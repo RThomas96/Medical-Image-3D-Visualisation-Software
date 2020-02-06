@@ -1,0 +1,6 @@
+# Ignore build directories from Qt :
+build_*
+
+# Ignore build files from Qt (using cmake here) :
+*.pro
+*.user
