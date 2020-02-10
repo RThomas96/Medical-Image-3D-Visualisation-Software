@@ -55,16 +55,25 @@ FIND_PACKAGE(glm REQUIRED)
 SET(INCLUDE_DIRECTORIES ${INCLUDE_DIRECTORIES} ${OPENGL_INCLUDE_DIRS})
 INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES})
 
+ADD_LIBRARY(tiff_lib
+	./TinyTIFF/tinytiffreader.cpp
+	./TinyTIFF/tinytiffwriter.cpp
+	./TinyTIFF/tinytiffhighrestimer.cpp
+)
+
 ADD_EXECUTABLE(visualisation
 	./qt/include/main_window.hpp
 	./viewer/include/simple_viewer.hpp
+	./qt/include/tiff_inspector.hpp
 
 	./main.cpp
 
 	./qt/src/main_window.cpp
 	./viewer/src/simple_viewer.cpp
+	./qt/src/tiff_inspector.cpp
 )
 TARGET_LINK_LIBRARIES(visualisation
+	PUBLIC tiff_lib
 	PUBLIC Qt5::Core
 	PUBLIC Qt5::Widgets
 	PUBLIC Qt5::Gui
