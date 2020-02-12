@@ -16,6 +16,11 @@ main_window::main_window() {
 	this->setCentralWidget(new simple_viewer());
 }
 
+QSize main_window::sizeHint() const {
+	QSize s(400, 400);
+	return s;
+}
+
 void main_window::on_add_new() {
 	std::clog << "Added new widget" << std::endl;
 }

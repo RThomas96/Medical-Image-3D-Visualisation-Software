@@ -18,6 +18,11 @@ class main_window : public QMainWindow {
 		 * @brief Default constructor.
 		 */
 		main_window();
+		/**
+		 * @brief Define a size hint for the window
+		 * @return The expected size of the window
+		 */
+		virtual QSize sizeHint() const override;
 	private slots:
 		/**
 		 * @brief Slot called when a QWidget is added as a child to this main window.
