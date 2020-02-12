@@ -1,11 +1,13 @@
-#ifndef QT_INCLUDE_TIFF_INSPECTOR_HPP_
-#define QT_INCLUDE_TIFF_INSPECTOR_HPP_
+#ifndef TESTS_TIFF_TESTS_INCLUDE_TIFF_INSPECTOR_HPP_
+#define TESTS_TIFF_TESTS_INCLUDE_TIFF_INSPECTOR_HPP_
 
 #include <QLabel>
 #include <QWidget>
 #include <QListWidget>
 #include <QPushButton>
 #include <QPlainTextEdit>
+
+#include "tiff_displayer.hpp"
 
 class tiff_inspector : public QWidget {
 		Q_OBJECT
@@ -50,6 +52,10 @@ class tiff_inspector : public QWidget {
 		 * @brief Label to display more file info
 		 */
 		QPlainTextEdit* image_info_label;
+		/**
+		 * @brief Display area for TIFF files
+		 */
+		tiff_display* tiff_displayer;
 };
 
-#endif // QT_INCLUDE_TIFF_INSPECTOR_HPP_
+#endif // TESTS_TIFF_TESTS_INCLUDE_TIFF_INSPECTOR_HPP_

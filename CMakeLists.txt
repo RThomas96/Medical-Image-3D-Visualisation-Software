@@ -55,22 +55,65 @@ FIND_PACKAGE(glm REQUIRED)
 SET(INCLUDE_DIRECTORIES ${INCLUDE_DIRECTORIES} ${OPENGL_INCLUDE_DIRS})
 INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES})
 
+# TinyTIFF Library {{{
 ADD_LIBRARY(tiff_lib
 	./TinyTIFF/tinytiffreader.cpp
 	./TinyTIFF/tinytiffwriter.cpp
 	./TinyTIFF/tinytiffhighrestimer.cpp
 )
+# }}}
 
+# TinyTIFF library tests {{{
+ADD_EXECUTABLE(tiff_loader_tests
+	# Header files (needed for Qt's MOCS compilation) :
+	./tests/tiff_tests/include/main_window.hpp
+	./tests/tiff_tests/include/tiff_inspector.hpp
+	./tests/tiff_tests/include/tiff_displayer.hpp
+
+	# Main file :
+	./tests/tiff_tests/main.cpp
+
+	# Implementation files :
+	./tests/tiff_tests/src/main_window.cpp
+	./tests/tiff_tests/src/tiff_inspector.cpp
+	./tests/tiff_tests/src/tiff_displayer.cpp
+)
+TARGET_LINK_LIBRARIES(tiff_loader_tests
+	PUBLIC tiff_lib
+	PUBLIC Qt5::Core
+	PUBLIC Qt5::Widgets
+	PUBLIC Qt5::Gui
+)
+# }}}
+
+ADD_EXECUTABLE(3d_texture_test
+	# Header files (needed for Qt's MOCS compilation) :
+	./tests/3D_texture_test/include/main_window.hpp
+
+	# Main file :
+	./tests/3D_texture_test/main.cpp
+
+	# Implementation files :
+	./tests/3D_texture_test/src/main_window.cpp
+)
+TARGET_LINK_LIBRARIES(3d_texture_test
+	PUBLIC Qt5::Core
+	PUBLIC Qt5::Widgets
+	PUBLIC Qt5::Gui
+)
+
+# Main executable {{{
 ADD_EXECUTABLE(visualisation
+	# Header files (needed for Qt's MOCS compilation) :
 	./qt/include/main_window.hpp
 	./viewer/include/simple_viewer.hpp
-	./qt/include/tiff_inspector.hpp
 
+	# Main file :
 	./main.cpp
 
+	# Implementation files :
 	./qt/src/main_window.cpp
 	./viewer/src/simple_viewer.cpp
-	./qt/src/tiff_inspector.cpp
 )
 TARGET_LINK_LIBRARIES(visualisation
 	PUBLIC tiff_lib
@@ -83,5 +126,6 @@ TARGET_LINK_LIBRARIES(visualisation
 	PUBLIC OpenGL
 	PUBLIC ${QGLViewer_LIBRARY}
 )
+# }}}
 
 # vim: foldmethod=marker : foldmarker={{{,}}} : tabstop=8

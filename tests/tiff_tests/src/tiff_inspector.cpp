@@ -15,6 +15,7 @@ tiff_inspector::tiff_inspector(QWidget* parent) {
 	this->setParent(parent);
 	this->file_name = "";
 	QVBoxLayout* vlayout = new QVBoxLayout();
+	QHBoxLayout* hlayout = new QHBoxLayout();
 	this->open_image_button = new QPushButton("Open TIFF Image");
 	this->image_name_label = new QLabel("Title : No image loaded.");
 	this->image_dims_label = new QLabel("Dimensions : Hard to get efficiently");
@@ -22,6 +23,7 @@ tiff_inspector::tiff_inspector(QWidget* parent) {
 	this->image_time_label = new QLabel("Time to open : N/A");
 	this->image_info_label = new QPlainTextEdit("No image selected");
 	this->image_info_label->setReadOnly(true);
+	this->tiff_displayer = new tiff_display(nullptr);
 
 	vlayout->addWidget(this->open_image_button);
 	vlayout->addWidget(this->image_name_label);
@@ -30,9 +32,12 @@ tiff_inspector::tiff_inspector(QWidget* parent) {
 	vlayout->addWidget(this->image_time_label);
 	vlayout->addWidget(this->image_info_label);
 
+	hlayout->addLayout(vlayout);
+	hlayout->addWidget(this->tiff_displayer);
+
 	connect(this->open_image_button, &QPushButton::pressed, this, &tiff_inspector::on_set_image_clicked);
 
-	this->setLayout(vlayout);
+	this->setLayout(hlayout);
 }
 
 void tiff_inspector::update_labels_for_image_data() {
@@ -48,10 +53,12 @@ void tiff_inspector::update_labels_for_image_data() {
 	if (this->file_name != "") {
 		TinyTIFFReaderFile* tiff_file = nullptr;
 		QString last_name = this->file_name.split("/").last();
+		QImage original_image(this->file_name);
+		original_image.save("input_image.tif");
 		start_point = std::chrono::high_resolution_clock::now();
 		tiff_file = TinyTIFFReader_open(this->file_name.toStdString().c_str());
 		end_point = std::chrono::high_resolution_clock::now();
-		std::chrono::duration<float, std::milli> duration = end_point - start_point;
+		std::chrono::duration<double, std::milli> duration = end_point - start_point;
 		strbuf << "Time to open : " << duration.count() << "ms";
 		img_time_txt = strbuf.str();
 		strbuf.str("");
@@ -64,11 +71,14 @@ void tiff_inspector::update_labels_for_image_data() {
 			if (img_info_txt.length() == 0) {
 				img_info_txt = "No image description was embedded in the file.\n";
 				img_info_txt += "Image frame count : " + std::to_string(TinyTIFFReader_countFrames(tiff_file)) + '\n';
-				img_info_txt += "File name : " + this->file_name.toStdString();
+				img_info_txt += "File name : " + this->file_name.toStdString() + '\n';
+				img_info_txt += "Projected time for 4k images : " + std::to_string(4.0 * (duration.count()));
 			}
 			strbuf << "Image size : " << TinyTIFFReader_getWidth(tiff_file) << "x" << TinyTIFFReader_getHeight(tiff_file);
 			img_size_txt = strbuf.str();
 			strbuf.str("");
+			this->tiff_displayer->load(tiff_file);
+			TinyTIFFReader_close(tiff_file);
 		} else {
 			std::cerr << "Error : no image loaded (file name : \"" << this->file_name.toStdString() << "\"" << std::endl;
 		}
