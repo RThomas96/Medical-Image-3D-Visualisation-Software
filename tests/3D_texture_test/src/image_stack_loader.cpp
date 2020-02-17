@@ -119,16 +119,31 @@ void image_stack_loader::load_single_image(QString absolute_path) {
 	// Image stride
 	uint32_t stride = static_cast<uint32_t>(this->image_width * this->image_height);
 
+	unsigned char* raw_data = static_cast<unsigned char*>(calloc(stride, sizeof(unsigned char)));
+
 	// Read data :
 	start_point_for_image_reading = std::chrono::high_resolution_clock::now();
-	TinyTIFFReader_readFrame<unsigned char>(this->tiff_file, &this->image_data[this->end_iterator]);
+	TinyTIFFReader_readFrame<unsigned char>(this->tiff_file, raw_data);
 	end_point_for_image_reading = std::chrono::high_resolution_clock::now();
 	this->raw_file_reading_duration += (end_point_for_image_reading - start_point_for_image_reading);
 	this->number_of_file_reading_operations++;
-	this->end_iterator += stride;
+
+	// Copy data, in RGB format :
+	start_point_for_image_copying = std::chrono::high_resolution_clock::now();
+	for (std::size_t i = 0; i < stride; ++i) {
+		this->image_data[this->end_iterator + 0] = raw_data[i];
+		this->image_data[this->end_iterator + 1] = raw_data[i];
+		this->image_data[this->end_iterator + 2] = raw_data[i];
+		this->end_iterator += 3;
+	}
+	end_point_for_image_copying = std::chrono::high_resolution_clock::now();
+	this->raw_file_copying_duration += (end_point_for_image_copying - start_point_for_image_copying);
+	this->number_of_file_copying_operations++;
 
 	TinyTIFFReader_close(this->tiff_file);
 	this->tiff_file = nullptr;
+
+	free(raw_data);
 
 	return;
 }
@@ -153,13 +168,16 @@ void image_stack_loader::initialize_image_data(QString test_file, int nb_images)
 	std::chrono::time_point<std::chrono::_V2::system_clock, DEFAULT_TIMEKEEPING_DURATION>
 		start_point_for_image_loading, end_point_for_image_loading;
 
-	start_point_for_image_loading = std::chrono::high_resolution_clock::now();
 
 	std::string fpath = test_file.toStdString();
 	const char* file_name = fpath.c_str();
 
 	// Open file and track time and operations :
+	start_point_for_image_loading = std::chrono::high_resolution_clock::now();
 	this->tiff_file = TinyTIFFReader_open(file_name);
+	end_point_for_image_loading = std::chrono::high_resolution_clock::now();
+	this->raw_file_opening_duration += (end_point_for_image_loading - start_point_for_image_loading);
+	this->number_of_file_opening_operations++;
 
 	uint32_t w = TinyTIFFReader_getWidth(this->tiff_file);
 	uint32_t h = TinyTIFFReader_getHeight(this->tiff_file);
@@ -169,12 +187,12 @@ void image_stack_loader::initialize_image_data(QString test_file, int nb_images)
 	this->image_height = static_cast<std::size_t>(h);
 	this->image_depth = static_cast<std::size_t>(nb_images);
 
-	// Set data :
-	this->image_data.resize(this->image_width * this->image_depth * this->image_height);
-	this->end_iterator = 0;
+	// Currently testing RGB channels (if all equal --> grescale)
+	std::size_t nb_channels = 3;
 
-	end_point_for_image_loading = std::chrono::high_resolution_clock::now();
-	this->raw_file_copying_duration += (end_point_for_image_loading - start_point_for_image_loading);
+	// Set data :
+	this->image_data.resize(this->image_width * this->image_depth * this->image_height * nb_channels);
+	this->end_iterator = 0;
 
 	return;
 }

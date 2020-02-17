@@ -26,22 +26,21 @@ void simple_3D_texture_viewer::load_textures() {
 	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	// Clamp textures to 0;1
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	// If above 1, put magenta behind the texture :
-	GLfloat border_color[] = {1., .0, 1., 1.};
-	glTexParameterfv(GL_TEXTURE_3D, GL_TEXTURE_BORDER_COLOR, border_color);
-	glPixelStorei(GL_UNPACK_SWAP_BYTES, GL_TRUE);
+//	GLfloat border_color[] = {1., .0, 1., 1.};
+//	glTexParameterfv(GL_TEXTURE_3D, GL_TEXTURE_BORDER_COLOR, border_color);
 	glTexImage3D(
 		GL_TEXTURE_3D,						// GLenum : Target
 		static_cast<GLint>(0),					// GLint  : Level of detail of the current texture (0 = original)
-		GL_DEPTH_COMPONENT,					// GLint  : Number of color components in the picture. Here grayscale so GL_RED
+		GL_RGB,							// GLint  : Number of color components in the picture. Here grayscale so GL_RED
 		static_cast<GLsizei>(stack_loader->get_image_width()),	// GLsizei: Image width
 		static_cast<GLsizei>(stack_loader->get_image_height()),	// GLsizei: Image height
 		static_cast<GLsizei>(stack_loader->get_image_depth()),	// GLsizei: Image depth (number of layers)
 		static_cast<GLint>(0),					// GLint  : Border. This value MUST be 0.
-		GL_DEPTH_COMPONENT,					// GLenum : Format of the pixel data
+		GL_RGB,							// GLenum : Format of the pixel data
 		GL_UNSIGNED_BYTE,					// GLenum : Type (the data type as in uchar, uint, float ...)
 		this->texture_data.data()				// void*  : Data to load into the buffer
 	);
