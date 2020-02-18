@@ -248,30 +248,78 @@ void simple_3D_texture_viewer::draw_face_gl(std::size_t v0, std::size_t v1, std:
 
 void simple_3D_texture_viewer::set_min_X_tex_value(double x) {
 	this->tex_coords_min[0] = x;
+	this->set_back_x_plane_coordinates();
 	this->update();
 }
 
 void simple_3D_texture_viewer::set_min_Y_tex_value(double y) {
 	this->tex_coords_min[1] = y;
+	this->set_back_y_plane_coordinates();
 	this->update();
 }
 
 void simple_3D_texture_viewer::set_min_Z_tex_value(double z) {
 	this->tex_coords_min[2] = z;
+	this->set_back_z_plane_coordinates();
 	this->update();
 }
 
 void simple_3D_texture_viewer::set_max_X_tex_value(double x) {
 	this->tex_coords_max[0] = x;
+	this->set_front_x_plane_coordinates();
 	this->update();
 }
 
 void simple_3D_texture_viewer::set_max_Y_tex_value(double y) {
 	this->tex_coords_max[1] = y;
+	this->set_front_y_plane_coordinates();
 	this->update();
 }
 
 void simple_3D_texture_viewer::set_max_Z_tex_value(double z) {
 	this->tex_coords_max[2] = z;
+	this->set_front_z_plane_coordinates();
 	this->update();
+}
+
+void simple_3D_texture_viewer::set_back_x_plane_coordinates() {
+	this->vertex_pos[ 1*3 + 0 ] = (this->tex_coords_min[0] * 2.0) - 1.0;
+	this->vertex_pos[ 2*3 + 0 ] = (this->tex_coords_min[0] * 2.0) - 1.0;
+	this->vertex_pos[ 6*3 + 0 ] = (this->tex_coords_min[0] * 2.0) - 1.0;
+	this->vertex_pos[ 7*3 + 0 ] = (this->tex_coords_min[0] * 2.0) - 1.0;
+}
+
+void simple_3D_texture_viewer::set_front_x_plane_coordinates() {
+	this->vertex_pos[ 0*3 + 0 ] = (this->tex_coords_max[0] * 2.0) - 1.0;
+	this->vertex_pos[ 3*3 + 0 ] = (this->tex_coords_max[0] * 2.0) - 1.0;
+	this->vertex_pos[ 4*3 + 0 ] = (this->tex_coords_max[0] * 2.0) - 1.0;
+	this->vertex_pos[ 5*3 + 0 ] = (this->tex_coords_max[0] * 2.0) - 1.0;
+}
+
+void simple_3D_texture_viewer::set_back_y_plane_coordinates() {
+	this->vertex_pos[ 2*3 + 1 ] = (this->tex_coords_min[1] * 2.0) - 1.0;
+	this->vertex_pos[ 3*3 + 1 ] = (this->tex_coords_min[1] * 2.0) - 1.0;
+	this->vertex_pos[ 4*3 + 1 ] = (this->tex_coords_min[1] * 2.0) - 1.0;
+	this->vertex_pos[ 7*3 + 1 ] = (this->tex_coords_min[1] * 2.0) - 1.0;
+}
+
+void simple_3D_texture_viewer::set_front_y_plane_coordinates() {
+	this->vertex_pos[ 0*3 + 1 ] = (this->tex_coords_max[1] * 2.0) - 1.0;
+	this->vertex_pos[ 1*3 + 1 ] = (this->tex_coords_max[1] * 2.0) - 1.0;
+	this->vertex_pos[ 5*3 + 1 ] = (this->tex_coords_max[1] * 2.0) - 1.0;
+	this->vertex_pos[ 6*3 + 1 ] = (this->tex_coords_max[1] * 2.0) - 1.0;
+}
+
+void simple_3D_texture_viewer::set_back_z_plane_coordinates() {
+	this->vertex_pos[ 4*3 + 2 ] = (this->tex_coords_min[2] * 2.0) - 1.0;
+	this->vertex_pos[ 5*3 + 2 ] = (this->tex_coords_min[2] * 2.0) - 1.0;
+	this->vertex_pos[ 6*3 + 2 ] = (this->tex_coords_min[2] * 2.0) - 1.0;
+	this->vertex_pos[ 7*3 + 2 ] = (this->tex_coords_min[2] * 2.0) - 1.0;
+}
+
+void simple_3D_texture_viewer::set_front_z_plane_coordinates() {
+	this->vertex_pos[ 0*3 + 2 ] = (this->tex_coords_max[2] * 2.0) - 1.0;
+	this->vertex_pos[ 1*3 + 2 ] = (this->tex_coords_max[2] * 2.0) - 1.0;
+	this->vertex_pos[ 2*3 + 2 ] = (this->tex_coords_max[2] * 2.0) - 1.0;
+	this->vertex_pos[ 3*3 + 2 ] = (this->tex_coords_max[2] * 2.0) - 1.0;
 }

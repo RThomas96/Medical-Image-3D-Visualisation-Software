@@ -107,6 +107,30 @@ class simple_3D_texture_viewer : public QGLViewer {
 		 * @warning The function does not check if the vertices are in the good order. Get that checked out yourself.
 		 */
 		void draw_face_gl(std::size_t v0, std::size_t v1, std::size_t v2);
+		/**
+		 * @brief Sets the X coordinate of the vertices in the back face to be the same as the texture
+		 */
+		void set_back_x_plane_coordinates();
+		/**
+		 * @brief Sets the Y coordinate of the vertices in the front face to be the same as the texture
+		 */
+		void set_front_x_plane_coordinates();
+		/**
+		 * @brief Sets the Y coordinate of the vertices in the back face to be the same as the texture
+		 */
+		void set_back_y_plane_coordinates();
+		/**
+		 * @brief Sets the Y coordinate of the vertices in the front face to be the same as the texture
+		 */
+		void set_front_y_plane_coordinates();
+		/**
+		 * @brief Sets the Z coordinate of the vertices in the back face to be the same as the texture
+		 */
+		void set_back_z_plane_coordinates();
+		/**
+		 * @brief Sets the Y coordinate of the vertices in the front face to be the same as the texture
+		 */
+		void set_front_z_plane_coordinates();
 };
 
 #endif // TESTS_3D_TEXTURE_TEST_3D_TEXTURE_VIEWER_HPP
