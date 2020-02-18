@@ -9,6 +9,9 @@
 #include <QFileDialog>
 #include <QErrorMessage>
 
+#define MULTIPLICATOR 2
+#define CLAMP_VAL(x) std::min(x*MULTIPLICATOR, 255)
+
 image_stack_loader::image_stack_loader() {
 	// Start all durations to 0 :
 	this->raw_file_opening_duration = DEFAULT_TIMEKEEPING_DURATION(0);
@@ -131,9 +134,9 @@ void image_stack_loader::load_single_image(QString absolute_path) {
 	// Copy data, in RGB format :
 	start_point_for_image_copying = std::chrono::high_resolution_clock::now();
 	for (std::size_t i = 0; i < stride; ++i) {
-		this->image_data[this->end_iterator + 0] = raw_data[i];
-		this->image_data[this->end_iterator + 1] = raw_data[i];
-		this->image_data[this->end_iterator + 2] = raw_data[i];
+		this->image_data[this->end_iterator + 0] = CLAMP_VAL(raw_data[i]);
+		this->image_data[this->end_iterator + 1] = CLAMP_VAL(raw_data[i]);
+		this->image_data[this->end_iterator + 2] = CLAMP_VAL(raw_data[i]);
 		this->end_iterator += 3;
 	}
 	end_point_for_image_copying = std::chrono::high_resolution_clock::now();

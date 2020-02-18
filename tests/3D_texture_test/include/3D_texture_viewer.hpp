@@ -6,10 +6,11 @@
 #include "../include/image_stack_loader.hpp"
 
 class simple_3D_texture_viewer : public QGLViewer {
-	public:
-		virtual void init() override;
-		void load_textures();
-		virtual void draw() override;
+
+		friend class slider_widget; // for easy access to private values
+
+		Q_OBJECT
+
 	protected:
 		/**
 		 * @brief Number of vertices to draw
@@ -47,9 +48,53 @@ class simple_3D_texture_viewer : public QGLViewer {
 		 * @brief Pointer to a stack loader for image retrieval
 		 */
 		image_stack_loader* stack_loader;
+	public:
+		/**
+		 * @brief Initializes the needed OpenGL state, and some variables
+		 */
+		virtual void init() override;
+		/**
+		 * @brief Load the texture, using a stack loader.
+		 */
+		void load_textures();
+		/**
+		 * @brief Draw the cube, and the texure on it.
+		 */
+		virtual void draw() override;
+	public slots:
+		/**
+		 * @brief Sets the minimum X value for texture coordinates
+		 * @param x the value of x for tex_coords_min
+		 */
+		void set_min_X_tex_value(double x);
+		/**
+		 * @brief Sets the minimum Y value for texture coordinates
+		 * @param y the value of y for tex_coords_min
+		 */
+		void set_min_Y_tex_value(double y);
+		/**
+		 * @brief Sets the minimum Z value for texture coordinates
+		 * @param z the value of z for tex_coords_min
+		 */
+		void set_min_Z_tex_value(double z);
+		/**
+		 * @brief Sets the maximum X value for texture coordinates
+		 * @param x the value of x for tex_coords_max
+		 */
+		void set_max_X_tex_value(double x);
+		/**
+		 * @brief Sets the maximum Y value for texture coordinates
+		 * @param y the value of y for tex_coords_max
+		 */
+		void set_max_Y_tex_value(double y);
+		/**
+		 * @brief Sets the maximum Z value for texture coordinates
+		 * @param z the value of z for tex_coords_max
+		 */
+		void set_max_Z_tex_value(double z);
 	private:
 		/**
-		 * @brief Setup the cube attributes
+		 * @brief Setup the cube attributes (vertices, normals and tex coordinates)
 		 */
 		void setup_cube_attribs();
 		/**

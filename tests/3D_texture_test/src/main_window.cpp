@@ -1,18 +1,18 @@
 #include <QMenuBar>
+#include <QVBoxLayout>
 #include <iostream>
 
 #include "../include/main_window.hpp"
 
-#include "../include/3D_texture_viewer.hpp"
-
 main_window::main_window() {
 	// OPTIONNAL : Add a menu bar with commonly accessed functions
 	this->setParent(nullptr);
-	this->setCentralWidget(new simple_3D_texture_viewer());
+	this->widget = new container_widget();
+	this->setCentralWidget(this->widget);
 }
 
 QSize main_window::sizeHint() const {
-	QSize s(800, 400);
+	QSize s(800, 500);
 	return s;
 }
 

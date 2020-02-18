@@ -12,10 +12,12 @@ void simple_3D_texture_viewer::init() {
 
 void simple_3D_texture_viewer::load_textures() {
 	glEnable(GL_TEXTURE_3D);
+	/*
 	std::cerr << "OpenGL current version : " << glGetString(GL_VERSION) << std::endl;
 	std::cerr << "OpenGL shaders version : " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
 	std::cerr << "OpenGL vendor name : " << glGetString(GL_VENDOR) << std::endl;
 	std::cerr << "OpenGL renderer : " << glGetString(GL_RENDERER) << std::endl;
+	*/
 	this->texture_data = this->stack_loader->load_stack_from_folder();
 
 	// Generate texture :
@@ -26,12 +28,12 @@ void simple_3D_texture_viewer::load_textures() {
 	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	// Clamp textures to 0;1
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 	// If above 1, put magenta behind the texture :
-//	GLfloat border_color[] = {1., .0, 1., 1.};
-//	glTexParameterfv(GL_TEXTURE_3D, GL_TEXTURE_BORDER_COLOR, border_color);
+	GLfloat border_color[] = {1., .0, 1., 1.};
+	glTexParameterfv(GL_TEXTURE_3D, GL_TEXTURE_BORDER_COLOR, border_color);
 	glTexImage3D(
 		GL_TEXTURE_3D,						// GLenum : Target
 		static_cast<GLint>(0),					// GLint  : Level of detail of the current texture (0 = original)
@@ -105,9 +107,9 @@ void simple_3D_texture_viewer::setup_cube_attribs() {
 	this->tex_coords_min[1] = 0.0;
 	this->tex_coords_min[2] = 0.0;
 
-	this->tex_coords_max[0] = 1.0;
-	this->tex_coords_max[1] = 1.0;
-	this->tex_coords_max[2] = 1.0;
+	this->tex_coords_max[0] = 0.99;
+	this->tex_coords_max[1] = 0.99;
+	this->tex_coords_max[2] = 0.99;
 
 	/**
 	 * Cube order :
@@ -244,34 +246,32 @@ void simple_3D_texture_viewer::draw_face_gl(std::size_t v0, std::size_t v1, std:
 	glVertex3d(this->vertex_pos[v2 * 3 + 0], this->vertex_pos[v2 * 3 + 1], this->vertex_pos[v2 * 3 + 2]);
 }
 
+void simple_3D_texture_viewer::set_min_X_tex_value(double x) {
+	this->tex_coords_min[0] = x;
+	this->update();
+}
 
+void simple_3D_texture_viewer::set_min_Y_tex_value(double y) {
+	this->tex_coords_min[1] = y;
+	this->update();
+}
 
+void simple_3D_texture_viewer::set_min_Z_tex_value(double z) {
+	this->tex_coords_min[2] = z;
+	this->update();
+}
 
+void simple_3D_texture_viewer::set_max_X_tex_value(double x) {
+	this->tex_coords_max[0] = x;
+	this->update();
+}
 
+void simple_3D_texture_viewer::set_max_Y_tex_value(double y) {
+	this->tex_coords_max[1] = y;
+	this->update();
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+void simple_3D_texture_viewer::set_max_Z_tex_value(double z) {
+	this->tex_coords_max[2] = z;
+	this->update();
+}

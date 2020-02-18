@@ -91,6 +91,8 @@ ADD_EXECUTABLE(3d_texture_test
 	./tests/3D_texture_test/include/main_window.hpp
 	./tests/3D_texture_test/include/image_stack_loader.hpp
 	./tests/3D_texture_test/include/3D_texture_viewer.hpp
+	./tests/3D_texture_test/include/container_widget.hpp
+	./tests/3D_texture_test/include/slider_widget.hpp
 
 	# Main file :
 	./tests/3D_texture_test/main.cpp
@@ -99,6 +101,7 @@ ADD_EXECUTABLE(3d_texture_test
 	./tests/3D_texture_test/src/main_window.cpp
 	./tests/3D_texture_test/src/image_stack_loader.cpp
 	./tests/3D_texture_test/src/3D_texture_viewer.cpp
+	./tests/3D_texture_test/src/slider_widget.cpp
 )
 TARGET_LINK_LIBRARIES(3d_texture_test
 	PUBLIC tiff_lib
