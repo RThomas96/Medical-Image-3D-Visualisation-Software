@@ -10,7 +10,7 @@
 #include <QApplication>
 #include <QCommandLineParser>
 
-#include "qt/include/main_window.hpp"
+#include "include/container_widget.hpp"
 
 int main(int argc, char* argv[]) {
 	QApplication app(argc, argv);
@@ -19,9 +19,9 @@ int main(int argc, char* argv[]) {
 	QCoreApplication::setOrganizationName("LIRMM");
 	QCoreApplication::setApplicationVersion(QT_VERSION_STR);
 
-	main_window mainwindow;
-	mainwindow.resize(mainwindow.sizeHint());
-	mainwindow.show();
+	container_widget container;
+	container.resize(container.sizeHint());
+	container.show();
 
 	return app.exec();
 }

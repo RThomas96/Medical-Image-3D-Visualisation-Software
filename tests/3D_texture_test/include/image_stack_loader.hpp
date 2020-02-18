@@ -69,6 +69,11 @@ class image_stack_loader {
 		 * @return the data
 		 */
 		const std::vector<unsigned char>& get_data() const { return this->image_data; }
+		/**
+		 * @brief Enables or disables downsampling
+		 * @param _is_enabled new value of downsampling_enabled
+		 */
+		void enable_downsampling(bool _is_enabled);
 	protected:
 		/**
 		 * @brief Loads a single image from the filesystem
@@ -123,6 +128,10 @@ class image_stack_loader {
 		 * @brief Number of file copying operations
 		 */
 		mutable uint number_of_file_copying_operations;
+		/**
+		 * @brief Checks if the image needs to be downsampled when loaded.
+		 */
+		bool downsampling_enabled;
 		/**
 		 * @brief Pointer to the tiff file opened.
 		 * @note Defined here to optimize the CPU calls by a bit.

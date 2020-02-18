@@ -1,10 +1,10 @@
 #include "../include/slider_widget.hpp"
 
-#include <QHBoxLayout>
-#include <QVBoxLayout>
-#include <QLabel>
-
 slider_widget::slider_widget(simple_3D_texture_viewer* viewer) {
+	// Dirty hack to not let the widget take the whole
+	// fucking screen. Fuck automatic size constraints.
+	this->setMaximumHeight(125);
+
 	/**
 	 * Create the sliders
 	 */
@@ -15,19 +15,31 @@ slider_widget::slider_widget(simple_3D_texture_viewer* viewer) {
 	this->max_y_slider = new QSlider(Qt::Horizontal);
 	this->max_z_slider = new QSlider(Qt::Horizontal);
 
-	this->min_x_slider->setRange(-1, 1000);
+	this->min_x_slider->setRange(-1, 999);
 	this->min_x_slider->setValue(0);
-	this->min_y_slider->setRange(-1, 1000);
+	this->min_x_slider->setTickPosition(QSlider::TicksBelow);
+	this->min_x_slider->setTickInterval(100);
+	this->min_y_slider->setRange(-1, 999);
 	this->min_y_slider->setValue(0);
-	this->min_z_slider->setRange(-1, 1000);
+	this->min_y_slider->setTickPosition(QSlider::TicksBelow);
+	this->min_y_slider->setTickInterval(100);
+	this->min_z_slider->setRange(-1, 999);
 	this->min_z_slider->setValue(0);
+	this->min_z_slider->setTickPosition(QSlider::TicksBelow);
+	this->min_z_slider->setTickInterval(100);
 
-	this->max_x_slider->setRange(-1, 1000);
+	this->max_x_slider->setRange(0, 1000);
 	this->max_x_slider->setValue(999);
-	this->max_y_slider->setRange(-1, 1000);
+	this->max_x_slider->setTickPosition(QSlider::TicksBelow);
+	this->max_x_slider->setTickInterval(100);
+	this->max_y_slider->setRange(0, 1000);
 	this->max_y_slider->setValue(999);
-	this->max_z_slider->setRange(-1, 1000);
+	this->max_y_slider->setTickPosition(QSlider::TicksBelow);
+	this->max_y_slider->setTickInterval(100);
+	this->max_z_slider->setRange(0, 1000);
 	this->max_z_slider->setValue(999);
+	this->max_z_slider->setTickPosition(QSlider::TicksBelow);
+	this->max_z_slider->setTickInterval(100);
 	/**
 	 * Create labels for them :
 	 */
@@ -44,18 +56,9 @@ slider_widget::slider_widget(simple_3D_texture_viewer* viewer) {
 	 *     - the layout will contain 2 columns
 	 *     - each column will have a title, as well as a pair of {label, slider} to represent the value slider
 	 */
-	min_label->setAutoFillBackground(true);
-	QPalette pal (min_label->palette());
-	pal.setColor(QPalette::Background, QColor("#ff00ff"));
-	QPalette pal2(pal);
-	min_label->setPalette(pal);
-	min_label->setMargin(0);
-	min_label->setContentsMargins(0,0,0,0);
-	max_label->setMargin(0);
-	max_label->setContentsMargins(0,0,0,0);
 	// left sliders box (for min tex coordinates)
 	QVBoxLayout* min_sliders = new QVBoxLayout();
-	min_sliders->addWidget(min_label, 0, Qt::AlignCenter);
+	min_sliders->addWidget(min_label, 0, Qt::AlignCenter | Qt::AlignTop);
 	{
 		// X slider box :
 		QHBoxLayout* min_x_box = new QHBoxLayout();
@@ -79,7 +82,7 @@ slider_widget::slider_widget(simple_3D_texture_viewer* viewer) {
 	}
 	// right sliders box (for max tex coordinates)
 	QVBoxLayout* max_sliders = new QVBoxLayout();
-	max_sliders->addWidget(max_label, 0, Qt::AlignCenter);
+	max_sliders->addWidget(max_label, 0, Qt::AlignCenter | Qt::AlignTop);
 	{
 		// X slider box :
 		QHBoxLayout* max_x_box = new QHBoxLayout();

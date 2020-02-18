@@ -6,6 +6,7 @@
 void simple_3D_texture_viewer::init() {
 	this->restoreStateFromFile();
 	this->stack_loader = new image_stack_loader();
+	this->stack_loader->enable_downsampling(true);
 	this->setup_cube_attribs();
 	this->load_textures();
 }
@@ -46,6 +47,8 @@ void simple_3D_texture_viewer::load_textures() {
 		GL_UNSIGNED_BYTE,					// GLenum : Type (the data type as in uchar, uint, float ...)
 		this->texture_data.data()				// void*  : Data to load into the buffer
 	);
+	// we can now safely delete the data
+	this->texture_data.clear();
 }
 
 void simple_3D_texture_viewer::draw() {

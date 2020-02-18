@@ -133,11 +133,22 @@ void image_stack_loader::load_single_image(QString absolute_path) {
 
 	// Copy data, in RGB format :
 	start_point_for_image_copying = std::chrono::high_resolution_clock::now();
-	for (std::size_t i = 0; i < stride; ++i) {
-		this->image_data[this->end_iterator + 0] = CLAMP_VAL(raw_data[i]);
-		this->image_data[this->end_iterator + 1] = CLAMP_VAL(raw_data[i]);
-		this->image_data[this->end_iterator + 2] = CLAMP_VAL(raw_data[i]);
-		this->end_iterator += 3;
+	if (downsampling_enabled == false ) {
+		for (std::size_t i = 0; i < stride; ++i) {
+			this->image_data[this->end_iterator + 0] = CLAMP_VAL(raw_data[i]);
+			this->image_data[this->end_iterator + 1] = CLAMP_VAL(raw_data[i]);
+			this->image_data[this->end_iterator + 2] = CLAMP_VAL(raw_data[i]);
+			this->end_iterator += 3;
+		}
+	} else {
+		for (std::size_t i = 0; i < this->image_height/2; ++i) {
+			for (std::size_t j = 0; j < this->image_width/2; ++j) {
+				this->image_data[this->end_iterator + 0] = CLAMP_VAL(raw_data[i*2*this->image_width + j*2]);
+				this->image_data[this->end_iterator + 1] = CLAMP_VAL(raw_data[i*2*this->image_width + j*2]);
+				this->image_data[this->end_iterator + 2] = CLAMP_VAL(raw_data[i*2*this->image_width + j*2]);
+				this->end_iterator += 3;
+			}
+		}
 	}
 	end_point_for_image_copying = std::chrono::high_resolution_clock::now();
 	this->raw_file_copying_duration += (end_point_for_image_copying - start_point_for_image_copying);
@@ -193,8 +204,18 @@ void image_stack_loader::initialize_image_data(QString test_file, int nb_images)
 	// Currently testing RGB channels (if all equal --> grescale)
 	std::size_t nb_channels = 3;
 
+	// Size of vector to allocate :
+	std::size_t size_to_allocate = this->downsampling_enabled ?
+					       (this->image_width * this->image_height) / 4 * this->image_depth * nb_channels :
+					       this->image_width * this->image_depth * this->image_height * nb_channels;
+
+	std::cout << "Downsampling is " << (this->downsampling_enabled ? "disabled." : "enabled.") << std::endl;
+	std::cout << "Will allocate " << size_to_allocate << " elements (" << (static_cast<double>(size_to_allocate)/1024.)/1024. <<
+		     "Mo) instead of " << this->image_width * this->image_depth * this->image_height * nb_channels << " elements (" <<
+		     (static_cast<double>(this->image_width * this->image_depth * this->image_height * nb_channels)/1024.)/1024.<< "Mo)." <<std::endl;
+
 	// Set data :
-	this->image_data.resize(this->image_width * this->image_depth * this->image_height * nb_channels);
+	this->image_data.resize(size_to_allocate);
 	this->end_iterator = 0;
 
 	return;
@@ -211,6 +232,8 @@ void image_stack_loader::print_debug_info() const {
 
 std::size_t image_stack_loader::get_image_depth() const { return this->image_depth; }
 
-std::size_t image_stack_loader::get_image_width() const { return this->image_width; }
+std::size_t image_stack_loader::get_image_width() const { return not this->downsampling_enabled ? this->image_width : this->image_width/2; }
 
-std::size_t image_stack_loader::get_image_height() const { return this->image_height; }
+std::size_t image_stack_loader::get_image_height() const { return not this->downsampling_enabled ? this->image_height : this->image_height/2; }
+
+void image_stack_loader::enable_downsampling(bool _is_enabled) { this->downsampling_enabled = _is_enabled; }

@@ -20,8 +20,12 @@ class container_widget : public QWidget {
 			this->vbox = new QVBoxLayout();
 			this->vbox->addWidget(this->viewer);
 			this->vbox->addWidget(this->sliders);
+			std::cerr << "container_widget : setup vbox" << std::endl;
+			std::cerr.flush();
 
 			this->setLayout(this->vbox);
+			std::cerr << "container_widget : LEAVING CONSTRUCTOR" << std::endl;
+			std::cerr.flush();
 		}
 	private:
 		simple_3D_texture_viewer* viewer;

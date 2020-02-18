@@ -3,6 +3,9 @@
 
 #include <QWidget>
 #include <QSlider>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
+#include <QLabel>
 
 #include "./3D_texture_viewer.hpp"
 
@@ -39,7 +42,6 @@ class slider_widget : public QWidget {
 		 * @param viewer the viewer to hold onto (to change texture values)
 		 */
 		slider_widget(simple_3D_texture_viewer* viewer);
-		virtual QSize sizeHint() const override { return QSize(800, 100); }
 	private:
 		/**
 		 * @brief Set the minimum value of the given slider to the given value

@@ -88,7 +88,6 @@ TARGET_LINK_LIBRARIES(tiff_loader_tests
 
 ADD_EXECUTABLE(3d_texture_test
 	# Header files (needed for Qt's MOCS compilation) :
-	./tests/3D_texture_test/include/main_window.hpp
 	./tests/3D_texture_test/include/image_stack_loader.hpp
 	./tests/3D_texture_test/include/3D_texture_viewer.hpp
 	./tests/3D_texture_test/include/container_widget.hpp
@@ -98,7 +97,6 @@ ADD_EXECUTABLE(3d_texture_test
 	./tests/3D_texture_test/main.cpp
 
 	# Implementation files :
-	./tests/3D_texture_test/src/main_window.cpp
 	./tests/3D_texture_test/src/image_stack_loader.cpp
 	./tests/3D_texture_test/src/3D_texture_viewer.cpp
 	./tests/3D_texture_test/src/slider_widget.cpp
