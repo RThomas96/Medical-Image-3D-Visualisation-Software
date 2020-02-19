@@ -6,7 +6,7 @@
 void simple_3D_texture_viewer::init() {
 	this->restoreStateFromFile();
 	this->stack_loader = new image_stack_loader();
-	this->stack_loader->enable_downsampling(true);
+	this->stack_loader->enable_downsampling(true); // can downsample, don't need full-res for viewing
 	this->setup_cube_attribs();
 	this->load_textures();
 }
@@ -21,6 +21,8 @@ void simple_3D_texture_viewer::load_textures() {
 	*/
 	this->texture_data = this->stack_loader->load_stack_from_folder();
 
+	std::cerr << "Finished loading, going to create texture" << std::endl;
+
 	// Generate texture :
 	glGenTextures(1, &this->texture_id);
 	// Bind it :
@@ -28,31 +30,38 @@ void simple_3D_texture_viewer::load_textures() {
 	// Set the interpolation to be nearest neighbor :
 	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	// Try to reduce the number of mipmaps produced by OpenGL
+	glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_MAX_LOD, static_cast<GLfloat>(-1000.0));
 	// Clamp textures to 0;1
 	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
 	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	// Set the R, G, B components to take the R channel value, and 0 for alpha
+	GLint swizzle_mask[] = {GL_RED, GL_RED, GL_RED, GL_ONE};
+	glTexParameteriv(GL_TEXTURE_3D, GL_TEXTURE_SWIZZLE_RGBA, swizzle_mask);
 	// If above 1, put magenta behind the texture :
 	GLfloat border_color[] = {1., .0, 1., 1.};
 	glTexParameterfv(GL_TEXTURE_3D, GL_TEXTURE_BORDER_COLOR, border_color);
 	glTexImage3D(
 		GL_TEXTURE_3D,						// GLenum : Target
 		static_cast<GLint>(0),					// GLint  : Level of detail of the current texture (0 = original)
-		GL_RGB,							// GLint  : Number of color components in the picture. Here grayscale so GL_RED
+		GL_RED,							// GLint  : Number of color components in the picture. Here grayscale so GL_RED
 		static_cast<GLsizei>(stack_loader->get_image_width()),	// GLsizei: Image width
 		static_cast<GLsizei>(stack_loader->get_image_height()),	// GLsizei: Image height
 		static_cast<GLsizei>(stack_loader->get_image_depth()),	// GLsizei: Image depth (number of layers)
 		static_cast<GLint>(0),					// GLint  : Border. This value MUST be 0.
-		GL_RGB,							// GLenum : Format of the pixel data
+		GL_RED,							// GLenum : Format of the pixel data
 		GL_UNSIGNED_BYTE,					// GLenum : Type (the data type as in uchar, uint, float ...)
-		this->texture_data.data()				// void*  : Data to load into the buffer
+		this->texture_data					// void*  : Data to load into the buffer
 	);
 	// we can now safely delete the data
-	this->texture_data.clear();
+	free(this->texture_data);
 }
 
 void simple_3D_texture_viewer::draw() {
-	glEnable(GL_TEXTURE_3D);
+	// disable lighting computation
+	glDisable(GL_LIGHTING);
+	// bind texture
 	glBindTexture(GL_TEXTURE_3D, this->texture_id);
 
 	/**

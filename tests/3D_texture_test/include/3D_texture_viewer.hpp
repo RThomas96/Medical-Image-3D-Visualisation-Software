@@ -39,7 +39,7 @@ class simple_3D_texture_viewer : public QGLViewer {
 		/**
 		 * @brief Raw data from image stack
 		 */
-		std::vector<uchar> texture_data;
+		unsigned char* texture_data;
 		/**
 		 * @brief ID for the 3D texture to apply
 		 */

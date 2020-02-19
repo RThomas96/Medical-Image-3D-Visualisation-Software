@@ -9,8 +9,9 @@
 #include <QFileDialog>
 #include <QErrorMessage>
 
-#define MULTIPLICATOR 2
-#define CLAMP_VAL(x) std::min(x*MULTIPLICATOR, 255)
+#define CLAMP_VAL(x) (x>128)?255:x<<2
+#define THRESHOLD 5
+#define BINARIZE_VAL(x) (x>THRESHOLD) ? 128 : 0
 
 image_stack_loader::image_stack_loader() {
 	// Start all durations to 0 :
@@ -29,8 +30,11 @@ image_stack_loader::image_stack_loader() {
 	this->tiff_file = nullptr;
 
 	// The data has not been read yet :
-	this->image_data = std::vector<unsigned char>(0);
+	this->image_data = nullptr;
 	this->end_iterator = 0;
+
+	// Number of color channels in the image
+	this->color_channels = 1;
 
 	// No image was yet loaded, initialize the sizes to max :
 	this->image_width = std::numeric_limits<std::size_t>::max();
@@ -38,7 +42,7 @@ image_stack_loader::image_stack_loader() {
 	this->image_depth = std::numeric_limits<std::size_t>::max();
 }
 
-std::vector<unsigned char>& image_stack_loader::load_stack_from_folder() {
+unsigned char* image_stack_loader::load_stack_from_folder() {
 
 	// Open up a file dialog :
 	QStringList file_names = QFileDialog::getOpenFileNames(nullptr, "Open TIF images", "../../", "TIFF Image files (*.tif *.tiff)");
@@ -62,20 +66,6 @@ std::vector<unsigned char>& image_stack_loader::load_stack_from_folder() {
 	this->print_debug_info();
 
 	return this->image_data;
-}
-
-void image_stack_loader::load_stack_from_folder_into_vector(std::vector<unsigned char>& out_vector) {
-	// Open up a file dialog :
-	QStringList file_names = QFileDialog::getOpenFileNames(nullptr, "Open TIF images", "../../", "TIFF Image files (*.tif *.tiff)");
-	while (file_names.size() == 0) {
-		QErrorMessage errorMsg(nullptr);
-		errorMsg.showMessage("No files selected !");
-		file_names = QFileDialog::getOpenFileNames(nullptr, "Open TIF images", "../../", "TIFF Image files (*.tif *.tiff)");
-	}
-	// Once images paths are set, load in the images :
-	this->load_all_images(file_names);
-	// Copy into out vector :
-	std::copy(this->image_data.begin(), this->image_data.end(), std::back_inserter(out_vector));
 }
 
 void image_stack_loader::load_single_image(QString absolute_path) {
@@ -122,11 +112,9 @@ void image_stack_loader::load_single_image(QString absolute_path) {
 	// Image stride
 	uint32_t stride = static_cast<uint32_t>(this->image_width * this->image_height);
 
-	unsigned char* raw_data = static_cast<unsigned char*>(calloc(stride, sizeof(unsigned char)));
-
 	// Read data :
 	start_point_for_image_reading = std::chrono::high_resolution_clock::now();
-	TinyTIFFReader_readFrame<unsigned char>(this->tiff_file, raw_data);
+	TinyTIFFReader_readFrame<unsigned char>(this->tiff_file, this->raw_data_storage);
 	end_point_for_image_reading = std::chrono::high_resolution_clock::now();
 	this->raw_file_reading_duration += (end_point_for_image_reading - start_point_for_image_reading);
 	this->number_of_file_reading_operations++;
@@ -135,18 +123,18 @@ void image_stack_loader::load_single_image(QString absolute_path) {
 	start_point_for_image_copying = std::chrono::high_resolution_clock::now();
 	if (downsampling_enabled == false ) {
 		for (std::size_t i = 0; i < stride; ++i) {
-			this->image_data[this->end_iterator + 0] = CLAMP_VAL(raw_data[i]);
-			this->image_data[this->end_iterator + 1] = CLAMP_VAL(raw_data[i]);
-			this->image_data[this->end_iterator + 2] = CLAMP_VAL(raw_data[i]);
-			this->end_iterator += 3;
+			for (std::size_t j = 0; j < this->color_channels; ++j) {
+				this->image_data[this->end_iterator + j] = CLAMP_VAL(this->raw_data_storage[i]);
+			}
+			this->end_iterator += this->color_channels;
 		}
 	} else {
 		for (std::size_t i = 0; i < this->image_height/2; ++i) {
 			for (std::size_t j = 0; j < this->image_width/2; ++j) {
-				this->image_data[this->end_iterator + 0] = CLAMP_VAL(raw_data[i*2*this->image_width + j*2]);
-				this->image_data[this->end_iterator + 1] = CLAMP_VAL(raw_data[i*2*this->image_width + j*2]);
-				this->image_data[this->end_iterator + 2] = CLAMP_VAL(raw_data[i*2*this->image_width + j*2]);
-				this->end_iterator += 3;
+				for (std::size_t k = 0; k < this->color_channels; ++k) {
+					this->image_data[this->end_iterator + k] = CLAMP_VAL(this->raw_data_storage[i*2*this->image_width + j*2]);
+				}
+				this->end_iterator += this->color_channels;
 			}
 		}
 	}
@@ -156,8 +144,6 @@ void image_stack_loader::load_single_image(QString absolute_path) {
 
 	TinyTIFFReader_close(this->tiff_file);
 	this->tiff_file = nullptr;
-
-	free(raw_data);
 
 	return;
 }
@@ -171,17 +157,17 @@ void image_stack_loader::load_all_images(QStringList absolute_paths) {
 
 	this->initialize_image_data(absolute_paths[0], absolute_paths.size());
 
-	std::vector<unsigned char> data(0);
+	this->raw_data_storage = static_cast<unsigned char*>(calloc(this->image_width * this->image_height, sizeof(unsigned char)));
 	// For all paths, add them into a vector
 	for (int i = 0; i < absolute_paths.size(); i++) {
 		this->load_single_image(absolute_paths[i]);
 	}
+	free(this->raw_data_storage);
 }
 
 void image_stack_loader::initialize_image_data(QString test_file, int nb_images) {
 	std::chrono::time_point<std::chrono::_V2::system_clock, DEFAULT_TIMEKEEPING_DURATION>
 		start_point_for_image_loading, end_point_for_image_loading;
-
 
 	std::string fpath = test_file.toStdString();
 	const char* file_name = fpath.c_str();
@@ -201,21 +187,18 @@ void image_stack_loader::initialize_image_data(QString test_file, int nb_images)
 	this->image_height = static_cast<std::size_t>(h);
 	this->image_depth = static_cast<std::size_t>(nb_images);
 
-	// Currently testing RGB channels (if all equal --> grescale)
-	std::size_t nb_channels = 3;
-
 	// Size of vector to allocate :
 	std::size_t size_to_allocate = this->downsampling_enabled ?
-					       (this->image_width * this->image_height) / 4 * this->image_depth * nb_channels :
-					       this->image_width * this->image_depth * this->image_height * nb_channels;
+					       (this->image_width * this->image_height) / 4 * this->image_depth * this->color_channels :
+					       this->image_width * this->image_depth * this->image_height * this->color_channels;
 
-	std::cout << "Downsampling is " << (this->downsampling_enabled ? "disabled." : "enabled.") << std::endl;
+	std::cout << "Downsampling is " << (this->downsampling_enabled ? "enabled." : "disabled.") << std::endl;
 	std::cout << "Will allocate " << size_to_allocate << " elements (" << (static_cast<double>(size_to_allocate)/1024.)/1024. <<
-		     "Mo) instead of " << this->image_width * this->image_depth * this->image_height * nb_channels << " elements (" <<
-		     (static_cast<double>(this->image_width * this->image_depth * this->image_height * nb_channels)/1024.)/1024.<< "Mo)." <<std::endl;
+		     "Mo) instead of " << this->image_width * this->image_depth * this->image_height * this->color_channels << " elements (" <<
+		     (static_cast<double>(this->image_width * this->image_depth * this->image_height * this->color_channels)/1024.)/1024.<< "Mo)." <<std::endl;
 
 	// Set data :
-	this->image_data.resize(size_to_allocate);
+	this->image_data = static_cast<unsigned char*>(calloc(size_to_allocate, sizeof(unsigned char)));
 	this->end_iterator = 0;
 
 	return;

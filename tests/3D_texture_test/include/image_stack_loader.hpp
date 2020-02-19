@@ -38,17 +38,10 @@ class image_stack_loader {
 		 * @brief Loads a stack of images directly from a folder.
 		 * @details Prompts the user to select images, and proceeds to
 		 * load all images. Afterwards, loads them all into memory, and
-		 * returns a vector representing the images stacked on one another.
-		 * @return A vector representing the images stacked on one another
+		 * returns an array representing the images stacked on one another.
+		 * @return An array representing the images stacked on one another
 		 */
-		std::vector<unsigned char>& load_stack_from_folder();
-		/**
-		 * @brief Loads a stack of images from a folder, and adds them into
-		 * the given vector.
-		 * @details Just like load_stack_from_folder(), except this time it
-		 * will put the data at the end of the vector given in argument.
-		 */
-		void load_stack_from_folder_into_vector(std::vector<unsigned char>&);
+		unsigned char* load_stack_from_folder();
 		/**
 		 * @brief Returns the image width
 		 * @return the image width
@@ -68,7 +61,7 @@ class image_stack_loader {
 		 * @brief Get loaded data
 		 * @return the data
 		 */
-		const std::vector<unsigned char>& get_data() const { return this->image_data; }
+		const unsigned char* get_data() const { return this->image_data; }
 		/**
 		 * @brief Enables or disables downsampling
 		 * @param _is_enabled new value of downsampling_enabled
@@ -140,7 +133,7 @@ class image_stack_loader {
 		/**
 		 * @brief Image data read by the loader.
 		 */
-		std::vector<unsigned char> image_data;
+		unsigned char* image_data;
 		/**
 		 * @brief Pointer to the first empty element in image_data
 		 * @warning If image_data is full, this will point to image_data.end()
@@ -158,6 +151,15 @@ class image_stack_loader {
 		 * @brief Number of images loaded
 		 */
 		std::size_t image_depth;
+		/**
+		 * @brief Number of color channels in the image.
+		 * @note Possible values : 1, 3, 4 (Greyscale, RGB, RGBA respectively).
+		 */
+		std::size_t color_channels;
+		/**
+		 * @brief Storage space for raw data, allowing us to write to it every time and not allocate/free it every iteration.
+		 */
+		unsigned char* raw_data_storage;
 };
 
 #endif // TESTS_3D_TEXTURE_TEST_IMAGE_STACK_LOADER_HPP_

@@ -6,7 +6,7 @@ slider_widget::slider_widget(simple_3D_texture_viewer* viewer) {
 	this->setMaximumHeight(125);
 
 	/**
-	 * Create the sliders
+	 * Create the sliders (horizontally)
 	 */
 	this->min_x_slider = new QSlider(Qt::Horizontal);
 	this->min_y_slider = new QSlider(Qt::Horizontal);
@@ -15,6 +15,9 @@ slider_widget::slider_widget(simple_3D_texture_viewer* viewer) {
 	this->max_y_slider = new QSlider(Qt::Horizontal);
 	this->max_z_slider = new QSlider(Qt::Horizontal);
 
+	/**
+	 * Set their range, value, tick position and intervals
+	 */
 	this->min_x_slider->setRange(-1, 999);
 	this->min_x_slider->setValue(0);
 	this->min_x_slider->setTickPosition(QSlider::TicksBelow);
@@ -40,6 +43,7 @@ slider_widget::slider_widget(simple_3D_texture_viewer* viewer) {
 	this->max_z_slider->setValue(999);
 	this->max_z_slider->setTickPosition(QSlider::TicksBelow);
 	this->max_z_slider->setTickInterval(100);
+
 	/**
 	 * Create labels for them :
 	 */
@@ -51,10 +55,11 @@ slider_widget::slider_widget(simple_3D_texture_viewer* viewer) {
 	QLabel* x_label_bis = new QLabel("X :");
 	QLabel* y_label_bis = new QLabel("Y :");
 	QLabel* z_label_bis = new QLabel("Z :");
+
 	/**
 	 * Assign them into a layout, meaning :
 	 *     - the layout will contain 2 columns
-	 *     - each column will have a title, as well as a pair of {label, slider} to represent the value slider
+	 *     - each column will have a title label, as well as a pair of {label, slider} to represent the value slider
 	 */
 	// left sliders box (for min tex coordinates)
 	QVBoxLayout* min_sliders = new QVBoxLayout();
@@ -65,15 +70,11 @@ slider_widget::slider_widget(simple_3D_texture_viewer* viewer) {
 		min_x_box->addWidget(x_label, 0, Qt::AlignRight);
 		min_x_box->addWidget(this->min_x_slider);
 		min_sliders->addLayout(min_x_box);
-	}
-	{
 		// Y slider box :
 		QHBoxLayout* min_y_box = new QHBoxLayout();
 		min_y_box->addWidget(y_label, 0, Qt::AlignRight);
 		min_y_box->addWidget(this->min_y_slider);
 		min_sliders->addLayout(min_y_box);
-	}
-	{
 		// Z slider box :
 		QHBoxLayout* min_z_box = new QHBoxLayout();
 		min_z_box->addWidget(z_label, 0, Qt::AlignRight);
@@ -89,21 +90,20 @@ slider_widget::slider_widget(simple_3D_texture_viewer* viewer) {
 		max_x_box->addWidget(x_label_bis, 0, Qt::AlignRight);
 		max_x_box->addWidget(this->max_x_slider);
 		max_sliders->addLayout(max_x_box);
-	}
-	{
 		// Y slider box :
 		QHBoxLayout* max_y_box = new QHBoxLayout();
 		max_y_box->addWidget(y_label_bis, 0, Qt::AlignRight);
 		max_y_box->addWidget(this->max_y_slider);
 		max_sliders->addLayout(max_y_box);
-	}
-	{
 		// Z slider box :
 		QHBoxLayout* max_z_box = new QHBoxLayout();
 		max_z_box->addWidget(z_label_bis, 0, Qt::AlignRight);
 		max_z_box->addWidget(this->max_z_slider);
 		max_sliders->addLayout(max_z_box);
 	}
+	/**
+	 * Add them all into a main layout, to group them together
+	 */
 	QHBoxLayout* main_layout = new QHBoxLayout();
 	main_layout->addLayout(min_sliders);
 	main_layout->addLayout(max_sliders);
@@ -112,46 +112,50 @@ slider_widget::slider_widget(simple_3D_texture_viewer* viewer) {
 	/**
 	 * Connect signals to the passthrough they're assigned to
 	 */
-	connect(this->min_x_slider, &QSlider::valueChanged, this, &slider_widget::min_x_value_changed);
-	connect(this->min_y_slider, &QSlider::valueChanged, this, &slider_widget::min_y_value_changed);
-	connect(this->min_z_slider, &QSlider::valueChanged, this, &slider_widget::min_z_value_changed);
-	connect(this->max_x_slider, &QSlider::valueChanged, this, &slider_widget::max_x_value_changed);
-	connect(this->max_y_slider, &QSlider::valueChanged, this, &slider_widget::max_y_value_changed);
-	connect(this->max_z_slider, &QSlider::valueChanged, this, &slider_widget::max_z_value_changed);
+	QObject::connect(this->min_x_slider, &QSlider::valueChanged, this, &slider_widget::min_x_value_changed);
+	QObject::connect(this->min_y_slider, &QSlider::valueChanged, this, &slider_widget::min_y_value_changed);
+	QObject::connect(this->min_z_slider, &QSlider::valueChanged, this, &slider_widget::min_z_value_changed);
+	QObject::connect(this->max_x_slider, &QSlider::valueChanged, this, &slider_widget::max_x_value_changed);
+	QObject::connect(this->max_y_slider, &QSlider::valueChanged, this, &slider_widget::max_y_value_changed);
+	QObject::connect(this->max_z_slider, &QSlider::valueChanged, this, &slider_widget::max_z_value_changed);
 
 	/**
 	 * Connect passthroughs to the viewer slots :
 	 */
-	connect(this, &slider_widget::set_Min_X_Texture, viewer, &simple_3D_texture_viewer::set_min_X_tex_value);
-	connect(this, &slider_widget::set_Min_Y_Texture, viewer, &simple_3D_texture_viewer::set_min_Y_tex_value);
-	connect(this, &slider_widget::set_Min_Z_Texture, viewer, &simple_3D_texture_viewer::set_min_Z_tex_value);
-	connect(this, &slider_widget::set_Max_X_Texture, viewer, &simple_3D_texture_viewer::set_max_X_tex_value);
-	connect(this, &slider_widget::set_Max_Y_Texture, viewer, &simple_3D_texture_viewer::set_max_Y_tex_value);
-	connect(this, &slider_widget::set_Max_Z_Texture, viewer, &simple_3D_texture_viewer::set_max_Z_tex_value);
+	QObject::connect(this, &slider_widget::set_Min_X_Texture, viewer, &simple_3D_texture_viewer::set_min_X_tex_value);
+	QObject::connect(this, &slider_widget::set_Min_Y_Texture, viewer, &simple_3D_texture_viewer::set_min_Y_tex_value);
+	QObject::connect(this, &slider_widget::set_Min_Z_Texture, viewer, &simple_3D_texture_viewer::set_min_Z_tex_value);
+	QObject::connect(this, &slider_widget::set_Max_X_Texture, viewer, &simple_3D_texture_viewer::set_max_X_tex_value);
+	QObject::connect(this, &slider_widget::set_Max_Y_Texture, viewer, &simple_3D_texture_viewer::set_max_Y_tex_value);
+	QObject::connect(this, &slider_widget::set_Max_Z_Texture, viewer, &simple_3D_texture_viewer::set_max_Z_tex_value);
 }
 
 void slider_widget::set_min_value(QSlider *slider_to_change, int new_min_value) {
-	this->blockSignals(true);
-	slider_to_change->blockSignals(true);
-	int old_max = slider_to_change->maximum();
+	/**
+	 * In our case, we don't want to block signals : otherwise
+	 * the max value will be set, but not updated in the viewer.
+	 *
+	 * We need to set the value of the slider, and let it emit
+	 * the signal to the viewer (risking a recursive call of
+	 * XX_XX_value_changed(), better than nothing)
+	 */
 	if (slider_to_change->value() < new_min_value) {
 		slider_to_change->setValue(new_min_value);
 	}
-	slider_to_change->setRange(new_min_value, old_max);
-	slider_to_change->blockSignals(false);
-	this->blockSignals(false);
 }
 
 void slider_widget::set_max_value(QSlider *slider_to_change, int new_max_value) {
-	this->blockSignals(true);
-	slider_to_change->blockSignals(true);
-	int old_min = slider_to_change->minimum();
+	/**
+	 * In our case, we don't want to block signals : otherwise
+	 * the max value will be set, but not updated in the viewer.
+	 *
+	 * We need to set the value of the slider, and let it emit
+	 * the signal to the viewer (risking a recursive call of
+	 * XX_XX_value_changed(), better than nothing)
+	 */
 	if (slider_to_change->value() > new_max_value) {
 		slider_to_change->setValue(new_max_value);
 	}
-	slider_to_change->setRange(old_min, new_max_value);
-	slider_to_change->blockSignals(false);
-	this->blockSignals(false);
 }
 
 void slider_widget::min_x_value_changed(int x) {
