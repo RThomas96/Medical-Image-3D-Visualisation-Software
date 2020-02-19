@@ -88,18 +88,29 @@ TARGET_LINK_LIBRARIES(tiff_loader_tests
 
 ADD_EXECUTABLE(3d_texture_test
 	# Header files (needed for Qt's MOCS compilation) :
-	./tests/3D_texture_test/include/main_window.hpp
+	./tests/3D_texture_test/include/image_stack_loader.hpp
+	./tests/3D_texture_test/include/3D_texture_viewer.hpp
+	./tests/3D_texture_test/include/container_widget.hpp
+	./tests/3D_texture_test/include/slider_widget.hpp
 
 	# Main file :
 	./tests/3D_texture_test/main.cpp
 
 	# Implementation files :
-	./tests/3D_texture_test/src/main_window.cpp
+	./tests/3D_texture_test/src/image_stack_loader.cpp
+	./tests/3D_texture_test/src/3D_texture_viewer.cpp
+	./tests/3D_texture_test/src/slider_widget.cpp
 )
 TARGET_LINK_LIBRARIES(3d_texture_test
+	PUBLIC tiff_lib
 	PUBLIC Qt5::Core
 	PUBLIC Qt5::Widgets
 	PUBLIC Qt5::Gui
+	# The following are __ALL__ needed by libQGLViewer. For some f*ing reason. Don't touch them.
+	PUBLIC Qt5::Xml
+	PUBLIC Qt5::OpenGL
+	PUBLIC OpenGL
+	PUBLIC ${QGLViewer_LIBRARY}
 )
 
 # Main executable {{{
