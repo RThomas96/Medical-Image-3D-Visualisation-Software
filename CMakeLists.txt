@@ -2,19 +2,13 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.13)
 PROJECT(visualisation)
 
 # CMake Setup (compile_commands, debug mode check, and build directory check) {{{
-IF(CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR)
-        MESSAGE(FATAL_ERROR "Please select another Build Directory !")
-ENDIF()
-
 IF(WIN32 OR MINGW OR MSVC)
         MESSAGE(FATAL_ERROR "This project cannot be compiled on a Windows platform.")
 ENDIF()
 
-IF(CMAKE_BUILD_TYPE MATCHES Debug)
-        MESSAGE("Currently compiling in Debug mode.")
-	SET(GCC_COMPILE_FLAGS "-ggdb --pedantic")
-	SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_COMPILE_FLAGS}")
-ENDIF(CMAKE_BUILD_TYPE MATCHES Debug)
+IF(CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR)
+	MESSAGE(FATAL_ERROR "Please select another Build Directory !")
+ENDIF()
 
 SET(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 SET(CMAKE_CXX_STANDARD_REQUIRED TRUE)
@@ -24,35 +18,133 @@ SET(CMAKE_AUTOMOC ON)
 SET(CMAKE_AUTOUIC ON)
 SET(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-CMAKE_POLICY(SET CMP0072 OLD)
+IF(CMAKE_BUILD_TYPE MATCHES Debug)
+        MESSAGE("Currently compiling in Debug mode.")
+	SET(GCC_COMPILE_FLAGS "-ggdb --pedantic")
+	SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_COMPILE_FLAGS}")
+ENDIF(CMAKE_BUILD_TYPE MATCHES Debug)
+
+# libQGLViewer Setup {{{
+IF (EXISTS "/home/thibault/.config/awesome/rc.lua")
+	SET(QGLViewer_MAIN_DIR "/usr/local")
+	SET(QGLViewer_INCLUDE_DIR "${QGLViewer_MAIN_DIR}/include/QGLViewer")
+	SET(QGLViewer_LIB_DIR "${QGLViewer_MAIN_DIR}/lib")
+	FIND_LIBRARY(QGLViewer_LIBRARY
+		NAMES libQGLViewer-qt5.so
+		PATHS ${QGLViewer_MAIN_DIR} ${QGLViewer_LIB_DIR}
+		NO_DEFAULT_PATH)
+	IF(NOT QGLViewer_LIBRARY OR NOT EXISTS ${QGLViewer_LIBRARY})
+		MESSAGE(FATAL "Could not find QGLViewer library, set the path to a *.so file")
+	ENDIF()
+ELSE()
+	MESSAGE(FATAL "Warning : did not detect we were on the default system. As such, we could not infer
+		the location of the libQGLViewer file, needed to compile the project. Please contact me at:
+		thibault.de-villele@etu.umontpellier.fr and we'll try to sort your problem out.
+		ERROR MESSAGE : C_GLV_NOT_FOUND")
+ENDIF()
+
+# }}}
 
 SET(Qt5_DIR "/usr/lib/cmake/Qt5/")
 
-FIND_PACKAGE(Qt5 REQUIRED COMPONENTS Core Gui Widgets Multimedia)
-FIND_PACKAGE(GLEW REQUIRED)
+FIND_PACKAGE(Qt5 REQUIRED COMPONENTS Core Gui Widgets Multimedia Xml OpenGL)
 FIND_PACKAGE(OpenGL REQUIRED)
 FIND_PACKAGE(glm REQUIRED)
 # }}}
 
-SET(INCLUDE_DIRECTORIES ${INCLUDE_DIRECTORIES} ${OPENGL_INCLUDE_DIRS} ${GLEW_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+SET(INCLUDE_DIRECTORIES ${INCLUDE_DIRECTORIES} ${OPENGL_INCLUDE_DIRS})
 INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES})
 
-#SET_TARGET_PROPERTIES(qt_system PROPERTIES
-#	LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
-#	ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
-#)
-
-ADD_EXECUTABLE(visualisation
-	./qt/include/main_window.hpp
-
-	./main.cpp
-
-	./qt/src/main_window.cpp
+# TinyTIFF Library {{{
+ADD_LIBRARY(tiff_lib
+	./TinyTIFF/tinytiffreader.cpp
+	./TinyTIFF/tinytiffwriter.cpp
+	./TinyTIFF/tinytiffhighrestimer.cpp
 )
-TARGET_LINK_LIBRARIES(visualisation
+# }}}
+
+# TinyTIFF library tests {{{
+ADD_EXECUTABLE(tiff_loader_tests
+	# Header files (needed for Qt's MOCS compilation) :
+	./tests/tiff_tests/include/main_window.hpp
+	./tests/tiff_tests/include/tiff_inspector.hpp
+	./tests/tiff_tests/include/tiff_displayer.hpp
+
+	# Main file :
+	./tests/tiff_tests/main.cpp
+
+	# Implementation files :
+	./tests/tiff_tests/src/main_window.cpp
+	./tests/tiff_tests/src/tiff_inspector.cpp
+	./tests/tiff_tests/src/tiff_displayer.cpp
+)
+TARGET_LINK_LIBRARIES(tiff_loader_tests
+	PUBLIC tiff_lib
 	PUBLIC Qt5::Core
 	PUBLIC Qt5::Widgets
 	PUBLIC Qt5::Gui
 )
+# }}}
+
+# 3D Texture tests for viewer {{{
+ADD_EXECUTABLE(3d_texture_test
+	# Header files (needed for Qt's MOCS compilation) :
+	./tests/3D_texture_test/include/image_stack_loader.hpp
+	./tests/3D_texture_test/include/3D_texture_viewer.hpp
+	./tests/3D_texture_test/include/container_widget.hpp
+	./tests/3D_texture_test/include/slider_widget.hpp
+
+	# Main file :
+	./tests/3D_texture_test/main.cpp
+
+	# Implementation files :
+	./tests/3D_texture_test/src/image_stack_loader.cpp
+	./tests/3D_texture_test/src/3D_texture_viewer.cpp
+	./tests/3D_texture_test/src/slider_widget.cpp
+)
+TARGET_LINK_LIBRARIES(3d_texture_test
+	PUBLIC tiff_lib
+	PUBLIC Qt5::Core
+	PUBLIC Qt5::Widgets
+	PUBLIC Qt5::Gui
+	# The following are __ALL__ needed by libQGLViewer. For some f*ing reason. Don't touch them.
+	PUBLIC Qt5::Xml
+	PUBLIC Qt5::OpenGL
+	PUBLIC OpenGL
+	PUBLIC ${QGLViewer_LIBRARY}
+)
+# }}}
+
+# Main executable {{{
+ADD_EXECUTABLE(visualisation
+	# Header files (needed for Qt's MOCS compilation) :
+	./qt/include/main_widget.hpp
+	./viewer/include/texture_viewer.hpp
+	./image/include/bulk_texture_loader.hpp
+	./qt/include/texture_sliders.hpp
+	./qt/include/texture_control.hpp
+
+	# Implementation files :
+	./qt/src/main_widget.cpp
+	./viewer/src/texture_viewer.cpp
+	./image/src/bulk_texture_loader.cpp
+	./qt/src/texture_sliders.cpp
+	./qt/src/texture_control.cpp
+
+	# Main file :
+	./main.cpp
+)
+TARGET_LINK_LIBRARIES(visualisation
+	PUBLIC tiff_lib
+	PUBLIC Qt5::Core
+	PUBLIC Qt5::Widgets
+	PUBLIC Qt5::Gui
+	# The following are __ALL__ needed by libQGLViewer. For some f*ing reason. Don't touch them.
+	PUBLIC Qt5::Xml
+	PUBLIC Qt5::OpenGL
+	PUBLIC OpenGL
+	PUBLIC ${QGLViewer_LIBRARY}
+)
+# }}}
 
 # vim: foldmethod=marker : foldmarker={{{,}}} : tabstop=8

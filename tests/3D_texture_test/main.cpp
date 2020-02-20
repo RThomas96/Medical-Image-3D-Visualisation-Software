@@ -1,24 +1,27 @@
 /**********************************************************************
- * FILE : main.cpp
+ * FILE : tests/3D_texture_test/main.cpp
  * AUTH : Thibault de Villèle
- * DATE : 06/02/2020
- * DESC : The main file of the project, launching the Qt application
+ * DATE : 12/02/2020
+ * DESC : The main file of the testing for OpenGL's 3D textures,
+ *	  launching the Qt application.
  **********************************************************************/
 
 #include <iostream>
 #include <QApplication>
+#include <QCommandLineParser>
 
-#include "qt/include/main_widget.hpp"
+#include "include/container_widget.hpp"
 
 int main(int argc, char* argv[]) {
 	QApplication app(argc, argv);
 
-	QCoreApplication::setApplicationName("Medical Image Visualizer");
+	QCoreApplication::setApplicationName("Simple 3D Texture Viewer [TESTING]");
 	QCoreApplication::setOrganizationName("LIRMM");
 	QCoreApplication::setApplicationVersion(QT_VERSION_STR);
 
-	main_widget mainwidget;
-	mainwidget.show();
+	container_widget container;
+	container.resize(container.sizeHint());
+	container.show();
 
 	return app.exec();
 }

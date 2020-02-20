@@ -5,12 +5,22 @@
  * DESC : The implementation file for the main_window class
  **********************************************************************/
 
-#include "../include/main_window.hpp"
-
 #include <QMenuBar>
-#include <QGLViewer/qglviewer.h>
+
+#include "../include/main_window.hpp"
+#include "../../viewer/include/simple_viewer.hpp"
 
 main_window::main_window() {
 	// OPTIONNAL : Add a menu bar with commonly accessed functions
 	this->setParent(nullptr);
+	this->setCentralWidget(new simple_viewer());
+}
+
+QSize main_window::sizeHint() const {
+	QSize s(400, 400);
+	return s;
+}
+
+void main_window::on_add_new() {
+	std::clog << "Added new widget" << std::endl;
 }
