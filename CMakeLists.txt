@@ -86,6 +86,7 @@ TARGET_LINK_LIBRARIES(tiff_loader_tests
 )
 # }}}
 
+# 3D Texture tests for viewer {{{
 ADD_EXECUTABLE(3d_texture_test
 	# Header files (needed for Qt's MOCS compilation) :
 	./tests/3D_texture_test/include/image_stack_loader.hpp
@@ -112,19 +113,26 @@ TARGET_LINK_LIBRARIES(3d_texture_test
 	PUBLIC OpenGL
 	PUBLIC ${QGLViewer_LIBRARY}
 )
+# }}}
 
 # Main executable {{{
 ADD_EXECUTABLE(visualisation
 	# Header files (needed for Qt's MOCS compilation) :
-	./qt/include/main_window.hpp
-	./viewer/include/simple_viewer.hpp
+	./qt/include/main_widget.hpp
+	./viewer/include/texture_viewer.hpp
+	./image/include/bulk_texture_loader.hpp
+	./qt/include/texture_sliders.hpp
+	./qt/include/texture_control.hpp
+
+	# Implementation files :
+	./qt/src/main_widget.cpp
+	./viewer/src/texture_viewer.cpp
+	./image/src/bulk_texture_loader.cpp
+	./qt/src/texture_sliders.cpp
+	./qt/src/texture_control.cpp
 
 	# Main file :
 	./main.cpp
-
-	# Implementation files :
-	./qt/src/main_window.cpp
-	./viewer/src/simple_viewer.cpp
 )
 TARGET_LINK_LIBRARIES(visualisation
 	PUBLIC tiff_lib
