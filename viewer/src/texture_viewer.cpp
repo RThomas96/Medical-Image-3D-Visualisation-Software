@@ -1,5 +1,12 @@
 #include "../include/texture_viewer.hpp"
 
+// Define the voxel depth (distance between 2 slices)
+#define VOXEL_DEPTH 1.927
+#define VOXEL_SIDE 0.39
+// Taken from WolframAlpha for the exact fraction :
+#define VOXEL_RATIO 1927.0/399360.0
+#define VOXEL_RATIO_HALF 1927.0/798720.0
+
 void texture_viewer::init() {
 	this->restoreStateFromFile();
 	this->stack_loader = nullptr;
@@ -58,6 +65,8 @@ void texture_viewer::load_textures() {
 		GL_UNSIGNED_BYTE,					// GLenum : Type (the data type as in uchar, uint, float ...)
 		texture_data						// void*  : Data to load into the buffer
 	);
+
+	this->set_real_voxel_dimensions(stack_loader->get_image_depth());
 
 	// we can now safely ask the loader to delete the data
 	this->stack_loader->free_data();
@@ -327,22 +336,76 @@ void texture_viewer::set_front_z_plane_coordinates() {
 	this->vertex_pos[ 3*3 + 2 ] = (this->tex_coords_max[2] * 2.0) - 1.0;
 }
 
+void texture_viewer::set_to_unit_cube() {
+	// v0 :
+	this->vertex_pos[ 0] = 1.0;
+	this->vertex_pos[ 1] = 1.0;
+	this->vertex_pos[ 2] = 1.0;
+	// v1 :
+	this->vertex_pos[ 3] =-1.0;
+	this->vertex_pos[ 4] = 1.0;
+	this->vertex_pos[ 5] = 1.0;
+	// v2 :
+	this->vertex_pos[ 6] =-1.0;
+	this->vertex_pos[ 7] =-1.0;
+	this->vertex_pos[ 8] = 1.0;
+	// v3 :
+	this->vertex_pos[ 9] = 1.0;
+	this->vertex_pos[10] =-1.0;
+	this->vertex_pos[11] = 1.0;
+	// v4 :
+	this->vertex_pos[12] = 1.0;
+	this->vertex_pos[13] =-1.0;
+	this->vertex_pos[14] =-1.0;
+	// v5 :
+	this->vertex_pos[15] = 1.0;
+	this->vertex_pos[16] = 1.0;
+	this->vertex_pos[17] =-1.0;
+	// v6 :
+	this->vertex_pos[18] =-1.0;
+	this->vertex_pos[19] = 1.0;
+	this->vertex_pos[20] =-1.0;
+	// v7 :
+	this->vertex_pos[21] =-1.0;
+	this->vertex_pos[22] =-1.0;
+	this->vertex_pos[23] =-1.0;
+}
+
+void texture_viewer::set_real_voxel_dimensions(size_t nb_images_loaded) {
+	// The farthest point, when not centralised :
+	qreal far = static_cast<qreal>(nb_images_loaded) * VOXEL_RATIO;
+	qreal near = .0;
+	this->vertex_pos[ 2] = far - far/2.0; // v0
+	this->vertex_pos[ 5] = far - far/2.0; // v1
+	this->vertex_pos[ 8] = far - far/2.0; // v2
+	this->vertex_pos[11] = far - far/2.0; // v3
+	this->vertex_pos[14] =near - far/2.0; // v4
+	this->vertex_pos[17] =near - far/2.0; // v5
+	this->vertex_pos[20] =near - far/2.0; // v6
+	this->vertex_pos[23] =near - far/2.0; // v7
+	this->setSceneRadius(std::max(std::sqrt(3.0),std::sqrt(1.+1.+std::pow(far/2.0, 2.0))));
+}
+
 void texture_viewer::request_texture_load() {
 	if (this->stack_loader == nullptr) {
 		this->stack_loader = new bulk_texture_loader();
 		this->stack_loader->enable_downsampling(true); // can downsample, don't need full-res for viewing
+	} else {
+		this->request_texture_deletion();
 	}
 	this->load_textures();
 	this->update();
 }
 
 void texture_viewer::request_texture_deletion() {
+	this->set_to_unit_cube();
+	this->setSceneRadius(std::sqrt(3.0));
 	glBindTexture(GL_TEXTURE_3D, this->texture_id);
 	// define a shortcut to static_cast here, to make the line shorter
-	#define scglsi static_cast<GLsizei>
-	glTexImage3D(GL_TEXTURE_3D, static_cast<GLint>(0), GL_RED, scglsi(0), scglsi(0), scglsi(0), scglsi(0), GL_RED, GL_UNSIGNED_BYTE, nullptr);
+	#define cast static_cast<GLsizei>
+	glTexImage3D(GL_TEXTURE_3D, static_cast<GLint>(0), GL_RED, cast(0), cast(0), cast(0), cast(0), GL_RED, GL_UNSIGNED_BYTE, nullptr);
 	// remove shortcut
-	#undef scglsi
+	#undef cast
 	glDeleteTextures(1, &this->texture_id);
 	this->update();
 }

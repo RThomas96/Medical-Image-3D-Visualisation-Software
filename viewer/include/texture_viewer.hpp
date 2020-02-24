@@ -132,6 +132,16 @@ class texture_viewer : public QGLViewer {
 		 * @brief Sets the Y coordinate of the vertices in the front face to be the same as the texture
 		 */
 		void set_front_z_plane_coordinates();
+		/**
+		 * @brief Set the cube to doubled unit dimensions ([-1;1] instead of [0,1])
+		 */
+		void set_to_unit_cube();
+		/**
+		 * @brief Sets the cube to the real (but scaled) voxel dimensions, to get a better view of the stack of images.
+		 * @note Supposes the doubled unit square ([-1;1] on each side) is image-sized (2048 * 2048 pixels at 0.39µm * 0.39µm per pixel).
+		 * @param nb_images_loaded The number of images loaded.
+		 */
+		void set_real_voxel_dimensions(size_t nb_images_loaded);
 };
 
 #endif // VIEWER_INCLUDE_TEXTURE_VIEWER_HPP_
