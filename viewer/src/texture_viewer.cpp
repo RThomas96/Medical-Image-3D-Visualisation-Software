@@ -17,6 +17,8 @@ void texture_viewer::init() {
 	// (needed, even if none are loaded now)
 	// (enabling it later doesn't work)
 	glEnable(GL_TEXTURE_3D);
+	this->toggleAxisIsDrawn();
+	this->toggleFPSIsDisplayed();
 }
 
 void texture_viewer::print_opengl_info() const {
@@ -108,20 +110,12 @@ void texture_viewer::draw() {
 
 void texture_viewer::setup_cube_attribs() {
 	// setup vertices and normals (8 verts * 3 coords) :
-	this->vertex_pos = new qreal [8 * 3];
-	this->vertex_nor = new qreal [8 * 3];
-	this->vertex_tex = new qreal*[8 * 3];
+	this->vertex_pos = new vec3 [8];
+	this->vertex_nor = new vec3 [8];
+	this->vertex_tex = new qreal*[8*3];
 	// define max and min coords for texture application
-	this->tex_coords_min = new qreal[3];
-	this->tex_coords_max = new qreal[3];
-
-	this->tex_coords_min[0] = 0.0;
-	this->tex_coords_min[1] = 0.0;
-	this->tex_coords_min[2] = 0.0;
-
-	this->tex_coords_max[0] = 0.99;
-	this->tex_coords_max[1] = 0.99;
-	this->tex_coords_max[2] = 0.99;
+	this->tex_coords_min = vec3(.00, .00, .00);
+	this->tex_coords_max = vec3(.99, .99, .99);
 
 	/**
 	 * Cube order for the class :
@@ -138,77 +132,28 @@ void texture_viewer::setup_cube_attribs() {
 	 *   /
 	 *  L
 	 * Z
-	 *
-	 * Warning : very dirty code ahead
 	 */
-
-	// v0 :
-	this->vertex_pos[ 0] = 1.0;
-	this->vertex_pos[ 1] = 1.0;
-	this->vertex_pos[ 2] = 1.0;
-	// v1 :
-	this->vertex_pos[ 3] =-1.0;
-	this->vertex_pos[ 4] = 1.0;
-	this->vertex_pos[ 5] = 1.0;
-	// v2 :
-	this->vertex_pos[ 6] =-1.0;
-	this->vertex_pos[ 7] =-1.0;
-	this->vertex_pos[ 8] = 1.0;
-	// v3 :
-	this->vertex_pos[ 9] = 1.0;
-	this->vertex_pos[10] =-1.0;
-	this->vertex_pos[11] = 1.0;
-	// v4 :
-	this->vertex_pos[12] = 1.0;
-	this->vertex_pos[13] =-1.0;
-	this->vertex_pos[14] =-1.0;
-	// v5 :
-	this->vertex_pos[15] = 1.0;
-	this->vertex_pos[16] = 1.0;
-	this->vertex_pos[17] =-1.0;
-	// v6 :
-	this->vertex_pos[18] =-1.0;
-	this->vertex_pos[19] = 1.0;
-	this->vertex_pos[20] =-1.0;
-	// v7 :
-	this->vertex_pos[21] =-1.0;
-	this->vertex_pos[22] =-1.0;
-	this->vertex_pos[23] =-1.0;
+	this->vertex_pos[0] = vec3( 1., 1., 1.); // v0
+	this->vertex_pos[1] = vec3(-1., 1., 1.); // v1
+	this->vertex_pos[2] = vec3(-1.,-1., 1.); // v2
+	this->vertex_pos[3] = vec3( 1.,-1., 1.); // v3
+	this->vertex_pos[4] = vec3( 1.,-1.,-1.); // v4
+	this->vertex_pos[5] = vec3( 1., 1.,-1.); // v5
+	this->vertex_pos[6] = vec3(-1., 1.,-1.); // v6
+	this->vertex_pos[7] = vec3(-1.,-1.,-1.); // v7
 
 	qreal denom = std::sqrt(3.0);
+	qreal pos = 1.0 / denom; // positive Z coordinate
+	qreal neg =-1.0 / denom; // negative Z coordinate
 
-	// v0 :
-	this->vertex_nor[ 0] = 1.0 / denom;
-	this->vertex_nor[ 1] = 1.0 / denom;
-	this->vertex_nor[ 2] = 1.0 / denom;
-	// v1 :
-	this->vertex_nor[ 3] =-1.0 / denom;
-	this->vertex_nor[ 4] = 1.0 / denom;
-	this->vertex_nor[ 5] = 1.0 / denom;
-	// v2 :
-	this->vertex_nor[ 6] =-1.0 / denom;
-	this->vertex_nor[ 7] =-1.0 / denom;
-	this->vertex_nor[ 8] = 1.0 / denom;
-	// v3 :
-	this->vertex_nor[ 9] = 1.0 / denom;
-	this->vertex_nor[10] =-1.0 / denom;
-	this->vertex_nor[11] = 1.0 / denom;
-	// v4 :
-	this->vertex_nor[12] = 1.0 / denom;
-	this->vertex_nor[13] =-1.0 / denom;
-	this->vertex_nor[14] =-1.0 / denom;
-	// v5 :
-	this->vertex_nor[15] = 1.0 / denom;
-	this->vertex_nor[16] = 1.0 / denom;
-	this->vertex_nor[17] =-1.0 / denom;
-	// v6 :
-	this->vertex_nor[18] =-1.0 / denom;
-	this->vertex_nor[19] = 1.0 / denom;
-	this->vertex_nor[20] =-1.0 / denom;
-	// v7 :
-	this->vertex_nor[21] =-1.0 / denom;
-	this->vertex_nor[22] =-1.0 / denom;
-	this->vertex_nor[23] =-1.0 / denom;
+	this->vertex_nor[0] = vec3(pos, pos, pos);
+	this->vertex_nor[1] = vec3(neg, pos, pos);
+	this->vertex_nor[2] = vec3(neg, neg, pos);
+	this->vertex_nor[3] = vec3(pos, neg, pos);
+	this->vertex_nor[4] = vec3(pos, neg, neg);
+	this->vertex_nor[5] = vec3(pos, pos, neg);
+	this->vertex_nor[6] = vec3(neg, pos, neg);
+	this->vertex_nor[7] = vec3(neg, neg, neg);
 
 	// v0 :
 	this->vertex_tex[ 0] = &this->tex_coords_max[0];
@@ -246,143 +191,123 @@ void texture_viewer::setup_cube_attribs() {
 
 void texture_viewer::draw_face_gl(std::size_t v0, std::size_t v1, std::size_t v2) {
 	glTexCoord3d(*this->vertex_tex[v0 * 3 + 0], *this->vertex_tex[v0 * 3 + 1], *this->vertex_tex[v0 * 3 + 2]);
-	glNormal3d(this->vertex_nor[v0 * 3 + 0], this->vertex_nor[v0 * 3 + 1], this->vertex_nor[v0 * 3 + 2]);
-	glVertex3d(this->vertex_pos[v0 * 3 + 0], this->vertex_pos[v0 * 3 + 1], this->vertex_pos[v0 * 3 + 2]);
+	glNormal3d(this->vertex_nor[v0].x, this->vertex_nor[v0].y, this->vertex_nor[v0].z);
+	glVertex3d(this->vertex_pos[v0].x, this->vertex_pos[v0].y, this->vertex_pos[v0].z);
 
 	glTexCoord3d(*this->vertex_tex[v1 * 3 + 0], *this->vertex_tex[v1 * 3 + 1], *this->vertex_tex[v1 * 3 + 2]);
-	glNormal3d(this->vertex_nor[v1 * 3 + 0], this->vertex_nor[v1 * 3 + 1], this->vertex_nor[v1 * 3 + 2]);
-	glVertex3d(this->vertex_pos[v1 * 3 + 0], this->vertex_pos[v1 * 3 + 1], this->vertex_pos[v1 * 3 + 2]);
+	glNormal3d(this->vertex_nor[v1].x, this->vertex_nor[v1].y, this->vertex_nor[v1].z);
+	glVertex3d(this->vertex_pos[v1].x, this->vertex_pos[v1].y, this->vertex_pos[v1].z);
 
 	glTexCoord3d(*this->vertex_tex[v2 * 3 + 0], *this->vertex_tex[v2 * 3 + 1], *this->vertex_tex[v2 * 3 + 2]);
-	glNormal3d(this->vertex_nor[v2 * 3 + 0], this->vertex_nor[v2 * 3 + 1], this->vertex_nor[v2 * 3 + 2]);
-	glVertex3d(this->vertex_pos[v2 * 3 + 0], this->vertex_pos[v2 * 3 + 1], this->vertex_pos[v2 * 3 + 2]);
+	glNormal3d(this->vertex_nor[v2].x, this->vertex_nor[v2].y, this->vertex_nor[v2].z);
+	glVertex3d(this->vertex_pos[v2].x, this->vertex_pos[v2].y, this->vertex_pos[v2].z);
 }
 
 void texture_viewer::set_min_X_tex_value(double x) {
-	this->tex_coords_min[0] = x;
+	this->tex_coords_min.x = x;
 	this->set_back_x_plane_coordinates();
 	this->update();
 }
 
 void texture_viewer::set_min_Y_tex_value(double y) {
-	this->tex_coords_min[1] = y;
+	this->tex_coords_min.y = y;
 	this->set_back_y_plane_coordinates();
 	this->update();
 }
 
 void texture_viewer::set_min_Z_tex_value(double z) {
-	this->tex_coords_min[2] = z;
+	this->tex_coords_min.z = z;
 	this->set_back_z_plane_coordinates();
 	this->update();
 }
 
 void texture_viewer::set_max_X_tex_value(double x) {
-	this->tex_coords_max[0] = x;
+	this->tex_coords_max.x = x;
 	this->set_front_x_plane_coordinates();
 	this->update();
 }
 
 void texture_viewer::set_max_Y_tex_value(double y) {
-	this->tex_coords_max[1] = y;
+	this->tex_coords_max.y = y;
 	this->set_front_y_plane_coordinates();
 	this->update();
 }
 
 void texture_viewer::set_max_Z_tex_value(double z) {
-	this->tex_coords_max[2] = z;
+	this->tex_coords_max.z = z;
 	this->set_front_z_plane_coordinates();
 	this->update();
 }
 
 void texture_viewer::set_back_x_plane_coordinates() {
-	this->vertex_pos[ 1*3 + 0 ] = (this->tex_coords_min[0] * 2.0) - 1.0;
-	this->vertex_pos[ 2*3 + 0 ] = (this->tex_coords_min[0] * 2.0) - 1.0;
-	this->vertex_pos[ 6*3 + 0 ] = (this->tex_coords_min[0] * 2.0) - 1.0;
-	this->vertex_pos[ 7*3 + 0 ] = (this->tex_coords_min[0] * 2.0) - 1.0;
+	this->vertex_pos[1].x = (this->tex_coords_min.x * 2.0) - 1.0;
+	this->vertex_pos[2].x = (this->tex_coords_min.x * 2.0) - 1.0;
+	this->vertex_pos[6].x = (this->tex_coords_min.x * 2.0) - 1.0;
+	this->vertex_pos[7].x = (this->tex_coords_min.x * 2.0) - 1.0;
 }
 
 void texture_viewer::set_front_x_plane_coordinates() {
-	this->vertex_pos[ 0*3 + 0 ] = (this->tex_coords_max[0] * 2.0) - 1.0;
-	this->vertex_pos[ 3*3 + 0 ] = (this->tex_coords_max[0] * 2.0) - 1.0;
-	this->vertex_pos[ 4*3 + 0 ] = (this->tex_coords_max[0] * 2.0) - 1.0;
-	this->vertex_pos[ 5*3 + 0 ] = (this->tex_coords_max[0] * 2.0) - 1.0;
+	this->vertex_pos[0].x = (this->tex_coords_max.x * 2.0) - 1.0;
+	this->vertex_pos[3].x = (this->tex_coords_max.x * 2.0) - 1.0;
+	this->vertex_pos[4].x = (this->tex_coords_max.x * 2.0) - 1.0;
+	this->vertex_pos[5].x = (this->tex_coords_max.x * 2.0) - 1.0;
 }
 
 void texture_viewer::set_back_y_plane_coordinates() {
-	this->vertex_pos[ 2*3 + 1 ] = (this->tex_coords_min[1] * 2.0) - 1.0;
-	this->vertex_pos[ 3*3 + 1 ] = (this->tex_coords_min[1] * 2.0) - 1.0;
-	this->vertex_pos[ 4*3 + 1 ] = (this->tex_coords_min[1] * 2.0) - 1.0;
-	this->vertex_pos[ 7*3 + 1 ] = (this->tex_coords_min[1] * 2.0) - 1.0;
+	this->vertex_pos[2].y = (this->tex_coords_min.y * 2.0) - 1.0;
+	this->vertex_pos[3].y = (this->tex_coords_min.y * 2.0) - 1.0;
+	this->vertex_pos[4].y = (this->tex_coords_min.y * 2.0) - 1.0;
+	this->vertex_pos[7].y = (this->tex_coords_min.y * 2.0) - 1.0;
 }
 
 void texture_viewer::set_front_y_plane_coordinates() {
-	this->vertex_pos[ 0*3 + 1 ] = (this->tex_coords_max[1] * 2.0) - 1.0;
-	this->vertex_pos[ 1*3 + 1 ] = (this->tex_coords_max[1] * 2.0) - 1.0;
-	this->vertex_pos[ 5*3 + 1 ] = (this->tex_coords_max[1] * 2.0) - 1.0;
-	this->vertex_pos[ 6*3 + 1 ] = (this->tex_coords_max[1] * 2.0) - 1.0;
+	this->vertex_pos[0].y = (this->tex_coords_max.y * 2.0) - 1.0;
+	this->vertex_pos[1].y = (this->tex_coords_max.y * 2.0) - 1.0;
+	this->vertex_pos[5].y = (this->tex_coords_max.y * 2.0) - 1.0;
+	this->vertex_pos[6].y = (this->tex_coords_max.y * 2.0) - 1.0;
 }
 
 void texture_viewer::set_back_z_plane_coordinates() {
-	this->vertex_pos[ 4*3 + 2 ] = (this->tex_coords_min[2] * 2.0) - 1.0;
-	this->vertex_pos[ 5*3 + 2 ] = (this->tex_coords_min[2] * 2.0) - 1.0;
-	this->vertex_pos[ 6*3 + 2 ] = (this->tex_coords_min[2] * 2.0) - 1.0;
-	this->vertex_pos[ 7*3 + 2 ] = (this->tex_coords_min[2] * 2.0) - 1.0;
+	qreal far = static_cast<qreal>(nb_images_loaded) * VOXEL_RATIO;
+	this->vertex_pos[4].z = (this->tex_coords_min.z * far) - far/2.0;
+	this->vertex_pos[5].z = (this->tex_coords_min.z * far) - far/2.0;
+	this->vertex_pos[6].z = (this->tex_coords_min.z * far) - far/2.0;
+	this->vertex_pos[7].z = (this->tex_coords_min.z * far) - far/2.0;
 }
 
 void texture_viewer::set_front_z_plane_coordinates() {
-	this->vertex_pos[ 0*3 + 2 ] = (this->tex_coords_max[2] * 2.0) - 1.0;
-	this->vertex_pos[ 1*3 + 2 ] = (this->tex_coords_max[2] * 2.0) - 1.0;
-	this->vertex_pos[ 2*3 + 2 ] = (this->tex_coords_max[2] * 2.0) - 1.0;
-	this->vertex_pos[ 3*3 + 2 ] = (this->tex_coords_max[2] * 2.0) - 1.0;
+	qreal far = static_cast<qreal>(nb_images_loaded) * VOXEL_RATIO;
+	this->vertex_pos[0].z = (this->tex_coords_max.z * far) - far/2.0;
+	this->vertex_pos[1].z = (this->tex_coords_max.z * far) - far/2.0;
+	this->vertex_pos[2].z = (this->tex_coords_max.z * far) - far/2.0;
+	this->vertex_pos[3].z = (this->tex_coords_max.z * far) - far/2.0;
 }
 
 void texture_viewer::set_to_unit_cube() {
-	// v0 :
-	this->vertex_pos[ 0] = 1.0;
-	this->vertex_pos[ 1] = 1.0;
-	this->vertex_pos[ 2] = 1.0;
-	// v1 :
-	this->vertex_pos[ 3] =-1.0;
-	this->vertex_pos[ 4] = 1.0;
-	this->vertex_pos[ 5] = 1.0;
-	// v2 :
-	this->vertex_pos[ 6] =-1.0;
-	this->vertex_pos[ 7] =-1.0;
-	this->vertex_pos[ 8] = 1.0;
-	// v3 :
-	this->vertex_pos[ 9] = 1.0;
-	this->vertex_pos[10] =-1.0;
-	this->vertex_pos[11] = 1.0;
-	// v4 :
-	this->vertex_pos[12] = 1.0;
-	this->vertex_pos[13] =-1.0;
-	this->vertex_pos[14] =-1.0;
-	// v5 :
-	this->vertex_pos[15] = 1.0;
-	this->vertex_pos[16] = 1.0;
-	this->vertex_pos[17] =-1.0;
-	// v6 :
-	this->vertex_pos[18] =-1.0;
-	this->vertex_pos[19] = 1.0;
-	this->vertex_pos[20] =-1.0;
-	// v7 :
-	this->vertex_pos[21] =-1.0;
-	this->vertex_pos[22] =-1.0;
-	this->vertex_pos[23] =-1.0;
+	this->vertex_pos[0] = vec3( 1., 1., 1.); // v0
+	this->vertex_pos[1] = vec3(-1., 1., 1.); // v1
+	this->vertex_pos[2] = vec3(-1.,-1., 1.); // v2
+	this->vertex_pos[3] = vec3( 1.,-1., 1.); // v3
+	this->vertex_pos[4] = vec3( 1.,-1.,-1.); // v4
+	this->vertex_pos[5] = vec3( 1., 1.,-1.); // v5
+	this->vertex_pos[6] = vec3(-1., 1.,-1.); // v6
+	this->vertex_pos[7] = vec3(-1.,-1.,-1.); // v7
+	this->nb_images_loaded = 1.0 / VOXEL_RATIO;
 }
 
-void texture_viewer::set_real_voxel_dimensions(size_t nb_images_loaded) {
+void texture_viewer::set_real_voxel_dimensions(size_t _nb_images_loaded) {
 	// The farthest point, when not centralised :
-	qreal far = static_cast<qreal>(nb_images_loaded) * VOXEL_RATIO;
+	qreal far = static_cast<qreal>(_nb_images_loaded) * VOXEL_RATIO;
+	this->nb_images_loaded = _nb_images_loaded;
 	qreal near = .0;
-	this->vertex_pos[ 2] = far - far/2.0; // v0
-	this->vertex_pos[ 5] = far - far/2.0; // v1
-	this->vertex_pos[ 8] = far - far/2.0; // v2
-	this->vertex_pos[11] = far - far/2.0; // v3
-	this->vertex_pos[14] =near - far/2.0; // v4
-	this->vertex_pos[17] =near - far/2.0; // v5
-	this->vertex_pos[20] =near - far/2.0; // v6
-	this->vertex_pos[23] =near - far/2.0; // v7
+	this->vertex_pos[0].z = far - far/2.0; // v0
+	this->vertex_pos[1].z = far - far/2.0; // v1
+	this->vertex_pos[2].z = far - far/2.0; // v2
+	this->vertex_pos[3].z = far - far/2.0; // v3
+	this->vertex_pos[4].z =near - far/2.0; // v4
+	this->vertex_pos[5].z =near - far/2.0; // v5
+	this->vertex_pos[6].z =near - far/2.0; // v6
+	this->vertex_pos[7].z =near - far/2.0; // v7
 	this->setSceneRadius(std::max(std::sqrt(3.0),std::sqrt(1.+1.+std::pow(far/2.0, 2.0))));
 }
 

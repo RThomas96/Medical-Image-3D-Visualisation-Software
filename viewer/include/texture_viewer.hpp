@@ -2,12 +2,18 @@
 #define VIEWER_INCLUDE_TEXTURE_VIEWER_HPP_
 
 #include <QGLViewer/qglviewer.h>
+#include <glm/glm.hpp>
 
 #include "../../image/include/bulk_texture_loader.hpp"
 
 class texture_viewer : public QGLViewer {
 
-		friend class slider_widget; // for easy access to private values
+		/// For easy access to the private values of this class
+		friend class slider_widget;
+		/// @brief Redefinition of the default glm::vec3 type to follow the qreal type
+		typedef glm::vec<3, qreal, glm::defaultp> vec3;
+		/// @brief Redefinition of the default glm::mat3 type to follow the qreal type
+		typedef glm::mat<3, 3, qreal, glm::defaultp> mat3;
 
 		Q_OBJECT
 
@@ -15,11 +21,11 @@ class texture_viewer : public QGLViewer {
 		/**
 		 * @brief Positions of veritces
 		 */
-		qreal* vertex_pos;
+		vec3* vertex_pos;
 		/**
 		 * @brief Normals of vertices
 		 */
-		qreal* vertex_nor;
+		vec3* vertex_nor;
 		/**
 		 * @brief Pointers to the coordinates of the texture coordinates needed for the vertex.
 		 */
@@ -27,11 +33,15 @@ class texture_viewer : public QGLViewer {
 		/**
 		 * @brief Min texture coordinates for cube
 		 */
-		qreal* tex_coords_min;
+		vec3 tex_coords_min;
 		/**
 		 * @brief Max texture coordinates for cube
 		 */
-		qreal* tex_coords_max;
+		vec3 tex_coords_max;
+		/**
+		 * @brief Number of images loaded.
+		 */
+		size_t nb_images_loaded;
 		/**
 		 * @brief ID for the 3D texture to apply
 		 */

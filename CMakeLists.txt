@@ -13,9 +13,6 @@ ENDIF()
 SET(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 SET(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 SET(CMAKE_USE_RELATIVE_PATHS TRUE)
-SET(CMAKE_AUTORCC ON)
-SET(CMAKE_AUTOMOC ON)
-SET(CMAKE_AUTOUIC ON)
 SET(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 IF(CMAKE_BUILD_TYPE MATCHES Debug)
@@ -39,12 +36,37 @@ IF (EXISTS "/home/thibault/.config/awesome/rc.lua")
 ELSE()
 	MESSAGE(FATAL "Warning : did not detect we were on the default system. As such, we could not infer
 		the location of the libQGLViewer file, needed to compile the project. Please contact me at:
-		thibault.de-villele@etu.umontpellier.fr and we'll try to sort your problem out.
+		thibault.de-villele@lirmm.fr and we'll try to sort your problem out.
 		ERROR MESSAGE : C_GLV_NOT_FOUND")
 ENDIF()
-
 # }}}
 
+# Check if the library directory exists :
+IF(NOT EXISTS ${PROJECT_BINARY_DIR}/../lib/)
+	MAKE_DIRECTORY("../lib")
+ENDIF()
+
+# Check if the tiff lib exists {{{
+IF (NOT EXISTS ${PROJECT_BINARY_DIR}/../lib/libtiff.a)
+	ADD_LIBRARY(libtiff STATIC
+		./TinyTIFF/tinytiffreader.cpp
+		./TinyTIFF/tinytiffwriter.cpp
+		./TinyTIFF/tinytiffhighrestimer.cpp
+	)
+	SET_TARGET_PROPERTIES(libtiff PROPERTIES
+		LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/../lib/
+		ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/../lib/
+	)
+	SET(TIF_LIB libtiff)
+ELSE()
+	SET(TIF_LIB "${PROJECT_BINARY_DIR}/../lib/libtiff.a")
+ENDIF()
+# }}}
+
+# Qt5 stuff :
+SET(CMAKE_AUTORCC ON)
+SET(CMAKE_AUTOMOC ON)
+SET(CMAKE_AUTOUIC ON)
 SET(Qt5_DIR "/usr/lib/cmake/Qt5/")
 
 FIND_PACKAGE(Qt5 REQUIRED COMPONENTS Core Gui Widgets Multimedia Xml OpenGL)
@@ -56,11 +78,7 @@ SET(INCLUDE_DIRECTORIES ${INCLUDE_DIRECTORIES} ${OPENGL_INCLUDE_DIRS})
 INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES})
 
 # TinyTIFF Library {{{
-ADD_LIBRARY(tiff_lib
-	./TinyTIFF/tinytiffreader.cpp
-	./TinyTIFF/tinytiffwriter.cpp
-	./TinyTIFF/tinytiffhighrestimer.cpp
-)
+
 # }}}
 
 # TinyTIFF library tests {{{
@@ -79,7 +97,7 @@ ADD_EXECUTABLE(tiff_loader_tests
 	./tests/tiff_tests/src/tiff_displayer.cpp
 )
 TARGET_LINK_LIBRARIES(tiff_loader_tests
-	PUBLIC tiff_lib
+	PUBLIC ${TIF_LIB}
 	PUBLIC Qt5::Core
 	PUBLIC Qt5::Widgets
 	PUBLIC Qt5::Gui
@@ -103,7 +121,7 @@ ADD_EXECUTABLE(3d_texture_test
 	./tests/3D_texture_test/src/slider_widget.cpp
 )
 TARGET_LINK_LIBRARIES(3d_texture_test
-	PUBLIC tiff_lib
+	PUBLIC ${TIF_LIB}
 	PUBLIC Qt5::Core
 	PUBLIC Qt5::Widgets
 	PUBLIC Qt5::Gui
@@ -135,7 +153,7 @@ ADD_EXECUTABLE(visualisation
 	./main.cpp
 )
 TARGET_LINK_LIBRARIES(visualisation
-	PUBLIC tiff_lib
+	PUBLIC ${TIF_LIB}
 	PUBLIC Qt5::Core
 	PUBLIC Qt5::Widgets
 	PUBLIC Qt5::Gui

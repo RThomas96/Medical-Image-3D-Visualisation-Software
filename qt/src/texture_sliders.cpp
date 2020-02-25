@@ -18,28 +18,28 @@ texture_sliders::texture_sliders(texture_viewer* viewer) {
 	/**
 	 * Set their range, value, tick position and intervals
 	 */
-	this->min_x_slider->setRange(-1, 999);
+	this->min_x_slider->setRange(0, 999);
 	this->min_x_slider->setValue(0);
 	this->min_x_slider->setTickPosition(QSlider::TicksBelow);
 	this->min_x_slider->setTickInterval(100);
-	this->min_y_slider->setRange(-1, 999);
+	this->min_y_slider->setRange(0, 999);
 	this->min_y_slider->setValue(0);
 	this->min_y_slider->setTickPosition(QSlider::TicksBelow);
 	this->min_y_slider->setTickInterval(100);
-	this->min_z_slider->setRange(-1, 999);
+	this->min_z_slider->setRange(0, 999);
 	this->min_z_slider->setValue(0);
 	this->min_z_slider->setTickPosition(QSlider::TicksBelow);
 	this->min_z_slider->setTickInterval(100);
 
-	this->max_x_slider->setRange(0, 1000);
+	this->max_x_slider->setRange(1, 1000);
 	this->max_x_slider->setValue(999);
 	this->max_x_slider->setTickPosition(QSlider::TicksBelow);
 	this->max_x_slider->setTickInterval(100);
-	this->max_y_slider->setRange(0, 1000);
+	this->max_y_slider->setRange(1, 1000);
 	this->max_y_slider->setValue(999);
 	this->max_y_slider->setTickPosition(QSlider::TicksBelow);
 	this->max_y_slider->setTickInterval(100);
-	this->max_z_slider->setRange(0, 1000);
+	this->max_z_slider->setRange(1, 1000);
 	this->max_z_slider->setValue(999);
 	this->max_z_slider->setTickPosition(QSlider::TicksBelow);
 	this->max_z_slider->setTickInterval(100);
