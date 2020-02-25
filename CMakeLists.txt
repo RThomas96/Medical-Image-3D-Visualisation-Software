@@ -67,6 +67,7 @@ ENDIF()
 SET(CMAKE_AUTORCC ON)
 SET(CMAKE_AUTOMOC ON)
 SET(CMAKE_AUTOUIC ON)
+# TODO : actually search for Qt, instead of setting this as a static path
 SET(Qt5_DIR "/usr/lib/cmake/Qt5/")
 
 FIND_PACKAGE(Qt5 REQUIRED COMPONENTS Core Gui Widgets Multimedia Xml OpenGL)

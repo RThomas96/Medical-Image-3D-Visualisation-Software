@@ -19,6 +19,8 @@ class texture_controller : public QWidget {
 		 * @brief Button to request texture deletion
 		 */
 		QPushButton* free_tex_button;
+		/// @brief Button to trigger undistortion of the stack.
+		QPushButton* undistort_button;
 };
 
 #endif // QT_INCLUDE_TEXTURE_CONTROL_HPP_

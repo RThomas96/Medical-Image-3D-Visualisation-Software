@@ -12,6 +12,12 @@ void texture_viewer::init() {
 	this->stack_loader = nullptr;
 	this->print_opengl_info();
 	this->setup_cube_attribs();
+	this->undistort = false;
+	this->transformation_matrix = mat3(
+		.39/std::sqrt(2), .0,  .0,
+		.0,               .39, .0,
+		.39/std::sqrt(2), .0,  1.927 * std::sqrt(2)
+	);
 
 	// Enable the use of 3D textures
 	// (needed, even if none are loaded now)
@@ -190,17 +196,30 @@ void texture_viewer::setup_cube_attribs() {
 }
 
 void texture_viewer::draw_face_gl(std::size_t v0, std::size_t v1, std::size_t v2) {
+	vec3 V0, V1, V2;
+
+	if (this->undistort) {
+		mat3 inverse = glm::inverse(this->transformation_matrix);
+		V0 = inverse * this->vertex_pos[v0];
+		V1 = inverse * this->vertex_pos[v1];
+		V2 = inverse * this->vertex_pos[v2];
+	} else {
+		V0 = this->vertex_pos[v0];
+		V1 = this->vertex_pos[v1];
+		V2 = this->vertex_pos[v2];
+	}
+
 	glTexCoord3d(*this->vertex_tex[v0 * 3 + 0], *this->vertex_tex[v0 * 3 + 1], *this->vertex_tex[v0 * 3 + 2]);
 	glNormal3d(this->vertex_nor[v0].x, this->vertex_nor[v0].y, this->vertex_nor[v0].z);
-	glVertex3d(this->vertex_pos[v0].x, this->vertex_pos[v0].y, this->vertex_pos[v0].z);
+	glVertex3d(V0.x, V0.y, V0.z);
 
 	glTexCoord3d(*this->vertex_tex[v1 * 3 + 0], *this->vertex_tex[v1 * 3 + 1], *this->vertex_tex[v1 * 3 + 2]);
 	glNormal3d(this->vertex_nor[v1].x, this->vertex_nor[v1].y, this->vertex_nor[v1].z);
-	glVertex3d(this->vertex_pos[v1].x, this->vertex_pos[v1].y, this->vertex_pos[v1].z);
+	glVertex3d(V1.x, V1.y, V1.z);
 
 	glTexCoord3d(*this->vertex_tex[v2 * 3 + 0], *this->vertex_tex[v2 * 3 + 1], *this->vertex_tex[v2 * 3 + 2]);
 	glNormal3d(this->vertex_nor[v2].x, this->vertex_nor[v2].y, this->vertex_nor[v2].z);
-	glVertex3d(this->vertex_pos[v2].x, this->vertex_pos[v2].y, this->vertex_pos[v2].z);
+	glVertex3d(V2.x, V2.y, V2.z);
 }
 
 void texture_viewer::set_min_X_tex_value(double x) {
