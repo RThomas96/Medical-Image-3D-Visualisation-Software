@@ -1,57 +1,55 @@
 % Add option "final" for final Master thesis
 \documentclass[utf8]{stageM2R}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% Déclaration du stage %%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Déclaration du stage
 
-%% auteur
 \author{Thibault de \textsc{Villèle}}
 %% encadrants
 \supervisors{Noura \textsc{Faraj}\\Christophe \textsc{Fiorio}}
-%% lieu du stage (Optionnel)
 \location{LIRMM UM5506 - CNRS, Université de Montpellier}
-%% titre du stage
 \title{Gestion, traitement et visualisation d'images médicales à très haute résolution}
-%% parcours du master
 \track{IMAGINA}
-%% date de soutenance (Optionnel)
 \date{\today}
-%% version du rapport (Optionnel)
 \version{1}
-%% Résumé en francais
 \abstractfr{
-Ce stage de master.
+	Lors de la deuxième année de Master en Informatique, nous pouvons effectuer un stage de recherche parmi les sujets proposés dans les laboratoires de recherche. Ce stage est le fruit d'une collaboration entre l'Université de Tulane (Tulane University, La Nouvelle-Orléans, États-Unis) et Mme \textsc{Faraj}. Les chercheurs de Tulane University ont développés une méthode d'acquisition tridimensionnelle de tissus humains à très haute résolution. Ils souhaiteraient, grâce à leur méthode, étudier de plus près la forme tridimensionnelle des cellules de prostate lors du développement de cancers. Avec la conception de la machine, les chercheurs ont aussi développés un processus de reconstruction 3D très coûteux en temps et en mémoire, et assez inexact. Le but de ce stage est de proposer une méthode de reconstruction exacte, rapide et peu ou moins coûteuse en mémoire.
 }
-%% Résumé en anglais
-\abstracteng{
-  This master thesis.
-}
-
-
+%\abstracteng{
+%	% TODO : make it in english
+%}
 
 \begin{document}
-%\selectlanguage{english} %% --> turn the document into english mode (Default is french)
-\selectlanguage{french}
-\frontmatter  %% -> pas de numérotation numérique
-\maketitle    %% -> création de la page de garde et des résumés
-\cleardoublepage
-\tableofcontents %% -> table des matières
-\mainmatter  %% -> numérotation numérique
+{
+	%\selectlanguage{english} %% --> turn the document into english mode (Default is french)
+	\selectlanguage{french}
+	\frontmatter  %% -> pas de numérotation numérique
+	\maketitle    %% -> création de la page de garde et des résumés
+	\cleardoublepage
+	\tableofcontents %% -> table des matières
+	\mainmatter  %% -> numérotation numérique
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%    DEBUT DU RAPPORT  %%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	%%%%    DEBUT DU RAPPORT  %%%%
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\chapter{Introduction}
-\lipsum
-\chapter{Lorem Ipsum}
-\lipsum
-\section{Lorem Ipsum}
-\lipsum
-\section{Lorem Ipsum}
-\lipsum
+	\chapter{Introduction}
+	{
+		Actuellement, les diagnostics de cancer de la prostate sont effectués grâce à des coupes histologiques d'un échantillon de prostate d'un patient. La forme des glandes dans le tissu est ensuite comparé de manière empirique à une échelle qualitative, donnant un diagnostic permettant de savoir si le patient a besoin d'être traité ou pas. Or, cette méthode possède ses fautes. Par exemple, l'orientation de la coupe histologique dans l'échantillon de tissu du patient importe beaucoup sur la forme finale des glandes observées, ce qui peut mener à une erreur dans le disagnostic du patient. Afin de pallier à ce défaut, des chercheurs de l'université de Tulane à la Nouvelle-Orléans aux États-Unis ont développé une nouvelle méthode d'acquisition tridimensionnelle permettant de mieux évaluer la forme des glandes contenues dans la prostate. Ils espèrent ainsi pouvoir développer une nouvelle méthode de diagnostic du cancer de la prostate se reposant sur la forme tridimensionnelle des glandes, et non sur une coupe 2D qui pourrait induire les docteurs en erreur.
+	}
+
+	\chapter{Lorem Ipsum}
+	{
+		\section{Lorem Ipsum}
+		{
+			%
+		}
+		\section{Lorem Ipsum}
+		{
+			%
+		}
+	}
+}
 \end{document}
 
 %%% Local Variables:
