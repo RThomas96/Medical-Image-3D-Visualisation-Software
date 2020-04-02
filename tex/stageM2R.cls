@@ -19,7 +19,7 @@
 \ProcessOptions
 
 %% dependance à la classe memoir
-\LoadClass[a4paper,11pt]{memoir}
+\LoadClass[a4paper,11pt,openany]{memoir}
 
 \settrimmedsize{297mm}{210mm}{*}
 \setlength{\trimtop}{0pt}
@@ -75,8 +75,8 @@
 \ifdefined\addto{%
 	\addto{\captionsfrench}{\renewcommand{\authorname}	{Auteur}}
 	\addto{\captionsfrench}{\renewcommand{\authorsname}	{Auteurs}}
-	\addto{\captionsfrench}{\renewcommand{\supervisorname}	{Superviseur}}
-	\addto{\captionsfrench}{\renewcommand{\supervisorsname}	{Superviseurs}}
+	\addto{\captionsfrench}{\renewcommand{\supervisorname}	{Encadrant}}
+	\addto{\captionsfrench}{\renewcommand{\supervisorsname}	{Encadrants}}
 	\addto{\captionsfrench}{\renewcommand{\tutorname}	{Tuteur}}
 	\addto{\captionsfrench}{\renewcommand{\thepartname}	{Partie}}
 	\addto{\captionsfrench}{\renewcommand{\trackname}	{Parcours}}
