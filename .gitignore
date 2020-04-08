@@ -7,3 +7,6 @@ lib/
 # Ignore build files from Qt (using cmake here) :
 *.pro
 *.user
+
+# Ignore files from CCLS (on vim editors) :
+.ccls-cache/

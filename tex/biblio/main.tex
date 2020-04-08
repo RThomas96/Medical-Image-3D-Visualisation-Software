@@ -30,10 +30,10 @@
 		{
 			Ce stage de recherche, encadré par Mme \textsc{Faraj}, M.\textsc{Fiorio} tous deux de l'équipe ICAR du LIRMM, ainsi que M.\textsc{Charlier} du département de mathématiques de la faculté des sciences de l'université de Montpellier. Ce stage est également en collaboration avec l'université de Tulane, à la Nouvelle Orléans, et a pour but l'amélioration et l'optimisation d'un processus de reconstruction tridimensionnelle d'images médicales à haute résolution.\\
 
-			Actuellement, les diagnostics du cancer de la prostate et les décisions de traitement de celui-ci sont faits à partir d'images histologiques\footnotemark~ 2D~\cite{brown2017gleason_diagnosis}. Les formes des contours des glandes sont comparés à une échelle schématique 2D appelée échelle de Gleason~\cite{citation_gleason_score} afin de déterminer le stade du cancer. La variabilité des plans de coupe peut entraîner un diagnostic et un traitement inadaptés au patient.
+			Actuellement, les diagnostics du cancer de la prostate et les décisions de traitement de celui-ci sont faits à partir d'images histologiques\footnotemark~ 2D~\cite{cite_gleason_use_in_histology_poster}. Les formes des contours des glandes sont comparés à une échelle schématique 2D appelée échelle de Gleason~\cite{cite_gleason_score} afin de déterminer le stade du cancer. La variabilité des plans de coupe peut entraîner un diagnostic et un traitement inadaptés au patient.
 			\footnotetext{Image représentant des tissus biologiques, morts ou vivants.}\\
 
-			Nos partenaires chercheurs de l'université de Tulane ont développés une nouvelle méthode d'acquisition de tissus humains de très haute résolution et précision, à l'aide d'un microscope à éclairage sélectif, en utilisant une variation de la méthode \textit{SPIM}~\cite{Huisken1007}, qui signifie \textit{Single Plane Illumination Microscopy} (voir Chapitre \ref{section:02_description} : \nameref{section:02_description}). Cette méthode permet d'obtenir des séquences d'images numériques précises de l'ordre du micromètre d'un échantillon tridimensionnel transparisé, permettant de voir précisément la formation des cellules du corps humain.\\
+			Nos partenaires chercheurs de l'université de Tulane ont développés une nouvelle méthode d'acquisition de tissus humains de très haute résolution et précision, à l'aide d'un microscope à éclairage sélectif, en utilisant une variation de la méthode \textit{SPIM}~\cite{cite_spim_explication_original}, qui signifie \textit{Single Plane Illumination Microscopy} (voir Chapitre \ref{section:02_description} : \nameref{section:02_description}). Cette méthode permet d'obtenir des séquences d'images numériques précises de l'ordre du micromètre d'un échantillon tridimensionnel transparisé, permettant de voir précisément la formation des cellules du corps humain.\\
 
 			Le but global du projet est d’étudier la morphologie 3D des glandes à l'aide de méthodes de traitement (topologiques et géométriques) et d’une visualisation interactive de données médicales massives issues de la microscopie à éclairage sélectif. Cela permettrait d’enrichir les stratégies de diagnostic du cancer de la prostate existantes.\\
 
@@ -51,7 +51,7 @@
 	{
 		\section{Acquisition de données}\label{section:02_01_acquisition}
 		{
-			La microscopie en fluorescence à feuille de lumière~\cite{girard2011microscopie} (\textit{Light-Sheet Fluorescence Microscopy}, \textit{LSFM}) est une méthode d'acquisition d'images qui consiste à illuminer une fine tranche de l'échantillon à analyser perpendiculairement à l'axe du système de détection du microscope. La méthode utilisée par les chercheurs de l'université de Tulane est une variation d'une méthode de \textit{LSFM} appelée \textit{SPIM} : \textit{Single Plane Illumination Microscopy}, ou microscopie par éclairage sélectif en français. Cette méthode permet de faire des acquisitions par pile d'images rapidement, et permettant une reconstruction 3D d'un échantillon. Afin d'effectuer une acquisition avec un microscope \textit{SPIM}, l'échantillon a d'abord besoin d'être rendu transparent. En effet, la méthode \textit{SPIM} repose sur l'éclairage latéral d'une partie de l'échantillon, perpendiculairement à l'axe d'acquisition, ce qui rend les dispositifs d'acquisition et de détection complètement indépendants l'un de l'autre.\\
+			La microscopie en fluorescence à feuille de lumière~\cite{cite_lsfm_explication_girard} (\textit{Light-Sheet Fluorescence Microscopy}, \textit{LSFM}) est une méthode d'acquisition d'images qui consiste à illuminer une fine tranche de l'échantillon à analyser perpendiculairement à l'axe du système de détection du microscope. La méthode utilisée par les chercheurs de l'université de Tulane est une variation d'une méthode de \textit{LSFM} appelée \textit{SPIM} : \textit{Single Plane Illumination Microscopy}, ou microscopie par éclairage sélectif en français. Cette méthode permet de faire des acquisitions par pile d'images rapidement, et permettant une reconstruction 3D d'un échantillon. Afin d'effectuer une acquisition avec un microscope \textit{SPIM}, l'échantillon a d'abord besoin d'être rendu transparent. En effet, la méthode \textit{SPIM} repose sur l'éclairage latéral d'une partie de l'échantillon, perpendiculairement à l'axe d'acquisition, ce qui rend les dispositifs d'acquisition et de détection complètement indépendants l'un de l'autre.\\
 
 			\begin{figure}[H]
 				\centering
@@ -91,7 +91,7 @@
 		}
 		\section{Motivation de la méthode}\label{section:02_03_motivation}
 		{
-			À l'heure actuelle, les diagnostics du cancer de la prostate sont effectués grâce à des coupes histologiques d'un échantillon de prostate d'un patient. La forme des glandes dans le tissu est ensuite comparé de manière empirique à une échelle qualitative appelée échelle de Gleason~\cite{citation_gleason_score} (voir figure \ref{gleason_score}), donnant un diagnostic permettant de savoir si un patient a besoin d'être traité ou non.\\
+			À l'heure actuelle, les diagnostics du cancer de la prostate sont effectués grâce à des coupes histologiques d'un échantillon de prostate d'un patient. La forme des glandes dans le tissu est ensuite comparé de manière empirique à une échelle qualitative appelée échelle de Gleason~\cite{cite_gleason_score} (voir figure \ref{gleason_score}), donnant un diagnostic permettant de savoir si un patient a besoin d'être traité ou non.\\
 
 			\begin{figure}[!htp]
 				\centering
@@ -173,7 +173,7 @@
 		{
 			L'un des objectifs principaux du stage reste quand même la visualisation interactive des grilles résultantes. Une fois les acquisitions d'échantillons reconstruites en trois dimensions, il faudra donc trouver une méthode de visualisation afin de les manipuler en temps réel.\\
 
-			Un premier point de départ serait d'effectuer une vue en multi-résolution de la grille. Par exemple, le système de \textit{QSplat}~\cite{rusinkiewicz2000qsplat} de Rusinskiewi qui permet d'afficher un modèle interactivement en utilisant une arborescence de "vue" du modèle. Cela nous permettrait d'avoir une vue interactive, avec plus de détails ajoutés lorsque l'utilisateur ne manipule pas le modèle.
+			Un premier point de départ serait d'effectuer une vue en multi-résolution de la grille. Par exemple, le système de \textit{QSplat}~\cite{cite_visu_qsplat_system} de Rusinskiewi qui permet d'afficher un modèle interactivement en utilisant une arborescence de "vue" du modèle. Cela nous permettrait d'avoir une vue interactive, avec plus de détails ajoutés lorsque l'utilisateur ne manipule pas le modèle.
 
 			On pourrait aussi effectuer une visualisation avec régions d'intérêt, soit définies manuellement, soit selon un critère défini sur le modèle. De cette façon, l'utilisateur pourrait choisir quelles régions ont besoin d'avoir plus de détail, afin de pouvoir analyser une partie spécifique de l'échantillon acquis.
 		}
