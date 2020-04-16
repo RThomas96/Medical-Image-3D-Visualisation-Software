@@ -1,5 +1,6 @@
 # Ignore build directories from Qt :
 build_*
+build
 
 # Ignore compiled libs :
 lib/
@@ -8,5 +9,6 @@ lib/
 *.pro
 *.user
 
-# Ignore files from CCLS (on vim editors) :
+# Ignore files for CCLS (on vim editors) :
 .ccls-cache/
+compile_commands.json

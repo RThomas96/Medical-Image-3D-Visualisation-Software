@@ -210,10 +210,18 @@ void bulk_texture_loader::load_single_image(QString absolute_path) {
 
 void bulk_texture_loader::print_debug_info() const {
 	std::cout << "--------------------------------- TIME INFO ---------------------------------" << std::endl;
-	std::cout << "Total time to open images : " << this->raw_file_opening_duration.count() << " ms for " << this->number_of_file_opening_operations << " operations. Around " << this->raw_file_opening_duration.count() / static_cast<double>(this->number_of_file_opening_operations) << " ms per operation" << std::endl;
-	std::cout << "Total time to read images : " << this->raw_file_reading_duration.count() << " ms for " << this->number_of_file_reading_operations << " operations. Around " << this->raw_file_reading_duration.count() / static_cast<double>(this->number_of_file_reading_operations) << " ms per operation" << std::endl;
-	std::cout << "Total time to copy images : " << this->raw_file_copying_duration.count() << " ms for " << this->number_of_file_copying_operations << " operations. Around " << this->raw_file_copying_duration.count() / static_cast<double>(this->number_of_file_copying_operations) << " ms per operation" << std::endl;
-	std::cout << "Total time spent opening, reading, copying : " << this->raw_file_opening_duration.count() + this->raw_file_reading_duration.count() + this->raw_file_copying_duration.count() << "ms.\nTotal time elapsed since loading began : " << this->complete_stack_loading_duration.count() << " ms." << std::endl;
+	std::cout << "Total time to open images : " << this->raw_file_opening_duration.count() << " ms for " << this->number_of_file_opening_operations <<
+		     " operations. Around " << this->raw_file_opening_duration.count() / static_cast<double>(this->number_of_file_opening_operations) <<
+		     " ms per operation" << std::endl;
+	std::cout << "Total time to read images : " << this->raw_file_reading_duration.count() << " ms for " << this->number_of_file_reading_operations <<
+		     " operations. Around " << this->raw_file_reading_duration.count() / static_cast<double>(this->number_of_file_reading_operations) <<
+		     " ms per operation" << std::endl;
+	std::cout << "Total time to copy images : " << this->raw_file_copying_duration.count() << " ms for " << this->number_of_file_copying_operations <<
+		     " operations. Around " << this->raw_file_copying_duration.count() / static_cast<double>(this->number_of_file_copying_operations) <<
+		     " ms per operation" << std::endl;
+	std::cout << "Total time spent opening, reading, copying : " << this->raw_file_opening_duration.count() + this->raw_file_reading_duration.count() +
+		     this->raw_file_copying_duration.count() << "ms.\nTotal time elapsed since loading began : " << this->complete_stack_loading_duration.count() <<
+		     " ms." << std::endl;
 	std::cout << "--------------------------------- END  INFO ---------------------------------" << std::endl;
 }
 

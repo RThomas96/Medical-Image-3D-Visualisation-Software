@@ -6,12 +6,10 @@ INCLUDE(./cmake/CMakeSetup.cmake)
 # Find libQGLViewer :
 INCLUDE(./cmake/FindQGLViewer.cmake)
 
-# TODO : actually search for Qt, instead of setting this as a static path
-#SET(Qt5_DIR "/usr/lib/cmake/Qt5/")
-
 FIND_PACKAGE(Qt5 REQUIRED COMPONENTS Core Gui Widgets Multimedia Xml OpenGL)
 FIND_PACKAGE(OpenGL REQUIRED)
 FIND_PACKAGE(glm REQUIRED)
+FIND_PACKAGE(Threads REQUIRED)
 
 SET(INCLUDE_DIRECTORIES
 	${INCLUDE_DIRECTORIES}
@@ -93,6 +91,7 @@ ADD_EXECUTABLE(visualisation
 	./qt/include/main_widget.hpp
 	./viewer/include/texture_viewer.hpp
 	./image/include/bulk_texture_loader.hpp
+	./image/include/image_loader.hpp
 	./qt/include/texture_sliders.hpp
 	./qt/include/texture_control.hpp
 
@@ -100,6 +99,7 @@ ADD_EXECUTABLE(visualisation
 	./qt/src/main_widget.cpp
 	./viewer/src/texture_viewer.cpp
 	./image/src/bulk_texture_loader.cpp
+	./image/src/image_loader.cpp
 	./qt/src/texture_sliders.cpp
 	./qt/src/texture_control.cpp
 
@@ -108,6 +108,7 @@ ADD_EXECUTABLE(visualisation
 )
 TARGET_LINK_LIBRARIES(visualisation
 	PUBLIC ${TIF_LIB}
+	PUBLIC Threads::Threads
 	PUBLIC Qt5::Core
 	PUBLIC Qt5::Widgets
 	PUBLIC Qt5::Gui
@@ -118,5 +119,13 @@ TARGET_LINK_LIBRARIES(visualisation
 	PUBLIC ${QGLViewer_LIBRARY}
 )
 # }}}
+
+#ADD_EXECUTABLE(neighbor_visu
+	# Header files, for Qt MOCS compilation :
+	#./tests/neighbor_visu/include/main_widget.hpp
+
+	# Main file :
+#	./tests/neighbor_visu/main.cpp
+#)
 
 # vim: foldmethod=marker : foldmarker={{{,}}} : tabstop=8

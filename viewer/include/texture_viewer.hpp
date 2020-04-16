@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 
 #include "../../image/include/bulk_texture_loader.hpp"
+#include "../../image/include/image_loader.hpp"
 
 class texture_viewer : public QGLViewer {
 		Q_OBJECT
@@ -42,9 +43,12 @@ class texture_viewer : public QGLViewer {
 
 		/// @brief Pointer to a stack loader for image retrieval
 		bulk_texture_loader* stack_loader;
+		ImageLoader* imgLoader;
 
 		/// @brief Checks if we need to undistort the stack of images or not.
 		bool undistort;
+
+		bool waitsForTexture;
 
 		/// @brief Transformation matrix defined by Gille and Chalard in their report on the field.
 		mat3 transformation_matrix;
