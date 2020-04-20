@@ -1,3 +1,6 @@
 [submodule "TinyTIFF"]
 	path = TinyTIFF
 	url = https://github.com/jkriege2/TinyTIFF.git
+[submodule "gl"]
+	path = gl
+	url = git@gitlab.com:thibaulltt/glhandler.git
