@@ -122,12 +122,24 @@ TARGET_LINK_LIBRARIES(visualisation
 )
 # }}}
 
-#ADD_EXECUTABLE(neighbor_visu
+ADD_EXECUTABLE(neighbor_visu
 	# Header files, for Qt MOCS compilation :
-	#./tests/neighbor_visu/include/main_widget.hpp
+	./tests/neighbor_visu/include/control_panel.hpp
 
 	# Main file :
-#	./tests/neighbor_visu/main.cpp
-#)
+	./tests/neighbor_visu/main.cpp
+
+	# Source files :
+	./tests/neighbor_visu/src/control_panel.cpp
+)
+TARGET_LINK_LIBRARIES(neighbor_visu
+	PUBLIC Qt5::Core
+	PUBLIC Qt5::Gui
+	PUBLIC Qt5::Xml
+	PUBLIC Qt5::Widgets
+	PUBLIC Qt5::OpenGL
+	PUBLIC OpenGL
+	PUBLIC ${QGLViewer_LIBRARY}
+)
 
 # vim: foldmethod=marker : foldmarker={{{,}}} : tabstop=8

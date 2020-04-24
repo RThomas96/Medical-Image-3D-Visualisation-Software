@@ -1,5 +1,4 @@
 #include "../include/control_panel.hpp"
-#include "../include/double_viewer.hpp"
 
 #include <exception>
 
