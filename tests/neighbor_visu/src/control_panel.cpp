@@ -40,7 +40,7 @@ ControlPanel::ControlPanel(QWidget* parent, DoubleViewerWidget* viewer) : QWidge
 
 void ControlPanel::initSignals(DoubleViewerWidget *viewer) {
 	if (viewer == nullptr) {
-#ifndef NDEBUG
+#ifdef NDEBUG
 		throw std::runtime_error("Could not assign a connection to a null value for viewer !");
 		std::terminate();
 #else
@@ -48,8 +48,8 @@ void ControlPanel::initSignals(DoubleViewerWidget *viewer) {
 		// TODO : Handle this more gracefully, without requiring an exception.
 #endif
 	}
-	connect(this->xCoordSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), viewer, &DoubleViewerWidget::controlPanelXCoordChanged);
-	connect(this->yCoordSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), viewer, &DoubleViewerWidget::controlPanelYCoordChanged);
-	connect(this->zCoordSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), viewer, &DoubleViewerWidget::controlPanelZCoordChanged);
-	connect(this->updateCoordsButton, &QPushButton::pressed, viewer, &DoubleViewerWidget::requestPositionUpdate);
+//	connect(this->xCoordSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), viewer, &DoubleViewerWidget::controlPanelXCoordChanged);
+//	connect(this->yCoordSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), viewer, &DoubleViewerWidget::controlPanelYCoordChanged);
+//	connect(this->zCoordSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), viewer, &DoubleViewerWidget::controlPanelZCoordChanged);
+//	connect(this->updateCoordsButton, &QPushButton::pressed, viewer, &DoubleViewerWidget::requestPositionUpdate);
 }

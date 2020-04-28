@@ -8,6 +8,7 @@ INCLUDE(./cmake/FindQGLViewer.cmake)
 
 FIND_PACKAGE(Qt5 REQUIRED COMPONENTS Core Gui Widgets Multimedia Xml OpenGL)
 FIND_PACKAGE(OpenGL REQUIRED)
+FIND_PACKAGE(GLEW REQUIRED)
 FIND_PACKAGE(glm REQUIRED)
 FIND_PACKAGE(Threads REQUIRED)
 
@@ -125,12 +126,20 @@ TARGET_LINK_LIBRARIES(visualisation
 ADD_EXECUTABLE(neighbor_visu
 	# Header files, for Qt MOCS compilation :
 	./tests/neighbor_visu/include/control_panel.hpp
+	./tests/neighbor_visu/include/main_widget.hpp
+	./tests/neighbor_visu/include/scene.hpp
+	./tests/neighbor_visu/include/viewer.hpp
+	./image/include/bulk_texture_loader.hpp
 
 	# Main file :
 	./tests/neighbor_visu/main.cpp
 
 	# Source files :
 	./tests/neighbor_visu/src/control_panel.cpp
+	./tests/neighbor_visu/src/main_widget.cpp
+	./tests/neighbor_visu/src/scene.cpp
+	./tests/neighbor_visu/src/viewer.cpp
+	./image/src/bulk_texture_loader.cpp
 )
 TARGET_LINK_LIBRARIES(neighbor_visu
 	PUBLIC Qt5::Core
@@ -140,6 +149,9 @@ TARGET_LINK_LIBRARIES(neighbor_visu
 	PUBLIC Qt5::OpenGL
 	PUBLIC OpenGL
 	PUBLIC ${QGLViewer_LIBRARY}
+	PUBLIC GLEW
+	PUBLIC glHandler
+	PUBLIC ${TIF_LIB}
 )
 
 # vim: foldmethod=marker : foldmarker={{{,}}} : tabstop=8
