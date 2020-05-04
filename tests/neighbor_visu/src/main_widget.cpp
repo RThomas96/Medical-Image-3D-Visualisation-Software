@@ -11,12 +11,12 @@ MainWidget::MainWidget() {
 void MainWidget::setupWidgets() {
 	this->scene = new Scene();
 	this->leftViewer = new Viewer(this->scene, false);
-	this->rightViewer = new Viewer(this->scene, true);
+	//this->rightViewer = new Viewer(this->scene, true);
 	this->controlPanel = new ControlPanel();
 
 	QHBoxLayout* viewerLayout = new QHBoxLayout();
 	viewerLayout->addWidget(this->leftViewer);
-	viewerLayout->addWidget(this->rightViewer);
+	//viewerLayout->addWidget(this->rightViewer);
 
 	QVBoxLayout* mainLayout = new QVBoxLayout();
 	mainLayout->addLayout(viewerLayout);

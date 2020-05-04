@@ -17,7 +17,7 @@ class MainWidget : public QWidget {
 		void setupWidgets();
 	private:
 		Viewer* leftViewer;
-		Viewer* rightViewer;
+		//Viewer* rightViewer;
 		Scene* scene;
 		ControlPanel* controlPanel;
 };
