@@ -154,4 +154,27 @@ TARGET_LINK_LIBRARIES(neighbor_visu
 	PUBLIC ${TIF_LIB}
 )
 
+ADD_EXECUTABLE(simShaEx
+	# Header files, for Qt MOCS compilation :
+	./tests/simple_shader_example/include/main_widget.hpp
+
+	# Main file :
+	./tests/simple_shader_example/main.cpp
+
+	# Source files :
+	./tests/simple_shader_example/src/main_widget.cpp
+)
+TARGET_LINK_LIBRARIES(simShaEx
+	PUBLIC Qt5::Core
+	PUBLIC Qt5::Gui
+	PUBLIC Qt5::Xml
+	PUBLIC Qt5::Widgets
+	PUBLIC Qt5::OpenGL
+	PUBLIC OpenGL
+	PUBLIC ${QGLViewer_LIBRARY}
+	PUBLIC GLEW
+	PUBLIC glHandler
+	PUBLIC ${TIF_LIB}
+)
+
 # vim: foldmethod=marker : foldmarker={{{,}}} : tabstop=8
