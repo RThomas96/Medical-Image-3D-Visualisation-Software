@@ -7,7 +7,6 @@
 #include <QSurface>
 
 #include <fstream>
-
 // TODO : change the inspectorPosNormlized by inspectorSizeNormalized and inspectorPosition
 // TODO : check we passed all attributes to the shader
 // TODO	: allow for the texture cube to be drawn
@@ -15,11 +14,6 @@
 
 Scene::Scene(void) {
 	this->loader = nullptr;
-
-#ifndef RAW_GL
-	this->vao = nullptr;
-	this->program = nullptr;
-#endif
 
 	this->textureHandle = 0;
 
@@ -37,7 +31,6 @@ Scene::Scene(void) {
 	this->drawRealVoxelSize = false;
 	this->isInitialized = false;
 
-#ifdef RAW_GL
 	this->vboVertPosHandle = 0;
 	this->vboUVCoordHandle = 0;
 	this->vboElementHandle = 0;
@@ -47,15 +40,14 @@ Scene::Scene(void) {
 	this->programHandle = 0;
 	this->elemToDrawSeq = 0;
 	this->elemToDrawIdx = 0;
-#endif
+
+	this->generateGrid_Only(5,5,5);
+
+	this->frameCount1 = 0;
+	this->frameCount2 = 0;
 }
 
 Scene::~Scene(void) {
-#ifndef RAW_GL
-	delete this->vao;
-	delete this->program;
-#endif
-
 	glDeleteTextures(1, &this->textureHandle);
 }
 
@@ -69,49 +61,47 @@ void Scene::initGl(QOpenGLContext* const _context, std::size_t _x, std::size_t _
 		exit(EXIT_FAILURE);
 	}
 
-#ifndef RAW_GL
-	std::size_t pos;
-	VBOCreator vert = {pos, 4, GL_FLOAT};
-	VBOCreator uvco = {pos, 3, GL_FLOAT};
-	VBOCreator elem = {pos, 1, GL_UNSIGNED_INT};
-	this->vao = new VAOObject(VBOTypes::Vertex, vert, VBOTypes::TexCoords, uvco, VBOTypes::IndexBuffer, elem);
-
-	// Create the vertex, fragment shaders and program
-	std::shared_ptr<ShaderObject> vSha = std::make_shared<ShaderObject>("./base_scene_vshader.glsl", GL_VERTEX_SHADER);
-	std::shared_ptr<ShaderObject> fSha = std::make_shared<ShaderObject>("./base_scene_fshader.glsl", GL_FRAGMENT_SHADER);
-	this->program = new ProgramObject(vSha, nullptr, fSha);
-	this->program->linkShaders();
-
-	this->generateGrid(_x,_y,_z);
-	this->queryImage();
-
-	this->program->use();
-#else
-	this->context = _context;
-	QSurface* s = this->context->surface();
-	if (s == nullptr) {
-		std::cerr << __PRETTY_FUNCTION__ << " : The surface was nullptr !" << '\n';
-	}
-	this->context->makeCurrent(s);
 	this->loader = new bulk_texture_loader();
 
 	///////////////////////////
 	/// CREATE VAO :
 	///////////////////////////
 	glGenVertexArrays(1, &this->vaoHandle);
-	glBindVertexArray(this->vaoHandle);
-
-	this->generateGrid(_x,_y,_z);
+	std::cerr << "Initialized VAO array idx : " << this->vaoHandle << '\n';
+	GetOpenGLError();
+	this->setupVBOData();
+	GetOpenGLError();
+	this->compileShaders();
+	GetOpenGLError();
+	glUseProgram(this->programHandle);
+	GetOpenGLError();
 	this->queryImage();
+	GetOpenGLError();
+	glBindVertexArray(0);
+	GetOpenGLError();
+	glUseProgram(0);
+}
+
+void Scene::compileShaders() {
+	glUseProgram(0);
+	GetOpenGLError();
+	glDeleteShader(this->vShaHandle);
+	GetOpenGLError();
+	glDeleteShader(this->fShaHandle);
+	GetOpenGLError();
+	glDeleteProgram(this->programHandle);
+	GetOpenGLError();
 
 	///////////////////////////
 	/// CREATE SHADERS AND COMPILE :
 	///////////////////////////
 	this->vShaHandle = glCreateShader(GL_VERTEX_SHADER);
+	GetOpenGLError();
 	this->fShaHandle = glCreateShader(GL_FRAGMENT_SHADER);
+	GetOpenGLError();
 
-	std::string vShaPath = "./base_scene_vshader.glsl";
-	std::string fShaPath = "./base_scene_fshader.glsl";
+	std::string vShaPath = "./shaders/base_scene_vshader.glsl";
+	std::string fShaPath = "./shaders/base_scene_fshader.glsl";
 
 	// Open shader file for reading :
 	std::ifstream vShaFile = std::ifstream(vShaPath, std::ios_base::in);
@@ -143,7 +133,9 @@ void Scene::initGl(QOpenGLContext* const _context, std::size_t _x, std::size_t _
 	fShaSource[fShaFileSize] = '\0';
 
 	glShaderSource(this->vShaHandle, 1, const_cast<const char**>(&vShaSource), 0);
+	GetOpenGLError();
 	glShaderSource(this->fShaHandle, 1, const_cast<const char**>(&fShaSource), 0);
+	GetOpenGLError();
 
 	delete[] vShaSource;
 	delete[] fShaSource;
@@ -152,6 +144,7 @@ void Scene::initGl(QOpenGLContext* const _context, std::size_t _x, std::size_t _
 	fShaFile.close();
 
 	glCompileShader(this->vShaHandle);
+	GetOpenGLError();
 
 	{
 		GLint shaderInfoLength = 0;
@@ -159,6 +152,7 @@ void Scene::initGl(QOpenGLContext* const _context, std::size_t _x, std::size_t _
 		char* shaderInfoLog = nullptr;
 
 		glGetShaderiv(this->vShaHandle, GL_INFO_LOG_LENGTH, &shaderInfoLength);
+		GetOpenGLError();
 		if (shaderInfoLength > 1) {
 			std::cerr << __PRETTY_FUNCTION__ << " : start Log ***********************************************" << '\n';
 
@@ -166,6 +160,7 @@ void Scene::initGl(QOpenGLContext* const _context, std::size_t _x, std::size_t _
 			std::cerr << __FUNCTION__ << " : Shader was a vertex shader ";
 			shaderInfoLog = new char[shaderInfoLength];
 			glGetShaderInfoLog(this->vShaHandle, shaderInfoLength, &charsWritten, shaderInfoLog);
+			GetOpenGLError();
 			std::cerr << shaderInfoLog << '\n';
 			delete[] shaderInfoLog;
 
@@ -176,6 +171,7 @@ void Scene::initGl(QOpenGLContext* const _context, std::size_t _x, std::size_t _
 	}
 
 	glCompileShader(this->fShaHandle);
+	GetOpenGLError();
 
 	{
 		GLint shaderInfoLength = 0;
@@ -183,6 +179,7 @@ void Scene::initGl(QOpenGLContext* const _context, std::size_t _x, std::size_t _
 		char* shaderInfoLog = nullptr;
 
 		glGetShaderiv(this->fShaHandle, GL_INFO_LOG_LENGTH, &shaderInfoLength);
+		GetOpenGLError();
 		if (shaderInfoLength > 1) {
 			std::cerr << __PRETTY_FUNCTION__ << " : start Log ***********************************************" << '\n';
 
@@ -190,6 +187,7 @@ void Scene::initGl(QOpenGLContext* const _context, std::size_t _x, std::size_t _
 			std::cerr << __FUNCTION__ << " : Shader was a fragment shader ";
 			shaderInfoLog = new char[shaderInfoLength];
 			glGetShaderInfoLog(this->fShaHandle, shaderInfoLength, &charsWritten, shaderInfoLog);
+			GetOpenGLError();
 			std::cerr << shaderInfoLog << '\n';
 			delete[] shaderInfoLog;
 
@@ -203,19 +201,26 @@ void Scene::initGl(QOpenGLContext* const _context, std::size_t _x, std::size_t _
 	/// CREATE PROGRAM AND LINK :
 	///////////////////////////
 	this->programHandle = glCreateProgram();
+	GetOpenGLError();
 	glAttachShader(this->programHandle, this->vShaHandle);
+	GetOpenGLError();
 	glAttachShader(this->programHandle, this->fShaHandle);
+	GetOpenGLError();
 
 	glLinkProgram(this->programHandle);
+	GetOpenGLError();
 
 	{
 		GLint Result = 0;
 		int InfoLogLength = 0;
 		glGetProgramiv(this->programHandle, GL_LINK_STATUS, &Result);
+		GetOpenGLError();
 		glGetProgramiv(this->programHandle, GL_INFO_LOG_LENGTH, &InfoLogLength);
+		GetOpenGLError();
 		if ( InfoLogLength > 0 ){
 			std::vector<char> ProgramErrorMessage(InfoLogLength+1);
 			glGetProgramInfoLog(this->programHandle, InfoLogLength, NULL, &ProgramErrorMessage[0]);
+			GetOpenGLError();
 			std::cerr << __FUNCTION__ << " : Warning : errors while linking program :" << '\n';
 			std::cerr << "------------------------------------------------------------------" << '\n';
 			std::cerr << "------------------------------------------------------------------" << '\n';
@@ -229,13 +234,15 @@ void Scene::initGl(QOpenGLContext* const _context, std::size_t _x, std::size_t _
 	}
 
 	glDetachShader(this->programHandle, this->vShaHandle);
+	GetOpenGLError();
 	glDetachShader(this->programHandle, this->fShaHandle);
+	GetOpenGLError();
 
 	glDeleteShader(this->vShaHandle);
+	GetOpenGLError();
 	glDeleteShader(this->fShaHandle);
+	GetOpenGLError();
 
-	glUseProgram(this->programHandle);
-#endif
 }
 
 void Scene::loadImage(std::size_t i, std::size_t j, std::size_t k, const unsigned char *pData) {
@@ -247,21 +254,30 @@ void Scene::loadImage(std::size_t i, std::size_t j, std::size_t k, const unsigne
 
 	if (this->textureHandle == 0) {
 		glGenTextures(1, &this->textureHandle);
+		GetOpenGLError();
 	}
 	glBindTexture(GL_TEXTURE_3D, this->textureHandle);
+	GetOpenGLError();
 
 	// Set nearest neighbor :
 	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	GetOpenGLError();
 	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	GetOpenGLError();
 	// Set the texture upload to not generate mimaps :
 	glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_MAX_LOD, static_cast<GLfloat>(-1000.f));
+	GetOpenGLError();
 	// Stop once UV > 1 or < 0
 	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
+	GetOpenGLError();
 	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	GetOpenGLError();
 	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	GetOpenGLError();
 	// Swizzle G/B to R value, to save data upload
 	GLint swizzleMask[] = {GL_RED, GL_RED, GL_RED, GL_ONE};
 	glTexParameteriv(GL_TEXTURE_3D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
+	GetOpenGLError();
 
 	glTexImage3D(
 		GL_TEXTURE_3D,		// GLenum : Target
@@ -275,6 +291,7 @@ void Scene::loadImage(std::size_t i, std::size_t j, std::size_t k, const unsigne
 		GL_UNSIGNED_BYTE,	// GLenum : Type (the data type as in uchar, uint, float ...)
 		pData			// void*  : Data to load into the buffer
 	);
+	GetOpenGLError();
 }
 
 void Scene::queryImage(void) {
@@ -286,35 +303,11 @@ void Scene::queryImage(void) {
 	this->loadImage(i, j, k, image);
 }
 
-void Scene::reloadShaders(void) const {
-#ifndef RAW_GL
-	if (this->program != nullptr) {
-		this->program->reloadShaders();
-	}
-#endif
-}
-
 void Scene::drawRealSpace(GLfloat mvMat[], GLfloat pMat[], bool bDrawWireframe) const {
-	/*QSurface* s = this->context->surface();
-	if (s == nullptr) {
-		std::cerr << __PRETTY_FUNCTION__ << " : The surface was nullptr !" << '\n';
-	}
-	this->context->makeCurrent(s);*/
-#ifndef RAW_GL
-	if (this->program == nullptr || this->vao == nullptr) { std::cerr << "Nothing here " << std::endl; return; }
-
-	this->program->use();
-	this->vao->bind();
-	this->vao->enableVertexAttributes();
-#else
+	GetOpenGLError();
 	glUseProgram(this->programHandle);
-	glBindVertexArray(this->vaoHandle);
-#endif
-//	if (bDrawWireframe) {
-		// Set the mode to wireframe :
-	//	glLineWidth(10.0);
-	//	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-//	}
+
+	GetOpenGLError();
 
 	glm::mat4 transfoMat = glm::mat4();
 	if (this->drawRealVoxelSize) {
@@ -325,142 +318,168 @@ void Scene::drawRealSpace(GLfloat mvMat[], GLfloat pMat[], bool bDrawWireframe) 
 			      static_cast<float>(this->gridDepth) * this->positionNormalized.z);
 	transfoMat *= glm::translate(posAbsolute);
 
-	//glActiveTexture(GL_TEXTURE0);
+	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_3D, this->textureHandle);
-#ifndef RAW_GL
-	this->program->setUniform1ui("texData", 0); // set texture sampler in texture slot 0
+	GetOpenGLError();
 
-	this->program->setUniformMatrix4fv("mMatrix", 1, this->transposeMatrices, glm::value_ptr(transfoMat[0]));
-	this->program->setUniformMatrix4fv("vMatrix", 1, this->transposeMatrices, &mvMat[0]);
-	this->program->setUniformMatrix4fv("pMatrix", 1, this->transposeMatrices, &pMat[0]);
-	this->program->setUniform3fv("texOffset", 1, &this->positionNormalized[0]);
-
-	glPointSize(10.0);
-	this->vao->pVBOElementBuffer->bind();
-	glDrawElements(GL_POINTS, this->vao->pVBOElementBuffer->getValueCount(), GL_UNSIGNED_INT, 0);
-	this->vao->pVBOElementBuffer->unBind();
-
-	this->vao->disableVertexAttributes();
-	this->vao->unBind();
-	this->program->release();
-#else
 	//////////////////
 	/// SET UNIFORMS :
 	//////////////////
-	glFrontFace(GL_CW);
 
-	GLuint texDataLocation = glGetUniformLocation(this->programHandle, "texData");
-	GLuint mMatrixLocation = glGetUniformLocation(this->programHandle, "mMatrix");
-	GLuint vMatrixLocation = glGetUniformLocation(this->programHandle, "vMatrix");
-	GLuint pMatrixLocation = glGetUniformLocation(this->programHandle, "pMatrix");
-	GLuint texOffsetLocation = glGetUniformLocation(this->programHandle, "texOffset");
+	GLint texDataLocation = glGetUniformLocation(this->programHandle, "texData");
+	GetOpenGLError();
+	GLint mMatrixLocation = glGetUniformLocation(this->programHandle, "mMatrix");
+	GetOpenGLError();
+	GLint vMatrixLocation = glGetUniformLocation(this->programHandle, "vMatrix");
+	GetOpenGLError();
+	GLint pMatrixLocation = glGetUniformLocation(this->programHandle, "pMatrix");
+	GetOpenGLError();
+	GLint texOffsetLocation = glGetUniformLocation(this->programHandle, "texOffset");
+	GetOpenGLError();
 
 	glUniform1i(texDataLocation, 0);
+	GetOpenGLError();
 	glUniformMatrix4fv(mMatrixLocation, 1, this->transposeMatrices, glm::value_ptr(transfoMat[0]));
+	GetOpenGLError();
 	glUniformMatrix4fv(vMatrixLocation, 1, this->transposeMatrices, &mvMat[0]);
+	GetOpenGLError();
 	glUniformMatrix4fv(pMatrixLocation, 1, this->transposeMatrices, &pMat[0]);
+	GetOpenGLError();
 	glUniform3fv(texOffsetLocation, 1, &this->positionNormalized[0]);
+	GetOpenGLError();
 
-	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, this->vboVertPosHandle);
-	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
+	glBindVertexArray(this->vaoHandle);
+	GetOpenGLError();
 
-	glEnableVertexAttribArray(1);
-	glBindBuffer(GL_ARRAY_BUFFER, this->vboUVCoordHandle);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+	this->setupVAOPointers();
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboElementHandle);
-	GLint b = 0;
-	glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &b);
-	std::cerr << "Buffer has " << b << " elements" << '\n';
-	glDrawElements(GL_TRIANGLES, this->elemToDrawIdx, GL_UNSIGNED_INT, (void*)0);
-
-	glDisableVertexAttribArray(0);
-	glDisableVertexAttribArray(1);
+	GetOpenGLError();
+	glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(this->vertIdx.size()), GL_UNSIGNED_BYTE, (void*)0);
+	GetOpenGLError();
 
 	glBindVertexArray(0);
+	GetOpenGLError();
 	glUseProgram(0);
-#endif
+	GetOpenGLError();
 }
 
 void Scene::drawInitialSpace(GLfloat mvMat[], GLfloat pMat[], bool bDrawWireframe) const {
-#ifndef RAW_GL
-	if (this->program == nullptr || this->vao == nullptr) { std::cerr << "Nothing here " << std::endl; return; }
-
-	this->program->use();
-	this->vao->bind();
-	this->vao->enableVertexAttributes();
-#else
+	GetOpenGLError();
 	glUseProgram(this->programHandle);
-	glBindVertexArray(this->vaoHandle);
-#endif
-
-//	if (bDrawWireframe) {
-		// Set the mode to wireframe :
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-//	}
+	GetOpenGLError();
 
 	glm::mat4 transfoMat = glm::mat4(1.0);
 
-	//glActiveTexture(GL_TEXTURE0);
+	glActiveTexture(GL_TEXTURE0);
+	GetOpenGLError();
 	glBindTexture(GL_TEXTURE_3D, this->textureHandle);
-#ifndef RAW_GL
-	this->program->setUniform1ui("texData", 0); // set texture sampler in texture slot 0
+	GetOpenGLError();
 
-	this->program->setUniformMatrix4fv("mMatrix", 1, this->transposeMatrices, glm::value_ptr(transfoMat[0]));
-	this->program->setUniformMatrix4fv("vMatrix", 1, this->transposeMatrices, &mvMat[0]);
-	this->program->setUniformMatrix4fv("pMatrix", 1, this->transposeMatrices, &pMat[0]);
-	this->program->setUniform3fv("texOffset", 1, &this->positionNormalized[0]);
-
-	glPointSize(10.0);
-	this->vao->pVBOElementBuffer->bind();
-	glDrawElements(GL_POINTS, this->vao->pVBOElementBuffer->getValueCount(), GL_UNSIGNED_INT, 0);
-	this->vao->pVBOElementBuffer->unBind();
-
-	this->vao->disableVertexAttributes();
-	this->vao->unBind();
-	this->program->release();
-#else
 	//////////////////
 	/// SET UNIFORMS :
 	//////////////////
 
 	GLuint texDataLocation = glGetUniformLocation(this->programHandle, "texData");
+	GetOpenGLError();
 	GLuint mMatrixLocation = glGetUniformLocation(this->programHandle, "mMatrix");
+	GetOpenGLError();
 	GLuint vMatrixLocation = glGetUniformLocation(this->programHandle, "vMatrix");
+	GetOpenGLError();
 	GLuint pMatrixLocation = glGetUniformLocation(this->programHandle, "pMatrix");
+	GetOpenGLError();
 	GLuint texOffsetLocation = glGetUniformLocation(this->programHandle, "texOffset");
+	GetOpenGLError();
 
 	glUniform1i(texDataLocation, 0);
+	GetOpenGLError();
 	glUniformMatrix4fv(mMatrixLocation, 1, this->transposeMatrices, glm::value_ptr(transfoMat[0]));
+	GetOpenGLError();
 	glUniformMatrix4fv(vMatrixLocation, 1, this->transposeMatrices, &mvMat[0]);
+	GetOpenGLError();
 	glUniformMatrix4fv(pMatrixLocation, 1, this->transposeMatrices, &pMat[0]);
+	GetOpenGLError();
 	glUniform3fv(texOffsetLocation, 1, &this->positionNormalized[0]);
+	GetOpenGLError();
 
-	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, this->vboVertPosHandle);
-	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4*sizeof(float), (void*)0);
+	glBindVertexArray(this->vaoHandle);
+	GetOpenGLError();
 
-	glEnableVertexAttribArray(1);
-	glBindBuffer(GL_ARRAY_BUFFER, this->vboUVCoordHandle);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
+	this->setupVAOPointers();
 
-	glDrawArrays(GL_POINTS, 0, this->elemToDrawSeq);
-
-	glDisableVertexAttribArray(0);
-	glDisableVertexAttribArray(1);
-
+	glDrawArrays(GL_POINTS, 0, this->vertPos.size());
+	GetOpenGLError();
 	glBindVertexArray(0);
+	GetOpenGLError();
 	glUseProgram(0);
-
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-#endif
+	GetOpenGLError();
 }
 
 void Scene::generateGrid(std::size_t _x, std::size_t _y, std::size_t _z) {
-	std::vector<float> vertPos;
-	std::vector<float> vertTex;
-	std::vector<GLuint> vertIdx;
+	this->generateGrid_Only(_x,_y,_z);
+
+	this->setupVBOData();
+
+	this->elemToDrawSeq = this->vertPos.size()/4;
+	this->elemToDrawIdx = this->vertIdx.size();
+
+	std::cerr << "Normally, inserted " << this->vertIdx.size() << " elements into element buffer. " << '\n';
+}
+
+void Scene::setupVBOData() {
+	glBindVertexArray(this->vaoHandle);
+	GetOpenGLError();
+	if (glIsVertexArray(this->vaoHandle) == GL_FALSE) { throw std::runtime_error("Was not a valid VAO handle !"); }
+	GetOpenGLError();
+	///////////////////////////////////////////////
+	/// CREATE VBO AND UPLOAD DATA
+	///////////////////////////////////////////////
+	glGenBuffers(1, &this->vboVertPosHandle);
+	GetOpenGLError();
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboVertPosHandle);
+	GetOpenGLError();
+	glBufferData(GL_ARRAY_BUFFER, this->vertPos.size()*sizeof(glm::vec4), this->vertPos.data(), GL_STATIC_DRAW);
+	GetOpenGLError();
+
+	glGenBuffers(1, &this->vboUVCoordHandle);
+	GetOpenGLError();
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboUVCoordHandle);
+	GetOpenGLError();
+	glBufferData(GL_ARRAY_BUFFER, this->vertTex.size()*sizeof(glm::vec3), this->vertTex.data(), GL_STATIC_DRAW);
+	GetOpenGLError();
+
+	glGenBuffers(1, &this->vboElementHandle);
+	GetOpenGLError();
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboElementHandle);
+	GetOpenGLError();
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->vertIdx.size()*sizeof(unsigned char), this->vertIdx.data(), GL_STATIC_DRAW);
+	GetOpenGLError();
+
+	this->setupVAOPointers();
+
+	this->elemToDrawSeq = this->vertPos.size()/4;
+	this->elemToDrawIdx = this->vertIdx.size();
+
+	std::cerr << "Normally, inserted " << this->vertIdx.size() << " elements into element buffer. " << '\n';
+}
+
+void Scene::setupVAOPointers() const {
+	glEnableVertexAttribArray(0);
+	GetOpenGLError();
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboVertPosHandle);
+	GetOpenGLError();
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
+	GetOpenGLError();
+
+	glEnableVertexAttribArray(1);
+	GetOpenGLError();
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboUVCoordHandle);
+	GetOpenGLError();
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+	GetOpenGLError();
+}
+
+void Scene::generateGrid_Only(std::size_t _x, std::size_t _y, std::size_t _z) {
 	this->neighborWidth = _x;
 	this->neighborHeight =_y;
 	this->neighborDepth = _z;
@@ -469,19 +488,17 @@ void Scene::generateGrid(std::size_t _x, std::size_t _y, std::size_t _z) {
 	for (std::size_t i = 0; i <= _z; ++i) {
 		for (std::size_t j = 0; j <= _y; ++j) {
 			for (std::size_t k = 0; k <= _x; ++k) {
-				vertPos.emplace_back(static_cast<float>(k));
-				vertPos.emplace_back(static_cast<float>(j));
-				vertPos.emplace_back(static_cast<float>(i));
-				vertPos.emplace_back(1.f);
+				this->vertPos.emplace_back(static_cast<float>(k), static_cast<float>(j), static_cast<float>(i), 1.f);
 				float xtex = static_cast<float>(k) / static_cast<float>(_x);
 				float ytex = static_cast<float>(j) / static_cast<float>(_y);
 				float ztex = static_cast<float>(i) / static_cast<float>(_z);
-				vertTex.emplace_back(xtex);
-				vertTex.emplace_back(ytex);
-				vertTex.emplace_back(ztex);
+				this->vertTex.emplace_back(xtex, ytex, ztex);
 			}
 		}
 	}
+
+	std::size_t zplaneoffset = (_x+1) * (_y+1);
+	std::size_t ylineoffset = (_x+1);
 
 	// Create the index buffer used to draw it in order :
 	// (see notes for reference about draw order)
@@ -490,70 +507,39 @@ void Scene::generateGrid(std::size_t _x, std::size_t _y, std::size_t _z) {
 			for (std::size_t k = 0; k < _x; ++k) {
 				/**
 				 * Name references :
+				 *     +i
+				 *     A
 				 *     a-------b-->+k
 				 *    /|      /|
 				 *   c-------d |
 				 *  /| |     | |
 				 *+j | |e----|-|f
-				 *   |/|     |/
+				 *   |/      |/
 				 *   g-------h
-				 *     V
-				 *    +i
 				 */
-				GLuint a = static_cast<GLuint>((k+0) + (j+0)*_x + (i+0)*_x*_y);
-				GLuint b = static_cast<GLuint>((k+1) + (j+0)*_x + (i+0)*_x*_y);
-				GLuint c = static_cast<GLuint>((k+0) + (j+1)*_x + (i+0)*_x*_y);
-				GLuint d = static_cast<GLuint>((k+1) + (j+1)*_x + (i+0)*_x*_y);
-				GLuint e = static_cast<GLuint>((k+0) + (j+0)*_x + (i+1)*_x*_y);
-				GLuint f = static_cast<GLuint>((k+1) + (j+0)*_x + (i+1)*_x*_y);
-				GLuint g = static_cast<GLuint>((k+0) + (j+1)*_x + (i+1)*_x*_y);
-				GLuint h = static_cast<GLuint>((k+1) + (j+1)*_x + (i+1)*_x*_y);
+				unsigned char a = static_cast<unsigned char>((k+0) + (j+0)*ylineoffset + (i+0)*zplaneoffset);
+				unsigned char b = static_cast<unsigned char>((k+1) + (j+0)*ylineoffset + (i+0)*zplaneoffset);
+				unsigned char c = static_cast<unsigned char>((k+0) + (j+1)*ylineoffset + (i+0)*zplaneoffset);
+				unsigned char d = static_cast<unsigned char>((k+1) + (j+1)*ylineoffset + (i+0)*zplaneoffset);
+				unsigned char e = static_cast<unsigned char>((k+0) + (j+0)*ylineoffset + (i+1)*zplaneoffset);
+				unsigned char f = static_cast<unsigned char>((k+1) + (j+0)*ylineoffset + (i+1)*zplaneoffset);
+				unsigned char g = static_cast<unsigned char>((k+0) + (j+1)*ylineoffset + (i+1)*zplaneoffset);
+				unsigned char h = static_cast<unsigned char>((k+1) + (j+1)*ylineoffset + (i+1)*zplaneoffset);
 
 				// Draw the half of the cube atteinable from the position a :
-				// Faces :	   |    1   |    2   |    3   |    4   |    5   |   6   |
-				GLuint faceIdx1[]= {a, d, c, a, b, c, e, b, a, e, f, b, g, e, a, g, a, c};
+				// Faces :	          |    1   |    2   |    3   |    4   |    5   |   6   |
+				unsigned char faceIdx1[]= {a, d, c, a, b, d, e, b, a, e, f, b, g, e, a, g, a, c};
 				// Draw the other side :
-				// Faces :	   |    1   |    2   |    3   |    4   |    5   |   6   |
-				GLuint faceIdx2[]= {h, e, g, h, f, e, h, g, c, h, c, d, h, d, b, h, d, f};
+				// Faces :	          |    1   |    2   |    3   |    4   |    5   |   6   |
+				unsigned char faceIdx2[]= {h, e, g, h, f, e, h, g, c, h, c, d, h, d, b, h, f, b};
 
 				// Insert them into the vector :
-				vertIdx.insert(vertIdx.end(), faceIdx1, faceIdx1+18);
-				vertIdx.insert(vertIdx.end(), faceIdx2, faceIdx2+18);
+				this->vertIdx.insert(vertIdx.end(), faceIdx1, faceIdx1+18);
+				this->vertIdx.insert(vertIdx.end(), faceIdx2, faceIdx2+18);
 			}
 		}
 	}
 
-	for (std::size_t i = 0; i < vertPos.size()/4; ++i) {
-		std::cerr << "Vertex : (" << vertPos[4*i+0] << ',' << vertPos[4*i+1] << ',' << vertPos[4*i+2] << ',' << vertPos[4*i+3] << ") , (" << vertTex[3*i+0] << ',' << vertTex[3*i+1] << ',' << vertTex[3*i+2] << ")\n";
-	}
-
-#ifndef RAW_GL
-	// Upload vertex positions :
-	this->vao->setVBOData<VBOTypes::Vertex>(vertPos.size(), 4, vertPos.size()*sizeof(glm::vec4), vertPos.data(), GL_STATIC_DRAW, GL_FLOAT);
-	// Upload texture coordinates :
-	this->vao->setVBOData<VBOTypes::TexCoords>(vertTex.size(), 3, vertTex.size()*sizeof(glm::vec3), vertTex.data(), GL_STATIC_DRAW, GL_FLOAT);
-	// Upload the index buffer :
-	this->vao->setVBOData<VBOTypes::IndexBuffer>(vertIdx.size(), 1, vertIdx.size()*sizeof(GLuint), vertIdx.data(), GL_STATIC_DRAW, GL_UNSIGNED_INT);
-#else
-	///////////////////////////////////////////////
-	/// CREATE VBO AND UPLOAD DATA
-	///////////////////////////////////////////////
-	glGenBuffers(1, &this->vboVertPosHandle);
-	glBindBuffer(GL_ARRAY_BUFFER, this->vboVertPosHandle);
-	glBufferData(GL_ARRAY_BUFFER, vertPos.size() * sizeof(float), vertPos.data(), GL_STATIC_DRAW);
-
-	glGenBuffers(1, &this->vboUVCoordHandle);
-	glBindBuffer(GL_ARRAY_BUFFER, this->vboUVCoordHandle);
-	glBufferData(GL_ARRAY_BUFFER, vertTex.size() * sizeof(float), vertTex.data(), GL_STATIC_DRAW);
-
-	glGenBuffers(1, &this->vboElementHandle);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboElementHandle);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertIdx.size() * sizeof(GLuint), vertIdx.data(), GL_STATIC_DRAW);
-
-	this->elemToDrawSeq = vertPos.size()/4;
-	this->elemToDrawIdx = vertIdx.size();
-#endif
-	std::cerr << "Normally, inserted " << vertIdx.size() << " elements into element buffer. " << '\n';
 }
 
 void Scene::toggleRealVoxelSize() {

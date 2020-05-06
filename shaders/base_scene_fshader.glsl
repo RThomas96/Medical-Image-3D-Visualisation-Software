@@ -1,4 +1,4 @@
-#version 430
+#version 400
 
 // output from vshader :
 in vec4 vertexPosWorld;
@@ -8,9 +8,9 @@ in vec3 vertexTexWorld;
 uniform sampler3D texData;
 
 // fragment color :
-out vec3 color;
+out vec4 color;
 
 void main(void)
 {
-    color = normalize(vertexPosWorld.xyz); // vec4(abs(1.0-vertexPosWorld.z), .0, abs(vertexPosWorld.z), 1.0); //
+    color = vec4(vertexPosWorld.xyz, 1.0); // vec4(abs(1.0-vertexPosWorld.z), .0, abs(vertexPosWorld.z), 1.0); //
 }

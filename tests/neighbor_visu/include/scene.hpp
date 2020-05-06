@@ -11,8 +11,44 @@
 #include <glm/glm.hpp>
 
 #include <vector>
+#include <mutex>
 
 #define RAW_GL
+
+#if not defined( NDEBUG )
+	#define GetOpenGLError() __GetOpenGLError( ( char* )__FILE__, ( int )__LINE__ )
+#else
+	#define GetOpenGLError()
+#endif
+
+inline int __GetOpenGLError ( char* szFile, int iLine )
+{
+	int    retCode = 0;
+	GLenum glErr = glGetError();
+	while (glErr != GL_NO_ERROR) {
+		std::cerr << "GLError in file " << szFile << " @ line " << iLine << " : ";
+		switch (glErr) {
+			case GL_INVALID_ENUM:
+				std::cerr << "was an invalid enum";
+			break;
+			case GL_INVALID_VALUE:
+				std::cerr << "was an invalid value";
+			break;
+			case GL_INVALID_OPERATION:
+				std::cerr << "was an invalid operation";
+			break;
+			default:
+				std::cerr << "was another error";
+			break;
+		}
+		std::cerr << '\n';
+		glErr = glGetError();
+		retCode = 1;
+	}
+	if (retCode) {
+		exit(EXIT_FAILURE);
+	}
+}
 
 class Scene {
 
@@ -28,8 +64,6 @@ class Scene {
 		void loadImage(std::size_t i, std::size_t j, std::size_t k, const unsigned char* pData = nullptr);
 		void queryImage(void);
 
-		void reloadShaders(void) const;
-
 		glm::vec3 getSceneBoundaries(void) const;
 
 		void toggleTransposeMatrices(void) { this->transposeMatrices = !this->transposeMatrices; }
@@ -37,6 +71,11 @@ class Scene {
 		// public functions :
 		void drawRealSpace(GLfloat mvMat[], GLfloat pMat[], bool bDrawWireframe = false) const;
 		void drawInitialSpace(GLfloat mvMat[], GLfloat pMat[], bool bDrawWireframe = false) const;
+		void compileShaders();
+
+		void setupVBOData();
+
+		void setupVAOPointers() const;
 
 		void cleanup(void); ///< cleanup function for vbo and other parts
 		bool isInitialized; ///< tracks if the scene was initialized or not
@@ -45,10 +84,7 @@ class Scene {
 		void generateGrid(std::size_t _x, std::size_t _y, std::size_t _z);
 
 		bulk_texture_loader* loader; ///< texture loader
-#ifndef RAW_GL
-		VAOObject* vao; ///< vao to send the data to
-		ProgramObject* program; ///< shader program to display the scene
-#endif
+
 		GLuint textureHandle; ///< handle for glTexImage3D
 
 		GLboolean transposeMatrices; ///< do we need to transpose matrices ?
@@ -64,7 +100,6 @@ class Scene {
 
 		bool drawRealVoxelSize; ///< do we need to draw the voxels to their real sizes ?
 
-#ifdef RAW_GL
 		QOpenGLContext* context;
 		GLuint vboVertPosHandle;
 		GLuint vboUVCoordHandle;
@@ -75,9 +110,15 @@ class Scene {
 		GLuint programHandle;
 		std::size_t elemToDrawIdx;
 		std::size_t elemToDrawSeq;
-#endif
+
+		std::vector<glm::vec4> vertPos;
+		std::vector<glm::vec3> vertTex;
+		std::vector<unsigned char> vertIdx;
+		mutable std::size_t frameCount1;
+		mutable std::size_t frameCount2;
 	private:
 		void loadEmptyImage();
+		void generateGrid_Only(std::size_t _x, std::size_t _y, std::size_t _z);
 };
 
 #endif // TESTS_NEIGHBOR_VISU_INCLUDE_SCENE_HPP_
