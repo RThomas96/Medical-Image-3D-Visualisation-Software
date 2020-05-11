@@ -11,7 +11,9 @@ uniform mat4 pMatrix;
 
 void main(void)
 {
-	mat4 mvp = pMatrix * vMatrix;
-	vPos = mvp * vertexPosition;
-	vNorm = inverse(transpose(mvp)) * vertexNormal;
+	mat4 mvp = vMatrix * pMatrix;
+	vec3 scaledPos = vertexPosition.xyz * .5;
+	vec3 finalPos = scaledPos + vec3(.25,.25,.25);
+	vPos = vec4(finalPos,1.0);
+	vNorm = vertexNormal;
 }

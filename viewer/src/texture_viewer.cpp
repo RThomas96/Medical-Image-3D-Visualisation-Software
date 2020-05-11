@@ -39,7 +39,10 @@ void texture_viewer::print_opengl_info() const {
 }
 
 void texture_viewer::load_textures() {
-	const unsigned char* texture_data = this->imgLoader->getImageDataAs<unsigned char>();
+	// stack_loader option :
+	const unsigned char* texture_data = this->stack_loader->load_stack_from_folder();
+	// imgLoader option :
+	//const unsigned char* texture_data = this->imgLoader->getImageDataAs<unsigned char>();
 
 	if (texture_data == nullptr) {
 		std::cerr << "nullptr returned.\nNo image data was loaded." << std::endl;
@@ -69,30 +72,40 @@ void texture_viewer::load_textures() {
 		GL_TEXTURE_3D,						// GLenum : Target
 		static_cast<GLint>(0),					// GLint  : Level of detail of the current texture (0 = original)
 		GL_RED,							// GLint  : Number of color components in the picture. Here grayscale so GL_RED
-		static_cast<GLsizei>(imgLoader->getImageWidth()),	// GLsizei: Image width
-		static_cast<GLsizei>(imgLoader->getImageHeight()),	// GLsizei: Image height
-		static_cast<GLsizei>(imgLoader->getStackDepth()),	// GLsizei: Image depth (number of layers)
+		// stack_loader option :
+		static_cast<GLsizei>(this->stack_loader->get_image_width()),	// GLsizei: Image width
+		static_cast<GLsizei>(this->stack_loader->get_image_height()),	// GLsizei: Image height
+		static_cast<GLsizei>(this->stack_loader->get_image_depth()),	// GLsizei: Image depth (number of layers)
+		// imgLoader option :
+		//		static_cast<GLsizei>(imgLoader->getImageWidth()),	// GLsizei: Image width
+		//		static_cast<GLsizei>(imgLoader->getImageHeight()),	// GLsizei: Image height
+		//		static_cast<GLsizei>(imgLoader->getStackDepth()),	// GLsizei: Image depth (number of layers)
 		static_cast<GLint>(0),					// GLint  : Border. This value MUST be 0.
 		GL_RED,							// GLenum : Format of the pixel data
 		GL_UNSIGNED_BYTE,					// GLenum : Type (the data type as in uchar, uint, float ...)
 		texture_data						// void*  : Data to load into the buffer
 	);
 
-	this->set_real_voxel_dimensions(imgLoader->getStackDepth());
+	// stack_loader option :
+	this->set_real_voxel_dimensions(stack_loader->get_image_depth());
+	// imageLoader option :
+	//this->set_real_voxel_dimensions(imgLoader->getStackDepth());
 
+	// stack_loader option :
 	// we can now safely ask the loader to delete the data
-	//this->stack_loader->free_data();
+	this->stack_loader->free_data();
 }
 
 void texture_viewer::draw() {
 	// disable lighting computation
 	glDisable(GL_LIGHTING);
-	if (this->waitsForTexture) {
-		if (this->imgLoader->hasFinishedLoading()) {
-			this->load_textures();
-			this->waitsForTexture = false;
-		}
-	}
+	// imageLoader option :
+	//if (this->waitsForTexture) {
+	//	if (this->imgLoader->hasFinishedLoading()) {
+	//		this->load_textures();
+	//		this->waitsForTexture = false;
+	//	}
+	//}
 	// check if the texture has been created :
 	if (glIsTexture(this->texture_id) == GL_TRUE) {
 		// bind texture to current context
@@ -341,19 +354,30 @@ void texture_viewer::set_real_voxel_dimensions(size_t _nb_images_loaded) {
 }
 
 void texture_viewer::request_texture_load() {
-	if (this->imgLoader == nullptr) {
-		this->imgLoader = ImageLoader::getInstance();
+	// imageLoader option :
+	//if (this->imgLoader == nullptr) {
+	//	this->imgLoader = ImageLoader::getInstance();
+	//} else {
+	//	this->request_texture_deletion();
+	//}
+	//this->waitsForTexture = true;
+	//QStringList file_names = QFileDialog::getOpenFileNames(nullptr, "Open TIF images", "../../", "TIFF Image files (*.tif *.tiff)");
+	//std::vector<QString> fileNameVector;
+	//for (int i = 0 ; i < file_names.size(); ++i) {
+	//	fileNameVector.push_back(file_names[i]);
+	//}
+	//this->imgLoader->loadInfoDirect(fileNameVector);
+	//this->imgLoader->loadImages();
+
+	// stack_loader option :
+	if (this->stack_loader == nullptr) {
+		this->stack_loader = new bulk_texture_loader();
+		this->stack_loader->enable_downsampling(true); // can downsample, don't need full-res for viewing
 	} else {
 		this->request_texture_deletion();
 	}
-	this->waitsForTexture = true;
-	QStringList file_names = QFileDialog::getOpenFileNames(nullptr, "Open TIF images", "../../", "TIFF Image files (*.tif *.tiff)");
-	std::vector<QString> fileNameVector;
-	for (int i = 0 ; i < file_names.size(); ++i) {
-		fileNameVector.push_back(file_names[i]);
-	}
-	this->imgLoader->loadInfoDirect(fileNameVector);
-	this->imgLoader->loadImages();
+	this->load_textures();
+
 	this->update();
 }
 

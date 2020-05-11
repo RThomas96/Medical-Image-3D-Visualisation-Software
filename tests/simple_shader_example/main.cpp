@@ -8,7 +8,8 @@
 #include <iostream>
 #include <QApplication>
 
-#include "include/main_widget.hpp"
+#include "./include/logoutput.hpp"
+#include "./include/qglfversion.hpp"
 
 int main(int argc, char* argv[]) {
 	QApplication app(argc, argv);
@@ -17,7 +18,7 @@ int main(int argc, char* argv[]) {
 	QCoreApplication::setOrganizationName("LIRMM");
 	QCoreApplication::setApplicationVersion(QT_VERSION_STR);
 
-	MainWidget mainwidget;
+	GLWidget mainwidget;
 	mainwidget.show();
 
 	return app.exec();
