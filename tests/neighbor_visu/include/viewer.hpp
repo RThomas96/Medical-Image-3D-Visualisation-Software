@@ -68,6 +68,8 @@ class Viewer : public QGLViewer {
 		std::size_t elemToDrawIdx;
 		std::size_t elemToDrawSeq;
 
+		float sceneSize;
+
 		std::vector<glm::vec4> vertPos;
 		std::vector<glm::vec3> vertTex;
 		std::vector<unsigned char> vertIdx;

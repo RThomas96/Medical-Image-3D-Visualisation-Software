@@ -15,11 +15,13 @@ class MainWidget : public QWidget {
 		~MainWidget(){}
 	protected:
 		void setupWidgets();
+		bool eventFilter(QObject* obj, QEvent* e) override;
 	private:
 		Viewer* leftViewer;
 		//Viewer* rightViewer;
-		//Scene* scene;
+		Scene* scene;
 		ControlPanel* controlPanel;
+		bool widgetSizeSet; ///< checks if the widget size has been set before
 };
 
 #endif // TESTS_NEIGHBOR_VISU_INCLUDE_MAIN_WIDGET_HPP_

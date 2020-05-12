@@ -1,6 +1,6 @@
 #include "../include/control_panel.hpp"
 
-#include <exception>
+#include <iostream>
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -36,6 +36,9 @@ ControlPanel::ControlPanel(QWidget* parent, DoubleViewerWidget* viewer) : QWidge
 	this->setLayout(spinBoxesLayout);
 
 	this->initSignals(viewer);
+
+	// make it so this widget's size is consistent when resizing the window
+	this->setSizePolicy(QSizePolicy::Policy::Fixed, QSizePolicy::Policy::Fixed);
 }
 
 void ControlPanel::initSignals(DoubleViewerWidget *viewer) {

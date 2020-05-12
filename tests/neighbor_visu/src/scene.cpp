@@ -55,7 +55,7 @@ void Scene::initGl(QOpenGLContext* const _context, std::size_t _x, std::size_t _
 	if (this->isInitialized == true) { return; }
 	this->isInitialized = true;
 
-	glewExperimental = false;
+	glewExperimental = true;
 	if (glewInit() != GLEW_OK) {
 		std::cerr << "Could not start GLEW" << '\n';
 		exit(EXIT_FAILURE);
@@ -100,8 +100,8 @@ void Scene::compileShaders() {
 	this->fShaHandle = glCreateShader(GL_FRAGMENT_SHADER);
 	GetOpenGLError();
 
-	std::string vShaPath = "./shaders/base_scene_vshader.glsl";
-	std::string fShaPath = "./shaders/base_scene_fshader.glsl";
+	std::string vShaPath = "./shaders/base.vert";
+	std::string fShaPath = "./shaders/base.frag";
 
 	// Open shader file for reading :
 	std::ifstream vShaFile = std::ifstream(vShaPath, std::ios_base::in);

@@ -161,8 +161,14 @@ void GLWidget::draw() {
 	GLfloat* pMat = new GLfloat[16];
 	this->camera()->getModelViewMatrix(vMat);
 	this->camera()->getProjectionMatrix(pMat);
+
+	float lightPos[4] = {-0.25,-0.25,-0.25,1.0};
+
 	glUniformMatrix4fv(glGetUniformLocation(this->programHandle, "vMatrix"), 1, this->transposeMatrices, vMat);
+	GetGLError();
 	glUniformMatrix4fv(glGetUniformLocation(this->programHandle, "pMatrix"), 1, this->transposeMatrices, pMat);
+	GetGLError();
+	glUniform4fv(glGetUniformLocation(this->programHandle, "lightPos"), 1, lightPos);
 	GetGLError();
 
 	glBindVertexArray(this->vaoHandle);

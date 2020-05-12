@@ -46,7 +46,7 @@ inline int __GetOpenGLError ( char* szFile, int iLine )
 		retCode = 1;
 	}
 	if (retCode) {
-		exit(EXIT_FAILURE);
+		//exit(EXIT_FAILURE);
 	}
 }
 

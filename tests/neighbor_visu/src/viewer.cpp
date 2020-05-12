@@ -8,6 +8,7 @@
 
 Viewer::Viewer(QWidget* parent) : QGLViewer(parent) {
 	this->format().setVersion(4, 1);
+	this->setMinimumSize(QSize(350,350));
 
 	this->setAxisIsDrawn(true);
 	this->loader = nullptr;
@@ -37,6 +38,8 @@ Viewer::Viewer(QWidget* parent) : QGLViewer(parent) {
 	this->programHandle = 0;
 	this->elemToDrawSeq = 0;
 	this->elemToDrawIdx = 0;
+
+	this->sceneSize = .0f;
 
 	this->generateGrid_Only(5,5,5);
 
@@ -103,8 +106,8 @@ void Viewer::compileShaders() {
 	this->fShaHandle = glCreateShader(GL_FRAGMENT_SHADER);
 	GetOpenGLError();
 
-	std::string vShaPath = "./shaders/base_scene_vshader.glsl";
-	std::string fShaPath = "./shaders/base_scene_fshader.glsl";
+	std::string vShaPath = "./shaders/base.vert";
+	std::string fShaPath = "./shaders/base.frag";
 
 	// Open shader file for reading :
 	std::ifstream vShaFile = std::ifstream(vShaPath, std::ios_base::in);
@@ -321,7 +324,6 @@ void Viewer::draw() {
 	GLfloat mvMat[16];
 	GLfloat pMat[16];
 
-	this->setSceneRadius(std::sqrt(2.0));
 	this->setSceneCenter(qglviewer::Vec(.0,.0,.0));
 	this->camera()->getModelViewMatrix(mvMat);
 	this->camera()->getProjectionMatrix(pMat);
@@ -344,35 +346,40 @@ void Viewer::drawRealSpace(GLfloat *mvMat, GLfloat *pMat, bool bDrawWireframe) c
 			      static_cast<float>(this->gridDepth) * this->positionNormalized.z);
 	transfoMat *= glm::translate(posAbsolute);
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_3D, this->textureHandle);
-	GetOpenGLError();
+//	glActiveTexture(GL_TEXTURE0);
+//	glBindTexture(GL_TEXTURE_3D, this->textureHandle);
+//	GetOpenGLError();
+
+	glm::vec4 lightPos = glm::vec4(-0.25, -0.25, -0.25, 1.0);
 
 	//////////////////
 	/// SET UNIFORMS :
 	//////////////////
 
-	GLint texDataLocation = glGetUniformLocation(this->programHandle, "texData");
-	GetOpenGLError();
+//	GLint texDataLocation = glGetUniformLocation(this->programHandle, "texData");
+//	GetOpenGLError();
 	GLint mMatrixLocation = glGetUniformLocation(this->programHandle, "mMatrix");
 	GetOpenGLError();
 	GLint vMatrixLocation = glGetUniformLocation(this->programHandle, "vMatrix");
 	GetOpenGLError();
 	GLint pMatrixLocation = glGetUniformLocation(this->programHandle, "pMatrix");
 	GetOpenGLError();
-	GLint texOffsetLocation = glGetUniformLocation(this->programHandle, "texOffset");
+	GLint lightPosLocation = glGetUniformLocation(this->programHandle, "lightPos");
 	GetOpenGLError();
+//	GLint texOffsetLocation = glGetUniformLocation(this->programHandle, "texOffset");
+//	GetOpenGLError();
 
-	glUniform1i(texDataLocation, 0);
-	GetOpenGLError();
+//	glUniform1i(texDataLocation, 0);
+//	GetOpenGLError();
 	glUniformMatrix4fv(mMatrixLocation, 1, this->transposeMatrices, glm::value_ptr(transfoMat[0]));
 	GetOpenGLError();
 	glUniformMatrix4fv(vMatrixLocation, 1, this->transposeMatrices, &mvMat[0]);
 	GetOpenGLError();
 	glUniformMatrix4fv(pMatrixLocation, 1, this->transposeMatrices, &pMat[0]);
 	GetOpenGLError();
-	glUniform3fv(texOffsetLocation, 1, &this->positionNormalized[0]);
-	GetOpenGLError();
+	glUniform4fv(lightPosLocation, 1, glm::value_ptr(lightPos));
+//	glUniform3fv(texOffsetLocation, 1, &this->positionNormalized[0]);
+//	GetOpenGLError();
 
 	glBindVertexArray(this->vaoHandle);
 	GetOpenGLError();
@@ -506,6 +513,10 @@ void Viewer::setupVAOPointers() const {
 }
 
 void Viewer::generateGrid_Only(std::size_t _x, std::size_t _y, std::size_t _z) {
+	if (_x == 0) { throw std::runtime_error("Cannot greate a grid with width = 0 !"); }
+	if (_y == 0) { throw std::runtime_error("Cannot greate a grid with height= 0 !"); }
+	if (_z == 0) { throw std::runtime_error("Cannot greate a grid with depth = 0 !"); }
+
 	this->neighborWidth = _x;
 	this->neighborHeight =_y;
 	this->neighborDepth = _z;
@@ -522,6 +533,16 @@ void Viewer::generateGrid_Only(std::size_t _x, std::size_t _y, std::size_t _z) {
 			}
 		}
 	}
+
+	// diagonal of bounding box
+	glm::vec3 bbDiag = glm::vec3(static_cast<float>(_x-1), static_cast<float>(_y-1), static_cast<float>(_z-1));
+	// set radius to this
+	this->sceneSize = glm::length(bbDiag);
+	std::cerr << "Scene size : " << this->sceneSize << '\n';
+	this->setSceneRadius(this->sceneSize);
+	// center scene on center of grid
+	this->setSceneCenter(qglviewer::Vec(bbDiag.x/2., bbDiag.y/2., bbDiag.z/2.));
+	this->showEntireScene();
 
 	std::size_t zplaneoffset = (_x+1) * (_y+1);
 	std::size_t ylineoffset = (_x+1);
@@ -629,6 +650,7 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 		break;
 		case Qt::Key::Key_R:
 			this->compileShaders();
+			this->update();
 		break;
 		default:
 			QGLViewer::keyPressEvent(e);
