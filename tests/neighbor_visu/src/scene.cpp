@@ -17,8 +17,6 @@ Scene::Scene(void) {
 
 	this->textureHandle = 0;
 
-	this->transposeMatrices = GL_FALSE;
-
 	this->positionNormalized = glm::vec3(.0f, .0f, .0f);
 
 	this->gridWidth = 0;
@@ -40,18 +38,13 @@ Scene::Scene(void) {
 	this->programHandle = 0;
 	this->elemToDrawSeq = 0;
 	this->elemToDrawIdx = 0;
-
-	this->generateGrid_Only(5,5,5);
-
-	this->frameCount1 = 0;
-	this->frameCount2 = 0;
 }
 
 Scene::~Scene(void) {
 	glDeleteTextures(1, &this->textureHandle);
 }
 
-void Scene::initGl(QOpenGLContext* const _context, std::size_t _x, std::size_t _y, std::size_t _z) {
+void Scene::initGl(std::size_t _x, std::size_t _y, std::size_t _z) {
 	if (this->isInitialized == true) { return; }
 	this->isInitialized = true;
 
@@ -62,24 +55,34 @@ void Scene::initGl(QOpenGLContext* const _context, std::size_t _x, std::size_t _
 	}
 
 	this->loader = new bulk_texture_loader();
+	this->generateGrid_Only(_x, _y, _z);
 
 	///////////////////////////
 	/// CREATE VAO :
 	///////////////////////////
 	glGenVertexArrays(1, &this->vaoHandle);
-	std::cerr << "Initialized VAO array idx : " << this->vaoHandle << '\n';
 	GetOpenGLError();
+	std::cerr << "Initialized VAO array idx : " << this->vaoHandle << '\n';
+	glBindVertexArray(this->vaoHandle);
+	GetOpenGLError();
+
 	this->setupVBOData();
 	GetOpenGLError();
+
 	this->compileShaders();
 	GetOpenGLError();
+
 	glUseProgram(this->programHandle);
 	GetOpenGLError();
+
 	this->queryImage();
 	GetOpenGLError();
-	glBindVertexArray(0);
-	GetOpenGLError();
-	glUseProgram(0);
+
+	glUseProgram(this->programHandle);
+	this->mMatrixLocation = glGetUniformLocation(this->programHandle, "mMatrix");
+	this->vMatrixLocation = glGetUniformLocation(this->programHandle, "vMatrix");
+	this->pMatrixLocation = glGetUniformLocation(this->programHandle, "pMatrix");
+	this->lightPosLocation = glGetUniformLocation(this->programHandle, "lightPos");
 }
 
 void Scene::compileShaders() {
@@ -100,6 +103,7 @@ void Scene::compileShaders() {
 	this->fShaHandle = glCreateShader(GL_FRAGMENT_SHADER);
 	GetOpenGLError();
 
+	// shaderPaths shader paths
 	std::string vShaPath = "./shaders/base.vert";
 	std::string fShaPath = "./shaders/base.frag";
 
@@ -112,6 +116,7 @@ void Scene::compileShaders() {
 		exit(EXIT_FAILURE);
 	}
 	if (!fShaFile.is_open()) {
+		vShaFile.close();
 		std::cerr << "Error : could not get the contents of shader file " << fShaPath << '\n';
 		exit(EXIT_FAILURE);
 	}
@@ -305,50 +310,49 @@ void Scene::queryImage(void) {
 
 void Scene::drawRealSpace(GLfloat mvMat[], GLfloat pMat[], bool bDrawWireframe) const {
 	GetOpenGLError();
-	glUseProgram(this->programHandle);
-
+	glEnable(GL_DEPTH_TEST);
+	GetOpenGLError();
+	glEnable(GL_TEXTURE_3D);
 	GetOpenGLError();
 
-	glm::mat4 transfoMat = glm::mat4();
+	glm::mat4 transfoMat = glm::mat4(1.0);
 	if (this->drawRealVoxelSize) {
 		transfoMat *= glm::scale(glm::vec3(0.39, 0.39, 1.927));
 	}
-	glm::vec3 posAbsolute(static_cast<float>(this->gridWidth) * this->positionNormalized.x,
-			      static_cast<float>(this->gridHeight)* this->positionNormalized.y,
-			      static_cast<float>(this->gridDepth) * this->positionNormalized.z);
-	transfoMat *= glm::translate(posAbsolute);
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_3D, this->textureHandle);
-	GetOpenGLError();
+	glm::vec4 lightPos = glm::vec4(-0.25, -0.25, -0.25, 1.0);
 
 	//////////////////
 	/// SET UNIFORMS :
 	//////////////////
 
-	GLint texDataLocation = glGetUniformLocation(this->programHandle, "texData");
-	GetOpenGLError();
-	GLint mMatrixLocation = glGetUniformLocation(this->programHandle, "mMatrix");
-	GetOpenGLError();
-	GLint vMatrixLocation = glGetUniformLocation(this->programHandle, "vMatrix");
-	GetOpenGLError();
-	GLint pMatrixLocation = glGetUniformLocation(this->programHandle, "pMatrix");
-	GetOpenGLError();
-	GLint texOffsetLocation = glGetUniformLocation(this->programHandle, "texOffset");
+	glUseProgram(this->programHandle);
 	GetOpenGLError();
 
-	glUniform1i(texDataLocation, 0);
+//	glActiveTexture(GL_TEXTURE0);
+//	glBindTexture(GL_TEXTURE_3D, this->textureHandle);
+//	GetOpenGLError();
+
+//	GLint texDataLocation = glGetUniformLocation(this->programHandle, "texData");
+//	GetOpenGLError();
+//	GLint texOffsetLocation = glGetUniformLocation(this->programHandle, "texOffset");
+//	GetOpenGLError();
+
+//	glUniform1i(texDataLocation, 0);
+//	GetOpenGLError();
+	glUniformMatrix4fv(this->mMatrixLocation, 1, GL_FALSE, glm::value_ptr(transfoMat));
 	GetOpenGLError();
-	glUniformMatrix4fv(mMatrixLocation, 1, this->transposeMatrices, glm::value_ptr(transfoMat[0]));
+	glUniformMatrix4fv(this->vMatrixLocation, 1, GL_FALSE, &mvMat[0]);
 	GetOpenGLError();
-	glUniformMatrix4fv(vMatrixLocation, 1, this->transposeMatrices, &mvMat[0]);
+	glUniformMatrix4fv(this->pMatrixLocation, 1, GL_FALSE, &pMat[0]);
 	GetOpenGLError();
-	glUniformMatrix4fv(pMatrixLocation, 1, this->transposeMatrices, &pMat[0]);
+	glUniform4fv(this->lightPosLocation, 1, glm::value_ptr(lightPos));
 	GetOpenGLError();
-	glUniform3fv(texOffsetLocation, 1, &this->positionNormalized[0]);
-	GetOpenGLError();
+//	glUniform3fv(texOffsetLocation, 1, &this->positionNormalized[0]);
+//	GetOpenGLError();
 
 	glBindVertexArray(this->vaoHandle);
+	std::cerr << "RSpace : attempting to bind a VAO of ID " << this->vaoHandle << '\n';
 	GetOpenGLError();
 
 	this->setupVAOPointers();
@@ -366,49 +370,52 @@ void Scene::drawRealSpace(GLfloat mvMat[], GLfloat pMat[], bool bDrawWireframe) 
 
 void Scene::drawInitialSpace(GLfloat mvMat[], GLfloat pMat[], bool bDrawWireframe) const {
 	GetOpenGLError();
-	glUseProgram(this->programHandle);
+	glEnable(GL_DEPTH_TEST);
+	GetOpenGLError();
+	glEnable(GL_TEXTURE_3D);
 	GetOpenGLError();
 
 	glm::mat4 transfoMat = glm::mat4(1.0);
+	if (this->drawRealVoxelSize) {
+		transfoMat *= glm::scale(glm::vec3(0.39, 0.39, 1.927));
+	}
 
-	glActiveTexture(GL_TEXTURE0);
-	GetOpenGLError();
-	glBindTexture(GL_TEXTURE_3D, this->textureHandle);
-	GetOpenGLError();
+	glm::vec4 lightPos = glm::vec4(-0.25, -0.25, -0.25, 1.0);
 
 	//////////////////
 	/// SET UNIFORMS :
 	//////////////////
 
-	GLuint texDataLocation = glGetUniformLocation(this->programHandle, "texData");
-	GetOpenGLError();
-	GLuint mMatrixLocation = glGetUniformLocation(this->programHandle, "mMatrix");
-	GetOpenGLError();
-	GLuint vMatrixLocation = glGetUniformLocation(this->programHandle, "vMatrix");
-	GetOpenGLError();
-	GLuint pMatrixLocation = glGetUniformLocation(this->programHandle, "pMatrix");
-	GetOpenGLError();
-	GLuint texOffsetLocation = glGetUniformLocation(this->programHandle, "texOffset");
+	glUseProgram(this->programHandle);
 	GetOpenGLError();
 
-	glUniform1i(texDataLocation, 0);
+//	glActiveTexture(GL_TEXTURE0);
+//	glBindTexture(GL_TEXTURE_3D, this->textureHandle);
+//	GetOpenGLError();
+
+	glUniformMatrix4fv(this->mMatrixLocation, 1, GL_FALSE, glm::value_ptr(transfoMat));
 	GetOpenGLError();
-	glUniformMatrix4fv(mMatrixLocation, 1, this->transposeMatrices, glm::value_ptr(transfoMat[0]));
+	glUniformMatrix4fv(this->vMatrixLocation, 1, GL_FALSE, &mvMat[0]);
 	GetOpenGLError();
-	glUniformMatrix4fv(vMatrixLocation, 1, this->transposeMatrices, &mvMat[0]);
+	glUniformMatrix4fv(this->pMatrixLocation, 1, GL_FALSE, &pMat[0]);
 	GetOpenGLError();
-	glUniformMatrix4fv(pMatrixLocation, 1, this->transposeMatrices, &pMat[0]);
-	GetOpenGLError();
-	glUniform3fv(texOffsetLocation, 1, &this->positionNormalized[0]);
+	glUniform4fv(this->lightPosLocation, 1, glm::value_ptr(lightPos));
 	GetOpenGLError();
 
+	GLint current_vao = 0;
+	glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &current_vao);
 	glBindVertexArray(this->vaoHandle);
+	std::cerr << "ISpace : attempting to bind a VAO of ID " << this->vaoHandle << " after VAO bound before was : " << current_vao << '\n';
 	GetOpenGLError();
 
 	this->setupVAOPointers();
 
-	glDrawArrays(GL_POINTS, 0, this->vertPos.size());
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboElementHandle);
 	GetOpenGLError();
+
+	glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(this->vertIdx.size()), GL_UNSIGNED_INT, (void*)0);
+	GetOpenGLError();
+
 	glBindVertexArray(0);
 	GetOpenGLError();
 	glUseProgram(0);
@@ -427,31 +434,28 @@ void Scene::generateGrid(std::size_t _x, std::size_t _y, std::size_t _z) {
 }
 
 void Scene::setupVBOData() {
-	glBindVertexArray(this->vaoHandle);
-	GetOpenGLError();
-	if (glIsVertexArray(this->vaoHandle) == GL_FALSE) { throw std::runtime_error("Was not a valid VAO handle !"); }
+	if (glIsVertexArray(this->vaoHandle) == GL_FALSE) { throw std::runtime_error("The vao handle generated by OpenGL has been invalidated !"); }
 	GetOpenGLError();
 	///////////////////////////////////////////////
 	/// CREATE VBO AND UPLOAD DATA
 	///////////////////////////////////////////////
 	glGenBuffers(1, &this->vboVertPosHandle);
-	GetOpenGLError();
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboVertPosHandle);
-	GetOpenGLError();
 	glBufferData(GL_ARRAY_BUFFER, this->vertPos.size()*sizeof(glm::vec4), this->vertPos.data(), GL_STATIC_DRAW);
 	GetOpenGLError();
 
+	glGenBuffers(1, &this->vboVertNormHandle);
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboVertNormHandle);
+	glBufferData(GL_ARRAY_BUFFER, this->vertNorm.size()*sizeof(glm::vec4), this->vertNorm.data(), GL_STATIC_DRAW);
+	GetOpenGLError();
+
 	glGenBuffers(1, &this->vboUVCoordHandle);
-	GetOpenGLError();
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboUVCoordHandle);
-	GetOpenGLError();
 	glBufferData(GL_ARRAY_BUFFER, this->vertTex.size()*sizeof(glm::vec3), this->vertTex.data(), GL_STATIC_DRAW);
 	GetOpenGLError();
 
 	glGenBuffers(1, &this->vboElementHandle);
-	GetOpenGLError();
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboElementHandle);
-	GetOpenGLError();
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->vertIdx.size()*sizeof(unsigned char), this->vertIdx.data(), GL_STATIC_DRAW);
 	GetOpenGLError();
 
@@ -465,17 +469,18 @@ void Scene::setupVBOData() {
 
 void Scene::setupVAOPointers() const {
 	glEnableVertexAttribArray(0);
-	GetOpenGLError();
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboVertPosHandle);
-	GetOpenGLError();
 	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
 	GetOpenGLError();
 
 	glEnableVertexAttribArray(1);
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboVertNormHandle);
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
 	GetOpenGLError();
+
+	glEnableVertexAttribArray(2);
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboUVCoordHandle);
-	GetOpenGLError();
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 	GetOpenGLError();
 }
 
@@ -484,14 +489,23 @@ void Scene::generateGrid_Only(std::size_t _x, std::size_t _y, std::size_t _z) {
 	this->neighborHeight =_y;
 	this->neighborDepth = _z;
 
+	// make float versions ofthe sizes :
+	float f_x = static_cast<float>(_x+1);
+	float f_y = static_cast<float>(_y+1);
+	float f_z = static_cast<float>(_z+1);
+
+	glm::vec4 center = glm::vec4(f_x/2.f, f_y/2.f, f_z/2.f, 1.f);
+
 	// Create the grid, in raw form :
 	for (std::size_t i = 0; i <= _z; ++i) {
 		for (std::size_t j = 0; j <= _y; ++j) {
 			for (std::size_t k = 0; k <= _x; ++k) {
-				this->vertPos.emplace_back(static_cast<float>(k), static_cast<float>(j), static_cast<float>(i), 1.f);
-				float xtex = static_cast<float>(k) / static_cast<float>(_x);
-				float ytex = static_cast<float>(j) / static_cast<float>(_y);
-				float ztex = static_cast<float>(i) / static_cast<float>(_z);
+				glm::vec4 vPos = glm::vec4(static_cast<float>(k), static_cast<float>(j), static_cast<float>(i), 1.f);
+				this->vertPos.push_back(vPos);
+				float xtex = static_cast<float>(k) / f_x;
+				float ytex = static_cast<float>(j) / f_y;
+				float ztex = static_cast<float>(i) / f_z;
+				this->vertNorm.push_back(center - vPos);
 				this->vertTex.emplace_back(xtex, ytex, ztex);
 			}
 		}

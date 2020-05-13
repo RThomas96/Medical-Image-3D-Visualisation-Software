@@ -6,7 +6,7 @@ INCLUDE(./cmake/CMakeSetup.cmake)
 # Find libQGLViewer :
 INCLUDE(./cmake/FindQGLViewer.cmake)
 
-FIND_PACKAGE(Qt5 REQUIRED COMPONENTS Core Gui Widgets Multimedia Xml OpenGL)
+FIND_PACKAGE(Qt5 REQUIRED COMPONENTS Core Gui Widgets Xml OpenGL)
 FIND_PACKAGE(OpenGL REQUIRED)
 FIND_PACKAGE(GLEW REQUIRED)
 FIND_PACKAGE(glm REQUIRED)

@@ -6,6 +6,7 @@
 #include <QKeyEvent>
 #include <fstream>
 
+#ifndef USE_SCENE_DATA
 Viewer::Viewer(QWidget* parent) : QGLViewer(parent) {
 	this->format().setVersion(4, 1);
 	this->setMinimumSize(QSize(350,350));
@@ -46,11 +47,28 @@ Viewer::Viewer(QWidget* parent) : QGLViewer(parent) {
 	this->frameCount1 = 0;
 	this->frameCount2 = 0;
 }
+#else
+Viewer::Viewer(Scene* const scene, bool isLeftOrRight, QWidget* parent) : QGLViewer(parent), scene(scene), isRealSpace(isLeftOrRight) {
+	this->setAxisIsDrawn();
+	this->setGridIsDrawn();
+}
+#endif
 
 void Viewer::init() {
+	#ifndef USE_SCENE_DATA
 	this->initGLVariables(3,3,3);
+#else
+	this->scene->initGl(2,2,2);
+	glm::vec3 bbDiag = this->scene->getSceneBoundaries();
+	float sceneSize = glm::length(bbDiag);
+	this->setSceneRadius(sceneSize);
+	// center scene on center of grid
+	this->setSceneCenter(qglviewer::Vec(bbDiag.x/2., bbDiag.y/2., bbDiag.z/2.));
+	this->showEntireScene();
+#endif
 }
 
+#ifndef USE_SCENE_DATA
 void Viewer::initGLVariables(std::size_t _x, std::size_t _y, std::size_t _z) {
 	if (this->isInitialized == true) { return; }
 	this->isInitialized = true;
@@ -313,31 +331,30 @@ void Viewer::queryImage() {
 
 	this->loadImage(i, j, k, image);
 }
+#endif
 
 void Viewer::draw() {
-	//GetOpenGLError();
-	//glEnable(GL_DEPTH_TEST);
-	//GetOpenGLError();
-	//glEnable(GL_TEXTURE_3D);
-	GetOpenGLError();
-
 	GLfloat mvMat[16];
 	GLfloat pMat[16];
 
-	this->setSceneCenter(qglviewer::Vec(.0,.0,.0));
 	this->camera()->getModelViewMatrix(mvMat);
 	this->camera()->getProjectionMatrix(pMat);
 
-	this->drawRealSpace(mvMat, pMat);
+	if (isRealSpace) {
+		this->scene->drawRealSpace(mvMat, pMat);
+	} else {
+		this->scene->drawInitialSpace(mvMat, pMat);
+	}
 }
 
+#ifndef USE_SCENE_DATA
 void Viewer::drawRealSpace(GLfloat *mvMat, GLfloat *pMat, bool bDrawWireframe) const {
 	GetOpenGLError();
 	glUseProgram(this->programHandle);
 
 	GetOpenGLError();
 
-	glm::mat4 transfoMat = glm::mat4();
+	glm::mat4 transfoMat = glm::mat4(1.0);
 	if (this->drawRealVoxelSize) {
 		transfoMat *= glm::scale(glm::vec3(0.39, 0.39, 1.927));
 	}
@@ -371,7 +388,7 @@ void Viewer::drawRealSpace(GLfloat *mvMat, GLfloat *pMat, bool bDrawWireframe) c
 
 //	glUniform1i(texDataLocation, 0);
 //	GetOpenGLError();
-	glUniformMatrix4fv(mMatrixLocation, 1, this->transposeMatrices, glm::value_ptr(transfoMat[0]));
+	glUniformMatrix4fv(mMatrixLocation, 1, this->transposeMatrices, glm::value_ptr(transfoMat));
 	GetOpenGLError();
 	glUniformMatrix4fv(vMatrixLocation, 1, this->transposeMatrices, &mvMat[0]);
 	GetOpenGLError();
@@ -521,6 +538,13 @@ void Viewer::generateGrid_Only(std::size_t _x, std::size_t _y, std::size_t _z) {
 	this->neighborHeight =_y;
 	this->neighborDepth = _z;
 
+	// make float versions ofthe sizes :
+	float f_x = static_cast<float>(_x+1);
+	float f_y = static_cast<float>(_y+1);
+	float f_z = static_cast<float>(_z+1);
+
+	glm::vec4 center = glm::vec4(f_x/2.f, f_y/2.f, f_z/2.f, 1.f);
+
 	// Create the grid, in raw form :
 	for (std::size_t i = 0; i <= _z; ++i) {
 		for (std::size_t j = 0; j <= _y; ++j) {
@@ -642,6 +666,7 @@ glm::vec3 Viewer::getSceneBoundaries() const {
 		static_cast<float>(std::max(this->gridDepth, this->neighborDepth))
 	);
 }
+#endif
 
 void Viewer::keyPressEvent(QKeyEvent *e) {
 	switch (e->key()) {
@@ -649,7 +674,11 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 			this->update();
 		break;
 		case Qt::Key::Key_R:
+			#ifndef USE_SCENE_DATA
 			this->compileShaders();
+			#else
+			this->scene->compileShaders();
+			#endif
 			this->update();
 		break;
 		default:

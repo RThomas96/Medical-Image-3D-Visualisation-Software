@@ -2,6 +2,7 @@
 
 in vec4 vPos_WS;
 in vec4 vNorm_WS;
+in vec3 texCoord;
 
 in vec4 vPos_CS;
 in vec4 vNorm_CS;

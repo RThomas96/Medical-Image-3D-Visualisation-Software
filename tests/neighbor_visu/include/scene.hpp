@@ -1,12 +1,13 @@
 #ifndef TESTS_NEIGHBOR_VISU_INCLUDE_SCENE_HPP_
 #define TESTS_NEIGHBOR_VISU_INCLUDE_SCENE_HPP_
 
-#include "gl/GLHandler/include/ShaderObject.hpp"
-#include "gl/GLHandler/include/ProgramObject.hpp"
-#include "gl/GLHandler/include/VAOObject.hpp"
+//#include "gl/GLHandler/include/ShaderObject.hpp"
+//#include "gl/GLHandler/include/ProgramObject.hpp"
+//#include "gl/GLHandler/include/VAOObject.hpp"
 
 #include "image/include/bulk_texture_loader.hpp"
 
+#include <GL/glew.h>
 #include <QGLViewer/qglviewer.h>
 #include <glm/glm.hpp>
 
@@ -57,7 +58,7 @@ class Scene {
 		~Scene(void); ///< default destructor
 
 		// initialize the variables of the scene
-		void initGl(QOpenGLContext* const context, std::size_t _x = 1, std::size_t _y = 1, std::size_t _z = 1);
+		void initGl(std::size_t _x = 1, std::size_t _y = 1, std::size_t _z = 1);
 
 		void toggleRealVoxelSize();
 
@@ -65,8 +66,6 @@ class Scene {
 		void queryImage(void);
 
 		glm::vec3 getSceneBoundaries(void) const;
-
-		void toggleTransposeMatrices(void) { this->transposeMatrices = !this->transposeMatrices; }
 
 		// public functions :
 		void drawRealSpace(GLfloat mvMat[], GLfloat pMat[], bool bDrawWireframe = false) const;
@@ -87,8 +86,6 @@ class Scene {
 
 		GLuint textureHandle; ///< handle for glTexImage3D
 
-		GLboolean transposeMatrices; ///< do we need to transpose matrices ?
-
 		glm::vec3 positionNormalized; ///< uniform location
 
 		std::size_t gridWidth; ///< grid size
@@ -100,8 +97,15 @@ class Scene {
 
 		bool drawRealVoxelSize; ///< do we need to draw the voxels to their real sizes ?
 
+		// Uniform locations :
+		GLint mMatrixLocation;
+		GLint vMatrixLocation;
+		GLint pMatrixLocation;
+		GLint lightPosLocation;
+
 		QOpenGLContext* context;
 		GLuint vboVertPosHandle;
+		GLuint vboVertNormHandle;
 		GLuint vboUVCoordHandle;
 		GLuint vboElementHandle;
 		GLuint vaoHandle;
@@ -112,10 +116,9 @@ class Scene {
 		std::size_t elemToDrawSeq;
 
 		std::vector<glm::vec4> vertPos;
+		std::vector<glm::vec4> vertNorm;
 		std::vector<glm::vec3> vertTex;
-		std::vector<unsigned char> vertIdx;
-		mutable std::size_t frameCount1;
-		mutable std::size_t frameCount2;
+		std::vector<unsigned int> vertIdx;
 	private:
 		void loadEmptyImage();
 		void generateGrid_Only(std::size_t _x, std::size_t _y, std::size_t _z);

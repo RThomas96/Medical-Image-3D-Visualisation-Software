@@ -9,15 +9,21 @@
 // TODO : test the class
 // TODO : work on shaders
 
+#define USE_SCENE_DATA
+
 class Viewer : public QGLViewer {
 		Q_OBJECT
 	public:
+#ifndef USE_SCENE_DATA
 		Viewer(QWidget* parent = nullptr);
+#else
+		Viewer(Scene* const scene, bool _isRealSpace, QWidget* parent = nullptr);
+#endif
 	protected:
 		virtual void init() override;
 		virtual void draw() override;
 		virtual void keyPressEvent(QKeyEvent* e) override;
-
+#ifndef USE_SCENE_DATA
 		void initGLVariables(std::size_t _x = 1, std::size_t _y = 1, std::size_t _z = 1);
 
 		void loadImage(std::size_t i, std::size_t j, std::size_t k, const unsigned char* pData = nullptr);
@@ -26,8 +32,6 @@ class Viewer : public QGLViewer {
 		void generateGrid(std::size_t _x, std::size_t _y, std::size_t _z);
 
 		glm::vec3 getSceneBoundaries(void) const;
-
-		void toggleTransposeMatrices(void) { this->transposeMatrices = !this->transposeMatrices; }
 
 		// public functions :
 		void drawRealSpace(GLfloat mvMat[], GLfloat pMat[], bool bDrawWireframe = false) const;
@@ -39,7 +43,10 @@ class Viewer : public QGLViewer {
 		void setupVAOPointers() const;
 
 		void cleanup(void); ///< cleanup function for vbo and other parts
+		void toggleTransposeMatrices(void) { this->transposeMatrices = !this->transposeMatrices; }
+#endif
 	private:
+#ifndef USE_SCENE_DATA
 		bulk_texture_loader* loader; ///< texture loader
 
 		GLuint textureHandle; ///< handle for glTexImage3D
@@ -79,6 +86,10 @@ class Viewer : public QGLViewer {
 
 		void loadEmptyImage();
 		void generateGrid_Only(std::size_t _x, std::size_t _y, std::size_t _z);
+#else
+		Scene* const scene;
+		bool isRealSpace;
+#endif
 };
 
 #endif // TESTS_NEIGHBOR_VISU_INCLUDE_VIEWER_HPP_

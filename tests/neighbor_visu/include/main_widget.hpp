@@ -18,7 +18,7 @@ class MainWidget : public QWidget {
 		bool eventFilter(QObject* obj, QEvent* e) override;
 	private:
 		Viewer* leftViewer;
-		//Viewer* rightViewer;
+		Viewer* rightViewer;
 		Scene* scene;
 		ControlPanel* controlPanel;
 		bool widgetSizeSet; ///< checks if the widget size has been set before
