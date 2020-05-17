@@ -51,8 +51,4 @@ void ControlPanel::initSignals(DoubleViewerWidget *viewer) {
 		// TODO : Handle this more gracefully, without requiring an exception.
 #endif
 	}
-//	connect(this->xCoordSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), viewer, &DoubleViewerWidget::controlPanelXCoordChanged);
-//	connect(this->yCoordSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), viewer, &DoubleViewerWidget::controlPanelYCoordChanged);
-//	connect(this->zCoordSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), viewer, &DoubleViewerWidget::controlPanelZCoordChanged);
-//	connect(this->updateCoordsButton, &QPushButton::pressed, viewer, &DoubleViewerWidget::requestPositionUpdate);
 }

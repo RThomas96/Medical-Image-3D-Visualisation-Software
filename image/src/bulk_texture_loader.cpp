@@ -53,6 +53,9 @@ unsigned char* bulk_texture_loader::load_stack_from_folder() {
 	QStringList file_names = QFileDialog::getOpenFileNames(nullptr, "Open TIF images", "../../", "TIFF Image files (*.tif *.tiff)");
 	// If no files are selected, return a null pointer :
 	if (file_names.size() == 0) {
+		this->image_depth= 0;
+		this->image_height = 0;
+		this->image_width = 0;
 		return nullptr;
 	}
 

@@ -13,16 +13,18 @@ MainWidget::MainWidget() {
 
 void MainWidget::setupWidgets() {
 	this->scene = new Scene();
-	this->leftViewer = new Viewer(this->scene, false);
-	this->rightViewer = new Viewer(this->scene, false);
-	this->controlPanel = new ControlPanel();
+
+	this->leftViewer = new Viewer(this->scene, true);
+	this->rightViewer = new Viewer(this->scene, true);
+
+	this->controlPanel = new ControlPanel(this->scene, this->leftViewer, this->rightViewer, nullptr);
+	this->scene->setControlPanel(this->controlPanel);
 
 	QHBoxLayout* viewerLayout = new QHBoxLayout();
 	viewerLayout->addWidget(this->leftViewer);
 	viewerLayout->addWidget(this->rightViewer);
 
 	QVBoxLayout* mainLayout = new QVBoxLayout();
-	//mainLayout->addWidget(this->leftViewer);
 	mainLayout->addLayout(viewerLayout);
 	mainLayout->addWidget(this->controlPanel);
 	mainLayout->setAlignment(this->controlPanel, Qt::AlignHCenter);

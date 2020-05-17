@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QSpinBox>
 #include <QPushButton>
+#include <QCheckBox>
 
 class DoubleViewerWidget; // Forward declaration
 
@@ -31,6 +32,9 @@ class ControlPanel : public QWidget {
 
 		//! @brief Update button, to update the neighbor search in the viewer
 		QPushButton* updateCoordsButton;
+
+		//! @brief Checkbox to show the texture cube or not
+		QCheckBox* showTexCubeCheckBox;
 
 	private:
 		//! @brief Initializes the signal connections for the control panel.

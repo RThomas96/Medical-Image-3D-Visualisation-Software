@@ -3,7 +3,7 @@
 
 #include "./viewer.hpp"
 #include "./scene.hpp"
-#include "./control_panel.hpp"
+#include "./scene_control.hpp"
 
 #include <QWidget>
 #include <QGLViewer/qglviewer.h>

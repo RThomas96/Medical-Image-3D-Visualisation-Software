@@ -126,6 +126,7 @@ TARGET_LINK_LIBRARIES(visualisation
 ADD_EXECUTABLE(neighbor_visu
 	# Header files, for Qt MOCS compilation :
 	./tests/neighbor_visu/include/control_panel.hpp
+	./tests/neighbor_visu/include/scene_control.hpp
 	./tests/neighbor_visu/include/main_widget.hpp
 	./tests/neighbor_visu/include/scene.hpp
 	./tests/neighbor_visu/include/viewer.hpp
@@ -136,6 +137,7 @@ ADD_EXECUTABLE(neighbor_visu
 
 	# Source files :
 	./tests/neighbor_visu/src/control_panel.cpp
+	./tests/neighbor_visu/src/scene_control.cpp
 	./tests/neighbor_visu/src/main_widget.cpp
 	./tests/neighbor_visu/src/scene.cpp
 	./tests/neighbor_visu/src/viewer.cpp

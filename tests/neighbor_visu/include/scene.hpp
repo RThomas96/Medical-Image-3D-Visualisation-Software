@@ -7,14 +7,12 @@
 
 #include "image/include/bulk_texture_loader.hpp"
 
-#include <GL/glew.h>
+#include <QOpenGLFunctions_4_0_Core>
 #include <QGLViewer/qglviewer.h>
 #include <glm/glm.hpp>
 
 #include <vector>
 #include <mutex>
-
-#define RAW_GL
 
 #if not defined( NDEBUG )
 	#define GetOpenGLError() __GetOpenGLError( ( char* )__FILE__, ( int )__LINE__ )
@@ -46,47 +44,57 @@ inline int __GetOpenGLError ( char* szFile, int iLine )
 		glErr = glGetError();
 		retCode = 1;
 	}
-	if (retCode) {
-		//exit(EXIT_FAILURE);
-	}
+//	if (retCode) {
+//		exit(EXIT_FAILURE);
+//	}
+	return retCode;
 }
 
-class Scene {
+class ControlPanel; // forward declaration
 
+class Scene : public QOpenGLFunctions_4_0_Core {
 	public:
 		Scene(void); ///< default constructor
 		~Scene(void); ///< default destructor
 
+		void setControlPanel(ControlPanel* cp) { this->controlPanel = cp; }
+
 		// initialize the variables of the scene
-		void initGl(std::size_t _x = 1, std::size_t _y = 1, std::size_t _z = 1);
+		void initGl(QOpenGLContext* context, std::size_t _x = 1, std::size_t _y = 1, std::size_t _z = 1);
 
-		void toggleRealVoxelSize();
+		void compileShaders();
+		void setupVBOData();
+		void setupVAOPointers();
 
-		void loadImage(std::size_t i, std::size_t j, std::size_t k, const unsigned char* pData = nullptr);
+		void drawRealSpace(GLfloat mvMat[], GLfloat pMat[], bool bDrawWireframe = false);
+		void drawInitialSpace(GLfloat mvMat[], GLfloat pMat[], bool bDrawWireframe = false);
+
 		void queryImage(void);
+		void loadImage(std::size_t i, std::size_t j, std::size_t k, const unsigned char* pData = nullptr);
+
+		void toggleRealVoxelSize(bool showReal) { this->drawRealVoxelSize = showReal; }
+		void togglePolygonMode(bool showPolygon) { this->polygonMode = showPolygon ? GL_FILL : GL_LINE; }
+		void toggleTexCubeVisibility(bool visibility) { this->showTextureCube = visibility; }
+		void toggleTexCubeVisibility() { this->toggleTexCubeVisibility(!this->showTextureCube); }
 
 		glm::vec3 getSceneBoundaries(void) const;
-
-		// public functions :
-		void drawRealSpace(GLfloat mvMat[], GLfloat pMat[], bool bDrawWireframe = false) const;
-		void drawInitialSpace(GLfloat mvMat[], GLfloat pMat[], bool bDrawWireframe = false) const;
-		void compileShaders();
-
-		void setupVBOData();
-
-		void setupVAOPointers() const;
 
 		void cleanup(void); ///< cleanup function for vbo and other parts
 		bool isInitialized; ///< tracks if the scene was initialized or not
 
+		// Simili-slots (this scene cannot be a QObject, as such we cannot have slot/signals) :
+
+		void slotTogglePolygonMode(bool show);
+		void slotToggleShowTextureCube(bool show);
+		void slotSetTextureXCoord(int newXCoord);
+		void slotSetTextureYCoord(int newYCoord);
+		void slotSetTextureZCoord(int newZCoord);
 	protected:
 		void generateGrid(std::size_t _x, std::size_t _y, std::size_t _z);
 
+		QOpenGLContext* context; ///< context given by the viewers
 		bulk_texture_loader* loader; ///< texture loader
-
-		GLuint textureHandle; ///< handle for glTexImage3D
-
-		glm::vec3 positionNormalized; ///< uniform location
+		ControlPanel* controlPanel; ///< pointer to the control panel
 
 		std::size_t gridWidth; ///< grid size
 		std::size_t gridHeight; ///< grid size
@@ -95,15 +103,31 @@ class Scene {
 		std::size_t neighborHeight; ///< neighborhood size
 		std::size_t neighborDepth; ///< neighborhood size
 
+		std::size_t renderSize;
+		bool showTextureCube;
+
+		// Generated data (positions, normals, texture
+		// coordinates, and indexed draw order) :
+		std::vector<glm::vec4> vertPos;
+		std::vector<glm::vec4> vertNorm;
+		std::vector<glm::vec3> vertTex;
+		std::vector<unsigned int> vertIdx;
+
 		bool drawRealVoxelSize; ///< do we need to draw the voxels to their real sizes ?
+
+		glm::vec3 neighborOffset;
+
+		// OpenGL data :
 
 		// Uniform locations :
 		GLint mMatrixLocation;
 		GLint vMatrixLocation;
 		GLint pMatrixLocation;
+		GLint texDataLocation;
 		GLint lightPosLocation;
+		GLint neighborOffsetLocation;
 
-		QOpenGLContext* context;
+		GLuint textureHandle; ///< handle for glTexImage3D
 		GLuint vboVertPosHandle;
 		GLuint vboVertNormHandle;
 		GLuint vboUVCoordHandle;
@@ -112,16 +136,11 @@ class Scene {
 		GLuint vShaHandle;
 		GLuint fShaHandle;
 		GLuint programHandle;
-		std::size_t elemToDrawIdx;
-		std::size_t elemToDrawSeq;
-
-		std::vector<glm::vec4> vertPos;
-		std::vector<glm::vec4> vertNorm;
-		std::vector<glm::vec3> vertTex;
-		std::vector<unsigned int> vertIdx;
+		GLenum polygonMode;
 	private:
-		void loadEmptyImage();
-		void generateGrid_Only(std::size_t _x, std::size_t _y, std::size_t _z);
+		void generateTexCube(void);
+		const unsigned char* loadEmptyImage();
+		void generateNeighborGrid(std::size_t _x, std::size_t _y, std::size_t _z);
 };
 
 #endif // TESTS_NEIGHBOR_VISU_INCLUDE_SCENE_HPP_
