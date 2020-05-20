@@ -52,7 +52,14 @@ inline int __GetOpenGLError ( char* szFile, int iLine )
 
 class ControlPanel; // forward declaration
 
+typedef struct neighborCoordinates {
+	union {glm::vec3 origin, startingPoint, o;};
+	union {glm::vec3 limit, endPoint, p;};
+} nbCoord;
+
 class Scene : public QOpenGLFunctions_4_0_Core {
+		typedef glm::vec<4, unsigned int, glm::defaultp> uvec4;
+		typedef glm::vec<3, int, glm::defaultp> ivec3;
 	public:
 		Scene(void); ///< default constructor
 		~Scene(void); ///< default destructor
@@ -78,6 +85,8 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void toggleTexCubeVisibility() { this->toggleTexCubeVisibility(!this->showTextureCube); }
 
 		glm::vec3 getSceneBoundaries(void) const;
+		glm::vec3 getTexCubeBoundaries(bool realSpace) const;
+		nbCoord getNeighborBoundaries(bool realSpace) const;
 
 		void cleanup(void); ///< cleanup function for vbo and other parts
 		bool isInitialized; ///< tracks if the scene was initialized or not
@@ -96,6 +105,10 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		bulk_texture_loader* loader; ///< texture loader
 		ControlPanel* controlPanel; ///< pointer to the control panel
 
+		bool hasQuery;
+		glm::vec3 query;
+		std::vector<glm::vec3> queryResults;
+
 		std::size_t gridWidth; ///< grid size
 		std::size_t gridHeight; ///< grid size
 		std::size_t gridDepth; ///< grid size
@@ -104,18 +117,20 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		std::size_t neighborDepth; ///< neighborhood size
 
 		std::size_t renderSize;
-		bool showTextureCube;
+		bool showTextureCube; ///< does the user want to show the texture cube ?
+		bool cubeShown; ///< is the texture cube shown ?
 
 		// Generated data (positions, normals, texture
 		// coordinates, and indexed draw order) :
 		std::vector<glm::vec4> vertPos;
 		std::vector<glm::vec4> vertNorm;
-		std::vector<glm::vec3> vertTex;
 		std::vector<unsigned int> vertIdx;
+		std::vector<uvec4> vertIdxDraw;
+		uint drawCalls;
 
 		bool drawRealVoxelSize; ///< do we need to draw the voxels to their real sizes ?
 
-		glm::vec3 neighborOffset;
+		ivec3 neighborOffset;
 
 		// OpenGL data :
 
@@ -127,20 +142,25 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		GLint lightPosLocation;
 		GLint neighborOffsetLocation;
 
-		GLuint textureHandle; ///< handle for glTexImage3D
 		GLuint vboVertPosHandle;
 		GLuint vboVertNormHandle;
-		GLuint vboUVCoordHandle;
 		GLuint vboElementHandle;
+		GLuint vboIndexedDrawHandle;
 		GLuint vaoHandle;
 		GLuint vShaHandle;
 		GLuint fShaHandle;
 		GLuint programHandle;
+
+		GLuint textureHandle; ///< handle for glTexImage3D
 		GLenum polygonMode;
 	private:
 		void generateTexCube(void);
 		const unsigned char* loadEmptyImage();
 		void generateNeighborGrid(std::size_t _x, std::size_t _y, std::size_t _z);
+		void prepUniforms(glm::mat4 transfoMat, GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos);
+		void showTexCubeVBO();
+		void hideTexCubeVBO();
+		glm::mat4 computeTransformationMatrix() const;
 };
 
 #endif // TESTS_NEIGHBOR_VISU_INCLUDE_SCENE_HPP_

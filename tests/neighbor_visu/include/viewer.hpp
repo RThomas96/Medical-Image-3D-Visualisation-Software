@@ -9,6 +9,13 @@
 // TODO : test the class
 // TODO : work on shaders
 
+enum FocusStates {
+	NoFocus,
+	TextureFocus,
+	NeighborFocus,
+	DefaultFocus = TextureFocus,
+};
+
 class Viewer : public QGLViewer {
 		Q_OBJECT
 	public:
@@ -20,6 +27,11 @@ class Viewer : public QGLViewer {
 	private:
 		Scene* const scene;
 		bool isRealSpace;
+		FocusStates focusType;
+
+		void updateTextureFocus();
+	public slots:
+		void setFocusState(int state);
 };
 
 #endif // TESTS_NEIGHBOR_VISU_INCLUDE_VIEWER_HPP_

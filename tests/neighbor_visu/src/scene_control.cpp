@@ -12,7 +12,8 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, Viewer* rv, QWidget* 
 	this->ySlider = new QSlider(Qt::Horizontal);
 	this->zSlider = new QSlider(Qt::Horizontal);
 	// Create checkbox :
-	this->toggleTexCubeCheckbox = new QCheckBox("Toogle texture cube");
+	this->toggleTexCubeCheckbox = new QCheckBox("Show texture cube");
+	this->toggleTexCubeCheckbox->setCheckState(Qt::Unchecked);
 	// Create the container widget :
 	this->controlContainer = new QWidget();
 
@@ -72,6 +73,11 @@ void ControlPanel::initSignals() {
 
 void ControlPanel::activatePanels(bool activeStatus) {
 	this->controlContainer->setEnabled(activeStatus);
+	if (activeStatus) {
+		this->controlContainer->show();
+	} else {
+		this->controlContainer->hide();
+	}
 	this->update();
 }
 
@@ -83,8 +89,10 @@ void ControlPanel::setImageBoundaries(int bounds[6]) {
 
 	if (bounds[1] == 0) {
 		this->controlContainer->setEnabled(false);
+		this->controlContainer->hide();
 	} else {
 		this->controlContainer->setEnabled(true);
+		this->controlContainer->show();
 	}
 
 	// Sets the range of the sliders based on image size :
@@ -113,13 +121,13 @@ void ControlPanel::setXCoord(int coordX) {
 }
 
 void ControlPanel::setYCoord(int coordY) {
-	this->sceneToControl->slotSetTextureXCoord(coordY);
+	this->sceneToControl->slotSetTextureYCoord(coordY);
 	this->leftViewer->update();
 	this->rightViewer->update();
 }
 
 void ControlPanel::setZCoord(int coordZ) {
-	this->sceneToControl->slotSetTextureXCoord(coordZ);
+	this->sceneToControl->slotSetTextureZCoord(coordZ);
 	this->leftViewer->update();
 	this->rightViewer->update();
 }

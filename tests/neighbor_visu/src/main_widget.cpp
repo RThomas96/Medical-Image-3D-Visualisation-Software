@@ -15,7 +15,7 @@ void MainWidget::setupWidgets() {
 	this->scene = new Scene();
 
 	this->leftViewer = new Viewer(this->scene, true);
-	this->rightViewer = new Viewer(this->scene, true);
+	this->rightViewer = new Viewer(this->scene, false);
 
 	this->controlPanel = new ControlPanel(this->scene, this->leftViewer, this->rightViewer, nullptr);
 	this->scene->setControlPanel(this->controlPanel);
