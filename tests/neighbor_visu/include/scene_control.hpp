@@ -5,6 +5,7 @@
 #include <QSlider>
 #include <QCheckBox>
 #include <QPushButton>
+#include <QDoubleSpinBox>
 
 #include <iostream>
 
@@ -23,18 +24,18 @@ class ControlPanel : public QWidget {
 		void setImageBoundaries(int bounds[6]);
 	private:
 		Scene* const sceneToControl;
-		QSlider* xSlider;
-		QSlider* ySlider;
-		QSlider* zSlider;
+		QDoubleSpinBox* xSlider;
+		QDoubleSpinBox* ySlider;
+		QDoubleSpinBox* zSlider;
 		QCheckBox* toggleTexCubeCheckbox;
 		QWidget* controlContainer;
 		Viewer* leftViewer;
 		Viewer* rightViewer;
 
 	public slots:
-		void setXCoord(int coordX);
-		void setYCoord(int coordY);
-		void setZCoord(int coordZ);
+		void setXCoord(double coordX);
+		void setYCoord(double coordY);
+		void setZCoord(double coordZ);
 		void setTexCube(bool show);
 };
 

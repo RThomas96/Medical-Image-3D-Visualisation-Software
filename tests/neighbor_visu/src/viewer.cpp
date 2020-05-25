@@ -14,7 +14,7 @@ Viewer::Viewer(Scene* const scene, bool isLeftOrRight, QWidget* parent) : QGLVie
 
 void Viewer::init() {
 	this->makeCurrent();
-	this->scene->initGl(this->context(), 2, 2, 2);
+	this->scene->initGl(this->context(), 3, 3, 3);
 
 	if (this->focusType == FocusStates::TextureFocus) {
 		glm::vec3 bbDiag = this->scene->getTexCubeBoundaries(this->isRealSpace);
@@ -69,6 +69,10 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 		break;
 		case Qt::Key::Key_F:
 			this->scene->toggleTexCubeVisibility();
+			this->update();
+		break;
+		case Qt::Key::Key_E:
+			this->scene->togglePolygonMode();
 			this->update();
 		break;
 		case Qt::Key::Key_N : {

@@ -80,7 +80,8 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void loadImage(std::size_t i, std::size_t j, std::size_t k, const unsigned char* pData = nullptr);
 
 		void toggleRealVoxelSize(bool showReal) { this->drawRealVoxelSize = showReal; }
-		void togglePolygonMode(bool showPolygon) { this->polygonMode = showPolygon ? GL_FILL : GL_LINE; }
+		void togglePolygonMode(bool showPolygon) { this->polygonMode == showPolygon ? GL_FILL : GL_LINE; }
+		void togglePolygonMode() { this->polygonMode == GL_LINE ? GL_FILL : GL_LINE; }
 		void toggleTexCubeVisibility(bool visibility) { this->showTextureCube = visibility; }
 		void toggleTexCubeVisibility() { this->toggleTexCubeVisibility(!this->showTextureCube); }
 

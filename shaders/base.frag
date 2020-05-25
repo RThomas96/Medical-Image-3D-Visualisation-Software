@@ -17,7 +17,7 @@ uniform usampler3D texData;
 /// Takes a uvec3 of an R8UI-based texture and spits out an RGB color by converting
 // from R(uchar)G(void)B(void) to HSV first, then to RGB
 vec4 R8UIToRGB(in uvec3 ucolor) {
-	float a = 0.f / 255.f;
+	float a = 5.f / 255.f;
 	float b = 255.f / 255.f;
 	float c = 50.f / 255.f;
 	float d = 200.f / 255.f;

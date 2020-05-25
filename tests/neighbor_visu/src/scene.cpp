@@ -41,6 +41,7 @@ Scene::Scene(void) {
 	this->vShaHandle = 0;
 	this->fShaHandle = 0;
 	this->programHandle = 0;
+	this->polygonMode = GL_FILL;
 
 	this->polygonMode = GL_FILL;
 
@@ -72,7 +73,7 @@ void Scene::initGl(QOpenGLContext* _context, std::size_t _x, std::size_t _y, std
 	this->initializeOpenGLFunctions();
 
 	this->loader = new bulk_texture_loader();
-	this->loader->enable_downsampling(false);
+	this->loader->enable_downsampling(true);
 
 	///////////////////////////
 	/// CREATE VAO :
@@ -378,6 +379,8 @@ void Scene::drawRealSpace(GLfloat mvMat[], GLfloat pMat[], bool bDrawWireframe) 
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboElementHandle);
 
+	glPolygonMode(GL_FRONT_AND_BACK, this->polygonMode);
+
 	if (this->showTextureCube == true) {
 		if (this->cubeShown == false) { this->showTexCubeVBO(); }
 		glDrawElementsInstanced(GL_TRIANGLES, static_cast<GLsizei>(this->renderSize), GL_UNSIGNED_INT, (void*)0, static_cast<GLsizei>(this->drawCalls));
@@ -416,6 +419,8 @@ void Scene::drawInitialSpace(GLfloat mvMat[], GLfloat pMat[], bool bDrawWirefram
 	this->setupVAOPointers();
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboElementHandle);
+
+	glPolygonMode(GL_FRONT_AND_BACK, this->polygonMode);
 
 	if (this->showTextureCube) {
 		if (this->cubeShown == false) { this->showTexCubeVBO(); }
@@ -659,9 +664,18 @@ void Scene::slotSetTextureZCoord(int newZCoord) {
 }
 
 glm::mat4 Scene::computeTransformationMatrix() const {
-	glm::mat4 transfoMat = glm::mat4(1.0) * glm::scale(glm::vec3(0.39, 0.39, 1.927));
-	transfoMat[2][2] *= std::sqrt(2.);
+	glm::mat4 transfoMat = glm::mat4(1.0) ;
+
+	double angleDeg = 45.;
+	double angleRad = (angleDeg * M_PI) / 180.;
+	//transfoMat[0] = glm::vec4(1., .0, std::cos(M_PI/4.), .0);
+	transfoMat[0] = glm::vec4(1., .0, .0, .0);
+	transfoMat[2] = glm::vec4(std::sin(angleRad), .0, 1., .0);
+/*
+	transfoMat[1][1] = 0.39;
+	transfoMat[2][2] = 1.927 * std::sqrt(2.);
 	transfoMat[2][0] = 0.39 * std::sqrt(2.);
-	//transfoMat = glm::inverse(transfoMat);
+*/
+	//transfoMat = glm::transpose(transfoMat);
 	return transfoMat;
 }

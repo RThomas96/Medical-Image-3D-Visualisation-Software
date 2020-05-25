@@ -8,9 +8,9 @@
 
 ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, Viewer* rv, QWidget* parent) : QWidget(parent), sceneToControl(scene), leftViewer(lv), rightViewer(rv) {
 	// Create sliders :
-	this->xSlider = new QSlider(Qt::Horizontal);
-	this->ySlider = new QSlider(Qt::Horizontal);
-	this->zSlider = new QSlider(Qt::Horizontal);
+	this->xSlider = new QDoubleSpinBox();
+	this->ySlider = new QDoubleSpinBox();
+	this->zSlider = new QDoubleSpinBox();
 	// Create checkbox :
 	this->toggleTexCubeCheckbox = new QCheckBox("Show texture cube");
 	this->toggleTexCubeCheckbox->setCheckState(Qt::Unchecked);
@@ -49,12 +49,23 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, Viewer* rv, QWidget* 
 	this->xSlider->setMinimum(0);
 	this->xSlider->setMaximum(1);
 	this->xSlider->setValue(0);
+	this->xSlider->setDecimals(0);
+	this->xSlider->setStepType(QAbstractSpinBox::StepType::DefaultStepType);
+	this->xSlider->setSingleStep(1.0);
+
 	this->ySlider->setMinimum(0);
 	this->ySlider->setMaximum(1);
 	this->ySlider->setValue(0);
+	this->ySlider->setDecimals(0);
+	this->ySlider->setStepType(QAbstractSpinBox::StepType::DefaultStepType);
+	this->ySlider->setSingleStep(1.0);
+
 	this->zSlider->setMinimum(0);
 	this->zSlider->setMaximum(1);
 	this->zSlider->setValue(0);
+	this->zSlider->setDecimals(0);
+	this->zSlider->setStepType(QAbstractSpinBox::StepType::DefaultStepType);
+	this->zSlider->setSingleStep(1.0);
 
 	QHBoxLayout* mainLayout = new QHBoxLayout();
 	mainLayout->addWidget(this->controlContainer);
@@ -65,9 +76,9 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, Viewer* rv, QWidget* 
 }
 
 void ControlPanel::initSignals() {
-	connect(this->xSlider, &QSlider::valueChanged, this, &ControlPanel::setXCoord);
-	connect(this->ySlider, &QSlider::valueChanged, this, &ControlPanel::setYCoord);
-	connect(this->zSlider, &QSlider::valueChanged, this, &ControlPanel::setZCoord);
+	connect(this->xSlider, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &ControlPanel::setXCoord);
+	connect(this->ySlider, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &ControlPanel::setYCoord);
+	connect(this->zSlider, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &ControlPanel::setZCoord);
 	connect(this->toggleTexCubeCheckbox, &QCheckBox::clicked, this, &ControlPanel::setTexCube);
 }
 
@@ -114,20 +125,23 @@ void ControlPanel::setImageBoundaries(int bounds[6]) {
 	else if (oldZValue > this->zSlider->maximum()) { this->zSlider->setValue(this->zSlider->maximum()); }
 }
 
-void ControlPanel::setXCoord(int coordX) {
-	this->sceneToControl->slotSetTextureXCoord(coordX);
+void ControlPanel::setXCoord(double coordX) {
+	int co = static_cast<int>(coordX);
+	this->sceneToControl->slotSetTextureXCoord(co);
 	this->leftViewer->update();
 	this->rightViewer->update();
 }
 
-void ControlPanel::setYCoord(int coordY) {
-	this->sceneToControl->slotSetTextureYCoord(coordY);
+void ControlPanel::setYCoord(double coordY) {
+	int co = static_cast<int>(coordY);
+	this->sceneToControl->slotSetTextureYCoord(co);
 	this->leftViewer->update();
 	this->rightViewer->update();
 }
 
-void ControlPanel::setZCoord(int coordZ) {
-	this->sceneToControl->slotSetTextureZCoord(coordZ);
+void ControlPanel::setZCoord(double coordZ) {
+	int co = static_cast<int>(coordZ);
+	this->sceneToControl->slotSetTextureZCoord(co);
 	this->leftViewer->update();
 	this->rightViewer->update();
 }

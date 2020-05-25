@@ -58,7 +58,7 @@ void main(void) {
 		vec4 tz = vec4(.0, .0, fimgz*fidxz, .0);
 		vec4 tw = vec4(.0, .0, .0, 1.);
 		mat4 transform = mat4(tx, ty, tz, tw);
-		vPos = transform * vertexPosition;
+		vPos = transform * vertexPosition * (mMatrix);
 	} else {
 		// Float versions of ivec3's coordinates :
 		float fnbx = float(neighborOffset.x);
@@ -86,7 +86,7 @@ void main(void) {
 		// Position of the cube within the grid :
 		vec4 posInGrid = vec4(dis.x * fidxx, dis.y * fidxy, dis.z * fidxz, 0.);
 		// Final vertex position :
-		vPos = (basePos + posInGrid + vertexPosition) * mMatrix;
+		vPos = (basePos + posInGrid + vertexPosition) * (mMatrix);
 	}
 
 	gl_Position = mvp * vPos;
