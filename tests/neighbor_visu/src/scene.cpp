@@ -126,6 +126,7 @@ void Scene::initGl(QOpenGLContext* _context, std::size_t _x, std::size_t _y, std
 void Scene::compileShaders() {
 	glUseProgram(0);
 	glDeleteShader(this->vShaHandle);
+	glDeleteShader(this->gShaHandle);
 	glDeleteShader(this->fShaHandle);
 	glDeleteProgram(this->programHandle);
 	GetOpenGLError();
@@ -135,23 +136,33 @@ void Scene::compileShaders() {
 	///////////////////////////
 	this->vShaHandle = glCreateShader(GL_VERTEX_SHADER);
 	GetOpenGLError();
+	this->gShaHandle = glCreateShader(GL_GEOMETRY_SHADER);
+	GetOpenGLError();
 	this->fShaHandle = glCreateShader(GL_FRAGMENT_SHADER);
 	GetOpenGLError();
 
 	// shaderPaths shader paths
 	std::string vShaPath = "./shaders/base.vert";
+	std::string gShaPath = "./shaders/base.geom";
 	std::string fShaPath = "./shaders/base.frag";
 
 	// Open shader file for reading :
 	std::ifstream vShaFile = std::ifstream(vShaPath, std::ios_base::in);
+	std::ifstream gShaFile = std::ifstream(gShaPath, std::ios_base::in);
 	std::ifstream fShaFile = std::ifstream(fShaPath, std::ios_base::in);
 
 	if (!vShaFile.is_open()) {
 		std::cerr << "Error : could not get the contents of shader file " << vShaPath << '\n';
 		exit(EXIT_FAILURE);
 	}
+	if (!gShaFile.is_open()) {
+		vShaFile.close();
+		std::cerr << "Error : could not get the contents of shader file " << gShaPath << '\n';
+		exit(EXIT_FAILURE);
+	}
 	if (!fShaFile.is_open()) {
 		vShaFile.close();
+		gShaFile.close();
 		std::cerr << "Error : could not get the contents of shader file " << fShaPath << '\n';
 		exit(EXIT_FAILURE);
 	}
@@ -160,6 +171,9 @@ void Scene::compileShaders() {
 	vShaFile.seekg(0, vShaFile.end);
 	std::size_t vShaFileSize = static_cast<std::size_t>(vShaFile.tellg());
 	vShaFile.seekg(0, vShaFile.beg);
+	gShaFile.seekg(0, gShaFile.end);
+	std::size_t gShaFileSize = static_cast<std::size_t>(gShaFile.tellg());
+	gShaFile.seekg(0, gShaFile.beg);
 	fShaFile.seekg(0, fShaFile.end);
 	std::size_t fShaFileSize = static_cast<std::size_t>(fShaFile.tellg());
 	fShaFile.seekg(0, fShaFile.beg);
@@ -168,17 +182,23 @@ void Scene::compileShaders() {
 	char* vShaSource = new char[vShaFileSize+1];
 	vShaFile.read(vShaSource, vShaFileSize);
 	vShaSource[vShaFileSize] = '\0';
+	char* gShaSource = new char[gShaFileSize+1];
+	gShaFile.read(gShaSource, gShaFileSize);
+	gShaSource[gShaFileSize] = '\0';
 	char* fShaSource = new char[fShaFileSize+1];
 	fShaFile.read(fShaSource, fShaFileSize);
 	fShaSource[fShaFileSize] = '\0';
 
 	glShaderSource(this->vShaHandle, 1, const_cast<const char**>(&vShaSource), 0);
+	glShaderSource(this->gShaHandle, 1, const_cast<const char**>(&gShaSource), 0);
 	glShaderSource(this->fShaHandle, 1, const_cast<const char**>(&fShaSource), 0);
 
 	delete[] vShaSource;
+	delete[] gShaSource;
 	delete[] fShaSource;
 
 	vShaFile.close();
+	gShaFile.close();
 	fShaFile.close();
 
 	glCompileShader(this->vShaHandle);
@@ -204,6 +224,32 @@ void Scene::compileShaders() {
 			std::cerr << __PRETTY_FUNCTION__ << " : end Log ***********************************************" << '\n';
 		} else {
 			std::cerr << "No more info about shader " << vShaPath << '\n';
+		}
+	}
+
+	glCompileShader(this->gShaHandle);
+	GetOpenGLError();
+
+	{
+		GLint shaderInfoLength = 0;
+		GLint charsWritten = 0;
+		char* shaderInfoLog = nullptr;
+
+		glGetShaderiv(this->gShaHandle, GL_INFO_LOG_LENGTH, &shaderInfoLength);
+		if (shaderInfoLength > 1) {
+			std::cerr << __PRETTY_FUNCTION__ << " : start Log ***********************************************" << '\n';
+
+			std::cerr << __FUNCTION__ << " : Information about shader " << gShaPath << " : " << '\n';
+			std::cerr << __FUNCTION__ << " : Shader was a geometry shader ";
+			shaderInfoLog = new char[shaderInfoLength];
+			glGetShaderInfoLog(this->gShaHandle, shaderInfoLength, &charsWritten, shaderInfoLog);
+			GetOpenGLError();
+			std::cerr << shaderInfoLog << '\n';
+			delete[] shaderInfoLog;
+
+			std::cerr << __PRETTY_FUNCTION__ << " : end Log ***********************************************" << '\n';
+		} else {
+			std::cerr << "No more info about shader " << gShaPath << '\n';
 		}
 	}
 
@@ -239,6 +285,7 @@ void Scene::compileShaders() {
 	this->programHandle = glCreateProgram();
 	GetOpenGLError();
 	glAttachShader(this->programHandle, this->vShaHandle);
+	glAttachShader(this->programHandle, this->gShaHandle);
 	glAttachShader(this->programHandle, this->fShaHandle);
 
 	glLinkProgram(this->programHandle);
@@ -266,10 +313,12 @@ void Scene::compileShaders() {
 	}
 
 	glDetachShader(this->programHandle, this->vShaHandle);
+	glDetachShader(this->programHandle, this->gShaHandle);
 	glDetachShader(this->programHandle, this->fShaHandle);
 	GetOpenGLError();
 
 	glDeleteShader(this->vShaHandle);
+	glDeleteShader(this->gShaHandle);
 	glDeleteShader(this->fShaHandle);
 
 }
@@ -651,16 +700,28 @@ void Scene::slotToggleShowTextureCube(bool show) {
 	std::cerr << "Set tex cube to " << std::boolalpha << this->showTextureCube << std::noboolalpha << '\n';
 }
 
-void Scene::slotSetTextureXCoord(int newXCoord) {
+void Scene::slotSetNeighborXCoord(int newXCoord) {
 	this->neighborOffset.x = newXCoord;
 }
 
-void Scene::slotSetTextureYCoord(int newYCoord) {
+void Scene::slotSetNeighborYCoord(int newYCoord) {
 	this->neighborOffset.y = newYCoord;
 }
 
-void Scene::slotSetTextureZCoord(int newZCoord) {
+void Scene::slotSetNeighborZCoord(int newZCoord) {
 	this->neighborOffset.z = newZCoord;
+}
+
+void Scene::slotSetTextureXCoord(int newXCoord) {
+	//
+}
+
+void Scene::slotSetTextureYCoord(int newYCoord) {
+	//
+}
+
+void Scene::slotSetTextureZCoord(int newZCoord) {
+	//
 }
 
 glm::mat4 Scene::computeTransformationMatrix() const {

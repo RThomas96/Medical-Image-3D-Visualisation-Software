@@ -24,9 +24,12 @@ class ControlPanel : public QWidget {
 		void setImageBoundaries(int bounds[6]);
 	private:
 		Scene* const sceneToControl;
-		QDoubleSpinBox* xSlider;
-		QDoubleSpinBox* ySlider;
-		QDoubleSpinBox* zSlider;
+		QDoubleSpinBox* xPicker;
+		QDoubleSpinBox* yPicker;
+		QDoubleSpinBox* zPicker;
+		QSlider* xTex;
+		QSlider* yTex;
+		QSlider* zTex;
 		QCheckBox* toggleTexCubeCheckbox;
 		QWidget* controlContainer;
 		Viewer* leftViewer;
@@ -36,6 +39,9 @@ class ControlPanel : public QWidget {
 		void setXCoord(double coordX);
 		void setYCoord(double coordY);
 		void setZCoord(double coordZ);
+		void setXTexCoord(int coordX);
+		void setYTexCoord(int coordY);
+		void setZTexCoord(int coordZ);
 		void setTexCube(bool show);
 };
 

@@ -3,6 +3,8 @@
 in vec4 vPos_WS;
 in vec4 vNorm_WS;
 in vec3 texCoord;
+in vec3 barycentricCoords;
+in float largestDelta;
 
 in vec4 vPos_CS;
 in vec4 vNorm_CS;
@@ -42,6 +44,10 @@ void main(void)
 	// distance between lights and vt :
 	float dist = length(lightPos - vPos_WS);
 
+	float epsilon = (1./75.) * largestDelta;
+	float distMin = min(barycentricCoords.x, min(barycentricCoords.y, barycentricCoords.z));
+	vec4 wireframecolor = vec4(0., 0., 0., 1.);
+
 	vec4 n = normalize(vNorm_CS);
 	vec4 l = normalize(lightDir_CS);
 	float cosTheta = clamp(dot(n,l), 0.0, 1.0);
@@ -55,5 +61,9 @@ void main(void)
 	uvec3 ui = texture(texData, texCoord).rgb;
 	//color = vec4(float(ui.x)/255., float(ui.y)/255., float(ui.z)/255., 1.);
 	//color = vNorm_WS;
-	color = R8UIToRGB(ui);
+	if (distMin > epsilon) {
+		color = R8UIToRGB(ui);
+	} else {
+		color = wireframecolor;
+	}
 }

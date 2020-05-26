@@ -4,14 +4,14 @@ layout(location=0) in vec4 vertexPosition;
 layout(location=1) in vec4 vertexNormal;
 layout(location=2) in uvec4 voxelIndex;
 
-out vec4 vPos_WS;
-out vec4 vNorm_WS;
-out vec3 texCoord;
+out vec4 vPos_WS_VS;
+out vec4 vNorm_WS_VS;
+out vec3 texCoord_VS;
 
-out vec4 vPos_CS;
-out vec4 vNorm_CS;
-out vec4 lightDir_CS;
-out vec4 eyeDir_CS;
+out vec4 vPos_CS_VS;
+out vec4 vNorm_CS_VS;
+out vec4 lightDir_CS_VS;
+out vec4 eyeDir_CS_VS;
 
 uniform mat4 mMatrix;
 uniform mat4 vMatrix;
@@ -27,15 +27,15 @@ void main(void) {
 	// Inverse of transpose of model matrix for normals, computed once :
 	mat4 minverse = transpose(inverse(mMatrix));
 
-	vNorm_WS = minverse * (normalize(vertexNormal));
+	vNorm_WS_VS = minverse * (normalize(vertexNormal));
 
-	vPos_CS = vMatrix * mMatrix * vertexPosition;
-	vNorm_CS = vMatrix * minverse * normalize(vertexNormal);
+	vPos_CS_VS = vMatrix * mMatrix * vertexPosition;
+	vNorm_CS_VS = vMatrix * minverse * normalize(vertexNormal);
 
-	eyeDir_CS = (vPos_CS - vec4(.0,.0,.0,.0));
+	eyeDir_CS_VS = (vPos_CS_VS - vec4(.0,.0,.0,.0));
 	// Camera space position of the light source :
 	vec4 lightPos_CS = vMatrix * lightPos;
-	lightDir_CS = lightPos_CS + eyeDir_CS;
+	lightDir_CS_VS = lightPos_CS + eyeDir_CS_VS;
 
 	// Float versions of program data :
 	float fimgx = float(imageSize.x);
@@ -51,14 +51,14 @@ void main(void) {
 
 	if (gl_InstanceID == 0) {
 		// For the texture cube, at instance 0, we display the whole texture :
-		texCoord = vertexPosition.xyz;
+		texCoord_VS = vertexPosition.xyz;
 		// The transformation matrix for it to show the true texture size :
 		vec4 tx = vec4(fimgx*fidxx, .0, .0, .0);
 		vec4 ty = vec4(.0, fimgy*fidxy, .0, .0);
 		vec4 tz = vec4(.0, .0, fimgz*fidxz, .0);
 		vec4 tw = vec4(.0, .0, .0, 1.);
 		mat4 transform = mat4(tx, ty, tz, tw);
-		vPos = transform * vertexPosition * (mMatrix);
+		vPos = transform * vertexPosition;
 	} else {
 		// Float versions of ivec3's coordinates :
 		float fnbx = float(neighborOffset.x);
@@ -74,7 +74,7 @@ void main(void) {
 		// Tex offset within the neighborhood 'cube' :
 		vec3 baseTexCoord = neighborhoodBaseTexCoord + vec3(fidxx * texCoordX, fidxy * texCoordY, fidxz * texCoordZ);
 		// Tex coordinate of the vertex :
-		texCoord = vec3(baseTexCoord.x + vertexPosition.x * texCoordX,
+		texCoord_VS = vec3(baseTexCoord.x + vertexPosition.x * texCoordX,
 				baseTexCoord.y + vertexPosition.y * texCoordY,
 				baseTexCoord.z + vertexPosition.z * texCoordZ);
 		// NOTE	: the displacement for a pixel is given by vec3(1,1,1) * mMatrix + displacementSlice (TODO : fix this, might be wrong)
@@ -86,9 +86,9 @@ void main(void) {
 		// Position of the cube within the grid :
 		vec4 posInGrid = vec4(dis.x * fidxx, dis.y * fidxy, dis.z * fidxz, 0.);
 		// Final vertex position :
-		vPos = (basePos + posInGrid + vertexPosition) * (mMatrix);
+		vPos = (basePos + posInGrid + vertexPosition) ;
 	}
 
 	gl_Position = mvp * vPos;
-	vPos_WS = mMatrix * vPos;
+	vPos_WS_VS = mMatrix * vPos;
 }

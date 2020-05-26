@@ -52,9 +52,7 @@ void Viewer::draw() {
 	this->camera()->getProjectionMatrix(pMat);
 
 	if (isRealSpace) {
-		this->setSceneCenter(qglviewer::Vec(.0, .0, .0));
-		this->setSceneRadius(std::sqrt(3.));
-		this->scene->drawRealSpace(mvMat, pMat, this->applyMatrix);
+		this->scene->drawRealSpace(mvMat, pMat);
 	} else {
 		this->scene->drawInitialSpace(mvMat, pMat);
 	}

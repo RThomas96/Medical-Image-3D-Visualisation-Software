@@ -96,6 +96,9 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 
 		void slotTogglePolygonMode(bool show);
 		void slotToggleShowTextureCube(bool show);
+		void slotSetNeighborXCoord(int newXCoord);
+		void slotSetNeighborYCoord(int newYCoord);
+		void slotSetNeighborZCoord(int newZCoord);
 		void slotSetTextureXCoord(int newXCoord);
 		void slotSetTextureYCoord(int newYCoord);
 		void slotSetTextureZCoord(int newZCoord);
@@ -149,6 +152,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		GLuint vboIndexedDrawHandle;
 		GLuint vaoHandle;
 		GLuint vShaHandle;
+		GLuint gShaHandle;
 		GLuint fShaHandle;
 		GLuint programHandle;
 
