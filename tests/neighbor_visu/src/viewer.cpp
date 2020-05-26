@@ -52,7 +52,9 @@ void Viewer::draw() {
 	this->camera()->getProjectionMatrix(pMat);
 
 	if (isRealSpace) {
-		this->scene->drawRealSpace(mvMat, pMat);
+		this->setSceneCenter(qglviewer::Vec(.0, .0, .0));
+		this->setSceneRadius(std::sqrt(3.));
+		this->scene->drawRealSpace(mvMat, pMat, this->applyMatrix);
 	} else {
 		this->scene->drawInitialSpace(mvMat, pMat);
 	}
@@ -65,6 +67,10 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 		break;
 		case Qt::Key::Key_R:
 			this->scene->compileShaders();
+			this->update();
+		break;
+		case Qt::Key::Key_1:
+			this->applyMatrix = !this->applyMatrix;
 			this->update();
 		break;
 		case Qt::Key::Key_F:

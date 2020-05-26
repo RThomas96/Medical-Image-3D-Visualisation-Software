@@ -668,14 +668,12 @@ glm::mat4 Scene::computeTransformationMatrix() const {
 
 	double angleDeg = 45.;
 	double angleRad = (angleDeg * M_PI) / 180.;
-	//transfoMat[0] = glm::vec4(1., .0, std::cos(M_PI/4.), .0);
-	transfoMat[0] = glm::vec4(1., .0, .0, .0);
-	transfoMat[2] = glm::vec4(std::sin(angleRad), .0, 1., .0);
-/*
+
+	transfoMat[0][0] = 0.39 * std::cos(angleRad);
+	transfoMat[0][2] = 0.39* std::sin(angleRad);
 	transfoMat[1][1] = 0.39;
-	transfoMat[2][2] = 1.927 * std::sqrt(2.);
-	transfoMat[2][0] = 0.39 * std::sqrt(2.);
-*/
+	transfoMat[2][2] = 1.927 * std::cos(angleRad);
+
 	//transfoMat = glm::transpose(transfoMat);
 	return transfoMat;
 }

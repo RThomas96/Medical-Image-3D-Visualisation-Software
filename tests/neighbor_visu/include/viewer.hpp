@@ -27,6 +27,7 @@ class Viewer : public QGLViewer {
 	private:
 		Scene* const scene;
 		bool isRealSpace;
+		bool applyMatrix;
 		FocusStates focusType;
 
 		void updateTextureFocus();
