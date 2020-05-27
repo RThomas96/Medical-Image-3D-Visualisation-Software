@@ -75,10 +75,6 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 			this->scene->toggleTexCubeVisibility();
 			this->update();
 		break;
-		case Qt::Key::Key_E:
-			this->scene->togglePolygonMode();
-			this->update();
-		break;
 		case Qt::Key::Key_N : {
 			this->focusType = FocusStates::NeighborFocus;
 			nbCoord c = this->scene->getNeighborBoundaries(this->isRealSpace);
@@ -90,6 +86,18 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 			this->setSceneCenter(qglviewer::Vec(center.x, center.y, center.z));
 			this->showEntireScene();
 		}
+		break;
+		case Qt::Key::Key_F1:
+			this->scene->setDrawModeSolid();
+			this->update();
+		break;
+		case Qt::Key::Key_F2:
+			this->scene->setDrawModeSolidAndWireframe();
+			this->update();
+		break;
+		case Qt::Key::Key_F3:
+			this->scene->setDrawModeWireframe();
+			this->update();
 		break;
 		case Qt::Key::Key_T:
 			this->focusType = FocusStates::DefaultFocus;

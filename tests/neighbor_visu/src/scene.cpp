@@ -30,7 +30,6 @@ Scene::Scene(void) {
 
 	this->drawCalls = 0;
 
-	this->drawRealVoxelSize = false;
 	this->isInitialized = false;
 
 	this->textureHandle = 0;
@@ -41,9 +40,6 @@ Scene::Scene(void) {
 	this->vShaHandle = 0;
 	this->fShaHandle = 0;
 	this->programHandle = 0;
-	this->polygonMode = GL_FILL;
-
-	this->polygonMode = GL_FILL;
 
 	this->neighborOffset = ivec3(0, 0, 0);
 
@@ -391,6 +387,17 @@ void Scene::prepUniforms(glm::mat4 transfoMat, GLfloat* mvMat, GLfloat* pMat, gl
 	glUniform3ui(imgLoc, gridWidth, gridHeight, gridDepth);
 	glUniform3i(this->neighborOffsetLocation, this->neighborOffset.x, this->neighborOffset.y, this->neighborOffset.z);
 
+	GLint modeLoc = glGetUniformLocation(this->programHandle, "drawMode");
+	if (modeLoc < 0) {
+		std::cerr << "Could not find draw mode uniform !" << '\n';
+	} else {
+		if (this->drawMode == DrawMode::Solid) {
+			glUniform1ui(modeLoc, 0);
+		} else {
+			glUniform1ui(modeLoc, 1);
+		}
+	}
+
 	glUniform1i(this->texDataLocation, 0);
 	GetOpenGLError();
 	glUniformMatrix4fv(this->mMatrixLocation, 1, GL_FALSE, glm::value_ptr(transfoMat));
@@ -428,7 +435,11 @@ void Scene::drawRealSpace(GLfloat mvMat[], GLfloat pMat[], bool bDrawWireframe) 
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboElementHandle);
 
-	glPolygonMode(GL_FRONT_AND_BACK, this->polygonMode);
+	if (this->drawMode == DrawMode::Wireframe) {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	} else {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
 
 	if (this->showTextureCube == true) {
 		if (this->cubeShown == false) { this->showTexCubeVBO(); }
@@ -469,7 +480,11 @@ void Scene::drawInitialSpace(GLfloat mvMat[], GLfloat pMat[], bool bDrawWirefram
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboElementHandle);
 
-	glPolygonMode(GL_FRONT_AND_BACK, this->polygonMode);
+	if (this->drawMode == DrawMode::Wireframe) {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	} else {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
 
 	if (this->showTextureCube) {
 		if (this->cubeShown == false) { this->showTexCubeVBO(); }
@@ -689,10 +704,6 @@ void Scene::showTexCubeVBO() {
 //	this->vboIndexedDraw->bind();
 //	this->vboIndexedDraw->updateData(static_cast<GLintptr>(0), 3u*sizeof(uint), newData);
 //	this->vboIndexedDraw->unBind();
-}
-
-void Scene::slotTogglePolygonMode(bool status) {
-	this->togglePolygonMode(status);
 }
 
 void Scene::slotToggleShowTextureCube(bool show) {

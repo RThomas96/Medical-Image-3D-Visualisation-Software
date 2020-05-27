@@ -20,6 +20,12 @@
 	#define GetOpenGLError()
 #endif
 
+enum DrawMode {
+	Solid,
+	SolidAndWireframe,
+	Wireframe
+};
+
 inline int __GetOpenGLError ( char* szFile, int iLine )
 {
 	int    retCode = 0;
@@ -79,15 +85,16 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void queryImage(void);
 		void loadImage(std::size_t i, std::size_t j, std::size_t k, const unsigned char* pData = nullptr);
 
-		void toggleRealVoxelSize(bool showReal) { this->drawRealVoxelSize = showReal; }
-		void togglePolygonMode(bool showPolygon) { this->polygonMode == showPolygon ? GL_FILL : GL_LINE; }
-		void togglePolygonMode() { this->polygonMode == GL_LINE ? GL_FILL : GL_LINE; }
 		void toggleTexCubeVisibility(bool visibility) { this->showTextureCube = visibility; }
 		void toggleTexCubeVisibility() { this->toggleTexCubeVisibility(!this->showTextureCube); }
 
 		glm::vec3 getSceneBoundaries(void) const;
 		glm::vec3 getTexCubeBoundaries(bool realSpace) const;
 		nbCoord getNeighborBoundaries(bool realSpace) const;
+
+		void setDrawModeSolid() { this->drawMode = DrawMode::Solid; }
+		void setDrawModeSolidAndWireframe() { this->drawMode = DrawMode::SolidAndWireframe; }
+		void setDrawModeWireframe() { this->drawMode = DrawMode::Wireframe; }
 
 		void cleanup(void); ///< cleanup function for vbo and other parts
 		bool isInitialized; ///< tracks if the scene was initialized or not
@@ -132,9 +139,8 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		std::vector<uvec4> vertIdxDraw;
 		uint drawCalls;
 
-		bool drawRealVoxelSize; ///< do we need to draw the voxels to their real sizes ?
-
 		ivec3 neighborOffset;
+		DrawMode drawMode;
 
 		// OpenGL data :
 
@@ -157,7 +163,6 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		GLuint programHandle;
 
 		GLuint textureHandle; ///< handle for glTexImage3D
-		GLenum polygonMode;
 	private:
 		void generateTexCube(void);
 		const unsigned char* loadEmptyImage();
