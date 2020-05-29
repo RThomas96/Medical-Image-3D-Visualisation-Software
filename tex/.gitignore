@@ -3,3 +3,8 @@
 *.blg
 *.fls
 *.synctex.gz
+*.aux
+*.log
+*.pdf
+*.out
+*.toc
