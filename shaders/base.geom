@@ -25,9 +25,9 @@ noperspective out vec4 lightDir_CS;
 noperspective out vec4 eyeDir_CS;
 
 void main() {
-	vec3 p0 = vec3(gl_in[0].gl_Position.x, gl_in[0].gl_Position.y, gl_in[0].gl_Position.z);
-	vec3 p1 = vec3(gl_in[1].gl_Position.x, gl_in[1].gl_Position.y, gl_in[1].gl_Position.z);
-	vec3 p2 = vec3(gl_in[2].gl_Position.x, gl_in[2].gl_Position.y, gl_in[2].gl_Position.z);
+	vec3 p0 = vec3(vPos_CS_VS[0].x, vPos_CS_VS[0].y, vPos_CS_VS[0].z);
+	vec3 p1 = vec3(vPos_CS_VS[1].x, vPos_CS_VS[1].y, vPos_CS_VS[1].z);
+	vec3 p2 = vec3(vPos_CS_VS[2].x, vPos_CS_VS[2].y, vPos_CS_VS[2].z);
 	vec3 e1 = normalize(p1 - p0);
 	vec3 e2 = normalize(p2 - p1);
 	vec3 e3 = normalize(p0 - p2);
@@ -37,9 +37,9 @@ void main() {
 	vec3 p0e2 = p1 + dot((p0-p1), e2) / dot(e2, e2) * e2;
 	// project point 1 on e3
 	vec3 p1e3 = p0 + dot((p1-p2), e3) / dot(e3, e3) * e3;
-	float dist_p2e1 = length(p2e1);
-	float dist_p0e2 = length(p2e1);
-	float dist_p1e3 = length(p2e1);
+	float dist_p2e1 = length(p2 - p2e1);
+	float dist_p0e2 = length(p0 - p0e2);
+	float dist_p1e3 = length(p1 - p1e3);
 	float maxDelta = max(dist_p0e2, max(dist_p1e3, dist_p2e1));
 	gl_Position = gl_in[0].gl_Position;
 	barycentricCoords = vec3(dist_p0e2, .0, .0);

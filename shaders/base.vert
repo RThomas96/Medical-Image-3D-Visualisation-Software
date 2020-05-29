@@ -18,6 +18,7 @@ uniform mat4 vMatrix;
 uniform mat4 pMatrix;
 uniform vec4 lightPos; // will always be worldspace here !
 
+uniform uint scaledCubes;
 uniform uvec3 imageSize;
 uniform ivec3 neighborOffset;
 
@@ -25,17 +26,13 @@ void main(void) {
 	// ModelViewProjection matrix :
 	mat4 mvp = pMatrix * vMatrix * mMatrix;
 	// Inverse of transpose of model matrix for normals, computed once :
-	mat4 minverse = transpose(inverse(mMatrix));
+	mat4 iMatrix = inverse(mMatrix);
+	mat4 minverse = transpose(iMatrix);
 
-	vNorm_WS_VS = minverse * (normalize(vertexNormal));
-
-	vPos_CS_VS = vMatrix * mMatrix * vertexPosition;
-	vNorm_CS_VS = vMatrix * minverse * normalize(vertexNormal);
-
-	eyeDir_CS_VS = (vPos_CS_VS - vec4(.0,.0,.0,.0));
 	// Camera space position of the light source :
 	vec4 lightPos_CS = vMatrix * lightPos;
-	lightDir_CS_VS = lightPos_CS + eyeDir_CS_VS;
+	vNorm_WS_VS = minverse * (normalize(vertexNormal));
+	vNorm_CS_VS = vMatrix * minverse * normalize(vertexNormal);
 
 	// Float versions of program data :
 	float fimgx = float(imageSize.x);
@@ -49,17 +46,18 @@ void main(void) {
 	// Contains the position of the vertex after transform :
 	vec4 vPos = vec4(.0,.0,.0,.0);
 
-	if (gl_InstanceID == 0) {
+	if (gl_InstanceID < scaledCubes) {
 		// For the texture cube, at instance 0, we display the whole texture :
 		texCoord_VS = vertexPosition.xyz;
 		// The transformation matrix for it to show the true texture size :
-		vec4 tx = vec4(fimgx*fidxx, .0, .0, .0);
-		vec4 ty = vec4(.0, fimgy*fidxy, .0, .0);
-		vec4 tz = vec4(.0, .0, fimgz*fidxz, .0);
+		vec4 tx = vec4(fidxx, .0, .0, .0);
+		vec4 ty = vec4(.0, fidxy, .0, .0);
+		vec4 tz = vec4(.0, .0, fidxz, .0);
 		vec4 tw = vec4(.0, .0, .0, 1.);
 		mat4 transform = mat4(tx, ty, tz, tw);
 		vPos = transform * vertexPosition;
 	} else {
+		//if (voxelIndex.w == 0u) {
 		// Float versions of ivec3's coordinates :
 		float fnbx = float(neighborOffset.x);
 		float fnby = float(neighborOffset.y);
@@ -89,6 +87,16 @@ void main(void) {
 		vPos = (basePos + posInGrid + vertexPosition) ;
 	}
 
-	gl_Position = mvp * vPos;
-	vPos_WS_VS = mMatrix * vPos;
+	//if (voxelIndex.w == 0u) {
+		gl_Position = mvp * vPos;
+		vPos_WS_VS = mMatrix * vPos;
+		vPos_CS_VS = vMatrix * mMatrix * vPos;
+	//} else {
+	//	gl_Position = pMatrix * vMatrix * iMatrix * vPos;
+	//	vPos_WS_VS = iMatrix * vPos;
+	//	vPos_CS_VS = vMatrix * iMatrix * vPos;
+	//}
+
+	eyeDir_CS_VS = (vPos_CS_VS - vec4(.0,.0,.0,.0));
+	lightDir_CS_VS = lightPos_CS + eyeDir_CS_VS;
 }

@@ -16,6 +16,8 @@
 Scene::Scene(void) {
 	this->loader = nullptr;
 	this->controlPanel = nullptr;
+	this->imgStore = nullptr;
+	this->mesh = nullptr;
 
 	this->gridWidth = 0;
 	this->gridHeight = 0;
@@ -49,7 +51,7 @@ Scene::Scene(void) {
 	this->pMatrixLocation = -1;
 	this->lightPosLocation = -1;
 	this->neighborOffsetLocation = -1;
-
+	this->scaledCubes = 1;
 }
 
 Scene::~Scene(void) {
@@ -70,6 +72,9 @@ void Scene::initGl(QOpenGLContext* _context, std::size_t _x, std::size_t _y, std
 
 	this->loader = new bulk_texture_loader();
 	this->loader->enable_downsampling(true);
+
+	this->mesh = new InspectingMesh();
+	this->mesh->setTransformationMatrix(this->computeTransformationMatrix());
 
 	///////////////////////////
 	/// CREATE VAO :
@@ -326,7 +331,9 @@ void Scene::loadImage(std::size_t i, std::size_t j, std::size_t k, const unsigne
 	this->gridHeight= j;
 	this->gridDepth = k;
 
-	if (pData == nullptr) { this->loadEmptyImage(); }
+	if (pData == nullptr) { pData = this->loadEmptyImage(); }
+
+	this->imgStore = new ImageStorage(this->gridWidth, this->gridHeight, this->gridDepth, pData);
 
 	if (this->textureHandle == 0) {
 		glGenTextures(1, &this->textureHandle);
@@ -393,11 +400,19 @@ void Scene::prepUniforms(glm::mat4 transfoMat, GLfloat* mvMat, GLfloat* pMat, gl
 	} else {
 		if (this->drawMode == DrawMode::Solid) {
 			glUniform1ui(modeLoc, 0);
-		} else {
+		} else if (this->drawMode == DrawMode::SolidAndWireframe) {
 			glUniform1ui(modeLoc, 1);
+		} else {
+			glUniform1ui(modeLoc, 2);
 		}
 	}
 
+	GLint scaledLoc = glGetUniformLocation(this->programHandle, "scaledCubes");
+	if (scaledLoc < 0) {
+		std::cerr << "Cannot find scaled cubes !" << '\n';
+	} else {
+		glUniform1ui(scaledLoc, this->scaledCubes);
+	}
 	glUniform1i(this->texDataLocation, 0);
 	GetOpenGLError();
 	glUniformMatrix4fv(this->mMatrixLocation, 1, GL_FALSE, glm::value_ptr(transfoMat));
@@ -407,7 +422,6 @@ void Scene::prepUniforms(glm::mat4 transfoMat, GLfloat* mvMat, GLfloat* pMat, gl
 }
 
 void Scene::drawRealSpace(GLfloat mvMat[], GLfloat pMat[], bool bDrawWireframe) {
-	std::cerr << "Drawing " << this->drawCalls << " instances" << '\n';
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_TEXTURE_3D);
 	GetOpenGLError();
@@ -435,11 +449,11 @@ void Scene::drawRealSpace(GLfloat mvMat[], GLfloat pMat[], bool bDrawWireframe) 
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboElementHandle);
 
-	if (this->drawMode == DrawMode::Wireframe) {
+	/*if (this->drawMode == DrawMode::Wireframe) {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	} else {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	}
+	}*/
 
 	if (this->showTextureCube == true) {
 		if (this->cubeShown == false) { this->showTexCubeVBO(); }
@@ -456,6 +470,7 @@ void Scene::drawRealSpace(GLfloat mvMat[], GLfloat pMat[], bool bDrawWireframe) 
 void Scene::drawInitialSpace(GLfloat mvMat[], GLfloat pMat[], bool bDrawWireframe) {
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_TEXTURE_3D);
+	GetOpenGLError();
 
 	bDrawWireframe = true;
 
@@ -470,8 +485,10 @@ void Scene::drawInitialSpace(GLfloat mvMat[], GLfloat pMat[], bool bDrawWirefram
 	//////////////////
 
 	glUseProgram(this->programHandle);
+	GetOpenGLError();
 
 	this->prepUniforms(transfoMat, mvMat, pMat, lightPos);
+	GetOpenGLError();
 
 	glBindVertexArray(this->vaoHandle);
 	GetOpenGLError();
@@ -480,11 +497,11 @@ void Scene::drawInitialSpace(GLfloat mvMat[], GLfloat pMat[], bool bDrawWirefram
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboElementHandle);
 
-	if (this->drawMode == DrawMode::Wireframe) {
+	/*if (this->drawMode == DrawMode::Wireframe) {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	} else {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	}
+	}*/
 
 	if (this->showTextureCube) {
 		if (this->cubeShown == false) { this->showTexCubeVBO(); }
@@ -698,7 +715,7 @@ void Scene::hideTexCubeVBO() {
 void Scene::showTexCubeVBO() {
 	this->cubeShown = true;
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboIndexedDrawHandle);
-	GLuint newData[] = {static_cast<GLuint>(1), static_cast<GLuint>(1), static_cast<GLuint>(1)};
+	GLuint newData[] = {static_cast<GLuint>(this->gridWidth), static_cast<GLuint>(this->gridHeight), static_cast<GLuint>(this->gridDepth)};
 	glBufferSubData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(0), 3u*sizeof(unsigned int), newData);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 //	this->vboIndexedDraw->bind();
@@ -724,28 +741,42 @@ void Scene::slotSetNeighborZCoord(int newZCoord) {
 }
 
 void Scene::slotSetTextureXCoord(int newXCoord) {
-	//
+	this->neighborPos.x = newXCoord;
+	this->queryNeighborsOfPoint();
 }
 
 void Scene::slotSetTextureYCoord(int newYCoord) {
-	//
+	this->neighborPos.y = newYCoord;
+	this->queryNeighborsOfPoint();
 }
 
 void Scene::slotSetTextureZCoord(int newZCoord) {
-	//
+	this->neighborPos.z = newZCoord;
+	this->queryNeighborsOfPoint();
+}
+
+void Scene::queryNeighborsOfPoint() {
+	std::cerr << "Queried point ! " << this->neighborPos.x << ',' << this->neighborPos.y << ',' << this->neighborPos.z << '\n';
+	glm::vec3 origin(static_cast<float>(this->neighborPos.x), static_cast<float>(this->neighborPos.y), static_cast<float>(this->neighborPos.z));
+	this->mesh->setOrigin(origin);
 }
 
 glm::mat4 Scene::computeTransformationMatrix() const {
-	glm::mat4 transfoMat = glm::mat4(1.0) ;
+	glm::mat4 transfoMat = glm::mat4(1.0);
 
 	double angleDeg = 45.;
 	double angleRad = (angleDeg * M_PI) / 180.;
 
 	transfoMat[0][0] = 0.39 * std::cos(angleRad);
-	transfoMat[0][2] = 0.39* std::sin(angleRad);
+	transfoMat[0][2] = 0.39 * std::sin(angleRad);
 	transfoMat[1][1] = 0.39;
 	transfoMat[2][2] = 1.927 * std::cos(angleRad);
 
-	//transfoMat = glm::transpose(transfoMat);
+	if (angleDeg < 0.) {
+		// compute translation along Z :
+		float w = static_cast<float>(this->gridWidth) *	.39;
+		transfoMat[3][2] = w * std::abs(std::sin(angleRad));
+	}
+
 	return transfoMat;
 }

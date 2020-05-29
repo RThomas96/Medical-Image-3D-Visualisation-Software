@@ -7,6 +7,9 @@
 
 #include "image/include/bulk_texture_loader.hpp"
 
+#include "./image_storage.hpp"
+#include "./inspecting_mesh.hpp"
+
 #include <QOpenGLFunctions_4_0_Core>
 #include <QGLViewer/qglviewer.h>
 #include <glm/glm.hpp>
@@ -115,10 +118,8 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		QOpenGLContext* context; ///< context given by the viewers
 		bulk_texture_loader* loader; ///< texture loader
 		ControlPanel* controlPanel; ///< pointer to the control panel
-
-		bool hasQuery;
-		glm::vec3 query;
-		std::vector<glm::vec3> queryResults;
+		ImageStorage* imgStore; ///< stores image data
+		InspectingMesh* mesh; ///< creates a mesh around the queried point
 
 		std::size_t gridWidth; ///< grid size
 		std::size_t gridHeight; ///< grid size
@@ -138,8 +139,10 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		std::vector<unsigned int> vertIdx;
 		std::vector<uvec4> vertIdxDraw;
 		uint drawCalls;
+		uint scaledCubes;
 
 		ivec3 neighborOffset;
+		ivec3 neighborPos;
 		DrawMode drawMode;
 
 		// OpenGL data :
@@ -171,6 +174,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void showTexCubeVBO();
 		void hideTexCubeVBO();
 		glm::mat4 computeTransformationMatrix() const;
+		void queryNeighborsOfPoint();
 };
 
 #endif // TESTS_NEIGHBOR_VISU_INCLUDE_SCENE_HPP_

@@ -13,7 +13,7 @@ in vec4 eyeDir_CS;
 
 out vec4 color;
 
-uniform unsigned int drawMode;
+uniform uint drawMode;
 
 uniform vec4 lightPos;
 uniform usampler3D texData;
@@ -61,12 +61,17 @@ void main(void)
 	//color = vNorm_WS;
 	if (distMin > epsilon) {
 		basecolor = R8UIToRGB(ui);
+		if (drawMode == 2) {
+			basecolor = vec4(.3, .3, .3, .0);
+		}
 	} else {
-		float colorRatio = (drawMode == 2u) ? (1.) : (1. - ((distMin/epsilon < .33 || distMin/epsilon > .66) ? 1. : .0));
+		float colorRatio = (drawMode == 2u) ? (.3) : (1. - ((distMin/epsilon < .33 || distMin/epsilon > .66) ? 1. : .0));
 		basecolor = (drawMode == 0u) ? R8UIToRGB(ui) : vec4(colorRatio, colorRatio, colorRatio, 1.);
 	}
 	vec4 fragDif = matDifColor * lightColor * lightPower * cosTheta / pow(dist,2.0); fragDif.w = .0;
 	vec4 fragSpe = (matSpeColor * lightColor * lightPower * pow(cosAlpha,5.0)) / pow(dist,2.0); fragSpe.w = .0;
 
 	color = basecolor + fragDif + fragSpe;
+
+	if (basecolor.a < 0.1) { discard; } // if transparent, discard and show other behind
 }
