@@ -72,7 +72,7 @@ void Scene::initGl(QOpenGLContext* _context, std::size_t _x, std::size_t _y, std
 	this->texStorage = new TextureStorage();
 	this->texStorage->enableDownsampling(true);
 
-	this->mesh = new InspectingMesh();
+	this->mesh = new TetMesh(this->texStorage);
 	this->mesh->setTransformationMatrix(this->computeTransformationMatrix());
 
 	///////////////////////////
@@ -370,10 +370,10 @@ void Scene::loadImage(std::size_t i, std::size_t j, std::size_t k, const unsigne
 void Scene::queryImage(void) {
 	this->texStorage->loadImages();
 	std::vector<unsigned char> image = this->texStorage->getData();
-	std::size_t* imageSizes = this->texStorage->getImageSize();
-	std::size_t& i = imageSizes[0];
-	std::size_t& j = imageSizes[1];
-	std::size_t& k = imageSizes[2];
+	std::vector<std::size_t> imageSizes = this->texStorage->getImageSize();
+	std::size_t i = imageSizes[0];
+	std::size_t j = imageSizes[1];
+	std::size_t k = imageSizes[2];
 
 	std::cerr << "Loading image of size " << i << ',' << j << ',' << k << '\n';
 
@@ -759,7 +759,7 @@ void Scene::slotSetTextureZCoord(int newZCoord) {
 
 void Scene::queryNeighborsOfPoint() {
 	std::cerr << "Queried point ! " << this->neighborPos.x << ',' << this->neighborPos.y << ',' << this->neighborPos.z << '\n';
-	glm::vec3 origin(static_cast<float>(this->neighborPos.x), static_cast<float>(this->neighborPos.y), static_cast<float>(this->neighborPos.z));
+	glm::vec4 origin(static_cast<float>(this->neighborPos.x), static_cast<float>(this->neighborPos.y), static_cast<float>(this->neighborPos.z), 1.);
 	this->mesh->setOrigin(origin);
 }
 

@@ -3,7 +3,7 @@
 TextureStorage::TextureStorage() {
 	this->data.clear();
 	this->texLoader = nullptr;
-	this->imageSpecs = nullptr;
+	this->imageSpecs.clear();
 	this->downsampleImages = false;
 
 	this->resetImageSpecs();
@@ -26,8 +26,13 @@ TextureStorage& TextureStorage::loadImages() {
 
 	// If any data was loaded (the loading went smoothly) :
 	if (texData != nullptr) {
+		this->imageSpecs[0][0] = this->texLoader->get_image_width();
+		this->imageSpecs[0][1] = this->texLoader->get_image_height();
+		this->imageSpecs[0][2] = this->texLoader->get_image_depth();
 		std::size_t imageSize = this->imageSpecs[0][0] * this->imageSpecs[0][1] * this->imageSpecs[0][2];
 		this->data.insert(this->data.end(), texData, texData+imageSize);
+
+		std::cerr << "Data is " << data.size() << " elements long" << '\n';
 
 		this->loadImageSpecs();
 	}
@@ -35,19 +40,19 @@ TextureStorage& TextureStorage::loadImages() {
 	return *this;
 }
 
-std::size_t** TextureStorage::getImageSpecs() const {
+std::vector<std::vector<std::size_t>> TextureStorage::getImageSpecs() const {
 	return this->imageSpecs;
 }
 
-std::size_t* TextureStorage::getImageSize() const {
+std::vector<std::size_t> TextureStorage::getImageSize() const {
 	return this->imageSpecs[0];
 }
 
-std::size_t* TextureStorage::getImageBoundingBoxMin() const {
+std::vector<std::size_t> TextureStorage::getImageBoundingBoxMin() const {
 	return this->imageSpecs[1];
 }
 
-std::size_t* TextureStorage::getImageBoundingBoxMax() const {
+std::vector<std::size_t> TextureStorage::getImageBoundingBoxMax() const {
 	return this->imageSpecs[2];
 }
 
@@ -66,8 +71,8 @@ unsigned char TextureStorage::getTexelValue(const glm::vec3& position) const {
 	std::size_t y = static_cast<std::size_t>(std::roundf(position.y));
 	std::size_t z = static_cast<std::size_t>(std::roundf(position.z));
 
-	std::size_t& imageWidth = this->imageSpecs[0][0];
-	std::size_t& imageHeight = this->imageSpecs[0][1];
+	std::size_t imageWidth = this->imageSpecs[0][0];
+	std::size_t imageHeight = this->imageSpecs[0][1];
 
 	std::size_t index = x + y * imageWidth + z * imageWidth * imageHeight;
 	if (index > this->data.size()) {
@@ -130,10 +135,11 @@ void TextureStorage::loadImageSpecs() {
 }
 
 void TextureStorage::resetImageSpecs() {
-	if (this->imageSpecs == nullptr) { this->imageSpecs = new std::size_t*[3]; }
-	if (this->imageSpecs[0] == nullptr) { this->imageSpecs[0] = new std::size_t[3]; }
-	if (this->imageSpecs[1] == nullptr) { this->imageSpecs[1] = new std::size_t[3]; }
-	if (this->imageSpecs[2] == nullptr) { this->imageSpecs[2] = new std::size_t[3]; }
+	this->imageSpecs.clear();
+	this->imageSpecs.resize(3);
+	this->imageSpecs[0].resize(3);
+	this->imageSpecs[1].resize(3);
+	this->imageSpecs[2].resize(3);
 
 	std::size_t maxVal = std::numeric_limits<std::size_t>::max();
 

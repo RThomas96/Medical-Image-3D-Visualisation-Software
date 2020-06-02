@@ -57,7 +57,6 @@ void main(void) {
 		mat4 transform = mat4(tx, ty, tz, tw);
 		vPos = transform * vertexPosition;
 	} else {
-		//if (voxelIndex.w == 0u) {
 		// Float versions of ivec3's coordinates :
 		float fnbx = float(neighborOffset.x);
 		float fnby = float(neighborOffset.y);
@@ -85,17 +84,14 @@ void main(void) {
 		vec4 posInGrid = vec4(dis.x * fidxx, dis.y * fidxy, dis.z * fidxz, 0.);
 		// Final vertex position :
 		vPos = (basePos + posInGrid + vertexPosition) ;
+		if (voxelIndex.w == 0u) {
+			vPos *= iMatrix; // make it inverse of transfo, to get the shape in initial space to reflect the 'real' space
+		}
 	}
 
-	//if (voxelIndex.w == 0u) {
-		gl_Position = mvp * vPos;
-		vPos_WS_VS = mMatrix * vPos;
-		vPos_CS_VS = vMatrix * mMatrix * vPos;
-	//} else {
-	//	gl_Position = pMatrix * vMatrix * iMatrix * vPos;
-	//	vPos_WS_VS = iMatrix * vPos;
-	//	vPos_CS_VS = vMatrix * iMatrix * vPos;
-	//}
+	gl_Position = mvp * vPos;
+	vPos_WS_VS = mMatrix * vPos;
+	vPos_CS_VS = vMatrix * mMatrix * vPos;
 
 	eyeDir_CS_VS = (vPos_CS_VS - vec4(.0,.0,.0,.0));
 	lightDir_CS_VS = lightPos_CS + eyeDir_CS_VS;

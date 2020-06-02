@@ -124,11 +124,12 @@ TARGET_LINK_LIBRARIES(visualisation
 )
 # }}}
 
+# Neighbor visualisation (Test variant) {{{
 ADD_EXECUTABLE(neighbor_visu
 	# Header files, for Qt MOCS compilation :
 	./tests/neighbor_visu/include/control_panel.hpp
 	./tests/neighbor_visu/include/image_storage.hpp
-	./tests/neighbor_visu/include/inspecting_mesh.hpp
+	./tests/neighbor_visu/include/tetmesh.hpp
 	./tests/neighbor_visu/include/scene_control.hpp
 	./tests/neighbor_visu/include/main_widget.hpp
 	./tests/neighbor_visu/include/scene.hpp
@@ -141,7 +142,7 @@ ADD_EXECUTABLE(neighbor_visu
 	# Source files :
 	./tests/neighbor_visu/src/control_panel.cpp
 	./tests/neighbor_visu/src/image_storage.cpp
-	./tests/neighbor_visu/src/inspecting_mesh.cpp
+	./tests/neighbor_visu/src/tetmesh.cpp
 	./tests/neighbor_visu/src/scene_control.cpp
 	./tests/neighbor_visu/src/main_widget.cpp
 	./tests/neighbor_visu/src/scene.cpp
@@ -160,28 +161,6 @@ TARGET_LINK_LIBRARIES(neighbor_visu
 	PUBLIC glHandler
 	PUBLIC ${TIF_LIB}
 )
-
-ADD_EXECUTABLE(simShaEx
-	# Header files, for Qt MOCS compilation :
-	#./tests/simple_shader_example/include/main_widget.hpp
-	./tests/simple_shader_example/include/logoutput.hpp
-	./tests/simple_shader_example/include/qglfversion.hpp
-
-	# Main file :
-	./tests/simple_shader_example/main.cpp
-
-	# Source files :
-	#./tests/simple_shader_example/src/main_widget.cpp
-	./tests/simple_shader_example/src/qglfversion.cpp
-)
-TARGET_LINK_LIBRARIES(simShaEx
-	PUBLIC Qt5::Core
-	PUBLIC Qt5::Gui
-	PUBLIC Qt5::Xml
-	PUBLIC Qt5::Widgets
-	PUBLIC Qt5::OpenGL
-	PUBLIC OpenGL
-	PUBLIC ${QGLViewer_LIBRARY}
-)
+# }}}
 
 # vim: foldmethod=marker : foldmarker={{{,}}} : tabstop=8

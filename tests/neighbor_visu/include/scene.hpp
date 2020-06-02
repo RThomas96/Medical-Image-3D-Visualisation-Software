@@ -8,7 +8,7 @@
 #include "image/include/bulk_texture_loader.hpp"
 
 #include "./image_storage.hpp"
-#include "./inspecting_mesh.hpp"
+#include "./tetmesh.hpp"
 
 #include <QOpenGLFunctions_4_0_Core>
 #include <QGLViewer/qglviewer.h>
@@ -118,7 +118,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		QOpenGLContext* context; ///< context given by the viewers
 		ControlPanel* controlPanel; ///< pointer to the control panel
 		TextureStorage* texStorage; ///< textureLoader and 'manager'
-		InspectingMesh* mesh; ///< creates a mesh around the queried point
+		TetMesh* mesh; ///< creates a mesh around the queried point
 
 		std::size_t gridWidth; ///< grid size
 		std::size_t gridHeight; ///< grid size

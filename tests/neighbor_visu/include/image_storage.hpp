@@ -22,15 +22,15 @@ class TextureStorage {
 		~TextureStorage();
 		TextureStorage& loadImages(void);
 		/// @brief Enables downsampling on the texture loader
-		TextureStorage& enableDownsampling(bool enabled = true);
+		TextureStorage& enableDownsampling(bool enabled = true) { this->downsampleImages = enabled; return *this; }
 		/// @brief get the image specs.
-		std::size_t** getImageSpecs() const;
+		std::vector<std::vector<std::size_t>> getImageSpecs() const;
 		/// @brief Returns the image size. First width, then height and finally depth (== number of images)
-		std::size_t* getImageSize() const;
+		std::vector<std::size_t> getImageSize() const;
 		/// @brief Get the min point of the image's data bounding box
-		std::size_t* getImageBoundingBoxMin() const;
+		std::vector<std::size_t> getImageBoundingBoxMin() const;
 		/// @brief Get the max point of the image's data bounding box
-		std::size_t* getImageBoundingBoxMax() const;
+		std::vector<std::size_t> getImageBoundingBoxMax() const;
 		/// @brief Get the image data, in its entirety
 		const std::vector<unsigned char>& getData() const;
 		/// @brief Gets the value of the texel nearest of the given position (no interpolation).
@@ -50,7 +50,7 @@ class TextureStorage {
 		///   - the image bounding box min point in the next three components,
 		///   - the image bounding box max point in the last three components.
 		/// The image bounding box is defined as the bounding box around the parts of the image that actually contain data.
-		std::size_t** imageSpecs;
+		std::vector<std::vector<std::size_t>> imageSpecs;
 		/// @brief a loader for the images.
 		bulk_texture_loader* texLoader;
 		/// @brief The image data loaded by the loader.
