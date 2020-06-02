@@ -116,9 +116,8 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void generateGrid(std::size_t _x, std::size_t _y, std::size_t _z);
 
 		QOpenGLContext* context; ///< context given by the viewers
-		bulk_texture_loader* loader; ///< texture loader
 		ControlPanel* controlPanel; ///< pointer to the control panel
-		ImageStorage* imgStore; ///< stores image data
+		TextureStorage* texStorage; ///< textureLoader and 'manager'
 		InspectingMesh* mesh; ///< creates a mesh around the queried point
 
 		std::size_t gridWidth; ///< grid size

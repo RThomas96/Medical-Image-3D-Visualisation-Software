@@ -14,9 +14,8 @@
 // TODO : test the class
 
 Scene::Scene(void) {
-	this->loader = nullptr;
 	this->controlPanel = nullptr;
-	this->imgStore = nullptr;
+	this->texStorage = nullptr;
 	this->mesh = nullptr;
 
 	this->gridWidth = 0;
@@ -70,8 +69,8 @@ void Scene::initGl(QOpenGLContext* _context, std::size_t _x, std::size_t _y, std
 
 	this->initializeOpenGLFunctions();
 
-	this->loader = new bulk_texture_loader();
-	this->loader->enable_downsampling(true);
+	this->texStorage = new TextureStorage();
+	this->texStorage->enableDownsampling(true);
 
 	this->mesh = new InspectingMesh();
 	this->mesh->setTransformationMatrix(this->computeTransformationMatrix());
@@ -333,8 +332,6 @@ void Scene::loadImage(std::size_t i, std::size_t j, std::size_t k, const unsigne
 
 	if (pData == nullptr) { pData = this->loadEmptyImage(); }
 
-	this->imgStore = new ImageStorage(this->gridWidth, this->gridHeight, this->gridDepth, pData);
-
 	if (this->textureHandle == 0) {
 		glGenTextures(1, &this->textureHandle);
 		GetOpenGLError();
@@ -371,14 +368,16 @@ void Scene::loadImage(std::size_t i, std::size_t j, std::size_t k, const unsigne
 }
 
 void Scene::queryImage(void) {
-	const unsigned char* image = this->loader->load_stack_from_folder();
-	std::size_t i = this->loader->get_image_width();
-	std::size_t j = this->loader->get_image_height();
-	std::size_t k = this->loader->get_image_depth();
+	this->texStorage->loadImages();
+	std::vector<unsigned char> image = this->texStorage->getData();
+	std::size_t* imageSizes = this->texStorage->getImageSize();
+	std::size_t& i = imageSizes[0];
+	std::size_t& j = imageSizes[1];
+	std::size_t& k = imageSizes[2];
 
 	std::cerr << "Loading image of size " << i << ',' << j << ',' << k << '\n';
 
-	this->loadImage(i, j, k, image);
+	this->loadImage(i, j, k, image.data());
 }
 
 void Scene::prepUniforms(glm::mat4 transfoMat, GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos) {
@@ -644,6 +643,9 @@ void Scene::generateNeighborGrid(std::size_t _x, std::size_t _y, std::size_t _z)
 	this->neighborDepth = _z;
 
 	// Original texture cube :
+	this->vertIdxDraw.emplace_back(uint(1), uint(1), uint(1), uint(0));
+
+	// Queriable cube :
 	this->vertIdxDraw.emplace_back(uint(1), uint(1), uint(1), uint(0));
 
 	// Create the grid, in raw form :

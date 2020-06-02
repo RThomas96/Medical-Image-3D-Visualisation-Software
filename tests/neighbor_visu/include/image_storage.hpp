@@ -1,34 +1,64 @@
 #ifndef TESTS_NEIGHBOR_VISU_IMAGE_STORAGE_HPP_
 #define TESTS_NEIGHBOR_VISU_IMAGE_STORAGE_HPP_
 
+#include "image/include/bulk_texture_loader.hpp"
+
 #include <glm/glm.hpp>
 
 #include <vector>
 #include <iostream>
 
-// TODO : maybe make this a templated class, to allow for other data types than unsigned char for image data
+/// @brief The minimum value at which a point is considered 'data' instead of 'void'
+#define MIN_DATA_VALUE 5
 
-class ImageStorage {
+/// @brief This class holds a texture in memory, for easy management.
+/// @details
+class TextureStorage {
+
+		friend class TetMesh;
+
 	public:
-		ImageStorage(void);
-		ImageStorage(size_t stW, size_t stH, size_t stD, const unsigned char* pData);
-		~ImageStorage(void);
-
-		unsigned char getImageDataAtPosition(glm::vec4 position);
-
-		ImageStorage& setImageData(const unsigned char* pData, size_t stW, size_t stH, size_t stD);
-
-		// Disallow copy, move and assignment operations on the object :
-		ImageStorage(const ImageStorage&) = delete;
-		ImageStorage(ImageStorage&&) = delete;
-		ImageStorage& operator= (const ImageStorage&) = delete;
-		ImageStorage& operator= (ImageStorage&&) = delete;
-
+		TextureStorage();
+		~TextureStorage();
+		TextureStorage& loadImages(void);
+		/// @brief Enables downsampling on the texture loader
+		TextureStorage& enableDownsampling(bool enabled = true);
+		/// @brief get the image specs.
+		std::size_t** getImageSpecs() const;
+		/// @brief Returns the image size. First width, then height and finally depth (== number of images)
+		std::size_t* getImageSize() const;
+		/// @brief Get the min point of the image's data bounding box
+		std::size_t* getImageBoundingBoxMin() const;
+		/// @brief Get the max point of the image's data bounding box
+		std::size_t* getImageBoundingBoxMax() const;
+		/// @brief Get the image data, in its entirety
+		const std::vector<unsigned char>& getData() const;
+		/// @brief Gets the value of the texel nearest of the given position (no interpolation).
+		unsigned char getTexelValue(const glm::vec3& position) const;
+		/// @brief Gets the value of the texel nearest of the given position (no interpolation).
+		unsigned char getTexelValue(const glm::vec4& position) const;
+		/// @brief Gets the value of the texel nearest of the given position with an interpolation applied to get the value.
+		/// @warning NOT IMPLEMENTED YET
+		/// @todo Implement it.
+		/// @note Think about how we deal with the different interplation types ...
+		unsigned char getInterpolatedValue(const glm::vec3 position) const { std::cerr << "Not implemented yet !" << '\n'; return 0; }
+		TextureStorage& resetTexture();
 	protected:
-		const unsigned char* imageData;
-		std::size_t imageWidth;
-		std::size_t imageHeight;
-		std::size_t imageDepth;
+		/// @brief Holds the specifications for the image.
+		/// @details This is a 3x3 matrix, holding :
+		///   - the image size in the first three components,
+		///   - the image bounding box min point in the next three components,
+		///   - the image bounding box max point in the last three components.
+		/// The image bounding box is defined as the bounding box around the parts of the image that actually contain data.
+		std::size_t** imageSpecs;
+		/// @brief a loader for the images.
+		bulk_texture_loader* texLoader;
+		/// @brief The image data loaded by the loader.
+		std::vector<unsigned char> data;
+		bool downsampleImages;
+
+		void loadImageSpecs();
+		void resetImageSpecs();
 };
 
 #endif // TESTS_NEIGHBOR_VISU_IMAGE_STORAGE_HPP_

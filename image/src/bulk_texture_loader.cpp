@@ -41,10 +41,19 @@ bulk_texture_loader::bulk_texture_loader() {
 	this->image_depth = static_cast<std::size_t>(0);
 }
 
+bulk_texture_loader::~bulk_texture_loader() {
+	if (this->image_data != nullptr || this->raw_data_storage != nullptr || this->tiff_file != nullptr) {
+		this->free_data();
+	}
+}
+
 void bulk_texture_loader::free_data() {
 	TinyTIFFReader_close(this->tiff_file);
 	free(this->raw_data_storage);
 	free(this->image_data);
+	this->tiff_file = nullptr;
+	this->raw_data_storage = nullptr;
+	this->image_data = nullptr;
 }
 
 unsigned char* bulk_texture_loader::load_stack_from_folder() {

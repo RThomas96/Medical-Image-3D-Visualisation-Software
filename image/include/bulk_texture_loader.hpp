@@ -38,6 +38,7 @@
 class bulk_texture_loader {
 	public:
 		bulk_texture_loader();
+		~bulk_texture_loader();
 		/**
 		 * @brief Loads a stack of images directly from a folder.
 		 * @details Prompts the user to select images, and proceeds to
