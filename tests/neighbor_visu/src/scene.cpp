@@ -42,7 +42,8 @@ Scene::Scene(void) {
 	this->fShaHandle = 0;
 	this->programHandle = 0;
 
-	this->neighborOffset = ivec3(0, 0, 0);
+	this->neighborOffset = glm::vec3(0, 0, 0);
+	this->neighborPos = uvec3(0, 0, 0);
 
 	// Uniform locations :
 	this->mMatrixLocation = -1;
@@ -391,7 +392,7 @@ void Scene::prepUniforms(glm::mat4 transfoMat, GLfloat* mvMat, GLfloat* pMat, gl
 	}
 
 	glUniform3ui(imgLoc, gridWidth, gridHeight, gridDepth);
-	glUniform3i(this->neighborOffsetLocation, this->neighborOffset.x, this->neighborOffset.y, this->neighborOffset.z);
+	glUniform3ui(this->neighborOffsetLocation, this->neighborPos.x, this->neighborPos.y, this->neighborPos.z);
 
 	GLint modeLoc = glGetUniformLocation(this->programHandle, "drawMode");
 	if (modeLoc < 0) {
@@ -429,7 +430,7 @@ void Scene::drawRealSpace(GLfloat mvMat[], GLfloat pMat[], bool bDrawWireframe) 
 
 	if (this->context == nullptr) { std::cerr << "Warning ! Drawing in real space without a valid OpenGL context !" << '\n' ; }
 
-	glm::mat4 transfoMat = glm::mat4(1.0);
+	glm::mat4 transfoMat = this->computeTransformationMatrix();
 
 	glm::vec4 lightPos = glm::vec4(-0.25, -0.25, -0.25, 1.0);
 
@@ -464,6 +465,18 @@ void Scene::drawRealSpace(GLfloat mvMat[], GLfloat pMat[], bool bDrawWireframe) 
 
 	glBindVertexArray(0);
 	glUseProgram(0);
+
+	std::vector<glm::vec4> vertices = this->mesh->getVertices();
+	std::vector<unsigned char> values = this->mesh->getVertexValues();
+
+	glPointSize(5.0);
+	glBegin(GL_POINTS);
+	for (std::size_t i = 0; i < vertices.size(); ++i) {
+		glm::vec3 rgb = ucharToRGB(values[i], 5, 255, 50, 200);
+		glColor3f(rgb.r, rgb.g, rgb.b);
+		glVertex3f(vertices[i].x, vertices[i].y, vertices[i].z);
+	}
+	glEnd();
 }
 
 void Scene::drawInitialSpace(GLfloat mvMat[], GLfloat pMat[], bool bDrawWireframe) {
@@ -475,7 +488,7 @@ void Scene::drawInitialSpace(GLfloat mvMat[], GLfloat pMat[], bool bDrawWirefram
 
 	if (this->context == nullptr) { std::cerr << "Warning ! Drawing in initial space without a valid OpenGL context !" << '\n' ; }
 
-	glm::mat4 transfoMat = this->computeTransformationMatrix();
+	glm::mat4 transfoMat = glm::mat4(1.);
 
 	glm::vec4 lightPos = glm::vec4(-0.25, -0.25, -0.25, 1.0);
 
@@ -513,6 +526,23 @@ void Scene::drawInitialSpace(GLfloat mvMat[], GLfloat pMat[], bool bDrawWirefram
 
 	glBindVertexArray(0);
 	glUseProgram(0);
+
+	std::vector<glm::vec4> vertices = this->mesh->getVertices();
+	std::vector<unsigned char> values = this->mesh->getVertexValues();
+	glm::mat4 imat = glm::inverse(this->computeTransformationMatrix());
+
+	glPointSize(5.0);
+	glBegin(GL_POINTS);
+	for (std::size_t i = 0; i < vertices.size(); ++i) {
+		glm::vec3 rgb = ucharToRGB(values[i], 5, 255, 50, 200);
+		glColor3f(rgb.x, rgb.y, rgb.z);
+		std::cerr << "Color : " << rgb.x << ',' << rgb.y << ',' << rgb.z << '\n';
+		glm::vec4 v = vertices[i] * imat;
+		glVertex3f(v.x, v.y, v.z);
+		glColor3f(rgb.x, rgb.y, rgb.z);
+	}
+	glEnd();
+	glFlush();
 }
 
 void Scene::generateGrid(std::size_t _x, std::size_t _y, std::size_t _z) {
@@ -524,7 +554,7 @@ void Scene::generateGrid(std::size_t _x, std::size_t _y, std::size_t _z) {
 	this->generateNeighborGrid(_x,_y,_z);
 	this->generateTexCube();
 
-	this->neighborOffset = ivec3(0, 0, 0);
+	this->neighborOffset = glm::vec3(0, 0, 0);
 	this->controlPanel->setXCoord(0);
 	this->controlPanel->setYCoord(0);
 	this->controlPanel->setZCoord(0);
@@ -646,7 +676,7 @@ void Scene::generateNeighborGrid(std::size_t _x, std::size_t _y, std::size_t _z)
 	this->vertIdxDraw.emplace_back(uint(1), uint(1), uint(1), uint(0));
 
 	// Queriable cube :
-	this->vertIdxDraw.emplace_back(uint(1), uint(1), uint(1), uint(0));
+	//this->vertIdxDraw.emplace_back(uint(1), uint(1), uint(1), uint(0));
 
 	// Create the grid, in raw form :
 	for (std::size_t i = 0; i < _z; ++i) {
@@ -692,7 +722,7 @@ glm::vec3 Scene::getTexCubeBoundaries(bool realSpace) const {
 
 nbCoord Scene::getNeighborBoundaries(bool realSpace) const {
 	glm::vec3 neighbor(static_cast<float>(this->neighborWidth), static_cast<float>(this->neighborHeight), static_cast<float>(this->neighborDepth));
-	glm::vec3 pos(static_cast<float>(this->neighborOffset.x), static_cast<float>(this->neighborOffset.y), static_cast<float>(this->neighborOffset.z));
+	glm::vec3 pos(neighborOffset);
 
 	glm::mat3 transfoMat = glm::mat3(this->computeTransformationMatrix());
 	glm::vec3 max = neighbor+pos;
@@ -730,29 +760,29 @@ void Scene::slotToggleShowTextureCube(bool show) {
 	std::cerr << "Set tex cube to " << std::boolalpha << this->showTextureCube << std::noboolalpha << '\n';
 }
 
-void Scene::slotSetNeighborXCoord(int newXCoord) {
+void Scene::slotSetNeighborXCoord(float newXCoord) {
 	this->neighborOffset.x = newXCoord;
 }
 
-void Scene::slotSetNeighborYCoord(int newYCoord) {
+void Scene::slotSetNeighborYCoord(float newYCoord) {
 	this->neighborOffset.y = newYCoord;
 }
 
-void Scene::slotSetNeighborZCoord(int newZCoord) {
+void Scene::slotSetNeighborZCoord(float newZCoord) {
 	this->neighborOffset.z = newZCoord;
 }
 
-void Scene::slotSetTextureXCoord(int newXCoord) {
+void Scene::slotSetTextureXCoord(uint newXCoord) {
 	this->neighborPos.x = newXCoord;
 	this->queryNeighborsOfPoint();
 }
 
-void Scene::slotSetTextureYCoord(int newYCoord) {
+void Scene::slotSetTextureYCoord(uint newYCoord) {
 	this->neighborPos.y = newYCoord;
 	this->queryNeighborsOfPoint();
 }
 
-void Scene::slotSetTextureZCoord(int newZCoord) {
+void Scene::slotSetTextureZCoord(uint newZCoord) {
 	this->neighborPos.z = newZCoord;
 	this->queryNeighborsOfPoint();
 }
@@ -761,6 +791,15 @@ void Scene::queryNeighborsOfPoint() {
 	std::cerr << "Queried point ! " << this->neighborPos.x << ',' << this->neighborPos.y << ',' << this->neighborPos.z << '\n';
 	glm::vec4 origin(static_cast<float>(this->neighborPos.x), static_cast<float>(this->neighborPos.y), static_cast<float>(this->neighborPos.z), 1.);
 	this->mesh->setOrigin(origin);
+}
+
+void Scene::updateNeighborTetMesh() {
+	glm::vec4 n = glm::vec4(this->neighborOffset.x, this->neighborOffset.y, this->neighborOffset.z, 1.);
+	std::cerr << "Queried point ! " << n.x << ',' << n.y << ',' << n.z << '\n';
+	glm::vec4 o = glm::inverse(this->computeTransformationMatrix()) * n;
+	std::cerr << "Inverse point ! " << o.x << ',' << o.y << ',' << o.z << ',' << o.w << '\n';
+	this->mesh->setOrigin(n);
+	this->mesh->printInfo();
 }
 
 glm::mat4 Scene::computeTransformationMatrix() const {

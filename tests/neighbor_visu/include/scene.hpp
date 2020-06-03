@@ -59,6 +59,17 @@ inline int __GetOpenGLError ( char* szFile, int iLine )
 	return retCode;
 }
 
+inline glm::vec3 ucharToRGB(const unsigned char val, const unsigned char a, const unsigned char b, const unsigned char c, const unsigned char d) {
+	float fa = static_cast<float>(a) / 255.f;
+	float fb = static_cast<float>(b) / 255.f;
+	float fc = static_cast<float>(c) / 255.f;
+	float fd = static_cast<float>(d) / 255.f;
+	float fr = 1.f - ((fb - fa) / (fd - fc)) * ((static_cast<float>(val)/255.f)-fc)+fa;
+	glm::vec4 K = glm::vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+	glm::vec3 p = glm::abs(glm::fract(glm::vec3(fr, fr, fr) + glm::vec3(K.x, K.y, K.z)) * 6.0f - glm::vec3(K.w, K.w, K.w));
+	return glm::mix(glm::vec3(K.x, K.x, K.x), glm::clamp((p - glm::vec3(K.x, K.x, K.x)), .1f, .7f), fr);
+}
+
 class ControlPanel; // forward declaration
 
 typedef struct neighborCoordinates {
@@ -69,6 +80,7 @@ typedef struct neighborCoordinates {
 class Scene : public QOpenGLFunctions_4_0_Core {
 		typedef glm::vec<4, unsigned int, glm::defaultp> uvec4;
 		typedef glm::vec<3, int, glm::defaultp> ivec3;
+		typedef glm::uvec3 uvec3;
 	public:
 		Scene(void); ///< default constructor
 		~Scene(void); ///< default destructor
@@ -99,6 +111,9 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void setDrawModeSolidAndWireframe() { this->drawMode = DrawMode::SolidAndWireframe; }
 		void setDrawModeWireframe() { this->drawMode = DrawMode::Wireframe; }
 
+		/// @brief updates the values of the tetrahedral mesh around the point defined by the spinboxes
+		void updateNeighborTetMesh(void);
+
 		void cleanup(void); ///< cleanup function for vbo and other parts
 		bool isInitialized; ///< tracks if the scene was initialized or not
 
@@ -106,12 +121,12 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 
 		void slotTogglePolygonMode(bool show);
 		void slotToggleShowTextureCube(bool show);
-		void slotSetNeighborXCoord(int newXCoord);
-		void slotSetNeighborYCoord(int newYCoord);
-		void slotSetNeighborZCoord(int newZCoord);
-		void slotSetTextureXCoord(int newXCoord);
-		void slotSetTextureYCoord(int newYCoord);
-		void slotSetTextureZCoord(int newZCoord);
+		void slotSetNeighborXCoord(float newXCoord);
+		void slotSetNeighborYCoord(float newYCoord);
+		void slotSetNeighborZCoord(float newZCoord);
+		void slotSetTextureXCoord(uint newXCoord);
+		void slotSetTextureYCoord(uint newYCoord);
+		void slotSetTextureZCoord(uint newZCoord);
 	protected:
 		void generateGrid(std::size_t _x, std::size_t _y, std::size_t _z);
 
@@ -140,8 +155,8 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		uint drawCalls;
 		uint scaledCubes;
 
-		ivec3 neighborOffset;
-		ivec3 neighborPos;
+		glm::vec3 neighborOffset;
+		uvec3 neighborPos;
 		DrawMode drawMode;
 
 		// OpenGL data :

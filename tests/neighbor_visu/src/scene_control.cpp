@@ -60,21 +60,21 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, Viewer* rv, QWidget* 
 	this->initSignals();
 
 	this->xPicker->setMinimum(0);
-	this->xPicker->setMaximum(1);
+	this->xPicker->setMaximum(1e9);
 	this->xPicker->setValue(0);
 	this->xPicker->setDecimals(0);
 	this->xPicker->setStepType(QAbstractSpinBox::StepType::DefaultStepType);
 	this->xPicker->setSingleStep(1.0);
 
 	this->yPicker->setMinimum(0);
-	this->yPicker->setMaximum(1);
+	this->yPicker->setMaximum(1e9);
 	this->yPicker->setValue(0);
 	this->yPicker->setDecimals(0);
 	this->yPicker->setStepType(QAbstractSpinBox::StepType::DefaultStepType);
 	this->yPicker->setSingleStep(1.0);
 
 	this->zPicker->setMinimum(0);
-	this->zPicker->setMaximum(1);
+	this->zPicker->setMaximum(1e9);
 	this->zPicker->setValue(0);
 	this->zPicker->setDecimals(0);
 	this->zPicker->setStepType(QAbstractSpinBox::StepType::DefaultStepType);
@@ -122,9 +122,9 @@ void ControlPanel::activatePanels(bool activeStatus) {
 
 void ControlPanel::setImageBoundaries(int bounds[6]) {
 	// get old slider values :
-	int oldXValue = this->xPicker->value();
-	int oldYValue = this->yPicker->value();
-	int oldZValue = this->zPicker->value();
+	int oldXValue = this->xTex->value();
+	int oldYValue = this->yTex->value();
+	int oldZValue = this->zTex->value();
 
 	if (bounds[1] == 0) {
 		this->controlContainer->setEnabled(false);
@@ -137,57 +137,60 @@ void ControlPanel::setImageBoundaries(int bounds[6]) {
 	// Sets the range of the sliders based on image size :
 	// (also, set the value to min or max if it goes out of bounds)
 
-	this->xPicker->setMinimum(bounds[0]);
-	this->xPicker->setMaximum(bounds[1]);
-	if (oldXValue < this->xPicker->minimum()) { this->xPicker->setValue(this->xPicker->minimum()); }
-	else if (oldXValue > this->xPicker->maximum()) { this->xPicker->setValue(this->xPicker->maximum()); }
+	this->xTex->setMinimum(bounds[0]);
+	this->xTex->setMaximum(bounds[1]);
+	if (oldXValue < this->xTex->minimum()) { this->xTex->setValue(this->xTex->minimum()); }
+	else if (oldXValue > this->xTex->maximum()) { this->xTex->setValue(this->xTex->maximum()); }
 
-	this->yPicker->setMinimum(bounds[2]);
-	this->yPicker->setMaximum(bounds[3]);
-	if (oldYValue < this->yPicker->minimum()) { this->yPicker->setValue(this->yPicker->minimum()); }
-	else if (oldYValue > this->yPicker->maximum()) { this->yPicker->setValue(this->yPicker->maximum()); }
+	this->yTex->setMinimum(bounds[2]);
+	this->yTex->setMaximum(bounds[3]);
+	if (oldYValue < this->yTex->minimum()) { this->yTex->setValue(this->yTex->minimum()); }
+	else if (oldYValue > this->yTex->maximum()) { this->yTex->setValue(this->yTex->maximum()); }
 
-	this->zPicker->setMinimum(bounds[4]);
-	this->zPicker->setMaximum(bounds[5]);
-	if (oldZValue < this->zPicker->minimum()) { this->zPicker->setValue(this->zPicker->minimum()); }
-	else if (oldZValue > this->zPicker->maximum()) { this->zPicker->setValue(this->zPicker->maximum()); }
+	this->zTex->setMinimum(bounds[4]);
+	this->zTex->setMaximum(bounds[5]);
+	if (oldZValue < this->zTex->minimum()) { this->zTex->setValue(this->zTex->minimum()); }
+	else if (oldZValue > this->zTex->maximum()) { this->zTex->setValue(this->zTex->maximum()); }
 }
 
 void ControlPanel::setXCoord(double coordX) {
-	int co = static_cast<int>(coordX);
+	int co = static_cast<float>(coordX);
 	this->sceneToControl->slotSetNeighborXCoord(co);
 	this->leftViewer->update();
 	this->rightViewer->update();
 }
 
 void ControlPanel::setYCoord(double coordY) {
-	int co = static_cast<int>(coordY);
+	int co = static_cast<float>(coordY);
 	this->sceneToControl->slotSetNeighborYCoord(co);
 	this->leftViewer->update();
 	this->rightViewer->update();
 }
 
 void ControlPanel::setZCoord(double coordZ) {
-	int co = static_cast<int>(coordZ);
+	int co = static_cast<float>(coordZ);
 	this->sceneToControl->slotSetNeighborZCoord(co);
 	this->leftViewer->update();
 	this->rightViewer->update();
 }
 
 void ControlPanel::setXTexCoord(int coordX) {
-	this->sceneToControl->slotSetTextureXCoord(coordX);
+	uint co = static_cast<uint>(coordX);
+	this->sceneToControl->slotSetTextureXCoord(co);
 	this->leftViewer->update();
 	this->rightViewer->update();
 }
 
 void ControlPanel::setYTexCoord(int coordY) {
-	this->sceneToControl->slotSetTextureYCoord(coordY);
+	uint co = static_cast<uint>(coordY);
+	this->sceneToControl->slotSetTextureYCoord(co);
 	this->leftViewer->update();
 	this->rightViewer->update();
 }
 
 void ControlPanel::setZTexCoord(int coordZ) {
-	this->sceneToControl->slotSetTextureZCoord(coordZ);
+	uint co = static_cast<uint>(coordZ);
+	this->sceneToControl->slotSetTextureZCoord(co);
 	this->leftViewer->update();
 	this->rightViewer->update();
 }

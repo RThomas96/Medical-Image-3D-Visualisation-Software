@@ -19,10 +19,14 @@ class TetMesh {
 		TetMesh& updatePositions(void);
 		TetMesh& resetPositions(void);
 		TetMesh& updateValues(void);
+		TetMesh& printInfo(void);
+		std::vector<glm::vec4> getVertices(void) const;
+		std::vector<unsigned char> getVertexValues(void) const;
 	private:
 		const TextureStorage* const texLoader;
 
 		glm::vec4 origin; /// @brief queried point
+		unsigned char originalValue;
 		glm::mat4 transformationMatrix;
 		glm::mat4 inverseTransformationMatrix;
 

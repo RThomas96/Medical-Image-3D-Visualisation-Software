@@ -42,6 +42,9 @@ class TextureStorage {
 		/// @todo Implement it.
 		/// @note Think about how we deal with the different interplation types ...
 		unsigned char getInterpolatedValue(const glm::vec3 position) const { std::cerr << "Not implemented yet !" << '\n'; return 0; }
+		glm::vec4 getVoxelPositionFromIndex(std::size_t i, std::size_t j, std::size_t k) {
+			return glm::vec4(static_cast<float>(i) +.5f, static_cast<float>(j) +.5f, static_cast<float>(k) +.5f, 1.);
+		}
 		TextureStorage& resetTexture();
 	protected:
 		/// @brief Holds the specifications for the image.

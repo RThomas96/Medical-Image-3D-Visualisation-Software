@@ -39,16 +39,18 @@ TetMesh& TetMesh::setOrigin(const glm::vec4 position) {
 	return *this;
 }
 
+TetMesh& TetMesh::setOrigin(std::size_t i, std::size_t j, std::size_t k) {
+	glm::vec4 o = glm::vec4(static_cast<float>(i), static_cast<float>(j), static_cast<float>(k), 1.);
+	std::cerr << "Neighbors : queried " << o.x << ',' << o.y << ',' << o.z << '\n';
+	return this->setOrigin(o);
+}
+
 TetMesh& TetMesh::resetPositions() {
 	for (std::size_t i = 0; i < this->vertices.size(); ++i) {
 		this->vertices[i] -= this->origin;
 		this->vertices[i].w = 1.;
 	}
 	return *this;
-}
-
-TetMesh& TetMesh::setOrigin(std::size_t i, std::size_t j, std::size_t k) {
-	return this->setOrigin(glm::vec4(static_cast<std::size_t>(i), static_cast<std::size_t>(j), static_cast<std::size_t>(k), 1.));
 }
 
 TetMesh& TetMesh::setTransformationMatrix(const glm::mat4& transfoMat) {
@@ -61,7 +63,9 @@ TetMesh& TetMesh::setTransformationMatrix(const glm::mat4& transfoMat) {
 
 TetMesh& TetMesh::updateValues() {
 	for (std::size_t i = 0; i < this->vertices.size(); ++i) {
-		this->vertexValues[i] = this->texLoader->getTexelValue(inverseTransformationMatrix * this->vertices[i]);
+		glm::vec4 icoord = this->inverseTransformationMatrix * this->vertices[i];
+		std::cerr << "Update :: querying for (" << icoord.x << ',' << icoord.y << ',' << icoord.z << ")\n";
+		this->vertexValues[i] = this->texLoader->getTexelValue(icoord);
 	}
 	return *this;
 }
@@ -74,6 +78,33 @@ TetMesh& TetMesh::updatePositions() {
 	this->updateValues();
 
 	return *this;
+}
+
+TetMesh& TetMesh::printInfo() {
+	std::cout << "The image storage has the following specs :" << '\n';
+	std::vector<std::vector<std::size_t>> specs = this->texLoader->getImageSpecs();
+	std::cout << "Image size : " << specs[0][0] << 'x' << specs[0][1] << 'x' << specs[0][2] << '\n';
+	std::cout << "Bounding box min value: " << specs[1][0] << 'x' << specs[1][1] << 'x' << specs[1][2] << '\n';
+	std::cout << "Bounding box max value: " << specs[2][0] << 'x' << specs[2][1] << 'x' << specs[2][2] << '\n';
+
+	std::cout << "The neighboring mesh has the following positions and values :" << '\n';
+	for (std::size_t i = 0; i < this->vertices.size(); ++i) {
+		std::cout << "[" << this->vertices[i].x << ',' << this->vertices[i].y << ',' << this->vertices[i].z << "] : " << +(this->vertexValues[i]) << '\n';
+	}
+
+	return *this;
+}
+
+std::vector<glm::vec4> TetMesh::getVertices() const {
+	std::vector<glm::vec4> res(this->vertices);
+	res.push_back(this->origin);
+	return res;
+}
+
+std::vector<unsigned char> TetMesh::getVertexValues() const {
+	std::vector<unsigned char> res(this->vertexValues);
+	res.push_back(this->originalValue);
+	return res;
 }
 
 void TetMesh::makeTetrahedra() {

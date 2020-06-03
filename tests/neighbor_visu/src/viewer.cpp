@@ -17,7 +17,7 @@ void Viewer::init() {
 	this->scene->initGl(this->context(), 3, 3, 3);
 
 	if (this->focusType == FocusStates::TextureFocus) {
-		glm::vec3 bbDiag = this->scene->getTexCubeBoundaries(this->isRealSpace);
+		glm::vec3 bbDiag = this->scene->getTexCubeBoundaries(!this->isRealSpace);
 		float sceneSize = glm::length(bbDiag);
 
 		this->setSceneRadius(sceneSize);
@@ -25,7 +25,7 @@ void Viewer::init() {
 		this->setSceneCenter(qglviewer::Vec(bbDiag.x/2., bbDiag.y/2., bbDiag.z/2.));
 		this->showEntireScene();
 	} else if (this->focusType == FocusStates::NeighborFocus) {
-		nbCoord c = this->scene->getNeighborBoundaries(this->isRealSpace);
+		nbCoord c = this->scene->getNeighborBoundaries(!this->isRealSpace);
 
 		glm::vec3 span = c.p - c.o;
 		glm::vec3 center = ((c.p - c.o)/2.f)+c.o;
@@ -38,7 +38,7 @@ void Viewer::init() {
 
 void Viewer::draw() {
 	if (this->focusType == FocusStates::NeighborFocus){
-		nbCoord n = this->scene->getNeighborBoundaries(this->isRealSpace);
+		nbCoord n = this->scene->getNeighborBoundaries(!this->isRealSpace);
 		glm::vec3 center = n.o + ((n.p - n.o)/2.f);
 		this->setSceneCenter(qglviewer::Vec(center.x, center.y, center.z));
 		this->setSceneRadius(glm::length(n.p - n.o)*2.f);
@@ -46,7 +46,7 @@ void Viewer::draw() {
 	GLfloat mvMat[16];
 	GLfloat pMat[16];
 
-	glClearColor(.9, .9, .9, 1.);
+	glClearColor(.8, .8, .8, 1.);
 
 	this->camera()->getModelViewMatrix(mvMat);
 	this->camera()->getProjectionMatrix(pMat);
@@ -98,6 +98,9 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 		case Qt::Key::Key_F3:
 			this->scene->setDrawModeWireframe();
 			this->update();
+		break;
+		case Qt::Key::Key_F5:
+			this->scene->updateNeighborTetMesh();
 		break;
 		case Qt::Key::Key_T:
 			this->focusType = FocusStates::DefaultFocus;

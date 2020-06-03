@@ -20,7 +20,7 @@ uniform vec4 lightPos; // will always be worldspace here !
 
 uniform uint scaledCubes;
 uniform uvec3 imageSize;
-uniform ivec3 neighborOffset;
+uniform uvec3 neighborOffset;
 
 void main(void) {
 	// ModelViewProjection matrix :
@@ -58,16 +58,16 @@ void main(void) {
 		vPos = transform * vertexPosition;
 	} else {
 		// Float versions of ivec3's coordinates :
-		float fnbx = float(neighborOffset.x);
-		float fnby = float(neighborOffset.y);
-		float fnbz = float(neighborOffset.z);
+		float nbx = float(neighborOffset.x);
+		float nby = float(neighborOffset.y);
+		float nbz = float(neighborOffset.z);
 
 		// Each cube is one pixel wide. Which means the tex coordinates at the vertex given here are :
 		float texCoordX = 1.f / fimgx;
 		float texCoordY = 1.f / fimgy;
 		float texCoordZ = 1.f / fimgz;
 		// Base tex coordinate of the neighborhood 'cube' :
-		vec3 neighborhoodBaseTexCoord = vec3(fnbx * texCoordX, fnby * texCoordY, fnbz * texCoordZ);
+		vec3 neighborhoodBaseTexCoord = vec3(nbx * texCoordX, nby * texCoordY, nbz * texCoordZ);
 		// Tex offset within the neighborhood 'cube' :
 		vec3 baseTexCoord = neighborhoodBaseTexCoord + vec3(fidxx * texCoordX, fidxy * texCoordY, fidxz * texCoordZ);
 		// Tex coordinate of the vertex :
@@ -79,7 +79,7 @@ void main(void) {
 		// The unit of displacement (size of a single cube) :
 		vec4 dis = vec4(1., 1., 1., 0.);
 		// The base position of the neighbor grid as a whole :
-		vec4 basePos = vec4(fnbx * dis.x, fnby * dis.y, fnbz * dis.z, 0.);
+		vec4 basePos = vec4(nbx * dis.x, nby * dis.y, nbz * dis.z, 0.);
 		// Position of the cube within the grid :
 		vec4 posInGrid = vec4(dis.x * fidxx, dis.y * fidxy, dis.z * fidxz, 0.);
 		// Final vertex position :

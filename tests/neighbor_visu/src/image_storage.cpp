@@ -66,10 +66,15 @@ unsigned char TextureStorage::getTexelValue(const glm::vec3& position) const {
 		return '\0';
 	}
 
+	if (position.x < 0.f || position.y < 0.f || position.z < 0.f) {
+		std::cerr << __PRETTY_FUNCTION__ << " : The position asked for was negative." << '\n';
+		return '\0';
+	}
+
 	// For now, we don't interpolate the value of the texel at the position given :
-	std::size_t x = static_cast<std::size_t>(std::roundf(position.x));
-	std::size_t y = static_cast<std::size_t>(std::roundf(position.y));
-	std::size_t z = static_cast<std::size_t>(std::roundf(position.z));
+	std::size_t x = static_cast<std::size_t>(std::truncf(position.x));
+	std::size_t y = static_cast<std::size_t>(std::truncf(position.y));
+	std::size_t z = static_cast<std::size_t>(std::truncf(position.z));
 
 	std::size_t imageWidth = this->imageSpecs[0][0];
 	std::size_t imageHeight = this->imageSpecs[0][1];
@@ -77,6 +82,7 @@ unsigned char TextureStorage::getTexelValue(const glm::vec3& position) const {
 	std::size_t index = x + y * imageWidth + z * imageWidth * imageHeight;
 	if (index > this->data.size()) {
 		std::cerr << __PRETTY_FUNCTION__ << " : The position asked for was OOB." << '\n';
+		std::cerr << '\t' << "Asked for " << x << ',' << y << ',' << z << " which is " << index << " out of " << this->data.size() << '\n';
 		return '\0';
 	}
 
