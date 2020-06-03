@@ -188,7 +188,6 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void showTexCubeVBO();
 		void hideTexCubeVBO();
 		glm::mat4 computeTransformationMatrix() const;
-		void queryNeighborsOfPoint();
 };
 
 #endif // TESTS_NEIGHBOR_VISU_INCLUDE_SCENE_HPP_

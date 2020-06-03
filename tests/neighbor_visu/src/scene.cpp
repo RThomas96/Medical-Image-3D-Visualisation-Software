@@ -426,6 +426,13 @@ void Scene::drawRealSpace(GLfloat mvMat[], GLfloat pMat[], bool bDrawWireframe) 
 	glEnable(GL_TEXTURE_3D);
 	GetOpenGLError();
 
+
+	glm::vec4 n = glm::vec4(this->neighborOffset.x, this->neighborOffset.y, this->neighborOffset.z, 1.);
+	std::cerr << "Queried point ! " << n.x << ',' << n.y << ',' << n.z << '\n';
+	glm::vec4 o = glm::inverse(this->computeTransformationMatrix()) * n;
+	std::cerr << "Inverse point ! " << o.x << ',' << o.y << ',' << o.z << ',' << o.w << '\n';
+	this->neighborPos = this->texStorage->getVoxelIndexFromPosition(o);
+
 	bDrawWireframe = true;
 
 	if (this->context == nullptr) { std::cerr << "Warning ! Drawing in real space without a valid OpenGL context !" << '\n' ; }
@@ -484,6 +491,12 @@ void Scene::drawInitialSpace(GLfloat mvMat[], GLfloat pMat[], bool bDrawWirefram
 	glEnable(GL_TEXTURE_3D);
 	GetOpenGLError();
 
+	glm::vec4 n = glm::vec4(this->neighborOffset.x, this->neighborOffset.y, this->neighborOffset.z, 1.);
+	std::cerr << "Queried point ! " << n.x << ',' << n.y << ',' << n.z << '\n';
+	glm::vec4 o = glm::inverse(this->computeTransformationMatrix()) * n;
+	std::cerr << "Inverse point ! " << o.x << ',' << o.y << ',' << o.z << ',' << o.w << '\n';
+	this->neighborPos = this->texStorage->getVoxelIndexFromPosition(o);
+
 	bDrawWireframe = true;
 
 	if (this->context == nullptr) { std::cerr << "Warning ! Drawing in initial space without a valid OpenGL context !" << '\n' ; }
@@ -536,13 +549,11 @@ void Scene::drawInitialSpace(GLfloat mvMat[], GLfloat pMat[], bool bDrawWirefram
 	for (std::size_t i = 0; i < vertices.size(); ++i) {
 		glm::vec3 rgb = ucharToRGB(values[i], 5, 255, 50, 200);
 		glColor3f(rgb.x, rgb.y, rgb.z);
-		std::cerr << "Color : " << rgb.x << ',' << rgb.y << ',' << rgb.z << '\n';
-		glm::vec4 v = vertices[i] * imat;
+		glm::vec4 v = imat * vertices[i];
 		glVertex3f(v.x, v.y, v.z);
 		glColor3f(rgb.x, rgb.y, rgb.z);
 	}
 	glEnd();
-	glFlush();
 }
 
 void Scene::generateGrid(std::size_t _x, std::size_t _y, std::size_t _z) {
@@ -774,23 +785,14 @@ void Scene::slotSetNeighborZCoord(float newZCoord) {
 
 void Scene::slotSetTextureXCoord(uint newXCoord) {
 	this->neighborPos.x = newXCoord;
-	this->queryNeighborsOfPoint();
 }
 
 void Scene::slotSetTextureYCoord(uint newYCoord) {
 	this->neighborPos.y = newYCoord;
-	this->queryNeighborsOfPoint();
 }
 
 void Scene::slotSetTextureZCoord(uint newZCoord) {
 	this->neighborPos.z = newZCoord;
-	this->queryNeighborsOfPoint();
-}
-
-void Scene::queryNeighborsOfPoint() {
-	std::cerr << "Queried point ! " << this->neighborPos.x << ',' << this->neighborPos.y << ',' << this->neighborPos.z << '\n';
-	glm::vec4 origin(static_cast<float>(this->neighborPos.x), static_cast<float>(this->neighborPos.y), static_cast<float>(this->neighborPos.z), 1.);
-	this->mesh->setOrigin(origin);
 }
 
 void Scene::updateNeighborTetMesh() {

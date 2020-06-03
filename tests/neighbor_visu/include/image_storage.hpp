@@ -45,6 +45,13 @@ class TextureStorage {
 		glm::vec4 getVoxelPositionFromIndex(std::size_t i, std::size_t j, std::size_t k) {
 			return glm::vec4(static_cast<float>(i) +.5f, static_cast<float>(j) +.5f, static_cast<float>(k) +.5f, 1.);
 		}
+		glm::uvec3 getVoxelIndexFromPosition(glm::vec4 pos) {
+			return glm::uvec3(
+				static_cast<uint>(std::truncf(pos.x)),
+				static_cast<uint>(std::truncf(pos.y)),
+				static_cast<uint>(std::truncf(pos.z))
+			);
+		}
 		TextureStorage& resetTexture();
 	protected:
 		/// @brief Holds the specifications for the image.
