@@ -40,19 +40,19 @@ TextureStorage& TextureStorage::loadImages() {
 	return *this;
 }
 
-std::vector<std::vector<std::size_t>> TextureStorage::getImageSpecs() const {
+std::vector<svec3> TextureStorage::getImageSpecs() const {
 	return this->imageSpecs;
 }
 
-std::vector<std::size_t> TextureStorage::getImageSize() const {
+svec3 TextureStorage::getImageSize() const {
 	return this->imageSpecs[0];
 }
 
-std::vector<std::size_t> TextureStorage::getImageBoundingBoxMin() const {
+svec3  TextureStorage::getImageBoundingBoxMin() const {
 	return this->imageSpecs[1];
 }
 
-std::vector<std::size_t> TextureStorage::getImageBoundingBoxMax() const {
+svec3  TextureStorage::getImageBoundingBoxMax() const {
 	return this->imageSpecs[2];
 }
 
@@ -60,7 +60,7 @@ const std::vector<unsigned char>& TextureStorage::getData() const {
 	return this->data;
 }
 
-unsigned char TextureStorage::getTexelValue(const glm::vec3& position) const {
+unsigned char TextureStorage::getTexelValue(const glm::vec4& position) const {
 	if (this->data.empty()) {
 		std::cerr << __PRETTY_FUNCTION__ << " : Data was not loaded !" << '\n';
 		return '\0';
@@ -87,10 +87,6 @@ unsigned char TextureStorage::getTexelValue(const glm::vec3& position) const {
 	}
 
 	return this->data[index];
-}
-
-unsigned char TextureStorage::getTexelValue(const glm::vec4& position) const {
-	return this->getTexelValue(glm::vec3(position.x, position.y, position.z));
 }
 
 TextureStorage& TextureStorage::resetTexture() {
@@ -140,22 +136,40 @@ void TextureStorage::loadImageSpecs() {
 	std::cerr << "Texture bounding box updated.\n";
 }
 
+svec3 TextureStorage::convertRealSpaceToVoxelIndex(const glm::vec4 position) const {
+	glm::vec4 initialVersion = this->convertRealSpaceToInitialSpace(position);
+	return this->convertInitialSpaceToVoxelIndex(initialVersion);
+}
+
+glm::vec4 TextureStorage::convertRealSpaceToInitialSpace(const glm::vec4 position) const {
+	return this->real2InitialMatrix * position;
+}
+
+svec3 TextureStorage::convertInitialSpaceToVoxelIndex(const glm::vec4 position) const {
+	return svec3(
+		static_cast<std::size_t>(std::truncf(position.x)),
+		static_cast<std::size_t>(std::truncf(position.y)),
+		static_cast<std::size_t>(std::truncf(position.z))
+	);
+}
+
+glm::vec4 TextureStorage::convertInitialSpaceToRealSpace(const glm::vec4 position) const {
+	return this->initial2RealMatrix * position;
+}
+
+TextureStorage& TextureStorage::setInitialToRealMatrix(const glm::mat4 transfoMat) {
+	this->initial2RealMatrix = transfoMat;
+	this->real2InitialMatrix = glm::inverse(transfoMat);
+
+	return *this;
+}
+
 void TextureStorage::resetImageSpecs() {
 	this->imageSpecs.clear();
-	this->imageSpecs.resize(3);
-	this->imageSpecs[0].resize(3);
-	this->imageSpecs[1].resize(3);
-	this->imageSpecs[2].resize(3);
 
 	std::size_t maxVal = std::numeric_limits<std::size_t>::max();
 
-	this->imageSpecs[0][0] = 0;
-	this->imageSpecs[0][1] = 0;
-	this->imageSpecs[0][2] = 0;
-	this->imageSpecs[1][0] = maxVal;
-	this->imageSpecs[1][1] = maxVal;
-	this->imageSpecs[1][2] = maxVal;
-	this->imageSpecs[2][0] = 0;
-	this->imageSpecs[2][1] = 0;
-	this->imageSpecs[2][2] = 0;
+	this->imageSpecs.push_back(svec3(0, 0, 0));
+	this->imageSpecs.push_back(svec3(maxVal, maxVal, maxVal));
+	this->imageSpecs.push_back(svec3(0, 0, 0));
 }

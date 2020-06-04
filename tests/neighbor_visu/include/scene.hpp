@@ -94,8 +94,8 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void setupVBOData();
 		void setupVAOPointers();
 
-		void drawRealSpace(GLfloat mvMat[], GLfloat pMat[], bool bDrawWireframe = false);
-		void drawInitialSpace(GLfloat mvMat[], GLfloat pMat[], bool bDrawWireframe = false);
+		void drawRealSpace(GLfloat mvMat[], GLfloat pMat[]);
+		void drawInitialSpace(GLfloat mvMat[], GLfloat pMat[]);
 
 		void queryImage(void);
 		void loadImage(std::size_t i, std::size_t j, std::size_t k, const unsigned char* pData = nullptr);
@@ -130,7 +130,6 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 	protected:
 		void generateGrid(std::size_t _x, std::size_t _y, std::size_t _z);
 
-		QOpenGLContext* context; ///< context given by the viewers
 		ControlPanel* controlPanel; ///< pointer to the control panel
 		TextureStorage* texStorage; ///< textureLoader and 'manager'
 		TetMesh* mesh; ///< creates a mesh around the queried point
@@ -188,6 +187,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void showTexCubeVBO();
 		void hideTexCubeVBO();
 		glm::mat4 computeTransformationMatrix() const;
+		void draw(GLfloat mvMat[], GLfloat pMat[], glm::mat4 transfoMat);
 };
 
 #endif // TESTS_NEIGHBOR_VISU_INCLUDE_SCENE_HPP_

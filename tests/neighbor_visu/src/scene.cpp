@@ -8,10 +8,6 @@
 #include <QSurface>
 
 #include <fstream>
-// TODO : change the inspectorPosNormlized by inspectorSizeNormalized and inspectorPosition
-// TODO : check we passed all attributes to the shader
-// TODO	: allow for the texture cube to be drawn
-// TODO : test the class
 
 Scene::Scene(void) {
 	this->controlPanel = nullptr;
@@ -63,18 +59,16 @@ void Scene::initGl(QOpenGLContext* _context, std::size_t _x, std::size_t _y, std
 	this->isInitialized = true;
 	std::cerr << "Entering scene initialization ! " << '\n';
 
-	this->context = _context;
-
-	if (this->context == 0) { std::cerr << "Warning ! this->context() returned 0 !" << '\n' ; }
-	if (this->context == nullptr) { std::cerr << "Warning ! Initializing a scene without a valid OpenGL context !" << '\n' ; }
+	if (_context == 0) { throw std::runtime_error("Warning ! this->context() returned 0 !") ; }
+	if (_context == nullptr) { std::cerr << "Warning ! Initializing a scene without a valid OpenGL context !" << '\n' ; }
 
 	this->initializeOpenGLFunctions();
 
 	this->texStorage = new TextureStorage();
 	this->texStorage->enableDownsampling(true);
+	this->texStorage->setInitialToRealMatrix(this->computeTransformationMatrix());
 
 	this->mesh = new TetMesh(this->texStorage);
-	this->mesh->setTransformationMatrix(this->computeTransformationMatrix());
 
 	///////////////////////////
 	/// CREATE VAO :
@@ -361,7 +355,7 @@ void Scene::loadImage(std::size_t i, std::size_t j, std::size_t k, const unsigne
 		static_cast<GLsizei>(j),// GLsizei: Image height
 		static_cast<GLsizei>(k),// GLsizei: Image depth (number of layers)
 		static_cast<GLint>(0),	// GLint  : Border. This value MUST be 0.
-		GL_RED_INTEGER,			// GLenum : Format of the pixel data
+		GL_RED_INTEGER,		// GLenum : Format of the pixel data
 		GL_UNSIGNED_BYTE,	// GLenum : Type (the data type as in uchar, uint, float ...)
 		pData			// void*  : Data to load into the buffer
 	);
@@ -371,7 +365,7 @@ void Scene::loadImage(std::size_t i, std::size_t j, std::size_t k, const unsigne
 void Scene::queryImage(void) {
 	this->texStorage->loadImages();
 	std::vector<unsigned char> image = this->texStorage->getData();
-	std::vector<std::size_t> imageSizes = this->texStorage->getImageSize();
+	svec3 imageSizes = this->texStorage->getImageSize();
 	std::size_t i = imageSizes[0];
 	std::size_t j = imageSizes[1];
 	std::size_t k = imageSizes[2];
@@ -379,6 +373,58 @@ void Scene::queryImage(void) {
 	std::cerr << "Loading image of size " << i << ',' << j << ',' << k << '\n';
 
 	this->loadImage(i, j, k, image.data());
+}
+
+void Scene::drawRealSpace(GLfloat mvMat[], GLfloat pMat[]) {
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_TEXTURE_3D);
+	GetOpenGLError();
+
+
+	glm::vec4 n = glm::vec4(this->neighborOffset.x, this->neighborOffset.y, this->neighborOffset.z, 1.);
+	this->neighborPos = this->texStorage->convertRealSpaceToVoxelIndex(n);
+	//this->neighborPos -= glm::uvec3(1, 1, 1);
+
+	glm::mat4 transfoMat = this->computeTransformationMatrix();
+
+	this->draw(mvMat, pMat, transfoMat);
+
+	std::vector<glm::vec4> vertices = this->mesh->getVertices();
+	std::vector<unsigned char> values = this->mesh->getVertexValues();
+
+	glPointSize(5.0);
+	glBegin(GL_POINTS);
+	for (std::size_t i = 0; i < vertices.size(); ++i) {
+		glm::vec3 rgb = ucharToRGB(values[i], 5, 255, 50, 200);
+		glColor3f(rgb.r, rgb.g, rgb.b);
+		glm::vec4 v = this->texStorage->convertInitialSpaceToRealSpace(vertices[i]);
+		glVertex3f(v.x, v.y, v.z);
+	}
+	glEnd();
+}
+
+void Scene::drawInitialSpace(GLfloat mvMat[], GLfloat pMat[]) {
+
+	this->neighborPos = this->texStorage->convertRealSpaceToVoxelIndex(glm::vec4(this->neighborOffset.x, this->neighborOffset.y, this->neighborOffset.z, 1.));
+	//this->neighborPos -= glm::uvec3(1, 1, 1);
+
+	glm::mat4 transfoMat = glm::mat4(1.);
+
+	this->draw(mvMat, pMat, transfoMat);
+
+	std::vector<glm::vec4> vertices = this->mesh->getVertices();
+	std::vector<unsigned char> values = this->mesh->getVertexValues();
+
+	glPointSize(5.0);
+	glBegin(GL_POINTS);
+	for (std::size_t i = 0; i < vertices.size(); ++i) {
+		glm::vec3 rgb = ucharToRGB(values[i], 5, 255, 50, 200);
+		glColor3f(rgb.x, rgb.y, rgb.z);
+		glm::vec4 v = (vertices[i]);
+		glVertex3f(v.x, v.y, v.z);
+		glColor3f(rgb.x, rgb.y, rgb.z);
+	}
+	glEnd();
 }
 
 void Scene::prepUniforms(glm::mat4 transfoMat, GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos) {
@@ -421,96 +467,15 @@ void Scene::prepUniforms(glm::mat4 transfoMat, GLfloat* mvMat, GLfloat* pMat, gl
 	glUniform4fv(this->lightPosLocation, 1, glm::value_ptr(lightPos));
 }
 
-void Scene::drawRealSpace(GLfloat mvMat[], GLfloat pMat[], bool bDrawWireframe) {
+void Scene::draw(GLfloat mvMat[], GLfloat pMat[], glm::mat4 transfoMat) {
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_TEXTURE_3D);
 	GetOpenGLError();
 
-
-	glm::vec4 n = glm::vec4(this->neighborOffset.x, this->neighborOffset.y, this->neighborOffset.z, 1.);
-	std::cerr << "Queried point ! " << n.x << ',' << n.y << ',' << n.z << '\n';
-	glm::vec4 o = glm::inverse(this->computeTransformationMatrix()) * n;
-	std::cerr << "Inverse point ! " << o.x << ',' << o.y << ',' << o.z << ',' << o.w << '\n';
-	this->neighborPos = this->texStorage->getVoxelIndexFromPosition(o);
-
-	bDrawWireframe = true;
-
-	if (this->context == nullptr) { std::cerr << "Warning ! Drawing in real space without a valid OpenGL context !" << '\n' ; }
-
-	glm::mat4 transfoMat = this->computeTransformationMatrix();
-
-	glm::vec4 lightPos = glm::vec4(-0.25, -0.25, -0.25, 1.0);
-
-	//////////////////
-	/// SET UNIFORMS :
-	//////////////////
-
-	glUseProgram(this->programHandle);
-
-	this->prepUniforms(transfoMat, mvMat, pMat, lightPos);
-
-	glBindVertexArray(this->vaoHandle);
-	GetOpenGLError();
-
-	this->setupVAOPointers();
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboElementHandle);
-
-	/*if (this->drawMode == DrawMode::Wireframe) {
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	} else {
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	}*/
-
-	if (this->showTextureCube == true) {
-		if (this->cubeShown == false) { this->showTexCubeVBO(); }
-		glDrawElementsInstanced(GL_TRIANGLES, static_cast<GLsizei>(this->renderSize), GL_UNSIGNED_INT, (void*)0, static_cast<GLsizei>(this->drawCalls));
-	} else {
-		if (this->cubeShown == true) { this->hideTexCubeVBO(); }
-		glDrawElementsInstanced(GL_TRIANGLES, static_cast<GLsizei>(this->renderSize), GL_UNSIGNED_INT, (void*)0, static_cast<GLsizei>(this->drawCalls));
-	}
-
-	glBindVertexArray(0);
-	glUseProgram(0);
-
-	std::vector<glm::vec4> vertices = this->mesh->getVertices();
-	std::vector<unsigned char> values = this->mesh->getVertexValues();
-
-	glPointSize(5.0);
-	glBegin(GL_POINTS);
-	for (std::size_t i = 0; i < vertices.size(); ++i) {
-		glm::vec3 rgb = ucharToRGB(values[i], 5, 255, 50, 200);
-		glColor3f(rgb.r, rgb.g, rgb.b);
-		glVertex3f(vertices[i].x, vertices[i].y, vertices[i].z);
-	}
-	glEnd();
-}
-
-void Scene::drawInitialSpace(GLfloat mvMat[], GLfloat pMat[], bool bDrawWireframe) {
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_TEXTURE_3D);
-	GetOpenGLError();
-
-	glm::vec4 n = glm::vec4(this->neighborOffset.x, this->neighborOffset.y, this->neighborOffset.z, 1.);
-	std::cerr << "Queried point ! " << n.x << ',' << n.y << ',' << n.z << '\n';
-	glm::vec4 o = glm::inverse(this->computeTransformationMatrix()) * n;
-	std::cerr << "Inverse point ! " << o.x << ',' << o.y << ',' << o.z << ',' << o.w << '\n';
-	this->neighborPos = this->texStorage->getVoxelIndexFromPosition(o);
-
-	bDrawWireframe = true;
-
-	if (this->context == nullptr) { std::cerr << "Warning ! Drawing in initial space without a valid OpenGL context !" << '\n' ; }
-
-	glm::mat4 transfoMat = glm::mat4(1.);
-
-	glm::vec4 lightPos = glm::vec4(-0.25, -0.25, -0.25, 1.0);
-
-	//////////////////
-	/// SET UNIFORMS :
-	//////////////////
-
 	glUseProgram(this->programHandle);
 	GetOpenGLError();
+
+	glm::vec4 lightPos = glm::vec4(-0.25, -0.25, -0.25, 1.0);
 
 	this->prepUniforms(transfoMat, mvMat, pMat, lightPos);
 	GetOpenGLError();
@@ -521,12 +486,6 @@ void Scene::drawInitialSpace(GLfloat mvMat[], GLfloat pMat[], bool bDrawWirefram
 	this->setupVAOPointers();
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboElementHandle);
-
-	/*if (this->drawMode == DrawMode::Wireframe) {
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	} else {
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	}*/
 
 	if (this->showTextureCube) {
 		if (this->cubeShown == false) { this->showTexCubeVBO(); }
@@ -539,21 +498,6 @@ void Scene::drawInitialSpace(GLfloat mvMat[], GLfloat pMat[], bool bDrawWirefram
 
 	glBindVertexArray(0);
 	glUseProgram(0);
-
-	std::vector<glm::vec4> vertices = this->mesh->getVertices();
-	std::vector<unsigned char> values = this->mesh->getVertexValues();
-	glm::mat4 imat = glm::inverse(this->computeTransformationMatrix());
-
-	glPointSize(5.0);
-	glBegin(GL_POINTS);
-	for (std::size_t i = 0; i < vertices.size(); ++i) {
-		glm::vec3 rgb = ucharToRGB(values[i], 5, 255, 50, 200);
-		glColor3f(rgb.x, rgb.y, rgb.z);
-		glm::vec4 v = imat * vertices[i];
-		glVertex3f(v.x, v.y, v.z);
-		glColor3f(rgb.x, rgb.y, rgb.z);
-	}
-	glEnd();
 }
 
 void Scene::generateGrid(std::size_t _x, std::size_t _y, std::size_t _z) {
@@ -640,11 +584,6 @@ void Scene::setupVBOData() {
 	glBufferData(GL_ARRAY_BUFFER, this->vertIdxDraw.size()*sizeof(uvec4), this->vertIdxDraw.data(), GL_DYNAMIC_DRAW);
 	GetOpenGLError();
 
-/*	this->vboVertPos->setData(this->vertPos.size(), 4, this->vertPos.size()*sizeof(float), this->vertPos.data(), GL_DYNAMIC_DRAW, GL_FLOAT);
-	this->vboVertNorm->setData(this->vertNorm.size(), 4, this->vertNorm.size()*sizeof(float), this->vertNorm.data(), GL_DYNAMIC_DRAW, GL_FLOAT);
-	this->vboVertElement->setData(this->vertIdx.size(), 1, this->vertIdx.size()*sizeof(unsigned int), this->vertIdx.data(), GL_DYNAMIC_DRAW, GL_UNSIGNED_INT);
-	this->vboIndexedDraw->setData(this->vertIdxDraw.size(), 4, this->vertIdxDraw.size()*sizeof(unsigned int), this->vertIdxDraw.data(), GL_DYNAMIC_DRAW, GL_UNSIGNED_INT);
-*/
 	this->setupVAOPointers();
 
 	std::cerr << "Normally, inserted " << this->vertIdx.size() << " elements into element buffer. " << '\n';
@@ -750,9 +689,6 @@ void Scene::hideTexCubeVBO() {
 	GLuint newData[] = {0, 0, 0};
 	glBufferSubData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(0), 3u*sizeof(unsigned int), newData);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-//	this->vboIndexedDraw->bind();
-//	this->vboIndexedDraw->updateData(static_cast<GLintptr>(0), 3u*sizeof(uint), newData);
-//	this->vboIndexedDraw->unBind();
 }
 
 void Scene::showTexCubeVBO() {
@@ -761,9 +697,6 @@ void Scene::showTexCubeVBO() {
 	GLuint newData[] = {static_cast<GLuint>(this->gridWidth), static_cast<GLuint>(this->gridHeight), static_cast<GLuint>(this->gridDepth)};
 	glBufferSubData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(0), 3u*sizeof(unsigned int), newData);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-//	this->vboIndexedDraw->bind();
-//	this->vboIndexedDraw->updateData(static_cast<GLintptr>(0), 3u*sizeof(uint), newData);
-//	this->vboIndexedDraw->unBind();
 }
 
 void Scene::slotToggleShowTextureCube(bool show) {
@@ -798,9 +731,9 @@ void Scene::slotSetTextureZCoord(uint newZCoord) {
 void Scene::updateNeighborTetMesh() {
 	glm::vec4 n = glm::vec4(this->neighborOffset.x, this->neighborOffset.y, this->neighborOffset.z, 1.);
 	std::cerr << "Queried point ! " << n.x << ',' << n.y << ',' << n.z << '\n';
-	glm::vec4 o = glm::inverse(this->computeTransformationMatrix()) * n;
+	glm::vec4 o = this->texStorage->convertRealSpaceToInitialSpace(n);
 	std::cerr << "Inverse point ! " << o.x << ',' << o.y << ',' << o.z << ',' << o.w << '\n';
-	this->mesh->setOrigin(n);
+	this->mesh->setOriginInitialSpace(o);
 	this->mesh->printInfo();
 }
 

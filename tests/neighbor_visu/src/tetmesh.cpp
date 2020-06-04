@@ -5,23 +5,8 @@ TetMesh::TetMesh(const TextureStorage* const texL) : texLoader(texL) {
 	this->vertexValues.clear();
 	this->tetrahedra.clear();
 	this->origin = glm::vec4(.0, .0, .0, .0);
-	this->transformationMatrix = glm::mat4(1.f);
-	this->inverseTransformationMatrix = this->transformationMatrix;
 
 	this->makeTetrahedra();
-}
-
-TetMesh::TetMesh(const TextureStorage* const texL, const glm::vec4 pos) : texLoader(texL) {
-	this->origin = pos;
-	this->transformationMatrix = glm::mat4(1.f);
-	this->inverseTransformationMatrix = this->transformationMatrix;
-
-	this->vertices.clear();
-	this->vertexValues.clear();
-	this->tetrahedra.clear();
-
-	this->makeTetrahedra();
-	this->updatePositions();
 }
 
 TetMesh::~TetMesh() {
@@ -30,19 +15,23 @@ TetMesh::~TetMesh() {
 	this->tetrahedra.clear();
 }
 
-TetMesh& TetMesh::setOrigin(const glm::vec4 position) {
-	this->resetPositions();
-	this->origin = position;
-	this->origin.w = 1.;
-	this->updatePositions();
+TetMesh& TetMesh::setOriginInitialSpace(const glm::vec4 position) {
+	// The position given in argument is a 'free' position,
+	// not constrained to the grid's voxel centers. We need
+	// to set the center of the mesh to the center of the
+	// nearest voxel :
+	glm::vec4 newOrigin = glm::vec4(
+			std::truncf(position.x),
+			std::truncf(position.y),
+			std::truncf(position.z),
+			.0
+		);
+
+	// Set the new origin to be the center of the nearest
+	// voxel relative to 'position'
+	this->updatePositions(newOrigin);
 
 	return *this;
-}
-
-TetMesh& TetMesh::setOrigin(std::size_t i, std::size_t j, std::size_t k) {
-	glm::vec4 o = glm::vec4(static_cast<float>(i), static_cast<float>(j), static_cast<float>(k), 1.);
-	std::cerr << "Neighbors : queried " << o.x << ',' << o.y << ',' << o.z << '\n';
-	return this->setOrigin(o);
 }
 
 TetMesh& TetMesh::resetPositions() {
@@ -53,36 +42,38 @@ TetMesh& TetMesh::resetPositions() {
 	return *this;
 }
 
-TetMesh& TetMesh::setTransformationMatrix(const glm::mat4& transfoMat) {
-	this->transformationMatrix = transfoMat;
-	this->inverseTransformationMatrix = glm::inverse(transfoMat);
-	this->updateValues();
-
-	return *this;
-}
-
 TetMesh& TetMesh::updateValues() {
 	for (std::size_t i = 0; i < this->vertices.size(); ++i) {
-		glm::vec4 icoord = this->inverseTransformationMatrix * this->vertices[i];
+		glm::vec4 icoord = this->vertices[i];
 		std::cerr << "Update :: querying for (" << icoord.x << ',' << icoord.y << ',' << icoord.z << ")\n";
 		this->vertexValues[i] = this->texLoader->getTexelValue(icoord);
 	}
 	return *this;
 }
 
-TetMesh& TetMesh::updatePositions() {
+TetMesh& TetMesh::updatePositions(glm::vec4 newOrigin) {
 	for (std::size_t i = 0; i < this->vertices.size(); ++i) {
-		this->vertices[i] += this->origin;
+		this->vertices[i] = this->vertices[i] - this->origin + newOrigin;
 		this->vertices[i].w = 1.;
 	}
 	this->updateValues();
+	this->origin = newOrigin;
 
 	return *this;
 }
 
+std::vector<glm::vec4> TetMesh::getVertices() const {
+	std::vector<glm::vec4> res(this->vertices);
+	return res;
+}
+
+std::vector<unsigned char> TetMesh::getVertexValues() const {
+	return this->vertexValues;
+}
+
 TetMesh& TetMesh::printInfo() {
 	std::cout << "The image storage has the following specs :" << '\n';
-	std::vector<std::vector<std::size_t>> specs = this->texLoader->getImageSpecs();
+	std::vector<svec3> specs = this->texLoader->getImageSpecs();
 	std::cout << "Image size : " << specs[0][0] << 'x' << specs[0][1] << 'x' << specs[0][2] << '\n';
 	std::cout << "Bounding box min value: " << specs[1][0] << 'x' << specs[1][1] << 'x' << specs[1][2] << '\n';
 	std::cout << "Bounding box max value: " << specs[2][0] << 'x' << specs[2][1] << 'x' << specs[2][2] << '\n';
@@ -95,40 +86,133 @@ TetMesh& TetMesh::printInfo() {
 	return *this;
 }
 
-std::vector<glm::vec4> TetMesh::getVertices() const {
-	std::vector<glm::vec4> res(this->vertices);
-	res.push_back(this->origin);
-	return res;
-}
-
-std::vector<unsigned char> TetMesh::getVertexValues() const {
-	std::vector<unsigned char> res(this->vertexValues);
-	res.push_back(this->originalValue);
-	return res;
-}
-
 void TetMesh::makeTetrahedra() {
 	// For now, a mesh of side 1, centered at the origin
 
-	float m = -0.5f; // 'minus' coordinate
-	float p =  0.5f; // 'plus' coordinate
+	auto getIndex = [&](std::size_t i, std::size_t j, std::size_t k) {
+		return i * 2u * 2u + j * 2u + k;
+	};
 
-	glm::vec4 a = glm::vec4(m, m, m, 1.); this->vertices.push_back(a); this->vertexValues.push_back(0);
-	glm::vec4 b = glm::vec4(m, m, p, 1.); this->vertices.push_back(b); this->vertexValues.push_back(0);
-	glm::vec4 c = glm::vec4(m, p, m, 1.); this->vertices.push_back(c); this->vertexValues.push_back(0);
-	glm::vec4 d = glm::vec4(m, p, p, 1.); this->vertices.push_back(d); this->vertexValues.push_back(0);
-	glm::vec4 e = glm::vec4(p, m, m, 1.); this->vertices.push_back(e); this->vertexValues.push_back(0);
-	glm::vec4 f = glm::vec4(p, m, p, 1.); this->vertices.push_back(f); this->vertexValues.push_back(0);
-	glm::vec4 g = glm::vec4(p, p, m, 1.); this->vertices.push_back(g); this->vertexValues.push_back(0);
-	glm::vec4 h = glm::vec4(p, p, p, 1.); this->vertices.push_back(h); this->vertexValues.push_back(0);
+	// At the start, the origin is at [.0, .0, .0]. But the center of
+	// the first voxel is in fact at [.5, .5, .5], which means we
+	// need to iterate in [-.5, 1.5] by steps of 1. each time.
 
-	// For now the tetrahedra initialization is hard-coded, but shouldn't be too hard to paramterize for
-	// other shapes using CGAL for example. Here, a 6-tetrahedra decomposition of a cube (not the single
-	// possible 5-tetrehedra one) :
-	std::vector<std::size_t> tet0 = std::vector<std::size_t>({4, 6, 2, 7}); this->tetrahedra.push_back(tet0);
-	std::vector<std::size_t> tet1 = std::vector<std::size_t>({1, 0, 3, 5}); this->tetrahedra.push_back(tet1);
-	std::vector<std::size_t> tet2 = std::vector<std::size_t>({3, 4, 7, 5}); this->tetrahedra.push_back(tet2);
-	std::vector<std::size_t> tet3 = std::vector<std::size_t>({0, 4, 3, 5}); this->tetrahedra.push_back(tet3);
-	std::vector<std::size_t> tet4 = std::vector<std::size_t>({0, 4, 2, 3}); this->tetrahedra.push_back(tet4);
-	std::vector<std::size_t> tet5 = std::vector<std::size_t>({2, 4, 7, 3}); this->tetrahedra.push_back(tet5);
+	for (std::size_t i = 0; i < 3; ++i) {
+		for (std::size_t j = 0; j < 3; ++j) {
+			for (std::size_t k = 0; k < 3; ++k) {
+				this->vertices.emplace_back(
+					static_cast<float>(i) * 1.f - .5f,
+					static_cast<float>(j) * 1.f - .5f,
+					static_cast<float>(k) * 1.f - .5f,
+					1.
+				);
+				this->vertexValues.push_back(0);
+			}
+		}
+	}
+
+	for (std::size_t i = 0; i < 2; ++i) {
+		for (std::size_t j = 0; j < 2; ++j) {
+			for (std::size_t k = 0; k < 2; ++k) {
+				// Tetrahedra 1 :
+				this->tetrahedra.push_back({
+					getIndex(i+1, j+0, k+0),
+					getIndex(i+1, j+1, k+0),
+					getIndex(i+0, j+1, k+0),
+					getIndex(i+1, j+1, k+1)
+				});
+				// Tetrahedra 2 :
+				this->tetrahedra.push_back({
+					getIndex(i+0, j+0, k+1),
+					getIndex(i+0, j+0, k+0),
+					getIndex(i+0, j+1, k+1),
+					getIndex(i+1, j+0, k+1)
+				});
+				// Tetrahedra 3 :
+				this->tetrahedra.push_back({
+					getIndex(i+0, j+1, k+1),
+					getIndex(i+1, j+0, k+0),
+					getIndex(i+1, j+1, k+1),
+					getIndex(i+1, j+0, k+1)
+				});
+				// Tetrahedra 4 :
+				this->tetrahedra.push_back({
+					getIndex(i+0, j+0, k+0),
+					getIndex(i+1, j+0, k+0),
+					getIndex(i+0, j+1, k+1),
+					getIndex(i+1, j+0, k+1)
+				});
+				// Tetrahedra 5 :
+				this->tetrahedra.push_back({
+					getIndex(i+0, j+0, k+0),
+					getIndex(i+1, j+0, k+0),
+					getIndex(i+0, j+1, k+0),
+					getIndex(i+0, j+1, k+1)
+				});
+				// Tetrahedra 6 :
+				this->tetrahedra.push_back({
+					getIndex(i+0, j+1, k+0),
+					getIndex(i+1, j+0, k+0),
+					getIndex(i+1, j+1, k+1),
+					getIndex(i+0, j+1, k+1)
+				});
+			}
+		}
+	}
+
+	// The mesh is now constructed. Or at least, it should be.
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
