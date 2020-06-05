@@ -13,6 +13,11 @@
 int main(int argc, char* argv[]) {
 	QApplication app(argc, argv);
 
+	// So the edges don't look jagged
+	QSurfaceFormat fmt;
+	fmt.setSamples(10);
+	QSurfaceFormat::setDefaultFormat(fmt);
+
 	QCoreApplication::setApplicationName("Medical Image Visualizer");
 	QCoreApplication::setOrganizationName("LIRMM");
 	QCoreApplication::setApplicationVersion(QT_VERSION_STR);

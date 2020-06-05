@@ -21,11 +21,11 @@ TetMesh& TetMesh::setOriginInitialSpace(const glm::vec4 position) {
 	// to set the center of the mesh to the center of the
 	// nearest voxel :
 	glm::vec4 newOrigin = glm::vec4(
-			std::truncf(position.x),
-			std::truncf(position.y),
-			std::truncf(position.z),
-			.0
-		);
+		std::truncf(position.x),
+		std::truncf(position.y),
+		std::truncf(position.z),
+		.0
+	);
 
 	// Set the new origin to be the center of the nearest
 	// voxel relative to 'position'
