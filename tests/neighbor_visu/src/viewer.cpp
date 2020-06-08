@@ -6,6 +6,8 @@
 #include <QKeyEvent>
 #include <fstream>
 
+float Viewer::sceneRadiusMultiplier{1.5f};
+
 Viewer::Viewer(Scene* const scene, bool isLeftOrRight, QWidget* parent) : QGLViewer(parent), scene(scene), isRealSpace(isLeftOrRight) {
 	this->setAxisIsDrawn();
 	this->setGridIsDrawn();
@@ -16,33 +18,14 @@ void Viewer::init() {
 	this->makeCurrent();
 	this->scene->initGl(this->context(), 3, 3, 3);
 
-	if (this->focusType == FocusStates::TextureFocus) {
-		glm::vec3 bbDiag = this->scene->getTexCubeBoundaries(!this->isRealSpace);
-		float sceneSize = glm::length(bbDiag);
-
-		this->setSceneRadius(sceneSize);
-		// center scene on center of grid
-		this->setSceneCenter(qglviewer::Vec(bbDiag.x/2., bbDiag.y/2., bbDiag.z/2.));
-		this->showEntireScene();
-	} else if (this->focusType == FocusStates::NeighborFocus) {
-		nbCoord c = this->scene->getNeighborBoundaries(!this->isRealSpace);
-
-		glm::vec3 span = c.p - c.o;
-		glm::vec3 center = ((c.p - c.o)/2.f)+c.o;
-
-		this->setSceneRadius(2.*glm::length(span));
-		this->setSceneCenter(qglviewer::Vec(center.x, center.y, center.z));
-		this->showEntireScene();
+	if (this->focusType == FocusStates::NeighborFocus) {
+		this->updateNeighborFocus();
+	} else {
+		this->updateTextureFocus();
 	}
 }
 
 void Viewer::draw() {
-	if (this->focusType == FocusStates::NeighborFocus){
-		nbCoord n = this->scene->getNeighborBoundaries(!this->isRealSpace);
-		glm::vec3 center = n.o + ((n.p - n.o)/2.f);
-		this->setSceneCenter(qglviewer::Vec(center.x, center.y, center.z));
-		this->setSceneRadius(glm::length(n.p - n.o)*2.f);
-	}
 	GLfloat mvMat[16];
 	GLfloat pMat[16];
 
@@ -60,9 +43,6 @@ void Viewer::draw() {
 
 void Viewer::keyPressEvent(QKeyEvent *e) {
 	switch (e->key()) {
-		case Qt::Key::Key_X:
-			this->update();
-		break;
 		case Qt::Key::Key_R:
 			this->scene->compileShaders();
 			this->update();
@@ -75,17 +55,16 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 			this->scene->toggleTexCubeVisibility();
 			this->update();
 		break;
-		case Qt::Key::Key_N : {
+		// Focus of the viewer :
+		case Qt::Key::Key_N :
 			this->focusType = FocusStates::NeighborFocus;
-			nbCoord c = this->scene->getNeighborBoundaries(this->isRealSpace);
-
-			glm::vec3 span = c.p - c.o;
-			glm::vec3 center = ((c.p - c.o)/2.f)+c.o;
-
-			this->setSceneRadius(2.*glm::length(span));
-			this->setSceneCenter(qglviewer::Vec(center.x, center.y, center.z));
-			this->showEntireScene();
-		}
+			this->updateNeighborFocus();
+			this->update();
+		break;
+		case Qt::Key::Key_T:
+			this->focusType = FocusStates::DefaultFocus;
+			this->updateTextureFocus();
+			this->update();
 		break;
 		case Qt::Key::Key_F1:
 			this->scene->setDrawModeSolid();
@@ -101,11 +80,6 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 		break;
 		case Qt::Key::Key_F5:
 			this->scene->updateNeighborTetMesh();
-		break;
-		case Qt::Key::Key_T:
-			this->focusType = FocusStates::DefaultFocus;
-			this->updateTextureFocus();
-			this->update();
 		break;
 		default:
 			QGLViewer::keyPressEvent(e);
@@ -131,11 +105,22 @@ void Viewer::setFocusState(int state) {
 	this->update();
 }
 
+void Viewer::updateNeighborFocus() {
+	nbCoord c = this->scene->getNeighborBoundaries(this->isRealSpace);
+
+	glm::vec3 span = c.p - c.o;
+	glm::vec3 center = ((c.p - c.o)/2.f) + c.o;
+
+	this->setSceneRadius(sceneRadiusMultiplier * glm::length(span));
+	this->setSceneCenter(qglviewer::Vec(center.x, center.y, center.z));
+	this->showEntireScene();
+}
+
 void Viewer::updateTextureFocus() {
-	glm::vec3 bbDiag = this->scene->getSceneBoundaries();
+	glm::vec3 bbDiag = this->scene->getTexCubeBoundaries(this->isRealSpace);
 	float sceneSize = glm::length(bbDiag);
 
-	this->setSceneRadius(sceneSize);
+	this->setSceneRadius(sceneSize*sceneRadiusMultiplier);
 	// center scene on center of grid
 	this->setSceneCenter(qglviewer::Vec(bbDiag.x/2., bbDiag.y/2., bbDiag.z/2.));
 	this->showEntireScene();

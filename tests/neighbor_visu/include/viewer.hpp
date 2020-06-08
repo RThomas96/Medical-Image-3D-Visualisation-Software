@@ -20,6 +20,7 @@ class Viewer : public QGLViewer {
 		Q_OBJECT
 	public:
 		Viewer(Scene* const scene, bool _isRealSpace, QWidget* parent = nullptr);
+		static float sceneRadiusMultiplier;
 	protected:
 		virtual void init() override;
 		virtual void draw() override;
@@ -31,6 +32,7 @@ class Viewer : public QGLViewer {
 		FocusStates focusType;
 
 		void updateTextureFocus();
+		void updateNeighborFocus();
 	public slots:
 		void setFocusState(int state);
 };

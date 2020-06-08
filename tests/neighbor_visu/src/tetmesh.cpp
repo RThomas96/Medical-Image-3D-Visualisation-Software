@@ -1,6 +1,6 @@
 #include "../include/tetmesh.hpp"
 
-TetMesh::TetMesh(const TextureStorage* const texL) : texLoader(texL) {
+TetMesh::TetMesh(const std::shared_ptr<TextureStorage> texL) : texLoader(texL) {
 	this->vertices.clear();
 	this->vertexValues.clear();
 	this->tetrahedra.clear();

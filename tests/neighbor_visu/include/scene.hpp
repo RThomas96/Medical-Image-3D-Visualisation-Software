@@ -131,8 +131,8 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void generateGrid(std::size_t _x, std::size_t _y, std::size_t _z);
 
 		ControlPanel* controlPanel; ///< pointer to the control panel
-		TextureStorage* texStorage; ///< textureLoader and 'manager'
-		TetMesh* mesh; ///< creates a mesh around the queried point
+		std::shared_ptr<TextureStorage> texStorage; ///< textureLoader and 'manager'
+		std::shared_ptr<TetMesh> mesh; ///< creates a mesh around the queried point
 
 		std::size_t gridWidth; ///< grid size
 		std::size_t gridHeight; ///< grid size

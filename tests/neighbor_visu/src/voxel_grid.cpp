@@ -34,15 +34,25 @@ VoxelGrid::~VoxelGrid() {
 	this->inspectorMesh.reset();
 }
 
-VoxelGrid& VoxelGrid::setGridSize(svec3 newDimensions) {
+VoxelGrid& VoxelGrid::setGridResolution(svec3 newDimensions) {
 	this->gridDimensions = newDimensions;
+	this->updateVoxelSizes();
 	return *this;
 }
 
 VoxelGrid& VoxelGrid::setRenderBoundingBox(glm::vec4 minPoint, glm::vec4 maxPoint) {
 	this->renderBB.setMax(glm::vec3(maxPoint.x, maxPoint.y, maxPoint.z));
 	this->renderBB.setMin(glm::vec3(minPoint.x, minPoint.y, minPoint.z));
+	this->updateVoxelSizes();
 	return *this;
+}
+
+void VoxelGrid::updateVoxelSizes() {
+	BoundingBox_General<float>::vec diag = this->renderBB.getDiagonal();
+	float vx = static_cast<float>(diag.x) / static_cast<float>(this->gridDimensions.x);
+	float vy = static_cast<float>(diag.y) / static_cast<float>(this->gridDimensions.y);
+	float vz = static_cast<float>(diag.z) / static_cast<float>(this->gridDimensions.z);
+	this->voxelDimensions = glm::vec3(vx, vy, vz);
 }
 
 VoxelGrid& VoxelGrid::setImageStack(std::shared_ptr<TextureStorage> _stack) {
@@ -74,5 +84,34 @@ void VoxelGrid::reserveSpace() {
 }
 
 void VoxelGrid::computeData() {
-	//
+	/**
+	 * Starts by iterating over the grid's resolution. Then, for each voxel, its position is defined
+	 * on all axes by `renderBB.Minimum.Axis + (index) * voxelSize.Axis`.
+	 *
+	 * Once the iterations are over, we should have a fully populated data vector.
+	 */
+
+	float x = .0f, y = .0f, z = .0f;
+	std::size_t index;
+
+	for (std::size_t k = this->renderBB.getMin().z; k < this->gridDimensions.z; ++k) {
+		z = this->renderBB.getMin().z + this->voxelDimensions.z * static_cast<float>(k);
+
+		for (std::size_t j = 0; j < this->gridDimensions.y; ++j) {
+			y = this->renderBB.getMin().y + this->voxelDimensions.y * static_cast<float>(j);
+
+			for (std::size_t i = 0; i < this->gridDimensions.x; ++i) {
+				x = this->renderBB.getMin().x + this->voxelDimensions.x * static_cast<float>(i);
+				index = i + j * this->gridDimensions.x + k * this->gridDimensions.x * this->gridDimensions.y;
+
+				// We now have the position of the voxel to render. Set the mesh here :
+				glm::vec4 voxelPosWorldSpace = glm::vec4(x, y, z, 1.);
+				// And get the interpolated value here, directly stored in the data vector :
+				this->data[index] = this->inspectorMesh->getInterpolatedValue(voxelPosWorldSpace, InterpolationMethods::NearestNeighbor);
+			}
+
+		}
+		std::cerr << "Finished depth level " << k << " of " << this->gridDimensions.z << '\n';
+
+	}
 }

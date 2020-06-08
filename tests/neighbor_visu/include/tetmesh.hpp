@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <iostream>
+#include <memory>
 
 enum InterpolationMethods {
 	NearestNeighbor,
@@ -26,7 +27,7 @@ enum InterpolationMethods {
 class TetMesh {
 	public:
 		/// @brief Constructs a mesh, associated with the given stack of images.
-		TetMesh(const TextureStorage* const texLoader);
+		TetMesh(const std::shared_ptr<TextureStorage> texLoader);
 
 		/// @brief Sets the new origin of the mesh, as an XYZ position.
 		/// @details Takes the XYZ position given (in initial space) and sets
@@ -40,7 +41,9 @@ class TetMesh {
 		/// @brief Get the values associated with each element in TetMesh::getVertices(void).
 		std::vector<unsigned char> getVertexValues(void) const;
 
-		unsigned char getInterpolatedValue(InterpolationMethods method, glm::vec4 realPosition);
+		/// @brief Get the interpolated value at the specified position, using the specified interpolation method :
+		/// @param pos_ws The position to query for, in world space.
+		unsigned char getInterpolatedValue(glm::vec4 pos_ws, InterpolationMethods method = InterpolationMethods::NearestNeighbor);
 
 		/// @brief Prints info about the current position and values of the neighbor grid.
 		/// @returns A reference to (this), to chain function calls.
@@ -49,7 +52,7 @@ class TetMesh {
 		/// @brief Destructs the mesh.
 		~TetMesh(void);
 	private:
-		const TextureStorage* const texLoader; ///< reference to the image stack
+		const std::shared_ptr<TextureStorage> texLoader; ///< reference to the image stack
 
 		glm::vec4 origin; ///< Position of the mesh's origin
 		std::vector<glm::vec4> vertices; ///< Positions of the neighboring vertices
@@ -70,6 +73,12 @@ class TetMesh {
 		/// @brief Updates the values of the neighbors in the grid.
 		/// @returns A reference to (this), to chain function calls.
 		TetMesh& updateValues(void);
+
+	protected:
+		unsigned char interpolate_NearestNeighbor(glm::vec4 pos) const;
+		unsigned char interpolate_TriCubic(glm::vec4 pos) const;
+		unsigned char interpolate_TriLinear(glm::vec4 pos) const;
+		unsigned char interpolate_Barycentric(glm::vec4 pos) const;
 };
 
 #endif // TESTS_NEIGHBOR_VISU_INCLUDE_TETMESH_HPP_

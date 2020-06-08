@@ -64,11 +64,11 @@ void Scene::initGl(QOpenGLContext* _context, std::size_t _x, std::size_t _y, std
 
 	this->initializeOpenGLFunctions();
 
-	this->texStorage = new TextureStorage();
+	this->texStorage = std::make_shared<TextureStorage>();
 	this->texStorage->enableDownsampling(true);
 	this->texStorage->setInitialToRealMatrix(this->computeTransformationMatrix());
 
-	this->mesh = new TetMesh(this->texStorage);
+	this->mesh = std::make_shared<TetMesh>(this->texStorage);
 
 	///////////////////////////
 	/// CREATE VAO :
@@ -663,20 +663,25 @@ glm::vec3 Scene::getSceneBoundaries() const {
 glm::vec3 Scene::getTexCubeBoundaries(bool realSpace) const {
 	glm::vec3 baseVtx = glm::vec3(static_cast<float>(this->gridWidth), static_cast<float>(this->gridHeight), static_cast<float>(this->gridDepth));
 	if (realSpace) {
-		return baseVtx;
-	} else {
 		glm::mat3 transfoMat = glm::mat3(this->computeTransformationMatrix());
 		return transfoMat * baseVtx;
+	} else {
+		glm::mat3 transfoMat = glm::mat3(this->computeTransformationMatrix());
+		return baseVtx;
 	}
 }
 
 nbCoord Scene::getNeighborBoundaries(bool realSpace) const {
+	/**
+	 * If we are in real space, the stack is deformed. As such, we apply the transformation matrix.
+	 * If we're in initial space, we can byupass this transformation.
+	 */
 	glm::vec3 neighbor(static_cast<float>(this->neighborWidth), static_cast<float>(this->neighborHeight), static_cast<float>(this->neighborDepth));
 	glm::vec3 pos(neighborOffset);
 
 	glm::mat3 transfoMat = glm::mat3(this->computeTransformationMatrix());
 	glm::vec3 max = neighbor+pos;
-	if (not realSpace) {
+	if (realSpace) {
 		pos = transfoMat * pos;
 		max = transfoMat * max;
 	}
