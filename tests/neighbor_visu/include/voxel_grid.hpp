@@ -47,7 +47,7 @@ class VoxelGrid {
 		/// @details Renders a voxel grid of dimensions `gridDimensions` in the area
 		/// defined by `renderBB`, with voxels of size `voxelDimensions`. The resulting
 		/// voxel data is saved in `data`.
-		VoxelGrid& populateGrid(void);
+		VoxelGrid& populateGrid(InterpolationMethods method = InterpolationMethods::NearestNeighbor);
 
 		/*
 
@@ -62,7 +62,7 @@ class VoxelGrid {
 
 	protected:
 		void reserveSpace(void); // Allocate the needed space for filling the data progressively.
-		void computeData(void); // Compute te values to put in the grid
+		void computeData(InterpolationMethods method); // Compute te values to put in the grid
 		void updateVoxelSizes(void); // Compute the size of voxels after renderBB or gridDimensions has changed.
 
 	private:

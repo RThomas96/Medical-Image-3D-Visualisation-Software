@@ -65,7 +65,7 @@ VoxelGrid& VoxelGrid::setInspector(std::shared_ptr<TetMesh> _mesh) {
 	return *this;
 }
 
-VoxelGrid& VoxelGrid::populateGrid() {
+VoxelGrid& VoxelGrid::populateGrid(InterpolationMethods method) {
 	if (this->imageStack == nullptr || this->inspectorMesh == nullptr) {
 		OUT << "VoxelGrid : No image stack or inspecting mesh was set !" << '\n';
 	}
@@ -73,7 +73,7 @@ VoxelGrid& VoxelGrid::populateGrid() {
 	this->reserveSpace();
 
 	// TODO : add a progress tracker called upon at the end of each depth level
-	this->computeData();
+	this->computeData(method);
 }
 
 void VoxelGrid::reserveSpace() {
@@ -83,9 +83,8 @@ void VoxelGrid::reserveSpace() {
 	this->data.reserve(dataSize);
 }
 
-void VoxelGrid::computeData() {
-	/**
-	 * Starts by iterating over the grid's resolution. Then, for each voxel, its position is defined
+void VoxelGrid::computeData(InterpolationMethods method) {
+	/* Starts by iterating over the grid's resolution. Then, for each voxel, its position is defined
 	 * on all axes by `renderBB.Minimum.Axis + (index) * voxelSize.Axis`.
 	 *
 	 * Once the iterations are over, we should have a fully populated data vector.
@@ -107,7 +106,7 @@ void VoxelGrid::computeData() {
 				// We now have the position of the voxel to render. Set the mesh here :
 				glm::vec4 voxelPosWorldSpace = glm::vec4(x, y, z, 1.);
 				// And get the interpolated value here, directly stored in the data vector :
-				this->data[index] = this->inspectorMesh->getInterpolatedValue(voxelPosWorldSpace, InterpolationMethods::NearestNeighbor);
+				this->data[index] = this->inspectorMesh->getInterpolatedValue(voxelPosWorldSpace, method);
 			}
 
 		}
