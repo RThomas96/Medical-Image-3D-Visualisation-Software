@@ -9,9 +9,9 @@
 #include <iostream>
 
 /// TODO (infinite) : make this class templated as to accept different types of data from TIF images. The standard supports uchar, uint16, and floats (IIRC, see paulbourke.net/dataformats/tiff/ for details)
-/// TODO (1) : make the image loading and processing happen here, or in a separate struct, but centralise everything here (don't need 2 classes for the same job ...)
+/// TODO (1) : make the image loading and processing happen here, or in a separate private struct, but centralise everything here (don't need 2 classes for the same job ...)
 /// TODO (2) : in relation to (1), once it's done, remove the bulk_texture_loader reference.
-/// TODO (3) : move the interpolation function from here to TetMesh, we'll need it there to interpolate according to the user's need.
+/// DONE (3) : move the interpolation function from here to TetMesh, we'll need it there to interpolate according to the user's need.
 /// TODO (4) : after (1) and maybe (2) are done, make a vector of pair of boundaries for different values of data as such :
 ///		- std::vector<std::pair<glm::uvec3, glm::uvec3>> :
 ///			- each index 'i' contains the positions of the bounding boxes for the data, if 'i' is the minimum value in which we are sure there's data.

@@ -16,9 +16,6 @@ enum InterpolationMethods {
 	Barycentric
 };
 
-/// TODO (1) : move the interpolation function from TextureStorage to here, we'll need it here in order to account for the user's prefered interpolation method.
-/// TODO (2) : remove the const reference to a stack loader, we can only have one mesh and update it as necessary, since all stacks are in the same initial space.
-
 /// @brief Represents a tetrahedral mesh in initial space, to interpolate a voxel's value at a given position.
 /// @details This class represents a tetrahedral mesh which vertices are the dual of a voxel's direct neighbors.
 /// You can analyse the neighbors of a voxel by supplying it a position, which will update the positions and
@@ -91,8 +88,35 @@ class TetMesh {
 		unsigned char interpolate_TriLinear(glm::vec4 pos) const; ///< Interpolates a given point in initial space with the Trilinear technique
 		unsigned char interpolate_TriCubic(glm::vec4 pos) const; ///< Interpolates a given point in initial space with the Tricubic technique // TODO : Implement it, but later.
 		unsigned char interpolate_Barycentric(glm::vec4 pos) const; ///< Interpolates a given point in initial space with the barycentric technique
-		bool isPointInTetrahedra(const glm::vec4 pos, std::size_t tetrahedra) const; ///< Determines if a point P is in the tetrahedron T using signed distance computations.
 		glm::vec4 computeBarycentricCoords(glm::vec4 pos, std::size_t tetIndex) const; ///< Computes the barycentric coordinates of a point in the tetrahedra given in argument.
 };
+
+#ifndef GLM_CROSS_VEC4_OVERRIDE
+#define GLM_CROSS_VEC4_OVERRIDE
+namespace glm {
+	namespace detail {
+		///! @brief Redefinition of glm::detail::compute_cross<> for vec4s instead of vec3s (for convenience)
+		template<typename T, qualifier Q, bool Aligned>
+		struct compute_cross_vec4
+		{
+			GLM_FUNC_QUALIFIER static vec<4, T, Q> call(vec<4, T, Q> const& x, vec<4, T, Q> const& y)
+			{
+				GLM_STATIC_ASSERT(std::numeric_limits<T>::is_iec559, "'cross' accepts only floating-point inputs");
+
+				return vec<4, T, Q>(
+					x.y * y.z - y.y * x.z,
+					x.z * y.x - y.z * x.x,
+					x.x * y.y - y.x * x.y, .0f);
+			}
+		};
+	}
+	///! @brief Computes glm::cross(), but with vec4s instead of vec3s (ignores last component)
+	template<typename T, qualifier Q>
+	GLM_FUNC_QUALIFIER vec<4, T, Q> cross(vec<4, T, Q> const& x, vec<4, T, Q> const& y)
+	{
+		return detail::compute_cross_vec4<T, Q, detail::is_aligned<Q>::value>::call(x, y);
+	}
+}
+#endif
 
 #endif // TESTS_NEIGHBOR_VISU_INCLUDE_TETMESH_HPP_

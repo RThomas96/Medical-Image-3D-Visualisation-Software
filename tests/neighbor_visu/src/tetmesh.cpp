@@ -177,14 +177,14 @@ unsigned char TetMesh::interpolate_TriLinear(glm::vec4 pos) const {
 	// with its coordinates)
 
 	// Get values :
-	const uchar& xyz = this->vertexValues[index_x_min * 2*2 + index_y_min * 2 + index_z_min];
-	const uchar& xyZ = this->vertexValues[index_x_min * 2*2 + index_y_min * 2 + index_z_max];
-	const uchar& xYz = this->vertexValues[index_x_min * 2*2 + index_y_max * 2 + index_z_min];
-	const uchar& xYZ = this->vertexValues[index_x_min * 2*2 + index_y_max * 2 + index_z_max];
-	const uchar& Xyz = this->vertexValues[index_x_max * 2*2 + index_y_min * 2 + index_z_min];
-	const uchar& XyZ = this->vertexValues[index_x_max * 2*2 + index_y_min * 2 + index_z_max];
-	const uchar& XYz = this->vertexValues[index_x_max * 2*2 + index_y_max * 2 + index_z_min];
-	const uchar& XYZ = this->vertexValues[index_x_max * 2*2 + index_y_max * 2 + index_z_max];
+	const unsigned char& xyz = this->vertexValues[index_x_min * 2*2 + index_y_min * 2 + index_z_min];
+	const unsigned char& xyZ = this->vertexValues[index_x_min * 2*2 + index_y_min * 2 + index_z_max];
+	const unsigned char& xYz = this->vertexValues[index_x_min * 2*2 + index_y_max * 2 + index_z_min];
+	const unsigned char& xYZ = this->vertexValues[index_x_min * 2*2 + index_y_max * 2 + index_z_max];
+	const unsigned char& Xyz = this->vertexValues[index_x_max * 2*2 + index_y_min * 2 + index_z_min];
+	const unsigned char& XyZ = this->vertexValues[index_x_max * 2*2 + index_y_min * 2 + index_z_max];
+	const unsigned char& XYz = this->vertexValues[index_x_max * 2*2 + index_y_max * 2 + index_z_min];
+	const unsigned char& XYZ = this->vertexValues[index_x_max * 2*2 + index_y_max * 2 + index_z_max];
 
 	float cyz = (1.f - pos.x) * static_cast<float>(xyz) + pos.x * static_cast<float>(Xyz);
 	float cyZ = (1.f - pos.x) * static_cast<float>(xyZ) + pos.x * static_cast<float>(XyZ);
@@ -209,9 +209,13 @@ unsigned char TetMesh::interpolate_Barycentric(glm::vec4 pos) const {
 	// coefficients of the vertex in it.
 
 	bool found = false;
-	std::size_t i = 0;
-	for (i; i < this->tetrahedra.size(); ++i) {
-		found = isPointInTetrahedra(pos, i);
+	std::size_t tet = 0;
+	glm::vec4 b; // barycentric coords of the point
+	for (; tet < this->tetrahedra.size(); ++tet) {
+		b = this->computeBarycentricCoords(pos, tet);
+		// Check if any components are negative :
+		found = ( (b.x > .0f) && (b.y > .0f) && (b.z > .0f) && (b.w > .0f) );
+		// If not, then the point is in the tetrahedron !
 		if (found) { break; }
 	}
 	if (not found) {
@@ -220,29 +224,45 @@ unsigned char TetMesh::interpolate_Barycentric(glm::vec4 pos) const {
 		return 0;
 	}
 
-	// TODO : compute barycentric coordinates for tetrahedron 'i', and then interpolate the values.
+	float va = static_cast<float>(this->vertexValues[this->tetrahedra[tet][0]]);
+	float vb = static_cast<float>(this->vertexValues[this->tetrahedra[tet][1]]);
+	float vc = static_cast<float>(this->vertexValues[this->tetrahedra[tet][2]]);
+	float vd = static_cast<float>(this->vertexValues[this->tetrahedra[tet][3]]);
+
+	// Function used to get the floating point back to a number without numbers after the
+	// decimal point (can also be truncf) :
+	auto precisionFunction = std::roundf;
+
+	return static_cast<unsigned char>(precisionFunction(b.x * va + b.y * vb + b.z * vc + b.w * vd));
 }
 
-bool TetMesh::isPointInTetrahedra(const glm::vec4 pos, std::size_t tet) const {
-	// Computes the planes corresponding to the faces of the tetrahedra, with normals
-	// oriented inwards. If the point is on the 'good' side of each plane, then it
-	// **must** be in the tetrahedra.
+glm::vec4 TetMesh::computeBarycentricCoords(glm::vec4 pos, std::size_t tetIndex) const {
+	// Computes the barycentric coordinates of the point P relative to the tetrahedron
+	// T, whether this point is in the tetrahedra or not.
 
-	// Note : glm doesn't appear to have a functionnal cast from glm::vec3 to glm::vec4,
-	// so we are forced to allocate more on the stack than necessary and jump through
-	// some hoops in order to do this :
+	// Each tetrahedron is composed of 4 vertices : A, B, C, and D. The point P must
+	// 'slice' the tetrahedron if it is inside it. We will compute the volume of the 4
+	// sub-tetrahedra composing the 5-element mesh ABCDP. First, we get the vertices of
+	// the original tetrahedron :
+	const glm::vec4& a = this->vertices[this->tetrahedra[tetIndex][0]];
+	const glm::vec4& b = this->vertices[this->tetrahedra[tetIndex][1]];
+	const glm::vec4& c = this->vertices[this->tetrahedra[tetIndex][2]];
+	const glm::vec4& d = this->vertices[this->tetrahedra[tetIndex][3]];
 
-	const glm::vec4 t0 = this->vertices[this->tetrahedra[tet][0]]; glm::vec3 p0 = glm::vec3(t0.x, t0.y, t0.z);
-	const glm::vec4 t1 = this->vertices[this->tetrahedra[tet][1]]; glm::vec3 p1 = glm::vec3(t1.x, t1.y, t1.z);
-	const glm::vec4 t2 = this->vertices[this->tetrahedra[tet][2]]; glm::vec3 p2 = glm::vec3(t2.x, t2.y, t2.z);
-	const glm::vec4 t3 = this->vertices[this->tetrahedra[tet][3]]; glm::vec3 p3 = glm::vec3(t3.x, t3.y, t3.z);
+	// Vectors (edges) of the tetrahedron, and edges AP, BP :
+	glm::vec4 vab = b - a; glm::vec4 vac = c - a;
+	glm::vec4 vad = d - a; glm::vec4 vbc = c - b;
+	glm::vec4 vbd = d - b;
+	glm::vec4 vap = pos - a; glm::vec4 vbp = pos - b;
 
-	glm::vec3 n0 = glm::cross((p1 - p0), (p2 - p0)); n0 = (glm::dot(n0, p3) < 0) ? -n0 : n0; glm::vec4 N0 = glm::vec4(n0.x, n0.y, n0.z, .0f);
-	glm::vec3 n1 = glm::cross((p1 - p0), (p3 - p0)); n1 = (glm::dot(n1, p2) < 0) ? -n1 : n1; glm::vec4 N1 = glm::vec4(n1.x, n1.y, n1.z, .0f);
-	glm::vec3 n2 = glm::cross((p2 - p0), (p3 - p0)); n2 = (glm::dot(n2, p1) < 0) ? -n2 : n2; glm::vec4 N2 = glm::vec4(n2.x, n2.y, n2.z, .0f);
-	glm::vec3 n3 = glm::cross((p2 - p1), (p3 - p1)); n3 = (glm::dot(n3, p0) < 0) ? -n3 : n3; glm::vec4 N3 = glm::vec4(n3.x, n3.y, n3.z, .0f);
+	// vX = volume of the sub-tetrahedron opposite of X relative to P :
+	float va = (1.f / 6.f) * glm::dot(vbp, glm::cross(vbd, vbc));
+	float vb = (1.f / 6.f) * glm::dot(vap, glm::cross(vac, vad));
+	float vc = (1.f / 6.f) * glm::dot(vap, glm::cross(vad, vab));
+	float vd = (1.f / 6.f) * glm::dot(vap, glm::cross(vab, vac));
+	float v  = (1.f / 6.f) * glm::dot(vab, glm::cross(vac, vad)); // special value : volume of whole tetrahedra (without P)
 
-	return (glm::dot(pos, N0) > .0f && glm::dot(pos, N1) > .0f && glm::dot(pos, N2) > .0f && glm::dot(pos, N3) > .0f);
+	return glm::vec4(va / v, vb / v, vc / v, vd / v);
 }
 
 void TetMesh::makeTetrahedra() {

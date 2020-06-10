@@ -5,10 +5,6 @@
 
 #include <QGLViewer/qglviewer.h>
 
-// TODO : link control panels's actions to signals/slots here
-// TODO : test the class
-// TODO : work on shaders
-
 enum FocusStates {
 	NoFocus,
 	TextureFocus,
