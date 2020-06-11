@@ -7,16 +7,20 @@
 
 #include <glm/glm.hpp>
 
+#include <QObject>
+
 #include <iostream>
 #include <vector>
 #include <memory>
 #include <fstream>
 
+class GridControl; ///< Fwd-declaration of the class.
+
 /// @brief High precision vector3 type to store image sizes, and coordinates.
 typedef glm::vec<3, std::size_t, glm::highp> svec3;
 
-class VoxelGrid {
-
+class VoxelGrid : public QObject {
+	Q_OBJECT
 	public:
 		/// @brief Default constructor of a voxel grid. Allocated nothing, set size to 0x0x0.
 		VoxelGrid(void);
@@ -49,6 +53,12 @@ class VoxelGrid {
 		/// voxel data is saved in `data`.
 		VoxelGrid& populateGrid(InterpolationMethods method = InterpolationMethods::NearestNeighbor);
 
+		/// @brief Returns the grid dimensions.
+		svec3 getGridDimensions(void) const { return this->gridDimensions; }
+
+		/// @brief Returns the render bounding box.
+		BoundingBox_General<float> getRenderBB(void) const { return this->renderBB; }
+
 		/*
 
 		friend class IGridWriter;
@@ -59,6 +69,18 @@ class VoxelGrid {
 		/// For example, if the path given is path_filename.file_extension then the files will be named path_filename_FILENUMBER.file_extension.
 		VoxelGrid& writeToFile(const IGridWriter* writer, const std::string path);
 		*/
+
+	public:
+		void slotSetGridDimensionX(int newDim);
+		void slotSetGridDimensionY(int newDim);
+		void slotSetGridDimensionZ(int newDim);
+		void slotSetGridBBMinX(double newDim);
+		void slotSetGridBBMinY(double newDim);
+		void slotSetGridBBMinZ(double newDim);
+		void slotSetGridBBMaxX(double newDim);
+		void slotSetGridBBMaxY(double newDim);
+		void slotSetGridBBMaxZ(double newDim);
+		void setController(GridControl* g) { this->controller = g; }
 
 	protected:
 		void reserveSpace(void); // Allocate the needed space for filling the data progressively.
@@ -78,6 +100,8 @@ class VoxelGrid {
 		std::shared_ptr<TextureStorage> imageStack;
 		/// @brief Pointer to a mesh to explore the data
 		std::shared_ptr<TetMesh> inspectorMesh;
+		/// @brief Pointer to the grid controller, in order to modify the values of this voxel grid from outside and have a feedback loop
+		GridControl* controller;
 
 		/*
 		IGridWriter* defaultWriter; // Maybe for incrementally writing to a file ? could be good if the grid size > available memory

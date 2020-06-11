@@ -1,5 +1,7 @@
 #include "../include/voxel_grid.hpp"
 
+#include "../include/grid_control.hpp"
+
 #ifndef NDEBUG
 #define OUT std::cerr
 #else
@@ -14,6 +16,7 @@ VoxelGrid::VoxelGrid() {
 	this->data.clear();
 	this->imageStack.reset();
 	this->inspectorMesh.reset();
+	this->controller = nullptr;
 }
 
 VoxelGrid::VoxelGrid(std::size_t width, std::size_t height, std::size_t depth) : VoxelGrid() {
@@ -77,12 +80,32 @@ VoxelGrid& VoxelGrid::populateGrid(InterpolationMethods method) {
 
 	this->reserveSpace();
 
+	switch (method) {
+		case InterpolationMethods::NearestNeighbor:
+			std::cerr << "Interpolating with NN" << '\n';
+		break;
+		case InterpolationMethods::TriLinear:
+			std::cerr << "Interpolating with TL" << '\n';
+		break;
+		case InterpolationMethods::TriCubic:
+			std::cerr << "Interpolating with TC" << '\n';
+		break;
+		case InterpolationMethods::Barycentric:
+			std::cerr << "Interpolating with BC" << '\n';
+		break;
+		default:break;
+	}
+
+	if (this->controller == nullptr) {
 	// TODO : add a progress tracker called upon at the end of each depth level
-	std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::duration<double, std::ratio<1,1>>> start_point = std::chrono::high_resolution_clock::now();
-	this->computeData(method);
-	std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::duration<double, std::ratio<1,1>>> end_point = std::chrono::high_resolution_clock::now();
-	std::size_t size = this->gridDimensions.x * this->gridDimensions.y * this->gridDimensions.z;
-	std::cerr << "To generate " << std::scientific << size << " voxels, it took " << (end_point - start_point).count() << " seconds\n";
+		std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::duration<double, std::ratio<1,1>>> start_point = std::chrono::high_resolution_clock::now();
+		this->computeData(method);
+		std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::duration<double, std::ratio<1,1>>> end_point = std::chrono::high_resolution_clock::now();
+		std::size_t size = this->gridDimensions.x * this->gridDimensions.y * this->gridDimensions.z;
+		std::cerr << "To generate " << std::scientific << size << " voxels, it took " << (end_point - start_point).count() << " seconds\n";
+	} else {
+		this->computeData(method);
+	}
 	return *this;
 }
 
@@ -125,3 +148,22 @@ void VoxelGrid::computeData(InterpolationMethods method) {
 	}
 	std::cerr << "Finished populating the grid." << '\n';
 }
+
+void VoxelGrid::slotSetGridDimensionX(int newDim) {
+	if (newDim >= 0) { this->gridDimensions.x = static_cast<std::size_t>(newDim); }
+	if (this->controller) { this->controller->updateGridLabels(); }
+}
+void VoxelGrid::slotSetGridDimensionY(int newDim) {
+	if (newDim >= 0) { this->gridDimensions.y = static_cast<std::size_t>(newDim); }
+	if (this->controller) { this->controller->updateGridLabels(); }
+}
+void VoxelGrid::slotSetGridDimensionZ(int newDim) {
+	if (newDim >= 0) { this->gridDimensions.z = static_cast<std::size_t>(newDim); }
+	if (this->controller) { this->controller->updateGridLabels(); }
+}
+void VoxelGrid::slotSetGridBBMinX(double newDim) { this->renderBB.setMinX(newDim); if (this->controller) { this->controller->updateGridLabels(); } }
+void VoxelGrid::slotSetGridBBMinY(double newDim) { this->renderBB.setMinY(newDim); if (this->controller) { this->controller->updateGridLabels(); } }
+void VoxelGrid::slotSetGridBBMinZ(double newDim) { this->renderBB.setMinZ(newDim); if (this->controller) { this->controller->updateGridLabels(); } }
+void VoxelGrid::slotSetGridBBMaxX(double newDim) { this->renderBB.setMaxX(newDim); if (this->controller) { this->controller->updateGridLabels(); } }
+void VoxelGrid::slotSetGridBBMaxY(double newDim) { this->renderBB.setMaxY(newDim); if (this->controller) { this->controller->updateGridLabels(); } }
+void VoxelGrid::slotSetGridBBMaxZ(double newDim) { this->renderBB.setMaxZ(newDim); if (this->controller) { this->controller->updateGridLabels(); } }

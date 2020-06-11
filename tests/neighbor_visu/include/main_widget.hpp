@@ -4,6 +4,7 @@
 #include "./viewer.hpp"
 #include "./scene.hpp"
 #include "./scene_control.hpp"
+#include "./grid_control.hpp"
 
 #include <QWidget>
 #include <QGLViewer/qglviewer.h>
@@ -21,6 +22,7 @@ class MainWidget : public QWidget {
 		Viewer* rightViewer;
 		Scene* scene;
 		ControlPanel* controlPanel;
+		GridControl* gridController;
 		bool widgetSizeSet; ///< checks if the widget size has been set before
 };
 

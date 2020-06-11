@@ -9,6 +9,7 @@
 
 #include "./image_storage.hpp"
 #include "./voxel_grid.hpp"
+#include "./grid_control.hpp"
 #include "./tetmesh.hpp"
 
 #include <QOpenGLFunctions_4_0_Core>
@@ -83,7 +84,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		typedef glm::vec<3, int, glm::defaultp> ivec3;
 		typedef glm::uvec3 uvec3;
 	public:
-		Scene(void); ///< default constructor
+		Scene(GridControl* const gc); ///< default constructor
 		~Scene(void); ///< default destructor
 
 		void setControlPanel(ControlPanel* cp) { this->controlPanel = cp; }
@@ -137,6 +138,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		std::shared_ptr<TextureStorage> texStorage; ///< textureLoader and 'manager'
 		std::shared_ptr<TetMesh> mesh; ///< creates a mesh around the queried point
 		std::shared_ptr<VoxelGrid> voxelGrid; ///< Voxel grid to fill upon keypress
+		GridControl* gridControl;
 
 		std::size_t gridWidth; ///< grid size
 		std::size_t gridHeight; ///< grid size

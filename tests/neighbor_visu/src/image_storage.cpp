@@ -67,7 +67,7 @@ unsigned char TextureStorage::getTexelValue(const glm::vec4& position) const {
 	}
 
 	if (position.x < 0.f || position.y < 0.f || position.z < 0.f) {
-		std::cerr << __PRETTY_FUNCTION__ << " : The position asked for was negative." << '\n';
+		//std::cerr << __PRETTY_FUNCTION__ << " : The position asked for was negative." << '\n';
 		return '\0';
 	}
 

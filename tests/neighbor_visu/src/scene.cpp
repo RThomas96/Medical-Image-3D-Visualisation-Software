@@ -9,11 +9,12 @@
 
 #include <fstream>
 
-Scene::Scene(void) {
+Scene::Scene(GridControl* const gc) {
 	this->controlPanel = nullptr;
 	this->texStorage = nullptr;
 	this->mesh = nullptr;
 	this->voxelGrid = nullptr;
+	this->gridControl = gc;
 
 	this->gridWidth = 0;
 	this->gridHeight = 0;
@@ -74,6 +75,8 @@ void Scene::initGl(QOpenGLContext* _context, std::size_t _x, std::size_t _y, std
 	this->voxelGrid	= std::make_shared<VoxelGrid>();
 	this->voxelGrid->setInspector(this->mesh);
 	this->voxelGrid->setImageStack(this->texStorage);
+	this->voxelGrid->setController(this->gridControl);
+	this->gridControl->setVoxelGrid(this->voxelGrid.get());
 
 	///////////////////////////
 	/// CREATE VAO :
@@ -378,6 +381,15 @@ void Scene::queryImage(void) {
 	std::cerr << "Loading image of size " << i << ',' << j << ',' << k << '\n';
 
 	this->loadImage(i, j, k, image.data());
+
+	svec3 max = this->texStorage->getImageSize();
+	std::cerr << "Image size : " << max.x << ',' <<	max.y << ',' <<	max.z << '\n';
+	glm::vec4 ma = glm::vec4(static_cast<float>(max.x), static_cast<float>(max.y), static_cast<float>(max.z), 1.f);
+	ma = ma * this->computeTransformationMatrix();
+
+	this->voxelGrid->setRenderBoundingBox(glm::vec4(.0f), ma);
+	this->voxelGrid->setGridResolution(max);
+	this->gridControl->updateGridDimensions();
 }
 
 void Scene::drawRealSpace(GLfloat mvMat[], GLfloat pMat[]) {
@@ -527,14 +539,6 @@ void Scene::populateGrid() {
 		std::cerr << "Could not populate grid, was not allocated !" << '\n';
 		return;
 	}
-
-
-	svec3 max = this->texStorage->getImageSize();
-	std::cerr << "Image size : " << max.x << ',' <<	max.y << ',' <<	max.z << '\n';
-	glm::vec4 ma = glm::vec4(static_cast<float>(max.x), static_cast<float>(max.y), static_cast<float>(max.z), 1.f);
-
-	this->voxelGrid->setRenderBoundingBox(glm::vec4(.0f), ma);
-	this->voxelGrid->setGridResolution(max);
 
 	this->voxelGrid->populateGrid(InterpolationMethods::NearestNeighbor);
 }

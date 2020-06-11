@@ -220,7 +220,7 @@ unsigned char TetMesh::interpolate_Barycentric(glm::vec4 pos) const {
 	}
 	if (not found) {
 		// Not in any tetrahedra ... strange.
-		std::cerr << "Warning : the point was not found to be in any tetrahedra.\n";
+		//std::cerr << "Warning : the point was not found to be in any tetrahedra.\n";
 		return 0;
 	}
 

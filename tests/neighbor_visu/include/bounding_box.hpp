@@ -57,6 +57,42 @@ template <typename DataType> class BoundingBox_General {
 			return this->max - this->min;
 		}
 
+		/// @brief Sets the X coordinate of the min point to the value given.
+		BoundingBox_General& setMinX(double _d) {
+			this->min.x = static_cast<DataType>(_d);
+			return *this;
+		}
+
+		/// @brief Sets the Y coordinate of the min point to the value given.
+		BoundingBox_General& setMinY(double _d) {
+			this->min.y = static_cast<DataType>(_d);
+			return *this;
+		}
+
+		/// @brief Sets the Z coordinate of the min point to the value given.
+		BoundingBox_General& setMinZ(double _d) {
+			this->min.z = static_cast<DataType>(_d);
+			return *this;
+		}
+
+		/// @brief Sets the X coordinate of the max point to the value given.
+		BoundingBox_General& setMaxX(double _d) {
+			this->max.x = static_cast<DataType>(_d);
+			return *this;
+		}
+
+		/// @brief Sets the Y coordinate of the max point to the value given.
+		BoundingBox_General& setMaxY(double _d) {
+			this->max.y = static_cast<DataType>(_d);
+			return *this;
+		}
+
+		/// @brief Sets the Z coordinate of the max point to the value given.
+		BoundingBox_General& setMaxZ(double _d) {
+			this->max.z = static_cast<DataType>(_d);
+			return *this;
+		}
+
 	protected:
 		/// @brief Set the boundaries of the bounding box
 		void setBoundaries(vec _min, vec _max) {
