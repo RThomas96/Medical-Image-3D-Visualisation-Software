@@ -13,6 +13,7 @@ Scene::Scene(void) {
 	this->controlPanel = nullptr;
 	this->texStorage = nullptr;
 	this->mesh = nullptr;
+	this->voxelGrid = nullptr;
 
 	this->gridWidth = 0;
 	this->gridHeight = 0;
@@ -69,6 +70,10 @@ void Scene::initGl(QOpenGLContext* _context, std::size_t _x, std::size_t _y, std
 	this->texStorage->setInitialToRealMatrix(this->computeTransformationMatrix());
 
 	this->mesh = std::make_shared<TetMesh>(this->texStorage);
+
+	this->voxelGrid	= std::make_shared<VoxelGrid>();
+	this->voxelGrid->setInspector(this->mesh);
+	this->voxelGrid->setImageStack(this->texStorage);
 
 	///////////////////////////
 	/// CREATE VAO :
@@ -515,6 +520,23 @@ void Scene::generateGrid(std::size_t _x, std::size_t _y, std::size_t _z) {
 	this->controlPanel->setZCoord(0);
 
 	this->setupVBOData();
+}
+
+void Scene::populateGrid() {
+	if (this->voxelGrid == nullptr) {
+		std::cerr << "Could not populate grid, was not allocated !" << '\n';
+		return;
+	}
+
+
+	svec3 max = this->texStorage->getImageSize();
+	std::cerr << "Image size : " << max.x << ',' <<	max.y << ',' <<	max.z << '\n';
+	glm::vec4 ma = glm::vec4(static_cast<float>(max.x), static_cast<float>(max.y), static_cast<float>(max.z), 1.f);
+
+	this->voxelGrid->setRenderBoundingBox(glm::vec4(.0f), ma);
+	this->voxelGrid->setGridResolution(max);
+
+	this->voxelGrid->populateGrid(InterpolationMethods::NearestNeighbor);
 }
 
 void Scene::generateTexCube() {

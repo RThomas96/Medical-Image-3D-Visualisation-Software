@@ -8,6 +8,7 @@
 #include "image/include/bulk_texture_loader.hpp"
 
 #include "./image_storage.hpp"
+#include "./voxel_grid.hpp"
 #include "./tetmesh.hpp"
 
 #include <QOpenGLFunctions_4_0_Core>
@@ -117,6 +118,8 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void cleanup(void); ///< cleanup function for vbo and other parts
 		bool isInitialized; ///< tracks if the scene was initialized or not
 
+		void populateGrid();
+
 		// Simili-slots (this scene cannot be a QObject, as such we cannot have slot/signals) :
 
 		void slotTogglePolygonMode(bool show);
@@ -133,6 +136,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		ControlPanel* controlPanel; ///< pointer to the control panel
 		std::shared_ptr<TextureStorage> texStorage; ///< textureLoader and 'manager'
 		std::shared_ptr<TetMesh> mesh; ///< creates a mesh around the queried point
+		std::shared_ptr<VoxelGrid> voxelGrid; ///< Voxel grid to fill upon keypress
 
 		std::size_t gridWidth; ///< grid size
 		std::size_t gridHeight; ///< grid size

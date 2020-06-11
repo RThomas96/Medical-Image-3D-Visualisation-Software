@@ -2,6 +2,7 @@
 #define TESTS_NEIGHBOR_BISU_INCLUDE_BOUNDING_BOX_HPP_
 
 #include <glm/glm.hpp>
+#include <iostream>
 
 /// @brief Simple representation of an Axis Aligned Bounding Box
 template <typename DataType> class BoundingBox_General {
@@ -30,6 +31,7 @@ template <typename DataType> class BoundingBox_General {
 		/// function call reverses the order of boundaries.
 		BoundingBox_General& setMin(vec _min) {
 			this->setBoundaries(_min, this->max);
+			return *this;
 		}
 
 		/// @brief Sets the new maximum point of the bounding box.
@@ -37,6 +39,7 @@ template <typename DataType> class BoundingBox_General {
 		/// function call reverses the order of boundaries.
 		BoundingBox_General& setMax(vec _max) {
 			this->setBoundaries(this->min, _max);
+			return *this;
 		}
 
 		/// @brief Get a read-only reference to the minimum point.
@@ -58,8 +61,8 @@ template <typename DataType> class BoundingBox_General {
 		/// @brief Set the boundaries of the bounding box
 		void setBoundaries(vec _min, vec _max) {
 			bool switchPlaces = (glm::length(_min) > glm::length(_max));
-			this->min = switchPlaces ? vec(_max) : vec(_min);
-			this->max = switchPlaces ? vec(_min) : vec(_max);
+			this->min = switchPlaces ? _max : _min;
+			this->max = switchPlaces ? _min : _max;
 		}
 
 	private:

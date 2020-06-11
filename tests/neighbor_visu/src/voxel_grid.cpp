@@ -70,10 +70,20 @@ VoxelGrid& VoxelGrid::populateGrid(InterpolationMethods method) {
 		OUT << "VoxelGrid : No image stack or inspecting mesh was set !" << '\n';
 	}
 
+#ifndef NDEBUG
+	std::cerr << "Attempting to populate a grid of size " << this->gridDimensions.x << ',' << this->gridDimensions.y << ',' << this->gridDimensions.z << '\n';
+	std::cerr << "Voxel size is " << this->voxelDimensions.x << ',' << this->voxelDimensions.y << ',' << this->voxelDimensions.z << '\n';
+#endif
+
 	this->reserveSpace();
 
 	// TODO : add a progress tracker called upon at the end of each depth level
+	std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::duration<double, std::ratio<1,1>>> start_point = std::chrono::high_resolution_clock::now();
 	this->computeData(method);
+	std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::duration<double, std::ratio<1,1>>> end_point = std::chrono::high_resolution_clock::now();
+	std::size_t size = this->gridDimensions.x * this->gridDimensions.y * this->gridDimensions.z;
+	std::cerr << "To generate " << std::scientific << size << " voxels, it took " << (end_point - start_point).count() << " seconds\n";
+	return *this;
 }
 
 void VoxelGrid::reserveSpace() {
@@ -113,4 +123,5 @@ void VoxelGrid::computeData(InterpolationMethods method) {
 		std::cerr << "Finished depth level " << k << " of " << this->gridDimensions.z << '\n';
 
 	}
+	std::cerr << "Finished populating the grid." << '\n';
 }

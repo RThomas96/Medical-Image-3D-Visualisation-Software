@@ -66,6 +66,10 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 			this->updateTextureFocus();
 			this->update();
 		break;
+		case Qt::Key::Key_H:
+			this->scene->populateGrid();
+			this->update();
+		break;
 		case Qt::Key::Key_F1:
 			this->scene->setDrawModeSolid();
 			this->update();
