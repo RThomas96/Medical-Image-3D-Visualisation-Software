@@ -1,0 +1,1 @@
+../stageM2R.cls

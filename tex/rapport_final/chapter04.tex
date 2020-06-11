@@ -1,0 +1,32 @@
+% Chapitre 4 : travaux sur la grille de voxels de noura
+
+\chapter{KidPocketFramework}% TODO : labeliser ce chapitre avec le nom complet
+
+\commentaire{
+	\begin{enumerate}
+		\item Présentation de la méthode~\begin{itemize}
+			\item Chargement de la texture
+			\item Génération de maillage tétrahédrique à partir de maillage surfacique englobant
+			\item (Rapide) Raymarching, Bresenham pour trouver voxel, et estimer normale et couleur
+			\item Note : mentionner le fait que du coup, la complexité revient à la taille du framebuffer, non de la grille
+			\item Mentionner le fait qu'on peut charger des grilles déformées afin de déformer les modèles en dehors de l'espace mémoire GPU
+			\item Mentionner que ca va sortir à Vis 2020 si tout va bien
+		\end{itemize}
+		\item Présentation des travaux effectués~\begin{itemize}
+			\item Mise à jour du code (dépoussiérage logiciel)
+			\item Changement dans la gestion de la texture (vec4f $\rightarrow$ uchar + texture)
+			\item Bug fixing pour grosses grilles
+			\item Tests extensifs de la méthode pour publication scientifique~\begin{itemize}
+				\item Tests de framerate
+				\item Tests effectués sur grosses grilles
+				\item Tests effectués sur petites grilles avec déformation
+				\item Tests effectués à plusieurs résolutions
+			\end{itemize}
+		\end{itemize}
+		\item Présentation des possibilités d'utilisation de la méthode dans notre cas~\begin{itemize}
+			\item Une fois reconstruction effectuée, si taille grille générée < taille mémoire GPU, alors possiblité de voir interactivement le modèle
+			\item Sinon, générer une grille plus petite et recommencer (pas besoin de super grande résolution pour voir les formes
+				(Note : pas besoin de très grande résolution pour visualisation à l'oeil nu, on peut downsample)
+		\end{itemize}
+	\end{enumerate}
+}

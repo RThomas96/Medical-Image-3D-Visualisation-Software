@@ -1,0 +1,41 @@
+% Contents of chapter 3
+\chapter{Travail stage}\label{chapter:03:internshipwork}
+
+\commentaire{
+	\begin{enumerate}
+		\item intro : chargements d'images, recherche de voisins et génération de grille
+		\item travaux sur le chargement d'images\begin{enumerate}
+			\item formats de sortie du microscope
+			\item problème de tailles $\rightarrow$ downsampling
+			\item recherche de librairies
+			\item comparaison libtiff et tinytiff
+			\item gestion de mémoire
+			\item possibles travaux : buffer circulaire, chargement en multi-threading
+		\end{enumerate}
+		\item travaux sur la recherche de voisins\begin{enumerate}
+			\item introduction au problème : à tulane ils le font pas
+			\item rappel sur les paramètres du microscope
+			\item présentation graphique du problème des voisins
+			\item explication sur le besoin d'une méthode paramétrique (paramétrisable ?)
+			\item explication de la méthode : espaces différents, relations mathématiques entre eux ... (cf le dessin de benjamin)
+			\item implémentation de cette méthode
+			\item présentation visuelle
+			\item ouverture : on peut mieux avoir les voisins et donc interpoler comme il faut les voisins, donc grille de voxels !
+		\end{enumerate}
+		\item travaux sur la génération de grilles\begin{enumerate}
+			\item recherche des voisins faite, mais toujours pas de notion de grille
+			\item génération de grille : la facon simple
+			\item génération de grille : prendre en compte les voisins, et interpoler pour avoir des résultats cohérents~\begin{itemize}
+				\item l'interpolation nearest neighbor : tout bêta
+				\item l'interpolation trilinéaire : bah c'est un peu mieux
+				\item l'interpolation barycentrique : résiste au changement d'espace car espace défini par position des points du tétraèdre
+			\end{itemize}
+			\item le blending des deux stacks : mais pourquoi, et comment ?
+			\item la sortie : à quoi elle sert ?
+			\item implémentation (rapide, vu qu'on en parle extensivement avant)
+		\end{enumerate}
+	\end{enumerate}
+}
+
+% VIM modeline : do not touch !
+% vim: set spell spelllang=fr :
