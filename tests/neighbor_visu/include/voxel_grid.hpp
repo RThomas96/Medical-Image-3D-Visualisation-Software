@@ -4,6 +4,7 @@
 #include "./bounding_box.hpp"
 #include "./image_storage.hpp"
 #include "./tetmesh.hpp"
+#include "./writer.hpp"
 
 #include <glm/glm.hpp>
 
@@ -56,19 +57,20 @@ class VoxelGrid : public QObject {
 		/// @brief Returns the grid dimensions.
 		svec3 getGridDimensions(void) const { return this->gridDimensions; }
 
+		/// @brief Returns the voxel dimensions.
+		glm::vec3 getVoxelDimensions(void) const { return this->voxelDimensions; }
+
 		/// @brief Returns the render bounding box.
 		BoundingBox_General<float> getRenderBB(void) const { return this->renderBB; }
 
-		/*
-
-		friend class IGridWriter;
+		/// @brief Returns a read-only reference to the data vector of the voexl grid.
+		const std::vector<unsigned char>& getData(void) const { return this->data; }
 
 		/// @brief Writes the grid to a filepath provided.
 		/// This function will write the grid to a file, using an IGridWriter pointer (IGridWriter is an interface class to write the grid in many forms).
 		/// If the writer writes multiple files (in the case of a multiple image writer, as the Blue dataset is) then the `path` argument will be interpreted as a template for the name.
 		/// For example, if the path given is path_filename.file_extension then the files will be named path_filename_FILENUMBER.file_extension.
-		VoxelGrid& writeToFile(const IGridWriter* writer, const std::string path);
-		*/
+		VoxelGrid& writeToFile(const std::string path);
 
 	public:
 		void slotSetGridDimensionX(int newDim);
@@ -102,6 +104,8 @@ class VoxelGrid : public QObject {
 		std::shared_ptr<TetMesh> inspectorMesh;
 		/// @brief Pointer to the grid controller, in order to modify the values of this voxel grid from outside and have a feedback loop
 		GridControl* controller;
+		/// @brief Pointer to a grid writer to write the grid to disk once populated.
+		IO::GenericGridWriter* writer;
 
 		/*
 		IGridWriter* defaultWriter; // Maybe for incrementally writing to a file ? could be good if the grid size > available memory

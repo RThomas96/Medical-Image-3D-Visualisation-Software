@@ -8,6 +8,8 @@
 #define OUT std::cout
 #endif
 
+using defaultWriter = IO::DIMWriter;
+
 VoxelGrid::VoxelGrid() {
 	// No data is provided for now
 	this->gridDimensions = svec3(0, 0, 0);
@@ -17,6 +19,7 @@ VoxelGrid::VoxelGrid() {
 	this->imageStack.reset();
 	this->inspectorMesh.reset();
 	this->controller = nullptr;
+	this->writer = nullptr;
 }
 
 VoxelGrid::VoxelGrid(std::size_t width, std::size_t height, std::size_t depth) : VoxelGrid() {
@@ -106,6 +109,14 @@ VoxelGrid& VoxelGrid::populateGrid(InterpolationMethods method) {
 	} else {
 		this->computeData(method);
 	}
+	return *this;
+}
+
+VoxelGrid& VoxelGrid::writeToFile(const std::string path) {
+	this->writer = new defaultWriter(path);
+
+	this->writer->write(this);
+
 	return *this;
 }
 
