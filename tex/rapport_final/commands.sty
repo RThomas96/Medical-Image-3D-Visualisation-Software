@@ -23,9 +23,9 @@
 % Not defined if the draft opion is not given.
 
 \ifdraft
-	\renewcommand\wip[1]{{\raggedright{\color{red}\fontfamily{\firamono@family}\selectfont\small#1}}}
+	\renewcommand\wip[1]{{\raggedright{\color{red}\fontfamily{\firamono@family}\selectfont\small[WIP] : #1}}}
 	\renewcommand\todo[1]{\footnote{\color{darkgreen}\textit{TODO : #1}}}
-	\renewcommand\commentaire[1]{{\color{blue}\fontfamily{\fira@family}\selectfont\textit{Commentaire : #1}}}
+	\renewcommand\commentaire[1]{{\color{blue}\fontfamily{\fira@family}\selectfont\small\textit{Commentaire : #1}}}
 \fi
 
 \endinput

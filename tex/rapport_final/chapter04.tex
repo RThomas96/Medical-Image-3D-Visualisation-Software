@@ -1,32 +1,51 @@
 % Chapitre 4 : travaux sur la grille de voxels de noura
+\chapter{Analyse de volume et génération de grilles}\label{chapter04:vispaper}
+{
+	\commentaire{
+		\begin{enumerate}
+			% Recherche de voisins {{{
+			\item travaux sur la recherche de voisins\begin{enumerate}
+				\item introduction au problème : à tulane ils le font pas, et on va le faire pour eux
+				\item rappel sur les paramètres du microscope
+				\item présentation graphique du problème des voisins
+				\item explication sur le besoin d'une méthode générique / paramétrisable
+				\item explication de la méthode : espaces différents, relations mathématiques entre eux ... (cf le dessin de benjamin)
+				\item implémentation de cette méthode (sans code, rapide, montrer aspect modulaire à 'n' stacks)
+				\item présentation visuelle \todo{faire screenshots de l'appli en dual-visu}
+				\item transition : on peut mieux avoir les voisins et donc interpoler comme il faut les valeurs, donc grille de voxels !
+			\end{enumerate}
+			% }}}
+			% Génération de grilles {{{
+			\item travaux sur la génération de grilles\begin{enumerate}
+				\item recherche des voisins faite, mais toujours pas de notion de grille
+				\item génération de grille : la facon simple\begin{itemize}
+					\item Dump la grille telle quelle après transfo dans l'espace réel
+					\item du coup pas de notion de voisins, et beaucoup d'espace réellement vide (pas de données par rapport à donnée nulle)
+				\end{itemize}
+				\item génération de grille : prendre en compte les voisins, et interpoler pour avoir des résultats cohérents~\begin{itemize}
+					\item l'interpolation nearest neighbor : tout bête
+					\item l'interpolation trilinéaire : c'est un petit peu mieux, permet d'estimer un blending des valeurs aux points pour mieux estimer la donnée
+					\item l'interpolation barycentrique : meme effet que 3-lin., et en + : résiste au changement d'espace car espace défini par position des points du tétraèdre
+				\end{itemize}
+				\item Note : avec interpolations, présenter avantages/inconvénients de chacuns afin de les comparer
+				\item présenter possibilités de faire rendu très détaillé de une sous partie de la chose, afin de mieux voir de quoi il s'agit
+				\item le blending des deux stacks : mais pourquoi, et comment ?
+				\item implémentation (rapide, vu qu'on en parle extensivement avant)
+			\end{enumerate}
+			% }}}
+		\end{enumerate}
+	}
 
-\chapter{KidPocketFramework}% TODO : labeliser ce chapitre avec le nom complet
+	\section{Recherche de voisins}
+	{
+		\commentaire{}\\
+	}
 
-\commentaire{
-	\begin{enumerate}
-		\item Présentation de la méthode~\begin{itemize}
-			\item Chargement de la texture
-			\item Génération de maillage tétrahédrique à partir de maillage surfacique englobant
-			\item (Rapide) Raymarching, Bresenham pour trouver voxel, et estimer normale et couleur
-			\item Note : mentionner le fait que du coup, la complexité revient à la taille du framebuffer, non de la grille
-			\item Mentionner le fait qu'on peut charger des grilles déformées afin de déformer les modèles en dehors de l'espace mémoire GPU
-			\item Mentionner que ca va sortir à Vis 2020 si tout va bien
-		\end{itemize}
-		\item Présentation des travaux effectués~\begin{itemize}
-			\item Mise à jour du code (dépoussiérage logiciel)
-			\item Changement dans la gestion de la texture (vec4f $\rightarrow$ uchar + texture)
-			\item Bug fixing pour grosses grilles
-			\item Tests extensifs de la méthode pour publication scientifique~\begin{itemize}
-				\item Tests de framerate
-				\item Tests effectués sur grosses grilles
-				\item Tests effectués sur petites grilles avec déformation
-				\item Tests effectués à plusieurs résolutions
-			\end{itemize}
-		\end{itemize}
-		\item Présentation des possibilités d'utilisation de la méthode dans notre cas~\begin{itemize}
-			\item Une fois reconstruction effectuée, si taille grille générée < taille mémoire GPU, alors possiblité de voir interactivement le modèle
-			\item Sinon, générer une grille plus petite et recommencer (pas besoin de super grande résolution pour voir les formes
-				(Note : pas besoin de très grande résolution pour visualisation à l'oeil nu, on peut downsample)
-		\end{itemize}
-	\end{enumerate}
+	\section{Génération de grille}
+	{
+		\commentaire{}\\
+	}
 }
+
+% VIM modeline : do not touch !
+% vim: set spell spelllang=fr :

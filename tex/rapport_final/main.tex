@@ -2,51 +2,37 @@
 \documentclass[utf8,final]{stageM2R}
 
 \usepackage{graphicx}
+\usepackage[T1]{fontenc}
 \usepackage{float}
 \usepackage[french]{babel}
-
 \usepackage[draft]{commands} % Custom commands, defined in this folder
+\setsecnumdepth{subsection}
 
 \supervisors{Noura \textsc{Faraj}\\Christophe \textsc{Fiorio}\\Benjamin \textsc{Charlier}}
 \location{LIRMM UM5506 - CNRS, Université de Montpellier}
 \title{Gestion, traitement et visualisation d'images médicales à très haute résolution}
 \track{IMAGINA}
 \date{2 Juillet 2020}
-\version{6}
 \author{Thibault}
-
-\abstractfr{}
-%\abstracten{}
+\abstractfr{Ce sujet de stage s'inscrit dans un effort de collaboration internationale entre l'université de Tulane à la Nouvelle Orléans, et l'université de Montpellier dans le cadre d'un projet pour l'aide à la détection et au diagnostic du cancer de la prostate.}
 
 \begin{document}
 	\selectlanguage{french}
 	\frontmatter \maketitle
 	\cleardoublepage
-	\tableofcontents \mainmatter
-
-	\commentaire{\raggedright
-		Plan proposé pour l'instant :\\
-		\begin{enumerate}
-			\item Introduction au stage, et aux problématiques
-			\item Continuation de l'état de l'art, introduction poussée au domaine
-			\item Travail réalisé sur le stage
-			\item Travail réalisé sur le papier avec Noura
-			\item Travail à venir -- Thèse ! (si conclusion, parler de thèse dans conclusion, pas ici)
-			\item Conclusion (?) -- peut être a mettre avec (5)
-		\end{enumerate}
-	}
+	\settocdepth{subsection} \tableofcontents \mainmatter
 
 	\input{chapter01}
-
 	\input{chapter02}
-
 	\input{chapter03}
-
 	\input{chapter04}
-
-	\input{chapter05}
-
+%	\input{chapter05} % Chapter 5 has been dropped, and merged into Chapter 6
 	\input{chapter06}
+
+	% Add references to the end of the document :
+	\selectlanguage{french}
+	\bibliography{references}{}
+	\bibliographystyle{plain}
 
 \end{document}
 

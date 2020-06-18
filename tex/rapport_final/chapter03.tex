@@ -1,40 +1,79 @@
 % Contents of chapter 3
-\chapter{Travail stage}\label{chapter:03:internshipwork}
-
-\commentaire{
-	\begin{enumerate}
-		\item intro : chargements d'images, recherche de voisins et génération de grille
-		\item travaux sur le chargement d'images\begin{enumerate}
-			\item formats de sortie du microscope
-			\item problème de tailles $\rightarrow$ downsampling
-			\item recherche de librairies
-			\item comparaison libtiff et tinytiff
-			\item gestion de mémoire
-			\item possibles travaux : buffer circulaire, chargement en multi-threading
-		\end{enumerate}
-		\item travaux sur la recherche de voisins\begin{enumerate}
-			\item introduction au problème : à tulane ils le font pas
-			\item rappel sur les paramètres du microscope
-			\item présentation graphique du problème des voisins
-			\item explication sur le besoin d'une méthode paramétrique (paramétrisable ?)
-			\item explication de la méthode : espaces différents, relations mathématiques entre eux ... (cf le dessin de benjamin)
-			\item implémentation de cette méthode
-			\item présentation visuelle
-			\item ouverture : on peut mieux avoir les voisins et donc interpoler comme il faut les voisins, donc grille de voxels !
-		\end{enumerate}
-		\item travaux sur la génération de grilles\begin{enumerate}
-			\item recherche des voisins faite, mais toujours pas de notion de grille
-			\item génération de grille : la facon simple
-			\item génération de grille : prendre en compte les voisins, et interpoler pour avoir des résultats cohérents~\begin{itemize}
-				\item l'interpolation nearest neighbor : tout bêta
-				\item l'interpolation trilinéaire : bah c'est un peu mieux
-				\item l'interpolation barycentrique : résiste au changement d'espace car espace défini par position des points du tétraèdre
+\chapter{Gestion et visualisation d'images}\label{chapter:03:internshipwork}
+{
+	\commentaire{
+		\begin{enumerate}
+			%% gestion images en mémoire {{{{
+			\item intro : chargements d'images, recherche de voisins et génération de grille. prés du problème plus en détail
+			\item travaux sur le chargement d'images\begin{enumerate}
+				\item formats de sortie du microscope
+				\item problème de tailles $\rightarrow$ downsampling
+				\item recherche de librairies
+				\item comparaison (très rapide) libtiff / tinytiff
+				\item gestion de mémoire~\begin{itemize}
+					\item downsampling à la volée des images, sur requête utilisateur
+					\item parler de structure en mémoire une fois chargé
+					\item on peut avoir autant d'images que on veut en mémoire
+				\end{itemize}
+				\item possibles travaux : buffer circulaire pour pas tout charger d'un coup et/ou chargement en multi-threading (a garder ici ou dans travaux à venir ?)
+			\end{enumerate}
+			% }}}
+			%% KPF / Texture3D {{{
+			\item Très rapide : intro à pourquoi on a fait ca :\begin{itemize}
+				\item C'est un travail déjà presque entièrement fait, à tester et MàJ pour publication
+				\item Ca peut nous servir d'une certaine façon pour visualiser le modèle en fin de stage
 			\end{itemize}
-			\item le blending des deux stacks : mais pourquoi, et comment ?
-			\item la sortie : à quoi elle sert ?
-			\item implémentation (rapide, vu qu'on en parle extensivement avant)
+			\item Présentation de la méthode (rapide, pas le focus du rapport)~\begin{itemize}
+				\item Chargement de la texture
+				\item Génération de maillage tétrahédrique à partir de maillage surfacique englobant (version binaire de la grille $\rightarrow$ maillage tétra, binariser grille $\rightarrow$ dilatation, et maillage autour de ca)
+				\item (Rapide) Raymarching/Bresenham pour trouver voxel, et estimer normale et couleur
+				\item Note : mentionner le fait que du coup, la complexité revient à la taille du framebuffer, non de la grille
+				\item Effet de bord : on peut donc charger des grilles rentrant sur GPU, les déformer afin d'avoir une grille techniquement + grande que espace mémoire GPU
+			%	\item Mentionner que ca va sortir à Vis 2020 si tout va bien
+			\end{itemize}
+			\item Présentation des travaux effectués (plus de détails, avec difficultés mentionnées)~\begin{itemize}
+				\item Mise(s) à jour du code~\begin{itemize}
+					\item 'Dépoussiérage' logiciel
+					\item MaJ des shaders en GLSL : passé à qqchose de plus récent pour moins de problèmes incompatibilités
+					\item Changement dans la gestion de la texture (vec4f $\rightarrow$ uchar + texture)
+					\item Bug fixing pour grosses grilles
+				\end{itemize}
+				\item Tests de la méthode en vue de publication scientifique~\begin{itemize}
+					\item Tests de performances
+					\item Tests effectués sur grosses grilles
+					\item Tests effectués sur petites grilles avec déformation
+					\item Tests effectués à plusieurs résolutions
+				\end{itemize}
+				\item Difficultés encontrées sur le projet~\begin{itemize}
+					\item Problème rencontré : incompatibilités Boost $\Leftrightarrow$ CGAL, et anciennes versions des libs $\Rightarrow$ problème de compilation
+				\end{itemize}
+			\end{itemize}
+			\item Présentation des possibilités d'utilisation de la méthode dans notre cas~\begin{itemize}
+				\item Une fois reconstruction effectuée, si taille grille générée $<$ taille mémoire GPU, alors possiblité de voir interactivement le modèle
+				\item Générer une visu multi échelle avec fichiers comme H5F/HF5 afin de pull des infos qu'on a besoin : petit modèle sur GPU, et charger hiérarchiquement en zoomant progressivement
+			\end{itemize}
+			% }}}
 		\end{enumerate}
-	\end{enumerate}
+	}
+
+	\commentaire{Faire légère intro au chapitre ici, rappelant les objectifs à obtenir, et comment ils contribuent au but final}
+
+	\section{Gestion de mémoire}
+	{
+		\wip{Gestion de la mémoire dans ce cas là : permet de ne charger que les données nécessaires au traitement, afin de réduire temps de traitement \textsc{\textbf{et empreinte mémoire}}~}\\
+
+		\commentaire{ne pas oublier de parler de comment les données sont structurées en mémoire une fois chargées}\\
+	}
+
+	\section{Visualisation par plans de coupe}
+	{
+		\commentaire{Parler de l'appli simple faite en tout début de stage, visualisation par texture 3D splatted sur un cube, bouger points afin de traverser texture}\\
+	}
+
+	\section{Visualisation par sous-domaines}
+	{
+		\wip{N.B. : on utilise cette technique pour voir le modèle en sous domaines, pour une méthode de visu en plus que les plans de coupe}
+	}
 }
 
 % VIM modeline : do not touch !
