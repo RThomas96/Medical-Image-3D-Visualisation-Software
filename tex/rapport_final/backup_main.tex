@@ -4,10 +4,9 @@
 \usepackage{graphicx}
 \usepackage[T1]{fontenc}
 \usepackage{float}
-\usepackage{hyperref}
 \usepackage[french]{babel}
 \usepackage[draft]{commands} % Custom commands, defined in this folder
-\setsecnumdepth{subsection} % Numérotation des subsections, peu importe le type de doc
+\setsecnumdepth{subsection}
 
 \supervisors{Noura \textsc{Faraj}\\Christophe \textsc{Fiorio}\\Benjamin \textsc{Charlier}}
 \location{LIRMM UM5506 - CNRS, Université de Montpellier}
@@ -21,10 +20,7 @@
 	\selectlanguage{french}
 	\frontmatter \maketitle
 	\cleardoublepage
-	%\settocdepth{subsection} % Mettre subsections dans table des matières
-	\tableofcontents \mainmatter
-
-	\commentaire{Ajouter un glossaire et annexes techniques. la première : toutes technos, présentées (très) vite fait, avec leur logo, leur langage de prog et 2/3 infos pour + de compréhension du lecteur, et ensuite toutes annexes techniques nécessaires (exemple : fonctionnement d'opengl en mode direct et indirect)}
+	\settocdepth{subsection} \tableofcontents \mainmatter
 
 	\input{chapter01}
 	\input{chapter02}
