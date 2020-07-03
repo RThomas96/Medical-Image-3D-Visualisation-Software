@@ -48,12 +48,34 @@ svec3 TextureStorage::getImageSize() const {
 	return this->imageSpecs[0];
 }
 
-svec3  TextureStorage::getImageBoundingBoxMin() const {
+svec3 TextureStorage::getImageBoundingBoxMin() const {
 	return this->imageSpecs[1];
 }
 
-svec3  TextureStorage::getImageBoundingBoxMax() const {
+svec3 TextureStorage::getImageBoundingBoxMax() const {
 	return this->imageSpecs[2];
+}
+
+glm::vec3 TextureStorage::getImageBoundingBoxMin_WS() const {
+	glm::vec4 fMin = glm::vec4(
+		static_cast<float>(this->imageSpecs[1].x),
+		static_cast<float>(this->imageSpecs[1].y),
+		static_cast<float>(this->imageSpecs[1].z),
+		1.
+	);
+	glm::vec4 fMinWS = this->initial2RealMatrix * fMin;
+	return glm::vec3(fMinWS.x, fMinWS.y, fMinWS.z);
+}
+
+glm::vec3 TextureStorage::getImageBoundingBoxMax_WS() const {
+	glm::vec4 fMax = glm::vec4(
+		static_cast<float>(this->imageSpecs[2].x),
+		static_cast<float>(this->imageSpecs[2].y),
+		static_cast<float>(this->imageSpecs[2].z),
+		1.
+	);
+	glm::vec4 fMaxWS = this->initial2RealMatrix * fMax;
+	return glm::vec3(fMaxWS.x, fMaxWS.y, fMaxWS.z);
 }
 
 const std::vector<unsigned char>& TextureStorage::getData() const {
@@ -81,8 +103,8 @@ unsigned char TextureStorage::getTexelValue(const glm::vec4& position) const {
 
 	std::size_t index = x + y * imageWidth + z * imageWidth * imageHeight;
 	if (index > this->data.size()) {
-		std::cerr << __PRETTY_FUNCTION__ << " : The position asked for was OOB." << '\n';
-		std::cerr << '\t' << "Asked for " << x << ',' << y << ',' << z << " which is " << index << " out of " << this->data.size() << '\n';
+	//	std::cerr << __PRETTY_FUNCTION__ << " : The position asked for was OOB." << '\n';
+	//	std::cerr << '\t' << "Asked for " << x << ',' << y << ',' << z << " which is " << index << " out of " << this->data.size() << '\n';
 		return '\0';
 	}
 

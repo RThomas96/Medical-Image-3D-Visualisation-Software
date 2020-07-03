@@ -7,6 +7,7 @@ namespace IO {
 		this->baseName = _baseName;
 		this->comment = "";
 		this->bytesWritten = std::size_t(0);
+		this->depthReached = std::size_t(0);
 	}
 
 	// The base destructor does nothing.
@@ -36,17 +37,17 @@ namespace IO {
 
 	void GenericGridWriter::openFile(bool _binaryMode) {
 		return; // To be implemented in daughter classes.
-	};
+	}
 
 	void GenericGridWriter::openFileVersioned(std::size_t version, bool _binaryMode) {
 		return; // To be implemented in daughter classes.
-	};
+	}
 
 	std::size_t GenericGridWriter::write_Once(const VoxelGrid* const _vg) {
 		return 0; // To be implemented in daughter classes.
 	}
 
-	std::size_t GenericGridWriter::write_Depthwise(const VoxelGrid* const _vg) {
+	std::size_t GenericGridWriter::write_Depthwise(const VoxelGrid* const _vg, std::size_t depth) {
 		return 0; // To be implemented in daughter classes.
 	}
 
@@ -63,6 +64,7 @@ namespace IO {
 
 	DIMWriter& DIMWriter::write(const VoxelGrid* const _vg) {
 		this->bytesWritten = this->write_Once(_vg);
+		this->depthReached = _vg->getGridDimensions().z;
 		return *this;
 	}
 
@@ -98,7 +100,7 @@ namespace IO {
 
 	std::size_t DIMWriter::write_Once(const VoxelGrid *const _vg) {
 		if (this->outputDIM == nullptr || this->outputIMA == nullptr) {
-			std::cerr << __FUNCTION__ << " : Could not write the contents to a file, none were opened." << '\n';
+			std::cerr << __FUNCTION__ << " : Could not write the contents to a file, one or more weren't opened." << '\n';
 			return 0;
 		}
 
@@ -115,14 +117,78 @@ namespace IO {
 	}
 
 	void DIMWriter::writeDIMInfo(const VoxelGrid* const _vg) {
-		// Write the file all at once.
+		/* Writes the file all at once. */
+
+		// Writes the grid's dimensions
 		svec3 imDims = _vg->getGridDimensions();
 		*this->outputDIM << imDims.x << " " << imDims.y << " " << imDims.z << '\n';
 		*this->outputDIM << "-type U8\n";
+
+		// Writes the voxel's dimensions within the grid :
 		glm::vec3 vxDim	= _vg->getVoxelDimensions();
 		*this->outputDIM << "-dx " << vxDim.x << '\n';
 		*this->outputDIM << "-dy " << vxDim.y << '\n';
 		*this->outputDIM << "-dz " << vxDim.z << '\n';
-		return; // return stream position
+
+		return;
+	}
+
+	SingleTIFFWriter::SingleTIFFWriter(const std::string _baseName) : GenericGridWriter(_baseName) {
+		this->tiffFile = nullptr;
+	}
+
+	SingleTIFFWriter::~SingleTIFFWriter() {
+		if (this->tiffFile != nullptr) {
+			TinyTIFFWriter_close(this->tiffFile);
+			this->tiffFile = nullptr;
+		}
+	}
+
+	SingleTIFFWriter& SingleTIFFWriter::write(const VoxelGrid *const _vg) {
+		this->bytesWritten = this->write_Once(_vg);
+		this->depthReached = _vg->getGridDimensions().z;
+		return *this;
+	}
+
+	void SingleTIFFWriter::openTIFFFile(const VoxelGrid *const _vg) {
+		uint16_t bps = static_cast<uint16_t>(sizeof(unsigned char));
+		svec3 dims = _vg->getGridDimensions();
+		uint32_t width = static_cast<uint32_t>(dims.x);
+		uint32_t height = static_cast<uint32_t>(dims.y);
+
+		std::string fileName = this->baseName + ".tif";
+
+		this->tiffFile = TinyTIFFWriter_open(fileName.c_str(), bps, width, height);
+		if (this->tiffFile == nullptr) {
+			std::cerr << __FUNCTION__ << " : Warning : Tiff file could not be opened." << '\n';
+		}
+
+		return;
+	}
+
+	std::size_t SingleTIFFWriter::write_Once(const VoxelGrid *const _vg) {
+		this->openTIFFFile(_vg);
+		// Checks the file was opened :
+		if (this->tiffFile == nullptr) {
+			std::cerr << __FUNCTION__ << " : Warning : Could not write to file, since it was not opened." << '\n';
+			return 0;
+		}
+
+		// Get the data :
+		const std::vector<unsigned char>& data = _vg->getData();
+		svec3 gridDims = _vg->getGridDimensions();
+		std::size_t faceOffset = gridDims.x * gridDims.y;
+
+		// Iterate on each 'face' :
+		for (std::size_t i = 0; i < gridDims.z; ++i) {
+			const uint8_t* frame = &(data[i * faceOffset]);
+			TinyTIFFWriter_writeImage(this->tiffFile, (void*)frame);
+		}
+
+		// Close the file once finished :
+		TinyTIFFWriter_close(this->tiffFile);
+		this->tiffFile = nullptr;
+
+		return static_cast<std::size_t>(data.size());
 	}
 }

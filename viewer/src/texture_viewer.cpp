@@ -99,6 +99,7 @@ void texture_viewer::load_textures() {
 void texture_viewer::draw() {
 	// disable lighting computation
 	glDisable(GL_LIGHTING);
+	glClearColor(.8, .8, .8, 1.);
 	// imageLoader option :
 	//if (this->waitsForTexture) {
 	//	if (this->imgLoader->hasFinishedLoading()) {

@@ -1,23 +1,32 @@
 #version 400 core
 
+// VAO inputs :
 layout(location=0) in vec4 vertexPosition;
 layout(location=1) in vec4 vertexNormal;
-layout(location=2) in uvec4 voxelIndex;
+layout(location=2) in uvec4 voxelIndex; // is supposed to change every instance, not every vertex
 
+// VShader outputs world space (suffixed by _WS_VS) :
 out vec4 vPos_WS_VS;
 out vec4 vNorm_WS_VS;
 out vec3 texCoord_VS;
-
+// VShader outputs camera space (suffixed by _CS_VS) :
 out vec4 vPos_CS_VS;
 out vec4 vNorm_CS_VS;
 out vec4 lightDir_CS_VS;
 out vec4 eyeDir_CS_VS;
 
+// Scene parameters :
 uniform mat4 mMatrix;
 uniform mat4 vMatrix;
 uniform mat4 pMatrix;
 uniform vec4 lightPos; // will always be worldspace here !
 
+// Voxel grid data :
+uniform vec4 voxelGridOrigin;
+uniform vec3 voxelGridSize;
+uniform uint voxelGridShown;
+
+// Initial space data :
 uniform uint scaledCubes;
 uniform uvec3 imageSize;
 uniform uvec3 neighborOffset;
@@ -74,7 +83,6 @@ void main(void) {
 		texCoord_VS = vec3(baseTexCoord.x + vertexPosition.x * texCoordX,
 				baseTexCoord.y + vertexPosition.y * texCoordY,
 				baseTexCoord.z + vertexPosition.z * texCoordZ);
-		// NOTE	: the displacement for a pixel is given by vec3(1,1,1) * mMatrix + displacementSlice (TODO : fix this, might be wrong)
 
 		// The unit of displacement (size of a single cube) :
 		vec4 dis = vec4(1., 1., 1., 0.);

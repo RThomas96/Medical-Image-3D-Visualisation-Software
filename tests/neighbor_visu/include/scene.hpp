@@ -92,7 +92,8 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		// initialize the variables of the scene
 		void initGl(QOpenGLContext* context, std::size_t _x = 1, std::size_t _y = 1, std::size_t _z = 1);
 
-		void compileShaders();
+		GLuint compileShaders(std::string vPath, std::string gPath, std::string fPath);
+		void recompileShaders(void);
 		void setupVBOData();
 		void setupVAOPointers();
 
@@ -101,6 +102,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 
 		void queryImage(void);
 		void loadImage(std::size_t i, std::size_t j, std::size_t k, const unsigned char* pData = nullptr);
+		void loadVoxelGrid(svec3 size, const unsigned char* pData = nullptr);
 
 		void toggleTexCubeVisibility(bool visibility) { this->showTextureCube = visibility; }
 		void toggleTexCubeVisibility() { this->toggleTexCubeVisibility(!this->showTextureCube); }
@@ -121,8 +123,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 
 		void populateGrid();
 
-		// Simili-slots (this scene cannot be a QObject, as such we cannot have slot/signals) :
-
+		// Simili-slots (this scene cannot be a QObject [inherits from QOpenGL*], as such we cannot have slot/signals) :
 		void slotTogglePolygonMode(bool show);
 		void slotToggleShowTextureCube(bool show);
 		void slotSetNeighborXCoord(float newXCoord);
@@ -179,12 +180,11 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		GLuint vboElementHandle;
 		GLuint vboIndexedDrawHandle;
 		GLuint vaoHandle;
-		GLuint vShaHandle;
-		GLuint gShaHandle;
-		GLuint fShaHandle;
 		GLuint programHandle;
+		GLuint programHandle_VG;
 
 		GLuint textureHandle; ///< handle for glTexImage3D
+		GLuint voxelGridTexHandle; ///< handle for the voxel grid's data
 	private:
 		void generateTexCube(void);
 		const unsigned char* loadEmptyImage();
@@ -194,6 +194,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void hideTexCubeVBO();
 		glm::mat4 computeTransformationMatrix() const;
 		void draw(GLfloat mvMat[], GLfloat pMat[], glm::mat4 transfoMat);
+		void drawVoxelGrid(GLfloat mvMat[], GLfloat pMat[], glm::mat4 transfoMat);
 };
 
 #endif // TESTS_NEIGHBOR_VISU_INCLUDE_SCENE_HPP_

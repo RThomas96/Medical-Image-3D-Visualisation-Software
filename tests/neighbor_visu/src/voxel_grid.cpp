@@ -1,6 +1,7 @@
 #include "../include/voxel_grid.hpp"
 
 #include "../include/grid_control.hpp"
+#include "../include/scene.hpp"
 
 #ifndef NDEBUG
 #define OUT std::cerr
@@ -20,6 +21,7 @@ VoxelGrid::VoxelGrid() {
 	this->inspectorMesh.reset();
 	this->controller = nullptr;
 	this->writer = nullptr;
+	this->scene = nullptr;
 }
 
 VoxelGrid::VoxelGrid(std::size_t width, std::size_t height, std::size_t depth) : VoxelGrid() {
@@ -99,16 +101,18 @@ VoxelGrid& VoxelGrid::populateGrid(InterpolationMethods method) {
 		default:break;
 	}
 
+	this->computeData(method);
+
 	if (this->controller == nullptr) {
-	// TODO : add a progress tracker called upon at the end of each depth level
-		std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::duration<double, std::ratio<1,1>>> start_point = std::chrono::high_resolution_clock::now();
-		this->computeData(method);
-		std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::duration<double, std::ratio<1,1>>> end_point = std::chrono::high_resolution_clock::now();
-		std::size_t size = this->gridDimensions.x * this->gridDimensions.y * this->gridDimensions.z;
-		std::cerr << "To generate " << std::scientific << size << " voxels, it took " << (end_point - start_point).count() << " seconds\n";
-	} else {
-		this->computeData(method);
+		std::cerr << "To generate " << std::scientific << this->gridDimensions.x*this->gridDimensions.y*this->gridDimensions.z <<
+			     " voxels, it took " << this->generationDuration.count() << " seconds\n";
 	}
+
+	if (this->scene != nullptr) {
+		std::cerr << "Loading texture in scene" << '\n';
+		this->scene->loadVoxelGrid(this->getGridDimensions(), this->data.data());
+	}
+
 	return *this;
 }
 
@@ -117,6 +121,11 @@ VoxelGrid& VoxelGrid::writeToFile(const std::string path) {
 
 	this->writer->write(this);
 
+	return *this;
+}
+
+VoxelGrid& VoxelGrid::setScene(Scene* _sc) {
+	this->scene = _sc;
 	return *this;
 }
 
@@ -137,6 +146,7 @@ void VoxelGrid::computeData(InterpolationMethods method) {
 	float x = .0f, y = .0f, z = .0f;
 	std::size_t index;
 
+	std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::duration<double, std::ratio<1,1>>> start_point = std::chrono::high_resolution_clock::now();
 	for (std::size_t k = this->renderBB.getMin().z; k < this->gridDimensions.z; ++k) {
 		z = this->renderBB.getMin().z + this->voxelDimensions.z * static_cast<float>(k);
 
@@ -154,9 +164,11 @@ void VoxelGrid::computeData(InterpolationMethods method) {
 			}
 
 		}
-		std::cerr << "Finished depth level " << k << " of " << this->gridDimensions.z << '\n';
+		// std::cerr << "Finished depth level " << k << " of " << this->gridDimensions.z << '\n';
 
 	}
+	std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::duration<double, std::ratio<1,1>>> end_point = std::chrono::high_resolution_clock::now();
+	this->generationDuration = end_point - start_point;
 	std::cerr << "Finished populating the grid." << '\n';
 }
 

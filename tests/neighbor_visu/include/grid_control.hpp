@@ -19,7 +19,7 @@ class GridControl : public QWidget {
 	public:
 		GridControl(VoxelGrid* vxg, QWidget* parent = nullptr); ///< Default constructor
 		~GridControl(void); ///< Default destructor
-		void setVoxelGrid(VoxelGrid* vg);
+		void setVoxelGrid(std::shared_ptr<VoxelGrid> vg);
 
 	public slots:
 		/// @brief Upates the labels on the grid controller.
@@ -36,7 +36,6 @@ class GridControl : public QWidget {
 		void setupSignals();
 		void setupSpinBoxBounds(QSpinBox* sb);
 		void setupDoubleSpinBoxBounds(QDoubleSpinBox* dsb);
-		VoxelGrid* voxelGrid; ///< Voxel grid to control.
 		InterpolationMethods method; ///< The method with which to interpolate the grid
 		QSpinBox* input_GridSizeX; ///< Controls the grid size along X
 		QSpinBox* input_GridSizeY; ///< Controls the grid size along Y
@@ -51,10 +50,12 @@ class GridControl : public QWidget {
 		QDoubleSpinBox* input_GridBBMaxX; ///< Controls the coordinates of the maximum bound of the grid's render bounding box along X
 		QDoubleSpinBox* input_GridBBMaxY; ///< Controls the coordinates of the maximum bound of the grid's render bounding box along Y
 		QDoubleSpinBox* input_GridBBMaxZ; ///< Controls the coordinates of the maximum bound of the grid's render bounding box along Z
+		std::shared_ptr<VoxelGrid> voxelGrid; ///< Voxel grid to control.
 
 	private:
 		QLabel* info_TotalTime; ///< Total time it took to fill the grid
 		QLabel* info_VoxelRate; ///< Rate of filling, in gigavoxels/hour.
+		QLabel* info_MemorySize; ///< Size of the voxel grid, in GB.
 		void updateDebugInfoFields(void);
 };
 

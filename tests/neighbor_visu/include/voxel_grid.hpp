@@ -16,6 +16,7 @@
 #include <fstream>
 
 class GridControl; ///< Fwd-declaration of the class.
+class Scene; ///< Fwd-declaration of the class.
 
 /// @brief High precision vector3 type to store image sizes, and coordinates.
 typedef glm::vec<3, std::size_t, glm::highp> svec3;
@@ -48,6 +49,9 @@ class VoxelGrid : public QObject {
 		/// @brief Set the shared pointer to the inspector, to be able to navigate the grid.
 		VoxelGrid& setInspector(std::shared_ptr<TetMesh> _mesh);
 
+		/// @brief Set the scene governing the voxel grid.
+		VoxelGrid& setScene(Scene* _sc);
+
 		/// @brief Iterates on each cell of the grid, and computes the grey value here.
 		/// @details Renders a voxel grid of dimensions `gridDimensions` in the area
 		/// defined by `renderBB`, with voxels of size `voxelDimensions`. The resulting
@@ -63,8 +67,10 @@ class VoxelGrid : public QObject {
 		/// @brief Returns the render bounding box.
 		BoundingBox_General<float> getRenderBB(void) const { return this->renderBB; }
 
-		/// @brief Returns a read-only reference to the data vector of the voexl grid.
+		/// @brief Returns a read-only reference to the data vector of the voxel grid.
 		const std::vector<unsigned char>& getData(void) const { return this->data; }
+
+		const std::chrono::duration<double, std::ratio<1, 1>> getTimeToCompute(void) const { return this->generationDuration; }
 
 		/// @brief Writes the grid to a filepath provided.
 		/// This function will write the grid to a file, using an IGridWriter pointer (IGridWriter is an interface class to write the grid in many forms).
@@ -82,7 +88,7 @@ class VoxelGrid : public QObject {
 		void slotSetGridBBMaxX(double newDim);
 		void slotSetGridBBMaxY(double newDim);
 		void slotSetGridBBMaxZ(double newDim);
-		void setController(GridControl* g) { this->controller = g; }
+		VoxelGrid& setController(GridControl* g) { this->controller = g; return *this; }
 
 	protected:
 		void reserveSpace(void); // Allocate the needed space for filling the data progressively.
@@ -106,10 +112,10 @@ class VoxelGrid : public QObject {
 		GridControl* controller;
 		/// @brief Pointer to a grid writer to write the grid to disk once populated.
 		IO::GenericGridWriter* writer;
-
-		/*
-		IGridWriter* defaultWriter; // Maybe for incrementally writing to a file ? could be good if the grid size > available memory
-		*/
+		/// @brief Pointer to the scene, to display the generated data once done.
+		Scene* scene;
+		/// @brief Time to generate a grid
+		std::chrono::duration<double, std::ratio<1,1>> generationDuration;
 };
 
 #endif // TEST_NEIGHBOR_VISU_INCLUDE_VOXEL_GRID_HPP_

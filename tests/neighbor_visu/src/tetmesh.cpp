@@ -23,8 +23,8 @@ TetMesh& TetMesh::setOrigin(const glm::vec4 position) {
 	// If no stack manager is linked, there exists no conversion from real space to intial
 	// space. So nothing happens, and an error message is displayed to the user.
 	if (this->texLoader == nullptr) {
-		std::cerr << "Warning : asked a world space position, but no stack was"
-			  << " linked with this mesh !\n";
+	//	std::cerr << "Warning : asked a world space position, but no stack was"
+	//		  << " linked with this mesh !\n";
 		return *this;
 	}
 	glm::vec4 posInitialSpace = this->texLoader->convertRealSpaceToInitialSpace(position);

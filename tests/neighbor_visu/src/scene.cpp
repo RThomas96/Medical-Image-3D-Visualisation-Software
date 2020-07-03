@@ -36,9 +36,8 @@ Scene::Scene(GridControl* const gc) {
 	this->vboVertPosHandle = 0;
 	this->vboElementHandle = 0;
 	this->vaoHandle = 0;
-	this->vShaHandle = 0;
-	this->fShaHandle = 0;
 	this->programHandle = 0;
+	this->programHandle_VG = 0;
 
 	this->neighborOffset = glm::vec3(0, 0, 0);
 	this->neighborPos = uvec3(0, 0, 0);
@@ -61,8 +60,8 @@ void Scene::initGl(QOpenGLContext* _context, std::size_t _x, std::size_t _y, std
 	this->isInitialized = true;
 	std::cerr << "Entering scene initialization ! " << '\n';
 
-	if (_context == 0) { throw std::runtime_error("Warning ! this->context() returned 0 !") ; }
-	if (_context == nullptr) { std::cerr << "Warning ! Initializing a scene without a valid OpenGL context !" << '\n' ; }
+	if (_context == 0) { throw std::runtime_error("Warning : this->context() returned 0 or nullptr !") ; }
+	if (_context == nullptr) { std::cerr << "Warning : Initializing a scene without a valid OpenGL context !" << '\n' ; }
 
 	this->initializeOpenGLFunctions();
 
@@ -73,10 +72,8 @@ void Scene::initGl(QOpenGLContext* _context, std::size_t _x, std::size_t _y, std
 	this->mesh = std::make_shared<TetMesh>(this->texStorage);
 
 	this->voxelGrid	= std::make_shared<VoxelGrid>();
-	this->voxelGrid->setInspector(this->mesh);
-	this->voxelGrid->setImageStack(this->texStorage);
-	this->voxelGrid->setController(this->gridControl);
-	this->gridControl->setVoxelGrid(this->voxelGrid.get());
+	this->voxelGrid->setInspector(this->mesh).setImageStack(this->texStorage).setController(this->gridControl).setScene(this);
+	this->gridControl->setVoxelGrid(this->voxelGrid);
 
 	///////////////////////////
 	/// CREATE VAO :
@@ -86,7 +83,7 @@ void Scene::initGl(QOpenGLContext* _context, std::size_t _x, std::size_t _y, std
 	glBindVertexArray(this->vaoHandle);
 	GetOpenGLError();
 
-	this->compileShaders();
+	this->recompileShaders();
 
 	this->queryImage();
 
@@ -126,47 +123,47 @@ void Scene::initGl(QOpenGLContext* _context, std::size_t _x, std::size_t _y, std
 	}
 }
 
-void Scene::compileShaders() {
+void Scene::recompileShaders() {
+	this->programHandle = this->compileShaders("./shaders/base.vert", "./shaders/base.geom", "./shaders/base.frag");
+	this->programHandle_VG = this->compileShaders("./shaders/voxelgrid.vert", "./shaders/voxelgrid.geom", "./shaders/voxelgrid.frag");
+}
+
+GLuint Scene::compileShaders(std::string _vPath, std::string _gPath, std::string _fPath) {
 	glUseProgram(0);
-	glDeleteShader(this->vShaHandle);
-	glDeleteShader(this->gShaHandle);
-	glDeleteShader(this->fShaHandle);
-	glDeleteProgram(this->programHandle);
-	GetOpenGLError();
+
+	GLuint _vSha;
+	GLuint _gSha;
+	GLuint _fSha;
+	GLuint _prog;
 
 	///////////////////////////
 	/// CREATE SHADERS AND COMPILE :
 	///////////////////////////
-	this->vShaHandle = glCreateShader(GL_VERTEX_SHADER);
+	_vSha = glCreateShader(GL_VERTEX_SHADER);
 	GetOpenGLError();
-	this->gShaHandle = glCreateShader(GL_GEOMETRY_SHADER);
+	_gSha= glCreateShader(GL_GEOMETRY_SHADER);
 	GetOpenGLError();
-	this->fShaHandle = glCreateShader(GL_FRAGMENT_SHADER);
+	_fSha= glCreateShader(GL_FRAGMENT_SHADER);
 	GetOpenGLError();
-
-	// shaderPaths shader paths
-	std::string vShaPath = "./shaders/base.vert";
-	std::string gShaPath = "./shaders/base.geom";
-	std::string fShaPath = "./shaders/base.frag";
 
 	// Open shader file for reading :
-	std::ifstream vShaFile = std::ifstream(vShaPath, std::ios_base::in);
-	std::ifstream gShaFile = std::ifstream(gShaPath, std::ios_base::in);
-	std::ifstream fShaFile = std::ifstream(fShaPath, std::ios_base::in);
+	std::ifstream vShaFile = std::ifstream(_vPath, std::ios_base::in);
+	std::ifstream gShaFile = std::ifstream(_gPath, std::ios_base::in);
+	std::ifstream fShaFile = std::ifstream(_fPath, std::ios_base::in);
 
 	if (!vShaFile.is_open()) {
-		std::cerr << "Error : could not get the contents of shader file " << vShaPath << '\n';
+		std::cerr << "Error : could not get the contents of shader file " << _vPath << '\n';
 		exit(EXIT_FAILURE);
 	}
 	if (!gShaFile.is_open()) {
 		vShaFile.close();
-		std::cerr << "Error : could not get the contents of shader file " << gShaPath << '\n';
+		std::cerr << "Error : could not get the contents of shader file " << _gPath << '\n';
 		exit(EXIT_FAILURE);
 	}
 	if (!fShaFile.is_open()) {
 		vShaFile.close();
 		gShaFile.close();
-		std::cerr << "Error : could not get the contents of shader file " << fShaPath << '\n';
+		std::cerr << "Error : could not get the contents of shader file " << _fPath << '\n';
 		exit(EXIT_FAILURE);
 	}
 
@@ -192,9 +189,9 @@ void Scene::compileShaders() {
 	fShaFile.read(fShaSource, fShaFileSize);
 	fShaSource[fShaFileSize] = '\0';
 
-	glShaderSource(this->vShaHandle, 1, const_cast<const char**>(&vShaSource), 0);
-	glShaderSource(this->gShaHandle, 1, const_cast<const char**>(&gShaSource), 0);
-	glShaderSource(this->fShaHandle, 1, const_cast<const char**>(&fShaSource), 0);
+	glShaderSource(_vSha, 1, const_cast<const char**>(&vShaSource), 0);
+	glShaderSource(_gSha, 1, const_cast<const char**>(&gShaSource), 0);
+	glShaderSource(_fSha, 1, const_cast<const char**>(&fShaSource), 0);
 
 	delete[] vShaSource;
 	delete[] gShaSource;
@@ -204,7 +201,7 @@ void Scene::compileShaders() {
 	gShaFile.close();
 	fShaFile.close();
 
-	glCompileShader(this->vShaHandle);
+	glCompileShader(_vSha);
 	GetOpenGLError();
 
 	{
@@ -212,25 +209,25 @@ void Scene::compileShaders() {
 		GLint charsWritten = 0;
 		char* shaderInfoLog = nullptr;
 
-		glGetShaderiv(this->vShaHandle, GL_INFO_LOG_LENGTH, &shaderInfoLength);
+		glGetShaderiv(_vSha, GL_INFO_LOG_LENGTH, &shaderInfoLength);
 		if (shaderInfoLength > 1) {
 			std::cerr << __PRETTY_FUNCTION__ << " : start Log ***********************************************" << '\n';
 
-			std::cerr << __FUNCTION__ << " : Information about shader " << vShaPath << " : " << '\n';
+			std::cerr << __FUNCTION__ << " : Information about shader " << _vPath << " : " << '\n';
 			std::cerr << __FUNCTION__ << " : Shader was a vertex shader ";
 			shaderInfoLog = new char[shaderInfoLength];
-			glGetShaderInfoLog(this->vShaHandle, shaderInfoLength, &charsWritten, shaderInfoLog);
+			glGetShaderInfoLog(_vSha, shaderInfoLength, &charsWritten, shaderInfoLog);
 			GetOpenGLError();
 			std::cerr << shaderInfoLog << '\n';
 			delete[] shaderInfoLog;
 
 			std::cerr << __PRETTY_FUNCTION__ << " : end Log ***********************************************" << '\n';
 		} else {
-			std::cerr << "No more info about shader " << vShaPath << '\n';
+			std::cerr << "No more info about shader " << _vPath << '\n';
 		}
 	}
 
-	glCompileShader(this->gShaHandle);
+	glCompileShader(_gSha);
 	GetOpenGLError();
 
 	{
@@ -238,25 +235,25 @@ void Scene::compileShaders() {
 		GLint charsWritten = 0;
 		char* shaderInfoLog = nullptr;
 
-		glGetShaderiv(this->gShaHandle, GL_INFO_LOG_LENGTH, &shaderInfoLength);
+		glGetShaderiv(_gSha, GL_INFO_LOG_LENGTH, &shaderInfoLength);
 		if (shaderInfoLength > 1) {
 			std::cerr << __PRETTY_FUNCTION__ << " : start Log ***********************************************" << '\n';
 
-			std::cerr << __FUNCTION__ << " : Information about shader " << gShaPath << " : " << '\n';
+			std::cerr << __FUNCTION__ << " : Information about shader " << _gPath << " : " << '\n';
 			std::cerr << __FUNCTION__ << " : Shader was a geometry shader ";
 			shaderInfoLog = new char[shaderInfoLength];
-			glGetShaderInfoLog(this->gShaHandle, shaderInfoLength, &charsWritten, shaderInfoLog);
+			glGetShaderInfoLog(_gSha, shaderInfoLength, &charsWritten, shaderInfoLog);
 			GetOpenGLError();
 			std::cerr << shaderInfoLog << '\n';
 			delete[] shaderInfoLog;
 
 			std::cerr << __PRETTY_FUNCTION__ << " : end Log ***********************************************" << '\n';
 		} else {
-			std::cerr << "No more info about shader " << gShaPath << '\n';
+			std::cerr << "No more info about shader " << _gPath << '\n';
 		}
 	}
 
-	glCompileShader(this->fShaHandle);
+	glCompileShader(_fSha);
 	GetOpenGLError();
 
 	{
@@ -264,44 +261,44 @@ void Scene::compileShaders() {
 		GLint charsWritten = 0;
 		char* shaderInfoLog = nullptr;
 
-		glGetShaderiv(this->fShaHandle, GL_INFO_LOG_LENGTH, &shaderInfoLength);
+		glGetShaderiv(_fSha, GL_INFO_LOG_LENGTH, &shaderInfoLength);
 		if (shaderInfoLength > 1) {
 			std::cerr << __PRETTY_FUNCTION__ << " : start Log ***********************************************" << '\n';
 
-			std::cerr << __FUNCTION__ << " : Information about shader " << fShaPath << " : " << '\n';
+			std::cerr << __FUNCTION__ << " : Information about shader " << _fPath << " : " << '\n';
 			std::cerr << __FUNCTION__ << " : Shader was a fragment shader ";
 			shaderInfoLog = new char[shaderInfoLength];
-			glGetShaderInfoLog(this->fShaHandle, shaderInfoLength, &charsWritten, shaderInfoLog);
+			glGetShaderInfoLog(_fSha, shaderInfoLength, &charsWritten, shaderInfoLog);
 			GetOpenGLError();
 			std::cerr << shaderInfoLog << '\n';
 			delete[] shaderInfoLog;
 
 			std::cerr << __PRETTY_FUNCTION__ << " : end Log ***********************************************" << '\n';
 		} else {
-			std::cerr << "No more info about shader " << fShaPath << '\n';
+			std::cerr << "No more info about shader " << _fPath << '\n';
 		}
 	}
 
 	///////////////////////////
 	/// CREATE PROGRAM AND LINK :
 	///////////////////////////
-	this->programHandle = glCreateProgram();
+	_prog = glCreateProgram();
 	GetOpenGLError();
-	glAttachShader(this->programHandle, this->vShaHandle);
-	glAttachShader(this->programHandle, this->gShaHandle);
-	glAttachShader(this->programHandle, this->fShaHandle);
+	glAttachShader(_prog, _vSha);
+	glAttachShader(_prog, _gSha);
+	glAttachShader(_prog, _fSha);
 
-	glLinkProgram(this->programHandle);
+	glLinkProgram(_prog);
 	GetOpenGLError();
 
 	{
 		GLint Result = 0;
 		int InfoLogLength = 0;
-		glGetProgramiv(this->programHandle, GL_LINK_STATUS, &Result);
-		glGetProgramiv(this->programHandle, GL_INFO_LOG_LENGTH, &InfoLogLength);
+		glGetProgramiv(_prog, GL_LINK_STATUS, &Result);
+		glGetProgramiv(_prog, GL_INFO_LOG_LENGTH, &InfoLogLength);
 		if ( InfoLogLength > 0 ){
 			std::vector<char> ProgramErrorMessage(InfoLogLength+1);
-			glGetProgramInfoLog(this->programHandle, InfoLogLength, NULL, &ProgramErrorMessage[0]);
+			glGetProgramInfoLog(_prog, InfoLogLength, NULL, &ProgramErrorMessage[0]);
 			GetOpenGLError();
 			std::cerr << __FUNCTION__ << " : Warning : errors while linking program :" << '\n';
 			std::cerr << "------------------------------------------------------------------" << '\n';
@@ -315,19 +312,22 @@ void Scene::compileShaders() {
 
 	}
 
-	glDetachShader(this->programHandle, this->vShaHandle);
-	glDetachShader(this->programHandle, this->gShaHandle);
-	glDetachShader(this->programHandle, this->fShaHandle);
+	glDetachShader(_prog, _vSha);
+	glDetachShader(_prog, _gSha);
+	glDetachShader(_prog, _fSha);
 	GetOpenGLError();
 
-	glDeleteShader(this->vShaHandle);
-	glDeleteShader(this->gShaHandle);
-	glDeleteShader(this->fShaHandle);
+	glDeleteShader(_vSha);
+	glDeleteShader(_gSha);
+	glDeleteShader(_fSha);
 
+	return _prog;
 }
 
 void Scene::loadImage(std::size_t i, std::size_t j, std::size_t k, const unsigned char *pData) {
 	glEnable(GL_TEXTURE_3D);
+
+	glDeleteTextures(1, &this->textureHandle); // just in case one was allocated before
 
 	this->gridWidth = i;
 	this->gridHeight= j;
@@ -370,6 +370,62 @@ void Scene::loadImage(std::size_t i, std::size_t j, std::size_t k, const unsigne
 	GetOpenGLError();
 }
 
+void Scene::loadVoxelGrid(svec3 size, const unsigned char *pData) {
+	if (this->voxelGrid == nullptr) {
+		// Sanity check. This function can *now* be called from the voxel grid only,
+		// but just in case we call it from elsewhere, all bases are covered.
+		std::cerr << "Voxel grid in scene was not created ! (voxelGrid == nullptr) => true" << '\n';
+		return;
+	}
+
+	glEnable(GL_TEXTURE_3D);
+
+	glDeleteTextures(1, &this->voxelGridTexHandle); // just in case one was allocated before
+
+	if (pData == nullptr) {
+		std::cerr << "No data was uploaded for the Voxel Grid texture !" << '\n';
+		pData = this->loadEmptyImage();
+		size.x = 0;
+		size.y = 0;
+		size.z = 0;
+	}
+
+	if (this->voxelGridTexHandle == 0) {
+		glGenTextures(1, &this->voxelGridTexHandle);
+		GetOpenGLError();
+	}
+	std::cerr << "Voxel grid texture was generated at index " << this->voxelGridTexHandle << "\n";
+	glBindTexture(GL_TEXTURE_3D, this->voxelGridTexHandle);
+	GetOpenGLError();
+
+	// Set nearest neighbor :
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	// Set the texture upload to not generate mimaps :
+	glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_MAX_LOD, static_cast<GLfloat>(-1000.f));
+	// Stop once UV > 1 or < 0
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_MIRRORED_REPEAT);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+	// Swizzle G/B to R value, to save data upload
+	GLint swizzleMask[] = {GL_RED, GL_RED, GL_RED, GL_ONE};
+	glTexParameteriv(GL_TEXTURE_3D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
+
+	glTexImage3D(
+		GL_TEXTURE_3D,			// GLenum : Target
+		static_cast<GLint>(0),		// GLint  : Level of detail of the current texture (0 = original)
+		GL_R8UI,			// GLint  : Number of color components in the picture. Here grayscale in uchar so GL_R8UI
+		static_cast<GLsizei>(size.x),	// GLsizei: Image width
+		static_cast<GLsizei>(size.y),	// GLsizei: Image height
+		static_cast<GLsizei>(size.z),	// GLsizei: Image depth (number of layers)
+		static_cast<GLint>(0),		// GLint  : Border. This value MUST be 0.
+		GL_RED_INTEGER,			// GLenum : Format of the pixel data
+		GL_UNSIGNED_BYTE,		// GLenum : Type (the data type as in uchar, uint, float ...)
+		pData				// void*  : Data to load into the buffer
+	);
+	GetOpenGLError();
+}
+
 void Scene::queryImage(void) {
 	this->texStorage->loadImages();
 	std::vector<unsigned char> image = this->texStorage->getData();
@@ -382,27 +438,27 @@ void Scene::queryImage(void) {
 
 	this->loadImage(i, j, k, image.data());
 
-	svec3 max = this->texStorage->getImageSize();
-	std::cerr << "Image size : " << max.x << ',' <<	max.y << ',' <<	max.z << '\n';
-	glm::vec4 ma = glm::vec4(static_cast<float>(max.x), static_cast<float>(max.y), static_cast<float>(max.z), 1.f);
-	ma = ma * this->computeTransformationMatrix();
+	glm::vec3 rMin = this->texStorage->getImageBoundingBoxMin_WS();
+	glm::vec3 rMax = this->texStorage->getImageBoundingBoxMax_WS();
 
-	this->voxelGrid->setRenderBoundingBox(glm::vec4(.0f), ma);
-	this->voxelGrid->setGridResolution(max);
+	std::cerr << "Set the bounding box to :\n";
+	std::cerr << '\t' << "[" << rMin.x << ',' << rMin.y << ',' << rMin.z << ']' << '\n';
+	std::cerr << '\t' << "[" << rMax.x << ',' << rMax.y << ',' << rMax.z << ']' << '\n';
+
+	this->voxelGrid->setRenderBoundingBox(glm::vec4(rMin, .0), glm::vec4(rMax,0));
+	this->voxelGrid->setGridResolution(imageSizes);
 	this->gridControl->updateGridDimensions();
 }
 
 void Scene::drawRealSpace(GLfloat mvMat[], GLfloat pMat[]) {
 	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_TEXTURE_3D);
 	GetOpenGLError();
-
 
 	glm::vec4 n = glm::vec4(this->neighborOffset.x, this->neighborOffset.y, this->neighborOffset.z, 1.);
 	this->neighborPos = this->texStorage->convertRealSpaceToVoxelIndex(n);
-	//this->neighborPos -= glm::uvec3(1, 1, 1);
 
 	glm::mat4 transfoMat = this->computeTransformationMatrix();
+	glm::mat4 voxelMat = glm::mat4(1.f);
 
 	this->draw(mvMat, pMat, transfoMat);
 
@@ -426,6 +482,7 @@ void Scene::drawInitialSpace(GLfloat mvMat[], GLfloat pMat[]) {
 	//this->neighborPos -= glm::uvec3(1, 1, 1);
 
 	glm::mat4 transfoMat = glm::mat4(1.);
+	glm::mat4 voxelMat = this->computeTransformationMatrix();
 
 	this->draw(mvMat, pMat, transfoMat);
 
@@ -447,6 +504,7 @@ void Scene::drawInitialSpace(GLfloat mvMat[], GLfloat pMat[]) {
 void Scene::prepUniforms(glm::mat4 transfoMat, GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos) {
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_3D, this->textureHandle);
+	glUniform1i(this->texDataLocation, 0);
 	GetOpenGLError();
 
 	GLint imgLoc = glGetUniformLocation(this->programHandle, "imageSize");
@@ -476,7 +534,6 @@ void Scene::prepUniforms(glm::mat4 transfoMat, GLfloat* mvMat, GLfloat* pMat, gl
 	} else {
 		glUniform1ui(scaledLoc, this->scaledCubes);
 	}
-	glUniform1i(this->texDataLocation, 0);
 	GetOpenGLError();
 	glUniformMatrix4fv(this->mMatrixLocation, 1, GL_FALSE, glm::value_ptr(transfoMat));
 	glUniformMatrix4fv(this->vMatrixLocation, 1, GL_FALSE, &mvMat[0]);
@@ -486,7 +543,6 @@ void Scene::prepUniforms(glm::mat4 transfoMat, GLfloat* mvMat, GLfloat* pMat, gl
 
 void Scene::draw(GLfloat mvMat[], GLfloat pMat[], glm::mat4 transfoMat) {
 	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_TEXTURE_3D);
 	GetOpenGLError();
 
 	glUseProgram(this->programHandle);
@@ -513,8 +569,61 @@ void Scene::draw(GLfloat mvMat[], GLfloat pMat[], glm::mat4 transfoMat) {
 	}
 	GetOpenGLError();
 
-	glBindVertexArray(0);
+	this->drawVoxelGrid(mvMat, pMat, transfoMat);
+
 	glUseProgram(0);
+	glBindVertexArray(0);
+}
+
+void Scene::drawVoxelGrid(GLfloat mvMat[], GLfloat pMat[], glm::mat4 transfoMat) {
+	// The VAO should still be in use, so :
+	glUseProgram(this->programHandle_VG); // use the voxel grid shader program
+
+	// Light position world space :
+	glm::vec4 lightPos = glm::vec4(-0.25, -0.25, -0.25, 1.0);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_3D, this->voxelGridTexHandle);
+	glUniform1i(glGetUniformLocation(this->programHandle_VG, "texData"), 1);
+	GetOpenGLError();
+
+	GLint voxelSize_Loc = glGetUniformLocation(this->programHandle_VG, "voxelSize");
+	GLint voxelGridSize_Loc = glGetUniformLocation(this->programHandle_VG, "voxelGridSize");
+	GLint voxelGridOrigin_Loc = glGetUniformLocation(this->programHandle_VG, "voxelGridOrigin");
+
+	// Compute grid dimensions as uint, not size_t for GLSL (to make sure no overflow errors can happen while uplodaing data) :
+	svec3 dims = this->voxelGrid->getGridDimensions();
+	glm::vec3 d = glm::vec3(static_cast<float>(dims.x), static_cast<float>(dims.y), static_cast<float>(dims.z));
+
+	// Set uniforms :
+	glUniform3fv(voxelSize_Loc, 1, glm::value_ptr(this->voxelGrid->getVoxelDimensions()));
+	GetOpenGLError();
+	glUniform3fv(voxelGridSize_Loc, 1, glm::value_ptr(d));
+	GetOpenGLError();
+	glUniform3fv(voxelGridOrigin_Loc, 1, glm::value_ptr(this->voxelGrid->getRenderBB().getMin()));
+	GetOpenGLError();
+
+	GLint modeLoc = glGetUniformLocation(this->programHandle_VG, "drawMode");
+	if (this->voxelGrid->getData().size() == 0) {
+		glUniform1ui(modeLoc, 2); // force wireframe only if grid not generated yet
+	} else {
+		if (this->drawMode == DrawMode::Solid) {
+			glUniform1ui(modeLoc, 0);
+		} else if (this->drawMode == DrawMode::SolidAndWireframe) {
+			glUniform1ui(modeLoc, 1);
+		} else {
+			glUniform1ui(modeLoc, 2);
+		}
+	}
+	GetOpenGLError();
+
+	GetOpenGLError();
+	glUniformMatrix4fv(glGetUniformLocation(this->programHandle_VG, "mMatrix"), 1, GL_FALSE, glm::value_ptr(transfoMat));
+	glUniformMatrix4fv(glGetUniformLocation(this->programHandle_VG, "vMatrix"), 1, GL_FALSE, &mvMat[0]);
+	glUniformMatrix4fv(glGetUniformLocation(this->programHandle_VG, "pMatrix"), 1, GL_FALSE, &pMat[0]);
+	glUniform4fv(this->lightPosLocation, 1, glm::value_ptr(lightPos));
+
+	glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(this->renderSize), GL_UNSIGNED_INT, (void*)0);
 }
 
 void Scene::generateGrid(std::size_t _x, std::size_t _y, std::size_t _z) {
@@ -525,6 +634,9 @@ void Scene::generateGrid(std::size_t _x, std::size_t _y, std::size_t _z) {
 
 	this->generateNeighborGrid(_x,_y,_z);
 	this->generateTexCube();
+
+	this->renderSize = this->vertIdx.size();
+	this->drawCalls	= this->vertIdxDraw.size();
 
 	this->neighborOffset = glm::vec3(0, 0, 0);
 	this->controlPanel->setXCoord(0);
@@ -614,8 +726,6 @@ void Scene::setupVBOData() {
 
 	std::cerr << "Normally, inserted " << this->vertIdx.size() << " elements into element buffer. " << '\n';
 
-	this->renderSize = this->vertIdx.size();
-	this->drawCalls	= this->vertIdxDraw.size();
 	this->vertPos.clear();
 	this->vertNorm.clear();
 	this->vertIdx.clear();
@@ -640,7 +750,7 @@ void Scene::setupVAOPointers() {
 	GetOpenGLError();
 
 //	this->vao->enableVertexAttributes();
-	glVertexAttribDivisor(2, 1);
+//	glVertexAttribDivisor(2, 1);
 }
 
 void Scene::generateNeighborGrid(std::size_t _x, std::size_t _y, std::size_t _z) {
@@ -692,7 +802,6 @@ glm::vec3 Scene::getTexCubeBoundaries(bool realSpace) const {
 		glm::mat3 transfoMat = glm::mat3(this->computeTransformationMatrix());
 		return transfoMat * baseVtx;
 	} else {
-		glm::mat3 transfoMat = glm::mat3(this->computeTransformationMatrix());
 		return baseVtx;
 	}
 }

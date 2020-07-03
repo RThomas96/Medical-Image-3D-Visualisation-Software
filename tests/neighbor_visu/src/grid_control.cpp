@@ -5,11 +5,11 @@
 #include <QGridLayout>
 
 GridControl::GridControl(VoxelGrid* const vg, QWidget* parent) : QWidget(parent) {
-	this->voxelGrid = vg;
+	this->voxelGrid.reset(vg);
 	this->setupWidgets();
 	if (this->voxelGrid != nullptr) {
-		this->setupSignals();
 		this->updateGridDimensions();
+		this->setupSignals();
 	}
 }
 
@@ -17,30 +17,33 @@ GridControl::~GridControl() {
 	delete this->input_GridSizeX;
 	delete this->input_GridSizeY;
 	delete this->input_GridSizeZ;
+	delete this->methodPicker;
+	delete this->info_GridSizeTotal;
+	delete this->info_VoxelSize;
+	delete this->button_FillButton;
 	delete this->input_GridBBMinX;
 	delete this->input_GridBBMinY;
 	delete this->input_GridBBMinZ;
 	delete this->input_GridBBMaxX;
 	delete this->input_GridBBMaxY;
 	delete this->input_GridBBMaxZ;
-	delete this->methodPicker;
-	delete this->button_FillButton;
-	delete this->info_GridSizeTotal;
-	delete this->info_VoxelSize;
 	delete this->info_VoxelRate;
 	delete this->info_TotalTime;
+	delete this->info_MemorySize;
 }
 
-void GridControl::setVoxelGrid(VoxelGrid *vg) {
+void GridControl::setVoxelGrid(std::shared_ptr<VoxelGrid> vg) {
 	this->voxelGrid = vg;
-	this->setupSignals();
 	this->updateGridDimensions();
+	this->setupSignals();
 }
 
 void GridControl::setupWidgets() {
 	// Warning : long constructor ! Ugly, but functionnal.
 	// Setting up a layout in code in Qt is quite easy, but
-	// goddammit, is it ever verbose.
+	// goddammit, is it ever verbose. Mainly because all the
+	// setXXX() functions return void, disallowing chained
+	// calls like "obj->setX()->setY()->setZ();"
 
 	// Setup all inputs :
 	this->methodPicker = new QComboBox();
@@ -68,6 +71,7 @@ void GridControl::setupWidgets() {
 	this->setupDoubleSpinBoxBounds(this->input_GridBBMaxY);
 	this->setupDoubleSpinBoxBounds(this->input_GridBBMaxZ);
 
+	// Setup the picker for the reconstruction method :
 	this->methodPicker->addItem("Nearest Neighbor");
 	this->methodPicker->addItem("Trilinear");
 	this->methodPicker->addItem("Tricubic");
@@ -75,6 +79,7 @@ void GridControl::setupWidgets() {
 	this->methodPicker->setMaxCount(4);
 	this->method = InterpolationMethods::NearestNeighbor;
 
+	// Builds the grid layout, iterating on the rows :
 	int currentRow = 0;
 
 	QGridLayout* mainLayout = new QGridLayout();
@@ -134,29 +139,40 @@ void GridControl::setupWidgets() {
 	mainLayout->addLayout(infoVoxelSizeLayout, currentRow, 0, 1, -1, Qt::AlignLeft);
 	currentRow += 2; // Add a bit of padding inbetween sections
 
+	// Add method picker :
 	mainLayout->addWidget(new QLabel("Method to interpolate :"), currentRow, 0, Qt::AlignLeft);
 	mainLayout->addWidget(this->methodPicker, currentRow, 2, Qt::AlignRight);
 	currentRow += 2;
 
+	// "Launch" button :
 	mainLayout->addWidget(this->button_FillButton, currentRow, 0, 1, -1, Qt::AlignCenter);
 
 	currentRow += 2;
+	// Default values for debug labels (time to reconstruct and rate in GV/h) :
 	this->info_TotalTime = new QLabel("NaN");
 	this->info_VoxelRate = new QLabel("NaN");
-	QHBoxLayout* infoTime =new QHBoxLayout();
-	QHBoxLayout* infoRate =new QHBoxLayout();
+	this->info_MemorySize = new QLabel("NaN");
+	QHBoxLayout* infoTime = new QHBoxLayout();
+	QHBoxLayout* infoRate = new QHBoxLayout();
+	QHBoxLayout* infoMem = new QHBoxLayout();
 	QLabel* timePrefix = new QLabel("Time to fill grid : ");
 	QLabel* timeSuffix = new QLabel(" seconds");
 	QLabel* ratePrefix = new QLabel("Generating voxels at ");
 	QLabel* rateSuffix = new QLabel(" GV/h");
+	QLabel* memPrefix = new QLabel("Memory size estimated : ");
+	QLabel* memSuffix = new QLabel(" GB");
 	infoTime->addWidget(timePrefix);
 	infoRate->addWidget(ratePrefix);
+	infoMem->addWidget(memPrefix);
 	infoTime->addWidget(this->info_TotalTime);
 	infoRate->addWidget(this->info_VoxelRate);
+	infoMem->addWidget(this->info_MemorySize);
 	infoTime->addWidget(timeSuffix);
 	infoRate->addWidget(rateSuffix);
+	infoMem->addWidget(memSuffix);
 	mainLayout->addLayout(infoTime, currentRow++, 0, 1, -1, Qt::AlignLeft);
 	mainLayout->addLayout(infoRate, currentRow++, 0, 1, -1, Qt::AlignLeft);
+	mainLayout->addLayout(infoMem, currentRow++, 0, 1, -1, Qt::AlignLeft);
 
 	std::cerr << "Grid control : generated layout.\nGrid layout has " << currentRow << " rows.\n";
 	this->setLayout(mainLayout);
@@ -168,17 +184,17 @@ void GridControl::setupSignals() {
 		return;
 	}
 
-	connect(this->input_GridSizeX, QOverload<int>::of(&QSpinBox::valueChanged), this->voxelGrid, &VoxelGrid::slotSetGridDimensionX);
-	connect(this->input_GridSizeY, QOverload<int>::of(&QSpinBox::valueChanged), this->voxelGrid, &VoxelGrid::slotSetGridDimensionY);
-	connect(this->input_GridSizeZ, QOverload<int>::of(&QSpinBox::valueChanged), this->voxelGrid, &VoxelGrid::slotSetGridDimensionZ);
+	connect(this->input_GridSizeX, QOverload<int>::of(&QSpinBox::valueChanged), this->voxelGrid.get(), &VoxelGrid::slotSetGridDimensionX);
+	connect(this->input_GridSizeY, QOverload<int>::of(&QSpinBox::valueChanged), this->voxelGrid.get(), &VoxelGrid::slotSetGridDimensionY);
+	connect(this->input_GridSizeZ, QOverload<int>::of(&QSpinBox::valueChanged), this->voxelGrid.get(), &VoxelGrid::slotSetGridDimensionZ);
 
-	connect(this->input_GridBBMinX, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this->voxelGrid, &VoxelGrid::slotSetGridBBMinX);
-	connect(this->input_GridBBMinY, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this->voxelGrid, &VoxelGrid::slotSetGridBBMinY);
-	connect(this->input_GridBBMinZ, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this->voxelGrid, &VoxelGrid::slotSetGridBBMinZ);
+	connect(this->input_GridBBMinX, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this->voxelGrid.get(), &VoxelGrid::slotSetGridBBMinX);
+	connect(this->input_GridBBMinY, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this->voxelGrid.get(), &VoxelGrid::slotSetGridBBMinY);
+	connect(this->input_GridBBMinZ, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this->voxelGrid.get(), &VoxelGrid::slotSetGridBBMinZ);
 
-	connect(this->input_GridBBMaxX, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this->voxelGrid, &VoxelGrid::slotSetGridBBMaxX);
-	connect(this->input_GridBBMaxY, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this->voxelGrid, &VoxelGrid::slotSetGridBBMaxY);
-	connect(this->input_GridBBMaxZ, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this->voxelGrid, &VoxelGrid::slotSetGridBBMaxZ);
+	connect(this->input_GridBBMaxX, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this->voxelGrid.get(), &VoxelGrid::slotSetGridBBMaxX);
+	connect(this->input_GridBBMaxY, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this->voxelGrid.get(), &VoxelGrid::slotSetGridBBMaxY);
+	connect(this->input_GridBBMaxZ, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this->voxelGrid.get(), &VoxelGrid::slotSetGridBBMaxZ);
 
 	connect(this->methodPicker, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &GridControl::pickMethod);
 
@@ -236,6 +252,9 @@ void GridControl::updateGridLabels() {
 	float vzSize = (bb.getMax().z - bb.getMin().z) / static_cast<float>(dims.z);
 	QString text = QString::number(vxSize) + 'x' + QString::number(vySize) + 'x' + QString::number(vzSize);
 	this->info_VoxelSize->setText(text);
+
+	double memSize = static_cast<double>(size) / 1.e9;
+	this->info_MemorySize->setText(QString::number(memSize));
 }
 
 void GridControl::updateGridDimensions() {
@@ -246,15 +265,42 @@ void GridControl::updateGridDimensions() {
 	svec3 dims = this->voxelGrid->getGridDimensions();
 	BoundingBox_General<float> bb = this->voxelGrid->getRenderBB();
 
+	/// A bit verbose, but we need to block signals from the spinboxes when updating
+	/// the values, in order to remove the possibility of a 'feedback loop' inbetween objects :
+
+	// Grid size :
+	this->input_GridSizeX->blockSignals(true);
 	this->input_GridSizeX->setValue(static_cast<int>(dims.x));
+	this->input_GridSizeX->blockSignals(false);
+	this->input_GridSizeY->blockSignals(true);
 	this->input_GridSizeY->setValue(static_cast<int>(dims.y));
+	this->input_GridSizeY->blockSignals(false);
+	this->input_GridSizeZ->blockSignals(true);
 	this->input_GridSizeZ->setValue(static_cast<int>(dims.z));
+	this->input_GridSizeZ->blockSignals(false);
+
+	// Min bounding box coordinates :
+	this->input_GridBBMinX->blockSignals(true);
 	this->input_GridBBMinX->setValue(static_cast<double>(bb.getMin().x));
+	this->input_GridBBMinX->blockSignals(false);
+	this->input_GridBBMinY->blockSignals(true);
 	this->input_GridBBMinY->setValue(static_cast<double>(bb.getMin().y));
+	this->input_GridBBMinY->blockSignals(false);
+	this->input_GridBBMinZ->blockSignals(true);
 	this->input_GridBBMinZ->setValue(static_cast<double>(bb.getMin().z));
+	this->input_GridBBMinZ->blockSignals(false);
+
+	// Max bounding box coordinates
+	this->input_GridBBMaxX->blockSignals(true);
 	this->input_GridBBMaxX->setValue(static_cast<double>(bb.getMax().x));
+	this->input_GridBBMaxX->blockSignals(false);
+	this->input_GridBBMaxY->blockSignals(true);
 	this->input_GridBBMaxY->setValue(static_cast<double>(bb.getMax().y));
+	this->input_GridBBMaxY->blockSignals(false);
+	this->input_GridBBMaxZ->blockSignals(true);
 	this->input_GridBBMaxZ->setValue(static_cast<double>(bb.getMax().z));
+	this->input_GridBBMaxZ->blockSignals(false);
+
 	this->updateGridLabels();
 }
 
@@ -263,10 +309,8 @@ void GridControl::launchGridFill() {
 		return;
 	}
 	std::cerr << "Launching grid fill ... will freeze the application.\n";
-	std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::duration<double, std::ratio<1,1>>> start_point = std::chrono::high_resolution_clock::now();
 	this->voxelGrid->populateGrid(this->method);
-	std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::duration<double, std::ratio<1,1>>> end_point = std::chrono::high_resolution_clock::now();
-	double time = (end_point - start_point).count();
+	double time = this->voxelGrid->getTimeToCompute().count();
 	this->info_TotalTime->setText(QString::number(time));
 	svec3 dims = this->voxelGrid->getGridDimensions();
 	std::size_t size = dims.x * dims.y * dims.z;

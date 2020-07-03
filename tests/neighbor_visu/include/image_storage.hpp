@@ -56,6 +56,12 @@ class TextureStorage {
 		/// @brief Get the max point of the image's data bounding box
 		svec3 getImageBoundingBoxMax() const; // See TODO(4) and add argument here (value to get BoundingBox for)
 
+		/// @brief Gets the position in world space of the minimum point of the image's bounding box
+		glm::vec3 getImageBoundingBoxMin_WS() const;
+
+		/// @brief Gets the position in world space of the maximum point of the image's bounding box
+		glm::vec3 getImageBoundingBoxMax_WS() const;
+
 		/// @brief Get the image data, in its entirety
 		const std::vector<unsigned char>& getData() const;
 

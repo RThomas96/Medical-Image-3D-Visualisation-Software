@@ -44,7 +44,7 @@ void Viewer::draw() {
 void Viewer::keyPressEvent(QKeyEvent *e) {
 	switch (e->key()) {
 		case Qt::Key::Key_R:
-			this->scene->compileShaders();
+			this->scene->recompileShaders();
 			this->update();
 		break;
 		case Qt::Key::Key_1:
