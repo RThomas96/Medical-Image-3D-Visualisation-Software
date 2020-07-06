@@ -49,10 +49,14 @@ Scene::Scene(GridControl* const gc) {
 	this->lightPosLocation = -1;
 	this->neighborOffsetLocation = -1;
 	this->scaledCubes = 1;
+
+	this->minTexVal = uchar(0);
+	this->maxTexVal = uchar(255);
 }
 
 Scene::~Scene(void) {
 	glDeleteTextures(1, &this->textureHandle);
+	glDeleteTextures(1, &this->voxelGridTexHandle);
 }
 
 void Scene::initGl(QOpenGLContext* _context, std::size_t _x, std::size_t _y, std::size_t _z) {
@@ -86,6 +90,7 @@ void Scene::initGl(QOpenGLContext* _context, std::size_t _x, std::size_t _y, std
 	this->recompileShaders();
 
 	this->queryImage();
+//	this->queryIMA(); // TODO : implement it, in conjonction with IMALoader
 
 	this->generateGrid(_x, _y, _z);
 
@@ -390,7 +395,12 @@ void Scene::loadVoxelGrid(svec3 size, const unsigned char *pData) {
 		size.z = 0;
 	}
 
+	if (this->voxelGridTexHandle != 0) {
+		// Texture has already been created, destroy it:
+		glDeleteTextures(1, &this->voxelGridTexHandle);
+	}
 	if (this->voxelGridTexHandle == 0) {
+		// Create texture handle
 		glGenTextures(1, &this->voxelGridTexHandle);
 		GetOpenGLError();
 	}
@@ -460,7 +470,7 @@ void Scene::drawRealSpace(GLfloat mvMat[], GLfloat pMat[]) {
 	glm::mat4 transfoMat = this->computeTransformationMatrix();
 	glm::mat4 voxelMat = glm::mat4(1.f);
 
-	this->draw(mvMat, pMat, transfoMat);
+	this->draw(mvMat, pMat, transfoMat, voxelMat);
 
 	std::vector<glm::vec4> vertices = this->mesh->getVertices();
 	std::vector<unsigned char> values = this->mesh->getVertexValues();
@@ -482,9 +492,11 @@ void Scene::drawInitialSpace(GLfloat mvMat[], GLfloat pMat[]) {
 	//this->neighborPos -= glm::uvec3(1, 1, 1);
 
 	glm::mat4 transfoMat = glm::mat4(1.);
-	glm::mat4 voxelMat = this->computeTransformationMatrix();
+	glm::mat4 voxelMat = glm::inverse(this->computeTransformationMatrix());
 
-	this->draw(mvMat, pMat, transfoMat);
+	// In initial space, the voxel grid needs to be deformed inverse to the
+	// transformation applied when saving them to disk. So, computeMatrix^-1
+	this->draw(mvMat, pMat, transfoMat, voxelMat);
 
 	std::vector<glm::vec4> vertices = this->mesh->getVertices();
 	std::vector<unsigned char> values = this->mesh->getVertexValues();
@@ -528,6 +540,11 @@ void Scene::prepUniforms(glm::mat4 transfoMat, GLfloat* mvMat, GLfloat* pMat, gl
 		}
 	}
 
+	GLint minTexVal_Loc = glGetUniformLocation(this->programHandle, "minTexVal");
+	GLint maxTexVal_Loc = glGetUniformLocation(this->programHandle, "maxTexVal");
+	glUniform1ui(minTexVal_Loc, static_cast<GLuint>(this->minTexVal));
+	glUniform1ui(maxTexVal_Loc, static_cast<GLuint>(this->maxTexVal));
+
 	GLint scaledLoc = glGetUniformLocation(this->programHandle, "scaledCubes");
 	if (scaledLoc < 0) {
 		std::cerr << "Cannot find scaled cubes !" << '\n';
@@ -541,7 +558,7 @@ void Scene::prepUniforms(glm::mat4 transfoMat, GLfloat* mvMat, GLfloat* pMat, gl
 	glUniform4fv(this->lightPosLocation, 1, glm::value_ptr(lightPos));
 }
 
-void Scene::draw(GLfloat mvMat[], GLfloat pMat[], glm::mat4 transfoMat) {
+void Scene::draw(GLfloat mvMat[], GLfloat pMat[], glm::mat4 transfoMat, glm::mat4 voxelGridMat) {
 	glEnable(GL_DEPTH_TEST);
 	GetOpenGLError();
 
@@ -569,7 +586,7 @@ void Scene::draw(GLfloat mvMat[], GLfloat pMat[], glm::mat4 transfoMat) {
 	}
 	GetOpenGLError();
 
-	this->drawVoxelGrid(mvMat, pMat, transfoMat);
+	this->drawVoxelGrid(mvMat, pMat, voxelGridMat);
 
 	glUseProgram(0);
 	glBindVertexArray(0);
@@ -582,14 +599,21 @@ void Scene::drawVoxelGrid(GLfloat mvMat[], GLfloat pMat[], glm::mat4 transfoMat)
 	// Light position world space :
 	glm::vec4 lightPos = glm::vec4(-0.25, -0.25, -0.25, 1.0);
 
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_3D, this->voxelGridTexHandle);
-	glUniform1i(glGetUniformLocation(this->programHandle_VG, "texData"), 1);
-	GetOpenGLError();
+	if (this->voxelGrid->getData().size()) {
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_3D, this->voxelGridTexHandle);
+		glUniform1i(glGetUniformLocation(this->programHandle_VG, "texData"), 0);
+		GetOpenGLError();
+	}
 
 	GLint voxelSize_Loc = glGetUniformLocation(this->programHandle_VG, "voxelSize");
 	GLint voxelGridSize_Loc = glGetUniformLocation(this->programHandle_VG, "voxelGridSize");
 	GLint voxelGridOrigin_Loc = glGetUniformLocation(this->programHandle_VG, "voxelGridOrigin");
+
+	GLint minTexVal_Loc = glGetUniformLocation(this->programHandle_VG, "minTexVal");
+	GLint maxTexVal_Loc = glGetUniformLocation(this->programHandle_VG, "maxTexVal");
+	glUniform1ui(minTexVal_Loc, static_cast<GLuint>(this->minTexVal));
+	glUniform1ui(maxTexVal_Loc, static_cast<GLuint>(this->maxTexVal));
 
 	// Compute grid dimensions as uint, not size_t for GLSL (to make sure no overflow errors can happen while uplodaing data) :
 	svec3 dims = this->voxelGrid->getGridDimensions();
@@ -605,6 +629,7 @@ void Scene::drawVoxelGrid(GLfloat mvMat[], GLfloat pMat[], glm::mat4 transfoMat)
 
 	GLint modeLoc = glGetUniformLocation(this->programHandle_VG, "drawMode");
 	if (this->voxelGrid->getData().size() == 0) {
+		std::cerr << "Showing wireframe on the voxel grid\n";
 		glUniform1ui(modeLoc, 2); // force wireframe only if grid not generated yet
 	} else {
 		if (this->drawMode == DrawMode::Solid) {
@@ -866,6 +891,16 @@ void Scene::slotSetTextureYCoord(uint newYCoord) {
 
 void Scene::slotSetTextureZCoord(uint newZCoord) {
 	this->neighborPos.z = newZCoord;
+}
+
+void Scene::slotSetMinTexValue(uchar val) {
+	this->minTexVal = val;
+	std::cerr << "Set min bound to " << +val << '\n';
+}
+
+void Scene::slotSetMaxTexValue(uchar val) {
+	this->maxTexVal = val;
+	std::cerr << "Set max bound to " << +val << '\n';
 }
 
 void Scene::updateNeighborTetMesh() {

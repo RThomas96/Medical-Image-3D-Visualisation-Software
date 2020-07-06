@@ -12,22 +12,20 @@ in vec4 vNorm_CS_VS[];
 in vec4 lightDir_CS_VS[];
 in vec4 eyeDir_CS_VS[];
 
-noperspective out vec3 barycentricCoords;
-
 noperspective out vec4 vPos_WS;
 noperspective out vec4 vNorm_WS;
 noperspective out vec3 texCoord;
-noperspective out float largestDelta;
-
+noperspective out vec3 barycentricCoords;
+noperspective out vec3 largestDelta;
 noperspective out vec4 vPos_CS;
 noperspective out vec4 vNorm_CS;
 noperspective out vec4 lightDir_CS;
 noperspective out vec4 eyeDir_CS;
 
 void main() {
-	vec3 p0 = vec3(vPos_CS_VS[0].x, vPos_CS_VS[0].y, vPos_CS_VS[0].z);
-	vec3 p1 = vec3(vPos_CS_VS[1].x, vPos_CS_VS[1].y, vPos_CS_VS[1].z);
-	vec3 p2 = vec3(vPos_CS_VS[2].x, vPos_CS_VS[2].y, vPos_CS_VS[2].z);
+	vec3 p0 = vPos_CS_VS[0].xyz;
+	vec3 p1 = vPos_CS_VS[1].xyz;
+	vec3 p2 = vPos_CS_VS[2].xyz;
 	vec3 e1 = normalize(p1 - p0);
 	vec3 e2 = normalize(p2 - p1);
 	vec3 e3 = normalize(p0 - p2);
@@ -40,7 +38,7 @@ void main() {
 	float dist_p2e1 = length(p2 - p2e1);
 	float dist_p0e2 = length(p0 - p0e2);
 	float dist_p1e3 = length(p1 - p1e3);
-	float maxDelta = max(dist_p0e2, max(dist_p1e3, dist_p2e1));
+	vec3 maxDelta = vec3(dist_p0e2, dist_p1e3, dist_p2e1);
 	gl_Position = gl_in[0].gl_Position;
 	barycentricCoords = vec3(dist_p0e2, .0, .0);
 	vPos_WS = vPos_WS_VS[0];

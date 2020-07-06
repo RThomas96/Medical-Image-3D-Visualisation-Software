@@ -132,6 +132,8 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void slotSetTextureXCoord(uint newXCoord);
 		void slotSetTextureYCoord(uint newYCoord);
 		void slotSetTextureZCoord(uint newZCoord);
+		void slotSetMinTexValue(uchar val);
+		void slotSetMaxTexValue(uchar val);
 	protected:
 		void generateGrid(std::size_t _x, std::size_t _y, std::size_t _z);
 
@@ -151,6 +153,8 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		std::size_t renderSize;
 		bool showTextureCube; ///< does the user want to show the texture cube ?
 		bool cubeShown; ///< is the texture cube shown ?
+		uchar minTexVal;
+		uchar maxTexVal;
 
 		// Generated data (positions, normals, texture
 		// coordinates, and indexed draw order) :
@@ -193,7 +197,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void showTexCubeVBO();
 		void hideTexCubeVBO();
 		glm::mat4 computeTransformationMatrix() const;
-		void draw(GLfloat mvMat[], GLfloat pMat[], glm::mat4 transfoMat);
+		void draw(GLfloat mvMat[], GLfloat pMat[], glm::mat4 transfoMat, glm::mat4 voxelGridMat);
 		void drawVoxelGrid(GLfloat mvMat[], GLfloat pMat[], glm::mat4 transfoMat);
 };
 

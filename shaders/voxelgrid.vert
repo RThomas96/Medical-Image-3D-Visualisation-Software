@@ -31,7 +31,7 @@ void main(void) {
 	mat4 iMatrix = inverse(mMatrix);
 	mat4 minverse = transpose(iMatrix);
 	// ModelViewProjection matrix :
-	mat4 mvp = pMatrix * vMatrix;
+	mat4 mvp = pMatrix * vMatrix * mMatrix;
 
 	// Camera space position of the light source :
 	vec4 lightPos_CS = vMatrix * lightPos;

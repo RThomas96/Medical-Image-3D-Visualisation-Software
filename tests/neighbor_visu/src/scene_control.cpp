@@ -11,6 +11,8 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, Viewer* rv, QWidget* 
 	this->xPicker = new QDoubleSpinBox();
 	this->yPicker = new QDoubleSpinBox();
 	this->zPicker = new QDoubleSpinBox();
+	this->minValueTexture = new QSpinBox();
+	this->maxValueTexture = new QSpinBox();
 	this->xTex = new QSlider(Qt::Horizontal);
 	this->yTex = new QSlider(Qt::Horizontal);
 	this->zTex = new QSlider(Qt::Horizontal);
@@ -20,6 +22,10 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, Viewer* rv, QWidget* 
 	// Create the container widget :
 	this->controlContainer = new QWidget();
 
+	this->minValueTexture->setRange(0, 255);
+	this->minValueTexture->setValue(0);
+	this->maxValueTexture->setRange(0, 255);
+	this->maxValueTexture->setValue(255);
 
 	// Create labels for sliders :
 	QLabel* xSliderLabel = new QLabel("X coordinate");
@@ -33,7 +39,8 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, Viewer* rv, QWidget* 
 	QVBoxLayout* xContainer = new QVBoxLayout();
 	QVBoxLayout* yContainer = new QVBoxLayout();
 	QVBoxLayout* zContainer = new QVBoxLayout();
-	QHBoxLayout* topContainer = new QHBoxLayout(this->controlContainer);
+	QHBoxLayout* topContainer = new QHBoxLayout();
+	QVBoxLayout* allContainer = new QVBoxLayout(this->controlContainer);
 	xContainer->addWidget(xSliderLabel);
 	xContainer->addWidget(this->xPicker);
 	xContainer->addWidget(xTexLabel);
@@ -54,10 +61,12 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, Viewer* rv, QWidget* 
 	topContainer->addLayout(zContainer);
 	topContainer->addWidget(this->toggleTexCubeCheckbox);
 
+	allContainer->addLayout(topContainer);
+	allContainer->addWidget(this->minValueTexture);
+	allContainer->addWidget(this->maxValueTexture);
+
 	// Disable by default the top level container :
 	this->controlContainer->setEnabled(false);
-
-	this->initSignals();
 
 	this->xPicker->setMinimum(0);
 	this->xPicker->setMaximum(1e9);
@@ -97,6 +106,8 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, Viewer* rv, QWidget* 
 
 	this->setLayout(mainLayout);
 
+	this->initSignals();
+
 	this->setSizePolicy(QSizePolicy::Policy::Fixed, QSizePolicy::Policy::Fixed);
 }
 
@@ -108,6 +119,10 @@ void ControlPanel::initSignals() {
 	connect(this->yTex, &QSlider::valueChanged, this, &ControlPanel::setYTexCoord);
 	connect(this->zTex, &QSlider::valueChanged, this, &ControlPanel::setZTexCoord);
 	connect(this->toggleTexCubeCheckbox, &QCheckBox::clicked, this, &ControlPanel::setTexCube);
+
+	// Connect values to setters for the scene :
+	connect(this->minValueTexture, QOverload<int>::of(&QSpinBox::valueChanged), this, &ControlPanel::setMinTexVal);
+	connect(this->maxValueTexture, QOverload<int>::of(&QSpinBox::valueChanged), this, &ControlPanel::setMaxTexVal);
 }
 
 void ControlPanel::activatePanels(bool activeStatus) {
@@ -199,4 +214,28 @@ void ControlPanel::setTexCube(bool show) {
 	this->sceneToControl->slotToggleShowTextureCube(show);
 	this->leftViewer->update();
 	this->rightViewer->update();
+}
+
+void ControlPanel::setMinTexVal(int val) {
+	if (this->sceneToControl) {
+		this->sceneToControl->slotSetMinTexValue(static_cast<uchar>(val));
+	}
+	if (this->leftViewer) {
+		this->leftViewer->update();
+	}
+	if (this->rightViewer) {
+		this->rightViewer->update();
+	}
+}
+
+void ControlPanel::setMaxTexVal(int val) {
+	if (this->sceneToControl) {
+		this->sceneToControl->slotSetMaxTexValue(static_cast<uchar>(val));
+	}
+	if (this->leftViewer) {
+		this->leftViewer->update();
+	}
+	if (this->rightViewer) {
+		this->rightViewer->update();
+	}
 }

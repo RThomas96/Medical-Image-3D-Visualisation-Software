@@ -133,7 +133,7 @@ void VoxelGrid::reserveSpace() {
 	this->data.clear();
 
 	std::size_t dataSize = this->gridDimensions.x * this->gridDimensions.y * this->gridDimensions.z;
-	this->data.reserve(dataSize);
+	this->data.resize(dataSize);
 }
 
 void VoxelGrid::computeData(InterpolationMethods method) {
@@ -173,15 +173,27 @@ void VoxelGrid::computeData(InterpolationMethods method) {
 }
 
 void VoxelGrid::slotSetGridDimensionX(int newDim) {
-	if (newDim >= 0) { this->gridDimensions.x = static_cast<std::size_t>(newDim); }
+	if (newDim >= 0) {
+		float bbXDim = static_cast<float>(this->gridDimensions.x)*this->voxelDimensions.x;
+		this->gridDimensions.x = static_cast<std::size_t>(newDim);
+		this->voxelDimensions.x = bbXDim / static_cast<float>(this->gridDimensions.x);
+	}
 	if (this->controller) { this->controller->updateGridLabels(); }
 }
 void VoxelGrid::slotSetGridDimensionY(int newDim) {
-	if (newDim >= 0) { this->gridDimensions.y = static_cast<std::size_t>(newDim); }
+	if (newDim >= 0) {
+		float bbYDim = static_cast<float>(this->gridDimensions.y)*this->voxelDimensions.y;
+		this->gridDimensions.y = static_cast<std::size_t>(newDim);
+		this->voxelDimensions.y = bbYDim / static_cast<float>(this->gridDimensions.y);
+	}
 	if (this->controller) { this->controller->updateGridLabels(); }
 }
 void VoxelGrid::slotSetGridDimensionZ(int newDim) {
-	if (newDim >= 0) { this->gridDimensions.z = static_cast<std::size_t>(newDim); }
+	if (newDim >= 0) {
+		float bbZDim = static_cast<float>(this->gridDimensions.z)*this->voxelDimensions.z;
+		this->gridDimensions.z = static_cast<std::size_t>(newDim);
+		this->voxelDimensions.z = bbZDim / static_cast<float>(this->gridDimensions.z);
+	}
 	if (this->controller) { this->controller->updateGridLabels(); }
 }
 void VoxelGrid::slotSetGridBBMinX(double newDim) { this->renderBB.setMinX(newDim); if (this->controller) { this->controller->updateGridLabels(); } }

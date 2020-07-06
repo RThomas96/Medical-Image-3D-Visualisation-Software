@@ -30,6 +30,8 @@ class ControlPanel : public QWidget {
 		QSlider* xTex;
 		QSlider* yTex;
 		QSlider* zTex;
+		QSpinBox* minValueTexture;
+		QSpinBox* maxValueTexture;
 		QCheckBox* toggleTexCubeCheckbox;
 		QWidget* controlContainer;
 		Viewer* leftViewer;
@@ -43,6 +45,8 @@ class ControlPanel : public QWidget {
 		void setYTexCoord(int coordY);
 		void setZTexCoord(int coordZ);
 		void setTexCube(bool show);
+		void setMinTexVal(int val);
+		void setMaxTexVal(int val);
 };
 
 #endif // TESTS_NEIGHBOR_VISU_INCLUDE_SCENE_CONTROL_HPP_

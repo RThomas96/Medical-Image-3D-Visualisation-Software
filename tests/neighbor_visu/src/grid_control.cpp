@@ -39,7 +39,8 @@ void GridControl::setVoxelGrid(std::shared_ptr<VoxelGrid> vg) {
 }
 
 void GridControl::setupWidgets() {
-	// Warning : long constructor ! Ugly, but functionnal.
+	// Warning : long constructor-like function ! Ugly, but functionnal.
+
 	// Setting up a layout in code in Qt is quite easy, but
 	// goddammit, is it ever verbose. Mainly because all the
 	// setXXX() functions return void, disallowing chained
@@ -265,8 +266,8 @@ void GridControl::updateGridDimensions() {
 	svec3 dims = this->voxelGrid->getGridDimensions();
 	BoundingBox_General<float> bb = this->voxelGrid->getRenderBB();
 
-	/// A bit verbose, but we need to block signals from the spinboxes when updating
-	/// the values, in order to remove the possibility of a 'feedback loop' inbetween objects :
+	// A bit (very much) verbose, but we need to block signals from the spinboxes when updating
+	// the values, in order to remove the possibility of a 'feedback loop' inbetween objects :
 
 	// Grid size :
 	this->input_GridSizeX->blockSignals(true);

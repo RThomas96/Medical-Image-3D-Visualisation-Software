@@ -4,7 +4,7 @@ in vec4 vPos_WS;
 in vec4 vNorm_WS;
 in vec3 texCoord;
 in vec3 barycentricCoords;
-in float largestDelta;
+in vec3 largestDelta;
 
 in vec4 vPos_CS;
 in vec4 vNorm_CS;
@@ -12,6 +12,9 @@ in vec4 lightDir_CS;
 in vec4 eyeDir_CS;
 
 out vec4 color;
+
+uniform uint minTexVal;
+uniform uint maxTexVal;
 
 // Draw modes :
 //    - 0u : texture/cube/polygons only
@@ -25,7 +28,8 @@ uniform usampler3D texData;
 /// Takes a uvec3 of an R8UI-based texture and spits out an RGB color by converting
 /// from R(uchar)G(void)B(void) to HSV first, then to RGB
 vec4 R8UIToRGB(in uvec3 ucolor) {
-	if (ucolor.r < 5u) { return vec4(.0, .0, .0, 1.); }
+	if (ucolor.r < minTexVal) { return vec4(.0, .0, .0, 1.); }
+	if (ucolor.r > maxTexVal) { return vec4(.0, .0, .0, 1.); }
 	float a = 5.f / 255.f;
 	float b = 255.f / 255.f;
 	float c = 50.f / 255.f;
@@ -41,8 +45,8 @@ vec4 R8UIToRGB(in uvec3 ucolor) {
 
 void main(void)
 {
-	float epsilon = (1./100.) * largestDelta;
-	float distMin = min(barycentricCoords.x, min(barycentricCoords.y, barycentricCoords.z));
+	float epsilon = .03;
+	float distMin = min(barycentricCoords.x/largestDelta.x, min(barycentricCoords.y/largestDelta.y, barycentricCoords.z/largestDelta.z));
 
 	/* Phong shading : */
 	vec4 lightColor = vec4(255./255., 214./255., 170./255.,1.0);
