@@ -31,6 +31,11 @@ uniform uint scaledCubes;
 uniform uvec3 imageSize;
 uniform uvec3 neighborOffset;
 
+// Cutting planes for the grid, will
+// always have components in [0, 1]:
+uniform vec3 cutPlaneMin;
+uniform vec3 cutPlaneMax;
+
 void main(void) {
 	// ModelViewProjection matrix :
 	mat4 mvp = pMatrix * vMatrix * mMatrix;
@@ -56,13 +61,35 @@ void main(void) {
 	vec4 vPos = vec4(.0,.0,.0,.0);
 
 	if (gl_InstanceID < scaledCubes) {
-		// For the texture cube, at instance 0, we display the whole texture :
-		texCoord_VS = vertexPosition.xyz;
+		// Cube size, if displayed entirely :
+		vec3 size = vec3(fidxx, fidxy, fidxz);
+
+		// Compute the displacement needed for the origin of the cube :
+		vec3 origin = vec3(
+			cutPlaneMin.x * size.x,
+			cutPlaneMin.y * size.y,
+			cutPlaneMin.z * size.z
+		);
+
+		// The cube needs to be shrinked down to the size dictated by
+		// the cutting planes :
+		size.x = (1.-(cutPlaneMin.x + (1. - cutPlaneMax.x))) * size.x;
+		size.y = (1.-(cutPlaneMin.y + (1. - cutPlaneMax.y))) * size.y;
+		size.z = (1.-(cutPlaneMin.z + (1. - cutPlaneMax.z))) * size.z;
+
+		// For the texture cube, at instance 0, we display the part of the
+		// texture that needs to be displayed :
+		texCoord_VS = vec3(
+			(vertexPosition.x < 0.5) ? cutPlaneMin.x : cutPlaneMax.x,
+			(vertexPosition.y < 0.5) ? cutPlaneMin.y : cutPlaneMax.y,
+			(vertexPosition.z < 0.5) ? cutPlaneMin.z : cutPlaneMax.z
+		);
+
 		// The transformation matrix for it to show the true texture size :
-		vec4 tx = vec4(fidxx, .0, .0, .0);
-		vec4 ty = vec4(.0, fidxy, .0, .0);
-		vec4 tz = vec4(.0, .0, fidxz, .0);
-		vec4 tw = vec4(.0, .0, .0, 1.);
+		vec4 tx = vec4(size.x, .0, .0, .0);
+		vec4 ty = vec4(.0, size.y, .0, .0);
+		vec4 tz = vec4(.0, .0, size.z, .0);
+		vec4 tw = vec4(origin.x, origin.y, origin.z, 1.);
 		mat4 transform = mat4(tx, ty, tz, tw);
 		vPos = transform * vertexPosition;
 	} else {

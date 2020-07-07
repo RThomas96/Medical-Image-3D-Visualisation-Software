@@ -1,8 +1,10 @@
 #include "../include/grid_control.hpp"
+#include "../include/writer.hpp"
 
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QGridLayout>
+#include <QFileDialog>
 
 GridControl::GridControl(VoxelGrid* const vg, QWidget* parent) : QWidget(parent) {
 	this->voxelGrid.reset(vg);
@@ -60,6 +62,7 @@ void GridControl::setupWidgets() {
 	this->info_GridSizeTotal = new QLabel("");
 	this->info_VoxelSize = new QLabel("0x0x0");
 	this->button_FillButton = new QPushButton("Populate Grid");
+	this->button_SaveButton = new QPushButton("Save to file");
 
 	// Setup bounds for the selectors :
 	this->setupSpinBoxBounds(this->input_GridSizeX);
@@ -146,9 +149,11 @@ void GridControl::setupWidgets() {
 	currentRow += 2;
 
 	// "Launch" button :
-	mainLayout->addWidget(this->button_FillButton, currentRow, 0, 1, -1, Qt::AlignCenter);
-
+	mainLayout->addWidget(this->button_FillButton, currentRow++, 0, 1, -1, Qt::AlignCenter);
+	// Save button :
+	mainLayout->addWidget(this->button_SaveButton, currentRow, 0, 1, -1, Qt::AlignCenter);
 	currentRow += 2;
+
 	// Default values for debug labels (time to reconstruct and rate in GV/h) :
 	this->info_TotalTime = new QLabel("NaN");
 	this->info_VoxelRate = new QLabel("NaN");
@@ -200,6 +205,7 @@ void GridControl::setupSignals() {
 	connect(this->methodPicker, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &GridControl::pickMethod);
 
 	connect(this->button_FillButton, &QPushButton::clicked, this, &GridControl::launchGridFill);
+	connect(this->button_SaveButton, &QPushButton::clicked, this, &GridControl::saveToFile);
 }
 
 void GridControl::pickMethod(int m) {
@@ -316,4 +322,16 @@ void GridControl::launchGridFill() {
 	svec3 dims = this->voxelGrid->getGridDimensions();
 	std::size_t size = dims.x * dims.y * dims.z;
 	this->info_VoxelRate->setText(QString::number(((static_cast<double>(size)/time)*3600.)/1.e9));
+}
+
+void GridControl::saveToFile() {
+	if (this->voxelGrid == nullptr) {
+		std::cerr << "Cannot save, no voxel grid attached." << '\n';
+		return;
+	}
+
+	QString fileName = QFileDialog::getSaveFileName(nullptr, "Save to DIM/IMA files", "../", "BrainVisa DIM/IMA (*.dim, *.ima)");
+	IO::Writer::DIM* dimWriter = new IO::Writer::DIM(fileName.toStdString());
+	std::cerr << "Writing to file with basename : \"" << fileName.toStdString() << '\"' << '\n';
+	dimWriter->write(this->voxelGrid.get());
 }

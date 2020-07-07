@@ -131,6 +131,7 @@ ADD_EXECUTABLE(neighbor_visu
 	./tests/neighbor_visu/include/image_storage.hpp
 	./tests/neighbor_visu/include/tetmesh.hpp
 	./tests/neighbor_visu/include/writer.hpp
+	./tests/neighbor_visu/include/ima_loader.hpp
 	./tests/neighbor_visu/include/voxel_grid.hpp
 	./tests/neighbor_visu/include/scene_control.hpp
 	./tests/neighbor_visu/include/grid_control.hpp
@@ -147,6 +148,7 @@ ADD_EXECUTABLE(neighbor_visu
 	./tests/neighbor_visu/src/image_storage.cpp
 	./tests/neighbor_visu/src/tetmesh.cpp
 	./tests/neighbor_visu/src/writer.cpp
+	./tests/neighbor_visu/src/ima_loader.cpp
 	./tests/neighbor_visu/src/voxel_grid.cpp
 	./tests/neighbor_visu/src/scene_control.cpp
 	./tests/neighbor_visu/src/grid_control.cpp

@@ -9,6 +9,9 @@ lib/
 *.pro
 *.user
 
+# Ignore QGLViewer XML's files :
+*.xml
+
 # Ignore files for CCLS (on vim editors) :
 .ccls-cache/
 compile_commands.json

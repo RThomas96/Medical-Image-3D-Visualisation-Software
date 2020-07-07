@@ -100,7 +100,8 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void drawRealSpace(GLfloat mvMat[], GLfloat pMat[]);
 		void drawInitialSpace(GLfloat mvMat[], GLfloat pMat[]);
 
-		void queryImage(void);
+		void queryImage(void); ///< Loads a stack of TIF images
+		void queryIMA(void); ///< Loads an IMA file
 		void loadImage(std::size_t i, std::size_t j, std::size_t k, const unsigned char* pData = nullptr);
 		void loadVoxelGrid(svec3 size, const unsigned char* pData = nullptr);
 
@@ -134,6 +135,12 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void slotSetTextureZCoord(uint newZCoord);
 		void slotSetMinTexValue(uchar val);
 		void slotSetMaxTexValue(uchar val);
+		void slotSetCutPlaneX_Min(float coord);
+		void slotSetCutPlaneY_Min(float coord);
+		void slotSetCutPlaneZ_Min(float coord);
+		void slotSetCutPlaneX_Max(float coord);
+		void slotSetCutPlaneY_Max(float coord);
+		void slotSetCutPlaneZ_Max(float coord);
 	protected:
 		void generateGrid(std::size_t _x, std::size_t _y, std::size_t _z);
 
@@ -166,6 +173,8 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		uint scaledCubes;
 
 		glm::vec3 neighborOffset;
+		glm::vec3 cutPlaneMin;
+		glm::vec3 cutPlaneMax;
 		uvec3 neighborPos;
 		DrawMode drawMode;
 
@@ -192,6 +201,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 	private:
 		void generateTexCube(void);
 		const unsigned char* loadEmptyImage();
+		const unsigned char* loadEmptyVoxelGrid();
 		void generateNeighborGrid(std::size_t _x, std::size_t _y, std::size_t _z);
 		void prepUniforms(glm::mat4 transfoMat, GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos);
 		void showTexCubeVBO();

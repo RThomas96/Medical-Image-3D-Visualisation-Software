@@ -112,6 +112,12 @@ namespace IO {
 		this->outputIMA->write((const char*)data.data(), data.size() * sizeof(unsigned char));
 		// FIXME : think the cast might not work here ... to see and test
 
+		// Fixes a bug where the contents of the file for DIM
+		// would not fill the buffered ofstream enough to write
+		// to the file, instead keeping the data in memory :
+		this->outputDIM->flush();
+		this->outputIMA->flush();
+
 		// Return the number of bytes written by the call :
 		return static_cast<std::size_t>(this->outputDIM->tellp() + this->outputIMA->tellp());
 	}

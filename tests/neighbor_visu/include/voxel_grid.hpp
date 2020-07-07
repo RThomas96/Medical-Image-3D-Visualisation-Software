@@ -70,6 +70,9 @@ class VoxelGrid : public QObject {
 		/// @brief Returns a read-only reference to the data vector of the voxel grid.
 		const std::vector<unsigned char>& getData(void) const { return this->data; }
 
+		/// @brief Returns the time it took to fill the grid, and only fill the grid.
+		/// @details Does not take into account the time to allocate the memory needed beforehand, nor the
+		/// time to load the voxel grid in OpenGL's buffers afterwards. Only the grid-filling itself is timed.
 		const std::chrono::duration<double, std::ratio<1, 1>> getTimeToCompute(void) const { return this->generationDuration; }
 
 		/// @brief Writes the grid to a filepath provided.
@@ -79,15 +82,25 @@ class VoxelGrid : public QObject {
 		VoxelGrid& writeToFile(const std::string path);
 
 	public:
+		/// @brief Sets the dimension of the grid along X
 		void slotSetGridDimensionX(int newDim);
+		/// @brief Sets the dimension of the grid along Y
 		void slotSetGridDimensionY(int newDim);
+		/// @brief Sets the dimension of the grid along Z
 		void slotSetGridDimensionZ(int newDim);
+		/// @brief Sets the position of the minimum point of the grid's bounding box on X
 		void slotSetGridBBMinX(double newDim);
+		/// @brief Sets the position of the minimum point of the grid's bounding box on Y
 		void slotSetGridBBMinY(double newDim);
+		/// @brief Sets the position of the minimum point of the grid's bounding box on Z
 		void slotSetGridBBMinZ(double newDim);
+		/// @brief Sets the position of the maximum point of the grid's bounding box on X
 		void slotSetGridBBMaxX(double newDim);
+		/// @brief Sets the position of the maximum point of the grid's bounding box on X
 		void slotSetGridBBMaxY(double newDim);
+		/// @brief Sets the position of the maximum point of the grid's bounding box on X
 		void slotSetGridBBMaxZ(double newDim);
+		/// @brief Sets the controller of this grid, allowing remote control of its properties.
 		VoxelGrid& setController(GridControl* g) { this->controller = g; return *this; }
 
 	protected:

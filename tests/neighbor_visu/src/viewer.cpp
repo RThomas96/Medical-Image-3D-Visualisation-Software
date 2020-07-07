@@ -9,7 +9,6 @@
 float Viewer::sceneRadiusMultiplier{1.5f};
 
 Viewer::Viewer(Scene* const scene, bool isLeftOrRight, QWidget* parent) : QGLViewer(parent), scene(scene), isRealSpace(isLeftOrRight) {
-	this->setAxisIsDrawn();
 	this->setGridIsDrawn();
 	this->focusType = FocusStates::DefaultFocus;
 }
@@ -17,6 +16,7 @@ Viewer::Viewer(Scene* const scene, bool isLeftOrRight, QWidget* parent) : QGLVie
 void Viewer::init() {
 	this->makeCurrent();
 	this->scene->initGl(this->context(), 3, 3, 3);
+	this->scene->setDrawModeSolid();
 
 	if (this->focusType == FocusStates::NeighborFocus) {
 		this->updateNeighborFocus();
@@ -45,10 +45,6 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 	switch (e->key()) {
 		case Qt::Key::Key_R:
 			this->scene->recompileShaders();
-			this->update();
-		break;
-		case Qt::Key::Key_1:
-			this->applyMatrix = !this->applyMatrix;
 			this->update();
 		break;
 		case Qt::Key::Key_F:

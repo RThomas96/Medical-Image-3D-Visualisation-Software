@@ -107,6 +107,10 @@ const std::vector<unsigned char>& IMALoader::loadData() {
 	dim_input_file >> ny;
 	dim_input_file >> nz;
 
+	this->sx = nx;
+	this->sy = ny;
+	this->sz = nz;
+
 	// read info :
 	std::string token, type;
 	double input_dx, input_dy, input_dz;
@@ -121,6 +125,10 @@ const std::vector<unsigned char>& IMALoader::loadData() {
 			std::cerr << "token " << token << " did not represent anything" << '\n';
 		}
 	} while (not dim_input_file.eof());
+
+	this->dx = input_dx;
+	this->dy = input_dy;
+	this->dz = input_dz;
 
 	std::cout << "IMA file at " << ima_input_file_path << " should contain a voxel grid with the following properties :" << '\n';
 	std::cout << '\t' << "Voxels : " << nx << "x" << ny << "x" << nz << '\n';
@@ -138,11 +146,11 @@ const std::vector<unsigned char>& IMALoader::loadData() {
 
 	this->data.resize(nx*ny*nz);
 
-	// TODO============================================
-	// TODO============================================
+	// TODO ============================================
+	// FIXME============================================
 	// This cast underneath could cause nasty problems. If some arise, check here first.
-	// FIXME===========================================
-	// FIXME===========================================
+	// FIXME============================================
+	// TODO ============================================
 	ima_input_file.read((char*)this->data.data(), static_cast<std::size_t>(nx*ny*nz));
 
 	return this->data;

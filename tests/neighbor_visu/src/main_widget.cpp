@@ -44,8 +44,10 @@ bool MainWidget::eventFilter(QObject* obj, QEvent* e) {
 		this->controlPanel->setMinimumSize(this->controlPanel->size());
 		this->controlPanel->setMaximumSize(this->controlPanel->size());
 		// set the viewer to have a minimum size of controlPanelSize on width/height :
-		this->leftViewer->setMinimumWidth(this->controlPanel->minimumWidth());
-		this->leftViewer->setMinimumHeight(this->controlPanel->minimumWidth());
+		this->leftViewer->setMinimumWidth(this->controlPanel->minimumWidth()/2);
+		this->leftViewer->setMinimumHeight(this->controlPanel->minimumWidth()/2);
+		this->rightViewer->setMinimumWidth(this->controlPanel->minimumWidth()/2);
+		this->rightViewer->setMinimumHeight(this->controlPanel->minimumWidth()/2);
 	}
 	// Return false, to handle the rest of the event normally
 	return false;

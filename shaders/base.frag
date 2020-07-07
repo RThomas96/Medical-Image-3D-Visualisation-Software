@@ -30,8 +30,8 @@ uniform usampler3D texData;
 vec4 R8UIToRGB(in uvec3 ucolor) {
 	if (ucolor.r < minTexVal) { return vec4(.0, .0, .0, 1.); }
 	if (ucolor.r > maxTexVal) { return vec4(.0, .0, .0, 1.); }
-	float a = 5.f / 255.f;
-	float b = 255.f / 255.f;
+	float a = float(minTexVal) / 255.f;
+	float b = float(maxTexVal) / 255.f;
 	float c = 50.f / 255.f;
 	float d = 200.f / 255.f;
 	// Get the red component in floating point :

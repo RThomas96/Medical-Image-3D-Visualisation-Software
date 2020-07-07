@@ -26,6 +26,11 @@ uniform vec3 voxelGridOrigin;
 uniform vec3 voxelGridSize;
 uniform vec3 voxelSize;
 
+// Cutting planes for the grid, will
+// always have components in [0, 1]:
+uniform vec3 cutPlaneMin;
+uniform vec3 cutPlaneMax;
+
 void main(void) {
 	// Inverse of transpose of model matrix for normals, computed once :
 	mat4 iMatrix = inverse(mMatrix);
@@ -41,17 +46,40 @@ void main(void) {
 	// Contains the position of the vertex after transform :
 	vec4 vPos = vec4(.0,.0,.0,.0);
 
-	vec3 s = voxelGridSize * voxelSize; // s for scale
+	// Scaling matrix, unit cube at first and voxel
+	// grid sized parallelepiped afterwards :
+	vec3 s = voxelGridSize * voxelSize;
 
-	// Always displays the whole texture (might change in the future) :
-	texCoord_VS = vertexPosition.xyz;
+	// Offset the grid by (origin + cutPlaneMin*gridSize).
+	// Here, cutPlaneMin's coordinates serves as scalars
+	// for the original displacement of the grid :
+	vec3 origin = voxelGridOrigin + vec3(
+		cutPlaneMin.x * s.x,
+		cutPlaneMin.y * s.y,
+		cutPlaneMin.z * s.z
+	);
+
+	// The voxel grid should only be scaled from :
+	//     cutPlaneMin.x * s.x to cutPlaneMax.x * s.x,
+	//     cutPlaneMin.y * s.y to cutPlaneMax.y * s.y,
+	//     cutPlaneMin.z * s.z to cutPlaneMax.z * s.z
+	s.x = (1.-(cutPlaneMin.x + (1. - cutPlaneMax.x))) * s.x;
+	s.y = (1.-(cutPlaneMin.y + (1. - cutPlaneMax.y))) * s.y;
+	s.z = (1.-(cutPlaneMin.z + (1. - cutPlaneMax.z))) * s.z;
+
+	// Display the texture that should be displayed only, with cutting planes :
+	texCoord_VS = vec3(
+		(vertexPosition.x < 0.5) ? cutPlaneMin.x : cutPlaneMax.x,
+		(vertexPosition.y < 0.5) ? cutPlaneMin.y : cutPlaneMax.y,
+		(vertexPosition.z < 0.5) ? cutPlaneMin.z : cutPlaneMax.z
+	);
 	// The transformation matrix to resize the cube to the grid's size :
 	vec4 tx = vec4(s.x, .0, .0, .0);
 	vec4 ty = vec4(.0, s.y, .0, .0);
 	vec4 tz = vec4(.0, .0, s.z, .0);
-	vec4 tw = vec4(.0, .0, .0, 1.);
+	vec4 tw = vec4(origin.x, origin.y, origin.z, 1.);
 	mat4 transform = mat4(tx, ty, tz, tw);
-	vPos = (transform * vertexPosition) + vec4(voxelGridOrigin, .0); // TODO : check if we can't just embed it in the transform matrix above
+	vPos = (transform * vertexPosition);
 
 	gl_Position = mvp * vPos;
 	vPos_WS_VS = mMatrix * vPos;

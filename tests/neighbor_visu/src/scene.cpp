@@ -1,5 +1,6 @@
 #include "../include/scene.hpp"
 #include "../include/scene_control.hpp"
+#include "../include/ima_loader.hpp"
 
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -52,6 +53,9 @@ Scene::Scene(GridControl* const gc) {
 
 	this->minTexVal = uchar(0);
 	this->maxTexVal = uchar(255);
+
+	this->cutPlaneMin = glm::vec3(.0f, .0f, .0f);
+	this->cutPlaneMax = glm::vec3(1.f, 1.f, 1.f);
 }
 
 Scene::~Scene(void) {
@@ -89,8 +93,8 @@ void Scene::initGl(QOpenGLContext* _context, std::size_t _x, std::size_t _y, std
 
 	this->recompileShaders();
 
-	this->queryImage();
-//	this->queryIMA(); // TODO : implement it, in conjonction with IMALoader
+	//this->queryImage();
+	this->queryIMA();
 
 	this->generateGrid(_x, _y, _z);
 
@@ -389,10 +393,10 @@ void Scene::loadVoxelGrid(svec3 size, const unsigned char *pData) {
 
 	if (pData == nullptr) {
 		std::cerr << "No data was uploaded for the Voxel Grid texture !" << '\n';
-		pData = this->loadEmptyImage();
-		size.x = 0;
-		size.y = 0;
-		size.z = 0;
+		pData = this->loadEmptyVoxelGrid();
+		size.x = 1;
+		size.y = 1;
+		size.z = 1;
 	}
 
 	if (this->voxelGridTexHandle != 0) {
@@ -458,6 +462,18 @@ void Scene::queryImage(void) {
 	this->voxelGrid->setRenderBoundingBox(glm::vec4(rMin, .0), glm::vec4(rMax,0));
 	this->voxelGrid->setGridResolution(imageSizes);
 	this->gridControl->updateGridDimensions();
+}
+
+void Scene::queryIMA() {
+	IMALoader* loader = new IMALoader();
+	const std::vector<unsigned char>& data = loader->loadData();
+
+	std::tuple<std::size_t, std::size_t, std::size_t> dimensions = loader->getDimensions();
+
+	this->loadImage(std::get<0>(dimensions), std::get<1>(dimensions), std::get<2>(dimensions), data.data());
+
+	this->voxelGrid->setRenderBoundingBox(glm::vec4(.0f), glm::vec4(.0f));
+	this->voxelGrid->setGridResolution(svec3(0, 0, 0));
 }
 
 void Scene::drawRealSpace(GLfloat mvMat[], GLfloat pMat[]) {
@@ -541,8 +557,8 @@ void Scene::prepUniforms(glm::mat4 transfoMat, GLfloat* mvMat, GLfloat* pMat, gl
 	}
 
 	GLint minTexVal_Loc = glGetUniformLocation(this->programHandle, "minTexVal");
-	GLint maxTexVal_Loc = glGetUniformLocation(this->programHandle, "maxTexVal");
 	glUniform1ui(minTexVal_Loc, static_cast<GLuint>(this->minTexVal));
+	GLint maxTexVal_Loc = glGetUniformLocation(this->programHandle, "maxTexVal");
 	glUniform1ui(maxTexVal_Loc, static_cast<GLuint>(this->maxTexVal));
 
 	GLint scaledLoc = glGetUniformLocation(this->programHandle, "scaledCubes");
@@ -556,6 +572,14 @@ void Scene::prepUniforms(glm::mat4 transfoMat, GLfloat* mvMat, GLfloat* pMat, gl
 	glUniformMatrix4fv(this->vMatrixLocation, 1, GL_FALSE, &mvMat[0]);
 	glUniformMatrix4fv(this->pMatrixLocation, 1, GL_FALSE, &pMat[0]);
 	glUniform4fv(this->lightPosLocation, 1, glm::value_ptr(lightPos));
+
+	// Cutting planes :
+	GLint cutPlaneMin_Loc = glGetUniformLocation(this->programHandle_VG, "cutPlaneMin");
+	glUniform3fv(cutPlaneMin_Loc, 1, glm::value_ptr(this->cutPlaneMin));
+	GetOpenGLError();
+	GLint cutPlaneMax_Loc = glGetUniformLocation(this->programHandle_VG, "cutPlaneMax");
+	glUniform3fv(cutPlaneMax_Loc, 1, glm::value_ptr(this->cutPlaneMax));
+	GetOpenGLError();
 }
 
 void Scene::draw(GLfloat mvMat[], GLfloat pMat[], glm::mat4 transfoMat, glm::mat4 voxelGridMat) {
@@ -593,43 +617,55 @@ void Scene::draw(GLfloat mvMat[], GLfloat pMat[], glm::mat4 transfoMat, glm::mat
 }
 
 void Scene::drawVoxelGrid(GLfloat mvMat[], GLfloat pMat[], glm::mat4 transfoMat) {
+	// Each uniform location is separated in its own variable in order to see them in debug view. Should be optimized away in release mode.
+
 	// The VAO should still be in use, so :
 	glUseProgram(this->programHandle_VG); // use the voxel grid shader program
 
 	// Light position world space :
 	glm::vec4 lightPos = glm::vec4(-0.25, -0.25, -0.25, 1.0);
 
-	if (this->voxelGrid->getData().size()) {
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_3D, this->voxelGridTexHandle);
-		glUniform1i(glGetUniformLocation(this->programHandle_VG, "texData"), 0);
-		GetOpenGLError();
-	}
-
-	GLint voxelSize_Loc = glGetUniformLocation(this->programHandle_VG, "voxelSize");
-	GLint voxelGridSize_Loc = glGetUniformLocation(this->programHandle_VG, "voxelGridSize");
-	GLint voxelGridOrigin_Loc = glGetUniformLocation(this->programHandle_VG, "voxelGridOrigin");
-
-	GLint minTexVal_Loc = glGetUniformLocation(this->programHandle_VG, "minTexVal");
-	GLint maxTexVal_Loc = glGetUniformLocation(this->programHandle_VG, "maxTexVal");
-	glUniform1ui(minTexVal_Loc, static_cast<GLuint>(this->minTexVal));
-	glUniform1ui(maxTexVal_Loc, static_cast<GLuint>(this->maxTexVal));
-
-	// Compute grid dimensions as uint, not size_t for GLSL (to make sure no overflow errors can happen while uplodaing data) :
+	// Compute grid dimensions as float, not size_t for GLSL (to make sure no overflow errors can happen while uplodaing data) :
 	svec3 dims = this->voxelGrid->getGridDimensions();
 	glm::vec3 d = glm::vec3(static_cast<float>(dims.x), static_cast<float>(dims.y), static_cast<float>(dims.z));
 
-	// Set uniforms :
+	if (this->voxelGrid->getData().size()) {
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_3D, this->voxelGridTexHandle);
+		GLint texData_Loc = glGetUniformLocation(this->programHandle_VG, "texData");
+		glUniform1i(texData_Loc, 0);
+		GetOpenGLError();
+	}
+
+	// Min/max values for the texture data :
+	GLint minTexVal_Loc = glGetUniformLocation(this->programHandle_VG, "minTexVal");
+	glUniform1ui(minTexVal_Loc, static_cast<GLuint>(this->minTexVal));
+	GetOpenGLError();
+	GLint maxTexVal_Loc = glGetUniformLocation(this->programHandle_VG, "maxTexVal");
+	glUniform1ui(maxTexVal_Loc, static_cast<GLuint>(this->maxTexVal));
+	GetOpenGLError();
+
+	// Voxel grid data such as size, position, and voxel dimensions :
+	GLint voxelSize_Loc = glGetUniformLocation(this->programHandle_VG, "voxelSize");
 	glUniform3fv(voxelSize_Loc, 1, glm::value_ptr(this->voxelGrid->getVoxelDimensions()));
 	GetOpenGLError();
+	GLint voxelGridSize_Loc = glGetUniformLocation(this->programHandle_VG, "voxelGridSize");
 	glUniform3fv(voxelGridSize_Loc, 1, glm::value_ptr(d));
 	GetOpenGLError();
+	GLint voxelGridOrigin_Loc = glGetUniformLocation(this->programHandle_VG, "voxelGridOrigin");
 	glUniform3fv(voxelGridOrigin_Loc, 1, glm::value_ptr(this->voxelGrid->getRenderBB().getMin()));
+	GetOpenGLError();
+
+	// Cutting planes :
+	GLint cutPlaneMin_Loc = glGetUniformLocation(this->programHandle_VG, "cutPlaneMin");
+	glUniform3fv(cutPlaneMin_Loc, 1, glm::value_ptr(this->cutPlaneMin));
+	GetOpenGLError();
+	GLint cutPlaneMax_Loc = glGetUniformLocation(this->programHandle_VG, "cutPlaneMax");
+	glUniform3fv(cutPlaneMax_Loc, 1, glm::value_ptr(this->cutPlaneMax));
 	GetOpenGLError();
 
 	GLint modeLoc = glGetUniformLocation(this->programHandle_VG, "drawMode");
 	if (this->voxelGrid->getData().size() == 0) {
-		std::cerr << "Showing wireframe on the voxel grid\n";
 		glUniform1ui(modeLoc, 2); // force wireframe only if grid not generated yet
 	} else {
 		if (this->drawMode == DrawMode::Solid) {
@@ -642,13 +678,24 @@ void Scene::drawVoxelGrid(GLfloat mvMat[], GLfloat pMat[], glm::mat4 transfoMat)
 	}
 	GetOpenGLError();
 
+	GLint mMatrix_Loc = glGetUniformLocation(this->programHandle_VG, "mMatrix");
+	glUniformMatrix4fv(mMatrix_Loc, 1, GL_FALSE, glm::value_ptr(transfoMat));
 	GetOpenGLError();
-	glUniformMatrix4fv(glGetUniformLocation(this->programHandle_VG, "mMatrix"), 1, GL_FALSE, glm::value_ptr(transfoMat));
-	glUniformMatrix4fv(glGetUniformLocation(this->programHandle_VG, "vMatrix"), 1, GL_FALSE, &mvMat[0]);
-	glUniformMatrix4fv(glGetUniformLocation(this->programHandle_VG, "pMatrix"), 1, GL_FALSE, &pMat[0]);
-	glUniform4fv(this->lightPosLocation, 1, glm::value_ptr(lightPos));
+
+	GLint vMatrix_Loc = glGetUniformLocation(this->programHandle_VG, "vMatrix");
+	glUniformMatrix4fv(vMatrix_Loc, 1, GL_FALSE, &mvMat[0]);
+	GetOpenGLError();
+
+	GLint pMatrix_Loc = glGetUniformLocation(this->programHandle_VG, "pMatrix");
+	glUniformMatrix4fv(pMatrix_Loc, 1, GL_FALSE, &pMat[0]);
+	GetOpenGLError();
+
+	GLint lightPos_Loc = glGetUniformLocation(this->programHandle_VG, "lightPos");
+	glUniform4fv(lightPos_Loc, 1, glm::value_ptr(lightPos));
+	GetOpenGLError();
 
 	glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(this->renderSize), GL_UNSIGNED_INT, (void*)0);
+	GetOpenGLError();
 }
 
 void Scene::generateGrid(std::size_t _x, std::size_t _y, std::size_t _z) {
@@ -786,9 +833,6 @@ void Scene::generateNeighborGrid(std::size_t _x, std::size_t _y, std::size_t _z)
 	// Original texture cube :
 	this->vertIdxDraw.emplace_back(uint(1), uint(1), uint(1), uint(0));
 
-	// Queriable cube :
-	//this->vertIdxDraw.emplace_back(uint(1), uint(1), uint(1), uint(0));
-
 	// Create the grid, in raw form :
 	for (std::size_t i = 0; i < _z; ++i) {
 		for (std::size_t j = 0; j < _y; ++j) {
@@ -809,6 +853,16 @@ const unsigned char* Scene::loadEmptyImage() {
 	this->gridWidth = 0;
 	this->gridHeight= 0;
 	this->gridDepth = 0;
+
+	return pData;
+}
+
+const unsigned char* Scene::loadEmptyVoxelGrid() {
+	std::size_t i = 1;
+	std::size_t j = 1;
+	std::size_t k = 1;
+
+	const unsigned char* pData = static_cast<unsigned char*>(calloc(i*j*k, sizeof(unsigned char)));
 
 	return pData;
 }
@@ -895,12 +949,10 @@ void Scene::slotSetTextureZCoord(uint newZCoord) {
 
 void Scene::slotSetMinTexValue(uchar val) {
 	this->minTexVal = val;
-	std::cerr << "Set min bound to " << +val << '\n';
 }
 
 void Scene::slotSetMaxTexValue(uchar val) {
 	this->maxTexVal = val;
-	std::cerr << "Set max bound to " << +val << '\n';
 }
 
 void Scene::updateNeighborTetMesh() {
@@ -910,6 +962,30 @@ void Scene::updateNeighborTetMesh() {
 	std::cerr << "Inverse point ! " << o.x << ',' << o.y << ',' << o.z << ',' << o.w << '\n';
 	this->mesh->setOriginInitialSpace(o);
 	this->mesh->printInfo();
+}
+
+void Scene::slotSetCutPlaneX_Min(float coord) {
+	this->cutPlaneMin.x = coord;
+}
+
+void Scene::slotSetCutPlaneY_Min(float coord) {
+	this->cutPlaneMin.y = coord;
+}
+
+void Scene::slotSetCutPlaneZ_Min(float coord) {
+	this->cutPlaneMin.z = coord;
+}
+
+void Scene::slotSetCutPlaneX_Max(float coord) {
+	this->cutPlaneMax.x = coord;
+}
+
+void Scene::slotSetCutPlaneY_Max(float coord) {
+	this->cutPlaneMax.y = coord;
+}
+
+void Scene::slotSetCutPlaneZ_Max(float coord) {
+	this->cutPlaneMax.z = coord;
 }
 
 glm::mat4 Scene::computeTransformationMatrix() const {
@@ -929,5 +1005,6 @@ glm::mat4 Scene::computeTransformationMatrix() const {
 		transfoMat[3][2] = w * std::abs(std::sin(angleRad));
 	}
 
-	return transfoMat;
+	//return transfoMat;
+	return glm::mat4(1.f);
 }

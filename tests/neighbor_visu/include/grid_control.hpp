@@ -30,6 +30,8 @@ class GridControl : public QWidget {
 		void pickMethod(int m);
 		/// @brief Asks the user if it wants to launch the grid filling operation, and then does it if it's okay.
 		void launchGridFill(void);
+		/// @brief Saves the grid to a file. Currently, only DIM/IMA writers are tested.
+		void saveToFile(void);
 
 	protected:
 		void setupWidgets();
@@ -44,6 +46,7 @@ class GridControl : public QWidget {
 		QLabel* info_GridSizeTotal; ///< Displays the total number of voxels in the grid
 		QLabel* info_VoxelSize; ///< Displays the size of voxels, in units.
 		QPushButton* button_FillButton; ///< Button to start the process of filling the grid
+		QPushButton* button_SaveButton; ///< Button to save the grid, triggers a text dialog and saves the file.
 		QDoubleSpinBox* input_GridBBMinX; ///< Controls the coordinates of the minimum bound of the grid's render bounding box along X
 		QDoubleSpinBox* input_GridBBMinY; ///< Controls the coordinates of the minimum bound of the grid's render bounding box along Y
 		QDoubleSpinBox* input_GridBBMinZ; ///< Controls the coordinates of the minimum bound of the grid's render bounding box along Z

@@ -217,6 +217,21 @@ namespace IO {
 			std::size_t totalFiles; ///< The total number of files to be written. Gathered from the voxel grid info.
 	};
 
+	/// @brief Namespace for writer classes, giving shortcuts of the form IO::Writer::<Format/Filetype>
+	namespace Writer {
+		/// @brief Writer for a voxel grid, writing it to a DIM/IMA BrainVisa file combo.
+		/// @see ::IO::DIMWriter
+		typedef ::IO::DIMWriter DIM;
+
+		/// @brief Writer for a voxel grid, writing it to a single TIFF file.
+		/// @see ::IO::SingleTIFFWriter
+		typedef ::IO::SingleTIFFWriter SingleTIFF;
+
+		/// @brief Writer for a voxel grid, writing it to a stack of TIFF files.
+		/// @see ::IO::StaggeredTIFFWriter
+		typedef ::IO::StaggeredTIFFWriter MultiTIFF;
+	}
+
 }
 
 #endif // TESTS_NEIGHBOR_VISU_INCLUDE_WRITER_HPP_
