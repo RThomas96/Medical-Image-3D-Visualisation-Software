@@ -1,6 +1,6 @@
 #include "../include/scene_control.hpp"
-#include "../include/scene.hpp"
-#include "../include/viewer.hpp"
+#include "../../viewer/include/scene.hpp"
+#include "../../viewer/include/neighbor_visu_viewer.hpp"
 
 #include <QLabel>
 #include <QHBoxLayout>

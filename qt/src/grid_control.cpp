@@ -1,5 +1,5 @@
 #include "../include/grid_control.hpp"
-#include "../include/writer.hpp"
+#include "../../image/include/writer.hpp"
 
 #include <QHBoxLayout>
 #include <QVBoxLayout>

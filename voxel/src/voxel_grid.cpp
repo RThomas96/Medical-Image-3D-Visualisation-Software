@@ -1,7 +1,7 @@
 #include "../include/voxel_grid.hpp"
 
-#include "../include/grid_control.hpp"
-#include "../include/scene.hpp"
+#include "../../qt/include/grid_control.hpp"
+#include "../../viewer/include/scene.hpp"
 
 #ifndef NDEBUG
 #define OUT std::cerr

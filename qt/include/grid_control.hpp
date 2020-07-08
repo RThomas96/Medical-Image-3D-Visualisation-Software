@@ -1,7 +1,7 @@
-#ifndef TESTS_NEIGHBOR_VISU_INCLUDE_GRID_CONTROL_HPP_
-#define TESTS_NEIGHBOR_VISU_INCLUDE_GRID_CONTROL_HPP_
+#ifndef QT_INCLUDE_GRID_CONTROL_HPP_
+#define QT_INCLUDE_GRID_CONTROL_HPP_
 
-#include "voxel_grid.hpp"
+#include "../../voxel/include/voxel_grid.hpp"
 
 #include <glm/glm.hpp>
 
@@ -62,4 +62,4 @@ class GridControl : public QWidget {
 		void updateDebugInfoFields(void);
 };
 
-#endif // TESTS_NEIGHBOR_VISU_INCLUDE_GRID_CONTROL_HPP_
+#endif // QT_INCLUDE_GRID_CONTROL_HPP_

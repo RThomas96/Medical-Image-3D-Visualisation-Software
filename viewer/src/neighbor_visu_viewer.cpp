@@ -1,4 +1,4 @@
-#include "../include/viewer.hpp"
+#include "../include/neighbor_visu_viewer.hpp"
 
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>

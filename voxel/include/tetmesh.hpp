@@ -1,7 +1,7 @@
-#ifndef TESTS_NEIGHBOR_VISU_INCLUDE_TETMESH_HPP_
-#define TESTS_NEIGHBOR_VISU_INCLUDE_TETMESH_HPP_
+#ifndef VOXEL_INCLUDE_TETMESH_HPP_
+#define VOXEL_INCLUDE_TETMESH_HPP_
 
-#include "./image_storage.hpp"
+#include "../../image/include/image_storage.hpp"
 
 #include <glm/glm.hpp>
 
@@ -124,4 +124,4 @@ namespace glm {
 }
 #endif
 
-#endif // TESTS_NEIGHBOR_VISU_INCLUDE_TETMESH_HPP_
+#endif // VOXEL_INCLUDE_TETMESH_HPP_

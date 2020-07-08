@@ -127,35 +127,35 @@ TARGET_LINK_LIBRARIES(visualisation
 # Neighbor visualisation (Test variant) {{{
 ADD_EXECUTABLE(neighbor_visu
 	# Header files, for Qt MOCS compilation :
-	./tests/neighbor_visu/include/control_panel.hpp
-	./tests/neighbor_visu/include/image_storage.hpp
-	./tests/neighbor_visu/include/tetmesh.hpp
-	./tests/neighbor_visu/include/writer.hpp
-	./tests/neighbor_visu/include/ima_loader.hpp
-	./tests/neighbor_visu/include/voxel_grid.hpp
-	./tests/neighbor_visu/include/scene_control.hpp
-	./tests/neighbor_visu/include/grid_control.hpp
-	./tests/neighbor_visu/include/main_widget.hpp
-	./tests/neighbor_visu/include/scene.hpp
-	./tests/neighbor_visu/include/viewer.hpp
 	./image/include/bulk_texture_loader.hpp
+	./image/include/ima_loader.hpp
+	./image/include/image_storage.hpp
+	./image/include/writer.hpp
+	./qt/include/control_panel.hpp
+	./qt/include/grid_control.hpp
+	./qt/include/neighbor_visu_main_widget.hpp
+	./qt/include/scene_control.hpp
+	./viewer/include/scene.hpp
+	./viewer/include/neighbor_visu_viewer.hpp
+	./voxel/include/tetmesh.hpp
+	./voxel/include/voxel_grid.hpp
 
 	# Main file :
-	./tests/neighbor_visu/main.cpp
+	./neighbor_visu_main.cpp
 
 	# Source files :
-	./tests/neighbor_visu/src/control_panel.cpp
-	./tests/neighbor_visu/src/image_storage.cpp
-	./tests/neighbor_visu/src/tetmesh.cpp
-	./tests/neighbor_visu/src/writer.cpp
-	./tests/neighbor_visu/src/ima_loader.cpp
-	./tests/neighbor_visu/src/voxel_grid.cpp
-	./tests/neighbor_visu/src/scene_control.cpp
-	./tests/neighbor_visu/src/grid_control.cpp
-	./tests/neighbor_visu/src/main_widget.cpp
-	./tests/neighbor_visu/src/scene.cpp
-	./tests/neighbor_visu/src/viewer.cpp
 	./image/src/bulk_texture_loader.cpp
+	./image/src/ima_loader.cpp
+	./image/src/image_storage.cpp
+	./image/src/writer.cpp
+	./qt/src/control_panel.cpp
+	./qt/src/grid_control.cpp
+	./qt/src/neighbor_visu_main_widget.cpp
+	./qt/src/scene_control.cpp
+	./viewer/src/scene.cpp
+	./viewer/src/neighbor_visu_viewer.cpp
+	./voxel/src/tetmesh.cpp
+	./voxel/src/voxel_grid.cpp
 )
 TARGET_LINK_LIBRARIES(neighbor_visu
 	PUBLIC Qt5::Core

@@ -1,7 +1,7 @@
-#ifndef TESTS_NEIGHBOR_VISU_IMAGE_STORAGE_HPP_
-#define TESTS_NEIGHBOR_VISU_IMAGE_STORAGE_HPP_
+#ifndef IMAGE_INCLUDE_IMAGE_STORAGE_HPP_
+#define IMAGE_INCLUDE_IMAGE_STORAGE_HPP_
 
-#include "image/include/bulk_texture_loader.hpp"
+#include "./bulk_texture_loader.hpp"
 
 #include <glm/glm.hpp>
 
@@ -120,4 +120,4 @@ class TextureStorage {
 		void resetImageSpecs();
 };
 
-#endif // TESTS_NEIGHBOR_VISU_IMAGE_STORAGE_HPP_
+#endif // IMAGE_INCLUDE_IMAGE_STORAGE_HPP_

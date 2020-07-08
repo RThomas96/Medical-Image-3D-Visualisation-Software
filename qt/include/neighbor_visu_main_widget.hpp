@@ -1,8 +1,8 @@
-#ifndef TESTS_NEIGHBOR_VISU_INCLUDE_MAIN_WIDGET_HPP_
-#define TESTS_NEIGHBOR_VISU_INCLUDE_MAIN_WIDGET_HPP_
+#ifndef QT_INCLUDE_NEIGHBOR_VISU_MAIN_WIDGET_HPP_
+#define QT_INCLUDE_NEIGHBOR_VISU_MAIN_WIDGET_HPP_
 
-#include "./viewer.hpp"
-#include "./scene.hpp"
+#include "../../viewer/include/neighbor_visu_viewer.hpp"
+#include "../../viewer/include/scene.hpp"
 #include "./scene_control.hpp"
 #include "./grid_control.hpp"
 
@@ -26,4 +26,4 @@ class MainWidget : public QWidget {
 		bool widgetSizeSet; ///< checks if the widget size has been set before
 };
 
-#endif // TESTS_NEIGHBOR_VISU_INCLUDE_MAIN_WIDGET_HPP_
+#endif // QT_INCLUDE_NEIGHBOR_VISU_MAIN_WIDGET_HPP_

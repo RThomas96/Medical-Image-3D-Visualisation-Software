@@ -1,5 +1,5 @@
-#ifndef TESTS_NEIGHBOR_VISU_INCLUDE_CONTROL_PANEL_HPP_
-#define TESTS_NEIGHBOR_VISU_INCLUDE_CONTROL_PANEL_HPP_
+#ifndef QT_INCLUDE_CONTROL_PANEL_HPP_
+#define QT_INCLUDE_CONTROL_PANEL_HPP_
 
 #include <QWidget>
 #include <QSpinBox>
@@ -67,4 +67,4 @@ class ControlPanel : public QWidget {
 		void updateButtonPressed();
 };
 
-#endif // TESTS_NEIGHBOR_VISU_INCLUDE_CONTROL_PANEL_HPP_
+#endif // QT_INCLUDE_CONTROL_PANEL_HPP_

@@ -1,7 +1,7 @@
-#ifndef TESTS_NEIGHBOR_VISU_INCLUDE_WRITER_HPP_
-#define TESTS_NEIGHBOR_VISU_INCLUDE_WRITER_HPP_
+#ifndef IMAGE_INCLUDE_WRITER_HPP_
+#define IMAGE_INCLUDE_WRITER_HPP_
 
-#include "TinyTIFF/tinytiffwriter.h" // To write to TIF files
+#include "../../TinyTIFF/tinytiffwriter.h" // To write to TIF files
 
 #include <iostream>
 #include <fstream>
@@ -234,4 +234,4 @@ namespace IO {
 
 }
 
-#endif // TESTS_NEIGHBOR_VISU_INCLUDE_WRITER_HPP_
+#endif // IMAGE_INCLUDE_WRITER_HPP_

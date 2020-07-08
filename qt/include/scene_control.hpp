@@ -1,5 +1,5 @@
-#ifndef TESTS_NEIGHBOR_VISU_INCLUDE_SCENE_CONTROL_HPP_
-#define TESTS_NEIGHBOR_VISU_INCLUDE_SCENE_CONTROL_HPP_
+#ifndef QT_INCLUDE_SCENE_CONTROL_HPP_
+#define QT_INCLUDE_SCENE_CONTROL_HPP_
 
 #include <QWidget>
 #include <QSlider>
@@ -62,4 +62,4 @@ class ControlPanel : public QWidget {
 		void setCutPlaneZ_Max(int val);
 };
 
-#endif // TESTS_NEIGHBOR_VISU_INCLUDE_SCENE_CONTROL_HPP_
+#endif // QT_INCLUDE_SCENE_CONTROL_HPP_

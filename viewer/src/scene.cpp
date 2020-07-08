@@ -1,6 +1,6 @@
 #include "../include/scene.hpp"
-#include "../include/scene_control.hpp"
-#include "../include/ima_loader.hpp"
+#include "../../qt/include/scene_control.hpp"
+#include "../../image/include/ima_loader.hpp"
 
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>

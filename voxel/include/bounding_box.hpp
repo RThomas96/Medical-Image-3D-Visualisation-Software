@@ -1,5 +1,5 @@
-#ifndef TESTS_NEIGHBOR_BISU_INCLUDE_BOUNDING_BOX_HPP_
-#define TESTS_NEIGHBOR_BISU_INCLUDE_BOUNDING_BOX_HPP_
+#ifndef VOXEL_INCLUDE_BOUNDING_BOX_HPP_
+#define VOXEL_INCLUDE_BOUNDING_BOX_HPP_
 
 #include <glm/glm.hpp>
 #include <iostream>
@@ -110,4 +110,4 @@ template <typename DataType> class BoundingBox_General {
 		vec max;
 };
 
-#endif // TESTS_NEIGHBOR_BISU_INCLUDE_BOUNDING_BOX_HPP_
+#endif // VOXEL_INCLUDE_BOUNDING_BOX_HPP_

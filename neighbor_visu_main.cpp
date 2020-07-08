@@ -8,7 +8,7 @@
 #include <iostream>
 #include <QApplication>
 
-#include "include/main_widget.hpp"
+#include "./qt/include/neighbor_visu_main_widget.hpp"
 
 int main(int argc, char* argv[]) {
 	QApplication app(argc, argv);

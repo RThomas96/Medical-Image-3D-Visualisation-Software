@@ -1,5 +1,5 @@
 #include "../include/writer.hpp"
-#include "../include/voxel_grid.hpp"
+#include "../../voxel/include/voxel_grid.hpp"
 
 namespace IO {
 

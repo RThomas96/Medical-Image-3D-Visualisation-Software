@@ -1,5 +1,5 @@
-#ifndef TESTS_NEIGHBOR_VISU_INCLUDE_VIEWER_HPP_
-#define TESTS_NEIGHBOR_VISU_INCLUDE_VIEWER_HPP_
+#ifndef VIEWER_INCLUDE_NEIGHBOR_VISU_VIEWER_HPP_
+#define VIEWER_INCLUDE_NEIGHBOR_VISU_VIEWER_HPP_
 
 #include "./scene.hpp"
 
@@ -47,4 +47,4 @@ class Viewer : public QGLViewer {
 		void setFocusState(int state);
 };
 
-#endif // TESTS_NEIGHBOR_VISU_INCLUDE_VIEWER_HPP_
+#endif // VIEWER_INCLUDE_NEIGHBOR_VISU_VIEWER_HPP_

@@ -1,16 +1,16 @@
-#ifndef TESTS_NEIGHBOR_VISU_INCLUDE_SCENE_HPP_
-#define TESTS_NEIGHBOR_VISU_INCLUDE_SCENE_HPP_
+#ifndef VIEWER_INCLUDE_SCENE_HPP_
+#define VIEWER_INCLUDE_SCENE_HPP_
 
 //#include "gl/GLHandler/include/ShaderObject.hpp"
 //#include "gl/GLHandler/include/ProgramObject.hpp"
 //#include "gl/GLHandler/include/VAOObject.hpp"
 
-#include "image/include/bulk_texture_loader.hpp"
+#include "../../image/include/bulk_texture_loader.hpp"
 
-#include "./image_storage.hpp"
-#include "./voxel_grid.hpp"
-#include "./grid_control.hpp"
-#include "./tetmesh.hpp"
+#include "../../image/include/image_storage.hpp"
+#include "../../voxel/include/voxel_grid.hpp"
+#include "../../qt/include/grid_control.hpp"
+#include "../../voxel/include/tetmesh.hpp"
 
 #include <QOpenGLFunctions_4_0_Core>
 #include <QGLViewer/qglviewer.h>
@@ -211,6 +211,6 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void drawVoxelGrid(GLfloat mvMat[], GLfloat pMat[], glm::mat4 transfoMat);
 };
 
-#endif // TESTS_NEIGHBOR_VISU_INCLUDE_SCENE_HPP_
+#endif // VIEWER_INCLUDE_SCENE_HPP_
 
 // vim : ts=8

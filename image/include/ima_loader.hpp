@@ -1,5 +1,5 @@
-#ifndef TESTS_NEIGHBOR_VISU_INCLUDE_IMA_LOADER_HPP_
-#define TESTS_NEIGHBOR_VISU_INCLUDE_IMA_LOADER_HPP_
+#ifndef IMAGE_INCLUDE_IMA_LOADER_HPP_
+#define IMAGE_INCLUDE_IMA_LOADER_HPP_
 
 #include <vector>
 #include <tuple>
@@ -45,4 +45,4 @@ class IMALoader {
 		float dz;
 };
 
-#endif // TESTS_NEIGHBOR_VISU_INCLUDE_IMA_LOADER_HPP_
+#endif // IMAGE_INCLUDE_IMA_LOADER_HPP_
