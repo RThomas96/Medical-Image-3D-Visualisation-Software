@@ -47,11 +47,13 @@ class TetMesh {
 		/// @brief Get the interpolated value at the specified position, using the specified interpolation method.
 		/// @param pos_ws The position to query for, in world space.
 		/// @param method The method to use for the interpolation.
+		/// @warning This method assumes the point given is in real space. Since there's no way to check if it's true, no checks are done.
 		unsigned char getInterpolatedValue(glm::vec4 pos_ws, InterpolationMethods method = InterpolationMethods::NearestNeighbor);
 
 		/// @brief Get the interpolated value at the specified position, using the specified interpolation method.
 		/// @param pos_is The position to query for, in initial space.
 		/// @param method The method to use for the interpolation.
+		/// @warning This method assumes the point given is in initial space. Since there's no way to check if it's true, no checks are done.
 		unsigned char getInterpolatedValueInitialSpace(glm::vec4 pos_is, InterpolationMethods method = InterpolationMethods::NearestNeighbor);
 
 		/// @brief Prints info about the current position and values of the neighbor grid.

@@ -141,10 +141,13 @@ unsigned char TetMesh::getInterpolatedValueInitialSpace(glm::vec4 pos_is, Interp
 		case InterpolationMethods::NearestNeighbor:
 			return this->interpolate_NearestNeighbor(pos_is);
 		case InterpolationMethods::TriLinear:
+			this->setOriginInitialSpace(pos_is);
 			return this->interpolate_TriLinear(pos_is);
 		case InterpolationMethods::TriCubic:
+			this->setOriginInitialSpace(pos_is);
 			return this->interpolate_TriCubic(pos_is);
 		case InterpolationMethods::Barycentric:
+			this->setOriginInitialSpace(pos_is);
 			return this->interpolate_Barycentric(pos_is);
 		default:
 			std::cerr << "Method asked for interpolation was not recognised.\n";
@@ -199,7 +202,7 @@ unsigned char TetMesh::interpolate_TriLinear(glm::vec4 pos) const {
 
 unsigned char TetMesh::interpolate_TriCubic(glm::vec4 pos) const {
 	// Not implemented : need the neighbors to a distance of 2, not 1 as it is now
-	std::cerr << "Warning : the method is not yer implemented !\n";
+	std::cerr << "Warning : the method is not yet implemented !\n";
 	return 0;
 }
 

@@ -93,8 +93,8 @@ void Scene::initGl(QOpenGLContext* _context, std::size_t _x, std::size_t _y, std
 
 	this->recompileShaders();
 
-	//this->queryImage();
-	this->queryIMA();
+	this->queryImage();
+	//this->queryIMA();
 
 	this->generateGrid(_x, _y, _z);
 

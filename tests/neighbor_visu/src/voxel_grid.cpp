@@ -147,25 +147,26 @@ void VoxelGrid::computeData(InterpolationMethods method) {
 	std::size_t index;
 
 	std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::duration<double, std::ratio<1,1>>> start_point = std::chrono::high_resolution_clock::now();
-	for (std::size_t k = this->renderBB.getMin().z; k < this->gridDimensions.z; ++k) {
-		z = this->renderBB.getMin().z + this->voxelDimensions.z * static_cast<float>(k);
+	{ // Timed portion of code :
+		for (std::size_t k = this->renderBB.getMin().z; k < this->gridDimensions.z; ++k) {
+			z = this->renderBB.getMin().z + this->voxelDimensions.z * static_cast<float>(k);
 
-		for (std::size_t j = 0; j < this->gridDimensions.y; ++j) {
-			y = this->renderBB.getMin().y + this->voxelDimensions.y * static_cast<float>(j);
+			for (std::size_t j = 0; j < this->gridDimensions.y; ++j) {
+				y = this->renderBB.getMin().y + this->voxelDimensions.y * static_cast<float>(j);
 
-			for (std::size_t i = 0; i < this->gridDimensions.x; ++i) {
-				x = this->renderBB.getMin().x + this->voxelDimensions.x * static_cast<float>(i);
-				index = i + j * this->gridDimensions.x + k * this->gridDimensions.x * this->gridDimensions.y;
+				for (std::size_t i = 0; i < this->gridDimensions.x; ++i) {
+					x = this->renderBB.getMin().x + this->voxelDimensions.x * static_cast<float>(i);
+					index = i + j * this->gridDimensions.x + k * this->gridDimensions.x * this->gridDimensions.y;
 
-				// We now have the position of the voxel to render. Set the mesh here :
-				glm::vec4 voxelPosWorldSpace = glm::vec4(x, y, z, 1.);
-				// And get the interpolated value here, directly stored in the data vector :
-				this->data[index] = this->inspectorMesh->getInterpolatedValue(voxelPosWorldSpace, method);
+					// We now have the position of the voxel to render. Set the mesh here :
+					glm::vec4 voxelPosWorldSpace = glm::vec4(x, y, z, 1.);
+					// And get the interpolated value here, directly stored in the data vector :
+					this->data[index] = this->inspectorMesh->getInterpolatedValue(voxelPosWorldSpace, method);
+				}
+
 			}
 
 		}
-		// std::cerr << "Finished depth level " << k << " of " << this->gridDimensions.z << '\n';
-
 	}
 	std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::duration<double, std::ratio<1,1>>> end_point = std::chrono::high_resolution_clock::now();
 	this->generationDuration = end_point - start_point;
