@@ -45,6 +45,8 @@ vec4 R8UIToRGB(in uvec3 ucolor) {
 
 void main(void)
 {
+	uvec3 ui = texture(texData, texCoord).rgb; // color, as R(uchar)G(void)B(void)
+	if (ui.r < minTexVal || ui.r > maxTexVal) { discard; } // Early discard for fragments which are outside of shown domains/values
 	float epsilon = .03;
 	float distMin = min(barycentricCoords.x/largestDelta.x, min(barycentricCoords.y/largestDelta.y, barycentricCoords.z/largestDelta.z));
 
@@ -66,7 +68,6 @@ void main(void)
 	float cosAlpha = clamp(dot(e,r), 0.0, 1.0);
 
 	vec4 basecolor;
-	uvec3 ui = texture(texData, texCoord).rgb; // color, as R(uchar)G(void)B(void)
 	// If we're in the area of a primitive where wireframe is NOT shown :
 	if (distMin > epsilon) {
 		basecolor = R8UIToRGB(ui);

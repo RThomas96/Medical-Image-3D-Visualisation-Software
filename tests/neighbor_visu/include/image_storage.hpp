@@ -66,7 +66,7 @@ class TextureStorage {
 		const std::vector<unsigned char>& getData() const;
 
 		/// @brief Gets the value of the texel nearest of the given position (no interpolation).
-		unsigned char getTexelValue(const glm::vec4& position) const;
+		unsigned char getTexelValue(glm::vec4 position) const;
 
 		/// @brief Converts a real-space XYZ position to a voxel index within the grid.
 		/// @returns A vector containing the IJK indexes of the index within the grid.

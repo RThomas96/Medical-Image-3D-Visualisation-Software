@@ -94,9 +94,9 @@ void main(void) {
 		vPos = transform * vertexPosition;
 	} else {
 		// Float versions of ivec3's coordinates :
-		float nbx = float(neighborOffset.x-1u);
-		float nby = float(neighborOffset.y-1u);
-		float nbz = float(neighborOffset.z-1u);
+		float nbx = float(neighborOffset.x); // -1u for neighborhood visualization, nothing for voxel-like view of the images
+		float nby = float(neighborOffset.y); // -1u for neighborhood visualization, nothing for voxel-like view of the images
+		float nbz = float(neighborOffset.z); // -1u for neighborhood visualization, nothing for voxel-like view of the images
 
 		// Each cube is one pixel wide. Which means the tex coordinates at the vertex given here are :
 		float texCoordX = 1.f / fimgx;

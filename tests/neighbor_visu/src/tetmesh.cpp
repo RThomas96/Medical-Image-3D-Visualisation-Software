@@ -5,7 +5,6 @@ TetMesh::TetMesh(const std::shared_ptr<TextureStorage> texL) : texLoader(texL) {
 	// Centers the mesh around the space's origin. Also, makes the mesh
 	// by a call to TetMesh::makeTetrahedra().
 	this->vertices.clear();
-	this->vertexValues.clear();
 	this->tetrahedra.clear();
 	this->origin = glm::vec4(.0, .0, .0, .0);
 
@@ -15,7 +14,6 @@ TetMesh::TetMesh(const std::shared_ptr<TextureStorage> texL) : texLoader(texL) {
 TetMesh::~TetMesh() {
 	// Free all storage allocated for the current mesh.
 	this->vertices.clear();
-	this->vertexValues.clear();
 	this->tetrahedra.clear();
 }
 
@@ -40,7 +38,7 @@ TetMesh& TetMesh::setOriginInitialSpace(const glm::vec4 position) {
 
 	// Set the new origin to be the center of the nearest
 	// voxel relative to 'position'
-	this->updatePositions(newOrigin);
+	this->origin = newOrigin;
 
 	return *this;
 }
@@ -54,31 +52,9 @@ TetMesh& TetMesh::resetPositions() {
 	return *this;
 }
 
-TetMesh& TetMesh::updateValues() {
-	// Get the value of the voxel each vertex is positionned in. Nearest neighbor only on the positions.
-	for (std::size_t i = 0; i < this->vertices.size(); ++i) {
-		const glm::vec4& icoord = this->vertices[i];
-		#ifndef NDEBUG // Debug only prompt
-		std::cerr << "Update :: querying for (" << icoord.x << ',' << icoord.y << ',' << icoord.z << ")\n";
-		#endif
-		this->vertexValues[i] = this->texLoader->getTexelValue(icoord);
-	}
-	return *this;
-}
-
-TetMesh& TetMesh::updatePositions(glm::vec4 newOrigin) {
-	// Centers the mesh's vertices around the new origin given, by first
-	// centering them around the space's origin and them translating them
-	// by newOrigin. Then updates the mesh's values at those vertices.
-
-	for (std::size_t i = 0; i < this->vertices.size(); ++i) {
-		this->vertices[i] = this->vertices[i] - this->origin + newOrigin;
-		this->vertices[i].w = 1.; // Sanity check.
-	}
-	this->updateValues();
-	this->origin = newOrigin;
-
-	return *this;
+const TetMesh::DataType TetMesh::getVertexValueAt(std::size_t idx) const {
+	// Get the position of the vertex needed, and then query the tex loader for it.
+	return this->texLoader->getTexelValue(this->origin+this->vertices[idx]);
 }
 
 std::vector<glm::vec4> TetMesh::getVertices() const {
@@ -87,9 +63,13 @@ std::vector<glm::vec4> TetMesh::getVertices() const {
 	return res;
 }
 
-std::vector<unsigned char> TetMesh::getVertexValues() const {
+std::vector<TetMesh::DataType> TetMesh::getVertexValues() const {
 	// Simple getter for the mesh's vertex values.
-	return this->vertexValues;
+	std::vector<DataType> values;
+	for (std::size_t i = 0; i < this->vertices.size(); ++i) {
+		values.push_back(this->getVertexValueAt(i));
+	}
+	return values;
 }
 
 TetMesh& TetMesh::printInfo() {
@@ -107,7 +87,7 @@ TetMesh& TetMesh::printInfo() {
 
 	std::cout << "The neighboring mesh has the following positions and values :" << '\n';
 	for (std::size_t i = 0; i < this->vertices.size(); ++i) {
-		std::cout << "[" << this->vertices[i].x << ',' << this->vertices[i].y << ',' << this->vertices[i].z << "] : " << +(this->vertexValues[i]) << '\n';
+		std::cout << "\t[" << this->vertices[i].x << ',' << this->vertices[i].y << ',' << this->vertices[i].z << "] : " << +(this->getVertexValueAt(i)) << '\n';
 	}
 
 	return *this;
@@ -165,39 +145,41 @@ unsigned char TetMesh::interpolate_TriLinear(glm::vec4 pos) const {
 	// Get the vertices nearest the point asked for. Then, use the point's
 	// X, Y, and Z coordinates to linearly sample the value requested.
 
-	// Determine which 'sub-cube' the point belongs to :
-	std::size_t index_x_min = (pos.x < this->origin.x) ? 0 : 1;
-	std::size_t index_y_min = (pos.y < this->origin.y) ? 0 : 1;
-	std::size_t index_z_min = (pos.z < this->origin.z) ? 0 : 1;
-	std::size_t index_x_max = index_x_min + 1;
-	std::size_t index_y_max = index_y_min + 1;
-	std::size_t index_z_max = index_z_min + 1;
+	std::size_t index_x_min, index_x_max, index_y_min, index_y_max, index_z_min, index_z_max;
 
 	// Since the voxels are of size 1 in initial space, we only need the coordinates
 	// of the vertex closest to the origin within the ones where the point is located.
-	pos -= this->vertices[index_x_min * 2*2 + index_y_min * 2 + index_z_min];
+	glm::vec4 localPos = pos - this->origin;
 	// This gets the cube the point is in to the origin (so we can interpolate directly
 	// with its coordinates)
 
+	// Determine which 'sub-cube' the point belongs to :
+	index_x_min = (localPos.x < .0f) ? 0 : 1;
+	index_y_min = (localPos.y < .0f) ? 0 : 1;
+	index_z_min = (localPos.z < .0f) ? 0 : 1;
+	index_x_max = index_x_min + 1;
+	index_y_max = index_y_min + 1;
+	index_z_max = index_z_min + 1;
+
 	// Get values :
-	const unsigned char& xyz = this->vertexValues[index_x_min * 2*2 + index_y_min * 2 + index_z_min];
-	const unsigned char& xyZ = this->vertexValues[index_x_min * 2*2 + index_y_min * 2 + index_z_max];
-	const unsigned char& xYz = this->vertexValues[index_x_min * 2*2 + index_y_max * 2 + index_z_min];
-	const unsigned char& xYZ = this->vertexValues[index_x_min * 2*2 + index_y_max * 2 + index_z_max];
-	const unsigned char& Xyz = this->vertexValues[index_x_max * 2*2 + index_y_min * 2 + index_z_min];
-	const unsigned char& XyZ = this->vertexValues[index_x_max * 2*2 + index_y_min * 2 + index_z_max];
-	const unsigned char& XYz = this->vertexValues[index_x_max * 2*2 + index_y_max * 2 + index_z_min];
-	const unsigned char& XYZ = this->vertexValues[index_x_max * 2*2 + index_y_max * 2 + index_z_max];
+	const unsigned char& xyz = this->getVertexValueAt(index_z_min * 2*2 + index_y_min * 2 + index_x_min);
+	const unsigned char& xyZ = this->getVertexValueAt(index_z_min * 2*2 + index_y_min * 2 + index_x_max);
+	const unsigned char& xYz = this->getVertexValueAt(index_z_min * 2*2 + index_y_max * 2 + index_x_min);
+	const unsigned char& xYZ = this->getVertexValueAt(index_z_min * 2*2 + index_y_max * 2 + index_x_max);
+	const unsigned char& Xyz = this->getVertexValueAt(index_z_max * 2*2 + index_y_min * 2 + index_x_min);
+	const unsigned char& XyZ = this->getVertexValueAt(index_z_max * 2*2 + index_y_min * 2 + index_x_max);
+	const unsigned char& XYz = this->getVertexValueAt(index_z_max * 2*2 + index_y_max * 2 + index_x_min);
+	const unsigned char& XYZ = this->getVertexValueAt(index_z_max * 2*2 + index_y_max * 2 + index_x_max);
 
-	float cyz = (1.f - pos.x) * static_cast<float>(xyz) + pos.x * static_cast<float>(Xyz);
-	float cyZ = (1.f - pos.x) * static_cast<float>(xyZ) + pos.x * static_cast<float>(XyZ);
-	float cYz = (1.f - pos.x) * static_cast<float>(xYz) + pos.x * static_cast<float>(XYz);
-	float cYZ = (1.f - pos.x) * static_cast<float>(xYZ) + pos.x * static_cast<float>(XYZ);
+	float cyz = (1.f - localPos.x) * static_cast<float>(xyz) + localPos.x * static_cast<float>(Xyz);
+	float cyZ = (1.f - localPos.x) * static_cast<float>(xyZ) + localPos.x * static_cast<float>(XyZ);
+	float cYz = (1.f - localPos.x) * static_cast<float>(xYz) + localPos.x * static_cast<float>(XYz);
+	float cYZ = (1.f - localPos.x) * static_cast<float>(xYZ) + localPos.x * static_cast<float>(XYZ);
 
-	float cz = (1.f - pos.y) * cyz + pos.y * cYz;
-	float cZ = (1.f - pos.y) * cyZ + pos.y * cYZ;
+	float cz = (1.f - localPos.y) * cyz + localPos.y * cYz;
+	float cZ = (1.f - localPos.y) * cyZ + localPos.y * cYZ;
 
-	return static_cast<unsigned char>((1.f - pos.z) * cz + pos.z * cZ);
+	return static_cast<unsigned char>((1.f - localPos.z) * cz + localPos.z * cZ);
 }
 
 unsigned char TetMesh::interpolate_TriCubic(glm::vec4 pos) const {
@@ -227,10 +209,10 @@ unsigned char TetMesh::interpolate_Barycentric(glm::vec4 pos) const {
 		return 0;
 	}
 
-	float va = static_cast<float>(this->vertexValues[this->tetrahedra[tet][0]]);
-	float vb = static_cast<float>(this->vertexValues[this->tetrahedra[tet][1]]);
-	float vc = static_cast<float>(this->vertexValues[this->tetrahedra[tet][2]]);
-	float vd = static_cast<float>(this->vertexValues[this->tetrahedra[tet][3]]);
+	float va = static_cast<float>(this->getVertexValueAt(this->tetrahedra[tet][0]));
+	float vb = static_cast<float>(this->getVertexValueAt(this->tetrahedra[tet][1]));
+	float vc = static_cast<float>(this->getVertexValueAt(this->tetrahedra[tet][2]));
+	float vd = static_cast<float>(this->getVertexValueAt(this->tetrahedra[tet][3]));
 
 	// Function used to get the floating point back to a number without numbers after the
 	// decimal point (can also be truncf) :
@@ -279,23 +261,22 @@ void TetMesh::makeTetrahedra() {
 	// the first voxel is in fact at [.5, .5, .5], which means we
 	// need to iterate in [-.5, 1.5] by steps of 1. each time.
 
-	for (std::size_t i = 0; i < 3; ++i) {
+	for (std::size_t k = 0; k < 3; ++k) {
 		for (std::size_t j = 0; j < 3; ++j) {
-			for (std::size_t k = 0; k < 3; ++k) {
+			for (std::size_t i = 0; i < 3; ++i) {
 				this->vertices.emplace_back(
 					static_cast<float>(i) * 1.f - .5f,
 					static_cast<float>(j) * 1.f - .5f,
 					static_cast<float>(k) * 1.f - .5f,
 					1.
 				);
-				this->vertexValues.push_back(0);
 			}
 		}
 	}
 
-	for (std::size_t i = 0; i < 2; ++i) {
+	for (std::size_t k = 0; k < 2; ++k) {
 		for (std::size_t j = 0; j < 2; ++j) {
-			for (std::size_t k = 0; k < 2; ++k) {
+			for (std::size_t i = 0; i < 2; ++i) {
 				// Tetrahedra 1 :
 				this->tetrahedra.push_back({
 					getIndex(i+1, j+0, k+0),

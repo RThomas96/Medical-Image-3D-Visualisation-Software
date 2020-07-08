@@ -82,7 +82,7 @@ const std::vector<unsigned char>& TextureStorage::getData() const {
 	return this->data;
 }
 
-unsigned char TextureStorage::getTexelValue(const glm::vec4& position) const {
+unsigned char TextureStorage::getTexelValue(glm::vec4 position) const {
 	if (this->data.empty()) {
 		std::cerr << __PRETTY_FUNCTION__ << " : Data was not loaded !" << '\n';
 		return '\0';
@@ -147,9 +147,9 @@ void TextureStorage::loadImageSpecs() {
 					this->imageSpecs[1][1] = (y < this->imageSpecs[1][1]) ? y : this->imageSpecs[1][1];
 					this->imageSpecs[1][2] = (z < this->imageSpecs[1][2]) ? z : this->imageSpecs[1][2];
 
-					this->imageSpecs[2][0] = (x > this->imageSpecs[2][0]) ? x : this->imageSpecs[2][0];
-					this->imageSpecs[2][1] = (y > this->imageSpecs[2][1]) ? y : this->imageSpecs[2][1];
-					this->imageSpecs[2][2] = (z > this->imageSpecs[2][2]) ? z : this->imageSpecs[2][2];
+					this->imageSpecs[2][0] = (x > this->imageSpecs[2][0]) ? x+1 : this->imageSpecs[2][0];
+					this->imageSpecs[2][1] = (y > this->imageSpecs[2][1]) ? y+1 : this->imageSpecs[2][1];
+					this->imageSpecs[2][2] = (z > this->imageSpecs[2][2]) ? z+1 : this->imageSpecs[2][2];
 				}
 			}
 		}

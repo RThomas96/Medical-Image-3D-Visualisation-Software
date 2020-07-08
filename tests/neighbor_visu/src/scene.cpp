@@ -833,6 +833,7 @@ void Scene::generateNeighborGrid(std::size_t _x, std::size_t _y, std::size_t _z)
 	// Original texture cube :
 	this->vertIdxDraw.emplace_back(uint(1), uint(1), uint(1), uint(0));
 
+	// This is to create a neighbor grid :
 	// Create the grid, in raw form :
 	for (std::size_t i = 0; i < _z; ++i) {
 		for (std::size_t j = 0; j < _y; ++j) {
@@ -841,6 +842,16 @@ void Scene::generateNeighborGrid(std::size_t _x, std::size_t _y, std::size_t _z)
 			}
 		}
 	}
+
+	/* // This is to create a voxel grid for a voxel-like visualisation
+	for (std::size_t i = 0; i < this->gridDepth; ++i) {
+		for (std::size_t j = 0; j < this->gridHeight; ++j) {
+			for (std::size_t k = 0; k < this->gridWidth; ++k) {
+				this->vertIdxDraw.emplace_back(k, j, i, uint(1));
+			}
+		}
+	}
+	*/
 }
 
 const unsigned char* Scene::loadEmptyImage() {
@@ -1005,6 +1016,5 @@ glm::mat4 Scene::computeTransformationMatrix() const {
 		transfoMat[3][2] = w * std::abs(std::sin(angleRad));
 	}
 
-	//return transfoMat;
-	return glm::mat4(1.f);
+	return transfoMat;
 }
