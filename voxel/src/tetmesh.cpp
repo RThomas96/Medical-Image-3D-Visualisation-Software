@@ -117,6 +117,8 @@ unsigned char TetMesh::getInterpolatedValueInitialSpace(glm::vec4 pos_is, Interp
 		return 0;
 	}
 
+//	std::cout << "\tPosition in initial space before interpolation : [" << pos_is.x << " ," << pos_is.y << " ," << pos_is.z << "]\n";
+
 	switch (method) {
 		case InterpolationMethods::NearestNeighbor:
 			return this->interpolate_NearestNeighbor(pos_is);
@@ -153,6 +155,10 @@ unsigned char TetMesh::interpolate_TriLinear(glm::vec4 pos) const {
 	// This gets the cube the point is in to the origin (so we can interpolate directly
 	// with its coordinates)
 
+//	std::cout << "\t\tlocalPos : [" << localPos.x << " ," << localPos.y << " ," << localPos.z << "]\n";
+//	svec3 sizes = this->texLoader->getImageSize();
+//	std::cout << "\t\t\t\t\tSizes of image : [" << sizes.x << " ," << sizes.y << " ," << sizes.z << "]\n";
+
 	// Determine which 'sub-cube' the point belongs to :
 	index_x_min = (localPos.x < .0f) ? 0 : 1;
 	index_y_min = (localPos.y < .0f) ? 0 : 1;
@@ -161,15 +167,35 @@ unsigned char TetMesh::interpolate_TriLinear(glm::vec4 pos) const {
 	index_y_max = index_y_min + 1;
 	index_z_max = index_z_min + 1;
 
+	std::size_t pxyz = index_z_min * 2*2 + index_y_min * 2 + index_x_min;
+	std::size_t pxyZ = index_z_min * 2*2 + index_y_min * 2 + index_x_max;
+	std::size_t pxYz = index_z_min * 2*2 + index_y_max * 2 + index_x_min;
+	std::size_t pxYZ = index_z_min * 2*2 + index_y_max * 2 + index_x_max;
+	std::size_t pXyz = index_z_max * 2*2 + index_y_min * 2 + index_x_min;
+	std::size_t pXyZ = index_z_max * 2*2 + index_y_min * 2 + index_x_max;
+	std::size_t pXYz = index_z_max * 2*2 + index_y_max * 2 + index_x_min;
+	std::size_t pXYZ = index_z_max * 2*2 + index_y_max * 2 + index_x_max;
+
+//	std::cout << "\t\tValues of neighbors : " << '\n';
+
 	// Get values :
-	const unsigned char& xyz = this->getVertexValueAt(index_z_min * 2*2 + index_y_min * 2 + index_x_min);
-	const unsigned char& xyZ = this->getVertexValueAt(index_z_min * 2*2 + index_y_min * 2 + index_x_max);
-	const unsigned char& xYz = this->getVertexValueAt(index_z_min * 2*2 + index_y_max * 2 + index_x_min);
-	const unsigned char& xYZ = this->getVertexValueAt(index_z_min * 2*2 + index_y_max * 2 + index_x_max);
-	const unsigned char& Xyz = this->getVertexValueAt(index_z_max * 2*2 + index_y_min * 2 + index_x_min);
-	const unsigned char& XyZ = this->getVertexValueAt(index_z_max * 2*2 + index_y_min * 2 + index_x_max);
-	const unsigned char& XYz = this->getVertexValueAt(index_z_max * 2*2 + index_y_max * 2 + index_x_min);
-	const unsigned char& XYZ = this->getVertexValueAt(index_z_max * 2*2 + index_y_max * 2 + index_x_max);
+	const unsigned char xyz = this->getVertexValueAt(pxyz);
+	const unsigned char xyZ = this->getVertexValueAt(pxyZ);
+	const unsigned char xYz = this->getVertexValueAt(pxYz);
+	const unsigned char xYZ = this->getVertexValueAt(pxYZ);
+	const unsigned char Xyz = this->getVertexValueAt(pXyz);
+	const unsigned char XyZ = this->getVertexValueAt(pXyZ);
+	const unsigned char XYz = this->getVertexValueAt(pXYz);
+	const unsigned char XYZ = this->getVertexValueAt(pXYZ);
+
+//	std::cout << "\t\t\tNeighbor 1 : " << +xyz << '\n';
+//	std::cout << "\t\t\tNeighbor 2 : " << +xyZ << '\n';
+//	std::cout << "\t\t\tNeighbor 3 : " << +xYz << '\n';
+//	std::cout << "\t\t\tNeighbor 4 : " << +xYZ << '\n';
+//	std::cout << "\t\t\tNeighbor 5 : " << +Xyz << '\n';
+//	std::cout << "\t\t\tNeighbor 6 : " << +XyZ << '\n';
+//	std::cout << "\t\t\tNeighbor 7 : " << +XYz << '\n';
+//	std::cout << "\t\t\tNeighbor 8 : " << +XYZ << '\n';
 
 	float cyz = (1.f - localPos.x) * static_cast<float>(xyz) + localPos.x * static_cast<float>(Xyz);
 	float cyZ = (1.f - localPos.x) * static_cast<float>(xyZ) + localPos.x * static_cast<float>(XyZ);
@@ -179,7 +205,11 @@ unsigned char TetMesh::interpolate_TriLinear(glm::vec4 pos) const {
 	float cz = (1.f - localPos.y) * cyz + localPos.y * cYz;
 	float cZ = (1.f - localPos.y) * cyZ + localPos.y * cYZ;
 
-	return static_cast<unsigned char>((1.f - localPos.z) * cz + localPos.z * cZ);
+	unsigned char result = static_cast<unsigned char>((1.f - localPos.z) * cz + localPos.z * cZ);
+
+//	std::cout << "\t\t\t\tFinal result : " << +result << '\n';
+
+	return result;
 }
 
 unsigned char TetMesh::interpolate_TriCubic(glm::vec4 pos) const {

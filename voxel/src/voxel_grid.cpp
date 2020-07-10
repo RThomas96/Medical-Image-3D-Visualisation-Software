@@ -143,23 +143,27 @@ void VoxelGrid::computeData(InterpolationMethods method) {
 	 * Once the iterations are over, we should have a fully populated data vector.
 	 */
 
+	//std::cout << "Starting to compute data for a grid of dimensions " << this->gridDimensions.x << 'x' << this->gridDimensions.y << 'x' << this->gridDimensions.z << '\n';
+
 	float x = .0f, y = .0f, z = .0f;
 	std::size_t index;
 
 	std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::duration<double, std::ratio<1,1>>> start_point = std::chrono::high_resolution_clock::now();
 	{ // Timed portion of code :
-		for (std::size_t k = this->renderBB.getMin().z; k < this->gridDimensions.z; ++k) {
-			z = this->renderBB.getMin().z + this->voxelDimensions.z * static_cast<float>(k);
+		for (std::size_t k = 0; k < this->gridDimensions.z; ++k) {
+			z = this->renderBB.getMin().z + this->voxelDimensions.z * static_cast<float>(k) + this->voxelDimensions.z/2.f;
 
 			for (std::size_t j = 0; j < this->gridDimensions.y; ++j) {
-				y = this->renderBB.getMin().y + this->voxelDimensions.y * static_cast<float>(j);
+				y = this->renderBB.getMin().y + this->voxelDimensions.y * static_cast<float>(j) + this->voxelDimensions.y/2.f;
 
 				for (std::size_t i = 0; i < this->gridDimensions.x; ++i) {
-					x = this->renderBB.getMin().x + this->voxelDimensions.x * static_cast<float>(i);
+					x = this->renderBB.getMin().x + this->voxelDimensions.x * static_cast<float>(i) + this->voxelDimensions.x/2.f;
 					index = i + j * this->gridDimensions.x + k * this->gridDimensions.x * this->gridDimensions.y;
 
 					// We now have the position of the voxel to render. Set the mesh here :
 					glm::vec4 voxelPosWorldSpace = glm::vec4(x, y, z, 1.);
+					//std::cout << "Voxel grid query :" << '\n';
+					//std::cout << "\tPosition in real space : [" << voxelPosWorldSpace.x << " ," << voxelPosWorldSpace.y << " ," << voxelPosWorldSpace.z << "]\n";
 					// And get the interpolated value here, directly stored in the data vector :
 					this->data[index] = this->inspectorMesh->getInterpolatedValue(voxelPosWorldSpace, method);
 				}

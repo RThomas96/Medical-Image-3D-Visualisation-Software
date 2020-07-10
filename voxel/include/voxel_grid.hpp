@@ -75,6 +75,10 @@ class VoxelGrid : public QObject {
 		/// time to load the voxel grid in OpenGL's buffers afterwards. Only the grid-filling itself is timed.
 		const std::chrono::duration<double, std::ratio<1, 1>> getTimeToCompute(void) const { return this->generationDuration; }
 
+		/// @brief Returns the position of the queried voxel.
+		/// @details If the position is outside the voxel grid, it will compute the position it should have been at, but it will not be a valid position.
+		glm::vec4 getVoxelPosition(std::size_t i, std::size_t j, std::size_t k) const;
+
 		/// @brief Writes the grid to a filepath provided.
 		/// This function will write the grid to a file, using an IGridWriter pointer (IGridWriter is an interface class to write the grid in many forms).
 		/// If the writer writes multiple files (in the case of a multiple image writer, as the Blue dataset is) then the `path` argument will be interpreted as a template for the name.

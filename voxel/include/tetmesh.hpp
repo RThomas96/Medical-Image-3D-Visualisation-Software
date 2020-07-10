@@ -51,13 +51,13 @@ class TetMesh {
 		/// @param pos_ws The position to query for, in world space.
 		/// @param method The method to use for the interpolation.
 		/// @warning This method assumes the point given is in real space. Since there's no way to check if it's true, no checks are done.
-		DataType getInterpolatedValue(glm::vec4 pos_ws, InterpolationMethods method = InterpolationMethods::NearestNeighbor);
+		TetMesh::DataType getInterpolatedValue(glm::vec4 pos_ws, InterpolationMethods method = InterpolationMethods::NearestNeighbor);
 
 		/// @brief Get the interpolated value at the specified position, using the specified interpolation method.
 		/// @param pos_is The position to query for, in initial space.
 		/// @param method The method to use for the interpolation.
 		/// @warning This method assumes the point given is in initial space. Since there's no way to check if it's true, no checks are done.
-		DataType getInterpolatedValueInitialSpace(glm::vec4 pos_is, InterpolationMethods method = InterpolationMethods::NearestNeighbor);
+		TetMesh::DataType getInterpolatedValueInitialSpace(glm::vec4 pos_is, InterpolationMethods method = InterpolationMethods::NearestNeighbor);
 
 		/// @brief Prints info about the current position and values of the neighbor grid.
 		/// @returns A reference to (this), to chain function calls.
@@ -86,13 +86,13 @@ class TetMesh {
 
 		/// @brief Returns the value at the position of the (indexed) vertex asked.
 		/// @returns The value at this point, relative to the origin.
-		const DataType getVertexValueAt(std::size_t index) const;
+		const TetMesh::DataType getVertexValueAt(std::size_t index) const;
 
 	protected:
-		DataType interpolate_NearestNeighbor(glm::vec4 pos) const; ///< Interpolates a given point in initial space with the Nearest Neighbor technique
-		DataType interpolate_TriLinear(glm::vec4 pos) const; ///< Interpolates a given point in initial space with the Trilinear technique
-		DataType interpolate_TriCubic(glm::vec4 pos) const; ///< Interpolates a given point in initial space with the Tricubic technique // TODO : Implement it, but later.
-		DataType interpolate_Barycentric(glm::vec4 pos) const; ///< Interpolates a given point in initial space with the barycentric technique
+		TetMesh::DataType interpolate_NearestNeighbor(glm::vec4 pos) const; ///< Interpolates a given point in initial space with the Nearest Neighbor technique
+		TetMesh::DataType interpolate_TriLinear(glm::vec4 pos) const; ///< Interpolates a given point in initial space with the Trilinear technique
+		TetMesh::DataType interpolate_TriCubic(glm::vec4 pos) const; ///< Interpolates a given point in initial space with the Tricubic technique // TODO : Implement it, but later.
+		TetMesh::DataType interpolate_Barycentric(glm::vec4 pos) const; ///< Interpolates a given point in initial space with the barycentric technique
 		glm::vec4 computeBarycentricCoords(glm::vec4 pos, std::size_t tetIndex) const; ///< Computes the barycentric coordinates of a point in the tetrahedra given in argument.
 };
 

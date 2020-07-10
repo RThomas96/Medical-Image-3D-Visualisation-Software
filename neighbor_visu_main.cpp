@@ -15,7 +15,7 @@ int main(int argc, char* argv[]) {
 
 	// So the edges don't look jagged
 	QSurfaceFormat fmt;
-	fmt.setSamples(10);
+	fmt.setSamples(5);
 	QSurfaceFormat::setDefaultFormat(fmt);
 
 	QCoreApplication::setApplicationName("Medical Image Visualizer");

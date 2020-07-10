@@ -73,13 +73,15 @@ class TextureStorage {
 		svec3 convertRealSpaceToVoxelIndex(const glm::vec4 position) const;
 
 		/// @brief Converts a real-space XYZ position to an initial-space XYZ position.
-		/// @returns An XYZ position in initial space.
+		/// @returns A XYZ position in initial space.
 		glm::vec4 convertRealSpaceToInitialSpace(const glm::vec4 position) const;
 
 		/// @brief Converts an initial-space XYZ position to a voxel index within the grid.
 		/// @returns A vector containing the IJK indexes of the index within the grid.
 		svec3 convertInitialSpaceToVoxelIndex(const glm::vec4 position) const;
 
+		/// @brief Converts an initial-space XYZ position to a real-space XYZ position.
+		/// @returns A XYZ position in real space.
 		glm::vec4 convertInitialSpaceToRealSpace(const glm::vec4 position) const;
 
 		/// @brief Get the matrix to transform from real space to initial space.

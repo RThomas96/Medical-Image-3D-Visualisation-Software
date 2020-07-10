@@ -833,7 +833,7 @@ void Scene::generateNeighborGrid(std::size_t _x, std::size_t _y, std::size_t _z)
 	// Original texture cube :
 	this->vertIdxDraw.emplace_back(uint(1), uint(1), uint(1), uint(0));
 
-	// This is to create a neighbor grid :
+	/* // This is to create a neighbor grid :
 	// Create the grid, in raw form :
 	for (std::size_t i = 0; i < _z; ++i) {
 		for (std::size_t j = 0; j < _y; ++j) {
@@ -842,6 +842,7 @@ void Scene::generateNeighborGrid(std::size_t _x, std::size_t _y, std::size_t _z)
 			}
 		}
 	}
+	*/
 
 	/* // This is to create a voxel grid for a voxel-like visualisation
 	for (std::size_t i = 0; i < this->gridDepth; ++i) {
