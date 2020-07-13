@@ -11,6 +11,11 @@ float Viewer::sceneRadiusMultiplier{1.5f};
 Viewer::Viewer(Scene* const scene, bool isLeftOrRight, QWidget* parent) : QGLViewer(parent), scene(scene), isRealSpace(isLeftOrRight) {
 	this->setGridIsDrawn();
 	this->focusType = FocusStates::DefaultFocus;
+
+	this->refreshTimer = new QTimer();
+	this->refreshTimer->setInterval(std::chrono::milliseconds(7)); // ~7 ms for 144fps, ~16ms for 60fps and ~33ms for 30 FPS
+	this->refreshTimer->setSingleShot(false);
+	connect(this->refreshTimer, &QTimer::timeout, this, &Viewer::updateView);
 }
 
 void Viewer::init() {
@@ -23,6 +28,8 @@ void Viewer::init() {
 	} else {
 		this->updateTextureFocus();
 	}
+
+	this->refreshTimer->start(); // Update every 'n' milliseconds from here on out
 }
 
 void Viewer::draw() {

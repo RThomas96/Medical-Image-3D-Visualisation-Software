@@ -80,7 +80,7 @@ void Scene::initGl(QOpenGLContext* _context, std::size_t _x, std::size_t _y, std
 	this->mesh = std::make_shared<TetMesh>(this->texStorage);
 
 	this->voxelGrid	= std::make_shared<VoxelGrid>();
-	this->voxelGrid->setInspector(this->mesh).setImageStack(this->texStorage).setController(this->gridControl).setScene(this);
+	this->voxelGrid->setScene(this).setInspector(this->mesh).setImageStack(this->texStorage).setController(this->gridControl);
 	this->gridControl->setVoxelGrid(this->voxelGrid);
 
 	///////////////////////////

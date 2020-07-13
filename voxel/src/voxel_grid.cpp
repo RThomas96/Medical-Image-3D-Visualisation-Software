@@ -201,9 +201,9 @@ void VoxelGrid::slotSetGridDimensionZ(int newDim) {
 	}
 	if (this->controller) { this->controller->updateGridLabels(); }
 }
-void VoxelGrid::slotSetGridBBMinX(double newDim) { this->renderBB.setMinX(newDim); if (this->controller) { this->controller->updateGridLabels(); } }
-void VoxelGrid::slotSetGridBBMinY(double newDim) { this->renderBB.setMinY(newDim); if (this->controller) { this->controller->updateGridLabels(); } }
-void VoxelGrid::slotSetGridBBMinZ(double newDim) { this->renderBB.setMinZ(newDim); if (this->controller) { this->controller->updateGridLabels(); } }
-void VoxelGrid::slotSetGridBBMaxX(double newDim) { this->renderBB.setMaxX(newDim); if (this->controller) { this->controller->updateGridLabels(); } }
-void VoxelGrid::slotSetGridBBMaxY(double newDim) { this->renderBB.setMaxY(newDim); if (this->controller) { this->controller->updateGridLabels(); } }
-void VoxelGrid::slotSetGridBBMaxZ(double newDim) { this->renderBB.setMaxZ(newDim); if (this->controller) { this->controller->updateGridLabels(); } }
+void VoxelGrid::slotSetGridBBMinX(double newDim) { this->renderBB.setMinX(newDim); this->updateVoxelSizes(); if (this->controller) { this->controller->updateGridLabels(); } }
+void VoxelGrid::slotSetGridBBMinY(double newDim) { this->renderBB.setMinY(newDim); this->updateVoxelSizes(); if (this->controller) { this->controller->updateGridLabels(); } }
+void VoxelGrid::slotSetGridBBMinZ(double newDim) { this->renderBB.setMinZ(newDim); this->updateVoxelSizes(); if (this->controller) { this->controller->updateGridLabels(); } }
+void VoxelGrid::slotSetGridBBMaxX(double newDim) { this->renderBB.setMaxX(newDim); this->updateVoxelSizes(); if (this->controller) { this->controller->updateGridLabels(); } }
+void VoxelGrid::slotSetGridBBMaxY(double newDim) { this->renderBB.setMaxY(newDim); this->updateVoxelSizes(); if (this->controller) { this->controller->updateGridLabels(); } }
+void VoxelGrid::slotSetGridBBMaxZ(double newDim) { this->renderBB.setMaxZ(newDim); this->updateVoxelSizes(); if (this->controller) { this->controller->updateGridLabels(); } }

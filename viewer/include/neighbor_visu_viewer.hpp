@@ -4,6 +4,7 @@
 #include "./scene.hpp"
 
 #include <QGLViewer/qglviewer.h>
+#include <QTimer>
 
 #include <memory>
 
@@ -37,6 +38,8 @@ class Viewer : public QGLViewer {
 		bool isRealSpace;
 		/// @brief The focus this viewer is supposed to have.
 		FocusStates focusType;
+		/// @brief A refresh timer for the viewer, to update in real time
+		QTimer* refreshTimer;
 
 		/// @brief Sets the focus the viewer has to be the texture focus.
 		void updateTextureFocus();
@@ -45,6 +48,9 @@ class Viewer : public QGLViewer {
 	public slots:
 		/// @brief Set the focus state from elsewhere in the program.
 		void setFocusState(int state);
+
+		/// @brief Update the view, as a slot without any arguments (currently only used by QTimer)
+		void updateView() { this->update(); }
 };
 
 #endif // VIEWER_INCLUDE_NEIGHBOR_VISU_VIEWER_HPP_
