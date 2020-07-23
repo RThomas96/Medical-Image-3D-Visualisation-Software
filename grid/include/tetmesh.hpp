@@ -1,7 +1,8 @@
-#ifndef VOXEL_INCLUDE_TETMESH_HPP_
-#define VOXEL_INCLUDE_TETMESH_HPP_
+#ifndef GRID_INCLUDE_TETMESH_HPP_
+#define GRID_INCLUDE_TETMESH_HPP_
 
 #include "../../image/include/image_storage.hpp"
+#include "./discrete_grid.hpp"
 
 #include <glm/glm.hpp>
 
@@ -124,4 +125,4 @@ namespace glm {
 }
 #endif
 
-#endif // VOXEL_INCLUDE_TETMESH_HPP_
+#endif // GRID_INCLUDE_TETMESH_HPP_

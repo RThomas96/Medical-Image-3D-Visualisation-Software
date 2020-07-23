@@ -2,6 +2,7 @@
 #define IMAGE_INCLUDE_IMAGE_STORAGE_HPP_
 
 #include "./bulk_texture_loader.hpp"
+#include "../../grid/include/bounding_box.hpp"
 
 #include <glm/glm.hpp>
 
@@ -92,6 +93,9 @@ class TextureStorage {
 
 		/// @brief Set the transformation matrix to convert from initial space to real space.
 		TextureStorage& setInitialToRealMatrix(const glm::mat4 transfoMat);
+
+		/// @brief Gets the bounding box of this object's render bounding box, in world space.
+		BoundingBox_General<float> getRenderBB_WS(void);
 
 		/// @brief Resets all data and measurements associated with the texture.
 		TextureStorage& resetTexture();

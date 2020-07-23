@@ -16,16 +16,21 @@ void MainWidget::setupWidgets() {
 	this->scene = new Scene(this->gridController);
 
 	this->leftViewer = new Viewer(this->scene, true);
+	#ifdef ENABLE_DUAL_VISU
 	this->rightViewer = new Viewer(this->scene, false);
-
 	this->controlPanel = new ControlPanel(this->scene, this->leftViewer, this->rightViewer, nullptr);
+	#else
+	this->controlPanel = new ControlPanel(this->scene, this->leftViewer, nullptr, nullptr);
+	#endif
 	this->scene->setControlPanel(this->controlPanel);
 
 	this->gridController->show(); // Enable floating window
 
 	QHBoxLayout* viewerLayout = new QHBoxLayout();
 	viewerLayout->addWidget(this->leftViewer);
+	#ifdef ENABLE_DUAL_VISU
 	viewerLayout->addWidget(this->rightViewer);
+	#endif
 
 	QVBoxLayout* mainLayout = new QVBoxLayout();
 	mainLayout->addLayout(viewerLayout);
@@ -44,10 +49,15 @@ bool MainWidget::eventFilter(QObject* obj, QEvent* e) {
 		this->controlPanel->setMinimumSize(this->controlPanel->size());
 		this->controlPanel->setMaximumSize(this->controlPanel->size());
 		// set the viewer to have a minimum size of controlPanelSize on width/height :
+		#ifdef ENABLE_DUAL_VISU
 		this->leftViewer->setMinimumWidth(this->controlPanel->minimumWidth()/2);
 		this->leftViewer->setMinimumHeight(this->controlPanel->minimumWidth()/2);
 		this->rightViewer->setMinimumWidth(this->controlPanel->minimumWidth()/2);
 		this->rightViewer->setMinimumHeight(this->controlPanel->minimumWidth()/2);
+		#else
+		this->leftViewer->setMinimumWidth(this->controlPanel->minimumWidth());
+		this->leftViewer->setMinimumHeight(this->controlPanel->minimumWidth()/2);
+		#endif
 	}
 	// Return false, to handle the rest of the event normally
 	return false;

@@ -1,5 +1,5 @@
-#ifndef VOXEL_INCLUDE_VOXEL_GRID_HPP_
-#define VOXEL_INCLUDE_VOXEL_GRID_HPP_
+#ifndef GRID_INCLUDE_VOXEL_GRID_HPP_
+#define GRID_INCLUDE_VOXEL_GRID_HPP_
 
 #include "./bounding_box.hpp"
 #include "../../image/include/image_storage.hpp"
@@ -135,4 +135,4 @@ class VoxelGrid : public QObject {
 		std::chrono::duration<double, std::ratio<1,1>> generationDuration;
 };
 
-#endif // VOXEL_INCLUDE_VOXEL_GRID_HPP_
+#endif // GRID_INCLUDE_VOXEL_GRID_HPP_

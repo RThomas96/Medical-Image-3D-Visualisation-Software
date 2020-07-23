@@ -29,11 +29,11 @@ uniform usampler3D texData;
 /// from R(uchar)G(void)B(void) to HSV first, then to RGB
 vec4 R8UIToRGB(in uvec3 ucolor) {
 	if (ucolor.r < minTexVal) { return vec4(.0, .0, .0, 1.); }
-	if (ucolor.r > maxTexVal) { return vec4(.0, .0, .0, 1.); }
+	if (ucolor.r > maxTexVal) { return vec4(1., 1., 1., 1.); }
 	float a = float(minTexVal) / 255.f;
 	float b = float(maxTexVal) / 255.f;
-	float c = 50.f / 255.f;
-	float d = 200.f / 255.f;
+	float c = .2*b; // 50.f / 255.f;
+	float d = .7*b; // 200.f / 255.f;
 	// Get the red component in floating point :
 	float r = 1.f - ((b - a) / (d - c)) * ((float(ucolor.r)/255.f)-c)+a;
 	// Convert to HSV space (from glsl-hsv2rgb on github) :
@@ -46,7 +46,7 @@ vec4 R8UIToRGB(in uvec3 ucolor) {
 void main(void)
 {
 	uvec3 ui = texture(texData, texCoord).rgb; // color, as R(uchar)G(void)B(void)
-	if (ui.r < minTexVal || ui.r > maxTexVal) { discard; } // Early discard for fragments which are outside of shown domains/values
+	//if (ui.r < minTexVal || ui.r > maxTexVal) { discard; } // Early discard for fragments which are outside of shown domains/values
 	float epsilon = .03;
 	float distMin = min(barycentricCoords.x/largestDelta.x, min(barycentricCoords.y/largestDelta.y, barycentricCoords.z/largestDelta.z));
 

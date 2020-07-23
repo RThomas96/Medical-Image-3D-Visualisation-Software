@@ -8,9 +8,9 @@
 #include "../../image/include/bulk_texture_loader.hpp"
 
 #include "../../image/include/image_storage.hpp"
-#include "../../voxel/include/voxel_grid.hpp"
+#include "../../grid/include/voxel_grid.hpp"
 #include "../../qt/include/grid_control.hpp"
-#include "../../voxel/include/tetmesh.hpp"
+#include "../../grid/include/tetmesh.hpp"
 
 #include <QOpenGLFunctions_4_0_Core>
 #include <QGLViewer/qglviewer.h>

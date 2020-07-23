@@ -111,6 +111,10 @@ unsigned char TextureStorage::getTexelValue(glm::vec4 position) const {
 	return this->data[index];
 }
 
+BoundingBox_General<float> TextureStorage::getRenderBB_WS() {
+	return BoundingBox_General<float>();
+}
+
 TextureStorage& TextureStorage::resetTexture() {
 	this->data.clear();
 	this->resetImageSpecs();

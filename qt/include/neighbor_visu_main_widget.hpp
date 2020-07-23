@@ -9,6 +9,8 @@
 #include <QWidget>
 #include <QGLViewer/qglviewer.h>
 
+//#define ENABLE_DUAL_VISU
+
 class MainWidget : public QWidget {
 		Q_OBJECT
 	public:
@@ -19,7 +21,9 @@ class MainWidget : public QWidget {
 		bool eventFilter(QObject* obj, QEvent* e) override;
 	private:
 		Viewer* leftViewer;
+		#ifdef ENABLE_DUAL_VISU
 		Viewer* rightViewer;
+		#endif
 		Scene* scene;
 		ControlPanel* controlPanel;
 		GridControl* gridController;

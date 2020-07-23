@@ -442,7 +442,7 @@ void Scene::loadVoxelGrid(svec3 size, const unsigned char *pData) {
 
 void Scene::queryImage(void) {
 	this->texStorage->loadImages();
-	std::vector<unsigned char> image = this->texStorage->getData();
+	const std::vector<unsigned char>& image = this->texStorage->getData();
 	svec3 imageSizes = this->texStorage->getImageSize();
 	std::size_t i = imageSizes[0];
 	std::size_t j = imageSizes[1];
@@ -452,14 +452,20 @@ void Scene::queryImage(void) {
 
 	this->loadImage(i, j, k, image.data());
 
+	std::vector<BoundingBox_General<float>::vec> points;
+
 	glm::vec3 rMin = this->texStorage->getImageBoundingBoxMin_WS();
 	glm::vec3 rMax = this->texStorage->getImageBoundingBoxMax_WS();
+	BoundingBox_General<float> rb = this->texStorage->getRenderBB_WS();
+	BoundingBox_General<float> bb(rMin,rMax);
+	rMin = rb.getMin();
+	rMax = rb.getMax();
 
 	std::cerr << "Set the bounding box to :\n";
 	std::cerr << '\t' << "[" << rMin.x << ',' << rMin.y << ',' << rMin.z << ']' << '\n';
 	std::cerr << '\t' << "[" << rMax.x << ',' << rMax.y << ',' << rMax.z << ']' << '\n';
 
-	this->voxelGrid->setRenderBoundingBox(glm::vec4(rMin, .0), glm::vec4(rMax,0));
+	this->voxelGrid->setRenderBoundingBox(glm::vec4(rMin, .0), glm::vec4(rMax, .0));
 	this->voxelGrid->setGridResolution(imageSizes);
 	this->gridControl->updateGridDimensions();
 }
@@ -1011,11 +1017,11 @@ glm::mat4 Scene::computeTransformationMatrix() const {
 	transfoMat[1][1] = 0.39;
 	transfoMat[2][2] = 1.927 * std::cos(angleRad);
 
-	if (angleDeg < 0.) {
-		// compute translation along Z :
-		float w = static_cast<float>(this->gridWidth) *	.39;
-		transfoMat[3][2] = w * std::abs(std::sin(angleRad));
-	}
+//	if (angleDeg < 0.) {
+//		// compute translation along Z :
+//		float w = static_cast<float>(this->gridWidth) *	.39;
+//		transfoMat[3][2] = w * std::abs(std::sin(angleRad));
+//	}
 
 	return transfoMat;
 }

@@ -193,8 +193,8 @@ void ControlPanel::initSignals() {
 }
 
 void ControlPanel::updateViewers() {
-	this->leftViewer->update();
-	this->rightViewer->update();
+	if (this->leftViewer != nullptr) { this->leftViewer->update(); }
+	if (this->rightViewer != nullptr) { this->rightViewer->update(); }
 }
 
 void ControlPanel::activatePanels(bool activeStatus) {
@@ -243,73 +243,56 @@ void ControlPanel::setImageBoundaries(int bounds[6]) {
 void ControlPanel::setXCoord(double coordX) {
 	int co = static_cast<float>(coordX);
 	this->sceneToControl->slotSetNeighborXCoord(co);
-	this->leftViewer->update();
-	this->rightViewer->update();
+	this->updateViewers();
 }
 
 void ControlPanel::setYCoord(double coordY) {
 	int co = static_cast<float>(coordY);
 	this->sceneToControl->slotSetNeighborYCoord(co);
-	this->leftViewer->update();
-	this->rightViewer->update();
+	this->updateViewers();
 }
 
 void ControlPanel::setZCoord(double coordZ) {
 	int co = static_cast<float>(coordZ);
 	this->sceneToControl->slotSetNeighborZCoord(co);
-	this->leftViewer->update();
-	this->rightViewer->update();
+	this->updateViewers();
 }
 
 void ControlPanel::setXTexCoord(int coordX) {
 	uint co = static_cast<uint>(coordX);
 	this->sceneToControl->slotSetTextureXCoord(co);
-	this->leftViewer->update();
-	this->rightViewer->update();
+	this->updateViewers();
 }
 
 void ControlPanel::setYTexCoord(int coordY) {
 	uint co = static_cast<uint>(coordY);
 	this->sceneToControl->slotSetTextureYCoord(co);
-	this->leftViewer->update();
-	this->rightViewer->update();
+	this->updateViewers();
 }
 
 void ControlPanel::setZTexCoord(int coordZ) {
 	uint co = static_cast<uint>(coordZ);
 	this->sceneToControl->slotSetTextureZCoord(co);
-	this->leftViewer->update();
-	this->rightViewer->update();
+	this->updateViewers();
 }
 
 void ControlPanel::setTexCube(bool show) {
 	this->sceneToControl->slotToggleShowTextureCube(show);
-	this->leftViewer->update();
-	this->rightViewer->update();
+	this->updateViewers();
 }
 
 void ControlPanel::setMinTexVal(int val) {
 	if (this->sceneToControl) {
 		this->sceneToControl->slotSetMinTexValue(static_cast<uchar>(val));
 	}
-	if (this->leftViewer) {
-		this->leftViewer->update();
-	}
-	if (this->rightViewer) {
-		this->rightViewer->update();
-	}
+	this->updateViewers();
 }
 
 void ControlPanel::setMaxTexVal(int val) {
 	if (this->sceneToControl) {
 		this->sceneToControl->slotSetMaxTexValue(static_cast<uchar>(val));
 	}
-	if (this->leftViewer) {
-		this->leftViewer->update();
-	}
-	if (this->rightViewer) {
-		this->rightViewer->update();
-	}
+	this->updateViewers();
 }
 
 void ControlPanel::setCutPlaneX_Min(int val) {

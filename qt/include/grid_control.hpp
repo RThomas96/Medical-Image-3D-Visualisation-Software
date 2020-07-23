@@ -1,7 +1,7 @@
 #ifndef QT_INCLUDE_GRID_CONTROL_HPP_
 #define QT_INCLUDE_GRID_CONTROL_HPP_
 
-#include "../../voxel/include/voxel_grid.hpp"
+#include "../../grid/include/voxel_grid.hpp"
 
 #include <glm/glm.hpp>
 

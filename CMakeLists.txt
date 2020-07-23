@@ -137,8 +137,11 @@ ADD_EXECUTABLE(neighbor_visu
 	./qt/include/scene_control.hpp
 	./viewer/include/scene.hpp
 	./viewer/include/neighbor_visu_viewer.hpp
-	./voxel/include/tetmesh.hpp
-	./voxel/include/voxel_grid.hpp
+	./grid/include/tetmesh.hpp
+	./grid/include/voxel_grid.hpp
+	./grid/include/discrete_grid.hpp
+	./grid/include/input_discrete_grid.hpp
+	./grid/include/output_discrete_grid.hpp
 
 	# Main file :
 	./neighbor_visu_main.cpp
@@ -154,8 +157,11 @@ ADD_EXECUTABLE(neighbor_visu
 	./qt/src/scene_control.cpp
 	./viewer/src/scene.cpp
 	./viewer/src/neighbor_visu_viewer.cpp
-	./voxel/src/tetmesh.cpp
-	./voxel/src/voxel_grid.cpp
+	./grid/src/tetmesh.cpp
+	./grid/src/voxel_grid.cpp
+	./grid/src/discrete_grid.cpp
+	./grid/src/input_discrete_grid.cpp
+	./grid/src/output_discrete_grid.cpp
 )
 TARGET_LINK_LIBRARIES(neighbor_visu
 	PUBLIC Qt5::Core
