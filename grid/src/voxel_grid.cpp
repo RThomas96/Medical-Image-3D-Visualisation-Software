@@ -165,7 +165,7 @@ void VoxelGrid::computeData(InterpolationMethods method) {
 					//std::cout << "Voxel grid query :" << '\n';
 					//std::cout << "\tPosition in real space : [" << voxelPosWorldSpace.x << " ," << voxelPosWorldSpace.y << " ," << voxelPosWorldSpace.z << "]\n";
 					// And get the interpolated value here, directly stored in the data vector :
-					this->data[index] = this->inspectorMesh->getInterpolatedValue(voxelPosWorldSpace, method);
+					//this->data[index] = this->inspectorMesh->getInterpolatedValue(voxelPosWorldSpace, method);
 				}
 
 			}

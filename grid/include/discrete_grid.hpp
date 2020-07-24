@@ -20,6 +20,8 @@ glm::mat4 computeTransfoShear(double angleDeg, glm::vec3 origin = glm::vec3(.0f)
 /// @note Although some functions in this class may mention 'texels', they are in no way, shape, or form tied to the visualization aspect of the project.
 class DiscreteGrid {
 
+	friend class GridControl;
+
 	public:
 		/// @brief Definition of a 3 dimensionnal vector to store this grid's dimensions, amongst other things.
 		typedef glm::vec<3, std::size_t, glm::defaultp> sizevec3;
@@ -53,6 +55,9 @@ class DiscreteGrid {
 		/// @brief Fetches the voxel at the given position index, in the grid.
 		virtual DataType fetchTexelIndex(sizevec3 idx);
 
+		/// @brief Get the voxel grid's data.
+		virtual const std::vector<DataType>& getData(void) const;
+
 		/// @brief Returns the matrix used to go from world space to grid space.
 		const glm::mat4& getTransform_WorldToGrid(void) const;
 
@@ -62,8 +67,14 @@ class DiscreteGrid {
 		/// @brief Returns the resolution of the voxel grid,
 		const sizevec3& getGridDimensions(void) const;
 
+		/// @brief Voxel dimensions, in grid space.
+		const glm::vec3 getVoxelDimensions(void) const;
+
 		/// @brief Gets the bounding box of the grid.
-		const BoundingBox_General<float>& getBoundingBox(void) const;
+		const bbox_t& getBoundingBox(void) const;
+
+		/// @brief Gets the bounding box of the grid.
+		bbox_t getBoundingBoxWorldSpace(void) const;
 
 		/// @brief Checks if the grid is modifiable, for controllers
 		bool isModifiable(void) const;
@@ -85,8 +96,11 @@ class DiscreteGrid {
 		/// @brief Sets the grid's resolution.
 		virtual DiscreteGrid& setResolution(sizevec3 dims);
 
-		/// @brief Sets the bounding box.
-		virtual DiscreteGrid& setBoundingBox(glm::vec4 min, glm::vec4 max);
+		/// @brief Sets the bounding box of the discrete grid.
+		virtual DiscreteGrid& setBoundingBox(bbox_t renderWindow);
+
+		/// @brief Updates the bounding box of the discrete grid with another bounding box.
+		virtual DiscreteGrid& updateBoundingBox(bbox_t renderWindow);
 
 		/// @brief Sets the associated transform from world space to grid space.
 		virtual DiscreteGrid& setTransform_WorldToGrid(glm::mat4 _w2g);
@@ -119,11 +133,15 @@ class DiscreteGrid {
 		/// @brief Voxel dimensions along the X, Y, and Z axis in grid space.
 		glm::vec3 voxelDimensions;
 		/// @brief The matrix used to go from world space to grid space.
+		/// @details Usually precomputed from transform_gridToWorld's inverse, but can be set
+		/// manually (which will trigger an update of transform_gridToWorld as well).
 		glm::mat4 transform_worldToGrid;
 		/// @brief The matrix used to go from grid space to world space.
 		glm::mat4 transform_gridToWorld;
 		/// @brief The bounding box of the grid, in grid space :
 		bbox_t boundingBox;
+		/// @brief The threshold from which to consider a voxel as 'data', instead of the background.
+		DataType dataThreshold;
 		/// @brief Bounding box where data lives :
 		bbox_t dataBoundingBox;
 		/// @brief The name of the grid, used to identify it on a

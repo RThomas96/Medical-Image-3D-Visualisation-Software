@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 #include <iostream>
 #include <vector>
+#include <algorithm>
 
 /// @brief Simple representation of an Axis Aligned Bounding Box
 template <typename DataType> class BoundingBox_General {
@@ -23,7 +24,8 @@ template <typename DataType> class BoundingBox_General {
 
 		/// @brief Creates a bounding box around the coordinates given in argument
 		BoundingBox_General(vec _min, vec _max) : BoundingBox_General() {
-			this->setBoundaries(_min, _max);
+			this->setMinX(_min.x).setMinY(_min.y).setMinZ(_min.z);
+			this->setMaxX(_max.x).setMaxY(_max.y).setMaxZ(_max.z);
 		}
 
 		/// @brief Destroys the bounding box.
@@ -32,20 +34,20 @@ template <typename DataType> class BoundingBox_General {
 		/// @brief Sets the new minimum point of the bounding box.
 		/// @details If the vector is larger than the max point, this
 		/// function call reverses the order of boundaries.
-		__attribute__((flatten)) BoundingBox_General& setMin(vec _min) {
-			this->setBoundaries(_min, this->max);
+		__attribute__((flatten)) BoundingBox_General& setMin(vec point) {
+			this->setMinX(point.x).setMinY(point.y).setMinZ(point.z);
 			return *this;
 		}
 
 		/// @brief Sets the new maximum point of the bounding box.
 		/// @details If the vector is small than the min point, this
 		/// function call reverses the order of boundaries.
-		BoundingBox_General& setMax(vec _max) {
-			this->setBoundaries(this->min, _max);
+		BoundingBox_General& setMax(vec point) {
+			this->setMaxX(point.x).setMaxY(point.y).setMaxZ(point.z);
 			return *this;
 		}
 
-		std::vector<vec> getAllCorners(void) {
+		std::vector<vec> getAllCorners(void) const {
 			std::vector<vec> corners;
 			corners.push_back(vec(this->min.x, this->min.y, this->min.z));
 			corners.push_back(vec(this->min.x, this->min.y, this->max.z));
@@ -58,17 +60,34 @@ template <typename DataType> class BoundingBox_General {
 			return corners;
 		}
 
-		BoundingBox_General& addPoint(vec point) {
+		__attribute__((flatten)) BoundingBox_General& addPoint(vec point) {
 			this->setMinX(point.x).setMinY(point.y).setMinZ(point.z);
 			this->setMaxX(point.x).setMaxY(point.y).setMaxZ(point.z);
 			return *this;
 		}
 
-		BoundingBox_General& addPoints(std::vector<vec> points) {
+		BoundingBox_General& addPoints(const std::vector<vec>& points) {
 			for (const vec& p : points) {
 				this->addPoint(p);
 			}
 			return *this;
+		}
+
+		BoundingBox_General transformTo(const glm::mat4 transform) const {
+			// Transform the bounding box to another space
+			std::vector<vec> corners = this->getAllCorners();
+			// Create new BB englobing this space :
+			BoundingBox_General<DataType> newbb;
+			// For each element, convert to another space :
+			std::for_each(corners.begin(), corners.end(), [&](vec &v){
+				glm::vec4 pos = glm::vec4(static_cast<float>(v.x), static_cast<float>(v.y), static_cast<float>(v.z), 1.);
+				pos = transform * pos;
+				v.x = static_cast<DataType>(pos.x);
+				v.y = static_cast<DataType>(pos.y);
+				v.z = static_cast<DataType>(pos.z);
+				newbb.addPoint(v);
+			});
+			return newbb;
 		}
 
 		/// @brief Get a read-only reference to the minimum point.
@@ -89,43 +108,51 @@ template <typename DataType> class BoundingBox_General {
 		/// @brief Sets the X coordinate of the min point to the value given.
 		BoundingBox_General& setMinX(double _d) {
 			DataType d = static_cast<DataType>(_d);
-			this->min.x = (this->min.x < d) ? this->min.x : d;
+			this->min.x = std::min(this->min.x, d);
 			return *this;
 		}
 
 		/// @brief Sets the Y coordinate of the min point to the value given.
 		BoundingBox_General& setMinY(double _d) {
 			DataType d = static_cast<DataType>(_d);
-			this->min.y = (this->min.y < d) ? this->min.y : d;
+			this->min.y = std::min(this->min.y, d);
 			return *this;
 		}
 
 		/// @brief Sets the Z coordinate of the min point to the value given.
 		BoundingBox_General& setMinZ(double _d) {
 			DataType d = static_cast<DataType>(_d);
-			this->min.z = (this->min.z < d) ? this->min.z : d;
+			this->min.z = std::min(this->min.z, d);
 			return *this;
 		}
 
 		/// @brief Sets the X coordinate of the max point to the value given.
 		BoundingBox_General& setMaxX(double _d) {
 			DataType d = static_cast<DataType>(_d);
-			this->max.x = (this->max.x < d) ? d : this->max.x;
+			this->max.x = std::max(this->max.x, d);
 			return *this;
 		}
 
 		/// @brief Sets the Y coordinate of the max point to the value given.
 		BoundingBox_General& setMaxY(double _d) {
 			DataType d = static_cast<DataType>(_d);
-			this->max.y = (this->max.y < d) ? d : this->max.y;
+			this->max.y = std::max(this->max.y, d);
 			return *this;
 		}
 
 		/// @brief Sets the Z coordinate of the max point to the value given.
 		BoundingBox_General& setMaxZ(double _d) {
 			DataType d = static_cast<DataType>(_d);
-			this->max.z = (this->max.z < d) ? d : this->max.z;
+			this->max.z = std::max(this->max.z, d);
 			return *this;
+		}
+
+		void printInfo(std::string message) const {
+			if (message.length() != 0) {
+				std::cerr << message << '\n';
+			}
+			std::cerr << '\t' << '[' << this->min.x << ',' << this->min.y << ',' << this->min.z << ']' << '\n';
+			std::cerr << '\t' << '[' << this->max.x << ',' << this->max.y << ',' << this->max.z << ']' << '\n';
 		}
 
 	protected:

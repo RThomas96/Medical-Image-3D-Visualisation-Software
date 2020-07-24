@@ -21,6 +21,9 @@ DiscreteGrid::DiscreteGrid(bool _modifiable) {
 	this->transform_gridToWorld = glm::mat4(1.f);
 	this->transform_worldToGrid = glm::mat4(1.f);
 	this->gridName = "defaultGridName";
+	this->boundingBox = bbox_t();
+	this->dataBoundingBox = bbox_t();
+	this->dataThreshold = DataType(0);
 }
 
 DiscreteGrid::~DiscreteGrid(void) {
@@ -31,18 +34,20 @@ DiscreteGrid& DiscreteGrid::recomputeBoundingBox(DataType threshold) {
 	// Early return for empty grids :
 	if (this->data.size() == 0) { return *this; };
 	DiscreteGrid::bbox_t newBB;
-	std::cout << "Updating the grid \"" << this->gridName << "\" with a new threshold of " << threshold << '\n';
+	std::cout << "Updating the grid \"" << this->gridName << "\" with a new threshold of " << +threshold << '\n';
 	for (std::size_t z = 0; z < this->gridDimensions.z; ++z) {
 		for (std::size_t y = 0; y < this->gridDimensions.y; ++y) {
 			for (std::size_t x = 0; x < this->gridDimensions.x; ++x) {
 				if (this->data[x+y*this->gridDimensions.x+z*this->gridDimensions.x*this->gridDimensions.y] >= threshold) {
 					DiscreteGrid::bbox_t::vec v(static_cast<float>(x), static_cast<float>(y), static_cast<float>(z));
+					// add v to the data bounding box, updating itself :
 					newBB.addPoint(v);
 				}
 			}
 		}
 	}
 	this->dataBoundingBox = newBB;
+	this->dataThreshold = threshold;
 	std::cout << "Updated" << '\n';
 	return *this;
 }
@@ -81,6 +86,10 @@ DiscreteGrid::DataType DiscreteGrid::fetchTexelIndex(sizevec3 idx) {
 	else { return this->data[index]; }
 }
 
+const std::vector<DiscreteGrid::DataType>& DiscreteGrid::getData() const {
+	return this->data;
+}
+
 const glm::mat4& DiscreteGrid::getTransform_WorldToGrid() const {
 	return this->transform_worldToGrid;
 }
@@ -93,8 +102,16 @@ const DiscreteGrid::sizevec3& DiscreteGrid::getGridDimensions() const {
 	return this->gridDimensions;
 }
 
+const glm::vec3 DiscreteGrid::getVoxelDimensions() const {
+	return this->voxelDimensions;
+}
+
 const DiscreteGrid::bbox_t& DiscreteGrid::getBoundingBox() const {
 	return this->boundingBox;
+}
+
+DiscreteGrid::bbox_t DiscreteGrid::getBoundingBoxWorldSpace() const {
+	return this->boundingBox.transformTo(this->transform_gridToWorld);
 }
 
 bool DiscreteGrid::isModifiable() const {
@@ -127,16 +144,32 @@ DiscreteGrid& DiscreteGrid::setModifiable(bool _mod) {
 }
 
 DiscreteGrid& DiscreteGrid::setResolution(sizevec3 dims) {
+	if (not this->modifiable) { return *this; }
 	this->gridDimensions = dims;
 	this->updateVoxelDimensions();
 	return *this;
 }
 
-DiscreteGrid& DiscreteGrid::setBoundingBox(glm::vec4 min, glm::vec4 max) {
-	this->boundingBox.setMin(min);
-	this->boundingBox.setMax(max);
+DiscreteGrid& DiscreteGrid::setBoundingBox(bbox_t renderWindow) {
+	if (not this->modifiable) { return *this; }
+	// assumes the bbox given is in world space
+	this->boundingBox = renderWindow;
+	// update voxel dimensions :
 	this->updateVoxelDimensions();
-	this->dataBoundingBox = this->boundingBox;
+	// update the data bb :
+	this->recomputeBoundingBox(this->dataThreshold);
+	return *this;
+}
+
+DiscreteGrid& DiscreteGrid::updateBoundingBox(bbox_t renderWindow) {
+	if (not this->modifiable) { return *this; }
+	// assumes the bbox given is in world space. update :
+	std::vector<bbox_t::vec> cornersBB = renderWindow.getAllCorners();
+	this->boundingBox.addPoints(cornersBB);
+	// update voxel dimensions :
+	this->updateVoxelDimensions();
+	// update the data bb :
+	this->recomputeBoundingBox(this->dataThreshold);
 	return *this;
 }
 
@@ -162,6 +195,8 @@ const std::string& DiscreteGrid::getGridName(void) const {
 }
 
 void DiscreteGrid::updateVoxelDimensions() {
+	// if the resolution hasn't been set, return to prevent NaNs :
+	if (this->gridDimensions.x == 0u || this->gridDimensions.y == 0u || this->gridDimensions.z == 0u) { return; }
 	// voxel dimensions along each axis should be BBlength / resolution :
 	glm::vec3 diag = this->boundingBox.getDiagonal();
 	this->voxelDimensions.x = diag.x / static_cast<float>(this->gridDimensions.x);

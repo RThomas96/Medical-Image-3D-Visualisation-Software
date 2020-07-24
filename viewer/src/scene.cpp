@@ -73,15 +73,20 @@ void Scene::initGl(QOpenGLContext* _context, std::size_t _x, std::size_t _y, std
 
 	this->initializeOpenGLFunctions();
 
-	this->texStorage = std::make_shared<TextureStorage>();
-	this->texStorage->enableDownsampling(true);
-	this->texStorage->setInitialToRealMatrix(this->computeTransformationMatrix());
+	this->t = std::make_shared<TextureStorage>();
+	this->t->enableDownsampling(true);
+	this->t->setInitialToRealMatrix(this->computeTransformationMatrix());
 
-	this->mesh = std::make_shared<TetMesh>(this->texStorage);
+	this->texStorage = std::make_shared<InputGrid>();
+	this->texStorage->setTransform_GridToWorld(this->computeTransformationMatrix());
 
-	this->voxelGrid	= std::make_shared<VoxelGrid>();
-	this->voxelGrid->setScene(this).setInspector(this->mesh).setImageStack(this->texStorage).setController(this->gridControl);
+	this->voxelGrid	= std::make_shared<OutputGrid>();
 	this->gridControl->setVoxelGrid(this->voxelGrid);
+
+	this->voxelGrid->getBoundingBox().printInfo("BEFORE ANYTHING HAPPENS");
+
+	this->mesh = std::make_shared<TetMesh>();
+	this->mesh->addInputGrid(this->texStorage).setOutputGrid(this->voxelGrid);
 
 	///////////////////////////
 	/// CREATE VAO :
@@ -123,13 +128,6 @@ void Scene::initGl(QOpenGLContext* _context, std::size_t _x, std::size_t _y, std
 		std::cerr << "Cannot find " << "neighborOffset" << " uniform" << '\n';
 	}
 	GetOpenGLError();
-
-	if (this->showTextureCube == false && this->cubeShown == true) {
-		this->hideTexCubeVBO();
-	}
-	if (this->showTextureCube == true && this->cubeShown == false) {
-		this->showTexCubeVBO();
-	}
 }
 
 void Scene::recompileShaders() {
@@ -342,6 +340,8 @@ void Scene::loadImage(std::size_t i, std::size_t j, std::size_t k, const unsigne
 	this->gridHeight= j;
 	this->gridDepth = k;
 
+	std::cerr << "Set grid size in scene to be " << i << ' ' << j << ' ' << k << '\n';
+
 	if (pData == nullptr) { pData = this->loadEmptyImage(); }
 
 	if (this->textureHandle == 0) {
@@ -441,32 +441,30 @@ void Scene::loadVoxelGrid(svec3 size, const unsigned char *pData) {
 }
 
 void Scene::queryImage(void) {
-	this->texStorage->loadImages();
-	const std::vector<unsigned char>& image = this->texStorage->getData();
-	svec3 imageSizes = this->texStorage->getImageSize();
+	this->t->loadImages();
+	const std::vector<unsigned char>& image = this->t->getData();
+	svec3 imageSizes = this->t->getImageSize();
 	std::size_t i = imageSizes[0];
 	std::size_t j = imageSizes[1];
 	std::size_t k = imageSizes[2];
+	this->texStorage->setImage(image, imageSizes).recomputeBoundingBox(5);
+	this->t->resetTexture();
+
+	DiscreteGrid::sizevec3 d = this->texStorage->getGridDimensions();
+	DiscreteGrid::bbox_t b = this->texStorage->getBoundingBoxWorldSpace();
 
 	std::cerr << "Loading image of size " << i << ',' << j << ',' << k << '\n';
+	std::cerr << "InputGrid " << this->texStorage->getGridName() <<  " dimensions :\n";
+	std::cerr << '\t' << "Dimensions : [" << d.x << ' ' << d.y << ' ' << d.z << "]\n";
+	b.printInfo("");
 
 	this->loadImage(i, j, k, image.data());
 
-	std::vector<BoundingBox_General<float>::vec> points;
+	std::vector<DiscreteGrid::bbox_t::vec> points;
 
-	glm::vec3 rMin = this->texStorage->getImageBoundingBoxMin_WS();
-	glm::vec3 rMax = this->texStorage->getImageBoundingBoxMax_WS();
-	BoundingBox_General<float> rb = this->texStorage->getRenderBB_WS();
-	BoundingBox_General<float> bb(rMin,rMax);
-	rMin = rb.getMin();
-	rMax = rb.getMax();
+	DiscreteGrid::bbox_t rb = this->texStorage->getBoundingBoxWorldSpace();
 
-	std::cerr << "Set the bounding box to :\n";
-	std::cerr << '\t' << "[" << rMin.x << ',' << rMin.y << ',' << rMin.z << ']' << '\n';
-	std::cerr << '\t' << "[" << rMax.x << ',' << rMax.y << ',' << rMax.z << ']' << '\n';
-
-	this->voxelGrid->setRenderBoundingBox(glm::vec4(rMin, .0), glm::vec4(rMax, .0));
-	this->voxelGrid->setGridResolution(imageSizes);
+	this->voxelGrid->setBoundingBox(rb).setResolution(imageSizes);
 	this->gridControl->updateGridDimensions();
 }
 
@@ -478,8 +476,8 @@ void Scene::queryIMA() {
 
 	this->loadImage(std::get<0>(dimensions), std::get<1>(dimensions), std::get<2>(dimensions), data.data());
 
-	this->voxelGrid->setRenderBoundingBox(glm::vec4(.0f), glm::vec4(.0f));
-	this->voxelGrid->setGridResolution(svec3(0, 0, 0));
+	this->voxelGrid->setResolution(DiscreteGrid::sizevec3(0,0,0));
+	this->voxelGrid->setBoundingBox(DiscreteGrid::bbox_t());
 }
 
 void Scene::drawRealSpace(GLfloat mvMat[], GLfloat pMat[]) {
@@ -487,30 +485,17 @@ void Scene::drawRealSpace(GLfloat mvMat[], GLfloat pMat[]) {
 	GetOpenGLError();
 
 	glm::vec4 n = glm::vec4(this->neighborOffset.x, this->neighborOffset.y, this->neighborOffset.z, 1.);
-	this->neighborPos = this->texStorage->convertRealSpaceToVoxelIndex(n);
+	this->neighborPos = this->t->convertRealSpaceToVoxelIndex(n);
 
 	glm::mat4 transfoMat = this->computeTransformationMatrix();
 	glm::mat4 voxelMat = glm::mat4(1.f);
 
 	this->draw(mvMat, pMat, transfoMat, voxelMat);
-
-	std::vector<glm::vec4> vertices = this->mesh->getVertices();
-	std::vector<unsigned char> values = this->mesh->getVertexValues();
-
-	glPointSize(5.0);
-	glBegin(GL_POINTS);
-	for (std::size_t i = 0; i < vertices.size(); ++i) {
-		glm::vec3 rgb = ucharToRGB(values[i], 5, 255, 50, 200);
-		glColor3f(rgb.r, rgb.g, rgb.b);
-		glm::vec4 v = this->texStorage->convertInitialSpaceToRealSpace(vertices[i]);
-		glVertex3f(v.x, v.y, v.z);
-	}
-	glEnd();
 }
 
 void Scene::drawInitialSpace(GLfloat mvMat[], GLfloat pMat[]) {
 
-	this->neighborPos = this->texStorage->convertRealSpaceToVoxelIndex(glm::vec4(this->neighborOffset.x, this->neighborOffset.y, this->neighborOffset.z, 1.));
+	this->neighborPos = this->t->convertRealSpaceToVoxelIndex(glm::vec4(this->neighborOffset.x, this->neighborOffset.y, this->neighborOffset.z, 1.));
 	//this->neighborPos -= glm::uvec3(1, 1, 1);
 
 	glm::mat4 transfoMat = glm::mat4(1.);
@@ -519,20 +504,6 @@ void Scene::drawInitialSpace(GLfloat mvMat[], GLfloat pMat[]) {
 	// In initial space, the voxel grid needs to be deformed inverse to the
 	// transformation applied when saving them to disk. So, computeMatrix^-1
 	this->draw(mvMat, pMat, transfoMat, voxelMat);
-
-	std::vector<glm::vec4> vertices = this->mesh->getVertices();
-	std::vector<unsigned char> values = this->mesh->getVertexValues();
-
-	glPointSize(5.0);
-	glBegin(GL_POINTS);
-	for (std::size_t i = 0; i < vertices.size(); ++i) {
-		glm::vec3 rgb = ucharToRGB(values[i], 5, 255, 50, 200);
-		glColor3f(rgb.x, rgb.y, rgb.z);
-		glm::vec4 v = (vertices[i]);
-		glVertex3f(v.x, v.y, v.z);
-		glColor3f(rgb.x, rgb.y, rgb.z);
-	}
-	glEnd();
 }
 
 void Scene::prepUniforms(glm::mat4 transfoMat, GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos) {
@@ -632,10 +603,10 @@ void Scene::drawVoxelGrid(GLfloat mvMat[], GLfloat pMat[], glm::mat4 transfoMat)
 	glm::vec4 lightPos = glm::vec4(-0.25, -0.25, -0.25, 1.0);
 
 	// Compute grid dimensions as float, not size_t for GLSL (to make sure no overflow errors can happen while uplodaing data) :
-	svec3 dims = this->voxelGrid->getGridDimensions();
+	DiscreteGrid::sizevec3 dims = this->voxelGrid->getGridDimensions();
 	glm::vec3 d = glm::vec3(static_cast<float>(dims.x), static_cast<float>(dims.y), static_cast<float>(dims.z));
 
-	if (this->voxelGrid->getData().size()) {
+	if (this->voxelGrid->getData().size() != 0u) {
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_3D, this->voxelGridTexHandle);
 		GLint texData_Loc = glGetUniformLocation(this->programHandle_VG, "texData");
@@ -659,7 +630,7 @@ void Scene::drawVoxelGrid(GLfloat mvMat[], GLfloat pMat[], glm::mat4 transfoMat)
 	glUniform3fv(voxelGridSize_Loc, 1, glm::value_ptr(d));
 	GetOpenGLError();
 	GLint voxelGridOrigin_Loc = glGetUniformLocation(this->programHandle_VG, "voxelGridOrigin");
-	glUniform3fv(voxelGridOrigin_Loc, 1, glm::value_ptr(this->voxelGrid->getRenderBB().getMin()));
+	glUniform3fv(voxelGridOrigin_Loc, 1, glm::value_ptr(this->voxelGrid->getBoundingBox().getMin()));
 	GetOpenGLError();
 
 	// Cutting planes :
@@ -730,11 +701,12 @@ void Scene::populateGrid() {
 		return;
 	}
 
-	this->voxelGrid->populateGrid(InterpolationMethods::NearestNeighbor);
+	std::cerr << "Could not populate grid from scene !\n";
+
+	//this->voxelGrid->populateGrid(InterpolationMethods::NearestNeighbor);
 }
 
 void Scene::generateTexCube() {
-
 	// Generate statically a cube of dimension gridSize :
 	glm::vec4 center = glm::vec4(.5f, .5f, .5f, 1.f);
 	/**
@@ -974,12 +946,12 @@ void Scene::slotSetMaxTexValue(uchar val) {
 }
 
 void Scene::updateNeighborTetMesh() {
+	/*
 	glm::vec4 n = glm::vec4(this->neighborOffset.x, this->neighborOffset.y, this->neighborOffset.z, 1.);
 	std::cerr << "Queried point ! " << n.x << ',' << n.y << ',' << n.z << '\n';
 	glm::vec4 o = this->texStorage->convertRealSpaceToInitialSpace(n);
 	std::cerr << "Inverse point ! " << o.x << ',' << o.y << ',' << o.z << ',' << o.w << '\n';
-	this->mesh->setOriginInitialSpace(o);
-	this->mesh->printInfo();
+	*/
 }
 
 void Scene::slotSetCutPlaneX_Min(float coord) {

@@ -7,7 +7,7 @@
 #include <fstream>
 #include <vector>
 
-class VoxelGrid; // Fwd-declaration
+class DiscreteGrid; // Fwd-declaration
 
 /// @brief A namespace for file inputs and outputs for the program.
 namespace IO {
@@ -56,7 +56,7 @@ namespace IO {
 			/// specified and allowed).
 			/// @param _vg The voxel grid to write the contents of.
 			/// @returns A reference to *this, to chain function calls.
-			virtual GenericGridWriter& write(const VoxelGrid* const _vg);
+			virtual GenericGridWriter& write(const DiscreteGrid* const _vg);
 
 			/// @brief Sets the 'comment' to be written to the file, overwriting any previous value.
 			/// @details Most file formats will not allow a comment, but if the writer you
@@ -92,7 +92,7 @@ namespace IO {
 			/// @brief Writes the entire grid at once, as a block.
 			/// @param _vg The voxel grid to write to file.
 			/// @return The number of bytes written to disk.
-			virtual std::size_t write_Once(const VoxelGrid* const _vg);
+			virtual std::size_t write_Once(const DiscreteGrid* const _vg);
 
 			/// @brief Writes the entire grid as `depth` files, according to the basename
 			/// and extension set beforehand.
@@ -105,7 +105,7 @@ namespace IO {
 			/// @param depth The depth of the voxel grid to write. Also, the number of
 			/// images to write.
 			/// @return The number of bytes written to disk.
-			virtual std::size_t write_Depthwise(const VoxelGrid* const _vg, std::size_t depthChosen);
+			virtual std::size_t write_Depthwise(const DiscreteGrid* const _vg, std::size_t depthChosen);
 
 		protected:
 			std::string baseName; ///< Base name of the file. If multiple files are written, they will be written as `baseName_XX.extension`.
@@ -129,17 +129,17 @@ namespace IO {
 			/// @details Writes the entire grid at once, as the DIM/IMA filetype represents a whole grid at once.
 			/// @param _vg The voxel grid to write the contents of.
 			/// @returns A reference to *this, to chain function calls.
-			virtual DIMWriter& write(const VoxelGrid* const _vg) override;
+			virtual DIMWriter& write(const DiscreteGrid* const _vg) override;
 
 		protected:
 			/// @brief Opens the DIM/IMA file combo based on the basename provided.
 			virtual void openFile(bool _binaryMode = false) override;
 
 			/// @brief Writes the entire file at once.
-			virtual std::size_t write_Once(const VoxelGrid* const _vg) override;
+			virtual std::size_t write_Once(const DiscreteGrid* const _vg) override;
 
 			/// @brief Writes the info about the grid to the DIM file.
-			void writeDIMInfo(const VoxelGrid* const _vg);
+			void writeDIMInfo(const DiscreteGrid* const _vg);
 
 		protected:
 			std::ofstream* outputDIM; ///< A pointer to a file handle for the DIM file
@@ -159,14 +159,14 @@ namespace IO {
 			~SingleTIFFWriter(void);
 
 			/// @brief Write the whole voxel grid to file,
-			virtual SingleTIFFWriter& write(const VoxelGrid* const _vg) override;
+			virtual SingleTIFFWriter& write(const DiscreteGrid* const _vg) override;
 
 		protected:
 			/// @brief Opens the TIFF file to consequently write to.
-			void openTIFFFile(const VoxelGrid* const _vg);
+			void openTIFFFile(const DiscreteGrid* const _vg);
 
 			/// @brief Writes the whole file at once.
-			virtual std::size_t write_Once(const VoxelGrid* const _vg) override;
+			virtual std::size_t write_Once(const DiscreteGrid* const _vg) override;
 		protected:
 			TinyTIFFFile* tiffFile; ///< The tiff file to write to.
 	};
@@ -191,12 +191,12 @@ namespace IO {
 			/// @details Each call to this function writes the latest image generated in the
 			/// grid, and then increments `depthReached` by one, signifying we will then (at
 			/// the next call) need to write the image at depth `depthReached`.
-			virtual StaggeredTIFFWriter& write(const VoxelGrid* const _vg) override;
+			virtual StaggeredTIFFWriter& write(const DiscreteGrid* const _vg) override;
 
 		protected:
 			/// @brief Opens the file corresponding to the depth level 'n', to be the next one
 			/// written when called with `write()`.
-			void openVersionnedTIFFFile(const VoxelGrid* const _vg);
+			void openVersionnedTIFFFile(const DiscreteGrid* const _vg);
 
 			/// @brief Computes the length of the suffix to append, equal to log10(maxDepth).
 			/// @details Computes the total number of digits to have in the suffix, in order to

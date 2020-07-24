@@ -13,7 +13,7 @@ namespace IO {
 	// The base destructor does nothing.
 	GenericGridWriter::~GenericGridWriter() {}
 
-	GenericGridWriter& GenericGridWriter::write(const VoxelGrid* const _vg) {
+	GenericGridWriter& GenericGridWriter::write(const DiscreteGrid* const _vg) {
 		return *this; // To be implemented in daughter classes.
 	}
 
@@ -43,11 +43,11 @@ namespace IO {
 		return; // To be implemented in daughter classes.
 	}
 
-	std::size_t GenericGridWriter::write_Once(const VoxelGrid* const _vg) {
+	std::size_t GenericGridWriter::write_Once(const DiscreteGrid* const _vg) {
 		return 0; // To be implemented in daughter classes.
 	}
 
-	std::size_t GenericGridWriter::write_Depthwise(const VoxelGrid* const _vg, std::size_t depth) {
+	std::size_t GenericGridWriter::write_Depthwise(const DiscreteGrid* const _vg, std::size_t depth) {
 		return 0; // To be implemented in daughter classes.
 	}
 
@@ -62,7 +62,7 @@ namespace IO {
 		this->outputIMA->close();
 	}
 
-	DIMWriter& DIMWriter::write(const VoxelGrid* const _vg) {
+	DIMWriter& DIMWriter::write(const DiscreteGrid* const _vg) {
 		this->bytesWritten = this->write_Once(_vg);
 		this->depthReached = _vg->getGridDimensions().z;
 		return *this;
@@ -98,7 +98,7 @@ namespace IO {
 		return;
 	}
 
-	std::size_t DIMWriter::write_Once(const VoxelGrid *const _vg) {
+	std::size_t DIMWriter::write_Once(const DiscreteGrid *const _vg) {
 		if (this->outputDIM == nullptr || this->outputIMA == nullptr) {
 			std::cerr << __FUNCTION__ << " : Could not write the contents to a file, one or more weren't opened." << '\n';
 			return 0;
@@ -122,7 +122,7 @@ namespace IO {
 		return static_cast<std::size_t>(this->outputDIM->tellp() + this->outputIMA->tellp());
 	}
 
-	void DIMWriter::writeDIMInfo(const VoxelGrid* const _vg) {
+	void DIMWriter::writeDIMInfo(const DiscreteGrid* const _vg) {
 		/* Writes the file all at once. */
 
 		// Writes the grid's dimensions
@@ -135,6 +135,8 @@ namespace IO {
 		*this->outputDIM << "-dx " << vxDim.x << '\n';
 		*this->outputDIM << "-dy " << vxDim.y << '\n';
 		*this->outputDIM << "-dz " << vxDim.z << '\n';
+
+		// TODO : add other properties here ...
 
 		return;
 	}
@@ -150,13 +152,13 @@ namespace IO {
 		}
 	}
 
-	SingleTIFFWriter& SingleTIFFWriter::write(const VoxelGrid *const _vg) {
+	SingleTIFFWriter& SingleTIFFWriter::write(const DiscreteGrid *const _vg) {
 		this->bytesWritten = this->write_Once(_vg);
 		this->depthReached = _vg->getGridDimensions().z;
 		return *this;
 	}
 
-	void SingleTIFFWriter::openTIFFFile(const VoxelGrid *const _vg) {
+	void SingleTIFFWriter::openTIFFFile(const DiscreteGrid *const _vg) {
 		uint16_t bps = static_cast<uint16_t>(sizeof(unsigned char));
 		svec3 dims = _vg->getGridDimensions();
 		uint32_t width = static_cast<uint32_t>(dims.x);
@@ -172,7 +174,7 @@ namespace IO {
 		return;
 	}
 
-	std::size_t SingleTIFFWriter::write_Once(const VoxelGrid *const _vg) {
+	std::size_t SingleTIFFWriter::write_Once(const DiscreteGrid *const _vg) {
 		this->openTIFFFile(_vg);
 		// Checks the file was opened :
 		if (this->tiffFile == nullptr) {

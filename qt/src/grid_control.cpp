@@ -6,12 +6,16 @@
 #include <QGridLayout>
 #include <QFileDialog>
 
-GridControl::GridControl(VoxelGrid* const vg, QWidget* parent) : QWidget(parent) {
-	this->voxelGrid.reset(vg);
+GridControl::GridControl(std::shared_ptr<DiscreteGrid> vg, QWidget* parent) : QWidget(parent) {
+	this->voxelGrid = vg;
 	this->setupWidgets();
 	if (this->voxelGrid != nullptr) {
 		this->updateGridDimensions();
-		this->setupSignals();
+		if (this->voxelGrid->isModifiable()) {
+			this->setupSignals();
+		} else {
+			this->disableWidgets();
+		}
 	}
 }
 
@@ -32,12 +36,54 @@ GridControl::~GridControl() {
 	delete this->info_VoxelRate;
 	delete this->info_TotalTime;
 	delete this->info_MemorySize;
+	delete this->nameLabel;
 }
 
-void GridControl::setVoxelGrid(std::shared_ptr<VoxelGrid> vg) {
-	this->voxelGrid = vg;
-	this->updateGridDimensions();
-	this->setupSignals();
+void GridControl::enableWidgets() {
+	this->input_GridSizeX->setDisabled(false);
+	this->input_GridSizeY->setDisabled(false);
+	this->input_GridSizeZ->setDisabled(false);
+	this->methodPicker->setDisabled(false);
+	this->info_GridSizeTotal->setDisabled(false);
+	this->info_VoxelSize->setDisabled(false);
+	this->button_FillButton->setDisabled(false);
+	this->input_GridBBMinX->setDisabled(false);
+	this->input_GridBBMinY->setDisabled(false);
+	this->input_GridBBMinZ->setDisabled(false);
+	this->input_GridBBMaxX->setDisabled(false);
+	this->input_GridBBMaxY->setDisabled(false);
+	this->input_GridBBMaxZ->setDisabled(false);
+	this->info_VoxelRate->setDisabled(false);
+	this->info_TotalTime->setDisabled(false);
+	this->info_MemorySize->setDisabled(false);
+}
+
+void GridControl::disableWidgets() {
+	this->input_GridSizeX->setDisabled(true);
+	this->input_GridSizeY->setDisabled(true);
+	this->input_GridSizeZ->setDisabled(true);
+	this->methodPicker->setDisabled(true);
+	this->info_GridSizeTotal->setDisabled(true);
+	this->info_VoxelSize->setDisabled(true);
+	this->button_FillButton->setDisabled(true);
+	this->input_GridBBMinX->setDisabled(true);
+	this->input_GridBBMinY->setDisabled(true);
+	this->input_GridBBMinZ->setDisabled(true);
+	this->input_GridBBMaxX->setDisabled(true);
+	this->input_GridBBMaxY->setDisabled(true);
+	this->input_GridBBMaxZ->setDisabled(true);
+	this->info_VoxelRate->setDisabled(true);
+	this->info_TotalTime->setDisabled(true);
+	this->info_MemorySize->setDisabled(true);
+}
+
+void GridControl::setVoxelGrid(std::shared_ptr<DiscreteGrid> vg) {
+	if (vg != nullptr) {
+		this->voxelGrid = vg;
+		this->nameLabel->setText(QString(this->voxelGrid->getGridName().c_str()));
+		this->updateGridDimensions();
+		this->setupSignals();
+	}
 }
 
 void GridControl::setupWidgets() {
@@ -47,6 +93,8 @@ void GridControl::setupWidgets() {
 	// goddammit, is it ever verbose. Mainly because all the
 	// setXXX() functions return void, disallowing chained
 	// calls like "obj->setX()->setY()->setZ();"
+	// Also, there are a metric butt-ton of widgets here
+	// in order to make the grid controller UI.
 
 	// Setup all inputs :
 	this->methodPicker = new QComboBox();
@@ -86,8 +134,17 @@ void GridControl::setupWidgets() {
 	// Builds the grid layout, iterating on the rows :
 	int currentRow = 0;
 
+	QLabel* pre_nameLabel = new QLabel("Controlling grid named ");
+	if (this->voxelGrid != nullptr) {
+		this->nameLabel = new QLabel(QString(this->voxelGrid->getGridName().c_str()));
+	} else {
+		this->nameLabel = new QLabel("-- undefined --");
+	}
+
 	QGridLayout* mainLayout = new QGridLayout();
-	mainLayout->addWidget(new QLabel("Grid Control"), currentRow, 0, 1, -1, Qt::AlignCenter);
+	mainLayout->addWidget(new QLabel("Grid Control"), currentRow++, 0, 1, -1, Qt::AlignCenter);
+	mainLayout->addWidget(pre_nameLabel, currentRow, 0, Qt::AlignLeft);
+	mainLayout->addWidget(this->nameLabel, currentRow, 1, Qt::AlignLeft);
 	currentRow +=2; // Add an extra row for spacing
 
 	// Control of voxel number :
@@ -190,17 +247,17 @@ void GridControl::setupSignals() {
 		return;
 	}
 
-	connect(this->input_GridSizeX, QOverload<int>::of(&QSpinBox::valueChanged), this->voxelGrid.get(), &VoxelGrid::slotSetGridDimensionX);
-	connect(this->input_GridSizeY, QOverload<int>::of(&QSpinBox::valueChanged), this->voxelGrid.get(), &VoxelGrid::slotSetGridDimensionY);
-	connect(this->input_GridSizeZ, QOverload<int>::of(&QSpinBox::valueChanged), this->voxelGrid.get(), &VoxelGrid::slotSetGridDimensionZ);
+	connect(this->input_GridSizeX, QOverload<int>::of(&QSpinBox::valueChanged), this, &GridControl::setGridDimensionX);
+	connect(this->input_GridSizeY, QOverload<int>::of(&QSpinBox::valueChanged), this, &GridControl::setGridDimensionY);
+	connect(this->input_GridSizeZ, QOverload<int>::of(&QSpinBox::valueChanged), this, &GridControl::setGridDimensionZ);
 
-	connect(this->input_GridBBMinX, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this->voxelGrid.get(), &VoxelGrid::slotSetGridBBMinX);
-	connect(this->input_GridBBMinY, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this->voxelGrid.get(), &VoxelGrid::slotSetGridBBMinY);
-	connect(this->input_GridBBMinZ, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this->voxelGrid.get(), &VoxelGrid::slotSetGridBBMinZ);
+	connect(this->input_GridBBMinX, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &GridControl::setGridBBMinX);
+	connect(this->input_GridBBMinY, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &GridControl::setGridBBMinY);
+	connect(this->input_GridBBMinZ, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &GridControl::setGridBBMinZ);
 
-	connect(this->input_GridBBMaxX, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this->voxelGrid.get(), &VoxelGrid::slotSetGridBBMaxX);
-	connect(this->input_GridBBMaxY, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this->voxelGrid.get(), &VoxelGrid::slotSetGridBBMaxY);
-	connect(this->input_GridBBMaxZ, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this->voxelGrid.get(), &VoxelGrid::slotSetGridBBMaxZ);
+	connect(this->input_GridBBMaxX, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &GridControl::setGridBBMaxX);
+	connect(this->input_GridBBMaxY, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &GridControl::setGridBBMaxY);
+	connect(this->input_GridBBMaxZ, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &GridControl::setGridBBMaxZ);
 
 	connect(this->methodPicker, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &GridControl::pickMethod);
 
@@ -253,7 +310,7 @@ void GridControl::updateGridLabels() {
 	std::size_t size = dims.x * dims.y * dims.z;
 	this->info_GridSizeTotal->setText(QString::number(size));
 
-	BoundingBox_General<float> bb = this->voxelGrid->getRenderBB();
+	BoundingBox_General<float> bb = this->voxelGrid->getBoundingBox();
 	float vxSize = (bb.getMax().x - bb.getMin().x) / static_cast<float>(dims.x);
 	float vySize = (bb.getMax().y - bb.getMin().y) / static_cast<float>(dims.y);
 	float vzSize = (bb.getMax().z - bb.getMin().z) / static_cast<float>(dims.z);
@@ -270,7 +327,9 @@ void GridControl::updateGridDimensions() {
 	}
 
 	svec3 dims = this->voxelGrid->getGridDimensions();
-	BoundingBox_General<float> bb = this->voxelGrid->getRenderBB();
+	DiscreteGrid::bbox_t bb = this->voxelGrid->getBoundingBox();
+
+	bb.printInfo("Grid bounding box : ");
 
 	// A bit (very much) verbose, but we need to block signals from the spinboxes when updating
 	// the values, in order to remove the possibility of a 'feedback loop' inbetween objects :
@@ -316,12 +375,15 @@ void GridControl::launchGridFill() {
 		return;
 	}
 	std::cerr << "Launching grid fill ... will freeze the application.\n";
+	/*
 	this->voxelGrid->populateGrid(this->method);
 	double time = this->voxelGrid->getTimeToCompute().count();
 	this->info_TotalTime->setText(QString::number(time));
 	svec3 dims = this->voxelGrid->getGridDimensions();
 	std::size_t size = dims.x * dims.y * dims.z;
 	this->info_VoxelRate->setText(QString::number(((static_cast<double>(size)/time)*3600.)/1.e9));
+	*/
+	std::cerr << "[ERROR] Not yet implemented the filling from the controller\n";
 }
 
 void GridControl::saveToFile() {
@@ -330,8 +392,59 @@ void GridControl::saveToFile() {
 		return;
 	}
 
-	QString fileName = QFileDialog::getSaveFileName(nullptr, "Save to DIM/IMA files", "../", "BrainVisa DIM/IMA (*.dim, *.ima)");
-	IO::Writer::DIM* dimWriter = new IO::Writer::DIM(fileName.toStdString());
-	std::cerr << "Writing to file with basename : \"" << fileName.toStdString() << '\"' << '\n';
-	dimWriter->write(this->voxelGrid.get());
+	//QString fileName = QFileDialog::getSaveFileName(nullptr, "Save to DIM/IMA files", "../", "BrainVisa DIM/IMA (*.dim, *.ima)");
+	//IO::Writer::DIM* dimWriter = new IO::Writer::DIM(fileName.toStdString());
+	//std::cerr << "Writing to file with basename : \"" << fileName.toStdString() << '\"' << '\n';
+	//dimWriter->write(this->voxelGrid.get());
+
+	std::cerr << "[ERROR] Not yet implemented the discretegrid writer\n";
+}
+
+void GridControl::setGridDimensionX(int newDim) {
+	this->voxelGrid->gridDimensions.x = static_cast<std::size_t>(newDim);
+	this->voxelGrid->updateVoxelDimensions();
+}
+void GridControl::setGridDimensionY(int newDim) {
+	this->voxelGrid->gridDimensions.y = static_cast<std::size_t>(newDim);
+	this->voxelGrid->updateVoxelDimensions();
+}
+void GridControl::setGridDimensionZ(int newDim) {
+	this->voxelGrid->gridDimensions.z = static_cast<std::size_t>(newDim);
+	this->voxelGrid->updateVoxelDimensions();
+}
+void GridControl::setGridBBMinX(double newDim) {
+	DiscreteGrid::bbox_t::vec v = this->voxelGrid->boundingBox.getMin();
+	v.x = static_cast<DiscreteGrid::bbox_t::vec::value_type>(newDim);
+	this->voxelGrid->boundingBox.setMin(v);
+	this->voxelGrid->updateVoxelDimensions();
+}
+void GridControl::setGridBBMinY(double newDim) {
+	DiscreteGrid::bbox_t::vec v = this->voxelGrid->boundingBox.getMin();
+	v.y = static_cast<DiscreteGrid::bbox_t::vec::value_type>(newDim);
+	this->voxelGrid->boundingBox.setMin(v);
+	this->voxelGrid->updateVoxelDimensions();
+}
+void GridControl::setGridBBMinZ(double newDim) {
+	DiscreteGrid::bbox_t::vec v = this->voxelGrid->boundingBox.getMin();
+	v.z = static_cast<DiscreteGrid::bbox_t::vec::value_type>(newDim);
+	this->voxelGrid->boundingBox.setMin(v);
+	this->voxelGrid->updateVoxelDimensions();
+}
+void GridControl::setGridBBMaxX(double newDim) {
+	DiscreteGrid::bbox_t::vec v = this->voxelGrid->boundingBox.getMax();
+	v.x = static_cast<DiscreteGrid::bbox_t::vec::value_type>(newDim);
+	this->voxelGrid->boundingBox.setMax(v);
+	this->voxelGrid->updateVoxelDimensions();
+}
+void GridControl::setGridBBMaxY(double newDim) {
+	DiscreteGrid::bbox_t::vec v = this->voxelGrid->boundingBox.getMax();
+	v.y = static_cast<DiscreteGrid::bbox_t::vec::value_type>(newDim);
+	this->voxelGrid->boundingBox.setMax(v);
+	this->voxelGrid->updateVoxelDimensions();
+}
+void GridControl::setGridBBMaxZ(double newDim) {
+	DiscreteGrid::bbox_t::vec v = this->voxelGrid->boundingBox.getMax();
+	v.z = static_cast<DiscreteGrid::bbox_t::vec::value_type>(newDim);
+	this->voxelGrid->boundingBox.setMax(v);
+	this->voxelGrid->updateVoxelDimensions();
 }

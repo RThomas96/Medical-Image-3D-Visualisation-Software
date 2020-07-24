@@ -17,14 +17,17 @@ class InputGrid : public DiscreteGrid {
 		/// @brief Add an image to the input grid.
 		virtual InputGrid& addImage(std::vector<DataType> imgData, std::size_t imgIndex);
 
+		/// @brief For file formats where the image is stored as one chunk of data, sets the while image at once.
+		virtual InputGrid& setGrid(std::vector<DataType> imgData, sizevec3 dimensions);
+
 		/// @brief Override of the modifiable flag in the discrete grid, removing the ability for this grid to be modified.
 		virtual InputGrid& setModifiable(bool b) override;
 
-		/// @brief Disallows any bounding box changes.
-		virtual InputGrid& setBoundingBox(glm::vec4 min, glm::vec4 max) override;
-
 		/// @brief Disallows setting the resolution to anything else than already loaded in.
 		virtual InputGrid& setResolution(sizevec3 newRes) override;
+
+		/// @brief Disallows setting a new bounding box to the input grid.
+		virtual InputGrid& setBoundingBox(bbox_t renderWindow) override;
 };
 
 #endif // GRID_INCLUDE_INPUT_DISCRETE_GRID_HPP_

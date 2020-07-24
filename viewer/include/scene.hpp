@@ -12,6 +12,10 @@
 #include "../../qt/include/grid_control.hpp"
 #include "../../grid/include/tetmesh.hpp"
 
+#include "../../grid/include/discrete_grid.hpp"
+#include "../../grid/include/input_discrete_grid.hpp"
+#include "../../grid/include/output_discrete_grid.hpp"
+
 #include <QOpenGLFunctions_4_0_Core>
 #include <QGLViewer/qglviewer.h>
 #include <glm/glm.hpp>
@@ -145,9 +149,10 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void generateGrid(std::size_t _x, std::size_t _y, std::size_t _z);
 
 		ControlPanel* controlPanel; ///< pointer to the control panel
-		std::shared_ptr<TextureStorage> texStorage; ///< textureLoader and 'manager'
+		std::shared_ptr<TextureStorage> t; ///< temp texture storage object, will be removed later
+		std::shared_ptr<InputGrid> texStorage; ///< textureLoader and 'manager'
+		std::shared_ptr<OutputGrid> voxelGrid; ///< Voxel grid to fill upon keypress
 		std::shared_ptr<TetMesh> mesh; ///< creates a mesh around the queried point
-		std::shared_ptr<VoxelGrid> voxelGrid; ///< Voxel grid to fill upon keypress
 		GridControl* gridControl;
 
 		std::size_t gridWidth; ///< grid size

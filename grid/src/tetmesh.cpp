@@ -1,12 +1,14 @@
 #include "../include/tetmesh.hpp"
 
-TetMesh::TetMesh(const std::shared_ptr<TextureStorage> texL) : texLoader(texL) {
+TetMesh::TetMesh() {
 	// Initialises all the values of the mesh to their default values.
 	// Centers the mesh around the space's origin. Also, makes the mesh
 	// by a call to TetMesh::makeTetrahedra().
 	this->vertices.clear();
 	this->tetrahedra.clear();
 	this->origin = glm::vec4(.0, .0, .0, .0);
+	this->inputGrids.clear();
+	this->outputGrid = nullptr;
 
 	this->makeTetrahedra();
 }
@@ -17,29 +19,15 @@ TetMesh::~TetMesh() {
 	this->tetrahedra.clear();
 }
 
-TetMesh& TetMesh::setOrigin(const glm::vec4 position) {
-	// If no stack manager is linked, there exists no conversion from real space to intial
-	// space. So nothing happens, and an error message is displayed to the user.
-	if (this->texLoader == nullptr) {
-	//	std::cerr << "Warning : asked a world space position, but no stack was"
-	//		  << " linked with this mesh !\n";
-		return *this;
-	}
-	glm::vec4 posInitialSpace = this->texLoader->convertRealSpaceToInitialSpace(position);
-	return this->setOriginInitialSpace(posInitialSpace);
+TetMesh& TetMesh::addInputGrid(const std::shared_ptr<InputGrid>& toAdd) {
+	this->inputGrids.push_back(toAdd);
+	this->updateOutputGridData();
+	return *this;
 }
 
-TetMesh& TetMesh::setOriginInitialSpace(const glm::vec4 position) {
-	// The position given in argument is a 'free' position,
-	// not constrained to the grid's voxel centers. We need
-	// to set the center of the mesh to the center of the
-	// nearest voxel :
-	glm::vec4 newOrigin = glm::vec4(std::truncf(position.x), std::truncf(position.y), std::truncf(position.z), .0f);
-
-	// Set the new origin to be the center of the nearest
-	// voxel relative to 'position'
-	this->origin = newOrigin;
-
+TetMesh& TetMesh::setOutputGrid(const std::shared_ptr<OutputGrid>& toSet) {
+	this->outputGrid = toSet;
+	this->updateOutputGridData();
 	return *this;
 }
 
@@ -52,244 +40,252 @@ TetMesh& TetMesh::resetPositions() {
 	return *this;
 }
 
-const TetMesh::DataType TetMesh::getVertexValueAt(std::size_t idx) const {
-	// Get the position of the vertex needed, and then query the tex loader for it.
-	return this->texLoader->getTexelValue(this->origin+this->vertices[idx]);
+TetMesh& TetMesh::populateOutputGrid(InterpolationMethods method) {
+	// early returns :
+	if (this->outputGrid == nullptr) { return *this; }
+	if (this->inputGrids.size() == 0) { return *this; }
+
+	// Check the dimensions of the voxel grid (if it can host voxels) :
+	DiscreteGrid::sizevec3 dims = this->outputGrid->getGridDimensions();
+	if (dims.x == 0 || dims.y == 0 || dims.z == 0) { return *this; }
+
+	// reserve and allocate space :
+	this->outputGrid->preallocateData();
+
+	std::size_t inputGridCount = this->inputGrids.size();
+
+	// iterate on the voxels of the output data grid :
+	for (std::size_t k = 0; k < dims.z; ++k) {
+		for (std::size_t j = 0; j < dims.y; ++j) {
+			for (std::size_t i = 0; i < dims.x; ++i) {
+				// generate 3D index :
+				DiscreteGrid::sizevec3 idx = DiscreteGrid::sizevec3(i,j,k);
+				// get world position from it :
+				glm::vec4 pos_ws = this->outputGrid->getVoxelPositionWorldSpace(idx);
+				// set it as origin :
+				this->origin = pos_ws;
+				// gather values from all input grids :
+				std::vector<DiscreteGrid::DataType> values;
+				for (std::size_t g = 0; g < inputGridCount; ++g) {
+					values.push_back(this->getInterpolatedValue(this->inputGrids[g], method, pos_ws));
+				}
+				// do a basic mean of the values obtained from the different input grids :
+				float globalVal = static_cast<float>(values.size()) / static_cast<float>(inputGridCount);
+				// set data :
+				this->outputGrid->setVoxelData(idx, static_cast<DiscreteGrid::DataType>(globalVal));
+			}
+		}
+	}
+
+	// Data should now be done being generated ...
+	return *this;
 }
 
-std::vector<glm::vec4> TetMesh::getVertices() const {
+DiscreteGrid::DataType TetMesh::getInterpolatedValue(std::shared_ptr<InputGrid> grid, InterpolationMethods method, glm::vec4 pos) const {
+	switch (method) {
+		case InterpolationMethods::NearestNeighbor:
+			return this->interpolate_NearestNeighbor(grid);
+		case InterpolationMethods::TriLinear:
+			return this->interpolate_TriLinear(grid);
+		case InterpolationMethods::TriCubic:
+		case InterpolationMethods::Barycentric:
+			std::cerr << "Method not implemented in final version of interpolation structure." << '\n';
+			return 0;
+			break;
+		default:
+			std::cerr << "Method not recognized.\n";
+			break;
+	}
+	return 0;
+}
+
+std::vector<glm::vec4> TetMesh::getVertices_WorldSpace() const {
 	// Simple getter for the mesh's vertices.
 	std::vector<glm::vec4> res(this->vertices);
+	// convert all vertices to world space, instead of this stack's space :
+	std::for_each(res.begin(), res.end(), [&](glm::vec4& v) {
+		v = v * this->outputGrid->getTransform_GridToWorld();
+	});
 	return res;
-}
-
-std::vector<TetMesh::DataType> TetMesh::getVertexValues() const {
-	// Simple getter for the mesh's vertex values.
-	std::vector<DataType> values;
-	for (std::size_t i = 0; i < this->vertices.size(); ++i) {
-		values.push_back(this->getVertexValueAt(i));
-	}
-	return values;
 }
 
 TetMesh& TetMesh::printInfo() {
 	// Prints info about the mesh :
-	//   - the image size,
-	//   - the minimum value of the image's data bounding box,
-	//   - the maximum value of the image's data bounding box,
-	//   - the vertices positions and values at the current time.
+	// input grid data (resolution, render window)
 
-	std::cout << "The image storage has the following specs :" << '\n';
-	std::vector<svec3> specs = this->texLoader->getImageSpecs();
-	std::cout << "Image size : " << specs[0][0] << 'x' << specs[0][1] << 'x' << specs[0][2] << '\n';
-	std::cout << "Bounding box min value: " << specs[1][0] << 'x' << specs[1][1] << 'x' << specs[1][2] << '\n';
-	std::cout << "Bounding box max value: " << specs[2][0] << 'x' << specs[2][1] << 'x' << specs[2][2] << '\n';
+	if (this->inputGrids.size() == 0 && this->outputGrid == nullptr) {
+		std::cerr << "[INFO] TetMesh has no relevant info" << '\n';
+		return *this;
+	}
 
-	std::cout << "The neighboring mesh has the following positions and values :" << '\n';
-	for (std::size_t i = 0; i < this->vertices.size(); ++i) {
-		std::cout << "\t[" << this->vertices[i].x << ',' << this->vertices[i].y << ',' << this->vertices[i].z << "] : " << +(this->getVertexValueAt(i)) << '\n';
+	std::cerr << "[INFO]TetMesh has the following specs :" << '\n';
+	if (this->inputGrids.size() == 0) {
+		std::cerr << "[INFO](No input grids present)" << '\n';
+	} else {
+		std::cerr << "[INFO]Input grids :\n";
+		// Print all of the grids' infos we can easily get :
+		for (const std::shared_ptr<InputGrid>& grid : this->inputGrids) {
+			std::cerr << "[INFO]\tInput grid named \"" << grid->getGridName() << "\" :\n";
+			DiscreteGrid::sizevec3 dims = grid->getGridDimensions();
+			// Bounding box dimensions :
+			const DiscreteGrid::bbox_t& box = grid->getBoundingBox();
+			const DiscreteGrid::bbox_t::vec& min = box.getMin();
+			const DiscreteGrid::bbox_t::vec& max = box.getMax();
+			std::cerr << "[INFO]\t\tResolution : " << dims.x << 'x' << dims.y << 'x' << dims.z << '\n';
+			std::cerr << "[INFO]\t\tBounding box (initial space) : [" << min.x << 'x' << min.y << 'x' << min.z
+					<< "] to [" << max.x << 'x' << max.y << 'x' << max.z << "]\n";
+			std::cerr << "[INFO]\t\tThis grid is " << ((grid->isModifiable()) ? "not modifiable" : "modifiable") << '\n';
+		}
+	}
+	if (this->outputGrid != nullptr) {
+		std::cerr << "[INFO]Output grid :\n";
+		std::cerr << "[INFO]\tOutput grid named \"" << this->outputGrid->getGridName() << "\" :\n";
+		DiscreteGrid::sizevec3 dims = this->outputGrid->getGridDimensions();
+		// Bounding box dimensions :
+		const DiscreteGrid::bbox_t& box = this->outputGrid->getBoundingBox();
+		const DiscreteGrid::bbox_t::vec& min = box.getMin();
+		const DiscreteGrid::bbox_t::vec& max = box.getMax();
+		std::cerr << "[INFO]\t\tResolution : " << dims.x << 'x' << dims.y << 'x' << dims.z << '\n';
+		std::cerr << "[INFO]\t\tBounding box (initial space) : [" << min.x << 'x' << min.y << 'x' << min.z
+				<< "] to [" << max.x << 'x' << max.y << 'x' << max.z << "]\n";
+		std::cerr << "[INFO]\t\tThis grid is " << ((this->outputGrid->isModifiable()) ? "not modifiable" : "modifiable") << '\n';
+	} else {
+		std::cerr << "[INFO](No output grid yet)" << '\n';
 	}
 
 	return *this;
 }
 
-unsigned char TetMesh::getInterpolatedValue(glm::vec4 pos_ws, InterpolationMethods method) {
-	// If no stack loader was linked with the current mesh, then we cannot infer the data
-	// that should be at a given point [XYZ] in either real or intial space. Return 0 in
-	// this case. Otherwise, return the value at this point, converted in initial space.
-	if (this->texLoader == nullptr) {
-		std::cerr << "Warning : asked a world space position, but no stack was"
-			  << " linked with this mesh !\n";
-		return 0;
-	}
-	glm::vec4 posInitialSpace = this->texLoader->convertRealSpaceToInitialSpace(pos_ws);
-	return this->getInterpolatedValueInitialSpace(posInitialSpace, method);
+TetMesh::DataType TetMesh::interpolate_NearestNeighbor(const std::shared_ptr<InputGrid> grid) const {
+	// DiscreteGrid::fetchTexelWorldSpace already applies NearestNeighbor on the position
+	// given in argument, so we just fetch the value of the origin, giving us a NN interpolation :
+	return grid->fetchTexelWorldSpace(this->outputGrid->toWorldSpace(this->origin));
 }
 
-unsigned char TetMesh::getInterpolatedValueInitialSpace(glm::vec4 pos_is, InterpolationMethods method) {
-	// Same deal as getInterpolatedValue(), but in initial space. Then, calls the appropriate method
-	// to get an interpolated value at the specified point.
-	// If the method is not recognized, then the function returns 0 (no data).
+TetMesh::DataType TetMesh::interpolate_TriLinear(const std::shared_ptr<InputGrid> grid) const {
+	// For this trilinear interpolation, the point will always be at the center of the mesh created earlier.
+	// However, we want this method to be as generic as possible, in the event of a catastrophic failure on our part.
+	// We want the point in the center of the mesh to be a trilinear interpolation of the corners of the mesh.
+	// The grid is constructed in arrays along X first, then along Y, then along Z.
+	// As such :
+	std::size_t pxyz =  0; // Those indices are arranged such
+	std::size_t pxyZ = 18; // that if an axis letter is uppercased,
+	std::size_t pxYz =  6; // it means we take the index of the
+	std::size_t pxYZ = 24; // point which is at the end of this
+	std::size_t pXyz =  2; // axis in the 'cube' the mesh is
+	std::size_t pXyZ = 20; // representing.
+	std::size_t pXYz =  8; // Can be confusing given their order,
+	std::size_t pXYZ = 26; // but ensures a good interpolation.
 
-	if (this->texLoader == nullptr) {
-		std::cerr << "Warning : asked to interpolate a point in the mesh, but no image stack was"
-			  << " linked with it !\n";
-		return 0;
-	}
+	// We also already know the point to interpolate for is at the center of this cube. We can set the coefficients
+	// for trilinear interpolation directly hardcoded in the computation, since they'll all be 0.5 :
+	float coef_x = 0.5f;
+	float coef_y = 0.5f;
+	float coef_z = 0.5f;
 
-//	std::cout << "\tPosition in initial space before interpolation : [" << pos_is.x << " ," << pos_is.y << " ," << pos_is.z << "]\n";
-
-	switch (method) {
-		case InterpolationMethods::NearestNeighbor:
-			return this->interpolate_NearestNeighbor(pos_is);
-		case InterpolationMethods::TriLinear:
-			this->setOriginInitialSpace(pos_is);
-			return this->interpolate_TriLinear(pos_is);
-		case InterpolationMethods::TriCubic:
-			this->setOriginInitialSpace(pos_is);
-			return this->interpolate_TriCubic(pos_is);
-		case InterpolationMethods::Barycentric:
-			this->setOriginInitialSpace(pos_is);
-			return this->interpolate_Barycentric(pos_is);
-		default:
-			std::cerr << "Method asked for interpolation was not recognised.\n";
-			return 0;
-	}
-}
-
-unsigned char TetMesh::interpolate_NearestNeighbor(glm::vec4 pos) const {
-	// TexStorage::getTexelValue() already applies NearestNeighbor on the position
-	// given in argument, so we just fetch the value of the function :
-	return this->texLoader->getTexelValue(pos);
-}
-
-unsigned char TetMesh::interpolate_TriLinear(glm::vec4 pos) const {
-	// Get the vertices nearest the point asked for. Then, use the point's
-	// X, Y, and Z coordinates to linearly sample the value requested.
-
-	std::size_t index_x_min, index_x_max, index_y_min, index_y_max, index_z_min, index_z_max;
-
-	// Since the voxels are of size 1 in initial space, we only need the coordinates
-	// of the vertex closest to the origin within the ones where the point is located.
-	glm::vec4 localPos = pos - this->origin;
-	// This gets the cube the point is in to the origin (so we can interpolate directly
-	// with its coordinates)
-
-//	std::cout << "\t\tlocalPos : [" << localPos.x << " ," << localPos.y << " ," << localPos.z << "]\n";
-//	svec3 sizes = this->texLoader->getImageSize();
-//	std::cout << "\t\t\t\t\tSizes of image : [" << sizes.x << " ," << sizes.y << " ," << sizes.z << "]\n";
-
-	// Determine which 'sub-cube' the point belongs to :
-	index_x_min = (localPos.x < .0f) ? 0 : 1;
-	index_y_min = (localPos.y < .0f) ? 0 : 1;
-	index_z_min = (localPos.z < .0f) ? 0 : 1;
-	index_x_max = index_x_min + 1;
-	index_y_max = index_y_min + 1;
-	index_z_max = index_z_min + 1;
-
-	std::size_t pxyz = index_z_min * 2*2 + index_y_min * 2 + index_x_min;
-	std::size_t pxyZ = index_z_min * 2*2 + index_y_min * 2 + index_x_max;
-	std::size_t pxYz = index_z_min * 2*2 + index_y_max * 2 + index_x_min;
-	std::size_t pxYZ = index_z_min * 2*2 + index_y_max * 2 + index_x_max;
-	std::size_t pXyz = index_z_max * 2*2 + index_y_min * 2 + index_x_min;
-	std::size_t pXyZ = index_z_max * 2*2 + index_y_min * 2 + index_x_max;
-	std::size_t pXYz = index_z_max * 2*2 + index_y_max * 2 + index_x_min;
-	std::size_t pXYZ = index_z_max * 2*2 + index_y_max * 2 + index_x_max;
-
-//	std::cout << "\t\tValues of neighbors : " << '\n';
-
+#ifndef DIRECT_CASTING_FROM_FETCH
 	// Get values :
-	const unsigned char xyz = this->getVertexValueAt(pxyz);
-	const unsigned char xyZ = this->getVertexValueAt(pxyZ);
-	const unsigned char xYz = this->getVertexValueAt(pxYz);
-	const unsigned char xYZ = this->getVertexValueAt(pxYZ);
-	const unsigned char Xyz = this->getVertexValueAt(pXyz);
-	const unsigned char XyZ = this->getVertexValueAt(pXyZ);
-	const unsigned char XYz = this->getVertexValueAt(pXYz);
-	const unsigned char XYZ = this->getVertexValueAt(pXYZ);
+	const TetMesh::DataType xyz = grid->fetchTexelWorldSpace(this->outputGrid->toWorldSpace(this->getVertexPosition(pxyz)));
+	const TetMesh::DataType xyZ = grid->fetchTexelWorldSpace(this->outputGrid->toWorldSpace(this->getVertexPosition(pxyZ)));
+	const TetMesh::DataType xYz = grid->fetchTexelWorldSpace(this->outputGrid->toWorldSpace(this->getVertexPosition(pxYz)));
+	const TetMesh::DataType xYZ = grid->fetchTexelWorldSpace(this->outputGrid->toWorldSpace(this->getVertexPosition(pxYZ)));
+	const TetMesh::DataType Xyz = grid->fetchTexelWorldSpace(this->outputGrid->toWorldSpace(this->getVertexPosition(pXyz)));
+	const TetMesh::DataType XyZ = grid->fetchTexelWorldSpace(this->outputGrid->toWorldSpace(this->getVertexPosition(pXyZ)));
+	const TetMesh::DataType XYz = grid->fetchTexelWorldSpace(this->outputGrid->toWorldSpace(this->getVertexPosition(pXYz)));
+	const TetMesh::DataType XYZ = grid->fetchTexelWorldSpace(this->outputGrid->toWorldSpace(this->getVertexPosition(pXYZ)));
 
-//	std::cout << "\t\t\tNeighbor 1 : " << +xyz << '\n';
-//	std::cout << "\t\t\tNeighbor 2 : " << +xyZ << '\n';
-//	std::cout << "\t\t\tNeighbor 3 : " << +xYz << '\n';
-//	std::cout << "\t\t\tNeighbor 4 : " << +xYZ << '\n';
-//	std::cout << "\t\t\tNeighbor 5 : " << +Xyz << '\n';
-//	std::cout << "\t\t\tNeighbor 6 : " << +XyZ << '\n';
-//	std::cout << "\t\t\tNeighbor 7 : " << +XYz << '\n';
-//	std::cout << "\t\t\tNeighbor 8 : " << +XYZ << '\n';
+	float cyz = (1.f - coef_x) * static_cast<float>(xyz) + coef_x * static_cast<float>(Xyz);
+	float cyZ = (1.f - coef_x) * static_cast<float>(xyZ) + coef_x * static_cast<float>(XyZ);
+	float cYz = (1.f - coef_x) * static_cast<float>(xYz) + coef_x * static_cast<float>(XYz);
+	float cYZ = (1.f - coef_x) * static_cast<float>(xYZ) + coef_x * static_cast<float>(XYZ);
 
-	float cyz = (1.f - localPos.x) * static_cast<float>(xyz) + localPos.x * static_cast<float>(Xyz);
-	float cyZ = (1.f - localPos.x) * static_cast<float>(xyZ) + localPos.x * static_cast<float>(XyZ);
-	float cYz = (1.f - localPos.x) * static_cast<float>(xYz) + localPos.x * static_cast<float>(XYz);
-	float cYZ = (1.f - localPos.x) * static_cast<float>(xYZ) + localPos.x * static_cast<float>(XYZ);
+	float cz = (1.f - coef_y) * cyz + coef_y * cYz;
+	float cZ = (1.f - coef_y) * cyZ + coef_y * cYZ;
+#else
+	// Get values from the grid :
+	float xyz = static_cast<float>(this->getVertexValue(grid, pxyz));
+	float xyZ = static_cast<float>(this->getVertexValue(grid, pxyZ));
+	float xYz = static_cast<float>(this->getVertexValue(grid, pxYz));
+	float xYZ = static_cast<float>(this->getVertexValue(grid, pxYZ));
+	float Xyz = static_cast<float>(this->getVertexValue(grid, pXyz));
+	float XyZ = static_cast<float>(this->getVertexValue(grid, pXyZ));
+	float XYz = static_cast<float>(this->getVertexValue(grid, pXYz));
+	float XYZ = static_cast<float>(this->getVertexValue(grid, pXYZ));
 
-	float cz = (1.f - localPos.y) * cyz + localPos.y * cYz;
-	float cZ = (1.f - localPos.y) * cyZ + localPos.y * cYZ;
+	float cyz = (1.f - coef_x) * xyz + coef_x * Xyz;
+	float cyZ = (1.f - coef_x) * xyZ + coef_x * XyZ;
+	float cYz = (1.f - coef_x) * xYz + coef_x * XYz;
+	float cYZ = (1.f - coef_x) * xYZ + coef_x * XYZ;
 
-	unsigned char result = static_cast<unsigned char>((1.f - localPos.z) * cz + localPos.z * cZ);
+	float cz = (1.f - coef_y) * cyz + coef_y * cYz;
+	float cZ = (1.f - coef_y) * cyZ + coef_y * cYZ;
+#endif
 
-//	std::cout << "\t\t\t\tFinal result : " << +result << '\n';
+	DataType result = static_cast<DataType>((1.f - coef_z) * cz + coef_z * cZ);
 
 	return result;
 }
 
-unsigned char TetMesh::interpolate_TriCubic(glm::vec4 pos) const {
-	// Not implemented : need the neighbors to a distance of 2, not 1 as it is now
-	std::cerr << "Warning : the method is not yet implemented !\n";
-	return 0;
-}
+TetMesh& TetMesh::updateVoxelSizes() {
+	if (this->outputGrid == nullptr) { return *this; }
+	glm::vec3 vxdims = this->outputGrid->getVoxelDimensions();
+	glm::vec3 halfdims = vxdims/2.f;
 
-unsigned char TetMesh::interpolate_Barycentric(glm::vec4 pos) const {
-	// Get the tetrahedron in which the point resides. Then, compute its barycentric
-	// coordinates and interpolate the values of the tetrahedron's vertices with the
-	// coefficients of the vertex in it.
-
-	bool found = false;
-	std::size_t tet = 0;
-	glm::vec4 b; // barycentric coords of the point
-	for (; tet < this->tetrahedra.size(); ++tet) {
-		b = this->computeBarycentricCoords(pos, tet);
-		// Check if any components are negative :
-		found = ( (b.x > .0f) && (b.y > .0f) && (b.z > .0f) && (b.w > .0f) );
-		// If not, then the point is in the tetrahedron !
-		if (found) { break; }
-	}
-	if (not found) {
-		// Not in any tetrahedra ... strange.
-		//std::cerr << "Warning : the point was not found to be in any tetrahedra.\n";
-		return 0;
+	for (std::size_t k = 0; k < 3; ++k) {
+		for (std::size_t j = 0; j < 3; ++j) {
+			for (std::size_t i = 0; i < 3; ++i) {
+				this->vertices[i+j*2u+k*2u*2u] = glm::vec4(static_cast<float>(i) * vxdims.x - halfdims.x, static_cast<float>(j) * vxdims.y - halfdims.y, static_cast<float>(k) * vxdims.z - halfdims.z, 1.);
+			}
+		}
 	}
 
-	float va = static_cast<float>(this->getVertexValueAt(this->tetrahedra[tet][0]));
-	float vb = static_cast<float>(this->getVertexValueAt(this->tetrahedra[tet][1]));
-	float vc = static_cast<float>(this->getVertexValueAt(this->tetrahedra[tet][2]));
-	float vd = static_cast<float>(this->getVertexValueAt(this->tetrahedra[tet][3]));
-
-	// Function used to get the floating point back to a number without numbers after the
-	// decimal point (can also be truncf) :
-	auto precisionFunction = std::roundf;
-
-	return static_cast<unsigned char>(precisionFunction(b.x * va + b.y * vb + b.z * vc + b.w * vd));
+	return *this;
 }
 
-glm::vec4 TetMesh::computeBarycentricCoords(glm::vec4 pos, std::size_t tetIndex) const {
-	// Computes the barycentric coordinates of the point P relative to the tetrahedron
-	// T, whether this point is in the tetrahedra or not.
+glm::vec4 TetMesh::getVertexPosition(std::size_t idx) const {
+	return this->vertices[idx] + this->origin;
+}
 
-	// Each tetrahedron is composed of 4 vertices : A, B, C, and D. The point P must
-	// 'slice' the tetrahedron if it is inside it. We will compute the volume of the 4
-	// sub-tetrahedra composing the 5-element mesh ABCDP. First, we get the vertices of
-	// the original tetrahedron :
-	const glm::vec4& a = this->vertices[this->tetrahedra[tetIndex][0]];
-	const glm::vec4& b = this->vertices[this->tetrahedra[tetIndex][1]];
-	const glm::vec4& c = this->vertices[this->tetrahedra[tetIndex][2]];
-	const glm::vec4& d = this->vertices[this->tetrahedra[tetIndex][3]];
+TetMesh::DataType TetMesh::getVertexValue(const std::shared_ptr<InputGrid> grid, std::size_t idx) const {
+	return grid->fetchTexelWorldSpace(this->outputGrid->toWorldSpace(this->getVertexPosition(idx)));
+}
 
-	// Vectors (edges) of the tetrahedron, and edges AP, BP :
-	glm::vec4 vab = b - a; glm::vec4 vac = c - a;
-	glm::vec4 vad = d - a; glm::vec4 vbc = c - b;
-	glm::vec4 vbd = d - b;
-	glm::vec4 vap = pos - a; glm::vec4 vbp = pos - b;
+TetMesh& TetMesh::updateOutputGridData() {
+	// If there aren't any input grids nor any output grid, return early :
+	if (this->inputGrids.size() == 0) { return *this; }
+	if (this->outputGrid == nullptr) { return *this; }
 
-	// vX = volume of the sub-tetrahedron opposite of X relative to P :
-	float va = (1.f / 6.f) * glm::dot(vbp, glm::cross(vbd, vbc));
-	float vb = (1.f / 6.f) * glm::dot(vap, glm::cross(vac, vad));
-	float vc = (1.f / 6.f) * glm::dot(vap, glm::cross(vad, vab));
-	float vd = (1.f / 6.f) * glm::dot(vap, glm::cross(vab, vac));
-	float v  = (1.f / 6.f) * glm::dot(vab, glm::cross(vac, vad)); // special value : volume of whole tetrahedra (without P)
+	for (const std::shared_ptr<InputGrid>& grid : this->inputGrids) {
+		// Get bounding box of data in world space :
+		DiscreteGrid::bbox_t newbb = grid->getBoundingBoxWorldSpace();
+		newbb.printInfo("InputGrid update to OutputGrid");
+		this->outputGrid->updateBoundingBox(newbb);
+		this->outputGrid->getBoundingBox().printInfo("After update from inputgrid");
+	}
+	// get diagonal of bb :
+	DiscreteGrid::bbox_t::vec diag = this->outputGrid->getBoundingBox().getDiagonal();
+	// set resolution so each voxel's side length is a bit less than 1 :
+	DiscreteGrid::sizevec3 dimensions = DiscreteGrid::sizevec3(
+		static_cast<std::size_t>(std::ceil(diag.x)),
+		static_cast<std::size_t>(std::ceil(diag.y)),
+		static_cast<std::size_t>(std::ceil(diag.z))
+	);
+	this->outputGrid->setResolution(dimensions);
 
-	return glm::vec4(va / v, vb / v, vc / v, vd / v);
+	return *this;
 }
 
 void TetMesh::makeTetrahedra() {
 	// For now, a mesh of side 1, centered at the origin
 
+	// Lambda returning the index of the vertex in the mesh :
 	auto getIndex = [&](std::size_t i, std::size_t j, std::size_t k) {
-		return i * 2u * 2u + j * 2u + k;
+		return k * 2u * 2u + j * 2u + i;
 	};
 
 	// At the start, the origin is at [.0, .0, .0]. But the center of
 	// the first voxel is in fact at [.5, .5, .5], which means we
-	// need to iterate in [-.5, 1.5] by steps of 1. each time.
+	// need to iterate in [-.5, 1.5] by steps of 1, on each axis.
 
 	for (std::size_t k = 0; k < 3; ++k) {
 		for (std::size_t j = 0; j < 3; ++j) {
