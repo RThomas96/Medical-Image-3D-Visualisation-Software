@@ -142,6 +142,7 @@ ADD_EXECUTABLE(neighbor_visu
 	./grid/include/discrete_grid.hpp
 	./grid/include/input_discrete_grid.hpp
 	./grid/include/output_discrete_grid.hpp
+	./image/include/reader.hpp
 
 	# Main file :
 	./neighbor_visu_main.cpp
@@ -162,6 +163,7 @@ ADD_EXECUTABLE(neighbor_visu
 	./grid/src/discrete_grid.cpp
 	./grid/src/input_discrete_grid.cpp
 	./grid/src/output_discrete_grid.cpp
+	./image/src/reader.cpp
 )
 TARGET_LINK_LIBRARIES(neighbor_visu
 	PUBLIC Qt5::Core

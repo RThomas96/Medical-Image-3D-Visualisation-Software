@@ -59,14 +59,17 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 			this->update();
 		break;
 		// Focus of the viewer :
-		case Qt::Key::Key_N :
+		/*case Qt::Key::Key_N :
 			this->focusType = FocusStates::NeighborFocus;
 			this->updateNeighborFocus();
 			this->update();
-		break;
+		break;*/
 		case Qt::Key::Key_T:
-			this->focusType = FocusStates::DefaultFocus;
-			this->updateTextureFocus();
+			this->scene->fillTrilinear();
+			this->update();
+		break;
+		case Qt::Key::Key_N:
+			this->scene->fillNearestNeighbor();
 			this->update();
 		break;
 		case Qt::Key::Key_H:

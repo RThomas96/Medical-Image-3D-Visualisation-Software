@@ -9,7 +9,7 @@
 #include <QWidget>
 #include <QGLViewer/qglviewer.h>
 
-//#define ENABLE_DUAL_VISU
+#define ENABLE_DUAL_VISU
 
 class MainWidget : public QWidget {
 		Q_OBJECT

@@ -104,10 +104,11 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void drawRealSpace(GLfloat mvMat[], GLfloat pMat[]);
 		void drawInitialSpace(GLfloat mvMat[], GLfloat pMat[]);
 
-		void queryImage(void); ///< Loads a stack of TIF images
-		void queryIMA(void); ///< Loads an IMA file
-		void loadImage(std::size_t i, std::size_t j, std::size_t k, const unsigned char* pData = nullptr);
-		void loadVoxelGrid(svec3 size, const unsigned char* pData = nullptr);
+		void loadImage();
+		void loadVoxelGrid();
+
+		void fillTrilinear();
+		void fillNearestNeighbor();
 
 		void toggleTexCubeVisibility(bool visibility) { this->showTextureCube = visibility; }
 		void toggleTexCubeVisibility() { this->toggleTexCubeVisibility(!this->showTextureCube); }
@@ -149,7 +150,6 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void generateGrid(std::size_t _x, std::size_t _y, std::size_t _z);
 
 		ControlPanel* controlPanel; ///< pointer to the control panel
-		std::shared_ptr<TextureStorage> t; ///< temp texture storage object, will be removed later
 		std::shared_ptr<InputGrid> texStorage; ///< textureLoader and 'manager'
 		std::shared_ptr<OutputGrid> voxelGrid; ///< Voxel grid to fill upon keypress
 		std::shared_ptr<TetMesh> mesh; ///< creates a mesh around the queried point

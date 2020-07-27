@@ -49,7 +49,7 @@ namespace IO {
 		public:
 			/// @brief Destructor of the class. Closes files and frees up memory taken by the loaded data.
 			/// @details Closes all filestreams, and clears all data associated with the loader.
-			~GenericGridReader(void);
+			virtual ~GenericGridReader(void);
 
 			/// @brief Set the threshold at which a voxel is considered data.
 			virtual GenericGridReader& setDataThreshold(data_t _thresh);
@@ -79,6 +79,12 @@ namespace IO {
 			/// @brief Get the grid's data bounding box.
 			/// @note Computed according to the value set in `GenericGridReader::threshold`.
 			virtual bbox_t getDataBoundingBox(void) const;
+
+			/// @brief Returns the threshold from which data is considered information.
+			virtual data_t getDataThreshold(void) const;
+
+			/// @brief Swaps the contents from this grid's data to the target vector.
+			virtual GenericGridReader& swapData(std::vector<data_t>& target);
 
 		protected:
 			/// @brief Open the file with the given name, and load its contents into memory.
@@ -116,18 +122,20 @@ namespace IO {
 	class DIMReader : public GenericGridReader {
 		public:
 			DIMReader(data_t _thresh);
-			~DIMReader(void);
+			virtual ~DIMReader(void);
 
+			/// @brief Loads the image from disk. If no filenames are provided, loads nothing.
 			virtual DIMReader& loadImage() override;
 		protected:
+			/// @brief Open the DIM and IMA files to read later.
 			virtual DIMReader& openFile(std::string& name) override;
 			virtual DIMReader& loadGrid() override;
 
 		protected:
 			/// @brief The DIM file
-			std::ifstream dimFile;
+			std::ifstream* dimFile;
 			/// @brief The IMA file
-			std::ifstream imaFile;
+			std::ifstream* imaFile;
 	};
 }
 

@@ -66,13 +66,17 @@ TetMesh& TetMesh::populateOutputGrid(InterpolationMethods method) {
 				this->origin = pos_ws;
 				// gather values from all input grids :
 				std::vector<DiscreteGrid::DataType> values;
-				for (std::size_t g = 0; g < inputGridCount; ++g) {
-					values.push_back(this->getInterpolatedValue(this->inputGrids[g], method, pos_ws));
+				for (const std::shared_ptr<InputGrid>& grid : this->inputGrids) {
+					values.push_back(this->getInterpolatedValue(grid, method, pos_ws));
 				}
 				// do a basic mean of the values obtained from the different input grids :
-				float globalVal = static_cast<float>(values.size()) / static_cast<float>(inputGridCount);
+				float globalVal = .0f;
+				std::for_each(std::begin(values), std::end(values), [&](DiscreteGrid::DataType v) {
+					globalVal += static_cast<float>(v) / static_cast<float>(inputGridCount);
+				});
 				// set data :
 				this->outputGrid->setVoxelData(idx, static_cast<DiscreteGrid::DataType>(globalVal));
+			//	this->outputGrid->setVoxelData(idx, this->getInterpolatedValue(this->inputGrids[0], method, pos_ws));
 			}
 		}
 	}
@@ -255,13 +259,14 @@ TetMesh& TetMesh::updateOutputGridData() {
 	if (this->inputGrids.size() == 0) { return *this; }
 	if (this->outputGrid == nullptr) { return *this; }
 
+	this->outputGrid->setBoundingBox(DiscreteGrid::bbox_t());
+
 	for (const std::shared_ptr<InputGrid>& grid : this->inputGrids) {
 		// Get bounding box of data in world space :
-		DiscreteGrid::bbox_t newbb = grid->getBoundingBoxWorldSpace();
-		newbb.printInfo("InputGrid update to OutputGrid");
+		DiscreteGrid::bbox_t newbb = grid->getDataBoundingBox().transformTo(grid->getTransform_GridToWorld());
 		this->outputGrid->updateBoundingBox(newbb);
-		this->outputGrid->getBoundingBox().printInfo("After update from inputgrid");
 	}
+
 	// get diagonal of bb :
 	DiscreteGrid::bbox_t::vec diag = this->outputGrid->getBoundingBox().getDiagonal();
 	// set resolution so each voxel's side length is a bit less than 1 :

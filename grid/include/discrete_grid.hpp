@@ -1,6 +1,7 @@
 #ifndef GRID_INCLUDE_DISCRETE_GRID_HPP_
 #define GRID_INCLUDE_DISCRETE_GRID_HPP_
 
+#include "../../image/include/reader.hpp"
 #include "./bounding_box.hpp"
 
 #include <glm/glm.hpp>
@@ -34,8 +35,14 @@ class DiscreteGrid {
 		/// @brief Default constructor, creates an empty grid.
 		DiscreteGrid(bool _modifiable = true);
 
+		/// @brief Creates a grid using content from a grid reader.
+		DiscreteGrid(IO::GenericGridReader& reader);
+
 		/// @brief Default destructor, removes any storage associated with the grid.
 		~DiscreteGrid(void);
+
+		/// @brief Updates this grid's data with data computed from a grid reader.
+		virtual DiscreteGrid& fromGridReader(IO::GenericGridReader& reader);
 
 		/// @brief Recomputes the bounding box surrounding data with the threshold for "data" set to "threshold".
 		virtual DiscreteGrid& recomputeBoundingBox(DataType threshold);
@@ -72,6 +79,9 @@ class DiscreteGrid {
 
 		/// @brief Gets the bounding box of the grid.
 		const bbox_t& getBoundingBox(void) const;
+
+		/// @brief Get the data's bounding box.
+		const bbox_t& getDataBoundingBox(void) const;
 
 		/// @brief Gets the bounding box of the grid.
 		bbox_t getBoundingBoxWorldSpace(void) const;

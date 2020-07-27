@@ -1,5 +1,7 @@
 #include "../include/reader.hpp"
 
+#include <cstring>
+
 namespace IO {
 
 	bool FileExists(const char* filename) {
@@ -83,7 +85,7 @@ namespace IO {
 		this->data.clear();
 	}
 
-	GenericGridReader& GenericGridReader::setDataThreshold(data_t _thresh) { this->threshold = _thresh; }
+	GenericGridReader& GenericGridReader::setDataThreshold(data_t _thresh) { this->threshold = _thresh; return *this; }
 
 	GenericGridReader& GenericGridReader::setFilenames(std::vector<std::string> &names) {
 		// remove old filenames :
@@ -114,15 +116,31 @@ namespace IO {
 
 	GenericGridReader& GenericGridReader::loadGrid() { return *this; }
 
-	DIMReader::DIMReader(data_t thresh) : GenericGridReader(thresh) {}
+	GenericGridReader::data_t GenericGridReader::getDataThreshold() const { return this->threshold; }
+
+	GenericGridReader& GenericGridReader::swapData(std::vector<data_t> &target) { this->data.swap(target); return *this; }
+
+	DIMReader::DIMReader(data_t thresh) : GenericGridReader(thresh) {
+		this->dimFile = nullptr;
+		this->imaFile = nullptr;
+	}
 
 	DIMReader::~DIMReader() {
-		this->dimFile.close();
-		this->imaFile.close();
+		if (this->dimFile != nullptr) { this->dimFile->close(); }
+		if (this->imaFile != nullptr) { this->imaFile->close(); }
+		std::cerr << "[LOG] Destroying DIM reader" << '\n';
 	}
 
 	DIMReader& DIMReader::loadImage() {
 		if (this->filenames.size() != 0) {
+			try {
+				// Open with the given filename :
+				this->openFile(this->filenames[0]);
+			} catch (const std::runtime_error& e) {
+				std::cerr << "[ERROR] Could not open the file. Aborting program.\n";
+				std::abort();
+			}
+
 			this->loadGrid();
 		}
 		return *this;
@@ -131,20 +149,25 @@ namespace IO {
 	DIMReader& DIMReader::openFile(std::string &name) {
 		// Get IMA/DIM names from the open file :
 		char* basename = FileBaseName(name.c_str());
-		char* ima_input_file_path = nullptr; ima_input_file_path = AppendExtension(basename, "ima");
-		char* dim_input_file_path = nullptr; dim_input_file_path = AppendExtension(basename, "dim");
+		char* ima_input_file_path = nullptr;
+		char* dim_input_file_path = nullptr;
+
+		ima_input_file_path = AppendExtension(basename, "ima");
+		dim_input_file_path = AppendExtension(basename, "dim");
 
 		// check the filenames are properly created :
 		if (dim_input_file_path == nullptr) { std::cerr << "base and ext concat could not be performed for dim" << '\n'; return *this; }
 		if (ima_input_file_path == nullptr) { std::cerr << "base and ext concat could not be performed for ima" << '\n'; return *this; }
 
 		// Open the files, and check they are open
-		this->dimFile.open(dim_input_file_path);
-		this->imaFile.open(ima_input_file_path);
+		this->dimFile = new std::ifstream(dim_input_file_path);
+		this->imaFile = new std::ifstream(ima_input_file_path);
 
-		if ((not this->dimFile.is_open()) or (not this->imaFile.is_open())) {
-			this->dimFile.close();
-			this->imaFile.close();
+		if ((not this->dimFile->is_open()) or (not this->imaFile->is_open())) {
+			this->dimFile->close();
+			this->imaFile->close();
+			this->dimFile = nullptr;
+			this->imaFile = nullptr;
 			throw std::runtime_error("Could not open files.");
 		}
 
@@ -152,47 +175,71 @@ namespace IO {
 	}
 
 	DIMReader& DIMReader::loadGrid() {
-		// Read info from DIM file :
-		sizevec3 dims;
+		// Check if dim/ima files are opened :
+		if (this->dimFile == nullptr || this->imaFile == nullptr) { return *this; }
+
+		std::cerr << "[LOG] Reading DIM data ...\n";
 
 		// read number of voxels :
-		this->dimFile >> this->gridDimensions.x;
-		this->dimFile >> this->gridDimensions.y;
-		this->dimFile >> this->gridDimensions.z;
+		(*this->dimFile) >> this->gridDimensions.x;
+		(*this->dimFile) >> this->gridDimensions.y;
+		(*this->dimFile) >> this->gridDimensions.z;
 
-		// read info :
+		// Get the max coord as a bounding box-type vector :
+		bbox_t::vec maxCoord = bbox_t::vec(
+			static_cast<bbox_t::vec::value_type>(this->gridDimensions.x),
+			static_cast<bbox_t::vec::value_type>(this->gridDimensions.y),
+			static_cast<bbox_t::vec::value_type>(this->gridDimensions.z)
+		);
+
+		// By default, set the bounding box to the grid dimensions :
+		this->boundingBox.setMin(bbox_t::vec(0, 0, 0));
+		this->boundingBox.setMax(maxCoord);
+		// (can be overriden by the dim file's info)
+
+		// read info from the DIM file (extended with our properties)
 		std::string token, type;
-
 		do {
-			this->dimFile >> token;
-			if (token.find("-type") != std::string::npos) { this->dimFile >> type; }
-			else if (token.find("-dx") != std::string::npos) { this->dimFile >> this->voxelDimensions.x; }
-			else if (token.find("-dy") != std::string::npos) { this->dimFile >> this->voxelDimensions.y; }
-			else if (token.find("-dz") != std::string::npos) { this->dimFile >> this->voxelDimensions.z; }
-			else if (token.find("-bbmin") != std::string::npos) { bbox_t::vec v; this->dimFile >> v.x >> v.y >> v.z; this->boundingBox.setMin(v); }
-			else if (token.find("-bbmax") != std::string::npos) { bbox_t::vec v; this->dimFile >> v.x >> v.y >> v.z; this->boundingBox.setMax(v); }
-			else if (token.find("-databbmin") != std::string::npos) { bbox_t::vec v; this->dimFile >> v.x >> v.y >> v.z; this->dataBoundingBox.setMin(v); }
-			else if (token.find("-databbmax") != std::string::npos) { bbox_t::vec v; this->dimFile >> v.x >> v.y >> v.z; this->dataBoundingBox.setMax(v); }
-			else if (token.find("-threshold") != std::string::npos) { this->dimFile >> this->threshold; }
-			else if (token.find("-transform") != std::string::npos) {
-				glm::mat4 t;
-				for (std::size_t i = 0; i < 4; ++i) {
-					for (std::size_t j = 0; j < 4; ++j) {
-						this->dimFile >> t[i][j];
-					}
-				}
-				this->transform = t;
-			}
+			(*this->dimFile) >> token;
+			if (token.find("-type") != std::string::npos) { (*this->dimFile) >> type; }
+			else if (token.find("-dx") != std::string::npos) { (*this->dimFile) >> this->voxelDimensions.x; }
+			else if (token.find("-dy") != std::string::npos) { (*this->dimFile) >> this->voxelDimensions.y; }
+			else if (token.find("-dz") != std::string::npos) { (*this->dimFile) >> this->voxelDimensions.z; }
+			else if (token.find("-bbmin") != std::string::npos) { bbox_t::vec v; (*this->dimFile) >> v.x >> v.y >> v.z; this->boundingBox.setMin(v); }
+			else if (token.find("-bbmax") != std::string::npos) { bbox_t::vec v; (*this->dimFile) >> v.x >> v.y >> v.z; this->boundingBox.setMax(v); }
 			else {
 				std::cerr << "[DIMReader - ERROR] token " << token << " did not represent anything" << '\n';
 			}
-		} while (not this->dimFile.eof());
+		} while (not this->dimFile->eof());
 
+		std::cerr << "[LOG] Reading from IMA file ...\n";
 		// resize data vector :
 		std::size_t dataSize = this->gridDimensions.x * this->gridDimensions.y * this->gridDimensions.z;
 		this->data.resize(dataSize);
 		// read from file directly :
-		this->imaFile.read((char*)this->data.data(), static_cast<std::size_t>(dataSize));
+		this->imaFile->read((char*)this->data.data(), static_cast<std::size_t>(dataSize));
+
+		std::cerr << "[LOG] Updating DIM/IMA data bounding box with threshold " << +this->threshold << " ...\n";
+
+		// update data bounding box :
+		this->dataBoundingBox = bbox_t();
+		for (std::size_t k = 0; k < this->gridDimensions.z; ++k) {
+			for (std::size_t j = 0; j < this->gridDimensions.y; ++j) {
+				for (std::size_t i = 0; i < this->gridDimensions.x; ++i) {
+					std::size_t idx = i + j * this->gridDimensions.x + k * this->gridDimensions.x * this->gridDimensions.y;
+					if (this->data[idx] > this->threshold) {
+						// Update data BB :
+						bbox_t::vec v;
+						v.x = static_cast<bbox_t::vec::value_type>(i);
+						v.y = static_cast<bbox_t::vec::value_type>(j);
+						v.z = static_cast<bbox_t::vec::value_type>(k);
+						this->dataBoundingBox.addPoint(v);
+					}
+				}
+			}
+		}
+
+		std::cerr << "[LOG] Updated data bounding box\n";
 
 		return *this;
 	}

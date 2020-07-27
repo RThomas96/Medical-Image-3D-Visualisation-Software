@@ -17,7 +17,7 @@ DiscreteGrid::DiscreteGrid(bool _modifiable) {
 	this->modifiable = _modifiable;
 	this->data.clear();
 	this->gridDimensions = sizevec3(0);
-	this->voxelDimensions = glm::vec3(.0f);
+	this->voxelDimensions = glm::vec3(1.f);
 	this->transform_gridToWorld = glm::mat4(1.f);
 	this->transform_worldToGrid = glm::mat4(1.f);
 	this->gridName = "defaultGridName";
@@ -26,8 +26,31 @@ DiscreteGrid::DiscreteGrid(bool _modifiable) {
 	this->dataThreshold = DataType(0);
 }
 
+DiscreteGrid::DiscreteGrid(IO::GenericGridReader& reader) : DiscreteGrid() {
+	this->fromGridReader(reader);
+}
+
 DiscreteGrid::~DiscreteGrid(void) {
 	this->data.clear();
+}
+
+DiscreteGrid& DiscreteGrid::fromGridReader(IO::GenericGridReader& reader) {
+	// Updates this grid's data, bypassing the 'state'isModifiable' check.
+	this->data.clear();
+	this->dataBoundingBox = reader.getDataBoundingBox();
+	this->dataThreshold = reader.getDataThreshold();
+	this->boundingBox = reader.getBoundingBox();
+	this->gridDimensions = reader.getGridDimensions();
+	this->voxelDimensions = reader.getVoxelDimensions();
+
+	this->setTransform_GridToWorld(reader.getTransform());
+
+	std::size_t gridsize = this->gridDimensions.x * this->gridDimensions.y * this->gridDimensions.z;
+	this->data.resize(gridsize);
+	// copy data :
+	reader.swapData(this->data);
+
+	return *this;
 }
 
 DiscreteGrid& DiscreteGrid::recomputeBoundingBox(DataType threshold) {
@@ -53,11 +76,11 @@ DiscreteGrid& DiscreteGrid::recomputeBoundingBox(DataType threshold) {
 }
 
 glm::vec4 DiscreteGrid::toGridSpace(glm::vec4 pos_ws) {
-	return this->transform_worldToGrid * pos_ws;
+	return pos_ws * this->transform_worldToGrid;
 }
 
 glm::vec4 DiscreteGrid::toWorldSpace(glm::vec4 pos_gs) {
-	return this->transform_gridToWorld * pos_gs;
+	return pos_gs * this->transform_gridToWorld;
 }
 
 DiscreteGrid::DataType DiscreteGrid::fetchTexelGridSpace(glm::vec4 pos_gs) {
@@ -110,6 +133,10 @@ const DiscreteGrid::bbox_t& DiscreteGrid::getBoundingBox() const {
 	return this->boundingBox;
 }
 
+const DiscreteGrid::bbox_t& DiscreteGrid::getDataBoundingBox() const {
+	return this->dataBoundingBox;
+}
+
 DiscreteGrid::bbox_t DiscreteGrid::getBoundingBoxWorldSpace() const {
 	return this->boundingBox.transformTo(this->transform_gridToWorld);
 }
@@ -119,11 +146,19 @@ bool DiscreteGrid::isModifiable() const {
 }
 
 glm::vec4 DiscreteGrid::getVoxelPositionGridSpace(sizevec3 idx) {
+	// origin of the grid (min BB position) :
+	bbox_t::vec m = this->boundingBox.getMin();
+	glm::vec4 minBBpos = glm::vec4(static_cast<float>(m.x), static_cast<float>(m.y), static_cast<float>(m.z), 0.f);
 	// displacement for half a voxel :
 	glm::vec4 halfVoxel = glm::vec4(this->voxelDimensions.x / 2.f, this->voxelDimensions.y / 2.f, this->voxelDimensions.z / 2.f, .0f);
 	// voxel position, in grid space :
-	glm::vec4 voxelPos = glm::vec4(static_cast<float>(idx.x), static_cast<float>(idx.y), static_cast<float>(idx.z), 1.f);
-	return voxelPos + halfVoxel;
+	glm::vec4 voxelPos = glm::vec4(
+		static_cast<float>(idx.x) * this->voxelDimensions.x,
+		static_cast<float>(idx.y) * this->voxelDimensions.y,
+		static_cast<float>(idx.z) * this->voxelDimensions.z,
+		1.f
+	);
+	return minBBpos + voxelPos + halfVoxel;
 }
 
 glm::vec4 DiscreteGrid::getVoxelPositionWorldSpace(sizevec3 idx){
@@ -180,7 +215,7 @@ DiscreteGrid& DiscreteGrid::setTransform_WorldToGrid(glm::mat4 _w2g) {
 }
 
 DiscreteGrid& DiscreteGrid::setTransform_GridToWorld(glm::mat4 _g2w) {
-	this->transform_gridToWorld = _g2w;
+	this->transform_gridToWorld = glm::mat4(_g2w);
 	this->transform_worldToGrid = glm::inverse(this->transform_gridToWorld);
 	return *this;
 }
@@ -199,6 +234,8 @@ void DiscreteGrid::updateVoxelDimensions() {
 	if (this->gridDimensions.x == 0u || this->gridDimensions.y == 0u || this->gridDimensions.z == 0u) { return; }
 	// voxel dimensions along each axis should be BBlength / resolution :
 	glm::vec3 diag = this->boundingBox.getDiagonal();
+
+	//this->boundingBox.printInfo("Updating voxel dimensions ...");
 	this->voxelDimensions.x = diag.x / static_cast<float>(this->gridDimensions.x);
 	this->voxelDimensions.y = diag.y / static_cast<float>(this->gridDimensions.y);
 	this->voxelDimensions.z = diag.z / static_cast<float>(this->gridDimensions.z);

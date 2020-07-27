@@ -110,7 +110,7 @@ VoxelGrid& VoxelGrid::populateGrid(InterpolationMethods method) {
 
 	if (this->scene != nullptr) {
 		std::cerr << "Loading texture in scene" << '\n';
-		this->scene->loadVoxelGrid(this->getGridDimensions(), this->data.data());
+		//this->scene->loadVoxelGrid(this->getGridDimensions(), this->data.data());
 	}
 
 	return *this;
@@ -119,7 +119,7 @@ VoxelGrid& VoxelGrid::populateGrid(InterpolationMethods method) {
 VoxelGrid& VoxelGrid::writeToFile(const std::string path) {
 	this->writer = new defaultWriter(path);
 
-	this->writer->write(this);
+	//this->writer->write(this);
 
 	return *this;
 }

@@ -10,7 +10,7 @@ class OutputGrid : public DiscreteGrid {
 		OutputGrid(sizevec3 resolution, bbox_t renderWindow);
 		~OutputGrid(void);
 
-		virtual OutputGrid& updateRenderBox(const std::shared_ptr<InputGrid> input);
+		virtual OutputGrid& updateRenderBox(const bbox_t& newbox);
 		virtual OutputGrid& preallocateData(void);
 		virtual OutputGrid& preallocateData(sizevec3 dims);
 		virtual void setVoxelData(sizevec3 idx, DataType value);

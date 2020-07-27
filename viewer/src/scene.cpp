@@ -1,11 +1,14 @@
 #include "../include/scene.hpp"
 #include "../../qt/include/scene_control.hpp"
 #include "../../image/include/ima_loader.hpp"
+#include "../../image/include/reader.hpp"
 
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 #include <QOpenGLContext>
+#include <QFileDialog>
+#include <QMessageBox>
 #include <QSurface>
 
 #include <fstream>
@@ -66,24 +69,53 @@ Scene::~Scene(void) {
 void Scene::initGl(QOpenGLContext* _context, std::size_t _x, std::size_t _y, std::size_t _z) {
 	if (this->isInitialized == true) { return; }
 	this->isInitialized = true;
-	std::cerr << "Entering scene initialization ! " << '\n';
 
 	if (_context == 0) { throw std::runtime_error("Warning : this->context() returned 0 or nullptr !") ; }
 	if (_context == nullptr) { std::cerr << "Warning : Initializing a scene without a valid OpenGL context !" << '\n' ; }
 
 	this->initializeOpenGLFunctions();
 
-	this->t = std::make_shared<TextureStorage>();
-	this->t->enableDownsampling(true);
-	this->t->setInitialToRealMatrix(this->computeTransformationMatrix());
+//	this->t = std::make_shared<TextureStorage>();
+//	this->t->enableDownsampling(true);
+//	this->t->setInitialToRealMatrix(this->computeTransformationMatrix());
 
 	this->texStorage = std::make_shared<InputGrid>();
 	this->texStorage->setTransform_GridToWorld(this->computeTransformationMatrix());
 
+	QMessageBox* msgBox = new QMessageBox();
+	msgBox->setText("Choose your input data type");
+	QPushButton* dimButton = msgBox->addButton("DIM", QMessageBox::ActionRole);
+	QPushButton* tiffButton = msgBox->addButton("TIFF", QMessageBox::ActionRole);
+
+	msgBox->exec();
+
+	IO::GenericGridReader* reader = nullptr;
+	IO::GenericGridReader::data_t threshold = IO::GenericGridReader::data_t(6);
+
+	if (msgBox->clickedButton() == dimButton) {
+		reader = new IO::DIMReader(threshold);
+		QString filename = QFileDialog::getOpenFileName(nullptr, "Open a DIM/IMA image", "../../", "BrainVISA DIM Files (*.dim)");
+		std::vector<std::string> f;
+		f.push_back(filename.toStdString());
+		reader->setFilenames(f);
+	} else if (msgBox->clickedButton() == tiffButton) {
+		// do nothing :
+		std::cerr << "TIFF reader not yet implemented" << '\n';
+		throw std::runtime_error("Not implemented TIFF reader yet");
+	} else {
+		std::cerr << "No button was pressed." << '\n';
+		throw std::runtime_error("error : no button pressed");
+	}
+	// Set reader properties :
+	reader->setDataThreshold(threshold);
+	reader->loadImage();
+	// Update data from the grid reader :
+	this->texStorage->fromGridReader(*reader);
+	// delete reader :
+	delete reader;
+
 	this->voxelGrid	= std::make_shared<OutputGrid>();
 	this->gridControl->setVoxelGrid(this->voxelGrid);
-
-	this->voxelGrid->getBoundingBox().printInfo("BEFORE ANYTHING HAPPENS");
 
 	this->mesh = std::make_shared<TetMesh>();
 	this->mesh->addInputGrid(this->texStorage).setOutputGrid(this->voxelGrid);
@@ -98,8 +130,7 @@ void Scene::initGl(QOpenGLContext* _context, std::size_t _x, std::size_t _y, std
 
 	this->recompileShaders();
 
-	this->queryImage();
-	//this->queryIMA();
+	this->loadImage();
 
 	this->generateGrid(_x, _y, _z);
 
@@ -331,18 +362,14 @@ GLuint Scene::compileShaders(std::string _vPath, std::string _gPath, std::string
 	return _prog;
 }
 
-void Scene::loadImage(std::size_t i, std::size_t j, std::size_t k, const unsigned char *pData) {
+void Scene::loadImage() {
+	DiscreteGrid::sizevec3 d = this->texStorage->getGridDimensions();
+	this->gridWidth = d.x;
+	this->gridHeight= d.y;
+	this->gridDepth = d.z;
+
 	glEnable(GL_TEXTURE_3D);
-
 	glDeleteTextures(1, &this->textureHandle); // just in case one was allocated before
-
-	this->gridWidth = i;
-	this->gridHeight= j;
-	this->gridDepth = k;
-
-	std::cerr << "Set grid size in scene to be " << i << ' ' << j << ' ' << k << '\n';
-
-	if (pData == nullptr) { pData = this->loadEmptyImage(); }
 
 	if (this->textureHandle == 0) {
 		glGenTextures(1, &this->textureHandle);
@@ -355,7 +382,7 @@ void Scene::loadImage(std::size_t i, std::size_t j, std::size_t k, const unsigne
 	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	// Set the texture upload to not generate mimaps :
-	//glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_MAX_LOD, static_cast<GLfloat>(-1000.f));
+	glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_MAX_LOD, static_cast<GLfloat>(-1000.f));
 	// Stop once UV > 1 or < 0
 	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_MIRRORED_REPEAT);
 	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
@@ -368,18 +395,20 @@ void Scene::loadImage(std::size_t i, std::size_t j, std::size_t k, const unsigne
 		GL_TEXTURE_3D,		// GLenum : Target
 		static_cast<GLint>(0),	// GLint  : Level of detail of the current texture (0 = original)
 		GL_R8UI,		// GLint  : Number of color components in the picture. Here grayscale so GL_RED
-		static_cast<GLsizei>(i),// GLsizei: Image width
-		static_cast<GLsizei>(j),// GLsizei: Image height
-		static_cast<GLsizei>(k),// GLsizei: Image depth (number of layers)
+		static_cast<GLsizei>(d.x), // GLsizei: Image width
+		static_cast<GLsizei>(d.y), // GLsizei: Image height
+		static_cast<GLsizei>(d.z), // GLsizei: Image depth (number of layers)
 		static_cast<GLint>(0),	// GLint  : Border. This value MUST be 0.
 		GL_RED_INTEGER,		// GLenum : Format of the pixel data
 		GL_UNSIGNED_BYTE,	// GLenum : Type (the data type as in uchar, uint, float ...)
-		pData			// void*  : Data to load into the buffer
+		this->texStorage->getData().data() // void*  : Data to load into the buffer
 	);
 	GetOpenGLError();
+
+	this->gridControl->updateGridDimensions();
 }
 
-void Scene::loadVoxelGrid(svec3 size, const unsigned char *pData) {
+void Scene::loadVoxelGrid() {
 	if (this->voxelGrid == nullptr) {
 		// Sanity check. This function can *now* be called from the voxel grid only,
 		// but just in case we call it from elsewhere, all bases are covered.
@@ -387,21 +416,14 @@ void Scene::loadVoxelGrid(svec3 size, const unsigned char *pData) {
 		return;
 	}
 
+	DiscreteGrid::sizevec3 size = this->voxelGrid->getGridDimensions();
+
 	glEnable(GL_TEXTURE_3D);
-
-	glDeleteTextures(1, &this->voxelGridTexHandle); // just in case one was allocated before
-
-	if (pData == nullptr) {
-		std::cerr << "No data was uploaded for the Voxel Grid texture !" << '\n';
-		pData = this->loadEmptyVoxelGrid();
-		size.x = 1;
-		size.y = 1;
-		size.z = 1;
-	}
 
 	if (this->voxelGridTexHandle != 0) {
 		// Texture has already been created, destroy it:
 		glDeleteTextures(1, &this->voxelGridTexHandle);
+		this->voxelGridTexHandle = 0;
 	}
 	if (this->voxelGridTexHandle == 0) {
 		// Create texture handle
@@ -435,57 +457,39 @@ void Scene::loadVoxelGrid(svec3 size, const unsigned char *pData) {
 		static_cast<GLint>(0),		// GLint  : Border. This value MUST be 0.
 		GL_RED_INTEGER,			// GLenum : Format of the pixel data
 		GL_UNSIGNED_BYTE,		// GLenum : Type (the data type as in uchar, uint, float ...)
-		pData				// void*  : Data to load into the buffer
+		this->voxelGrid->getData().data() // void*  : Data to load into the buffer
 	);
 	GetOpenGLError();
 }
 
-void Scene::queryImage(void) {
-	this->t->loadImages();
-	const std::vector<unsigned char>& image = this->t->getData();
-	svec3 imageSizes = this->t->getImageSize();
-	std::size_t i = imageSizes[0];
-	std::size_t j = imageSizes[1];
-	std::size_t k = imageSizes[2];
-	this->texStorage->setImage(image, imageSizes).recomputeBoundingBox(5);
-	this->t->resetTexture();
-
-	DiscreteGrid::sizevec3 d = this->texStorage->getGridDimensions();
-	DiscreteGrid::bbox_t b = this->texStorage->getBoundingBoxWorldSpace();
-
-	std::cerr << "Loading image of size " << i << ',' << j << ',' << k << '\n';
-	std::cerr << "InputGrid " << this->texStorage->getGridName() <<  " dimensions :\n";
-	std::cerr << '\t' << "Dimensions : [" << d.x << ' ' << d.y << ' ' << d.z << "]\n";
-	b.printInfo("");
-
-	this->loadImage(i, j, k, image.data());
-
-	std::vector<DiscreteGrid::bbox_t::vec> points;
-
-	DiscreteGrid::bbox_t rb = this->texStorage->getBoundingBoxWorldSpace();
-
-	this->voxelGrid->setBoundingBox(rb).setResolution(imageSizes);
-	this->gridControl->updateGridDimensions();
+void Scene::fillNearestNeighbor() {
+	InterpolationMethods method = InterpolationMethods::NearestNeighbor;
+	if (this->mesh != nullptr && this->voxelGrid != nullptr) {
+		std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::duration<double, std::ratio<1,1>>> start_point = std::chrono::high_resolution_clock::now();
+		this->mesh->populateOutputGrid(method);
+		std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::duration<double, std::ratio<1,1>>> end_point = std::chrono::high_resolution_clock::now();
+		std::cerr << "To fill the grid, it took " << (end_point - start_point).count() << " seconds" << '\n';
+	}
+	this->loadVoxelGrid();
 }
 
-void Scene::queryIMA() {
-	IMALoader* loader = new IMALoader();
-	const std::vector<unsigned char>& data = loader->loadData();
-
-	std::tuple<std::size_t, std::size_t, std::size_t> dimensions = loader->getDimensions();
-
-	this->loadImage(std::get<0>(dimensions), std::get<1>(dimensions), std::get<2>(dimensions), data.data());
-
-	this->voxelGrid->setResolution(DiscreteGrid::sizevec3(0,0,0));
-	this->voxelGrid->setBoundingBox(DiscreteGrid::bbox_t());
+void Scene::fillTrilinear() {
+	InterpolationMethods method = InterpolationMethods::TriLinear;
+	if (this->mesh != nullptr && this->voxelGrid != nullptr) {
+		std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::duration<double, std::ratio<1,1>>> start_point = std::chrono::high_resolution_clock::now();
+		this->mesh->populateOutputGrid(method);
+		std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::duration<double, std::ratio<1,1>>> end_point = std::chrono::high_resolution_clock::now();
+		std::cerr << "To fill the grid, it took " << (end_point - start_point).count() << " seconds" << '\n';
+	}
+	this->loadVoxelGrid();
 }
 
 void Scene::drawRealSpace(GLfloat mvMat[], GLfloat pMat[]) {
 	glEnable(GL_DEPTH_TEST);
 	GetOpenGLError();
 
-	glm::vec4 n = glm::vec4(this->neighborOffset.x, this->neighborOffset.y, this->neighborOffset.z, 1.);
-	this->neighborPos = this->t->convertRealSpaceToVoxelIndex(n);
+//	glm::vec4 n = glm::vec4(this->neighborOffset.x, this->neighborOffset.y, this->neighborOffset.z, 1.);
+//	this->neighborPos = this->t->convertRealSpaceToVoxelIndex(n);
 
 	glm::mat4 transfoMat = this->computeTransformationMatrix();
 	glm::mat4 voxelMat = glm::mat4(1.f);
@@ -495,7 +499,7 @@ void Scene::drawRealSpace(GLfloat mvMat[], GLfloat pMat[]) {
 
 void Scene::drawInitialSpace(GLfloat mvMat[], GLfloat pMat[]) {
 
-	this->neighborPos = this->t->convertRealSpaceToVoxelIndex(glm::vec4(this->neighborOffset.x, this->neighborOffset.y, this->neighborOffset.z, 1.));
+//	this->neighborPos = this->t->convertRealSpaceToVoxelIndex(glm::vec4(this->neighborOffset.x, this->neighborOffset.y, this->neighborOffset.z, 1.));
 	//this->neighborPos -= glm::uvec3(1, 1, 1);
 
 	glm::mat4 transfoMat = glm::mat4(1.);
@@ -773,8 +777,6 @@ void Scene::setupVBOData() {
 	GetOpenGLError();
 
 	this->setupVAOPointers();
-
-	std::cerr << "Normally, inserted " << this->vertIdx.size() << " elements into element buffer. " << '\n';
 
 	this->vertPos.clear();
 	this->vertNorm.clear();

@@ -24,8 +24,8 @@ template <typename DataType> class BoundingBox_General {
 
 		/// @brief Creates a bounding box around the coordinates given in argument
 		BoundingBox_General(vec _min, vec _max) : BoundingBox_General() {
-			this->setMinX(_min.x).setMinY(_min.y).setMinZ(_min.z);
-			this->setMaxX(_max.x).setMaxY(_max.y).setMaxZ(_max.z);
+			this->setMin(_min);
+			this->setMax(_max);
 		}
 
 		/// @brief Destroys the bounding box.
@@ -35,7 +35,7 @@ template <typename DataType> class BoundingBox_General {
 		/// @details If the vector is larger than the max point, this
 		/// function call reverses the order of boundaries.
 		__attribute__((flatten)) BoundingBox_General& setMin(vec point) {
-			this->setMinX(point.x).setMinY(point.y).setMinZ(point.z);
+			this->min = point;
 			return *this;
 		}
 
@@ -43,7 +43,7 @@ template <typename DataType> class BoundingBox_General {
 		/// @details If the vector is small than the min point, this
 		/// function call reverses the order of boundaries.
 		BoundingBox_General& setMax(vec point) {
-			this->setMaxX(point.x).setMaxY(point.y).setMaxZ(point.z);
+			this->max = point;
 			return *this;
 		}
 
@@ -81,7 +81,7 @@ template <typename DataType> class BoundingBox_General {
 			// For each element, convert to another space :
 			std::for_each(corners.begin(), corners.end(), [&](vec &v){
 				glm::vec4 pos = glm::vec4(static_cast<float>(v.x), static_cast<float>(v.y), static_cast<float>(v.z), 1.);
-				pos = transform * pos;
+				pos = pos * transform;
 				v.x = static_cast<DataType>(pos.x);
 				v.y = static_cast<DataType>(pos.y);
 				v.z = static_cast<DataType>(pos.z);
