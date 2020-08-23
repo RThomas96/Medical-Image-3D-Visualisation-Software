@@ -31,6 +31,30 @@ template <typename DataType> class BoundingBox_General {
 		/// @brief Destroys the bounding box.
 		~BoundingBox_General(void) {}
 
+		BoundingBox_General(const BoundingBox_General& bb) {
+			this->min = bb.min;
+			this->max = bb.max;
+		}
+
+		BoundingBox_General(BoundingBox_General&& bb) {
+			this->min = bb.min;
+			this->max = bb.max;
+		}
+
+		/// @brief Assignment operator, copying values from the bounding box given
+		BoundingBox_General& operator= (const BoundingBox_General& bb) {
+			this->min = bb.min;
+			this->max = bb.max;
+			return *this;
+		}
+
+		/// @brief Assignment operator, copying values from the bounding box given
+		BoundingBox_General& operator= (BoundingBox_General&& bb) {
+			this->min = bb.min;
+			this->max = bb.max;
+			return *this;
+		}
+
 		/// @brief Sets the new minimum point of the bounding box.
 		/// @details If the vector is larger than the max point, this
 		/// function call reverses the order of boundaries.
@@ -88,6 +112,12 @@ template <typename DataType> class BoundingBox_General {
 				newbb.addPoint(v);
 			});
 			return newbb;
+		}
+
+		__attribute__((always_inline)) bool contains(vec point) const {
+			return point.x > this->min.x && point.x < this->max.x &&
+				point.y > this->min.y && point.y < this->max.y &&
+				point.z > this->min.z && point.z < this->max.z;
 		}
 
 		/// @brief Get a read-only reference to the minimum point.

@@ -2,6 +2,7 @@
 #define IMAGE_INCLUDE_READER_HPP_
 
 #include "../../grid/include/bounding_box.hpp"
+#include "../../TinyTIFF/tinytiffreader.h"
 
 #include <glm/glm.hpp>
 
@@ -137,6 +138,38 @@ namespace IO {
 			/// @brief The IMA file
 			std::ifstream* imaFile;
 	};
+
+	class StackedTIFFReader : public GenericGridReader {
+		public:
+			StackedTIFFReader(data_t thresh);
+			virtual ~StackedTIFFReader(void);
+
+			/// @brief Loads the image from disk. If no filenames are provided, does nothing.
+			virtual StackedTIFFReader& loadImage() override;
+
+			/// @brief Enables downsampling upon image loading or not.
+			virtual StackedTIFFReader& enableDownsampling(bool enabled = true);
+
+		protected:
+			/// @brief Preallocates the data vector and updates some data we can gather before loading the images.
+			/// @details Loads the first image, takes its dimensions and preallocates the whole grid to load the images faster.
+			/// also updates the grid's bounding box, as well as the grid dimensions, the voxel dimensions and
+			virtual StackedTIFFReader& preAllocateStorage();
+			/// @brief Opens the specified file to be able to read it later.
+			virtual StackedTIFFReader& openFile(std::string& filename) override;
+			/// @brief Loads the image at index 'idx' in the filenames in memory.
+			virtual StackedTIFFReader& loadImageIndexed(std::size_t idx) override;
+
+		protected:
+			TinyTIFFReaderFile* tiffFile;
+	};
+
+	namespace Reader {
+		/// @brief Alias for the IO::DIMReader class.
+		typedef ::IO::DIMReader DIM;
+		/// @brief Alias for the IO::StackedTIFFReader class.
+		typedef ::IO::StackedTIFFReader TIFF;
+	}
 }
 
 #endif // IMAGE_INCLUDE_READER_HPP_

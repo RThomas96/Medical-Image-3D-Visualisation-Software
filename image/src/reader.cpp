@@ -132,17 +132,22 @@ namespace IO {
 	}
 
 	DIMReader& DIMReader::loadImage() {
-		if (this->filenames.size() != 0) {
-			try {
-				// Open with the given filename :
-				this->openFile(this->filenames[0]);
-			} catch (const std::runtime_error& e) {
-				std::cerr << "[ERROR] Could not open the file. Aborting program.\n";
-				std::abort();
-			}
-
-			this->loadGrid();
+		if (this->filenames.size() == 0) {
+			std::cerr << "[LOG] No filenames were provided, nothing will be loaded." << '\n';
+			return *this;
 		}
+
+		try {
+			// Open with the given filename :
+			this->openFile(this->filenames[0]);
+		} catch (const std::runtime_error& e) {
+			std::cerr << "[ERROR] Could not open the file \"" << this->filenames[0] << "\". Error message :\n";
+			std::cerr << e.what() << '\n';
+			std::abort();
+		}
+
+		this->loadGrid();
+
 		return *this;
 	}
 
@@ -241,6 +246,123 @@ namespace IO {
 
 		std::cerr << "[LOG] Updated data bounding box\n";
 
+		return *this;
+	}
+
+	StackedTIFFReader::StackedTIFFReader(StackedTIFFReader::data_t thresh) : GenericGridReader(thresh) {
+		this->tiffFile = nullptr;
+	}
+
+	StackedTIFFReader::~StackedTIFFReader() {
+		// if a file was opened :
+		if (this->tiffFile != nullptr) {
+			// close the file, and free up memory
+			TinyTIFFReader_close(this->tiffFile);
+			this->tiffFile = nullptr;
+		}
+		std::cerr << "[LOG] Destroying stacked TIFF reader\n";
+	}
+
+	StackedTIFFReader& StackedTIFFReader::loadImage() {
+		// checks we have something to load :
+		if (this->filenames.size() == 0) {
+			std::cerr << "[LOG] No filenames were provided, nothing will be loaded." << '\n';
+			return *this;
+		}
+
+		// Prepare storage of all the image's data :
+		this->preAllocateStorage();
+
+		for (std::size_t i = 0; i < this->filenames.size(); ++i) {
+			this->loadImageIndexed(i);
+		}
+
+		return *this;
+	}
+
+	StackedTIFFReader& StackedTIFFReader::preAllocateStorage() {
+		try {
+			this->openFile(this->filenames[0]);
+		}  catch (std::runtime_error& e) {
+			std::cerr << "[ERROR] A runtime error occured while preallocating storage. Error message : \n";
+			std::cerr << e.what() << '\n';
+			std::abort();
+		}
+
+		// File is opened, we can query its dimensions :
+		std::size_t width = static_cast<std::size_t>(TinyTIFFReader_getWidth(this->tiffFile));
+		std::size_t height = static_cast<std::size_t>(TinyTIFFReader_getHeight(this->tiffFile));
+		std::size_t depth = static_cast<std::size_t>(this->filenames.size());
+		// If we downsample, apply the dimension reduction here :
+		if (this->downsampled) { width /= 2; height /= 2; }
+		// Compute the vector size :
+		std::size_t finalSize = width * height * depth;
+
+		// Compute the min/max values for the bounding box :
+		bbox_t::vec minBB = bbox_t::vec(static_cast<bbox_t::vec::value_type>(0));
+		bbox_t::vec maxBB = bbox_t::vec(
+			static_cast<bbox_t::vec::value_type>(width),
+			static_cast<bbox_t::vec::value_type>(height),
+			static_cast<bbox_t::vec::value_type>(depth)
+		);
+		// Resize the vector :
+		this->data.resize(finalSize);
+		// Fill in the data for grid dimensions, bounding box, transform and voxel dimensions :
+		this->gridDimensions = sizevec3(width, height, depth);
+		this->transform = glm::mat4(1.f);
+		this->voxelDimensions = glm::vec3(1.f, 1.f, 1.f);
+		this->boundingBox = bbox_t(minBB, maxBB);
+
+		// Most of those values assigned above are default values, since we cannot gather that info from a TIFF file.
+		return *this;
+	}
+
+	StackedTIFFReader& StackedTIFFReader::openFile(std::string& filename) {
+		if (this->tiffFile != nullptr) {
+			TinyTIFFReader_close(this->tiffFile);
+			this->tiffFile = nullptr;
+		}
+
+		std::cerr << "[LOG] Opening file named \"" << filename << "\" ..." << '\n';
+		this->tiffFile = TinyTIFFReader_open(filename.c_str());
+
+		if (TinyTIFFReader_wasError(this->tiffFile)) {
+			std::cerr << "[WARNING] Errors occured while loading \"" << filename << "\" with TinyTIFF. Error messages :" << '\n';
+			while (TinyTIFFReader_wasError(this->tiffFile)) {
+				std::cerr << "[WARNING]\t" << TinyTIFFReader_getLastError(this->tiffFile) << '\n';
+			}
+		}
+
+		return *this;
+	}
+
+	StackedTIFFReader& StackedTIFFReader::loadImageIndexed(std::size_t idx) {
+		try {
+			this->openFile(this->filenames[idx]);
+		} catch (std::runtime_error& e) {
+			std::cerr << "[ERROR] A runtime error occured while loading file \"" << this->filenames[idx] << "\". Error message :\n";
+			std::cerr << e.what() << '\n';
+			std::abort();
+		}
+
+		// file is now opened, we can load the data into a vector :
+		std::vector<data_t> rawData;
+		rawData.resize(this->gridDimensions.x * this->gridDimensions.y);
+		// load data :
+		TinyTIFFReader_getSampleData(this->tiffFile, rawData.data(), 0);
+
+		if (this->downsampled) {
+			// Downsample here :
+		} else {
+			std::size_t offset = this->gridDimensions.x * this->gridDimensions.y * idx;
+			std::copy(rawData.begin(), rawData.end(), this->data.data()+offset);
+		}
+
+		return *this;
+	}
+
+	StackedTIFFReader& StackedTIFFReader::enableDownsampling(bool enabled) {
+		this->downsampled = enabled;
 		return *this;
 	}
 

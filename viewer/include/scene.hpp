@@ -214,6 +214,10 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		glm::mat4 computeTransformationMatrix() const;
 		void draw(GLfloat mvMat[], GLfloat pMat[], glm::mat4 transfoMat, glm::mat4 voxelGridMat);
 		void drawVoxelGrid(GLfloat mvMat[], GLfloat pMat[], glm::mat4 transfoMat);
+		/// @b preps uniforms for a grid
+		void prepGridUniforms(GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, GLuint texHandle, const std::shared_ptr<DiscreteGrid>& grid);
+		/// @b draws a grid, slightly more generic than drawVoxelGrid()
+		void drawGrid_Generic(GLfloat mvMat[], GLfloat pMat[], glm::mat4 baseMatrix, GLuint texHandle, const std::shared_ptr<DiscreteGrid>& grid);
 };
 
 #endif // VIEWER_INCLUDE_SCENE_HPP_

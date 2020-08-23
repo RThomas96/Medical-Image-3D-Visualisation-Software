@@ -75,16 +75,16 @@ DiscreteGrid& DiscreteGrid::recomputeBoundingBox(DataType threshold) {
 	return *this;
 }
 
-glm::vec4 DiscreteGrid::toGridSpace(glm::vec4 pos_ws) {
+glm::vec4 DiscreteGrid::toGridSpace(glm::vec4 pos_ws) const {
 	return pos_ws * this->transform_worldToGrid;
 }
 
-glm::vec4 DiscreteGrid::toWorldSpace(glm::vec4 pos_gs) {
+glm::vec4 DiscreteGrid::toWorldSpace(glm::vec4 pos_gs) const {
 	return pos_gs * this->transform_gridToWorld;
 }
 
-DiscreteGrid::DataType DiscreteGrid::fetchTexelGridSpace(glm::vec4 pos_gs) {
-	if (pos_gs.x < .0f || pos_gs.y < .0f || pos_gs.z < .0f) { return DataType(0); }
+DiscreteGrid::DataType DiscreteGrid::fetchTexelGridSpace(glm::vec4 pos_gs) const {
+	if (not this->boundingBox.contains(pos_gs)) { return DataType(0); }
 
 	// compute index of position :
 	std::size_t x = std::floor(pos_gs.x);
@@ -93,15 +93,12 @@ DiscreteGrid::DataType DiscreteGrid::fetchTexelGridSpace(glm::vec4 pos_gs) {
 	return this->fetchTexelIndex(sizevec3(x,y,z));
 }
 
-DiscreteGrid::DataType DiscreteGrid::fetchTexelWorldSpace(glm::vec4 pos_ws) {
+DiscreteGrid::DataType DiscreteGrid::fetchTexelWorldSpace(glm::vec4 pos_ws) const {
 	glm::vec4 pos_gs = this->transform_worldToGrid * pos_ws;
 	return this->fetchTexelGridSpace(pos_gs);
 }
 
-DiscreteGrid::DataType DiscreteGrid::fetchTexelIndex(sizevec3 idx) {
-	// if bigger in any dimension, then return nothing :
-	if (idx.x > this->gridDimensions.x || idx.y > this->gridDimensions.y || idx.z > this->gridDimensions.z) { return DataType(0); }
-
+DiscreteGrid::DataType DiscreteGrid::fetchTexelIndex(sizevec3 idx) const {
 	std::size_t index = idx.x + idx.y * this->gridDimensions.x + idx.z * this->gridDimensions.x * this->gridDimensions.y;
 	// sanity check, should be covered by the case above :
 	if (this->data.size() < index) { return DataType(0); }
@@ -191,8 +188,6 @@ DiscreteGrid& DiscreteGrid::setBoundingBox(bbox_t renderWindow) {
 	this->boundingBox = renderWindow;
 	// update voxel dimensions :
 	this->updateVoxelDimensions();
-	// update the data bb :
-	this->recomputeBoundingBox(this->dataThreshold);
 	return *this;
 }
 
@@ -203,8 +198,6 @@ DiscreteGrid& DiscreteGrid::updateBoundingBox(bbox_t renderWindow) {
 	this->boundingBox.addPoints(cornersBB);
 	// update voxel dimensions :
 	this->updateVoxelDimensions();
-	// update the data bb :
-	this->recomputeBoundingBox(this->dataThreshold);
 	return *this;
 }
 
@@ -216,7 +209,7 @@ DiscreteGrid& DiscreteGrid::setTransform_WorldToGrid(glm::mat4 _w2g) {
 
 DiscreteGrid& DiscreteGrid::setTransform_GridToWorld(glm::mat4 _g2w) {
 	this->transform_gridToWorld = glm::mat4(_g2w);
-	this->transform_worldToGrid = glm::inverse(this->transform_gridToWorld);
+	this->transform_worldToGrid = glm::inverse(_g2w);
 	return *this;
 }
 
@@ -229,6 +222,16 @@ const std::string& DiscreteGrid::getGridName(void) const {
 	return this->gridName;
 }
 
+bool DiscreteGrid::includesPointWorldSpace(glm::vec4 point) const {
+	glm::vec4 point_gs = this->toGridSpace(point);
+	return this->includesPointGridSpace(point_gs);
+}
+
+bool DiscreteGrid::includesPointGridSpace(glm::vec4 point) const {
+	bbox_t::vec point_bb = bbox_t::vec(static_cast<float>(point.x), static_cast<float>(point.y), static_cast<float>(point.z));
+	return this->boundingBox.contains(point_bb);
+}
+
 void DiscreteGrid::updateVoxelDimensions() {
 	// if the resolution hasn't been set, return to prevent NaNs :
 	if (this->gridDimensions.x == 0u || this->gridDimensions.y == 0u || this->gridDimensions.z == 0u) { return; }
@@ -239,5 +242,8 @@ void DiscreteGrid::updateVoxelDimensions() {
 	this->voxelDimensions.x = diag.x / static_cast<float>(this->gridDimensions.x);
 	this->voxelDimensions.y = diag.y / static_cast<float>(this->gridDimensions.y);
 	this->voxelDimensions.z = diag.z / static_cast<float>(this->gridDimensions.z);
+
+	std::cerr << "[LOG] Grid dimensions after update : [" << this->gridDimensions.x << ',' << this->gridDimensions.y << ',' << this->gridDimensions.z << "]\n";
+	std::cerr << "[LOG] Voxel dimensions after update : [" << this->voxelDimensions.x << ',' << this->voxelDimensions.y << ',' << this->voxelDimensions.z << "]\n";
 	return;
 }

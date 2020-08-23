@@ -397,9 +397,12 @@ void GridControl::saveToFile() {
 }
 
 void GridControl::setGridDimensionX(int newDim) {
+	std::cerr << "[LOG] Updating the grid dimensions ...\n";
 	this->voxelGrid->gridDimensions.x = static_cast<std::size_t>(newDim);
 	this->voxelGrid->updateVoxelDimensions();
+	std::cerr << "[LOG] Updating the labels ...\n";
 	this->updateGridLabels();
+	std::cerr << "[LOG] Done with updates.\n\n";
 }
 void GridControl::setGridDimensionY(int newDim) {
 	this->voxelGrid->gridDimensions.y = static_cast<std::size_t>(newDim);

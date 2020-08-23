@@ -27,6 +27,7 @@ TetMesh& TetMesh::addInputGrid(const std::shared_ptr<InputGrid>& toAdd) {
 
 TetMesh& TetMesh::setOutputGrid(const std::shared_ptr<OutputGrid>& toSet) {
 	this->outputGrid = toSet;
+	this->updateVoxelSizes();
 	this->updateOutputGridData();
 	return *this;
 }
@@ -45,14 +46,27 @@ TetMesh& TetMesh::populateOutputGrid(InterpolationMethods method) {
 	if (this->outputGrid == nullptr) { return *this; }
 	if (this->inputGrids.size() == 0) { return *this; }
 
+	this->updateVoxelSizes();
+
 	// Check the dimensions of the voxel grid (if it can host voxels) :
 	DiscreteGrid::sizevec3 dims = this->outputGrid->getGridDimensions();
-	if (dims.x == 0 || dims.y == 0 || dims.z == 0) { return *this; }
+
+	auto bb = this->outputGrid->getBoundingBox();
+	auto min = bb.getMin();
+	auto max = bb.getMax();
+	auto vd = this->outputGrid->getVoxelDimensions();
+	std::cerr << "[LOG]\t Generating a voxel grid of dimensions : [" << dims.x << ',' << dims.y << ',' << dims.z << "]\n";
+	std::cerr << "[LOG]\t Voxel dimensions are [" << vd.x << ',' << vd.y << ',' << vd.z << "]\n";
+	std::cerr << "[LOG]\t Bounding box is from [" << min.x << ',' << min.y << ',' << min.z << "] to [" << max.x << ',' << max.y << ',' << max.z << "]\n";
+
+	// If the grid to generate has "wrong" dimensions, warn and exit
+	if (dims.x == 0 || dims.y == 0 || dims.z == 0) {
+		std::cerr << "Grid dimensions contain a zero !" << '\n';
+		return *this;
+	}
 
 	// reserve and allocate space :
 	this->outputGrid->preallocateData();
-
-	std::size_t inputGridCount = this->inputGrids.size();
 
 	// iterate on the voxels of the output data grid :
 	for (std::size_t k = 0; k < dims.z; ++k) {
@@ -60,23 +74,26 @@ TetMesh& TetMesh::populateOutputGrid(InterpolationMethods method) {
 			for (std::size_t i = 0; i < dims.x; ++i) {
 				// generate 3D index :
 				DiscreteGrid::sizevec3 idx = DiscreteGrid::sizevec3(i,j,k);
-				// get world position from it :
-				glm::vec4 pos_ws = this->outputGrid->getVoxelPositionWorldSpace(idx);
-				// set it as origin :
-				this->origin = pos_ws;
+				// get grid-space origin :
+				this->origin = this->outputGrid->getVoxelPositionGridSpace(idx);
+				// set world-space origin from it :
+				this->origin_WS = this->outputGrid->toWorldSpace(this->origin);
+
 				// gather values from all input grids :
 				std::vector<DiscreteGrid::DataType> values;
 				for (const std::shared_ptr<InputGrid>& grid : this->inputGrids) {
-					values.push_back(this->getInterpolatedValue(grid, method, pos_ws));
+					if (grid->includesPointWorldSpace(this->origin_WS)) {
+						values.push_back(this->getInterpolatedValue(grid, method, idx));
+					}
 				}
+
 				// do a basic mean of the values obtained from the different input grids :
 				float globalVal = .0f;
 				std::for_each(std::begin(values), std::end(values), [&](DiscreteGrid::DataType v) {
-					globalVal += static_cast<float>(v) / static_cast<float>(inputGridCount);
+					globalVal += static_cast<float>(v) / static_cast<float>(values.size());
 				});
 				// set data :
 				this->outputGrid->setVoxelData(idx, static_cast<DiscreteGrid::DataType>(globalVal));
-			//	this->outputGrid->setVoxelData(idx, this->getInterpolatedValue(this->inputGrids[0], method, pos_ws));
 			}
 		}
 	}
@@ -85,7 +102,7 @@ TetMesh& TetMesh::populateOutputGrid(InterpolationMethods method) {
 	return *this;
 }
 
-DiscreteGrid::DataType TetMesh::getInterpolatedValue(std::shared_ptr<InputGrid> grid, InterpolationMethods method, glm::vec4 pos) const {
+DiscreteGrid::DataType TetMesh::getInterpolatedValue(std::shared_ptr<InputGrid> grid, InterpolationMethods method, DiscreteGrid::sizevec3 idx) const {
 	switch (method) {
 		case InterpolationMethods::NearestNeighbor:
 			return this->interpolate_NearestNeighbor(grid);

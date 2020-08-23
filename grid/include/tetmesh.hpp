@@ -14,6 +14,8 @@
 
 #define DIRECT_CASTING_FROM_FETCH
 
+#define TETMESH_OPTI __attribute__((flatten))
+
 enum InterpolationMethods {
 	NearestNeighbor,
 	TriLinear,
@@ -66,7 +68,11 @@ class TetMesh {
 		TetMesh::DataType getInterpolatedValueInitialSpace(glm::vec4 pos_is, InterpolationMethods method = InterpolationMethods::NearestNeighbor);
 #endif
 		/// @brief Returns the interpolated value from 'grid', interpolated using 'method'
-		DiscreteGrid::DataType getInterpolatedValue(std::shared_ptr<InputGrid> grid, InterpolationMethods method, glm::vec4 pos) const;
+		/// @param grid The grid to sample data from
+		/// @param method The interpolation method used to determine the value at the given point.
+		/// @param idx The index of the voxel to fetch the value from
+		DiscreteGrid::DataType getInterpolatedValue(std::shared_ptr<InputGrid> grid, InterpolationMethods method, DiscreteGrid::sizevec3 idx) const;
+
 		/// @brief Prints info about the current position and values of the neighbor grid.
 		/// @returns A reference to (this), to chain function calls.
 		TetMesh& printInfo(void);
@@ -78,6 +84,7 @@ class TetMesh {
 		std::shared_ptr<OutputGrid> outputGrid; ///< Output grid, to populate
 
 		glm::vec4 origin; ///< Position of the mesh's origin.
+		glm::vec4 origin_WS; ///< Position of the origin of the mesh, always in world space.
 		std::vector<glm::vec4> vertices; ///< Positions of the neighboring vertices
 
 		std::vector<std::vector<std::size_t>> tetrahedra; ///< Tetrahedra, each represented as the index of the vertices making it up stored in an array

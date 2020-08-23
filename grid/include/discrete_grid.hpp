@@ -48,19 +48,19 @@ class DiscreteGrid {
 		virtual DiscreteGrid& recomputeBoundingBox(DataType threshold);
 
 		/// @brief Returns the given point (originally world space) in grid space.
-		virtual glm::vec4 toGridSpace(glm::vec4 pos_ws);
+		virtual glm::vec4 toGridSpace(glm::vec4 pos_ws) const;
 
 		/// @brief Returns the given point (originally grid space) in world space.
-		virtual glm::vec4 toWorldSpace(glm::vec4 pos_gs);
+		virtual glm::vec4 toWorldSpace(glm::vec4 pos_gs) const;
 
 		/// @brief Fetches the voxel at the given position, in grid space.
-		virtual DataType fetchTexelGridSpace(glm::vec4 pos_gs);
+		virtual DataType fetchTexelGridSpace(glm::vec4 pos_gs) const;
 
 		/// @brief Fetches the voxel at the given position, in world space.
-		virtual DataType fetchTexelWorldSpace(glm::vec4 pos_ws);
+		virtual DataType fetchTexelWorldSpace(glm::vec4 pos_ws) const;
 
 		/// @brief Fetches the voxel at the given position index, in the grid.
-		virtual DataType fetchTexelIndex(sizevec3 idx);
+		virtual DataType fetchTexelIndex(sizevec3 idx) const;
 
 		/// @brief Get the voxel grid's data.
 		virtual const std::vector<DataType>& getData(void) const;
@@ -123,6 +123,18 @@ class DiscreteGrid {
 
 		/// @brief Get the grid name, in order to indentify them in a controller
 		const std::string& getGridName(void) const;
+
+		/// @brief Checks if the grid contains the point given in world space.
+		/// @details Allows to check whether we need to sample from this grid or not. If the point
+		/// (defined in world space) is contained within the grid's bounding box when transformed
+		/// in grid space, then this function returns true. Returns false otherwise.
+		bool includesPointWorldSpace(glm::vec4 point) const;
+
+		/// @brief Checks if the grid contains the point given in world space.
+		/// @details Allows to check whether we need to sample from this grid or not. If the point
+		/// (defined in grid space) is contained within the grid's bounding box then this function
+		/// returns true. Returns false otherwise.
+		bool includesPointGridSpace(glm::vec4 point) const;
 
 	protected:
 		/// @brief Updates the voxel dimensions of the grid, each time the BB or the resolution changes.

@@ -75,12 +75,7 @@ void Scene::initGl(QOpenGLContext* _context, std::size_t _x, std::size_t _y, std
 
 	this->initializeOpenGLFunctions();
 
-//	this->t = std::make_shared<TextureStorage>();
-//	this->t->enableDownsampling(true);
-//	this->t->setInitialToRealMatrix(this->computeTransformationMatrix());
-
 	this->texStorage = std::make_shared<InputGrid>();
-	this->texStorage->setTransform_GridToWorld(this->computeTransformationMatrix());
 
 	QMessageBox* msgBox = new QMessageBox();
 	msgBox->setText("Choose your input data type");
@@ -111,7 +106,8 @@ void Scene::initGl(QOpenGLContext* _context, std::size_t _x, std::size_t _y, std
 	reader->loadImage();
 	// Update data from the grid reader :
 	this->texStorage->fromGridReader(*reader);
-	// delete reader :
+	this->texStorage->setTransform_GridToWorld(this->computeTransformationMatrix());
+	// free up the reader's resources :
 	delete reader;
 
 	this->voxelGrid	= std::make_shared<OutputGrid>();
@@ -440,9 +436,9 @@ void Scene::loadVoxelGrid() {
 	// Set the texture upload to not generate mimaps :
 	glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_MAX_LOD, static_cast<GLfloat>(-1000.f));
 	// Stop once UV > 1 or < 0
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_MIRRORED_REPEAT);
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 	// Swizzle G/B to R value, to save data upload
 	GLint swizzleMask[] = {GL_RED, GL_RED, GL_RED, GL_ONE};
 	glTexParameteriv(GL_TEXTURE_3D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
@@ -491,23 +487,29 @@ void Scene::drawRealSpace(GLfloat mvMat[], GLfloat pMat[]) {
 //	glm::vec4 n = glm::vec4(this->neighborOffset.x, this->neighborOffset.y, this->neighborOffset.z, 1.);
 //	this->neighborPos = this->t->convertRealSpaceToVoxelIndex(n);
 
-	glm::mat4 transfoMat = this->computeTransformationMatrix();
-	glm::mat4 voxelMat = glm::mat4(1.f);
+	glm::mat4 transfoMat = glm::mat4(1.f); //this->computeTransformationMatrix();
 
-	this->draw(mvMat, pMat, transfoMat, voxelMat);
+	//this->draw(mvMat, pMat, transfoMat, voxelMat);
+	this->drawGrid_Generic(mvMat, pMat, transfoMat, this->textureHandle, this->texStorage);
+	this->drawGrid_Generic(mvMat, pMat, transfoMat, this->voxelGridTexHandle, this->voxelGrid);
 }
 
 void Scene::drawInitialSpace(GLfloat mvMat[], GLfloat pMat[]) {
 
-//	this->neighborPos = this->t->convertRealSpaceToVoxelIndex(glm::vec4(this->neighborOffset.x, this->neighborOffset.y, this->neighborOffset.z, 1.));
+	//this->neighborPos = this->t->convertRealSpaceToVoxelIndex(glm::vec4(this->neighborOffset.x, this->neighborOffset.y, this->neighborOffset.z, 1.));
 	//this->neighborPos -= glm::uvec3(1, 1, 1);
 
-	glm::mat4 transfoMat = glm::mat4(1.);
-	glm::mat4 voxelMat = glm::inverse(this->computeTransformationMatrix());
+	glm::mat4 transfoMat = this->texStorage->getTransform_WorldToGrid(); // glm::mat4(1.f);
+	this->drawGrid_Generic(mvMat, pMat, transfoMat, this->textureHandle, this->texStorage);
+	this->drawGrid_Generic(mvMat, pMat, transfoMat, this->voxelGridTexHandle, this->voxelGrid);
 
+/*
+	glm::mat4 transfoMat = glm::mat4(1.f);
+	glm::mat4 voxelMat = glm::inverse(this->computeTransformationMatrix());
 	// In initial space, the voxel grid needs to be deformed inverse to the
 	// transformation applied when saving them to disk. So, computeMatrix^-1
 	this->draw(mvMat, pMat, transfoMat, voxelMat);
+*/
 }
 
 void Scene::prepUniforms(glm::mat4 transfoMat, GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos) {
@@ -677,6 +679,72 @@ void Scene::drawVoxelGrid(GLfloat mvMat[], GLfloat pMat[], glm::mat4 transfoMat)
 
 	glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(this->renderSize), GL_UNSIGNED_INT, (void*)0);
 	GetOpenGLError();
+}
+
+void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, GLuint texHandle, const std::shared_ptr<DiscreteGrid>& grid) {
+	// Get the world to grid transform :
+	glm::mat4 transfoMat = baseMatrix * grid->getTransform_GridToWorld();
+
+	// Get the uniform locations :
+	GLint mMatrix_Loc = glGetUniformLocation(this->programHandle_VG, "mMatrix");
+	GLint vMatrix_Loc = glGetUniformLocation(this->programHandle_VG, "vMatrix");
+	GLint pMatrix_Loc = glGetUniformLocation(this->programHandle_VG, "pMatrix");
+	GLint lightPos_Loc = glGetUniformLocation(this->programHandle_VG, "lightPos");
+	GLint voxelGridOrigin_Loc = glGetUniformLocation(this->programHandle_VG, "voxelGridOrigin");
+	GLint voxelGridSize_Loc = glGetUniformLocation(this->programHandle_VG, "voxelGridSize");
+	GLint voxelSize_Loc = glGetUniformLocation(this->programHandle_VG, "voxelSize");
+	GLint cutPlaneMin_Loc = glGetUniformLocation(this->programHandle_VG, "cutPlaneMin");
+	GLint cutPlaneMax_Loc = glGetUniformLocation(this->programHandle_VG, "cutPlaneMax");
+	GLint minTexVal_Loc = glGetUniformLocation(this->programHandle_VG, "minTexVal");
+	GLint maxTexVal_Loc = glGetUniformLocation(this->programHandle_VG, "maxTexVal");
+	GLint drawMode_Loc = glGetUniformLocation(this->programHandle_VG, "drawMode");
+	GLint texData_Loc = glGetUniformLocation(this->programHandle_VG, "texData");
+
+	DiscreteGrid::bbox_t::vec origin = grid->getBoundingBox().getMin();
+	glUniform3fv(voxelGridOrigin_Loc, 1, glm::value_ptr(origin));
+	DiscreteGrid::sizevec3 gridDims = grid->getGridDimensions();
+	glm::vec3 dims = glm::vec3(static_cast<float>(gridDims.x), static_cast<float>(gridDims.y), static_cast<float>(gridDims.z));
+	glUniform3fv(voxelGridSize_Loc, 1, glm::value_ptr(dims));
+	glUniform3fv(voxelSize_Loc, 1, glm::value_ptr(grid->getVoxelDimensions()));
+	glUniform3fv(cutPlaneMin_Loc, 1, glm::value_ptr(this->cutPlaneMin));
+	glUniform3fv(cutPlaneMax_Loc, 1, glm::value_ptr(this->cutPlaneMax));
+	glUniform1ui(minTexVal_Loc, this->minTexVal);
+	glUniform1ui(maxTexVal_Loc, this->maxTexVal);
+	if (grid->getData().size() == 0) {
+		glUniform1ui(drawMode_Loc, 2);
+	} else {
+		glUniform1ui(drawMode_Loc, this->drawMode);
+	}
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_3D, texHandle);
+	glUniform1ui(texData_Loc, 0);
+
+	// Apply the uniforms :
+	glUniformMatrix4fv(mMatrix_Loc, 1, GL_FALSE, glm::value_ptr(transfoMat));
+	GetOpenGLError();
+	glUniformMatrix4fv(vMatrix_Loc, 1, GL_FALSE, &mvMat[0]);
+	GetOpenGLError();
+	glUniformMatrix4fv(pMatrix_Loc, 1, GL_FALSE, &pMat[0]);
+	GetOpenGLError();
+	glUniform4fv(lightPos_Loc, 1, glm::value_ptr(lightPos));
+	GetOpenGLError();
+}
+
+void Scene::drawGrid_Generic(GLfloat *mvMat, GLfloat *pMat, glm::mat4 baseMatrix, GLuint texHandle, const std::shared_ptr<DiscreteGrid> &grid) {
+	glm::vec4 lightPos = glm::vec4(-0.25, -0.25, -0.25, 1.0);
+	glUseProgram(this->programHandle_VG);
+	this->prepGridUniforms(mvMat, pMat, lightPos, baseMatrix, texHandle, grid);
+	GetOpenGLError();
+
+	glBindVertexArray(this->vaoHandle);
+	this->setupVAOPointers();
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboElementHandle);
+
+	glDrawElementsInstanced(GL_TRIANGLES, static_cast<GLsizei>(this->renderSize), GL_UNSIGNED_INT, (void*)0, static_cast<GLsizei>(this->drawCalls));
+
+	glUseProgram(0);
+	glBindVertexArray(0);
 }
 
 void Scene::generateGrid(std::size_t _x, std::size_t _y, std::size_t _z) {
@@ -997,5 +1065,6 @@ glm::mat4 Scene::computeTransformationMatrix() const {
 //		transfoMat[3][2] = w * std::abs(std::sin(angleRad));
 //	}
 
-	return transfoMat;
+	// return transfoMat;
+	return glm::mat4(1.f);
 }
