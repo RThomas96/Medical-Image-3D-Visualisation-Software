@@ -14,7 +14,9 @@ class OutputGrid : public DiscreteGrid {
 		virtual OutputGrid& preallocateData(void);
 		virtual OutputGrid& preallocateData(sizevec3 dims);
 		virtual void setVoxelData(sizevec3 idx, DataType value);
+#ifdef ENABLE_DATA_FITTING
 		virtual OutputGrid& setBoundingBox(bbox_t renderWindow) override;
+#endif
 
 	protected:
 };

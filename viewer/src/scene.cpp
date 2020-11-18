@@ -12,6 +12,10 @@
 #include <QSurface>
 
 #include <fstream>
+#include <type_traits>
+
+template<class T>
+std::remove_reference_t<T> const& as_const(T&&t){return t;}
 
 Scene::Scene(GridControl* const gc) {
 	this->controlPanel = nullptr;
@@ -95,8 +99,13 @@ void Scene::initGl(QOpenGLContext* _context, std::size_t _x, std::size_t _y, std
 		reader->setFilenames(f);
 	} else if (msgBox->clickedButton() == tiffButton) {
 		// do nothing :
-		std::cerr << "TIFF reader not yet implemented" << '\n';
-		throw std::runtime_error("Not implemented TIFF reader yet");
+		reader = new IO::Reader::TIFF(threshold);
+		QStringList filenames = QFileDialog::getOpenFileNames(nullptr, "Open multiple TIFF images","../../", "TIFF Files (*.tiff, *.tif)");
+		std::vector<std::string> f;
+		for (const QString& fn : as_const(filenames)) {
+			f.push_back(fn.toStdString());
+		}
+		reader->setFilenames(f);
 	} else {
 		std::cerr << "No button was pressed." << '\n';
 		throw std::runtime_error("error : no button pressed");
@@ -130,8 +139,14 @@ void Scene::initGl(QOpenGLContext* _context, std::size_t _x, std::size_t _y, std
 
 	this->generateGrid(_x, _y, _z);
 
-	int bounds[] = {0, static_cast<int>(this->gridWidth - this->neighborWidth), 0, static_cast<int>(this->gridHeight - this->neighborHeight), 0, static_cast<int>(this->gridDepth - this->neighborDepth)};
-	if (this->gridWidth <= this->neighborWidth || this->gridHeight <= this->neighborHeight || this->gridDepth <= this->neighborDepth) {
+	int bounds[] = {
+		0, static_cast<int>(this->gridWidth - this->neighborWidth),
+		0, static_cast<int>(this->gridHeight - this->neighborHeight),
+		0, static_cast<int>(this->gridDepth - this->neighborDepth)
+	};
+	if (this->gridWidth <= this->neighborWidth ||
+	    this->gridHeight <= this->neighborHeight ||
+	    this->gridDepth <= this->neighborDepth) {
 		bounds[1] = 0;
 		bounds[3] = 0;
 		bounds[5] = 0;
@@ -380,9 +395,9 @@ void Scene::loadImage() {
 	// Set the texture upload to not generate mimaps :
 	glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_MAX_LOD, static_cast<GLfloat>(-1000.f));
 	// Stop once UV > 1 or < 0
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_MIRRORED_REPEAT);
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	// Swizzle G/B to R value, to save data upload
 	GLint swizzleMask[] = {GL_RED, GL_RED, GL_RED, GL_ONE};
 	glTexParameteriv(GL_TEXTURE_3D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
@@ -460,10 +475,11 @@ void Scene::loadVoxelGrid() {
 
 void Scene::fillNearestNeighbor() {
 	InterpolationMethods method = InterpolationMethods::NearestNeighbor;
+	using timepoint = std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::duration<double, std::ratio<1,1>>>;
 	if (this->mesh != nullptr && this->voxelGrid != nullptr) {
-		std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::duration<double, std::ratio<1,1>>> start_point = std::chrono::high_resolution_clock::now();
+		timepoint start_point = std::chrono::high_resolution_clock::now();
 		this->mesh->populateOutputGrid(method);
-		std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::duration<double, std::ratio<1,1>>> end_point = std::chrono::high_resolution_clock::now();
+		timepoint end_point = std::chrono::high_resolution_clock::now();
 		std::cerr << "To fill the grid, it took " << (end_point - start_point).count() << " seconds" << '\n';
 	}
 	this->loadVoxelGrid();
@@ -471,10 +487,11 @@ void Scene::fillNearestNeighbor() {
 
 void Scene::fillTrilinear() {
 	InterpolationMethods method = InterpolationMethods::TriLinear;
+	using timepoint = std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::duration<double, std::ratio<1,1>>>;
 	if (this->mesh != nullptr && this->voxelGrid != nullptr) {
-		std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::duration<double, std::ratio<1,1>>> start_point = std::chrono::high_resolution_clock::now();
+		timepoint start_point = std::chrono::high_resolution_clock::now();
 		this->mesh->populateOutputGrid(method);
-		std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::duration<double, std::ratio<1,1>>> end_point = std::chrono::high_resolution_clock::now();
+		timepoint end_point = std::chrono::high_resolution_clock::now();
 		std::cerr << "To fill the grid, it took " << (end_point - start_point).count() << " seconds" << '\n';
 	}
 	this->loadVoxelGrid();
@@ -490,7 +507,9 @@ void Scene::drawRealSpace(GLfloat mvMat[], GLfloat pMat[]) {
 	glm::mat4 transfoMat = glm::mat4(1.f); //this->computeTransformationMatrix();
 
 	//this->draw(mvMat, pMat, transfoMat, voxelMat);
-	this->drawGrid_Generic(mvMat, pMat, transfoMat, this->textureHandle, this->texStorage);
+	if (this->showTextureCube) {
+		this->drawGrid_Generic(mvMat, pMat, transfoMat, this->textureHandle, this->texStorage);
+	}
 	this->drawGrid_Generic(mvMat, pMat, transfoMat, this->voxelGridTexHandle, this->voxelGrid);
 }
 
@@ -500,7 +519,9 @@ void Scene::drawInitialSpace(GLfloat mvMat[], GLfloat pMat[]) {
 	//this->neighborPos -= glm::uvec3(1, 1, 1);
 
 	glm::mat4 transfoMat = this->texStorage->getTransform_WorldToGrid(); // glm::mat4(1.f);
-	this->drawGrid_Generic(mvMat, pMat, transfoMat, this->textureHandle, this->texStorage);
+	if (this->showTextureCube) {
+		this->drawGrid_Generic(mvMat, pMat, transfoMat, this->textureHandle, this->texStorage);
+	}
 	this->drawGrid_Generic(mvMat, pMat, transfoMat, this->voxelGridTexHandle, this->voxelGrid);
 
 /*
@@ -636,7 +657,12 @@ void Scene::drawVoxelGrid(GLfloat mvMat[], GLfloat pMat[], glm::mat4 transfoMat)
 	glUniform3fv(voxelGridSize_Loc, 1, glm::value_ptr(d));
 	GetOpenGLError();
 	GLint voxelGridOrigin_Loc = glGetUniformLocation(this->programHandle_VG, "voxelGridOrigin");
+#ifdef ENABLE_DATA_FITTING
 	glUniform3fv(voxelGridOrigin_Loc, 1, glm::value_ptr(this->voxelGrid->getBoundingBox().getMin()));
+#else
+	glm::vec3 o = glm::vec3(.0f);
+	glUniform3fv(voxelGridOrigin_Loc, 1, glm::value_ptr(o));
+#endif
 	GetOpenGLError();
 
 	// Cutting planes :
@@ -700,7 +726,11 @@ void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, 
 	GLint drawMode_Loc = glGetUniformLocation(this->programHandle_VG, "drawMode");
 	GLint texData_Loc = glGetUniformLocation(this->programHandle_VG, "texData");
 
+#ifdef ENABLE_DATA_FITTING
 	DiscreteGrid::bbox_t::vec origin = grid->getBoundingBox().getMin();
+#else
+	DiscreteGrid::bbox_t::vec origin = glm::vec3(.0f);
+#endif
 	glUniform3fv(voxelGridOrigin_Loc, 1, glm::value_ptr(origin));
 	DiscreteGrid::sizevec3 gridDims = grid->getGridDimensions();
 	glm::vec3 dims = glm::vec3(static_cast<float>(gridDims.x), static_cast<float>(gridDims.y), static_cast<float>(gridDims.z));
@@ -1059,12 +1089,12 @@ glm::mat4 Scene::computeTransformationMatrix() const {
 	transfoMat[1][1] = 0.39;
 	transfoMat[2][2] = 1.927 * std::cos(angleRad);
 
-//	if (angleDeg < 0.) {
-//		// compute translation along Z :
-//		float w = static_cast<float>(this->gridWidth) *	.39;
-//		transfoMat[3][2] = w * std::abs(std::sin(angleRad));
-//	}
+	if (angleDeg < 0.) {
+		// compute translation along Z :
+		float w = static_cast<float>(this->gridWidth) *	.39;
+		transfoMat[3][2] = w * std::abs(std::sin(angleRad));
+	}
 
-	// return transfoMat;
-	return glm::mat4(1.f);
+	return transfoMat;
+	//return glm::mat4(1.f);
 }

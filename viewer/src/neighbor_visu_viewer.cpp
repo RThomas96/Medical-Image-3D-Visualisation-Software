@@ -58,6 +58,10 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 			this->scene->toggleTexCubeVisibility();
 			this->update();
 		break;
+		case Qt::Key::Key_L:
+			this->scene->toggleTexCubeVisibility();
+			this->update();
+		break;
 		// Focus of the viewer :
 		/*case Qt::Key::Key_N :
 			this->focusType = FocusStates::NeighborFocus;

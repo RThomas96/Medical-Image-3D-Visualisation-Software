@@ -90,7 +90,9 @@ class TetMesh {
 		std::vector<std::vector<std::size_t>> tetrahedra; ///< Tetrahedra, each represented as the index of the vertices making it up stored in an array
 	private:
 		/// @brief Builds the mesh around the origin. Only called once, in the constructor.
-		void makeTetrahedra(void);
+		/// @param vxdims Dimensions of a voxel
+		/// @param size The size of the neighborhood to create (1 for a 3-wide cube, 2 for a 5-wide, and so on)
+		void makeTetrahedra(glm::vec3 vxdims = glm::vec3(1.f), std::size_t size = 1);
 
 		/// @brief Updates the positions of the origin and its neighbors, updating the values as well.
 		/// @returns A reference to (this), to chain function calls.

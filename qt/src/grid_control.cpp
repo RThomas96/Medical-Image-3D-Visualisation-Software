@@ -308,11 +308,8 @@ void GridControl::updateGridLabels() {
 	std::size_t size = dims.x * dims.y * dims.z;
 	this->info_GridSizeTotal->setText(QString::number(size));
 
-	BoundingBox_General<float> bb = this->voxelGrid->getBoundingBox();
-	float vxSize = (bb.getMax().x - bb.getMin().x) / static_cast<float>(dims.x);
-	float vySize = (bb.getMax().y - bb.getMin().y) / static_cast<float>(dims.y);
-	float vzSize = (bb.getMax().z - bb.getMin().z) / static_cast<float>(dims.z);
-	QString text = QString::number(vxSize) + 'x' + QString::number(vySize) + 'x' + QString::number(vzSize);
+	glm::vec3 vxDims = this->voxelGrid->getVoxelDimensions();
+	QString text = QString::number(vxDims.x) + 'x' + QString::number(vxDims.y) + 'x' + QString::number(vxDims.z);
 	this->info_VoxelSize->setText(text);
 
 	double memSize = static_cast<double>(size) / 1.e9;
@@ -325,7 +322,6 @@ void GridControl::updateGridDimensions() {
 	}
 
 	svec3 dims = this->voxelGrid->getGridDimensions();
-	DiscreteGrid::bbox_t bb = this->voxelGrid->getBoundingBox();
 
 	// A bit (very much) verbose, but we need to block signals from the spinboxes when updating
 	// the values, in order to remove the possibility of a 'feedback loop' inbetween objects :
@@ -341,6 +337,8 @@ void GridControl::updateGridDimensions() {
 	this->input_GridSizeZ->setValue(static_cast<int>(dims.z));
 	this->input_GridSizeZ->blockSignals(false);
 
+#ifdef ENABLE_DATA_FITTING
+	DiscreteGrid::bbox_t bb = this->voxelGrid->getBoundingBox();
 	// Min bounding box coordinates :
 	this->input_GridBBMinX->blockSignals(true);
 	this->input_GridBBMinX->setValue(static_cast<double>(bb.getMin().x));
@@ -362,6 +360,7 @@ void GridControl::updateGridDimensions() {
 	this->input_GridBBMaxZ->blockSignals(true);
 	this->input_GridBBMaxZ->setValue(static_cast<double>(bb.getMax().z));
 	this->input_GridBBMaxZ->blockSignals(false);
+#endif
 
 	this->updateGridLabels();
 }
@@ -415,44 +414,56 @@ void GridControl::setGridDimensionZ(int newDim) {
 	this->updateGridLabels();
 }
 void GridControl::setGridBBMinX(double newDim) {
+#ifdef ENABLE_DATA_FITTING
 	DiscreteGrid::bbox_t::vec v = this->voxelGrid->boundingBox.getMin();
 	v.x = static_cast<DiscreteGrid::bbox_t::vec::value_type>(newDim);
 	this->voxelGrid->boundingBox.setMin(v);
+#endif
 	this->voxelGrid->updateVoxelDimensions();
 	this->updateGridLabels();
 }
 void GridControl::setGridBBMinY(double newDim) {
+#ifdef ENABLE_DATA_FITTING
 	DiscreteGrid::bbox_t::vec v = this->voxelGrid->boundingBox.getMin();
 	v.y = static_cast<DiscreteGrid::bbox_t::vec::value_type>(newDim);
 	this->voxelGrid->boundingBox.setMin(v);
+#endif
 	this->voxelGrid->updateVoxelDimensions();
 	this->updateGridLabels();
 }
 void GridControl::setGridBBMinZ(double newDim) {
+#ifdef ENABLE_DATA_FITTING
 	DiscreteGrid::bbox_t::vec v = this->voxelGrid->boundingBox.getMin();
 	v.z = static_cast<DiscreteGrid::bbox_t::vec::value_type>(newDim);
 	this->voxelGrid->boundingBox.setMin(v);
+#endif
 	this->voxelGrid->updateVoxelDimensions();
 	this->updateGridLabels();
 }
 void GridControl::setGridBBMaxX(double newDim) {
+#ifdef ENABLE_DATA_FITTING
 	DiscreteGrid::bbox_t::vec v = this->voxelGrid->boundingBox.getMax();
 	v.x = static_cast<DiscreteGrid::bbox_t::vec::value_type>(newDim);
 	this->voxelGrid->boundingBox.setMax(v);
+#endif
 	this->voxelGrid->updateVoxelDimensions();
 	this->updateGridLabels();
 }
 void GridControl::setGridBBMaxY(double newDim) {
+#ifdef ENABLE_DATA_FITTING
 	DiscreteGrid::bbox_t::vec v = this->voxelGrid->boundingBox.getMax();
 	v.y = static_cast<DiscreteGrid::bbox_t::vec::value_type>(newDim);
 	this->voxelGrid->boundingBox.setMax(v);
+#endif
 	this->voxelGrid->updateVoxelDimensions();
 	this->updateGridLabels();
 }
 void GridControl::setGridBBMaxZ(double newDim) {
+#ifdef ENABLE_DATA_FITTING
 	DiscreteGrid::bbox_t::vec v = this->voxelGrid->boundingBox.getMax();
 	v.z = static_cast<DiscreteGrid::bbox_t::vec::value_type>(newDim);
 	this->voxelGrid->boundingBox.setMax(v);
+#endif
 	this->voxelGrid->updateVoxelDimensions();
 	this->updateGridLabels();
 }

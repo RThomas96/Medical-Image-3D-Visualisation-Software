@@ -26,8 +26,10 @@ class InputGrid : public DiscreteGrid {
 		/// @brief Disallows setting the resolution to anything else than already loaded in.
 		virtual InputGrid& setResolution(sizevec3 newRes) override;
 
+#ifdef ENABLE_DATA_FITTING
 		/// @brief Disallows setting a new bounding box to the input grid.
 		virtual InputGrid& setBoundingBox(bbox_t renderWindow) override;
+#endif
 };
 
 #endif // GRID_INCLUDE_INPUT_DISCRETE_GRID_HPP_

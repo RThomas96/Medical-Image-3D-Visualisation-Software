@@ -85,7 +85,10 @@ namespace IO {
 		this->data.clear();
 	}
 
-	GenericGridReader& GenericGridReader::setDataThreshold(data_t _thresh) { this->threshold = _thresh; return *this; }
+	GenericGridReader& GenericGridReader::setDataThreshold(data_t _thresh) {
+		this->threshold = _thresh;
+		return *this;
+	}
 
 	GenericGridReader& GenericGridReader::setFilenames(std::vector<std::string> &names) {
 		// remove old filenames :
@@ -118,7 +121,10 @@ namespace IO {
 
 	GenericGridReader::data_t GenericGridReader::getDataThreshold() const { return this->threshold; }
 
-	GenericGridReader& GenericGridReader::swapData(std::vector<data_t> &target) { this->data.swap(target); return *this; }
+	GenericGridReader& GenericGridReader::swapData(std::vector<data_t> &target) {
+		this->data.swap(target);
+		return *this;
+	}
 
 	DIMReader::DIMReader(data_t thresh) : GenericGridReader(thresh) {
 		this->dimFile = nullptr;
@@ -141,7 +147,7 @@ namespace IO {
 			// Open with the given filename :
 			this->openFile(this->filenames[0]);
 		} catch (const std::runtime_error& e) {
-			std::cerr << "[ERROR] Could not open the file \"" << this->filenames[0] << "\". Error message :\n";
+			std::cerr << "[ERROR] Could not open the file \""<<this->filenames[0]<<"\". Error message :\n";
 			std::cerr << e.what() << '\n';
 			std::abort();
 		}
@@ -161,8 +167,17 @@ namespace IO {
 		dim_input_file_path = AppendExtension(basename, "dim");
 
 		// check the filenames are properly created :
-		if (dim_input_file_path == nullptr) { std::cerr << "base and ext concat could not be performed for dim" << '\n'; return *this; }
-		if (ima_input_file_path == nullptr) { std::cerr << "base and ext concat could not be performed for ima" << '\n'; return *this; }
+		if (dim_input_file_path == nullptr) {
+			std::cerr << "base and ext concat could not be performed for dim" << '\n';
+			free(basename);
+			return *this;
+		}
+		if (ima_input_file_path == nullptr) {
+			std::cerr << "base and ext concat could not be performed for ima" << '\n';
+			free(basename);
+			free(dim_input_file_path);
+			return *this;
+		}
 
 		// Open the files, and check they are open
 		this->dimFile = new std::ifstream(dim_input_file_path);
@@ -175,6 +190,10 @@ namespace IO {
 			this->imaFile = nullptr;
 			throw std::runtime_error("Could not open files.");
 		}
+
+		free(basename);
+		free(dim_input_file_path);
+		free(ima_input_file_path);
 
 		return *this;
 	}
@@ -207,13 +226,17 @@ namespace IO {
 		do {
 			(*this->dimFile) >> token;
 			if (token.find("-type") != std::string::npos) { (*this->dimFile) >> type; }
-			else if (token.find("-dx") != std::string::npos) { (*this->dimFile) >> this->voxelDimensions.x; }
-			else if (token.find("-dy") != std::string::npos) { (*this->dimFile) >> this->voxelDimensions.y; }
-			else if (token.find("-dz") != std::string::npos) { (*this->dimFile) >> this->voxelDimensions.z; }
-			else if (token.find("-bbmin") != std::string::npos) { bbox_t::vec v; (*this->dimFile) >> v.x >> v.y >> v.z; this->boundingBox.setMin(v); }
-			else if (token.find("-bbmax") != std::string::npos) { bbox_t::vec v; (*this->dimFile) >> v.x >> v.y >> v.z; this->boundingBox.setMax(v); }
+			else if (token.find("-dx") != std::string::npos) {(*this->dimFile) >> this->voxelDimensions.x;}
+			else if (token.find("-dy") != std::string::npos) {(*this->dimFile) >> this->voxelDimensions.y;}
+			else if (token.find("-dz") != std::string::npos) {(*this->dimFile) >> this->voxelDimensions.z;}
+			else if (token.find("-bbmin") != std::string::npos) {
+				bbox_t::vec v; (*this->dimFile) >> v.x >> v.y >> v.z; this->boundingBox.setMin(v);
+			}
+			else if (token.find("-bbmax") != std::string::npos) {
+				bbox_t::vec v; (*this->dimFile) >> v.x >> v.y >> v.z; this->boundingBox.setMax(v);
+			}
 			else {
-				std::cerr << "[DIMReader - ERROR] token " << token << " did not represent anything" << '\n';
+				std::cerr << "[DIMReader - ERROR] token "<<token<<" did not represent anything"<<'\n';
 			}
 		} while (not this->dimFile->eof());
 
@@ -231,7 +254,8 @@ namespace IO {
 		for (std::size_t k = 0; k < this->gridDimensions.z; ++k) {
 			for (std::size_t j = 0; j < this->gridDimensions.y; ++j) {
 				for (std::size_t i = 0; i < this->gridDimensions.x; ++i) {
-					std::size_t idx = i + j * this->gridDimensions.x + k * this->gridDimensions.x * this->gridDimensions.y;
+					std::size_t idx = i + j * this->gridDimensions.x +
+							  k * this->gridDimensions.x * this->gridDimensions.y;
 					if (this->data[idx] > this->threshold) {
 						// Update data BB :
 						bbox_t::vec v;
@@ -312,8 +336,10 @@ namespace IO {
 		this->transform = glm::mat4(1.f);
 		this->voxelDimensions = glm::vec3(1.f, 1.f, 1.f);
 		this->boundingBox = bbox_t(minBB, maxBB);
+		this->dataBoundingBox = bbox_t();
 
-		// Most of those values assigned above are default values, since we cannot gather that info from a TIFF file.
+		// Most of those values assigned above are default values, since we cannot gather
+		// that info from a TIFF file. (Not easily, anyway).
 		return *this;
 	}
 
@@ -327,7 +353,8 @@ namespace IO {
 		this->tiffFile = TinyTIFFReader_open(filename.c_str());
 
 		if (TinyTIFFReader_wasError(this->tiffFile)) {
-			std::cerr << "[WARNING] Errors occured while loading \"" << filename << "\" with TinyTIFF. Error messages :" << '\n';
+			std::cerr << "[WARNING] Errors occured while loading \"" << filename
+				  << "\" with TinyTIFF. Error messages :" << '\n';
 			while (TinyTIFFReader_wasError(this->tiffFile)) {
 				std::cerr << "[WARNING]\t" << TinyTIFFReader_getLastError(this->tiffFile) << '\n';
 			}
@@ -340,7 +367,8 @@ namespace IO {
 		try {
 			this->openFile(this->filenames[idx]);
 		} catch (std::runtime_error& e) {
-			std::cerr << "[ERROR] A runtime error occured while loading file \"" << this->filenames[idx] << "\". Error message :\n";
+			std::cerr << "[ERROR] A runtime error occured while loading file \"" << this->filenames[idx]
+				     << "\". Error message :\n";
 			std::cerr << e.what() << '\n';
 			std::abort();
 		}
@@ -348,15 +376,50 @@ namespace IO {
 		// file is now opened, we can load the data into a vector :
 		std::vector<data_t> rawData;
 		rawData.resize(this->gridDimensions.x * this->gridDimensions.y);
-		// load data :
-		TinyTIFFReader_getSampleData(this->tiffFile, rawData.data(), 0);
 
-		if (this->downsampled) {
-			// Downsample here :
+		if (not this->downsampled) {
+			// If we aren't downsampled, then the grid size is the same as the image size.
+			// load data :
+			TinyTIFFReader_getSampleData(this->tiffFile, rawData.data(), 0);
 		} else {
-			std::size_t offset = this->gridDimensions.x * this->gridDimensions.y * idx;
-			std::copy(rawData.begin(), rawData.end(), this->data.data()+offset);
+			// Need a vector to hold the whole image :
+			std::vector<data_t> wholeImage;
+			// Resize it to the image canvas' size :
+			std::size_t width = TinyTIFFReader_getWidth(this->tiffFile);
+			std::size_t height = TinyTIFFReader_getHeight(this->tiffFile);
+			std::cerr << "[LOG] Loading image " << this->filenames[idx] << "at native resolution of " <<
+				     width << "x" << height << " ...\n";
+			wholeImage.resize(width*height);
+			// Load image :
+			TinyTIFFReader_getSampleData(this->tiffFile, wholeImage.data(), 0);
+			// Take only the data needed :
+			for (std::size_t j = 0; j < this->gridDimensions.y; ++j) {
+				for (std::size_t i = 0; i < this->gridDimensions.x; ++i) {
+					// width should be equal to this->gridDimensions.x, since we're downsampled :
+					rawData[i + j*this->gridDimensions.x] = wholeImage[i*2 + j*width];
+				}
+			}
+			std::cerr << "[LOG]Outputting a " << width << "x" << height << " 2D image into a " <<
+				  this->gridDimensions.x << "x" << this->gridDimensions.y << " 3D image\n";
 		}
+
+		// Analyse the image (for bounding box) :
+		for (std::size_t j = 0; j < this->gridDimensions.y; ++j) {
+			for (std::size_t i = 0; i < this->gridDimensions.x; ++i) {
+				const data_t& val = rawData[i + j*this->gridDimensions.x];
+				if (val > this->threshold) {
+					bbox_t::vec v;
+					v.x = static_cast<bbox_t::vec::value_type>(i);
+					v.y = static_cast<bbox_t::vec::value_type>(j);
+					v.z = static_cast<bbox_t::vec::value_type>(idx);
+					this->dataBoundingBox.addPoint(v);
+				}
+			}
+		}
+
+		// Copy it into the main image buffer :
+		std::size_t offset = this->gridDimensions.x * this->gridDimensions.y * idx;
+		std::copy(rawData.begin(), rawData.end(), this->data.data()+offset);
 
 		return *this;
 	}

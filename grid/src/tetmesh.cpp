@@ -1,5 +1,7 @@
 #include "../include/tetmesh.hpp"
 
+#include <random>
+
 TetMesh::TetMesh() {
 	// Initialises all the values of the mesh to their default values.
 	// Centers the mesh around the space's origin. Also, makes the mesh
@@ -51,13 +53,16 @@ TetMesh& TetMesh::populateOutputGrid(InterpolationMethods method) {
 	// Check the dimensions of the voxel grid (if it can host voxels) :
 	DiscreteGrid::sizevec3 dims = this->outputGrid->getGridDimensions();
 
+#ifdef ENABLE_DATA_FITTING
+	// Print some info before running the generation :
 	auto bb = this->outputGrid->getBoundingBox();
 	auto min = bb.getMin();
 	auto max = bb.getMax();
 	auto vd = this->outputGrid->getVoxelDimensions();
-	std::cerr << "[LOG]\t Generating a voxel grid of dimensions : [" << dims.x << ',' << dims.y << ',' << dims.z << "]\n";
-	std::cerr << "[LOG]\t Voxel dimensions are [" << vd.x << ',' << vd.y << ',' << vd.z << "]\n";
-	std::cerr << "[LOG]\t Bounding box is from [" << min.x << ',' << min.y << ',' << min.z << "] to [" << max.x << ',' << max.y << ',' << max.z << "]\n";
+	std::cerr << "[LOG] Generating a voxel grid of dimensions : [" << dims.x << ',' << dims.y << ',' << dims.z << "]\n";
+	std::cerr << "[LOG] Voxel dimensions are [" << vd.x << ',' << vd.y << ',' << vd.z << "]\n";
+	std::cerr << "[LOG] Bounding box is from [" << min.x << ',' << min.y << ',' << min.z << "] to [" << max.x << ',' << max.y << ',' << max.z << "]\n";
+#endif
 
 	// If the grid to generate has "wrong" dimensions, warn and exit
 	if (dims.x == 0 || dims.y == 0 || dims.z == 0) {
@@ -68,14 +73,23 @@ TetMesh& TetMesh::populateOutputGrid(InterpolationMethods method) {
 	// reserve and allocate space :
 	this->outputGrid->preallocateData();
 
+	double maxRate = 1e-6;
+	bool isVerbose = false;
+	std::random_device randDev;
+	std::mt19937 generator(randDev());
+	std::uniform_real_distribution<double> distribution(0., 0.99);
+
+	std::cerr << "[LOG] Starting to iterate on the image to generate ... (" << dims.z << " levels)\n";
 	// iterate on the voxels of the output data grid :
 	for (std::size_t k = 0; k < dims.z; ++k) {
 		for (std::size_t j = 0; j < dims.y; ++j) {
 			for (std::size_t i = 0; i < dims.x; ++i) {
+				// debug verbose output
+				//isVerbose = ( (distribution(generator) < maxRate) ? true : false );
 				// generate 3D index :
 				DiscreteGrid::sizevec3 idx = DiscreteGrid::sizevec3(i,j,k);
 				// get grid-space origin :
-				this->origin = this->outputGrid->getVoxelPositionGridSpace(idx);
+				this->origin = this->outputGrid->getVoxelPositionGridSpace(idx, isVerbose);
 				// set world-space origin from it :
 				this->origin_WS = this->outputGrid->toWorldSpace(this->origin);
 
@@ -88,14 +102,15 @@ TetMesh& TetMesh::populateOutputGrid(InterpolationMethods method) {
 				}
 
 				// do a basic mean of the values obtained from the different input grids :
-				float globalVal = .0f;
+				DiscreteGrid::DataType globalVal = .0f;
 				std::for_each(std::begin(values), std::end(values), [&](DiscreteGrid::DataType v) {
-					globalVal += static_cast<float>(v) / static_cast<float>(values.size());
+					globalVal += static_cast<DiscreteGrid::DataType>(v) / static_cast<DiscreteGrid::DataType>(values.size());
 				});
 				// set data :
-				this->outputGrid->setVoxelData(idx, static_cast<DiscreteGrid::DataType>(globalVal));
+				this->outputGrid->setVoxelData(idx, globalVal);
 			}
 		}
+		std::cerr << "[LOG]\tFinished level " << k+1 << "\n";
 	}
 
 	// Data should now be done being generated ...
@@ -113,7 +128,7 @@ DiscreteGrid::DataType TetMesh::getInterpolatedValue(std::shared_ptr<InputGrid> 
 			std::cerr << "Method not implemented in final version of interpolation structure." << '\n';
 			return 0;
 			break;
-		default:
+		default: // should never be encountered as long as all enum values are above, just to check
 			std::cerr << "Method not recognized.\n";
 			break;
 	}
@@ -148,13 +163,15 @@ TetMesh& TetMesh::printInfo() {
 		for (const std::shared_ptr<InputGrid>& grid : this->inputGrids) {
 			std::cerr << "[INFO]\tInput grid named \"" << grid->getGridName() << "\" :\n";
 			DiscreteGrid::sizevec3 dims = grid->getGridDimensions();
+			std::cerr << "[INFO]\t\tResolution : " << dims.x << 'x' << dims.y << 'x' << dims.z << '\n';
+#ifdef ENABLE_DATA_FITTING
 			// Bounding box dimensions :
 			const DiscreteGrid::bbox_t& box = grid->getBoundingBox();
 			const DiscreteGrid::bbox_t::vec& min = box.getMin();
 			const DiscreteGrid::bbox_t::vec& max = box.getMax();
-			std::cerr << "[INFO]\t\tResolution : " << dims.x << 'x' << dims.y << 'x' << dims.z << '\n';
 			std::cerr << "[INFO]\t\tBounding box (initial space) : [" << min.x << 'x' << min.y << 'x' << min.z
 					<< "] to [" << max.x << 'x' << max.y << 'x' << max.z << "]\n";
+#endif
 			std::cerr << "[INFO]\t\tThis grid is " << ((grid->isModifiable()) ? "not modifiable" : "modifiable") << '\n';
 		}
 	}
@@ -162,13 +179,17 @@ TetMesh& TetMesh::printInfo() {
 		std::cerr << "[INFO]Output grid :\n";
 		std::cerr << "[INFO]\tOutput grid named \"" << this->outputGrid->getGridName() << "\" :\n";
 		DiscreteGrid::sizevec3 dims = this->outputGrid->getGridDimensions();
+		std::cerr << "[INFO]\t\tResolution : " << dims.x << 'x' << dims.y << 'x' << dims.z << '\n';
+
+#ifdef ENABLE_DATA_FITTING
 		// Bounding box dimensions :
 		const DiscreteGrid::bbox_t& box = this->outputGrid->getBoundingBox();
 		const DiscreteGrid::bbox_t::vec& min = box.getMin();
 		const DiscreteGrid::bbox_t::vec& max = box.getMax();
-		std::cerr << "[INFO]\t\tResolution : " << dims.x << 'x' << dims.y << 'x' << dims.z << '\n';
 		std::cerr << "[INFO]\t\tBounding box (initial space) : [" << min.x << 'x' << min.y << 'x' << min.z
 				<< "] to [" << max.x << 'x' << max.y << 'x' << max.z << "]\n";
+#endif
+
 		std::cerr << "[INFO]\t\tThis grid is " << ((this->outputGrid->isModifiable()) ? "not modifiable" : "modifiable") << '\n';
 	} else {
 		std::cerr << "[INFO](No output grid yet)" << '\n';
@@ -248,17 +269,10 @@ TetMesh::DataType TetMesh::interpolate_TriLinear(const std::shared_ptr<InputGrid
 }
 
 TetMesh& TetMesh::updateVoxelSizes() {
+	/* TODO : we should probably soft-fail here instead of ignoring the potential problem. To debate. */
 	if (this->outputGrid == nullptr) { return *this; }
-	glm::vec3 vxdims = this->outputGrid->getVoxelDimensions();
-	glm::vec3 halfdims = vxdims/2.f;
 
-	for (std::size_t k = 0; k < 3; ++k) {
-		for (std::size_t j = 0; j < 3; ++j) {
-			for (std::size_t i = 0; i < 3; ++i) {
-				this->vertices[i+j*2u+k*2u*2u] = glm::vec4(static_cast<float>(i) * vxdims.x - halfdims.x, static_cast<float>(j) * vxdims.y - halfdims.y, static_cast<float>(k) * vxdims.z - halfdims.z, 1.);
-			}
-		}
-	}
+	this->makeTetrahedra(this->outputGrid->getVoxelDimensions(), 1);
 
 	return *this;
 }
@@ -275,7 +289,7 @@ TetMesh& TetMesh::updateOutputGridData() {
 	// If there aren't any input grids nor any output grid, return early :
 	if (this->inputGrids.size() == 0) { return *this; }
 	if (this->outputGrid == nullptr) { return *this; }
-
+#ifdef ENABLE_DATA_FITTING
 	this->outputGrid->setBoundingBox(DiscreteGrid::bbox_t());
 
 	for (const std::shared_ptr<InputGrid>& grid : this->inputGrids) {
@@ -286,6 +300,22 @@ TetMesh& TetMesh::updateOutputGridData() {
 
 	// get diagonal of bb :
 	DiscreteGrid::bbox_t::vec diag = this->outputGrid->getBoundingBox().getDiagonal();
+#else
+	using val_t = DiscreteGrid::bbox_t::vec::value_type ;
+	val_t x = 0;
+	val_t y = 0;
+	val_t z = 0;
+	for (const std::shared_ptr<InputGrid>& grid : this->inputGrids) {
+		// Get bounding box of data in world space :
+		val_t cx = grid->getGridDimensions().x;
+		val_t cy = grid->getGridDimensions().x;
+		val_t cz = grid->getGridDimensions().x;
+		x = (cx > x) ? cx : x;
+		y = (cy > y) ? cy : y;
+		z = (cz > z) ? cz : z;
+	}
+	DiscreteGrid::bbox_t::vec diag = DiscreteGrid::bbox_t::vec(x, y, z);
+#endif
 	// set resolution so each voxel's side length is a bit less than 1 :
 	DiscreteGrid::sizevec3 dimensions = DiscreteGrid::sizevec3(
 		static_cast<std::size_t>(std::ceil(diag.x)),
@@ -297,34 +327,40 @@ TetMesh& TetMesh::updateOutputGridData() {
 	return *this;
 }
 
-void TetMesh::makeTetrahedra() {
+void TetMesh::makeTetrahedra(glm::vec3 vxDims, std::size_t size) {
 	// For now, a mesh of side 1, centered at the origin
+	this->vertices.clear();
+	this->tetrahedra.clear();
+
+	glm::vec3 halfDims = vxDims/2.f;
+	std::size_t neighborWidth = 2u * size;
+	std::size_t cubeWidth = neighborWidth + 1u;
 
 	// Lambda returning the index of the vertex in the mesh :
 	auto getIndex = [&](std::size_t i, std::size_t j, std::size_t k) {
-		return k * 2u * 2u + j * 2u + i;
+		return k * neighborWidth * neighborWidth + j * neighborWidth + i;
 	};
 
 	// At the start, the origin is at [.0, .0, .0]. But the center of
 	// the first voxel is in fact at [.5, .5, .5], which means we
 	// need to iterate in [-.5, 1.5] by steps of 1, on each axis.
 
-	for (std::size_t k = 0; k < 3; ++k) {
-		for (std::size_t j = 0; j < 3; ++j) {
-			for (std::size_t i = 0; i < 3; ++i) {
+	for (std::size_t k = 0; k < cubeWidth; ++k) {
+		for (std::size_t j = 0; j < cubeWidth; ++j) {
+			for (std::size_t i = 0; i < cubeWidth; ++i) {
 				this->vertices.emplace_back(
-					static_cast<float>(i) * 1.f - .5f,
-					static_cast<float>(j) * 1.f - .5f,
-					static_cast<float>(k) * 1.f - .5f,
+					static_cast<float>(i) * vxDims.x - halfDims.x,
+					static_cast<float>(j) * vxDims.y - halfDims.y,
+					static_cast<float>(k) * vxDims.z - halfDims.z,
 					1.
 				);
 			}
 		}
 	}
 
-	for (std::size_t k = 0; k < 2; ++k) {
-		for (std::size_t j = 0; j < 2; ++j) {
-			for (std::size_t i = 0; i < 2; ++i) {
+	for (std::size_t k = 0; k < neighborWidth; ++k) {
+		for (std::size_t j = 0; j < neighborWidth; ++j) {
+			for (std::size_t i = 0; i < neighborWidth; ++i) {
 				// Tetrahedra 1 :
 				this->tetrahedra.push_back({
 					getIndex(i+1, j+0, k+0),
