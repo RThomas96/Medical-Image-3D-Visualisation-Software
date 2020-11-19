@@ -294,7 +294,7 @@ void GridControl::setupSpinBoxBounds(QSpinBox *sb) {
 
 void GridControl::setupDoubleSpinBoxBounds(QDoubleSpinBox *dsb) {
 	dsb->setSingleStep(.5);
-	dsb->setMinimum(std::numeric_limits<double>::min()/2);
+	dsb->setMinimum(std::numeric_limits<double>::lowest()/2);
 	dsb->setMaximum(std::numeric_limits<double>::max()/2);
 }
 
@@ -337,7 +337,7 @@ void GridControl::updateGridDimensions() {
 	this->input_GridSizeZ->setValue(static_cast<int>(dims.z));
 	this->input_GridSizeZ->blockSignals(false);
 
-#ifdef ENABLE_DATA_FITTING
+#ifdef ENABLE_BASIC_BB
 	DiscreteGrid::bbox_t bb = this->voxelGrid->getBoundingBox();
 	// Min bounding box coordinates :
 	this->input_GridBBMinX->blockSignals(true);
@@ -396,12 +396,9 @@ void GridControl::saveToFile() {
 }
 
 void GridControl::setGridDimensionX(int newDim) {
-	std::cerr << "[LOG] Updating the grid dimensions ...\n";
 	this->voxelGrid->gridDimensions.x = static_cast<std::size_t>(newDim);
 	this->voxelGrid->updateVoxelDimensions();
-	std::cerr << "[LOG] Updating the labels ...\n";
 	this->updateGridLabels();
-	std::cerr << "[LOG] Done with updates.\n\n";
 }
 void GridControl::setGridDimensionY(int newDim) {
 	this->voxelGrid->gridDimensions.y = static_cast<std::size_t>(newDim);
@@ -414,7 +411,7 @@ void GridControl::setGridDimensionZ(int newDim) {
 	this->updateGridLabels();
 }
 void GridControl::setGridBBMinX(double newDim) {
-#ifdef ENABLE_DATA_FITTING
+#ifdef ENABLE_BASIC_BB
 	DiscreteGrid::bbox_t::vec v = this->voxelGrid->boundingBox.getMin();
 	v.x = static_cast<DiscreteGrid::bbox_t::vec::value_type>(newDim);
 	this->voxelGrid->boundingBox.setMin(v);
@@ -423,7 +420,7 @@ void GridControl::setGridBBMinX(double newDim) {
 	this->updateGridLabels();
 }
 void GridControl::setGridBBMinY(double newDim) {
-#ifdef ENABLE_DATA_FITTING
+#ifdef ENABLE_BASIC_BB
 	DiscreteGrid::bbox_t::vec v = this->voxelGrid->boundingBox.getMin();
 	v.y = static_cast<DiscreteGrid::bbox_t::vec::value_type>(newDim);
 	this->voxelGrid->boundingBox.setMin(v);
@@ -432,7 +429,7 @@ void GridControl::setGridBBMinY(double newDim) {
 	this->updateGridLabels();
 }
 void GridControl::setGridBBMinZ(double newDim) {
-#ifdef ENABLE_DATA_FITTING
+#ifdef ENABLE_BASIC_BB
 	DiscreteGrid::bbox_t::vec v = this->voxelGrid->boundingBox.getMin();
 	v.z = static_cast<DiscreteGrid::bbox_t::vec::value_type>(newDim);
 	this->voxelGrid->boundingBox.setMin(v);
@@ -441,7 +438,7 @@ void GridControl::setGridBBMinZ(double newDim) {
 	this->updateGridLabels();
 }
 void GridControl::setGridBBMaxX(double newDim) {
-#ifdef ENABLE_DATA_FITTING
+#ifdef ENABLE_BASIC_BB
 	DiscreteGrid::bbox_t::vec v = this->voxelGrid->boundingBox.getMax();
 	v.x = static_cast<DiscreteGrid::bbox_t::vec::value_type>(newDim);
 	this->voxelGrid->boundingBox.setMax(v);
@@ -450,7 +447,7 @@ void GridControl::setGridBBMaxX(double newDim) {
 	this->updateGridLabels();
 }
 void GridControl::setGridBBMaxY(double newDim) {
-#ifdef ENABLE_DATA_FITTING
+#ifdef ENABLE_BASIC_BB
 	DiscreteGrid::bbox_t::vec v = this->voxelGrid->boundingBox.getMax();
 	v.y = static_cast<DiscreteGrid::bbox_t::vec::value_type>(newDim);
 	this->voxelGrid->boundingBox.setMax(v);
@@ -459,7 +456,7 @@ void GridControl::setGridBBMaxY(double newDim) {
 	this->updateGridLabels();
 }
 void GridControl::setGridBBMaxZ(double newDim) {
-#ifdef ENABLE_DATA_FITTING
+#ifdef ENABLE_BASIC_BB
 	DiscreteGrid::bbox_t::vec v = this->voxelGrid->boundingBox.getMax();
 	v.z = static_cast<DiscreteGrid::bbox_t::vec::value_type>(newDim);
 	this->voxelGrid->boundingBox.setMax(v);

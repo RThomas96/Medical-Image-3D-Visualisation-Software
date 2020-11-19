@@ -7,7 +7,9 @@
 #include <algorithm>
 
 #define ENABLE_TRANSFORMATIONS
-//#define ENABLE_DATA_FITTING
+//#define ENABLE_BASIC_BB
+//#define ADJUST_TO_BB
+//#define ENABLE_BB_TRANSFORM
 
 #define GLM_MAT_BEFORE_VEC
 //#define REVERSE_MATRIX_ORDER
@@ -62,16 +64,18 @@ template <typename DataType> class BoundingBox_General {
 		}
 
 		/// @brief Sets the new minimum point of the bounding box.
-		/// @details If the vector is larger than the max point, this
-		/// function call reverses the order of boundaries.
+		/// @details Does not do __any__ checks of the validity of the
+		/// bounding box after this operation. If you provide a min point
+		/// bigger than the max point, it is up to you to fix it.
 		__attribute__((flatten)) BoundingBox_General& setMin(vec point) {
 			this->min = point;
 			return *this;
 		}
 
 		/// @brief Sets the new maximum point of the bounding box.
-		/// @details If the vector is small than the min point, this
-		/// function call reverses the order of boundaries.
+		/// @details Does not do __any__ checks of the validity of the
+		/// bounding box after this operation. If you provide a max point
+		/// smaller than the min point, it is up to you to fix it.
 		BoundingBox_General& setMax(vec point) {
 			this->max = point;
 			return *this;
@@ -142,57 +146,57 @@ template <typename DataType> class BoundingBox_General {
 
 		/// @brief Get the coordinates of the diagonal of the BB, defined as (max-min).
 		vec getDiagonal(void) const {
-			return this->max - this->min;
+			return glm::abs(this->max - this->min);
 		}
 
 		/// @brief Sets the X coordinate of the min point to the value given.
-		BoundingBox_General& setMinX(double _d) {
+		__attribute__((always_inline)) BoundingBox_General& setMinX(double _d) {
 			DataType d = static_cast<DataType>(_d);
 			this->min.x = std::min(this->min.x, d);
 			return *this;
 		}
 
 		/// @brief Sets the Y coordinate of the min point to the value given.
-		BoundingBox_General& setMinY(double _d) {
+		__attribute__((always_inline)) BoundingBox_General& setMinY(double _d) {
 			DataType d = static_cast<DataType>(_d);
 			this->min.y = std::min(this->min.y, d);
 			return *this;
 		}
 
 		/// @brief Sets the Z coordinate of the min point to the value given.
-		BoundingBox_General& setMinZ(double _d) {
+		__attribute__((always_inline)) BoundingBox_General& setMinZ(double _d) {
 			DataType d = static_cast<DataType>(_d);
 			this->min.z = std::min(this->min.z, d);
 			return *this;
 		}
 
 		/// @brief Sets the X coordinate of the max point to the value given.
-		BoundingBox_General& setMaxX(double _d) {
+		__attribute__((always_inline)) BoundingBox_General& setMaxX(double _d) {
 			DataType d = static_cast<DataType>(_d);
 			this->max.x = std::max(this->max.x, d);
 			return *this;
 		}
 
 		/// @brief Sets the Y coordinate of the max point to the value given.
-		BoundingBox_General& setMaxY(double _d) {
+		__attribute__((always_inline)) BoundingBox_General& setMaxY(double _d) {
 			DataType d = static_cast<DataType>(_d);
 			this->max.y = std::max(this->max.y, d);
 			return *this;
 		}
 
 		/// @brief Sets the Z coordinate of the max point to the value given.
-		BoundingBox_General& setMaxZ(double _d) {
+		__attribute__((always_inline)) BoundingBox_General& setMaxZ(double _d) {
 			DataType d = static_cast<DataType>(_d);
 			this->max.z = std::max(this->max.z, d);
 			return *this;
 		}
 
-		void printInfo(std::string message) const {
+		__attribute__((flatten)) void printInfo(std::string message, std::string prefix = "") const {
 			if (message.length() != 0) {
-				std::cerr << message << '\n';
+				std::cerr << prefix << " | " << message << '\n';
 			}
-			std::cerr << '\t' << '[' << this->min.x << ',' << this->min.y << ',' << this->min.z << ']' << '\n';
-			std::cerr << '\t' << '[' << this->max.x << ',' << this->max.y << ',' << this->max.z << ']' << '\n';
+			std::cerr << prefix << '\t' << '[' << this->min.x << ',' << this->min.y << ',' << this->min.z << ']' << '\n';
+			std::cerr << prefix << '\t' << '[' << this->max.x << ',' << this->max.y << ',' << this->max.z << ']' << '\n';
 		}
 
 	protected:

@@ -116,6 +116,8 @@ void Scene::initGl(QOpenGLContext* _context, std::size_t _x, std::size_t _y, std
 	// Update data from the grid reader :
 	this->texStorage->fromGridReader(*reader);
 	this->texStorage->setTransform_GridToWorld(this->computeTransformationMatrix());
+	this->texStorage->printInfo("Once the data is loaded :", "[INFO]");
+
 	// free up the reader's resources :
 	delete reader;
 
@@ -124,6 +126,10 @@ void Scene::initGl(QOpenGLContext* _context, std::size_t _x, std::size_t _y, std
 
 	this->mesh = std::make_shared<TetMesh>();
 	this->mesh->addInputGrid(this->texStorage).setOutputGrid(this->voxelGrid);
+	this->voxelGrid->printInfo("Output grid after being set : ", "[INFO]");
+
+	//this->printGridInfo(this->texStorage);
+	//this->printGridInfo(this->voxelGrid);
 
 	///////////////////////////
 	/// CREATE VAO :
@@ -170,6 +176,33 @@ void Scene::initGl(QOpenGLContext* _context, std::size_t _x, std::size_t _y, std
 		std::cerr << "Cannot find " << "neighborOffset" << " uniform" << '\n';
 	}
 	GetOpenGLError();
+}
+
+void Scene::printGridInfo(const std::shared_ptr<DiscreteGrid>& grid) {
+	std::cerr << "[INFO] Information about the grid " << grid->getGridName() << " :\n";
+	DiscreteGrid::sizevec3 res = grid->getGridDimensions();
+	const glm::vec3& dims = grid->getVoxelDimensions();
+	const DiscreteGrid::bbox_t& dataBB = grid->getDataBoundingBox();
+	const DiscreteGrid::bbox_t::vec& dataBBm = dataBB.getMin();
+	const DiscreteGrid::bbox_t::vec& dataBBM = dataBB.getMax();
+	std::cerr << "[INFO]\tResolution : [" << res.x << ", " << res.y << ", " << res.z << "]\n";
+	std::cerr << "[INFO]\tVoxel dimensions : [" << dims.x << ", " << dims.y << ", " << dims.z << "]\n";
+	std::cerr << "[INFO]\tData Bounding box : [" << dataBBm.x << ", " << dataBBm.y << ", " << dataBBm.z << "] to ["
+		  << dataBBM.x << ", " << dataBBM.y << ", " << dataBBM.z << "]\n";
+#ifdef ENABLE_BASIC_BB
+	const DiscreteGrid::bbox_t& bbGS = grid->getBoundingBox();
+	const DiscreteGrid::bbox_t::vec& bbGSm = bbGS.getMin();
+	const DiscreteGrid::bbox_t::vec& bbGSM = bbGS.getMax();
+	std::cerr << "[INFO]\tBounding box GS : [" << bbGSm.x << ", " << bbGSm.y << ", " << bbGSm.z << "] to ["
+		  << bbGSM.x << ", " << bbGSM.y << ", " << bbGSM.z << "]\n";
+#ifdef ENABLE_BB_TRANSFORM
+	const DiscreteGrid::bbox_t& bbWS = grid->getBoundingBoxWorldSpace();
+	const DiscreteGrid::bbox_t::vec& bbWSm = bbWS.getMin();
+	const DiscreteGrid::bbox_t::vec& bbWSM = bbWS.getMax();
+	std::cerr << "[INFO]\tBounding box WS : [" << bbWSm.x << ", " << bbWSm.y << ", " << bbWSm.z << "] to ["
+		  << bbWSM.x << ", " << bbWSM.y << ", " << bbWSM.z << "]\n";
+#endif
+#endif
 }
 
 void Scene::recompileShaders() {
@@ -272,7 +305,7 @@ GLuint Scene::compileShaders(std::string _vPath, std::string _gPath, std::string
 
 			std::cerr << __PRETTY_FUNCTION__ << " : end Log ***********************************************" << '\n';
 		} else {
-			std::cerr << "No more info about shader " << _vPath << '\n';
+			//std::cerr << "No more info about shader " << _vPath << '\n';
 		}
 	}
 
@@ -298,7 +331,7 @@ GLuint Scene::compileShaders(std::string _vPath, std::string _gPath, std::string
 
 			std::cerr << __PRETTY_FUNCTION__ << " : end Log ***********************************************" << '\n';
 		} else {
-			std::cerr << "No more info about shader " << _gPath << '\n';
+			//std::cerr << "No more info about shader " << _gPath << '\n';
 		}
 	}
 
@@ -324,7 +357,7 @@ GLuint Scene::compileShaders(std::string _vPath, std::string _gPath, std::string
 
 			std::cerr << __PRETTY_FUNCTION__ << " : end Log ***********************************************" << '\n';
 		} else {
-			std::cerr << "No more info about shader " << _fPath << '\n';
+			//std::cerr << "No more info about shader " << _fPath << '\n';
 		}
 	}
 
@@ -356,7 +389,7 @@ GLuint Scene::compileShaders(std::string _vPath, std::string _gPath, std::string
 			std::cerr << "------------------------------------------------------------------" << '\n';
 			std::cerr << "------------------------------------------------------------------" << '\n';
 		} else {
-			std::cerr << "Linking of program happened just fine." << '\n';
+			//std::cerr << "Linking of program happened just fine." << '\n';
 		}
 
 	}
@@ -657,7 +690,7 @@ void Scene::drawVoxelGrid(GLfloat mvMat[], GLfloat pMat[], glm::mat4 transfoMat)
 	glUniform3fv(voxelGridSize_Loc, 1, glm::value_ptr(d));
 	GetOpenGLError();
 	GLint voxelGridOrigin_Loc = glGetUniformLocation(this->programHandle_VG, "voxelGridOrigin");
-#ifdef ENABLE_DATA_FITTING
+#ifdef ENABLE_BASIC_BB
 	glUniform3fv(voxelGridOrigin_Loc, 1, glm::value_ptr(this->voxelGrid->getBoundingBox().getMin()));
 #else
 	glm::vec3 o = glm::vec3(.0f);
@@ -726,7 +759,7 @@ void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, 
 	GLint drawMode_Loc = glGetUniformLocation(this->programHandle_VG, "drawMode");
 	GLint texData_Loc = glGetUniformLocation(this->programHandle_VG, "texData");
 
-#ifdef ENABLE_DATA_FITTING
+#ifdef ENABLE_BASIC_BB
 	DiscreteGrid::bbox_t::vec origin = grid->getBoundingBox().getMin();
 #else
 	DiscreteGrid::bbox_t::vec origin = glm::vec3(.0f);
@@ -1081,7 +1114,7 @@ void Scene::slotSetCutPlaneZ_Max(float coord) {
 glm::mat4 Scene::computeTransformationMatrix() const {
 	glm::mat4 transfoMat = glm::mat4(1.0);
 
-	double angleDeg = 45.;
+	double angleDeg = -45.;
 	double angleRad = (angleDeg * M_PI) / 180.;
 
 	transfoMat[0][0] = 0.39 * std::cos(angleRad);
@@ -1095,6 +1128,6 @@ glm::mat4 Scene::computeTransformationMatrix() const {
 		transfoMat[3][2] = w * std::abs(std::sin(angleRad));
 	}
 
-	return transfoMat;
-	//return glm::mat4(1.f);
+	//return transfoMat;
+	return glm::mat4(1.f);
 }

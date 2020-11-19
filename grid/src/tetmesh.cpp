@@ -53,27 +53,18 @@ TetMesh& TetMesh::populateOutputGrid(InterpolationMethods method) {
 	// Check the dimensions of the voxel grid (if it can host voxels) :
 	DiscreteGrid::sizevec3 dims = this->outputGrid->getGridDimensions();
 
-#ifdef ENABLE_DATA_FITTING
-	// Print some info before running the generation :
-	auto bb = this->outputGrid->getBoundingBox();
-	auto min = bb.getMin();
-	auto max = bb.getMax();
-	auto vd = this->outputGrid->getVoxelDimensions();
-	std::cerr << "[LOG] Generating a voxel grid of dimensions : [" << dims.x << ',' << dims.y << ',' << dims.z << "]\n";
-	std::cerr << "[LOG] Voxel dimensions are [" << vd.x << ',' << vd.y << ',' << vd.z << "]\n";
-	std::cerr << "[LOG] Bounding box is from [" << min.x << ',' << min.y << ',' << min.z << "] to [" << max.x << ',' << max.y << ',' << max.z << "]\n";
-#endif
-
 	// If the grid to generate has "wrong" dimensions, warn and exit
 	if (dims.x == 0 || dims.y == 0 || dims.z == 0) {
 		std::cerr << "Grid dimensions contain a zero !" << '\n';
 		return *this;
 	}
 
+	this->outputGrid->printInfo("Right before generating data :", "[DEBUG]");
+
 	// reserve and allocate space :
 	this->outputGrid->preallocateData();
 
-	double maxRate = 1e-6;
+	double maxRate = 1e-7;
 	bool isVerbose = false;
 	std::random_device randDev;
 	std::mt19937 generator(randDev());
@@ -85,7 +76,7 @@ TetMesh& TetMesh::populateOutputGrid(InterpolationMethods method) {
 		for (std::size_t j = 0; j < dims.y; ++j) {
 			for (std::size_t i = 0; i < dims.x; ++i) {
 				// debug verbose output
-				//isVerbose = ( (distribution(generator) < maxRate) ? true : false );
+				// isVerbose = ( (distribution(generator) < maxRate) ? true : false );
 				// generate 3D index :
 				DiscreteGrid::sizevec3 idx = DiscreteGrid::sizevec3(i,j,k);
 				// get grid-space origin :
@@ -96,7 +87,7 @@ TetMesh& TetMesh::populateOutputGrid(InterpolationMethods method) {
 				// gather values from all input grids :
 				std::vector<DiscreteGrid::DataType> values;
 				for (const std::shared_ptr<InputGrid>& grid : this->inputGrids) {
-					if (grid->includesPointWorldSpace(this->origin_WS)) {
+					if (grid->includesPointWorldSpace(this->origin)) {
 						values.push_back(this->getInterpolatedValue(grid, method, idx));
 					}
 				}
@@ -110,7 +101,6 @@ TetMesh& TetMesh::populateOutputGrid(InterpolationMethods method) {
 				this->outputGrid->setVoxelData(idx, globalVal);
 			}
 		}
-		std::cerr << "[LOG]\tFinished level " << k+1 << "\n";
 	}
 
 	// Data should now be done being generated ...
@@ -164,7 +154,7 @@ TetMesh& TetMesh::printInfo() {
 			std::cerr << "[INFO]\tInput grid named \"" << grid->getGridName() << "\" :\n";
 			DiscreteGrid::sizevec3 dims = grid->getGridDimensions();
 			std::cerr << "[INFO]\t\tResolution : " << dims.x << 'x' << dims.y << 'x' << dims.z << '\n';
-#ifdef ENABLE_DATA_FITTING
+#ifdef ENABLE_BASIC_BB
 			// Bounding box dimensions :
 			const DiscreteGrid::bbox_t& box = grid->getBoundingBox();
 			const DiscreteGrid::bbox_t::vec& min = box.getMin();
@@ -181,7 +171,7 @@ TetMesh& TetMesh::printInfo() {
 		DiscreteGrid::sizevec3 dims = this->outputGrid->getGridDimensions();
 		std::cerr << "[INFO]\t\tResolution : " << dims.x << 'x' << dims.y << 'x' << dims.z << '\n';
 
-#ifdef ENABLE_DATA_FITTING
+#ifdef ENABLE_BASIC_BB
 		// Bounding box dimensions :
 		const DiscreteGrid::bbox_t& box = this->outputGrid->getBoundingBox();
 		const DiscreteGrid::bbox_t::vec& min = box.getMin();
@@ -289,27 +279,27 @@ TetMesh& TetMesh::updateOutputGridData() {
 	// If there aren't any input grids nor any output grid, return early :
 	if (this->inputGrids.size() == 0) { return *this; }
 	if (this->outputGrid == nullptr) { return *this; }
-#ifdef ENABLE_DATA_FITTING
+#ifdef ENABLE_BASIC_BB
 	this->outputGrid->setBoundingBox(DiscreteGrid::bbox_t());
 
 	for (const std::shared_ptr<InputGrid>& grid : this->inputGrids) {
 		// Get bounding box of data in world space :
 		DiscreteGrid::bbox_t newbb = grid->getDataBoundingBox().transformTo(grid->getTransform_GridToWorld());
-		this->outputGrid->updateBoundingBox(newbb);
+#ifdef ENABLE_BB_TRANSFORM
+		//this->outputGrid->updateBoundingBox(newbb);
+#endif
 	}
 
 	// get diagonal of bb :
 	DiscreteGrid::bbox_t::vec diag = this->outputGrid->getBoundingBox().getDiagonal();
 #else
 	using val_t = DiscreteGrid::bbox_t::vec::value_type ;
-	val_t x = 0;
-	val_t y = 0;
-	val_t z = 0;
+	val_t x = 0, y = 0, z = 0;
 	for (const std::shared_ptr<InputGrid>& grid : this->inputGrids) {
 		// Get bounding box of data in world space :
 		val_t cx = grid->getGridDimensions().x;
-		val_t cy = grid->getGridDimensions().x;
-		val_t cz = grid->getGridDimensions().x;
+		val_t cy = grid->getGridDimensions().y;
+		val_t cz = grid->getGridDimensions().z;
 		x = (cx > x) ? cx : x;
 		y = (cy > y) ? cy : y;
 		z = (cz > z) ? cz : z;

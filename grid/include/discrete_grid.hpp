@@ -100,18 +100,20 @@ class DiscreteGrid {
 		/// @brief Sets the grid's resolution.
 		virtual DiscreteGrid& setResolution(sizevec3 dims);
 
-#ifdef ENABLE_DATA_FITTING
+#ifdef ENABLE_BASIC_BB
 		/// @brief Gets the bounding box of the grid.
 		const bbox_t& getBoundingBox(void) const;
-
-		/// @brief Gets the bounding box of the grid.
-		bbox_t getBoundingBoxWorldSpace(void) const;
 
 		/// @brief Sets the bounding box of the discrete grid.
 		virtual DiscreteGrid& setBoundingBox(bbox_t renderWindow);
 
+#ifdef ENABLE_BB_TRANSFORM
+		/// @brief Gets the bounding box of the grid.
+		bbox_t getBoundingBoxWorldSpace(void) const;
+
 		/// @brief Updates the bounding box of the discrete grid with another bounding box.
 		virtual DiscreteGrid& updateBoundingBox(bbox_t renderWindow);
+#endif
 #endif
 
 		/// @brief Sets the associated transform from world space to grid space.
@@ -137,6 +139,8 @@ class DiscreteGrid {
 		/// (defined in grid space) is contained within the grid's bounding box then this function
 		/// returns true. Returns false otherwise.
 		bool includesPointGridSpace(glm::vec4 point) const;
+
+		void printInfo(std::string message, std::string prefix = "");
 
 	protected:
 		/// @brief Updates the voxel dimensions of the grid, each time the BB or the resolution changes.
@@ -164,7 +168,7 @@ class DiscreteGrid {
 		/// @brief The matrix used to go from grid space to world space.
 		glm::mat4 transform_gridToWorld;
 #endif
-#ifdef ENABLE_DATA_FITTING
+#ifdef ENABLE_BASIC_BB
 		/// @brief The bounding box of the grid, in grid space :
 		bbox_t boundingBox;
 #endif

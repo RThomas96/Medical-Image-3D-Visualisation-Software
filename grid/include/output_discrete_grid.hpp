@@ -10,15 +10,15 @@ class OutputGrid : public DiscreteGrid {
 		OutputGrid(sizevec3 resolution, bbox_t renderWindow);
 		~OutputGrid(void);
 
-		virtual OutputGrid& updateRenderBox(const bbox_t& newbox);
 		virtual OutputGrid& preallocateData(void);
 		virtual OutputGrid& preallocateData(sizevec3 dims);
 		virtual void setVoxelData(sizevec3 idx, DataType value);
-#ifdef ENABLE_DATA_FITTING
+#ifdef ENABLE_BASIC_BB
 		virtual OutputGrid& setBoundingBox(bbox_t renderWindow) override;
+#ifdef ENABLE_BB_TRANSFORM
+		virtual OutputGrid& updateRenderBox(const bbox_t& newbox);
 #endif
-
-	protected:
+#endif
 };
 
 #endif // GRID_INCLUDE_OUTPUT_DISCRETE_GRID_HPP_
