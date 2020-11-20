@@ -67,6 +67,7 @@ Scene::Scene(GridControl* const gc) {
 
 Scene::~Scene(void) {
 	glDeleteTextures(1, &this->textureHandle);
+	glDeleteTextures(1, &this->colorScaleHandle);
 	glDeleteTextures(1, &this->voxelGridTexHandle);
 }
 
@@ -142,6 +143,9 @@ void Scene::initGl(QOpenGLContext* _context, std::size_t _x, std::size_t _y, std
 	this->loadImage();
 
 	this->generateGrid(_x, _y, _z);
+
+	std::vector<float> colorScale = this->generateColorScale(1, 255);
+	this->uploadColorScale(colorScale);
 
 	int bounds[] = {
 		0, static_cast<int>(this->gridWidth - this->neighborWidth),
@@ -489,17 +493,41 @@ void Scene::loadVoxelGrid() {
 	GLint swizzleMask[] = {GL_RED, GL_RED, GL_RED, GL_ONE};
 	glTexParameteriv(GL_TEXTURE_3D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
 
+	// Fix for a stupid fucking bug : OpenGL expects textures with dimensions which are a multiple of 4. However,
+	// this will only be the case 25% of the time, so we need to manually pad the texture before sending it to
+	// OpenGL for displaying. Might shift the data on very small datasets (resolution < 50).
+	const auto& data = this->voxelGrid->getData();
+	DiscreteGrid::sizevec3 sane = size;
+	if (sane.x%4u != 0) { sane.x += (4-size.x%4u); }
+	if (sane.y%4u != 0) { sane.y += (4-size.y%4u); }
+	//if (sane.z%4u != 0) { sane.z += (4-size.z%4u); }
+	std::vector<DiscreteGrid::DataType> texData;
+	texData.resize(sane.x*sane.y*sane.z);
+	DiscreteGrid::DataType d = 0;
+	for (std::size_t k = 0; k < sane.z; ++k) {
+		for (std::size_t j = 0; j < sane.y; ++j) {
+			for (std::size_t i = 0; i < sane.x; ++i) {
+				if (i >= size.x || j >= size.y || k >= size.z) {
+					d = 0;
+				} else {
+					d = data[i+j*size.x+k*size.x*size.y];
+				}
+				texData[i+j*sane.x+k*sane.x*sane.y] = d;
+			}
+		}
+	}
+
 	glTexImage3D(
 		GL_TEXTURE_3D,			// GLenum : Target
 		static_cast<GLint>(0),		// GLint  : Level of detail of the current texture (0 = original)
 		GL_R8UI,			// GLint  : Number of color components in the picture. Here grayscale in uchar so GL_R8UI
-		static_cast<GLsizei>(size.x),	// GLsizei: Image width
-		static_cast<GLsizei>(size.y),	// GLsizei: Image height
-		static_cast<GLsizei>(size.z),	// GLsizei: Image depth (number of layers)
+		static_cast<GLsizei>(sane.x),	// GLsizei: Image width
+		static_cast<GLsizei>(sane.y),	// GLsizei: Image height
+		static_cast<GLsizei>(sane.z),	// GLsizei: Image depth (number of layers)
 		static_cast<GLint>(0),		// GLint  : Border. This value MUST be 0.
 		GL_RED_INTEGER,			// GLenum : Format of the pixel data
 		GL_UNSIGNED_BYTE,		// GLenum : Type (the data type as in uchar, uint, float ...)
-		this->voxelGrid->getData().data() // void*  : Data to load into the buffer
+		texData.data() // void*  : Data to load into the buffer
 	);
 	GetOpenGLError();
 }
@@ -1126,6 +1154,61 @@ glm::mat4 Scene::computeTransformationMatrix() const {
 		transfoMat[3][2] = w * std::abs(std::sin(angleRad));
 	}
 
-	//return transfoMat;
-	return glm::mat4(1.f);
+	return transfoMat;
+	//return glm::mat4(1.f);
+}
+
+std::vector<float> Scene::generateColorScale(std::size_t minVal, std::size_t maxVal) {
+	std::vector<float> raw_colors;
+	raw_colors.resize(3*256);
+
+	for (std::size_t i = 0; i < 256; ++i) {
+		// Apply the RGB2HSV conversion (adapted from the shaders) :
+		glm::vec3 color = glm::vec3(.0f, .0f, .0f);
+		if (i >= minVal && i <= maxVal) {
+			float a = static_cast<float>(minVal) / 255.f;
+			float b = static_cast<float>(maxVal) / 255.f;
+			float c	= .2f * b;
+			float d	= .7f * b;
+			float r = 1.f - ((b - a) / (d - c)) * ((static_cast<float>(i)/255.f)-c)+a;
+			glm::vec4 k = glm::vec4(1.f, 2.f/3.f, 1.f/3.f, 3.f);
+			glm::vec3 p = glm::abs(glm::fract(glm::vec3(r,r,r) + glm::vec3(k.x,k.y,k.z)) * 6.f - glm::vec3(k.w));
+			color = glm::mix(glm::vec3(k.x, k.x, k.x), glm::clamp(p-glm::vec3(k.x, k.x, k.x), .1f, .7f), r);
+		} else if (i > maxVal) {
+			color.r = 1.f;
+			color.g = 1.f;
+			color.b = 1.f;
+		}
+		raw_colors[3u*i+0] = color.r;
+		raw_colors[3u*i+1] = color.g;
+		raw_colors[3u*i+2] = color.b;
+	}
+
+	return raw_colors;
+}
+
+void Scene::uploadColorScale(const std::vector<float>& colorScale) {
+	if (this->colorScaleHandle != 0) {
+		glDeleteTextures(1, &this->colorScaleHandle);
+		this->colorScaleHandle = 0;
+	}
+
+	glGenTextures(1, &this->colorScaleHandle);
+
+	glBindTexture(GL_TEXTURE_1D, this->colorScaleHandle);
+	GetOpenGLError();
+	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+	glTexImage1D(
+		GL_TEXTURE_1D,
+		0,
+		GL_RGB,
+		256,
+		0,
+		GL_RGB,
+		GL_FLOAT,
+		colorScale.data()
+	);
 }

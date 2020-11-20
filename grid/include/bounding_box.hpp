@@ -6,10 +6,11 @@
 #include <vector>
 #include <algorithm>
 
-//#define ENABLE_TRANSFORMATIONS
+#define ENABLE_TRANSFORMATIONS
 #define ENABLE_BASIC_BB
+#define ENABLE_DATA_BB
 #define ADJUST_TO_BB
-//#define ENABLE_BB_TRANSFORM
+#define ENABLE_BB_TRANSFORM
 
 #define GLM_MAT_BEFORE_VEC
 //#define REVERSE_MATRIX_ORDER
@@ -24,7 +25,7 @@ template <typename DataType> class BoundingBox_General {
 	public:
 		/// @brief Initializes a bounding box at the origin, of size 0.
 		BoundingBox_General(void) {
-			DataType min = std::numeric_limits<DataType>::min();
+			DataType min = std::numeric_limits<DataType>::lowest();
 			DataType max = std::numeric_limits<DataType>::max();
 			this->min = vec(max, max, max);
 			this->max = vec(min, min, min);

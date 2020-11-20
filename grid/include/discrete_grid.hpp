@@ -44,9 +44,6 @@ class DiscreteGrid {
 		/// @brief Updates this grid's data with data computed from a grid reader.
 		virtual DiscreteGrid& fromGridReader(IO::GenericGridReader& reader);
 
-		/// @brief Recomputes the bounding box surrounding data with the threshold for "data" set to "threshold".
-		virtual DiscreteGrid& recomputeBoundingBox(DataType threshold);
-
 		/// @brief Returns the given point (originally world space) in grid space.
 		virtual glm::vec4 toGridSpace(glm::vec4 pos_ws) const;
 
@@ -77,9 +74,6 @@ class DiscreteGrid {
 		/// @brief Voxel dimensions, in grid space.
 		const glm::vec3 getVoxelDimensions(void) const;
 
-		/// @brief Get the data's bounding box.
-		const bbox_t& getDataBoundingBox(void) const;
-
 		/// @brief Checks if the grid is modifiable, for controllers
 		bool isModifiable(void) const;
 
@@ -100,6 +94,13 @@ class DiscreteGrid {
 		/// @brief Sets the grid's resolution.
 		virtual DiscreteGrid& setResolution(sizevec3 dims);
 
+#ifdef ENABLE_DATA_BB
+		/// @brief Recomputes the bounding box surrounding data with the threshold for "data" set to "threshold".
+		virtual DiscreteGrid& recomputeBoundingBox(DataType threshold);
+
+		/// @brief Get the data's bounding box.
+		const bbox_t& getDataBoundingBox(void) const;
+#endif
 #ifdef ENABLE_BASIC_BB
 		/// @brief Gets the bounding box of the grid.
 		const bbox_t& getBoundingBox(void) const;
@@ -174,8 +175,10 @@ class DiscreteGrid {
 #endif
 		/// @brief The threshold from which to consider a voxel as 'data', instead of the background.
 		DataType dataThreshold;
+#ifdef ENABLE_DATA_BB
 		/// @brief Bounding box where data lives :
 		bbox_t dataBoundingBox;
+#endif
 		/// @brief The name of the grid, used to identify it on a
 		std::string gridName;
 };

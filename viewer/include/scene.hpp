@@ -192,6 +192,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		GLint texDataLocation;
 		GLint lightPosLocation;
 		GLint neighborOffsetLocation;
+		GLint colorScaleLocation;
 
 		GLuint vboVertPosHandle;
 		GLuint vboVertNormHandle;
@@ -203,6 +204,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 
 		GLuint textureHandle; ///< handle for glTexImage3D
 		GLuint voxelGridTexHandle; ///< handle for the voxel grid's data
+		GLuint colorScaleHandle;
 	private:
 		void generateTexCube(void);
 		const unsigned char* loadEmptyImage();
@@ -219,6 +221,8 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		/// @b draws a grid, slightly more generic than drawVoxelGrid()
 		void drawGrid_Generic(GLfloat mvMat[], GLfloat pMat[], glm::mat4 baseMatrix, GLuint texHandle, const std::shared_ptr<DiscreteGrid>& grid);
 		void printGridInfo(const std::shared_ptr<DiscreteGrid>& grid);
+		std::vector<float> generateColorScale(std::size_t minVal, std::size_t maxVal); ///< Generate a color scale for the data
+		void uploadColorScale(const std::vector<float>& colorScale); ///< Uploads the color scale to OpenGL
 };
 
 #endif // VIEWER_INCLUDE_SCENE_HPP_
