@@ -48,6 +48,8 @@ TetMesh& TetMesh::populateOutputGrid(InterpolationMethods method) {
 	if (this->outputGrid == nullptr) { return *this; }
 	if (this->inputGrids.size() == 0) { return *this; }
 
+	this->outputGrid->printInfo("Right before generating data :", "[DEBUG]");
+
 	this->updateVoxelSizes();
 
 	// Check the dimensions of the voxel grid (if it can host voxels) :
@@ -59,7 +61,7 @@ TetMesh& TetMesh::populateOutputGrid(InterpolationMethods method) {
 		return *this;
 	}
 
-	this->outputGrid->printInfo("Right before generating data :", "[DEBUG]");
+	this->outputGrid->printInfo("After update, before data :", "[DEBUG]");
 
 	// reserve and allocate space :
 	this->outputGrid->preallocateData();
@@ -69,6 +71,8 @@ TetMesh& TetMesh::populateOutputGrid(InterpolationMethods method) {
 	std::random_device randDev;
 	std::mt19937 generator(randDev());
 	std::uniform_real_distribution<double> distribution(0., 0.99);
+
+	std::cerr << "[LOG] TetMesh generating over [" << dims.x << ", " << dims.y << ", " << dims.z << "]\n";
 
 	std::cerr << "[LOG] Starting to iterate on the image to generate ... (" << dims.z << " levels)\n";
 	// iterate on the voxels of the output data grid :
@@ -83,10 +87,15 @@ TetMesh& TetMesh::populateOutputGrid(InterpolationMethods method) {
 				this->origin = this->outputGrid->getVoxelPositionGridSpace(idx, isVerbose);
 				// set world-space origin from it :
 				this->origin_WS = this->outputGrid->toWorldSpace(this->origin);
+				std::cerr << "[TRACE] Index : [" << idx.x << ", " << idx.y << ", " << idx.z << "]\n";
+				std::cerr << "[TRACE] PosG  : [" << this->origin.x << ", " << this->origin.y << ", " << this->origin.z << "]\n";
+				std::cerr << "[TRACE] PosW  : [" << this->origin_WS.x << ", " << this->origin_WS.y << ", " << this->origin_WS.z << "]\n";
 
 				// gather values from all input grids :
 				std::vector<DiscreteGrid::DataType> values;
 				for (const std::shared_ptr<InputGrid>& grid : this->inputGrids) {
+					glm::vec4 now = grid->toGridSpace(this->origin_WS);
+					std::cerr << "[TRACE] Now   : [" << now.x << ", " << now.y << ", " << now.z << "]\n";
 					if (grid->includesPointWorldSpace(this->origin)) {
 						values.push_back(this->getInterpolatedValue(grid, method, idx));
 					}
@@ -191,7 +200,7 @@ TetMesh& TetMesh::printInfo() {
 TetMesh::DataType TetMesh::interpolate_NearestNeighbor(const std::shared_ptr<InputGrid> grid) const {
 	// DiscreteGrid::fetchTexelWorldSpace already applies NearestNeighbor on the position
 	// given in argument, so we just fetch the value of the origin, giving us a NN interpolation :
-	return grid->fetchTexelWorldSpace(this->outputGrid->toWorldSpace(this->origin));
+	return grid->fetchTexelWorldSpace(this->origin_WS);
 }
 
 TetMesh::DataType TetMesh::interpolate_TriLinear(const std::shared_ptr<InputGrid> grid) const {
@@ -322,26 +331,25 @@ void TetMesh::makeTetrahedra(glm::vec3 vxDims, std::size_t size) {
 	this->vertices.clear();
 	this->tetrahedra.clear();
 
-	glm::vec3 halfDims = vxDims/2.f;
 	std::size_t neighborWidth = 2u * size;
-	std::size_t cubeWidth = neighborWidth + 1u;
 
 	// Lambda returning the index of the vertex in the mesh :
 	auto getIndex = [&](std::size_t i, std::size_t j, std::size_t k) {
 		return k * neighborWidth * neighborWidth + j * neighborWidth + i;
 	};
 
-	// At the start, the origin is at [.0, .0, .0]. But the center of
-	// the first voxel is in fact at [.5, .5, .5], which means we
-	// need to iterate in [-.5, 1.5] by steps of 1, on each axis.
+	// We can have the vertices directly on 'whole' coordinates since those
+	// are basically just an offset to fetch values by. The origin is at the
+	// center of the created vertices.
 
-	for (std::size_t k = 0; k < cubeWidth; ++k) {
-		for (std::size_t j = 0; j < cubeWidth; ++j) {
-			for (std::size_t i = 0; i < cubeWidth; ++i) {
+	int isize = static_cast<int>(size);
+	for (int k = -isize; k <= isize; ++k) {
+		for (int j = -isize; j <= isize; ++j) {
+			for (int i = -isize; i <= isize; ++i) {
 				this->vertices.emplace_back(
-					static_cast<float>(i) * vxDims.x - halfDims.x,
-					static_cast<float>(j) * vxDims.y - halfDims.y,
-					static_cast<float>(k) * vxDims.z - halfDims.z,
+					static_cast<float>(i) * vxDims.x,
+					static_cast<float>(j) * vxDims.y,
+					static_cast<float>(k) * vxDims.z,
 					1.
 				);
 			}

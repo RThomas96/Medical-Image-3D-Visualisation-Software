@@ -349,7 +349,7 @@ namespace IO {
 			this->tiffFile = nullptr;
 		}
 
-		std::cerr << "[LOG] Opening file named \"" << filename << "\" ..." << '\n';
+		//std::cerr << "[LOG] Opening file named \"" << filename << "\" ..." << '\n';
 		this->tiffFile = TinyTIFFReader_open(filename.c_str());
 
 		if (TinyTIFFReader_wasError(this->tiffFile)) {

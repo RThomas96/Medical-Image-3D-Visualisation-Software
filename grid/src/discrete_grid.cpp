@@ -56,7 +56,7 @@ DiscreteGrid& DiscreteGrid::fromGridReader(IO::GenericGridReader& reader) {
 	// copy data :
 	reader.swapData(this->data);
 
-	this->printInfo("[DiscreteGrid::fromReader()]", "[INFO]");
+	//this->printInfo("[DiscreteGrid::fromReader()]", "[INFO]");
 
 	return *this;
 }
@@ -109,11 +109,11 @@ DiscreteGrid::DataType DiscreteGrid::fetchTexelGridSpace(glm::vec4 pos_gs) const
 #else
 	DiscreteGrid::bbox_t::vec minBB = DiscreteGrid::bbox_t::vec(DiscreteGrid::bbox_t::vec::value_type(0));
 #endif
-	glm::vec3 halfVox = this->voxelDimensions / 2.f;
 	// compute index of position :
-	std::size_t x = static_cast<std::size_t>(std::floor((pos_gs.x - halfVox.x - minBB.x) / this->voxelDimensions.x));
-	std::size_t y = static_cast<std::size_t>(std::floor((pos_gs.y - halfVox.y - minBB.y) / this->voxelDimensions.y));
-	std::size_t z = static_cast<std::size_t>(std::floor((pos_gs.z - halfVox.z - minBB.z) / this->voxelDimensions.z));
+	std::size_t x = static_cast<std::size_t>(std::floor((pos_gs.x - minBB.x) / this->voxelDimensions.x));
+	std::size_t y = static_cast<std::size_t>(std::floor((pos_gs.y - minBB.y) / this->voxelDimensions.y));
+	std::size_t z = static_cast<std::size_t>(std::floor((pos_gs.z - minBB.z) / this->voxelDimensions.z));
+	std::cerr << "[TRACE] PosFT : [" << x << ", " << y << ", " << z << "]\n";
 	return this->fetchTexelIndex(sizevec3(x,y,z));
 }
 
@@ -129,9 +129,14 @@ DiscreteGrid::DataType DiscreteGrid::fetchTexelWorldSpace(glm::vec4 pos_ws) cons
 DiscreteGrid::DataType DiscreteGrid::fetchTexelIndex(sizevec3 idx) const {
 	std::size_t index = idx.x + idx.y * this->gridDimensions.x + idx.z * this->gridDimensions.x * this->gridDimensions.y;
 	// sanity check, should be covered by the case above :
-	if (this->data.size() < index) { return DataType(0); }
+	if (this->data.size() < index) {
+		std::cerr << "[TRACE] Targt : [idx:" << index << ", val:" << +0 << ']' << '\n';
+		return DataType(0); }
 	// return data at this index :
-	else { return this->data[index]; }
+	else {
+		std::cerr << "[TRACE] Targt : [idx:" << index << ", val:" << +this->data[index] << "]\n";
+		std::cerr << "[TRACE] Targt : [" << this->gridDimensions.x << ", " << this->gridDimensions.y << ", " << this->gridDimensions.z << "]\n\n";
+		return this->data[index]; }
 }
 
 const std::vector<DiscreteGrid::DataType>& DiscreteGrid::getData() const {
@@ -313,7 +318,8 @@ bool DiscreteGrid::includesPointWorldSpace(glm::vec4 point) const {
 
 bool DiscreteGrid::includesPointGridSpace(glm::vec4 point) const {
 #ifdef ADJUST_TO_BB
-	bbox_t::vec point_bb = bbox_t::vec(static_cast<float>(point.x), static_cast<float>(point.y), static_cast<float>(point.z));
+	using val_t = bbox_t::vec::value_type;
+	bbox_t::vec point_bb = bbox_t::vec(static_cast<val_t>(point.x), static_cast<val_t>(point.y), static_cast<val_t>(point.z));
 	return this->boundingBox.contains(point_bb);
 #else
 	return true;

@@ -6,9 +6,9 @@
 #include <vector>
 #include <algorithm>
 
-#define ENABLE_TRANSFORMATIONS
-//#define ENABLE_BASIC_BB
-//#define ADJUST_TO_BB
+//#define ENABLE_TRANSFORMATIONS
+#define ENABLE_BASIC_BB
+#define ADJUST_TO_BB
 //#define ENABLE_BB_TRANSFORM
 
 #define GLM_MAT_BEFORE_VEC

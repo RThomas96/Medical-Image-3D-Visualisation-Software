@@ -79,8 +79,6 @@ void Scene::initGl(QOpenGLContext* _context, std::size_t _x, std::size_t _y, std
 
 	this->initializeOpenGLFunctions();
 
-	this->texStorage = std::make_shared<InputGrid>();
-
 	QMessageBox* msgBox = new QMessageBox();
 	msgBox->setText("Choose your input data type");
 	QPushButton* dimButton = msgBox->addButton("DIM", QMessageBox::ActionRole);
@@ -112,11 +110,14 @@ void Scene::initGl(QOpenGLContext* _context, std::size_t _x, std::size_t _y, std
 	}
 	// Set reader properties :
 	reader->setDataThreshold(threshold);
+	// Load the data :
 	reader->loadImage();
+
 	// Update data from the grid reader :
+	this->texStorage = std::make_shared<InputGrid>();
 	this->texStorage->fromGridReader(*reader);
 	this->texStorage->setTransform_GridToWorld(this->computeTransformationMatrix());
-	this->texStorage->printInfo("Once the data is loaded :", "[INFO]");
+	this->texStorage->printInfo("Once the data is loaded :", "[DEBUG-I]");
 
 	// free up the reader's resources :
 	delete reader;
@@ -126,10 +127,7 @@ void Scene::initGl(QOpenGLContext* _context, std::size_t _x, std::size_t _y, std
 
 	this->mesh = std::make_shared<TetMesh>();
 	this->mesh->addInputGrid(this->texStorage).setOutputGrid(this->voxelGrid);
-	this->voxelGrid->printInfo("Output grid after being set : ", "[INFO]");
-
-	//this->printGridInfo(this->texStorage);
-	//this->printGridInfo(this->voxelGrid);
+	this->voxelGrid->printInfo("Output grid after being set : ", "[DEBUG-O]");
 
 	///////////////////////////
 	/// CREATE VAO :
