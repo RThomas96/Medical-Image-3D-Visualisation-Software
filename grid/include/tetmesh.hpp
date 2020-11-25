@@ -1,7 +1,6 @@
 #ifndef GRID_INCLUDE_TETMESH_HPP_
 #define GRID_INCLUDE_TETMESH_HPP_
 
-#include "../../image/include/image_storage.hpp"
 #include "./discrete_grid.hpp"
 #include "./input_discrete_grid.hpp"
 #include "./output_discrete_grid.hpp"
@@ -33,7 +32,7 @@ class TetMesh {
 		// Testing to slowly template this class.
 		using DataType = unsigned char;
 	public:
-		/// @brief Constructs a mesh, associated with the given stack of images.
+		/// @brief Constructs a mesh, devoid of any associated image stack.
 		TetMesh(void);
 
 		/// @brief Add a grid as an input to the mesh's reconstruction algorithm.
@@ -48,25 +47,9 @@ class TetMesh {
 		TetMesh& setOutputGrid(const std::shared_ptr<OutputGrid>& toSet);
 
 		/// @brief Populate the output grid with data from the input grids.
+		/// @param method The interpolation method used to determine the values of the neighbor grid.
 		TetMesh& populateOutputGrid(InterpolationMethods method);
 
-		/// @brief Get the positions of neighboring vertices and of the origin.
-		/// @return The vertices of the mesh, in world space.
-		std::vector<glm::vec4> getVertices_WorldSpace(void) const;
-
-#if 0
-		/// @brief Get the interpolated value at the specified position, using the specified interpolation method.
-		/// @param pos_ws The position to query for, in world space.
-		/// @param method The method to use for the interpolation.
-		/// @warning This method assumes the point given is in real space. Since there's no way to check if it's true, no checks are done.
-		TetMesh::DataType getInterpolatedValue(glm::vec4 pos_ws, InterpolationMethods method = InterpolationMethods::NearestNeighbor);
-
-		/// @brief Get the interpolated value at the specified position, using the specified interpolation method.
-		/// @param pos_is The position to query for, in initial space.
-		/// @param method The method to use for the interpolation.
-		/// @warning This method assumes the point given is in initial space. Since there's no way to check if it's true, no checks are done.
-		TetMesh::DataType getInterpolatedValueInitialSpace(glm::vec4 pos_is, InterpolationMethods method = InterpolationMethods::NearestNeighbor);
-#endif
 		/// @brief Returns the interpolated value from 'grid', interpolated using 'method'
 		/// @param grid The grid to sample data from
 		/// @param method The interpolation method used to determine the value at the given point.
@@ -93,14 +76,6 @@ class TetMesh {
 		/// @param vxdims Dimensions of a voxel
 		/// @param size The size of the neighborhood to create (1 for a 3-wide cube, 2 for a 5-wide, and so on)
 		void makeTetrahedra(glm::vec3 vxdims = glm::vec3(1.f), std::size_t size = 1);
-
-		/// @brief Updates the positions of the origin and its neighbors, updating the values as well.
-		/// @returns A reference to (this), to chain function calls.
-		TetMesh& updatePositions(glm::vec4 newOrigin);
-
-		/// @brief Resets the position of the grid to the origin.
-		/// @returns A reference to (this), to chain function calls.
-		TetMesh& resetPositions(void);
 
 		/// @brief Updates the relative positions of the grid to the sizes of the outputgrid's voxels.
 		TetMesh& updateVoxelSizes(void);

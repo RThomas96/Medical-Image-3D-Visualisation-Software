@@ -34,15 +34,6 @@ TetMesh& TetMesh::setOutputGrid(const std::shared_ptr<OutputGrid>& toSet) {
 	return *this;
 }
 
-TetMesh& TetMesh::resetPositions() {
-	// Resets the positions so the mesh is centered around the origin.
-	for (std::size_t i = 0; i < this->vertices.size(); ++i) {
-		this->vertices[i] -= this->origin;
-		this->vertices[i].w = 1.; // Sanity check.
-	}
-	return *this;
-}
-
 TetMesh& TetMesh::populateOutputGrid(InterpolationMethods method) {
 	// early returns :
 	if (this->outputGrid == nullptr) { return *this; }
@@ -132,16 +123,6 @@ DiscreteGrid::DataType TetMesh::getInterpolatedValue(std::shared_ptr<InputGrid> 
 			break;
 	}
 	return 0;
-}
-
-std::vector<glm::vec4> TetMesh::getVertices_WorldSpace() const {
-	// Simple getter for the mesh's vertices.
-	std::vector<glm::vec4> res(this->vertices);
-	// convert all vertices to world space, instead of this stack's space :
-	std::for_each(res.begin(), res.end(), [&](glm::vec4& v) {
-		v = v * this->outputGrid->getTransform_GridToWorld();
-	});
-	return res;
 }
 
 TetMesh& TetMesh::printInfo() {

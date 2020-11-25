@@ -19,7 +19,7 @@ glm::mat4 computeTransfoShear(double angleDeg, glm::vec3 origin = glm::vec3(.0f)
 
 /// @brief Representation of a discrete grid (as a stack of images, or a voxel grid) which can be queried from world space.
 /// @note Although some functions in this class may mention 'texels', they are in no way, shape, or form tied to the visualization aspect of the project.
-class DiscreteGrid {
+class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 
 	friend class GridControl;
 
@@ -31,12 +31,14 @@ class DiscreteGrid {
 		/// @brief Type of bounding box used
 		typedef BoundingBox_General<float> bbox_t;
 
-	public:
+	protected:
 		/// @brief Default constructor, creates an empty grid.
 		DiscreteGrid(bool _modifiable = true);
 
 		/// @brief Creates a grid using content from a grid reader.
 		DiscreteGrid(IO::GenericGridReader& reader);
+
+	public:
 
 		/// @brief Default destructor, removes any storage associated with the grid.
 		~DiscreteGrid(void);
@@ -182,7 +184,5 @@ class DiscreteGrid {
 		/// @brief The name of the grid, used to identify it on a
 		std::string gridName;
 };
-
-extern std::vector<std::shared_ptr<DiscreteGrid>> gridIndex;
 
 #endif // GRID_INCLUDE_DISCRETE_GRID_HPP_

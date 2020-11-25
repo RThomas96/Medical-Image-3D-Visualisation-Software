@@ -25,9 +25,6 @@ class ControlPanel : public QWidget {
 		void setImageBoundaries(int bounds[6]);
 	private:
 		Scene* const sceneToControl;
-		QDoubleSpinBox* xPicker;
-		QDoubleSpinBox* yPicker;
-		QDoubleSpinBox* zPicker;
 		QSlider* xTex;
 		QSlider* yTex;
 		QSlider* zTex;
@@ -39,15 +36,11 @@ class ControlPanel : public QWidget {
 		QSlider* xPlane_Max; ///< Slider to determine the coordinate of the maximum X cutting plane
 		QSlider* yPlane_Max; ///< Slider to determine the coordinate of the maximum Y cutting plane
 		QSlider* zPlane_Max; ///< Slider to determine the coordinate of the maximum Z cutting plane
-		QCheckBox* toggleTexCubeCheckbox; ///< Determines if the texture cube should be shown or not
 		QWidget* controlContainer;
 		Viewer* leftViewer;
 		Viewer* rightViewer;
 
 	public slots:
-		void setXCoord(double coordX);
-		void setYCoord(double coordY);
-		void setZCoord(double coordZ);
 		void setXTexCoord(int coordX);
 		void setYTexCoord(int coordY);
 		void setZTexCoord(int coordZ);

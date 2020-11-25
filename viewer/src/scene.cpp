@@ -44,10 +44,8 @@ Scene::Scene(GridControl* const gc) {
 	this->vboVertPosHandle = 0;
 	this->vboElementHandle = 0;
 	this->vaoHandle = 0;
-	this->programHandle = 0;
 	this->programHandle_VG = 0;
 
-	this->neighborOffset = glm::vec3(0, 0, 0);
 	this->neighborPos = uvec3(0, 0, 0);
 
 	// Uniform locations :
@@ -55,7 +53,6 @@ Scene::Scene(GridControl* const gc) {
 	this->vMatrixLocation = -1;
 	this->pMatrixLocation = -1;
 	this->lightPosLocation = -1;
-	this->neighborOffsetLocation = -1;
 	this->scaledCubes = 1;
 
 	this->minTexVal = uchar(0);
@@ -74,6 +71,7 @@ Scene::~Scene(void) {
 void Scene::initGl(QOpenGLContext* _context, std::size_t _x, std::size_t _y, std::size_t _z) {
 	if (this->isInitialized == true) { return; }
 	this->isInitialized = true;
+	std::cerr << "Initializing scene ..." << '\n';
 
 	if (_context == 0) { throw std::runtime_error("Warning : this->context() returned 0 or nullptr !") ; }
 	if (_context == nullptr) { std::cerr << "Warning : Initializing a scene without a valid OpenGL context !" << '\n' ; }
@@ -144,7 +142,7 @@ void Scene::initGl(QOpenGLContext* _context, std::size_t _x, std::size_t _y, std
 
 	this->generateGrid(_x, _y, _z);
 
-	std::vector<float> colorScale = this->generateColorScale(1, 255);
+	std::vector<float> colorScale = this->generateColorScale(0, 255);
 	this->uploadColorScale(colorScale);
 
 	int bounds[] = {
@@ -165,19 +163,16 @@ void Scene::initGl(QOpenGLContext* _context, std::size_t _x, std::size_t _y, std
 		this->controlPanel->activatePanels();
 	}
 
-	glUseProgram(this->programHandle);
+	glUseProgram(this->programHandle_VG);
 	GetOpenGLError();
 
-	this->mMatrixLocation = glGetUniformLocation(this->programHandle, "mMatrix");
-	this->vMatrixLocation = glGetUniformLocation(this->programHandle, "vMatrix");
-	this->pMatrixLocation = glGetUniformLocation(this->programHandle, "pMatrix");
-	this->texDataLocation = glGetUniformLocation(this->programHandle, "texData");
-	this->lightPosLocation = glGetUniformLocation(this->programHandle, "lightPos");
-	this->neighborOffsetLocation = glGetUniformLocation(this->programHandle, "neighborOffset");
-	if (this->neighborOffsetLocation < 0) {
-		std::cerr << "Cannot find " << "neighborOffset" << " uniform" << '\n';
-	}
+	this->mMatrixLocation = glGetUniformLocation(this->programHandle_VG, "mMatrix");
+	this->vMatrixLocation = glGetUniformLocation(this->programHandle_VG, "vMatrix");
+	this->pMatrixLocation = glGetUniformLocation(this->programHandle_VG, "pMatrix");
+	this->texDataLocation = glGetUniformLocation(this->programHandle_VG, "texData");
+	this->lightPosLocation = glGetUniformLocation(this->programHandle_VG, "lightPos");
 	GetOpenGLError();
+	std::cerr << "Finished initializing scene" << '\n';
 }
 
 void Scene::printGridInfo(const std::shared_ptr<DiscreteGrid>& grid) {
@@ -208,202 +203,143 @@ void Scene::printGridInfo(const std::shared_ptr<DiscreteGrid>& grid) {
 }
 
 void Scene::recompileShaders() {
-	this->programHandle = this->compileShaders("./shaders/base.vert", "./shaders/base.geom", "./shaders/base.frag");
-	this->programHandle_VG = this->compileShaders("./shaders/voxelgrid.vert", "./shaders/voxelgrid.geom", "./shaders/voxelgrid.frag");
+	this->compileShaders("./shaders/voxelgrid.vert", "./shaders/voxelgrid.geom", "./shaders/voxelgrid.frag");
 }
 
-GLuint Scene::compileShaders(std::string _vPath, std::string _gPath, std::string _fPath) {
+void Scene::compileShaders(std::string _vPath, std::string _gPath, std::string _fPath) {
 	glUseProgram(0);
 
-	GLuint _vSha;
-	GLuint _gSha;
-	GLuint _fSha;
-	GLuint _prog;
-
-	///////////////////////////
-	/// CREATE SHADERS AND COMPILE :
-	///////////////////////////
-	_vSha = glCreateShader(GL_VERTEX_SHADER);
-	GetOpenGLError();
-	_gSha= glCreateShader(GL_GEOMETRY_SHADER);
-	GetOpenGLError();
-	_fSha= glCreateShader(GL_FRAGMENT_SHADER);
-	GetOpenGLError();
-
-	// Open shader file for reading :
-	std::ifstream vShaFile = std::ifstream(_vPath, std::ios_base::in);
-	std::ifstream gShaFile = std::ifstream(_gPath, std::ios_base::in);
-	std::ifstream fShaFile = std::ifstream(_fPath, std::ios_base::in);
-
-	if (!vShaFile.is_open()) {
-		std::cerr << "Error : could not get the contents of shader file " << _vPath << '\n';
-		exit(EXIT_FAILURE);
-	}
-	if (!gShaFile.is_open()) {
-		vShaFile.close();
-		std::cerr << "Error : could not get the contents of shader file " << _gPath << '\n';
-		exit(EXIT_FAILURE);
-	}
-	if (!fShaFile.is_open()) {
-		vShaFile.close();
-		gShaFile.close();
-		std::cerr << "Error : could not get the contents of shader file " << _fPath << '\n';
+	GLboolean compilerAvailable = GL_FALSE;
+	glGetBooleanv(GL_SHADER_COMPILER, &compilerAvailable);
+	if (compilerAvailable == GL_FALSE) {
+		std::cerr << "[" << __PRETTY_FUNCTION__ << "] : No shader compiler was available.\nExiting the program.\n";
 		exit(EXIT_FAILURE);
 	}
 
-	// Get file size by seeking end and rewinding :
-	vShaFile.seekg(0, vShaFile.end);
-	std::size_t vShaFileSize = static_cast<std::size_t>(vShaFile.tellg());
-	vShaFile.seekg(0, vShaFile.beg);
-	gShaFile.seekg(0, gShaFile.end);
-	std::size_t gShaFileSize = static_cast<std::size_t>(gShaFile.tellg());
-	gShaFile.seekg(0, gShaFile.beg);
-	fShaFile.seekg(0, fShaFile.end);
-	std::size_t fShaFileSize = static_cast<std::size_t>(fShaFile.tellg());
-	fShaFile.seekg(0, fShaFile.beg);
+	GLuint _vSha = this->compileShader(_vPath, GL_VERTEX_SHADER);
+	GLuint _gSha = this->compileShader(_gPath, GL_GEOMETRY_SHADER);
+	GLuint _fSha = this->compileShader(_fPath, GL_FRAGMENT_SHADER);
+	GLuint _prog = this->compileProgram(_vSha, _gSha, _fSha);
 
-	// Get shader file contents :
-	char* vShaSource = new char[vShaFileSize+1];
-	vShaFile.read(vShaSource, vShaFileSize);
-	vShaSource[vShaFileSize] = '\0';
-	char* gShaSource = new char[gShaFileSize+1];
-	gShaFile.read(gShaSource, gShaFileSize);
-	gShaSource[gShaFileSize] = '\0';
-	char* fShaSource = new char[fShaFileSize+1];
-	fShaFile.read(fShaSource, fShaFileSize);
-	fShaSource[fShaFileSize] = '\0';
-
-	glShaderSource(_vSha, 1, const_cast<const char**>(&vShaSource), 0);
-	glShaderSource(_gSha, 1, const_cast<const char**>(&gShaSource), 0);
-	glShaderSource(_fSha, 1, const_cast<const char**>(&fShaSource), 0);
-
-	delete[] vShaSource;
-	delete[] gShaSource;
-	delete[] fShaSource;
-
-	vShaFile.close();
-	gShaFile.close();
-	fShaFile.close();
-
-	glCompileShader(_vSha);
-	GetOpenGLError();
-
-	{
-		GLint shaderInfoLength = 0;
-		GLint charsWritten = 0;
-		char* shaderInfoLog = nullptr;
-
-		glGetShaderiv(_vSha, GL_INFO_LOG_LENGTH, &shaderInfoLength);
-		if (shaderInfoLength > 1) {
-			std::cerr << __PRETTY_FUNCTION__ << " : start Log ***********************************************" << '\n';
-
-			std::cerr << __FUNCTION__ << " : Information about shader " << _vPath << " : " << '\n';
-			std::cerr << __FUNCTION__ << " : Shader was a vertex shader ";
-			shaderInfoLog = new char[shaderInfoLength];
-			glGetShaderInfoLog(_vSha, shaderInfoLength, &charsWritten, shaderInfoLog);
-			GetOpenGLError();
-			std::cerr << shaderInfoLog << '\n';
-			delete[] shaderInfoLog;
-
-			std::cerr << __PRETTY_FUNCTION__ << " : end Log ***********************************************" << '\n';
-		} else {
-			//std::cerr << "No more info about shader " << _vPath << '\n';
-		}
+	if (_prog != 0) {
+		this->programHandle_VG = _prog;
 	}
 
-	glCompileShader(_gSha);
-	GetOpenGLError();
+	return;
+}
 
-	{
-		GLint shaderInfoLength = 0;
-		GLint charsWritten = 0;
-		char* shaderInfoLog = nullptr;
-
-		glGetShaderiv(_gSha, GL_INFO_LOG_LENGTH, &shaderInfoLength);
-		if (shaderInfoLength > 1) {
-			std::cerr << __PRETTY_FUNCTION__ << " : start Log ***********************************************" << '\n';
-
-			std::cerr << __FUNCTION__ << " : Information about shader " << _gPath << " : " << '\n';
-			std::cerr << __FUNCTION__ << " : Shader was a geometry shader ";
-			shaderInfoLog = new char[shaderInfoLength];
-			glGetShaderInfoLog(_gSha, shaderInfoLength, &charsWritten, shaderInfoLog);
-			GetOpenGLError();
-			std::cerr << shaderInfoLog << '\n';
-			delete[] shaderInfoLog;
-
-			std::cerr << __PRETTY_FUNCTION__ << " : end Log ***********************************************" << '\n';
-		} else {
-			//std::cerr << "No more info about shader " << _gPath << '\n';
-		}
+GLuint Scene::compileShader(const std::string& path, const GLenum shaType) {
+	// Check the given type is accepted :
+	if (shaType != GL_VERTEX_SHADER && shaType != GL_GEOMETRY_SHADER && shaType != GL_FRAGMENT_SHADER) {
+		std::cerr << "[" << __PRETTY_FUNCTION__ << "] Error : unrecognized shader type (vertex, geometry and fragment shaders)\n";
+		return -1;
 	}
 
-	glCompileShader(_fSha);
+	// Create a shader object :
+	GLuint _sha = glCreateShader(shaType);
 	GetOpenGLError();
 
-	{
-		GLint shaderInfoLength = 0;
-		GLint charsWritten = 0;
-		char* shaderInfoLog = nullptr;
-
-		glGetShaderiv(_fSha, GL_INFO_LOG_LENGTH, &shaderInfoLength);
-		if (shaderInfoLength > 1) {
-			std::cerr << __PRETTY_FUNCTION__ << " : start Log ***********************************************" << '\n';
-
-			std::cerr << __FUNCTION__ << " : Information about shader " << _fPath << " : " << '\n';
-			std::cerr << __FUNCTION__ << " : Shader was a fragment shader ";
-			shaderInfoLog = new char[shaderInfoLength];
-			glGetShaderInfoLog(_fSha, shaderInfoLength, &charsWritten, shaderInfoLog);
-			GetOpenGLError();
-			std::cerr << shaderInfoLog << '\n';
-			delete[] shaderInfoLog;
-
-			std::cerr << __PRETTY_FUNCTION__ << " : end Log ***********************************************" << '\n';
-		} else {
-			//std::cerr << "No more info about shader " << _fPath << '\n';
-		}
+	// Open the file :
+	std::ifstream shaFile = std::ifstream(path.c_str(), std::ios_base::in);
+	if (!shaFile.is_open()) {
+		std::cerr << "[" << __PRETTY_FUNCTION__ << "] Error : could not get the contents of shader file " << path << '\n';
+		return -1;
 	}
 
-	///////////////////////////
-	/// CREATE PROGRAM AND LINK :
-	///////////////////////////
-	_prog = glCreateProgram();
+	// Get the file's length in characters :
+	shaFile.seekg(0, shaFile.end);
+	std::size_t shaFileSize = static_cast<std::size_t>(shaFile.tellg());
+	shaFile.seekg(0, shaFile.beg);
+
+	// Get the file's contents and null-terminate it :
+	char* shaSource = new char[shaFileSize+1];
+	shaFile.read(shaSource, shaFileSize);
+	shaSource[shaFileSize] = '\0';
+
+	// Source it into the shader object :
+	glShaderSource(_sha, 1, const_cast<const char**>(&shaSource), 0);
+
+	// We can free up the host memory now :
+	delete[] shaSource;
+	shaFile.close();
+
+	glCompileShader(_sha);
 	GetOpenGLError();
-	glAttachShader(_prog, _vSha);
-	glAttachShader(_prog, _gSha);
-	glAttachShader(_prog, _fSha);
+
+	GLint shaderInfoLength = 0;
+	GLint charsWritten = 0;
+	char* shaderInfoLog = nullptr;
+
+	// Get shader information after compilation :
+	glGetShaderiv(_sha, GL_INFO_LOG_LENGTH, &shaderInfoLength);
+	if (shaderInfoLength > 1) {
+		std::cerr << __PRETTY_FUNCTION__ << " : start Log ***********************************************" << '\n';
+
+		std::cerr << __FUNCTION__ << " : Information about shader " << path << " : " << '\n';
+		std::cerr << __FUNCTION__ << " : Shader was a vertex shader ";
+		shaderInfoLog = new char[shaderInfoLength];
+		glGetShaderInfoLog(_sha, shaderInfoLength, &charsWritten, shaderInfoLog);
+		GetOpenGLError();
+		std::cerr << shaderInfoLog << '\n';
+		delete[] shaderInfoLog;
+
+		std::cerr << __PRETTY_FUNCTION__ << " : end Log ***********************************************" << '\n';
+	}
+
+	GLint result = GL_FALSE;
+	glGetShaderiv(_sha, GL_COMPILE_STATUS, &result);
+	if (result == GL_FALSE) {
+		std::cerr << "[" << __PRETTY_FUNCTION__ << "] : Could not compile shader.\n";
+		return 0;
+	}
+
+	return _sha;
+}
+
+GLuint Scene::compileProgram(const GLuint vSha, const GLuint gSha, const GLuint fSha) {
+	// Check any shader was passed to the program :
+	if (vSha == 0 && gSha == 0 && fSha == 0) {
+		std::cerr << "[" << __PRETTY_FUNCTION__ << "] : No shader IDs were passed to the function.\n" <<
+			"\tArguments : vSha(" << vSha << "), gSha(" << gSha << "), fSha(" << fSha << ")";
+	}
+
+	GLuint _prog = glCreateProgram();
+	GetOpenGLError();
+	glAttachShader(_prog, vSha);
+	glAttachShader(_prog, gSha);
+	glAttachShader(_prog, fSha);
 
 	glLinkProgram(_prog);
 	GetOpenGLError();
 
-	{
-		GLint Result = 0;
-		int InfoLogLength = 0;
-		glGetProgramiv(_prog, GL_LINK_STATUS, &Result);
-		glGetProgramiv(_prog, GL_INFO_LOG_LENGTH, &InfoLogLength);
-		if ( InfoLogLength > 0 ){
-			std::vector<char> ProgramErrorMessage(InfoLogLength+1);
-			glGetProgramInfoLog(_prog, InfoLogLength, NULL, &ProgramErrorMessage[0]);
-			GetOpenGLError();
-			std::cerr << __FUNCTION__ << " : Warning : errors while linking program :" << '\n';
-			std::cerr << "------------------------------------------------------------------" << '\n';
-			std::cerr << "------------------------------------------------------------------" << '\n';
-			std::cerr << ProgramErrorMessage.data() << '\n';
-			std::cerr << "------------------------------------------------------------------" << '\n';
-			std::cerr << "------------------------------------------------------------------" << '\n';
-		} else {
-			//std::cerr << "Linking of program happened just fine." << '\n';
-		}
-
+	int InfoLogLength = 0;
+	glGetProgramiv(_prog, GL_INFO_LOG_LENGTH, &InfoLogLength);
+	if ( InfoLogLength > 0 ){
+		std::vector<char> ProgramErrorMessage(InfoLogLength+1);
+		glGetProgramInfoLog(_prog, InfoLogLength, NULL, &ProgramErrorMessage[0]);
+		GetOpenGLError();
+		std::cerr << __FUNCTION__ << " : Warning : errors while linking program :" << '\n';
+		std::cerr << "------------------------------------------------------------------" << '\n';
+		std::cerr << "------------------------------------------------------------------" << '\n';
+		std::cerr << ProgramErrorMessage.data() << '\n';
+		std::cerr << "------------------------------------------------------------------" << '\n';
+		std::cerr << "------------------------------------------------------------------" << '\n';
 	}
 
-	glDetachShader(_prog, _vSha);
-	glDetachShader(_prog, _gSha);
-	glDetachShader(_prog, _fSha);
-	GetOpenGLError();
+	GLint Result = 0;
+	glGetProgramiv(_prog, GL_LINK_STATUS, &Result);
+	if (Result == GL_FALSE) {
+		// Return 0 (no program created) :
+		std::cerr << "[" << __PRETTY_FUNCTION__ << "] : Could not link shader.\n";
+		return 0;
+	}
 
-	glDeleteShader(_vSha);
-	glDeleteShader(_gSha);
-	glDeleteShader(_fSha);
+	glDetachShader(_prog, vSha);
+	glDetachShader(_prog, gSha);
+	glDetachShader(_prog, fSha);
+	glDeleteShader(vSha);
+	glDeleteShader(gSha);
+	glDeleteShader(fSha);
 
 	return _prog;
 }
@@ -560,10 +496,7 @@ void Scene::drawRealSpace(GLfloat mvMat[], GLfloat pMat[]) {
 	glEnable(GL_DEPTH_TEST);
 	GetOpenGLError();
 
-//	glm::vec4 n = glm::vec4(this->neighborOffset.x, this->neighborOffset.y, this->neighborOffset.z, 1.);
-//	this->neighborPos = this->t->convertRealSpaceToVoxelIndex(n);
-
-	glm::mat4 transfoMat = glm::mat4(1.f); //this->computeTransformationMatrix();
+	glm::mat4 transfoMat = glm::mat4(1.f);
 
 	//this->draw(mvMat, pMat, transfoMat, voxelMat);
 	if (this->showTextureCube) {
@@ -573,197 +506,14 @@ void Scene::drawRealSpace(GLfloat mvMat[], GLfloat pMat[]) {
 }
 
 void Scene::drawInitialSpace(GLfloat mvMat[], GLfloat pMat[]) {
+	glEnable(GL_DEPTH_TEST);
+	GetOpenGLError();
 
-	//this->neighborPos = this->t->convertRealSpaceToVoxelIndex(glm::vec4(this->neighborOffset.x, this->neighborOffset.y, this->neighborOffset.z, 1.));
-	//this->neighborPos -= glm::uvec3(1, 1, 1);
-
-	glm::mat4 transfoMat = this->texStorage->getTransform_WorldToGrid(); // glm::mat4(1.f);
+	glm::mat4 transfoMat = this->texStorage->getTransform_WorldToGrid();
 	if (this->showTextureCube) {
 		this->drawGrid_Generic(mvMat, pMat, transfoMat, this->textureHandle, this->texStorage);
 	}
 	this->drawGrid_Generic(mvMat, pMat, transfoMat, this->voxelGridTexHandle, this->voxelGrid);
-
-/*
-	glm::mat4 transfoMat = glm::mat4(1.f);
-	glm::mat4 voxelMat = glm::inverse(this->computeTransformationMatrix());
-	// In initial space, the voxel grid needs to be deformed inverse to the
-	// transformation applied when saving them to disk. So, computeMatrix^-1
-	this->draw(mvMat, pMat, transfoMat, voxelMat);
-*/
-}
-
-void Scene::prepUniforms(glm::mat4 transfoMat, GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos) {
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_3D, this->textureHandle);
-	glUniform1i(this->texDataLocation, 0);
-	GetOpenGLError();
-
-	GLint imgLoc = glGetUniformLocation(this->programHandle, "imageSize");
-	if (imgLoc < 0) {
-		std::cerr << "cannot find imgsize" << '\n';
-	}
-
-	glUniform3ui(imgLoc, gridWidth, gridHeight, gridDepth);
-	glUniform3ui(this->neighborOffsetLocation, this->neighborPos.x, this->neighborPos.y, this->neighborPos.z);
-
-	GLint modeLoc = glGetUniformLocation(this->programHandle, "drawMode");
-	if (modeLoc < 0) {
-		std::cerr << "Could not find draw mode uniform !" << '\n';
-	} else {
-		if (this->drawMode == DrawMode::Solid) {
-			glUniform1ui(modeLoc, 0);
-		} else if (this->drawMode == DrawMode::SolidAndWireframe) {
-			glUniform1ui(modeLoc, 1);
-		} else {
-			glUniform1ui(modeLoc, 2);
-		}
-	}
-
-	GLint minTexVal_Loc = glGetUniformLocation(this->programHandle, "minTexVal");
-	glUniform1ui(minTexVal_Loc, static_cast<GLuint>(this->minTexVal));
-	GLint maxTexVal_Loc = glGetUniformLocation(this->programHandle, "maxTexVal");
-	glUniform1ui(maxTexVal_Loc, static_cast<GLuint>(this->maxTexVal));
-
-	GLint scaledLoc = glGetUniformLocation(this->programHandle, "scaledCubes");
-	if (scaledLoc < 0) {
-		std::cerr << "Cannot find scaled cubes !" << '\n';
-	} else {
-		glUniform1ui(scaledLoc, this->scaledCubes);
-	}
-	GetOpenGLError();
-	glUniformMatrix4fv(this->mMatrixLocation, 1, GL_FALSE, glm::value_ptr(transfoMat));
-	glUniformMatrix4fv(this->vMatrixLocation, 1, GL_FALSE, &mvMat[0]);
-	glUniformMatrix4fv(this->pMatrixLocation, 1, GL_FALSE, &pMat[0]);
-	glUniform4fv(this->lightPosLocation, 1, glm::value_ptr(lightPos));
-
-	// Cutting planes :
-	GLint cutPlaneMin_Loc = glGetUniformLocation(this->programHandle_VG, "cutPlaneMin");
-	glUniform3fv(cutPlaneMin_Loc, 1, glm::value_ptr(this->cutPlaneMin));
-	GetOpenGLError();
-	GLint cutPlaneMax_Loc = glGetUniformLocation(this->programHandle_VG, "cutPlaneMax");
-	glUniform3fv(cutPlaneMax_Loc, 1, glm::value_ptr(this->cutPlaneMax));
-	GetOpenGLError();
-}
-
-void Scene::draw(GLfloat mvMat[], GLfloat pMat[], glm::mat4 transfoMat, glm::mat4 voxelGridMat) {
-	glEnable(GL_DEPTH_TEST);
-	GetOpenGLError();
-
-	glUseProgram(this->programHandle);
-	GetOpenGLError();
-
-	glm::vec4 lightPos = glm::vec4(-0.25, -0.25, -0.25, 1.0);
-
-	this->prepUniforms(transfoMat, mvMat, pMat, lightPos);
-	GetOpenGLError();
-
-	glBindVertexArray(this->vaoHandle);
-	GetOpenGLError();
-
-	this->setupVAOPointers();
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboElementHandle);
-
-	if (this->showTextureCube) {
-		if (this->cubeShown == false) { this->showTexCubeVBO(); }
-		glDrawElementsInstanced(GL_TRIANGLES, static_cast<GLsizei>(this->renderSize), GL_UNSIGNED_INT, (void*)0, static_cast<GLsizei>(this->drawCalls));
-	} else {
-		if (this->cubeShown) { this->hideTexCubeVBO(); }
-		glDrawElementsInstanced(GL_TRIANGLES, static_cast<GLsizei>(this->renderSize), GL_UNSIGNED_INT, (void*)0, static_cast<GLsizei>(this->drawCalls));
-	}
-	GetOpenGLError();
-
-	this->drawVoxelGrid(mvMat, pMat, voxelGridMat);
-
-	glUseProgram(0);
-	glBindVertexArray(0);
-}
-
-void Scene::drawVoxelGrid(GLfloat mvMat[], GLfloat pMat[], glm::mat4 transfoMat) {
-	// Each uniform location is separated in its own variable in order to see them in debug view. Should be optimized away in release mode.
-
-	// The VAO should still be in use, so :
-	glUseProgram(this->programHandle_VG); // use the voxel grid shader program
-
-	// Light position world space :
-	glm::vec4 lightPos = glm::vec4(-0.25, -0.25, -0.25, 1.0);
-
-	// Compute grid dimensions as float, not size_t for GLSL (to make sure no overflow errors can happen while uplodaing data) :
-	DiscreteGrid::sizevec3 dims = this->voxelGrid->getGridDimensions();
-	glm::vec3 d = glm::vec3(static_cast<float>(dims.x), static_cast<float>(dims.y), static_cast<float>(dims.z));
-
-	if (this->voxelGrid->getData().size() != 0u) {
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_3D, this->voxelGridTexHandle);
-		GLint texData_Loc = glGetUniformLocation(this->programHandle_VG, "texData");
-		glUniform1i(texData_Loc, 0);
-		GetOpenGLError();
-	}
-
-	// Min/max values for the texture data :
-	GLint minTexVal_Loc = glGetUniformLocation(this->programHandle_VG, "minTexVal");
-	glUniform1ui(minTexVal_Loc, static_cast<GLuint>(this->minTexVal));
-	GetOpenGLError();
-	GLint maxTexVal_Loc = glGetUniformLocation(this->programHandle_VG, "maxTexVal");
-	glUniform1ui(maxTexVal_Loc, static_cast<GLuint>(this->maxTexVal));
-	GetOpenGLError();
-
-	// Voxel grid data such as size, position, and voxel dimensions :
-	GLint voxelSize_Loc = glGetUniformLocation(this->programHandle_VG, "voxelSize");
-	glUniform3fv(voxelSize_Loc, 1, glm::value_ptr(this->voxelGrid->getVoxelDimensions()));
-	GetOpenGLError();
-	GLint voxelGridSize_Loc = glGetUniformLocation(this->programHandle_VG, "voxelGridSize");
-	glUniform3fv(voxelGridSize_Loc, 1, glm::value_ptr(d));
-	GetOpenGLError();
-	GLint voxelGridOrigin_Loc = glGetUniformLocation(this->programHandle_VG, "voxelGridOrigin");
-#ifdef ENABLE_BASIC_BB
-	glUniform3fv(voxelGridOrigin_Loc, 1, glm::value_ptr(this->voxelGrid->getBoundingBox().getMin()));
-#else
-	glm::vec3 o = glm::vec3(.0f);
-	glUniform3fv(voxelGridOrigin_Loc, 1, glm::value_ptr(o));
-#endif
-	GetOpenGLError();
-
-	// Cutting planes :
-	GLint cutPlaneMin_Loc = glGetUniformLocation(this->programHandle_VG, "cutPlaneMin");
-	glUniform3fv(cutPlaneMin_Loc, 1, glm::value_ptr(this->cutPlaneMin));
-	GetOpenGLError();
-	GLint cutPlaneMax_Loc = glGetUniformLocation(this->programHandle_VG, "cutPlaneMax");
-	glUniform3fv(cutPlaneMax_Loc, 1, glm::value_ptr(this->cutPlaneMax));
-	GetOpenGLError();
-
-	GLint modeLoc = glGetUniformLocation(this->programHandle_VG, "drawMode");
-	if (this->voxelGrid->getData().size() == 0) {
-		glUniform1ui(modeLoc, 2); // force wireframe only if grid not generated yet
-	} else {
-		if (this->drawMode == DrawMode::Solid) {
-			glUniform1ui(modeLoc, 0);
-		} else if (this->drawMode == DrawMode::SolidAndWireframe) {
-			glUniform1ui(modeLoc, 1);
-		} else {
-			glUniform1ui(modeLoc, 2);
-		}
-	}
-	GetOpenGLError();
-
-	GLint mMatrix_Loc = glGetUniformLocation(this->programHandle_VG, "mMatrix");
-	glUniformMatrix4fv(mMatrix_Loc, 1, GL_FALSE, glm::value_ptr(transfoMat));
-	GetOpenGLError();
-
-	GLint vMatrix_Loc = glGetUniformLocation(this->programHandle_VG, "vMatrix");
-	glUniformMatrix4fv(vMatrix_Loc, 1, GL_FALSE, &mvMat[0]);
-	GetOpenGLError();
-
-	GLint pMatrix_Loc = glGetUniformLocation(this->programHandle_VG, "pMatrix");
-	glUniformMatrix4fv(pMatrix_Loc, 1, GL_FALSE, &pMat[0]);
-	GetOpenGLError();
-
-	GLint lightPos_Loc = glGetUniformLocation(this->programHandle_VG, "lightPos");
-	glUniform4fv(lightPos_Loc, 1, glm::value_ptr(lightPos));
-	GetOpenGLError();
-
-	glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(this->renderSize), GL_UNSIGNED_INT, (void*)0);
-	GetOpenGLError();
 }
 
 void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, GLuint texHandle, const std::shared_ptr<DiscreteGrid>& grid) {
@@ -784,6 +534,10 @@ void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, 
 	GLint maxTexVal_Loc = glGetUniformLocation(this->programHandle_VG, "maxTexVal");
 	GLint drawMode_Loc = glGetUniformLocation(this->programHandle_VG, "drawMode");
 	GLint texData_Loc = glGetUniformLocation(this->programHandle_VG, "texData");
+	this->colorScaleLocation = glGetUniformLocation(this->programHandle_VG, "colorScale");
+	if (this->colorScaleLocation == -1) {
+		std::cerr << "Cannot find colorScale location in program\n";
+	}
 
 #ifdef ENABLE_BASIC_BB
 	DiscreteGrid::bbox_t::vec origin = grid->getBoundingBox().getMin();
@@ -804,9 +558,12 @@ void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, 
 	} else {
 		glUniform1ui(drawMode_Loc, this->drawMode);
 	}
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_3D, texHandle);
 	glUniform1ui(texData_Loc, 0);
+	glUniform1ui(this->colorScaleLocation, 1);
+	glActiveTexture(GL_TEXTURE0 + 0);
+	glBindTexture(GL_TEXTURE_3D, texHandle);
+	glActiveTexture(GL_TEXTURE0 + 1);
+	glBindTexture(GL_TEXTURE_1D, this->colorScaleHandle);
 
 	// Apply the uniforms :
 	glUniformMatrix4fv(mMatrix_Loc, 1, GL_FALSE, glm::value_ptr(transfoMat));
@@ -822,6 +579,7 @@ void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, 
 void Scene::drawGrid_Generic(GLfloat *mvMat, GLfloat *pMat, glm::mat4 baseMatrix, GLuint texHandle, const std::shared_ptr<DiscreteGrid> &grid) {
 	glm::vec4 lightPos = glm::vec4(-0.25, -0.25, -0.25, 1.0);
 	glUseProgram(this->programHandle_VG);
+	glEnable(GL_TEXTURE_3D);
 	this->prepGridUniforms(mvMat, pMat, lightPos, baseMatrix, texHandle, grid);
 	GetOpenGLError();
 
@@ -847,11 +605,6 @@ void Scene::generateGrid(std::size_t _x, std::size_t _y, std::size_t _z) {
 
 	this->renderSize = this->vertIdx.size();
 	this->drawCalls	= this->vertIdxDraw.size();
-
-	this->neighborOffset = glm::vec3(0, 0, 0);
-	this->controlPanel->setXCoord(0);
-	this->controlPanel->setYCoord(0);
-	this->controlPanel->setZCoord(0);
 
 	this->setupVBOData();
 }
@@ -1034,23 +787,6 @@ glm::vec3 Scene::getTexCubeBoundaries(bool realSpace) const {
 	}
 }
 
-nbCoord Scene::getNeighborBoundaries(bool realSpace) const {
-	/**
-	 * If we are in real space, the stack is deformed. As such, we apply the transformation matrix.
-	 * If we're in initial space, we can byupass this transformation.
-	 */
-	glm::vec3 neighbor(static_cast<float>(this->neighborWidth), static_cast<float>(this->neighborHeight), static_cast<float>(this->neighborDepth));
-	glm::vec3 pos(neighborOffset);
-
-	glm::mat3 transfoMat = glm::mat3(this->computeTransformationMatrix());
-	glm::vec3 max = neighbor+pos;
-	if (realSpace) {
-		pos = transfoMat * pos;
-		max = transfoMat * max;
-	}
-	return nbCoord{{pos}, {max}};
-}
-
 void Scene::hideTexCubeVBO() {
 	this->cubeShown = false;
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboIndexedDrawHandle);
@@ -1070,18 +806,6 @@ void Scene::showTexCubeVBO() {
 void Scene::slotToggleShowTextureCube(bool show) {
 	this->showTextureCube = show;
 	std::cerr << "Set tex cube to " << std::boolalpha << this->showTextureCube << std::noboolalpha << '\n';
-}
-
-void Scene::slotSetNeighborXCoord(float newXCoord) {
-	this->neighborOffset.x = newXCoord;
-}
-
-void Scene::slotSetNeighborYCoord(float newYCoord) {
-	this->neighborOffset.y = newYCoord;
-}
-
-void Scene::slotSetNeighborZCoord(float newZCoord) {
-	this->neighborOffset.z = newZCoord;
 }
 
 void Scene::slotSetTextureXCoord(uint newXCoord) {
@@ -1194,12 +918,14 @@ void Scene::uploadColorScale(const std::vector<float>& colorScale) {
 	}
 
 	glGenTextures(1, &this->colorScaleHandle);
+	GetOpenGLError();
 
 	glBindTexture(GL_TEXTURE_1D, this->colorScaleHandle);
 	GetOpenGLError();
 	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+	GetOpenGLError();
 
 	glTexImage1D(
 		GL_TEXTURE_1D,
@@ -1211,4 +937,5 @@ void Scene::uploadColorScale(const std::vector<float>& colorScale) {
 		GL_FLOAT,
 		colorScale.data()
 	);
+	GetOpenGLError();
 }

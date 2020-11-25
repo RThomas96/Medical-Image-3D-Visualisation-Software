@@ -133,12 +133,12 @@ ADD_EXECUTABLE(neighbor_visu
 	./image/include/writer.hpp
 	./qt/include/control_panel.hpp
 	./qt/include/grid_control.hpp
+	./qt/include/grid_list_view.hpp
 	./qt/include/neighbor_visu_main_widget.hpp
 	./qt/include/scene_control.hpp
 	./viewer/include/scene.hpp
 	./viewer/include/neighbor_visu_viewer.hpp
 	./grid/include/tetmesh.hpp
-	./grid/include/voxel_grid.hpp
 	./grid/include/discrete_grid.hpp
 	./grid/include/input_discrete_grid.hpp
 	./grid/include/output_discrete_grid.hpp
@@ -154,12 +154,12 @@ ADD_EXECUTABLE(neighbor_visu
 	./image/src/writer.cpp
 	./qt/src/control_panel.cpp
 	./qt/src/grid_control.cpp
+	./qt/src/grid_list_view.cpp
 	./qt/src/neighbor_visu_main_widget.cpp
 	./qt/src/scene_control.cpp
 	./viewer/src/scene.cpp
 	./viewer/src/neighbor_visu_viewer.cpp
 	./grid/src/tetmesh.cpp
-	./grid/src/voxel_grid.cpp
 	./grid/src/discrete_grid.cpp
 	./grid/src/input_discrete_grid.cpp
 	./grid/src/output_discrete_grid.cpp

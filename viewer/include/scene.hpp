@@ -5,16 +5,13 @@
 //#include "gl/GLHandler/include/ProgramObject.hpp"
 //#include "gl/GLHandler/include/VAOObject.hpp"
 
-#include "../../image/include/bulk_texture_loader.hpp"
-
-#include "../../image/include/image_storage.hpp"
-#include "../../grid/include/voxel_grid.hpp"
-#include "../../qt/include/grid_control.hpp"
 #include "../../grid/include/tetmesh.hpp"
-
 #include "../../grid/include/discrete_grid.hpp"
 #include "../../grid/include/input_discrete_grid.hpp"
 #include "../../grid/include/output_discrete_grid.hpp"
+
+#include "../../qt/include/grid_control.hpp"
+#include "../../qt/include/grid_list_view.hpp"
 
 #include <QOpenGLFunctions_4_0_Core>
 #include <QGLViewer/qglviewer.h>
@@ -78,14 +75,8 @@ inline glm::vec3 ucharToRGB(const unsigned char val, const unsigned char a, cons
 
 class ControlPanel; // forward declaration
 
-typedef struct neighborCoordinates {
-	union {glm::vec3 origin, startingPoint, o;};
-	union {glm::vec3 limit, endPoint, p;};
-} nbCoord;
-
 class Scene : public QOpenGLFunctions_4_0_Core {
 		typedef glm::vec<4, unsigned int, glm::defaultp> uvec4;
-		typedef glm::vec<3, int, glm::defaultp> ivec3;
 		typedef glm::uvec3 uvec3;
 	public:
 		Scene(GridControl* const gc); ///< default constructor
@@ -96,8 +87,8 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		// initialize the variables of the scene
 		void initGl(QOpenGLContext* context, std::size_t _x = 1, std::size_t _y = 1, std::size_t _z = 1);
 
-		GLuint compileShaders(std::string vPath, std::string gPath, std::string fPath);
-		void recompileShaders(void);
+		void compileShaders(std::string vPath, std::string gPath, std::string fPath);
+		void recompileShaders(void); ///< Reload the default shader files
 		void setupVBOData();
 		void setupVAOPointers();
 
@@ -115,7 +106,6 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 
 		glm::vec3 getSceneBoundaries(void) const;
 		glm::vec3 getTexCubeBoundaries(bool realSpace) const;
-		nbCoord getNeighborBoundaries(bool realSpace) const;
 
 		void setDrawModeSolid() { this->drawMode = DrawMode::Solid; }
 		void setDrawModeSolidAndWireframe() { this->drawMode = DrawMode::SolidAndWireframe; }
@@ -132,9 +122,6 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		// Simili-slots (this scene cannot be a QObject [inherits from QOpenGL*], as such we cannot have slot/signals) :
 		void slotTogglePolygonMode(bool show);
 		void slotToggleShowTextureCube(bool show);
-		void slotSetNeighborXCoord(float newXCoord);
-		void slotSetNeighborYCoord(float newYCoord);
-		void slotSetNeighborZCoord(float newZCoord);
 		void slotSetTextureXCoord(uint newXCoord);
 		void slotSetTextureYCoord(uint newYCoord);
 		void slotSetTextureZCoord(uint newZCoord);
@@ -177,7 +164,6 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		uint drawCalls;
 		uint scaledCubes;
 
-		glm::vec3 neighborOffset;
 		glm::vec3 cutPlaneMin;
 		glm::vec3 cutPlaneMax;
 		uvec3 neighborPos;
@@ -191,7 +177,6 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		GLint pMatrixLocation;
 		GLint texDataLocation;
 		GLint lightPosLocation;
-		GLint neighborOffsetLocation;
 		GLint colorScaleLocation;
 
 		GLuint vboVertPosHandle;
@@ -199,7 +184,6 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		GLuint vboElementHandle;
 		GLuint vboIndexedDrawHandle;
 		GLuint vaoHandle;
-		GLuint programHandle;
 		GLuint programHandle_VG;
 
 		GLuint textureHandle; ///< handle for glTexImage3D
@@ -210,12 +194,11 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		const unsigned char* loadEmptyImage();
 		const unsigned char* loadEmptyVoxelGrid();
 		void generateNeighborGrid(std::size_t _x, std::size_t _y, std::size_t _z);
-		void prepUniforms(glm::mat4 transfoMat, GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos);
 		void showTexCubeVBO();
 		void hideTexCubeVBO();
 		glm::mat4 computeTransformationMatrix() const;
-		void draw(GLfloat mvMat[], GLfloat pMat[], glm::mat4 transfoMat, glm::mat4 voxelGridMat);
-		void drawVoxelGrid(GLfloat mvMat[], GLfloat pMat[], glm::mat4 transfoMat);
+		GLuint compileShader(const std::string& path, const GLenum shaType);
+		GLuint compileProgram(const GLuint vSha = 0, const GLuint gSha = 0, const GLuint fSha = 0);
 		/// @b preps uniforms for a grid
 		void prepGridUniforms(GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, GLuint texHandle, const std::shared_ptr<DiscreteGrid>& grid);
 		/// @b draws a grid, slightly more generic than drawVoxelGrid()

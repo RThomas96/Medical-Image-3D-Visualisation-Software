@@ -11,11 +11,6 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, Viewer* rv, QWidget* 
 	// Qt's layout and positionning system when done directly in
 	// code. Goddammit, it's verbose.
 
-	// Pickers for tetmesh positionning :
-	this->xPicker = new QDoubleSpinBox();
-	this->yPicker = new QDoubleSpinBox();
-	this->zPicker = new QDoubleSpinBox();
-
 	// Texture color scale bounds :
 	this->minValueTexture = new QSpinBox();
 	this->maxValueTexture = new QSpinBox();
@@ -32,10 +27,6 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, Viewer* rv, QWidget* 
 	this->xPlane_Max = new QSlider(Qt::Horizontal);
 	this->yPlane_Max = new QSlider(Qt::Horizontal);
 	this->zPlane_Max = new QSlider(Qt::Horizontal);
-
-	// Create checkbox :
-	this->toggleTexCubeCheckbox = new QCheckBox("Show texture cube");
-	this->toggleTexCubeCheckbox->setCheckState(Qt::Unchecked);
 
 	// Create the container widget :
 	this->controlContainer = new QWidget();
@@ -61,35 +52,11 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, Viewer* rv, QWidget* 
 	QLabel* cutMaxLabel = new QLabel("Maximum cutting plane coordinates");
 
 	// Create containers layouts :
-	QVBoxLayout* xContainer = new QVBoxLayout();
-	QVBoxLayout* yContainer = new QVBoxLayout();
-	QVBoxLayout* zContainer = new QVBoxLayout();
 	QHBoxLayout* topContainer = new QHBoxLayout();
 	QVBoxLayout* texContainer = new QVBoxLayout();
 	QVBoxLayout* cutMinContainer = new QVBoxLayout();
 	QVBoxLayout* cutMaxContainer = new QVBoxLayout();
 	QHBoxLayout* allContainer = new QHBoxLayout(this->controlContainer);
-
-	// Add widgets to layouts :
-	xContainer->addWidget(xSliderLabel);
-	xContainer->addWidget(this->xPicker);
-	xContainer->addWidget(xTexLabel);
-	xContainer->addWidget(this->xTex);
-
-	yContainer->addWidget(ySliderLabel);
-	yContainer->addWidget(this->yPicker);
-	yContainer->addWidget(yTexLabel);
-	yContainer->addWidget(this->yTex);
-
-	zContainer->addWidget(zSliderLabel);
-	zContainer->addWidget(this->zPicker);
-	zContainer->addWidget(zTexLabel);
-	zContainer->addWidget(this->zTex);
-
-	topContainer->addLayout(xContainer);
-	topContainer->addLayout(yContainer);
-	topContainer->addLayout(zContainer);
-	topContainer->addWidget(this->toggleTexCubeCheckbox);
 
 	texContainer->addWidget(minTexLabel);
 	texContainer->addWidget(this->minValueTexture);
@@ -112,27 +79,6 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, Viewer* rv, QWidget* 
 
 	// Disable by default the top level container :
 	this->controlContainer->setEnabled(false);
-
-	this->xPicker->setMinimum(0);
-	this->xPicker->setMaximum(1e9);
-	this->xPicker->setValue(0);
-	this->xPicker->setDecimals(0);
-	this->xPicker->setStepType(QAbstractSpinBox::StepType::DefaultStepType);
-	this->xPicker->setSingleStep(1.0);
-
-	this->yPicker->setMinimum(0);
-	this->yPicker->setMaximum(1e9);
-	this->yPicker->setValue(0);
-	this->yPicker->setDecimals(0);
-	this->yPicker->setStepType(QAbstractSpinBox::StepType::DefaultStepType);
-	this->yPicker->setSingleStep(1.0);
-
-	this->zPicker->setMinimum(0);
-	this->zPicker->setMaximum(1e9);
-	this->zPicker->setValue(0);
-	this->zPicker->setDecimals(0);
-	this->zPicker->setStepType(QAbstractSpinBox::StepType::DefaultStepType);
-	this->zPicker->setSingleStep(1.0);
 
 	this->xTex->setMinimum(0);
 	this->xTex->setMaximum(100);
@@ -171,13 +117,9 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, Viewer* rv, QWidget* 
 }
 
 void ControlPanel::initSignals() {
-	connect(this->xPicker, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &ControlPanel::setXCoord);
-	connect(this->yPicker, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &ControlPanel::setYCoord);
-	connect(this->zPicker, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &ControlPanel::setZCoord);
 	connect(this->xTex, &QSlider::valueChanged, this, &ControlPanel::setXTexCoord);
 	connect(this->yTex, &QSlider::valueChanged, this, &ControlPanel::setYTexCoord);
 	connect(this->zTex, &QSlider::valueChanged, this, &ControlPanel::setZTexCoord);
-	connect(this->toggleTexCubeCheckbox, &QCheckBox::clicked, this, &ControlPanel::setTexCube);
 
 	// Modifies the values of the cutting planes :
 	connect(this->xPlane_Min, &QSlider::valueChanged, this, &ControlPanel::setCutPlaneX_Min);
@@ -238,24 +180,6 @@ void ControlPanel::setImageBoundaries(int bounds[6]) {
 	this->zTex->setMaximum(bounds[5]);
 	if (oldZValue < this->zTex->minimum()) { this->zTex->setValue(this->zTex->minimum()); }
 	else if (oldZValue > this->zTex->maximum()) { this->zTex->setValue(this->zTex->maximum()); }
-}
-
-void ControlPanel::setXCoord(double coordX) {
-	int co = static_cast<float>(coordX);
-	this->sceneToControl->slotSetNeighborXCoord(co);
-	this->updateViewers();
-}
-
-void ControlPanel::setYCoord(double coordY) {
-	int co = static_cast<float>(coordY);
-	this->sceneToControl->slotSetNeighborYCoord(co);
-	this->updateViewers();
-}
-
-void ControlPanel::setZCoord(double coordZ) {
-	int co = static_cast<float>(coordZ);
-	this->sceneToControl->slotSetNeighborZCoord(co);
-	this->updateViewers();
 }
 
 void ControlPanel::setXTexCoord(int coordX) {

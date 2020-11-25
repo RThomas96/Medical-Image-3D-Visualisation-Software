@@ -1,7 +1,7 @@
 #include "../include/input_discrete_grid.hpp"
 
 InputGrid::InputGrid(void){
-	this->gridName = "InputGrid";
+	this->gridName = "defaultInputGrid";
 	this->setModifiable(false);
 }
 
