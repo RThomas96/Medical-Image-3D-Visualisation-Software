@@ -43,7 +43,6 @@ ADD_EXECUTABLE(neighbor_visu
 	./qt/include/control_panel.hpp
 	./qt/include/grid_control.hpp
 	./qt/include/grid_list_view.hpp
-
 	./qt/include/neighbor_visu_main_widget.hpp
 	./qt/include/scene_control.hpp
 
