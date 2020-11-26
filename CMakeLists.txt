@@ -37,133 +37,47 @@ SET_TARGET_PROPERTIES(libtiff PROPERTIES AUTOMOC OFF AUTORCC OFF AUTOUIC OFF)
 SET(TIF_LIB libtiff)
 # }}}
 
-# TinyTIFF library tests {{{
-ADD_EXECUTABLE(tiff_loader_tests
-	# Header files (needed for Qt's MOCS compilation) :
-	./tests/tiff_tests/include/main_window.hpp
-	./tests/tiff_tests/include/tiff_inspector.hpp
-	./tests/tiff_tests/include/tiff_displayer.hpp
-
-	# Main file :
-	./tests/tiff_tests/main.cpp
-
-	# Implementation files :
-	./tests/tiff_tests/src/main_window.cpp
-	./tests/tiff_tests/src/tiff_inspector.cpp
-	./tests/tiff_tests/src/tiff_displayer.cpp
-)
-TARGET_LINK_LIBRARIES(tiff_loader_tests
-	PUBLIC ${TIF_LIB}
-	PUBLIC Qt5::Core
-	PUBLIC Qt5::Widgets
-	PUBLIC Qt5::Gui
-)
-# }}}
-
-# 3D Texture tests for viewer {{{
-ADD_EXECUTABLE(3d_texture_test
-	# Header files (needed for Qt's MOCS compilation) :
-	./tests/3D_texture_test/include/image_stack_loader.hpp
-	./tests/3D_texture_test/include/3D_texture_viewer.hpp
-	./tests/3D_texture_test/include/container_widget.hpp
-	./tests/3D_texture_test/include/slider_widget.hpp
-
-	# Main file :
-	./tests/3D_texture_test/main.cpp
-
-	# Implementation files :
-	./tests/3D_texture_test/src/image_stack_loader.cpp
-	./tests/3D_texture_test/src/3D_texture_viewer.cpp
-	./tests/3D_texture_test/src/slider_widget.cpp
-)
-TARGET_LINK_LIBRARIES(3d_texture_test
-	PUBLIC ${TIF_LIB}
-	PUBLIC Qt5::Core
-	PUBLIC Qt5::Widgets
-	PUBLIC Qt5::Gui
-	# The following are __ALL__ needed by libQGLViewer. For some f*ing reason. Don't touch them.
-	PUBLIC Qt5::Xml
-	PUBLIC Qt5::OpenGL
-	PUBLIC OpenGL
-	PUBLIC ${QGLViewer_LIBRARY}
-)
-# }}}
-
-# Main executable {{{
-ADD_EXECUTABLE(visualisation
-	# Header files (needed for Qt's MOCS compilation) :
-	./qt/include/main_widget.hpp
-	./viewer/include/texture_viewer.hpp
-	./image/include/bulk_texture_loader.hpp
-	./image/include/image_loader.hpp
-	./qt/include/texture_sliders.hpp
-	./qt/include/texture_control.hpp
-
-	# Implementation files :
-	./qt/src/main_widget.cpp
-	./viewer/src/texture_viewer.cpp
-	./image/src/bulk_texture_loader.cpp
-	./image/src/image_loader.cpp
-	./qt/src/texture_sliders.cpp
-	./qt/src/texture_control.cpp
-
-	# Main file :
-	./main.cpp
-)
-TARGET_LINK_LIBRARIES(visualisation
-	PUBLIC ${TIF_LIB}
-	PUBLIC Threads::Threads
-	PUBLIC Qt5::Core
-	PUBLIC Qt5::Widgets
-	PUBLIC Qt5::Gui
-	# The following are __ALL__ needed by libQGLViewer. For some f*ing reason. Don't touch them.
-	PUBLIC Qt5::Xml
-	PUBLIC Qt5::OpenGL
-	PUBLIC OpenGL
-	PUBLIC ${QGLViewer_LIBRARY}
-)
-# }}}
-
 # Neighbor visualisation (Test variant) {{{
 ADD_EXECUTABLE(neighbor_visu
 	# Header files, for Qt MOCS compilation :
-	./image/include/bulk_texture_loader.hpp
-	./image/include/ima_loader.hpp
-	./image/include/image_storage.hpp
-	./image/include/writer.hpp
 	./qt/include/control_panel.hpp
 	./qt/include/grid_control.hpp
 	./qt/include/grid_list_view.hpp
+
 	./qt/include/neighbor_visu_main_widget.hpp
 	./qt/include/scene_control.hpp
+
 	./viewer/include/scene.hpp
 	./viewer/include/neighbor_visu_viewer.hpp
+
 	./grid/include/tetmesh.hpp
 	./grid/include/discrete_grid.hpp
 	./grid/include/input_discrete_grid.hpp
 	./grid/include/output_discrete_grid.hpp
+
 	./image/include/reader.hpp
+	./image/include/writer.hpp
 
 	# Main file :
 	./neighbor_visu_main.cpp
 
 	# Source files :
-	./image/src/bulk_texture_loader.cpp
-	./image/src/ima_loader.cpp
-	./image/src/image_storage.cpp
-	./image/src/writer.cpp
 	./qt/src/control_panel.cpp
 	./qt/src/grid_control.cpp
 	./qt/src/grid_list_view.cpp
 	./qt/src/neighbor_visu_main_widget.cpp
 	./qt/src/scene_control.cpp
+
 	./viewer/src/scene.cpp
 	./viewer/src/neighbor_visu_viewer.cpp
+
 	./grid/src/tetmesh.cpp
 	./grid/src/discrete_grid.cpp
 	./grid/src/input_discrete_grid.cpp
 	./grid/src/output_discrete_grid.cpp
+
 	./image/src/reader.cpp
+	./image/src/writer.cpp
 )
 TARGET_LINK_LIBRARIES(neighbor_visu
 	PUBLIC Qt5::Core
