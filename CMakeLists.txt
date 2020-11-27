@@ -42,9 +42,11 @@ ADD_EXECUTABLE(neighbor_visu
 	# Header files, for Qt MOCS compilation :
 	./qt/include/control_panel.hpp
 	./qt/include/grid_control.hpp
+	./qt/include/grid_detailed_view.hpp
 	./qt/include/grid_list_view.hpp
 	./qt/include/neighbor_visu_main_widget.hpp
 	./qt/include/scene_control.hpp
+	./qt/include/qt_proxies.hpp
 
 	./viewer/include/scene.hpp
 	./viewer/include/neighbor_visu_viewer.hpp
@@ -63,9 +65,11 @@ ADD_EXECUTABLE(neighbor_visu
 	# Source files :
 	./qt/src/control_panel.cpp
 	./qt/src/grid_control.cpp
+	./qt/src/grid_detailed_view.cpp
 	./qt/src/grid_list_view.cpp
 	./qt/src/neighbor_visu_main_widget.cpp
 	./qt/src/scene_control.cpp
+	./qt/src/qt_proxies.cpp
 
 	./viewer/src/scene.cpp
 	./viewer/src/neighbor_visu_viewer.cpp

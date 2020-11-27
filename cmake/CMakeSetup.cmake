@@ -28,8 +28,9 @@ MESSAGE(STATUS "Currently compiling in ${CMAKE_BUILD_TYPE} mode.")
 
 # Additionnal flags for Debug mode :
 IF(CMAKE_BUILD_TYPE MATCHES Debug)
-	SET(GCC_COMPILE_FLAGS "-ggdb --pedantic")
-	SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_COMPILE_FLAGS}")
+	SET(GCC_COMPILE_FLAGS "-gdwarf-2 --pedantic")
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_COMPILE_FLAGS}")
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
 ENDIF(CMAKE_BUILD_TYPE MATCHES Debug)
 
 MESSAGE(STATUS "Current flags in use : ${CMAKE_CXX_FLAGS}")
