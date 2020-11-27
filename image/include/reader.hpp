@@ -1,6 +1,9 @@
 #ifndef IMAGE_INCLUDE_READER_HPP_
 #define IMAGE_INCLUDE_READER_HPP_
 
+#include "../../macros.hpp"
+#include "../../features.hpp"
+
 #include "../../grid/include/bounding_box.hpp"
 #include "../../TinyTIFF/tinytiffreader.h"
 
@@ -84,6 +87,11 @@ namespace IO {
 			/// @brief Returns the threshold from which data is considered information.
 			virtual data_t getDataThreshold(void) const;
 
+#ifdef IMAGE_READER_LOG_FILE_SIZE
+			/// @brief Returns the number of bytes read, or to be read
+			virtual std::size_t getReadBytes(void) const;
+#endif
+
 			/// @brief Swaps the contents from this grid's data to the target vector.
 			virtual GenericGridReader& swapData(std::vector<data_t>& target);
 
@@ -118,6 +126,10 @@ namespace IO {
 			std::string name;
 			/// @brief Tracks if the data needs to be downsampled upon loading.
 			bool downsampled;
+#ifdef IMAGE_READER_LOG_FILE_SIZE
+			/// @brief Logs the size on disk that was actually read
+			std::size_t readBytes;
+#endif
 	};
 
 	class DIMReader : public GenericGridReader {

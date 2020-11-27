@@ -1,6 +1,9 @@
 #ifndef QT_INCLUDE_SCENE_CONTROL_HPP_
 #define QT_INCLUDE_SCENE_CONTROL_HPP_
 
+#include "../../macros.hpp"
+#include "../../features.hpp"
+
 #include <QWidget>
 #include <QSlider>
 #include <QCheckBox>

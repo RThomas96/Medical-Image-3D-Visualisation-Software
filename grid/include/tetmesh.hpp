@@ -1,6 +1,9 @@
 #ifndef GRID_INCLUDE_TETMESH_HPP_
 #define GRID_INCLUDE_TETMESH_HPP_
 
+#include "../../macros.hpp"
+#include "../../features.hpp"
+
 #include "./discrete_grid.hpp"
 #include "./input_discrete_grid.hpp"
 #include "./output_discrete_grid.hpp"

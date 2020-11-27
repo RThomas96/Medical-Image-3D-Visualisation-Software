@@ -1,6 +1,9 @@
 #ifndef IMAGE_INCLUDE_WRITER_HPP_
 #define IMAGE_INCLUDE_WRITER_HPP_
 
+#include "../../macros.hpp"
+#include "../../features.hpp"
+
 #include "../../TinyTIFF/tinytiffwriter.h" // To write to TIF files
 
 #include <iostream>

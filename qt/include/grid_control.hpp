@@ -1,7 +1,10 @@
 #ifndef QT_INCLUDE_GRID_CONTROL_HPP_
 #define QT_INCLUDE_GRID_CONTROL_HPP_
 
-#include "../../grid/include/voxel_grid.hpp"
+#include "../../macros.hpp"
+#include "../../features.hpp"
+
+#include "../../grid/include/tetmesh.hpp"
 #include "../../grid/include/discrete_grid.hpp"
 
 #include <glm/glm.hpp>

@@ -1,12 +1,23 @@
 #ifndef GRID_INCLUDE_INPUT_DISCRETE_GRID_HPP_
 #define GRID_INCLUDE_INPUT_DISCRETE_GRID_HPP_
 
+#include "../../macros.hpp"
+#include "../../features.hpp"
+
 #include "./discrete_grid.hpp"
 
 class InputGrid : public DiscreteGrid {
 	public:
 		/// @brief Nothing to be done in the constructor.
 		InputGrid(void);
+		/// @brief Nothing to be done in the constructor.
+		InputGrid(const InputGrid& other) = delete;
+		/// @brief Nothing to be done in the constructor.
+		InputGrid(InputGrid&& other) = delete;
+		/// @brief Nothing to be done in the constructor.
+		InputGrid& operator= (const InputGrid& other) = delete;
+		/// @brief Nothing to be done in the constructor.
+		InputGrid& operator= (InputGrid&& other) = delete;
 
 		/// @brief Nothing will be done in the destructor here.
 		~InputGrid(void) {}

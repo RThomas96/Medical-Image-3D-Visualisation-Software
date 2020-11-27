@@ -1,6 +1,5 @@
 #include "../include/scene.hpp"
 #include "../../qt/include/scene_control.hpp"
-#include "../../image/include/ima_loader.hpp"
 #include "../../image/include/reader.hpp"
 
 #include <glm/gtx/transform.hpp>
@@ -116,7 +115,7 @@ void Scene::initGl(QOpenGLContext* _context, std::size_t _x, std::size_t _y, std
 	this->texStorage = std::make_shared<InputGrid>();
 	this->texStorage->fromGridReader(*reader);
 	this->texStorage->setTransform_GridToWorld(this->computeTransformationMatrix());
-	this->texStorage->printInfo("Once the data is loaded :", "[DEBUG-I]");
+	this->texStorage->printInfo("After loading : ", "[DEBUG-I]");
 
 	// free up the reader's resources :
 	delete reader;
@@ -127,6 +126,13 @@ void Scene::initGl(QOpenGLContext* _context, std::size_t _x, std::size_t _y, std
 	this->mesh = std::make_shared<TetMesh>();
 	this->mesh->addInputGrid(this->texStorage).setOutputGrid(this->voxelGrid);
 	this->voxelGrid->printInfo("Output grid after being set : ", "[DEBUG-O]");
+
+	this->detailsView = new GridDetailedView();
+	this->listViewInput = new GridView(this->detailsView, this->texStorage);
+	this->listViewOutput = new GridView(this->detailsView, this->voxelGrid);
+	this->listViewInput->show();
+	this->listViewOutput->show();
+	this->detailsView->show();
 
 	///////////////////////////
 	/// CREATE VAO :

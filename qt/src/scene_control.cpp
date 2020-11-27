@@ -116,6 +116,34 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, Viewer* rv, QWidget* 
 	this->setSizePolicy(QSizePolicy::Policy::Fixed, QSizePolicy::Policy::Fixed);
 }
 
+ControlPanel::~ControlPanel() {
+#ifndef NDEBUG
+	std::cerr << "[TRACE][" << __PRETTY_FUNCTION__ << "] : deleting control panel tied to scene " << this->sceneToControl << "...\n";
+#endif
+
+	auto deletePtr = [](auto* obj) {
+		if (obj != nullptr) {
+			delete obj;
+		}
+		obj = nullptr;
+	};
+	deletePtr(this->xTex);
+	deletePtr(this->yTex);
+	deletePtr(this->zTex);
+	deletePtr(this->minValueTexture);
+	deletePtr(this->maxValueTexture);
+	deletePtr(this->xPlane_Min);
+	deletePtr(this->yPlane_Min);
+	deletePtr(this->zPlane_Min);
+	deletePtr(this->xPlane_Max);
+	deletePtr(this->yPlane_Max);
+	deletePtr(this->zPlane_Max);
+	deletePtr(this->controlContainer);
+#ifndef NDEBUG
+	std::cerr << "[TRACE][" << __PRETTY_FUNCTION__ << "] : Deleted control panel.\n";
+#endif
+}
+
 void ControlPanel::initSignals() {
 	connect(this->xTex, &QSlider::valueChanged, this, &ControlPanel::setXTexCoord);
 	connect(this->yTex, &QSlider::valueChanged, this, &ControlPanel::setYTexCoord);

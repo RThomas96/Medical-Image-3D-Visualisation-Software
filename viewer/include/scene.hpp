@@ -5,12 +5,16 @@
 //#include "gl/GLHandler/include/ProgramObject.hpp"
 //#include "gl/GLHandler/include/VAOObject.hpp"
 
+#include "../../macros.hpp"
+#include "../../features.hpp"
+
 #include "../../grid/include/tetmesh.hpp"
 #include "../../grid/include/discrete_grid.hpp"
 #include "../../grid/include/input_discrete_grid.hpp"
 #include "../../grid/include/output_discrete_grid.hpp"
 
 #include "../../qt/include/grid_control.hpp"
+#include "../../qt/include/grid_detailed_view.hpp"
 #include "../../qt/include/grid_list_view.hpp"
 
 #include <QOpenGLFunctions_4_0_Core>
@@ -141,6 +145,9 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		std::shared_ptr<OutputGrid> voxelGrid; ///< Voxel grid to fill upon keypress
 		std::shared_ptr<TetMesh> mesh; ///< creates a mesh around the queried point
 		GridControl* gridControl;
+		GridDetailedView* detailsView;
+		GridView* listViewInput;
+		GridView* listViewOutput;
 
 		std::size_t gridWidth; ///< grid size
 		std::size_t gridHeight; ///< grid size

@@ -1,6 +1,9 @@
 #ifndef GRID_LIST_VIEW_HPP
 #define GRID_LIST_VIEW_HPP
 
+#include "../../macros.hpp"
+#include "../../features.hpp"
+
 #include "../../grid/include/discrete_grid.hpp"
 
 #include <QWidget>
@@ -12,7 +15,6 @@
 #include <memory>
 
 class GridDetailedView; // [Fwd-declaration]
-
 
 class GridView : public QWidget {
 	public:
@@ -45,11 +47,13 @@ class GridView : public QWidget {
 
 	signals:
 		/// @brief Signals the user's request to view/modify the grid data of this grid view.
-		void gridModifyRequest(const std::shared_ptr<DiscreteGrid>&);
+		void gridModifyRequest(GridView* _caller, const std::shared_ptr<DiscreteGrid>&);
 
 	public slots:
 		/// @brief Request to update the labels on this widget to the grid's latest information.
 		void updateValues(void);
+		/// @brief Proxy to handle a grid modification request.
+		void proxy_viewGrid(void);
 
 	protected:
 		/// @brief Deletes and frees up the memory allocated by all the QObjects of this class.
@@ -71,7 +75,7 @@ class GridView : public QWidget {
 		QGridLayout* gridLayout; ///< Layout to position the items on the widget.
 		GridDetailedView* detailedView; ///< Detailed view of the grid (another panel in the UI).
 
-		const std::shared_ptr<DiscreteGrid>& grid; ///< Pointer to the grid we want to display info from.
+		const std::shared_ptr<DiscreteGrid> grid; ///< Pointer to the grid we want to display info from.
 };
 
 #endif // GRID_LIST_VIEW_HPP

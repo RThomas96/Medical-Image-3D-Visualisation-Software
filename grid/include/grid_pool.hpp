@@ -1,6 +1,9 @@
 #ifndef GRID_INCLUDE_GRID_POOL_HPP_
 #define GRID_INCLUDE_GRID_POOL_HPP_
 
+#include "../../macros.hpp"
+#include "../../features.hpp"
+
 /* The class here will hold a vector of shared_ptrs to DiscreteGrids, with methods to add a stack of images, remove a
  * stack, modify a grid (return a shared_ptr which can modify the grid). it also holds
  */

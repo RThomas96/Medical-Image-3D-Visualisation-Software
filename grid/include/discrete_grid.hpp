@@ -1,6 +1,9 @@
 #ifndef GRID_INCLUDE_DISCRETE_GRID_HPP_
 #define GRID_INCLUDE_DISCRETE_GRID_HPP_
 
+#include "../../macros.hpp"
+#include "../../features.hpp"
+
 #include "../../image/include/reader.hpp"
 #include "./bounding_box.hpp"
 
@@ -17,11 +20,15 @@
 /// to any use case !
 glm::mat4 computeTransfoShear(double angleDeg, glm::vec3 origin = glm::vec3(.0f));
 
+/// @brief High precision vector3 type to store image sizes, and coordinates.
+typedef glm::vec<3, std::size_t, glm::highp> svec3;
+
 /// @brief Representation of a discrete grid (as a stack of images, or a voxel grid) which can be queried from world space.
 /// @note Although some functions in this class may mention 'texels', they are in no way, shape, or form tied to the visualization aspect of the project.
 class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 
 	friend class GridControl;
+	friend class GridDetailedView;
 
 	public:
 		/// @brief Definition of a 3 dimensionnal vector to store this grid's dimensions, amongst other things.
@@ -37,6 +44,18 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 
 		/// @brief Creates a grid using content from a grid reader.
 		DiscreteGrid(IO::GenericGridReader& reader);
+
+		/// @brief Creates a grid using content from a grid reader.
+		DiscreteGrid(const DiscreteGrid& other) = delete;
+
+		/// @brief Creates a grid using content from a grid reader.
+		DiscreteGrid(DiscreteGrid&& other) = delete;
+
+		/// @brief Creates a grid using content from a grid reader.
+		DiscreteGrid& operator= (const DiscreteGrid& other) = delete;
+
+		/// @brief Creates a grid using content from a grid reader.
+		DiscreteGrid& operator= (DiscreteGrid&& other) = delete;
 
 	public:
 
@@ -145,7 +164,6 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 
 		void printInfo(std::string message, std::string prefix = "");
 
-	protected:
 		/// @brief Updates the voxel dimensions of the grid, each time the BB or the resolution changes.
 		void updateVoxelDimensions(void);
 

@@ -1,6 +1,9 @@
 #ifndef QT_INCLUDE_CONTROL_PANEL_HPP_
 #define QT_INCLUDE_CONTROL_PANEL_HPP_
 
+#include "../../macros.hpp"
+#include "../../features.hpp"
+
 #include <QWidget>
 #include <QSpinBox>
 #include <QPushButton>

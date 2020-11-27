@@ -1,26 +1,28 @@
 #ifndef GRID_INCLUDE_BOUNDING_BOX_HPP_
 #define GRID_INCLUDE_BOUNDING_BOX_HPP_
 
+#include "../../macros.hpp"
+#include "../../features.hpp"
+
 #include <glm/glm.hpp>
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <type_traits>
 
-#define ENABLE_TRANSFORMATIONS
-#define ENABLE_BASIC_BB
-#define ENABLE_DATA_BB
-#define ADJUST_TO_BB
-#define ENABLE_BB_TRANSFORM
-
-#define GLM_MAT_BEFORE_VEC
-//#define REVERSE_MATRIX_ORDER
-
-/// @brief Simple representation of an Axis Aligned Bounding Box
-template <typename DataType> class BoundingBox_General {
+/// @brief Simple representation of an Axis Aligned Bounding Box.
+/// @details This class has two template parameters : the first one, DataType is the type of the element composing the
+/// points of the bounding box. This is the parameter that will define the type of glm::vec3 used in this class, and
+/// thus provide the precision to which a point is defined. The second template parameter is a compile-time check which
+/// ensures the DataType passed to the template to be a floating point type only (float, double, long double, and some
+/// variants of float such as fp16, fp32 if those are enabled by the compiler).
+template <typename DataType, restrict_floating_point_check<DataType> = nullptr>
+class BoundingBox_General {
 
 	public:
 		/// @brief Defines a vector of the type defined by the instanced template.
 		typedef glm::vec<3, DataType, glm::defaultp> vec;
+		using data_t = DataType;
 
 	public:
 		/// @brief Initializes a bounding box at the origin, of size 0.
@@ -82,6 +84,7 @@ template <typename DataType> class BoundingBox_General {
 			return *this;
 		}
 
+		/// @brief Returns the positions of the 8 corners of this bounding box.
 		std::vector<vec> getAllCorners(void) const {
 			std::vector<vec> corners;
 			corners.push_back(vec(this->min.x, this->min.y, this->min.z));
@@ -189,6 +192,48 @@ template <typename DataType> class BoundingBox_General {
 		__attribute__((always_inline)) BoundingBox_General& setMaxZ(double _d) {
 			DataType d = static_cast<DataType>(_d);
 			this->max.z = std::max(this->max.z, d);
+			return *this;
+		}
+
+		/// @brief Sets the X coordinate of the min point to the value given.
+		__attribute__((always_inline)) BoundingBox_General& setMinX_forced(double _d) {
+			DataType d = static_cast<DataType>(_d);
+			this->min.x = d;
+			return *this;
+		}
+
+		/// @brief Sets the Y coordinate of the min point to the value given.
+		__attribute__((always_inline)) BoundingBox_General& setMinY_forced(double _d) {
+			DataType d = static_cast<DataType>(_d);
+			this->min.y = d;
+			return *this;
+		}
+
+		/// @brief Sets the Z coordinate of the min point to the value given.
+		__attribute__((always_inline)) BoundingBox_General& setMinZ_forced(double _d) {
+			DataType d = static_cast<DataType>(_d);
+			this->min.z = d;
+			return *this;
+		}
+
+		/// @brief Sets the X coordinate of the max point to the value given.
+		__attribute__((always_inline)) BoundingBox_General& setMaxX_forced(double _d) {
+			DataType d = static_cast<DataType>(_d);
+			this->max.x = d;
+			return *this;
+		}
+
+		/// @brief Sets the Y coordinate of the max point to the value given.
+		__attribute__((always_inline)) BoundingBox_General& setMaxY_forced(double _d) {
+			DataType d = static_cast<DataType>(_d);
+			this->max.y = d;
+			return *this;
+		}
+
+		/// @brief Sets the Z coordinate of the max point to the value given.
+		__attribute__((always_inline)) BoundingBox_General& setMaxZ_forced(double _d) {
+			DataType d = static_cast<DataType>(_d);
+			this->max.z = d;
 			return *this;
 		}
 

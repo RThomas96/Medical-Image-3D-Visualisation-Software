@@ -44,6 +44,13 @@ GridView::GridView(GridDetailedView* const _details, const std::shared_ptr<Discr
 		std::cerr << "[ERROR] Caught a signal while putting widgets on the grid.\nMessage" << e.what() << '\n';
 		throw std::runtime_error("[ERROR] Could not place widgets on the grid.");
 	}
+
+	try {
+		this->setupWidgetConnections();
+	} catch (std::runtime_error& e) {
+		std::cerr << "[ERROR] Caught a signal while connecting widgets\nMessage" << e.what() << '\n';
+		throw std::runtime_error("[ERROR] Could not connect widgets.");
+	}
 }
 
 GridView::~GridView(void) {
@@ -67,7 +74,15 @@ void GridView::readValuesFromGrid() {
 	this->label_gridImageCount->setText("<N/A TODO>");
 	this->label_gridDiskSize->setText("<N/A TODO>");
 
-	this->label_gridName->setText("<b>" + QString(gridName.c_str()) + "</b>");
+	QString formattedText = "<b>" + QString(gridName.c_str()) + "</b>";
+#ifdef GRID_LIST_ITEM_ENABLE_ELLIPSIS_TEXT
+	QFontMetrics fontMetrics(this->label_gridName->font());
+	QString ellipsisText = fontMetrics.elidedText(formattedText, Qt::ElideRight, this->label_gridName->width());
+
+	this->label_gridName->setText(ellipsisText);
+#else
+	this->label_gridName->setText(formattedText);
+#endif
 	this->label_gridResolution->setText(QString(resolutionString.c_str()));
 
 	auto ptr_t = dynamic_cast<InputGrid*>(this->grid.get());
@@ -87,7 +102,7 @@ void GridView::setupWidgetConnections(void) {
 	}
 
 	// Connect 'View' button to showing the grid :
-	//connect(this->button_modifyGrid, &QPushButton::pressed, this->detailedView, &GridDetailedView::showGrid);
+	connect(this->button_modifyGrid, &QPushButton::pressed, this, &GridView::proxy_viewGrid);
 }
 
 void GridView::blockEverySignal(bool blocked) {
@@ -140,10 +155,9 @@ std::string GridView::resolutionToString(const resolution_t& res) const {
 	}
 	unsigned int realExp = static_cast<unsigned int>(std::floor(static_cast<double>(exp - exp % 3)));
 	double vxFloat = (realExp > 0) ? (doubleVx / std::pow(10, realExp)) : doubleVx;
-	std::cerr << "================EXP================\nExp : " << exp << " // vxUnit : " << vxUnit << " // realExp : "
-		<< realExp << " // vxFloat : " << vxFloat <<'\n';
+	vxFloat = std::floor(vxFloat);
 	std::string formattedResolution = std::to_string(sizeX) + "x" + std::to_string(sizeY) + "x" +
-					std::to_string(sizeZ)+" : "+std::to_string(vxFloat)+" "+vxUnit+"voxels";
+					std::to_string(sizeZ)+" ≈ "+std::to_string(vxFloat) +" "+vxUnit+"Voxels";
 	return formattedResolution;
 }
 
@@ -185,6 +199,11 @@ void GridView::placeWidgetsOnGrid(void) {
 
 void GridView::updateValues() {
 	this->readValuesFromGrid();
+	return;
+}
+
+void GridView::proxy_viewGrid() {
+	this->detailedView->showGrid(this, this->grid);
 	return;
 }
 

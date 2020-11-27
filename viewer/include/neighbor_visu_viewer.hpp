@@ -1,6 +1,8 @@
 #ifndef VIEWER_INCLUDE_NEIGHBOR_VISU_VIEWER_HPP_
 #define VIEWER_INCLUDE_NEIGHBOR_VISU_VIEWER_HPP_
 
+#include "../../features.hpp"
+
 #include "./scene.hpp"
 
 #include <QGLViewer/qglviewer.h>
