@@ -17,6 +17,10 @@ Viewer::Viewer(Scene* const scene, bool isLeftOrRight, QWidget* parent) : QGLVie
 	connect(this->refreshTimer, &QTimer::timeout, this, &Viewer::updateView);
 }
 
+Viewer::~Viewer() {
+	delete this->refreshTimer;
+}
+
 void Viewer::init() {
 	this->makeCurrent();
 	this->scene->initGl(this->context(), 3, 3, 3);
@@ -55,10 +59,6 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 			this->scene->recompileShaders();
 			this->update();
 		break;
-		case Qt::Key::Key_F:
-			this->scene->toggleTexCubeVisibility();
-			this->update();
-		break;
 		case Qt::Key::Key_L:
 			this->scene->toggleTexCubeVisibility();
 			this->update();
@@ -69,10 +69,6 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 		break;
 		case Qt::Key::Key_N:
 			this->scene->fillNearestNeighbor();
-			this->update();
-		break;
-		case Qt::Key::Key_H:
-			this->scene->populateGrid();
 			this->update();
 		break;
 		case Qt::Key::Key_F1:
@@ -87,8 +83,9 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 			this->scene->setDrawModeWireframe();
 			this->update();
 		break;
-		case Qt::Key::Key_F5:
-			this->scene->updateNeighborTetMesh();
+		case Qt::Key::Key_F4:
+			this->scene->toggleColorOrTexture();
+			this->update();
 		break;
 		default:
 			QGLViewer::keyPressEvent(e);

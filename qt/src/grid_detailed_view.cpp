@@ -113,9 +113,8 @@ void GridDetailedView::showGrid(GridView* _caller, const std::shared_ptr<Discret
 	this->updateValues();
 	this->updateSignals();
 
-	OutputGrid* gridType = dynamic_cast<OutputGrid*>(_grid.get());
-	if (gridType == nullptr) {
-		// If the dynamic_cast didn't go through, then it is NOT an output grid :
+	// If the dynamic_cast didn't go through, then it is NOT an output grid :
+	if (dynamic_cast<OutputGrid*>(_grid.get()) == nullptr) {
 		this->setNonEditable();
 	} else {
 		this->setEditable();

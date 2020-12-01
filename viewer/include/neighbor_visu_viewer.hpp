@@ -16,6 +16,7 @@ class Viewer : public QGLViewer {
 	public:
 		/// @brief Default constructor for the viewer.
 		Viewer(Scene* const scene, bool _isRealSpace, QWidget* parent = nullptr);
+		~Viewer();
 		/// @brief Multiplier to apply to scene radii for the scene's view.
 		static float sceneRadiusMultiplier;
 	protected:

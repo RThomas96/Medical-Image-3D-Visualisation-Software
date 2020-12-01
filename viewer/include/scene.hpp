@@ -24,60 +24,10 @@
 #include <vector>
 #include <mutex>
 
-#if not defined( NDEBUG )
-	#define GetOpenGLError() __GetOpenGLError( ( char* )__FILE__, ( int )__LINE__ )
-#else
-	#define GetOpenGLError()
-#endif
+class ControlPanel; // Forward declaration
 
-enum DrawMode {
-	Solid,
-	SolidAndWireframe,
-	Wireframe
-};
-
-inline int __GetOpenGLError ( char* szFile, int iLine )
-{
-	int    retCode = 0;
-	GLenum glErr = glGetError();
-	while (glErr != GL_NO_ERROR) {
-		std::cerr << "GLError in file " << szFile << " @ line " << iLine << " : ";
-		switch (glErr) {
-			case GL_INVALID_ENUM:
-				std::cerr << "was an invalid enum";
-			break;
-			case GL_INVALID_VALUE:
-				std::cerr << "was an invalid value";
-			break;
-			case GL_INVALID_OPERATION:
-				std::cerr << "was an invalid operation";
-			break;
-			default:
-				std::cerr << "was another error";
-			break;
-		}
-		std::cerr << '\n';
-		glErr = glGetError();
-		retCode = 1;
-	}
-//	if (retCode) {
-//		exit(EXIT_FAILURE);
-//	}
-	return retCode;
-}
-
-inline glm::vec3 ucharToRGB(const unsigned char val, const unsigned char a, const unsigned char b, const unsigned char c, const unsigned char d) {
-	float fa = static_cast<float>(a) / 255.f;
-	float fb = static_cast<float>(b) / 255.f;
-	float fc = static_cast<float>(c) / 255.f;
-	float fd = static_cast<float>(d) / 255.f;
-	float fr = 1.f - ((fb - fa) / (fd - fc)) * ((static_cast<float>(val)/255.f)-fc)+fa;
-	glm::vec4 K = glm::vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
-	glm::vec3 p = glm::abs(glm::fract(glm::vec3(fr, fr, fr) + glm::vec3(K.x, K.y, K.z)) * 6.0f - glm::vec3(K.w, K.w, K.w));
-	return glm::mix(glm::vec3(K.x, K.x, K.x), glm::clamp((p - glm::vec3(K.x, K.x, K.x)), .1f, .7f), fr);
-}
-
-class ControlPanel; // forward declaration
+enum DrawMode { Solid, SolidAndWireframe, Wireframe };
+enum planes { x, y, z };
 
 class Scene : public QOpenGLFunctions_4_0_Core {
 		typedef glm::vec<4, unsigned int, glm::defaultp> uvec4;
@@ -86,27 +36,48 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		Scene(GridControl* const gc); ///< default constructor
 		~Scene(void); ///< default destructor
 
-		void setControlPanel(ControlPanel* cp) { this->controlPanel = cp; }
-
-		// initialize the variables of the scene
+		/// @brief initialize the variables of the scene
 		void initGl(QOpenGLContext* context, std::size_t _x = 1, std::size_t _y = 1, std::size_t _z = 1);
 
-		void compileShaders(std::string vPath, std::string gPath, std::string fPath);
-		void recompileShaders(void); ///< Reload the default shader files
-		void setupVBOData();
-		void setupVAOPointers();
+		/// @brief set the control panel responsible for controlling the scene
+		void setControlPanel(ControlPanel* cp) { this->controlPanel = cp; }
 
+		/// @brief compile the given shaders
+		void compileShaders(std::string vPath, std::string gPath, std::string fPath);
+		/// @brief reload the default shader files
+		void recompileShaders(void);
+
+		/// @brief For the dual-viewer : draw in real space
 		void drawRealSpace(GLfloat mvMat[], GLfloat pMat[]);
+		/// @brief For the dual-viewer : draw in grid space
 		void drawInitialSpace(GLfloat mvMat[], GLfloat pMat[]);
 
+		/// @brief Draws the X plane.
+		void drawPlaneX();
+		/// @brief Draws the Y plane.
+		void drawPlaneY();
+		/// @brief Draws the Z plane.
+		void drawPlaneZ();
+		/// @brief draw the planes, in the
+		void drawPlanes(void);
+
+		/// @brief load the 3D texture to opengl
 		void loadImage();
+		/// @brief load the voxel grid generated
 		void loadVoxelGrid();
 
+		/// @brief fill the grid using trilinear interpolation
 		void fillTrilinear();
+		/// @brief fill the grid using nearest neighbor interpolation
 		void fillNearestNeighbor();
 
+		/// @brief show the tex cube or not
 		void toggleTexCubeVisibility(bool visibility) { this->showTextureCube = visibility; }
+		/// @brief show the tex cube or not
 		void toggleTexCubeVisibility() { this->toggleTexCubeVisibility(!this->showTextureCube); }
+
+		void toggleColorOrTexture(bool _cOT) { this->colorOrTexture = _cOT; }
+		void toggleColorOrTexture() { this->toggleColorOrTexture(!this->colorOrTexture); }
 
 		glm::vec3 getSceneBoundaries(void) const;
 		glm::vec3 getTexCubeBoundaries(bool realSpace) const;
@@ -115,15 +86,9 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void setDrawModeSolidAndWireframe() { this->drawMode = DrawMode::SolidAndWireframe; }
 		void setDrawModeWireframe() { this->drawMode = DrawMode::Wireframe; }
 
-		/// @brief updates the values of the tetrahedral mesh around the point defined by the spinboxes
-		void updateNeighborTetMesh(void);
-
 		void cleanup(void); ///< cleanup function for vbo and other parts
 		bool isInitialized; ///< tracks if the scene was initialized or not
 
-		void populateGrid();
-
-		// Simili-slots (this scene cannot be a QObject [inherits from QOpenGL*], as such we cannot have slot/signals) :
 		void slotTogglePolygonMode(bool show);
 		void slotToggleShowTextureCube(bool show);
 		void slotSetTextureXCoord(uint newXCoord);
@@ -137,6 +102,31 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void slotSetCutPlaneX_Max(float coord);
 		void slotSetCutPlaneY_Max(float coord);
 		void slotSetCutPlaneZ_Max(float coord);
+	private :
+		void generateTexCube(std::vector<glm::vec4>& vertPos, std::vector<glm::vec4>& vertNorm, std::vector<unsigned int>& vertIdx);
+		void generatePlanesArray(std::vector<unsigned int>& idx);
+		glm::mat4 computeTransformationMatrix() const;
+		GLuint compileShader(const std::string& path, const GLenum shaType);
+		GLuint compileProgram(const GLuint vSha = 0, const GLuint gSha = 0, const GLuint fSha = 0);
+		/// @b preps uniforms for a grid
+		void prepGridUniforms(GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, GLuint texHandle, const std::shared_ptr<DiscreteGrid>& grid);
+		/// @b draws a grid, slightly more generic than drawVoxelGrid()
+		void drawGrid_Generic(GLfloat mvMat[], GLfloat pMat[], glm::mat4 baseMatrix, GLuint texHandle, const std::shared_ptr<DiscreteGrid>& grid);
+		/// @b preps uniforms for a given plane
+		void prepSinglePlaneUniforms(planes _plane);
+		/// @b draws a given plane
+		void drawPlane_single(planes _plane);
+		/// @brief prep the plane uniforms to draw in space
+		void prepPlaneSpaceUniforms(planes _plane, GLfloat* mvMat, GLfloat* pMat, glm::vec4);
+		/// @b Prints grid info.
+		void printGridInfo(const std::shared_ptr<DiscreteGrid>& grid);
+		/// @b Generate a scale of colors for the program.
+		std::vector<float> generateColorScale(std::size_t minVal, std::size_t maxVal); ///< Generate a color scale for the data
+		void uploadColorScale(const std::vector<float>& colorScale); ///< Uploads the color scale to OpenGL
+		/// @b setup the buffers' data
+		void setupVBOData(const std::vector<glm::vec4>& vertPos, const std::vector<glm::vec4>& vertNorm, const std::vector<unsigned int>& vertIdx, const std::vector<unsigned int>& vertIdx_plane);
+		/// @b setup the vao binding setup
+		void setupVAOPointers();
 	protected:
 		void generateGrid(std::size_t _x, std::size_t _y, std::size_t _z);
 
@@ -145,9 +135,11 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		std::shared_ptr<OutputGrid> voxelGrid; ///< Voxel grid to fill upon keypress
 		std::shared_ptr<TetMesh> mesh; ///< creates a mesh around the queried point
 		GridControl* gridControl;
+		/*
 		GridDetailedView* detailsView;
 		GridView* listViewInput;
 		GridView* listViewOutput;
+		*/
 
 		std::size_t gridWidth; ///< grid size
 		std::size_t gridHeight; ///< grid size
@@ -158,62 +150,38 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 
 		std::size_t renderSize;
 		bool showTextureCube; ///< does the user want to show the texture cube ?
-		bool cubeShown; ///< is the texture cube shown ?
+		bool colorOrTexture; ///< do we use the RGB2HSV function or the color scale ?
 		uchar minTexVal;
 		uchar maxTexVal;
-
-		// Generated data (positions, normals, texture
-		// coordinates, and indexed draw order) :
-		std::vector<glm::vec4> vertPos;
-		std::vector<glm::vec4> vertNorm;
-		std::vector<unsigned int> vertIdx;
-		std::vector<uvec4> vertIdxDraw;
-		uint drawCalls;
-		uint scaledCubes;
 
 		glm::vec3 cutPlaneMin;
 		glm::vec3 cutPlaneMax;
 		uvec3 neighborPos;
 		DrawMode drawMode;
 
-		// OpenGL data :
-
 		// Uniform locations :
-		GLint mMatrixLocation;
-		GLint vMatrixLocation;
-		GLint pMatrixLocation;
-		GLint texDataLocation;
-		GLint lightPosLocation;
 		GLint colorScaleLocation;
 
 		GLuint vboVertPosHandle;
 		GLuint vboVertNormHandle;
 		GLuint vboElementHandle;
-		GLuint vboIndexedDrawHandle;
+		GLuint vboPlaneElementHandle;
 		GLuint vaoHandle;
-		GLuint programHandle_VG;
+		GLuint programHandle;
+		GLuint planeProgramHandle;
 
 		GLuint textureHandle; ///< handle for glTexImage3D
 		GLuint voxelGridTexHandle; ///< handle for the voxel grid's data
-		GLuint colorScaleHandle;
-	private:
-		void generateTexCube(void);
-		const unsigned char* loadEmptyImage();
-		const unsigned char* loadEmptyVoxelGrid();
-		void generateNeighborGrid(std::size_t _x, std::size_t _y, std::size_t _z);
-		void showTexCubeVBO();
-		void hideTexCubeVBO();
-		glm::mat4 computeTransformationMatrix() const;
-		GLuint compileShader(const std::string& path, const GLenum shaType);
-		GLuint compileProgram(const GLuint vSha = 0, const GLuint gSha = 0, const GLuint fSha = 0);
-		/// @b preps uniforms for a grid
-		void prepGridUniforms(GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, GLuint texHandle, const std::shared_ptr<DiscreteGrid>& grid);
-		/// @b draws a grid, slightly more generic than drawVoxelGrid()
-		void drawGrid_Generic(GLfloat mvMat[], GLfloat pMat[], glm::mat4 baseMatrix, GLuint texHandle, const std::shared_ptr<DiscreteGrid>& grid);
-		void printGridInfo(const std::shared_ptr<DiscreteGrid>& grid);
-		std::vector<float> generateColorScale(std::size_t minVal, std::size_t maxVal); ///< Generate a color scale for the data
-		void uploadColorScale(const std::vector<float>& colorScale); ///< Uploads the color scale to OpenGL
+		GLuint colorScaleHandle; ///< handle for the uploaded color scale
 };
+
+inline int __GetOpenGLError ( char* szFile, int iLine );
+
+#if not defined( NDEBUG )
+	#define GetOpenGLError() __GetOpenGLError( ( char* )__FILE__, ( int )__LINE__ )
+#else
+	#define GetOpenGLError()
+#endif
 
 #endif // VIEWER_INCLUDE_SCENE_HPP_
 

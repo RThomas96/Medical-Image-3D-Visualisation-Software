@@ -11,6 +11,10 @@ MainWidget::MainWidget() {
 	this->widgetSizeSet = false;
 }
 
+MainWidget::~MainWidget() {
+	delete this->scene;
+}
+
 void MainWidget::setupWidgets() {
 	this->gridController = new GridControl(nullptr);
 	this->scene = new Scene(this->gridController);

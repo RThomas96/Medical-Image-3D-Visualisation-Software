@@ -15,7 +15,7 @@ class MainWidget : public QWidget {
 		Q_OBJECT
 	public:
 		MainWidget();
-		~MainWidget(){}
+		~MainWidget();
 	protected:
 		void setupWidgets();
 		bool eventFilter(QObject* obj, QEvent* e) override;

@@ -3,7 +3,6 @@
 // VAO inputs :
 layout(location=0) in vec4 vertexPosition;
 layout(location=1) in vec4 vertexNormal;
-layout(location=2) in uvec4 voxelIndex; // in this shader : does nothing
 
 // VShader outputs world space (suffixed by _WS_VS) :
 out vec4 vPos_WS_VS;
