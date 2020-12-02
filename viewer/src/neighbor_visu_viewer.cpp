@@ -28,7 +28,7 @@ void Viewer::init() {
 	this->scene->initGl(this->context());
 	this->scene->setDrawModeSolid();
 
-	glm::vec3 bbDiag = this->scene->getSceneBoundaries(this->isRealSpace);
+	glm::vec3 bbDiag = this->scene->getSceneBoundaries(true);
 	float sceneSize = glm::length(bbDiag);
 
 	this->setSceneRadius(sceneSize*sceneRadiusMultiplier);

@@ -50,13 +50,13 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void drawWithPlane(GLfloat mvMat[], GLfloat pMat[], planes _plane);
 
 		/// @brief Draws the X plane.
-		void drawPlaneX();
+		void drawPlaneX(GLfloat mvMat[], GLfloat pMat[]);
 		/// @brief Draws the Y plane.
-		void drawPlaneY();
+		void drawPlaneY(GLfloat mvMat[], GLfloat pMat[]);
 		/// @brief Draws the Z plane.
-		void drawPlaneZ();
+		void drawPlaneZ(GLfloat mvMat[], GLfloat pMat[]);
 		/// @brief draw the planes, in the real space
-		void drawPlanes(void);
+		void drawPlanes(GLfloat mvMat[], GLfloat pMat[]);
 
 		/// @brief load the 3D texture to opengl
 		void loadImage();
@@ -75,12 +75,12 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		/// @brief show the tex cube or not
 		void toggleOutputGridVisible(bool visibility) { this->outputGridVisible = visibility; }
 		/// @brief show the tex cube or not
-		void toggleOutputGridVisible() { this->toggleOutputGridVisible(!this->outputGridVisible); }
+		void toggleOutputGridVisible() { this->outputGridVisible = not this->outputGridVisible; }
 
 		void toggleColorOrTexture(bool _cOT) { this->colorOrTexture = _cOT; }
 		void toggleColorOrTexture() { this->toggleColorOrTexture(!this->colorOrTexture); }
 
-		glm::vec3 getSceneBoundaries(bool realSpace) const;
+		glm::vec3 getSceneBoundaries(bool realSpace = true) const;
 
 		void setDrawModeSolid() { this->drawMode = DrawMode::Solid; }
 		void setDrawModeSolidAndWireframe() { this->drawMode = DrawMode::SolidAndWireframe; }
@@ -114,7 +114,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		/// @b preps uniforms for a given plane
 		void prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane);
 		/// @b draws a given plane
-		void drawPlane_single(planes _plane);
+		void drawPlane_single(GLfloat mvMat[], GLfloat pMat[], planes _plane);
 		/// @brief prep the plane uniforms to draw in space
 		void prepPlane_SingleUniforms(planes _plane, GLfloat* mvMat, GLfloat* pMat, glm::vec4);
 		/// @b Prints grid info.

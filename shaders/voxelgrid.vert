@@ -46,7 +46,7 @@ void main(void) {
 	vec3 s = voxelGridSize * voxelSize;
 
 	// Display the texture that should be displayed only, with cutting planes :
-	texCoord_VS = vertexTexCoord * voxelGridSize;
+	texCoord_VS = vertexTexCoord;
 	// The transformation matrix to resize the cube to the grid's size :
 	vec4 tx = vec4(s.x, .0, .0, .0);
 	vec4 ty = vec4(.0, s.y, .0, .0);

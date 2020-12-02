@@ -331,19 +331,12 @@ void DiscreteGrid::updateVoxelDimensions() {
 	// if the resolution hasn't been set, return to prevent NaNs :
 	if (this->gridDimensions.x == 0u || this->gridDimensions.y == 0u || this->gridDimensions.z == 0u) { return; }
 	// voxel dimensions along each axis should be BBlength / resolution :
-#ifdef ENABLE_BASIC_BB
 	glm::vec3 diag = this->boundingBox.getDiagonal();
 
 	//this->boundingBox.printInfo("Updating voxel dimensions ...");
 	this->voxelDimensions.x = diag.x / static_cast<float>(this->gridDimensions.x);
 	this->voxelDimensions.y = diag.y / static_cast<float>(this->gridDimensions.y);
 	this->voxelDimensions.z = diag.z / static_cast<float>(this->gridDimensions.z);
-
-	std::cerr << "[LOG] Resolution after update : [" << this->gridDimensions.x << ',' << this->gridDimensions.y << ',' << this->gridDimensions.z << "]\n";
-	std::cerr << "[LOG] Voxel dims after update : [" << this->voxelDimensions.x << ',' << this->voxelDimensions.y << ',' << this->voxelDimensions.z << "]\n";
-#else
-	this->voxelDimensions = glm::vec3(1.f, 1.f, 1.f);
-#endif
 	return;
 }
 

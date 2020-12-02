@@ -24,6 +24,9 @@ MainWidget::~MainWidget() {
 	delete this->scene;
 	delete this->gridController;
 	delete this->controlPanel;
+	#ifndef ENABLE_QUAD_VIEW
+	delete this->viewer;
+	#endif
 	/*
 	delete this->viewer;
 	delete this->viewer_planeX;
@@ -37,21 +40,31 @@ void MainWidget::setupWidgets() {
 	this->gridController = new GridControl(nullptr);
 	this->scene = new Scene(this->gridController);
 
+#ifdef ENABLE_QUAD_VIEW
 	QSplitter* mainSplit = new QSplitter(Qt::Vertical);
 	QSplitter* splitAbove = new QSplitter(mainSplit);
 	QSplitter* splitBelow = new QSplitter(mainSplit);
+#endif
 
+#ifdef ENABLE_QUAD_VIEW
 	this->viewer = new Viewer(this->scene, true, planes::x, splitAbove);
-	this->viewer_planeX = new Viewer(this->scene, true, planes::x, splitAbove);
-	this->viewer_planeY = new Viewer(this->scene, true, planes::y, splitBelow);
-	this->viewer_planeZ = new Viewer(this->scene, true, planes::z, splitBelow);
+	this->viewer_planeX = new Viewer(this->scene, false, planes::x, splitAbove);
+	this->viewer_planeY = new Viewer(this->scene, false, planes::y, splitBelow);
+	this->viewer_planeZ = new Viewer(this->scene, false, planes::z, splitBelow);
+#else
+	this->viewer = new Viewer(this->scene, true, planes::x, nullptr);
+#endif
 	this->controlPanel = new ControlPanel(this->scene, this->viewer, nullptr, nullptr);
 	this->scene->setControlPanel(this->controlPanel);
 
 	this->gridController->show(); // Enable grid controller as a floating window
 
 	QHBoxLayout* viewerLayout = new QHBoxLayout();
+	#ifdef ENABLE_QUAD_VIEW
 	viewerLayout->addWidget(mainSplit);
+	#else
+	viewerLayout->addWidget(this->viewer);
+	#endif
 
 	QVBoxLayout* mainLayout = new QVBoxLayout();
 	mainLayout->addLayout(viewerLayout);
@@ -60,9 +73,9 @@ void MainWidget::setupWidgets() {
 
 	this->strayObj.push_back(viewerLayout);
 	this->strayObj.push_back(mainLayout);
+	#ifdef ENABLE_QUAD_VIEW
 	this->strayObj.push_back(mainSplit);
-	//this->strayObj.push_back(splitAbove);
-	//this->strayObj.push_back(splitBelow);
+	#endif
 
 	this->setLayout(mainLayout);
 	this->installEventFilter(this);

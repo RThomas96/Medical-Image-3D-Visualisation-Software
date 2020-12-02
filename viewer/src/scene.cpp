@@ -63,6 +63,8 @@ Scene::Scene(GridControl* const gc) {
 	this->colorOrTexture = true; // by default, the cube is shown !
 	this->renderSize = 0;
 
+	this->inputGridVisible = false;
+	this->outputGridVisible = false;
 
 	this->isInitialized = false;
 
@@ -72,6 +74,7 @@ Scene::Scene(GridControl* const gc) {
 	this->vboElementHandle = 0;
 	this->vaoHandle = 0;
 	this->programHandle = 0;
+	this->planeProgramHandle = 0;
 
 	this->neighborPos = uvec3(0, 0, 0);
 
@@ -512,14 +515,40 @@ void Scene::fillTrilinear() {
 	this->loadVoxelGrid();
 }
 
-void Scene::drawPlaneX() { this->drawPlane_single(planes::x); }
+void Scene::drawPlaneX(GLfloat mvMat[], GLfloat pMat[]) { this->drawPlane_single(mvMat, pMat, planes::x); }
 
-void Scene::drawPlaneY() { this->drawPlane_single(planes::y); }
+void Scene::drawPlaneY(GLfloat mvMat[], GLfloat pMat[]) { this->drawPlane_single(mvMat, pMat, planes::y); }
 
-void Scene::drawPlaneZ() { this->drawPlane_single(planes::z); }
+void Scene::drawPlaneZ(GLfloat mvMat[], GLfloat pMat[]) { this->drawPlane_single(mvMat, pMat, planes::z); }
 
-void Scene::drawPlane_single(planes _plane) {
+void Scene::drawPlane_single(GLfloat mvMat[], GLfloat pMat[], planes _plane) {
+	//
+}
+
+void Scene::drawPlanes(GLfloat mvMat[], GLfloat pMat[]) {
+	glUseProgram(this->planeProgramHandle);
 	glEnable(GL_DEPTH_TEST);
+
+	glBindVertexArray(this->vaoHandle);
+	this->setupVAOPointers();
+
+	// Plane X :
+	this->prepPlaneUniforms(mvMat, pMat, planes::x);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboPlaneElementHandle);
+	glDrawArrays(GL_TRIANGLES, static_cast<GLint>(0), static_cast<GLint>(6));
+
+	// Plane Y :
+	this->prepPlaneUniforms(mvMat, pMat, planes::y);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboPlaneElementHandle);
+	glDrawArrays(GL_TRIANGLES, static_cast<GLint>(6), static_cast<GLint>(6));
+
+	// Plane Z :
+	this->prepPlaneUniforms(mvMat, pMat, planes::z);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboPlaneElementHandle);
+	glDrawArrays(GL_TRIANGLES, static_cast<GLint>(12), static_cast<GLint>(6));
+
+	glBindVertexArray(0);
+	glUseProgram(0);
 }
 
 void Scene::drawGridOnly(GLfloat mvMat[], GLfloat pMat[]) {
@@ -528,28 +557,28 @@ void Scene::drawGridOnly(GLfloat mvMat[], GLfloat pMat[]) {
 
 	glm::mat4 transfoMat = glm::mat4(1.f);
 
-	//this->draw(mvMat, pMat, transfoMat, voxelMat);
 	if (this->inputGridVisible) {
 		this->drawGrid_Generic(mvMat, pMat, transfoMat, this->textureHandle, this->texStorage);
 	}
-	this->drawGrid_Generic(mvMat, pMat, transfoMat, this->voxelGridTexHandle, this->voxelGrid);
+	if (this->outputGridVisible) {
+		this->drawGrid_Generic(mvMat, pMat, transfoMat, this->voxelGridTexHandle, this->voxelGrid);
+	}
 }
 
 void Scene::drawWithPlane(GLfloat mvMat[], GLfloat pMat[], planes _plane) {
 	glEnable(GL_DEPTH_TEST);
 	GetOpenGLError();
 
-	glm::mat4 transfoMat = this->texStorage->getTransform_WorldToGrid();
+	glm::mat4 transfoMat = glm::mat4(1.f);
+
 	if (this->inputGridVisible) {
 		this->drawGrid_Generic(mvMat, pMat, transfoMat, this->textureHandle, this->texStorage);
 	}
-	this->drawGrid_Generic(mvMat, pMat, transfoMat, this->voxelGridTexHandle, this->voxelGrid);
-	switch (_plane) {
-		case planes::x : this->drawPlaneX(); break;
-		case planes::y : this->drawPlaneY(); break;
-		case planes::z : this->drawPlaneZ(); break;
-		default : std::cerr << "[ERROR][" << __PRETTY_FUNCTION__ << "] Requested a non-existant plane.\n";
+	if (this->outputGridVisible) {
+		this->drawGrid_Generic(mvMat, pMat, transfoMat, this->voxelGridTexHandle, this->voxelGrid);
 	}
+
+	this->drawPlanes(mvMat, pMat);
 }
 
 void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, GLuint texHandle, const std::shared_ptr<DiscreteGrid>& grid) {
@@ -623,12 +652,13 @@ void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, 
 
 void Scene::prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane) {
 	// lambda function to check uniform location :
-	auto checkUniformLocation = [](const GLint id, const char* name) {
+	/*auto checkUniformLocation = [](const GLint id, const char* name) {
 		if (id == -1) {
 			std::cerr << "[LOG][" << __PRETTY_FUNCTION__ << "] Could not " <<
 				"find uniform \"" << name << "\" in program.\n";
 		}
-	};
+	};*/
+	auto checkUniformLocation = [](const GLint id, const char* name) { return; };
 	// aliases for this function :
 	using uvec3_t = typename glm::uvec3::value_type;
 	using boxvec_t = typename DiscreteGrid::bbox_t::vec;
@@ -768,27 +798,27 @@ void Scene::setupVBOData(const std::vector<glm::vec4>& vertPos, const std::vecto
 	///////////////////////////////////////////////
 	glGenBuffers(1, &this->vboVertPosHandle);
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboVertPosHandle);
-	glBufferData(GL_ARRAY_BUFFER, vertPos.size()*sizeof(glm::vec4), vertPos.data(), GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, vertPos.size()*sizeof(glm::vec4), vertPos.data(), GL_STATIC_DRAW);
 	GetOpenGLError();
 
 	glGenBuffers(1, &this->vboVertNormHandle);
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboVertNormHandle);
-	glBufferData(GL_ARRAY_BUFFER, vertNorm.size()*sizeof(glm::vec4), vertNorm.data(), GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, vertNorm.size()*sizeof(glm::vec4), vertNorm.data(), GL_STATIC_DRAW);
 	GetOpenGLError();
 
 	glGenBuffers(1, &this->vboVertTexHandle);
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboVertTexHandle);
-	glBufferData(GL_ARRAY_BUFFER, vertTex.size()*sizeof(glm::vec3), vertTex.data(), GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, vertTex.size()*sizeof(glm::vec3), vertTex.data(), GL_STATIC_DRAW);
 	GetOpenGLError();
 
 	glGenBuffers(1, &this->vboElementHandle);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboElementHandle);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertIdx.size()*sizeof(unsigned int), vertIdx.data(), GL_DYNAMIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertIdx.size()*sizeof(unsigned int), vertIdx.data(), GL_STATIC_DRAW);
 	GetOpenGLError();
 
 	glGenBuffers(1, &this->vboPlaneElementHandle);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboPlaneElementHandle);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertIdx_plane.size()*sizeof(unsigned int), vertIdx_plane.data(), GL_DYNAMIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertIdx_plane.size()*sizeof(unsigned int), vertIdx_plane.data(), GL_STATIC_DRAW);
 	GetOpenGLError();
 
 	this->setupVAOPointers();
@@ -803,6 +833,11 @@ void Scene::setupVAOPointers() {
 	glEnableVertexAttribArray(1);
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboVertNormHandle);
 	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
+	GetOpenGLError();
+
+	glEnableVertexAttribArray(2);
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboVertTexHandle);
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 	GetOpenGLError();
 }
 

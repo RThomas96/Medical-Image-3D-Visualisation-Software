@@ -58,31 +58,12 @@ void main(void)
 	vec4 r = reflect(-l,n);
 	float cosAlpha = clamp(dot(e,r), 0.0, 1.0);
 
-	vec4 basecolor;
-	uvec3 ui = texture(texData, texCoord).rgb; // color, as R(uchar)G(void)B(void)
-	// If we're in the area of a primitive where wireframe is NOT shown :
-	if (distMin > epsilon) {
-		basecolor = R8UIConversion(ui);
-		// If we asked for wireframe only, show nothing (alpha=.0)
-		if (drawMode == 2) {
-			basecolor = vec4(.3, .3, .3, .0);
-		}
-	}
-	// If we're in the area of a primitive where wireframe IS shown :
-	else {
-		// If asked to do wireframe only, set basecolor to grey only, if wireframe+texture, have a
-		// stripe of white surrounding the wireframe (better contrast), if texture only, show it :
-		float colorRatio = (drawMode == 2u) ? (.3) : (1. - ((distMin/epsilon < .33 || distMin/epsilon > .66) ? 1. : .0));
-		basecolor = (drawMode == 0u) ? R8UIConversion(ui) : vec4(colorRatio, colorRatio, colorRatio, 1.);
-	}
+	vec4 basecolor=vec4(.5, .5, .5, .5);
 	// finish computing phong :
 	vec4 fragDif = matDifColor * lightColor * lightPower * cosTheta / pow(dist,2.0); fragDif.w = .0;
 	vec4 fragSpe = (matSpeColor * lightColor * lightPower * pow(cosAlpha,5.0)) / pow(dist,2.0); fragSpe.w = .0;
 
 	color = basecolor + fragDif + fragSpe;
-	//color = vNorm_WS; // debug
-
-	if (basecolor.a < 0.1) { discard; } // if transparent, discard the fragment to show others behind it
 }
 
 vec4 R8UIToRGB(in uvec3 ucolor) {

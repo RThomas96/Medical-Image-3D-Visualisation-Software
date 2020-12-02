@@ -33,10 +33,24 @@ uniform int currentPlane;
 uniform vec3 planePosition;
 
 // Get a displacement to apply to the plane's vertices for a given plane index (1, 2, 3 -> x, y, z)
-void planeIdxToPlanePosition(in int idx, out vec4 position);
+vec4 planeIdxToPlanePosition(int idx) {
+	// displacement to apply :
+	vec4 displ = vec4(.0, .0, .0, .0);
+	if (idx == 1) { displ.x = planePosition.x; }
+	if (idx == 2) { displ.y = planePosition.y; }
+	if (idx == 3) { displ.z = planePosition.z; }
+	return displ;
+}
 
 // Get a size multiplier to apply to the plane's vertices for a given plane index (1, 2, 3 -> x, y, z)
-void planeIdxToPlaneSize(in int idx, out vec4 size);
+vec4 planeIdxToPlaneSize(int idx) {
+	// size :
+	vec4 s = vec4(.0, .0, .0, .0);
+	if (idx == 1) { s.y = float(gridSize.y); s.z = float(gridSize.z); }
+	if (idx == 2) { s.x = float(gridSize.x); s.z = float(gridSize.z); }
+	if (idx == 3) { s.x = float(gridSize.x); s.y = float(gridSize.y); }
+	return s;
+}
 
 void main(void) {
 	// For gl_Position :
@@ -48,6 +62,15 @@ void main(void) {
 	*/
 
 	vec4 vPos_planeSpace = vertexPosition;
+	vec4 vPos_worldSpace = vPos_planeSpace * planeIdxToPlaneSize(currentPlane) + planeIdxToPlanePosition(currentPlane);
+	vec4 vPos_gridSpace = vPos_planeSpace * gridTransform;
+	vec4 vPos_texSpace = vPos_gridSpace;
+	vPos_texSpace.x = vPos_texSpace.x / float(gridSize.x);
+	vPos_texSpace.y = vPos_texSpace.y / float(gridSize.y);
+	vPos_texSpace.z = vPos_texSpace.z / float(gridSize.z);
 
-	// gl_Position =
+	vNorm_WS_VS = vertexNormal;
+	texCoord_VS = vPos_texSpace.xyz;
+
+	gl_Position = vPos_worldSpace;
 }

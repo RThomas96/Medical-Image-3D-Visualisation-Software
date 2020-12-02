@@ -10,6 +10,8 @@
 #include <algorithm>
 #include <type_traits>
 
+#define OPTI FUNC_ALWAYS_INLINE
+
 /// @brief Simple representation of an Axis Aligned Bounding Box.
 /// @details This class has two template parameters : the first one, DataType is the type of the element composing the
 /// points of the bounding box. This is the parameter that will define the type of glm::vec3 used in this class, and
@@ -132,7 +134,7 @@ class BoundingBox_General {
 			return newbb;
 		}
 
-		__attribute__((always_inline)) bool contains(vec point) const {
+		OPTI bool contains(vec point) const {
 			return point.x > this->min.x && point.x < this->max.x &&
 				point.y > this->min.y && point.y < this->max.y &&
 				point.z > this->min.z && point.z < this->max.z;
@@ -154,90 +156,90 @@ class BoundingBox_General {
 		}
 
 		/// @brief Sets the X coordinate of the min point to the value given.
-		__attribute__((always_inline)) BoundingBox_General& setMinX(double _d) {
+		OPTI BoundingBox_General& setMinX(double _d) {
 			DataType d = static_cast<DataType>(_d);
 			this->min.x = std::min(this->min.x, d);
 			return *this;
 		}
 
 		/// @brief Sets the Y coordinate of the min point to the value given.
-		__attribute__((always_inline)) BoundingBox_General& setMinY(double _d) {
+		OPTI BoundingBox_General& setMinY(double _d) {
 			DataType d = static_cast<DataType>(_d);
 			this->min.y = std::min(this->min.y, d);
 			return *this;
 		}
 
 		/// @brief Sets the Z coordinate of the min point to the value given.
-		__attribute__((always_inline)) BoundingBox_General& setMinZ(double _d) {
+		OPTI BoundingBox_General& setMinZ(double _d) {
 			DataType d = static_cast<DataType>(_d);
 			this->min.z = std::min(this->min.z, d);
 			return *this;
 		}
 
 		/// @brief Sets the X coordinate of the max point to the value given.
-		__attribute__((always_inline)) BoundingBox_General& setMaxX(double _d) {
+		OPTI BoundingBox_General& setMaxX(double _d) {
 			DataType d = static_cast<DataType>(_d);
 			this->max.x = std::max(this->max.x, d);
 			return *this;
 		}
 
 		/// @brief Sets the Y coordinate of the max point to the value given.
-		__attribute__((always_inline)) BoundingBox_General& setMaxY(double _d) {
+		OPTI BoundingBox_General& setMaxY(double _d) {
 			DataType d = static_cast<DataType>(_d);
 			this->max.y = std::max(this->max.y, d);
 			return *this;
 		}
 
 		/// @brief Sets the Z coordinate of the max point to the value given.
-		__attribute__((always_inline)) BoundingBox_General& setMaxZ(double _d) {
+		OPTI BoundingBox_General& setMaxZ(double _d) {
 			DataType d = static_cast<DataType>(_d);
 			this->max.z = std::max(this->max.z, d);
 			return *this;
 		}
 
 		/// @brief Sets the X coordinate of the min point to the value given.
-		__attribute__((always_inline)) BoundingBox_General& setMinX_forced(double _d) {
+		OPTI BoundingBox_General& setMinX_forced(double _d) {
 			DataType d = static_cast<DataType>(_d);
 			this->min.x = d;
 			return *this;
 		}
 
 		/// @brief Sets the Y coordinate of the min point to the value given.
-		__attribute__((always_inline)) BoundingBox_General& setMinY_forced(double _d) {
+		OPTI BoundingBox_General& setMinY_forced(double _d) {
 			DataType d = static_cast<DataType>(_d);
 			this->min.y = d;
 			return *this;
 		}
 
 		/// @brief Sets the Z coordinate of the min point to the value given.
-		__attribute__((always_inline)) BoundingBox_General& setMinZ_forced(double _d) {
+		OPTI BoundingBox_General& setMinZ_forced(double _d) {
 			DataType d = static_cast<DataType>(_d);
 			this->min.z = d;
 			return *this;
 		}
 
 		/// @brief Sets the X coordinate of the max point to the value given.
-		__attribute__((always_inline)) BoundingBox_General& setMaxX_forced(double _d) {
+		OPTI BoundingBox_General& setMaxX_forced(double _d) {
 			DataType d = static_cast<DataType>(_d);
 			this->max.x = d;
 			return *this;
 		}
 
 		/// @brief Sets the Y coordinate of the max point to the value given.
-		__attribute__((always_inline)) BoundingBox_General& setMaxY_forced(double _d) {
+		OPTI BoundingBox_General& setMaxY_forced(double _d) {
 			DataType d = static_cast<DataType>(_d);
 			this->max.y = d;
 			return *this;
 		}
 
 		/// @brief Sets the Z coordinate of the max point to the value given.
-		__attribute__((always_inline)) BoundingBox_General& setMaxZ_forced(double _d) {
+		OPTI BoundingBox_General& setMaxZ_forced(double _d) {
 			DataType d = static_cast<DataType>(_d);
 			this->max.z = d;
 			return *this;
 		}
 
-		__attribute__((flatten)) void printInfo(std::string message, std::string prefix = "") const {
+		OPTI void printInfo(std::string message, std::string prefix = "") const {
 			if (message.length() != 0) {
 				std::cerr << prefix << " | " << message << '\n';
 			}

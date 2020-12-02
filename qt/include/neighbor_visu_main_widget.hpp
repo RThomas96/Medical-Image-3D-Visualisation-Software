@@ -9,6 +9,8 @@
 #include <QWidget>
 #include <QGLViewer/qglviewer.h>
 
+#define ENABLE_QUAD_VIEW
+
 class MainWidget : public QWidget {
 		Q_OBJECT
 	public:
@@ -23,9 +25,11 @@ class MainWidget : public QWidget {
 		bool eventFilter(QObject* obj, QEvent* e) override;
 	private:
 		Viewer* viewer; ///< The visualisation panel, drawing elements from the scene
+		#ifdef ENABLE_QUAD_VIEW
 		Viewer* viewer_planeX; ///< The visualisation of the grid on plane X
 		Viewer* viewer_planeY; ///< The visualisation of the grid on plane Y
 		Viewer* viewer_planeZ; ///< The visualisation of the grid on plane Z
+		#endif
 		Scene* scene; ///< The underlying scene, with the data to display
 		ControlPanel* controlPanel; ///< The control panel at the bottom of the grid
 		GridControl* gridController; ///< The control panel for the grid to generate

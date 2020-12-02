@@ -67,11 +67,13 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, Viewer* rv, QWidget* 
 	// Disable by default the top level container :
 	this->controlContainer->setEnabled(false);
 
-	this->xPlanePos->setRange(0, 100);
+	double min = std::numeric_limits<double>::lowest();
+	double max = std::numeric_limits<double>::max();
+	this->xPlanePos->setRange(min, max);
 	this->xPlanePos->setValue(0);
-	this->yPlanePos->setRange(0, 100);
+	this->yPlanePos->setRange(min, max);
 	this->yPlanePos->setValue(0);
-	this->zPlanePos->setRange(0, 100);
+	this->zPlanePos->setRange(min, max);
 	this->zPlanePos->setValue(0);
 
 	QHBoxLayout* mainLayout = new QHBoxLayout();
