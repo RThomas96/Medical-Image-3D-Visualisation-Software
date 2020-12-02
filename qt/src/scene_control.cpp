@@ -15,18 +15,10 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, Viewer* rv, QWidget* 
 	this->minValueTexture = new QSpinBox();
 	this->maxValueTexture = new QSpinBox();
 
-	// Tex coordinates :
-	this->xTex = new QSlider(Qt::Horizontal);
-	this->yTex = new QSlider(Qt::Horizontal);
-	this->zTex = new QSlider(Qt::Horizontal);
-
 	// Cutting planes :
-	this->xPlane_Min = new QSlider(Qt::Horizontal);
-	this->yPlane_Min = new QSlider(Qt::Horizontal);
-	this->zPlane_Min = new QSlider(Qt::Horizontal);
-	this->xPlane_Max = new QSlider(Qt::Horizontal);
-	this->yPlane_Max = new QSlider(Qt::Horizontal);
-	this->zPlane_Max = new QSlider(Qt::Horizontal);
+	this->xPlanePos = new QDoubleSpinBox();
+	this->yPlanePos = new QDoubleSpinBox();
+	this->zPlanePos = new QDoubleSpinBox();
 
 	// Create the container widget :
 	this->controlContainer = new QWidget();
@@ -48,8 +40,7 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, Viewer* rv, QWidget* 
 	QLabel* minTexLabel = new QLabel("Min texture value");
 	QLabel* maxTexLabel = new QLabel("Max texture value");
 
-	QLabel* cutMinLabel = new QLabel("Minimum cutting plane coordinates");
-	QLabel* cutMaxLabel = new QLabel("Maximum cutting plane coordinates");
+	QLabel* cutMinLabel = new QLabel("Cutting plane coordinates");
 
 	// Create containers layouts :
 	QHBoxLayout* topContainer = new QHBoxLayout();
@@ -64,13 +55,9 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, Viewer* rv, QWidget* 
 	texContainer->addWidget(this->maxValueTexture);
 
 	cutMinContainer->addWidget(cutMinLabel);
-	cutMinContainer->addWidget(this->xPlane_Min);
-	cutMinContainer->addWidget(this->yPlane_Min);
-	cutMinContainer->addWidget(this->zPlane_Min);
-	cutMaxContainer->addWidget(cutMaxLabel);
-	cutMaxContainer->addWidget(this->xPlane_Max);
-	cutMaxContainer->addWidget(this->yPlane_Max);
-	cutMaxContainer->addWidget(this->zPlane_Max);
+	cutMinContainer->addWidget(this->xPlanePos);
+	cutMinContainer->addWidget(this->yPlanePos);
+	cutMinContainer->addWidget(this->zPlanePos);
 
 	allContainer->addLayout(topContainer);
 	allContainer->addLayout(texContainer);
@@ -80,31 +67,12 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, Viewer* rv, QWidget* 
 	// Disable by default the top level container :
 	this->controlContainer->setEnabled(false);
 
-	this->xTex->setMinimum(0);
-	this->xTex->setMaximum(100);
-	this->xTex->setValue(0);
-
-	this->yTex->setMinimum(0);
-	this->yTex->setMaximum(100);
-	this->yTex->setValue(0);
-
-	this->zTex->setMinimum(0);
-	this->zTex->setMaximum(100);
-	this->zTex->setValue(0);
-
-	this->xPlane_Min->setRange(0, 100);
-	this->xPlane_Min->setValue(0);
-	this->yPlane_Min->setRange(0, 100);
-	this->yPlane_Min->setValue(0);
-	this->zPlane_Min->setRange(0, 100);
-	this->zPlane_Min->setValue(0);
-
-	this->xPlane_Max->setRange(0, 100);
-	this->xPlane_Max->setValue(100);
-	this->yPlane_Max->setRange(0, 100);
-	this->yPlane_Max->setValue(100);
-	this->zPlane_Max->setRange(0, 100);
-	this->zPlane_Max->setValue(100);
+	this->xPlanePos->setRange(0, 100);
+	this->xPlanePos->setValue(0);
+	this->yPlanePos->setRange(0, 100);
+	this->yPlanePos->setValue(0);
+	this->zPlanePos->setRange(0, 100);
+	this->zPlanePos->setValue(0);
 
 	QHBoxLayout* mainLayout = new QHBoxLayout();
 	mainLayout->addWidget(this->controlContainer);
@@ -127,17 +95,11 @@ ControlPanel::~ControlPanel() {
 		}
 		obj = nullptr;
 	};
-	deletePtr(this->xTex);
-	deletePtr(this->yTex);
-	deletePtr(this->zTex);
 	deletePtr(this->minValueTexture);
 	deletePtr(this->maxValueTexture);
-	deletePtr(this->xPlane_Min);
-	deletePtr(this->yPlane_Min);
-	deletePtr(this->zPlane_Min);
-	deletePtr(this->xPlane_Max);
-	deletePtr(this->yPlane_Max);
-	deletePtr(this->zPlane_Max);
+	deletePtr(this->xPlanePos);
+	deletePtr(this->yPlanePos);
+	deletePtr(this->zPlanePos);
 	deletePtr(this->controlContainer);
 #ifndef NDEBUG
 	std::cerr << "[TRACE][" << __PRETTY_FUNCTION__ << "] : Deleted control panel.\n";
@@ -145,17 +107,10 @@ ControlPanel::~ControlPanel() {
 }
 
 void ControlPanel::initSignals() {
-	connect(this->xTex, &QSlider::valueChanged, this, &ControlPanel::setXTexCoord);
-	connect(this->yTex, &QSlider::valueChanged, this, &ControlPanel::setYTexCoord);
-	connect(this->zTex, &QSlider::valueChanged, this, &ControlPanel::setZTexCoord);
-
 	// Modifies the values of the cutting planes :
-	connect(this->xPlane_Min, &QSlider::valueChanged, this, &ControlPanel::setCutPlaneX_Min);
-	connect(this->yPlane_Min, &QSlider::valueChanged, this, &ControlPanel::setCutPlaneY_Min);
-	connect(this->zPlane_Min, &QSlider::valueChanged, this, &ControlPanel::setCutPlaneZ_Min);
-	connect(this->xPlane_Max, &QSlider::valueChanged, this, &ControlPanel::setCutPlaneX_Max);
-	connect(this->yPlane_Max, &QSlider::valueChanged, this, &ControlPanel::setCutPlaneY_Max);
-	connect(this->zPlane_Max, &QSlider::valueChanged, this, &ControlPanel::setCutPlaneZ_Max);
+	connect(this->xPlanePos, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &ControlPanel::setCutPlaneXPos);
+	connect(this->yPlanePos, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &ControlPanel::setCutPlaneYPos);
+	connect(this->zPlanePos, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &ControlPanel::setCutPlaneZPos);
 
 	// Modifies the min/max values of the texture to be considered valuable data :
 	connect(this->minValueTexture, QOverload<int>::of(&QSpinBox::valueChanged), this, &ControlPanel::setMinTexVal);
@@ -175,39 +130,6 @@ void ControlPanel::activatePanels(bool activeStatus) {
 		this->controlContainer->hide();
 	}
 	this->update();
-}
-
-void ControlPanel::setImageBoundaries(int bounds[6]) {
-	// get old slider values :
-	int oldXValue = this->xTex->value();
-	int oldYValue = this->yTex->value();
-	int oldZValue = this->zTex->value();
-
-	if (bounds[1] == 0) {
-		this->controlContainer->setEnabled(false);
-		this->controlContainer->hide();
-	} else {
-		this->controlContainer->setEnabled(true);
-		this->controlContainer->show();
-	}
-
-	// Sets the range of the sliders based on image size :
-	// (also, set the value to min or max if it goes out of bounds)
-
-	this->xTex->setMinimum(bounds[0]);
-	this->xTex->setMaximum(bounds[1]);
-	if (oldXValue < this->xTex->minimum()) { this->xTex->setValue(this->xTex->minimum()); }
-	else if (oldXValue > this->xTex->maximum()) { this->xTex->setValue(this->xTex->maximum()); }
-
-	this->yTex->setMinimum(bounds[2]);
-	this->yTex->setMaximum(bounds[3]);
-	if (oldYValue < this->yTex->minimum()) { this->yTex->setValue(this->yTex->minimum()); }
-	else if (oldYValue > this->yTex->maximum()) { this->yTex->setValue(this->yTex->maximum()); }
-
-	this->zTex->setMinimum(bounds[4]);
-	this->zTex->setMaximum(bounds[5]);
-	if (oldZValue < this->zTex->minimum()) { this->zTex->setValue(this->zTex->minimum()); }
-	else if (oldZValue > this->zTex->maximum()) { this->zTex->setValue(this->zTex->maximum()); }
 }
 
 void ControlPanel::setXTexCoord(int coordX) {
@@ -247,44 +169,20 @@ void ControlPanel::setMaxTexVal(int val) {
 	this->updateViewers();
 }
 
-void ControlPanel::setCutPlaneX_Min(int val) {
-	int max = this->xPlane_Min->maximum();
-	float ratio = static_cast<float>(val)/static_cast<float>(max);
-	this->sceneToControl->slotSetCutPlaneX_Min(ratio);
+void ControlPanel::setCutPlaneXPos(double val) {
+	float ratio = static_cast<float>(val);
+	this->sceneToControl->slotSetPlanePositionX(ratio);
 	this->updateViewers();
 }
 
-void ControlPanel::setCutPlaneY_Min(int val) {
-	int max = this->yPlane_Min->maximum();
-	float ratio = static_cast<float>(val)/static_cast<float>(max);
-	this->sceneToControl->slotSetCutPlaneY_Min(ratio);
+void ControlPanel::setCutPlaneYPos(double val) {
+	float ratio = static_cast<float>(val);
+	this->sceneToControl->slotSetPlanePositionY(ratio);
 	this->updateViewers();
 }
 
-void ControlPanel::setCutPlaneZ_Min(int val) {
-	int max = this->zPlane_Min->maximum();
-	float ratio = static_cast<float>(val)/static_cast<float>(max);
-	this->sceneToControl->slotSetCutPlaneZ_Min(ratio);
-	this->updateViewers();
-}
-
-void ControlPanel::setCutPlaneX_Max(int val) {
-	int max = this->xPlane_Max->maximum();
-	float ratio = static_cast<float>(val)/static_cast<float>(max);
-	this->sceneToControl->slotSetCutPlaneX_Max(ratio);
-	this->updateViewers();
-}
-
-void ControlPanel::setCutPlaneY_Max(int val) {
-	int max = this->yPlane_Max->maximum();
-	float ratio = static_cast<float>(val)/static_cast<float>(max);
-	this->sceneToControl->slotSetCutPlaneY_Max(ratio);
-	this->updateViewers();
-}
-
-void ControlPanel::setCutPlaneZ_Max(int val) {
-	int max = this->zPlane_Max->maximum();
-	float ratio = static_cast<float>(val)/static_cast<float>(max);
-	this->sceneToControl->slotSetCutPlaneZ_Max(ratio);
+void ControlPanel::setCutPlaneZPos(double val) {
+	float ratio = static_cast<float>(val);
+	this->sceneToControl->slotSetPlanePositionZ(ratio);
 	this->updateViewers();
 }

@@ -15,7 +15,7 @@ class Viewer : public QGLViewer {
 		Q_OBJECT
 	public:
 		/// @brief Default constructor for the viewer.
-		Viewer(Scene* const scene, bool _isRealSpace, QWidget* parent = nullptr);
+		Viewer(Scene* const scene, bool isRealSpace, planes _plane, QWidget* parent = nullptr);
 		~Viewer();
 		/// @brief Multiplier to apply to scene radii for the scene's view.
 		static float sceneRadiusMultiplier;
@@ -29,9 +29,11 @@ class Viewer : public QGLViewer {
 	private:
 		/// @brief The scene to control.
 		Scene* const scene;
-		/// @brief Determines if the viewer show real space, or initial space.
+		/// @brief Determines if the viewer shows only the texture/3D model, or with a plane.
 		bool isRealSpace;
-		/// @brief A refresh timer for the viewer, to update in real time
+		/// @brief The plane to draw, if needed
+		planes plane;
+		/// @brief A refresh timer for the viewer, to update in real time.
 		QTimer* refreshTimer;
 	public slots:
 		/// @brief Update the view, as a slot without any arguments (currently only used by QTimer)

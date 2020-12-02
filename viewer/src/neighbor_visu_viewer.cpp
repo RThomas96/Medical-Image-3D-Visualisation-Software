@@ -8,7 +8,8 @@
 
 float Viewer::sceneRadiusMultiplier{1.5f};
 
-Viewer::Viewer(Scene* const scene, bool isLeftOrRight, QWidget* parent) : QGLViewer(parent), scene(scene), isRealSpace(isLeftOrRight) {
+Viewer::Viewer(Scene* const scene, bool isLeftOrRight, planes _plane, QWidget* parent) :
+	QGLViewer(parent), scene(scene), isRealSpace(isLeftOrRight), plane(_plane) {
 	this->setGridIsDrawn();
 
 	this->refreshTimer = new QTimer();
@@ -18,15 +19,16 @@ Viewer::Viewer(Scene* const scene, bool isLeftOrRight, QWidget* parent) : QGLVie
 }
 
 Viewer::~Viewer() {
+	disconnect(this->refreshTimer, &QTimer::timeout, this, &Viewer::updateView);
 	delete this->refreshTimer;
 }
 
 void Viewer::init() {
 	this->makeCurrent();
-	this->scene->initGl(this->context(), 3, 3, 3);
+	this->scene->initGl(this->context());
 	this->scene->setDrawModeSolid();
 
-	glm::vec3 bbDiag = this->scene->getTexCubeBoundaries(this->isRealSpace);
+	glm::vec3 bbDiag = this->scene->getSceneBoundaries(this->isRealSpace);
 	float sceneSize = glm::length(bbDiag);
 
 	this->setSceneRadius(sceneSize*sceneRadiusMultiplier);
@@ -47,22 +49,35 @@ void Viewer::draw() {
 	this->camera()->getProjectionMatrix(pMat);
 
 	if (isRealSpace) {
-		this->scene->drawRealSpace(mvMat, pMat);
+		this->scene->drawGridOnly(mvMat, pMat);
 	} else {
-		this->scene->drawInitialSpace(mvMat, pMat);
+		this->scene->drawWithPlane(mvMat, pMat, this->plane);
 	}
 }
 
 void Viewer::keyPressEvent(QKeyEvent *e) {
 	switch (e->key()) {
+		/*
+		SHADER PROGRAMS
+		*/
 		case Qt::Key::Key_R:
 			this->scene->recompileShaders();
 			this->update();
 		break;
-		case Qt::Key::Key_L:
-			this->scene->toggleTexCubeVisibility();
+		/*
+		GRID VISIBILITY
+		*/
+		case Qt::Key::Key_I:
+			this->scene->toggleInputGridVisible();
 			this->update();
 		break;
+		case Qt::Key::Key_O:
+			this->scene->toggleOutputGridVisible();
+			this->update();
+		break;
+		/*
+		INTERPOLATION
+		*/
 		case Qt::Key::Key_T:
 			this->scene->fillTrilinear();
 			this->update();
@@ -71,6 +86,9 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 			this->scene->fillNearestNeighbor();
 			this->update();
 		break;
+		/*
+		DRAW MODES
+		*/
 		case Qt::Key::Key_F1:
 			this->scene->setDrawModeSolid();
 			this->update();
@@ -87,6 +105,9 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 			this->scene->toggleColorOrTexture();
 			this->update();
 		break;
+		/*
+		Default handler.
+		*/
 		default:
 			QGLViewer::keyPressEvent(e);
 		break;
