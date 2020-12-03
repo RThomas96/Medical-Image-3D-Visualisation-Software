@@ -52,7 +52,7 @@ void MainWidget::setupWidgets() {
 	this->viewer_planeY = new Viewer(this->scene, false, planes::y, splitBelow);
 	this->viewer_planeZ = new Viewer(this->scene, false, planes::z, splitBelow);
 #else
-	this->viewer = new Viewer(this->scene, true, planes::x, nullptr);
+	this->viewer = new Viewer(this->scene, false, planes::x, nullptr);
 #endif
 	this->controlPanel = new ControlPanel(this->scene, this->viewer, nullptr, nullptr);
 	this->scene->setControlPanel(this->controlPanel);

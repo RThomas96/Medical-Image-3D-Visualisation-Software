@@ -103,10 +103,10 @@ vec4 R8UIToRGB(in uvec3 ucolor) {
 
 vec4 R8UItoColorScale(in uvec3 ucolor) {
 	// Only the red component contains the data needed for the color scale :
-	uint column = ucolor.r % 16;
-	uint row = (ucolor.r - column) / 16;
+	float column = float(mod(ucolor.r,16)) / 15.f;
+	float row = float((ucolor.r - column) / 16) / 15.f;
 	float index = float(ucolor.r);
-	vec4 color = texture(colorScale, uvec2(row, column));
+	vec4 color = texture(colorScale, vec2(row, column));
 	//color.g = color.r;
 	//color.b = color.r;
 	color.a = 1.f;

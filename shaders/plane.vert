@@ -3,21 +3,17 @@
 // VAO inputs :
 layout(location=0) in vec4 vertexPosition;
 layout(location=1) in vec4 vertexNormal;
+layout(location=2) in vec3 vertexTexCoord; // In this shader : does nothing
 
 // VShader outputs world space (suffixed by _WS_VS) :
-out vec4 vPos_WS_VS;
-out vec4 vNorm_WS_VS;
-out vec3 texCoord_VS;
-// VShader outputs camera space (suffixed by _CS_VS) :
-out vec4 vPos_CS_VS;
-out vec4 vNorm_CS_VS;
-out vec4 lightDir_CS_VS;
-out vec4 eyeDir_CS_VS;
+out vec4 vPos;
+out vec4 vNorm;
+out vec3 texCoord;
 
 // Model, view, and projection matrices :
-uniform mat4 mMatrix;
-uniform mat4 vMatrix;
-uniform mat4 pMatrix;
+uniform mat4 model_Mat;
+uniform mat4 view_Mat;
+uniform mat4 projection_Mat;
 
 // The transform used by the grid to change space from grid to world
 uniform mat4 gridTransform;
@@ -53,24 +49,23 @@ vec4 planeIdxToPlaneSize(int idx) {
 }
 
 void main(void) {
-	// For gl_Position :
-	mat4 mvp = pMatrix * vMatrix * mMatrix;
-
+	vec4 gridPosition4 = gridPosition.xyzx;
+	gridPosition4.a = 0;
 	/*
 	Vertex position will always be normalized (i.e., in [0, 1]). We need to apply the correct size multiplier and
 	the correct displacement in order to get the 'real' position of a vertex within that plane.
 	*/
-
 	vec4 vPos_planeSpace = vertexPosition;
 	vec4 vPos_worldSpace = vPos_planeSpace * planeIdxToPlaneSize(currentPlane) + planeIdxToPlanePosition(currentPlane);
 	vec4 vPos_gridSpace = vPos_planeSpace * gridTransform;
-	vec4 vPos_texSpace = vPos_gridSpace;
+	vec4 vPos_texSpace = vPos_gridSpace - gridPosition4;
 	vPos_texSpace.x = vPos_texSpace.x / float(gridSize.x);
 	vPos_texSpace.y = vPos_texSpace.y / float(gridSize.y);
 	vPos_texSpace.z = vPos_texSpace.z / float(gridSize.z);
 
-	vNorm_WS_VS = vertexNormal;
-	texCoord_VS = vPos_texSpace.xyz;
+	vPos = vPos_worldSpace;
+	vNorm = vertexNormal;
+	texCoord = vPos_texSpace.xyz;
 
-	gl_Position = vPos_worldSpace;
+	gl_Position = projection_Mat * view_Mat * model_Mat * vPos;
 }

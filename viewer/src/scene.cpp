@@ -15,6 +15,9 @@
 #include <iomanip>
 #include <type_traits>
 
+#warning Check the signification of the drawWithPlanes method, and other plane-drawing methods.
+#warning One draws all planes but still takes a plane to draw, and other inconsistencies.
+
 template<class T>
 std::remove_reference_t<T> const& as_const(T&&t){return t;}
 
@@ -155,8 +158,9 @@ void Scene::initGl(QOpenGLContext* _context) {
 	GetOpenGLError();
 
 	this->programHandle = this->compileShaders("./shaders/voxelgrid.vert", "./shaders/voxelgrid.geom", "./shaders/voxelgrid.frag");
-	this->planeProgramHandle = this->compileShaders("./shaders/plane.vert", "./shaders/plane.geom", "./shaders/plane.frag");
+	this->planeProgramHandle = this->compileShaders("./shaders/plane.vert", "", "./shaders/plane.frag");
 	if (this->programHandle == 0) { throw std::runtime_error("[ERROR] Program did not compile"); }
+	if (this->planeProgramHandle == 0) { throw std::runtime_error("[ERROR] 'Planes' Program did not compile"); }
 
 	this->loadImage();
 
@@ -178,6 +182,30 @@ void Scene::initGl(QOpenGLContext* _context) {
 	glUseProgram(this->programHandle);
 	GetOpenGLError();
 	std::cerr << "Finished initializing scene" << '\n';
+
+	GLint size; // size of the variable
+	GLenum type; // type of the variable (float, vec3 or mat4, etc)
+
+	const GLsizei bufSize = 256; // maximum name length
+	GLchar name[bufSize]; // variable name in GLSL
+	GLsizei length; // name length
+
+	glUseProgram(this->planeProgramHandle);
+	GLint attrCount = 0;
+	glGetProgramiv(this->planeProgramHandle, GL_ACTIVE_ATTRIBUTES, &attrCount);
+	std::cerr << "[TRACE] Plane program active attributes :\n";
+	for (GLint i = 0; i < attrCount; ++i ) {
+		//std::cerr << "[TRACE]\t" << ;
+		glGetActiveAttrib(this->planeProgramHandle, (GLuint)i, bufSize, &length, &size, &type, name);
+		fprintf(stderr, "[TRACE]\t\tAttribute #%d Type: %u Name: %s\n", i, type, name);
+	}
+	glGetProgramiv(this->planeProgramHandle, GL_ACTIVE_UNIFORMS, &attrCount);
+	std::cerr << "[TRACE] Plane program active attributes :\n";
+	for (GLint i = 0; i < attrCount; ++i ) {
+		//std::cerr << "[TRACE]\t" << ;
+		glGetActiveUniform(this->planeProgramHandle, (GLuint)i, bufSize, &length, &size, &type, name);
+		fprintf(stderr, "[TRACE]\t\tUniform #%d Type: %u Name: %s\n", i, type, name);
+	}
 }
 
 void Scene::printGridInfo(const std::shared_ptr<DiscreteGrid>& grid) {
@@ -209,7 +237,31 @@ void Scene::printGridInfo(const std::shared_ptr<DiscreteGrid>& grid) {
 
 void Scene::recompileShaders() {
 	this->programHandle = this->compileShaders("./shaders/voxelgrid.vert", "./shaders/voxelgrid.geom", "./shaders/voxelgrid.frag", true);
-	this->planeProgramHandle = this->compileShaders("./shaders/plane.vert", "./shaders/plane.geom", "./shaders/plane.frag", true);
+	this->planeProgramHandle = this->compileShaders("./shaders/plane.vert", "", "./shaders/plane.frag", true);
+
+	GLint size; // size of the variable
+	GLenum type; // type of the variable (float, vec3 or mat4, etc)
+
+	const GLsizei bufSize = 256; // maximum name length
+	GLchar name[bufSize]; // variable name in GLSL
+	GLsizei length; // name length
+
+	glUseProgram(this->planeProgramHandle);
+	GLint attrCount = 0;
+	glGetProgramiv(this->planeProgramHandle, GL_ACTIVE_ATTRIBUTES, &attrCount);
+	std::cerr << "[TRACE] Plane program active attributes :\n";
+	for (GLint i = 0; i < attrCount; ++i ) {
+		//std::cerr << "[TRACE]\t" << ;
+		glGetActiveAttrib(this->planeProgramHandle, (GLuint)i, bufSize, &length, &size, &type, name);
+		fprintf(stderr, "[TRACE]\t\tAttribute #%d Type: %u Name: %s\n", i, type, name);
+	}
+	glGetProgramiv(this->planeProgramHandle, GL_ACTIVE_UNIFORMS, &attrCount);
+	std::cerr << "[TRACE] Plane program active attributes :\n";
+	for (GLint i = 0; i < attrCount; ++i ) {
+		//std::cerr << "[TRACE]\t" << ;
+		glGetActiveUniform(this->planeProgramHandle, (GLuint)i, bufSize, &length, &size, &type, name);
+		fprintf(stderr, "[TRACE]\t\tUniform #%d Type: %u Name: %s\n", i, type, name);
+	}
 }
 
 GLuint Scene::compileShaders(std::string _vPath, std::string _gPath, std::string _fPath, bool verbose) {
@@ -219,42 +271,43 @@ GLuint Scene::compileShaders(std::string _vPath, std::string _gPath, std::string
 	GLboolean compilerAvailable = GL_FALSE;
 	glGetBooleanv(GL_SHADER_COMPILER, &compilerAvailable);
 	if (compilerAvailable == GL_FALSE) {
-		std::cerr << "[" << __PRETTY_FUNCTION__ << "] : No shader compiler was available.\nExiting the program.\n";
+		std::cerr << "[" << __FILE__ << ":" << __LINE__ << "] : No shader compiler was available.\nExiting the program.\n";
 		exit(EXIT_FAILURE);
 	}
 
-	if (verbose) { std::cerr << "[LOG][" << __PRETTY_FUNCTION__ << "] Compiling vertex shader \"" << _vPath << "\"...\n"; }
+	if (verbose) { std::cerr << "[LOG][" << __FILE__ << ":" << __LINE__ << "] Compiling vertex shader \"" << _vPath << "\"...\n"; }
 	GLuint _vSha = this->compileShader(_vPath, GL_VERTEX_SHADER, verbose);
-	if (verbose) { std::cerr << "[LOG][" << __PRETTY_FUNCTION__ << "] Compiling geometry shader \"" << _gPath << "\"...\n"; }
+	if (verbose) { std::cerr << "[LOG][" << __FILE__ << ":" << __LINE__ << "] Compiling geometry shader \"" << _gPath << "\"...\n"; }
 	GLuint _gSha = this->compileShader(_gPath, GL_GEOMETRY_SHADER, verbose);
-	if (verbose) { std::cerr << "[LOG][" << __PRETTY_FUNCTION__ << "] Compiling fragment shader \"" << _fPath << "\"...\n"; }
+	if (verbose) { std::cerr << "[LOG][" << __FILE__ << ":" << __LINE__ << "] Compiling fragment shader \"" << _fPath << "\"...\n"; }
 	GLuint _fSha = this->compileShader(_fPath, GL_FRAGMENT_SHADER, verbose);
-	if (verbose) { std::cerr << "[LOG][" << __PRETTY_FUNCTION__ << "] Compiling program ...\n"; }
+	if (verbose) { std::cerr << "[LOG][" << __FILE__ << ":" << __LINE__ << "] Compiling program ...\n"; }
 	GLuint _prog = this->compileProgram(_vSha, _gSha, _fSha, verbose);
 
 	if (_prog != 0) {
-		if (verbose) { std::cerr<<"[LOG]["<<__PRETTY_FUNCTION__<<"] Compiled program at index "<<_prog<<"\n"; }
+		if (verbose) { std::cerr<<"[LOG]["<<__FILE__ << ":" << __LINE__<<"] Compiled program at index "<<_prog<<"\n"; }
 	}
 
 	return _prog;
 }
 
 GLuint Scene::compileShader(const std::string& path, const GLenum shaType, bool verbose) {
+	if (path.empty()) { return -1; }
 	// Check the given type is accepted :
 	if (shaType != GL_VERTEX_SHADER && shaType != GL_GEOMETRY_SHADER && shaType != GL_FRAGMENT_SHADER) {
-		std::cerr << "[" << __PRETTY_FUNCTION__ << "] Error : unrecognized shader type (vertex, geometry and fragment shaders)\n";
+		std::cerr << "[" << __FILE__ << ":" << __LINE__ << "] Error : unrecognized shader type (vertex, geometry and fragment shaders)\n";
 		return -1;
 	}
 
 	// Create a shader object :
 	GLuint _sha = glCreateShader(shaType);
-	if (verbose) {std::cerr<<"[LOG]["<<__PRETTY_FUNCTION__<<"] Created shader at index" << _sha << ".\n";}
+	if (verbose) {std::cerr<<"[LOG]["<<__FILE__ << ":" << __LINE__<<"] Created shader at index" << _sha << ".\n";}
 	GetOpenGLError();
 
 	// Open the file :
 	std::ifstream shaFile = std::ifstream(path.c_str(), std::ios_base::in);
 	if (!shaFile.is_open()) {
-		std::cerr << "[" << __PRETTY_FUNCTION__ << "] Error : could not get the contents of shader file " << path << '\n';
+		std::cerr << "[" << __FILE__ << ":" << __LINE__ << "] Error : could not get the contents of shader file " << path << '\n';
 		return -1;
 	}
 
@@ -262,9 +315,6 @@ GLuint Scene::compileShader(const std::string& path, const GLenum shaType, bool 
 	shaFile.seekg(0, shaFile.end);
 	std::size_t shaFileSize = static_cast<std::size_t>(shaFile.tellg());
 	shaFile.seekg(0, shaFile.beg);
-	if (verbose) {
-		std::cerr << "[LOG][" << __PRETTY_FUNCTION__ << "] Opened shader file \"" << path << "\" (" << shaFileSize << " bytes)\n";
-	}
 
 	// Get the file's contents and null-terminate it :
 	char* shaSource = new char[shaFileSize+1];
@@ -273,7 +323,6 @@ GLuint Scene::compileShader(const std::string& path, const GLenum shaType, bool 
 
 	// Source it into the shader object :
 	glShaderSource(_sha, 1, const_cast<const char**>(&shaSource), 0);
-	if (verbose) { std::cerr << "[LOG][" << __PRETTY_FUNCTION__ << "] Sourced shader file.\n"; }
 
 	// We can free up the host memory now :
 	delete[] shaSource;
@@ -289,26 +338,26 @@ GLuint Scene::compileShader(const std::string& path, const GLenum shaType, bool 
 	// Get shader information after compilation :
 	glGetShaderiv(_sha, GL_INFO_LOG_LENGTH, &shaderInfoLength);
 	if (shaderInfoLength > 1) {
-		std::cerr << __PRETTY_FUNCTION__ << " : start Log ***********************************************" << '\n';
+		std::cerr << __FILE__ << ":" << __LINE__ << " : start Log ***********************************************" << '\n';
 
-		std::cerr << __FUNCTION__ << " : Information about shader " << path << " : " << '\n';
-		std::cerr << __FUNCTION__ << " : Shader was a vertex shader ";
+		std::cerr << __FILE__ << ":" << __LINE__ << " : Information about shader " << path << " : " << '\n';
+		std::cerr << __FILE__ << ":" << __LINE__ << " : Shader was a vertex shader ";
 		shaderInfoLog = new char[shaderInfoLength];
 		glGetShaderInfoLog(_sha, shaderInfoLength, &charsWritten, shaderInfoLog);
 		GetOpenGLError();
 		std::cerr << shaderInfoLog << '\n';
 		delete[] shaderInfoLog;
 
-		std::cerr << __PRETTY_FUNCTION__ << " : end Log ***********************************************" << '\n';
+		std::cerr << __FILE__ << ":" << __LINE__ << " : end Log ***********************************************" << '\n';
 	}
 
 	GLint result = GL_FALSE;
 	glGetShaderiv(_sha, GL_COMPILE_STATUS, &result);
 	if (result == GL_FALSE) {
-		std::cerr << "[" << __PRETTY_FUNCTION__ << "] : Could not compile shader.\n";
+		std::cerr << "[" << __FILE__ << ":" << __LINE__ << "] : Could not compile shader.\n";
 		return 0;
 	}
-	if (verbose) { std::cerr << "[LOG][" << __PRETTY_FUNCTION__ << "] Compiled shader successfully.\n"; }
+	if (verbose) { std::cerr << "[LOG][" << __FILE__ << ":" << __LINE__ << "] Compiled shader successfully.\n"; }
 
 	return _sha;
 }
@@ -316,21 +365,20 @@ GLuint Scene::compileShader(const std::string& path, const GLenum shaType, bool 
 GLuint Scene::compileProgram(const GLuint vSha, const GLuint gSha, const GLuint fSha, bool verbose) {
 	// Check any shader was passed to the program :
 	if (vSha == 0 && gSha == 0 && fSha == 0) {
-		std::cerr << "[" << __PRETTY_FUNCTION__ << "] : No shader IDs were passed to the function.\n" <<
+		std::cerr << "[" << __FILE__ << ":" << __LINE__ << "] : No shader IDs were passed to the function.\n" <<
 			"\tArguments : vSha(" << vSha << "), gSha(" << gSha << "), fSha(" << fSha << ")";
 	}
 
 	GLuint _prog = glCreateProgram();
-	if (verbose) {std::cerr<<"[LOG]["<<__PRETTY_FUNCTION__<<"] Created new program at index"<<_prog<<"\n";}
+	if (verbose) {std::cerr<<"[LOG]["<<__FILE__ << ":" << __LINE__<<"] Created new program at index"<<_prog<<"\n";}
 	GetOpenGLError();
 	glAttachShader(_prog, vSha);
 	glAttachShader(_prog, gSha);
 	glAttachShader(_prog, fSha);
-	if (verbose) {std::cerr<<"[LOG]["<<__PRETTY_FUNCTION__<<"] Attached shaders.\n";}
+	if (verbose) {std::cerr<<"[LOG]["<<__FILE__ << ":" << __LINE__<<"] Attached shaders.\n";}
 
 	glLinkProgram(_prog);
 	GetOpenGLError();
-	if (verbose) {std::cerr<<"[LOG]["<<__PRETTY_FUNCTION__<<"] Trying to link program ...\n";}
 
 	int InfoLogLength = 0;
 	glGetProgramiv(_prog, GL_INFO_LOG_LENGTH, &InfoLogLength);
@@ -338,7 +386,7 @@ GLuint Scene::compileProgram(const GLuint vSha, const GLuint gSha, const GLuint 
 		std::vector<char> ProgramErrorMessage(InfoLogLength+1);
 		glGetProgramInfoLog(_prog, InfoLogLength, NULL, &ProgramErrorMessage[0]);
 		GetOpenGLError();
-		std::cerr << __FUNCTION__ << " : Warning : errors while linking program :" << '\n';
+		std::cerr << __FILE__ << ":" << __LINE__ << " : Warning : errors while linking program :" << '\n';
 		std::cerr << "------------------------------------------------------------------" << '\n';
 		std::cerr << "------------------------------------------------------------------" << '\n';
 		std::cerr << ProgramErrorMessage.data() << '\n';
@@ -350,19 +398,17 @@ GLuint Scene::compileProgram(const GLuint vSha, const GLuint gSha, const GLuint 
 	glGetProgramiv(_prog, GL_LINK_STATUS, &Result);
 	if (Result == GL_FALSE) {
 		// Return 0 (no program created) :
-		std::cerr << "[" << __PRETTY_FUNCTION__ << "] : Could not link shader.\n";
+		std::cerr << "[" << __FILE__ << ":" << __LINE__ << "] : Could not link shader.\n";
 		return 0;
 	}
-	if (verbose) {std::cerr<<"[LOG]["<<__PRETTY_FUNCTION__<<"] Program playing.\n";}
+	if (verbose) {std::cerr<<"[LOG]["<<__FILE__ << ":" << __LINE__<<"] Program linked.\n";}
 
 	glDetachShader(_prog, vSha);
 	glDetachShader(_prog, gSha);
 	glDetachShader(_prog, fSha);
-	if (verbose) {std::cerr<<"[LOG]["<<__PRETTY_FUNCTION__<<"] Detached shaders.\n";}
 	glDeleteShader(vSha);
 	glDeleteShader(gSha);
 	glDeleteShader(fSha);
-	if (verbose) {std::cerr<<"[LOG]["<<__PRETTY_FUNCTION__<<"] Deleted shaders.\n";}
 
 	return _prog;
 }
@@ -526,27 +572,44 @@ void Scene::drawPlane_single(GLfloat mvMat[], GLfloat pMat[], planes _plane) {
 }
 
 void Scene::drawPlanes(GLfloat mvMat[], GLfloat pMat[]) {
-	glUseProgram(this->planeProgramHandle);
 	glEnable(GL_DEPTH_TEST);
 
-	glBindVertexArray(this->vaoHandle);
-	this->setupVAOPointers();
-
 	// Plane X :
-	this->prepPlaneUniforms(mvMat, pMat, planes::x);
+	glUseProgram(this->planeProgramHandle);
+	glBindVertexArray(this->vaoHandle);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboPlaneElementHandle);
-	glDrawArrays(GL_TRIANGLES, static_cast<GLint>(0), static_cast<GLint>(6));
+	this->prepPlaneUniforms(mvMat, pMat, planes::x);
+
+	// glDrawRangeElements(GL_TRIANGLES, 0, 6, static_cast<GLsizei>(6), GL_UNSIGNED_INT, static_cast<GLvoid*>(0));
+	glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(6), GL_UNSIGNED_INT, static_cast<GLvoid*>(0));
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+	glUseProgram(0);
 
 	// Plane Y :
-	this->prepPlaneUniforms(mvMat, pMat, planes::y);
+	glUseProgram(this->planeProgramHandle);
+	glBindVertexArray(this->vaoHandle);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboPlaneElementHandle);
-	glDrawArrays(GL_TRIANGLES, static_cast<GLint>(6), static_cast<GLint>(6));
+	this->prepPlaneUniforms(mvMat, pMat, planes::y);
+
+	// glDrawRangeElements(GL_TRIANGLES, 6, 12, static_cast<GLsizei>(6), GL_UNSIGNED_INT, static_cast<GLvoid*>(0));
+	glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(6), GL_UNSIGNED_INT, (GLvoid*)(6*sizeof(GLuint)));
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+	glUseProgram(0);
 
 	// Plane Z :
-	this->prepPlaneUniforms(mvMat, pMat, planes::z);
+	glUseProgram(this->planeProgramHandle);
+	glBindVertexArray(this->vaoHandle);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboPlaneElementHandle);
-	glDrawArrays(GL_TRIANGLES, static_cast<GLint>(12), static_cast<GLint>(6));
+	this->prepPlaneUniforms(mvMat, pMat, planes::z);
 
+	// glDrawRangeElements(GL_TRIANGLES, 12, 18, static_cast<GLsizei>(6), GL_UNSIGNED_INT, static_cast<GLvoid*>(0));
+	glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(6), GL_UNSIGNED_INT, (GLvoid*)(12*sizeof(GLuint)));
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 	glUseProgram(0);
 }
@@ -596,44 +659,29 @@ void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, 
 	GLint minTexVal_Loc = glGetUniformLocation(this->programHandle, "minTexVal");
 	GLint maxTexVal_Loc = glGetUniformLocation(this->programHandle, "maxTexVal");
 	GLint drawMode_Loc = glGetUniformLocation(this->programHandle, "drawMode");
-	GLint texData_Loc = glGetUniformLocation(this->programHandle, "texData");
 	GLint colorOrTexture_Loc = glGetUniformLocation(this->programHandle, "colorOrTexture");
 	GetOpenGLError();
-	if (colorOrTexture_Loc == -1) {
-		std::cerr << "Cannot find the colorOrTexture location in program.\n";
-	}
-	GLint colorScaleLocation = glGetUniformLocation(this->programHandle, "colorScale");
-	GetOpenGLError();
-	if (colorScaleLocation == -1) {
-		std::cerr << "Cannot find colorScale location in program\n";
-	}
 
 	DiscreteGrid::bbox_t::vec origin = grid->getBoundingBox().getMin();
-	glUniform3fv(voxelGridOrigin_Loc, 1, glm::value_ptr(origin));
-	GetOpenGLError();
 	DiscreteGrid::sizevec3 gridDims = grid->getGridDimensions();
 	glm::vec3 dims = glm::vec3(static_cast<float>(gridDims.x), static_cast<float>(gridDims.y), static_cast<float>(gridDims.z));
+
+	glUniform3fv(voxelGridOrigin_Loc, 1, glm::value_ptr(origin));
 	glUniform3fv(voxelGridSize_Loc, 1, glm::value_ptr(dims));
-	GetOpenGLError();
 	glUniform3fv(voxelSize_Loc, 1, glm::value_ptr(grid->getVoxelDimensions()));
-	GetOpenGLError();
 	glUniform1ui(minTexVal_Loc, this->minTexVal);
-	GetOpenGLError();
 	glUniform1ui(maxTexVal_Loc, this->maxTexVal);
-	GetOpenGLError();
 	glUniform1ui(colorOrTexture_Loc, this->colorOrTexture ? 1 : 0);
-	GetOpenGLError();
 	if (grid->getData().size() == 0) {
 		glUniform1ui(drawMode_Loc, 2);
 	} else {
 		glUniform1ui(drawMode_Loc, this->drawMode);
 	}
-	glUniform1ui(texData_Loc, 0);
 	GetOpenGLError();
-	glUniform1ui(colorScaleLocation, 1);
-	GetOpenGLError();
+
+	// Textures :
 	glActiveTexture(GL_TEXTURE0 + 0);
-	glBindTexture(GL_TEXTURE_3D, texHandle);
+	glBindTexture(GL_TEXTURE_3D, this->textureHandle);
 	GetOpenGLError();
 	glActiveTexture(GL_TEXTURE0 + 1);
 	glBindTexture(GL_TEXTURE_2D, this->colorScaleHandle);
@@ -641,37 +689,38 @@ void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, 
 
 	// Apply the uniforms :
 	glUniformMatrix4fv(mMatrix_Loc, 1, GL_FALSE, glm::value_ptr(transfoMat));
-	GetOpenGLError();
 	glUniformMatrix4fv(vMatrix_Loc, 1, GL_FALSE, &mvMat[0]);
-	GetOpenGLError();
 	glUniformMatrix4fv(pMatrix_Loc, 1, GL_FALSE, &pMat[0]);
-	GetOpenGLError();
 	glUniform4fv(lightPos_Loc, 1, glm::value_ptr(lightPos));
 	GetOpenGLError();
 }
 
 void Scene::prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane) {
 	// lambda function to check uniform location :
-	/*auto checkUniformLocation = [](const GLint id, const char* name) {
+	auto checkUniformLocation = [](const GLint id, const char* name) -> bool {
 		if (id == -1) {
-			std::cerr << "[LOG][" << __PRETTY_FUNCTION__ << "] Could not " <<
-				"find uniform \"" << name << "\" in program.\n";
+			/*std::cerr << "[LOG][" << __FILE__ << ":" << __LINE__ << "] Could not " <<
+				"find uniform \"" << name << "\" in program.\n";*/
+				return false;
 		}
-	};*/
-	auto checkUniformLocation = [](const GLint id, const char* name) { return; };
+		return true;
+	};
+
 	// aliases for this function :
 	using uvec3_t = typename glm::uvec3::value_type;
 	using boxvec_t = typename DiscreteGrid::bbox_t::vec;
 
 	// Get uniform locations for the program :
-	GLint location_mMatrix = glGetUniformLocation(this->planeProgramHandle, "mMatrix");
-	GLint location_vMatrix = glGetUniformLocation(this->planeProgramHandle, "vMatrix");
-	GLint location_pMatrix = glGetUniformLocation(this->planeProgramHandle, "pMatrix");
+	GLint location_mMatrix = glGetUniformLocation(this->planeProgramHandle, "model_Mat");
+	GLint location_vMatrix = glGetUniformLocation(this->planeProgramHandle, "view_Mat");
+	GLint location_pMatrix = glGetUniformLocation(this->planeProgramHandle, "projection_Mat");
 	GLint location_gridTransform = glGetUniformLocation(this->planeProgramHandle, "gridTransform");
 	GLint location_gridPosition = glGetUniformLocation(this->planeProgramHandle, "gridPosition");
 	GLint location_gridSize = glGetUniformLocation(this->planeProgramHandle, "gridSize");
 	GLint location_currentPlane = glGetUniformLocation(this->planeProgramHandle, "currentPlane");
 	GLint location_planePosition = glGetUniformLocation(this->planeProgramHandle, "planePosition");
+	GLint location_texData = glGetUniformLocation(this->planeProgramHandle, "texData");
+	GLint location_colorScale = glGetUniformLocation(this->planeProgramHandle, "colorScale");
 
 	// Check the location values :
 	checkUniformLocation(location_mMatrix, "mMatrix");
@@ -682,10 +731,12 @@ void Scene::prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane) {
 	checkUniformLocation(location_gridSize, "gridSize");
 	checkUniformLocation(location_currentPlane, "currentPlane");
 	checkUniformLocation(location_planePosition, "planePosition");
+	checkUniformLocation(location_texData, "texData");
+	checkUniformLocation(location_colorScale, "colorScale");
 
 	// Generate the data we need :
 	glm::mat4 transform = glm::mat4(1.f);
-	glm::mat4 gridTransfo = this->texStorage->getTransform_WorldToGrid();
+	glm::mat4 gridTransfo = glm::mat4(1.f);
 	boxvec_t min = this->texStorage->getBoundingBoxWorldSpace().getMin();
 	glm::uvec3 size = glm::convert_to<uvec3_t>(this->texStorage->getGridDimensions());
 	glm::uvec3 d(static_cast<uvec3_t>(size.x), static_cast<uvec3_t>(size.y), static_cast<uvec3_t>(size.z));
@@ -693,29 +744,37 @@ void Scene::prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane) {
 	glUniformMatrix4fv(location_mMatrix, 1, GL_FALSE, glm::value_ptr(transform));
 	glUniformMatrix4fv(location_vMatrix, 1, GL_FALSE, mvMat);
 	glUniformMatrix4fv(location_pMatrix, 1, GL_FALSE, pMat);
-	glUniform3fv(location_gridTransform, 1, glm::value_ptr(gridTransfo));
+	glUniformMatrix4fv(location_gridTransform, 1, GL_FALSE, glm::value_ptr(gridTransfo));
 	glUniform3fv(location_gridPosition, 1, glm::value_ptr(min));
 	glUniform3uiv(location_gridSize, 1, glm::value_ptr(size));
 	glUniform1i(location_currentPlane, _plane);
 	glUniform3fv(location_planePosition, 1, glm::value_ptr(this->planePosition));
+	glActiveTexture(GL_TEXTURE0 + 0);
+	glBindTexture(GL_TEXTURE_3D, this->textureHandle);
+	glUniform1i(location_texData, this->textureHandle);
+	glActiveTexture(GL_TEXTURE0 + 1);
+	glBindTexture(GL_TEXTURE_2D, this->colorScaleHandle);
+	glUniform1i(location_colorScale, this->colorScaleHandle);
+	GetOpenGLError();
 }
 
 void Scene::drawGrid_Generic(GLfloat *mvMat, GLfloat *pMat, glm::mat4 baseMatrix, GLuint texHandle, const std::shared_ptr<DiscreteGrid> &grid) {
 	glm::vec4 lightPos = glm::vec4(-0.25, -0.25, -0.25, 1.0);
-	glUseProgram(this->programHandle);
 	glEnable(GL_TEXTURE_3D);
-	this->prepGridUniforms(mvMat, pMat, lightPos, baseMatrix, texHandle, grid);
 	GetOpenGLError();
 
+	glUseProgram(this->programHandle);
 	glBindVertexArray(this->vaoHandle);
-	this->setupVAOPointers();
-
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboElementHandle);
+
+	this->prepGridUniforms(mvMat, pMat, lightPos, baseMatrix, texHandle, grid);
 
 	glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(this->renderSize), GL_UNSIGNED_INT, (void*)0);
 
-	glUseProgram(0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
+	glUseProgram(0);
+	GetOpenGLError();
 }
 
 void Scene::generateGrid() {
@@ -797,27 +856,37 @@ void Scene::setupVBOData(const std::vector<glm::vec4>& vertPos, const std::vecto
 	/// CREATE VBO AND UPLOAD DATA
 	///////////////////////////////////////////////
 	glGenBuffers(1, &this->vboVertPosHandle);
+	GetOpenGLError();
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboVertPosHandle);
+	GetOpenGLError();
 	glBufferData(GL_ARRAY_BUFFER, vertPos.size()*sizeof(glm::vec4), vertPos.data(), GL_STATIC_DRAW);
 	GetOpenGLError();
 
 	glGenBuffers(1, &this->vboVertNormHandle);
+	GetOpenGLError();
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboVertNormHandle);
+	GetOpenGLError();
 	glBufferData(GL_ARRAY_BUFFER, vertNorm.size()*sizeof(glm::vec4), vertNorm.data(), GL_STATIC_DRAW);
 	GetOpenGLError();
 
 	glGenBuffers(1, &this->vboVertTexHandle);
+	GetOpenGLError();
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboVertTexHandle);
+	GetOpenGLError();
 	glBufferData(GL_ARRAY_BUFFER, vertTex.size()*sizeof(glm::vec3), vertTex.data(), GL_STATIC_DRAW);
 	GetOpenGLError();
 
 	glGenBuffers(1, &this->vboElementHandle);
+	GetOpenGLError();
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboElementHandle);
+	GetOpenGLError();
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertIdx.size()*sizeof(unsigned int), vertIdx.data(), GL_STATIC_DRAW);
 	GetOpenGLError();
 
 	glGenBuffers(1, &this->vboPlaneElementHandle);
+	GetOpenGLError();
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboPlaneElementHandle);
+	GetOpenGLError();
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertIdx_plane.size()*sizeof(unsigned int), vertIdx_plane.data(), GL_STATIC_DRAW);
 	GetOpenGLError();
 
@@ -825,18 +894,26 @@ void Scene::setupVBOData(const std::vector<glm::vec4>& vertPos, const std::vecto
 }
 
 void Scene::setupVAOPointers() {
+	glBindVertexArray(this->vaoHandle);
+
 	glEnableVertexAttribArray(0);
+	GetOpenGLError();
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboVertPosHandle);
+	GetOpenGLError();
 	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
 	GetOpenGLError();
 
 	glEnableVertexAttribArray(1);
+	GetOpenGLError();
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboVertNormHandle);
+	GetOpenGLError();
 	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
 	GetOpenGLError();
 
 	glEnableVertexAttribArray(2);
+	GetOpenGLError();
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboVertTexHandle);
+	GetOpenGLError();
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 	GetOpenGLError();
 }
@@ -882,8 +959,13 @@ std::vector<float> Scene::generateColorScale(std::size_t minVal, std::size_t max
 		if (i >= minVal && i <= maxVal) {
 			float a = static_cast<float>(minVal) / 255.f;
 			float b = static_cast<float>(maxVal) / 255.f;
+			#ifdef COLOR_SCALE_RELATIVE_COLORS
 			float c	= .2f * b;
 			float d	= .7f * b;
+			#else
+			float c = 50.f / 255.f;
+			float d = 200.f / 255.f;
+			#endif
 			float r = 1.f - ((b - a) / (d - c)) * ((static_cast<float>(i)/255.f)-c)+a;
 			glm::vec4 k = glm::vec4(1.f, 2.f/3.f, 1.f/3.f, 3.f);
 			glm::vec3 p = glm::abs(glm::fract(glm::vec3(r,r,r) + glm::vec3(k.x,k.y,k.z)) * 6.f - glm::vec3(k.w));
