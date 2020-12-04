@@ -19,8 +19,10 @@ uniform mat4 projection_Mat;
 uniform mat4 gridTransform;
 // The origin of the grid's bounding box
 uniform vec3 gridPosition;
-// The size of the grid  we have to intersect :
-uniform uvec3 gridSize;
+// The size of the grid's bounding box in world space :
+uniform vec3 gridSize;
+// The dimensions of the grid :
+uniform vec3 gridDimensions;
 
 // Plane number : 1 (x), 2 (y), 3 (z)
 uniform int currentPlane;
@@ -49,23 +51,22 @@ vec4 planeIdxToPlaneSize(int idx) {
 }
 
 void main(void) {
-	vec4 gridPosition4 = gridPosition.xyzx;
-	gridPosition4.a = 0;
+	mat4 norMat = inverse(transpose(model_Mat));
+	vec4 gridSize4 = vec4(gridSize.x, gridSize.y, gridSize.z, 1.f);
+	vec4 gridPosition4 = vec4(gridPosition.x, gridPosition.y, gridPosition.z, .0);
+	vec4 gridDimensions4 = vec4(gridDimensions.x, gridDimensions.y, gridDimensions.z, 1.f);
 	/*
 	Vertex position will always be normalized (i.e., in [0, 1]). We need to apply the correct size multiplier and
 	the correct displacement in order to get the 'real' position of a vertex within that plane.
 	*/
-	vec4 vPos_planeSpace = vertexPosition;
-	vec4 vPos_worldSpace = vPos_planeSpace * planeIdxToPlaneSize(currentPlane) + planeIdxToPlanePosition(currentPlane);
-	vec4 vPos_gridSpace = vPos_planeSpace * gridTransform;
-	vec4 vPos_texSpace = vPos_gridSpace - gridPosition4;
-	vPos_texSpace.x = vPos_texSpace.x / float(gridSize.x);
-	vPos_texSpace.y = vPos_texSpace.y / float(gridSize.y);
-	vPos_texSpace.z = vPos_texSpace.z / float(gridSize.z);
+	vec4 vPos_ws = (vertexPosition * gridSize4) + gridPosition4 + planeIdxToPlanePosition(currentPlane);
+	vec4 tempP = (vertexPosition * gridSize4) + planeIdxToPlanePosition(currentPlane);
+	vec4 vPos_gs = inverse(gridTransform) * vPos_ws;
+	vec4 vPos_ts = vPos_gs / gridDimensions4;
 
-	vPos = vPos_worldSpace;
-	vNorm = vertexNormal;
-	texCoord = vPos_texSpace.xyz;
+	vPos = vPos_ws;
+	vNorm = norMat * vertexNormal;
+	texCoord = vPos_ts.xyz;
 
 	gl_Position = projection_Mat * view_Mat * model_Mat * vPos;
 }

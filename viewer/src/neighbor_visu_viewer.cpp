@@ -64,6 +64,9 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 			this->scene->recompileShaders();
 			this->update();
 		break;
+		case Qt::Key::Key_C:
+			this->scene->printVAOStateNext();
+		break;
 		/*
 		GRID VISIBILITY
 		*/

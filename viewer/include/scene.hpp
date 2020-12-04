@@ -88,6 +88,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 
 		void cleanup(void); ///< cleanup function for vbo and other parts
 		bool isInitialized; ///< tracks if the scene was initialized or not
+		void printVAOStateNext() { this->showVAOstate = true; }
 
 		void slotTogglePolygonMode(bool show);
 		void slotToggleShowTextureCube(bool show);
@@ -126,6 +127,8 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void setupVBOData(const std::vector<glm::vec4>& vertPos, const std::vector<glm::vec4>& vertNorm, const std::vector<glm::vec3>& vertTex, const std::vector<unsigned int>& vertIdx, const std::vector<unsigned int>& vertIdx_plane);
 		/// @b setup the vao binding setup
 		void setupVAOPointers();
+		/// @b bind the textures to use them later
+		void bindTextures();
 	protected:
 		void generateGrid();
 
@@ -154,6 +157,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		glm::vec3 planePosition;
 		uvec3 neighborPos;
 		DrawMode drawMode;
+		bool showVAOstate;
 
 		GLuint vboVertPosHandle;
 		GLuint vboVertNormHandle;
