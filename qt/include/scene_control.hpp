@@ -21,8 +21,9 @@ class ControlPanel : public QWidget {
 		ControlPanel(Scene* const scene, Viewer* lv, Viewer* rv, QWidget* parent = nullptr);
 		~ControlPanel();
 	protected:
-		void initSignals();
+		void initSignals(void);
 		void updateViewers(void);
+		void updateValues(void);
 	public slots:
 		void activatePanels(bool activeStatus = true);
 	private:
@@ -32,6 +33,9 @@ class ControlPanel : public QWidget {
 		QDoubleSpinBox* xPlanePos; ///< Slider to determine the coordinate of the minimum X cutting plane
 		QDoubleSpinBox* yPlanePos; ///< Slider to determine the coordinate of the minimum Y cutting plane
 		QDoubleSpinBox* zPlanePos; ///< Slider to determine the coordinate of the minimum Z cutting plane
+		QSlider* xPlaneDepth; ///< The depth of the cutting plane in the texture, on the X axis
+		QSlider* yPlaneDepth; ///< The depth of the cutting plane in the texture, on the Y axis
+		QSlider* zPlaneDepth; ///< The depth of the cutting plane in the texture, on the Z axis
 		QWidget* controlContainer;
 		Viewer* leftViewer;
 		Viewer* rightViewer;

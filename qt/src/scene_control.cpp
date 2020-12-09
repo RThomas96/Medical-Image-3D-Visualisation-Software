@@ -19,6 +19,9 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, Viewer* rv, QWidget* 
 	this->xPlanePos = new QDoubleSpinBox();
 	this->yPlanePos = new QDoubleSpinBox();
 	this->zPlanePos = new QDoubleSpinBox();
+	this->xPlaneDepth = new QSlider(Qt::Horizontal);
+	this->yPlaneDepth = new QSlider(Qt::Horizontal);
+	this->zPlaneDepth = new QSlider(Qt::Horizontal);
 
 	// Create the container widget :
 	this->controlContainer = new QWidget();
@@ -29,16 +32,13 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, Viewer* rv, QWidget* 
 	this->maxValueTexture->setRange(0, 255);
 	this->maxValueTexture->setValue(255);
 
-	// Create labels for sliders :
-	QLabel* xSliderLabel = new QLabel("X coordinate");
-	QLabel* ySliderLabel = new QLabel("Y coordinate");
-	QLabel* zSliderLabel = new QLabel("Z coordinate");
-	QLabel* xTexLabel = new QLabel("X texture");
-	QLabel* yTexLabel = new QLabel("Y texture");
-	QLabel* zTexLabel = new QLabel("Z texture");
+	this->xPlaneDepth->setRange(0, 100); this->xPlaneDepth->setValue(0);
+	this->yPlaneDepth->setRange(0, 100); this->yPlaneDepth->setValue(0);
+	this->zPlaneDepth->setRange(0, 100); this->zPlaneDepth->setValue(0);
 
 	QLabel* minTexLabel = new QLabel("Min texture value");
 	QLabel* maxTexLabel = new QLabel("Max texture value");
+	QLabel* planeDepthLabel = new QLabel("Cutting plane depths");
 
 	QLabel* cutMinLabel = new QLabel("Cutting plane coordinates");
 
@@ -58,6 +58,11 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, Viewer* rv, QWidget* 
 	cutMinContainer->addWidget(this->xPlanePos);
 	cutMinContainer->addWidget(this->yPlanePos);
 	cutMinContainer->addWidget(this->zPlanePos);
+
+	cutMaxContainer->addWidget(planeDepthLabel);
+	cutMaxContainer->addWidget(this->xPlaneDepth);
+	cutMaxContainer->addWidget(this->yPlaneDepth);
+	cutMaxContainer->addWidget(this->zPlaneDepth);
 
 	allContainer->addLayout(topContainer);
 	allContainer->addLayout(texContainer);
@@ -90,19 +95,30 @@ ControlPanel::~ControlPanel() {
 #ifndef NDEBUG
 	std::cerr << "[TRACE][" << __PRETTY_FUNCTION__ << "] : deleting control panel tied to scene " << this->sceneToControl << "...\n";
 #endif
-
 	auto deletePtr = [](auto* obj) {
 		if (obj != nullptr) {
 			delete obj;
 		}
 		obj = nullptr;
 	};
+
+	this->xPlanePos->disconnect();
+	this->yPlanePos->disconnect();
+	this->zPlanePos->disconnect();
+	this->xPlaneDepth->disconnect();
+	this->yPlaneDepth->disconnect();
+	this->zPlaneDepth->disconnect();
+
 	deletePtr(this->minValueTexture);
 	deletePtr(this->maxValueTexture);
 	deletePtr(this->xPlanePos);
 	deletePtr(this->yPlanePos);
 	deletePtr(this->zPlanePos);
+	deletePtr(this->xPlaneDepth);
+	deletePtr(this->yPlaneDepth);
+	deletePtr(this->zPlaneDepth);
 	deletePtr(this->controlContainer);
+
 #ifndef NDEBUG
 	std::cerr << "[TRACE][" << __PRETTY_FUNCTION__ << "] : Deleted control panel.\n";
 #endif
@@ -113,6 +129,11 @@ void ControlPanel::initSignals() {
 	connect(this->xPlanePos, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &ControlPanel::setCutPlaneXPos);
 	connect(this->yPlanePos, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &ControlPanel::setCutPlaneYPos);
 	connect(this->zPlanePos, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &ControlPanel::setCutPlaneZPos);
+
+	// The signals for plane depth will be connected :
+	connect(this->xPlaneDepth, &QSlider::valueChanged, this, &ControlPanel::setXTexCoord);
+	connect(this->yPlaneDepth, &QSlider::valueChanged, this, &ControlPanel::setYTexCoord);
+	connect(this->zPlaneDepth, &QSlider::valueChanged, this, &ControlPanel::setZTexCoord);
 
 	// Modifies the min/max values of the texture to be considered valuable data :
 	connect(this->minValueTexture, QOverload<int>::of(&QSpinBox::valueChanged), this, &ControlPanel::setMinTexVal);
@@ -125,6 +146,7 @@ void ControlPanel::updateViewers() {
 }
 
 void ControlPanel::activatePanels(bool activeStatus) {
+	this->updateValues();
 	this->controlContainer->setEnabled(activeStatus);
 	if (activeStatus) {
 		this->controlContainer->show();
@@ -134,21 +156,46 @@ void ControlPanel::activatePanels(bool activeStatus) {
 	this->update();
 }
 
+void ControlPanel::updateValues(void) {
+	if (this->sceneToControl == nullptr) { return; }
+	glm::vec3 pos = this->sceneToControl->getPlanePositions();
+	this->blockSignals(true);
+	this->xPlanePos->blockSignals(true);
+	this->yPlanePos->blockSignals(true);
+	this->zPlanePos->blockSignals(true);
+	this->minValueTexture->blockSignals(true);
+	this->maxValueTexture->blockSignals(true);
+	this->xPlanePos->setValue(pos.x);
+	this->yPlanePos->setValue(pos.y);
+	this->zPlanePos->setValue(pos.z);
+	this->minValueTexture->setValue(this->sceneToControl->getMinTexValue());
+	this->maxValueTexture->setValue(this->sceneToControl->getMaxTexValue());
+	this->maxValueTexture->blockSignals(false);
+	this->minValueTexture->blockSignals(false);
+	this->zPlanePos->blockSignals(false);
+	this->yPlanePos->blockSignals(false);
+	this->xPlanePos->blockSignals(false);
+	this->blockSignals(false);
+}
+
 void ControlPanel::setXTexCoord(int coordX) {
-	uint co = static_cast<uint>(coordX);
-	this->sceneToControl->slotSetTextureXCoord(co);
+	float max = static_cast<float>(this->xPlaneDepth->maximum());
+	float ratio = static_cast<float>(coordX) / max;
+	this->sceneToControl->slotSetPlaneDepthX(ratio);
 	this->updateViewers();
 }
 
 void ControlPanel::setYTexCoord(int coordY) {
-	uint co = static_cast<uint>(coordY);
-	this->sceneToControl->slotSetTextureYCoord(co);
+	float max = static_cast<float>(this->yPlaneDepth->maximum());
+	float ratio = static_cast<float>(coordY) / max;
+	this->sceneToControl->slotSetPlaneDepthY(ratio);
 	this->updateViewers();
 }
 
 void ControlPanel::setZTexCoord(int coordZ) {
-	uint co = static_cast<uint>(coordZ);
-	this->sceneToControl->slotSetTextureZCoord(co);
+	float max = static_cast<float>(this->zPlaneDepth->maximum());
+	float ratio = static_cast<float>(coordZ) / max;
+	this->sceneToControl->slotSetPlaneDepthZ(ratio);
 	this->updateViewers();
 }
 

@@ -1,26 +1,25 @@
 #ifndef VIEWER_INCLUDE_SCENE_HPP_
 #define VIEWER_INCLUDE_SCENE_HPP_
 
-//#include "gl/GLHandler/include/ShaderObject.hpp"
-//#include "gl/GLHandler/include/ProgramObject.hpp"
-//#include "gl/GLHandler/include/VAOObject.hpp"
-
+// Program-wide features and macros
 #include "../../macros.hpp"
 #include "../../features.hpp"
-
+// Scene control panel :
+#include "../../qt/include/scene_control.hpp"
+// Discrete grid and grid generation :
 #include "../../grid/include/tetmesh.hpp"
 #include "../../grid/include/discrete_grid.hpp"
 #include "../../grid/include/input_discrete_grid.hpp"
 #include "../../grid/include/output_discrete_grid.hpp"
-
+// UI elements :
 #include "../../qt/include/grid_control.hpp"
 #include "../../qt/include/grid_detailed_view.hpp"
 #include "../../qt/include/grid_list_view.hpp"
-
+// Qt headers :
 #include <QOpenGLFunctions_4_0_Core>
 #include <QGLViewer/qglviewer.h>
 #include <glm/glm.hpp>
-
+// STD headers :
 #include <vector>
 #include <mutex>
 
@@ -46,17 +45,13 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 
 		/// @brief For the dual-viewer : draw in real space
 		void drawGridOnly(GLfloat mvMat[], GLfloat pMat[]);
-		/// @brief For the dual-viewer : draw in grid space
-		void drawWithPlane(GLfloat mvMat[], GLfloat pMat[], planes _plane);
-
-		/// @brief Draws the X plane.
-		void drawPlaneX(GLfloat mvMat[], GLfloat pMat[]);
-		/// @brief Draws the Y plane.
-		void drawPlaneY(GLfloat mvMat[], GLfloat pMat[]);
-		/// @brief Draws the Z plane.
-		void drawPlaneZ(GLfloat mvMat[], GLfloat pMat[]);
 		/// @brief draw the planes, in the real space
 		void drawPlanes(GLfloat mvMat[], GLfloat pMat[]);
+
+		/// @brief For the dual-viewer : draw in grid space
+		void drawWithPlanes(GLfloat mvMat[], GLfloat pMat[]);
+		/// @b Draw a given plane 'view' (single plane on the framebuffer).
+		void drawPlaneView(glm::vec2 fbDims, planes _plane);
 
 		/// @brief load the 3D texture to opengl
 		void loadImage();
@@ -89,24 +84,32 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void cleanup(void); ///< cleanup function for vbo and other parts
 		bool isInitialized; ///< tracks if the scene was initialized or not
 		void printVAOStateNext() { this->showVAOstate = true; }
+		glm::vec3 getPlanePositions(void) { return this->planePosition; } ///< Get the cutting planes' positions
+		uint getMinTexValue(void) const { return this->minTexVal; }
+		uint getMaxTexValue(void) const { return this->maxTexVal; }
 
 		void slotTogglePolygonMode(bool show);
 		void slotToggleShowTextureCube(bool show);
-		void slotSetTextureXCoord(uint newXCoord);
-		void slotSetTextureYCoord(uint newYCoord);
-		void slotSetTextureZCoord(uint newZCoord);
+		void slotSetPlaneDepthX(float newXCoord);
+		void slotSetPlaneDepthY(float newYCoord);
+		void slotSetPlaneDepthZ(float newZCoord);
 		void slotSetMinTexValue(uchar val);
 		void slotSetMaxTexValue(uchar val);
 		void slotSetPlanePositionX(float coord);
 		void slotSetPlanePositionY(float coord);
 		void slotSetPlanePositionZ(float coord);
 	private :
-		/// @brief compile the given shaders
+		/// @b compile the given shader at 'path' as a shader of type 'shaType'
 		GLuint compileShader(const std::string& path, const GLenum shaType, bool verbose = false);
+		/// @b Create and link a program, with the given (valid) shader IDs.
 		GLuint compileProgram(const GLuint vSha = 0, const GLuint gSha = 0, const GLuint fSha = 0, bool verbose = false);
+		/// @b Compile the given shaders, and return the ID of the program generated. On any error, returns 0.
 		GLuint compileShaders(std::string vPath, std::string gPath, std::string fPath, bool verbose = false);
+		/// @b Generates the vertices, normals, and tex coordinates for a basic unit cube
 		void generateTexCube(std::vector<glm::vec4>& vertPos, std::vector<glm::vec4>& vertNorm, std::vector<glm::vec3>& vertTex, std::vector<unsigned int>& vertIdx);
+		/// @b Generates the plane's vertices array indexes
 		void generatePlanesArray(std::vector<unsigned int>& idx);
+		/// @b computes the transformation matrix of the input grid
 		glm::mat4 computeTransformationMatrix() const;
 		/// @b preps uniforms for a grid
 		void prepGridUniforms(GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, GLuint texHandle, const std::shared_ptr<DiscreteGrid>& grid);
@@ -114,21 +117,22 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void drawGrid_Generic(GLfloat mvMat[], GLfloat pMat[], glm::mat4 baseMatrix, GLuint texHandle, const std::shared_ptr<DiscreteGrid>& grid);
 		/// @b preps uniforms for a given plane
 		void prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane);
-		/// @b draws a given plane
-		void drawPlane_single(GLfloat mvMat[], GLfloat pMat[], planes _plane);
 		/// @brief prep the plane uniforms to draw in space
-		void prepPlane_SingleUniforms(planes _plane, GLfloat* mvMat, GLfloat* pMat, glm::vec4);
+		void prepPlane_SingleUniforms(planes _plane, glm::vec2 fbDims, const std::shared_ptr<DiscreteGrid> _grid);
 		/// @b Prints grid info.
 		void printGridInfo(const std::shared_ptr<DiscreteGrid>& grid);
 		/// @b Generate a scale of colors for the program.
-		std::vector<float> generateColorScale(std::size_t minVal, std::size_t maxVal); ///< Generate a color scale for the data
-		void uploadColorScale(const std::vector<float>& colorScale); ///< Uploads the color scale to OpenGL
+		std::vector<float> generateColorScale(std::size_t minVal, std::size_t maxVal);
+		/// @b Uploads the color scale to OpenGL
+		void uploadColorScale(const std::vector<float>& colorScale);
 		/// @b setup the buffers' data
 		void setupVBOData(const std::vector<glm::vec4>& vertPos, const std::vector<glm::vec4>& vertNorm, const std::vector<glm::vec3>& vertTex, const std::vector<unsigned int>& vertIdx, const std::vector<unsigned int>& vertIdx_plane);
 		/// @b setup the vao binding setup
 		void setupVAOPointers();
 		/// @b bind the textures to use them later
 		void bindTextures();
+		/// @b Prints the accessible uniforms and attributes of the given program.
+		void printProgramUniforms(const GLuint _pid);
 	protected:
 		void generateGrid();
 
@@ -155,7 +159,9 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		uchar maxTexVal;
 
 		glm::vec3 planePosition;
-		uvec3 neighborPos;
+		glm::vec3 planeDepths;
+		glm::vec3 sceneBBPosition;
+		glm::vec3 sceneBBDiag;
 		DrawMode drawMode;
 		bool showVAOstate;
 
@@ -167,6 +173,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		GLuint vaoHandle;
 		GLuint programHandle;
 		GLuint planeProgramHandle;
+		GLuint planeViewerProgramHandle;
 
 		GLuint textureHandle; ///< handle for glTexImage3D
 		GLuint voxelGridTexHandle; ///< handle for the voxel grid's data

@@ -8,8 +8,8 @@
 
 float Viewer::sceneRadiusMultiplier{1.5f};
 
-Viewer::Viewer(Scene* const scene, bool isLeftOrRight, planes _plane, QWidget* parent) :
-	QGLViewer(parent), scene(scene), isRealSpace(isLeftOrRight), plane(_plane) {
+Viewer::Viewer(Scene* const scene, QWidget* parent) :
+	QGLViewer(parent), scene(scene) {
 	this->setGridIsDrawn();
 
 	this->refreshTimer = new QTimer();
@@ -48,11 +48,7 @@ void Viewer::draw() {
 	this->camera()->getModelViewMatrix(mvMat);
 	this->camera()->getProjectionMatrix(pMat);
 
-	if (isRealSpace) {
-		this->scene->drawGridOnly(mvMat, pMat);
-	} else {
-		this->scene->drawWithPlane(mvMat, pMat, this->plane);
-	}
+	this->scene->drawWithPlanes(mvMat, pMat);
 }
 
 void Viewer::keyPressEvent(QKeyEvent *e) {

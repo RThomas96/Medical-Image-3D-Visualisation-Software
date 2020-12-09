@@ -49,6 +49,7 @@ ADD_EXECUTABLE(neighbor_visu
 	./qt/include/qt_proxies.hpp
 
 	./viewer/include/scene.hpp
+	./viewer/include/planar_viewer.hpp
 	./viewer/include/neighbor_visu_viewer.hpp
 
 	./grid/include/tetmesh.hpp
@@ -72,6 +73,7 @@ ADD_EXECUTABLE(neighbor_visu
 	./qt/src/qt_proxies.cpp
 
 	./viewer/src/scene.cpp
+	./viewer/src/planar_viewer.cpp
 	./viewer/src/neighbor_visu_viewer.cpp
 
 	./grid/src/tetmesh.cpp

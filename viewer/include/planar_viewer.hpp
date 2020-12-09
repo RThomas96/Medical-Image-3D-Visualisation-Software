@@ -5,6 +5,7 @@
 #include "./scene.hpp"
 
 #include <QGLViewer/qglviewer.h>
+#include <QTimer>
 
 #include <memory>
 
@@ -26,9 +27,10 @@ class PlanarViewer : public QGLViewer {
 	private :
 		Scene* sceneToShow; ///< The scene to draw.
 		planes planeToShow; ///< The plane to show.
+		QTimer* refreshTimer; ///< Triggers a scene reload
 	public slots:
 		/// @brief Update the view, as a slot without any arguments
-		void updateView(void) { this->update(); }
+		void updateView(void);
 };
 
 #endif // VISUALISATION_VIEWER_INCLUDE_PLANAR_VIEWER_HPP_

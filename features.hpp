@@ -27,4 +27,7 @@ the compiled code, by enabling or disabling certain parts of it.
 #define GLM_MAT_BEFORE_VEC
 //#define REVERSE_MATRIX_ORDER
 
+/// @b If defined, asks the user for images to load. Otherwise, loads the first 50 images of the 'Blue' dataset.
+#define USER_DEFINED_IMAGE_LOADING
+
 #endif // FEATURES_HPP

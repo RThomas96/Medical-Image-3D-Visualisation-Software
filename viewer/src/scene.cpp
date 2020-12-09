@@ -74,14 +74,18 @@ Scene::Scene(GridControl* const gc) {
 	this->textureHandle = 0;
 	this->colorScaleHandle = 0;
 
+	this->planePosition = glm::vec3();
+	this->planeDepths = glm::vec3();
+	this->sceneBBDiag = glm::vec3();
+	this->sceneBBPosition = glm::vec3();
+
 	this->vboVertPosHandle = 0;
 	this->vboElementHandle = 0;
 	this->vaoHandle = 0;
 	this->programHandle = 0;
 	this->planeProgramHandle = 0;
+	this->planeViewerProgramHandle = 0;
 	this->showVAOstate = false;
-
-	this->neighborPos = uvec3(0, 0, 0);
 
 	this->minTexVal = uchar(0);
 	this->maxTexVal = uchar(255);
@@ -103,15 +107,16 @@ void Scene::initGl(QOpenGLContext* _context) {
 
 	this->initializeOpenGLFunctions();
 
+	IO::GenericGridReader* reader = nullptr;
+	IO::GenericGridReader::data_t threshold = IO::GenericGridReader::data_t(6);
+
+#ifdef USER_DEFINED_IMAGE_LOADING
 	QMessageBox* msgBox = new QMessageBox();
 	msgBox->setText("Choose your input data type");
 	QPushButton* dimButton = msgBox->addButton("DIM", QMessageBox::ActionRole);
 	QPushButton* tiffButton = msgBox->addButton("TIFF", QMessageBox::ActionRole);
 
 	msgBox->exec();
-
-	IO::GenericGridReader* reader = nullptr;
-	IO::GenericGridReader::data_t threshold = IO::GenericGridReader::data_t(6);
 
 	if (msgBox->clickedButton() == dimButton) {
 		reader = new IO::DIMReader(threshold);
@@ -132,6 +137,17 @@ void Scene::initGl(QOpenGLContext* _context) {
 		std::cerr << "No button was pressed." << '\n';
 		throw std::runtime_error("error : no button pressed");
 	}
+#else
+	reader = new IO::Reader::TIFF(threshold);
+	std::vector<std::string> filenames = {
+		"/home/thibault/git/datasets/Blue/Blue_P5B-A2_2500.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2501.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2502.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2503.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2504.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2505.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2506.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2507.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2508.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2509.tif",
+		"/home/thibault/git/datasets/Blue/Blue_P5B-A2_2510.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2511.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2512.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2513.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2514.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2515.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2516.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2517.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2518.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2519.tif",
+		"/home/thibault/git/datasets/Blue/Blue_P5B-A2_2520.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2521.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2522.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2523.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2524.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2525.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2526.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2527.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2528.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2529.tif",
+		"/home/thibault/git/datasets/Blue/Blue_P5B-A2_2530.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2531.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2532.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2533.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2534.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2535.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2536.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2537.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2538.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2539.tif",
+		"/home/thibault/git/datasets/Blue/Blue_P5B-A2_2540.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2541.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2542.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2543.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2544.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2545.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2546.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2547.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2548.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2549.tif",
+	};
+	reader->setFilenames(filenames);
+#endif
 	// Set reader properties :
 	reader->setDataThreshold(threshold);
 	// Load the data :
@@ -146,7 +162,9 @@ void Scene::initGl(QOpenGLContext* _context) {
 	delete reader;
 
 	this->voxelGrid	= std::make_shared<OutputGrid>();
-	this->gridControl->setVoxelGrid(this->voxelGrid);
+	if (this->gridControl) {
+		this->gridControl->setVoxelGrid(this->voxelGrid);
+	}
 
 	this->mesh = std::make_shared<TetMesh>();
 	this->mesh->addInputGrid(this->texStorage).setOutputGrid(this->voxelGrid);
@@ -161,8 +179,10 @@ void Scene::initGl(QOpenGLContext* _context) {
 
 	this->programHandle = this->compileShaders("./shaders/voxelgrid.vert", "./shaders/voxelgrid.geom", "./shaders/voxelgrid.frag");
 	this->planeProgramHandle = this->compileShaders("./shaders/plane.vert", "", "./shaders/plane.frag");
+	this->planeViewerProgramHandle = this->compileShaders("./shaders/texture_explorer.vert", "", "./shaders/texture_explorer.frag");
 	if (this->programHandle == 0) { throw std::runtime_error("[ERROR] Program did not compile"); }
 	if (this->planeProgramHandle == 0) { throw std::runtime_error("[ERROR] 'Planes' Program did not compile"); }
+	if (this->planeViewerProgramHandle == 0) { throw std::runtime_error("[ERROR] 'PlaneViewer' Program did not compile"); }
 
 	this->loadImage();
 
@@ -171,6 +191,18 @@ void Scene::initGl(QOpenGLContext* _context) {
 	std::vector<float> colorScale = this->generateColorScale(0, 255);
 	this->uploadColorScale(colorScale);
 
+	// Get the bounding box of the input grid :
+	DiscreteGrid::bbox_t bb_ws = this->texStorage->getBoundingBoxWorldSpace();
+	// Add the bounding box of the output grid to it :
+	bb_ws.addPoints(this->voxelGrid->getBoundingBox().getAllCorners());
+	this->sceneBBPosition = bb_ws.getMin();
+	this->sceneBBDiag = bb_ws.getDiagonal();
+	// Set the plane position to the min point of the BB :
+	this->planePosition = glm::convert_to<glm::vec3::value_type>(bb_ws.getMin());
+
+	this->minTexVal = 5;
+	this->maxTexVal = 255;
+
 	if (this->controlPanel) {
 		this->controlPanel->activatePanels();
 	}
@@ -178,32 +210,6 @@ void Scene::initGl(QOpenGLContext* _context) {
 	glUseProgram(this->programHandle);
 	GetOpenGLError();
 	std::cerr << "Finished initializing scene" << '\n';
-
-	/*
-	GLint size; // size of the variable
-	GLenum type; // type of the variable (float, vec3 or mat4, etc)
-
-	const GLsizei bufSize = 256; // maximum name length
-	GLchar name[bufSize]; // variable name in GLSL
-	GLsizei length; // name length
-
-	glUseProgram(this->planeProgramHandle);
-	GLint attrCount = 0;
-	glGetProgramiv(this->planeProgramHandle, GL_ACTIVE_ATTRIBUTES, &attrCount);
-	std::cerr << "[TRACE] Plane program active attributes :\n";
-	for (GLint i = 0; i < attrCount; ++i ) {
-		//std::cerr << "[TRACE]\t" << ;
-		glGetActiveAttrib(this->planeProgramHandle, (GLuint)i, bufSize, &length, &size, &type, name);
-		fprintf(stderr, "[TRACE]\t\tAttribute #%d Type: %u Name: %s\n", i, type, name);
-	}
-	glGetProgramiv(this->planeProgramHandle, GL_ACTIVE_UNIFORMS, &attrCount);
-	std::cerr << "[TRACE] Plane program active attributes :\n";
-	for (GLint i = 0; i < attrCount; ++i ) {
-		//std::cerr << "[TRACE]\t" << ;
-		glGetActiveUniform(this->planeProgramHandle, (GLuint)i, bufSize, &length, &size, &type, name);
-		fprintf(stderr, "[TRACE]\t\tUniform #%d Type: %u Name: %s\n", i, type, name);
-	}
-	*/
 }
 
 void Scene::printGridInfo(const std::shared_ptr<DiscreteGrid>& grid) {
@@ -236,6 +242,7 @@ void Scene::printGridInfo(const std::shared_ptr<DiscreteGrid>& grid) {
 void Scene::recompileShaders() {
 	GLuint newProgram = this->compileShaders("./shaders/voxelgrid.vert", "./shaders/voxelgrid.geom", "./shaders/voxelgrid.frag", true);
 	GLuint newPlaneProgram = this->compileShaders("./shaders/plane.vert", "", "./shaders/plane.frag", true);
+	GLuint newPlaneViewerProgram = this->compileShaders("./shaders/texture_explorer.vert", "", "./shaders/texture_explorer.frag", true);
 
 	if (newProgram) {
 		glDeleteProgram(this->programHandle);
@@ -244,6 +251,10 @@ void Scene::recompileShaders() {
 	if (newPlaneProgram) {
 		glDeleteProgram(this->planeProgramHandle);
 		this->planeProgramHandle = newPlaneProgram;
+	}
+	if (newPlaneViewerProgram) {
+		glDeleteProgram(this->planeViewerProgramHandle);
+		this->planeViewerProgramHandle = newPlaneViewerProgram;
 	}
 }
 
@@ -419,8 +430,8 @@ void Scene::loadImage() {
 	GetOpenGLError();
 
 	// Set nearest neighbor :
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	// Set the texture upload to not generate mimaps :
 	glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_MAX_LOD, static_cast<GLfloat>(-1000.f));
 	// Stop once UV > 1 or < 0
@@ -445,7 +456,9 @@ void Scene::loadImage() {
 	);
 	GetOpenGLError();
 
-	this->gridControl->updateGridDimensions();
+	if (this->gridControl) {
+		this->gridControl->updateGridDimensions();
+	}
 }
 
 void Scene::loadVoxelGrid() {
@@ -550,15 +563,29 @@ void Scene::fillTrilinear() {
 	this->loadVoxelGrid();
 }
 
-/* void Scene::drawPlaneX(GLfloat mvMat[], GLfloat pMat[]) { this->drawPlane_single(mvMat, pMat, planes::x); }
+void Scene::drawPlaneView(glm::vec2 fbDims, planes _plane) {
+	if (this->texStorage == nullptr) { return; }
+	glEnable(GL_DEPTH_TEST);
 
-void Scene::drawPlaneY(GLfloat mvMat[], GLfloat pMat[]) { this->drawPlane_single(mvMat, pMat, planes::y); }
+	uint min = 0; // min index for drawing commands
+	if (_plane == planes::x) { min =  0; }
+	if (_plane == planes::y) { min =  6; }
+	if (_plane == planes::z) { min = 12; }
 
-void Scene::drawPlaneZ(GLfloat mvMat[], GLfloat pMat[]) { this->drawPlane_single(mvMat, pMat, planes::z); }
+	glUseProgram(this->planeViewerProgramHandle);
+	glBindVertexArray(this->vaoHandle);
+	GetOpenGLError();
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboPlaneElementHandle);
+	this->prepPlane_SingleUniforms(_plane, fbDims, this->texStorage);
+	this->setupVAOPointers();
 
-void Scene::drawPlane_single(GLfloat mvMat[], GLfloat pMat[], planes _plane) {
-	//
-}*/
+	glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(6), GL_UNSIGNED_INT, (GLvoid*)(min*sizeof(GLuint)));
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+	glUseProgram(0);
+	this->showVAOstate = false;
+}
 
 void Scene::drawPlanes(GLfloat mvMat[], GLfloat pMat[]) {
 	glEnable(GL_DEPTH_TEST);
@@ -621,7 +648,7 @@ void Scene::drawGridOnly(GLfloat mvMat[], GLfloat pMat[]) {
 	}
 }
 
-void Scene::drawWithPlane(GLfloat mvMat[], GLfloat pMat[], planes _plane) {
+void Scene::drawWithPlanes(GLfloat mvMat[], GLfloat pMat[]) {
 	glEnable(GL_DEPTH_TEST);
 	GetOpenGLError();
 
@@ -723,8 +750,7 @@ void Scene::prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane) {
 		return true;
 	};
 
-	// aliases for this function :
-	using uvec3_t = typename glm::uvec3::value_type;
+	// quick alias :
 	using boxvec_t = typename DiscreteGrid::bbox_t::vec;
 
 	// Get uniform locations for the program :
@@ -732,7 +758,8 @@ void Scene::prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane) {
 	GLint location_vMatrix = glGetUniformLocation(this->planeProgramHandle, "view_Mat");
 	GLint location_pMatrix = glGetUniformLocation(this->planeProgramHandle, "projection_Mat");
 	GLint location_gridTransform = glGetUniformLocation(this->planeProgramHandle, "gridTransform");
-	GLint location_gridPosition = glGetUniformLocation(this->planeProgramHandle, "gridPosition");
+	GLint location_sceneBBPosition = glGetUniformLocation(this->planeProgramHandle, "sceneBBPosition");
+	GLint location_sceneBBDiagonal = glGetUniformLocation(this->planeProgramHandle, "sceneBBDiagonal");
 	GLint location_gridSize = glGetUniformLocation(this->planeProgramHandle, "gridSize");
 	GLint location_gridDimensions = glGetUniformLocation(this->planeProgramHandle, "gridDimensions");
 	GLint location_currentPlane = glGetUniformLocation(this->planeProgramHandle, "currentPlane");
@@ -747,7 +774,8 @@ void Scene::prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane) {
 	checkUniformLocation(location_vMatrix, "vMatrix");
 	checkUniformLocation(location_pMatrix, "pMatrix");
 	checkUniformLocation(location_gridTransform, "gridTransform");
-	checkUniformLocation(location_gridPosition, "gridPosition");
+	checkUniformLocation(location_sceneBBPosition, "sceneBBPosition");
+	checkUniformLocation(location_sceneBBDiagonal, "sceneBBDiagonal");
 	checkUniformLocation(location_gridSize, "gridSize");
 	checkUniformLocation(location_gridDimensions, "gridDimensions");
 	checkUniformLocation(location_currentPlane, "currentPlane");
@@ -768,7 +796,8 @@ void Scene::prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane) {
 	glUniformMatrix4fv(location_vMatrix, 1, GL_FALSE, mvMat);
 	glUniformMatrix4fv(location_pMatrix, 1, GL_FALSE, pMat);
 	glUniformMatrix4fv(location_gridTransform, 1, GL_FALSE, glm::value_ptr(gridTransfo));
-	glUniform3fv(location_gridPosition, 1, glm::value_ptr(min));
+	glUniform3fv(location_sceneBBPosition, 1, glm::value_ptr(this->sceneBBPosition));
+	glUniform3fv(location_sceneBBDiagonal, 1, glm::value_ptr(this->sceneBBDiag));
 	glUniform3fv(location_gridSize, 1, glm::value_ptr(size));
 	glUniform3fv(location_gridDimensions, 1, glm::value_ptr(dims));
 	glUniform1i(location_currentPlane, plIdx);
@@ -781,6 +810,83 @@ void Scene::prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane) {
 	glUniform1i(location_texData, 0);
 	glActiveTexture(GL_TEXTURE0 + 1);
 	glEnable(GL_TEXTURE_1D);
+	glBindTexture(GL_TEXTURE_1D, this->colorScaleHandle);
+	glUniform1i(location_colorScale, 1);
+	GetOpenGLError();
+}
+
+void Scene::prepPlane_SingleUniforms(planes _plane, glm::vec2 fbDims, const std::shared_ptr<DiscreteGrid> _grid) {
+	glUseProgram(this->planeViewerProgramHandle);
+	// Info about the grid's BB :
+	DiscreteGrid::bbox_t ws = _grid->getBoundingBoxWorldSpace();
+	DiscreteGrid::bbox_t::vec bbox = ws.getDiagonal();
+	DiscreteGrid::bbox_t::vec posBox = ws.getMin();
+	if (this->showVAOstate) {
+		std::cerr << "[TRACE] BBox diagonal : {" << bbox.x << ", " << bbox.y << ", " << bbox.z << "}\n";
+		std::cerr << "[TRACE] BBox position : {" << posBox.x << ", " << posBox.y << ", " << posBox.z << "}\n";
+		std::cerr << "[TRACE] Program uniforms :" << '\n';
+		this->printProgramUniforms(this->planeViewerProgramHandle);
+	}
+	glm::vec2 gridBBDims;
+	if (_plane == planes::x) { gridBBDims.x = bbox.y; gridBBDims.y = bbox.z; }
+	if (_plane == planes::y) { gridBBDims.x = bbox.x; gridBBDims.y = bbox.z; }
+	if (_plane == planes::z) { gridBBDims.x = bbox.x; gridBBDims.y = bbox.y; }
+	// Grid transform :
+	glm::mat4 gridTransform = _grid->getTransform_WorldToGrid();
+	// Grid dimensions :
+	glm::vec3 gridDimensions = glm::convert_to<float>(_grid->getGridDimensions());
+	// Depth of the plane :
+	float planeDepth = (_plane == planes::x) ? this->planeDepths.x :
+			   (_plane == planes::y) ? this->planeDepths.y : this->planeDepths.z;
+
+	// Uniform locations :
+	// VShader :
+	GLint location_fbDims = glGetUniformLocation(this->planeViewerProgramHandle, "fbDims");
+	GLint location_bbDims = glGetUniformLocation(this->planeViewerProgramHandle, "bbDims");
+	GLint location_planeIndex = glGetUniformLocation(this->planeViewerProgramHandle, "planeIndex");
+	GLint location_gridTransform = glGetUniformLocation(this->planeViewerProgramHandle, "gridTransform");
+	GLint location_gridDimensions = glGetUniformLocation(this->planeViewerProgramHandle, "gridDimensions");
+	GLint location_gridBBDiagonal = glGetUniformLocation(this->planeViewerProgramHandle, "gridBBDiagonal");
+	GLint location_gridBBPosition = glGetUniformLocation(this->planeViewerProgramHandle, "gridBBPosition");
+	GLint location_depth = glGetUniformLocation(this->planeViewerProgramHandle, "depth");
+	// FShader :
+	GLint location_texData = glGetUniformLocation(this->planeViewerProgramHandle, "texData");
+	GLint location_colorScale = glGetUniformLocation(this->planeViewerProgramHandle, "colorScale");
+	GLint location_colorBounds = glGetUniformLocation(this->planeViewerProgramHandle, "colorBounds");
+	GetOpenGLError();
+
+	if (this->showVAOstate) {
+		std::cerr << "[TRACE][Shader variables] " << "fbDims : " << +location_fbDims << '\n';
+		std::cerr << "[TRACE][Shader variables] " << "bbDims : " << +location_bbDims << '\n';
+		std::cerr << "[TRACE][Shader variables] " << "planeIndex : " << +location_planeIndex << '\n';
+		std::cerr << "[TRACE][Shader variables] " << "gridTransform : " << +location_gridTransform << '\n';
+		std::cerr << "[TRACE][Shader variables] " << "gridDimensions : " << +location_gridDimensions << '\n';
+		std::cerr << "[TRACE][Shader variables] " << "gridBBDiagonal : " << +location_gridBBDiagonal << '\n';
+		std::cerr << "[TRACE][Shader variables] " << "gridBBPosition : " << +location_gridBBPosition << '\n';
+		std::cerr << "[TRACE][Shader variables] " << "depth : " << +location_depth << '\n';
+		std::cerr << "[TRACE][Shader variables] " << "texData : " << +location_texData << '\n';
+		std::cerr << "[TRACE][Shader variables] " << "colorScale : " << +location_colorScale << '\n';
+	}
+
+	// Uniform settings :
+	glUniform2fv(location_fbDims, 1, glm::value_ptr(fbDims));
+	glUniform2fv(location_bbDims, 1, glm::value_ptr(gridBBDims));
+	glUniform1ui(location_planeIndex, (_plane == planes::x) ? 1 : (_plane == planes::y) ? 2 : 3);
+	glUniformMatrix4fv(location_gridTransform, 1, GL_FALSE, glm::value_ptr(gridTransform));
+	glUniform4f(location_gridDimensions, gridDimensions.x, gridDimensions.y, gridDimensions.z, 1.f);
+	glUniform4f(location_gridBBDiagonal, bbox.x, bbox.y, bbox.z, 1.f);
+	glUniform4f(location_gridBBPosition, posBox.x, posBox.y, posBox.z, .0f);
+	glUniform1f(location_depth, planeDepth);
+	glUniform2ui(location_colorBounds, this->minTexVal, this->maxTexVal);
+	GetOpenGLError();
+
+	// Uniform samplers :
+	glActiveTexture(GL_TEXTURE0 + 0);
+	glBindTexture(GL_TEXTURE_3D, this->textureHandle);
+	glUniform1i(location_texData, 0);
+	GetOpenGLError();
+
+	glActiveTexture(GL_TEXTURE0 + 1);
 	glBindTexture(GL_TEXTURE_1D, this->colorScaleHandle);
 	glUniform1i(location_colorScale, 1);
 	GetOpenGLError();
@@ -923,8 +1029,6 @@ void Scene::setupVBOData(const std::vector<glm::vec4>& vertPos, const std::vecto
 }
 
 void Scene::setupVAOPointers() {
-	glBindVertexArray(this->vaoHandle);
-
 	glEnableVertexAttribArray(0);
 	GetOpenGLError();
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboVertPosHandle);
@@ -954,6 +1058,33 @@ glm::vec3 Scene::getSceneBoundaries(bool realSpace) const {
 		return transfoMat * baseVtx;
 	} else {
 		return baseVtx;
+	}
+}
+
+void Scene::printProgramUniforms(const GLuint _pid) {
+	const GLsizei bufSize = 256; // maximum name length
+	GLchar name[bufSize]; // variable name in GLSL
+	GLsizei length = 0; // name length
+	GLint attrCount = 0; // the count of attributes/uniforms
+	GLenum type = GL_NONE; // type of the variable (float, vec3 or mat4, etc)
+	GLint size = 0; // size of the variable
+
+	std::cerr << "[TRACE] Printing attributes of the program " << +_pid << '\n';
+	glUseProgram(_pid);
+
+	std::cerr << "[TRACE]\t\tPlane program active attributes :\n";
+	glGetProgramiv(_pid, GL_ACTIVE_ATTRIBUTES, &attrCount);
+	for (GLint i = 0; i < attrCount; ++i ) {
+		//std::cerr << "[TRACE]\t" << ;
+		glGetActiveAttrib(_pid, (GLuint)i, bufSize, &length, &size, &type, name);
+		fprintf(stderr, "[TRACE]\t\t\tAttribute #%d Type: %u Name: %s\n", i, type, name);
+	}
+
+	std::cerr << "[TRACE]\t\tProgram active attributes :\n";
+	glGetProgramiv(_pid, GL_ACTIVE_UNIFORMS, &attrCount);
+	for (GLint i = 0; i < attrCount; ++i ) {
+		glGetActiveUniform(_pid, (GLuint)i, bufSize, &length, &size, &type, name);
+		fprintf(stderr, "[TRACE]\t\t\tUniform #%d Type: %u Name: %s\n", i, type, name);
 	}
 }
 
@@ -1041,11 +1172,11 @@ void Scene::uploadColorScale(const std::vector<float>& colorScale) {
 
 void Scene::slotToggleShowTextureCube(bool show) { this->inputGridVisible = show; }
 
-void Scene::slotSetTextureXCoord(uint newXCoord) { this->neighborPos.x = newXCoord; }
+void Scene::slotSetPlaneDepthX(float newXCoord) { this->planeDepths.x = newXCoord; }
 
-void Scene::slotSetTextureYCoord(uint newYCoord) { this->neighborPos.y = newYCoord; }
+void Scene::slotSetPlaneDepthY(float newYCoord) { this->planeDepths.y = newYCoord; }
 
-void Scene::slotSetTextureZCoord(uint newZCoord) { this->neighborPos.z = newZCoord; }
+void Scene::slotSetPlaneDepthZ(float newZCoord) { this->planeDepths.z = newZCoord; }
 
 void Scene::slotSetMinTexValue(uchar val) { this->minTexVal = val; }
 
