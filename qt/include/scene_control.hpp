@@ -30,20 +30,14 @@ class ControlPanel : public QWidget {
 		Scene* const sceneToControl;
 		QSpinBox* minValueTexture; ///< Spinbox to determine the min value in the texture which constitutes viable information
 		QSpinBox* maxValueTexture; ///< Spinbox to determine the max value in the texture which constitutes viable information
-		QDoubleSpinBox* xPlanePos; ///< Slider to determine the coordinate of the minimum X cutting plane
-		QDoubleSpinBox* yPlanePos; ///< Slider to determine the coordinate of the minimum Y cutting plane
-		QDoubleSpinBox* zPlanePos; ///< Slider to determine the coordinate of the minimum Z cutting plane
-		QSlider* xPlaneDepth; ///< The depth of the cutting plane in the texture, on the X axis
-		QSlider* yPlaneDepth; ///< The depth of the cutting plane in the texture, on the Y axis
-		QSlider* zPlaneDepth; ///< The depth of the cutting plane in the texture, on the Z axis
+		QDoubleSpinBox* xPlanePos; ///< Box to determine the coordinate of the minimum X cutting plane
+		QDoubleSpinBox* yPlanePos; ///< Box to determine the coordinate of the minimum Y cutting plane
+		QDoubleSpinBox* zPlanePos; ///< Box to determine the coordinate of the minimum Z cutting plane
 		QWidget* controlContainer;
 		Viewer* leftViewer;
 		Viewer* rightViewer;
 
 	public slots:
-		void setXTexCoord(int coordX);
-		void setYTexCoord(int coordY);
-		void setZTexCoord(int coordZ);
 		void setTexCube(bool show);
 		void setMinTexVal(int val);
 		void setMaxTexVal(int val);

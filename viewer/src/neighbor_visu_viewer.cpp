@@ -16,6 +16,8 @@ Viewer::Viewer(Scene* const scene, QWidget* parent) :
 	this->refreshTimer->setInterval(std::chrono::milliseconds(7)); // ~7 ms for 144fps, ~16ms for 60fps and ~33ms for 30 FPS
 	this->refreshTimer->setSingleShot(false);
 	connect(this->refreshTimer, &QTimer::timeout, this, &Viewer::updateView);
+
+	this->drawVolumetric = false;
 }
 
 Viewer::~Viewer() {
@@ -48,7 +50,11 @@ void Viewer::draw() {
 	this->camera()->getModelViewMatrix(mvMat);
 	this->camera()->getProjectionMatrix(pMat);
 
-	this->scene->drawWithPlanes(mvMat, pMat);
+	if (this->drawVolumetric) {
+		this->scene->drawVolumetric(mvMat, pMat);
+	} else {
+		this->scene->drawWithPlanes(mvMat, pMat);
+	}
 }
 
 void Viewer::keyPressEvent(QKeyEvent *e) {
@@ -62,6 +68,10 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 		break;
 		case Qt::Key::Key_C:
 			this->scene->printVAOStateNext();
+		break;
+		case Qt::Key::Key_V:
+			this->drawVolumetric = !this->drawVolumetric;
+			this->update();
 		break;
 		/*
 		GRID VISIBILITY

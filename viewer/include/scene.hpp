@@ -17,6 +17,7 @@
 #include "../../qt/include/grid_list_view.hpp"
 // Qt headers :
 #include <QOpenGLFunctions_4_0_Core>
+#include <QOpenGLFunctions_4_0_Compatibility>
 #include <QGLViewer/qglviewer.h>
 #include <glm/glm.hpp>
 // STD headers :
@@ -41,7 +42,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		/// @brief set the control panel responsible for controlling the scene
 		void setControlPanel(ControlPanel* cp) { this->controlPanel = cp; }
 		/// @brief reload the default shader files
-		void recompileShaders(void);
+		void recompileShaders(bool verbose = true);
 
 		/// @brief For the dual-viewer : draw in real space
 		void drawGridOnly(GLfloat mvMat[], GLfloat pMat[]);
@@ -52,6 +53,9 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void drawWithPlanes(GLfloat mvMat[], GLfloat pMat[]);
 		/// @b Draw a given plane 'view' (single plane on the framebuffer).
 		void drawPlaneView(glm::vec2 fbDims, planes _plane);
+
+		/// @brief Draws the 3D texture with a volumetric-like visualization method
+		void drawVolumetric(GLfloat mvMat[], GLfloat pMat[]);
 
 		/// @brief load the 3D texture to opengl
 		void loadImage();
@@ -81,9 +85,10 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void setDrawModeSolidAndWireframe() { this->drawMode = DrawMode::SolidAndWireframe; }
 		void setDrawModeWireframe() { this->drawMode = DrawMode::Wireframe; }
 
+		bool isInitialized; ///< tracks if the scene was initialized or not (query-able from anywhere)
+
 		void cleanup(void); ///< cleanup function for vbo and other parts
-		bool isInitialized; ///< tracks if the scene was initialized or not
-		void printVAOStateNext() { this->showVAOstate = true; }
+		void printVAOStateNext() { this->showVAOstate = true; } ///< prints info about the VAO on next refresh
 		glm::vec3 getPlanePositions(void) { return this->planePosition; } ///< Get the cutting planes' positions
 		uint getMinTexValue(void) const { return this->minTexVal; }
 		uint getMaxTexValue(void) const { return this->maxTexVal; }
@@ -133,12 +138,23 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void bindTextures();
 		/// @b Prints the accessible uniforms and attributes of the given program.
 		void printProgramUniforms(const GLuint _pid);
+
+		/*************************************/
+		/*************************************/
+		/****** TEXTURE3D VISUALIZATION ******/
+		/*************************************/
+		/*************************************/
+		void tex3D_buildTexture();
+		void tex3D_buildMesh();
+		void tex3D_buildVisTexture();
+		void tex3D_buildBuffers();
+		void tex3D_bindVAO();
 	protected:
 		void generateGrid();
 
 		ControlPanel* controlPanel; ///< pointer to the control panel
-		std::shared_ptr<InputGrid> texStorage; ///< textureLoader and 'manager'
-		std::shared_ptr<OutputGrid> voxelGrid; ///< Voxel grid to fill upon keypress
+		std::shared_ptr<InputGrid> inputGrid; ///< input grid
+		std::shared_ptr<OutputGrid> outputGrid; ///< output grid
 		std::shared_ptr<TetMesh> mesh; ///< creates a mesh around the queried point
 		GridControl* gridControl;
 		/*
@@ -165,22 +181,63 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		DrawMode drawMode;
 		bool showVAOstate;
 
-		GLuint vboVertPosHandle;
-		GLuint vboVertNormHandle;
-		GLuint vboVertTexHandle;
-		GLuint vboElementHandle;
-		GLuint vboPlaneElementHandle;
+		// VBO/VAO handles :
+		GLuint vboHandle_VertPos;
+		GLuint vboHandle_VertNorm;
+		GLuint vboHandle_VertTex;
+		GLuint vboHandle_Element;
+		GLuint vboHandle_PlaneElement;
 		GLuint vaoHandle;
-		GLuint programHandle;
-		GLuint planeProgramHandle;
-		GLuint planeViewerProgramHandle;
+		GLuint vaoHandle_VolumetricBuffers;
 
-		GLuint textureHandle; ///< handle for glTexImage3D
-		GLuint voxelGridTexHandle; ///< handle for the voxel grid's data
-		GLuint colorScaleHandle; ///< handle for the uploaded color scale
+		// Program handles :
+		GLuint programHandle_projectedTex;
+		GLuint programHandle_Plane3D;
+		GLuint programHandle_PlaneViewer;
+		GLuint programHandle_VolumetricViewer;
+
+		/*************************************/
+		/*************************************/
+		/****** TEXTURE3D VISUALIZATION ******/
+		/*************************************/
+		/*************************************/
+		GLuint texHandle_InputGrid;  ///< handle for glTexImage3D
+		GLuint texHandle_OutputGrid; ///< handle for the voxel grid's data
+		GLuint texHandle_ColorScaleGrid; ///< handle for the uploaded color scale
+		GLuint texHandle_tetrahedraNeighborhood; ///< handle for tetrhedra neighbors' texture
+		GLuint texHandle_tetrahedraFaceNormals; ///< handle for the per-face normals of each tetrahedra
+		GLuint texHandle_tetrahedraVertexPositions; ///< vertex positions for the tetrahedra
+		GLuint texHandle_tetrahedraVertexTexCoords; ///< vertex positions for the tetrahedra
+		GLuint texHandle_visibilityMap; ///< texture for visibility (might not need it anymore, used once in FS)
+		GLuint vboHandle_Texture3D_VertPos;
+		GLuint vboHandle_Texture3D_VertNorm;
+		GLuint vboHandle_Texture3D_VertTex;
+		GLuint vboHandle_Texture3D_VertIdx;
+		unsigned int* visibleDomains;
+		GLsizei tetCount;
+		int widths[4]; ///< vert width, neighbor width, normal width, visibility width
 };
 
 inline int __GetOpenGLError ( char* szFile, int iLine );
+
+
+struct Face {
+	public:
+		inline Face ( unsigned int v0, unsigned int v1, unsigned int v2) {
+			if (v1 < v0) std::swap(v0,v1);
+			if (v2 < v1) std::swap(v1,v2);
+			if (v1 < v0) std::swap(v0,v1);
+			v[0] = v0; v[1] = v1; v[2] = v2;
+		}
+		inline Face (const Face & f) { v[0] = f.v[0]; v[1] = f.v[1]; v[2] = f.v[2]; }
+		inline virtual ~Face () {}
+		inline Face & operator= (const Face & f) { v[0] = f.v[0]; v[1] = f.v[1]; v[2] = f.v[2]; return (*this); }
+		inline bool operator== (const Face & f) { return (v[0] == f.v[0] && v[1] == f.v[1] && v[2] == f.v[2]); }
+		inline bool operator< (const Face & f) const { return (v[0] < f.v[0] || (v[0] == f.v[0] && v[1] < f.v[1]) || (v[0] == f.v[0] && v[1] == f.v[1] && v[2] < f.v[2])); }
+		inline bool contains (unsigned int i) const { return (v[0] == i || v[1] == i || v[2] == i); }
+		inline unsigned int getVertex (unsigned int i) const { return v[i]; }
+		unsigned int v[3];
+};
 
 #if not defined( NDEBUG )
 	#define GetOpenGLError() __GetOpenGLError( ( char* )__FILE__, ( int )__LINE__ )

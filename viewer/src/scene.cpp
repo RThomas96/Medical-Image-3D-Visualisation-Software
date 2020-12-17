@@ -15,8 +15,7 @@
 #include <iomanip>
 #include <type_traits>
 
-#warning Check the signification of the drawWithPlanes method, and other plane-drawing methods.
-#warning One draws all planes but still takes a plane to draw, and other inconsistencies.
+#undef USER_DEFINED_IMAGE_LOADING
 
 template<class T>
 std::remove_reference_t<T> const& as_const(T&&t){return t;}
@@ -26,19 +25,19 @@ inline int __GetOpenGLError ( char* szFile, int iLine )
 	int    retCode = 0;
 	GLenum glErr = glGetError();
 	while (glErr != GL_NO_ERROR) {
-		std::cerr << "GLError in file " << szFile << " @ line " << iLine << " : ";
+		std::cerr << "GLError @ " << szFile << ":" << iLine << " : ";
 		switch (glErr) {
 			case GL_INVALID_ENUM:
-				std::cerr << "was an invalid enum";
+				std::cerr << "Invalid enum";
 			break;
 			case GL_INVALID_VALUE:
-				std::cerr << "was an invalid value";
+				std::cerr << "Invalid value";
 			break;
 			case GL_INVALID_OPERATION:
-				std::cerr << "was an invalid operation";
+				std::cerr << "Invalid operation";
 			break;
 			default:
-				std::cerr << "was another error";
+				std::cerr << "(unknown error code)";
 			break;
 		}
 		std::cerr << '\n';
@@ -51,11 +50,24 @@ inline int __GetOpenGLError ( char* szFile, int iLine )
 	return retCode;
 }
 
+inline void __GetTexSize(std::size_t numTexNeeded, std::size_t* opt_width, std::size_t* opt_height) {
+	std::size_t iRoot = ( std::size_t )sqrtf(static_cast<float>(numTexNeeded));
+
+	*opt_width = iRoot + 1;
+	*opt_height = iRoot;
+	if ( ( (*opt_width) * (*opt_height)) < numTexNeeded ) {
+		(*opt_height)++;
+	}
+	if ( ( (*opt_width) * (*opt_height) ) < numTexNeeded ) {
+		(*opt_width)++;
+	}
+}
+
 Scene::Scene(GridControl* const gc) {
 	this->controlPanel = nullptr;
-	this->texStorage = nullptr;
+	this->inputGrid = nullptr;
 	this->mesh = nullptr;
-	this->voxelGrid = nullptr;
+	this->outputGrid = nullptr;
 	this->gridControl = gc;
 
 	this->gridWidth = 0;
@@ -68,33 +80,49 @@ Scene::Scene(GridControl* const gc) {
 
 	this->inputGridVisible = false;
 	this->outputGridVisible = false;
+	this->showVAOstate = false;
 
 	this->isInitialized = false;
 
-	this->textureHandle = 0;
-	this->colorScaleHandle = 0;
+	this->minTexVal = uchar(0);
+	this->maxTexVal = uchar(255);
 
 	this->planePosition = glm::vec3();
 	this->planeDepths = glm::vec3();
 	this->sceneBBDiag = glm::vec3();
 	this->sceneBBPosition = glm::vec3();
 
-	this->vboVertPosHandle = 0;
-	this->vboElementHandle = 0;
+	this->vboHandle_VertPos = 0;
+	this->vboHandle_VertNorm = 0;
+	this->vboHandle_VertTex = 0;
+	this->vboHandle_Element = 0;
+	this->vboHandle_PlaneElement = 0;
 	this->vaoHandle = 0;
-	this->programHandle = 0;
-	this->planeProgramHandle = 0;
-	this->planeViewerProgramHandle = 0;
-	this->showVAOstate = false;
 
-	this->minTexVal = uchar(0);
-	this->maxTexVal = uchar(255);
+	this->programHandle_projectedTex = 0;
+	this->programHandle_Plane3D = 0;
+	this->programHandle_PlaneViewer = 0;
+
+	this->texHandle_InputGrid = 0;
+	this->texHandle_ColorScaleGrid = 0;
+	this->texHandle_OutputGrid = 0;
+	this->texHandle_tetrahedraFaceNormals = 0;
+	this->texHandle_tetrahedraNeighborhood = 0;
+	this->texHandle_visibilityMap = 0;
+
+	this->texHandle_tetrahedraVertexPositions = 0;
+	this->texHandle_tetrahedraVertexTexCoords = 0;
+
+	this->visibleDomains = new unsigned int[256];
+	for (std::size_t i = 0; i < 256; ++i) {
+		this->visibleDomains[i] = 1;
+	}
 }
 
 Scene::~Scene(void) {
-	glDeleteTextures(1, &this->textureHandle);
-	glDeleteTextures(1, &this->colorScaleHandle);
-	glDeleteTextures(1, &this->voxelGridTexHandle);
+	glDeleteTextures(1, &this->texHandle_InputGrid);
+	glDeleteTextures(1, &this->texHandle_ColorScaleGrid);
+	glDeleteTextures(1, &this->texHandle_OutputGrid);
 }
 
 void Scene::initGl(QOpenGLContext* _context) {
@@ -154,20 +182,20 @@ void Scene::initGl(QOpenGLContext* _context) {
 	reader->loadImage();
 
 	// Update data from the grid reader :
-	this->texStorage = std::make_shared<InputGrid>();
-	this->texStorage->fromGridReader(*reader);
-	this->texStorage->setTransform_GridToWorld(this->computeTransformationMatrix());
+	this->inputGrid = std::make_shared<InputGrid>();
+	this->inputGrid->fromGridReader(*reader);
+	this->inputGrid->setTransform_GridToWorld(this->computeTransformationMatrix());
 
 	// free up the reader's resources :
 	delete reader;
 
-	this->voxelGrid	= std::make_shared<OutputGrid>();
+	this->outputGrid	= std::make_shared<OutputGrid>();
 	if (this->gridControl) {
-		this->gridControl->setVoxelGrid(this->voxelGrid);
+		this->gridControl->setVoxelGrid(this->outputGrid);
 	}
 
 	this->mesh = std::make_shared<TetMesh>();
-	this->mesh->addInputGrid(this->texStorage).setOutputGrid(this->voxelGrid);
+	this->mesh->addInputGrid(this->inputGrid).setOutputGrid(this->outputGrid);
 
 	///////////////////////////
 	/// CREATE VAO :
@@ -177,24 +205,18 @@ void Scene::initGl(QOpenGLContext* _context) {
 	glBindVertexArray(this->vaoHandle);
 	GetOpenGLError();
 
-	this->programHandle = this->compileShaders("./shaders/voxelgrid.vert", "./shaders/voxelgrid.geom", "./shaders/voxelgrid.frag");
-	this->planeProgramHandle = this->compileShaders("./shaders/plane.vert", "", "./shaders/plane.frag");
-	this->planeViewerProgramHandle = this->compileShaders("./shaders/texture_explorer.vert", "", "./shaders/texture_explorer.frag");
-	if (this->programHandle == 0) { throw std::runtime_error("[ERROR] Program did not compile"); }
-	if (this->planeProgramHandle == 0) { throw std::runtime_error("[ERROR] 'Planes' Program did not compile"); }
-	if (this->planeViewerProgramHandle == 0) { throw std::runtime_error("[ERROR] 'PlaneViewer' Program did not compile"); }
+	this->recompileShaders(false);
 
 	this->loadImage();
-
 	this->generateGrid();
 
 	std::vector<float> colorScale = this->generateColorScale(0, 255);
 	this->uploadColorScale(colorScale);
 
 	// Get the bounding box of the input grid :
-	DiscreteGrid::bbox_t bb_ws = this->texStorage->getBoundingBoxWorldSpace();
+	DiscreteGrid::bbox_t bb_ws = this->inputGrid->getBoundingBoxWorldSpace();
 	// Add the bounding box of the output grid to it :
-	bb_ws.addPoints(this->voxelGrid->getBoundingBox().getAllCorners());
+	bb_ws.addPoints(this->outputGrid->getBoundingBox().getAllCorners());
 	this->sceneBBPosition = bb_ws.getMin();
 	this->sceneBBDiag = bb_ws.getDiagonal();
 	// Set the plane position to the min point of the BB :
@@ -207,7 +229,14 @@ void Scene::initGl(QOpenGLContext* _context) {
 		this->controlPanel->activatePanels();
 	}
 
-	glUseProgram(this->programHandle);
+	std::cerr << "Building the texture3D mesh and textures ... ";
+	this->tex3D_buildTexture();
+	this->tex3D_buildMesh();
+	this->tex3D_buildVisTexture();
+	this->tex3D_buildBuffers();
+	std::cerr << "done\n";
+
+	glUseProgram(this->programHandle_projectedTex);
 	GetOpenGLError();
 	std::cerr << "Finished initializing scene" << '\n';
 }
@@ -239,22 +268,27 @@ void Scene::printGridInfo(const std::shared_ptr<DiscreteGrid>& grid) {
 #endif
 }
 
-void Scene::recompileShaders() {
-	GLuint newProgram = this->compileShaders("./shaders/voxelgrid.vert", "./shaders/voxelgrid.geom", "./shaders/voxelgrid.frag", true);
-	GLuint newPlaneProgram = this->compileShaders("./shaders/plane.vert", "", "./shaders/plane.frag", true);
-	GLuint newPlaneViewerProgram = this->compileShaders("./shaders/texture_explorer.vert", "", "./shaders/texture_explorer.frag", true);
+void Scene::recompileShaders(bool verbose) {
+	GLuint newProgram = this->compileShaders("./shaders/voxelgrid.vert", "./shaders/voxelgrid.geom", "./shaders/voxelgrid.frag", verbose);
+	GLuint newPlaneProgram = this->compileShaders("./shaders/plane.vert", "", "./shaders/plane.frag", verbose);
+	GLuint newPlaneViewerProgram = this->compileShaders("./shaders/texture_explorer.vert", "", "./shaders/texture_explorer.frag", verbose);
+	GLuint newVolumetricProgram = this->compileShaders("./shaders/transfer_mesh.vert", "", "./shaders/transfer_mesh.frag", verbose);
 
 	if (newProgram) {
-		glDeleteProgram(this->programHandle);
-		this->programHandle = newProgram;
+		glDeleteProgram(this->programHandle_projectedTex);
+		this->programHandle_projectedTex = newProgram;
 	}
 	if (newPlaneProgram) {
-		glDeleteProgram(this->planeProgramHandle);
-		this->planeProgramHandle = newPlaneProgram;
+		glDeleteProgram(this->programHandle_Plane3D);
+		this->programHandle_Plane3D = newPlaneProgram;
 	}
 	if (newPlaneViewerProgram) {
-		glDeleteProgram(this->planeViewerProgramHandle);
-		this->planeViewerProgramHandle = newPlaneViewerProgram;
+		glDeleteProgram(this->programHandle_PlaneViewer);
+		this->programHandle_PlaneViewer = newPlaneViewerProgram;
+	}
+	if (newVolumetricProgram) {
+		glDeleteProgram(this->programHandle_VolumetricViewer);
+		this->programHandle_VolumetricViewer = newVolumetricProgram;
 	}
 }
 
@@ -289,12 +323,14 @@ GLuint Scene::compileShaders(std::string _vPath, std::string _gPath, std::string
 }
 
 GLuint Scene::compileShader(const std::string& path, const GLenum shaType, bool verbose) {
-	if (path.empty()) { return -1; }
+	if (path.empty()) { return 0; }
 	// Check the given type is accepted :
 	if (shaType != GL_VERTEX_SHADER && shaType != GL_GEOMETRY_SHADER && shaType != GL_FRAGMENT_SHADER) {
 		std::cerr << "[" << __FILE__ << ":" << __LINE__ << "] Error : unrecognized shader type (vertex, geometry and fragment shaders)\n";
 		return -1;
 	}
+	GetOpenGLError();
+	GetOpenGLError();
 
 	// Create a shader object :
 	GLuint _sha = glCreateShader(shaType);
@@ -338,7 +374,6 @@ GLuint Scene::compileShader(const std::string& path, const GLenum shaType, bool 
 		std::cerr << __FILE__ << ":" << __LINE__ << " : start Log ***********************************************" << '\n';
 
 		std::cerr << __FILE__ << ":" << __LINE__ << " : Information about shader " << path << " : " << '\n';
-		std::cerr << __FILE__ << ":" << __LINE__ << " : Shader was a vertex shader ";
 		shaderInfoLog = new char[shaderInfoLength];
 		glGetShaderInfoLog(_sha, shaderInfoLength, &charsWritten, shaderInfoLog);
 		GetOpenGLError();
@@ -412,21 +447,21 @@ GLuint Scene::compileProgram(const GLuint vSha, const GLuint gSha, const GLuint 
 }
 
 void Scene::loadImage() {
-	DiscreteGrid::sizevec3 d = this->texStorage->getGridDimensions();
+	DiscreteGrid::sizevec3 d = this->inputGrid->getGridDimensions();
 	this->gridWidth = d.x;
 	this->gridHeight= d.y;
 	this->gridDepth = d.z;
 
 	glEnable(GL_TEXTURE_3D);
 	GetOpenGLError();
-	glDeleteTextures(1, &this->textureHandle); // just in case one was allocated before
+	glDeleteTextures(1, &this->texHandle_InputGrid); // just in case one was allocated before
 	GetOpenGLError();
 
-	if (this->textureHandle == 0) {
-		glGenTextures(1, &this->textureHandle);
+	if (this->texHandle_InputGrid == 0) {
+		glGenTextures(1, &this->texHandle_InputGrid);
 		GetOpenGLError();
 	}
-	glBindTexture(GL_TEXTURE_3D, this->textureHandle);
+	glBindTexture(GL_TEXTURE_3D, this->texHandle_InputGrid);
 	GetOpenGLError();
 
 	// Set nearest neighbor :
@@ -452,7 +487,7 @@ void Scene::loadImage() {
 		static_cast<GLint>(0),	// GLint  : Border. This value MUST be 0.
 		GL_RED_INTEGER,		// GLenum : Format of the pixel data
 		GL_UNSIGNED_BYTE,	// GLenum : Type (the data type as in uchar, uint, float ...)
-		this->texStorage->getData().data() // void*  : Data to load into the buffer
+		this->inputGrid->getData().data() // void*  : Data to load into the buffer
 	);
 	GetOpenGLError();
 
@@ -462,29 +497,29 @@ void Scene::loadImage() {
 }
 
 void Scene::loadVoxelGrid() {
-	if (this->voxelGrid == nullptr) {
+	if (this->outputGrid == nullptr) {
 		// Sanity check. This function can *now* be called from the voxel grid only,
 		// but just in case we call it from elsewhere, all bases are covered.
 		std::cerr << "Voxel grid in scene was not created ! (voxelGrid == nullptr) => true" << '\n';
 		return;
 	}
 
-	DiscreteGrid::sizevec3 size = this->voxelGrid->getGridDimensions();
+	DiscreteGrid::sizevec3 size = this->outputGrid->getGridDimensions();
 
 	glEnable(GL_TEXTURE_3D);
 
-	if (this->voxelGridTexHandle != 0) {
+	if (this->texHandle_OutputGrid != 0) {
 		// Texture has already been created, destroy it:
-		glDeleteTextures(1, &this->voxelGridTexHandle);
-		this->voxelGridTexHandle = 0;
+		glDeleteTextures(1, &this->texHandle_OutputGrid);
+		this->texHandle_OutputGrid = 0;
 	}
-	if (this->voxelGridTexHandle == 0) {
+	if (this->texHandle_OutputGrid == 0) {
 		// Create texture handle
-		glGenTextures(1, &this->voxelGridTexHandle);
+		glGenTextures(1, &this->texHandle_OutputGrid);
 		GetOpenGLError();
 	}
-	std::cerr << "Voxel grid texture was generated at index " << this->voxelGridTexHandle << "\n";
-	glBindTexture(GL_TEXTURE_3D, this->voxelGridTexHandle);
+	std::cerr << "Voxel grid texture was generated at index " << this->texHandle_OutputGrid << "\n";
+	glBindTexture(GL_TEXTURE_3D, this->texHandle_OutputGrid);
 	GetOpenGLError();
 
 	// Set nearest neighbor :
@@ -503,7 +538,7 @@ void Scene::loadVoxelGrid() {
 	// Fix for a stupid fucking bug : OpenGL expects textures with dimensions which are a multiple of 4. However,
 	// this will only be the case 25% of the time, so we need to manually pad the texture before sending it to
 	// OpenGL for displaying. Might shift the data on very small datasets (resolution < 50).
-	const auto& data = this->voxelGrid->getData();
+	const auto& data = this->outputGrid->getData();
 	DiscreteGrid::sizevec3 sane = size;
 	if (sane.x%4u != 0) { sane.x += (4-size.x%4u); }
 	if (sane.y%4u != 0) { sane.y += (4-size.y%4u); }
@@ -542,7 +577,7 @@ void Scene::loadVoxelGrid() {
 void Scene::fillNearestNeighbor() {
 	InterpolationMethods method = InterpolationMethods::NearestNeighbor;
 	using timepoint = std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::duration<double, std::ratio<1,1>>>;
-	if (this->mesh != nullptr && this->voxelGrid != nullptr) {
+	if (this->mesh != nullptr && this->outputGrid != nullptr) {
 		timepoint start_point = std::chrono::high_resolution_clock::now();
 		this->mesh->populateOutputGrid(method);
 		timepoint end_point = std::chrono::high_resolution_clock::now();
@@ -554,7 +589,7 @@ void Scene::fillNearestNeighbor() {
 void Scene::fillTrilinear() {
 	InterpolationMethods method = InterpolationMethods::TriLinear;
 	using timepoint = std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::duration<double, std::ratio<1,1>>>;
-	if (this->mesh != nullptr && this->voxelGrid != nullptr) {
+	if (this->mesh != nullptr && this->outputGrid != nullptr) {
 		timepoint start_point = std::chrono::high_resolution_clock::now();
 		this->mesh->populateOutputGrid(method);
 		timepoint end_point = std::chrono::high_resolution_clock::now();
@@ -564,27 +599,187 @@ void Scene::fillTrilinear() {
 }
 
 void Scene::drawPlaneView(glm::vec2 fbDims, planes _plane) {
-	if (this->texStorage == nullptr) { return; }
+	if (this->inputGrid == nullptr) { return; }
 	glEnable(GL_DEPTH_TEST);
+	GetOpenGLError();
 
 	uint min = 0; // min index for drawing commands
 	if (_plane == planes::x) { min =  0; }
 	if (_plane == planes::y) { min =  6; }
 	if (_plane == planes::z) { min = 12; }
 
-	glUseProgram(this->planeViewerProgramHandle);
+	glUseProgram(this->programHandle_PlaneViewer);
+	GetOpenGLError();
 	glBindVertexArray(this->vaoHandle);
 	GetOpenGLError();
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboPlaneElementHandle);
-	this->prepPlane_SingleUniforms(_plane, fbDims, this->texStorage);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_PlaneElement);
+	this->prepPlane_SingleUniforms(_plane, fbDims, this->inputGrid);
 	this->setupVAOPointers();
+	GetOpenGLError();
 
 	glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(6), GL_UNSIGNED_INT, (GLvoid*)(min*sizeof(GLuint)));
+	GetOpenGLError();
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	GetOpenGLError();
 	glBindVertexArray(0);
+	GetOpenGLError();
 	glUseProgram(0);
+	GetOpenGLError();
 	this->showVAOstate = false;
+}
+
+void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat) {
+	glUseProgram(this->programHandle_VolumetricViewer);
+	GetOpenGLError();
+
+	GLint location_vertices_translation = glGetUniformLocation(this->programHandle_VolumetricViewer, "vertices_translation");
+	GLint location_normals_translation = glGetUniformLocation(this->programHandle_VolumetricViewer, "normals_translation");
+	GLint location_visibility_texture = glGetUniformLocation(this->programHandle_VolumetricViewer, "visibility_texture");
+	GLint location_texture_coordinates = glGetUniformLocation(this->programHandle_VolumetricViewer, "texture_coordinates");
+	GLint location_neighbors = glGetUniformLocation(this->programHandle_VolumetricViewer, "neighbors");
+	GLint location_Mask = glGetUniformLocation(this->programHandle_VolumetricViewer, "Mask");
+	GLint location_color_texture = glGetUniformLocation(this->programHandle_VolumetricViewer, "color_texture");
+	GLint location_vMat = glGetUniformLocation(this->programHandle_VolumetricViewer, "vMat");
+	GLint location_pMat = glGetUniformLocation(this->programHandle_VolumetricViewer, "pMat");
+	GetOpenGLError();
+
+	GLint location_widths1 = glGetUniformLocation(this->programHandle_VolumetricViewer, "width");
+	GLint location_widths2 = glGetUniformLocation(this->programHandle_VolumetricViewer, "neighbor_width");
+	GLint location_widths3 = glGetUniformLocation(this->programHandle_VolumetricViewer, "normal_width");
+	GLint location_widths4 = glGetUniformLocation(this->programHandle_VolumetricViewer, "visibility_width");
+	GLint location_colorTexWidth = glGetUniformLocation(this->programHandle_VolumetricViewer, "colorTexWidth");
+
+	GLint location_visibilityMap = glGetUniformLocation(this->programHandle_VolumetricViewer, "visibilityMap");
+
+	GLint location_diffuseRef = glGetUniformLocation(this->programHandle_VolumetricViewer, "diffuseRef");
+	GLint location_dx = glGetUniformLocation(this->programHandle_VolumetricViewer, "dx");
+	GLint location_dy = glGetUniformLocation(this->programHandle_VolumetricViewer, "dy");
+	GLint location_dz = glGetUniformLocation(this->programHandle_VolumetricViewer, "dz");
+	GLint location_specRef = glGetUniformLocation(this->programHandle_VolumetricViewer, "specRef");
+	GLint location_shininess = glGetUniformLocation(this->programHandle_VolumetricViewer, "shininess");
+	GetOpenGLError();
+
+	std::size_t tex = 0;
+	glActiveTexture(GL_TEXTURE0 + tex);
+	glBindTexture(GL_TEXTURE_2D, this->texHandle_tetrahedraVertexPositions);
+	glUniform1i(location_vertices_translation, tex);
+	tex++;
+	GetOpenGLError();
+	glActiveTexture(GL_TEXTURE0 + tex);
+	glBindTexture(GL_TEXTURE_2D, this->texHandle_tetrahedraFaceNormals);
+	glUniform1i(location_normals_translation, tex);
+	tex++;
+	GetOpenGLError();
+	glActiveTexture(GL_TEXTURE0 + tex);
+	glBindTexture(GL_TEXTURE_2D, this->texHandle_visibilityMap);
+	glUniform1i(location_visibility_texture, tex);
+	tex++;
+	GetOpenGLError();
+	glActiveTexture(GL_TEXTURE0 + tex);
+	glBindTexture(GL_TEXTURE_2D, this->texHandle_tetrahedraVertexTexCoords);
+	glUniform1i(location_texture_coordinates, tex);
+	tex++;
+	GetOpenGLError();
+	glActiveTexture(GL_TEXTURE0 + tex);
+	glBindTexture(GL_TEXTURE_2D, this->texHandle_tetrahedraNeighborhood);
+	glUniform1i(location_neighbors, tex);
+	tex++;
+	GetOpenGLError();
+	glActiveTexture(GL_TEXTURE0 + tex);
+	glBindTexture(GL_TEXTURE_3D, this->texHandle_InputGrid);
+	glUniform1i(location_Mask, tex);
+	tex++;
+	GetOpenGLError();
+	glActiveTexture(GL_TEXTURE0 + tex);
+	glBindTexture(GL_TEXTURE_1D, this->texHandle_ColorScaleGrid);
+	glUniform1i(location_color_texture, tex);
+	tex++;
+	GetOpenGLError();
+
+	glm::vec3 vx = this->inputGrid->getVoxelDimensions();
+	glUniform1f(location_diffuseRef, .8f);
+	glUniform1f(location_specRef, .8f);
+	glUniform1f(location_shininess, .8f);
+	glUniform1f(location_dx, vx.x);
+	glUniform1f(location_dy, vx.y);
+	glUniform1f(location_dz, vx.z);
+	glUniform1uiv(location_visibilityMap, 256, this->visibleDomains);
+	glUniform1ui(location_colorTexWidth, 16u);
+	GetOpenGLError();
+
+	glUniform1i(location_widths1, this->widths[0]);
+	glUniform1i(location_widths2, this->widths[1]);
+	glUniform1i(location_widths3, this->widths[2]);
+	glUniform1i(location_widths4, this->widths[3]);
+	GetOpenGLError();
+
+	glUniformMatrix4fv(location_vMat, 1, GL_FALSE, mvMat);
+	glUniformMatrix4fv(location_pMat, 1, GL_FALSE, pMat);
+	GetOpenGLError();
+
+	// before draw, specify vertex and index arrays with their offsets
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_Texture3D_VertNorm);
+	GetOpenGLError();
+	glNormalPointer(GL_FLOAT, 0, 0);
+	GetOpenGLError();
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_Texture3D_VertPos);
+	GetOpenGLError();
+	glVertexPointer(3, GL_FLOAT, 0, 0);
+	GetOpenGLError();
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_Texture3D_VertTex);
+	GetOpenGLError();
+	glTexCoordPointer(2, GL_FLOAT, 0, 0);
+	GetOpenGLError();
+
+//	glBindVertexArray(this->vaoHandle_VolumetricBuffers);
+//	GetOpenGLError();
+//	this->tex3D_bindVAO();
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_Texture3D_VertIdx);
+	GetOpenGLError();
+
+	glPushClientAttrib( GL_CLIENT_VERTEX_ARRAY_BIT );
+	GetOpenGLError();
+
+	// start to render polygons
+	glEnableClientState(GL_NORMAL_ARRAY);
+	GetOpenGLError();
+	glEnableClientState(GL_VERTEX_ARRAY);
+	GetOpenGLError();
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	GetOpenGLError();
+
+	glDrawElementsInstanced( GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, (void*)0, this->tetCount );
+	GetOpenGLError();
+
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	GetOpenGLError();
+	glDisableClientState(GL_VERTEX_ARRAY);
+	GetOpenGLError();
+	glDisableClientState(GL_NORMAL_ARRAY);
+	GetOpenGLError();
+
+	glPopClientAttrib();
+	GetOpenGLError();
+
+	for (std::size_t t = tex; t >= 0 && t < tex+1; t--) {
+		glActiveTexture(GL_TEXTURE0 + t);
+		GetOpenGLError();
+		glBindTexture(GL_TEXTURE_3D, 0);
+		GetOpenGLError();
+		glBindTexture(GL_TEXTURE_2D, 0);
+		GetOpenGLError();
+		glBindTexture(GL_TEXTURE_1D, 0);
+		GetOpenGLError();
+	}
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	GetOpenGLError();
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	GetOpenGLError();
+	glUseProgram(0);
+	GetOpenGLError();
+
+	this->drawPlanes(mvMat, pMat);
 }
 
 void Scene::drawPlanes(GLfloat mvMat[], GLfloat pMat[]) {
@@ -592,9 +787,9 @@ void Scene::drawPlanes(GLfloat mvMat[], GLfloat pMat[]) {
 	glEnable(GL_BLEND);
 
 	// Plane X :
-	glUseProgram(this->planeProgramHandle);
+	glUseProgram(this->programHandle_Plane3D);
 	glBindVertexArray(this->vaoHandle);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboPlaneElementHandle);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_PlaneElement);
 	this->prepPlaneUniforms(mvMat, pMat, planes::x);
 	this->setupVAOPointers();
 
@@ -606,9 +801,9 @@ void Scene::drawPlanes(GLfloat mvMat[], GLfloat pMat[]) {
 	glUseProgram(0);
 
 	// Plane Y :
-	glUseProgram(this->planeProgramHandle);
+	glUseProgram(this->programHandle_Plane3D);
 	glBindVertexArray(this->vaoHandle);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboPlaneElementHandle);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_PlaneElement);
 	this->prepPlaneUniforms(mvMat, pMat, planes::y);
 	this->setupVAOPointers();
 
@@ -620,9 +815,9 @@ void Scene::drawPlanes(GLfloat mvMat[], GLfloat pMat[]) {
 	glUseProgram(0);
 
 	// Plane Z :
-	glUseProgram(this->planeProgramHandle);
+	glUseProgram(this->programHandle_Plane3D);
 	glBindVertexArray(this->vaoHandle);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboPlaneElementHandle);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_PlaneElement);
 	this->prepPlaneUniforms(mvMat, pMat, planes::z);
 	this->setupVAOPointers();
 
@@ -641,24 +836,26 @@ void Scene::drawGridOnly(GLfloat mvMat[], GLfloat pMat[]) {
 	glm::mat4 transfoMat = glm::mat4(1.f);
 
 	if (this->inputGridVisible) {
-		this->drawGrid_Generic(mvMat, pMat, transfoMat, this->textureHandle, this->texStorage);
+		this->drawGrid_Generic(mvMat, pMat, transfoMat, this->texHandle_InputGrid, this->inputGrid);
 	}
 	if (this->outputGridVisible) {
-		this->drawGrid_Generic(mvMat, pMat, transfoMat, this->voxelGridTexHandle, this->voxelGrid);
+		this->drawGrid_Generic(mvMat, pMat, transfoMat, this->texHandle_OutputGrid, this->outputGrid);
 	}
 }
 
 void Scene::drawWithPlanes(GLfloat mvMat[], GLfloat pMat[]) {
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	GetOpenGLError();
 
 	glm::mat4 transfoMat = glm::mat4(1.f);
 
 	if (this->inputGridVisible) {
-		this->drawGrid_Generic(mvMat, pMat, transfoMat, this->textureHandle, this->texStorage);
+		this->drawGrid_Generic(mvMat, pMat, transfoMat, this->texHandle_InputGrid, this->inputGrid);
 	}
 	if (this->outputGridVisible) {
-		this->drawGrid_Generic(mvMat, pMat, transfoMat, this->voxelGridTexHandle, this->voxelGrid);
+		this->drawGrid_Generic(mvMat, pMat, transfoMat, this->texHandle_OutputGrid, this->outputGrid);
 	}
 
 	this->drawPlanes(mvMat, pMat);
@@ -671,21 +868,21 @@ void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, 
 	glm::mat4 transfoMat = baseMatrix * grid->getTransform_GridToWorld();
 
 	// Get the uniform locations :
-	GLint mMatrix_Loc = glGetUniformLocation(this->programHandle, "mMatrix");
-	GLint vMatrix_Loc = glGetUniformLocation(this->programHandle, "vMatrix");
-	GLint pMatrix_Loc = glGetUniformLocation(this->programHandle, "pMatrix");
-	GLint lightPos_Loc = glGetUniformLocation(this->programHandle, "lightPos");
-	GLint voxelGridOrigin_Loc = glGetUniformLocation(this->programHandle, "voxelGridOrigin");
-	GLint voxelGridSize_Loc = glGetUniformLocation(this->programHandle, "voxelGridSize");
-	GLint voxelSize_Loc = glGetUniformLocation(this->programHandle, "voxelSize");
-	GLint minTexVal_Loc = glGetUniformLocation(this->programHandle, "minTexVal");
-	GLint maxTexVal_Loc = glGetUniformLocation(this->programHandle, "maxTexVal");
-	GLint drawMode_Loc = glGetUniformLocation(this->programHandle, "drawMode");
-	GLint colorOrTexture_Loc = glGetUniformLocation(this->programHandle, "colorOrTexture");
-	GLint texDataLoc = glGetUniformLocation(this->programHandle, "texData");
-	GLint colorScaleLoc = glGetUniformLocation(this->programHandle, "colorScale");
-	GLint planePositionsLoc = glGetUniformLocation(this->programHandle, "planePositions");
-	GLint gridPositionLoc = glGetUniformLocation(this->programHandle, "gridPosition");
+	GLint mMatrix_Loc = glGetUniformLocation(this->programHandle_projectedTex, "mMatrix");
+	GLint vMatrix_Loc = glGetUniformLocation(this->programHandle_projectedTex, "vMatrix");
+	GLint pMatrix_Loc = glGetUniformLocation(this->programHandle_projectedTex, "pMatrix");
+	GLint lightPos_Loc = glGetUniformLocation(this->programHandle_projectedTex, "lightPos");
+	GLint voxelGridOrigin_Loc = glGetUniformLocation(this->programHandle_projectedTex, "voxelGridOrigin");
+	GLint voxelGridSize_Loc = glGetUniformLocation(this->programHandle_projectedTex, "voxelGridSize");
+	GLint voxelSize_Loc = glGetUniformLocation(this->programHandle_projectedTex, "voxelSize");
+	GLint minTexVal_Loc = glGetUniformLocation(this->programHandle_projectedTex, "minTexVal");
+	GLint maxTexVal_Loc = glGetUniformLocation(this->programHandle_projectedTex, "maxTexVal");
+	GLint drawMode_Loc = glGetUniformLocation(this->programHandle_projectedTex, "drawMode");
+	GLint colorOrTexture_Loc = glGetUniformLocation(this->programHandle_projectedTex, "colorOrTexture");
+	GLint texDataLoc = glGetUniformLocation(this->programHandle_projectedTex, "texData");
+	GLint colorScaleLoc = glGetUniformLocation(this->programHandle_projectedTex, "colorScale");
+	GLint planePositionsLoc = glGetUniformLocation(this->programHandle_projectedTex, "planePositions");
+	GLint gridPositionLoc = glGetUniformLocation(this->programHandle_projectedTex, "gridPosition");
 	GetOpenGLError();
 
 	DiscreteGrid::bbox_t::vec origin = grid->getBoundingBox().getMin();
@@ -721,7 +918,7 @@ void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, 
 	GetOpenGLError();
 	glEnable(GL_TEXTURE_1D);
 	GetOpenGLError();
-	glBindTexture(GL_TEXTURE_1D, this->colorScaleHandle);
+	glBindTexture(GL_TEXTURE_1D, this->texHandle_ColorScaleGrid);
 	GetOpenGLError();
 	glUniform1i(colorScaleLoc, 1);
 	GetOpenGLError();
@@ -739,7 +936,7 @@ void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, 
 
 void Scene::prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane) {
 	// lambda function to check uniform location :
-	auto checkUniformLocation = [](const GLint id, const char* name) -> bool {
+	auto checkUniformLocation = [](const GLint id, const char* name = nullptr) -> bool {
 		if (id == -1) {
 			/*
 			std::cerr << "[LOG][" << __FILE__ << ":" << __LINE__ << "] Could not " <<
@@ -754,20 +951,20 @@ void Scene::prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane) {
 	using boxvec_t = typename DiscreteGrid::bbox_t::vec;
 
 	// Get uniform locations for the program :
-	GLint location_mMatrix = glGetUniformLocation(this->planeProgramHandle, "model_Mat");
-	GLint location_vMatrix = glGetUniformLocation(this->planeProgramHandle, "view_Mat");
-	GLint location_pMatrix = glGetUniformLocation(this->planeProgramHandle, "projection_Mat");
-	GLint location_gridTransform = glGetUniformLocation(this->planeProgramHandle, "gridTransform");
-	GLint location_sceneBBPosition = glGetUniformLocation(this->planeProgramHandle, "sceneBBPosition");
-	GLint location_sceneBBDiagonal = glGetUniformLocation(this->planeProgramHandle, "sceneBBDiagonal");
-	GLint location_gridSize = glGetUniformLocation(this->planeProgramHandle, "gridSize");
-	GLint location_gridDimensions = glGetUniformLocation(this->planeProgramHandle, "gridDimensions");
-	GLint location_currentPlane = glGetUniformLocation(this->planeProgramHandle, "currentPlane");
-	GLint location_planePosition = glGetUniformLocation(this->planeProgramHandle, "planePosition");
-	GLint location_texData = glGetUniformLocation(this->planeProgramHandle, "texData");
-	GLint location_colorScale = glGetUniformLocation(this->planeProgramHandle, "colorScale");
-	GLint location_minTexVal = glGetUniformLocation(this->planeProgramHandle, "minTexVal");
-	GLint location_maxTexVal = glGetUniformLocation(this->planeProgramHandle, "maxTexVal");
+	GLint location_mMatrix = glGetUniformLocation(this->programHandle_Plane3D, "model_Mat");
+	GLint location_vMatrix = glGetUniformLocation(this->programHandle_Plane3D, "view_Mat");
+	GLint location_pMatrix = glGetUniformLocation(this->programHandle_Plane3D, "projection_Mat");
+	GLint location_gridTransform = glGetUniformLocation(this->programHandle_Plane3D, "gridTransform");
+	GLint location_sceneBBPosition = glGetUniformLocation(this->programHandle_Plane3D, "sceneBBPosition");
+	GLint location_sceneBBDiagonal = glGetUniformLocation(this->programHandle_Plane3D, "sceneBBDiagonal");
+	GLint location_gridSize = glGetUniformLocation(this->programHandle_Plane3D, "gridSize");
+	GLint location_gridDimensions = glGetUniformLocation(this->programHandle_Plane3D, "gridDimensions");
+	GLint location_currentPlane = glGetUniformLocation(this->programHandle_Plane3D, "currentPlane");
+	GLint location_planePosition = glGetUniformLocation(this->programHandle_Plane3D, "planePosition");
+	GLint location_texData = glGetUniformLocation(this->programHandle_Plane3D, "texData");
+	GLint location_colorScale = glGetUniformLocation(this->programHandle_Plane3D, "colorScale");
+	GLint location_minTexVal = glGetUniformLocation(this->programHandle_Plane3D, "minTexVal");
+	GLint location_maxTexVal = glGetUniformLocation(this->programHandle_Plane3D, "maxTexVal");
 
 	// Check the location values :
 	checkUniformLocation(location_mMatrix, "mMatrix");
@@ -785,11 +982,10 @@ void Scene::prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane) {
 
 	// Generate the data we need :
 	glm::mat4 transform = glm::mat4(1.f);
-	glm::mat4 gridTransfo = this->texStorage->getTransform_GridToWorld();
-	DiscreteGrid::bbox_t bbws = this->texStorage->getBoundingBoxWorldSpace();
-	boxvec_t min = bbws.getMin();
+	glm::mat4 gridTransfo = this->inputGrid->getTransform_GridToWorld();
+	DiscreteGrid::bbox_t bbws = this->inputGrid->getBoundingBoxWorldSpace();
 	glm::vec3 size = bbws.getDiagonal();
-	glm::vec3 dims = glm::convert_to<glm::vec3::value_type>(this->texStorage->getGridDimensions());
+	glm::vec3 dims = glm::convert_to<glm::vec3::value_type>(this->inputGrid->getGridDimensions());
 	GLint plIdx = (_plane == planes::x) ? 1 : (_plane == planes::y) ? 2 : 3;
 
 	glUniformMatrix4fv(location_mMatrix, 1, GL_FALSE, glm::value_ptr(transform));
@@ -806,17 +1002,17 @@ void Scene::prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane) {
 	glUniform3fv(location_planePosition, 1, glm::value_ptr(this->planePosition));
 	glActiveTexture(GL_TEXTURE0 + 0);
 	glEnable(GL_TEXTURE_3D);
-	glBindTexture(GL_TEXTURE_3D, this->textureHandle);
+	glBindTexture(GL_TEXTURE_3D, this->texHandle_InputGrid);
 	glUniform1i(location_texData, 0);
 	glActiveTexture(GL_TEXTURE0 + 1);
 	glEnable(GL_TEXTURE_1D);
-	glBindTexture(GL_TEXTURE_1D, this->colorScaleHandle);
+	glBindTexture(GL_TEXTURE_1D, this->texHandle_ColorScaleGrid);
 	glUniform1i(location_colorScale, 1);
 	GetOpenGLError();
 }
 
 void Scene::prepPlane_SingleUniforms(planes _plane, glm::vec2 fbDims, const std::shared_ptr<DiscreteGrid> _grid) {
-	glUseProgram(this->planeViewerProgramHandle);
+	glUseProgram(this->programHandle_PlaneViewer);
 	// Info about the grid's BB :
 	DiscreteGrid::bbox_t ws = _grid->getBoundingBoxWorldSpace();
 	DiscreteGrid::bbox_t::vec bbox = ws.getDiagonal();
@@ -825,7 +1021,7 @@ void Scene::prepPlane_SingleUniforms(planes _plane, glm::vec2 fbDims, const std:
 		std::cerr << "[TRACE] BBox diagonal : {" << bbox.x << ", " << bbox.y << ", " << bbox.z << "}\n";
 		std::cerr << "[TRACE] BBox position : {" << posBox.x << ", " << posBox.y << ", " << posBox.z << "}\n";
 		std::cerr << "[TRACE] Program uniforms :" << '\n';
-		this->printProgramUniforms(this->planeViewerProgramHandle);
+		this->printProgramUniforms(this->programHandle_PlaneViewer);
 	}
 	glm::vec2 gridBBDims;
 	if (_plane == planes::x) { gridBBDims.x = bbox.y; gridBBDims.y = bbox.z; }
@@ -841,18 +1037,18 @@ void Scene::prepPlane_SingleUniforms(planes _plane, glm::vec2 fbDims, const std:
 
 	// Uniform locations :
 	// VShader :
-	GLint location_fbDims = glGetUniformLocation(this->planeViewerProgramHandle, "fbDims");
-	GLint location_bbDims = glGetUniformLocation(this->planeViewerProgramHandle, "bbDims");
-	GLint location_planeIndex = glGetUniformLocation(this->planeViewerProgramHandle, "planeIndex");
-	GLint location_gridTransform = glGetUniformLocation(this->planeViewerProgramHandle, "gridTransform");
-	GLint location_gridDimensions = glGetUniformLocation(this->planeViewerProgramHandle, "gridDimensions");
-	GLint location_gridBBDiagonal = glGetUniformLocation(this->planeViewerProgramHandle, "gridBBDiagonal");
-	GLint location_gridBBPosition = glGetUniformLocation(this->planeViewerProgramHandle, "gridBBPosition");
-	GLint location_depth = glGetUniformLocation(this->planeViewerProgramHandle, "depth");
+	GLint location_fbDims = glGetUniformLocation(this->programHandle_PlaneViewer, "fbDims");
+	GLint location_bbDims = glGetUniformLocation(this->programHandle_PlaneViewer, "bbDims");
+	GLint location_planeIndex = glGetUniformLocation(this->programHandle_PlaneViewer, "planeIndex");
+	GLint location_gridTransform = glGetUniformLocation(this->programHandle_PlaneViewer, "gridTransform");
+	GLint location_gridDimensions = glGetUniformLocation(this->programHandle_PlaneViewer, "gridDimensions");
+	GLint location_gridBBDiagonal = glGetUniformLocation(this->programHandle_PlaneViewer, "gridBBDiagonal");
+	GLint location_gridBBPosition = glGetUniformLocation(this->programHandle_PlaneViewer, "gridBBPosition");
+	GLint location_depth = glGetUniformLocation(this->programHandle_PlaneViewer, "depth");
 	// FShader :
-	GLint location_texData = glGetUniformLocation(this->planeViewerProgramHandle, "texData");
-	GLint location_colorScale = glGetUniformLocation(this->planeViewerProgramHandle, "colorScale");
-	GLint location_colorBounds = glGetUniformLocation(this->planeViewerProgramHandle, "colorBounds");
+	GLint location_texData = glGetUniformLocation(this->programHandle_PlaneViewer, "texData");
+	GLint location_colorScale = glGetUniformLocation(this->programHandle_PlaneViewer, "colorScale");
+	GLint location_colorBounds = glGetUniformLocation(this->programHandle_PlaneViewer, "colorBounds");
 	GetOpenGLError();
 
 	if (this->showVAOstate) {
@@ -882,12 +1078,12 @@ void Scene::prepPlane_SingleUniforms(planes _plane, glm::vec2 fbDims, const std:
 
 	// Uniform samplers :
 	glActiveTexture(GL_TEXTURE0 + 0);
-	glBindTexture(GL_TEXTURE_3D, this->textureHandle);
+	glBindTexture(GL_TEXTURE_3D, this->texHandle_InputGrid);
 	glUniform1i(location_texData, 0);
 	GetOpenGLError();
 
 	glActiveTexture(GL_TEXTURE0 + 1);
-	glBindTexture(GL_TEXTURE_1D, this->colorScaleHandle);
+	glBindTexture(GL_TEXTURE_1D, this->texHandle_ColorScaleGrid);
 	glUniform1i(location_colorScale, 1);
 	GetOpenGLError();
 }
@@ -897,9 +1093,9 @@ void Scene::drawGrid_Generic(GLfloat *mvMat, GLfloat *pMat, glm::mat4 baseMatrix
 	glEnable(GL_TEXTURE_3D);
 	GetOpenGLError();
 
-	glUseProgram(this->programHandle);
+	glUseProgram(this->programHandle_projectedTex);
 	glBindVertexArray(this->vaoHandle);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboElementHandle);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_Element);
 
 	this->prepGridUniforms(mvMat, pMat, lightPos, baseMatrix, texHandle, grid);
 	this->setupVAOPointers();
@@ -990,37 +1186,37 @@ void Scene::setupVBOData(const std::vector<glm::vec4>& vertPos, const std::vecto
 	///////////////////////////////////////////////
 	/// CREATE VBO AND UPLOAD DATA
 	///////////////////////////////////////////////
-	glGenBuffers(1, &this->vboVertPosHandle);
+	glGenBuffers(1, &this->vboHandle_VertPos);
 	GetOpenGLError();
-	glBindBuffer(GL_ARRAY_BUFFER, this->vboVertPosHandle);
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_VertPos);
 	GetOpenGLError();
 	glBufferData(GL_ARRAY_BUFFER, vertPos.size()*sizeof(glm::vec4), vertPos.data(), GL_STATIC_DRAW);
 	GetOpenGLError();
 
-	glGenBuffers(1, &this->vboVertNormHandle);
+	glGenBuffers(1, &this->vboHandle_VertNorm);
 	GetOpenGLError();
-	glBindBuffer(GL_ARRAY_BUFFER, this->vboVertNormHandle);
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_VertNorm);
 	GetOpenGLError();
 	glBufferData(GL_ARRAY_BUFFER, vertNorm.size()*sizeof(glm::vec4), vertNorm.data(), GL_STATIC_DRAW);
 	GetOpenGLError();
 
-	glGenBuffers(1, &this->vboVertTexHandle);
+	glGenBuffers(1, &this->vboHandle_VertTex);
 	GetOpenGLError();
-	glBindBuffer(GL_ARRAY_BUFFER, this->vboVertTexHandle);
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_VertTex);
 	GetOpenGLError();
 	glBufferData(GL_ARRAY_BUFFER, vertTex.size()*sizeof(glm::vec3), vertTex.data(), GL_STATIC_DRAW);
 	GetOpenGLError();
 
-	glGenBuffers(1, &this->vboElementHandle);
+	glGenBuffers(1, &this->vboHandle_Element);
 	GetOpenGLError();
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboElementHandle);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_Element);
 	GetOpenGLError();
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertIdx.size()*sizeof(unsigned int), vertIdx.data(), GL_STATIC_DRAW);
 	GetOpenGLError();
 
-	glGenBuffers(1, &this->vboPlaneElementHandle);
+	glGenBuffers(1, &this->vboHandle_PlaneElement);
 	GetOpenGLError();
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboPlaneElementHandle);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_PlaneElement);
 	GetOpenGLError();
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertIdx_plane.size()*sizeof(unsigned int), vertIdx_plane.data(), GL_STATIC_DRAW);
 	GetOpenGLError();
@@ -1031,21 +1227,21 @@ void Scene::setupVBOData(const std::vector<glm::vec4>& vertPos, const std::vecto
 void Scene::setupVAOPointers() {
 	glEnableVertexAttribArray(0);
 	GetOpenGLError();
-	glBindBuffer(GL_ARRAY_BUFFER, this->vboVertPosHandle);
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_VertPos);
 	GetOpenGLError();
 	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
 	GetOpenGLError();
 
 	glEnableVertexAttribArray(1);
 	GetOpenGLError();
-	glBindBuffer(GL_ARRAY_BUFFER, this->vboVertNormHandle);
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_VertNorm);
 	GetOpenGLError();
 	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
 	GetOpenGLError();
 
 	glEnableVertexAttribArray(2);
 	GetOpenGLError();
-	glBindBuffer(GL_ARRAY_BUFFER, this->vboVertTexHandle);
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_VertTex);
 	GetOpenGLError();
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 	GetOpenGLError();
@@ -1148,16 +1344,16 @@ std::vector<float> Scene::generateColorScale(std::size_t minVal, std::size_t max
 }
 
 void Scene::uploadColorScale(const std::vector<float>& colorScale) {
-	if (this->colorScaleHandle != 0) {
-		glDeleteTextures(1, &this->colorScaleHandle);
+	if (this->texHandle_ColorScaleGrid != 0) {
+		glDeleteTextures(1, &this->texHandle_ColorScaleGrid);
 		GetOpenGLError();
-		this->colorScaleHandle = 0;
+		this->texHandle_ColorScaleGrid = 0;
 	}
 
-	glGenTextures(1, &this->colorScaleHandle);
+	glGenTextures(1, &this->texHandle_ColorScaleGrid);
 	GetOpenGLError();
 
-	glBindTexture(GL_TEXTURE_1D, this->colorScaleHandle);
+	glBindTexture(GL_TEXTURE_1D, this->texHandle_ColorScaleGrid);
 	GetOpenGLError();
 	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -1187,3 +1383,482 @@ void Scene::slotSetPlanePositionX(float coord) { this->planePosition.x = coord; 
 void Scene::slotSetPlanePositionY(float coord) { this->planePosition.y = coord; }
 
 void Scene::slotSetPlanePositionZ(float coord) { this->planePosition.z = coord; }
+
+void Scene::tex3D_buildTexture() {
+	/* By default, this step should have been done in the Scene::loadImage() function. */
+}
+
+void Scene::tex3D_buildMesh() {
+	/* Here, we'll build the tetrahedral mesh used to visualize the 3D structure of the acquisition in real-time. */
+	/* Textures built : index of vertices, index of per-face normals for tetrahedra, index of per-face neighbors
+	 * for tetrehedra */
+
+	std::vector<glm::vec4> vertices; ///< positions of the vertices, within the grid space
+	std::vector<glm::vec3> texCoords; ///< texture coordinates of the vertices, normalized
+	std::vector<std::array<std::size_t, 4>> tetrahedra; ///< stores the indices of vertices needed for a tetrahedron
+	std::vector<std::vector<int>> neighbors; ///< stores the indices of neighboring tetrahedra
+	std::vector<std::array<glm::vec4, 4>> normals; ///< per-face normals of each tetrahedron
+
+	using vec_t = typename DiscreteGrid::bbox_t::vec;
+
+	const DiscreteGrid::sizevec3& dims = this->inputGrid->getGridDimensions();
+	const DiscreteGrid::bbox_t::vec size = this->inputGrid->getBoundingBox().getDiagonal();
+	// Dimensions, subject to change :
+	std::size_t xv = dims.x / 500 + 1; glm::vec4::value_type xs = size.x / static_cast<glm::vec4::value_type>(xv);
+	std::size_t yv = dims.y / 500 + 1; glm::vec4::value_type ys = size.y / static_cast<glm::vec4::value_type>(yv);
+	std::size_t zv = dims.z / 25 + 1; glm::vec4::value_type zs = size.z / static_cast<glm::vec4::value_type>(zv);
+
+	// Create vertices along with their texture coordinates :
+	for (std::size_t i = 0; i <= xv; ++i) {
+		for (std::size_t j = 0; j <= yv; ++j) {
+			for (std::size_t k = 0; k <= zv; ++k) {
+				vertices.emplace_back(
+					static_cast<vec_t::value_type>(i)*xs,
+					static_cast<vec_t::value_type>(j)*ys,
+					static_cast<vec_t::value_type>(k)*zs,
+					1.
+				);
+				texCoords.emplace_back(
+					static_cast<vec_t::value_type>(i)/static_cast<vec_t::value_type>(xv),
+					static_cast<vec_t::value_type>(j)/static_cast<vec_t::value_type>(yv),
+					static_cast<vec_t::value_type>(k)/static_cast<vec_t::value_type>(zv)
+				);
+			}
+		}
+	}
+
+	std::size_t xt = xv+1; std::size_t yt = yv+1; std::size_t zt = zv+1;
+	auto getIndice = [&, xv, yv](std::size_t i, std::size_t j, std::size_t k) -> std::size_t {
+		return i * xv * yv + j * xv + k;
+	};
+	// Create tetrahedra :
+	for (std::size_t i = 0; i < xt; ++i) {
+		for (std::size_t j = 0; j < yt; ++j) {
+			for (std::size_t k = 0; k < zt; ++k) {
+				/*
+				tetrahedra.push_back({getIndice(i+0, j+0, k+0), getIndice(i+0, j+0, k+1), getIndice(i+1, j+0, k+0), getIndice(i+1, j+1, k+0)}); // 1
+				tetrahedra.push_back({getIndice(i+0, j+0, k+0), getIndice(i+0, j+0, k+1), getIndice(i+0, j+1, k+0), getIndice(i+1, j+1, k+0)}); // 2
+				tetrahedra.push_back({getIndice(i+0, j+0, k+1), getIndice(i+1, j+1, k+0), getIndice(i+1, j+0, k+0), getIndice(i+1, j+0, k+1)}); // 3
+				tetrahedra.push_back({getIndice(i+0, j+1, k+0), getIndice(i+0, j+1, k+1), getIndice(i+0, j+0, k+1), getIndice(i+1, j+1, k+0)}); // 4
+				tetrahedra.push_back({getIndice(i+0, j+0, k+1), getIndice(i+0, j+1, k+1), getIndice(i+1, j+1, k+1), getIndice(i+1, j+1, k+0)}); // 5
+				tetrahedra.push_back({getIndice(i+0, j+0, k+1), getIndice(i+1, j+0, k+1), getIndice(i+1, j+1, k+1), getIndice(i+1, j+1, k+0)}); // 6
+				*/
+				tetrahedra.push_back({getIndice(i+1, j  , k  ), getIndice(i+1, j+1, k  ), getIndice(i  , j+1, k  ), getIndice(i+1, j+1, k+1)});
+				tetrahedra.push_back({getIndice(i  , j  , k+1), getIndice(i  , j  , k  ), getIndice(i  , j+1, k+1), getIndice(i+1, j  , k+1)});
+				tetrahedra.push_back({getIndice(i  , j+1, k+1), getIndice(i+1, j  , k  ), getIndice(i+1, j+1, k+1), getIndice(i+1, j  , k+1)});
+				tetrahedra.push_back({getIndice(i  , j  , k  ), getIndice(i+1, j  , k  ), getIndice(i  , j+1, k+1), getIndice(i+1, j  , k+1)});
+				tetrahedra.push_back({getIndice(i  , j  , k  ), getIndice(i+1, j  , k  ), getIndice(i  , j+1, k  ), getIndice(i  , j+1, k+1)});
+				tetrahedra.push_back({getIndice(i  , j+1, k  ), getIndice(i+1, j  , k  ), getIndice(i+1, j+1, k+1), getIndice(i  , j+1, k+1)});
+
+			}
+		}
+	}
+
+	std::map< Face , std::pair<int, int> > adjacent_faces;
+	std::size_t indices[4][3];
+	indices[0][0] = 3; indices[0][1] = 1; indices[0][2] = 2;
+	indices[1][0] = 3; indices[1][1] = 2; indices[1][2] = 0;
+	indices[2][0] = 3; indices[2][1] = 0; indices[2][2] = 1;
+	indices[3][0] = 2; indices[3][1] = 1; indices[3][2] = 0;
+
+	neighbors.clear();
+	for(std::size_t i = 0 ; i < tetrahedra.size() ; i++ ){
+		neighbors.push_back(std::vector(4, -1));
+		normals.push_back(std::array<glm::vec4, 4>{glm::vec4(.0f), glm::vec4(.0f), glm::vec4(.0f), glm::vec4(.0f)});
+	}
+
+	// generate the correspondance by looking at which faces are similar : [HEAVY COMPUTATION]
+	for(std::size_t i = 0 ; i < tetrahedra.size() ; i ++ ){
+		for( int v = 0 ; v < 4 ; v++ ){
+			// find similar face in other tetrahedrons :
+			Face face = Face( tetrahedra[i][indices[v][0]],
+					tetrahedra[i][indices[v][1]],
+					tetrahedra[i][indices[v][2]]);
+			std::map< Face , std::pair<int, int> >::iterator it = adjacent_faces.find(face);
+			if( it == adjacent_faces.end() ){
+				adjacent_faces[face] = std::make_pair(static_cast<int>(i),v);
+			} else {
+				neighbors[i][v] = it->second.first;
+				neighbors[it->second.first][it->second.second] = i;
+			}
+		}
+	}
+
+	// determine the size of the texture, depending on the # of tetrahedron neighbors :
+	std::size_t vertWidth = 0, vertHeight = 0;
+	std::size_t normWidth = 0, normHeight = 0;
+	std::size_t coorWidth = 0, coorHeight = 0;
+	std::size_t neighbWidth = 0, neighbHeight = 0;
+
+	__GetTexSize(tetrahedra.size()*4*3, &vertWidth, &vertHeight);
+	__GetTexSize(tetrahedra.size()*4, &normWidth, &normHeight);
+	__GetTexSize(tetrahedra.size()*4*3, &coorWidth, &coorHeight);
+	__GetTexSize(tetrahedra.size()*4, &neighbWidth, &neighbHeight);
+
+	this->tetCount = tetrahedra.size();
+	this->widths[0] = vertWidth;
+	this->widths[1] = neighbWidth;
+	this->widths[2] = normWidth;
+
+	GLfloat* rawVertices = new GLfloat[tetCount*4*3*3];
+	GLfloat* rawNormals = new GLfloat[tetCount*4*4];
+	GLfloat* tex = new GLfloat[tetCount*4*3*3];
+	GLfloat* rawNeighbors = new GLfloat[tetCount*4*3];
+
+	/*
+	Warning : the loop that follows is horribly bad : it duplicates every texture coordinate by the number of times
+	the vertex is used within the mesh. It MUST be improved once the method is working, to save up on video memory.
+	It does the same for the vertex positions.
+	*/
+	std::size_t cnt = 0;
+	std::size_t iter = 0;
+	std::size_t texcnt = 0;
+	std::size_t ncount = 0;
+	for(std::size_t t = 0; t < tetrahedra.size(); ++t) {
+		// For each tet :
+		const std::array<std::size_t, 4>& tetrahedron = tetrahedra[t];
+		// For each tet's face :
+		for (std::size_t i = 0; i < 4; ++i) {
+			// For all vertices within that face :
+			for (std::size_t j = 0; j < 3; ++j) {
+				// Get the vertex's position and tex coord :
+				const glm::vec3& position = vertices[tetrahedron[indices[i][j]]];
+				const glm::vec3& tetCoord = texCoords[tetrahedron[indices[i][j]]];
+				// And put it in the array :
+				for (std::size_t k = 0; k < 3; ++k) {
+					rawVertices[texcnt] = position[k];
+					tex[texcnt] = tetCoord[k];
+					texcnt++;
+				}
+			}
+
+			// Compute this face's normal :
+			glm::vec4 n1 = vertices[tetrahedron[indices[i][1]]] - vertices[tetrahedron[indices[i][0]]];
+			glm::vec4 n2 = vertices[tetrahedron[indices[i][2]]] - vertices[tetrahedron[indices[i][0]]];
+			glm::vec4 norm = glm::normalize(glm::cross(n1, n2));
+			// Put inverse of dot with opposing vertex in norm.w :
+			glm::vec4 v1 = vertices[tetrahedron[i]] - vertices[tetrahedron[(i+1)%4]];
+			glm::vec4::value_type val = 1. / glm::dot(v1, norm);
+			norm.w = val;
+			// Put it in the array :
+			for (std::size_t n = 0; n < 4; ++n) {
+				rawNormals[ncount++] = norm[n];
+			}
+
+			rawNeighbors[iter + i] = static_cast<GLfloat>(neighbors[t][i]);
+			iter+=3;
+		}
+	}
+
+	// Write to file :
+	std::ofstream out("./meshcreated2.mesh");
+	if (out.is_open()) {
+		char endl = '\n';
+		int dim = 3;
+		out << "MeshVersionFormatted " << 1 << endl;
+		out << "Dimension " << dim << endl;
+		out << "Vertices\n";
+		out << vertices.size() << endl;
+		glm::vec3 d = glm::vec3(2.f, 2.f, 50.f/1000.f);
+		for (const auto& v : vertices) {
+			out << v.x / d.x << ' ' << v.y / d.y << ' ' << v.z / d.z << ' ' << 1 << endl;
+		}
+		out << "Triangles\n";
+		out << 0 << endl;
+		out << "Tetrahedra\n" ;
+		out << tetrahedra.size() << endl;
+		for (const auto& t : tetrahedra) {
+			out << t[0]+1 << ' ' << t[1]+1 << ' ' << t[2]+1 << ' ' << t[3]+1 << ' ' << 3 << '\n';
+		}
+		out << endl ;
+		out.close();
+	} else {
+		std::cerr << "Could not open file, no mesh created" << '\n';
+	}
+	__GetOpenGLError("texInit", 00);
+
+	// Vertices texture :
+	if (glIsTexture(this->texHandle_tetrahedraVertexPositions) == GL_TRUE) {
+		glDeleteTextures(1, &this->texHandle_tetrahedraVertexPositions);
+		this->texHandle_tetrahedraVertexPositions = 0;
+	}
+	// Generate the texture for vertex positions :
+	glGenTextures(1, &this->texHandle_tetrahedraVertexPositions);
+	__GetOpenGLError("texInit", 10);
+	glBindTexture(GL_TEXTURE_2D, this->texHandle_tetrahedraVertexPositions);
+	__GetOpenGLError("texInit", 11);
+	// nearest neighbor :
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	__GetOpenGLError("texInit", 12);
+	// Set the texture upload to not generate mimaps :
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_LOD, static_cast<GLfloat>(-1000.f));
+	__GetOpenGLError("texInit", 13);
+	// Clamping :
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP);
+	__GetOpenGLError("texInit", 14);
+	// Upload to OpenGL :
+	glTexImage2D(GL_TEXTURE_2D,	// tex target
+		0,			// mipmap 0
+		GL_RGB32F,		// internal format
+		vertWidth,		// width
+		vertHeight,		// height
+		0,			// border
+		GL_RGB,			// pixel data format
+		GL_FLOAT,		// pixel data type
+		rawVertices		// pointer to array of data
+	);
+	__GetOpenGLError("texInit", 1);
+
+	// Per-face normals texture :
+	if (glIsTexture(this->texHandle_tetrahedraFaceNormals) == GL_TRUE) {
+		glDeleteTextures(1, &this->texHandle_tetrahedraFaceNormals);
+		this->texHandle_tetrahedraFaceNormals = 0;
+	}
+	// Generate texture, and specify nearest neighbor and clamping for mip-mapping :
+	glGenTextures(1, &this->texHandle_tetrahedraFaceNormals);
+	__GetOpenGLError("texInit", 20);
+	glBindTexture(GL_TEXTURE_2D, this->texHandle_tetrahedraFaceNormals);
+	__GetOpenGLError("texInit", 201);
+	// nearest neighbor :
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	__GetOpenGLError("texInit", 21);
+	// Set the texture upload to not generate mimaps :
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_LOD, static_cast<GLfloat>(-1000.f));
+	__GetOpenGLError("texInit", 22);
+	// Clamping :
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP);
+	__GetOpenGLError("texInit", 23);
+	// upload to opengl :
+	glTexImage2D(GL_TEXTURE_2D,	// tex target
+		0,			// mipmap 0
+		GL_RGBA32F,		// internal format
+		normWidth,		// width
+		normHeight,		// height
+		0,			// border
+		GL_RGBA,		// pixel data format
+		GL_FLOAT,		// pixel data type
+		rawNormals		// pointer to array of data
+	);
+	__GetOpenGLError("texInit", 2);
+
+	// Texture coordinates texture :
+	if (glIsTexture(this->texHandle_tetrahedraVertexTexCoords) == GL_TRUE) {
+		glDeleteTextures(1, &this->texHandle_tetrahedraVertexTexCoords);
+		this->texHandle_tetrahedraVertexTexCoords = 0;
+	}
+	glGenTextures(1, &this->texHandle_tetrahedraVertexTexCoords);
+	__GetOpenGLError("texInit", 30);
+	glBindTexture(GL_TEXTURE_2D, this->texHandle_tetrahedraVertexTexCoords);
+	__GetOpenGLError("texInit", 301);
+	// Nearest neighbor :
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	__GetOpenGLError("texInit", 31);
+	// Set the texture upload to not generate mimaps :
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_LOD, static_cast<GLfloat>(-1000.f));
+	__GetOpenGLError("texInit", 32);
+	// Clamping :
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP);
+	__GetOpenGLError("texInit", 33);
+
+	// Upload to OpenGL :
+	glTexImage2D(GL_TEXTURE_2D,	// tex target
+		0,			// mipmap 0
+		GL_RGB32F,		// internal format
+		coorWidth,		// width
+		coorHeight,		// height
+		0,			// border
+		GL_RGB,			// pixel data format
+		GL_FLOAT,		// pixel data type
+		tex			// pointer to array of data
+	);
+	__GetOpenGLError("texInit", 3);
+
+	// Tetrahedra neighbors texture :
+	if (glIsTexture(this->texHandle_tetrahedraNeighborhood) == GL_TRUE) {
+		glDeleteTextures(1, &this->texHandle_tetrahedraNeighborhood);
+		this->texHandle_tetrahedraNeighborhood = 0;
+	}
+	// Generate texture, and specify nearest neighbor and clamping for mip-mapping :
+	glGenTextures(1, &this->texHandle_tetrahedraNeighborhood);
+	glBindTexture(GL_TEXTURE_2D, this->texHandle_tetrahedraNeighborhood);
+	// nearest neighbor :
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	// Set the texture upload to not generate mimaps :
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_LOD, static_cast<GLfloat>(-1000.f));
+	// Clamping :
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP);
+	// upload to opengl :
+	glTexImage2D(GL_TEXTURE_2D,	// tex target
+		0,			// mipmap 0
+		GL_RGB32F,		// internal format
+		neighbWidth,		// width
+		neighbHeight,		// height
+		0,			// border
+		GL_RGB,			// pixel data format
+		GL_FLOAT,		// pixel data type
+		rawNeighbors		// pointer to array of data
+	);
+	__GetOpenGLError("texInit", 4);
+
+	delete[] tex;
+	delete[] rawVertices;
+	delete[] rawNormals;
+	delete[] rawNeighbors;
+	normals.clear();
+	neighbors.clear();
+	tetrahedra.clear();
+	texCoords.clear();
+	vertices.clear();
+	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void Scene::tex3D_buildVisTexture() {
+	if (glIsTexture(this->texHandle_visibilityMap) == GL_TRUE) {
+		glDeleteTextures(1, &this->texHandle_visibilityMap);
+		this->texHandle_visibilityMap = 0;
+	}
+	this->widths[3] = 0;
+
+	glGenTextures(1, &this->texHandle_visibilityMap);
+	__GetOpenGLError("visWidths", 0);
+	glBindTexture(GL_TEXTURE_2D, this->texHandle_visibilityMap);
+	__GetOpenGLError("visWidths", 1);
+	// nearest neighbor :
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	__GetOpenGLError("visWidths", 2);
+	// Set the texture upload to not generate mimaps :
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_LOD, static_cast<GLfloat>(-1000.f));
+	__GetOpenGLError("visWidths", 3);
+	// Clamping :
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP);
+	__GetOpenGLError("visWidths", 4);
+
+	std::size_t visWidth = 0, visHeight = 0;
+	__GetTexSize(256, &visWidth, &visHeight);
+	this->widths[3] = visWidth;
+
+	GLfloat* rawVisibility = new GLfloat[256*3];
+
+	for (std::size_t i = 0; i < 256; ++i) {
+		rawVisibility[i*3 + 0] = 100.f;
+		rawVisibility[i*3 + 1] = 100.f;
+		rawVisibility[i*3 + 2] = 100.f;
+	}
+
+	glTexImage2D(GL_TEXTURE_2D,	// tex target
+		0,			// mipmap 0
+		GL_RGB32F,		// internal format
+		visWidth,		// width
+		visHeight,		// height
+		0,			// border
+		GL_RGB,			// pixel data format
+		GL_FLOAT,		// pixel data type
+		rawVisibility		// pointer to array of data
+	);
+	__GetOpenGLError("visWidths", 5);
+}
+
+void Scene::tex3D_buildBuffers() {
+	// Tetra ///////////////////////////////////////////////////////////////////////
+	//    v0----- v
+	//   /       /|
+	//  v ------v3|
+	//  | |     | |
+	//  | |v ---|-|v2
+	//  |/      |/
+	//  v1------v
+
+	float v0 [3] = { -1, -1,  1 };
+	float v1 [3] = { -1,  1, -1 };
+	float v2 [3] = {  1, -1, -1 };
+	float v3 [3] = {  1,  1,  1 };
+	GetOpenGLError();
+
+	// vertex coords array
+	GLfloat vertices[] = {v3[0],v3[1],v3[2],  v1[0],v1[1],v1[2],  v2[0],v2[1],v2[2],        // v3-v1-v2
+			      v3[0],v3[1],v3[2],  v2[0],v2[1],v2[2],  v1[0],v1[1],v1[2],        // v3-v2-v1
+			      v3[0],v3[1],v3[2],  v0[0],v0[1],v0[2],  v1[0],v1[1],v1[2],        // v3-v0-v1
+			      v2[0],v2[1],v2[2],  v1[0],v1[1],v1[2],  v0[0],v0[1],v0[2]};       // v2-v1-v0
+	// normal array
+	GLfloat normals[] = {v3[0],v3[1],v3[2],  v1[0],v1[1],v1[2],  v2[0],v2[1],v2[2],        // v3-v1-v2
+			     v3[0],v3[1],v3[2],  v2[0],v2[1],v2[2],  v1[0],v1[1],v1[2],        // v3-v2-v1
+			     v3[0],v3[1],v3[2],  v0[0],v0[1],v0[2],  v1[0],v1[1],v1[2],        // v3-v0-v1
+			     v2[0],v2[1],v2[2],  v1[0],v1[1],v1[2],  v0[0],v0[1],v0[2]};       // v2-v1-v0
+	// index array of vertex array for glDrawElements()
+	// Notice the indices are listed straight from beginning to end as exactly
+	// same order of vertex array without hopping, because of different normals at
+	// a shared vertex. For this case, glDrawArrays() and glDrawElements() have no
+	// difference.
+	GLushort indices[] = {0,1,2,
+			      3,4,5,
+			      6,7,8,
+			      9,10,11};
+	// texture coords :
+	GLfloat textureCoords[] = {0.,0.,1. ,1. ,2. ,2. ,
+				   3.,3.,4. ,4. ,5. ,5. ,
+				   6.,6.,7. ,7. ,8. ,8. ,
+				   9.,9.,10.,10.,11.,11.};
+
+	glGenBuffers(1, &this->vboHandle_Texture3D_VertPos);
+	glGenBuffers(1, &this->vboHandle_Texture3D_VertNorm);
+	glGenBuffers(1, &this->vboHandle_Texture3D_VertTex);
+	glGenBuffers(1, &this->vboHandle_Texture3D_VertIdx);
+	GetOpenGLError();
+
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_Texture3D_VertPos);
+	glBufferData(GL_ARRAY_BUFFER, 12*3*sizeof(GLfloat), vertices, GL_STATIC_DRAW);
+	GetOpenGLError();
+
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_Texture3D_VertNorm);
+	glBufferData(GL_ARRAY_BUFFER, 12*3*sizeof(GLfloat), normals, GL_STATIC_DRAW);
+	GetOpenGLError();
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_Texture3D_VertTex);
+	glBufferData(GL_ARRAY_BUFFER, 8*3*sizeof(GLfloat), textureCoords, GL_STATIC_DRAW);
+	GetOpenGLError();
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_Texture3D_VertIdx);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 12*sizeof(GLushort), indices, GL_STATIC_DRAW);
+	GetOpenGLError();
+
+	glGenVertexArrays(1, &this->vaoHandle_VolumetricBuffers);
+	this->tex3D_bindVAO();
+}
+
+void Scene::tex3D_bindVAO() {
+	glBindVertexArray(this->vaoHandle_VolumetricBuffers);
+	GetOpenGLError();
+	glEnableVertexAttribArray(0);
+	GetOpenGLError();
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_Texture3D_VertPos);
+	GetOpenGLError();
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+	GetOpenGLError();
+
+	glEnableVertexAttribArray(1);
+	GetOpenGLError();
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_Texture3D_VertNorm);
+	GetOpenGLError();
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
+	GetOpenGLError();
+
+	glEnableVertexAttribArray(2);
+	GetOpenGLError();
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_Texture3D_VertTex);
+	GetOpenGLError();
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+	GetOpenGLError();
+}

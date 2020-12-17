@@ -22,6 +22,7 @@ uniform vec3 sceneBBPosition;	// The scene's bounding box position
 uniform vec3 sceneBBDiagonal;	// The scene's bounding box diagonal
 uniform uint minTexVal;		// The minimum displayed grid value
 uniform uint maxTexVal;		// The maximum displayed grid value
+uniform int currentPlane;	// Plane identifier : 1 (x), 2 (y), 3 (z)
 
 /****************************************/
 /*********** Function headers ***********/
@@ -32,6 +33,8 @@ vec4 R8UItoColorScale(in uvec3 ucolor);
 vec4 R8UIToRGB(in uvec3 ucolor);
 // Determines the plane position along its axis
 float planeIdxToPlanePosition(int id);
+// Return a color corresponding to a plane's index
+vec4 planeIndexToColor();
 
 /****************************************/
 /***************** Main *****************/
@@ -45,15 +48,16 @@ void main(void)
 		if (texCoord.y > 0 && texCoord.y < 1) {
 			if (texCoord.z > 0 && texCoord.z < 1) {
 				colorTex = R8UItoColorScale(tex);
-			}
-		}
-	}
+			} else { colorTex = planeIndexToColor(); }
+		} else { colorTex = planeIndexToColor(); }
+	} else { colorTex = planeIndexToColor(); }
+
 	if (colorTex.a < .1f) { discard; }
-	if ((vPos.x+.01) < planeIdxToPlanePosition(1)) { discard; } // Early discards for
+	/*if ((vPos.x+.01) < planeIdxToPlanePosition(1)) { discard; } // Early discards for
 	if ((vPos.y+.01) < planeIdxToPlanePosition(2)) { discard; } // the parts of the grid
 	if ((vPos.z+.01) < planeIdxToPlanePosition(3)) { discard; } // behind the planes
-	// color = vec4(texCoord.x, texCoord.y, texCoord.z, 1.);
-	// color = basecolor;
+	*/
+
 	color = colorTex;
 }
 
@@ -93,4 +97,11 @@ float planeIdxToPlanePosition(int id) {
 	if (id == 2) { return diff.y; }
 	if (id == 3) { return diff.z; }
 	return 0.f;
+}
+
+vec4 planeIndexToColor() {
+	if (currentPlane == 1) { return vec4(.5, .0, .0, .1); }
+	if (currentPlane == 2) { return vec4(.0, .5, .0, .1); }
+	if (currentPlane == 3) { return vec4(.0, .0, .5, .1); }
+	return vec4(.27, .27, .27, 1.);
 }

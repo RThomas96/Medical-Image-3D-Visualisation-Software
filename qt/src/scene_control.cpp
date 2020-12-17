@@ -19,9 +19,6 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, Viewer* rv, QWidget* 
 	this->xPlanePos = new QDoubleSpinBox();
 	this->yPlanePos = new QDoubleSpinBox();
 	this->zPlanePos = new QDoubleSpinBox();
-	this->xPlaneDepth = new QSlider(Qt::Horizontal);
-	this->yPlaneDepth = new QSlider(Qt::Horizontal);
-	this->zPlaneDepth = new QSlider(Qt::Horizontal);
 
 	// Create the container widget :
 	this->controlContainer = new QWidget();
@@ -32,13 +29,8 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, Viewer* rv, QWidget* 
 	this->maxValueTexture->setRange(0, 255);
 	this->maxValueTexture->setValue(255);
 
-	this->xPlaneDepth->setRange(0, 100); this->xPlaneDepth->setValue(0);
-	this->yPlaneDepth->setRange(0, 100); this->yPlaneDepth->setValue(0);
-	this->zPlaneDepth->setRange(0, 100); this->zPlaneDepth->setValue(0);
-
 	QLabel* minTexLabel = new QLabel("Min texture value");
 	QLabel* maxTexLabel = new QLabel("Max texture value");
-	QLabel* planeDepthLabel = new QLabel("Cutting plane depths");
 
 	QLabel* cutMinLabel = new QLabel("Cutting plane coordinates");
 
@@ -46,7 +38,6 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, Viewer* rv, QWidget* 
 	QHBoxLayout* topContainer = new QHBoxLayout();
 	QVBoxLayout* texContainer = new QVBoxLayout();
 	QVBoxLayout* cutMinContainer = new QVBoxLayout();
-	QVBoxLayout* cutMaxContainer = new QVBoxLayout();
 	QHBoxLayout* allContainer = new QHBoxLayout(this->controlContainer);
 
 	texContainer->addWidget(minTexLabel);
@@ -59,15 +50,9 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, Viewer* rv, QWidget* 
 	cutMinContainer->addWidget(this->yPlanePos);
 	cutMinContainer->addWidget(this->zPlanePos);
 
-	cutMaxContainer->addWidget(planeDepthLabel);
-	cutMaxContainer->addWidget(this->xPlaneDepth);
-	cutMaxContainer->addWidget(this->yPlaneDepth);
-	cutMaxContainer->addWidget(this->zPlaneDepth);
-
 	allContainer->addLayout(topContainer);
 	allContainer->addLayout(texContainer);
 	allContainer->addLayout(cutMinContainer);
-	allContainer->addLayout(cutMaxContainer);
 
 	// Disable by default the top level container :
 	this->controlContainer->setEnabled(false);
@@ -105,18 +90,12 @@ ControlPanel::~ControlPanel() {
 	this->xPlanePos->disconnect();
 	this->yPlanePos->disconnect();
 	this->zPlanePos->disconnect();
-	this->xPlaneDepth->disconnect();
-	this->yPlaneDepth->disconnect();
-	this->zPlaneDepth->disconnect();
 
 	deletePtr(this->minValueTexture);
 	deletePtr(this->maxValueTexture);
 	deletePtr(this->xPlanePos);
 	deletePtr(this->yPlanePos);
 	deletePtr(this->zPlanePos);
-	deletePtr(this->xPlaneDepth);
-	deletePtr(this->yPlaneDepth);
-	deletePtr(this->zPlaneDepth);
 	deletePtr(this->controlContainer);
 
 #ifndef NDEBUG
@@ -129,11 +108,6 @@ void ControlPanel::initSignals() {
 	connect(this->xPlanePos, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &ControlPanel::setCutPlaneXPos);
 	connect(this->yPlanePos, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &ControlPanel::setCutPlaneYPos);
 	connect(this->zPlanePos, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &ControlPanel::setCutPlaneZPos);
-
-	// The signals for plane depth will be connected :
-	connect(this->xPlaneDepth, &QSlider::valueChanged, this, &ControlPanel::setXTexCoord);
-	connect(this->yPlaneDepth, &QSlider::valueChanged, this, &ControlPanel::setYTexCoord);
-	connect(this->zPlaneDepth, &QSlider::valueChanged, this, &ControlPanel::setZTexCoord);
 
 	// Modifies the min/max values of the texture to be considered valuable data :
 	connect(this->minValueTexture, QOverload<int>::of(&QSpinBox::valueChanged), this, &ControlPanel::setMinTexVal);
@@ -176,27 +150,6 @@ void ControlPanel::updateValues(void) {
 	this->yPlanePos->blockSignals(false);
 	this->xPlanePos->blockSignals(false);
 	this->blockSignals(false);
-}
-
-void ControlPanel::setXTexCoord(int coordX) {
-	float max = static_cast<float>(this->xPlaneDepth->maximum());
-	float ratio = static_cast<float>(coordX) / max;
-	this->sceneToControl->slotSetPlaneDepthX(ratio);
-	this->updateViewers();
-}
-
-void ControlPanel::setYTexCoord(int coordY) {
-	float max = static_cast<float>(this->yPlaneDepth->maximum());
-	float ratio = static_cast<float>(coordY) / max;
-	this->sceneToControl->slotSetPlaneDepthY(ratio);
-	this->updateViewers();
-}
-
-void ControlPanel::setZTexCoord(int coordZ) {
-	float max = static_cast<float>(this->zPlaneDepth->maximum());
-	float ratio = static_cast<float>(coordZ) / max;
-	this->sceneToControl->slotSetPlaneDepthZ(ratio);
-	this->updateViewers();
 }
 
 void ControlPanel::setTexCube(bool show) {

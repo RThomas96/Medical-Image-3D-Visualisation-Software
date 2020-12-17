@@ -29,6 +29,8 @@ class Viewer : public QGLViewer {
 	private:
 		/// @brief The scene to control.
 		Scene* const scene;
+		/// @brief Should we draw it in volumetric mode ?
+		bool drawVolumetric;
 		/// @brief A refresh timer for the viewer, to update in real time.
 		QTimer* refreshTimer;
 	public slots:
