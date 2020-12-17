@@ -252,20 +252,16 @@ void Scene::printGridInfo(const std::shared_ptr<DiscreteGrid>& grid) {
 	std::cerr << "[INFO]\tVoxel dimensions : [" << dims.x << ", " << dims.y << ", " << dims.z << "]\n";
 	std::cerr << "[INFO]\tData Bounding box : [" << dataBBm.x << ", " << dataBBm.y << ", " << dataBBm.z << "] to ["
 		  << dataBBM.x << ", " << dataBBM.y << ", " << dataBBM.z << "]\n";
-#ifdef ENABLE_BASIC_BB
 	const DiscreteGrid::bbox_t& bbGS = grid->getBoundingBox();
 	const DiscreteGrid::bbox_t::vec& bbGSm = bbGS.getMin();
 	const DiscreteGrid::bbox_t::vec& bbGSM = bbGS.getMax();
 	std::cerr << "[INFO]\tBounding box GS : [" << bbGSm.x << ", " << bbGSm.y << ", " << bbGSm.z << "] to ["
 		  << bbGSM.x << ", " << bbGSM.y << ", " << bbGSM.z << "]\n";
-#ifdef ENABLE_BB_TRANSFORM
 	const DiscreteGrid::bbox_t& bbWS = grid->getBoundingBoxWorldSpace();
 	const DiscreteGrid::bbox_t::vec& bbWSm = bbWS.getMin();
 	const DiscreteGrid::bbox_t::vec& bbWSM = bbWS.getMax();
 	std::cerr << "[INFO]\tBounding box WS : [" << bbWSm.x << ", " << bbWSm.y << ", " << bbWSm.z << "] to ["
 		  << bbWSM.x << ", " << bbWSM.y << ", " << bbWSM.z << "]\n";
-#endif
-#endif
 }
 
 void Scene::recompileShaders(bool verbose) {
@@ -651,11 +647,6 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos) {
 	GLint location_dx = getUniform("dx");
 	GLint location_dy = getUniform("dy");
 	GLint location_dz = getUniform("dz");
-	GLint location_widths1 = getUniform("width");
-	GLint location_widths2 = getUniform("neighbor_width");
-	GLint location_widths3 = getUniform("normal_width");
-	GLint location_widths4 = getUniform("visibility_width");
-	GLint location_colorTexWidth = getUniform("colorTexWidth");
 	GLint location_specRef = getUniform("specRef");
 	GLint location_shininess = getUniform("shininess");
 	GLint location_diffuseRef = getUniform("diffuseRef");
@@ -715,13 +706,6 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos) {
 	glUniform1f(location_dy, vx.y);
 	glUniform1f(location_dz, vx.z);
 	glUniform1uiv(location_visibilityMap, 256, this->visibleDomains);
-	glUniform1ui(location_colorTexWidth, 16u);
-	GetOpenGLError();
-
-	glUniform1i(location_widths1, this->widths[0]);
-	glUniform1i(location_widths2, this->widths[1]);
-	glUniform1i(location_widths3, this->widths[2]);
-	glUniform1i(location_widths4, this->widths[3]);
 	GetOpenGLError();
 
 	glUniform3fv(location_cam, 1, glm::value_ptr(camPos));
@@ -1518,9 +1502,6 @@ void Scene::tex3D_buildMesh() {
 	__GetTexSize(tetrahedra.size()*4, &neighbWidth, &neighbHeight);
 
 	this->tetCount = tetrahedra.size();
-	this->widths[0] = vertWidth;
-	this->widths[1] = neighbWidth;
-	this->widths[2] = normWidth;
 
 	GLfloat* rawVertices = new GLfloat[tetCount*4*3*3];
 	GLfloat* rawNormals = new GLfloat[tetCount*4*4];
@@ -1751,7 +1732,6 @@ void Scene::tex3D_buildVisTexture() {
 		glDeleteTextures(1, &this->texHandle_visibilityMap);
 		this->texHandle_visibilityMap = 0;
 	}
-	this->widths[3] = 0;
 
 	glGenTextures(1, &this->texHandle_visibilityMap);
 	__GetOpenGLError("visWidths", 0);
@@ -1772,7 +1752,6 @@ void Scene::tex3D_buildVisTexture() {
 
 	std::size_t visWidth = 0, visHeight = 0;
 	__GetTexSize(256, &visWidth, &visHeight);
-	this->widths[3] = visWidth;
 
 	GLfloat* rawVisibility = new GLfloat[256*3];
 

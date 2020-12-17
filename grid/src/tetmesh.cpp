@@ -144,14 +144,12 @@ TetMesh& TetMesh::printInfo() {
 			std::cerr << "[INFO]\tInput grid named \"" << grid->getGridName() << "\" :\n";
 			DiscreteGrid::sizevec3 dims = grid->getGridDimensions();
 			std::cerr << "[INFO]\t\tResolution : " << dims.x << 'x' << dims.y << 'x' << dims.z << '\n';
-#ifdef ENABLE_BASIC_BB
 			// Bounding box dimensions :
 			const DiscreteGrid::bbox_t& box = grid->getBoundingBox();
 			const DiscreteGrid::bbox_t::vec& min = box.getMin();
 			const DiscreteGrid::bbox_t::vec& max = box.getMax();
 			std::cerr << "[INFO]\t\tBounding box (initial space) : [" << min.x << 'x' << min.y << 'x' << min.z
 					<< "] to [" << max.x << 'x' << max.y << 'x' << max.z << "]\n";
-#endif
 			std::cerr << "[INFO]\t\tThis grid is " << ((grid->isModifiable()) ? "not modifiable" : "modifiable") << '\n';
 		}
 	}
@@ -161,14 +159,12 @@ TetMesh& TetMesh::printInfo() {
 		DiscreteGrid::sizevec3 dims = this->outputGrid->getGridDimensions();
 		std::cerr << "[INFO]\t\tResolution : " << dims.x << 'x' << dims.y << 'x' << dims.z << '\n';
 
-#ifdef ENABLE_BASIC_BB
 		// Bounding box dimensions :
 		const DiscreteGrid::bbox_t& box = this->outputGrid->getBoundingBox();
 		const DiscreteGrid::bbox_t::vec& min = box.getMin();
 		const DiscreteGrid::bbox_t::vec& max = box.getMax();
 		std::cerr << "[INFO]\t\tBounding box (initial space) : [" << min.x << 'x' << min.y << 'x' << min.z
 				<< "] to [" << max.x << 'x' << max.y << 'x' << max.z << "]\n";
-#endif
 
 		std::cerr << "[INFO]\t\tThis grid is " << ((this->outputGrid->isModifiable()) ? "not modifiable" : "modifiable") << '\n';
 	} else {
@@ -269,33 +265,16 @@ TetMesh& TetMesh::updateOutputGridData() {
 	// If there aren't any input grids nor any output grid, return early :
 	if (this->inputGrids.size() == 0) { return *this; }
 	if (this->outputGrid == nullptr) { return *this; }
-#ifdef ENABLE_BASIC_BB
 	this->outputGrid->setBoundingBox(DiscreteGrid::bbox_t());
 
 	for (const std::shared_ptr<InputGrid>& grid : this->inputGrids) {
 		// Get bounding box of data in world space :
 		DiscreteGrid::bbox_t newbb = grid->getDataBoundingBox().transformTo(grid->getTransform_GridToWorld());
-#ifdef ENABLE_BB_TRANSFORM
 		this->outputGrid->updateBoundingBox(newbb);
-#endif
 	}
 
 	// get diagonal of bb :
 	DiscreteGrid::bbox_t::vec diag = this->outputGrid->getBoundingBox().getDiagonal();
-#else
-	using val_t = DiscreteGrid::bbox_t::vec::value_type ;
-	val_t x = 0, y = 0, z = 0;
-	for (const std::shared_ptr<InputGrid>& grid : this->inputGrids) {
-		// Get bounding box of data in world space :
-		val_t cx = grid->getGridDimensions().x;
-		val_t cy = grid->getGridDimensions().y;
-		val_t cz = grid->getGridDimensions().z;
-		x = (cx > x) ? cx : x;
-		y = (cy > y) ? cy : y;
-		z = (cz > z) ? cz : z;
-	}
-	DiscreteGrid::bbox_t::vec diag = DiscreteGrid::bbox_t::vec(x, y, z);
-#endif
 	// set resolution so each voxel's side length is a bit less than 1 :
 	DiscreteGrid::sizevec3 dimensions = DiscreteGrid::sizevec3(
 		static_cast<std::size_t>(std::ceil(diag.x)),

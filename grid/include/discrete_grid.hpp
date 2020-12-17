@@ -115,28 +115,23 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 		/// @brief Sets the grid's resolution.
 		virtual DiscreteGrid& setResolution(sizevec3 dims);
 
-#ifdef ENABLE_DATA_BB
 		/// @brief Recomputes the bounding box surrounding data with the threshold for "data" set to "threshold".
 		virtual DiscreteGrid& recomputeBoundingBox(DataType threshold);
 
 		/// @brief Get the data's bounding box.
 		const bbox_t& getDataBoundingBox(void) const;
-#endif
-#ifdef ENABLE_BASIC_BB
+
 		/// @brief Gets the bounding box of the grid.
 		const bbox_t& getBoundingBox(void) const;
 
 		/// @brief Sets the bounding box of the discrete grid.
 		virtual DiscreteGrid& setBoundingBox(bbox_t renderWindow);
 
-#ifdef ENABLE_BB_TRANSFORM
 		/// @brief Gets the bounding box of the grid.
 		bbox_t getBoundingBoxWorldSpace(void) const;
 
 		/// @brief Updates the bounding box of the discrete grid with another bounding box.
 		virtual DiscreteGrid& updateBoundingBox(bbox_t renderWindow);
-#endif
-#endif
 
 		/// @brief Sets the associated transform from world space to grid space.
 		virtual DiscreteGrid& setTransform_WorldToGrid(glm::mat4 _w2g);
@@ -181,24 +176,18 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 		sizevec3 gridDimensions;
 		/// @brief Voxel dimensions along the X, Y, and Z axis in grid space.
 		glm::vec3 voxelDimensions;
-#ifdef ENABLE_TRANSFORMATIONS
 		/// @brief The matrix used to go from world space to grid space.
 		/// @details Usually precomputed from transform_gridToWorld's inverse, but can be set
 		/// manually (which will trigger an update of transform_gridToWorld as well).
 		glm::mat4 transform_worldToGrid;
 		/// @brief The matrix used to go from grid space to world space.
 		glm::mat4 transform_gridToWorld;
-#endif
-#ifdef ENABLE_BASIC_BB
 		/// @brief The bounding box of the grid, in grid space :
 		bbox_t boundingBox;
-#endif
 		/// @brief The threshold from which to consider a voxel as 'data', instead of the background.
 		DataType dataThreshold;
-#ifdef ENABLE_DATA_BB
 		/// @brief Bounding box where data lives :
 		bbox_t dataBoundingBox;
-#endif
 		/// @brief The name of the grid, used to identify it on a
 		std::string gridName;
 };

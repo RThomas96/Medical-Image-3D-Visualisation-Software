@@ -6,13 +6,9 @@ OutputGrid::OutputGrid(void) : DiscreteGrid() {
 	this->setModifiable(true);
 	this->data.clear();
 	this->gridName = "defaultOutputGrid";
-#ifdef ENABLE_TRANSFORMATIONS
+	this->boundingBox = bbox_t();
 	this->transform_gridToWorld = glm::mat4(1.f);
 	this->transform_worldToGrid = glm::mat4(1.f);
-#endif
-#ifdef ENABLE_BASIC_BB
-	this->boundingBox = bbox_t();
-#endif
 }
 
 OutputGrid::~OutputGrid() {}
@@ -35,7 +31,6 @@ OutputGrid& OutputGrid::preallocateData(sizevec3 dims) {
 	return *this;
 }
 
-#ifdef ENABLE_BASIC_BB
 OutputGrid& OutputGrid::setBoundingBox(bbox_t renderWindow) {
 	// Warning : assumes the bounding box given is in world space
 
@@ -45,7 +40,6 @@ OutputGrid& OutputGrid::setBoundingBox(bbox_t renderWindow) {
 	return *this;
 }
 
-#ifdef ENABLE_BB_TRANSFORM
 OutputGrid& OutputGrid::updateRenderBox(const bbox_t& newbox) {
 	// Get input grid render box :
 	std::vector<bbox_t::vec> corners = newbox.transformTo(this->transform_worldToGrid).getAllCorners();
@@ -61,5 +55,3 @@ OutputGrid& OutputGrid::updateRenderBox(const bbox_t& newbox) {
 
 	return *this;
 }
-#endif
-#endif

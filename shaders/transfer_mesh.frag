@@ -3,20 +3,23 @@
 // Vertex, vertex texture coordinate and vertex visibility :
 in vec4 P;
 in vec3 text3DCoord;
-in float visibility;
-
-// Instance ID :
-in float instanceId;
 
 // Tetrahedra vertices and texture coordinates :
 in vec4 P0;
 in vec3 text3DCoordP0;
+
 in vec4 P1;
 in vec3 text3DCoordP1;
+
 in vec4 P2;
 in vec3 text3DCoordP2;
+
 in vec4 P3;
 in vec3 text3DCoordP3;
+
+// Instance ID :
+in float instanceId;
+in float visibility;
 
 // Fragment color :
 out vec4 colorOut;
@@ -34,13 +37,6 @@ uniform sampler2D visibility_texture;
 uniform sampler2D neighbors;
 uniform sampler1D color_texture;
 uniform uint visiblity_map[256];
-
-// Sampler information :
-uniform int width;
-uniform int neighbor_width;
-uniform int normal_width;
-uniform int visibility_width;
-uniform uint colorTexWidth;
 
 // Phong :
 uniform float diffuseRef;
@@ -62,7 +58,6 @@ uniform vec3 clippingPoint;
 uniform vec3 clippingNormal;
 
 bool ComputeVisibility(vec3 point){
-	/*
 	float xVis = (point.x - cut.x)*cutDirection.x;
 	float yVis = (point.y - cut.y)*cutDirection.y;
 	float zVis = (point.z - cut.z)*cutDirection.z;
@@ -71,7 +66,7 @@ bool ComputeVisibility(vec3 point){
 	float vis = dot( clippingNormal, pos );
 	if( xVis < 0. || yVis < 0. || zVis < 0. || vis < 0. )
 		return false;
-	else*/ return true;
+	else return true;
 }
 
 vec3 getWorldCoordinates( in ivec3 _gridCoord ){
@@ -100,23 +95,24 @@ ivec2 Convert1DIndexTo2DIndex_Unnormed_Flipped( in uint uiIndexToConvert, in int
 }
 
 bool computeBarycentricCoordinates( in vec3 point, out float ld0 , out float ld1 , out float ld2 , out float ld3){
-        ivec2 textF = Convert1DIndexTo2DIndex_Unnormed(uint(int(instanceId+0.5)*4 ), normal_width);
+	int nWidth = textureSize(normals_translations, 0).x;
+	ivec2 textF = Convert1DIndexTo2DIndex_Unnormed(uint(int(instanceId+0.5)*4 ), nWidth);
 	vec4 texelVal = texelFetch(normals_translations, textF, 0);
 	vec3 Normal_F0 = texelVal.xyz;
 	float factor_0 = texelVal.w;
 
 
-        textF = Convert1DIndexTo2DIndex_Unnormed(uint(int(instanceId+0.5)*4 + 1), normal_width);
+	textF = Convert1DIndexTo2DIndex_Unnormed(uint(int(instanceId+0.5)*4 + 1), nWidth);
 	texelVal = texelFetch(normals_translations, textF, 0);
 	vec3 Normal_F1 = texelVal.xyz;
 	float factor_1 = texelVal.w;
 
-        textF = Convert1DIndexTo2DIndex_Unnormed(uint(int(instanceId+0.5)*4 + 2 ), normal_width);
+	textF = Convert1DIndexTo2DIndex_Unnormed(uint(int(instanceId+0.5)*4 + 2 ), nWidth);
 	texelVal = texelFetch(normals_translations, textF, 0);
 	vec3 Normal_F2 = texelVal.xyz;
 	float factor_2 = texelVal.w;
 
-        textF = Convert1DIndexTo2DIndex_Unnormed(uint(int(instanceId+0.5)*4 + 3), normal_width);
+	textF = Convert1DIndexTo2DIndex_Unnormed(uint(int(instanceId+0.5)*4 + 3), nWidth);
 	texelVal = texelFetch(normals_translations, textF, 0);
 	vec3 Normal_F3 = texelVal.xyz;
 	float factor_3 = texelVal.w;
@@ -149,35 +145,39 @@ vec3 crossProduct( vec3 a, vec3 b ){
 bool computeBarycentricCoordinates( in vec3 point, out float ld0 , out float ld1 , out float ld2 , out float ld3,
 									in int id_tetra_start, out int id_tetra_end, out vec3 Current_text3DCoord){
 
-        ivec2 textCoord3 = Convert1DIndexTo2DIndex_Unnormed(uint(id_tetra_start*12 ), width);
+	int vWidth = textureSize(vertices_translations, 0).x;
+	int nWidth = textureSize(normals_translations, 0).x;
+	int neighborWidth = textureSize(neighbors, 0).x;
+
+	ivec2 textCoord3 = Convert1DIndexTo2DIndex_Unnormed(uint(id_tetra_start*12 ), vWidth);
 	vec3 N_P3 = texelFetch(vertices_translations, textCoord3, 0).xyz;
 
-        ivec2 textCoord1 = Convert1DIndexTo2DIndex_Unnormed(uint(id_tetra_start*12 + 1 ), width);
+	ivec2 textCoord1 = Convert1DIndexTo2DIndex_Unnormed(uint(id_tetra_start*12 + 1 ), vWidth);
 	vec3 N_P1 = texelFetch(vertices_translations, textCoord1, 0).xyz;
 
-        ivec2 textCoord2 = Convert1DIndexTo2DIndex_Unnormed(uint(id_tetra_start*12 + 2 ), width);
+	ivec2 textCoord2 = Convert1DIndexTo2DIndex_Unnormed(uint(id_tetra_start*12 + 2 ), vWidth);
 	vec3 N_P2 = texelFetch(vertices_translations, textCoord2, 0).xyz;
 
-        ivec2 textCoord0 = Convert1DIndexTo2DIndex_Unnormed(uint(id_tetra_start*12 + 5 ), width);
+	ivec2 textCoord0 = Convert1DIndexTo2DIndex_Unnormed(uint(id_tetra_start*12 + 5 ), vWidth);
 	vec3 N_P0 = texelFetch(vertices_translations, textCoord0, 0).xyz;
 
 
-        ivec2 textF = Convert1DIndexTo2DIndex_Unnormed(uint(id_tetra_start*4 ), normal_width);
+	ivec2 textF = Convert1DIndexTo2DIndex_Unnormed(uint(id_tetra_start*4 ), nWidth);
 	vec4 texelVal = texelFetch(normals_translations, textF, 0);
 	vec3 Normal_F0 = texelVal.xyz;
 	float factor_0 = texelVal.w;
 
-        textF = Convert1DIndexTo2DIndex_Unnormed(uint(id_tetra_start*4 + 1), normal_width);
+	textF = Convert1DIndexTo2DIndex_Unnormed(uint(id_tetra_start*4 + 1), nWidth);
 	texelVal = texelFetch(normals_translations, textF, 0);
 	vec3 Normal_F1 = texelVal.xyz;
 	float factor_1 = texelVal.w;
 
-        textF = Convert1DIndexTo2DIndex_Unnormed(uint(id_tetra_start*4 + 2 ), normal_width);
+	textF = Convert1DIndexTo2DIndex_Unnormed(uint(id_tetra_start*4 + 2 ), nWidth);
 	texelVal = texelFetch(normals_translations, textF, 0);
 	vec3 Normal_F2 = texelVal.xyz;
 	float factor_2 = texelVal.w;
 
-        textF = Convert1DIndexTo2DIndex_Unnormed(uint(id_tetra_start*4 + 3), normal_width);
+	textF = Convert1DIndexTo2DIndex_Unnormed(uint(id_tetra_start*4 + 3), nWidth);
 	texelVal = texelFetch(normals_translations, textF, 0);
 	vec3 Normal_F3 = texelVal.xyz;
 	float factor_3 = texelVal.w;
@@ -215,7 +215,7 @@ bool computeBarycentricCoordinates( in vec3 point, out float ld0 , out float ld1
 		}
 		*/
 
-                ivec2 textCoordNeighbor = Convert1DIndexTo2DIndex_Unnormed(uint(texture_id_next_tetra), neighbor_width);
+		ivec2 textCoordNeighbor = Convert1DIndexTo2DIndex_Unnormed(uint(texture_id_next_tetra), neighborWidth);
 		vec4 texV = vec4( texelFetch(neighbors, textCoordNeighbor, 0).xyz, 1. );
 
 		if( texV.x < 0 )
@@ -416,15 +416,13 @@ void main (void) {
 				vec4 current_color = texelFetch(color_texture, int(voxelIndex), 0);
 				if (visiblity_map[voxelIndex] > 0u) {
 					if( voxelIndex > 5u ){
-						ivec2 textF = Convert1DIndexTo2DIndex_Unnormed(voxelIndex, visibility_width);
-						//ivec2 textF = ivec2(int(round(current_color.a*255.)), 0);
 					//	vec3 current_visibility = texelFetch(visibility_texture, textF, 0).xyz;
 					//	if(current_visibility.x>0.){
 							//  val = 1.;
 							//current_color = vec4(texture(Mask, Current_text3DCoord.xyz).r, 0., 0., 1.0);
 							color = current_color;
 							//color = vec4(1.,0.,0.,1.);
-							Pos = vec4( (ld0*P0 + ld1*P1 + ld2*P2 + ld3*P3).xyz, 1. ); // vec4(Current_P.xyz, 1.);//
+							Pos = vec4(Current_P.xyz, 1.);// vec4( (ld0*P0 + ld1*P1 + ld2*P2 + ld3*P3).xyz, 1. ); // //
 							if(ComputeVisibility(voxel_center_P.xyz) )
 								hit = true;
 					//	}

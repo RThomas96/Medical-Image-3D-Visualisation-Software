@@ -11,10 +11,8 @@ InputGrid& InputGrid::preAllocateImageData(sizevec3 dimensions) {
 	this->data.resize(datasize);
 	// Input grids have voxel sizes of 1, and their bounding box is equal to their dimensions :
 	this->voxelDimensions = glm::vec3(1.f, 1.f, 1.f);
-#ifdef ENABLE_BASIC_BB
 	this->boundingBox.setMin(glm::vec3(.0f));
 	this->boundingBox.setMax(glm::vec3(static_cast<float>(dimensions.x), static_cast<float>(dimensions.y), static_cast<float>(dimensions.z)));
-#endif
 
 	return *this;
 }
@@ -37,11 +35,9 @@ InputGrid& InputGrid::setGrid(std::vector<DataType> imgData, sizevec3 dimensions
 	std::copy(imgData.begin(), imgData.end(), this->data.begin());
 	// Set the grid's dimensions :
 	this->gridDimensions = dimensions;
-#ifdef ENABLE_BASIC_BB
 	// Set the bounding box's dimensions :
 	this->boundingBox.setMin(glm::vec3(.0f));
 	this->boundingBox.setMax(glm::vec3(static_cast<float>(dimensions.x), static_cast<float>(dimensions.y), static_cast<float>(dimensions.z)));
-#endif
 	// Set the bounding box for data loaded :
 	this->recomputeBoundingBox(5);
 	// 5 is set in stone here, since Tulane told us under 5
@@ -53,6 +49,4 @@ InputGrid& InputGrid::setModifiable(bool b) { return *this; }
 
 InputGrid& InputGrid::setResolution(sizevec3 newRes) { return *this; }
 
-#ifdef ENABLE_BASIC_BB
 InputGrid& InputGrid::setBoundingBox(bbox_t renderWindow) { return *this; }
-#endif

@@ -215,7 +215,6 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		GLuint vboHandle_Texture3D_VertIdx;
 		unsigned int* visibleDomains;
 		GLsizei tetCount;
-		int widths[4]; ///< vert width, neighbor width, normal width, visibility width
 };
 
 inline int __GetOpenGLError ( char* szFile, int iLine );

@@ -17,16 +17,6 @@ the compiled code, by enabling or disabling certain parts of it.
 // Enable ellipsis if the name of a grid is too long in the list view :
 // #define GRID_LIST_ITEM_ENABLE_ELLIPSIS_TEXT
 
-// Features for the discretegrid/bounding box
-#define ENABLE_TRANSFORMATIONS
-#define ENABLE_BASIC_BB
-#define ENABLE_DATA_BB
-#define ADJUST_TO_BB
-#define ENABLE_BB_TRANSFORM
-
-#define GLM_MAT_BEFORE_VEC
-//#define REVERSE_MATRIX_ORDER
-
 /// @b If defined, asks the user for images to load. Otherwise, loads the first 50 images of the 'Blue' dataset.
 #define USER_DEFINED_IMAGE_LOADING
 

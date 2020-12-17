@@ -337,7 +337,6 @@ void GridControl::updateGridDimensions() {
 	this->input_GridSizeZ->setValue(static_cast<int>(dims.z));
 	this->input_GridSizeZ->blockSignals(false);
 
-#ifdef ENABLE_BASIC_BB
 	DiscreteGrid::bbox_t bb = this->voxelGrid->getBoundingBox();
 	// Min bounding box coordinates :
 	this->input_GridBBMinX->blockSignals(true);
@@ -360,7 +359,6 @@ void GridControl::updateGridDimensions() {
 	this->input_GridBBMaxZ->blockSignals(true);
 	this->input_GridBBMaxZ->setValue(static_cast<double>(bb.getMax().z));
 	this->input_GridBBMaxZ->blockSignals(false);
-#endif
 
 	this->updateGridLabels();
 }
@@ -411,56 +409,44 @@ void GridControl::setGridDimensionZ(int newDim) {
 	this->updateGridLabels();
 }
 void GridControl::setGridBBMinX(double newDim) {
-#ifdef ENABLE_BASIC_BB
 	DiscreteGrid::bbox_t::vec v = this->voxelGrid->boundingBox.getMin();
 	v.x = static_cast<DiscreteGrid::bbox_t::vec::value_type>(newDim);
 	this->voxelGrid->boundingBox.setMin(v);
-#endif
 	this->voxelGrid->updateVoxelDimensions();
 	this->updateGridLabels();
 }
 void GridControl::setGridBBMinY(double newDim) {
-#ifdef ENABLE_BASIC_BB
 	DiscreteGrid::bbox_t::vec v = this->voxelGrid->boundingBox.getMin();
 	v.y = static_cast<DiscreteGrid::bbox_t::vec::value_type>(newDim);
 	this->voxelGrid->boundingBox.setMin(v);
-#endif
 	this->voxelGrid->updateVoxelDimensions();
 	this->updateGridLabels();
 }
 void GridControl::setGridBBMinZ(double newDim) {
-#ifdef ENABLE_BASIC_BB
 	DiscreteGrid::bbox_t::vec v = this->voxelGrid->boundingBox.getMin();
 	v.z = static_cast<DiscreteGrid::bbox_t::vec::value_type>(newDim);
 	this->voxelGrid->boundingBox.setMin(v);
-#endif
 	this->voxelGrid->updateVoxelDimensions();
 	this->updateGridLabels();
 }
 void GridControl::setGridBBMaxX(double newDim) {
-#ifdef ENABLE_BASIC_BB
 	DiscreteGrid::bbox_t::vec v = this->voxelGrid->boundingBox.getMax();
 	v.x = static_cast<DiscreteGrid::bbox_t::vec::value_type>(newDim);
 	this->voxelGrid->boundingBox.setMax(v);
-#endif
 	this->voxelGrid->updateVoxelDimensions();
 	this->updateGridLabels();
 }
 void GridControl::setGridBBMaxY(double newDim) {
-#ifdef ENABLE_BASIC_BB
 	DiscreteGrid::bbox_t::vec v = this->voxelGrid->boundingBox.getMax();
 	v.y = static_cast<DiscreteGrid::bbox_t::vec::value_type>(newDim);
 	this->voxelGrid->boundingBox.setMax(v);
-#endif
 	this->voxelGrid->updateVoxelDimensions();
 	this->updateGridLabels();
 }
 void GridControl::setGridBBMaxZ(double newDim) {
-#ifdef ENABLE_BASIC_BB
 	DiscreteGrid::bbox_t::vec v = this->voxelGrid->boundingBox.getMax();
 	v.z = static_cast<DiscreteGrid::bbox_t::vec::value_type>(newDim);
 	this->voxelGrid->boundingBox.setMax(v);
-#endif
 	this->voxelGrid->updateVoxelDimensions();
 	this->updateGridLabels();
 }
