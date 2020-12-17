@@ -50,8 +50,11 @@ void Viewer::draw() {
 	this->camera()->getModelViewMatrix(mvMat);
 	this->camera()->getProjectionMatrix(pMat);
 
+	qglviewer::Vec cam = this->camera()->worldCoordinatesOf(qglviewer::Vec(0., 0., 0.));
+	glm::vec3 camPos = glm::vec3(static_cast<float>(cam.x), static_cast<float>(cam.y), static_cast<float>(cam.z));
+
 	if (this->drawVolumetric) {
-		this->scene->drawVolumetric(mvMat, pMat);
+		this->scene->drawVolumetric(mvMat, pMat, camPos);
 	} else {
 		this->scene->drawWithPlanes(mvMat, pMat);
 	}

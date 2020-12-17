@@ -55,7 +55,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void drawPlaneView(glm::vec2 fbDims, planes _plane);
 
 		/// @brief Draws the 3D texture with a volumetric-like visualization method
-		void drawVolumetric(GLfloat mvMat[], GLfloat pMat[]);
+		void drawVolumetric(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos);
 
 		/// @brief load the 3D texture to opengl
 		void loadImage();

@@ -629,35 +629,45 @@ void Scene::drawPlaneView(glm::vec2 fbDims, planes _plane) {
 	this->showVAOstate = false;
 }
 
-void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat) {
+void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos) {
 	glUseProgram(this->programHandle_VolumetricViewer);
 	GetOpenGLError();
 
-	GLint location_vertices_translation = glGetUniformLocation(this->programHandle_VolumetricViewer, "vertices_translation");
-	GLint location_normals_translation = glGetUniformLocation(this->programHandle_VolumetricViewer, "normals_translation");
-	GLint location_visibility_texture = glGetUniformLocation(this->programHandle_VolumetricViewer, "visibility_texture");
-	GLint location_texture_coordinates = glGetUniformLocation(this->programHandle_VolumetricViewer, "texture_coordinates");
-	GLint location_neighbors = glGetUniformLocation(this->programHandle_VolumetricViewer, "neighbors");
-	GLint location_Mask = glGetUniformLocation(this->programHandle_VolumetricViewer, "Mask");
-	GLint location_color_texture = glGetUniformLocation(this->programHandle_VolumetricViewer, "color_texture");
-	GLint location_vMat = glGetUniformLocation(this->programHandle_VolumetricViewer, "vMat");
-	GLint location_pMat = glGetUniformLocation(this->programHandle_VolumetricViewer, "pMat");
+	/// @b Shortcut for glGetUniform, since this can result in long lines.
+	auto getUniform = [&](const char* name) -> GLint {
+		return glGetUniformLocation(this->programHandle_VolumetricViewer, name);
+	};
+
+	// Textures :
+	GLint location_vertices_translation = getUniform("vertices_translations");
+	GLint location_normals_translation = getUniform("normals_translations");
+	GLint location_visibility_texture = getUniform("visibility_texture");
+	GLint location_texture_coordinates = getUniform("texture_coordinates");
+	GLint location_neighbors = getUniform("neighbors");
+	GLint location_Mask = getUniform("Mask");
+	GLint location_color_texture = getUniform("color_texture");
 	GetOpenGLError();
-
-	GLint location_widths1 = glGetUniformLocation(this->programHandle_VolumetricViewer, "width");
-	GLint location_widths2 = glGetUniformLocation(this->programHandle_VolumetricViewer, "neighbor_width");
-	GLint location_widths3 = glGetUniformLocation(this->programHandle_VolumetricViewer, "normal_width");
-	GLint location_widths4 = glGetUniformLocation(this->programHandle_VolumetricViewer, "visibility_width");
-	GLint location_colorTexWidth = glGetUniformLocation(this->programHandle_VolumetricViewer, "colorTexWidth");
-
-	GLint location_visibilityMap = glGetUniformLocation(this->programHandle_VolumetricViewer, "visibilityMap");
-
-	GLint location_diffuseRef = glGetUniformLocation(this->programHandle_VolumetricViewer, "diffuseRef");
-	GLint location_dx = glGetUniformLocation(this->programHandle_VolumetricViewer, "dx");
-	GLint location_dy = glGetUniformLocation(this->programHandle_VolumetricViewer, "dy");
-	GLint location_dz = glGetUniformLocation(this->programHandle_VolumetricViewer, "dz");
-	GLint location_specRef = glGetUniformLocation(this->programHandle_VolumetricViewer, "specRef");
-	GLint location_shininess = glGetUniformLocation(this->programHandle_VolumetricViewer, "shininess");
+	// Scalars :
+	GLint location_dx = getUniform("dx");
+	GLint location_dy = getUniform("dy");
+	GLint location_dz = getUniform("dz");
+	GLint location_widths1 = getUniform("width");
+	GLint location_widths2 = getUniform("neighbor_width");
+	GLint location_widths3 = getUniform("normal_width");
+	GLint location_widths4 = getUniform("visibility_width");
+	GLint location_colorTexWidth = getUniform("colorTexWidth");
+	GLint location_specRef = getUniform("specRef");
+	GLint location_shininess = getUniform("shininess");
+	GLint location_diffuseRef = getUniform("diffuseRef");
+	GetOpenGLError();
+	// Vectors/arrays :
+	GLint location_cam = getUniform("cam");
+	GLint location_visibilityMap = getUniform("visiblity_map");
+	GetOpenGLError();
+	// Matrices :
+	GLint location_mMat = getUniform("mMat");
+	GLint location_vMat = getUniform("vMat");
+	GLint location_pMat = getUniform("pMat");
 	GetOpenGLError();
 
 	std::size_t tex = 0;
@@ -714,6 +724,11 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat) {
 	glUniform1i(location_widths4, this->widths[3]);
 	GetOpenGLError();
 
+	glUniform3fv(location_cam, 1, glm::value_ptr(camPos));
+	GetOpenGLError();
+
+	const glm::mat4& gridTransfo = this->inputGrid->getTransform_GridToWorld();
+	glUniformMatrix4fv(location_mMat, 1, GL_FALSE, glm::value_ptr(gridTransfo));
 	glUniformMatrix4fv(location_vMat, 1, GL_FALSE, mvMat);
 	glUniformMatrix4fv(location_pMat, 1, GL_FALSE, pMat);
 	GetOpenGLError();
@@ -1408,14 +1423,21 @@ void Scene::tex3D_buildMesh() {
 	std::size_t yv = dims.y / 500 + 1; glm::vec4::value_type ys = size.y / static_cast<glm::vec4::value_type>(yv);
 	std::size_t zv = dims.z / 25 + 1; glm::vec4::value_type zs = size.z / static_cast<glm::vec4::value_type>(zv);
 
+//	using sizevec3 = glm::vec<3, std::size_t, glm::defaultp>;
+//	using sizevec4 = glm::vec<4, std::size_t, glm::defaultp>;
+//	glm::vec4 sizeScalar = glm::vec4(xs, ys, zs, 1.);
+
 	// Create vertices along with their texture coordinates :
-	for (std::size_t i = 0; i <= xv; ++i) {
+	for (std::size_t k = 0; k <= zv; ++k) {
 		for (std::size_t j = 0; j <= yv; ++j) {
-			for (std::size_t k = 0; k <= zv; ++k) {
+			for (std::size_t i = 0; i <= xv; ++i) {
+				// Integer positions :
+//				sizevec4 posInteger = sizevec4(i,j,k,1);
+//				sizevec3 texInteger = sizevec3(i,j,k);
 				vertices.emplace_back(
-					static_cast<vec_t::value_type>(i)*xs,
-					static_cast<vec_t::value_type>(j)*ys,
-					static_cast<vec_t::value_type>(k)*zs,
+					static_cast<vec_t::value_type>(i) * xs,
+					static_cast<vec_t::value_type>(j) * ys,
+					static_cast<vec_t::value_type>(k) * zs,
 					1.
 				);
 				texCoords.emplace_back(
@@ -1428,13 +1450,13 @@ void Scene::tex3D_buildMesh() {
 	}
 
 	std::size_t xt = xv+1; std::size_t yt = yv+1; std::size_t zt = zv+1;
-	auto getIndice = [&, xv, yv](std::size_t i, std::size_t j, std::size_t k) -> std::size_t {
-		return i * xv * yv + j * xv + k;
+	auto getIndice = [&, xt, yt](std::size_t i, std::size_t j, std::size_t k) -> std::size_t {
+		return i + j * xt + k * xt * yt;
 	};
 	// Create tetrahedra :
-	for (std::size_t i = 0; i < xt; ++i) {
-		for (std::size_t j = 0; j < yt; ++j) {
-			for (std::size_t k = 0; k < zt; ++k) {
+	for (std::size_t i = 0; i < xv; ++i) {
+		for (std::size_t j = 0; j < yv; ++j) {
+			for (std::size_t k = 0; k < zv; ++k) {
 				/*
 				tetrahedra.push_back({getIndice(i+0, j+0, k+0), getIndice(i+0, j+0, k+1), getIndice(i+1, j+0, k+0), getIndice(i+1, j+1, k+0)}); // 1
 				tetrahedra.push_back({getIndice(i+0, j+0, k+0), getIndice(i+0, j+0, k+1), getIndice(i+0, j+1, k+0), getIndice(i+1, j+1, k+0)}); // 2

@@ -1,79 +1,68 @@
 #version 130
 
-// --------------------------------------------------
-// shader definition
-// --------------------------------------------------
-
-// --------------------------------------------------
-// varying variables
-// --------------------------------------------------
-in float instanceId;
-//varying vec3 vLightDir;
-//varying vec3 position;
-//varying vec3 normal;
-
+// Vertex, vertex texture coordinate and vertex visibility :
+in vec4 P;
+in vec3 text3DCoord;
 in float visibility;
 
-in vec3 text3DCoord;
+// Instance ID :
+in float instanceId;
 
-in vec4 P;
-//varying vec3 N;
-
+// Tetrahedra vertices and texture coordinates :
 in vec4 P0;
-in vec4 P1;
-in vec4 P2;
-in vec4 P3;
-
 in vec3 text3DCoordP0;
+in vec4 P1;
 in vec3 text3DCoordP1;
+in vec4 P2;
 in vec3 text3DCoordP2;
+in vec4 P3;
 in vec3 text3DCoordP3;
 
+// Fragment color :
 out vec4 colorOut;
 
 // --------------------------------------------------
-// uniform variables
+// Uniforms
 // --------------------------------------------------
-uniform bool solid;
 
-uniform usampler3D Mask; // d?claration de la map mask
+// Samplers :
+uniform usampler3D Mask; // déclaration de la map mask : texture 3D à raycaster
 uniform sampler2D vertices_translations;
 uniform sampler2D normals_translations;
 uniform sampler2D texture_coordinates;
 uniform sampler2D visibility_texture;
-
-//uniform sampler2D neighbors_nb;
 uniform sampler2D neighbors;
-
-uniform float gridStep;
-
-uniform float diffuseRef;
-uniform float specRef;
-uniform float shininess;
-
-uniform uint visiblity_map[256];
 uniform sampler1D color_texture;
-uniform uint colorTexWidth;
+uniform uint visiblity_map[256];
 
+// Sampler information :
 uniform int width;
 uniform int neighbor_width;
 uniform int normal_width;
 uniform int visibility_width;
+uniform uint colorTexWidth;
 
+// Phong :
+uniform float diffuseRef;
+uniform float specRef;
+uniform float shininess;
+
+// Camera position world-space :
 uniform vec3 cam;
 
+// Grid voxel dimensions :
 uniform float dx;
 uniform float dy;
 uniform float dz;
 
+// Variables for visibility :
 uniform vec3 cut;
 uniform vec3 cutDirection;
-
 uniform vec3 clippingPoint;
 uniform vec3 clippingNormal;
 
 bool ComputeVisibility(vec3 point){
-
+	/*
 	float xVis = (point.x - cut.x)*cutDirection.x;
 	float yVis = (point.y - cut.y)*cutDirection.y;
 	float zVis = (point.z - cut.z)*cutDirection.z;
@@ -82,7 +71,7 @@ bool ComputeVisibility(vec3 point){
 	float vis = dot( clippingNormal, pos );
 	if( xVis < 0. || yVis < 0. || zVis < 0. || vis < 0. )
 		return false;
-	else return true;
+	else*/ return true;
 }
 
 vec3 getWorldCoordinates( in ivec3 _gridCoord ){
@@ -111,8 +100,6 @@ ivec2 Convert1DIndexTo2DIndex_Unnormed_Flipped( in uint uiIndexToConvert, in int
 }
 
 bool computeBarycentricCoordinates( in vec3 point, out float ld0 , out float ld1 , out float ld2 , out float ld3){
-
-
         ivec2 textF = Convert1DIndexTo2DIndex_Unnormed(uint(int(instanceId+0.5)*4 ), normal_width);
 	vec4 texelVal = texelFetch(normals_translations, textF, 0);
 	vec3 Normal_F0 = texelVal.xyz;
@@ -161,8 +148,6 @@ vec3 crossProduct( vec3 a, vec3 b ){
 
 bool computeBarycentricCoordinates( in vec3 point, out float ld0 , out float ld1 , out float ld2 , out float ld3,
 									in int id_tetra_start, out int id_tetra_end, out vec3 Current_text3DCoord){
-
-
 
         ivec2 textCoord3 = Convert1DIndexTo2DIndex_Unnormed(uint(id_tetra_start*12 ), width);
 	vec3 N_P3 = texelFetch(vertices_translations, textCoord3, 0).xyz;
@@ -305,19 +290,26 @@ void getFirstRayVoxelIntersection( in vec3 origin, in vec3 direction, out ivec3 
 }
 
 void main (void) {
-
 	if( visibility > 3500. ) discard;
 
+	// Default color of the fragment : black
+	colorOut = vec4(.0, .0, .0, 1.);
 
 	/*
+	// Early discard, and debug return :
 	if (P.x < .0f) {discard;}
 	if (P.y < .0f) {discard;}
 	if (P.z < .0f) {discard;}
-	*/
 	colorOut = P/2048.;
 	return;
+	*/
 
 	vec3 V = normalize ( P.xyz - cam );
+	/*
+	// Check the view vector is properly set :
+	colorOut.xyz = V;
+	return;
+	*/
 
 	bool in_tet = true;
 	bool hit = false;
@@ -333,6 +325,10 @@ void main (void) {
 
 	//Find the first intersection of the ray with the grid
 	getFirstRayVoxelIntersection(Current_P, V, origin_voxel, t_next );
+	/*
+	colorOut.xyz = Current_P/1024.;
+	return;
+	*/
 
 	vec3 dt = vec3( abs(dx/V.x), abs(dy/V.y), abs(dz/V.z) );
 
@@ -348,6 +344,12 @@ void main (void) {
 	/***********************************************/
 
 	vec3 Current_text3DCoord;// = text3DCoord;
+	/*
+	Current_text3DCoord = text3DCoord;
+	uint voxInd = texture(Mask, (Current_text3DCoord)).x;
+	colorOut = texture(color_texture, float(voxInd)/255.);
+	return;
+	*/
 
 	vec4 Pos;
 
@@ -358,7 +360,6 @@ void main (void) {
 	if( v_step > dz ) v_step = dz;
 
 	bool changed = false;
-	//  Current_P = P.xyz;
 	next_voxel = origin_voxel;
 
 
@@ -371,7 +372,7 @@ void main (void) {
 
 	float val =0;
 	int fragmentIteration = 0;
-	while( in_tet && !hit && fragmentIteration < 10 ){
+	while( in_tet && !hit && fragmentIteration < 100 ){
 		fragmentIteration++;
 		if( t_next.x < t_next.y && t_next.x < t_next.z ){
 			Current_P = P.xyz + t_next.x*V;
@@ -414,16 +415,16 @@ void main (void) {
 				uint voxelIndex = texture(Mask, (Current_text3DCoord.xyz)).x;
 				vec4 current_color = texelFetch(color_texture, int(voxelIndex), 0);
 				if (visiblity_map[voxelIndex] > 0u) {
-					if( voxelIndex > 0u ){
+					if( voxelIndex > 5u ){
 						ivec2 textF = Convert1DIndexTo2DIndex_Unnormed(voxelIndex, visibility_width);
 						//ivec2 textF = ivec2(int(round(current_color.a*255.)), 0);
-						vec3 current_visibility = texelFetch(visibility_texture, textF, 0).xyz;
+					//	vec3 current_visibility = texelFetch(visibility_texture, textF, 0).xyz;
 					//	if(current_visibility.x>0.){
 							//  val = 1.;
 							//current_color = vec4(texture(Mask, Current_text3DCoord.xyz).r, 0., 0., 1.0);
 							color = current_color;
 							//color = vec4(1.,0.,0.,1.);
-							Pos = vec4(Current_P.xyz, 1.);//vec4( (ld0*P0 + ld1*P1 + ld2*P2 + ld3*P3).xyz, 1. );
+							Pos = vec4( (ld0*P0 + ld1*P1 + ld2*P2 + ld3*P3).xyz, 1. ); // vec4(Current_P.xyz, 1.);//
 							if(ComputeVisibility(voxel_center_P.xyz) )
 								hit = true;
 					//	}
@@ -438,15 +439,11 @@ void main (void) {
 
 
 	}
-
-
-
-
 	if(!in_tet || !hit) discard;
 	colorOut = color;
 	return;
 
-	vec3 p = vec3 (Pos);
+	vec3 p = Pos.xyz;
 	vec3 v = normalize(cam-p);
 
 	/*

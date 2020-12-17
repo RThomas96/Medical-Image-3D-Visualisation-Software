@@ -61,6 +61,7 @@
 	uniform sampler2D neighbors;
 	uniform sampler2D visibility_texture;
 
+	uniform mat4 mMat;
 	uniform mat4 vMat;
 	uniform mat4 pMat;
 
@@ -126,5 +127,5 @@ void main()
 	text3DCoordP0 = texelFetch(texture_coordinates, textCoord, 0).xyz;
 	visibility += ComputeVisibility(P0.xyz);
 
-	gl_Position = pMat*vMat*P;
+	gl_Position = pMat*vMat*mMat*P;
 }
