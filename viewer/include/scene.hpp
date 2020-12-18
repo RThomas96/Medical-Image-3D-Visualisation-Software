@@ -138,6 +138,8 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void bindTextures();
 		/// @b Prints the accessible uniforms and attributes of the given program.
 		void printProgramUniforms(const GLuint _pid);
+		/// @b Updates the visibility array to only show values between the min and max tex values
+		void updateVis();
 
 		/*************************************/
 		/*************************************/
@@ -157,11 +159,6 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		std::shared_ptr<OutputGrid> outputGrid; ///< output grid
 		std::shared_ptr<TetMesh> mesh; ///< creates a mesh around the queried point
 		GridControl* gridControl;
-		/*
-		GridDetailedView* detailsView;
-		GridView* listViewInput;
-		GridView* listViewOutput;
-		*/
 
 		std::size_t gridWidth; ///< grid size
 		std::size_t gridHeight; ///< grid size

@@ -3,6 +3,8 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include <QCoreApplication>
+#include <QProgressDialog>
 #include <QKeyEvent>
 #include <fstream>
 
@@ -27,8 +29,14 @@ Viewer::~Viewer() {
 
 void Viewer::init() {
 	this->makeCurrent();
-	this->scene->initGl(this->context());
-	this->scene->setDrawModeSolid();
+	if (not this->scene->isInitialized) {
+		QProgressDialog* progress = new QProgressDialog("Initializing scene ...", QString(), 0, 10);
+		progress->show();
+		QCoreApplication::processEvents();
+		this->scene->initGl(this->context());
+		this->scene->setDrawModeSolid();
+		progress->setValue(10);
+	}
 
 	glm::vec3 bbDiag = this->scene->getSceneBoundaries(true);
 	float sceneSize = glm::length(bbDiag);

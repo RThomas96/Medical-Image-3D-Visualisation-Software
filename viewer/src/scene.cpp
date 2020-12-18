@@ -102,6 +102,7 @@ Scene::Scene(GridControl* const gc) {
 	this->programHandle_projectedTex = 0;
 	this->programHandle_Plane3D = 0;
 	this->programHandle_PlaneViewer = 0;
+	this->programHandle_VolumetricViewer = 0;
 
 	this->texHandle_InputGrid = 0;
 	this->texHandle_ColorScaleGrid = 0;
@@ -138,7 +139,7 @@ void Scene::initGl(QOpenGLContext* _context) {
 	IO::GenericGridReader* reader = nullptr;
 	IO::GenericGridReader::data_t threshold = IO::GenericGridReader::data_t(6);
 
-#ifdef USER_DEFINED_IMAGE_LOADING
+	#ifdef USER_DEFINED_IMAGE_LOADING
 	QMessageBox* msgBox = new QMessageBox();
 	msgBox->setText("Choose your input data type");
 	QPushButton* dimButton = msgBox->addButton("DIM", QMessageBox::ActionRole);
@@ -165,7 +166,7 @@ void Scene::initGl(QOpenGLContext* _context) {
 		std::cerr << "No button was pressed." << '\n';
 		throw std::runtime_error("error : no button pressed");
 	}
-#else
+	#else
 	reader = new IO::Reader::TIFF(threshold);
 	std::vector<std::string> filenames = {
 		"/home/thibault/git/datasets/Blue/Blue_P5B-A2_2500.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2501.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2502.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2503.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2504.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2505.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2506.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2507.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2508.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2509.tif",
@@ -175,7 +176,7 @@ void Scene::initGl(QOpenGLContext* _context) {
 		"/home/thibault/git/datasets/Blue/Blue_P5B-A2_2540.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2541.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2542.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2543.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2544.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2545.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2546.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2547.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2548.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2549.tif",
 	};
 	reader->setFilenames(filenames);
-#endif
+	#endif
 	// Set reader properties :
 	reader->setDataThreshold(threshold);
 	// Load the data :
@@ -228,7 +229,6 @@ void Scene::initGl(QOpenGLContext* _context) {
 	if (this->controlPanel) {
 		this->controlPanel->activatePanels();
 	}
-
 	std::cerr << "Building the texture3D mesh and textures ... ";
 	this->tex3D_buildTexture();
 	this->tex3D_buildMesh();
@@ -432,12 +432,12 @@ GLuint Scene::compileProgram(const GLuint vSha, const GLuint gSha, const GLuint 
 	}
 	if (verbose) {std::cerr<<"[LOG]["<<__FILE__ << ":" << __LINE__<<"] Program linked.\n";}
 
-	glDetachShader(_prog, vSha);
-	glDetachShader(_prog, gSha);
-	glDetachShader(_prog, fSha);
-	glDeleteShader(vSha);
-	glDeleteShader(gSha);
-	glDeleteShader(fSha);
+	if (vSha != 0) { glDetachShader(_prog, vSha); }
+	if (gSha != 0) { glDetachShader(_prog, gSha); }
+	if (fSha != 0) { glDetachShader(_prog, fSha); }
+	if (vSha != 0) { glDeleteShader(vSha); }
+	if (gSha != 0) { glDeleteShader(gSha); }
+	if (fSha != 0) { glDeleteShader(fSha); }
 
 	return _prog;
 }
@@ -644,15 +644,15 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos) {
 	GLint location_color_texture = getUniform("color_texture");
 	GetOpenGLError();
 	// Scalars :
-	GLint location_dx = getUniform("dx");
-	GLint location_dy = getUniform("dy");
-	GLint location_dz = getUniform("dz");
+	GLint location_voxelSize = getUniform("voxelSize");
 	GLint location_specRef = getUniform("specRef");
 	GLint location_shininess = getUniform("shininess");
 	GLint location_diffuseRef = getUniform("diffuseRef");
 	GetOpenGLError();
 	// Vectors/arrays :
 	GLint location_cam = getUniform("cam");
+	GLint location_cut = getUniform("cut");
+	GLint location_cutDirection = getUniform("cutDirection");
 	GLint location_visibilityMap = getUniform("visiblity_map");
 	GetOpenGLError();
 	// Matrices :
@@ -698,17 +698,17 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos) {
 	tex++;
 	GetOpenGLError();
 
-	glm::vec3 vx = this->inputGrid->getVoxelDimensions();
 	glUniform1f(location_diffuseRef, .8f);
 	glUniform1f(location_specRef, .8f);
 	glUniform1f(location_shininess, .8f);
-	glUniform1f(location_dx, vx.x);
-	glUniform1f(location_dy, vx.y);
-	glUniform1f(location_dz, vx.z);
+	glUniform3fv(location_voxelSize, 1, glm::value_ptr(this->inputGrid->getVoxelDimensions()));
 	glUniform1uiv(location_visibilityMap, 256, this->visibleDomains);
 	GetOpenGLError();
 
+	GLfloat cutDir[] = { 1., 1., 1. };
 	glUniform3fv(location_cam, 1, glm::value_ptr(camPos));
+	glUniform3fv(location_cut, 1, glm::value_ptr(this->planePosition));
+	glUniform3fv(location_cutDirection, 1, &(cutDir[0]));
 	GetOpenGLError();
 
 	const glm::mat4& gridTransfo = this->inputGrid->getTransform_GridToWorld();
@@ -717,6 +717,7 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos) {
 	glUniformMatrix4fv(location_pMat, 1, GL_FALSE, pMat);
 	GetOpenGLError();
 
+/*
 	// before draw, specify vertex and index arrays with their offsets
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_Texture3D_VertNorm);
 	GetOpenGLError();
@@ -730,37 +731,17 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos) {
 	GetOpenGLError();
 	glTexCoordPointer(2, GL_FLOAT, 0, 0);
 	GetOpenGLError();
+*/
 
-//	glBindVertexArray(this->vaoHandle_VolumetricBuffers);
-//	GetOpenGLError();
-//	this->tex3D_bindVAO();
+	glBindVertexArray(this->vaoHandle_VolumetricBuffers);
+	//this->tex3D_bindVAO();
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_Texture3D_VertIdx);
-	GetOpenGLError();
-
-	glPushClientAttrib( GL_CLIENT_VERTEX_ARRAY_BIT );
-	GetOpenGLError();
-
-	// start to render polygons
-	glEnableClientState(GL_NORMAL_ARRAY);
-	GetOpenGLError();
-	glEnableClientState(GL_VERTEX_ARRAY);
-	GetOpenGLError();
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	GetOpenGLError();
 
 	glDrawElementsInstanced( GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, (void*)0, this->tetCount );
 	GetOpenGLError();
 
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	GetOpenGLError();
-	glDisableClientState(GL_VERTEX_ARRAY);
-	GetOpenGLError();
-	glDisableClientState(GL_NORMAL_ARRAY);
-	GetOpenGLError();
-
-	glPopClientAttrib();
-	GetOpenGLError();
-
+	// Unbind textures :
 	for (std::size_t t = tex; t >= 0 && t < tex+1; t--) {
 		glActiveTexture(GL_TEXTURE0 + t);
 		GetOpenGLError();
@@ -771,10 +752,10 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos) {
 		glBindTexture(GL_TEXTURE_1D, 0);
 		GetOpenGLError();
 	}
+
+	// Unbind program, buffers and VAO :
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	GetOpenGLError();
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	GetOpenGLError();
 	glUseProgram(0);
 	GetOpenGLError();
 
@@ -1365,6 +1346,18 @@ void Scene::uploadColorScale(const std::vector<float>& colorScale) {
 	GetOpenGLError();
 }
 
+void Scene::updateVis() {
+	for (uint i = 0; i < this->minTexVal; ++i) {
+		this->visibleDomains[i] = 0;
+	}
+	for (uint i = this->minTexVal; i < this->maxTexVal; ++i) {
+		this->visibleDomains[i] = 1;
+	}
+	for (uint i = this->maxTexVal; i < 256; ++i) {
+		this->visibleDomains[i] = 0;
+	}
+}
+
 void Scene::slotToggleShowTextureCube(bool show) { this->inputGridVisible = show; }
 
 void Scene::slotSetPlaneDepthX(float newXCoord) { this->planeDepths.x = newXCoord; }
@@ -1403,21 +1396,14 @@ void Scene::tex3D_buildMesh() {
 	const DiscreteGrid::sizevec3& dims = this->inputGrid->getGridDimensions();
 	const DiscreteGrid::bbox_t::vec size = this->inputGrid->getBoundingBox().getDiagonal();
 	// Dimensions, subject to change :
-	std::size_t xv = dims.x / 500 + 1; glm::vec4::value_type xs = size.x / static_cast<glm::vec4::value_type>(xv);
-	std::size_t yv = dims.y / 500 + 1; glm::vec4::value_type ys = size.y / static_cast<glm::vec4::value_type>(yv);
-	std::size_t zv = dims.z / 25 + 1; glm::vec4::value_type zs = size.z / static_cast<glm::vec4::value_type>(zv);
-
-//	using sizevec3 = glm::vec<3, std::size_t, glm::defaultp>;
-//	using sizevec4 = glm::vec<4, std::size_t, glm::defaultp>;
-//	glm::vec4 sizeScalar = glm::vec4(xs, ys, zs, 1.);
+	std::size_t xv = dims.x / 1000 + 1; glm::vec4::value_type xs = size.x / static_cast<glm::vec4::value_type>(xv);
+	std::size_t yv = dims.y / 1000 + 1; glm::vec4::value_type ys = size.y / static_cast<glm::vec4::value_type>(yv);
+	std::size_t zv = dims.z / 50 + 1; glm::vec4::value_type zs = size.z / static_cast<glm::vec4::value_type>(zv);
 
 	// Create vertices along with their texture coordinates :
 	for (std::size_t k = 0; k <= zv; ++k) {
 		for (std::size_t j = 0; j <= yv; ++j) {
 			for (std::size_t i = 0; i <= xv; ++i) {
-				// Integer positions :
-//				sizevec4 posInteger = sizevec4(i,j,k,1);
-//				sizevec3 texInteger = sizevec3(i,j,k);
 				vertices.emplace_back(
 					static_cast<vec_t::value_type>(i) * xs,
 					static_cast<vec_t::value_type>(j) * ys,
@@ -1437,25 +1423,16 @@ void Scene::tex3D_buildMesh() {
 	auto getIndice = [&, xt, yt](std::size_t i, std::size_t j, std::size_t k) -> std::size_t {
 		return i + j * xt + k * xt * yt;
 	};
-	// Create tetrahedra :
+	// Create tetrahedra, statically for each 'cube' of vertices created :
 	for (std::size_t i = 0; i < xv; ++i) {
 		for (std::size_t j = 0; j < yv; ++j) {
 			for (std::size_t k = 0; k < zv; ++k) {
-				/*
-				tetrahedra.push_back({getIndice(i+0, j+0, k+0), getIndice(i+0, j+0, k+1), getIndice(i+1, j+0, k+0), getIndice(i+1, j+1, k+0)}); // 1
-				tetrahedra.push_back({getIndice(i+0, j+0, k+0), getIndice(i+0, j+0, k+1), getIndice(i+0, j+1, k+0), getIndice(i+1, j+1, k+0)}); // 2
-				tetrahedra.push_back({getIndice(i+0, j+0, k+1), getIndice(i+1, j+1, k+0), getIndice(i+1, j+0, k+0), getIndice(i+1, j+0, k+1)}); // 3
-				tetrahedra.push_back({getIndice(i+0, j+1, k+0), getIndice(i+0, j+1, k+1), getIndice(i+0, j+0, k+1), getIndice(i+1, j+1, k+0)}); // 4
-				tetrahedra.push_back({getIndice(i+0, j+0, k+1), getIndice(i+0, j+1, k+1), getIndice(i+1, j+1, k+1), getIndice(i+1, j+1, k+0)}); // 5
-				tetrahedra.push_back({getIndice(i+0, j+0, k+1), getIndice(i+1, j+0, k+1), getIndice(i+1, j+1, k+1), getIndice(i+1, j+1, k+0)}); // 6
-				*/
-				tetrahedra.push_back({getIndice(i+1, j  , k  ), getIndice(i+1, j+1, k  ), getIndice(i  , j+1, k  ), getIndice(i+1, j+1, k+1)});
-				tetrahedra.push_back({getIndice(i  , j  , k+1), getIndice(i  , j  , k  ), getIndice(i  , j+1, k+1), getIndice(i+1, j  , k+1)});
-				tetrahedra.push_back({getIndice(i  , j+1, k+1), getIndice(i+1, j  , k  ), getIndice(i+1, j+1, k+1), getIndice(i+1, j  , k+1)});
-				tetrahedra.push_back({getIndice(i  , j  , k  ), getIndice(i+1, j  , k  ), getIndice(i  , j+1, k+1), getIndice(i+1, j  , k+1)});
-				tetrahedra.push_back({getIndice(i  , j  , k  ), getIndice(i+1, j  , k  ), getIndice(i  , j+1, k  ), getIndice(i  , j+1, k+1)});
-				tetrahedra.push_back({getIndice(i  , j+1, k  ), getIndice(i+1, j  , k  ), getIndice(i+1, j+1, k+1), getIndice(i  , j+1, k+1)});
-
+				tetrahedra.push_back({getIndice(i+0, j+0, k+0), getIndice(i+0, j+0, k+1), getIndice(i+1, j+0, k+0), getIndice(i+1, j+1, k+0)});
+				tetrahedra.push_back({getIndice(i+0, j+0, k+0), getIndice(i+0, j+0, k+1), getIndice(i+0, j+1, k+0), getIndice(i+1, j+1, k+0)});
+				tetrahedra.push_back({getIndice(i+0, j+0, k+1), getIndice(i+1, j+1, k+0), getIndice(i+1, j+0, k+0), getIndice(i+1, j+0, k+1)});
+				tetrahedra.push_back({getIndice(i+0, j+1, k+0), getIndice(i+0, j+1, k+1), getIndice(i+0, j+0, k+1), getIndice(i+1, j+1, k+0)});
+				tetrahedra.push_back({getIndice(i+0, j+0, k+1), getIndice(i+0, j+1, k+1), getIndice(i+1, j+1, k+1), getIndice(i+1, j+1, k+0)});
+				tetrahedra.push_back({getIndice(i+0, j+0, k+1), getIndice(i+1, j+0, k+1), getIndice(i+1, j+1, k+1), getIndice(i+1, j+1, k+0)});
 			}
 		}
 	}
@@ -1578,7 +1555,6 @@ void Scene::tex3D_buildMesh() {
 	} else {
 		std::cerr << "Could not open file, no mesh created" << '\n';
 	}
-	__GetOpenGLError("texInit", 00);
 
 	// Vertices texture :
 	if (glIsTexture(this->texHandle_tetrahedraVertexPositions) == GL_TRUE) {
@@ -1587,21 +1563,16 @@ void Scene::tex3D_buildMesh() {
 	}
 	// Generate the texture for vertex positions :
 	glGenTextures(1, &this->texHandle_tetrahedraVertexPositions);
-	__GetOpenGLError("texInit", 10);
 	glBindTexture(GL_TEXTURE_2D, this->texHandle_tetrahedraVertexPositions);
-	__GetOpenGLError("texInit", 11);
 	// nearest neighbor :
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	__GetOpenGLError("texInit", 12);
 	// Set the texture upload to not generate mimaps :
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_LOD, static_cast<GLfloat>(-1000.f));
-	__GetOpenGLError("texInit", 13);
 	// Clamping :
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP);
-	__GetOpenGLError("texInit", 14);
 	// Upload to OpenGL :
 	glTexImage2D(GL_TEXTURE_2D,	// tex target
 		0,			// mipmap 0
@@ -1613,7 +1584,6 @@ void Scene::tex3D_buildMesh() {
 		GL_FLOAT,		// pixel data type
 		rawVertices		// pointer to array of data
 	);
-	__GetOpenGLError("texInit", 1);
 
 	// Per-face normals texture :
 	if (glIsTexture(this->texHandle_tetrahedraFaceNormals) == GL_TRUE) {
@@ -1622,21 +1592,16 @@ void Scene::tex3D_buildMesh() {
 	}
 	// Generate texture, and specify nearest neighbor and clamping for mip-mapping :
 	glGenTextures(1, &this->texHandle_tetrahedraFaceNormals);
-	__GetOpenGLError("texInit", 20);
 	glBindTexture(GL_TEXTURE_2D, this->texHandle_tetrahedraFaceNormals);
-	__GetOpenGLError("texInit", 201);
 	// nearest neighbor :
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	__GetOpenGLError("texInit", 21);
 	// Set the texture upload to not generate mimaps :
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_LOD, static_cast<GLfloat>(-1000.f));
-	__GetOpenGLError("texInit", 22);
 	// Clamping :
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP);
-	__GetOpenGLError("texInit", 23);
 	// upload to opengl :
 	glTexImage2D(GL_TEXTURE_2D,	// tex target
 		0,			// mipmap 0
@@ -1648,7 +1613,6 @@ void Scene::tex3D_buildMesh() {
 		GL_FLOAT,		// pixel data type
 		rawNormals		// pointer to array of data
 	);
-	__GetOpenGLError("texInit", 2);
 
 	// Texture coordinates texture :
 	if (glIsTexture(this->texHandle_tetrahedraVertexTexCoords) == GL_TRUE) {
@@ -1656,21 +1620,16 @@ void Scene::tex3D_buildMesh() {
 		this->texHandle_tetrahedraVertexTexCoords = 0;
 	}
 	glGenTextures(1, &this->texHandle_tetrahedraVertexTexCoords);
-	__GetOpenGLError("texInit", 30);
 	glBindTexture(GL_TEXTURE_2D, this->texHandle_tetrahedraVertexTexCoords);
-	__GetOpenGLError("texInit", 301);
 	// Nearest neighbor :
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	__GetOpenGLError("texInit", 31);
 	// Set the texture upload to not generate mimaps :
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_LOD, static_cast<GLfloat>(-1000.f));
-	__GetOpenGLError("texInit", 32);
 	// Clamping :
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP);
-	__GetOpenGLError("texInit", 33);
 
 	// Upload to OpenGL :
 	glTexImage2D(GL_TEXTURE_2D,	// tex target
@@ -1683,7 +1642,6 @@ void Scene::tex3D_buildMesh() {
 		GL_FLOAT,		// pixel data type
 		tex			// pointer to array of data
 	);
-	__GetOpenGLError("texInit", 3);
 
 	// Tetrahedra neighbors texture :
 	if (glIsTexture(this->texHandle_tetrahedraNeighborhood) == GL_TRUE) {
@@ -1713,7 +1671,6 @@ void Scene::tex3D_buildMesh() {
 		GL_FLOAT,		// pixel data type
 		rawNeighbors		// pointer to array of data
 	);
-	__GetOpenGLError("texInit", 4);
 
 	delete[] tex;
 	delete[] rawVertices;
@@ -1734,21 +1691,16 @@ void Scene::tex3D_buildVisTexture() {
 	}
 
 	glGenTextures(1, &this->texHandle_visibilityMap);
-	__GetOpenGLError("visWidths", 0);
 	glBindTexture(GL_TEXTURE_2D, this->texHandle_visibilityMap);
-	__GetOpenGLError("visWidths", 1);
 	// nearest neighbor :
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	__GetOpenGLError("visWidths", 2);
 	// Set the texture upload to not generate mimaps :
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_LOD, static_cast<GLfloat>(-1000.f));
-	__GetOpenGLError("visWidths", 3);
 	// Clamping :
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP);
-	__GetOpenGLError("visWidths", 4);
 
 	std::size_t visWidth = 0, visHeight = 0;
 	__GetTexSize(256, &visWidth, &visHeight);
@@ -1771,7 +1723,6 @@ void Scene::tex3D_buildVisTexture() {
 		GL_FLOAT,		// pixel data type
 		rawVisibility		// pointer to array of data
 	);
-	__GetOpenGLError("visWidths", 5);
 }
 
 void Scene::tex3D_buildBuffers() {
@@ -1829,7 +1780,7 @@ void Scene::tex3D_buildBuffers() {
 	glBufferData(GL_ARRAY_BUFFER, 12*3*sizeof(GLfloat), normals, GL_STATIC_DRAW);
 	GetOpenGLError();
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_Texture3D_VertTex);
-	glBufferData(GL_ARRAY_BUFFER, 8*3*sizeof(GLfloat), textureCoords, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, 12*2*sizeof(GLfloat), textureCoords, GL_STATIC_DRAW);
 	GetOpenGLError();
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_Texture3D_VertIdx);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 12*sizeof(GLushort), indices, GL_STATIC_DRAW);

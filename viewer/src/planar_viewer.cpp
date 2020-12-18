@@ -1,5 +1,7 @@
 #include "../include/planar_viewer.hpp"
 
+#include <QCoreApplication>
+#include <QProgressDialog>
 #include <QMouseEvent>
 
 PlanarViewer::PlanarViewer(Scene* const _scene, planes _p, QWidget* parent) :
@@ -23,7 +25,14 @@ void PlanarViewer::init(void) {
 	}
 
 	this->makeCurrent();
-	this->sceneToShow->initGl(this->context());
+	if (not this->sceneToShow->isInitialized) {
+		QProgressDialog* progress = new QProgressDialog("Initializing scene ...", QString(), 0, 10);
+		progress->show();
+		QCoreApplication::processEvents();
+		this->sceneToShow->initGl(this->context());
+		this->sceneToShow->setDrawModeSolid();
+		progress->setValue(10);
+	}
 	this->refreshTimer->start();
 }
 

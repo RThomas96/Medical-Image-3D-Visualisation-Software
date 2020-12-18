@@ -1,4 +1,4 @@
-#version 130
+#version 400
 
 // Vertex, vertex texture coordinate and vertex visibility :
 in vec4 P;
@@ -47,9 +47,7 @@ uniform float shininess;
 uniform vec3 cam;
 
 // Grid voxel dimensions :
-uniform float dx;
-uniform float dy;
-uniform float dz;
+uniform vec3 voxelSize;
 
 // Variables for visibility :
 uniform vec3 cut;
@@ -57,28 +55,38 @@ uniform vec3 cutDirection;
 uniform vec3 clippingPoint;
 uniform vec3 clippingNormal;
 
-bool ComputeVisibility(vec3 point){
+uniform mat4 mMat;
+
+bool ComputeVisibility(vec3 point)
+{
+	mat4 iGrid = mMat;
+	vec4 point4 = vec4(point, 1.);
+	vec4 cut4 = vec4(cut, .0);
+	vec4 vis4 = (iGrid * point4) - cut4;
+	vis4.xyz *= cutDirection;
 	float xVis = (point.x - cut.x)*cutDirection.x;
 	float yVis = (point.y - cut.y)*cutDirection.y;
 	float zVis = (point.z - cut.z)*cutDirection.z;
 
 	vec3 pos = point - clippingPoint;
 	float vis = dot( clippingNormal, pos );
-	if( xVis < 0. || yVis < 0. || zVis < 0. || vis < 0. )
+	if( vis4.x < 0.|| vis4.y < 0.|| vis4.z < 0. )
 		return false;
 	else return true;
 }
 
-vec3 getWorldCoordinates( in ivec3 _gridCoord ){
-	return vec3( (_gridCoord.x+0.5)*dx,
-				 (_gridCoord.y+0.5)*dy,
-				 (_gridCoord.z+0.5)*dz );
+vec3 getWorldCoordinates( in ivec3 _gridCoord )
+{
+	return vec3( (_gridCoord.x+0.5)*voxelSize.x,
+				 (_gridCoord.y+0.5)*voxelSize.y,
+				 (_gridCoord.z+0.5)*voxelSize.z );
 }
 
-ivec3 getGridCoordinates( in vec4 _P ){
-	return ivec3( int( _P.x/dx ) ,
-				  int( _P.y/dy ) ,
-				  int( _P.z/dz ) );
+ivec3 getGridCoordinates( in vec4 _P )
+{
+	return ivec3( int( _P.x/voxelSize.x ) ,
+				  int( _P.y/voxelSize.y ) ,
+				  int( _P.z/voxelSize.z ) );
 }
 ivec2 Convert1DIndexTo2DIndex_Unnormed( in uint uiIndexToConvert, in int iWrapSize )
 {
@@ -94,7 +102,8 @@ ivec2 Convert1DIndexTo2DIndex_Unnormed_Flipped( in uint uiIndexToConvert, in int
 	return ivec2( iY, iX );
 }
 
-bool computeBarycentricCoordinates( in vec3 point, out float ld0 , out float ld1 , out float ld2 , out float ld3){
+bool computeBarycentricCoordinates( in vec3 point, out float ld0 , out float ld1 , out float ld2 , out float ld3)
+{
 	int nWidth = textureSize(normals_translations, 0).x;
 	ivec2 textF = Convert1DIndexTo2DIndex_Unnormed(uint(int(instanceId+0.5)*4 ), nWidth);
 	vec4 texelVal = texelFetch(normals_translations, textF, 0);
@@ -137,13 +146,14 @@ bool computeBarycentricCoordinates( in vec3 point, out float ld0 , out float ld1
 }
 
 
-vec3 crossProduct( vec3 a, vec3 b ){
-
+vec3 crossProduct( vec3 a, vec3 b )
+{
 	return vec3( a.y*b.z - a.z*b.y, a.z*b.x - a.x*b.z, a.x*b.y - a.y*b.x );
 }
 
-bool computeBarycentricCoordinates( in vec3 point, out float ld0 , out float ld1 , out float ld2 , out float ld3,
-									in int id_tetra_start, out int id_tetra_end, out vec3 Current_text3DCoord){
+bool computeBarycentricCoordinates(in vec3 point, out float ld0 , out float ld1 , out float ld2 , out float ld3,
+				   in int id_tetra_start, out int id_tetra_end, out vec3 Current_text3DCoord)
+{
 
 	int vWidth = textureSize(vertices_translations, 0).x;
 	int nWidth = textureSize(normals_translations, 0).x;
@@ -238,8 +248,9 @@ bool computeBarycentricCoordinates( in vec3 point, out float ld0 , out float ld1
 }
 
 
-bool computeBarycentricCoordinatesRecursive( in vec3 point, out float ld0 , out float ld1 , out float ld2 , out float ld3,
-					in int id_tetra_start, out int id_tetra_end, int max_iter, out vec3 result_text_coord ){
+bool computeBarycentricCoordinatesRecursive(in vec3 point, out float ld0 , out float ld1 , out float ld2 , out float ld3,
+					in int id_tetra_start, out int id_tetra_end, int max_iter, out vec3 result_text_coord )
+{
 	int current_iter = 0;
 	int current_tet_visited = id_tetra_start;
 	int next_tet_to_visit;
@@ -260,8 +271,8 @@ bool computeBarycentricCoordinatesRecursive( in vec3 point, out float ld0 , out 
 }
 
 
-void getFirstRayVoxelIntersection( in vec3 origin, in vec3 direction, out ivec3 v0, out vec3 t_n){
-
+void getFirstRayVoxelIntersection( in vec3 origin, in vec3 direction, out ivec3 v0, out vec3 t_n)
+{
 	// 	vec3 origin = o;
 	//
 	// 	vec3 t_cut = vec3( (cut.x - o.x)/direction.x, (cut.y - o.y)/direction.y, (cut.z - o.z)/direction.z );
@@ -275,12 +286,12 @@ void getFirstRayVoxelIntersection( in vec3 origin, in vec3 direction, out ivec3 
 
 	v0 = getGridCoordinates(vec4(origin.xyz, 1.));
 
-	float xi = v0.x*dx;
-	if( direction.x > 0  ) xi = xi + dx;
-	float yi = v0.y*dy;
-	if( direction.y > 0  ) yi = yi + dy;
-	float zi = v0.z*dz;
-	if( direction.z > 0  ) zi = zi + dz;
+	float xi = v0.x*voxelSize.x;
+	if( direction.x > 0  ) xi = xi + voxelSize.x;
+	float yi = v0.y*voxelSize.y;
+	if( direction.y > 0  ) yi = yi + voxelSize.y;
+	float zi = v0.z*voxelSize.z;
+	if( direction.z > 0  ) zi = zi + voxelSize.z;
 	t_n = vec3 ( ((xi - origin.x)/direction.x), ((yi - origin.y)/direction.y), ((zi - origin.z)/direction.z) );
 
 	if( abs( direction.x ) < 0.00001 ) t_n.x = 100000000;
@@ -293,31 +304,23 @@ void main (void) {
 	if( visibility > 3500. ) discard;
 
 	// Default color of the fragment : black
-	colorOut = vec4(.0, .0, .0, 1.);
-
-	/*
-	// Early discard, and debug return :
-	if (P.x < .0f) {discard;}
-	if (P.y < .0f) {discard;}
-	if (P.z < .0f) {discard;}
-	colorOut = P/2048.;
-	return;
-	*/
-
-	vec3 V = normalize ( P.xyz - cam );
-	/*
-	// Check the view vector is properly set :
-	colorOut.xyz = V;
-	return;
-	*/
-
-	bool in_tet = true;
-	bool hit = false;
+	colorOut = vec4(.6, .0, .6, 1.);
 
 
-	vec3 t_next;
-	ivec3 next_voxel;
-	ivec3 origin_voxel;
+	vec3 V = normalize(P.xyz - cam);
+
+	bool hit = false; // have we hit a voxle that is supposed to be shown yet ?
+	bool in_tet = true; // are we in a tetrahedron ? (prevents analyzing ray when not needed)
+
+	vec3 t_next; // The delta-t in all axes for the DDA analysis
+	ivec3 next_voxel; // The next voxel index in the grid
+	ivec3 origin_voxel; // The ray's origin voxel for the grid
+
+	// imitates the normals of a cube of size 1.
+	vec3 normals[6];
+	normals[0] = vec3( 1., 0., 0.); normals[1] = vec3( -1.,  0.,  0.);
+	normals[2] = vec3( 0., 1., 0.); normals[3] = vec3(  0., -1.,  0.);
+	normals[4] = vec3( 0., 0., 1.); normals[5] = vec3(  0.,  0., -1.);
 
 	/**************initialization******************/
 
@@ -330,10 +333,10 @@ void main (void) {
 	return;
 	*/
 
-	vec3 dt = vec3( abs(dx/V.x), abs(dy/V.y), abs(dz/V.z) );
+	//vec3 dt = vec3( abs(voxelSize.x/V.x), abs(voxelSize.y/V.y), abs(voxelSize.z/V.z) );
+	vec3 dt = vec3( voxelSize.x, voxelSize.y, voxelSize.z);
 
 	ivec3 grid_step = ivec3 (-1, -1, -1);
-
 
 	if( V.x > 0 ) grid_step.x = 1;
 	if( V.y > 0 ) grid_step.y = 1;
@@ -343,7 +346,7 @@ void main (void) {
 
 	/***********************************************/
 
-	vec3 Current_text3DCoord;// = text3DCoord;
+	vec3 Current_text3DCoord;
 	/*
 	Current_text3DCoord = text3DCoord;
 	uint voxInd = texture(Mask, (Current_text3DCoord)).x;
@@ -353,24 +356,16 @@ void main (void) {
 
 	vec4 Pos;
 
-	vec4 color = vec4 (0.,0.,0.,1.);
+	vec4 color = vec4 (0.6,0.,0.6,1.);
 
-	float v_step = dx;
-	if( v_step > dy ) v_step = dy;
-	if( v_step > dz ) v_step = dz;
+	float v_step = voxelSize.x;
+	if( v_step > voxelSize.y ) v_step = voxelSize.y;
+	if( v_step > voxelSize.z ) v_step = voxelSize.z;
 
-	bool changed = false;
 	next_voxel = origin_voxel;
-
-
-	vec3 normals[6];
-	normals[0] = vec3( 1., 0., 0.); normals[1] = vec3( -1.,  0.,  0.);
-	normals[2] = vec3( 0., 1., 0.); normals[3] = vec3(  0., -1.,  0.);
-	normals[4] = vec3( 0., 0., 1.); normals[5] = vec3(  0.,  0., -1.);
 
 	vec3 n;
 
-	float val =0;
 	int fragmentIteration = 0;
 	while( in_tet && !hit && fragmentIteration < 100 ){
 		fragmentIteration++;
@@ -412,21 +407,18 @@ void main (void) {
 			//if( computeBarycentricCoordinates( voxel_center_P, ld0, ld1, ld2, ld3) ){
 			if( computeBarycentricCoordinatesRecursive( voxel_center_P, ld0, ld1, ld2, ld3, int(instanceId+0.5), id_tet, 50, Current_text3DCoord ) ){
 				// Current_text3DCoord = ld0*text3DCoordP0 + ld1*text3DCoordP1 + ld2*text3DCoordP2 + ld3*text3DCoordP3;
-				uint voxelIndex = texture(Mask, (Current_text3DCoord.xyz)).x;
+				uint voxelIndex = texture(Mask, Current_text3DCoord).x;
 				vec4 current_color = texelFetch(color_texture, int(voxelIndex), 0);
 				if (visiblity_map[voxelIndex] > 0u) {
-					if( voxelIndex > 5u ){
-					//	vec3 current_visibility = texelFetch(visibility_texture, textF, 0).xyz;
-					//	if(current_visibility.x>0.){
-							//  val = 1.;
-							//current_color = vec4(texture(Mask, Current_text3DCoord.xyz).r, 0., 0., 1.0);
+	//				if( voxelIndex > 0u ){
+	//					vec3 current_visibility = texelFetch(visibility_texture, textF, 0).xyz;
+	//					if(current_visibility.x>0.){
 							color = current_color;
-							//color = vec4(1.,0.,0.,1.);
-							Pos = vec4(Current_P.xyz, 1.);// vec4( (ld0*P0 + ld1*P1 + ld2*P2 + ld3*P3).xyz, 1. ); // //
-							if(ComputeVisibility(voxel_center_P.xyz) )
+							Pos = vec4( (ld0*P0 + ld1*P1 + ld2*P2 + ld3*P3).xyz, 1. ); // vec4(Current_P.xyz, 1.);//
+	//						if(ComputeVisibility(voxel_center_P.xyz) )
 								hit = true;
-					//	}
-					}
+	//					}
+	//				}
 				}
 
 			}
@@ -437,6 +429,7 @@ void main (void) {
 
 
 	}
+
 	if(!in_tet || !hit) discard;
 	colorOut = color;
 	return;
