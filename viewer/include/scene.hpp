@@ -47,7 +47,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		/// @brief For the dual-viewer : draw in real space
 		void drawGridOnly(GLfloat mvMat[], GLfloat pMat[]);
 		/// @brief draw the planes, in the real space
-		void drawPlanes(GLfloat mvMat[], GLfloat pMat[]);
+		void drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane = true);
 
 		/// @brief For the dual-viewer : draw in grid space
 		void drawWithPlanes(GLfloat mvMat[], GLfloat pMat[]);
@@ -93,6 +93,10 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		uint getMinTexValue(void) const { return this->minTexVal; }
 		uint getMaxTexValue(void) const { return this->maxTexVal; }
 
+		void writeGridDIM(const std::string name);
+
+		void draft_writeRawGridPortion(DiscreteGrid::sizevec3 begin, DiscreteGrid::sizevec3 size, std::string name);
+
 		void slotTogglePolygonMode(bool show);
 		void slotToggleShowTextureCube(bool show);
 		void slotSetPlaneDepthX(float newXCoord);
@@ -121,7 +125,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		/// @b draws a grid, slightly more generic than drawVoxelGrid()
 		void drawGrid_Generic(GLfloat mvMat[], GLfloat pMat[], glm::mat4 baseMatrix, GLuint texHandle, const std::shared_ptr<DiscreteGrid>& grid);
 		/// @b preps uniforms for a given plane
-		void prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane);
+		void prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane, bool showTexOnPlane = true);
 		/// @brief prep the plane uniforms to draw in space
 		void prepPlane_SingleUniforms(planes _plane, glm::vec2 fbDims, const std::shared_ptr<DiscreteGrid> _grid);
 		/// @b Prints grid info.
@@ -151,6 +155,15 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void tex3D_buildVisTexture();
 		void tex3D_buildBuffers();
 		void tex3D_bindVAO();
+		void tex3D_loadMESHFile(const std::string name, std::vector<glm::vec4>& vert,
+					std::vector<glm::vec3>& texCoords, std::vector<std::array<std::size_t, 4>>& tet);
+/*
+	std::vector<glm::vec4> vertices; ///< positions of the vertices, within the grid space
+	std::vector<glm::vec3> texCoords; ///< texture coordinates of the vertices, normalized
+	std::vector<std::array<std::size_t, 4>> tetrahedra; ///< stores the indices of vertices needed for a tetrahedron
+	std::vector<std::vector<int>> neighbors; ///< stores the indices of neighboring tetrahedra
+	std::vector<std::array<glm::vec4, 4>> normals; ///< per-face normals of each tetrahedron
+*/
 	protected:
 		void generateGrid();
 

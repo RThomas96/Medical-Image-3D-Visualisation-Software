@@ -2,6 +2,7 @@
 #include "../include/planar_viewer.hpp"
 #include "../../qt/include/scene_control.hpp"
 #include "../../image/include/reader.hpp"
+#include "../../image/include/writer.hpp"
 
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -14,8 +15,6 @@
 #include <fstream>
 #include <iomanip>
 #include <type_traits>
-
-#undef USER_DEFINED_IMAGE_LOADING
 
 template<class T>
 std::remove_reference_t<T> const& as_const(T&&t){return t;}
@@ -236,6 +235,12 @@ void Scene::initGl(QOpenGLContext* _context) {
 	this->tex3D_buildBuffers();
 	std::cerr << "done\n";
 
+/*
+	DiscreteGrid::sizevec3 begin(1000, 40, 500);
+	DiscreteGrid::sizevec3 size(100, 100, 100);
+	this->draft_writeRawGridPortion(begin, size, "rawGrid2");
+*/
+
 	glUseProgram(this->programHandle_projectedTex);
 	GetOpenGLError();
 	std::cerr << "Finished initializing scene" << '\n';
@@ -268,7 +273,7 @@ void Scene::recompileShaders(bool verbose) {
 	GLuint newProgram = this->compileShaders("./shaders/voxelgrid.vert", "./shaders/voxelgrid.geom", "./shaders/voxelgrid.frag", verbose);
 	GLuint newPlaneProgram = this->compileShaders("./shaders/plane.vert", "", "./shaders/plane.frag", verbose);
 	GLuint newPlaneViewerProgram = this->compileShaders("./shaders/texture_explorer.vert", "", "./shaders/texture_explorer.frag", verbose);
-	GLuint newVolumetricProgram = this->compileShaders("./shaders/transfer_mesh.vert", "", "./shaders/transfer_mesh.frag", verbose);
+	GLuint newVolumetricProgram = this->compileShaders("./shaders/transfer_mesh.vert", "./shaders/transfer_mesh.geom", "./shaders/transfer_mesh.frag", verbose);
 
 	if (newProgram) {
 		glDeleteProgram(this->programHandle_projectedTex);
@@ -759,10 +764,10 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos) {
 	glUseProgram(0);
 	GetOpenGLError();
 
-	this->drawPlanes(mvMat, pMat);
+	this->drawPlanes(mvMat, pMat, false);
 }
 
-void Scene::drawPlanes(GLfloat mvMat[], GLfloat pMat[]) {
+void Scene::drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane) {
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 
@@ -770,7 +775,7 @@ void Scene::drawPlanes(GLfloat mvMat[], GLfloat pMat[]) {
 	glUseProgram(this->programHandle_Plane3D);
 	glBindVertexArray(this->vaoHandle);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_PlaneElement);
-	this->prepPlaneUniforms(mvMat, pMat, planes::x);
+	this->prepPlaneUniforms(mvMat, pMat, planes::x, showTexOnPlane);
 	this->setupVAOPointers();
 
 	// glDrawRangeElements(GL_TRIANGLES, 0, 6, static_cast<GLsizei>(6), GL_UNSIGNED_INT, static_cast<GLvoid*>(0));
@@ -784,7 +789,7 @@ void Scene::drawPlanes(GLfloat mvMat[], GLfloat pMat[]) {
 	glUseProgram(this->programHandle_Plane3D);
 	glBindVertexArray(this->vaoHandle);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_PlaneElement);
-	this->prepPlaneUniforms(mvMat, pMat, planes::y);
+	this->prepPlaneUniforms(mvMat, pMat, planes::y, showTexOnPlane);
 	this->setupVAOPointers();
 
 	// glDrawRangeElements(GL_TRIANGLES, 6, 12, static_cast<GLsizei>(6), GL_UNSIGNED_INT, static_cast<GLvoid*>(0));
@@ -798,7 +803,7 @@ void Scene::drawPlanes(GLfloat mvMat[], GLfloat pMat[]) {
 	glUseProgram(this->programHandle_Plane3D);
 	glBindVertexArray(this->vaoHandle);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_PlaneElement);
-	this->prepPlaneUniforms(mvMat, pMat, planes::z);
+	this->prepPlaneUniforms(mvMat, pMat, planes::z, showTexOnPlane);
 	this->setupVAOPointers();
 
 	// glDrawRangeElements(GL_TRIANGLES, 12, 18, static_cast<GLsizei>(6), GL_UNSIGNED_INT, static_cast<GLvoid*>(0));
@@ -914,7 +919,7 @@ void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, 
 	GetOpenGLError();
 }
 
-void Scene::prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane) {
+void Scene::prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane, bool showTexOnPlane) {
 	// lambda function to check uniform location :
 	auto checkUniformLocation = [](const GLint id, const char* name = nullptr) -> bool {
 		if (id == -1) {
@@ -945,6 +950,7 @@ void Scene::prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane) {
 	GLint location_colorScale = glGetUniformLocation(this->programHandle_Plane3D, "colorScale");
 	GLint location_minTexVal = glGetUniformLocation(this->programHandle_Plane3D, "minTexVal");
 	GLint location_maxTexVal = glGetUniformLocation(this->programHandle_Plane3D, "maxTexVal");
+	GLint location_showTex = glGetUniformLocation(this->programHandle_Plane3D, "showTex");
 
 	// Check the location values :
 	checkUniformLocation(location_mMatrix, "mMatrix");
@@ -980,6 +986,7 @@ void Scene::prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane) {
 	glUniform1ui(location_minTexVal, this->minTexVal);
 	glUniform1ui(location_maxTexVal, this->maxTexVal);
 	glUniform3fv(location_planePosition, 1, glm::value_ptr(this->planePosition));
+	glUniform1i(location_showTex, showTexOnPlane ? 1 : 0);
 	glActiveTexture(GL_TEXTURE0 + 0);
 	glEnable(GL_TEXTURE_3D);
 	glBindTexture(GL_TEXTURE_3D, this->texHandle_InputGrid);
@@ -1366,15 +1373,49 @@ void Scene::slotSetPlaneDepthY(float newYCoord) { this->planeDepths.y = newYCoor
 
 void Scene::slotSetPlaneDepthZ(float newZCoord) { this->planeDepths.z = newZCoord; }
 
-void Scene::slotSetMinTexValue(uchar val) { this->minTexVal = val; }
+void Scene::slotSetMinTexValue(uchar val) { this->minTexVal = val; this->updateVis(); }
 
-void Scene::slotSetMaxTexValue(uchar val) { this->maxTexVal = val; }
+void Scene::slotSetMaxTexValue(uchar val) { this->maxTexVal = val; this->updateVis(); }
 
 void Scene::slotSetPlanePositionX(float coord) { this->planePosition.x = coord; }
 
 void Scene::slotSetPlanePositionY(float coord) { this->planePosition.y = coord; }
 
 void Scene::slotSetPlanePositionZ(float coord) { this->planePosition.z = coord; }
+
+void Scene::writeGridDIM(const std::string name) {
+	IO::Writer::DIM* writer = new IO::Writer::DIM(name);
+	writer->write(this->outputGrid);
+	return;
+}
+
+void Scene::draft_writeRawGridPortion(DiscreteGrid::sizevec3 begin, DiscreteGrid::sizevec3 size, std::string name) {
+	std::shared_ptr<OutputGrid> rawGrid = std::make_shared<OutputGrid>();
+	//fetch data from input grid :
+	std::vector<DiscreteGrid::DataType> data(size.x * size.y * size.z, uchar(0));
+	const std::vector<DiscreteGrid::DataType>& src = this->inputGrid->getData();
+	const DiscreteGrid::sizevec3 dims = this->inputGrid->getGridDimensions();
+	std::size_t x = 0, y = 0, z = 0;
+	for (std::size_t i = begin.x; i < begin.x + size.x; ++i) {
+		y = 0;
+		for (std::size_t j = begin.y; j < begin.y + size.y; ++j) {
+			z = 0;
+			for (std::size_t k = begin.z; k < begin.z + size.z; ++k) {
+				// this is beautiful, fucking hell
+				data[x + y * size.x + z * size.x * size.y] = src[i + j *  dims.x + k * dims.x * dims.y];
+				z++;
+			}
+			y++;
+		}
+		x++;
+	}
+	rawGrid->setResolution(size);
+	rawGrid->setBoundingBox(DiscreteGrid::bbox_t(glm::vec3(.0, .0, .0), glm::convert_to<float>(size)));
+	rawGrid->setData(data);
+	IO::Writer::DIM* writer = new IO::Writer::DIM(name);
+	writer->write(rawGrid);
+	return;
+}
 
 void Scene::tex3D_buildTexture() {
 	/* By default, this step should have been done in the Scene::loadImage() function. */
@@ -1391,14 +1432,20 @@ void Scene::tex3D_buildMesh() {
 	std::vector<std::vector<int>> neighbors; ///< stores the indices of neighboring tetrahedra
 	std::vector<std::array<glm::vec4, 4>> normals; ///< per-face normals of each tetrahedron
 
-	using vec_t = typename DiscreteGrid::bbox_t::vec;
+	std::string path = "";
+	QString filename = QFileDialog::getOpenFileName(nullptr, "Open MESH file", "../../", "MESH Files (*.MESH, *.mesh)");
+	path = filename.toStdString();
+	this->tex3D_loadMESHFile(path, vertices, texCoords, tetrahedra);
 
+	/*
+	using vec_t = typename DiscreteGrid::bbox_t::vec;
+	// VERTEX AND TEXCOORDS GENERATION :
 	const DiscreteGrid::sizevec3& dims = this->inputGrid->getGridDimensions();
 	const DiscreteGrid::bbox_t::vec size = this->inputGrid->getBoundingBox().getDiagonal();
 	// Dimensions, subject to change :
-	std::size_t xv = dims.x / 1000 + 1; glm::vec4::value_type xs = size.x / static_cast<glm::vec4::value_type>(xv);
-	std::size_t yv = dims.y / 1000 + 1; glm::vec4::value_type ys = size.y / static_cast<glm::vec4::value_type>(yv);
-	std::size_t zv = dims.z / 50 + 1; glm::vec4::value_type zs = size.z / static_cast<glm::vec4::value_type>(zv);
+	std::size_t xv = 15; glm::vec4::value_type xs = size.x / static_cast<glm::vec4::value_type>(xv);
+	std::size_t yv = 15; glm::vec4::value_type ys = size.y / static_cast<glm::vec4::value_type>(yv);
+	std::size_t zv = 15; glm::vec4::value_type zs = size.z / static_cast<glm::vec4::value_type>(zv);
 
 	// Create vertices along with their texture coordinates :
 	for (std::size_t k = 0; k <= zv; ++k) {
@@ -1419,6 +1466,7 @@ void Scene::tex3D_buildMesh() {
 		}
 	}
 
+	// TETRAHEDRA CONSTRUCTION :
 	std::size_t xt = xv+1; std::size_t yt = yv+1; std::size_t zt = zv+1;
 	auto getIndice = [&, xt, yt](std::size_t i, std::size_t j, std::size_t k) -> std::size_t {
 		return i + j * xt + k * xt * yt;
@@ -1436,21 +1484,25 @@ void Scene::tex3D_buildMesh() {
 			}
 		}
 	}
+	*/
 
-	std::map< Face , std::pair<int, int> > adjacent_faces;
+	// Hard-coded indices smh, got to move to a more portable (and readable) solution :
 	std::size_t indices[4][3];
 	indices[0][0] = 3; indices[0][1] = 1; indices[0][2] = 2;
 	indices[1][0] = 3; indices[1][1] = 2; indices[1][2] = 0;
 	indices[2][0] = 3; indices[2][1] = 0; indices[2][2] = 1;
 	indices[3][0] = 2; indices[3][1] = 1; indices[3][2] = 0;
 
+	// INIT NEIGHBORS :
 	neighbors.clear();
 	for(std::size_t i = 0 ; i < tetrahedra.size() ; i++ ){
 		neighbors.push_back(std::vector(4, -1));
 		normals.push_back(std::array<glm::vec4, 4>{glm::vec4(.0f), glm::vec4(.0f), glm::vec4(.0f), glm::vec4(.0f)});
 	}
 
-	// generate the correspondance by looking at which faces are similar : [HEAVY COMPUTATION]
+	// Adjacency map :
+	std::map< Face , std::pair<int, int> > adjacent_faces;
+	// generate the correspondance by looking at which faces are similar : [MEDIUM/HEAVY COMPUTATION]
 	for(std::size_t i = 0 ; i < tetrahedra.size() ; i ++ ){
 		for( int v = 0 ; v < 4 ; v++ ){
 			// find similar face in other tetrahedrons :
@@ -1530,6 +1582,7 @@ void Scene::tex3D_buildMesh() {
 		}
 	}
 
+/*
 	// Write to file :
 	std::ofstream out("./meshcreated2.mesh");
 	if (out.is_open()) {
@@ -1555,6 +1608,7 @@ void Scene::tex3D_buildMesh() {
 	} else {
 		std::cerr << "Could not open file, no mesh created" << '\n';
 	}
+*/
 
 	// Vertices texture :
 	if (glIsTexture(this->texHandle_tetrahedraVertexPositions) == GL_TRUE) {
@@ -1682,6 +1736,76 @@ void Scene::tex3D_buildMesh() {
 	texCoords.clear();
 	vertices.clear();
 	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void Scene::tex3D_loadMESHFile(const std::string file, std::vector<glm::vec4>& vert, std::vector<glm::vec3>& texCoords,
+				std::vector<std::array<std::size_t, 4>>& tet) {
+
+	DiscreteGrid::sizevec3 dims = this->inputGrid->getGridDimensions();
+	std::ifstream myfile(file.c_str());
+
+	if (not myfile.is_open()) {
+		throw std::runtime_error("could not open mesh file");
+	}
+
+	std::string meshString;
+	std::size_t sizeV, sizeT, sizeTet, dimension;
+
+	myfile >> meshString;
+	while (meshString.find("Dimension") == std::string::npos)
+		myfile >> meshString;
+
+	myfile>> dimension;
+	while (meshString.find("Vertices") == std::string::npos)
+		myfile >> meshString;
+
+	myfile >> sizeV;
+
+	int s;
+	for (unsigned int i = 0; i < sizeV; i++) {
+		float p[3];
+		for (unsigned int j = 0; j < 3; j++)
+			myfile >> p[j];
+
+		glm::vec3 position = glm::vec3(p[0], p[1], p[2]);
+		vert.push_back(glm::vec4(position, 1.));
+		texCoords.push_back(glm::vec3(
+			std::min(1.f,position[0]/dims.x),
+			std::min(1.f,position[1]/dims.y),
+			std::min(1.f,position[2]/dims.z)
+		));
+		myfile >> s;
+	}
+
+	while (meshString.find("Triangles") == std::string::npos)
+		myfile >> meshString;
+
+	myfile >> sizeT;
+	unsigned int v[3];
+	for (unsigned int i = 0; i < sizeT; i++) {
+		for (unsigned int j = 0; j < 3; j++)
+			myfile >> v[j];
+		myfile >> s;
+	}
+
+	if( dimension == 3 ){
+		while (meshString.find("Tetrahedra") == std::string::npos)
+			myfile >> meshString;
+
+		myfile >> sizeTet;
+		for (unsigned int i = 0; i < sizeTet; i++) {
+			unsigned int v[4];
+			for (unsigned int j = 0; j < 4; j++) {
+				myfile >> v[j];
+			}
+			myfile >> s;
+			if( s > 0 ) {
+				tet.push_back({v[0]-1, v[1]-1, v[2]-1, v[3]-1});
+			}
+		}
+	}
+
+	myfile.close ();
 }
 
 void Scene::tex3D_buildVisTexture() {

@@ -7,23 +7,19 @@ layout (location = 2) in vec2 texCoord;
 // --------------------------------------------------
 // VShader outputs :
 // --------------------------------------------------
-out vec4 P;
-out vec3 text3DCoord;
-
-out vec4 P0;
-out vec3 text3DCoordP0;
-
-out vec4 P1;
-out vec3 text3DCoordP1;
-
-out vec4 P2;
-out vec3 text3DCoordP2;
-
-out vec4 P3;
-out vec3 text3DCoordP3;
-
-out float instanceId;
-out float visibility;
+out vec4 P_VS;
+out vec3 text3DCoord_VS;
+out vec4 P0_VS;
+out vec3 text3DCoordP0_VS;
+out vec4 P1_VS;
+out vec3 text3DCoordP1_VS;
+out vec4 P2_VS;
+out vec3 text3DCoordP2_VS;
+out vec4 P3_VS;
+out vec3 text3DCoordP3_VS;
+out float instanceId_VS;
+out float visibility_VS;
+out float gl_ClipDistance[1];
 
 // --------------------------------------------------
 // Uniform variables:
@@ -34,6 +30,8 @@ uniform sampler2D texture_coordinates;
 uniform mat4 mMat;
 uniform mat4 vMat;
 uniform mat4 pMat;
+
+uniform vec4 clipPlane = vec4(.0, 1., .0, .0);
 
 uniform vec3 cut;
 uniform vec3 cutDirection;
@@ -58,13 +56,13 @@ float ComputeVisibility(vec3 point)
 	vec4 cut4 = vec4(cut, .0);
 	vec4 vis4 = (iGrid * point4) - cut4;
 	vis4.xyz *= cutDirection;
-	float xVis = ((point.x - cut.x))*cutDirection.x;
-	float yVis = ((point.y - cut.y))*cutDirection.y;
-	float zVis = ((point.z - cut.z))*cutDirection.z;
+	float xVis = vis4.x; // ((point.x - cut.x))*cutDirection.x;
+	float yVis = vis4.y; // ((point.y - cut.y))*cutDirection.y;
+	float zVis = vis4.z; // ((point.z - cut.z))*cutDirection.z;
 
-	vec3 pos = point - clippingPoint;
-	//float vis = dot( clippingNormal, pos );
-	if( vis4.x < 0.|| vis4.y < 0.|| vis4.z < 0. )
+	// vec3 pos = point - clippingPoint;
+	// float vis = dot( clippingNormal, pos );
+	if( xVis < 0.|| yVis < 0.|| zVis < 0. )
 		return 1000.;
 	else return 0.;
 }
@@ -73,38 +71,49 @@ void main()
 {
 	int vertWidth = textureSize(vertices_translations, 0).x;
 
-	ivec2 textCoord = Convert1DIndexTo2DIndex_Unnormed(unsigned int(gl_InstanceID*12 + texCoord.x ), vertWidth);
+	ivec2 textCoord = Convert1DIndexTo2DIndex_Unnormed(uint(gl_InstanceID*12 + texCoord.x), vertWidth);
 
 	vec3 textValue = texelFetch(vertices_translations, textCoord, 0).xyz;
 
-	instanceId = gl_InstanceID;
+	instanceId_VS = float(gl_InstanceID);
 
-	P = vec4(textValue.xyz, 1.);
+	P_VS = vec4(textValue.xyz, 1.);
 
-	text3DCoord = texelFetch(texture_coordinates, textCoord, 0).xyz;
+	text3DCoord_VS = texelFetch(texture_coordinates, textCoord, 0).xyz;
 
 	//Storing instance vertices informations: position and texture coordinates
 	textCoord = Convert1DIndexTo2DIndex_Unnormed(unsigned int(gl_InstanceID*12 ), vertWidth);
-	P3 = vec4( texelFetch(vertices_translations, textCoord, 0).xyz, 1. );
-	text3DCoordP3 = texelFetch(texture_coordinates, textCoord, 0).xyz;;
+	P3_VS = vec4( texelFetch(vertices_translations, textCoord, 0).xyz, 1. );
+	text3DCoordP3_VS = texelFetch(texture_coordinates, textCoord, 0).xyz;;
 
-	visibility = ComputeVisibility(P3.xyz);
+	visibility_VS = ComputeVisibility(P3_VS.xyz);
 
 	textCoord = Convert1DIndexTo2DIndex_Unnormed(unsigned int(gl_InstanceID*12 + 1 ), vertWidth);
-	P1 = vec4( texelFetch(vertices_translations, textCoord, 0).xyz, 1. );
-	text3DCoordP1 = texelFetch(texture_coordinates, textCoord, 0).xyz;;
+	P1_VS = vec4( texelFetch(vertices_translations, textCoord, 0).xyz, 1. );
+	text3DCoordP1_VS = texelFetch(texture_coordinates, textCoord, 0).xyz;;
 
-	visibility += ComputeVisibility(P1.xyz);
+	visibility_VS += ComputeVisibility(P1_VS.xyz);
 
 	textCoord = Convert1DIndexTo2DIndex_Unnormed(unsigned int(gl_InstanceID*12 + 2 ), vertWidth);
-	P2 = vec4( texelFetch(vertices_translations, textCoord, 0).xyz, 1. );
-	text3DCoordP2 = texelFetch(texture_coordinates, textCoord, 0).xyz;;
-	visibility += ComputeVisibility(P2.xyz);
+	P2_VS = vec4( texelFetch(vertices_translations, textCoord, 0).xyz, 1. );
+	text3DCoordP2_VS = texelFetch(texture_coordinates, textCoord, 0).xyz;;
+
+	visibility_VS += ComputeVisibility(P2_VS.xyz);
 
 	textCoord = Convert1DIndexTo2DIndex_Unnormed(unsigned int(gl_InstanceID*12 + 5 ), vertWidth);
-	P0 = vec4( texelFetch(vertices_translations, textCoord, 0).xyz, 1. );
-	text3DCoordP0 = texelFetch(texture_coordinates, textCoord, 0).xyz;
-	visibility += ComputeVisibility(P0.xyz);
+	P0_VS = vec4( texelFetch(vertices_translations, textCoord, 0).xyz, 1. );
+	text3DCoordP0_VS = texelFetch(texture_coordinates, textCoord, 0).xyz;
 
-	gl_Position = pMat*vMat*mMat*P;
+	visibility_VS += ComputeVisibility(P0_VS.xyz);
+
+	// variable to toggle the use of the grid transformation matrix :
+	mat4 viewTransfo = mMat; // default : mat4(1.f);
+/*
+	viewTransfo = mat4(1., .0, .0, .0,
+				.0, 1., .0, .0,
+				.0, .0, 30., .0,
+				.0, .0, .0, 1.);
+*/
+	gl_Position = pMat*vMat*viewTransfo*P_VS;
+	gl_ClipDistance[0] = dot(P_VS, vMat * clipPlane);
 }

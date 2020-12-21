@@ -1,4 +1,5 @@
 #include "../include/neighbor_visu_viewer.hpp"
+#include "../../image/include/writer.hpp"
 
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -46,7 +47,7 @@ void Viewer::init() {
 	this->setSceneCenter(qglviewer::Vec(bbDiag.x/2., bbDiag.y/2., bbDiag.z/2.));
 	this->showEntireScene();
 
-	this->refreshTimer->start(); // Update every 'n' milliseconds from here on out
+	//this->refreshTimer->start(); // Update every 'n' milliseconds from here on out
 }
 
 void Viewer::draw() {
@@ -105,6 +106,9 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 		case Qt::Key::Key_N:
 			this->scene->fillNearestNeighbor();
 			this->update();
+		break;
+		case Qt::Key::Key_W:
+			this->scene->writeGridDIM("outputGrid");
 		break;
 		/*
 		DRAW MODES

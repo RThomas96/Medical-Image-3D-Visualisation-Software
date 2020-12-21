@@ -33,7 +33,7 @@ void PlanarViewer::init(void) {
 		this->sceneToShow->setDrawModeSolid();
 		progress->setValue(10);
 	}
-	this->refreshTimer->start();
+	//this->refreshTimer->start();
 }
 
 void PlanarViewer::draw(void) {

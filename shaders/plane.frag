@@ -23,6 +23,7 @@ uniform vec3 sceneBBDiagonal;	// The scene's bounding box diagonal
 uniform uint minTexVal;		// The minimum displayed grid value
 uniform uint maxTexVal;		// The maximum displayed grid value
 uniform int currentPlane;	// Plane identifier : 1 (x), 2 (y), 3 (z)
+uniform bool showTex;		// Do we show the texture on the plane, or not ?
 
 /****************************************/
 /*********** Function headers ***********/
@@ -41,6 +42,10 @@ vec4 planeIndexToColor();
 /****************************************/
 void main(void)
 {
+	if (showTex == false) {
+		color = planeIndexToColor(); return;
+	}
+
 	vec4 basecolor= vNorm;
 	uvec3 tex = texture(texData, texCoord).xyz;
 	vec4 colorTex = vec4(.0, .0, .0, .0);
@@ -100,8 +105,8 @@ float planeIdxToPlanePosition(int id) {
 }
 
 vec4 planeIndexToColor() {
-	if (currentPlane == 1) { return vec4(.5, .0, .0, .1); }
-	if (currentPlane == 2) { return vec4(.0, .5, .0, .1); }
-	if (currentPlane == 3) { return vec4(.0, .0, .5, .1); }
+	if (currentPlane == 1) { return vec4(.5, .0, .0, .0); }
+	if (currentPlane == 2) { return vec4(.0, .5, .0, .0); }
+	if (currentPlane == 3) { return vec4(.0, .0, .5, .0); }
 	return vec4(.27, .27, .27, 1.);
 }
