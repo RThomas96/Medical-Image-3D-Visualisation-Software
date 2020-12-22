@@ -85,8 +85,6 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void setDrawModeSolidAndWireframe() { this->drawMode = DrawMode::SolidAndWireframe; }
 		void setDrawModeWireframe() { this->drawMode = DrawMode::Wireframe; }
 
-		bool isInitialized; ///< tracks if the scene was initialized or not (query-able from anywhere)
-
 		void cleanup(void); ///< cleanup function for vbo and other parts
 		void printVAOStateNext() { this->showVAOstate = true; } ///< prints info about the VAO on next refresh
 		glm::vec3 getPlanePositions(void) { return this->planePosition; } ///< Get the cutting planes' positions
@@ -155,20 +153,19 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void tex3D_buildVisTexture();
 		void tex3D_buildBuffers();
 		void tex3D_bindVAO();
-		void tex3D_loadMESHFile(const std::string name, std::vector<glm::vec4>& vert,
-					std::vector<glm::vec3>& texCoords, std::vector<std::array<std::size_t, 4>>& tet);
-/*
-	std::vector<glm::vec4> vertices; ///< positions of the vertices, within the grid space
-	std::vector<glm::vec3> texCoords; ///< texture coordinates of the vertices, normalized
-	std::vector<std::array<std::size_t, 4>> tetrahedra; ///< stores the indices of vertices needed for a tetrahedron
-	std::vector<std::vector<int>> neighbors; ///< stores the indices of neighboring tetrahedra
-	std::vector<std::array<glm::vec4, 4>> normals; ///< per-face normals of each tetrahedron
-*/
+		void tex3D_loadMESHFile(const std::string name, std::vector<glm::vec4>& vert, std::vector<glm::vec3>& texCoords, std::vector<std::array<std::size_t, 4>>& tet);
+	public:
+		bool isInitialized; ///< tracks if the scene was initialized or not (query-able from anywhere)
 	protected:
 		void generateGrid();
 
 		ControlPanel* controlPanel; ///< pointer to the control panel
+		#ifdef LOAD_RED_AND_BLUE_IMAGE_STACKS
+		std::shared_ptr<InputGrid> inputGrid_Blue; ///< input grid (blue channel)
+		std::shared_ptr<InputGrid> inputGrid_Red; ///< input grid (red channel)
+		#else
 		std::shared_ptr<InputGrid> inputGrid; ///< input grid
+		#endif
 		std::shared_ptr<OutputGrid> outputGrid; ///< output grid
 		std::shared_ptr<TetMesh> mesh; ///< creates a mesh around the queried point
 		GridControl* gridControl;
@@ -211,14 +208,14 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		/****** TEXTURE3D VISUALIZATION ******/
 		/*************************************/
 		/*************************************/
-		GLuint texHandle_InputGrid;  ///< handle for glTexImage3D
-		GLuint texHandle_OutputGrid; ///< handle for the voxel grid's data
-		GLuint texHandle_ColorScaleGrid; ///< handle for the uploaded color scale
-		GLuint texHandle_tetrahedraNeighborhood; ///< handle for tetrhedra neighbors' texture
-		GLuint texHandle_tetrahedraFaceNormals; ///< handle for the per-face normals of each tetrahedra
-		GLuint texHandle_tetrahedraVertexPositions; ///< vertex positions for the tetrahedra
-		GLuint texHandle_tetrahedraVertexTexCoords; ///< vertex positions for the tetrahedra
-		GLuint texHandle_visibilityMap; ///< texture for visibility (might not need it anymore, used once in FS)
+		GLuint texHandle_InputGrid;			///< handle for glTexImage3D
+		GLuint texHandle_OutputGrid;			///< handle for the voxel grid's data
+		GLuint texHandle_ColorScaleGrid;		///< handle for the uploaded color scale
+		GLuint texHandle_tetrahedraNeighborhood;	///< handle for tetrhedra neighbors' texture
+		GLuint texHandle_tetrahedraFaceNormals;		///< handle for the per-face normals of each tetrahedra
+		GLuint texHandle_tetrahedraVertexPositions;	///< vertex positions for the tetrahedra
+		GLuint texHandle_tetrahedraVertexTexCoords;	///< vertex positions for the tetrahedra
+		GLuint texHandle_visibilityMap;			///< texture for visibility
 		GLuint vboHandle_Texture3D_VertPos;
 		GLuint vboHandle_Texture3D_VertNorm;
 		GLuint vboHandle_Texture3D_VertTex;

@@ -60,6 +60,32 @@ uniform vec3 clippingNormal;
 
 uniform mat4 mMat;
 
+vec4 voxelIdxToColor(in uvec3 ucolor) {
+	// Compute the color as Brian's paper describes it :
+	float color_k = 2.5;
+	float eosin = float(ucolor.r)/255.;
+	float dna = float(ucolor.g)/255.; // B is on G channel because OpenGL only allows 2 channels upload to be RG, not RB
+
+	float eosin_r_coef = 0.050;
+	float eosin_g_coef = 1.000;
+	float eosin_b_coef = 0.544;
+
+	float hematoxylin_r_coef = 0.860;
+	float hematoxylin_g_coef = 1.000;
+	float hematoxylin_b_coef = 0.300;
+
+	float r_coef = eosin_r_coef;
+	float g_coef = eosin_g_coef;
+	float b_coef = eosin_b_coef;
+
+	return vec4(
+		exp(-hematoxylin_r_coef * dna * color_k) * exp(-eosin_r_coef * eosin * color_k),
+		exp(-hematoxylin_g_coef * dna * color_k) * exp(-eosin_g_coef * eosin * color_k),
+		exp(-hematoxylin_b_coef * dna * color_k) * exp(-eosin_b_coef * eosin * color_k),
+		1.
+	);
+}
+
 bool ComputeVisibility(vec3 point)
 {
 	mat4 iGrid = mMat;
@@ -435,11 +461,12 @@ void main (void) {
 			// tetrahedra if needed :
 			if( computeBarycentricCoordinatesRecursive( voxel_center_P, ld0, ld1, ld2, ld3, int(instanceId+0.5), id_tet, 50, Current_text3DCoord ) ){
 				// Get this voxel's value :
-				uint voxelIndex = texture(Mask, Current_text3DCoord).x;
+				uvec3 voxelIndex = texture(Mask, Current_text3DCoord).xyz;
 				// If it's visible :
-				if (visiblity_map[voxelIndex] > 0u) {
+				if (visiblity_map[voxelIndex.x] > 0u) {
 					// Get the corresponding color :
-					color = texelFetch(color_texture, int(voxelIndex), 0);
+					// color = texelFetch(color_texture, int(voxelIndex.x), 0);
+					color = voxelIdxToColor(voxelIndex);
 					//Pos = vec4( (ld0*P0 + ld1*P1 + ld2*P2 + ld3*P3).xyz, 1. );
 					if(ComputeVisibility(voxel_center_P.xyz) )
 						hit = true;

@@ -64,7 +64,12 @@ inline void __GetTexSize(std::size_t numTexNeeded, std::size_t* opt_width, std::
 
 Scene::Scene(GridControl* const gc) {
 	this->controlPanel = nullptr;
-	this->inputGrid = nullptr;
+	#ifdef LOAD_RED_AND_BLUE_IMAGE_STACKS
+	this->inputGrid_Blue = nullptr;
+	this->inputGrid_Red = nullptr;
+	#else
+	this->inputrid = nullptr;
+	#endif
 	this->mesh = nullptr;
 	this->outputGrid = nullptr;
 	this->gridControl = gc;
@@ -148,14 +153,14 @@ void Scene::initGl(QOpenGLContext* _context) {
 
 	if (msgBox->clickedButton() == dimButton) {
 		reader = new IO::DIMReader(threshold);
-		QString filename = QFileDialog::getOpenFileName(nullptr, "Open a DIM/IMA image", "../../", "BrainVISA DIM Files (*.dim)");
+		QString filename = QFileDialog::getOpenFileName(nullptr, "Open a DIM/IMA image (Blue channel)", "../../", "BrainVISA DIM Files (*.dim)");
 		std::vector<std::string> f;
 		f.push_back(filename.toStdString());
 		reader->setFilenames(f);
 	} else if (msgBox->clickedButton() == tiffButton) {
 		// do nothing :
 		reader = new IO::Reader::TIFF(threshold);
-		QStringList filenames = QFileDialog::getOpenFileNames(nullptr, "Open multiple TIFF images","../../", "TIFF Files (*.tiff, *.tif)");
+		QStringList filenames = QFileDialog::getOpenFileNames(nullptr, "Open multiple TIFF images (Blue channel)","../../", "TIFF Files (*.tiff, *.tif)");
 		std::vector<std::string> f;
 		for (const QString& fn : as_const(filenames)) {
 			f.push_back(fn.toStdString());
@@ -182,20 +187,65 @@ void Scene::initGl(QOpenGLContext* _context) {
 	reader->loadImage();
 
 	// Update data from the grid reader :
+	#ifndef LOAD_RED_AND_BLUE_IMAGE_STACKS
 	this->inputGrid = std::make_shared<InputGrid>();
 	this->inputGrid->fromGridReader(*reader);
 	this->inputGrid->setTransform_GridToWorld(this->computeTransformationMatrix());
+	#endif
+
+	// In the case where there's two grids, ask the user to load the red channel as well :
+	#ifdef LOAD_RED_AND_BLUE_IMAGE_STACKS
+	IO::GenericGridReader* readerRed = nullptr;
+	IO::GenericGridReader::data_t threshRed = IO::GenericGridReader::data_t(6);
+	if (msgBox->clickedButton() == dimButton) {
+		readerRed = new IO::DIMReader(threshRed);
+		QString filename = QFileDialog::getOpenFileName(nullptr, "Open a DIM/IMA image (Red channel)", "../../", "BrainVISA DIM Files (*.dim)");
+		std::vector<std::string> f;
+		f.push_back(filename.toStdString());
+		readerRed->setFilenames(f);
+	} else if (msgBox->clickedButton() == tiffButton) {
+		readerRed = new IO::Reader::TIFF(threshRed);
+		QStringList filenames = QFileDialog::getOpenFileNames(nullptr, "Open multiple TIFF images (Red channel)","../../", "TIFF Files (*.tiff, *.tif)");
+		std::vector<std::string> f;
+		for (const QString& fn : as_const(filenames)) {
+			f.push_back(fn.toStdString());
+		}
+		readerRed->setFilenames(f);
+	} else {
+		std::cerr << "No button was pressed." << '\n';
+		throw std::runtime_error("error : no button pressed");
+	}
+	// Set reader properties :
+	readerRed->setDataThreshold(threshold);
+	// Load the data :
+	readerRed->loadImage();
+
+	this->inputGrid_Blue = std::make_shared<InputGrid>();
+	this->inputGrid_Blue->fromGridReader(*reader);
+	this->inputGrid_Blue->setTransform_GridToWorld(this->computeTransformationMatrix());
+
+	this->inputGrid_Red = std::make_shared<InputGrid>();
+	this->inputGrid_Red->fromGridReader(*readerRed);
+	this->inputGrid_Red->setTransform_GridToWorld(this->computeTransformationMatrix());
+	#endif
 
 	// free up the reader's resources :
 	delete reader;
+	#ifdef LOAD_RED_AND_BLUE_IMAGE_STACKS
+	delete readerRed;
+	#endif
 
-	this->outputGrid	= std::make_shared<OutputGrid>();
+	this->outputGrid = std::make_shared<OutputGrid>();
 	if (this->gridControl) {
 		this->gridControl->setVoxelGrid(this->outputGrid);
 	}
 
 	this->mesh = std::make_shared<TetMesh>();
+	#ifdef LOAD_RED_AND_BLUE_IMAGE_STACKS
+	this->mesh->addInputGrid(this->inputGrid_Blue).setOutputGrid(this->outputGrid);
+	#else
 	this->mesh->addInputGrid(this->inputGrid).setOutputGrid(this->outputGrid);
+	#endif
 
 	///////////////////////////
 	/// CREATE VAO :
@@ -214,7 +264,11 @@ void Scene::initGl(QOpenGLContext* _context) {
 	this->uploadColorScale(colorScale);
 
 	// Get the bounding box of the input grid :
+	#ifdef LOAD_RED_AND_BLUE_IMAGE_STACKS
+	DiscreteGrid::bbox_t bb_ws = this->inputGrid_Blue->getBoundingBoxWorldSpace();
+	#else
 	DiscreteGrid::bbox_t bb_ws = this->inputGrid->getBoundingBoxWorldSpace();
+	#endif
 	// Add the bounding box of the output grid to it :
 	bb_ws.addPoints(this->outputGrid->getBoundingBox().getAllCorners());
 	this->sceneBBPosition = bb_ws.getMin();
@@ -447,6 +501,7 @@ GLuint Scene::compileProgram(const GLuint vSha, const GLuint gSha, const GLuint 
 	return _prog;
 }
 
+#ifndef LOAD_RED_AND_BLUE_IMAGE_STACKS
 void Scene::loadImage() {
 	DiscreteGrid::sizevec3 d = this->inputGrid->getGridDimensions();
 	this->gridWidth = d.x;
@@ -496,6 +551,86 @@ void Scene::loadImage() {
 		this->gridControl->updateGridDimensions();
 	}
 }
+#else
+void Scene::loadImage() {
+	/**
+	 * In this version of the function, we'll assume both grids are the same size, always.
+	 * We'll first combine the data from both grids into a single data array, and upload it
+	 * to OpenGL storage using a GL_RG or similar format. This'll allow us to only upload
+	 * 2 channels per pixel. Be wary, this will place the blue channel in place of the green
+	 * one, account for this specificity in the shaders.
+	 */
+	DiscreteGrid::sizevec3 d = this->inputGrid_Blue->getGridDimensions();
+	this->gridWidth = d.x;
+	this->gridHeight= d.y;
+	this->gridDepth = d.z;
+
+	glEnable(GL_TEXTURE_3D);
+	GetOpenGLError();
+	glDeleteTextures(1, &this->texHandle_InputGrid); // just in case one was allocated before
+	GetOpenGLError();
+
+	if (this->texHandle_InputGrid == 0) {
+		glGenTextures(1, &this->texHandle_InputGrid);
+		GetOpenGLError();
+	}
+	glBindTexture(GL_TEXTURE_3D, this->texHandle_InputGrid);
+	GetOpenGLError();
+
+	// Set nearest neighbor :
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	// Set the texture upload to not generate mimaps :
+	glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_MAX_LOD, static_cast<GLfloat>(-1000.f));
+	// Stop once UV > 1 or < 0
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	// Swizzle G/B to R value, to save data upload
+	GLint swizzleMask[] = {GL_RED, GL_RED, GL_RED, GL_ONE};
+	glTexParameteriv(GL_TEXTURE_3D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
+
+	// Get both grids' data vectors :
+	const std::vector<DiscreteGrid::DataType>& gridData_red = this->inputGrid_Red->getData();
+	const std::vector<DiscreteGrid::DataType>& gridData_blue = this->inputGrid_Blue->getData();
+
+	std::cerr << "Allocating data ...";
+	// Create a vector the size of the data we want :
+	std::vector<DiscreteGrid::DataType> combinedData;
+	combinedData.resize(2 * d.x * d.y * d.z); // we want twice the size of the array, for two grids
+	std::cerr << " done." << '\n';
+
+	std::cerr << "Copying data ...";
+	std::size_t gridSize = d.x * d.y * d.z;
+	for (std::size_t i = 0; i < gridSize; ++i) {
+		combinedData[2 * i + 0] = gridData_red[i];
+		combinedData[2 * i + 1] = gridData_blue[i];
+	}
+	std::cerr << " done." << '\n';
+
+	/* Important thing to note : the image dimensions won't change here. We simply add a channel to the uploaded
+	data, and it does __not__ change the image size. */
+	glTexImage3D(
+		GL_TEXTURE_3D,		// GLenum : Target
+		static_cast<GLint>(0),	// GLint  : Level of detail of the current texture (0 = original)
+		GL_RG8UI,		// GLint  : Number of color components in the picture. (macro)			// Changed from single-grid function
+		static_cast<GLsizei>(d.x), // GLsizei: Image width
+		static_cast<GLsizei>(d.y), // GLsizei: Image height
+		static_cast<GLsizei>(d.z), // GLsizei: Image depth (number of layers)
+		static_cast<GLint>(0),	// GLint  : Border. This value MUST be 0.
+		GL_RG_INTEGER,		// GLenum : Format of the pixel data						// Changed from single-grid function
+		GL_UNSIGNED_BYTE,	// GLenum : Type (the data type as in uchar, uint, float ...)
+		combinedData.data() // void*  : Data to load into the buffer
+	);
+	GetOpenGLError();
+
+	combinedData.clear();
+
+	if (this->gridControl) {
+		this->gridControl->updateGridDimensions();
+	}
+}
+#endif
 
 void Scene::loadVoxelGrid() {
 	if (this->outputGrid == nullptr) {
@@ -600,7 +735,12 @@ void Scene::fillTrilinear() {
 }
 
 void Scene::drawPlaneView(glm::vec2 fbDims, planes _plane) {
+	#ifdef LOAD_RED_AND_BLUE_IMAGE_STACKS
+	// We only want to check the existence of one stack (both MUST be init in initGL()) :
+	if (this->inputGrid_Blue == nullptr) { return; }
+	#else
 	if (this->inputGrid == nullptr) { return; }
+	#endif
 	glEnable(GL_DEPTH_TEST);
 	GetOpenGLError();
 
@@ -614,7 +754,12 @@ void Scene::drawPlaneView(glm::vec2 fbDims, planes _plane) {
 	glBindVertexArray(this->vaoHandle);
 	GetOpenGLError();
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_PlaneElement);
+	#ifdef LOAD_RED_AND_BLUE_IMAGE_STACKS
+	// We have the same uniforms for blue and red (combined into one texture, actually)
+	this->prepPlane_SingleUniforms(_plane, fbDims, this->inputGrid_Blue);
+	#else
 	this->prepPlane_SingleUniforms(_plane, fbDims, this->inputGrid);
+	#endif
 	this->setupVAOPointers();
 	GetOpenGLError();
 
@@ -706,7 +851,12 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos) {
 	glUniform1f(location_diffuseRef, .8f);
 	glUniform1f(location_specRef, .8f);
 	glUniform1f(location_shininess, .8f);
+	#ifdef LOAD_RED_AND_BLUE_IMAGE_STACKS
+	// same for both grids, we can leave it at that
+	glUniform3fv(location_voxelSize, 1, glm::value_ptr(this->inputGrid_Blue->getVoxelDimensions()));
+	#else
 	glUniform3fv(location_voxelSize, 1, glm::value_ptr(this->inputGrid->getVoxelDimensions()));
+	#endif
 	glUniform1uiv(location_visibilityMap, 256, this->visibleDomains);
 	GetOpenGLError();
 
@@ -716,7 +866,11 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos) {
 	glUniform3fv(location_cutDirection, 1, &(cutDir[0]));
 	GetOpenGLError();
 
+	#ifdef LOAD_RED_AND_BLUE_IMAGE_STACKS
+	const glm::mat4& gridTransfo = this->inputGrid_Blue->getTransform_GridToWorld();
+	#else
 	const glm::mat4& gridTransfo = this->inputGrid->getTransform_GridToWorld();
+	#endif
 	glUniformMatrix4fv(location_mMat, 1, GL_FALSE, glm::value_ptr(gridTransfo));
 	glUniformMatrix4fv(location_vMat, 1, GL_FALSE, mvMat);
 	glUniformMatrix4fv(location_pMat, 1, GL_FALSE, pMat);
@@ -821,7 +975,11 @@ void Scene::drawGridOnly(GLfloat mvMat[], GLfloat pMat[]) {
 	glm::mat4 transfoMat = glm::mat4(1.f);
 
 	if (this->inputGridVisible) {
+		#ifdef LOAD_RED_AND_BLUE_IMAGE_STACKS
+		this->drawGrid_Generic(mvMat, pMat, transfoMat, this->texHandle_InputGrid, this->inputGrid_Blue);
+		#else
 		this->drawGrid_Generic(mvMat, pMat, transfoMat, this->texHandle_InputGrid, this->inputGrid);
+		#endif
 	}
 	if (this->outputGridVisible) {
 		this->drawGrid_Generic(mvMat, pMat, transfoMat, this->texHandle_OutputGrid, this->outputGrid);
@@ -837,7 +995,11 @@ void Scene::drawWithPlanes(GLfloat mvMat[], GLfloat pMat[]) {
 	glm::mat4 transfoMat = glm::mat4(1.f);
 
 	if (this->inputGridVisible) {
+		#ifdef LOAD_RED_AND_BLUE_IMAGE_STACKS
+		this->drawGrid_Generic(mvMat, pMat, transfoMat, this->texHandle_InputGrid, this->inputGrid_Blue);
+		#else
 		this->drawGrid_Generic(mvMat, pMat, transfoMat, this->texHandle_InputGrid, this->inputGrid);
+		#endif
 	}
 	if (this->outputGridVisible) {
 		this->drawGrid_Generic(mvMat, pMat, transfoMat, this->texHandle_OutputGrid, this->outputGrid);
@@ -968,10 +1130,17 @@ void Scene::prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane, bool
 
 	// Generate the data we need :
 	glm::mat4 transform = glm::mat4(1.f);
+	#ifdef LOAD_RED_AND_BLUE_IMAGE_STACKS
+	// Data here is the same for both grids :
+	glm::mat4 gridTransfo = this->inputGrid_Blue->getTransform_GridToWorld();
+	DiscreteGrid::bbox_t bbws = this->inputGrid_Blue->getBoundingBoxWorldSpace();
+	glm::vec3 dims = glm::convert_to<glm::vec3::value_type>(this->inputGrid_Blue->getGridDimensions());
+	#else
 	glm::mat4 gridTransfo = this->inputGrid->getTransform_GridToWorld();
 	DiscreteGrid::bbox_t bbws = this->inputGrid->getBoundingBoxWorldSpace();
-	glm::vec3 size = bbws.getDiagonal();
 	glm::vec3 dims = glm::convert_to<glm::vec3::value_type>(this->inputGrid->getGridDimensions());
+	#endif
+	glm::vec3 size = bbws.getDiagonal();
 	GLint plIdx = (_plane == planes::x) ? 1 : (_plane == planes::y) ? 2 : 3;
 
 	glUniformMatrix4fv(location_mMatrix, 1, GL_FALSE, glm::value_ptr(transform));
@@ -1393,8 +1562,13 @@ void Scene::draft_writeRawGridPortion(DiscreteGrid::sizevec3 begin, DiscreteGrid
 	std::shared_ptr<OutputGrid> rawGrid = std::make_shared<OutputGrid>();
 	//fetch data from input grid :
 	std::vector<DiscreteGrid::DataType> data(size.x * size.y * size.z, uchar(0));
+	#ifdef LOAD_RED_AND_BLUE_IMAGE_STACKS
+	const std::vector<DiscreteGrid::DataType>& src = this->inputGrid_Blue->getData();
+	const DiscreteGrid::sizevec3 dims = this->inputGrid_Blue->getGridDimensions();
+	#else
 	const std::vector<DiscreteGrid::DataType>& src = this->inputGrid->getData();
 	const DiscreteGrid::sizevec3 dims = this->inputGrid->getGridDimensions();
+	#endif
 	std::size_t x = 0, y = 0, z = 0;
 	for (std::size_t i = begin.x; i < begin.x + size.x; ++i) {
 		y = 0;
@@ -1740,8 +1914,11 @@ void Scene::tex3D_buildMesh() {
 
 void Scene::tex3D_loadMESHFile(const std::string file, std::vector<glm::vec4>& vert, std::vector<glm::vec3>& texCoords,
 				std::vector<std::array<std::size_t, 4>>& tet) {
-
+	#ifdef LOAD_RED_AND_BLUE_IMAGE_STACKS
+	DiscreteGrid::sizevec3 dims = this->inputGrid_Blue->getGridDimensions();
+	#else
 	DiscreteGrid::sizevec3 dims = this->inputGrid->getGridDimensions();
+	#endif
 	std::ifstream myfile(file.c_str());
 
 	if (not myfile.is_open()) {

@@ -26,6 +26,7 @@ uniform uvec2 colorBounds;	// The min and max values displayed (minTexValue and 
 /****************************************/
 // Fetches the right color from the texture value given in argument.
 vec4 texValueToColor(in uint value);
+vec4 voxelValueToColor(in uvec4 ucolor);
 
 /****************************************/
 /***************** Main *****************/
@@ -34,8 +35,7 @@ void main() {
 	if (vTexCoords.x > 1. || vTexCoords.y > 1. || vTexCoords.z > 1.) { discard; }
 	if (vTexCoords.x < 0. || vTexCoords.y < 0. || vTexCoords.z < 0.) { discard; }
 	color = texValueToColor(texture(texData, vTexCoords).r);
-	// color = vec4(.0, .0, .0, 1.);
-	// color.xyz = vTexCoords;
+	color = voxelValueToColor(texture(texData, vTexCoords));
 }
 
 /****************************************/
@@ -47,3 +47,27 @@ vec4 texValueToColor(in uint value) {
 	return texture(colorScale, float(value)/255.f);
 }
 
+vec4 voxelValueToColor(in uvec4 ucolor) {
+	float color_k = 2.5;
+	float eosin = float(ucolor.r)/255.;
+	float dna = float(ucolor.g)/255.; // B is on G channel because OpenGL only allows 2 channels upload to be RG, not RB
+
+	float eosin_r_coef = 0.050;
+	float eosin_g_coef = 1.000;
+	float eosin_b_coef = 0.544;
+
+	float hematoxylin_r_coef = 0.860;
+	float hematoxylin_g_coef = 1.000;
+	float hematoxylin_b_coef = 0.300;
+
+	float r_coef = eosin_r_coef;
+	float g_coef = eosin_g_coef;
+	float b_coef = eosin_b_coef;
+
+	return vec4(
+		exp(-hematoxylin_r_coef * dna * color_k) * exp(-eosin_r_coef * eosin * color_k),
+		exp(-hematoxylin_g_coef * dna * color_k) * exp(-eosin_g_coef * eosin * color_k),
+		exp(-hematoxylin_b_coef * dna * color_k) * exp(-eosin_b_coef * eosin * color_k),
+		1.
+	);
+}

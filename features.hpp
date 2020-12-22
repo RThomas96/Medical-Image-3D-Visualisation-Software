@@ -20,4 +20,6 @@ the compiled code, by enabling or disabling certain parts of it.
 /// @b If defined, asks the user for images to load. Otherwise, loads the first 50 images of the 'Blue' dataset.
 #define USER_DEFINED_IMAGE_LOADING
 
+#define LOAD_RED_AND_BLUE_IMAGE_STACKS
+
 #endif // FEATURES_HPP

@@ -37,6 +37,8 @@ float planeIdxToPlanePosition(int id);
 // Return a color corresponding to a plane's index
 vec4 planeIndexToColor();
 
+float color_k = 2.5;
+
 /****************************************/
 /***************** Main *****************/
 /****************************************/
@@ -52,7 +54,7 @@ void main(void)
 	if (texCoord.x > 0 && texCoord.x < 1) {
 		if (texCoord.y > 0 && texCoord.y < 1) {
 			if (texCoord.z > 0 && texCoord.z < 1) {
-				colorTex = R8UItoColorScale(tex);
+				colorTex = R8UIToRGB(tex);
 			} else { colorTex = planeIndexToColor(); }
 		} else { colorTex = planeIndexToColor(); }
 	} else { colorTex = planeIndexToColor(); }
@@ -70,6 +72,7 @@ void main(void)
 /************** Functions ***************/
 /****************************************/
 vec4 R8UIToRGB(in uvec3 ucolor) {
+/*
 	if (ucolor.r < minTexVal) { return vec4(.0, .0, .0, .0); }
 	if (ucolor.r > maxTexVal) { return vec4(1., 1., 1., 1.); }
 	float a = float(minTexVal) / 255.f;
@@ -83,6 +86,28 @@ vec4 R8UIToRGB(in uvec3 ucolor) {
 	vec3 p = abs(fract(vec3(r,r,r) + K.xyz) * 6.0 - K.www);
 	vec3 rgb = mix(K.xxx, clamp(p - K.xxx, .1, .7), r); // change min/max vals of clamp() to change saturation
 	return vec4(rgb.r, rgb.g, rgb.b, 1.0);
+*/
+	float eosin = float(ucolor.r)/255.;
+	float dna = float(ucolor.g)/255.; // B is on G channel because OpenGL only allows 2 channels upload to be RG, not RB
+
+	float eosin_r_coef = 0.050;
+	float eosin_g_coef = 1.000;
+	float eosin_b_coef = 0.544;
+
+	float hematoxylin_r_coef = 0.860;
+	float hematoxylin_g_coef = 1.000;
+	float hematoxylin_b_coef = 0.300;
+
+	float r_coef = eosin_r_coef;
+	float g_coef = eosin_g_coef;
+	float b_coef = eosin_b_coef;
+
+	return vec4(
+		exp(-hematoxylin_r_coef * dna * color_k) * exp(-eosin_r_coef * eosin * color_k),
+		exp(-hematoxylin_g_coef * dna * color_k) * exp(-eosin_g_coef * eosin * color_k),
+		exp(-hematoxylin_b_coef * dna * color_k) * exp(-eosin_b_coef * eosin * color_k),
+		1.
+	);
 }
 
 vec4 R8UItoColorScale(in uvec3 ucolor) {
