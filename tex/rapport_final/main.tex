@@ -1,0 +1,44 @@
+% Class for the academic internship paper :
+\documentclass[utf8,final]{stageM2R}
+
+\usepackage{graphicx}
+\usepackage[T1]{fontenc}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage[french]{babel}
+\usepackage[draft]{commands} % Custom commands, defined in this folder
+\setsecnumdepth{subsection} % Numérotation des subsections, peu importe le type de doc
+
+\supervisors{Noura \textsc{Faraj}\\Christophe \textsc{Fiorio}\\Benjamin \textsc{Charlier}}
+\location{LIRMM UM5506 - CNRS, Université de Montpellier}
+\title{Gestion, traitement et visualisation d'images médicales à très haute résolution}
+\track{IMAGINA}
+\date{2 Juillet 2020}
+\author{Thibault}
+\abstractfr{Ce sujet de stage s'inscrit dans un effort de collaboration internationale entre l'université de Tulane à la Nouvelle Orléans, et l'université de Montpellier dans le cadre d'un projet pour l'aide à la détection et au diagnostic du cancer de la prostate.}
+
+\begin{document}
+	\selectlanguage{french}
+	\frontmatter \maketitle
+	\cleardoublepage
+	%\settocdepth{subsection} % Mettre subsections dans table des matières
+	\tableofcontents \mainmatter
+
+	\commentaire{Ajouter un glossaire et annexes techniques. la première : toutes technos, présentées (très) vite fait, avec leur logo, leur langage de prog et 2/3 infos pour + de compréhension du lecteur, et ensuite toutes annexes techniques nécessaires (exemple : fonctionnement d'opengl en mode direct et indirect)}
+
+	\input{chapter01}
+	\input{chapter02}
+	\input{chapter03}
+	\input{chapter04}
+%	\input{chapter05} % Chapter 5 has been dropped, and merged into Chapter 6
+	\input{chapter06}
+
+	% Add references to the end of the document :
+	\selectlanguage{french}
+	\bibliography{references}{}
+	\bibliographystyle{plain}
+
+\end{document}
+
+% VIM modeline : do not touch !
+% vim: set spell spelllang=fr :

@@ -1,0 +1,75 @@
+% Chapter 5 : Conclusion, réflection & difficultés rencontrées, ouverture
+\chapter{Conclusion}\label{chapter05:conclusion}
+{
+	\commentaire{
+		\begin{enumerate}
+			% conclusion {{{
+			\item Conclusion : travaux effectués. Buts originaux :~\begin{itemize}
+				\item Gestion de données massives [x] :\begin{itemize}
+					\item on peut en effet charger des images massives en mémoire, même si celles ci sont moins massives que les données réelles de Tulane (travail à suivre après le stage)
+					\item on peut aussi charger des versions basse résolution des images, au cas où les full-res ne rentrent pas en mémoire (option de downsampling dans le loader)
+				\end{itemize}
+				\item Exploration interactive [x] :~\begin{itemize}
+					\item On peut utiliser des plans de coupe dans l'application en single-view, pour traverser le volume (plans de coupe surement ajoutés dans vue double sous peu, mais peut être après rapport/soutenance)
+					\item Techniquement, on pourait aussi exporter une grille et le voir avec Texture3D
+				\end{itemize}
+				\item Visualisation multi-résolution~\begin{itemize}
+					\item Ce but est plus flou, parce que oui, on peut générer des grilles à plusieurs résolutions et les voir, mais bon, ca casse le côté interactif de la visu ...
+				\end{itemize}
+			\end{itemize}
+			% }}}
+			% reflection {{{
+			\item Réflection : difficultés encontrées\begin{itemize}
+				\item confinement $\rightarrow$ pas de réunion en présentiel et tous les jours se ressemblent et s'assemblent $\rightarrow$ moral au plus bas
+				\item exemple : opengl : je me suis pas posé et ai plutot foncé tête baissée $\rightarrow$ perte de temps, d'énergie et de toute envie de quoi que ce soit
+				\item problème perso : ne veut pas faire de petits pas, mais plutot un grand en + de tps
+				\item ouverture : + de travail sur moi même \& ma facon de travailler (malheureusement, seule ouverture possible dans ce contexte)
+			\end{itemize}
+			% }}}
+			% futur, pour juillet & thèse {{{
+			\item Ouverture : possibilités de continuation dans un futur proche\begin{itemize}
+				\item En juillet\begin{enumerate}
+					\item Implémenter version offline, sans accès graphique
+					\item Implémenter version incrémentale et/ou partielle (d'abord recalage, sauvegardé dans un fichier, puis stitching des images en grille)
+					\item Faire plutot visu multi res
+					\item Et d'autres encore
+				\end{enumerate}
+			\item Ouverture : thèse ! Travaux à venir :\todo{A garder ?}\begin{enumerate}
+					\item Remeshing des glandes pour démarrer le travail de reconstruction approfondie et détaillé (?)
+					\item ???
+				\end{enumerate}
+			\end{itemize}
+			% }}}
+		\end{enumerate}
+	}
+
+	\section{Travail réalisé}
+	{
+		Durant ce stage, nous devions achever les trois objectifs suivants :~\begin{itemize}
+			\item une méthode de gestion de données massives,
+			\item une méthode d'exploration interactive de ces données,
+			\item et une méthode de visualisation multi-résolution.
+		\end{itemize}\par
+		Nous avons pu en effet gérer les données massives venant du processus de capture développé par l'université de Tulane. Grâce à l'utilisation d'une simplification des images à la volée, nous pouvons confortablement charger une pile d'image entière en mémoire. De plus, nous avons présenté une méthode plus intelligente de chargement des données, qui permettrait de réduire l'empreinte mémoire de notre programme\todo{pour que plus de systèmes le fassent tourner, à mentionner ?}.\par
+		Nous avons également présenté deux méthodes pour l'exploration interactive des données, une fois chargés en mémoire, avec deux cas d'utilisation différents. Ces deux méthodes nous permettent de visualiser interactivement les modèles selon le type de données en entrée, et le type d'observation à effectuer.\par
+		Enfin, même si ces travaux s'achèveront au courant du mois de juillet, la vue en multi-résolution des données est possible car nous avons créé deux méthodes permettant d'analyser les données et d'en générer de nouvelles de résolution et tailles différentes, à la volée.\par
+	}
+
+	\section{Réflexion}
+	{
+		\commentaire{Cette partie est entièrement personnelle, donc utilisation naturelle de la première personne. À garder, ou réécrire en non-inclusif (qui rendrait cette partie non nécessaire) ? Si réécriture en non-personnel, uniquement parler des problèmes techniques, et laisser les explications personnelles pour la soutenance peut être ?}\par
+		Il est impossible de parler des difficultés rencontrées pendant le stage sans parler de la période de confinement engagée par l'\'Etat Français. En effet, la mise en place d'une mesure de confinement à domicile a rendu beaucoup plus compliqué les réunions entre toutes les personnes dans le stage. La distanciation sociale ne fut pas que physique, elle fut aussi mentale, pesant lourd sur les résultats du stage et les travaux accomplis. Une des conséquences de cette distanciation fut accrue par un problème technique que j'ai rencontré, qui a mis beaucoup trop de temps à être réglé à cause de cette baisse de moral, qui entraîne un cercle vicieux.\par
+		De plus, un de mes gros défauts personnels viennent d'un manque d'organisation : je n'arrive pas à découper les tâches en morceaux assez petits pour permettre une progression fluide des travaux de recherche. Je me retrouve uniquement coincé devant un immense mur de tâches monolithiques duquel je ne peux pas m'échapper. Et la distanciation, couplée à un très grand sentiment de monotonie pendant le confinement ont impacté fortement mes capacités à travailler efficacement pendant plus d'un mois.\par
+		Mais tout n'est pas perdu. Le retour progressif à la normale va me forcer à reprendre un rythme plus soutenu, me forcer à reprendre l'habitude de montrer une amélioration plus souvent, et je vais bien entendu faire de mon possible pour toujours essayer de décomposer au plus les problèmes afin de ne plus me retrouver bloqué comme pendant cette période de confinement.
+	}
+
+	\section{Futurs travaux}
+	{
+		\wip{Changer : multi-échelle après, uniquement si temps : d'abord offline et incrémentale}\par
+		Malgré les difficultés rencontrées, nous avons réussis à atteindre la majorité de nos objectifs au moment de l'écriture du rapport. Mais nous avons encore du travail à effectuer avant la fin du stage en fin juillet. Il nous reste bien sûr à finir les fonctionnalités en cours d'implémentation comme discuté auparavant : une possibilité de visualisation multi-échelle par génération de multiples grilles hiérarchiques, la possibilité d'effectuer le processus de reconstruction hors-ligne, afin de pouvoir s'affranchir de la visualisation et de permettre de faire fonctionner la reconstruction sur un serveur distant sans sortie vidéo.\par
+		%
+	}
+}
+
+% VIM modeline : do not touch !
+% vim: set spell spelllang=fr :

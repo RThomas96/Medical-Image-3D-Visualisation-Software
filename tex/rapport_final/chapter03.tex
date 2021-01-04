@@ -1,0 +1,182 @@
+% Contents of chapter 3
+\chapter{Gestion et visualisation d'images}\label{chapter:03:memory_and_vis}
+{
+	% Plan {{{
+	\commentaire{
+		\begin{enumerate}
+			%% gestion images en mémoire {{{
+			\item intro : chargements d'images, recherche de voisins et génération de grille. prés du problème plus en détail
+			\item travaux sur le chargement d'images\begin{enumerate}
+				\item formats de sortie du microscope
+				\item problème de tailles $\rightarrow$ downsampling
+				\item recherche de librairies
+				\item comparaison (très rapide) libtiff / tinytiff
+				\item gestion de mémoire~\begin{itemize}
+					\item downsampling à la volée des images, sur requête utilisateur
+					\item parler de structure en mémoire une fois chargé
+					\item on peut avoir autant d'images que on veut en mémoire
+				\end{itemize}
+				\item possibles travaux : buffer circulaire pour pas tout charger d'un coup et/ou chargement en multi-threading (a garder ici ou dans travaux à venir ?)
+			\end{enumerate}
+			% }}}
+			\item visualisation plans de coupe
+			%% KPF / Texture3D {{{
+			\item Très rapide : intro à pourquoi on a fait ca :\begin{itemize}
+				\item C'est un travail déjà presque entièrement fait, à tester et MàJ pour publication
+				\item Ca peut nous servir d'une certaine façon pour visualiser le modèle en fin de stage
+			\end{itemize}
+			\item Présentation de la méthode (rapide, pas le focus du rapport)~\begin{itemize}
+				\item Chargement de la texture
+				\item Génération de maillage tétrahédrique à partir de maillage surfacique englobant (version binaire de la grille $\rightarrow$ maillage tétra, binariser grille $\rightarrow$ dilatation, et maillage autour de ca)
+				\item (Rapide) Raymarching/Bresenham pour trouver voxel, et estimer normale et couleur
+				\item Note : mentionner le fait que du coup, la complexité revient à la taille du framebuffer, non de la grille
+				\item Effet de bord : on peut donc charger des grilles rentrant sur GPU, les déformer afin d'avoir une grille techniquement + grande que espace mémoire GPU
+			%	\item Mentionner que ca va sortir à Vis 2020 si tout va bien
+			\end{itemize}
+			\item Présentation des travaux effectués (plus de détails, avec difficultés mentionnées)~\begin{itemize}
+				\item Mise(s) à jour du code~\begin{itemize}
+					\item 'Dépoussiérage' logiciel
+					\item MaJ des shaders en GLSL : passé à qqchose de plus récent pour moins de problèmes incompatibilités
+					\item Changement dans la gestion de la texture (vec4f $\rightarrow$ uchar + texture)
+					\item Bug fixing pour grosses grilles
+				\end{itemize}
+				\item Tests de la méthode en vue de publication scientifique~\begin{itemize}
+					\item Tests de performances
+					\item Tests effectués sur grosses grilles
+					\item Tests effectués sur petites grilles avec déformation
+					\item Tests effectués à plusieurs résolutions
+				\end{itemize}
+				\item Difficultés encontrées sur le projet~\begin{itemize}
+					\item Problème rencontré : incompatibilités Boost $\Leftrightarrow$ CGAL, et anciennes versions des libs $\Rightarrow$ problème de compilation
+				\end{itemize}
+			\end{itemize}
+			\item Présentation des possibilités d'utilisation de la méthode dans notre cas~\begin{itemize}
+				\item Une fois reconstruction effectuée, si taille grille générée $<$ taille mémoire GPU, alors possiblité de voir interactivement le modèle
+				\item Générer une visu multi échelle avec fichiers comme H5F/HF5 afin de pull des infos qu'on a besoin : petit modèle sur GPU, et charger hiérarchiquement en zoomant progressivement
+			\end{itemize}
+			% }}}
+		\end{enumerate}
+	}
+	% }}}
+
+	% Prelude : présentation chapitre {{{
+	Comme vu dans le chapitre précédent, nos collaborateurs à l'université de Tulane possèdent une méthode non destructive pour acquérir un échantillon de tissu humain à très haute résolution. Cette haute résolution, bien que préférable afin de pouvoir observer les fins détails du tissu, posent un problème : les données issue d'une acquisition sont très souvent massives et donc difficiles à gérer. Avec l'expertise que possède l'université de Montpellier dans le traitement d'images, nous pouvons leur prêter main-forte afin de réduire l'empreinte mémoire de ces images tout en gardant toute l'information présente dans chacune d'entre elles. Ainsi, un des objectifs de ce stage étant la gestion de données massives, la première partie de ce chapitre sera accordé aux travaux réalisés sur la gestion de mémoire lors du traitement des informations. Par la suite, nous allons parler de deux techniques permettant la visualisation en temps réel de ces données.
+	% }}}
+
+	Comme vu dans le chapitre précédent, nos collaborateurs à l'université de Tulane possèdent une méthode non destructive pour acquérir un échantillon de tissu humain à très haute résolution. Cette haute résolution, bien que préférable afin de pouvoir observer les fins détails du tissu, posent un problème : les données issue d'une acquisition sont très souvent massives et donc difficiles à gérer. Avec l'expertise que possède l'université de Montpellier dans le traitement d'images, nous pouvons leur prêter main-forte afin de réduire l'empreinte mémoire de ces images tout en gardant toute l'information présente dans chacune d'entre elles. Ainsi, un des objectifs de ce stage étant la gestion de données massives, la première partie de ce chapitre sera accordé aux travaux réalisés sur la gestion de mémoire lors du traitement des informations. Par la suite, nous allons parler de deux techniques permettant la visualisation en temps réel de ces données.
+
+	\section{Gestion de mémoire}
+	{
+		\wip{Gestion de la mémoire dans ce cas là : permet de ne charger que les données nécessaires au traitement, afin de réduire temps de traitement \textsc{\textbf{et empreinte mémoire}}~}\\
+
+		\commentaire{ne pas oublier de parler de comment les données sont structurées en mémoire une fois chargées}\\
+
+		Afin de proposer une méthode de traitement des données générées par le microscope, il faut d'abord pouvoir gérer lesdites données. Cette partie étant intimement liée aux format de sortie des données provenant du microscope, il est important de rappeler les caractéristiques de celui-ci.\par
+
+		L'équipe de Tulane nous a fait parvenir\todo{a redire de facon plus soutenue} quelques ensembles de jeux de données. Ceux-ci représentent quelques exemples d'échantillons acquis avec leur microscope. Ces exemples sont des images en niveaux de gris \wip{A finir, intro technique aux images et mentionner limite maximale au nb d'images en 1 stack dans les jeux de données}\par
+
+		Avec des images de si haute résolution et en si grand nombre, il est nécessaire de pouvoir efficacement utiliser la mémoire disponible, afin de charger le plus de données possible. Il faut également un processus de chargement de ces images rapide, afin de ne pas attendre indéfiniment la lecture des données, mais aussi assez flexible pour permettre de gérer les différents types d'images que le microscope peut sortir\todo{maladroit, réécrire}. Les problèmes de taillent peuvent être résolus avec du sous échantillonnage, mais la problématique de la flexibilité et de la rapidité doivent être résolus\todo{conjugaison : vérifier} avec l'utilisation de librairies externes. Ainsi, nous comparerons plusieurs librairies : \texttt{libtiff} et \texttt{TinyTIFF}.\par
+
+		\wip{Retrouver benchmark tinytiff/libtiff et mettre ici}\par
+
+		Attaquons nous maintenant au problème de la gestion de la mémoire utilisée par ces images, lors du chargement, et une fois chargées.
+
+		\subsection{Utilisation et disposition mémoire}\todo{changer titre}
+		{
+			Afin de permettre de la visualisation en temps réel, nous devons permettre à l'utilisateur de charger le plus d'images possibles en mémoire. La visualisation à l'oeil nu ne nécessitant pas d'avoir le maximum de résolution possible\todo{re-ecrire, maladroit}, nous proposons un pré-traitement des images, en les sous-échantillonnant, afin d'en faire rentrer le plus grand nombre en mémoire. Ainsi, une visualisation en temps réel est possible pour l'intégrité des images chargées par l'utilisateur.\par
+			L'utilisateur peut demander explicitement d'effectuer une première passe de pré-traitement au moment de charger les images. Cet algorithme, si demandé par l'utilisateur, va effectuer un sous-échantillonage sur chaque image à $\frac{1}{4}$ de sa résolution initiale. Cela nous permet de charger l'intégrité des images en mémoire, et de ne pas souffrir d'artefact visuels\todo{maladroit/mal dit}.\par
+
+			C'est à cette étape du processus que l'on peut faire d'autres opérations de pré-traitement sur les images. Par exemple, on pourrait binariser\definition{Rendre une image en noir ou blanc} l'image, ou la segmenter selon plusieurs sous-domaines, ou encore la redimensionner de façon à ne pas avoir de zones de vide autour de la donnée.
+
+			Une fois chargées, les données contenues dans les images sont disposées dans un tableau tridimensionnel, que l'on va traiter comme une grille de voxels implicite avec des voxels de côté de longueur unitaire\todo{sémantique : de taille unitaire ?}. Ainsi, lorsque nous souhaitons savoir la valeur d'un voxel à un point $P(x,y,z)$ donné, nous n'avons qu'à accéder à l'indice correspondant dans le tableau chargé en mémoire (voir figure \ref{img:todo}\todo{ajouter illustration mémoire $\rightarrow$ position grille voxels}). De ce fait, nous pouvons avoir une complexité en $O(1)$ pour l'accès aux données dans la grille.\par
+
+			\commentaire{Ajouter illustration de layout mémoire 2D + position query $\rightarrow$ voxel}\par
+
+			Cette structure de donnée est également utilisée afin de passer les informations nécessaires au moteur de rendu pour pouvoir afficher la pile d'images à l'écran.\par
+		 }
+	}\vspace{30pt}\par
+	% }}}
+
+	% Interlude : présentation API graphiques {{{
+	Une fois cette partie finie, nous pouvons maintenant afficher les données à l'écran. \`A cette étape du rapport, il est important de se rappeler que ces méthodes furent testées sur les jeux de données que nous avons reçus de l'université de Tulane. Étant donné que leur méthode de microscopie fait encore l'objet de recherches actives, des tests sur des jeux de données mis à jour doivent encore être réalisés.\par
+
+	Avant de passer aux sections expliquant les méthodes mises en place pour effectuer la visualisation interactive d'un échantillon, il est important de détailler l'environnement technique dans lequel ces techniques furent élaborées. En effet, nous avons besoin de plusieurs choses afin de faire une visualisation interactive d'un objet :\begin{itemize}
+		\item une API\definition{\textit{Application Programming Interface}} de fenêtrage afin de donner le contrôle du programme à l'utilisateur de façon graphique,
+		\item une API, préférablement indépendante du matériel qui sera utilisé,
+		\item une méthode de contrôle de caméra virtuelle afin de permettre à l'utilisateur d'interagir avec la représentation virtuelle de l'échantillon.
+	\end{itemize}\par
+
+	Pour l'API de fenêtrage, nous acons choisi Qt\footnote{\url{https://www.qt.io/}}. Développé en C++, cette API permet de faire non seulement des fenêtres pour que l'utilisateur puisse avoir un rendu à l'écran, mais permet aussi très aisément de faire tout un ensemble de boutons, curseurs et interactions entre composants. Pour l'API de rendu, nous avons choisi \textit{OpenGL}\footnote{\url{https://www.khronos.org/opengl/}}. Cette API est disponible sur toutes les plateformes, ne dépend pas du matériel sur lequel on la fait fonctionner, et est assez simple à configurer, par rapport à une API comme \textit{Vulkan}\footnote{\url{https://www.khronos.org/vulkan/}}, par exemple. De plus, Qt propose un ensemble de composants utiles à la gestion des applications utilisant OpenGL. Et enfin, pour notre méthode de contrôle de caméra, nous avons choisi les méthodes implémentées dans la librairie QGLViewer\footnote{\url{http://libqglviewer.com/}}. Cette librairie permet d'avoir très rapidement une application interactive avec le clavier et la souris, et est assez facile d'utilisation.\par
+	Afin de continuer à lire ce rapport, il est nécessaire de connaitre quelques bases sur l'API Qt, ainsi que les principaux modes de fonctionnement d'OpenGL et comment chacun fonctionne\todo{-ent ?}. Étant donné que ce n'est pas le sujet principal de ce rapport, vous trouverez en annexe plus d'informations concernant chacune de ces technologies. Ces annexes contiendront une brève explication de Qt et de son mécanisme de connexion \textit{Slot-Signal} ainsi que des différents modes de fonctionnement d'OpenGL afin de pouvoir comprendre les opérations effectuées par la suite, ainsi que les termes techniques associés à ces opérations.\par
+	La combinaison de ces trois principaux composants nous permet de nous abstraire au plus que possible du matériel faisant fonctionner le programme.\par
+	% }}}
+
+	% Partie visualisation plans de coupe {{{
+	\section{Visualisation par plans de coupe}
+	{
+		\commentaire{Parler de l'appli simple faite en tout début de stage, visualisation par texture 3D splatted sur un cube, bouger points afin de traverser texture}\\
+
+		Cette méthode de visualisation volumique repose sur l'intuition que l'on peut effectivement couper un volume selon un plan, et obtenir une coupe représentant le volume à cet endroit\todo{réécrire, maladroit}. Les visualisations par plans de coupe sont extrêmement importantes dans le milieu médical, où elles sont utilisées fréquemment afin de pouvoir observer les tissus humains sous plusieurs angles différents.\par
+
+		\commentaire{illustrations coupes médicales (avec peut etre si on trouve l'appli VR qui permet de prendre un plan de coupe volant et de faire une coupe anatomique ?}\par
+
+		Nous avons implémenté cette méthode de visualisation dans un léger programme. Ce programme permet non seulement de charger un ensemble d'images en mémoire, mais aussi de les visualiser une fois chargés. Pour achever une telle visualisation, il nous suffit de construire un cube unitaire représentant la pile d'images, et d'appliquer une texture tridimensionnelle dessus. Grâce à l'utilisation d'OpenGL, cette tâche est assez facile à faire. En effet, OpenGL possède déjà des fonctions de gestion de texture en 1, 2, ou 3 dimensions. Il nous suffit d'allouer un espace mémoire suffisant (réservé à OpenGL), et d'envoyer les données issues du chargement des images.\todo{Annexe : plus d'infos sur comment opengl fonctionne (mode direct)}\\
+		Par la suite nous pouvons, toujours grâce à OpenGL, attribuer des coordonnées de texture à chacun des sommets. Ainsi, OpenGL peut appliquer la bonne texture sur la bonne primitive afin de l'appliquer à l'écran.\par
+
+		\commentaire{inclure screenshot appli visu coupe}\par
+
+		Une fois les textures passées à OpenGL, nous pouvons redimensionner le cube de façon à répliquer la 'hauteur' de la pile d'images si l'on estime que tout voxel est de taille unitaire. Cela permet d'avoir une intuition visuelle de la quantité de données chargées, en fonction de la hauteur de la pile d'images.
+
+		\commentaire{inclure photo comparaison cube et proportionnel au nb images chargées}\par
+
+		Ensuite, nous pouvons donner le contrôle à l'utilisateur de la position des plans de coupe qu'il souhaite avoir, avec des curseurs en bas de la fenêtre. Chacun d'entre eux est connecté aux valeurs X, Y, et Z de chacun des points permettant à l'utilisateur de préciser à quel point appliquer un plan de coupe selon ces axes. Lorsque l'utilisateur décide d'appliquer un plan de coupe, il lui suffira de faire glisser le curseur à la position désirée, et le programme mettra automatiquement à jour les valeurs de position et de texture aux sommets concernés par cette modification. Par la suite, l'écran sera rafraîchi afin de refléter les changements apportés.\par
+
+		\commentaire{inclure screenshot sans coupe,et avec coupe}\par
+
+		Ainsi, nous pouvons traverser interactivement le volume selon toutes les directions, afin d'observer le tissu sous différentes facettes afin de mieux comprendre sa formation interne.
+	}
+	% }}}
+
+	% Partie visualisation volumique par sous-domaine {{{
+	\section{Visualisation par sous-domaines}
+	{
+		% Intro {{{
+		En plus de la visualisation en plans de coupe, nous proposons aussi une visualisation de grilles de voxels par sous-domaines. Un sous-domaine est une plage de valeurs dans le domaine de définition de la grille de voxels représentant un type de donnée : dans le cas d'images médicales, un sous-domaine peut représenter une membrane, un type spécifique de tissu musculaire (...).\par
+
+		Cette méthode nous permettrait de visualiser uniquement les sous-domaines que l'utilisateur souhaiterait examiner. Par exemple, si l'on définit un sous-domaine représentant la membrane d'une glande dans un échantillon de prostate, nous pourrions afficher uniquement ce sous-domaine et ainsi représenter à l'écran la morphologie de celles-ci. Cette partie du stage fut réalisée dans le cadre d'une tentative de publication d'une méthode développée par Mme~\textsc{Faraj} à la conférence IEEE VIS 2020\footnote{\url{http://ieeevis.org/year/2020/welcome}}.\par
+		% }}}
+
+		% Présentation méthode {{{
+		\subsection{Présentation de la méthode}
+		{
+			Cette méthode de visualisation de grilles de voxels fut originellement développée afin d'analyser l'effet de l'exposition aux émission électromagnétiques sur le corps humain. Une fois la grille de voxels chargée en mémoire, et un maillage englobant fourni par l'utilisateur, le programme calcule un pavage de l'espace interne au maillage et envoie les informations de ce pavage avec le maillage et la texture sur la carte graphique. Une fois les étapes de pré-traitement réalisées, le programme effectue une boucle de rendu afin d'afficher le maillage à l'écran, comme le feraient la grande majorité des programmes de visualisation volumique traditionnels. La différence avec les logiciels plus traditionnels est que une fois que le rendu du maillage est calculé après l'étape de rastérisation\definition{Processus de projeter une image 3D sur un écran 2D}, une étape de \textit{Ray-casting}\definition{Processus de rendu physiquement réaliste} est effectuée afin de parcourir la grille de voxels, et de trouver le premier voxel sur le chemin du rayon incident qui contient une information. À partir de cette information et du rayon incident, nous pouvons extraire la normale en ce point, ainsi que la couleur qu'il devrait prendre.\par
+
+			\commentaire{insérer image raycasting dans grille ici}\par
+
+			L'un des avantages de cette méthode est que sa complexité dépend entièrement du nombre de pixels pour lesquels il faut effectuer cette étape de \textit{Ray-casting}. Ainsi, nous pouvons afficher interactivement de massives grilles de voxels, tant que celle ci rentre entièrement dans l'espace mémoire de la carte graphique. Bien sûr, n'étant pas un des principaux sujets de discussion de ce rapport, vous pourrez trouver ce rapport une fois publié. \wip{finir phrase ici + papier pas encore sorti, comment faire pour le citer ?}\par
+		}
+		% }}}
+
+		% Travail effectué {{{
+		\subsection{Travail effectué}
+		{
+			La méthode de rendu volumétrique ayant étée développée par Mme \textsc{Faraj} il y a de cela quelques années et ayant déjà fait l'objet d'une tentative de publication, les principaux travaux restants au début de la période de stage furent majoritairement des correctifs, des mises à jour de la base de code ainsi que des tests extensifs afin d'obtenir des résultats détaillés des performances obtenues avec cette méthode.\par
+
+			\commentaire{parler de l'upsampler développé pour grilles ?}\par
+
+			Étant un projet vieux de quelques années, la première tâche effectuée avant même de commencer à travailler sur le programme en lui même fut de retrouver et de recompiler les versions nécessaires des librairies \texttt{boost} et \texttt{CGAL}, toutes deux ayant subis de nombreux changements dans leur façon d'être compilées et dans leur manière de fonctionner depuis l'écriture originelle du programme. \commentaire{parler technique des problèmes boost/cgal ? je pense pas}\par
+
+			Une fois le projet rendu compilable\todo{maladroit, reprendre}, la prochaine tâche fut de régler certains problèmes liés aux \textit{shaders}\definition{Petit programme décrivant comment générer une image rendue à l'écran} du programme. En effet, ceux ci furent écrits lorsque OpenGL était encore peu développé, et nécessitaient un peu de travail afin de fonctionner sur de nouvelles architectures de cartes graphiques.\commentaire{je suis toujours pas sur que ce soit a mettre dans le rapport ... trop technique et n'apporte rien à la discussion}
+
+			Le principal reproche fait lors de la dernière tentative de publication fut que les jeux de données de test n'étaient pas assez grands, et n'étaient donc pas indicatifs de la performance réelle de l'algorithme. Afin de remédier à cela, un algorithme de suréchantillonage fut développé afin de 'gonfler' artificiellement la taille de nos jeux de données de test. Étant donné que les images étaient segmentées, le suréchantillonnage se devait d'être fait avec de l'interpolation au plus proche voisin, afin de ne pas perdre l'information contenue dans la grille originelle tout en augmentant la taille des fichiers de grilles. Ainsi, à partir d'un modèle du Visible Human de 400Mo, nous avons pu obtenir un modèle de 6.9Go, équivalent à une grille de 6.9 milliards de voxels.~\commentaire{Détailler plus le processus d'upsampling ? pas trop de choses techniques ...}
+		}
+		% }}}
+
+		Cette méthode de visualisation par sous-domaines est rapide, efficace et permet une exploration interactive de la grille de voxels chargée en mémoire. Bien sûr, il serait possible d'ajuster cette méthode pour fonctionner avec les autres travaux réalisés au cours de ce stage. Une première idée serait de pouvoir charger un modèle à multi-résolution hiérarchique en mémoire, et charger uniquement la partie que l'utilisateur souhaiterait visualiser.\wip{pour cela, nécessaire de changer de grille de voxels à autre chose ? (kd-tree, octree), ou juste charger une seule sous partie de la grille, et recharger dès changement de zoom ?}
+	}
+	% }}}
+
+}
+
+% VIM modeline : do not touch !
+% vim: set spell spelllang=fr :
