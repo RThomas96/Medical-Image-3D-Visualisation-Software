@@ -1,21 +1,37 @@
-# Tasks to accomplish
+# Medical Image Visualizer
 
-- [ ] Add the ability to convert a stack of images into one file
-- [ ] Implement a voxel grid
-- [ ] Implement a viewer and loader for the grid
+*N.B.* : This project is the result of the work done for the end of my Masters degree for the year 2019/2020. You can find the original project
+proposal [here](http://www.lirmm.fr/~nfaraj/files/positions/sujet_stage-prostate3D.pdf).
 
-### Warnings
+====
 
-Currently, the TIF loader (TinyTIFF) only supports a few datatypes in TIFF images :
-- INT
-- UINT
-- FLOAT
+### Compilation and installation of the project
 
-It also only handles uncompressed TIF[F] files. It can handle multiple samples per
-frame, but it remains to be seen how it will be handled in code (TODO)
+To install the project, you must clone this repository with __one__ of the following commands, depending on how you want to download it :
 
-### Questions for Noura
+```sh
+$ git clone git@gitlab.com:thibaulltt/visualisation.git visualisation # To clone via SSH
+$ git clone https://gitlab.com/thibaulltt/visualisation.git visualisation # To clone via HTTPS
+```
 
-In the `VoxelGrid.h` file :
+Then, once in the `visualisation` folder, you must update and clone the repositories needed with :
 
-- What is `GRID_TYPE` ? Is it the data stored inside ?
+```
+$ git submodule init && git submodule update
+```
+
+To compile the project, you'll need to have `cmake`, `Qt 5`, `libQGLViewer`, the `glm` library and an implementation of OpenGL (usually bundled
+with your graphic card's video driver, or with the `mesa` library for the integrated Intel GPUs for example). Once those pre-requisites are
+installed, you can launch the compilation with the following command :
+
+```sh
+$ cmake -S ./ -B buildDir
+$ cmake --build buildDir --parallel
+```
+
+Then, you can launch the program with :
+
+```sh
+$ ./buildDir/visualisation
+```
+

@@ -1,0 +1,49 @@
+% Chapitre 1 : Introduction
+\chapter{Introduction}\label{chapter:01:introduction}
+{
+	\commentaire{Cette introduction est fluide : elle changera jusqu'au dernier moment}\\
+	% Plan originel {{{
+	\iffalse{Plan de l'intro :
+		\begin{enumerate}
+			\item introduction au sujet de stage~\begin{itemize}
+				\item présentation de la reconstruction 3D (overview très générale, avantage par rapport 2D)
+				\item intérêt dans le médical $\rightarrow$ vue volumétrique
+				\item transition : présentation de la prostate (à revoir)
+			\end{itemize}
+			\item introduction à la problématique (coupes histologiques, Gleason, ...)~\begin{itemize}
+				\item prostate : beaucoup de cancers (nombres de l'OMS)
+				\item cancer de la prostate : identification/diagnostic $\rightarrow$ échelle de Gleason
+				\item présentation rapide de l'échelle de Gleason
+				\item présentation problèmes encourus par utilisation échelle de Gleason (dépendance d'angle coupe $\rightarrow$ faux pronostic)
+				\item intérêt de la reconstruction 3D : vraie forme des glandes, pas comme coupe 2D
+				\item intérêt du stage : Tulane ne le fait pas (pas leur domaine), du coup on le fait $\rightarrow$ collaboration internationale
+				\item transition
+			\end{itemize}
+			\item rapide overview du travail fait~\begin{itemize}
+				\item présentation du chargement des images
+				\item présentation de la recherche de voisins
+				\item présentation de la génération de grille de voxels
+			\end{itemize}
+		\end{enumerate}
+	}\par\fi
+	% }}}
+
+	%\wip{\todo{Mettre dans l'abstract ?}}\\
+
+	La reconstruction 3D est un processus permettant d'obtenir une représentation tridimensionnelle d'un objet ou d'une scène à partir d'un ensemble de primitives, tells que des points, des images ou d'autres ensembles tridimensionnels. Ces représentations tridimensionnelles des objets nous permettent de percevoir la forme réelle d'un objet, même si celle-ci est projetée sur un écran 2D.\todo{Vraiment nécessaire ? On sait que c'est mieux en 3D, mais trouver plus de raisons} De plus, elle permet l'analyse de ces formes par des algorithmes en tous genres, comme des algorithmes d'analyse morphologique, des algorithmes d'extraction de points caractéristiques, ou encore des algorithmes d'apprentissage machine.\\
+
+	\commentaire{Ajouter des illustrations de reconstruction 3D ici}\\
+
+	Ainsi, dans le domaine du médical, une représentation tridimensionnelle d'un échantillon de tissu humain permettrait d'analyser sa morphologie ainsi que ses propriétés de façon automatique ou semi-automatique, afin d'aider les médecins à faire des analyses plus approfondies par la suite.\\
+
+	\'Etant donné que ce stage repose sur la développement d'une méthode visant à aider au diagnostic du cancer de la prostate, il est nécessaire de préciser certaines choses sur les caractéristiques de cette pathologie. Tout d'abord, selon l'IARC, l'Agence Internationale pour la Recherche sur le Cancer de l'Organisation Mondiale de la Santé, le cancer de la prostate était l'un des types de cancers les plus courants tous sexes confondus en 2018\footnote{Voir : \protect{\url{https://gco.iarc.fr/today/home}}}. Cette même année, plus d'un million de nouveaux cas de cancers de la prostate furent diagnostiqués dans le monde.\\
+
+	Le meilleur pronostic disponible contre ce cancer est une échelle histologique, appelée échelle de Gleason. Celle ci attribue un score, appelé score de Gleason, en se basant sur l'observation des formes des glandes dans une coupe du tissu de la prostate d'un patient. Or, étant une échelle se basant sur une observation morphologique dans une coupe histologique, donc effectivement bidimensionnelle, d'un objet tridimensionnel, le biais induit par la direction de la coupe, l'angle de celle-ci, son orientation ainsi que le type d'intersection avec la glande influera beaucoup le pronostic final donné par un médecin. Ainsi, cette méthode peut engendrer de faux positifs, pouvant causer des frais médicaux non nécessaires pour un patient sain, ainsi que des faux négatifs, pouvant laisser le cancer d'un patient se développer librement sans aucune action prise à son encontre.\\
+
+	Dans ce contexte, une méthode de reconstruction 3D de ce même échantillon permettrait d'effectuer un meilleur pronostic en étudiant la forme réelle des glandes. Le but du projet, à très long terme, serait de créer une nouvelle procédure d'aide au diagnostic du cancer de la prostate, utilisant l'information contenue dans la morphologie tridimensionnelle des glandes. Actuellement, nos collaborateurs de l'Université de Tulane possèdent un microscope planaire à émission par feuillet de lumière (appelé microscope \textit{LSM}) afin d'observer avec précision la forme des glandes sur plusieurs plans de coupe. Malheureusement, ils ne possèdent pas d'experts en reconstruction 3D, car ce n'ést pas leur domaine de recherche principal. De ce fait, ils ne peuvent pas efficacement reconstruire les échantillons acquis en trois dimensions. L'Université de Montpellier, et plus particulièrement l'équipe ICAR, se sont engagés à apporter leur aide dans le cadre d'une collaboration internationale et pluridisciplinaire s'étendant sur plusieurs années.\\Pour ce stage, deux principaux axes de recherche\todo{Garder ceci, ou présentation des objectifs originaux du stage puis axes de recherche pour rapport ?} ont étés explorés, et continueront à l'être jusqu'à fin juillet\todo{Trouver une meilleure façon de glisser cette information} :\begin{itemize}
+		\item la gestion de données massives et leur visualisation,
+		\item l'analyse de ces dernières et la génération de représentations volumiques
+	\end{itemize}\par~Chacun de ces axes est exploré en détail dans ce rapport, et à la fin de celui-ci, plusieurs axes de recherche vont être mentionnés pour une continuation de ce projet en thèse, encadrée par Mme \textsc{FARAJ}\todo{Doit on garder cette information ici ?}.\\
+}
+% VIM modeline : do not touch !
+% vim: set spell spelllang=fr :

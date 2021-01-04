@@ -1,0 +1,66 @@
+\documentclass[a4paper]{article}
+
+\usepackage{section}	% Sectionning the document
+\usepackage{float}	% Floating boxes in document
+\usepackage{graphicx}	% Images, and more
+\usepackage{amsmath}	% Math symbols, commands, and environments
+
+\title{Prostate3D : Notes, ramblings, and plans for the future}
+\author{Thibault de Villèle}
+\date{April 2nd, 2020 onwards}
+
+\begin{document}
+{
+	\maketitle
+	\clearpage
+
+	\section{What should we do ?}
+	{
+	}
+	\section{How should we do it ?}
+	{
+		%
+	}
+	\section{What's next ?}
+	{
+		%
+	}
+	\section{Raw notes, and useful snippets from papers}
+	{
+		\subsection{What we currently have}
+		{
+			We have SPIM imagery from Tulane in TIFF format saved a number of different ways :
+
+			\begin{itemize} \label{list:different_image_types}
+				\item Two stacks of 2000 pictures in 2048x2048 resolution \label{item:different_image_types:stacks}
+				\item Two images : each with the entire image stack in one TIFF frame \label{item:different_image_types:single_image}
+			\end{itemize}
+
+			Each stack represents a full SPIM acquisition from one of the sensors of the microscope. The are angled 90 degrees relative to one another, and plus or minus 45 degrees relative to world coordinates.
+
+			We should first of all, be able to determine a pixel's real coordinates in world-space, given an image, a stack, I and J positions (within the image) and voxel dimensions. Indeed, if we have a stack of images where the data is a sample being acquired using SPIM, then, given a stack $s$, an image count $d$ (for depth), a pixel position within that image $(i,j)$, we should be able to determine the 3D position $(x,y,z)$ of the point within the sample space.
+
+			$$
+			\text{If}~\left\{d, s, (i, j)\right\}~\text{then}~\exists~f(d,s,i,j)~\Rightarrow~(x,y,z)\label{math:existence_of_3D_coordinates}
+			$$
+
+			The only certainty we'll have is the angle between the two SPIM sensors : they will \textbf{always} be angled 90 degrees from one another, since it's a requirement of the method~\cite{cite_spim_explication_original}~.
+
+			We can thus define some base assumptions :
+
+			\begin{itemize} \label{list:reconstruction_assumptions}
+				\item \label{item:reconstruction_assumptions:00} The world space coordinates are unimportant, we shall only focus on the sample space coordinates.
+				\item \label{item:reconstruction_assumptions:01} The sample space is defined by the bounding box around the images, oriented the way they were taken in world space.
+				\item \label{item:reconstruction_assumptions:02} The origin of the sample space is defined as the world space coordinate of the upper-left corner of the first image of the first stack.
+				\item \label{item:reconstruction_assumptions:03} The stack shall be reconstructed as if the sample space origin is at the world origin, and shalld be aligned with world-space coordinates ($+Z$ in world space is the same as $+Z$ in sample space, same for other axes)
+				\item \label{item:reconstruction_assumptions:04} The stack's Z coordinates will be the (up) vector.
+				\item \label{item:reconstruction_assumptions:05} Each voxel's origin shall be placed at the world-space coordinate of the upper-leftmost pixel, at the image level, at the lowest Z-coordinate of the voxel.
+				\item \label{item:reconstruction_assumptions:06} Each data within a voxel shall be assumed to be placed in the middle of the X-Y's voxel plane.
+			\end{itemize}
+		}
+	}
+
+	\bibliography{references}
+	\bibliographystyle{apalike}
+}
+\end{document}
