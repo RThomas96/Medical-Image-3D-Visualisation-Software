@@ -37,13 +37,8 @@ void PlanarViewer::init(void) {
 }
 
 void PlanarViewer::draw(void) {
-	float coef = .7f;
-	/*
-	if (this->planeToShow == planes::x) { glClearColor(coef,  .0f, .0f, 1.f); }
-	if (this->planeToShow == planes::y) { glClearColor(.0f,  coef, .0f, 1.f); }
-	if (this->planeToShow == planes::z) { glClearColor(.0f,  .0f, coef, 1.f); }
-	*/
 	glClearColor(.8, .8, .8, 1.);
+
 	QSize viewerSize = this->size();
 	glm::vec2 fbDims = glm::vec2(static_cast<float>(viewerSize.width()), static_cast<float>(viewerSize.height()));
 

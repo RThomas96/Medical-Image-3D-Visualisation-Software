@@ -24,6 +24,9 @@ MainWidget::~MainWidget() {
 			this->strayObj[i] = nullptr;
 		}
 	}
+	delete this->viewer_planeX;
+	delete this->viewer_planeY;
+	delete this->viewer_planeZ;
 	delete this->scene;
 	delete this->gridController;
 	delete this->controlPanel;
@@ -31,6 +34,18 @@ MainWidget::~MainWidget() {
 }
 
 void MainWidget::setupWidgets() {
+	this->gridController = new GridControl(nullptr);
+	this->scene = new Scene(this->gridController);
+
+	this->viewer = new Viewer(this->scene, nullptr);
+	this->controlPanel = new ControlPanel(this->scene, this->viewer, nullptr, nullptr);
+	this->scene->setControlPanel(this->controlPanel);
+
+	this->viewer_planeX = new PlanarViewer(this->scene, planes::x, nullptr);
+	this->viewer_planeY = new PlanarViewer(this->scene, planes::y, nullptr);
+	this->viewer_planeZ = new PlanarViewer(this->scene, planes::z, nullptr);
+
+	// Sliders for each plane (also sets range and values) :
 	this->xPlaneDepth = new QSlider(Qt::Horizontal);
 	this->yPlaneDepth = new QSlider(Qt::Horizontal);
 	this->zPlaneDepth = new QSlider(Qt::Horizontal);
@@ -38,26 +53,31 @@ void MainWidget::setupWidgets() {
 	this->yPlaneDepth->setRange(0, 100); this->yPlaneDepth->setValue(0);
 	this->zPlaneDepth->setRange(0, 100); this->zPlaneDepth->setValue(0);
 
+	// The signals for plane depth will be connected :
+	connect(this->xPlaneDepth, &QSlider::valueChanged, this, &MainWidget::setXTexCoord);
+	connect(this->yPlaneDepth, &QSlider::valueChanged, this, &MainWidget::setYTexCoord);
+	connect(this->zPlaneDepth, &QSlider::valueChanged, this, &MainWidget::setZTexCoord);
+
+	// Splitters : one main (hor.) and two secondaries (vert.) :
 	QSplitter* mainSplit = new QSplitter(Qt::Horizontal);
-	this->gridController = new GridControl(nullptr);
-	this->scene = new Scene(this->gridController);
+	QSplitter* splitAbove = new QSplitter(Qt::Vertical);
+	QSplitter* splitAbove1 = new QSplitter(Qt::Vertical);
 
-	QSplitter* splitAbove = new QSplitter(Qt::Vertical, mainSplit);
-	QSplitter* splitAbove1 = new QSplitter(Qt::Vertical, splitAbove);
-	QSplitter* splitAbove2 = new QSplitter(Qt::Vertical, splitAbove1);
+	// Layouts to place a viewer and a slider in the same place :
+	QVBoxLayout* vPX = new QVBoxLayout();
+	QVBoxLayout* vPY = new QVBoxLayout();
+	QVBoxLayout* vPZ = new QVBoxLayout();
 
-	this->viewer = new Viewer(this->scene, mainSplit);
-	this->controlPanel = new ControlPanel(this->scene, this->viewer, nullptr, nullptr);
-	this->scene->setControlPanel(this->controlPanel);
+	// Those will encapsulate the layouts above :
+	QWidget* xViewerCapsule = new QWidget();
+	QWidget* yViewerCapsule = new QWidget();
+	QWidget* zViewerCapsule = new QWidget();
+
+	// Add the sub-splits to the main one :
 	mainSplit->addWidget(splitAbove);
-	this->viewer_planeX = new PlanarViewer(this->scene, planes::x, nullptr);
-	this->viewer_planeY = new PlanarViewer(this->scene, planes::y, nullptr);
-	this->viewer_planeZ = new PlanarViewer(this->scene, planes::z, nullptr);
+	mainSplit->addWidget(splitAbove1);
 
-	QVBoxLayout* vPX = new QVBoxLayout(splitAbove);
-	QVBoxLayout* vPY = new QVBoxLayout(splitAbove1);
-	QVBoxLayout* vPZ = new QVBoxLayout(splitAbove2);
-
+	// Set the layouts for the plane viewers :
 	vPX->addWidget(this->viewer_planeX);
 	vPX->addWidget(this->xPlaneDepth);
 	vPY->addWidget(this->viewer_planeY);
@@ -65,10 +85,16 @@ void MainWidget::setupWidgets() {
 	vPZ->addWidget(this->viewer_planeZ);
 	vPZ->addWidget(this->zPlaneDepth);
 
-	// The signals for plane depth will be connected :
-	connect(this->xPlaneDepth, &QSlider::valueChanged, this, &MainWidget::setXTexCoord);
-	connect(this->yPlaneDepth, &QSlider::valueChanged, this, &MainWidget::setYTexCoord);
-	connect(this->zPlaneDepth, &QSlider::valueChanged, this, &MainWidget::setZTexCoord);
+	// Encapsulate the layouts above :
+	xViewerCapsule->setLayout(vPX);
+	yViewerCapsule->setLayout(vPY);
+	zViewerCapsule->setLayout(vPZ);
+
+	// Add to splits in order to show them all :
+	splitAbove->addWidget(this->viewer);
+	splitAbove->addWidget(xViewerCapsule);
+	splitAbove1->addWidget(yViewerCapsule);
+	splitAbove1->addWidget(zViewerCapsule);
 
 	QHBoxLayout* viewerLayout = new QHBoxLayout();
 	viewerLayout->addWidget(mainSplit);
@@ -82,6 +108,11 @@ void MainWidget::setupWidgets() {
 	this->strayObj.push_back(viewerLayout);
 	this->strayObj.push_back(mainLayout);
 	this->strayObj.push_back(mainSplit);
+	this->strayObj.push_back(splitAbove);
+	this->strayObj.push_back(splitAbove1);
+	this->strayObj.push_back(xViewerCapsule);
+	this->strayObj.push_back(yViewerCapsule);
+	this->strayObj.push_back(zViewerCapsule);
 
 	this->setLayout(mainLayout);
 	this->installEventFilter(this);

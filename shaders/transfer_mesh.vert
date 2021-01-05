@@ -19,7 +19,7 @@ out vec4 P3_VS;
 out vec3 text3DCoordP3_VS;
 out float instanceId_VS;
 out float visibility_VS;
-out float gl_ClipDistance[1];
+//out float gl_ClipDistance[1];
 
 // --------------------------------------------------
 // Uniform variables:
@@ -44,17 +44,17 @@ uniform vec3 clippingNormal;
 */
 ivec2 Convert1DIndexTo2DIndex_Unnormed( in uint uiIndexToConvert, in int iWrapSize )
 {
-	int iY = int( uiIndexToConvert / uint(iWrapSize) );
-	int iX = int( uiIndexToConvert - ( uint(iY) * uint(iWrapSize) ) );
+	int iY = int( uiIndexToConvert / unsigned int(iWrapSize) );
+	int iX = int( uiIndexToConvert - ( unsigned int(iY) * unsigned int(iWrapSize) ) );
 	return ivec2( iX, iY );
 }
 
 float ComputeVisibility(vec3 point)
 {
-	mat4 iGrid = mMat;
+	mat4 iGrid = mat4(1.); //mMat;
 	vec4 point4 = vec4(point, 1.);
-	vec4 cut4 = vec4(cut, .0);
-	vec4 vis4 = (iGrid * point4) - cut4;
+	vec4 cut4 = vec4(cut, 1.);
+	vec4 vis4 = (/* iGrid */ point4) - cut4;
 	vis4.xyz *= cutDirection;
 	float xVis = vis4.x; // ((point.x - cut.x))*cutDirection.x;
 	float yVis = vis4.y; // ((point.y - cut.y))*cutDirection.y;
@@ -107,7 +107,7 @@ void main()
 	visibility_VS += ComputeVisibility(P0_VS.xyz);
 
 	// variable to toggle the use of the grid transformation matrix :
-	mat4 viewTransfo = mMat; // default : mat4(1.f);
+	mat4 viewTransfo = mat4(1.f);
 /*
 	viewTransfo = mat4(1., .0, .0, .0,
 				.0, 1., .0, .0,
@@ -115,5 +115,5 @@ void main()
 				.0, .0, .0, 1.);
 */
 	gl_Position = pMat*vMat*viewTransfo*P_VS;
-	gl_ClipDistance[0] = dot(P_VS, vMat * clipPlane);
+	//gl_ClipDistance[0] = dot(P_VS, vMat * clipPlane);
 }

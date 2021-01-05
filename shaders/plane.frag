@@ -44,10 +44,18 @@ float color_k = 2.5;
 /****************************************/
 void main(void)
 {
-	if (showTex == false) {
-		color = planeIndexToColor(); return;
-	}
-
+//	if (showTex == false) {
+//		// If the texture should not be shown, we're in volumetric mode and
+//		// the plane should not be shown at all (causes problems with visu) :
+//		discard;
+//		// color = planeIndexToColor(); return;
+//	}
+/*
+	if ((vPos.x+.01) < planeIdxToPlanePosition(1)) { discard; } // Early discards for
+	if ((vPos.y+.01) < planeIdxToPlanePosition(2)) { discard; } // the parts of the grid
+	if ((vPos.z+.01) < planeIdxToPlanePosition(3)) { discard; } // behind the planes
+*/
+discard;
 	vec4 basecolor= vNorm;
 	uvec3 tex = texture(texData, texCoord).xyz;
 	vec4 colorTex = vec4(.0, .0, .0, .0);
@@ -60,10 +68,6 @@ void main(void)
 	} else { colorTex = planeIndexToColor(); }
 
 	if (colorTex.a < .1f) { discard; }
-	/*if ((vPos.x+.01) < planeIdxToPlanePosition(1)) { discard; } // Early discards for
-	if ((vPos.y+.01) < planeIdxToPlanePosition(2)) { discard; } // the parts of the grid
-	if ((vPos.z+.01) < planeIdxToPlanePosition(3)) { discard; } // behind the planes
-	*/
 
 	color = colorTex;
 }
@@ -87,6 +91,7 @@ vec4 R8UIToRGB(in uvec3 ucolor) {
 	vec3 rgb = mix(K.xxx, clamp(p - K.xxx, .1, .7), r); // change min/max vals of clamp() to change saturation
 	return vec4(rgb.r, rgb.g, rgb.b, 1.0);
 */
+	if (showTex == false) { return vec4(1., 1., 1., .05); }
 	float eosin = float(ucolor.r)/255.;
 	float dna = float(ucolor.g)/255.; // B is on G channel because OpenGL only allows 2 channels upload to be RG, not RB
 
@@ -130,8 +135,8 @@ float planeIdxToPlanePosition(int id) {
 }
 
 vec4 planeIndexToColor() {
-	if (currentPlane == 1) { return vec4(.5, .0, .0, .0); }
-	if (currentPlane == 2) { return vec4(.0, .5, .0, .0); }
-	if (currentPlane == 3) { return vec4(.0, .0, .5, .0); }
+	if (currentPlane == 1) { return vec4(.5, .0, .0, .2); }
+	if (currentPlane == 2) { return vec4(.0, .5, .0, .2); }
+	if (currentPlane == 3) { return vec4(.0, .0, .5, .2); }
 	return vec4(.27, .27, .27, 1.);
 }

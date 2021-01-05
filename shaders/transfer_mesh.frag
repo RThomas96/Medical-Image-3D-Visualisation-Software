@@ -43,6 +43,8 @@ uniform uint visiblity_map[256];
 uniform float diffuseRef;
 uniform float specRef;
 uniform float shininess;
+// Light positions
+uniform vec4 lightPos[8];
 
 // Camera position world-space :
 uniform vec3 cam;
@@ -55,16 +57,26 @@ uniform ivec3 gridSize;
 // Variables for visibility :
 uniform vec3 cut;
 uniform vec3 cutDirection;
-uniform vec3 clippingPoint;
-uniform vec3 clippingNormal;
+// uniform vec3 clippingPoint;
+// uniform vec3 clippingNormal;
 
 uniform mat4 mMat;
+uniform mat4 vMat;
+
+uniform vec2 colorBounds;
 
 vec4 voxelIdxToColor(in uvec3 ucolor) {
+	if (float(ucolor.r) > colorBounds.y) {
+		return vec4(.8, .0, .8, 1.);
+	}
+	if (float(ucolor.r) < colorBounds.x) {
+		return vec4(.0, .8, .8, 1.);
+	}
 	// Compute the color as Brian's paper describes it :
 	float color_k = 2.5;
-	float eosin = float(ucolor.r)/255.;
-	float dna = float(ucolor.g)/255.; // B is on G channel because OpenGL only allows 2 channels upload to be RG, not RB
+	float sc = colorBounds.y - colorBounds.x;
+	float eosin = (float(ucolor.r) - colorBounds.x)/(sc);
+	float dna = (float(ucolor.g) - colorBounds.x)/(sc); // B is on G channel because OpenGL only allows 2 channels upload to be RG, not RB
 
 	float eosin_r_coef = 0.050;
 	float eosin_g_coef = 1.000;
@@ -88,10 +100,10 @@ vec4 voxelIdxToColor(in uvec3 ucolor) {
 
 bool ComputeVisibility(vec3 point)
 {
-	mat4 iGrid = mMat;
+	mat4 iGrid = mat4(1.); //mMat;
 	vec4 point4 = vec4(point, 1.);
-	vec4 cut4 = vec4(cut, .0);
-	vec4 vis4 = (iGrid * point4) - cut4;
+	vec4 cut4 = vec4(cut, 1.);
+	vec4 vis4 = ( /*iGrid */ point4) - cut4;
 	vis4.xyz *= cutDirection;
 	float xVis = vis4.x; // (point.x - cut.x)*cutDirection.x;
 	float yVis = vis4.y; // (point.y - cut.y)*cutDirection.y;
@@ -99,16 +111,16 @@ bool ComputeVisibility(vec3 point)
 
 	// vec3 pos = point - clippingPoint;
 	// float vis = dot( clippingNormal, pos );
-	if( xVis < 0.|| yVis < 0.|| zVis < 0. )
+	if( xVis < 0.|| yVis < 0.|| zVis < 0.)
 		return false;
 	else return true;
 }
 
 vec3 getWorldCoordinates( in ivec3 _gridCoord )
 {
-	return vec3( (float(_gridCoord.x)+0.5)*voxelSize.x,
-			(float(_gridCoord.y)+0.5)*voxelSize.y,
-			(float(_gridCoord.z)+0.5)*voxelSize.z );
+	return vec3( (_gridCoord.x+0.5)*voxelSize.x,
+			(_gridCoord.y+0.5)*voxelSize.y,
+			(_gridCoord.z+0.5)*voxelSize.z );
 }
 
 ivec3 getGridCoordinates( in vec4 _P )
@@ -176,7 +188,6 @@ bool computeBarycentricCoordinates( in vec3 point, out float ld0 , out float ld1
 
 	return true;
 }
-
 
 vec3 crossProduct( vec3 a, vec3 b )
 {
@@ -279,7 +290,6 @@ bool computeBarycentricCoordinates(in vec3 point, out float ld0 , out float ld1 
 	return true;
 }
 
-
 bool computeBarycentricCoordinatesRecursive(in vec3 point, out float ld0 , out float ld1 , out float ld2 , out float ld3,
 					in int id_tetra_start, out int id_tetra_end, int max_iter, out vec3 result_text_coord )
 {
@@ -301,7 +311,6 @@ bool computeBarycentricCoordinatesRecursive(in vec3 point, out float ld0 , out f
 	}
 	return false;
 }
-
 
 void getFirstRayVoxelIntersection( in vec3 origin, in vec3 direction, out ivec3 v0, out vec3 t_n)
 {
@@ -335,12 +344,14 @@ void getFirstRayVoxelIntersection( in vec3 origin, in vec3 direction, out ivec3 
 void main (void) {
 	if( visibility > 3500. ) discard;
 
-	float epsilon = 0.0;
+	//if (visibility < 1.) discard;
+
+	float epsilon = 0.005;
 	float distMin = min(barycentricCoords.x/largestDelta.x, min(barycentricCoords.y/largestDelta.y, barycentricCoords.z/largestDelta.z));
 
 	// Enables a 1-pass wireframe mode :
-	if (distMin < epsilon) {
-		colorOut = vec4(.6, .0, .6, 1.);
+	if (distMin < epsilon && visibility > 0.) {
+		colorOut = vec4(.8, .1, .1, 1.);
 		return;
 	}
 
@@ -402,7 +413,7 @@ void main (void) {
 	/*
 	Current_text3DCoord = text3DCoord;
 	uint voxInd = texture(Mask, (Current_text3DCoord)).x;
-	colorOut = texture(color_texture, float(voxInd)/255.);
+	colorOut = texture(color_texture, float(voxInd)/255.).yxzw;
 	return;
 	*/
 
@@ -416,10 +427,13 @@ void main (void) {
 
 	next_voxel = origin_voxel;
 
+	int maxFragIter = 100;
+	int maxTetrIter =  50;
+
 	vec3 n;
 
 	int fragmentIteration = 0;
-	while( in_tet && !hit && fragmentIteration < 100 ){
+	while( in_tet && !hit && fragmentIteration < maxFragIter ){
 		fragmentIteration++;
 		// step in the smallest direction : x, y, or z
 		if( t_next.x < t_next.y && t_next.x < t_next.z ){
@@ -459,15 +473,15 @@ void main (void) {
 			vec3 voxel_center_P = getWorldCoordinates( next_voxel );
 			// Recursively traverse the texture, using barycentric coords to 'jump' to another
 			// tetrahedra if needed :
-			if( computeBarycentricCoordinatesRecursive( voxel_center_P, ld0, ld1, ld2, ld3, int(instanceId+0.5), id_tet, 50, Current_text3DCoord ) ){
+			if( computeBarycentricCoordinatesRecursive( voxel_center_P, ld0, ld1, ld2, ld3, int(instanceId+0.5), id_tet, maxTetrIter, Current_text3DCoord ) ){
 				// Get this voxel's value :
 				uvec3 voxelIndex = texture(Mask, Current_text3DCoord).xyz;
 				// If it's visible :
-				if (visiblity_map[voxelIndex.x] > 0u) {
+				if (visiblity_map[voxelIndex.r] > 0u) {
 					// Get the corresponding color :
 					// color = texelFetch(color_texture, int(voxelIndex.x), 0);
 					color = voxelIdxToColor(voxelIndex);
-					//Pos = vec4( (ld0*P0 + ld1*P1 + ld2*P2 + ld3*P3).xyz, 1. );
+					Pos = vec4(Current_P.xyz, 1.); // vec4( (ld0*P0 + ld1*P1 + ld2*P2 + ld3*P3).xyz, 1. );
 					if(ComputeVisibility(voxel_center_P.xyz) )
 						hit = true;
 				}
@@ -484,13 +498,16 @@ void main (void) {
 	if(!in_tet || !hit) discard;
 
 	colorOut = vec4(.0, .0, .0, 1.);
+	//color.xyz = abs(n);
 
+	//for (int i = 0; i < 8; ++i) {
 	vec3 p = Pos.xyz;
 	vec3 v = normalize(cam-p);
-	vec3 lightPos = vec3(-100, 500, 150);
-	vec3 lightSpecular = vec3(.0, .9, .0);
+	vec3 lightP = (inverse(vMat) * vec4(.0, .0, .0, 1.)).xyz; // light 'glued' to the camera
+	//vec3 lightP = vec3(1., 5., 3.);
+	vec3 lightSpecular = vec3(.5, .5, .5);
 
-	vec3 l = normalize (lightPos - p);
+	vec3 l = normalize (lightP - p);
 	l.z = l.z*-1.;
 	l.y = l.y*-1.;
 
@@ -502,11 +519,11 @@ void main (void) {
 	spec = pow (spec, shininess);
 	spec = max (0.0, spec);
 
-	vec3 LightContribution = diffuseRef * diffuse * color.xyz + specRef * spec * lightSpecular * 0.01;
+	vec3 LightContribution = diffuseRef * diffuse * color.xyz + specRef * spec * lightSpecular* 1;
 	float factor = 1.;
 	colorOut += factor * vec4(LightContribution.xyz, 1);
 
-	colorOut = color;
+	//colorOut = color;
 	return;
 
 }

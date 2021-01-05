@@ -74,10 +74,6 @@ void main(void) {
 		float ratio_fb_inv = fbDims.y / fbDims.x;
 		multiplier.x = ratio_fb_inv / ratio_bb_inv;
 	}
-	/*if (planeIndex == 1) { planeMultiplier.yz = multiplier; } // Applied to Y and Z axes
-	if (planeIndex == 2) { planeMultiplier.xz = multiplier; } // Applied to X and Z axes
-	if (planeIndex == 3) { planeMultiplier.xy = multiplier; } // Applied to X and Y axes
-	*/
 	planeMultiplier.xy = multiplier;
 
 	/* TESTING : computing the coordinates same way as plane.vert, but resize plane to fit the FB ratio
