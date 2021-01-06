@@ -14,33 +14,23 @@ MainWidget::MainWidget() {
 }
 
 MainWidget::~MainWidget() {
-	fprintf(stderr, "MainWidget::~MainWidget() called\n");
 	this->removeEventFilter(this);
-	fprintf(stderr, "MainWidget::~MainWidget() : removed event filter\n");
+	delete this->viewer_planeZ;
+	delete this->viewer_planeY;
+	delete this->viewer_planeX;
+	delete this->scene;
+	delete this->gridController;
+	delete this->controlPanel;
 	this->xPlaneDepth->disconnect();
 	this->yPlaneDepth->disconnect();
 	this->zPlaneDepth->disconnect();
-	fprintf(stderr, "MainWidget::~MainWidget() : disconnected plane sliders\n");
 	for (std::size_t i = 0; i < this->strayObj.size(); ++i) {
 		if (this->strayObj[i] != nullptr) {
 			delete this->strayObj[i];
 			this->strayObj[i] = nullptr;
 		}
 	}
-	fprintf(stderr, "MainWidget::~MainWidget() : deleted stray objects\n");
-	delete this->viewer_planeX;
-	delete this->viewer_planeY;
-	delete this->viewer_planeZ;
-	fprintf(stderr, "MainWidget::~MainWidget() : deleted plane viewers\n");
-	delete this->scene;
-	fprintf(stderr, "MainWidget::~MainWidget() : deleted scene\n");
-	delete this->gridController;
-	fprintf(stderr, "MainWidget::~MainWidget() : deleted grid controller\n");
-	delete this->controlPanel;
-	fprintf(stderr, "MainWidget::~MainWidget() : deleted control panel\n");
 	this->strayObj.clear();
-	fprintf(stderr, "MainWidget::~MainWidget() : cleared stray objects vector\n");
-	fprintf(stderr, "MainWidget::~MainWidget() : end\n");
 }
 
 void MainWidget::setupWidgets() {
@@ -83,10 +73,6 @@ void MainWidget::setupWidgets() {
 	QWidget* yViewerCapsule = new QWidget();
 	QWidget* zViewerCapsule = new QWidget();
 
-	// Add the sub-splits to the main one :
-	mainSplit->addWidget(splitAbove);
-	mainSplit->addWidget(splitAbove1);
-
 	// Set the layouts for the plane viewers :
 	vPX->addWidget(this->viewer_planeX);
 	vPX->addWidget(this->xPlaneDepth);
@@ -105,6 +91,9 @@ void MainWidget::setupWidgets() {
 	splitAbove->addWidget(xViewerCapsule);
 	splitAbove1->addWidget(yViewerCapsule);
 	splitAbove1->addWidget(zViewerCapsule);
+	// Add the sub-splits to the main one :
+	mainSplit->addWidget(splitAbove);
+	mainSplit->addWidget(splitAbove1);
 
 	QHBoxLayout* viewerLayout = new QHBoxLayout();
 	viewerLayout->addWidget(mainSplit);
@@ -115,14 +104,14 @@ void MainWidget::setupWidgets() {
 	mainLayout->setAlignment(this->controlPanel, Qt::AlignHCenter);
 	this->gridController->show(); // Enable grid controller as a floating window
 
+	this->strayObj.push_back(zViewerCapsule);
+	this->strayObj.push_back(yViewerCapsule);
+	this->strayObj.push_back(xViewerCapsule);
+	this->strayObj.push_back(splitAbove1);
+	this->strayObj.push_back(splitAbove);
+	this->strayObj.push_back(mainSplit);
 	this->strayObj.push_back(viewerLayout);
 	this->strayObj.push_back(mainLayout);
-	this->strayObj.push_back(mainSplit);
-	this->strayObj.push_back(splitAbove);
-	this->strayObj.push_back(splitAbove1);
-	this->strayObj.push_back(xViewerCapsule);
-	this->strayObj.push_back(yViewerCapsule);
-	this->strayObj.push_back(zViewerCapsule);
 
 	this->setLayout(mainLayout);
 	this->installEventFilter(this);
