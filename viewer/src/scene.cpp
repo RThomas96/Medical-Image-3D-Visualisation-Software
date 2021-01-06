@@ -273,10 +273,19 @@ void Scene::initGl(QOpenGLContext* _context) {
 	bb_ws.addPoints(this->outputGrid->getBoundingBox().getAllCorners());
 	this->sceneBBPosition = bb_ws.getMin();
 	this->sceneBBDiag = bb_ws.getDiagonal();
+
+	std::vector<DiscreteGrid::bbox_t::vec> corners = bb_ws.getAllCorners();
+	// LIGHTS : update positions
+	for (std::size_t i = 0; i < 8; ++i) {
+		this->lightPositions[i] = glm::convert_to<float>(corners[i]);
+		std::cerr << "Light position #" << i << " : ";
+		std::cerr << "{" << corners[i].x << "," << corners[i].y << "," << corners[i].z << "}\n";
+	}
+
 	// Set the plane position to the min point of the BB :
 	this->planePosition = glm::convert_to<glm::vec3::value_type>(bb_ws.getMin());
 
-	this->minTexVal = 5;
+	this->minTexVal = 1;
 	this->maxTexVal = 255;
 
 	if (this->controlPanel) {
@@ -294,6 +303,8 @@ void Scene::initGl(QOpenGLContext* _context) {
 	DiscreteGrid::sizevec3 size(50, 50, 50);
 	this->draft_writeRawGridPortion(begin, size, "rawGrid2");
 */
+
+	this->updateVis();
 
 	glUseProgram(this->programHandle_projectedTex);
 	GetOpenGLError();
@@ -784,7 +795,9 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos) {
 
 	/// @b Shortcut for glGetUniform, since this can result in long lines.
 	auto getUniform = [&](const char* name) -> GLint {
-		return glGetUniformLocation(this->programHandle_VolumetricViewer, name);
+		GLint g = glGetUniformLocation(this->programHandle_VolumetricViewer, name);
+		// if (g < 0) { std::cerr << "Cannot find uniform " << name << '\n'; }
+		return g;
 	};
 
 	// Textures :
@@ -813,6 +826,15 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos) {
 	GLint location_mMat = getUniform("mMat");
 	GLint location_vMat = getUniform("vMat");
 	GLint location_pMat = getUniform("pMat");
+	GetOpenGLError();
+	GLint location_light0 = getUniform("lightPositions[0]");
+	GLint location_light1 = getUniform("lightPositions[1]");
+	GLint location_light2 = getUniform("lightPositions[2]");
+	GLint location_light3 = getUniform("lightPositions[3]");
+	GLint location_light4 = getUniform("lightPositions[4]");
+	GLint location_light5 = getUniform("lightPositions[5]");
+	GLint location_light6 = getUniform("lightPositions[6]");
+	GLint location_light7 = getUniform("lightPositions[7]");
 	GetOpenGLError();
 
 	std::size_t tex = 0;
@@ -884,21 +906,15 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos) {
 	glUniform2fv(location_colorBounds, 1, glm::value_ptr(bounds));
 	GetOpenGLError();
 
-/*
-	// before draw, specify vertex and index arrays with their offsets
-	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_Texture3D_VertNorm);
+	glUniform3fv(location_light0, 1, glm::value_ptr(this->lightPositions[0]));
+	glUniform3fv(location_light1, 1, glm::value_ptr(this->lightPositions[1]));
+	glUniform3fv(location_light2, 1, glm::value_ptr(this->lightPositions[2]));
+	glUniform3fv(location_light3, 1, glm::value_ptr(this->lightPositions[3]));
+	glUniform3fv(location_light4, 1, glm::value_ptr(this->lightPositions[4]));
+	glUniform3fv(location_light5, 1, glm::value_ptr(this->lightPositions[5]));
+	glUniform3fv(location_light6, 1, glm::value_ptr(this->lightPositions[6]));
+	glUniform3fv(location_light7, 1, glm::value_ptr(this->lightPositions[7]));
 	GetOpenGLError();
-	glNormalPointer(GL_FLOAT, 0, 0);
-	GetOpenGLError();
-	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_Texture3D_VertPos);
-	GetOpenGLError();
-	glVertexPointer(3, GL_FLOAT, 0, 0);
-	GetOpenGLError();
-	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_Texture3D_VertTex);
-	GetOpenGLError();
-	glTexCoordPointer(2, GL_FLOAT, 0, 0);
-	GetOpenGLError();
-*/
 
 	glBindVertexArray(this->vaoHandle_VolumetricBuffers);
 	this->tex3D_bindVAO();
@@ -911,11 +927,8 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos) {
 	// Unbind textures :
 	for (std::size_t t = tex; t >= 0 && t < tex+1; t--) {
 		glActiveTexture(GL_TEXTURE0 + t);
-		GetOpenGLError();
 		glBindTexture(GL_TEXTURE_3D, 0);
-		GetOpenGLError();
 		glBindTexture(GL_TEXTURE_2D, 0);
-		GetOpenGLError();
 		glBindTexture(GL_TEXTURE_1D, 0);
 		GetOpenGLError();
 	}

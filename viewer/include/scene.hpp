@@ -181,6 +181,8 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		uchar minTexVal;
 		uchar maxTexVal;
 
+		std::array<glm::vec3, 8> lightPositions; ///< Scene lights (positionned at every corner of the scene BB)
+
 		glm::vec3 planePosition;
 		glm::vec3 planeDepths;
 		glm::vec3 sceneBBPosition;

@@ -44,7 +44,7 @@ uniform float diffuseRef;
 uniform float specRef;
 uniform float shininess;
 // Light positions
-uniform vec4 lightPos[8];
+uniform vec3 lightPositions[8];
 
 // Camera position world-space :
 uniform vec3 cam;
@@ -346,7 +346,7 @@ void main (void) {
 	if( visibility > 3500. ) discard;
 
 	//if (visibility < 1.) discard;
-
+/*
 	float epsilon = 0.005;
 	float distMin = min(barycentricCoords.x/largestDelta.x, min(barycentricCoords.y/largestDelta.y, barycentricCoords.z/largestDelta.z));
 
@@ -355,7 +355,7 @@ void main (void) {
 		colorOut = vec4(.8, .1, .1, 1.);
 		return;
 	}
-
+*/
 	/**
 	A little reminder here :
 		- all fragments processed here will be defined in world-space, along with the
@@ -483,7 +483,7 @@ void main (void) {
 					// color = texelFetch(color_texture, int(voxelIndex.x), 0);
 					color = voxelIdxToColor(voxelIndex);
 					Pos = vec4(Current_P.xyz, 1.); // vec4( (ld0*P0 + ld1*P1 + ld2*P2 + ld3*P3).xyz, 1. );
-					if(ComputeVisibility(voxel_center_P.xyz) )
+					if( ComputeVisibility(voxel_center_P.xyz) )
 						hit = true;
 				}
 
@@ -498,33 +498,34 @@ void main (void) {
 
 	if(!in_tet || !hit) discard;
 
-	colorOut = vec4(.0, .0, .0, 1.);
-	//color.xyz = abs(n);
+	// Phong computation :
 
-	//for (int i = 0; i < 8; ++i) {
-	vec3 p = Pos.xyz;
-	vec3 v = normalize(cam-p);
-	// vec3 lightP = (inverse(vMat) * vec4(.0, .0, .0, 1.)).xyz; // light 'glued' to the camera
-	vec3 lightP = vec3(1., 5., 3.);
-	vec3 lightSpecular = vec3(.5, .5, .5);
+	colorOut = vec4(.0, .0, .0, .0);
+	for (int i = 0; i < 8; ++i) {
+		vec3 p = Pos.xyz;
+		vec3 v = normalize(cam-p);
 
-	vec3 l = normalize (lightP - p);
-	l.z = l.z*-1.;
-	l.y = l.y*-1.;
+		vec3 lightP = lightPositions[i];
+		vec3 lightSpecular = vec3(.5, .5, .5);
 
-	float ndotl = dot(l, n);
-	float diffuse = max(ndotl, 0.0);
-	vec3 r = 2. * ndotl * n - l;
+		vec3 l = normalize (lightP - p);
+		l.z = l.z*-1.;
+		l.y = l.y*-1.;
 
-	float spec = max(dot(r, v), 0.0);
-	spec = pow (spec, shininess);
-	spec = max (0.0, spec);
+		float ndotl = dot(l, n);
+		float diffuse = max(ndotl, 0.0);
+		vec3 r = 2. * ndotl * n - l;
 
-	vec3 LightContribution = diffuseRef * diffuse * color.xyz + specRef * spec * lightSpecular* 1;
-	float factor = 1.;
-	colorOut += factor * vec4(LightContribution.xyz, 1);
+		float spec = max(dot(r, v), 0.0);
+		spec = pow (spec, shininess);
+		spec = max (0.0, spec);
 
-	//colorOut = color;
+		vec3 LightContribution = diffuseRef * diffuse * color.xyz + specRef * spec * lightSpecular * .1;
+		float factor = .125;
+		colorOut += factor * vec4(LightContribution.xyz, 1.);
+	}
+
+	colorOut.xyz *= .8;
+
 	return;
-
 }
