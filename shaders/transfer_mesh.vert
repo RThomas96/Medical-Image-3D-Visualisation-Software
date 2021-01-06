@@ -31,6 +31,8 @@ uniform mat4 mMat;
 uniform mat4 vMat;
 uniform mat4 pMat;
 
+uniform vec3 cam;
+
 uniform vec4 clipPlane = vec4(.0, 1., .0, .0);
 
 uniform vec3 cut;

@@ -196,7 +196,7 @@ void Scene::initGl(QOpenGLContext* _context) {
 	// In the case where there's two grids, ask the user to load the red channel as well :
 	#ifdef LOAD_RED_AND_BLUE_IMAGE_STACKS
 	IO::GenericGridReader* readerRed = nullptr;
-	IO::GenericGridReader::data_t threshRed = IO::GenericGridReader::data_t(6);
+	IO::GenericGridReader::data_t threshRed = threshold;
 	if (msgBox->clickedButton() == dimButton) {
 		readerRed = new IO::DIMReader(threshRed);
 		QString filename = QFileDialog::getOpenFileName(nullptr, "Open a DIM/IMA image (Red channel)", "../../", "BrainVISA DIM Files (*.dim)");
@@ -289,9 +289,11 @@ void Scene::initGl(QOpenGLContext* _context) {
 	this->tex3D_buildBuffers();
 	std::cerr << "done\n";
 
+/*
 	DiscreteGrid::sizevec3 begin(1000, 200, 10);
 	DiscreteGrid::sizevec3 size(50, 50, 50);
 	this->draft_writeRawGridPortion(begin, size, "rawGrid2");
+*/
 
 	glUseProgram(this->programHandle_projectedTex);
 	GetOpenGLError();
@@ -528,8 +530,11 @@ void Scene::loadImage() {
 	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	// Swizzle G/B to R value, to save data upload
-	GLint swizzleMask[] = {GL_RED, GL_RED, GL_RED, GL_ONE};
+	GLint swizzleMask[] = {GL_RED, GL_ZERO, GL_ZERO, GL_ONE};
 	glTexParameteriv(GL_TEXTURE_3D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
+	// Set the pixel alignment to be per-byte, instead of per-word (tightly packed into array) :
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
 
 	glTexImage3D(
 		GL_TEXTURE_3D,		// GLenum : Target
@@ -1862,13 +1867,15 @@ void Scene::tex3D_loadMESHFile(const std::string file, std::vector<glm::vec4>& v
 				std::vector<std::array<std::size_t, 4>>& tet) {
 	#ifdef LOAD_RED_AND_BLUE_IMAGE_STACKS
 	DiscreteGrid::sizevec3 dims = this->inputGrid_Blue->getGridDimensions();
+	DiscreteGrid::bbox_t box = this->inputGrid_Blue->getBoundingBox();
 	#else
 	DiscreteGrid::sizevec3 dims = this->inputGrid->getGridDimensions();
 	DiscreteGrid::bbox_t box = this->inputGrid->getBoundingBox();
+	#endif
 	glm::vec3 bmin = glm::convert_to<float>(box.getMin());
 	glm::vec3 bmax = glm::convert_to<float>(box.getMax());
 	glm::vec3 diag = glm::abs(bmax - bmin);
-	#endif
+
 	std::ifstream myfile(file.c_str());
 
 	if (not myfile.is_open()) {
@@ -1903,7 +1910,7 @@ void Scene::tex3D_loadMESHFile(const std::string file, std::vector<glm::vec4>& v
 		if (p[2] > maxZ) { maxZ = p[2]; }
 		glm::vec4 position = glm::vec4(p[0], p[1], p[2], 1.);
 		rawVert.push_back(position);
-		position = this->inputGrid->getTransform_GridToWorld() * position;
+		//position = this->inputGrid->getTransform_GridToWorld() * position;
 		vert.push_back(position);
 /*
 		texCoords.push_back(glm::vec3(
@@ -2073,9 +2080,6 @@ void Scene::tex3D_buildBuffers() {
 	GetOpenGLError();
 
 	glGenVertexArrays(1, &this->vaoHandle_VolumetricBuffers);
-	std::cerr << "[LOG] VAO name : " << +this->vaoHandle_VolumetricBuffers << "=================" << '\n';
-	std::cerr << "[LOG] VAO name : " << +this->vaoHandle_VolumetricBuffers << "=================" << '\n';
-	std::cerr << "[LOG] VAO name : " << +this->vaoHandle_VolumetricBuffers << "=================" << '\n';
 	this->tex3D_bindVAO();
 }
 

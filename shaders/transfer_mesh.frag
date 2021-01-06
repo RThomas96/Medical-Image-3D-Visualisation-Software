@@ -62,6 +62,7 @@ uniform vec3 cutDirection;
 
 uniform mat4 mMat;
 uniform mat4 vMat;
+uniform mat4 pMat;
 
 uniform vec2 colorBounds;
 
@@ -111,7 +112,7 @@ bool ComputeVisibility(vec3 point)
 
 	// vec3 pos = point - clippingPoint;
 	// float vis = dot( clippingNormal, pos );
-	if( xVis < 0.|| yVis < 0.|| zVis < 0.)
+	if( xVis < 0.|| yVis < 0.|| zVis < 0. )
 		return false;
 	else return true;
 }
@@ -503,8 +504,8 @@ void main (void) {
 	//for (int i = 0; i < 8; ++i) {
 	vec3 p = Pos.xyz;
 	vec3 v = normalize(cam-p);
-	vec3 lightP = (inverse(vMat) * vec4(.0, .0, .0, 1.)).xyz; // light 'glued' to the camera
-	//vec3 lightP = vec3(1., 5., 3.);
+	// vec3 lightP = (inverse(vMat) * vec4(.0, .0, .0, 1.)).xyz; // light 'glued' to the camera
+	vec3 lightP = vec3(1., 5., 3.);
 	vec3 lightSpecular = vec3(.5, .5, .5);
 
 	vec3 l = normalize (lightP - p);

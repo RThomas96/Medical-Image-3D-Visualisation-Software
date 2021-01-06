@@ -14,23 +14,33 @@ MainWidget::MainWidget() {
 }
 
 MainWidget::~MainWidget() {
+	fprintf(stderr, "MainWidget::~MainWidget() called\n");
 	this->removeEventFilter(this);
+	fprintf(stderr, "MainWidget::~MainWidget() : removed event filter\n");
 	this->xPlaneDepth->disconnect();
 	this->yPlaneDepth->disconnect();
 	this->zPlaneDepth->disconnect();
+	fprintf(stderr, "MainWidget::~MainWidget() : disconnected plane sliders\n");
 	for (std::size_t i = 0; i < this->strayObj.size(); ++i) {
 		if (this->strayObj[i] != nullptr) {
 			delete this->strayObj[i];
 			this->strayObj[i] = nullptr;
 		}
 	}
+	fprintf(stderr, "MainWidget::~MainWidget() : deleted stray objects\n");
 	delete this->viewer_planeX;
 	delete this->viewer_planeY;
 	delete this->viewer_planeZ;
+	fprintf(stderr, "MainWidget::~MainWidget() : deleted plane viewers\n");
 	delete this->scene;
+	fprintf(stderr, "MainWidget::~MainWidget() : deleted scene\n");
 	delete this->gridController;
+	fprintf(stderr, "MainWidget::~MainWidget() : deleted grid controller\n");
 	delete this->controlPanel;
+	fprintf(stderr, "MainWidget::~MainWidget() : deleted control panel\n");
 	this->strayObj.clear();
+	fprintf(stderr, "MainWidget::~MainWidget() : cleared stray objects vector\n");
+	fprintf(stderr, "MainWidget::~MainWidget() : end\n");
 }
 
 void MainWidget::setupWidgets() {
