@@ -68,18 +68,33 @@ void MainWidget::setupWidgets() {
 	QVBoxLayout* vPY = new QVBoxLayout();
 	QVBoxLayout* vPZ = new QVBoxLayout();
 
+	// Sets the background color of widgets :
+	QPalette paletteX, paletteY, paletteZ;
+	paletteX.setColor(QPalette::Window, Qt::red);
+	paletteY.setColor(QPalette::Window, Qt::green);
+	paletteZ.setColor(QPalette::Window, Qt::blue);
+
 	// Those will encapsulate the layouts above :
-	QWidget* xViewerCapsule = new QWidget();
-	QWidget* yViewerCapsule = new QWidget();
-	QWidget* zViewerCapsule = new QWidget();
+	QWidget* xViewerCapsule = new QWidget(); xViewerCapsule->setAutoFillBackground(true); xViewerCapsule->setPalette(paletteX);
+	QWidget* yViewerCapsule = new QWidget(); yViewerCapsule->setAutoFillBackground(true); yViewerCapsule->setPalette(paletteY);
+	QWidget* zViewerCapsule = new QWidget(); zViewerCapsule->setAutoFillBackground(true); zViewerCapsule->setPalette(paletteZ);
 
 	// Set the layouts for the plane viewers :
-	vPX->addWidget(this->viewer_planeX);
 	vPX->addWidget(this->xPlaneDepth);
-	vPY->addWidget(this->viewer_planeY);
+	vPX->addWidget(this->viewer_planeX);
 	vPY->addWidget(this->yPlaneDepth);
-	vPZ->addWidget(this->viewer_planeZ);
+	vPY->addWidget(this->viewer_planeY);
 	vPZ->addWidget(this->zPlaneDepth);
+	vPZ->addWidget(this->viewer_planeZ);
+	// Get content margins by default :
+	int left = 0, right = 0, top = 0, bottom = 0;
+	// This is the same arrangement for the setCM() function :
+	vPX->getContentsMargins(&left, &top, &right, &bottom);
+	std::cerr << "Default margins : " << left << ' ' << top << ' ' << right << ' ' << bottom << '\n';
+	// Set the content margins, no side margins :
+	vPX->setContentsMargins(0, top*2, 0, bottom);
+	vPY->setContentsMargins(0, top*2, 0, bottom);
+	vPZ->setContentsMargins(0, top*2, 0, bottom);
 
 	// Encapsulate the layouts above :
 	xViewerCapsule->setLayout(vPX);

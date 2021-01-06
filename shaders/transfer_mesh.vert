@@ -37,8 +37,9 @@ uniform vec4 clipPlane = vec4(.0, 1., .0, .0);
 
 uniform vec3 cut;
 uniform vec3 cutDirection;
-uniform vec3 clippingPoint;
-uniform vec3 clippingNormal;
+
+// Scalar to displace the camera's cutting plane :
+uniform float clipDistanceFromCamera;
 
 /**
 * @brief function to convert 1D Index to 2D index (not normalized)
@@ -56,15 +57,19 @@ float ComputeVisibility(vec3 point)
 	mat4 iGrid = mat4(1.); //mMat;
 	vec4 point4 = vec4(point, 1.);
 	vec4 cut4 = vec4(cut, 1.);
-	vec4 vis4 = (/* iGrid */ point4) - cut4;
+	vec4 vis4 = point4 - cut4;
 	vis4.xyz *= cutDirection;
 	float xVis = vis4.x; // ((point.x - cut.x))*cutDirection.x;
 	float yVis = vis4.y; // ((point.y - cut.y))*cutDirection.y;
 	float zVis = vis4.z; // ((point.z - cut.z))*cutDirection.z;
 
-	// vec3 pos = point - clippingPoint;
-	// float vis = dot( clippingNormal, pos );
-	if( xVis < 0.|| yVis < 0.|| zVis < 0. )
+	vec4 clippingPoint = vec4(cam, 1.);
+	vec4 clippingNormal = inverse(vMat) * vec4(.0, .0, -1., .0);
+	clippingPoint += clippingNormal * clipDistanceFromCamera;
+	vec4 pos = point4 - clippingPoint;
+	float vis = dot( clippingNormal, pos );
+
+	if( xVis < 0.|| yVis < 0.|| zVis < 0. || vis < .0)
 		return 1000.;
 	else return 0.;
 }

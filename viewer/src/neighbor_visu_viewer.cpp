@@ -9,11 +9,10 @@
 #include <QKeyEvent>
 #include <fstream>
 
-float Viewer::sceneRadiusMultiplier{1.5f};
+float Viewer::sceneRadiusMultiplier{.5f};
 
 Viewer::Viewer(Scene* const scene, QWidget* parent) :
 	QGLViewer(parent), scene(scene) {
-	this->setGridIsDrawn();
 
 	this->refreshTimer = new QTimer();
 	this->refreshTimer->setInterval(std::chrono::milliseconds(7)); // ~7 ms for 144fps, ~16ms for 60fps and ~33ms for 30 FPS

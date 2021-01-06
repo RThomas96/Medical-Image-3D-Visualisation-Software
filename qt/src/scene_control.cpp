@@ -20,6 +20,10 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, Viewer* rv, QWidget* 
 	this->yPlanePos = new QDoubleSpinBox();
 	this->zPlanePos = new QDoubleSpinBox();
 
+	this->clipDistance = new QDoubleSpinBox();
+	this->clipDistance->setRange(.0, 1000.);
+	this->clipDistance->setValue(5.);
+
 	// Create the container widget :
 	this->controlContainer = new QWidget();
 
@@ -50,9 +54,9 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, Viewer* rv, QWidget* 
 	cutMinContainer->addWidget(this->yPlanePos);
 	cutMinContainer->addWidget(this->zPlanePos);
 
-	allContainer->addLayout(topContainer);
 	allContainer->addLayout(texContainer);
 	allContainer->addLayout(cutMinContainer);
+	allContainer->addWidget(this->clipDistance);
 
 	// Disable by default the top level container :
 	this->controlContainer->setEnabled(false);
@@ -90,12 +94,14 @@ ControlPanel::~ControlPanel() {
 	this->xPlanePos->disconnect();
 	this->yPlanePos->disconnect();
 	this->zPlanePos->disconnect();
+	this->clipDistance->disconnect();
 
 	deletePtr(this->minValueTexture);
 	deletePtr(this->maxValueTexture);
 	deletePtr(this->xPlanePos);
 	deletePtr(this->yPlanePos);
 	deletePtr(this->zPlanePos);
+	deletePtr(this->clipDistance);
 	deletePtr(this->controlContainer);
 
 #ifndef NDEBUG
@@ -108,6 +114,8 @@ void ControlPanel::initSignals() {
 	connect(this->xPlanePos, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &ControlPanel::setCutPlaneXPos);
 	connect(this->yPlanePos, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &ControlPanel::setCutPlaneYPos);
 	connect(this->zPlanePos, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &ControlPanel::setCutPlaneZPos);
+
+	connect(this->clipDistance, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &ControlPanel::setClipDistance);
 
 	// Modifies the min/max values of the texture to be considered valuable data :
 	connect(this->minValueTexture, QOverload<int>::of(&QSpinBox::valueChanged), this, &ControlPanel::setMinTexVal);
@@ -167,6 +175,13 @@ void ControlPanel::setMinTexVal(int val) {
 void ControlPanel::setMaxTexVal(int val) {
 	if (this->sceneToControl) {
 		this->sceneToControl->slotSetMaxTexValue(static_cast<uchar>(val));
+	}
+	this->updateViewers();
+}
+
+void ControlPanel::setClipDistance(double val) {
+	if (this->sceneToControl) {
+		this->sceneToControl->slotSetClipDistance(val);
 	}
 	this->updateViewers();
 }

@@ -31,8 +31,6 @@ uniform int currentPlane;	// Plane identifier : 1 (x), 2 (y), 3 (z)
 /****************************************/
 /*********** Function headers ***********/
 /****************************************/
-// Convert a vec3 to a vec4 (omega component will be set to 'vec.w = 0')
-vec4 toVec4(in vec3 inputPos);
 // Get a displacement to apply to the plane's vertices for a given plane identifier
 vec4 planeIdxToPlanePosition(int id);
 // Get a size multiplier to apply to the plane's vertices for a given plane identifier
@@ -43,10 +41,10 @@ vec4 planeIdxToPlaneSize(int id);
 /****************************************/
 void main(void) {
 	mat4 norMat = inverse(transpose(model_Mat));
-	vec4 gridSize4 = toVec4(gridSize); gridSize4.w = 1.f;
-	vec4 planePosition4 = toVec4(planePosition);
-	vec4 gridDimensions4 = toVec4(gridDimensions);
-	vec4 sceneBBPosition4 = toVec4(sceneBBPosition);
+	vec4 gridSize4 = vec4(gridSize, 1.);
+	vec4 planePosition4 = vec4(planePosition, .0);
+	vec4 gridDimensions4 = vec4(gridDimensions, .0);
+	vec4 sceneBBPosition4 = vec4(sceneBBPosition, .0);
 
 	/*
 	Vertex position will always be normalized (i.e., in [0, 1]). We need to apply the correct size multiplier and
@@ -66,11 +64,6 @@ void main(void) {
 /****************************************/
 /************** Functions ***************/
 /****************************************/
-vec4 toVec4(in vec3 inputPos) {
-	vec4 outputPos = inputPos.xyzz;
-	outputPos.w = .0f;
-	return outputPos;
-}
 
 vec4 planeIdxToPlanePosition(int id) {
 	// displacement to apply :

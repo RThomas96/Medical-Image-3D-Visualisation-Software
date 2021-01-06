@@ -36,11 +36,13 @@ class ControlPanel : public QWidget {
 		QWidget* controlContainer;
 		Viewer* leftViewer;
 		Viewer* rightViewer;
+		QDoubleSpinBox* clipDistance;
 
 	public slots:
 		void setTexCube(bool show);
 		void setMinTexVal(int val);
 		void setMaxTexVal(int val);
+		void setClipDistance(double val);
 		void setCutPlaneXPos(double val);
 		void setCutPlaneYPos(double val);
 		void setCutPlaneZPos(double val);

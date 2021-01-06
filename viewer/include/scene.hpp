@@ -105,6 +105,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void slotSetPlanePositionX(float coord);
 		void slotSetPlanePositionY(float coord);
 		void slotSetPlanePositionZ(float coord);
+		void slotSetClipDistance(double val) { this->clipDistanceFromCamera = static_cast<float>(val); return; }
 	private :
 		/// @b compile the given shader at 'path' as a shader of type 'shaType'
 		GLuint compileShader(const std::string& path, const GLenum shaType, bool verbose = false);
@@ -187,6 +188,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		glm::vec3 planeDepths;
 		glm::vec3 sceneBBPosition;
 		glm::vec3 sceneBBDiag;
+		float clipDistanceFromCamera;
 		DrawMode drawMode;
 		bool showVAOstate;
 
@@ -222,7 +224,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		GLuint vboHandle_Texture3D_VertNorm;
 		GLuint vboHandle_Texture3D_VertTex;
 		GLuint vboHandle_Texture3D_VertIdx;
-		unsigned int* visibleDomains;
+		unsigned int* visibleDomains;			///< Array deciding which values are visible
 		GLsizei tetCount;
 };
 

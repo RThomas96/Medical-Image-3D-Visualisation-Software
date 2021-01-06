@@ -54,11 +54,11 @@ uniform vec3 voxelSize;
 
 uniform ivec3 gridSize;
 
+uniform float clipDistanceFromCamera;
+
 // Variables for visibility :
 uniform vec3 cut;
 uniform vec3 cutDirection;
-// uniform vec3 clippingPoint;
-// uniform vec3 clippingNormal;
 
 uniform mat4 mMat;
 uniform mat4 vMat;
@@ -104,15 +104,19 @@ bool ComputeVisibility(vec3 point)
 	mat4 iGrid = mat4(1.); //mMat;
 	vec4 point4 = vec4(point, 1.);
 	vec4 cut4 = vec4(cut, 1.);
-	vec4 vis4 = ( /*iGrid */ point4) - cut4;
+	vec4 vis4 = point4 - cut4;
 	vis4.xyz *= cutDirection;
 	float xVis = vis4.x; // (point.x - cut.x)*cutDirection.x;
 	float yVis = vis4.y; // (point.y - cut.y)*cutDirection.y;
 	float zVis = vis4.z; // (point.z - cut.z)*cutDirection.z;
 
-	// vec3 pos = point - clippingPoint;
-	// float vis = dot( clippingNormal, pos );
-	if( xVis < 0.|| yVis < 0.|| zVis < 0. )
+	vec4 clippingPoint = vec4(cam, 1.);
+	vec4 clippingNormal = normalize(inverse(vMat) * vec4(.0, .0, -1., .0));
+	clippingPoint += clippingNormal * clipDistanceFromCamera ;
+	vec4 pos = point4 - clippingPoint;
+	float vis = dot( clippingNormal, pos );
+
+	if( xVis < 0.|| yVis < 0.|| zVis < 0. || vis < .0)
 		return false;
 	else return true;
 }
@@ -345,17 +349,15 @@ void getFirstRayVoxelIntersection( in vec3 origin, in vec3 direction, out ivec3 
 void main (void) {
 	if( visibility > 3500. ) discard;
 
-	//if (visibility < 1.) discard;
-/*
-	float epsilon = 0.005;
+	float epsilon = 0.0;
 	float distMin = min(barycentricCoords.x/largestDelta.x, min(barycentricCoords.y/largestDelta.y, barycentricCoords.z/largestDelta.z));
 
 	// Enables a 1-pass wireframe mode :
-	if (distMin < epsilon && visibility > 0.) {
+	if (distMin < epsilon) { // && visibility > 0.) {
 		colorOut = vec4(.8, .1, .1, 1.);
 		return;
 	}
-*/
+
 	/**
 	A little reminder here :
 		- all fragments processed here will be defined in world-space, along with the
@@ -520,9 +522,9 @@ void main (void) {
 		spec = pow (spec, shininess);
 		spec = max (0.0, spec);
 
-		vec3 LightContribution = diffuseRef * diffuse * color.xyz + specRef * spec * lightSpecular * .1;
+		vec3 LightContribution = diffuseRef * diffuse * color.xyz + specRef * spec * lightSpecular * 4;
 		float factor = .125;
-		colorOut += factor * vec4(LightContribution.xyz, 1.);
+		colorOut += factor * vec4(LightContribution, 1.);
 	}
 
 	colorOut.xyz *= .8;

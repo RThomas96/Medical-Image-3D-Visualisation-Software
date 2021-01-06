@@ -140,6 +140,8 @@ void Scene::initGl(QOpenGLContext* _context) {
 
 	this->initializeOpenGLFunctions();
 
+	this->clipDistanceFromCamera = 5.;
+
 	IO::GenericGridReader* reader = nullptr;
 	IO::GenericGridReader::data_t threshold = IO::GenericGridReader::data_t(0);
 
@@ -819,6 +821,7 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos) {
 	GLint location_cam = getUniform("cam");
 	GLint location_cut = getUniform("cut");
 	GLint location_cutDirection = getUniform("cutDirection");
+	GLint location_clipDistanceFromCamera = getUniform("clipDistanceFromCamera");
 	GLint location_visibilityMap = getUniform("visiblity_map");
 	GLint location_colorBounds = getUniform("colorBounds");
 	GetOpenGLError();
@@ -890,6 +893,7 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos) {
 	glUniform3fv(location_cam, 1, glm::value_ptr(camPos));
 	glUniform3fv(location_cut, 1, glm::value_ptr(this->planePosition));
 	glUniform3fv(location_cutDirection, 1, &(cutDir[0]));
+	glUniform1f(location_clipDistanceFromCamera, this->clipDistanceFromCamera);
 	GetOpenGLError();
 
 	#ifdef LOAD_RED_AND_BLUE_IMAGE_STACKS
@@ -1173,6 +1177,8 @@ void Scene::prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane, bool
 	glm::vec3 size = bbws.getDiagonal();
 	GLint plIdx = (_plane == planes::x) ? 1 : (_plane == planes::y) ? 2 : 3;
 	GetOpenGLError();
+
+	gridTransfo = glm::mat4(1.);
 
 	glUniformMatrix4fv(location_mMatrix, 1, GL_FALSE, glm::value_ptr(transform));
 	glUniformMatrix4fv(location_vMatrix, 1, GL_FALSE, mvMat);
@@ -1923,7 +1929,11 @@ void Scene::tex3D_loadMESHFile(const std::string file, std::vector<glm::vec4>& v
 		if (p[2] > maxZ) { maxZ = p[2]; }
 		glm::vec4 position = glm::vec4(p[0], p[1], p[2], 1.);
 		rawVert.push_back(position);
-		//position = this->inputGrid->getTransform_GridToWorld() * position;
+		#ifdef LOAD_RED_AND_BLUE_IMAGE_STACKS
+		position = this->inputGrid_Blue->getTransform_GridToWorld() * position;
+		#else
+		position = this->inputGrid->getTransform_GridToWorld() * position;
+		#endif
 		vert.push_back(position);
 /*
 		texCoords.push_back(glm::vec3(
