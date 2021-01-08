@@ -8,6 +8,7 @@
 #include <QProgressDialog>
 #include <QKeyEvent>
 #include <fstream>
+#include <dlfcn.h>
 
 float Viewer::sceneRadiusMultiplier{.5f};
 
@@ -20,6 +21,7 @@ Viewer::Viewer(Scene* const scene, QWidget* parent) :
 	connect(this->refreshTimer, &QTimer::timeout, this, &Viewer::updateView);
 
 	this->drawVolumetric = false;
+	this->shouldCapture = false;
 }
 
 Viewer::~Viewer() {
@@ -46,7 +48,25 @@ void Viewer::init() {
 	this->setSceneCenter(qglviewer::Vec(bbDiag.x/2., bbDiag.y/2., bbDiag.z/2.));
 	this->showEntireScene();
 
-	//this->refreshTimer->start(); // Update every 'n' milliseconds from here on out
+	this->refreshTimer->start(); // Update every 'n' milliseconds from here on out
+}
+
+void Viewer::preDraw() {
+	QGLViewer::preDraw();
+/*
+	if (this->shouldCapture) {
+		std::cerr << "Will capture ... ";
+		if (rdocAPI != nullptr) {
+			// Save in current folder, under 'capture_frameXXX.rdoc'
+			rdocAPI->SetCaptureFilePathTemplate("./rdoc");
+			// Start capture :
+			rdocAPI->StartFrameCapture(NULL, NULL);
+			std::cerr << "started\n";
+		} else {
+			std::cerr << " NOPE !\n";
+		}
+	}
+*/
 }
 
 void Viewer::draw() {
@@ -68,6 +88,24 @@ void Viewer::draw() {
 	}
 }
 
+void Viewer::postDraw() {
+/*	if (this->shouldCapture) {
+		std::cerr << "Trying to end ... ";
+		if (rdocAPI != nullptr) {
+			if (rdocAPI->EndFrameCapture(NULL, NULL) == 0) {
+				std::cerr << "an error occured while capturing the frame !\n";
+			} else {
+				std::cerr << "done.\n";
+			}
+			this->shouldCapture = false;
+		} else {
+			std::cerr << " NOPE !\n";
+		}
+	}*/
+
+	QGLViewer::postDraw();
+}
+
 void Viewer::keyPressEvent(QKeyEvent *e) {
 	switch (e->key()) {
 		/*
@@ -77,7 +115,7 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 			this->scene->recompileShaders();
 			this->update();
 		break;
-		case Qt::Key::Key_C:
+		case Qt::Key::Key_P:
 			this->scene->printVAOStateNext();
 		break;
 		case Qt::Key::Key_V:
@@ -126,6 +164,13 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 		break;
 		case Qt::Key::Key_F4:
 			this->scene->toggleColorOrTexture();
+			this->update();
+		break;
+		/*
+		RENDERDOC
+		*/
+		case Qt::Key::Key_C:
+			this->shouldCapture = true;
 			this->update();
 		break;
 		/*

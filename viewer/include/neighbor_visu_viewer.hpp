@@ -8,6 +8,8 @@
 #include <QGLViewer/qglviewer.h>
 #include <QTimer>
 
+#include <renderdoc_app.h>
+
 #include <memory>
 
 /// @brief A viewer that displays a scene, either in real space or in initial space
@@ -22,8 +24,12 @@ class Viewer : public QGLViewer {
 	protected:
 		/// @brief Initializes the scene, and the viewer's variables.
 		virtual void init() override;
+		/// @brief Custom pre-draw function.
+		virtual void preDraw() override;
 		/// @brief Draws the scene, in the space the viewer is supposed to show.
 		virtual void draw() override;
+		/// @brief Custom post-draw function.
+		virtual void postDraw() override;
 		/// @brief Handles key events from the user.
 		virtual void keyPressEvent(QKeyEvent* e) override;
 	private:
@@ -33,6 +39,8 @@ class Viewer : public QGLViewer {
 		bool drawVolumetric;
 		/// @brief A refresh timer for the viewer, to update in real time.
 		QTimer* refreshTimer;
+		/// @b Should we capture a frame ?
+		bool shouldCapture;
 	public slots:
 		/// @brief Update the view, as a slot without any arguments (currently only used by QTimer)
 		void updateView() { this->update(); }

@@ -4,19 +4,26 @@
 #include <QProgressDialog>
 #include <QMouseEvent>
 
-PlanarViewer::PlanarViewer(Scene* const _scene, planes _p, QWidget* parent) :
-		QGLViewer(parent), sceneToShow(_scene), planeToShow(_p) {
+PlanarViewer::PlanarViewer(Scene* const _scene, planes _p, planeHeading _h, QWidget* parent) :
+		QGLViewer(parent), sceneToShow(_scene), planeToShow(_p), planeOrientation(_h) {
 	this->setGridIsDrawn(false);
 	this->setAxisIsDrawn(false);
 	this->setCameraIsEdited(false);
+
+	this->viewerController = nullptr;
+
 	this->refreshTimer = new QTimer();
-	this->refreshTimer->setInterval(std::chrono::milliseconds(16)); // ~7 ms for 144fps, ~16ms for 60fps and ~33ms for 30 FPS
+	// ~7 ms for 144fps, ~16ms for 60fps and ~33ms for 30 FPS
+	this->refreshTimer->setInterval(std::chrono::milliseconds(500)); // 1/2 second when not updated by the viewer
 	this->refreshTimer->setSingleShot(false);
 	connect(this->refreshTimer, &QTimer::timeout, this, &PlanarViewer::updateView);
 }
 
 PlanarViewer::~PlanarViewer(void) {
 	// Nothing here yet.
+	if (this->viewerController != nullptr) {
+		this->viewerController->unregisterPlaneViewer();
+	}
 }
 
 void PlanarViewer::init(void) {
@@ -33,7 +40,8 @@ void PlanarViewer::init(void) {
 		this->sceneToShow->setDrawModeSolid();
 		progress->setValue(10);
 	}
-	//this->refreshTimer->start();
+
+	this->refreshTimer->start();
 }
 
 void PlanarViewer::draw(void) {
@@ -42,7 +50,7 @@ void PlanarViewer::draw(void) {
 	QSize viewerSize = this->size();
 	glm::vec2 fbDims = glm::vec2(static_cast<float>(viewerSize.width()), static_cast<float>(viewerSize.height()));
 
-	this->sceneToShow->drawPlaneView(fbDims, this->planeToShow);
+	this->sceneToShow->drawPlaneView(fbDims, this->planeToShow, this->planeOrientation);
 }
 
 void PlanarViewer::keyPressEvent(QKeyEvent* _e) {
@@ -70,6 +78,43 @@ void PlanarViewer::mousePressEvent(QMouseEvent* _e) {
 	this->update();
 }
 
+void PlanarViewer::setController(ViewerHeader* _header) {
+	this->viewerController = _header;
+}
+
 void PlanarViewer::updateView() {
+	// Done because for some reason we coundn't connect the signal
+	// from the timer's timeout to the update slot directly. Dumb.
+	this->update();
+}
+
+void PlanarViewer::updatePlaneDepth(int newVal) {
+	float scalar = static_cast<float>(newVal) / 100.f;
+	if (this->planeToShow == planes::x) { this->sceneToShow->slotSetPlaneDisplacementX(scalar); }
+	if (this->planeToShow == planes::y) { this->sceneToShow->slotSetPlaneDisplacementY(scalar); }
+	if (this->planeToShow == planes::z) { this->sceneToShow->slotSetPlaneDisplacementZ(scalar); }
+	this->update();
+}
+
+void PlanarViewer::flipPlaneDirection() {
+	if (this->planeToShow == planes::x) { this->sceneToShow->slotTogglePlaneDirectionX(); }
+	if (this->planeToShow == planes::y) { this->sceneToShow->slotTogglePlaneDirectionY(); }
+	if (this->planeToShow == planes::z) { this->sceneToShow->slotTogglePlaneDirectionZ(); }
+	this->update();
+}
+
+void PlanarViewer::rotatePlaneClockwise() {
+	if (this->planeOrientation == planeHeading::North) { this->planeOrientation = planeHeading::East; }
+	if (this->planeOrientation == planeHeading::East) { this->planeOrientation = planeHeading::South; }
+	if (this->planeOrientation == planeHeading::South) { this->planeOrientation = planeHeading::West; }
+	if (this->planeOrientation == planeHeading::West) { this->planeOrientation = planeHeading::North; }
+	this->update();
+}
+
+void PlanarViewer::rotatePlaneCounterClockwise() {
+	if (this->planeOrientation == planeHeading::North) { this->planeOrientation = planeHeading::West; }
+	if (this->planeOrientation == planeHeading::West) { this->planeOrientation = planeHeading::South; }
+	if (this->planeOrientation == planeHeading::South) { this->planeOrientation = planeHeading::East; }
+	if (this->planeOrientation == planeHeading::East) { this->planeOrientation = planeHeading::North; }
 	this->update();
 }

@@ -28,6 +28,7 @@ class ControlPanel; // Forward declaration
 
 enum DrawMode { Solid, SolidAndWireframe, Wireframe };
 enum planes { x = 1, y = 2, z = 3 };
+enum planeHeading { North = 0, East = 1, South = 2, West = 3, Up = North, Right = East, Down = South, Left = West };
 
 class Scene : public QOpenGLFunctions_4_0_Core {
 		typedef glm::vec<4, unsigned int, glm::defaultp> uvec4;
@@ -52,7 +53,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		/// @brief For the dual-viewer : draw in grid space
 		void drawWithPlanes(GLfloat mvMat[], GLfloat pMat[]);
 		/// @b Draw a given plane 'view' (single plane on the framebuffer).
-		void drawPlaneView(glm::vec2 fbDims, planes _plane);
+		void drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading);
 
 		/// @brief Draws the 3D texture with a volumetric-like visualization method
 		void drawVolumetric(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos);
@@ -97,9 +98,12 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 
 		void slotTogglePolygonMode(bool show);
 		void slotToggleShowTextureCube(bool show);
-		void slotSetPlaneDepthX(float newXCoord);
-		void slotSetPlaneDepthY(float newYCoord);
-		void slotSetPlaneDepthZ(float newZCoord);
+		void slotSetPlaneDisplacementX(float scalar);
+		void slotSetPlaneDisplacementY(float scalar);
+		void slotSetPlaneDisplacementZ(float scalar);
+		void slotTogglePlaneDirectionX();
+		void slotTogglePlaneDirectionY();
+		void slotTogglePlaneDirectionZ();
 		void slotSetMinTexValue(uchar val);
 		void slotSetMaxTexValue(uchar val);
 		void slotSetPlanePositionX(float coord);
@@ -126,7 +130,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		/// @b preps uniforms for a given plane
 		void prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane, bool showTexOnPlane = true);
 		/// @brief prep the plane uniforms to draw in space
-		void prepPlane_SingleUniforms(planes _plane, glm::vec2 fbDims, const std::shared_ptr<DiscreteGrid> _grid);
+		void prepPlane_SingleUniforms(planes _plane, planeHeading _heading, glm::vec2 fbDims, const std::shared_ptr<DiscreteGrid> _grid);
 		/// @b Prints grid info.
 		void printGridInfo(const std::shared_ptr<DiscreteGrid>& grid);
 		/// @b Generate a scale of colors for the program.
@@ -143,6 +147,13 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void printProgramUniforms(const GLuint _pid);
 		/// @b Updates the visibility array to only show values between the min and max tex values
 		void updateVis();
+
+		/// @b Creates the VBO/VAO handles for bounding boxes
+		void createBoundingBoxBuffers();
+		/// @b Updates the VBO/VAO buffers of bounding boxes with new vertices
+		void updateBoundingBoxPositions(const DiscreteGrid::bbox_t& _box);
+		/// @b Draw a bounding box
+		void drawBoundingBox(const DiscreteGrid::bbox_t& _box, GLfloat* vMat, GLfloat* pMat);
 
 		/*************************************/
 		/*************************************/
@@ -185,7 +196,9 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		std::array<glm::vec3, 8> lightPositions; ///< Scene lights (positionned at every corner of the scene BB)
 
 		glm::vec3 planePosition;
-		glm::vec3 planeDepths;
+		glm::vec3 planeDirection;
+		glm::vec3 planeDisplacement;
+		DiscreteGrid::bbox_t sceneBB;
 		glm::vec3 sceneBBPosition;
 		glm::vec3 sceneBBDiag;
 		float clipDistanceFromCamera;
@@ -198,14 +211,18 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		GLuint vboHandle_VertTex;
 		GLuint vboHandle_Element;
 		GLuint vboHandle_PlaneElement;
+		GLuint vboHandle_boundingBoxVertices;
+		GLuint vboHandle_boundingBoxIndices;
 		GLuint vaoHandle;
 		GLuint vaoHandle_VolumetricBuffers;
+		GLuint vaoHandle_boundingBox;
 
 		// Program handles :
 		GLuint programHandle_projectedTex;
 		GLuint programHandle_Plane3D;
 		GLuint programHandle_PlaneViewer;
 		GLuint programHandle_VolumetricViewer;
+		GLuint programHandle_BoundingBox;
 
 		/*************************************/
 		/*************************************/
@@ -230,6 +247,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 
 inline int __GetOpenGLError ( char* szFile, int iLine );
 
+inline unsigned int planeHeadingToIndex(planeHeading _heading);
 
 struct Face {
 	public:

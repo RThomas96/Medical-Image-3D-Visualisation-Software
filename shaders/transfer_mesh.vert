@@ -19,7 +19,6 @@ out vec4 P3_VS;
 out vec3 text3DCoordP3_VS;
 out float instanceId_VS;
 out float visibility_VS;
-//out float gl_ClipDistance[1];
 
 // --------------------------------------------------
 // Uniform variables:
@@ -64,7 +63,7 @@ float ComputeVisibility(vec3 point)
 	float zVis = vis4.z; // ((point.z - cut.z))*cutDirection.z;
 
 	vec4 clippingPoint = vec4(cam, 1.);
-	vec4 clippingNormal = inverse(vMat) * vec4(.0, .0, -1., .0);
+	vec4 clippingNormal = normalize(inverse(vMat) * vec4(.0, .0, -1., .0));
 	clippingPoint += clippingNormal * clipDistanceFromCamera;
 	vec4 pos = point4 - clippingPoint;
 	float vis = dot( clippingNormal, pos );
@@ -122,5 +121,4 @@ void main()
 				.0, .0, .0, 1.);
 */
 	gl_Position = pMat*vMat*viewTransfo*P_VS;
-	//gl_ClipDistance[0] = dot(P_VS, vMat * clipPlane);
 }

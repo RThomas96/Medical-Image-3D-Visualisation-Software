@@ -34,7 +34,6 @@ vec4 voxelValueToColor(in uvec4 ucolor);
 void main() {
 	if (vTexCoords.x > 1. || vTexCoords.y > 1. || vTexCoords.z > 1.) { discard; }
 	if (vTexCoords.x < 0. || vTexCoords.y < 0. || vTexCoords.z < 0.) { discard; }
-	color = texValueToColor(texture(texData, vTexCoords).r);
 	color = voxelValueToColor(texture(texData, vTexCoords));
 }
 
@@ -42,15 +41,23 @@ void main() {
 /************** Functions ***************/
 /****************************************/
 vec4 texValueToColor(in uint value) {
-	if (value < colorBounds.x) { return vec4(.0, .0, .0, 1.); }
-	if (value > colorBounds.y) { return vec4(1., 1., 1., 1.); }
+	if (value < colorBounds.x) { discard; }
+	if (value > colorBounds.y) { discard; }
 	return texture(colorScale, float(value)/255.f);
 }
 
 vec4 voxelValueToColor(in uvec4 ucolor) {
+	if (float(ucolor.r) >= colorBounds.y) {
+		discard;
+	}
+	if (float(ucolor.r) < colorBounds.x) {
+		discard;
+	}
+
+	float sc = float(colorBounds.y) - float(colorBounds.x);
 	float color_k = 2.5;
-	float eosin = float(ucolor.r)/255.;
-	float dna = float(ucolor.g)/255.; // B is on G channel because OpenGL only allows 2 channels upload to be RG, not RB
+	float eosin = (float(ucolor.r) - float(colorBounds.x))/(sc);
+	float dna = (float(ucolor.g) - float(colorBounds.x))/(sc); // B is on G channel because OpenGL only allows 2 channels upload to be RG, not RB
 
 	float eosin_r_coef = 0.050;
 	float eosin_g_coef = 1.000;

@@ -31,15 +31,12 @@ class MainWidget : public QWidget {
 		PlanarViewer* viewer_planeZ; ///< The visualisation of the grid on plane Z
 		ControlPanel* controlPanel; ///< The control panel at the bottom of the grid
 		GridControl* gridController; ///< The control panel for the grid to generate
-		QSlider* xPlaneDepth; ///< The depth of the cutting plane in the texture, on the X axis
-		QSlider* yPlaneDepth; ///< The depth of the cutting plane in the texture, on the Y axis
-		QSlider* zPlaneDepth; ///< The depth of the cutting plane in the texture, on the Z axis
+		ViewerHeader* headerX; ///< Header for the X plane viewer
+		ViewerHeader* headerY; ///< Header for the Y plane viewer
+		ViewerHeader* headerZ; ///< Header for the Z plane viewer
 		Scene* scene; ///< The underlying scene, with the data to display
 		bool widgetSizeSet; ///< Checks if the widget size has been set before
 		std::vector<QObject*> strayObj; ///< Pointers to all temporary objects allocated in the setup process
-		void setXTexCoord(int coordX);
-		void setYTexCoord(int coordY);
-		void setZTexCoord(int coordZ);
 };
 
 #endif // QT_INCLUDE_NEIGHBOR_VISU_MAIN_WIDGET_HPP_

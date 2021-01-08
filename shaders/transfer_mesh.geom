@@ -17,7 +17,6 @@ in vec4 P3_VS[];
 in vec3 text3DCoordP3_VS[];
 in float instanceId_VS[];
 in float visibility_VS[];
-//in float gl_ClipDistance[];
 
 OUTLAYOUT out vec4 P;
 OUTLAYOUT out vec3 text3DCoord;
@@ -75,7 +74,6 @@ void main(void)
 	largestDelta = maxDelta;
 	instanceId = instanceId_VS[idx];
 	visibility = visibility_VS[idx];
-//	gl_ClipDistance[0] = gl_in[idx].gl_ClipDistance[0];
 	EmitVertex();
 
 	idx++;
@@ -95,7 +93,6 @@ void main(void)
 	largestDelta = maxDelta;
 	instanceId = instanceId_VS[idx];
 	visibility = visibility_VS[idx];
-//	gl_ClipDistance[0] = gl_in[idx].gl_ClipDistance[0];
 	EmitVertex();
 
 	idx++;
@@ -115,7 +112,6 @@ void main(void)
 	largestDelta = maxDelta;
 	instanceId = instanceId_VS[idx];
 	visibility = visibility_VS[idx];
-//	gl_ClipDistance[0] = gl_in[idx].gl_ClipDistance[0];
 	EmitVertex();
 
 	EndPrimitive();

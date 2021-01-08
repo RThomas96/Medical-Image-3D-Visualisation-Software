@@ -55,7 +55,6 @@ void main(void)
 	if ((vPos.y+.01) < planeIdxToPlanePosition(2)) { discard; } // the parts of the grid
 	if ((vPos.z+.01) < planeIdxToPlanePosition(3)) { discard; } // behind the planes
 */
-discard;
 	vec4 basecolor= vNorm;
 	uvec3 tex = texture(texData, texCoord).xyz;
 	vec4 colorTex = vec4(.0, .0, .0, .0);

@@ -67,7 +67,7 @@ uniform mat4 pMat;
 uniform vec2 colorBounds;
 
 vec4 voxelIdxToColor(in uvec3 ucolor) {
-	if (float(ucolor.r) > colorBounds.y) {
+	if (float(ucolor.r) >= colorBounds.y) {
 		return vec4(.8, .0, .8, 1.);
 	}
 	if (float(ucolor.r) < colorBounds.x) {
@@ -349,7 +349,7 @@ void getFirstRayVoxelIntersection( in vec3 origin, in vec3 direction, out ivec3 
 void main (void) {
 	if( visibility > 3500. ) discard;
 
-	float epsilon = 0.0;
+	float epsilon = 0.005;
 	float distMin = min(barycentricCoords.x/largestDelta.x, min(barycentricCoords.y/largestDelta.y, barycentricCoords.z/largestDelta.z));
 
 	// Enables a 1-pass wireframe mode :
