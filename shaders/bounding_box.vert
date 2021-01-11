@@ -24,7 +24,8 @@ uniform mat4 vMat;	// View matrix
 /***************** Main *****************/
 /****************************************/
 void main(void) {
-	gl_Position = pMat * vMat * vertexPosition;
+	vPos = pMat * vMat * vertexPosition;
+	gl_Position = vPos;
 }
 
 /****************************************/

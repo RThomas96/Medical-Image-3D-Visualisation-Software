@@ -106,6 +106,8 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void slotTogglePlaneDirectionZ();
 		void slotSetMinTexValue(uchar val);
 		void slotSetMaxTexValue(uchar val);
+		void slotSetMinColorValue(uchar val);
+		void slotSetMaxColorValue(uchar val);
 		void slotSetPlanePositionX(float coord);
 		void slotSetPlanePositionY(float coord);
 		void slotSetPlanePositionZ(float coord);
@@ -192,6 +194,8 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		bool colorOrTexture; ///< do we use the RGB2HSV function or the color scale ?
 		uchar minTexVal;
 		uchar maxTexVal;
+		uchar minColorVal;
+		uchar maxColorVal;
 
 		std::array<glm::vec3, 8> lightPositions; ///< Scene lights (positionned at every corner of the scene BB)
 

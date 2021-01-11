@@ -24,12 +24,8 @@ class Viewer : public QGLViewer {
 	protected:
 		/// @brief Initializes the scene, and the viewer's variables.
 		virtual void init() override;
-		/// @brief Custom pre-draw function.
-		virtual void preDraw() override;
 		/// @brief Draws the scene, in the space the viewer is supposed to show.
 		virtual void draw() override;
-		/// @brief Custom post-draw function.
-		virtual void postDraw() override;
 		/// @brief Handles key events from the user.
 		virtual void keyPressEvent(QKeyEvent* e) override;
 	private:

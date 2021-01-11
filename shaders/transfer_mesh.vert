@@ -53,7 +53,6 @@ ivec2 Convert1DIndexTo2DIndex_Unnormed( in uint uiIndexToConvert, in int iWrapSi
 
 float ComputeVisibility(vec3 point)
 {
-	mat4 iGrid = mat4(1.); //mMat;
 	vec4 point4 = vec4(point, 1.);
 	vec4 cut4 = vec4(cut, 1.);
 	vec4 vis4 = point4 - cut4;
@@ -112,13 +111,5 @@ void main()
 
 	visibility_VS += ComputeVisibility(P0_VS.xyz);
 
-	// variable to toggle the use of the grid transformation matrix :
-	mat4 viewTransfo = mat4(1.f);
-/*
-	viewTransfo = mat4(1., .0, .0, .0,
-				.0, 1., .0, .0,
-				.0, .0, 30., .0,
-				.0, .0, .0, 1.);
-*/
-	gl_Position = pMat*vMat*viewTransfo*P_VS;
+	gl_Position = pMat*vMat*P_VS;
 }

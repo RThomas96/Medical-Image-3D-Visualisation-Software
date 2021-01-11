@@ -65,19 +65,18 @@ uniform mat4 vMat;
 uniform mat4 pMat;
 
 uniform vec2 colorBounds;
+uniform vec2 textureBounds;
 
 vec4 voxelIdxToColor(in uvec3 ucolor) {
-	if (float(ucolor.r) >= colorBounds.y) {
-		return vec4(.8, .0, .8, 1.);
-	}
-	if (float(ucolor.r) < colorBounds.x) {
-		return vec4(.0, .8, .8, 1.);
-	}
+	// Have the R and G color channels clamped to the min/max of the scale
+	// (mimics under or over-exposure)
+	float color_r = clamp(float(ucolor.r), colorBounds.x, colorBounds.y);
+	float color_g = clamp(float(ucolor.g), colorBounds.x, colorBounds.y);
 	// Compute the color as Brian's paper describes it :
 	float color_k = 2.5;
 	float sc = colorBounds.y - colorBounds.x;
-	float eosin = (float(ucolor.r) - colorBounds.x)/(sc);
-	float dna = (float(ucolor.g) - colorBounds.x)/(sc); // B is on G channel because OpenGL only allows 2 channels upload to be RG, not RB
+	float eosin = (color_r - colorBounds.x)/(sc);
+	float dna = (color_g - colorBounds.x)/(sc); // B is on G channel because OpenGL only allows 2 channels upload to be RG, not RB
 
 	float eosin_r_coef = 0.050;
 	float eosin_g_coef = 1.000;
@@ -101,7 +100,6 @@ vec4 voxelIdxToColor(in uvec3 ucolor) {
 
 bool ComputeVisibility(vec3 point)
 {
-	mat4 iGrid = mat4(1.); //mMat;
 	vec4 point4 = vec4(point, 1.);
 	vec4 cut4 = vec4(cut, 1.);
 	vec4 vis4 = point4 - cut4;
@@ -349,7 +347,7 @@ void getFirstRayVoxelIntersection( in vec3 origin, in vec3 direction, out ivec3 
 void main (void) {
 	if( visibility > 3500. ) discard;
 
-	float epsilon = 0.005;
+	float epsilon = 0.00;
 	float distMin = min(barycentricCoords.x/largestDelta.x, min(barycentricCoords.y/largestDelta.y, barycentricCoords.z/largestDelta.z));
 
 	// Enables a 1-pass wireframe mode :
@@ -402,23 +400,12 @@ void main (void) {
 
 	//Find the first intersection of the ray with the grid
 	getFirstRayVoxelIntersection(Current_P, V, origin_voxel, t_next );
-	/*
-	// IT WORKS ! (up until now)
-	colorOut.xyz = Current_P/vec3(2048, 2048, 400);
-	return;
-	*/
 
 	vec3 dt = vec3( abs(voxelSize.x/V.x), abs(voxelSize.y/V.y), abs(voxelSize.z/V.z) );
 
 	/***********************************************/
 
 	vec3 Current_text3DCoord;
-	/*
-	Current_text3DCoord = text3DCoord;
-	uint voxInd = texture(Mask, (Current_text3DCoord)).x;
-	colorOut = texture(color_texture, float(voxInd)/255.).yxzw;
-	return;
-	*/
 
 	vec4 Pos;
 
@@ -494,7 +481,6 @@ void main (void) {
 		} else {
 			in_tet = false;
 		}
-
 
 	}
 

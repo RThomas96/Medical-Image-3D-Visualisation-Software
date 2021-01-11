@@ -22,4 +22,9 @@ the compiled code, by enabling or disabling certain parts of it.
 
 //#define LOAD_RED_AND_BLUE_IMAGE_STACKS
 
+/*
+#include <renderdoc_app.h>
+extern RENDERDOC_API_1_4_1* rdocAPI;
+*/
+
 #endif // FEATURES_HPP

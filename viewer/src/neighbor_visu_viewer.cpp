@@ -1,5 +1,6 @@
 #include "../include/neighbor_visu_viewer.hpp"
 #include "../../image/include/writer.hpp"
+#include "../../features.hpp"
 
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -51,24 +52,6 @@ void Viewer::init() {
 	this->refreshTimer->start(); // Update every 'n' milliseconds from here on out
 }
 
-void Viewer::preDraw() {
-	QGLViewer::preDraw();
-/*
-	if (this->shouldCapture) {
-		std::cerr << "Will capture ... ";
-		if (rdocAPI != nullptr) {
-			// Save in current folder, under 'capture_frameXXX.rdoc'
-			rdocAPI->SetCaptureFilePathTemplate("./rdoc");
-			// Start capture :
-			rdocAPI->StartFrameCapture(NULL, NULL);
-			std::cerr << "started\n";
-		} else {
-			std::cerr << " NOPE !\n";
-		}
-	}
-*/
-}
-
 void Viewer::draw() {
 	GLfloat mvMat[16];
 	GLfloat pMat[16];
@@ -86,24 +69,6 @@ void Viewer::draw() {
 	} else {
 		this->scene->drawWithPlanes(mvMat, pMat);
 	}
-}
-
-void Viewer::postDraw() {
-/*	if (this->shouldCapture) {
-		std::cerr << "Trying to end ... ";
-		if (rdocAPI != nullptr) {
-			if (rdocAPI->EndFrameCapture(NULL, NULL) == 0) {
-				std::cerr << "an error occured while capturing the frame !\n";
-			} else {
-				std::cerr << "done.\n";
-			}
-			this->shouldCapture = false;
-		} else {
-			std::cerr << " NOPE !\n";
-		}
-	}*/
-
-	QGLViewer::postDraw();
 }
 
 void Viewer::keyPressEvent(QKeyEvent *e) {

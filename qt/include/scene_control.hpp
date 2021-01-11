@@ -30,9 +30,8 @@ class ControlPanel : public QWidget {
 		Scene* const sceneToControl;
 		QSpinBox* minValueTexture; ///< Spinbox to determine the min value in the texture which constitutes viable information
 		QSpinBox* maxValueTexture; ///< Spinbox to determine the max value in the texture which constitutes viable information
-		QDoubleSpinBox* xPlanePos; ///< Box to determine the coordinate of the minimum X cutting plane
-		QDoubleSpinBox* yPlanePos; ///< Box to determine the coordinate of the minimum Y cutting plane
-		QDoubleSpinBox* zPlanePos; ///< Box to determine the coordinate of the minimum Z cutting plane
+		QSpinBox* minValueColor; ///< Spinbox to determine the min color value to determine the color scale
+		QSpinBox* maxValueColor; ///< Spinbox to determine the max color value to determine the color scale
 		QWidget* controlContainer;
 		Viewer* leftViewer;
 		Viewer* rightViewer;
@@ -42,6 +41,8 @@ class ControlPanel : public QWidget {
 		void setTexCube(bool show);
 		void setMinTexVal(int val);
 		void setMaxTexVal(int val);
+		void setMinColVal(int val);
+		void setMaxColVal(int val);
 		void setClipDistance(double val);
 		void setCutPlaneXPos(double val);
 		void setCutPlaneYPos(double val);
