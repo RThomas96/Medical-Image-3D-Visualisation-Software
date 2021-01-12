@@ -91,6 +91,8 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		glm::vec3 getPlanePositions(void) { return this->planePosition; } ///< Get the cutting planes' positions
 		uint getMinTexValue(void) const { return this->minTexVal; }
 		uint getMaxTexValue(void) const { return this->maxTexVal; }
+		uint getMinColorValue(void) const { return this->minColorVal; }
+		uint getMaxColorValue(void) const { return this->maxColorVal; }
 
 		void writeGridDIM(const std::string name);
 
@@ -112,6 +114,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void slotSetPlanePositionY(float coord);
 		void slotSetPlanePositionZ(float coord);
 		void slotSetClipDistance(double val) { this->clipDistanceFromCamera = static_cast<float>(val); return; }
+		void setPlaneHeading(planes _plane, planeHeading _heading);
 	private :
 		/// @b compile the given shader at 'path' as a shader of type 'shaType'
 		GLuint compileShader(const std::string& path, const GLenum shaType, bool verbose = false);
@@ -122,7 +125,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		/// @b Generates the vertices, normals, and tex coordinates for a basic unit cube
 		void generateTexCube(std::vector<glm::vec4>& vertPos, std::vector<glm::vec4>& vertNorm, std::vector<glm::vec3>& vertTex, std::vector<unsigned int>& vertIdx);
 		/// @b Generates the plane's vertices array indexes
-		void generatePlanesArray(std::vector<unsigned int>& idx);
+		void generatePlanesArray(std::vector<glm::vec4>& vert, std::vector<glm::vec4>& norm, std::vector<glm::vec3>& tex, std::vector<unsigned int>& idx, std::vector<unsigned int>& single_plane_idx);
 		/// @b computes the transformation matrix of the input grid
 		glm::mat4 computeTransformationMatrix() const;
 		/// @b preps uniforms for a grid
@@ -140,7 +143,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		/// @b Uploads the color scale to OpenGL
 		void uploadColorScale(const std::vector<float>& colorScale);
 		/// @b setup the buffers' data
-		void setupVBOData(const std::vector<glm::vec4>& vertPos, const std::vector<glm::vec4>& vertNorm, const std::vector<glm::vec3>& vertTex, const std::vector<unsigned int>& vertIdx, const std::vector<unsigned int>& vertIdx_plane);
+		void setupVBOData(const std::vector<glm::vec4>& vertPos, const std::vector<glm::vec4>& vertNorm, const std::vector<glm::vec3>& vertTex, const std::vector<unsigned int>& vertIdx, const std::vector<unsigned int>& vertIdx_plane, const std::vector<unsigned int>& vertIdx_singe_plane);
 		/// @b setup the vao binding setup
 		void setupVAOPointers();
 		/// @b bind the textures to use them later
@@ -152,10 +155,8 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 
 		/// @b Creates the VBO/VAO handles for bounding boxes
 		void createBoundingBoxBuffers();
-		/// @b Updates the VBO/VAO buffers of bounding boxes with new vertices
-		void updateBoundingBoxPositions(const DiscreteGrid::bbox_t& _box);
 		/// @b Draw a bounding box
-		void drawBoundingBox(const DiscreteGrid::bbox_t& _box, GLfloat* vMat, GLfloat* pMat);
+		void drawBoundingBox(const DiscreteGrid::bbox_t& _box, glm::vec4 color, GLfloat* vMat, GLfloat* pMat);
 
 		/*************************************/
 		/*************************************/
@@ -215,6 +216,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		GLuint vboHandle_VertTex;
 		GLuint vboHandle_Element;
 		GLuint vboHandle_PlaneElement;
+		GLuint vboHandle_SinglePlaneElement;
 		GLuint vboHandle_boundingBoxVertices;
 		GLuint vboHandle_boundingBoxIndices;
 		GLuint vaoHandle;

@@ -23,9 +23,11 @@ uniform mat4 projection_Mat;	// Projection matrix
 uniform mat4 gridTransform;	// The transform used by the grid to change space from grid to world
 uniform vec3 sceneBBPosition;	// The scene's bounding box position
 uniform vec3 sceneBBDiagonal;	// The scene's bounding box diagonal
+uniform vec3 gridBBPosition;	// The grid's bounding box position
+uniform vec3 gridBBDiagonal;	// The grid's bouding box diagonal
 uniform vec3 gridSize;		// The size of the grid's bounding box in world space
 uniform vec3 gridDimensions;	// The dimensions of the grid
-uniform vec3 planePosition;	// World-space positions of all planes, along the axis they cut
+uniform vec3 planePositions;	// World-space positions of all planes, along the axis they cut
 uniform int currentPlane;	// Plane identifier : 1 (x), 2 (y), 3 (z)
 
 /****************************************/
@@ -42,8 +44,8 @@ vec4 planeIdxToPlaneSize(int id);
 void main(void) {
 	mat4 norMat = inverse(transpose(model_Mat));
 	vec4 gridSize4 = vec4(gridSize, 1.);
-	vec4 planePosition4 = vec4(planePosition, .0);
-	vec4 gridDimensions4 = vec4(gridDimensions, .0);
+	vec4 planePosition4 = vec4(planePositions, .0);
+	vec4 gridDimensions4 = vec4(gridDimensions, 1.);
 	vec4 sceneBBPosition4 = vec4(sceneBBPosition, .0);
 
 	/*
@@ -51,8 +53,9 @@ void main(void) {
 	the correct displacement in order to get the 'real' position of a vertex within that plane.
 	*/
 	vec4 vPos_ws = sceneBBPosition4 + (vertexPosition * gridSize4) + planeIdxToPlanePosition(currentPlane);
+	// We want to make the positions go from WS to GS, so invert the matrix to transform :
 	vec4 vPos_gs = inverse(gridTransform) * vPos_ws;
-	vec4 vPos_ts = vPos_gs / gridDimensions4;
+	vec4 vPos_ts = (vPos_gs) / gridDimensions4;
 
 	vPos = vPos_ws;
 	vNorm = norMat * vertexNormal;
@@ -67,7 +70,7 @@ void main(void) {
 
 vec4 planeIdxToPlanePosition(int id) {
 	// displacement to apply :
-	vec3 diff = planePosition - sceneBBPosition;
+	vec3 diff = planePositions - sceneBBPosition;
 	vec4 displ = vec4(.0, .0, .0, .0);
 	if (id == 1) { displ.x = diff.x; }
 	if (id == 2) { displ.y = diff.y; }

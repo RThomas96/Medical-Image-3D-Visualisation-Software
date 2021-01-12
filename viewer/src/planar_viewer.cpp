@@ -45,7 +45,7 @@ void PlanarViewer::init(void) {
 }
 
 void PlanarViewer::draw(void) {
-	glClearColor(.8, .8, .8, 1.);
+	glClearColor(.0, .0, .0, 1.);
 
 	QSize viewerSize = this->size();
 	glm::vec2 fbDims = glm::vec2(static_cast<float>(viewerSize.width()), static_cast<float>(viewerSize.height()));
@@ -97,6 +97,8 @@ void PlanarViewer::updatePlaneDepth(int newVal) {
 }
 
 void PlanarViewer::flipPlaneDirection() {
+	// The plane inversion doesn't happen here (only visible in 3D view) however the buttons to control it
+	// are contained in the headers of the planar viewers. Thus, it must be placed here.
 	if (this->planeToShow == planes::x) { this->sceneToShow->slotTogglePlaneDirectionX(); }
 	if (this->planeToShow == planes::y) { this->sceneToShow->slotTogglePlaneDirectionY(); }
 	if (this->planeToShow == planes::z) { this->sceneToShow->slotTogglePlaneDirectionZ(); }
@@ -108,6 +110,7 @@ void PlanarViewer::rotatePlaneClockwise() {
 	if (this->planeOrientation == planeHeading::East) { this->planeOrientation = planeHeading::South; }
 	if (this->planeOrientation == planeHeading::South) { this->planeOrientation = planeHeading::West; }
 	if (this->planeOrientation == planeHeading::West) { this->planeOrientation = planeHeading::North; }
+	this->sceneToShow->setPlaneHeading(this->planeToShow, this->planeOrientation);
 	this->update();
 }
 
@@ -116,5 +119,6 @@ void PlanarViewer::rotatePlaneCounterClockwise() {
 	if (this->planeOrientation == planeHeading::West) { this->planeOrientation = planeHeading::South; }
 	if (this->planeOrientation == planeHeading::South) { this->planeOrientation = planeHeading::East; }
 	if (this->planeOrientation == planeHeading::East) { this->planeOrientation = planeHeading::North; }
+	this->sceneToShow->setPlaneHeading(this->planeToShow, this->planeOrientation);
 	this->update();
 }

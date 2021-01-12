@@ -42,7 +42,7 @@ uniform uint visiblity_map[256];
 // Phong :
 uniform float diffuseRef;
 uniform float specRef;
-uniform float shininess;
+// uniform float shininess;
 // Light positions
 uniform vec3 lightPositions[8];
 
@@ -351,10 +351,13 @@ void main (void) {
 	float distMin = min(barycentricCoords.x/largestDelta.x, min(barycentricCoords.y/largestDelta.y, barycentricCoords.z/largestDelta.z));
 
 	// Enables a 1-pass wireframe mode :
-	if (distMin < epsilon) { // && visibility > 0.) {
-		colorOut = vec4(.8, .1, .1, 1.);
+	if (distMin < epsilon && visibility > 0.) {
+		float factor = (visibility/3500.);
+		colorOut = vec4(1.-factor, factor, 1.-factor, 1.);
 		return;
 	}
+
+	// if (ComputeVisibility(P.xyz) == false) { discard; }
 
 	/**
 	A little reminder here :
@@ -494,7 +497,7 @@ void main (void) {
 		vec3 v = normalize(cam-p);
 
 		vec3 lightP = lightPositions[i];
-		vec3 lightSpecular = vec3(.5, .5, .5);
+		vec3 lightSpecular = vec3(.2, .2, .2);
 
 		vec3 l = normalize (lightP - p);
 		l.z = l.z*-1.;
@@ -505,11 +508,11 @@ void main (void) {
 		vec3 r = 2. * ndotl * n - l;
 
 		float spec = max(dot(r, v), 0.0);
-		spec = pow (spec, shininess);
+		spec = pow (spec, 5.);
 		spec = max (0.0, spec);
 
 		vec3 LightContribution = diffuseRef * diffuse * color.xyz + specRef * spec * lightSpecular * 4;
-		float factor = .125;
+		float factor = .25;
 		colorOut += factor * vec4(LightContribution, 1.);
 	}
 

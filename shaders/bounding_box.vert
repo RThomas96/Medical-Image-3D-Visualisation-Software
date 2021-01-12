@@ -3,7 +3,7 @@
 /****************************************/
 /**************** Inputs ****************/
 /****************************************/
-layout(location=0) in vec4 vertexPosition;	// Vertex position, in world space
+layout(location=0) in vec3 vertexPosition;	// Vertex position, in world space
 
 /****************************************/
 /*************** Outputs ****************/
@@ -15,6 +15,8 @@ out vec4 vPos;
 /****************************************/
 uniform mat4 pMat;	// Projection matrix
 uniform mat4 vMat;	// View matrix
+uniform vec3 bbSize;	// Bounding box dimensions
+uniform vec3 bbPos;	// Bounding box original position (min point)
 
 /****************************************/
 /*********** Function headers ***********/
@@ -24,8 +26,9 @@ uniform mat4 vMat;	// View matrix
 /***************** Main *****************/
 /****************************************/
 void main(void) {
-	vPos = pMat * vMat * vertexPosition;
-	gl_Position = vPos;
+	vPos = vec4(.0, .0, .0, 1.);
+	vPos.xyz = bbPos + (vertexPosition.xyz * bbSize);
+	gl_Position = pMat * vMat * vPos;
 }
 
 /****************************************/

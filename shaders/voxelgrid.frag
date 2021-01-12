@@ -15,6 +15,8 @@ out vec4 color;
 
 uniform uint minTexVal;
 uniform uint maxTexVal;
+uniform vec2 texBounds;		// Min/max values of the texture to show.
+uniform vec2 colorBounds;	// Min/max values to compute the color scale
 uniform uint colorOrTexture;
 
 // Draw modes :
@@ -31,6 +33,7 @@ uniform vec3 sceneBBPosition;
 uniform vec3 sceneBBDiagonal;
 uniform vec3 voxelGridSize;
 uniform vec3 planePositions;
+uniform vec3 planeDirections;
 
 /// Takes a uvec3 of an R8UI-based texture and spits out an RGB color by converting
 /// from R(uchar)G(void)B(void) to HSV first, then to RGB
@@ -42,6 +45,8 @@ vec4 R8UItoColorScale(in uvec3 ucolor);
 vec4 R8UIConversion(in uvec3 ucolor);
 // Get a plane's coordinate in its axis.
 float planeIdxToPlanePosition(int id);
+// Checks a fragment is visible, according to the plane positions and directions.
+bool isFragmentVisible();
 
 // 'k' taken from Brian's paper
 float color_k = 2.5;
@@ -49,9 +54,7 @@ float color_k = 2.5;
 void main(void)
 {
 	// Compute the cutting plane position so that we can threshold the fragments :
-	if (vPos_WS.x < planeIdxToPlanePosition(1)) { discard; } // Early discards for
-	if (vPos_WS.y < planeIdxToPlanePosition(2)) { discard; } // the parts of the grid
-	if (vPos_WS.z < planeIdxToPlanePosition(3)) { discard; } // behind the planes
+	if (isFragmentVisible() == false) { discard; }
 
 	float epsilon = .03;
 	float distMin = min(barycentricCoords.x/largestDelta.x, min(barycentricCoords.y/largestDelta.y, barycentricCoords.z/largestDelta.z));
@@ -81,23 +84,16 @@ void main(void)
 }
 
 vec4 R8UIToRGB(in uvec3 ucolor) {
-/*
-	if (ucolor.r < minTexVal) { return vec4(.0, .0, .0, 1.); }
-	if (ucolor.r > maxTexVal) { return vec4(1., 1., 1., 1.); }
-	float a = float(minTexVal) / 255.f;
-	float b = float(maxTexVal) / 255.f;
-	float c = 50.f / 255.f;
-	float d = 200.f / 255.f;
-	// Get the red component in floating point :
-	float r = 1.f - ((b - a) / (d - c)) * ((float(ucolor.r)/255.f)-c)+a;
-	// Convert to HSV space (from glsl-hsv2rgb on github) :
-	vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
-	vec3 p = abs(fract(vec3(r,r,r) + K.xyz) * 6.0 - K.www);
-	vec3 rgb = mix(K.xxx, clamp(p - K.xxx, .1, .7), r); // change min/max vals of clamp() to change saturation
-	return vec4(rgb.r, rgb.g, rgb.b, 1.0);
-*/
-	float eosin = float(ucolor.r)/255.;
-	float dna = float(ucolor.g)/255.; // B is on G channel because OpenGL only allows 2 channels upload to be RG, not RB
+	float color_r = float(ucolor.r);
+	float color_g = float(ucolor.g);
+	// Check if we're in the colorscale :
+	color_r = clamp(float(ucolor.r), colorBounds.x, colorBounds.y);
+	color_g = clamp(float(ucolor.g), colorBounds.x, colorBounds.y);
+	// Compute the color as Brian's paper describes it :
+	float color_k = 2.5;
+	float sc = colorBounds.y - colorBounds.x;
+	float eosin = (color_r - colorBounds.x)/(sc);
+	float dna = (color_g - colorBounds.x)/(sc); // B is on G channel because OpenGL only allows 2 channels upload to be RG, not RB
 
 	float eosin_r_coef = 0.050;
 	float eosin_g_coef = 1.000;
@@ -141,4 +137,12 @@ float planeIdxToPlanePosition(int id) {
 	if (id == 2) { return diff.y; }
 	if (id == 3) { return diff.z; }
 	return 0.f;
+}
+
+bool isFragmentVisible() {
+	float epsilon = .01f;
+	if (((vPos_WS.x - planePositions.x) * planeDirections.x + epsilon) < .0f) { return false; }
+	if (((vPos_WS.y - planePositions.y) * planeDirections.y + epsilon) < .0f) { return false; }
+	if (((vPos_WS.z - planePositions.z) * planeDirections.z + epsilon) < .0f) { return false; }
+	return true;
 }

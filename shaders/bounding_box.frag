@@ -5,7 +5,7 @@
 /****************************************/
 /**************** Inputs ****************/
 /****************************************/
-layout(location=0) in vec4 vertexPosition;	// Vertex position, in world space
+layout(location=0) in vec4 vPos;	// Vertex position, in world space
 
 /****************************************/
 /*************** Outputs ****************/
@@ -18,6 +18,8 @@ out vec4 color;
 uniform mat4 pMat;	// Projection matrix
 uniform mat4 vMat;	// View matrix
 uniform vec4 bbColor = vec4(.257, .257, .257, 1.);	// Default BB color = mid-gray
+uniform vec3 bbSize;	// Bounding box dimensions
+uniform vec3 bbPos;	// Bounding box original position (min point)
 
 /****************************************/
 /*********** Function headers ***********/
@@ -27,7 +29,8 @@ uniform vec4 bbColor = vec4(.257, .257, .257, 1.);	// Default BB color = mid-gra
 /***************** Main *****************/
 /****************************************/
 void main(void) {
-	color = vec4(.0, .0, .0, 1.);
+	color = bbColor;
+	return;
 }
 
 /****************************************/

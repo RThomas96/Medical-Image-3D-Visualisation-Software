@@ -5,6 +5,7 @@
 #include <QLabel>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
+#include <QGridLayout>
 
 ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, Viewer* rv, QWidget* parent) : QWidget(parent), sceneToControl(scene), leftViewer(lv), rightViewer(rv) {
 	// Once again, a long constructor because of the verbosity of
@@ -31,7 +32,7 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, Viewer* rv, QWidget* 
 	this->maxValueTexture->setValue(255);
 
 	this->minValueColor->setRange(0, 255);
-	this->minValueColor->setValue(0);
+	this->minValueColor->setValue(1);
 	this->maxValueColor->setRange(0, 255);
 	this->maxValueColor->setValue(255);
 
@@ -40,26 +41,40 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, Viewer* rv, QWidget* 
 	QLabel* minColorLabel = new QLabel("Min color value");
 	QLabel* maxColorLabel = new QLabel("Min color value");
 
-	// Create containers layouts :
-	QVBoxLayout* texContainer = new QVBoxLayout();
-	QVBoxLayout* colContainer = new QVBoxLayout();
-	QVBoxLayout* cutMinContainer = new QVBoxLayout();
-	QHBoxLayout* allContainer = new QHBoxLayout(this->controlContainer);
+	QLabel* label_Color = new QLabel("Color intensities : ");
+	QLabel* label_Texture = new QLabel("Texture intensities : ");
+	QLabel* label_Min = new QLabel("Minimum");
+	QLabel* label_Max = new QLabel("Maximum");
 
-	texContainer->addWidget(minTexLabel);
-	texContainer->addWidget(this->minValueTexture);
-	texContainer->addWidget(maxTexLabel);
-	texContainer->addWidget(this->maxValueTexture);
+	label_Color->setToolTip("Controls the minimum/maximum values for the color scale computation.");
+	label_Texture->setToolTip("Controls the minimum/maximum intensity values visible in the grid.");
 
-	colContainer->addWidget(minColorLabel);
-	colContainer->addWidget(this->minValueColor);
-	colContainer->addWidget(maxColorLabel);
-	colContainer->addWidget(this->maxValueColor);
+	/**
+	 * The widgets in this widget will be laid out on a grid layout, with the following arragement :
+	 * Row 0 : MIN and MAX labels for the columns below
+	 * Row 1 : Color control. This will include a label for color intensity, and the spinboxes to control the color
+	 *         bounds given to the shader programs when drawing the grid(s).
+	 * Row 2 : Texture control. This will include a label for texture intensity, and the spinboxes to control the
+	 *         texure bounds given to the shader programs to compute visibility of different subdomains.
+	 * Row 3 : Camera cutting plane control
+	 */
 
-	allContainer->addLayout(colContainer);
-	allContainer->addLayout(texContainer);
-	allContainer->addLayout(cutMinContainer);
-	allContainer->addWidget(this->clipDistance);
+	// Grid layout for this widget.
+	QGridLayout* grid = new QGridLayout();
+
+	grid->addWidget(label_Min, 0, 1, Qt::AlignCenter);
+	grid->addWidget(label_Max, 0, 2, Qt::AlignCenter);
+	grid->addWidget(label_Color, 1, 0, Qt::AlignRight | Qt::AlignVCenter);
+	grid->addWidget(this->minValueColor, 1, 1, Qt::AlignCenter);
+	grid->addWidget(this->maxValueColor, 1, 2, Qt::AlignCenter);
+	grid->addWidget(label_Texture, 2, 0, Qt::AlignRight | Qt::AlignVCenter);
+	grid->addWidget(this->minValueTexture, 2, 1, Qt::AlignCenter);
+	grid->addWidget(this->maxValueTexture, 2, 2, Qt::AlignCenter);
+	grid->addWidget(this->clipDistance, 3, 0, 1, 3, Qt::AlignCenter);
+	this->controlContainer->setLayout(grid);
+
+	grid->setColumnStretch(1, 0);
+	grid->setColumnStretch(2, 0);
 
 	// Disable by default the top level container :
 	this->controlContainer->setEnabled(false);
@@ -122,12 +137,17 @@ void ControlPanel::activatePanels(bool activeStatus) {
 
 void ControlPanel::updateValues(void) {
 	if (this->sceneToControl == nullptr) { return; }
-	glm::vec3 pos = this->sceneToControl->getPlanePositions();
 	this->blockSignals(true);
 	this->minValueTexture->blockSignals(true);
 	this->maxValueTexture->blockSignals(true);
+	this->minValueColor->blockSignals(true);
+	this->maxValueColor->blockSignals(true);
 	this->minValueTexture->setValue(this->sceneToControl->getMinTexValue());
 	this->maxValueTexture->setValue(this->sceneToControl->getMaxTexValue());
+	this->minValueColor->setValue(this->sceneToControl->getMinColorValue());
+	this->maxValueColor->setValue(this->sceneToControl->getMaxColorValue());
+	this->maxValueColor->blockSignals(false);
+	this->minValueColor->blockSignals(false);
 	this->maxValueTexture->blockSignals(false);
 	this->minValueTexture->blockSignals(false);
 	this->blockSignals(false);

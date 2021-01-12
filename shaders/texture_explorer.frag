@@ -6,7 +6,8 @@
 /**************** Inputs ****************/
 /****************************************/
 layout(location = 0) in vec4 vPos;		// The vertex's positions
-layout(location = 1) in vec3 vTexCoords;	// The vertex's texture coordinates
+layout(location = 1) in vec4 vNorm;		// The vertex's normal
+layout(location = 2) in vec3 vTexCoords;	// The vertex's texture coordinates
 
 /****************************************/
 /*************** Outputs ****************/
@@ -31,9 +32,11 @@ vec4 voxelValueToColor(in uvec4 ucolor);
 /***************** Main *****************/
 /****************************************/
 void main() {
-	if (vTexCoords.x > 1. || vTexCoords.y > 1. || vTexCoords.z > 1.) { discard; }
-	if (vTexCoords.x < 0. || vTexCoords.y < 0. || vTexCoords.z < 0.) { discard; }
-	color = voxelValueToColor(texture(texData, vTexCoords));
+	//if (vTexCoords.x > 1. || vTexCoords.y > 1. || vTexCoords.z > 1.) { discard; }
+	//if (vTexCoords.x < 0. || vTexCoords.y < 0. || vTexCoords.z < 0.) { discard; }
+	// color = voxelValueToColor(texture(texData, vTexCoords));
+	color = abs(normalize(vNorm));
+	color = vec4(1., .0, 1., 1.);
 }
 
 /****************************************/
