@@ -45,15 +45,13 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		/// @brief reload the default shader files
 		void recompileShaders(bool verbose = true);
 
-		/// @brief For the dual-viewer : draw in real space
-		void drawGridOnly(GLfloat mvMat[], GLfloat pMat[]);
 		/// @brief draw the planes, in the real space
 		void drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane = true);
 
-		/// @brief For the dual-viewer : draw in grid space
+		/// @brief Draws the scene in world-space, along with planes.
 		void drawWithPlanes(GLfloat mvMat[], GLfloat pMat[]);
 		/// @b Draw a given plane 'view' (single plane on the framebuffer).
-		void drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading);
+		void drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading, GLfloat* vMat, GLfloat* pMat);
 
 		/// @brief Draws the 3D texture with a volumetric-like visualization method
 		void drawVolumetric(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos);

@@ -45,12 +45,17 @@ void PlanarViewer::init(void) {
 }
 
 void PlanarViewer::draw(void) {
-	glClearColor(.0, .0, .0, 1.);
+	glClearColor(.8, .8, .8, 1.);
+
+	GLfloat mvMat[16];
+	GLfloat pMat[16];
+	this->camera()->getModelViewMatrix(mvMat);
+	this->camera()->getProjectionMatrix(pMat);
 
 	QSize viewerSize = this->size();
 	glm::vec2 fbDims = glm::vec2(static_cast<float>(viewerSize.width()), static_cast<float>(viewerSize.height()));
 
-	this->sceneToShow->drawPlaneView(fbDims, this->planeToShow, this->planeOrientation);
+	this->sceneToShow->drawPlaneView(fbDims, this->planeToShow, this->planeOrientation, mvMat, pMat);
 }
 
 void PlanarViewer::keyPressEvent(QKeyEvent* _e) {
@@ -107,18 +112,18 @@ void PlanarViewer::flipPlaneDirection() {
 
 void PlanarViewer::rotatePlaneClockwise() {
 	if (this->planeOrientation == planeHeading::North) { this->planeOrientation = planeHeading::East; }
-	if (this->planeOrientation == planeHeading::East) { this->planeOrientation = planeHeading::South; }
-	if (this->planeOrientation == planeHeading::South) { this->planeOrientation = planeHeading::West; }
-	if (this->planeOrientation == planeHeading::West) { this->planeOrientation = planeHeading::North; }
+	else if (this->planeOrientation == planeHeading::East) { this->planeOrientation = planeHeading::South; }
+	else if (this->planeOrientation == planeHeading::South) { this->planeOrientation = planeHeading::West; }
+	else if (this->planeOrientation == planeHeading::West) { this->planeOrientation = planeHeading::North; }
 	this->sceneToShow->setPlaneHeading(this->planeToShow, this->planeOrientation);
 	this->update();
 }
 
 void PlanarViewer::rotatePlaneCounterClockwise() {
 	if (this->planeOrientation == planeHeading::North) { this->planeOrientation = planeHeading::West; }
-	if (this->planeOrientation == planeHeading::West) { this->planeOrientation = planeHeading::South; }
-	if (this->planeOrientation == planeHeading::South) { this->planeOrientation = planeHeading::East; }
-	if (this->planeOrientation == planeHeading::East) { this->planeOrientation = planeHeading::North; }
+	else if (this->planeOrientation == planeHeading::West) { this->planeOrientation = planeHeading::South; }
+	else if (this->planeOrientation == planeHeading::South) { this->planeOrientation = planeHeading::East; }
+	else if (this->planeOrientation == planeHeading::East) { this->planeOrientation = planeHeading::North; }
 	this->sceneToShow->setPlaneHeading(this->planeToShow, this->planeOrientation);
 	this->update();
 }

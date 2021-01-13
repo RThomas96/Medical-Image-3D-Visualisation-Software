@@ -127,7 +127,7 @@ vec4 R8UItoColorScale(in uvec3 ucolor) {
 
 vec4 R8UIConversion(in uvec3 ucolor) {
 	if (colorOrTexture > 0) { return R8UIToRGB(ucolor); }
-	return R8UItoColorScale(ucolor);
+	return R8UIToRGB(ucolor);
 }
 
 float planeIdxToPlanePosition(int id) {

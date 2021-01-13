@@ -274,6 +274,9 @@ void Scene::initGl(QOpenGLContext* _context) {
 	GetOpenGLError();
 	glBindVertexArray(this->vaoHandle);
 	GetOpenGLError();
+	if (glIsVertexArray(this->vaoHandle) == GL_FALSE) {
+		throw std::runtime_error("Couldn't create default VAO (glIsVertexArray() → GL_FALSE)\n");
+	}
 
 	this->recompileShaders(false);
 
@@ -397,21 +400,17 @@ GLuint Scene::compileShaders(std::string _vPath, std::string _gPath, std::string
 		exit(EXIT_FAILURE);
 	}
 
-	if (verbose) { std::cerr << "[LOG][" << __FILE__ << ":" << __LINE__ << "] Compiling vertex shader \"" << _vPath << "\"...\n"; }
+	if (verbose) { if (not _vPath.empty()) { std::cerr << "[LOG][" << __FILE__ << ":" << __LINE__ << "] Compiling vertex shader \"" << _vPath << "\"...\n"; } }
 	GLuint _vSha = this->compileShader(_vPath, GL_VERTEX_SHADER, verbose);
 
-	if (verbose) { std::cerr << "[LOG][" << __FILE__ << ":" << __LINE__ << "] Compiling geometry shader \"" << _gPath << "\"...\n"; }
+	if (verbose) { if (not _gPath.empty()) { std::cerr << "[LOG][" << __FILE__ << ":" << __LINE__ << "] Compiling geometry shader \"" << _gPath << "\"...\n"; } }
 	GLuint _gSha = this->compileShader(_gPath, GL_GEOMETRY_SHADER, verbose);
 
-	if (verbose) { std::cerr << "[LOG][" << __FILE__ << ":" << __LINE__ << "] Compiling fragment shader \"" << _fPath << "\"...\n"; }
+	if (verbose) { if (not _fPath.empty()) { std::cerr << "[LOG][" << __FILE__ << ":" << __LINE__ << "] Compiling fragment shader \"" << _fPath << "\"...\n"; } }
 	GLuint _fSha = this->compileShader(_fPath, GL_FRAGMENT_SHADER, verbose);
 
 	if (verbose) { std::cerr << "[LOG][" << __FILE__ << ":" << __LINE__ << "] Compiling program ...\n"; }
 	GLuint _prog = this->compileProgram(_vSha, _gSha, _fSha, verbose);
-
-	if (_prog != 0) {
-		if (verbose) { std::cerr<<"[LOG]["<<__FILE__ << ":" << __LINE__<<"] Compiled program at index "<<_prog<<"\n"; }
-	}
 
 	return _prog;
 }
@@ -428,7 +427,6 @@ GLuint Scene::compileShader(const std::string& path, const GLenum shaType, bool 
 
 	// Create a shader object :
 	GLuint _sha = glCreateShader(shaType);
-	if (verbose) {std::cerr<<"[LOG]["<<__FILE__ << ":" << __LINE__<<"] Created shader at index" << _sha << ".\n";}
 	GetOpenGLError();
 
 	// Open the file :
@@ -483,7 +481,6 @@ GLuint Scene::compileShader(const std::string& path, const GLenum shaType, bool 
 		std::cerr << "[" << __FILE__ << ":" << __LINE__ << "] : Could not compile shader.\n";
 		return 0;
 	}
-	if (verbose) { std::cerr << "[LOG][" << __FILE__ << ":" << __LINE__ << "] Compiled shader successfully.\n"; }
 
 	return _sha;
 }
@@ -496,13 +493,11 @@ GLuint Scene::compileProgram(const GLuint vSha, const GLuint gSha, const GLuint 
 	}
 
 	GLuint _prog = glCreateProgram();
-	if (verbose) {std::cerr<<"[LOG]["<<__FILE__ << ":" << __LINE__<<"] Created new program at index"<<_prog<<"\n";}
 	GetOpenGLError();
 	if (vSha != 0) { glAttachShader(_prog, vSha); GetOpenGLError(); }
 	if (gSha != 0) { glAttachShader(_prog, gSha); GetOpenGLError(); }
 	if (fSha != 0) { glAttachShader(_prog, fSha); GetOpenGLError(); }
 	GetOpenGLError();
-	if (verbose) {std::cerr<<"[LOG]["<<__FILE__ << ":" << __LINE__<<"] Attached shaders.\n";}
 
 	glLinkProgram(_prog);
 	GetOpenGLError();
@@ -527,8 +522,11 @@ GLuint Scene::compileProgram(const GLuint vSha, const GLuint gSha, const GLuint 
 		// Return 0 (no program created) :
 		std::cerr << "[" << __FILE__ << ":" << __LINE__ << "] : Could not link shader.\n";
 		return 0;
+	} else {
+		if (verbose) {std::cerr<<"[LOG]["<<__FILE__ << ":" << __LINE__<<"] Compiled program. New name : "<< _prog <<"\n";}
 	}
-	if (verbose) {std::cerr<<"[LOG]["<<__FILE__ << ":" << __LINE__<<"] Program linked.\n";}
+
+	if (verbose) { std::cerr << '\n'; } // Put an empty line between all program compilations (more readable)
 
 	if (vSha != 0) { glDetachShader(_prog, vSha); }
 	if (gSha != 0) { glDetachShader(_prog, gSha); }
@@ -776,7 +774,7 @@ void Scene::fillTrilinear() {
 	this->loadVoxelGrid();
 }
 
-void Scene::drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading) {
+void Scene::drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading, GLfloat* vMat, GLfloat* pMat) {
 	#ifdef LOAD_RED_AND_BLUE_IMAGE_STACKS
 	// We only want to check the existence of one stack (both MUST be init in initGL()) :
 	if (this->inputGrid_Blue == nullptr) { return; }
@@ -785,21 +783,16 @@ void Scene::drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading
 	#endif
 	glEnable(GL_DEPTH_TEST);
 	GetOpenGLError();
-	__GetOpenGLError((char*)__FILE__, __LINE__);
 
 	uint min = 0; // min index for drawing commands
 	if (_plane == planes::x) { min =  0; }
 	if (_plane == planes::y) { min =  6; }
 	if (_plane == planes::z) { min = 12; }
 
-	min += this->renderSize; // Indices for planes start after the indices for cube, stored before buf[renderSize]
-
 	glUseProgram(this->programHandle_PlaneViewer);
 	GetOpenGLError();
-	__GetOpenGLError((char*)__FILE__, __LINE__);
 	glBindVertexArray(this->vaoHandle);
 	GetOpenGLError();
-	__GetOpenGLError((char*)__FILE__, __LINE__);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_SinglePlaneElement);
 	#ifdef LOAD_RED_AND_BLUE_IMAGE_STACKS
 	// We have the same uniforms for blue and red (combined into one texture, actually)
@@ -807,19 +800,22 @@ void Scene::drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading
 	#else
 	this->prepPlane_SingleUniforms(_plane, _heading, fbDims, this->inputGrid);
 	#endif
+
+	GLint locV = glGetUniformLocation(this->programHandle_PlaneViewer, "vMat");
+	GLint locP = glGetUniformLocation(this->programHandle_PlaneViewer, "pMat");
+	glUniformMatrix4fv(locV, 1, GL_FALSE, vMat);
+	glUniformMatrix4fv(locP, 1, GL_FALSE, pMat);
+
 	this->setupVAOPointers();
 	GetOpenGLError();
 
 	glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(6), GL_UNSIGNED_INT, (GLvoid*)(min*sizeof(GLuint)));
 	GetOpenGLError();
-	__GetOpenGLError((char*)__FILE__, __LINE__);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	GetOpenGLError();
-	__GetOpenGLError((char*)__FILE__, __LINE__);
 	glBindVertexArray(0);
 	GetOpenGLError();
-	__GetOpenGLError((char*)__FILE__, __LINE__);
 	glUseProgram(0);
 	GetOpenGLError();
 	this->showVAOstate = false;
@@ -931,7 +927,7 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos) {
 	glUniform1uiv(location_visibilityMap, 256, this->visibleDomains);
 	GetOpenGLError();
 
-	glm::vec3 planePos = this->sceneBBPosition + this->planeDisplacement * this->sceneBBDiag; // PLANE POSITIONS
+	glm::vec3 planePos = glm::round(this->sceneBBPosition + this->planeDisplacement * this->sceneBBDiag); // PLANE POSITIONS
 
 	glUniform3fv(location_cam, 1, glm::value_ptr(camPos));
 	// glUniform3fv(location_cut, 1, glm::value_ptr(this->planePosition));
@@ -1043,24 +1039,6 @@ void Scene::drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane) {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 	glUseProgram(0);
-}
-
-void Scene::drawGridOnly(GLfloat mvMat[], GLfloat pMat[]) {
-	glEnable(GL_DEPTH_TEST);
-	GetOpenGLError();
-
-	glm::mat4 transfoMat = glm::mat4(1.f);
-
-	if (this->inputGridVisible) {
-		#ifdef LOAD_RED_AND_BLUE_IMAGE_STACKS
-		this->drawGrid_Generic(mvMat, pMat, transfoMat, this->texHandle_InputGrid, this->inputGrid_Blue);
-		#else
-		this->drawGrid_Generic(mvMat, pMat, transfoMat, this->texHandle_InputGrid, this->inputGrid);
-		#endif
-	}
-	if (this->outputGridVisible) {
-		this->drawGrid_Generic(mvMat, pMat, transfoMat, this->texHandle_OutputGrid, this->outputGrid);
-	}
 }
 
 void Scene::drawWithPlanes(GLfloat mvMat[], GLfloat pMat[]) {
@@ -1239,7 +1217,8 @@ void Scene::prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane, bool
 	GLint plIdx = (_plane == planes::x) ? 1 : (_plane == planes::y) ? 2 : 3;
 	GetOpenGLError();
 
-	gridTransfo = glm::mat4(1.);
+	// gridTransfo = glm::mat4(1.);
+	gridTransfo = this->inputGrid->getTransform_GridToWorld();
 
 	glm::vec3 planePos = glm::round(this->sceneBBPosition + this->planeDisplacement * this->sceneBBDiag); // PLANE POSITIONS
 
@@ -1274,33 +1253,28 @@ void Scene::prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane, bool
 
 void Scene::prepPlane_SingleUniforms(planes _plane, planeHeading _heading, glm::vec2 fbDims, const std::shared_ptr<DiscreteGrid> _grid) {
 	glUseProgram(this->programHandle_PlaneViewer);
-	// Info about the grid's BB :
-	#ifdef LOAD_RED_AND_BLUE_IMAGE_STACKS
-	DiscreteGrid::bbox_t ws = this->inputGrid_Blue->getBoundingBoxWorldSpace();
-	ws.addPoints(this->inputGrid_Red->getBoundingBoxWorldSpace().getAllCorners());
-	#else
-	DiscreteGrid::bbox_t ws = this->inputGrid->getBoundingBoxWorldSpace();
-	#endif
-	ws.addPoints(this->outputGrid->getBoundingBoxWorldSpace().getAllCorners());
-	DiscreteGrid::bbox_t::vec bbox = ws.getDiagonal();
-	DiscreteGrid::bbox_t::vec posBox = ws.getMin();
-	if (this->showVAOstate) {
-		std::cerr << "[TRACE] BBox diagonal : {" << bbox.x << ", " << bbox.y << ", " << bbox.z << "}\n";
-		std::cerr << "[TRACE] BBox position : {" << posBox.x << ", " << posBox.y << ", " << posBox.z << "}\n";
-		std::cerr << "[TRACE] Program uniforms :" << '\n';
-		this->printProgramUniforms(this->programHandle_PlaneViewer);
-	}
+	// The BB used is the scene's bounding box :
+	const DiscreteGrid::bbox_t::vec& bbox = this->sceneBBDiag;
+	const DiscreteGrid::bbox_t::vec& posBox = this->sceneBBPosition;
+
 	glm::vec2 gridBBDims;
 	if (_plane == planes::x) { gridBBDims.x = bbox.y; gridBBDims.y = bbox.z; }
 	if (_plane == planes::y) { gridBBDims.x = bbox.x; gridBBDims.y = bbox.z; }
 	if (_plane == planes::z) { gridBBDims.x = bbox.x; gridBBDims.y = bbox.y; }
+
+	uint plane_heading = planeHeadingToIndex(_heading);
+
 	// Grid transform :
 	glm::mat4 gridTransform = _grid->getTransform_WorldToGrid();
 	// Grid dimensions :
-	glm::vec3 gridDimensions = glm::convert_to<float>(_grid->getGridDimensions());
+	glm::vec3 gridDimensions = glm::convert_to<glm::vec3::value_type>(_grid->getGridDimensions());
+
 	// Depth of the plane :
-	float planeDepth = (_plane == planes::x) ? this->planeDisplacement.x :
-			   (_plane == planes::y) ? this->planeDisplacement.y : this->planeDisplacement.z;
+	glm::vec3 planePos = this->sceneBBPosition + this->planeDisplacement * this->sceneBBDiag;
+
+	// Color and texture bounds :
+	glm::vec2 colorBounds{static_cast<float>(this->minColorVal), static_cast<float>(this->maxColorVal)};
+	glm::vec2 textureBounds{static_cast<float>(this->minTexVal), static_cast<float>(this->maxTexVal)};
 
 	// Uniform locations :
 	// VShader :
@@ -1309,9 +1283,9 @@ void Scene::prepPlane_SingleUniforms(planes _plane, planeHeading _heading, glm::
 	GLint location_planeIndex = glGetUniformLocation(this->programHandle_PlaneViewer, "planeIndex");
 	GLint location_gridTransform = glGetUniformLocation(this->programHandle_PlaneViewer, "gridTransform");
 	GLint location_gridDimensions = glGetUniformLocation(this->programHandle_PlaneViewer, "gridDimensions");
-	GLint location_gridBBDiagonal = glGetUniformLocation(this->programHandle_PlaneViewer, "gridBBDiagonal");
-	GLint location_gridBBPosition = glGetUniformLocation(this->programHandle_PlaneViewer, "gridBBPosition");
-	GLint location_depth = glGetUniformLocation(this->programHandle_PlaneViewer, "depth");
+	GLint location_gridBBDiagonal = glGetUniformLocation(this->programHandle_PlaneViewer, "sceneBBDiagonal");
+	GLint location_gridBBPosition = glGetUniformLocation(this->programHandle_PlaneViewer, "sceneBBPosition");
+	GLint location_planePositions = glGetUniformLocation(this->programHandle_PlaneViewer, "planePositions");
 	GLint location_heading = glGetUniformLocation(this->programHandle_PlaneViewer, "heading");
 	// FShader :
 	GLint location_texData = glGetUniformLocation(this->programHandle_PlaneViewer, "texData");
@@ -1321,6 +1295,8 @@ void Scene::prepPlane_SingleUniforms(planes _plane, planeHeading _heading, glm::
 	GetOpenGLError();
 
 	if (this->showVAOstate) {
+		std::cerr << "[TRACE] Program uniforms :" << '\n';
+		this->printProgramUniforms(this->programHandle_PlaneViewer);
 		std::cerr << "[TRACE][Shader variables] " << "fbDims : " << +location_fbDims << '\n';
 		std::cerr << "[TRACE][Shader variables] " << "bbDims : " << +location_bbDims << '\n';
 		std::cerr << "[TRACE][Shader variables] " << "planeIndex : " << +location_planeIndex << '\n';
@@ -1328,12 +1304,12 @@ void Scene::prepPlane_SingleUniforms(planes _plane, planeHeading _heading, glm::
 		std::cerr << "[TRACE][Shader variables] " << "gridDimensions : " << +location_gridDimensions << '\n';
 		std::cerr << "[TRACE][Shader variables] " << "gridBBDiagonal : " << +location_gridBBDiagonal << '\n';
 		std::cerr << "[TRACE][Shader variables] " << "gridBBPosition : " << +location_gridBBPosition << '\n';
-		std::cerr << "[TRACE][Shader variables] " << "depth : " << +location_depth << '\n';
+		std::cerr << "[TRACE][Shader variables] " << "depth : " << +location_planePositions << '\n';
 		std::cerr << "[TRACE][Shader variables] " << "texData : " << +location_texData << '\n';
 		std::cerr << "[TRACE][Shader variables] " << "colorScale : " << +location_colorScale << '\n';
 	}
 
-	// Uniform settings :
+	// Uniform variables :
 	glUniform2fv(location_fbDims, 1, glm::value_ptr(fbDims));
 	glUniform2fv(location_bbDims, 1, glm::value_ptr(gridBBDims));
 	glUniform1ui(location_planeIndex, (_plane == planes::x) ? 1 : (_plane == planes::y) ? 2 : 3);
@@ -1341,12 +1317,10 @@ void Scene::prepPlane_SingleUniforms(planes _plane, planeHeading _heading, glm::
 	glUniform4f(location_gridDimensions, gridDimensions.x, gridDimensions.y, gridDimensions.z, 1.f);
 	glUniform4f(location_gridBBDiagonal, bbox.x, bbox.y, bbox.z, 1.f);
 	glUniform4f(location_gridBBPosition, posBox.x, posBox.y, posBox.z, .0f);
-	glUniform1f(location_depth, planeDepth);
-	glm::vec2 colorBounds{static_cast<float>(this->minColorVal), static_cast<float>(this->maxColorVal)};
-	glm::vec2 textureBounds{static_cast<float>(this->minTexVal), static_cast<float>(this->maxTexVal)};
+	glUniform3fv(location_planePositions, 1, glm::value_ptr(planePos));
 	glUniform2fv(location_colorBounds, 1, glm::value_ptr(colorBounds));
 	glUniform2fv(location_textureBounds, 1, glm::value_ptr(textureBounds));
-	glUniform1ui(location_heading, planeHeadingToIndex(_heading));
+	glUniform1ui(location_heading, plane_heading);
 	GetOpenGLError();
 
 	// Uniform samplers :
@@ -1409,15 +1383,6 @@ void Scene::generatePlanesArray(std::vector<glm::vec4>& vert, std::vector<glm::v
 	// way the cube's vertices are inserted into the array.
 
 	unsigned int a = 0, b = 1, c = 2, d = 3, e = 4, f = 5, g = 6;
-	// Create the element array for each plane :
-	/*
-	unsigned int planeZ[] = {a, b, c, c, b, d};
-	unsigned int planeY[] = {a, e, b, b, e, f};
-	unsigned int planeX[] = {a, g, e, g, a, c};
-	plane_idx.insert(idx.end(), planeX, planeX+6);
-	plane_idx.insert(idx.end(), planeY, planeY+5);
-	plane_idx.insert(idx.end(), planeZ, planeZ+6);
-	*/
 	std::vector otheridx{a, g, e, g, a, c, a, e, b, b, e, f, a, b, c, c, b, d};
 	plane_idx.swap(otheridx);
 
@@ -1440,20 +1405,6 @@ void Scene::generatePlanesArray(std::vector<glm::vec4>& vert, std::vector<glm::v
 	glm::vec3 hr = glm::vec3(1., 1., .0);	// higher-right
 
 	// Push them into the vectors, so they can be drawn without indices :
-	// Plane Z :
-	vert.push_back(apos); norm.push_back(anorm); tex.push_back(ll);
-	vert.push_back(bpos); norm.push_back(bnorm); tex.push_back(lr);
-	vert.push_back(cpos); norm.push_back(cnorm); tex.push_back(hl);
-	vert.push_back(cpos); norm.push_back(cnorm); tex.push_back(hl);
-	vert.push_back(bpos); norm.push_back(bnorm); tex.push_back(lr);
-	vert.push_back(dpos); norm.push_back(dnorm); tex.push_back(hr);
-	// Plane Y :
-	vert.push_back(apos); norm.push_back(anorm); tex.push_back(ll);
-	vert.push_back(bpos); norm.push_back(bnorm); tex.push_back(lr);
-	vert.push_back(epos); norm.push_back(enorm); tex.push_back(hl);
-	vert.push_back(epos); norm.push_back(enorm); tex.push_back(hl);
-	vert.push_back(bpos); norm.push_back(bnorm); tex.push_back(lr);
-	vert.push_back(fpos); norm.push_back(fnorm); tex.push_back(hr);
 	// Plane X :
 	vert.push_back(apos); norm.push_back(anorm); tex.push_back(ll);
 	vert.push_back(cpos); norm.push_back(cnorm); tex.push_back(lr);
@@ -1461,9 +1412,23 @@ void Scene::generatePlanesArray(std::vector<glm::vec4>& vert, std::vector<glm::v
 	vert.push_back(epos); norm.push_back(enorm); tex.push_back(hl);
 	vert.push_back(cpos); norm.push_back(cnorm); tex.push_back(lr);
 	vert.push_back(gpos); norm.push_back(gnorm); tex.push_back(hr);
+	// Plane Y :
+	vert.push_back(apos); norm.push_back(anorm); tex.push_back(ll);
+	vert.push_back(bpos); norm.push_back(bnorm); tex.push_back(lr);
+	vert.push_back(epos); norm.push_back(enorm); tex.push_back(hl);
+	vert.push_back(epos); norm.push_back(enorm); tex.push_back(hl);
+	vert.push_back(bpos); norm.push_back(bnorm); tex.push_back(lr);
+	vert.push_back(fpos); norm.push_back(fnorm); tex.push_back(hr);
+	// Plane Z :
+	vert.push_back(apos); norm.push_back(anorm); tex.push_back(ll);
+	vert.push_back(bpos); norm.push_back(bnorm); tex.push_back(lr);
+	vert.push_back(cpos); norm.push_back(cnorm); tex.push_back(hl);
+	vert.push_back(cpos); norm.push_back(cnorm); tex.push_back(hl);
+	vert.push_back(bpos); norm.push_back(bnorm); tex.push_back(lr);
+	vert.push_back(dpos); norm.push_back(dnorm); tex.push_back(hr);
 
 	// Push back enough indices to draw the planes all at once :
-	for (unsigned int i = base; i < base + 18; ++i) { idx.push_back(i); }
+	for (unsigned int i = 0; i < vert.size()-base; ++i) { idx.push_back(base + i); }
 
 	return;
 }
@@ -1477,10 +1442,6 @@ void Scene::setPlaneHeading(planes _plane, planeHeading _heading) {
 	 *
 	 * We need to modify the texture coordinates
 	 */
-
-	// Bind vertex texture coordinate buffer :
-	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_VertTex);
-	GetOpenGLError();
 
 	// Create texture coordinates serving as framebuffer positions once all is done :
 	glm::vec3 ll = glm::vec3(-1., -1., .0);	// lower-left
@@ -1512,7 +1473,13 @@ void Scene::setPlaneHeading(planes _plane, planeHeading _heading) {
 		case South: data = (void*) south.data(); break;
 	}
 
+	// Bind vertex texture coordinate buffer :
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_VertTex);
+	GetOpenGLError();
+
+	__GetOpenGLError((char*)__FILE__, __LINE__);
 	glBufferSubData(GL_ARRAY_BUFFER, begin, 6*sizeof(glm::vec3), data);
+	GetOpenGLError();
 	__GetOpenGLError((char*)__FILE__, __LINE__);
 
 	return;
@@ -1656,7 +1623,7 @@ void Scene::printProgramUniforms(const GLuint _pid) {
 	std::cerr << "[TRACE] Printing attributes of the program " << +_pid << '\n';
 	glUseProgram(_pid);
 
-	std::cerr << "[TRACE]\t\tPlane program active attributes :\n";
+	std::cerr << "[TRACE]\t\tActive attributes :\n";
 	glGetProgramiv(_pid, GL_ACTIVE_ATTRIBUTES, &attrCount);
 	for (GLint i = 0; i < attrCount; ++i ) {
 		//std::cerr << "[TRACE]\t" << ;
@@ -1664,7 +1631,7 @@ void Scene::printProgramUniforms(const GLuint _pid) {
 		fprintf(stderr, "[TRACE]\t\t\tAttribute #%d Type: %u Name: %s\n", i, type, name);
 	}
 
-	std::cerr << "[TRACE]\t\tProgram active attributes :\n";
+	std::cerr << "[TRACE]\t\tActive uniforms :\n";
 	glGetProgramiv(_pid, GL_ACTIVE_UNIFORMS, &attrCount);
 	for (GLint i = 0; i < attrCount; ++i ) {
 		glGetActiveUniform(_pid, (GLuint)i, bufSize, &length, &size, &type, name);
@@ -2304,6 +2271,7 @@ void Scene::tex3D_loadMESHFile(const std::string file, std::vector<glm::vec4>& v
 
 	std::cerr << "[LOG][" << __FILE__ << ':' << __LINE__ << "] Max dimensions of the mesh : [" << maxX << ',' << maxY << ',' << maxZ << "]\n";
 	for (std::size_t i = 0; i < vert.size(); ++i) {
+		vert[i] *= scale;
 		texCoords.push_back(glm::vec3(
 			std::min(1.f,rawVert[i].x/size.x),
 			std::min(1.f,rawVert[i].y/size.y),
@@ -2455,6 +2423,10 @@ void Scene::tex3D_buildBuffers() {
 	GetOpenGLError();
 
 	glGenVertexArrays(1, &this->vaoHandle_VolumetricBuffers);
+	glBindVertexArray(this->vaoHandle_VolumetricBuffers);
+	if (glIsVertexArray(this->vaoHandle_VolumetricBuffers) == GL_FALSE) {
+		throw std::runtime_error("Couldn't create volumetric buffer VAO (glIsVertexArray() → GL_FALSE)\n");
+	}
 	this->tex3D_bindVAO();
 }
 

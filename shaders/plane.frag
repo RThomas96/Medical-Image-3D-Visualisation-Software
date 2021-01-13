@@ -6,6 +6,7 @@
 in vec4 vPos;
 in vec4 vNorm;
 in vec3 texCoord;
+in vec4 vPos_PS;
 
 /****************************************/
 /*************** Outputs ****************/
@@ -53,15 +54,17 @@ void main(void)
 	vec4 basecolor= vNorm;
 	uvec3 tex = texture(texData, texCoord).xyz;
 	vec4 colorTex = planeIndexToColor();
+	color = colorTex;
 
-	/*if (texCoord.x > 0. && texCoord.x < 1.) {
-		if (texCoord.y > .0 && texCoord.y < 1.) {
-			if (texCoord.z > 0. && texCoord.z < 1.) {
-				colorTex = R8UIToRGB(tex);
-				// colorTex.xyz = texCoord; colorTex.a = 1.;
+	if (showTex == true) {
+		if (texCoord.x > 0. && texCoord.x < 1.) {
+			if (texCoord.y > .0 && texCoord.y < 1.) {
+				if (texCoord.z > 0. && texCoord.z < 1.) {
+					colorTex = R8UIToRGB(tex);
+				}
 			}
 		}
-	}*/
+	}
 
 	if (colorTex.a < .1f) { discard; }
 
@@ -77,6 +80,8 @@ vec4 R8UIToRGB(in uvec3 ucolor) {
 	// Check if we're in the colorscale :
 //	if (color_r < textureBounds.x || color_r > textureBounds.y) { return vec4(.0, .0, .0, .0); }
 //	if (color_g < textureBounds.x || color_g > textureBounds.y) { return planeIndexToColor(); }
+	if (color_r < colorBounds.x || color_r > colorBounds.y) { return planeIndexToColor(); }
+	//if (color_r < colorBounds.x || color_r > colorBounds.y) { return vec4(.257, .257, .257, .0); }
 	color_r = clamp(float(ucolor.r), colorBounds.x, colorBounds.y);
 	color_g = clamp(float(ucolor.g), colorBounds.x, colorBounds.y);
 	// Compute the color as Brian's paper describes it :
@@ -135,7 +140,7 @@ vec4 planeIndexToColor() {
 }
 
 bool isPlaneVisible() {
-	float epsilon = .01f;
+	float epsilon = .001f;
 	if (((vPos.x - planePositions.x) * planeDirections.x + epsilon) < .0f) { if (intersectPlanes) { return false; }}
 	if (((vPos.y - planePositions.y) * planeDirections.y + epsilon) < .0f) { if (intersectPlanes) { return false; }}
 	if (((vPos.z - planePositions.z) * planeDirections.z + epsilon) < .0f) { if (intersectPlanes) { return false; }}

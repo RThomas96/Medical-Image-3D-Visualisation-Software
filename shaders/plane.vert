@@ -13,6 +13,7 @@ layout(location=2) in vec3 vertexTexCoord;	// Vertex texture coordinates. In thi
 out vec4 vPos;
 out vec4 vNorm;
 out vec3 texCoord;
+out vec4 vPos_PS; // Original position
 
 /****************************************/
 /*************** Uniforms ***************/
@@ -60,6 +61,7 @@ void main(void) {
 	vPos = vPos_ws;
 	vNorm = norMat * vertexNormal;
 	texCoord = vPos_ts.xyz;
+	vPos_PS = vertexPosition;
 
 	gl_Position = projection_Mat * view_Mat * model_Mat * vPos;
 }

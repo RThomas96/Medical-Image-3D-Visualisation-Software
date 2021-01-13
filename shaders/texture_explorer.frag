@@ -27,23 +27,29 @@ uniform vec2 textureBounds;	// The min and max values
 /*********** Function headers ***********/
 /****************************************/
 vec4 voxelValueToColor(in uvec4 ucolor);
+vec4 planeIdxToColor(in uint idx);
+bool shouldDiscard();
+bool shouldDrawBorder();
 
 /****************************************/
 /***************** Main *****************/
 /****************************************/
 void main() {
-	//if (vTexCoords.x > 1. || vTexCoords.y > 1. || vTexCoords.z > 1.) { discard; }
-	//if (vTexCoords.x < 0. || vTexCoords.y < 0. || vTexCoords.z < 0.) { discard; }
-	// color = voxelValueToColor(texture(texData, vTexCoords));
-	color = abs(normalize(vNorm));
-	color = vec4(1., .0, 1., 1.);
+	if (shouldDiscard()) { discard; }
+	// Default color : plane color
+	color = planeIdxToColor(planeIndex);
+	// If in the border area, stop there :
+	if (shouldDrawBorder()) { return; }
+
+	// Apply the texture :
+	color = voxelValueToColor(texture(texData, vTexCoords));
 }
 
 /****************************************/
 /************** Functions ***************/
 /****************************************/
 vec4 voxelValueToColor(in uvec4 ucolor) {
-	if (ucolor.r < textureBounds.x || ucolor.r > colorBounds.y) { discard; }
+	if (ucolor.r < textureBounds.x || ucolor.r > textureBounds.y) { discard; }
 //	if (ucolor.g < textureBounds.x || ucolor.g > colorBounds.y) { discard; }
 	// Have the R and G color channels clamped to the min/max of the scale
 	// (mimics under or over-exposure)
@@ -53,7 +59,7 @@ vec4 voxelValueToColor(in uvec4 ucolor) {
 	float color_k = 2.5;
 	float sc = colorBounds.y - colorBounds.x;
 	float eosin = (color_r - colorBounds.x)/(sc);
-	float dna = (color_g - colorBounds.x)/(sc); // B is on G channel because OpenGL only allows 2 channels upload to be RG, not RB
+	float dna = (color_r - colorBounds.x)/(sc); // B is on G channel because OpenGL only allows 2 channels upload to be RG, not RB
 
 	float eosin_r_coef = 0.050;
 	float eosin_g_coef = 1.000;
@@ -73,4 +79,26 @@ vec4 voxelValueToColor(in uvec4 ucolor) {
 		exp(-hematoxylin_b_coef * dna * color_k) * exp(-eosin_b_coef * eosin * color_k),
 		1.
 	);
+}
+
+vec4 planeIdxToColor(in uint idx) {
+	if (idx == 1) { return vec4(1., .0, .0, 1.); }
+	if (idx == 2) { return vec4(.0, 1., .0, 1.); }
+	if (idx == 3) { return vec4(.0, .0, 1., 1.); }
+	return vec4(.27, .27, .27, 1.);
+}
+
+bool shouldDiscard() {
+	if (vTexCoords.x > 1. || vTexCoords.y > 1. || vTexCoords.z > 1.) { return true; }
+	if (vTexCoords.x < 0. || vTexCoords.y < 0. || vTexCoords.z < 0.) { return true; }
+	return false;
+}
+
+bool shouldDrawBorder() {
+	// Create a border around the image :
+	float min = .01;
+	float max = .99;
+	if (vTexCoords.x > max || vTexCoords.y > max || vTexCoords.z > max) { return true; }
+	if (vTexCoords.x < min || vTexCoords.y < min || vTexCoords.z < min) { return true; }
+	return false;
 }

@@ -56,7 +56,7 @@ void Viewer::draw() {
 	GLfloat mvMat[16];
 	GLfloat pMat[16];
 
-	glClearColor(.0, .0, .0, 1.);
+	glClearColor(.8, .8, .8, 1.);
 
 	this->camera()->getModelViewMatrix(mvMat);
 	this->camera()->getProjectionMatrix(pMat);

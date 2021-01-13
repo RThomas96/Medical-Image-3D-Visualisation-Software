@@ -20,7 +20,7 @@ ViewerHeader::ViewerHeader(std::string name, QWidget* parent) : ViewerHeader(par
 
 	this->label_PlaneName = new QLabel(name.c_str());
 
-	this->button_invertPlaneCut = new QPushButton("I");
+	this->button_invertPlaneCut = new QPushButton("Invert");
 	this->button_rotateClockwise = new QPushButton("RCW");
 	this->button_rotateCounterClockwise = new QPushButton("RCCW");
 
