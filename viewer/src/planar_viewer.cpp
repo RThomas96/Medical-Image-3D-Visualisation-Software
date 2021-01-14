@@ -32,14 +32,9 @@ void PlanarViewer::init(void) {
 	}
 
 	this->makeCurrent();
-	if (not this->sceneToShow->isInitialized) {
-		QProgressDialog* progress = new QProgressDialog("Initializing scene ...", QString(), 0, 10);
-		progress->show();
-		QCoreApplication::processEvents();
-		this->sceneToShow->initGl(this->context());
-		this->sceneToShow->setDrawModeSolid();
-		progress->setValue(10);
-	}
+
+	this->sceneToShow->initGl(this->context());
+	this->sceneToShow->setDrawModeSolid();
 
 	this->refreshTimer->start();
 }

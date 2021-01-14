@@ -73,6 +73,7 @@ inline void __GetTexSize(std::size_t numTexNeeded, std::size_t* opt_width, std::
 }
 
 Scene::Scene(GridControl* const gc) {
+	this->context = nullptr;
 	this->controlPanel = nullptr;
 	#ifdef LOAD_RED_AND_BLUE_IMAGE_STACKS
 	this->inputGrid_Blue = nullptr;
@@ -149,12 +150,24 @@ Scene::~Scene(void) {
 }
 
 void Scene::initGl(QOpenGLContext* _context) {
-	if (this->isInitialized == true) { return; }
+	if (this->isInitialized == true) {
+		if (this->context != nullptr && _context != 0 && _context != nullptr) {
+			_context->setShareContext(this->context);
+			if (_context->create()) {
+				std::cerr << "Re-created context " << _context << " shared with context " << this->context << '\n';
+			} else {
+				// throw std::runtime_error("Couldn't re-create context with shared context added\n");
+				std::cerr << "Couldn't re-create context with shared context added\n";
+			}
+		}
+		return;
+	}
 	this->isInitialized = true;
 	std::cerr << "Initializing scene ..." << '\n';
 
 	if (_context == 0) { throw std::runtime_error("Warning : this->context() returned 0 or nullptr !") ; }
 	if (_context == nullptr) { std::cerr << "Warning : Initializing a scene without a valid OpenGL context !" << '\n' ; }
+	this->context = _context;
 
 	this->initializeOpenGLFunctions();
 
@@ -1602,14 +1615,8 @@ void Scene::setupVAOPointers() {
 	GetOpenGLError();
 }
 
-glm::vec3 Scene::getSceneBoundaries(bool realSpace) const {
-	glm::vec3 baseVtx = glm::vec3(static_cast<float>(this->gridWidth), static_cast<float>(this->gridHeight), static_cast<float>(this->gridDepth));
-	if (realSpace) {
-		glm::mat3 transfoMat = glm::mat3(this->computeTransformationMatrix());
-		return transfoMat * baseVtx;
-	} else {
-		return baseVtx;
-	}
+glm::vec3 Scene::getSceneBoundaries() const {
+	return this->sceneBBDiag;
 }
 
 void Scene::printProgramUniforms(const GLuint _pid) {

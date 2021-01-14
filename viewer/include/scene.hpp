@@ -78,7 +78,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void toggleColorOrTexture(bool _cOT) { this->colorOrTexture = _cOT; }
 		void toggleColorOrTexture() { this->toggleColorOrTexture(!this->colorOrTexture); }
 
-		glm::vec3 getSceneBoundaries(bool realSpace = true) const;
+		glm::vec3 getSceneBoundaries() const;
 
 		void setDrawModeSolid() { this->drawMode = DrawMode::Solid; }
 		void setDrawModeSolidAndWireframe() { this->drawMode = DrawMode::SolidAndWireframe; }
@@ -120,6 +120,8 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		GLuint compileProgram(const GLuint vSha = 0, const GLuint gSha = 0, const GLuint fSha = 0, bool verbose = false);
 		/// @b Compile the given shaders, and return the ID of the program generated. On any error, returns 0.
 		GLuint compileShaders(std::string vPath, std::string gPath, std::string fPath, bool verbose = false);
+		/// @b Generate the default cube used to draw the grid in non-volumetric mode, as well as the plane positions.
+		void generateGrid();
 		/// @b Generates the vertices, normals, and tex coordinates for a basic unit cube
 		void generateTexCube(std::vector<glm::vec4>& vertPos, std::vector<glm::vec4>& vertNorm, std::vector<glm::vec3>& vertTex, std::vector<unsigned int>& vertIdx);
 		/// @b Generates the plane's vertices array indexes
@@ -167,11 +169,9 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void tex3D_buildBuffers();
 		void tex3D_bindVAO();
 		void tex3D_loadMESHFile(const std::string name, std::vector<glm::vec4>& vert, std::vector<glm::vec3>& texCoords, std::vector<std::array<std::size_t, 4>>& tet);
-	public:
-		bool isInitialized; ///< tracks if the scene was initialized or not (query-able from anywhere)
 	protected:
-		void generateGrid();
-
+		bool isInitialized; ///< tracks if the scene was initialized or not (query-able from anywhere)
+		QOpenGLContext* context; ///< The context with which the scene has been created with
 		ControlPanel* controlPanel; ///< pointer to the control panel
 		#ifdef LOAD_RED_AND_BLUE_IMAGE_STACKS
 		std::shared_ptr<InputGrid> inputGrid_Blue; ///< input grid (blue channel)

@@ -32,16 +32,11 @@ Viewer::~Viewer() {
 
 void Viewer::init() {
 	this->makeCurrent();
-	if (not this->scene->isInitialized) {
-		QProgressDialog* progress = new QProgressDialog("Initializing scene ...", QString(), 0, 10);
-		progress->show();
-		QCoreApplication::processEvents();
-		this->scene->initGl(this->context());
-		this->scene->setDrawModeSolid();
-		progress->setValue(10);
-	}
 
-	glm::vec3 bbDiag = this->scene->getSceneBoundaries(true);
+	this->scene->initGl(this->context());
+	this->scene->setDrawModeSolid();
+
+	glm::vec3 bbDiag = this->scene->getSceneBoundaries();
 	float sceneSize = glm::length(bbDiag);
 
 	this->setSceneRadius(sceneSize*sceneRadiusMultiplier);
