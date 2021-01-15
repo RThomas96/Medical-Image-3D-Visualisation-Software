@@ -52,6 +52,7 @@ ADD_EXECUTABLE(neighbor_visu
 	./viewer/include/scene.hpp
 	./viewer/include/planar_viewer.hpp
 	./viewer/include/neighbor_visu_viewer.hpp
+	./viewer/include/viewer_structs.hpp
 
 	./grid/include/tetmesh.hpp
 	./grid/include/discrete_grid.hpp
@@ -77,6 +78,7 @@ ADD_EXECUTABLE(neighbor_visu
 	./viewer/src/scene.cpp
 	./viewer/src/planar_viewer.cpp
 	./viewer/src/neighbor_visu_viewer.cpp
+	./viewer/src/viewer_structs.cpp
 
 	./grid/src/tetmesh.cpp
 	./grid/src/discrete_grid.cpp

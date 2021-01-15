@@ -27,7 +27,7 @@ uniform vec2 textureBounds;	// The min/max values of the texture to display
 uniform int currentPlane;	// Plane identifier : 1 (x), 2 (y), 3 (z)
 uniform bool showTex;		// Do we show the texture on the plane, or not ?
 
-uniform bool intersectPlanes = true;	// Should the planes intersect each other ? (hide other planes)
+uniform bool intersectPlanes = false;	// Should the planes intersect each other ? (hide other planes)
 
 /****************************************/
 /*********** Function headers ***********/

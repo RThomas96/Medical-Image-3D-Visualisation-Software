@@ -29,6 +29,7 @@ uniform vec4 sceneBBDiagonal;	// The grid's world-space bounding box diagonal
 uniform vec4 sceneBBPosition;	// The grid's world-space bounding box position
 uniform vec3 planePositions;	// The plane positions, in world space
 uniform uint heading;		// The plane's 'up' orientation (up [default] = 0, right = 1, down = 2, left = 3)
+uniform float zoom = 0.f;
 
 uniform mat4 pMat;
 uniform mat4 vMat;
@@ -87,7 +88,8 @@ void main(void) {
 	vec4 vPos_TS = vPos_GS / gridDimensions;
 
 	gl_Position = vec4(.0, .0, .0, 1.);
-	gl_Position.xyz = multiplier * vertexTexCoord ;
+	gl_Position.xyz = multiplier * vertexTexCoord;
+	gl_Position.xyz *= zoom;
 
 	vPos = vertexPosition;
 	vNorm = normalize(vertexNormal);

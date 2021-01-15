@@ -1,0 +1,126 @@
+	IO::GenericGridReader* reader = nullptr;
+	IO::GenericGridReader::data_t threshold = IO::GenericGridReader::data_t(0);
+
+	#ifdef USER_DEFINED_IMAGE_LOADING
+	QMessageBox* msgBox = new QMessageBox();
+	msgBox->setText("Choose your input data type");
+	QPushButton* dimButton = msgBox->addButton("DIM", QMessageBox::ActionRole);
+	QPushButton* tiffButton = msgBox->addButton("TIFF", QMessageBox::ActionRole);
+
+	msgBox->exec();
+
+	if (msgBox->clickedButton() == dimButton) {
+		reader = new IO::DIMReader(threshold);
+		QString filename = QFileDialog::getOpenFileName(nullptr, "Open a DIM/IMA image (Blue channel)", "../../", "BrainVISA DIM Files (*.dim)");
+		std::vector<std::string> f;
+		f.push_back(filename.toStdString());
+		reader->setFilenames(f);
+	} else if (msgBox->clickedButton() == tiffButton) {
+		// do nothing :
+		reader = new IO::Reader::TIFF(threshold);
+		QStringList filenames = QFileDialog::getOpenFileNames(nullptr, "Open multiple TIFF images (Blue channel)","../../", "TIFF Files (*.tiff, *.tif)");
+		std::vector<std::string> f;
+		for (const QString& fn : as_const(filenames)) {
+			f.push_back(fn.toStdString());
+		}
+		reader->setFilenames(f);
+	} else {
+		std::cerr << "No button was pressed." << '\n';
+		throw std::runtime_error("error : no button pressed");
+	}
+	#else
+	reader = new IO::Reader::TIFF(threshold);
+	std::vector<std::string> filenames = {
+		"/home/thibault/git/datasets/Blue/Blue_P5B-A2_2500.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2501.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2502.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2503.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2504.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2505.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2506.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2507.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2508.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2509.tif",
+		"/home/thibault/git/datasets/Blue/Blue_P5B-A2_2510.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2511.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2512.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2513.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2514.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2515.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2516.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2517.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2518.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2519.tif",
+		"/home/thibault/git/datasets/Blue/Blue_P5B-A2_2520.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2521.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2522.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2523.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2524.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2525.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2526.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2527.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2528.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2529.tif",
+		"/home/thibault/git/datasets/Blue/Blue_P5B-A2_2530.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2531.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2532.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2533.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2534.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2535.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2536.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2537.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2538.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2539.tif",
+		"/home/thibault/git/datasets/Blue/Blue_P5B-A2_2540.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2541.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2542.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2543.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2544.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2545.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2546.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2547.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2548.tif","/home/thibault/git/datasets/Blue/Blue_P5B-A2_2549.tif",
+	};
+	reader->setFilenames(filenames);
+	#endif
+	// Set reader properties :
+	reader->setDataThreshold(threshold);
+	// Load the data :
+	reader->loadImage();
+
+	// Update data from the grid reader :
+	#ifndef LOAD_RED_AND_BLUE_IMAGE_STACKS
+	this->inputGrid = std::make_shared<InputGrid>();
+	this->inputGrid->fromGridReader(*reader);
+	this->inputGrid->setTransform_GridToWorld(this->computeTransformationMatrix());
+	#endif
+
+	// In the case where there's two grids, ask the user to load the red channel as well :
+	#ifdef LOAD_RED_AND_BLUE_IMAGE_STACKS
+	IO::GenericGridReader* readerRed = nullptr;
+	IO::GenericGridReader::data_t threshRed = threshold;
+	if (msgBox->clickedButton() == dimButton) {
+		readerRed = new IO::DIMReader(threshRed);
+		QString filename = QFileDialog::getOpenFileName(nullptr, "Open a DIM/IMA image (Red channel)", "../../", "BrainVISA DIM Files (*.dim)");
+		std::vector<std::string> f;
+		f.push_back(filename.toStdString());
+		readerRed->setFilenames(f);
+	} else if (msgBox->clickedButton() == tiffButton) {
+		readerRed = new IO::Reader::TIFF(threshRed);
+		QStringList filenames = QFileDialog::getOpenFileNames(nullptr, "Open multiple TIFF images (Red channel)","../../", "TIFF Files (*.tiff, *.tif)");
+		std::vector<std::string> f;
+		for (const QString& fn : as_const(filenames)) {
+			f.push_back(fn.toStdString());
+		}
+		readerRed->setFilenames(f);
+	} else {
+		std::cerr << "No button was pressed." << '\n';
+		throw std::runtime_error("error : no button pressed");
+	}
+	// Set reader properties :
+	readerRed->setDataThreshold(threshold);
+	// Load the data :
+	readerRed->loadImage();
+
+	this->inputGrid_Blue = std::make_shared<InputGrid>();
+	this->inputGrid_Blue->fromGridReader(*reader);
+	this->inputGrid_Blue->setTransform_GridToWorld(this->computeTransformationMatrix());
+
+	this->inputGrid_Red = std::make_shared<InputGrid>();
+	this->inputGrid_Red->fromGridReader(*readerRed);
+	this->inputGrid_Red->setTransform_GridToWorld(this->computeTransformationMatrix());
+	#endif
+
+	// free up the reader's resources :
+	delete reader;
+	#ifdef LOAD_RED_AND_BLUE_IMAGE_STACKS
+	delete readerRed;
+	#endif
+
+	this->outputGrid = std::make_shared<OutputGrid>();
+	this->mesh = std::make_shared<TetMesh>();
+
+	if (this->gridControl) {
+		this->gridControl->setVoxelGrid(this->outputGrid);
+	}
+
+	#ifdef LOAD_RED_AND_BLUE_IMAGE_STACKS
+	this->mesh->addInputGrid(this->inputGrid_Blue).setOutputGrid(this->outputGrid);
+	#else
+	this->mesh->addInputGrid(this->inputGrid).setOutputGrid(this->outputGrid);
+	#endif
+
+
+====================================================================================================================================================================================================
+====================================================================================================================================================================================================
+====================================================================================================================================================================================================
+====================================================================================================================================================================================================
+====================================================================================================================================================================================================
+====================================================================================================================================================================================================
+====================================================================================================================================================================================================
+====================================================================================================================================================================================================
+====================================================================================================================================================================================================
+====================================================================================================================================================================================================
+====================================================================================================================================================================================================
+====================================================================================================================================================================================================
+====================================================================================================================================================================================================
+====================================================================================================================================================================================================
+
+
+

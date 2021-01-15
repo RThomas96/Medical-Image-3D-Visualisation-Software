@@ -22,11 +22,12 @@ int main(int argc, char* argv[]) {
 	QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
 
 	// So the edges don't look jagged
-/*
+
 	QSurfaceFormat fmt;
-	fmt.setSamples(5);
+	fmt.setMajorVersion(4);
+	fmt.setMajorVersion(0);
+	fmt.setOption(QSurfaceFormat::DebugContext);
 	QSurfaceFormat::setDefaultFormat(fmt);
-*/
 
 	QApplication app(argc, argv);
 

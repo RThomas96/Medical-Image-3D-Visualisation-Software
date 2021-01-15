@@ -12,6 +12,8 @@ PlanarViewer::PlanarViewer(Scene* const _scene, planes _p, planeHeading _h, QWid
 
 	this->viewerController = nullptr;
 
+	this->zoomRatio = 1.f;
+
 	this->refreshTimer = new QTimer();
 	// ~7 ms for 144fps, ~16ms for 60fps and ~33ms for 30 FPS
 	this->refreshTimer->setInterval(std::chrono::milliseconds(500)); // 1/2 second when not updated by the viewer
@@ -34,7 +36,7 @@ void PlanarViewer::init(void) {
 	this->makeCurrent();
 
 	this->sceneToShow->initGl(this->context());
-	this->sceneToShow->setDrawModeSolid();
+//	this->sceneToShow->setDrawModeSolid();
 
 	this->refreshTimer->start();
 }
@@ -50,7 +52,7 @@ void PlanarViewer::draw(void) {
 	QSize viewerSize = this->size();
 	glm::vec2 fbDims = glm::vec2(static_cast<float>(viewerSize.width()), static_cast<float>(viewerSize.height()));
 
-	this->sceneToShow->drawPlaneView(fbDims, this->planeToShow, this->planeOrientation, mvMat, pMat);
+	this->sceneToShow->drawPlaneView(fbDims, this->planeToShow, this->planeOrientation, this->zoomRatio, mvMat, pMat);
 }
 
 void PlanarViewer::keyPressEvent(QKeyEvent* _e) {
@@ -76,6 +78,16 @@ void PlanarViewer::keyPressEvent(QKeyEvent* _e) {
 void PlanarViewer::mousePressEvent(QMouseEvent* _e) {
 	QGLViewer::mousePressEvent(_e);
 	this->update();
+}
+
+void PlanarViewer::wheelEvent(QWheelEvent* _w) {
+	if (_w->pixelDelta().rx() > 1) {
+		this->zoomRatio += .1;
+	} else {
+		this->zoomRatio -= .1;
+	}
+
+	QGLViewer::wheelEvent(_w);
 }
 
 void PlanarViewer::setController(ViewerHeader* _header) {

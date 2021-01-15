@@ -8,7 +8,7 @@
 #include <QGLViewer/qglviewer.h>
 #include <QTimer>
 
-#include <renderdoc_app.h>
+// #include <renderdoc_app.h>
 
 #include <memory>
 

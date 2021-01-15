@@ -59,7 +59,7 @@ vec4 voxelValueToColor(in uvec4 ucolor) {
 	float color_k = 2.5;
 	float sc = colorBounds.y - colorBounds.x;
 	float eosin = (color_r - colorBounds.x)/(sc);
-	float dna = (color_r - colorBounds.x)/(sc); // B is on G channel because OpenGL only allows 2 channels upload to be RG, not RB
+	float dna = (color_g - colorBounds.x)/(sc); // B is on G channel because OpenGL only allows 2 channels upload to be RG, not RB
 
 	float eosin_r_coef = 0.050;
 	float eosin_g_coef = 1.000;

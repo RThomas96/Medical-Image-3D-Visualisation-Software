@@ -27,6 +27,8 @@ class PlanarViewer : public QGLViewer {
 		virtual void keyPressEvent(QKeyEvent* _e) override;
 		/// @brief Handles mouse events from the user.
 		virtual void mousePressEvent(QMouseEvent* _m) override;
+		/// @brief Overrides the mouse wheel events from the user.
+		virtual void wheelEvent(QWheelEvent* _w) override;
 	protected:
 		/// @b Sets the widget in charge of controlling the viewer
 		void setController(ViewerHeader* _header);
@@ -36,6 +38,7 @@ class PlanarViewer : public QGLViewer {
 		planeHeading planeOrientation; ///< This plane's orientation
 		QTimer* refreshTimer; ///< Triggers a scene reload
 		ViewerHeader* viewerController; ///< The widget that controls this widget
+		float zoomRatio;
 	public slots:
 		/// @brief Update the view, as a slot without any arguments
 		void updateView(void);

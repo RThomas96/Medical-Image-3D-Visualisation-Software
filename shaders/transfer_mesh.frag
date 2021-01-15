@@ -496,7 +496,7 @@ void main (void) {
 		vec3 p = Pos.xyz;
 		vec3 v = normalize(cam-p);
 
-		vec3 lightP = lightPositions[i];
+		vec3 lightP = lightPositions[i] * vec3(gridSize);
 		vec3 lightSpecular = vec3(.2, .2, .2);
 
 		vec3 l = normalize (lightP - p);
@@ -512,11 +512,11 @@ void main (void) {
 		spec = max (0.0, spec);
 
 		vec3 LightContribution = diffuseRef * diffuse * color.xyz + specRef * spec * lightSpecular * 4;
-		float factor = .25;
+		float factor = .125;
 		colorOut += factor * vec4(LightContribution, 1.);
 	}
 
-	colorOut.xyz *= .8;
+	//colorOut.xyz *= .8;
 
 	return;
 }

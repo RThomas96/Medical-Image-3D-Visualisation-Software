@@ -8,8 +8,14 @@
 #include <QCoreApplication>
 #include <QProgressDialog>
 #include <QKeyEvent>
+#include <QMessageBox>
+#include <QFileDialog>
+
 #include <fstream>
 #include <dlfcn.h>
+
+template<class T>
+std::remove_reference_t<T> const& as_const(T&&t){return t;}
 
 float Viewer::sceneRadiusMultiplier{.5f};
 
@@ -21,7 +27,7 @@ Viewer::Viewer(Scene* const scene, QWidget* parent) :
 	this->refreshTimer->setSingleShot(false);
 	connect(this->refreshTimer, &QTimer::timeout, this, &Viewer::updateView);
 
-	this->drawVolumetric = false;
+	this->drawVolumetric = true;
 	this->shouldCapture = false;
 }
 
@@ -34,7 +40,41 @@ void Viewer::init() {
 	this->makeCurrent();
 
 	this->scene->initGl(this->context());
-	this->scene->setDrawModeSolid();
+
+	// ==========================================================================================
+	// ==========================================================================================
+	// ==========================================================================================
+
+	std::shared_ptr<InputGrid> inputGrid = std::make_shared<InputGrid>();
+
+	IO::GenericGridReader::data_t threshold = IO::GenericGridReader::data_t(0);
+	IO::GenericGridReader* reader = new IO::DIMReader(threshold);
+	std::vector<std::string> f{"/home/thibault/git/Texture3D/Data/Spheres/2_intersecting.dim"};
+	reader->setFilenames(f);
+	// Set reader properties :
+	reader->setDataThreshold(threshold);
+	// Load the data :
+	reader->loadImage();
+
+	// Update data from the grid reader :
+	inputGrid = std::make_shared<InputGrid>();
+	inputGrid->fromGridReader(*reader);
+
+	// free up the reader's resources :
+	delete reader;
+
+	std::string meshpath = "/home/thibault/git/Texture3D/Data/Spheres/meshSpheres.mesh";
+
+	this->makeCurrent();
+	this->scene->addGrid(inputGrid, meshpath);
+
+	std::cerr << "Added input grid to scene\n";
+
+	// ==========================================================================================
+	// ==========================================================================================
+	// ==========================================================================================
+
+//	this->scene->setDrawModeSolid();
 
 	glm::vec3 bbDiag = this->scene->getSceneBoundaries();
 	float sceneSize = glm::length(bbDiag);
@@ -110,7 +150,7 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 		/*
 		DRAW MODES
 		*/
-		case Qt::Key::Key_F1:
+/*		case Qt::Key::Key_F1:
 			this->scene->setDrawModeSolid();
 			this->update();
 		break;
@@ -126,6 +166,7 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 			this->scene->toggleColorOrTexture();
 			this->update();
 		break;
+*/
 		/*
 		RENDERDOC
 		*/
