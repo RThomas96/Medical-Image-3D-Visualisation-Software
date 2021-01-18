@@ -27,6 +27,8 @@
 #include <vector>
 #include <mutex>
 
+#define PLANE_POS_FLOOR
+
 class ControlPanel; // Forward declaration
 
 enum DrawMode { Solid, Volumetric };
@@ -55,7 +57,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane = true);
 
 		/// @b Draw the 3D view of the scene.
-		void draw3DView(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane = true);
+		void draw3DView(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, bool showTexOnPlane = true);
 
 		/// @brief Draws the scene in world-space, along with planes.
 		void drawWithPlanes(GLfloat mvMat[], GLfloat pMat[]);
@@ -63,10 +65,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading, float zoomRatio, GLfloat* vMat, GLfloat* pMat);
 
 		/// @brief Draws the 3D texture with a volumetric-like visualization method
-		void drawVolumetric(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos);
-
-		/// @brief load the voxel grid generated
-		void loadVoxelGrid();
+		void drawVolumetric(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, const GridGLView& grid);
 
 		/// @brief fill the grid using trilinear interpolation
 		void fillTrilinear();
@@ -122,6 +121,10 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void slotSetPlanePositionY(float coord);
 		void slotSetPlanePositionZ(float coord);
 		void slotSetClipDistance(double val) { this->clipDistanceFromCamera = static_cast<float>(val); return; }
+		float getClipDistance(void) { return this->clipDistanceFromCamera; }
+		/// @b Toggles the visibility of the plane in argument
+		void togglePlaneVisibility(planes _plane);
+		/// @b Sets the new 'heading' of the plane (to rotate the planar viewers in the framebuffer)
 		void setPlaneHeading(planes _plane, planeHeading _heading);
 	private :
 		/// @b compile the given shader at 'path' as a shader of type 'shaType'
@@ -130,6 +133,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		GLuint compileProgram(const GLuint vSha = 0, const GLuint gSha = 0, const GLuint fSha = 0, bool verbose = false);
 		/// @b Compile the given shaders, and return the ID of the program generated. On any error, returns 0.
 		GLuint compileShaders(std::string vPath, std::string gPath, std::string fPath, bool verbose = false);
+
 		/// @b Creates all the VAO/VBO handles
 		void createBuffers();
 		/// @b Generate the unit cube used to draw the grid in non-volumetric mode, as well as the plane positions and bounding box buffers.
@@ -142,6 +146,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void setupVBOData(const Mesh& _mesh);
 		/// @b setup the vao binding setup
 		void setupVAOPointers();
+
 		/// @b Print the OpenGL message to std::cerr
 		void printOpenGLMessage(const QOpenGLDebugMessage& message);
 
@@ -151,11 +156,11 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		/// @b preps uniforms for a grid
 		void prepGridUniforms(GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, GLuint texHandle, const std::shared_ptr<DiscreteGrid>& grid);
 		/// @b draws a grid, slightly more generic than drawVoxelGrid()
-		void drawGrid_Generic(GLfloat mvMat[], GLfloat pMat[], glm::mat4 baseMatrix, GLuint texHandle, const std::shared_ptr<DiscreteGrid>& grid);
+		void drawGrid(GLfloat mvMat[], GLfloat pMat[], glm::mat4 baseMatrix, const GridGLView& grid);
 		/// @b preps uniforms for a given plane
-		void prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane, bool showTexOnPlane = true);
+		void prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane, const GridGLView& grid, bool showTexOnPlane = true);
 		/// @brief prep the plane uniforms to draw in space
-		void prepPlane_SingleUniforms(planes _plane, planeHeading _heading, glm::vec2 fbDims, float zoomRatio, const std::shared_ptr<DiscreteGrid> _grid);
+		void prepPlane_SingleUniforms(planes _plane, planeHeading _heading, glm::vec2 fbDims, float zoomRatio, const GridGLView& _grid);
 
 		/// @b Prints grid info.
 		void printGridInfo(const std::shared_ptr<DiscreteGrid>& grid);
@@ -173,8 +178,10 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 
 		/// @b Creates the VBO/VAO handles for bounding boxes
 		void createBoundingBoxBuffers();
+		/// @b Orders the VAO pointers for the bounding box
+		void setupVAOBoundingBox();
 		/// @b Draw a bounding box
-		void drawBoundingBox(const DiscreteGrid::bbox_t& _box, glm::vec4 color, GLfloat* vMat, GLfloat* pMat);
+		void drawBoundingBox(const DiscreteGrid::bbox_t& _box, glm::vec3 color, GLfloat* vMat, GLfloat* pMat);
 		/// @b Update the scene's bounding box with the currently drawn grids.
 		void updateBoundingBox(void);
 
@@ -184,11 +191,11 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		/*************************************/
 		/*************************************/
 		void tex3D_buildTexture();
-		void tex3D_buildMesh(const std::string path = "");
-		void tex3D_buildVisTexture();
-		void tex3D_buildBuffers();
+		void tex3D_buildMesh(GridGLView& grid, const std::string path = "");
+		void tex3D_buildVisTexture(VolMesh& volMesh);
+		void tex3D_buildBuffers(VolMesh& volMesh);
 		void tex3D_bindVAO();
-		void tex3D_loadMESHFile(const std::string name, VolMeshData& _mesh);
+		void tex3D_loadMESHFile(const std::string name, const GridGLView& grid, VolMeshData& _mesh);
 	protected:
 		bool isInitialized;	///< tracks if the scene was initialized or not
 		bool inputGridVisible;	///< does the user want to show the input grid ?
@@ -196,7 +203,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		bool colorOrTexture;	///< do we use the RGB2HSV function or the color scale ?
 		bool showVAOstate;	///< Do we need to print the VAO/program state on next draw ?
 
-		std::vector<std::shared_ptr<DiscreteGrid>> grids; ///< The grids to draw in the scene
+		std::vector<GridGLView> grids;
 
 		QOpenGLContext* context; ///< The context with which the scene has been created with
 		QOpenGLDebugLogger* debugLog; ///< The debug log reading messages from the GL_KHR_debug extension
@@ -217,7 +224,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		uchar maxColorVal;
 		std::size_t renderSize;
 
-		std::array<glm::vec3, 8> lightPositions; ///< Scene lights (positionned at every corner of the scene BB)
+		std::array<glm::vec3, 8> lightPositions; ///< Scene lights (positionned at the corners of the scene BB)
 
 		glm::vec3 planePosition;
 		glm::vec3 planeDirection;
@@ -225,6 +232,8 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		DiscreteGrid::bbox_t sceneBB;
 		float clipDistanceFromCamera;
 		DrawMode drawMode;
+
+		glm::vec<3, bool, glm::defaultp> planeVisibility; ///< Should we show each plane (X, Y, Z)
 
 		// VAO handles :
 		GLuint vaoHandle;
@@ -252,19 +261,8 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		/****** TEXTURE3D VISUALIZATION ******/
 		/*************************************/
 		/*************************************/
-		GLuint texHandle_InputGrid;			///< handle for glTexImage3D
-		GLuint texHandle_OutputGrid;			///< handle for the voxel grid's data
 		GLuint texHandle_ColorScaleGrid;		///< handle for the uploaded color scale
-		#ifndef TEST_VOLMESH
-		GLuint texHandle_tetrahedraNeighborhood;	///< handle for tetrhedra neighbors' texture
-		GLuint texHandle_tetrahedraFaceNormals;		///< handle for the per-face normals of each tetrahedra
-		GLuint texHandle_tetrahedraVertexPositions;	///< vertex positions for the tetrahedra
-		GLuint texHandle_tetrahedraVertexTexCoords;	///< vertex positions for the tetrahedra
-		GLuint texHandle_visibilityMap;			///< texture for visibility
-		GLsizei tetCount;
-		#else
 		VolMesh volumetricMesh;
-		#endif
 		GLuint vboHandle_Texture3D_VertPos;
 		GLuint vboHandle_Texture3D_VertNorm;
 		GLuint vboHandle_Texture3D_VertTex;

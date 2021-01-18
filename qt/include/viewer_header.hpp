@@ -30,7 +30,6 @@ class ViewerHeader : public QWidget {
 		void setName(const std::string _name);
 		/// @b Allows to dynamically set a planar viewer to this header.
 		void connectToViewer(PlanarViewer* _viewer);
-		void add3DViewer(Viewer* _viewer);
 		/// @b Removes the connections between this object's members and the planar viewer.
 		void unregisterPlaneViewer(void);
 	public slots:
@@ -59,7 +58,7 @@ class ViewerHeader : public QWidget {
 		/// @b Button to rotate the cutting plane clockwise
 		QPushButton* button_rotateClockwise;
 		/// @b Button to rotate the cutting plane counter-clockwise
-		QPushButton* button_rotateCounterClockwise;
+		QPushButton* button_togglePlane;
 		/// @b Slider to control the cutting plane's depth
 		QSlider* slider_planeDepth;
 		/// @b Color for the widget's background

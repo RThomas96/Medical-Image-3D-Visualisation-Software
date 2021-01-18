@@ -35,12 +35,15 @@ bool shouldDrawBorder();
 /***************** Main *****************/
 /****************************************/
 void main() {
-	if (shouldDiscard()) { discard; }
+	// if (shouldDiscard()) { discard; }
+
 	// Default color : plane color
 	color = planeIdxToColor(planeIndex);
+
 	// If in the border area, stop there :
 	if (shouldDrawBorder()) { return; }
 
+	color.xyz = vTexCoords;
 	// Apply the texture :
 	color = voxelValueToColor(texture(texData, vTexCoords));
 }
@@ -49,7 +52,7 @@ void main() {
 /************** Functions ***************/
 /****************************************/
 vec4 voxelValueToColor(in uvec4 ucolor) {
-	if (ucolor.r < textureBounds.x || ucolor.r > textureBounds.y) { discard; }
+	if (float(ucolor.r) < textureBounds.x || float(ucolor.r) > textureBounds.y) { discard; }
 //	if (ucolor.g < textureBounds.x || ucolor.g > colorBounds.y) { discard; }
 	// Have the R and G color channels clamped to the min/max of the scale
 	// (mimics under or over-exposure)

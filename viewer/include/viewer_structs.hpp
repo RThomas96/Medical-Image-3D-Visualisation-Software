@@ -115,8 +115,6 @@ struct VolMeshData {
 		std::vector<std::array<glm::vec4, 4>> normals;
 };
 
-#define TEST_VOLMESH
-
 struct VolMesh {
 	public:
 		/// @b Default constructor for the VolMesh struct.
@@ -149,7 +147,7 @@ struct GridGLView {
 		/// @b Default constructor for the grid view. Must be associated to one and only one grid.
 		GridGLView(const std::shared_ptr<DiscreteGrid>& _g);
 		/// @b Copy constructor of the GridGLView struct.
-		GridGLView(const GridGLView&) = delete;
+		GridGLView(const GridGLView&) = default;
 		/// @b Move constructor of the GridGLView struct.
 		GridGLView(GridGLView&&) = delete;
 		/// @b Copy operator of the GridGLView struct.

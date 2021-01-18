@@ -29,10 +29,7 @@ uniform vec4 sceneBBDiagonal;	// The grid's world-space bounding box diagonal
 uniform vec4 sceneBBPosition;	// The grid's world-space bounding box position
 uniform vec3 planePositions;	// The plane positions, in world space
 uniform uint heading;		// The plane's 'up' orientation (up [default] = 0, right = 1, down = 2, left = 3)
-uniform float zoom = 0.f;
-
-uniform mat4 pMat;
-uniform mat4 vMat;
+uniform float zoom;		// The zoom factor for the current view
 
 /****************************************/
 /*********** Function headers ***********/
@@ -78,10 +75,8 @@ void main(void) {
 		multiplier.y = 1.f; // The bb height will be displayed whole
 		float ratio_bb_inv = bb.y / bb.x;
 		float ratio_fb_inv = fb.y / fb.x;
-		if (heading == 1 || heading == 3) { ratio_bb_inv = bb.x / bb.y; }
 		multiplier.x = ratio_fb_inv / ratio_bb_inv;
 	}
-	//if (heading == 1 || heading == 3) { multiplier = multiplier.yxz; }
 
 	vec4 vPos_WS = sceneBBPosition + (vertexPosition * sceneBBDiagonal) + planeDisplacementCompute(planeIndex);
 	vec4 vPos_GS = (gridTransform) * vPos_WS;

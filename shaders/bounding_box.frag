@@ -17,7 +17,7 @@ out vec4 color;
 /****************************************/
 uniform mat4 pMat;	// Projection matrix
 uniform mat4 vMat;	// View matrix
-uniform vec4 bbColor = vec4(.257, .257, .257, 1.);	// Default BB color = mid-gray
+uniform vec3 bbColor;	// Asked color for the lines
 uniform vec3 bbSize;	// Bounding box dimensions
 uniform vec3 bbPos;	// Bounding box original position (min point)
 
@@ -29,7 +29,8 @@ uniform vec3 bbPos;	// Bounding box original position (min point)
 /***************** Main *****************/
 /****************************************/
 void main(void) {
-	color = bbColor;
+	color.xyz = bbColor;
+	color.w = 1.f;
 	return;
 }
 

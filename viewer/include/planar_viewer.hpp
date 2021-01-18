@@ -38,7 +38,9 @@ class PlanarViewer : public QGLViewer {
 		planeHeading planeOrientation; ///< This plane's orientation
 		QTimer* refreshTimer; ///< Triggers a scene reload
 		ViewerHeader* viewerController; ///< The widget that controls this widget
-		float zoomRatio;
+		float minZoomRatio; ///< minimum value of the zoom applied to the image
+		float maxZoomRatio; ///< maximum value of the zoom applied to the image
+		float zoomRatio; ///< The current zoom level applied to the image
 	public slots:
 		/// @brief Update the view, as a slot without any arguments
 		void updateView(void);
@@ -50,6 +52,8 @@ class PlanarViewer : public QGLViewer {
 		void rotatePlaneClockwise(void);
 		/// @b Rotates a plane in a counter-clockwise fashion.
 		void rotatePlaneCounterClockwise(void);
+		/// @b Toggles the corresponding plane's visibility in the scene
+		void togglePlaneVisibility(void);
 };
 
 #endif // VISUALISATION_VIEWER_INCLUDE_PLANAR_VIEWER_HPP_

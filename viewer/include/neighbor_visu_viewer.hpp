@@ -28,6 +28,8 @@ class Viewer : public QGLViewer {
 		virtual void draw() override;
 		/// @brief Handles key events from the user.
 		virtual void keyPressEvent(QKeyEvent* e) override;
+		/// @b Wheel event for the mouse.
+		virtual void wheelEvent(QWheelEvent* _w) override;
 	private:
 		/// @brief The scene to control.
 		Scene* const scene;
@@ -40,6 +42,8 @@ class Viewer : public QGLViewer {
 	public slots:
 		/// @brief Update the view, as a slot without any arguments (currently only used by QTimer)
 		void updateView() { this->update(); }
+
+		void addGrid();
 };
 
 #endif // VIEWER_INCLUDE_NEIGHBOR_VISU_VIEWER_HPP_

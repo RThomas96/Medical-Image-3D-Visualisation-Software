@@ -10,6 +10,7 @@
 #include <QKeyEvent>
 #include <QMessageBox>
 #include <QFileDialog>
+#include <QtPlatformHeaders/QGLXNativeContext>
 
 #include <fstream>
 #include <dlfcn.h>
@@ -41,41 +42,6 @@ void Viewer::init() {
 
 	this->scene->initGl(this->context());
 
-	// ==========================================================================================
-	// ==========================================================================================
-	// ==========================================================================================
-
-	std::shared_ptr<InputGrid> inputGrid = std::make_shared<InputGrid>();
-
-	IO::GenericGridReader::data_t threshold = IO::GenericGridReader::data_t(0);
-	IO::GenericGridReader* reader = new IO::DIMReader(threshold);
-	std::vector<std::string> f{"/home/thibault/git/Texture3D/Data/Spheres/2_intersecting.dim"};
-	reader->setFilenames(f);
-	// Set reader properties :
-	reader->setDataThreshold(threshold);
-	// Load the data :
-	reader->loadImage();
-
-	// Update data from the grid reader :
-	inputGrid = std::make_shared<InputGrid>();
-	inputGrid->fromGridReader(*reader);
-
-	// free up the reader's resources :
-	delete reader;
-
-	std::string meshpath = "/home/thibault/git/Texture3D/Data/Spheres/meshSpheres.mesh";
-
-	this->makeCurrent();
-	this->scene->addGrid(inputGrid, meshpath);
-
-	std::cerr << "Added input grid to scene\n";
-
-	// ==========================================================================================
-	// ==========================================================================================
-	// ==========================================================================================
-
-//	this->scene->setDrawModeSolid();
-
 	glm::vec3 bbDiag = this->scene->getSceneBoundaries();
 	float sceneSize = glm::length(bbDiag);
 
@@ -99,11 +65,7 @@ void Viewer::draw() {
 	qglviewer::Vec cam = this->camera()->worldCoordinatesOf(qglviewer::Vec(0., 0., 0.));
 	glm::vec3 camPos = glm::vec3(static_cast<float>(cam.x), static_cast<float>(cam.y), static_cast<float>(cam.z));
 
-	if (this->drawVolumetric) {
-		this->scene->drawVolumetric(mvMat, pMat, camPos);
-	} else {
-		this->scene->drawWithPlanes(mvMat, pMat);
-	}
+	this->scene->draw3DView(mvMat, pMat, camPos);
 }
 
 void Viewer::keyPressEvent(QKeyEvent *e) {
@@ -119,7 +81,11 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 			this->scene->printVAOStateNext();
 		break;
 		case Qt::Key::Key_V:
-			this->drawVolumetric = !this->drawVolumetric;
+			this->scene->setDrawMode(DrawMode::Volumetric);
+			this->update();
+		break;
+		case Qt::Key::Key_S:
+			this->scene->setDrawMode(DrawMode::Solid);
 			this->update();
 		break;
 		/*
@@ -131,6 +97,10 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 		break;
 		case Qt::Key::Key_O:
 			this->scene->toggleOutputGridVisible();
+			this->update();
+		break;
+		case Qt::Key::Key_A:
+			this->addGrid();
 			this->update();
 		break;
 		/*
@@ -148,26 +118,6 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 			this->scene->writeGridDIM("outputGrid");
 		break;
 		/*
-		DRAW MODES
-		*/
-/*		case Qt::Key::Key_F1:
-			this->scene->setDrawModeSolid();
-			this->update();
-		break;
-		case Qt::Key::Key_F2:
-			this->scene->setDrawModeSolidAndWireframe();
-			this->update();
-		break;
-		case Qt::Key::Key_F3:
-			this->scene->setDrawModeWireframe();
-			this->update();
-		break;
-		case Qt::Key::Key_F4:
-			this->scene->toggleColorOrTexture();
-			this->update();
-		break;
-*/
-		/*
 		RENDERDOC
 		*/
 		case Qt::Key::Key_C:
@@ -181,4 +131,72 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 			QGLViewer::keyPressEvent(e);
 		break;
 	}
+}
+
+void Viewer::wheelEvent(QWheelEvent* _w) {
+	QGLViewer::wheelEvent(_w);
+	this->update();
+}
+
+void Viewer::addGrid() {
+	// create input grid pointer :
+	std::shared_ptr<InputGrid> inputGrid = std::make_shared<InputGrid>();
+
+	IO::GenericGridReader* reader = nullptr;
+	IO::GenericGridReader::data_t threshold = IO::GenericGridReader::data_t(0);
+
+	QMessageBox* msgBox = new QMessageBox();
+	msgBox->setText("Choose your input data type");
+	QPushButton* dimButton = msgBox->addButton("DIM", QMessageBox::ActionRole);
+	QPushButton* tiffButton = msgBox->addButton("TIFF", QMessageBox::ActionRole);
+
+	msgBox->exec();
+
+	if (msgBox->clickedButton() == dimButton) {
+		reader = new IO::DIMReader(threshold);
+		QString filename = QFileDialog::getOpenFileName(nullptr, "Open a DIM/IMA image (Blue channel)", "../../", "BrainVISA DIM Files (*.dim)");
+		std::vector<std::string> f;
+		f.push_back(filename.toStdString());
+		reader->setFilenames(f);
+	} else if (msgBox->clickedButton() == tiffButton) {
+		// do nothing :
+		reader = new IO::Reader::TIFF(threshold);
+		QStringList filenames = QFileDialog::getOpenFileNames(nullptr, "Open multiple TIFF images (Blue channel)","../../", "TIFF Files (*.tiff, *.tif)");
+		std::vector<std::string> f;
+		for (const QString& fn : as_const(filenames)) {
+			f.push_back(fn.toStdString());
+		}
+		reader->setFilenames(f);
+	} else {
+		std::cerr << "No button was pressed." << '\n';
+		throw std::runtime_error("error : no button pressed");
+	}
+	// Set reader properties :
+	reader->setDataThreshold(threshold);
+	// Load the data :
+	reader->loadImage();
+
+	// Update data from the grid reader :
+	inputGrid = std::make_shared<InputGrid>();
+	inputGrid->fromGridReader(*reader);
+
+	// free up the reader's resources :
+	delete reader;
+
+	QString filename = QFileDialog::getOpenFileName(nullptr, "Open a MESH", "../../", "Mesh (*.MESH)");
+	std::string meshpath = filename.toStdString();
+
+	this->makeCurrent();
+	this->scene->addGrid(inputGrid, meshpath);
+	this->doneCurrent();
+
+	std::cerr << "Added input grid to scene\n";
+
+	glm::vec3 bbDiag = this->scene->getSceneBoundaries();
+	float sceneSize = glm::length(bbDiag);
+
+	this->setSceneRadius(sceneSize*sceneRadiusMultiplier);
+	// center scene on center of grid
+	this->setSceneCenter(qglviewer::Vec(bbDiag.x/2., bbDiag.y/2., bbDiag.z/2.));
+	this->showEntireScene();
 }

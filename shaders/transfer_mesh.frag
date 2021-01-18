@@ -357,19 +357,6 @@ void main (void) {
 		return;
 	}
 
-	// if (ComputeVisibility(P.xyz) == false) { discard; }
-
-	/**
-	A little reminder here :
-		- all fragments processed here will be defined in world-space, along with the
-		  cutting planes, clipping point/normal etc
-		- however, the VShader outputs will be defined in grid space, aka without any
-		  transformation applied from the vertex_translations texture (or similar)
-
-	It remains to be seen if the 'P' input is defined in world space or grid space, since
-	it's the position we use to compute the ray's initial vector in world space.
-	**/
-
 	// Default color of the fragment : cyan
 	colorOut = vec4(.0, .8, .8, 1.);
 
@@ -490,14 +477,13 @@ void main (void) {
 	if(!in_tet || !hit) discard;
 
 	// Phong computation :
-
 	colorOut = vec4(.0, .0, .0, .0);
 	for (int i = 0; i < 8; ++i) {
 		vec3 p = Pos.xyz;
 		vec3 v = normalize(cam-p);
 
-		vec3 lightP = lightPositions[i] * vec3(gridSize);
-		vec3 lightSpecular = vec3(.2, .2, .2);
+		vec3 lightP = lightPositions[i];
+		vec3 lightSpecular = vec3(.8, .8, .8);
 
 		vec3 l = normalize (lightP - p);
 		l.z = l.z*-1.;
@@ -508,15 +494,13 @@ void main (void) {
 		vec3 r = 2. * ndotl * n - l;
 
 		float spec = max(dot(r, v), 0.0);
-		spec = pow (spec, 5.);
+		spec = pow (spec, 25.);
 		spec = max (0.0, spec);
 
 		vec3 LightContribution = diffuseRef * diffuse * color.xyz + specRef * spec * lightSpecular * 4;
-		float factor = .125;
+		float factor = 1./8.;
 		colorOut += factor * vec4(LightContribution, 1.);
 	}
-
-	//colorOut.xyz *= .8;
 
 	return;
 }

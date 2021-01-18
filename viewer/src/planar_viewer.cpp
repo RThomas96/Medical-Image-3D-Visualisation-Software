@@ -12,7 +12,9 @@ PlanarViewer::PlanarViewer(Scene* const _scene, planes _p, planeHeading _h, QWid
 
 	this->viewerController = nullptr;
 
+	this->minZoomRatio = 1.f;
 	this->zoomRatio = 1.f;
+	this->maxZoomRatio = 5.f;
 
 	this->refreshTimer = new QTimer();
 	// ~7 ms for 144fps, ~16ms for 60fps and ~33ms for 30 FPS
@@ -81,13 +83,17 @@ void PlanarViewer::mousePressEvent(QMouseEvent* _e) {
 }
 
 void PlanarViewer::wheelEvent(QWheelEvent* _w) {
-	if (_w->pixelDelta().rx() > 1) {
+	if (_w->angleDelta().y() > 0) {
 		this->zoomRatio += .1;
 	} else {
 		this->zoomRatio -= .1;
 	}
 
+	if (this->zoomRatio > this->maxZoomRatio) { this->zoomRatio = this->maxZoomRatio; }
+	if (this->zoomRatio < this->minZoomRatio) { this->zoomRatio = this->minZoomRatio; }
+
 	QGLViewer::wheelEvent(_w);
+	this->update();
 }
 
 void PlanarViewer::setController(ViewerHeader* _header) {
@@ -133,4 +139,8 @@ void PlanarViewer::rotatePlaneCounterClockwise() {
 	else if (this->planeOrientation == planeHeading::East) { this->planeOrientation = planeHeading::North; }
 	this->sceneToShow->setPlaneHeading(this->planeToShow, this->planeOrientation);
 	this->update();
+}
+
+void PlanarViewer::togglePlaneVisibility() {
+	this->sceneToShow->togglePlaneVisibility(this->planeToShow);
 }
