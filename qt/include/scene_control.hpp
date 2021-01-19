@@ -18,7 +18,7 @@ class Viewer; // forward declaration
 class ControlPanel : public QWidget {
 		Q_OBJECT
 	public:
-		ControlPanel(Scene* const scene, Viewer* lv, Viewer* rv, QWidget* parent = nullptr);
+		ControlPanel(Scene* const scene, Viewer* lv, QWidget* parent = nullptr);
 		~ControlPanel();
 	protected:
 		void initSignals(void);
@@ -34,7 +34,6 @@ class ControlPanel : public QWidget {
 		QSpinBox* maxValueColor; ///< Spinbox to determine the max color value to determine the color scale
 		QWidget* controlContainer;
 		Viewer* leftViewer;
-		Viewer* rightViewer;
 		QDoubleSpinBox* clipDistance;
 
 	public slots:

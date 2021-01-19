@@ -8,11 +8,12 @@
 #include "./grid_control.hpp"
 
 #include <QWidget>
+#include <QMainWindow>
 #include <QGLViewer/qglviewer.h>
 
 #define ENABLE_QUAD_VIEW
 
-class MainWidget : public QWidget {
+class MainWidget : public QMainWindow {
 		Q_OBJECT
 	public:
 		MainWidget();
@@ -25,18 +26,17 @@ class MainWidget : public QWidget {
 		/// have them both square, and not too small.
 		bool eventFilter(QObject* obj, QEvent* e) override;
 	private:
-		Viewer* viewer; ///< The visualisation panel, drawing elements from the scene
-		PlanarViewer* viewer_planeX; ///< The visualisation of the grid on plane X
-		PlanarViewer* viewer_planeY; ///< The visualisation of the grid on plane Y
-		PlanarViewer* viewer_planeZ; ///< The visualisation of the grid on plane Z
-		ControlPanel* controlPanel; ///< The control panel at the bottom of the grid
-		GridControl* gridController; ///< The control panel for the grid to generate
-		ViewerHeader* headerX; ///< Header for the X plane viewer
-		ViewerHeader* headerY; ///< Header for the Y plane viewer
-		ViewerHeader* headerZ; ///< Header for the Z plane viewer
-		Scene* scene; ///< The underlying scene, with the data to display
-		bool widgetSizeSet; ///< Checks if the widget size has been set before
-		std::vector<QObject*> strayObj; ///< Pointers to all temporary objects allocated in the setup process
+		Viewer* viewer;			///< The visualisation panel, drawing elements from the scene
+		PlanarViewer* viewer_planeX;	///< The visualisation of the grid on plane X
+		PlanarViewer* viewer_planeY;	///< The visualisation of the grid on plane Y
+		PlanarViewer* viewer_planeZ;	///< The visualisation of the grid on plane Z
+		ControlPanel* controlPanel;	///< The control panel at the bottom of the grid
+		ViewerHeader* headerX;		///< Header for the X plane viewer
+		ViewerHeader* headerY;		///< Header for the Y plane viewer
+		ViewerHeader* headerZ;		///< Header for the Z plane viewer
+		Scene* scene;			///< The underlying scene, with the data to display
+		bool widgetSizeSet;		///< Checks if the widget size has been set before
+		std::vector<QObject*> strayObj;	///< Pointers to all temporary objects allocated in the setup process
 };
 
 #endif // QT_INCLUDE_NEIGHBOR_VISU_MAIN_WIDGET_HPP_

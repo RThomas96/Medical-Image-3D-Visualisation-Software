@@ -42,7 +42,7 @@ class Viewer : public QGLViewer {
 	public slots:
 		/// @brief Update the view, as a slot without any arguments (currently only used by QTimer)
 		void updateView() { this->update(); }
-
+		/// @brief Adds a grid to the scene
 		void addGrid();
 };
 

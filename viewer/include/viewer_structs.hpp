@@ -149,16 +149,16 @@ struct GridGLView {
 		/// @b Copy constructor of the GridGLView struct.
 		GridGLView(const GridGLView&) = default;
 		/// @b Move constructor of the GridGLView struct.
-		GridGLView(GridGLView&&) = delete;
+		GridGLView(GridGLView&&) = default;
 		/// @b Copy operator of the GridGLView struct.
-		GridGLView& operator= (const GridGLView&) = delete;
+		GridGLView& operator= (const GridGLView&) = default;
 		/// @b Move operator of the GridGLView struct.
-		GridGLView& operator= (GridGLView&&) = delete;
+		GridGLView& operator= (GridGLView&&) = default;
 		/// @b Default destructor of the GridGLView struct.
 		~GridGLView(void);
 	public:
 		/// @b The pointer to the grid we want to show.
-		const std::shared_ptr<DiscreteGrid> grid;
+		std::shared_ptr<DiscreteGrid> grid;
 		/// @b The texture handle to access the grid data in shaders.
 		GLuint gridTexture;
 		/// @b The volumetric mesh handles to use when drawing

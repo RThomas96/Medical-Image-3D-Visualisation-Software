@@ -39,7 +39,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		typedef glm::vec<4, unsigned int, glm::defaultp> uvec4;
 		typedef glm::uvec3 uvec3;
 	public:
-		Scene(GridControl* const gc); ///< default constructor
+		Scene(); ///< default constructor
 		~Scene(void); ///< default destructor
 
 		/// @brief initialize the variables of the scene
@@ -47,47 +47,34 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 
 		/// @brief set the control panel responsible for controlling the scene
 		void setControlPanel(ControlPanel* cp) { this->controlPanel = cp; }
+		/// @b Remove the grid controller pointer from the scene class.
+		void removeController();
 		/// @brief reload the default shader files
 		void recompileShaders(bool verbose = true);
 
 		/// @b Adds a grid to the list of grids present and to be drawn, and generates the data structure to visualize it.
 		void addGrid(const std::shared_ptr<InputGrid> _grid, std::string meshPath);
 
-		/// @brief draw the planes, in the real space
-		void drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane = true);
-
 		/// @b Draw the 3D view of the scene.
 		void draw3DView(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, bool showTexOnPlane = true);
 
-		/// @brief Draws the scene in world-space, along with planes.
-		void drawWithPlanes(GLfloat mvMat[], GLfloat pMat[]);
 		/// @b Draw a given plane 'view' (single plane on the framebuffer).
 		void drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading, float zoomRatio, GLfloat* vMat, GLfloat* pMat);
-
-		/// @brief Draws the 3D texture with a volumetric-like visualization method
-		void drawVolumetric(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, const GridGLView& grid);
 
 		/// @brief fill the grid using trilinear interpolation
 		void fillTrilinear();
 		/// @brief fill the grid using nearest neighbor interpolation
 		void fillNearestNeighbor();
 
-		/// @brief show the tex cube or not
-		void toggleInputGridVisible(bool visibility) { this->inputGridVisible = visibility; }
-		/// @brief show the tex cube or not
-		void toggleInputGridVisible() { this->toggleInputGridVisible(!this->inputGridVisible); }
-		/// @brief show the tex cube or not
-		void toggleOutputGridVisible(bool visibility) { this->outputGridVisible = visibility; }
-		/// @brief show the tex cube or not
-		void toggleOutputGridVisible() { this->outputGridVisible = not this->outputGridVisible; }
-
-		void toggleColorOrTexture(bool _cOT) { this->colorOrTexture = _cOT; }
-		void toggleColorOrTexture() { this->toggleColorOrTexture(!this->colorOrTexture); }
-
 		glm::vec3 getSceneBoundaries() const;
 
 		/// @b Set the draw mode for the 3D view of the scene.
 		void setDrawMode(DrawMode _mode);
+
+		/// @b Launches a save dialog, to generate a grid.
+		void launchSaveDialog();
+		/// @b Deletes a grid from the array of grids to show
+		void deleteGrid(const std::shared_ptr<DiscreteGrid>& _grid);
 
 		void cleanup(void); ///< cleanup function for vbo and other parts
 		void printVAOStateNext() { this->showVAOstate = true; } ///< prints info about the VAO on next refresh
@@ -103,7 +90,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 
 		void writeGridDIM(const std::string name);
 
-		void draft_writeRawGridPortion(DiscreteGrid::sizevec3 begin, DiscreteGrid::sizevec3 size, std::string name);
+		void draft_writeRawGridPortion(DiscreteGrid::sizevec3 begin, DiscreteGrid::sizevec3 size, std::string name, const std::shared_ptr<DiscreteGrid>& _grid);
 
 		void slotTogglePolygonMode(bool show);
 		void slotToggleShowTextureCube(bool show);
@@ -155,12 +142,17 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 
 		/// @b preps uniforms for a grid
 		void prepGridUniforms(GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, GLuint texHandle, const std::shared_ptr<DiscreteGrid>& grid);
-		/// @b draws a grid, slightly more generic than drawVoxelGrid()
-		void drawGrid(GLfloat mvMat[], GLfloat pMat[], glm::mat4 baseMatrix, const GridGLView& grid);
 		/// @b preps uniforms for a given plane
 		void prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane, const GridGLView& grid, bool showTexOnPlane = true);
 		/// @brief prep the plane uniforms to draw in space
 		void prepPlane_SingleUniforms(planes _plane, planeHeading _heading, glm::vec2 fbDims, float zoomRatio, const GridGLView& _grid);
+
+		/// @brief draw the planes, in the real space
+		void drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane = true);
+		/// @b draws a grid, slightly more generic than drawVoxelGrid()
+		void drawGrid(GLfloat mvMat[], GLfloat pMat[], glm::mat4 baseMatrix, const GridGLView& grid);
+		/// @brief Draws the 3D texture with a volumetric-like visualization method
+		void drawVolumetric(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, const GridGLView& grid);
 
 		/// @b Prints grid info.
 		void printGridInfo(const std::shared_ptr<DiscreteGrid>& grid);
@@ -208,14 +200,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		QOpenGLContext* context; ///< The context with which the scene has been created with
 		QOpenGLDebugLogger* debugLog; ///< The debug log reading messages from the GL_KHR_debug extension
 		ControlPanel* controlPanel; ///< pointer to the control panel
-		#ifdef LOAD_RED_AND_BLUE_IMAGE_STACKS
-		std::shared_ptr<InputGrid> inputGrid_Blue; ///< input grid (blue channel)
-		std::shared_ptr<InputGrid> inputGrid_Red; ///< input grid (red channel)
-		#else
-		std::shared_ptr<InputGrid> inputGrid; ///< input grid
-		#endif
 		std::shared_ptr<OutputGrid> outputGrid; ///< output grid
-		std::shared_ptr<TetMesh> mesh; ///< creates a mesh around the queried point
 		GridControl* gridControl;
 
 		uchar minTexVal;

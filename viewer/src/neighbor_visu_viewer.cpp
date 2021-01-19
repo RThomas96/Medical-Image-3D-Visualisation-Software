@@ -73,7 +73,7 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 		/*
 		SHADER PROGRAMS
 		*/
-		case Qt::Key::Key_R:
+		case Qt::Key::Key_F5:
 			this->scene->recompileShaders();
 			this->update();
 		break;
@@ -85,20 +85,16 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 			this->update();
 		break;
 		case Qt::Key::Key_S:
-			this->scene->setDrawMode(DrawMode::Solid);
-			this->update();
+			if ((e->modifiers() & Qt::KeyboardModifier::ControlModifier) != 0) {
+				this->scene->launchSaveDialog();
+			} else {
+				this->scene->setDrawMode(DrawMode::Solid);
+				this->update();
+			}
 		break;
 		/*
-		GRID VISIBILITY
+		GRIDS
 		*/
-		case Qt::Key::Key_I:
-			this->scene->toggleInputGridVisible();
-			this->update();
-		break;
-		case Qt::Key::Key_O:
-			this->scene->toggleOutputGridVisible();
-			this->update();
-		break;
 		case Qt::Key::Key_A:
 			this->addGrid();
 			this->update();
@@ -142,14 +138,17 @@ void Viewer::addGrid() {
 	// create input grid pointer :
 	std::shared_ptr<InputGrid> inputGrid = std::make_shared<InputGrid>();
 
+	// create reader :
 	IO::GenericGridReader* reader = nullptr;
 	IO::GenericGridReader::data_t threshold = IO::GenericGridReader::data_t(0);
 
+	// create message box to ask user :
 	QMessageBox* msgBox = new QMessageBox();
 	msgBox->setText("Choose your input data type");
 	QPushButton* dimButton = msgBox->addButton("DIM", QMessageBox::ActionRole);
 	QPushButton* tiffButton = msgBox->addButton("TIFF", QMessageBox::ActionRole);
 
+	// show the msgbox :
 	msgBox->exec();
 
 	if (msgBox->clickedButton() == dimButton) {
@@ -159,7 +158,6 @@ void Viewer::addGrid() {
 		f.push_back(filename.toStdString());
 		reader->setFilenames(f);
 	} else if (msgBox->clickedButton() == tiffButton) {
-		// do nothing :
 		reader = new IO::Reader::TIFF(threshold);
 		QStringList filenames = QFileDialog::getOpenFileNames(nullptr, "Open multiple TIFF images (Blue channel)","../../", "TIFF Files (*.tiff, *.tif)");
 		std::vector<std::string> f;

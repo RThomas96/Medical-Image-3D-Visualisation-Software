@@ -1,13 +1,16 @@
 #include "../include/grid_control.hpp"
 #include "../../image/include/writer.hpp"
+#include "../../viewer/include/scene.hpp"
 
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QGridLayout>
 #include <QFileDialog>
 
-GridControl::GridControl(std::shared_ptr<DiscreteGrid> vg, QWidget* parent) : QWidget(parent) {
+GridControl::GridControl(std::shared_ptr<DiscreteGrid> vg, std::shared_ptr<TetMesh>& tetMesh, Scene* _scene, QWidget* parent) : QWidget(parent) {
 	this->voxelGrid = vg;
+	this->scene = _scene;
+	this->mesh = tetMesh;
 	this->setupWidgets();
 	if (this->voxelGrid != nullptr) {
 		this->updateGridDimensions();
@@ -17,9 +20,13 @@ GridControl::GridControl(std::shared_ptr<DiscreteGrid> vg, QWidget* parent) : QW
 			this->disableWidgets();
 		}
 	}
+
+	this->setAttribute(Qt::WA_DeleteOnClose);
 }
 
 GridControl::~GridControl() {
+	std::cerr << "Deleting the GridControl panel ...\n";
+	if (this->scene != nullptr) { this->scene->deleteGrid(this->voxelGrid); this->scene->removeController(); }
 	delete this->input_GridSizeX;
 	delete this->input_GridSizeY;
 	delete this->input_GridSizeZ;
@@ -364,19 +371,21 @@ void GridControl::updateGridDimensions() {
 }
 
 void GridControl::launchGridFill() {
-	if (voxelGrid == nullptr) {
+	if (voxelGrid == nullptr || this->mesh == nullptr) {
 		return;
 	}
 	std::cerr << "Launching grid fill ... will freeze the application.\n";
-	/*
-	this->voxelGrid->populateGrid(this->method);
-	double time = this->voxelGrid->getTimeToCompute().count();
-	this->info_TotalTime->setText(QString::number(time));
-	svec3 dims = this->voxelGrid->getGridDimensions();
-	std::size_t size = dims.x * dims.y * dims.z;
-	this->info_VoxelRate->setText(QString::number(((static_cast<double>(size)/time)*3600.)/1.e9));
-	*/
-	std::cerr << "[ERROR] Not yet implemented the filling from the controller\n";
+
+	this->mesh->populateOutputGrid(this->method);
+	// this->voxelGrid->populateGrid(this->method);
+	// double time = this->voxelGrid->getTimeToCompute().count();
+	// this->info_TotalTime->setText(QString::number(time));
+	// svec3 dims = this->voxelGrid->getGridDimensions();
+	// std::size_t size = dims.x * dims.y * dims.z;
+	// this->info_VoxelRate->setText(QString::number(((static_cast<double>(size)/time)*3600.)/1.e9));
+
+	// std::cerr << "[ERROR] Not yet implemented the filling from the controller\n";
+	std::cerr << "DONE !" << '\n';
 }
 
 void GridControl::saveToFile() {
@@ -385,12 +394,12 @@ void GridControl::saveToFile() {
 		return;
 	}
 
-	//QString fileName = QFileDialog::getSaveFileName(nullptr, "Save to DIM/IMA files", "../", "BrainVisa DIM/IMA (*.dim, *.ima)");
-	//IO::Writer::DIM* dimWriter = new IO::Writer::DIM(fileName.toStdString());
-	//std::cerr << "Writing to file with basename : \"" << fileName.toStdString() << '\"' << '\n';
-	//dimWriter->write(this->voxelGrid.get());
+	QString fileName = QFileDialog::getSaveFileName(nullptr, "Save to DIM/IMA files", "../", "BrainVisa DIM/IMA (*.dim, *.ima)");
+	IO::Writer::DIM* dimWriter = new IO::Writer::DIM(fileName.toStdString());
+	std::cerr << "Writing to file with basename : \"" << fileName.toStdString() << '\"' << '\n';
+	dimWriter->write(this->voxelGrid);
 
-	std::cerr << "[ERROR] Not yet implemented the discretegrid writer\n";
+	std::cerr << "Wrote grid to the file \"" << fileName.toStdString() << "\"\n";
 }
 
 void GridControl::setGridDimensionX(int newDim) {

@@ -7,7 +7,7 @@
 #include <QVBoxLayout>
 #include <QGridLayout>
 
-ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, Viewer* rv, QWidget* parent) : QWidget(parent), sceneToControl(scene), leftViewer(lv), rightViewer(rv) {
+ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, QWidget* parent) : QWidget(parent), sceneToControl(scene), leftViewer(lv) {
 	// Once again, a long constructor because of the verbosity of
 	// Qt's layout and positionning system when done directly in
 	// code. Goddammit, it's verbose.
@@ -86,6 +86,10 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, Viewer* rv, QWidget* 
 
 	this->initSignals();
 
+	if (this->sceneToControl != nullptr) {
+		this->updateValues();
+	}
+
 	this->setSizePolicy(QSizePolicy::Policy::Fixed, QSizePolicy::Policy::Fixed);
 }
 
@@ -121,7 +125,6 @@ void ControlPanel::initSignals() {
 
 void ControlPanel::updateViewers() {
 	if (this->leftViewer != nullptr) { this->leftViewer->update(); }
-	if (this->rightViewer != nullptr) { this->rightViewer->update(); }
 }
 
 void ControlPanel::activatePanels(bool activeStatus) {

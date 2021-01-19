@@ -17,9 +17,9 @@ ViewerHeader::ViewerHeader(QWidget* parent) : QWidget(parent) {
 ViewerHeader::ViewerHeader(std::string name, QWidget* parent) : ViewerHeader(parent) {
 	this->layout = new QHBoxLayout();
 	this->viewerToControl = nullptr;
-
+	// Create the label
 	this->label_PlaneName = new QLabel(name.c_str());
-
+	// Create buttons
 	this->button_invertPlaneCut = new QPushButton("Invert");
 	this->button_rotateClockwise = new QPushButton("RCW");
 	this->button_togglePlane = new QPushButton("Show ?");
@@ -55,6 +55,10 @@ ViewerHeader::~ViewerHeader() {
 	delete this->layout;
 }
 
+void ViewerHeader::setName(const std::string _name) {
+	this->label_PlaneName->setText(QString(_name.c_str()));
+}
+
 void ViewerHeader::connectToViewer(PlanarViewer *_viewer) {
 	if (_viewer == nullptr) { return; }
 
@@ -72,7 +76,7 @@ void ViewerHeader::unregisterPlaneViewer() {
 	this->label_PlaneName->setText("- Nothing connected -");
 
 	// Reset sliders :
-	this->slider_planeDepth->setValue(-1);
+	this->slider_planeDepth->setValue(1);
 
 	// De-activate widgets :
 	this->activateWidgets(false);

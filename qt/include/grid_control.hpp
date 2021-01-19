@@ -18,10 +18,12 @@
 #include <memory>
 #include <iostream>
 
+class Scene; // Fwd-declaration
+
 class GridControl : public QWidget {
 		Q_OBJECT
 	public:
-		GridControl(std::shared_ptr<DiscreteGrid> vxg, QWidget* parent = nullptr); ///< Default constructor
+		GridControl(std::shared_ptr<DiscreteGrid> vxg, std::shared_ptr<TetMesh>& tetMesh, Scene* _scene, QWidget* parent = nullptr); ///< Default constructor
 		~GridControl(void); ///< Default destructor
 		void setVoxelGrid(std::shared_ptr<DiscreteGrid> vg);
 
@@ -79,6 +81,8 @@ class GridControl : public QWidget {
 		QDoubleSpinBox* input_GridBBMaxY; ///< Controls the coordinates of the maximum bound of the grid's render bounding box along Y
 		QDoubleSpinBox* input_GridBBMaxZ; ///< Controls the coordinates of the maximum bound of the grid's render bounding box along Z
 		std::shared_ptr<DiscreteGrid> voxelGrid; ///< Voxel grid to control.
+		std::shared_ptr<TetMesh> mesh; ///< Tetrahedral mesh responsible for the generation of the grid
+		Scene* scene;
 
 	private:
 		QLabel* info_TotalTime; ///< Total time it took to fill the grid

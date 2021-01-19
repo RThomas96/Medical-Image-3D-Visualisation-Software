@@ -23,7 +23,6 @@ MainWidget::~MainWidget() {
 	delete this->viewer_planeY;
 	delete this->viewer_planeX;
 	delete this->scene;
-	delete this->gridController;
 	delete this->controlPanel;
 	delete this->headerZ;
 	delete this->headerY;
@@ -38,11 +37,10 @@ MainWidget::~MainWidget() {
 }
 
 void MainWidget::setupWidgets() {
-	this->gridController = new GridControl(nullptr);
-	this->scene = new Scene(this->gridController);
+	this->scene = new Scene();
 
 	this->viewer = new Viewer(this->scene, nullptr);
-	this->controlPanel = new ControlPanel(this->scene, this->viewer, nullptr, nullptr);
+	this->controlPanel = new ControlPanel(this->scene, this->viewer, nullptr);
 	this->scene->setControlPanel(this->controlPanel);
 
 	this->viewer_planeX = new PlanarViewer(this->scene, planes::x, planeHeading::North, nullptr);
@@ -75,6 +73,10 @@ void MainWidget::setupWidgets() {
 	QWidget* yViewerCapsule = new QWidget(); yViewerCapsule->setAutoFillBackground(true); yViewerCapsule->setPalette(paletteY);
 	QWidget* zViewerCapsule = new QWidget(); zViewerCapsule->setAutoFillBackground(true); zViewerCapsule->setPalette(paletteZ);
 
+	this->headerX->setFixedHeight(this->headerX->sizeHint().height());
+	this->headerY->setFixedHeight(this->headerY->sizeHint().height());
+	this->headerZ->setFixedHeight(this->headerZ->sizeHint().height());
+
 	// Set the layouts for the plane viewers :
 	vPX->addWidget(this->headerX);
 	vPX->addWidget(this->viewer_planeX);
@@ -86,7 +88,6 @@ void MainWidget::setupWidgets() {
 	int left = 0, right = 0, top = 0, bottom = 0;
 	// This is the same arrangement for the setCM() function :
 	vPX->getContentsMargins(&left, &top, &right, &bottom);
-	std::cerr << "Default margins : " << left << ' ' << top << ' ' << right << ' ' << bottom << '\n';
 	// Set the content margins, no side margins :
 	vPX->setContentsMargins(0, top*2, 0, bottom);
 	vPY->setContentsMargins(0, top*2, 0, bottom);
@@ -113,7 +114,6 @@ void MainWidget::setupWidgets() {
 	mainLayout->addLayout(viewerLayout);
 	mainLayout->addWidget(this->controlPanel);
 	mainLayout->setAlignment(this->controlPanel, Qt::AlignHCenter);
-	this->gridController->show(); // Enable grid controller as a floating window
 
 	this->strayObj.push_back(zViewerCapsule);
 	this->strayObj.push_back(yViewerCapsule);
@@ -124,7 +124,10 @@ void MainWidget::setupWidgets() {
 	this->strayObj.push_back(viewerLayout);
 	this->strayObj.push_back(mainLayout);
 
-	this->setLayout(mainLayout);
+	QWidget* mainWidget = new QWidget();
+	mainWidget->setLayout(mainLayout);
+	this->setCentralWidget(mainWidget);
+
 	this->installEventFilter(this);
 }
 
