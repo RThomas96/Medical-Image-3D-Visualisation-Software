@@ -36,11 +36,6 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, QWidget* parent) : QW
 	this->maxValueColor->setRange(0, 255);
 	this->maxValueColor->setValue(255);
 
-	QLabel* minTexLabel = new QLabel("Min texture value");
-	QLabel* maxTexLabel = new QLabel("Max texture value");
-	QLabel* minColorLabel = new QLabel("Min color value");
-	QLabel* maxColorLabel = new QLabel("Min color value");
-
 	QLabel* label_Color = new QLabel("Color intensities : ");
 	QLabel* label_Texture = new QLabel("Texture intensities : ");
 	QLabel* label_Min = new QLabel("Minimum");

@@ -6,6 +6,8 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QSizePolicy>
+#include <QToolBar>
+#include <QMenuBar>
 
 MainWidget::MainWidget() {
 	this->strayObj.clear();
@@ -19,6 +21,12 @@ MainWidget::~MainWidget() {
 	this->headerY->unregisterPlaneViewer();
 	this->headerX->unregisterPlaneViewer();
 
+	this->action_add1Grid->disconnect();
+	this->action_saveGrid->disconnect();
+	this->action_exitProgram->disconnect();
+
+	delete this->action_add1Grid;
+	delete this->action_saveGrid;
 	delete this->viewer_planeZ;
 	delete this->viewer_planeY;
 	delete this->viewer_planeX;
@@ -38,6 +46,21 @@ MainWidget::~MainWidget() {
 
 void MainWidget::setupWidgets() {
 	this->scene = new Scene();
+
+	this->action_add1Grid = new QAction("Open acquisition");
+	this->action_saveGrid = new QAction("Save acquisition");
+	this->action_exitProgram = new QAction("Exit program");
+
+	this->fileMenu = this->menuBar()->addMenu("File");
+
+	this->fileMenu->addAction(this->action_add1Grid);
+	this->fileMenu->addAction(this->action_saveGrid);
+	this->fileMenu->addAction(this->action_exitProgram);
+
+	// Connect add and save button to the slots/functions in the program :
+	QObject::connect(this->action_add1Grid, &QAction::triggered, [this](){this->viewer->addGrid();});
+	QObject::connect(this->action_saveGrid, &QAction::triggered, [this](){this->scene->launchSaveDialog();});
+	QObject::connect(this->action_exitProgram, &QAction::triggered, this, &QMainWindow::close);
 
 	this->viewer = new Viewer(this->scene, nullptr);
 	this->controlPanel = new ControlPanel(this->scene, this->viewer, nullptr);

@@ -182,10 +182,20 @@ void Scene::initGl(QOpenGLContext* _context) {
 	// If the context supports the GL_KHR_debug extension, enable a logger :
 	if (_context->hasExtension(QByteArrayLiteral("GL_KHR_debug"))) {
 		this->debugLog = new QOpenGLDebugLogger;
-		this->debugLog->initialize();
+		if (this->debugLog->initialize()) {
+			QObject::connect(this->debugLog, &QOpenGLDebugLogger::messageLogged, [this](QOpenGLDebugMessage _m) {
+				this->printOpenGLMessage(_m);
+			});
+			this->debugLog->startLogging(QOpenGLDebugLogger::LoggingMode::SynchronousLogging);
+		} else {
+			QMessageBox* messageBox = new QMessageBox();
+			messageBox->warning(nullptr, "Warning", "Could not initialize the QOpenGLDebugLogger class.");
+			messageBox->show();
+		}
 	} else {
-		this->debugLog = nullptr;
-		std::cerr << "OpenGL logging not enabled" << '\n';
+		QMessageBox* messageBox = new QMessageBox();
+		messageBox->warning(nullptr, "Warning", "OpenGL context does not support the GL_KHR_Debug extension.");
+		messageBox->show();
 	}
 
 	// The default parameters have already been set in the constructor. We
@@ -209,11 +219,37 @@ void Scene::initGl(QOpenGLContext* _context) {
 }
 
 void Scene::printOpenGLMessage(const QOpenGLDebugMessage& message) {
-	if ((message.severity() & QOpenGLDebugMessage::Severity::HighSeverity) != 0) {
-		std::cerr << message.message().toStdString() << '\n';
-	} else {
-		std::cerr << "Message id " << message.id() << " ignored.\n";
-	}
+	std::string src = "";
+	std::string sev = "";
+	std::string typ = "";
+	QFlags severity = message.severity();
+	QFlags type = message.type();
+	QFlags source = message.source();
+
+	if (severity & QOpenGLDebugMessage::Severity::NotificationSeverity)	{ sev += "[Notification]"; }
+	if (severity & QOpenGLDebugMessage::Severity::LowSeverity)		{ sev += "[Low]"; }
+	if (severity & QOpenGLDebugMessage::Severity::MediumSeverity)		{ sev += "[Medium]"; }
+	if (severity & QOpenGLDebugMessage::Severity::HighSeverity)		{ sev += "[High]"; }
+
+	if (type & QOpenGLDebugMessage::Type::ErrorType)		{ typ += "[Error]"; }
+	if (type & QOpenGLDebugMessage::Type::DeprecatedBehaviorType)	{ typ += "[Deprecated Behaviour]"; }
+	if (type & QOpenGLDebugMessage::Type::UndefinedBehaviorType)	{ typ += "[Undefined Behaviour]"; }
+	if (type & QOpenGLDebugMessage::Type::PortabilityType)		{ typ += "[Portability]"; }
+	if (type & QOpenGLDebugMessage::Type::PerformanceType)		{ typ += "[Performance]"; }
+	if (type & QOpenGLDebugMessage::Type::OtherType)		{ typ += "[Other]"; }
+	if (type & QOpenGLDebugMessage::Type::MarkerType)		{ typ += "[Marker]"; }
+	if (type & QOpenGLDebugMessage::Type::GroupPushType)		{ typ += "[Group Push]"; }
+	if (type & QOpenGLDebugMessage::Type::GroupPopType)		{ typ += "[Group Pop]"; }
+
+	if (source & QOpenGLDebugMessage::Source::APISource)			{ src += "[OpenGL API]"; }
+	if (source & QOpenGLDebugMessage::Source::WindowSystemSource)		{ src += "[Window System]"; }
+	if (source & QOpenGLDebugMessage::Source::ShaderCompilerSource)		{ src += "[Shader Compiler]"; }
+	if (source & QOpenGLDebugMessage::Source::ThirdPartySource)		{ src += "[Third Party]"; }
+	if (source & QOpenGLDebugMessage::Source::OtherSource)			{ src += "[Other]"; }
+
+	//if (typ.empty() == false) {
+		std::cerr << sev << ' ' << typ << ' ' << src << ' ' << message.message().toStdString() << '\n';
+	//}
 }
 
 void Scene::printGridInfo(const std::shared_ptr<DiscreteGrid>& grid) {
@@ -249,8 +285,6 @@ void Scene::createBuffers() {
 		GetOpenGLError();
 		if (this->glIsVertexArray(buf) == GL_FALSE) {
 			std::cerr << "[ERROR]["<< __FILE__ << ":" << __LINE__ <<"] : Could not create VAO object " << name << '\n';
-		} else {
-			std::cerr << "[LOG]["<< __FILE__ << ":" << __LINE__ <<"] : Created VAO object " << name << '\n';
 		}
 		return buf;
 	};
@@ -264,8 +298,6 @@ void Scene::createBuffers() {
 		GetOpenGLError();
 		if (this->glIsBuffer(buf) == GL_FALSE) {
 			std::cerr << "[ERROR]["<< __FILE__ << ":" << __LINE__ <<"] : Could not create buffer object " << name << '\n';
-		} else {
-			std::cerr << "[LOG]["<< __FILE__ << ":" << __LINE__ <<"] : Created buffer object " << name << '\n';
 		}
 		return buf;
 	};
@@ -701,38 +733,6 @@ GLuint Scene::uploadTexture3D(const TextureUpload& tex) {
 	GetOpenGLError();
 
 	return texHandle;
-}
-
-void Scene::fillNearestNeighbor() {
-/*
-	InterpolationMethods method = InterpolationMethods::NearestNeighbor;
-	using timepoint = std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::duration<double, std::ratio<1,1>>>;
-	if (this->mesh != nullptr && this->outputGrid != nullptr) {
-		timepoint start_point = std::chrono::high_resolution_clock::now();
-		this->mesh->populateOutputGrid(method);
-		timepoint end_point = std::chrono::high_resolution_clock::now();
-		std::cerr << "To fill the grid, it took " << (end_point - start_point).count() << " seconds" << '\n';
-	}
-	this->loadVoxelGrid();
-*/
-	std::cerr << "[ERROR] Not implemented anymore ! Use Ctrl+S to save a grid of your choosing.\n";
-	return;
-}
-
-void Scene::fillTrilinear() {
-/*
-	InterpolationMethods method = InterpolationMethods::TriLinear;
-	using timepoint = std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::duration<double, std::ratio<1,1>>>;
-	if (this->mesh != nullptr && this->outputGrid != nullptr) {
-		timepoint start_point = std::chrono::high_resolution_clock::now();
-		this->mesh->populateOutputGrid(method);
-		timepoint end_point = std::chrono::high_resolution_clock::now();
-		std::cerr << "To fill the grid, it took " << (end_point - start_point).count() << " seconds" << '\n';
-	}
-	this->loadVoxelGrid();
-*/
-	std::cerr << "[ERROR] Not implemented anymore ! Use Ctrl+S to save a grid of your choosing.\n";
-	return;
 }
 
 void Scene::launchSaveDialog() {

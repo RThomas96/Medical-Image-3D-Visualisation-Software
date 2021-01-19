@@ -61,11 +61,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		/// @b Draw a given plane 'view' (single plane on the framebuffer).
 		void drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading, float zoomRatio, GLfloat* vMat, GLfloat* pMat);
 
-		/// @brief fill the grid using trilinear interpolation
-		void fillTrilinear();
-		/// @brief fill the grid using nearest neighbor interpolation
-		void fillNearestNeighbor();
-
+		/// @b Returns the current scene boundaries.
 		glm::vec3 getSceneBoundaries() const;
 
 		/// @b Set the draw mode for the 3D view of the scene.
@@ -73,10 +69,10 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 
 		/// @b Launches a save dialog, to generate a grid.
 		void launchSaveDialog();
+
 		/// @b Deletes a grid from the array of grids to show
 		void deleteGrid(const std::shared_ptr<DiscreteGrid>& _grid);
 
-		void cleanup(void); ///< cleanup function for vbo and other parts
 		void printVAOStateNext() { this->showVAOstate = true; } ///< prints info about the VAO on next refresh
 		glm::vec3 getPlanePositions(void) { return this->planePosition; } ///< Get the cutting planes' positions
 		uint getMinTexValue(void) const { return this->minTexVal; }

@@ -26,17 +26,28 @@ class MainWidget : public QMainWindow {
 		/// have them both square, and not too small.
 		bool eventFilter(QObject* obj, QEvent* e) override;
 	private:
-		Viewer* viewer;			///< The visualisation panel, drawing elements from the scene
-		PlanarViewer* viewer_planeX;	///< The visualisation of the grid on plane X
-		PlanarViewer* viewer_planeY;	///< The visualisation of the grid on plane Y
-		PlanarViewer* viewer_planeZ;	///< The visualisation of the grid on plane Z
-		ControlPanel* controlPanel;	///< The control panel at the bottom of the grid
-		ViewerHeader* headerX;		///< Header for the X plane viewer
-		ViewerHeader* headerY;		///< Header for the Y plane viewer
-		ViewerHeader* headerZ;		///< Header for the Z plane viewer
 		Scene* scene;			///< The underlying scene, with the data to display
+		Viewer* viewer;			///< The visualisation panel, drawing elements from the scene
+
+		ViewerHeader* headerX;		///< Header for the X plane viewer
+		PlanarViewer* viewer_planeX;	///< The visualisation of the grid on plane X
+
+		ViewerHeader* headerY;		///< Header for the Y plane viewer
+		PlanarViewer* viewer_planeY;	///< The visualisation of the grid on plane Y
+
+		ViewerHeader* headerZ;		///< Header for the Z plane viewer
+		PlanarViewer* viewer_planeZ;	///< The visualisation of the grid on plane Z
+
+		ControlPanel* controlPanel;	///< The control panel at the bottom of the grid
 		bool widgetSizeSet;		///< Checks if the widget size has been set before
 		std::vector<QObject*> strayObj;	///< Pointers to all temporary objects allocated in the setup process
+
+		// UI Stuff :
+
+		QMenu* fileMenu;		///< The 'File' menu of the application
+		QAction* action_add1Grid;	///< Action to add grid
+		QAction* action_saveGrid;	///< Action to save grid
+		QAction* action_exitProgram;	///< Action to exit the program.
 };
 
 #endif // QT_INCLUDE_NEIGHBOR_VISU_MAIN_WIDGET_HPP_

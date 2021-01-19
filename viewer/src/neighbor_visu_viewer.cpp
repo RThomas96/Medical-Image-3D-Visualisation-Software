@@ -93,27 +93,6 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 			}
 		break;
 		/*
-		GRIDS
-		*/
-		case Qt::Key::Key_A:
-			this->addGrid();
-			this->update();
-		break;
-		/*
-		INTERPOLATION
-		*/
-		case Qt::Key::Key_T:
-			this->scene->fillTrilinear();
-			this->update();
-		break;
-		case Qt::Key::Key_N:
-			this->scene->fillNearestNeighbor();
-			this->update();
-		break;
-		case Qt::Key::Key_W:
-			this->scene->writeGridDIM("outputGrid");
-		break;
-		/*
 		RENDERDOC
 		*/
 		case Qt::Key::Key_C:
@@ -145,8 +124,10 @@ void Viewer::addGrid() {
 	// create message box to ask user :
 	QMessageBox* msgBox = new QMessageBox();
 	msgBox->setText("Choose your input data type");
+	msgBox->setAttribute(Qt::WA_DeleteOnClose);
 	QPushButton* dimButton = msgBox->addButton("DIM", QMessageBox::ActionRole);
 	QPushButton* tiffButton = msgBox->addButton("TIFF", QMessageBox::ActionRole);
+	QString lastPath = "";
 
 	// show the msgbox :
 	msgBox->exec();
@@ -154,21 +135,59 @@ void Viewer::addGrid() {
 	if (msgBox->clickedButton() == dimButton) {
 		reader = new IO::DIMReader(threshold);
 		QString filename = QFileDialog::getOpenFileName(nullptr, "Open a DIM/IMA image (Blue channel)", "../../", "BrainVISA DIM Files (*.dim)");
-		std::vector<std::string> f;
-		f.push_back(filename.toStdString());
-		reader->setFilenames(f);
+		if (filename.isEmpty() == false) {
+			// update last path :
+			lastPath = QFileInfo(filename).path();
+			std::vector<std::string> f;
+			f.push_back(filename.toStdString());
+			reader->setFilenames(f);
+		} else {
+			QMessageBox* fileDialog = new QMessageBox();
+			fileDialog->critical(nullptr, "Error", "Did not provide any filename !");
+			fileDialog->setAttribute(Qt::WA_DeleteOnClose);
+			fileDialog->show();
+			return;
+		}
 	} else if (msgBox->clickedButton() == tiffButton) {
 		reader = new IO::Reader::TIFF(threshold);
 		QStringList filenames = QFileDialog::getOpenFileNames(nullptr, "Open multiple TIFF images (Blue channel)","../../", "TIFF Files (*.tiff, *.tif)");
-		std::vector<std::string> f;
-		for (const QString& fn : as_const(filenames)) {
-			f.push_back(fn.toStdString());
+		if (filenames.isEmpty() == false) {
+			std::vector<std::string> f;
+			for (const QString& fn : as_const(filenames)) {
+				f.push_back(fn.toStdString());
+				// update last path :
+				if (lastPath.isEmpty() == true) {
+					if (fn.isEmpty() == false) {
+						lastPath = QFileInfo(fn).path();
+					}
+				}
+			}
+			reader->setFilenames(f);
+		} else {
+			QMessageBox* fileDialog = new QMessageBox();
+			fileDialog->critical(nullptr, "Error", "Did not provide any filenames !");
+			fileDialog->setAttribute(Qt::WA_DeleteOnClose);
+			fileDialog->show();
+			return;
 		}
-		reader->setFilenames(f);
 	} else {
 		std::cerr << "No button was pressed." << '\n';
 		throw std::runtime_error("error : no button pressed");
 	}
+
+	std::string meshpath; // filepath for the MESH file
+	QString filename = QFileDialog::getOpenFileName(nullptr, "Open a MESH", lastPath, "Mesh (*.MESH)");
+	if (filename.isEmpty() == false) {
+		meshpath = filename.toStdString();
+	} else {
+		delete reader;
+		QMessageBox* fileDialog = new QMessageBox();
+		fileDialog->critical(nullptr, "Error", "Did not provide any filename !");
+		fileDialog->setAttribute(Qt::WA_DeleteOnClose);
+		fileDialog->show();
+		return;
+	}
+
 	// Set reader properties :
 	reader->setDataThreshold(threshold);
 	// Load the data :
@@ -180,9 +199,6 @@ void Viewer::addGrid() {
 
 	// free up the reader's resources :
 	delete reader;
-
-	QString filename = QFileDialog::getOpenFileName(nullptr, "Open a MESH", "../../", "Mesh (*.MESH)");
-	std::string meshpath = filename.toStdString();
 
 	this->makeCurrent();
 	this->scene->addGrid(inputGrid, meshpath);
