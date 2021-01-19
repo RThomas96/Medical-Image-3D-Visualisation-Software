@@ -344,6 +344,22 @@ void getFirstRayVoxelIntersection( in vec3 origin, in vec3 direction, out ivec3 
 
 }
 
+vec3 phongComputation(vec4 position, vec3 normal, vec4 color, vec3 lightPos, vec3 phongDetails, mat3 lightDetails) {
+	vec3 lightDiffuse = lightDetails[0];
+	vec3 lightSpecular = lightDetails[1];
+
+	float phong_Diffuse = phongDetails.x;
+	float phong_Specular = phongDetails.y;
+	float phong_Shininess = phongDetails.z;
+
+	vec3 lm = normalize(lightPos - position.xyz);
+	vec3 n = normalize(normal);
+	vec3 r = 2.f * max(.0, dot(lm, n)) * n - lm;
+	vec3 v = normalize(cam - position.xyz);
+
+	return phong_Diffuse * max(.0, dot(lm, n)) * lightDiffuse; //+ phong_Specular * pow(max(.0, dot(r, v)), phong_Shininess) * lightSpecular;
+}
+
 void main (void) {
 	if( visibility > 3500. ) discard;
 
@@ -397,7 +413,7 @@ void main (void) {
 
 	vec3 Current_text3DCoord;
 
-	vec4 Pos;
+	vec4 Pos = vec4(0.,0.,0.,0.);
 
 	vec4 color = vec4 (0.6,0.,0.6,1.);
 
@@ -410,7 +426,7 @@ void main (void) {
 	int maxFragIter = 100;
 	int maxTetrIter =  50;
 
-	vec3 n;
+	vec3 n = vec3(0.,0.,0.);
 
 	int fragmentIteration = 0;
 	while( in_tet && !hit && fragmentIteration < maxFragIter ){
@@ -476,31 +492,29 @@ void main (void) {
 
 	if(!in_tet || !hit) discard;
 
+	colorOut = vec4(.0, .0, .0, 1.);
+	// Phong details :
+	float phongAmbient = .6;
+	mat3 lightDetails = mat3(
+		vec3(1., 1., 1.),	// light diffuse color
+		vec3(.0, 1., .0),	// light specular color
+		vec3(.0, .0, .0)	// nothing
+	);
+	float factor = (1./3.) * (1. - phongAmbient - .1);
+	vec3 phongDetails = vec3(
+		factor,	// kd = diffuse coefficient
+		.1/3.,	// ks = specular coefficient
+		5.	// Shininess
+	);
+
+	colorOut.xyz = phongAmbient * color.xyz;
 	// Phong computation :
-	colorOut = vec4(.0, .0, .0, .0);
 	for (int i = 0; i < 8; ++i) {
-		vec3 p = Pos.xyz;
-		vec3 v = normalize(cam-p);
-
-		vec3 lightP = lightPositions[i];
-		vec3 lightSpecular = vec3(.8, .8, .8);
-
-		vec3 l = normalize (lightP - p);
-		l.z = l.z*-1.;
-		l.y = l.y*-1.;
-
-		float ndotl = dot(l, n);
-		float diffuse = max(ndotl, 0.0);
-		vec3 r = 2. * ndotl * n - l;
-
-		float spec = max(dot(r, v), 0.0);
-		spec = pow (spec, 25.);
-		spec = max (0.0, spec);
-
-		vec3 LightContribution = diffuseRef * diffuse * color.xyz + specRef * spec * lightSpecular * 4;
-		float factor = 1./8.;
-		colorOut += factor * vec4(LightContribution, 1.);
 	}
+	colorOut.xyz += phongComputation(Pos, n, color, lightPositions[0], phongDetails, lightDetails);
+	colorOut.xyz += phongComputation(Pos, n, color, lightPositions[4], phongDetails, lightDetails);
+	// camera light :
+	colorOut.xyz += phongComputation(Pos, n, color, cam, phongDetails, lightDetails);;
 
 	return;
 }

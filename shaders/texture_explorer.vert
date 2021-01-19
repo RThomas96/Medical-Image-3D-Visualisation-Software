@@ -13,7 +13,7 @@ layout(location = 2) in vec3 vertexTexCoord;	// Texture coordinate used for the 
 /*************** Outputs ****************/
 /****************************************/
 layout(location = 0) out vec4 vPos;		// The vertex's positions
-layout(location = 1) out vec4 vNorm;
+layout(location = 1) out vec3 vOriginalCoords;	// Original coords in plane-space
 layout(location = 2) out vec3 vTexCoord;	// The vertex's texture coordinates
 
 /****************************************/
@@ -87,7 +87,7 @@ void main(void) {
 	gl_Position.xyz *= zoom;
 
 	vPos = vertexPosition;
-	vNorm = normalize(vertexNormal);
+	vOriginalCoords = vertexTexCoord;
 	vTexCoord = vPos_TS.xyz;
 }
 
@@ -129,51 +129,4 @@ vec2 computeMultiplier(in uint head) {
 	}
 
 	return multiplier;
-}
-
-void oldMainFunction() {
-	/*
-	This shader will do the following :
-		- determine which plane is currently being drawn,
-		- compute a multiplier for the unit plane which will
-		  allow it to cover the whole grid in world-space,
-		- apply that multiplier to the currently drawn plane,
-		- compute the vertex positions in world space, then
-		  grid space, then texture space,
-		- output a set of vertex coordinates & attributes to
-		  draw it in the fragment shader.
-	*/
-	/*
-	vec4 gridDiag = gridBBDiagonal; gridDiag.w = 1.;
-	vec4 gridPos = gridBBPosition; gridPos.w = 1.;
-	vec2 multiplier = vec2(1., 1.); // used to compute values
-	vec4 planeMultiplier = multiplier.xyxy; // used to apply it to the plane later on
-	vec4 gridHalfSize = gridBBDiagonal / 2.f;
-	vec4 gridCenter = gridBBPosition + gridHalfSize;
-
-	// Ratios of the framebuffer and the bounding box :
-	float ratio_fb = fbDims.x / fbDims.y;
-	float ratio_bb = bbDims.x / bbDims.y;
-
-	if (ratio_bb > ratio_fb) {
-		// If the bounding box is wider relative to the framebuffer :
-		multiplier.x = 1.f; // The BB width will take the whole FB
-		multiplier.y = ratio_fb / ratio_bb;
-	} else {
-		// If the framebuffer is wider relative to the bounding box :
-		multiplier.y = 1.f; // The bb height will be displayed whole
-		float ratio_bb_inv = bbDims.y / bbDims.x;
-		float ratio_fb_inv = fbDims.y / fbDims.x;
-		multiplier.x = ratio_fb_inv / ratio_bb_inv;
-	}
-	planeMultiplier.xy = multiplier;
-
-	vec4 vPosWS = gridBBPosition + (vertexPosition * gridBBDiagonal) + planeDisplacementCompute(planeIndex);
-	vec4 vPosGS = gridTransform * vPosWS;
-	vec4 vPosTS = vPosGS / gridDimensions;
-
-	vPos = planeCoordsToGLPosition(vertexPosition) * planeMultiplier * 2.f - vec4(multiplier.x, multiplier.y, 1.f, .0f);
-	vPos.w = 1.;
-	vTexCoord = vPosTS.xyz;
-	*/
 }

@@ -6,7 +6,7 @@
 /**************** Inputs ****************/
 /****************************************/
 layout(location = 0) in vec4 vPos;		// The vertex's positions
-layout(location = 1) in vec4 vNorm;		// The vertex's normal
+layout(location = 1) in vec3 vOriginalCoords;	// The vertex's normal
 layout(location = 2) in vec3 vTexCoords;	// The vertex's texture coordinates
 
 /****************************************/
@@ -35,7 +35,7 @@ bool shouldDrawBorder();
 /***************** Main *****************/
 /****************************************/
 void main() {
-	// if (shouldDiscard()) { discard; }
+	if (shouldDiscard()) { discard; }
 
 	// Default color : plane color
 	color = planeIdxToColor(planeIndex);
@@ -99,9 +99,9 @@ bool shouldDiscard() {
 
 bool shouldDrawBorder() {
 	// Create a border around the image :
-	float min = .01;
+	float min =-.99;
 	float max = .99;
-	if (vTexCoords.x > max || vTexCoords.y > max || vTexCoords.z > max) { return true; }
-	if (vTexCoords.x < min || vTexCoords.y < min || vTexCoords.z < min) { return true; }
+	if (vOriginalCoords.x > max || vOriginalCoords.y > max || vOriginalCoords.z > max) { return true; }
+	if (vOriginalCoords.x < min || vOriginalCoords.y < min || vOriginalCoords.z < min) { return true; }
 	return false;
 }

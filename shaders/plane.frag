@@ -42,6 +42,8 @@ float planeIdxToPlanePosition(int id);
 vec4 planeIndexToColor();
 // Checks if a plane is visible (not hidden by another plane)
 bool isPlaneVisible();
+// Checks if the plane should be drawn as a simple border, or not.
+bool shouldDrawBorder();
 
 /****************************************/
 /***************** Main *****************/
@@ -51,15 +53,17 @@ void main(void)
 	// Early discard if the plane shouldn't be shown :
 	if (isPlaneVisible() == false) { discard; }
 
-	vec4 basecolor= vNorm;
-	uvec3 tex = texture(texData, texCoord).xyz;
-	vec4 colorTex = planeIndexToColor();
-	color = colorTex;
+	color = planeIndexToColor(); // default plane color
+
+	if (shouldDrawBorder()) { return; } // stop here, if on a border
+
+	vec4 colorTex = vec4(.0, .0, .0, .0);
 
 	if (showTex == true) {
 		if (texCoord.x > 0. && texCoord.x < 1.) {
 			if (texCoord.y > .0 && texCoord.y < 1.) {
 				if (texCoord.z > 0. && texCoord.z < 1.) {
+					uvec3 tex = texture(texData, texCoord).xyz;
 					colorTex = R8UIToRGB(tex);
 				}
 			}
@@ -80,7 +84,7 @@ vec4 R8UIToRGB(in uvec3 ucolor) {
 	// Check if we're in the colorscale :
 //	if (color_r < textureBounds.x || color_r > textureBounds.y) { return vec4(.0, .0, .0, .0); }
 //	if (color_g < textureBounds.x || color_g > textureBounds.y) { return planeIndexToColor(); }
-	if (color_r < colorBounds.x || color_r > colorBounds.y) { return planeIndexToColor(); }
+	// if (color_r < colorBounds.x || color_r > colorBounds.y) { return planeIndexToColor(); }
 	//if (color_r < colorBounds.x || color_r > colorBounds.y) { return vec4(.257, .257, .257, .0); }
 	color_r = clamp(float(ucolor.r), colorBounds.x, colorBounds.y);
 	color_g = clamp(float(ucolor.g), colorBounds.x, colorBounds.y);
@@ -123,6 +127,24 @@ vec4 R8UItoColorScale(in uvec3 ucolor) {
 	return color;
 }
 
+bool shouldDrawBorder() {
+	float min = .01;
+	float max = .99;
+	if (currentPlane == 1) {
+		if (vPos_PS.y > max || vPos_PS.z > max) { return true; }
+		if (vPos_PS.y < min || vPos_PS.z < min) { return true; }
+	}
+	if (currentPlane == 2) {
+		if (vPos_PS.x > max || vPos_PS.z > max) { return true; }
+		if (vPos_PS.x < min || vPos_PS.z < min) { return true; }
+	}
+	if (currentPlane == 3) {
+		if (vPos_PS.x > max || vPos_PS.y > max) { return true; }
+		if (vPos_PS.x < min || vPos_PS.y < min) { return true; }
+	}
+	return false;
+}
+
 float planeIdxToPlanePosition(int id) {
 	// displacement to apply :
 	vec3 diff = planePositions;
@@ -133,9 +155,9 @@ float planeIdxToPlanePosition(int id) {
 }
 
 vec4 planeIndexToColor() {
-	if (currentPlane == 1) { return vec4(1., .0, .0, .3); }
-	if (currentPlane == 2) { return vec4(.0, 1., .0, .3); }
-	if (currentPlane == 3) { return vec4(.0, .0, 1., .3); }
+	if (currentPlane == 1) { return vec4(1., .0, .0, .9); }
+	if (currentPlane == 2) { return vec4(.0, 1., .0, .9); }
+	if (currentPlane == 3) { return vec4(.0, .0, 1., .9); }
 	return vec4(.27, .27, .27, 1.);
 }
 
