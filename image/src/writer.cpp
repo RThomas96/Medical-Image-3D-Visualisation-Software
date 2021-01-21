@@ -64,7 +64,7 @@ namespace IO {
 
 	DIMWriter& DIMWriter::write(const std::shared_ptr<DiscreteGrid>& _vg) {
 		this->bytesWritten = this->write_Once(_vg);
-		this->depthReached = _vg->getGridDimensions().z;
+		this->depthReached = _vg->getResolution().z;
 		return *this;
 	}
 
@@ -126,7 +126,7 @@ namespace IO {
 		/* Writes the file all at once. */
 
 		// Writes the grid's dimensions
-		svec3 imDims = _vg->getGridDimensions();
+		svec3 imDims = _vg->getResolution();
 		*this->outputDIM << imDims.x << " " << imDims.y << " " << imDims.z << '\n';
 		*this->outputDIM << "-type U8\n";
 
@@ -154,13 +154,13 @@ namespace IO {
 
 	SingleTIFFWriter& SingleTIFFWriter::write(const std::shared_ptr<DiscreteGrid>& _vg) {
 		this->bytesWritten = this->write_Once(_vg);
-		this->depthReached = _vg->getGridDimensions().z;
+		this->depthReached = _vg->getResolution().z;
 		return *this;
 	}
 
 	void SingleTIFFWriter::openTIFFFile(const std::shared_ptr<DiscreteGrid>& _vg) {
 		uint16_t bps = static_cast<uint16_t>(sizeof(unsigned char));
-		svec3 dims = _vg->getGridDimensions();
+		svec3 dims = _vg->getResolution();
 		uint32_t width = static_cast<uint32_t>(dims.x);
 		uint32_t height = static_cast<uint32_t>(dims.y);
 
@@ -184,7 +184,7 @@ namespace IO {
 
 		// Get the data :
 		const std::vector<unsigned char>& data = _vg->getData();
-		svec3 gridDims = _vg->getGridDimensions();
+		svec3 gridDims = _vg->getResolution();
 		std::size_t faceOffset = gridDims.x * gridDims.y;
 
 		// Iterate on each 'face' :

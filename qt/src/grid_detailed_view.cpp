@@ -304,7 +304,7 @@ void GridDetailedView::updateValues(void) {
 		throw std::runtime_error("[ERROR][Fatal] Grid shared_ptr was 'nullptr' when showing the grid.");
 	}
 	this->editable_gridName->setText(QString(this->grid->getGridName().c_str()));
-	DiscreteGrid::sizevec3 dims = this->grid->getGridDimensions();
+	DiscreteGrid::sizevec3 dims = this->grid->getResolution();
 	DiscreteGrid::bbox_t::vec minBB = this->grid->getBoundingBox().getMin();
 	DiscreteGrid::bbox_t::vec maxBB = this->grid->getBoundingBox().getMax();
 

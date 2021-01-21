@@ -27,7 +27,7 @@ typedef glm::vec<3, std::size_t, glm::highp> svec3;
 /// @note Although some functions in this class may mention 'texels', they are in no way, shape, or form tied to the visualization aspect of the project.
 class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 
-	friend class GridControl;
+	//friend class GridControl;
 	friend class GridDetailedView;
 
 	public:
@@ -90,7 +90,7 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 		const glm::mat4 getTransform_GridToWorld(void) const;
 
 		/// @brief Returns the resolution of the voxel grid,
-		const sizevec3& getGridDimensions(void) const;
+		const sizevec3& getResolution(void) const;
 
 		/// @brief Voxel dimensions, in grid space.
 		const glm::vec3 getVoxelDimensions(void) const;
@@ -114,6 +114,9 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 
 		/// @brief Sets the grid's resolution.
 		virtual DiscreteGrid& setResolution(sizevec3 dims);
+
+		/// @brief Sets the voxel dimensions
+		virtual DiscreteGrid& setVoxelDimensions(glm::vec3 _vxdims);
 
 		/// @brief Recomputes the bounding box surrounding data with the threshold for "data" set to "threshold".
 		virtual DiscreteGrid& recomputeBoundingBox(DataType threshold);

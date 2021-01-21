@@ -101,7 +101,7 @@ const glm::mat4 DiscreteGrid::getTransform_GridToWorld() const {
 	return this->transform_gridToWorld;
 }
 
-const DiscreteGrid::sizevec3& DiscreteGrid::getGridDimensions() const {
+const DiscreteGrid::sizevec3& DiscreteGrid::getResolution() const {
 	return this->gridDimensions;
 }
 
@@ -115,7 +115,7 @@ const DiscreteGrid::bbox_t& DiscreteGrid::getBoundingBox() const {
 
 DiscreteGrid& DiscreteGrid::setBoundingBox(bbox_t renderWindow) {
 	if (not this->modifiable) { return *this; }
-	// assumes the bbox given is in world space
+	// assumes the bbox given is in grid space :
 	this->boundingBox = renderWindow;
 	// update voxel dimensions :
 	this->updateVoxelDimensions();
@@ -125,7 +125,6 @@ DiscreteGrid& DiscreteGrid::setBoundingBox(bbox_t renderWindow) {
 DiscreteGrid::bbox_t DiscreteGrid::getBoundingBoxWorldSpace() const {
 	return this->boundingBox.transformTo(this->transform_gridToWorld);
 }
-
 
 DiscreteGrid& DiscreteGrid::updateBoundingBox(bbox_t renderWindow) {
 	if (not this->modifiable) { return *this; }
@@ -208,6 +207,7 @@ glm::vec4 DiscreteGrid::getVoxelPositionGridSpace(sizevec3 idx, bool verbose) {
 DiscreteGrid& DiscreteGrid::setData(std::vector<DataType> &_data) {
 	this->data.clear();
 	this->data.resize(_data.size());
+	#warning To change once an interface to data has been implemented
 	// Copy data :
 	std::copy(_data.begin(), _data.end(), this->data.begin());
 	return *this;
@@ -222,6 +222,26 @@ DiscreteGrid& DiscreteGrid::setResolution(sizevec3 dims) {
 	if (not this->modifiable) { return *this; }
 	this->gridDimensions = dims;
 	this->updateVoxelDimensions();
+	return *this;
+}
+
+DiscreteGrid& DiscreteGrid::setVoxelDimensions(glm::vec3 _vxdims) {
+	if (not this->modifiable) { return *this; }
+
+	// set new voxel dimensions :
+	this->voxelDimensions = _vxdims;
+
+	// update the resolution to be the most possible with the current bounding box :
+	bbox_t::vec diag = this->boundingBox.getDiagonal();
+	sizevec3 newRes = glm::convert_to<size_t>(glm::round(diag / this->voxelDimensions));
+	this->gridDimensions = newRes;
+
+	// update BB : size will be recomputed, minimum stays the same
+	bbox_t::vec newBBMax = glm::convert_to<float>(newRes) * this->voxelDimensions + this->boundingBox.getMin();
+	bbox_t newBB(this->boundingBox.getMin(), newBBMax);
+	this->boundingBox = newBB;
+
+	// return reference to this
 	return *this;
 }
 
@@ -261,13 +281,15 @@ bool DiscreteGrid::includesPointGridSpace(glm::vec4 point) const {
 void DiscreteGrid::updateVoxelDimensions() {
 	// if the resolution hasn't been set, return to prevent NaNs :
 	if (this->gridDimensions.x == 0u || this->gridDimensions.y == 0u || this->gridDimensions.z == 0u) { return; }
+
 	// voxel dimensions along each axis should be BBlength / resolution :
 	glm::vec3 diag = this->boundingBox.getDiagonal();
 
-	//this->boundingBox.printInfo("Updating voxel dimensions ...");
+	std::cerr << "[LOG] Old voxel dimensions : { " << this->voxelDimensions.x << ',' << this->voxelDimensions.y << ',' << this->voxelDimensions.z << "}\n";
 	this->voxelDimensions.x = diag.x / static_cast<float>(this->gridDimensions.x);
 	this->voxelDimensions.y = diag.y / static_cast<float>(this->gridDimensions.y);
 	this->voxelDimensions.z = diag.z / static_cast<float>(this->gridDimensions.z);
+	std::cerr << "[LOG] New voxel dimensions : { " << this->voxelDimensions.x << ',' << this->voxelDimensions.y << ',' << this->voxelDimensions.z << "}\n";
 	return;
 }
 

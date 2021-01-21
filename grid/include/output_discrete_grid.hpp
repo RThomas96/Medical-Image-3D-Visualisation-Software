@@ -20,7 +20,6 @@ class OutputGrid : public DiscreteGrid {
 		virtual OutputGrid& preallocateData(void);
 		virtual OutputGrid& preallocateData(sizevec3 dims);
 		virtual void setVoxelData(sizevec3 idx, DataType value);
-		virtual OutputGrid& setBoundingBox(bbox_t renderWindow) override;
 		virtual OutputGrid& updateRenderBox(const bbox_t& newbox);
 };
 

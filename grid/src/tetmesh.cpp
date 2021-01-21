@@ -42,7 +42,7 @@ TetMesh& TetMesh::populateOutputGrid(InterpolationMethods method) {
 	this->updateVoxelSizes();
 
 	// Check the dimensions of the voxel grid (if it can host voxels) :
-	DiscreteGrid::sizevec3 dims = this->outputGrid->getGridDimensions();
+	DiscreteGrid::sizevec3 dims = this->outputGrid->getResolution();
 
 	// If the grid to generate has "wrong" dimensions, warn and exit
 	if (dims.x == 0 || dims.y == 0 || dims.z == 0) {
@@ -142,7 +142,7 @@ TetMesh& TetMesh::printInfo() {
 		// Print all of the grids' infos we can easily get :
 		for (const std::shared_ptr<InputGrid>& grid : this->inputGrids) {
 			std::cerr << "[INFO]\tInput grid named \"" << grid->getGridName() << "\" :\n";
-			DiscreteGrid::sizevec3 dims = grid->getGridDimensions();
+			DiscreteGrid::sizevec3 dims = grid->getResolution();
 			std::cerr << "[INFO]\t\tResolution : " << dims.x << 'x' << dims.y << 'x' << dims.z << '\n';
 			// Bounding box dimensions :
 			const DiscreteGrid::bbox_t& box = grid->getBoundingBox();
@@ -156,7 +156,7 @@ TetMesh& TetMesh::printInfo() {
 	if (this->outputGrid != nullptr) {
 		std::cerr << "[INFO]Output grid :\n";
 		std::cerr << "[INFO]\tOutput grid named \"" << this->outputGrid->getGridName() << "\" :\n";
-		DiscreteGrid::sizevec3 dims = this->outputGrid->getGridDimensions();
+		DiscreteGrid::sizevec3 dims = this->outputGrid->getResolution();
 		std::cerr << "[INFO]\t\tResolution : " << dims.x << 'x' << dims.y << 'x' << dims.z << '\n';
 
 		// Bounding box dimensions :

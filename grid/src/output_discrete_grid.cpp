@@ -31,15 +31,6 @@ OutputGrid& OutputGrid::preallocateData(sizevec3 dims) {
 	return *this;
 }
 
-OutputGrid& OutputGrid::setBoundingBox(bbox_t renderWindow) {
-	// Warning : assumes the bounding box given is in world space
-
-	// get bb in this stack's space :
-	this->boundingBox = renderWindow;
-
-	return *this;
-}
-
 OutputGrid& OutputGrid::updateRenderBox(const bbox_t& newbox) {
 	// Get input grid render box :
 	std::vector<bbox_t::vec> corners = newbox.transformTo(this->transform_worldToGrid).getAllCorners();

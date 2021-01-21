@@ -39,9 +39,8 @@ InputGrid& InputGrid::setGrid(std::vector<DataType> imgData, sizevec3 dimensions
 	this->boundingBox.setMin(glm::vec3(.0f));
 	this->boundingBox.setMax(glm::vec3(static_cast<float>(dimensions.x), static_cast<float>(dimensions.y), static_cast<float>(dimensions.z)));
 	// Set the bounding box for data loaded :
-	this->recomputeBoundingBox(5);
-	// 5 is set in stone here, since Tulane told us under 5
-	// is to be considered noisy data (no information)
+	this->recomputeBoundingBox(this->dataThreshold);
+
 	return *this;
 }
 

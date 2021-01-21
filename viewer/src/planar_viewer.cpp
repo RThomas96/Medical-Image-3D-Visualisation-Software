@@ -13,9 +13,9 @@ PlanarViewer::PlanarViewer(Scene* const _scene, planes _p, planeHeading _h, QWid
 
 	this->viewerController = nullptr;
 
-	this->minZoomRatio = 1.f;
+	this->minZoomRatio = .1f;
 	this->zoomRatio = 1.f;
-	this->maxZoomRatio = 5.f;
+	this->maxZoomRatio = 500.f;
 	this->offset = glm::vec2(0.f, 0.f);
 
 	this->refreshTimer = new QTimer();
@@ -40,7 +40,6 @@ void PlanarViewer::init(void) {
 	this->makeCurrent();
 
 	this->sceneToShow->initGl(this->context());
-//	this->sceneToShow->setDrawModeSolid();
 
 	this->refreshTimer->start();
 }
@@ -128,9 +127,9 @@ void PlanarViewer::mouseReleaseEvent(QMouseEvent* _m) {
 
 void PlanarViewer::wheelEvent(QWheelEvent* _w) {
 	if (_w->angleDelta().y() > 0) {
-		this->zoomRatio += .1;
+		this->zoomRatio *= 1.1;
 	} else {
-		this->zoomRatio -= .1;
+		this->zoomRatio *= .9;
 	}
 
 	if (this->zoomRatio > this->maxZoomRatio) { this->zoomRatio = this->maxZoomRatio; }

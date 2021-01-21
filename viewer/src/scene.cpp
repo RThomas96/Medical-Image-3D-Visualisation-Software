@@ -253,7 +253,7 @@ void Scene::printOpenGLMessage(const QOpenGLDebugMessage& message) {
 
 void Scene::printGridInfo(const std::shared_ptr<DiscreteGrid>& grid) {
 	std::cerr << "[INFO] Information about the grid " << grid->getGridName() << " :\n";
-	DiscreteGrid::sizevec3 res = grid->getGridDimensions();
+	DiscreteGrid::sizevec3 res = grid->getResolution();
 	const glm::vec3& dims = grid->getVoxelDimensions();
 	const DiscreteGrid::bbox_t& dataBB = grid->getDataBoundingBox();
 	const DiscreteGrid::bbox_t::vec& dataBBm = dataBB.getMin();
@@ -344,7 +344,7 @@ void Scene::addGrid(const std::shared_ptr<InputGrid> _grid, std::string meshPath
 	gridTexture.alignment.y = 1;
 
 	// Tex upload function :
-	auto dimensions = _grid->getGridDimensions();
+	auto dimensions = _grid->getResolution();
 	if (dimensions.x > 0 && dimensions.y > 0 && dimensions.z > 0) {
 		gridTexture.level = 0;
 		gridTexture.internalFormat = GL_R8UI;
@@ -1088,7 +1088,7 @@ void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, 
 
 	DiscreteGrid::bbox_t::vec origin = gridView.grid->getBoundingBox().getMin();
 	DiscreteGrid::bbox_t::vec originWS = gridView.grid->getBoundingBoxWorldSpace().getMin();
-	DiscreteGrid::sizevec3 gridDims = gridView.grid->getGridDimensions();
+	DiscreteGrid::sizevec3 gridDims = gridView.grid->getResolution();
 	glm::vec3 dims = glm::vec3(static_cast<float>(gridDims.x), static_cast<float>(gridDims.y), static_cast<float>(gridDims.z));
 
 	glm::vec2 texBounds{static_cast<float>(this->minTexVal), static_cast<float>(this->maxTexVal)};
@@ -1204,7 +1204,7 @@ void Scene::prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane, cons
 	glm::mat4 transform = glm::mat4(1.f);
 	glm::mat4 gridTransfo = grid.grid->getTransform_GridToWorld();
 	DiscreteGrid::bbox_t bbws = grid.grid->getBoundingBoxWorldSpace();
-	glm::vec3 dims = glm::convert_to<glm::vec3::value_type>(grid.grid->getGridDimensions());
+	glm::vec3 dims = glm::convert_to<glm::vec3::value_type>(grid.grid->getResolution());
 	glm::vec3 size = bbws.getDiagonal();
 	GLint plIdx = (_plane == planes::x) ? 1 : (_plane == planes::y) ? 2 : 3;
 	GetOpenGLError();
@@ -1265,7 +1265,7 @@ void Scene::prepPlane_SingleUniforms(planes _plane, planeHeading _heading, glm::
 	// Grid transform :
 	glm::mat4 gridTransform = _grid.grid->getTransform_WorldToGrid();
 	// Grid dimensions :
-	glm::vec3 gridDimensions = glm::convert_to<glm::vec3::value_type>(_grid.grid->getGridDimensions()) * _grid.grid->getVoxelDimensions();
+	glm::vec3 gridDimensions = glm::convert_to<glm::vec3::value_type>(_grid.grid->getResolution()) * _grid.grid->getVoxelDimensions();
 
 	// Depth of the plane :
 	DiscreteGrid::bbox_t::vec position = this->sceneBB.getMin();
@@ -1652,7 +1652,7 @@ glm::mat4 Scene::computeTransformationMatrix(const std::shared_ptr<DiscreteGrid>
 	double angleRad = (angleDeg * M_PI) / 180.;
 
 	if (angleDeg < 0.) {
-		DiscreteGrid::sizevec3 d = _grid->getGridDimensions();
+		DiscreteGrid::sizevec3 d = _grid->getResolution();
 		// compute translation along Z :
 		float w = static_cast<float>(d.x) * .39;
 		float displacement = w * std::abs(std::sin(angleRad));
@@ -1924,7 +1924,7 @@ void Scene::draft_writeRawGridPortion(DiscreteGrid::sizevec3 begin, DiscreteGrid
 	//fetch data from input grid :
 	std::vector<DiscreteGrid::DataType> data(size.x * size.y * size.z, uchar(0));
 	const std::vector<DiscreteGrid::DataType>& src = _grid->getData();
-	const DiscreteGrid::sizevec3 dims = _grid->getGridDimensions();
+	const DiscreteGrid::sizevec3 dims = _grid->getResolution();
 
 	if ((begin.x + size.x) > dims.x || (begin.y + size.y) > dims.y || (begin.z + size.z) > dims.z) { return; }
 	std::cerr << "Writing data ...";
@@ -2119,7 +2119,7 @@ void Scene::tex3D_buildMesh(GridGLView& grid, const std::string path) {
 }
 
 void Scene::tex3D_loadMESHFile(const std::string file, const GridGLView& grid, VolMeshData& mesh) {
-	DiscreteGrid::sizevec3 dims = grid.grid->getGridDimensions();
+	DiscreteGrid::sizevec3 dims = grid.grid->getResolution();
 	DiscreteGrid::bbox_t box = grid.grid->getBoundingBox();
 	glm::vec3 bmin = glm::convert_to<float>(box.getMin());
 	glm::vec3 bmax = glm::convert_to<float>(box.getMax());
@@ -2178,7 +2178,7 @@ void Scene::tex3D_loadMESHFile(const std::string file, const GridGLView& grid, V
 	// Current mesh size :
 	glm::vec3 size{maxX, maxY, maxZ};
 	// Grid size divided by mesh size gives a scalar to apply to the mesh to make it grid-sized :
-	glm::vec3 gridsize = glm::convert_to<float>(grid.grid->getGridDimensions()) * grid.grid->getVoxelDimensions();
+	glm::vec3 gridsize = glm::convert_to<float>(grid.grid->getResolution()) * grid.grid->getVoxelDimensions();
 	glm::vec4 scale = glm::vec4(gridsize / size, 1.);
 
 	std::cerr << "[LOG][" << __FILE__ << ':' << __LINE__ << "] Max dimensions of the mesh : [" << maxX << ',' << maxY << ',' << maxZ << "]\n";
