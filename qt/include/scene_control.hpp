@@ -12,6 +12,8 @@
 
 #include <iostream>
 
+#define CONTROLLER_USE_SLIDERS
+
 class Scene; // forward declaration
 class Viewer; // forward declaration
 
@@ -28,24 +30,27 @@ class ControlPanel : public QWidget {
 		void activatePanels(bool activeStatus = true);
 	private:
 		Scene* const sceneToControl;
+		#ifdef CONTROLLER_USE_SLIDERS
+		QSlider* minValueTexture; ///< Slider to determine the min value in the texture which constitutes viable information
+		QSlider* maxValueTexture; ///< Slider to determine the max value in the texture which constitutes viable information
+		QSlider* minValueColor; ///< Slider to determine the min color value to determine the color scale
+		QSlider* maxValueColor; ///< Slider to determine the max color value to determine the color scale
+		#else
 		QSpinBox* minValueTexture; ///< Spinbox to determine the min value in the texture which constitutes viable information
 		QSpinBox* maxValueTexture; ///< Spinbox to determine the max value in the texture which constitutes viable information
 		QSpinBox* minValueColor; ///< Spinbox to determine the min color value to determine the color scale
 		QSpinBox* maxValueColor; ///< Spinbox to determine the max color value to determine the color scale
+		#endif
 		QWidget* controlContainer;
 		Viewer* leftViewer;
 		QDoubleSpinBox* clipDistance;
 
 	public slots:
-		void setTexCube(bool show);
 		void setMinTexVal(int val);
 		void setMaxTexVal(int val);
 		void setMinColVal(int val);
 		void setMaxColVal(int val);
 		void setClipDistance(double val);
-		void setCutPlaneXPos(double val);
-		void setCutPlaneYPos(double val);
-		void setCutPlaneZPos(double val);
 };
 
 #endif // QT_INCLUDE_SCENE_CONTROL_HPP_

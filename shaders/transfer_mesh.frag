@@ -357,7 +357,7 @@ vec3 phongComputation(vec4 position, vec3 normal, vec4 color, vec3 lightPos, vec
 	vec3 r = 2.f * max(.0, dot(lm, n)) * n - lm;
 	vec3 v = normalize(cam - position.xyz);
 
-	return phong_Diffuse * max(.0, dot(lm, n)) * lightDiffuse; //+ phong_Specular * pow(max(.0, dot(r, v)), phong_Shininess) * lightSpecular;
+	return phong_Diffuse * max(.0, dot(lm, n)) * lightDiffuse + phong_Specular * pow(max(.0, dot(r, v)), phong_Shininess) * lightSpecular;
 }
 
 void main (void) {
@@ -494,16 +494,16 @@ void main (void) {
 
 	colorOut = vec4(.0, .0, .0, 1.);
 	// Phong details :
-	float phongAmbient = .6;
+	float phongAmbient = .5;
 	mat3 lightDetails = mat3(
-		vec3(1., 1., 1.),	// light diffuse color
+		vec3(.5, .5, .5),	// light diffuse color
 		vec3(.0, 1., .0),	// light specular color
 		vec3(.0, .0, .0)	// nothing
 	);
-	float factor = (1./3.) * (1. - phongAmbient - .1);
+	float factor = (1./1.) * (1. - phongAmbient -.1);
 	vec3 phongDetails = vec3(
 		factor,	// kd = diffuse coefficient
-		.1/3.,	// ks = specular coefficient
+		.1/1.,	// ks = specular coefficient
 		5.	// Shininess
 	);
 
@@ -511,8 +511,8 @@ void main (void) {
 	// Phong computation :
 	for (int i = 0; i < 8; ++i) {
 	}
-	colorOut.xyz += phongComputation(Pos, n, color, lightPositions[0], phongDetails, lightDetails);
-	colorOut.xyz += phongComputation(Pos, n, color, lightPositions[4], phongDetails, lightDetails);
+	//colorOut.xyz += phongComputation(Pos, n, color, lightPositions[0], phongDetails, lightDetails);
+	//colorOut.xyz += phongComputation(Pos, n, color, lightPositions[4], phongDetails, lightDetails);
 	// camera light :
 	colorOut.xyz += phongComputation(Pos, n, color, cam, phongDetails, lightDetails);;
 

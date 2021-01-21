@@ -133,10 +133,10 @@ void MainWidget::setupWidgets() {
 	QHBoxLayout* viewerLayout = new QHBoxLayout();
 	viewerLayout->addWidget(mainSplit);
 
-	QVBoxLayout* mainLayout = new QVBoxLayout();
-	mainLayout->addLayout(viewerLayout);
+	QHBoxLayout* mainLayout = new QHBoxLayout();
 	mainLayout->addWidget(this->controlPanel);
-	mainLayout->setAlignment(this->controlPanel, Qt::AlignHCenter);
+	mainLayout->addLayout(viewerLayout);
+	mainLayout->setAlignment(this->controlPanel, Qt::AlignVCenter);
 
 	this->strayObj.push_back(zViewerCapsule);
 	this->strayObj.push_back(yViewerCapsule);
@@ -150,6 +150,10 @@ void MainWidget::setupWidgets() {
 	QWidget* mainWidget = new QWidget();
 	mainWidget->setLayout(mainLayout);
 	this->setCentralWidget(mainWidget);
+
+	QSizePolicy policy;
+	QSize vSize = viewerLayout->sizeHint();
+	this->controlPanel->setFixedHeight(static_cast<int>(static_cast<float>(vSize.height()) * .75f));
 
 	this->installEventFilter(this);
 }

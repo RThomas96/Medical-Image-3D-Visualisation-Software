@@ -14,9 +14,12 @@
 #include <QSpinBox>
 #include <QComboBox>
 #include <QPushButton>
+#include <QMessageBox>
 
 #include <memory>
 #include <iostream>
+
+#define ENABLE_SINGLE_DIALOGBOX
 
 class Scene; // Fwd-declaration
 
@@ -72,7 +75,7 @@ class GridControl : public QWidget {
 		QLabel* info_GridSizeTotal; ///< Displays the total number of voxels in the grid
 		QLabel* info_VoxelSize; ///< Displays the size of voxels, in units.
 		QLabel* nameLabel; ///< label for the grid name
-		QPushButton* button_FillButton; ///< Button to start the process of filling the grid
+		// QPushButton* button_FillButton; ///< Button to start the process of filling the grid
 		QPushButton* button_SaveButton; ///< Button to save the grid, triggers a text dialog and saves the file.
 		QDoubleSpinBox* input_GridBBMinX; ///< Controls the coordinates of the minimum bound of the grid's render bounding box along X
 		QDoubleSpinBox* input_GridBBMinY; ///< Controls the coordinates of the minimum bound of the grid's render bounding box along Y
@@ -83,6 +86,10 @@ class GridControl : public QWidget {
 		std::shared_ptr<DiscreteGrid> voxelGrid; ///< Voxel grid to control.
 		std::shared_ptr<TetMesh> mesh; ///< Tetrahedral mesh responsible for the generation of the grid
 		Scene* scene;
+
+		#ifdef ENABLE_SINGLE_DIALOGBOX
+		QMessageBox* dialogBox;
+		#endif
 
 	private:
 		QLabel* info_TotalTime; ///< Total time it took to fill the grid

@@ -39,6 +39,8 @@ class Viewer : public QGLViewer {
 		QTimer* refreshTimer;
 		/// @b Should we capture a frame ?
 		bool shouldCapture;
+		/// @b Is the Ctrl key pressed down ?
+		bool keyboard_CtrlDown;
 	public slots:
 		/// @brief Update the view, as a slot without any arguments (currently only used by QTimer)
 		void updateView() { this->update(); }

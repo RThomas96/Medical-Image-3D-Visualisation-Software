@@ -54,7 +54,7 @@ ivec2 Convert1DIndexTo2DIndex_Unnormed( in uint uiIndexToConvert, in int iWrapSi
 float ComputeVisibility(vec3 point)
 {
 	vec4 point4 = vec4(point, 1.);
-	vec4 cut4 = vec4(cut, 1.);
+	vec4 cut4 = vec4(cut, 1.)- vec4(1.5, 1.5, 1.5, .0);
 	vec4 vis4 = point4 - cut4;
 	vis4.xyz *= cutDirection;
 	float xVis = vis4.x; // ((point.x - cut.x))*cutDirection.x;

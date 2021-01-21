@@ -28,6 +28,7 @@ uniform vec4 gridDimensions;	// The grid dimensions (used to compute tex-space c
 uniform vec4 sceneBBDiagonal;	// The grid's world-space bounding box diagonal
 uniform vec4 sceneBBPosition;	// The grid's world-space bounding box position
 uniform vec3 planePositions;	// The plane positions, in world space
+uniform vec2 offset;		// The offset from the origin, to move the viewer
 uniform uint heading;		// The plane's 'up' orientation (up [default] = 0, right = 1, down = 2, left = 3)
 uniform float zoom;		// The zoom factor for the current view
 
@@ -85,6 +86,7 @@ void main(void) {
 	gl_Position = vec4(.0, .0, .0, 1.);
 	gl_Position.xyz = multiplier * vertexTexCoord;
 	gl_Position.xyz *= zoom;
+	gl_Position.xy += offset;
 
 	vPos = vertexPosition;
 	vOriginalCoords = vertexTexCoord;

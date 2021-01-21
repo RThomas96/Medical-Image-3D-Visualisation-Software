@@ -59,7 +59,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void draw3DView(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, bool showTexOnPlane = true);
 
 		/// @b Draw a given plane 'view' (single plane on the framebuffer).
-		void drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading, float zoomRatio, GLfloat* vMat, GLfloat* pMat);
+		void drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading, float zoomRatio, glm::vec2 offset, GLfloat* vMat, GLfloat* pMat);
 
 		/// @b Returns the current scene boundaries.
 		glm::vec3 getSceneBoundaries() const;
@@ -109,6 +109,9 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void togglePlaneVisibility(planes _plane);
 		/// @b Sets the new 'heading' of the plane (to rotate the planar viewers in the framebuffer)
 		void setPlaneHeading(planes _plane, planeHeading _heading);
+
+		/// @b computes the transformation matrix of the input grid
+		glm::mat4 computeTransformationMatrix(const std::shared_ptr<DiscreteGrid>& _grid) const;
 	private :
 		/// @b compile the given shader at 'path' as a shader of type 'shaType'
 		GLuint compileShader(const std::string& path, const GLenum shaType, bool verbose = false);
@@ -133,15 +136,12 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		/// @b Print the OpenGL message to std::cerr
 		void printOpenGLMessage(const QOpenGLDebugMessage& message);
 
-		/// @b computes the transformation matrix of the input grid
-		glm::mat4 computeTransformationMatrix(const std::shared_ptr<DiscreteGrid>& _grid) const;
-
 		/// @b preps uniforms for a grid
-		void prepGridUniforms(GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, GLuint texHandle, const std::shared_ptr<DiscreteGrid>& grid);
+		void prepGridUniforms(GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, const GridGLView& grid);
 		/// @b preps uniforms for a given plane
 		void prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane, const GridGLView& grid, bool showTexOnPlane = true);
 		/// @brief prep the plane uniforms to draw in space
-		void prepPlane_SingleUniforms(planes _plane, planeHeading _heading, glm::vec2 fbDims, float zoomRatio, const GridGLView& _grid);
+		void prepPlane_SingleUniforms(planes _plane, planeHeading _heading, glm::vec2 fbDims, float zoomRatio, glm::vec2 offset, const GridGLView& _grid);
 
 		/// @brief draw the planes, in the real space
 		void drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane = true);

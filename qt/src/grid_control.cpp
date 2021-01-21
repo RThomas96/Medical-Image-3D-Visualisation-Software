@@ -6,6 +6,7 @@
 #include <QVBoxLayout>
 #include <QGridLayout>
 #include <QFileDialog>
+#include <QMessageBox>
 
 GridControl::GridControl(std::shared_ptr<DiscreteGrid> vg, std::shared_ptr<TetMesh>& tetMesh, Scene* _scene, QWidget* parent) : QWidget(parent) {
 	this->voxelGrid = vg;
@@ -26,14 +27,16 @@ GridControl::GridControl(std::shared_ptr<DiscreteGrid> vg, std::shared_ptr<TetMe
 
 GridControl::~GridControl() {
 	std::cerr << "Deleting the GridControl panel ...\n";
-	if (this->scene != nullptr) { this->scene->deleteGrid(this->voxelGrid); this->scene->removeController(); }
+	if (this->scene != nullptr) {
+		this->scene->deleteGrid(this->voxelGrid);
+		this->scene->removeController();
+	}
 	delete this->input_GridSizeX;
 	delete this->input_GridSizeY;
 	delete this->input_GridSizeZ;
 	delete this->methodPicker;
 	delete this->info_GridSizeTotal;
 	delete this->info_VoxelSize;
-	delete this->button_FillButton;
 	delete this->input_GridBBMinX;
 	delete this->input_GridBBMinY;
 	delete this->input_GridBBMinZ;
@@ -44,6 +47,9 @@ GridControl::~GridControl() {
 	delete this->info_TotalTime;
 	delete this->info_MemorySize;
 	delete this->nameLabel;
+	#ifdef ENABLE_SINGLE_DIALOGBOX
+	delete this->dialogBox;
+	#endif
 }
 
 void GridControl::enableWidgets() {
@@ -53,7 +59,6 @@ void GridControl::enableWidgets() {
 	this->methodPicker->setDisabled(false);
 	this->info_GridSizeTotal->setDisabled(false);
 	this->info_VoxelSize->setDisabled(false);
-	this->button_FillButton->setDisabled(false);
 	this->input_GridBBMinX->setDisabled(false);
 	this->input_GridBBMinY->setDisabled(false);
 	this->input_GridBBMinZ->setDisabled(false);
@@ -72,7 +77,6 @@ void GridControl::disableWidgets() {
 	this->methodPicker->setDisabled(true);
 	this->info_GridSizeTotal->setDisabled(true);
 	this->info_VoxelSize->setDisabled(true);
-	this->button_FillButton->setDisabled(true);
 	this->input_GridBBMinX->setDisabled(true);
 	this->input_GridBBMinY->setDisabled(true);
 	this->input_GridBBMinZ->setDisabled(true);
@@ -103,6 +107,10 @@ void GridControl::setupWidgets() {
 	// Also, there are a metric butt-ton of widgets here
 	// in order to make the grid controller UI.
 
+	#ifdef ENABLE_SINGLE_DIALOGBOX
+	this->dialogBox = new QMessageBox;
+	#endif
+
 	// Setup all inputs :
 	this->methodPicker = new QComboBox();
 	this->input_GridSizeX = new QSpinBox();
@@ -116,8 +124,7 @@ void GridControl::setupWidgets() {
 	this->input_GridBBMaxZ = new QDoubleSpinBox();
 	this->info_GridSizeTotal = new QLabel("");
 	this->info_VoxelSize = new QLabel("0x0x0");
-	this->button_FillButton = new QPushButton("Populate Grid");
-	this->button_SaveButton = new QPushButton("Save to file");
+	this->button_SaveButton = new QPushButton("Generate and save grid");
 
 	// Setup bounds for the selectors :
 	this->setupSpinBoxBounds(this->input_GridSizeX);
@@ -212,9 +219,7 @@ void GridControl::setupWidgets() {
 	mainLayout->addWidget(this->methodPicker, currentRow, 2, Qt::AlignRight);
 	currentRow += 2;
 
-	// "Launch" button :
-	mainLayout->addWidget(this->button_FillButton, currentRow++, 0, 1, -1, Qt::AlignCenter);
-	// Save button :
+	// Generation button :
 	mainLayout->addWidget(this->button_SaveButton, currentRow, 0, 1, -1, Qt::AlignCenter);
 	currentRow += 2;
 
@@ -266,7 +271,6 @@ void GridControl::setupSignals() {
 
 	connect(this->methodPicker, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &GridControl::pickMethod);
 
-	connect(this->button_FillButton, &QPushButton::clicked, this, &GridControl::launchGridFill);
 	connect(this->button_SaveButton, &QPushButton::clicked, this, &GridControl::saveToFile);
 }
 
@@ -374,32 +378,64 @@ void GridControl::launchGridFill() {
 	if (voxelGrid == nullptr || this->mesh == nullptr) {
 		return;
 	}
-	std::cerr << "Launching grid fill ... will freeze the application.\n";
 
 	this->mesh->populateOutputGrid(this->method);
-	// this->voxelGrid->populateGrid(this->method);
-	// double time = this->voxelGrid->getTimeToCompute().count();
-	// this->info_TotalTime->setText(QString::number(time));
-	// svec3 dims = this->voxelGrid->getGridDimensions();
-	// std::size_t size = dims.x * dims.y * dims.z;
-	// this->info_VoxelRate->setText(QString::number(((static_cast<double>(size)/time)*3600.)/1.e9));
-
-	// std::cerr << "[ERROR] Not yet implemented the filling from the controller\n";
-	std::cerr << "DONE !" << '\n';
 }
 
 void GridControl::saveToFile() {
+	// Check the voxel grid and
 	if (this->voxelGrid == nullptr) {
-		std::cerr << "Cannot save, no voxel grid attached." << '\n';
+		#ifndef ENABLE_SINGLE_DIALOGBOX
+		QMessageBox* messageBox = new QMessageBox;
+		messageBox->setAttribute(Qt::WA_DeleteOnClose);
+		messageBox->critical(nullptr, "Error", "No grid was attached to this controller.\nPlease close and re-open the save dialog.");
+		messageBox->show();
+		#else
+		this->dialogBox->critical(this, "Error", "No grid was attached to this controller.\nPlease close and re-open the save dialog.");
+		this->dialogBox->show();
+		#endif
+		return;
+	}
+	if (this->mesh == nullptr) {
+		#ifndef ENABLE_SINGLE_DIALOGBOX
+		QMessageBox* messageBox = new QMessageBox;
+		messageBox->setAttribute(Qt::WA_DeleteOnClose);
+		messageBox->critical(nullptr, "Error", "No mesh was attached to this controller.\nPlease close and re-open the save dialog.");
+		messageBox->show();
+		#else
+		this->dialogBox->critical(this, "Error", "No mesh was attached to this controller.\nPlease close and re-open the save dialog.");
+		this->dialogBox->show();
+		#endif
 		return;
 	}
 
-	QString fileName = QFileDialog::getSaveFileName(nullptr, "Save to DIM/IMA files", "../", "BrainVisa DIM/IMA (*.dim, *.ima)");
+	// Here :  parent is 'this' because it will make the save dialog appear centered above this widget !
+	QString fileName = QFileDialog::getSaveFileName(this, "Save to DIM/IMA files", "../", "BrainVisa DIM/IMA (*.dim, *.ima)");
+
+	// If nothing was selected !
+	if (fileName.isEmpty()) {
+		#ifndef ENABLE_SINGLE_DIALOGBOX
+		QMessageBox* messageBox = new QMessageBox;
+		messageBox->setAttribute(Qt::WA_DeleteOnClose);
+		messageBox->critical(nullptr, "Error", "No filename was given !\nNo grid will be generated.");
+		messageBox->show();
+		#else
+		this->dialogBox->critical(this, "Error", "No filename was given !\nNo grid will be generated.");
+		this->dialogBox->show();
+		#endif
+		return;
+	}
+
+	this->launchGridFill();
+
 	IO::Writer::DIM* dimWriter = new IO::Writer::DIM(fileName.toStdString());
 	std::cerr << "Writing to file with basename : \"" << fileName.toStdString() << '\"' << '\n';
 	dimWriter->write(this->voxelGrid);
 
 	std::cerr << "Wrote grid to the file \"" << fileName.toStdString() << "\"\n";
+
+	// Once done, close the widget in order to remove the grid from the scene !
+	this->close();
 }
 
 void GridControl::setGridDimensionX(int newDim) {

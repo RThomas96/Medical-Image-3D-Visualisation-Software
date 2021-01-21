@@ -226,30 +226,29 @@ void Scene::printOpenGLMessage(const QOpenGLDebugMessage& message) {
 	QFlags type = message.type();
 	QFlags source = message.source();
 
-	if (severity & QOpenGLDebugMessage::Severity::NotificationSeverity)	{ sev += "[Notification]"; }
-	if (severity & QOpenGLDebugMessage::Severity::LowSeverity)		{ sev += "[Low]"; }
-	if (severity & QOpenGLDebugMessage::Severity::MediumSeverity)		{ sev += "[Medium]"; }
-	if (severity & QOpenGLDebugMessage::Severity::HighSeverity)		{ sev += "[High]"; }
+	if (severity & QOpenGLDebugMessage::Severity::NotificationSeverity)	{ sev += "{Notif}"; }
+	if (severity & QOpenGLDebugMessage::Severity::LowSeverity)		{ sev += "{Low}"; }
+	if (severity & QOpenGLDebugMessage::Severity::MediumSeverity)		{ sev += "{Med}"; }
+	if (severity & QOpenGLDebugMessage::Severity::HighSeverity)		{ sev += "{High}"; }
 
-	if (type & QOpenGLDebugMessage::Type::ErrorType)		{ typ += "[Error]"; }
-	if (type & QOpenGLDebugMessage::Type::DeprecatedBehaviorType)	{ typ += "[Deprecated Behaviour]"; }
-	if (type & QOpenGLDebugMessage::Type::UndefinedBehaviorType)	{ typ += "[Undefined Behaviour]"; }
-	if (type & QOpenGLDebugMessage::Type::PortabilityType)		{ typ += "[Portability]"; }
-	if (type & QOpenGLDebugMessage::Type::PerformanceType)		{ typ += "[Performance]"; }
-	if (type & QOpenGLDebugMessage::Type::OtherType)		{ typ += "[Other]"; }
-	if (type & QOpenGLDebugMessage::Type::MarkerType)		{ typ += "[Marker]"; }
-	if (type & QOpenGLDebugMessage::Type::GroupPushType)		{ typ += "[Group Push]"; }
-	if (type & QOpenGLDebugMessage::Type::GroupPopType)		{ typ += "[Group Pop]"; }
+	if (type & QOpenGLDebugMessage::Type::ErrorType)			{ typ += "[ERROR]"; }
+	if (type & QOpenGLDebugMessage::Type::DeprecatedBehaviorType)		{ typ += "[DEPR. BEHAVIOUR]"; }
+	if (type & QOpenGLDebugMessage::Type::UndefinedBehaviorType)		{ typ += "[UNDEF. BEHAVIOUR]"; }
+	if (type & QOpenGLDebugMessage::Type::PortabilityType)			{ typ += "[PORTABILITY]"; }
+	if (type & QOpenGLDebugMessage::Type::PerformanceType)			{ typ += "[PERF]"; }
+	if (type & QOpenGLDebugMessage::Type::OtherType)			{ typ += "[OTHER]"; }
+	if (type & QOpenGLDebugMessage::Type::MarkerType)			{ typ += "[MARKER]"; }
+	if (type & QOpenGLDebugMessage::Type::GroupPushType)			{ typ += "[GROUP PUSH]"; }
+	if (type & QOpenGLDebugMessage::Type::GroupPopType)			{ typ += "[GROUP POP]"; }
 
-	if (source & QOpenGLDebugMessage::Source::APISource)			{ src += "[OpenGL API]"; }
-	if (source & QOpenGLDebugMessage::Source::WindowSystemSource)		{ src += "[Window System]"; }
-	if (source & QOpenGLDebugMessage::Source::ShaderCompilerSource)		{ src += "[Shader Compiler]"; }
-	if (source & QOpenGLDebugMessage::Source::ThirdPartySource)		{ src += "[Third Party]"; }
+	if (source & QOpenGLDebugMessage::Source::APISource)			{ src += "[OpenGL]"; }
+	if (source & QOpenGLDebugMessage::Source::WindowSystemSource)		{ src += "[WinSys]"; }
+	if (source & QOpenGLDebugMessage::Source::ShaderCompilerSource)		{ src += "[ShaComp]"; }
+	if (source & QOpenGLDebugMessage::Source::ThirdPartySource)		{ src += "[3rdParty]"; }
 	if (source & QOpenGLDebugMessage::Source::OtherSource)			{ src += "[Other]"; }
 
-	//if (typ.empty() == false) {
-		std::cerr << sev << ' ' << typ << ' ' << src << ' ' << message.message().toStdString() << '\n';
-	//}
+	// Currently outputs any message on the GL stack, regardless of severity, type, or source :
+	std::cerr << sev << ' ' << typ << ' ' << src << ' ' << +message.id() << " : " << message.message().toStdString() << '\n';
 }
 
 void Scene::printGridInfo(const std::shared_ptr<DiscreteGrid>& grid) {
@@ -328,6 +327,7 @@ void Scene::createBuffers() {
 
 void Scene::addGrid(const std::shared_ptr<InputGrid> _grid, std::string meshPath) {
 	GridGLView gridView(_grid);
+	//gridView.grid->setTransform_GridToWorld(this->computeTransformationMatrix(_grid));
 
 	TextureUpload gridTexture{};
 	gridTexture.minmag.x = GL_NEAREST;
@@ -357,7 +357,7 @@ void Scene::addGrid(const std::shared_ptr<InputGrid> _grid, std::string meshPath
 		gridView.gridTexture = this->uploadTexture3D(gridTexture);
 	}
 
-	gridView.boundingBoxColor = glm::vec3(.4, .6, .3); // olive-colored
+	gridView.boundingBoxColor = glm::vec3(.4, .6, .3); // olive-colored by default
 
 	this->tex3D_buildTexture();
 	this->tex3D_buildMesh(gridView, meshPath);
@@ -739,7 +739,7 @@ void Scene::launchSaveDialog() {
 	// if no grids are loaded, do nothing !
 	if (this->grids.size() == 0) {
 		QMessageBox messageBox;
-		messageBox.critical(nullptr,"Error","Cannot save a grid when nothing is loaded !");
+		messageBox.critical(nullptr, "Error","Cannot save a grid when nothing is loaded !");
 		messageBox.setFixedSize(500,200);
 		return;
 	}
@@ -794,7 +794,7 @@ void Scene::deleteGrid(const std::shared_ptr<DiscreteGrid> &_grid) {
 	this->grids.erase(this->grids.begin() + i);
 }
 
-void Scene::drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading, float zoomRatio, GLfloat* vMat, GLfloat* pMat) {
+void Scene::drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading, float zoomRatio, glm::vec2 offset, GLfloat* vMat, GLfloat* pMat) {
 	if (this->grids.size() == 0) { return; }
 
 	glEnable(GL_DEPTH_TEST);
@@ -813,12 +813,7 @@ void Scene::drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading
 
 	// Do for all grids :
 	if (this->grids.size() > 0) {
-		this->prepPlane_SingleUniforms(_plane, _heading, fbDims, zoomRatio, this->grids[0]);
-
-		GLint locV = glGetUniformLocation(this->programHandle_PlaneViewer, "vMat");
-		GLint locP = glGetUniformLocation(this->programHandle_PlaneViewer, "pMat");
-		glUniformMatrix4fv(locV, 1, GL_FALSE, vMat);
-		glUniformMatrix4fv(locP, 1, GL_FALSE, pMat);
+		this->prepPlane_SingleUniforms(_plane, _heading, fbDims, zoomRatio, offset, this->grids[0]);
 
 		this->setupVAOPointers();
 		GetOpenGLError();
@@ -939,7 +934,7 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, cons
 		#ifndef PLANE_POS_FLOOR
 		glm::vec3 planePos = glm::round(position + this->planeDisplacement * diagonal); // PLANE POSITIONS
 		#else
-		glm::vec3 planePos = glm::floor(position + this->planeDisplacement * diagonal); // PLANE POSITIONS
+		glm::vec3 planePos = (position + this->planeDisplacement * diagonal); // PLANE POSITIONS
 		#endif
 
 		glUniform3fv(location_cam, 1, glm::value_ptr(camPos));
@@ -1066,9 +1061,9 @@ void Scene::drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane) {
 	glDisable(GL_BLEND);
 }
 
-void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, GLuint texHandle, const std::shared_ptr<DiscreteGrid>& grid) {
+void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, const GridGLView& gridView) {
 	// Get the world to grid transform :
-	glm::mat4 transfoMat = baseMatrix * grid->getTransform_GridToWorld();
+	glm::mat4 transfoMat = baseMatrix * gridView.grid->getTransform_GridToWorld();
 
 	// Get the uniform locations :
 	GLint mMatrix_Loc = glGetUniformLocation(this->programHandle_projectedTex, "mMatrix");
@@ -1091,9 +1086,9 @@ void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, 
 
 	GetOpenGLError();
 
-	DiscreteGrid::bbox_t::vec origin = grid->getBoundingBox().getMin();
-	DiscreteGrid::bbox_t::vec originWS = grid->getBoundingBoxWorldSpace().getMin();
-	DiscreteGrid::sizevec3 gridDims = grid->getGridDimensions();
+	DiscreteGrid::bbox_t::vec origin = gridView.grid->getBoundingBox().getMin();
+	DiscreteGrid::bbox_t::vec originWS = gridView.grid->getBoundingBoxWorldSpace().getMin();
+	DiscreteGrid::sizevec3 gridDims = gridView.grid->getGridDimensions();
 	glm::vec3 dims = glm::vec3(static_cast<float>(gridDims.x), static_cast<float>(gridDims.y), static_cast<float>(gridDims.z));
 
 	glm::vec2 texBounds{static_cast<float>(this->minTexVal), static_cast<float>(this->maxTexVal)};
@@ -1101,13 +1096,13 @@ void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, 
 
 	glUniform3fv(voxelGridOrigin_Loc, 1, glm::value_ptr(origin));
 	glUniform3fv(voxelGridSize_Loc, 1, glm::value_ptr(dims));
-	glUniform3fv(voxelSize_Loc, 1, glm::value_ptr(grid->getVoxelDimensions()));
+	glUniform3fv(voxelSize_Loc, 1, glm::value_ptr(gridView.grid->getVoxelDimensions()));
 	glUniform2fv(location_texBounds, 1, glm::value_ptr(texBounds));
 	glUniform2fv(location_colorBounds, 1, glm::value_ptr(colorBounds));
 	glm::vec2 texbounds{static_cast<float>(this->minColorVal), static_cast<float>(this->maxColorVal)};
 	glUniform2fv(location_textureBounds, 1, glm::value_ptr(texbounds));
 	glUniform1ui(colorOrTexture_Loc, this->colorOrTexture ? 1 : 0);
-	if (grid->getData().size() == 0) {
+	if (gridView.grid->getData().size() == 0) {
 		glUniform1ui(drawMode_Loc, 2);
 	} else {
 		glUniform1ui(drawMode_Loc, this->drawMode);
@@ -1115,12 +1110,12 @@ void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, 
 	GetOpenGLError();
 
 	// Textures :
-	if (grid->getData().size() != 0) {
+	if (gridView.grid->getData().size() != 0) {
 		glActiveTexture(GL_TEXTURE0 + 0);
 		GetOpenGLError();
 		glEnable(GL_TEXTURE_3D);
 		GetOpenGLError();
-		glBindTexture(GL_TEXTURE_3D, texHandle);
+		glBindTexture(GL_TEXTURE_3D, gridView.gridTexture);
 		GetOpenGLError();
 		glUniform1i(texDataLoc, 0);
 		GetOpenGLError();
@@ -1254,7 +1249,7 @@ void Scene::prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane, cons
 	GetOpenGLError();
 }
 
-void Scene::prepPlane_SingleUniforms(planes _plane, planeHeading _heading, glm::vec2 fbDims, float zoomRatio, const GridGLView& _grid) {
+void Scene::prepPlane_SingleUniforms(planes _plane, planeHeading _heading, glm::vec2 fbDims, float zoomRatio, glm::vec2 offset, const GridGLView& _grid) {
 	glUseProgram(this->programHandle_PlaneViewer);
 	// The BB used is the scene's bounding box :
 	const DiscreteGrid::bbox_t::vec& bbox = this->sceneBB.getDiagonal();
@@ -1270,7 +1265,7 @@ void Scene::prepPlane_SingleUniforms(planes _plane, planeHeading _heading, glm::
 	// Grid transform :
 	glm::mat4 gridTransform = _grid.grid->getTransform_WorldToGrid();
 	// Grid dimensions :
-	glm::vec3 gridDimensions = glm::convert_to<glm::vec3::value_type>(_grid.grid->getGridDimensions());
+	glm::vec3 gridDimensions = glm::convert_to<glm::vec3::value_type>(_grid.grid->getGridDimensions()) * _grid.grid->getVoxelDimensions();
 
 	// Depth of the plane :
 	DiscreteGrid::bbox_t::vec position = this->sceneBB.getMin();
@@ -1297,6 +1292,7 @@ void Scene::prepPlane_SingleUniforms(planes _plane, planeHeading _heading, glm::
 	GLint location_planePositions = glGetUniformLocation(this->programHandle_PlaneViewer, "planePositions");
 	GLint location_heading = glGetUniformLocation(this->programHandle_PlaneViewer, "heading");
 	GLint location_zoom = glGetUniformLocation(this->programHandle_PlaneViewer, "zoom");
+	GLint location_offset = glGetUniformLocation(this->programHandle_PlaneViewer, "offset");
 	// FShader :
 	GLint location_texData = glGetUniformLocation(this->programHandle_PlaneViewer, "texData");
 	GLint location_colorScale = glGetUniformLocation(this->programHandle_PlaneViewer, "colorScale");
@@ -1332,6 +1328,9 @@ void Scene::prepPlane_SingleUniforms(planes _plane, planeHeading _heading, glm::
 	glUniform2fv(location_textureBounds, 1, glm::value_ptr(textureBounds));
 	glUniform1ui(location_heading, plane_heading);
 	glUniform1f(location_zoom, zoomRatio);
+	glm::vec2 realOffset = offset;
+	realOffset.y = -realOffset.y;
+	glUniform2fv(location_offset, 1, glm::value_ptr(realOffset));
 	GetOpenGLError();
 
 	// Uniform samplers :
@@ -1357,7 +1356,7 @@ void Scene::drawGrid(GLfloat *mvMat, GLfloat *pMat, glm::mat4 baseMatrix, const 
 		glBindVertexArray(this->vaoHandle);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_Element);
 
-		this->prepGridUniforms(mvMat, pMat, lightPos, baseMatrix, grid.gridTexture, grid.grid);
+		this->prepGridUniforms(mvMat, pMat, lightPos, baseMatrix, grid);
 		this->setupVAOPointers();
 
 		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(this->renderSize), GL_UNSIGNED_INT, (void*)0);
@@ -2179,7 +2178,7 @@ void Scene::tex3D_loadMESHFile(const std::string file, const GridGLView& grid, V
 	// Current mesh size :
 	glm::vec3 size{maxX, maxY, maxZ};
 	// Grid size divided by mesh size gives a scalar to apply to the mesh to make it grid-sized :
-	glm::vec3 gridsize = glm::convert_to<float>(grid.grid->getGridDimensions());
+	glm::vec3 gridsize = glm::convert_to<float>(grid.grid->getGridDimensions()) * grid.grid->getVoxelDimensions();
 	glm::vec4 scale = glm::vec4(gridsize / size, 1.);
 
 	std::cerr << "[LOG][" << __FILE__ << ':' << __LINE__ << "] Max dimensions of the mesh : [" << maxX << ',' << maxY << ',' << maxZ << "]\n";

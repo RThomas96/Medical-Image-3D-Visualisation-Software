@@ -27,6 +27,10 @@ class PlanarViewer : public QGLViewer {
 		virtual void keyPressEvent(QKeyEvent* _e) override;
 		/// @brief Handles mouse events from the user.
 		virtual void mousePressEvent(QMouseEvent* _m) override;
+		/// @b Event raised when the mouse moves
+		virtual void mouseMoveEvent(QMouseEvent* _m) override;
+		/// @b Event raised when the mouse is released
+		virtual void mouseReleaseEvent(QMouseEvent* _m) override;
 		/// @brief Overrides the mouse wheel events from the user.
 		virtual void wheelEvent(QWheelEvent* _w) override;
 	protected:
@@ -41,6 +45,9 @@ class PlanarViewer : public QGLViewer {
 		float minZoomRatio; ///< minimum value of the zoom applied to the image
 		float maxZoomRatio; ///< maximum value of the zoom applied to the image
 		float zoomRatio; ///< The current zoom level applied to the image
+		bool mouse_isPressed;
+		glm::vec2 offset; ///< Normalized offset
+		QPoint lastPosition;
 	public slots:
 		/// @brief Update the view, as a slot without any arguments
 		void updateView(void);

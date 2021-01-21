@@ -59,7 +59,7 @@ void main(void)
 
 	vec4 colorTex = vec4(.0, .0, .0, .0);
 
-	if (showTex == true) {
+	//if (showTex == true) {
 		if (texCoord.x > 0. && texCoord.x < 1.) {
 			if (texCoord.y > .0 && texCoord.y < 1.) {
 				if (texCoord.z > 0. && texCoord.z < 1.) {
@@ -68,7 +68,7 @@ void main(void)
 				}
 			}
 		}
-	}
+	//}
 
 	if (colorTex.a < .1f) { discard; }
 
@@ -113,7 +113,7 @@ vec4 R8UIToRGB(in uvec3 ucolor) {
 		1.
 	);
 
-	if (showTex == false) { color.w = .05; }
+	if (showTex == false) { color.a = .05; }
 	return color;
 }
 

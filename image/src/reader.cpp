@@ -209,18 +209,6 @@ namespace IO {
 		(*this->dimFile) >> this->gridDimensions.y;
 		(*this->dimFile) >> this->gridDimensions.z;
 
-		// Get the max coord as a bounding box-type vector :
-		bbox_t::vec maxCoord = bbox_t::vec(
-			static_cast<bbox_t::vec::value_type>(this->gridDimensions.x),
-			static_cast<bbox_t::vec::value_type>(this->gridDimensions.y),
-			static_cast<bbox_t::vec::value_type>(this->gridDimensions.z)
-		);
-
-		// By default, set the bounding box to the grid dimensions :
-		this->boundingBox.setMin(bbox_t::vec(0, 0, 0));
-		this->boundingBox.setMax(maxCoord);
-		// (can be overriden by the dim file's info)
-
 		// read info from the DIM file (extended with our properties)
 		std::string token, type;
 		do {
@@ -229,16 +217,22 @@ namespace IO {
 			else if (token.find("-dx") != std::string::npos) {(*this->dimFile) >> this->voxelDimensions.x;}
 			else if (token.find("-dy") != std::string::npos) {(*this->dimFile) >> this->voxelDimensions.y;}
 			else if (token.find("-dz") != std::string::npos) {(*this->dimFile) >> this->voxelDimensions.z;}
-			else if (token.find("-bbmin") != std::string::npos) {
-				bbox_t::vec v; (*this->dimFile) >> v.x >> v.y >> v.z; this->boundingBox.setMin(v);
-			}
-			else if (token.find("-bbmax") != std::string::npos) {
-				bbox_t::vec v; (*this->dimFile) >> v.x >> v.y >> v.z; this->boundingBox.setMax(v);
-			}
 			else {
 				std::cerr << "[DIMReader - ERROR] token "<<token<<" did not represent anything"<<'\n';
 			}
 		} while (not this->dimFile->eof());
+
+		// Get the max coord as a bounding box-type vector :
+		bbox_t::vec maxCoord = bbox_t::vec(
+			static_cast<bbox_t::vec::value_type>(this->gridDimensions.x) * static_cast<bbox_t::vec::value_type>(this->voxelDimensions.x),
+			static_cast<bbox_t::vec::value_type>(this->gridDimensions.y) * static_cast<bbox_t::vec::value_type>(this->voxelDimensions.y),
+			static_cast<bbox_t::vec::value_type>(this->gridDimensions.z) * static_cast<bbox_t::vec::value_type>(this->voxelDimensions.z)
+		);
+
+		// By default, set the bounding box to the grid dimensions :
+		this->boundingBox.setMin(bbox_t::vec(0, 0, 0));
+		this->boundingBox.setMax(maxCoord);
+		// (can be overriden by the dim file's info)
 
 		std::cerr << "[LOG] Reading from IMA file ...\n";
 		// resize data vector :

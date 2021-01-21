@@ -3,6 +3,7 @@
 #include <QCoreApplication>
 #include <QProgressDialog>
 #include <QMouseEvent>
+#include <QGuiApplication>
 
 PlanarViewer::PlanarViewer(Scene* const _scene, planes _p, planeHeading _h, QWidget* parent) :
 		QGLViewer(parent), sceneToShow(_scene), planeToShow(_p), planeOrientation(_h) {
@@ -15,6 +16,7 @@ PlanarViewer::PlanarViewer(Scene* const _scene, planes _p, planeHeading _h, QWid
 	this->minZoomRatio = 1.f;
 	this->zoomRatio = 1.f;
 	this->maxZoomRatio = 5.f;
+	this->offset = glm::vec2(0.f, 0.f);
 
 	this->refreshTimer = new QTimer();
 	// ~7 ms for 144fps, ~16ms for 60fps and ~33ms for 30 FPS
@@ -54,7 +56,7 @@ void PlanarViewer::draw(void) {
 	QSize viewerSize = this->size();
 	glm::vec2 fbDims = glm::vec2(static_cast<float>(viewerSize.width()), static_cast<float>(viewerSize.height()));
 
-	this->sceneToShow->drawPlaneView(fbDims, this->planeToShow, this->planeOrientation, this->zoomRatio, mvMat, pMat);
+	this->sceneToShow->drawPlaneView(fbDims, this->planeToShow, this->planeOrientation, this->zoomRatio, this->offset, mvMat, pMat);
 }
 
 void PlanarViewer::keyPressEvent(QKeyEvent* _e) {
@@ -62,12 +64,22 @@ void PlanarViewer::keyPressEvent(QKeyEvent* _e) {
 		/*
 		SHADER PROGRAMS
 		*/
-		case Qt::Key::Key_R:
+		case Qt::Key::Key_F5:
 			this->sceneToShow->recompileShaders();
 			this->update();
 		break;
 		case Qt::Key::Key_P:
 			this->sceneToShow->printVAOStateNext();
+			this->update();
+		break;
+		/*
+		MOUSE MOVEMENT
+		*/
+		case Qt::Key::Key_R:
+			if (not this->mouse_isPressed) {
+				this->offset = glm::vec2(.0, .0);
+				this->zoomRatio = 1.f;
+			}
 			this->update();
 		break;
 		default:
@@ -78,7 +90,39 @@ void PlanarViewer::keyPressEvent(QKeyEvent* _e) {
 }
 
 void PlanarViewer::mousePressEvent(QMouseEvent* _e) {
+	if (_e->buttons().testFlag(Qt::MouseButton::RightButton)) {
+		this->mouse_isPressed = true;
+		this->lastPosition = _e->pos();
+	}
 	QGLViewer::mousePressEvent(_e);
+	this->update();
+}
+
+void PlanarViewer::mouseMoveEvent(QMouseEvent* _m) {
+	if (this->mouse_isPressed) {
+		QPoint currentPos = _m->pos();
+		QSize viewerSize = this->size();
+		QPoint viewerPos = this->pos();
+		glm::vec2 minViewer = glm::vec2(static_cast<float>(viewerPos.x()), static_cast<float>(viewerPos.y()));
+		glm::vec2 maxViewer = minViewer + glm::vec2(static_cast<float>(viewerSize.width()), static_cast<float>(viewerSize.height()));
+		// absolute positions of the mouse in last pos and current pos :
+		glm::vec2 absPosMouse = glm::vec2(static_cast<float>(currentPos.x()), static_cast<float>(currentPos.y()));
+		glm::vec2 absPosLastPos = glm::vec2(static_cast<float>(this->lastPosition.x()), static_cast<float>(this->lastPosition.y()));
+		this->offset += (absPosMouse - absPosLastPos) / (maxViewer - minViewer);
+		this->lastPosition = currentPos;
+	} else {
+	}
+	QGLViewer::mouseMoveEvent(_m);
+	return;
+}
+
+void PlanarViewer::mouseReleaseEvent(QMouseEvent* _m) {
+	//
+	if (_m->button() == Qt::MouseButton::RightButton) {
+		this->mouse_isPressed = false;
+		this->lastPosition = _m->pos();
+	}
+	QGLViewer::mouseReleaseEvent(_m);
 	this->update();
 }
 
