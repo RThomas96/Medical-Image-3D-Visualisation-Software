@@ -12,18 +12,11 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, QWidget* parent) : QW
 	// Qt's layout and positionning system when done directly in
 	// code. Goddammit, it's verbose.
 
-	// Texture color scale bounds :
-	#ifdef CONTROLLER_USE_SLIDERS
+	// Texture and color scale bounds :
 	this->minValueTexture = new QSlider(Qt::Vertical);
 	this->maxValueTexture = new QSlider(Qt::Vertical);
 	this->minValueColor = new QSlider(Qt::Vertical);
 	this->maxValueColor = new QSlider(Qt::Vertical);
-	#else
-	this->minValueTexture = new QSpinBox();
-	this->maxValueTexture = new QSpinBox();
-	this->minValueColor = new QSpinBox();
-	this->maxValueColor = new QSpinBox();
-	#endif
 
 	this->clipDistance = new QDoubleSpinBox();
 	this->clipDistance->setRange(.0, 1000.);
@@ -138,21 +131,12 @@ ControlPanel::~ControlPanel() {
 void ControlPanel::initSignals() {
 	connect(this->clipDistance, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &ControlPanel::setClipDistance);
 
-	#ifdef CONTROLLER_USE_SLIDERS
 	// Modifies the min/max values of the texture to be considered valuable data :
 	QObject::connect(this->minValueTexture, &QSlider::valueChanged, this, &ControlPanel::setMinTexVal);
 	QObject::connect(this->maxValueTexture, &QSlider::valueChanged, this, &ControlPanel::setMaxTexVal);
 	// Same for colors :
 	QObject::connect(this->minValueColor, &QSlider::valueChanged, this, &ControlPanel::setMinColVal);
 	QObject::connect(this->maxValueColor, &QSlider::valueChanged, this, &ControlPanel::setMaxColVal);
-	#else
-	// Modifies the min/max values of the texture to be considered valuable data :
-	QObject::connect(this->minValueTexture, QOverload<int>::of(&QSpinBox::valueChanged), this, &ControlPanel::setMinTexVal);
-	QObject::connect(this->maxValueTexture, QOverload<int>::of(&QSpinBox::valueChanged), this, &ControlPanel::setMaxTexVal);
-	// Same for colors :
-	QObject::connect(this->minValueColor, QOverload<int>::of(&QSpinBox::valueChanged), this, &ControlPanel::setMinColVal);
-	QObject::connect(this->maxValueColor, QOverload<int>::of(&QSpinBox::valueChanged), this, &ControlPanel::setMaxColVal);
-	#endif
 
 }
 

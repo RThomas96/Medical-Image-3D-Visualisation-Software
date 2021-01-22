@@ -354,7 +354,7 @@ void Scene::addGrid(const std::shared_ptr<InputGrid> _grid, std::string meshPath
 		gridTexture.size.z = dimensions.z;
 		gridTexture.format = GL_RED_INTEGER;
 		gridTexture.type = GL_UNSIGNED_BYTE;
-		gridTexture.data = _grid->getData().data();
+		gridTexture.data = _grid->getDataPtr();
 		gridView.gridTexture = this->uploadTexture3D(gridTexture);
 	}
 
@@ -1118,7 +1118,7 @@ void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, 
 	glm::vec2 texbounds{static_cast<float>(this->minColorVal), static_cast<float>(this->maxColorVal)};
 	glUniform2fv(location_textureBounds, 1, glm::value_ptr(texbounds));
 	glUniform1ui(colorOrTexture_Loc, this->colorOrTexture ? 1 : 0);
-	if (gridView.grid->getData().size() == 0) {
+	if (gridView.grid->hasData() == false) {
 		glUniform1ui(drawMode_Loc, 2);
 	} else {
 		glUniform1ui(drawMode_Loc, this->drawMode);
@@ -1126,7 +1126,7 @@ void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, 
 	GetOpenGLError();
 
 	// Textures :
-	if (gridView.grid->getData().size() != 0) {
+	if (gridView.grid->hasData() == true) {
 		glActiveTexture(GL_TEXTURE0 + 0);
 		GetOpenGLError();
 		glEnable(GL_TEXTURE_3D);
@@ -1935,7 +1935,7 @@ void Scene::slotTogglePlaneDirectionZ() { this->planeDirection.z = - this->plane
 void Scene::slotSetMinTexValue(uchar val) { this->minTexVal = val; this->updateVis(); }
 void Scene::slotSetMaxTexValue(uchar val) { this->maxTexVal = val; this->updateVis(); }
 
-void Scene::slotSetMinColorValue(uchar val) { this->minColorVal = val; }
+void Scene::slotSetMinColorValue(uchar val) { this->minColorVal = val; if (this->controlPanel) {this->controlPanel->updateValues();} }
 void Scene::slotSetMaxColorValue(uchar val) { this->maxColorVal = val; }
 
 void Scene::slotSetPlanePositionX(float coord) { this->planePosition.x = coord; }
@@ -1961,7 +1961,6 @@ void Scene::draft_writeRawGridPortion(DiscreteGrid::sizevec3 begin, DiscreteGrid
 	std::shared_ptr<OutputGrid> rawGrid = std::make_shared<OutputGrid>();
 	//fetch data from input grid :
 	std::vector<DiscreteGrid::DataType> data(size.x * size.y * size.z, uchar(0));
-	const std::vector<DiscreteGrid::DataType>& src = _grid->getData();
 	const DiscreteGrid::sizevec3 dims = _grid->getResolution();
 
 	if ((begin.x + size.x) > dims.x || (begin.y + size.y) > dims.y || (begin.z + size.z) > dims.z) { return; }
@@ -1973,7 +1972,7 @@ void Scene::draft_writeRawGridPortion(DiscreteGrid::sizevec3 begin, DiscreteGrid
 			z = 0;
 			for (std::size_t k = begin.z; k < begin.z + size.z; ++k) {
 				// this is beautiful, fucking hell
-				data[x + y * size.x + z * size.x * size.y] = src[i + j *  dims.x + k * dims.x * dims.y];
+				data[x + y * size.x + z * size.x * size.y] = _grid->getPixel(i, j, k);
 				z++;
 			}
 			y++;
@@ -2138,7 +2137,7 @@ void Scene::tex3D_buildMesh(GridGLView& grid, const std::string path) {
 	// Texture coordinates :
 	texParams.internalFormat = GL_RGB32F;
 	texParams.size.x = coorWidth;
-	texParams.size.y = coorWidth;
+	texParams.size.y = coorHeight;
 	texParams.format = GL_RGB;
 	texParams.data = tex;
 	grid.volumetricMesh.textureCoordinates = this->uploadTexture2D(texParams);

@@ -141,6 +141,19 @@ void Viewer::addGrid() {
 	QPushButton* tiffButton = msgBox->addButton("TIFF", QMessageBox::ActionRole);
 	QString lastPath = "";
 
+	QMessageBox* levelBox = new QMessageBox();
+	levelBox->setText("Choose your downsampling level");
+	//levelBox->setAttribute(Qt::WA_DeleteOnClose);
+	QPushButton* originalButton = levelBox->addButton("Original Size", QMessageBox::ButtonRole::ActionRole);
+	QPushButton* lowButton = levelBox->addButton("Low Resolution", QMessageBox::ButtonRole::ActionRole);
+	QPushButton* lowerButton = levelBox->addButton("Lower Resolution", QMessageBox::ButtonRole::ActionRole);
+	QPushButton* lowestButton = levelBox->addButton("Lowest Resolution", QMessageBox::ButtonRole::ActionRole);
+
+	QMessageBox* confirmBox = new QMessageBox();
+	confirmBox->setText("This will be a considerably large image. Do you really wish to do this ?");
+	QPushButton* confirm_Accept = confirmBox->addButton("Yes", QMessageBox::ButtonRole::AcceptRole);
+	QPushButton* confirm_Deny = confirmBox->addButton("No, take me back", QMessageBox::ButtonRole::RejectRole);
+
 	// show the msgbox :
 	msgBox->exec();
 
@@ -187,6 +200,29 @@ void Viewer::addGrid() {
 		throw std::runtime_error("error : no button pressed");
 	}
 
+	levelBox->exec();
+
+	while (levelBox->clickedButton() == originalButton) {
+		confirmBox->exec();
+		if (confirmBox->clickedButton() == confirm_Accept) {
+			std::cerr << "Accepted full-res\n";
+			break;
+		}
+		else {
+			std::cerr << "Re-showing the dialog box\n";
+			levelBox->exec();
+		}
+	}
+
+	if (levelBox->clickedButton() == lowButton) { reader->enableDownsampling(IO::DownsamplingLevel::Low); }
+	if (levelBox->clickedButton() == lowerButton) { reader->enableDownsampling(IO::DownsamplingLevel::Lower); }
+	if (levelBox->clickedButton() == lowestButton) { reader->enableDownsampling(IO::DownsamplingLevel::Lowest); }
+
+	// Set the interpolation method :
+	std::shared_ptr<Interpolators::genericInterpolator<IO::GenericGridReader::data_t>> interpolator =
+			std::make_shared<Interpolators::meanValue<IO::GenericGridReader::data_t>>();
+	reader->setInterpolationMethod(interpolator);
+
 	std::string meshpath; // filepath for the MESH file
 	QString filename = QFileDialog::getOpenFileName(this, "Open a MESH", lastPath, "Mesh (*.MESH)");
 	if (filename.isEmpty() == false) {
@@ -204,6 +240,10 @@ void Viewer::addGrid() {
 	reader->setDataThreshold(threshold);
 	// Load the data :
 	reader->loadImage();
+	// get texture bounds :
+	glm::vec<2, IO::GenericGridReader::data_t, glm::defaultp> limits = reader->getTextureLimits();
+	this->scene->slotSetMinColorValue(limits.x);
+	this->scene->slotSetMaxColorValue(limits.y);
 
 	// Update data from the grid reader :
 	inputGrid = std::make_shared<InputGrid>();

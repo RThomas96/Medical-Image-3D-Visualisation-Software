@@ -62,6 +62,12 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 		/// @brief Default destructor, removes any storage associated with the grid.
 		~DiscreteGrid(void);
 
+		/// @b Return a read-only reference to a pixel's value.
+		virtual DataType getPixel(std::size_t x, std::size_t y, std::size_t z) const;
+
+		/// @brief Allows to set a value for the pixel at the coordinates 'x,y,z'.
+		virtual DiscreteGrid& setPixel(std::size_t x, std::size_t y, std::size_t z, DataType value);
+
 		/// @brief Updates this grid's data with data computed from a grid reader.
 		virtual DiscreteGrid& fromGridReader(IO::GenericGridReader& reader);
 
@@ -80,8 +86,11 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 		/// @brief Fetches the voxel at the given position index, in the grid.
 		virtual DataType fetchTexelIndex(sizevec3 idx) const;
 
-		/// @brief Get the voxel grid's data.
-		virtual const std::vector<DataType>& getData(void) const;
+		/// @brief Checks if the voxel grid has data, or if it is empty.
+		virtual bool hasData(void) const;
+
+		/// @brief Get the voxel grid's data, as a C-style array (std::vector::data())
+		virtual const DataType* getDataPtr(void) const;
 
 		/// @brief Returns the matrix used to go from world space to grid space.
 		const glm::mat4 getTransform_WorldToGrid(void) const;

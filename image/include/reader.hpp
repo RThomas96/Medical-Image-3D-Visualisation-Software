@@ -7,12 +7,15 @@
 #include "../../grid/include/bounding_box.hpp"
 #include "../../TinyTIFF/tinytiffreader.h"
 
+#include "../include/interpolator.hpp"
+
 #include <glm/glm.hpp>
 
 #include <vector>
 #include <string>
 #include <fstream>
 #include <algorithm>
+#include <memory>
 
 class DiscreteGrid; // Fwd-declaration
 
@@ -69,6 +72,9 @@ namespace IO {
 			/// @brief Sets the filenames to load.
 			virtual GenericGridReader& setFilenames(std::vector<std::string>& names);
 
+			/// @b Sets an interpolation structure to generate the image data upon loading.
+			virtual GenericGridReader& setInterpolationMethod(std::shared_ptr<Interpolators::genericInterpolator<data_t>>& ptr);
+
 			/// @brief Starts the image loading process.
 			virtual GenericGridReader& loadImage();
 
@@ -106,6 +112,9 @@ namespace IO {
 			/// @brief Swaps the contents from this grid's data to the target vector.
 			virtual GenericGridReader& swapData(std::vector<data_t>& target);
 
+			/// @brief Enables downsampling upon image loading at level '_level'.
+			virtual GenericGridReader& enableDownsampling(DownsamplingLevel _level);
+
 		protected:
 			/// @brief Open the file with the given name, and load its contents into memory.
 			virtual GenericGridReader& openFile(const std::string& name);
@@ -139,6 +148,8 @@ namespace IO {
 			DownsamplingLevel downsampleLevel;
 			/// @brief The minimum and maximum values of the texture.
 			glm::vec<2, data_t, glm::defaultp> textureLimits;
+			/// @brief Structure to interpolate the data in the loaded images
+			std::shared_ptr<Interpolators::genericInterpolator<data_t>> interpolator;
 #ifdef IMAGE_READER_LOG_FILE_SIZE
 			/// @brief Logs the size on disk that was actually read
 			std::size_t readBytes;
@@ -172,9 +183,6 @@ namespace IO {
 
 			/// @brief Loads the image from disk. If no filenames are provided, does nothing.
 			virtual StackedTIFFReader& loadImage() override;
-
-			/// @brief Enables downsampling upon image loading or not.
-			virtual StackedTIFFReader& enableDownsampling(DownsamplingLevel _level);
 
 		protected:
 			/// @brief Preallocates the data vector and updates some data we can gather before loading the images.

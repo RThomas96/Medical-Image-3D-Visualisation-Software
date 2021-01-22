@@ -1,7 +1,5 @@
 #include "../include/reader.hpp"
 
-#include "../include/interpolator.hpp"
-
 #include <cstring>
 #include <memory>
 
@@ -84,6 +82,8 @@ namespace IO {
 		// init limits
 		this->textureLimits.x = std::numeric_limits<data_t>::max();
 		this->textureLimits.y = std::numeric_limits<data_t>::lowest();
+		// interpolation struct :
+		this->interpolator = nullptr;
 	}
 
 	GenericGridReader::~GenericGridReader() {
@@ -96,12 +96,22 @@ namespace IO {
 		return *this;
 	}
 
+	GenericGridReader& GenericGridReader::setInterpolationMethod(std::shared_ptr<Interpolators::genericInterpolator<data_t>> &ptr) {
+		this->interpolator = ptr;
+		return *this;
+	}
+
 	GenericGridReader& GenericGridReader::setFilenames(std::vector<std::string> &names) {
 		// remove old filenames :
 		this->filenames.clear();
 		// Copy filenames, inserting them at the back of 'filenames' :
 		std::copy(names.begin(), names.end(), std::back_inserter(this->filenames));
 
+		return *this;
+	}
+
+	GenericGridReader& GenericGridReader::enableDownsampling(DownsamplingLevel _level) {
+		this->downsampleLevel = _level;
 		return *this;
 	}
 
@@ -148,6 +158,11 @@ namespace IO {
 	DIMReader& DIMReader::loadImage() {
 		if (this->filenames.size() == 0) {
 			std::cerr << "[LOG] No filenames were provided, nothing will be loaded." << '\n';
+			return *this;
+		}
+
+		if (this->downsampleLevel != DownsamplingLevel::Original && this->interpolator == nullptr) {
+			std::cerr << "[ERROR] No interpolation structure was set in this reader, even though a downsample was required.\n";
 			return *this;
 		}
 
@@ -209,8 +224,6 @@ namespace IO {
 			static_cast<val_t>(this->gridDimensions.z) * static_cast<val_t>(this->voxelDimensions.z)
 		);
 
-		std::shared_ptr<Interpolators::genericInterpolator<data_t>> interpolator;
-
 		// Set the bounding box to the grid*voxel dimensions :
 		this->boundingBox.setMin(bbox_t::vec(0, 0, 0));
 		this->boundingBox.setMax(maxCoord);
@@ -236,8 +249,6 @@ namespace IO {
 		// update data bounding box at the same time we're copying data:
 		this->dataBoundingBox = bbox_t();
 		for (std::size_t k = 0; k < this->gridDimensions.z; ++k) {
-			std::cerr << "Starting to process row " << k << " out of " << this->gridDimensions.z << " ... ";
-
 			rawSlicesIterator = std::begin(rawSlices);
 			// Load slice(s) according to slicesToLoad :
 			for (std::size_t i = 0; i < slicesToLoad; ++i) {
@@ -249,16 +260,32 @@ namespace IO {
 			}
 
 			if (this->downsampleLevel == DownsamplingLevel::Original) {
-				std::cerr << "(direct to curSlice)";
 				// straight copy into current slice vector :
 				std::copy(std::begin(singleSlice), std::end(singleSlice), std::begin(curSlice));
 			} else {
 				for (std::size_t j = 0; j < this->gridDimensions.y; ++j) {
 					for (std::size_t i = 0; i < this->gridDimensions.x; ++i) {
 						// Interpolation happens here !
-						// Will perform an interpolation based on the current neighborhood of
-						// the pixel we want to 'create' (generate from its neighbors)
-						// Multiple slices are already loaded in rawSlices, combine them here
+						// we start at i*slice, j*slice, k*slice
+
+						std::vector<data_t> interpolationData;
+						std::vector<data_t>::iterator interpolationIterator;
+
+						// Gather necessary data :
+						for (std::size_t z = 0; z < slicesToLoad; ++z) {
+							for (std::size_t y = 0; y < slicesToLoad; ++y) {
+								std::size_t i_x = i * slicesToLoad;
+								std::size_t i_y = (j * slicesToLoad + y) * this->imageDimensions.x;
+								std::size_t i_z = (z) * this->imageDimensions.x * this->imageDimensions.y;
+								std::size_t iter = i_x + i_y + i_z;
+								// read 'slicesToLoad' elements from the grid :
+								interpolationIterator = interpolationData.insert(interpolationIterator, rawSlices.begin()+iter, rawSlices.begin()+iter+slicesToLoad);
+							}
+						}
+
+						data_t pixelVal = (*this->interpolator)(slicesToLoad, interpolationData);
+						std::size_t idx = i + j * this->gridDimensions.x;
+						curSlice[idx] = pixelVal;
 					}
 				}
 			}
@@ -280,7 +307,6 @@ namespace IO {
 				}
 			}
 
-			std::cerr << "finished.\n";
 		}
 
 		return *this;
@@ -337,8 +363,6 @@ namespace IO {
 			return *this;
 		}
 
-		std::cerr << "(position " << this->imaFile->tellg() << " → ";
-
 		// automatically advances the internal std::basic_ifstream position indicator in order to read the
 		// next data whenever std::basic_ifstream::read is called another time :
 		this->imaFile->read((char*)tgt.data(), this->imageDimensions.x * this->imageDimensions.y);
@@ -348,8 +372,6 @@ namespace IO {
 			this->textureLimits.x = std::min(this->textureLimits.x, d);
 			this->textureLimits.y = std::max(this->textureLimits.y, d);
 		});
-
-		std::cerr << this->imaFile->tellg() << ')';
 
 		return *this;
 	}
@@ -405,20 +427,16 @@ namespace IO {
 
 		// Go through the grid :
 		for (std::size_t k = 0; k < this->gridDimensions.z; ++k) {
-			std::cerr << "Image " << k << " / " << this->gridDimensions.z << " ... " ;
 			rawSlicesIterator = std::begin(rawSlices);
 			// Load slice(s) here :
 			for (std::size_t i = 0; i < slicesToLoad; ++i) {
 				this->loadSlice(k*slicesToLoad+i, singleSlice);
 				// Do this only if we have multiple slices to load, otherwise skip it
 				if (this->downsampleLevel != DownsamplingLevel::Original) {
-					std::cerr << "(copy into rawSlices)";
 					// copy into rawslices :
 					rawSlicesIterator = std::copy(std::begin(singleSlice), std::end(singleSlice), rawSlicesIterator);
 				}
 			}
-
-			std::cerr << " loaded slices ... ";
 
 			if (this->downsampleLevel == DownsamplingLevel::Original) {
 				// Straight copy from loaded data to current slice data, updating the insertion iterator :
@@ -428,14 +446,28 @@ namespace IO {
 				for (std::size_t j = 0; j < this->gridDimensions.y; ++j) {
 					for (std::size_t i = 0; i < this->gridDimensions.x; ++i) {
 						// Interpolation code here !
-						// Will perform an interpolation based on the current neighborhood of
-						// the pixel we want to 'create' (generate from its neighbors)
-						// Multiple slices are already loaded in rawSlices, combine them here
+
+						std::vector<data_t> interpolationData;
+						std::vector<data_t>::iterator interpolationIterator;
+
+						// Gather necessary data :
+						for (std::size_t z = 0; z < slicesToLoad; ++z) {
+							for (std::size_t y = 0; y < slicesToLoad; ++y) {
+								std::size_t i_x = i * slicesToLoad;
+								std::size_t i_y = (j * slicesToLoad + y) * this->imageDimensions.x;
+								std::size_t i_z = (z) * this->imageDimensions.x * this->imageDimensions.y;
+								std::size_t iter = i_x + i_y + i_z;
+								// read 'slicesToLoad' elements from the grid :
+								interpolationIterator = interpolationData.insert(interpolationIterator, rawSlices.begin()+iter, rawSlices.begin()+iter+slicesToLoad);
+							}
+						}
+
+						data_t pixelVal = (*this->interpolator)(slicesToLoad, interpolationData);
+						std::size_t idx = i + j * this->gridDimensions.x;
+						curSlice[idx] = pixelVal;
 					}
 				}
 			}
-
-			std::cerr << " loaded into curSlice ... " ;
 
 			// Copy data from curSlice into final buffer :
 			for (std::size_t j = 0; j < this->gridDimensions.y; ++j) {
@@ -454,8 +486,6 @@ namespace IO {
 					}
 				}
 			}
-
-			std::cerr << "finished.\n";
 		}
 
 		return *this;
@@ -639,11 +669,6 @@ namespace IO {
 		std::size_t offset = this->gridDimensions.x * this->gridDimensions.y * idx;
 		std::copy(rawData.begin(), rawData.end(), this->data.data()+offset);
 */
-	}
-
-	StackedTIFFReader& StackedTIFFReader::enableDownsampling(DownsamplingLevel _level) {
-		this->downsampleLevel = _level;
-		return *this;
 	}
 
 }

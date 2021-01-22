@@ -13,14 +13,6 @@ OutputGrid::OutputGrid(void) : DiscreteGrid() {
 
 OutputGrid::~OutputGrid() {}
 
-void OutputGrid::setVoxelData(sizevec3 idx, DataType val) {
-	// early check :
-	if (idx.x >= this->gridDimensions.x || idx.y >= this->gridDimensions.y || idx.z >= this->gridDimensions.z) { return; }
-	// set value :
-	this->data[idx.x+idx.y*this->gridDimensions.x+idx.z*this->gridDimensions.x*this->gridDimensions.y] = val;
-	return;
-}
-
 OutputGrid& OutputGrid::preallocateData() {
 	return this->preallocateData(this->gridDimensions);
 }

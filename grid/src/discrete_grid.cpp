@@ -79,18 +79,44 @@ DiscreteGrid::DataType DiscreteGrid::fetchTexelGridSpace(glm::vec4 pos_gs) const
 }
 
 DiscreteGrid::DataType DiscreteGrid::fetchTexelIndex(sizevec3 idx) const {
-	std::size_t index = idx.x + idx.y * this->gridDimensions.x + idx.z * this->gridDimensions.x * this->gridDimensions.y;
-	if (idx.x >= this->gridDimensions.x || idx.y >= this->gridDimensions.y || idx.z >= this->gridDimensions.z) {
+	return this->getPixel(idx.x, idx.y, idx.z);
+}
+
+DiscreteGrid::DataType DiscreteGrid::getPixel(std::size_t x, std::size_t y, std::size_t z) const {
+	std::size_t index = x + y * this->gridDimensions.x + z * this->gridDimensions.x * this->gridDimensions.y;
+	if (x >= this->gridDimensions.x || y >= this->gridDimensions.y || z >= this->gridDimensions.z) {
 		return DataType(0);
 	}
+
 	// sanity check, should be covered by the cases above :
 	if (this->data.size() < index) { return DataType(0); }
+
 	// return data at this index :
 	else { return this->data[index]; }
 }
 
-const std::vector<DiscreteGrid::DataType>& DiscreteGrid::getData() const {
-	return this->data;
+DiscreteGrid& DiscreteGrid::setPixel(std::size_t x, std::size_t y, std::size_t z, DataType value) {
+	// early check :
+	if (this->modifiable == false) { return *this; }
+
+	// Check the dimensions are within spec :
+	if (x >= this->gridDimensions.x || y >= this->gridDimensions.y || z >= this->gridDimensions.z) {
+		return *this;
+	}
+
+	// change value :
+	std::size_t idx = x + y * this->gridDimensions.x + z * this->gridDimensions.x * this->gridDimensions.y;
+	this->data[idx] = value;
+
+	return *this;
+}
+
+bool DiscreteGrid::hasData() const {
+	return (this->data.size() != 0);
+}
+
+const DiscreteGrid::DataType* DiscreteGrid::getDataPtr() const {
+	return this->data.data();
 }
 
 const glm::mat4 DiscreteGrid::getTransform_WorldToGrid() const {

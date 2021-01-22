@@ -96,9 +96,9 @@ TetMesh& TetMesh::populateOutputGrid(InterpolationMethods method) {
 				std::for_each(std::begin(values), std::end(values), [&](DiscreteGrid::DataType v) {
 					globalVal += static_cast<DiscreteGrid::DataType>(v) / static_cast<DiscreteGrid::DataType>(values.size());
 				});
-				//std::cerr << "[TRACE] Adding " << +globalVal << " to the grid\n\n";
+
 				// set data :
-				this->outputGrid->setVoxelData(idx, globalVal);
+				this->outputGrid->setPixel(i, j, k, globalVal);
 			}
 		}
 	}

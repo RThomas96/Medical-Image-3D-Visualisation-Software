@@ -16,7 +16,7 @@ namespace Interpolators {
 			genericInterpolator(void) = default;
 			~genericInterpolator(void) = default;	///< Default destructor
 		public:
-			virtual data_t operator()(std::size_t neighborHoodSize, std::vector<DataType>& truth) const = delete;
+			virtual data_t operator()(std::size_t neighborHoodSize, std::vector<DataType>& truth) const;
 	};
 
 	template <typename DataType>
@@ -43,13 +43,12 @@ namespace Interpolators {
 			meanValue(void) = default;	///< Default constructor
 			~meanValue(void) = default;	///< Default destructor
 		public:
-			template <typename mean_t = data_t>
-			mean_t operator()(std::size_t nbsize, std::vector<data_t>& data) const  {
+			virtual data_t operator()(std::size_t nbsize, std::vector<data_t>& data) const override {
 				// take value at center, or as close as possible to the center
-				mean_t factor = mean_t(1) / static_cast<mean_t>(nbsize * nbsize * nbsize);
-				mean_t mean = .0f;
+				double factor = 1. / static_cast<double>(nbsize * nbsize * nbsize);
+				double mean = .0f;
 				for (const data_t& d : data) {
-					mean += static_cast<mean_t>(d) * factor;
+					mean += static_cast<double>(d) * factor;
 				}
 				return mean;
 			}

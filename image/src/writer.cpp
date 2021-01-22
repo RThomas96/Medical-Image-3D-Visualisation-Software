@@ -108,8 +108,9 @@ namespace IO {
 		this->writeDIMInfo(_vg);
 
 		// Write the data about the grid in bulk to the IMA file :
-		const std::vector<unsigned char>& data = _vg->getData();
-		this->outputIMA->write((const char*)data.data(), data.size() * sizeof(unsigned char));
+		const unsigned char* data = _vg->getDataPtr();
+		DiscreteGrid::sizevec3 size = _vg->getResolution();
+		this->outputIMA->write((const char*)data, size.x * size.y * size.z * sizeof(unsigned char));
 		// FIXME : think the cast might not work here ... to see and test
 
 		// Fixes a bug where the contents of the file for DIM
@@ -183,7 +184,7 @@ namespace IO {
 		}
 
 		// Get the data :
-		const std::vector<unsigned char>& data = _vg->getData();
+		const unsigned char* data = _vg->getDataPtr();
 		svec3 gridDims = _vg->getResolution();
 		std::size_t faceOffset = gridDims.x * gridDims.y;
 
@@ -197,6 +198,6 @@ namespace IO {
 		TinyTIFFWriter_close(this->tiffFile);
 		this->tiffFile = nullptr;
 
-		return static_cast<std::size_t>(data.size());
+		return faceOffset * gridDims.z;
 	}
 }
