@@ -40,6 +40,11 @@ uniform vec3 cutDirection;
 // Scalar to displace the camera's cutting plane :
 uniform float clipDistanceFromCamera;
 
+// 'Cube' visualization (restricted to a bounding box) :
+uniform vec3 visuBBMin;
+uniform vec3 visuBBMax;
+uniform bool shouldUseBB;
+
 /**
 * @brief function to convert 1D Index to 2D index (not normalized)
 * @return The texture coordinate [0..iWrapSize]x[0..n]
@@ -53,23 +58,34 @@ ivec2 Convert1DIndexTo2DIndex_Unnormed( in uint uiIndexToConvert, in int iWrapSi
 
 float ComputeVisibility(vec3 point)
 {
-	vec4 point4 = vec4(point, 1.);
-	vec4 cut4 = vec4(cut, 1.)- vec4(1.5, 1.5, 1.5, .0);
-	vec4 vis4 = point4 - cut4;
-	vis4.xyz *= cutDirection;
-	float xVis = vis4.x; // ((point.x - cut.x))*cutDirection.x;
-	float yVis = vis4.y; // ((point.y - cut.y))*cutDirection.y;
-	float zVis = vis4.z; // ((point.z - cut.z))*cutDirection.z;
+	vec4 epsilon = vec4(1.5, 1.5, 1.5, .0);
+	if (shouldUseBB == false) {
+		vec4 point4 = vec4(point, 1.);
+		vec4 cut4 = vec4(cut, 1.) - epsilon;
+		vec4 vis4 = point4 - cut4;
+		vis4.xyz *= cutDirection;
+		float xVis = vis4.x; // ((point.x - cut.x))*cutDirection.x;
+		float yVis = vis4.y; // ((point.y - cut.y))*cutDirection.y;
+		float zVis = vis4.z; // ((point.z - cut.z))*cutDirection.z;
 
-	vec4 clippingPoint = vec4(cam, 1.);
-	vec4 clippingNormal = normalize(inverse(vMat) * vec4(.0, .0, -1., .0));
-	clippingPoint += clippingNormal * clipDistanceFromCamera;
-	vec4 pos = point4 - clippingPoint;
-	float vis = dot( clippingNormal, pos );
+		vec4 clippingPoint = vec4(cam, 1.);
+		vec4 clippingNormal = normalize(inverse(vMat) * vec4(.0, .0, -1., .0));
+		clippingPoint += clippingNormal * clipDistanceFromCamera;
+		vec4 pos = point4 - clippingPoint;
+		float vis = dot( clippingNormal, pos );
 
-	if( xVis < 0.|| yVis < 0.|| zVis < 0. || vis < .0)
-		return 1000.;
-	else return 0.;
+		if( xVis < 0.|| yVis < 0.|| zVis < 0. || vis < .0)
+			return 1000.;
+		else return 0.;
+	} else {
+		if (point.x + epsilon.x < visuBBMin.x) { return 1000.; }
+		if (point.y + epsilon.y < visuBBMin.y) { return 1000.; }
+		if (point.z + epsilon.z < visuBBMin.z) { return 1000.; }
+		if (point.x - epsilon.x > visuBBMax.x) { return 1000.; }
+		if (point.y - epsilon.y > visuBBMax.y) { return 1000.; }
+		if (point.z - epsilon.z > visuBBMax.z) { return 1000.; }
+		return .0;
+	}
 }
 
 void main()

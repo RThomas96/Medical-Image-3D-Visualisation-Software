@@ -82,7 +82,11 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 			this->scene->printVAOStateNext();
 		break;
 		case Qt::Key::Key_V:
-			this->scene->setDrawMode(DrawMode::Volumetric);
+			if ((e->modifiers() & Qt::KeyboardModifier::ShiftModifier) != 0) {
+				this->scene->setDrawMode(DrawMode::VolumetricBoxed);
+			} else {
+				this->scene->setDrawMode(DrawMode::Volumetric);
+			}
 			this->update();
 		break;
 		case Qt::Key::Key_S:

@@ -11,6 +11,10 @@ This file exists to define some macros used through the program.
 template <typename T>
 using restrict_floating_point_check = typename std::enable_if<std::is_floating_point<T>::value>::type*;
 
+/// @brief Allows to restrict a template to use only integer values for type T
+template <typename T>
+using restrict_integer_check = typename std::enable_if<std::is_integral<T>::value>::type*;
+
 namespace glm {
 
 	template <typename out, typename in, qualifier prec>

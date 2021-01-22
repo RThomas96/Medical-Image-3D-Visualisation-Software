@@ -48,6 +48,7 @@ ADD_EXECUTABLE(neighbor_visu
 	./qt/include/scene_control.hpp
 	./qt/include/qt_proxies.hpp
 	./qt/include/viewer_header.hpp
+	./qt/include/visu_box_controller.hpp
 
 	./viewer/include/scene.hpp
 	./viewer/include/planar_viewer.hpp
@@ -74,6 +75,7 @@ ADD_EXECUTABLE(neighbor_visu
 	./qt/src/scene_control.cpp
 	./qt/src/qt_proxies.cpp
 	./qt/src/viewer_header.cpp
+	./qt/src/visu_box_controller.cpp
 
 	./viewer/src/scene.cpp
 	./viewer/src/planar_viewer.cpp

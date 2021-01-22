@@ -47,15 +47,10 @@ void PlanarViewer::init(void) {
 void PlanarViewer::draw(void) {
 	glClearColor(.8, .8, .8, 1.);
 
-	GLfloat mvMat[16];
-	GLfloat pMat[16];
-	this->camera()->getModelViewMatrix(mvMat);
-	this->camera()->getProjectionMatrix(pMat);
-
 	QSize viewerSize = this->size();
 	glm::vec2 fbDims = glm::vec2(static_cast<float>(viewerSize.width()), static_cast<float>(viewerSize.height()));
 
-	this->sceneToShow->drawPlaneView(fbDims, this->planeToShow, this->planeOrientation, this->zoomRatio, this->offset, mvMat, pMat);
+	this->sceneToShow->drawPlaneView(fbDims, this->planeToShow, this->planeOrientation, this->zoomRatio, this->offset);
 }
 
 void PlanarViewer::keyPressEvent(QKeyEvent* _e) {

@@ -49,17 +49,20 @@ void MainWidget::setupWidgets() {
 
 	this->action_add1Grid = new QAction("Open acquisition");
 	this->action_saveGrid = new QAction("Save acquisition");
+	this->action_showVisuBox = new QAction("Show visu box controller");
 	this->action_exitProgram = new QAction("Exit program");
 
 	this->fileMenu = this->menuBar()->addMenu("File");
 
 	this->fileMenu->addAction(this->action_add1Grid);
 	this->fileMenu->addAction(this->action_saveGrid);
+	this->fileMenu->addAction(this->action_showVisuBox);
 	this->fileMenu->addAction(this->action_exitProgram);
 
 	// Connect add and save button to the slots/functions in the program :
 	QObject::connect(this->action_add1Grid, &QAction::triggered, [this](){this->viewer->addGrid();});
 	QObject::connect(this->action_saveGrid, &QAction::triggered, [this](){this->scene->launchSaveDialog();});
+	QObject::connect(this->action_showVisuBox, &QAction::triggered, [this](){this->scene->showVisuBoxController();});
 	QObject::connect(this->action_exitProgram, &QAction::triggered, this, &QMainWindow::close);
 
 	this->viewer = new Viewer(this->scene, nullptr);

@@ -67,6 +67,10 @@ uniform mat4 pMat;
 uniform vec2 colorBounds;
 uniform vec2 textureBounds;
 
+uniform vec3 visuBBMin;
+uniform vec3 visuBBMax;
+uniform bool shouldUseBB;
+
 vec4 voxelIdxToColor(in uvec3 ucolor) {
 	// Have the R and G color channels clamped to the min/max of the scale
 	// (mimics under or over-exposure)
@@ -100,23 +104,33 @@ vec4 voxelIdxToColor(in uvec3 ucolor) {
 
 bool ComputeVisibility(vec3 point)
 {
-	vec4 point4 = vec4(point, 1.);
-	vec4 cut4 = vec4(cut, 1.);
-	vec4 vis4 = point4 - cut4;
-	vis4.xyz *= cutDirection;
-	float xVis = vis4.x; // (point.x - cut.x)*cutDirection.x;
-	float yVis = vis4.y; // (point.y - cut.y)*cutDirection.y;
-	float zVis = vis4.z; // (point.z - cut.z)*cutDirection.z;
+	if (shouldUseBB == false) {
+		vec4 point4 = vec4(point, 1.);
+		vec4 cut4 = vec4(cut, 1.);
+		vec4 vis4 = point4 - cut4;
+		vis4.xyz *= cutDirection;
+		float xVis = vis4.x; // (point.x - cut.x)*cutDirection.x;
+		float yVis = vis4.y; // (point.y - cut.y)*cutDirection.y;
+		float zVis = vis4.z; // (point.z - cut.z)*cutDirection.z;
 
-	vec4 clippingPoint = vec4(cam, 1.);
-	vec4 clippingNormal = normalize(inverse(vMat) * vec4(.0, .0, -1., .0));
-	clippingPoint += clippingNormal * clipDistanceFromCamera ;
-	vec4 pos = point4 - clippingPoint;
-	float vis = dot( clippingNormal, pos );
+		vec4 clippingPoint = vec4(cam, 1.);
+		vec4 clippingNormal = normalize(inverse(vMat) * vec4(.0, .0, -1., .0));
+		clippingPoint += clippingNormal * clipDistanceFromCamera ;
+		vec4 pos = point4 - clippingPoint;
+		float vis = dot( clippingNormal, pos );
 
-	if( xVis < 0.|| yVis < 0.|| zVis < 0. || vis < .0)
-		return false;
-	else return true;
+		if( xVis < 0.|| yVis < 0.|| zVis < 0. || vis < .0)
+			return false;
+		else return true;
+	} else {
+		if (point.x < visuBBMin.x) { return false; }
+		if (point.y < visuBBMin.y) { return false; }
+		if (point.z < visuBBMin.z) { return false; }
+		if (point.x > visuBBMax.x) { return false; }
+		if (point.y > visuBBMax.y) { return false; }
+		if (point.z > visuBBMax.z) { return false; }
+		return true;
+	}
 }
 
 vec3 getWorldCoordinates( in ivec3 _gridCoord )

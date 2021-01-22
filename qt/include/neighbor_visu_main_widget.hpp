@@ -48,6 +48,7 @@ class MainWidget : public QMainWindow {
 		QAction* action_add1Grid;	///< Action to add grid
 		QAction* action_saveGrid;	///< Action to save grid
 		QAction* action_exitProgram;	///< Action to exit the program.
+		QAction* action_showVisuBox;	///< Action to show the visualization box controller
 };
 
 #endif // QT_INCLUDE_NEIGHBOR_VISU_MAIN_WIDGET_HPP_

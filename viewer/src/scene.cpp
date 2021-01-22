@@ -95,6 +95,7 @@ Scene::Scene() {
 	this->controlPanel = nullptr;
 	this->outputGrid = nullptr;
 	this->gridControl = nullptr;
+	this->visuBoxController = nullptr;
 
 	this->minTexVal = uchar(1);
 	this->maxTexVal = uchar(255);
@@ -381,6 +382,11 @@ void Scene::updateBoundingBox(void) {
 	auto corners = this->sceneBB.getAllCorners();
 	for (std::size_t i = 0; i < corners.size(); ++i) {
 		this->lightPositions[i] = glm::convert_to<float>(corners[i]);
+	}
+
+	this->visuBox = this->sceneBB;
+	if (this->visuBoxController != nullptr) {
+		this->visuBoxController->updateValues();
 	}
 
 	return;
@@ -794,7 +800,7 @@ void Scene::deleteGrid(const std::shared_ptr<DiscreteGrid> &_grid) {
 	this->grids.erase(this->grids.begin() + i);
 }
 
-void Scene::drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading, float zoomRatio, glm::vec2 offset, GLfloat* vMat, GLfloat* pMat) {
+void Scene::drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading, float zoomRatio, glm::vec2 offset) {
 	if (this->grids.size() == 0) { return; }
 
 	glEnable(GL_DEPTH_TEST);
@@ -868,6 +874,9 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, cons
 		GLint location_visibilityMap = getUniform("visiblity_map");
 		GLint location_colorBounds = getUniform("colorBounds");
 		GLint location_textureBounds = getUniform("textureBounds");
+		GLint location_visuBBMin = getUniform("visuBBMin");
+		GLint location_visuBBMax = getUniform("visuBBMax");
+		GLint location_shouldUseBB = getUniform("shouldUseBB");
 		GetOpenGLError();
 		// Matrices :
 		GLint location_mMat = getUniform("mMat");
@@ -953,6 +962,13 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, cons
 		glm::vec2 texbounds{static_cast<float>(this->minTexVal), static_cast<float>(this->maxTexVal)};
 		glUniform2fv(location_colorBounds, 1, glm::value_ptr(colorbounds));
 		glUniform2fv(location_textureBounds, 1, glm::value_ptr(texbounds));
+		GetOpenGLError();
+
+		DiscreteGrid::bbox_t::vec min = this->visuBox.getMin();
+		DiscreteGrid::bbox_t::vec max = this->visuBox.getMax();
+		glUniform3fv(location_visuBBMin, 1, glm::value_ptr(min));
+		glUniform3fv(location_visuBBMax, 1, glm::value_ptr(max));
+		glUniform1ui(location_shouldUseBB, ((this->drawMode == DrawMode::VolumetricBoxed) ? 1 : 0));
 		GetOpenGLError();
 
 		glUniform3fv(location_light0, 1, glm::value_ptr(this->lightPositions[0]));
@@ -1134,7 +1150,7 @@ void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, 
 	#ifndef PLANE_POS_FLOOR
 	glm::vec3 planePos = glm::round(position + this->planeDisplacement * diagonal); // PLANE POSITIONS
 	#else
-	glm::vec3 planePos = glm::floor(position + this->planeDisplacement * diagonal); // PLANE POSITIONS
+	glm::vec3 planePos = (position + this->planeDisplacement * diagonal); // PLANE POSITIONS
 	#endif
 
 	glUniform3fv(planePositionsLoc, 1, glm::value_ptr(planePos));
@@ -1217,7 +1233,7 @@ void Scene::prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane, cons
 	#ifndef PLANE_POS_FLOOR
 	glm::vec3 planePos = glm::round(position + this->planeDisplacement * diagonal); // PLANE POSITIONS
 	#else
-	glm::vec3 planePos = glm::floor(position + this->planeDisplacement * diagonal); // PLANE POSITIONS
+	glm::vec3 planePos = (position + this->planeDisplacement * diagonal); // PLANE POSITIONS
 	#endif
 
 	glUniformMatrix4fv(location_mMatrix, 1, GL_FALSE, glm::value_ptr(transform));
@@ -1273,7 +1289,7 @@ void Scene::prepPlane_SingleUniforms(planes _plane, planeHeading _heading, glm::
 	#ifndef PLANE_POS_FLOOR
 	glm::vec3 planePos = glm::round(position + this->planeDisplacement * diagonal); // PLANE POSITIONS
 	#else
-	glm::vec3 planePos = glm::floor(position + this->planeDisplacement * diagonal); // PLANE POSITIONS
+	glm::vec3 planePos = (position + this->planeDisplacement * diagonal); // PLANE POSITIONS
 	#endif
 
 	// Color and texture bounds :
@@ -1384,9 +1400,13 @@ void Scene::draw3DView(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, bool sho
 		for (std::size_t i = 0; i < this->grids.size(); ++i) {
 			this->drawGrid(mvMat, pMat, transfoMat, this->grids[i]);
 		}
-	} else if (this->drawMode == DrawMode::Volumetric) {
+	} else if (this->drawMode == DrawMode::Volumetric || this->drawMode == DrawMode::VolumetricBoxed) {
 		for (std::size_t i = 0; i < this->grids.size(); ++i) {
 			this->drawVolumetric(mvMat, pMat, camPos, this->grids[i]);
+		}
+
+		if (this->drawMode == DrawMode::VolumetricBoxed) {
+			this->drawBoundingBox(this->visuBox, glm::vec3(1., .0, .0), mvMat, pMat);
 		}
 	}
 
@@ -1882,6 +1902,24 @@ void Scene::drawBoundingBox(const DiscreteGrid::bbox_t& _box, glm::vec3 color, G
 	glLineWidth(1.0f);
 	glUseProgram(0);
 	GetOpenGLError();
+}
+
+void Scene::showVisuBoxController() {
+	if (this->visuBoxController == nullptr) {
+		this->visuBoxController = new VisuBoxController(this);
+	}
+	std::cerr << "Trying to show the widget" << '\n';
+	this->visuBoxController->show();
+}
+
+void Scene::removeVisuBoxController() {
+	this->visuBoxController = nullptr;
+}
+
+void Scene::setVisuBox(DiscreteGrid::bbox_t box) {
+	std::cerr << "Setting new visu box" << '\n';
+	this->visuBox = box;
+	return;
 }
 
 void Scene::slotToggleShowTextureCube(bool show) { this->inputGridVisible = show; }

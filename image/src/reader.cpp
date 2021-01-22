@@ -1,6 +1,9 @@
 #include "../include/reader.hpp"
 
+#include "../include/interpolator.hpp"
+
 #include <cstring>
+#include <memory>
 
 namespace IO {
 
@@ -74,10 +77,13 @@ namespace IO {
 		this->gridDimensions = sizevec3(0,0,0);
 		this->voxelDimensions = glm::vec3(0.f);
 		this->transform = glm::mat4(1.f);
-		this->downsampled = false;
+		this->downsampleLevel = DownsamplingLevel::Original;
 		this->data.clear();
 		this->filenames.clear();
 		this->name = "";
+		// init limits
+		this->textureLimits.x = std::numeric_limits<data_t>::max();
+		this->textureLimits.y = std::numeric_limits<data_t>::lowest();
 	}
 
 	GenericGridReader::~GenericGridReader() {
@@ -113,13 +119,15 @@ namespace IO {
 
 	GenericGridReader::bbox_t GenericGridReader::getDataBoundingBox() const { return this->dataBoundingBox; }
 
-	GenericGridReader& GenericGridReader::openFile(std::string &name) { return *this; }
+	GenericGridReader& GenericGridReader::openFile(const std::string &name) { return *this; }
 
-	GenericGridReader& GenericGridReader::loadImageIndexed(std::size_t idx) { return *this; }
-
-	GenericGridReader& GenericGridReader::loadGrid() { return *this; }
+	GenericGridReader& GenericGridReader::loadSlice(std::size_t idx, std::vector<data_t>& tgt) { return *this; }
 
 	GenericGridReader::data_t GenericGridReader::getDataThreshold() const { return this->threshold; }
+
+	glm::vec<2, GenericGridReader::data_t, glm::defaultp> GenericGridReader::getTextureLimits() const {
+		return this->textureLimits;
+	}
 
 	GenericGridReader& GenericGridReader::swapData(std::vector<data_t> &target) {
 		this->data.swap(target);
@@ -152,12 +160,133 @@ namespace IO {
 			std::abort();
 		}
 
-		this->loadGrid();
+		// Check if dim/ima files are opened :
+		if (this->dimFile == nullptr || this->imaFile == nullptr) {
+			std::cerr << "Some files were not opened. Stopping loading now.\n";
+			return *this;
+		}
+
+		std::cerr << "[LOG] Reading DIM data ...\n";
+
+		// read number of voxels into image dimensions :
+		(*this->dimFile) >> this->imageDimensions.x;
+		(*this->dimFile) >> this->imageDimensions.y;
+		(*this->dimFile) >> this->imageDimensions.z;
+
+		// read info from the DIM file (extended with our properties)
+		std::string token, type;
+		do {
+			(*this->dimFile) >> token;
+			if (token.find("-type") != std::string::npos) { (*this->dimFile) >> type; }
+			else if (token.find("-dx") != std::string::npos) {(*this->dimFile) >> this->voxelDimensions.x;}
+			else if (token.find("-dy") != std::string::npos) {(*this->dimFile) >> this->voxelDimensions.y;}
+			else if (token.find("-dz") != std::string::npos) {(*this->dimFile) >> this->voxelDimensions.z;}
+			else {
+				std::cerr << "[ERROR] DIMReader - token "<< token <<" did not represent anything"<<'\n';
+			}
+		} while (not this->dimFile->eof());
+
+		// # of slices to load at once in order to downsample :
+		std::size_t slicesToLoad = 1;
+		// Compute voxel and grid sizes :
+		sizevec3 dataDims = this->imageDimensions;
+		if (this->downsampleLevel == DownsamplingLevel::Low) {
+			dataDims /= std::size_t(2); this->voxelDimensions *= 2.; slicesToLoad = 2;
+		}
+		if (this->downsampleLevel == DownsamplingLevel::Lower) {
+			dataDims /= std::size_t(4); this->voxelDimensions *= 4.; slicesToLoad = 4;
+		}
+		if (this->downsampleLevel == DownsamplingLevel::Lowest) {
+			dataDims /= std::size_t(8); this->voxelDimensions *= 8.; slicesToLoad = 8;
+		}
+		this->gridDimensions = dataDims;
+
+		// Get the max coord as a bounding box-type vector :
+		using val_t = bbox_t::vec::value_type;
+		bbox_t::vec maxCoord = bbox_t::vec(
+			static_cast<val_t>(this->gridDimensions.x) * static_cast<val_t>(this->voxelDimensions.x),
+			static_cast<val_t>(this->gridDimensions.y) * static_cast<val_t>(this->voxelDimensions.y),
+			static_cast<val_t>(this->gridDimensions.z) * static_cast<val_t>(this->voxelDimensions.z)
+		);
+
+		std::shared_ptr<Interpolators::genericInterpolator<data_t>> interpolator;
+
+		// Set the bounding box to the grid*voxel dimensions :
+		this->boundingBox.setMin(bbox_t::vec(0, 0, 0));
+		this->boundingBox.setMax(maxCoord);
+
+		std::cerr << "[LOG] Reading from IMA file ...\n";
+		// resize data vector to fit all data :
+		std::size_t dataSize = this->gridDimensions.x * this->gridDimensions.y * this->gridDimensions.z;
+		this->data.resize(dataSize);
+
+		std::vector<data_t> rawSlices;		// Raw slices loaded at full-res to downsample
+		std::vector<data_t> singleSlice;	// Single raw slice (also full-res)
+		std::vector<data_t> curSlice;		// Slice to output to this->data after processing
+
+		curSlice.resize(this->gridDimensions.x * this->gridDimensions.y); // resize for one slice at grid dims
+		singleSlice.resize(this->imageDimensions.x * this->imageDimensions.y); // Resize for 1 slice at full-res
+		if (this->downsampleLevel != DownsamplingLevel::Original) {
+			rawSlices.resize(singleSlice.size() * slicesToLoad);	// Resize to fit 'n' slices at full-res
+		}
+
+		// iterator pointing to positions in different vectors :
+		std::vector<data_t>::iterator rawSlicesIterator = std::begin(rawSlices);
+
+		// update data bounding box at the same time we're copying data:
+		this->dataBoundingBox = bbox_t();
+		for (std::size_t k = 0; k < this->gridDimensions.z; ++k) {
+			std::cerr << "Starting to process row " << k << " out of " << this->gridDimensions.z << " ... ";
+
+			rawSlicesIterator = std::begin(rawSlices);
+			// Load slice(s) according to slicesToLoad :
+			for (std::size_t i = 0; i < slicesToLoad; ++i) {
+				this->loadSlice(k, singleSlice);
+				// if we have multiple of them to load, do so :
+				if (this->downsampleLevel != DownsamplingLevel::Original) {
+					rawSlicesIterator = std::copy(std::begin(singleSlice), std::end(singleSlice), rawSlicesIterator);
+				}
+			}
+
+			if (this->downsampleLevel == DownsamplingLevel::Original) {
+				std::cerr << "(direct to curSlice)";
+				// straight copy into current slice vector :
+				std::copy(std::begin(singleSlice), std::end(singleSlice), std::begin(curSlice));
+			} else {
+				for (std::size_t j = 0; j < this->gridDimensions.y; ++j) {
+					for (std::size_t i = 0; i < this->gridDimensions.x; ++i) {
+						// Interpolation happens here !
+						// Will perform an interpolation based on the current neighborhood of
+						// the pixel we want to 'create' (generate from its neighbors)
+						// Multiple slices are already loaded in rawSlices, combine them here
+					}
+				}
+			}
+
+			// Copy data from curSlice to data :
+			for (std::size_t j = 0; j < this->gridDimensions.y; ++j) {
+				for (std::size_t i = 0; i < this->gridDimensions.x; ++i) {
+					std::size_t idx = i + j * this->gridDimensions.x;
+					std::size_t data_idx = idx + k * this->gridDimensions.x * this->gridDimensions.y;
+					this->data[data_idx] = curSlice[idx];
+					if (this->data[data_idx] > this->threshold) {
+						// Update data BB :
+						bbox_t::vec v;
+						v.x = static_cast<val_t>(i);
+						v.y = static_cast<val_t>(j);
+						v.z = static_cast<val_t>(k);
+						this->dataBoundingBox.addPoint(v);
+					}
+				}
+			}
+
+			std::cerr << "finished.\n";
+		}
 
 		return *this;
 	}
 
-	DIMReader& DIMReader::openFile(std::string &name) {
+	DIMReader& DIMReader::openFile(const std::string &name) {
 		// Get IMA/DIM names from the open file :
 		char* basename = FileBaseName(name.c_str());
 		char* ima_input_file_path = nullptr;
@@ -198,71 +327,29 @@ namespace IO {
 		return *this;
 	}
 
-	DIMReader& DIMReader::loadGrid() {
-		// Check if dim/ima files are opened :
-		if (this->dimFile == nullptr || this->imaFile == nullptr) { return *this; }
-
-		std::cerr << "[LOG] Reading DIM data ...\n";
-
-		// read number of voxels :
-		(*this->dimFile) >> this->gridDimensions.x;
-		(*this->dimFile) >> this->gridDimensions.y;
-		(*this->dimFile) >> this->gridDimensions.z;
-
-		// read info from the DIM file (extended with our properties)
-		std::string token, type;
-		do {
-			(*this->dimFile) >> token;
-			if (token.find("-type") != std::string::npos) { (*this->dimFile) >> type; }
-			else if (token.find("-dx") != std::string::npos) {(*this->dimFile) >> this->voxelDimensions.x;}
-			else if (token.find("-dy") != std::string::npos) {(*this->dimFile) >> this->voxelDimensions.y;}
-			else if (token.find("-dz") != std::string::npos) {(*this->dimFile) >> this->voxelDimensions.z;}
-			else {
-				std::cerr << "[DIMReader - ERROR] token "<<token<<" did not represent anything"<<'\n';
-			}
-		} while (not this->dimFile->eof());
-
-		// Get the max coord as a bounding box-type vector :
-		bbox_t::vec maxCoord = bbox_t::vec(
-			static_cast<bbox_t::vec::value_type>(this->gridDimensions.x) * static_cast<bbox_t::vec::value_type>(this->voxelDimensions.x),
-			static_cast<bbox_t::vec::value_type>(this->gridDimensions.y) * static_cast<bbox_t::vec::value_type>(this->voxelDimensions.y),
-			static_cast<bbox_t::vec::value_type>(this->gridDimensions.z) * static_cast<bbox_t::vec::value_type>(this->voxelDimensions.z)
-		);
-
-		// By default, set the bounding box to the grid dimensions :
-		this->boundingBox.setMin(bbox_t::vec(0, 0, 0));
-		this->boundingBox.setMax(maxCoord);
-		// (can be overriden by the dim file's info)
-
-		std::cerr << "[LOG] Reading from IMA file ...\n";
-		// resize data vector :
-		std::size_t dataSize = this->gridDimensions.x * this->gridDimensions.y * this->gridDimensions.z;
-		this->data.resize(dataSize);
-		// read from file directly :
-		this->imaFile->read((char*)this->data.data(), static_cast<std::size_t>(dataSize));
-
-		std::cerr << "[LOG] Updating DIM/IMA data bounding box with threshold " << +this->threshold << " ...\n";
-
-		// update data bounding box :
-		this->dataBoundingBox = bbox_t();
-		for (std::size_t k = 0; k < this->gridDimensions.z; ++k) {
-			for (std::size_t j = 0; j < this->gridDimensions.y; ++j) {
-				for (std::size_t i = 0; i < this->gridDimensions.x; ++i) {
-					std::size_t idx = i + j * this->gridDimensions.x +
-							  k * this->gridDimensions.x * this->gridDimensions.y;
-					if (this->data[idx] > this->threshold) {
-						// Update data BB :
-						bbox_t::vec v;
-						v.x = static_cast<bbox_t::vec::value_type>(i);
-						v.y = static_cast<bbox_t::vec::value_type>(j);
-						v.z = static_cast<bbox_t::vec::value_type>(k);
-						this->dataBoundingBox.addPoint(v);
-					}
-				}
-			}
+	DIMReader& DIMReader::loadSlice(std::size_t idx, std::vector<data_t>& tgt) {
+		if (this->imaFile == nullptr) {
+			std::cerr << "[ERROR] IMA file was not open at the moment to call loadSlice()" << '\n';
+			return *this;
+		}
+		if (not this->imaFile->good()) {
+			std::cerr << "[ERROR] IMA file has suffered an irrecuperable error. (std::basic_ios::good() == false)\n";
+			return *this;
 		}
 
-		std::cerr << "[LOG] Updated data bounding box\n";
+		std::cerr << "(position " << this->imaFile->tellg() << " → ";
+
+		// automatically advances the internal std::basic_ifstream position indicator in order to read the
+		// next data whenever std::basic_ifstream::read is called another time :
+		this->imaFile->read((char*)tgt.data(), this->imageDimensions.x * this->imageDimensions.y);
+
+		// analyze to find raw min/max values :
+		std::for_each(std::begin(tgt), std::end(tgt), [this](const data_t& d) -> void {
+			this->textureLimits.x = std::min(this->textureLimits.x, d);
+			this->textureLimits.y = std::max(this->textureLimits.y, d);
+		});
+
+		std::cerr << this->imaFile->tellg() << ')';
 
 		return *this;
 	}
@@ -291,44 +378,143 @@ namespace IO {
 		// Prepare storage of all the image's data :
 		this->preAllocateStorage();
 
-		for (std::size_t i = 0; i < this->filenames.size(); ++i) {
-			this->loadImageIndexed(i);
+		// holds the data of the (possibly) downsampled file, to insert into this->data
+		std::vector<data_t> curSlice;
+		// holds the data of the raw slice(s) from the filesystem.
+		std::vector<data_t> rawSlices;
+		// holds the data of a single slice, raw from the filesystem
+		std::vector<data_t> singleSlice;
+
+		// The # of slices to load according to the downsampling level :
+		std::size_t slicesToLoad = 1;
+		if (this->downsampleLevel == DownsamplingLevel::Low) { slicesToLoad = 2; }
+		if (this->downsampleLevel == DownsamplingLevel::Lower) { slicesToLoad = 4; }
+		if (this->downsampleLevel == DownsamplingLevel::Lowest) { slicesToLoad = 8; }
+
+		curSlice.resize(this->gridDimensions.x * this->gridDimensions.y);
+		// Resize to accept one slice at full-res :
+		singleSlice.resize(this->imageDimensions.x * this->imageDimensions.y);
+		// only uses memory if we have to downsample :
+		if (this->downsampleLevel != DownsamplingLevel::Original) {
+			// resize to accept multiple slices at full res :
+			rawSlices.resize(singleSlice.size() * slicesToLoad);
+		}
+
+		// iterator for raw slices :
+		std::vector<data_t>::iterator rawSlicesIterator = std::begin(rawSlices);
+
+		// Go through the grid :
+		for (std::size_t k = 0; k < this->gridDimensions.z; ++k) {
+			std::cerr << "Image " << k << " / " << this->gridDimensions.z << " ... " ;
+			rawSlicesIterator = std::begin(rawSlices);
+			// Load slice(s) here :
+			for (std::size_t i = 0; i < slicesToLoad; ++i) {
+				this->loadSlice(k*slicesToLoad+i, singleSlice);
+				// Do this only if we have multiple slices to load, otherwise skip it
+				if (this->downsampleLevel != DownsamplingLevel::Original) {
+					std::cerr << "(copy into rawSlices)";
+					// copy into rawslices :
+					rawSlicesIterator = std::copy(std::begin(singleSlice), std::end(singleSlice), rawSlicesIterator);
+				}
+			}
+
+			std::cerr << " loaded slices ... ";
+
+			if (this->downsampleLevel == DownsamplingLevel::Original) {
+				// Straight copy from loaded data to current slice data, updating the insertion iterator :
+				std::copy(std::begin(singleSlice), std::end(singleSlice), std::begin(curSlice));
+			} else {
+				// input data into curSlice, one pixel at a time :
+				for (std::size_t j = 0; j < this->gridDimensions.y; ++j) {
+					for (std::size_t i = 0; i < this->gridDimensions.x; ++i) {
+						// Interpolation code here !
+						// Will perform an interpolation based on the current neighborhood of
+						// the pixel we want to 'create' (generate from its neighbors)
+						// Multiple slices are already loaded in rawSlices, combine them here
+					}
+				}
+			}
+
+			std::cerr << " loaded into curSlice ... " ;
+
+			// Copy data from curSlice into final buffer :
+			for (std::size_t j = 0; j < this->gridDimensions.y; ++j) {
+				for (std::size_t i = 0; i < this->gridDimensions.x; ++i) {
+					// Copy into final buffer :
+					std::size_t idx = i + j * this->gridDimensions.x;
+					std::size_t data_idx = idx + k * this->gridDimensions.x * this->gridDimensions.y;
+					this->data[data_idx] = curSlice[idx];
+					if (this->data[data_idx] > this->threshold) {
+						// Update data BB :
+						bbox_t::vec v;
+						v.x = static_cast<bbox_t::vec::value_type>(i);
+						v.y = static_cast<bbox_t::vec::value_type>(j);
+						v.z = static_cast<bbox_t::vec::value_type>(k);
+						this->dataBoundingBox.addPoint(v);
+					}
+				}
+			}
+
+			std::cerr << "finished.\n";
 		}
 
 		return *this;
 	}
 
 	StackedTIFFReader& StackedTIFFReader::preAllocateStorage() {
-		try {
-			this->openFile(this->filenames[0]);
-		}  catch (std::runtime_error& e) {
-			std::cerr << "[ERROR] A runtime error occured while preallocating storage. Error message : \n";
-			std::cerr << e.what() << '\n';
-			std::abort();
+		// Count the # of frames in the stack :
+		std::size_t nbFrames = 0;
+		for (const std::string& fname : this->filenames) {
+			// open the file, check the frames inside it and continue
+			this->openFile(fname);
+			do { nbFrames++; } while (TinyTIFFReader_hasNext(this->tiffFile));
 		}
+		std::cerr << "Finished analyzing the files. Found " << nbFrames << " frames in " << this->filenames.size() << " files.\n";
+		this->currentFile = 0;
+		// re-open the first file :
+		this->openFile(filenames[0]);
 
 		// File is opened, we can query its dimensions :
 		std::size_t width = static_cast<std::size_t>(TinyTIFFReader_getWidth(this->tiffFile));
 		std::size_t height = static_cast<std::size_t>(TinyTIFFReader_getHeight(this->tiffFile));
-		std::size_t depth = static_cast<std::size_t>(this->filenames.size());
-		// If we downsample, apply the dimension reduction here :
-		if (this->downsampled) { width /= 2; height /= 2; }
-		// Compute the vector size :
+		std::size_t depth = static_cast<std::size_t>(nbFrames);
+
+		// 'raw' image dimensions are what is originally read above :
+		this->imageDimensions = sizevec3(width, height, depth);
+
+		// multiplier to voxel dimensions :
+		float voxelMultiplier = 1.f;
+		// used to compute the voxel dimensions in the (possibly) downsampled grid loaded.
+		// By default, the voxels in TIFF images are 1.f units since there's no way to specify
+		// it in the TIFF spec. But is we downsample, we want to keep the same grid size, but
+		// with less voxels inside. We thus need a multiplier for voxel sizes
+
+		// If we downsample, apply the dimension reduction here on all axes
+		// and modify the voxel multiplier accordingly :
+		if (this->downsampleLevel == DownsamplingLevel::Low) {
+			width /= 2; height /= 2; depth /= 2; voxelMultiplier = 2.f;
+		} else if (this->downsampleLevel == DownsamplingLevel::Lower) {
+			width /= 4; height /= 4; depth /= 4; voxelMultiplier = 4.f;
+		} else if (this->downsampleLevel == DownsamplingLevel::Lowest) {
+			width /= 8; height /= 8; depth /= 8; voxelMultiplier = 8.f;
+		}
+
+		// Compute the vector size to allocate :
 		std::size_t finalSize = width * height * depth;
 
 		// Compute the min/max values for the bounding box :
 		bbox_t::vec minBB = bbox_t::vec(static_cast<bbox_t::vec::value_type>(0));
 		bbox_t::vec maxBB = bbox_t::vec(
-			static_cast<bbox_t::vec::value_type>(width),
-			static_cast<bbox_t::vec::value_type>(height),
-			static_cast<bbox_t::vec::value_type>(depth)
+			static_cast<bbox_t::vec::value_type>(this->imageDimensions.x),
+			static_cast<bbox_t::vec::value_type>(this->imageDimensions.y),
+			static_cast<bbox_t::vec::value_type>(this->imageDimensions.z)
 		);
 		// Resize the vector :
 		this->data.resize(finalSize);
 		// Fill in the data for grid dimensions, bounding box, transform and voxel dimensions :
 		this->gridDimensions = sizevec3(width, height, depth);
 		this->transform = glm::mat4(1.f);
-		this->voxelDimensions = glm::vec3(1.f, 1.f, 1.f);
+		this->voxelDimensions = glm::vec3(1.f, 1.f, 1.f) * voxelMultiplier;
 		this->boundingBox = bbox_t(minBB, maxBB);
 		this->dataBoundingBox = bbox_t();
 
@@ -337,8 +523,12 @@ namespace IO {
 		return *this;
 	}
 
-	StackedTIFFReader& StackedTIFFReader::openFile(std::string& filename) {
+	StackedTIFFReader& StackedTIFFReader::openFile(const std::string& filename) {
 		if (this->tiffFile != nullptr) {
+			TinyTIFFReader_close(this->tiffFile);
+			this->tiffFile = nullptr;
+		}
+		if (filename.empty()) {
 			TinyTIFFReader_close(this->tiffFile);
 			this->tiffFile = nullptr;
 		}
@@ -357,25 +547,59 @@ namespace IO {
 		return *this;
 	}
 
-	StackedTIFFReader& StackedTIFFReader::loadImageIndexed(std::size_t idx) {
-		try {
+	StackedTIFFReader& StackedTIFFReader::loadSlice(std::size_t idx, std::vector<data_t>& tgt) {
+		/*try {
 			this->openFile(this->filenames[idx]);
 		} catch (std::runtime_error& e) {
 			std::cerr << "[ERROR] A runtime error occured while loading file \"" << this->filenames[idx]
 				     << "\". Error message :\n";
 			std::cerr << e.what() << '\n';
 			std::abort();
+		}*/
+
+		/**
+		Here, we want to load directly an entire frame. We will read the current frame of the opened TIFF, and
+		then go onto either the next frame in the file, OR the next file.
+		*/
+		#warning Defaults to using 8 bit values for all images loaded !
+		#warning Assumes the vector is of the right size !
+		TinyTIFFReader_getSampleData(this->tiffFile, tgt.data(), 0);
+
+		if (TinyTIFFReader_hasNext(this->tiffFile)) {
+			int ret = TinyTIFFReader_readNext(this->tiffFile);
+			if (ret == 0) {
+				std::cerr << "[ERROR] Could not read the next frame of the TIFF file, even tough it has one.\n";
+				std::cerr << "        Loading the next image instead.\n";
+				this->currentFile++;
+				this->openFile(this->filenames[this->currentFile]);
+			}
+		} else {
+			this->currentFile++;
+			if (this->currentFile < this->filenames.size()) {
+				this->openFile(this->filenames[this->currentFile]);
+			} else {
+				this->currentFile = 0;
+			}
 		}
 
+		//look for min/max values per-slice :
+		std::for_each(std::begin(tgt), std::end(tgt), [this](const data_t& d) -> void {
+			this->textureLimits.x = std::min(this->textureLimits.x, d);
+			this->textureLimits.y = std::max(this->textureLimits.y, d);
+		});
+
+		return *this;
+/*
 		// file is now opened, we can load the data into a vector :
 		std::vector<data_t> rawData;
 		rawData.resize(this->gridDimensions.x * this->gridDimensions.y);
 
-		if (not this->downsampled) {
+		if (this->downsampleLevel == DownsamplingLevel::Original) {
 			// If we aren't downsampled, then the grid size is the same as the image size.
 			// load data :
 			TinyTIFFReader_getSampleData(this->tiffFile, rawData.data(), 0);
 		} else {
+			#warning Check we read the proper data here. Height doesn't get skipped in for loop
 			// Need a vector to hold the whole image :
 			std::vector<data_t> wholeImage;
 			// Resize it to the image canvas' size :
@@ -414,12 +638,11 @@ namespace IO {
 		// Copy it into the main image buffer :
 		std::size_t offset = this->gridDimensions.x * this->gridDimensions.y * idx;
 		std::copy(rawData.begin(), rawData.end(), this->data.data()+offset);
-
-		return *this;
+*/
 	}
 
-	StackedTIFFReader& StackedTIFFReader::enableDownsampling(bool enabled) {
-		this->downsampled = enabled;
+	StackedTIFFReader& StackedTIFFReader::enableDownsampling(DownsamplingLevel _level) {
+		this->downsampleLevel = _level;
 		return *this;
 	}
 

@@ -15,6 +15,7 @@
 #include "../../qt/include/grid_control.hpp"
 #include "../../qt/include/grid_detailed_view.hpp"
 #include "../../qt/include/grid_list_view.hpp"
+#include "../../qt/include/visu_box_controller.hpp"
 // Helper structs and functions :
 #include "./viewer_structs.hpp"
 // Qt headers :
@@ -31,7 +32,7 @@
 
 class ControlPanel; // Forward declaration
 
-enum DrawMode { Solid, Volumetric };
+enum DrawMode { Solid, Volumetric, VolumetricBoxed };
 enum planes { x = 1, y = 2, z = 3 };
 enum planeHeading { North = 0, East = 1, South = 2, West = 3, Up = North, Right = East, Down = South, Left = West };
 
@@ -44,6 +45,11 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 
 		/// @brief initialize the variables of the scene
 		void initGl(QOpenGLContext* context);
+
+		/// @brief Show the Visualization box controller
+		void showVisuBoxController();
+		/// @brief Remove the visu box controller if it closes
+		void removeVisuBoxController();
 
 		/// @brief set the control panel responsible for controlling the scene
 		void setControlPanel(ControlPanel* cp) { this->controlPanel = cp; }
@@ -59,7 +65,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void draw3DView(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, bool showTexOnPlane = true);
 
 		/// @b Draw a given plane 'view' (single plane on the framebuffer).
-		void drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading, float zoomRatio, glm::vec2 offset, GLfloat* vMat, GLfloat* pMat);
+		void drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading, float zoomRatio, glm::vec2 offset);
 
 		/// @b Returns the current scene boundaries.
 		glm::vec3 getSceneBoundaries() const;
@@ -79,6 +85,10 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		uint getMaxTexValue(void) const { return this->maxTexVal; }
 		uint getMinColorValue(void) const { return this->minColorVal; }
 		uint getMaxColorValue(void) const { return this->maxColorVal; }
+		/// @brief Returns the current visu box
+		DiscreteGrid::bbox_t getVisuBox(void) { return this->visuBox; }
+		/// @brief Sets the visu box
+		void setVisuBox(DiscreteGrid::bbox_t box);
 
 		GLuint uploadTexture1D(const TextureUpload& tex);
 		GLuint uploadTexture2D(const TextureUpload& tex);
@@ -191,30 +201,31 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		bool colorOrTexture;	///< do we use the RGB2HSV function or the color scale ?
 		bool showVAOstate;	///< Do we need to print the VAO/program state on next draw ?
 
-		std::vector<GridGLView> grids;
+		std::vector<GridGLView> grids;		///< Grids to display in the different views.
 
-		QOpenGLContext* context; ///< The context with which the scene has been created with
-		QOpenGLDebugLogger* debugLog; ///< The debug log reading messages from the GL_KHR_debug extension
-		ControlPanel* controlPanel; ///< pointer to the control panel
+		QOpenGLContext* context;		///< The context with which the scene has been created with
+		QOpenGLDebugLogger* debugLog;		///< The debug log reading messages from the GL_KHR_debug extension
+		ControlPanel* controlPanel;		///< pointer to the control panel
+		VisuBoxController* visuBoxController;	///< The controller for the visualization box
 		std::shared_ptr<OutputGrid> outputGrid; ///< output grid
-		GridControl* gridControl;
+		GridControl* gridControl;		///< The controller for the grid 'save' feature (generation)
 
-		uchar minTexVal;
-		uchar maxTexVal;
-		uchar minColorVal;
-		uchar maxColorVal;
-		std::size_t renderSize;
+		uchar minTexVal;			///< The minimum texture intensity to display
+		uchar maxTexVal;			///< The maximum texture intensity to display
+		uchar minColorVal;			///< The minimum color intensity to use for the color computation
+		uchar maxColorVal;			///< The maximum color intensity to use for the color computation
+		std::size_t renderSize;			///< Number of primitives to render for the solid view mode.
 
 		std::array<glm::vec3, 8> lightPositions; ///< Scene lights (positionned at the corners of the scene BB)
 
-		glm::vec3 planePosition;
-		glm::vec3 planeDirection;
-		glm::vec3 planeDisplacement;
-		DiscreteGrid::bbox_t sceneBB;
-		float clipDistanceFromCamera;
-		DrawMode drawMode;
-
 		glm::vec<3, bool, glm::defaultp> planeVisibility; ///< Should we show each plane (X, Y, Z)
+		glm::vec3 planePosition;		///< Current plane positions
+		glm::vec3 planeDirection;		///< Cutting plane directions (-1 or 1 on each axis)
+		glm::vec3 planeDisplacement;		///< %age of the scene bounding box to place the planes
+		DiscreteGrid::bbox_t sceneBB;		///< Outer BB of the scene
+		float clipDistanceFromCamera;		/// Distance from the camera to its clip plane
+		DrawMode drawMode;			///< Current 3D draw mode
+		DiscreteGrid::bbox_t visuBox;		///< Used to restrict the view to a box with its coordinates
 
 		// VAO handles :
 		GLuint vaoHandle;

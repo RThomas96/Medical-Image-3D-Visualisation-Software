@@ -18,6 +18,14 @@ class DiscreteGrid; // Fwd-declaration
 
 namespace IO {
 
+	/// \brief Describes a downsampling level to apply when loading the image.
+	enum DownsamplingLevel {
+		Original = 0,	///< Does not downsample an image upon loading.
+		Low = 1,	///< Downsamples the image using a 2x2x2 sub-region for one pixel.
+		Lower = 2,	///< Downsamples the image using a 4x4x4 sub-region for one pixel.
+		Lowest = 3	///< Downsamples the image using a 8x8x8 sub-region for one pixel.
+	};
+
 	/// \brief Checks if the file given in argument exists
 	/// \param filename The name of the file to check
 	bool FileExists(const char* filename);
@@ -87,6 +95,9 @@ namespace IO {
 			/// @brief Returns the threshold from which data is considered information.
 			virtual data_t getDataThreshold(void) const;
 
+			/// @brief Returns the texture min/max values contained in the image.
+			virtual glm::vec<2, data_t, glm::defaultp> getTextureLimits(void) const;
+
 #ifdef IMAGE_READER_LOG_FILE_SIZE
 			/// @brief Returns the number of bytes read, or to be read
 			virtual std::size_t getReadBytes(void) const;
@@ -97,19 +108,19 @@ namespace IO {
 
 		protected:
 			/// @brief Open the file with the given name, and load its contents into memory.
-			virtual GenericGridReader& openFile(std::string& name);
+			virtual GenericGridReader& openFile(const std::string& name);
 
-			/// @brief Load an image from the filesystem, for slice-based image formats.
-			virtual GenericGridReader& loadImageIndexed(std::size_t idx);
-
-			/// @brief Load the whole grid into memory at once.
-			virtual GenericGridReader& loadGrid();
+			/// @brief Load an single full-res slice from the images, in all (possible) formats.
+			/// @warning Might be very heavy in some binary or compressed file formats.
+			virtual GenericGridReader& loadSlice(std::size_t idx, std::vector<data_t>& tgt);
 
 		protected:
 			/// @brief Filenames to open images from.
 			std::vector<std::string> filenames;
 			/// @brief Data loaded from images.
 			std::vector<data_t> data;
+			/// @brief 'raw' image dimensions, untouched by downsampling
+			sizevec3 imageDimensions;
 			/// @brief Grid dimensions (resolution of the grid).
 			sizevec3 gridDimensions;
 			/// @brief Dimensions of voxels, if provided. Otherwise, set to unit volume.
@@ -125,7 +136,9 @@ namespace IO {
 			/// @brief Name of the grid, if provided. Otherwise, empty string.
 			std::string name;
 			/// @brief Tracks if the data needs to be downsampled upon loading.
-			bool downsampled;
+			DownsamplingLevel downsampleLevel;
+			/// @brief The minimum and maximum values of the texture.
+			glm::vec<2, data_t, glm::defaultp> textureLimits;
 #ifdef IMAGE_READER_LOG_FILE_SIZE
 			/// @brief Logs the size on disk that was actually read
 			std::size_t readBytes;
@@ -141,8 +154,9 @@ namespace IO {
 			virtual DIMReader& loadImage() override;
 		protected:
 			/// @brief Open the DIM and IMA files to read later.
-			virtual DIMReader& openFile(std::string& name) override;
-			virtual DIMReader& loadGrid() override;
+			virtual DIMReader& openFile(const std::string& name) override;
+			/// @brief Load a slice of the grid into memory.
+			virtual DIMReader& loadSlice(std::size_t idx, std::vector<data_t>& tgt) override;
 
 		protected:
 			/// @brief The DIM file
@@ -160,20 +174,24 @@ namespace IO {
 			virtual StackedTIFFReader& loadImage() override;
 
 			/// @brief Enables downsampling upon image loading or not.
-			virtual StackedTIFFReader& enableDownsampling(bool enabled = true);
+			virtual StackedTIFFReader& enableDownsampling(DownsamplingLevel _level);
 
 		protected:
 			/// @brief Preallocates the data vector and updates some data we can gather before loading the images.
-			/// @details Loads the first image, takes its dimensions and preallocates the whole grid to load the images faster.
-			/// also updates the grid's bounding box, as well as the grid dimensions, the voxel dimensions and
+			/// @details Loads the first image, takes its dimensions on X and Y and then opens each file to check
+			/// the number of frames they have. Then, preallocates the whole grid to load the images faster.
+			/// Also updates the grid's bounding box, as well as the grid dimensions & the voxel dimensions.
 			virtual StackedTIFFReader& preAllocateStorage();
+
 			/// @brief Opens the specified file to be able to read it later.
-			virtual StackedTIFFReader& openFile(std::string& filename) override;
+			virtual StackedTIFFReader& openFile(const std::string& filename) override;
+
 			/// @brief Loads the image at index 'idx' in the filenames in memory.
-			virtual StackedTIFFReader& loadImageIndexed(std::size_t idx) override;
+			virtual StackedTIFFReader& loadSlice(std::size_t idx, std::vector<data_t>& tgt) override;
 
 		protected:
 			TinyTIFFReaderFile* tiffFile;
+			std::size_t currentFile;
 	};
 
 	namespace Reader {
