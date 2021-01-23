@@ -27,6 +27,8 @@ class MainWidget : public QMainWindow {
 		bool eventFilter(QObject* obj, QEvent* e) override;
 	private:
 		Scene* scene;			///< The underlying scene, with the data to display
+
+		ViewerHeader3D* header3d;	///< The header for the 3D widget
 		Viewer* viewer;			///< The visualisation panel, drawing elements from the scene
 
 		ViewerHeader* headerX;		///< Header for the X plane viewer

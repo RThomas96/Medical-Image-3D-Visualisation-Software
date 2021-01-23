@@ -66,6 +66,7 @@ void MainWidget::setupWidgets() {
 	QObject::connect(this->action_exitProgram, &QAction::triggered, this, &QMainWindow::close);
 
 	this->viewer = new Viewer(this->scene, nullptr);
+	this->header3d = new ViewerHeader3D(this->viewer, this->scene, nullptr);
 	this->controlPanel = new ControlPanel(this->scene, this->viewer, nullptr);
 	this->scene->setControlPanel(this->controlPanel);
 
@@ -83,49 +84,53 @@ void MainWidget::setupWidgets() {
 	QSplitter* splitAbove = new QSplitter(Qt::Vertical);
 	QSplitter* splitAbove1 = new QSplitter(Qt::Vertical);
 
-	// Layouts to place a viewer and a slider in the same place :
-	QVBoxLayout* vPX = new QVBoxLayout();
-	QVBoxLayout* vPY = new QVBoxLayout();
-	QVBoxLayout* vPZ = new QVBoxLayout();
+	// Layouts to place a viewer and a header in the same place :
+	QVBoxLayout* vP3 = new QVBoxLayout(); vP3->setSpacing(0);
+	QVBoxLayout* vPX = new QVBoxLayout(); vPX->setSpacing(0);
+	QVBoxLayout* vPY = new QVBoxLayout(); vPY->setSpacing(0);
+	QVBoxLayout* vPZ = new QVBoxLayout(); vPZ->setSpacing(0);
 
 	// Sets the background color of widgets :
-	QPalette paletteX, paletteY, paletteZ;
-	paletteX.setColor(QPalette::Window, Qt::red);
-	paletteY.setColor(QPalette::Window, Qt::green);
-	paletteZ.setColor(QPalette::Window, Qt::blue);
+	// QPalette paletteX, paletteY, paletteZ;
+	// paletteX.setColor(QPalette::Window, Qt::red);
+	// paletteY.setColor(QPalette::Window, Qt::green);
+	// paletteZ.setColor(QPalette::Window, Qt::blue);
 
 	// Those will encapsulate the layouts above :
-	QWidget* xViewerCapsule = new QWidget(); xViewerCapsule->setAutoFillBackground(true); xViewerCapsule->setPalette(paletteX);
-	QWidget* yViewerCapsule = new QWidget(); yViewerCapsule->setAutoFillBackground(true); yViewerCapsule->setPalette(paletteY);
-	QWidget* zViewerCapsule = new QWidget(); zViewerCapsule->setAutoFillBackground(true); zViewerCapsule->setPalette(paletteZ);
+	QWidget* _ViewerCapsule = new QWidget(); // _ViewerCapsule->setAutoFillBackground(true); xViewerCapsule->setPalette(paletteX);
+	QWidget* xViewerCapsule = new QWidget(); // xViewerCapsule->setAutoFillBackground(true); xViewerCapsule->setPalette(paletteX);
+	QWidget* yViewerCapsule = new QWidget(); // yViewerCapsule->setAutoFillBackground(true); yViewerCapsule->setPalette(paletteY);
+	QWidget* zViewerCapsule = new QWidget(); // zViewerCapsule->setAutoFillBackground(true); zViewerCapsule->setPalette(paletteZ);
 
+	this->header3d->setFixedHeight(this->header3d->sizeHint().height());
 	this->headerX->setFixedHeight(this->headerX->sizeHint().height());
 	this->headerY->setFixedHeight(this->headerY->sizeHint().height());
 	this->headerZ->setFixedHeight(this->headerZ->sizeHint().height());
 
 	// Set the layouts for the plane viewers :
-	vPX->addWidget(this->headerX);
-	vPX->addWidget(this->viewer_planeX);
-	vPY->addWidget(this->headerY);
-	vPY->addWidget(this->viewer_planeY);
-	vPZ->addWidget(this->headerZ);
-	vPZ->addWidget(this->viewer_planeZ);
+	vP3->addWidget(this->header3d);	vP3->addWidget(this->viewer);
+	vPX->addWidget(this->headerX);	vPX->addWidget(this->viewer_planeX);
+	vPY->addWidget(this->headerY);	vPY->addWidget(this->viewer_planeY);
+	vPZ->addWidget(this->headerZ);	vPZ->addWidget(this->viewer_planeZ);
+
 	// Get content margins by default :
 	int left = 0, right = 0, top = 0, bottom = 0;
 	// This is the same arrangement for the setCM() function :
 	vPX->getContentsMargins(&left, &top, &right, &bottom);
 	// Set the content margins, no side margins :
+	vP3->setContentsMargins(0, top*2, 0, bottom);
 	vPX->setContentsMargins(0, top*2, 0, bottom);
 	vPY->setContentsMargins(0, top*2, 0, bottom);
 	vPZ->setContentsMargins(0, top*2, 0, bottom);
 
 	// Encapsulate the layouts above :
+	_ViewerCapsule->setLayout(vP3);
 	xViewerCapsule->setLayout(vPX);
 	yViewerCapsule->setLayout(vPY);
 	zViewerCapsule->setLayout(vPZ);
 
 	// Add to splits in order to show them all :
-	splitAbove->addWidget(this->viewer);
+	splitAbove->addWidget(_ViewerCapsule);
 	splitAbove->addWidget(xViewerCapsule);
 	splitAbove1->addWidget(yViewerCapsule);
 	splitAbove1->addWidget(zViewerCapsule);

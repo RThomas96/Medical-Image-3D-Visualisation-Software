@@ -120,3 +120,71 @@ void ViewerHeader::registerWithViewer(void) {
 
 	this->activateWidgets(true);
 }
+
+ViewerHeader3D::ViewerHeader3D(QWidget* parent) : QWidget(parent) {
+	this->layout = nullptr;
+	this->sceneToControl = nullptr;
+	this->viewerToUpdate = nullptr;
+	this->button_invertPlaneCut = nullptr;
+	this->button_togglePlane = nullptr;
+	this->color = Qt::GlobalColor::darkGray;
+}
+
+ViewerHeader3D::ViewerHeader3D(Viewer* _viewer, Scene* _scene, QWidget* parent) : ViewerHeader3D(parent) {
+	this->sceneToControl = _scene;
+	this->viewerToUpdate = _viewer;
+
+	this->setupWidgets();
+	this->setupSignals();
+}
+
+ViewerHeader3D::~ViewerHeader3D() {
+	if (this->button_invertPlaneCut) { this->button_invertPlaneCut->disconnect(); }
+	if (this->button_togglePlane) { this->button_togglePlane->disconnect(); }
+}
+
+void ViewerHeader3D::setupWidgets() {
+	if (this->sceneToControl == nullptr || this->viewerToUpdate == nullptr) {
+		return;
+	}
+
+	this->button_togglePlane = new QPushButton("Toggle all planes");
+	this->button_invertPlaneCut = new QPushButton("Invert all planes");
+	this->layout = new QHBoxLayout;
+
+	this->layout->addWidget(this->button_togglePlane);
+	this->layout->addWidget(this->button_invertPlaneCut);
+
+	this->button_invertPlaneCut->setStyleSheet("padding-left:padding-top; padding-right:padding-top;");
+	this->button_togglePlane->setStyleSheet("padding-left:padding-top; padding-right:padding-top;");
+
+	QPalette colorPalette;
+	colorPalette.setColor(QPalette::Window, this->color);
+	this->setAutoFillBackground(true);
+	this->setPalette(colorPalette);
+
+	this->setLayout(this->layout);
+}
+
+void ViewerHeader3D::setupSignals() {
+	if (this->sceneToControl == nullptr || this->viewerToUpdate == nullptr) {
+		return;
+	}
+
+	// connect plane visibility button :
+	QObject::connect(this->button_togglePlane, &QPushButton::clicked, [this]() ->void {
+		if (this->sceneToControl == nullptr) { return; }
+		this->sceneToControl->toggleAllPlaneVisibilities();
+		if (this->viewerToUpdate == nullptr) { return; }
+		this->viewerToUpdate->update();
+	});
+	// connect plane directions button :
+	QObject::connect(this->button_invertPlaneCut, &QPushButton::clicked, [this]() ->void {
+		if (this->sceneToControl == nullptr) { return; }
+		this->sceneToControl->toggleAllPlaneDirections();
+		if (this->viewerToUpdate == nullptr) { return; }
+		this->viewerToUpdate->update();
+	});
+
+	return;
+}

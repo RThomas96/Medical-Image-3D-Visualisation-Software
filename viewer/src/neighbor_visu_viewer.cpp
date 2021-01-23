@@ -246,7 +246,6 @@ void Viewer::addGrid() {
 	this->scene->slotSetMaxColorValue(limits.y);
 
 	// Update data from the grid reader :
-	inputGrid = std::make_shared<InputGrid>();
 	inputGrid->fromGridReader(*reader);
 
 	// free up the reader's resources :

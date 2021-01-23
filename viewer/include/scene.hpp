@@ -103,9 +103,6 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void slotSetPlaneDisplacementX(float scalar);
 		void slotSetPlaneDisplacementY(float scalar);
 		void slotSetPlaneDisplacementZ(float scalar);
-		void slotTogglePlaneDirectionX();
-		void slotTogglePlaneDirectionY();
-		void slotTogglePlaneDirectionZ();
 		void slotSetMinTexValue(uchar val);
 		void slotSetMaxTexValue(uchar val);
 		void slotSetMinColorValue(uchar val);
@@ -117,8 +114,18 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		float getClipDistance(void) { return this->clipDistanceFromCamera; }
 		/// @b Toggles the visibility of the plane in argument
 		void togglePlaneVisibility(planes _plane);
+		/// @b Signals all planes they need to be to be [in]visible.
+		void toggleAllPlaneVisibilities(void);
 		/// @b Sets the new 'heading' of the plane (to rotate the planar viewers in the framebuffer)
 		void setPlaneHeading(planes _plane, planeHeading _heading);
+		/// @b Toggles visibility of plane X.
+		void slotTogglePlaneDirectionX();
+		/// @b Toggles visibility of plane Y.
+		void slotTogglePlaneDirectionY();
+		/// @b Toggles visibility of plane Z.
+		void slotTogglePlaneDirectionZ();
+		/// @b Signals all planes they need to be inverted.
+		void toggleAllPlaneDirections();
 
 		/// @b computes the transformation matrix of the input grid
 		glm::mat4 computeTransformationMatrix(const std::shared_ptr<DiscreteGrid>& _grid) const;

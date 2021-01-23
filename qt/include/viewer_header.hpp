@@ -65,4 +65,31 @@ class ViewerHeader : public QWidget {
 		Qt::GlobalColor color;
 };
 
+class ViewerHeader3D : public QWidget {
+		Q_OBJECT
+	public:
+		/// @b Default constructor, creating an empty header
+		ViewerHeader3D(QWidget* parent = nullptr);
+		/// @b Constructs a header with a given name, and planar viewer to control
+		ViewerHeader3D(Viewer* _viewer, Scene* _scene, QWidget* parent = nullptr);
+		/// @b Default dtor.
+		~ViewerHeader3D(void);
+	public:
+		void setupWidgets();
+		void setupSignals();
+	protected:
+		/// @b Layout of the current widget
+		QHBoxLayout* layout;
+		/// @b Viewer to control with the sliders and buttons
+		Scene* sceneToControl;
+		/// @b 3D viewer, to update whenever a signal is raised.
+		Viewer* viewerToUpdate;
+		/// @b Invert the plane's cutting direction
+		QPushButton* button_invertPlaneCut;
+		/// @b Button to rotate the cutting plane counter-clockwise
+		QPushButton* button_togglePlane;
+		/// @b Color for the widget's background
+		Qt::GlobalColor color;
+};
+
 #endif // VIEWER_HEADER_HPP

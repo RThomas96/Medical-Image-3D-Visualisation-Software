@@ -1931,12 +1931,13 @@ void Scene::slotSetPlaneDisplacementZ(float scalar) { this->planeDisplacement.z 
 void Scene::slotTogglePlaneDirectionX() { this->planeDirection.x = - this->planeDirection.x; }
 void Scene::slotTogglePlaneDirectionY() { this->planeDirection.y = - this->planeDirection.y; }
 void Scene::slotTogglePlaneDirectionZ() { this->planeDirection.z = - this->planeDirection.z; }
+void Scene::toggleAllPlaneDirections() { this->planeDirection = - this->planeDirection; }
 
 void Scene::slotSetMinTexValue(uchar val) { this->minTexVal = val; this->updateVis(); }
 void Scene::slotSetMaxTexValue(uchar val) { this->maxTexVal = val; this->updateVis(); }
 
 void Scene::slotSetMinColorValue(uchar val) { this->minColorVal = val; if (this->controlPanel) {this->controlPanel->updateValues();} }
-void Scene::slotSetMaxColorValue(uchar val) { this->maxColorVal = val; }
+void Scene::slotSetMaxColorValue(uchar val) { this->maxColorVal = val; if (this->controlPanel) {this->controlPanel->updateValues();} }
 
 void Scene::slotSetPlanePositionX(float coord) { this->planePosition.x = coord; }
 void Scene::slotSetPlanePositionY(float coord) { this->planePosition.y = coord; }
@@ -1949,6 +1950,12 @@ void Scene::togglePlaneVisibility(planes _plane) {
 	if (_plane == planes::y) { this->planeVisibility.y = not this->planeVisibility.y; }
 	if (_plane == planes::z) { this->planeVisibility.z = not this->planeVisibility.z; }
 	return;
+}
+
+void Scene::toggleAllPlaneVisibilities() {
+	this->planeVisibility.x = not this->planeVisibility.x;
+	this->planeVisibility.y = not this->planeVisibility.y;
+	this->planeVisibility.z = not this->planeVisibility.z;
 }
 
 void Scene::writeGridDIM(const std::string name) {
