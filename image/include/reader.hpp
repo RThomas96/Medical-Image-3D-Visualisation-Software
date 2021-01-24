@@ -115,6 +115,9 @@ namespace IO {
 			/// @brief Enables downsampling upon image loading at level '_level'.
 			virtual GenericGridReader& enableDownsampling(DownsamplingLevel _level);
 
+			/// @brief Return the filenames associated with this reader.
+			virtual std::vector<std::string> getFilenames(void) const;
+
 		protected:
 			/// @brief Open the file with the given name, and load its contents into memory.
 			virtual GenericGridReader& openFile(const std::string& name);

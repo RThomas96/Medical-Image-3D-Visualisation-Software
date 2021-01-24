@@ -85,6 +85,7 @@ namespace IO {
 			this->outputIMA->close();
 			this->outputDIM = nullptr;
 			this->outputIMA = nullptr;
+			return;
 		}
 		if (not this->outputIMA->is_open()) {
 			std::cerr << __FUNCTION__ << " : Warning, couldn't open " << imaName << '\n';
@@ -92,6 +93,7 @@ namespace IO {
 			this->outputIMA->close();
 			this->outputDIM = nullptr;
 			this->outputIMA = nullptr;
+			return;
 		}
 
 		// Both files are opened, and ready to be written to.
@@ -101,6 +103,11 @@ namespace IO {
 	std::size_t DIMWriter::write_Once(const std::shared_ptr<DiscreteGrid>& _vg) {
 		if (this->outputDIM == nullptr || this->outputIMA == nullptr) {
 			std::cerr << __FUNCTION__ << " : Could not write the contents to a file, one or more weren't opened." << '\n';
+			return 0;
+		}
+
+		if (_vg->hasData() == false) {
+			std::cerr << "[ERROR] : The voxel grid passed to this writer did not have any data !\n";
 			return 0;
 		}
 
@@ -180,6 +187,11 @@ namespace IO {
 		// Checks the file was opened :
 		if (this->tiffFile == nullptr) {
 			std::cerr << __FUNCTION__ << " : Warning : Could not write to file, since it was not opened." << '\n';
+			return 0;
+		}
+
+		if (_vg->hasData() == false) {
+			std::cerr << "[ERROR] : The voxel grid associated with this writer did not have any data !\n";
 			return 0;
 		}
 

@@ -174,6 +174,12 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 		/// @brief Updates the voxel dimensions of the grid, each time the BB or the resolution changes.
 		void updateVoxelDimensions(void);
 
+		/// @brief Sets the filenames associated with the grid to 'fnames'. Useful in the offline versions of the string.
+		virtual DiscreteGrid& setFilenames(std::vector<std::string> fnames);
+
+		/// @brief Sets the filenames associated with the grid to 'fnames'. Useful in the offline versions of the string.
+		const std::vector<std::string>& getFilenames(void) const;
+
 	protected:
 		/// @brief Checks if the grid's properties can be modified (data will always be modifiable, dimensions might not)
 		/// @details Output grids can be modified, input grids however, cannot.
@@ -202,6 +208,8 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 		bbox_t dataBoundingBox;
 		/// @brief The name of the grid, used to identify it on a
 		std::string gridName;
+		/// @brief Filenames associated with the grid. Used in offline versions of the grid.
+		std::vector<std::string> filenames;
 };
 
 #endif // GRID_INCLUDE_DISCRETE_GRID_HPP_

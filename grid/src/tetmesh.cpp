@@ -68,26 +68,20 @@ TetMesh& TetMesh::populateOutputGrid(InterpolationMethods method) {
 	for (std::size_t k = 0; k < dims.z; ++k) {
 		for (std::size_t j = 0; j < dims.y; ++j) {
 			for (std::size_t i = 0; i < dims.x; ++i) {
-				// debug verbose output
-				// isVerbose = ( (distribution(generator) < maxRate) ? true : false );
 				// generate 3D index :
 				DiscreteGrid::sizevec3 idx = DiscreteGrid::sizevec3(i,j,k);
-				//std::cerr << "[TRACE] Index : [" << idx.x << ", " << idx.y << ", " << idx.z << "]\n";
+
 				// get grid-space origin :
 				this->origin = this->outputGrid->getVoxelPositionGridSpace(idx, isVerbose);
 				// set world-space origin from it :
 				this->origin_WS = this->outputGrid->toWorldSpace(this->origin);
-				//std::cerr << "[TRACE] Pos_O : [" << this->origin.x << ", " << this->origin.y << ", " << this->origin.z << "]\n";
-				//std::cerr << "[TRACE] Pos_W : [" << this->origin_WS.x << ", " << this->origin_WS.y << ", " << this->origin_WS.z << "]\n";
 
 				// gather values from all input grids :
 				std::vector<DiscreteGrid::DataType> values;
 				for (const std::shared_ptr<InputGrid>& grid : this->inputGrids) {
 					glm::vec4 now = grid->toGridSpace(this->origin_WS);
-					//std::cerr << "[TRACE] Pos_I : [" << now.x << ", " << now.y << ", " << now.z << "]\n";
 					if (grid->includesPointWorldSpace(this->origin)) {
 						values.push_back(this->getInterpolatedValue(grid, method, idx));
-						//std::cerr << "[TRACE] Added value " << +values[values.size()-1] << " to the array\n";
 					}
 				}
 

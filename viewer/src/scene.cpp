@@ -757,7 +757,15 @@ void Scene::launchSaveDialog() {
 	}
 
 	// create an output grid AND a tetmesh to generate it :
-	std::shared_ptr<OutputGrid> outputGrid = std::make_shared<OutputGrid>();
+	std::shared_ptr<OutputGrid> outputGrid = std::make_shared<OfflineOutputGrid>();
+	std::shared_ptr<OfflineInputGrid> inputGrid = std::make_shared<OfflineInputGrid>();
+	inputGrid->fromInputGrid(std::dynamic_pointer_cast<InputGrid>(this->grids[0].grid));
+
+	auto fnames = this->grids[0].grid->getFilenames();
+	for (const std::string& fn : fnames) {
+		std::cerr << "\tSetting fn to" << fn << '\n';
+	}
+	outputGrid->setFilenames(fnames);
 	std::shared_ptr<TetMesh> tetmesh = std::make_shared<TetMesh>();
 	// add the grids to the tetmesh
 	for (std::size_t i = 0; i < this->grids.size(); ++i) {

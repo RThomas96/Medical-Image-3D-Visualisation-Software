@@ -44,6 +44,11 @@ DiscreteGrid& DiscreteGrid::fromGridReader(IO::GenericGridReader& reader) {
 	this->voxelDimensions = reader.getVoxelDimensions();
 	this->boundingBox = reader.getBoundingBox();
 	this->dataBoundingBox = reader.getDataBoundingBox();
+	this->setFilenames(reader.getFilenames());
+
+	for (const std::string& fn : this->filenames) {
+		std::cerr << "\tDiscreteGrid::fromReader() : filename " << fn << '\n';
+	}
 
 	std::size_t gridsize = this->gridDimensions.x * this->gridDimensions.y * this->gridDimensions.z;
 	this->data.resize(gridsize);
@@ -291,6 +296,15 @@ DiscreteGrid& DiscreteGrid::setGridName(std::string name) {
 
 const std::string& DiscreteGrid::getGridName(void) const {
 	return this->gridName;
+}
+
+DiscreteGrid& DiscreteGrid::setFilenames(std::vector<std::string> fnames) {
+	this->filenames = std::vector<std::string>(fnames);
+	return *this;
+}
+
+const std::vector<std::string>& DiscreteGrid::getFilenames() const {
+	return this->filenames;
 }
 
 bool DiscreteGrid::includesPointWorldSpace(glm::vec4 point) const {

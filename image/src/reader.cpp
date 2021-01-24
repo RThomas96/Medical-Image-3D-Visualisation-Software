@@ -144,6 +144,8 @@ namespace IO {
 		return *this;
 	}
 
+	std::vector<std::string> GenericGridReader::getFilenames(void) const { return this->filenames; }
+
 	DIMReader::DIMReader(data_t thresh) : GenericGridReader(thresh) {
 		this->dimFile = nullptr;
 		this->imaFile = nullptr;

@@ -49,3 +49,59 @@ InputGrid& InputGrid::setModifiable(bool b) { return *this; }
 InputGrid& InputGrid::setResolution(sizevec3 newRes) { return *this; }
 
 InputGrid& InputGrid::setBoundingBox(bbox_t renderWindow) { return *this; }
+
+OfflineInputGrid::OfflineInputGrid(void){
+	this->gridName = "defaultOfflineInputGrid";
+	this->setModifiable(false);
+	this->dimFile = nullptr;
+	this->imaFile = nullptr;
+}
+
+OfflineInputGrid::~OfflineInputGrid() {
+	if (this->dimFile) { this->dimFile->close(); }
+	if (this->imaFile) { this->imaFile->close(); }
+}
+
+OfflineInputGrid& OfflineInputGrid::fromInputGrid(const std::shared_ptr<InputGrid>& igrid) {
+	this->filenames = igrid->getFilenames();
+	this->boundingBox = igrid->getBoundingBox();
+	this->setTransform_GridToWorld(igrid->getTransform_GridToWorld());
+
+	char* bname = IO::FileBaseName(this->filenames[0].c_str());
+	const char* dname = IO::AppendExtension(bname, "dim");
+	const char* iname = IO::AppendExtension(bname, "ima");
+
+	this->dimFile = new std::ifstream(dname);
+	this->imaFile = new std::ifstream(iname);
+
+	// read number of voxels into image dimensions :
+	(*this->dimFile) >> this->gridDimensions.x;
+	(*this->dimFile) >> this->gridDimensions.y;
+	(*this->dimFile) >> this->gridDimensions.z;
+
+	// read info from the DIM file (extended with our properties)
+	std::string token, type;
+	do {
+		(*this->dimFile) >> token;
+		if (token.find("-type") != std::string::npos) { (*this->dimFile) >> type; }
+		else if (token.find("-dx") != std::string::npos) {(*this->dimFile) >> this->voxelDimensions.x;}
+		else if (token.find("-dy") != std::string::npos) {(*this->dimFile) >> this->voxelDimensions.y;}
+		else if (token.find("-dz") != std::string::npos) {(*this->dimFile) >> this->voxelDimensions.z;}
+		else {
+			std::cerr << "[ERROR] DIMReader - token "<< token <<" did not represent anything"<<'\n';
+		}
+	} while (not this->dimFile->eof());
+
+	return *this;
+
+}
+
+OfflineInputGrid::DataType OfflineInputGrid::getPixel(std::size_t x, std::size_t y, std::size_t z) const {
+	std::size_t idx = x + y * this->gridDimensions.x + z * this->gridDimensions.x * this->gridDimensions.y;
+
+	this->imaFile->seekg(idx*sizeof(DataType));
+	DataType storage = 0;
+	this->imaFile->read(reinterpret_cast<char*>(&storage), sizeof(DataType));
+
+	return storage;
+}
