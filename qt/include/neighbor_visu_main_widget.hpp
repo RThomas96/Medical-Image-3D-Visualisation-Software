@@ -6,6 +6,7 @@
 #include "../../viewer/include/scene.hpp"
 #include "./scene_control.hpp"
 #include "./grid_control.hpp"
+#include "./opengl_debug_log.hpp"
 
 #include <QWidget>
 #include <QMainWindow>
@@ -40,6 +41,8 @@ class MainWidget : public QMainWindow {
 		ViewerHeader* headerZ;		///< Header for the Z plane viewer
 		PlanarViewer* viewer_planeZ;	///< The visualisation of the grid on plane Z
 
+		OpenGLDebugLog* glDebug;	///< Output for the OpenGL debug messages.
+
 		ControlPanel* controlPanel;	///< The control panel at the bottom of the grid
 		bool widgetSizeSet;		///< Checks if the widget size has been set before
 		std::vector<QObject*> strayObj;	///< Pointers to all temporary objects allocated in the setup process
@@ -51,6 +54,8 @@ class MainWidget : public QMainWindow {
 		QAction* action_saveGrid;	///< Action to save grid
 		QAction* action_exitProgram;	///< Action to exit the program.
 		QAction* action_showVisuBox;	///< Action to show the visualization box controller
+		QStatusBar* statusBar;		///< Status bar
+		QPushButton* showGLLog;		///< Button to open the QOpenGLDebugLog message box.
 };
 
 #endif // QT_INCLUDE_NEIGHBOR_VISU_MAIN_WIDGET_HPP_

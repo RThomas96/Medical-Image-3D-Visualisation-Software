@@ -36,8 +36,6 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, QWidget* parent) : QW
 	this->maxValueColor->setRange(0, 255);
 	this->maxValueColor->setValue(255);
 
-	auto sizeHint = this->minValueColor->minimumSizeHint();
-	std::cerr << "Slider constructor sets min height at : " << sizeHint.height() << '\n';
 	QSizePolicy policy;
 	policy.setVerticalPolicy(QSizePolicy::Policy::Expanding);
 	this->minValueColor->setSizePolicy(policy);

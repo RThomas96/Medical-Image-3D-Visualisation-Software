@@ -7,19 +7,9 @@ INCLUDE(./cmake/CMakeSetup.cmake)
 INCLUDE(./cmake/FindQGLViewer.cmake)
 
 FIND_PACKAGE(Qt5 REQUIRED COMPONENTS Core Gui Widgets Xml OpenGL)
-FIND_PACKAGE(OpenGL REQUIRED)
-FIND_PACKAGE(GLEW REQUIRED)
-FIND_PACKAGE(glm REQUIRED)
 FIND_PACKAGE(Threads REQUIRED)
-
-SET(INCLUDE_DIRECTORIES
-	${INCLUDE_DIRECTORIES}
-	${OPENGL_INCLUDE_DIRS}
-)
-INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES})
-
-SET(GLHANDLER_USE_QT ON CACHE BOOL "Compile GLHandler with Qt")
-ADD_SUBDIRECTORY(gl)
+FIND_PACKAGE(OpenGL REQUIRED)
+FIND_PACKAGE(glm REQUIRED)
 
 # TinyTIFF Library {{{
 ADD_LIBRARY(libtiff STATIC
@@ -49,6 +39,7 @@ ADD_EXECUTABLE(neighbor_visu
 	./qt/include/qt_proxies.hpp
 	./qt/include/viewer_header.hpp
 	./qt/include/visu_box_controller.hpp
+	./qt/include/opengl_debug_log.hpp
 
 	./viewer/include/scene.hpp
 	./viewer/include/planar_viewer.hpp
@@ -76,6 +67,7 @@ ADD_EXECUTABLE(neighbor_visu
 	./qt/src/qt_proxies.cpp
 	./qt/src/viewer_header.cpp
 	./qt/src/visu_box_controller.cpp
+	./qt/src/opengl_debug_log.cpp
 
 	./viewer/src/scene.cpp
 	./viewer/src/planar_viewer.cpp
@@ -90,6 +82,10 @@ ADD_EXECUTABLE(neighbor_visu
 	./image/src/reader.cpp
 	./image/src/writer.cpp
 )
+TARGET_INCLUDE_DIRECTORIES(neighbor_visu
+	PRIVATE ${OPENGL_INCLUDE_DIRS}
+	PRIVATE ${GLM_INCLUDE_DIRS}
+)
 TARGET_LINK_LIBRARIES(neighbor_visu
 	PUBLIC Qt5::Core
 	PUBLIC Qt5::Gui
@@ -97,10 +93,8 @@ TARGET_LINK_LIBRARIES(neighbor_visu
 	PUBLIC Qt5::Widgets
 	PUBLIC Qt5::OpenGL
 	PUBLIC OpenGL
-	PUBLIC ${QGLViewer_LIBRARY}
-	PUBLIC GLEW
-	PUBLIC glHandler
 	PUBLIC ${TIF_LIB}
+	PUBLIC ${QGLViewer_LIBRARY}
 )
 # }}}
 

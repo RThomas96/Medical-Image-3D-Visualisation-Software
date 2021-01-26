@@ -92,10 +92,12 @@ Scene::Scene() {
 
 	this->context = nullptr;
 	this->debugLog = nullptr;
+	this->glOutput = nullptr;
 	this->controlPanel = nullptr;
 	this->outputGrid = nullptr;
 	this->gridControl = nullptr;
 	this->visuBoxController = nullptr;
+	this->programStatusBar = nullptr;
 
 	this->minTexVal = uchar(1);
 	this->maxTexVal = uchar(255);
@@ -109,7 +111,6 @@ Scene::Scene() {
 		glm::vec3(.0, .0, 1.), glm::vec3(1., .0, 1.), glm::vec3(.0, 1., 1.), glm::vec3(1., 1., 1.)
 	};
 
-	this->planePosition = glm::vec3(.0, .0, .0);
 	this->planeDirection = glm::vec3(1., 1., 1.);
 	this->planeDisplacement = glm::vec3(.0, .0, .0);
 	DiscreteGrid::bbox_t::vec min(.0, .0, .0);
@@ -180,24 +181,8 @@ void Scene::initGl(QOpenGLContext* _context) {
 	// Get OpenGL functions from the currently bound context :
 	this->initializeOpenGLFunctions();
 
-	// If the context supports the GL_KHR_debug extension, enable a logger :
-	if (_context->hasExtension(QByteArrayLiteral("GL_KHR_debug"))) {
-		this->debugLog = new QOpenGLDebugLogger;
-		if (this->debugLog->initialize()) {
-			QObject::connect(this->debugLog, &QOpenGLDebugLogger::messageLogged, [this](QOpenGLDebugMessage _m) {
-				this->printOpenGLMessage(_m);
-			});
-			this->debugLog->startLogging(QOpenGLDebugLogger::LoggingMode::SynchronousLogging);
-		} else {
-			QMessageBox* messageBox = new QMessageBox();
-			messageBox->warning(nullptr, "Warning", "Could not initialize the QOpenGLDebugLogger class.");
-			messageBox->show();
-		}
-	} else {
-		QMessageBox* messageBox = new QMessageBox();
-		messageBox->warning(nullptr, "Warning", "OpenGL context does not support the GL_KHR_Debug extension.");
-		messageBox->show();
-	}
+	// Create the debug logger and connect its signals :
+	this->setupGLOutput();
 
 	// The default parameters have already been set in the constructor. We
 	// need to initialize the OpenGL objects now. Shaders, VAOs, VBOs.
@@ -212,11 +197,61 @@ void Scene::initGl(QOpenGLContext* _context) {
 	std::vector<float> colorScale = this->generateColorScale(0, 255);
 	this->uploadColorScale(colorScale);
 
+	// if a control panel is attached, enable its sliders/buttons :
 	if (this->controlPanel) {
 		this->controlPanel->activatePanels();
 	}
+}
 
-	std::cerr << "Finished initializing scene" << '\n';
+void Scene::addOpenGLOutput(OpenGLDebugLog* glLog) {
+	// if an output is already enabled, stop there
+	if (this->glOutput != nullptr) { return; }
+	if (glLog == nullptr) { return; }
+
+	// add the glOutput to this class :
+	this->glOutput = glLog;
+
+	// if there __is__ a logger in the class (init didn't fail) :
+	if (this->debugLog != nullptr) {
+		// disconnect the messagelogged signal and re-connect it with glOutput :
+		this->debugLog->disconnect(SIGNAL(&QOpenGLDebugLogger::messageLogged));
+		QObject::connect(this->debugLog, &QOpenGLDebugLogger::messageLogged, this->glOutput, &OpenGLDebugLog::addOpenGLMessage);
+	}
+}
+
+void Scene::addStatusBar(QStatusBar *_s) {
+	if (this->programStatusBar != nullptr) { return; }
+
+	this->programStatusBar = _s;
+}
+
+void Scene::setupGLOutput() {
+	// if no context is available, end the func now.
+	if (this->context == nullptr) { return; }
+
+	// If the context supports the GL_KHR_debug extension, enable a logger :
+	if (this->context->hasExtension(QByteArrayLiteral("GL_KHR_debug"))) {
+		this->debugLog = new QOpenGLDebugLogger;
+		if (this->debugLog->initialize()) {
+			if (this->glOutput != nullptr) {
+				// Connect debug logger to gl output class :
+				QObject::connect(this->debugLog, &QOpenGLDebugLogger::messageLogged,
+						this->glOutput, &OpenGLDebugLog::addOpenGLMessage);
+			} else {
+				// connect directly to std::cerr if no gl outputs are available
+				QObject::connect(this->debugLog, &QOpenGLDebugLogger::messageLogged, [this](QOpenGLDebugMessage _m) {
+					this->printOpenGLMessage(_m);
+				});
+			}
+			this->debugLog->startLogging(QOpenGLDebugLogger::LoggingMode::SynchronousLogging);
+		} else {
+			// Silently ignore the init error, and free the debugLog resource.
+			delete this->debugLog;
+			this->debugLog = nullptr;
+		}
+	} else {
+		// Silently ignore the fact the current context does not have support for GL_KHR_extension.
+	}
 }
 
 void Scene::printOpenGLMessage(const QOpenGLDebugMessage& message) {
@@ -328,7 +363,7 @@ void Scene::createBuffers() {
 
 void Scene::addGrid(const std::shared_ptr<InputGrid> _grid, std::string meshPath) {
 	GridGLView gridView(_grid);
-	//gridView.grid->setTransform_GridToWorld(this->computeTransformationMatrix(_grid));
+	gridView.grid->setTransform_GridToWorld(this->computeTransformationMatrix(_grid));
 
 	TextureUpload gridTexture{};
 	gridTexture.minmag.x = GL_NEAREST;
@@ -755,6 +790,8 @@ void Scene::launchSaveDialog() {
 		this->gridControl->show();
 		return;
 	}
+
+	#warning Allocates new grids from input grids here !
 
 	// create an output grid AND a tetmesh to generate it :
 	std::shared_ptr<OutputGrid> outputGrid = std::make_shared<OfflineOutputGrid>();
@@ -1372,8 +1409,6 @@ void Scene::prepPlane_SingleUniforms(planes _plane, planeHeading _heading, glm::
 void Scene::drawGrid(GLfloat *mvMat, GLfloat *pMat, glm::mat4 baseMatrix, const GridGLView& grid) {
 	glm::vec4 lightPos = glm::vec4(-0.25, -0.25, -0.25, 1.0);
 
-	// If the grid has data, show it :
-	// if (grid.grid->getData().size() > 0) {
 	// If the grid has been uploaded, show it :
 	if (grid.gridTexture > 0) {
 		glUseProgram(this->programHandle_projectedTex);
@@ -1513,20 +1548,25 @@ void Scene::setPlaneHeading(planes _plane, planeHeading _heading) {
 
 	// Get the offset into the buffer to read from :
 	GLsizeiptr planeBegin = 0;
-	if (_plane == planes::y) { planeBegin = 6; }
-	if (_plane == planes::z) { planeBegin = 12; }
+	QString planeName;
+	switch (_plane) {
+		case planes::x : planeBegin = 0; planeName = "X"; break;
+		case planes::y : planeBegin = 6; planeName = "Y"; break;
+		case planes::z : planeBegin =12; planeName = "Z"; break;
+	}
 
 	// Add 8 here because the 8 vertices of the cube will be placed
 	// before the tex coordinates we're interested in :
 	GLsizeiptr begin = (planeBegin + 8)*sizeof(glm::vec3);
 
+	QString h;
 	// Select the vertices' tex coordinates in order to draw it the 'right' way up :
 	void* data = nullptr;
 	switch(_heading) {
-		case North: data = (void*) north.data(); break;
-		case East : data = (void*) east.data();  break;
-		case West : data = (void*) west.data();  break;
-		case South: data = (void*) south.data(); break;
+		case North: data = (void*) north.data(); h = "N"; break;
+		case East : data = (void*) east.data();  h = "E"; break;
+		case West : data = (void*) west.data();  h = "W"; break;
+		case South: data = (void*) south.data(); h = "S"; break;
 	}
 
 	// Bind vertex texture coordinate buffer :
@@ -1535,6 +1575,11 @@ void Scene::setPlaneHeading(planes _plane, planeHeading _heading) {
 	// Modify a part of the data :
 	glBufferSubData(GL_ARRAY_BUFFER, begin, 6*sizeof(glm::vec3), data);
 	GetOpenGLError();
+
+	if (this->programStatusBar != nullptr) {
+		QString message = "Plane " + planeName + " is now oriented " + h;
+		this->programStatusBar->showMessage(message, 5000);
+	}
 
 	return;
 }
@@ -1930,7 +1975,18 @@ void Scene::setVisuBox(DiscreteGrid::bbox_t box) {
 	return;
 }
 
-void Scene::slotToggleShowTextureCube(bool show) { this->inputGridVisible = show; }
+void Scene::resetVisuBox() {
+	this->visuBox = this->sceneBB;
+	return;
+}
+
+void Scene::getSceneRadius() {
+	//
+}
+
+void Scene::getSceneCenter() {
+	//
+}
 
 void Scene::slotSetPlaneDisplacementX(float scalar) { this->planeDisplacement.x = scalar; }
 void Scene::slotSetPlaneDisplacementY(float scalar) { this->planeDisplacement.y = scalar; }
@@ -1947,11 +2003,16 @@ void Scene::slotSetMaxTexValue(uchar val) { this->maxTexVal = val; this->updateV
 void Scene::slotSetMinColorValue(uchar val) { this->minColorVal = val; if (this->controlPanel) {this->controlPanel->updateValues();} }
 void Scene::slotSetMaxColorValue(uchar val) { this->maxColorVal = val; if (this->controlPanel) {this->controlPanel->updateValues();} }
 
-void Scene::slotSetPlanePositionX(float coord) { this->planePosition.x = coord; }
-void Scene::slotSetPlanePositionY(float coord) { this->planePosition.y = coord; }
-void Scene::slotSetPlanePositionZ(float coord) { this->planePosition.z = coord; }
-
-void Scene::setDrawMode(DrawMode _mode) { this->drawMode = _mode; }
+void Scene::setDrawMode(DrawMode _mode) {
+	this->drawMode = _mode;
+	if (this->programStatusBar != nullptr) {
+		switch (_mode) {
+			case DrawMode::Solid : this->programStatusBar->showMessage("Set draw mode to Solid.\n", 5000); break;
+			case DrawMode::Volumetric : this->programStatusBar->showMessage("Set draw mode to Volumetric.\n", 5000); break;
+			case DrawMode::VolumetricBoxed : this->programStatusBar->showMessage("Set draw mode to VolumetricBoxed.\n", 5000); break;
+		}
+	}
+}
 
 void Scene::togglePlaneVisibility(planes _plane) {
 	if (_plane == planes::x) { this->planeVisibility.x = not this->planeVisibility.x; }

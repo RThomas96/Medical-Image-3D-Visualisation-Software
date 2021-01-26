@@ -127,6 +127,7 @@ ViewerHeader3D::ViewerHeader3D(QWidget* parent) : QWidget(parent) {
 	this->viewerToUpdate = nullptr;
 	this->button_invertPlaneCut = nullptr;
 	this->button_togglePlane = nullptr;
+	this->button_resetVisuBox = nullptr;
 	this->color = Qt::GlobalColor::darkGray;
 }
 
@@ -150,12 +151,15 @@ void ViewerHeader3D::setupWidgets() {
 
 	this->button_togglePlane = new QPushButton("Toggle all planes");
 	this->button_invertPlaneCut = new QPushButton("Invert all planes");
+	this->button_resetVisuBox = new QPushButton("Reset Cutting Box");
 	this->layout = new QHBoxLayout;
 
 	this->layout->addWidget(this->button_togglePlane);
 	this->layout->addWidget(this->button_invertPlaneCut);
+	this->layout->addWidget(this->button_resetVisuBox);
 
 	this->button_invertPlaneCut->setStyleSheet("padding-left:padding-top; padding-right:padding-top;");
+	this->button_resetVisuBox->setStyleSheet("padding-left:padding-top; padding-right:padding-top;");
 	this->button_togglePlane->setStyleSheet("padding-left:padding-top; padding-right:padding-top;");
 
 	QPalette colorPalette;
@@ -182,6 +186,13 @@ void ViewerHeader3D::setupSignals() {
 	QObject::connect(this->button_invertPlaneCut, &QPushButton::clicked, [this]() ->void {
 		if (this->sceneToControl == nullptr) { return; }
 		this->sceneToControl->toggleAllPlaneDirections();
+		if (this->viewerToUpdate == nullptr) { return; }
+		this->viewerToUpdate->update();
+	});
+	// connect reset visu box button :
+	QObject::connect(this->button_resetVisuBox, &QPushButton::clicked, [this]() ->void {
+		if (this->sceneToControl == nullptr) { return; }
+		this->sceneToControl->resetVisuBox();
 		if (this->viewerToUpdate == nullptr) { return; }
 		this->viewerToUpdate->update();
 	});

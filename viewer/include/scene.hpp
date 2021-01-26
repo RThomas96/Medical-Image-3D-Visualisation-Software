@@ -16,13 +16,17 @@
 #include "../../qt/include/grid_detailed_view.hpp"
 #include "../../qt/include/grid_list_view.hpp"
 #include "../../qt/include/visu_box_controller.hpp"
+#include "../../qt/include/opengl_debug_log.hpp"
 // Helper structs and functions :
 #include "./viewer_structs.hpp"
 // Qt headers :
 #include <QOpenGLFunctions_4_0_Core>
 #include <QOpenGLFunctions_4_0_Compatibility>
 #include <QOpenGLDebugLogger>
+#include <QStatusBar>
+// libQGLViewer :
 #include <QGLViewer/qglviewer.h>
+// glm include :
 #include <glm/glm.hpp>
 // STD headers :
 #include <vector>
@@ -50,6 +54,11 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void showVisuBoxController();
 		/// @brief Remove the visu box controller if it closes
 		void removeVisuBoxController();
+
+		/// @brief Adds a widget to which redirect to OpenGL output.
+		void addOpenGLOutput(OpenGLDebugLog* _gldl);
+		/// @brief Add a status bar to the program
+		void addStatusBar(QStatusBar* _s);
 
 		/// @brief set the control panel responsible for controlling the scene
 		void setControlPanel(ControlPanel* cp) { this->controlPanel = cp; }
@@ -79,38 +88,61 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		/// @b Deletes a grid from the array of grids to show
 		void deleteGrid(const std::shared_ptr<DiscreteGrid>& _grid);
 
-		void printVAOStateNext() { this->showVAOstate = true; } ///< prints info about the VAO on next refresh
-		glm::vec3 getPlanePositions(void) { return this->planePosition; } ///< Get the cutting planes' positions
+		/// @brief Prints info about the VAO on next refresh
+		void printVAOStateNext() { this->showVAOstate = true; }
+
+		/// @brief Get the minimum texture value to represent
 		uint getMinTexValue(void) const { return this->minTexVal; }
+		/// @brief Get the maximum texture value to represent
 		uint getMaxTexValue(void) const { return this->maxTexVal; }
+
+		/// @brief Get the minimum color value, for the color scale resizing.
 		uint getMinColorValue(void) const { return this->minColorVal; }
+		/// @brief Get the maximum color value, for the color scale resizing.
 		uint getMaxColorValue(void) const { return this->maxColorVal; }
+
 		/// @brief Returns the current visu box
 		DiscreteGrid::bbox_t getVisuBox(void) { return this->visuBox; }
 		/// @brief Sets the visu box
 		void setVisuBox(DiscreteGrid::bbox_t box);
+		/// @brief Resets the visu box
+		void resetVisuBox();
 
+		/// @brief Get the scene radius at this time
+		void getSceneRadius();
+		/// @brief Get the scene center at this time
+		void getSceneCenter();
+
+		/// @brief Upload a 1D texture with the given parameters.
 		GLuint uploadTexture1D(const TextureUpload& tex);
+		/// @brief Upload a 2D texture with the given parameters.
 		GLuint uploadTexture2D(const TextureUpload& tex);
+		/// @brief Upload a 3D texture with the given parameters.
 		GLuint uploadTexture3D(const TextureUpload& tex);
 
+		/// @brief (Obsolete) Function to write the generated output grid as a DIM/IMA file
 		void writeGridDIM(const std::string name);
 
+		/// @brief Draft function to write the loaded input grid as a DIM/IMA file
 		void draft_writeRawGridPortion(DiscreteGrid::sizevec3 begin, DiscreteGrid::sizevec3 size, std::string name, const std::shared_ptr<DiscreteGrid>& _grid);
 
-		void slotTogglePolygonMode(bool show);
-		void slotToggleShowTextureCube(bool show);
+		/// @brief Set X's plane displacement within the bounding box to be `scalar`
 		void slotSetPlaneDisplacementX(float scalar);
+		/// @brief Set Y's plane displacement within the bounding box to be `scalar`
 		void slotSetPlaneDisplacementY(float scalar);
+		/// @brief Set Z's plane displacement within the bounding box to be `scalar`
 		void slotSetPlaneDisplacementZ(float scalar);
+		/// @brief Set minimum texture intensity.
 		void slotSetMinTexValue(uchar val);
+		/// @brief Set maximum texture intensity.
 		void slotSetMaxTexValue(uchar val);
+		/// @brief Set minimum color intensity.
 		void slotSetMinColorValue(uchar val);
+		/// @brief Set maximum color intensity.
 		void slotSetMaxColorValue(uchar val);
-		void slotSetPlanePositionX(float coord);
-		void slotSetPlanePositionY(float coord);
-		void slotSetPlanePositionZ(float coord);
+		/// @brief set the clip plane distance from camera to be `val`
 		void slotSetClipDistance(double val) { this->clipDistanceFromCamera = static_cast<float>(val); return; }
+		/// @brief Get clipping distance from camera
 		float getClipDistance(void) { return this->clipDistanceFromCamera; }
 		/// @b Toggles the visibility of the plane in argument
 		void togglePlaneVisibility(planes _plane);
@@ -150,7 +182,9 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		/// @b setup the vao binding setup
 		void setupVAOPointers();
 
-		/// @b Print the OpenGL message to std::cerr
+		/// @b Sets up the OpenGL debug log.
+		void setupGLOutput();
+		/// @b Print the OpenGL message to std::cerr, if no OpenGLDebugLogMessages are enabled.
 		void printOpenGLMessage(const QOpenGLDebugMessage& message);
 
 		/// @b preps uniforms for a grid
@@ -216,6 +250,8 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		VisuBoxController* visuBoxController;	///< The controller for the visualization box
 		std::shared_ptr<OutputGrid> outputGrid; ///< output grid
 		GridControl* gridControl;		///< The controller for the grid 'save' feature (generation)
+		OpenGLDebugLog* glOutput;		///< Output of the GL log.
+		QStatusBar* programStatusBar;		///< Status bar to show some info about the program.
 
 		uchar minTexVal;			///< The minimum texture intensity to display
 		uchar maxTexVal;			///< The maximum texture intensity to display
@@ -226,7 +262,6 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		std::array<glm::vec3, 8> lightPositions; ///< Scene lights (positionned at the corners of the scene BB)
 
 		glm::vec<3, bool, glm::defaultp> planeVisibility; ///< Should we show each plane (X, Y, Z)
-		glm::vec3 planePosition;		///< Current plane positions
 		glm::vec3 planeDirection;		///< Cutting plane directions (-1 or 1 on each axis)
 		glm::vec3 planeDisplacement;		///< %age of the scene bounding box to place the planes
 		DiscreteGrid::bbox_t sceneBB;		///< Outer BB of the scene

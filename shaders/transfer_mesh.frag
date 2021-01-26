@@ -371,7 +371,9 @@ vec3 phongComputation(vec4 position, vec3 normal, vec4 color, vec3 lightPos, vec
 	vec3 r = 2.f * max(.0, dot(lm, n)) * n - lm;
 	vec3 v = normalize(cam - position.xyz);
 
-	return phong_Diffuse * max(.0, dot(lm, n)) * lightDiffuse + phong_Specular * pow(max(.0, dot(r, v)), phong_Shininess) * lightSpecular;
+	float dotlmn = dot(lm, n);
+
+	return phong_Diffuse * max(.0, dotlmn) * lightDiffuse + phong_Specular * pow(max(.0, dot(r, v)), phong_Shininess) * lightSpecular;
 }
 
 void main (void) {

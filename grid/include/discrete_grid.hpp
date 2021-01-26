@@ -37,6 +37,8 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 		typedef unsigned char DataType;
 		/// @brief Type of bounding box used
 		typedef BoundingBox_General<float> bbox_t;
+		/// @brief Public typename for DiscreteGrid's data type
+		typedef DataType data_t;
 
 	protected:
 		/// @brief Default constructor, creates an empty grid.
@@ -169,6 +171,7 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 		/// returns true. Returns false otherwise.
 		bool includesPointGridSpace(glm::vec4 point) const;
 
+		/// @brief Print some information about the grid to std::cerr (unbuffered stream)
 		void printInfo(std::string message, std::string prefix = "");
 
 		/// @brief Updates the voxel dimensions of the grid, each time the BB or the resolution changes.

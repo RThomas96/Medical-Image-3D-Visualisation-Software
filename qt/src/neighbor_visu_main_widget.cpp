@@ -8,6 +8,7 @@
 #include <QSizePolicy>
 #include <QToolBar>
 #include <QMenuBar>
+#include <QStatusBar>
 
 MainWidget::MainWidget() {
 	this->strayObj.clear();
@@ -45,36 +46,45 @@ MainWidget::~MainWidget() {
 }
 
 void MainWidget::setupWidgets() {
+	this->glDebug = new OpenGLDebugLog;
 	this->scene = new Scene();
+	this->scene->addOpenGLOutput(this->glDebug);
 
+	this->statusBar = new QStatusBar;
+	this->showGLLog = new QPushButton("Show GL log");
+	this->statusBar->addPermanentWidget(this->showGLLog);
+	this->setStatusBar(this->statusBar);
+	QObject::connect(this->showGLLog, &QPushButton::clicked, this->glDebug, &QWidget::show);
+
+	this->scene->addStatusBar(this->statusBar);
+
+	// Actions creation :
 	this->action_add1Grid = new QAction("Open acquisition");
 	this->action_saveGrid = new QAction("Save acquisition");
 	this->action_showVisuBox = new QAction("Show visu box controller");
 	this->action_exitProgram = new QAction("Exit program");
-
+	// Menu creation :
 	this->fileMenu = this->menuBar()->addMenu("File");
-
 	this->fileMenu->addAction(this->action_add1Grid);
 	this->fileMenu->addAction(this->action_saveGrid);
 	this->fileMenu->addAction(this->action_showVisuBox);
 	this->fileMenu->addAction(this->action_exitProgram);
-
-	// Connect add and save button to the slots/functions in the program :
+	// Connect actions to the slots/functions in the program :
 	QObject::connect(this->action_add1Grid, &QAction::triggered, [this](){this->viewer->addGrid();});
 	QObject::connect(this->action_saveGrid, &QAction::triggered, [this](){this->scene->launchSaveDialog();});
 	QObject::connect(this->action_showVisuBox, &QAction::triggered, [this](){this->scene->showVisuBoxController();});
 	QObject::connect(this->action_exitProgram, &QAction::triggered, this, &QMainWindow::close);
 
+	// Viewer(s) creation along with control panel :
 	this->viewer = new Viewer(this->scene, nullptr);
-	this->header3d = new ViewerHeader3D(this->viewer, this->scene, nullptr);
-	this->controlPanel = new ControlPanel(this->scene, this->viewer, nullptr);
-	this->scene->setControlPanel(this->controlPanel);
-
 	this->viewer_planeX = new PlanarViewer(this->scene, planes::x, planeHeading::North, nullptr);
 	this->viewer_planeY = new PlanarViewer(this->scene, planes::y, planeHeading::North, nullptr);
 	this->viewer_planeZ = new PlanarViewer(this->scene, planes::z, planeHeading::North, nullptr);
+	this->controlPanel = new ControlPanel(this->scene, this->viewer, nullptr);
+	this->scene->setControlPanel(this->controlPanel);
 
 	// Sliders for each plane (also sets range and values) :
+	this->header3d = new ViewerHeader3D(this->viewer, this->scene, nullptr);
 	this->headerX = new ViewerHeader("X Plane"); this->headerX->connectToViewer(this->viewer_planeX);
 	this->headerY = new ViewerHeader("Y Plane"); this->headerY->connectToViewer(this->viewer_planeY);
 	this->headerZ = new ViewerHeader("Z Plane"); this->headerZ->connectToViewer(this->viewer_planeZ);
@@ -85,29 +95,23 @@ void MainWidget::setupWidgets() {
 	QSplitter* splitAbove1 = new QSplitter(Qt::Vertical);
 
 	// Layouts to place a viewer and a header in the same place :
-	QVBoxLayout* vP3 = new QVBoxLayout(); vP3->setSpacing(0);
-	QVBoxLayout* vPX = new QVBoxLayout(); vPX->setSpacing(0);
-	QVBoxLayout* vPY = new QVBoxLayout(); vPY->setSpacing(0);
-	QVBoxLayout* vPZ = new QVBoxLayout(); vPZ->setSpacing(0);
-
-	// Sets the background color of widgets :
-	// QPalette paletteX, paletteY, paletteZ;
-	// paletteX.setColor(QPalette::Window, Qt::red);
-	// paletteY.setColor(QPalette::Window, Qt::green);
-	// paletteZ.setColor(QPalette::Window, Qt::blue);
+	QVBoxLayout* vP3 = new QVBoxLayout(); vP3->setSpacing(0);	// header above 3D view
+	QVBoxLayout* vPX = new QVBoxLayout(); vPX->setSpacing(0);	// header above plane X
+	QVBoxLayout* vPY = new QVBoxLayout(); vPY->setSpacing(0);	// header above plane Y
+	QVBoxLayout* vPZ = new QVBoxLayout(); vPZ->setSpacing(0);	// header above plane Z
 
 	// Those will encapsulate the layouts above :
-	QWidget* _ViewerCapsule = new QWidget(); // _ViewerCapsule->setAutoFillBackground(true); xViewerCapsule->setPalette(paletteX);
-	QWidget* xViewerCapsule = new QWidget(); // xViewerCapsule->setAutoFillBackground(true); xViewerCapsule->setPalette(paletteX);
-	QWidget* yViewerCapsule = new QWidget(); // yViewerCapsule->setAutoFillBackground(true); yViewerCapsule->setPalette(paletteY);
-	QWidget* zViewerCapsule = new QWidget(); // zViewerCapsule->setAutoFillBackground(true); zViewerCapsule->setPalette(paletteZ);
+	QWidget* _ViewerCapsule = new QWidget();
+	QWidget* xViewerCapsule = new QWidget();
+	QWidget* yViewerCapsule = new QWidget();
+	QWidget* zViewerCapsule = new QWidget();
 
 	this->header3d->setFixedHeight(this->header3d->sizeHint().height());
 	this->headerX->setFixedHeight(this->headerX->sizeHint().height());
 	this->headerY->setFixedHeight(this->headerY->sizeHint().height());
 	this->headerZ->setFixedHeight(this->headerZ->sizeHint().height());
 
-	// Set the layouts for the plane viewers :
+	// Add widgets in layouts to compose the plane viewers :
 	vP3->addWidget(this->header3d);	vP3->addWidget(this->viewer);
 	vPX->addWidget(this->headerX);	vPX->addWidget(this->viewer_planeX);
 	vPY->addWidget(this->headerY);	vPY->addWidget(this->viewer_planeY);
@@ -146,6 +150,8 @@ void MainWidget::setupWidgets() {
 	mainLayout->addLayout(viewerLayout);
 	mainLayout->setAlignment(this->controlPanel, Qt::AlignVCenter);
 
+	// add pointers to Qobjects needed for this widget
+	// that we need to detroy at cleanup time :
 	this->strayObj.push_back(zViewerCapsule);
 	this->strayObj.push_back(yViewerCapsule);
 	this->strayObj.push_back(xViewerCapsule);

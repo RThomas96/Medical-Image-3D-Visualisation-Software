@@ -17,8 +17,6 @@
 #include <algorithm>
 #include <memory>
 
-class DiscreteGrid; // Fwd-declaration
-
 namespace IO {
 
 	/// \brief Describes a downsampling level to apply when loading the image.

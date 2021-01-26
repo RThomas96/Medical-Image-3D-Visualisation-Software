@@ -88,6 +88,8 @@ class ViewerHeader3D : public QWidget {
 		QPushButton* button_invertPlaneCut;
 		/// @b Button to rotate the cutting plane counter-clockwise
 		QPushButton* button_togglePlane;
+		/// @b Button to reset the visu box
+		QPushButton* button_resetVisuBox;
 		/// @b Color for the widget's background
 		Qt::GlobalColor color;
 };
