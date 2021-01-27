@@ -178,8 +178,15 @@ void Scene::initGl(QOpenGLContext* _context) {
 	if (_context == nullptr) { std::cerr << "Warning : Initializing a scene without a valid OpenGL context !" << '\n' ; }
 	this->context = _context;
 
+    auto maj = this->context->format().majorVersion();
+    auto min = this->context->format().minorVersion();
+    std::cerr << "OpenGL version " << maj << '.' << min << '\n';
+
 	// Get OpenGL functions from the currently bound context :
 	this->initializeOpenGLFunctions();
+
+    std::cerr << "OpenGL vendor string : " << glGetString(GL_VENDOR) << '\n';
+    std::cerr << "OpenGL renderer string : " << glGetString(GL_RENDERER) << '\n';
 
 	// Create the debug logger and connect its signals :
 	this->setupGLOutput();

@@ -10,11 +10,9 @@
 #include <QKeyEvent>
 #include <QMessageBox>
 #include <QFileDialog>
-#include <QtPlatformHeaders/QGLXNativeContext>
 #include <QGuiApplication>
 
 #include <fstream>
-#include <dlfcn.h>
 
 template<class T>
 std::remove_reference_t<T> const& as_const(T&&t){return t;}

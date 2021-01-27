@@ -107,24 +107,7 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, QWidget* parent) : QW
 	this->setSizePolicy(QSizePolicy::Policy::Fixed, QSizePolicy::Policy::Fixed);
 }
 
-ControlPanel::~ControlPanel() {
-#ifndef NDEBUG
-	std::cerr << "[TRACE][" << __PRETTY_FUNCTION__ << "] : deleting control panel tied to scene " << this->sceneToControl << "...\n";
-#endif
-	auto deletePtr = [](auto* obj) {
-		if (obj != nullptr) {
-			delete obj;
-		}
-		obj = nullptr;
-	};
-
-	this->clipDistance->disconnect();
-
-	deletePtr(this->minValueTexture);
-	deletePtr(this->maxValueTexture);
-	deletePtr(this->clipDistance);
-	deletePtr(this->controlContainer);
-}
+ControlPanel::~ControlPanel() = default;
 
 void ControlPanel::initSignals() {
 	connect(this->clipDistance, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &ControlPanel::setClipDistance);
