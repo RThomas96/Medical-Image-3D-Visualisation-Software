@@ -51,6 +51,7 @@ class MainWidget : public QMainWindow {
 
 		QMenu* fileMenu;		///< The 'File' menu of the application
 		QAction* action_add1Grid;	///< Action to add grid
+		QAction* action_add2Grid;	///< Action to add two grids (red and green channels)
 		QAction* action_saveGrid;	///< Action to save grid
 		QAction* action_exitProgram;	///< Action to exit the program.
 		QAction* action_showVisuBox;	///< Action to show the visualization box controller

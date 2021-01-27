@@ -46,10 +46,6 @@ DiscreteGrid& DiscreteGrid::fromGridReader(IO::GenericGridReader& reader) {
 	this->dataBoundingBox = reader.getDataBoundingBox();
 	this->setFilenames(reader.getFilenames());
 
-	for (const std::string& fn : this->filenames) {
-		std::cerr << "\tDiscreteGrid::fromReader() : filename " << fn << '\n';
-	}
-
 	std::size_t gridsize = this->gridDimensions.x * this->gridDimensions.y * this->gridDimensions.z;
 	this->data.resize(gridsize);
 	// copy data :

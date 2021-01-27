@@ -46,6 +46,8 @@ class Viewer : public QGLViewer {
 		void updateView() { this->update(); }
 		/// @brief Adds a grid to the scene
 		void addGrid();
+		/// @brief Adds one grid, composed of two grid's metadata to the scene
+		void addTwoGrids();
 };
 
 #endif // VIEWER_INCLUDE_NEIGHBOR_VISU_VIEWER_HPP_

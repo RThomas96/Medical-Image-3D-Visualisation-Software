@@ -23,10 +23,12 @@ MainWidget::~MainWidget() {
 	this->headerX->unregisterPlaneViewer();
 
 	this->action_add1Grid->disconnect();
+	this->action_add2Grid->disconnect();
 	this->action_saveGrid->disconnect();
 	this->action_exitProgram->disconnect();
 
 	delete this->action_add1Grid;
+	delete this->action_add2Grid;
 	delete this->action_saveGrid;
 	delete this->viewer_planeZ;
 	delete this->viewer_planeY;
@@ -59,18 +61,21 @@ void MainWidget::setupWidgets() {
 	this->scene->addStatusBar(this->statusBar);
 
 	// Actions creation :
-	this->action_add1Grid = new QAction("Open acquisition");
+	this->action_add1Grid = new QAction("Open acquisition (1 channel only)");
+	this->action_add2Grid = new QAction("Open acquisition (2 channels)");
 	this->action_saveGrid = new QAction("Save acquisition");
 	this->action_showVisuBox = new QAction("Show visu box controller");
 	this->action_exitProgram = new QAction("Exit program");
 	// Menu creation :
 	this->fileMenu = this->menuBar()->addMenu("File");
 	this->fileMenu->addAction(this->action_add1Grid);
+	this->fileMenu->addAction(this->action_add2Grid);
 	this->fileMenu->addAction(this->action_saveGrid);
 	this->fileMenu->addAction(this->action_showVisuBox);
 	this->fileMenu->addAction(this->action_exitProgram);
 	// Connect actions to the slots/functions in the program :
 	QObject::connect(this->action_add1Grid, &QAction::triggered, [this](){this->viewer->addGrid();});
+	QObject::connect(this->action_add2Grid, &QAction::triggered, [this](){this->viewer->addTwoGrids();});
 	QObject::connect(this->action_saveGrid, &QAction::triggered, [this](){this->scene->launchSaveDialog();});
 	QObject::connect(this->action_showVisuBox, &QAction::triggered, [this](){this->scene->showVisuBoxController();});
 	QObject::connect(this->action_exitProgram, &QAction::triggered, this, &QMainWindow::close);

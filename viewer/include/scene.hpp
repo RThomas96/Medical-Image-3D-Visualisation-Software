@@ -69,6 +69,8 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 
 		/// @b Adds a grid to the list of grids present and to be drawn, and generates the data structure to visualize it.
 		void addGrid(const std::shared_ptr<InputGrid> _grid, std::string meshPath);
+		/// @b Adds a grid to the list of grids present and to be drawn, which is composed of two separate grids' data.
+		void addTwoGrids(const std::shared_ptr<InputGrid> _gridR, const std::shared_ptr<InputGrid> _gridG, std::string meshPath);
 
 		/// @b Draw the 3D view of the scene.
 		void draw3DView(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, bool showTexOnPlane = true);
@@ -109,9 +111,9 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void resetVisuBox();
 
 		/// @brief Get the scene radius at this time
-		void getSceneRadius();
+		float getSceneRadius();
 		/// @brief Get the scene center at this time
-		void getSceneCenter();
+		glm::vec3 getSceneCenter();
 
 		/// @brief Upload a 1D texture with the given parameters.
 		GLuint uploadTexture1D(const TextureUpload& tex);

@@ -35,9 +35,12 @@ uniform vec3 voxelGridSize;
 uniform vec3 planePositions;
 uniform vec3 planeDirections;
 
-/// Takes a uvec3 of an R8UI-based texture and spits out an RGB color by converting
-/// from R(uchar)G(void)B(void) to HSV first, then to RGB
+uniform uint nbChannels;	// nb of channels in the image (R, RG, RGB ?)
+
+/// Takes a uvec3 of an R8UI-based texture and spits out an RGB color by applying a 'realistic' color grading
 vec4 R8UIToRGB(in uvec3 ucolor);
+vec4 R8UIToRGB_1channel(in uvec3 ucolor);
+vec4 R8UIToRGB_2channel(in uvec3 ucolor);
 
 // Takes a uvec3 of an R8UI-based texture and spits out an RGB color by looking up the color scale
 vec4 R8UItoColorScale(in uvec3 ucolor);
@@ -84,6 +87,43 @@ void main(void)
 }
 
 vec4 R8UIToRGB(in uvec3 ucolor) {
+	if (nbChannels == 1u) { return R8UIToRGB_1channel(ucolor); }
+	else { return R8UIToRGB_2channel(ucolor); }
+}
+
+vec4 R8UIToRGB_1channel(in uvec3 ucolor) {
+	float color_r = float(ucolor.r);
+	float color_g = float(ucolor.r);
+	// Check if we're in the colorscale :
+	color_r = clamp(color_r, colorBounds.x, colorBounds.y);
+	color_g = clamp(color_g, colorBounds.x, colorBounds.y);
+	// Compute the color as Brian's paper describes it :
+	float color_k = 2.5;
+	float sc = colorBounds.y - colorBounds.x;
+	float eosin = (color_r - colorBounds.x)/(sc);
+	float dna = (color_g - colorBounds.x)/(sc); // B is on G channel because OpenGL only allows 2 channels upload to be RG, not RB
+
+	float eosin_r_coef = 0.050;
+	float eosin_g_coef = 1.000;
+	float eosin_b_coef = 0.544;
+
+	float hematoxylin_r_coef = 0.860;
+	float hematoxylin_g_coef = 1.000;
+	float hematoxylin_b_coef = 0.300;
+
+	float r_coef = eosin_r_coef;
+	float g_coef = eosin_g_coef;
+	float b_coef = eosin_b_coef;
+
+	return vec4(
+		exp(-hematoxylin_r_coef * dna * color_k) * exp(-eosin_r_coef * eosin * color_k),
+		exp(-hematoxylin_g_coef * dna * color_k) * exp(-eosin_g_coef * eosin * color_k),
+		exp(-hematoxylin_b_coef * dna * color_k) * exp(-eosin_b_coef * eosin * color_k),
+		1.
+	);
+}
+
+vec4 R8UIToRGB_2channel(in uvec3 ucolor) {
 	float color_r = float(ucolor.r);
 	float color_g = float(ucolor.g);
 	// Check if we're in the colorscale :

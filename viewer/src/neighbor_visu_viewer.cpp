@@ -63,6 +63,13 @@ void Viewer::draw() {
 	this->camera()->getModelViewMatrix(mvMat);
 	this->camera()->getProjectionMatrix(pMat);
 
+	glm::vec3 scene_center = this->scene->getSceneCenter();
+	float scene_radius = this->scene->getSceneRadius();
+
+	this->setSceneRadius(qreal(scene_radius));
+	qglviewer::Vec cnt(scene_center.x, scene_center.y, scene_center.z);
+	this->setSceneCenter(cnt);
+
 	qglviewer::Vec cam = this->camera()->worldCoordinatesOf(qglviewer::Vec(0., 0., 0.));
 	glm::vec3 camPos = glm::vec3(static_cast<float>(cam.x), static_cast<float>(cam.y), static_cast<float>(cam.z));
 
@@ -259,6 +266,206 @@ void Viewer::addGrid() {
 
 	glm::vec3 bbDiag = this->scene->getSceneBoundaries();
 	float sceneSize = glm::length(bbDiag);
+
+	this->setSceneRadius(sceneSize*sceneRadiusMultiplier);
+	// center scene on center of grid
+	this->setSceneCenter(qglviewer::Vec(bbDiag.x/2., bbDiag.y/2., bbDiag.z/2.));
+	this->showEntireScene();
+}
+
+void Viewer::addTwoGrids() {
+	// create input grid pointer :
+	std::shared_ptr<InputGrid> inputGrid = std::make_shared<InputGrid>();
+	std::shared_ptr<InputGrid>  otherGrid = std::make_shared<InputGrid>();
+
+	// create reader :
+	IO::GenericGridReader* readerR = nullptr;
+	IO::GenericGridReader* readerG = nullptr;
+	IO::GenericGridReader::data_t threshold = IO::GenericGridReader::data_t(0);
+
+	// create message box to ask user :
+	QMessageBox* msgBox = new QMessageBox();
+	msgBox->setText("Choose your input data type");
+	msgBox->setAttribute(Qt::WA_DeleteOnClose);
+	QPushButton* dimButton = msgBox->addButton("DIM", QMessageBox::ActionRole);
+	QPushButton* tiffButton = msgBox->addButton("TIFF", QMessageBox::ActionRole);
+	QString lastPath = "";
+
+	// NOTE : Downsampling level will be used for both loaded grids.
+	QMessageBox* levelBox = new QMessageBox();
+	levelBox->setText("Choose your downsampling level");
+	QPushButton* originalButton = levelBox->addButton("Original Size", QMessageBox::ButtonRole::ActionRole);
+	QPushButton* lowButton = levelBox->addButton("Low Resolution", QMessageBox::ButtonRole::ActionRole);
+	QPushButton* lowerButton = levelBox->addButton("Lower Resolution", QMessageBox::ButtonRole::ActionRole);
+	QPushButton* lowestButton = levelBox->addButton("Lowest Resolution", QMessageBox::ButtonRole::ActionRole);
+
+	QMessageBox* confirmBox = new QMessageBox();
+	confirmBox->setText("This will be a considerably large image. Do you really wish to do this ?");
+	QPushButton* confirm_Accept = confirmBox->addButton("Yes", QMessageBox::ButtonRole::AcceptRole);
+	QPushButton* confirm_Deny = confirmBox->addButton("No, take me back", QMessageBox::ButtonRole::RejectRole);
+
+	// show the msgbox :
+	msgBox->exec();
+
+	if (msgBox->clickedButton() == dimButton) {
+		// Reader for Red channel :
+		readerR = new IO::DIMReader(threshold);
+		QString filenameR = QFileDialog::getOpenFileName(this, "Open a DIM/IMA image (Red channel)", "../../", "BrainVISA DIM Files (*.dim)");
+		if (filenameR.isEmpty() == false) {
+			// update last path :
+			lastPath = QFileInfo(filenameR).path();
+			std::vector<std::string> f;
+			f.push_back(filenameR.toStdString());
+			readerR->setFilenames(f);
+		} else {
+			QMessageBox* fileDialog = new QMessageBox();
+			fileDialog->critical(this, "Error", "Did not provide any filename !");
+			fileDialog->setAttribute(Qt::WA_DeleteOnClose);
+			fileDialog->show();
+			return;
+		}
+
+		// Reader Green (or blue) channel :
+		readerG = new IO::DIMReader(threshold);
+		QString filenameG = QFileDialog::getOpenFileName(this, "Open a DIM/IMA image (Blue channel)", lastPath, "BrainVISA DIM Files (*.dim)");
+		if (filenameG.isEmpty() == false) {
+			// update last path :
+			lastPath = QFileInfo(filenameG).path();
+			std::vector<std::string> f;
+			f.push_back(filenameG.toStdString());
+			readerG->setFilenames(f);
+		} else {
+			QMessageBox* fileDialog = new QMessageBox();
+			fileDialog->critical(this, "Error", "Did not provide any filename !");
+			fileDialog->setAttribute(Qt::WA_DeleteOnClose);
+			fileDialog->show();
+			return;
+		}
+	} else if (msgBox->clickedButton() == tiffButton) {
+		readerR = new IO::Reader::TIFF(threshold);
+		QStringList filenamesR = QFileDialog::getOpenFileNames(this, "Open multiple TIFF images (Red channel)","../../", "TIFF Files (*.tiff, *.tif)");
+		if (filenamesR.isEmpty() == false) {
+			std::vector<std::string> f;
+			for (const QString& fn : as_const(filenamesR)) {
+				f.push_back(fn.toStdString());
+				// update last path :
+				if (lastPath.isEmpty() == true) {
+					if (fn.isEmpty() == false) {
+						lastPath = QFileInfo(fn).path();
+					}
+				}
+			}
+			readerR->setFilenames(f);
+		} else {
+			QMessageBox* fileDialog = new QMessageBox();
+			fileDialog->critical(this, "Error", "Did not provide any filenames !");
+			fileDialog->setAttribute(Qt::WA_DeleteOnClose);
+			fileDialog->show();
+			return;
+		}
+
+		readerG = new IO::Reader::TIFF(threshold);
+		QStringList filenamesG = QFileDialog::getOpenFileNames(this, "Open multiple TIFF images (Red channel)", lastPath, "TIFF Files (*.tiff, *.tif)");
+		if (filenamesG.isEmpty() == false) {
+			std::vector<std::string> f;
+			for (const QString& fn : as_const(filenamesG)) {
+				f.push_back(fn.toStdString());
+				// update last path :
+				if (lastPath.isEmpty() == true) {
+					if (fn.isEmpty() == false) {
+						lastPath = QFileInfo(fn).path();
+					}
+				}
+			}
+			readerG->setFilenames(f);
+		} else {
+			QMessageBox* fileDialog = new QMessageBox();
+			fileDialog->critical(this, "Error", "Did not provide any filenames !");
+			fileDialog->setAttribute(Qt::WA_DeleteOnClose);
+			fileDialog->show();
+			return;
+		}
+	} else {
+		std::cerr << "No button was pressed." << '\n';
+		throw std::runtime_error("error : no button pressed");
+	}
+
+	levelBox->exec();
+
+	while (levelBox->clickedButton() == originalButton) {
+		confirmBox->exec();
+		if (confirmBox->clickedButton() == confirm_Accept) {
+			std::cerr << "Accepted full-res\n";
+			break;
+		}
+		else {
+			std::cerr << "Re-showing the dialog box\n";
+			levelBox->exec();
+		}
+	}
+
+	if (levelBox->clickedButton() == lowButton) {
+		readerR->enableDownsampling(IO::DownsamplingLevel::Low);
+		readerG->enableDownsampling(IO::DownsamplingLevel::Low);
+	}
+	if (levelBox->clickedButton() == lowerButton) {
+		readerR->enableDownsampling(IO::DownsamplingLevel::Lower);
+		readerG->enableDownsampling(IO::DownsamplingLevel::Lower);
+	}
+	if (levelBox->clickedButton() == lowestButton) {
+		readerR->enableDownsampling(IO::DownsamplingLevel::Lowest);
+		readerG->enableDownsampling(IO::DownsamplingLevel::Lowest);
+	}
+
+	// Set the interpolation method :
+	std::shared_ptr<Interpolators::genericInterpolator<IO::GenericGridReader::data_t>> interpolator =
+			std::make_shared<Interpolators::meanValue<IO::GenericGridReader::data_t>>();
+	readerR->setInterpolationMethod(interpolator);
+	readerG->setInterpolationMethod(interpolator);
+
+	std::string meshpath; // filepath for the MESH file
+	QString filename = QFileDialog::getOpenFileName(this, "Open a MESH", lastPath, "Mesh (*.MESH)");
+	if (filename.isEmpty() == false) {
+		meshpath = filename.toStdString();
+	} else {
+		delete readerR;
+		delete readerG;
+		QMessageBox* fileDialog = new QMessageBox();
+		fileDialog->critical(this, "Error", "Did not provide any filename !");
+		fileDialog->setAttribute(Qt::WA_DeleteOnClose);
+		fileDialog->show();
+		return;
+	}
+
+	// Set reader properties :
+	readerR->setDataThreshold(threshold);
+	readerG->setDataThreshold(threshold);
+	// Load the data :
+	readerR->loadImage();
+	readerG->loadImage();
+	// get texture bounds :
+	glm::vec<2, IO::GenericGridReader::data_t, glm::defaultp> limitsR = readerR->getTextureLimits();
+	glm::vec<2, IO::GenericGridReader::data_t, glm::defaultp> limitsG = readerG->getTextureLimits();
+	glm::vec<2, IO::GenericGridReader::data_t, glm::defaultp> limits{ std::min(limitsR.x, limitsG.x), std::max(limitsR.y, limitsG.y) };
+	this->scene->slotSetMinColorValue(limits.x);
+	this->scene->slotSetMaxColorValue(limits.y);
+
+	// Update data from the grid reader :
+	inputGrid->fromGridReader(*readerR);
+	otherGrid->fromGridReader(*readerG);
+
+	// free up the reader's resources :
+	delete readerR;
+	delete readerG;
+
+	this->makeCurrent();
+	this->scene->addTwoGrids(inputGrid, otherGrid, meshpath);
+	this->doneCurrent();
+
+	std::cerr << "Added input grid to scene\n";
+
+	glm::vec3 bbDiag = this->scene->getSceneCenter();
+	float sceneSize = this->scene->getSceneRadius();
 
 	this->setSceneRadius(sceneSize*sceneRadiusMultiplier);
 	// center scene on center of grid

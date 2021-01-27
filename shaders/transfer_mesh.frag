@@ -71,7 +71,40 @@ uniform vec3 visuBBMin;
 uniform vec3 visuBBMax;
 uniform bool shouldUseBB;
 
-vec4 voxelIdxToColor(in uvec3 ucolor) {
+uniform uint nbChannels;
+
+vec4 voxelIdxToColor_1channel(in uvec3 ucolor) {
+	// Have the R and G color channels clamped to the min/max of the scale
+	// (mimics under or over-exposure)
+	float color_r = clamp(float(ucolor.r), colorBounds.x, colorBounds.y);
+	float color_g = clamp(float(ucolor.r), colorBounds.x, colorBounds.y);
+	// Compute the color as Brian's paper describes it :
+	float color_k = 2.5;
+	float sc = colorBounds.y - colorBounds.x;
+	float eosin = (color_r - colorBounds.x)/(sc);
+	float dna = (color_g - colorBounds.x)/(sc); // B is on G channel because OpenGL only allows 2 channels upload to be RG, not RB
+
+	float eosin_r_coef = 0.050;
+	float eosin_g_coef = 1.000;
+	float eosin_b_coef = 0.544;
+
+	float hematoxylin_r_coef = 0.860;
+	float hematoxylin_g_coef = 1.000;
+	float hematoxylin_b_coef = 0.300;
+
+	float r_coef = eosin_r_coef;
+	float g_coef = eosin_g_coef;
+	float b_coef = eosin_b_coef;
+
+	return vec4(
+		exp(-hematoxylin_r_coef * dna * color_k) * exp(-eosin_r_coef * eosin * color_k),
+		exp(-hematoxylin_g_coef * dna * color_k) * exp(-eosin_g_coef * eosin * color_k),
+		exp(-hematoxylin_b_coef * dna * color_k) * exp(-eosin_b_coef * eosin * color_k),
+		1.
+	);
+}
+
+vec4 voxelIdxToColor_2channel(in uvec3 ucolor) {
 	// Have the R and G color channels clamped to the min/max of the scale
 	// (mimics under or over-exposure)
 	float color_r = clamp(float(ucolor.r), colorBounds.x, colorBounds.y);
@@ -100,6 +133,11 @@ vec4 voxelIdxToColor(in uvec3 ucolor) {
 		exp(-hematoxylin_b_coef * dna * color_k) * exp(-eosin_b_coef * eosin * color_k),
 		1.
 	);
+}
+
+vec4 voxelIdxToColor(in uvec3 ucolor) {
+	if (nbChannels == 1u) { return voxelIdxToColor_1channel(ucolor); }
+	else { return voxelIdxToColor_2channel(ucolor); }
 }
 
 bool ComputeVisibility(vec3 point)
@@ -135,16 +173,18 @@ bool ComputeVisibility(vec3 point)
 
 vec3 getWorldCoordinates( in ivec3 _gridCoord )
 {
-	return vec3( (_gridCoord.x+0.5)*voxelSize.x,
+	vec4 p = vec4( (_gridCoord.x+0.5)*voxelSize.x,
 			(_gridCoord.y+0.5)*voxelSize.y,
-			(_gridCoord.z+0.5)*voxelSize.z );
+			(_gridCoord.z+0.5)*voxelSize.z, 1. );
+	return p.xyz;
 }
 
 ivec3 getGridCoordinates( in vec4 _P )
 {
-	return ivec3( int( _P.x/voxelSize.x ) ,
-				  int( _P.y/voxelSize.y ) ,
-				  int( _P.z/voxelSize.z ) );
+	vec4 pw = _P;
+	return ivec3( int( pw.x/voxelSize.x ) ,
+			int( pw.y/voxelSize.y ) ,
+			int( pw.z/voxelSize.z ) );
 }
 
 ivec2 Convert1DIndexTo2DIndex_Unnormed( in uint uiIndexToConvert, in int iWrapSize )
@@ -345,11 +385,11 @@ void getFirstRayVoxelIntersection( in vec3 origin, in vec3 direction, out ivec3 
 	v0 = getGridCoordinates(vec4(origin.xyz, 1.));
 
 	float xi = v0.x*voxelSize.x;
-	if( direction.x > 0  ) xi = xi + voxelSize.x;
+	if( direction.x > 0 ) xi = xi + voxelSize.x;
 	float yi = v0.y*voxelSize.y;
-	if( direction.y > 0  ) yi = yi + voxelSize.y;
+	if( direction.y > 0 ) yi = yi + voxelSize.y;
 	float zi = v0.z*voxelSize.z;
-	if( direction.z > 0  ) zi = zi + voxelSize.z;
+	if( direction.z > 0 ) zi = zi + voxelSize.z;
 	t_n = vec3 ( ((xi - origin.x)/direction.x), ((yi - origin.y)/direction.y), ((zi - origin.z)/direction.z) );
 
 	if( abs( direction.x ) < 0.00001 ) t_n.x = 100000000;
@@ -379,18 +419,18 @@ vec3 phongComputation(vec4 position, vec3 normal, vec4 color, vec3 lightPos, vec
 void main (void) {
 	if( visibility > 3500. ) discard;
 
-	float epsilon = 0.00;
+	float epsilon = 0.00; //3;
 	float distMin = min(barycentricCoords.x/largestDelta.x, min(barycentricCoords.y/largestDelta.y, barycentricCoords.z/largestDelta.z));
 
 	// Enables a 1-pass wireframe mode :
-	if (distMin < epsilon && visibility > 0.) {
+	if (distMin < epsilon) {// && visibility > 0.) {
 		float factor = (visibility/3500.);
 		colorOut = vec4(1.-factor, factor, 1.-factor, 1.);
 		return;
 	}
 
 	// Default color of the fragment : cyan
-	colorOut = vec4(.0, .8, .8, 1.);
+	colorOut = vec4(.0, .0, .0, .0);
 
 	vec3 V = normalize(P.xyz - cam);
 
@@ -423,13 +463,13 @@ void main (void) {
 	//Find the first intersection of the ray with the grid
 	getFirstRayVoxelIntersection(Current_P, V, origin_voxel, t_next );
 
-	vec3 dt = vec3( abs(voxelSize.x/V.x), abs(voxelSize.y/V.y), abs(voxelSize.z/V.z) );
+	vec3 dt = vec3( abs(voxelSize.xyz/V.xyz) );
 
 	/***********************************************/
 
 	vec3 Current_text3DCoord;
 
-	vec4 Pos = vec4(0.,0.,0.,0.);
+	vec4 Pos = vec4(0.,0.,0.,1.);
 
 	vec4 color = vec4 (0.6,0.,0.6,1.);
 
@@ -477,12 +517,20 @@ void main (void) {
 				n = normals[4];
 		}
 
+		// if (next_voxel.x < 0) { colorOut.x += .3; }
+		// if (next_voxel.y < 0) { colorOut.y += .3; }
+		// if (next_voxel.z < 0) { colorOut.z += .5; }
+
 		float ld0, ld1, ld2, ld3;
 		Current_P = Current_P + 0.0001*v_step*V; // guess it's for not self-intersecting ?
 		// If the barycentric coordinates are valid, then :
 		if( computeBarycentricCoordinates( Current_P, ld0, ld1, ld2, ld3) ){
 			int id_tet;
 			vec3 voxel_center_P = getWorldCoordinates( next_voxel );
+			// colorOut.xyz = voxel_center_P / (gridSize); return;
+			// if (voxel_center_P.x < 0) { colorOut.x = 1.; colorOut.a = 1.; return; }
+			// if (voxel_center_P.y < 0) { colorOut.y = 1.; colorOut.a = 1.; return; }
+			// if (voxel_center_P.z < 0) { colorOut.z = 1.; colorOut.a = 1.; return; }
 			// Recursively traverse the texture, using barycentric coords to 'jump' to another
 			// tetrahedra if needed :
 			if( computeBarycentricCoordinatesRecursive( voxel_center_P, ld0, ld1, ld2, ld3, int(instanceId+0.5), id_tet, maxTetrIter, Current_text3DCoord ) ){
@@ -508,7 +556,6 @@ void main (void) {
 
 	if(!in_tet || !hit) discard;
 
-	colorOut = vec4(.0, .0, .0, 1.);
 	// Phong details :
 	float phongAmbient = .5;
 	mat3 lightDetails = mat3(
@@ -516,21 +563,19 @@ void main (void) {
 		vec3(.0, 1., .0),	// light specular color
 		vec3(.0, .0, .0)	// nothing
 	);
-	float factor = (1./1.) * (1. - phongAmbient -.1);
+	float factor = (1. - phongAmbient) / 3.;
 	vec3 phongDetails = vec3(
-		factor,	// kd = diffuse coefficient
-		.1/1.,	// ks = specular coefficient
+		factor*.8,	// kd = diffuse coefficient
+		factor*.2,	// ks = specular coefficient
 		5.	// Shininess
 	);
-
-	colorOut.xyz = phongAmbient * color.xyz;
+	colorOut.a = 1.;
+	colorOut.xyz += phongAmbient * color.xyz;
 	// Phong computation :
-	for (int i = 0; i < 8; ++i) {
-	}
-	//colorOut.xyz += phongComputation(Pos, n, color, lightPositions[0], phongDetails, lightDetails);
-	//colorOut.xyz += phongComputation(Pos, n, color, lightPositions[4], phongDetails, lightDetails);
-	// camera light :
-	colorOut.xyz += phongComputation(Pos, n, color, cam, phongDetails, lightDetails);;
+	colorOut.xyz += phongComputation(Pos, n, color, lightPositions[0], phongDetails, lightDetails);
+	colorOut.xyz += phongComputation(Pos, n, color, lightPositions[4], phongDetails, lightDetails);
+	// Phong for camera light :
+	colorOut.xyz += phongComputation(Pos, n, color, cam, phongDetails, lightDetails);
 
 	return;
 }
