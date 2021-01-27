@@ -7,9 +7,12 @@ INCLUDE(./cmake/CMakeSetup.cmake)
 INCLUDE(./cmake/FindQGLViewer.cmake)
 
 FIND_PACKAGE(Qt5 REQUIRED COMPONENTS Core Gui Widgets Xml OpenGL)
-FIND_PACKAGE(Threads REQUIRED)
 FIND_PACKAGE(OpenGL REQUIRED)
-FIND_PACKAGE(glm REQUIRED)
+FIND_PACKAGE(Threads REQUIRED)
+
+ADD_SUBDIRECTORY(glm)
+
+MESSAGE(STATUS "GLM library directory : ${GLM_INCLUDE_DIRS}")
 
 # TinyTIFF Library {{{
 ADD_LIBRARY(libtiff STATIC
@@ -30,7 +33,6 @@ SET(TIF_LIB libtiff)
 # Neighbor visualisation (Test variant) {{{
 ADD_EXECUTABLE(neighbor_visu
 	# Header files, for Qt MOCS compilation :
-	./qt/include/control_panel.hpp
 	./qt/include/grid_control.hpp
 	./qt/include/grid_detailed_view.hpp
 	./qt/include/grid_list_view.hpp
@@ -39,7 +41,6 @@ ADD_EXECUTABLE(neighbor_visu
 	./qt/include/qt_proxies.hpp
 	./qt/include/viewer_header.hpp
 	./qt/include/visu_box_controller.hpp
-	./qt/include/opengl_debug_log.hpp
 
 	./viewer/include/scene.hpp
 	./viewer/include/planar_viewer.hpp
@@ -58,7 +59,6 @@ ADD_EXECUTABLE(neighbor_visu
 	./neighbor_visu_main.cpp
 
 	# Source files :
-	./qt/src/control_panel.cpp
 	./qt/src/grid_control.cpp
 	./qt/src/grid_detailed_view.cpp
 	./qt/src/grid_list_view.cpp
@@ -67,7 +67,6 @@ ADD_EXECUTABLE(neighbor_visu
 	./qt/src/qt_proxies.cpp
 	./qt/src/viewer_header.cpp
 	./qt/src/visu_box_controller.cpp
-	./qt/src/opengl_debug_log.cpp
 
 	./viewer/src/scene.cpp
 	./viewer/src/planar_viewer.cpp
@@ -83,8 +82,9 @@ ADD_EXECUTABLE(neighbor_visu
 	./image/src/writer.cpp
 )
 TARGET_INCLUDE_DIRECTORIES(neighbor_visu
+	PRIVATE ./glm/
 	PRIVATE ${OPENGL_INCLUDE_DIRS}
-	PRIVATE ${GLM_INCLUDE_DIRS}
+	PRIVATE ${QGLViewer_HEADER_DIR}
 )
 TARGET_LINK_LIBRARIES(neighbor_visu
 	PUBLIC Qt5::Core
@@ -92,9 +92,9 @@ TARGET_LINK_LIBRARIES(neighbor_visu
 	PUBLIC Qt5::Xml
 	PUBLIC Qt5::Widgets
 	PUBLIC Qt5::OpenGL
-	PUBLIC OpenGL
+	PUBLIC ${OPENGL_LIBRARIES}
+	PUBLIC ${QGLViewer}
 	PUBLIC ${TIF_LIB}
-	PUBLIC ${QGLViewer_LIBRARY}
 )
 # }}}
 

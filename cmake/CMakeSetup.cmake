@@ -6,7 +6,7 @@
 
 # We cannot currently compile on Windows (coming at a later date)
 IF(WIN32 OR MINGW OR MSVC)
-	MESSAGE(FATAL_ERROR "This project cannot YET be compiled on a Windows platform.\nWindows support will be coming later.")
+        LIST(APPEND CMAKE_PREFIX_PATH "${GLM_HINT}")
 ENDIF()
 
 # Requiring an out-of-source build
