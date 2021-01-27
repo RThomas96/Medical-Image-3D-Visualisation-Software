@@ -207,6 +207,8 @@ namespace IO {
 		std::size_t slicesToLoad = 1;
 		// Compute voxel and grid sizes :
 		sizevec3 dataDims = this->imageDimensions;
+		std::cerr << "\tOriginal file dimensions : {" << dataDims.x << ',' << dataDims.y << ',' << dataDims.z << "}\n";
+		std::cerr << "\tOriginal vox  dimensions : {" << this->voxelDimensions.x << ',' << this->voxelDimensions.y << ',' << this->voxelDimensions.z << "}\n";
 		if (this->downsampleLevel == DownsamplingLevel::Low) {
 			dataDims /= std::size_t(2); this->voxelDimensions *= 2.; slicesToLoad = 2;
 		}
@@ -217,6 +219,8 @@ namespace IO {
 			dataDims /= std::size_t(8); this->voxelDimensions *= 8.; slicesToLoad = 8;
 		}
 		this->gridDimensions = dataDims;
+		std::cerr << "\tNew      img  dimensions : {" << dataDims.x << ',' << dataDims.y << ',' << dataDims.z << "}\n";
+		std::cerr << "\tNew      vox  dimensions : {" << this->voxelDimensions.x << ',' << this->voxelDimensions.y << ',' << this->voxelDimensions.z << "}\n";
 
 		// Get the max coord as a bounding box-type vector :
 		using val_t = bbox_t::vec::value_type;
@@ -225,6 +229,7 @@ namespace IO {
 			static_cast<val_t>(this->gridDimensions.y) * static_cast<val_t>(this->voxelDimensions.y),
 			static_cast<val_t>(this->gridDimensions.z) * static_cast<val_t>(this->voxelDimensions.z)
 		);
+		std::cerr << "\tMax bounding box point   : {" << maxCoord.x << ',' << maxCoord.y << ',' << maxCoord.z << "}\n";
 
 		// Set the bounding box to the grid*voxel dimensions :
 		this->boundingBox.setMin(bbox_t::vec(0, 0, 0));
@@ -279,6 +284,8 @@ namespace IO {
 								std::size_t i_x = i * slicesToLoad;
 								std::size_t i_y = (j * slicesToLoad + y) * this->imageDimensions.x;
 								std::size_t i_z = (z) * this->imageDimensions.x * this->imageDimensions.y;
+								// here z is untouched because we have only loaded the slices to
+								// 'merge' with the interpolator. we don't need to to (k*slice + z)
 								std::size_t iter = i_x + i_y + i_z;
 								// read 'slicesToLoad' elements from the grid :
 								interpolationIterator = interpolationData.insert(interpolationIterator, rawSlices.begin()+iter, rawSlices.begin()+iter+slicesToLoad);
@@ -286,6 +293,7 @@ namespace IO {
 						}
 
 						data_t pixelVal = (*this->interpolator)(slicesToLoad, interpolationData);
+						interpolationData.clear();
 						std::size_t idx = i + j * this->gridDimensions.x;
 						curSlice[idx] = pixelVal;
 					}
@@ -367,7 +375,7 @@ namespace IO {
 
 		// automatically advances the internal std::basic_ifstream position indicator in order to read the
 		// next data whenever std::basic_ifstream::read is called another time :
-		this->imaFile->read((char*)tgt.data(), this->imageDimensions.x * this->imageDimensions.y);
+		this->imaFile->read((char*)tgt.data(), this->imageDimensions.x * this->imageDimensions.y * sizeof(data_t));
 
 		// analyze to find raw min/max values :
 		std::for_each(std::begin(tgt), std::end(tgt), [this](const data_t& d) -> void {

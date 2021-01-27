@@ -115,9 +115,9 @@ namespace IO {
 		this->writeDIMInfo(_vg);
 
 		// Write the data about the grid in bulk to the IMA file :
-		const unsigned char* data = _vg->getDataPtr();
+		const data_t* data = _vg->getDataPtr();
 		DiscreteGrid::sizevec3 size = _vg->getResolution();
-		this->outputIMA->write((const char*)data, size.x * size.y * size.z * sizeof(unsigned char));
+		this->outputIMA->write((const char*)data, size.x * size.y * size.z * sizeof(data_t));
 		// FIXME : think the cast might not work here ... to see and test
 
 		// Fixes a bug where the contents of the file for DIM
@@ -167,7 +167,7 @@ namespace IO {
 	}
 
 	void SingleTIFFWriter::openTIFFFile(const std::shared_ptr<DiscreteGrid>& _vg) {
-		uint16_t bps = static_cast<uint16_t>(sizeof(unsigned char));
+		uint16_t bps = static_cast<uint16_t>(sizeof(data_t));
 		svec3 dims = _vg->getResolution();
 		uint32_t width = static_cast<uint32_t>(dims.x);
 		uint32_t height = static_cast<uint32_t>(dims.y);
@@ -196,7 +196,7 @@ namespace IO {
 		}
 
 		// Get the data :
-		const unsigned char* data = _vg->getDataPtr();
+		const data_t* data = _vg->getDataPtr();
 		svec3 gridDims = _vg->getResolution();
 		std::size_t faceOffset = gridDims.x * gridDims.y;
 

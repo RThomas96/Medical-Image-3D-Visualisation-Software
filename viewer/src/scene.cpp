@@ -409,7 +409,7 @@ void Scene::addGrid(const std::shared_ptr<InputGrid> _grid, std::string meshPath
 
 void Scene::addTwoGrids(const std::shared_ptr<InputGrid> _gridR, const std::shared_ptr<InputGrid> _gridB, std::string meshPath) {
 	GridGLView gridView(_gridR);
-	gridView.grid->setTransform_GridToWorld(this->computeTransformationMatrix(_gridR));
+	//gridView.grid->setTransform_GridToWorld(this->computeTransformationMatrix(_gridR));
 
 	TextureUpload gridTexture{};
 	gridTexture.minmag.x = GL_NEAREST;
@@ -474,6 +474,11 @@ void Scene::updateBoundingBox(void) {
 	for (std::size_t i = 0; i < this->grids.size(); ++i) {
 		this->sceneBB.addPoints(this->grids[i].grid->getBoundingBoxWorldSpace().getAllCorners());
 	}
+
+	DiscreteGrid::bbox_t::vec min = this->sceneBB.getMin();
+	DiscreteGrid::bbox_t::vec max = this->sceneBB.getMax();
+	std::cerr << "\tScene BB min : {" <<min.x<<',' << min.y << ',' << min.z << "}\n";
+	std::cerr << "\tScene BB max : {" <<max.x<<',' << max.y << ',' << max.z << "}\n";
 
 	// Update light positions :
 	auto corners = this->sceneBB.getAllCorners();
@@ -1338,7 +1343,7 @@ void Scene::prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane, cons
 	glm::mat4 transform = glm::mat4(1.f);
 	glm::mat4 gridTransfo = grid.grid->getTransform_GridToWorld();
 	DiscreteGrid::bbox_t bbws = grid.grid->getBoundingBoxWorldSpace();
-	glm::vec3 dims = glm::convert_to<glm::vec3::value_type>(grid.grid->getResolution());
+	glm::vec3 dims = glm::convert_to<glm::vec3::value_type>(grid.grid->getResolution()) * grid.grid->getVoxelDimensions();
 	glm::vec3 size = bbws.getDiagonal();
 	GLint plIdx = (_plane == planes::x) ? 1 : (_plane == planes::y) ? 2 : 3;
 	GetOpenGLError();
@@ -1400,7 +1405,7 @@ void Scene::prepPlane_SingleUniforms(planes _plane, planeHeading _heading, glm::
 	// Grid transform :
 	glm::mat4 gridTransform = _grid.grid->getTransform_WorldToGrid();
 	// Grid dimensions :
-	glm::vec3 gridDimensions = glm::convert_to<glm::vec3::value_type>(_grid.grid->getResolution()) * _grid.grid->getVoxelDimensions();
+	glm::vec3 gridDimensions = glm::convert_to<glm::vec3::value_type>(_grid.grid->getBoundingBox().getDiagonal());
 
 	// Depth of the plane :
 	DiscreteGrid::bbox_t::vec position = this->sceneBB.getMin();
@@ -2062,12 +2067,9 @@ float Scene::getSceneRadius() {
 		glm::vec3 planePos = (this->sceneBB.getMin() + this->planeDisplacement * this->sceneBB.getDiagonal());
 		glm::vec3 min = glm::vec3(), max = glm::vec3();
 
-		if (this->planeDirection.x < 0) { min.x = bbmin.x; max.x = planePos.x; }
-		else { min.x = planePos.x; max.x = bbmax.x; }
-		if (this->planeDirection.x < 0) { min.y = bbmin.y; max.y = planePos.y; }
-		else { min.y = planePos.y; max.y = bbmax.y; }
-		if (this->planeDirection.x < 0) { min.z = bbmin.z; max.z = planePos.z; }
-		else { min.z = planePos.z; max.z = bbmax.z; }
+		if (this->planeDirection.x < 0) { min.x = bbmin.x; max.x = planePos.x; } else { min.x = planePos.x; max.x = bbmax.x; }
+		if (this->planeDirection.y < 0) { min.y = bbmin.y; max.y = planePos.y; } else { min.y = planePos.y; max.y = bbmax.y; }
+		if (this->planeDirection.z < 0) { min.z = bbmin.z; max.z = planePos.z; } else { min.z = planePos.z; max.z = bbmax.z; }
 
 		glm::vec3 diag = max - min;
 		return glm::length(diag);
@@ -2088,12 +2090,9 @@ glm::vec3 Scene::getSceneCenter() {
 		glm::vec3 planePos = (this->sceneBB.getMin() + this->planeDisplacement * this->sceneBB.getDiagonal());
 		glm::vec3 min = glm::vec3(), max = glm::vec3();
 
-		if (this->planeDirection.x < 0) { min.x = bbmin.x; max.x = planePos.x; }
-		else { min.x = planePos.x; max.x = bbmax.x; }
-		if (this->planeDirection.y < 0) { min.y = bbmin.y; max.y = planePos.y; }
-		else { min.y = planePos.y; max.y = bbmax.y; }
-		if (this->planeDirection.z < 0) { min.z = bbmin.z; max.z = planePos.z; }
-		else { min.z = planePos.z; max.z = bbmax.z; }
+		if (this->planeDirection.x < 0) { min.x = bbmin.x; max.x = planePos.x; } else { min.x = planePos.x; max.x = bbmax.x; }
+		if (this->planeDirection.y < 0) { min.y = bbmin.y; max.y = planePos.y; } else { min.y = planePos.y; max.y = bbmax.y; }
+		if (this->planeDirection.z < 0) { min.z = bbmin.z; max.z = planePos.z; } else { min.z = planePos.z; max.z = bbmax.z; }
 
 		glm::vec3 diag = max - min;
 		return min + diag/2.f;
@@ -2216,6 +2215,8 @@ void Scene::tex3D_buildMesh(GridGLView& grid, const std::string path) {
 		mesh.normals.push_back(std::array<glm::vec4, 4>{glm::vec4(.0f), glm::vec4(.0f), glm::vec4(.0f), glm::vec4(.0f)});
 	}
 
+	std::cerr << "resized neighbors\n";
+
 	// Adjacency map :
 	std::map< Face , std::pair<int, int> > adjacent_faces;
 	// generate the correspondance by looking at which faces are similar : [MEDIUM/HEAVY COMPUTATION]
@@ -2235,6 +2236,8 @@ void Scene::tex3D_buildMesh(GridGLView& grid, const std::string path) {
 		}
 	}
 
+	std::cerr << "created adj map" << '\n';
+
 	// determine the size of the texture, depending on the # of tetrahedron neighbors :
 	std::size_t vertWidth = 0, vertHeight = 0;
 	std::size_t normWidth = 0, normHeight = 0;
@@ -2248,10 +2251,19 @@ void Scene::tex3D_buildMesh(GridGLView& grid, const std::string path) {
 
 	grid.volumetricMesh.tetrahedraCount = mesh.tetrahedra.size();
 
+	#ifdef DIRECT_FROM_VOLMESH_TO_ARRAY_SIZE
 	GLfloat* rawVertices = new GLfloat[grid.volumetricMesh.tetrahedraCount*4*3*3];
 	GLfloat* rawNormals = new GLfloat[grid.volumetricMesh.tetrahedraCount*4*4];
 	GLfloat* tex = new GLfloat[grid.volumetricMesh.tetrahedraCount*4*3*3];
 	GLfloat* rawNeighbors = new GLfloat[grid.volumetricMesh.tetrahedraCount*4*3];
+	#else
+	GLfloat* rawVertices = new GLfloat[vertWidth * vertHeight *3];
+	GLfloat* rawNormals = new GLfloat[normWidth * normHeight *4];
+	GLfloat* tex = new GLfloat[coorWidth * coorHeight *3];
+	GLfloat* rawNeighbors = new GLfloat[neighbWidth * neighbHeight *3];
+	#endif
+
+	std::cerr << "allocated arrays\n";
 
 	/*
 	Warning : the loop that follows is horribly bad : it duplicates every texture coordinate by the number of times
@@ -2297,6 +2309,8 @@ void Scene::tex3D_buildMesh(GridGLView& grid, const std::string path) {
 			iter+=3;
 		}
 	}
+
+	std::cerr << "built normals\n";
 
 	// Struct to upload the texture to OpenGL :
 	TextureUpload texParams = {};
@@ -2448,6 +2462,7 @@ void Scene::tex3D_loadMESHFile(const std::string file, const GridGLView& grid, V
 			}
 		}
 	}
+	std::cerr << "loadMesh() done\n";
 
 	myfile.close ();
 }

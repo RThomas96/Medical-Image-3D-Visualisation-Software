@@ -59,16 +59,16 @@ void main(void)
 
 	vec4 colorTex = vec4(.0, .0, .0, .0);
 
-	//if (showTex == true) {
-		if (texCoord.x > 0. && texCoord.x < 1.) {
-			if (texCoord.y > .0 && texCoord.y < 1.) {
-				if (texCoord.z > 0. && texCoord.z < 1.) {
+	if (texCoord.x > 0. && texCoord.x < 1.) {
+		if (texCoord.y > .0 && texCoord.y < 1.) {
+			if (texCoord.z > 0. && texCoord.z < 1.) {
+				if (showTex == true) {
 					uvec3 tex = texture(texData, texCoord).xyz;
 					colorTex = R8UIToRGB(tex);
 				}
 			}
 		}
-	//}
+	}
 
 	if (colorTex.a < .1f) { discard; }
 
@@ -157,7 +157,7 @@ vec4 R8UIToRGB_2channel(in uvec3 ucolor) {
 	);
 
 	// if we're not supposed to show the texture AND the plane isn't visible, then discard
-	if (showTex == false) { if(isPlaneVisible(false) == false) { color.a = .05; } }
+	if (showTex == false) { if(isPlaneVisible(intersectPlanes) == false) { color.a = .05; } }
 	return color;
 }
 

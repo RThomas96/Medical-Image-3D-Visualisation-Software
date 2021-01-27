@@ -38,6 +38,8 @@ namespace IO {
 	///     - TIFF single-frame files (1 stack = n images)
 	///     - (Soon) NIFTI files // TODO : Implement a NIFTIWriter
 	class GenericGridWriter {
+		public:
+			typedef unsigned char data_t;
 		protected:
 			/// @brief The base constructor of a grid writer, with the base name of the
 			/// file (without extensions).

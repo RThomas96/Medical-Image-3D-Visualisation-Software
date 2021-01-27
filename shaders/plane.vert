@@ -53,7 +53,7 @@ void main(void) {
 	Vertex position will always be normalized (i.e., in [0, 1]). We need to apply the correct size multiplier and
 	the correct displacement in order to get the 'real' position of a vertex within that plane.
 	*/
-	vec4 vPos_ws = sceneBBPosition4 + (vertexPosition * gridSize4) + planeIdxToPlanePosition(currentPlane);
+	vec4 vPos_ws = sceneBBPosition4 + (vertexPosition * vec4(sceneBBDiagonal,1.)) + planeIdxToPlanePosition(currentPlane);
 	// We want to make the positions go from WS to GS, so invert the matrix to transform :
 	vec4 vPos_gs = inverse(gridTransform) * vPos_ws;
 	vec4 vPos_ts = (vPos_gs) / gridDimensions4;
