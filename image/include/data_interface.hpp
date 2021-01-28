@@ -18,30 +18,67 @@ namespace IO {
 			/// @brief Pixel type, used for getPixel().
 			/// @details Similar to OpenGL, whatever the dimensionnality of the data, queries return a vec4.
 			using pixel_t = glm::vec<4, T, glm::defaultp>;
-		public:
+			/// @brief Position and type within the image.
+			/// @details Allows to get a position (X,Y,Z). The color channel will be separate.
+			using pos_t = glm::vec<3, std::size_t, glm::defaultp>;
+			/// @brief Size type within the image.
+			/// @details Allows to define a size (X,Y,Z), with the number of color channels as 'A'.
+			using size_t = glm::vec<3, std::size_t, glm::defaultp>;
+
+		protected:
+			/// @brief Default constructor. Made protected so as not to call it directly.
 			DataInterface() = default;
-			~DataInterface(void) = default;
+
 		public:
+			/// @brief Default deletor. Will release the resources allocated in this class.
+			~DataInterface(void) = default;
+
 			/// @brief Common interface to load information from the disk, overriden in derived classes.
-			virtual void loadInformation(void);
+			virtual void loadInformation(void) = 0;
 			/// @brief Common interface to write information to the disk, overriden in derived classes.
-			virtual void writeInformation(void);
+			virtual void writeInformation(void) = 0;
 
+			/// @brief Get the currently set data threshold.
+			virtual data_t getDataThreshold(void) const = 0;
 			/// @brief Sets the data threshold for the class.
-			virtual DataInterface<T>& setDataThreshold(const T _thresh) = 0;
+			virtual DataInterface<T>& setDataThreshold(const data_t _thresh) = 0;
 
-			/// @brief Sets the filenames for the class.
-			virtual DataInterface<T>& setFilenames(const std::vector<std::string>& fnames) = 0;
-			/// @brief Sets the file basename for file formats that are written in multiple files.
-			virtual DataInterface<T>& setFileBasename(const std::string& name) = 0;
+			/// @brief Get the image's resolution.
+			virtual size_t getResolution(void) const = 0;
+			/// @brief Sets the resolution of the image.
+			virtual DataInterface<data_t>& setResolution(size_t s) = 0;
 
-			/// @brief Sets the interpolation structure used to downsample images.
-			virtual DataInterface<T>& setInterpolator(const Interpolators::genericInterpolator<T>& i) = 0;
+			/// @brief Get the image's voxel sizes. If it cannot be read, this will return (1,1,1).
+			virtual glm::vec3 getVoxelDimensions(void) const = 0;
+			/// @brief Sets the voxel resolution for the image.
+			virtual DataInterface<data_t>& setVoxelDimensions(glm::vec3 dims) = 0;
 
 			/// @brief Returns a pixel's data, in the grid.
-			virtual pixel_t getPixel(std::size_t i, std::size_t j, std::size_t k) = 0;
-			/// @brief Set the pixel at coordinates (I,J,K) of channel 'C' to data 'D'
-			virtual DataInterface<T>& setPixel(std::size_t i, std::size_t j, std::size_t k, std::size_t c, data_t d) = 0;
+			virtual pixel_t getPixel(std::size_t i, std::size_t j, std::size_t k) const = 0;
+			/// @brief Set the pixel at coordinates 'pos' of channel 'C' to data 'D'
+			virtual DataInterface<data_t>& setPixel(pos_t pos, std::size_t c, data_t d) = 0;
+
+			/// @brief Get the image that lives on disk/in memory, downsampled to 'target_size'.
+			virtual std::vector<pixel_t> getImageDownsampled(pos_t target_size) = 0;
+			/// @brief Get a sub-image of the currently loaded image.
+			virtual std::vector<pixel_t> getSubImage(pos_t begin, pos_t size) const = 0;
+
+			/**********************************/
+			/* File names, paths and basename */
+			/**********************************/
+
+			/// @brief Get the filenames associated with the data interface.
+			virtual std::vector<std::string> getFilenames(void) = 0;
+			/// @brief Sets the filenames for the class.
+			virtual DataInterface<data_t>& setFilenames(const std::vector<std::string>& fnames) = 0;
+			/// @brief Get the file's basename, if it exists.
+			virtual std::string getFileBasename(void) = 0;
+			/// @brief Sets the file basename for file formats that are written in multiple files.
+			virtual DataInterface<data_t>& setFileBasename(const std::string& name) = 0;
+			/// @brief Gets the base file path for the image save directory.
+			virtual std::string getFilePath(void) = 0;
+			/// @brief Sets the base file path for the image save directory.
+			virtual DataInterface<data_t>& setFilePath(const std::string _path) = 0;
 	};
 
 }
