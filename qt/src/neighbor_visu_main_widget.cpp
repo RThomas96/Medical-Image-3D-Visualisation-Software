@@ -8,6 +8,7 @@
 #include <QSizePolicy>
 #include <QToolBar>
 #include <QMenuBar>
+#include <QList>
 #include <QStatusBar>
 
 MainWidget::MainWidget() {
@@ -56,9 +57,8 @@ void MainWidget::setupWidgets() {
 	this->showGLLog = new QPushButton("Show GL log");
 	this->statusBar->addPermanentWidget(this->showGLLog);
 	this->setStatusBar(this->statusBar);
-	QObject::connect(this->showGLLog, &QPushButton::clicked, this->glDebug, &QWidget::show);
-
 	this->scene->addStatusBar(this->statusBar);
+	QObject::connect(this->showGLLog, &QPushButton::clicked, this->glDebug, &QWidget::show);
 
 	// Actions creation :
 	this->action_add1Grid = new QAction("Open acquisition (1 channel only)");
@@ -138,11 +138,14 @@ void MainWidget::setupWidgets() {
 	yViewerCapsule->setLayout(vPY);
 	zViewerCapsule->setLayout(vPZ);
 
+	int max = std::numeric_limits<int>::max();
 	// Add to splits in order to show them all :
 	splitAbove->addWidget(_ViewerCapsule);
 	splitAbove->addWidget(xViewerCapsule);
+	splitAbove->setSizes(QList<int>({max, max}));
 	splitAbove1->addWidget(yViewerCapsule);
 	splitAbove1->addWidget(zViewerCapsule);
+	splitAbove1->setSizes(QList<int>({max, max}));
 	// Add the sub-splits to the main one :
 	mainSplit->addWidget(splitAbove);
 	mainSplit->addWidget(splitAbove1);
@@ -150,10 +153,9 @@ void MainWidget::setupWidgets() {
 	QHBoxLayout* viewerLayout = new QHBoxLayout();
 	viewerLayout->addWidget(mainSplit);
 
-	QHBoxLayout* mainLayout = new QHBoxLayout();
-	mainLayout->addWidget(this->controlPanel);
+	QVBoxLayout* mainLayout = new QVBoxLayout();
 	mainLayout->addLayout(viewerLayout);
-	mainLayout->setAlignment(this->controlPanel, Qt::AlignVCenter);
+	mainLayout->addWidget(this->controlPanel, 0, Qt::AlignHCenter);
 
 	// add pointers to Qobjects needed for this widget
 	// that we need to detroy at cleanup time :
@@ -166,13 +168,12 @@ void MainWidget::setupWidgets() {
 	this->strayObj.push_back(viewerLayout);
 	this->strayObj.push_back(mainLayout);
 
+	QSize v = viewerLayout->sizeHint();
+	this->controlPanel->setMinimumWidth(static_cast<int>(static_cast<float>(v.width()) * .7f));
+
 	QWidget* mainWidget = new QWidget();
 	mainWidget->setLayout(mainLayout);
 	this->setCentralWidget(mainWidget);
-
-	QSizePolicy policy;
-	QSize vSize = viewerLayout->sizeHint();
-	this->controlPanel->setFixedHeight(static_cast<int>(static_cast<float>(vSize.height()) * .75f));
 
 	this->installEventFilter(this);
 }
@@ -181,12 +182,11 @@ bool MainWidget::eventFilter(QObject* obj, QEvent* e) {
 	// Set our code to run after the original event handling :
 	if (this->widgetSizeSet == false && obj == this && e->type() == QEvent::Show) {
 		this->widgetSizeSet = true;
+		this->resize(1024, 576);
+		this->setMinimumSize(768, 432);
 		// lock control panel size to the current size it has :
-		this->controlPanel->setMinimumSize(this->controlPanel->size());
-		this->controlPanel->setMaximumSize(this->controlPanel->size());
-		// set the viewer to have a minimum size of controlPanelSize on width/height :
-		this->viewer->setMinimumWidth(this->controlPanel->minimumWidth());
-		this->viewer->setMinimumHeight(this->controlPanel->minimumWidth()/2);
+		QSize centerSize = this->size();
+		this->controlPanel->setMinimumWidth(static_cast<int>(static_cast<float>(centerSize.width()) * .9f));
 	}
 	// Return false, to handle the rest of the event normally
 	return false;

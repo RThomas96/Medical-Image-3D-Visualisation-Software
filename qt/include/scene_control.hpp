@@ -4,6 +4,7 @@
 #include "../../macros.hpp"
 #include "../../features.hpp"
 
+#include <QLabel>
 #include <QWidget>
 #include <QSlider>
 #include <QCheckBox>
@@ -12,7 +13,7 @@
 
 #include <iostream>
 
-#define CONTROLLER_USE_SLIDERS
+#define COLOR_CONTROL
 
 class Scene; // forward declaration
 class Viewer; // forward declaration
@@ -33,8 +34,11 @@ class ControlPanel : public QWidget {
 
 		QSlider* minValueTexture; ///< Slider to determine the min value in the texture which constitutes viable information
 		QSlider* maxValueTexture; ///< Slider to determine the max value in the texture which constitutes viable information
-		QSlider* minValueColor; ///< Slider to determine the min color value to determine the color scale
-		QSlider* maxValueColor; ///< Slider to determine the max color value to determine the color scale
+
+		QLabel* label_minTexLeft;	///< Label for the min value of the texture slider (left)
+		QLabel* label_maxTexLeft;	///< Label for the max value of the texture slider (left)
+		QLabel* label_minTexRight;	///< Label for the min value of the texture slider (right)
+		QLabel* label_maxTexRight;	///< Label for the max value of the texture slider (right)
 
 		QWidget* controlContainer;
 		Viewer* leftViewer;
