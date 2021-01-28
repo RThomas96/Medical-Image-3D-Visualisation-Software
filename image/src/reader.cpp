@@ -345,8 +345,12 @@ namespace IO {
 		}
 
 		// Open the files, and check they are open
+		/*
 		this->dimFile = new std::ifstream(dim_input_file_path);
 		this->imaFile = new std::ifstream(ima_input_file_path);
+		*/
+		this->dimFile = new std::ifstream(dim_input_file_path, std::ios_base::in | std::ios_base::binary);
+		this->imaFile = new std::ifstream(ima_input_file_path, std::ios_base::in | std::ios_base::binary);
 
 		if ((not this->dimFile->is_open()) or (not this->imaFile->is_open())) {
 			this->dimFile->close();
@@ -368,8 +372,9 @@ namespace IO {
 			std::cerr << "[ERROR] IMA file was not open at the moment to call loadSlice()" << '\n';
 			return *this;
 		}
-		if (not this->imaFile->good()) {
-			std::cerr << "[ERROR] IMA file has suffered an irrecuperable error. (std::basic_ios::good() == false)\n";
+		if (this->imaFile->fail()) {
+			std::cerr << "[ERROR] IMA file has suffered an irrecuperable error at slice " << idx << ". (std::basic_ios::fail() == true)\n";
+			std::cerr << "Error message : " << strerror(errno) << "\n";
 			return *this;
 		}
 
