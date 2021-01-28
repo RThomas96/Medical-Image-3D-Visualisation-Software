@@ -62,7 +62,7 @@ class ViewerHeader : public QWidget {
 		/// @b Slider to control the cutting plane's depth
 		QSlider* slider_planeDepth;
 		/// @b Color for the widget's background
-		Qt::GlobalColor color;
+		QColor color;
 };
 
 class ViewerHeader3D : public QWidget {
@@ -90,6 +90,12 @@ class ViewerHeader3D : public QWidget {
 		QPushButton* button_togglePlane;
 		/// @b Button to reset the visu box
 		QPushButton* button_resetVisuBox;
+		/// @b Button to set solid drawing
+		QPushButton* button_setSolid;
+		/// @b Button to set volumetric mode
+		QPushButton* button_setVolumetric;
+		/// @b Button to set boxed view
+		QPushButton* button_setVolumetricBoxed;
 		/// @b Color for the widget's background
 		Qt::GlobalColor color;
 };

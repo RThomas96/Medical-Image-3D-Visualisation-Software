@@ -25,9 +25,9 @@ ViewerHeader::ViewerHeader(std::string name, QWidget* parent) : ViewerHeader(par
 	this->button_togglePlane = new QPushButton("Show ?");
 
 	// Remove padding :
-	this->button_invertPlaneCut->setStyleSheet("padding-left:padding-top; padding-right:padding-top;");
-	this->button_rotateClockwise->setStyleSheet("padding-left:padding-top; padding-right:padding-top;");
-	this->button_togglePlane->setStyleSheet("padding-left:padding-top; padding-right:padding-top;");
+	//this->button_invertPlaneCut->setStyleSheet("padding-left:padding-top; padding-right:padding-top;");
+	//this->button_rotateClockwise->setStyleSheet("padding-left:padding-top; padding-right:padding-top;");
+	//this->button_togglePlane->setStyleSheet("padding-left:padding-top; padding-right:padding-top;");
 
 	this->slider_planeDepth = new QSlider(Qt::Horizontal);
 
@@ -99,11 +99,11 @@ void ViewerHeader::registerWithViewer(void) {
 
 	// Choose the background color in the widget :
 	if (this->viewerToControl->planeToShow == planes::x) {
-		this->color = Qt::GlobalColor::red;
+		this->color = QColor::fromRgbF(.8, .0, .0);
 	} else if (this->viewerToControl->planeToShow == planes::y) {
-		this->color = Qt::GlobalColor::green;
+		this->color = QColor::fromRgbF(.0, .8, .0);
 	} else if (this->viewerToControl->planeToShow == planes::z) {
-		this->color = Qt::GlobalColor::blue;
+		this->color = QColor::fromRgbF(.0, .0, .8);
 	}
 
 	// Set the background color :
@@ -152,15 +152,21 @@ void ViewerHeader3D::setupWidgets() {
 	this->button_togglePlane = new QPushButton("Toggle all planes");
 	this->button_invertPlaneCut = new QPushButton("Invert all planes");
 	this->button_resetVisuBox = new QPushButton("Reset Cutting Box");
+	this->button_setSolid = new QPushButton("Solid");
+	this->button_setVolumetric = new QPushButton("Volumetric");
+	this->button_setVolumetricBoxed = new QPushButton("Box view");
 	this->layout = new QHBoxLayout;
 
+	this->layout->addWidget(this->button_setSolid);
+	this->layout->addWidget(this->button_setVolumetric);
+	this->layout->addWidget(this->button_setVolumetricBoxed);
 	this->layout->addWidget(this->button_togglePlane);
 	this->layout->addWidget(this->button_invertPlaneCut);
 	this->layout->addWidget(this->button_resetVisuBox);
 
-	this->button_invertPlaneCut->setStyleSheet("padding-left:padding-top; padding-right:padding-top;");
+	/*this->button_invertPlaneCut->setStyleSheet("padding-left:padding-top; padding-right:padding-top;");
 	this->button_resetVisuBox->setStyleSheet("padding-left:padding-top; padding-right:padding-top;");
-	this->button_togglePlane->setStyleSheet("padding-left:padding-top; padding-right:padding-top;");
+	this->button_togglePlane->setStyleSheet("padding-left:padding-top; padding-right:padding-top;");*/
 
 	QPalette colorPalette;
 	colorPalette.setColor(QPalette::Window, this->color);
@@ -175,6 +181,24 @@ void ViewerHeader3D::setupSignals() {
 		return;
 	}
 
+	QObject::connect(this->button_setSolid, &QPushButton::clicked, [this]() ->void {
+		if (this->sceneToControl == nullptr) { return; }
+		this->sceneToControl->setDrawMode(DrawMode::Solid);
+		if (this->viewerToUpdate == nullptr) { return; }
+		this->viewerToUpdate->update();
+	});
+	QObject::connect(this->button_setVolumetric, &QPushButton::clicked, [this]() ->void {
+		if (this->sceneToControl == nullptr) { return; }
+		this->sceneToControl->setDrawMode(DrawMode::Volumetric);
+		if (this->viewerToUpdate == nullptr) { return; }
+		this->viewerToUpdate->update();
+	});
+	QObject::connect(this->button_setVolumetricBoxed, &QPushButton::clicked, [this]() ->void {
+		if (this->sceneToControl == nullptr) { return; }
+		this->sceneToControl->setDrawMode(DrawMode::VolumetricBoxed);
+		if (this->viewerToUpdate == nullptr) { return; }
+		this->viewerToUpdate->update();
+	});
 	// connect plane visibility button :
 	QObject::connect(this->button_togglePlane, &QPushButton::clicked, [this]() ->void {
 		if (this->sceneToControl == nullptr) { return; }
