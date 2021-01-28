@@ -2207,12 +2207,11 @@ void Scene::tex3D_buildMesh(GridGLView& grid, const std::string path) {
 
 	VolMeshData mesh{};
 
-	std::string meshpath = path;
-	if (path.empty() == true) {
-		QString filename = QFileDialog::getOpenFileName(nullptr, "Open MESH file", "../../", "MESH Files (*.MESH, *.mesh)");
-		meshpath = filename.toStdString();
+	if (path.empty()) {
+		this->tex3D_generateMESH(grid, mesh);
+	} else {
+		this->tex3D_loadMESHFile(path, grid, mesh);
 	}
-	this->tex3D_loadMESHFile(meshpath, grid, mesh);
 
 	// Hard-coded indices smh, got to move to a more portable (and readable) solution :
 	std::size_t indices[4][3];
@@ -2228,8 +2227,6 @@ void Scene::tex3D_buildMesh(GridGLView& grid, const std::string path) {
 		mesh.neighbors[i].resize(4, -1);
 		mesh.normals.push_back(std::array<glm::vec4, 4>{glm::vec4(.0f), glm::vec4(.0f), glm::vec4(.0f), glm::vec4(.0f)});
 	}
-
-	std::cerr << "resized neighbors\n";
 
 	// Adjacency map :
 	std::map< Face , std::pair<int, int> > adjacent_faces;
@@ -2249,8 +2246,6 @@ void Scene::tex3D_buildMesh(GridGLView& grid, const std::string path) {
 			}
 		}
 	}
-
-	std::cerr << "created adj map" << '\n';
 
 	// determine the size of the texture, depending on the # of tetrahedron neighbors :
 	std::size_t vertWidth = 0, vertHeight = 0;
@@ -2276,8 +2271,6 @@ void Scene::tex3D_buildMesh(GridGLView& grid, const std::string path) {
 	GLfloat* tex = new GLfloat[coorWidth * coorHeight *3];
 	GLfloat* rawNeighbors = new GLfloat[neighbWidth * neighbHeight *3];
 	#endif
-
-	std::cerr << "allocated arrays\n";
 
 	/*
 	Warning : the loop that follows is horribly bad : it duplicates every texture coordinate by the number of times
@@ -2323,8 +2316,6 @@ void Scene::tex3D_buildMesh(GridGLView& grid, const std::string path) {
 			iter+=3;
 		}
 	}
-
-	std::cerr << "built normals\n";
 
 	// Struct to upload the texture to OpenGL :
 	TextureUpload texParams = {};
@@ -2479,6 +2470,72 @@ void Scene::tex3D_loadMESHFile(const std::string file, const GridGLView& grid, V
 	std::cerr << "loadMesh() done\n";
 
 	myfile.close ();
+}
+
+void Scene::tex3D_generateMESH(const GridGLView& grid, VolMeshData& mesh) {
+	/* std::vector<glm::vec4> vertices; ///< positions of the vertices, within the grid space
+	std::vector<glm::vec3> texCoords; ///< texture coordinates of the vertices, normalized
+	std::vector<std::array<std::size_t, 4>> tetrahedra; ///< stores the indices of vertices needed for a tetrahedron
+	std::vector<std::vector<int>> neighbors; ///< stores the indices of neighboring tetrahedra
+	std::vector<std::array<glm::vec4, 4>> normals; ///< per-face normals of each tetrahedron */
+
+	using vec_t = typename DiscreteGrid::bbox_t::vec;
+
+	const DiscreteGrid::sizevec3& dims = grid.grid->getResolution();
+	const DiscreteGrid::bbox_t::vec size = grid.grid->getBoundingBox().getDiagonal();
+	// Dimensions, subject to change :
+	std::size_t yv = 10 /* dims.y / 25 */ ; glm::vec4::value_type ys = size.y / static_cast<glm::vec4::value_type>(yv);
+	std::size_t xv = 10 /* dims.x / 25 */ ; glm::vec4::value_type xs = size.x / static_cast<glm::vec4::value_type>(xv);
+	std::size_t zv = 10 /* dims.z / 25 */ ; glm::vec4::value_type zs = size.z / static_cast<glm::vec4::value_type>(zv);
+
+	std::cerr << "Making a mesh of " << xv*yv*zv << " vertices and " << xv*yv*zv*6 << " tetrahedra ...\n";
+
+	glm::vec4 pos = glm::vec4();
+	glm::vec3 tex = glm::vec3();
+	glm::mat4 transfo = grid.grid->getTransform_GridToWorld();
+
+	// Create vertices along with their texture coordinates :
+	for (std::size_t k = 0; k <= zv; ++k) {
+		for (std::size_t j = 0; j <= yv; ++j) {
+			for (std::size_t i = 0; i <= xv; ++i) {
+				pos = transfo * glm::vec4(
+					static_cast<vec_t::value_type>(i)*xs,
+					static_cast<vec_t::value_type>(j)*ys,
+					static_cast<vec_t::value_type>(k)*zs,
+					1.
+				);
+				tex = glm::vec3(
+					static_cast<vec_t::value_type>(i)/static_cast<vec_t::value_type>(xv),
+					static_cast<vec_t::value_type>(j)/static_cast<vec_t::value_type>(yv),
+					static_cast<vec_t::value_type>(k)/static_cast<vec_t::value_type>(zv)
+				);
+
+				mesh.positions.push_back(pos);
+				mesh.texture.push_back(tex);
+			}
+		}
+	}
+
+	std::size_t xt = xv+1; std::size_t yt = yv+1; std::size_t zt = zv+1;
+	auto getIndice = [&, xt, yt](std::size_t i, std::size_t j, std::size_t k) -> std::size_t {
+		return i + j * xt + k * xt * yt;
+	};
+
+	// Create tetrahedra :
+	for (std::size_t i = 0; i < xv; ++i) {
+		for (std::size_t j = 0; j < yv; ++j) {
+			for (std::size_t k = 0; k < zv; ++k) {
+				mesh.tetrahedra.push_back({getIndice(i+1, j  , k  ), getIndice(i+1, j+1, k  ), getIndice(i  , j+1, k  ), getIndice(i+1, j+1, k+1)});
+				mesh.tetrahedra.push_back({getIndice(i  , j  , k+1), getIndice(i  , j  , k  ), getIndice(i  , j+1, k+1), getIndice(i+1, j  , k+1)});
+				mesh.tetrahedra.push_back({getIndice(i  , j+1, k+1), getIndice(i+1, j  , k  ), getIndice(i+1, j+1, k+1), getIndice(i+1, j  , k+1)});
+				mesh.tetrahedra.push_back({getIndice(i  , j  , k  ), getIndice(i+1, j  , k  ), getIndice(i  , j+1, k+1), getIndice(i+1, j  , k+1)});
+				mesh.tetrahedra.push_back({getIndice(i  , j  , k  ), getIndice(i+1, j  , k  ), getIndice(i  , j+1, k  ), getIndice(i  , j+1, k+1)});
+				mesh.tetrahedra.push_back({getIndice(i  , j+1, k  ), getIndice(i+1, j  , k  ), getIndice(i+1, j+1, k+1), getIndice(i  , j+1, k+1)});
+
+			}
+		}
+	}
+
 }
 
 void Scene::tex3D_buildVisTexture(VolMesh& volMesh) {

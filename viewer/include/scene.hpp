@@ -237,6 +237,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void tex3D_buildBuffers(VolMesh& volMesh);
 		void tex3D_bindVAO();
 		void tex3D_loadMESHFile(const std::string name, const GridGLView& grid, VolMeshData& _mesh);
+		void tex3D_generateMESH(const GridGLView& grid, VolMeshData& _mesh);
 	protected:
 		bool isInitialized;	///< tracks if the scene was initialized or not
 		bool inputGridVisible;	///< does the user want to show the input grid ?

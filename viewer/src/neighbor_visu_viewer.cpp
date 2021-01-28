@@ -233,12 +233,7 @@ void Viewer::addGrid() {
 	if (filename.isEmpty() == false) {
 		meshpath = filename.toStdString();
 	} else {
-		delete reader;
-		QMessageBox* fileDialog = new QMessageBox();
-		fileDialog->critical(this, "Error", "Did not provide any filename !");
-		fileDialog->setAttribute(Qt::WA_DeleteOnClose);
-		fileDialog->show();
-		return;
+		meshpath = "";
 	}
 
 	// Set reader properties :
@@ -426,13 +421,7 @@ void Viewer::addTwoGrids() {
 	if (filename.isEmpty() == false) {
 		meshpath = filename.toStdString();
 	} else {
-		delete readerR;
-		delete readerG;
-		QMessageBox* fileDialog = new QMessageBox();
-		fileDialog->critical(this, "Error", "Did not provide any filename !");
-		fileDialog->setAttribute(Qt::WA_DeleteOnClose);
-		fileDialog->show();
-		return;
+		meshpath = "";
 	}
 
 	// Set reader properties :
