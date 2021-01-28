@@ -226,14 +226,6 @@ void Viewer::addGrid() {
 			std::make_shared<Interpolators::meanValue<IO::GenericGridReader::data_t>>();
 	reader->setInterpolationMethod(interpolator);
 
-	std::string meshpath; // filepath for the MESH file
-	QString filename = QFileDialog::getOpenFileName(this, "Open a MESH", lastPath, "Mesh (*.MESH)");
-	if (filename.isEmpty() == false) {
-		meshpath = filename.toStdString();
-	} else {
-		meshpath = "";
-	}
-
 	// Set reader properties :
 	reader->setDataThreshold(threshold);
 	// Load the data :
@@ -250,7 +242,7 @@ void Viewer::addGrid() {
 	delete reader;
 
 	this->makeCurrent();
-	this->scene->addGrid(inputGrid, meshpath);
+	this->scene->addGrid(inputGrid, "");
 	this->doneCurrent();
 
 	std::cerr << "Added input grid to scene\n";
@@ -411,14 +403,6 @@ void Viewer::addTwoGrids() {
 	readerR->setInterpolationMethod(interpolator);
 	readerG->setInterpolationMethod(interpolator);
 
-	std::string meshpath; // filepath for the MESH file
-	QString filename = QFileDialog::getOpenFileName(this, "Open a MESH", lastPath, "Mesh (*.MESH)");
-	if (filename.isEmpty() == false) {
-		meshpath = filename.toStdString();
-	} else {
-		meshpath = "";
-	}
-
 	// Set reader properties :
 	readerR->setDataThreshold(threshold);
 	readerG->setDataThreshold(threshold);
@@ -441,7 +425,7 @@ void Viewer::addTwoGrids() {
 	delete readerG;
 
 	this->makeCurrent();
-	this->scene->addTwoGrids(inputGrid, otherGrid, meshpath);
+	this->scene->addTwoGrids(inputGrid, otherGrid, "");
 	this->doneCurrent();
 
 	std::cerr << "Added input grid to scene\n";

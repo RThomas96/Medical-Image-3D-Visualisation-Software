@@ -26,6 +26,7 @@ uniform vec2 textureBounds;	// The min/max values of the texture to display
 uniform int currentPlane;	// Plane identifier : 1 (x), 2 (y), 3 (z)
 uniform bool showTex;		// Do we show the texture on the plane, or not ?
 uniform uint nbChannels;
+uniform bool drawOnlyData;	// Should we draw only the data ? not any other plane ?
 
 uniform bool intersectPlanes = false;	// Should the planes intersect each other ? (hide other planes)
 
@@ -53,26 +54,25 @@ void main(void)
 	// Early discard if the plane shouldn't be shown :
 	if (isPlaneVisible(intersectPlanes) == false) { discard; }
 
-	color = planeIndexToColor(); // default plane color
-
-	if (shouldDrawBorder()) { return; } // stop here, if on a border
-
-	vec4 colorTex = vec4(.0, .0, .0, .0);
-
-	if (texCoord.x > 0. && texCoord.x < 1.) {
-		if (texCoord.y > .0 && texCoord.y < 1.) {
-			if (texCoord.z > 0. && texCoord.z < 1.) {
-				if (showTex == true) {
-					uvec3 tex = texture(texData, texCoord).xyz;
-					colorTex = R8UIToRGB(tex);
+	// not in border :
+	if (shouldDrawBorder() == false) {
+		vec4 colorTex = vec4(.0, .0, .0, .0);
+		if (texCoord.x > 0. && texCoord.x < 1.) {
+			if (texCoord.y > .0 && texCoord.y < 1.) {
+				if (texCoord.z > 0. && texCoord.z < 1.) {
+					if (isPlaneVisible(true)) {
+						uvec3 tex = texture(texData, texCoord).xyz;
+						colorTex = R8UIToRGB(tex);
+					}
 				}
 			}
 		}
+		color = colorTex;
+	} else {
+		color = planeIndexToColor(); // default plane color
 	}
 
-	if (colorTex.a < .1f) { discard; }
-
-	color = colorTex;
+	if (color.a < .1f) { discard; }
 }
 
 /****************************************/
@@ -87,8 +87,8 @@ vec4 R8UIToRGB_1channel(in uvec3 ucolor) {
 	float color_g = float(ucolor.r);
 	float alpha = 1.;
 	// Check if we're in the colorscale. Since drawn on plane, discard fragments by setting alpha < .1 :
-	if (color_r < textureBounds.x || color_r > textureBounds.y) { alpha = .05; }
-	if (color_g < textureBounds.x || color_g > textureBounds.y) { alpha = .05; }
+	// if (color_r < textureBounds.x || color_r > textureBounds.y) { alpha = .05; }
+	// if (color_g < textureBounds.x || color_g > textureBounds.y) { alpha = .05; }
 	// clamp values (necessary ?) :
 	color_r = clamp(color_r, colorBounds.x, colorBounds.y);
 	color_g = clamp(color_g, colorBounds.x, colorBounds.y);
@@ -118,7 +118,7 @@ vec4 R8UIToRGB_1channel(in uvec3 ucolor) {
 	);
 
 	// if we're not supposed to show the texture AND the plane isn't visible, then discard
-	if (showTex == false) { if(isPlaneVisible(false) == false) { color.a = .05; } }
+	if (showTex == false) { discard; }
 	return color;
 }
 vec4 R8UIToRGB_2channel(in uvec3 ucolor) {

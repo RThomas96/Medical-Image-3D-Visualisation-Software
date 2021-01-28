@@ -85,7 +85,7 @@ void main(void) {
 
 	gl_Position = vec4(.0, .0, .0, 1.);
 	gl_Position.xyz = multiplier * vertexTexCoord;
-	gl_Position.xyz *= zoom;
+	gl_Position.xyz *= zoom * .95;
 	gl_Position.xy += offset;
 
 	vPos = vertexPosition;

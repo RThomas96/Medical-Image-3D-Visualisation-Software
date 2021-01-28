@@ -930,6 +930,8 @@ void Scene::drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading
 	if (this->grids.size() == 0) { return; }
 
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	GetOpenGLError();
 
 	uint min = 0; // min index for drawing commands
@@ -1147,7 +1149,7 @@ void Scene::drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane) {
 	glEnable(GL_BLEND);
 
 	// Plane X :
-	if (this->planeVisibility.x == true) {
+	//if (this->planeVisibility.x == true) {
 		glUseProgram(this->programHandle_Plane3D);
 		glBindVertexArray(this->vaoHandle);
 		GetOpenGLError();
@@ -1164,10 +1166,10 @@ void Scene::drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane) {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		glBindVertexArray(0);
 		glUseProgram(0);
-	}
+	//}
 
 	// Plane Y :
-	if (this->planeVisibility.y == true) {
+	//if (this->planeVisibility.y == true) {
 		glUseProgram(this->programHandle_Plane3D);
 		glBindVertexArray(this->vaoHandle);
 		GetOpenGLError();
@@ -1184,10 +1186,10 @@ void Scene::drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane) {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		glBindVertexArray(0);
 		glUseProgram(0);
-	}
+	//}
 
 	// Plane Z :
-	if (this->planeVisibility.z == true) {
+	//if (this->planeVisibility.z == true) {
 		glUseProgram(this->programHandle_Plane3D);
 		glBindVertexArray(this->vaoHandle);
 		GetOpenGLError();
@@ -1206,7 +1208,7 @@ void Scene::drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane) {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		glBindVertexArray(0);
 		glUseProgram(0);
-	}
+	//}
 
 	glDisable(GL_BLEND);
 }
@@ -1315,6 +1317,11 @@ void Scene::prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane, cons
 		return true;
 	};
 
+	bool shouldHide = false;
+	if (_plane == planes::x) { shouldHide = this->planeVisibility.x; }
+	if (_plane == planes::y) { shouldHide = this->planeVisibility.y; }
+	if (_plane == planes::z) { shouldHide = this->planeVisibility.z; }
+
 	// quick alias :
 	using boxvec_t = typename DiscreteGrid::bbox_t::vec;
 
@@ -1336,6 +1343,7 @@ void Scene::prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane, cons
 	GLint location_textureBounds = glGetUniformLocation(this->programHandle_Plane3D, "textureBounds");
 	GLint location_showTex = glGetUniformLocation(this->programHandle_Plane3D, "showTex");
 	GLint location_nbChannels = glGetUniformLocation(this->programHandle_Plane3D, "nbChannels");
+	GLint location_drawOnlyData = glGetUniformLocation(this->programHandle_PlaneViewer, "drawOnlyData");
 	GetOpenGLError();
 
 	// Check the location values :
@@ -1383,6 +1391,7 @@ void Scene::prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane, cons
 	glUniform3fv(location_gridDimensions, 1, glm::value_ptr(dims));
 	glUniform1i(location_currentPlane, plIdx);
 	glUniform1ui(location_nbChannels, grid.nbChannels);
+	glUniform1ui(location_drawOnlyData, shouldHide ? 1 : 0);
 
 	glm::vec2 colorBounds{static_cast<float>(this->minColorVal), static_cast<float>(this->maxColorVal)};
 	glm::vec2 textureBounds{static_cast<float>(this->minTexVal), static_cast<float>(this->maxTexVal)};
@@ -2145,6 +2154,8 @@ void Scene::togglePlaneVisibility(planes _plane) {
 	if (_plane == planes::x) { this->planeVisibility.x = not this->planeVisibility.x; }
 	if (_plane == planes::y) { this->planeVisibility.y = not this->planeVisibility.y; }
 	if (_plane == planes::z) { this->planeVisibility.z = not this->planeVisibility.z; }
+	std::cerr << "Visibilities : {" << std::boolalpha << this->planeVisibility.x << ',' <<
+		     this->planeVisibility.y << ',' << this->planeVisibility.z << "}\n";
 	return;
 }
 
