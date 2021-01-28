@@ -358,7 +358,7 @@ void Viewer::addTwoGrids() {
 		}
 
 		readerG = new IO::Reader::TIFF(threshold);
-		QStringList filenamesG = QFileDialog::getOpenFileNames(this, "Open multiple TIFF images (Red channel)", lastPath, "TIFF Files (*.tiff, *.tif)");
+		QStringList filenamesG = QFileDialog::getOpenFileNames(this, "Open multiple TIFF images (Blue channel)", lastPath, "TIFF Files (*.tiff, *.tif)");
 		if (filenamesG.isEmpty() == false) {
 			std::vector<std::string> f;
 			for (const QString& fn : as_const(filenamesG)) {

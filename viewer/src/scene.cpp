@@ -416,7 +416,7 @@ void Scene::addGrid(const std::shared_ptr<InputGrid> _grid, std::string meshPath
 
 void Scene::addTwoGrids(const std::shared_ptr<InputGrid> _gridR, const std::shared_ptr<InputGrid> _gridB, std::string meshPath) {
 	GridGLView gridView(_gridR);
-	//gridView.grid->setTransform_GridToWorld(this->computeTransformationMatrix(_gridR));
+	gridView.grid->setTransform_GridToWorld(this->computeTransformationMatrix(_gridR));
 
 	TextureUpload gridTexture{};
 	gridTexture.minmag.x = GL_NEAREST;
