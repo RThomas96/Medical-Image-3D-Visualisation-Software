@@ -173,9 +173,8 @@ void Viewer::addGrid() {
 			reader->setFilenames(f);
 		} else {
 			QMessageBox* fileDialog = new QMessageBox();
+            fileDialog->setAttribute(Qt::WA_DeleteOnClose);
 			fileDialog->critical(this, "Error", "Did not provide any filename !");
-			fileDialog->setAttribute(Qt::WA_DeleteOnClose);
-			fileDialog->show();
 			return;
 		}
 	} else if (msgBox->clickedButton() == tiffButton) {
@@ -195,9 +194,8 @@ void Viewer::addGrid() {
 			reader->setFilenames(f);
 		} else {
 			QMessageBox* fileDialog = new QMessageBox();
+            fileDialog->setAttribute(Qt::WA_DeleteOnClose);
 			fileDialog->critical(this, "Error", "Did not provide any filenames !");
-			fileDialog->setAttribute(Qt::WA_DeleteOnClose);
-			fileDialog->show();
 			return;
 		}
 	} else {
@@ -312,9 +310,8 @@ void Viewer::addTwoGrids() {
 			readerR->setFilenames(f);
 		} else {
 			QMessageBox* fileDialog = new QMessageBox();
+            fileDialog->setAttribute(Qt::WA_DeleteOnClose);
 			fileDialog->critical(this, "Error", "Did not provide any filename !");
-			fileDialog->setAttribute(Qt::WA_DeleteOnClose);
-			fileDialog->show();
 			return;
 		}
 
@@ -329,9 +326,8 @@ void Viewer::addTwoGrids() {
 			readerG->setFilenames(f);
 		} else {
 			QMessageBox* fileDialog = new QMessageBox();
+            fileDialog->setAttribute(Qt::WA_DeleteOnClose);
 			fileDialog->critical(this, "Error", "Did not provide any filename !");
-			fileDialog->setAttribute(Qt::WA_DeleteOnClose);
-			fileDialog->show();
 			return;
 		}
 	} else if (msgBox->clickedButton() == tiffButton) {
@@ -351,9 +347,8 @@ void Viewer::addTwoGrids() {
 			readerR->setFilenames(f);
 		} else {
 			QMessageBox* fileDialog = new QMessageBox();
+            fileDialog->setAttribute(Qt::WA_DeleteOnClose);
 			fileDialog->critical(this, "Error", "Did not provide any filenames !");
-			fileDialog->setAttribute(Qt::WA_DeleteOnClose);
-			fileDialog->show();
 			return;
 		}
 
