@@ -571,7 +571,7 @@ GLuint Scene::compileShader(const std::string& path, const GLenum shaType, bool 
 	GetOpenGLError();
 
 	// Open the file :
-	std::ifstream shaFile = std::ifstream(path.c_str(), std::ios_base::in);
+    std::ifstream shaFile = std::ifstream(path.c_str(), std::ios_base::in | std::ios_base::binary);
 	if (!shaFile.is_open()) {
 		std::cerr << "[" << __FILE__ << ":" << __LINE__ << "] Error : could not get the contents of shader file " << path << '\n';
 		return -1;
@@ -585,7 +585,7 @@ GLuint Scene::compileShader(const std::string& path, const GLenum shaType, bool 
 	// Get the file's contents and null-terminate it :
 	char* shaSource = new char[shaFileSize+1];
 	shaFile.read(shaSource, shaFileSize);
-	shaSource[shaFileSize] = '\0';
+    shaSource[shaFileSize] = '\0';
 
 	// Source it into the shader object :
 	glShaderSource(_sha, 1, const_cast<const char**>(&shaSource), 0);
@@ -614,6 +614,13 @@ GLuint Scene::compileShader(const std::string& path, const GLenum shaType, bool 
 		delete[] shaderInfoLog;
 
 		std::cerr << __FILE__ << ":" << __LINE__ << " : end Log ***********************************************" << '\n';
+        std::cerr << "Shader contents :" << '\n';
+        std::cerr << "=============================================================================================\n";
+        std::cerr << "=============================================================================================\n";
+        std::cerr << shaSource << '\n';
+        std::cerr << "=============================================================================================\n";
+        std::cerr << "=============================================================================================\n";
+        std::cerr << "End shader contents" << '\n';
 	}
 
 	GLint result = GL_FALSE;

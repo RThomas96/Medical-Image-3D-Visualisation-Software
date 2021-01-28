@@ -1,4 +1,4 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.13)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.14)
 PROJECT(visualisation)
 
 # CMake Setup :
@@ -41,6 +41,7 @@ ADD_EXECUTABLE(neighbor_visu
 	./qt/include/qt_proxies.hpp
 	./qt/include/viewer_header.hpp
 	./qt/include/visu_box_controller.hpp
+	./qt/include/opengl_debug_log.hpp
 
 	./viewer/include/scene.hpp
 	./viewer/include/planar_viewer.hpp
@@ -67,6 +68,7 @@ ADD_EXECUTABLE(neighbor_visu
 	./qt/src/qt_proxies.cpp
 	./qt/src/viewer_header.cpp
 	./qt/src/visu_box_controller.cpp
+	./qt/src/opengl_debug_log.cpp
 
 	./viewer/src/scene.cpp
 	./viewer/src/planar_viewer.cpp
