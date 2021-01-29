@@ -63,6 +63,11 @@ class ViewerHeader : public QWidget {
 		QSlider* slider_planeDepth;
 		/// @b Color for the widget's background
 		QColor color;
+
+		QIcon* icon_togglePlane_On;
+		QIcon* icon_togglePlane_Off;
+		QIcon* icon_invertPlane;
+		QIcon* icon_rotatePlane;
 };
 
 class ViewerHeader3D : public QWidget {
@@ -89,7 +94,7 @@ class ViewerHeader3D : public QWidget {
 		/// @b Button to rotate the cutting plane counter-clockwise
 		QPushButton* button_togglePlane;
 		/// @b Button to reset the visu box
-		QPushButton* button_resetVisuBox;
+		QPushButton* button_centerCamera;
 		/// @b Button to set solid drawing
 		QPushButton* button_setSolid;
 		/// @b Button to set volumetric mode
@@ -98,6 +103,22 @@ class ViewerHeader3D : public QWidget {
 		QPushButton* button_setVolumetricBoxed;
 		/// @b Color for the widget's background
 		Qt::GlobalColor color;
+		/// @b Label for "All planes"
+		QLabel* label_allPlanes;
+		/// @b Separator for the header
+		QFrame* separator;
+		/// @b Icon to show the planes
+		QIcon* icon_show;
+		/// @b Icon to hide the planes
+		QIcon* icon_hide;
+		/// @b Icon to invert the planes
+		QIcon* icon_invert;
+		/// @b icon for the solid draw mode
+		QIcon* icon_solid;
+		/// @b icon for the volumetric draw mode
+		QIcon* icon_volumetric;
+		/// @b icon for the volumetric boxed draw mode
+		QIcon* icon_volumetric_boxed;
 };
 
 #endif // VIEWER_HEADER_HPP

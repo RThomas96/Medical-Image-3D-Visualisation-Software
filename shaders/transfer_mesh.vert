@@ -58,7 +58,7 @@ ivec2 Convert1DIndexTo2DIndex_Unnormed( in uint uiIndexToConvert, in int iWrapSi
 
 float ComputeVisibility(vec3 point)
 {
-	vec4 epsilon = vec4(1.5, 1.5, 1.5, .0) ;
+	vec4 epsilon = vec4(15, 15, 15, .0) ;
 	epsilon.xyz *= cutDirection;
 	if (shouldUseBB == false) {
 		vec4 point4 = vec4(point, 1.);

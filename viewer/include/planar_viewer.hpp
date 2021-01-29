@@ -33,6 +33,12 @@ class PlanarViewer : public QGLViewer {
 		virtual void mouseReleaseEvent(QMouseEvent* _m) override;
 		/// @brief Overrides the mouse wheel events from the user.
 		virtual void wheelEvent(QWheelEvent* _w) override;
+		/// @b Defines the 'Help'/'About' string defined for this viewer.
+		virtual QString helpString(void) const override;
+		/// @b Defines the 'Help'/'About' string for the keyboard for this viewer.
+		virtual QString keyboardString(void) const override;
+		/// @b Defines the 'Help'/'About' string for the mouse for this viewer.
+		virtual QString mouseString(void) const override;
 	protected:
 		/// @b Sets the widget in charge of controlling the viewer
 		void setController(ViewerHeader* _header);

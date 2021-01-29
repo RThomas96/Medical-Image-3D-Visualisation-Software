@@ -559,8 +559,8 @@ void main (void) {
 	// Phong details :
 	float phongAmbient = .5;
 	mat3 lightDetails = mat3(
-		vec3(.5, .5, .5),	// light diffuse color
-		vec3(.0, 1., .0),	// light specular color
+		vec3(.9, .9, .9),	// light diffuse color
+		vec3(1., 1., 1.),	// light specular color
 		vec3(.0, .0, .0)	// nothing
 	);
 	float factor = (1. - phongAmbient) / 3.;

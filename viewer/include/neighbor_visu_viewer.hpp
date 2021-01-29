@@ -30,6 +30,12 @@ class Viewer : public QGLViewer {
 		virtual void keyPressEvent(QKeyEvent* e) override;
 		/// @b Wheel event for the mouse.
 		virtual void wheelEvent(QWheelEvent* _w) override;
+		/// @b Defines the 'Help'/'About' string defined for this viewer.
+		virtual QString helpString(void) const override;
+		/// @b Defines the 'Help'/'About' string for the keyboard for this viewer.
+		virtual QString keyboardString(void) const override;
+		/// @b Defines the 'Help'/'About' string for the mouse for this viewer.
+		virtual QString mouseString(void) const override;
 	private:
 		/// @brief The scene to control.
 		Scene* const scene;
@@ -48,6 +54,8 @@ class Viewer : public QGLViewer {
 		void addGrid();
 		/// @brief Adds one grid, composed of two grid's metadata to the scene
 		void addTwoGrids();
+		/// @b Re-centers the camera around the scene-defined center point
+		void centerScene(void) ;
 };
 
 #endif // VIEWER_INCLUDE_NEIGHBOR_VISU_VIEWER_HPP_

@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QDoubleSpinBox>
+#include <QPushButton>
 
 class Scene; // Fwd-decl
 
@@ -26,6 +27,7 @@ class VisuBoxController : public QWidget {
 		QDoubleSpinBox* input_BBMaxX;	///< Controls the max point's X coordinate
 		QDoubleSpinBox* input_BBMaxY;	///< Controls the max point's Y coordinate
 		QDoubleSpinBox* input_BBMaxZ;	///< Controls the max point's Z coordinate
+		QPushButton* button_resetBox;	///< Resets the visu box coordinates
 		std::vector<QObject*> strayObj;	///< Stray objects created in the widget's setup process
 };
 

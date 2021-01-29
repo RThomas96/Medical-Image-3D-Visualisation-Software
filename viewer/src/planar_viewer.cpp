@@ -182,3 +182,54 @@ void PlanarViewer::rotatePlaneCounterClockwise() {
 void PlanarViewer::togglePlaneVisibility() {
 	this->sceneToShow->togglePlaneVisibility(this->planeToShow);
 }
+
+QString PlanarViewer::helpString() const {
+	QString message("<h2>P l a n a r   v i e w e r</h2>");
+
+	return message;
+}
+
+QString PlanarViewer::keyboardString() const {
+	QString message("");
+	message += "<ul>";
+		message += "<li>3D viewer :";
+			message += "<ul>";
+				message += "<li><b>S</b> : set draw mode to \'Solid\'</li>";
+				message += "<li><b>V</b> : set draw mode to \'Volumetric\'</li>";
+				message += "<li><i>Shift</i>+<b>V</b> : set draw mode to \'Volumetric Boxed\'</li>";
+				message += "<li><i>Ctrl</i>+<b>S</b> : Generate a grid, if any are loaded.</li>";
+			message += "</ul>";
+		message += "</li>";
+		message += "<li> Planar viewer(s) :";
+			message += "<ul>";
+				message += "<li><b>R</b> : Reset size and position to default values</li>";
+			message += "</ul>";
+		message += "</li>";
+		message += "<li>Developper options :";
+		message += "<ul><li><b>F5</b> : Reload shaders (from any viewer)</li></ul>";
+		message += "</li>";
+	message += "</ul>";
+
+	return message;
+}
+
+QString PlanarViewer::mouseString() const {
+	QString message("");
+	message += "<ul>";
+		message += "<li>3D viewer :";
+			message += "<ul>";
+				message += "<li><i>Left-click & drag</i> : Rotate around the loaded image stack(s)</li>";
+				message += "<li><i>Right-click & drag</i> : Pan the camera</li>";
+				message += "<li><i>Scroll up/down</i> : zoom in/out (respectively)</li>";
+			message += "</ul>";
+		message += "</li>";
+		message += "<li> Planar viewer(s) :";
+			message += "<ul>";
+				message += "<li><i>Right-click & drag</i> : pan the image</li>";
+				message += "<li><i>Scroll up/down</i> : zoom in/out (respectively)</li>";
+			message += "</ul>";
+		message += "</li>";
+	message += "</ul>";
+
+	return message;
+}

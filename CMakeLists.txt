@@ -1,6 +1,8 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.14)
 PROJECT(visualisation)
 
+LIST(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
+
 # CMake Setup :
 INCLUDE(./cmake/CMakeSetup.cmake)
 # Find libQGLViewer :

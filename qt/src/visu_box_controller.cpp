@@ -50,6 +50,7 @@ void VisuBoxController::setupWidgets() {
 	this->input_BBMaxX = new QDoubleSpinBox;
 	this->input_BBMaxY = new QDoubleSpinBox;
 	this->input_BBMaxZ = new QDoubleSpinBox;
+	this->button_resetBox = new QPushButton("Reset coordinates");
 
 	auto dsbLimits = [](QDoubleSpinBox* d) -> void {
 		d->setRange(std::numeric_limits<double>::lowest(), std::numeric_limits<double>::max());
@@ -95,6 +96,8 @@ void VisuBoxController::setupWidgets() {
 	layout_BoundingBox->addWidget(this->input_BBMaxY, bRow, 4, Qt::AlignHCenter);
 	layout_BoundingBox->addWidget(this->input_BBMaxZ, bRow, 6, Qt::AlignHCenter);
 	bRow++;
+	// button to reset :
+	layout_BoundingBox->addWidget(this->button_resetBox, bRow, 1, 1, 4, Qt::AlignCenter);
 	frame_BoundingBox->setLayout(layout_BoundingBox);
 	frame_BoundingBox->setStyleSheet(".QFrame{border: 2px solid grey;border-radius: 4px;}");
 
@@ -119,6 +122,9 @@ void VisuBoxController::setupSignals() {
 	QObject::connect(this->input_BBMaxX, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &VisuBoxController::updateBox);
 	QObject::connect(this->input_BBMaxY, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &VisuBoxController::updateBox);
 	QObject::connect(this->input_BBMaxZ, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &VisuBoxController::updateBox);
+	QObject::connect(this->button_resetBox, &QPushButton::clicked, [this]() {
+		if (this->scene != nullptr) { this->scene->resetVisuBox(); }
+	});
 }
 
 void VisuBoxController::updateValues() {

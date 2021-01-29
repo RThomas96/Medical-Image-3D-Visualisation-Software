@@ -50,11 +50,18 @@ class MainWidget : public QMainWindow {
 		// UI Stuff :
 
 		QMenu* fileMenu;		///< The 'File' menu of the application
+		QMenu* viewMenu;		///< The 'View' menu of the application
+		QMenu* helpMenu;		///< The 'Help' menu of the application
 		QAction* action_add1Grid;	///< Action to add grid
 		QAction* action_add2Grid;	///< Action to add two grids (red and green channels)
 		QAction* action_saveGrid;	///< Action to save grid
 		QAction* action_exitProgram;	///< Action to exit the program.
 		QAction* action_showVisuBox;	///< Action to show the visualization box controller
+		QAction* action_drawModeS;	///< Action to set the scene's draw mode to 'Solid'
+		QAction* action_drawModeV;	///< Action to set the scene's draw mode to 'Volumetric'
+		QAction* action_drawModeVB;	///< Action to set the scene's draw mode to 'Volumetric boxed'
+		QAction* action_showHelp3D;	///< Action to show the help dialog for the 3D viewer
+		QAction* action_showHelpPlane;	///< Action to show the help dialog for the planar viewers
 		QStatusBar* statusBar;		///< Status bar
 		QPushButton* showGLLog;		///< Button to open the QOpenGLDebugLog message box.
 };

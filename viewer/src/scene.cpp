@@ -2143,9 +2143,16 @@ void Scene::setDrawMode(DrawMode _mode) {
 	this->drawMode = _mode;
 	if (this->programStatusBar != nullptr) {
 		switch (_mode) {
-			case DrawMode::Solid : this->programStatusBar->showMessage("Set draw mode to Solid.\n", 5000); break;
-			case DrawMode::Volumetric : this->programStatusBar->showMessage("Set draw mode to Volumetric.\n", 5000); break;
-			case DrawMode::VolumetricBoxed : this->programStatusBar->showMessage("Set draw mode to VolumetricBoxed.\n", 5000); break;
+			case DrawMode::Solid :
+				this->programStatusBar->showMessage("Set draw mode to Solid.\n", 5000);
+			break;
+			case DrawMode::Volumetric :
+				this->programStatusBar->showMessage("Set draw mode to Volumetric.\n", 5000);
+			break;
+			case DrawMode::VolumetricBoxed :
+				this->programStatusBar->showMessage("Set draw mode to VolumetricBoxed.\n", 5000);
+				this->showVisuBoxController();
+			break;
 		}
 	}
 }
