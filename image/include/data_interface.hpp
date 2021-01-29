@@ -20,10 +20,13 @@ namespace IO {
 			using pixel_t = glm::vec<4, T, glm::defaultp>;
 			/// @brief Position and type within the image.
 			/// @details Allows to get a position (X,Y,Z). The color channel will be separate.
-			using pos_t = glm::vec<3, std::size_t, glm::defaultp>;
+			using size3_t = glm::vec<3, std::size_t, glm::defaultp>;
 			/// @brief Size type within the image.
 			/// @details Allows to define a size (X,Y,Z), with the number of color channels as 'A'.
-			using size_t = glm::vec<3, std::size_t, glm::defaultp>;
+			using size4_t = glm::vec<4, std::size_t, glm::defaultp>;
+			/// @brief Floating-point size type within the image.
+			/// @details Allows to define a size (X,Y,Z), with the number of color channels as 'A'.
+			using fsize_t = glm::vec3;
 
 		protected:
 			/// @brief Default constructor. Made protected so as not to call it directly.
@@ -44,24 +47,24 @@ namespace IO {
 			virtual DataInterface<T>& setDataThreshold(const data_t _thresh) = 0;
 
 			/// @brief Get the image's resolution.
-			virtual size_t getResolution(void) const = 0;
+			virtual size4_t getResolution(void) const = 0;
 			/// @brief Sets the resolution of the image.
 			virtual DataInterface<data_t>& setResolution(size_t s) = 0;
 
 			/// @brief Get the image's voxel sizes. If it cannot be read, this will return (1,1,1).
-			virtual glm::vec3 getVoxelDimensions(void) const = 0;
+			virtual fsize_t getVoxelDimensions(void) const = 0;
 			/// @brief Sets the voxel resolution for the image.
-			virtual DataInterface<data_t>& setVoxelDimensions(glm::vec3 dims) = 0;
+			virtual DataInterface<data_t>& setVoxelDimensions(fsize_t dims) = 0;
 
 			/// @brief Returns a pixel's data, in the grid.
 			virtual pixel_t getPixel(std::size_t i, std::size_t j, std::size_t k) const = 0;
 			/// @brief Set the pixel at coordinates 'pos' of channel 'C' to data 'D'
-			virtual DataInterface<data_t>& setPixel(pos_t pos, std::size_t c, data_t d) = 0;
+			virtual DataInterface<data_t>& setPixel(size3_t pos, std::size_t c, data_t d) = 0;
 
 			/// @brief Get the image that lives on disk/in memory, downsampled to 'target_size'.
-			virtual std::vector<pixel_t> getImageDownsampled(pos_t target_size) = 0;
+			virtual std::vector<pixel_t> getImageDownsampled(size3_t target_size) = 0;
 			/// @brief Get a sub-image of the currently loaded image.
-			virtual std::vector<pixel_t> getSubImage(pos_t begin, pos_t size) const = 0;
+			virtual std::vector<pixel_t> getSubImage(size3_t begin, size3_t size) const = 0;
 
 			/**********************************/
 			/* File names, paths and basename */
@@ -79,6 +82,17 @@ namespace IO {
 			virtual std::string getFilePath(void) = 0;
 			/// @brief Sets the base file path for the image save directory.
 			virtual DataInterface<data_t>& setFilePath(const std::string _path) = 0;
+
+		protected:
+			/// @brief Contains image dimensions, and channel count.
+			size4_t imageDimensions;
+			/// @brief Voxel dimensions for the loaded image.
+			fsize_t voxelDimensions;
+			/// @brief Base path for the filetypes supporting it.
+			std::string basePath;
+			/// @brief Base name for the filetypes supporting it.
+			std::string baseName;
+
 	};
 
 }
