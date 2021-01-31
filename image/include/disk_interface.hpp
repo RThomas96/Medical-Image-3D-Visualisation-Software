@@ -15,7 +15,7 @@ namespace IO {
 		public:
 			~DiskInterface(void);
 		public:
-			const std::shared_ptr<DataInterface<T>> toMemoryInterface();
+			const DataInterface_ptr_t toMemoryInterface();
 		protected:
 	};
 

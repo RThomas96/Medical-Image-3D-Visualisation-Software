@@ -51,6 +51,7 @@ bool shouldDrawBorder();
 /****************************************/
 void main(void)
 {
+	if (isPlaneVisible(true) == false && drawOnlyData) { discard; }
 	// Early discard if the plane shouldn't be shown :
 	if (isPlaneVisible(intersectPlanes) == false) { discard; }
 
