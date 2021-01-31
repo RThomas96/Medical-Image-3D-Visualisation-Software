@@ -1,36 +1,20 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.14)
 PROJECT(visualisation)
 
+# Append current cmake/ directory to CMake file paths :
 LIST(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
-
 # CMake Setup :
-INCLUDE(./cmake/CMakeSetup.cmake)
+INCLUDE(CMakeSetup)
 # Find libQGLViewer :
-INCLUDE(./cmake/FindQGLViewer.cmake)
+INCLUDE(FindQGLViewer)
 
 FIND_PACKAGE(Qt5 REQUIRED COMPONENTS Core Gui Widgets Xml OpenGL)
 FIND_PACKAGE(OpenGL REQUIRED)
 FIND_PACKAGE(Threads REQUIRED)
+# Find TinyTIFF compiled locally
+FIND_PACKAGE(TinyTIFF REQUIRED PATHS ${CMAKE_CURRENT_LIST_DIR}/lib/lib/cmake PATH_SUFFIXES TinyTIFF)
 
 ADD_SUBDIRECTORY(glm)
-
-MESSAGE(STATUS "GLM library directory : ${GLM_INCLUDE_DIRS}")
-
-# TinyTIFF Library {{{
-ADD_LIBRARY(libtiff STATIC
-	./TinyTIFF/tinytiffreader.cpp
-	./TinyTIFF/tinytiffwriter.cpp
-	./TinyTIFF/tinytiffhighrestimer.cpp
-)
-SET_TARGET_PROPERTIES(libtiff PROPERTIES
-	LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/../lib/
-	ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/../lib/
-)
-# TinyTIFF doesn't need to be compiled with Qt :
-SET_TARGET_PROPERTIES(libtiff PROPERTIES AUTOMOC OFF AUTORCC OFF AUTOUIC OFF)
-# Handy variable to refer to the target :
-SET(TIF_LIB libtiff)
-# }}}
 
 # Neighbor visualisation (Test variant) {{{
 ADD_EXECUTABLE(neighbor_visu
@@ -86,9 +70,10 @@ ADD_EXECUTABLE(neighbor_visu
 	./image/src/writer.cpp
 )
 TARGET_INCLUDE_DIRECTORIES(neighbor_visu
-	PRIVATE ./glm/
 	PRIVATE ${OPENGL_INCLUDE_DIRS}
 	PRIVATE ${QGLViewer_HEADER_DIR}
+	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/glm/
+	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/lib/include
 )
 TARGET_LINK_LIBRARIES(neighbor_visu
 	PUBLIC Qt5::Core
@@ -98,7 +83,7 @@ TARGET_LINK_LIBRARIES(neighbor_visu
 	PUBLIC Qt5::OpenGL
 	PUBLIC ${OPENGL_LIBRARIES}
 	PUBLIC ${QGLViewer}
-	PUBLIC ${TIF_LIB}
+	PUBLIC TinyTIFF
 )
 # }}}
 

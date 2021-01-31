@@ -174,7 +174,8 @@ namespace IO {
 
 		std::string fileName = this->baseName + ".tif";
 
-		this->tiffFile = TinyTIFFWriter_open(fileName.c_str(), bps, width, height);
+		#warning TinyTIFFWriter has not been tested here !
+		//this->tiffFile = TinyTIFFWriter_open(fileName.c_str(), bps, width, height);
 		if (this->tiffFile == nullptr) {
 			std::cerr << __FUNCTION__ << " : Warning : Tiff file could not be opened." << '\n';
 		}

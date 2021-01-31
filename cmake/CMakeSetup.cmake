@@ -9,6 +9,15 @@ IF(WIN32 OR MINGW OR MSVC)
         LIST(APPEND CMAKE_PREFIX_PATH "${GLM_HINT}")
 ENDIF()
 
+# Warning : CMAKE_CURRENT_LIST_DIR is set here to ./cmake !
+# (since list dir is the dir of the current cmake file, not
+# necessarily the top CMakeLists.txt) :
+IF(NOT EXISTS ${CMAKE_CURRENT_LIST_DIR}/../lib)
+	MESSAGE(FATAL_ERROR "TinyTIFF has not yet been compiled ! Run ./configure.sh or ./configure.bat first.")
+ELSE()
+	MESSAGE(STATUS "TinyTIFF has previously been installed.")
+ENDIF()
+
 # Requiring an out-of-source build
 IF(CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR)
 	MESSAGE(FATAL_ERROR "Please select another Build Directory !\nWe recommend doing an out-of-source build. Create a build folder\nhere, or in the parent root, but don't build the project here !")

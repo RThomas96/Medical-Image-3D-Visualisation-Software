@@ -4,7 +4,7 @@
 #include "../../macros.hpp"
 #include "../../features.hpp"
 
-#include "../../TinyTIFF/tinytiffwriter.h" // To write to TIF files
+#include <tinytiffwriter.h>
 
 #include <iostream>
 #include <fstream>
@@ -174,7 +174,7 @@ namespace IO {
 			/// @brief Writes the whole file at once.
 			virtual std::size_t write_Once(const std::shared_ptr<DiscreteGrid>& _vg) override;
 		protected:
-			TinyTIFFFile* tiffFile; ///< The tiff file to write to.
+			TinyTIFFWriterFile* tiffFile; ///< The tiff file to write to.
 	};
 
 	/// @brief Writes the voxel grid as a multitude of TIFF files, one for each depth level.
@@ -219,7 +219,7 @@ namespace IO {
 			/// suffix.
 			std::string createSuffixedFilename(void);
 
-			TinyTIFFFile* tifFiles; ///< A pointer to a TIFF file, which will change through the program's execution.
+			TinyTIFFWriterFile* tifFiles; ///< A pointer to a TIFF file, which will change through the program's execution.
 			std::size_t totalFiles; ///< The total number of files to be written. Gathered from the voxel grid info.
 	};
 

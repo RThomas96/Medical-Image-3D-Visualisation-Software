@@ -5,7 +5,7 @@
 #include "../../features.hpp"
 
 #include "../../grid/include/bounding_box.hpp"
-#include "../../TinyTIFF/tinytiffreader.h"
+#include <tinytiffreader.h>
 
 #include "../include/interpolator.hpp"
 
