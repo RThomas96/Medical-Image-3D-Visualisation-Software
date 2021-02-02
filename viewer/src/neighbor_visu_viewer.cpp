@@ -227,7 +227,7 @@ void Viewer::addGrid() {
 	std::shared_ptr<InputGrid> inputGrid = std::make_shared<InputGrid>();
 
 	// create reader :
-	IO::GenericGridReader* reader = nullptr;
+	std::shared_ptr<IO::GenericGridReader> reader = nullptr;
 	IO::GenericGridReader::data_t threshold = IO::GenericGridReader::data_t(0);
 
 	// create message box to ask user :
@@ -255,7 +255,7 @@ void Viewer::addGrid() {
 	msgBox->exec();
 
 	if (msgBox->clickedButton() == dimButton) {
-		reader = new IO::DIMReader(threshold);
+		reader = std::make_shared<IO::DIMReader>(threshold);
 		QString filename = QFileDialog::getOpenFileName(this, "Open a DIM/IMA image (Blue channel)", "../../", "BrainVISA DIM Files (*.dim)");
 		if (filename.isEmpty() == false) {
 			// update last path :
@@ -265,12 +265,12 @@ void Viewer::addGrid() {
 			reader->setFilenames(f);
 		} else {
 			QMessageBox* fileDialog = new QMessageBox();
-            fileDialog->setAttribute(Qt::WA_DeleteOnClose);
+			fileDialog->setAttribute(Qt::WA_DeleteOnClose);
 			fileDialog->critical(this, "Error", "Did not provide any filename !");
 			return;
 		}
 	} else if (msgBox->clickedButton() == tiffButton) {
-		reader = new IO::Reader::TIFF(threshold);
+		reader = std::make_shared<IO::Reader::TIFF>(threshold);
 		QStringList filenames = QFileDialog::getOpenFileNames(this, "Open multiple TIFF images (Blue channel)","../../", "TIFF Files (*.tiff, *.tif)");
 		if (filenames.isEmpty() == false) {
 			std::vector<std::string> f;
@@ -286,7 +286,7 @@ void Viewer::addGrid() {
 			reader->setFilenames(f);
 		} else {
 			QMessageBox* fileDialog = new QMessageBox();
-            fileDialog->setAttribute(Qt::WA_DeleteOnClose);
+			fileDialog->setAttribute(Qt::WA_DeleteOnClose);
 			fileDialog->critical(this, "Error", "Did not provide any filenames !");
 			return;
 		}
@@ -328,10 +328,8 @@ void Viewer::addGrid() {
 	this->scene->slotSetMaxColorValue(limits.y);
 
 	// Update data from the grid reader :
-	inputGrid->fromGridReader(*reader);
-
-	// free up the reader's resources :
-	delete reader;
+	inputGrid->setGridReader(reader);
+	inputGrid->fromGridReader();
 
 	this->makeCurrent();
 	this->scene->addGrid(inputGrid, "");
@@ -351,11 +349,11 @@ void Viewer::addGrid() {
 void Viewer::addTwoGrids() {
 	// create input grid pointer :
 	std::shared_ptr<InputGrid> inputGrid = std::make_shared<InputGrid>();
-	std::shared_ptr<InputGrid>  otherGrid = std::make_shared<InputGrid>();
+	std::shared_ptr<InputGrid> otherGrid = std::make_shared<InputGrid>();
 
 	// create reader :
-	IO::GenericGridReader* readerR = nullptr;
-	IO::GenericGridReader* readerG = nullptr;
+	std::shared_ptr<IO::GenericGridReader> readerR = nullptr;
+	std::shared_ptr<IO::GenericGridReader> readerG = nullptr;
 	IO::GenericGridReader::data_t threshold = IO::GenericGridReader::data_t(0);
 
 	// create message box to ask user :
@@ -384,7 +382,7 @@ void Viewer::addTwoGrids() {
 
 	if (msgBox->clickedButton() == dimButton) {
 		// Reader for Red channel :
-		readerR = new IO::DIMReader(threshold);
+		readerR = std::make_shared<IO::DIMReader>(threshold);
 		QString filenameR = QFileDialog::getOpenFileName(this, "Open a DIM/IMA image (Red channel)", "../../", "BrainVISA DIM Files (*.dim)");
 		if (filenameR.isEmpty() == false) {
 			// update last path :
@@ -400,7 +398,7 @@ void Viewer::addTwoGrids() {
 		}
 
 		// Reader Green (or blue) channel :
-		readerG = new IO::DIMReader(threshold);
+		readerG = std::make_shared<IO::DIMReader>(threshold);
 		QString filenameG = QFileDialog::getOpenFileName(this, "Open a DIM/IMA image (Blue channel)", lastPath, "BrainVISA DIM Files (*.dim)");
 		if (filenameG.isEmpty() == false) {
 			// update last path :
@@ -415,7 +413,7 @@ void Viewer::addTwoGrids() {
 			return;
 		}
 	} else if (msgBox->clickedButton() == tiffButton) {
-		readerR = new IO::Reader::TIFF(threshold);
+		readerR = std::make_shared<IO::Reader::TIFF>(threshold);
 		QStringList filenamesR = QFileDialog::getOpenFileNames(this, "Open multiple TIFF images (Red channel)","../../", "TIFF Files (*.tiff, *.tif)");
 		if (filenamesR.isEmpty() == false) {
 			std::vector<std::string> f;
@@ -436,7 +434,7 @@ void Viewer::addTwoGrids() {
 			return;
 		}
 
-		readerG = new IO::Reader::TIFF(threshold);
+		readerG = std::make_shared<IO::Reader::TIFF>(threshold);
 		QStringList filenamesG = QFileDialog::getOpenFileNames(this, "Open multiple TIFF images (Blue channel)", lastPath, "TIFF Files (*.tiff, *.tif)");
 		if (filenamesG.isEmpty() == false) {
 			std::vector<std::string> f;
@@ -509,12 +507,10 @@ void Viewer::addTwoGrids() {
 	this->scene->slotSetMaxColorValue(limits.y);
 
 	// Update data from the grid reader :
-	inputGrid->fromGridReader(*readerR);
-	otherGrid->fromGridReader(*readerG);
-
-	// free up the reader's resources :
-	delete readerR;
-	delete readerG;
+	inputGrid->setGridReader(readerR);
+	inputGrid->fromGridReader();
+	otherGrid->setGridReader(readerG);
+	otherGrid->fromGridReader();
 
 	this->makeCurrent();
 	this->scene->addTwoGrids(inputGrid, otherGrid, "");

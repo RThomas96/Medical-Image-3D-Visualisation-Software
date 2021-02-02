@@ -369,6 +369,7 @@ void Scene::createBuffers() {
 }
 
 void Scene::addGrid(const std::shared_ptr<InputGrid> _grid, std::string meshPath) {
+	if (this->grids.size() > 0) { this->grids.clear(); }
 	GridGLView gridView(_grid);
 	gridView.grid->setTransform_GridToWorld(this->computeTransformationMatrix(_grid));
 
@@ -415,6 +416,7 @@ void Scene::addGrid(const std::shared_ptr<InputGrid> _grid, std::string meshPath
 }
 
 void Scene::addTwoGrids(const std::shared_ptr<InputGrid> _gridR, const std::shared_ptr<InputGrid> _gridB, std::string meshPath) {
+	if (this->grids.size() > 0) { this->grids.clear(); }
 	GridGLView gridView(_gridR);
 	gridView.grid->setTransform_GridToWorld(this->computeTransformationMatrix(_gridR));
 
@@ -469,7 +471,10 @@ void Scene::addTwoGrids(const std::shared_ptr<InputGrid> _gridR, const std::shar
 	this->tex3D_buildVisTexture(gridView.volumetricMesh);
 	this->tex3D_buildBuffers(gridView.volumetricMesh);
 
+	GridGLView blueView{_gridB};
+
 	this->grids.push_back(gridView);
+	this->grids.push_back(blueView);
 
 	this->updateVis();
 
@@ -880,9 +885,6 @@ void Scene::launchSaveDialog() {
 	inputGrid->fromInputGrid(std::dynamic_pointer_cast<InputGrid>(this->grids[0].grid));
 
 	auto fnames = this->grids[0].grid->getFilenames();
-	for (const std::string& fn : fnames) {
-		std::cerr << "\tSetting fn to" << fn << '\n';
-	}
 	outputGrid->setFilenames(fnames);
 	std::shared_ptr<TetMesh> tetmesh = std::make_shared<TetMesh>();
 	// add the grids to the tetmesh
@@ -2501,10 +2503,15 @@ void Scene::tex3D_generateMESH(const GridGLView& grid, VolMeshData& mesh) {
 
 	const DiscreteGrid::sizevec3& dims = grid.grid->getResolution();
 	const DiscreteGrid::bbox_t::vec size = grid.grid->getBoundingBox().getDiagonal();
+	DiscreteGrid::bbox_t::vec min = grid.grid->getBoundingBox().getMin();
+	DiscreteGrid::bbox_t::vec max = grid.grid->getBoundingBox().getMax();
+	DiscreteGrid::bbox_t::vec epsilon = size*1.f;
+	min -= epsilon; max += epsilon;
+	DiscreteGrid::bbox_t::vec diag = max - min;
 	// Dimensions, subject to change :
-	std::size_t yv = 10 /* dims.y / 25 */ ; glm::vec4::value_type ys = size.y / static_cast<glm::vec4::value_type>(yv);
-	std::size_t xv = 10 /* dims.x / 25 */ ; glm::vec4::value_type xs = size.x / static_cast<glm::vec4::value_type>(xv);
-	std::size_t zv = 10 /* dims.z / 25 */ ; glm::vec4::value_type zs = size.z / static_cast<glm::vec4::value_type>(zv);
+	std::size_t yv = 10 ; glm::vec4::value_type ys = diag.y / static_cast<glm::vec4::value_type>(yv);
+	std::size_t xv = 10 ; glm::vec4::value_type xs = diag.x / static_cast<glm::vec4::value_type>(xv);
+	std::size_t zv = 10 ; glm::vec4::value_type zs = diag.z / static_cast<glm::vec4::value_type>(zv);
 
 	std::cerr << "Making a mesh of " << xv*yv*zv << " vertices and " << xv*yv*zv*6 << " tetrahedra ...\n";
 
