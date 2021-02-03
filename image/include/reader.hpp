@@ -49,7 +49,7 @@ namespace IO {
 			/// @brief Vector to store grid dimensions.
 			typedef glm::vec<3, std::size_t, glm::defaultp> sizevec3;
 			/// @brief Data type to be loaded from disk into memory.
-			typedef unsigned char data_t;
+			using data_t = unsigned char;
 			/// @brief Type of bounding box used in this class.
 			typedef BoundingBox_General<float> bbox_t;
 
@@ -70,8 +70,11 @@ namespace IO {
 			/// @brief Sets the filenames to load.
 			virtual GenericGridReader& setFilenames(std::vector<std::string>& names);
 
-			/// @b Sets an interpolation structure to generate the image data upon loading.
+			/// @brief Sets an interpolation structure to generate the image data upon loading.
 			virtual GenericGridReader& setInterpolationMethod(std::shared_ptr<Interpolators::genericInterpolator<data_t>>& ptr);
+
+			/// @brief Pre-compute some image data, such as size, voxel dimensions (...)
+			virtual GenericGridReader& preComputeImageData();
 
 			/// @brief Starts the image loading process.
 			virtual GenericGridReader& loadImage();
@@ -81,6 +84,9 @@ namespace IO {
 
 			/// @brief Get the grid dimensions, once loaded.
 			virtual sizevec3 getGridDimensions(void) const;
+
+			/// @brief Get the estimated grid size, in bytes.
+			virtual std::size_t getGridSizeBytes() const;
 
 			/// @brief Get the grid's voxel dimensions, once loaded.
 			virtual glm::vec3 getVoxelDimensions(void) const;
@@ -125,6 +131,8 @@ namespace IO {
 			virtual GenericGridReader& loadSlice(std::size_t idx, std::vector<data_t>& tgt);
 
 		protected:
+			/// @brief Checks if the files have been analysed
+			bool isAnalyzed;
 			/// @brief Filenames to open images from.
 			std::vector<std::string> filenames;
 			/// @brief Data loaded from images.
@@ -162,6 +170,8 @@ namespace IO {
 			DIMReader(data_t _thresh);
 			virtual ~DIMReader(void);
 
+			virtual DIMReader& preComputeImageData() override;
+
 			/// @brief Loads the image from disk. If no filenames are provided, loads nothing.
 			virtual DIMReader& loadImage() override;
 		protected:
@@ -182,6 +192,8 @@ namespace IO {
 			StackedTIFFReader(data_t thresh);
 			virtual ~StackedTIFFReader(void);
 
+			virtual StackedTIFFReader& preComputeImageData() override;
+
 			/// @brief Loads the image from disk. If no filenames are provided, does nothing.
 			virtual StackedTIFFReader& loadImage() override;
 
@@ -193,14 +205,21 @@ namespace IO {
 			virtual StackedTIFFReader& preAllocateStorage();
 
 			/// @brief Opens the specified file to be able to read it later.
-			virtual StackedTIFFReader& openFile(const std::string& filename) override;
+			virtual StackedTIFFReader& openFile(const std::string& filename) override;;
 
 			/// @brief Loads the image at index 'idx' in the filenames in memory.
 			virtual StackedTIFFReader& loadSlice(std::size_t idx, std::vector<data_t>& tgt) override;
 
 		protected:
-			TinyTIFFReaderFile* tiffFile;
-			std::size_t currentFile;
+			TinyTIFFReaderFile* tiffFile;	///< Currently opened file, TinyTIFF's handle.
+			std::size_t currentFile;	///< Currently opened file, indexed.
+			/// @brief Index of grid slices to [TIFF filename, TIFF frame].
+			/// @details Contains a pair of <i, j> where 'i' is the filename index in the available names,
+			/// and 'j' is the index of the TIFF frame inside this file. This vector is indexed according
+			/// to the grid slices. For example, if you want the slice 'N' in the full 3D image, you get
+			/// the 'N'-th pair of indices, and get filenames[i].frame[j] to get the data.
+			/// @note For the moment, this index is built but unused.
+			std::vector<std::pair<std::size_t, std::size_t>> sliceToFilename;
 	};
 
 	namespace Reader {

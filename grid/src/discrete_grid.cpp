@@ -24,35 +24,58 @@ DiscreteGrid::DiscreteGrid(bool _modifiable) {
 	this->transform_gridToWorld = glm::mat4(1.f);
 	this->transform_worldToGrid = glm::mat4(1.f);
 	this->dataBoundingBox = bbox_t();
+	this->gridReader = nullptr;
+	this->gridWriter = nullptr;
+	this->isOffline = false;
 }
 
-DiscreteGrid::DiscreteGrid(IO::GenericGridReader& reader) : DiscreteGrid() {
-	this->fromGridReader(reader);
+DiscreteGrid::DiscreteGrid(std::shared_ptr<IO::GenericGridReader> reader) : DiscreteGrid() {
+	this->gridReader = reader;
+	this->fromGridReader();
 }
 
 DiscreteGrid::~DiscreteGrid(void) {
 	this->data.clear();
 }
 
-DiscreteGrid& DiscreteGrid::fromGridReader(IO::GenericGridReader& reader) {
+DiscreteGrid& DiscreteGrid::setOffline(bool off) {
+	this->isOffline = off;
+	return *this;
+}
+
+DiscreteGrid& DiscreteGrid::fromGridReader() {
+	if (this->gridReader == nullptr) { return *this; }
 	// Updates this grid's data, bypassing the 'state'isModifiable' check.
 	this->data.clear();
 
-	this->setTransform_GridToWorld(reader.getTransform());
-	this->dataThreshold = reader.getDataThreshold();
-	this->gridDimensions = reader.getGridDimensions();
-	this->voxelDimensions = reader.getVoxelDimensions();
-	this->boundingBox = reader.getBoundingBox();
-	this->dataBoundingBox = reader.getDataBoundingBox();
-	this->setFilenames(reader.getFilenames());
+	this->setTransform_GridToWorld(this->gridReader->getTransform());
+	this->dataThreshold = this->gridReader->getDataThreshold();
+	this->gridDimensions = this->gridReader->getGridDimensions();
+	this->voxelDimensions = this->gridReader->getVoxelDimensions();
+	this->boundingBox = this->gridReader->getBoundingBox();
+	this->dataBoundingBox = this->gridReader->getDataBoundingBox();
+	this->setFilenames(this->gridReader->getFilenames());
 
 	std::size_t gridsize = this->gridDimensions.x * this->gridDimensions.y * this->gridDimensions.z;
 	this->data.resize(gridsize);
 	// copy data :
-	reader.swapData(this->data);
+	this->gridReader->swapData(this->data);
 
 	return *this;
 }
+
+DiscreteGrid& DiscreteGrid::setGridReader(std::shared_ptr<IO::GenericGridReader> reader) {
+	this->gridReader = reader;
+	return *this;
+}
+
+DiscreteGrid& DiscreteGrid::setGridWriter(std::shared_ptr<IO::GenericGridWriter> writer) {
+	this->gridWriter = writer;
+	return *this;
+}
+
+std::shared_ptr<IO::GenericGridReader> DiscreteGrid::getGridReader(void) const { return this->gridReader; }
+std::shared_ptr<IO::GenericGridWriter> DiscreteGrid::getGridWriter(void) const { return this->gridWriter; }
 
 glm::vec4 DiscreteGrid::toGridSpace(glm::vec4 pos_ws) const {
 	return this->transform_worldToGrid * pos_ws;
@@ -113,10 +136,14 @@ DiscreteGrid& DiscreteGrid::setPixel(std::size_t x, std::size_t y, std::size_t z
 }
 
 bool DiscreteGrid::hasData() const {
+	// if offline, we MAY have a buffer but this doesn't count as data.
+	if (this->isOffline) { return false; }
+	// Otherwise, return if the data vector has been filled.
 	return (this->data.size() != 0);
 }
 
 const DiscreteGrid::DataType* DiscreteGrid::getDataPtr() const {
+	if (this->isOffline) { return nullptr; }
 	return this->data.data();
 }
 

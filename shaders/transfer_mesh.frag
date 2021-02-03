@@ -419,6 +419,7 @@ vec3 phongComputation(vec4 position, vec3 normal, vec4 color, vec3 lightPos, vec
 void main (void) {
 	if( visibility > 3500. ) discard;
 
+	/*
 	float epsilon = 0.00; //3;
 	float distMin = min(barycentricCoords.x/largestDelta.x, min(barycentricCoords.y/largestDelta.y, barycentricCoords.z/largestDelta.z));
 
@@ -428,6 +429,7 @@ void main (void) {
 		colorOut = vec4(1.-factor, factor, 1.-factor, 1.);
 		return;
 	}
+	*/
 
 	// Default color of the fragment : cyan
 	colorOut = vec4(.0, .0, .0, .0);

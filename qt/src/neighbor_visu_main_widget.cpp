@@ -15,6 +15,7 @@ MainWidget::MainWidget() {
 	this->strayObj.clear();
 	this->setupWidgets();
 	this->widgetSizeSet = false;
+	this->usettings = nullptr;
 }
 
 MainWidget::~MainWidget() {
@@ -71,6 +72,7 @@ void MainWidget::setupWidgets() {
 	this->action_drawModeVB= new QAction("Set draw mode to Volumetric(Boxed)");
 	this->action_showHelp3D = new QAction("3D Viewer Help Page");
 	this->action_showHelpPlane = new QAction("Planar Viewer Help Page");
+	this->action_showSettings = new QAction("Settings");
 
 	// Menu creation :
 	// File menu :
@@ -78,6 +80,7 @@ void MainWidget::setupWidgets() {
 	this->fileMenu->addAction(this->action_add1Grid);
 	this->fileMenu->addAction(this->action_add2Grid);
 	this->fileMenu->addAction(this->action_saveGrid);
+	this->fileMenu->addAction(this->action_showSettings);
 	this->fileMenu->addAction(this->action_exitProgram);
 	// view menu :
 	this->viewMenu = this->menuBar()->addMenu("&View");
@@ -89,6 +92,7 @@ void MainWidget::setupWidgets() {
 	this->helpMenu = this->menuBar()->addMenu("&Help");
 	this->helpMenu->addAction(this->action_showHelp3D);
 	this->helpMenu->addAction(this->action_showHelpPlane);
+
 	// Connect actions to the slots/functions in the program :
 	QObject::connect(this->action_add1Grid, &QAction::triggered, [this](){this->viewer->addGrid();});
 	QObject::connect(this->action_add2Grid, &QAction::triggered, [this](){this->viewer->addTwoGrids();});
@@ -100,6 +104,13 @@ void MainWidget::setupWidgets() {
 	QObject::connect(this->action_drawModeVB, &QAction::triggered, [this](){this->scene->setDrawMode(DrawMode::VolumetricBoxed);});
 	QObject::connect(this->action_showHelp3D, &QAction::triggered, [this](){this->viewer->help();});
 	QObject::connect(this->action_showHelpPlane, &QAction::triggered, [this](){this->viewer_planeX->help();});
+	QObject::connect(this->action_showSettings, &QAction::triggered, [this](){
+		if (this->usettings != nullptr) { this->usettings->show(); }
+		else {
+			this->usettings = new UserSettingsWidget;
+			this->usettings->show();
+		}
+	});
 
 	// Viewer(s) creation along with control panel :
 	this->viewer = new Viewer(this->scene, nullptr);

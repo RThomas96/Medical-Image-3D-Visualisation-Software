@@ -5,6 +5,7 @@
 #include "../../features.hpp"
 
 #include "../../image/include/reader.hpp"
+#include "../../image/include/writer.hpp"
 #include "./bounding_box.hpp"
 
 #include <glm/glm.hpp>
@@ -34,7 +35,7 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 		/// @brief Definition of a 3 dimensionnal vector to store this grid's dimensions, amongst other things.
 		typedef glm::vec<3, std::size_t, glm::defaultp> sizevec3;
 		/// @brief Simple typedef in order to to a templat-ing of this class later.
-		typedef unsigned char DataType;
+		using DataType = unsigned char;
 		/// @brief Type of bounding box used
 		typedef BoundingBox_General<float> bbox_t;
 		/// @brief Public typename for DiscreteGrid's data type
@@ -45,7 +46,7 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 		DiscreteGrid(bool _modifiable = true);
 
 		/// @brief Creates a grid using content from a grid reader.
-		DiscreteGrid(IO::GenericGridReader& reader);
+		DiscreteGrid(std::shared_ptr<IO::GenericGridReader> reader);
 
 		/// @brief Creates a grid using content from a grid reader.
 		DiscreteGrid(const DiscreteGrid& other) = delete;
@@ -71,7 +72,18 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 		virtual DiscreteGrid& setPixel(std::size_t x, std::size_t y, std::size_t z, DataType value);
 
 		/// @brief Updates this grid's data with data computed from a grid reader.
-		virtual DiscreteGrid& fromGridReader(IO::GenericGridReader& reader);
+		virtual DiscreteGrid& fromGridReader();
+
+		/// @brief Set the grid reader used to generate this grid.
+		virtual DiscreteGrid& setGridReader(std::shared_ptr<IO::GenericGridReader> reader);
+		/// @brief Set the grid writer used to write this grid to disk.
+		virtual DiscreteGrid& setGridWriter(std::shared_ptr<IO::GenericGridWriter> writer);
+		/// @brief Get the grid reader used to generate this grid.
+		virtual std::shared_ptr<IO::GenericGridReader> getGridReader(void) const;
+		/// @brief Get the grid writer used to write this grid to disk.
+		virtual std::shared_ptr<IO::GenericGridWriter> getGridWriter(void) const;
+		/// @brief Set the data reads/writes to be offline or not
+		virtual DiscreteGrid& setOffline(bool off = true);
 
 		/// @brief Returns the given point (originally world space) in grid space.
 		virtual glm::vec4 toGridSpace(glm::vec4 pos_ws) const;
@@ -187,6 +199,8 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 		/// @brief Checks if the grid's properties can be modified (data will always be modifiable, dimensions might not)
 		/// @details Output grids can be modified, input grids however, cannot.
 		bool modifiable;
+		/// @brief Checks if we want to query/write data directly to disk or not
+		bool isOffline;
 		/// @brief Stores the data associated with the grid.
 		/// @details Arranged in order : X, Y, Z. Meaning, we first get a 'width'-sized
 		/// array of values, followed by 'height'-sized arrays of 'width'-sized arrays
@@ -213,6 +227,10 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 		std::string gridName;
 		/// @brief Filenames associated with the grid. Used in offline versions of the grid.
 		std::vector<std::string> filenames;
+		/// @brief File reader
+		std::shared_ptr<IO::GenericGridReader> gridReader;
+		/// @brief File writer
+		std::shared_ptr<IO::GenericGridWriter> gridWriter;
 };
 
 #endif // GRID_INCLUDE_DISCRETE_GRID_HPP_

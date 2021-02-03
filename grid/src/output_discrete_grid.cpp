@@ -20,7 +20,11 @@ OutputGrid& OutputGrid::preallocateData() {
 
 OutputGrid& OutputGrid::preallocateData(sizevec3 dims) {
 	this->data.clear();
-	this->data.resize(dims.x*dims.y*dims.z);
+	if (this->isOffline) {
+		this->data.resize(dims.x*dims.y);
+	} else {
+		this->data.resize(dims.x*dims.y*dims.z);
+	}
 	return *this;
 }
 
@@ -39,6 +43,29 @@ OutputGrid& OutputGrid::updateRenderBox(const bbox_t& newbox) {
 
 	return *this;
 }
+
+OutputGrid& OutputGrid::writeSlice() {
+	if (this->isOffline == false) { return *this; }
+	if (this->gridWriter == nullptr) {
+		std::cerr << "[ERROR] Requested to write slice " << this->currentSlice << " but no writer was set.\n";
+		return *this;
+	}
+	if (this->data.size() == 0) { this->preallocateData(); }
+	std::cerr << "[LOG] Writing slice " << this->currentSlice << "/" << this->gridDimensions.z << " ...\n";
+	this->gridWriter->writeSlice(this->data, this->currentSlice);
+	return *this;
+}
+
+OutputGrid& OutputGrid::setPixel(std::size_t i, std::size_t j, std::size_t k, DataType _data) {
+	if (this->isOffline) {
+		DiscreteGrid::setPixel(i, j, 0, _data);
+	} else {
+		DiscreteGrid::setPixel(i, j, k, _data);
+	}
+	return *this;
+}
+
+OutputGrid& OutputGrid::setCurrentSlice(std::size_t cs) { this->currentSlice = cs; return *this; }
 
 OfflineOutputGrid::OfflineOutputGrid(void) : OutputGrid() {
 	this->setModifiable(true);

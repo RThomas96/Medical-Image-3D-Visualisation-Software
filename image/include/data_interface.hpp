@@ -56,17 +56,17 @@ namespace IO {
 			/// @brief Get the currently set data threshold.
 			virtual data_t getDataThreshold(void) const;
 			/// @brief Sets the data threshold for the class.
-			virtual DataInterface<T>& setDataThreshold(const data_t _thresh) = 0;
+			virtual DataInterface<T>& setDataThreshold(const data_t _thresh);
 
 			/// @brief Get the image's resolution.
-			virtual size4_t getResolution(void) const = 0;
+			virtual size4_t getResolution(void) const;
 			/// @brief Sets the resolution of the image.
 			virtual DataInterface<data_t>& setResolution(size4_t s) = 0;
 
 			/// @brief Get the image's voxel sizes. If it cannot be read, this will return (1,1,1).
 			virtual fsize_t getVoxelDimensions(void) const;
 			/// @brief Sets the voxel resolution for the image.
-			virtual DataInterface<data_t>& setVoxelDimensions(fsize_t dims);
+			virtual DataInterface<data_t>& setVoxelDimensions(fsize_t dims) = 0;
 
 			/// @brief Returns a pixel's data, in the grid.
 			virtual pixel_t getPixel(size3_t pos) = 0;

@@ -29,6 +29,7 @@ int main(int argc, char* argv[]) {
 
 	QSurfaceFormat fmt;
 	fmt.setOption(QSurfaceFormat::DebugContext);
+	fmt.setSamples(4);
 	QSurfaceFormat::setDefaultFormat(fmt);
 
 	QApplication app(argc, argv);

@@ -20,6 +20,11 @@ class OutputGrid : public DiscreteGrid {
 		virtual OutputGrid& preallocateData(void);
 		virtual OutputGrid& preallocateData(sizevec3 dims);
 		virtual OutputGrid& updateRenderBox(const bbox_t& newbox);
+		virtual OutputGrid& writeSlice();
+		virtual OutputGrid& setCurrentSlice(std::size_t currentSlice);
+		virtual OutputGrid& setPixel(std::size_t i, std::size_t j, std::size_t k, DataType _data) override;
+	protected:
+		std::size_t currentSlice;
 };
 
 class OfflineOutputGrid : public OutputGrid {

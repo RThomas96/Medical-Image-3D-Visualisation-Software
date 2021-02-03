@@ -9,6 +9,7 @@
 
 #include <glm/glm.hpp>
 
+#include <QDir>
 #include <QLabel>
 #include <QWidget>
 #include <QSpinBox>
@@ -105,6 +106,13 @@ class GridControl : public QWidget {
 		QComboBox* methodPicker; ///< Picker for the interpolation method.
 		QLabel* info_GridSizeTotal; ///< Displays the total number of voxels in the grid
 		QLabel* info_VoxelSize; ///< Displays the size of voxels, in units.
+
+		QDir baseDir; ///< User save dir, by default set to QDir::homePath()
+		QPushButton* button_modifyBaseDir;
+		QLabel* label_baseDir;
+		QLineEdit* lineEdit_baseName;
+		QLabel* label_baseName;
+		QComboBox* comboBox_filetype;
 
 		QPushButton* button_SaveButton; ///< Button to save the grid, triggers a text dialog and saves the file.
 		QDoubleSpinBox* input_GridBBMinX; ///< Controls the coordinates of the minimum bound of the grid's render bounding box along X

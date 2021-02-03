@@ -7,6 +7,7 @@
 #include "./scene_control.hpp"
 #include "./grid_control.hpp"
 #include "./opengl_debug_log.hpp"
+#include "./user_settings_widget.hpp"
 
 #include <QWidget>
 #include <QMainWindow>
@@ -43,6 +44,8 @@ class MainWidget : public QMainWindow {
 
 		OpenGLDebugLog* glDebug;	///< Output for the OpenGL debug messages.
 
+		UserSettingsWidget* usettings;	///< User settings dialog.
+
 		ControlPanel* controlPanel;	///< The control panel at the bottom of the grid
 		bool widgetSizeSet;		///< Checks if the widget size has been set before
 		std::vector<QObject*> strayObj;	///< Pointers to all temporary objects allocated in the setup process
@@ -62,6 +65,7 @@ class MainWidget : public QMainWindow {
 		QAction* action_drawModeVB;	///< Action to set the scene's draw mode to 'Volumetric boxed'
 		QAction* action_showHelp3D;	///< Action to show the help dialog for the 3D viewer
 		QAction* action_showHelpPlane;	///< Action to show the help dialog for the planar viewers
+		QAction* action_showSettings;	///< Action to show user settings
 		QStatusBar* statusBar;		///< Status bar
 		QPushButton* showGLLog;		///< Button to open the QOpenGLDebugLog message box.
 };

@@ -257,6 +257,7 @@ void ViewerHeader3D::setupSignals() {
 		bool toggled = this->button_togglePlane->property("toggled").toBool();
 		if (toggled) { this->button_togglePlane->setIcon(*this->icon_hide); }
 		else { this->button_togglePlane->setIcon(*this->icon_show); }
+		this->button_togglePlane->setProperty("toggled", not toggled);
 	});
 	// connect plane directions button :
 	QObject::connect(this->button_invertPlaneCut, &QPushButton::clicked, [this]() ->void {

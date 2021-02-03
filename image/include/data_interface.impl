@@ -24,6 +24,23 @@ namespace IO {
 		return this->dataThreshold;
 	}
 
+	template <typename T> DataInterface<T>& DataInterface<T>::setDataThreshold(data_t thresh) {
+		this->dataThreshold = thresh;
+		return *this;
+	}
+
+	template <typename T> size4_t DataInterface<T>::getResolution() const {
+		return this->imageDimensions;
+	}
+
+	template <typename T> fsize_t DataInterface<T>::getVoxelDimensions() const {
+		return this->voxelDimensions;
+	}
+
+	template <typename T> const typename DataInterface<T>::limit_t DataInterface<T>::getIntensityBounds(std::size_t c) const {
+		return this->intensityBounds[c];
+	}
+
 	template <typename T> const std::vector<std::string>& DataInterface<T>::getFilenames() const {
 		return this->filenames;
 	}

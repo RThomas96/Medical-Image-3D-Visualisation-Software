@@ -44,6 +44,11 @@ namespace glm {
 #define FUNC_FLATTEN __attribute__((flatten))
 #define FUNC_ALWAYS_INLINE __attribute__((always_inline))
 
+#if defined(WIN32) || defined(WIN64) || defined(_MSC_VER) || defined(_WIN32)
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
+
 /* Copy paste this to have trace output at debug time
 #ifndef NDEBUG
 	std::cerr << "[TRACE][" << __PRETTY_FUNCTION__ << "] : \n";

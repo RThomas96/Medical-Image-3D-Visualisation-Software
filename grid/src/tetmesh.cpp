@@ -63,9 +63,12 @@ TetMesh& TetMesh::populateOutputGrid(InterpolationMethods method) {
 
 	std::cerr << "[LOG] TetMesh generating over [" << dims.x << ", " << dims.y << ", " << dims.z << "]\n";
 
+	this->outputGrid->getGridWriter()->preAllocateData();
+
 	std::cerr << "[LOG] Starting to iterate on the image to generate ... (" << dims.z << " levels)\n";
 	// iterate on the voxels of the output data grid :
 	for (std::size_t k = 0; k < dims.z; ++k) {
+		this->outputGrid->setCurrentSlice(k);
 		for (std::size_t j = 0; j < dims.y; ++j) {
 			for (std::size_t i = 0; i < dims.x; ++i) {
 				// generate 3D index :
@@ -95,6 +98,9 @@ TetMesh& TetMesh::populateOutputGrid(InterpolationMethods method) {
 				this->outputGrid->setPixel(i, j, k, globalVal);
 			}
 		}
+
+		#warning Writes data directly to disk here.
+		this->outputGrid->writeSlice();
 	}
 
 	// Data should now be done being generated ...

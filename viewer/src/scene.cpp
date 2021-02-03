@@ -880,12 +880,9 @@ void Scene::launchSaveDialog() {
 	#warning Allocates new grids from input grids here !
 
 	// create an output grid AND a tetmesh to generate it :
-	std::shared_ptr<OutputGrid> outputGrid = std::make_shared<OfflineOutputGrid>();
-	std::shared_ptr<OfflineInputGrid> inputGrid = std::make_shared<OfflineInputGrid>();
-	inputGrid->fromInputGrid(std::dynamic_pointer_cast<InputGrid>(this->grids[0].grid));
+	std::shared_ptr<OutputGrid> outputGrid = std::make_shared<OutputGrid>();
+	outputGrid->setOffline();
 
-	auto fnames = this->grids[0].grid->getFilenames();
-	outputGrid->setFilenames(fnames);
 	std::shared_ptr<TetMesh> tetmesh = std::make_shared<TetMesh>();
 	// add the grids to the tetmesh
 	for (std::size_t i = 0; i < this->grids.size(); ++i) {
@@ -1837,11 +1834,13 @@ glm::mat4 Scene::computeTransformationMatrix(const std::shared_ptr<DiscreteGrid>
 	transfoMat[1][1] = 0.39;
 	transfoMat[2][2] = 1.927 * std::cos(angleRad);
 
+	/*
 	std::cerr << "Matrix : " << '\n';
 	for (int i = 0; i < 4; ++i) {
 		std::cerr << '{' << transfoMat[i][0] << ", " << transfoMat[i][1] << ", " << transfoMat[i][2] << ", " << transfoMat[i][3] << "}\n";
 	}
 	std::cerr << '\n';
+	*/
 
 	return transfoMat;
 	// return glm::mat4(1.f);
@@ -2175,8 +2174,8 @@ void Scene::toggleAllPlaneVisibilities() {
 }
 
 void Scene::writeGridDIM(const std::string name) {
-	IO::Writer::DIM* writer = new IO::Writer::DIM(name);
-	writer->write(this->outputGrid);
+	//IO::Writer::DIM* writer = new IO::Writer::DIM(name, "./");
+	//writer->write(this->outputGrid);
 	return;
 }
 
@@ -2211,8 +2210,8 @@ void Scene::draft_writeRawGridPortion(DiscreteGrid::sizevec3 begin, DiscreteGrid
 	rawGrid->setBoundingBox(box);
 	rawGrid->setResolution(size);
 	rawGrid->setData(data);
-	IO::Writer::DIM* writer = new IO::Writer::DIM(name);
-	writer->write(rawGrid);
+	// IO::Writer::DIM* writer = new IO::Writer::DIM(name, "./");
+	// writer->write(rawGrid);
 	return;
 }
 
@@ -2501,23 +2500,29 @@ void Scene::tex3D_generateMESH(const GridGLView& grid, VolMeshData& mesh) {
 
 	using vec_t = typename DiscreteGrid::bbox_t::vec;
 
-	const DiscreteGrid::sizevec3& dims = grid.grid->getResolution();
-	const DiscreteGrid::bbox_t::vec size = grid.grid->getBoundingBox().getDiagonal();
+	grid.grid->getBoundingBox().printInfo("In mesh generation");
 	DiscreteGrid::bbox_t::vec min = grid.grid->getBoundingBox().getMin();
 	DiscreteGrid::bbox_t::vec max = grid.grid->getBoundingBox().getMax();
-	DiscreteGrid::bbox_t::vec epsilon = size*1.f;
-	min -= epsilon; max += epsilon;
-	DiscreteGrid::bbox_t::vec diag = max - min;
+	const DiscreteGrid::bbox_t::vec size = grid.grid->getBoundingBox().getDiagonal();
+	DiscreteGrid::bbox_t::vec diag = size;
 	// Dimensions, subject to change :
-	std::size_t yv = 10 ; glm::vec4::value_type ys = diag.y / static_cast<glm::vec4::value_type>(yv);
 	std::size_t xv = 10 ; glm::vec4::value_type xs = diag.x / static_cast<glm::vec4::value_type>(xv);
+	std::size_t yv = 10 ; glm::vec4::value_type ys = diag.y / static_cast<glm::vec4::value_type>(yv);
 	std::size_t zv = 10 ; glm::vec4::value_type zs = diag.z / static_cast<glm::vec4::value_type>(zv);
 
-	std::cerr << "Making a mesh of " << xv*yv*zv << " vertices and " << xv*yv*zv*6 << " tetrahedra ...\n";
+	std::size_t tetcount = (xv+1)+(yv+1)*(zv+1);
+
+	std::cerr << "Making a mesh of " << tetcount << " vertices and " << xv*yv*zv*6 << " tetrahedra ...\n";
 
 	glm::vec4 pos = glm::vec4();
 	glm::vec3 tex = glm::vec3();
 	glm::mat4 transfo = grid.grid->getTransform_GridToWorld();
+
+	std::cerr << "Matrix : " << '\n';
+	for (int i = 0; i < 4; ++i) {
+		std::cerr << '{' << transfo[i][0] << ", " << transfo[i][1] << ", " << transfo[i][2] << ", " << transfo[i][3] << "}\n";
+	}
+	std::cerr << '\n';
 
 	// Create vertices along with their texture coordinates :
 	for (std::size_t k = 0; k <= zv; ++k) {

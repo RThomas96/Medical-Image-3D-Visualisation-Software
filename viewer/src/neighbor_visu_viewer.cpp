@@ -1,6 +1,7 @@
 #include "../include/neighbor_visu_viewer.hpp"
 #include "../../image/include/writer.hpp"
 #include "../../features.hpp"
+#include "../../qt/include/user_settings_widget.hpp"
 
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -295,17 +296,26 @@ void Viewer::addGrid() {
 		throw std::runtime_error("error : no button pressed");
 	}
 
+	reader->preComputeImageData();
+	std::size_t sizebits = reader->getGridSizeBytes() * 8;
+	std::size_t settings = UserSettings::getInstance().getUserRemainingBitSize();
+
+	bool askUser = ((settings / 2) < sizebits);
+	std::cerr << "Bits available : " << settings/2 << " bits taken by loading " << sizebits << '\n';
+
 	levelBox->exec();
 
-	while (levelBox->clickedButton() == originalButton) {
-		confirmBox->exec();
-		if (confirmBox->clickedButton() == confirm_Accept) {
-			std::cerr << "Accepted full-res\n";
-			break;
-		}
-		else {
-			std::cerr << "Re-showing the dialog box\n";
-			levelBox->exec();
+	if (askUser) {
+		while (levelBox->clickedButton() == originalButton) {
+			confirmBox->exec();
+			if (confirmBox->clickedButton() == confirm_Accept) {
+				std::cerr << "Accepted full-res\n";
+				break;
+			}
+			else {
+				std::cerr << "Re-showing the dialog box\n";
+				levelBox->exec();
+			}
 		}
 	}
 
@@ -313,15 +323,22 @@ void Viewer::addGrid() {
 	if (levelBox->clickedButton() == lowerButton) { reader->enableDownsampling(IO::DownsamplingLevel::Lower); }
 	if (levelBox->clickedButton() == lowestButton) { reader->enableDownsampling(IO::DownsamplingLevel::Lowest); }
 
+	if (levelBox->clickedButton() != originalButton) {
 	// Set the interpolation method :
-	std::shared_ptr<Interpolators::genericInterpolator<IO::GenericGridReader::data_t>> interpolator =
-			std::make_shared<Interpolators::meanValue<IO::GenericGridReader::data_t>>();
-	reader->setInterpolationMethod(interpolator);
+		std::shared_ptr<Interpolators::genericInterpolator<IO::GenericGridReader::data_t>> interpolator =
+				std::make_shared<Interpolators::meanValue<IO::GenericGridReader::data_t>>();
+		reader->setInterpolationMethod(interpolator);
+	}
+
+	sizebits = reader->getGridSizeBytes() * 8;
+	// add the image size to loaded size
+	UserSettings::getInstance().loadImageSize(sizebits);
 
 	// Set reader properties :
 	reader->setDataThreshold(threshold);
 	// Load the data :
 	reader->loadImage();
+	reader->getBoundingBox().printInfo("After reader");
 	// get texture bounds :
 	glm::vec<2, IO::GenericGridReader::data_t, glm::defaultp> limits = reader->getTextureLimits();
 	this->scene->slotSetMinColorValue(limits.x);
@@ -460,17 +477,25 @@ void Viewer::addTwoGrids() {
 		throw std::runtime_error("error : no button pressed");
 	}
 
+	readerR->preComputeImageData();
+	readerG->preComputeImageData();
+	std::size_t sizebits = readerR->getGridSizeBytes() * 8 + readerG->getGridSizeBytes() * 8;
+	std::size_t settings = UserSettings::getInstance().getUserRemainingBitSize();
+	bool askUser = ((settings / 2) < sizebits);
+
 	levelBox->exec();
 
-	while (levelBox->clickedButton() == originalButton) {
-		confirmBox->exec();
-		if (confirmBox->clickedButton() == confirm_Accept) {
-			std::cerr << "Accepted full-res\n";
-			break;
-		}
-		else {
-			std::cerr << "Re-showing the dialog box\n";
-			levelBox->exec();
+	if (askUser) {
+		while (levelBox->clickedButton() == originalButton) {
+			confirmBox->exec();
+			if (confirmBox->clickedButton() == confirm_Accept) {
+				std::cerr << "Accepted full-res\n";
+				break;
+			}
+			else {
+				std::cerr << "Re-showing the dialog box\n";
+				levelBox->exec();
+			}
 		}
 	}
 
@@ -486,12 +511,17 @@ void Viewer::addTwoGrids() {
 		readerR->enableDownsampling(IO::DownsamplingLevel::Lowest);
 		readerG->enableDownsampling(IO::DownsamplingLevel::Lowest);
 	}
+	if (levelBox->clickedButton() != originalButton) {
+		// Set the interpolation method :
+		std::shared_ptr<Interpolators::genericInterpolator<IO::GenericGridReader::data_t>> interpolator =
+				std::make_shared<Interpolators::meanValue<IO::GenericGridReader::data_t>>();
+		readerR->setInterpolationMethod(interpolator);
+		readerG->setInterpolationMethod(interpolator);
+	}
 
-	// Set the interpolation method :
-	std::shared_ptr<Interpolators::genericInterpolator<IO::GenericGridReader::data_t>> interpolator =
-			std::make_shared<Interpolators::meanValue<IO::GenericGridReader::data_t>>();
-	readerR->setInterpolationMethod(interpolator);
-	readerG->setInterpolationMethod(interpolator);
+	sizebits = readerR->getGridSizeBytes() * 8 + readerG->getGridSizeBytes() * 8;
+	// add the image size to loaded size
+	UserSettings::getInstance().loadImageSize(sizebits);
 
 	// Set reader properties :
 	readerR->setDataThreshold(threshold);
@@ -499,6 +529,8 @@ void Viewer::addTwoGrids() {
 	// Load the data :
 	readerR->loadImage();
 	readerG->loadImage();
+	readerR->getBoundingBox().printInfo("After readerR");
+	readerG->getBoundingBox().printInfo("After readerG");
 	// get texture bounds :
 	glm::vec<2, IO::GenericGridReader::data_t, glm::defaultp> limitsR = readerR->getTextureLimits();
 	glm::vec<2, IO::GenericGridReader::data_t, glm::defaultp> limitsG = readerG->getTextureLimits();

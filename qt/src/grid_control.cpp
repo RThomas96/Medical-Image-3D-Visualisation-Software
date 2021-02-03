@@ -12,6 +12,7 @@ GridControl::GridControl(std::shared_ptr<DiscreteGrid> vg, std::shared_ptr<TetMe
 	this->voxelGrid = vg;
 	this->scene = _scene;
 	this->mesh = tetMesh;
+	this->baseDir.setPath(QDir::homePath());
 	this->setupWidgets();
 	if (this->voxelGrid != nullptr) {
 		this->updateValues();
@@ -126,6 +127,15 @@ void GridControl::setupWidgets() {
 	this->info_VoxelSize = new QLabel("0x0x0");
 	this->button_SaveButton = new QPushButton("Generate and save grid");
 
+	this->button_modifyBaseDir = new QPushButton("Change dir...");
+	this->label_baseDir = new QLabel(this->baseDir.path());
+
+	this->comboBox_filetype = new QComboBox;
+	this->comboBox_filetype->addItem(".dim, .ima");
+	this->comboBox_filetype->addItem(".tif (Multiple files)");
+
+	this->lineEdit_baseName = new QLineEdit("grid");
+
 	// Setup bounds for the selectors :
 	this->setupSpinBoxBounds(this->input_GridSizeX);
 	this->setupSpinBoxBounds(this->input_GridSizeY);
@@ -168,6 +178,7 @@ void GridControl::setupWidgets() {
 	QGridLayout* mainLayout = new QGridLayout;
 	QFrame* frame_VoxelSizes = new QFrame;
 	QFrame* frame_BoundingBox = new QFrame;
+	QGridLayout* layout_saveFile = new QGridLayout;
 
 	//==========================//
 	// Add grid and voxel sizes //
@@ -214,6 +225,11 @@ void GridControl::setupWidgets() {
 	frame_BoundingBox->setLayout(layout_BoundingBox);
 	frame_BoundingBox->setStyleSheet(".QFrame{border: 2px solid grey;border-radius: 4px;}");
 
+	layout_saveFile->addWidget(this->label_baseDir, 0, 0, 1, 3, Qt::AlignJustify);
+	layout_saveFile->addWidget(this->button_modifyBaseDir, 0, 4, 1, 1, Qt::AlignJustify);
+	layout_saveFile->addWidget(this->lineEdit_baseName, 1, 0, 1, 3, Qt::AlignJustify);
+	layout_saveFile->addWidget(this->comboBox_filetype, 1, 4, 1, 1, Qt::AlignJustify);
+
 	//========================================//
 	// Merge grid/voxel and BB layouts in one //
 	//========================================//
@@ -223,6 +239,8 @@ void GridControl::setupWidgets() {
 	mainLayout->addWidget(frame_VoxelSizes, mRow, 0, 1, -1); mRow+=2; // space to next widget
 	// Add bb controls :
 	mainLayout->addWidget(frame_BoundingBox, mRow, 0, 1, -1); mRow+=2; // space to next widget
+	// Add save options :
+	mainLayout->addLayout(layout_saveFile, mRow, 0); mRow+=2; // space to next widget
 	// Add buttons :
 	mainLayout->addWidget(label_InterpolationMethod, mRow, 0, Qt::AlignRight);
 	mainLayout->addWidget(this->methodPicker, mRow, 1, Qt::AlignJustify);
@@ -306,6 +324,16 @@ void GridControl::setupSignals() {
 	connect(this->methodPicker, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &GridControl::pickMethod);
 
 	connect(this->button_SaveButton, &QPushButton::clicked, this, &GridControl::saveToFile);
+
+	connect(this->button_modifyBaseDir, &QPushButton::clicked, [this]() {
+		QDir newDir = QFileDialog::getExistingDirectory(this, "Pick a save dialog", this->baseDir.path());
+		if (newDir.isReadable()) {
+			this->baseDir = newDir;
+		} else {
+			this->dialogBox->critical(this, "Directory Error", "Directory chosen was not readable !");
+		}
+		this->label_baseDir->setText(this->baseDir.path());
+	});
 }
 
 void GridControl::pickMethod(int m) {
@@ -436,7 +464,6 @@ void GridControl::saveToFile() {
 		messageBox->show();
 		#else
 		this->dialogBox->critical(this, "Error", "No grid was attached to this controller.\nPlease close and re-open the save dialog.");
-		this->dialogBox->show();
 		#endif
 		return;
 	}
@@ -448,16 +475,12 @@ void GridControl::saveToFile() {
 		messageBox->show();
 		#else
 		this->dialogBox->critical(this, "Error", "No mesh was attached to this controller.\nPlease close and re-open the save dialog.");
-		this->dialogBox->show();
 		#endif
 		return;
 	}
 
-	// Here :  parent is 'this' because it will make the save dialog appear centered above this widget !
-	QString fileName = QFileDialog::getSaveFileName(this, "Save to DIM/IMA files", "../", "BrainVisa DIM/IMA (*.dim, *.ima)");
-
 	// If nothing was selected !
-	if (fileName.isEmpty()) {
+	if (this->lineEdit_baseName->text().isEmpty()) {
 		#ifndef ENABLE_SINGLE_DIALOGBOX
 		QMessageBox* messageBox = new QMessageBox;
 		messageBox->setAttribute(Qt::WA_DeleteOnClose);
@@ -465,16 +488,33 @@ void GridControl::saveToFile() {
 		messageBox->show();
 		#else
 		this->dialogBox->critical(this, "Error", "No filename was given !\nNo grid will be generated.");
-		this->dialogBox->show();
 		#endif
 		return;
 	}
 
-	this->launchGridFill();
+	QString fileName = this->lineEdit_baseName->text();
 
-	IO::Writer::DIM* dimWriter = new IO::Writer::DIM(fileName.toStdString());
+	std::shared_ptr<IO::GenericGridWriter> writer = nullptr;
+	switch (this->comboBox_filetype->currentIndex()) {
+		case 0:
+			// DIM/IMA at 0 :
+			writer = std::make_shared<IO::Writer::DIM>(fileName.toStdString(), this->baseDir.path().toStdString());
+		break;
+		case 1:
+			// DIM/IMA at 0 :
+			writer = std::make_shared<IO::Writer::MultiTIFF>(fileName.toStdString(), this->baseDir.path().toStdString());
+		break;
+		default:
+			std::cerr << "[ERROR] No value was recognized for the writer picker." << '\n';
+			std::cerr << "[ERROR] No grid will be written." << '\n';
+		break;
+	}
+
+	this->voxelGrid->setGridWriter(writer);
+	writer->setGrid(this->voxelGrid);
 	std::cerr << "Writing to file with basename : \"" << fileName.toStdString() << '\"' << '\n';
-	dimWriter->write(this->voxelGrid);
+
+	this->launchGridFill();
 
 	std::cerr << "Wrote grid to the file \"" << fileName.toStdString() << "\"\n";
 
