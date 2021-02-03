@@ -35,7 +35,7 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 		/// @brief Definition of a 3 dimensionnal vector to store this grid's dimensions, amongst other things.
 		typedef glm::vec<3, std::size_t, glm::defaultp> sizevec3;
 		/// @brief Simple typedef in order to to a templat-ing of this class later.
-		using DataType = unsigned char;
+		using DataType = uint16_t;
 		/// @brief Type of bounding box used
 		typedef BoundingBox_General<float> bbox_t;
 		/// @brief Public typename for DiscreteGrid's data type

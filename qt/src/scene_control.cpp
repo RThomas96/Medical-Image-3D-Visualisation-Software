@@ -29,10 +29,11 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, QWidget* parent) : QW
 	this->controlContainer = new QWidget();
 
 	// Set the range to min/max of uchar for texture bounds :
-	this->minValueTexture->setRange(0, 255);
+	int max = std::max(255, static_cast<int>(std::numeric_limits<DiscreteGrid::data_t>::max()));
+	this->minValueTexture->setRange(0, max);
 	this->minValueTexture->setValue(0);
-	this->maxValueTexture->setRange(0, 255);
-	this->maxValueTexture->setValue(255);
+	this->maxValueTexture->setRange(0, max);
+	this->maxValueTexture->setValue(max);
 
 	QLabel* label_Texture = new QLabel("Image intensities");
 	QLabel* label_Min_Tex = new QLabel("Min");
@@ -153,7 +154,7 @@ void ControlPanel::setMaxTexVal(int val) {
 		}
 	}
 	if (this->sceneToControl) {
-		this->sceneToControl->slotSetMaxTexValue(static_cast<uchar>(val));
+		this->sceneToControl->slotSetMaxTexValue(static_cast<DiscreteGrid::data_t>(val));
 	}
 	this->updateViewers();
 }

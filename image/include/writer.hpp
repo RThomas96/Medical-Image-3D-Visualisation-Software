@@ -39,7 +39,7 @@ namespace IO {
 	///     - (Soon) NIFTI files // TODO : Implement a NIFTIWriter
 	class GenericGridWriter {
 		public:
-			using data_t = unsigned char;
+			using data_t = uint16_t;
 		protected:
 			/// @brief The base constructor of a grid writer, with the base name of the
 			/// file (without extensions).

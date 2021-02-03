@@ -32,8 +32,7 @@ enum InterpolationMethods {
 /// voxels, due to the limitations of the TextureStorage class.
 class TetMesh {
 	public:
-		// Testing to slowly template this class.
-		using DataType = unsigned char;
+		using DataType = DiscreteGrid::data_t;
 	public:
 		/// @brief Constructs a mesh, devoid of any associated image stack.
 		TetMesh(void);

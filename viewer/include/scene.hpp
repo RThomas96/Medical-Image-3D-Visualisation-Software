@@ -94,9 +94,9 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void printVAOStateNext() { this->showVAOstate = true; }
 
 		/// @brief Get the minimum texture value to represent
-		uint getMinTexValue(void) const { return this->minTexVal; }
+		DiscreteGrid::data_t getMinTexValue(void) const { return this->minTexVal; }
 		/// @brief Get the maximum texture value to represent
-		uint getMaxTexValue(void) const { return this->maxTexVal; }
+		DiscreteGrid::data_t getMaxTexValue(void) const { return this->maxTexVal; }
 
 		/// @brief Get the minimum color value, for the color scale resizing.
 		uint getMinColorValue(void) const { return this->minColorVal; }
@@ -135,13 +135,13 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		/// @brief Set Z's plane displacement within the bounding box to be `scalar`
 		void slotSetPlaneDisplacementZ(float scalar);
 		/// @brief Set minimum texture intensity.
-		void slotSetMinTexValue(uchar val);
+		void slotSetMinTexValue(DiscreteGrid::data_t val);
 		/// @brief Set maximum texture intensity.
-		void slotSetMaxTexValue(uchar val);
+		void slotSetMaxTexValue(DiscreteGrid::data_t val);
 		/// @brief Set minimum color intensity.
-		void slotSetMinColorValue(uchar val);
+		void slotSetMinColorValue(DiscreteGrid::data_t val);
 		/// @brief Set maximum color intensity.
-		void slotSetMaxColorValue(uchar val);
+		void slotSetMaxColorValue(DiscreteGrid::data_t val);
 		/// @brief set the clip plane distance from camera to be `val`
 		void slotSetClipDistance(double val) { this->clipDistanceFromCamera = static_cast<float>(val); return; }
 		/// @brief Get clipping distance from camera
@@ -256,10 +256,10 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		OpenGLDebugLog* glOutput;		///< Output of the GL log.
 		QStatusBar* programStatusBar;		///< Status bar to show some info about the program.
 
-		uchar minTexVal;			///< The minimum texture intensity to display
-		uchar maxTexVal;			///< The maximum texture intensity to display
-		uchar minColorVal;			///< The minimum color intensity to use for the color computation
-		uchar maxColorVal;			///< The maximum color intensity to use for the color computation
+		DiscreteGrid::data_t minTexVal;			///< The minimum texture intensity to display
+		DiscreteGrid::data_t maxTexVal;			///< The maximum texture intensity to display
+		DiscreteGrid::data_t minColorVal;			///< The minimum color intensity to use for the color computation
+		DiscreteGrid::data_t maxColorVal;			///< The maximum color intensity to use for the color computation
 		std::size_t renderSize;			///< Number of primitives to render for the solid view mode.
 
 		std::array<glm::vec3, 8> lightPositions; ///< Scene lights (positionned at the corners of the scene BB)

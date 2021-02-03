@@ -391,12 +391,12 @@ void Scene::addGrid(const std::shared_ptr<InputGrid> _grid, std::string meshPath
 	auto dimensions = _grid->getResolution();
 	if (dimensions.x > 0 && dimensions.y > 0 && dimensions.z > 0) {
 		gridTexture.level = 0;
-		gridTexture.internalFormat = GL_R8UI;
+		gridTexture.internalFormat = GL_R16UI;
 		gridTexture.size.x = dimensions.x;
 		gridTexture.size.y = dimensions.y;
 		gridTexture.size.z = dimensions.z;
 		gridTexture.format = GL_RED_INTEGER;
-		gridTexture.type = GL_UNSIGNED_BYTE;
+		gridTexture.type = GL_UNSIGNED_SHORT;
 		gridTexture.data = _grid->getDataPtr();
 		gridView.gridTexture = this->uploadTexture3D(gridTexture);
 	}
@@ -2134,11 +2134,11 @@ void Scene::slotTogglePlaneDirectionY() { this->planeDirection.y = - this->plane
 void Scene::slotTogglePlaneDirectionZ() { this->planeDirection.z = - this->planeDirection.z; }
 void Scene::toggleAllPlaneDirections() { this->planeDirection = - this->planeDirection; }
 
-void Scene::slotSetMinTexValue(uchar val) { this->minTexVal = val; this->updateVis(); }
-void Scene::slotSetMaxTexValue(uchar val) { this->maxTexVal = val; this->updateVis(); }
+void Scene::slotSetMinTexValue(DiscreteGrid::data_t val) { this->minTexVal = val; this->updateVis(); }
+void Scene::slotSetMaxTexValue(DiscreteGrid::data_t val) { this->maxTexVal = val; this->updateVis(); }
 
-void Scene::slotSetMinColorValue(uchar val) { this->minColorVal = val; if (this->controlPanel) {this->controlPanel->updateValues();} }
-void Scene::slotSetMaxColorValue(uchar val) { this->maxColorVal = val; if (this->controlPanel) {this->controlPanel->updateValues();} }
+void Scene::slotSetMinColorValue(DiscreteGrid::data_t val) { this->minColorVal = val; if (this->controlPanel) {this->controlPanel->updateValues();} }
+void Scene::slotSetMaxColorValue(DiscreteGrid::data_t val) { this->maxColorVal = val; if (this->controlPanel) {this->controlPanel->updateValues();} }
 
 void Scene::setDrawMode(DrawMode _mode) {
 	this->drawMode = _mode;

@@ -49,7 +49,7 @@ namespace IO {
 			/// @brief Vector to store grid dimensions.
 			typedef glm::vec<3, std::size_t, glm::defaultp> sizevec3;
 			/// @brief Data type to be loaded from disk into memory.
-			using data_t = unsigned char;
+			using data_t = uint16_t;
 			/// @brief Type of bounding box used in this class.
 			typedef BoundingBox_General<float> bbox_t;
 
