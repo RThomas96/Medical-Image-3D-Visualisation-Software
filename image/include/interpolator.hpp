@@ -16,7 +16,9 @@ namespace Interpolators {
 			genericInterpolator(void) = default;
 			~genericInterpolator(void) = default;	///< Default destructor
 		public:
-			virtual data_t operator()(std::size_t neighborHoodSize, std::vector<DataType>& truth) const;
+			virtual data_t operator()(std::size_t neighborHoodSize, std::vector<DataType>& truth) const {
+				return *truth.begin();
+			}
 	};
 
 	template <typename DataType>

@@ -36,8 +36,9 @@ uniform sampler2D normals_translations;
 uniform sampler2D texture_coordinates;
 uniform sampler2D visibility_texture;
 uniform sampler2D neighbors;
-uniform sampler1D color_texture;
-uniform uint visiblity_map[256];
+uniform sampler2D visiblity_map;
+
+uniform float maxValData = 65535.f;
 
 // Phong :
 uniform float diffuseRef;
@@ -189,15 +190,15 @@ ivec3 getGridCoordinates( in vec4 _P )
 
 ivec2 Convert1DIndexTo2DIndex_Unnormed( in uint uiIndexToConvert, in int iWrapSize )
 {
-        int iY = int( uiIndexToConvert / uint( iWrapSize ) );
-        int iX = int( uiIndexToConvert - ( uint( iY ) * uint( iWrapSize ) ) );
+	int iY = int( uiIndexToConvert / uint( iWrapSize ) );
+	int iX = int( uiIndexToConvert - ( uint( iY ) * uint( iWrapSize ) ) );
 	return ivec2( iX, iY );
 }
 
 ivec2 Convert1DIndexTo2DIndex_Unnormed_Flipped( in uint uiIndexToConvert, in int iWrapSize )
 {
-        int iY = int( uiIndexToConvert / uint( iWrapSize ) );
-        int iX = int( uiIndexToConvert - ( uint( iY ) * uint( iWrapSize ) ) );
+	int iY = int( uiIndexToConvert / uint( iWrapSize ) );
+	int iX = int( uiIndexToConvert - ( uint( iY ) * uint( iWrapSize ) ) );
 	return ivec2( iY, iX );
 }
 
@@ -538,8 +539,12 @@ void main (void) {
 			if( computeBarycentricCoordinatesRecursive( voxel_center_P, ld0, ld1, ld2, ld3, int(instanceId+0.5), id_tet, maxTetrIter, Current_text3DCoord ) ){
 				// Get this voxel's value :
 				uvec3 voxelIndex = texture(Mask, Current_text3DCoord).xyz;
+				uint rawVal = voxelIndex.r;
+				int width = textureSize(visiblity_map, 0).x;
+				float colVal = float(mod(rawVal, width)) / float(width);
+				float rowVal = float(rawVal / width) / float(width);
 				// If it's visible :
-				if (visiblity_map[voxelIndex.r] > 0u) {
+				if (texture(visiblity_map, vec2(rowVal, colVal)).x > 0.) {
 					// Get the corresponding color :
 					// color = texelFetch(color_texture, int(voxelIndex.x), 0);
 					color = voxelIdxToColor(voxelIndex);

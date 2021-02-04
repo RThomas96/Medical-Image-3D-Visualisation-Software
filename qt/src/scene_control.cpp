@@ -34,7 +34,6 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, QWidget* parent) : QW
 	this->minValueTexture->setValue(0);
 	this->maxValueTexture->setRange(0, max-1);
 	this->maxValueTexture->setValue(max-2);
-	std::cerr << "MAXMAX : " << max << '\n';
 
 	this->label_maxTexLeft = new QLabel(QString::number(max));
 	this->label_maxTexRight = new QLabel(QString::number(max));
@@ -128,52 +127,36 @@ void ControlPanel::updateValues(void) {
 }
 
 void ControlPanel::setMinTexVal(int val) {
-	std::cerr << "Called min tex\n";
 	int otherval = this->maxValueTexture->value();
-	std::cerr << "got other value\n";
 	if (val >= otherval) {
-		std::cerr << "otherval needs to move\n";
 		// if max already at max, return and do nothing :
 		if (otherval == this->maxValueTexture->maximum()) { return; }
 		// otherwise, we can do something
 		else {
-			std::cerr << "other val was not max\n";
 			this->maxValueTexture->setValue(val+1);
 		}
-		std::cerr << "other val has been set\n";
 	}
 	// update scene data :
 	if (this->sceneToControl) {
-		std::cerr << "setting scene val\n";
 		this->sceneToControl->slotSetMinTexValue(static_cast<DiscreteGrid::data_t>(val));
-		std::cerr << "scene val set\n";
 	}
-	std::cerr << "updating viewers ...\n";
-	//this->updateViewers();
+	this->updateViewers();
 }
 
 void ControlPanel::setMaxTexVal(int val) {
-	std::cerr << "Called max tex\n";
 	int otherval = this->minValueTexture->value();
-	std::cerr << "got other value\n";
 	if (val <= otherval) {
-		std::cerr << "otherval needs to move\n";
 		// if max already at max, return and do nothing :
 		if (otherval == this->minValueTexture->minimum()) { return; }
 		// otherwise, we can do something
 		else {
-			std::cerr << "other val was not min\n";
 			this->minValueTexture->setValue(val-1);
 		}
-		std::cerr << "other val has been set\n";
 	}
 	if (this->sceneToControl) {
-		std::cerr << "setting scene val\n";
 		this->sceneToControl->slotSetMaxTexValue(static_cast<DiscreteGrid::data_t>(val));
-		std::cerr << "scene val set\n";
 	}
-	std::cerr << "updating viewers ...\n";
-	//this->updateViewers();
+	this->updateViewers();
 }
 
 void ControlPanel::setMinColVal(int val) {

@@ -220,7 +220,7 @@ QString Viewer::mouseString() const {
 	return message;
 }
 
-void Viewer::loadGrid(std::shared_ptr<InputGrid>& g) {
+void Viewer::loadGrid(const std::shared_ptr<InputGrid>& g) {
 	this->makeCurrent();
 	this->scene->addGrid(g, "");
 	this->doneCurrent();
@@ -236,7 +236,8 @@ void Viewer::loadGrid(std::shared_ptr<InputGrid>& g) {
 	this->showEntireScene();
 }
 
-void Viewer::loadTwoGrids(std::shared_ptr<InputGrid>& g1, std::shared_ptr<InputGrid>& g2) {
+void Viewer::loadTwoGrids(const std::shared_ptr<InputGrid>& g1, const std::shared_ptr<InputGrid>& g2) {
+	if (this->scene == nullptr) { return; }
 	this->makeCurrent();
 	this->scene->addTwoGrids(g1, g2, "");
 	this->doneCurrent();

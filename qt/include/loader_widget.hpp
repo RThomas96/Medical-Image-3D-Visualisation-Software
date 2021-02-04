@@ -79,7 +79,7 @@ class GridLoaderWidget : public QWidget {
 		QHBoxLayout* layout_load2channel;	///< Layout for the 2-channel load procedure.
 		QGridLayout* layout_transfoDetails;	///< Layout for the transformation details
 		QHBoxLayout* layout_downsampling;	///< Layout for the downsampling group box
-		QHBoxLayout* layout_interpolator;	///< Layout for the interpolator group box
+		QGridLayout* layout_interpolator;	///< Layout for the interpolator group box
 
 		QFrame* frame_load1channel;		///< Frame surrounding the load '1-channel' widgets
 		QFrame* frame_load2channel;		///< Frame surrounding the load '2-channel' widgets

@@ -134,7 +134,7 @@ void GridLoaderWidget::setupLayouts() {
 	this->layout_load2channel = new QHBoxLayout;
 	this->layout_transfoDetails = new QGridLayout;
 	this->layout_downsampling = new QHBoxLayout;
-	this->layout_interpolator = new QHBoxLayout;
+	this->layout_interpolator = new QGridLayout;
 
 	// layout and frame for the 1-channel loader :
 	this->layout_load1channel->addWidget(this->label_load1channel);
@@ -162,11 +162,11 @@ void GridLoaderWidget::setupLayouts() {
 	this->layout_downsampling->addWidget(this->radioButton_lowest);
 	this->groupBox_downsampling->setLayout(this->layout_downsampling);
 	// interpolator layout :
-	this->layout_interpolator->addWidget(this->radioButton_nn);
-	this->layout_interpolator->addWidget(this->radioButton_mean);
-	this->layout_interpolator->addWidget(this->radioButton_mp);
-	this->layout_interpolator->addWidget(this->radioButton_min);
-	this->layout_interpolator->addWidget(this->radioButton_max);
+	this->layout_interpolator->addWidget(this->radioButton_nn, 0, 0);
+	this->layout_interpolator->addWidget(this->radioButton_mean, 0, 1);
+	this->layout_interpolator->addWidget(this->radioButton_mp, 0, 2);
+	this->layout_interpolator->addWidget(this->radioButton_min, 1, 0);
+	this->layout_interpolator->addWidget(this->radioButton_max, 1, 1);
 	this->groupBox_interpolator->setLayout(this->layout_interpolator);
 
 	// main layout :

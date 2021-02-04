@@ -207,9 +207,9 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void printGridInfo(const std::shared_ptr<DiscreteGrid>& grid);
 
 		/// @b Generate a scale of colors for the program.
-		std::vector<float> generateColorScale(std::size_t minVal, std::size_t maxVal);
+		void generateColorScale();
 		/// @b Uploads the color scale to OpenGL
-		void uploadColorScale(const std::vector<float>& colorScale);
+		void uploadColorScale();
 
 		/// @b Prints the accessible uniforms and attributes of the given program.
 		void printProgramUniforms(const GLuint _pid);
@@ -299,12 +299,13 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		/*************************************/
 		/*************************************/
 		GLuint texHandle_ColorScaleGrid;		///< handle for the uploaded color scale
+		bool shouldUpdateVis;
 		VolMesh volumetricMesh;
 		GLuint vboHandle_Texture3D_VertPos;
 		GLuint vboHandle_Texture3D_VertNorm;
 		GLuint vboHandle_Texture3D_VertTex;
 		GLuint vboHandle_Texture3D_VertIdx;
-		unsigned int* visibleDomains;			///< Array deciding which values are visible
+		float* visibleDomains;			///< Array deciding which values are visible
 
 };
 

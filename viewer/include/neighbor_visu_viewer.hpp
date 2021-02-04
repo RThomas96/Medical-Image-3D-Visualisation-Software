@@ -54,8 +54,8 @@ class Viewer : public QGLViewer {
 		//void addGrid();
 		/// @brief Adds one grid, composed of two grid's metadata to the scene
 		//void addTwoGrids();
-		void loadGrid(std::shared_ptr<InputGrid>& g);
-		void loadTwoGrids(std::shared_ptr<InputGrid>& g1, std::shared_ptr<InputGrid>& g2);
+		void loadGrid(const std::shared_ptr<InputGrid>& g);
+		void loadTwoGrids(const std::shared_ptr<InputGrid>& g1, const std::shared_ptr<InputGrid>& g2);
 		/// @b Re-centers the camera around the scene-defined center point
 		void centerScene(void) ;
 };

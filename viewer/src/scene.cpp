@@ -96,10 +96,10 @@ Scene::Scene() {
 	this->visuBoxController = nullptr;
 	this->programStatusBar = nullptr;
 
-	this->minTexVal = uchar(1);
-	this->maxTexVal = uchar(255);
-	this->minColorVal = uchar(0);
-	this->maxColorVal = uchar(255);
+	this->minTexVal = DiscreteGrid::data_t(1);
+	this->maxTexVal = DiscreteGrid::data_t(std::numeric_limits<DiscreteGrid::data_t>::max());
+	this->minColorVal = DiscreteGrid::data_t(0);
+	this->maxColorVal = DiscreteGrid::data_t(std::numeric_limits<DiscreteGrid::data_t>::max());
 	this->renderSize = 0;
 
 	// Default light positions : at the vertices of a unit cube.
@@ -139,20 +139,21 @@ Scene::Scene() {
 	this->programHandle_BoundingBox = 0;
 
 	this->texHandle_ColorScaleGrid = 0;
+	this->shouldUpdateVis = false;
 	this->volumetricMesh = {};
 	this->vboHandle_Texture3D_VertPos = 0;
 	this->vboHandle_Texture3D_VertNorm = 0;
 	this->vboHandle_Texture3D_VertTex = 0;
 	this->vboHandle_Texture3D_VertIdx = 0;
 
-	this->visibleDomains = new unsigned int[256];
-	for (std::size_t i = 0; i < 256; ++i) {
-		this->visibleDomains[i] = 1;
+	std::cerr << "Allocating " << std::numeric_limits<DiscreteGrid::data_t>::max() << " elements for vis ...\n";
+	this->visibleDomains = new float[std::numeric_limits<DiscreteGrid::data_t>::max()];
+	for (std::size_t i = 0; i < std::numeric_limits<DiscreteGrid::data_t>::max(); ++i) {
+		this->visibleDomains[i] = .5f;
 	}
 }
 
 Scene::~Scene(void) {
-	glDeleteTextures(1, &this->texHandle_ColorScaleGrid);
 }
 
 void Scene::initGl(QOpenGLContext* _context) {
@@ -175,15 +176,15 @@ void Scene::initGl(QOpenGLContext* _context) {
 	if (_context == nullptr) { std::cerr << "Warning : Initializing a scene without a valid OpenGL context !" << '\n' ; }
 	this->context = _context;
 
-    auto maj = this->context->format().majorVersion();
-    auto min = this->context->format().minorVersion();
-    std::cerr << "OpenGL version " << maj << '.' << min << '\n';
+	auto maj = this->context->format().majorVersion();
+	auto min = this->context->format().minorVersion();
+	std::cerr << "OpenGL version " << maj << '.' << min << '\n';
 
 	// Get OpenGL functions from the currently bound context :
 	this->initializeOpenGLFunctions();
 
-    std::cerr << "OpenGL vendor string : " << glGetString(GL_VENDOR) << '\n';
-    std::cerr << "OpenGL renderer string : " << glGetString(GL_RENDERER) << '\n';
+	std::cerr << "OpenGL vendor string : " << glGetString(GL_VENDOR) << '\n';
+	std::cerr << "OpenGL renderer string : " << glGetString(GL_RENDERER) << '\n';
 
 	// Create the debug logger and connect its signals :
 	this->setupGLOutput();
@@ -198,13 +199,18 @@ void Scene::initGl(QOpenGLContext* _context) {
 	this->createBuffers();
 	this->generateSceneData();
 
-	std::vector<float> colorScale = this->generateColorScale(0, 255);
-	this->uploadColorScale(colorScale);
+	// Generate visibility array :
+	this->texHandle_ColorScaleGrid = 0;
+	this->generateColorScale();
+	this->uploadColorScale();
 
 	// if a control panel is attached, enable its sliders/buttons :
 	if (this->controlPanel) {
 		this->controlPanel->activatePanels();
 	}
+
+	GLsizei maxTexSize = 0;
+	std::cerr << "Max texture size as reported by OpenGL : " << maxTexSize << '\n';
 }
 
 void Scene::addOpenGLOutput(OpenGLDebugLog* glLog) {
@@ -598,7 +604,6 @@ GLuint Scene::compileShader(const std::string& path, const GLenum shaType, bool 
 	glShaderSource(_sha, 1, const_cast<const char**>(&shaSource), 0);
 
 	// We can free up the host memory now :
-	delete[] shaSource;
 	shaFile.close();
 
 	glCompileShader(_sha);
@@ -629,6 +634,8 @@ GLuint Scene::compileShader(const std::string& path, const GLenum shaType, bool 
 		std::cerr << "=============================================================================================\n";
 		std::cerr << "End shader contents" << '\n';
 	}
+
+	delete[] shaSource;
 
 	GLint result = GL_FALSE;
 	glGetShaderiv(_sha, GL_COMPILE_STATUS, &result);
@@ -736,7 +743,7 @@ GLuint Scene::uploadTexture1D(const TextureUpload& tex) {
 
 	glTexImage1D(GL_TEXTURE_1D,		// GLenum : Target
 		static_cast<GLint>(tex.level),	// GLint  : Level of detail of the current texture (0 = original)
-		tex.internalFormat,		// GLint  : Number of color components in the picture. Here grayscale so GL_RED
+		tex.internalFormat,		// GLint  : Number of color components in the picture.
 		tex.size.x,			// GLsizei: Image width
 		static_cast<GLint>(0),		// GLint  : Border. This value MUST be 0.
 		tex.format,			// GLenum : Format of the pixel data
@@ -802,6 +809,7 @@ GLuint Scene::uploadTexture2D(const TextureUpload& tex) {
 	);
 	GetOpenGLError();
 
+
 	return texHandle;
 }
 
@@ -860,6 +868,7 @@ GLuint Scene::uploadTexture3D(const TextureUpload& tex) {
 		tex.data			// void*  : Data to load into the buffer
 	);
 	GetOpenGLError();
+
 
 	return texHandle;
 }
@@ -988,7 +997,7 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, cons
 		GLint location_texture_coordinates = getUniform("texture_coordinates");
 		GLint location_neighbors = getUniform("neighbors");
 		GLint location_Mask = getUniform("Mask");
-		GLint location_color_texture = getUniform("color_texture");
+		GLint location_visibilityMap = getUniform("visiblity_map");
 		GetOpenGLError();
 		// Scalars :
 		GLint location_voxelSize = getUniform("voxelSize");
@@ -1002,7 +1011,6 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, cons
 		GLint location_cut = getUniform("cut");
 		GLint location_cutDirection = getUniform("cutDirection");
 		GLint location_clipDistanceFromCamera = getUniform("clipDistanceFromCamera");
-		GLint location_visibilityMap = getUniform("visiblity_map");
 		GLint location_colorBounds = getUniform("colorBounds");
 		GLint location_textureBounds = getUniform("textureBounds");
 		GLint location_visuBBMin = getUniform("visuBBMin");
@@ -1059,7 +1067,7 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, cons
 		GetOpenGLError();
 		glActiveTexture(GL_TEXTURE0 + tex);
 		glBindTexture(GL_TEXTURE_1D, this->texHandle_ColorScaleGrid);
-		glUniform1i(location_color_texture, tex);
+		glUniform1i(location_visibilityMap, tex);
 		tex++;
 		GetOpenGLError();
 
@@ -1070,7 +1078,6 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, cons
 		glUniform1f(location_shininess, .8f);
 		glUniform3fv(location_voxelSize, 1, glm::value_ptr(grid.grid->getVoxelDimensions()));
 		glUniform3fv(location_gridSize, 1, glm::value_ptr(floatres));
-		glUniform1uiv(location_visibilityMap, 256, this->visibleDomains);
 		glUniform1ui(location_nbChannels, grid.nbChannels);
 		GetOpenGLError();
 
@@ -1231,7 +1238,6 @@ void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, 
 	GLint drawMode_Loc = glGetUniformLocation(this->programHandle_projectedTex, "drawMode");
 	GLint colorOrTexture_Loc = glGetUniformLocation(this->programHandle_projectedTex, "colorOrTexture");
 	GLint texDataLoc = glGetUniformLocation(this->programHandle_projectedTex, "texData");
-	GLint colorScaleLoc = glGetUniformLocation(this->programHandle_projectedTex, "colorScale");
 	GLint planePositionsLoc = glGetUniformLocation(this->programHandle_projectedTex, "planePositions");
 	GLint location_planeDirections = glGetUniformLocation(this->programHandle_projectedTex, "planeDirections");
 	GLint gridPositionLoc = glGetUniformLocation(this->programHandle_projectedTex, "gridPosition");
@@ -1253,8 +1259,8 @@ void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, 
 	glUniform3fv(voxelSize_Loc, 1, glm::value_ptr(gridView.grid->getVoxelDimensions()));
 	glUniform2fv(location_texBounds, 1, glm::value_ptr(texBounds));
 	glUniform2fv(location_colorBounds, 1, glm::value_ptr(colorBounds));
-	glm::vec2 texbounds{static_cast<float>(this->minColorVal), static_cast<float>(this->maxColorVal)};
-	glUniform2fv(location_textureBounds, 1, glm::value_ptr(texbounds));
+	//glm::vec2 texbounds{static_cast<float>(this->minColorVal), static_cast<float>(this->maxColorVal)};
+	glUniform2fv(location_textureBounds, 1, glm::value_ptr(texBounds));
 	glUniform1ui(colorOrTexture_Loc, this->colorOrTexture ? 1 : 0);
 	if (gridView.grid->hasData() == false) {
 		glUniform1ui(drawMode_Loc, 2);
@@ -1275,14 +1281,6 @@ void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, 
 		glUniform1i(texDataLoc, 0);
 		GetOpenGLError();
 	}
-	glActiveTexture(GL_TEXTURE0 + 1);
-	GetOpenGLError();
-	glEnable(GL_TEXTURE_1D);
-	GetOpenGLError();
-	glBindTexture(GL_TEXTURE_1D, this->texHandle_ColorScaleGrid);
-	GetOpenGLError();
-	glUniform1i(colorScaleLoc, 1);
-	GetOpenGLError();
 
 	DiscreteGrid::bbox_t::vec position = this->sceneBB.getMin();
 	DiscreteGrid::bbox_t::vec diagonal = this->sceneBB.getDiagonal();
@@ -1406,10 +1404,6 @@ void Scene::prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane, cons
 	glEnable(GL_TEXTURE_3D);
 	glBindTexture(GL_TEXTURE_3D, grid.gridTexture);
 	glUniform1i(location_texData, 0);
-	glActiveTexture(GL_TEXTURE0 + 1);
-	glEnable(GL_TEXTURE_1D);
-	glBindTexture(GL_TEXTURE_1D, this->texHandle_ColorScaleGrid);
-	glUniform1i(location_colorScale, 1);
 	GetOpenGLError();
 }
 
@@ -1460,7 +1454,6 @@ void Scene::prepPlane_SingleUniforms(planes _plane, planeHeading _heading, glm::
 	GLint location_nbChannels = glGetUniformLocation(this->programHandle_PlaneViewer, "nbChannels");
 	// FShader :
 	GLint location_texData = glGetUniformLocation(this->programHandle_PlaneViewer, "texData");
-	GLint location_colorScale = glGetUniformLocation(this->programHandle_PlaneViewer, "colorScale");
 	GLint location_colorBounds = glGetUniformLocation(this->programHandle_PlaneViewer, "colorBounds");
 	GLint location_textureBounds = glGetUniformLocation(this->programHandle_PlaneViewer, "textureBounds");
 	GetOpenGLError();
@@ -1530,6 +1523,11 @@ void Scene::drawGrid(GLfloat *mvMat, GLfloat *pMat, glm::mat4 baseMatrix, const 
 }
 
 void Scene::draw3DView(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, bool showTexOnPlane) {
+	if (this->shouldUpdateVis) {
+		this->shouldUpdateVis = false;
+		this->generateColorScale();
+		this->uploadColorScale();
+	}
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	glEnable(GL_TEXTURE_3D);
@@ -1849,86 +1847,52 @@ glm::mat4 Scene::computeTransformationMatrix(const std::shared_ptr<DiscreteGrid>
 	// return glm::translate(glm::mat4(1.f), glm::vec3(.0, .0, 20.));
 }
 
-std::vector<float> Scene::generateColorScale(std::size_t minVal, std::size_t maxVal) {
-	std::vector<float> raw_colors;
-	raw_colors.resize(3*256);
-
-	for (std::size_t i = 0; i < 256; ++i) {
-		// Apply the RGB2HSV conversion (adapted from the shaders) :
-		glm::vec3 color = glm::vec3(.0f, .0f, .0f);
-		if (i >= minVal && i <= maxVal) {
-			float a = static_cast<float>(minVal) / 255.f;
-			float b = static_cast<float>(maxVal) / 255.f;
-			#ifdef COLOR_SCALE_RELATIVE_COLORS
-			float c	= .2f * b;
-			float d	= .7f * b;
-			#else
-			float c = 50.f / 255.f;
-			float d = 200.f / 255.f;
-			#endif
-			float r = 1.f - ((b - a) / (d - c)) * ((static_cast<float>(i)/255.f)-c)+a;
-			glm::vec4 k = glm::vec4(1.f, 2.f/3.f, 1.f/3.f, 3.f);
-			glm::vec3 p = glm::abs(glm::fract(glm::vec3(r,r,r) + glm::vec3(k.x,k.y,k.z)) * 6.f - glm::vec3(k.w));
-			color = glm::mix(glm::vec3(k.x, k.x, k.x), glm::clamp(p-glm::vec3(k.x, k.x, k.x), .1f, .7f), r);
-		} else if (i > maxVal) {
-			color.r = 1.f;
-			color.g = 1.f;
-			color.b = 1.f;
-		}
-		raw_colors[3u*i+0] = color.r;
-		raw_colors[3u*i+1] = color.g;
-		raw_colors[3u*i+2] = color.b;
-		/*
-		std::cerr << "[TRACE][" << __PRETTY_FUNCTION__ << "] Color index : " << std::setw(3) << i << " : { x = "
-			<< raw_colors[3u*i+0] << ", y = " << raw_colors[3u*i+1] << ", z = " << raw_colors[3u*i+2] << " }\n";
-		*/
+void Scene::generateColorScale() {
+	for (uint i = 0; i < this->minTexVal; ++i) {
+		this->visibleDomains[i] = 0.f;
 	}
-
-	return raw_colors;
+	for (uint i = this->minTexVal; i < this->maxTexVal; ++i) {
+		this->visibleDomains[i] = .5f;
+	}
+	for (uint i = this->maxTexVal; i < std::numeric_limits<DiscreteGrid::data_t>::max(); ++i) {
+		this->visibleDomains[i] = 0.f;
+	}
 }
 
-void Scene::uploadColorScale(const std::vector<float>& colorScale) {
+void Scene::uploadColorScale() {
 	TextureUpload texParams = {};
+
+	if (this->texHandle_ColorScaleGrid != 0) {
+		if (glIsTexture(this->texHandle_ColorScaleGrid) == GL_TRUE) {
+			glDeleteTextures(1, &this->texHandle_ColorScaleGrid);
+		} else {
+			std::cerr << "[LOG] Texture handle for visibility was not 0, but not a texture either.\n";
+		}
+		this->texHandle_ColorScaleGrid = 0;
+	}
 
 	// Vertex positions :
 	texParams.minmag.x = GL_NEAREST;
 	texParams.minmag.y = GL_NEAREST;
+	texParams.lod.y = -1000.f;
 	texParams.wrap.s = GL_CLAMP_TO_EDGE;
+	texParams.wrap.t = GL_CLAMP_TO_EDGE;
+	texParams.swizzle.y = GL_ZERO;
+	texParams.swizzle.z = GL_ZERO;
+	texParams.swizzle.a = GL_ONE;
 	// Swizzle and alignment unchanged, not present in Texture3D
-	texParams.internalFormat = GL_RGB;
+	texParams.internalFormat = GL_RED;
 	texParams.size.x = 256;
-	texParams.format = GL_RGB;
+	texParams.size.y = 256;
+	texParams.format = GL_RED;
 	texParams.type = GL_FLOAT;
-	texParams.data = colorScale.data();
-
-	/*
-	glGenTextures(1, &this->texHandle_ColorScaleGrid);
-	GetOpenGLError();
-
-	glBindTexture(GL_TEXTURE_1D, this->texHandle_ColorScaleGrid);
-	GetOpenGLError();
-	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	GetOpenGLError();
-	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	GetOpenGLError();
-
-	glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, 256, 0, GL_RGB, GL_FLOAT, colorScale.data());
-	GetOpenGLError();
-	*/
-	this->texHandle_ColorScaleGrid = this->uploadTexture1D(texParams);
+	texParams.data = this->visibleDomains;
+	this->texHandle_ColorScaleGrid = this->uploadTexture2D(texParams);
 }
 
 void Scene::updateVis() {
-	for (uint i = 0; i < this->minTexVal; ++i) {
-		this->visibleDomains[i] = 0;
-	}
-	for (uint i = this->minTexVal; i < this->maxTexVal; ++i) {
-		this->visibleDomains[i] = 1;
-	}
-	for (uint i = this->maxTexVal; i < 256; ++i) {
-		this->visibleDomains[i] = 0;
-	}
+	// will update on the next draw call, where the countext is sure to be bound
+	this->shouldUpdateVis = true;
 }
 
 void Scene::createBoundingBoxBuffers() {
