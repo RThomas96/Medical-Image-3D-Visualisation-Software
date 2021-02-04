@@ -65,11 +65,11 @@ namespace Interpolators {
 			virtual data_t operator()(std::size_t nbsize, std::vector<data_t>& data) const override {
 				// map keys (values) to occurences in data :
 				std::map<data_t, std::size_t> map;
-				for (const data_t& d : data) {
+				for (data_t& d : data) {
 					// have we inserted the data beforehand ?
 					auto pos = map.find(d);
 					// if not, add it with count = 1
-					if (pos == map.end()) { map.insert(std::make_pair<data_t, std::size_t>(d, 1)); }
+					if (pos == map.end()) { map.insert(std::make_pair<data_t, std::size_t>(std::move(d), 1)); }
 					// otherwise, increase occurences
 					else { map[d] = map[d]+1; }
 				}

@@ -16,9 +16,6 @@
 #include <iomanip>
 #include <type_traits>
 
-template<class T>
-std::remove_reference_t<T> const& as_const(T&&t){return t;}
-
 inline int __GetOpenGLError ( char* szFile, int iLine )
 {
 	int    retCode = 0;
@@ -371,7 +368,9 @@ void Scene::createBuffers() {
 void Scene::addGrid(const std::shared_ptr<InputGrid> _grid, std::string meshPath) {
 	if (this->grids.size() > 0) { this->grids.clear(); }
 	GridGLView gridView(_grid);
+	/*
 	gridView.grid->setTransform_GridToWorld(this->computeTransformationMatrix(_grid));
+	*/
 
 	TextureUpload gridTexture{};
 	gridTexture.minmag.x = GL_NEAREST;
@@ -418,7 +417,10 @@ void Scene::addGrid(const std::shared_ptr<InputGrid> _grid, std::string meshPath
 void Scene::addTwoGrids(const std::shared_ptr<InputGrid> _gridR, const std::shared_ptr<InputGrid> _gridB, std::string meshPath) {
 	if (this->grids.size() > 0) { this->grids.clear(); }
 	GridGLView gridView(_gridR);
+	/*
 	gridView.grid->setTransform_GridToWorld(this->computeTransformationMatrix(_gridR));
+	gridView.grid->setTransform_GridToWorld(this->computeTransformationMatrix(_gridB));
+	*/
 
 	TextureUpload gridTexture{};
 	gridTexture.minmag.x = GL_NEAREST;
@@ -438,12 +440,12 @@ void Scene::addTwoGrids(const std::shared_ptr<InputGrid> _gridR, const std::shar
 	auto dimensions = _gridR->getResolution();
 	if (dimensions.x > 0 && dimensions.y > 0 && dimensions.z > 0) {
 		gridTexture.level = 0;
-		gridTexture.internalFormat = GL_RG8UI;
+		gridTexture.internalFormat = GL_RG16UI;
 		gridTexture.size.x = dimensions.x;
 		gridTexture.size.y = dimensions.y;
 		gridTexture.size.z = dimensions.z;
 		gridTexture.format = GL_RG_INTEGER;
-		gridTexture.type = GL_UNSIGNED_BYTE;
+		gridTexture.type = GL_UNSIGNED_SHORT;
 		gridTexture.data = _gridR->getDataPtr();
 
 		// We should upload and combine all data here :
@@ -576,7 +578,7 @@ GLuint Scene::compileShader(const std::string& path, const GLenum shaType, bool 
 	GetOpenGLError();
 
 	// Open the file :
-    std::ifstream shaFile = std::ifstream(path.c_str(), std::ios_base::in | std::ios_base::binary);
+	std::ifstream shaFile = std::ifstream(path.c_str(), std::ios_base::in | std::ios_base::binary);
 	if (!shaFile.is_open()) {
 		std::cerr << "[" << __FILE__ << ":" << __LINE__ << "] Error : could not get the contents of shader file " << path << '\n';
 		return -1;
@@ -590,7 +592,7 @@ GLuint Scene::compileShader(const std::string& path, const GLenum shaType, bool 
 	// Get the file's contents and null-terminate it :
 	char* shaSource = new char[shaFileSize+1];
 	shaFile.read(shaSource, shaFileSize);
-    shaSource[shaFileSize] = '\0';
+	shaSource[shaFileSize] = '\0';
 
 	// Source it into the shader object :
 	glShaderSource(_sha, 1, const_cast<const char**>(&shaSource), 0);
@@ -619,13 +621,13 @@ GLuint Scene::compileShader(const std::string& path, const GLenum shaType, bool 
 		delete[] shaderInfoLog;
 
 		std::cerr << __FILE__ << ":" << __LINE__ << " : end Log ***********************************************" << '\n';
-        std::cerr << "Shader contents :" << '\n';
-        std::cerr << "=============================================================================================\n";
-        std::cerr << "=============================================================================================\n";
-        std::cerr << shaSource << '\n';
-        std::cerr << "=============================================================================================\n";
-        std::cerr << "=============================================================================================\n";
-        std::cerr << "End shader contents" << '\n';
+		std::cerr << "Shader contents :" << '\n';
+		std::cerr << "=============================================================================================\n";
+		std::cerr << "=============================================================================================\n";
+		std::cerr << shaSource << '\n';
+		std::cerr << "=============================================================================================\n";
+		std::cerr << "=============================================================================================\n";
+		std::cerr << "End shader contents" << '\n';
 	}
 
 	GLint result = GL_FALSE;
@@ -2137,8 +2139,8 @@ void Scene::toggleAllPlaneDirections() { this->planeDirection = - this->planeDir
 void Scene::slotSetMinTexValue(DiscreteGrid::data_t val) { this->minTexVal = val; this->updateVis(); }
 void Scene::slotSetMaxTexValue(DiscreteGrid::data_t val) { this->maxTexVal = val; this->updateVis(); }
 
-void Scene::slotSetMinColorValue(DiscreteGrid::data_t val) { this->minColorVal = val; if (this->controlPanel) {this->controlPanel->updateValues();} }
-void Scene::slotSetMaxColorValue(DiscreteGrid::data_t val) { this->maxColorVal = val; if (this->controlPanel) {this->controlPanel->updateValues();} }
+void Scene::slotSetMinColorValue(DiscreteGrid::data_t val) { this->minColorVal = val; }
+void Scene::slotSetMaxColorValue(DiscreteGrid::data_t val) { this->maxColorVal = val; }
 
 void Scene::setDrawMode(DrawMode _mode) {
 	this->drawMode = _mode;

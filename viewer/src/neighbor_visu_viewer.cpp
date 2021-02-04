@@ -15,9 +15,6 @@
 
 #include <fstream>
 
-template<class T>
-std::remove_reference_t<T> const& as_const(T&&t){return t;}
-
 float Viewer::sceneRadiusMultiplier{.5f};
 
 Viewer::Viewer(Scene* const scene, QWidget* parent) :
@@ -223,6 +220,38 @@ QString Viewer::mouseString() const {
 	return message;
 }
 
+void Viewer::loadGrid(std::shared_ptr<InputGrid>& g) {
+	this->makeCurrent();
+	this->scene->addGrid(g, "");
+	this->doneCurrent();
+
+	std::cerr << "Added input grid to scene\n";
+
+	glm::vec3 bbDiag = this->scene->getSceneBoundaries();
+	float sceneSize = glm::length(bbDiag);
+
+	this->setSceneRadius(sceneSize*sceneRadiusMultiplier);
+	// center scene on center of grid
+	this->setSceneCenter(qglviewer::Vec(bbDiag.x/2., bbDiag.y/2., bbDiag.z/2.));
+	this->showEntireScene();
+}
+
+void Viewer::loadTwoGrids(std::shared_ptr<InputGrid>& g1, std::shared_ptr<InputGrid>& g2) {
+	this->makeCurrent();
+	this->scene->addTwoGrids(g1, g2, "");
+	this->doneCurrent();
+
+	std::cerr << "Added 2 input grids to scene\n";
+
+	glm::vec3 bbDiag = this->scene->getSceneBoundaries();
+	float sceneSize = glm::length(bbDiag);
+
+	this->setSceneRadius(sceneSize*sceneRadiusMultiplier);
+	// center scene on center of grid
+	this->setSceneCenter(qglviewer::Vec(bbDiag.x/2., bbDiag.y/2., bbDiag.z/2.));
+	this->showEntireScene();
+}
+#if 0
 void Viewer::addGrid() {
 	// create input grid pointer :
 	std::shared_ptr<InputGrid> inputGrid = std::make_shared<InputGrid>();
@@ -558,3 +587,4 @@ void Viewer::addTwoGrids() {
 	this->setSceneCenter(qglviewer::Vec(bbDiag.x/2., bbDiag.y/2., bbDiag.z/2.));
 	this->showEntireScene();
 }
+#endif

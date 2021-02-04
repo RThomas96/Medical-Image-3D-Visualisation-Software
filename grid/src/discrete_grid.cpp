@@ -1,14 +1,23 @@
 #include "../include/discrete_grid.hpp"
 
-glm::mat4 computeTransfoShear(double angleDeg, glm::vec3 origin) {
-	glm::mat4 transfoMat = glm::mat4(1.);
-	// Get angle radians :
+#include <glm/ext/matrix_transform.hpp>
+
+glm::mat4 computeTransfoShear(double angleDeg, svec3 dims, glm::vec3 vxdims) {
+	glm::mat4 transfoMat = glm::mat4(1.0);
+
 	double angleRad = (angleDeg * M_PI) / 180.;
 
-	transfoMat[0][0] = 0.39 * std::cos(angleRad);
-	transfoMat[0][2] = 0.39 * std::sin(angleRad);
-	transfoMat[1][1] = 0.39;
-	transfoMat[2][2] = 1.927 * std::cos(angleRad);
+	if (angleDeg < 0.) {
+		// compute translation along Z :
+		float w = static_cast<float>(dims.x) * vxdims.x;
+		float displacement = w * std::abs(std::sin(angleRad));
+		transfoMat = glm::translate(transfoMat, glm::vec3(.0, .0, displacement));
+	}
+
+	transfoMat[0][0] = vxdims.x * std::cos(angleRad);
+	transfoMat[0][2] = vxdims.x * std::sin(angleRad);
+	transfoMat[1][1] = vxdims.y;
+	transfoMat[2][2] = vxdims.z * std::cos(angleRad);
 
 	return transfoMat;
 }

@@ -16,6 +16,7 @@ MainWidget::MainWidget() {
 	this->setupWidgets();
 	this->widgetSizeSet = false;
 	this->usettings = nullptr;
+	this->loaderWidget = nullptr;
 }
 
 MainWidget::~MainWidget() {
@@ -24,13 +25,11 @@ MainWidget::~MainWidget() {
 	this->headerY->unregisterPlaneViewer();
 	this->headerX->unregisterPlaneViewer();
 
-	this->action_add1Grid->disconnect();
-	this->action_add2Grid->disconnect();
+	this->action_addGrid->disconnect();
 	this->action_saveGrid->disconnect();
 	this->action_exitProgram->disconnect();
 
-	delete this->action_add1Grid;
-	delete this->action_add2Grid;
+	delete this->action_addGrid;
 	delete this->action_saveGrid;
 	delete this->viewer_planeZ;
 	delete this->viewer_planeY;
@@ -62,8 +61,7 @@ void MainWidget::setupWidgets() {
 	QObject::connect(this->showGLLog, &QPushButton::clicked, this->glDebug, &QWidget::show);
 
 	// Actions creation :
-	this->action_add1Grid = new QAction("Open acquisition (1 channel only)");
-	this->action_add2Grid = new QAction("Open acquisition (2 channels)");
+	this->action_addGrid = new QAction("Open acquisition (1 channel only)");
 	this->action_saveGrid = new QAction("Save acquisition");
 	this->action_showVisuBox = new QAction("Show visu box controller");
 	this->action_exitProgram = new QAction("Exit program");
@@ -74,11 +72,12 @@ void MainWidget::setupWidgets() {
 	this->action_showHelpPlane = new QAction("Planar Viewer Help Page");
 	this->action_showSettings = new QAction("Settings");
 
+	this->action_addGrid->setShortcut(QKeySequence::Open);
+
 	// Menu creation :
 	// File menu :
 	this->fileMenu = this->menuBar()->addMenu("&File");
-	this->fileMenu->addAction(this->action_add1Grid);
-	this->fileMenu->addAction(this->action_add2Grid);
+	this->fileMenu->addAction(this->action_addGrid);
 	this->fileMenu->addAction(this->action_saveGrid);
 	this->fileMenu->addAction(this->action_showSettings);
 	this->fileMenu->addAction(this->action_exitProgram);
@@ -94,8 +93,15 @@ void MainWidget::setupWidgets() {
 	this->helpMenu->addAction(this->action_showHelpPlane);
 
 	// Connect actions to the slots/functions in the program :
-	QObject::connect(this->action_add1Grid, &QAction::triggered, [this](){this->viewer->addGrid();});
-	QObject::connect(this->action_add2Grid, &QAction::triggered, [this](){this->viewer->addTwoGrids();});
+	QObject::connect(this->action_addGrid, &QAction::triggered, [this](){
+		if (this->loaderWidget == nullptr) {
+			this->loaderWidget = new GridLoaderWidget(this->scene, this->viewer);
+			QObject::connect(this->loaderWidget, &QWidget::destroyed, [this]() {
+				this->loaderWidget = nullptr;
+			});
+		}
+		this->loaderWidget->show();
+	});
 	QObject::connect(this->action_saveGrid, &QAction::triggered, [this](){this->scene->launchSaveDialog();});
 	QObject::connect(this->action_showVisuBox, &QAction::triggered, [this](){this->scene->showVisuBoxController();});
 	QObject::connect(this->action_exitProgram, &QAction::triggered, this, &QMainWindow::close);

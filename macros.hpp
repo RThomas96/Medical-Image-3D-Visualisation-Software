@@ -49,6 +49,10 @@ namespace glm {
 #include <windows.h>
 #endif
 
+/// @brief Template used to iterate over some const containers, to get the underlying object
+template<class T>
+std::remove_reference_t<T> const& as_const(T&&t){return t;}
+
 /* Copy paste this to have trace output at debug time
 #ifndef NDEBUG
 	std::cerr << "[TRACE][" << __PRETTY_FUNCTION__ << "] : \n";

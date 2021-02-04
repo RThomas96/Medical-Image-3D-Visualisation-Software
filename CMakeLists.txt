@@ -29,6 +29,7 @@ ADD_EXECUTABLE(neighbor_visu
 	./qt/include/visu_box_controller.hpp
 	./qt/include/opengl_debug_log.hpp
 	./qt/include/user_settings_widget.hpp
+	./qt/include/loader_widget.hpp
 
 	./viewer/include/scene.hpp
 	./viewer/include/planar_viewer.hpp
@@ -57,6 +58,7 @@ ADD_EXECUTABLE(neighbor_visu
 	./qt/src/visu_box_controller.cpp
 	./qt/src/opengl_debug_log.cpp
 	./qt/src/user_settings_widget.cpp
+	./qt/src/loader_widget.cpp
 
 	./viewer/src/scene.cpp
 	./viewer/src/planar_viewer.cpp

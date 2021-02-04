@@ -8,6 +8,7 @@
 #include "./grid_control.hpp"
 #include "./opengl_debug_log.hpp"
 #include "./user_settings_widget.hpp"
+#include "./loader_widget.hpp"
 
 #include <QWidget>
 #include <QMainWindow>
@@ -45,6 +46,7 @@ class MainWidget : public QMainWindow {
 		OpenGLDebugLog* glDebug;	///< Output for the OpenGL debug messages.
 
 		UserSettingsWidget* usettings;	///< User settings dialog.
+		GridLoaderWidget* loaderWidget;	///< Loader widget
 
 		ControlPanel* controlPanel;	///< The control panel at the bottom of the grid
 		bool widgetSizeSet;		///< Checks if the widget size has been set before
@@ -55,8 +57,7 @@ class MainWidget : public QMainWindow {
 		QMenu* fileMenu;		///< The 'File' menu of the application
 		QMenu* viewMenu;		///< The 'View' menu of the application
 		QMenu* helpMenu;		///< The 'Help' menu of the application
-		QAction* action_add1Grid;	///< Action to add grid
-		QAction* action_add2Grid;	///< Action to add two grids (red and green channels)
+		QAction* action_addGrid;	///< Action to add grid
 		QAction* action_saveGrid;	///< Action to save grid
 		QAction* action_exitProgram;	///< Action to exit the program.
 		QAction* action_showVisuBox;	///< Action to show the visualization box controller

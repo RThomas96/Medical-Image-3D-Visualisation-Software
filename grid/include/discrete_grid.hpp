@@ -16,13 +16,13 @@
 
 #define INSERTION_BASED_COPY
 
+/// @brief Definition of a 3 dimensionnal vector to store this grid's dimensions, amongst other things.
+typedef glm::vec<3, std::size_t, glm::defaultp> svec3;
+
 /// @brief Computes a transformation matrix from an origin and an angle, for our use case.
 /// @details This computes a transformation matrix to fit our purpose, might not be adapted
 /// to any use case !
-glm::mat4 computeTransfoShear(double angleDeg, glm::vec3 origin = glm::vec3(.0f));
-
-/// @brief High precision vector3 type to store image sizes, and coordinates.
-typedef glm::vec<3, std::size_t, glm::highp> svec3;
+glm::mat4 computeTransfoShear(double angleDeg, svec3 dimensions, glm::vec3 vxdims);
 
 /// @brief Representation of a discrete grid (as a stack of images, or a voxel grid) which can be queried from world space.
 /// @note Although some functions in this class may mention 'texels', they are in no way, shape, or form tied to the visualization aspect of the project.
@@ -32,7 +32,6 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 	friend class GridDetailedView;
 
 	public:
-		/// @brief Definition of a 3 dimensionnal vector to store this grid's dimensions, amongst other things.
 		typedef glm::vec<3, std::size_t, glm::defaultp> sizevec3;
 		/// @brief Simple typedef in order to to a templat-ing of this class later.
 		using DataType = uint16_t;

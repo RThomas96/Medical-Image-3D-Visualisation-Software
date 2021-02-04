@@ -122,7 +122,17 @@ namespace IO {
 
 	const std::vector<GenericGridReader::data_t>& GenericGridReader::getGrid() const { return this->data; }
 
-	GenericGridReader::sizevec3 GenericGridReader::getGridDimensions() const { return this->gridDimensions; }
+	GenericGridReader::sizevec3 GenericGridReader::getGridDimensions() const {
+		if (this->downsampleLevel == DownsamplingLevel::Original) {
+			return this->gridDimensions;
+		} else if (this->downsampleLevel == DownsamplingLevel::Low) {
+			return (this->imageDimensions / std::size_t(2));
+		} else if (this->downsampleLevel == DownsamplingLevel::Lower) {
+			return (this->imageDimensions / std::size_t(4));
+		} else if (this->downsampleLevel == DownsamplingLevel::Lowest) {
+			return (this->imageDimensions / std::size_t(8));
+		}
+	}
 
 	std::size_t GenericGridReader::getGridSizeBytes() const {
 		std::size_t sizeBytes = 0;
@@ -231,7 +241,7 @@ namespace IO {
 		this->boundingBox.setMin(bbox_t::vec(0, 0, 0));
 		this->boundingBox.setMax(maxCoord);
 
-		this->boundingBox.printInfo("in precomputedata() : ");
+		this->gridDimensions = this->imageDimensions;
 
 		return *this;
 	}
@@ -492,8 +502,6 @@ namespace IO {
 		this->boundingBox = bbox_t(minBB, maxBB);
 		this->dataBoundingBox = bbox_t();
 
-		this->boundingBox.printInfo("In precomputedata : ");
-
 		return *this;
 	}
 
@@ -640,6 +648,25 @@ namespace IO {
 		std::size_t finalSize = width * height * depth;
 		// Resize the vector :
 		this->data.resize(finalSize);
+
+		std::cerr << "preallocate() : Downsampling level : ";
+		switch (this->downsampleLevel) {
+			case Original:
+				std::cerr << "original\n";
+			break;
+			case Low:
+				std::cerr << "low\n";
+			break;
+			case Lower:
+				std::cerr << "lower\n";
+			break;
+			case Lowest:
+				std::cerr << "lowest\n";
+			break;
+			default:
+				std::cerr << "UNKNOWN\n";
+			break;
+		}
 
 		// Most of those values assigned above are default values, since we cannot gather
 		// that info from a TIFF file. (Not easily, anyway).

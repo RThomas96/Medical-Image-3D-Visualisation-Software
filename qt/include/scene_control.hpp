@@ -41,8 +41,7 @@ class ControlPanel : public QWidget {
 		QLabel* label_maxTexRight;	///< Label for the max value of the texture slider (right)
 
 		QWidget* controlContainer;
-		Viewer* leftViewer;
-		QDoubleSpinBox* clipDistance;
+		Viewer* const viewer;
 
 	public slots:
 		void setMinTexVal(int val);

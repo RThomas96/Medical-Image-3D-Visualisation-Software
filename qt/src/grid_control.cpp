@@ -225,10 +225,10 @@ void GridControl::setupWidgets() {
 	frame_BoundingBox->setLayout(layout_BoundingBox);
 	frame_BoundingBox->setStyleSheet(".QFrame{border: 2px solid grey;border-radius: 4px;}");
 
-	layout_saveFile->addWidget(this->label_baseDir, 0, 0, 1, 3, Qt::AlignJustify);
-	layout_saveFile->addWidget(this->button_modifyBaseDir, 0, 4, 1, 1, Qt::AlignJustify);
-	layout_saveFile->addWidget(this->lineEdit_baseName, 1, 0, 1, 3, Qt::AlignJustify);
-	layout_saveFile->addWidget(this->comboBox_filetype, 1, 4, 1, 1, Qt::AlignJustify);
+	layout_saveFile->addWidget(this->label_baseDir, 0, 0, 1, 3);
+	layout_saveFile->addWidget(this->button_modifyBaseDir, 0, 4, 1, 1);
+	layout_saveFile->addWidget(this->lineEdit_baseName, 1, 0, 1, 3);
+	layout_saveFile->addWidget(this->comboBox_filetype, 1, 4, 1, 1);
 
 	//========================================//
 	// Merge grid/voxel and BB layouts in one //
@@ -240,7 +240,7 @@ void GridControl::setupWidgets() {
 	// Add bb controls :
 	mainLayout->addWidget(frame_BoundingBox, mRow, 0, 1, -1); mRow+=2; // space to next widget
 	// Add save options :
-	mainLayout->addLayout(layout_saveFile, mRow, 0); mRow+=2; // space to next widget
+	mainLayout->addLayout(layout_saveFile, mRow, 0, 1, -1); mRow+=2; // space to next widget
 	// Add buttons :
 	mainLayout->addWidget(label_InterpolationMethod, mRow, 0, Qt::AlignRight);
 	mainLayout->addWidget(this->methodPicker, mRow, 1, Qt::AlignJustify);
