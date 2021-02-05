@@ -136,6 +136,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void slotSetPlaneDisplacementY(float scalar);
 		/// @brief Set Z's plane displacement within the bounding box to be `scalar`
 		void slotSetPlaneDisplacementZ(float scalar);
+
 		/// @brief Set minimum texture intensity.
 		void slotSetMinTexValue(DiscreteGrid::data_t val);
 		/// @brief Set maximum texture intensity.
@@ -144,16 +145,21 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void slotSetMinColorValue(DiscreteGrid::data_t val);
 		/// @brief Set maximum color intensity.
 		void slotSetMaxColorValue(DiscreteGrid::data_t val);
+
 		/// @brief set the clip plane distance from camera to be `val`
 		void slotSetClipDistance(double val) { this->clipDistanceFromCamera = static_cast<float>(val); return; }
+
 		/// @brief Get clipping distance from camera
 		float getClipDistance(void) { return this->clipDistanceFromCamera; }
+
 		/// @b Toggles the visibility of the plane in argument
 		void togglePlaneVisibility(planes _plane);
 		/// @b Signals all planes they need to be to be [in]visible.
 		void toggleAllPlaneVisibilities(void);
+
 		/// @b Sets the new 'heading' of the plane (to rotate the planar viewers in the framebuffer)
 		void setPlaneHeading(planes _plane, planeHeading _heading);
+
 		/// @b Toggles visibility of plane X.
 		void slotTogglePlaneDirectionX();
 		/// @b Toggles visibility of plane Y.
@@ -270,6 +276,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		glm::vec3 planeDirection;		///< Cutting plane directions (-1 or 1 on each axis)
 		glm::vec3 planeDisplacement;		///< %age of the scene bounding box to place the planes
 		DiscreteGrid::bbox_t sceneBB;		///< Outer BB of the scene
+		DiscreteGrid::bbox_t sceneDataBB;	///< Outer BB of the scene's data
 		float clipDistanceFromCamera;		/// Distance from the camera to its clip plane
 		DrawMode drawMode;			///< Current 3D draw mode
 		DiscreteGrid::bbox_t visuBox;		///< Used to restrict the view to a box with its coordinates
@@ -311,10 +318,10 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 
 };
 
-inline int __GetOpenGLError ( char* szFile, int iLine );
-
+/// @brief Type-safe conversion of enum values to unsigned ints.
 inline unsigned int planeHeadingToIndex(planeHeading _heading);
 
+/// @brief Helper struct to store the indices of vertices that make a face, and compare two faces to one another.
 struct Face {
 	public:
 		inline Face ( unsigned int v0, unsigned int v1, unsigned int v2) {
@@ -332,12 +339,6 @@ struct Face {
 		inline unsigned int getVertex (unsigned int i) const { return v[i]; }
 		unsigned int v[3];
 };
-
-#if not defined( NDEBUG )
-	#define GetOpenGLError() __GetOpenGLError( ( char* )__FILE__, ( int )__LINE__ )
-#else
-	#define GetOpenGLError()
-#endif
 
 #endif // VIEWER_INCLUDE_SCENE_HPP_
 
