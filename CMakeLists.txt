@@ -16,9 +16,45 @@ FIND_PACKAGE(TinyTIFF REQUIRED PATHS ${CMAKE_CURRENT_LIST_DIR}/lib/lib/cmake PAT
 
 ADD_SUBDIRECTORY(glm)
 
-# Neighbor visualisation (Test variant) {{{
-ADD_EXECUTABLE(neighbor_visu
-	# Header files, for Qt MOCS compilation :
+# Library for image reading/writing {{{
+ADD_LIBRARY(ImageIO STATIC
+	./image/include/reader.hpp
+	./image/include/writer.hpp
+
+	./image/src/reader.cpp
+	./image/src/writer.cpp
+)
+TARGET_INCLUDE_DIRECTORIES(ImageIO
+	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/lib/include
+)
+TARGET_LINK_LIBRARIES(ImageIO
+	PUBLIC TinyTIFF
+)
+# }}}
+
+# Library for DiscreteGrid and TetMesh {{{
+ADD_LIBRARY(DiscreteGrid STATIC
+	# Headers :
+	./grid/include/tetmesh.hpp
+	./grid/include/discrete_grid.hpp
+	./grid/include/input_discrete_grid.hpp
+	./grid/include/output_discrete_grid.hpp
+	# Sources :
+	./grid/src/tetmesh.cpp
+	./grid/src/discrete_grid.cpp
+	./grid/src/input_discrete_grid.cpp
+	./grid/src/output_discrete_grid.cpp
+)
+TARGET_INCLUDE_DIRECTORIES(DiscreteGrid
+	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/glm/
+)
+TARGET_LINK_LIBRARIES(DiscreteGrid
+	PUBLIC ImageIO
+)
+# }}}
+
+# All the needed widgets for this project, under one target {{{
+ADD_LIBRARY(VisualisationWidgets STATIC
 	./qt/include/grid_control.hpp
 	./qt/include/grid_detailed_view.hpp
 	./qt/include/grid_list_view.hpp
@@ -31,23 +67,6 @@ ADD_EXECUTABLE(neighbor_visu
 	./qt/include/user_settings_widget.hpp
 	./qt/include/loader_widget.hpp
 
-	./viewer/include/scene.hpp
-	./viewer/include/planar_viewer.hpp
-	./viewer/include/neighbor_visu_viewer.hpp
-	./viewer/include/viewer_structs.hpp
-
-	./grid/include/tetmesh.hpp
-	./grid/include/discrete_grid.hpp
-	./grid/include/input_discrete_grid.hpp
-	./grid/include/output_discrete_grid.hpp
-
-	./image/include/reader.hpp
-	./image/include/writer.hpp
-
-	# Main file :
-	./neighbor_visu_main.cpp
-
-	# Source files :
 	./qt/src/grid_control.cpp
 	./qt/src/grid_detailed_view.cpp
 	./qt/src/grid_list_view.cpp
@@ -59,25 +78,45 @@ ADD_EXECUTABLE(neighbor_visu
 	./qt/src/opengl_debug_log.cpp
 	./qt/src/user_settings_widget.cpp
 	./qt/src/loader_widget.cpp
+)
+TARGET_INCLUDE_DIRECTORIES(VisualisationWidgets
+	PRIVATE ${QGLViewer_HEADER_DIR}
+)
+TARGET_LINK_LIBRARIES(VisualisationWidgets
+	PUBLIC Qt5::Core
+	PUBLIC Qt5::Gui
+	PUBLIC Qt5::Xml
+	PUBLIC Qt5::Widgets
+	PUBLIC Qt5::OpenGL
+)
+# }}}
 
+# Neighbor visualisation {{{
+ADD_EXECUTABLE(neighbor_visu
+	# Header files, for Qt MOCS compilation :
+	./viewer/include/scene.hpp
+	./viewer/include/planar_viewer.hpp
+	./viewer/include/neighbor_visu_viewer.hpp
+	./viewer/include/viewer_structs.hpp
+
+	# Main file :
+	./neighbor_visu_main.cpp
+
+	# Source files :
 	./viewer/src/scene.cpp
 	./viewer/src/planar_viewer.cpp
 	./viewer/src/neighbor_visu_viewer.cpp
 	./viewer/src/viewer_structs.cpp
-
-	./grid/src/tetmesh.cpp
-	./grid/src/discrete_grid.cpp
-	./grid/src/input_discrete_grid.cpp
-	./grid/src/output_discrete_grid.cpp
-
-	./image/src/reader.cpp
-	./image/src/writer.cpp
+)
+TARGET_PRECOMPILE_HEADERS(neighbor_visu
+	# Made so that QtCreator will precompile this header and
+	# shut up about the deprecated functions used within :
+	PRIVATE ${QGLViewer_HEADER_DIR}/QGLViewer/qglviewer.h
+	# Also, dramatically reduces compilation time.
 )
 TARGET_INCLUDE_DIRECTORIES(neighbor_visu
 	PRIVATE ${OPENGL_INCLUDE_DIRS}
-	PRIVATE ${QGLViewer_HEADER_DIR}
 	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/glm/
-	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/lib/include
 )
 TARGET_LINK_LIBRARIES(neighbor_visu
 	PUBLIC Qt5::Core
@@ -87,7 +126,9 @@ TARGET_LINK_LIBRARIES(neighbor_visu
 	PUBLIC Qt5::OpenGL
 	PUBLIC ${OPENGL_LIBRARIES}
 	PUBLIC ${QGLViewer}
-	PUBLIC TinyTIFF
+	PUBLIC ImageIO
+	PUBLIC DiscreteGrid
+	PUBLIC VisualisationWidgets
 )
 # }}}
 
