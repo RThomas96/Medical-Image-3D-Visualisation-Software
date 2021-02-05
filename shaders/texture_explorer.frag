@@ -24,6 +24,9 @@ uniform vec2 colorBounds;	// The min and max values displayed (minTexValue and m
 uniform vec2 textureBounds;	// The min and max values
 uniform uint nbChannels;	// nb of channels in the image (R, RG, RGB)
 
+uniform uint channelView;	// What channels do we visualize ? R+G = 1, R = 2, G = 3
+uniform float maxTexPossible;	// maximum tex value possible, variable depending on the data type
+
 /****************************************/
 /*********** Function headers ***********/
 /****************************************/
@@ -64,8 +67,8 @@ vec4 voxelValueToColor_1channel(in uvec4 ucolor) {
 	float alpha = 1.f;
 	float r = float(ucolor.r);
 	float g = float(ucolor.r);
-	if (r < textureBounds.x || r > textureBounds.y) { alpha = .1f; }
-	if (g < textureBounds.x || g > textureBounds.y) { alpha = .1f; }
+	if (r < textureBounds.x || r > textureBounds.y) { alpha = .3f; }
+	if (g < textureBounds.x || g > textureBounds.y) { alpha = .3f; }
 	// Have the R and G color channels clamped to the min/max of the scale
 	// (mimics under or over-exposure)
 	float color_r = clamp(r, colorBounds.x, colorBounds.y);

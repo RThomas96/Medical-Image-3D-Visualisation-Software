@@ -110,7 +110,7 @@ namespace IO {
 		if (not this->isOpen) { return *this; }
 		if (not this->isPreallocated) { this->preAllocateData(); }
 
-		std::size_t framesize = this->grid->getResolution().x * this->grid->getResolution().y;
+		std::size_t framesize = this->grid->getResolution().x * this->grid->getResolution().y * sizeof(data_t);
 		this->outputIMA->seekp(framesize*sliceIdx);
 		this->outputIMA->write((const char*)sliceData.data(), framesize);
 		return *this;
@@ -192,8 +192,12 @@ namespace IO {
 		// Writes the grid's dimensions
 		svec3 imDims = this->grid->getResolution();
 		*this->outputDIM << imDims.x << " " << imDims.y << " " << imDims.z << '\n';
-		#warning Type is written as U8 here, no checks on datatype
+		#ifdef VISUALISATION_USE_UINT8
 		*this->outputDIM << "-type U8\n";
+		#endif
+		#ifdef VISUALISATION_USE_UINT16
+		*this->outputDIM << "-type U16\n";
+		#endif
 
 		// Writes the voxel's dimensions within the grid :
 		glm::vec3 vxDim	= this->grid->getVoxelDimensions();
@@ -224,7 +228,7 @@ namespace IO {
 	}
 
 	void SingleTIFFWriter::openTIFFFile(const std::shared_ptr<DiscreteGrid>& _vg) {
-		uint16_t bps = static_cast<uint16_t>(sizeof(data_t));
+		uint16_t bps = static_cast<uint16_t>(sizeof(data_t)*8);
 		svec3 dims = _vg->getResolution();
 		uint32_t width = static_cast<uint32_t>(dims.x);
 		uint32_t height = static_cast<uint32_t>(dims.y);

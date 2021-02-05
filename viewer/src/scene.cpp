@@ -406,12 +406,22 @@ void Scene::addGrid(const std::shared_ptr<InputGrid> _grid, std::string meshPath
 	auto dimensions = _grid->getResolution();
 	if (dimensions.x > 0 && dimensions.y > 0 && dimensions.z > 0) {
 		gridTexture.level = 0;
+		#ifdef VISUALISATION_USE_UINT8
+		gridTexture.internalFormat = GL_R8UI;
+		#endif
+		#ifdef VISUALISATION_USE_UINT16
 		gridTexture.internalFormat = GL_R16UI;
+		#endif
 		gridTexture.size.x = dimensions.x;
 		gridTexture.size.y = dimensions.y;
 		gridTexture.size.z = dimensions.z;
 		gridTexture.format = GL_RED_INTEGER;
+		#ifdef VISUALISATION_USE_UINT8
+		gridTexture.type = GL_UNSIGNED_BYTE;
+		#endif
+		#ifdef VISUALISATION_USE_UINT16
 		gridTexture.type = GL_UNSIGNED_SHORT;
+		#endif
 		gridTexture.data = _grid->getDataPtr();
 		gridView.gridTexture = this->uploadTexture3D(gridTexture);
 	}
@@ -456,12 +466,22 @@ void Scene::addTwoGrids(const std::shared_ptr<InputGrid> _gridR, const std::shar
 	auto dimensions = _gridR->getResolution();
 	if (dimensions.x > 0 && dimensions.y > 0 && dimensions.z > 0) {
 		gridTexture.level = 0;
-		gridTexture.internalFormat = GL_RG16UI;
+		#ifdef VISUALISATION_USE_UINT8
+		gridTexture.internalFormat = GL_R8UI;
+		#endif
+		#ifdef VISUALISATION_USE_UINT16
+		gridTexture.internalFormat = GL_R16UI;
+		#endif
 		gridTexture.size.x = dimensions.x;
 		gridTexture.size.y = dimensions.y;
 		gridTexture.size.z = dimensions.z;
 		gridTexture.format = GL_RG_INTEGER;
+		#ifdef VISUALISATION_USE_UINT8
+		gridTexture.type = GL_UNSIGNED_BYTE;
+		#endif
+		#ifdef VISUALISATION_USE_UINT16
 		gridTexture.type = GL_UNSIGNED_SHORT;
+		#endif
 		gridTexture.data = _gridR->getDataPtr();
 
 		// We should upload and combine all data here :
@@ -899,8 +919,6 @@ void Scene::launchSaveDialog() {
 		this->gridControl->show();
 		return;
 	}
-
-	#warning Allocates new grids from input grids here !
 
 	// create an output grid AND a tetmesh to generate it :
 	std::shared_ptr<OutputGrid> outputGrid = std::make_shared<OutputGrid>();
@@ -1892,7 +1910,11 @@ void Scene::uploadColorScale() {
 	// Swizzle and alignment unchanged, not present in Texture3D
 	texParams.internalFormat = GL_R32F;
 	texParams.size.x = 256;
+	#ifdef VISUALISATION_USE_UINT16
 	texParams.size.y = 256;
+	#else
+	texParams.size.y = 1;
+	#endif
 	texParams.format = GL_RED;
 	texParams.type = GL_FLOAT;
 	texParams.data = this->visibleDomains;
@@ -2151,42 +2173,6 @@ void Scene::toggleAllPlaneVisibilities() {
 void Scene::writeGridDIM(const std::string name) {
 	//IO::Writer::DIM* writer = new IO::Writer::DIM(name, "./");
 	//writer->write(this->outputGrid);
-	return;
-}
-
-void Scene::draft_writeRawGridPortion(DiscreteGrid::sizevec3 begin, DiscreteGrid::sizevec3 size, std::string name, const std::shared_ptr<DiscreteGrid>& _grid) {
-	std::shared_ptr<OutputGrid> rawGrid = std::make_shared<OutputGrid>();
-	//fetch data from input grid :
-	std::vector<DiscreteGrid::DataType> data(size.x * size.y * size.z, uchar(0));
-	const DiscreteGrid::sizevec3 dims = _grid->getResolution();
-
-	if ((begin.x + size.x) > dims.x || (begin.y + size.y) > dims.y || (begin.z + size.z) > dims.z) { return; }
-	std::cerr << "Writing data ...";
-	std::size_t x = 0, y = 0, z = 0;
-	for (std::size_t i = begin.x; i < begin.x + size.x; ++i) {
-		y = 0;
-		for (std::size_t j = begin.y; j < begin.y + size.y; ++j) {
-			z = 0;
-			for (std::size_t k = begin.z; k < begin.z + size.z; ++k) {
-				// this is beautiful, fucking hell
-				data[x + y * size.x + z * size.x * size.y] = _grid->getPixel(i, j, k);
-				z++;
-			}
-			y++;
-		}
-		x++;
-	}
-	std::cerr << " done\n";
-	std::cerr << "Writing with sizes : " << size.x << ',' << size.y << ',' << size.z << "\n";
-	DiscreteGrid::bbox_t box(glm::vec3(.0, .0, .0), glm::convert_to<float>(size));
-	DiscreteGrid::bbox_t::vec mi = box.getMin();
-	DiscreteGrid::bbox_t::vec ma = box.getMax();
-	std::cerr << "Writing with box : {" << mi.x << ',' << mi.y << ',' << mi.z << "}, {" << ma.x << ',' << ma.y << ',' << ma.z << "}\n";
-	rawGrid->setBoundingBox(box);
-	rawGrid->setResolution(size);
-	rawGrid->setData(data);
-	// IO::Writer::DIM* writer = new IO::Writer::DIM(name, "./");
-	// writer->write(rawGrid);
 	return;
 }
 
@@ -2475,10 +2461,21 @@ void Scene::tex3D_generateMESH(const GridGLView& grid, VolMeshData& mesh) {
 
 	using vec_t = typename DiscreteGrid::bbox_t::vec;
 
+	#warning Re-do the computation, we're close
+	float epsilonPercent = .1f;
+	float texEpsilon = 1.f / (1.f + epsilonPercent*2.);
+	float texOrigin = (1.f - texEpsilon) / 2.f;
+
 	grid.grid->getBoundingBox().printInfo("In mesh generation");
 	DiscreteGrid::bbox_t::vec min = grid.grid->getBoundingBox().getMin();
 	DiscreteGrid::bbox_t::vec max = grid.grid->getBoundingBox().getMax();
 	const DiscreteGrid::bbox_t::vec size = grid.grid->getBoundingBox().getDiagonal();
+	/*
+	DiscreteGrid::bbox_t::vec epsilon = size * epsilonPercent;
+	min = min - epsilon;
+	max = max + epsilon;
+	DiscreteGrid::bbox_t::vec diag = max - min;
+	*/
 	DiscreteGrid::bbox_t::vec diag = size;
 	// Dimensions, subject to change :
 	std::size_t xv = 10 ; glm::vec4::value_type xs = diag.x / static_cast<glm::vec4::value_type>(xv);

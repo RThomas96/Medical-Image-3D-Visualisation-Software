@@ -123,15 +123,14 @@ namespace IO {
 	const std::vector<GenericGridReader::data_t>& GenericGridReader::getGrid() const { return this->data; }
 
 	GenericGridReader::sizevec3 GenericGridReader::getGridDimensions() const {
-		if (this->downsampleLevel == DownsamplingLevel::Original) {
-			return this->gridDimensions;
-		} else if (this->downsampleLevel == DownsamplingLevel::Low) {
+		if (this->downsampleLevel == DownsamplingLevel::Low) {
 			return (this->imageDimensions / std::size_t(2));
 		} else if (this->downsampleLevel == DownsamplingLevel::Lower) {
 			return (this->imageDimensions / std::size_t(4));
 		} else if (this->downsampleLevel == DownsamplingLevel::Lowest) {
 			return (this->imageDimensions / std::size_t(8));
 		}
+		return this->gridDimensions;
 	}
 
 	std::size_t GenericGridReader::getGridSizeBytes() const {

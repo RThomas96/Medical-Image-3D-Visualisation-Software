@@ -34,10 +34,10 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 	public:
 		typedef glm::vec<3, std::size_t, glm::defaultp> sizevec3;
 		/// @brief Simple typedef in order to to a templat-ing of this class later.
-		using DataType = uint16_t;
+		using DataType = IO::GenericGridReader::data_t;
 		/// @brief Type of bounding box used
 		typedef BoundingBox_General<float> bbox_t;
-		/// @brief Public typename for DiscreteGrid's data type
+		/// @brief Public typename for DiscreteGrid's data type (compatibility reasons)
 		typedef DataType data_t;
 
 	protected:

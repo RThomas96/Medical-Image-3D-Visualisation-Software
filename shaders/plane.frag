@@ -61,7 +61,7 @@ void main(void)
 		if (texCoord.x > 0. && texCoord.x < 1.) {
 			if (texCoord.y > .0 && texCoord.y < 1.) {
 				if (texCoord.z > 0. && texCoord.z < 1.) {
-					if (isPlaneVisible(true)) {
+					if (isPlaneVisible(true) && showTex == true) {
 						uvec3 tex = texture(texData, texCoord).xyz;
 						colorTex = R8UIToRGB(tex);
 					}
@@ -70,7 +70,11 @@ void main(void)
 		}
 		color = colorTex;
 	} else {
-		color = planeIndexToColor(); // default plane color
+		if (showTex == true) {
+			color = planeIndexToColor(); // default plane color
+		} else {
+			discard;
+		}
 	}
 
 	if (color.a < .1f) { discard; }

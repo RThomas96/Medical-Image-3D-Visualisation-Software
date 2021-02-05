@@ -36,8 +36,13 @@
 
 class ControlPanel; // Forward declaration
 
+/// @b Simple enum to keep track of the different viewing primitives for the program.
 enum DrawMode { Solid, Volumetric, VolumetricBoxed };
+/// @b Simple enum to keep track of which channel(s) we show from the texture to the viewers.
+enum DisplayChannel { RedAndGreen, Red, Green };
+/// @b Simple enum to define which plane we are drawing
 enum planes { x = 1, y = 2, z = 3 };
+/// @b Simple enum to keep track of a plane's orientation.
 enum planeHeading { North = 0, East = 1, South = 2, West = 3, Up = North, Right = East, Down = South, Left = West };
 
 class Scene : public QOpenGLFunctions_4_0_Core {
@@ -124,9 +129,6 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 
 		/// @brief (Obsolete) Function to write the generated output grid as a DIM/IMA file
 		void writeGridDIM(const std::string name);
-
-		/// @brief Draft function to write the loaded input grid as a DIM/IMA file
-		void draft_writeRawGridPortion(DiscreteGrid::sizevec3 begin, DiscreteGrid::sizevec3 size, std::string name, const std::shared_ptr<DiscreteGrid>& _grid);
 
 		/// @brief Set X's plane displacement within the bounding box to be `scalar`
 		void slotSetPlaneDisplacementX(float scalar);
