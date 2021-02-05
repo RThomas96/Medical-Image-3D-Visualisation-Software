@@ -530,10 +530,6 @@ void main (void) {
 		if( computeBarycentricCoordinates( Current_P, ld0, ld1, ld2, ld3) ){
 			int id_tet;
 			vec3 voxel_center_P = getWorldCoordinates( next_voxel );
-			// colorOut.xyz = voxel_center_P / (gridSize); return;
-			// if (voxel_center_P.x < 0) { colorOut.x = 1.; colorOut.a = 1.; return; }
-			// if (voxel_center_P.y < 0) { colorOut.y = 1.; colorOut.a = 1.; return; }
-			// if (voxel_center_P.z < 0) { colorOut.z = 1.; colorOut.a = 1.; return; }
 			// Recursively traverse the texture, using barycentric coords to 'jump' to another
 			// tetrahedra if needed :
 			if( computeBarycentricCoordinatesRecursive( voxel_center_P, ld0, ld1, ld2, ld3, int(instanceId+0.5), id_tet, maxTetrIter, Current_text3DCoord ) ){
@@ -541,10 +537,10 @@ void main (void) {
 				uvec3 voxelIndex = texture(Mask, Current_text3DCoord).xyz;
 				uint rawVal = voxelIndex.r;
 				int width = textureSize(visiblity_map, 0).x;
-				float colVal = float(mod(rawVal, width)) / float(width);
-				float rowVal = float(rawVal / width) / float(width);
-				// If it's visible :
-				if (texture(visiblity_map, vec2(rowVal, colVal)).x > 0.) {
+				// texture coords for visibility :
+				ivec2 tcfv = Convert1DIndexTo2DIndex_Unnormed(voxelIndex.r, width);
+				// If it's visible : (texelFetch here to take advantage of using ivec2 rather than normalized vec2)
+				if (texelFetch(visiblity_map, tcfv, 0).x > 0.) {
 					// Get the corresponding color :
 					// color = texelFetch(color_texture, int(voxelIndex.x), 0);
 					color = voxelIdxToColor(voxelIndex);

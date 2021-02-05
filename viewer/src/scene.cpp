@@ -208,9 +208,6 @@ void Scene::initGl(QOpenGLContext* _context) {
 	if (this->controlPanel) {
 		this->controlPanel->activatePanels();
 	}
-
-	GLsizei maxTexSize = 0;
-	std::cerr << "Max texture size as reported by OpenGL : " << maxTexSize << '\n';
 }
 
 void Scene::addOpenGLOutput(OpenGLDebugLog* glLog) {
@@ -258,9 +255,22 @@ void Scene::setupGLOutput() {
 			// Silently ignore the init error, and free the debugLog resource.
 			delete this->debugLog;
 			this->debugLog = nullptr;
+			if (this->glOutput != nullptr) {
+				this->glOutput->addErrorMessage("Cannot initialize QOpenGLDebugLogger. No messages will be logged.");
+			} else {
+				QMessageBox* msgBox = new QMessageBox;
+				msgBox->setAttribute(Qt::WA_DeleteOnClose);
+				msgBox->critical(nullptr, "QOpenGLDebugLogger Error", "Could not initialize logging for the QOpenGLDebugLogger. No messages will be logged.");
+			}
 		}
 	} else {
-		// Silently ignore the fact the current context does not have support for GL_KHR_extension.
+		if (this->glOutput != nullptr) {
+			this->glOutput->addErrorMessage("Context does not support the <pre>GL_KHR_debug</pre> extension. No mesages <i>can</i> be logged.");
+		} else {
+			QMessageBox* msgBox = new QMessageBox;
+			msgBox->setAttribute(Qt::WA_DeleteOnClose);
+			msgBox->critical(nullptr, "QOpenGLDebugLogger Error", "Context does not support the <pre>GL_KHR_debug</pre> extension. No mesages <i>can</i> be logged.");
+		}
 	}
 }
 
@@ -626,6 +636,7 @@ GLuint Scene::compileShader(const std::string& path, const GLenum shaType, bool 
 		delete[] shaderInfoLog;
 
 		std::cerr << __FILE__ << ":" << __LINE__ << " : end Log ***********************************************" << '\n';
+		#ifdef ENABLE_SHADER_CONTENTS_ON_FAILURE
 		std::cerr << "Shader contents :" << '\n';
 		std::cerr << "=============================================================================================\n";
 		std::cerr << "=============================================================================================\n";
@@ -633,6 +644,7 @@ GLuint Scene::compileShader(const std::string& path, const GLenum shaType, bool 
 		std::cerr << "=============================================================================================\n";
 		std::cerr << "=============================================================================================\n";
 		std::cerr << "End shader contents" << '\n';
+		#endif
 	}
 
 	delete[] shaSource;
@@ -1066,7 +1078,7 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, cons
 		tex++;
 		GetOpenGLError();
 		glActiveTexture(GL_TEXTURE0 + tex);
-		glBindTexture(GL_TEXTURE_1D, this->texHandle_ColorScaleGrid);
+		glBindTexture(GL_TEXTURE_2D, this->texHandle_ColorScaleGrid);
 		glUniform1i(location_visibilityMap, tex);
 		tex++;
 		GetOpenGLError();
@@ -1525,8 +1537,10 @@ void Scene::drawGrid(GLfloat *mvMat, GLfloat *pMat, glm::mat4 baseMatrix, const 
 void Scene::draw3DView(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, bool showTexOnPlane) {
 	if (this->shouldUpdateVis) {
 		this->shouldUpdateVis = false;
+		std::cerr << "Updating vis ... " << '\n';
 		this->generateColorScale();
 		this->uploadColorScale();
+		std::cerr << "Updated vis. New bounds : " << this->minTexVal << " and " << this->maxTexVal << '\n';
 	}
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
@@ -1848,21 +1862,16 @@ glm::mat4 Scene::computeTransformationMatrix(const std::shared_ptr<DiscreteGrid>
 }
 
 void Scene::generateColorScale() {
-	for (uint i = 0; i < this->minTexVal; ++i) {
-		this->visibleDomains[i] = 0.f;
-	}
-	for (uint i = this->minTexVal; i < this->maxTexVal; ++i) {
-		this->visibleDomains[i] = .5f;
-	}
-	for (uint i = this->maxTexVal; i < std::numeric_limits<DiscreteGrid::data_t>::max(); ++i) {
-		this->visibleDomains[i] = 0.f;
-	}
+	for (DiscreteGrid::data_t i = 0; i < this->minTexVal; ++i) { this->visibleDomains[i] = 0.f; }
+	for (DiscreteGrid::data_t i = this->minTexVal; i < this->maxTexVal; ++i) { this->visibleDomains[i] = 1.f; }
+	for (DiscreteGrid::data_t i = this->maxTexVal; i < std::numeric_limits<DiscreteGrid::data_t>::max(); ++i) { this->visibleDomains[i] = 0.f; }
 }
 
 void Scene::uploadColorScale() {
 	TextureUpload texParams = {};
 
 	if (this->texHandle_ColorScaleGrid != 0) {
+		std::cerr << "Should have updated instead.\n";
 		if (glIsTexture(this->texHandle_ColorScaleGrid) == GL_TRUE) {
 			glDeleteTextures(1, &this->texHandle_ColorScaleGrid);
 		} else {
@@ -1881,7 +1890,7 @@ void Scene::uploadColorScale() {
 	texParams.swizzle.z = GL_ZERO;
 	texParams.swizzle.a = GL_ONE;
 	// Swizzle and alignment unchanged, not present in Texture3D
-	texParams.internalFormat = GL_RED;
+	texParams.internalFormat = GL_R32F;
 	texParams.size.x = 256;
 	texParams.size.y = 256;
 	texParams.format = GL_RED;
@@ -2476,7 +2485,7 @@ void Scene::tex3D_generateMESH(const GridGLView& grid, VolMeshData& mesh) {
 	std::size_t yv = 10 ; glm::vec4::value_type ys = diag.y / static_cast<glm::vec4::value_type>(yv);
 	std::size_t zv = 10 ; glm::vec4::value_type zs = diag.z / static_cast<glm::vec4::value_type>(zv);
 
-	std::size_t tetcount = (xv+1)+(yv+1)*(zv+1);
+	std::size_t tetcount = (xv+1)*(yv+1)*(zv+1);
 
 	std::cerr << "Making a mesh of " << tetcount << " vertices and " << xv*yv*zv*6 << " tetrahedra ...\n";
 

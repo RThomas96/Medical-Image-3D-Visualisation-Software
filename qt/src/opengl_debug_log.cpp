@@ -18,6 +18,13 @@ void OpenGLDebugLog::setupWidgets() {
 	this->setLayout(this->layout);
 }
 
+void OpenGLDebugLog::addErrorMessage(QString _m) {
+	this->messageOutput->appendPlainText("========= Error Message from Application =========");
+	this->messageOutput->appendHtml(_m);
+	this->messageOutput->appendPlainText("==================================================");
+	return;
+}
+
 void OpenGLDebugLog::setupSignals() {
 	// nothing for now ...
 }

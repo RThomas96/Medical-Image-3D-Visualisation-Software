@@ -98,9 +98,7 @@ void ControlPanel::initSignals() {
 }
 
 void ControlPanel::updateViewers() {
-	std::cerr << "value of left : " << this->viewer << '\n';
 	if (this->viewer != nullptr) { this->viewer->update(); }
-	std::cerr << "ended update\n";
 }
 
 void ControlPanel::activatePanels(bool activeStatus) {
