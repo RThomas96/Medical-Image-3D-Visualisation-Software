@@ -35,7 +35,7 @@ void UserSettings::init() {
 	if (this->isInit == true) { return; }
 	#if defined(WIN32) || defined(WIN64) || defined(_MSC_VER) || defined(_WIN32)
 	MEMORYSTATUSEX memstats{};
-	if (GlobalMemoryStatusEx(memstats) != 0) {
+	if (GlobalMemoryStatusEx(&memstats) != 0) {
 		std::cerr << "error : cannot get memory stats !" << '\n';
 		this->userAllowedBitSize = 2 * 1024 * 1024 * 1024; // 2GB by default
 	} else {

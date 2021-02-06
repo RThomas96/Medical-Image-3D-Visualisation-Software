@@ -22,6 +22,7 @@
 #include <QDoubleSpinBox>
 
 class GridLoaderWidget : public QWidget {
+		Q_OBJECT
 	public:
 		/// @brief Default constructor. Builds the widget's layout and sets up signals
 		GridLoaderWidget(Scene* _scene, Viewer* _viewer, QWidget* parent = nullptr);

@@ -5,6 +5,8 @@ InputGrid::InputGrid(void){
 	this->setModifiable(false);
 }
 
+InputGrid::~InputGrid() {}
+
 InputGrid& InputGrid::preAllocateImageData(sizevec3 dimensions) {
 	this->gridDimensions = dimensions;
 	std::size_t datasize = dimensions.x * dimensions.y * dimensions.z;

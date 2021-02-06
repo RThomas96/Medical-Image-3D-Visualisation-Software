@@ -54,8 +54,8 @@ namespace glm {
 // #define ENABLE_SHADER_CONTENTS_ON_FAILURE
 
 // What's the size of data we want to load in the program ?
-#define VISUALISATION_USE_UINT8		// the program uses uint8_t, or uchar
-//#define VISUALISATION_USE_UINT16	// the program uses uint16_t, or ushort
+//#define VISUALISATION_USE_UINT8		// the program uses uint8_t, or uchar
+#define VISUALISATION_USE_UINT16	// the program uses uint16_t, or ushort
 
 /// @brief Template used to iterate over some const containers, to get the underlying object
 template<class T>

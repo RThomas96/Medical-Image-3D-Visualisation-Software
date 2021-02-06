@@ -20,7 +20,7 @@ class InputGrid : public DiscreteGrid {
 		InputGrid& operator= (InputGrid&& other) = delete;
 
 		/// @brief Nothing will be done in the destructor here.
-		~InputGrid(void) {}
+		~InputGrid(void);
 
 		/// @brief Pre-allocate the data vector, in order to have enough space to copy the data into it.
 		virtual InputGrid& preAllocateImageData(sizevec3 dimensions);
