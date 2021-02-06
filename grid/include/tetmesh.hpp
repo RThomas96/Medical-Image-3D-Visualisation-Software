@@ -42,6 +42,10 @@ class TetMesh {
 		/// @returns A reference to (this), to chain function calls.
 		TetMesh& addInputGrid(const std::shared_ptr<InputGrid>& toAdd);
 
+		/// @brief Returns the currently associated input grids
+		/// @return The input grids.
+		std::vector<std::shared_ptr<InputGrid>> getInputGrids() const;
+
 		/// @brief Set the grid to sample data into from the input grids.
 		/// @details Sets the positions of the mesh vertices when the output mesh is set.
 		/// @param toSet A raw pointer to the grid to populate for the reconstruction.

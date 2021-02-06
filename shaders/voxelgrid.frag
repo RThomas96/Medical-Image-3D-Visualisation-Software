@@ -37,6 +37,9 @@ uniform vec3 planeDirections;
 
 uniform uint nbChannels;	// nb of channels in the image (R, RG, RGB ?)
 
+uniform uint channelView;	// What channels do we visualize ? R+G = 1, R = 2, G = 3
+uniform double maxTexPossible;	// maximum tex value possible, variable depending on the data type
+
 /// Takes a uvec3 of an R8UI-based texture and spits out an RGB color by applying a 'realistic' color grading
 vec4 R8UIToRGB(in uvec3 ucolor);
 vec4 R8UIToRGB_1channel(in uvec3 ucolor);
@@ -87,8 +90,18 @@ void main(void)
 }
 
 vec4 R8UIToRGB(in uvec3 ucolor) {
-	if (nbChannels == 1u) { return R8UIToRGB_1channel(ucolor); }
-	else { return R8UIToRGB_2channel(ucolor); }
+	if (channelView == 1u) {
+		if (nbChannels == 1u) { return R8UIToRGB_1channel(ucolor); }
+		else { return R8UIToRGB_2channel(ucolor); }
+	} else if (channelView == 2u) {
+		float alpha = 1.f;
+		float val = (float(ucolor.r) - colorBounds.x)/(colorBounds.y-colorBounds.x);
+		return vec4(val, val, val, alpha);
+	} else if (channelView == 3u) {
+		float alpha = 1.f;
+		float val = (float(ucolor.g) - colorBounds.x)/(colorBounds.y-colorBounds.x);
+		return vec4(val, val, val, alpha);
+	}
 }
 
 vec4 R8UIToRGB_1channel(in uvec3 ucolor) {

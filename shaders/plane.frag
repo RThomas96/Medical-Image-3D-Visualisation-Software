@@ -28,6 +28,9 @@ uniform bool showTex;		// Do we show the texture on the plane, or not ?
 uniform uint nbChannels;
 uniform bool drawOnlyData;	// Should we draw only the data ? not any other plane ?
 
+uniform uint channelView;	// What channels do we visualize ? R+G = 1, R = 2, G = 3
+uniform double maxTexPossible;	// maximum tex value possible, variable depending on the data type
+
 uniform bool intersectPlanes = false;	// Should the planes intersect each other ? (hide other planes)
 
 /****************************************/
@@ -84,8 +87,19 @@ void main(void)
 /************** Functions ***************/
 /****************************************/
 vec4 R8UIToRGB(in uvec3 ucolor) {
-	if (nbChannels == 1u) { return R8UIToRGB_1channel(ucolor); }
-	else { return R8UIToRGB_2channel(ucolor); }
+	// Those are planes in 3D. Alpha stays unchanged when outside texture bounds.
+	if (channelView == 1u) {
+		if (nbChannels == 1u) { return R8UIToRGB_1channel(ucolor); }
+		else { return R8UIToRGB_2channel(ucolor); }
+	} else if (channelView == 2u) {
+		float alpha = 1.f;
+		float val = (float(ucolor.r) - colorBounds.x)/(colorBounds.y-colorBounds.x);
+		return vec4(val, val, val, alpha);
+	} else if (channelView == 3u) {
+		float alpha = 1.f;
+		float val = (float(ucolor.g) - colorBounds.x)/(colorBounds.y-colorBounds.x);
+		return vec4(val, val, val, alpha);
+	}
 }
 vec4 R8UIToRGB_1channel(in uvec3 ucolor) {
 	float color_r = float(ucolor.r);
@@ -131,8 +145,8 @@ vec4 R8UIToRGB_2channel(in uvec3 ucolor) {
 	float color_g = float(ucolor.g);
 	float alpha = 1.;
 	// Check if we're in the colorscale. Since drawn on plane, discard fragments by setting alpha < .1 :
-	if (color_r < textureBounds.x || color_r > textureBounds.y) { alpha = .05; }
-	if (color_g < textureBounds.x || color_g > textureBounds.y) { alpha = .05; }
+	//if (color_r < textureBounds.x || color_r > textureBounds.y) { alpha = .05; }
+	//if (color_g < textureBounds.x || color_g > textureBounds.y) { alpha = .05; }
 	// clamp values (necessary ?) :
 	color_r = clamp(color_r, colorBounds.x, colorBounds.y);
 	color_g = clamp(color_g, colorBounds.x, colorBounds.y);

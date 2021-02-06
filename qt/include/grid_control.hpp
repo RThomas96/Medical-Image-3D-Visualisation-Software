@@ -14,17 +14,17 @@
 #include <QWidget>
 #include <QSpinBox>
 #include <QComboBox>
+#include <QGroupBox>
 #include <QPushButton>
 #include <QMessageBox>
+#include <QRadioButton>
 
 #include <memory>
 #include <iostream>
 
 #define ENABLE_SINGLE_DIALOGBOX
-#define ENABLE_SINGLE_FUNCTION_FOR_GRID_UPDATE
 
 class Scene; // Fwd-declaration
-
 
 /// @brief Simple widget allowing the control (if possible) of a grid's resolution, voxel sizes and bounding box.
 /// @note In this class, the bounding box controlled will always be defined as existing within grid space. It makes no
@@ -51,33 +51,12 @@ class GridControl : public QWidget {
 		void launchGridFill(void);
 		/// @brief Saves the grid to a file, after having populated it (GridControl::launchGridFill()).
 		void saveToFile(void);
-		#ifdef ENABLE_SINGLE_FUNCTION_FOR_GRID_UPDATE
 		/// @brief Updates the grid's resolution whenever a spinbox for it changes.
 		void setGridResolution(void);
 		/// @brief Updates the grid's voxel sizes whenever a spinbox for it changes.
 		void setGridVoxelSize(void);
 		/// @brief Updates the grid's bounding box whenever a spinbox for it changes.
 		void setGridBoundingBox(void);
-		#else
-		/// @brief Sets the dimension of the grid along X
-		void setGridDimensionX(int newDim);
-		/// @brief Sets the dimension of the grid along Y
-		void setGridDimensionY(int newDim);
-		/// @brief Sets the dimension of the grid along Z
-		void setGridDimensionZ(int newDim);
-		/// @brief Sets the position of the minimum point of the grid's bounding box on X
-		void setGridBBMinX(double newDim);
-		/// @brief Sets the position of the minimum point of the grid's bounding box on Y
-		void setGridBBMinY(double newDim);
-		/// @brief Sets the position of the minimum point of the grid's bounding box on Z
-		void setGridBBMinZ(double newDim);
-		/// @brief Sets the position of the maximum point of the grid's bounding box on X
-		void setGridBBMaxX(double newDim);
-		/// @brief Sets the position of the maximum point of the grid's bounding box on X
-		void setGridBBMaxY(double newDim);
-		/// @brief Sets the position of the maximum point of the grid's bounding box on X
-		void setGridBBMaxZ(double newDim);
-		#endif
 
 	protected:
 		/// @brief Allows to block all signals from this widget in one fell swoop.
@@ -121,10 +100,13 @@ class GridControl : public QWidget {
 		QDoubleSpinBox* input_GridBBMaxX; ///< Controls the coordinates of the maximum bound of the grid's render bounding box along X
 		QDoubleSpinBox* input_GridBBMaxY; ///< Controls the coordinates of the maximum bound of the grid's render bounding box along Y
 		QDoubleSpinBox* input_GridBBMaxZ; ///< Controls the coordinates of the maximum bound of the grid's render bounding box along Z
+		QGroupBox* groupBox_outputType; ///< Decides on the grid output type. Either single channel 2 stacks, or RGB
+		QRadioButton* radioButton_2stacks; ///< Button to choose the output type as being two stacks
+		QRadioButton* radioButton_rgb; ///< Button to choose the output type as one RGB stack
 		std::vector<QObject*> strayObj; ///< All temporary objects allocated for the viewer, that need to be deleted
 		std::shared_ptr<DiscreteGrid> voxelGrid; ///< Voxel grid to control.
 		std::shared_ptr<TetMesh> mesh; ///< Tetrahedral mesh responsible for the generation of the grid
-		Scene* scene;
+		Scene* scene; ///< The scene to control.
 
 		#ifdef ENABLE_SINGLE_DIALOGBOX
 		QMessageBox* dialogBox;

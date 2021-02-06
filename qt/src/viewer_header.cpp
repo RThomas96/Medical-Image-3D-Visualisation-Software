@@ -47,7 +47,7 @@ ViewerHeader::ViewerHeader(std::string name, QWidget* parent) : ViewerHeader(par
 	this->slider_planeDepth = new QSlider(Qt::Horizontal);
 
 	// Make it go a bit further than the bounding box of the scene
-	this->slider_planeDepth->setRange(1, 99);
+	this->slider_planeDepth->setRange(0, 1000);
 
 	this->layout->addWidget(this->label_PlaneName);
 	this->layout->addWidget(this->slider_planeDepth);

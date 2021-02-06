@@ -115,6 +115,10 @@ namespace IO {
 			/// @return The number of bytes written as of this call.
 			std::size_t sizeWritten(void) const;
 
+			/// @brief Sets the number of channels in the image to write to the file(s)
+			/// @return A reference to *this, to chain function calls
+			GenericGridWriter& setChannelCount(std::size_t i);
+
 		protected:
 			///@brief Opens the file, according to the basename, extension and binary mode requested.
 			virtual void openFile();
@@ -146,6 +150,7 @@ namespace IO {
 			std::string comment; ///< Comment to be written to the file, if allowed.
 			std::size_t bytesWritten; ///< The total number of bytes written to disk, by this writer.
 			std::size_t depthReached; ///< The depth reached by the last write() call
+			std::size_t nbChannels;	///< The number of color channels in the grid/image/whatever
 			std::shared_ptr<DiscreteGrid> grid;	///< The current grid to write.
 			bool isPreallocated;
 			bool isOpen;

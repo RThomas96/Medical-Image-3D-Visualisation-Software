@@ -37,6 +37,7 @@ class GridLoaderWidget : public QWidget {
 		void resetGridInfoLabel();
 		/// @brief Computes the grid information based on the new data available
 		void computeGridInfoLabel();
+		void disableWidgets();
 	public slots:
 		void loadGridDIM1channel();
 		void loadGridTIF1channel();

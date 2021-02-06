@@ -31,6 +31,7 @@ uniform mat4 vMat;
 uniform mat4 pMat;
 
 uniform vec3 cam;
+uniform vec3 volumeEpsilon;
 
 uniform vec4 clipPlane = vec4(.0, 1., .0, .0);
 
@@ -58,7 +59,7 @@ ivec2 Convert1DIndexTo2DIndex_Unnormed( in uint uiIndexToConvert, in int iWrapSi
 
 float ComputeVisibility(vec3 point)
 {
-	vec4 epsilon = vec4(15, 15, 15, .0) ;
+	vec4 epsilon = vec4(volumeEpsilon, .0) ;
 	epsilon.xyz *= cutDirection;
 	if (shouldUseBB == false) {
 		vec4 point4 = vec4(point, 1.);

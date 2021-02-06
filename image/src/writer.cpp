@@ -10,6 +10,7 @@ namespace IO {
 		this->comment = "";
 		this->bytesWritten = std::size_t(0);
 		this->depthReached = std::size_t(0);
+		this->nbChannels = 1;
 		this->isPreallocated = false;
 		this->isOpen = false;
 	}
@@ -302,7 +303,6 @@ namespace IO {
 
 		// get total files to process :
 		this->totalFiles = this->grid->getResolution().z;
-		std::cerr << "Staggerered : max slices = "<< this->totalFiles << '\n';
 		this->currentFile = 0;
 
 		return *this;
@@ -358,14 +358,21 @@ namespace IO {
 		// we only have grayscale :
 		uint16_t samples = 1;
 		TinyTIFFWriterSampleInterpretation si = TinyTIFFWriter_Greyscale;
+		if (this->nbChannels == 3) {
+			si = TinyTIFFWriter_RGB;
+			samples=3;
+		}
+		if (this->nbChannels != 1 && this->nbChannels != 3) {
+			throw std::runtime_error("Trying to write something different from 1 or 3 channels");
+		}
 		// set width/height :
 		auto dims = this->grid->getResolution();
 		std::cerr << "Image dimensions : " << dims.x << ',' << dims.y;
-		uint32_t width = dims.x;
+		uint32_t width = dims.x * nbChannels;
 		uint32_t height = dims.y;
 
 		// finally, open file :
-		this->tiffFile = TinyTIFFWriter_open(fullpath.c_str(), bps, sf, 0, width, height, si);
+		this->tiffFile = TinyTIFFWriter_open(fullpath.c_str(), bps, sf, samples, width, height, si);
 
 		if (TinyTIFFWriter_wasError(this->tiffFile)) {
 			std::cerr << "Error occured while trying to open " << fullpath << "\n";

@@ -127,14 +127,26 @@ void GridControl::setupWidgets() {
 	this->info_VoxelSize = new QLabel("0x0x0");
 	this->button_SaveButton = new QPushButton("Generate and save grid");
 
+	this->groupBox_outputType = new QGroupBox("Output type");
+	this->radioButton_rgb = new QRadioButton("RGB");
+	this->radioButton_2stacks = new QRadioButton("2 stacks");
+	this->radioButton_2stacks->setChecked(true);
+	this->radioButton_rgb->setToolTip("Output the grid to generate as an RGB stack of images");
+	this->radioButton_2stacks->setToolTip("Output the grid to generate as two stacks of greyscale images.");
+
 	this->button_modifyBaseDir = new QPushButton("Change dir...");
 	this->label_baseDir = new QLabel(this->baseDir.path());
 
 	this->comboBox_filetype = new QComboBox;
 	this->comboBox_filetype->addItem(".dim, .ima");
 	this->comboBox_filetype->addItem(".tif (Multiple files)");
+	this->comboBox_filetype->setCurrentIndex(1);
 
-	this->lineEdit_baseName = new QLineEdit("grid");
+	if (this->voxelGrid != nullptr) {
+		this->lineEdit_baseName = new QLineEdit(this->voxelGrid->getGridName().c_str());
+	} else {
+		this->lineEdit_baseName = new QLineEdit("grid");
+	}
 
 	// Setup bounds for the selectors :
 	this->setupSpinBoxBounds(this->input_GridSizeX);
@@ -179,6 +191,7 @@ void GridControl::setupWidgets() {
 	QFrame* frame_VoxelSizes = new QFrame;
 	QFrame* frame_BoundingBox = new QFrame;
 	QGridLayout* layout_saveFile = new QGridLayout;
+	QHBoxLayout* groupBoxLayout = new QHBoxLayout;
 
 	//==========================//
 	// Add grid and voxel sizes //
@@ -230,6 +243,13 @@ void GridControl::setupWidgets() {
 	layout_saveFile->addWidget(this->lineEdit_baseName, 1, 0, 1, 3);
 	layout_saveFile->addWidget(this->comboBox_filetype, 1, 4, 1, 1);
 
+	//===============================================//
+	// Add layout for the GroupBox for radio buttons //
+	//===============================================//
+	groupBoxLayout->addWidget(this->radioButton_rgb);
+	groupBoxLayout->addWidget(this->radioButton_2stacks);
+	this->groupBox_outputType->setLayout(groupBoxLayout);
+
 	//========================================//
 	// Merge grid/voxel and BB layouts in one //
 	//========================================//
@@ -239,6 +259,8 @@ void GridControl::setupWidgets() {
 	mainLayout->addWidget(frame_VoxelSizes, mRow, 0, 1, -1); mRow+=2; // space to next widget
 	// Add bb controls :
 	mainLayout->addWidget(frame_BoundingBox, mRow, 0, 1, -1); mRow+=2; // space to next widget
+	// group box for the output selector
+	mainLayout->addWidget(this->groupBox_outputType, mRow, 0, 1, -1); mRow+=2;
 	// Add save options :
 	mainLayout->addLayout(layout_saveFile, mRow, 0, 1, -1); mRow+=2; // space to next widget
 	// Add buttons :
@@ -275,6 +297,14 @@ void GridControl::setupWidgets() {
 	infoAll->addLayout(infoRate);
 	infoAll->addLayout(infoMem);
 
+	if (this->voxelGrid != nullptr) {
+		if (this->mesh->getInputGrids().size() > 1) {
+			this->groupBox_outputType->setEnabled(true);
+		} else {
+			this->groupBox_outputType->setEnabled(false);
+		}
+	}
+
 	mainLayout->addLayout(infoAll, mRow++, 0, 1, -1, Qt::AlignLeft);
 
 	// Set the layout :
@@ -289,7 +319,6 @@ void GridControl::setupSignals() {
 		return;
 	}
 
-	#ifdef ENABLE_SINGLE_FUNCTION_FOR_GRID_UPDATE
 	// connect grid sizes :
 	QObject::connect(this->input_GridSizeX, QOverload<int>::of(&QSpinBox::valueChanged), this, &GridControl::setGridResolution);
 	QObject::connect(this->input_GridSizeY, QOverload<int>::of(&QSpinBox::valueChanged), this, &GridControl::setGridResolution);
@@ -307,19 +336,6 @@ void GridControl::setupSignals() {
 	QObject::connect(this->input_GridBBMaxX, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &GridControl::setGridBoundingBox);
 	QObject::connect(this->input_GridBBMaxY, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &GridControl::setGridBoundingBox);
 	QObject::connect(this->input_GridBBMaxZ, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &GridControl::setGridBoundingBox);
-	#else
-	connect(this->input_GridSizeX, QOverload<int>::of(&QSpinBox::valueChanged), this, &GridControl::setGridDimensionX);
-	connect(this->input_GridSizeY, QOverload<int>::of(&QSpinBox::valueChanged), this, &GridControl::setGridDimensionY);
-	connect(this->input_GridSizeZ, QOverload<int>::of(&QSpinBox::valueChanged), this, &GridControl::setGridDimensionZ);
-
-	connect(this->input_GridBBMinX, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &GridControl::setGridBBMinX);
-	connect(this->input_GridBBMinY, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &GridControl::setGridBBMinY);
-	connect(this->input_GridBBMinZ, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &GridControl::setGridBBMinZ);
-
-	connect(this->input_GridBBMaxX, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &GridControl::setGridBBMaxX);
-	connect(this->input_GridBBMaxY, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &GridControl::setGridBBMaxY);
-	connect(this->input_GridBBMaxZ, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &GridControl::setGridBBMaxZ);
-	#endif
 
 	connect(this->methodPicker, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &GridControl::pickMethod);
 
@@ -522,7 +538,6 @@ void GridControl::saveToFile() {
 	this->close();
 }
 
-#ifdef ENABLE_SINGLE_FUNCTION_FOR_GRID_UPDATE
 void GridControl::setGridResolution() {
 	if (this->voxelGrid == nullptr) {
 		return; // nothing done if no grid 'connected'
@@ -582,72 +597,3 @@ void GridControl::setGridVoxelSize() {
 	// update fields and labels :
 	this->updateValues();
 }
-#else
-void GridControl::setGridDimensionX(int newDim) {
-	// get current res :
-	DiscreteGrid::sizevec3 dimensions = this->voxelGrid->getGridDimensions();
-	// update :
-	dimensions.x = static_cast<std::size_t>(newDim);
-	this->voxelGrid->setResolution(dimensions);
-	// update self :
-	this->updateGridLabels();
-}
-void GridControl::setGridDimensionY(int newDim) {
-	// get current res :
-	DiscreteGrid::sizevec3 dimensions = this->voxelGrid->getGridDimensions();
-	// update :
-	dimensions.y = static_cast<std::size_t>(newDim);
-	this->voxelGrid->setResolution(dimensions);
-	this->updateGridLabels();
-}
-void GridControl::setGridDimensionZ(int newDim) {
-	// get current res :
-	DiscreteGrid::sizevec3 dimensions = this->voxelGrid->getGridDimensions();
-	// update :
-	dimensions.z = static_cast<std::size_t>(newDim);
-	this->voxelGrid->setResolution(dimensions);
-	this->updateGridLabels();
-}
-void GridControl::setGridBBMinX(double newDim) {
-	DiscreteGrid::bbox_t::vec v = this->voxelGrid->boundingBox.getMin();
-	v.x = static_cast<DiscreteGrid::bbox_t::vec::value_type>(newDim);
-	this->voxelGrid->boundingBox.setMin(v);
-	this->voxelGrid->updateVoxelDimensions();
-	this->updateGridLabels();
-}
-void GridControl::setGridBBMinY(double newDim) {
-	DiscreteGrid::bbox_t::vec v = this->voxelGrid->boundingBox.getMin();
-	v.y = static_cast<DiscreteGrid::bbox_t::vec::value_type>(newDim);
-	this->voxelGrid->boundingBox.setMin(v);
-	this->voxelGrid->updateVoxelDimensions();
-	this->updateGridLabels();
-}
-void GridControl::setGridBBMinZ(double newDim) {
-	DiscreteGrid::bbox_t::vec v = this->voxelGrid->boundingBox.getMin();
-	v.z = static_cast<DiscreteGrid::bbox_t::vec::value_type>(newDim);
-	this->voxelGrid->boundingBox.setMin(v);
-	this->voxelGrid->updateVoxelDimensions();
-	this->updateGridLabels();
-}
-void GridControl::setGridBBMaxX(double newDim) {
-	DiscreteGrid::bbox_t::vec v = this->voxelGrid->boundingBox.getMax();
-	v.x = static_cast<DiscreteGrid::bbox_t::vec::value_type>(newDim);
-	this->voxelGrid->boundingBox.setMax(v);
-	this->voxelGrid->updateVoxelDimensions();
-	this->updateGridLabels();
-}
-void GridControl::setGridBBMaxY(double newDim) {
-	DiscreteGrid::bbox_t::vec v = this->voxelGrid->boundingBox.getMax();
-	v.y = static_cast<DiscreteGrid::bbox_t::vec::value_type>(newDim);
-	this->voxelGrid->boundingBox.setMax(v);
-	this->voxelGrid->updateVoxelDimensions();
-	this->updateGridLabels();
-}
-void GridControl::setGridBBMaxZ(double newDim) {
-	DiscreteGrid::bbox_t::vec v = this->voxelGrid->boundingBox.getMax();
-	v.z = static_cast<DiscreteGrid::bbox_t::vec::value_type>(newDim);
-	this->voxelGrid->boundingBox.setMax(v);
-	this->voxelGrid->updateVoxelDimensions();
-	this->updateGridLabels();
-}
-#endif

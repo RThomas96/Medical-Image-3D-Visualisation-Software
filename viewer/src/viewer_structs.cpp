@@ -98,6 +98,7 @@ GridGLView::GridGLView(const std::shared_ptr<DiscreteGrid>& _g) : grid(_g) {
 	this->volumetricMesh = {};
 	this->boundingBoxColor = glm::vec3(.257, .257, .257);
 	this->nbChannels = 1;
+	this->defaultEpsilon = glm::vec3(1.5, 1.5, 1.5);
 }
 
 GridGLView::~GridGLView(void) { /* Nothing here for now. */ }

@@ -71,7 +71,6 @@ namespace IO {
 	GenericGridReader::GenericGridReader(data_t _thres) : threshold(_thres) {
 		this->boundingBox = bbox_t();
 		this->dataBoundingBox = bbox_t();
-		this->threshold = data_t(0);
 		this->gridDimensions = sizevec3(0,0,0);
 		this->voxelDimensions = glm::vec3(0.f);
 		this->transform = glm::mat4(1.f);

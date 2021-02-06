@@ -61,7 +61,7 @@ void MainWidget::setupWidgets() {
 	QObject::connect(this->showGLLog, &QPushButton::clicked, this->glDebug, &QWidget::show);
 
 	// Actions creation :
-	this->action_addGrid = new QAction("Open acquisition (1 channel only)");
+	this->action_addGrid = new QAction("Open images");
 	this->action_saveGrid = new QAction("Save acquisition");
 	this->action_showVisuBox = new QAction("Show visu box controller");
 	this->action_exitProgram = new QAction("Exit program");
@@ -115,6 +115,9 @@ void MainWidget::setupWidgets() {
 		else {
 			this->usettings = new UserSettingsWidget;
 			this->usettings->show();
+			QObject::connect(this->usettings, &QWidget::destroyed, [this](){
+				this->usettings = nullptr;
+			});
 		}
 	});
 

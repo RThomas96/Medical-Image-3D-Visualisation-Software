@@ -5,6 +5,7 @@
 #include <QMessageBox>
 #include <QDialog>
 #include <QFileDialog>
+#include <QCoreApplication>
 
 GridLoaderWidget::GridLoaderWidget(Scene* _scene, Viewer* _viewer, QWidget* parent) : QWidget(parent) {
 	this->setAttribute(Qt::WA_DeleteOnClose); // delete widget and resources on close.
@@ -66,7 +67,7 @@ void GridLoaderWidget::setupWidgets() {
 	this->label_load2channel = new QLabel("Load a grid containing 2 color channels : ");
 	this->label_headerTransformation = new QLabel("Transformation details");
 	this->label_transformationAngle = new QLabel("Angle of capture (degrees) : ");
-	this->label_transformationDimensions = new QLabel("Physical resolution of a pixel :");
+	this->label_transformationDimensions = new QLabel("Physical resolution of a pixel (nanometers, on X, Y, and Z) :");
 	this->label_gridInfoR = new QLabel("<No grid loaded>");
 	this->label_gridInfoG = new QLabel("");
 
@@ -282,6 +283,36 @@ void GridLoaderWidget::setupSignals() {
 			this->interpolator = std::make_shared<Interpolators::max<DiscreteGrid::data_t>>();
 		}
 	});
+}
+
+void GridLoaderWidget::disableWidgets() {
+	this->button_loadDIM_1channel->setDisabled(true);
+	this->button_loadDIM_2channel->setDisabled(true);
+	this->button_loadTIF_1channel->setDisabled(true);
+	this->button_loadTIF_2channel->setDisabled(true);
+	this->button_loadGrids->setDisabled(true);
+
+	this->dsb_transformationA->setDisabled(true);
+	this->dsb_transformationDX->setDisabled(true);
+	this->dsb_transformationDY->setDisabled(true);
+	this->dsb_transformationDZ->setDisabled(true);
+
+	this->frame_load1channel->setDisabled(true);
+	this->frame_load2channel->setDisabled(true);
+	this->frame_transfoDetails->setDisabled(true);
+
+	this->groupBox_downsampling->setDisabled(true);
+	this->groupBox_interpolator->setDisabled(true);
+
+	this->radioButton_original->setDisabled(true);
+	this->radioButton_low->setDisabled(true);
+	this->radioButton_lower->setDisabled(true);
+	this->radioButton_lowest->setDisabled(true);
+	this->radioButton_nn->setDisabled(true);
+	this->radioButton_mean->setDisabled(true);
+	this->radioButton_mp->setDisabled(true);
+	this->radioButton_min->setDisabled(true);
+	this->radioButton_max->setDisabled(true);
 }
 
 void GridLoaderWidget::resetGridInfoLabel() {
@@ -546,6 +577,8 @@ void GridLoaderWidget::loadGrid() {
 		dims = this->inputGridG->getResolution();
 		this->inputGridG->setTransform_GridToWorld(computeTransfoShear(a, dims, vxdims));
 	}
+
+	this->disableWidgets();
 
 	if (this->readerG == nullptr) {
 		this->viewer->loadGrid(this->inputGridR);

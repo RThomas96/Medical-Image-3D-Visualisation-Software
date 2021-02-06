@@ -58,6 +58,18 @@ void PlanarViewer::keyPressEvent(QKeyEvent* _e) {
 		/*
 		SHADER PROGRAMS
 		*/
+		case Qt::Key::Key_F1:
+			this->sceneToShow->setDisplayChannel(DisplayChannel::RedAndGreen);
+			this->update();
+		break;
+		case Qt::Key::Key_F2:
+			this->sceneToShow->setDisplayChannel(DisplayChannel::Red);
+			this->update();
+		break;
+		case Qt::Key::Key_F3:
+			this->sceneToShow->setDisplayChannel(DisplayChannel::Green);
+			this->update();
+		break;
 		case Qt::Key::Key_F5:
 			this->sceneToShow->recompileShaders();
 			this->update();
@@ -145,7 +157,7 @@ void PlanarViewer::updateView() {
 }
 
 void PlanarViewer::updatePlaneDepth(int newVal) {
-	float scalar = static_cast<float>(newVal) / 100.f;
+	float scalar = static_cast<float>(newVal) / 1000.f;
 	if (this->planeToShow == planes::x) { this->sceneToShow->slotSetPlaneDisplacementX(scalar); }
 	if (this->planeToShow == planes::y) { this->sceneToShow->slotSetPlaneDisplacementY(scalar); }
 	if (this->planeToShow == planes::z) { this->sceneToShow->slotSetPlaneDisplacementZ(scalar); }

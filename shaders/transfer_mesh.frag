@@ -74,6 +74,9 @@ uniform bool shouldUseBB;
 
 uniform uint nbChannels;
 
+uniform uint channelView;	// What channels do we visualize ? R+G = 1, R = 2, G = 3
+uniform double maxTexPossible;	// maximum tex value possible, variable depending on the data type
+
 vec4 voxelIdxToColor_1channel(in uvec3 ucolor) {
 	// Have the R and G color channels clamped to the min/max of the scale
 	// (mimics under or over-exposure)
@@ -137,8 +140,18 @@ vec4 voxelIdxToColor_2channel(in uvec3 ucolor) {
 }
 
 vec4 voxelIdxToColor(in uvec3 ucolor) {
-	if (nbChannels == 1u) { return voxelIdxToColor_1channel(ucolor); }
-	else { return voxelIdxToColor_2channel(ucolor); }
+	if (channelView == 1u) {
+		if (nbChannels == 1u) { return voxelIdxToColor_1channel(ucolor); }
+		else { return voxelIdxToColor_2channel(ucolor); }
+	} else if (channelView == 2u) {
+		float alpha = 1.f;
+		float val = (float(ucolor.r) - colorBounds.x)/(colorBounds.y-colorBounds.x);
+		return vec4(val, val, val, alpha);
+	} else if (channelView == 3u) {
+		float alpha = 1.f;
+		float val = (float(ucolor.g) - colorBounds.x)/(colorBounds.y-colorBounds.x);
+		return vec4(val, val, val, alpha);
+	}
 }
 
 bool ComputeVisibility(vec3 point)
@@ -536,9 +549,12 @@ void main (void) {
 				// Get this voxel's value :
 				uvec3 voxelIndex = texture(Mask, Current_text3DCoord).xyz;
 				uint rawVal = voxelIndex.r;
+				// If we only show green, make the visibility check on green :
+				if (channelView == 3u) { rawVal = voxelIndex.g; }
+				// Get texture size :
 				int width = textureSize(visiblity_map, 0).x;
 				// texture coords for visibility :
-				ivec2 tcfv = Convert1DIndexTo2DIndex_Unnormed(voxelIndex.r, width);
+				ivec2 tcfv = Convert1DIndexTo2DIndex_Unnormed(rawVal, width);
 				// If it's visible : (texelFetch here to take advantage of using ivec2 rather than normalized vec2)
 				if (texelFetch(visiblity_map, tcfv, 0).x > 0.) {
 					// Get the corresponding color :

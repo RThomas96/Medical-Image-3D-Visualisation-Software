@@ -109,7 +109,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		uint getMaxColorValue(void) const { return this->maxColorVal; }
 
 		/// @brief Returns the current visu box
-		DiscreteGrid::bbox_t getVisuBox(void) { return this->visuBox; }
+		DiscreteGrid::bbox_t getVisuBox(void);
 		/// @brief Sets the visu box
 		void setVisuBox(DiscreteGrid::bbox_t box);
 		/// @brief Resets the visu box
@@ -119,6 +119,8 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		float getSceneRadius();
 		/// @brief Get the scene center at this time
 		glm::vec3 getSceneCenter();
+		/// @brief Returns the current scene bounding box.
+		DiscreteGrid::bbox_t getSceneBoundingBox() const;
 
 		/// @brief Upload a 1D texture with the given parameters.
 		GLuint uploadTexture1D(const TextureUpload& tex);
@@ -127,8 +129,8 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		/// @brief Upload a 3D texture with the given parameters.
 		GLuint uploadTexture3D(const TextureUpload& tex);
 
-		/// @brief (Obsolete) Function to write the generated output grid as a DIM/IMA file
-		void writeGridDIM(const std::string name);
+		/// @b Changes the texture coloration mode to the desired setting
+		void setDisplayChannel(DisplayChannel _c);
 
 		/// @brief Set X's plane displacement within the bounding box to be `scalar`
 		void slotSetPlaneDisplacementX(float scalar);
@@ -197,6 +199,9 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		/// @b Print the OpenGL message to std::cerr, if no OpenGLDebugLogMessages are enabled.
 		void printOpenGLMessage(const QOpenGLDebugMessage& message);
 
+		/// @b Computes the planes positions based on their parameters.
+		glm::vec3 computePlanePositions();
+
 		/// @b preps uniforms for a grid
 		void prepGridUniforms(GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, const GridGLView& grid);
 		/// @b preps uniforms for a given plane
@@ -239,13 +244,12 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		/****** TEXTURE3D VISUALIZATION ******/
 		/*************************************/
 		/*************************************/
-		void tex3D_buildTexture();
 		void tex3D_buildMesh(GridGLView& grid, const std::string path = "");
 		void tex3D_buildVisTexture(VolMesh& volMesh);
 		void tex3D_buildBuffers(VolMesh& volMesh);
 		void tex3D_bindVAO();
 		void tex3D_loadMESHFile(const std::string name, const GridGLView& grid, VolMeshData& _mesh);
-		void tex3D_generateMESH(const GridGLView& grid, VolMeshData& _mesh);
+		void tex3D_generateMESH(GridGLView& grid, VolMeshData& _mesh);
 	protected:
 		bool isInitialized;	///< tracks if the scene was initialized or not
 		bool inputGridVisible;	///< does the user want to show the input grid ?
@@ -278,8 +282,9 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		DiscreteGrid::bbox_t sceneBB;		///< Outer BB of the scene
 		DiscreteGrid::bbox_t sceneDataBB;	///< Outer BB of the scene's data
 		float clipDistanceFromCamera;		/// Distance from the camera to its clip plane
-		DrawMode drawMode;			///< Current 3D draw mode
 		DiscreteGrid::bbox_t visuBox;		///< Used to restrict the view to a box with its coordinates
+		DrawMode drawMode;			///< Current 3D draw mode
+		DisplayChannel channels;		///< Channel(s) to display on the viewers
 
 		// VAO handles :
 		GLuint vaoHandle;

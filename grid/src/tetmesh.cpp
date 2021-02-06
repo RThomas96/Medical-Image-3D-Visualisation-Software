@@ -27,6 +27,10 @@ TetMesh& TetMesh::addInputGrid(const std::shared_ptr<InputGrid>& toAdd) {
 	return *this;
 }
 
+std::vector<std::shared_ptr<InputGrid>> TetMesh::getInputGrids() const {
+	return this->inputGrids;
+}
+
 TetMesh& TetMesh::setOutputGrid(const std::shared_ptr<OutputGrid>& toSet) {
 	this->outputGrid = toSet;
 	this->updateVoxelSizes();

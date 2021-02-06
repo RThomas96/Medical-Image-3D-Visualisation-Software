@@ -73,6 +73,8 @@ void VisuBoxController::setupWidgets() {
 	QLabel* label_Header_X = new QLabel(" X "); this->strayObj.push_back(label_Header_X);
 	QLabel* label_Header_Y = new QLabel(" Y "); this->strayObj.push_back(label_Header_Y);
 	QLabel* label_Header_Z = new QLabel(" Z "); this->strayObj.push_back(label_Header_Z);
+	QLabel* label_position = new QLabel("Position : "); this->strayObj.push_back(label_position);
+	QLabel* label_diagonal = new QLabel("Diagonal : "); this->strayObj.push_back(label_diagonal);
 
 	// create a few layouts :
 	QGridLayout* layout_BoundingBox = new QGridLayout;
@@ -87,11 +89,13 @@ void VisuBoxController::setupWidgets() {
 	layout_BoundingBox->addWidget(label_Header_Z, bRow, 6, Qt::AlignHCenter);
 	bRow++;
 	// BB min :
+	layout_BoundingBox->addWidget(label_position, bRow, 0, Qt::AlignLeft);
 	layout_BoundingBox->addWidget(this->input_BBMinX, bRow, 2, Qt::AlignHCenter);
 	layout_BoundingBox->addWidget(this->input_BBMinY, bRow, 4, Qt::AlignHCenter);
 	layout_BoundingBox->addWidget(this->input_BBMinZ, bRow, 6, Qt::AlignHCenter);
 	bRow++;
 	// BB max :
+	layout_BoundingBox->addWidget(label_diagonal, bRow, 0, Qt::AlignLeft);
 	layout_BoundingBox->addWidget(this->input_BBMaxX, bRow, 2, Qt::AlignHCenter);
 	layout_BoundingBox->addWidget(this->input_BBMaxY, bRow, 4, Qt::AlignHCenter);
 	layout_BoundingBox->addWidget(this->input_BBMaxZ, bRow, 6, Qt::AlignHCenter);
@@ -136,9 +140,10 @@ void VisuBoxController::updateValues() {
 	this->input_BBMinX->setValue(box.getMin().x);
 	this->input_BBMinY->setValue(box.getMin().y);
 	this->input_BBMinZ->setValue(box.getMin().z);
-	this->input_BBMaxX->setValue(box.getMax().x);
-	this->input_BBMaxY->setValue(box.getMax().y);
-	this->input_BBMaxZ->setValue(box.getMax().z);
+	auto diag = box.getDiagonal();
+	this->input_BBMaxX->setValue(diag.x);
+	this->input_BBMaxY->setValue(diag.y);
+	this->input_BBMaxZ->setValue(diag.z);
 	this->blockSignals(false);
 	return;
 }
@@ -161,6 +166,6 @@ void VisuBoxController::updateBox() {
 	DiscreteGrid::bbox_t::vec::value_type maxY = this->input_BBMaxY->value();
 	DiscreteGrid::bbox_t::vec::value_type maxZ = this->input_BBMaxZ->value();
 	DiscreteGrid::bbox_t::vec max{maxX, maxY, maxZ};
-	this->scene->setVisuBox(DiscreteGrid::bbox_t(min, max));
+	this->scene->setVisuBox(DiscreteGrid::bbox_t(min, min + max));
 	return;
 }

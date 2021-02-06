@@ -16,45 +16,6 @@
 #include <iomanip>
 #include <type_traits>
 
-inline int __GetOpenGLError ( char* szFile, int iLine )
-{
-	int    retCode = 0;
-	GLenum glErr = glGetError();
-	while (glErr != GL_NO_ERROR) {
-		std::cerr << "GLError @ " << szFile << ":" << iLine << " : ";
-		switch (glErr) {
-			case GL_INVALID_ENUM:
-				std::cerr << "Invalid enum";
-			break;
-			case GL_INVALID_VALUE:
-				std::cerr << "Invalid value";
-			break;
-			case GL_INVALID_OPERATION:
-				std::cerr << "Invalid operation";
-			break;
-			case GL_OUT_OF_MEMORY:
-				std::cerr << "out of memory";
-			break;
-			case GL_STACK_OVERFLOW:
-				std::cerr << "out of memory";
-			break;
-			case GL_STACK_UNDERFLOW:
-				std::cerr << "out of memory";
-			break;
-			default:
-				std::cerr << "(unknown error code)";
-			break;
-		}
-		std::cerr << '\n';
-		glErr = glGetError();
-		retCode = 1;
-	}
-//	if (retCode) {
-//		exit(EXIT_FAILURE);
-//	}
-	return retCode;
-}
-
 inline unsigned int planeHeadingToIndex(planeHeading _heading) {
 	switch (_heading) {
 		case planeHeading::North : return 1;
@@ -78,7 +39,6 @@ Scene::Scene() {
 	/** This constructor not only creates the object, but also sets the default values for the Scene in order
 	 *  to be drawn, even if it is empty at the time of the first call to a draw function.
 	 */
-
 	this->isInitialized = false;
 	this->inputGridVisible = false;
 	this->outputGridVisible = false;
@@ -115,6 +75,7 @@ Scene::Scene() {
 	this->sceneBB = DiscreteGrid::bbox_t(min, max);
 	this->clipDistanceFromCamera = 5.f;
 	this->drawMode = DrawMode::Solid;
+	this->channels = DisplayChannel::RedAndGreen;
 
 	// Show all planes as default :
 	this->planeVisibility = glm::vec<3, bool, glm::defaultp>(true, true, true);
@@ -421,7 +382,6 @@ void Scene::addGrid(const std::shared_ptr<InputGrid> _grid, std::string meshPath
 
 	gridView.boundingBoxColor = glm::vec3(.4, .6, .3); // olive-colored by default
 
-	this->tex3D_buildTexture();
 	this->tex3D_buildMesh(gridView, meshPath);
 	this->tex3D_buildVisTexture(gridView.volumetricMesh);
 	this->tex3D_buildBuffers(gridView.volumetricMesh);
@@ -457,10 +417,10 @@ void Scene::addTwoGrids(const std::shared_ptr<InputGrid> _gridR, const std::shar
 	if (dimensions.x > 0 && dimensions.y > 0 && dimensions.z > 0) {
 		gridTexture.level = 0;
 		#ifdef VISUALISATION_USE_UINT8
-		gridTexture.internalFormat = GL_R8UI;
+		gridTexture.internalFormat = GL_RG8UI;
 		#endif
 		#ifdef VISUALISATION_USE_UINT16
-		gridTexture.internalFormat = GL_R16UI;
+		gridTexture.internalFormat = GL_RG16UI;
 		#endif
 		gridTexture.size.x = dimensions.x;
 		gridTexture.size.y = dimensions.y;
@@ -494,7 +454,6 @@ void Scene::addTwoGrids(const std::shared_ptr<InputGrid> _gridR, const std::shar
 	gridView.boundingBoxColor = glm::vec3(.4, .6, .3); // olive-colored by default
 	gridView.nbChannels = 2; // loaded 2 channels in the image
 
-	this->tex3D_buildTexture();
 	this->tex3D_buildMesh(gridView, meshPath);
 	this->tex3D_buildVisTexture(gridView.volumetricMesh);
 	this->tex3D_buildBuffers(gridView.volumetricMesh);
@@ -524,7 +483,9 @@ void Scene::updateBoundingBox(void) {
 		this->lightPositions[i] = glm::convert_to<float>(corners[i]);
 	}
 
-	this->visuBox = this->sceneBB;
+	this->visuBox = this->sceneDataBB;
+	this->sceneDataBB.printInfo("Data BB : ");
+	this->sceneBB.printInfo("Scene BB : ");
 	if (this->visuBoxController != nullptr) {
 		this->visuBoxController->updateValues();
 	}
@@ -988,6 +949,7 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, cons
 		GLint location_visuBBMax = getUniform("visuBBMax");
 		GLint location_shouldUseBB = getUniform("shouldUseBB");
 		GLint location_nbChannels = getUniform("nbChannels");
+		GLint location_volumeEpsilon = getUniform("volumeEpsilon");
 		// Matrices :
 		GLint location_mMat = getUniform("mMat");
 		GLint location_vMat = getUniform("vMat");
@@ -1038,6 +1000,12 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, cons
 		glUniform1i(location_visibilityMap, tex);
 		tex++;
 
+		GLint location_channelView = glGetUniformLocation(this->programHandle_VolumetricViewer, "channelView");
+		GLint location_maxTexPossible = glGetUniformLocation(this->programHandle_VolumetricViewer, "maxTexPossible");
+		uint chan = (this->channels == DisplayChannel::RedAndGreen) ? 1 : (this->channels == DisplayChannel::Red) ? 2 : 3;
+		glUniform1ui(location_channelView, chan);
+		glUniform1d(location_maxTexPossible, static_cast<double>(std::numeric_limits<DiscreteGrid::data_t>::max()));
+
 		glm::vec3 floatres = grid.grid->getResolution();
 
 		glUniform1f(location_diffuseRef, .8f);
@@ -1046,17 +1014,12 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, cons
 		glUniform3fv(location_voxelSize, 1, glm::value_ptr(grid.grid->getVoxelDimensions()));
 		glUniform3fv(location_gridSize, 1, glm::value_ptr(floatres));
 		glUniform1ui(location_nbChannels, grid.nbChannels);
+		glUniform3fv(location_volumeEpsilon, 1, glm::value_ptr(grid.defaultEpsilon));
 
-		DiscreteGrid::bbox_t::vec position = this->sceneBB.getMin();
-		DiscreteGrid::bbox_t::vec diagonal = this->sceneBB.getDiagonal();
-		#ifndef PLANE_POS_FLOOR
-		glm::vec3 planePos = glm::round(position + this->planeDisplacement * diagonal); // PLANE POSITIONS
-		#else
-		glm::vec3 planePos = (position + this->planeDisplacement * diagonal); // PLANE POSITIONS
-		#endif
+		glm::vec3 planePos = this->computePlanePositions();
 
 		glUniform3fv(location_cam, 1, glm::value_ptr(camPos));
-		glUniform3fv(location_cut, 1, glm::value_ptr(planePos));	// PLANE POSITIONS
+		glUniform3fv(location_cut, 1, glm::value_ptr(planePos));
 		glUniform3fv(location_cutDirection, 1, glm::value_ptr(this->planeDirection));
 		glUniform1f(location_clipDistanceFromCamera, this->clipDistanceFromCamera);
 
@@ -1113,62 +1076,57 @@ void Scene::drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane) {
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 
-	// Plane X :
-	//if (this->planeVisibility.x == true) {
-		glUseProgram(this->programHandle_Plane3D);
-		glBindVertexArray(this->vaoHandle);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_PlaneElement);
+	#warning drawPlanes() : Only draws the first grid for each plane !
 
-		//for (std::size_t i = 0; i < this->grids.size(); ++i) {
-		#warning drawPlanes() : Only draws the first grid !
-		if (not this->grids.empty()) {
-			this->prepPlaneUniforms(mvMat, pMat, planes::x, this->grids[0], showTexOnPlane);
-			this->setupVAOPointers();
-			glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(6), GL_UNSIGNED_INT, static_cast<GLvoid*>(0));
-		}
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-		glBindVertexArray(0);
-		glUseProgram(0);
-	//}
+	// Plane X :
+	glUseProgram(this->programHandle_Plane3D);
+	glBindVertexArray(this->vaoHandle);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_PlaneElement);
+	if (not this->grids.empty()) {
+		this->prepPlaneUniforms(mvMat, pMat, planes::x, this->grids[0], showTexOnPlane);
+		this->setupVAOPointers();
+		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(6), GL_UNSIGNED_INT, static_cast<GLvoid*>(0));
+	}
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+	glUseProgram(0);
 
 	// Plane Y :
-	//if (this->planeVisibility.y == true) {
-		glUseProgram(this->programHandle_Plane3D);
-		glBindVertexArray(this->vaoHandle);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_PlaneElement);
-		// for (std::size_t i = 0; i < this->grids.size(); ++i) {
-		if (not this->grids.empty()) {
-			this->prepPlaneUniforms(mvMat, pMat, planes::y, this->grids[0], showTexOnPlane);
-			this->setupVAOPointers();
+	glUseProgram(this->programHandle_Plane3D);
+	glBindVertexArray(this->vaoHandle);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_PlaneElement);
+	if (not this->grids.empty()) {
+		this->prepPlaneUniforms(mvMat, pMat, planes::y, this->grids[0], showTexOnPlane);
+		this->setupVAOPointers();
 
-			glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(6), GL_UNSIGNED_INT, (GLvoid*)(6*sizeof(GLuint)));
-		}
-
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-		glBindVertexArray(0);
-		glUseProgram(0);
-	//}
+		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(6), GL_UNSIGNED_INT, (GLvoid*)(6*sizeof(GLuint)));
+	}
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+	glUseProgram(0);
 
 	// Plane Z :
-	//if (this->planeVisibility.z == true) {
-		glUseProgram(this->programHandle_Plane3D);
-		glBindVertexArray(this->vaoHandle);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_PlaneElement);
+	glUseProgram(this->programHandle_Plane3D);
+	glBindVertexArray(this->vaoHandle);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_PlaneElement);
+	if (not this->grids.empty()) {
+		this->prepPlaneUniforms(mvMat, pMat, planes::z, this->grids[0], showTexOnPlane);
+		this->setupVAOPointers();
 
-		// for (std::size_t i = 0; i < this->grids.size(); ++i) {
-		if (not this->grids.empty()) {
-			this->prepPlaneUniforms(mvMat, pMat, planes::z, this->grids[0], showTexOnPlane);
-			this->setupVAOPointers();
-
-			glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(6), GL_UNSIGNED_INT, (GLvoid*)(12*sizeof(GLuint)));
-		}
-
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-		glBindVertexArray(0);
-		glUseProgram(0);
-	//}
+		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(6), GL_UNSIGNED_INT, (GLvoid*)(12*sizeof(GLuint)));
+	}
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+	glUseProgram(0);
 
 	glDisable(GL_BLEND);
+}
+
+glm::vec3 Scene::computePlanePositions() {
+	DiscreteGrid::bbox_t::vec position = this->sceneBB.getMin();
+	DiscreteGrid::bbox_t::vec diagonal = this->sceneBB.getDiagonal();
+	glm::vec3 planePos = (position + this->planeDisplacement * diagonal);
+	return planePos;
 }
 
 void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, const GridGLView& gridView) {
@@ -1225,13 +1183,13 @@ void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, 
 		glUniform1i(texDataLoc, 0);
 	}
 
-	DiscreteGrid::bbox_t::vec position = this->sceneBB.getMin();
-	DiscreteGrid::bbox_t::vec diagonal = this->sceneBB.getDiagonal();
-	#ifndef PLANE_POS_FLOOR
-	glm::vec3 planePos = glm::round(position + this->planeDisplacement * diagonal); // PLANE POSITIONS
-	#else
-	glm::vec3 planePos = (position + this->planeDisplacement * diagonal); // PLANE POSITIONS
-	#endif
+	GLint location_channelView = glGetUniformLocation(this->programHandle_projectedTex, "channelView");
+	GLint location_maxTexPossible = glGetUniformLocation(this->programHandle_projectedTex, "maxTexPossible");
+	uint chan = (this->channels == DisplayChannel::RedAndGreen) ? 1 : (this->channels == DisplayChannel::Red) ? 2 : 3;
+	glUniform1ui(location_channelView, chan);
+	glUniform1d(location_maxTexPossible, static_cast<double>(std::numeric_limits<DiscreteGrid::data_t>::max()));
+
+	glm::vec3 planePos = this->computePlanePositions();
 
 	glUniform3fv(planePositionsLoc, 1, glm::value_ptr(planePos));
 	glUniform3fv(location_planeDirections, 1, glm::value_ptr(this->planeDirection));
@@ -1245,25 +1203,10 @@ void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, 
 }
 
 void Scene::prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane, const GridGLView& grid, bool showTexOnPlane) {
-	// lambda function to check uniform location :
-	auto checkUniformLocation = [](const GLint id, const char* name = nullptr) -> bool {
-		if (id == -1) {
-			/*
-			std::cerr << "[LOG][" << __FILE__ << ":" << __LINE__ << "] Could not " <<
-				"find uniform \"" << name << "\" in program.\n";
-			*/
-			return false;
-		}
-		return true;
-	};
-
 	bool shouldHide = false;
 	if (_plane == planes::x) { shouldHide = this->planeVisibility.x; }
 	if (_plane == planes::y) { shouldHide = this->planeVisibility.y; }
 	if (_plane == planes::z) { shouldHide = this->planeVisibility.z; }
-
-	// quick alias :
-	using boxvec_t = typename DiscreteGrid::bbox_t::vec;
 
 	// Get uniform locations for the program :
 	GLint location_mMatrix = glGetUniformLocation(this->programHandle_Plane3D, "model_Mat");
@@ -1278,26 +1221,17 @@ void Scene::prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane, cons
 	GLint location_planePosition = glGetUniformLocation(this->programHandle_Plane3D, "planePositions");
 	GLint location_planeDirection = glGetUniformLocation(this->programHandle_Plane3D, "planeDirections");
 	GLint location_texData = glGetUniformLocation(this->programHandle_Plane3D, "texData");
-	GLint location_colorScale = glGetUniformLocation(this->programHandle_Plane3D, "colorScale");
 	GLint location_colorBounds = glGetUniformLocation(this->programHandle_Plane3D, "colorBounds");
 	GLint location_textureBounds = glGetUniformLocation(this->programHandle_Plane3D, "textureBounds");
 	GLint location_showTex = glGetUniformLocation(this->programHandle_Plane3D, "showTex");
 	GLint location_nbChannels = glGetUniformLocation(this->programHandle_Plane3D, "nbChannels");
-	GLint location_drawOnlyData = glGetUniformLocation(this->programHandle_PlaneViewer, "drawOnlyData");
+	GLint location_drawOnlyData = glGetUniformLocation(this->programHandle_Plane3D, "drawOnlyData");
 
-	// Check the location values :
-	checkUniformLocation(location_mMatrix, "mMatrix");
-	checkUniformLocation(location_vMatrix, "vMatrix");
-	checkUniformLocation(location_pMatrix, "pMatrix");
-	checkUniformLocation(location_gridTransform, "gridTransform");
-	checkUniformLocation(location_sceneBBPosition, "sceneBBPosition");
-	checkUniformLocation(location_sceneBBDiagonal, "sceneBBDiagonal");
-	checkUniformLocation(location_gridSize, "gridSize");
-	checkUniformLocation(location_gridDimensions, "gridDimensions");
-	checkUniformLocation(location_currentPlane, "currentPlane");
-	checkUniformLocation(location_planePosition, "planePositions");
-	checkUniformLocation(location_texData, "texData");
-	checkUniformLocation(location_colorScale, "colorScale");
+	GLint location_channelView = glGetUniformLocation(this->programHandle_Plane3D, "channelView");
+	GLint location_maxTexPossible = glGetUniformLocation(this->programHandle_Plane3D, "maxTexPossible");
+	uint chan = (this->channels == DisplayChannel::RedAndGreen) ? 1 : (this->channels == DisplayChannel::Red) ? 2 : 3;
+	glUniform1ui(location_channelView, chan);
+	glUniform1d(location_maxTexPossible, static_cast<double>(std::numeric_limits<DiscreteGrid::data_t>::max()));
 
 	// Generate the data we need :
 	glm::mat4 transform = glm::mat4(1.f);
@@ -1312,11 +1246,7 @@ void Scene::prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane, cons
 
 	DiscreteGrid::bbox_t::vec position = this->sceneBB.getMin();
 	DiscreteGrid::bbox_t::vec diagonal = this->sceneBB.getDiagonal();
-	#ifndef PLANE_POS_FLOOR
-	glm::vec3 planePos = glm::round(position + this->planeDisplacement * diagonal); // PLANE POSITIONS
-	#else
-	glm::vec3 planePos = (position + this->planeDisplacement * diagonal); // PLANE POSITIONS
-	#endif
+	glm::vec3 planePos = this->computePlanePositions();
 
 	glUniformMatrix4fv(location_mMatrix, 1, GL_FALSE, glm::value_ptr(transform));
 	glUniformMatrix4fv(location_vMatrix, 1, GL_FALSE, mvMat);
@@ -1335,7 +1265,7 @@ void Scene::prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane, cons
 	glUniform2fv(location_colorBounds, 1, glm::value_ptr(colorBounds));
 	glUniform2fv(location_textureBounds, 1, glm::value_ptr(textureBounds));
 
-	glUniform3fv(location_planePosition, 1, glm::value_ptr(planePos)); // PLANE POSITIONS
+	glUniform3fv(location_planePosition, 1, glm::value_ptr(planePos));
 	glUniform3fv(location_planeDirection, 1, glm::value_ptr(this->planeDirection));
 	glUniform1i(location_showTex, showTexOnPlane ? 1 : 0);
 	glActiveTexture(GL_TEXTURE0 + 0);
@@ -1363,17 +1293,17 @@ void Scene::prepPlane_SingleUniforms(planes _plane, planeHeading _heading, glm::
 	glm::vec3 gridDimensions = glm::convert_to<glm::vec3::value_type>(_grid.grid->getBoundingBox().getDiagonal());
 
 	// Depth of the plane :
-	DiscreteGrid::bbox_t::vec position = this->sceneBB.getMin();
-	DiscreteGrid::bbox_t::vec diagonal = this->sceneBB.getDiagonal();
-	#ifndef PLANE_POS_FLOOR
-	glm::vec3 planePos = glm::round(position + this->planeDisplacement * diagonal); // PLANE POSITIONS
-	#else
-	glm::vec3 planePos = (position + this->planeDisplacement * diagonal); // PLANE POSITIONS
-	#endif
+	glm::vec3 planePos = this->computePlanePositions();
 
 	// Color and texture bounds :
 	glm::vec2 colorBounds{static_cast<float>(this->minColorVal), static_cast<float>(this->maxColorVal)};
 	glm::vec2 textureBounds{static_cast<float>(this->minTexVal), static_cast<float>(this->maxTexVal)};
+
+	GLint location_channelView = glGetUniformLocation(this->programHandle_PlaneViewer, "channelView");
+	GLint location_maxTexPossible = glGetUniformLocation(this->programHandle_PlaneViewer, "maxTexPossible");
+	uint chan = (this->channels == DisplayChannel::RedAndGreen) ? 1 : (this->channels == DisplayChannel::Red) ? 2 : 3;
+	glUniform1ui(location_channelView, chan);
+	glUniform1d(location_maxTexPossible, static_cast<double>(std::numeric_limits<DiscreteGrid::data_t>::max()));
 
 	// Uniform locations :
 	// VShader :
@@ -1393,20 +1323,6 @@ void Scene::prepPlane_SingleUniforms(planes _plane, planeHeading _heading, glm::
 	GLint location_texData = glGetUniformLocation(this->programHandle_PlaneViewer, "texData");
 	GLint location_colorBounds = glGetUniformLocation(this->programHandle_PlaneViewer, "colorBounds");
 	GLint location_textureBounds = glGetUniformLocation(this->programHandle_PlaneViewer, "textureBounds");
-
-	if (this->showVAOstate) {
-		std::cerr << "[TRACE] Program uniforms :" << '\n';
-		this->printProgramUniforms(this->programHandle_PlaneViewer);
-		std::cerr << "[TRACE][Shader variables] " << "fbDims : " << +location_fbDims << '\n';
-		std::cerr << "[TRACE][Shader variables] " << "bbDims : " << +location_bbDims << '\n';
-		std::cerr << "[TRACE][Shader variables] " << "planeIndex : " << +location_planeIndex << '\n';
-		std::cerr << "[TRACE][Shader variables] " << "gridTransform : " << +location_gridTransform << '\n';
-		std::cerr << "[TRACE][Shader variables] " << "gridDimensions : " << +location_gridDimensions << '\n';
-		std::cerr << "[TRACE][Shader variables] " << "gridBBDiagonal : " << +location_gridBBDiagonal << '\n';
-		std::cerr << "[TRACE][Shader variables] " << "gridBBPosition : " << +location_gridBBPosition << '\n';
-		std::cerr << "[TRACE][Shader variables] " << "depth : " << +location_planePositions << '\n';
-		std::cerr << "[TRACE][Shader variables] " << "texData : " << +location_texData << '\n';
-	}
 
 	// Uniform variables :
 	glUniform2fv(location_fbDims, 1, glm::value_ptr(fbDims));
@@ -1458,10 +1374,8 @@ void Scene::drawGrid(GLfloat *mvMat, GLfloat *pMat, glm::mat4 baseMatrix, const 
 void Scene::draw3DView(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, bool showTexOnPlane) {
 	if (this->shouldUpdateVis) {
 		this->shouldUpdateVis = false;
-		std::cerr << "Updating vis ... " << '\n';
 		this->generateColorScale();
 		this->uploadColorScale();
-		std::cerr << "Updated vis. New bounds : " << this->minTexVal << " and " << this->maxTexVal << '\n';
 	}
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
@@ -1768,7 +1682,6 @@ void Scene::uploadColorScale() {
 	TextureUpload texParams = {};
 
 	if (this->texHandle_ColorScaleGrid != 0) {
-		std::cerr << "Should have updated instead.\n";
 		if (glIsTexture(this->texHandle_ColorScaleGrid) == GL_TRUE) {
 			glDeleteTextures(1, &this->texHandle_ColorScaleGrid);
 		} else {
@@ -1918,7 +1831,6 @@ void Scene::showVisuBoxController() {
 	if (this->visuBoxController == nullptr) {
 		this->visuBoxController = new VisuBoxController(this);
 	}
-	std::cerr << "Trying to show the widget" << '\n';
 	this->visuBoxController->show();
 }
 
@@ -1926,8 +1838,16 @@ void Scene::removeVisuBoxController() {
 	this->visuBoxController = nullptr;
 }
 
+DiscreteGrid::bbox_t Scene::getVisuBox() {
+	glm::vec3 min = this->computePlanePositions();
+	glm::vec3 max = this->visuBox.getMax();
+	this->visuBox = DiscreteGrid::bbox_t();
+	this->visuBox.addPoint(min);
+	this->visuBox.addPoint(max);
+	return this->visuBox;
+}
+
 void Scene::setVisuBox(DiscreteGrid::bbox_t box) {
-	std::cerr << "Setting new visu box" << '\n';
 	this->visuBox = box;
 	return;
 }
@@ -1983,6 +1903,10 @@ glm::vec3 Scene::getSceneCenter() {
 	return glm::vec3(.5, .5, .5);
 }
 
+void Scene::setDisplayChannel(DisplayChannel _c) { this->channels = _c; }
+
+DiscreteGrid::bbox_t Scene::getSceneBoundingBox() const { return this->sceneBB; };
+
 void Scene::slotSetPlaneDisplacementX(float scalar) { this->planeDisplacement.x = scalar; }
 void Scene::slotSetPlaneDisplacementY(float scalar) { this->planeDisplacement.y = scalar; }
 void Scene::slotSetPlaneDisplacementZ(float scalar) { this->planeDisplacement.z = scalar; }
@@ -2029,16 +1953,6 @@ void Scene::toggleAllPlaneVisibilities() {
 	this->planeVisibility.x = not this->planeVisibility.x;
 	this->planeVisibility.y = not this->planeVisibility.y;
 	this->planeVisibility.z = not this->planeVisibility.z;
-}
-
-void Scene::writeGridDIM(const std::string name) {
-	//IO::Writer::DIM* writer = new IO::Writer::DIM(name, "./");
-	//writer->write(this->outputGrid);
-	return;
-}
-
-void Scene::tex3D_buildTexture() {
-	/* By default, this step should have been done in the Scene::loadImage() function. */
 }
 
 void Scene::tex3D_buildMesh(GridGLView& grid, const std::string path) {
@@ -2118,7 +2032,6 @@ void Scene::tex3D_buildMesh(GridGLView& grid, const std::string path) {
 	the vertex is used within the mesh. It MUST be improved once the method is working, to save up on video memory.
 	It does the same for the vertex positions.
 	*/
-	std::size_t cnt = 0;
 	std::size_t iter = 0;
 	std::size_t texcnt = 0;
 	std::size_t ncount = 0;
@@ -2206,11 +2119,7 @@ void Scene::tex3D_buildMesh(GridGLView& grid, const std::string path) {
 }
 
 void Scene::tex3D_loadMESHFile(const std::string file, const GridGLView& grid, VolMeshData& mesh) {
-	DiscreteGrid::sizevec3 dims = grid.grid->getResolution();
 	DiscreteGrid::bbox_t box = grid.grid->getBoundingBox();
-	glm::vec3 bmin = glm::convert_to<float>(box.getMin());
-	glm::vec3 bmax = glm::convert_to<float>(box.getMax());
-	glm::vec3 diag = glm::abs(bmax - bmin);
 
 	std::ifstream myfile(file.c_str());
 
@@ -2313,7 +2222,7 @@ void Scene::tex3D_loadMESHFile(const std::string file, const GridGLView& grid, V
 	myfile.close ();
 }
 
-void Scene::tex3D_generateMESH(const GridGLView& grid, VolMeshData& mesh) {
+void Scene::tex3D_generateMESH(GridGLView& grid, VolMeshData& mesh) {
 	/* std::vector<glm::vec4> vertices; ///< positions of the vertices, within the grid space
 	std::vector<glm::vec3> texCoords; ///< texture coordinates of the vertices, normalized
 	std::vector<std::array<std::size_t, 4>> tetrahedra; ///< stores the indices of vertices needed for a tetrahedron
@@ -2327,6 +2236,9 @@ void Scene::tex3D_generateMESH(const GridGLView& grid, VolMeshData& mesh) {
 	std::size_t xv = 10 ; glm::vec4::value_type xs = diag.x / static_cast<glm::vec4::value_type>(xv);
 	std::size_t yv = 10 ; glm::vec4::value_type ys = diag.y / static_cast<glm::vec4::value_type>(yv);
 	std::size_t zv = 10 ; glm::vec4::value_type zs = diag.z / static_cast<glm::vec4::value_type>(zv);
+
+	glm::vec3 epsVolu = glm::vec3(xs, ys, zs);
+	grid.defaultEpsilon = epsVolu * .9f;
 
 	std::size_t tetcount = (xv+1)*(yv+1)*(zv+1);
 	std::cerr << "Making a mesh of " << tetcount << " vertices and " << xv*yv*zv*6 << " tetrahedra ...\n";

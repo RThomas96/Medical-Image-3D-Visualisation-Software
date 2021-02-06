@@ -189,6 +189,10 @@ DiscreteGrid::bbox_t DiscreteGrid::getBoundingBoxWorldSpace() const {
 	return this->boundingBox.transformTo(this->transform_gridToWorld);
 }
 
+DiscreteGrid::bbox_t DiscreteGrid::getDataBoundingBoxWorldSpace() const {
+	return this->dataBoundingBox.transformTo(this->transform_gridToWorld);
+}
+
 DiscreteGrid& DiscreteGrid::updateBoundingBox(bbox_t renderWindow) {
 	if (not this->modifiable) { return *this; }
 	// assumes the bbox given is in world space. update :

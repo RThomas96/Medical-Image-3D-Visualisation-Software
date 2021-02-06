@@ -154,6 +154,8 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 
 		/// @brief Gets the bounding box of the grid.
 		bbox_t getBoundingBoxWorldSpace(void) const;
+		/// @brief Gets the bounding box of the grid.
+		bbox_t getDataBoundingBoxWorldSpace(void) const;
 
 		/// @brief Updates the bounding box of the discrete grid with another bounding box.
 		virtual DiscreteGrid& updateBoundingBox(bbox_t renderWindow);

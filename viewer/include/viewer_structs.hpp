@@ -165,6 +165,8 @@ struct GridGLView {
 		VolMesh volumetricMesh;
 		/// @b The bounding box's color, as a triplet of normalized values for R, G, and B.
 		glm::vec3 boundingBoxColor;
+		/// @b The epsilon to provide for the volumetric viewing method
+		glm::vec3 defaultEpsilon;
 		/// @b The number of channels contained in the image
 		unsigned int nbChannels;
 };
