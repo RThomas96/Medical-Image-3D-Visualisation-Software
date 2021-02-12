@@ -8,11 +8,14 @@ INCLUDE(CMakeSetup)
 # Find libQGLViewer :
 INCLUDE(FindQGLViewer)
 
+# Required libraries {{{
 FIND_PACKAGE(Qt5 REQUIRED COMPONENTS Core Gui Widgets Xml OpenGL)
 FIND_PACKAGE(OpenGL REQUIRED)
 FIND_PACKAGE(Threads REQUIRED)
-# Find TinyTIFF compiled locally
+# Find TinyTIFF compiled locally :
 FIND_PACKAGE(TinyTIFF REQUIRED PATHS ${CMAKE_CURRENT_LIST_DIR}/lib/lib/cmake PATH_SUFFIXES TinyTIFF)
+# If TinyTIFF's not found, it stops CMake's generation process with an error message.
+# }}}
 
 ADD_SUBDIRECTORY(glm)
 
@@ -31,6 +34,7 @@ TARGET_INCLUDE_DIRECTORIES(ImageIO
 TARGET_LINK_LIBRARIES(ImageIO
 	PUBLIC TinyTIFF
 )
+SET_TARGET_PROPERTIES(ImageIO PROPERTIES AUTOMOC OFF AUTORCC OFF AUTOUIC OFF)
 # }}}
 
 # Library for DiscreteGrid and TetMesh {{{
@@ -53,6 +57,7 @@ TARGET_INCLUDE_DIRECTORIES(DiscreteGrid
 TARGET_LINK_LIBRARIES(DiscreteGrid
 	PUBLIC ImageIO
 )
+SET_TARGET_PROPERTIES(DiscreteGrid PROPERTIES AUTOMOC OFF AUTORCC OFF AUTOUIC OFF)
 # }}}
 
 # All the needed widgets for this project, under one target {{{

@@ -7,6 +7,8 @@
 #include <QFileDialog>
 #include <QCoreApplication>
 
+#include <iomanip>
+
 GridLoaderWidget::GridLoaderWidget(Scene* _scene, Viewer* _viewer, QWidget* parent) : QWidget(parent) {
 	this->setAttribute(Qt::WA_DeleteOnClose); // delete widget and resources on close.
 	this->basePath.setPath(QDir::homePath());
@@ -67,7 +69,7 @@ void GridLoaderWidget::setupWidgets() {
 	this->label_load2channel = new QLabel("Load a grid containing 2 color channels : ");
 	this->label_headerTransformation = new QLabel("Transformation details");
 	this->label_transformationAngle = new QLabel("Angle of capture (degrees) : ");
-	this->label_transformationDimensions = new QLabel("Physical resolution of a pixel (nanometers, on X, Y, and Z) :");
+	this->label_transformationDimensions = new QLabel("Physical resolution of a pixel (micrometers, on X, Y, and Z) :");
 	this->label_gridInfoR = new QLabel("<No grid loaded>");
 	this->label_gridInfoG = new QLabel("");
 
@@ -344,6 +346,7 @@ void GridLoaderWidget::computeGridInfoLabel() {
 		this->label_gridInfoG->setText(g);
 	}
 
+	/*
 	this->dsb_transformationDX->blockSignals(true);
 	this->dsb_transformationDY->blockSignals(true);
 	this->dsb_transformationDZ->blockSignals(true);
@@ -354,6 +357,7 @@ void GridLoaderWidget::computeGridInfoLabel() {
 	this->dsb_transformationDZ->blockSignals(false);
 	this->dsb_transformationDY->blockSignals(false);
 	this->dsb_transformationDX->blockSignals(false);
+	*/
 }
 
 void GridLoaderWidget::loadGridDIM1channel() {
@@ -572,12 +576,20 @@ void GridLoaderWidget::loadGrid() {
 	);
 	svec3 dims = this->inputGridR->getResolution();
 	float a = this->dsb_transformationA->value();
-	this->inputGridR->setTransform_GridToWorld(computeTransfoShear(a, dims, vxdims));
+
+	// Add transformation matrix to red, and possibly green matrix :
+	auto colB = this->readerR->getTextureLimits();
+	this->inputGridR->setTransform_GridToWorld(computeTransfoShear(a, this->inputGridR, vxdims));
 	if (this->readerG != nullptr) {
 		dims = this->inputGridG->getResolution();
-		this->inputGridG->setTransform_GridToWorld(computeTransfoShear(a, dims, vxdims));
+		this->inputGridG->setTransform_GridToWorld(computeTransfoShear(a, this->inputGridG, vxdims));
+		auto colG = this->readerG->getTextureLimits();
+		colB.x = std::min(colB.x, colG.x);
+		colB.y = std::max(colB.y, colG.y);
 	}
 
+	// Disable widgets purely for no data races or
+	// events that might cause unexpected behaviour :
 	this->disableWidgets();
 
 	if (this->readerG == nullptr) {
@@ -585,6 +597,9 @@ void GridLoaderWidget::loadGrid() {
 	} else {
 		this->viewer->loadTwoGrids(this->inputGridR, this->inputGridG);
 	}
+	this->viewer->centerScene();
+	this->scene->slotSetMinColorValue(colB.x);
+	this->scene->slotSetMaxColorValue(colB.y);
 
 	this->close();
 }

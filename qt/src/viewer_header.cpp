@@ -24,10 +24,10 @@ ViewerHeader::ViewerHeader(std::string name, QWidget* parent) : ViewerHeader(par
 	this->button_rotateClockwise = new QPushButton();
 	this->button_togglePlane = new QPushButton();
 
-	this->icon_togglePlane_On = new QIcon("./resources/eye_open.png");
-	this->icon_togglePlane_Off = new QIcon("./resources/eye_close.png");
-	this->icon_rotatePlane = new QIcon("./resources/rotate.png");
-	this->icon_invertPlane = new QIcon("./resources/invert.png");
+	this->icon_togglePlane_On = new QIcon("../resources/eye_open.png");
+	this->icon_togglePlane_Off = new QIcon("../resources/eye_close.png");
+	this->icon_rotatePlane = new QIcon("../resources/rotate.png");
+	this->icon_invertPlane = new QIcon("../resources/invert.png");
 
 	this->button_togglePlane->setProperty("toggled", true);
 
@@ -187,13 +187,13 @@ void ViewerHeader3D::setupWidgets() {
 	this->separator->setFrameShape(QFrame::VLine);
 	this->separator->setFrameShadow(QFrame::Sunken);
 
-	this->icon_solid = new QIcon("./resources/label_2D.png");
-	this->icon_volumetric = new QIcon("./resources/label_3D.png");
-	this->icon_volumetric_boxed = new QIcon("./resources/label_3D_box.png");
+	this->icon_solid = new QIcon("../resources/label_2D.png");
+	this->icon_volumetric = new QIcon("../resources/label_3D.png");
+	this->icon_volumetric_boxed = new QIcon("../resources/label_3D_box.png");
 
-	this->icon_invert = new QIcon("./resources/invert.png");
-	this->icon_show = new QIcon("./resources/eye_open.png");
-	this->icon_hide = new QIcon("./resources/eye_close.png");
+	this->icon_invert = new QIcon("../resources/invert.png");
+	this->icon_show = new QIcon("../resources/eye_open.png");
+	this->icon_hide = new QIcon("../resources/eye_close.png");
 
 	this->button_togglePlane->setIcon(*this->icon_show);
 	this->button_togglePlane->setToolTip("Show/hide all planes");

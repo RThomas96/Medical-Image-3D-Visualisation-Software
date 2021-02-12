@@ -54,31 +54,33 @@ bool shouldDrawBorder();
 /****************************************/
 void main(void)
 {
-	if (isPlaneVisible(true) == false && drawOnlyData) { discard; }
 	// Early discard if the plane shouldn't be shown :
 	if (isPlaneVisible(intersectPlanes) == false) { discard; }
 
 	// not in border :
-	if (shouldDrawBorder() == false) {
-		vec4 colorTex = vec4(.0, .0, .0, .0);
-		if (texCoord.x > 0. && texCoord.x < 1.) {
-			if (texCoord.y > .0 && texCoord.y < 1.) {
-				if (texCoord.z > 0. && texCoord.z < 1.) {
-					if (isPlaneVisible(true) && showTex == true) {
-						uvec3 tex = texture(texData, texCoord).xyz;
-						colorTex = R8UIToRGB(tex);
-					}
+
+	vec4 colorTex = vec4(.0, .0, .0, .0);
+	if (texCoord.x > 0. && texCoord.x < 1.) {
+		if (texCoord.y > .0 && texCoord.y < 1.) {
+			if (texCoord.z > 0. && texCoord.z < 1.) {
+				if (isPlaneVisible(true) && showTex == true) {
+					uvec3 tex = texture(texData, texCoord).xyz;
+					colorTex = R8UIToRGB(tex);
 				}
 			}
 		}
-		color = colorTex;
-	} else {
+	}
+	color = colorTex;
+	if (shouldDrawBorder() == true && drawOnlyData == true) {
+		color = planeIndexToColor();
+	}
+	/*} else {
 		if (showTex == true) {
 			color = planeIndexToColor(); // default plane color
 		} else {
 			discard;
 		}
-	}
+	}*/
 
 	if (color.a < .1f) { discard; }
 }

@@ -19,11 +19,6 @@
 /// @brief Definition of a 3 dimensionnal vector to store this grid's dimensions, amongst other things.
 typedef glm::vec<3, std::size_t, glm::defaultp> svec3;
 
-/// @brief Computes a transformation matrix from an origin and an angle, for our use case.
-/// @details This computes a transformation matrix to fit our purpose, might not be adapted
-/// to any use case !
-glm::mat4 computeTransfoShear(double angleDeg, svec3 dimensions, glm::vec3 vxdims);
-
 /// @brief Representation of a discrete grid (as a stack of images, or a voxel grid) which can be queried from world space.
 /// @note Although some functions in this class may mention 'texels', they are in no way, shape, or form tied to the visualization aspect of the project.
 class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
@@ -91,13 +86,13 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 		virtual glm::vec4 toWorldSpace(glm::vec4 pos_gs) const;
 
 		/// @brief Fetches the voxel at the given position, in grid space.
-		virtual DataType fetchTexelGridSpace(glm::vec4 pos_gs) const;
+		virtual DataType fetchTexelGridSpace(glm::vec4 pos_gs, bool verbose = false) const;
 
 		/// @brief Fetches the voxel at the given position, in world space.
-		virtual DataType fetchTexelWorldSpace(glm::vec4 pos_ws) const;
+		virtual DataType fetchTexelWorldSpace(glm::vec4 pos_ws, bool verbose = false) const;
 
 		/// @brief Fetches the voxel at the given position index, in the grid.
-		virtual DataType fetchTexelIndex(sizevec3 idx) const;
+		virtual DataType fetchTexelIndex(sizevec3 idx, bool verbose = false) const;
 
 		/// @brief Checks if the voxel grid has data, or if it is empty.
 		virtual bool hasData(void) const;
@@ -176,13 +171,13 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 		/// @details Allows to check whether we need to sample from this grid or not. If the point
 		/// (defined in world space) is contained within the grid's bounding box when transformed
 		/// in grid space, then this function returns true. Returns false otherwise.
-		bool includesPointWorldSpace(glm::vec4 point) const;
+		bool includesPointWorldSpace(glm::vec4 point, bool verbose = false) const;
 
 		/// @brief Checks if the grid contains the point given in world space.
 		/// @details Allows to check whether we need to sample from this grid or not. If the point
 		/// (defined in grid space) is contained within the grid's bounding box then this function
 		/// returns true. Returns false otherwise.
-		bool includesPointGridSpace(glm::vec4 point) const;
+		bool includesPointGridSpace(glm::vec4 point, bool verbose = false) const;
 
 		/// @brief Print some information about the grid to std::cerr (unbuffered stream)
 		void printInfo(std::string message, std::string prefix = "");
@@ -233,5 +228,10 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 		/// @brief File writer
 		std::shared_ptr<IO::GenericGridWriter> gridWriter;
 };
+
+/// @brief Computes a transformation matrix from an origin and an angle, for our use case.
+/// @details This computes a transformation matrix to fit our purpose, might not be adapted
+/// to any use case !
+glm::mat4 computeTransfoShear(double angleDeg, const std::shared_ptr<DiscreteGrid>&, glm::vec3 vxdims);
 
 #endif // GRID_INCLUDE_DISCRETE_GRID_HPP_

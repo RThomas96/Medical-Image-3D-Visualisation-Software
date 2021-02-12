@@ -479,7 +479,9 @@ void main (void) {
 	//Find the first intersection of the ray with the grid
 	getFirstRayVoxelIntersection(Current_P, V, origin_voxel, t_next );
 
-	vec3 dt = vec3( abs(voxelSize.xyz/V.xyz) );
+	//vec3 dt = vec3( abs(voxelSize.xyz/V.xyz) );
+	vec3 dt = vec3( abs(voxelSize.x/V.x), abs(voxelSize.y/V.y), abs(voxelSize.z/V.z) );
+
 
 	/***********************************************/
 

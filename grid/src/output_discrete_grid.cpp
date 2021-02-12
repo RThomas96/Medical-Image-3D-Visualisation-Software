@@ -45,13 +45,16 @@ OutputGrid& OutputGrid::updateRenderBox(const bbox_t& newbox) {
 }
 
 OutputGrid& OutputGrid::writeSlice() {
-	if (this->isOffline == false) { return *this; }
+	if (this->isOffline == false) {
+		std::cerr << "Grid was offline ? no";
+		return *this;
+	}
 	if (this->gridWriter == nullptr) {
 		std::cerr << "[ERROR] Requested to write slice " << this->currentSlice << " but no writer was set.\n";
 		return *this;
 	}
 	if (this->data.size() == 0) { this->preallocateData(); }
-	std::cerr << "[LOG] Writing slice " << this->currentSlice << "/" << this->gridDimensions.z << " ...\n";
+	std::cerr << "[LOG] Writing slice " << this->currentSlice << "/" << this->gridDimensions.z << " ... ";
 	this->gridWriter->writeSlice(this->data, this->currentSlice);
 	return *this;
 }

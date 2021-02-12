@@ -560,8 +560,6 @@ void GridControl::setGridBoundingBox() {
 		return; // nothing done if no grid 'connected'
 	}
 
-	std::cerr << "[TRACE] Bounding box update triggered !\n";
-
 	DiscreteGrid::bbox_t::vec userBBoxMin;
 	DiscreteGrid::bbox_t::vec userBBoxMax;
 

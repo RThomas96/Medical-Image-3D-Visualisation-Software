@@ -480,8 +480,6 @@ namespace IO {
 		std::size_t height = static_cast<std::size_t>(TinyTIFFReader_getHeight(this->tiffFile));
 		std::size_t depth = static_cast<std::size_t>(nbFrames);
 
-		std::cerr << "[LOG] precompute() : Image dimensions : " << this->imageDimensions.x << ',' << this->imageDimensions.y << ',' << this->imageDimensions.z << '\n';
-
 		// Compute the min/max values for the bounding box :
 		bbox_t::vec minBB = bbox_t::vec(static_cast<bbox_t::vec::value_type>(0));
 		// no multiplication by voxel dimensions here because they're undefined in this file format :
@@ -499,6 +497,8 @@ namespace IO {
 		this->voxelDimensions = glm::vec3(1.f, 1.f, 1.f);
 		this->boundingBox = bbox_t(minBB, maxBB);
 		this->dataBoundingBox = bbox_t();
+
+		std::cerr << "[LOG] precompute() : Image dimensions : " << this->imageDimensions.x << ',' << this->imageDimensions.y << ',' << this->imageDimensions.z << '\n';
 
 		return *this;
 	}
@@ -529,9 +529,7 @@ namespace IO {
 		if (this->downsampleLevel == DownsamplingLevel::Lowest) { slicesToLoad = 8; }
 
 		// resize :
-		this->gridDimensions /= slicesToLoad;
 		std::cerr << "[LOG] load() : Grid dimensions : " << this->gridDimensions.x << ',' << this->gridDimensions.y << ',' << this->gridDimensions.z << '\n';
-		this->data.resize(this->gridDimensions.x * this->gridDimensions.y * this->gridDimensions.z);
 		std::cerr << "[LOG] load() : Voxel dimensions : " << this->voxelDimensions.x << ',' << this->voxelDimensions.y << ',' << this->voxelDimensions.z << '\n';
 
 		curSlice.resize(this->gridDimensions.x * this->gridDimensions.y);
@@ -637,9 +635,10 @@ namespace IO {
 			width /= 8; height /= 8; depth /= 8; voxelMultiplier = 8.f;
 		}
 
-		std::cerr << "[LOG] preallocate() : Grid dimensions : " << this->gridDimensions.x << ',' << this->gridDimensions.y << ',' << this->gridDimensions.z << '\n';
-
+		this->gridDimensions = sizevec3(width, height, depth);
 		this->voxelDimensions *= voxelMultiplier;
+
+		std::cerr << "[LOG] preallocate() : Grid dimensions : " << this->gridDimensions.x << ',' << this->gridDimensions.y << ',' << this->gridDimensions.z << '\n';
 		std::cerr << "[LOG] preallocate() : Voxel dimensions : " << this->voxelDimensions.x << ',' << this->voxelDimensions.y << ',' << this->voxelDimensions.z << '\n';
 
 		// Compute the vector size to allocate :
@@ -647,7 +646,7 @@ namespace IO {
 		// Resize the vector :
 		this->data.resize(finalSize);
 
-		std::cerr << "preallocate() : Downsampling level : ";
+		std::cerr << "[LOG] preallocate() : Downsampling level : ";
 		switch (this->downsampleLevel) {
 			case Original:
 				std::cerr << "original\n";

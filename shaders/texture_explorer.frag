@@ -8,6 +8,7 @@
 layout(location = 0) in vec4 vPos;		// The vertex's positions
 layout(location = 1) in vec3 vOriginalCoords;	// The vertex's normal
 layout(location = 2) in vec3 vTexCoords;	// The vertex's texture coordinates
+layout(location = 3) in vec2 planeMultiplier;	// The multiplier used to 'stretch' the plane
 
 /****************************************/
 /*************** Outputs ****************/
@@ -116,7 +117,7 @@ vec4 voxelValueToColor_2channel(in uvec4 ucolor) {
 	float r = float(ucolor.r);
 	float g = float(ucolor.g);
 	if (r < textureBounds.x || r > textureBounds.y) { alpha = .3f; }
-	if (g < textureBounds.x || g > textureBounds.y) { alpha = .3f; }
+	//if (g < textureBounds.x || g > textureBounds.y) { alpha = .3f; }
 	// Have the R and G color channels clamped to the min/max of the scale
 	// (mimics under or over-exposure)
 	float color_r = clamp(r, colorBounds.x, colorBounds.y);
@@ -161,10 +162,15 @@ bool shouldDiscard() {
 }
 
 bool shouldDrawBorder() {
-	// Create a border around the image :
+	// Create a border around the image (and try to scale border
+	// 'lengths' so they're equal on all sides) :
 	float min =-.99;
 	float max = .99;
-	if (vOriginalCoords.x > max || vOriginalCoords.y > max || vOriginalCoords.z > max) { return true; }
-	if (vOriginalCoords.x < min || vOriginalCoords.y < min || vOriginalCoords.z < min) { return true; }
+	float minx = min;
+	float maxx = max;
+	float miny = min;
+	float maxy = max;
+	if ((vOriginalCoords.x) > maxx || (vOriginalCoords.y) > maxy) { return true; }
+	if ((vOriginalCoords.x) < minx || (vOriginalCoords.y) < miny) { return true; }
 	return false;
 }

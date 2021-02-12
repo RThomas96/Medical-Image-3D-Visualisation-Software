@@ -2,22 +2,23 @@
 
 #include <glm/ext/matrix_transform.hpp>
 
-glm::mat4 computeTransfoShear(double angleDeg, svec3 dims, glm::vec3 vxdims) {
+glm::mat4 computeTransfoShear(double angleDeg, const std::shared_ptr<DiscreteGrid>& grid, glm::vec3 vxdims) {
 	glm::mat4 transfoMat = glm::mat4(1.0);
 
 	double angleRad = (angleDeg * M_PI) / 180.;
-
-	if (angleDeg < 0.) {
-		// compute translation along Z :
-		float w = static_cast<float>(dims.x) * vxdims.x;
-		float displacement = w * std::abs(std::sin(angleRad));
-		transfoMat = glm::translate(transfoMat, glm::vec3(.0, .0, displacement));
-	}
 
 	transfoMat[0][0] = vxdims.x * std::cos(angleRad);
 	transfoMat[0][2] = vxdims.x * std::sin(angleRad);
 	transfoMat[1][1] = vxdims.y;
 	transfoMat[2][2] = vxdims.z * std::cos(angleRad);
+
+	if (angleDeg < 0.) {
+		auto dims = grid->getBoundingBox().getDiagonal();
+		// compute translation along Z :
+		float w = static_cast<float>(dims.x) * vxdims.x;
+		float displacement = w * std::abs(std::sin(angleRad));
+		transfoMat = glm::translate(transfoMat, glm::vec3(.0, .0, displacement));
+	}
 
 	return transfoMat;
 }
@@ -94,25 +95,34 @@ glm::vec4 DiscreteGrid::toWorldSpace(glm::vec4 pos_gs) const {
 	return this->transform_gridToWorld * pos_gs;
 }
 
-DiscreteGrid::DataType DiscreteGrid::fetchTexelWorldSpace(glm::vec4 pos_ws) const {
-	glm::vec4 pos_gs = this->transform_worldToGrid * pos_ws;
-	return this->fetchTexelGridSpace(pos_gs);
+DiscreteGrid::DataType DiscreteGrid::fetchTexelWorldSpace(glm::vec4 pos_ws, bool verbose) const {
+	if (verbose) { std::cerr << "texelWorldSpace() {" << pos_ws.x << ',' << pos_ws.y << ',' << pos_ws.z << ',' << pos_ws.a << "} ... "; }
+	glm::vec4 pos_gs = this->toGridSpace(pos_ws);
+	return this->fetchTexelGridSpace(pos_gs, verbose);
 }
 
-DiscreteGrid::DataType DiscreteGrid::fetchTexelGridSpace(glm::vec4 pos_gs) const {
-	if (not this->boundingBox.contains(pos_gs)) { return DataType(0); }
+DiscreteGrid::DataType DiscreteGrid::fetchTexelGridSpace(glm::vec4 pos_gs, bool verbose) const {
+	if (verbose) { std::cerr << "texelGridSpace() {" << pos_gs.x << ',' << pos_gs.y << ',' << pos_gs.z << ',' << pos_gs.a << "} ... "; }
+
+	using val_t = bbox_t::vec::value_type;
+	bbox_t::vec point_bb = bbox_t::vec(static_cast<val_t>(pos_gs.x), static_cast<val_t>(pos_gs.y), static_cast<val_t>(pos_gs.z));
+	if (not this->boundingBox.contains(pos_gs)) { if (verbose) { std::cerr << "not contained in BB\n"; } return DataType(0); }
+
 	DiscreteGrid::bbox_t::vec minBB = this->boundingBox.getMin();
 
 	// compute index of position :
 	std::size_t x = static_cast<std::size_t>(std::floor((pos_gs.x - minBB.x) / this->voxelDimensions.x));
 	std::size_t y = static_cast<std::size_t>(std::floor((pos_gs.y - minBB.y) / this->voxelDimensions.y));
 	std::size_t z = static_cast<std::size_t>(std::floor((pos_gs.z - minBB.z) / this->voxelDimensions.z));
+	if (verbose) { std::cerr << "index is [" << x << ',' << y << ',' << z << "] ... "; }
 	// fetch from grid :
-	return this->fetchTexelIndex(sizevec3(x,y,z));
+	return this->fetchTexelIndex(sizevec3(x,y,z), verbose);
 }
 
-DiscreteGrid::DataType DiscreteGrid::fetchTexelIndex(sizevec3 idx) const {
-	return this->getPixel(idx.x, idx.y, idx.z);
+DiscreteGrid::DataType DiscreteGrid::fetchTexelIndex(sizevec3 idx, bool verbose) const {
+	DiscreteGrid::DataType d = this->getPixel(idx.x, idx.y, idx.z);
+	if (verbose) { std::cerr << " value is " << +d << '\n'; }
+	return d;
 }
 
 DiscreteGrid::DataType DiscreteGrid::getPixel(std::size_t x, std::size_t y, std::size_t z) const {
@@ -343,15 +353,22 @@ const std::vector<std::string>& DiscreteGrid::getFilenames() const {
 	return this->filenames;
 }
 
-bool DiscreteGrid::includesPointWorldSpace(glm::vec4 point) const {
+bool DiscreteGrid::includesPointWorldSpace(glm::vec4 point, bool verbose) const {
 	glm::vec4 point_gs = this->toGridSpace(point);
-	return this->includesPointGridSpace(point_gs);
+	if (verbose) { std::cerr << "[LOG]\t\tPoint submitted was {" << point.x << "," << point.y << ',' << point.z << "} ... "; }
+	return this->includesPointGridSpace(point_gs, verbose);
 }
 
-bool DiscreteGrid::includesPointGridSpace(glm::vec4 point) const {
+bool DiscreteGrid::includesPointGridSpace(glm::vec4 point, bool verbose) const {
 	using val_t = bbox_t::vec::value_type;
 	bbox_t::vec point_bb = bbox_t::vec(static_cast<val_t>(point.x), static_cast<val_t>(point.y), static_cast<val_t>(point.z));
-	return this->boundingBox.contains(point_bb);
+	bool b = this->boundingBox.contains(point_bb);
+	if (verbose) {
+		std::cerr << "grid space {" << point.x << "," << point.y << ',' << point.z << "} ... ";
+		std::cerr << "bb space {" << point_bb.x << "," << point_bb.y << ',' << point_bb.z << "} ... ";
+		std::cerr << "contained ? " << std::boolalpha << b << std::noboolalpha << '\n';
+	}
+	return b;
 }
 
 void DiscreteGrid::updateVoxelDimensions() {
@@ -361,11 +378,10 @@ void DiscreteGrid::updateVoxelDimensions() {
 	// voxel dimensions along each axis should be BBlength / resolution :
 	glm::vec3 diag = this->boundingBox.getDiagonal();
 
-	std::cerr << "[LOG] Old voxel dimensions : { " << this->voxelDimensions.x << ',' << this->voxelDimensions.y << ',' << this->voxelDimensions.z << "}\n";
 	this->voxelDimensions.x = diag.x / static_cast<float>(this->gridDimensions.x);
 	this->voxelDimensions.y = diag.y / static_cast<float>(this->gridDimensions.y);
 	this->voxelDimensions.z = diag.z / static_cast<float>(this->gridDimensions.z);
-	std::cerr << "[LOG] New voxel dimensions : { " << this->voxelDimensions.x << ',' << this->voxelDimensions.y << ',' << this->voxelDimensions.z << "}\n";
+
 	return;
 }
 
@@ -383,18 +399,18 @@ void DiscreteGrid::printInfo(std::string message, std::string prefix) {
 			this->voxelDimensions.x << ", " <<
 			this->voxelDimensions.y << ", " <<
 			this->voxelDimensions.z << "]\n";
-	std::cerr << prefix << "\tGrid BB is [" <<
+	std::cerr << prefix << "\tGrid BB is \n\t\t{" <<
 			this->boundingBox.getMin().x << ", " <<
 			this->boundingBox.getMin().y << ", " <<
-			this->boundingBox.getMin().z << "] to [" <<
+			this->boundingBox.getMin().z << "} to\n\t\t{" <<
 			this->boundingBox.getMax().x << ", " <<
 			this->boundingBox.getMax().y << ", " <<
-			this->boundingBox.getMax().z << "]\n";
-	std::cerr << prefix << "\tData BB is [" <<
+			this->boundingBox.getMax().z << "}\n";
+	std::cerr << prefix << "\tData BB is \n\t\t{" <<
 			this->dataBoundingBox.getMin().x << ", " <<
 			this->dataBoundingBox.getMin().y << ", " <<
-			this->dataBoundingBox.getMin().z << "] to [" <<
+			this->dataBoundingBox.getMin().z << "} to\n\t\t{" <<
 			this->dataBoundingBox.getMax().x << ", " <<
 			this->dataBoundingBox.getMax().y << ", " <<
-			this->dataBoundingBox.getMax().z << "]\n";
+			this->dataBoundingBox.getMax().z << "}\n";
 }

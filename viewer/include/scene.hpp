@@ -194,6 +194,9 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		/// @b setup the vao binding setup
 		void setupVAOPointers();
 
+		/// @b Immediate deletion of the grid index to delete
+		void deleteGridNow();
+
 		/// @b Sets up the OpenGL debug log.
 		void setupGLOutput();
 		/// @b Print the OpenGL message to std::cerr, if no OpenGLDebugLogMessages are enabled.
@@ -256,6 +259,9 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		bool outputGridVisible;	///< does the user want to show the output grid ?
 		bool colorOrTexture;	///< do we use the RGB2HSV function or the color scale ?
 		bool showVAOstate;	///< Do we need to print the VAO/program state on next draw ?
+		bool shouldUpdateVis;	///< Should we update visibility on next draw ?
+		bool shouldDeleteGrid;	///< Should we delete a grid on next draw ?
+		std::vector<std::size_t> delGrid;	///< Grid to delete
 
 		std::vector<GridGLView> grids;		///< Grids to display in the different views.
 
@@ -313,7 +319,6 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		/*************************************/
 		/*************************************/
 		GLuint texHandle_ColorScaleGrid;		///< handle for the uploaded color scale
-		bool shouldUpdateVis;
 		VolMesh volumetricMesh;
 		GLuint vboHandle_Texture3D_VertPos;
 		GLuint vboHandle_Texture3D_VertNorm;

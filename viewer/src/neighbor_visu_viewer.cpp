@@ -256,6 +256,7 @@ void Viewer::loadGrid(const std::shared_ptr<InputGrid>& g) {
 	this->setSceneCenter(qglviewer::Vec(bbDiag.x/2., bbDiag.y/2., bbDiag.z/2.));
 	this->showEntireScene();
 	this->updateCameraPosition();
+	this->centerScene();
 }
 
 void Viewer::loadTwoGrids(const std::shared_ptr<InputGrid>& g1, const std::shared_ptr<InputGrid>& g2) {
@@ -274,4 +275,5 @@ void Viewer::loadTwoGrids(const std::shared_ptr<InputGrid>& g1, const std::share
 	this->setSceneCenter(qglviewer::Vec(bbDiag.x/2., bbDiag.y/2., bbDiag.z/2.));
 	this->showEntireScene();
 	this->updateCameraPosition();
+	this->centerScene();
 }

@@ -7,7 +7,7 @@
 /****************************************/
 layout(location = 0) in vec4 vertexPosition;	// Vertex position
 layout(location = 1) in vec4 vertexNormal;	// In this shader : does nothing
-layout(location = 2) in vec3 vertexTexCoord;	// Texture coordinate used for the position in the scene BB
+layout(location = 2) in vec3 vertexTexCoord;	// Actually position within the final FB : [-1;1] on axes
 
 /****************************************/
 /*************** Outputs ****************/
@@ -15,6 +15,7 @@ layout(location = 2) in vec3 vertexTexCoord;	// Texture coordinate used for the 
 layout(location = 0) out vec4 vPos;		// The vertex's positions
 layout(location = 1) out vec3 vOriginalCoords;	// Original coords in plane-space
 layout(location = 2) out vec3 vTexCoord;	// The vertex's texture coordinates
+layout(location = 3) out vec2 planeMultiplier;	// The multiplier used to 'stretch' the plane
 
 /****************************************/
 /*************** Uniforms ***************/
@@ -85,12 +86,13 @@ void main(void) {
 
 	gl_Position = vec4(.0, .0, .0, 1.);
 	gl_Position.xyz = multiplier * vertexTexCoord;
-	gl_Position.xyz *= zoom * .95;
+	gl_Position.xyz *= zoom;
 	gl_Position.xy += offset;
 
 	vPos = vertexPosition;
 	vOriginalCoords = vertexTexCoord;
 	vTexCoord = vPos_TS.xyz;
+	planeMultiplier = multiplier.xy;
 }
 
 /****************************************/

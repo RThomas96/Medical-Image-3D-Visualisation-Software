@@ -6,6 +6,7 @@ This file exists to define some macros used through the program.
 **/
 #include <glm/glm.hpp>
 #include <type_traits>
+#include <iostream>
 
 /// @brief Allows to restrict a template to use only floating point values for the type T.
 template <typename T>
@@ -56,6 +57,16 @@ namespace glm {
 // What's the size of data we want to load in the program ?
 //#define VISUALISATION_USE_UINT8		// the program uses uint8_t, or uchar
 #define VISUALISATION_USE_UINT16	// the program uses uint16_t, or ushort
+
+// Prints whatever's fed as parameter, no expression evaluation
+// (useful for printing function names for example, or macros as their name)
+#define pnt(x) #x
+
+#define LOG_ENTER(x) std::cerr << "[LOG] Entered function " << pnt(x) << " :\n";
+#define LOG_LEAVE(x) std::cerr << "[LOG] Left function " << pnt(x) << " :\n";
+#define PRINTVAL_NAMED(x, v) std::cerr << "[LOG] Value of " << pnt(x) << " : " << +v << '\n';
+#define PRINTVAL_VAR(x, v) std::cerr << "[LOG] Value of " << x << " : " << +v << '\n';
+#define PRINTVAL(x) PRINTVAL_NAMED(x, x)
 
 /// @brief Template used to iterate over some const containers, to get the underlying object
 template<class T>

@@ -367,7 +367,7 @@ namespace IO {
 		}
 		// set width/height :
 		auto dims = this->grid->getResolution();
-		std::cerr << "Image dimensions : " << dims.x << ',' << dims.y;
+		std::cerr << "Image dimensions : " << dims.x << ',' << dims.y << " ... ";
 		uint32_t width = dims.x * nbChannels;
 		uint32_t height = dims.y;
 

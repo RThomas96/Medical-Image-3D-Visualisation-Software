@@ -2,7 +2,13 @@
 
 InputGrid::InputGrid(void){
 	this->gridName = "defaultInputGrid";
-	this->setModifiable(false);
+	this->transform_gridToWorld = glm::mat4(1.f);
+	this->transform_worldToGrid = glm::mat4(1.f);
+
+	// By default, calling setModifiable() would bypass virtual dispatch, thus
+	// calling InputGrid::setModifiable(), which did nothing. Se we set the
+	// value here 'in stone' in order to prevent modifications from happening.
+	this->modifiable = false;
 }
 
 InputGrid::~InputGrid() {}

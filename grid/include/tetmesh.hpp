@@ -20,9 +20,7 @@
 
 enum InterpolationMethods {
 	NearestNeighbor,
-	TriLinear,
-	TriCubic,
-	Barycentric
+	TriLinear
 };
 
 /// @brief Represents a tetrahedral mesh in initial space, to interpolate a voxel's value at a given position.
@@ -60,7 +58,7 @@ class TetMesh {
 		/// @param grid The grid to sample data from
 		/// @param method The interpolation method used to determine the value at the given point.
 		/// @param idx The index of the voxel to fetch the value from
-		DiscreteGrid::DataType getInterpolatedValue(std::shared_ptr<InputGrid> grid, InterpolationMethods method, DiscreteGrid::sizevec3 idx) const;
+		DiscreteGrid::DataType getInterpolatedValue(std::shared_ptr<InputGrid> grid, InterpolationMethods method, DiscreteGrid::sizevec3 idx, bool verbose = false) const;
 
 		/// @brief Prints info about the current position and values of the neighbor grid.
 		/// @returns A reference to (this), to chain function calls.
@@ -98,11 +96,11 @@ class TetMesh {
 
 		/// @brief Gets the value at vertex 'idx' from the grid in argument.
 		/// @returns The value at the vertex 'idx' in this mesh, in the grid queried.
-		DataType getVertexValue(const std::shared_ptr<InputGrid> grid, std::size_t idx) const;
+		DataType getVertexValue(const std::shared_ptr<InputGrid> grid, std::size_t idx, bool verbose = false) const;
 
 	protected:
-		TetMesh::DataType interpolate_NearestNeighbor(const std::shared_ptr<InputGrid> grid) const; ///< Interpolates a given point in initial space with the Nearest Neighbor technique
-		TetMesh::DataType interpolate_TriLinear(const std::shared_ptr<InputGrid> grid) const; ///< Interpolates a given point in initial space with the Trilinear technique
+		TetMesh::DataType interpolate_NearestNeighbor(const std::shared_ptr<InputGrid> grid, bool verbose = false) const; ///< Interpolates a given point in initial space with the Nearest Neighbor technique
+		TetMesh::DataType interpolate_TriLinear(const std::shared_ptr<InputGrid> grid, bool verbose = false) const; ///< Interpolates a given point in initial space with the Trilinear technique
 };
 
 #ifndef GLM_CROSS_VEC4_OVERRIDE
