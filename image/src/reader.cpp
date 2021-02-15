@@ -133,8 +133,10 @@ namespace IO {
 	}
 
 	std::size_t GenericGridReader::getGridSizeBytes() const {
+		LOG_ENTER(GenericGridReader::getGridSizeBytes())
 		std::size_t sizeBytes = 0;
 		sizeBytes = this->imageDimensions.x * this->imageDimensions.y * this->imageDimensions.z * sizeof(data_t);
+		PRINTVAL(sizeBytes);
 		if (this->downsampleLevel == DownsamplingLevel::Low) {
 			sizeBytes /= 2*2*2;
 		}
@@ -144,6 +146,7 @@ namespace IO {
 		if (this->downsampleLevel == DownsamplingLevel::Lowest) {
 			sizeBytes /= 8*8*8;
 		}
+		LOG_LEAVE(GenericGridReader::getGridSizeBytes())
 		return sizeBytes;
 	}
 

@@ -417,14 +417,8 @@ void Scene::addTwoGrids(const std::shared_ptr<InputGrid> _gridR, const std::shar
 	gridTexture.swizzle.g = GL_GREEN;
 	gridTexture.swizzle.b = GL_ZERO;
 	gridTexture.swizzle.a = GL_ONE;
-	#ifdef VISUALISATION_USE_UINT8
 	gridTexture.alignment.x = 1;
 	gridTexture.alignment.y = 1;
-	#endif
-	#ifdef VISUALISATION_USE_UINT16
-	gridTexture.alignment.x = 2;
-	gridTexture.alignment.y = 2;
-	#endif
 
 	// Tex upload function :
 	auto dimensions = _gridR->getResolution();
@@ -453,6 +447,10 @@ void Scene::addTwoGrids(const std::shared_ptr<InputGrid> _gridR, const std::shar
 		const DiscreteGrid::data_t* bData = _gridB->getDataPtr();
 		// allocate array of <size> :
 		std::size_t elementCount = dimensions.x * dimensions.y * dimensions.z;
+		PRINTVAL(elementCount);
+		PRINTVAL(sizeof(DiscreteGrid::data_t));
+		std::size_t finalsize = elementCount * sizeof(DiscreteGrid::data_t);
+		PRINTVAL(finalsize);
 		DiscreteGrid::data_t* combinedData = new DiscreteGrid::data_t[elementCount * 2];
 		// combine data :
 		for (std::size_t i = 0; i < elementCount; ++i) {
@@ -461,7 +459,7 @@ void Scene::addTwoGrids(const std::shared_ptr<InputGrid> _gridR, const std::shar
 		}
 
 		gridTexture.data = combinedData;
-		gridView.gridTexture = this->uploadTexture3D(gridTexture);
+		gridView.gridTexture = this->uploadTexture3D_iterative(gridTexture, dimensions.x * dimensions.y * sizeof(DiscreteGrid::data_t));
 		delete[] combinedData;
 	}
 
@@ -508,11 +506,11 @@ void Scene::updateBoundingBox(void) {
 }
 
 void Scene::recompileShaders(bool verbose) {
-	GLuint newProgram = this->compileShaders("./shaders/voxelgrid.vert", "./shaders/voxelgrid.geom", "./shaders/voxelgrid.frag", verbose);
-	GLuint newPlaneProgram = this->compileShaders("./shaders/plane.vert", "", "./shaders/plane.frag", verbose);
-	GLuint newPlaneViewerProgram = this->compileShaders("./shaders/texture_explorer.vert", "", "./shaders/texture_explorer.frag", verbose);
-	GLuint newVolumetricProgram = this->compileShaders("./shaders/transfer_mesh.vert", "./shaders/transfer_mesh.geom", "./shaders/transfer_mesh.frag", verbose);
-	GLuint newBoundingBoxProgram = this->compileShaders("./shaders/bounding_box.vert", "", "./shaders/bounding_box.frag", verbose);
+	GLuint newProgram = this->compileShaders("../shaders/voxelgrid.vert", "../shaders/voxelgrid.geom", "../shaders/voxelgrid.frag", verbose);
+	GLuint newPlaneProgram = this->compileShaders("../shaders/plane.vert", "", "../shaders/plane.frag", verbose);
+	GLuint newPlaneViewerProgram = this->compileShaders("../shaders/texture_explorer.vert", "", "../shaders/texture_explorer.frag", verbose);
+	GLuint newVolumetricProgram = this->compileShaders("../shaders/transfer_mesh.vert", "../shaders/transfer_mesh.geom", "../shaders/transfer_mesh.frag", verbose);
+	GLuint newBoundingBoxProgram = this->compileShaders("../shaders/bounding_box.vert", "", "../shaders/bounding_box.frag", verbose);
 
 	if (newProgram) {
 		glDeleteProgram(this->programHandle_projectedTex);
@@ -828,6 +826,80 @@ GLuint Scene::uploadTexture3D(const TextureUpload& tex) {
 		tex.data			// void*  : Data to load into the buffer
 	);
 
+
+	return texHandle;
+}
+
+GLuint Scene::uploadTexture3D_iterative(const TextureUpload &tex, std::size_t imgSize) {
+	if (this->context != nullptr) {
+		if (this->context->isValid() == false) {
+			throw std::runtime_error("No associated valid context");
+		}
+	} else {
+		throw std::runtime_error("nullptr as context");
+	}
+
+	glEnable(GL_TEXTURE_3D);
+
+	GLuint texHandle = 0;
+	glGenTextures(1, &texHandle);
+	glBindTexture(GL_TEXTURE_3D, texHandle);
+
+	// Min and mag filters :
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, tex.minmag.x);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, tex.minmag.y);
+
+	// Set the min and max LOD values :
+	glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_MIN_LOD, tex.lod.x);
+	glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_MAX_LOD, tex.lod.y);
+
+	// Set the wrap parameters :
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, tex.wrap.x);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, tex.wrap.y);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, tex.wrap.z);
+
+	// Set the swizzle the user wants :
+	glTexParameteriv(GL_TEXTURE_3D, GL_TEXTURE_SWIZZLE_RGBA, glm::value_ptr(tex.swizzle));
+
+	// Set the pixel alignment :
+	glPixelStorei(GL_PACK_ALIGNMENT, tex.alignment.x);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, tex.alignment.y);
+
+	PRINTVAL(tex.size.x)
+	PRINTVAL(tex.size.y)
+	PRINTVAL(tex.size.z)
+
+	std::cerr << "[LOG] Allocating memory ...";
+	glTexImage3D(GL_TEXTURE_3D,		// GLenum : Target
+		static_cast<GLint>(tex.level),	// GLint  : Level of detail of the current texture (0 = original)
+		tex.internalFormat,		// GLint  : Number of color components in the picture. Here grayscale so GL_RED
+		tex.size.x,			// GLsizei: Image width
+		tex.size.y,			// GLsizei: Image height
+		tex.size.z,			// GLsizei: Image depth (number of layers)
+		static_cast<GLint>(0),		// GLint  : Border. This value MUST be 0.
+		tex.format,			// GLenum : Format of the pixel data
+		tex.type,			// GLenum : Type (the data type as in uchar, uint, float ...)
+		nullptr		// null for the moment, to allocate data only
+	);
+	std::cerr << "done.\n";
+
+	// check for error, and throw a std::runtime_error() for now
+	GLenum err = glGetError();
+	if (err == GL_OUT_OF_MEMORY) {
+		std::cerr << "[ERROR] Application could not allocate enough memory.\n";
+	}
+
+	// upload the texture slice by slice :
+	for (GLint z = 0; z < tex.size.z; ++z) {
+		std::cerr << "[LOG] Uploading slice " << z << " ... \n";
+		// cast data to void* (non-const), then to char*, then shift by imgSize, and then recast as void* :
+		void* ptr = reinterpret_cast<void*>((reinterpret_cast<char*>(const_cast<void*>(tex.data)) + z * imgSize));
+		glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, z, tex.size.x, tex.size.y, 1, tex.format, tex.type, ptr);
+		err = glGetError();
+		if (err == GL_OUT_OF_MEMORY) {
+			std::cerr << "[ERROR] Application could not allocate enough memory for slice " << z << "\n";
+		}
+	}
 
 	return texHandle;
 }

@@ -511,6 +511,7 @@ void GridLoaderWidget::loadGridTIF2channel() {
 }
 
 void GridLoaderWidget::loadGrid() {
+	LOG_ENTER(GridLoaderWidget::loadGrid())
 	if (readerR == nullptr) {
 		QMessageBox* msgBox = new QMessageBox;
 		msgBox->setAttribute(Qt::WA_DeleteOnClose);
@@ -537,6 +538,8 @@ void GridLoaderWidget::loadGrid() {
 
 	// Check user memory allowed, and ask for confirmation if necessary :
 	UserSettings settings = UserSettings::getInstance();
+	PRINTVAL(settings.getUserRemainingBitSize())
+	PRINTVAL(completeSizeBits);
 	if (settings.getUserRemainingBitSize() < completeSizeBits) {
 		QMessageBox* confirmBox = new QMessageBox();
 		confirmBox->setWindowTitle("Warning : Memory load");
@@ -547,6 +550,7 @@ void GridLoaderWidget::loadGrid() {
 		confirmBox->exec();
 		if (confirmBox->clickedButton() == confirm_Deny) {
 			// if the user doesn't want anything like this, return.
+			LOG_LEAVE(GridLoaderWidget::loadGrid())
 			return;
 		}
 
@@ -601,5 +605,6 @@ void GridLoaderWidget::loadGrid() {
 	this->scene->slotSetMinColorValue(colB.x);
 	this->scene->slotSetMaxColorValue(colB.y);
 
+	LOG_LEAVE(GridLoaderWidget::loadGrid())
 	this->close();
 }

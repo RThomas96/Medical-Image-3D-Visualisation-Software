@@ -19,6 +19,8 @@ UserSettings UserSettings::getInstance() {
 }
 
 bool UserSettings::canLoadImageSize(std::size_t sizeBits) {
+	// If the allowed size is 0, then no limit is applied.
+	if (this->userAllowedBitSize == 0) { return true; }
 	return this->userLoadedSize + sizeBits < this->userAllowedBitSize;
 }
 
@@ -35,13 +37,12 @@ void UserSettings::init() {
 	if (this->isInit == true) { return; }
 	#if defined(WIN32) || defined(WIN64) || defined(_MSC_VER) || defined(_WIN32)
 	MEMORYSTATUSEX memstats{};
-	if (GlobalMemoryStatusEx(&memstats) != 0) {
-		std::cerr << "error : cannot get memory stats !" << '\n';
-		this->userAllowedBitSize = 2 * 1024 * 1024 * 1024; // 2GB by default
+	memstats.dwLength = sizeof(memstats);
+	if (GlobalMemoryStatusEx(&memstats) == 0) {
+		this->userAllowedBitSize = 2ull * 1024ull * 1024ull * 1024ull; // 2GB by default
 	} else {
 		// size is in bytes here (convert to bits) :
 		this->userAllowedBitSize = static_cast<std::size_t>(memstats.ullAvailPhys*8/2);
-		std::cerr << "set user allowed size to " << memstats.ullAvailPhys/1024/1024/2 << " MB by default\n";
 	}
 	this->isInit = true;
 	return;

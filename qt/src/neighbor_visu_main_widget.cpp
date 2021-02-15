@@ -17,6 +17,8 @@ MainWidget::MainWidget() {
 	this->widgetSizeSet = false;
 	this->usettings = nullptr;
 	this->loaderWidget = nullptr;
+	// Query a user settings instance to initialize it :
+	UserSettings set = UserSettings::getInstance();
 }
 
 MainWidget::~MainWidget() {

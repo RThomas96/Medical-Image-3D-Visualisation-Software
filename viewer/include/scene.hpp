@@ -128,6 +128,8 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		GLuint uploadTexture2D(const TextureUpload& tex);
 		/// @brief Upload a 3D texture with the given parameters.
 		GLuint uploadTexture3D(const TextureUpload& tex);
+		/// @brief Upload a 3D texture with the given parameters.
+		GLuint uploadTexture3D_iterative(const TextureUpload& tex, std::size_t imgSize);
 
 		/// @b Changes the texture coloration mode to the desired setting
 		void setDisplayChannel(DisplayChannel _c);
