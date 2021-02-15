@@ -20,7 +20,7 @@ class InputGrid : public DiscreteGrid {
 		InputGrid& operator= (InputGrid&& other) = delete;
 
 		/// @brief Nothing will be done in the destructor here.
-		~InputGrid(void) {}
+		~InputGrid(void);
 
 		/// @brief Pre-allocate the data vector, in order to have enough space to copy the data into it.
 		virtual InputGrid& preAllocateImageData(sizevec3 dimensions);
@@ -39,6 +39,31 @@ class InputGrid : public DiscreteGrid {
 
 		/// @brief Disallows setting a new bounding box to the input grid.
 		virtual InputGrid& setBoundingBox(bbox_t renderWindow) override;
+};
+
+class OfflineInputGrid : public InputGrid {
+	public:
+		/// @brief Nothing to be done in the constructor.
+		OfflineInputGrid(void);
+		/// @brief Nothing to be done in the constructor.
+		OfflineInputGrid(const OfflineInputGrid& other) = delete;
+		/// @brief Nothing to be done in the constructor.
+		OfflineInputGrid(OfflineInputGrid&& other) = delete;
+		/// @brief Nothing to be done in the constructor.
+		OfflineInputGrid& operator= (const OfflineInputGrid& other) = delete;
+		/// @brief Nothing to be done in the constructor.
+		OfflineInputGrid& operator= (OfflineInputGrid&& other) = delete;
+
+		/// @brief Nothing will be done in the destructor here.
+		~OfflineInputGrid(void);
+
+		/// @b Gathers info from an existing inputgrid, and loads the info for itself.
+		virtual OfflineInputGrid& fromInputGrid(const std::shared_ptr<InputGrid>& igrid);
+
+		virtual DataType getPixel(std::size_t x, std::size_t y, std::size_t z) const override;
+	protected:
+		mutable std::ifstream* dimFile; // mutable needed for proper overloads of getPixel()
+		mutable std::ifstream* imaFile; // mutable needed for proper overloads of getPixel()
 };
 
 #endif // GRID_INCLUDE_INPUT_DISCRETE_GRID_HPP_

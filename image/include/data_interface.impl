@@ -1,0 +1,76 @@
+#ifndef IMAGE_INCLUDE_DATA_INTERFACE_IMPL_
+#define IMAGE_INCLUDE_DATA_INTERFACE_IMPL_
+
+#ifndef IMAGE_INCLUDE_DATA_INTERFACE_HPP_
+#include "./data_interface.hpp"
+#endif
+
+namespace IO {
+
+	template <typename T> DataInterface<T>::DataInterface(void) {
+		this->baseName = "";
+		this->basePath = "";
+		this->imageDimensions = size4_t(0, 0, 0, 0);
+		this->voxelDimensions = fsize_t(1, 1, 1);
+		// By default, data threshold is set to lowest possible value :
+		this->dataThreshold = std::numeric_limits<T>::lowest();
+		// set texture intensity limits to abherrant values, so any value added later will update them :
+		data_t min = std::numeric_limits<T>::lowest();
+		data_t max = std::numeric_limits<T>::max();
+		this->intensityBounds = { limit_t(max, min), limit_t(max, min), limit_t(max, min), limit_t(max, min) };
+	}
+
+	template <typename T> T DataInterface<T>::getDataThreshold(void) const {
+		return this->dataThreshold;
+	}
+
+	template <typename T> DataInterface<T>& DataInterface<T>::setDataThreshold(data_t thresh) {
+		this->dataThreshold = thresh;
+		return *this;
+	}
+
+	template <typename T> size4_t DataInterface<T>::getResolution() const {
+		return this->imageDimensions;
+	}
+
+	template <typename T> fsize_t DataInterface<T>::getVoxelDimensions() const {
+		return this->voxelDimensions;
+	}
+
+	template <typename T> const typename DataInterface<T>::limit_t DataInterface<T>::getIntensityBounds(std::size_t c) const {
+		return this->intensityBounds[c];
+	}
+
+	template <typename T> const std::vector<std::string>& DataInterface<T>::getFilenames() const {
+		return this->filenames;
+	}
+
+	template <typename T> DataInterface<T>& DataInterface<T>::setFilenames(const std::vector<std::string>& paths) {
+		this->filenames.clear();
+		for (const std::string& path : paths) {
+			this->filenames.emplace_back(path);
+		}
+		return *this;
+	}
+
+	template <typename T> const std::string DataInterface<T>::getFileBaseName() const {
+		return this->baseName;
+	}
+
+	template <typename T> DataInterface<T>& DataInterface<T>::setFileBaseName(const std::string& _name) {
+		this->baseName = _name;
+		return *this;
+	}
+
+	template <typename T> const std::string DataInterface<T>::getFileBasePath() const {
+		return this->basePath;
+	}
+
+	template <typename T> DataInterface<T>& DataInterface<T>::setFileBasePath(const std::string& _path) {
+		this->baseName = _path;
+		return *this;
+	}
+
+}
+
+#endif // IMAGE_INCLUDE_DATA_INTERFACE_IMPL_

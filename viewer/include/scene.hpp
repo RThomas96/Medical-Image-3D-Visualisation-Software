@@ -15,96 +15,166 @@
 #include "../../qt/include/grid_control.hpp"
 #include "../../qt/include/grid_detailed_view.hpp"
 #include "../../qt/include/grid_list_view.hpp"
+#include "../../qt/include/visu_box_controller.hpp"
+#include "../../qt/include/opengl_debug_log.hpp"
+// Helper structs and functions :
+#include "./viewer_structs.hpp"
 // Qt headers :
 #include <QOpenGLFunctions_4_0_Core>
 #include <QOpenGLFunctions_4_0_Compatibility>
+#include <QOpenGLDebugLogger>
+#include <QStatusBar>
+// libQGLViewer :
 #include <QGLViewer/qglviewer.h>
+// glm include :
 #include <glm/glm.hpp>
 // STD headers :
 #include <vector>
 #include <mutex>
 
+#define PLANE_POS_FLOOR
+
 class ControlPanel; // Forward declaration
 
-enum DrawMode { Solid, SolidAndWireframe, Wireframe };
+/// @b Simple enum to keep track of the different viewing primitives for the program.
+enum DrawMode { Solid, Volumetric, VolumetricBoxed };
+/// @b Simple enum to keep track of which channel(s) we show from the texture to the viewers.
+enum DisplayChannel { RedAndGreen, Red, Green };
+/// @b Simple enum to define which plane we are drawing
 enum planes { x = 1, y = 2, z = 3 };
+/// @b Simple enum to keep track of a plane's orientation.
+enum planeHeading { North = 0, East = 1, South = 2, West = 3, Up = North, Right = East, Down = South, Left = West };
 
 class Scene : public QOpenGLFunctions_4_0_Core {
 		typedef glm::vec<4, unsigned int, glm::defaultp> uvec4;
 		typedef glm::uvec3 uvec3;
 	public:
-		Scene(GridControl* const gc); ///< default constructor
+		Scene(); ///< default constructor
 		~Scene(void); ///< default destructor
 
 		/// @brief initialize the variables of the scene
 		void initGl(QOpenGLContext* context);
 
+		/// @brief Show the Visualization box controller
+		void showVisuBoxController();
+		/// @brief Remove the visu box controller if it closes
+		void removeVisuBoxController();
+
+		/// @brief Adds a widget to which redirect to OpenGL output.
+		void addOpenGLOutput(OpenGLDebugLog* _gldl);
+		/// @brief Add a status bar to the program
+		void addStatusBar(QStatusBar* _s);
+
 		/// @brief set the control panel responsible for controlling the scene
 		void setControlPanel(ControlPanel* cp) { this->controlPanel = cp; }
+		/// @b Remove the grid controller pointer from the scene class.
+		void removeController();
 		/// @brief reload the default shader files
 		void recompileShaders(bool verbose = true);
 
-		/// @brief For the dual-viewer : draw in real space
-		void drawGridOnly(GLfloat mvMat[], GLfloat pMat[]);
-		/// @brief draw the planes, in the real space
-		void drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane = true);
+		/// @b Adds a grid to the list of grids present and to be drawn, and generates the data structure to visualize it.
+		void addGrid(const std::shared_ptr<InputGrid> _grid, std::string meshPath);
+		/// @b Adds a grid to the list of grids present and to be drawn, which is composed of two separate grids' data.
+		void addTwoGrids(const std::shared_ptr<InputGrid> _gridR, const std::shared_ptr<InputGrid> _gridG, std::string meshPath);
 
-		/// @brief For the dual-viewer : draw in grid space
-		void drawWithPlanes(GLfloat mvMat[], GLfloat pMat[]);
+		/// @b Draw the 3D view of the scene.
+		void draw3DView(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, bool showTexOnPlane = true);
+
 		/// @b Draw a given plane 'view' (single plane on the framebuffer).
-		void drawPlaneView(glm::vec2 fbDims, planes _plane);
+		void drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading, float zoomRatio, glm::vec2 offset);
 
-		/// @brief Draws the 3D texture with a volumetric-like visualization method
-		void drawVolumetric(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos);
+		/// @b Returns the current scene boundaries.
+		glm::vec3 getSceneBoundaries() const;
 
-		/// @brief load the 3D texture to opengl
-		void loadImage();
-		/// @brief load the voxel grid generated
-		void loadVoxelGrid();
+		/// @b Set the draw mode for the 3D view of the scene.
+		void setDrawMode(DrawMode _mode);
 
-		/// @brief fill the grid using trilinear interpolation
-		void fillTrilinear();
-		/// @brief fill the grid using nearest neighbor interpolation
-		void fillNearestNeighbor();
+		/// @b Launches a save dialog, to generate a grid.
+		void launchSaveDialog();
 
-		/// @brief show the tex cube or not
-		void toggleInputGridVisible(bool visibility) { this->inputGridVisible = visibility; }
-		/// @brief show the tex cube or not
-		void toggleInputGridVisible() { this->toggleInputGridVisible(!this->inputGridVisible); }
-		/// @brief show the tex cube or not
-		void toggleOutputGridVisible(bool visibility) { this->outputGridVisible = visibility; }
-		/// @brief show the tex cube or not
-		void toggleOutputGridVisible() { this->outputGridVisible = not this->outputGridVisible; }
+		/// @b Deletes a grid from the array of grids to show
+		void deleteGrid(const std::shared_ptr<DiscreteGrid>& _grid);
 
-		void toggleColorOrTexture(bool _cOT) { this->colorOrTexture = _cOT; }
-		void toggleColorOrTexture() { this->toggleColorOrTexture(!this->colorOrTexture); }
+		/// @brief Prints info about the VAO on next refresh
+		void printVAOStateNext() { this->showVAOstate = true; }
 
-		glm::vec3 getSceneBoundaries(bool realSpace = true) const;
+		/// @brief Get the minimum texture value to represent
+		DiscreteGrid::data_t getMinTexValue(void) const { return this->minTexVal; }
+		/// @brief Get the maximum texture value to represent
+		DiscreteGrid::data_t getMaxTexValue(void) const { return this->maxTexVal; }
 
-		void setDrawModeSolid() { this->drawMode = DrawMode::Solid; }
-		void setDrawModeSolidAndWireframe() { this->drawMode = DrawMode::SolidAndWireframe; }
-		void setDrawModeWireframe() { this->drawMode = DrawMode::Wireframe; }
+		/// @brief Get the minimum color value, for the color scale resizing.
+		uint getMinColorValue(void) const { return this->minColorVal; }
+		/// @brief Get the maximum color value, for the color scale resizing.
+		uint getMaxColorValue(void) const { return this->maxColorVal; }
 
-		void cleanup(void); ///< cleanup function for vbo and other parts
-		void printVAOStateNext() { this->showVAOstate = true; } ///< prints info about the VAO on next refresh
-		glm::vec3 getPlanePositions(void) { return this->planePosition; } ///< Get the cutting planes' positions
-		uint getMinTexValue(void) const { return this->minTexVal; }
-		uint getMaxTexValue(void) const { return this->maxTexVal; }
+		/// @brief Returns the current visu box
+		DiscreteGrid::bbox_t getVisuBox(void);
+		/// @brief Sets the visu box
+		void setVisuBox(DiscreteGrid::bbox_t box);
+		/// @brief Resets the visu box
+		void resetVisuBox();
 
-		void writeGridDIM(const std::string name);
+		/// @brief Get the scene radius at this time
+		float getSceneRadius();
+		/// @brief Get the scene center at this time
+		glm::vec3 getSceneCenter();
+		/// @brief Returns the current scene bounding box.
+		DiscreteGrid::bbox_t getSceneBoundingBox() const;
 
-		void draft_writeRawGridPortion(DiscreteGrid::sizevec3 begin, DiscreteGrid::sizevec3 size, std::string name);
+		/// @brief Upload a 1D texture with the given parameters.
+		GLuint uploadTexture1D(const TextureUpload& tex);
+		/// @brief Upload a 2D texture with the given parameters.
+		GLuint uploadTexture2D(const TextureUpload& tex);
+		/// @brief Upload a 3D texture with the given parameters.
+		GLuint uploadTexture3D(const TextureUpload& tex);
+		/// @brief Upload a 3D texture with the given parameters.
+		GLuint uploadTexture3D_iterative(const TextureUpload& tex, std::size_t imgSize);
 
-		void slotTogglePolygonMode(bool show);
-		void slotToggleShowTextureCube(bool show);
-		void slotSetPlaneDepthX(float newXCoord);
-		void slotSetPlaneDepthY(float newYCoord);
-		void slotSetPlaneDepthZ(float newZCoord);
-		void slotSetMinTexValue(uchar val);
-		void slotSetMaxTexValue(uchar val);
-		void slotSetPlanePositionX(float coord);
-		void slotSetPlanePositionY(float coord);
-		void slotSetPlanePositionZ(float coord);
+		/// @b Changes the texture coloration mode to the desired setting
+		void setDisplayChannel(DisplayChannel _c);
+
+		/// @brief Set X's plane displacement within the bounding box to be `scalar`
+		void slotSetPlaneDisplacementX(float scalar);
+		/// @brief Set Y's plane displacement within the bounding box to be `scalar`
+		void slotSetPlaneDisplacementY(float scalar);
+		/// @brief Set Z's plane displacement within the bounding box to be `scalar`
+		void slotSetPlaneDisplacementZ(float scalar);
+
+		/// @brief Set minimum texture intensity.
+		void slotSetMinTexValue(DiscreteGrid::data_t val);
+		/// @brief Set maximum texture intensity.
+		void slotSetMaxTexValue(DiscreteGrid::data_t val);
+		/// @brief Set minimum color intensity.
+		void slotSetMinColorValue(DiscreteGrid::data_t val);
+		/// @brief Set maximum color intensity.
+		void slotSetMaxColorValue(DiscreteGrid::data_t val);
+
+		/// @brief set the clip plane distance from camera to be `val`
+		void slotSetClipDistance(double val) { this->clipDistanceFromCamera = static_cast<float>(val); return; }
+
+		/// @brief Get clipping distance from camera
+		float getClipDistance(void) { return this->clipDistanceFromCamera; }
+
+		/// @b Toggles the visibility of the plane in argument
+		void togglePlaneVisibility(planes _plane);
+		/// @b Signals all planes they need to be to be [in]visible.
+		void toggleAllPlaneVisibilities(void);
+
+		/// @b Sets the new 'heading' of the plane (to rotate the planar viewers in the framebuffer)
+		void setPlaneHeading(planes _plane, planeHeading _heading);
+
+		/// @b Toggles visibility of plane X.
+		void slotTogglePlaneDirectionX();
+		/// @b Toggles visibility of plane Y.
+		void slotTogglePlaneDirectionY();
+		/// @b Toggles visibility of plane Z.
+		void slotTogglePlaneDirectionZ();
+		/// @b Signals all planes they need to be inverted.
+		void toggleAllPlaneDirections();
+
+		/// @b computes the transformation matrix of the input grid
+		glm::mat4 computeTransformationMatrix(const std::shared_ptr<DiscreteGrid>& _grid) const;
 	private :
 		/// @b compile the given shader at 'path' as a shader of type 'shaType'
 		GLuint compileShader(const std::string& path, const GLenum shaType, bool verbose = false);
@@ -112,121 +182,158 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		GLuint compileProgram(const GLuint vSha = 0, const GLuint gSha = 0, const GLuint fSha = 0, bool verbose = false);
 		/// @b Compile the given shaders, and return the ID of the program generated. On any error, returns 0.
 		GLuint compileShaders(std::string vPath, std::string gPath, std::string fPath, bool verbose = false);
+
+		/// @b Creates all the VAO/VBO handles
+		void createBuffers();
+		/// @b Generate the unit cube used to draw the grid in non-volumetric mode, as well as the plane positions and bounding box buffers.
+		void generateSceneData();
 		/// @b Generates the vertices, normals, and tex coordinates for a basic unit cube
-		void generateTexCube(std::vector<glm::vec4>& vertPos, std::vector<glm::vec4>& vertNorm, std::vector<glm::vec3>& vertTex, std::vector<unsigned int>& vertIdx);
+		void generateTexCube(Mesh& _mesh);
 		/// @b Generates the plane's vertices array indexes
-		void generatePlanesArray(std::vector<unsigned int>& idx);
-		/// @b computes the transformation matrix of the input grid
-		glm::mat4 computeTransformationMatrix() const;
-		/// @b preps uniforms for a grid
-		void prepGridUniforms(GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, GLuint texHandle, const std::shared_ptr<DiscreteGrid>& grid);
-		/// @b draws a grid, slightly more generic than drawVoxelGrid()
-		void drawGrid_Generic(GLfloat mvMat[], GLfloat pMat[], glm::mat4 baseMatrix, GLuint texHandle, const std::shared_ptr<DiscreteGrid>& grid);
-		/// @b preps uniforms for a given plane
-		void prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane, bool showTexOnPlane = true);
-		/// @brief prep the plane uniforms to draw in space
-		void prepPlane_SingleUniforms(planes _plane, glm::vec2 fbDims, const std::shared_ptr<DiscreteGrid> _grid);
-		/// @b Prints grid info.
-		void printGridInfo(const std::shared_ptr<DiscreteGrid>& grid);
-		/// @b Generate a scale of colors for the program.
-		std::vector<float> generateColorScale(std::size_t minVal, std::size_t maxVal);
-		/// @b Uploads the color scale to OpenGL
-		void uploadColorScale(const std::vector<float>& colorScale);
+		void generatePlanesArray(Mesh& _mesh);
 		/// @b setup the buffers' data
-		void setupVBOData(const std::vector<glm::vec4>& vertPos, const std::vector<glm::vec4>& vertNorm, const std::vector<glm::vec3>& vertTex, const std::vector<unsigned int>& vertIdx, const std::vector<unsigned int>& vertIdx_plane);
+		void setupVBOData(const Mesh& _mesh);
 		/// @b setup the vao binding setup
 		void setupVAOPointers();
-		/// @b bind the textures to use them later
-		void bindTextures();
+
+		/// @b Immediate deletion of the grid index to delete
+		void deleteGridNow();
+
+		/// @b Sets up the OpenGL debug log.
+		void setupGLOutput();
+		/// @b Print the OpenGL message to std::cerr, if no OpenGLDebugLogMessages are enabled.
+		void printOpenGLMessage(const QOpenGLDebugMessage& message);
+
+		/// @b Computes the planes positions based on their parameters.
+		glm::vec3 computePlanePositions();
+
+		/// @b preps uniforms for a grid
+		void prepGridUniforms(GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, const GridGLView& grid);
+		/// @b preps uniforms for a given plane
+		void prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane, const GridGLView& grid, bool showTexOnPlane = true);
+		/// @brief prep the plane uniforms to draw in space
+		void prepPlane_SingleUniforms(planes _plane, planeHeading _heading, glm::vec2 fbDims, float zoomRatio, glm::vec2 offset, const GridGLView& _grid);
+
+		/// @brief draw the planes, in the real space
+		void drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane = true);
+		/// @b draws a grid, slightly more generic than drawVoxelGrid()
+		void drawGrid(GLfloat mvMat[], GLfloat pMat[], glm::mat4 baseMatrix, const GridGLView& grid);
+		/// @brief Draws the 3D texture with a volumetric-like visualization method
+		void drawVolumetric(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, const GridGLView& grid);
+
+		/// @b Prints grid info.
+		void printGridInfo(const std::shared_ptr<DiscreteGrid>& grid);
+
+		/// @b Generate a scale of colors for the program.
+		void generateColorScale();
+		/// @b Uploads the color scale to OpenGL
+		void uploadColorScale();
+
 		/// @b Prints the accessible uniforms and attributes of the given program.
 		void printProgramUniforms(const GLuint _pid);
+
 		/// @b Updates the visibility array to only show values between the min and max tex values
 		void updateVis();
+
+		/// @b Creates the VBO/VAO handles for bounding boxes
+		void createBoundingBoxBuffers();
+		/// @b Orders the VAO pointers for the bounding box
+		void setupVAOBoundingBox();
+		/// @b Draw a bounding box
+		void drawBoundingBox(const DiscreteGrid::bbox_t& _box, glm::vec3 color, GLfloat* vMat, GLfloat* pMat);
+		/// @b Update the scene's bounding box with the currently drawn grids.
+		void updateBoundingBox(void);
 
 		/*************************************/
 		/*************************************/
 		/****** TEXTURE3D VISUALIZATION ******/
 		/*************************************/
 		/*************************************/
-		void tex3D_buildTexture();
-		void tex3D_buildMesh();
-		void tex3D_buildVisTexture();
-		void tex3D_buildBuffers();
+		void tex3D_buildMesh(GridGLView& grid, const std::string path = "");
+		void tex3D_buildVisTexture(VolMesh& volMesh);
+		void tex3D_buildBuffers(VolMesh& volMesh);
 		void tex3D_bindVAO();
-		void tex3D_loadMESHFile(const std::string name, std::vector<glm::vec4>& vert, std::vector<glm::vec3>& texCoords, std::vector<std::array<std::size_t, 4>>& tet);
-	public:
-		bool isInitialized; ///< tracks if the scene was initialized or not (query-able from anywhere)
+		void tex3D_loadMESHFile(const std::string name, const GridGLView& grid, VolMeshData& _mesh);
+		void tex3D_generateMESH(GridGLView& grid, VolMeshData& _mesh);
 	protected:
-		void generateGrid();
+		bool isInitialized;	///< tracks if the scene was initialized or not
+		bool inputGridVisible;	///< does the user want to show the input grid ?
+		bool outputGridVisible;	///< does the user want to show the output grid ?
+		bool colorOrTexture;	///< do we use the RGB2HSV function or the color scale ?
+		bool showVAOstate;	///< Do we need to print the VAO/program state on next draw ?
+		bool shouldUpdateVis;	///< Should we update visibility on next draw ?
+		bool shouldDeleteGrid;	///< Should we delete a grid on next draw ?
+		std::vector<std::size_t> delGrid;	///< Grid to delete
 
-		ControlPanel* controlPanel; ///< pointer to the control panel
-		#ifdef LOAD_RED_AND_BLUE_IMAGE_STACKS
-		std::shared_ptr<InputGrid> inputGrid_Blue; ///< input grid (blue channel)
-		std::shared_ptr<InputGrid> inputGrid_Red; ///< input grid (red channel)
-		#else
-		std::shared_ptr<InputGrid> inputGrid; ///< input grid
-		#endif
+		std::vector<GridGLView> grids;		///< Grids to display in the different views.
+
+		QOpenGLContext* context;		///< The context with which the scene has been created with
+		QOpenGLDebugLogger* debugLog;		///< The debug log reading messages from the GL_KHR_debug extension
+		ControlPanel* controlPanel;		///< pointer to the control panel
+		VisuBoxController* visuBoxController;	///< The controller for the visualization box
 		std::shared_ptr<OutputGrid> outputGrid; ///< output grid
-		std::shared_ptr<TetMesh> mesh; ///< creates a mesh around the queried point
-		GridControl* gridControl;
+		GridControl* gridControl;		///< The controller for the grid 'save' feature (generation)
+		OpenGLDebugLog* glOutput;		///< Output of the GL log.
+		QStatusBar* programStatusBar;		///< Status bar to show some info about the program.
 
-		std::size_t gridWidth; ///< grid size
-		std::size_t gridHeight; ///< grid size
-		std::size_t gridDepth; ///< grid size
+		DiscreteGrid::data_t minTexVal;			///< The minimum texture intensity to display
+		DiscreteGrid::data_t maxTexVal;			///< The maximum texture intensity to display
+		DiscreteGrid::data_t minColorVal;			///< The minimum color intensity to use for the color computation
+		DiscreteGrid::data_t maxColorVal;			///< The maximum color intensity to use for the color computation
+		std::size_t renderSize;			///< Number of primitives to render for the solid view mode.
 
-		std::size_t renderSize;
-		bool inputGridVisible; ///< does the user want to show the input grid ?
-		bool outputGridVisible; ///< does the user want to show the output grid ?
-		bool colorOrTexture; ///< do we use the RGB2HSV function or the color scale ?
-		uchar minTexVal;
-		uchar maxTexVal;
+		std::array<glm::vec3, 8> lightPositions; ///< Scene lights (positionned at the corners of the scene BB)
 
-		glm::vec3 planePosition;
-		glm::vec3 planeDepths;
-		glm::vec3 sceneBBPosition;
-		glm::vec3 sceneBBDiag;
-		DrawMode drawMode;
-		bool showVAOstate;
+		glm::vec<3, bool, glm::defaultp> planeVisibility; ///< Should we show each plane (X, Y, Z)
+		glm::vec3 planeDirection;		///< Cutting plane directions (-1 or 1 on each axis)
+		glm::vec3 planeDisplacement;		///< %age of the scene bounding box to place the planes
+		DiscreteGrid::bbox_t sceneBB;		///< Outer BB of the scene
+		DiscreteGrid::bbox_t sceneDataBB;	///< Outer BB of the scene's data
+		float clipDistanceFromCamera;		/// Distance from the camera to its clip plane
+		DiscreteGrid::bbox_t visuBox;		///< Used to restrict the view to a box with its coordinates
+		DrawMode drawMode;			///< Current 3D draw mode
+		DisplayChannel channels;		///< Channel(s) to display on the viewers
 
-		// VBO/VAO handles :
+		// VAO handles :
+		GLuint vaoHandle;
+		GLuint vaoHandle_VolumetricBuffers;
+		GLuint vaoHandle_boundingBox;
+		// VBO handles :
 		GLuint vboHandle_VertPos;
 		GLuint vboHandle_VertNorm;
 		GLuint vboHandle_VertTex;
 		GLuint vboHandle_Element;
 		GLuint vboHandle_PlaneElement;
-		GLuint vaoHandle;
-		GLuint vaoHandle_VolumetricBuffers;
+		GLuint vboHandle_SinglePlaneElement;
+		GLuint vboHandle_boundingBoxVertices;
+		GLuint vboHandle_boundingBoxIndices;
 
 		// Program handles :
 		GLuint programHandle_projectedTex;
 		GLuint programHandle_Plane3D;
 		GLuint programHandle_PlaneViewer;
 		GLuint programHandle_VolumetricViewer;
+		GLuint programHandle_BoundingBox;
 
 		/*************************************/
 		/*************************************/
 		/****** TEXTURE3D VISUALIZATION ******/
 		/*************************************/
 		/*************************************/
-		GLuint texHandle_InputGrid;			///< handle for glTexImage3D
-		GLuint texHandle_OutputGrid;			///< handle for the voxel grid's data
 		GLuint texHandle_ColorScaleGrid;		///< handle for the uploaded color scale
-		GLuint texHandle_tetrahedraNeighborhood;	///< handle for tetrhedra neighbors' texture
-		GLuint texHandle_tetrahedraFaceNormals;		///< handle for the per-face normals of each tetrahedra
-		GLuint texHandle_tetrahedraVertexPositions;	///< vertex positions for the tetrahedra
-		GLuint texHandle_tetrahedraVertexTexCoords;	///< vertex positions for the tetrahedra
-		GLuint texHandle_visibilityMap;			///< texture for visibility
+		VolMesh volumetricMesh;
 		GLuint vboHandle_Texture3D_VertPos;
 		GLuint vboHandle_Texture3D_VertNorm;
 		GLuint vboHandle_Texture3D_VertTex;
 		GLuint vboHandle_Texture3D_VertIdx;
-		unsigned int* visibleDomains;
-		GLsizei tetCount;
+		float* visibleDomains;			///< Array deciding which values are visible
+
 };
 
-inline int __GetOpenGLError ( char* szFile, int iLine );
+/// @brief Type-safe conversion of enum values to unsigned ints.
+inline unsigned int planeHeadingToIndex(planeHeading _heading);
 
-
+/// @brief Helper struct to store the indices of vertices that make a face, and compare two faces to one another.
 struct Face {
 	public:
 		inline Face ( unsigned int v0, unsigned int v1, unsigned int v2) {
@@ -244,12 +351,6 @@ struct Face {
 		inline unsigned int getVertex (unsigned int i) const { return v[i]; }
 		unsigned int v[3];
 };
-
-#if not defined( NDEBUG )
-	#define GetOpenGLError() __GetOpenGLError( ( char* )__FILE__, ( int )__LINE__ )
-#else
-	#define GetOpenGLError()
-#endif
 
 #endif // VIEWER_INCLUDE_SCENE_HPP_
 

@@ -1,6 +1,7 @@
 #include "../include/tetmesh.hpp"
 
 #include <random>
+#include <iomanip>
 
 TetMesh::TetMesh() {
 	// Initialises all the values of the mesh to their default values.
@@ -27,6 +28,10 @@ TetMesh& TetMesh::addInputGrid(const std::shared_ptr<InputGrid>& toAdd) {
 	return *this;
 }
 
+std::vector<std::shared_ptr<InputGrid>> TetMesh::getInputGrids() const {
+	return this->inputGrids;
+}
+
 TetMesh& TetMesh::setOutputGrid(const std::shared_ptr<OutputGrid>& toSet) {
 	this->outputGrid = toSet;
 	this->updateVoxelSizes();
@@ -42,7 +47,7 @@ TetMesh& TetMesh::populateOutputGrid(InterpolationMethods method) {
 	this->updateVoxelSizes();
 
 	// Check the dimensions of the voxel grid (if it can host voxels) :
-	DiscreteGrid::sizevec3 dims = this->outputGrid->getGridDimensions();
+	DiscreteGrid::sizevec3 dims = this->outputGrid->getResolution();
 
 	// If the grid to generate has "wrong" dimensions, warn and exit
 	if (dims.x == 0 || dims.y == 0 || dims.z == 0) {
@@ -52,8 +57,46 @@ TetMesh& TetMesh::populateOutputGrid(InterpolationMethods method) {
 
 	this->outputGrid->printInfo("After update, before data :", "[DEBUG]");
 
+	/*
+	std::string dummy;
+	std::cerr << "Do you want to continue ? (y/n) : ";
+	std::cin >> dummy;
+	while (dummy != "y" && dummy != "n") {
+		std::cerr << '\n' << "Wrong choice. Please input (y/n) : ";
+		std::cin >> dummy;
+	}
+	if (dummy == "n") {
+		return *this;
+	}
+	*/
+
 	// reserve and allocate space :
 	this->outputGrid->preallocateData();
+
+	std::cerr << "=====================================================================================\n";
+	std::cerr << "Listing input grids : " << '\n';
+	for (const auto& g : this->inputGrids) {
+		std::cerr << '\t' << g->getGridName() << '\n';
+		glm::mat4 g2w = g->getTransform_GridToWorld();
+		const DiscreteGrid::bbox_t& box = g->getBoundingBox();
+		DiscreteGrid::bbox_t::vec min = box.getMin();
+		DiscreteGrid::bbox_t::vec max = box.getMax();
+		std::cerr << '\t' << "Matrix (grid to world) :" << '\n';
+		std::cerr <<  "\t\t[" << std::setprecision(4) << std::fixed << g2w[0].x << ',' << g2w[0].y << ',' << g2w[0].z << ',' << g2w[0].w << "]\n";
+		std::cerr <<  "\t\t[" << std::setprecision(4) << std::fixed << g2w[1].x << ',' << g2w[1].y << ',' << g2w[1].z << ',' << g2w[1].w << "]\n";
+		std::cerr <<  "\t\t[" << std::setprecision(4) << std::fixed << g2w[2].x << ',' << g2w[2].y << ',' << g2w[2].z << ',' << g2w[2].w << "]\n";
+		std::cerr <<  "\t\t[" << std::setprecision(4) << std::fixed << g2w[3].x << ',' << g2w[3].y << ',' << g2w[3].z << ',' << g2w[3].w << "]\n";
+		g2w = g->getTransform_WorldToGrid();
+		std::cerr << '\t' << "Matrix (world to grid) :" << '\n';
+		std::cerr <<  "\t\t[" << std::setprecision(4) << std::fixed << g2w[0].x << ',' << g2w[0].y << ',' << g2w[0].z << ',' << g2w[0].w << "]\n";
+		std::cerr <<  "\t\t[" << std::setprecision(4) << std::fixed << g2w[1].x << ',' << g2w[1].y << ',' << g2w[1].z << ',' << g2w[1].w << "]\n";
+		std::cerr <<  "\t\t[" << std::setprecision(4) << std::fixed << g2w[2].x << ',' << g2w[2].y << ',' << g2w[2].z << ',' << g2w[2].w << "]\n";
+		std::cerr <<  "\t\t[" << std::setprecision(4) << std::fixed << g2w[3].x << ',' << g2w[3].y << ',' << g2w[3].z << ',' << g2w[3].w << "]\n";
+		std::cerr << '\t' << "Bounding box :" << '\n';
+		std::cerr << "\t\t[" << min.x << ',' << min.y << ',' << min.z << "]\n";
+		std::cerr << "\t\t[" << max.x << ',' << max.y << ',' << max.z << "]\n";
+	}
+	std::cerr << "=====================================================================================\n";
 
 	double maxRate = 1e-7;
 	bool isVerbose = false;
@@ -63,31 +106,45 @@ TetMesh& TetMesh::populateOutputGrid(InterpolationMethods method) {
 
 	std::cerr << "[LOG] TetMesh generating over [" << dims.x << ", " << dims.y << ", " << dims.z << "]\n";
 
+	this->outputGrid->getGridWriter()->preAllocateData();
+
+	// 'checkpoints' used to print coordinates in the loop :
+	std::size_t x1 = 0, x2 = dims.x / 2, x3 = dims.x - 1;
+	std::size_t y1 = 0, y2 = dims.y / 2, y3 = dims.y - 1;
+	std::size_t z1 = 0, z2 = dims.z / 2, z3 = dims.z - 1;
+	bool verbose = false;
+
 	std::cerr << "[LOG] Starting to iterate on the image to generate ... (" << dims.z << " levels)\n";
 	// iterate on the voxels of the output data grid :
 	for (std::size_t k = 0; k < dims.z; ++k) {
+		this->outputGrid->setCurrentSlice(k);
 		for (std::size_t j = 0; j < dims.y; ++j) {
 			for (std::size_t i = 0; i < dims.x; ++i) {
-				// debug verbose output
-				// isVerbose = ( (distribution(generator) < maxRate) ? true : false );
 				// generate 3D index :
 				DiscreteGrid::sizevec3 idx = DiscreteGrid::sizevec3(i,j,k);
-				//std::cerr << "[TRACE] Index : [" << idx.x << ", " << idx.y << ", " << idx.z << "]\n";
+
 				// get grid-space origin :
 				this->origin = this->outputGrid->getVoxelPositionGridSpace(idx, isVerbose);
 				// set world-space origin from it :
 				this->origin_WS = this->outputGrid->toWorldSpace(this->origin);
-				//std::cerr << "[TRACE] Pos_O : [" << this->origin.x << ", " << this->origin.y << ", " << this->origin.z << "]\n";
-				//std::cerr << "[TRACE] Pos_W : [" << this->origin_WS.x << ", " << this->origin_WS.y << ", " << this->origin_WS.z << "]\n";
+
+				verbose = false;
+				if (	(i == x1 || i == x2 || i == x3) &&
+					(j == y1 || j == y2 || j == y3) &&
+					(k == z1 || k == z2 || k == z3))
+				{
+					std::cerr << "[LOG]\tCheckpoint. Iteration [" << i << ',' << j << ',' << k <<
+						"] yielded position : {" << this->origin.x << ',' << this->origin.y <<
+						',' << this->origin.z << "}\n";
+					verbose = true;
+				}
 
 				// gather values from all input grids :
 				std::vector<DiscreteGrid::DataType> values;
 				for (const std::shared_ptr<InputGrid>& grid : this->inputGrids) {
-					glm::vec4 now = grid->toGridSpace(this->origin_WS);
-					//std::cerr << "[TRACE] Pos_I : [" << now.x << ", " << now.y << ", " << now.z << "]\n";
-					if (grid->includesPointWorldSpace(this->origin)) {
-						values.push_back(this->getInterpolatedValue(grid, method, idx));
-						//std::cerr << "[TRACE] Added value " << +values[values.size()-1] << " to the array\n";
+					// glm::vec4 now = grid->toGridSpace(this->origin_WS);
+					if (grid->includesPointWorldSpace(this->origin_WS, verbose)) {
+						values.push_back(this->getInterpolatedValue(grid, method, idx, verbose));
 					}
 				}
 
@@ -96,30 +153,29 @@ TetMesh& TetMesh::populateOutputGrid(InterpolationMethods method) {
 				std::for_each(std::begin(values), std::end(values), [&](DiscreteGrid::DataType v) {
 					globalVal += static_cast<DiscreteGrid::DataType>(v) / static_cast<DiscreteGrid::DataType>(values.size());
 				});
-				//std::cerr << "[TRACE] Adding " << +globalVal << " to the grid\n\n";
+
 				// set data :
-				this->outputGrid->setVoxelData(idx, globalVal);
+				this->outputGrid->setPixel(i, j, k, globalVal);
 			}
 		}
+
+		// #warning Writes data directly to disk here.
+		this->outputGrid->writeSlice();
+		std::cerr << '\n';
 	}
 
 	// Data should now be done being generated ...
 	return *this;
 }
 
-DiscreteGrid::DataType TetMesh::getInterpolatedValue(std::shared_ptr<InputGrid> grid, InterpolationMethods method, DiscreteGrid::sizevec3 idx) const {
+DiscreteGrid::DataType TetMesh::getInterpolatedValue(std::shared_ptr<InputGrid> grid, InterpolationMethods method, DiscreteGrid::sizevec3 idx, bool verbose) const {
 	switch (method) {
 		case InterpolationMethods::NearestNeighbor:
-			return this->interpolate_NearestNeighbor(grid);
+			return this->interpolate_NearestNeighbor(grid, verbose);
 		case InterpolationMethods::TriLinear:
-			return this->interpolate_TriLinear(grid);
-		case InterpolationMethods::TriCubic:
-		case InterpolationMethods::Barycentric:
-			std::cerr << "Method not implemented in final version of interpolation structure." << '\n';
-			return 0;
-			break;
+			return this->interpolate_TriLinear(grid, verbose);
 		default: // should never be encountered as long as all enum values are above, just to check
-			std::cerr << "Method not recognized.\n";
+			std::cerr << "[ERROR] Interpolation method not recognized.\n";
 			break;
 	}
 	return 0;
@@ -142,7 +198,7 @@ TetMesh& TetMesh::printInfo() {
 		// Print all of the grids' infos we can easily get :
 		for (const std::shared_ptr<InputGrid>& grid : this->inputGrids) {
 			std::cerr << "[INFO]\tInput grid named \"" << grid->getGridName() << "\" :\n";
-			DiscreteGrid::sizevec3 dims = grid->getGridDimensions();
+			DiscreteGrid::sizevec3 dims = grid->getResolution();
 			std::cerr << "[INFO]\t\tResolution : " << dims.x << 'x' << dims.y << 'x' << dims.z << '\n';
 			// Bounding box dimensions :
 			const DiscreteGrid::bbox_t& box = grid->getBoundingBox();
@@ -156,7 +212,7 @@ TetMesh& TetMesh::printInfo() {
 	if (this->outputGrid != nullptr) {
 		std::cerr << "[INFO]Output grid :\n";
 		std::cerr << "[INFO]\tOutput grid named \"" << this->outputGrid->getGridName() << "\" :\n";
-		DiscreteGrid::sizevec3 dims = this->outputGrid->getGridDimensions();
+		DiscreteGrid::sizevec3 dims = this->outputGrid->getResolution();
 		std::cerr << "[INFO]\t\tResolution : " << dims.x << 'x' << dims.y << 'x' << dims.z << '\n';
 
 		// Bounding box dimensions :
@@ -174,13 +230,14 @@ TetMesh& TetMesh::printInfo() {
 	return *this;
 }
 
-TetMesh::DataType TetMesh::interpolate_NearestNeighbor(const std::shared_ptr<InputGrid> grid) const {
+TetMesh::DataType TetMesh::interpolate_NearestNeighbor(const std::shared_ptr<InputGrid> grid, bool verbose) const {
 	// DiscreteGrid::fetchTexelWorldSpace already applies NearestNeighbor on the position
 	// given in argument, so we just fetch the value of the origin, giving us a NN interpolation :
-	return grid->fetchTexelWorldSpace(this->origin_WS);
+	if (verbose) { std::cerr << "[LOG]\t\t"; }
+	return grid->fetchTexelWorldSpace(this->origin_WS, verbose);
 }
 
-TetMesh::DataType TetMesh::interpolate_TriLinear(const std::shared_ptr<InputGrid> grid) const {
+TetMesh::DataType TetMesh::interpolate_TriLinear(const std::shared_ptr<InputGrid> grid, bool verbose) const {
 	// For this trilinear interpolation, the point will always be at the center of the mesh created earlier.
 	// However, we want this method to be as generic as possible, in the event of a catastrophic failure on our part.
 	// We want the point in the center of the mesh to be a trilinear interpolation of the corners of the mesh.
@@ -201,34 +258,23 @@ TetMesh::DataType TetMesh::interpolate_TriLinear(const std::shared_ptr<InputGrid
 	float coef_y = 0.5f;
 	float coef_z = 0.5f;
 
-#ifndef DIRECT_CASTING_FROM_FETCH
-	// Get values :
-	const TetMesh::DataType xyz = grid->fetchTexelWorldSpace(this->outputGrid->toWorldSpace(this->getVertexPosition(pxyz)));
-	const TetMesh::DataType xyZ = grid->fetchTexelWorldSpace(this->outputGrid->toWorldSpace(this->getVertexPosition(pxyZ)));
-	const TetMesh::DataType xYz = grid->fetchTexelWorldSpace(this->outputGrid->toWorldSpace(this->getVertexPosition(pxYz)));
-	const TetMesh::DataType xYZ = grid->fetchTexelWorldSpace(this->outputGrid->toWorldSpace(this->getVertexPosition(pxYZ)));
-	const TetMesh::DataType Xyz = grid->fetchTexelWorldSpace(this->outputGrid->toWorldSpace(this->getVertexPosition(pXyz)));
-	const TetMesh::DataType XyZ = grid->fetchTexelWorldSpace(this->outputGrid->toWorldSpace(this->getVertexPosition(pXyZ)));
-	const TetMesh::DataType XYz = grid->fetchTexelWorldSpace(this->outputGrid->toWorldSpace(this->getVertexPosition(pXYz)));
-	const TetMesh::DataType XYZ = grid->fetchTexelWorldSpace(this->outputGrid->toWorldSpace(this->getVertexPosition(pXYZ)));
-
-	float cyz = (1.f - coef_x) * static_cast<float>(xyz) + coef_x * static_cast<float>(Xyz);
-	float cyZ = (1.f - coef_x) * static_cast<float>(xyZ) + coef_x * static_cast<float>(XyZ);
-	float cYz = (1.f - coef_x) * static_cast<float>(xYz) + coef_x * static_cast<float>(XYz);
-	float cYZ = (1.f - coef_x) * static_cast<float>(xYZ) + coef_x * static_cast<float>(XYZ);
-
-	float cz = (1.f - coef_y) * cyz + coef_y * cYz;
-	float cZ = (1.f - coef_y) * cyZ + coef_y * cYZ;
-#else
 	// Get values from the grid :
-	float xyz = static_cast<float>(this->getVertexValue(grid, pxyz));
-	float xyZ = static_cast<float>(this->getVertexValue(grid, pxyZ));
-	float xYz = static_cast<float>(this->getVertexValue(grid, pxYz));
-	float xYZ = static_cast<float>(this->getVertexValue(grid, pxYZ));
-	float Xyz = static_cast<float>(this->getVertexValue(grid, pXyz));
-	float XyZ = static_cast<float>(this->getVertexValue(grid, pXyZ));
-	float XYz = static_cast<float>(this->getVertexValue(grid, pXYz));
-	float XYZ = static_cast<float>(this->getVertexValue(grid, pXYZ));
+	float xyz = static_cast<float>(this->getVertexValue(grid, pxyz, verbose));
+	float xyZ = static_cast<float>(this->getVertexValue(grid, pxyZ, verbose));
+	float xYz = static_cast<float>(this->getVertexValue(grid, pxYz, verbose));
+	float xYZ = static_cast<float>(this->getVertexValue(grid, pxYZ, verbose));
+
+	if (verbose) {
+		auto out = this->outputGrid->toWorldSpace(this->origin);
+		std::cerr << "[LOG]\t\tOrigin position : {" << this->origin.x << ',' << this->origin.y << ',' << this->origin.z << "}\n[LOG]\t\t\t";
+		auto g = grid->fetchTexelWorldSpace(out, verbose);
+		std::cerr << "[LOG]\t\tValue returned at origin : " << +g << '\n';
+	}
+
+	float Xyz = static_cast<float>(this->getVertexValue(grid, pXyz, verbose));
+	float XyZ = static_cast<float>(this->getVertexValue(grid, pXyZ, verbose));
+	float XYz = static_cast<float>(this->getVertexValue(grid, pXYz, verbose));
+	float XYZ = static_cast<float>(this->getVertexValue(grid, pXYZ, verbose));
 
 	float cyz = (1.f - coef_x) * xyz + coef_x * Xyz;
 	float cyZ = (1.f - coef_x) * xyZ + coef_x * XyZ;
@@ -237,7 +283,6 @@ TetMesh::DataType TetMesh::interpolate_TriLinear(const std::shared_ptr<InputGrid
 
 	float cz = (1.f - coef_y) * cyz + coef_y * cYz;
 	float cZ = (1.f - coef_y) * cyZ + coef_y * cYZ;
-#endif
 
 	DataType result = static_cast<DataType>((1.f - coef_z) * cz + coef_z * cZ);
 
@@ -257,8 +302,10 @@ glm::vec4 TetMesh::getVertexPosition(std::size_t idx) const {
 	return this->vertices[idx] + this->origin;
 }
 
-TetMesh::DataType TetMesh::getVertexValue(const std::shared_ptr<InputGrid> grid, std::size_t idx) const {
-	return grid->fetchTexelWorldSpace(this->outputGrid->toWorldSpace(this->getVertexPosition(idx)));
+TetMesh::DataType TetMesh::getVertexValue(const std::shared_ptr<InputGrid> grid, std::size_t idx, bool verbose) const {
+	auto out = this->outputGrid->toWorldSpace(this->getVertexPosition(idx));
+	if (verbose) { std::cerr << "[LOG]\t\t\t"; }
+	return grid->fetchTexelWorldSpace(out, verbose);
 }
 
 TetMesh& TetMesh::updateOutputGridData() {
@@ -310,7 +357,8 @@ void TetMesh::makeTetrahedra(glm::vec3 vxDims, std::size_t size) {
 					static_cast<float>(i) * vxDims.x,
 					static_cast<float>(j) * vxDims.y,
 					static_cast<float>(k) * vxDims.z,
-					1.
+					.0	// 0 here since those positions will serve
+					// as offsets applied to a world space position
 				);
 			}
 		}

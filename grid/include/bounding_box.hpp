@@ -120,7 +120,9 @@ class BoundingBox_General {
 			BoundingBox_General<DataType> newbb;
 			// For each element, convert to another space :
 			std::for_each(corners.begin(), corners.end(), [&](vec &v){
-				glm::vec4 pos = glm::vec4(static_cast<float>(v.x), static_cast<float>(v.y), static_cast<float>(v.z), 1.);
+				// 1 as 'w' because we want to take into account the possible
+				// translation at the end of the matrix :
+				glm::vec4 pos = glm::vec4(glm::convert_to<float>(v), 1.);
 				pos = transform * pos;
 				v.x = static_cast<DataType>(pos.x);
 				v.y = static_cast<DataType>(pos.y);

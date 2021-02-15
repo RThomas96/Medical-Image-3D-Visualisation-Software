@@ -2,8 +2,16 @@
 
 InputGrid::InputGrid(void){
 	this->gridName = "defaultInputGrid";
-	this->setModifiable(false);
+	this->transform_gridToWorld = glm::mat4(1.f);
+	this->transform_worldToGrid = glm::mat4(1.f);
+
+	// By default, calling setModifiable() would bypass virtual dispatch, thus
+	// calling InputGrid::setModifiable(), which did nothing. Se we set the
+	// value here 'in stone' in order to prevent modifications from happening.
+	this->modifiable = false;
 }
+
+InputGrid::~InputGrid() {}
 
 InputGrid& InputGrid::preAllocateImageData(sizevec3 dimensions) {
 	this->gridDimensions = dimensions;
@@ -39,9 +47,8 @@ InputGrid& InputGrid::setGrid(std::vector<DataType> imgData, sizevec3 dimensions
 	this->boundingBox.setMin(glm::vec3(.0f));
 	this->boundingBox.setMax(glm::vec3(static_cast<float>(dimensions.x), static_cast<float>(dimensions.y), static_cast<float>(dimensions.z)));
 	// Set the bounding box for data loaded :
-	this->recomputeBoundingBox(5);
-	// 5 is set in stone here, since Tulane told us under 5
-	// is to be considered noisy data (no information)
+	this->recomputeBoundingBox(this->dataThreshold);
+
 	return *this;
 }
 
@@ -50,3 +57,59 @@ InputGrid& InputGrid::setModifiable(bool b) { return *this; }
 InputGrid& InputGrid::setResolution(sizevec3 newRes) { return *this; }
 
 InputGrid& InputGrid::setBoundingBox(bbox_t renderWindow) { return *this; }
+
+OfflineInputGrid::OfflineInputGrid(void){
+	this->gridName = "defaultOfflineInputGrid";
+	this->setModifiable(false);
+	this->dimFile = nullptr;
+	this->imaFile = nullptr;
+}
+
+OfflineInputGrid::~OfflineInputGrid() {
+	if (this->dimFile) { this->dimFile->close(); }
+	if (this->imaFile) { this->imaFile->close(); }
+}
+
+OfflineInputGrid& OfflineInputGrid::fromInputGrid(const std::shared_ptr<InputGrid>& igrid) {
+	this->filenames = igrid->getFilenames();
+	this->boundingBox = igrid->getBoundingBox();
+	this->setTransform_GridToWorld(igrid->getTransform_GridToWorld());
+
+	char* bname = IO::FileBaseName(this->filenames[0].c_str());
+	const char* dname = IO::AppendExtension(bname, "dim");
+	const char* iname = IO::AppendExtension(bname, "ima");
+
+	this->dimFile = new std::ifstream(dname);
+	this->imaFile = new std::ifstream(iname);
+
+	// read number of voxels into image dimensions :
+	(*this->dimFile) >> this->gridDimensions.x;
+	(*this->dimFile) >> this->gridDimensions.y;
+	(*this->dimFile) >> this->gridDimensions.z;
+
+	// read info from the DIM file (extended with our properties)
+	std::string token, type;
+	do {
+		(*this->dimFile) >> token;
+		if (token.find("-type") != std::string::npos) { (*this->dimFile) >> type; }
+		else if (token.find("-dx") != std::string::npos) {(*this->dimFile) >> this->voxelDimensions.x;}
+		else if (token.find("-dy") != std::string::npos) {(*this->dimFile) >> this->voxelDimensions.y;}
+		else if (token.find("-dz") != std::string::npos) {(*this->dimFile) >> this->voxelDimensions.z;}
+		else {
+			std::cerr << "[ERROR] DIMReader - token "<< token <<" did not represent anything"<<'\n';
+		}
+	} while (not this->dimFile->eof());
+
+	return *this;
+
+}
+
+OfflineInputGrid::DataType OfflineInputGrid::getPixel(std::size_t x, std::size_t y, std::size_t z) const {
+	std::size_t idx = x + y * this->gridDimensions.x + z * this->gridDimensions.x * this->gridDimensions.y;
+
+	this->imaFile->seekg(idx*sizeof(DataType));
+	DataType storage = 0;
+	this->imaFile->read(reinterpret_cast<char*>(&storage), sizeof(DataType));
+
+	return storage;
+}

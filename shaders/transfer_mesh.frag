@@ -36,13 +36,16 @@ uniform sampler2D normals_translations;
 uniform sampler2D texture_coordinates;
 uniform sampler2D visibility_texture;
 uniform sampler2D neighbors;
-uniform sampler1D color_texture;
-uniform uint visiblity_map[256];
+uniform sampler2D visiblity_map;
+
+uniform float maxValData = 65535.f;
 
 // Phong :
 uniform float diffuseRef;
 uniform float specRef;
-uniform float shininess;
+// uniform float shininess;
+// Light positions
+uniform vec3 lightPositions[8];
 
 // Camera position world-space :
 uniform vec3 cam;
@@ -52,19 +55,38 @@ uniform vec3 voxelSize;
 
 uniform ivec3 gridSize;
 
+uniform float clipDistanceFromCamera;
+
 // Variables for visibility :
 uniform vec3 cut;
 uniform vec3 cutDirection;
-uniform vec3 clippingPoint;
-uniform vec3 clippingNormal;
 
 uniform mat4 mMat;
+uniform mat4 vMat;
+uniform mat4 pMat;
 
-vec4 voxelIdxToColor(in uvec3 ucolor) {
+uniform vec2 colorBounds;
+uniform vec2 textureBounds;
+
+uniform vec3 visuBBMin;
+uniform vec3 visuBBMax;
+uniform bool shouldUseBB;
+
+uniform uint nbChannels;
+
+uniform uint channelView;	// What channels do we visualize ? R+G = 1, R = 2, G = 3
+uniform double maxTexPossible;	// maximum tex value possible, variable depending on the data type
+
+vec4 voxelIdxToColor_1channel(in uvec3 ucolor) {
+	// Have the R and G color channels clamped to the min/max of the scale
+	// (mimics under or over-exposure)
+	float color_r = clamp(float(ucolor.r), colorBounds.x, colorBounds.y);
+	float color_g = clamp(float(ucolor.r), colorBounds.x, colorBounds.y);
 	// Compute the color as Brian's paper describes it :
 	float color_k = 2.5;
-	float eosin = float(ucolor.r)/255.;
-	float dna = float(ucolor.g)/255.; // B is on G channel because OpenGL only allows 2 channels upload to be RG, not RB
+	float sc = colorBounds.y - colorBounds.x;
+	float eosin = (color_r - colorBounds.x)/(sc);
+	float dna = (color_g - colorBounds.x)/(sc); // B is on G channel because OpenGL only allows 2 channels upload to be RG, not RB
 
 	float eosin_r_coef = 0.050;
 	float eosin_g_coef = 1.000;
@@ -86,49 +108,110 @@ vec4 voxelIdxToColor(in uvec3 ucolor) {
 	);
 }
 
+vec4 voxelIdxToColor_2channel(in uvec3 ucolor) {
+	// Have the R and G color channels clamped to the min/max of the scale
+	// (mimics under or over-exposure)
+	float color_r = clamp(float(ucolor.r), colorBounds.x, colorBounds.y);
+	float color_g = clamp(float(ucolor.g), colorBounds.x, colorBounds.y);
+	// Compute the color as Brian's paper describes it :
+	float color_k = 2.5;
+	float sc = colorBounds.y - colorBounds.x;
+	float eosin = (color_r - colorBounds.x)/(sc);
+	float dna = (color_g - colorBounds.x)/(sc); // B is on G channel because OpenGL only allows 2 channels upload to be RG, not RB
+
+	float eosin_r_coef = 0.050;
+	float eosin_g_coef = 1.000;
+	float eosin_b_coef = 0.544;
+
+	float hematoxylin_r_coef = 0.860;
+	float hematoxylin_g_coef = 1.000;
+	float hematoxylin_b_coef = 0.300;
+
+	float r_coef = eosin_r_coef;
+	float g_coef = eosin_g_coef;
+	float b_coef = eosin_b_coef;
+
+	return vec4(
+		exp(-hematoxylin_r_coef * dna * color_k) * exp(-eosin_r_coef * eosin * color_k),
+		exp(-hematoxylin_g_coef * dna * color_k) * exp(-eosin_g_coef * eosin * color_k),
+		exp(-hematoxylin_b_coef * dna * color_k) * exp(-eosin_b_coef * eosin * color_k),
+		1.
+	);
+}
+
+vec4 voxelIdxToColor(in uvec3 ucolor) {
+	if (channelView == 1u) {
+		if (nbChannels == 1u) { return voxelIdxToColor_1channel(ucolor); }
+		else { return voxelIdxToColor_2channel(ucolor); }
+	} else if (channelView == 2u) {
+		float alpha = 1.f;
+		float val = (float(ucolor.r) - colorBounds.x)/(colorBounds.y-colorBounds.x);
+		return vec4(val, val, val, alpha);
+	} else if (channelView == 3u) {
+		float alpha = 1.f;
+		float val = (float(ucolor.g) - colorBounds.x)/(colorBounds.y-colorBounds.x);
+		return vec4(val, val, val, alpha);
+	}
+}
+
 bool ComputeVisibility(vec3 point)
 {
-	mat4 iGrid = mMat;
-	vec4 point4 = vec4(point, 1.);
-	vec4 cut4 = vec4(cut, .0);
-	vec4 vis4 = (iGrid * point4) - cut4;
-	vis4.xyz *= cutDirection;
-	float xVis = vis4.x; // (point.x - cut.x)*cutDirection.x;
-	float yVis = vis4.y; // (point.y - cut.y)*cutDirection.y;
-	float zVis = vis4.z; // (point.z - cut.z)*cutDirection.z;
+	if (shouldUseBB == false) {
+		vec4 point4 = vec4(point, 1.);
+		vec4 cut4 = vec4(cut, 1.);
+		vec4 vis4 = point4 - cut4;
+		vis4.xyz *= cutDirection;
+		float xVis = vis4.x; // (point.x - cut.x)*cutDirection.x;
+		float yVis = vis4.y; // (point.y - cut.y)*cutDirection.y;
+		float zVis = vis4.z; // (point.z - cut.z)*cutDirection.z;
 
-	// vec3 pos = point - clippingPoint;
-	// float vis = dot( clippingNormal, pos );
-	if( xVis < 0.|| yVis < 0.|| zVis < 0. )
-		return false;
-	else return true;
+		vec4 clippingPoint = vec4(cam, 1.);
+		vec4 clippingNormal = normalize(inverse(vMat) * vec4(.0, .0, -1., .0));
+		clippingPoint += clippingNormal * clipDistanceFromCamera ;
+		vec4 pos = point4 - clippingPoint;
+		float vis = dot( clippingNormal, pos );
+
+		if( xVis < 0.|| yVis < 0.|| zVis < 0. || vis < .0)
+			return false;
+		else return true;
+	} else {
+		if (point.x < visuBBMin.x) { return false; }
+		if (point.y < visuBBMin.y) { return false; }
+		if (point.z < visuBBMin.z) { return false; }
+		if (point.x > visuBBMax.x) { return false; }
+		if (point.y > visuBBMax.y) { return false; }
+		if (point.z > visuBBMax.z) { return false; }
+		return true;
+	}
 }
 
 vec3 getWorldCoordinates( in ivec3 _gridCoord )
 {
-	return vec3( (float(_gridCoord.x)+0.5)*voxelSize.x,
-			(float(_gridCoord.y)+0.5)*voxelSize.y,
-			(float(_gridCoord.z)+0.5)*voxelSize.z );
+	vec4 p = vec4( (_gridCoord.x+0.5)*voxelSize.x,
+			(_gridCoord.y+0.5)*voxelSize.y,
+			(_gridCoord.z+0.5)*voxelSize.z, 1. );
+	return p.xyz;
 }
 
 ivec3 getGridCoordinates( in vec4 _P )
 {
-	return ivec3( int( _P.x/voxelSize.x ) ,
-				  int( _P.y/voxelSize.y ) ,
-				  int( _P.z/voxelSize.z ) );
+	vec4 pw = _P;
+	return ivec3( int( pw.x/voxelSize.x ) ,
+			int( pw.y/voxelSize.y ) ,
+			int( pw.z/voxelSize.z ) );
 }
 
 ivec2 Convert1DIndexTo2DIndex_Unnormed( in uint uiIndexToConvert, in int iWrapSize )
 {
-        int iY = int( uiIndexToConvert / uint( iWrapSize ) );
-        int iX = int( uiIndexToConvert - ( uint( iY ) * uint( iWrapSize ) ) );
+	int iY = int( uiIndexToConvert / uint( iWrapSize ) );
+	int iX = int( uiIndexToConvert - ( uint( iY ) * uint( iWrapSize ) ) );
 	return ivec2( iX, iY );
 }
 
 ivec2 Convert1DIndexTo2DIndex_Unnormed_Flipped( in uint uiIndexToConvert, in int iWrapSize )
 {
-        int iY = int( uiIndexToConvert / uint( iWrapSize ) );
-        int iX = int( uiIndexToConvert - ( uint( iY ) * uint( iWrapSize ) ) );
+	int iY = int( uiIndexToConvert / uint( iWrapSize ) );
+	int iX = int( uiIndexToConvert - ( uint( iY ) * uint( iWrapSize ) ) );
 	return ivec2( iY, iX );
 }
 
@@ -176,7 +259,6 @@ bool computeBarycentricCoordinates( in vec3 point, out float ld0 , out float ld1
 
 	return true;
 }
-
 
 vec3 crossProduct( vec3 a, vec3 b )
 {
@@ -279,7 +361,6 @@ bool computeBarycentricCoordinates(in vec3 point, out float ld0 , out float ld1 
 	return true;
 }
 
-
 bool computeBarycentricCoordinatesRecursive(in vec3 point, out float ld0 , out float ld1 , out float ld2 , out float ld3,
 					in int id_tetra_start, out int id_tetra_end, int max_iter, out vec3 result_text_coord )
 {
@@ -302,7 +383,6 @@ bool computeBarycentricCoordinatesRecursive(in vec3 point, out float ld0 , out f
 	return false;
 }
 
-
 void getFirstRayVoxelIntersection( in vec3 origin, in vec3 direction, out ivec3 v0, out vec3 t_n)
 {
 	// 	vec3 origin = o;
@@ -319,11 +399,11 @@ void getFirstRayVoxelIntersection( in vec3 origin, in vec3 direction, out ivec3 
 	v0 = getGridCoordinates(vec4(origin.xyz, 1.));
 
 	float xi = v0.x*voxelSize.x;
-	if( direction.x > 0  ) xi = xi + voxelSize.x;
+	if( direction.x > 0 ) xi = xi + voxelSize.x;
 	float yi = v0.y*voxelSize.y;
-	if( direction.y > 0  ) yi = yi + voxelSize.y;
+	if( direction.y > 0 ) yi = yi + voxelSize.y;
 	float zi = v0.z*voxelSize.z;
-	if( direction.z > 0  ) zi = zi + voxelSize.z;
+	if( direction.z > 0 ) zi = zi + voxelSize.z;
 	t_n = vec3 ( ((xi - origin.x)/direction.x), ((yi - origin.y)/direction.y), ((zi - origin.z)/direction.z) );
 
 	if( abs( direction.x ) < 0.00001 ) t_n.x = 100000000;
@@ -332,31 +412,41 @@ void getFirstRayVoxelIntersection( in vec3 origin, in vec3 direction, out ivec3 
 
 }
 
+vec3 phongComputation(vec4 position, vec3 normal, vec4 color, vec3 lightPos, vec3 phongDetails, mat3 lightDetails) {
+	vec3 lightDiffuse = lightDetails[0];
+	vec3 lightSpecular = lightDetails[1];
+
+	float phong_Diffuse = phongDetails.x;
+	float phong_Specular = phongDetails.y;
+	float phong_Shininess = phongDetails.z;
+
+	vec3 lm = normalize(lightPos - position.xyz);
+	vec3 n = normalize(normal);
+	vec3 r = 2.f * max(.0, dot(lm, n)) * n - lm;
+	vec3 v = normalize(cam - position.xyz);
+
+	float dotlmn = dot(lm, n);
+
+	return phong_Diffuse * max(.0, dotlmn) * lightDiffuse + phong_Specular * pow(max(.0, dot(r, v)), phong_Shininess) * lightSpecular;
+}
+
 void main (void) {
 	if( visibility > 3500. ) discard;
 
-	float epsilon = 0.0;
+	/*
+	float epsilon = 0.00; //3;
 	float distMin = min(barycentricCoords.x/largestDelta.x, min(barycentricCoords.y/largestDelta.y, barycentricCoords.z/largestDelta.z));
 
 	// Enables a 1-pass wireframe mode :
-	if (distMin < epsilon) {
-		colorOut = vec4(.6, .0, .6, 1.);
+	if (distMin < epsilon) {// && visibility > 0.) {
+		float factor = (visibility/3500.);
+		colorOut = vec4(1.-factor, factor, 1.-factor, 1.);
 		return;
 	}
-
-	/**
-	A little reminder here :
-		- all fragments processed here will be defined in world-space, along with the
-		  cutting planes, clipping point/normal etc
-		- however, the VShader outputs will be defined in grid space, aka without any
-		  transformation applied from the vertex_translations texture (or similar)
-
-	It remains to be seen if the 'P' input is defined in world space or grid space, since
-	it's the position we use to compute the ray's initial vector in world space.
-	**/
+	*/
 
 	// Default color of the fragment : cyan
-	colorOut = vec4(.0, .8, .8, 1.);
+	colorOut = vec4(.0, .0, .0, .0);
 
 	vec3 V = normalize(P.xyz - cam);
 
@@ -388,25 +478,16 @@ void main (void) {
 
 	//Find the first intersection of the ray with the grid
 	getFirstRayVoxelIntersection(Current_P, V, origin_voxel, t_next );
-	/*
-	// IT WORKS ! (up until now)
-	colorOut.xyz = Current_P/vec3(2048, 2048, 400);
-	return;
-	*/
 
+	//vec3 dt = vec3( abs(voxelSize.xyz/V.xyz) );
 	vec3 dt = vec3( abs(voxelSize.x/V.x), abs(voxelSize.y/V.y), abs(voxelSize.z/V.z) );
+
 
 	/***********************************************/
 
 	vec3 Current_text3DCoord;
-	/*
-	Current_text3DCoord = text3DCoord;
-	uint voxInd = texture(Mask, (Current_text3DCoord)).x;
-	colorOut = texture(color_texture, float(voxInd)/255.);
-	return;
-	*/
 
-	vec4 Pos;
+	vec4 Pos = vec4(0.,0.,0.,1.);
 
 	vec4 color = vec4 (0.6,0.,0.6,1.);
 
@@ -416,10 +497,13 @@ void main (void) {
 
 	next_voxel = origin_voxel;
 
-	vec3 n;
+	int maxFragIter = 100;
+	int maxTetrIter =  50;
+
+	vec3 n = vec3(0.,0.,0.);
 
 	int fragmentIteration = 0;
-	while( in_tet && !hit && fragmentIteration < 100 ){
+	while( in_tet && !hit && fragmentIteration < maxFragIter ){
 		fragmentIteration++;
 		// step in the smallest direction : x, y, or z
 		if( t_next.x < t_next.y && t_next.x < t_next.z ){
@@ -451,6 +535,10 @@ void main (void) {
 				n = normals[4];
 		}
 
+		// if (next_voxel.x < 0) { colorOut.x += .3; }
+		// if (next_voxel.y < 0) { colorOut.y += .3; }
+		// if (next_voxel.z < 0) { colorOut.z += .5; }
+
 		float ld0, ld1, ld2, ld3;
 		Current_P = Current_P + 0.0001*v_step*V; // guess it's for not self-intersecting ?
 		// If the barycentric coordinates are valid, then :
@@ -459,16 +547,23 @@ void main (void) {
 			vec3 voxel_center_P = getWorldCoordinates( next_voxel );
 			// Recursively traverse the texture, using barycentric coords to 'jump' to another
 			// tetrahedra if needed :
-			if( computeBarycentricCoordinatesRecursive( voxel_center_P, ld0, ld1, ld2, ld3, int(instanceId+0.5), id_tet, 50, Current_text3DCoord ) ){
+			if( computeBarycentricCoordinatesRecursive( voxel_center_P, ld0, ld1, ld2, ld3, int(instanceId+0.5), id_tet, maxTetrIter, Current_text3DCoord ) ){
 				// Get this voxel's value :
 				uvec3 voxelIndex = texture(Mask, Current_text3DCoord).xyz;
-				// If it's visible :
-				if (visiblity_map[voxelIndex.x] > 0u) {
+				uint rawVal = voxelIndex.r;
+				// If we only show green, make the visibility check on green :
+				if (channelView == 3u) { rawVal = voxelIndex.g; }
+				// Get texture size :
+				int width = textureSize(visiblity_map, 0).x;
+				// texture coords for visibility :
+				ivec2 tcfv = Convert1DIndexTo2DIndex_Unnormed(rawVal, width);
+				// If it's visible : (texelFetch here to take advantage of using ivec2 rather than normalized vec2)
+				if (texelFetch(visiblity_map, tcfv, 0).x > 0.) {
 					// Get the corresponding color :
 					// color = texelFetch(color_texture, int(voxelIndex.x), 0);
 					color = voxelIdxToColor(voxelIndex);
-					//Pos = vec4( (ld0*P0 + ld1*P1 + ld2*P2 + ld3*P3).xyz, 1. );
-					if(ComputeVisibility(voxel_center_P.xyz) )
+					Pos = vec4(Current_P.xyz, 1.); // vec4( (ld0*P0 + ld1*P1 + ld2*P2 + ld3*P3).xyz, 1. );
+					if( ComputeVisibility(voxel_center_P.xyz) )
 						hit = true;
 				}
 
@@ -478,35 +573,30 @@ void main (void) {
 			in_tet = false;
 		}
 
-
 	}
 
 	if(!in_tet || !hit) discard;
 
-	colorOut = vec4(.0, .0, .0, 1.);
+	// Phong details :
+	float phongAmbient = .5;
+	mat3 lightDetails = mat3(
+		vec3(.9, .9, .9),	// light diffuse color
+		vec3(1., 1., 1.),	// light specular color
+		vec3(.0, .0, .0)	// nothing
+	);
+	float factor = (1. - phongAmbient) / 3.;
+	vec3 phongDetails = vec3(
+		factor*.8,	// kd = diffuse coefficient
+		factor*.2,	// ks = specular coefficient
+		5.	// Shininess
+	);
+	colorOut.a = 1.;
+	colorOut.xyz += phongAmbient * color.xyz;
+	// Phong computation :
+	colorOut.xyz += phongComputation(Pos, n, color, lightPositions[0], phongDetails, lightDetails);
+	colorOut.xyz += phongComputation(Pos, n, color, lightPositions[4], phongDetails, lightDetails);
+	// Phong for camera light :
+	colorOut.xyz += phongComputation(Pos, n, color, cam, phongDetails, lightDetails);
 
-	vec3 p = Pos.xyz;
-	vec3 v = normalize(cam-p);
-	vec3 lightPos = vec3(-100, 500, 150);
-	vec3 lightSpecular = vec3(.0, .9, .0);
-
-	vec3 l = normalize (lightPos - p);
-	l.z = l.z*-1.;
-	l.y = l.y*-1.;
-
-	float ndotl = dot(l, n);
-	float diffuse = max(ndotl, 0.0);
-	vec3 r = 2. * ndotl * n - l;
-
-	float spec = max(dot(r, v), 0.0);
-	spec = pow (spec, shininess);
-	spec = max (0.0, spec);
-
-	vec3 LightContribution = diffuseRef * diffuse * color.xyz + specRef * spec * lightSpecular * 0.01;
-	float factor = 1.;
-	colorOut += factor * vec4(LightContribution.xyz, 1);
-
-	colorOut = color;
 	return;
-
 }

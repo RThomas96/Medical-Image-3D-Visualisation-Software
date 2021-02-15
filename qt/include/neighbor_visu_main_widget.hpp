@@ -6,13 +6,17 @@
 #include "../../viewer/include/scene.hpp"
 #include "./scene_control.hpp"
 #include "./grid_control.hpp"
+#include "./opengl_debug_log.hpp"
+#include "./user_settings_widget.hpp"
+#include "./loader_widget.hpp"
 
 #include <QWidget>
+#include <QMainWindow>
 #include <QGLViewer/qglviewer.h>
 
 #define ENABLE_QUAD_VIEW
 
-class MainWidget : public QWidget {
+class MainWidget : public QMainWindow {
 		Q_OBJECT
 	public:
 		MainWidget();
@@ -25,21 +29,46 @@ class MainWidget : public QWidget {
 		/// have them both square, and not too small.
 		bool eventFilter(QObject* obj, QEvent* e) override;
 	private:
-		Viewer* viewer; ///< The visualisation panel, drawing elements from the scene
-		PlanarViewer* viewer_planeX; ///< The visualisation of the grid on plane X
-		PlanarViewer* viewer_planeY; ///< The visualisation of the grid on plane Y
-		PlanarViewer* viewer_planeZ; ///< The visualisation of the grid on plane Z
-		ControlPanel* controlPanel; ///< The control panel at the bottom of the grid
-		GridControl* gridController; ///< The control panel for the grid to generate
-		QSlider* xPlaneDepth; ///< The depth of the cutting plane in the texture, on the X axis
-		QSlider* yPlaneDepth; ///< The depth of the cutting plane in the texture, on the Y axis
-		QSlider* zPlaneDepth; ///< The depth of the cutting plane in the texture, on the Z axis
-		Scene* scene; ///< The underlying scene, with the data to display
-		bool widgetSizeSet; ///< Checks if the widget size has been set before
-		std::vector<QObject*> strayObj; ///< Pointers to all temporary objects allocated in the setup process
-		void setXTexCoord(int coordX);
-		void setYTexCoord(int coordY);
-		void setZTexCoord(int coordZ);
+		Scene* scene;			///< The underlying scene, with the data to display
+
+		ViewerHeader3D* header3d;	///< The header for the 3D widget
+		Viewer* viewer;			///< The visualisation panel, drawing elements from the scene
+
+		ViewerHeader* headerX;		///< Header for the X plane viewer
+		PlanarViewer* viewer_planeX;	///< The visualisation of the grid on plane X
+
+		ViewerHeader* headerY;		///< Header for the Y plane viewer
+		PlanarViewer* viewer_planeY;	///< The visualisation of the grid on plane Y
+
+		ViewerHeader* headerZ;		///< Header for the Z plane viewer
+		PlanarViewer* viewer_planeZ;	///< The visualisation of the grid on plane Z
+
+		OpenGLDebugLog* glDebug;	///< Output for the OpenGL debug messages.
+
+		UserSettingsWidget* usettings;	///< User settings dialog.
+		GridLoaderWidget* loaderWidget;	///< Loader widget
+
+		ControlPanel* controlPanel;	///< The control panel at the bottom of the grid
+		bool widgetSizeSet;		///< Checks if the widget size has been set before
+		std::vector<QObject*> strayObj;	///< Pointers to all temporary objects allocated in the setup process
+
+		// UI Stuff :
+
+		QMenu* fileMenu;		///< The 'File' menu of the application
+		QMenu* viewMenu;		///< The 'View' menu of the application
+		QMenu* helpMenu;		///< The 'Help' menu of the application
+		QAction* action_addGrid;	///< Action to add grid
+		QAction* action_saveGrid;	///< Action to save grid
+		QAction* action_exitProgram;	///< Action to exit the program.
+		QAction* action_showVisuBox;	///< Action to show the visualization box controller
+		QAction* action_drawModeS;	///< Action to set the scene's draw mode to 'Solid'
+		QAction* action_drawModeV;	///< Action to set the scene's draw mode to 'Volumetric'
+		QAction* action_drawModeVB;	///< Action to set the scene's draw mode to 'Volumetric boxed'
+		QAction* action_showHelp3D;	///< Action to show the help dialog for the 3D viewer
+		QAction* action_showHelpPlane;	///< Action to show the help dialog for the planar viewers
+		QAction* action_showSettings;	///< Action to show user settings
+		QStatusBar* statusBar;		///< Status bar
+		QPushButton* showGLLog;		///< Button to open the QOpenGLDebugLog message box.
 };
 
 #endif // QT_INCLUDE_NEIGHBOR_VISU_MAIN_WIDGET_HPP_

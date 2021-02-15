@@ -19,7 +19,6 @@ out vec4 P3_VS;
 out vec3 text3DCoordP3_VS;
 out float instanceId_VS;
 out float visibility_VS;
-out float gl_ClipDistance[1];
 
 // --------------------------------------------------
 // Uniform variables:
@@ -31,12 +30,21 @@ uniform mat4 mMat;
 uniform mat4 vMat;
 uniform mat4 pMat;
 
+uniform vec3 cam;
+uniform vec3 volumeEpsilon;
+
 uniform vec4 clipPlane = vec4(.0, 1., .0, .0);
 
 uniform vec3 cut;
 uniform vec3 cutDirection;
-uniform vec3 clippingPoint;
-uniform vec3 clippingNormal;
+
+// Scalar to displace the camera's cutting plane :
+uniform float clipDistanceFromCamera;
+
+// 'Cube' visualization (restricted to a bounding box) :
+uniform vec3 visuBBMin;
+uniform vec3 visuBBMax;
+uniform bool shouldUseBB;
 
 /**
 * @brief function to convert 1D Index to 2D index (not normalized)
@@ -44,27 +52,42 @@ uniform vec3 clippingNormal;
 */
 ivec2 Convert1DIndexTo2DIndex_Unnormed( in uint uiIndexToConvert, in int iWrapSize )
 {
-	int iY = int( uiIndexToConvert / uint(iWrapSize) );
-	int iX = int( uiIndexToConvert - ( uint(iY) * uint(iWrapSize) ) );
+	int iY = int( uiIndexToConvert / unsigned int(iWrapSize) );
+	int iX = int( uiIndexToConvert - ( unsigned int(iY) * unsigned int(iWrapSize) ) );
 	return ivec2( iX, iY );
 }
 
 float ComputeVisibility(vec3 point)
 {
-	mat4 iGrid = mMat;
-	vec4 point4 = vec4(point, 1.);
-	vec4 cut4 = vec4(cut, .0);
-	vec4 vis4 = (iGrid * point4) - cut4;
-	vis4.xyz *= cutDirection;
-	float xVis = vis4.x; // ((point.x - cut.x))*cutDirection.x;
-	float yVis = vis4.y; // ((point.y - cut.y))*cutDirection.y;
-	float zVis = vis4.z; // ((point.z - cut.z))*cutDirection.z;
+	vec4 epsilon = vec4(volumeEpsilon, .0) ;
+	epsilon.xyz *= cutDirection;
+	if (shouldUseBB == false) {
+		vec4 point4 = vec4(point, 1.);
+		vec4 cut4 = vec4(cut, 1.) - epsilon;
+		vec4 vis4 = point4 - cut4;
+		vis4.xyz *= cutDirection;
+		float xVis = vis4.x; // ((point.x - cut.x))*cutDirection.x;
+		float yVis = vis4.y; // ((point.y - cut.y))*cutDirection.y;
+		float zVis = vis4.z; // ((point.z - cut.z))*cutDirection.z;
 
-	// vec3 pos = point - clippingPoint;
-	// float vis = dot( clippingNormal, pos );
-	if( xVis < 0.|| yVis < 0.|| zVis < 0. )
-		return 1000.;
-	else return 0.;
+		vec4 clippingPoint = vec4(cam, 1.);
+		vec4 clippingNormal = normalize(inverse(vMat) * vec4(.0, .0, -1., .0));
+		clippingPoint += clippingNormal * clipDistanceFromCamera;
+		vec4 pos = point4 - clippingPoint;
+		float vis = dot( clippingNormal, pos );
+
+		if( xVis < 0.|| yVis < 0.|| zVis < 0. || vis < .0)
+			return 1000.;
+		else return 0.;
+	} else {
+		if (point.x + epsilon.x < visuBBMin.x) { return 1000.; }
+		if (point.y + epsilon.y < visuBBMin.y) { return 1000.; }
+		if (point.z + epsilon.z < visuBBMin.z) { return 1000.; }
+		if (point.x - epsilon.x > visuBBMax.x) { return 1000.; }
+		if (point.y - epsilon.y > visuBBMax.y) { return 1000.; }
+		if (point.z - epsilon.z > visuBBMax.z) { return 1000.; }
+		return .0;
+	}
 }
 
 void main()
@@ -106,14 +129,5 @@ void main()
 
 	visibility_VS += ComputeVisibility(P0_VS.xyz);
 
-	// variable to toggle the use of the grid transformation matrix :
-	mat4 viewTransfo = mMat; // default : mat4(1.f);
-/*
-	viewTransfo = mat4(1., .0, .0, .0,
-				.0, 1., .0, .0,
-				.0, .0, 30., .0,
-				.0, .0, .0, 1.);
-*/
-	gl_Position = pMat*vMat*viewTransfo*P_VS;
-	gl_ClipDistance[0] = dot(P_VS, vMat * clipPlane);
+	gl_Position = pMat*vMat*P_VS;
 }

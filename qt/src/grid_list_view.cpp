@@ -66,7 +66,7 @@ void GridView::readValuesFromGrid() {
 	/// Grid name
 	std::string gridName = this->grid->getGridName();
 	/// Resolution to display to the user
-	std::string resolutionString = this->resolutionToString(this->grid->getGridDimensions());
+	std::string resolutionString = this->resolutionToString(this->grid->getResolution());
 	/// Size on disk and number of images : [TODO]
 	// std::size_t diskSize = this->grid->getDiskSize();
 	// std::size_t imagesLoaded = this->grid->getImagesLoaded().size();
