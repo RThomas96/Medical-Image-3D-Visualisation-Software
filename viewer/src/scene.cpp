@@ -459,7 +459,7 @@ void Scene::addTwoGrids(const std::shared_ptr<InputGrid> _gridR, const std::shar
 		}
 
 		gridTexture.data = combinedData;
-		gridView.gridTexture = this->uploadTexture3D_iterative(gridTexture, dimensions.x * dimensions.y * sizeof(DiscreteGrid::data_t));
+		gridView.gridTexture = this->uploadTexture3D(gridTexture);
 		delete[] combinedData;
 	}
 
