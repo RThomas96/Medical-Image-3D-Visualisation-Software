@@ -502,6 +502,10 @@ namespace IO {
 		this->dataBoundingBox = bbox_t();
 
 		std::cerr << "[LOG] precompute() : Image dimensions : " << this->imageDimensions.x << ',' << this->imageDimensions.y << ',' << this->imageDimensions.z << '\n';
+		std::size_t sizeBytes = width*height*depth*sizeof(GenericGridReader::data_t);
+		float sizeBytesf = static_cast<float>(sizeBytes);
+		std::cerr << "[LOG] precompute() : Bit size : " << sizeBytes << "B, " << sizeBytesf / 1024.f << "kB, "
+			<< sizeBytesf / 1024.f / 1024.f << "MB, " << sizeBytesf / 1024.f / 1024.f / 1024.f << "GB.\n";
 
 		return *this;
 	}
@@ -648,6 +652,15 @@ namespace IO {
 		std::size_t finalSize = width * height * depth;
 		// Resize the vector :
 		this->data.resize(finalSize);
+
+		std::size_t sizeBytes = width*height*depth*sizeof(GenericGridReader::data_t);
+		float sizeBytesf = static_cast<float>(sizeBytes);
+		std::cerr << "[LOG] preAllocate() : sizes  : Bit size : " << sizeBytes << "B, " << sizeBytesf / 1024.f << "kB, "
+			<< sizeBytesf / 1024.f / 1024.f << "MB, " << sizeBytesf / 1024.f / 1024.f / 1024.f << "GB.\n";
+		sizeBytes = this->data.size()*sizeof(data_t);
+		sizeBytesf = static_cast<float>(sizeBytes);
+		std::cerr << "[LOG] preAllocate() : Vector : Bit size : " << sizeBytes << "B, " << sizeBytesf / 1024.f << "kB, "
+			<< sizeBytesf / 1024.f / 1024.f << "MB, " << sizeBytesf / 1024.f / 1024.f / 1024.f << "GB.\n";
 
 		std::cerr << "[LOG] preallocate() : Downsampling level : ";
 		switch (this->downsampleLevel) {

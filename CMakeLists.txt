@@ -145,4 +145,20 @@ TARGET_LINK_LIBRARIES(neighbor_visu
 )
 # }}}
 
+ADD_EXECUTABLE(nvidia_problem
+	./nvidia/main.cpp
+	./nvidia/main_widget.hpp
+	./nvidia/main_widget.cpp
+	./nvidia/glwidget.hpp
+	./nvidia/glwidget.cpp
+)
+TARGET_LINK_LIBRARIES(nvidia_problem
+	PUBLIC Qt5::Core
+	PUBLIC Qt5::Gui
+	PUBLIC Qt5::OpenGL
+	PUBLIC Qt5::Widgets
+	PUBLIC ${OPENGL_LIBRARIES}
+	PUBLIC glm
+)
+
 # vim: foldmethod=marker : foldmarker={{{,}}} : tabstop=8

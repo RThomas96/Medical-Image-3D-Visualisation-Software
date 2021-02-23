@@ -169,6 +169,9 @@ void Scene::initGl(QOpenGLContext* _context) {
 	if (this->controlPanel) {
 		this->controlPanel->activatePanels();
 	}
+
+	DiscreteGrid::sizevec3 size(4096, 1024, 30);
+	//this->testTextureUpload(10, size);
 }
 
 void Scene::addOpenGLOutput(OpenGLDebugLog* glLog) {
@@ -406,41 +409,41 @@ void Scene::addTwoGrids(const std::shared_ptr<InputGrid> _gridR, const std::shar
 	}
 	GridGLView gridView(_gridR);
 
-	TextureUpload gridTexture{};
-	gridTexture.minmag.x = GL_NEAREST;
-	gridTexture.minmag.y = GL_NEAREST;
-	gridTexture.lod.y = -1000.f;
-	gridTexture.wrap.x = GL_CLAMP_TO_EDGE;
-	gridTexture.wrap.y = GL_CLAMP_TO_EDGE;
-	gridTexture.wrap.z = GL_CLAMP_TO_EDGE;
-	gridTexture.swizzle.r = GL_RED;
-	gridTexture.swizzle.g = GL_GREEN;
-	gridTexture.swizzle.b = GL_ZERO;
-	gridTexture.swizzle.a = GL_ONE;
-	gridTexture.alignment.x = 1;
-	gridTexture.alignment.y = 1;
+	TextureUpload _gridTex{};
+	_gridTex.minmag.x = GL_NEAREST;
+	_gridTex.minmag.y = GL_NEAREST;
+	_gridTex.lod.y = -1000.f;
+	_gridTex.wrap.x = GL_CLAMP_TO_EDGE;
+	_gridTex.wrap.y = GL_CLAMP_TO_EDGE;
+	_gridTex.wrap.z = GL_CLAMP_TO_EDGE;
+	_gridTex.swizzle.r = GL_RED;
+	_gridTex.swizzle.g = GL_GREEN;
+	_gridTex.swizzle.b = GL_ZERO;
+	_gridTex.swizzle.a = GL_ONE;
+	_gridTex.alignment.x = 1;
+	_gridTex.alignment.y = 1;
 
 	// Tex upload function :
 	auto dimensions = _gridR->getResolution();
 	if (dimensions.x > 0 && dimensions.y > 0 && dimensions.z > 0) {
-		gridTexture.level = 0;
+		_gridTex.level = 0;
 		#ifdef VISUALISATION_USE_UINT8
-		gridTexture.internalFormat = GL_RG8UI;
+		_gridTex.internalFormat = GL_RG8UI;
 		#endif
 		#ifdef VISUALISATION_USE_UINT16
-		gridTexture.internalFormat = GL_RG16UI;
+		_gridTex.internalFormat = GL_RG16UI;
 		#endif
-		gridTexture.size.x = dimensions.x;
-		gridTexture.size.y = dimensions.y;
-		gridTexture.size.z = dimensions.z;
-		gridTexture.format = GL_RG_INTEGER;
+		_gridTex.size.x = dimensions.x;
+		_gridTex.size.y = dimensions.y;
+		_gridTex.size.z = dimensions.z;
+		_gridTex.format = GL_RG_INTEGER;
 		#ifdef VISUALISATION_USE_UINT8
-		gridTexture.type = GL_UNSIGNED_BYTE;
+		_gridTex.type = GL_UNSIGNED_BYTE;
 		#endif
 		#ifdef VISUALISATION_USE_UINT16
-		gridTexture.type = GL_UNSIGNED_SHORT;
+		_gridTex.type = GL_UNSIGNED_SHORT;
 		#endif
-		gridTexture.data = _gridR->getDataPtr();
+		_gridTex.data = _gridR->getDataPtr();
 
 		// We should upload and combine all data here :
 		const DiscreteGrid::data_t* rData = _gridR->getDataPtr();
@@ -451,16 +454,31 @@ void Scene::addTwoGrids(const std::shared_ptr<InputGrid> _gridR, const std::shar
 		PRINTVAL(sizeof(DiscreteGrid::data_t));
 		std::size_t finalsize = elementCount * sizeof(DiscreteGrid::data_t);
 		PRINTVAL(finalsize);
-		DiscreteGrid::data_t* combinedData = new DiscreteGrid::data_t[elementCount * 2];
+		std::vector<DiscreteGrid::data_t> combinedData(elementCount * 2, DiscreteGrid::data_t(0));
 		// combine data :
 		for (std::size_t i = 0; i < elementCount; ++i) {
 			combinedData[i*2+0] = rData[i];
 			combinedData[i*2+1] = bData[i];
 		}
+		std::size_t sizeBytes = elementCount*2 * sizeof(DiscreteGrid::data_t);
+		float sizeBytesf = static_cast<float>(sizeBytes);
+		std::cerr << "[LOG] upload() : sizes  : Bytes size : " << sizeBytes << "B, " << sizeBytesf / 1024.f << "kB, "
+			<< sizeBytesf / 1024.f / 1024.f << "MB, " << sizeBytesf / 1024.f / 1024.f / 1024.f << "GB.\n";
+		sizeBytes = combinedData.size()*sizeof(DiscreteGrid::data_t);
+		sizeBytesf = static_cast<float>(sizeBytes);
+		std::cerr << "[LOG] upload() : Vector : Bytes size : " << sizeBytes << "B, " << sizeBytesf / 1024.f << "kB, "
+			<< sizeBytesf / 1024.f / 1024.f << "MB, " << sizeBytesf / 1024.f / 1024.f / 1024.f << "GB.\n";
 
-		gridTexture.data = combinedData;
-		gridView.gridTexture = this->uploadTexture3D(gridTexture);
-		delete[] combinedData;
+		_gridTex.data = combinedData.data();
+		_gridTex.printInfo();
+		gridView.gridTexture = this->uploadTexture3D(_gridTex);
+		combinedData.clear();
+
+		/*
+		_gridTex.data = nullptr;
+		_gridTex.printInfo();
+		gridView.gridTexture = this->uploadTexture3D_iterative(_gridTex, _gridR, _gridB);
+		*/
 	}
 
 	gridView.boundingBoxColor = glm::vec3(.4, .6, .3); // olive-colored by default
@@ -830,7 +848,7 @@ GLuint Scene::uploadTexture3D(const TextureUpload& tex) {
 	return texHandle;
 }
 
-GLuint Scene::uploadTexture3D_iterative(const TextureUpload &tex, std::size_t imgSize) {
+GLuint Scene::uploadTexture3D_iterative(const TextureUpload &tex, const std::shared_ptr<DiscreteGrid>& red, const std::shared_ptr<DiscreteGrid>& blue) {
 	if (this->context != nullptr) {
 		if (this->context->isValid() == false) {
 			throw std::runtime_error("No associated valid context");
@@ -869,6 +887,8 @@ GLuint Scene::uploadTexture3D_iterative(const TextureUpload &tex, std::size_t im
 	PRINTVAL(tex.size.y)
 	PRINTVAL(tex.size.z)
 
+	this->debugLog->pushGroup("Texture upload");
+
 	std::cerr << "[LOG] Allocating memory ...";
 	glTexImage3D(GL_TEXTURE_3D,		// GLenum : Target
 		static_cast<GLint>(tex.level),	// GLint  : Level of detail of the current texture (0 = original)
@@ -889,19 +909,105 @@ GLuint Scene::uploadTexture3D_iterative(const TextureUpload &tex, std::size_t im
 		std::cerr << "[ERROR] Application could not allocate enough memory.\n";
 	}
 
+	std::size_t imgSize = tex.size.x * tex.size.y;
+	std::vector<DiscreteGrid::data_t> image(imgSize * 2, DiscreteGrid::data_t(0));
+	const DiscreteGrid::data_t* redPtr = red->getDataPtr();
+	const DiscreteGrid::data_t* bluePtr = blue->getDataPtr();
+
 	// upload the texture slice by slice :
 	for (GLint z = 0; z < tex.size.z; ++z) {
 		std::cerr << "[LOG] Uploading slice " << z << " ... \n";
-		// cast data to void* (non-const), then to char*, then shift by imgSize, and then recast as void* :
-		void* ptr = reinterpret_cast<void*>((reinterpret_cast<char*>(const_cast<void*>(tex.data)) + z * imgSize));
-		glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, z, tex.size.x, tex.size.y, 1, tex.format, tex.type, ptr);
+		std::size_t baseIdx = z * imgSize;
+		for (std::size_t i = 0; i < imgSize; ++i) {
+			image[2*i + 0] = redPtr[baseIdx + i];
+			image[2*i + 1] = bluePtr[baseIdx + i];
+		}
+		glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, z, tex.size.x, tex.size.y, 1, tex.format, tex.type, image.data());
 		err = glGetError();
 		if (err == GL_OUT_OF_MEMORY) {
 			std::cerr << "[ERROR] Application could not allocate enough memory for slice " << z << "\n";
 		}
 	}
 
+	this->debugLog->popGroup();
+
 	return texHandle;
+}
+
+GLuint Scene::testTextureUpload(GLuint nbTex, DiscreteGrid::sizevec3 dims) {
+	GLuint *textures = new GLuint[nbTex];
+
+	glGenTextures(nbTex, textures);
+
+	// connect to cerr output, to have messages on the console
+	auto connection = QObject::connect(this->debugLog, &QOpenGLDebugLogger::messageLogged,
+	[this](const QOpenGLDebugMessage m) {
+		std::cerr << "OpenGL Message logged :";
+		this->openGLDebugLogger_inserter(m);
+	});
+
+	for (GLuint i = 0; i < nbTex; ++i) {
+		std::cerr << "Binding texture " << i << "/" << nbTex << " ... \n";
+		// Bind texture to Tex3D binding point :
+		glBindTexture(GL_TEXTURE_3D, textures[i]);
+		// Allocate texture :
+		glTexImage3D(
+			GL_TEXTURE_3D,
+			0,
+			GL_RG16UI,
+			dims.x,
+			dims.y,
+			dims.z,
+			0,
+			GL_RG_INTEGER,
+			GL_UNSIGNED_SHORT,
+			nullptr
+		);
+		Sleep(2000);
+	}
+
+	// Disconnect the cerr output
+	this->debugLog->disconnect(connection);
+
+	glDeleteTextures(nbTex, textures);
+
+	delete[] textures;
+
+	return 0;
+}
+
+void Scene::openGLDebugLogger_inserter(const QOpenGLDebugMessage message) {
+	QString src = "";
+	QString sev = "";
+	QString typ = "";
+	QFlags severity = message.severity();
+	QFlags type = message.type();
+	QFlags source = message.source();
+
+	if (severity & QOpenGLDebugMessage::Severity::NotificationSeverity)	{ sev += "{Notif}"; }
+	if (severity & QOpenGLDebugMessage::Severity::LowSeverity)		{ sev += "{Low  }"; }
+	if (severity & QOpenGLDebugMessage::Severity::MediumSeverity)		{ sev += "{Med  }"; }
+	if (severity & QOpenGLDebugMessage::Severity::HighSeverity)		{ sev += "{High }"; }
+
+	if (type & QOpenGLDebugMessage::Type::ErrorType)			{ typ += "[	ERROR     ]"; }
+	if (type & QOpenGLDebugMessage::Type::DeprecatedBehaviorType)		{ typ += "[ DEPRE. BEHAV. ]"; }
+	if (type & QOpenGLDebugMessage::Type::UndefinedBehaviorType)		{ typ += "[ UNDEF. BEHAV. ]"; }
+	if (type & QOpenGLDebugMessage::Type::PortabilityType)			{ typ += "[  PORTABILITY  ]"; }
+	if (type & QOpenGLDebugMessage::Type::PerformanceType)			{ typ += "[      PERF     ]"; }
+	if (type & QOpenGLDebugMessage::Type::OtherType)			{ typ += "[     OTHER	  ]"; }
+	if (type & QOpenGLDebugMessage::Type::MarkerType)			{ typ += "[     MARKER    ]"; }
+	if (type & QOpenGLDebugMessage::Type::GroupPushType)			{ typ += "[  GROUP PUSH   ]"; }
+	if (type & QOpenGLDebugMessage::Type::GroupPopType)			{ typ += "[   GROUP POP   ]"; }
+
+	if (source & QOpenGLDebugMessage::Source::APISource)			{ src += "[OpenGL  ]"; }
+	if (source & QOpenGLDebugMessage::Source::WindowSystemSource)		{ src += "[WinSys  ]"; }
+	if (source & QOpenGLDebugMessage::Source::ShaderCompilerSource)		{ src += "[ShaComp ]"; }
+	if (source & QOpenGLDebugMessage::Source::ThirdPartySource)		{ src += "[3rdParty]"; }
+	if (source & QOpenGLDebugMessage::Source::OtherSource)			{ src += "[Other   ]"; }
+
+	QString glMessage = sev + typ + src + " [ID:" + QString::number(message.id()) + "] : " + message.message() + "\n";
+
+	std::cerr << glMessage.toStdString() << '\n';
 }
 
 void Scene::launchSaveDialog() {

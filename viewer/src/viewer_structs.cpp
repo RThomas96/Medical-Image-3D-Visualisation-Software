@@ -1,5 +1,8 @@
 #include "../include/viewer_structs.hpp"
 
+#define CASE_GL(x) case x : std::cerr << #x ; break;
+#define DEFAULT_GL() default : std::cerr << "<unknown>" ; break;
+
 TextureUpload::TextureUpload(void) {
 	// All those values are the initial values of the parameters they represent. Taken from
 	// the OpenGL specification, version 4.5.
@@ -33,6 +36,125 @@ TextureUpload::TextureUpload(void) {
 	this->format = GL_RGBA;
 	this->type = GL_FLOAT;
 	this->data = nullptr;
+}
+
+void TextureUpload::printInfo() {
+	// Struct :
+	//  - minmag
+	//  - lod
+	//  - wrap
+	//  - swizzle
+	//  - alignment
+	//  - level
+	//  - internalformat
+	//  - size
+	//  - format
+	//  - type
+	std::cerr << "Info about the struct :" <<"\n";
+	std::cerr << "\t- minmag : [";
+	switch (this->minmag.x) {
+		CASE_GL(GL_NEAREST);
+		CASE_GL(GL_LINEAR);
+		CASE_GL(GL_NEAREST_MIPMAP_NEAREST);
+		CASE_GL(GL_NEAREST_MIPMAP_LINEAR);
+		CASE_GL(GL_LINEAR_MIPMAP_NEAREST);
+		CASE_GL(GL_LINEAR_MIPMAP_LINEAR);
+		DEFAULT_GL();
+	} std::cerr << ", ";
+	switch (this->minmag.y) {
+		CASE_GL(GL_NEAREST);
+		CASE_GL(GL_LINEAR);
+		DEFAULT_GL();
+	}
+	std::cerr << "],\n\t- lod : {" << this->lod.x << ", " << this->lod.y << "},\n\t- wrap : [";
+	switch (this->wrap.x) {
+		CASE_GL(GL_CLAMP_TO_EDGE);
+		CASE_GL(GL_CLAMP_TO_BORDER);
+		CASE_GL(GL_MIRRORED_REPEAT);
+		CASE_GL(GL_MIRROR_CLAMP_TO_EDGE);
+		CASE_GL(GL_REPEAT);
+		DEFAULT_GL();
+	} std::cerr << ", ";
+	switch (this->wrap.y) {
+		CASE_GL(GL_CLAMP_TO_EDGE);
+		CASE_GL(GL_CLAMP_TO_BORDER);
+		CASE_GL(GL_MIRRORED_REPEAT);
+		CASE_GL(GL_MIRROR_CLAMP_TO_EDGE);
+		CASE_GL(GL_REPEAT);
+		DEFAULT_GL();
+	} std::cerr << ", ";
+	switch (this->wrap.z) {
+		CASE_GL(GL_CLAMP_TO_EDGE);
+		CASE_GL(GL_CLAMP_TO_BORDER);
+		CASE_GL(GL_MIRRORED_REPEAT);
+		CASE_GL(GL_MIRROR_CLAMP_TO_EDGE);
+		CASE_GL(GL_REPEAT);
+		DEFAULT_GL();
+	}
+	std::cerr << "],\n\t- swizzle : [";
+	switch (this->swizzle.x) {
+		CASE_GL(GL_RED);
+		CASE_GL(GL_GREEN);
+		CASE_GL(GL_BLUE);
+		CASE_GL(GL_ALPHA);
+		CASE_GL(GL_ZERO);
+		CASE_GL(GL_ONE);
+		DEFAULT_GL();
+	} std::cerr << ", " ;
+	switch (this->swizzle.y) {
+		CASE_GL(GL_RED);
+		CASE_GL(GL_GREEN);
+		CASE_GL(GL_BLUE);
+		CASE_GL(GL_ALPHA);
+		CASE_GL(GL_ZERO);
+		CASE_GL(GL_ONE);
+		DEFAULT_GL();
+	} std::cerr << ", " ;
+	switch (this->swizzle.z) {
+		CASE_GL(GL_RED);
+		CASE_GL(GL_GREEN);
+		CASE_GL(GL_BLUE);
+		CASE_GL(GL_ALPHA);
+		CASE_GL(GL_ZERO);
+		CASE_GL(GL_ONE);
+		DEFAULT_GL();
+	} std::cerr << ", " ;
+	switch (this->swizzle.a) {
+		CASE_GL(GL_RED);
+		CASE_GL(GL_GREEN);
+		CASE_GL(GL_BLUE);
+		CASE_GL(GL_ALPHA);
+		CASE_GL(GL_ZERO);
+		CASE_GL(GL_ONE);
+		DEFAULT_GL();
+	}
+	std::cerr << "],\n\t- alignment : {" << this->alignment.x << ",	" << this->alignment.y <<
+		     "}\n\t- level : " << this->level << ",\n\t- internalFormat : ";
+	switch (this->internalFormat) {
+		CASE_GL(GL_R16UI);
+		CASE_GL(GL_R8UI);
+		CASE_GL(GL_RG8UI);
+		CASE_GL(GL_RG16UI);
+		DEFAULT_GL();
+	}
+	std::cerr << ",\n\t- size : [" << this->size.x << ", " << this->size.y << ", " << this->size.z
+		  << "],\n\t- format : ";
+	switch(this->format) {
+		CASE_GL(GL_RED);
+		CASE_GL(GL_RED_INTEGER);
+		CASE_GL(GL_RG);
+		CASE_GL(GL_RG_INTEGER);
+		DEFAULT_GL();
+	}
+	std::cerr << ",\n\t- type : ";
+	switch (this->type) {
+		CASE_GL(GL_UNSIGNED_BYTE);
+		CASE_GL(GL_UNSIGNED_SHORT);
+		CASE_GL(GL_BYTE);
+		CASE_GL(GL_SHORT);
+		DEFAULT_GL();
+	}
+	std::cerr << '\n';
 }
 
 TextureUpload::~TextureUpload() {}

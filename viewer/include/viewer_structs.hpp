@@ -28,6 +28,8 @@ struct TextureUpload {
 		TextureUpload& operator= (const TextureUpload&) = delete;
 		/// @b Move operator for the TextureUpload class
 		TextureUpload& operator= (TextureUpload&&) = delete;
+		/// @b Print info about the struct
+		void printInfo();
 		/// @b Default destructor
 		~TextureUpload();
 	public:

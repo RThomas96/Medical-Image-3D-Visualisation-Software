@@ -129,7 +129,10 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		/// @brief Upload a 3D texture with the given parameters.
 		GLuint uploadTexture3D(const TextureUpload& tex);
 		/// @brief Upload a 3D texture with the given parameters.
-		GLuint uploadTexture3D_iterative(const TextureUpload& tex, std::size_t imgSize);
+		GLuint uploadTexture3D_iterative(const TextureUpload& tex, const std::shared_ptr<DiscreteGrid>&, const std::shared_ptr<DiscreteGrid>&);
+		/// @brief Tests the texture upload capabilities of OpenGL
+		GLuint testTextureUpload(GLuint nbTex, DiscreteGrid::sizevec3 dims);
+		void openGLDebugLogger_inserter(const QOpenGLDebugMessage m);
 
 		/// @b Changes the texture coloration mode to the desired setting
 		void setDisplayChannel(DisplayChannel _c);
