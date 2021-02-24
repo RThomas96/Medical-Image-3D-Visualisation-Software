@@ -1,6 +1,7 @@
 #include "./main_widget.hpp"
 
 #include <QDateTime>
+#include <iostream>
 
 MainWidget::MainWidget(QWidget* parent) : QMainWindow(parent) {
 	this->_container = nullptr;
@@ -34,6 +35,7 @@ void MainWidget::addUserMessage(const QString _message) {
 	QString user_header= "[" + QDateTime::currentDateTime().toString(Qt::ISODate)
 			     + "] <i>User message</i> : ";
 	QString formatted_message = user_header + _message;
+	std::cerr << _message.toStdString() << '\n';
 	this->log_GLErrors->appendHtml(formatted_message);
 	return;
 }

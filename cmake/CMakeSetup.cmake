@@ -39,7 +39,7 @@ MESSAGE(STATUS "Currently compiling in ${CMAKE_BUILD_TYPE} mode.")
 IF(CMAKE_BUILD_TYPE MATCHES Debug)
 	SET(GCC_COMPILE_FLAGS "-gdwarf-2 --pedantic")
 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_COMPILE_FLAGS}")
-	#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fsanitize=undefined -fsanitize=null -fsanitize=return -fsanitize=bounds")
 ENDIF(CMAKE_BUILD_TYPE MATCHES Debug)
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")

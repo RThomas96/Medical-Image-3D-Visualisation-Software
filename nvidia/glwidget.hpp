@@ -5,6 +5,7 @@
 #include <QOpenGLWidget>
 #include <QOpenGLFunctions_4_5_Core>
 #include <QOpenGLDebugLogger>
+#include <QTimer>
 
 #include <glm/glm.hpp>
 
@@ -14,7 +15,7 @@
 
 class MainWidget; // fwd-declaration for func headers
 
-class MyGLWidget : public QOpenGLWidget {
+class MyGLWidget : public QOpenGLWidget, public QOpenGLFunctions_4_5_Core {
 		Q_OBJECT
 	public:
 		MyGLWidget(MainWidget* _main, QWidget* parent = nullptr);
@@ -30,16 +31,22 @@ class MyGLWidget : public QOpenGLWidget {
 		GLuint compileShader(GLenum type, std::string);
 		GLuint linkProgram(std::initializer_list<GLuint> shaders);
 	protected:
+		// Parent widget, where the GL log resides.
 		MainWidget* main;
-		// GL functions :
-		QOpenGLFunctions_4_5_Core* f;
 		// OpenGL-managed storage buffers / vao :
 		GLuint vaoHandle;
 		GLuint vboHandle;
 		GLuint idxHandle;
 		// Program ID :
 		GLuint progHandle;
+		// Qt's class to intercept messages emmitted when the GL_KHR_debug extension is enabled.
 		QOpenGLDebugLogger* logger;
+		// Texture handle :
+		GLuint texHandle;
+		// Has OpenGL been initialized ?
+		bool init;
+		// Automatic window refresh.
+		QTimer* timer_refresh;
 };
 
 // VShader source :
@@ -52,6 +59,7 @@ out vec4 globalPos;
 
 void main() {
 	globalPos=position;
+	gl_Position=globalPos;
 }
 )src";
 
@@ -63,8 +71,27 @@ in vec4 globalPos;
 // Single color output :
 out vec4 color;
 
+// Uniforms :
+// User-generated 3D texture :
+uniform usampler3D userGen;
+// Time (in [0.f, 1000.f]) :
+uniform float time;
+// Should show tex or not :
+uniform bool showTex;
+
 void main() {
-	color = globalPos.rgra;
+	if (showTex == true) {
+		vec3 pos = vec3(globalPos.xy, time);
+		vec4 rawTexVal = texture(userGen, pos);
+		color = vec4(
+			float(rawTexVal.x),
+			float(rawTexVal.y),
+			float(rawTexVal.z),
+			1.
+		);
+	} else {
+		color = vec4(globalPos.rg, time, 1.f);
+	}
 }
 )src";
 

@@ -146,12 +146,17 @@ TARGET_LINK_LIBRARIES(neighbor_visu
 # }}}
 
 ADD_EXECUTABLE(nvidia_problem
+	# Headers included to make them a
+	# compile-time dependency.
 	./nvidia/main.cpp
 	./nvidia/main_widget.hpp
 	./nvidia/main_widget.cpp
 	./nvidia/glwidget.hpp
 	./nvidia/glwidget.cpp
+	./nvidia/time.hpp
+	./nvidia/time.cpp
 )
+TARGET_COMPILE_FEATURES(nvidia_problem PUBLIC cxx_std_11)
 TARGET_LINK_LIBRARIES(nvidia_problem
 	PUBLIC Qt5::Core
 	PUBLIC Qt5::Gui
