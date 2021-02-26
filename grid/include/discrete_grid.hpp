@@ -14,8 +14,6 @@
 #include <string>
 #include <memory>
 
-#define INSERTION_BASED_COPY
-
 /// @brief Definition of a 3 dimensionnal vector to store this grid's dimensions, amongst other things.
 typedef glm::vec<3, std::size_t, glm::defaultp> svec3;
 
@@ -78,6 +76,7 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 		virtual std::shared_ptr<IO::GenericGridWriter> getGridWriter(void) const;
 		/// @brief Set the data reads/writes to be offline or not
 		virtual DiscreteGrid& setOffline(bool off = true);
+		virtual bool isGridOffline(void) { return this->isOffline; }
 
 		/// @brief Returns the given point (originally world space) in grid space.
 		virtual glm::vec4 toGridSpace(glm::vec4 pos_ws) const;

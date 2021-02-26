@@ -247,6 +247,21 @@ namespace IO {
 		return *this;
 	}
 
+	DIMReader::data_t DIMReader::getPixel(std::size_t i, std::size_t j, std::size_t k) {
+		if (this->imaFile != nullptr) {
+			auto lastPos = this->imaFile->tellg();
+			// FF to the file location specified :
+			this->imaFile->seekg(i*j*k*sizeof(data_t));
+			data_t val = 0;
+			this->imaFile->read((char*)&val, sizeof(data_t));
+			// put stream back to where it was
+			this->imaFile->seekg(lastPos);
+			return val;
+		} else {
+			return data_t(0);
+		}
+	}
+
 	DIMReader& DIMReader::loadImage() {
 		if (this->downsampleLevel != DownsamplingLevel::Original && this->interpolator == nullptr) {
 			std::cerr << "[ERROR] No interpolation structure was set in this reader, even though a downsample was required.\n";
@@ -616,6 +631,28 @@ namespace IO {
 		}
 
 		return *this;
+	}
+
+	StackedTIFFReader::data_t StackedTIFFReader::getPixel(std::size_t i, std::size_t j, std::size_t k) {
+		if (this->isAnalyzed == false) { return data_t(0); }
+
+		const std::pair<std::size_t, std::size_t>& file = this->sliceToFilename[k];
+		std::size_t idxFile = file.first;
+		std::size_t idxFrame = file.second;
+
+		this->openFile(this->filenames[idxFile]);
+
+		for (std::size_t i = 0; i < idxFrame; ++i) {
+			TinyTIFFReader_readNext(this->tiffFile);
+		}
+
+		data_t* imgData = new data_t[this->imageDimensions.x * this->imageDimensions.y];
+		TinyTIFFReader_getSampleData(this->tiffFile, imgData, 0);
+
+		data_t retVal = imgData[j*this->imageDimensions.x+i];
+		delete[] imgData;
+
+		return retVal;
 	}
 
 	StackedTIFFReader& StackedTIFFReader::preAllocateStorage() {

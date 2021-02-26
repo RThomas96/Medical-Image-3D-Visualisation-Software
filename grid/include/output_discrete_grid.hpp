@@ -27,24 +27,4 @@ class OutputGrid : public DiscreteGrid {
 		std::size_t currentSlice;
 };
 
-class OfflineOutputGrid : public OutputGrid {
-	public:
-		OfflineOutputGrid(void);
-		OfflineOutputGrid(sizevec3 resolution, bbox_t renderWindow);
-		OfflineOutputGrid(const OfflineOutputGrid& other) = delete;
-		OfflineOutputGrid(OfflineOutputGrid&& other) = delete;
-		OfflineOutputGrid& operator= (const OfflineOutputGrid& other) = delete;
-		OfflineOutputGrid& operator= (OfflineOutputGrid&& other) = delete;
-		~OfflineOutputGrid(void);
-
-		virtual bool hasData(void) const override;
-		virtual OfflineOutputGrid& preallocateData(void) override;
-		virtual OfflineOutputGrid& preallocateData(sizevec3 dims) override;
-		/// @b Override of the setPixel() function to directly write the data to file
-		virtual OfflineOutputGrid& setPixel(std::size_t i, std::size_t j, std::size_t k, DataType _data) override;
-	protected:
-		std::ofstream* outputDIM;
-		std::ofstream* outputIMA;
-};
-
 #endif // GRID_INCLUDE_OUTPUT_DISCRETE_GRID_HPP_

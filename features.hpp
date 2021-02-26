@@ -7,9 +7,6 @@ This selective 'enabling' will be done mostly through macros, or sometimes const
 the compiled code, by enabling or disabling certain parts of it.
 **/
 
-/// Allows for the image reader classes to log the file sizes read, or to be read.
-// #define IMAGE_READER_LOG_FILE_SIZE
-
 // #define GRID_DETAILS_ENABLE_TRANSFORMATION_DETAILS
 // #define GRID_DETAILS_ENABLE_TRANSFORMATION_PICKER
 // #define GRID_DETAILS_ENABLE_SIDE_PANEL

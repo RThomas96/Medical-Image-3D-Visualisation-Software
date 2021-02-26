@@ -110,10 +110,14 @@ DiscreteGrid::DataType DiscreteGrid::fetchTexelGridSpace(glm::vec4 pos_gs, bool 
 
 	DiscreteGrid::bbox_t::vec minBB = this->boundingBox.getMin();
 
+	/// If the grid is offline, we don't want to divide the indices (can be divided in case the grid was downsampled)
+	glm::vec3 vxDiv = this->voxelDimensions;
+	if (this->isOffline) { vxDiv = glm::vec3(1.f, 1.f, 1.f); }
+
 	// compute index of position :
-	std::size_t x = static_cast<std::size_t>(std::floor((pos_gs.x - minBB.x) / this->voxelDimensions.x));
-	std::size_t y = static_cast<std::size_t>(std::floor((pos_gs.y - minBB.y) / this->voxelDimensions.y));
-	std::size_t z = static_cast<std::size_t>(std::floor((pos_gs.z - minBB.z) / this->voxelDimensions.z));
+	std::size_t x = static_cast<std::size_t>(std::floor((pos_gs.x - minBB.x) / vxDiv.x));
+	std::size_t y = static_cast<std::size_t>(std::floor((pos_gs.y - minBB.y) / vxDiv.y));
+	std::size_t z = static_cast<std::size_t>(std::floor((pos_gs.z - minBB.z) / vxDiv.z));
 	if (verbose) { std::cerr << "index is [" << x << ',' << y << ',' << z << "] ... "; }
 	// fetch from grid :
 	return this->fetchTexelIndex(sizevec3(x,y,z), verbose);
@@ -131,11 +135,15 @@ DiscreteGrid::DataType DiscreteGrid::getPixel(std::size_t x, std::size_t y, std:
 		return DataType(0);
 	}
 
-	// sanity check, should be covered by the cases above :
-	if (this->data.size() < index) { return DataType(0); }
+	if (this->isOffline) {
+		return this->gridReader->getPixel(x,y,z);
+	} else {
+		// sanity check, should be covered by the cases above :
+		if (this->data.size() < index) { return DataType(0); }
 
-	// return data at this index :
-	else { return this->data[index]; }
+		// return data at this index :
+		else { return this->data[index]; }
+	}
 }
 
 DiscreteGrid& DiscreteGrid::setPixel(std::size_t x, std::size_t y, std::size_t z, DataType value) {

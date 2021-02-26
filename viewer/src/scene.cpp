@@ -169,9 +169,6 @@ void Scene::initGl(QOpenGLContext* _context) {
 	if (this->controlPanel) {
 		this->controlPanel->activatePanels();
 	}
-
-	DiscreteGrid::sizevec3 size(4096, 1024, 30);
-	//this->testTextureUpload(10, size);
 }
 
 void Scene::addOpenGLOutput(OpenGLDebugLog* glLog) {
@@ -397,6 +394,8 @@ void Scene::addGrid(const std::shared_ptr<InputGrid> _grid, std::string meshPath
 
 	this->updateVis();
 
+	_grid->setOffline(true);
+
 	this->updateBoundingBox();
 	this->resetVisuBox();
 }
@@ -494,6 +493,9 @@ void Scene::addTwoGrids(const std::shared_ptr<InputGrid> _gridR, const std::shar
 	this->grids.push_back(blueView);
 
 	this->updateVis();
+
+	_gridR->setOffline(true);
+	_gridB->setOffline(true);
 
 	this->updateBoundingBox();
 	this->resetVisuBox();
@@ -963,7 +965,6 @@ GLuint Scene::testTextureUpload(GLuint nbTex, DiscreteGrid::sizevec3 dims) {
 			GL_UNSIGNED_SHORT,
 			nullptr
 		);
-		Sleep(2000);
 	}
 
 	// Disconnect the cerr output
@@ -1418,7 +1419,7 @@ void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, 
 	//glm::vec2 texbounds{static_cast<float>(this->minColorVal), static_cast<float>(this->maxColorVal)};
 	glUniform2fv(location_textureBounds, 1, glm::value_ptr(texBounds));
 	glUniform1ui(colorOrTexture_Loc, this->colorOrTexture ? 1 : 0);
-	if (gridView.grid->hasData() == false) {
+	if (gridView.grid->hasData() == false && gridView.grid->isGridOffline() == false) {
 		glUniform1ui(drawMode_Loc, 2);
 	} else {
 		glUniform1ui(drawMode_Loc, this->drawMode);
@@ -1426,7 +1427,7 @@ void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, 
 	glUniform1ui(location_nbChannels, gridView.nbChannels);
 
 	// Textures :
-	if (gridView.grid->hasData() == true) {
+	if (gridView.grid->hasData() == true || gridView.grid->isGridOffline() == true) {
 		glActiveTexture(GL_TEXTURE0 + 0);
 		glEnable(GL_TEXTURE_3D);
 		glBindTexture(GL_TEXTURE_3D, gridView.gridTexture);

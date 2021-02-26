@@ -1,6 +1,10 @@
 #ifndef IMAGE_INCLUDE_READER_HPP_
 #define IMAGE_INCLUDE_READER_HPP_
 
+#ifdef IMPLEMENTED_SLICE_CACHE
+#include "./linked_image_cache.hpp"
+#endif
+
 #include "../../macros.hpp"
 #include "../../features.hpp"
 
@@ -101,6 +105,10 @@ namespace IO {
 			/// @note If none are provided, this will return an identity matrix.
 			virtual glm::mat4 getTransform(void) const;
 
+			/// @brief Get the pixel at the position (i,j,k)
+			/// @note By default, this is a pure virtual function.
+			virtual data_t getPixel(std::size_t i, std::size_t j, std::size_t k) = 0;
+
 			/// @brief Get the bounding box of the grid.
 			virtual bbox_t getBoundingBox(void) const;
 
@@ -113,11 +121,6 @@ namespace IO {
 
 			/// @brief Returns the texture min/max values contained in the image.
 			virtual glm::vec<2, data_t, glm::defaultp> getTextureLimits(void) const;
-
-#ifdef IMAGE_READER_LOG_FILE_SIZE
-			/// @brief Returns the number of bytes read, or to be read
-			virtual std::size_t getReadBytes(void) const;
-#endif
 
 			/// @brief Swaps the contents from this grid's data to the target vector.
 			virtual GenericGridReader& swapData(std::vector<data_t>& target);
@@ -165,10 +168,10 @@ namespace IO {
 			glm::vec<2, data_t, glm::defaultp> textureLimits;
 			/// @brief Structure to interpolate the data in the loaded images
 			std::shared_ptr<Interpolators::genericInterpolator<data_t>> interpolator;
-#ifdef IMAGE_READER_LOG_FILE_SIZE
-			/// @brief Logs the size on disk that was actually read
-			std::size_t readBytes;
-#endif
+		#ifdef IMPLEMENTED_SLICE_CACHE
+		protected:
+			slice_cache cachedSlices;
+		#endif
 	};
 
 	class DIMReader : public GenericGridReader {
@@ -185,6 +188,7 @@ namespace IO {
 			virtual DIMReader& openFile(const std::string& name) override;
 			/// @brief Load a slice of the grid into memory.
 			virtual DIMReader& loadSlice(std::size_t idx, std::vector<data_t>& tgt) override;
+			virtual data_t getPixel(std::size_t i, std::size_t j, std::size_t k) override;
 
 		protected:
 			/// @brief The DIM file
@@ -215,6 +219,9 @@ namespace IO {
 
 			/// @brief Loads the image at index 'idx' in the filenames in memory.
 			virtual StackedTIFFReader& loadSlice(std::size_t idx, std::vector<data_t>& tgt) override;
+
+			/// @brief Returns the point at the index (i,j,k).
+			virtual data_t getPixel(std::size_t i, std::size_t j, std::size_t k) override;
 
 		protected:
 			TinyTIFFReaderFile* tiffFile;	///< Currently opened file, TinyTIFF's handle.
