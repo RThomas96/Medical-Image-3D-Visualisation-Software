@@ -90,15 +90,15 @@ void GridLoaderWidget::setupWidgets() {
 	this->dsb_transformationA->setValue(.0);
 	// Voxel dimensions on X set to [0, 100] with 0 default (not loaded) :
 	this->dsb_transformationDX->setRange(.0, 100.);
-	this->dsb_transformationDX->setValue(.0);
+	this->dsb_transformationDX->setValue(1.);
 	this->dsb_transformationDX->setSingleStep(.01);
 	// Voxel dimensions on Y set to [0, 100] with 0 default (not loaded) :
 	this->dsb_transformationDY->setRange(.0, 100.);
-	this->dsb_transformationDY->setValue(.0);
+	this->dsb_transformationDY->setValue(1.);
 	this->dsb_transformationDY->setSingleStep(.01);
 	// Voxel dimensions on Z set to [0, 100] with 0 default (not loaded) :
 	this->dsb_transformationDZ->setRange(.0, 100.);
-	this->dsb_transformationDZ->setValue(.0);
+	this->dsb_transformationDZ->setValue(1.);
 	this->dsb_transformationDZ->setSingleStep(.01);
 
 	this->frame_load1channel = new QFrame;

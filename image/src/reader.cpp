@@ -117,6 +117,8 @@ namespace IO {
 		return *this;
 	}
 
+	DownsamplingLevel GenericGridReader::downsamplingLevel() { return this->downsampleLevel; }
+
 	GenericGridReader& GenericGridReader::loadImage() { return *this; }
 
 	const std::vector<GenericGridReader::data_t>& GenericGridReader::getGrid() const { return this->data; }

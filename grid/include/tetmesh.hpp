@@ -13,6 +13,7 @@
 #include <vector>
 #include <iostream>
 #include <memory>
+#include <chrono>
 
 #define DIRECT_CASTING_FROM_FETCH
 
@@ -30,7 +31,7 @@ enum InterpolationMethods {
 /// voxels, due to the limitations of the TextureStorage class.
 class TetMesh {
 	public:
-		using DataType = DiscreteGrid::data_t;
+		using data_t = DiscreteGrid::data_t;
 	public:
 		/// @brief Constructs a mesh, devoid of any associated image stack.
 		TetMesh(void);
@@ -54,15 +55,22 @@ class TetMesh {
 		/// @param method The interpolation method used to determine the values of the neighbor grid.
 		TetMesh& populateOutputGrid(InterpolationMethods method);
 
+		/// @brief Populate the output grid with data from the input grids.
+		/// @param method The interpolation method used to determine the values of the neighbor grid.
+		TetMesh& populateOutputGrid_RGB(InterpolationMethods method);
+
 		/// @brief Returns the interpolated value from 'grid', interpolated using 'method'
 		/// @param grid The grid to sample data from
 		/// @param method The interpolation method used to determine the value at the given point.
 		/// @param idx The index of the voxel to fetch the value from
-		DiscreteGrid::DataType getInterpolatedValue(std::shared_ptr<InputGrid> grid, InterpolationMethods method, DiscreteGrid::sizevec3 idx, bool verbose = false) const;
+		data_t getInterpolatedValue(std::shared_ptr<InputGrid> grid, InterpolationMethods method, DiscreteGrid::sizevec3 idx, bool verbose = false) const;
 
 		/// @brief Prints info about the current position and values of the neighbor grid.
 		/// @returns A reference to (this), to chain function calls.
 		TetMesh& printInfo(void);
+
+		/// @brief Returns the rate at which we can generate voxels.
+		double getGenerationRate(void) const;
 
 		/// @brief Destructs the mesh.
 		~TetMesh(void);
@@ -75,11 +83,23 @@ class TetMesh {
 		std::vector<glm::vec4> vertices; ///< Positions of the neighboring vertices
 
 		std::vector<std::vector<std::size_t>> tetrahedra; ///< Tetrahedra, each represented as the index of the vertices making it up stored in an array
+
+		/// @brief The rate at which we can generate voxels.
+		/// @details Taken as the time to iterate over all images, excluding the time to write said images to disk.
+		double generationRate;
 	private:
 		/// @brief Builds the mesh around the origin. Only called once, in the constructor.
 		/// @param vxdims Dimensions of a voxel
 		/// @param size The size of the neighborhood to create (1 for a 3-wide cube, 2 for a 5-wide, and so on)
 		void makeTetrahedra(glm::vec3 vxdims = glm::vec3(1.f), std::size_t size = 1);
+
+		/// @brief Colour the given data with a pseudo-h&e colouring.
+		/// @param _r Value for R channel
+		/// @param _b Value for B channel
+		/// @param _gr Grid pointer for R channel
+		/// @param _gb Grid pointer for B channel
+		/// @return A vec3 representing a RGB triplet in linear space.
+		glm::vec<3, data_t, glm::defaultp> h_and_e_colouring(data_t _r, std::shared_ptr<InputGrid>& _rg, data_t _b, std::shared_ptr<InputGrid>& _bg);
 
 		/// @brief Updates the relative positions of the grid to the sizes of the outputgrid's voxels.
 		TetMesh& updateVoxelSizes(void);
@@ -96,11 +116,11 @@ class TetMesh {
 
 		/// @brief Gets the value at vertex 'idx' from the grid in argument.
 		/// @returns The value at the vertex 'idx' in this mesh, in the grid queried.
-		DataType getVertexValue(const std::shared_ptr<InputGrid> grid, std::size_t idx, bool verbose = false) const;
+		data_t getVertexValue(const std::shared_ptr<InputGrid> grid, std::size_t idx, bool verbose = false) const;
 
 	protected:
-		TetMesh::DataType interpolate_NearestNeighbor(const std::shared_ptr<InputGrid> grid, bool verbose = false) const; ///< Interpolates a given point in initial space with the Nearest Neighbor technique
-		TetMesh::DataType interpolate_TriLinear(const std::shared_ptr<InputGrid> grid, bool verbose = false) const; ///< Interpolates a given point in initial space with the Trilinear technique
+		TetMesh::data_t interpolate_NearestNeighbor(const std::shared_ptr<InputGrid> grid, bool verbose = false) const; ///< Interpolates a given point in initial space with the Nearest Neighbor technique
+		TetMesh::data_t interpolate_TriLinear(const std::shared_ptr<InputGrid> grid, bool verbose = false) const; ///< Interpolates a given point in initial space with the Trilinear technique
 };
 
 #ifndef GLM_CROSS_VEC4_OVERRIDE

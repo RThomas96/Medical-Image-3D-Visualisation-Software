@@ -35,8 +35,8 @@ class Scene; // Fwd-declaration
 class GridControl : public QWidget {
 		Q_OBJECT
 	public:
-		/// @brief Default constructor of the class, providing valid DiscreteGrid, TetMesh and scene pointers.
-		GridControl(std::shared_ptr<DiscreteGrid> vxg, std::shared_ptr<TetMesh>& tetMesh, Scene* _scene, QWidget* parent = nullptr);
+		/// @brief Default constructor of the class, providing a valid scene pointer.
+		GridControl(std::shared_ptr<DiscreteGrid> _vg, std::shared_ptr<TetMesh> _tm, Scene* _scene, QWidget* parent = nullptr);
 		/// @brief Default destructor of the class. Removes the output grid and unregisters itself from the scene.
 		~GridControl(void);
 		/// @brief Ovverides the default show event in order to lock its size, disabling later resize events.
@@ -75,6 +75,21 @@ class GridControl : public QWidget {
 		void setupDoubleSpinBoxBounds(QDoubleSpinBox* dsb, bool lowOrMin);
 
 	protected:
+		// Different output grids available to the user :
+		std::shared_ptr<OutputGrid> output_R;
+		std::shared_ptr<OutputGrid> output_B;
+		std::shared_ptr<OutputGrid> output_RGB;
+		// Different interpolation structures available to the user :
+		std::shared_ptr<TetMesh> interpolator_R;
+		std::shared_ptr<TetMesh> interpolator_G;
+		std::shared_ptr<TetMesh> interpolator_RGB;
+
+		// Variables retrieved from the constructor :
+		std::shared_ptr<DiscreteGrid> voxelGrid; ///< Voxel grid to control.
+		std::shared_ptr<TetMesh> mesh; ///< Tetrahedral mesh responsible for the generation of the grid
+		Scene* scene; ///< The scene to control.
+
+		// Qt stuff :
 		InterpolationMethods method; ///< The method with which to interpolate the grid
 		QSpinBox* input_GridSizeX; ///< Controls the grid size along X
 		QSpinBox* input_GridSizeY; ///< Controls the grid size along Y
@@ -104,9 +119,6 @@ class GridControl : public QWidget {
 		QRadioButton* radioButton_2stacks; ///< Button to choose the output type as being two stacks
 		QRadioButton* radioButton_rgb; ///< Button to choose the output type as one RGB stack
 		std::vector<QObject*> strayObj; ///< All temporary objects allocated for the viewer, that need to be deleted
-		std::shared_ptr<DiscreteGrid> voxelGrid; ///< Voxel grid to control.
-		std::shared_ptr<TetMesh> mesh; ///< Tetrahedral mesh responsible for the generation of the grid
-		Scene* scene; ///< The scene to control.
 
 		#ifdef ENABLE_SINGLE_DIALOGBOX
 		QMessageBox* dialogBox;

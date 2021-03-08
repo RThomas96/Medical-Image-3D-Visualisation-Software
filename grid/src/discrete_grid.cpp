@@ -81,6 +81,7 @@ DiscreteGrid& DiscreteGrid::setGridReader(std::shared_ptr<IO::GenericGridReader>
 
 DiscreteGrid& DiscreteGrid::setGridWriter(std::shared_ptr<IO::GenericGridWriter> writer) {
 	this->gridWriter = writer;
+	this->gridWriter->setGrid(this->shared_from_this());
 	return *this;
 }
 
@@ -135,7 +136,7 @@ DiscreteGrid::DataType DiscreteGrid::getPixel(std::size_t x, std::size_t y, std:
 		return DataType(0);
 	}
 
-	if (this->isOffline) {
+	if (this->isOffline && this->gridReader->downsamplingLevel() != IO::DownsamplingLevel::Original) {
 		return this->gridReader->getPixel(x,y,z);
 	} else {
 		// sanity check, should be covered by the cases above :
@@ -397,7 +398,7 @@ void DiscreteGrid::printInfo(std::string message, std::string prefix) {
 	if (message.length() > 0) {
 		std::cerr << prefix << message << '\n';
 	}
-	std::cerr << prefix << '\t' << "Name : " << this->gridName << '\n';
+	std::cerr << prefix << "\tName : " << this->gridName << '\n';
 	std::cerr << prefix << "\tData threshold is " << +this->dataThreshold << '\n';
 	std::cerr << prefix << "\tGrid size is [" <<
 			this->gridDimensions.x << ", " <<

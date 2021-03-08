@@ -10,6 +10,7 @@
 class OutputGrid : public DiscreteGrid {
 	public:
 		OutputGrid(void);
+		OutputGrid(const std::shared_ptr<OutputGrid>&);
 		OutputGrid(sizevec3 resolution, bbox_t renderWindow);
 		OutputGrid(const OutputGrid& other) = delete;
 		OutputGrid(OutputGrid&& other) = delete;

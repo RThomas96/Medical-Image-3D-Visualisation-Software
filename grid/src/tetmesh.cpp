@@ -13,6 +13,8 @@ TetMesh::TetMesh() {
 	this->inputGrids.clear();
 	this->outputGrid = nullptr;
 
+	this->generationRate = -std::numeric_limits<double>::infinity();
+
 	this->makeTetrahedra();
 }
 
@@ -55,92 +57,46 @@ TetMesh& TetMesh::populateOutputGrid(InterpolationMethods method) {
 		return *this;
 	}
 
-	this->outputGrid->printInfo("After update, before data :", "[DEBUG]");
-
-	/*
-	std::string dummy;
-	std::cerr << "Do you want to continue ? (y/n) : ";
-	std::cin >> dummy;
-	while (dummy != "y" && dummy != "n") {
-		std::cerr << '\n' << "Wrong choice. Please input (y/n) : ";
-		std::cin >> dummy;
+	std::cerr << "[DEBUG] =====================================================================================\n";
+	std::cerr << "[DEBUG] TetMesh generating over [" << dims.x << ", " << dims.y << ", " << dims.z << "]\n";
+	std::cerr << "[DEBUG] Listing input grids : " << '\n';
+	for (const auto& g : this->inputGrids) {
+		g->printInfo("After update, before output preallocation :", "[DEBUG]\t");
 	}
-	if (dummy == "n") {
-		return *this;
-	}
-	*/
+	this->outputGrid->printInfo("After update, before preallocation :", "[DEBUG]\t");
+	std::cerr << "[DEBUG] =====================================================================================\n";
 
 	// reserve and allocate space :
 	this->outputGrid->preallocateData();
 
-	std::cerr << "=====================================================================================\n";
-	std::cerr << "Listing input grids : " << '\n';
-	for (const auto& g : this->inputGrids) {
-		std::cerr << '\t' << g->getGridName() << '\n';
-		glm::mat4 g2w = g->getTransform_GridToWorld();
-		const DiscreteGrid::bbox_t& box = g->getBoundingBox();
-		DiscreteGrid::bbox_t::vec min = box.getMin();
-		DiscreteGrid::bbox_t::vec max = box.getMax();
-		std::cerr << '\t' << "Matrix (grid to world) :" << '\n';
-		std::cerr <<  "\t\t[" << std::setprecision(4) << std::fixed << g2w[0].x << ',' << g2w[0].y << ',' << g2w[0].z << ',' << g2w[0].w << "]\n";
-		std::cerr <<  "\t\t[" << std::setprecision(4) << std::fixed << g2w[1].x << ',' << g2w[1].y << ',' << g2w[1].z << ',' << g2w[1].w << "]\n";
-		std::cerr <<  "\t\t[" << std::setprecision(4) << std::fixed << g2w[2].x << ',' << g2w[2].y << ',' << g2w[2].z << ',' << g2w[2].w << "]\n";
-		std::cerr <<  "\t\t[" << std::setprecision(4) << std::fixed << g2w[3].x << ',' << g2w[3].y << ',' << g2w[3].z << ',' << g2w[3].w << "]\n";
-		g2w = g->getTransform_WorldToGrid();
-		std::cerr << '\t' << "Matrix (world to grid) :" << '\n';
-		std::cerr <<  "\t\t[" << std::setprecision(4) << std::fixed << g2w[0].x << ',' << g2w[0].y << ',' << g2w[0].z << ',' << g2w[0].w << "]\n";
-		std::cerr <<  "\t\t[" << std::setprecision(4) << std::fixed << g2w[1].x << ',' << g2w[1].y << ',' << g2w[1].z << ',' << g2w[1].w << "]\n";
-		std::cerr <<  "\t\t[" << std::setprecision(4) << std::fixed << g2w[2].x << ',' << g2w[2].y << ',' << g2w[2].z << ',' << g2w[2].w << "]\n";
-		std::cerr <<  "\t\t[" << std::setprecision(4) << std::fixed << g2w[3].x << ',' << g2w[3].y << ',' << g2w[3].z << ',' << g2w[3].w << "]\n";
-		std::cerr << '\t' << "Bounding box :" << '\n';
-		std::cerr << "\t\t[" << min.x << ',' << min.y << ',' << min.z << "]\n";
-		std::cerr << "\t\t[" << max.x << ',' << max.y << ',' << max.z << "]\n";
-	}
-	std::cerr << "=====================================================================================\n";
-
-	double maxRate = 1e-7;
-	bool isVerbose = false;
-	std::random_device randDev;
-	std::mt19937 generator(randDev());
-	std::uniform_real_distribution<double> distribution(0., 0.99);
-
-	std::cerr << "[LOG] TetMesh generating over [" << dims.x << ", " << dims.y << ", " << dims.z << "]\n";
-
 	this->outputGrid->getGridWriter()->preAllocateData();
 
-	// 'checkpoints' used to print coordinates in the loop :
-	std::size_t x1 = 0, x2 = dims.x / 2, x3 = dims.x - 1;
-	std::size_t y1 = 0, y2 = dims.y / 2, y3 = dims.y - 1;
-	std::size_t z1 = 0, z2 = dims.z / 2, z3 = dims.z - 1;
 	bool verbose = false;
+
+	using clock_t = std::chrono::high_resolution_clock;
+	using duration_t = clock_t::duration;
+	using timepoint_t = clock_t::time_point;
+
+	timepoint_t start, end;
+	duration_t elapsed = duration_t::zero();
 
 	std::cerr << "[LOG] Starting to iterate on the image to generate ... (" << dims.z << " levels)\n";
 	// iterate on the voxels of the output data grid :
 	for (std::size_t k = 0; k < dims.z; ++k) {
 		this->outputGrid->setCurrentSlice(k);
+		start = clock_t::now();
 		for (std::size_t j = 0; j < dims.y; ++j) {
 			for (std::size_t i = 0; i < dims.x; ++i) {
 				// generate 3D index :
 				DiscreteGrid::sizevec3 idx = DiscreteGrid::sizevec3(i,j,k);
 
 				// get grid-space origin :
-				this->origin = this->outputGrid->getVoxelPositionGridSpace(idx, isVerbose);
+				this->origin = this->outputGrid->getVoxelPositionGridSpace(idx, verbose);
 				// set world-space origin from it :
 				this->origin_WS = this->outputGrid->toWorldSpace(this->origin);
 
-				verbose = false;
-				if (	(i == x1 || i == x2 || i == x3) &&
-					(j == y1 || j == y2 || j == y3) &&
-					(k == z1 || k == z2 || k == z3))
-				{
-					std::cerr << "[LOG]\tCheckpoint. Iteration [" << i << ',' << j << ',' << k <<
-						"] yielded position : {" << this->origin.x << ',' << this->origin.y <<
-						',' << this->origin.z << "}\n";
-					verbose = true;
-				}
-
 				// gather values from all input grids :
-				std::vector<DiscreteGrid::DataType> values;
+				std::vector<data_t> values;
 				for (const std::shared_ptr<InputGrid>& grid : this->inputGrids) {
 					// glm::vec4 now = grid->toGridSpace(this->origin_WS);
 					if (grid->includesPointWorldSpace(this->origin_WS, verbose)) {
@@ -149,26 +105,181 @@ TetMesh& TetMesh::populateOutputGrid(InterpolationMethods method) {
 				}
 
 				// do a basic mean of the values obtained from the different input grids :
-				DiscreteGrid::DataType globalVal = .0f;
-				std::for_each(std::begin(values), std::end(values), [&](DiscreteGrid::DataType v) {
-					globalVal += static_cast<DiscreteGrid::DataType>(v) / static_cast<DiscreteGrid::DataType>(values.size());
+				data_t globalVal = .0f;
+				std::for_each(std::begin(values), std::end(values), [&](data_t v) {
+					globalVal += static_cast<data_t>(v) / static_cast<data_t>(values.size());
 				});
 
 				// set data :
 				this->outputGrid->setPixel(i, j, k, globalVal);
 			}
 		}
+		end = clock_t::now();
+		elapsed += (end - start);
 
 		// #warning Writes data directly to disk here.
 		this->outputGrid->writeSlice();
 		std::cerr << '\n';
 	}
 
+	// Get the number of generated voxels :
+	double gigavxcount = static_cast<double>(dims.x * dims.y * dims.z) / (1.e9);
+
+	// cast duration to double floating point and divide by the size of voxels, to get a GVx/H rate :
+	this->generationRate = gigavxcount / std::chrono::duration_cast<std::chrono::duration<double, std::ratio<3600>>>(elapsed).count();
+
 	// Data should now be done being generated ...
 	return *this;
 }
 
-DiscreteGrid::DataType TetMesh::getInterpolatedValue(std::shared_ptr<InputGrid> grid, InterpolationMethods method, DiscreteGrid::sizevec3 idx, bool verbose) const {
+TetMesh& TetMesh::populateOutputGrid_RGB(InterpolationMethods method) {
+	// early returns :
+	if (this->outputGrid == nullptr) { return *this; }
+	if (this->inputGrids.size() == 0) { return *this; }
+
+	this->updateVoxelSizes();
+
+	// Check the dimensions of the voxel grid (if it can host voxels) :
+	DiscreteGrid::sizevec3 dims = this->outputGrid->getResolution();
+
+	// If the grid to generate has "wrong" dimensions, warn and exit
+	if (dims.x == 0 || dims.y == 0 || dims.z == 0) {
+		std::cerr << "Grid dimensions contain a zero !" << '\n';
+		return *this;
+	}
+
+	std::cerr << "[DEBUG] =====================================================================================\n";
+	std::cerr << "[DEBUG] TetMesh generating over [" << dims.x << ", " << dims.y << ", " << dims.z << "]\n";
+	std::cerr << "[DEBUG] Listing input grids : " << '\n';
+	for (const auto& g : this->inputGrids) {
+		g->printInfo("After update, before output preallocation :", "[DEBUG]\t");
+	}
+	this->outputGrid->printInfo("After update, before preallocation :", "[DEBUG]\t");
+	std::cerr << "[DEBUG] =====================================================================================\n";
+
+	// reserve and allocate space :
+	this->outputGrid->preallocateData();
+
+	this->outputGrid->getGridWriter()->preAllocateData();
+
+	bool verbose = false;
+
+	using clock_t = std::chrono::high_resolution_clock;
+	using duration_t = clock_t::duration;
+	using timepoint_t = clock_t::time_point;
+
+	timepoint_t start, end;
+	duration_t elapsed = duration_t::zero();
+
+	std::vector<data_t> imgdata;
+
+	std::shared_ptr<IO::GenericGridWriter> writer = this->outputGrid->getGridWriter();
+	if (writer == nullptr) {
+		std::cerr << "ERROR : no writer can be accessed\n";
+		return *this;
+	}
+
+	std::cerr << "[LOG] Starting to iterate on the image to generate ... (" << dims.z << " levels)\n";
+	// iterate on the voxels of the output data grid :
+	for (std::size_t k = 0; k < dims.z; ++k) {
+		this->outputGrid->setCurrentSlice(k);
+		imgdata.clear();
+		imgdata.resize(dims.x * dims.y * 3);
+		start = clock_t::now();
+		for (std::size_t j = 0; j < dims.y; ++j) {
+			for (std::size_t i = 0; i < dims.x; ++i) {
+				// generate 3D index :
+				DiscreteGrid::sizevec3 idx = DiscreteGrid::sizevec3(i,j,k);
+
+				// get grid-space origin :
+				this->origin = this->outputGrid->getVoxelPositionGridSpace(idx, verbose);
+				// set world-space origin from it :
+				this->origin_WS = this->outputGrid->toWorldSpace(this->origin);
+
+				// gather values from all input grids :
+				std::vector<data_t> values;
+				for (const std::shared_ptr<InputGrid>& grid : this->inputGrids) {
+					// glm::vec4 now = grid->toGridSpace(this->origin_WS);
+					if (grid->includesPointWorldSpace(this->origin_WS, verbose)) {
+						values.push_back(this->getInterpolatedValue(grid, method, idx, verbose));
+					}
+				}
+
+				if (values.size() != 2) {
+					std::cerr << "[ERROR] For iteration {" << i << ',' << j << ',' << k << "}, no ";
+					std::cerr << "RGB output was possible. [COLOR_OUT]\n";
+				}
+				glm::vec<3, data_t, glm::defaultp> color ;
+				if (values.size() > 0) {
+					color = this->h_and_e_colouring(values[0], this->inputGrids[0], values[1], this->inputGrids[1]);
+				} else {
+					color = glm::vec<3, data_t, glm::defaultp>(0, 0, 0);
+				}
+
+				// Copy into the img buffer :
+				for (std::size_t c = 0; c < 3; ++c) {
+					imgdata[j*dims.x*3 + i*3 + c] = color[c];
+				}
+			}
+		}
+		end = clock_t::now();
+		elapsed += (end - start);
+
+		// #warning Writes data directly to disk here.
+		std::cerr << "[LOG] Writing slice " << k << "/" << dims.z << " ...\n";
+		writer->writeSlice_RGB(imgdata, k);
+	}
+
+	// Get the number of generated voxels :
+	double gigavxcount = static_cast<double>(dims.x * dims.y * dims.z) / (1.e9);
+
+	// cast duration to double floating point and divide by the size of voxels, to get a GVx/H rate :
+	this->generationRate = gigavxcount / std::chrono::duration_cast<std::chrono::duration<double, std::ratio<3600>>>(elapsed).count();
+
+	// Data should now be done being generated ...
+	return *this;
+}
+
+glm::vec<3, TetMesh::data_t, glm::defaultp> TetMesh::h_and_e_colouring(data_t _r, std::shared_ptr<InputGrid> &_rg, data_t _b, std::shared_ptr<InputGrid> &_bg) {
+	glm::vec2 bounds_r = glm::convert_to<float>(_rg->getGridReader()->getTextureLimits());
+	glm::vec2 bounds_b = glm::convert_to<float>(_bg->getGridReader()->getTextureLimits());
+	glm::vec2 color_bounds = glm::vec2(
+		std::min(bounds_r.x, bounds_b.x),
+		std::max(bounds_r.y, bounds_b.y)
+	);
+
+	float color_r = static_cast<float>(_r);
+	float color_b = static_cast<float>(_b);
+	/* No need to discard or clamp for texels outside the texture range, we aren't doing alpha nor discards */
+	float color_k = 2.5;
+	float sc = color_bounds.y - color_bounds.x;
+	float eosin = (color_r - color_bounds.x) / sc;
+	float dna = (color_b - color_bounds.x) / sc;
+
+	float eosin_r_coef = 0.050;
+	float eosin_g_coef = 1.000;
+	float eosin_b_coef = 0.544;
+
+	float hematoxylin_r_coef = 0.860;
+	float hematoxylin_g_coef = 1.000;
+	float hematoxylin_b_coef = 0.300;
+
+	glm::vec3 real_color = glm::vec3(
+		std::exp(-hematoxylin_r_coef * dna * color_k) * std::exp(-eosin_r_coef * eosin * color_k),
+		std::exp(-hematoxylin_g_coef * dna * color_k) * std::exp(-eosin_g_coef * eosin * color_k),
+		std::exp(-hematoxylin_b_coef * dna * color_k) * std::exp(-eosin_b_coef * eosin * color_k)
+	);
+
+	glm::vec<3, data_t, glm::defaultp> color = glm::vec<3, data_t, glm::defaultp>(
+		static_cast<data_t>(color_bounds.x + real_color.x * sc),
+		static_cast<data_t>(color_bounds.x + real_color.y * sc),
+		static_cast<data_t>(color_bounds.x + real_color.z * sc)
+	);
+
+	return color;
+}
+
+TetMesh::data_t TetMesh::getInterpolatedValue(std::shared_ptr<InputGrid> grid, InterpolationMethods method, DiscreteGrid::sizevec3 idx, bool verbose) const {
 	switch (method) {
 		case InterpolationMethods::NearestNeighbor:
 			return this->interpolate_NearestNeighbor(grid, verbose);
@@ -222,7 +333,7 @@ TetMesh& TetMesh::printInfo() {
 		std::cerr << "[INFO]\t\tBounding box (initial space) : [" << min.x << 'x' << min.y << 'x' << min.z
 				<< "] to [" << max.x << 'x' << max.y << 'x' << max.z << "]\n";
 
-		std::cerr << "[INFO]\t\tThis grid is " << ((this->outputGrid->isModifiable()) ? "not modifiable" : "modifiable") << '\n';
+		std::cerr << "[INFO]\t\tThis grid is " << ((this->outputGrid->isModifiable()) ? "modifiable" : "not modifiable") << '\n';
 	} else {
 		std::cerr << "[INFO](No output grid yet)" << '\n';
 	}
@@ -230,14 +341,18 @@ TetMesh& TetMesh::printInfo() {
 	return *this;
 }
 
-TetMesh::DataType TetMesh::interpolate_NearestNeighbor(const std::shared_ptr<InputGrid> grid, bool verbose) const {
+double TetMesh::getGenerationRate() const {
+	return this->generationRate;
+}
+
+TetMesh::data_t TetMesh::interpolate_NearestNeighbor(const std::shared_ptr<InputGrid> grid, bool verbose) const {
 	// DiscreteGrid::fetchTexelWorldSpace already applies NearestNeighbor on the position
 	// given in argument, so we just fetch the value of the origin, giving us a NN interpolation :
 	if (verbose) { std::cerr << "[LOG]\t\t"; }
 	return grid->fetchTexelWorldSpace(this->origin_WS, verbose);
 }
 
-TetMesh::DataType TetMesh::interpolate_TriLinear(const std::shared_ptr<InputGrid> grid, bool verbose) const {
+TetMesh::data_t TetMesh::interpolate_TriLinear(const std::shared_ptr<InputGrid> grid, bool verbose) const {
 	// For this trilinear interpolation, the point will always be at the center of the mesh created earlier.
 	// However, we want this method to be as generic as possible, in the event of a catastrophic failure on our part.
 	// We want the point in the center of the mesh to be a trilinear interpolation of the corners of the mesh.
@@ -284,7 +399,7 @@ TetMesh::DataType TetMesh::interpolate_TriLinear(const std::shared_ptr<InputGrid
 	float cz = (1.f - coef_y) * cyz + coef_y * cYz;
 	float cZ = (1.f - coef_y) * cyZ + coef_y * cYZ;
 
-	DataType result = static_cast<DataType>((1.f - coef_z) * cz + coef_z * cZ);
+	data_t result = static_cast<data_t>((1.f - coef_z) * cz + coef_z * cZ);
 
 	return result;
 }
@@ -302,7 +417,7 @@ glm::vec4 TetMesh::getVertexPosition(std::size_t idx) const {
 	return this->vertices[idx] + this->origin;
 }
 
-TetMesh::DataType TetMesh::getVertexValue(const std::shared_ptr<InputGrid> grid, std::size_t idx, bool verbose) const {
+TetMesh::data_t TetMesh::getVertexValue(const std::shared_ptr<InputGrid> grid, std::size_t idx, bool verbose) const {
 	auto out = this->outputGrid->toWorldSpace(this->getVertexPosition(idx));
 	if (verbose) { std::cerr << "[LOG]\t\t\t"; }
 	return grid->fetchTexelWorldSpace(out, verbose);

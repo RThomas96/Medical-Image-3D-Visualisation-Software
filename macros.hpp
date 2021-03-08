@@ -19,6 +19,14 @@ using restrict_integer_check = typename std::enable_if<std::is_integral<T>::valu
 namespace glm {
 
 	template <typename out, typename in, qualifier prec>
+	GLM_FUNC_DECL GLM_CONSTEXPR glm::vec<2, out, prec> convert_to(glm::vec<2, in, prec> origin) {
+		return glm::vec<2, out, prec>(
+			static_cast<out>(origin.x),
+			static_cast<out>(origin.y)
+		);
+	}
+
+	template <typename out, typename in, qualifier prec>
 	GLM_FUNC_DECL GLM_CONSTEXPR glm::vec<3, out, prec> convert_to(glm::vec<3, in, prec> origin) {
 		return glm::vec<3, out, prec>(
 			static_cast<out>(origin.x),
