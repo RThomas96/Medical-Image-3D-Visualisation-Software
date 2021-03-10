@@ -91,6 +91,8 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 
 		/// @b Launches a save dialog, to generate a grid.
 		void launchSaveDialog();
+		/// @b Adds a 'dummy' grid, to draw its bounding box only.
+		void addDummyGrid(std::shared_ptr<DiscreteGrid>& _grid);
 
 		/// @b Deletes a grid from the array of grids to show
 		void deleteGrid(const std::shared_ptr<DiscreteGrid>& _grid);
@@ -175,6 +177,9 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void slotTogglePlaneDirectionZ();
 		/// @b Signals all planes they need to be inverted.
 		void toggleAllPlaneDirections();
+
+		std::vector<std::shared_ptr<DiscreteGrid>> getInputGrids(void) const;
+		std::size_t getInputGridCount(void) const;
 
 		/// @b computes the transformation matrix of the input grid
 		glm::mat4 computeTransformationMatrix(const std::shared_ptr<DiscreteGrid>& _grid) const;

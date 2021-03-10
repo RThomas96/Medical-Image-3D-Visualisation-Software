@@ -420,7 +420,7 @@ void Scene::addTwoGrids(const std::shared_ptr<InputGrid> _gridR, const std::shar
 	_gridTex.swizzle.b = GL_ZERO;
 	_gridTex.swizzle.a = GL_ONE;
 	_gridTex.alignment.x = 1;
-	_gridTex.alignment.y = 1;
+	_gridTex.alignment.y = 2;
 
 	// Tex upload function :
 	auto dimensions = _gridR->getResolution();
@@ -450,34 +450,21 @@ void Scene::addTwoGrids(const std::shared_ptr<InputGrid> _gridR, const std::shar
 		// allocate array of <size> :
 		std::size_t elementCount = dimensions.x * dimensions.y * dimensions.z;
 		PRINTVAL(elementCount);
-		PRINTVAL(sizeof(DiscreteGrid::data_t));
-		std::size_t finalsize = elementCount * sizeof(DiscreteGrid::data_t);
-		PRINTVAL(finalsize);
 		std::vector<DiscreteGrid::data_t> combinedData(elementCount * 2, DiscreteGrid::data_t(0));
 		// combine data :
 		for (std::size_t i = 0; i < elementCount; ++i) {
 			combinedData[i*2+0] = rData[i];
 			combinedData[i*2+1] = bData[i];
 		}
-		std::size_t sizeBytes = elementCount*2 * sizeof(DiscreteGrid::data_t);
+		std::size_t sizeBytes = combinedData.size() * sizeof(DiscreteGrid::data_t);
 		float sizeBytesf = static_cast<float>(sizeBytes);
 		std::cerr << "[LOG] upload() : sizes  : Bytes size : " << sizeBytes << "B, " << sizeBytesf / 1024.f << "kB, "
-			<< sizeBytesf / 1024.f / 1024.f << "MB, " << sizeBytesf / 1024.f / 1024.f / 1024.f << "GB.\n";
-		sizeBytes = combinedData.size()*sizeof(DiscreteGrid::data_t);
-		sizeBytesf = static_cast<float>(sizeBytes);
-		std::cerr << "[LOG] upload() : Vector : Bytes size : " << sizeBytes << "B, " << sizeBytesf / 1024.f << "kB, "
 			<< sizeBytesf / 1024.f / 1024.f << "MB, " << sizeBytesf / 1024.f / 1024.f / 1024.f << "GB.\n";
 
 		_gridTex.data = combinedData.data();
 		_gridTex.printInfo();
 		gridView.gridTexture = this->uploadTexture3D(_gridTex);
 		combinedData.clear();
-
-		/*
-		_gridTex.data = nullptr;
-		_gridTex.printInfo();
-		gridView.gridTexture = this->uploadTexture3D_iterative(_gridTex, _gridR, _gridB);
-		*/
 	}
 
 	gridView.boundingBoxColor = glm::vec3(.4, .6, .3); // olive-colored by default
@@ -1049,6 +1036,32 @@ void Scene::launchSaveDialog() {
 	gridControl->show();
 	// done
 	return;
+}
+
+std::vector<std::shared_ptr<DiscreteGrid>> Scene::getInputGrids() const {
+	std::vector<std::shared_ptr<DiscreteGrid>> igrids;
+
+	// For each GLView, if the grid is an
+	std::for_each(std::cbegin(this->grids), std::cend(this->grids), [&igrids](const GridGLView& v) {
+		if (std::dynamic_pointer_cast<InputGrid>(v.grid) != nullptr) {
+			igrids.push_back(v.grid);
+		}
+	});
+
+	return igrids;
+}
+
+std::size_t Scene::getInputGridCount() const {
+	std::size_t cnt = 0;
+
+	// For each GLView, if the grid is an
+	std::for_each(std::cbegin(this->grids), std::cend(this->grids), [&cnt](const GridGLView& v) {
+		if (std::dynamic_pointer_cast<InputGrid>(v.grid) != nullptr) {
+			cnt++;
+		}
+	});
+
+	return cnt;
 }
 
 void Scene::removeController() {
