@@ -10,3 +10,6 @@
 [submodule "QGLViewer"]
 	path = libQGLViewer
 	url = git@github.com:GillesDebunne/libQGLViewer.git
+[submodule "libtiff"]
+	path = libtiff
+	url = git@gitlab.com:libtiff/libtiff.git
