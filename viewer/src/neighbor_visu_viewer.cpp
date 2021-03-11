@@ -73,15 +73,15 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 		SHADER PROGRAMS
 		*/
 		case Qt::Key::Key_F1:
-			this->scene->setDisplayChannel(DisplayChannel::RedAndGreen);
+			this->scene->setDisplayChannel(ColorFunction::RedAndGreen);
 			this->update();
 		break;
 		case Qt::Key::Key_F2:
-			this->scene->setDisplayChannel(DisplayChannel::Red);
+			this->scene->setDisplayChannel(ColorFunction::SingleChannel);
 			this->update();
 		break;
 		case Qt::Key::Key_F3:
-			this->scene->setDisplayChannel(DisplayChannel::Green);
+			this->scene->setDisplayChannel(ColorFunction::Green);
 			this->update();
 		break;
 		case Qt::Key::Key_F5:

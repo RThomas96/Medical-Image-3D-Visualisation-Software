@@ -556,7 +556,6 @@ void GridControl::saveToFile() {
 
 	if (doubleoutput) {
 		if (rgboutput) {
-			#warning OutputGridRGB and GenericGridWriterRGB support missing !
 			writerRGB = generator(fileName.toStdString(), basePath);
 			this->voxelGrid->setOffline().setGridWriter(writerRGB);
 

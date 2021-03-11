@@ -1,5 +1,7 @@
 #include "../include/neighbor_visu_main_widget.hpp"
 
+#include "../include/color_control.hpp"
+
 #include <QLabel>
 #include <QEvent>
 #include <QSplitter>
@@ -17,6 +19,7 @@ MainWidget::MainWidget() {
 	this->widgetSizeSet = false;
 	this->usettings = nullptr;
 	this->loaderWidget = nullptr;
+	this->colorControl = nullptr;
 	// Query a user settings instance to initialize it :
 	UserSettings set = UserSettings::getInstance();
 }
@@ -50,6 +53,21 @@ MainWidget::~MainWidget() {
 	this->strayObj.clear();
 }
 
+void MainWidget::addColorControl() {
+	if (this->colorControl != nullptr) {
+		this->colorControl->show();
+		return;
+	}
+
+	this->colorControl = new ColorBoundControl(this->scene, this->controlPanel, this, nullptr);
+	this->colorControl->show();
+}
+
+void MainWidget::removeColorControl() {
+	this->colorControl = nullptr;
+	return;
+}
+
 void MainWidget::setupWidgets() {
 	this->glDebug = new OpenGLDebugLog;
 	this->scene = new Scene();
@@ -66,6 +84,7 @@ void MainWidget::setupWidgets() {
 	this->action_addGrid = new QAction("Open images");
 	this->action_saveGrid = new QAction("Save acquisition");
 	this->action_showVisuBox = new QAction("Show visu box controller");
+	this->action_showColorControl = new QAction("Show color controller");
 	this->action_exitProgram = new QAction("Exit program");
 	this->action_drawModeS = new QAction("Set draw mode to Solid");
 	this->action_drawModeV = new QAction("Set draw mode to Volumetric");
@@ -89,6 +108,7 @@ void MainWidget::setupWidgets() {
 	this->viewMenu->addAction(this->action_drawModeV);
 	this->viewMenu->addAction(this->action_drawModeVB);
 	this->viewMenu->addAction(this->action_showVisuBox);
+	this->viewMenu->addAction(this->action_showColorControl);
 	// help menu :
 	this->helpMenu = this->menuBar()->addMenu("&Help");
 	this->helpMenu->addAction(this->action_showHelp3D);
@@ -97,7 +117,7 @@ void MainWidget::setupWidgets() {
 	// Connect actions to the slots/functions in the program :
 	QObject::connect(this->action_addGrid, &QAction::triggered, [this](){
 		if (this->loaderWidget == nullptr) {
-			this->loaderWidget = new GridLoaderWidget(this->scene, this->viewer);
+			this->loaderWidget = new GridLoaderWidget(this->scene, this->viewer, this->controlPanel);
 			QObject::connect(this->loaderWidget, &QWidget::destroyed, [this]() {
 				this->loaderWidget = nullptr;
 			});
@@ -106,6 +126,7 @@ void MainWidget::setupWidgets() {
 	});
 	QObject::connect(this->action_saveGrid, &QAction::triggered, [this](){this->scene->launchSaveDialog();});
 	QObject::connect(this->action_showVisuBox, &QAction::triggered, [this](){this->scene->showVisuBoxController();});
+	QObject::connect(this->action_showColorControl, &QAction::triggered, this, &MainWidget::addColorControl);
 	QObject::connect(this->action_exitProgram, &QAction::triggered, this, &QMainWindow::close);
 	QObject::connect(this->action_drawModeS, &QAction::triggered, [this](){this->scene->setDrawMode(DrawMode::Solid);});
 	QObject::connect(this->action_drawModeV, &QAction::triggered, [this](){this->scene->setDrawMode(DrawMode::Volumetric);});

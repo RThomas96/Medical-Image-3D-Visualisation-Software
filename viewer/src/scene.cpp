@@ -75,7 +75,7 @@ Scene::Scene() {
 	this->sceneBB = DiscreteGrid::bbox_t(min, max);
 	this->clipDistanceFromCamera = 5.f;
 	this->drawMode = DrawMode::Solid;
-	this->channels = DisplayChannel::RedAndGreen;
+	this->channels = ColorFunction::RedAndGreen;
 
 	// Show all planes as default :
 	this->planeVisibility = glm::vec<3, bool, glm::defaultp>(true, true, true);
@@ -164,6 +164,9 @@ void Scene::initGl(QOpenGLContext* _context) {
 	this->texHandle_ColorScaleGrid = 0;
 	this->generateColorScale();
 	this->uploadColorScale();
+
+	this->minColorVal = 0;
+	this->maxColorVal = std::numeric_limits<DiscreteGrid::data_t>::max();
 
 	// if a control panel is attached, enable its sliders/buttons :
 	if (this->controlPanel) {
@@ -1240,7 +1243,7 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, cons
 		glUniform1i(location_visibilityMap, tex);
 		tex++;
 
-		uint chan = (this->channels == DisplayChannel::RedAndGreen) ? 1 : (this->channels == DisplayChannel::Red) ? 2 : 3;
+		uint chan = (this->channels == ColorFunction::RedAndGreen) ? 1 : (this->channels == ColorFunction::SingleChannel) ? 2 : 3;
 		glUniform1ui(location_channelView, chan);
 		glUniform1d(location_maxTexPossible, static_cast<double>(std::numeric_limits<DiscreteGrid::data_t>::max()));
 
@@ -1449,7 +1452,7 @@ void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, 
 
 	GLint location_channelView = glGetUniformLocation(this->programHandle_projectedTex, "channelView");
 	GLint location_maxTexPossible = glGetUniformLocation(this->programHandle_projectedTex, "maxTexPossible");
-	uint chan = (this->channels == DisplayChannel::RedAndGreen) ? 1 : (this->channels == DisplayChannel::Red) ? 2 : 3;
+	uint chan = (this->channels == ColorFunction::RedAndGreen) ? 1 : (this->channels == ColorFunction::SingleChannel) ? 2 : 3;
 	glUniform1ui(location_channelView, chan);
 	glUniform1d(location_maxTexPossible, static_cast<double>(std::numeric_limits<DiscreteGrid::data_t>::max()));
 
@@ -1493,7 +1496,7 @@ void Scene::prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane, cons
 
 	GLint location_channelView = glGetUniformLocation(this->programHandle_Plane3D, "channelView");
 	GLint location_maxTexPossible = glGetUniformLocation(this->programHandle_Plane3D, "maxTexPossible");
-	uint chan = (this->channels == DisplayChannel::RedAndGreen) ? 1 : (this->channels == DisplayChannel::Red) ? 2 : 3;
+	uint chan = (this->channels == ColorFunction::RedAndGreen) ? 1 : (this->channels == ColorFunction::SingleChannel) ? 2 : 3;
 	glUniform1ui(location_channelView, chan);
 	glUniform1d(location_maxTexPossible, static_cast<double>(std::numeric_limits<DiscreteGrid::data_t>::max()));
 
@@ -1565,7 +1568,7 @@ void Scene::prepPlane_SingleUniforms(planes _plane, planeHeading _heading, glm::
 
 	GLint location_channelView = glGetUniformLocation(this->programHandle_PlaneViewer, "channelView");
 	GLint location_maxTexPossible = glGetUniformLocation(this->programHandle_PlaneViewer, "maxTexPossible");
-	uint chan = (this->channels == DisplayChannel::RedAndGreen) ? 1 : (this->channels == DisplayChannel::Red) ? 2 : 3;
+	uint chan = (this->channels == ColorFunction::RedAndGreen) ? 1 : (this->channels == ColorFunction::SingleChannel) ? 2 : 3;
 	glUniform1ui(location_channelView, chan);
 	glUniform1d(location_maxTexPossible, static_cast<double>(std::numeric_limits<DiscreteGrid::data_t>::max()));
 
@@ -2166,7 +2169,7 @@ glm::vec3 Scene::getSceneCenter() {
 	return glm::vec3(.5, .5, .5);
 }
 
-void Scene::setDisplayChannel(DisplayChannel _c) { this->channels = _c; }
+void Scene::setDisplayChannel(ColorFunction _c) { this->channels = _c; }
 
 DiscreteGrid::bbox_t Scene::getSceneBoundingBox() const { return this->sceneBB; };
 
@@ -2184,6 +2187,18 @@ void Scene::slotSetMaxTexValue(DiscreteGrid::data_t val) { this->maxTexVal = val
 
 void Scene::slotSetMinColorValue(DiscreteGrid::data_t val) { this->minColorVal = val; }
 void Scene::slotSetMaxColorValue(DiscreteGrid::data_t val) { this->maxColorVal = val; }
+
+void Scene::setColor0(qreal r, qreal g, qreal b) {
+	glm::vec<3, qreal, glm::highp> qtcolor(r,g,b);
+	this->color0 = glm::convert_to<float>(qtcolor);
+	return;
+}
+
+void Scene::setColor1(qreal r, qreal g, qreal b) {
+	glm::vec<3, qreal, glm::highp> qtcolor(r,g,b);
+	this->color1 = glm::convert_to<float>(qtcolor);
+	return;
+}
 
 void Scene::setDrawMode(DrawMode _mode) {
 	this->drawMode = _mode;

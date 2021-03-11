@@ -16,11 +16,18 @@
 
 #define ENABLE_QUAD_VIEW
 
+class ColorBoundControl;
+
 class MainWidget : public QMainWindow {
 		Q_OBJECT
 	public:
 		MainWidget();
 		~MainWidget();
+
+	public slots:
+		void addColorControl();
+	public:
+		void removeColorControl();
 	protected:
 		/// @b Setup all widgets, and connect their signals.
 		void setupWidgets();
@@ -48,6 +55,8 @@ class MainWidget : public QMainWindow {
 		UserSettingsWidget* usettings;	///< User settings dialog.
 		GridLoaderWidget* loaderWidget;	///< Loader widget
 
+		ColorBoundControl* colorControl; ///< The widget that controls the colors of the scene
+
 		ControlPanel* controlPanel;	///< The control panel at the bottom of the grid
 		bool widgetSizeSet;		///< Checks if the widget size has been set before
 		std::vector<QObject*> strayObj;	///< Pointers to all temporary objects allocated in the setup process
@@ -61,6 +70,7 @@ class MainWidget : public QMainWindow {
 		QAction* action_saveGrid;	///< Action to save grid
 		QAction* action_exitProgram;	///< Action to exit the program.
 		QAction* action_showVisuBox;	///< Action to show the visualization box controller
+		QAction* action_showColorControl;	///< Action to show the color control
 		QAction* action_drawModeS;	///< Action to set the scene's draw mode to 'Solid'
 		QAction* action_drawModeV;	///< Action to set the scene's draw mode to 'Volumetric'
 		QAction* action_drawModeVB;	///< Action to set the scene's draw mode to 'Volumetric boxed'

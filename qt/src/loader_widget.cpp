@@ -9,16 +9,20 @@
 
 #include <iomanip>
 
-GridLoaderWidget::GridLoaderWidget(Scene* _scene, Viewer* _viewer, QWidget* parent) : QWidget(parent) {
+GridLoaderWidget::GridLoaderWidget(Scene* _scene, Viewer* _viewer, ControlPanel* cp, QWidget* parent) : QWidget(parent) {
 	this->setAttribute(Qt::WA_DeleteOnClose); // delete widget and resources on close.
 	this->basePath.setPath(QDir::homePath());
 	this->scene = _scene;
 	this->viewer = _viewer;
+	this->_cp = cp;
 	this->dsLevel = IO::DownsamplingLevel::Original;
 	this->readerR = nullptr;
 	this->readerG = nullptr;
 	this->inputGridR = nullptr;
 	this->inputGridG = nullptr;
+	this->groupbox_userLimits = nullptr;
+	this->spinbox_userLimitMin = nullptr;
+	this->spinbox_userLimitMax = nullptr;
 	this->setupWidgets();
 	this->setupLayouts();
 	this->setupSignals();
@@ -38,6 +42,8 @@ GridLoaderWidget::~GridLoaderWidget() {
 	this->button_loadTIF_1channel->disconnect();
 	this->button_loadTIF_2channel->disconnect();
 	this->button_loadGrids->disconnect();
+
+	delete this->groupbox_userLimits;
 
 	delete this->label_headerLoader;
 	delete this->label_load1channel;
@@ -125,6 +131,22 @@ void GridLoaderWidget::setupWidgets() {
 	this->radioButton_min = new QRadioButton("Min value");
 	this->radioButton_max = new QRadioButton("Max value");
 
+	this->groupbox_userLimits = new QGroupBox("Predefined minimum and maximum intensities to evaluate");
+	this->groupbox_userLimits->setCheckable(true);
+	this->groupbox_userLimits->setChecked(false);
+
+	this->label_roiMin = new QLabel("Minimum intensity : ");
+	this->label_roiMax = new QLabel("Minimum intensity : ");
+
+	this->spinbox_userLimitMin = new QSpinBox;
+	this->spinbox_userLimitMin->setMinimum(static_cast<int>(std::numeric_limits<DiscreteGrid::data_t>::lowest()));
+	this->spinbox_userLimitMin->setMaximum(static_cast<int>(std::numeric_limits<DiscreteGrid::data_t>::max()));
+	this->spinbox_userLimitMin->setValue(static_cast<int>(std::numeric_limits<DiscreteGrid::data_t>::lowest()));
+	this->spinbox_userLimitMax = new QSpinBox;
+	this->spinbox_userLimitMax->setMinimum(static_cast<int>(std::numeric_limits<DiscreteGrid::data_t>::lowest()));
+	this->spinbox_userLimitMax->setMaximum(static_cast<int>(std::numeric_limits<DiscreteGrid::data_t>::max()));
+	this->spinbox_userLimitMax->setValue(static_cast<int>(std::numeric_limits<DiscreteGrid::data_t>::max()));
+
 	this->groupBox_interpolator->setDisabled(true);
 	this->radioButton_original->setChecked(true);
 	this->radioButton_nn->setChecked(true);
@@ -138,6 +160,7 @@ void GridLoaderWidget::setupLayouts() {
 	this->layout_transfoDetails = new QGridLayout;
 	this->layout_downsampling = new QHBoxLayout;
 	this->layout_interpolator = new QGridLayout;
+	this->layout_roiSelection = new QGridLayout;
 
 	// layout and frame for the 1-channel loader :
 	this->layout_load1channel->addWidget(this->label_load1channel);
@@ -172,12 +195,20 @@ void GridLoaderWidget::setupLayouts() {
 	this->layout_interpolator->addWidget(this->radioButton_max, 1, 1);
 	this->groupBox_interpolator->setLayout(this->layout_interpolator);
 
+	// ROI selection layout :
+	this->layout_roiSelection->addWidget(this->label_roiMin, 0, 0);
+	this->layout_roiSelection->addWidget(this->spinbox_userLimitMin, 0, 1);
+	this->layout_roiSelection->addWidget(this->label_roiMax, 1, 0);
+	this->layout_roiSelection->addWidget(this->spinbox_userLimitMax, 1, 1);
+	this->groupbox_userLimits->setLayout(this->layout_roiSelection);
+
 	// main layout :
 	this->layout_mainLayout->addWidget(this->label_headerLoader, 0, Qt::AlignCenter);
 	this->layout_mainLayout->addWidget(this->frame_load1channel);
 	this->layout_mainLayout->addWidget(this->frame_load2channel);
 	this->layout_mainLayout->addWidget(this->groupBox_downsampling);
 	this->layout_mainLayout->addWidget(this->groupBox_interpolator);
+	this->layout_mainLayout->addWidget(this->groupbox_userLimits);
 	this->layout_mainLayout->addStretch(1);
 	this->layout_mainLayout->addWidget(this->label_gridInfoR);
 	this->layout_mainLayout->addWidget(this->label_gridInfoG);
@@ -519,9 +550,15 @@ void GridLoaderWidget::loadGrid() {
 		return;
 	}
 
+	bool hasUserBounds = this->groupbox_userLimits->isChecked();
+	DiscreteGrid::data_t userMin = static_cast<DiscreteGrid::data_t>(this->spinbox_userLimitMin->value());
+	DiscreteGrid::data_t userMax = static_cast<DiscreteGrid::data_t>(this->spinbox_userLimitMax->value());
+
 	this->readerR->enableDownsampling(this->dsLevel);
+	if (hasUserBounds) { this->readerR->setUserIntensityLimits(userMin, userMax); }
 	if (this->readerG != nullptr) {
 		this->readerG->enableDownsampling(this->dsLevel);
+		if (hasUserBounds) { this->readerG->setUserIntensityLimits(userMin, userMax); }
 	}
 
 	if (this->dsLevel != IO::DownsamplingLevel::Original) {
@@ -604,6 +641,9 @@ void GridLoaderWidget::loadGrid() {
 	this->viewer->centerScene();
 	this->scene->slotSetMinColorValue(colB.x);
 	this->scene->slotSetMaxColorValue(colB.y);
+
+	this->_cp->updateMinValue(colB.x);
+	this->_cp->updateMaxValue(colB.y);
 
 	LOG_LEAVE(GridLoaderWidget::loadGrid())
 	this->close();

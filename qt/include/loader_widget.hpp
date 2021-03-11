@@ -7,6 +7,7 @@
 #include "../../grid/include/discrete_grid.hpp"
 #include "../../grid/include/input_discrete_grid.hpp"
 #include "../../viewer/include/neighbor_visu_viewer.hpp"
+#include "./scene_control.hpp"
 
 #include <QDir>
 #include <QLabel>
@@ -25,7 +26,7 @@ class GridLoaderWidget : public QWidget {
 		Q_OBJECT
 	public:
 		/// @brief Default constructor. Builds the widget's layout and sets up signals
-		GridLoaderWidget(Scene* _scene, Viewer* _viewer, QWidget* parent = nullptr);
+		GridLoaderWidget(Scene* _scene, Viewer* _viewer, ControlPanel* _cp, QWidget* parent = nullptr);
 		/// @brief Default destructor
 		~GridLoaderWidget(void);
 		/// @brief Sets up the different widgets
@@ -49,6 +50,7 @@ class GridLoaderWidget : public QWidget {
 		QDir basePath;				///< Last path opened, or $HOME
 		Scene* scene;				///< The scene to control/add grids to.
 		Viewer* viewer;				///< The viewer to call when uploading the grid.
+		ControlPanel* _cp;			///< The control panel to update
 		std::shared_ptr<IO::GenericGridReader> readerR;	///< The pointer to a generic grid reader for R channel
 		std::shared_ptr<IO::GenericGridReader> readerG;	///< The pointer to a generic grid reader for G channel
 		std::shared_ptr<InputGrid> inputGridR;		///< The pointer to an input grid for R channel
@@ -82,6 +84,13 @@ class GridLoaderWidget : public QWidget {
 		QGridLayout* layout_transfoDetails;	///< Layout for the transformation details
 		QHBoxLayout* layout_downsampling;	///< Layout for the downsampling group box
 		QGridLayout* layout_interpolator;	///< Layout for the interpolator group box
+		QGridLayout* layout_roiSelection;	///< Layout for the ROI selection
+
+		QGroupBox* groupbox_userLimits;		///< Does the user have min/max bounds of the ROI for the image ?
+		QSpinBox* spinbox_userLimitMin;		///< Minimum value to define the ROI of the image
+		QSpinBox* spinbox_userLimitMax;		///< Maximum value to define the ROI of the image
+		QLabel* label_roiMin;				///< Label for the min ROI selector
+		QLabel* label_roiMax;				///< Label for the max ROI selector
 
 		QFrame* frame_load1channel;		///< Frame surrounding the load '1-channel' widgets
 		QFrame* frame_load2channel;		///< Frame surrounding the load '2-channel' widgets

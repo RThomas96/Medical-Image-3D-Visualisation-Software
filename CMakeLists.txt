@@ -77,6 +77,7 @@ ADD_LIBRARY(VisualisationWidgets STATIC
 	./qt/include/opengl_debug_log.hpp
 	./qt/include/user_settings_widget.hpp
 	./qt/include/loader_widget.hpp
+	./qt/include/color_control.hpp
 
 	./qt/src/grid_control.cpp
 	./qt/src/grid_detailed_view.cpp
@@ -89,6 +90,7 @@ ADD_LIBRARY(VisualisationWidgets STATIC
 	./qt/src/opengl_debug_log.cpp
 	./qt/src/user_settings_widget.cpp
 	./qt/src/loader_widget.cpp
+	./qt/src/color_control.cpp
 )
 TARGET_INCLUDE_DIRECTORIES(VisualisationWidgets
 	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/glm/

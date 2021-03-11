@@ -9,9 +9,11 @@
 #include "../../features.hpp"
 
 #include "../../grid/include/bounding_box.hpp"
+#include "../include/interpolator.hpp"
+
 #include <tinytiffreader.h>
 
-#include "../include/interpolator.hpp"
+#include <tiffio.h>
 
 #include <glm/glm.hpp>
 
@@ -83,6 +85,8 @@ namespace IO {
 			/// @brief Sets an interpolation structure to generate the image data upon loading.
 			virtual GenericGridReader& setInterpolationMethod(std::shared_ptr<Interpolators::genericInterpolator<data_t>>& ptr);
 
+			virtual GenericGridReader& setUserIntensityLimits(data_t min, data_t max);
+
 			/// @brief Pre-compute some image data, such as size, voxel dimensions (...)
 			virtual GenericGridReader& preComputeImageData();
 
@@ -145,6 +149,8 @@ namespace IO {
 		protected:
 			/// @brief Checks if the files have been analysed
 			bool isAnalyzed;
+			/// @brief Signals the user has specified custom bounds
+			bool hasUserBounds;
 			/// @brief Filenames to open images from.
 			std::vector<std::string> filenames;
 			/// @brief Data loaded from images.
@@ -169,6 +175,8 @@ namespace IO {
 			DownsamplingLevel downsampleLevel;
 			/// @brief The minimum and maximum values of the texture.
 			glm::vec<2, data_t, glm::defaultp> textureLimits;
+			/// @brief The user-provided limits for the ROI.
+			glm::vec<2, data_t, glm::defaultp> userLimits;
 			/// @brief Structure to interpolate the data in the loaded images
 			std::shared_ptr<Interpolators::genericInterpolator<data_t>> interpolator;
 		#ifdef IMPLEMENTED_SLICE_CACHE
@@ -236,6 +244,70 @@ namespace IO {
 			/// the 'N'-th pair of indices, and get filenames[i].frame[j] to get the data.
 			/// @note For the moment, this index is built but unused.
 			std::vector<std::pair<std::size_t, std::size_t>> sliceToFilename;
+	};
+
+	class libTIFFReader : public GenericGridReader {
+		private:
+			struct TIFFFrame {
+					friend struct TIFFStack;
+				protected:
+					/// @brief Default ctor. Initializes member variables to default values.
+					TIFFFrame(void);
+				public:
+					TIFFFrame(TIFF* _tiff, tdir_t index) noexcept(false);
+					~TIFFFrame(void);
+				public: // Methods
+					/// @brief Loads the file's information, once it has been loaded.
+					/// @throws Can throw an exception if the file is in planar mode (PLANARCONFIG==2)
+					void loadTIFFInfo(tdir_t index) noexcept(false);
+					/// @brief Prefix for the printing of values for this frame
+					void printInfo(std::string prefix);
+				public:
+					/// @brief The TIFF file to query for information
+					TIFF* file;
+					/// @brief This frame's width
+					uint32_t width;
+					/// @brief This frame's height
+					uint32_t height;
+					/// @brief The number of rows per strip.
+					uint32_t rowsPerStrip;
+					/// @brief This frame's directory index
+					tdir_t directoryOffset;
+					/// @brief This frame's sample count
+					uint16_t samplesPerPixel;
+					/// @brief This frame's bits per sample
+					std::vector<uint16_t> bitsPerSample;
+					/// @brief This frame's strip offsets, to query data efficiently
+					uint64_t* stripOffsets;
+					/// @brief The number of strips of this image
+					uint64_t stripsPerImage;
+			};
+		public:
+			libTIFFReader(data_t thresh);
+			virtual ~libTIFFReader(void);
+
+			/// @brief Pre-computes image data, and throws if the image is not valid.
+			virtual libTIFFReader& preComputeImageData() noexcept(false) override;
+
+			/// @brief Loads the image from disk. If no filenames are provided, does nothing.
+			virtual libTIFFReader& loadImage() override;
+
+		protected:
+			/// @brief Opens all files and checks the data is valid
+			virtual libTIFFReader& preAllocateStorage();
+
+			/// @brief Opens the specified file to be able to read it later.
+			virtual libTIFFReader& openFile(const std::string& filename) override;
+
+			/// @brief Loads the image at index 'idx' in the filenames in memory.
+			virtual libTIFFReader& loadSlice(std::size_t idx, std::vector<data_t>& tgt) override;
+
+			/// @brief Returns the point at the index (i,j,k).
+			virtual data_t getPixel(std::size_t i, std::size_t j, std::size_t k) override;
+
+		protected:
+			std::vector<TIFF*> files;	///< List of files opened for the current stack
+			std::vector<TIFFFrame> frames;
 	};
 
 	namespace Reader {

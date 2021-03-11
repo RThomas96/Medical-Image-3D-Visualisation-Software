@@ -78,6 +78,24 @@ uniform uint channelView;	// What channels do we visualize ? R+G = 1, R = 2, G =
 uniform double maxTexPossible;	// maximum tex value possible, variable depending on the data type
 
 vec4 voxelIdxToColor_1channel(in uvec3 ucolor) {
+/*
+	//Retourne une échelle de couleur pour une valeure flottante normalisée entre 0 et 1
+	float value = (float(ucolor.r) - colorBounds.x) / ((.99*colorBounds.y) - colorBounds.x);
+	vec3 hsv = vec3 (value, 1., 1.);
+	hsv.x = mod( 100.0 + hsv.x, 1.0 ); // Ensure [0,1[
+	float   HueSlice = 6.0 * hsv.x; // In [0,6[
+	float   HueSliceInteger = floor( HueSlice );
+	float   HueSliceInterpolant = HueSlice - HueSliceInteger; // In [0,1[ for each hue slice
+	vec3  TempRGB = vec3(   hsv.z * (1.0 - hsv.y), hsv.z * (1.0 - hsv.y * HueSliceInterpolant), hsv.z * (1.0 - hsv.y * (1.0 - HueSliceInterpolant)) );
+	float   IsOddSlice = mod( HueSliceInteger, 2.0 ); // 0 if even (slices 0, 2, 4), 1 if odd (slices 1, 3, 5)
+	float   ThreeSliceSelector = 0.5 * (HueSliceInteger - IsOddSlice); // (0, 1, 2) corresponding to slices (0, 2, 4) and (1, 3, 5)
+	vec3  ScrollingRGBForEvenSlices = vec3( hsv.z, TempRGB.zx );           // (V, Temp Blue, Temp Red) for even slices (0, 2, 4)
+	vec3  ScrollingRGBForOddSlices = vec3( TempRGB.y, hsv.z, TempRGB.x );  // (Temp Green, V, Temp Red) for odd slices (1, 3, 5)
+	vec3  ScrollingRGB = mix( ScrollingRGBForEvenSlices, ScrollingRGBForOddSlices, IsOddSlice );
+	float   IsNotFirstSlice = clamp( ThreeSliceSelector, 0.0,1.0 );                   // 1 if NOT the first slice (true for slices 1 and 2)
+	float   IsNotSecondSlice = clamp( ThreeSliceSelector-1.0, 0.0,1. );              // 1 if NOT the first or second slice (true only for slice 2)
+	return  vec4(mix( ScrollingRGB.xyz, mix( ScrollingRGB.zxy, ScrollingRGB.yzx, IsNotSecondSlice ), IsNotFirstSlice ), 1.);    // Make the RGB rotate right depending on final slice index
+*/
 	// Have the R and G color channels clamped to the min/max of the scale
 	// (mimics under or over-exposure)
 	float color_r = clamp(float(ucolor.r), colorBounds.x, colorBounds.y);
@@ -578,16 +596,16 @@ void main (void) {
 	if(!in_tet || !hit) discard;
 
 	// Phong details :
-	float phongAmbient = .5;
+	float phongAmbient = .75;
 	mat3 lightDetails = mat3(
-		vec3(.9, .9, .9),	// light diffuse color
+		vec3(1., 1., 1.),	// light diffuse color
 		vec3(1., 1., 1.),	// light specular color
 		vec3(.0, .0, .0)	// nothing
 	);
 	float factor = (1. - phongAmbient) / 3.;
 	vec3 phongDetails = vec3(
-		factor*.8,	// kd = diffuse coefficient
-		factor*.2,	// ks = specular coefficient
+		factor*.9,	// kd = diffuse coefficient
+		factor*.1,	// ks = specular coefficient
 		5.	// Shininess
 	);
 	colorOut.a = 1.;
@@ -597,6 +615,8 @@ void main (void) {
 	colorOut.xyz += phongComputation(Pos, n, color, lightPositions[4], phongDetails, lightDetails);
 	// Phong for camera light :
 	colorOut.xyz += phongComputation(Pos, n, color, cam, phongDetails, lightDetails);
+
+	//
 
 	return;
 }

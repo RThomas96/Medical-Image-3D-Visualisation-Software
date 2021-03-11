@@ -3,6 +3,7 @@
 
 #include "../../macros.hpp"
 #include "../../features.hpp"
+#include "../../grid/include/discrete_grid.hpp"
 
 #include <QLabel>
 #include <QWidget>
@@ -29,6 +30,8 @@ class ControlPanel : public QWidget {
 	public slots:
 		void activatePanels(bool activeStatus = true);
 		void updateValues(void);
+		void updateMinValue(int val);
+		void updateMaxValue(int val);
 	private:
 		Scene* const sceneToControl;
 
@@ -40,8 +43,14 @@ class ControlPanel : public QWidget {
 		QLabel* label_minTexRight;	///< Label for the min value of the texture slider (right)
 		QLabel* label_maxTexRight;	///< Label for the max value of the texture slider (right)
 
+		QLabel* label_currentHeader0;
+		QLabel* label_currentHeader1;
+		QLabel* label_currentValue0;
+		QLabel* label_currentValue1;
+
 		QWidget* controlContainer;
 		Viewer* const viewer;
+		DiscreteGrid::data_t min, max;
 
 	public slots:
 		void setMinTexVal(int val);

@@ -38,8 +38,8 @@ class ControlPanel; // Forward declaration
 
 /// @b Simple enum to keep track of the different viewing primitives for the program.
 enum DrawMode { Solid, Volumetric, VolumetricBoxed };
-/// @b Simple enum to keep track of which channel(s) we show from the texture to the viewers.
-enum DisplayChannel { RedAndGreen, Red, Green };
+/// @b Simple enum to keep track of which color function to apply to the viewers.
+enum ColorFunction { RedAndGreen, SingleChannel, Green };
 /// @b Simple enum to define which plane we are drawing
 enum planes { x = 1, y = 2, z = 3 };
 /// @b Simple enum to keep track of a plane's orientation.
@@ -137,7 +137,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void openGLDebugLogger_inserter(const QOpenGLDebugMessage m);
 
 		/// @b Changes the texture coloration mode to the desired setting
-		void setDisplayChannel(DisplayChannel _c);
+		void setDisplayChannel(ColorFunction _c);
 
 		/// @brief Set X's plane displacement within the bounding box to be `scalar`
 		void slotSetPlaneDisplacementX(float scalar);
@@ -252,6 +252,11 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		/// @b Update the scene's bounding box with the currently drawn grids.
 		void updateBoundingBox(void);
 
+		/// @b Set the color of the beginning of the color segment for the segmented color scale
+		void setColor0(qreal r, qreal g, qreal b);
+		/// @b Set the color of the beginning of the color segment for the segmented color scale
+		void setColor1(qreal r, qreal g, qreal b);
+
 		/*************************************/
 		/*************************************/
 		/****** TEXTURE3D VISUALIZATION ******/
@@ -300,7 +305,10 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		float clipDistanceFromCamera;		/// Distance from the camera to its clip plane
 		DiscreteGrid::bbox_t visuBox;		///< Used to restrict the view to a box with its coordinates
 		DrawMode drawMode;			///< Current 3D draw mode
-		DisplayChannel channels;		///< Channel(s) to display on the viewers
+		ColorFunction channels;		///< Channel(s) to display on the viewers
+
+		glm::vec3 color0;	///< The color segment when approaching 0
+		glm::vec3 color1;	///< The color segment when approaching 1
 
 		// VAO handles :
 		GLuint vaoHandle;

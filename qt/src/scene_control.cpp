@@ -12,35 +12,35 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, QWidget* parent) : QW
 	// Qt's layout and positionning system when done directly in
 	// code. Goddammit, it's verbose.
 
+	this->min = std::numeric_limits<DiscreteGrid::data_t>::lowest();
+	this->max = std::numeric_limits<DiscreteGrid::data_t>::max();
+
 	// Texture and color scale bounds :
 	this->minValueTexture = new QSlider(Qt::Horizontal);
 	this->maxValueTexture = new QSlider(Qt::Horizontal);
 
-	this->label_minTexLeft = new QLabel("0");
-	this->label_minTexRight = new QLabel("0");
+	this->label_minTexLeft = new QLabel(QString::number(this->min));
+	this->label_minTexRight = new QLabel(QString::number(this->min));
 
 	// Create the container widget :
 	this->controlContainer = new QWidget();
 
-	// Set the range to min/max of uchar for texture bounds :
-	int max = 0;
-	if (sizeof(DiscreteGrid::data_t) < sizeof(int)) {
-		max = static_cast<int>(std::numeric_limits<DiscreteGrid::data_t>::max());
-	} else {
-		max = std::numeric_limits<int>::max();
-	}
-	// find max of value type, cast to int, and since this possibly causes an overflow, check against the max of int
-	this->minValueTexture->setRange(0, max-1);
+	this->minValueTexture->setRange(0, this->max-1);
 	this->minValueTexture->setValue(0);
-	this->maxValueTexture->setRange(0, max-1);
-	this->maxValueTexture->setValue(max-2);
+	this->maxValueTexture->setRange(0, this->max-1);
+	this->maxValueTexture->setValue(this->max-2);
 
-	this->label_maxTexLeft = new QLabel(QString::number(max));
-	this->label_maxTexRight = new QLabel(QString::number(max));
+	this->label_maxTexLeft = new QLabel(QString::number(this->max));
+	this->label_maxTexRight = new QLabel(QString::number(this->max));
 
 	QLabel* label_Texture = new QLabel("Image intensities");
 	QLabel* label_Min_Tex = new QLabel("Min");
 	QLabel* label_Max_Tex = new QLabel("Max");
+
+	this->label_currentHeader0 = new QLabel("Current value : ");
+	this->label_currentHeader1 = new QLabel("Current value : ");
+	this->label_currentValue0 = new QLabel(QString::number(this->minValueTexture->value()));
+	this->label_currentValue1 = new QLabel(QString::number(this->maxValueTexture->value()));
 
 	label_Texture->setToolTip("Controls the minimum/maximum intensity values visible in the grid.");
 
@@ -72,6 +72,12 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, QWidget* parent) : QW
 	grid->addWidget(this->label_maxTexLeft, 0, 24, 1, 1, Qt::AlignVCenter);
 	grid->addWidget(this->label_maxTexRight, 1, 24, 1, 1, Qt::AlignVCenter);
 
+	grid->addWidget(this->label_currentHeader0, 0, 25, 1, 1, Qt::AlignVCenter);
+	grid->addWidget(this->label_currentHeader1, 1, 25, 1, 1, Qt::AlignVCenter);
+
+	grid->addWidget(this->label_currentValue0, 0, 26, 1, 1, Qt::AlignVCenter);
+	grid->addWidget(this->label_currentValue1, 1, 26, 1, 1, Qt::AlignVCenter);
+
 	this->controlContainer->setLayout(grid);
 
 	// Disable by default the top level container :
@@ -101,6 +107,28 @@ void ControlPanel::updateViewers() {
 	if (this->viewer != nullptr) { this->viewer->update(); }
 }
 
+void ControlPanel::updateMinValue(int val) {
+	this->min = static_cast<DiscreteGrid::data_t>(val);
+	this->label_minTexLeft->setText(QString::number(this->min));
+	this->label_minTexRight->setText(QString::number(this->min));
+
+	this->minValueTexture->setMinimum(this->min);
+	this->maxValueTexture->setMinimum(this->min);
+
+	return;
+}
+
+void ControlPanel::updateMaxValue(int val) {
+	this->max = static_cast<DiscreteGrid::data_t>(val);
+	this->label_maxTexLeft->setText(QString::number(this->max));
+	this->label_maxTexRight->setText(QString::number(this->max));
+
+	this->minValueTexture->setMaximum(this->max);
+	this->maxValueTexture->setMaximum(this->max);
+
+	return;
+}
+
 void ControlPanel::activatePanels(bool activeStatus) {
 	this->updateValues();
 	this->controlContainer->setEnabled(activeStatus);
@@ -128,16 +156,18 @@ void ControlPanel::setMinTexVal(int val) {
 	int otherval = this->maxValueTexture->value();
 	if (val >= otherval) {
 		// if max already at max, return and do nothing :
-		if (otherval == this->maxValueTexture->maximum()) { return; }
-		// otherwise, we can do something
-		else {
-			this->maxValueTexture->setValue(val+1);
+		if (otherval >= this->maxValueTexture->maximum()-1) {
+			this->minValueTexture->setValue(otherval-1);
+			return;
 		}
+		// otherwise, we can do something
+		this->maxValueTexture->setValue(val+1);
 	}
 	// update scene data :
 	if (this->sceneToControl) {
 		this->sceneToControl->slotSetMinTexValue(static_cast<DiscreteGrid::data_t>(val));
 	}
+	this->label_currentValue0->setText(QString::number(val));
 	this->updateViewers();
 }
 
@@ -145,15 +175,17 @@ void ControlPanel::setMaxTexVal(int val) {
 	int otherval = this->minValueTexture->value();
 	if (val <= otherval) {
 		// if max already at max, return and do nothing :
-		if (otherval == this->minValueTexture->minimum()) { return; }
-		// otherwise, we can do something
-		else {
-			this->minValueTexture->setValue(val-1);
+		if (otherval <= this->minValueTexture->minimum()+1) {
+			this->maxValueTexture->setValue(otherval+1);
+			return;
 		}
+		// otherwise, we can do something
+		this->minValueTexture->setValue(val-1);
 	}
 	if (this->sceneToControl) {
 		this->sceneToControl->slotSetMaxTexValue(static_cast<DiscreteGrid::data_t>(val));
 	}
+	this->label_currentValue1->setText(QString::number(val));
 	this->updateViewers();
 }
 
