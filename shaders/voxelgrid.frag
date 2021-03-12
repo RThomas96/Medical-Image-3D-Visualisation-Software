@@ -85,6 +85,11 @@ void main(void)
 		float colorRatio = (drawMode == 2u) ? (.3) : (1. - ((distMin/epsilon < .33 || distMin/epsilon > .66) ? 1. : .0));
 		basecolor = (drawMode == 0u) ? compColor : vec4(colorRatio, colorRatio, colorRatio, 1.);
 	}
+	float ftexVal = float(ui.r);
+	if (selectedChannel == 1u) { ftexVal = float(ui.g); }
+	if (ftexVal < texBounds.x || ftexVal > texBounds.y) {
+		basecolor = vec4(.8, .8, .8, 1.) ;
+	}
 
 	color = basecolor;
 

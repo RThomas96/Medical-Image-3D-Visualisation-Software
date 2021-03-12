@@ -22,10 +22,10 @@ FIND_PACKAGE(TinyTIFF REQUIRED PATHS ${CMAKE_CURRENT_LIST_DIR}/lib/lib/cmake PAT
 ADD_SUBDIRECTORY(glm)
 
 # Supress the deprecation warnings for QGLViewer :
-IF (WIN32 OR MSVC)
-ELSE()
-	LIST(APPEND CMAKE_CXX_FLAGS "-Wno-deprecated-declarations")
-ENDIF()
+#IF (WIN32 OR MSVC)
+#ELSE()
+#	LIST(APPEND CMAKE_CXX_FLAGS "-Wno-deprecated-declarations")
+#ENDIF()
 
 # Library for image reading/writing {{{
 ADD_LIBRARY(ImageIO STATIC

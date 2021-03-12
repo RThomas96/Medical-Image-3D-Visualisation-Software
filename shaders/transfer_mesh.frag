@@ -483,8 +483,9 @@ void main (void) {
 				// Get this voxel's value :
 				uvec3 voxelIndex = texture(Mask, Current_text3DCoord).xyz;
 				uint rawVal = voxelIndex.r;
-				// If we only show green, make the visibility check on green :
-				if (channelView == 3u) { rawVal = voxelIndex.g; }
+				if (selectedChannel == 1u) {
+					rawVal = voxelIndex.g;
+				}
 				// Get texture size :
 				int width = textureSize(visiblity_map, 0).x;
 				// texture coords for visibility :
@@ -492,9 +493,8 @@ void main (void) {
 				// If it's visible : (texelFetch here to take advantage of using ivec2 rather than normalized vec2)
 				if (texelFetch(visiblity_map, tcfv, 0).x > 0.) {
 					// Get the corresponding color :
-					// color = texelFetch(color_texture, int(voxelIndex.x), 0);
 					color = voxelIdxToColor(colorParams, colorSegment, colorBounds, voxelIndex);
-					Pos = vec4(Current_P.xyz, 1.); // vec4( (ld0*P0 + ld1*P1 + ld2*P2 + ld3*P3).xyz, 1. );
+					Pos = vec4(Current_P.xyz, 1.);
 					if( ComputeVisibility(voxel_center_P.xyz) )
 						hit = true;
 				}

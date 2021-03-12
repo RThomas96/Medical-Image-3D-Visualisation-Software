@@ -59,7 +59,13 @@ void main() {
 	color.xyz = vTexCoords;
 	color.a = 1.f;
 	// Apply the texture :
-	color = voxelIdxToColor(colorParams, colorSegment, colorBounds, texture(texData, vTexCoords).rgb);
+	uvec3 tex =  texture(texData, vTexCoords).rgb;
+	color = voxelIdxToColor(colorParams, colorSegment, colorBounds, tex);
+	float ftexVal = float(tex.r);
+	if (selectedChannel == 1u) { ftexVal = float(tex.g); }
+	if (ftexVal < textureBounds.x || ftexVal > textureBounds.y) {
+		color.a = .2;
+	}
 }
 
 /****************************************/

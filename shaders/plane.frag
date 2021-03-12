@@ -71,6 +71,11 @@ void main(void)
 				if (isPlaneVisible(true) && showTex == true) {
 					uvec3 tex = texture(texData, texCoord).xyz;
 					colorTex = voxelIdxToColor(colorParams, colorSegment, colorBounds, tex);
+					float ftexVal = float(tex.r);
+					if (selectedChannel == 1u) { ftexVal = float(tex.g); }
+					if (ftexVal < textureBounds.x || ftexVal > textureBounds.y) {
+						colorTex=vec4(.8, .8, .8, 1.);
+					}
 				}
 			}
 		}
@@ -79,6 +84,7 @@ void main(void)
 	if (shouldDrawBorder() == true && drawOnlyData == true) {
 		color = planeIndexToColor();
 	}
+
 
 	if (color.a < .1f) { discard; }
 }

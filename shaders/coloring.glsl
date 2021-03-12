@@ -100,14 +100,14 @@ vec4 voxelIdxToColor(in uvec3 colorParams, in mat3 colorSegment, in vec2 colorBo
 	uint colorChannel = colorParams.y;
 	uint nbChannels = colorParams.z;
 	if (colorFunction == 1u) {
-		if (colorChannel == 1u) {
+		if (nbChannels == 1u) {
 			float alpha = 1.f;
 			float val = (float(ucolor.r) - colorBounds.x)/(colorBounds.y-colorBounds.x);
 			return vec4(val, val, val, alpha);
-		}
-		if (colorChannel != 1u && nbChannels > 1) {
+		} else {
+			uint uval = (colorChannel == 0u) ? ucolor.r : ucolor.g;
 			float alpha = 1.f;
-			float val = (float(ucolor.g) - colorBounds.x)/(colorBounds.y-colorBounds.x);
+			float val = (float(uval) - colorBounds.x)/(colorBounds.y-colorBounds.x);
 			return vec4(val, val, val, alpha);
 		}
 	} else if (colorFunction == 2u) {

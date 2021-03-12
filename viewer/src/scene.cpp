@@ -1220,7 +1220,7 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, cons
 		if (grid.nbChannels > 1) {
 			glUniform1ui(location_selectedChannel, this->selectedChannel);
 		} else {
-			glUniform1ui(location_selectedChannel, 1);
+			glUniform1ui(location_selectedChannel, 0);
 		}
 
 		std::size_t tex = 0;
@@ -1460,7 +1460,7 @@ void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, 
 	if (gridView.nbChannels > 1) {
 		glUniform1ui(location_selectedChannel, this->selectedChannel);
 	} else {
-		glUniform1ui(location_selectedChannel, 1);
+		glUniform1ui(location_selectedChannel, 0);
 	}
 	if (gridView.grid->hasData() == false && gridView.grid->isGridOffline() == false) {
 		glUniform1ui(drawMode_Loc, 2);
@@ -1528,7 +1528,7 @@ void Scene::prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane, cons
 	if (grid.nbChannels > 1) {
 		glUniform1ui(location_selectedChannel, this->selectedChannel);
 	} else {
-		glUniform1ui(location_selectedChannel, 1);
+		glUniform1ui(location_selectedChannel, 0);
 	}
 
 	GLint location_channelView = glGetUniformLocation(this->programHandle_Plane3D, "channelView");
@@ -1635,7 +1635,7 @@ void Scene::prepPlane_SingleUniforms(planes _plane, planeHeading _heading, glm::
 	if (_grid.nbChannels > 1) {
 		glUniform1ui(location_selectedChannel, this->selectedChannel);
 	} else {
-		glUniform1ui(location_selectedChannel, 1);
+		glUniform1ui(location_selectedChannel, 0);
 	}
 
 	// Uniform variables :
