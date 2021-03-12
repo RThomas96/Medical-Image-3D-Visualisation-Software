@@ -72,105 +72,16 @@ uniform vec3 visuBBMin;
 uniform vec3 visuBBMax;
 uniform bool shouldUseBB;
 
-uniform uint nbChannels;
+uniform vec3 color0;
+uniform vec3 color1;
 
 uniform uint channelView;	// What channels do we visualize ? R+G = 1, R = 2, G = 3
+uniform uint selectedChannel;	// The selected channel to visualize in greyscale mode
+uniform uint nbChannels;	// The number of channels of the image
 uniform double maxTexPossible;	// maximum tex value possible, variable depending on the data type
 
-vec4 voxelIdxToColor_1channel(in uvec3 ucolor) {
-/*
-	//Retourne une échelle de couleur pour une valeure flottante normalisée entre 0 et 1
-	float value = (float(ucolor.r) - colorBounds.x) / ((.99*colorBounds.y) - colorBounds.x);
-	vec3 hsv = vec3 (value, 1., 1.);
-	hsv.x = mod( 100.0 + hsv.x, 1.0 ); // Ensure [0,1[
-	float   HueSlice = 6.0 * hsv.x; // In [0,6[
-	float   HueSliceInteger = floor( HueSlice );
-	float   HueSliceInterpolant = HueSlice - HueSliceInteger; // In [0,1[ for each hue slice
-	vec3  TempRGB = vec3(   hsv.z * (1.0 - hsv.y), hsv.z * (1.0 - hsv.y * HueSliceInterpolant), hsv.z * (1.0 - hsv.y * (1.0 - HueSliceInterpolant)) );
-	float   IsOddSlice = mod( HueSliceInteger, 2.0 ); // 0 if even (slices 0, 2, 4), 1 if odd (slices 1, 3, 5)
-	float   ThreeSliceSelector = 0.5 * (HueSliceInteger - IsOddSlice); // (0, 1, 2) corresponding to slices (0, 2, 4) and (1, 3, 5)
-	vec3  ScrollingRGBForEvenSlices = vec3( hsv.z, TempRGB.zx );           // (V, Temp Blue, Temp Red) for even slices (0, 2, 4)
-	vec3  ScrollingRGBForOddSlices = vec3( TempRGB.y, hsv.z, TempRGB.x );  // (Temp Green, V, Temp Red) for odd slices (1, 3, 5)
-	vec3  ScrollingRGB = mix( ScrollingRGBForEvenSlices, ScrollingRGBForOddSlices, IsOddSlice );
-	float   IsNotFirstSlice = clamp( ThreeSliceSelector, 0.0,1.0 );                   // 1 if NOT the first slice (true for slices 1 and 2)
-	float   IsNotSecondSlice = clamp( ThreeSliceSelector-1.0, 0.0,1. );              // 1 if NOT the first or second slice (true only for slice 2)
-	return  vec4(mix( ScrollingRGB.xyz, mix( ScrollingRGB.zxy, ScrollingRGB.yzx, IsNotSecondSlice ), IsNotFirstSlice ), 1.);    // Make the RGB rotate right depending on final slice index
-*/
-	// Have the R and G color channels clamped to the min/max of the scale
-	// (mimics under or over-exposure)
-	float color_r = clamp(float(ucolor.r), colorBounds.x, colorBounds.y);
-	float color_g = clamp(float(ucolor.r), colorBounds.x, colorBounds.y);
-	// Compute the color as Brian's paper describes it :
-	float color_k = 2.5;
-	float sc = colorBounds.y - colorBounds.x;
-	float eosin = (color_r - colorBounds.x)/(sc);
-	float dna = (color_g - colorBounds.x)/(sc); // B is on G channel because OpenGL only allows 2 channels upload to be RG, not RB
+vec4 voxelIdxToColor(in uvec3 colorParams, in mat3 colorSegment, in vec2 colorBounds, in uvec3 ucolor);
 
-	float eosin_r_coef = 0.050;
-	float eosin_g_coef = 1.000;
-	float eosin_b_coef = 0.544;
-
-	float hematoxylin_r_coef = 0.860;
-	float hematoxylin_g_coef = 1.000;
-	float hematoxylin_b_coef = 0.300;
-
-	float r_coef = eosin_r_coef;
-	float g_coef = eosin_g_coef;
-	float b_coef = eosin_b_coef;
-
-	return vec4(
-		exp(-hematoxylin_r_coef * dna * color_k) * exp(-eosin_r_coef * eosin * color_k),
-		exp(-hematoxylin_g_coef * dna * color_k) * exp(-eosin_g_coef * eosin * color_k),
-		exp(-hematoxylin_b_coef * dna * color_k) * exp(-eosin_b_coef * eosin * color_k),
-		1.
-	);
-}
-
-vec4 voxelIdxToColor_2channel(in uvec3 ucolor) {
-	// Have the R and G color channels clamped to the min/max of the scale
-	// (mimics under or over-exposure)
-	float color_r = clamp(float(ucolor.r), colorBounds.x, colorBounds.y);
-	float color_g = clamp(float(ucolor.g), colorBounds.x, colorBounds.y);
-	// Compute the color as Brian's paper describes it :
-	float color_k = 2.5;
-	float sc = colorBounds.y - colorBounds.x;
-	float eosin = (color_r - colorBounds.x)/(sc);
-	float dna = (color_g - colorBounds.x)/(sc); // B is on G channel because OpenGL only allows 2 channels upload to be RG, not RB
-
-	float eosin_r_coef = 0.050;
-	float eosin_g_coef = 1.000;
-	float eosin_b_coef = 0.544;
-
-	float hematoxylin_r_coef = 0.860;
-	float hematoxylin_g_coef = 1.000;
-	float hematoxylin_b_coef = 0.300;
-
-	float r_coef = eosin_r_coef;
-	float g_coef = eosin_g_coef;
-	float b_coef = eosin_b_coef;
-
-	return vec4(
-		exp(-hematoxylin_r_coef * dna * color_k) * exp(-eosin_r_coef * eosin * color_k),
-		exp(-hematoxylin_g_coef * dna * color_k) * exp(-eosin_g_coef * eosin * color_k),
-		exp(-hematoxylin_b_coef * dna * color_k) * exp(-eosin_b_coef * eosin * color_k),
-		1.
-	);
-}
-
-vec4 voxelIdxToColor(in uvec3 ucolor) {
-	if (channelView == 1u) {
-		if (nbChannels == 1u) { return voxelIdxToColor_1channel(ucolor); }
-		else { return voxelIdxToColor_2channel(ucolor); }
-	} else if (channelView == 2u) {
-		float alpha = 1.f;
-		float val = (float(ucolor.r) - colorBounds.x)/(colorBounds.y-colorBounds.x);
-		return vec4(val, val, val, alpha);
-	} else if (channelView == 3u) {
-		float alpha = 1.f;
-		float val = (float(ucolor.g) - colorBounds.x)/(colorBounds.y-colorBounds.x);
-		return vec4(val, val, val, alpha);
-	}
-}
 
 bool ComputeVisibility(vec3 point)
 {
@@ -466,6 +377,9 @@ void main (void) {
 	// Default color of the fragment : cyan
 	colorOut = vec4(.0, .0, .0, .0);
 
+	uvec3 colorParams = uvec3(channelView, selectedChannel, nbChannels);
+	mat3 colorSegment = mat3(color0, color1, vec3(.0));
+
 	vec3 V = normalize(P.xyz - cam);
 
 	bool hit = false; // have we hit a voxle that is supposed to be shown yet ?
@@ -579,7 +493,7 @@ void main (void) {
 				if (texelFetch(visiblity_map, tcfv, 0).x > 0.) {
 					// Get the corresponding color :
 					// color = texelFetch(color_texture, int(voxelIndex.x), 0);
-					color = voxelIdxToColor(voxelIndex);
+					color = voxelIdxToColor(colorParams, colorSegment, colorBounds, voxelIndex);
 					Pos = vec4(Current_P.xyz, 1.); // vec4( (ld0*P0 + ld1*P1 + ld2*P2 + ld3*P3).xyz, 1. );
 					if( ComputeVisibility(voxel_center_P.xyz) )
 						hit = true;

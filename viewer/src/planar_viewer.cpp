@@ -59,15 +59,15 @@ void PlanarViewer::keyPressEvent(QKeyEvent* _e) {
 		SHADER PROGRAMS
 		*/
 		case Qt::Key::Key_F1:
-			this->sceneToShow->setDisplayChannel(ColorFunction::RedAndGreen);
+			this->sceneToShow->setColorFunction(ColorFunction::HistologyHandE);
 			this->update();
 		break;
 		case Qt::Key::Key_F2:
-			this->sceneToShow->setDisplayChannel(ColorFunction::SingleChannel);
+			this->sceneToShow->setColorFunction(ColorFunction::SingleChannel);
 			this->update();
 		break;
 		case Qt::Key::Key_F3:
-			this->sceneToShow->setDisplayChannel(ColorFunction::Green);
+			this->sceneToShow->setColorFunction(ColorFunction::HSV2RGB);
 			this->update();
 		break;
 		case Qt::Key::Key_F5:

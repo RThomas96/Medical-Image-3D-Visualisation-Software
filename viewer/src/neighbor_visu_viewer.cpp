@@ -73,15 +73,19 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 		SHADER PROGRAMS
 		*/
 		case Qt::Key::Key_F1:
-			this->scene->setDisplayChannel(ColorFunction::RedAndGreen);
+			this->scene->setColorFunction(ColorFunction::SingleChannel);
 			this->update();
 		break;
 		case Qt::Key::Key_F2:
-			this->scene->setDisplayChannel(ColorFunction::SingleChannel);
+			this->scene->setColorFunction(ColorFunction::HistologyHandE);
 			this->update();
 		break;
 		case Qt::Key::Key_F3:
-			this->scene->setDisplayChannel(ColorFunction::Green);
+			this->scene->setColorFunction(ColorFunction::HSV2RGB);
+			this->update();
+		break;
+		case Qt::Key::Key_F4:
+			this->scene->setColorFunction(ColorFunction::ColorMagnitude);
 			this->update();
 		break;
 		case Qt::Key::Key_F5:

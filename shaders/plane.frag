@@ -25,10 +25,14 @@ uniform vec2 colorBounds;	// The min/max values of the color scale to display
 uniform vec2 textureBounds;	// The min/max values of the texture to display
 uniform int currentPlane;	// Plane identifier : 1 (x), 2 (y), 3 (z)
 uniform bool showTex;		// Do we show the texture on the plane, or not ?
-uniform uint nbChannels;
 uniform bool drawOnlyData;	// Should we draw only the data ? not any other plane ?
 
+uniform vec3 color0;
+uniform vec3 color1;
+
 uniform uint channelView;	// What channels do we visualize ? R+G = 1, R = 2, G = 3
+uniform uint selectedChannel;	// The selected channel to visualize in greyscale
+uniform uint nbChannels;
 uniform double maxTexPossible;	// maximum tex value possible, variable depending on the data type
 
 uniform bool intersectPlanes = false;	// Should the planes intersect each other ? (hide other planes)
@@ -36,10 +40,8 @@ uniform bool intersectPlanes = false;	// Should the planes intersect each other 
 /****************************************/
 /*********** Function headers ***********/
 /****************************************/
-// Takes a grid value and spits out an RGB color by performing a modified HSV2RGB conversion
-vec4 R8UIToRGB(in uvec3 ucolor);
-vec4 R8UIToRGB_1channel(in uvec3 ucolor);
-vec4 R8UIToRGB_2channel(in uvec3 ucolor);
+// [Defined in coloring.glsl] Colors a given fragment.
+vec4 voxelIdxToColor(in uvec3 colorParams, in mat3 colorSegment, in vec2 colorBounds, in uvec3 ucolor);
 // Determines the plane position along its axis
 float planeIdxToPlanePosition(int id);
 // Return a color corresponding to a plane's index
@@ -57,6 +59,9 @@ void main(void)
 	// Early discard if the plane shouldn't be shown :
 	if (isPlaneVisible(intersectPlanes) == false) { discard; }
 
+	uvec3 colorParams = uvec3(channelView, selectedChannel, nbChannels);
+	mat3 colorSegment = mat3(color0, color1, vec3(.0));
+
 	// not in border :
 
 	vec4 colorTex = vec4(.0, .0, .0, .0);
@@ -65,7 +70,7 @@ void main(void)
 			if (texCoord.z > 0. && texCoord.z < 1.) {
 				if (isPlaneVisible(true) && showTex == true) {
 					uvec3 tex = texture(texData, texCoord).xyz;
-					colorTex = R8UIToRGB(tex);
+					colorTex = voxelIdxToColor(colorParams, colorSegment, colorBounds, tex);
 				}
 			}
 		}
@@ -74,13 +79,6 @@ void main(void)
 	if (shouldDrawBorder() == true && drawOnlyData == true) {
 		color = planeIndexToColor();
 	}
-	/*} else {
-		if (showTex == true) {
-			color = planeIndexToColor(); // default plane color
-		} else {
-			discard;
-		}
-	}*/
 
 	if (color.a < .1f) { discard; }
 }
@@ -88,100 +86,6 @@ void main(void)
 /****************************************/
 /************** Functions ***************/
 /****************************************/
-vec4 R8UIToRGB(in uvec3 ucolor) {
-	// Those are planes in 3D. Alpha stays unchanged when outside texture bounds.
-	if (channelView == 1u) {
-		if (nbChannels == 1u) { return R8UIToRGB_1channel(ucolor); }
-		else { return R8UIToRGB_2channel(ucolor); }
-	} else if (channelView == 2u) {
-		float alpha = 1.f;
-		float val = (float(ucolor.r) - colorBounds.x)/(colorBounds.y-colorBounds.x);
-		return vec4(val, val, val, alpha);
-	} else if (channelView == 3u) {
-		float alpha = 1.f;
-		float val = (float(ucolor.g) - colorBounds.x)/(colorBounds.y-colorBounds.x);
-		return vec4(val, val, val, alpha);
-	}
-}
-vec4 R8UIToRGB_1channel(in uvec3 ucolor) {
-	float color_r = float(ucolor.r);
-	float color_g = float(ucolor.r);
-	float alpha = 1.;
-	// Check if we're in the colorscale. Since drawn on plane, discard fragments by setting alpha < .1 :
-	// if (color_r < textureBounds.x || color_r > textureBounds.y) { alpha = .05; }
-	// if (color_g < textureBounds.x || color_g > textureBounds.y) { alpha = .05; }
-	// clamp values (necessary ?) :
-	color_r = clamp(color_r, colorBounds.x, colorBounds.y);
-	color_g = clamp(color_g, colorBounds.x, colorBounds.y);
-	// Compute the color as Brian's paper describes it :
-	float color_k = 2.5;
-	float sc = colorBounds.y - colorBounds.x;
-	float eosin = (color_r - colorBounds.x)/(sc);
-	float dna = (color_g - colorBounds.x)/(sc); // B is on G channel because OpenGL only allows 2 channels upload to be RG, not RB
-
-	float eosin_r_coef = 0.050;
-	float eosin_g_coef = 1.000;
-	float eosin_b_coef = 0.544;
-
-	float hematoxylin_r_coef = 0.860;
-	float hematoxylin_g_coef = 1.000;
-	float hematoxylin_b_coef = 0.300;
-
-	float r_coef = eosin_r_coef;
-	float g_coef = eosin_g_coef;
-	float b_coef = eosin_b_coef;
-
-	vec4 color = vec4(
-		exp(-hematoxylin_r_coef * dna * color_k) * exp(-eosin_r_coef * eosin * color_k),
-		exp(-hematoxylin_g_coef * dna * color_k) * exp(-eosin_g_coef * eosin * color_k),
-		exp(-hematoxylin_b_coef * dna * color_k) * exp(-eosin_b_coef * eosin * color_k),
-		alpha
-	);
-
-	// if we're not supposed to show the texture AND the plane isn't visible, then discard
-	if (showTex == false) { discard; }
-	return color;
-}
-vec4 R8UIToRGB_2channel(in uvec3 ucolor) {
-	float color_r = float(ucolor.r);
-	float color_g = float(ucolor.g);
-	float alpha = 1.;
-	// Check if we're in the colorscale. Since drawn on plane, discard fragments by setting alpha < .1 :
-	//if (color_r < textureBounds.x || color_r > textureBounds.y) { alpha = .05; }
-	//if (color_g < textureBounds.x || color_g > textureBounds.y) { alpha = .05; }
-	// clamp values (necessary ?) :
-	color_r = clamp(color_r, colorBounds.x, colorBounds.y);
-	color_g = clamp(color_g, colorBounds.x, colorBounds.y);
-	// Compute the color as Brian's paper describes it :
-	float color_k = 2.5;
-	float sc = colorBounds.y - colorBounds.x;
-	float eosin = (color_r - colorBounds.x)/(sc);
-	float dna = (color_g - colorBounds.x)/(sc); // B is on G channel because OpenGL only allows 2 channels upload to be RG, not RB
-
-	float eosin_r_coef = 0.050;
-	float eosin_g_coef = 1.000;
-	float eosin_b_coef = 0.544;
-
-	float hematoxylin_r_coef = 0.860;
-	float hematoxylin_g_coef = 1.000;
-	float hematoxylin_b_coef = 0.300;
-
-	float r_coef = eosin_r_coef;
-	float g_coef = eosin_g_coef;
-	float b_coef = eosin_b_coef;
-
-	vec4 color = vec4(
-		exp(-hematoxylin_r_coef * dna * color_k) * exp(-eosin_r_coef * eosin * color_k),
-		exp(-hematoxylin_g_coef * dna * color_k) * exp(-eosin_g_coef * eosin * color_k),
-		exp(-hematoxylin_b_coef * dna * color_k) * exp(-eosin_b_coef * eosin * color_k),
-		alpha
-	);
-
-	// if we're not supposed to show the texture AND the plane isn't visible, then discard
-	if (showTex == false) { if(isPlaneVisible(intersectPlanes) == false) { color.a = .05; } }
-	return color;
-}
-
 bool shouldDrawBorder() {
 	float min = .01;
 	float max = .99;

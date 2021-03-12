@@ -39,7 +39,7 @@ class ControlPanel; // Forward declaration
 /// @b Simple enum to keep track of the different viewing primitives for the program.
 enum DrawMode { Solid, Volumetric, VolumetricBoxed };
 /// @b Simple enum to keep track of which color function to apply to the viewers.
-enum ColorFunction { RedAndGreen, SingleChannel, Green };
+enum ColorFunction { SingleChannel, HistologyHandE, HSV2RGB, ColorMagnitude };
 /// @b Simple enum to define which plane we are drawing
 enum planes { x = 1, y = 2, z = 3 };
 /// @b Simple enum to keep track of a plane's orientation.
@@ -137,7 +137,12 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void openGLDebugLogger_inserter(const QOpenGLDebugMessage m);
 
 		/// @b Changes the texture coloration mode to the desired setting
-		void setDisplayChannel(ColorFunction _c);
+		void setColorFunction(ColorFunction _c);
+
+		/// @b Set the color of the beginning of the color segment for the segmented color scale
+		void setColor0(qreal r, qreal g, qreal b);
+		/// @b Set the color of the beginning of the color segment for the segmented color scale
+		void setColor1(qreal r, qreal g, qreal b);
 
 		/// @brief Set X's plane displacement within the bounding box to be `scalar`
 		void slotSetPlaneDisplacementX(float scalar);
@@ -187,9 +192,9 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		/// @b compile the given shader at 'path' as a shader of type 'shaType'
 		GLuint compileShader(const std::string& path, const GLenum shaType, bool verbose = false);
 		/// @b Create and link a program, with the given (valid) shader IDs.
-		GLuint compileProgram(const GLuint vSha = 0, const GLuint gSha = 0, const GLuint fSha = 0, bool verbose = false);
+		GLuint compileProgram(const GLuint vSha = 0, const GLuint gSha = 0, const GLuint colorSha = 0, const GLuint fSha = 0, bool verbose = false);
 		/// @b Compile the given shaders, and return the ID of the program generated. On any error, returns 0.
-		GLuint compileShaders(std::string vPath, std::string gPath, std::string fPath, bool verbose = false);
+		GLuint compileShaders(std::string vPath, std::string gPath, std::string cPath, std::string fPath, bool verbose = false);
 
 		/// @b Creates all the VAO/VBO handles
 		void createBuffers();
@@ -236,6 +241,8 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void generateColorScale();
 		/// @b Uploads the color scale to OpenGL
 		void uploadColorScale();
+		/// @b Returns an unsigned int (suitable for uniforms) from a color function
+		uint colorFunctionToUniform(ColorFunction _c);
 
 		/// @b Prints the accessible uniforms and attributes of the given program.
 		void printProgramUniforms(const GLuint _pid);
@@ -251,11 +258,6 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void drawBoundingBox(const DiscreteGrid::bbox_t& _box, glm::vec3 color, GLfloat* vMat, GLfloat* pMat);
 		/// @b Update the scene's bounding box with the currently drawn grids.
 		void updateBoundingBox(void);
-
-		/// @b Set the color of the beginning of the color segment for the segmented color scale
-		void setColor0(qreal r, qreal g, qreal b);
-		/// @b Set the color of the beginning of the color segment for the segmented color scale
-		void setColor1(qreal r, qreal g, qreal b);
 
 		/*************************************/
 		/*************************************/
@@ -306,6 +308,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		DiscreteGrid::bbox_t visuBox;		///< Used to restrict the view to a box with its coordinates
 		DrawMode drawMode;			///< Current 3D draw mode
 		ColorFunction channels;		///< Channel(s) to display on the viewers
+		GLuint selectedChannel;		///< The currently selected channel for greyscale mode.
 
 		glm::vec3 color0;	///< The color segment when approaching 0
 		glm::vec3 color1;	///< The color segment when approaching 1

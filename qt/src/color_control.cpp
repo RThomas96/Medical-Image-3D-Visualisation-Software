@@ -59,6 +59,9 @@ ColorBoundControl::ColorBoundControl(Scene* _sc, ControlPanel* _cp, MainWidget* 
 	QObject::connect(this->spinbox_max, QOverload<int>::of(&QSpinBox::valueChanged), this, &ColorBoundControl::setMaxColorBound);
 	QObject::connect(this->button_baseColor0, &QPushButton::clicked, this, &ColorBoundControl::setColor0);
 	QObject::connect(this->button_baseColor1, &QPushButton::clicked, this, &ColorBoundControl::setColor1);
+
+	this->_scene->setColor0(this->color_0.redF(), this->color_0.greenF(), this->color_0.blueF());
+	this->_scene->setColor1(this->color_1.redF(), this->color_1.greenF(), this->color_1.blueF());
 }
 
 ColorBoundControl::~ColorBoundControl() {
@@ -119,6 +122,8 @@ void ColorBoundControl::setColor0() {
 	QIcon c0(*this->pixmap_baseColor0);
 	this->button_baseColor0->setIcon(c0);
 
+	this->_scene->setColor0(this->color_0.redF(), this->color_0.greenF(), this->color_0.blueF());
+
 	return;
 }
 
@@ -129,6 +134,8 @@ void ColorBoundControl::setColor1() {
 	this->pixmap_baseColor1->fill(this->color_1);
 	QIcon c1(*this->pixmap_baseColor1);
 	this->button_baseColor1->setIcon(c1);
+
+	this->_scene->setColor1(this->color_1.redF(), this->color_1.greenF(), this->color_1.blueF());
 
 	return;
 }

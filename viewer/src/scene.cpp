@@ -75,7 +75,7 @@ Scene::Scene() {
 	this->sceneBB = DiscreteGrid::bbox_t(min, max);
 	this->clipDistanceFromCamera = 5.f;
 	this->drawMode = DrawMode::Solid;
-	this->channels = ColorFunction::RedAndGreen;
+	this->channels = ColorFunction::HistologyHandE;
 
 	// Show all planes as default :
 	this->planeVisibility = glm::vec<3, bool, glm::defaultp>(true, true, true);
@@ -167,6 +167,7 @@ void Scene::initGl(QOpenGLContext* _context) {
 
 	this->minColorVal = 0;
 	this->maxColorVal = std::numeric_limits<DiscreteGrid::data_t>::max();
+	this->selectedChannel = 1; // by default, the R channel
 
 	// if a control panel is attached, enable its sliders/buttons :
 	if (this->controlPanel) {
@@ -516,11 +517,11 @@ void Scene::updateBoundingBox(void) {
 }
 
 void Scene::recompileShaders(bool verbose) {
-	GLuint newProgram = this->compileShaders("../shaders/voxelgrid.vert", "../shaders/voxelgrid.geom", "../shaders/voxelgrid.frag", verbose);
-	GLuint newPlaneProgram = this->compileShaders("../shaders/plane.vert", "", "../shaders/plane.frag", verbose);
-	GLuint newPlaneViewerProgram = this->compileShaders("../shaders/texture_explorer.vert", "", "../shaders/texture_explorer.frag", verbose);
-	GLuint newVolumetricProgram = this->compileShaders("../shaders/transfer_mesh.vert", "../shaders/transfer_mesh.geom", "../shaders/transfer_mesh.frag", verbose);
-	GLuint newBoundingBoxProgram = this->compileShaders("../shaders/bounding_box.vert", "", "../shaders/bounding_box.frag", verbose);
+	GLuint newProgram = this->compileShaders("../shaders/voxelgrid.vert", "../shaders/voxelgrid.geom", "../shaders/voxelgrid.frag", "../shaders/coloring.glsl", verbose);
+	GLuint newPlaneProgram = this->compileShaders("../shaders/plane.vert", "", "../shaders/plane.frag", "../shaders/coloring.glsl", verbose);
+	GLuint newPlaneViewerProgram = this->compileShaders("../shaders/texture_explorer.vert", "", "../shaders/texture_explorer.frag", "../shaders/coloring.glsl", verbose);
+	GLuint newVolumetricProgram = this->compileShaders("../shaders/transfer_mesh.vert", "../shaders/transfer_mesh.geom", "../shaders/transfer_mesh.frag", "../shaders/coloring.glsl", verbose);
+	GLuint newBoundingBoxProgram = this->compileShaders("../shaders/bounding_box.vert", "", "../shaders/coloring.glsl", "../shaders/bounding_box.frag", verbose);
 
 	if (newProgram) {
 		glDeleteProgram(this->programHandle_projectedTex);
@@ -544,7 +545,7 @@ void Scene::recompileShaders(bool verbose) {
 	}
 }
 
-GLuint Scene::compileShaders(std::string _vPath, std::string _gPath, std::string _fPath, bool verbose) {
+GLuint Scene::compileShaders(std::string _vPath, std::string _gPath, std::string _cPath, std::string _fPath, bool verbose) {
 	glUseProgram(0);
 
 	// Checks if we have an available compiler, or exit ! We can't do shit otherwise.
@@ -561,11 +562,14 @@ GLuint Scene::compileShaders(std::string _vPath, std::string _gPath, std::string
 	if (verbose) { if (not _gPath.empty()) { std::cerr << "[LOG][" << __FILE__ << ":" << __LINE__ << "] Compiling geometry shader \"" << _gPath << "\"...\n"; } }
 	GLuint _gSha = this->compileShader(_gPath, GL_GEOMETRY_SHADER, verbose);
 
+	if (verbose) { if (not _cPath.empty()) { std::cerr << "[LOG][" << __FILE__ << ":" << __LINE__ << "] Compiling fragment shader \"" << _cPath << "\"...\n"; } }
+	GLuint _cSha = this->compileShader(_cPath, GL_FRAGMENT_SHADER, verbose);
+
 	if (verbose) { if (not _fPath.empty()) { std::cerr << "[LOG][" << __FILE__ << ":" << __LINE__ << "] Compiling fragment shader \"" << _fPath << "\"...\n"; } }
 	GLuint _fSha = this->compileShader(_fPath, GL_FRAGMENT_SHADER, verbose);
 
 	if (verbose) { std::cerr << "[LOG][" << __FILE__ << ":" << __LINE__ << "] Compiling program ...\n"; }
-	GLuint _prog = this->compileProgram(_vSha, _gSha, _fSha, verbose);
+	GLuint _prog = this->compileProgram(_vSha, _gSha, _cSha, _fSha, verbose);
 
 	return _prog;
 }
@@ -645,7 +649,8 @@ GLuint Scene::compileShader(const std::string& path, const GLenum shaType, bool 
 	return _sha;
 }
 
-GLuint Scene::compileProgram(const GLuint vSha, const GLuint gSha, const GLuint fSha, bool verbose) {
+// line 572 for compileShader
+GLuint Scene::compileProgram(const GLuint vSha, const GLuint gSha, const GLuint cSha, const GLuint fSha, bool verbose) {
 	// Check any shader was passed to the program :
 	if (vSha == 0 && gSha == 0 && fSha == 0) {
 		std::cerr << "[" << __FILE__ << ":" << __LINE__ << "] : No shader IDs were passed to the function.\n" <<
@@ -655,6 +660,7 @@ GLuint Scene::compileProgram(const GLuint vSha, const GLuint gSha, const GLuint 
 	GLuint _prog = glCreateProgram();
 	if (vSha != 0) { glAttachShader(_prog, vSha); }
 	if (gSha != 0) { glAttachShader(_prog, gSha); }
+	if (cSha != 0) { glAttachShader(_prog, cSha); }
 	if (fSha != 0) { glAttachShader(_prog, fSha); }
 
 	glLinkProgram(_prog);
@@ -1206,6 +1212,16 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, cons
 		// Texture display mode :
 		GLint location_channelView = getUniform("channelView");
 		GLint location_maxTexPossible = getUniform("maxTexPossible");
+		GLint location_color0 = getUniform("color0");
+		GLint location_color1 = getUniform("color1");
+		GLint location_selectedChannel = getUniform("selectedChannel");
+		glUniform3fv(location_color0, 1, glm::value_ptr(this->color0));
+		glUniform3fv(location_color1, 1, glm::value_ptr(this->color1));
+		if (grid.nbChannels > 1) {
+			glUniform1ui(location_selectedChannel, this->selectedChannel);
+		} else {
+			glUniform1ui(location_selectedChannel, 1);
+		}
 
 		std::size_t tex = 0;
 		glActiveTexture(GL_TEXTURE0 + tex);
@@ -1243,7 +1259,8 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, cons
 		glUniform1i(location_visibilityMap, tex);
 		tex++;
 
-		uint chan = (this->channels == ColorFunction::RedAndGreen) ? 1 : (this->channels == ColorFunction::SingleChannel) ? 2 : 3;
+		uint chan = this->colorFunctionToUniform(this->channels);
+
 		glUniform1ui(location_channelView, chan);
 		glUniform1d(location_maxTexPossible, static_cast<double>(std::numeric_limits<DiscreteGrid::data_t>::max()));
 
@@ -1418,6 +1435,9 @@ void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, 
 	GLint gridPositionLoc = glGetUniformLocation(this->programHandle_projectedTex, "gridPosition");
 	GLint location_textureBounds = glGetUniformLocation(this->programHandle_projectedTex, "textureBounds");
 	GLint location_nbChannels = glGetUniformLocation(this->programHandle_projectedTex, "nbChannels");
+	GLint location_color0 = glGetUniformLocation(this->programHandle_projectedTex, "color0");
+	GLint location_color1 = glGetUniformLocation(this->programHandle_projectedTex, "color1");
+	GLint location_selectedChannel = glGetUniformLocation(this->programHandle_projectedTex, "selectedChannel");
 
 	DiscreteGrid::bbox_t::vec origin = gridView.grid->getBoundingBox().getMin();
 	DiscreteGrid::bbox_t::vec originWS = gridView.grid->getBoundingBoxWorldSpace().getMin();
@@ -1435,6 +1455,13 @@ void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, 
 	//glm::vec2 texbounds{static_cast<float>(this->minColorVal), static_cast<float>(this->maxColorVal)};
 	glUniform2fv(location_textureBounds, 1, glm::value_ptr(texBounds));
 	glUniform1ui(colorOrTexture_Loc, this->colorOrTexture ? 1 : 0);
+	glUniform3fv(location_color0, 1, glm::value_ptr(this->color0));
+	glUniform3fv(location_color1, 1, glm::value_ptr(this->color1));
+	if (gridView.nbChannels > 1) {
+		glUniform1ui(location_selectedChannel, this->selectedChannel);
+	} else {
+		glUniform1ui(location_selectedChannel, 1);
+	}
 	if (gridView.grid->hasData() == false && gridView.grid->isGridOffline() == false) {
 		glUniform1ui(drawMode_Loc, 2);
 	} else {
@@ -1452,7 +1479,7 @@ void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, 
 
 	GLint location_channelView = glGetUniformLocation(this->programHandle_projectedTex, "channelView");
 	GLint location_maxTexPossible = glGetUniformLocation(this->programHandle_projectedTex, "maxTexPossible");
-	uint chan = (this->channels == ColorFunction::RedAndGreen) ? 1 : (this->channels == ColorFunction::SingleChannel) ? 2 : 3;
+	uint chan = this->colorFunctionToUniform(this->channels);
 	glUniform1ui(location_channelView, chan);
 	glUniform1d(location_maxTexPossible, static_cast<double>(std::numeric_limits<DiscreteGrid::data_t>::max()));
 
@@ -1493,10 +1520,20 @@ void Scene::prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane, cons
 	GLint location_showTex = glGetUniformLocation(this->programHandle_Plane3D, "showTex");
 	GLint location_nbChannels = glGetUniformLocation(this->programHandle_Plane3D, "nbChannels");
 	GLint location_drawOnlyData = glGetUniformLocation(this->programHandle_Plane3D, "drawOnlyData");
+	GLint location_color0 = glGetUniformLocation(this->programHandle_Plane3D, "color0");
+	GLint location_color1 = glGetUniformLocation(this->programHandle_Plane3D, "color1");
+	GLint location_selectedChannel = glGetUniformLocation(this->programHandle_Plane3D, "selectedChannel");
+	glUniform3fv(location_color0, 1, glm::value_ptr(this->color0));
+	glUniform3fv(location_color1, 1, glm::value_ptr(this->color1));
+	if (grid.nbChannels > 1) {
+		glUniform1ui(location_selectedChannel, this->selectedChannel);
+	} else {
+		glUniform1ui(location_selectedChannel, 1);
+	}
 
 	GLint location_channelView = glGetUniformLocation(this->programHandle_Plane3D, "channelView");
 	GLint location_maxTexPossible = glGetUniformLocation(this->programHandle_Plane3D, "maxTexPossible");
-	uint chan = (this->channels == ColorFunction::RedAndGreen) ? 1 : (this->channels == ColorFunction::SingleChannel) ? 2 : 3;
+	uint chan = this->colorFunctionToUniform(this->channels);
 	glUniform1ui(location_channelView, chan);
 	glUniform1d(location_maxTexPossible, static_cast<double>(std::numeric_limits<DiscreteGrid::data_t>::max()));
 
@@ -1568,7 +1605,7 @@ void Scene::prepPlane_SingleUniforms(planes _plane, planeHeading _heading, glm::
 
 	GLint location_channelView = glGetUniformLocation(this->programHandle_PlaneViewer, "channelView");
 	GLint location_maxTexPossible = glGetUniformLocation(this->programHandle_PlaneViewer, "maxTexPossible");
-	uint chan = (this->channels == ColorFunction::RedAndGreen) ? 1 : (this->channels == ColorFunction::SingleChannel) ? 2 : 3;
+	uint chan = this->colorFunctionToUniform(this->channels);
 	glUniform1ui(location_channelView, chan);
 	glUniform1d(location_maxTexPossible, static_cast<double>(std::numeric_limits<DiscreteGrid::data_t>::max()));
 
@@ -1590,6 +1627,16 @@ void Scene::prepPlane_SingleUniforms(planes _plane, planeHeading _heading, glm::
 	GLint location_texData = glGetUniformLocation(this->programHandle_PlaneViewer, "texData");
 	GLint location_colorBounds = glGetUniformLocation(this->programHandle_PlaneViewer, "colorBounds");
 	GLint location_textureBounds = glGetUniformLocation(this->programHandle_PlaneViewer, "textureBounds");
+	GLint location_color0 = glGetUniformLocation(this->programHandle_PlaneViewer, "color0");
+	GLint location_color1 = glGetUniformLocation(this->programHandle_PlaneViewer, "color1");
+	GLint location_selectedChannel = glGetUniformLocation(this->programHandle_PlaneViewer, "selectedChannel");
+	glUniform3fv(location_color0, 1, glm::value_ptr(this->color0));
+	glUniform3fv(location_color1, 1, glm::value_ptr(this->color1));
+	if (_grid.nbChannels > 1) {
+		glUniform1ui(location_selectedChannel, this->selectedChannel);
+	} else {
+		glUniform1ui(location_selectedChannel, 1);
+	}
 
 	// Uniform variables :
 	glUniform2fv(location_fbDims, 1, glm::value_ptr(fbDims));
@@ -2169,7 +2216,22 @@ glm::vec3 Scene::getSceneCenter() {
 	return glm::vec3(.5, .5, .5);
 }
 
-void Scene::setDisplayChannel(ColorFunction _c) { this->channels = _c; }
+uint Scene::colorFunctionToUniform(ColorFunction _c) {
+	switch (_c) {
+		case ColorFunction::SingleChannel: return 1;
+		case ColorFunction::HistologyHandE: return 2;
+		case ColorFunction::HSV2RGB: return 3;
+		case ColorFunction::ColorMagnitude: return 4;
+	}
+	return 0;
+}
+
+void Scene::setColorFunction(ColorFunction _c) {
+	if (_c == ColorFunction::SingleChannel && this->channels == ColorFunction::SingleChannel) {
+		this->selectedChannel = (this->selectedChannel+1)%2;
+	}
+	this->channels = _c;
+}
 
 DiscreteGrid::bbox_t Scene::getSceneBoundingBox() const { return this->sceneBB; };
 
