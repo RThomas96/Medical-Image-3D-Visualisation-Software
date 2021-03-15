@@ -205,7 +205,7 @@ namespace IO {
 		#endif
 
 		// Writes the voxel's dimensions within the grid :
-		glm::vec3 vxDim	= this->grid->getVoxelDimensions();
+		glm::vec3 vxDim = this->grid->getVoxelDimensions();
 		*this->outputDIM << "-dx " << vxDim.x << '\n';
 		*this->outputDIM << "-dy " << vxDim.y << '\n';
 		*this->outputDIM << "-dz " << vxDim.z << '\n';

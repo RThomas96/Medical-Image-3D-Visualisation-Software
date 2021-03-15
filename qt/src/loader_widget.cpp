@@ -376,19 +376,6 @@ void GridLoaderWidget::computeGridInfoLabel() {
 				QString::number(dimsG.z) + " in " + QString::number(fnSizeG) + " images.";
 		this->label_gridInfoG->setText(g);
 	}
-
-	/*
-	this->dsb_transformationDX->blockSignals(true);
-	this->dsb_transformationDY->blockSignals(true);
-	this->dsb_transformationDZ->blockSignals(true);
-	glm::vec3 v = this->readerR->getVoxelDimensions();
-	this->dsb_transformationDX->setValue(v.x);
-	this->dsb_transformationDY->setValue(v.y);
-	this->dsb_transformationDZ->setValue(v.z);
-	this->dsb_transformationDZ->blockSignals(false);
-	this->dsb_transformationDY->blockSignals(false);
-	this->dsb_transformationDX->blockSignals(false);
-	*/
 }
 
 void GridLoaderWidget::loadGridDIM1channel() {
@@ -554,10 +541,16 @@ void GridLoaderWidget::loadGrid() {
 	DiscreteGrid::data_t userMin = static_cast<DiscreteGrid::data_t>(this->spinbox_userLimitMin->value());
 	DiscreteGrid::data_t userMax = static_cast<DiscreteGrid::data_t>(this->spinbox_userLimitMax->value());
 
+	float dx = this->dsb_transformationDX->value();
+	float dy = this->dsb_transformationDY->value();
+	float dz = this->dsb_transformationDZ->value();
+
 	this->readerR->enableDownsampling(this->dsLevel);
+	this->readerR->setUserVoxelSize(dx, dy, dz);
 	if (hasUserBounds) { this->readerR->setUserIntensityLimits(userMin, userMax); }
 	if (this->readerG != nullptr) {
 		this->readerG->enableDownsampling(this->dsLevel);
+		this->readerG->setUserVoxelSize(dx, dy, dz);
 		if (hasUserBounds) { this->readerG->setUserIntensityLimits(userMin, userMax); }
 	}
 
@@ -595,7 +588,6 @@ void GridLoaderWidget::loadGrid() {
 		settings.loadImageSize(completeSizeBits);
 	}
 
-
 	this->readerR->loadImage();
 	// generate input grids :
 	this->inputGridR = std::make_shared<InputGrid>();
@@ -629,8 +621,8 @@ void GridLoaderWidget::loadGrid() {
 		colB.y = std::max(colB.y, colG.y);
 	}
 
-	// Disable widgets purely for no data races or
-	// events that might cause unexpected behaviour :
+	// Disable widgets purely so that no data races
+	// or events might cause unexpected behaviour :
 	this->disableWidgets();
 
 	if (this->readerG == nullptr) {

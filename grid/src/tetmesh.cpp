@@ -36,8 +36,8 @@ std::vector<std::shared_ptr<InputGrid>> TetMesh::getInputGrids() const {
 
 TetMesh& TetMesh::setOutputGrid(const std::shared_ptr<OutputGrid>& toSet) {
 	this->outputGrid = toSet;
-	this->updateVoxelSizes();
 	this->updateOutputGridData();
+	this->updateVoxelSizes();
 	return *this;
 }
 

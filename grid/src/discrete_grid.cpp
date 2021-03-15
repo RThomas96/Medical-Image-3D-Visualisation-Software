@@ -7,15 +7,15 @@ glm::mat4 computeTransfoShear(double angleDeg, const std::shared_ptr<DiscreteGri
 
 	double angleRad = (angleDeg * M_PI) / 180.;
 
-	transfoMat[0][0] = vxdims.x * std::cos(angleRad);
-	transfoMat[0][2] = vxdims.x * std::sin(angleRad);
-	transfoMat[1][1] = vxdims.y;
-	transfoMat[2][2] = vxdims.z * std::cos(angleRad);
+	transfoMat[0][0] = /* vxdims.x */ std::cos(angleRad);
+	transfoMat[0][2] = /* vxdims.x */ std::sin(angleRad);
+	transfoMat[1][1] = /* vxdims.y */ 1.f;
+	transfoMat[2][2] = /* vxdims.z */ std::cos(angleRad);
 
 	if (angleDeg < 0.) {
 		auto dims = grid->getBoundingBox().getDiagonal();
 		// compute translation along Z :
-		float w = static_cast<float>(dims.x) * vxdims.x;
+		float w = static_cast<float>(dims.x)/* vxdims.x */;
 		float displacement = w * std::abs(std::sin(angleRad));
 		transfoMat = glm::translate(transfoMat, glm::vec3(.0, .0, displacement));
 	}
@@ -113,7 +113,6 @@ DiscreteGrid::DataType DiscreteGrid::fetchTexelGridSpace(glm::vec4 pos_gs, bool 
 
 	/// If the grid is offline, we don't want to divide the indices (can be divided in case the grid was downsampled)
 	glm::vec3 vxDiv = this->voxelDimensions;
-	if (this->isOffline) { vxDiv = glm::vec3(1.f, 1.f, 1.f); }
 
 	// compute index of position :
 	std::size_t x = static_cast<std::size_t>(std::floor((pos_gs.x - minBB.x) / vxDiv.x));
@@ -272,8 +271,6 @@ glm::vec4 DiscreteGrid::getVoxelPositionGridSpace(sizevec3 idx, bool verbose) {
 	bbox_t::vec m = this->boundingBox.getMin();
 	glm::vec4 minBBpos = glm::vec4(static_cast<float>(m.x), static_cast<float>(m.y), static_cast<float>(m.z), float(0.f));
 	glm::vec4 finalPos = minBBpos + voxelPos + halfVoxel;
-	//std::cerr << "[TRACE] MinBB : [" << minBBpos.x << ", " << minBBpos.y << ", " << minBBpos.z << "]\n";
-	//std::cerr << "[TRACE] FinPos: [" << finalPos.x << ", " << finalPos.y << ", " << finalPos.z << "]\n";
 
 	if (verbose) {
 		glm::vec4 worldPos = this->toWorldSpace(voxelPos);

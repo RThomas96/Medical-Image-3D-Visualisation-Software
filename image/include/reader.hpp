@@ -96,7 +96,7 @@ namespace IO {
 			/// @brief Returns the whole data loaded, at once.
 			virtual const std::vector<data_t>& getGrid(void) const;
 
-			/// @brief Get the grid dimensions, once loaded.
+			/// @brief Get the "raw" grid dimensions from file info.
 			virtual sizevec3 getGridDimensions(void) const;
 
 			/// @brief Get the estimated grid size, in bytes.
@@ -138,6 +138,9 @@ namespace IO {
 			/// @brief Return the filenames associated with this reader.
 			virtual std::vector<std::string> getFilenames(void) const;
 
+			/// @brief Sets the voxel size to the user-defined values
+			virtual GenericGridReader& setUserVoxelSize(float _x, float _y, float _z);
+
 		protected:
 			/// @brief Open the file with the given name, and load its contents into memory.
 			virtual GenericGridReader& openFile(const std::string& name);
@@ -161,6 +164,8 @@ namespace IO {
 			sizevec3 gridDimensions;
 			/// @brief Dimensions of voxels, if provided. Otherwise, set to unit volume.
 			glm::vec3 voxelDimensions;
+			/// @brief Multiplier to apply to the voxel dimensions if the image set is downsampled upon loading.
+			glm::vec3 voxelMultiplier;
 			/// @brief Transform to apply to the grid, if any is provided. Identity matrix otherwise.
 			glm::mat4 transform;
 			/// @brief Bounding box of the grid, in the grid's space.

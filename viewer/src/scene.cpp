@@ -1269,7 +1269,11 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, cons
 		glUniform1f(location_diffuseRef, .8f);
 		glUniform1f(location_specRef, .8f);
 		glUniform1f(location_shininess, .8f);
-		glUniform3fv(location_voxelSize, 1, glm::value_ptr(grid.grid->getVoxelDimensions()));
+		glm::vec3 vxd = grid.grid->getVoxelDimensions();
+		if (this->showVAOstate == true) {
+			std::cerr << "Voxel dimensions : " << vxd.x << ',' << vxd.y << ',' << vxd.z << '\n';
+		}
+		glUniform3fv(location_voxelSize, 1, glm::value_ptr(vxd));
 		glUniform3fv(location_gridSize, 1, glm::value_ptr(floatres));
 		glUniform1ui(location_nbChannels, grid.nbChannels);
 		glUniform3fv(location_volumeEpsilon, 1, glm::value_ptr(grid.defaultEpsilon));
@@ -1442,7 +1446,13 @@ void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, 
 	DiscreteGrid::bbox_t::vec origin = gridView.grid->getBoundingBox().getMin();
 	DiscreteGrid::bbox_t::vec originWS = gridView.grid->getBoundingBoxWorldSpace().getMin();
 	DiscreteGrid::sizevec3 gridDims = gridView.grid->getResolution();
-	glm::vec3 dims = glm::vec3(static_cast<float>(gridDims.x), static_cast<float>(gridDims.y), static_cast<float>(gridDims.z));
+	glm::vec3 dims = glm::convert_to<float>(gridDims);
+
+	if (showVAOstate) {
+		PRINTVAL(gridDims.x);
+		PRINTVAL(gridDims.y);
+		PRINTVAL(gridDims.z);
+	}
 
 	glm::vec2 texBounds{static_cast<float>(this->minTexVal), static_cast<float>(this->maxTexVal)};
 	glm::vec2 colorBounds{static_cast<float>(this->minColorVal), static_cast<float>(this->maxColorVal)};

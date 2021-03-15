@@ -72,7 +72,8 @@ namespace IO {
 		this->boundingBox = bbox_t();
 		this->dataBoundingBox = bbox_t();
 		this->gridDimensions = sizevec3(0,0,0);
-		this->voxelDimensions = glm::vec3(0.f);
+		this->voxelDimensions = glm::vec3(1.f);
+		this->voxelMultiplier = glm::vec3(1.f);
 		this->transform = glm::mat4(1.f);
 		this->downsampleLevel = DownsamplingLevel::Original;
 		this->data.clear();
@@ -123,6 +124,21 @@ namespace IO {
 
 	GenericGridReader& GenericGridReader::enableDownsampling(DownsamplingLevel _level) {
 		this->downsampleLevel = _level;
+		// Update voxel multiplier accordingly :
+		switch (_level) {
+			case IO::DownsamplingLevel::Original:
+				this->voxelMultiplier = glm::vec3(1.f, 1.f, 1.f);
+				break;
+			case IO::DownsamplingLevel::Low :
+				this->voxelMultiplier = glm::vec3(2.f, 2.f, 2.f);
+				break;
+			case IO::DownsamplingLevel::Lower :
+				this->voxelMultiplier = glm::vec3(4.f, 4.f, 4.f);
+				break;
+			case IO::DownsamplingLevel::Lowest :
+				this->voxelMultiplier = glm::vec3(8.f, 8.f, 8.f);
+				break;
+		}
 		return *this;
 	}
 
@@ -161,7 +177,7 @@ namespace IO {
 		return sizeBytes;
 	}
 
-	glm::vec3 GenericGridReader::getVoxelDimensions() const { return this->voxelDimensions; }
+	glm::vec3 GenericGridReader::getVoxelDimensions() const { return this->voxelDimensions * this->voxelMultiplier; }
 
 	glm::mat4 GenericGridReader::getTransform() const { return this->transform; }
 
@@ -185,6 +201,11 @@ namespace IO {
 	}
 
 	std::vector<std::string> GenericGridReader::getFilenames(void) const { return this->filenames; }
+
+	GenericGridReader& GenericGridReader::setUserVoxelSize(float _x, float _y, float _z) {
+		this->voxelDimensions = glm::vec3(_x, _y, _z);
+		return *this;
+	}
 
 	DIMReader::DIMReader(data_t thresh) : GenericGridReader(thresh) {
 		this->dimFile = nullptr;
@@ -243,11 +264,11 @@ namespace IO {
 		// Get the max coord as a bounding box-type vector :
 		using val_t = bbox_t::vec::value_type;
 		bbox_t::vec maxCoord = bbox_t::vec(
-			static_cast<val_t>(this->imageDimensions.x) * static_cast<val_t>(this->voxelDimensions.x),
-			static_cast<val_t>(this->imageDimensions.y) * static_cast<val_t>(this->voxelDimensions.y),
-			static_cast<val_t>(this->imageDimensions.z) * static_cast<val_t>(this->voxelDimensions.z)
+			static_cast<val_t>(this->imageDimensions.x) * static_cast<val_t>(this->voxelDimensions.x*this->voxelMultiplier.x),
+			static_cast<val_t>(this->imageDimensions.y) * static_cast<val_t>(this->voxelDimensions.y*this->voxelMultiplier.y),
+			static_cast<val_t>(this->imageDimensions.z) * static_cast<val_t>(this->voxelDimensions.z*this->voxelMultiplier.z)
 		);
-		// N.B. : This BB will be valid regardless of the downsampling applied to the grid.
+		// N.B. : This BB will only be valid as long as the downsampling factor doesn't change. Recomputed in loadImage.
 
 		// Set the bounding box to the grid*voxel dimensions :
 		this->boundingBox.setMin(bbox_t::vec(0, 0, 0));
@@ -287,22 +308,34 @@ namespace IO {
 		std::size_t slicesToLoad = 1;
 		// Compute voxel and grid sizes :
 		sizevec3 dataDims = this->imageDimensions;
+
 		std::cerr << "\tOriginal file dimensions : {" << dataDims.x << ',' << dataDims.y << ',' << dataDims.z << "}\n";
 		std::cerr << "\tOriginal vox  dimensions : {" << this->voxelDimensions.x << ',' << this->voxelDimensions.y << ',' << this->voxelDimensions.z << "}\n";
-		if (this->downsampleLevel == DownsamplingLevel::Low) {
-			dataDims /= std::size_t(2); this->voxelDimensions *= 2.; slicesToLoad = 2;
-		}
-		if (this->downsampleLevel == DownsamplingLevel::Lower) {
-			dataDims /= std::size_t(4); this->voxelDimensions *= 4.; slicesToLoad = 4;
-		}
-		if (this->downsampleLevel == DownsamplingLevel::Lowest) {
-			dataDims /= std::size_t(8); this->voxelDimensions *= 8.; slicesToLoad = 8;
-		}
-		this->gridDimensions = dataDims;
-		std::cerr << "\tNew      img  dimensions : {" << dataDims.x << ',' << dataDims.y << ',' << dataDims.z << "}\n";
-		std::cerr << "\tNew      vox  dimensions : {" << this->voxelDimensions.x << ',' << this->voxelDimensions.y << ',' << this->voxelDimensions.z << "}\n";
 
-		std::cerr << "[LOG] preallocate() : Grid dimensions : " << this->gridDimensions.x << ',' << this->gridDimensions.y << ',' << this->gridDimensions.z << '\n';
+		if (this->downsampleLevel == DownsamplingLevel::Low) { dataDims /= std::size_t(2); slicesToLoad = 2; }
+		if (this->downsampleLevel == DownsamplingLevel::Lower) { dataDims /= std::size_t(4); slicesToLoad = 4; }
+		if (this->downsampleLevel == DownsamplingLevel::Lowest) { dataDims /= std::size_t(8); slicesToLoad = 8; }
+		this->gridDimensions = dataDims;
+
+		// Update the bounding box :
+		// if the downsampling rate changed between precomputeData() and now, the bounding box
+		// is no longer of the right size (by a factor of k \in [2,4,8]) :
+		using val_t = bbox_t::vec::value_type;
+		bbox_t::vec maxCoord = bbox_t::vec(
+			static_cast<val_t>(this->gridDimensions.x) * static_cast<val_t>(this->voxelDimensions.x*this->voxelMultiplier.x),
+			static_cast<val_t>(this->gridDimensions.y) * static_cast<val_t>(this->voxelDimensions.y*this->voxelMultiplier.y),
+			static_cast<val_t>(this->gridDimensions.z) * static_cast<val_t>(this->voxelDimensions.z*this->voxelMultiplier.z)
+		);
+		// Set the bounding box to the grid*voxel dimensions :
+		this->boundingBox.setMin(bbox_t::vec(0, 0, 0));
+		this->boundingBox.setMax(maxCoord);
+
+		std::cerr << "\tNew      img  dimensions : {" << dataDims.x << ',' << dataDims.y << ',' << dataDims.z << "}\n";
+		std::cerr << "\tNew      vox  dimensions : {" << this->voxelDimensions.x * this->voxelMultiplier.x << ',' <<
+				this->voxelDimensions.y * this->voxelMultiplier.y << ',' <<
+				this->voxelDimensions.z * this->voxelMultiplier.z << "}\n";
+
+		std::cerr << "[LOG] load() : Grid dimensions : " << this->gridDimensions.x << ',' << this->gridDimensions.y << ',' << this->gridDimensions.z << '\n';
 
 		std::cerr << "[LOG] Reading from IMA file ...\n";
 		// resize data vector to fit all data :
@@ -384,9 +417,9 @@ namespace IO {
 						if (this->data[data_idx] > this->userLimits.x && this->data[data_idx] < this->userLimits.y) {
 							// Update data BB :
 							bbox_t::vec v;
-							v.x = minBB.x + static_cast<bbox_t::vec::value_type>(i) * this->voxelDimensions.x;
-							v.y = minBB.y + static_cast<bbox_t::vec::value_type>(j) * this->voxelDimensions.y;
-							v.z = minBB.z + static_cast<bbox_t::vec::value_type>(k) * this->voxelDimensions.z;
+							v.x = minBB.x + static_cast<bbox_t::vec::value_type>(i) * this->voxelDimensions.x * this->voxelMultiplier.x;
+							v.y = minBB.y + static_cast<bbox_t::vec::value_type>(j) * this->voxelDimensions.y * this->voxelMultiplier.y;
+							v.z = minBB.z + static_cast<bbox_t::vec::value_type>(k) * this->voxelDimensions.z * this->voxelMultiplier.z;
 							this->dataBoundingBox.addPoint(v);
 						}
 					} else {
@@ -394,9 +427,9 @@ namespace IO {
 						if (this->data[data_idx] > this->threshold) {
 							// Update data BB :
 							bbox_t::vec v;
-							v.x = minBB.x + static_cast<bbox_t::vec::value_type>(i) * this->voxelDimensions.x;
-							v.y = minBB.y + static_cast<bbox_t::vec::value_type>(j) * this->voxelDimensions.y;
-							v.z = minBB.z + static_cast<bbox_t::vec::value_type>(k) * this->voxelDimensions.z;
+							v.x = minBB.x + static_cast<bbox_t::vec::value_type>(i) * this->voxelDimensions.x * this->voxelMultiplier.x;
+							v.y = minBB.y + static_cast<bbox_t::vec::value_type>(j) * this->voxelDimensions.y * this->voxelMultiplier.y;
+							v.z = minBB.z + static_cast<bbox_t::vec::value_type>(k) * this->voxelDimensions.z * this->voxelMultiplier.z;
 							this->dataBoundingBox.addPoint(v);
 						}
 					}
@@ -556,6 +589,12 @@ namespace IO {
 			return *this;
 		}
 
+		std::cerr << "[TRACE_LOAD]\t" << "Image dimensions : [ " << this->imageDimensions.x << ", " << this->imageDimensions.y << ", " << this->imageDimensions.z <<" ]\n";
+		std::cerr << "[TRACE_LOAD]\t" << "Grid dimensions : [ " << this->gridDimensions.x << ", " << this->gridDimensions.y << ", " << this->gridDimensions.z <<" ]\n";
+		std::cerr << "[TRACE_LOAD]\t" << "Voxel dimensions : {" << this->voxelDimensions.x * this->voxelMultiplier.x << ", "
+				<< this->voxelDimensions.y * this->voxelMultiplier.y << ", "
+				<< this->voxelDimensions.z * this->voxelMultiplier.z << "}\n";
+
 		if (this->isAnalyzed == false) { this->preComputeImageData(); }
 
 		// Prepare storage of all the image's data :
@@ -576,7 +615,20 @@ namespace IO {
 
 		// resize :
 		std::cerr << "[LOG] load() : Grid dimensions : " << this->gridDimensions.x << ',' << this->gridDimensions.y << ',' << this->gridDimensions.z << '\n';
-		std::cerr << "[LOG] load() : Voxel dimensions : " << this->voxelDimensions.x << ',' << this->voxelDimensions.y << ',' << this->voxelDimensions.z << '\n';
+		std::cerr << "[LOG] load() : Voxel dimensions : " << this->voxelDimensions.x * this->voxelMultiplier.x << ','
+				<< this->voxelDimensions.y * this->voxelMultiplier.y << ','
+				<< this->voxelDimensions.z * this->voxelMultiplier.z << '\n';
+
+		// Recompute bounding box according to the voxel multiplier used here :
+		using val_t = bbox_t::vec::value_type;
+		bbox_t::vec maxCoord = bbox_t::vec(
+			static_cast<val_t>(this->gridDimensions.x) * static_cast<val_t>(this->voxelDimensions.x*this->voxelMultiplier.x),
+			static_cast<val_t>(this->gridDimensions.y) * static_cast<val_t>(this->voxelDimensions.y*this->voxelMultiplier.y),
+			static_cast<val_t>(this->gridDimensions.z) * static_cast<val_t>(this->voxelDimensions.z*this->voxelMultiplier.z)
+		);
+		// Set the bounding box to the grid*voxel dimensions :
+		this->boundingBox.setMin(bbox_t::vec(0, 0, 0));
+		this->boundingBox.setMax(maxCoord);
 
 		curSlice.resize(this->gridDimensions.x * this->gridDimensions.y);
 		// Resize to accept one slice at full-res :
@@ -647,9 +699,9 @@ namespace IO {
 						if (this->data[data_idx] > this->userLimits.x && this->data[data_idx] < this->userLimits.y) {
 							// Update data BB :
 							bbox_t::vec v;
-							v.x = minBB.x + static_cast<bbox_t::vec::value_type>(i) * this->voxelDimensions.x;
-							v.y = minBB.y + static_cast<bbox_t::vec::value_type>(j) * this->voxelDimensions.y;
-							v.z = minBB.z + static_cast<bbox_t::vec::value_type>(k) * this->voxelDimensions.z;
+							v.x = minBB.x + static_cast<bbox_t::vec::value_type>(i) * this->voxelDimensions.x * this->voxelMultiplier.x;
+							v.y = minBB.y + static_cast<bbox_t::vec::value_type>(j) * this->voxelDimensions.y * this->voxelMultiplier.y;
+							v.z = minBB.z + static_cast<bbox_t::vec::value_type>(k) * this->voxelDimensions.z * this->voxelMultiplier.z;
 							this->dataBoundingBox.addPoint(v);
 						}
 					} else {
@@ -657,9 +709,9 @@ namespace IO {
 						if (this->data[data_idx] > this->threshold) {
 							// Update data BB :
 							bbox_t::vec v;
-							v.x = minBB.x + static_cast<bbox_t::vec::value_type>(i) * this->voxelDimensions.x;
-							v.y = minBB.y + static_cast<bbox_t::vec::value_type>(j) * this->voxelDimensions.y;
-							v.z = minBB.z + static_cast<bbox_t::vec::value_type>(k) * this->voxelDimensions.z;
+							v.x = minBB.x + static_cast<bbox_t::vec::value_type>(i) * this->voxelDimensions.x * this->voxelMultiplier.x;
+							v.y = minBB.y + static_cast<bbox_t::vec::value_type>(j) * this->voxelDimensions.y * this->voxelMultiplier.y;
+							v.z = minBB.z + static_cast<bbox_t::vec::value_type>(k) * this->voxelDimensions.z * this->voxelMultiplier.z;
 							this->dataBoundingBox.addPoint(v);
 						}
 					}
@@ -709,11 +761,11 @@ namespace IO {
 		// If we downsample, apply the dimension reduction here on all axes
 		// and modify the voxel multiplier accordingly :
 		if (this->downsampleLevel == DownsamplingLevel::Low) {
-			width /= 2; height /= 2; depth /= 2; voxelMultiplier = 2.f;
+			width /= 2; height /= 2; depth /= 2;
 		} else if (this->downsampleLevel == DownsamplingLevel::Lower) {
-			width /= 4; height /= 4; depth /= 4; voxelMultiplier = 4.f;
+			width /= 4; height /= 4; depth /= 4;
 		} else if (this->downsampleLevel == DownsamplingLevel::Lowest) {
-			width /= 8; height /= 8; depth /= 8; voxelMultiplier = 8.f;
+			width /= 8; height /= 8; depth /= 8;
 		}
 
 		this->gridDimensions = sizevec3(width, height, depth);
