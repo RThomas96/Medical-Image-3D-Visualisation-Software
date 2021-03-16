@@ -882,8 +882,6 @@ namespace IO {
 		// By default, one 8-bit pixel per
 		this->samplesPerPixel = 1;
 		this->bitsPerSample.clear();
-		this->bitsPerSample.push_back(8);
-		this->stripOffsets = nullptr;
 		this->width = 0;
 		this->height = 0;
 		this->rowsPerStrip = 0;
@@ -898,16 +896,7 @@ namespace IO {
 		this->loadTIFFInfo(idx);
 	}
 
-	libTIFFReader::TIFFFrame::~TIFFFrame() {
-		/*
-		 * Memory is managed by libtiff entirely for the stripoffsets. We _mustn't_ free this array ourselves,
-		 * or it will cause a double free memory error. (freed once by us, once by libtiff)
-		 */
-		if (this->stripOffsets != nullptr) {
-			delete[] this->stripOffsets;
-			this->stripOffsets = nullptr;
-		}
-	}
+	libTIFFReader::TIFFFrame::~TIFFFrame() { /* For now, nothing needs to be explicitely destructed here. */ }
 
 	void libTIFFReader::TIFFFrame::loadTIFFInfo(tdir_t index) {
 		this->directoryOffset = index;
@@ -915,65 +904,63 @@ namespace IO {
 		int result = 0; // result for all TIFF operations
 
 		if (this->file != nullptr) {
+			// We don't currently support tiled images :
 			if (TIFFIsTiled(this->file)) {
 				throw std::runtime_error("cannot read tiled images");
 			}
 
 			// Set the current directory (should already be there, but just to be sure) :
 			result = TIFFSetDirectory(this->file, this->directoryOffset);
+			// for some reason, we might read past-the-end on some directories. Handle the case :
+			if (result != 1) { throw std::runtime_error("cannot set file to directory "+std::to_string(index)); }
+
+			// Check the sample format of the directory :
+			uint16_t sampleformat = SAMPLEFORMAT_UINT;
+			result = TIFFGetField(this->file, TIFFTAG_SAMPLEFORMAT, &sampleformat);
 			if (result != 1) {
-				// for some reason, we might read past-the-end on some directories. Handle the case :
-				throw std::runtime_error("cannot set the file to directory number "+std::to_string(this->directoryOffset));
+				result = TIFFGetFieldDefaulted(this->file, TIFFTAG_SAMPLEFORMAT, &sampleformat);
+				if (result != 1) {
+					std::cerr << "[MAJOR_WARNING] The file \"" << TIFFFileName(this->file) << "\" has no SAMPLEFORMAT.";
+					std::cerr << "[MAJOR_WARNING] Interpreting the data as unsigned ints by default.";
+					sampleformat = SAMPLEFORMAT_UINT;
+				}
+			}
+			if (sampleformat != SAMPLEFORMAT_UINT) {
+				throw std::runtime_error("Cannot read values other than unsigned int yet");
 			}
 
 			uint16_t pconfig = 0;
 			result = TIFFGetField(this->file, TIFFTAG_PLANARCONFIG, &pconfig);
-			if (result != 1) {
-				throw std::runtime_error("cannot get planarconfig.");
-			}
+			if (result != 1) { throw std::runtime_error("cannot get planarconfig."); }
 			if (pconfig != 1) {
 				throw std::runtime_error("Currently do not support planar configurations other than 1 (interleaved)");
 			}
 
-			// Get image width and height :
-			result = TIFFGetField(this->file, TIFFTAG_IMAGEWIDTH, &this->width);
-			if (result != 1) {
-				throw std::runtime_error("cannot read width field in this directory");
-			}
-			result = TIFFGetField(this->file, TIFFTAG_IMAGELENGTH, &this->height);
-			if (result != 1) {
-				throw std::runtime_error("cannot read width field in this directory");
-			}
-
-			result = TIFFGetField(this->file, TIFFTAG_ROWSPERSTRIP, &this->rowsPerStrip);
-			if (result != 1) {
-				throw std::runtime_error("cannot read rowsperstrip. maybe the image was tiled ?");
-			}
-
+			// Get the number of samples per-pixel :
 			result = TIFFGetField(this->file, TIFFTAG_SAMPLESPERPIXEL, &this->samplesPerPixel);
-			if (result != 1) {
-				throw std::runtime_error("cannot read samplesperpixel.");
-			}
+			if (result != 1) { throw std::runtime_error("cannot read samplesperpixel."); }
 
+			// Get the number of bits per sample :
 			this->bitsPerSample.resize(this->samplesPerPixel);
 			result = TIFFGetField(this->file, TIFFTAG_BITSPERSAMPLE, this->bitsPerSample.data());
-			if (result != 1) {
-				throw std::runtime_error("cannot read bitsperpixel.");
-			}
+			if (result != 1) { throw std::runtime_error("cannot read bitsperpixel."); }
+
+			// If there are more than 3 samples per pixel, then extra samples are used.
+			// We don't support this currently.
+			if (this->samplesPerPixel > 3u) { throw std::runtime_error("cant parse images with more than 3 samples."); }
+
+			// Get image width and height :
+			result = TIFFGetField(this->file, TIFFTAG_IMAGEWIDTH, &this->width);
+			if (result != 1) { throw std::runtime_error("cannot read width field in this directory"); }
+			result = TIFFGetField(this->file, TIFFTAG_IMAGELENGTH, &this->height);
+			if (result != 1) { throw std::runtime_error("cannot read height field in this directory"); }
+
+			// Get the number of rows per strip :
+			result = TIFFGetField(this->file, TIFFTAG_ROWSPERSTRIP, &this->rowsPerStrip);
+			if (result != 1) { throw std::runtime_error("cannot read rowsperstrip. maybe the image was tiled ?"); }
 
 			// Compute the number of stripoffsets to return :
 			this->stripsPerImage = (this->height + this->rowsPerStrip - 1)/this->rowsPerStrip;
-
-			// query the strip offsets from the tiff library :
-			uint64_t* buf = nullptr; // target for already-allocated data
-			result = TIFFGetField(this->file, TIFFTAG_STRIPOFFSETS, &buf);
-			if (result != 1) { throw std::runtime_error("cannot get stripoffsets");}
-
-			// copy the data to the current structure
-			if (buf != nullptr) {
-				this->stripOffsets = new uint64_t[this->stripsPerImage];
-				memcpy(this->stripOffsets, buf, this->stripsPerImage*sizeof(uint64_t));
-			}
 
 			this->printInfo("\t");
 			std::cerr.flush();
@@ -992,14 +979,6 @@ namespace IO {
 			std::cerr << bps << ", ";
 		});
 		std::cerr << '\n';
-		std::string delim = "\n" + prefix + "\t\t- ";
-		std::cerr << prefix << '\t' << "Strip offsets :";
-		for (std::size_t i = 0; i < this->stripsPerImage; ++i) {
-			if (i%10 == 0) { std::cerr << '\n' << prefix << "\t\t"; }
-			std::cerr << this->stripOffsets[i] << ", ";
-		}
-		/*
-		*/
 		std::cerr << "\n" << prefix << "Finished TIFF directory " << this->directoryOffset << "\n";
 	}
 
@@ -1022,7 +1001,8 @@ namespace IO {
 		if (this->isAnalyzed == true) { return *this; }
 		this->isAnalyzed = true;
 
-		this->files.resize(this->filenames.size());
+		this->filenames.clear();
+		this->frames.clear();
 
 		// Open files :
 		std::for_each(this->filenames.cbegin(), this->filenames.cend(), [this](const std::string f) { this->openFile(f); });
@@ -1034,7 +1014,25 @@ namespace IO {
 
 	libTIFFReader& libTIFFReader::preAllocateStorage() {return *this;}
 
-	libTIFFReader& libTIFFReader::openFile(const std::string &filename) {return *this;}
+	libTIFFReader& libTIFFReader::openFile(const std::string &filename) {
+		TIFF* handle = TIFFOpen(filename.c_str(), "r");
+		if (handle == nullptr) {
+			throw std::runtime_error("Cannot open " + filename + " !");
+		}
+
+		// Push it to the files opened :
+		this->files.push_back(handle);
+		// Count its directories :
+		tdir_t nod = TIFFNumberOfDirectories(handle);
+		if (nod == 0) { throw std::runtime_error("File " + filename +  " had no directories !"); }
+
+		// Parse each frame of the file :
+		for (tdir_t i = 0; i < nod; ++i) {
+			this->frames.emplace_back(handle, i);
+		}
+
+		return *this;
+	}
 
 	libTIFFReader& libTIFFReader::loadSlice(std::size_t idx, std::vector<data_t> &tgt) { return *this;}
 

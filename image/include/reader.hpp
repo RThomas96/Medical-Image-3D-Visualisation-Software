@@ -22,15 +22,56 @@
 #include <fstream>
 #include <algorithm>
 #include <memory>
+#include <map>
 
 namespace IO {
+
+	/// @brief Very simple read cache which supports arbitrary indexes and data arrays.
+	template <typename cache_idx, typename cache_data>
+	struct ReadCache : public std::enable_shared_from_this<ReadCache<cache_idx, cache_data>> {
+		public:
+			/// @brief Type alias to the internal index representation
+			using Index = cache_idx;
+
+			/// @brief Type alias to the internal data representation
+			using Data = cache_data;
+
+			/// @brief Type alias of a shared pointer to this class
+			using Ptr = std::shared_ptr<ReadCache<Index, Data>>;
+
+		public:
+			/// @brief Default ctor. Allocates just enough memory for the empty struct.
+			ReadCache(void);
+
+			/// @brief Default dtor. Deallocates any elements
+			~ReadCache(void);
+
+			/// @brief Returns true if the cache has the data named referenced by Index 'x'
+			bool hasData(const Index&) const;
+
+			/// @brief Returns the data at Index 'i'
+			Data& getData(const Index& i) const;
+
+			/// @brief Loads the data into the cache, cleearing up a space if necessary.
+			void loadData(const Index&, const Data&);
+
+		protected:
+			/// @brief The internal structuring of data in the cache vector
+			using CachedData = std::pair<Index, Data>;
+
+			///  @brief The maximum number of elements we can have stored at any time during the cache's lifetime
+			constexpr static std::size_t maxCachedElements = 10;
+
+			/// @brief The actual cached data.
+			std::vector<CachedData> m_data;
+	};
 
 	/// \brief Describes a downsampling level to apply when loading the image.
 	enum DownsamplingLevel {
 		Original = 0,	///< Does not downsample an image upon loading.
-		Low = 1,	///< Downsamples the image using a 2x2x2 sub-region for one pixel.
-		Lower = 2,	///< Downsamples the image using a 4x4x4 sub-region for one pixel.
-		Lowest = 3	///< Downsamples the image using a 8x8x8 sub-region for one pixel.
+		Low = 1,		///< Downsamples the image using a 2x2x2 sub-region for one pixel.
+		Lower = 2,		///< Downsamples the image using a 4x4x4 sub-region for one pixel.
+		Lowest = 3		///< Downsamples the image using a 8x8x8 sub-region for one pixel.
 	};
 
 	/// \brief Checks if the file given in argument exists
@@ -282,8 +323,6 @@ namespace IO {
 					uint16_t samplesPerPixel;
 					/// @brief This frame's bits per sample
 					std::vector<uint16_t> bitsPerSample;
-					/// @brief This frame's strip offsets, to query data efficiently
-					uint64_t* stripOffsets;
 					/// @brief The number of strips of this image
 					uint64_t stripsPerImage;
 			};
@@ -311,8 +350,8 @@ namespace IO {
 			virtual data_t getPixel(std::size_t i, std::size_t j, std::size_t k) override;
 
 		protected:
-			std::vector<TIFF*> files;	///< List of files opened for the current stack
-			std::vector<TIFFFrame> frames;
+			std::vector<TIFF*> files;		///< List of files opened for the current stack
+			std::vector<TIFFFrame> frames;	///< The frames contained in this stack of images
 	};
 
 	namespace Reader {

@@ -403,7 +403,7 @@ void GridLoaderWidget::loadGridDIM1channel() {
 	delete msgBox;
 
 	this->readerR->setFilenames(fnR);
-	this->readerR->preComputeImageData();
+	this->readerR->parseImageInfo();
 	this->computeGridInfoLabel();
 }
 
@@ -447,9 +447,9 @@ void GridLoaderWidget::loadGridDIM2channel() {
 	delete msgBox;
 
 	this->readerR->setFilenames(fnR);
-	this->readerR->preComputeImageData();
+	this->readerR->parseImageInfo();
 	this->readerG->setFilenames(fnG);
-	this->readerG->preComputeImageData();
+	this->readerG->parseImageInfo();
 	this->computeGridInfoLabel();
 }
 
@@ -478,7 +478,7 @@ void GridLoaderWidget::loadGridTIF1channel() {
 	delete msgBox;
 
 	this->readerR->setFilenames(fnR);
-	this->readerR->preComputeImageData();
+	this->readerR->parseImageInfo();
 	this->computeGridInfoLabel();
 }
 
@@ -522,9 +522,9 @@ void GridLoaderWidget::loadGridTIF2channel() {
 	delete msgBox;
 
 	this->readerR->setFilenames(fnR);
-	this->readerR->preComputeImageData();
+	this->readerR->parseImageInfo();
 	this->readerG->setFilenames(fnG);
-	this->readerG->preComputeImageData();
+	this->readerG->parseImageInfo();
 	this->computeGridInfoLabel();
 }
 
