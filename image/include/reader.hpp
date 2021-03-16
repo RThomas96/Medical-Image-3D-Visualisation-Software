@@ -129,7 +129,7 @@ namespace IO {
 			virtual GenericGridReader& setUserIntensityLimits(data_t min, data_t max);
 
 			/// @brief Pre-compute some image data, such as size, voxel dimensions (...)
-			virtual GenericGridReader& preComputeImageData();
+			virtual GenericGridReader& parseImageInfo();
 
 			/// @brief Starts the image loading process.
 			virtual GenericGridReader& loadImage();
@@ -236,7 +236,7 @@ namespace IO {
 			DIMReader(data_t _thresh);
 			virtual ~DIMReader(void);
 
-			virtual DIMReader& preComputeImageData() override;
+			virtual DIMReader& parseImageInfo() override;
 
 			/// @brief Loads the image from disk. If no filenames are provided, loads nothing.
 			virtual DIMReader& loadImage() override;
@@ -259,7 +259,7 @@ namespace IO {
 			StackedTIFFReader(data_t thresh);
 			virtual ~StackedTIFFReader(void);
 
-			virtual StackedTIFFReader& preComputeImageData() override;
+			virtual StackedTIFFReader& parseImageInfo() override;
 
 			/// @brief Loads the image from disk. If no filenames are provided, does nothing.
 			virtual StackedTIFFReader& loadImage() override;
@@ -300,7 +300,7 @@ namespace IO {
 					/// @brief Default ctor. Initializes member variables to default values.
 					TIFFFrame(void);
 				public:
-					TIFFFrame(TIFF* _tiff, tdir_t index) noexcept(false);
+					TIFFFrame(std::string filename, tdir_t index) noexcept(false);
 					~TIFFFrame(void);
 				public: // Methods
 					/// @brief Loads the file's information, once it has been loaded.
@@ -310,7 +310,7 @@ namespace IO {
 					void printInfo(std::string prefix);
 				public:
 					/// @brief The TIFF file to query for information
-					TIFF* file;
+					std::string filename;
 					/// @brief This frame's width
 					uint32_t width;
 					/// @brief This frame's height
@@ -331,7 +331,7 @@ namespace IO {
 			virtual ~libTIFFReader(void);
 
 			/// @brief Pre-computes image data, and throws if the image is not valid.
-			virtual libTIFFReader& preComputeImageData() noexcept(false) override;
+			virtual libTIFFReader& parseImageInfo() noexcept(false) override;
 
 			/// @brief Loads the image from disk. If no filenames are provided, does nothing.
 			virtual libTIFFReader& loadImage() override;
@@ -350,7 +350,6 @@ namespace IO {
 			virtual data_t getPixel(std::size_t i, std::size_t j, std::size_t k) override;
 
 		protected:
-			std::vector<TIFF*> files;		///< List of files opened for the current stack
 			std::vector<TIFFFrame> frames;	///< The frames contained in this stack of images
 	};
 
@@ -358,7 +357,7 @@ namespace IO {
 		/// @brief Alias for the IO::DIMReader class.
 		typedef ::IO::DIMReader DIM;
 		/// @brief Alias for the IO::StackedTIFFReader class.
-		typedef ::IO::StackedTIFFReader TIFF;
+		typedef ::IO::libTIFFReader TIFF;
 	}
 }
 

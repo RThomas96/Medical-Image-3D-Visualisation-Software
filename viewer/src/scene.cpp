@@ -1269,11 +1269,7 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, cons
 		glUniform1f(location_diffuseRef, .8f);
 		glUniform1f(location_specRef, .8f);
 		glUniform1f(location_shininess, .8f);
-		glm::vec3 vxd = grid.grid->getVoxelDimensions();
-		if (this->showVAOstate == true) {
-			std::cerr << "Voxel dimensions : " << vxd.x << ',' << vxd.y << ',' << vxd.z << '\n';
-		}
-		glUniform3fv(location_voxelSize, 1, glm::value_ptr(vxd));
+		glUniform3fv(location_voxelSize, 1, glm::value_ptr(grid.grid->getVoxelDimensions()));
 		glUniform3fv(location_gridSize, 1, glm::value_ptr(floatres));
 		glUniform1ui(location_nbChannels, grid.nbChannels);
 		glUniform3fv(location_volumeEpsilon, 1, glm::value_ptr(grid.defaultEpsilon));
@@ -2580,9 +2576,9 @@ void Scene::tex3D_generateMESH(GridGLView& grid, VolMeshData& mesh) {
 	const vec_t min = grid.grid->getBoundingBox().getMin();
 	const vec_t diag = grid.grid->getBoundingBox().getDiagonal();
 	// Dimensions, subject to change :
-	std::size_t xv = 10 ; glm::vec4::value_type xs = diag.x / static_cast<glm::vec4::value_type>(xv);
-	std::size_t yv = 10 ; glm::vec4::value_type ys = diag.y / static_cast<glm::vec4::value_type>(yv);
-	std::size_t zv = 10 ; glm::vec4::value_type zs = diag.z / static_cast<glm::vec4::value_type>(zv);
+	std::size_t xv = 12 ; glm::vec4::value_type xs = diag.x / static_cast<glm::vec4::value_type>(xv);
+	std::size_t yv = 12 ; glm::vec4::value_type ys = diag.y / static_cast<glm::vec4::value_type>(yv);
+	std::size_t zv = 12 ; glm::vec4::value_type zs = diag.z / static_cast<glm::vec4::value_type>(zv);
 
 	// Size of tetrahedra, to compute epsilon :
 	glm::vec3 epsVolu = glm::vec3(xs, ys, zs);
