@@ -11,9 +11,8 @@
 [submodule "QGLViewer"]
 	path = libQGLViewer
 	url = git@github.com:GillesDebunne/libQGLViewer.git
+	ignore = untracked
 [submodule "libtiff"]
 	path = libtiff
 	url = git@gitlab.com:libtiff/libtiff.git
-	ignore = untracked
-[submodule "libQGLViewer"]
 	ignore = untracked
