@@ -1,6 +1,7 @@
 [submodule "TinyTIFF"]
 	path = TinyTIFF
 	url = https://github.com/jkriege2/TinyTIFF.git
+	ignore = untracked
 [submodule "gl"]
 	path = gl
 	url = git@gitlab.com:thibaulltt/glhandler.git
@@ -13,3 +14,6 @@
 [submodule "libtiff"]
 	path = libtiff
 	url = git@gitlab.com:libtiff/libtiff.git
+	ignore = untracked
+[submodule "libQGLViewer"]
+	ignore = untracked
