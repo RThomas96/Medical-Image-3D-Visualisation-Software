@@ -145,7 +145,7 @@ namespace IO {
 
 	DownsamplingLevel GenericGridReader::downsamplingLevel() { return this->downsampleLevel; }
 
-	GenericGridReader& GenericGridReader::loadImage() { return *this; }
+	GenericGridReader& GenericGridReader::loadImage(ThreadedTask::Ptr& task) { task->setSteps(0); return *this; }
 
 	const std::vector<GenericGridReader::data_t>& GenericGridReader::getGrid() const { return this->data; }
 
@@ -295,28 +295,34 @@ namespace IO {
 		}
 	}
 
-	DIMReader& DIMReader::loadImage() {
+	DIMReader& DIMReader::loadImage(ThreadedTask::Ptr& task) {
 		if (this->downsampleLevel != DownsamplingLevel::Original && this->interpolator == nullptr) {
 			std::cerr << "[ERROR] No interpolation structure was set in this reader, even though a downsample was required.\n";
 			return *this;
 		}
 
-		if (this->isAnalyzed == false) { this->parseImageInfo(); }
-
-		std::cerr << "[LOG] Reading DIM data ...\n";
-
-		// # of slices to load at once in order to downsample :
-		std::size_t slicesToLoad = 1;
+		if (this->isAnalyzed == false) {
+			this->parseImageInfo();
+		}
 		// Compute voxel and grid sizes :
 		sizevec3 dataDims = this->imageDimensions;
 
-		std::cerr << "\tOriginal file dimensions : {" << dataDims.x << ',' << dataDims.y << ',' << dataDims.z << "}\n";
-		std::cerr << "\tOriginal vox  dimensions : {" << this->voxelDimensions.x << ',' << this->voxelDimensions.y << ',' << this->voxelDimensions.z << "}\n";
+		// # of slices to load at once in order to downsample :
+		std::size_t slicesToLoad = 1;
 
 		if (this->downsampleLevel == DownsamplingLevel::Low) { dataDims /= std::size_t(2); slicesToLoad = 2; }
 		if (this->downsampleLevel == DownsamplingLevel::Lower) { dataDims /= std::size_t(4); slicesToLoad = 4; }
 		if (this->downsampleLevel == DownsamplingLevel::Lowest) { dataDims /= std::size_t(8); slicesToLoad = 8; }
 		this->gridDimensions = dataDims;
+
+		// Set max nb of steps ...
+		std::size_t nbsteps = this->gridDimensions.z;
+		task->setSteps(nbsteps);
+
+		std::cerr << "[LOG] Reading DIM data ...\n";
+
+		std::cerr << "\tOriginal file dimensions : {" << dataDims.x << ',' << dataDims.y << ',' << dataDims.z << "}\n";
+		std::cerr << "\tOriginal vox  dimensions : {" << this->voxelDimensions.x << ',' << this->voxelDimensions.y << ',' << this->voxelDimensions.z << "}\n";
 
 		// Update the bounding box :
 		// if the downsampling rate changed between precomputeData() and now, the bounding box
@@ -436,6 +442,7 @@ namespace IO {
 					}
 				}
 			}
+			task->advance();
 		}
 
 		return *this;
@@ -583,17 +590,24 @@ namespace IO {
 		return *this;
 	}
 
-	StackedTIFFReader& StackedTIFFReader::loadImage() {
+	StackedTIFFReader& StackedTIFFReader::loadImage(ThreadedTask::Ptr& task) {
 		// checks we have something to load :
 		if (this->filenames.size() == 0) {
 			std::cerr << "[LOG] No filenames were provided, nothing will be loaded." << '\n';
 			return *this;
 		}
 
-		if (this->isAnalyzed == false) { this->parseImageInfo(); }
+		if (this->isAnalyzed == false) {
+			this->parseImageInfo();
+			task->advance();
+		}
 
 		// Prepare storage of all the image's data :
 		this->preAllocateStorage();
+
+		// Set max nb of steps ...
+		std::size_t nbsteps = this->gridDimensions.z;
+		task->setSteps(nbsteps);
 
 		// holds the data of the (possibly) downsampled file, to insert into this->data
 		std::vector<data_t> curSlice;
@@ -712,6 +726,7 @@ namespace IO {
 					}
 				}
 			}
+			task->advance();
 		}
 
 		return *this;
@@ -1028,11 +1043,19 @@ namespace IO {
 		return *this;
 	}
 
-	libTIFFReader& libTIFFReader::loadImage() {
+	libTIFFReader& libTIFFReader::loadImage(ThreadedTask::Ptr& task) {
 		if (this->filenames.size() == 0) { return *this; }
 
-		if (not this->isAnalyzed) { this->parseImageInfo(); }
+		if (not this->isAnalyzed) {
+			this->parseImageInfo();
+			task->advance();
+		}
+
 		this->preAllocateStorage();
+
+		// Set max nb of steps ...
+		std::size_t nbsteps = this->gridDimensions.z;
+		task->setSteps(nbsteps);
 
 		// We need to update the bounding box size to reflect the user-defined size :
 		using val_t = bbox_t::vec::value_type;
@@ -1145,6 +1168,7 @@ namespace IO {
 					}
 				}
 			}
+			task->advance();
 		}
 
 		return *this;

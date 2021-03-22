@@ -111,6 +111,7 @@ TARGET_LINK_LIBRARIES(VisualisationWidgets
 	PUBLIC Qt5::Xml
 	PUBLIC Qt5::Widgets
 	PUBLIC Qt5::OpenGL
+	PUBLIC Threads::Threads
 )
 # }}}
 

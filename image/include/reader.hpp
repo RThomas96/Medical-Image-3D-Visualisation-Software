@@ -23,8 +23,80 @@
 #include <algorithm>
 #include <memory>
 #include <map>
+#include <thread>
+#include <mutex>
+#include <atomic>
 
 namespace IO {
+
+	class ThreadedTask {
+		public:
+			using Ptr = std::shared_ptr<ThreadedTask>;
+		public:
+			/// @b Ctor for a threaded task.
+			ThreadedTask(std::size_t _maxSteps = 0) : m_lock() {
+				this->maxSteps = _maxSteps;
+				this->currentStep = 0;
+			}
+			/// @b Default dtor for the class.
+			~ThreadedTask(void) = default;
+			/// @b Checks if the task is complete.
+			bool isComplete(void) {
+				bool retval = false;
+				if (this->m_lock.try_lock_for(std::chrono::milliseconds(100))) {
+					retval = (this->maxSteps > std::size_t(0)) && (this->currentStep >= this->maxSteps-1);
+					this->m_lock.unlock();
+				}
+				return retval;
+			}
+			/// @b Check if the task has steps.
+			bool hasSteps(void) {
+				bool retval = false;
+				if (this->m_lock.try_lock_for(std::chrono::milliseconds(100))) {
+					retval = this->maxSteps > std::size_t(0);
+					this->m_lock.unlock();
+				}
+				return retval;
+			}
+			/// @b Set the max number of steps for the task
+			void setSteps(std::size_t _ms) {
+				if (this->m_lock.try_lock_for(std::chrono::milliseconds(100))) {
+					this->maxSteps = _ms;
+					this->m_lock.unlock();
+				}
+				return;
+			}
+			/// @b Get current advancement of the task
+			std::size_t getAdvancement(void) {
+				std::size_t retval = 0;
+				if (this->m_lock.try_lock_for(std::chrono::milliseconds(100))) {
+					retval = this->currentStep;
+					this->m_lock.unlock();
+				}
+				return retval;
+			}
+			/// @b Advances a step (thread-safe)
+			void advance(void) {
+				if (this->m_lock.try_lock_for(std::chrono::milliseconds(100))) {
+					this->currentStep++;
+					this->m_lock.unlock();
+				}
+				return;
+			}
+			/// @b Get the maximum number of steps possible
+			std::size_t getMaxSteps(void) {
+				std::size_t retval = 0;
+				if (this->m_lock.try_lock_for(std::chrono::milliseconds(100))) {
+					retval = this->maxSteps;
+					this->m_lock.unlock();
+				}
+				return retval;
+			}
+		protected:
+			std::timed_mutex m_lock;				/// @b The mutex resposible for thread-safety.
+			std::atomic<std::size_t> currentStep;	/// @b The current number of steps achieved
+			std::size_t maxSteps;					/// @b The maximum number of steps. If 0, task has not been initialized.
+	};
 
 	/// @brief Very simple read cache which supports arbitrary indexes and data arrays.
 	template <typename cache_idx, typename cache_data>
@@ -132,7 +204,7 @@ namespace IO {
 			virtual GenericGridReader& parseImageInfo();
 
 			/// @brief Starts the image loading process.
-			virtual GenericGridReader& loadImage();
+			virtual GenericGridReader& loadImage(ThreadedTask::Ptr& task);
 
 			/// @brief Returns the whole data loaded, at once.
 			virtual const std::vector<data_t>& getGrid(void) const;
@@ -239,7 +311,7 @@ namespace IO {
 			virtual DIMReader& parseImageInfo() override;
 
 			/// @brief Loads the image from disk. If no filenames are provided, loads nothing.
-			virtual DIMReader& loadImage() override;
+			virtual DIMReader& loadImage(ThreadedTask::Ptr& task) override;
 		protected:
 			/// @brief Open the DIM and IMA files to read later.
 			virtual DIMReader& openFile(const std::string& name) override;
@@ -262,7 +334,7 @@ namespace IO {
 			virtual StackedTIFFReader& parseImageInfo() override;
 
 			/// @brief Loads the image from disk. If no filenames are provided, does nothing.
-			virtual StackedTIFFReader& loadImage() override;
+			virtual StackedTIFFReader& loadImage(ThreadedTask::Ptr& task) override;
 
 		protected:
 			/// @brief Preallocates the data vector and updates some data we can gather before loading the images.
@@ -334,7 +406,7 @@ namespace IO {
 			virtual libTIFFReader& parseImageInfo() noexcept(false) override;
 
 			/// @brief Loads the image from disk. If no filenames are provided, does nothing.
-			virtual libTIFFReader& loadImage() override;
+			virtual libTIFFReader& loadImage(ThreadedTask::Ptr& task) override;
 
 		protected:
 			/// @brief Opens all files and checks the data is valid

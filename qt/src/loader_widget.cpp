@@ -23,6 +23,7 @@ GridLoaderWidget::GridLoaderWidget(Scene* _scene, Viewer* _viewer, ControlPanel*
 	this->groupbox_userLimits = nullptr;
 	this->spinbox_userLimitMin = nullptr;
 	this->spinbox_userLimitMax = nullptr;
+	this->progress_load = nullptr;
 	this->setupWidgets();
 	this->setupLayouts();
 	this->setupSignals();
@@ -336,6 +337,16 @@ void GridLoaderWidget::disableWidgets() {
 
 	this->groupBox_downsampling->setDisabled(true);
 	this->groupBox_interpolator->setDisabled(true);
+	this->groupbox_userLimits->setDisabled(true);
+
+	this->label_headerLoader->setDisabled(true);
+	this->label_load1channel->setDisabled(true);
+	this->label_load2channel->setDisabled(true);
+	this->label_headerTransformation->setDisabled(true);
+	this->label_transformationAngle->setDisabled(true);
+	this->label_transformationDimensions->setDisabled(true);
+	this->label_gridInfoR->setDisabled(true);
+	this->label_gridInfoG->setDisabled(true);
 
 	this->radioButton_original->setDisabled(true);
 	this->radioButton_low->setDisabled(true);
@@ -462,7 +473,7 @@ void GridLoaderWidget::loadGridTIF1channel() {
 	QMessageBox* msgBox = new QMessageBox;
 	msgBox->setAttribute(Qt::WA_DeleteOnClose);
 
-	QStringList filenamesR = QFileDialog::getOpenFileNames(this, "Open TIFF images (Red channel)", this->basePath.path(), "TIFF files (*.tiff *.tif)");
+	QStringList filenamesR = QFileDialog::getOpenFileNames(nullptr, "Open TIFF images (Red channel)", this->basePath.path(), "TIFF files (*.tiff *.tif)", 0, QFileDialog::DontUseNativeDialog);
 	if (filenamesR.empty()) {
 		msgBox->critical(this, "Error !", "No filenames provided !");
 		this->readerR.reset(); this->readerR = nullptr;
@@ -492,7 +503,7 @@ void GridLoaderWidget::loadGridTIF2channel() {
 	QMessageBox* msgBox = new QMessageBox;
 	msgBox->setAttribute(Qt::WA_DeleteOnClose);
 
-	QStringList filenamesR = QFileDialog::getOpenFileNames(this, "Open TIFF images (Red channel)", this->basePath.path(), "TIFF files (*.tiff *.tif)");
+	QStringList filenamesR = QFileDialog::getOpenFileNames(nullptr, "Open TIFF images (Red channel)", this->basePath.path(), "TIFF files (*.tiff *.tif)", 0, QFileDialog::DontUseNativeDialog);
 	if (filenamesR.empty()) {
 		msgBox->critical(this, "Error !", "No filenames provided !");
 		this->readerR.reset(); this->readerR = nullptr;
@@ -503,7 +514,7 @@ void GridLoaderWidget::loadGridTIF2channel() {
 	// update path from last file picker :
 	this->basePath.setPath(QFileInfo(filenamesR[0]).path());
 
-	QStringList filenamesG = QFileDialog::getOpenFileNames(this, "Open TIFF images (Blue channel)", this->basePath.path(), "TIFF files (*.tiff *.tif)");
+	QStringList filenamesG = QFileDialog::getOpenFileNames(nullptr, "Open TIFF images (Blue channel)", this->basePath.path(), "TIFF files (*.tiff *.tif)", 0, QFileDialog::DontUseNativeDialog);
 	if (filenamesG.empty()) {
 		msgBox->critical(this, "Error !", "No filenames provided !");
 		this->readerR.reset(); this->readerR = nullptr;
@@ -588,14 +599,66 @@ void GridLoaderWidget::loadGrid() {
 		settings.loadImageSize(completeSizeBits);
 	}
 
-	this->readerR->loadImage();
+	IO::ThreadedTask::Ptr taskR = std::make_shared<IO::ThreadedTask>();
+	IO::ThreadedTask::Ptr taskG = std::make_shared<IO::ThreadedTask>();
+	this->progress_load = new QProgressBar;
+	std::size_t maxSteps;
+
+	std::thread threadRed = std::thread([this, &taskR](void) -> void {
+		this->readerR->loadImage(taskR);
+	});
+	do {
+		std::this_thread::sleep_for(std::chrono::milliseconds(50));
+	} while (not taskR->hasSteps());
+	maxSteps += taskR->getMaxSteps();
+
+	std::thread threadGreen;
+
+	if (this->readerG != nullptr) {
+		threadGreen = std::thread([this, &taskG](void) -> void {
+			this->readerG->loadImage(taskG);
+		});
+		do {
+			std::this_thread::sleep_for(std::chrono::milliseconds(50));
+		} while (not taskG->hasSteps());
+		maxSteps += taskG->getMaxSteps();
+	}
+
+	// Setup the progress bar :
+	this->progress_load->setRange(0,maxSteps);
+	this->layout_mainLayout->addWidget(this->progress_load);
+	this->setLayout(this->layout_mainLayout);
+	this->disableWidgets();
+
+	bool shouldStop = false;
+	do {
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		std::size_t currentSteps = 0;
+		if (taskR->hasSteps()) { currentSteps += taskR->getAdvancement(); }
+		if (taskG->hasSteps()) { currentSteps += taskG->getAdvancement(); }
+
+		this->progress_load->setValue(currentSteps);
+		// Needed to update the main window ...
+		QCoreApplication::processEvents();
+		this->update();
+
+		shouldStop = taskR->isComplete();
+		if (this->readerG != nullptr) {
+			shouldStop = shouldStop && taskG->isComplete();
+		}
+	} while (shouldStop == false);
+	// Join the threads, just in case :
+	threadRed.join();
+	if (threadGreen.joinable()) { threadGreen.join(); }
+
+	this->progress_load->setRange(0,0);
+
 	// generate input grids :
 	this->inputGridR = std::make_shared<InputGrid>();
 	this->inputGridR->setGridReader(this->readerR);
 	this->inputGridR->fromGridReader();
 
 	if (this->readerG != nullptr) {
-		this->readerG->loadImage();
 		this->inputGridG = std::make_shared<InputGrid>();
 		this->inputGridG->setGridReader(this->readerG);
 		this->inputGridG->fromGridReader();
@@ -630,10 +693,6 @@ void GridLoaderWidget::loadGrid() {
 		this->scene->slotSetMaxColorValueAlternate(colorBoundSecondary.y);
 	}
 
-	// Disable widgets purely so that no data races
-	// or events might cause unexpected behaviour :
-	this->disableWidgets();
-
 	if (this->readerG == nullptr) {
 		this->viewer->loadGrid(this->inputGridR);
 	} else {
@@ -642,5 +701,6 @@ void GridLoaderWidget::loadGrid() {
 	this->viewer->centerScene();
 
 	LOG_LEAVE(GridLoaderWidget::loadGrid())
+
 	this->close();
 }

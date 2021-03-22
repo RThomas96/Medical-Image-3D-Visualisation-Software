@@ -21,6 +21,7 @@
 #include <QGridLayout>
 #include <QRadioButton>
 #include <QDoubleSpinBox>
+#include <QProgressBar>
 
 class GridLoaderWidget : public QWidget {
 		Q_OBJECT
@@ -108,6 +109,8 @@ class GridLoaderWidget : public QWidget {
 		QRadioButton* radioButton_mp;		///< Interpolator option : most present label within subpixel
 		QRadioButton* radioButton_min;		///< Interpolator option : minimum label within subpixel
 		QRadioButton* radioButton_max;		///< Interpolator option : maximum label within subpixel
+
+		QProgressBar* progress_load;
 };
 
 #endif // QT_INCLUDE_LOADER_WIDGET_HPP_
