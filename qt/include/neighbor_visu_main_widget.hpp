@@ -16,7 +16,7 @@
 
 #define ENABLE_QUAD_VIEW
 
-class ColorBoundControl;
+class ColorBoundWidget;
 
 class MainWidget : public QMainWindow {
 		Q_OBJECT
@@ -55,7 +55,7 @@ class MainWidget : public QMainWindow {
 		UserSettingsWidget* usettings;	///< User settings dialog.
 		GridLoaderWidget* loaderWidget;	///< Loader widget
 
-		ColorBoundControl* colorControl; ///< The widget that controls the colors of the scene
+		ColorBoundWidget* colorControl; ///< The widget that controls the colors of the scene
 
 		ControlPanel* controlPanel;	///< The control panel at the bottom of the grid
 		bool widgetSizeSet;		///< Checks if the widget size has been set before

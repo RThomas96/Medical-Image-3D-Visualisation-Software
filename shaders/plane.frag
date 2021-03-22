@@ -1,5 +1,8 @@
 #version 400 core
 
+// Signals we're in the main shader, for any shaders inserted into this one.
+#define MAIN_SHADER_UNIT
+
 /****************************************/
 /**************** Inputs ****************/
 /****************************************/
@@ -23,12 +26,16 @@ uniform vec3 sceneBBPosition;	// The scene's bounding box position
 uniform vec3 sceneBBDiagonal;	// The scene's bounding box diagonal
 uniform vec2 colorBounds;	// The min/max values of the color scale to display
 uniform vec2 textureBounds;	// The min/max values of the texture to display
+uniform vec2 colorBoundsAlternate;	// The min/max values of the color scale to display
+uniform vec2 textureBoundsAlternate;	// The min/max values of the texture to display
 uniform int currentPlane;	// Plane identifier : 1 (x), 2 (y), 3 (z)
 uniform bool showTex;		// Do we show the texture on the plane, or not ?
 uniform bool drawOnlyData;	// Should we draw only the data ? not any other plane ?
 
 uniform vec3 color0;
 uniform vec3 color1;
+uniform vec3 color0Alternate;
+uniform vec3 color1Alternate;
 
 uniform uint channelView;	// What channels do we visualize ? R+G = 1, R = 2, G = 3
 uniform uint selectedChannel;	// The selected channel to visualize in greyscale
@@ -40,8 +47,6 @@ uniform bool intersectPlanes = false;	// Should the planes intersect each other 
 /****************************************/
 /*********** Function headers ***********/
 /****************************************/
-// [Defined in coloring.glsl] Colors a given fragment.
-vec4 voxelIdxToColor(in uvec3 colorParams, in mat3 colorSegment, in vec2 colorBounds, in uvec3 ucolor);
 // Determines the plane position along its axis
 float planeIdxToPlanePosition(int id);
 // Return a color corresponding to a plane's index
@@ -50,6 +55,8 @@ vec4 planeIndexToColor();
 bool isPlaneVisible(bool intersect);
 // Checks if the plane should be drawn as a simple border, or not.
 bool shouldDrawBorder();
+
+INCLUDE_COLOR_FUNCTIONS;
 
 /****************************************/
 /***************** Main *****************/
@@ -70,7 +77,7 @@ void main(void)
 			if (texCoord.z > 0. && texCoord.z < 1.) {
 				if (isPlaneVisible(true) && showTex == true) {
 					uvec3 tex = texture(texData, texCoord).xyz;
-					colorTex = voxelIdxToColor(colorParams, colorSegment, colorBounds, tex);
+					colorTex = voxelIdxToColor(tex);
 					float ftexVal = float(tex.r);
 					if (selectedChannel == 1u) { ftexVal = float(tex.g); }
 					if (ftexVal < textureBounds.x || ftexVal > textureBounds.y) {

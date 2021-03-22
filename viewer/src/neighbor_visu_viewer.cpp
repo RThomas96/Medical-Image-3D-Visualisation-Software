@@ -92,6 +92,11 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 			this->scene->recompileShaders();
 			this->update();
 		break;
+		/*
+		case Qt::Key::Key_F:
+			std::cerr << "Unable to display text." << "\n";
+		break;
+		*/
 		case Qt::Key::Key_P:
 			this->scene->printVAOStateNext();
 		break;

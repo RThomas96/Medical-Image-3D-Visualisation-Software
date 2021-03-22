@@ -611,14 +611,23 @@ void GridLoaderWidget::loadGrid() {
 	float a = this->dsb_transformationA->value();
 
 	// Add transformation matrix to red, and possibly green matrix :
-	auto colB = this->readerR->getTextureLimits();
+	auto colorBoundPrimary = this->readerR->getTextureLimits();
+	this->_cp->updateMinValue(colorBoundPrimary.x);
+	this->_cp->updateMaxValue(colorBoundPrimary.y);
+	this->scene->slotSetMinColorValue(colorBoundPrimary.x);
+	this->scene->slotSetMaxColorValue(colorBoundPrimary.y);
 	this->inputGridR->setTransform_GridToWorld(computeTransfoShear(a, this->inputGridR, vxdims));
+
 	if (this->readerG != nullptr) {
 		dims = this->inputGridG->getResolution();
 		this->inputGridG->setTransform_GridToWorld(computeTransfoShear(a, this->inputGridG, vxdims));
-		auto colG = this->readerG->getTextureLimits();
-		colB.x = std::min(colB.x, colG.x);
-		colB.y = std::max(colB.y, colG.y);
+
+		// Update texture bounds :
+		auto colorBoundSecondary = this->readerG->getTextureLimits();
+		this->_cp->updateMinValueAlternate(colorBoundSecondary.x);
+		this->_cp->updateMaxValueAlternate(colorBoundSecondary.y);
+		this->scene->slotSetMinColorValueAlternate(colorBoundSecondary.x);
+		this->scene->slotSetMaxColorValueAlternate(colorBoundSecondary.y);
 	}
 
 	// Disable widgets purely so that no data races
@@ -631,11 +640,6 @@ void GridLoaderWidget::loadGrid() {
 		this->viewer->loadTwoGrids(this->inputGridR, this->inputGridG);
 	}
 	this->viewer->centerScene();
-	this->scene->slotSetMinColorValue(colB.x);
-	this->scene->slotSetMaxColorValue(colB.y);
-
-	this->_cp->updateMinValue(colB.x);
-	this->_cp->updateMaxValue(colB.y);
 
 	LOG_LEAVE(GridLoaderWidget::loadGrid())
 	this->close();

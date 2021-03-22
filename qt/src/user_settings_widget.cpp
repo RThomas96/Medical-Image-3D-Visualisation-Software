@@ -13,7 +13,6 @@ UserSettings::~UserSettings() = default;
 
 UserSettings UserSettings::getInstance() {
 	static UserSettings settings{};
-	std::cerr << "querying an instance" << '\n';
 	if (settings.isInit == false) { settings.init(); }
 	return settings;
 }

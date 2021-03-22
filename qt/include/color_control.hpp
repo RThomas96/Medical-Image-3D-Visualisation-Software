@@ -17,8 +17,8 @@
 class ColorBoundControl : public QWidget {
 	Q_OBJECT
 	public:
-		ColorBoundControl(Scene* _sc, ControlPanel* _cp, MainWidget* main, QWidget* parent = nullptr);
-		~ColorBoundControl(void);
+		ColorBoundControl(Scene* _sc, ControlPanel* _cp, MainWidget* main, bool primary, QWidget* parent = nullptr);
+		virtual ~ColorBoundControl(void);
 	public slots:
 		void setMinColorBound(int val);
 		void setMaxColorBound(int val);
@@ -36,6 +36,8 @@ class ColorBoundControl : public QWidget {
 		DiscreteGrid::data_t _min;
 		DiscreteGrid::data_t _max;
 
+		bool _primary;
+
 		// For color segment-based colouring :
 		QLabel* label_color0;
 		QLabel* label_color1;
@@ -45,6 +47,19 @@ class ColorBoundControl : public QWidget {
 		QPixmap* pixmap_baseColor1;
 		QColor color_0;
 		QColor color_1;
+};
+
+class ColorBoundWidget : public QWidget {
+	public:
+		ColorBoundWidget(Scene* _sc, ControlPanel* _cp, MainWidget* main, QWidget* parent = nullptr);
+		virtual ~ColorBoundWidget(void);
+	protected:
+		ColorBoundControl* _control_primary;
+		ColorBoundControl* _control_secondary;
+		Scene* scene;
+		ControlPanel* _controlpanel;
+		MainWidget* _mainwidget;
+		QVBoxLayout* main_layout;
 };
 
 #endif // VISUALIZATION_COLOR_CONTROL_HPP

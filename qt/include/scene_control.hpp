@@ -29,34 +29,50 @@ class ControlPanel : public QWidget {
 		void updateViewers(void);
 	public slots:
 		void activatePanels(bool activeStatus = true);
+		void updateLabels();
 		void updateValues(void);
 		void updateMinValue(int val);
 		void updateMaxValue(int val);
+		void updateMinValueAlternate(int val);
+		void updateMaxValueAlternate(int val);
 	private:
 		Scene* const sceneToControl;
 
-		QSlider* minValueTexture; ///< Slider to determine the min value in the texture which constitutes viable information
-		QSlider* maxValueTexture; ///< Slider to determine the max value in the texture which constitutes viable information
+		QSlider* minValueTexture_top; ///< Slider to determine the min value in the texture which constitutes viable information
+		QSlider* maxValueTexture_top; ///< Slider to determine the max value in the texture which constitutes viable information
+		QSlider* minValueTexture_bottom; ///< Slider to determine the min value in the texture which constitutes viable information
+		QSlider* maxValueTexture_bottom; ///< Slider to determine the max value in the texture which constitutes viable information
 
-		QLabel* label_minTexLeft;	///< Label for the min value of the texture slider (left)
-		QLabel* label_maxTexLeft;	///< Label for the max value of the texture slider (left)
-		QLabel* label_minTexRight;	///< Label for the min value of the texture slider (right)
-		QLabel* label_maxTexRight;	///< Label for the max value of the texture slider (right)
+		QLabel* label_top_tex_min_min;	///< Label for the min value of the texture slider (left)
+		QLabel* label_top_tex_min_max;	///< Label for the max value of the texture slider (left)
+		QLabel* label_top_tex_max_min;	///< Label for the min value of the texture slider (right)
+		QLabel* label_top_tex_max_max;	///< Label for the max value of the texture slider (right)
 
-		QLabel* label_currentHeader0;
-		QLabel* label_currentHeader1;
-		QLabel* label_currentValue0;
-		QLabel* label_currentValue1;
+		QLabel* label_top_tex_min_header;
+		QLabel* label_top_tex_max_header;
+		QLabel* label_top_tex_min_value;
+		QLabel* label_top_tex_max_value;
+
+		QLabel* label_bottom_tex_min_min;
+		QLabel* label_bottom_tex_min_max;
+		QLabel* label_bottom_tex_max_min;
+		QLabel* label_bottom_tex_max_max;
+
+		QLabel* label_bottom_tex_min_header;
+		QLabel* label_bottom_tex_max_header;
+		QLabel* label_bottom_tex_min_value;
+		QLabel* label_bottom_tex_max_value;
 
 		QWidget* controlContainer;
 		Viewer* const viewer;
 		DiscreteGrid::data_t min, max;
+		DiscreteGrid::data_t minAlternate, maxAlternate;
 
 	public slots:
 		void setMinTexVal(int val);
 		void setMaxTexVal(int val);
-		void setMinColVal(int val);
-		void setMaxColVal(int val);
+		void setMinTexValBottom(int val);
+		void setMaxTexValBottom(int val);
 		void setClipDistance(double val);
 };
 

@@ -1,5 +1,8 @@
 #version 400 core
 
+// Signals we're in the main shader, for any shaders inserted into this one.
+#define MAIN_SHADER_UNIT
+
 in vec4 vPos_WS;
 in vec4 vNorm_WS;
 in vec3 texCoord;
@@ -17,7 +20,8 @@ uniform uint minTexVal;
 uniform uint maxTexVal;
 uniform vec2 texBounds;		// Min/max values of the texture to show.
 uniform vec2 colorBounds;	// Min/max values to compute the color scale
-uniform uint colorOrTexture;
+uniform vec2 texBoundsAlternate;		// Min/max values of the texture to show.
+uniform vec2 colorBoundsAlternate;	// Min/max values to compute the color scale
 
 // Draw modes :
 //    - 0u : texture/cube/polygons only
@@ -37,6 +41,8 @@ uniform vec3 planeDirections;
 
 uniform vec3 color0;	// Start of the color segment
 uniform vec3 color1;	// End of the color segment
+uniform vec3 color0Alternate;	// Start of the color segment
+uniform vec3 color1Alternate;	// End of the color segment
 
 uniform uint channelView;	// What channels do we visualize ? R+G = 1, R = 2, G = 3
 uniform uint selectedChannel;	// The currently selected channel
@@ -47,11 +53,7 @@ float planeIdxToPlanePosition(int id);
 // Checks a fragment is visible, according to the plane positions and directions.
 bool isFragmentVisible();
 
-// Colorize a fragment based on the user-supplied parameters
-vec4 voxelIdxToColor(in uvec3 colorParams, in mat3 colorSegment, in vec2 colorBounds, in uvec3 ucolor);
-
-// 'k' taken from Brian's paper
-float color_k = 2.5;
+INCLUDE_COLOR_FUNCTIONS;
 
 void main(void)
 {
@@ -68,7 +70,7 @@ void main(void)
 	uvec3 ui = texture(texData, texCoord).rgb;
 
 	// computed color :
-	vec4 compColor = voxelIdxToColor(colorParams, colorSegment, colorBounds, ui);
+	vec4 compColor = voxelIdxToColor(ui);
 
 	// If we're in the area of a primitive where wireframe is NOT shown :
 	if (distMin > epsilon) {

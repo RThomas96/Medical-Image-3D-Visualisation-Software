@@ -30,6 +30,8 @@ PlanarViewer::~PlanarViewer(void) {
 	if (this->viewerController != nullptr) {
 		this->viewerController->unregisterPlaneViewer();
 	}
+	this->refreshTimer->disconnect();
+	delete this->refreshTimer;
 }
 
 void PlanarViewer::init(void) {
@@ -78,6 +80,11 @@ void PlanarViewer::keyPressEvent(QKeyEvent* _e) {
 			this->sceneToShow->recompileShaders();
 			this->update();
 		break;
+		/*
+		case Qt::Key::Key_F:
+			std::cerr << "Unable to display text." << "\n";
+		break;
+		*/
 		case Qt::Key::Key_P:
 			this->sceneToShow->printVAOStateNext();
 			this->update();
@@ -113,11 +120,11 @@ void PlanarViewer::mouseMoveEvent(QMouseEvent* _m) {
 		QPoint currentPos = _m->pos();
 		QSize viewerSize = this->size();
 		QPoint viewerPos = this->pos();
-		glm::vec2 minViewer = glm::vec2(static_cast<float>(viewerPos.x()), static_cast<float>(viewerPos.y()));
-		glm::vec2 maxViewer = minViewer + glm::vec2(static_cast<float>(viewerSize.width()), static_cast<float>(viewerSize.height()));
+		glm::vec2 minViewer = glm::convert_to<float>(glm::ivec2(viewerPos.x(), viewerPos.y()));
+		glm::vec2 maxViewer = minViewer + glm::convert_to<float>(glm::ivec2(viewerSize.width(), viewerSize.height()));
 		// absolute positions of the mouse in last pos and current pos :
-		glm::vec2 absPosMouse = glm::vec2(static_cast<float>(currentPos.x()), static_cast<float>(currentPos.y()));
-		glm::vec2 absPosLastPos = glm::vec2(static_cast<float>(this->lastPosition.x()), static_cast<float>(this->lastPosition.y()));
+		glm::vec2 absPosMouse = glm::convert_to<float>(glm::ivec2(currentPos.x(), currentPos.y()));
+		glm::vec2 absPosLastPos = glm::convert_to<float>(glm::ivec2(this->lastPosition.x(), this->lastPosition.y()));
 		this->offset += (absPosMouse - absPosLastPos) / (maxViewer - minViewer);
 		this->lastPosition = currentPos;
 	} else {

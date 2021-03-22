@@ -1,9 +1,24 @@
-#version 400 core
+#line 1000
+//////////////////////////////////// COLOR FUNCTIONS ////////////////////////////////////
 
 // This shader is only included in other shaders to have
 // stable coloring functions !
 
-vec4 voxelIdxToColor_1channel(in vec2 colorBounds, in uvec3 ucolor) {
+#ifndef MAIN_SHADER_UNIT
+uniform uint channelView;
+uniform uint selectedChannel;
+uniform uint nbChannels;
+uniform vec2 colorBounds;
+uniform vec2 textureBounds;
+uniform vec2 colorBoundsAlternate;
+uniform vec2 textureBoundsAlternate;
+uniform vec3 color0;
+uniform vec3 color1;
+uniform vec3 color0Alternate;
+uniform vec3 color1Alternate;
+#endif
+
+vec4 voxelIdxToColor_1channel(in uvec3 ucolor) {
 	// Have the R and G color channels clamped to the min/max of the scale
 	// (mimics under or over-exposure)
 	float color_r = clamp(float(ucolor.r), colorBounds.x, colorBounds.y);
@@ -11,8 +26,9 @@ vec4 voxelIdxToColor_1channel(in vec2 colorBounds, in uvec3 ucolor) {
 	// Compute the color as Brian's paper describes it :
 	float color_k = 2.5;
 	float sc = colorBounds.y - colorBounds.x;
+	float scAlt = colorBoundsAlternate.y - colorBoundsAlternate.x;
 	float eosin = (color_r - colorBounds.x)/(sc);
-	float dna = (color_g - colorBounds.x)/(sc); // B is on G channel because OpenGL only allows 2 channels upload to be RG, not RB
+	float dna = (color_g - colorBoundsAlternate.x)/(scAlt);
 
 	float eosin_r_coef = 0.050;
 	float eosin_g_coef = 1.000;
@@ -34,16 +50,17 @@ vec4 voxelIdxToColor_1channel(in vec2 colorBounds, in uvec3 ucolor) {
 	);
 }
 
-vec4 voxelIdxToColor_2channel(in vec2 colorBounds, in uvec3 ucolor) {
+vec4 voxelIdxToColor_2channel(in uvec3 ucolor) {
 	// Have the R and G color channels clamped to the min/max of the scale
 	// (mimics under or over-exposure)
 	float color_r = clamp(float(ucolor.r), colorBounds.x, colorBounds.y);
-	float color_g = clamp(float(ucolor.g), colorBounds.x, colorBounds.y);
+	float color_g = clamp(float(ucolor.g), colorBoundsAlternate.x, colorBoundsAlternate.y);
 	// Compute the color as Brian's paper describes it :
 	float color_k = 2.5;
 	float sc = colorBounds.y - colorBounds.x;
+	float scAlt = colorBoundsAlternate.y - colorBoundsAlternate.x;
 	float eosin = (color_r - colorBounds.x)/(sc);
-	float dna = (color_g - colorBounds.x)/(sc); // B is on G channel because OpenGL only allows 2 channels upload to be RG, not RB
+	float dna = (color_g - colorBoundsAlternate.x)/(scAlt);
 
 	float eosin_r_coef = 0.050;
 	float eosin_g_coef = 1.000;
@@ -65,7 +82,7 @@ vec4 voxelIdxToColor_2channel(in vec2 colorBounds, in uvec3 ucolor) {
 	);
 }
 
-vec4 hsv2rgb(in vec2 colorBounds, in uvec3 ucolor) {
+vec4 hsv2rgb(in uvec3 ucolor) {
 
 	//Retourne une échelle de couleur pour une valeure flottante normalisée entre 0 et 1
 	float value = clamp((float(ucolor.r) - colorBounds.x) / ((1.01*colorBounds.y) - colorBounds.x), .0, 1.);
@@ -85,40 +102,36 @@ vec4 hsv2rgb(in vec2 colorBounds, in uvec3 ucolor) {
 	return  vec4(mix( ScrollingRGB.xyz, mix( ScrollingRGB.zxy, ScrollingRGB.yzx, IsNotSecondSlice ), IsNotFirstSlice ), 1.);    // Make the RGB rotate right depending on final slice index
 }
 
-vec4 colorSegmentColoration(in mat3 colorSegment, in vec2 colorBounds, in uvec3 ucolor) {
-	float t = clamp((float(ucolor.r) - colorBounds.x) / (colorBounds.y - colorBounds.x), .0, 1.);
-
-	vec4 color0 = vec4(colorSegment[0].xyz, 1.);
-	vec4 color1 = vec4(colorSegment[1].xyz, 1.);
-
-	return mix(color0, color1, t);
+vec4 colorSegmentColoration(in vec2 cbounds, in vec3 color0, in vec3 color1, in uvec3 ucolor) {
+	float t = clamp((float(ucolor.r) - cbounds.x) / (cbounds.y - cbounds.x), .0, 1.);
+	return vec4(mix(color0, color1, t), 1.);
 }
 
-vec4 voxelIdxToColor(in uvec3 colorParams, in mat3 colorSegment, in vec2 colorBounds, in uvec3 ucolor) {
-	// Texture and color parameters :
-	uint colorFunction = colorParams.x;
-	uint colorChannel = colorParams.y;
-	uint nbChannels = colorParams.z;
-	if (colorFunction == 1u) {
+vec4 voxelIdxToColor(in uvec3 ucolor) {
+	if (channelView == 1u) {
 		if (nbChannels == 1u) {
 			float alpha = 1.f;
 			float val = (float(ucolor.r) - colorBounds.x)/(colorBounds.y-colorBounds.x);
 			return vec4(val, val, val, alpha);
 		} else {
-			uint uval = (colorChannel == 0u) ? ucolor.r : ucolor.g;
+			uint uval = (selectedChannel == 0u) ? ucolor.r : ucolor.g;
 			float alpha = 1.f;
 			float val = (float(uval) - colorBounds.x)/(colorBounds.y-colorBounds.x);
 			return vec4(val, val, val, alpha);
 		}
-	} else if (colorFunction == 2u) {
-		if (nbChannels == 1u) { return voxelIdxToColor_1channel(colorBounds, ucolor); }
-		else { return voxelIdxToColor_2channel(colorBounds, ucolor); }
-	} else if (colorFunction == 3u) {
-		return hsv2rgb(colorBounds, ucolor);
-	} else if (colorFunction == 4u) {
-		return colorSegmentColoration(colorSegment, colorBounds, ucolor);
+	} else if (channelView == 2u) {
+		if (nbChannels == 1u) { return voxelIdxToColor_1channel(ucolor); }
+		else { return voxelIdxToColor_2channel(ucolor); }
+	} else if (channelView == 3u) {
+		return hsv2rgb(ucolor);
+	} else if (channelView == 4u) {
+		vec3 c0 = (ucolor.r < ucolor.g) ? color0 : color0Alternate;
+		vec3 c1 = (ucolor.r < ucolor.g) ? color1 : color1Alternate;
+		return colorSegmentColoration(colorBounds, c0, c1, ucolor);
 	} else {
 		return vec4(.0,.0,.0,1.);
 	}
 }
+
+//////////////////////////////////// COLOR FUNCTIONS ////////////////////////////////////
 

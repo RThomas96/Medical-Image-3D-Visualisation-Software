@@ -54,13 +54,12 @@ MainWidget::~MainWidget() {
 }
 
 void MainWidget::addColorControl() {
-	if (this->colorControl != nullptr) {
-		this->colorControl->show();
-		return;
+	if (this->colorControl == nullptr) {
+		this->colorControl = new ColorBoundWidget(this->scene, this->controlPanel, this, nullptr);
 	}
-
-	this->colorControl = new ColorBoundControl(this->scene, this->controlPanel, this, nullptr);
 	this->colorControl->show();
+	this->colorControl->raise();
+	return;
 }
 
 void MainWidget::removeColorControl() {
@@ -123,6 +122,7 @@ void MainWidget::setupWidgets() {
 			});
 		}
 		this->loaderWidget->show();
+		this->loaderWidget->raise();
 	});
 	QObject::connect(this->action_saveGrid, &QAction::triggered, [this](){this->scene->launchSaveDialog();});
 	QObject::connect(this->action_showVisuBox, &QAction::triggered, [this](){this->scene->showVisuBoxController();});
@@ -134,10 +134,11 @@ void MainWidget::setupWidgets() {
 	QObject::connect(this->action_showHelp3D, &QAction::triggered, [this](){this->viewer->help();});
 	QObject::connect(this->action_showHelpPlane, &QAction::triggered, [this](){this->viewer_planeX->help();});
 	QObject::connect(this->action_showSettings, &QAction::triggered, [this](){
-		if (this->usettings != nullptr) { this->usettings->show(); }
+		if (this->usettings != nullptr) { this->usettings->show(); this->usettings->raise(); }
 		else {
 			this->usettings = new UserSettingsWidget;
 			this->usettings->show();
+			this->usettings->raise();
 			QObject::connect(this->usettings, &QWidget::destroyed, [this](){
 				this->usettings = nullptr;
 			});

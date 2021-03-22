@@ -590,12 +590,6 @@ namespace IO {
 			return *this;
 		}
 
-		std::cerr << "[TRACE_LOAD]\t" << "Image dimensions : [ " << this->imageDimensions.x << ", " << this->imageDimensions.y << ", " << this->imageDimensions.z <<" ]\n";
-		std::cerr << "[TRACE_LOAD]\t" << "Grid dimensions : [ " << this->gridDimensions.x << ", " << this->gridDimensions.y << ", " << this->gridDimensions.z <<" ]\n";
-		std::cerr << "[TRACE_LOAD]\t" << "Voxel dimensions : {" << this->voxelDimensions.x * this->voxelMultiplier.x << ", "
-				<< this->voxelDimensions.y * this->voxelMultiplier.y << ", "
-				<< this->voxelDimensions.z * this->voxelMultiplier.z << "}\n";
-
 		if (this->isAnalyzed == false) { this->parseImageInfo(); }
 
 		// Prepare storage of all the image's data :
@@ -1040,15 +1034,6 @@ namespace IO {
 		if (not this->isAnalyzed) { this->parseImageInfo(); }
 		this->preAllocateStorage();
 
-		std::cerr << "[TRACE_LOAD] Image dimensions : [" << this->imageDimensions.x << ", " << this->imageDimensions.y
-			<< ", " << this->imageDimensions.z << "]\n";
-		std::cerr << "[TRACE_LOAD] Grid dimensions : [" << this->gridDimensions.x << ", " << this->gridDimensions.y
-			<< ", " << this->gridDimensions.z << "]\n";
-		std::cerr << "[TRACE_LOAD] Voxel dimensions : {" << this->voxelDimensions.x << ", " << this->voxelDimensions.y
-			<< ", " << this->voxelDimensions.z << "}\n";
-		std::cerr << "[TRACE_LOAD] Voxel multiplier : {" << this->voxelMultiplier.x << ", " << this->voxelMultiplier.y
-			<< ", " << this->voxelMultiplier.z << "}\n";
-
 		// We need to update the bounding box size to reflect the user-defined size :
 		using val_t = bbox_t::vec::value_type;
 		bbox_t::vec maxCoord = bbox_t::vec(
@@ -1087,7 +1072,6 @@ namespace IO {
 
 		// Go through the grid :
 		for (std::size_t k = 0; k < this->gridDimensions.z; ++k) {
-			std::cerr << "[TRACE] Loading slice " << k << "/" << this->gridDimensions.z << "\n";
 			rawSlicesIterator = std::begin(rawSlices);
 			// Load slice(s) here :
 			for (std::size_t i = 0; i < slicesToLoad; ++i) {
@@ -1304,6 +1288,8 @@ namespace IO {
 		data_t* rawData = new data_t[bufSize];
 		TIFFReadEncodedStrip(file, strip, rawData, bufSize*pixelOffset);
 		data_t result = rawData[i*pixelOffset + frame.width*pixelOffset*offsetInStrip];
+
+		delete[] rawData;
 
 		TIFFClose(file);
 

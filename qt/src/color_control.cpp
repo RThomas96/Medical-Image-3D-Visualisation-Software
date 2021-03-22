@@ -3,12 +3,19 @@
 #include <QColorDialog>
 #include <QIcon>
 
-ColorBoundControl::ColorBoundControl(Scene* _sc, ControlPanel* _cp, MainWidget* _mw, QWidget* parent) : QWidget(parent) {
+ColorBoundControl::ColorBoundControl(Scene* _sc, ControlPanel* _cp, MainWidget* _mw, bool _p, QWidget* parent) : QWidget(parent) {
 	this->_main = _mw;
 	this->_scene = _sc;
 	this->_controlpanel = _cp;
-	this->_min = this->_scene->getMinColorValue();
-	this->_max = this->_scene->getMaxColorValue();
+	this->_primary = _p;
+
+	if (this->_primary) {
+		this->_min = this->_scene->getMinColorValue();
+		this->_max = this->_scene->getMaxColorValue();
+	} else {
+		this->_min = this->_scene->getMinColorValue();
+		this->_max = this->_scene->getMaxColorValue();
+	}
 
 	this->setAttribute(Qt::WA_DeleteOnClose);
 
@@ -32,6 +39,10 @@ ColorBoundControl::ColorBoundControl(Scene* _sc, ControlPanel* _cp, MainWidget* 
 
 	this->color_0 = Qt::GlobalColor::red;
 	this->color_1 = Qt::GlobalColor::blue;
+	if (this->_primary) {
+		this->_scene->setColor0(this->color_0.redF(), this->color_0.greenF(), this->color_0.blueF());
+		this->_scene->setColor1(this->color_1.redF(), this->color_1.greenF(), this->color_1.blueF());
+	}
 
 	this->pixmap_baseColor0 = new QPixmap(30, 30);
 	this->pixmap_baseColor0->fill(this->color_0);
@@ -93,10 +104,17 @@ void ColorBoundControl::setMinColorBound(int val) {
 			}
 			this->spinbox_max->setValue(val+1);
 		}
-		this->_scene->slotSetMinColorValue(val);
-		this->_scene->slotSetMaxColorValue(other);
-		this->_controlpanel->updateMinValue(val);
-		this->_controlpanel->updateMaxValue(other);
+		if (this->_primary) {
+			this->_scene->slotSetMinColorValue(val);
+			this->_scene->slotSetMaxColorValue(other);
+			this->_controlpanel->updateMinValue(val);
+			this->_controlpanel->updateMaxValue(other);
+		} else {
+			this->_scene->slotSetMinColorValueAlternate(val);
+			this->_scene->slotSetMaxColorValueAlternate(other);
+			this->_controlpanel->updateMinValueAlternate(val);
+			this->_controlpanel->updateMaxValueAlternate(other);
+		}
 }
 
 void ColorBoundControl::setMaxColorBound(int val) {
@@ -108,10 +126,18 @@ void ColorBoundControl::setMaxColorBound(int val) {
 			}
 			this->spinbox_min->setValue(val-1);
 		}
-		this->_scene->slotSetMinColorValue(other);
-		this->_scene->slotSetMaxColorValue(val);
-		this->_controlpanel->updateMinValue(other);
-		this->_controlpanel->updateMaxValue(val);
+
+		if (this->_primary) {
+			this->_scene->slotSetMinColorValue(other);
+			this->_scene->slotSetMaxColorValue(val);
+			this->_controlpanel->updateMinValue(other);
+			this->_controlpanel->updateMaxValue(val);
+		} else {
+			this->_scene->slotSetMinColorValueAlternate(other);
+			this->_scene->slotSetMaxColorValueAlternate(val);
+			this->_controlpanel->updateMinValueAlternate(other);
+			this->_controlpanel->updateMaxValueAlternate(val);
+		}
 }
 
 void ColorBoundControl::setColor0() {
@@ -122,7 +148,11 @@ void ColorBoundControl::setColor0() {
 	QIcon c0(*this->pixmap_baseColor0);
 	this->button_baseColor0->setIcon(c0);
 
-	this->_scene->setColor0(this->color_0.redF(), this->color_0.greenF(), this->color_0.blueF());
+	if (this->_primary) {
+		this->_scene->setColor0(this->color_0.redF(), this->color_0.greenF(), this->color_0.blueF());
+	} else {
+		this->_scene->setColor0Alternate(this->color_0.redF(), this->color_0.greenF(), this->color_0.blueF());
+	}
 
 	return;
 }
@@ -135,7 +165,31 @@ void ColorBoundControl::setColor1() {
 	QIcon c1(*this->pixmap_baseColor1);
 	this->button_baseColor1->setIcon(c1);
 
-	this->_scene->setColor1(this->color_1.redF(), this->color_1.greenF(), this->color_1.blueF());
+	if (this->_primary) {
+		this->_scene->setColor1(this->color_1.redF(), this->color_1.greenF(), this->color_1.blueF());
+	} else {
+		this->_scene->setColor1Alternate(this->color_1.redF(), this->color_1.greenF(), this->color_1.blueF());
+	}
 
 	return;
+}
+
+ColorBoundWidget::ColorBoundWidget(Scene* _sc, ControlPanel* _cp, MainWidget* main, QWidget* parent) : QWidget(parent) {
+	this->scene = _sc;
+	this->_controlpanel = _cp;
+	this->_mainwidget = main;
+
+	this->_control_primary = new ColorBoundControl(_sc, _cp, main, true);
+	this->_control_secondary = new ColorBoundControl(_sc, _cp, main, false);
+
+	this->main_layout = new QVBoxLayout(nullptr);
+
+	this->main_layout->addWidget(this->_control_primary);
+	this->main_layout->addWidget(this->_control_secondary);
+
+	this->setLayout(this->main_layout);
+}
+
+ColorBoundWidget::~ColorBoundWidget() {
+	// nothing here for now ...
 }
