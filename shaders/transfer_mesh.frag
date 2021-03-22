@@ -512,7 +512,7 @@ void getFirstRayVoxelIntersection( in vec3 origin, in vec3 direction, out ivec3 
 	//
 	// 	if( lambda_max > 0 ) origin = origin + lambda_max*direction;
 
-	v0 = getGridCoordinates(vec4(origin.xyz, 1.));
+	v0 = getGridCoordinates(vec4(origin.xyz-0.001*direction, 1.));
 
 	float xi = v0.x*voxelSize.x;
 	if( direction.x > 0 ) xi = xi + voxelSize.x;

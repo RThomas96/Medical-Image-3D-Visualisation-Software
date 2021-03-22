@@ -125,8 +125,11 @@ vec4 voxelIdxToColor(in uvec3 ucolor) {
 	} else if (channelView == 3u) {
 		return hsv2rgb(ucolor);
 	} else if (channelView == 4u) {
-		vec3 c0 = (ucolor.r < ucolor.g) ? color0 : color0Alternate;
-		vec3 c1 = (ucolor.r < ucolor.g) ? color1 : color1Alternate;
+		float cvalue_0 = (float(ucolor.r) < textureBounds.x || float(ucolor.r) > textureBounds.y) ? -1. : ((float(ucolor.r) - colorBounds.x) / (colorBounds.y - colorBounds.x));
+		float cvalue_1 = (float(ucolor.g) < textureBoundsAlternate.x || float(ucolor.g) > textureBoundsAlternate.y) ? -1. : ((float(ucolor.g) - colorBoundsAlternate.x) / (colorBoundsAlternate.y - colorBoundsAlternate.x));
+		if (cvalue_0 < .0f && cvalue_1 < .0f) { return vec4(1., 1., .0, 1.); }
+		vec3 c0 = (cvalue_0 < cvalue_1) ? color0 : color0Alternate;
+		vec3 c1 = (cvalue_0 < cvalue_1) ? color1 : color1Alternate;
 		return colorSegmentColoration(colorBounds, c0, c1, ucolor);
 	} else {
 		return vec4(.0,.0,.0,1.);

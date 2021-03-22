@@ -1,5 +1,8 @@
 #version 400 core
 
+#pragma optimize(off)
+#pragma debug(on)
+
 // Signals we're in the main shader, for any shaders inserted into this one.
 #define MAIN_SHADER_UNIT
 
@@ -18,9 +21,9 @@ out vec4 color;
 
 uniform uint minTexVal;
 uniform uint maxTexVal;
-uniform vec2 texBounds;		// Min/max values of the texture to show.
-uniform vec2 colorBounds;	// Min/max values to compute the color scale
-uniform vec2 texBoundsAlternate;		// Min/max values of the texture to show.
+uniform vec2 textureBounds;		// Min/max values of the texture to show.
+uniform vec2 colorBounds;		// Min/max values to compute the color scale
+uniform vec2 textureBoundsAlternate;	// Min/max values of the texture to show.
 uniform vec2 colorBoundsAlternate;	// Min/max values to compute the color scale
 
 // Draw modes :
@@ -89,7 +92,7 @@ void main(void)
 	}
 	float ftexVal = float(ui.r);
 	if (selectedChannel == 1u) { ftexVal = float(ui.g); }
-	if (ftexVal < texBounds.x || ftexVal > texBounds.y) {
+	if (ftexVal < textureBounds.x || ftexVal > textureBounds.y) {
 		basecolor = vec4(.8, .8, .8, 1.) ;
 	}
 
