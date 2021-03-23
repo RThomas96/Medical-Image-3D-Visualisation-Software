@@ -1338,8 +1338,8 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, cons
 		glm::vec2 tb1 = glm::convert_to<float>(this->textureBounds1);
 		glUniform2fv(location_colorBounds, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds0)));
 		glUniform2fv(location_colorBoundsAlternate, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds1)));
-		glUniform2fv(location_textureBounds, 1, glm::value_ptr(tb0));
-		glUniform2fv(location_textureBoundsAlternate, 1, glm::value_ptr(tb1));
+		glUniform2f (location_textureBounds, tb0.x, tb0.y);
+		glUniform2f (location_textureBoundsAlternate, tb1.x, tb1.y);
 
 		DiscreteGrid::bbox_t::vec min = this->visuBox.getMin();
 		DiscreteGrid::bbox_t::vec max = this->visuBox.getMax();
@@ -1649,8 +1649,8 @@ void Scene::prepareUniforms_3DPlane(GLfloat *mvMat, GLfloat *pMat, planes _plane
 
 	glUniform2fv(location_colorBounds, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds0)));
 	glUniform2fv(location_colorBoundsAlternate, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds1)));
-	glUniform2fv(location_textureBounds, 1, glm::value_ptr(tb0));
-	glUniform2fv(location_textureBoundsAlternate, 1, glm::value_ptr(tb1));
+	glUniform2f (location_textureBounds, tb0.x, tb0.y);
+	glUniform2f (location_textureBoundsAlternate, tb1.x, tb1.y);
 
 	glUniform3fv(location_planePosition, 1, glm::value_ptr(planePos));
 	glUniform3fv(location_planeDirection, 1, glm::value_ptr(this->planeDirection));
@@ -1741,8 +1741,8 @@ void Scene::prepareUniforms_PlaneViewer(planes _plane, planeHeading _heading, gl
 	glUniform3fv(location_planePositions, 1, glm::value_ptr(planePos));
 	glUniform2fv(location_colorBounds, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds0)));
 	glUniform2fv(location_colorBoundsAlternate, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds1)));
-	glUniform2fv(location_textureBounds, 1, glm::value_ptr(tb0));
-	glUniform2fv(location_textureBoundsAlternate, 1, glm::value_ptr(tb1));
+	glUniform2f (location_textureBounds, tb0.x, tb0.y);
+	glUniform2f (location_textureBoundsAlternate, tb1.x, tb1.y);
 	glUniform1ui(location_heading, plane_heading);
 	glUniform1f(location_zoom, zoomRatio);
 	glUniform1ui(location_r_nbChannels, 1);
