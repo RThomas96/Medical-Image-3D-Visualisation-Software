@@ -71,7 +71,6 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 	switch (e->key()) {
 		/*
 		SHADER PROGRAMS
-		*/
 		case Qt::Key::Key_F1:
 			this->scene->setColorFunction(ColorFunction::SingleChannel);
 			this->update();
@@ -88,6 +87,7 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 			this->scene->setColorFunction(ColorFunction::ColorMagnitude);
 			this->update();
 		break;
+		*/
 		case Qt::Key::Key_F5:
 			this->scene->recompileShaders();
 			this->update();

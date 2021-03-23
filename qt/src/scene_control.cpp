@@ -21,7 +21,7 @@ ColorButton::ColorButton(QColor _color, QWidget* parent) : QWidget(parent) {
 	this->setLayout(this->layout);
 
 	QObject::connect(this->button, &QPushButton::clicked, this, [this](void) -> void {
-		QColor c = QColorDialog::getColor(this->color, this);
+		QColor c = QColorDialog::getColor(this->color, this, "Pick a color", QColorDialog::ColorDialogOption::DontUseNativeDialog);
 		if (c.isValid() == false) { return ; }
 		this->setColor(c);
 		return ;
@@ -148,6 +148,15 @@ void ControlPanel::initSignals() {
 	QObject::connect(this->colorbutton_green_max, &ColorButton::colorChanged, this, [this](QColor c) -> void {
 		this->sceneToControl->setColor1Alternate(c.redF(), c.greenF(), c.blueF());
 	});
+
+	// Connect the fact of selecting a groupbox to change the scene's information on how to display images
+	QObject::connect(this->groupbox_red, &QGroupBox::toggled, this, &ControlPanel::updateRGBMode);
+	// Connect the fact of selecting a groupbox to change the scene's information on how to display images
+	QObject::connect(this->groupbox_green, &QGroupBox::toggled, this, &ControlPanel::updateRGBMode);
+
+	// connect the comboboxes to their methods :
+	QObject::connect(this->red_coloration, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &ControlPanel::updateChannelRed);
+	QObject::connect(this->green_coloration, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &ControlPanel::updateChannelGreen);
 }
 
 void ControlPanel::updateViewers() {
@@ -201,6 +210,62 @@ void ControlPanel::updateLabels(void) {
 	//
 }
 
+void ControlPanel::updateRGBMode() {
+	bool r = this->groupbox_red->isChecked();
+	bool g = this->groupbox_green->isChecked();
+
+	if (!r && !g) { this->sceneToControl->setRGBMode(RGBMode::None); return; }
+	if ( r && !g) { this->sceneToControl->setRGBMode(RGBMode::RedOnly); return; }
+	if (!r &&  g) { this->sceneToControl->setRGBMode(RGBMode::GreenOnly); return; }
+	if ( r &&  g) { this->sceneToControl->setRGBMode(RGBMode::RedAndGreen); return; }
+}
+
+void ControlPanel::updateChannelRed(int value) {
+	switch (value) {
+		case 0:
+			// Should switch to greyscale
+			this->sceneToControl->setColorFunction_r(ColorFunction::SingleChannel);
+			this->updateViewers();
+		break;
+		case 1:
+			// Should switch to hsv
+			this->sceneToControl->setColorFunction_r(ColorFunction::HSV2RGB);
+			this->updateViewers();
+		break;
+		case 2:
+			// Should switch to hsv
+			this->sceneToControl->setColorFunction_r(ColorFunction::ColorMagnitude);
+			this->updateViewers();
+		break;
+		default:
+			std::cerr << "Cannot switch to function " << value << "\n";
+		break;
+	}
+}
+
+void ControlPanel::updateChannelGreen(int value) {
+	switch (value) {
+		case 0:
+			// Should switch to greyscale
+			this->sceneToControl->setColorFunction_g(ColorFunction::SingleChannel);
+			this->updateViewers();
+		break;
+		case 1:
+			// Should switch to hsv
+			this->sceneToControl->setColorFunction_g(ColorFunction::HSV2RGB);
+			this->updateViewers();
+		break;
+		case 2:
+			// Should switch to hsv
+			this->sceneToControl->setColorFunction_g(ColorFunction::ColorMagnitude);
+			this->updateViewers();
+		break;
+		default:
+			std::cerr << "Cannot switch to function " << value << "\n";
+		break;
+	}
+}
+
 void ControlPanel::setMinTexVal(int val) {
 	this->min = static_cast<DiscreteGrid::data_t>(val);
 	// update scene data :
@@ -220,6 +285,7 @@ void ControlPanel::setMaxTexVal(int val) {
 
 void ControlPanel::setMinTexValBottom(int val) {
 	this->minAlternate = static_cast<DiscreteGrid::data_t>(val);
+	std::cerr << "Changed bottom min" << '\n';
 	// update scene data :
 	if (this->sceneToControl) {
 		this->sceneToControl->slotSetMinTexValueAlternate(static_cast<DiscreteGrid::data_t>(val));

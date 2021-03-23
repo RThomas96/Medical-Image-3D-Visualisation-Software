@@ -38,6 +38,8 @@ class ControlPanel; // Forward declaration
 
 /// @b Simple enum to keep track of the different viewing primitives for the program.
 enum DrawMode { Solid, Volumetric, VolumetricBoxed };
+/// @b The RGB mode chosen by the user
+enum RGBMode { None = 0, RedOnly = 1, GreenOnly = 2, RedAndGreen = 3};
 /// @b Simple enum to keep track of which color function to apply to the viewers.
 enum ColorFunction { SingleChannel, HistologyHandE, HSV2RGB, ColorMagnitude };
 /// @b Simple enum to define which plane we are drawing
@@ -146,7 +148,11 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void openGLDebugLogger_inserter(const QOpenGLDebugMessage m);
 
 		/// @b Changes the texture coloration mode to the desired setting
-		void setColorFunction(ColorFunction _c);
+		void setColorFunction_r(ColorFunction _c);
+		void setColorFunction_g(ColorFunction _c);
+
+		/// @b Changes the RGB mode of the scene.
+		void setRGBMode(RGBMode _mode);
 
 		/// @b Set the color of the beginning of the color segment for the segmented color scale
 		void setColor0(qreal r, qreal g, qreal b);
@@ -242,11 +248,11 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		glm::vec3 computePlanePositions();
 
 		/// @b preps uniforms for a grid
-		void prepGridUniforms(GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, const GridGLView::Ptr& grid);
+		void prepareUniforms_3DSolid(GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, const GridGLView::Ptr& grid);
 		/// @b preps uniforms for a given plane
-		void prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane, const GridGLView::Ptr& grid, bool showTexOnPlane = true);
+		void prepareUniforms_3DPlane(GLfloat *mvMat, GLfloat *pMat, planes _plane, const GridGLView::Ptr& grid, bool showTexOnPlane = true);
 		/// @brief prep the plane uniforms to draw in space
-		void prepPlane_SingleUniforms(planes _plane, planeHeading _heading, glm::vec2 fbDims, float zoomRatio, glm::vec2 offset, const GridGLView::Ptr& _grid);
+		void prepareUniforms_PlaneViewer(planes _plane, planeHeading _heading, glm::vec2 fbDims, float zoomRatio, glm::vec2 offset, const GridGLView::Ptr& _grid);
 
 		/// @brief draw the planes, in the real space
 		void drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane = true);
@@ -329,8 +335,11 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		float clipDistanceFromCamera;			/// Distance from the camera to its clip plane
 		DiscreteGrid::bbox_t visuBox;			///< Used to restrict the view to a box with its coordinates
 		DrawMode drawMode;						///< Current 3D draw mode
-		ColorFunction channels;					///< Channel(s) to display on the viewers
-		GLuint selectedChannel;					///< The currently selected channel for greyscale mode.
+		RGBMode rgbMode;						///< Current RGB mode
+		ColorFunction channels_r;					///< Channel(s) to display on the viewers
+		GLuint selectedChannel_r;					///< The currently selected channel for greyscale mode.
+		ColorFunction channels_g;					///< Channel(s) to display on the viewers
+		GLuint selectedChannel_g;					///< The currently selected channel for greyscale mode.
 
 		glm::vec3 color0;			///< The color segment when approaching 0
 		glm::vec3 color1;			///< The color segment when approaching 1

@@ -33,9 +33,14 @@ uniform vec3 color1;		// Color 1, channel 0
 uniform vec3 color0Alternate;	// Color 0, channel 1
 uniform vec3 color1Alternate;	// Color 1, channel 1
 
-uniform uint channelView;	// What channels do we visualize ? R+G = 1, R = 2, G = 3
-uniform uint selectedChannel;	// The selected channel to visualize in greyscale mode
-uniform uint nbChannels;	// nb of channels in the image (R, RG, RGB)
+uniform uint rgbMode;	// Show only R, only G, or RG
+
+uniform uint r_channelView;	// The coloration function chosen
+uniform uint r_selectedChannel;	// The currently selected channel
+uniform uint r_nbChannels;	// nb of channels in the image in total (R, RG, RGB ?)
+uniform uint g_channelView;	// The coloration function chosen
+uniform uint g_selectedChannel;	// The currently selected channel
+uniform uint g_nbChannels;	// nb of channels in the image in total (R, RG, RGB ?)
 
 /****************************************/
 /*********** Function headers ***********/
@@ -45,16 +50,15 @@ bool shouldDiscard();
 bool shouldDrawBorder();
 bool checkAndColorizeVoxel(in uvec3 voxel, out vec4 color) ;
 
-INCLUDE_COLOR_FUNCTIONS;
+#pragma include_color_shader;
+
+#line 2055
 
 /****************************************/
 /***************** Main *****************/
 /****************************************/
 void main() {
 	if (shouldDiscard()) { if (!shouldDrawBorder()) { discard; } }
-
-	uvec3 colorParams = uvec3(channelView, selectedChannel, nbChannels);
-	mat3 colorSegment = mat3(color0, color1, vec3(.0));
 
 	// Default color : plane color
 	color = planeIdxToColor(planeIndex);
@@ -65,13 +69,13 @@ void main() {
 	color.xyz = vTexCoords;
 	color.a = 1.f;
 	// Get the texture data :
-	uvec3 tex =  texture(texData, vTexCoords).rgb;
+	uvec3 tex = texture(texData, vTexCoords).rgb;
 
 	vec4 final_color;
 	if (checkAndColorizeVoxel(tex, final_color)) {
 		color = final_color;
 	} else {
-		color = voxelIdxToColor( tex);
+		color = voxelIdxToColor(tex);
 		color.a = .1;
 	}
 }
@@ -120,50 +124,31 @@ bool checkAndColorizeVoxel(in uvec3 voxel, out vec4 return_color) {
 	//				- If not, return FALSE !
 	// But for now, as long as there's no uniform blocks, the primary channel will always be green.
 
-	uvec3 colorParams = uvec3(channelView, selectedChannel, nbChannels);
-	mat3 colorSegment = mat3(color0, color1, vec3(.0));
-
 	// texture coords for visibility :
-	uint voxelValue;
+	float voxVal;
 	vec2 cB, tB;
 	bool canSwitch = false;
-	if (nbChannels == 1) {
-		voxelValue = voxel.r;
-		cB = colorBounds;
-		tB = textureBounds;
-	} else {
-		// if we're in greyscale mode, assign values accrding to it :
-		if (channelView == 1) {
-			voxelValue = (selectedChannel == 0) ? voxel.r : voxel.g;
-			canSwitch = false; // if not visible from the start, don't show other channel
-			cB = (selectedChannel == 0) ? colorBounds : colorBoundsAlternate;
-			tB = (selectedChannel == 0) ? textureBounds : textureBoundsAlternate;
-		} else {
-			voxelValue = voxel.g;
-			canSwitch = (nbChannels > 1u);
-			cB = colorBoundsAlternate;
-			tB = textureBoundsAlternate;
-		}
+	vec4 compColor = voxelIdxToColor(voxel);
+
+	if (rgbMode == 1u) {
+		voxVal = float(voxel.r);
+		if (voxVal >= textureBounds.x && voxVal < textureBounds.y) {
+			compColor = voxelIdxToColor(voxel);
+		} else { return false; }
+	}
+	if (rgbMode == 2u) {
+		voxVal = float(voxel.g);
+		if (voxVal >= textureBoundsAlternate.x && voxVal < textureBoundsAlternate.y) {
+			compColor = voxelIdxToColor(voxel);
+		} else { return false; }
+	}
+	if (rgbMode == 3u) {
+		// Just color the thing, see later for boundary conditions :
+		compColor = voxelIdxToColor(voxel);
 	}
 
-	float voxelValue_f = float(voxelValue);
-
-	if (voxelValue_f > tB.x && voxelValue_f < tB.y) {
-		return_color = voxelIdxToColor(voxel.xyz);
-		return true;
-	} else {
-		// Is not in the bounds. Check if we can switch :
-		if (canSwitch) {
-			// Set other variables :
-			voxelValue = (voxelValue == voxel.r) ? voxel.r : voxel.g;
-			voxelValue_f = float(voxelValue);
-			cB = colorBounds;
-			tB = textureBounds;
-			if (voxelValue_f > tB.x && voxelValue_f < tB.y) {
-				return_color = voxelIdxToColor(voxel);
-				return true;
-			}
-		}
-	}
-	return false; // Don't need to compute color, nothing would have been shown ...
+	if (compColor.a < .0f) { return false; }
+	// unreachable ?
+	return_color = compColor;
+	return true;
 }

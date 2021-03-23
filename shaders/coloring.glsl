@@ -1,13 +1,18 @@
-#line 1000
+#line 1001
 //////////////////////////////////// COLOR FUNCTIONS ////////////////////////////////////
 
 // This shader is only included in other shaders to have
-// stable coloring functions !
+// similar coloring functions ! Should not be compiled alone.
+// Note : is included when encoutering "#pragma include_color_shader;"
 
 #ifndef MAIN_SHADER_UNIT
-uniform uint channelView;
-uniform uint selectedChannel;
-uniform uint nbChannels;
+uniform uint rgbMode;
+uniform uint r_channelView;
+uniform uint r_selectedChannel;
+uniform uint r_nbChannels;
+uniform uint g_channelView;
+uniform uint g_selectedChannel;
+uniform uint g_nbChannels;
 uniform vec2 colorBounds;
 uniform vec2 textureBounds;
 uniform vec2 colorBoundsAlternate;
@@ -82,10 +87,10 @@ vec4 voxelIdxToColor_2channel(in uvec3 ucolor) {
 	);
 }
 
-vec4 hsv2rgb(in uvec3 ucolor) {
+vec4 hsv2rgb(in uint color, in vec2 cb) {
 
 	//Retourne une échelle de couleur pour une valeure flottante normalisée entre 0 et 1
-	float value = clamp((float(ucolor.r) - colorBounds.x) / ((1.01*colorBounds.y) - colorBounds.x), .0, 1.);
+	float value = clamp((float(color) - cb.x) / ((1.01*cb.y) - cb.x), .0, 1.);
 	vec3 hsv = vec3 (value, 1., 1.);
 	hsv.x = mod( 100.0 + hsv.x, 1.0 ); // Ensure [0,1[
 	float   HueSlice = 6.0 * hsv.x; // In [0,6[
@@ -102,37 +107,42 @@ vec4 hsv2rgb(in uvec3 ucolor) {
 	return  vec4(mix( ScrollingRGB.xyz, mix( ScrollingRGB.zxy, ScrollingRGB.yzx, IsNotSecondSlice ), IsNotFirstSlice ), 1.);    // Make the RGB rotate right depending on final slice index
 }
 
-vec4 colorSegmentColoration(in vec2 cbounds, in vec3 color0, in vec3 color1, in uvec3 ucolor) {
-	float t = clamp((float(ucolor.r) - cbounds.x) / (cbounds.y - cbounds.x), .0, 1.);
+vec4 colorSegmentColoration(in vec2 cbounds, in vec3 color0, in vec3 color1, in uint ucolor) {
+	float t = clamp((float(ucolor) - cbounds.x) / (cbounds.y - cbounds.x), .0, 1.);
 	return vec4(mix(color0, color1, t), 1.);
 }
 
 vec4 voxelIdxToColor(in uvec3 ucolor) {
-	if (channelView == 1u) {
-		if (nbChannels == 1u) {
-			float alpha = 1.f;
+	if (rgbMode == 1u) {
+		if (r_channelView == 1u) {	// Greyscale
 			float val = (float(ucolor.r) - colorBounds.x)/(colorBounds.y-colorBounds.x);
-			return vec4(val, val, val, alpha);
-		} else {
-			uint uval = (selectedChannel == 0u) ? ucolor.r : ucolor.g;
+			return vec4(val, val, val, 1.);
+		}
+		// N°2 is HandE coloration, only available if both channels are visible
+		if (r_channelView == 3u) {	// HSV-2-RGB
+			return hsv2rgb(ucolor.r, colorBounds);
+		}
+		if (r_channelView == 4u){	// User-defined colors
+			return colorSegmentColoration(colorBounds, color0, color1, ucolor.r);
+		}
+	}
+	if (rgbMode == 2u) {
+		if (g_channelView == 1u) {	// Greyscale
 			float alpha = 1.f;
-			float val = (float(uval) - colorBounds.x)/(colorBounds.y-colorBounds.x);
+			float val = (float(ucolor.g) - colorBoundsAlternate.x)/(colorBoundsAlternate.y-colorBoundsAlternate.x);
 			return vec4(val, val, val, alpha);
 		}
-	} else if (channelView == 2u) {
-		if (nbChannels == 1u) { return voxelIdxToColor_1channel(ucolor); }
-		else { return voxelIdxToColor_2channel(ucolor); }
-	} else if (channelView == 3u) {
-		return hsv2rgb(ucolor);
-	} else if (channelView == 4u) {
-		float cvalue_0 = (float(ucolor.r) < textureBounds.x || float(ucolor.r) > textureBounds.y) ? -1. : ((float(ucolor.r) - colorBounds.x) / (colorBounds.y - colorBounds.x));
-		float cvalue_1 = (float(ucolor.g) < textureBoundsAlternate.x || float(ucolor.g) > textureBoundsAlternate.y) ? -1. : ((float(ucolor.g) - colorBoundsAlternate.x) / (colorBoundsAlternate.y - colorBoundsAlternate.x));
-		if (cvalue_0 < .0f && cvalue_1 < .0f) { return vec4(1., 1., .0, 1.); }
-		vec3 c0 = (cvalue_0 < cvalue_1) ? color0 : color0Alternate;
-		vec3 c1 = (cvalue_0 < cvalue_1) ? color1 : color1Alternate;
-		return colorSegmentColoration(colorBounds, c0, c1, ucolor);
-	} else {
-		return vec4(.0,.0,.0,1.);
+		// N°2 is HandE coloration, only available if both channels are visible
+		if (g_channelView == 3u) {	// HSV-2-RGB
+			return hsv2rgb(ucolor.g, colorBoundsAlternate);
+		}
+		if (g_channelView == 4u){	// User-defined colors
+			return colorSegmentColoration(colorBoundsAlternate, color0Alternate, color1Alternate, ucolor.g);
+		}
+	}
+	if (rgbMode == 3u) {
+		// Only support HandE mode for now :
+		return voxelIdxToColor_2channel(ucolor);
 	}
 }
 

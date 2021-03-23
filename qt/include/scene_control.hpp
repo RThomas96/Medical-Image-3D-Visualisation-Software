@@ -57,6 +57,9 @@ class ControlPanel : public QWidget {
 		void updateMaxValue(int val);
 		void updateMinValueAlternate(int val);
 		void updateMaxValueAlternate(int val);
+		void updateRGBMode(void);
+		void updateChannelRed(int value);
+		void updateChannelGreen(int value);
 	private:
 		/// @b The scene to control !
 		Scene* const sceneToControl;

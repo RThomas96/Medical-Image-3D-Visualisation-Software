@@ -39,25 +39,25 @@ void OpenGLDebugLog::addOpenGLMessage(QOpenGLDebugMessage message) {
 	QFlags source = message.source();
 
 	if (severity & QOpenGLDebugMessage::Severity::NotificationSeverity)	{ sev += "{Notif}"; }
-	if (severity & QOpenGLDebugMessage::Severity::LowSeverity)		{ sev += "{Low  }"; }
+	if (severity & QOpenGLDebugMessage::Severity::LowSeverity)			{ sev += "{Low  }"; }
 	if (severity & QOpenGLDebugMessage::Severity::MediumSeverity)		{ sev += "{Med  }"; }
-	if (severity & QOpenGLDebugMessage::Severity::HighSeverity)		{ sev += "{High }"; }
+	if (severity & QOpenGLDebugMessage::Severity::HighSeverity)			{ sev += "{High }"; }
 
-	if (type & QOpenGLDebugMessage::Type::ErrorType)			{ typ += "[	ERROR     ]"; }
-	if (type & QOpenGLDebugMessage::Type::DeprecatedBehaviorType)		{ typ += "[ DEPRE. BEHAV. ]"; }
-	if (type & QOpenGLDebugMessage::Type::UndefinedBehaviorType)		{ typ += "[ UNDEF. BEHAV. ]"; }
-	if (type & QOpenGLDebugMessage::Type::PortabilityType)			{ typ += "[  PORTABILITY  ]"; }
-	if (type & QOpenGLDebugMessage::Type::PerformanceType)			{ typ += "[      PERF     ]"; }
-	if (type & QOpenGLDebugMessage::Type::OtherType)			{ typ += "[     OTHER	  ]"; }
-	if (type & QOpenGLDebugMessage::Type::MarkerType)			{ typ += "[     MARKER    ]"; }
-	if (type & QOpenGLDebugMessage::Type::GroupPushType)			{ typ += "[  GROUP PUSH   ]"; this->groupDepth++; }
-	if (type & QOpenGLDebugMessage::Type::GroupPopType)			{ typ += "[   GROUP POP   ]"; this->groupDepth--; }
+	if (type & QOpenGLDebugMessage::Type::ErrorType)					{ typ += "[	ERROR   ]"; }
+	if (type & QOpenGLDebugMessage::Type::DeprecatedBehaviorType)		{ typ += "[ DEPREC. ]"; }
+	if (type & QOpenGLDebugMessage::Type::UndefinedBehaviorType)		{ typ += "[ UNDEF.  ]"; }
+	if (type & QOpenGLDebugMessage::Type::PortabilityType)				{ typ += "[ PORTAB. ]"; }
+	if (type & QOpenGLDebugMessage::Type::PerformanceType)				{ typ += "[  PERF.  ]"; }
+	if (type & QOpenGLDebugMessage::Type::OtherType)					{ typ += "[  OTHER. ]"; }
+	if (type & QOpenGLDebugMessage::Type::MarkerType)					{ typ += "[ MARKER  ]"; }
+	if (type & QOpenGLDebugMessage::Type::GroupPushType)				{ typ += "[  PUSH   ]"; this->groupDepth++; }
+	if (type & QOpenGLDebugMessage::Type::GroupPopType)					{ typ += "[   POP   ]"; this->groupDepth--; }
 
-	if (source & QOpenGLDebugMessage::Source::APISource)			{ src += "[OpenGL  ]"; }
+	if (source & QOpenGLDebugMessage::Source::APISource)				{ src += "[OpenGL  ]"; }
 	if (source & QOpenGLDebugMessage::Source::WindowSystemSource)		{ src += "[WinSys  ]"; }
 	if (source & QOpenGLDebugMessage::Source::ShaderCompilerSource)		{ src += "[ShaComp ]"; }
-	if (source & QOpenGLDebugMessage::Source::ThirdPartySource)		{ src += "[3rdParty]"; }
-	if (source & QOpenGLDebugMessage::Source::OtherSource)			{ src += "[Other   ]"; }
+	if (source & QOpenGLDebugMessage::Source::ThirdPartySource)			{ src += "[3rdParty]"; }
+	if (source & QOpenGLDebugMessage::Source::OtherSource)				{ src += "[Other   ]"; }
 
 	QString glMessage = QString(this->groupDepth, '\t') + sev + " " + typ + " " + src + " " + QString::number(message.id()) + " : " + message.message();
 

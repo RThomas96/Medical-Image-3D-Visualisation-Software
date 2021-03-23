@@ -59,7 +59,6 @@ void PlanarViewer::keyPressEvent(QKeyEvent* _e) {
 	switch (_e->key()) {
 		/*
 		SHADER PROGRAMS
-		*/
 		case Qt::Key::Key_F1:
 			this->sceneToShow->setColorFunction(ColorFunction::SingleChannel);
 			this->update();
@@ -76,6 +75,7 @@ void PlanarViewer::keyPressEvent(QKeyEvent* _e) {
 			this->sceneToShow->setColorFunction(ColorFunction::ColorMagnitude);
 			this->update();
 		break;
+		*/
 		case Qt::Key::Key_F5:
 			this->sceneToShow->recompileShaders();
 			this->update();

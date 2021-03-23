@@ -244,14 +244,14 @@ void MainWidget::setupWidgets() {
 }
 
 bool MainWidget::eventFilter(QObject* obj, QEvent* e) {
-	// Set our code to run after the original event handling :
+	// Set our code to run after the original "Show" event :
 	if (this->widgetSizeSet == false && obj == this && e->type() == QEvent::Show) {
 		this->widgetSizeSet = true;
-		this->resize(1024, 576);
+		this->resize(1280, 720);
 		this->setMinimumSize(768, 432);
 		// lock control panel size to the current size it has :
 		QSize centerSize = this->size();
-		this->controlPanel->setMinimumWidth(static_cast<int>(static_cast<float>(centerSize.width()) * .9f));
+		this->controlPanel->setMinimumWidth(static_cast<int>(static_cast<float>(centerSize.width()) * .99f));
 	}
 	// Return false, to handle the rest of the event normally
 	return false;

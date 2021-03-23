@@ -18,6 +18,9 @@ ELSE()
 	MESSAGE(STATUS "TinyTIFF has previously been installed.")
 ENDIF()
 
+# Export compile commands for clangd and other language servers
+SET(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # Requiring an out-of-source build
 IF(CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR)
 	MESSAGE(FATAL_ERROR "Please select another Build Directory !\nWe recommend doing an out-of-source build. Create a build folder\nhere, or in the parent root, but don't build the project here !")

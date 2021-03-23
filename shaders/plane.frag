@@ -37,9 +37,14 @@ uniform vec3 color1;
 uniform vec3 color0Alternate;
 uniform vec3 color1Alternate;
 
-uniform uint channelView;	// What channels do we visualize ? R+G = 1, R = 2, G = 3
-uniform uint selectedChannel;	// The selected channel to visualize in greyscale
-uniform uint nbChannels;
+uniform uint rgbMode;	// Show only R, only G, or RG
+
+uniform uint r_channelView;	// The coloration function chosen
+uniform uint r_selectedChannel;	// The currently selected channel
+uniform uint r_nbChannels;	// nb of channels in the image in total (R, RG, RGB ?)
+uniform uint g_channelView;	// The coloration function chosen
+uniform uint g_selectedChannel;	// The currently selected channel
+uniform uint g_nbChannels;	// nb of channels in the image in total (R, RG, RGB ?)
 
 uniform bool intersectPlanes = false;	// Should the planes intersect each other ? (hide other planes)
 
@@ -54,8 +59,12 @@ vec4 planeIndexToColor();
 bool isPlaneVisible(bool intersect);
 // Checks if the plane should be drawn as a simple border, or not.
 bool shouldDrawBorder();
+// Check the voxel should be displayed
+bool checkAndColorizeVoxel(in uvec3 color, out vec4 return_color);
 
-INCLUDE_COLOR_FUNCTIONS;
+#pragma include_color_shader;
+
+#line 2066
 
 /****************************************/
 /***************** Main *****************/
@@ -65,9 +74,6 @@ void main(void)
 	// Early discard if the plane shouldn't be shown :
 	if (isPlaneVisible(intersectPlanes) == false) { discard; }
 
-	uvec3 colorParams = uvec3(channelView, selectedChannel, nbChannels);
-	mat3 colorSegment = mat3(color0, color1, vec3(.0));
-
 	// not in border :
 
 	vec4 colorTex = vec4(.0, .0, .0, .0);
@@ -76,10 +82,7 @@ void main(void)
 			if (texCoord.z > 0. && texCoord.z < 1.) {
 				if (isPlaneVisible(true) && showTex == true) {
 					uvec3 tex = texture(texData, texCoord).xyz;
-					colorTex = voxelIdxToColor(tex);
-					float ftexVal = float(tex.r);
-					if (selectedChannel == 1u) { ftexVal = float(tex.g); }
-					if (ftexVal < textureBounds.x || ftexVal > textureBounds.y) {
+					if (!checkAndColorizeVoxel(tex, colorTex)) {
 						colorTex=vec4(.8, .8, .8, 1.);
 					}
 				}
@@ -137,5 +140,35 @@ bool isPlaneVisible(bool intersect) {
 	if (((vPos.x - planePositions.x) * planeDirections.x + epsilon) < .0f) { if (intersect) { return false; }}
 	if (((vPos.y - planePositions.y) * planeDirections.y + epsilon) < .0f) { if (intersect) { return false; }}
 	if (((vPos.z - planePositions.z) * planeDirections.z + epsilon) < .0f) { if (intersect) { return false; }}
+	return true;
+}
+
+bool checkAndColorizeVoxel(in uvec3 voxel, out vec4 return_color) {
+	float voxVal;
+	vec2 cB, tB;
+	bool isRed = false;
+	bool canSwitch = false;
+
+	vec4 compColor = voxelIdxToColor(voxel);
+
+	if (rgbMode == 1u) {
+		voxVal = float(voxel.r);
+		if (voxVal >= textureBounds.x && voxVal < textureBounds.y) {
+			compColor = voxelIdxToColor(voxel);
+		} else { return false; }
+	}
+	if (rgbMode == 2u) {
+		voxVal = float(voxel.g);
+		if (voxVal >= textureBoundsAlternate.x && voxVal < textureBoundsAlternate.y) {
+			compColor = voxelIdxToColor(voxel);
+		} else { return false; }
+	}
+	if (rgbMode == 3u) {
+		// Just color the thing, see later for boundary conditions :
+		compColor = voxelIdxToColor(voxel);
+	}
+
+	if (compColor.a < .0f) { return false; }
+	return_color = compColor;
 	return true;
 }

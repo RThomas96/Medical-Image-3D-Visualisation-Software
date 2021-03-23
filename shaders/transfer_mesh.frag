@@ -75,9 +75,14 @@ uniform vec3 color1;		// Color 1, channel 0
 uniform vec3 color0Alternate;	// Color 0, channel 1
 uniform vec3 color1Alternate;	// Color 1, channel 1
 
-uniform uint channelView;	// What channels do we visualize ? R+G = 1, R = 2, G = 3
-uniform uint selectedChannel;	// The selected channel to visualize in greyscale mode
-uniform uint nbChannels;	// The number of channels of the image
+uniform uint rgbMode;	// Show only R, only G, or RG
+
+uniform uint r_channelView;	// The coloration function chosen
+uniform uint r_selectedChannel;	// The currently selected channel
+uniform uint r_nbChannels;	// nb of channels in the image in total (R, RG, RGB ?)
+uniform uint g_channelView;	// The coloration function chosen
+uniform uint g_selectedChannel;	// The currently selected channel
+uniform uint g_nbChannels;	// nb of channels in the image in total (R, RG, RGB ?)
 
 // General utility functions :
 vec3 crossProduct( vec3 a, vec3 b );
@@ -101,9 +106,9 @@ bool ComputeVisibility(vec3 point);
 bool checkAndColorizeVoxel(in uvec3 voxel, out vec4 color) ;
 vec3 phongComputation(vec4 position, vec3 normal, vec4 color, vec3 lightPos, vec3 phongDetails, mat3 lightDetails);
 
-INCLUDE_COLOR_FUNCTIONS;
+#pragma include_color_shader;
 
-#line 106
+#line 2111
 
 void main (void) {
 	if( visibility > 3500. ) discard;
@@ -559,74 +564,37 @@ bool checkAndColorizeVoxel(in uvec3 voxel, out vec4 return_color) {
 	//				- If available, show it and return TRUE !
 	//				- If not, return FALSE !
 
-	uvec3 colorParams = uvec3(channelView, selectedChannel, nbChannels);
-	mat3 colorSegment = mat3(color0, color1, vec3(.0));
-
-	// Get texture size :
-	int width = textureSize(visiblity_map, 0).x;
-	// texture coords for visibility :
-	uint voxelValue;
+	// data to show :
+	float voxVal;
 	vec2 cB, tB;
-	bool isRed = false;
-	bool canSwitch = false;
-	if (channelView == 1) {
-		voxelValue = (selectedChannel == 0) ? voxel.r : voxel.g;
-		isRed = (selectedChannel == 0);
-		cB = (selectedChannel == 0) ? colorBounds : colorBoundsAlternate;
-		tB = (selectedChannel == 0) ? textureBounds : textureBoundsAlternate;
-	} else {
-		if (nbChannels == 1) {
-			voxelValue = voxel.r;
-			cB = colorBounds;
-			tB = textureBounds;
-			isRed = true;
-		} else {
-			// if we're in greyscale mode, assign values accrding to it :
-			voxelValue = voxel.g;
-			canSwitch = (nbChannels > 1u);
-			isRed = false;
-			cB = colorBoundsAlternate;
-			tB = textureBoundsAlternate;
-		}
-	}
 
-	float voxelValue_f = float(voxelValue);
+	int width = textureSize(visiblity_map, 0).x;
+	ivec2 tcfv = Convert1DIndexTo2DIndex_Unnormed(voxel.r, width);
+	int widthAlt = textureSize(visiblity_map_alternate, 0).x;
+	ivec2 tcfv_alt = Convert1DIndexTo2DIndex_Unnormed(voxel.g, widthAlt);
 
-	// 2D index in the texture :
-	ivec2 tcfv; //_t_exture _c_oordinate _f_or _v_oxel
-	float vis = .0; // visibility
+	float vis_r = texelFetch(visiblity_map, tcfv, 0).x;
+	float vis_g = texelFetch(visiblity_map_alternate, tcfv_alt, 0).x;
 
-	if (voxelValue_f > tB.x && voxelValue_f < tB.y) {
-		// Is in bounds, check visibility :
-		tcfv = Convert1DIndexTo2DIndex_Unnormed(voxelValue, width);
-		if (isRed) { vis = texelFetch(visiblity_map, tcfv, 0).x; }
-		else { vis = texelFetch(visiblity_map_alternate, tcfv, 0).x; }
-		// If it's visible : (texelFetch here to take advantage of using ivec2 rather than normalized vec2)
-		if (vis > 0.) {
-			return_color = voxelIdxToColor(voxel.xyz);
+	if (rgbMode == 1u) { // Only show greyscale ...
+		// If visible, color the voxel
+		if (vis_r > 0.) {
+			return_color = voxelIdxToColor(voxel);
 			return true;
 		}
-	} else {
-		// Is not in the bounds. Check if we can switch :
-		if (canSwitch) {
-			isRed = !isRed;
-			// Set other variables :
-			voxelValue = (voxelValue == voxel.r) ? voxel.g : voxel.r;
-			voxelValue_f = float(voxelValue);
-			cB = colorBounds;
-			tB = textureBounds;
-			if (voxelValue_f > tB.x && voxelValue_f < tB.y) {
-				// Check visibility :
-				tcfv = Convert1DIndexTo2DIndex_Unnormed(voxelValue, width);
-				if (isRed) { vis = texelFetch(visiblity_map, tcfv, 0).x; }
-				else { vis = texelFetch(visiblity_map_alternate, tcfv, 0).x; }
-				// If it's visible : (texelFetch here to take advantage of using ivec2 rather than normalized vec2)
-				if (vis > 0.) {
-					return_color = voxelIdxToColor(voxel);
-					return true;
-				}
-			}
-		}
+		return false;
 	}
+	if (rgbMode == 2u) {
+		if (vis_g > 0.) {
+			return_color = voxelIdxToColor(voxel);
+			return true;
+		}
+		return false;
+	}
+	if (rgbMode == 3u) {
+		return_color = voxelIdxToColor(voxel);
+		return true;
+	}
+
 	return false; // Don't need to compute color, nothing would have been shown ...
 }

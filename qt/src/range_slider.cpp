@@ -7,22 +7,38 @@ RangeSlider::RangeSlider(QWidget* parent) : QWidget(parent) {
 	this->label_max_header_current = new QLabel("");
 	this->label_header_min = new QLabel("Min : ");
 	this->label_header_max = new QLabel("Max : ");
-	this->label_min_value_current = new QLabel(QString::number(this->slider_min->value()));
-	this->label_max_value_current = new QLabel(QString::number(this->slider_max->value()));
-	this->label_value_min = new QLabel(QString::number(this->slider_min->minimum()));
-	this->label_value_max = new QLabel(QString::number(this->slider_min->maximum()));
+	this->label_min_value_current = new QLabel(QString::number(65535));
+	this->label_max_value_current = new QLabel(QString::number(65535));
+	this->label_value_min = new QLabel(QString::number(65535));
+	this->label_value_max = new QLabel(QString::number(65535));
 
+	// Columns :
+	// 0 : header min
+	// 1 : value min
+	// 2 : slider			(stretchable to infinity)
+	// 3 : header current
+	// 4 : value current
+	// 5 : header max
+	// 6 : value max
 	this->layout_grid = new QGridLayout;
 	this->layout_grid->addWidget(this->label_header_min,			0, 0, 2, 1);
 	this->layout_grid->addWidget(this->label_value_min,				0, 1, 2, 1);
-	this->layout_grid->addWidget(this->slider_min,					0, 2, 1, 15);
-	this->layout_grid->addWidget(this->label_min_header_current,	0, 18);
-	this->layout_grid->addWidget(this->label_min_value_current,		0, 19);
-	this->layout_grid->addWidget(this->label_header_max,			0, 20, 2, 1);
-	this->layout_grid->addWidget(this->label_value_max,				0, 21, 2, 1);
-	this->layout_grid->addWidget(this->slider_max,					1, 2, 1, 15);
-	this->layout_grid->addWidget(this->label_max_header_current,	1, 18);
-	this->layout_grid->addWidget(this->label_max_value_current,		1, 19);
+	this->layout_grid->addWidget(this->slider_min,					0, 2, 1, 1);
+	this->layout_grid->addWidget(this->label_min_header_current,	0, 3);
+	this->layout_grid->addWidget(this->label_min_value_current,		0, 4);
+	this->layout_grid->addWidget(this->label_header_max,			0, 5, 2, 1);
+	this->layout_grid->addWidget(this->label_value_max,				0, 6, 2, 1);
+	this->layout_grid->addWidget(this->slider_max,					1, 2, 1, 1);
+	this->layout_grid->addWidget(this->label_max_header_current,	1, 3);
+	this->layout_grid->addWidget(this->label_max_value_current,		1, 4);
+
+	this->layout_grid->setColumnStretch(0, 0);
+	this->layout_grid->setColumnStretch(1, 0);
+	this->layout_grid->setColumnStretch(2, 10);
+	this->layout_grid->setColumnStretch(3, 0);
+	this->layout_grid->setColumnStretch(4, 0);
+	this->layout_grid->setColumnStretch(5, 0);
+	this->layout_grid->setColumnStretch(6, 0);
 
 	this->setLayout(this->layout_grid);
 
@@ -32,7 +48,7 @@ RangeSlider::RangeSlider(QWidget* parent) : QWidget(parent) {
 	QObject::connect(this->slider_min, &QSlider::valueChanged, this, &RangeSlider::updateLabels);
 	QObject::connect(this->slider_max, &QSlider::valueChanged, this, &RangeSlider::updateLabels);
 
-	this->setMin(0);
+	this->setMin(INT_MAX);
 	this->setMax(INT_MAX);
 	this->setMinValue(0);
 	this->setMaxValue(65535);

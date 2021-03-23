@@ -60,7 +60,8 @@ Scene::Scene() {
 	this->textureBounds1 = GridGLView::data_2(minTexVal, maxTexVal);
 	this->colorBounds0 = GridGLView::data_2(0, maxTexVal);
 	this->colorBounds1 = GridGLView::data_2(0, maxTexVal);
-	this->selectedChannel = 0; // by default, the R channel
+	this->selectedChannel_r = 0; // by default, the R channel
+	this->selectedChannel_g = 0; // by default, the R channel
 
 	this->renderSize = 0;
 
@@ -77,7 +78,9 @@ Scene::Scene() {
 	this->sceneBB = DiscreteGrid::bbox_t(min, max);
 	this->clipDistanceFromCamera = 5.f;
 	this->drawMode = DrawMode::Solid;
-	this->channels = ColorFunction::HistologyHandE;
+	this->rgbMode = RGBMode::RedAndGreen;
+	this->channels_r = ColorFunction::SingleChannel;
+	this->channels_g = ColorFunction::SingleChannel;
 
 	// Show all planes as default :
 	this->planeVisibility = glm::vec<3, bool, glm::defaultp>(true, true, true);
@@ -250,7 +253,7 @@ void Scene::printOpenGLMessage(const QOpenGLDebugMessage& message) {
 	QFlags type = message.type();
 	QFlags source = message.source();
 
-	if (severity & QOpenGLDebugMessage::Severity::NotificationSeverity)	{ sev += "{Notif}"; }
+	//if (severity & QOpenGLDebugMessage::Severity::NotificationSeverity)	{ sev += "{Notif}"; }
 	if (severity & QOpenGLDebugMessage::Severity::LowSeverity)		{ sev += "{Low}"; }
 	if (severity & QOpenGLDebugMessage::Severity::MediumSeverity)		{ sev += "{Med}"; }
 	if (severity & QOpenGLDebugMessage::Severity::HighSeverity)		{ sev += "{High}"; }
@@ -601,7 +604,7 @@ GLuint Scene::compileShader(const std::string& path, const GLenum shaType, bool 
 
 	if (includeColorShader) {
 		while (getline(shaFile, read_buffer)) {
-			if (read_buffer == "INCLUDE_COLOR_FUNCTIONS;") {
+			if (read_buffer == "#pragma include_color_shader;") {
 				read_buffer = color_functions;
 			}
 			shader_contents += read_buffer + '\n';
@@ -1161,7 +1164,7 @@ void Scene::drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading
 	// Do for all grids :
 	#warning drawPlaneView() : Only draws the first grid !
 	if (this->grids.size() > 0) {
-		this->prepPlane_SingleUniforms(_plane, _heading, fbDims, zoomRatio, offset, this->grids[0]);
+		this->prepareUniforms_PlaneViewer(_plane, _heading, fbDims, zoomRatio, offset, this->grids[0]);
 
 		this->setupVAOPointers();
 
@@ -1191,64 +1194,75 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, cons
 		}
 
 		// Textures :
-		GLint location_vertices_translation = getUniform("vertices_translations");
-		GLint location_normals_translation = getUniform("normals_translations");
-		GLint location_visibility_texture = getUniform("visibility_texture");
-		GLint location_texture_coordinates = getUniform("texture_coordinates");
-		GLint location_neighbors = getUniform("neighbors");
-		GLint location_Mask = getUniform("texData");
-		GLint location_visibilityMap = getUniform("visiblity_map");
-		GLint location_visibilityMapAlternate = getUniform("visiblity_map_alternate");
+		GLint location_vertices_translation =	getUniform("vertices_translations");
+		GLint location_normals_translation =	getUniform("normals_translations");
+		GLint location_visibility_texture =		getUniform("visibility_texture");
+		GLint location_texture_coordinates =	getUniform("texture_coordinates");
+		GLint location_neighbors =				getUniform("neighbors");
+		GLint location_Mask =					getUniform("texData");
+		GLint location_visibilityMap =			getUniform("visiblity_map");
+		GLint location_visibilityMapAlternate =	getUniform("visiblity_map_alternate");
 		// Scalars :
-		GLint location_voxelSize = getUniform("voxelSize");
-		GLint location_gridSize = getUniform("gridSize");
-		GLint location_specRef = getUniform("specRef");
-		GLint location_shininess = getUniform("shininess");
-		GLint location_diffuseRef = getUniform("diffuseRef");
+		GLint location_voxelSize =				getUniform("voxelSize");
+		GLint location_gridSize =				getUniform("gridSize");
+		GLint location_specRef =				getUniform("specRef");
+		GLint location_shininess =				getUniform("shininess");
+		GLint location_diffuseRef =				getUniform("diffuseRef");
 		// Vectors/arrays :
-		GLint location_cam = getUniform("cam");
-		GLint location_cut = getUniform("cut");
-		GLint location_cutDirection = getUniform("cutDirection");
+		GLint location_cam =					getUniform("cam");
+		GLint location_cut =					getUniform("cut");
+		GLint location_cutDirection =			getUniform("cutDirection");
 		GLint location_clipDistanceFromCamera = getUniform("clipDistanceFromCamera");
-		GLint location_colorBounds = getUniform("colorBounds");
-		GLint location_colorBoundsAlternate = getUniform("colorBoundsAlternate");
-		GLint location_textureBounds = getUniform("textureBounds");
-		GLint location_textureBoundsAlternate = getUniform("textureBoundsAlternate");
-		GLint location_visuBBMin = getUniform("visuBBMin");
-		GLint location_visuBBMax = getUniform("visuBBMax");
-		GLint location_shouldUseBB = getUniform("shouldUseBB");
-		GLint location_nbChannels = getUniform("nbChannels");
-		GLint location_volumeEpsilon = getUniform("volumeEpsilon");
+		GLint location_colorBounds =			getUniform("colorBounds");
+		GLint location_colorBoundsAlternate =	getUniform("colorBoundsAlternate");
+		GLint location_textureBounds =			getUniform("textureBounds");
+		GLint location_textureBoundsAlternate =	getUniform("textureBoundsAlternate");
+		GLint location_visuBBMin =				getUniform("visuBBMin");
+		GLint location_visuBBMax =				getUniform("visuBBMax");
+		GLint location_shouldUseBB =			getUniform("shouldUseBB");
+		GLint location_volumeEpsilon =			getUniform("volumeEpsilon");
 		// Matrices :
-		GLint location_mMat = getUniform("mMat");
-		GLint location_vMat = getUniform("vMat");
-		GLint location_pMat = getUniform("pMat");
+		GLint location_mMat =					getUniform("mMat");
+		GLint location_vMat =					getUniform("vMat");
+		GLint location_pMat =					getUniform("pMat");
 		// light positions :
-		GLint location_light0 = getUniform("lightPositions[0]");
-		GLint location_light1 = getUniform("lightPositions[1]");
-		GLint location_light2 = getUniform("lightPositions[2]");
-		GLint location_light3 = getUniform("lightPositions[3]");
-		GLint location_light4 = getUniform("lightPositions[4]");
-		GLint location_light5 = getUniform("lightPositions[5]");
-		GLint location_light6 = getUniform("lightPositions[6]");
-		GLint location_light7 = getUniform("lightPositions[7]");
+		GLint location_light0 =					getUniform("lightPositions[0]");
+		GLint location_light1 =					getUniform("lightPositions[1]");
+		GLint location_light2 =					getUniform("lightPositions[2]");
+		GLint location_light3 =					getUniform("lightPositions[3]");
+		GLint location_light4 =					getUniform("lightPositions[4]");
+		GLint location_light5 =					getUniform("lightPositions[5]");
+		GLint location_light6 =					getUniform("lightPositions[6]");
+		GLint location_light7 =					getUniform("lightPositions[7]");
 		// Texture display mode :
-		GLint location_channelView = getUniform("channelView");
-		GLint location_maxTexPossible = getUniform("maxTexPossible");
-		GLint location_color0 = getUniform("color0");
-		GLint location_color1 = getUniform("color1");
-		GLint location_color0Alt = getUniform("color0Alternate");
-		GLint location_color1Alt = getUniform("color1Alternate");
-		GLint location_selectedChannel = getUniform("selectedChannel");
+		GLint location_rgbMode =				getUniform("rgbMode");
+
+		GLint location_r_channelView =			getUniform("r_channelView");
+		GLint location_r_selectedChannel =		getUniform("r_selectedChannel");
+		GLint location_r_nbChannels =			getUniform("r_nbChannels");
+		GLint location_g_channelView =			getUniform("g_channelView");
+		GLint location_g_selectedChannel =		getUniform("g_selectedChannel");
+		GLint location_g_nbChannels =			getUniform("g_nbChannels");
+
+		GLint location_color0 =					getUniform("color0");
+		GLint location_color1 =					getUniform("color1");
+		GLint location_color0Alt =				getUniform("color0Alternate");
+		GLint location_color1Alt =				getUniform("color1Alternate");
+
 		glUniform3fv(location_color0, 1, glm::value_ptr(this->color0));
 		glUniform3fv(location_color1, 1, glm::value_ptr(this->color1));
 		glUniform3fv(location_color0Alt, 1, glm::value_ptr(this->color0_second));
 		glUniform3fv(location_color1Alt, 1, glm::value_ptr(this->color1_second));
+
 		if (grid->nbChannels > 1) {
-			glUniform1ui(location_selectedChannel, this->selectedChannel);
+			glUniform1ui(location_r_selectedChannel, this->selectedChannel_r);
+			glUniform1ui(location_g_selectedChannel, this->selectedChannel_g);
 		} else {
-			glUniform1ui(location_selectedChannel, 0);
+			glUniform1ui(location_r_selectedChannel, 0);
+			glUniform1ui(location_g_selectedChannel, 0);
 		}
+
+		glUniform1ui(location_rgbMode, this->rgbMode);
 
 		std::size_t tex = 0;
 		glActiveTexture(GL_TEXTURE0 + tex);
@@ -1291,10 +1305,11 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, cons
 		glUniform1i(location_visibilityMapAlternate, tex);
 		tex++;
 
-		uint chan = this->colorFunctionToUniform(this->channels);
+		uint chan_r = this->colorFunctionToUniform(this->channels_r);
+		uint chan_g = this->colorFunctionToUniform(this->channels_g);
 
-		glUniform1ui(location_channelView, chan);
-		glUniform1d(location_maxTexPossible, static_cast<double>(std::numeric_limits<DiscreteGrid::data_t>::max()));
+		glUniform1ui(location_r_channelView, chan_r);
+		glUniform1ui(location_g_channelView, chan_g);
 
 		glm::vec3 floatres = glm::convert_to<float>(grid->grid[0]->getResolution());
 
@@ -1303,7 +1318,8 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, cons
 		glUniform1f(location_shininess, .8f);
 		glUniform3fv(location_voxelSize, 1, glm::value_ptr(grid->grid[0]->getVoxelDimensions()));
 		glUniform3fv(location_gridSize, 1, glm::value_ptr(floatres));
-		glUniform1ui(location_nbChannels, grid->nbChannels);
+		glUniform1ui(location_r_nbChannels, 1);
+		glUniform1ui(location_g_nbChannels, 1);
 		glUniform3fv(location_volumeEpsilon, 1, glm::value_ptr(grid->defaultEpsilon));
 
 		glm::vec3 planePos = this->computePlanePositions();
@@ -1318,10 +1334,12 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, cons
 		glUniformMatrix4fv(location_vMat, 1, GL_FALSE, mvMat);
 		glUniformMatrix4fv(location_pMat, 1, GL_FALSE, pMat);
 
+		glm::vec2 tb0 = glm::convert_to<float>(this->textureBounds0);
+		glm::vec2 tb1 = glm::convert_to<float>(this->textureBounds1);
 		glUniform2fv(location_colorBounds, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds0)));
 		glUniform2fv(location_colorBoundsAlternate, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds1)));
-		glUniform2fv(location_textureBounds, 1, glm::value_ptr(glm::convert_to<float>(this->textureBounds0)));
-		glUniform2fv(location_textureBoundsAlternate, 1, glm::value_ptr(glm::convert_to<float>(this->textureBounds1)));
+		glUniform2fv(location_textureBounds, 1, glm::value_ptr(tb0));
+		glUniform2fv(location_textureBoundsAlternate, 1, glm::value_ptr(tb1));
 
 		DiscreteGrid::bbox_t::vec min = this->visuBox.getMin();
 		DiscreteGrid::bbox_t::vec max = this->visuBox.getMax();
@@ -1342,7 +1360,6 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, cons
 		if (this->showVAOstate) {
 			auto vx = grid->grid[0]->getVoxelDimensions();
 			std::cerr << "[LOG] " << __FUNCTION__ << " has uniform values :\n";
-			std::cerr << "[LOG]\tChannel view              : " << +chan << '\n';
 			std::cerr << "[LOG]\tMax possible value        : " << static_cast<double>(std::numeric_limits<DiscreteGrid::data_t>::max()) << '\n';
 			std::cerr << "[LOG]\tDraw mode                : " << +this->drawMode << '\n';
 			std::cerr << "[LOG]\tNumber of channels        : " << +grid->nbChannels << '\n';
@@ -1366,7 +1383,6 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, cons
 			LOG_LEAVE(Scene::drawVolumetric)
 		}
 
-		glBindVertexArray(this->vaoHandle_VolumetricBuffers);
 		this->tex3D_bindVAO();
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_Texture3D_VertIdx);
 
@@ -1401,7 +1417,7 @@ void Scene::drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane) {
 	glBindVertexArray(this->vaoHandle);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_PlaneElement);
 	if (not this->grids.empty()) {
-		this->prepPlaneUniforms(mvMat, pMat, planes::x, this->grids[0], showTexOnPlane);
+		this->prepareUniforms_3DPlane(mvMat, pMat, planes::x, this->grids[0], showTexOnPlane);
 		this->setupVAOPointers();
 		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(6), GL_UNSIGNED_INT, static_cast<GLvoid*>(0));
 	}
@@ -1414,7 +1430,7 @@ void Scene::drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane) {
 	glBindVertexArray(this->vaoHandle);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_PlaneElement);
 	if (not this->grids.empty()) {
-		this->prepPlaneUniforms(mvMat, pMat, planes::y, this->grids[0], showTexOnPlane);
+		this->prepareUniforms_3DPlane(mvMat, pMat, planes::y, this->grids[0], showTexOnPlane);
 		this->setupVAOPointers();
 
 		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(6), GL_UNSIGNED_INT, (GLvoid*)(6*sizeof(GLuint)));
@@ -1428,7 +1444,7 @@ void Scene::drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane) {
 	glBindVertexArray(this->vaoHandle);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_PlaneElement);
 	if (not this->grids.empty()) {
-		this->prepPlaneUniforms(mvMat, pMat, planes::z, this->grids[0], showTexOnPlane);
+		this->prepareUniforms_3DPlane(mvMat, pMat, planes::z, this->grids[0], showTexOnPlane);
 		this->setupVAOPointers();
 
 		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(6), GL_UNSIGNED_INT, (GLvoid*)(12*sizeof(GLuint)));
@@ -1447,7 +1463,7 @@ glm::vec3 Scene::computePlanePositions() {
 	return planePos;
 }
 
-void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, const GridGLView::Ptr& gridView) {
+void Scene::prepareUniforms_3DSolid(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, const GridGLView::Ptr& gridView) {
 	// Get the world to grid transform :
 	glm::mat4 transfoMat = baseMatrix * gridView->grid[0]->getTransform_GridToWorld();
 
@@ -1468,12 +1484,16 @@ void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, 
 	GLint location_colorBoundsAlternate =	glGetUniformLocation(this->programHandle_projectedTex, "colorBoundsAlternate");
 	GLint location_textureBounds =			glGetUniformLocation(this->programHandle_projectedTex, "texBounds");
 	GLint location_textureBoundsAlternate =	glGetUniformLocation(this->programHandle_projectedTex, "texBoundsAlternate");
-	GLint location_nbChannels =				glGetUniformLocation(this->programHandle_projectedTex, "nbChannels");
 	GLint location_color0 =					glGetUniformLocation(this->programHandle_projectedTex, "color0");
 	GLint location_color1 =					glGetUniformLocation(this->programHandle_projectedTex, "color1");
 	GLint location_color0Alt =				glGetUniformLocation(this->programHandle_projectedTex, "color0Alternate");
 	GLint location_color1Alt =				glGetUniformLocation(this->programHandle_projectedTex, "color1Alternate");
-	GLint location_selectedChannel =		glGetUniformLocation(this->programHandle_projectedTex, "selectedChannel");
+	GLint location_r_channelView =			glGetUniformLocation(this->programHandle_projectedTex, "r_channelView");
+	GLint location_r_selectedChannel =		glGetUniformLocation(this->programHandle_projectedTex, "r_selectedChannel");
+	GLint location_r_nbChannels =			glGetUniformLocation(this->programHandle_projectedTex, "r_nbChannels");
+	GLint location_g_channelView =			glGetUniformLocation(this->programHandle_projectedTex, "g_channelView");
+	GLint location_g_selectedChannel =		glGetUniformLocation(this->programHandle_projectedTex, "g_selectedChannel");
+	GLint location_g_nbChannels =			glGetUniformLocation(this->programHandle_projectedTex, "g_nbChannels");
 
 	DiscreteGrid::bbox_t::vec origin = gridView->grid[0]->getBoundingBox().getMin();
 	DiscreteGrid::bbox_t::vec originWS = gridView->grid[0]->getBoundingBoxWorldSpace().getMin();
@@ -1486,43 +1506,43 @@ void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, 
 		PRINTVAL(gridDims.z);
 	}
 
+	glm::vec2 tb0 = glm::convert_to<float>(this->textureBounds0);
+	glm::vec2 tb1 = glm::convert_to<float>(this->textureBounds1);
+
 	glUniform3fv(voxelGridOrigin_Loc, 1, glm::value_ptr(origin));
 	glUniform3fv(voxelGridSize_Loc, 1, glm::value_ptr(dims));
 	glUniform3fv(voxelSize_Loc, 1, glm::value_ptr(gridView->grid[0]->getVoxelDimensions()));
 	glUniform2fv(location_colorBounds, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds0)));
 	glUniform2fv(location_colorBoundsAlternate, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds1)));
-	//glm::vec2 texbounds{static_cast<float>(this->minColorVal), static_cast<float>(this->maxColorVal)};
-	glUniform2fv(location_textureBounds, 1, glm::value_ptr(glm::convert_to<float>(this->textureBounds0)));
-	glUniform2fv(location_textureBoundsAlternate, 1, glm::value_ptr(glm::convert_to<float>(this->textureBounds1)));
+	glUniform2fv(location_textureBounds, 1, glm::value_ptr(tb0));
+	glUniform2fv(location_textureBoundsAlternate, 1, glm::value_ptr(tb1));
 	glUniform3fv(location_color0, 1, glm::value_ptr(this->color0));
 	glUniform3fv(location_color1, 1, glm::value_ptr(this->color1));
 	glUniform3fv(location_color0Alt, 1, glm::value_ptr(this->color0_second));
 	glUniform3fv(location_color1Alt, 1, glm::value_ptr(this->color1_second));
 	if (gridView->nbChannels > 1) {
-		glUniform1ui(location_selectedChannel, this->selectedChannel);
+		glUniform1ui(location_r_selectedChannel, this->selectedChannel_r);
+		glUniform1ui(location_g_selectedChannel, this->selectedChannel_g);
 	} else {
-		glUniform1ui(location_selectedChannel, 0);
+		glUniform1ui(location_r_selectedChannel, 0);
+		glUniform1ui(location_g_selectedChannel, 0);
 	}
-	if (gridView->grid[0]->hasData() == false && gridView->grid[0]->isGridOffline() == false) {
-		glUniform1ui(drawMode_Loc, 2);
-	} else {
-		glUniform1ui(drawMode_Loc, this->drawMode);
-	}
-	glUniform1ui(location_nbChannels, gridView->nbChannels);
+	glUniform1ui(drawMode_Loc, this->drawMode);
+	glUniform1ui(location_r_nbChannels, 1);
+	glUniform1ui(location_g_nbChannels, 1);
 
 	// Textures :
-	if (gridView->grid[0]->hasData() == true || gridView->grid[0]->isGridOffline() == true) {
-		glActiveTexture(GL_TEXTURE0 + 0);
-		glEnable(GL_TEXTURE_3D);
-		glBindTexture(GL_TEXTURE_3D, gridView->gridTexture);
-		glUniform1i(texDataLoc, 0);
-	}
+	//if (gridView->grid[0]->hasData() == true || gridView->grid[0]->isGridOffline() == true) {
+	glActiveTexture(GL_TEXTURE0 + 0);
+	glEnable(GL_TEXTURE_3D);
+	glBindTexture(GL_TEXTURE_3D, gridView->gridTexture);
+	glUniform1i(texDataLoc, 0);
+	//}
 
-	GLint location_channelView = glGetUniformLocation(this->programHandle_projectedTex, "channelView");
-	GLint location_maxTexPossible = glGetUniformLocation(this->programHandle_projectedTex, "maxTexPossible");
-	uint chan = this->colorFunctionToUniform(this->channels);
-	glUniform1ui(location_channelView, chan);
-	glUniform1d(location_maxTexPossible, static_cast<double>(std::numeric_limits<DiscreteGrid::data_t>::max()));
+	uint chan = this->colorFunctionToUniform(this->channels_r);
+	uint chan2 = this->colorFunctionToUniform(this->channels_g);
+	glUniform1ui(location_r_channelView, chan);
+	glUniform1ui(location_g_channelView, chan2);
 
 	glm::vec3 planePos = this->computePlanePositions();
 
@@ -1537,54 +1557,62 @@ void Scene::prepGridUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, 
 	glUniform4fv(lightPos_Loc, 1, glm::value_ptr(lightPos));
 }
 
-void Scene::prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane, const GridGLView::Ptr& grid, bool showTexOnPlane) {
+void Scene::prepareUniforms_3DPlane(GLfloat *mvMat, GLfloat *pMat, planes _plane, const GridGLView::Ptr& grid, bool showTexOnPlane) {
 	bool shouldHide = false;
 	if (_plane == planes::x) { shouldHide = this->planeVisibility.x; }
 	if (_plane == planes::y) { shouldHide = this->planeVisibility.y; }
 	if (_plane == planes::z) { shouldHide = this->planeVisibility.z; }
 
+	auto getUniform = [&](const char* name) -> GLint {
+		GLint g = glGetUniformLocation(this->programHandle_Plane3D, name);
+		if (this->showVAOstate) { std::cerr << "[LOG]\tLocation [" << +g << "] for uniform " << name << '\n'; }
+		return g;
+	};
+
 	// Get uniform locations for the program :
-	GLint location_mMatrix =				glGetUniformLocation(this->programHandle_Plane3D, "model_Mat");
-	GLint location_vMatrix =				glGetUniformLocation(this->programHandle_Plane3D, "view_Mat");
-	GLint location_pMatrix =				glGetUniformLocation(this->programHandle_Plane3D, "projection_Mat");
-	GLint location_gridTransform =			glGetUniformLocation(this->programHandle_Plane3D, "gridTransform");
-	GLint location_gridSize =				glGetUniformLocation(this->programHandle_Plane3D, "gridSize");
-	GLint location_gridDimensions =			glGetUniformLocation(this->programHandle_Plane3D, "gridDimensions");
+	GLint location_mMatrix =				getUniform("model_Mat");
+	GLint location_vMatrix =				getUniform("view_Mat");
+	GLint location_pMatrix =				getUniform("projection_Mat");
+	GLint location_gridTransform =			getUniform("gridTransform");
+	GLint location_gridSize =				getUniform("gridSize");
+	GLint location_gridDimensions =			getUniform("gridDimensions");
 
 	// Shader uniforms :
-	GLint location_texData =				glGetUniformLocation(this->programHandle_Plane3D, "texData");
-	GLint location_planePosition =			glGetUniformLocation(this->programHandle_Plane3D, "planePositions");
-	GLint location_planeDirection =			glGetUniformLocation(this->programHandle_Plane3D, "planeDirections");
-	GLint location_sceneBBPosition =		glGetUniformLocation(this->programHandle_Plane3D, "sceneBBPosition");
-	GLint location_sceneBBDiagonal =		glGetUniformLocation(this->programHandle_Plane3D, "sceneBBDiagonal");
-	GLint location_colorBounds =			glGetUniformLocation(this->programHandle_Plane3D, "colorBounds");
-	GLint location_textureBounds =			glGetUniformLocation(this->programHandle_Plane3D, "textureBounds");
-	GLint location_colorBoundsAlternate =	glGetUniformLocation(this->programHandle_Plane3D, "colorBoundsAlternate");
-	GLint location_textureBoundsAlternate =	glGetUniformLocation(this->programHandle_Plane3D, "textureBoundsAlternate");
-	GLint location_currentPlane =			glGetUniformLocation(this->programHandle_Plane3D, "currentPlane");
-	GLint location_showTex =				glGetUniformLocation(this->programHandle_Plane3D, "showTex");
-	GLint location_drawOnlyData =			glGetUniformLocation(this->programHandle_Plane3D, "drawOnlyData");
+	GLint location_texData =				getUniform("texData");
+	GLint location_planePosition =			getUniform("planePositions");
+	GLint location_planeDirection =			getUniform("planeDirections");
+	GLint location_sceneBBPosition =		getUniform("sceneBBPosition");
+	GLint location_sceneBBDiagonal =		getUniform("sceneBBDiagonal");
+	GLint location_colorBounds =			getUniform("colorBounds");
+	GLint location_textureBounds =			getUniform("textureBounds");
+	GLint location_colorBoundsAlternate =	getUniform("colorBoundsAlternate");
+	GLint location_textureBoundsAlternate =	getUniform("textureBoundsAlternate");
+	GLint location_currentPlane =			getUniform("currentPlane");
+	GLint location_showTex =				getUniform("showTex");
+	GLint location_drawOnlyData =			getUniform("drawOnlyData");
 
-	GLint location_color0 =					glGetUniformLocation(this->programHandle_Plane3D, "color0");
-	GLint location_color1 =					glGetUniformLocation(this->programHandle_Plane3D, "color1");
-	GLint location_color0Alt =				glGetUniformLocation(this->programHandle_Plane3D, "color0Alternate");
-	GLint location_color1Alt =				glGetUniformLocation(this->programHandle_Plane3D, "color1Alternate");
-	GLint location_channelView =			glGetUniformLocation(this->programHandle_Plane3D, "channelView");
-	GLint location_selectedChannel =		glGetUniformLocation(this->programHandle_Plane3D, "selectedChannel");
-	GLint location_nbChannels =				glGetUniformLocation(this->programHandle_Plane3D, "nbChannels");
+	GLint location_color0 =					getUniform("color0");
+	GLint location_color1 =					getUniform("color1");
+	GLint location_color0Alt =				getUniform("color0Alternate");
+	GLint location_color1Alt =				getUniform("color1Alternate");
+	GLint location_r_channelView =			getUniform("r_channelView");
+	GLint location_r_selectedChannel =		getUniform("r_selectedChannel");
+	GLint location_r_nbChannels =			getUniform("r_nbChannels");
+	GLint location_g_channelView =			getUniform("g_channelView");
+	GLint location_g_selectedChannel =		getUniform("g_selectedChannel");
+	GLint location_g_nbChannels =			getUniform("g_nbChannels");
 
 	if (grid->nbChannels > 1) {
-		glUniform1ui(location_selectedChannel, this->selectedChannel);
+		glUniform1ui(location_r_selectedChannel, this->selectedChannel_r);
+		glUniform1ui(location_g_selectedChannel, this->selectedChannel_g);
 	} else {
-		glUniform1ui(location_selectedChannel, 0);
+		glUniform1ui(location_r_selectedChannel, 0);
+		glUniform1ui(location_g_selectedChannel, 0);
 	}
 	glUniform3fv(location_color0, 1, glm::value_ptr(this->color0));
 	glUniform3fv(location_color1, 1, glm::value_ptr(this->color1));
 	glUniform3fv(location_color0Alt, 1, glm::value_ptr(this->color0_second));
 	glUniform3fv(location_color1Alt, 1, glm::value_ptr(this->color1_second));
-
-	uint chan = this->colorFunctionToUniform(this->channels);
-	glUniform1ui(location_channelView, chan);
 
 	// Generate the data we need :
 	glm::mat4 transform = glm::mat4(1.f);
@@ -1610,13 +1638,19 @@ void Scene::prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane, cons
 	glUniform3fv(location_gridSize, 1, glm::value_ptr(size));
 	glUniform3fv(location_gridDimensions, 1, glm::value_ptr(dims));
 	glUniform1i(location_currentPlane, plIdx);
-	glUniform1ui(location_nbChannels, grid->nbChannels);
+	glUniform1ui(location_r_nbChannels, 1);
+	glUniform1ui(location_g_nbChannels, 1);
+	glUniform1ui(location_r_channelView, this->colorFunctionToUniform(this->channels_r));
+	glUniform1ui(location_g_channelView, this->colorFunctionToUniform(this->channels_g));
 	glUniform1ui(location_drawOnlyData, shouldHide ? 1 : 0);
+
+	glm::vec2 tb0 = glm::convert_to<float>(this->textureBounds0);
+	glm::vec2 tb1 = glm::convert_to<float>(this->textureBounds1);
 
 	glUniform2fv(location_colorBounds, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds0)));
 	glUniform2fv(location_colorBoundsAlternate, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds1)));
-	glUniform2fv(location_textureBounds, 1, glm::value_ptr(glm::convert_to<float>(this->textureBounds0)));
-	glUniform2fv(location_textureBoundsAlternate, 1, glm::value_ptr(glm::convert_to<float>(this->textureBounds1)));
+	glUniform2fv(location_textureBounds, 1, glm::value_ptr(tb0));
+	glUniform2fv(location_textureBoundsAlternate, 1, glm::value_ptr(tb1));
 
 	glUniform3fv(location_planePosition, 1, glm::value_ptr(planePos));
 	glUniform3fv(location_planeDirection, 1, glm::value_ptr(this->planeDirection));
@@ -1627,7 +1661,7 @@ void Scene::prepPlaneUniforms(GLfloat *mvMat, GLfloat *pMat, planes _plane, cons
 	glUniform1i(location_texData, 0);
 }
 
-void Scene::prepPlane_SingleUniforms(planes _plane, planeHeading _heading, glm::vec2 fbDims, float zoomRatio, glm::vec2 offset, const GridGLView::Ptr& _grid) {
+void Scene::prepareUniforms_PlaneViewer(planes _plane, planeHeading _heading, glm::vec2 fbDims, float zoomRatio, glm::vec2 offset, const GridGLView::Ptr& _grid) {
 	glUseProgram(this->programHandle_PlaneViewer);
 	// The BB used is the scene's bounding box :
 	const DiscreteGrid::bbox_t::vec& bbox = this->sceneBB.getDiagonal();
@@ -1648,12 +1682,6 @@ void Scene::prepPlane_SingleUniforms(planes _plane, planeHeading _heading, glm::
 	// Depth of the plane :
 	glm::vec3 planePos = this->computePlanePositions();
 
-	GLint location_channelView = glGetUniformLocation(this->programHandle_PlaneViewer, "channelView");
-	GLint location_maxTexPossible = glGetUniformLocation(this->programHandle_PlaneViewer, "maxTexPossible");
-	uint chan = this->colorFunctionToUniform(this->channels);
-	glUniform1ui(location_channelView, chan);
-	glUniform1d(location_maxTexPossible, static_cast<double>(std::numeric_limits<DiscreteGrid::data_t>::max()));
-
 	// Uniform locations :
 	// VShader :
 	GLint location_fbDims =					glGetUniformLocation(this->programHandle_PlaneViewer, "fbDims");
@@ -1667,7 +1695,6 @@ void Scene::prepPlane_SingleUniforms(planes _plane, planeHeading _heading, glm::
 	GLint location_heading =				glGetUniformLocation(this->programHandle_PlaneViewer, "heading");
 	GLint location_zoom =					glGetUniformLocation(this->programHandle_PlaneViewer, "zoom");
 	GLint location_offset =					glGetUniformLocation(this->programHandle_PlaneViewer, "offset");
-	GLint location_nbChannels =				glGetUniformLocation(this->programHandle_PlaneViewer, "nbChannels");
 	// FShader :
 	GLint location_texData =				glGetUniformLocation(this->programHandle_PlaneViewer, "texData");
 	GLint location_colorBounds =			glGetUniformLocation(this->programHandle_PlaneViewer, "colorBounds");
@@ -1678,17 +1705,30 @@ void Scene::prepPlane_SingleUniforms(planes _plane, planeHeading _heading, glm::
 	GLint location_color1 =					glGetUniformLocation(this->programHandle_PlaneViewer, "color1");
 	GLint location_color0Alt =				glGetUniformLocation(this->programHandle_PlaneViewer, "color0Alternate");
 	GLint location_color1Alt =				glGetUniformLocation(this->programHandle_PlaneViewer, "color1Alternate");
-	GLint location_selectedChannel =		glGetUniformLocation(this->programHandle_PlaneViewer, "selectedChannel");
+	GLint location_r_channelView =			glGetUniformLocation(this->programHandle_PlaneViewer, "r_channelView");
+	GLint location_r_selectedChannel =		glGetUniformLocation(this->programHandle_PlaneViewer, "r_selectedChannel");
+	GLint location_r_nbChannels =			glGetUniformLocation(this->programHandle_PlaneViewer, "r_nbChannels");
+	GLint location_g_channelView =			glGetUniformLocation(this->programHandle_PlaneViewer, "g_channelView");
+	GLint location_g_selectedChannel =		glGetUniformLocation(this->programHandle_PlaneViewer, "g_selectedChannel");
+	GLint location_g_nbChannels =			glGetUniformLocation(this->programHandle_PlaneViewer, "g_nbChannels");
+
+	glUniform1ui(location_r_channelView, this->colorFunctionToUniform(this->channels_r));
+	glUniform1ui(location_g_channelView, this->colorFunctionToUniform(this->channels_g));
 
 	glUniform3fv(location_color0, 1, glm::value_ptr(this->color0));
 	glUniform3fv(location_color1, 1, glm::value_ptr(this->color1));
 	glUniform3fv(location_color0Alt, 1, glm::value_ptr(this->color0_second));
 	glUniform3fv(location_color1Alt, 1, glm::value_ptr(this->color1_second));
 	if (_grid->nbChannels > 1) {
-		glUniform1ui(location_selectedChannel, this->selectedChannel);
+		glUniform1ui(location_r_selectedChannel, this->selectedChannel_r);
+		glUniform1ui(location_g_selectedChannel, this->selectedChannel_g);
 	} else {
-		glUniform1ui(location_selectedChannel, 0);
+		glUniform1ui(location_r_selectedChannel, 0);
+		glUniform1ui(location_g_selectedChannel, 0);
 	}
+
+	glm::vec2 tb0 = glm::convert_to<float>(this->textureBounds0);
+	glm::vec2 tb1 = glm::convert_to<float>(this->textureBounds1);
 
 	// Uniform variables :
 	glUniform2fv(location_fbDims, 1, glm::value_ptr(fbDims));
@@ -1701,11 +1741,12 @@ void Scene::prepPlane_SingleUniforms(planes _plane, planeHeading _heading, glm::
 	glUniform3fv(location_planePositions, 1, glm::value_ptr(planePos));
 	glUniform2fv(location_colorBounds, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds0)));
 	glUniform2fv(location_colorBoundsAlternate, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds1)));
-	glUniform2fv(location_textureBounds, 1, glm::value_ptr(glm::convert_to<float>(this->textureBounds0)));
-	glUniform2fv(location_textureBoundsAlternate, 1, glm::value_ptr(glm::convert_to<float>(this->textureBounds1)));
+	glUniform2fv(location_textureBounds, 1, glm::value_ptr(tb0));
+	glUniform2fv(location_textureBoundsAlternate, 1, glm::value_ptr(tb1));
 	glUniform1ui(location_heading, plane_heading);
 	glUniform1f(location_zoom, zoomRatio);
-	glUniform1ui(location_nbChannels, _grid->nbChannels);
+	glUniform1ui(location_r_nbChannels, 1);
+	glUniform1ui(location_g_nbChannels, 1);
 	glm::vec2 realOffset = offset;
 	realOffset.y = -realOffset.y;
 	glUniform2fv(location_offset, 1, glm::value_ptr(realOffset));
@@ -1725,7 +1766,7 @@ void Scene::drawGrid(GLfloat *mvMat, GLfloat *pMat, glm::mat4 baseMatrix, const 
 		glBindVertexArray(this->vaoHandle);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_Element);
 
-		this->prepGridUniforms(mvMat, pMat, lightPos, baseMatrix, grid);
+		this->prepareUniforms_3DSolid(mvMat, pMat, lightPos, baseMatrix, grid);
 		this->setupVAOPointers();
 
 		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(this->renderSize), GL_UNSIGNED_INT, (void*)0);
@@ -2302,15 +2343,35 @@ uint Scene::colorFunctionToUniform(ColorFunction _c) {
 	return 0;
 }
 
-void Scene::setColorFunction(ColorFunction _c) {
-	if (_c == ColorFunction::SingleChannel && this->channels != ColorFunction::SingleChannel) {
-		this->selectedChannel = 0;
+void Scene::setColorFunction_r(ColorFunction _c) {
+	if (_c == ColorFunction::SingleChannel && this->channels_r != ColorFunction::SingleChannel) {
+		this->selectedChannel_r = 0;
 	}
-	if (_c == ColorFunction::SingleChannel && this->channels == ColorFunction::SingleChannel) {
-		this->selectedChannel = (this->selectedChannel+1)%2;
+	if (_c == ColorFunction::SingleChannel && this->channels_r == ColorFunction::SingleChannel) {
+		this->selectedChannel_r = (this->selectedChannel_r+1)%2;
 	}
-	this->channels = _c;
-	std::cerr << "Color function : " << this->channels << " / selected channel : " << this->selectedChannel << '\n';
+	this->channels_r = _c;
+}
+
+void Scene::setColorFunction_g(ColorFunction _c) {
+	if (_c == ColorFunction::SingleChannel && this->channels_g != ColorFunction::SingleChannel) {
+		this->selectedChannel_g = 0;
+	}
+	if (_c == ColorFunction::SingleChannel && this->channels_g == ColorFunction::SingleChannel) {
+		this->selectedChannel_g = (this->selectedChannel_g+1)%2;
+	}
+	this->channels_g = _c;
+}
+
+void Scene::setRGBMode(RGBMode _mode) {
+	this->rgbMode = _mode;
+	switch (_mode) {
+		case RGBMode::None : std::cerr << "Set mode to none" << '\n'; break;
+		case RGBMode::RedOnly : std::cerr << "Set mode to red" << '\n'; break;
+		case RGBMode::GreenOnly : std::cerr << "Set mode to green" << '\n'; break;
+		case RGBMode::RedAndGreen: std::cerr << "Set mode to both channels" << '\n'; break;
+		default: std::cerr << "Cannot set unknown mode\n"; break;
+	}
 }
 
 DiscreteGrid::bbox_t Scene::getSceneBoundingBox() const { return this->sceneBB; };
