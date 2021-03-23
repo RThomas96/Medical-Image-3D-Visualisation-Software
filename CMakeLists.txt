@@ -81,6 +81,7 @@ ADD_LIBRARY(VisualisationWidgets STATIC
 	./qt/include/viewer_header.hpp
 	./qt/include/visu_box_controller.hpp
 	./qt/include/opengl_debug_log.hpp
+	./qt/include/range_slider.hpp
 	./qt/include/user_settings_widget.hpp
 	./qt/include/loader_widget.hpp
 	./qt/include/color_control.hpp
@@ -94,6 +95,7 @@ ADD_LIBRARY(VisualisationWidgets STATIC
 	./qt/src/viewer_header.cpp
 	./qt/src/visu_box_controller.cpp
 	./qt/src/opengl_debug_log.cpp
+	./qt/src/range_slider.cpp
 	./qt/src/user_settings_widget.cpp
 	./qt/src/loader_widget.cpp
 	./qt/src/color_control.cpp

@@ -36,7 +36,6 @@ uniform vec3 color1Alternate;	// Color 1, channel 1
 uniform uint channelView;	// What channels do we visualize ? R+G = 1, R = 2, G = 3
 uniform uint selectedChannel;	// The selected channel to visualize in greyscale mode
 uniform uint nbChannels;	// nb of channels in the image (R, RG, RGB)
-uniform double maxTexPossible;	// maximum tex value possible, variable depending on the data type
 
 /****************************************/
 /*********** Function headers ***********/

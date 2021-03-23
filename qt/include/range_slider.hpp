@@ -12,7 +12,7 @@ class RangeSlider : public QWidget {
 		RangeSlider(QWidget* parent = nullptr);
 		virtual ~RangeSlider(void) = default;
 	public:
-		virtual void setDisabled(bool _dis) override;
+		void disable(bool _dis);
 	public slots:
 		void setRange(int min, int max);
 		void setMin(int min);
@@ -23,19 +23,17 @@ class RangeSlider : public QWidget {
 		void minChanged(int val);
 		void maxChanged(int val);
 	protected:
-		void updateLabels(int unused_val);
+		void changeMin(int val);
+		void changeMax(int val);
+		void updateLabels();
 	protected:
-		QLabel* label_min_header_min;
-		QLabel* label_min_header_max;
+		QLabel* label_header_min;
+		QLabel* label_header_max;
 		QLabel* label_min_header_current;
-		QLabel* label_min_value_min;
-		QLabel* label_min_value_max;
-		QLabel* label_min_value_current;
-		QLabel* label_max_header_min;
-		QLabel* label_max_header_max;
 		QLabel* label_max_header_current;
-		QLabel* label_max_value_min;
-		QLabel* label_max_value_max;
+		QLabel* label_value_min;
+		QLabel* label_value_max;
+		QLabel* label_min_value_current;
 		QLabel* label_max_value_current;
 		QSlider* slider_min;
 		QSlider* slider_max;

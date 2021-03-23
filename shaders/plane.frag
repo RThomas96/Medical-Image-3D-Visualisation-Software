@@ -40,7 +40,6 @@ uniform vec3 color1Alternate;
 uniform uint channelView;	// What channels do we visualize ? R+G = 1, R = 2, G = 3
 uniform uint selectedChannel;	// The selected channel to visualize in greyscale
 uniform uint nbChannels;
-uniform double maxTexPossible;	// maximum tex value possible, variable depending on the data type
 
 uniform bool intersectPlanes = false;	// Should the planes intersect each other ? (hide other planes)
 
