@@ -128,6 +128,11 @@ TetMesh& TetMesh::populateOutputGrid(InterpolationMethods method) {
 	// cast duration to double floating point and divide by the size of voxels, to get a GVx/H rate :
 	this->generationRate = gigavxcount / std::chrono::duration_cast<std::chrono::duration<double, std::ratio<3600>>>(elapsed).count();
 
+	std::cerr << "====================================" << '\n';
+	std::cerr << "\tTime to generate   : " << std::chrono::duration_cast<std::chrono::seconds>(elapsed).count() << " seconds\n";
+	std::cerr << "\tRate of generation : " << this->getGenerationRate() << " GV/h" << '\n';
+	std::cerr << "====================================" << '\n';
+
 	// Data should now be done being generated ...
 	return *this;
 }
@@ -235,6 +240,11 @@ TetMesh& TetMesh::populateOutputGrid_RGB(InterpolationMethods method) {
 
 	// cast duration to double floating point and divide by the size of voxels, to get a GVx/H rate :
 	this->generationRate = gigavxcount / std::chrono::duration_cast<std::chrono::duration<double, std::ratio<3600>>>(elapsed).count();
+
+	std::cerr << "====================================" << '\n';
+	std::cerr << "\tTime to generate   : " << std::chrono::duration_cast<std::chrono::seconds>(elapsed).count() << " seconds\n";
+	std::cerr << "\tRate of generation : " << this->getGenerationRate() << " GV/h" << '\n';
+	std::cerr << "====================================" << '\n';
 
 	// Data should now be done being generated ...
 	return *this;

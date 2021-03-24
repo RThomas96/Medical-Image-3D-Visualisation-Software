@@ -21,12 +21,12 @@ class VisuBoxController : public QWidget {
 		void updateBox(void);
 	protected:
 		Scene* scene;			///< The scene to control
-		QDoubleSpinBox* input_BBMinX;	///< Controls the min point's X coordinate
-		QDoubleSpinBox* input_BBMinY;	///< Controls the min point's Y coordinate
-		QDoubleSpinBox* input_BBMinZ;	///< Controls the min point's Z coordinate
-		QDoubleSpinBox* input_BBMaxX;	///< Controls the max point's X coordinate
-		QDoubleSpinBox* input_BBMaxY;	///< Controls the max point's Y coordinate
-		QDoubleSpinBox* input_BBMaxZ;	///< Controls the max point's Z coordinate
+		QSpinBox* input_coordMinX;
+		QSpinBox* input_coordMinY;
+		QSpinBox* input_coordMinZ;
+		QSpinBox* input_coordMaxX;
+		QSpinBox* input_coordMaxY;
+		QSpinBox* input_coordMaxZ;
 		QPushButton* button_resetBox;	///< Resets the visu box coordinates
 		std::vector<QObject*> strayObj;	///< Stray objects created in the widget's setup process
 };

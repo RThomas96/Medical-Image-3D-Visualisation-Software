@@ -7,12 +7,12 @@
 
 VisuBoxController::VisuBoxController(Scene* _scene) : QWidget(nullptr) {
 	this->strayObj.clear();
-	this->input_BBMinX = nullptr;
-	this->input_BBMinY = nullptr;
-	this->input_BBMinZ = nullptr;
-	this->input_BBMaxX = nullptr;
-	this->input_BBMaxY = nullptr;
-	this->input_BBMaxZ = nullptr;
+	this->input_coordMinX = nullptr;
+	this->input_coordMinY = nullptr;
+	this->input_coordMinZ = nullptr;
+	this->input_coordMaxX = nullptr;
+	this->input_coordMaxY = nullptr;
+	this->input_coordMaxZ = nullptr;
 	this->scene = _scene;
 	this->setupWidgets();
 	this->setAttribute(Qt::WA_DeleteOnClose);
@@ -28,12 +28,12 @@ VisuBoxController::~VisuBoxController() {
 		this->scene->removeVisuBoxController();
 	}
 	this->scene = nullptr;
-	delete this->input_BBMinX;
-	delete this->input_BBMinY;
-	delete this->input_BBMinZ;
-	delete this->input_BBMaxX;
-	delete this->input_BBMaxY;
-	delete this->input_BBMaxZ;
+	delete this->input_coordMinX;
+	delete this->input_coordMinY;
+	delete this->input_coordMinZ;
+	delete this->input_coordMaxX;
+	delete this->input_coordMaxY;
+	delete this->input_coordMaxZ;
 	for (std::size_t i = 0; i < this->strayObj.size(); ++i) {
 		if (this->strayObj[i]) {
 			delete this->strayObj[i];
@@ -44,26 +44,26 @@ VisuBoxController::~VisuBoxController() {
 }
 
 void VisuBoxController::setupWidgets() {
-	this->input_BBMinX = new QDoubleSpinBox;
-	this->input_BBMinY = new QDoubleSpinBox;
-	this->input_BBMinZ = new QDoubleSpinBox;
-	this->input_BBMaxX = new QDoubleSpinBox;
-	this->input_BBMaxY = new QDoubleSpinBox;
-	this->input_BBMaxZ = new QDoubleSpinBox;
+	this->input_coordMinX = new QSpinBox;
+	this->input_coordMinY = new QSpinBox;
+	this->input_coordMinZ = new QSpinBox;
+	this->input_coordMaxX = new QSpinBox;
+	this->input_coordMaxY = new QSpinBox;
+	this->input_coordMaxZ = new QSpinBox;
 	this->button_resetBox = new QPushButton("Reset coordinates");
 
-	auto dsbLimits = [](QDoubleSpinBox* d) -> void {
-		d->setRange(std::numeric_limits<double>::lowest(), std::numeric_limits<double>::max());
-		d->setValue(.0);
-		d->setSingleStep(.1);
+	auto dsbLimits = [](QSpinBox* d) -> void {
+		d->setRange(0, std::numeric_limits<int>::max());
+		d->setValue(0);
+		d->setSingleStep(1);
 	};
 
-	dsbLimits(this->input_BBMinX);
-	dsbLimits(this->input_BBMinY);
-	dsbLimits(this->input_BBMinZ);
-	dsbLimits(this->input_BBMaxX);
-	dsbLimits(this->input_BBMaxY);
-	dsbLimits(this->input_BBMaxZ);
+	dsbLimits(this->input_coordMinX);
+	dsbLimits(this->input_coordMinY);
+	dsbLimits(this->input_coordMinZ);
+	dsbLimits(this->input_coordMaxX);
+	dsbLimits(this->input_coordMaxY);
+	dsbLimits(this->input_coordMaxZ);
 
 	int bRow = 0; // row counter for 'bounding box' layout
 	int mRow = 0; // row counter for 'main' layout
@@ -90,15 +90,15 @@ void VisuBoxController::setupWidgets() {
 	bRow++;
 	// BB min :
 	layout_BoundingBox->addWidget(label_position, bRow, 0, Qt::AlignLeft);
-	layout_BoundingBox->addWidget(this->input_BBMinX, bRow, 2, Qt::AlignHCenter);
-	layout_BoundingBox->addWidget(this->input_BBMinY, bRow, 4, Qt::AlignHCenter);
-	layout_BoundingBox->addWidget(this->input_BBMinZ, bRow, 6, Qt::AlignHCenter);
+	layout_BoundingBox->addWidget(this->input_coordMinX, bRow, 2, Qt::AlignHCenter);
+	layout_BoundingBox->addWidget(this->input_coordMinY, bRow, 4, Qt::AlignHCenter);
+	layout_BoundingBox->addWidget(this->input_coordMinZ, bRow, 6, Qt::AlignHCenter);
 	bRow++;
 	// BB max :
 	layout_BoundingBox->addWidget(label_diagonal, bRow, 0, Qt::AlignLeft);
-	layout_BoundingBox->addWidget(this->input_BBMaxX, bRow, 2, Qt::AlignHCenter);
-	layout_BoundingBox->addWidget(this->input_BBMaxY, bRow, 4, Qt::AlignHCenter);
-	layout_BoundingBox->addWidget(this->input_BBMaxZ, bRow, 6, Qt::AlignHCenter);
+	layout_BoundingBox->addWidget(this->input_coordMaxX, bRow, 2, Qt::AlignHCenter);
+	layout_BoundingBox->addWidget(this->input_coordMaxY, bRow, 4, Qt::AlignHCenter);
+	layout_BoundingBox->addWidget(this->input_coordMaxZ, bRow, 6, Qt::AlignHCenter);
 	bRow++;
 	// button to reset :
 	layout_BoundingBox->addWidget(this->button_resetBox, bRow, 1, 1, 4, Qt::AlignCenter);
@@ -120,14 +120,15 @@ void VisuBoxController::setupWidgets() {
 }
 
 void VisuBoxController::setupSignals() {
-	QObject::connect(this->input_BBMinX, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &VisuBoxController::updateBox);
-	QObject::connect(this->input_BBMinY, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &VisuBoxController::updateBox);
-	QObject::connect(this->input_BBMinZ, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &VisuBoxController::updateBox);
-	QObject::connect(this->input_BBMaxX, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &VisuBoxController::updateBox);
-	QObject::connect(this->input_BBMaxY, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &VisuBoxController::updateBox);
-	QObject::connect(this->input_BBMaxZ, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &VisuBoxController::updateBox);
+	QObject::connect(this->input_coordMinX, QOverload<int>::of(&QSpinBox::valueChanged), this, &VisuBoxController::updateBox);
+	QObject::connect(this->input_coordMinY, QOverload<int>::of(&QSpinBox::valueChanged), this, &VisuBoxController::updateBox);
+	QObject::connect(this->input_coordMinZ, QOverload<int>::of(&QSpinBox::valueChanged), this, &VisuBoxController::updateBox);
+	QObject::connect(this->input_coordMaxX, QOverload<int>::of(&QSpinBox::valueChanged), this, &VisuBoxController::updateBox);
+	QObject::connect(this->input_coordMaxY, QOverload<int>::of(&QSpinBox::valueChanged), this, &VisuBoxController::updateBox);
+	QObject::connect(this->input_coordMaxZ, QOverload<int>::of(&QSpinBox::valueChanged), this, &VisuBoxController::updateBox);
 	QObject::connect(this->button_resetBox, &QPushButton::clicked, [this]() {
 		if (this->scene != nullptr) { this->scene->resetVisuBox(); }
+		this->updateValues();
 	});
 }
 
@@ -136,36 +137,37 @@ void VisuBoxController::updateValues() {
 		return;
 	}
 	this->blockSignals(true);
-	auto box = this->scene->getVisuBox();
-	this->input_BBMinX->setValue(box.getMin().x);
-	this->input_BBMinY->setValue(box.getMin().y);
-	this->input_BBMinZ->setValue(box.getMin().z);
-	auto diag = box.getDiagonal();
-	this->input_BBMaxX->setValue(diag.x);
-	this->input_BBMaxY->setValue(diag.y);
-	this->input_BBMaxZ->setValue(diag.z);
+	auto box = this->scene->getVisuBoxCoordinates();
+	this->input_coordMinX->setValue(box[0].x);
+	this->input_coordMinY->setValue(box[0].y);
+	this->input_coordMinZ->setValue(box[0].z);
+	this->input_coordMaxX->setValue(box[1].x);
+	this->input_coordMaxY->setValue(box[1].y);
+	this->input_coordMaxZ->setValue(box[1].z);
 	this->blockSignals(false);
 	return;
 }
 
 void VisuBoxController::blockSignals(bool b) {
-	this->input_BBMinX->blockSignals(b);
-	this->input_BBMinY->blockSignals(b);
-	this->input_BBMinZ->blockSignals(b);
-	this->input_BBMaxX->blockSignals(b);
-	this->input_BBMaxY->blockSignals(b);
-	this->input_BBMaxZ->blockSignals(b);
+	this->input_coordMinX->blockSignals(b);
+	this->input_coordMinY->blockSignals(b);
+	this->input_coordMinZ->blockSignals(b);
+	this->input_coordMaxX->blockSignals(b);
+	this->input_coordMaxY->blockSignals(b);
+	this->input_coordMaxZ->blockSignals(b);
 }
 
 void VisuBoxController::updateBox() {
-	DiscreteGrid::bbox_t::vec::value_type minX = this->input_BBMinX->value();
-	DiscreteGrid::bbox_t::vec::value_type minY = this->input_BBMinY->value();
-	DiscreteGrid::bbox_t::vec::value_type minZ = this->input_BBMinZ->value();
-	DiscreteGrid::bbox_t::vec min{minX, minY, minZ};
-	DiscreteGrid::bbox_t::vec::value_type maxX = this->input_BBMaxX->value();
-	DiscreteGrid::bbox_t::vec::value_type maxY = this->input_BBMaxY->value();
-	DiscreteGrid::bbox_t::vec::value_type maxZ = this->input_BBMaxZ->value();
-	DiscreteGrid::bbox_t::vec max{maxX, maxY, maxZ};
-	this->scene->setVisuBox(DiscreteGrid::bbox_t(min, min + max));
+	unsigned int minX = static_cast<unsigned int>((this->input_coordMinX->value() > 0) ? this->input_coordMinX->value() : 0);
+	unsigned int minY = static_cast<unsigned int>((this->input_coordMinY->value() > 0) ? this->input_coordMinY->value() : 0);
+	unsigned int minZ = static_cast<unsigned int>((this->input_coordMinZ->value() > 0) ? this->input_coordMinZ->value() : 0);
+	unsigned int maxX = static_cast<unsigned int>((this->input_coordMaxX->value() > 0) ? this->input_coordMaxX->value() : 0);
+	unsigned int maxY = static_cast<unsigned int>((this->input_coordMaxY->value() > 0) ? this->input_coordMaxY->value() : 0);
+	unsigned int maxZ = static_cast<unsigned int>((this->input_coordMaxZ->value() > 0) ? this->input_coordMaxZ->value() : 0);
+	glm::uvec3 max{maxX, maxY, maxZ};
+	glm::uvec3 min{minX, minY, minZ};
+	this->scene->setVisuBoxMinCoord(min);
+	this->scene->setVisuBoxMaxCoord(max);
+
 	return;
 }

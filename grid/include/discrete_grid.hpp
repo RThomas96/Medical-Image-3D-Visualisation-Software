@@ -76,10 +76,14 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 		virtual std::shared_ptr<IO::GenericGridWriter> getGridWriter(void) const;
 		/// @brief Set the data reads/writes to be offline or not
 		virtual DiscreteGrid& setOffline(bool off = true);
+		/// @brief Queries if the grid is offline or not
 		virtual bool isGridOffline(void) { return this->isOffline; }
 
 		/// @brief Returns the given point (originally world space) in grid space.
 		virtual glm::vec4 toGridSpace(glm::vec4 pos_ws) const;
+
+		/// @brief Returns the voxel index at position 'p'
+		virtual glm::uvec3 worldPositionToIndex(glm::vec4 p) const;
 
 		/// @brief Returns the given point (originally grid space) in world space.
 		virtual glm::vec4 toWorldSpace(glm::vec4 pos_gs) const;

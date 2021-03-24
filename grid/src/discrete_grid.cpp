@@ -86,6 +86,19 @@ DiscreteGrid& DiscreteGrid::setGridWriter(std::shared_ptr<IO::GenericGridWriter>
 std::shared_ptr<IO::GenericGridReader> DiscreteGrid::getGridReader(void) const { return this->gridReader; }
 std::shared_ptr<IO::GenericGridWriter> DiscreteGrid::getGridWriter(void) const { return this->gridWriter; }
 
+glm::uvec3 DiscreteGrid::worldPositionToIndex(glm::vec4 p) const {
+	// Get position in grid space first, then compute the index position using
+	// voxel sizes.
+	glm::vec4 gp = this->toGridSpace(p);
+	// rgp = relative grid position
+	glm::vec4 rgp = gp - glm::vec4(this->boundingBox.getMin(), 1.);
+	glm::vec4 vx = glm::vec4(this->getVoxelDimensions(), 1.);
+	unsigned int x = static_cast<unsigned int>(rgp.x/vx.x);
+	unsigned int y = static_cast<unsigned int>(rgp.y/vx.y);
+	unsigned int z = static_cast<unsigned int>(rgp.z/vx.z);
+	return glm::uvec3(x,y,z);
+}
+
 glm::vec4 DiscreteGrid::toGridSpace(glm::vec4 pos_ws) const {
 	return this->transform_worldToGrid * pos_ws;
 }

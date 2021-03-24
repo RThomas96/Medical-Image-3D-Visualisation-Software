@@ -2326,6 +2326,9 @@ void Scene::removeVisuBoxController() {
 }
 
 DiscreteGrid::bbox_t Scene::getVisuBox() {
+	// TO CHANGE
+	// This function should get the plane positions, determine the closest voxel position in grid space, and
+	// return an integer bounding box in order to be controlled by the visu box controller.
 	glm::vec3 min = this->computePlanePositions();
 	glm::vec3 max = this->visuBox.getMax();
 	this->visuBox = DiscreteGrid::bbox_t();
@@ -2334,13 +2337,55 @@ DiscreteGrid::bbox_t Scene::getVisuBox() {
 	return this->visuBox;
 }
 
+glm::umat2x3 Scene::getVisuBoxCoordinates() {
+	if (this->grids.size() == 0) { return glm::umat2x3(); }
+	if (this->grids[0]->grid.size() == 0) { return glm::umat2x3(); }
+
+	auto mi = this->computePlanePositions();
+	auto ma = this->visuBox.getMax();
+
+	glm::uvec3 min = this->grids[0]->grid[0]->worldPositionToIndex(glm::vec4(mi, 1.));
+	glm::uvec3 max = this->grids[0]->grid[0]->worldPositionToIndex(glm::vec4(ma, 1.));
+	glm::umat2x3 result;
+	result[0] = min;
+	result[1] = max;
+	return result;
+}
+
 void Scene::setVisuBox(DiscreteGrid::bbox_t box) {
 	this->visuBox = box;
 	return;
 }
 
+void Scene::setVisuBoxMinCoord(glm::uvec3 coor_min) {
+	this->visuMin = coor_min;
+	this->updateVisuBoxCoordinates();
+}
+
+void Scene::setVisuBoxMaxCoord(glm::uvec3 coor_max) {
+	this->visuMax = coor_max;
+	this->updateVisuBoxCoordinates();
+}
+
+void Scene::updateVisuBoxCoordinates() {
+	if (this->grids.size() == 0) { return; }
+	if (this->grids[0]->grid.size() == 0) { return; }
+	auto min = this->grids[0]->grid[0]->getVoxelPositionWorldSpace(this->visuMin);
+	auto max = this->grids[0]->grid[0]->getVoxelPositionWorldSpace(this->visuMax);
+
+	auto imgBox = DiscreteGrid::bbox_t(min, max);
+	this->visuBox = imgBox.transformTo(this->grids[0]->grid[0]->getTransform_GridToWorld());
+}
+
 void Scene::resetVisuBox() {
 	this->visuBox = this->sceneDataBB;
+
+	if (this->grids.size() == 0) { return; }
+	if (this->grids[0]->grid.size() == 0) { return; }
+
+	this->visuMin = glm::uvec3(0,0,0);
+	auto max = this->grids[0]->grid[0]->getResolution();
+	this->visuMax = glm::uvec3(max.x, max.y, max.z);
 	return;
 }
 

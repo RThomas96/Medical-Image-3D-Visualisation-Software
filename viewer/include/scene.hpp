@@ -122,8 +122,11 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 
 		/// @brief Returns the current visu box
 		DiscreteGrid::bbox_t getVisuBox(void);
+		glm::umat2x3 getVisuBoxCoordinates(void);
 		/// @brief Sets the visu box
 		void setVisuBox(DiscreteGrid::bbox_t box);
+		void setVisuBoxMinCoord(glm::uvec3 coor_min);
+		void setVisuBoxMaxCoord(glm::uvec3 coor_max);
 		/// @brief Resets the visu box
 		void resetVisuBox();
 
@@ -285,6 +288,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void drawBoundingBox(const DiscreteGrid::bbox_t& _box, glm::vec3 color, GLfloat* vMat, GLfloat* pMat);
 		/// @b Update the scene's bounding box with the currently drawn grids.
 		void updateBoundingBox(void);
+		void updateVisuBoxCoordinates(void);
 
 		/*************************************/
 		/*************************************/
@@ -333,6 +337,8 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		DiscreteGrid::bbox_t sceneBB;			///< Outer BB of the scene
 		DiscreteGrid::bbox_t sceneDataBB;		///< Outer BB of the scene's data
 		float clipDistanceFromCamera;			/// Distance from the camera to its clip plane
+		glm::uvec3 visuMin;						///< The min image coordinate to display on the visu box mode
+		glm::uvec3 visuMax;						///< The max image coordinate to display on the visu box mode
 		DiscreteGrid::bbox_t visuBox;			///< Used to restrict the view to a box with its coordinates
 		DrawMode drawMode;						///< Current 3D draw mode
 		RGBMode rgbMode;						///< Current RGB mode
