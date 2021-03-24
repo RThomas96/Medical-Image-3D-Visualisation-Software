@@ -1183,14 +1183,19 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, cons
 
 		/// @b Shortcut for glGetUniform, since this can result in long lines.
 		auto getUniform = [&](const char* name) -> GLint {
-			GLint g = glGetUniformLocation(this->programHandle_VolumetricViewer, name);
-			if (this->showVAOstate) { std::cerr << "[LOG]\tLocation [" << +g << "] for uniform " << name << '\n'; }
+			GLint g = glGetUniformLocation(this->programHandle_VolumetricViewer, name);if (this->showVAOstate) {
+				if (g >= 0) {
+				std::cerr << "[LOG]\tLocation [" << +g << "] for uniform " << name << '\n';
+				} else {
+					std::cerr << "[LOG]\tCannot find uniform " << name << "\n";
+				}
+			}
 			return g;
 		};
 
 		if (this->showVAOstate) {
 			LOG_ENTER(Scene::drawVolumetric)
-			std::cerr << "[LOG] Uniform values for " << __FUNCTION__ << " : \n";
+			std::cerr << "[LOG] Uniform locations for " << __FUNCTION__ << " : \n";
 		}
 
 		// Textures :
@@ -1467,33 +1472,51 @@ void Scene::prepareUniforms_3DSolid(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lig
 	// Get the world to grid transform :
 	glm::mat4 transfoMat = baseMatrix * gridView->grid[0]->getTransform_GridToWorld();
 
+	auto getUniform = [&](const char* name) -> GLint {
+		GLint g = glGetUniformLocation(this->programHandle_projectedTex, name);
+		if (this->showVAOstate) {
+			if (g >= 0) {
+			std::cerr << "[LOG]\tLocation [" << +g << "] for uniform " << name << '\n';
+			} else {
+				std::cerr << "[LOG]\tCannot find uniform " << name << "\n";
+			}
+		}
+		return g;
+	};
+
+	if (this->showVAOstate) {
+		LOG_ENTER(Scene::prepareUniforms_3DSolid);
+		std::cerr << "[LOG] Uniform locations for " << __FUNCTION__ << " : \n";
+	}
+
 	// Get the uniform locations :
-	GLint mMatrix_Loc =						glGetUniformLocation(this->programHandle_projectedTex, "mMatrix");
-	GLint vMatrix_Loc =						glGetUniformLocation(this->programHandle_projectedTex, "vMatrix");
-	GLint pMatrix_Loc =						glGetUniformLocation(this->programHandle_projectedTex, "pMatrix");
-	GLint lightPos_Loc =					glGetUniformLocation(this->programHandle_projectedTex, "lightPos");
-	GLint voxelGridOrigin_Loc =				glGetUniformLocation(this->programHandle_projectedTex, "voxelGridOrigin");
-	GLint voxelGridSize_Loc =				glGetUniformLocation(this->programHandle_projectedTex, "voxelGridSize");
-	GLint voxelSize_Loc =					glGetUniformLocation(this->programHandle_projectedTex, "voxelSize");
-	GLint drawMode_Loc =					glGetUniformLocation(this->programHandle_projectedTex, "drawMode");
-	GLint texDataLoc =						glGetUniformLocation(this->programHandle_projectedTex, "texData");
-	GLint planePositionsLoc =				glGetUniformLocation(this->programHandle_projectedTex, "planePositions");
-	GLint location_planeDirections =		glGetUniformLocation(this->programHandle_projectedTex, "planeDirections");
-	GLint gridPositionLoc =					glGetUniformLocation(this->programHandle_projectedTex, "gridPosition");
-	GLint location_colorBounds =			glGetUniformLocation(this->programHandle_projectedTex, "colorBounds");
-	GLint location_colorBoundsAlternate =	glGetUniformLocation(this->programHandle_projectedTex, "colorBoundsAlternate");
-	GLint location_textureBounds =			glGetUniformLocation(this->programHandle_projectedTex, "texBounds");
-	GLint location_textureBoundsAlternate =	glGetUniformLocation(this->programHandle_projectedTex, "texBoundsAlternate");
-	GLint location_color0 =					glGetUniformLocation(this->programHandle_projectedTex, "color0");
-	GLint location_color1 =					glGetUniformLocation(this->programHandle_projectedTex, "color1");
-	GLint location_color0Alt =				glGetUniformLocation(this->programHandle_projectedTex, "color0Alternate");
-	GLint location_color1Alt =				glGetUniformLocation(this->programHandle_projectedTex, "color1Alternate");
-	GLint location_r_channelView =			glGetUniformLocation(this->programHandle_projectedTex, "r_channelView");
-	GLint location_r_selectedChannel =		glGetUniformLocation(this->programHandle_projectedTex, "r_selectedChannel");
-	GLint location_r_nbChannels =			glGetUniformLocation(this->programHandle_projectedTex, "r_nbChannels");
-	GLint location_g_channelView =			glGetUniformLocation(this->programHandle_projectedTex, "g_channelView");
-	GLint location_g_selectedChannel =		glGetUniformLocation(this->programHandle_projectedTex, "g_selectedChannel");
-	GLint location_g_nbChannels =			glGetUniformLocation(this->programHandle_projectedTex, "g_nbChannels");
+	GLint mMatrix_Loc =						getUniform("mMatrix");
+	GLint vMatrix_Loc =						getUniform("vMatrix");
+	GLint pMatrix_Loc =						getUniform("pMatrix");
+	GLint lightPos_Loc =					getUniform("lightPos");
+	GLint voxelGridOrigin_Loc =				getUniform("voxelGridOrigin");
+	GLint voxelGridSize_Loc =				getUniform("voxelGridSize");
+	GLint voxelSize_Loc =					getUniform("voxelSize");
+	GLint drawMode_Loc =					getUniform("drawMode");
+	GLint texDataLoc =						getUniform("texData");
+	GLint planePositionsLoc =				getUniform("planePositions");
+	GLint location_planeDirections =		getUniform("planeDirections");
+	GLint gridPositionLoc =					getUniform("gridPosition");
+	GLint location_colorBounds =			getUniform("colorBounds");
+	GLint location_colorBoundsAlternate =	getUniform("colorBoundsAlternate");
+	GLint location_textureBounds =			getUniform("textureBounds");
+	GLint location_textureBoundsAlternate =	getUniform("textureBoundsAlternate");
+	GLint location_color0 =					getUniform("color0");
+	GLint location_color1 =					getUniform("color1");
+	GLint location_color0Alt =				getUniform("color0Alternate");
+	GLint location_color1Alt =				getUniform("color1Alternate");
+	GLint location_r_channelView =			getUniform("r_channelView");
+	GLint location_r_selectedChannel =		getUniform("r_selectedChannel");
+	GLint location_r_nbChannels =			getUniform("r_nbChannels");
+	GLint location_g_channelView =			getUniform("g_channelView");
+	GLint location_g_selectedChannel =		getUniform("g_selectedChannel");
+	GLint location_g_nbChannels =			getUniform("g_nbChannels");
+	GLint location_rgbMode =				getUniform("rgbMode");
 
 	DiscreteGrid::bbox_t::vec origin = gridView->grid[0]->getBoundingBox().getMin();
 	DiscreteGrid::bbox_t::vec originWS = gridView->grid[0]->getBoundingBoxWorldSpace().getMin();
@@ -1509,6 +1532,7 @@ void Scene::prepareUniforms_3DSolid(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lig
 	glm::vec2 tb0 = glm::convert_to<float>(this->textureBounds0);
 	glm::vec2 tb1 = glm::convert_to<float>(this->textureBounds1);
 
+	glUniform1ui(location_rgbMode, this->rgbMode);
 	glUniform3fv(voxelGridOrigin_Loc, 1, glm::value_ptr(origin));
 	glUniform3fv(voxelGridSize_Loc, 1, glm::value_ptr(dims));
 	glUniform3fv(voxelSize_Loc, 1, glm::value_ptr(gridView->grid[0]->getVoxelDimensions()));
@@ -1532,12 +1556,12 @@ void Scene::prepareUniforms_3DSolid(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lig
 	glUniform1ui(location_g_nbChannels, 1);
 
 	// Textures :
-	//if (gridView->grid[0]->hasData() == true || gridView->grid[0]->isGridOffline() == true) {
-	glActiveTexture(GL_TEXTURE0 + 0);
-	glEnable(GL_TEXTURE_3D);
-	glBindTexture(GL_TEXTURE_3D, gridView->gridTexture);
-	glUniform1i(texDataLoc, 0);
-	//}
+	if (gridView->grid[0]->hasData() == true || gridView->grid[0]->isGridOffline() == true) {
+		glActiveTexture(GL_TEXTURE0 + 0);
+		glEnable(GL_TEXTURE_3D);
+		glBindTexture(GL_TEXTURE_3D, gridView->gridTexture);
+		glUniform1i(texDataLoc, 0);
+	}
 
 	uint chan = this->colorFunctionToUniform(this->channels_r);
 	uint chan2 = this->colorFunctionToUniform(this->channels_g);
@@ -1565,9 +1589,20 @@ void Scene::prepareUniforms_3DPlane(GLfloat *mvMat, GLfloat *pMat, planes _plane
 
 	auto getUniform = [&](const char* name) -> GLint {
 		GLint g = glGetUniformLocation(this->programHandle_Plane3D, name);
-		if (this->showVAOstate) { std::cerr << "[LOG]\tLocation [" << +g << "] for uniform " << name << '\n'; }
+		if (this->showVAOstate) {
+			if (g >= 0) {
+			std::cerr << "[LOG]\tLocation [" << +g << "] for uniform " << name << '\n';
+			} else {
+				std::cerr << "[LOG]\tCannot find uniform " << name << "\n";
+			}
+		}
 		return g;
 	};
+
+	if (this->showVAOstate) {
+		LOG_ENTER(Scene::prepareUniforms_3DPlane);
+		std::cerr << "[LOG] Uniform locations for " << __FUNCTION__ << " : \n";
+	}
 
 	// Get uniform locations for the program :
 	GLint location_mMatrix =				getUniform("model_Mat");
@@ -1601,6 +1636,7 @@ void Scene::prepareUniforms_3DPlane(GLfloat *mvMat, GLfloat *pMat, planes _plane
 	GLint location_g_channelView =			getUniform("g_channelView");
 	GLint location_g_selectedChannel =		getUniform("g_selectedChannel");
 	GLint location_g_nbChannels =			getUniform("g_nbChannels");
+	GLint location_rgbMode =				getUniform("rgbMode");
 
 	if (grid->nbChannels > 1) {
 		glUniform1ui(location_r_selectedChannel, this->selectedChannel_r);
@@ -1613,6 +1649,7 @@ void Scene::prepareUniforms_3DPlane(GLfloat *mvMat, GLfloat *pMat, planes _plane
 	glUniform3fv(location_color1, 1, glm::value_ptr(this->color1));
 	glUniform3fv(location_color0Alt, 1, glm::value_ptr(this->color0_second));
 	glUniform3fv(location_color1Alt, 1, glm::value_ptr(this->color1_second));
+	glUniform1ui(location_rgbMode, this->rgbMode);
 
 	// Generate the data we need :
 	glm::mat4 transform = glm::mat4(1.f);
@@ -1667,50 +1704,70 @@ void Scene::prepareUniforms_PlaneViewer(planes _plane, planeHeading _heading, gl
 	const DiscreteGrid::bbox_t::vec& bbox = this->sceneBB.getDiagonal();
 	const DiscreteGrid::bbox_t::vec& posBox = this->sceneBB.getMin();
 
+	// The correct bounding box coordinates :
 	glm::vec2 gridBBDims;
 	if (_plane == planes::x) { gridBBDims.x = bbox.y; gridBBDims.y = bbox.z; }
 	if (_plane == planes::y) { gridBBDims.x = bbox.x; gridBBDims.y = bbox.z; }
 	if (_plane == planes::z) { gridBBDims.x = bbox.x; gridBBDims.y = bbox.y; }
 
+	// Plane heading as a integer value (valid for shaders) :
 	uint plane_heading = planeHeadingToIndex(_heading);
-
 	// Grid transform :
 	glm::mat4 gridTransform = _grid->grid[0]->getTransform_WorldToGrid();
 	// Grid dimensions :
 	glm::vec3 gridDimensions = glm::convert_to<glm::vec3::value_type>(_grid->grid[0]->getBoundingBox().getDiagonal());
-
 	// Depth of the plane :
 	glm::vec3 planePos = this->computePlanePositions();
 
+	auto getUniform = [&](const char* name) -> GLint {
+		GLint g = glGetUniformLocation(this->programHandle_PlaneViewer, name);
+		if (this->showVAOstate) {
+			if (g >= 0) {
+			std::cerr << "[LOG]\tLocation [" << +g << "] for uniform " << name << '\n';
+			} else {
+				std::cerr << "[LOG]\tCannot find uniform " << name << "\n";
+			}
+		}
+		return g;
+	};
+
+	if (this->showVAOstate) {
+		LOG_ENTER(Scene::prepareUniforms_PlaneViewer);
+		std::cerr << "[LOG] Uniform locations for " << __FUNCTION__ << " : \n";
+	}
+
 	// Uniform locations :
 	// VShader :
-	GLint location_fbDims =					glGetUniformLocation(this->programHandle_PlaneViewer, "fbDims");
-	GLint location_bbDims =					glGetUniformLocation(this->programHandle_PlaneViewer, "bbDims");
-	GLint location_planeIndex =				glGetUniformLocation(this->programHandle_PlaneViewer, "planeIndex");
-	GLint location_gridTransform =			glGetUniformLocation(this->programHandle_PlaneViewer, "gridTransform");
-	GLint location_gridDimensions =			glGetUniformLocation(this->programHandle_PlaneViewer, "gridDimensions");
-	GLint location_gridBBDiagonal =			glGetUniformLocation(this->programHandle_PlaneViewer, "sceneBBDiagonal");
-	GLint location_gridBBPosition =			glGetUniformLocation(this->programHandle_PlaneViewer, "sceneBBPosition");
-	GLint location_planePositions =			glGetUniformLocation(this->programHandle_PlaneViewer, "planePositions");
-	GLint location_heading =				glGetUniformLocation(this->programHandle_PlaneViewer, "heading");
-	GLint location_zoom =					glGetUniformLocation(this->programHandle_PlaneViewer, "zoom");
-	GLint location_offset =					glGetUniformLocation(this->programHandle_PlaneViewer, "offset");
+	GLint location_fbDims =					getUniform("fbDims");
+	GLint location_bbDims =					getUniform("bbDims");
+	GLint location_planeIndex =				getUniform("planeIndex");
+	GLint location_gridTransform =			getUniform("gridTransform");
+	GLint location_gridDimensions =			getUniform("gridDimensions");
+	GLint location_gridBBDiagonal =			getUniform("sceneBBDiagonal");
+	GLint location_gridBBPosition =			getUniform("sceneBBPosition");
+	GLint location_planePositions =			getUniform("planePositions");
+	GLint location_heading =				getUniform("heading");
+	GLint location_zoom =					getUniform("zoom");
+	GLint location_offset =					getUniform("offset");
 	// FShader :
-	GLint location_texData =				glGetUniformLocation(this->programHandle_PlaneViewer, "texData");
-	GLint location_colorBounds =			glGetUniformLocation(this->programHandle_PlaneViewer, "colorBounds");
-	GLint location_colorBoundsAlternate =	glGetUniformLocation(this->programHandle_PlaneViewer, "colorBoundsAlternate");
-	GLint location_textureBounds =			glGetUniformLocation(this->programHandle_PlaneViewer, "textureBounds");
-	GLint location_textureBoundsAlternate = glGetUniformLocation(this->programHandle_PlaneViewer, "textureBoundsAlternate");
-	GLint location_color0 =					glGetUniformLocation(this->programHandle_PlaneViewer, "color0");
-	GLint location_color1 =					glGetUniformLocation(this->programHandle_PlaneViewer, "color1");
-	GLint location_color0Alt =				glGetUniformLocation(this->programHandle_PlaneViewer, "color0Alternate");
-	GLint location_color1Alt =				glGetUniformLocation(this->programHandle_PlaneViewer, "color1Alternate");
-	GLint location_r_channelView =			glGetUniformLocation(this->programHandle_PlaneViewer, "r_channelView");
-	GLint location_r_selectedChannel =		glGetUniformLocation(this->programHandle_PlaneViewer, "r_selectedChannel");
-	GLint location_r_nbChannels =			glGetUniformLocation(this->programHandle_PlaneViewer, "r_nbChannels");
-	GLint location_g_channelView =			glGetUniformLocation(this->programHandle_PlaneViewer, "g_channelView");
-	GLint location_g_selectedChannel =		glGetUniformLocation(this->programHandle_PlaneViewer, "g_selectedChannel");
-	GLint location_g_nbChannels =			glGetUniformLocation(this->programHandle_PlaneViewer, "g_nbChannels");
+	GLint location_texData =				getUniform("texData");
+	GLint location_colorBounds =			getUniform("colorBounds");
+	GLint location_colorBoundsAlternate =	getUniform("colorBoundsAlternate");
+	GLint location_textureBounds =			getUniform("textureBounds");
+	GLint location_textureBoundsAlternate = getUniform("textureBoundsAlternate");
+	GLint location_color0 =					getUniform("color0");
+	GLint location_color1 =					getUniform("color1");
+	GLint location_color0Alt =				getUniform("color0Alternate");
+	GLint location_color1Alt =				getUniform("color1Alternate");
+	GLint location_r_channelView =			getUniform("r_channelView");
+	GLint location_r_selectedChannel =		getUniform("r_selectedChannel");
+	GLint location_r_nbChannels =			getUniform("r_nbChannels");
+	GLint location_g_channelView =			getUniform("g_channelView");
+	GLint location_g_selectedChannel =		getUniform("g_selectedChannel");
+	GLint location_g_nbChannels =			getUniform("g_nbChannels");
+	GLint location_rgbMode =				getUniform("rgbMode");
+
+	glUniform1ui(location_rgbMode, this->rgbMode);
 
 	glUniform1ui(location_r_channelView, this->colorFunctionToUniform(this->channels_r));
 	glUniform1ui(location_g_channelView, this->colorFunctionToUniform(this->channels_g));

@@ -285,7 +285,6 @@ void ControlPanel::setMaxTexVal(int val) {
 
 void ControlPanel::setMinTexValBottom(int val) {
 	this->minAlternate = static_cast<DiscreteGrid::data_t>(val);
-	std::cerr << "Changed bottom min" << '\n';
 	// update scene data :
 	if (this->sceneToControl) {
 		this->sceneToControl->slotSetMinTexValueAlternate(static_cast<DiscreteGrid::data_t>(val));

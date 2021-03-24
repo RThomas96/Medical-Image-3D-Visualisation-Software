@@ -76,14 +76,10 @@ void main(void)
 	vec4 basecolor;
 	uvec3 ui = texture(texData, texCoord).xyz;
 
-	float scR = (float(ui.x) - colorBounds.x) / (colorBounds.y - colorBounds.x);
-	float scG = (float(ui.y) - colorBoundsAlternate.x) / (colorBoundsAlternate.y - colorBoundsAlternate.x);
-	vec4 rawVals = vec4(scR, scG, .0, 1.);
-
 	// computed color :
 	vec4 compColor = vec4(.1,.1, .1, 1.);
 	if (checkAndColorizeVoxel(ui, compColor) == false) {
-		compColor = vec4(1., .0, .0, .2);
+		compColor = vec4(.8, .8, .8, 1.);
 	}
 
 	color = compColor;
@@ -110,39 +106,31 @@ bool isFragmentVisible() {
 }
 
 bool checkAndColorizeVoxel(in uvec3 voxel, out vec4 return_color) {
-	// In this function, we'll determine the color the voxel should have. Here is how
-	// we determine which channel should be shown, and which should not :
-	//	- If there is only one channel to show : (nbChannels == 1)
-	//		- Then we colorize the voxel the regular way : with voxel.r
-	//	- If not, we'll read the value of the 'primaryChannel' uniform :
-	//		- Allows to set the primary[_.*] and secondary[_.*] variables
-	//		- Check primary is within its bounds, _AND_ visible in texture :
-	//			- if it is, color the voxel according to this and return TRUE
-	//			- Otherwise, do the same for secondary. Check bounds, visibility and :
-	//				- If available, show it and return TRUE !
-	//				- If not, return FALSE !
+	float voxVal;
+	vec2 cB, tB;
+	bool isRed = false;
+	bool canSwitch = false;
 
-	float r = float(voxel.r);
-	float g = float(voxel.g);
-
-	bool redVisible = (r >= textureBounds.x) || (r <= textureBounds.y);
-	bool greenVisible = (g >= textureBoundsAlternate.x) || (g <= textureBoundsAlternate.y);
+	vec4 compColor = voxelIdxToColor(voxel);
 
 	if (rgbMode == 1u) {
-		if (redVisible) {
-			return_color = voxelIdxToColor(voxel);
-			return true;
+		voxVal = float(voxel.r);
+		if (voxVal >= textureBounds.x && voxVal < textureBounds.y) {
+			compColor = voxelIdxToColor(voxel);
 		} else { return false; }
-	} else if (rgbMode == 2u) {
-		if (greenVisible) {
-			return_color = voxelIdxToColor(voxel);
-			return true;
+	}
+	if (rgbMode == 2u) {
+		voxVal = float(voxel.g);
+		if (voxVal >= textureBoundsAlternate.x && voxVal < textureBoundsAlternate.y) {
+			compColor = voxelIdxToColor(voxel);
 		} else { return false; }
-	} else if (rgbMode == 3u) {
+	}
+	if (rgbMode == 3u) {
 		// Just color the thing, see later for boundary conditions :
-		return_color = voxelIdxToColor(voxel);
-		return true;
+		compColor = voxelIdxToColor(voxel);
 	}
 
-	return false;
+	if (compColor.a < .0f) { return false; }
+	return_color = compColor;
+	return true;
 }
