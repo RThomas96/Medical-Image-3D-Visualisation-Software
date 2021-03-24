@@ -352,7 +352,7 @@ void GridControl::setupSignals() {
 	connect(this->button_SaveButton, &QPushButton::clicked, this, &GridControl::saveToFile);
 
 	connect(this->button_modifyBaseDir, &QPushButton::clicked, [this]() {
-		QDir newDir = QFileDialog::getExistingDirectory(this, "Pick a save dialog", this->baseDir.path());
+		QDir newDir = QFileDialog::getExistingDirectory(this, "Pick a save dialog", this->baseDir.path(), QFileDialog::DontUseNativeDialog);
 		if (newDir.isReadable()) {
 			this->baseDir = newDir;
 		} else {

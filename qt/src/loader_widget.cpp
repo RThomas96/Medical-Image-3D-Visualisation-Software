@@ -398,7 +398,7 @@ void GridLoaderWidget::loadGridDIM1channel() {
 	QMessageBox* msgBox = new QMessageBox;
 	msgBox->setAttribute(Qt::WA_DeleteOnClose);
 
-	QString filenameR = QFileDialog::getOpenFileName(this, "Open DIM/IMA image", this->basePath.path(), "DIM/IMA header files (*.dim)");
+	QString filenameR = QFileDialog::getOpenFileName(this, "Open DIM/IMA image", this->basePath.path(), "DIM/IMA header files (*.dim)", nullptr, QFileDialog::DontUseNativeDialog);
 	if (filenameR.isEmpty()) {
 		msgBox->critical(this, "Error !", "No filenames provided !");
 		this->readerR.reset(); this->readerR = nullptr;
@@ -428,7 +428,7 @@ void GridLoaderWidget::loadGridDIM2channel() {
 	QMessageBox* msgBox = new QMessageBox;
 	msgBox->setAttribute(Qt::WA_DeleteOnClose);
 
-	QString filenameR = QFileDialog::getOpenFileName(this, "Open DIM/IMA image (Red channel)", this->basePath.path(), "DIM/IMA header files (*.dim)");
+	QString filenameR = QFileDialog::getOpenFileName(this, "Open DIM/IMA image (Red channel)", this->basePath.path(), "DIM/IMA header files (*.dim)", nullptr, QFileDialog::DontUseNativeDialog);
 	if (filenameR.isEmpty()) {
 		msgBox->critical(this, "Error !", "No filenames provided !");
 		this->readerR.reset(); this->readerR = nullptr;
@@ -439,7 +439,7 @@ void GridLoaderWidget::loadGridDIM2channel() {
 	// update path from last file picker :
 	this->basePath.setPath(QFileInfo(filenameR).path());
 
-	QString filenameG = QFileDialog::getOpenFileName(this, "Open DIM/IMA image (Blue channel)", this->basePath.path(), "DIM/IMA header files (*.dim)");
+	QString filenameG = QFileDialog::getOpenFileName(this, "Open DIM/IMA image (Blue channel)", this->basePath.path(), "DIM/IMA header files (*.dim)", nullptr, QFileDialog::DontUseNativeDialog);
 	if (filenameG.isEmpty()) {
 		msgBox->critical(this, "Error !", "No filenames provided !");
 		this->readerR.reset(); this->readerR = nullptr;

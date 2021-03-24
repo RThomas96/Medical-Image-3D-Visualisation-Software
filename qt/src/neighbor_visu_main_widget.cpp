@@ -1,7 +1,5 @@
 #include "../include/neighbor_visu_main_widget.hpp"
 
-#include "../include/color_control.hpp"
-
 #include <QLabel>
 #include <QEvent>
 #include <QSplitter>
