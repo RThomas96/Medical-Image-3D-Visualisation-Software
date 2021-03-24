@@ -91,8 +91,6 @@ ColorBoundControl::~ColorBoundControl() {
 	delete this->button_baseColor1;
 
 	delete this->grid;
-
-	this->_main->removeColorControl();
 }
 
 void ColorBoundControl::setMinColorBound(int val) {

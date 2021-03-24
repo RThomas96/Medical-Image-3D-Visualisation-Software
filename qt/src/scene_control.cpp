@@ -44,17 +44,64 @@ void ColorButton::setColor(QColor _color) {
 
 QColor ColorButton::getColor() const { return this->color; }
 
+ColorBoundsControl::ColorBoundsControl(Scene *_scene, bool _prim, QWidget *parent) : QWidget(parent) {
+	this->_primary = _prim;
+	this->scene = _scene;
+	this->sb_min = new QSpinBox;
+	this->sb_max = new QSpinBox;
+	this->sb_min->setRange(0, 65535);
+	this->sb_max->setRange(0, 65535);
+	this->layout = new QGridLayout;
+	QLabel* label_min = new QLabel("Minimum");
+	QLabel* label_max = new QLabel("Maximum");
+	this->getCurrentValues();
+	this->layout->addWidget(label_min, 0, 0);
+	this->layout->addWidget(label_max, 0, 1);
+	this->layout->addWidget(this->sb_min, 1, 0);
+	this->layout->addWidget(this->sb_max, 1, 1);
+	this->setLayout(this->layout);
+	QObject::connect(this->sb_min, QOverload<int>::of(&QSpinBox::valueChanged), this, &ColorBoundsControl::minChanged);
+	QObject::connect(this->sb_max, QOverload<int>::of(&QSpinBox::valueChanged), this, &ColorBoundsControl::maxChanged);
+	this->setAttribute(Qt::WA_DeleteOnClose);
+	if (this->_primary) {
+		this->setWindowTitle("Red bounds");
+	} else {
+		this->setWindowTitle("Green bounds");
+	}
+}
+
+ColorBoundsControl::~ColorBoundsControl() = default;
+
+void ColorBoundsControl::getCurrentValues() {
+	int mi, ma;
+	if (this->_primary) {
+		mi = static_cast<int>(this->scene->getMinColorValue());
+		ma = static_cast<int>(this->scene->getMaxColorValue());
+	} else {
+		mi = static_cast<int>(this->scene->getMinColorValueAlternate());
+		ma = static_cast<int>(this->scene->getMaxColorValueAlternate());
+	}
+	this->sb_min->setValue(mi);
+	this->sb_max->setValue(ma);
+}
+
 ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, QWidget* parent) : QWidget(parent), sceneToControl(scene), viewer(lv) {
 	this->min = std::numeric_limits<DiscreteGrid::data_t>::lowest();
 	this->max = std::numeric_limits<DiscreteGrid::data_t>::max();
 	this->minAlternate = std::numeric_limits<DiscreteGrid::data_t>::lowest();
 	this->maxAlternate = std::numeric_limits<DiscreteGrid::data_t>::max();
 
+	this->cb_red_bounds = nullptr;
+	this->cb_green_bounds = nullptr;
+
+	this->button_red_colorbounds = new QPushButton("Change min/max");
+	this->button_green_colorbounds = new QPushButton("Change min/max");
+
 	// Create the groupboxes and their layouts :
 	this->groupbox_red = new QGroupBox;
 	this->groupbox_green = new QGroupBox;
-	this->layout_widgets_red = new QHBoxLayout;
-	this->layout_widgets_green = new QHBoxLayout;
+	this->layout_widgets_red = new QGridLayout;
+	this->layout_widgets_green = new QGridLayout;
 	this->groupbox_red->setCheckable(true);
 	this->groupbox_green->setCheckable(true);
 	this->groupbox_red->setTitle("Red");
@@ -94,16 +141,20 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, QWidget* parent) : QW
 	this->rangeslider_green->setMinValue(0);
 	this->rangeslider_green->setMaxValue(this->max-2);
 
-	this->layout_widgets_red->addWidget(this->colorbutton_red_min);
-	this->layout_widgets_red->addWidget(this->rangeslider_red); this->layout_widgets_red->setStretch(1, 10);
-	this->layout_widgets_red->addWidget(this->colorbutton_red_max);
-	this->layout_widgets_red->addWidget(this->red_coloration);
+	this->layout_widgets_red->addWidget(this->colorbutton_red_min, 0, 0, 2, 1);
+	this->layout_widgets_red->addWidget(this->rangeslider_red, 0, 1, 2, 1);
+	this->layout_widgets_red->setColumnStretch(1, 10);
+	this->layout_widgets_red->addWidget(this->colorbutton_red_max, 0, 2, 2, 1);
+	this->layout_widgets_red->addWidget(this->red_coloration, 0, 3, 1, 1);
+	this->layout_widgets_red->addWidget(this->button_red_colorbounds, 1, 3, 1, 1);
 	this->groupbox_red->setLayout(this->layout_widgets_red);
 
-	this->layout_widgets_green->addWidget(this->colorbutton_green_min);
-	this->layout_widgets_green->addWidget(this->rangeslider_green); this->layout_widgets_green->setStretch(1, 10);
-	this->layout_widgets_green->addWidget(this->colorbutton_green_max);
-	this->layout_widgets_green->addWidget(this->green_coloration);
+	this->layout_widgets_green->addWidget(this->colorbutton_green_min, 0, 0, 2, 1);
+	this->layout_widgets_green->addWidget(this->rangeslider_green, 0, 1, 2, 1);
+	this->layout_widgets_green->setColumnStretch(1, 10);
+	this->layout_widgets_green->addWidget(this->colorbutton_green_max, 0, 2, 2, 1);
+	this->layout_widgets_green->addWidget(this->green_coloration, 0, 3, 1, 1);
+	this->layout_widgets_green->addWidget(this->button_green_colorbounds, 1, 3, 1, 1);
 	this->groupbox_green->setLayout(this->layout_widgets_green);
 
 	QLabel* label_Texture = new QLabel("Image intensities");
@@ -157,6 +208,9 @@ void ControlPanel::initSignals() {
 	// connect the comboboxes to their methods :
 	QObject::connect(this->red_coloration, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &ControlPanel::updateChannelRed);
 	QObject::connect(this->green_coloration, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &ControlPanel::updateChannelGreen);
+
+	QObject::connect(this->button_red_colorbounds, &QPushButton::clicked, this, &ControlPanel::launchRedColorBounds);
+	QObject::connect(this->button_green_colorbounds, &QPushButton::clicked, this, &ControlPanel::launchGreenColorBounds);
 }
 
 void ControlPanel::updateViewers() {
@@ -208,6 +262,44 @@ void ControlPanel::updateValues(void) {
 
 void ControlPanel::updateLabels(void) {
 	//
+}
+
+void ControlPanel::launchRedColorBounds() {
+	if (this->cb_red_bounds == nullptr) {
+		this->cb_red_bounds = new ColorBoundsControl(this->sceneToControl, true, nullptr);
+		QObject::connect(this->cb_red_bounds, &QWidget::destroyed, this, [this]() -> void {
+			this->cb_red_bounds = nullptr;
+		});
+		QObject::connect(this->cb_red_bounds, &ColorBoundsControl::minChanged, this, [this](int val) {
+			this->updateMinValue(val);
+			this->sceneToControl->slotSetMinColorValue(static_cast<DiscreteGrid::data_t>(val));
+		});
+		QObject::connect(this->cb_red_bounds, &ColorBoundsControl::maxChanged, this, [this](int val) {
+			this->updateMaxValue(val);
+			this->sceneToControl->slotSetMaxColorValue(static_cast<DiscreteGrid::data_t>(val));
+		});
+	}
+	this->cb_red_bounds->raise();
+	this->cb_red_bounds->show();
+}
+
+void ControlPanel::launchGreenColorBounds() {
+	if (this->cb_green_bounds == nullptr) {
+		this->cb_green_bounds = new ColorBoundsControl(this->sceneToControl, false, nullptr);
+		QObject::connect(this->cb_green_bounds, &QWidget::destroyed, this, [this]() -> void {
+			this->cb_green_bounds = nullptr;
+		});
+		QObject::connect(this->cb_green_bounds, &ColorBoundsControl::minChanged, this, [this](int val) {
+			this->updateMinValueAlternate(val);
+			this->sceneToControl->slotSetMinColorValueAlternate(static_cast<DiscreteGrid::data_t>(val));
+		});
+		QObject::connect(this->cb_green_bounds, &ColorBoundsControl::maxChanged, this, [this](int val) {
+			this->updateMaxValueAlternate(val);
+			this->sceneToControl->slotSetMaxColorValueAlternate(static_cast<DiscreteGrid::data_t>(val));
+		});
+	}
+	this->cb_green_bounds->raise();
+	this->cb_green_bounds->show();
 }
 
 void ControlPanel::updateRGBMode() {

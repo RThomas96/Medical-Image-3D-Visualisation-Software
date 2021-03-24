@@ -42,6 +42,27 @@ class ColorButton : public QWidget {
 		QVBoxLayout* layout;
 };
 
+class ColorBoundsControl : public QWidget {
+	Q_OBJECT
+	public:
+		ColorBoundsControl(Scene* scene, bool _primary, QWidget* parent = nullptr);
+		virtual ~ColorBoundsControl(void);
+	signals:
+		void minChanged(int val);
+		void maxChanged(int val);
+	public:
+		int getMin(void) const;
+		int getMax(void) const;
+	protected:
+		void getCurrentValues();
+	protected:
+		bool _primary;
+		Scene* scene;
+		QSpinBox* sb_min;
+		QSpinBox* sb_max;
+		QGridLayout* layout;
+};
+
 class ControlPanel : public QWidget {
 		Q_OBJECT
 	public:
@@ -60,6 +81,8 @@ class ControlPanel : public QWidget {
 		void updateRGBMode(void);
 		void updateChannelRed(int value);
 		void updateChannelGreen(int value);
+		void launchRedColorBounds(void);
+		void launchGreenColorBounds(void);
 	private:
 		/// @b The scene to control !
 		Scene* const sceneToControl;
@@ -75,9 +98,9 @@ class ControlPanel : public QWidget {
 		RangeSlider* rangeslider_green;
 
 		/// @b The layout of the red groupbox
-		QHBoxLayout* layout_widgets_red;
+		QGridLayout* layout_widgets_red;
 		/// @b The layout of the green groupbox
-		QHBoxLayout* layout_widgets_green;
+		QGridLayout* layout_widgets_green;
 
 		/// @b Minimum color of the color segment for the red channel
 		ColorButton* colorbutton_red_min;
@@ -87,6 +110,13 @@ class ControlPanel : public QWidget {
 		ColorButton* colorbutton_green_min;
 		/// @b Minimum color of the color segment for the green channel
 		ColorButton* colorbutton_green_max;
+
+		/// @b Button to launch a dialog to change the color bounds or the red channel
+		QPushButton* button_red_colorbounds;
+		ColorBoundsControl* cb_red_bounds;
+		/// @b Button to launch a dialog to change the color bounds or the green channel
+		QPushButton* button_green_colorbounds;
+		ColorBoundsControl* cb_green_bounds;
 
 		/// @b Picker for the coloration method of the red channel
 		QComboBox* red_coloration;

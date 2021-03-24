@@ -19,7 +19,6 @@ MainWidget::MainWidget() {
 	this->widgetSizeSet = false;
 	this->usettings = nullptr;
 	this->loaderWidget = nullptr;
-	this->colorControl = nullptr;
 	// Query a user settings instance to initialize it :
 	UserSettings set = UserSettings::getInstance();
 }
@@ -53,20 +52,6 @@ MainWidget::~MainWidget() {
 	this->strayObj.clear();
 }
 
-void MainWidget::addColorControl() {
-	if (this->colorControl == nullptr) {
-		this->colorControl = new ColorBoundWidget(this->scene, this->controlPanel, this, nullptr);
-	}
-	this->colorControl->show();
-	this->colorControl->raise();
-	return;
-}
-
-void MainWidget::removeColorControl() {
-	this->colorControl = nullptr;
-	return;
-}
-
 void MainWidget::setupWidgets() {
 	this->glDebug = new OpenGLDebugLog;
 	this->scene = new Scene();
@@ -83,7 +68,6 @@ void MainWidget::setupWidgets() {
 	this->action_addGrid = new QAction("Open images");
 	this->action_saveGrid = new QAction("Save acquisition");
 	this->action_showVisuBox = new QAction("Show visu box controller");
-	this->action_showColorControl = new QAction("Show color controller");
 	this->action_exitProgram = new QAction("Exit program");
 	this->action_drawModeS = new QAction("Set draw mode to Solid");
 	this->action_drawModeV = new QAction("Set draw mode to Volumetric");
@@ -107,7 +91,6 @@ void MainWidget::setupWidgets() {
 	this->viewMenu->addAction(this->action_drawModeV);
 	this->viewMenu->addAction(this->action_drawModeVB);
 	this->viewMenu->addAction(this->action_showVisuBox);
-	this->viewMenu->addAction(this->action_showColorControl);
 	// help menu :
 	this->helpMenu = this->menuBar()->addMenu("&Help");
 	this->helpMenu->addAction(this->action_showHelp3D);
@@ -126,7 +109,6 @@ void MainWidget::setupWidgets() {
 	});
 	QObject::connect(this->action_saveGrid, &QAction::triggered, [this](){this->scene->launchSaveDialog();});
 	QObject::connect(this->action_showVisuBox, &QAction::triggered, [this](){this->scene->showVisuBoxController();});
-	QObject::connect(this->action_showColorControl, &QAction::triggered, this, &MainWidget::addColorControl);
 	QObject::connect(this->action_exitProgram, &QAction::triggered, this, &QMainWindow::close);
 	QObject::connect(this->action_drawModeS, &QAction::triggered, [this](){this->scene->setDrawMode(DrawMode::Solid);});
 	QObject::connect(this->action_drawModeV, &QAction::triggered, [this](){this->scene->setDrawMode(DrawMode::Volumetric);});
