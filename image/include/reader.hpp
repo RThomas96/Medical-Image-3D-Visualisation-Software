@@ -49,11 +49,29 @@ namespace IO {
 				}
 				return retval;
 			}
+			/// @b Allows to immediately end a task.
+			void end(void) {
+				if (this->m_lock.try_lock_for(std::chrono::milliseconds(100))) {
+					this->maxSteps = 1;
+					this->currentStep = 2;
+					this->m_lock.unlock();
+				}
+				return;
+			}
 			/// @b Check if the task has steps.
 			bool hasSteps(void) {
 				bool retval = false;
 				if (this->m_lock.try_lock_for(std::chrono::milliseconds(100))) {
 					retval = this->maxSteps > std::size_t(0);
+					this->m_lock.unlock();
+				}
+				return retval;
+			}
+			/// @b Get the maximum number of steps possible
+			std::size_t getMaxSteps(void) {
+				std::size_t retval = 0;
+				if (this->m_lock.try_lock_for(std::chrono::milliseconds(100))) {
+					retval = this->maxSteps;
 					this->m_lock.unlock();
 				}
 				return retval;
@@ -75,6 +93,13 @@ namespace IO {
 				}
 				return retval;
 			}
+			void setAdvancement(std::size_t newcurrentvalue) {
+				if (this->m_lock.try_lock_for(std::chrono::milliseconds(100))) {
+					this->currentStep = newcurrentvalue;
+					this->m_lock.unlock();
+				}
+				return;
+			}
 			/// @b Advances a step (thread-safe)
 			void advance(void) {
 				if (this->m_lock.try_lock_for(std::chrono::milliseconds(100))) {
@@ -82,15 +107,6 @@ namespace IO {
 					this->m_lock.unlock();
 				}
 				return;
-			}
-			/// @b Get the maximum number of steps possible
-			std::size_t getMaxSteps(void) {
-				std::size_t retval = 0;
-				if (this->m_lock.try_lock_for(std::chrono::milliseconds(100))) {
-					retval = this->maxSteps;
-					this->m_lock.unlock();
-				}
-				return retval;
 			}
 		protected:
 			std::timed_mutex m_lock;				/// @b The mutex resposible for thread-safety.
@@ -201,7 +217,7 @@ namespace IO {
 			virtual GenericGridReader& setUserIntensityLimits(data_t min, data_t max);
 
 			/// @brief Pre-compute some image data, such as size, voxel dimensions (...)
-			virtual GenericGridReader& parseImageInfo();
+			virtual GenericGridReader& parseImageInfo(ThreadedTask::Ptr& task);
 
 			/// @brief Starts the image loading process.
 			virtual GenericGridReader& loadImage(ThreadedTask::Ptr& task);
@@ -312,7 +328,7 @@ namespace IO {
 			DIMReader(data_t _thresh);
 			virtual ~DIMReader(void);
 
-			virtual DIMReader& parseImageInfo() override;
+			virtual DIMReader& parseImageInfo(ThreadedTask::Ptr& task) override;
 
 			/// @brief Loads the image from disk. If no filenames are provided, loads nothing.
 			virtual DIMReader& loadImage(ThreadedTask::Ptr& task) override;
@@ -336,7 +352,7 @@ namespace IO {
 			StackedTIFFReader(data_t thresh);
 			virtual ~StackedTIFFReader(void);
 
-			virtual StackedTIFFReader& parseImageInfo() override;
+			virtual StackedTIFFReader& parseImageInfo(ThreadedTask::Ptr& task) override;
 
 			/// @brief Loads the image from disk. If no filenames are provided, does nothing.
 			virtual StackedTIFFReader& loadImage(ThreadedTask::Ptr& task) override;
@@ -409,7 +425,7 @@ namespace IO {
 			virtual ~libTIFFReader(void);
 
 			/// @brief Pre-computes image data, and throws if the image is not valid.
-			virtual libTIFFReader& parseImageInfo() noexcept(false) override;
+			virtual libTIFFReader& parseImageInfo(ThreadedTask::Ptr& task) noexcept(false) override;
 
 			/// @brief Loads the image from disk. If no filenames are provided, does nothing.
 			virtual libTIFFReader& loadImage(ThreadedTask::Ptr& task) override;

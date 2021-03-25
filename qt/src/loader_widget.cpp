@@ -80,6 +80,11 @@ void GridLoaderWidget::setupWidgets() {
 	this->label_gridInfoR = new QLabel("<No grid loaded>");
 	this->label_gridInfoG = new QLabel("");
 
+	this->progress_load = new QProgressBar;
+	QSizePolicy retain_size_policy = this->progress_load->sizePolicy();
+	retain_size_policy.setRetainSizeWhenHidden(true);
+	this->progress_load->setSizePolicy(retain_size_policy);
+
 	this->button_loadDIM_1channel = new QPushButton("DIM/IMA");
 	this->button_loadDIM_2channel = new QPushButton("DIM/IMA");
 	this->button_loadTIF_1channel = new QPushButton("TIFF");
@@ -242,10 +247,13 @@ void GridLoaderWidget::setupLayouts() {
 	this->layout_mainLayout->addStretch(1);
 	this->layout_mainLayout->addWidget(this->frame_transfoDetails);
 	this->layout_mainLayout->addStretch(1);
+	this->layout_mainLayout->addWidget(this->progress_load);
 	this->layout_mainLayout->addWidget(this->button_loadGrids);
 
 	// set main layout :
 	this->setLayout(this->layout_mainLayout);
+
+	this->progress_load->hide();
 }
 
 void GridLoaderWidget::setupSignals() {
@@ -364,6 +372,7 @@ void GridLoaderWidget::disableWidgets() {
 	this->groupBox_downsampling->setDisabled(true);
 	this->groupBox_interpolator->setDisabled(true);
 	this->groupbox_userLimits->setDisabled(true);
+	this->groupbox_originalOffset->setDisabled(true);
 
 	this->label_headerLoader->setDisabled(true);
 	this->label_load1channel->setDisabled(true);
@@ -440,7 +449,42 @@ void GridLoaderWidget::loadGridDIM1channel() {
 	delete msgBox;
 
 	this->readerR->setFilenames(fnR);
-	this->readerR->parseImageInfo();
+
+	// Create task and thread :
+	IO::ThreadedTask::Ptr parseTask = std::make_shared<IO::ThreadedTask>();
+	std::thread parseThread([this, &parseTask](void) -> void {
+		this->readerR->parseImageInfo(parseTask);
+	});
+	// Wait for task initialization
+	do {
+		std::this_thread::sleep_for(std::chrono::milliseconds(5));
+		QCoreApplication::processEvents();
+		this->update();
+	} while (not parseTask->hasSteps());
+	// Set and show progress bar :
+	this->progress_load->setRange(0, parseTask->getMaxSteps());
+	this->progress_load->setTextVisible(parseTask->getAdvancement());
+	this->progress_load->show();
+
+	// Loop while parsing files in other thread :
+	bool shouldStop = false;
+	do {
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		std::size_t currentSteps = 0;
+		if (parseTask->hasSteps()) { currentSteps = parseTask->getAdvancement(); }
+
+		this->progress_load->setRange(0, parseTask->getMaxSteps());
+		this->progress_load->setValue(currentSteps);
+		// Needed to update the main window ...
+		QCoreApplication::processEvents();
+		this->update();
+
+		shouldStop = parseTask->isComplete();
+	} while (shouldStop == false);
+	if (parseThread.joinable()) { parseThread.join(); }
+
+	this->progress_load->hide();
+
 	this->computeGridInfoLabel();
 }
 
@@ -482,11 +526,48 @@ void GridLoaderWidget::loadGridDIM2channel() {
 	fnG.push_back(filenameG.toStdString());
 
 	delete msgBox;
-
 	this->readerR->setFilenames(fnR);
-	this->readerR->parseImageInfo();
 	this->readerG->setFilenames(fnG);
-	this->readerG->parseImageInfo();
+
+	// Create task and thread :
+	IO::ThreadedTask::Ptr parseTask_R = std::make_shared<IO::ThreadedTask>();
+	IO::ThreadedTask::Ptr parseTask_G = std::make_shared<IO::ThreadedTask>();
+	std::thread parseThread_R([this, &parseTask_R](void) -> void { this->readerR->parseImageInfo(parseTask_R); });
+	std::thread parseThread_G([this, &parseTask_G](void) -> void { this->readerG->parseImageInfo(parseTask_G); });
+	// Wait for task initialization
+	do {
+		std::this_thread::sleep_for(std::chrono::milliseconds(5));
+		QCoreApplication::processEvents();
+		this->update();
+	} while (not (parseTask_R->hasSteps() && parseTask_G->hasSteps()));
+	std::size_t maxSteps = parseTask_G->getMaxSteps() + parseTask_R->getMaxSteps();
+	// Set and show progress bar :
+	this->progress_load->setRange(0, maxSteps);
+	this->progress_load->setTextVisible(0);
+	this->progress_load->show();
+
+	// Loop while parsing files in other thread :
+	bool shouldStop = false;
+	do {
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		std::size_t currentSteps = 0;
+		std::size_t maxStepsLoop = 0;
+		if (parseTask_R->hasSteps()) { currentSteps += parseTask_R->getAdvancement(); maxStepsLoop += parseTask_R->getMaxSteps(); }
+		if (parseTask_G->hasSteps()) { currentSteps += parseTask_G->getAdvancement(); maxStepsLoop += parseTask_G->getMaxSteps(); }
+
+		this->progress_load->setRange(0, maxStepsLoop);
+		this->progress_load->setValue(currentSteps);
+		// Needed to update the main window ...
+		QCoreApplication::processEvents();
+		this->update();
+
+		shouldStop = parseTask_R->isComplete() && parseTask_G->isComplete();
+	} while (shouldStop == false);
+	if (parseThread_R.joinable()) { parseThread_R.join(); }
+	if (parseThread_G.joinable()) { parseThread_G.join(); }
+
+	this->progress_load->hide();
+
 	this->computeGridInfoLabel();
 }
 
@@ -515,7 +596,40 @@ void GridLoaderWidget::loadGridTIF1channel() {
 	delete msgBox;
 
 	this->readerR->setFilenames(fnR);
-	this->readerR->parseImageInfo();
+
+	// Create task and thread :
+	IO::ThreadedTask::Ptr parseTask = std::make_shared<IO::ThreadedTask>();
+	std::thread parseThread([this, &parseTask](void) -> void {
+		this->readerR->parseImageInfo(parseTask);
+	});
+	// Wait for task initialization
+	do {
+		std::this_thread::sleep_for(std::chrono::milliseconds(5));
+		QCoreApplication::processEvents();
+		this->update();
+	} while (not parseTask->hasSteps());
+	// Set and show progress bar :
+	this->progress_load->setRange(0, parseTask->getMaxSteps());
+	this->progress_load->setTextVisible(parseTask->getAdvancement());
+	this->progress_load->show();
+
+	// Loop while parsing files in other thread :
+	bool shouldStop = false;
+	do {
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		std::size_t currentSteps = 0;
+		if (parseTask->hasSteps()) { currentSteps = parseTask->getAdvancement(); }
+
+		this->progress_load->setRange(0, parseTask->getMaxSteps());
+		this->progress_load->setValue(currentSteps);
+		// Needed to update the main window ...
+		QCoreApplication::processEvents();
+		this->update();
+
+		shouldStop = parseTask->isComplete();
+	} while (shouldStop == false);
+	if (parseThread.joinable()) { parseThread.join(); }
+
 	this->computeGridInfoLabel();
 }
 
@@ -559,9 +673,45 @@ void GridLoaderWidget::loadGridTIF2channel() {
 	delete msgBox;
 
 	this->readerR->setFilenames(fnR);
-	this->readerR->parseImageInfo();
 	this->readerG->setFilenames(fnG);
-	this->readerG->parseImageInfo();
+
+	// Create task and thread :
+	IO::ThreadedTask::Ptr parseTask_R = std::make_shared<IO::ThreadedTask>();
+	IO::ThreadedTask::Ptr parseTask_G = std::make_shared<IO::ThreadedTask>();
+	std::thread parseThread_R([this, &parseTask_R](void) -> void { this->readerR->parseImageInfo(parseTask_R); });
+	std::thread parseThread_G([this, &parseTask_G](void) -> void { this->readerG->parseImageInfo(parseTask_G); });
+	// Wait for task initialization
+	do {
+		std::this_thread::sleep_for(std::chrono::milliseconds(5));
+		QCoreApplication::processEvents();
+		this->update();
+	} while (not (parseTask_R->hasSteps() && parseTask_G->hasSteps()));
+	std::size_t maxSteps = parseTask_G->getMaxSteps() + parseTask_R->getMaxSteps();
+	// Set and show progress bar :
+	this->progress_load->setRange(0, maxSteps);
+	this->progress_load->setTextVisible(0);
+	this->progress_load->show();
+
+	// Loop while parsing files in other thread :
+	bool shouldStop = false;
+	do {
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		std::size_t currentSteps = 0;
+		std::size_t maxStepsLoop = 0;
+		if (parseTask_R->hasSteps()) { currentSteps += parseTask_R->getAdvancement(); maxStepsLoop += parseTask_R->getMaxSteps(); }
+		if (parseTask_G->hasSteps()) { currentSteps += parseTask_G->getAdvancement(); maxStepsLoop += parseTask_G->getMaxSteps(); }
+
+		this->progress_load->setRange(0, maxStepsLoop);
+		this->progress_load->setValue(currentSteps);
+		// Needed to update the main window ...
+		QCoreApplication::processEvents();
+		this->update();
+
+		shouldStop = parseTask_R->isComplete() && parseTask_G->isComplete();
+	} while (shouldStop == false);
+	if (parseThread_R.joinable()) { parseThread_R.join(); }
+	if (parseThread_G.joinable()) { parseThread_G.join(); }
+
 	this->computeGridInfoLabel();
 }
 
@@ -627,7 +777,6 @@ void GridLoaderWidget::loadGrid() {
 
 	IO::ThreadedTask::Ptr taskR = std::make_shared<IO::ThreadedTask>();
 	IO::ThreadedTask::Ptr taskG = std::make_shared<IO::ThreadedTask>();
-	this->progress_load = new QProgressBar;
 	std::size_t maxSteps;
 
 	std::thread threadRed = std::thread([this, &taskR](void) -> void {
@@ -652,8 +801,6 @@ void GridLoaderWidget::loadGrid() {
 
 	// Setup the progress bar :
 	this->progress_load->setRange(0,maxSteps);
-	this->layout_mainLayout->addWidget(this->progress_load);
-	this->setLayout(this->layout_mainLayout);
 	this->disableWidgets();
 
 	////////////////////////////////////////

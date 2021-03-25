@@ -98,7 +98,7 @@ namespace IO {
 		this->data.clear();
 	}
 
-	GenericGridReader& GenericGridReader::parseImageInfo() { return *this; }
+	GenericGridReader& GenericGridReader::parseImageInfo(ThreadedTask::Ptr& task) { task->setSteps(0); return *this; }
 
 	GenericGridReader& GenericGridReader::setDataThreshold(data_t _thresh) {
 		this->threshold = _thresh;
@@ -220,18 +220,27 @@ namespace IO {
 		if (this->imaFile != nullptr) { this->imaFile->close(); }
 	}
 
-	DIMReader& DIMReader::parseImageInfo() {
-		if (this->isAnalyzed == true) { return *this; }
+	DIMReader& DIMReader::parseImageInfo(ThreadedTask::Ptr& task) {
+		if (this->isAnalyzed == true) {
+			task->end();
+			return *this;
+		}
 		if (this->filenames.size() == 0) {
 			std::cerr << "[LOG] No filenames were provided, nothing will be loaded." << '\n';
+			task->end();
 			return *this;
 		}
 		this->isAnalyzed = true;
 
 		// if the files have already been opened, no need
 		// to re-open them (data was already precomputed) :
-		if (this->dimFile != nullptr) { return *this; }
-		if (this->imaFile != nullptr) { return *this; }
+		if (this->dimFile != nullptr) { task->end(); return *this; }
+		if (this->imaFile != nullptr) { task->end(); return *this; }
+
+		// Steps (2) :
+		// read image dimensions
+		// compute the default variables
+		task->setSteps(2);
 
 		try {
 			// Open with the given filename :
@@ -246,6 +255,8 @@ namespace IO {
 		(*this->dimFile) >> this->imageDimensions.x;
 		(*this->dimFile) >> this->imageDimensions.y;
 		(*this->dimFile) >> this->imageDimensions.z;
+
+		task->advance();
 
 		std::cerr << "[LOG] parseImageInfo() : Image dimensions : " << this->imageDimensions.x << ',' << this->imageDimensions.y << ',' << this->imageDimensions.z << '\n';
 
@@ -278,6 +289,8 @@ namespace IO {
 		this->boundingBox.setMax(maxCoord);
 
 		this->gridDimensions = this->imageDimensions;
+
+		task->advance();
 
 		return *this;
 	}
@@ -321,7 +334,7 @@ namespace IO {
 		}
 
 		if (this->isAnalyzed == false) {
-			this->parseImageInfo();
+			this->parseImageInfo(task);
 		}
 		// Compute voxel and grid sizes :
 		sizevec3 dataDims = this->imageDimensions;
@@ -546,13 +559,16 @@ namespace IO {
 		std::cerr << "[LOG] Destroying stacked TIFF reader\n";
 	}
 
-	StackedTIFFReader& StackedTIFFReader::parseImageInfo() {
+	StackedTIFFReader& StackedTIFFReader::parseImageInfo(ThreadedTask::Ptr& task) {
 		if (this->isAnalyzed == true) { return *this; }
 		if (this->filenames.size() == 0) {
 			std::cerr << "[LOG] No filenames were provided, nothing will be loaded." << '\n';
+			task->end();
 			return *this;
 		}
 		this->isAnalyzed = true;
+
+		task->setSteps(this->filenames.size());
 
 		// Count the # of frames in the stack :
 		std::size_t nbFrames = 0;
@@ -572,6 +588,8 @@ namespace IO {
 				this->sliceToFilename.push_back(std::make_pair(i, localNBFrames));
 				nbFrames++; localNBFrames++;
 			} while (TinyTIFFReader_hasNext(this->tiffFile));
+
+			task->advance();
 		}
 
 		std::cerr << "Finished analyzing the files. Found " << nbFrames << " frames in " << this->filenames.size() << " files.\n";
@@ -606,6 +624,8 @@ namespace IO {
 		std::cerr << "[LOG] parseImageInfo() : Bit size : " << sizeBytes << "B, " << sizeBytesf / 1024.f << "kB, "
 			<< sizeBytesf / 1024.f / 1024.f << "MB, " << sizeBytesf / 1024.f / 1024.f / 1024.f << "GB.\n";
 
+		task->advance();
+
 		return *this;
 	}
 
@@ -617,7 +637,7 @@ namespace IO {
 		}
 
 		if (this->isAnalyzed == false) {
-			this->parseImageInfo();
+			this->parseImageInfo(task);
 			task->advance();
 		}
 
@@ -1037,23 +1057,32 @@ namespace IO {
 		this->frames.clear();
 	}
 
-	libTIFFReader& libTIFFReader::parseImageInfo() noexcept(false) {
+	libTIFFReader& libTIFFReader::parseImageInfo(ThreadedTask::Ptr& task) noexcept(false) {
 		// if no filenames given, cannot preallocate data ...
-		if (this->filenames.empty()) { return *this; }
+		if (this->filenames.empty()) { task->end(); return *this; }
 
 		// if already analyzed, do nothing :
-		if (this->isAnalyzed == true) { return *this; }
+		if (this->isAnalyzed == true) { task->end(); return *this; }
 		this->isAnalyzed = true;
 
 		this->frames.clear();
 
+		// add one more than necessary, to not finish the task and add more elements later
+		task->setSteps(this->filenames.size()+1);
+
 		// Open files :
-		std::for_each(this->filenames.cbegin(), this->filenames.cend(), [this](const std::string f) { this->openFile(f); });
+		std::for_each(this->filenames.cbegin(), this->filenames.cend(), [this, &task](const std::string f) {
+			this->openFile(f);
+			task->advance();
+		});
 
 		// Since TIFF doesn't support any spatial information akin to voxel sizes, or bounding boxes, we can
 		// define a few default values here :
 
 		std::cerr << "Files opened, frame count : " << this->frames.size() << "\n";
+
+		task->setAdvancement(0);
+		task->setSteps(this->frames.size());
 
 		this->imageDimensions.x = this->frames[0].width;
 		this->imageDimensions.y = this->frames[0].height;
@@ -1061,12 +1090,13 @@ namespace IO {
 		this->gridDimensions = this->imageDimensions;
 
 		// TODO : check if we're not better off throwing an exception here ...
-		std::for_each(this->frames.cbegin(), this->frames.cend(), [this](const TIFFFrame& f) {
+		std::for_each(this->frames.cbegin(), this->frames.cend(), [this, &task](const TIFFFrame& f) {
 			if (f.width != this->imageDimensions.x || f.height != this->imageDimensions.y) {
 				std::cerr << "[ERROR_DIMENSIONS] Frame " << f.directoryOffset << " of file " << f.filename <<
 					" is not of the same dimensions. fDims = [" << f.width << ", " << f.height << "] compared to [" <<
 					this->imageDimensions.x << ", " << this->imageDimensions.y << "]\n";
 			}
+			task->advance();
 		});
 
 		this->voxelDimensions = glm::vec3(1., 1., 1.);
@@ -1084,7 +1114,7 @@ namespace IO {
 		if (this->filenames.size() == 0) { return *this; }
 
 		if (not this->isAnalyzed) {
-			this->parseImageInfo();
+			this->parseImageInfo(task);
 			task->advance();
 		}
 
