@@ -226,6 +226,10 @@ namespace IO {
 			/// @note By default, this is a pure virtual function.
 			virtual data_t getPixel(std::size_t i, std::size_t j, std::size_t k) = 0;
 
+			/// @brief Gets the pixel at position (pos), in image space.
+			/// @note By default, this is a pure virtual function.
+			virtual data_t getPixel_ImageSpace(glm::vec4 pos) = 0;
+
 			/// @brief Get the bounding box of the grid.
 			virtual bbox_t getBoundingBox(void) const;
 
@@ -318,6 +322,7 @@ namespace IO {
 			/// @brief Load a slice of the grid into memory.
 			virtual DIMReader& loadSlice(std::size_t idx, std::vector<data_t>& tgt) override;
 			virtual data_t getPixel(std::size_t i, std::size_t j, std::size_t k) override;
+			virtual data_t getPixel_ImageSpace(glm::vec4 pos) override;
 
 		protected:
 			/// @brief The DIM file
@@ -351,6 +356,7 @@ namespace IO {
 
 			/// @brief Returns the point at the index (i,j,k).
 			virtual data_t getPixel(std::size_t i, std::size_t j, std::size_t k) override;
+			virtual data_t getPixel_ImageSpace(glm::vec4 pos) override;
 
 		protected:
 			TinyTIFFReaderFile* tiffFile;	///< Currently opened file, TinyTIFF's handle.
@@ -420,6 +426,7 @@ namespace IO {
 
 			/// @brief Returns the point at the index (i,j,k).
 			virtual data_t getPixel(std::size_t i, std::size_t j, std::size_t k) override;
+			virtual data_t getPixel_ImageSpace(glm::vec4 pos) override;
 
 		protected:
 			std::vector<TIFFFrame> frames;	///< The frames contained in this stack of images

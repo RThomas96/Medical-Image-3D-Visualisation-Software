@@ -111,11 +111,18 @@ glm::vec4 DiscreteGrid::toWorldSpace(glm::vec4 pos_gs) const {
 DiscreteGrid::DataType DiscreteGrid::fetchTexelWorldSpace(glm::vec4 pos_ws, bool verbose) const {
 	if (verbose) { std::cerr << "texelWorldSpace() {" << pos_ws.x << ',' << pos_ws.y << ',' << pos_ws.z << ',' << pos_ws.a << "} ... "; }
 	glm::vec4 pos_gs = this->toGridSpace(pos_ws);
+	if (this->isOffline && this->gridReader->downsamplingLevel() != IO::DownsamplingLevel::Original) {
+		return this->gridReader->getPixel_ImageSpace(pos_gs);
+	}
 	return this->fetchTexelGridSpace(pos_gs, verbose);
 }
 
 DiscreteGrid::DataType DiscreteGrid::fetchTexelGridSpace(glm::vec4 pos_gs, bool verbose) const {
 	if (verbose) { std::cerr << "texelGridSpace() {" << pos_gs.x << ',' << pos_gs.y << ',' << pos_gs.z << ',' << pos_gs.a << "} ... "; }
+
+	if (this->isOffline && this->gridReader->downsamplingLevel() != IO::DownsamplingLevel::Original) {
+		return this->gridReader->getPixel_ImageSpace(pos_gs);
+	}
 
 	using val_t = bbox_t::vec::value_type;
 	bbox_t::vec point_bb = bbox_t::vec(static_cast<val_t>(pos_gs.x), static_cast<val_t>(pos_gs.y), static_cast<val_t>(pos_gs.z));

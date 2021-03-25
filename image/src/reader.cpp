@@ -297,6 +297,23 @@ namespace IO {
 		}
 	}
 
+	DIMReader::data_t DIMReader::getPixel_ImageSpace(glm::vec4 pos) {
+		// assumes the point is given in image space.
+		// We still need to check if if actually point to somewhere in image space, though.
+
+		// checks the point is actually in the bb :
+		if (this->boundingBox.contains(bbox_t::vec(glm::convert_to<bbox_t::data_t>(pos)))) {
+			// compute the actual coordinates of the point :
+			glm::vec3 inside_pos = glm::vec3(pos.x, pos.y, pos.z) - glm::convert_to<float>(this->boundingBox.getMin());
+			// divide by 'actual' voxel dimensions (we emulate no downsampling here) :
+			glm::uvec3 coords = inside_pos / this->voxelDimensions;
+			// Get the value !
+			return this->getPixel(coords.x, coords.y, coords.z);
+		}
+
+		return data_t(0);
+	}
+
 	DIMReader& DIMReader::loadImage(ThreadedTask::Ptr& task) {
 		if (this->downsampleLevel != DownsamplingLevel::Original && this->interpolator == nullptr) {
 			std::cerr << "[ERROR] No interpolation structure was set in this reader, even though a downsample was required.\n";
@@ -754,6 +771,22 @@ namespace IO {
 		delete[] imgData;
 
 		return retVal;
+	}
+
+	StackedTIFFReader::data_t StackedTIFFReader::getPixel_ImageSpace(glm::vec4 pos) {
+		// assumes the point is given in image space.
+		// We still need to check if if actually point to somewhere in image space, though.
+
+		// checks the point is actually in the bb :
+		if (this->boundingBox.contains(bbox_t::vec(glm::convert_to<bbox_t::data_t>(pos)))) {
+			// compute the actual coordinates of the point :
+			glm::vec3 inside_pos = glm::vec3(pos.x, pos.y, pos.z) - glm::convert_to<float>(this->boundingBox.getMin());
+			// divide by 'actual' voxel dimensions (we emulate no downsampling here) :
+			glm::uvec3 coords = inside_pos / this->voxelDimensions;
+			// Get the value !
+			return this->getPixel(coords.x, coords.y, coords.z);
+		}
+		return data_t(0);
 	}
 
 	StackedTIFFReader& StackedTIFFReader::preAllocateStorage() {
@@ -1294,14 +1327,13 @@ namespace IO {
 
 	libTIFFReader::data_t libTIFFReader::getPixel(std::size_t i, std::size_t j, std::size_t k) {
 		if (k >= this->frames.size()) { return 0; }
-		if (this->downsampleLevel == DownsamplingLevel::Low   ) { i*=2; j*=2; k*=2; }
-		if (this->downsampleLevel == DownsamplingLevel::Lower ) { i*=4; j*=4; k*=4; }
-		if (this->downsampleLevel == DownsamplingLevel::Lowest) { i*=8; j*=8; k*=8; }
 		// k will be used to get the right frame :
 		const TIFFFrame& frame = this->frames[k];
 		TIFFSetErrorHandler(nullify_tiff_errors);
 		TIFFSetWarningHandler(nullify_tiff_errors);
 		TIFF* file = TIFFOpen(frame.filename.c_str(), "r");
+
+		TIFFSetDirectory(file, frame.directoryOffset);
 
 		// j is used to get the right strip within the frame :
 		const uint16_t strip = j / frame.rowsPerStrip;
@@ -1311,19 +1343,21 @@ namespace IO {
 		// compute pixel offset :
 		uint64_t pixelOffset = 0;
 		for (uint16_t px = 0; px < frame.samplesPerPixel; ++px) { pixelOffset += frame.bitsPerSample[px]; }
-		pixelOffset/=8;
+		pixelOffset/=(8*sizeof(data_t)); // get the number of data_t elements in the buffer
 
 		std::size_t bufSize = frame.rowsPerStrip*frame.width*pixelOffset;
 		if (strip == frame.stripsPerImage-1) {
 			// last strip must read fewer bytes :
 			tsize_t last_strip_row_count = frame.height - (frame.stripsPerImage - 1)*frame.rowsPerStrip;
 			if (last_strip_row_count == 0) { throw std::runtime_error("Last strip was 0 rows tall ! Something went wrong beforehand."); }
-			bufSize = last_strip_row_count * frame.width;
+			bufSize = last_strip_row_count * frame.width * pixelOffset;
 		}
 
 		// Read the strip, and then get the right data from it :
 		data_t* rawData = new data_t[bufSize];
-		TIFFReadEncodedStrip(file, strip, rawData, bufSize*pixelOffset);
+		// note : tiffreadencodedstip() takes a size in _bytes_ as the last argument (number of bytes to decode/read).
+		// need to multiply it to read the whole image
+		TIFFReadEncodedStrip(file, strip, rawData, bufSize*pixelOffset*sizeof(data_t));
 		data_t result = rawData[i*pixelOffset + frame.width*pixelOffset*offsetInStrip];
 
 		delete[] rawData;
@@ -1331,6 +1365,23 @@ namespace IO {
 		TIFFClose(file);
 
 		return result;
+	}
+
+	libTIFFReader::data_t libTIFFReader::getPixel_ImageSpace(glm::vec4 pos) {
+		// assumes the point is given in image space.
+		// We still need to check if if actually point to somewhere in image space, though.
+
+		// checks the point is actually in the bb :
+		if (this->boundingBox.contains(bbox_t::vec(glm::convert_to<bbox_t::data_t>(pos)))) {
+			// compute the actual coordinates of the point :
+			glm::vec3 inside_pos = glm::vec3(pos.x, pos.y, pos.z) - glm::convert_to<float>(this->boundingBox.getMin());
+			// divide by 'actual' voxel dimensions (we emulate no downsampling here) :
+			glm::uvec3 coords = inside_pos / this->voxelDimensions;
+			// Get the value !
+			return this->getPixel(coords.x, coords.y, coords.z);
+		}
+
+		return data_t(0);
 	}
 
 }
