@@ -1182,225 +1182,12 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, cons
 	if (grid->gridTexture > 0) {
 		glUseProgram(this->programHandle_VolumetricViewer);
 
-		/// @b Shortcut for glGetUniform, since this can result in long lines.
-		auto getUniform = [&](const char* name) -> GLint {
-			GLint g = glGetUniformLocation(this->programHandle_VolumetricViewer, name);if (this->showVAOstate) {
-				if (g >= 0) {
-				std::cerr << "[LOG]\tLocation [" << +g << "] for uniform " << name << '\n';
-				} else {
-					std::cerr << "[LOG]\tCannot find uniform " << name << "\n";
-				}
-			}
-			return g;
-		};
-
-		if (this->showVAOstate) {
-			LOG_ENTER(Scene::drawVolumetric)
-			std::cerr << "[LOG] Uniform locations for " << __FUNCTION__ << " : \n";
-		}
-
-		// Textures :
-		GLint location_vertices_translation =	getUniform("vertices_translations");
-		GLint location_normals_translation =	getUniform("normals_translations");
-		GLint location_visibility_texture =		getUniform("visibility_texture");
-		GLint location_texture_coordinates =	getUniform("texture_coordinates");
-		GLint location_neighbors =				getUniform("neighbors");
-		GLint location_Mask =					getUniform("texData");
-		GLint location_visibilityMap =			getUniform("visiblity_map");
-		GLint location_visibilityMapAlternate =	getUniform("visiblity_map_alternate");
-		// Scalars :
-		GLint location_voxelSize =				getUniform("voxelSize");
-		GLint location_gridSize =				getUniform("gridSize");
-		GLint location_specRef =				getUniform("specRef");
-		GLint location_shininess =				getUniform("shininess");
-		GLint location_diffuseRef =				getUniform("diffuseRef");
-		// Vectors/arrays :
-		GLint location_cam =					getUniform("cam");
-		GLint location_cut =					getUniform("cut");
-		GLint location_cutDirection =			getUniform("cutDirection");
-		GLint location_clipDistanceFromCamera = getUniform("clipDistanceFromCamera");
-		GLint location_colorBounds =			getUniform("colorBounds");
-		GLint location_colorBoundsAlternate =	getUniform("colorBoundsAlternate");
-		GLint location_textureBounds =			getUniform("textureBounds");
-		GLint location_textureBoundsAlternate =	getUniform("textureBoundsAlternate");
-		GLint location_visuBBMin =				getUniform("visuBBMin");
-		GLint location_visuBBMax =				getUniform("visuBBMax");
-		GLint location_shouldUseBB =			getUniform("shouldUseBB");
-		GLint location_volumeEpsilon =			getUniform("volumeEpsilon");
-		// Matrices :
-		GLint location_mMat =					getUniform("mMat");
-		GLint location_vMat =					getUniform("vMat");
-		GLint location_pMat =					getUniform("pMat");
-		// light positions :
-		GLint location_light0 =					getUniform("lightPositions[0]");
-		GLint location_light1 =					getUniform("lightPositions[1]");
-		GLint location_light2 =					getUniform("lightPositions[2]");
-		GLint location_light3 =					getUniform("lightPositions[3]");
-		GLint location_light4 =					getUniform("lightPositions[4]");
-		GLint location_light5 =					getUniform("lightPositions[5]");
-		GLint location_light6 =					getUniform("lightPositions[6]");
-		GLint location_light7 =					getUniform("lightPositions[7]");
-		// Texture display mode :
-		GLint location_rgbMode =				getUniform("rgbMode");
-
-		GLint location_r_channelView =			getUniform("r_channelView");
-		GLint location_r_selectedChannel =		getUniform("r_selectedChannel");
-		GLint location_r_nbChannels =			getUniform("r_nbChannels");
-		GLint location_g_channelView =			getUniform("g_channelView");
-		GLint location_g_selectedChannel =		getUniform("g_selectedChannel");
-		GLint location_g_nbChannels =			getUniform("g_nbChannels");
-
-		GLint location_color0 =					getUniform("color0");
-		GLint location_color1 =					getUniform("color1");
-		GLint location_color0Alt =				getUniform("color0Alternate");
-		GLint location_color1Alt =				getUniform("color1Alternate");
-
-		glUniform3fv(location_color0, 1, glm::value_ptr(this->color0));
-		glUniform3fv(location_color1, 1, glm::value_ptr(this->color1));
-		glUniform3fv(location_color0Alt, 1, glm::value_ptr(this->color0_second));
-		glUniform3fv(location_color1Alt, 1, glm::value_ptr(this->color1_second));
-
-		if (grid->nbChannels > 1) {
-			glUniform1ui(location_r_selectedChannel, this->selectedChannel_r);
-			glUniform1ui(location_g_selectedChannel, this->selectedChannel_g);
-		} else {
-			glUniform1ui(location_r_selectedChannel, 0);
-			glUniform1ui(location_g_selectedChannel, 0);
-		}
-
-		glUniform1ui(location_rgbMode, this->rgbMode);
-
-		std::size_t tex = 0;
-		glActiveTexture(GL_TEXTURE0 + tex);
-		glBindTexture(GL_TEXTURE_2D, grid->volumetricMesh.vertexPositions);
-		glUniform1i(location_vertices_translation, tex);
-		tex++;
-
-		glActiveTexture(GL_TEXTURE0 + tex);
-		glBindTexture(GL_TEXTURE_2D, grid->volumetricMesh.faceNormals);
-		glUniform1i(location_normals_translation, tex);
-		tex++;
-
-		glActiveTexture(GL_TEXTURE0 + tex);
-		glBindTexture(GL_TEXTURE_2D, grid->volumetricMesh.visibilityMap);
-		glUniform1i(location_visibility_texture, tex);
-		tex++;
-
-		glActiveTexture(GL_TEXTURE0 + tex);
-		glBindTexture(GL_TEXTURE_2D, grid->volumetricMesh.textureCoordinates);
-		glUniform1i(location_texture_coordinates, tex);
-		tex++;
-
-		glActiveTexture(GL_TEXTURE0 + tex);
-		glBindTexture(GL_TEXTURE_2D, grid->volumetricMesh.neighborhood);
-		glUniform1i(location_neighbors, tex);
-		tex++;
-
-		glActiveTexture(GL_TEXTURE0 + tex);
-		glBindTexture(GL_TEXTURE_3D, grid->gridTexture);
-		glUniform1i(location_Mask, tex);
-		tex++;
-
-		glActiveTexture(GL_TEXTURE0 + tex);
-		glBindTexture(GL_TEXTURE_2D, this->texHandle_ColorScaleGrid);
-		glUniform1i(location_visibilityMap, tex);
-		tex++;
-
-		glActiveTexture(GL_TEXTURE0 + tex);
-		glBindTexture(GL_TEXTURE_2D, this->texHandle_ColorScaleGridAlternate);
-		glUniform1i(location_visibilityMapAlternate, tex);
-		tex++;
-
-		uint chan_r = this->colorFunctionToUniform(this->channels_r);
-		uint chan_g = this->colorFunctionToUniform(this->channels_g);
-
-		glUniform1ui(location_r_channelView, chan_r);
-		glUniform1ui(location_g_channelView, chan_g);
-
-		glm::vec3 floatres = glm::convert_to<float>(grid->grid[0]->getResolution());
-
-		glUniform1f(location_diffuseRef, .8f);
-		glUniform1f(location_specRef, .8f);
-		glUniform1f(location_shininess, .8f);
-		glUniform3fv(location_voxelSize, 1, glm::value_ptr(grid->grid[0]->getVoxelDimensions()));
-		glUniform3fv(location_gridSize, 1, glm::value_ptr(floatres));
-		glUniform1ui(location_r_nbChannels, 1);
-		glUniform1ui(location_g_nbChannels, 1);
-		glUniform3fv(location_volumeEpsilon, 1, glm::value_ptr(grid->defaultEpsilon));
-
-		glm::vec3 planePos = this->computePlanePositions();
-
-		glUniform3fv(location_cam, 1, glm::value_ptr(camPos));
-		glUniform3fv(location_cut, 1, glm::value_ptr(planePos));
-		glUniform3fv(location_cutDirection, 1, glm::value_ptr(this->planeDirection));
-		glUniform1f(location_clipDistanceFromCamera, this->clipDistanceFromCamera);
-
-		const glm::mat4& gridTransfo = grid->grid[0]->getTransform_GridToWorld();
-		glUniformMatrix4fv(location_mMat, 1, GL_FALSE, glm::value_ptr(gridTransfo));
-		glUniformMatrix4fv(location_vMat, 1, GL_FALSE, mvMat);
-		glUniformMatrix4fv(location_pMat, 1, GL_FALSE, pMat);
-
-		glm::vec2 tb0 = glm::convert_to<float>(this->textureBounds0);
-		glm::vec2 tb1 = glm::convert_to<float>(this->textureBounds1);
-		glUniform2fv(location_colorBounds, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds0)));
-		glUniform2fv(location_colorBoundsAlternate, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds1)));
-		glUniform2f (location_textureBounds, tb0.x, tb0.y);
-		glUniform2f (location_textureBoundsAlternate, tb1.x, tb1.y);
-
-		DiscreteGrid::bbox_t::vec min = this->visuBox.getMin();
-		DiscreteGrid::bbox_t::vec max = this->visuBox.getMax();
-		glUniform3fv(location_visuBBMin, 1, glm::value_ptr(min));
-		glUniform3fv(location_visuBBMax, 1, glm::value_ptr(max));
-		glUniform1ui(location_shouldUseBB, ((this->drawMode == DrawMode::VolumetricBoxed) ? 1 : 0));
-
-		glUniform3fv(location_light0, 1, glm::value_ptr(this->lightPositions[0]));
-		glUniform3fv(location_light1, 1, glm::value_ptr(this->lightPositions[1]));
-		glUniform3fv(location_light2, 1, glm::value_ptr(this->lightPositions[2]));
-		glUniform3fv(location_light3, 1, glm::value_ptr(this->lightPositions[3]));
-		glUniform3fv(location_light4, 1, glm::value_ptr(this->lightPositions[4]));
-		glUniform3fv(location_light5, 1, glm::value_ptr(this->lightPositions[5]));
-		glUniform3fv(location_light6, 1, glm::value_ptr(this->lightPositions[6]));
-		glUniform3fv(location_light7, 1, glm::value_ptr(this->lightPositions[7]));
-
-		// print uniform values :
-		if (this->showVAOstate) {
-			auto vx = grid->grid[0]->getVoxelDimensions();
-			std::cerr << "[LOG] " << __FUNCTION__ << " has uniform values :\n";
-			std::cerr << "[LOG]\tMax possible value        : " << static_cast<double>(std::numeric_limits<DiscreteGrid::data_t>::max()) << '\n';
-			std::cerr << "[LOG]\tDraw mode                : " << +this->drawMode << '\n';
-			std::cerr << "[LOG]\tNumber of channels        : " << +grid->nbChannels << '\n';
-			std::cerr << "[LOG]\tClip distance from camera : " << +clipDistanceFromCamera << '\n';
-			std::cerr << "[LOG]\tVoxel dimensions          : [" << vx.x << ',' << vx.y << ',' << vx.z << "]\n";
-			std::cerr << "[LOG]\tGrid resolution           : [" << floatres.x << ',' << floatres.y << ',' << floatres.z << "]\n";
-			std::cerr << "[LOG]\tVolume epsilon            : [" << grid->defaultEpsilon.x << ',' << grid->defaultEpsilon.y << ',' << grid->defaultEpsilon.z << "]\n";
-			std::cerr << "[LOG]\tCamera position           : [" << camPos.x << ',' << camPos.y << ',' << camPos.z << "]\n";
-			std::cerr << "[LOG]\tPlane positions           : [" << planePos.x << ',' << planePos.y << ',' << planePos.z << "]\n";
-			std::cerr << "[LOG]\tPlane directions          : [" << +this->planeDirection.x << ',' << +this->planeDirection.y << ',' << this->planeDirection.z << "]\n";
-			std::cerr << "[LOG]\tTexture bounds            : [" << +this->textureBounds0.x << ',' << +this->textureBounds0.y << "]\n";
-			std::cerr << "[LOG]\tTexture bounds alt        : [" << +this->textureBounds1.x << ',' << +this->textureBounds1.y << "]\n";
-			std::cerr << "[LOG]\tColor bounds              : [" << +this->colorBounds0.x << ',' << +this->colorBounds0.y << "]\n";
-			std::cerr << "[LOG]\tColor bounds alt          : [" << +this->colorBounds1.x << ',' << +this->colorBounds1.y << "]\n";
-			std::cerr << "[LOG]\tVisu BB min               : [" << +min.x << ',' << +min.y << ',' << +min.z << "]\n";
-			std::cerr << "[LOG]\tVisu BB max               : [" << +max.x << ',' << +max.y << ',' << +max.z << "]\n";
-			for (std::size_t i = 0; i < this->lightPositions.size(); ++i) {
-				std::cerr << "[LOG]\tLight " << i << "                   : [" << +this->lightPositions[i].x << ',' <<
-					+this->lightPositions[i].y << ',' << +this->lightPositions[i].z << "]\n";
-			}
-			LOG_LEAVE(Scene::drawVolumetric)
-		}
+		this->prepareUniforms_Volumetric(mvMat, pMat, camPos, grid);
 
 		this->tex3D_bindVAO();
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_Texture3D_VertIdx);
 
 		glDrawElementsInstanced(GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, (void*)0, grid->volumetricMesh.tetrahedraCount);
-
-		// Unbind textures :
-		for (std::size_t t = tex; t >= 0 && t < tex+1; t--) {
-			glActiveTexture(GL_TEXTURE0 + t);
-			glBindTexture(GL_TEXTURE_3D, 0);
-			glBindTexture(GL_TEXTURE_2D, 0);
-			glBindTexture(GL_TEXTURE_1D, 0);
-		}
 
 		// Unbind program, buffers and VAO :
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -1813,6 +1600,219 @@ void Scene::prepareUniforms_PlaneViewer(planes _plane, planeHeading _heading, gl
 	glActiveTexture(GL_TEXTURE0 + 0);
 	glBindTexture(GL_TEXTURE_3D, _grid->gridTexture);
 	glUniform1i(location_texData, 0);
+}
+
+void Scene::prepareUniforms_Volumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, const GridGLView::Ptr &_grid) {
+	// We assume the right program has been bound.
+
+	/// @b Shortcut for glGetUniform, since this can result in long lines.
+	auto getUniform = [&](const char* name) -> GLint {
+		GLint g = glGetUniformLocation(this->programHandle_VolumetricViewer, name);if (this->showVAOstate) {
+			if (g >= 0) {
+			std::cerr << "[LOG]\tLocation [" << +g << "] for uniform " << name << '\n';
+			} else {
+				std::cerr << "[LOG]\tCannot find uniform " << name << "\n";
+			}
+		}
+		return g;
+	};
+
+	if (this->showVAOstate) {
+		LOG_ENTER(Scene::drawVolumetric)
+		std::cerr << "[LOG] Uniform locations for " << __FUNCTION__ << " : \n";
+	}
+
+	// Texture handles :
+	GLint location_vertices_translation =	getUniform("vertices_translations");
+	GLint location_normals_translation =	getUniform("normals_translations");
+	GLint location_visibility_texture =		getUniform("visibility_texture");
+	GLint location_texture_coordinates =	getUniform("texture_coordinates");
+	GLint location_neighbors =				getUniform("neighbors");
+	GLint location_Mask =					getUniform("texData");
+	GLint location_visibilityMap =			getUniform("visiblity_map");
+	GLint location_visibilityMapAlternate =	getUniform("visiblity_map_alternate");
+
+	std::size_t tex = 0;
+	glActiveTexture(GL_TEXTURE0 + tex);
+	glBindTexture(GL_TEXTURE_2D, _grid->volumetricMesh.vertexPositions);
+	glUniform1i(location_vertices_translation, tex);
+	tex++;
+
+	glActiveTexture(GL_TEXTURE0 + tex);
+	glBindTexture(GL_TEXTURE_2D, _grid->volumetricMesh.faceNormals);
+	glUniform1i(location_normals_translation, tex);
+	tex++;
+
+	glActiveTexture(GL_TEXTURE0 + tex);
+	glBindTexture(GL_TEXTURE_2D, _grid->volumetricMesh.visibilityMap);
+	glUniform1i(location_visibility_texture, tex);
+	tex++;
+
+	glActiveTexture(GL_TEXTURE0 + tex);
+	glBindTexture(GL_TEXTURE_2D, _grid->volumetricMesh.textureCoordinates);
+	glUniform1i(location_texture_coordinates, tex);
+	tex++;
+
+	glActiveTexture(GL_TEXTURE0 + tex);
+	glBindTexture(GL_TEXTURE_2D, _grid->volumetricMesh.neighborhood);
+	glUniform1i(location_neighbors, tex);
+	tex++;
+
+	glActiveTexture(GL_TEXTURE0 + tex);
+	glBindTexture(GL_TEXTURE_3D, _grid->gridTexture);
+	glUniform1i(location_Mask, tex);
+	tex++;
+
+	glActiveTexture(GL_TEXTURE0 + tex);
+	glBindTexture(GL_TEXTURE_2D, this->texHandle_ColorScaleGrid);
+	glUniform1i(location_visibilityMap, tex);
+	tex++;
+
+	glActiveTexture(GL_TEXTURE0 + tex);
+	glBindTexture(GL_TEXTURE_2D, this->texHandle_ColorScaleGridAlternate);
+	glUniform1i(location_visibilityMapAlternate, tex);
+	tex++;
+
+	// Scalars :
+	GLint location_voxelSize =				getUniform("voxelSize");
+	GLint location_gridSize =				getUniform("gridSize");
+
+	glm::vec3 floatres = glm::convert_to<float>(_grid->grid[0]->getResolution());
+
+	glUniform3fv(location_voxelSize, 1, glm::value_ptr(_grid->grid[0]->getVoxelDimensions()));
+	glUniform3fv(location_gridSize, 1, glm::value_ptr(floatres));
+
+	// Vectors/arrays :
+	GLint location_cam =					getUniform("cam");
+	GLint location_cut =					getUniform("cut");
+	GLint location_cutDirection =			getUniform("cutDirection");
+	GLint location_clipDistanceFromCamera = getUniform("clipDistanceFromCamera");
+	GLint location_visuBBMin =				getUniform("visuBBMin");
+	GLint location_visuBBMax =				getUniform("visuBBMax");
+	GLint location_shouldUseBB =			getUniform("shouldUseBB");
+	GLint location_volumeEpsilon =			getUniform("volumeEpsilon");
+
+	glm::vec3 planePos = this->computePlanePositions();
+	DiscreteGrid::bbox_t::vec min = this->visuBox.getMin();
+	DiscreteGrid::bbox_t::vec max = this->visuBox.getMax();
+
+	glUniform3fv(location_cam, 1, glm::value_ptr(camPos));
+	glUniform3fv(location_cut, 1, glm::value_ptr(planePos));
+	glUniform3fv(location_cutDirection, 1, glm::value_ptr(this->planeDirection));
+	glUniform1f (location_clipDistanceFromCamera, this->clipDistanceFromCamera);
+	glUniform3fv(location_visuBBMin, 1, glm::value_ptr(min));
+	glUniform3fv(location_visuBBMax, 1, glm::value_ptr(max));
+	glUniform1ui(location_shouldUseBB, ((this->drawMode == DrawMode::VolumetricBoxed) ? 1 : 0));
+	glUniform3fv(location_volumeEpsilon, 1, glm::value_ptr(_grid->defaultEpsilon));
+
+	// Matrices :
+	GLint location_mMat = getUniform("mMat");
+	GLint location_vMat = getUniform("vMat");
+	GLint location_pMat = getUniform("pMat");
+
+	const glm::mat4& gridTransfo = _grid->grid[0]->getTransform_GridToWorld();
+	glUniformMatrix4fv(location_mMat, 1, GL_FALSE, glm::value_ptr(gridTransfo));
+	glUniformMatrix4fv(location_vMat, 1, GL_FALSE, mvMat);
+	glUniformMatrix4fv(location_pMat, 1, GL_FALSE, pMat);
+
+	// Light positions :
+	GLint location_light0 = getUniform("lightPositions[0]");
+	GLint location_light1 = getUniform("lightPositions[1]");
+	GLint location_light2 = getUniform("lightPositions[2]");
+	GLint location_light3 = getUniform("lightPositions[3]");
+	GLint location_light4 = getUniform("lightPositions[4]");
+	GLint location_light5 = getUniform("lightPositions[5]");
+	GLint location_light6 = getUniform("lightPositions[6]");
+	GLint location_light7 = getUniform("lightPositions[7]");
+
+	glUniform3fv(location_light0, 1, glm::value_ptr(this->lightPositions[0]));
+	glUniform3fv(location_light1, 1, glm::value_ptr(this->lightPositions[1]));
+	glUniform3fv(location_light2, 1, glm::value_ptr(this->lightPositions[2]));
+	glUniform3fv(location_light3, 1, glm::value_ptr(this->lightPositions[3]));
+	glUniform3fv(location_light4, 1, glm::value_ptr(this->lightPositions[4]));
+	glUniform3fv(location_light5, 1, glm::value_ptr(this->lightPositions[5]));
+	glUniform3fv(location_light6, 1, glm::value_ptr(this->lightPositions[6]));
+	glUniform3fv(location_light7, 1, glm::value_ptr(this->lightPositions[7]));
+
+	// Limits :
+	GLint location_colorBounds =			getUniform("colorBounds");
+	GLint location_colorBoundsAlternate =	getUniform("colorBoundsAlternate");
+	GLint location_textureBounds =			getUniform("textureBounds");
+	GLint location_textureBoundsAlternate =	getUniform("textureBoundsAlternate");
+
+	glUniform2fv(location_colorBounds, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds0)));
+	glUniform2fv(location_colorBoundsAlternate, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds1)));
+	glUniform2fv(location_textureBounds, 1, glm::value_ptr(glm::convert_to<float>(this->textureBounds0)));
+	glUniform2fv(location_textureBoundsAlternate, 1, glm::value_ptr(glm::convert_to<float>(this->textureBounds1)));
+
+	// Color and shading parameters :
+	GLint location_specRef =			getUniform("specRef");
+	GLint location_shininess =			getUniform("shininess");
+	GLint location_diffuseRef =			getUniform("diffuseRef");
+	GLint location_rgbMode =			getUniform("rgbMode");
+	GLint location_r_channelView =		getUniform("r_channelView");
+	GLint location_r_selectedChannel =	getUniform("r_selectedChannel");
+	GLint location_r_nbChannels =		getUniform("r_nbChannels");
+	GLint location_g_channelView =		getUniform("g_channelView");
+	GLint location_g_selectedChannel =	getUniform("g_selectedChannel");
+	GLint location_g_nbChannels =		getUniform("g_nbChannels");
+
+	uint chan_r = this->colorFunctionToUniform(this->channels_r);
+	uint chan_g = this->colorFunctionToUniform(this->channels_g);
+
+	glUniform1f (location_specRef, .8f);
+	glUniform1f (location_shininess, .8f);
+	glUniform1f (location_diffuseRef, .8f);
+	glUniform1ui(location_rgbMode, this->rgbMode);
+	glUniform1ui(location_r_channelView, chan_r);
+	glUniform1ui(location_g_channelView, chan_g);
+	glUniform1ui(location_r_nbChannels, 1);
+	glUniform1ui(location_g_nbChannels, 1);
+	if (_grid->nbChannels > 1) {
+		glUniform1ui(location_r_selectedChannel, this->selectedChannel_r);
+		glUniform1ui(location_g_selectedChannel, this->selectedChannel_g);
+	} else {
+		glUniform1ui(location_r_selectedChannel, 0);
+		glUniform1ui(location_g_selectedChannel, 0);
+	}
+
+	// User-defined colors :
+	GLint location_color0 =		getUniform("color0");
+	GLint location_color1 =		getUniform("color1");
+	GLint location_color0Alt =	getUniform("color0Alternate");
+	GLint location_color1Alt =	getUniform("color1Alternate");
+
+	glUniform3fv(location_color0, 1, glm::value_ptr(this->color0));
+	glUniform3fv(location_color1, 1, glm::value_ptr(this->color1));
+	glUniform3fv(location_color0Alt, 1, glm::value_ptr(this->color0_second));
+	glUniform3fv(location_color1Alt, 1, glm::value_ptr(this->color1_second));
+
+	// print uniform values :
+	if (this->showVAOstate) {
+		auto vx = _grid->grid[0]->getVoxelDimensions();
+		std::cerr << "[LOG] " << __FUNCTION__ << " has uniform values :\n";
+		std::cerr << "[LOG]\tMax possible value        : " << static_cast<double>(std::numeric_limits<DiscreteGrid::data_t>::max()) << '\n';
+		std::cerr << "[LOG]\tDraw mode                : " << +this->drawMode << '\n';
+		std::cerr << "[LOG]\tNumber of channels        : " << +_grid->nbChannels << '\n';
+		std::cerr << "[LOG]\tClip distance from camera : " << +clipDistanceFromCamera << '\n';
+		std::cerr << "[LOG]\tVoxel dimensions          : [" << vx.x << ',' << vx.y << ',' << vx.z << "]\n";
+		std::cerr << "[LOG]\tGrid resolution           : [" << floatres.x << ',' << floatres.y << ',' << floatres.z << "]\n";
+		std::cerr << "[LOG]\tVolume epsilon            : [" << _grid->defaultEpsilon.x << ',' << _grid->defaultEpsilon.y << ',' << _grid->defaultEpsilon.z << "]\n";
+		std::cerr << "[LOG]\tCamera position           : [" << camPos.x << ',' << camPos.y << ',' << camPos.z << "]\n";
+		std::cerr << "[LOG]\tPlane positions           : [" << planePos.x << ',' << planePos.y << ',' << planePos.z << "]\n";
+		std::cerr << "[LOG]\tPlane directions          : [" << +this->planeDirection.x << ',' << +this->planeDirection.y << ',' << this->planeDirection.z << "]\n";
+		std::cerr << "[LOG]\tTexture bounds            : [" << +this->textureBounds0.x << ',' << +this->textureBounds0.y << "]\n";
+		std::cerr << "[LOG]\tTexture bounds alt        : [" << +this->textureBounds1.x << ',' << +this->textureBounds1.y << "]\n";
+		std::cerr << "[LOG]\tColor bounds              : [" << +this->colorBounds0.x << ',' << +this->colorBounds0.y << "]\n";
+		std::cerr << "[LOG]\tColor bounds alt          : [" << +this->colorBounds1.x << ',' << +this->colorBounds1.y << "]\n";
+		std::cerr << "[LOG]\tVisu BB min               : [" << +min.x << ',' << +min.y << ',' << +min.z << "]\n";
+		std::cerr << "[LOG]\tVisu BB max               : [" << +max.x << ',' << +max.y << ',' << +max.z << "]\n";
+		for (std::size_t i = 0; i < this->lightPositions.size(); ++i) {
+			std::cerr << "[LOG]\tLight " << i << "                   : [" << +this->lightPositions[i].x << ',' <<
+				+this->lightPositions[i].y << ',' << +this->lightPositions[i].z << "]\n";
+		}
+		LOG_LEAVE(Scene::drawVolumetric)
+	}
 }
 
 void Scene::drawGrid(GLfloat *mvMat, GLfloat *pMat, glm::mat4 baseMatrix, const GridGLView::Ptr& grid) {

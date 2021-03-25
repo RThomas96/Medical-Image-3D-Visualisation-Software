@@ -256,6 +256,8 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void prepareUniforms_3DPlane(GLfloat *mvMat, GLfloat *pMat, planes _plane, const GridGLView::Ptr& grid, bool showTexOnPlane = true);
 		/// @brief prep the plane uniforms to draw in space
 		void prepareUniforms_PlaneViewer(planes _plane, planeHeading _heading, glm::vec2 fbDims, float zoomRatio, glm::vec2 offset, const GridGLView::Ptr& _grid);
+		/// @brief Prepare the uniforms for volumetric drawing
+		void prepareUniforms_Volumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, const GridGLView::Ptr& _grid);
 
 		/// @brief draw the planes, in the real space
 		void drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane = true);
