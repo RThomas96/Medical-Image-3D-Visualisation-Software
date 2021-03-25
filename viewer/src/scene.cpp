@@ -2830,9 +2830,9 @@ void Scene::tex3D_generateMESH(GridGLView::Ptr& grid, VolMeshData& mesh) {
 	const vec_t min = grid->grid[0]->getBoundingBox().getMin();
 	const vec_t diag = grid->grid[0]->getBoundingBox().getDiagonal();
 	// Dimensions, subject to change :
-	std::size_t xv = 12 ; glm::vec4::value_type xs = diag.x / static_cast<glm::vec4::value_type>(xv);
-	std::size_t yv = 12 ; glm::vec4::value_type ys = diag.y / static_cast<glm::vec4::value_type>(yv);
-	std::size_t zv = 12 ; glm::vec4::value_type zs = diag.z / static_cast<glm::vec4::value_type>(zv);
+	std::size_t xv = 10 ; glm::vec4::value_type xs = diag.x / static_cast<glm::vec4::value_type>(xv);
+	std::size_t yv = 10 ; glm::vec4::value_type ys = diag.y / static_cast<glm::vec4::value_type>(yv);
+	std::size_t zv = 10 ; glm::vec4::value_type zs = diag.z / static_cast<glm::vec4::value_type>(zv);
 
 	// Size of tetrahedra, to compute epsilon :
 	glm::vec3 epsVolu = glm::vec3(xs, ys, zs);

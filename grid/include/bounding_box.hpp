@@ -17,7 +17,7 @@
 /// points of the bounding box. This is the parameter that will define the type of glm::vec3 used in this class, and
 /// thus provide the precision to which a point is defined. The second template parameter is a compile-time check which
 /// ensures the DataType passed to the template to be a floating point type only (float, double, long double, and some
-/// variants of float such as fp16, fp32 if those are enabled by the compiler).
+/// variants of float such as fp16, fp32 if those are enabled by the compiler with std::is_floating_point<> traits)
 template <typename DataType, restrict_floating_point_check<DataType> = nullptr>
 class BoundingBox_General {
 
@@ -81,9 +81,14 @@ class BoundingBox_General {
 		/// @details Does not do __any__ checks of the validity of the
 		/// bounding box after this operation. If you provide a max point
 		/// smaller than the min point, it is up to you to fix it.
-		BoundingBox_General& setMax(vec point) {
+		OPTI BoundingBox_General& setMax(vec point) {
 			this->max = point;
 			return *this;
+		}
+
+		/// @brief Checks if the bounding box is valid (it has an initial value, not default ones)
+		OPTI bool isValid(void) const {
+			return this->min.x < this->max.x && this->min.y < this->max.y && this->min.z < this->max.z;
 		}
 
 		/// @brief Returns the positions of the 8 corners of this bounding box.
@@ -100,26 +105,39 @@ class BoundingBox_General {
 			return corners;
 		}
 
+		/// @brief Add a point in the bounding box. It will update itself.
+		/// @details This function can only grow or validate the bounding box. If it has been created, but not
+		/// initialized, then it will validate the bounding box by placing both min and max positions at the
+		/// given position. If it is already a valid bounding box, then it can only enlarge it.
 		__attribute__((flatten)) BoundingBox_General& addPoint(vec point) {
 			this->setMinX(point.x).setMinY(point.y).setMinZ(point.z);
 			this->setMaxX(point.x).setMaxY(point.y).setMaxZ(point.z);
 			return *this;
 		}
 
-		BoundingBox_General& addPoints(const std::vector<vec>& points) {
+		/// @brief Calls the BoundingBox_General::addPoint() function on all points in the container in argument
+		OPTI BoundingBox_General& addPoints(const std::vector<vec>& points) {
 			for (const vec& p : points) {
 				this->addPoint(p);
 			}
 			return *this;
 		}
 
+		/// @brief Allows to move the whole bounding box at once, by amount 'offset'.
+		OPTI BoundingBox_General& move(vec offset) {
+			this->min += offset;
+			this->max += offset;
+			return *this;
+		}
+
+		/// @brief Transforms the corners to another space, and computes the bounding box of the result.
 		BoundingBox_General transformTo(const glm::mat4 transform) const {
 			// Transform the bounding box to another space
 			std::vector<vec> corners = this->getAllCorners();
 			// Create new BB englobing this space :
 			BoundingBox_General<DataType> newbb;
 			// For each element, convert to another space :
-			std::for_each(corners.begin(), corners.end(), [&](vec &v){
+			std::for_each(corners.begin(), corners.end(), [&transform, &newbb](vec &v){
 				// 1 as 'w' because we want to take into account the possible
 				// translation at the end of the matrix :
 				glm::vec4 pos = glm::vec4(glm::convert_to<float>(v), 1.);
@@ -132,6 +150,8 @@ class BoundingBox_General {
 			return newbb;
 		}
 
+		/// @brief Does the bounding box contain the position 'point' ?
+		/// @details The position is assumed to be in the same space as the bounding box.
 		OPTI bool contains(vec point) const {
 			return point.x > this->min.x && point.x < this->max.x &&
 				point.y > this->min.y && point.y < this->max.y &&
@@ -139,12 +159,12 @@ class BoundingBox_General {
 		}
 
 		/// @brief Get a read-only reference to the minimum point.
-		const vec& getMin(void) const {
+		OPTI const vec& getMin(void) const {
 			return this->min;
 		}
 
 		/// @brief Get a read-only reference to the maximum point.
-		const vec& getMax(void) const {
+		OPTI const vec& getMax(void) const {
 			return this->max;
 		}
 

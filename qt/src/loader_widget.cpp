@@ -91,6 +91,10 @@ void GridLoaderWidget::setupWidgets() {
 	this->dsb_transformationDY = new QDoubleSpinBox;
 	this->dsb_transformationDZ = new QDoubleSpinBox;
 
+	this->dsb_offsetX = new QDoubleSpinBox;
+	this->dsb_offsetY = new QDoubleSpinBox;
+	this->dsb_offsetZ = new QDoubleSpinBox;
+
 	// Angle from -180° to 180°, set to 0 by default :
 	this->dsb_transformationA->setRange(-180., 180.);
 	this->dsb_transformationA->setSingleStep(.5);
@@ -108,6 +112,16 @@ void GridLoaderWidget::setupWidgets() {
 	this->dsb_transformationDZ->setValue(1.);
 	this->dsb_transformationDZ->setSingleStep(.01);
 
+	// Offset can be negative, positive, and of any value. The default value is 0.0 (no need to set it).
+	double min = std::numeric_limits<double>::lowest();
+	double max = std::numeric_limits<double>::max();
+	this->dsb_offsetX->setRange(min, max);
+	this->dsb_offsetX->setSingleStep(.01);
+	this->dsb_offsetY->setRange(min, max);
+	this->dsb_offsetY->setSingleStep(.01);
+	this->dsb_offsetZ->setRange(min, max);
+	this->dsb_offsetZ->setSingleStep(.01);
+
 	this->frame_load1channel = new QFrame;
 	this->frame_load2channel = new QFrame;
 	this->frame_transfoDetails = new QFrame;
@@ -121,6 +135,9 @@ void GridLoaderWidget::setupWidgets() {
 
 	this->groupBox_downsampling = new QGroupBox("Image resolution to load");
 	this->groupBox_interpolator = new QGroupBox("Interpolation to use");
+	this->groupbox_originalOffset = new QGroupBox("Sample offset");
+	this->groupbox_originalOffset->setCheckable(true);
+	this->groupbox_originalOffset->setChecked(false);
 
 	this->radioButton_original = new QRadioButton("Original");
 	this->radioButton_low = new QRadioButton("Low");
@@ -163,6 +180,8 @@ void GridLoaderWidget::setupLayouts() {
 	this->layout_interpolator = new QGridLayout;
 	this->layout_roiSelection = new QGridLayout;
 
+	this->layout_gb_offset = new QHBoxLayout;
+
 	// layout and frame for the 1-channel loader :
 	this->layout_load1channel->addWidget(this->label_load1channel);
 	this->layout_load1channel->addWidget(this->button_loadDIM_1channel);
@@ -203,6 +222,12 @@ void GridLoaderWidget::setupLayouts() {
 	this->layout_roiSelection->addWidget(this->spinbox_userLimitMax, 1, 1);
 	this->groupbox_userLimits->setLayout(this->layout_roiSelection);
 
+	// Offset input layout :
+	this->layout_gb_offset->addWidget(this->dsb_offsetX);
+	this->layout_gb_offset->addWidget(this->dsb_offsetY);
+	this->layout_gb_offset->addWidget(this->dsb_offsetZ);
+	this->groupbox_originalOffset->setLayout(this->layout_gb_offset);
+
 	// main layout :
 	this->layout_mainLayout->addWidget(this->label_headerLoader, 0, Qt::AlignCenter);
 	this->layout_mainLayout->addWidget(this->frame_load1channel);
@@ -210,6 +235,7 @@ void GridLoaderWidget::setupLayouts() {
 	this->layout_mainLayout->addWidget(this->groupBox_downsampling);
 	this->layout_mainLayout->addWidget(this->groupBox_interpolator);
 	this->layout_mainLayout->addWidget(this->groupbox_userLimits);
+	this->layout_mainLayout->addWidget(this->groupbox_originalOffset);
 	this->layout_mainLayout->addStretch(1);
 	this->layout_mainLayout->addWidget(this->label_gridInfoR);
 	this->layout_mainLayout->addWidget(this->label_gridInfoG);
@@ -630,6 +656,9 @@ void GridLoaderWidget::loadGrid() {
 	this->setLayout(this->layout_mainLayout);
 	this->disableWidgets();
 
+	////////////////////////////////////////
+	// WAIT FOR THREADS TO FINISH LOADING //
+	////////////////////////////////////////
 	bool shouldStop = false;
 	do {
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -650,6 +679,9 @@ void GridLoaderWidget::loadGrid() {
 	// Join the threads, just in case :
 	threadRed.join();
 	if (threadGreen.joinable()) { threadGreen.join(); }
+	////////////////////////////////////////
+	// WAIT FOR THREADS TO FINISH LOADING //
+	////////////////////////////////////////
 
 	this->progress_load->setRange(0,0);
 
@@ -691,6 +723,18 @@ void GridLoaderWidget::loadGrid() {
 		this->_cp->updateMaxValueAlternate(colorBoundSecondary.y);
 		this->scene->slotSetMinColorValueAlternate(colorBoundSecondary.x);
 		this->scene->slotSetMaxColorValueAlternate(colorBoundSecondary.y);
+	}
+
+	float ox = 0.f, oy = 0.f, oz = 0.f;
+	if (this->groupbox_originalOffset->isChecked()) {
+		ox = this->dsb_offsetX->value();
+		oy = this->dsb_offsetY->value();
+		oz = this->dsb_offsetZ->value();
+		std::cerr << "[LOG] LOADING : grid world offset is {" << ox << ", " << oy << ", " << oz << "}\n";
+		this->inputGridR->setOriginOffset_WorldSpace(glm::vec4(ox, oy, oz, 1.));
+		if (this->readerG != nullptr) {
+			this->inputGridG->setOriginOffset_WorldSpace(glm::vec4(ox, oy, oz, 1.));
+		}
 	}
 
 	if (this->readerG == nullptr) {

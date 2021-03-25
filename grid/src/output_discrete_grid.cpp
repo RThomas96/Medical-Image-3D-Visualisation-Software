@@ -31,7 +31,6 @@ OutputGrid::OutputGrid(const std::shared_ptr<OutputGrid>& _og) {
 	this->boundingBox = _og->boundingBox;
 	this->dataThreshold = _og->dataThreshold;
 	this->dataBoundingBox = _og->dataBoundingBox;
-	this->filenames = _og->filenames;
 }
 
 OutputGrid::~OutputGrid() {}

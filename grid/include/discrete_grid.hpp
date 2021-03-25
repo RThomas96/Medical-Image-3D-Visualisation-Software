@@ -150,6 +150,15 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 		/// @brief Sets the bounding box of the discrete grid.
 		virtual DiscreteGrid& setBoundingBox(bbox_t renderWindow);
 
+		/// @brief Sets the offset of the whole grid as 'position', defined in world space.
+		virtual glm::vec4 getOriginOffset_WorldSpace(void) const;
+
+		/// @brief Sets the offset of the whole grid as 'position', defined in world space.
+		virtual DiscreteGrid& setOriginOffset_WorldSpace(glm::vec4 position);
+
+		/// @brief Shifts the bounding box of the grid by 'position' amount.
+		virtual DiscreteGrid& setOriginOffset_GridSpace(glm::vec4 position);
+
 		/// @brief Gets the bounding box of the grid.
 		bbox_t getBoundingBoxWorldSpace(void) const;
 		/// @brief Gets the bounding box of the grid.
@@ -188,18 +197,14 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 		/// @brief Updates the voxel dimensions of the grid, each time the BB or the resolution changes.
 		void updateVoxelDimensions(void);
 
-		/// @brief Sets the filenames associated with the grid to 'fnames'. Useful in the offline versions of the string.
-		virtual DiscreteGrid& setFilenames(std::vector<std::string> fnames);
-
-		/// @brief Sets the filenames associated with the grid to 'fnames'. Useful in the offline versions of the string.
-		const std::vector<std::string>& getFilenames(void) const;
-
 	protected:
 		/// @brief Checks if the grid's properties can be modified (data will always be modifiable, dimensions might not)
 		/// @details Output grids can be modified, input grids however, cannot.
 		bool modifiable;
 		/// @brief Checks if we want to query/write data directly to disk or not
 		bool isOffline;
+		/// @brief The offset set to the grid by setOriginOffset_WorldSpace
+		glm::vec4 offset;
 		/// @brief Stores the data associated with the grid.
 		/// @details Arranged in order : X, Y, Z. Meaning, we first get a 'width'-sized
 		/// array of values, followed by 'height'-sized arrays of 'width'-sized arrays
@@ -224,8 +229,6 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 		bbox_t dataBoundingBox;
 		/// @brief The name of the grid, used to identify it on a
 		std::string gridName;
-		/// @brief Filenames associated with the grid. Used in offline versions of the grid.
-		std::vector<std::string> filenames;
 		/// @brief File reader
 		std::shared_ptr<IO::GenericGridReader> gridReader;
 		/// @brief File writer

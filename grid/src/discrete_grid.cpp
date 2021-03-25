@@ -12,13 +12,15 @@ glm::mat4 computeTransfoShear(double angleDeg, const std::shared_ptr<DiscreteGri
 	transfoMat[1][1] = /* vxdims.y */ 1.f;
 	transfoMat[2][2] = /* vxdims.z */ std::cos(angleRad);
 
+	/*
 	if (angleDeg < 0.) {
 		auto dims = grid->getBoundingBox().getDiagonal();
 		// compute translation along Z :
-		float w = static_cast<float>(dims.x)/* vxdims.x */;
+		float w = static_cast<float>(dims.x); //vxdims.x;
 		float displacement = w * std::abs(std::sin(angleRad));
 		transfoMat = glm::translate(transfoMat, glm::vec3(.0, .0, displacement));
 	}
+	*/
 
 	return transfoMat;
 }
@@ -64,7 +66,6 @@ DiscreteGrid& DiscreteGrid::fromGridReader() {
 	this->voxelDimensions = this->gridReader->getVoxelDimensions();
 	this->boundingBox = this->gridReader->getBoundingBox();
 	this->dataBoundingBox = this->gridReader->getDataBoundingBox();
-	this->setFilenames(this->gridReader->getFilenames());
 
 	// get data from reader :
 	this->gridReader->swapData(this->data);
@@ -215,6 +216,33 @@ DiscreteGrid& DiscreteGrid::setBoundingBox(bbox_t renderWindow) {
 	return *this;
 }
 
+glm::vec4 DiscreteGrid::getOriginOffset_WorldSpace() const {
+	return this->offset;
+}
+
+DiscreteGrid& DiscreteGrid::setOriginOffset_WorldSpace(glm::vec4 position) {
+	// Compute the bounding box in world space :
+	bbox_t box_ws = this->boundingBox.transformTo(this->transform_gridToWorld);
+	auto min_ws = glm::vec4(box_ws.getMin(), 1.);
+	// Get min point, back into grid space :
+	glm::vec4 min_gs = this->toGridSpace(min_ws);
+	// Compute offset from the actual bounding box to the min point of its world-space bretheren :
+	glm::vec4 offset_gs = glm::vec4(this->boundingBox.getMin(), 1.) - min_gs;
+	// compute the user-defined offset in grid space :
+	glm::vec4 pos_gs = this->toGridSpace(position);
+
+	// combine both offsets, to make a single one in grid space :
+	return this->setOriginOffset_GridSpace(pos_gs + offset_gs);
+}
+
+DiscreteGrid& DiscreteGrid::setOriginOffset_GridSpace(glm::vec4 p) {
+	this->boundingBox.move(glm::convert_to<bbox_t::data_t>(glm::vec3(p.x, p.y, p.z)));
+	if (this->dataBoundingBox.isValid()) {
+		this->dataBoundingBox.move(glm::convert_to<bbox_t::data_t>(glm::vec3(p.x, p.y, p.z)));
+	}
+	return *this;
+}
+
 DiscreteGrid::bbox_t DiscreteGrid::getBoundingBoxWorldSpace() const {
 	return this->boundingBox.transformTo(this->transform_gridToWorld);
 }
@@ -362,15 +390,6 @@ DiscreteGrid& DiscreteGrid::setGridName(std::string name) {
 
 const std::string& DiscreteGrid::getGridName(void) const {
 	return this->gridName;
-}
-
-DiscreteGrid& DiscreteGrid::setFilenames(std::vector<std::string> fnames) {
-	this->filenames = std::vector<std::string>(fnames);
-	return *this;
-}
-
-const std::vector<std::string>& DiscreteGrid::getFilenames() const {
-	return this->filenames;
 }
 
 bool DiscreteGrid::includesPointWorldSpace(glm::vec4 point, bool verbose) const {

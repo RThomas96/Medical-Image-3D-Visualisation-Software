@@ -93,6 +93,12 @@ class GridLoaderWidget : public QWidget {
 		QLabel* label_roiMin;				///< Label for the min ROI selector
 		QLabel* label_roiMax;				///< Label for the max ROI selector
 
+		QGroupBox* groupbox_originalOffset;	///< Does the grid have an offset (either user-given or parsed from file)
+		QDoubleSpinBox* dsb_offsetX;		///< The offset amount on X
+		QDoubleSpinBox* dsb_offsetY;		///< The offset amount on Y
+		QDoubleSpinBox* dsb_offsetZ;		///< The offset amount on Z
+		QHBoxLayout* layout_gb_offset;		///< The layout of the offset parameter
+
 		QFrame* frame_load1channel;		///< Frame surrounding the load '1-channel' widgets
 		QFrame* frame_load2channel;		///< Frame surrounding the load '2-channel' widgets
 		QFrame* frame_transfoDetails;		///< Frame surrounding the load transformation widgets
