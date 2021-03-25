@@ -4,6 +4,8 @@
 #include <memory>
 #include <iomanip>
 
+void nullify_tiff_errors(const char* module, const char* fmt, va_list _va_) { return; /* do nothing ! */ }
+
 namespace IO {
 
 	bool FileExists(const char* filename) {
@@ -913,6 +915,8 @@ namespace IO {
 		int result = 0; // result for all TIFF operations
 
 		if (this->filename.empty() == false) {
+			TIFFSetErrorHandler(nullify_tiff_errors);
+			TIFFSetWarningHandler(nullify_tiff_errors);
 			TIFF* file = TIFFOpen(this->filename.c_str(), "r");
 			// We don't currently support tiled images :
 			if (TIFFIsTiled(file)) {
@@ -1205,6 +1209,8 @@ namespace IO {
 	}
 
 	libTIFFReader& libTIFFReader::openFile(const std::string &filename) {
+		TIFFSetErrorHandler(nullify_tiff_errors);
+		TIFFSetWarningHandler(nullify_tiff_errors);
 		TIFF* handle = TIFFOpen(filename.c_str(), "r");
 		if (handle == nullptr) {
 			throw std::runtime_error("Cannot open " + filename + " !");
@@ -1236,6 +1242,8 @@ namespace IO {
 		}
 
 		const TIFFFrame& frame = this->frames[idx];
+		TIFFSetErrorHandler(nullify_tiff_errors);
+		TIFFSetWarningHandler(nullify_tiff_errors);
 		TIFF* file = TIFFOpen(frame.filename.c_str(), "r");
 		// Set the tiff frame to be current in its designated file :
 		int result = TIFFSetDirectory(file, frame.directoryOffset);
@@ -1286,8 +1294,13 @@ namespace IO {
 
 	libTIFFReader::data_t libTIFFReader::getPixel(std::size_t i, std::size_t j, std::size_t k) {
 		if (k >= this->frames.size()) { return 0; }
+		if (this->downsampleLevel == DownsamplingLevel::Low   ) { i*=2; j*=2; k*=2; }
+		if (this->downsampleLevel == DownsamplingLevel::Lower ) { i*=4; j*=4; k*=4; }
+		if (this->downsampleLevel == DownsamplingLevel::Lowest) { i*=8; j*=8; k*=8; }
 		// k will be used to get the right frame :
 		const TIFFFrame& frame = this->frames[k];
+		TIFFSetErrorHandler(nullify_tiff_errors);
+		TIFFSetWarningHandler(nullify_tiff_errors);
 		TIFF* file = TIFFOpen(frame.filename.c_str(), "r");
 
 		// j is used to get the right strip within the frame :

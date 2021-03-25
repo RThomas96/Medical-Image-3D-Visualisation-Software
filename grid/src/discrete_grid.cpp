@@ -123,7 +123,7 @@ DiscreteGrid::DataType DiscreteGrid::fetchTexelGridSpace(glm::vec4 pos_gs, bool 
 	DiscreteGrid::bbox_t::vec minBB = this->boundingBox.getMin();
 
 	/// If the grid is offline, we don't want to divide the indices (can be divided in case the grid was downsampled)
-	glm::vec3 vxDiv = this->voxelDimensions;
+	glm::vec3 vxDiv = this->getVoxelDimensions();
 
 	// compute index of position :
 	std::size_t x = static_cast<std::size_t>(std::floor((pos_gs.x - minBB.x) / vxDiv.x));
@@ -147,6 +147,7 @@ DiscreteGrid::DataType DiscreteGrid::getPixel(std::size_t x, std::size_t y, std:
 	}
 
 	if (this->isOffline && this->gridReader->downsamplingLevel() != IO::DownsamplingLevel::Original) {
+		#warning Fault is here !!! Need to get the real coordinates, not the downsampled ones !
 		return this->gridReader->getPixel(x,y,z);
 	} else {
 		// sanity check, should be covered by the cases above :
@@ -269,13 +270,15 @@ glm::vec4 DiscreteGrid::getVoxelPositionWorldSpace(sizevec3 idx){
 }
 
 glm::vec4 DiscreteGrid::getVoxelPositionGridSpace(sizevec3 idx, bool verbose) {
+	// always get the 'real' voxel size (might need to be multiplied first)
+	glm::vec3 vxdims = this->getVoxelDimensions();
 	// displacement for half a voxel :
-	glm::vec4 halfVoxel = glm::vec4(this->voxelDimensions.x / 2.f, this->voxelDimensions.y / 2.f, this->voxelDimensions.z / 2.f, .0f);
+	glm::vec4 halfVoxel = glm::vec4(vxdims.x / 2.f, vxdims.y / 2.f, vxdims.z / 2.f, .0f);
 	// voxel position, in grid space :
 	glm::vec4 voxelPos = glm::vec4(
-		static_cast<float>(idx.x) * this->voxelDimensions.x,
-		static_cast<float>(idx.y) * this->voxelDimensions.y,
-		static_cast<float>(idx.z) * this->voxelDimensions.z,
+		static_cast<float>(idx.x) * vxdims.x,
+		static_cast<float>(idx.y) * vxdims.y,
+		static_cast<float>(idx.z) * vxdims.z,
 		1.f
 	);
 	// origin of the grid (min BB position) :

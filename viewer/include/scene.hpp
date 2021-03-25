@@ -310,7 +310,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 
 		// Grids :
 		std::vector<GridGLView::Ptr> grids;		///< Grids to display in the different views.
-		std::shared_ptr<OutputGrid> outputGrid; ///< output grid
+		//std::shared_ptr<OutputGrid> outputGrid; ///< output grid
 
 		// OpenGL-related stuff :
 		QOpenGLContext* context;				///< The context with which the scene has been created with

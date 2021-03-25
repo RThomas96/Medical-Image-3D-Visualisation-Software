@@ -154,7 +154,7 @@ TetMesh& TetMesh::populateOutputGrid_RGB(InterpolationMethods method) {
 	}
 
 	std::cerr << "[DEBUG] =====================================================================================\n";
-	std::cerr << "[DEBUG] TetMesh generating over [" << dims.x << ", " << dims.y << ", " << dims.z << "]\n";
+	std::cerr << "[DEBUG] TetMesh g	enerating over [" << dims.x << ", " << dims.y << ", " << dims.z << "]\n";
 	std::cerr << "[DEBUG] Listing input grids : " << '\n';
 	for (const auto& g : this->inputGrids) {
 		g->printInfo("After update, before output preallocation :", "[DEBUG]\t");

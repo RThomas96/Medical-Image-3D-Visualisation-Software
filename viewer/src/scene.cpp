@@ -49,7 +49,6 @@ Scene::Scene() {
 	this->debugLog = nullptr;
 	this->glOutput = nullptr;
 	this->controlPanel = nullptr;
-	this->outputGrid = nullptr;
 	this->gridControl = nullptr;
 	this->visuBoxController = nullptr;
 	this->programStatusBar = nullptr;
@@ -1104,21 +1103,19 @@ void Scene::deleteGrid(const std::shared_ptr<DiscreteGrid> &_grid) {
 	std::size_t i = 0, j = 0;
 	for (i = 0; i < this->grids.size(); ++i) {
 		std::cerr << "Checking value " << i << '\n';
-		for (j = 0; j < this->grids[i]->grid.size(); ++i) {
+		for (j = 0; j < this->grids[i]->grid.size(); ++j) {
 			if (this->grids[i]->grid[j] == _grid) {
 				std::cerr << "Found at index " << i << '\n';
-				break;
+				// Delete the texture and associated meshes on next refresh :
+				this->shouldDeleteGrid = true;
+				this->delGrid.push_back(i);
 			}
 		}
 	}
-	if (i == this->grids.size()) {
+	if (this->shouldDeleteGrid == false) {
 		std::cerr << "No grid found !";
 		return;
 	}
-
-	// Delete the texture and associated meshes on next refresh :
-	this->shouldDeleteGrid = true;
-	this->delGrid.push_back(i);
 }
 
 void Scene::deleteGridNow() {

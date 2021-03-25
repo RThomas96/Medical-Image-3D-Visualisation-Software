@@ -433,4 +433,6 @@ namespace IO {
 	}
 }
 
+void nullify_tiff_errors(const char* module, const char* fmt, va_list _va_);
+
 #endif // IMAGE_INCLUDE_READER_HPP_
