@@ -603,7 +603,11 @@ GLuint Scene::compileShader(const std::string& path, const GLenum shaType, bool 
 
 	if (includeColorShader) {
 		while (getline(shaFile, read_buffer)) {
+#if defined(WIN32) || defined(WIN64) || defined(_MSC_VER) || defined(_WIN32)
+			if (read_buffer.find("#pragma include_color_shader;") != std::string::npos) {
+#else
 			if (read_buffer == "#pragma include_color_shader;") {
+#endif
 				read_buffer = color_functions;
 			}
 			shader_contents += read_buffer + '\n';

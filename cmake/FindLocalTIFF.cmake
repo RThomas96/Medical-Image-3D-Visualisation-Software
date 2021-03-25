@@ -6,8 +6,7 @@
 
 SET(libTIFF_LIBRARY_NAME "libtiff.so")
 IF(WIN32 OR MINGW OR MSVC)
-		MESSAGE(FATAL_ERROR "check the filenames produced for libTIFF on windows.")
-		SET(libTIFF_LIBRARY_NAME "libtiff.a" "TIFF.dll")
+		SET(libTIFF_LIBRARY_NAME "libtiff.dll.a")
 ENDIF()
 
 SET(LOCAL_COMPILED_LIBS "${CMAKE_SOURCE_DIR}/lib")
