@@ -122,7 +122,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 
 		/// @brief Returns the current visu box
 		DiscreteGrid::bbox_t getVisuBox(void);
-		glm::umat2x3 getVisuBoxCoordinates(void);
+		std::pair<glm::uvec3, glm::uvec3> getVisuBoxCoordinates(void);
 		/// @brief Sets the visu box
 		void setVisuBox(DiscreteGrid::bbox_t box);
 		void setVisuBoxMinCoord(glm::uvec3 coor_min);

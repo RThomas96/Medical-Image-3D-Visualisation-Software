@@ -93,7 +93,6 @@ namespace IO {
 		this->openFile();
 
 		auto dims = this->grid->getResolution();
-		std::cerr << "[LOG] preallocate() : Grid dimensions : " << dims.x << ',' << dims.y << ',' << dims.z << '\n';
 		std::size_t streamsize = dims.x * dims.y;
 		std::vector<data_t> emptydata(streamsize);
 		for (std::size_t i = 0; i < dims.z; ++i) {

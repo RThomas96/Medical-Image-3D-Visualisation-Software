@@ -230,16 +230,13 @@ glm::vec4 DiscreteGrid::getOriginOffset_WorldSpace() const {
 DiscreteGrid& DiscreteGrid::setOriginOffset_WorldSpace(glm::vec4 position) {
 	// Compute the bounding box in world space :
 	bbox_t box_ws = this->boundingBox.transformTo(this->transform_gridToWorld);
-	auto min_ws = glm::vec4(box_ws.getMin(), 1.);
+	auto min_ws = position - glm::vec4(box_ws.getMin(), 1.);
 	// Get min point, back into grid space :
 	glm::vec4 min_gs = this->toGridSpace(min_ws);
-	// Compute offset from the actual bounding box to the min point of its world-space bretheren :
-	glm::vec4 offset_gs = glm::vec4(this->boundingBox.getMin(), 1.) - min_gs;
-	// compute the user-defined offset in grid space :
-	glm::vec4 pos_gs = this->toGridSpace(position);
+	this->offset = min_ws;
 
 	// combine both offsets, to make a single one in grid space :
-	return this->setOriginOffset_GridSpace(pos_gs + offset_gs);
+	return this->setOriginOffset_GridSpace(min_gs);
 }
 
 DiscreteGrid& DiscreteGrid::setOriginOffset_GridSpace(glm::vec4 p) {
@@ -318,7 +315,7 @@ glm::vec4 DiscreteGrid::getVoxelPositionGridSpace(sizevec3 idx, bool verbose) {
 	);
 	// origin of the grid (min BB position) :
 	bbox_t::vec m = this->boundingBox.getMin();
-	glm::vec4 minBBpos = glm::vec4(static_cast<float>(m.x), static_cast<float>(m.y), static_cast<float>(m.z), float(0.f));
+	glm::vec4 minBBpos = glm::vec4(glm::convert_to<float>(m), float(0.f));
 	glm::vec4 finalPos = minBBpos + voxelPos + halfVoxel;
 
 	if (verbose) {

@@ -111,7 +111,12 @@ void PlanarViewer::mousePressEvent(QMouseEvent* _e) {
 		this->mouse_isPressed = true;
 		this->lastPosition = _e->pos();
 	}
-	QGLViewer::mousePressEvent(_e);
+	// The left click could move the view, but the user wouldn't
+	// be able to reset it later. Prevent that by allowing only to
+	// process events when the click is _different_ than the left :
+	if (not _e->buttons().testFlag(Qt::MouseButton::LeftButton)) {
+		QGLViewer::mousePressEvent(_e);
+	}
 	this->update();
 }
 

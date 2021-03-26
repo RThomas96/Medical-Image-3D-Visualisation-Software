@@ -163,20 +163,11 @@ namespace IO {
 	}
 
 	std::size_t GenericGridReader::getGridSizeBytes() const {
-		LOG_ENTER(GenericGridReader::getGridSizeBytes())
 		std::size_t sizeBytes = 0;
 		sizeBytes = this->imageDimensions.x * this->imageDimensions.y * this->imageDimensions.z * sizeof(data_t);
-		PRINTVAL(sizeBytes);
-		if (this->downsampleLevel == DownsamplingLevel::Low) {
-			sizeBytes /= 2*2*2;
-		}
-		if (this->downsampleLevel == DownsamplingLevel::Lower) {
-			sizeBytes /= 4*4*4;
-		}
-		if (this->downsampleLevel == DownsamplingLevel::Lowest) {
-			sizeBytes /= 8*8*8;
-		}
-		LOG_LEAVE(GenericGridReader::getGridSizeBytes())
+		if (this->downsampleLevel == DownsamplingLevel::Low) { sizeBytes /= 2*2*2; }
+		if (this->downsampleLevel == DownsamplingLevel::Lower) { sizeBytes /= 4*4*4; }
+		if (this->downsampleLevel == DownsamplingLevel::Lowest) { sizeBytes /= 8*8*8; }
 		return sizeBytes;
 	}
 
@@ -592,7 +583,6 @@ namespace IO {
 			task->advance();
 		}
 
-		std::cerr << "Finished analyzing the files. Found " << nbFrames << " frames in " << this->filenames.size() << " files.\n";
 		this->currentFile = 0;
 		this->openFile(this->filenames[0]);
 
@@ -617,12 +607,6 @@ namespace IO {
 		this->voxelDimensions = glm::vec3(1.f, 1.f, 1.f);
 		this->boundingBox = bbox_t(minBB, maxBB);
 		this->dataBoundingBox = bbox_t();
-
-		std::cerr << "[LOG] parseImageInfo() : Image dimensions : " << this->imageDimensions.x << ',' << this->imageDimensions.y << ',' << this->imageDimensions.z << '\n';
-		std::size_t sizeBytes = width*height*depth*sizeof(GenericGridReader::data_t);
-		float sizeBytesf = static_cast<float>(sizeBytes);
-		std::cerr << "[LOG] parseImageInfo() : Bit size : " << sizeBytes << "B, " << sizeBytesf / 1024.f << "kB, "
-			<< sizeBytesf / 1024.f / 1024.f << "MB, " << sizeBytesf / 1024.f / 1024.f / 1024.f << "GB.\n";
 
 		task->advance();
 
@@ -819,57 +803,20 @@ namespace IO {
 		std::size_t height= this->imageDimensions.y;
 		std::size_t depth = this->imageDimensions.z;
 
-		std::cerr << "[LOG] preallocate() : Image dimensions : " << this->imageDimensions.x << ',' << this->imageDimensions.y << ',' << this->imageDimensions.z << '\n';
-
 		// If we downsample, apply the dimension reduction here on all axes
 		// and modify the voxel multiplier accordingly :
-		if (this->downsampleLevel == DownsamplingLevel::Low) {
-			width /= 2; height /= 2; depth /= 2;
-		} else if (this->downsampleLevel == DownsamplingLevel::Lower) {
-			width /= 4; height /= 4; depth /= 4;
-		} else if (this->downsampleLevel == DownsamplingLevel::Lowest) {
-			width /= 8; height /= 8; depth /= 8;
-		}
+		if (this->downsampleLevel == DownsamplingLevel::Low) { width /= 2; height /= 2; depth /= 2; }
+		else if (this->downsampleLevel == DownsamplingLevel::Lower) { width /= 4; height /= 4; depth /= 4; }
+		else if (this->downsampleLevel == DownsamplingLevel::Lowest) { width /= 8; height /= 8; depth /= 8; }
 
 		// Voxel dimensions will be scaled with voxelMultiplier.
 		// However, grid dimensions needs to be set here :
 		this->gridDimensions = sizevec3(width, height, depth);
 
-		std::cerr << "[LOG] preallocate() : Grid dimensions : " << this->gridDimensions.x << ',' << this->gridDimensions.y << ',' << this->gridDimensions.z << '\n';
-		std::cerr << "[LOG] preallocate() : Voxel dimensions : " << this->voxelDimensions.x << ',' << this->voxelDimensions.y << ',' << this->voxelDimensions.z << '\n';
-
 		// Compute the vector size to allocate :
 		std::size_t finalSize = width * height * depth;
 		// Resize the vector :
 		this->data.resize(finalSize);
-
-		std::size_t sizeBytes = width*height*depth*sizeof(GenericGridReader::data_t);
-		float sizeBytesf = static_cast<float>(sizeBytes);
-		std::cerr << "[LOG] preAllocate() : sizes  : Bit size : " << sizeBytes << "B, " << sizeBytesf / 1024.f << "kB, "
-			<< sizeBytesf / 1024.f / 1024.f << "MB, " << sizeBytesf / 1024.f / 1024.f / 1024.f << "GB.\n";
-		sizeBytes = this->data.size()*sizeof(data_t);
-		sizeBytesf = static_cast<float>(sizeBytes);
-		std::cerr << "[LOG] preAllocate() : Vector : Bit size : " << sizeBytes << "B, " << sizeBytesf / 1024.f << "kB, "
-			<< sizeBytesf / 1024.f / 1024.f << "MB, " << sizeBytesf / 1024.f / 1024.f / 1024.f << "GB.\n";
-
-		std::cerr << "[LOG] preallocate() : Downsampling level : ";
-		switch (this->downsampleLevel) {
-			case Original:
-				std::cerr << "original\n";
-			break;
-			case Low:
-				std::cerr << "low\n";
-			break;
-			case Lower:
-				std::cerr << "lower\n";
-			break;
-			case Lowest:
-				std::cerr << "lowest\n";
-			break;
-			default:
-				std::cerr << "UNKNOWN\n";
-			break;
-		}
 
 		// Most of those values assigned above are default values, since we cannot gather
 		// that info from a TIFF file. (Not easily, anyway).
@@ -886,7 +833,6 @@ namespace IO {
 			this->tiffFile = nullptr;
 		}
 
-		//std::cerr << "[LOG] Opening file named \"" << filename << "\" ..." << '\n';
 		this->tiffFile = TinyTIFFReader_open(filename.c_str());
 
 		if (TinyTIFFReader_wasError(this->tiffFile)) {
@@ -1248,9 +1194,6 @@ namespace IO {
 		if (this->downsampleLevel == IO::DownsamplingLevel::Lower ) { divider = 4u; }
 		if (this->downsampleLevel == IO::DownsamplingLevel::Lowest) { divider = 8u; }
 
-		std::cerr << "[LOG] preAllocate() : Grid dimensions : [" << this->gridDimensions.x << ", " <<
-			this->gridDimensions.y << ", " << this->gridDimensions.z << "]\n";
-
 		this->gridDimensions = this->imageDimensions / sizevec3(divider, divider, divider);
 		this->data.resize(this->gridDimensions.x * this->gridDimensions.y * this->gridDimensions.z);
 
@@ -1261,9 +1204,6 @@ namespace IO {
 			static_cast<val_t>(this->imageDimensions.y) * static_cast<val_t>(this->voxelDimensions.y),
 			static_cast<val_t>(this->imageDimensions.z) * static_cast<val_t>(this->voxelDimensions.z)
 		);
-
-		std::cerr << "[LOG] preAllocate() : bounding box coords : {" << minCoord.x << ", " << minCoord.y << ", " <<
-			minCoord.z << "}, to {" << maxCoord.x << ", " << maxCoord.y << ", " << maxCoord.z << "}\n";
 
 		this->boundingBox = bbox_t(minCoord, maxCoord);
 		this->dataBoundingBox = bbox_t();

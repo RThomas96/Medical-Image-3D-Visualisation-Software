@@ -71,32 +71,11 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 	switch (e->key()) {
 		/*
 		SHADER PROGRAMS
-		case Qt::Key::Key_F1:
-			this->scene->setColorFunction(ColorFunction::SingleChannel);
-			this->update();
-		break;
-		case Qt::Key::Key_F2:
-			this->scene->setColorFunction(ColorFunction::HistologyHandE);
-			this->update();
-		break;
-		case Qt::Key::Key_F3:
-			this->scene->setColorFunction(ColorFunction::HSV2RGB);
-			this->update();
-		break;
-		case Qt::Key::Key_F4:
-			this->scene->setColorFunction(ColorFunction::ColorMagnitude);
-			this->update();
-		break;
 		*/
 		case Qt::Key::Key_F5:
 			this->scene->recompileShaders();
 			this->update();
 		break;
-		/*
-		case Qt::Key::Key_F:
-			std::cerr << "Unable to display text." << "\n";
-		break;
-		*/
 		case Qt::Key::Key_P:
 			this->scene->printVAOStateNext();
 		break;
@@ -133,10 +112,11 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 }
 
 void Viewer::centerScene(void) {
-	glm::vec3 scene_center = this->scene->getSceneCenter();
-	float scene_radius = this->scene->getSceneRadius();
+	// Don't update the scene radius, cuts off some drawn primitives (like bounding box for example) :
+	//float scene_radius = this->scene->getSceneRadius();
+	//this->setSceneRadius(qreal(scene_radius));
 
-	this->setSceneRadius(qreal(scene_radius));
+	glm::vec3 scene_center = this->scene->getSceneCenter();
 	qglviewer::Vec cnt(scene_center.x, scene_center.y, scene_center.z);
 	this->setSceneCenter(cnt);
 	this->camera()->centerScene();
@@ -255,8 +235,6 @@ void Viewer::loadGrid(const std::shared_ptr<InputGrid>& g) {
 	this->scene->addGrid(g, "");
 	this->doneCurrent();
 
-	std::cerr << "Added input grid to scene\n";
-
 	glm::vec3 bbDiag = this->scene->getSceneBoundaries();
 	float sceneSize = glm::length(bbDiag);
 
@@ -273,8 +251,6 @@ void Viewer::loadTwoGrids(const std::shared_ptr<InputGrid>& g1, const std::share
 	this->makeCurrent();
 	this->scene->addTwoGrids(g1, g2, "");
 	this->doneCurrent();
-
-	std::cerr << "Added 2 input grids to scene\n";
 
 	glm::vec3 bbDiag = this->scene->getSceneBoundaries();
 	float sceneSize = glm::length(bbDiag);

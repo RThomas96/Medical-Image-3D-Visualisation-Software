@@ -140,7 +140,8 @@ void GridLoaderWidget::setupWidgets() {
 
 	this->groupBox_downsampling = new QGroupBox("Image resolution to load");
 	this->groupBox_interpolator = new QGroupBox("Interpolation to use");
-	this->groupbox_originalOffset = new QGroupBox("Sample offset");
+	this->groupbox_originalOffset = new QGroupBox("Sample position");
+	this->groupbox_originalOffset->setToolTip("Original sample position relative to the microscope.");
 	this->groupbox_originalOffset->setCheckable(true);
 	this->groupbox_originalOffset->setChecked(false);
 
@@ -463,8 +464,9 @@ void GridLoaderWidget::loadGridDIM1channel() {
 	} while (not parseTask->hasSteps());
 	// Set and show progress bar :
 	this->progress_load->setRange(0, parseTask->getMaxSteps());
-	this->progress_load->setTextVisible(parseTask->getAdvancement());
-	this->progress_load->show();
+	this->progress_load->setValue(parseTask->getAdvancement());
+	this->progress_load->setFormat("Parsing image data ... (%p%)");
+	this->progress_load->setVisible(true);
 
 	// Loop while parsing files in other thread :
 	bool shouldStop = false;
@@ -483,7 +485,8 @@ void GridLoaderWidget::loadGridDIM1channel() {
 	} while (shouldStop == false);
 	if (parseThread.joinable()) { parseThread.join(); }
 
-	this->progress_load->hide();
+	this->progress_load->reset();
+	this->progress_load->setVisible(false);
 
 	this->computeGridInfoLabel();
 }
@@ -543,8 +546,9 @@ void GridLoaderWidget::loadGridDIM2channel() {
 	std::size_t maxSteps = parseTask_G->getMaxSteps() + parseTask_R->getMaxSteps();
 	// Set and show progress bar :
 	this->progress_load->setRange(0, maxSteps);
-	this->progress_load->setTextVisible(0);
-	this->progress_load->show();
+	this->progress_load->setValue(0);
+	this->progress_load->setFormat("Parsing image data ... (%p%)");
+	this->progress_load->setVisible(true);
 
 	// Loop while parsing files in other thread :
 	bool shouldStop = false;
@@ -566,7 +570,8 @@ void GridLoaderWidget::loadGridDIM2channel() {
 	if (parseThread_R.joinable()) { parseThread_R.join(); }
 	if (parseThread_G.joinable()) { parseThread_G.join(); }
 
-	this->progress_load->hide();
+	this->progress_load->reset();
+	this->progress_load->setVisible(false);
 
 	this->computeGridInfoLabel();
 }
@@ -610,8 +615,9 @@ void GridLoaderWidget::loadGridTIF1channel() {
 	} while (not parseTask->hasSteps());
 	// Set and show progress bar :
 	this->progress_load->setRange(0, parseTask->getMaxSteps());
-	this->progress_load->setTextVisible(parseTask->getAdvancement());
-	this->progress_load->show();
+	this->progress_load->setValue(parseTask->getAdvancement());
+	this->progress_load->setFormat("Parsing image data ... (%p%)");
+	this->progress_load->setVisible(true);
 
 	// Loop while parsing files in other thread :
 	bool shouldStop = false;
@@ -629,6 +635,9 @@ void GridLoaderWidget::loadGridTIF1channel() {
 		shouldStop = parseTask->isComplete();
 	} while (shouldStop == false);
 	if (parseThread.joinable()) { parseThread.join(); }
+
+	this->progress_load->reset();
+	this->progress_load->setVisible(false);
 
 	this->computeGridInfoLabel();
 }
@@ -689,8 +698,9 @@ void GridLoaderWidget::loadGridTIF2channel() {
 	std::size_t maxSteps = parseTask_G->getMaxSteps() + parseTask_R->getMaxSteps();
 	// Set and show progress bar :
 	this->progress_load->setRange(0, maxSteps);
-	this->progress_load->setTextVisible(0);
-	this->progress_load->show();
+	this->progress_load->setValue(0);
+	this->progress_load->setFormat("Parsing image data ... (%p%)");
+	this->progress_load->setVisible(true);
 
 	// Loop while parsing files in other thread :
 	bool shouldStop = false;
@@ -712,11 +722,13 @@ void GridLoaderWidget::loadGridTIF2channel() {
 	if (parseThread_R.joinable()) { parseThread_R.join(); }
 	if (parseThread_G.joinable()) { parseThread_G.join(); }
 
+	this->progress_load->reset();
+	this->progress_load->setVisible(false);
+
 	this->computeGridInfoLabel();
 }
 
 void GridLoaderWidget::loadGrid() {
-	LOG_ENTER(GridLoaderWidget::loadGrid())
 	if (readerR == nullptr) {
 		QMessageBox* msgBox = new QMessageBox;
 		msgBox->setAttribute(Qt::WA_DeleteOnClose);
@@ -755,8 +767,6 @@ void GridLoaderWidget::loadGrid() {
 
 	// Check user memory allowed, and ask for confirmation if necessary :
 	UserSettings settings = UserSettings::getInstance();
-	PRINTVAL(settings.getUserRemainingBitSize())
-	PRINTVAL(completeSizeBits);
 	if (settings.getUserRemainingBitSize() < completeSizeBits) {
 		QMessageBox* confirmBox = new QMessageBox();
 		confirmBox->setWindowTitle("Warning : Memory load");
@@ -767,7 +777,6 @@ void GridLoaderWidget::loadGrid() {
 		confirmBox->exec();
 		if (confirmBox->clickedButton() == confirm_Deny) {
 			// if the user doesn't want anything like this, return.
-			LOG_LEAVE(GridLoaderWidget::loadGrid())
 			return;
 		}
 
@@ -801,6 +810,9 @@ void GridLoaderWidget::loadGrid() {
 
 	// Setup the progress bar :
 	this->progress_load->setRange(0,maxSteps);
+	this->progress_load->setValue(0);
+	this->progress_load->setVisible(true);
+	this->progress_load->setFormat("Loading images in memory ... %v/%m (%p%)");
 	this->disableWidgets();
 
 	////////////////////////////////////////
@@ -877,7 +889,6 @@ void GridLoaderWidget::loadGrid() {
 		ox = this->dsb_offsetX->value();
 		oy = this->dsb_offsetY->value();
 		oz = this->dsb_offsetZ->value();
-		std::cerr << "[LOG] LOADING : grid world offset is {" << ox << ", " << oy << ", " << oz << "}\n";
 		this->inputGridR->setOriginOffset_WorldSpace(glm::vec4(ox, oy, oz, 1.));
 		if (this->readerG != nullptr) {
 			this->inputGridG->setOriginOffset_WorldSpace(glm::vec4(ox, oy, oz, 1.));
@@ -890,8 +901,6 @@ void GridLoaderWidget::loadGrid() {
 		this->viewer->loadTwoGrids(this->inputGridR, this->inputGridG);
 	}
 	this->viewer->centerScene();
-
-	LOG_LEAVE(GridLoaderWidget::loadGrid())
 
 	this->close();
 }

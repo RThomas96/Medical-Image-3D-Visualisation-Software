@@ -138,12 +138,12 @@ void VisuBoxController::updateValues() {
 	}
 	this->blockSignals(true);
 	auto box = this->scene->getVisuBoxCoordinates();
-	this->input_coordMinX->setValue(box[0].x);
-	this->input_coordMinY->setValue(box[0].y);
-	this->input_coordMinZ->setValue(box[0].z);
-	this->input_coordMaxX->setValue(box[1].x);
-	this->input_coordMaxY->setValue(box[1].y);
-	this->input_coordMaxZ->setValue(box[1].z);
+	this->input_coordMinX->setValue(box.first.x);
+	this->input_coordMinY->setValue(box.first.y);
+	this->input_coordMinZ->setValue(box.first.z);
+	this->input_coordMaxX->setValue(box.second.x);
+	this->input_coordMaxY->setValue(box.second.y);
+	this->input_coordMaxZ->setValue(box.second.z);
 	this->blockSignals(false);
 	return;
 }

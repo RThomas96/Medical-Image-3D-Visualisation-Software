@@ -406,6 +406,8 @@ void Scene::addGrid(const std::shared_ptr<InputGrid> _grid, std::string meshPath
 	_grid->setOffline(true);
 
 	this->updateBoundingBox();
+	this->setVisuBoxMinCoord(glm::uvec3());
+	this->setVisuBoxMaxCoord(_grid->getResolution());
 	this->resetVisuBox();
 }
 
@@ -468,10 +470,13 @@ void Scene::addTwoGrids(const std::shared_ptr<InputGrid> _gridR, const std::shar
 
 	this->updateVis();
 
-	_gridR->setOffline(true);
-	_gridB->setOffline(true);
+	// Only set those grids to be offline if they don't contain any data ! (downsampled reader)
+	if (_gridR->getGridReader()->downsamplingLevel() != IO::DownsamplingLevel::Original) { _gridR->setOffline(true); }
+	if (_gridB->getGridReader()->downsamplingLevel() != IO::DownsamplingLevel::Original) { _gridB->setOffline(true); }
 
 	this->updateBoundingBox();
+	this->setVisuBoxMinCoord(glm::uvec3());
+	this->setVisuBoxMaxCoord(_gridR->getResolution());
 	this->resetVisuBox();
 }
 
@@ -492,11 +497,6 @@ void Scene::updateBoundingBox(void) {
 	auto corners = this->sceneBB.getAllCorners();
 	for (std::size_t i = 0; i < corners.size(); ++i) {
 		this->lightPositions[i] = glm::convert_to<float>(corners[i]);
-	}
-
-	this->visuBox = this->sceneDataBB;
-	if (this->visuBoxController != nullptr) {
-		this->visuBoxController->updateValues();
 	}
 
 	return;
@@ -896,10 +896,6 @@ GLuint Scene::uploadTexture3D_iterative(const TextureUpload &tex, const std::sha
 	// Set the pixel alignment :
 	glPixelStorei(GL_PACK_ALIGNMENT, tex.alignment.x);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, tex.alignment.y);
-
-	PRINTVAL(tex.size.x)
-	PRINTVAL(tex.size.y)
-	PRINTVAL(tex.size.z)
 
 	this->debugLog->pushGroup("Texture upload");
 
@@ -1767,7 +1763,7 @@ void Scene::prepareUniforms_Volumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 
 	glUniform1ui(location_r_channelView, chan_r);
 	glUniform1ui(location_g_channelView, chan_g);
 	glUniform1ui(location_r_nbChannels, 1);
-	glUniform1ui(location_g_nbChannels, 1);
+	glUniform1ui(location_g_nbChannels, (_grid->grid.size() > 1) ? 1 : 0); // only set this if there's two grids
 	if (_grid->nbChannels > 1) {
 		glUniform1ui(location_r_selectedChannel, this->selectedChannel_r);
 		glUniform1ui(location_g_selectedChannel, this->selectedChannel_g);
@@ -2338,18 +2334,18 @@ DiscreteGrid::bbox_t Scene::getVisuBox() {
 	return this->visuBox;
 }
 
-glm::umat2x3 Scene::getVisuBoxCoordinates() {
-	if (this->grids.size() == 0) { return glm::umat2x3(); }
-	if (this->grids[0]->grid.size() == 0) { return glm::umat2x3(); }
+std::pair<glm::uvec3, glm::uvec3> Scene::getVisuBoxCoordinates() {
+	if (this->grids.size() == 0) { return std::make_pair<glm::uvec3, glm::uvec3>(glm::uvec3(), glm::uvec3()); }
+	if (this->grids[0]->grid.size() == 0) { return std::make_pair<glm::uvec3, glm::uvec3>(glm::uvec3(), glm::uvec3()); }
+
+	std::pair<glm::uvec3, glm::uvec3> result;
 
 	auto mi = this->computePlanePositions();
-	auto ma = this->visuBox.getMax();
-
 	glm::uvec3 min = this->grids[0]->grid[0]->worldPositionToIndex(glm::vec4(mi, 1.));
-	glm::uvec3 max = this->grids[0]->grid[0]->worldPositionToIndex(glm::vec4(ma, 1.));
-	glm::umat2x3 result;
-	result[0] = min;
-	result[1] = max;
+	result.first = min;
+
+	// The second coordinate can be directly taken from the current value (automatically max of scene)
+	result.second = this->visuMax;
 	return result;
 }
 
@@ -2370,12 +2366,23 @@ void Scene::setVisuBoxMaxCoord(glm::uvec3 coor_max) {
 
 void Scene::updateVisuBoxCoordinates() {
 	if (this->grids.size() == 0) { return; }
-	if (this->grids[0]->grid.size() == 0) { return; }
-	auto min = this->grids[0]->grid[0]->getVoxelPositionWorldSpace(this->visuMin);
-	auto max = this->grids[0]->grid[0]->getVoxelPositionWorldSpace(this->visuMax);
 
-	auto imgBox = DiscreteGrid::bbox_t(min, max);
-	this->visuBox = imgBox.transformTo(this->grids[0]->grid[0]->getTransform_GridToWorld());
+	// Reset the visu box :
+	using vec = DiscreteGrid::bbox_t::vec;
+	this->visuBox = DiscreteGrid::bbox_t();
+
+	// Add all corners of bounding boxes from the grids :
+	for (const std::shared_ptr<DiscreteGrid>& g : this->grids[0]->grid) {
+		// Get the bounding box of the coordinates in grid space :
+		auto min = g->getVoxelPositionGridSpace(this->visuMin);
+		auto max = g->getVoxelPositionGridSpace(this->visuMax);
+		DiscreteGrid::bbox_t imgBox = DiscreteGrid::bbox_t(vec(min.x, min.y, min.z), vec(max.x, max.y, max.z));
+
+		// Add the world-space-transformed version of it to the visu box :
+		this->visuBox.addPoints(imgBox.transformTo(g->getTransform_GridToWorld()).getAllCorners());
+	}
+
+	return;
 }
 
 void Scene::resetVisuBox() {
@@ -2836,7 +2843,7 @@ void Scene::tex3D_generateMESH(GridGLView::Ptr& grid, VolMeshData& mesh) {
 
 	// Size of tetrahedra, to compute epsilon :
 	glm::vec3 epsVolu = glm::vec3(xs, ys, zs);
-	grid->defaultEpsilon = epsVolu * .9f;
+	grid->defaultEpsilon = epsVolu;
 
 	// Containers for the computation of positions and texture coordinates :
 	glm::vec4 pos = glm::vec4();
@@ -2875,9 +2882,9 @@ void Scene::tex3D_generateMESH(GridGLView::Ptr& grid, VolMeshData& mesh) {
 	};
 
 	// Create tetrahedra :
-	for (std::size_t i = 0; i < xv; ++i) {
+	for (std::size_t k = 0; k < zv; ++k) {
 		for (std::size_t j = 0; j < yv; ++j) {
-			for (std::size_t k = 0; k < zv; ++k) {
+			for (std::size_t i = 0; i < xv; ++i) {
 				mesh.tetrahedra.push_back({getIndice(i+1, j  , k  ), getIndice(i+1, j+1, k  ), getIndice(i  , j+1, k  ), getIndice(i+1, j+1, k+1)});
 				mesh.tetrahedra.push_back({getIndice(i  , j  , k+1), getIndice(i  , j  , k  ), getIndice(i  , j+1, k+1), getIndice(i+1, j  , k+1)});
 				mesh.tetrahedra.push_back({getIndice(i  , j+1, k+1), getIndice(i+1, j  , k  ), getIndice(i+1, j+1, k+1), getIndice(i+1, j  , k+1)});

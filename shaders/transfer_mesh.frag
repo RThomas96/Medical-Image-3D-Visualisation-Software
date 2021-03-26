@@ -115,7 +115,7 @@ void main (void) {
 
 	/*
 	// Shows the wireframe of the mesh :
-	float epsilon = 0.03;
+	float epsilon = 0.008;
 	float distMin = min(barycentricCoords.x/largestDelta.x, min(barycentricCoords.y/largestDelta.y, barycentricCoords.z/largestDelta.z));
 
 	// Enables a 1-pass wireframe mode :
@@ -157,8 +157,12 @@ void main (void) {
 
 	vec3 Current_P = P.xyz;
 
+	// Start the raytracing path right before the actual hit, caused interferences before
+	Current_P = Current_P - 0.001*V;
+
 	//Find the first intersection of the ray with the grid
 	getFirstRayVoxelIntersection(Current_P, V, origin_voxel, t_next );
+
 
 	//vec3 dt = vec3( abs(voxelSize.xyz/V.xyz) );
 	vec3 dt = vec3( abs(voxelSize.x/V.x), abs(voxelSize.y/V.y), abs(voxelSize.z/V.z) );
@@ -178,7 +182,7 @@ void main (void) {
 
 	next_voxel = origin_voxel;
 
-	int maxFragIter = 100;
+	int maxFragIter = 200;
 	int maxTetrIter =  50;
 
 	vec3 n = vec3(0.,0.,0.);
@@ -576,6 +580,11 @@ bool checkAndColorizeVoxel(in uvec3 voxel, out vec4 return_color) {
 	float vis_r = texelFetch(visiblity_map, tcfv, 0).x;
 	float vis_g = texelFetch(visiblity_map_alternate, tcfv_alt, 0).x;
 
+	if (g_nbChannels == 0u) {
+		voxel.g = uint(colorBoundsAlternate.x);
+		vis_g = 1.f;
+	}
+
 	if (rgbMode == 1u) { // Only show greyscale ...
 		// If visible, color the voxel
 		if (vis_r > 0.) {
@@ -592,8 +601,10 @@ bool checkAndColorizeVoxel(in uvec3 voxel, out vec4 return_color) {
 		return false;
 	}
 	if (rgbMode == 3u) {
-		return_color = voxelIdxToColor(voxel);
-		return true;
+		if (vis_r > .5f && (vis_g > .5f)) {
+			return_color = voxelIdxToColor(voxel);
+			return true;
+		}
 	}
 
 	return false; // Don't need to compute color, nothing would have been shown ...
