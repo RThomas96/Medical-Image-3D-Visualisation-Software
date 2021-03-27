@@ -364,6 +364,7 @@ void Scene::loadGridROI() {
 	msgBox->setWindowTitle("Warning : loading high-resolution grid");
 	msgBox->setText("This grid will be loaded in high resolution, and no checks will be done to see if it can fit in memory. Do you want to continue ?");
 	QPushButton* deny_button = msgBox->addButton("Cancel", QMessageBox::ButtonRole::RejectRole);
+	msgBox->addButton("Ok", QMessageBox::ButtonRole::AcceptRole);
 	msgBox->exec();
 	if (msgBox->clickedButton() == deny_button) { return; }
 

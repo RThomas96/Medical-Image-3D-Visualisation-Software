@@ -106,7 +106,7 @@ void VisuBoxController::setupWidgets() {
 	bRow++;
 	// button to reset :
 	layout_BoundingBox->addWidget(this->button_resetBox, bRow, 0, 1, 3, Qt::AlignCenter);
-	layout_BoundingBox->addWidget(this->button_resetBox, bRow, 3, 1, 3, Qt::AlignCenter);
+	layout_BoundingBox->addWidget(this->button_loadROI, bRow, 3, 1, 3, Qt::AlignCenter);
 	frame_BoundingBox->setLayout(layout_BoundingBox);
 	frame_BoundingBox->setStyleSheet(".QFrame{border: 2px solid grey;border-radius: 4px;}");
 
