@@ -1,11 +1,13 @@
 #include "../include/visu_box_controller.hpp"
 
+#include "../include/neighbor_visu_main_widget.hpp"
 #include "../../viewer/include/scene.hpp"
+#include "../../viewer/include/neighbor_visu_viewer.hpp"
 
 #include <QLabel>
 #include <QGridLayout>
 
-VisuBoxController::VisuBoxController(Scene* _scene) : QWidget(nullptr) {
+VisuBoxController::VisuBoxController(Scene* _scene, MainWidget* _main) : QWidget(nullptr) {
 	this->strayObj.clear();
 	this->input_coordMinX = nullptr;
 	this->input_coordMinY = nullptr;
@@ -14,6 +16,7 @@ VisuBoxController::VisuBoxController(Scene* _scene) : QWidget(nullptr) {
 	this->input_coordMaxY = nullptr;
 	this->input_coordMaxZ = nullptr;
 	this->scene = _scene;
+	this->main = _main;
 	this->setupWidgets();
 	this->setAttribute(Qt::WA_DeleteOnClose);
 
@@ -51,6 +54,7 @@ void VisuBoxController::setupWidgets() {
 	this->input_coordMaxY = new QSpinBox;
 	this->input_coordMaxZ = new QSpinBox;
 	this->button_resetBox = new QPushButton("Reset coordinates");
+	this->button_loadROI = new QPushButton("Load high-res");
 
 	auto dsbLimits = [](QSpinBox* d) -> void {
 		d->setRange(0, std::numeric_limits<int>::max());
@@ -101,7 +105,8 @@ void VisuBoxController::setupWidgets() {
 	layout_BoundingBox->addWidget(this->input_coordMaxZ, bRow, 6, Qt::AlignHCenter);
 	bRow++;
 	// button to reset :
-	layout_BoundingBox->addWidget(this->button_resetBox, bRow, 1, 1, 4, Qt::AlignCenter);
+	layout_BoundingBox->addWidget(this->button_resetBox, bRow, 0, 1, 3, Qt::AlignCenter);
+	layout_BoundingBox->addWidget(this->button_resetBox, bRow, 3, 1, 3, Qt::AlignCenter);
 	frame_BoundingBox->setLayout(layout_BoundingBox);
 	frame_BoundingBox->setStyleSheet(".QFrame{border: 2px solid grey;border-radius: 4px;}");
 
@@ -129,6 +134,14 @@ void VisuBoxController::setupSignals() {
 	QObject::connect(this->button_resetBox, &QPushButton::clicked, [this]() {
 		if (this->scene != nullptr) { this->scene->resetVisuBox(); }
 		this->updateValues();
+	});
+	QObject::connect(this->button_loadROI, &QPushButton::clicked, this, [this](void) -> void {
+		if (this->scene == nullptr) { return; }
+		Viewer* viewer = this->main->getViewer3D();
+		viewer->makeCurrent();
+		this->scene->loadGridROI();
+		viewer->doneCurrent();
+		viewer->update();
 	});
 }
 

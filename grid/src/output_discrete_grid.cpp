@@ -33,6 +33,11 @@ OutputGrid::OutputGrid(const std::shared_ptr<OutputGrid>& _og) {
 	this->dataBoundingBox = _og->dataBoundingBox;
 }
 
+OutputGrid::OutputGrid(sizevec3 resolution, bbox_t renderWindow) : OutputGrid() {
+	this->setBoundingBox(renderWindow);
+	this->setResolution(resolution);
+}
+
 OutputGrid::~OutputGrid() {}
 
 OutputGrid& OutputGrid::preallocateData() {

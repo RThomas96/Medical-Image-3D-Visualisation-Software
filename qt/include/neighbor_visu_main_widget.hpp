@@ -23,6 +23,7 @@ class MainWidget : public QMainWindow {
 	public:
 		MainWidget();
 		~MainWidget();
+		Viewer* getViewer3D() const { return this->viewer; }
 	protected:
 		/// @b Setup all widgets, and connect their signals.
 		void setupWidgets();
@@ -49,6 +50,8 @@ class MainWidget : public QMainWindow {
 
 		UserSettingsWidget* usettings;	///< User settings dialog.
 		GridLoaderWidget* loaderWidget;	///< Loader widget
+
+		VisuBoxController* boxController;	///< The visu box controller
 
 		ControlPanel* controlPanel;	///< The control panel at the bottom of the grid
 		bool widgetSizeSet;		///< Checks if the widget size has been set before

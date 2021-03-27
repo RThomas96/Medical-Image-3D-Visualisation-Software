@@ -17,6 +17,7 @@ MainWidget::MainWidget() {
 	this->widgetSizeSet = false;
 	this->usettings = nullptr;
 	this->loaderWidget = nullptr;
+	this->boxController = nullptr;
 	// Query a user settings instance to initialize it :
 	UserSettings set = UserSettings::getInstance();
 }
@@ -26,6 +27,9 @@ MainWidget::~MainWidget() {
 	this->headerZ->unregisterPlaneViewer();
 	this->headerY->unregisterPlaneViewer();
 	this->headerX->unregisterPlaneViewer();
+	this->boxController->close();
+	#warning Might segfault on close
+	this->boxController = nullptr;
 
 	this->action_addGrid->disconnect();
 	this->action_saveGrid->disconnect();
@@ -41,6 +45,7 @@ MainWidget::~MainWidget() {
 	delete this->headerZ;
 	delete this->headerY;
 	delete this->headerX;
+
 	for (std::size_t i = 0; i < this->strayObj.size(); ++i) {
 		if (this->strayObj[i] != nullptr) {
 			delete this->strayObj[i];
@@ -106,7 +111,12 @@ void MainWidget::setupWidgets() {
 		this->loaderWidget->raise();
 	});
 	QObject::connect(this->action_saveGrid, &QAction::triggered, [this](){this->scene->launchSaveDialog();});
-	QObject::connect(this->action_showVisuBox, &QAction::triggered, [this](){this->scene->showVisuBoxController();});
+	QObject::connect(this->action_showVisuBox, &QAction::triggered, [this](){
+		if (this->boxController == nullptr) {
+			this->boxController = new VisuBoxController(this->scene, this);
+		}
+		this->scene->showVisuBoxController(this->boxController);
+	});
 	QObject::connect(this->action_exitProgram, &QAction::triggered, this, &QMainWindow::close);
 	QObject::connect(this->action_drawModeS, &QAction::triggered, [this](){this->scene->setDrawMode(DrawMode::Solid);});
 	QObject::connect(this->action_drawModeV, &QAction::triggered, [this](){this->scene->setDrawMode(DrawMode::Volumetric);});

@@ -41,6 +41,12 @@ TetMesh& TetMesh::setOutputGrid(const std::shared_ptr<OutputGrid>& toSet) {
 	return *this;
 }
 
+TetMesh& TetMesh::setOutputGrid_raw(const std::shared_ptr<OutputGrid>& toSet) {
+	this->outputGrid = toSet;
+	this->updateVoxelSizes();
+	return *this;
+}
+
 TetMesh& TetMesh::populateOutputGrid(InterpolationMethods method) {
 	// early returns :
 	if (this->outputGrid == nullptr) { return *this; }
@@ -132,6 +138,82 @@ TetMesh& TetMesh::populateOutputGrid(InterpolationMethods method) {
 	std::cerr << "\tTime to generate   : " << std::chrono::duration_cast<std::chrono::seconds>(elapsed).count() << " seconds\n";
 	std::cerr << "\tRate of generation : " << this->getGenerationRate() << " GV/h" << '\n';
 	std::cerr << "====================================" << '\n';
+
+	// Data should now be done being generated ...
+	return *this;
+}
+
+TetMesh& TetMesh::populateOutputGrid_threaded(InterpolationMethods method, IO::ThreadedTask::Ptr& task) {
+	// early returns :
+	if (this->outputGrid == nullptr) { return *this; }
+	if (this->inputGrids.size() == 0) { return *this; }
+
+	this->updateVoxelSizes();
+
+	// Check the dimensions of the voxel grid (if it can host voxels) :
+	DiscreteGrid::sizevec3 dims = this->outputGrid->getResolution();
+
+	task->setSteps(dims.z);
+
+	// If the grid to generate has "wrong" dimensions, warn and exit
+	if (dims.x == 0 || dims.y == 0 || dims.z == 0) {
+		std::cerr << "Grid dimensions contain a zero !" << '\n';
+		task->end();
+		return *this;
+	}
+
+	// reserve and allocate space :
+	this->outputGrid->preallocateData();
+
+	using clock_t = std::chrono::high_resolution_clock;
+	using duration_t = clock_t::duration;
+	using timepoint_t = clock_t::time_point;
+
+	timepoint_t start, end;
+	duration_t elapsed = duration_t::zero();
+
+	std::cerr << "[LOG] Starting to iterate on the image to generate ... (" << dims.z << " levels)\n";
+	// iterate on the voxels of the output data grid :
+	for (std::size_t k = 0; k < dims.z; ++k) {
+		this->outputGrid->setCurrentSlice(k);
+		start = clock_t::now();
+		for (std::size_t j = 0; j < dims.y; ++j) {
+			for (std::size_t i = 0; i < dims.x; ++i) {
+				// generate 3D index :
+				DiscreteGrid::sizevec3 idx = DiscreteGrid::sizevec3(i,j,k);
+
+				// get grid-space origin :
+				this->origin = this->outputGrid->getVoxelPositionGridSpace(idx);
+				// set world-space origin from it :
+				this->origin_WS = this->outputGrid->toWorldSpace(this->origin);
+
+				// gather values from all input grids :
+				std::vector<data_t> values;
+				for (const std::shared_ptr<InputGrid>& grid : this->inputGrids) {
+					// glm::vec4 now = grid->toGridSpace(this->origin_WS);
+					if (grid->includesPointWorldSpace(this->origin_WS)) {
+						values.push_back(this->getInterpolatedValue(grid, method, idx));
+					}
+				}
+
+				// do a basic mean of the values obtained from the different input grids :
+				data_t globalVal = .0f;
+				std::for_each(std::begin(values), std::end(values), [&](data_t v) {
+					globalVal += static_cast<data_t>(v) / static_cast<data_t>(values.size());
+				});
+
+				// set data :
+				this->outputGrid->setPixel(i, j, k, globalVal);
+			}
+		}
+		end = clock_t::now();
+		elapsed += (end - start);
+
+		// #warning Writes data directly to disk here.
+		task->advance();
+	}
+
+	task->end();
 
 	// Data should now be done being generated ...
 	return *this;

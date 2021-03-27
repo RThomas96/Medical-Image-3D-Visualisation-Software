@@ -52,8 +52,12 @@ namespace IO {
 			/// @b Allows to immediately end a task.
 			void end(void) {
 				if (this->m_lock.try_lock_for(std::chrono::milliseconds(100))) {
-					this->maxSteps = 1;
-					this->currentStep = 2;
+					if (this->maxSteps == 0) {
+						this->maxSteps = 1;
+						this->currentStep = 2;
+					} else {
+						this->currentStep = this->maxSteps+1;
+					}
 					this->m_lock.unlock();
 				}
 				return;

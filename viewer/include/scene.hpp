@@ -24,6 +24,7 @@
 #include <QOpenGLFunctions_4_0_Compatibility>
 #include <QOpenGLDebugLogger>
 #include <QStatusBar>
+#include <QProgressBar>
 // libQGLViewer :
 #include <QGLViewer/qglviewer.h>
 // glm include :
@@ -58,7 +59,7 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void initGl(QOpenGLContext* context);
 
 		/// @brief Show the Visualization box controller
-		void showVisuBoxController();
+		void showVisuBoxController(VisuBoxController* _controller);
 		/// @brief Remove the visu box controller if it closes
 		void removeVisuBoxController();
 
@@ -74,6 +75,8 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		/// @brief reload the default shader files
 		void recompileShaders(bool verbose = true);
 
+		/// @b Loads a designated ROI in high-resolution
+		void loadGridROI(void);
 		/// @b Adds a grid to the list of grids present and to be drawn, and generates the data structure to visualize it.
 		void addGrid(const std::shared_ptr<InputGrid> _grid, std::string meshPath);
 		/// @b Adds a grid to the list of grids present and to be drawn, which is composed of two separate grids' data.
@@ -250,6 +253,9 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		/// @b Computes the planes positions based on their parameters.
 		glm::vec3 computePlanePositions();
 
+		/// Updates the progress bar added to the main statusbar
+		void updateProgressBar();
+
 		/// @b preps uniforms for a grid
 		void prepareUniforms_3DSolid(GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, const GridGLView::Ptr& grid);
 		/// @b preps uniforms for a given plane
@@ -390,6 +396,18 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		float* visibleDomains;					///< Array deciding which values are visible
 		float* visibleDomainsAlternate;			///< Array deciding which values are visible
 
+		/********************************************/
+		/* Threaded loading of high-resolution grid */
+		/********************************************/
+		std::mutex mutexout;
+		std::mutex mutexadd;
+		std::vector<std::shared_ptr<DiscreteGrid>> gridsToAdd;
+		std::vector<IO::ThreadedTask::Ptr> tasks;
+		std::vector<std::shared_ptr<std::thread>> runningThreads;
+		QTimer* timer_refreshProgress;
+		QProgressBar* pb_loadProgress;
+		bool isFinishedLoading;
+		void replaceGridsWithHighRes();
 };
 
 /// @brief Type-safe conversion of enum values to unsigned ints.

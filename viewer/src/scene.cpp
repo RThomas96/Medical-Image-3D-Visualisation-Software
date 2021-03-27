@@ -124,6 +124,10 @@ Scene::Scene() {
 		this->visibleDomains[i] = .5f;
 		this->visibleDomainsAlternate[i] = .5f;
 	}
+
+	this->pb_loadProgress = nullptr;
+	this->timer_refreshProgress = nullptr;
+	this->isFinishedLoading = false;
 }
 
 Scene::~Scene(void) {
@@ -343,6 +347,153 @@ void Scene::createBuffers() {
 	this->vaoHandle_boundingBox = createVAO("vaoHandle_boundingBox");
 	this->vboHandle_boundingBoxVertices = createVBO(GL_ARRAY_BUFFER, "vboHandle_boundingBoxVertices");
 	this->vboHandle_boundingBoxIndices = createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_boundingBoxIndices");
+
+	return;
+}
+
+void Scene::loadGridROI() {
+	LOG_ENTER(Scene::loadGridROI)
+	// It will load the grid, based on the visu box coordinates !
+	// The context will be made current at this stage, no need to worry :)
+
+	if (this->grids.size() == 0) { return; }
+	if (this->grids[0]->grid.size() == 0) { return; }
+
+	// Warn the user we will load the image in high resolution :
+	QMessageBox* msgBox = new QMessageBox;
+	msgBox->setWindowTitle("Warning : loading high-resolution grid");
+	msgBox->setText("This grid will be loaded in high resolution, and no checks will be done to see if it can fit in memory. Do you want to continue ?");
+	QPushButton* deny_button = msgBox->addButton("Cancel", QMessageBox::ButtonRole::RejectRole);
+	msgBox->exec();
+	if (msgBox->clickedButton() == deny_button) { return; }
+
+	// Iterate over the grids loaded, and generate them with the coordinates given.
+	// Copy the populate grid function to load the current grid
+	// Have a vector of std::thread(s) each with the populate function running, and reporting their progress on this
+	// thread.
+	// At the end, insert the two grids with addGrid() or addTwoGrids() :)
+
+	std::for_each(this->grids[0]->grid.cbegin(), this->grids[0]->grid.cend(), [this](const std::shared_ptr<DiscreteGrid>& grid) -> void {
+		// Create a thread, in a shared ptr to add it to the list of running threads
+		std::shared_ptr<std::thread> localThread = std::make_shared<std::thread>([this, &grid](void) -> void {
+			{
+				std::lock_guard(this->mutexout);
+				std::cerr << "Launching thread " << std::this_thread::get_id() << '\n';
+			}
+
+			// Compute the positions for the bounding box from the given coordinates :
+			DiscreteGrid::bbox_t renderBox = this->visuBox;
+			// The resolution is going to be defined so the voxel dimensions are 1 :
+			DiscreteGrid::sizevec3 dims = glm::convert_to<std::size_t>(this->visuBox.getDiagonal());
+
+			// Create a tetrahedral mesh :
+			std::unique_ptr<TetMesh> tetMesh = std::make_unique<TetMesh>();
+			// Add the unique "input" grid to it :
+			tetMesh->addInputGrid(std::dynamic_pointer_cast<InputGrid>(grid));
+
+			// Create a new output grid :
+			std::shared_ptr<OutputGrid> outputGrid = std::make_shared<OutputGrid>(dims, renderBox);
+			// Specifies the grid size, and bounding box of the grid
+			outputGrid->setOffline(false); // we want to keep the grid in memory
+
+			tetMesh->setOutputGrid_raw(outputGrid);
+
+			// Create a new task to keep track of this thread's progress
+			IO::ThreadedTask::Ptr task = std::make_shared<IO::ThreadedTask>();
+
+			// Add the task to the scene
+			{
+				std::lock_guard<std::mutex> locking(this->mutexadd);
+				this->tasks.push_back(task);
+			}
+
+			// Launch grid fill :
+			tetMesh->populateOutputGrid_threaded(InterpolationMethods::NearestNeighbor, task);
+
+			// Add the grid to the list of grids to be added later
+			{
+				std::lock_guard<std::mutex> locking(this->mutexadd);
+				this->gridsToAdd.push_back(outputGrid);
+			}
+		});
+
+		// Add it to the list of running joinable threads :
+		this->runningThreads.push_back(localThread);
+	});
+
+	if (this->programStatusBar != nullptr) {
+		// Add a progress bar and update it :
+		this->pb_loadProgress = new QProgressBar;
+		this->programStatusBar->addWidget(this->pb_loadProgress);
+		this->timer_refreshProgress = new QTimer;
+		this->timer_refreshProgress->setSingleShot(false);
+		this->timer_refreshProgress->setInterval(50);
+		QObject::connect(this->timer_refreshProgress, &QTimer::timeout, [this](void){this->updateProgressBar();});
+		this->timer_refreshProgress->start();
+	}
+
+	LOG_LEAVE(Scene::loadGridROI)
+}
+
+void Scene::replaceGridsWithHighRes() {
+	if (this->gridsToAdd.size() == 0) { return; }
+
+	// Remove old grids :
+	this->delGrid.push_back(0);
+	this->deleteGridNow();
+
+	// Replace with new ones :
+	if (this->gridsToAdd.size() == 1) {
+		this->addGrid(std::dynamic_pointer_cast<InputGrid>(this->gridsToAdd[0]), "");
+	} else {
+		this->addTwoGrids(std::dynamic_pointer_cast<InputGrid>(this->gridsToAdd[0]), std::dynamic_pointer_cast<InputGrid>(this->gridsToAdd[1]), "");
+	}
+}
+
+void Scene::updateProgressBar() {
+	if (this->tasks.size() == 0) { return; }
+
+	// Track progress of tasks :
+	std::size_t current = 0;
+	std::size_t maxSteps = 0;
+	std::for_each(this->tasks.cbegin(), this->tasks.cend(), [&current, &maxSteps](const IO::ThreadedTask::Ptr& task){
+		maxSteps += task->getMaxSteps();
+		current += task->getAdvancement();
+	});
+
+	// Update the progress :
+	this->pb_loadProgress->setFormat("Loading high-res grid ... %v/%m (%v%)");
+	this->pb_loadProgress->setValue(current);
+	this->pb_loadProgress->setMaximum(maxSteps);
+
+	if (current >= maxSteps) {
+		// stop this function, and remove widget
+		this->timer_refreshProgress->stop();
+		this->pb_loadProgress->setVisible(false);
+		this->programStatusBar->removeWidget(this->pb_loadProgress);
+		// delete pointers :
+		delete this->programStatusBar;
+		delete this->timer_refreshProgress;
+		// remove pointer values :
+		this->programStatusBar = nullptr;
+		this->timer_refreshProgress = nullptr;
+
+		// Join threads :
+		std::for_each(this->runningThreads.begin(), this->runningThreads.end(), [this](std::shared_ptr<std::thread>& th) {
+			if (th->joinable()) {
+				std::lock_guard(this->mutexout);
+				std::cerr << "Waiting for thread " << th->get_id() << " ...\n";
+				th->join();
+				th.reset();
+			} else {
+				std::lock_guard(this->mutexout);
+				std::cerr << "Warning : cannot join thread " << th->get_id() << '\n';
+			}
+		});
+
+		this->runningThreads.clear();
+		this->isFinishedLoading = true;
+	}
 
 	return;
 }
@@ -1843,6 +1994,9 @@ void Scene::draw3DView(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, bool sho
 	if (this->shouldDeleteGrid) {
 		this->deleteGridNow();
 	}
+	if (this->isFinishedLoading) {
+		this->replaceGridsWithHighRes();
+	}
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	glEnable(GL_TEXTURE_3D);
@@ -2311,10 +2465,10 @@ void Scene::drawBoundingBox(const DiscreteGrid::bbox_t& _box, glm::vec3 color, G
 	glUseProgram(0);
 }
 
-void Scene::showVisuBoxController() {
-	if (this->visuBoxController == nullptr) {
-		this->visuBoxController = new VisuBoxController(this);
-	}
+void Scene::showVisuBoxController(VisuBoxController* _controller) {
+	if (this->visuBoxController != nullptr) { std::cerr << "Warning : rewriting visu box controller.\n"; }
+	this->visuBoxController = _controller;
+	this->visuBoxController->raise();
 	this->visuBoxController->show();
 }
 
@@ -2323,7 +2477,6 @@ void Scene::removeVisuBoxController() {
 }
 
 DiscreteGrid::bbox_t Scene::getVisuBox() {
-	// TO CHANGE
 	// This function should get the plane positions, determine the closest voxel position in grid space, and
 	// return an integer bounding box in order to be controlled by the visu box controller.
 	glm::vec3 min = this->computePlanePositions();
@@ -2541,7 +2694,6 @@ void Scene::setDrawMode(DrawMode _mode) {
 			break;
 			case DrawMode::VolumetricBoxed :
 				this->programStatusBar->showMessage("Set draw mode to VolumetricBoxed.\n", 5000);
-				this->showVisuBoxController();
 			break;
 		}
 	}
