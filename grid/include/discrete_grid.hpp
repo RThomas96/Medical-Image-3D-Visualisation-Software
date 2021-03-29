@@ -17,12 +17,15 @@
 /// @brief Definition of a 3 dimensionnal vector to store this grid's dimensions, amongst other things.
 typedef glm::vec<3, std::size_t, glm::defaultp> svec3;
 
+class TetMesh; // Fwd-decl
+
 /// @brief Representation of a discrete grid (as a stack of images, or a voxel grid) which can be queried from world space.
 /// @note Although some functions in this class may mention 'texels', they are in no way, shape, or form tied to the visualization aspect of the project.
 class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 
 	//friend class GridControl;
 	friend class GridDetailedView;
+	friend class TetMesh;
 
 	public:
 		typedef glm::vec<3, std::size_t, glm::defaultp> sizevec3;
@@ -54,6 +57,9 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 
 	public:
 
+		/// @b Creator from a resolution and a render window
+		DiscreteGrid(sizevec3 dims, bbox_t window);
+
 		/// @brief Default destructor, removes any storage associated with the grid.
 		~DiscreteGrid(void);
 
@@ -61,6 +67,7 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 		virtual DataType getPixel(std::size_t x, std::size_t y, std::size_t z) const;
 
 		/// @brief Allows to set a value for the pixel at the coordinates 'x,y,z'.
+		/// @note This is defined for all grid types, although it will only affect output grids (which are modifiable)
 		virtual DiscreteGrid& setPixel(std::size_t x, std::size_t y, std::size_t z, DataType value);
 
 		/// @brief Updates this grid's data with data computed from a grid reader.
@@ -198,6 +205,23 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 		void updateVoxelDimensions(void);
 
 	protected:
+		/// @b For the output grids, write the current slice to disk.
+		/// @n This is a hack.
+		virtual DiscreteGrid& writeSlice();
+		/// @b Prealocate enough space to fit all data in the data vector.
+		/// @n This is a hack.
+		virtual DiscreteGrid& preallocateData(void);
+		/// @b Pre-allocate the data necessary to fit 'size' elements of data in the class.
+		/// @n This is a hack.
+		virtual DiscreteGrid& preallocateData(sizevec3 size);
+		/// @b Updates the render window of output grids.
+		/// @n This is a hack.
+		virtual DiscreteGrid& updateRenderBox(const bbox_t& newbox);
+		/// @b For output grids, set the current slice to write to disk.
+		/// @n This is a hack.
+		virtual DiscreteGrid& setCurrentSlice(std::size_t cs);
+
+	protected:
 		/// @brief Checks if the grid's properties can be modified (data will always be modifiable, dimensions might not)
 		/// @details Output grids can be modified, input grids however, cannot.
 		bool modifiable;
@@ -233,6 +257,9 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 		std::shared_ptr<IO::GenericGridReader> gridReader;
 		/// @brief File writer
 		std::shared_ptr<IO::GenericGridWriter> gridWriter;
+		/// @b For offline output grids, the slice currently being edited.
+		/// @n This is currently a hack.
+		std::size_t currentSlice;
 };
 
 /// @brief Computes a transformation matrix from an origin and an angle, for our use case.

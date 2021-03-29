@@ -393,7 +393,7 @@ void Scene::loadGridROI() {
 			tetMesh->addInputGrid(std::dynamic_pointer_cast<InputGrid>(grid));
 
 			// Create a new output grid :
-			std::shared_ptr<OutputGrid> outputGrid = std::make_shared<OutputGrid>(dims, renderBox);
+			std::shared_ptr<DiscreteGrid> outputGrid = std::make_shared<DiscreteGrid>(dims, renderBox);
 			// Specifies the grid size, and bounding box of the grid
 			outputGrid->setOffline(false); // we want to keep the grid in memory
 
@@ -445,9 +445,9 @@ void Scene::replaceGridsWithHighRes() {
 
 	// Replace with new ones :
 	if (this->gridsToAdd.size() == 1) {
-		this->addGrid(std::dynamic_pointer_cast<InputGrid>(this->gridsToAdd[0]), "");
+		this->addGrid(this->gridsToAdd[0], "");
 	} else {
-		this->addTwoGrids(std::dynamic_pointer_cast<InputGrid>(this->gridsToAdd[0]), std::dynamic_pointer_cast<InputGrid>(this->gridsToAdd[1]), "");
+		this->addTwoGrids(this->gridsToAdd[0], this->gridsToAdd[1], "");
 	}
 }
 
@@ -463,7 +463,7 @@ void Scene::updateProgressBar() {
 	});
 
 	// Update the progress :
-	this->pb_loadProgress->setFormat("Loading high-res grid ... %v/%m (%v%)");
+	this->pb_loadProgress->setFormat("Loading high-res grid ... %v/%m (%p%)");
 	this->pb_loadProgress->setValue(current);
 	this->pb_loadProgress->setMaximum(maxSteps);
 
@@ -499,7 +499,7 @@ void Scene::updateProgressBar() {
 	return;
 }
 
-void Scene::addGrid(const std::shared_ptr<InputGrid> _grid, std::string meshPath) {
+void Scene::addGrid(const std::shared_ptr<DiscreteGrid> _grid, std::string meshPath) {
 	if (this->grids.size() > 0) {
 		this->shouldDeleteGrid = true;
 		for (std::size_t i = 0; i < this->grids.size(); ++i) { this->delGrid.push_back(i); }
@@ -563,13 +563,18 @@ void Scene::addGrid(const std::shared_ptr<InputGrid> _grid, std::string meshPath
 	this->resetVisuBox();
 }
 
-void Scene::addTwoGrids(const std::shared_ptr<InputGrid> _gridR, const std::shared_ptr<InputGrid> _gridB, std::string meshPath) {
+void Scene::addTwoGrids(const std::shared_ptr<DiscreteGrid> _gridR, const std::shared_ptr<DiscreteGrid> _gridB, std::string meshPath) {
 	if (this->grids.size() > 0) {
 		this->shouldDeleteGrid = true;
+		std::cerr << "Deleting grids ...\n";
 		for (std::size_t i = 0; i < this->grids.size(); ++i) { this->delGrid.push_back(i); }
+		std::cerr << "Pushed back elements ...\n";
 		this->deleteGridNow();
+		std::cerr << "Deleted grids.\n";
 	}
-	GridGLView::Ptr gridView = std::make_shared<GridGLView>(std::initializer_list<std::shared_ptr<DiscreteGrid>>({_gridR, _gridB}));
+	std::cerr << "Making the GridGLView pointer ...\n";
+	GridGLView::Ptr gridView = std::make_shared<GridGLView>(_gridR, _gridB);
+	std::cerr << "Made the GridGLView pointer.\n";
 
 	TextureUpload _gridTex{};
 	_gridTex.minmag.x = GL_NEAREST;
@@ -584,6 +589,7 @@ void Scene::addTwoGrids(const std::shared_ptr<InputGrid> _gridR, const std::shar
 	_gridTex.swizzle.a = GL_ONE;
 	_gridTex.alignment.x = 1;
 	_gridTex.alignment.y = 2;
+	std::cerr << "Made the upload texture struct.\n";
 
 	// Tex upload function :
 	auto dimensions = _gridR->getResolution();
@@ -607,6 +613,7 @@ void Scene::addTwoGrids(const std::shared_ptr<InputGrid> _gridR, const std::shar
 		#endif
 
 		_gridTex.printInfo();
+		std::cerr << "Made the upload texture struct.\n";
 
 		gridView->gridTexture = this->uploadTexture3D_iterative(_gridTex, _gridR, _gridB);
 	}
@@ -623,8 +630,23 @@ void Scene::addTwoGrids(const std::shared_ptr<InputGrid> _gridR, const std::shar
 	this->updateVis();
 
 	// Only set those grids to be offline if they don't contain any data ! (downsampled reader)
-	if (_gridR->getGridReader()->downsamplingLevel() != IO::DownsamplingLevel::Original) { _gridR->setOffline(true); }
-	if (_gridB->getGridReader()->downsamplingLevel() != IO::DownsamplingLevel::Original) { _gridB->setOffline(true); }
+	if (_gridR->getGridReader() != nullptr) {
+		if (_gridR->getGridReader()->downsamplingLevel() != IO::DownsamplingLevel::Original) {
+			_gridR->setOffline(true);
+		}
+	} else {
+		_gridR->setOffline(false);
+	}
+	if (_gridB->getGridReader() != nullptr) {
+		if (_gridB->getGridReader()->downsamplingLevel() != IO::DownsamplingLevel::Original) {
+			_gridB->setOffline(true);
+		}
+	} else {
+		_gridB->setOffline(false);
+	}
+
+	auto res = _gridR->getResolution();
+	std::cerr << "Resolution for visu box : " << res.x << ", " << res.y << ", " << res.z << "\n";
 
 	this->updateBoundingBox();
 	this->setVisuBoxMinCoord(glm::uvec3());
@@ -1996,7 +2018,9 @@ void Scene::draw3DView(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, bool sho
 		this->deleteGridNow();
 	}
 	if (this->isFinishedLoading) {
+		this->isFinishedLoading = false;
 		this->replaceGridsWithHighRes();
+		this->gridsToAdd.clear();
 	}
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
@@ -2548,6 +2572,7 @@ void Scene::resetVisuBox() {
 	this->visuMin = glm::uvec3(0,0,0);
 	auto max = this->grids[0]->grid[0]->getResolution();
 	this->visuMax = glm::uvec3(max.x, max.y, max.z);
+	this->updateVisuBoxCoordinates();
 	return;
 }
 

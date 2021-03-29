@@ -27,7 +27,7 @@ MainWidget::~MainWidget() {
 	this->headerZ->unregisterPlaneViewer();
 	this->headerY->unregisterPlaneViewer();
 	this->headerX->unregisterPlaneViewer();
-	this->boxController->close();
+	if (this->boxController) { this->boxController->close(); }
 	#warning Might segfault on close
 	this->boxController = nullptr;
 
@@ -114,6 +114,11 @@ void MainWidget::setupWidgets() {
 	QObject::connect(this->action_showVisuBox, &QAction::triggered, [this](){
 		if (this->boxController == nullptr) {
 			this->boxController = new VisuBoxController(this->scene, this);
+			// Connect the destrcution of the widget with its removal from the scene
+			QObject::connect(this->boxController, &QWidget::destroyed, this, [this](void) -> void {
+				this->boxController = nullptr;
+				this->scene->removeVisuBoxController();
+			});
 		}
 		this->scene->showVisuBoxController(this->boxController);
 	});

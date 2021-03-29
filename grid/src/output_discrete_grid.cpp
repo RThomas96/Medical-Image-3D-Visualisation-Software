@@ -40,6 +40,7 @@ OutputGrid::OutputGrid(sizevec3 resolution, bbox_t renderWindow) : OutputGrid() 
 
 OutputGrid::~OutputGrid() {}
 
+/*
 OutputGrid& OutputGrid::preallocateData() {
 	return this->preallocateData(this->gridDimensions);
 }
@@ -95,3 +96,4 @@ OutputGrid& OutputGrid::setPixel(std::size_t i, std::size_t j, std::size_t k, Da
 }
 
 OutputGrid& OutputGrid::setCurrentSlice(std::size_t cs) { this->currentSlice = cs; return *this; }
+*/

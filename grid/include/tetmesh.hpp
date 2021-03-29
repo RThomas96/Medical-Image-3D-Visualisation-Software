@@ -55,7 +55,7 @@ class TetMesh {
 		/// @details Sets the positions of the mesh vertices when the output mesh is set.
 		/// @param toSet A raw pointer to the grid to populate for the reconstruction.
 		/// @returns A reference to (this), to chain function calls.
-		TetMesh& setOutputGrid_raw(const std::shared_ptr<OutputGrid>& toSet);
+		TetMesh& setOutputGrid_raw(const std::shared_ptr<DiscreteGrid>& toSet);
 
 		/// @brief Populate the output grid with data from the input grids.
 		/// @param method The interpolation method used to determine the values of the neighbor grid.
@@ -86,7 +86,7 @@ class TetMesh {
 		~TetMesh(void);
 	protected:
 		std::vector<std::shared_ptr<InputGrid>> inputGrids; ///< Input grids, to sample data from
-		std::shared_ptr<OutputGrid> outputGrid; ///< Output grid, to populate
+		std::shared_ptr<DiscreteGrid> outputGrid; ///< Output grid, to populate
 
 		glm::vec4 origin; ///< Position of the mesh's origin.
 		glm::vec4 origin_WS; ///< Position of the origin of the mesh, always in world space.

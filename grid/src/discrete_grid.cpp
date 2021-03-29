@@ -39,11 +39,17 @@ DiscreteGrid::DiscreteGrid(bool _modifiable) {
 	this->gridReader = nullptr;
 	this->gridWriter = nullptr;
 	this->isOffline = false;
+	this->currentSlice = 0;
 }
 
 DiscreteGrid::DiscreteGrid(std::shared_ptr<IO::GenericGridReader> reader) : DiscreteGrid() {
 	this->gridReader = reader;
 	this->fromGridReader();
+}
+
+DiscreteGrid::DiscreteGrid(sizevec3 res, bbox_t box) : DiscreteGrid() {
+	this->setResolution(res);
+	this->setBoundingBox(box);
 }
 
 DiscreteGrid::~DiscreteGrid(void) {
@@ -72,6 +78,54 @@ DiscreteGrid& DiscreteGrid::fromGridReader() {
 
 	return *this;
 }
+
+DiscreteGrid& DiscreteGrid::writeSlice() {
+	if (this->isOffline == false) {
+		std::cerr << "Grid was offline ? no";
+		return *this;
+	}
+	if (this->gridWriter == nullptr) {
+		std::cerr << "[ERROR] Requested to write slice " << this->currentSlice << " but no writer was set.\n";
+		return *this;
+	}
+	if (this->data.size() == 0) { this->preallocateData(); }
+	//std::cerr << "[LOG] Writing slice " << this->currentSlice << "/" << this->gridDimensions.z << " ... ";
+	this->gridWriter->writeSlice(this->data, this->currentSlice);
+	return *this;
+}
+
+DiscreteGrid& DiscreteGrid::preallocateData() {
+	return this->preallocateData(this->gridDimensions);
+}
+
+DiscreteGrid& DiscreteGrid::preallocateData(sizevec3 dims) {
+	if (this->modifiable == false) { return *this; }
+	this->data.clear();
+	if (this->isOffline) {
+		this->data.resize(dims.x*dims.y);
+	} else {
+		this->data.resize(dims.x*dims.y*dims.z);
+	}
+	return *this;
+}
+
+DiscreteGrid& DiscreteGrid::updateRenderBox(const bbox_t &newbox) {
+	// Get input grid render box :
+	std::vector<bbox_t::vec> corners = newbox.transformTo(this->transform_worldToGrid).getAllCorners();
+
+	// Add all points to this render bounding box :
+	this->boundingBox.addPoints(corners);
+	bbox_t::vec min = newbox.getMin();
+	bbox_t::vec max = newbox.getMax();
+	sizevec3::value_type x = static_cast<sizevec3::value_type>(max.x - min.x);
+	sizevec3::value_type y = static_cast<sizevec3::value_type>(max.y - min.y);
+	sizevec3::value_type z = static_cast<sizevec3::value_type>(max.z - min.z);
+	this->setResolution(sizevec3(x, y, z));
+
+	return *this;
+}
+
+DiscreteGrid& DiscreteGrid::setCurrentSlice(std::size_t cs) { this->currentSlice = cs; return *this; }
 
 DiscreteGrid& DiscreteGrid::setGridReader(std::shared_ptr<IO::GenericGridReader> reader) {
 	this->gridReader = reader;
@@ -169,6 +223,9 @@ DiscreteGrid::DataType DiscreteGrid::getPixel(std::size_t x, std::size_t y, std:
 DiscreteGrid& DiscreteGrid::setPixel(std::size_t x, std::size_t y, std::size_t z, DataType value) {
 	// early check :
 	if (this->modifiable == false) { return *this; }
+
+	// If the grid is offline, only one slice has been allocated beforehand. Set the z-dimension to 0
+	if (this->isOffline) { z = 0; }
 
 	// Check the dimensions are within spec :
 	if (x >= this->gridDimensions.x || y >= this->gridDimensions.y || z >= this->gridDimensions.z) {

@@ -18,14 +18,14 @@ class OutputGrid : public DiscreteGrid {
 		OutputGrid& operator= (OutputGrid&& other) = delete;
 		~OutputGrid(void);
 
-		virtual OutputGrid& preallocateData(void);
-		virtual OutputGrid& preallocateData(sizevec3 dims);
-		virtual OutputGrid& updateRenderBox(const bbox_t& newbox);
-		virtual OutputGrid& writeSlice();
-		virtual OutputGrid& setCurrentSlice(std::size_t currentSlice);
-		virtual OutputGrid& setPixel(std::size_t i, std::size_t j, std::size_t k, DataType _data) override;
+	//	virtual OutputGrid& preallocateData(void);
+	//	virtual OutputGrid& preallocateData(sizevec3 dims);
+	//	virtual OutputGrid& updateRenderBox(const bbox_t& newbox);
+	//	virtual OutputGrid& writeSlice();
+	//	virtual OutputGrid& setCurrentSlice(std::size_t currentSlice);
+	//	virtual OutputGrid& setPixel(std::size_t i, std::size_t j, std::size_t k, DataType _data) override;
 	protected:
-		std::size_t currentSlice;
+	//	std::size_t currentSlice;
 };
 
 #endif // GRID_INCLUDE_OUTPUT_DISCRETE_GRID_HPP_

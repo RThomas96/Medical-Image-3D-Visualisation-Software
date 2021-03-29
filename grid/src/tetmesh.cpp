@@ -41,7 +41,7 @@ TetMesh& TetMesh::setOutputGrid(const std::shared_ptr<OutputGrid>& toSet) {
 	return *this;
 }
 
-TetMesh& TetMesh::setOutputGrid_raw(const std::shared_ptr<OutputGrid>& toSet) {
+TetMesh& TetMesh::setOutputGrid_raw(const std::shared_ptr<DiscreteGrid>& toSet) {
 	this->outputGrid = toSet;
 	this->updateVoxelSizes();
 	return *this;

@@ -78,9 +78,9 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		/// @b Loads a designated ROI in high-resolution
 		void loadGridROI(void);
 		/// @b Adds a grid to the list of grids present and to be drawn, and generates the data structure to visualize it.
-		void addGrid(const std::shared_ptr<InputGrid> _grid, std::string meshPath);
+		void addGrid(const std::shared_ptr<DiscreteGrid> _grid, std::string meshPath);
 		/// @b Adds a grid to the list of grids present and to be drawn, which is composed of two separate grids' data.
-		void addTwoGrids(const std::shared_ptr<InputGrid> _gridR, const std::shared_ptr<InputGrid> _gridG, std::string meshPath);
+		void addTwoGrids(const std::shared_ptr<DiscreteGrid> _gridR, const std::shared_ptr<DiscreteGrid> _gridG, std::string meshPath);
 
 		/// @b Draw the 3D view of the scene.
 		void draw3DView(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, bool showTexOnPlane = true);
@@ -318,7 +318,6 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 
 		// Grids :
 		std::vector<GridGLView::Ptr> grids;		///< Grids to display in the different views.
-		//std::shared_ptr<OutputGrid> outputGrid; ///< output grid
 
 		// OpenGL-related stuff :
 		QOpenGLContext* context;				///< The context with which the scene has been created with
