@@ -580,7 +580,7 @@ void GridLoaderWidget::loadGridTIF1channel() {
 	if (this->readerR != nullptr) { this->readerR.reset(); }
 	if (this->readerG != nullptr) { this->readerG.reset(); }
 	IO::GenericGridReader::data_t defaultThreshold = 5;
-	this->readerR = std::make_shared<IO::libTIFFReader>(defaultThreshold);
+	this->readerR = std::make_shared<IO::OMETIFFReader>(defaultThreshold);
 	// if an error occurs :
 	QMessageBox* msgBox = new QMessageBox;
 	msgBox->setAttribute(Qt::WA_DeleteOnClose);
@@ -646,8 +646,8 @@ void GridLoaderWidget::loadGridTIF2channel() {
 	if (this->readerR != nullptr) { this->readerR.reset(); }
 	if (this->readerG != nullptr) { this->readerG.reset(); }
 	IO::GenericGridReader::data_t defaultThreshold = 5;
-	this->readerR = std::make_shared<IO::libTIFFReader>(defaultThreshold);
-	this->readerG = std::make_shared<IO::libTIFFReader>(defaultThreshold);
+	this->readerR = std::make_shared<IO::OMETIFFReader>(defaultThreshold);
+	this->readerG = std::make_shared<IO::OMETIFFReader>(defaultThreshold);
 	// if an error occurs :
 	QMessageBox* msgBox = new QMessageBox;
 	msgBox->setAttribute(Qt::WA_DeleteOnClose);

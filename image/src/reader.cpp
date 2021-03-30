@@ -1,12 +1,15 @@
 #include "../include/reader.hpp"
 
+#include <QXmlStreamReader>
+#include <QDir>
+
 #include <cstring>
 #include <memory>
 #include <iomanip>
 
-void nullify_tiff_errors(const char* module, const char* fmt, va_list _va_) { return; /* do nothing ! */ }
-
 namespace IO {
+
+	void nullify_tiff_errors(const char* module, const char* fmt, va_list _va_) { return; /* do nothing ! */ }
 
 	bool FileExists(const char* filename) {
 		// We could do a more time-optimized version of it
@@ -1352,6 +1355,132 @@ namespace IO {
 		}
 
 		return data_t(0);
+	}
+
+	OMETIFFReader::OMETIFFReader(data_t thresh) : libTIFFReader(thresh) {}
+
+	OMETIFFReader& OMETIFFReader::parseImageInfo(ThreadedTask::Ptr &task) {
+		if (this->filenames.size() == 0) { task->end(); return *this; }
+
+		// Suppress TIFF warnings and errors.
+		TIFFSetErrorHandler(nullify_tiff_errors);
+		TIFFSetWarningHandler(nullify_tiff_errors);
+
+		QDir defaultDir = QFileInfo(this->filenames[0].c_str()).absoluteDir();
+
+		// Open the first file (supposed to have header) :
+		TIFF* file_with_header = TIFFOpen(this->filenames[0].c_str(), "r");
+		char* desc = nullptr;
+
+		// Get the description :
+		int result = TIFFGetField(file_with_header, TIFFTAG_IMAGEDESCRIPTION, &desc);
+		if (result != 1) {
+			throw std::runtime_error("Could not read the image description of file " + this->filenames[0]);
+		}
+
+		// If the description is empty, retun here :
+		if (strlen(desc) == 0) { throw std::runtime_error("Error : TIFF description did not contain any data"); }
+
+		QXmlStreamReader reader;
+		reader.addData(desc);
+
+		// Check if the XML data is ill-formed or not :
+		if (reader.hasError()) {
+			QString msg = "[" + QString::number(reader.lineNumber()) + "," + QString::number(reader.columnNumber()) +
+						  "] Error : " + reader.errorString();
+			reader.clear();
+			throw std::runtime_error(msg.toStdString());
+		}
+
+		// For all tokens in the document :
+		while (not reader.atEnd()) {
+			if (reader.readNext() == QXmlStreamReader::TokenType::StartElement) {
+				// If we're in the image tag :
+				if (reader.name().compare(QString("Image"), Qt::CaseSensitivity::CaseSensitive) == 0) {
+					auto attributes = reader.attributes();
+					if (attributes.hasAttribute("Name")) {
+						this->name = attributes.value("Name").toString().toStdString();
+					}
+				}
+
+				// If we're in the Pixels tag (where the data is) :
+				if (reader.name().compare(QString("Pixels"), Qt::CaseSensitivity::CaseSensitive) == 0) {
+					// Get attributes of the image :
+					auto attributes = reader.attributes();
+
+					// Attributes for the voxel dimensions :
+					if (attributes.hasAttribute("PhysicalSizeX")) {
+						this->voxelDimensions.x = attributes.value("PhysicalSizeX").toFloat();
+					}
+					if (attributes.hasAttribute("PhysicalSizeY")) {
+						this->voxelDimensions.y = attributes.value("PhysicalSizeY").toFloat();
+					}
+					if (attributes.hasAttribute("PhysicalSizeZ")) {
+						this->voxelDimensions.z = attributes.value("PhysicalSizeZ").toFloat();
+					}
+
+					// Attributes for the image dimensions :
+					if (attributes.hasAttribute("SizeX")) {
+						this->imageDimensions.x = attributes.value("SizeX").toUInt();
+					}
+					if (attributes.hasAttribute("SizeY")) {
+						this->imageDimensions.y = attributes.value("SizeY").toUInt();
+					}
+					if (attributes.hasAttribute("SizeZ")) {
+						this->imageDimensions.z = attributes.value("SizeZ").toUInt();
+						task->setSteps(this->imageDimensions.z);
+						task->setAdvancement(0);
+					}
+				}
+
+				// If we have an image identifier, open it :
+				if (reader.name().compare(QString("TiffData"), Qt::CaseSensitivity::CaseSensitive) == 0) {
+					tdir_t ifd_index = 0;
+					QString filename;
+					QStringRef ifdRef, filenameRef;
+					if ((ifdRef = reader.attributes().value("IFD")).isNull() == false) {
+						ifd_index = ifdRef.toString().toUInt();
+					}
+					// Go to the UUID element :
+					reader.readNextStartElement();
+					// In the UUID element, the filename is under the "FileName" attribute, the text is only
+					// the actual URN:UUID scheme for the OME-TIFF specification. Get the file name :
+					if ((filenameRef = reader.attributes().value("FileName")).isNull() == false) {
+						filename = filenameRef.toString();
+						/// Check if file exists :
+						if (QFileInfo::exists(defaultDir.path() + "/" + filename)) {
+							#warning Here, we exploit the fact the data is separated. To fix with new interface(soon)
+							// File exists, we can add it to the list:
+							std::string real_filename = defaultDir.path().toStdString() + "/" + filename.toStdString();
+							this->frames.emplace_back(real_filename, ifd_index);
+							task->advance();
+						} else {
+							std::cerr << "[Error] File " << filename.toStdString() << " does not exist in " <<
+										 defaultDir.path().toStdString() << '\n';
+						}
+					}
+					// Get out of the UUID tag
+					reader.readNext();
+				}
+			}
+		}
+
+		reader.clear();
+
+		// Default values for the other data members :
+		this->gridDimensions = this->imageDimensions;
+		this->voxelMultiplier = glm::vec3(1., 1., 1.);
+		this->transform = glm::mat4(1.f);
+
+		// Update bounding box and data bounding box :
+		this->boundingBox = bbox_t();
+		this->dataBoundingBox = bbox_t();
+
+		this->isAnalyzed = true;
+
+		task->end();
+
+		return *this;
 	}
 
 }

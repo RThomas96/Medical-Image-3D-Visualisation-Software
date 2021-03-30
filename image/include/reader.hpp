@@ -166,6 +166,10 @@ namespace IO {
 		Lowest = 3		///< Downsamples the image using a 8x8x8 sub-region for one pixel.
 	};
 
+	/// @brief Redirection for TIFF errors and warnings, which suppresses them.
+	/// @note The function signature is made to be compatible with both TIFFErrorHandler and TIFFWarningHandler.
+	void nullify_tiff_errors(const char* module, const char* fmt, va_list _va_);
+
 	/// \brief Checks if the file given in argument exists
 	/// \param filename The name of the file to check
 	bool FileExists(const char* filename);
@@ -452,6 +456,15 @@ namespace IO {
 			std::vector<TIFFFrame> frames;	///< The frames contained in this stack of images
 	};
 
+	/// @b Overload of the basic libTIFF reader, which implements a custom parsing function reading the header.
+	class OMETIFFReader : public libTIFFReader {
+		public:
+			OMETIFFReader(data_t thresh);
+			virtual ~OMETIFFReader(void) = default;
+		public:
+			virtual OMETIFFReader& parseImageInfo(ThreadedTask::Ptr& task) noexcept(false) override;
+	};
+
 	namespace Reader {
 		/// @brief Alias for the IO::DIMReader class.
 		typedef ::IO::DIMReader DIM;
@@ -459,7 +472,5 @@ namespace IO {
 		typedef ::IO::libTIFFReader TIFF;
 	}
 }
-
-void nullify_tiff_errors(const char* module, const char* fmt, va_list _va_);
 
 #endif // IMAGE_INCLUDE_READER_HPP_
