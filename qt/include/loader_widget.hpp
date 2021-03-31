@@ -41,11 +41,16 @@ class GridLoaderWidget : public QWidget {
 		/// @brief Computes the grid information based on the new data available
 		void computeGridInfoLabel();
 		void disableWidgets();
+	protected:
+		/// @brief Updates the voxel dimensions as specified by the reader, without emitting signals.
+		void updateVoxelDimensions_silent();
 	public slots:
 		void loadGridDIM1channel();
 		void loadGridTIF1channel();
+		void loadGridOME1channel();
 		void loadGridDIM2channel();
 		void loadGridTIF2channel();
+		void loadGridOME2channel();
 		void loadGrid();
 	protected:
 		QDir basePath;				///< Last path opened, or $HOME
@@ -72,6 +77,8 @@ class GridLoaderWidget : public QWidget {
 		QPushButton* button_loadDIM_2channel;	///< Button to load DIM/IMA files with two channels.
 		QPushButton* button_loadTIF_1channel;	///< Button to load TIF[F] files with one channel.
 		QPushButton* button_loadTIF_2channel;	///< Button to load TIF[F] files with two channels.
+		QPushButton* button_loadOME_1channel;	///< Button to load TIF[F] files with one channel.
+		QPushButton* button_loadOME_2channel;	///< Button to load TIF[F] files with two channels.
 		QPushButton* button_loadGrids;		///< Button to launch the grid loader.
 
 		QDoubleSpinBox* dsb_transformationA;	///< Double spinbox for the angle of the capture

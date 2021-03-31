@@ -42,6 +42,8 @@ GridLoaderWidget::~GridLoaderWidget() {
 	this->button_loadDIM_2channel->disconnect();
 	this->button_loadTIF_1channel->disconnect();
 	this->button_loadTIF_2channel->disconnect();
+	this->button_loadOME_1channel->disconnect();
+	this->button_loadOME_2channel->disconnect();
 	this->button_loadGrids->disconnect();
 
 	delete this->groupbox_userLimits;
@@ -57,6 +59,8 @@ GridLoaderWidget::~GridLoaderWidget() {
 	delete this->button_loadDIM_2channel;
 	delete this->button_loadTIF_1channel;
 	delete this->button_loadTIF_2channel;
+	delete this->button_loadOME_1channel;
+	delete this->button_loadOME_2channel;
 	delete this->button_loadGrids;
 
 	delete this->dsb_transformationA;
@@ -89,6 +93,8 @@ void GridLoaderWidget::setupWidgets() {
 	this->button_loadDIM_2channel = new QPushButton("DIM/IMA");
 	this->button_loadTIF_1channel = new QPushButton("TIFF");
 	this->button_loadTIF_2channel = new QPushButton("TIFF");
+	this->button_loadOME_1channel = new QPushButton("OME-TIFF");
+	this->button_loadOME_2channel = new QPushButton("OME-TIFF");
 	this->button_loadGrids = new QPushButton("Load grids into program");
 
 	this->dsb_transformationA  = new QDoubleSpinBox;
@@ -192,11 +198,13 @@ void GridLoaderWidget::setupLayouts() {
 	this->layout_load1channel->addWidget(this->label_load1channel);
 	this->layout_load1channel->addWidget(this->button_loadDIM_1channel);
 	this->layout_load1channel->addWidget(this->button_loadTIF_1channel);
+	this->layout_load1channel->addWidget(this->button_loadOME_1channel);
 	this->frame_load1channel->setLayout(this->layout_load1channel);
 	// layout and frame for the 2-channel loader :
 	this->layout_load2channel->addWidget(this->label_load2channel);
 	this->layout_load2channel->addWidget(this->button_loadDIM_2channel);
 	this->layout_load2channel->addWidget(this->button_loadTIF_2channel);
+	this->layout_load2channel->addWidget(this->button_loadOME_2channel);
 	this->frame_load2channel->setLayout(this->layout_load2channel);
 	// layout and frame for the transformation details :
 	this->layout_transfoDetails->addWidget(this->label_transformationAngle, 0, 0, 1, 2);
@@ -277,6 +285,8 @@ void GridLoaderWidget::setupSignals() {
 	QObject::connect(this->button_loadDIM_2channel, &QPushButton::clicked, this, &GridLoaderWidget::loadGridDIM2channel);
 	QObject::connect(this->button_loadTIF_1channel, &QPushButton::clicked, this, &GridLoaderWidget::loadGridTIF1channel);
 	QObject::connect(this->button_loadTIF_2channel, &QPushButton::clicked, this, &GridLoaderWidget::loadGridTIF2channel);
+	QObject::connect(this->button_loadOME_1channel, &QPushButton::clicked, this, &GridLoaderWidget::loadGridOME1channel);
+	QObject::connect(this->button_loadOME_2channel, &QPushButton::clicked, this, &GridLoaderWidget::loadGridOME2channel);
 
 	// load grid into mem :
 	QObject::connect(this->button_loadGrids, &QPushButton::clicked, this, &GridLoaderWidget::loadGrid);
@@ -359,6 +369,8 @@ void GridLoaderWidget::disableWidgets() {
 	this->button_loadDIM_2channel->setDisabled(true);
 	this->button_loadTIF_1channel->setDisabled(true);
 	this->button_loadTIF_2channel->setDisabled(true);
+	this->button_loadOME_1channel->setDisabled(true);
+	this->button_loadOME_2channel->setDisabled(true);
 	this->button_loadGrids->setDisabled(true);
 
 	this->dsb_transformationA->setDisabled(true);
@@ -414,6 +426,7 @@ void GridLoaderWidget::computeGridInfoLabel() {
 	QString infoGridR = "Image dimensions : " + QString::number(dims.x) + "x" + QString::number(dims.y) + "x" +
 				QString::number(dims.z) + " in " + QString::number(fnSize) + " images.";
 	this->label_gridInfoR->setText(infoGridR);
+	this->updateVoxelDimensions_silent();
 
 	if (this->readerG != nullptr) {
 		this->readerG->enableDownsampling(this->dsLevel);
@@ -423,6 +436,27 @@ void GridLoaderWidget::computeGridInfoLabel() {
 				QString::number(dimsG.z) + " in " + QString::number(fnSizeG) + " images.";
 		this->label_gridInfoG->setText(g);
 	}
+}
+
+void GridLoaderWidget::updateVoxelDimensions_silent() {
+	if (this->readerR == nullptr) { return; }
+	// NOTE : we only rely on the red reader's voxel dimensions, because we assume
+	// the voxel dimensions _do not change_ between color channels.
+
+	auto vxDims = this->readerR->getVoxelDimensions();
+	this->dsb_transformationDX->blockSignals(true);
+	this->dsb_transformationDY->blockSignals(true);
+	this->dsb_transformationDZ->blockSignals(true);
+
+	this->dsb_transformationDX->setValue(vxDims.x);
+	this->dsb_transformationDY->setValue(vxDims.y);
+	this->dsb_transformationDZ->setValue(vxDims.z);
+
+	this->dsb_transformationDZ->blockSignals(false);
+	this->dsb_transformationDY->blockSignals(false);
+	this->dsb_transformationDX->blockSignals(false);
+
+	return;
 }
 
 void GridLoaderWidget::loadGridDIM1channel() {
@@ -580,7 +614,7 @@ void GridLoaderWidget::loadGridTIF1channel() {
 	if (this->readerR != nullptr) { this->readerR.reset(); }
 	if (this->readerG != nullptr) { this->readerG.reset(); }
 	IO::GenericGridReader::data_t defaultThreshold = 5;
-	this->readerR = std::make_shared<IO::OMETIFFReader>(defaultThreshold);
+	this->readerR = std::make_shared<IO::libTIFFReader>(defaultThreshold);
 	// if an error occurs :
 	QMessageBox* msgBox = new QMessageBox;
 	msgBox->setAttribute(Qt::WA_DeleteOnClose);
@@ -646,8 +680,8 @@ void GridLoaderWidget::loadGridTIF2channel() {
 	if (this->readerR != nullptr) { this->readerR.reset(); }
 	if (this->readerG != nullptr) { this->readerG.reset(); }
 	IO::GenericGridReader::data_t defaultThreshold = 5;
-	this->readerR = std::make_shared<IO::OMETIFFReader>(defaultThreshold);
-	this->readerG = std::make_shared<IO::OMETIFFReader>(defaultThreshold);
+	this->readerR = std::make_shared<IO::libTIFFReader>(defaultThreshold);
+	this->readerG = std::make_shared<IO::libTIFFReader>(defaultThreshold);
 	// if an error occurs :
 	QMessageBox* msgBox = new QMessageBox;
 	msgBox->setAttribute(Qt::WA_DeleteOnClose);
@@ -664,6 +698,158 @@ void GridLoaderWidget::loadGridTIF2channel() {
 	this->basePath.setPath(QFileInfo(filenamesR[0]).path());
 
 	QStringList filenamesG = QFileDialog::getOpenFileNames(nullptr, "Open TIFF images (Blue channel)", this->basePath.path(), "TIFF files (*.tiff *.tif)", 0, QFileDialog::DontUseNativeDialog);
+	if (filenamesG.empty()) {
+		msgBox->critical(this, "Error !", "No filenames provided !");
+		this->readerR.reset(); this->readerR = nullptr;
+		this->readerG.reset(); this->readerG = nullptr;
+		this->computeGridInfoLabel();
+		return;
+	}
+	// update path from last file picker :
+	this->basePath.setPath(QFileInfo(filenamesG[0]).path());
+
+	std::vector<std::string> fnR;	// filenames, red channel
+	for (int i = 0; i < filenamesR.size(); ++i) { fnR.push_back(filenamesR[i].toStdString()); }
+	std::vector<std::string> fnG;	// filenames, green channel
+	for (int i = 0; i < filenamesG.size(); ++i) { fnG.push_back(filenamesG[i].toStdString()); }
+
+	delete msgBox;
+
+	this->readerR->setFilenames(fnR);
+	this->readerG->setFilenames(fnG);
+
+	// Create task and thread :
+	IO::ThreadedTask::Ptr parseTask_R = std::make_shared<IO::ThreadedTask>();
+	IO::ThreadedTask::Ptr parseTask_G = std::make_shared<IO::ThreadedTask>();
+	std::thread parseThread_R([this, &parseTask_R](void) -> void { this->readerR->parseImageInfo(parseTask_R); });
+	std::thread parseThread_G([this, &parseTask_G](void) -> void { this->readerG->parseImageInfo(parseTask_G); });
+	// Wait for task initialization
+	do {
+		std::this_thread::sleep_for(std::chrono::milliseconds(5));
+		QCoreApplication::processEvents();
+		this->update();
+	} while (not (parseTask_R->hasSteps() && parseTask_G->hasSteps()));
+	std::size_t maxSteps = parseTask_G->getMaxSteps() + parseTask_R->getMaxSteps();
+	// Set and show progress bar :
+	this->progress_load->setRange(0, maxSteps);
+	this->progress_load->setValue(0);
+	this->progress_load->setFormat("Parsing image data ... (%p%)");
+	this->progress_load->setVisible(true);
+
+	// Loop while parsing files in other thread :
+	bool shouldStop = false;
+	do {
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		std::size_t currentSteps = 0;
+		std::size_t maxStepsLoop = 0;
+		if (parseTask_R->hasSteps()) { currentSteps += parseTask_R->getAdvancement(); maxStepsLoop += parseTask_R->getMaxSteps(); }
+		if (parseTask_G->hasSteps()) { currentSteps += parseTask_G->getAdvancement(); maxStepsLoop += parseTask_G->getMaxSteps(); }
+
+		this->progress_load->setRange(0, maxStepsLoop);
+		this->progress_load->setValue(currentSteps);
+		// Needed to update the main window ...
+		QCoreApplication::processEvents();
+		this->update();
+
+		shouldStop = parseTask_R->isComplete() && parseTask_G->isComplete();
+	} while (shouldStop == false);
+	if (parseThread_R.joinable()) { parseThread_R.join(); }
+	if (parseThread_G.joinable()) { parseThread_G.join(); }
+
+	this->progress_load->reset();
+	this->progress_load->setVisible(false);
+
+	this->computeGridInfoLabel();
+}
+
+void GridLoaderWidget::loadGridOME1channel() {
+	if (this->readerR != nullptr) { this->readerR.reset(); }
+	if (this->readerG != nullptr) { this->readerG.reset(); }
+	IO::GenericGridReader::data_t defaultThreshold = 5;
+	this->readerR = std::make_shared<IO::OMETIFFReader>(defaultThreshold);
+	// if an error occurs :
+	QMessageBox* msgBox = new QMessageBox;
+	msgBox->setAttribute(Qt::WA_DeleteOnClose);
+
+	QStringList filenamesR = QFileDialog::getOpenFileNames(nullptr, "Open OME-TIFF images (Red channel)", this->basePath.path(), "OME-TIFF files (*.ome.tiff *.ome.tif)", 0, QFileDialog::DontUseNativeDialog);
+	if (filenamesR.empty()) {
+		msgBox->critical(this, "Error !", "No filenames provided !");
+		this->readerR.reset(); this->readerR = nullptr;
+		this->computeGridInfoLabel();
+		return;
+	}
+	// update path from last file picker :
+	this->basePath.setPath(QFileInfo(filenamesR[0]).path());
+
+	std::vector<std::string> fnR;	// filenames, red channel
+	for (int i = 0; i < filenamesR.size(); ++i) { fnR.push_back(filenamesR[i].toStdString()); }
+
+	delete msgBox;
+
+	this->readerR->setFilenames(fnR);
+
+	// Create task and thread :
+	IO::ThreadedTask::Ptr parseTask = std::make_shared<IO::ThreadedTask>();
+	std::thread parseThread([this, &parseTask](void) -> void {
+		this->readerR->parseImageInfo(parseTask);
+	});
+	// Wait for task initialization
+	do {
+		std::this_thread::sleep_for(std::chrono::milliseconds(5));
+		QCoreApplication::processEvents();
+		this->update();
+	} while (not parseTask->hasSteps());
+	// Set and show progress bar :
+	this->progress_load->setRange(0, parseTask->getMaxSteps());
+	this->progress_load->setValue(parseTask->getAdvancement());
+	this->progress_load->setFormat("Parsing image data ... (%p%)");
+	this->progress_load->setVisible(true);
+
+	// Loop while parsing files in other thread :
+	bool shouldStop = false;
+	do {
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		std::size_t currentSteps = 0;
+		if (parseTask->hasSteps()) { currentSteps = parseTask->getAdvancement(); }
+
+		this->progress_load->setRange(0, parseTask->getMaxSteps());
+		this->progress_load->setValue(currentSteps);
+		// Needed to update the main window ...
+		QCoreApplication::processEvents();
+		this->update();
+
+		shouldStop = parseTask->isComplete();
+	} while (shouldStop == false);
+	if (parseThread.joinable()) { parseThread.join(); }
+
+	this->progress_load->reset();
+	this->progress_load->setVisible(false);
+
+	this->computeGridInfoLabel();
+}
+
+void GridLoaderWidget::loadGridOME2channel() {
+	if (this->readerR != nullptr) { this->readerR.reset(); }
+	if (this->readerG != nullptr) { this->readerG.reset(); }
+	IO::GenericGridReader::data_t defaultThreshold = 5;
+	this->readerR = std::make_shared<IO::OMETIFFReader>(defaultThreshold);
+	this->readerG = std::make_shared<IO::OMETIFFReader>(defaultThreshold);
+	// if an error occurs :
+	QMessageBox* msgBox = new QMessageBox;
+	msgBox->setAttribute(Qt::WA_DeleteOnClose);
+
+	QStringList filenamesR = QFileDialog::getOpenFileNames(nullptr, "Open OME-TIFF images (Red channel)", this->basePath.path(), "OME-TIFF files (*.ome.tiff *.ome.tif)", 0, QFileDialog::DontUseNativeDialog);
+	if (filenamesR.empty()) {
+		msgBox->critical(this, "Error !", "No filenames provided !");
+		this->readerR.reset(); this->readerR = nullptr;
+		this->readerG.reset(); this->readerG = nullptr;
+		this->computeGridInfoLabel();
+		return;
+	}
+	// update path from last file picker :
+	this->basePath.setPath(QFileInfo(filenamesR[0]).path());
+
+	QStringList filenamesG = QFileDialog::getOpenFileNames(nullptr, "Open OME-TIFF images (Blue channel)", this->basePath.path(), "OME-TIFF files (*.ome.tiff *.ome.tif)", 0, QFileDialog::DontUseNativeDialog);
 	if (filenamesG.empty()) {
 		msgBox->critical(this, "Error !", "No filenames provided !");
 		this->readerR.reset(); this->readerR = nullptr;
