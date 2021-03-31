@@ -176,6 +176,8 @@ namespace IO {
 
 	glm::vec3 GenericGridReader::getVoxelDimensions() const { return this->voxelDimensions * this->voxelMultiplier; }
 
+	glm::vec3 GenericGridReader::getOriginalVoxelDimensions() const { return this->voxelDimensions; }
+
 	glm::mat4 GenericGridReader::getTransform() const { return this->transform; }
 
 	GenericGridReader::bbox_t GenericGridReader::getBoundingBox() const { return this->boundingBox; }

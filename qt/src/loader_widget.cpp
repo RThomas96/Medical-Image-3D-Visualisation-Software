@@ -440,6 +440,7 @@ void GridLoaderWidget::computeGridInfoLabel() {
 
 void GridLoaderWidget::updateVoxelDimensions_silent() {
 	if (this->readerR == nullptr) { return; }
+
 	// NOTE : we only rely on the red reader's voxel dimensions, because we assume
 	// the voxel dimensions _do not change_ between color channels.
 

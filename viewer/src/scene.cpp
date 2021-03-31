@@ -382,10 +382,13 @@ void Scene::loadGridROI() {
 				std::cerr << "Launching thread " << std::this_thread::get_id() << '\n';
 			}
 
+			// Get the original voxel dimensions :
+			glm::vec3 voxelDims = grid->getVoxelDimensions();
+			if (grid->getGridReader() != nullptr) { voxelDims = grid->getGridReader()->getOriginalVoxelDimensions(); }
 			// Compute the positions for the bounding box from the given coordinates :
 			DiscreteGrid::bbox_t renderBox = this->visuBox;
-			// The resolution is going to be defined so the voxel dimensions are 1 :
-			DiscreteGrid::sizevec3 dims = glm::convert_to<std::size_t>(this->visuBox.getDiagonal());
+			// The resolution is going to be defined so the voxel dimensions are the original voxel dimensions :
+			DiscreteGrid::sizevec3 dims = glm::convert_to<std::size_t>(this->visuBox.getDiagonal() / voxelDims);
 
 			// Create a tetrahedral mesh :
 			std::unique_ptr<TetMesh> tetMesh = std::make_unique<TetMesh>();
@@ -398,6 +401,12 @@ void Scene::loadGridROI() {
 			outputGrid->setOffline(false); // we want to keep the grid in memory
 
 			tetMesh->setOutputGrid_raw(outputGrid);
+
+			{
+				std::lock_guard(this->mutexout);
+				std::cerr << "TetMesh info : " << '\n';
+				tetMesh->printInfo();
+			}
 
 			// Create a new task to keep track of this thread's progress
 			IO::ThreadedTask::Ptr task = std::make_shared<IO::ThreadedTask>();

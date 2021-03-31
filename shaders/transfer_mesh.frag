@@ -158,7 +158,7 @@ void main (void) {
 	vec3 Current_P = P.xyz;
 
 	// Start the raytracing path right before the actual hit, caused interferences before
-	Current_P = Current_P - 0.001*V;
+	Current_P = Current_P - .1*V;
 
 	//Find the first intersection of the ray with the grid
 	getFirstRayVoxelIntersection(Current_P, V, origin_voxel, t_next );
@@ -521,7 +521,7 @@ void getFirstRayVoxelIntersection( in vec3 origin, in vec3 direction, out ivec3 
 	//
 	// 	if( lambda_max > 0 ) origin = origin + lambda_max*direction;
 
-	v0 = getGridCoordinates(vec4(origin.xyz-0.001*direction, 1.));
+	v0 = getGridCoordinates(vec4(origin.xyz, 1.));
 
 	float xi = v0.x*voxelSize.x;
 	if( direction.x > 0 ) xi = xi + voxelSize.x;

@@ -242,6 +242,9 @@ namespace IO {
 			/// @brief Get the grid's voxel dimensions, once loaded.
 			virtual glm::vec3 getVoxelDimensions(void) const;
 
+			/// @brief Get the grid's voxel dimensions, once loaded.
+			virtual glm::vec3 getOriginalVoxelDimensions(void) const;
+
 			/// @brief Get the associated transform of the grid, if any is provided.
 			/// @note If none are provided, this will return an identity matrix.
 			virtual glm::mat4 getTransform(void) const;
@@ -394,6 +397,7 @@ namespace IO {
 			std::vector<std::pair<std::size_t, std::size_t>> sliceToFilename;
 	};
 
+	/// @b TIFF file reader, using libTIFF as its backend for I/O
 	class libTIFFReader : public GenericGridReader {
 		private:
 			struct TIFFFrame {
@@ -468,8 +472,10 @@ namespace IO {
 	namespace Reader {
 		/// @brief Alias for the IO::DIMReader class.
 		typedef ::IO::DIMReader DIM;
-		/// @brief Alias for the IO::StackedTIFFReader class.
+		/// @brief Alias for the IO::libTIFFReader class.
 		typedef ::IO::libTIFFReader TIFF;
+		/// @brief Alias for the IO::OMETIFFReader class.
+		typedef ::IO::OMETIFFReader OME_TIFF;
 	}
 }
 
