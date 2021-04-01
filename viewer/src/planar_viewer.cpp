@@ -17,6 +17,8 @@ PlanarViewer::PlanarViewer(Scene* const _scene, planes _p, planeHeading _h, QWid
 	this->zoomRatio = 1.f;
 	this->maxZoomRatio = 500.f;
 	this->offset = glm::vec2(0.f, 0.f);
+	this->mouse_isPressed = false;
+	this->ctrl_pressed = false;
 
 	this->refreshTimer = new QTimer();
 	// ~7 ms for 144fps, ~16ms for 60fps and ~33ms for 30 FPS
@@ -55,40 +57,88 @@ void PlanarViewer::draw(void) {
 	this->sceneToShow->drawPlaneView(fbDims, this->planeToShow, this->planeOrientation, this->zoomRatio, this->offset);
 }
 
+void PlanarViewer::guessScenePosition(void) const {
+	// Get the last position of the cursor (this pos is relative to the
+	// widget's coordinate system, at its top-left corner.
+	glm::vec2 lastPos = glm::convert_to<float>(glm::ivec2(
+							this->cursorPosition_current.x(),
+							this->cursorPosition_current.y()
+						));
+
+	// Get the framebuffer dimensions :
+	QSize viewerSize = this->size();
+	glm::vec2 fbDims = glm::vec2(static_cast<float>(viewerSize.width()), static_cast<float>(viewerSize.height()));
+
+	// Get the raw bounding box dimensions (diagonal) :
+	DiscreteGrid::bbox_t sceneBox = this->sceneToShow->getSceneBoundingBox();
+	glm::vec3 bbDims = glm::convert_to<float>(sceneBox.getDiagonal());
+
+	// Determine the dimensions of the plane to show :
+	glm::vec2 bbPlaneDims{};
+	if (this->planeToShow == planes::x) {
+		bbPlaneDims.x = bbDims.y;
+		bbPlaneDims.y = bbDims.z;
+	} else if (this->planeToShow == planes::y) {
+		bbPlaneDims.x = bbDims.x;
+		bbPlaneDims.y = bbDims.z;
+	} else if (this->planeToShow == planes::z) {
+		bbPlaneDims.x = bbDims.x;
+		bbPlaneDims.y = bbDims.y;
+	} else {
+		std::cerr << "[ERROR] Cannot guess plane position of plane other than X, Y or Z\n";
+		return;
+	}
+
+	if (this->planeOrientation == planeHeading::Right || this->planeOrientation == planeHeading::Left) {
+		bbPlaneDims = glm::vec2(bbPlaneDims.y, bbPlaneDims.x);
+	}
+
+	// The plane multiplier :
+	glm::vec2 multiplier{1., 1.};
+	// The ratios of the framebuffer, and of the bounding box :
+	float fbRatio = fbDims.x / fbDims.y;
+	float bbRatio = bbDims.x / bbDims.y;
+
+	// Guess the ratio used to 'compress' the plane to fit the bb in the frame :
+	if (bbRatio > fbRatio) {
+		multiplier.y = fbRatio / bbRatio;
+	} else {
+		float fbRatioInv = fbDims.y / fbDims.x;
+		float bbRatioInv = bbDims.y / bbDims.x;
+		multiplier.x = fbRatioInv / bbRatioInv;
+	}
+
+	// Multiplier represents how much of the current frame buffer the projected
+	// quad takes.
+
+	// The remaining space, normalized :
+	glm::vec2 remaining = (glm::vec2{1., 1.} - multiplier)/2.f;
+	glm::vec2 planeSize = multiplier * fbDims;
+	glm::vec2 relativePos = lastPos / fbDims;
+	if (relativePos.x < remaining.x || relativePos.x > remaining.x + planeSize.x ||
+		relativePos.y < remaining.y || relativePos.y > remaining.y + planeSize.y) {
+		return;
+	}
+	// Get relative pos
+	relativePos -= remaining;
+
+	// Get the original position of the scene BB
+}
+
 void PlanarViewer::keyPressEvent(QKeyEvent* _e) {
 	switch (_e->key()) {
 		/*
 		SHADER PROGRAMS
-		case Qt::Key::Key_F1:
-			this->sceneToShow->setColorFunction(ColorFunction::SingleChannel);
-			this->update();
-		break;
-		case Qt::Key::Key_F2:
-			this->sceneToShow->setColorFunction(ColorFunction::HistologyHandE);
-			this->update();
-		break;
-		case Qt::Key::Key_F3:
-			this->sceneToShow->setColorFunction(ColorFunction::HSV2RGB);
-			this->update();
-		break;
-		case Qt::Key::Key_F4:
-			this->sceneToShow->setColorFunction(ColorFunction::ColorMagnitude);
-			this->update();
-		break;
 		*/
 		case Qt::Key::Key_F5:
 			this->sceneToShow->recompileShaders();
 			this->update();
 		break;
-		/*
-		case Qt::Key::Key_F:
-			std::cerr << "Unable to display text." << "\n";
-		break;
-		*/
 		case Qt::Key::Key_P:
 			this->sceneToShow->printVAOStateNext();
 			this->update();
 		break;
+
 		/*
 		MOUSE MOVEMENT
 		*/
@@ -107,21 +157,23 @@ void PlanarViewer::keyPressEvent(QKeyEvent* _e) {
 }
 
 void PlanarViewer::mousePressEvent(QMouseEvent* _e) {
-	if (_e->buttons().testFlag(Qt::MouseButton::RightButton)) {
-		this->mouse_isPressed = true;
-		this->lastPosition = _e->pos();
+	if (_e->buttons().testFlag(Qt::MouseButton::LeftButton)) {
+		this->cursorPosition_last = _e->pos();
+		this->cursorPosition_current = this->cursorPosition_last;
+		this->mouse_isPressed = 1;
 	}
-	// The left click could move the view, but the user wouldn't
-	// be able to reset it later. Prevent that by allowing only to
-	// process events when the click is _different_ than the left :
-	if (not _e->buttons().testFlag(Qt::MouseButton::LeftButton)) {
-		QGLViewer::mousePressEvent(_e);
+	if (_e->buttons().testFlag(Qt::MouseButton::RightButton) && !_e->buttons().testFlag(Qt::MouseButton::LeftButton)) {
+		this->cursorPosition_last = _e->pos();
+		this->cursorPosition_current = this->cursorPosition_last;
+		this->guessScenePosition();
 	}
+
+	QGLViewer::mousePressEvent(_e);
 	this->update();
 }
 
 void PlanarViewer::mouseMoveEvent(QMouseEvent* _m) {
-	if (this->mouse_isPressed) {
+	if (this->mouse_isPressed >= 1u) {
 		QPoint currentPos = _m->pos();
 		QSize viewerSize = this->size();
 		QPoint viewerPos = this->pos();
@@ -129,20 +181,21 @@ void PlanarViewer::mouseMoveEvent(QMouseEvent* _m) {
 		glm::vec2 maxViewer = minViewer + glm::convert_to<float>(glm::ivec2(viewerSize.width(), viewerSize.height()));
 		// absolute positions of the mouse in last pos and current pos :
 		glm::vec2 absPosMouse = glm::convert_to<float>(glm::ivec2(currentPos.x(), currentPos.y()));
-		glm::vec2 absPosLastPos = glm::convert_to<float>(glm::ivec2(this->lastPosition.x(), this->lastPosition.y()));
+		glm::vec2 absPosLastPos = glm::convert_to<float>(glm::ivec2(this->cursorPosition_last.x(), this->cursorPosition_last.y()));
 		this->offset += (absPosMouse - absPosLastPos) / (maxViewer - minViewer);
-		this->lastPosition = currentPos;
-	} else {
+		this->cursorPosition_last = this->cursorPosition_current;
+		this->cursorPosition_current = currentPos;
 	}
+	this->mouse_isPressed += 1u;
 	QGLViewer::mouseMoveEvent(_m);
 	return;
 }
 
 void PlanarViewer::mouseReleaseEvent(QMouseEvent* _m) {
-	//
-	if (_m->button() == Qt::MouseButton::RightButton) {
-		this->mouse_isPressed = false;
-		this->lastPosition = _m->pos();
+	if (_m->button() == Qt::MouseButton::LeftButton) {
+		this->mouse_isPressed = 0;
+		this->cursorPosition_last = _m->pos();
+		this->cursorPosition_current = this->cursorPosition_last;
 	}
 	QGLViewer::mouseReleaseEvent(_m);
 	this->update();

@@ -133,6 +133,12 @@ ADD_EXECUTABLE(neighbor_visu
 	./viewer/src/neighbor_visu_viewer.cpp
 	./viewer/src/viewer_structs.cpp
 )
+TARGET_COMPILE_OPTIONS(neighbor_visu
+	# Set so CMake (more precisely clang/gcc) will not print 30-80 warnings about QGLViewer's
+	# use of QString::null, a deprecated feature (causes long compilation times, and tons of
+	# warnings which make it harder to filter through our own warnings/errors).
+	PUBLIC "-Wno-deprecated-declarations"
+)
 TARGET_PRECOMPILE_HEADERS(neighbor_visu
 	# Made so that QtCreator will precompile this header and
 	# shut up about the deprecated functions used within :

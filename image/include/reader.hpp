@@ -328,10 +328,6 @@ namespace IO {
 			glm::vec<2, data_t, glm::defaultp> userLimits;
 			/// @brief Structure to interpolate the data in the loaded images
 			std::shared_ptr<Interpolators::genericInterpolator<data_t>> interpolator;
-		#ifdef IMPLEMENTED_SLICE_CACHE
-		protected:
-			slice_cache cachedSlices;
-		#endif
 	};
 
 	class DIMReader : public GenericGridReader {

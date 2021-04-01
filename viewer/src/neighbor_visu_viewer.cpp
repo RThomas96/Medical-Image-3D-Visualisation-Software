@@ -38,6 +38,7 @@ Viewer::~Viewer() {
 
 void Viewer::init() {
 	this->makeCurrent();
+	this->setMouseTracking(true);
 
 	this->scene->initGl(this->context());
 
