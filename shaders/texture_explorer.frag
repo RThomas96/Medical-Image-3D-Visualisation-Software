@@ -1,5 +1,5 @@
 #version 400 core
-
+// TEXTURE_EXPLORER.FRAG
 // Signals we're in the main shader, for any shaders inserted into this one.
 #define MAIN_SHADER_UNIT
 
@@ -16,7 +16,8 @@ layout(location = 3) in vec2 planeMultiplier;	// The multiplier used to 'stretch
 /****************************************/
 /*************** Outputs ****************/
 /****************************************/
-out vec4 color; // This fragment's color
+layout (location = 0) out vec4 color; // This fragment's color
+layout (location = 1) out vec3 finalGridCoordinates;
 
 /****************************************/
 /*************** Uniforms ***************/
@@ -78,6 +79,8 @@ void main() {
 		color = voxelIdxToColor(tex);
 		color.a = .1;
 	}
+
+	finalGridCoordinates = vTexCoords;
 }
 
 /****************************************/

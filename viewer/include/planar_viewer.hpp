@@ -33,6 +33,8 @@ class PlanarViewer : public QGLViewer {
 		virtual void mouseReleaseEvent(QMouseEvent* _m) override;
 		/// @brief Overrides the mouse wheel events from the user.
 		virtual void wheelEvent(QWheelEvent* _w) override;
+		/// @b Overrides the function to resize the widget.
+		virtual void resizeGL(int w, int h) override;
 		/// @b Defines the 'Help'/'About' string defined for this viewer.
 		virtual QString helpString(void) const override;
 		/// @b Defines the 'Help'/'About' string for the keyboard for this viewer.
@@ -40,7 +42,7 @@ class PlanarViewer : public QGLViewer {
 		/// @b Defines the 'Help'/'About' string for the mouse for this viewer.
 		virtual QString mouseString(void) const override;
 		/// @b Guess the scene position from the fragment position after rendering
-		virtual void guessScenePosition(void) const;
+		virtual void guessScenePosition(void);
 	protected:
 		/// @b Sets the widget in charge of controlling the viewer
 		void setController(ViewerHeader* _header);
@@ -51,9 +53,13 @@ class PlanarViewer : public QGLViewer {
 		planeHeading planeOrientation;	///< This plane's orientation
 		ViewerHeader* viewerController;	///< The widget that controls this widget
 
+		glm::ivec2 posRequest;			///< A texture position request for the render
+		GLuint renderTarget;			///< The texture to render to for additional info
+		GLuint renderTargetCopy;		///< The texture to render to for additional info
 		float minZoomRatio;				///< minimum value of the zoom applied to the image
 		float maxZoomRatio;				///< maximum value of the zoom applied to the image
 		float zoomRatio;				///< The current zoom level applied to the image
+		float planeDepth;				///< The normalized plane depth, set from the viewer's header slider
 		glm::vec2 offset;				///< Normalized offset from the window's origin
 		std::size_t mouse_isPressed;	///< Is the mouse pressed ? Counted in number of frames
 		bool ctrl_pressed;				///< Is the Ctrl keymod pressed ?
