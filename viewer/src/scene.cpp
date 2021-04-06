@@ -458,6 +458,15 @@ void Scene::replaceGridsWithHighRes() {
 	} else {
 		this->addTwoGrids(this->gridsToAdd[0], this->gridsToAdd[1], "");
 	}
+
+	// Update the visu box coordinates :
+	this->resetVisuBox();
+	if (this->visuBoxController != nullptr) { this->visuBoxController->updateValues(); }
+	this->updateBoundingBox();
+	this->sceneBB.printInfo("After adding the grids", "[TRACE]");
+
+	this->isFinishedLoading = false;
+	this->gridsToAdd.clear();
 }
 
 void Scene::updateProgressBar() {
@@ -1325,14 +1334,12 @@ void Scene::deleteGridNow() {
 	this->updateBoundingBox();
 }
 
-glm::vec4 Scene::drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading, float zoomRatio, glm::vec2 offset, GLuint tex_handle, glm::ivec2 fbCoords) {
-	// The container of pixel values :
-	glm::vec4 pixelValue = glm::vec4();
-
-	if (this->grids.size() == 0) { return pixelValue; }
+void Scene::drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading, float zoomRatio, glm::vec2 offset) {
+	if (this->grids.size() == 0) { return; }
 
 	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_BLEND);
+	//glEnable(GL_BLEND);
+	glEnablei(GL_BLEND, 0);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	uint min = 0; // min index for drawing commands
@@ -1354,18 +1361,12 @@ glm::vec4 Scene::drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _he
 		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(6), GL_UNSIGNED_INT, (GLvoid*)(min*sizeof(GLuint)));
 	}
 
-	if (fbCoords.x >= 0 && fbCoords.y >= 0) {
-		pixelValue = this->readCopiedFramebufferContents(tex_handle, fbCoords, fbDims);
-		glm::vec4 p = pixelValue;
-		std::cerr << "Value in scene : {" << p.x << ", " << p.y << ", " << p.z << ", " << p.w << "}\n";
-	}
-
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 	glUseProgram(0);
 	this->showVAOstate = false;
 
-	return pixelValue;
+	return;
 }
 
 void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, const GridGLView::Ptr& grid) {
@@ -2038,12 +2039,10 @@ void Scene::draw3DView(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, bool sho
 		this->deleteGridNow();
 	}
 	if (this->isFinishedLoading) {
-		this->isFinishedLoading = false;
 		this->replaceGridsWithHighRes();
-		this->gridsToAdd.clear();
 	}
 	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_BLEND);
+	glEnablei(GL_BLEND, 0);
 	glEnable(GL_TEXTURE_3D);
 	glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -2068,96 +2067,52 @@ void Scene::draw3DView(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, bool sho
 	this->showVAOstate = false;
 }
 
-GLuint Scene::createRenderTexture(glm::ivec2 dimensions, GLuint fb_handle, GLuint old_texture) {
-	if (old_texture != 0) {
-		glDeleteTextures(1, &old_texture);
-	}
+GLuint Scene::updateFBOOutputs(glm::ivec2 dimensions, GLuint fb_handle, GLuint old_texture) {
+	// Silently ignore attempts to modify the 0-th FBO, which is provided by the
+	// windowing system, and thus unmodifiable from GL/application code.
+	if (fb_handle == 0) { return 0; }
+	// Remove old textures, if updating the FBO from a resize event for example.
+	if (old_texture != 0) { glDeleteTextures(1, &old_texture); }
 
-	// Create a new texture :
+	// Upload an _empty_ texture with no mipmapping, and nearest neighbor :
 	GLuint new_tex = 0;
-	glGenTextures(1, &new_tex);
-	glBindTexture(GL_TEXTURE_2D, new_tex);
+	TextureUpload t{};
+	t.minmag = glm::ivec2{GL_NEAREST, GL_NEAREST};
+	t.lod = glm::vec2{-1000.f, -1000.f};
+	t.internalFormat = GL_RGBA32F; // RGBA 32-bit floating point, unnormalized
+	t.size = glm::ivec3(dimensions, 0);
 
-	if (glIsTexture(new_tex) == GL_FALSE) {
-		std::cerr << "Error : could not create a suitable render target texture !\n";
-		return 0;
-	}
-
-	// Allocate the texture with the right dimensions :
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, dimensions.x, dimensions.y, 0, GL_RGB, GL_FLOAT, nullptr);
-	// Nearest neighbor interpolation, need it for accurate positions :
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	// Create the texture object itself :
+	new_tex = this->uploadTexture2D(t);
+	if (new_tex == 0) { std::cerr << "Error : Could not create a framebuffer texture.\n"; return 0; }
 
 	// Bind framebuffer, and bind texture to a color attachment :
 	glBindFramebuffer(GL_FRAMEBUFFER, fb_handle);
-	// Bind texture 'new_tex' at level 0 to the color attachment 2 :
-	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, new_tex, 0);
-	//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, new_tex, 0);
+	// Bind texture 'new_tex' at level 0 to the color attachment 1 :
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, new_tex, 0);
 
 	// Specify the texture ouptuts in the framebuffer state :
-	GLenum colorAttachments[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT2};
+	GLenum colorAttachments[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
 	glDrawBuffers(2, colorAttachments);
 
 	// Check the framebuffer is complete :
-	if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
 		std::cerr << "An error occured while specifying the framebuffer attachments.\n";
 	}
 
 	return new_tex;
 }
 
-GLuint Scene::createRenderTextureCopy(glm::ivec2 dimensions, GLuint old_texture) {
-	if (old_texture != 0) {
-		glDeleteTextures(1, &old_texture);
-	}
-
-	// Create a new texture :
-	GLuint new_tex = 0;
-	glGenTextures(1, &new_tex);
-	glBindTexture(GL_TEXTURE_2D, new_tex);
-
-	if (glIsTexture(new_tex) == GL_FALSE) {
-		std::cerr << "Error : could not create a suitable render target texture !\n";
-		return 0;
-	}
-
-	// Allocate the texture with the right dimensions :
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, dimensions.x, dimensions.y, 0, GL_RGB, GL_FLOAT, nullptr);
-	// Nearest neighbor interpolation, need it for accurate positions :
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-	return new_tex;
-}
-
-glm::vec4 Scene::readFramebufferContents(GLuint fb_handle, GLuint tex_handle, glm::ivec2 image_coordinates) {
+glm::vec4 Scene::readFramebufferContents(GLuint fb_handle, glm::ivec2 image_coordinates) {
 	// The container of pixel values :
 	glm::vec4 pixelValue = glm::vec4();
 
 	// Bind the framebuffer to read from :
 	glBindFramebuffer(GL_FRAMEBUFFER, fb_handle);
 	// Specify reading from color attachment 1:
-	glReadBuffer(GL_COLOR_ATTACHMENT2);
+	glReadBuffer(GL_COLOR_ATTACHMENT1);
 	// Read pixels :
-	glReadPixels(image_coordinates.x, image_coordinates.y, 1, 1, GL_RGB, GL_FLOAT, glm::value_ptr(pixelValue));
-
-	return pixelValue;
-}
-
-glm::vec4 Scene::readCopiedFramebufferContents(GLuint tex_handle, glm::ivec2 image_coordinates, glm::ivec2 size) {
-	// The container of pixel values :
-	glm::vec4 pixelValue = glm::vec4();
-
-	// Specify reading from color attachment 1:
-	glBindTexture(GL_TEXTURE_2D, tex_handle);
-	// allocate pixels :
-	glm::vec3* pixels = new glm::vec3[size.x * size.y];
-	// read pixels :
-	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, pixels);
-	glm::vec3 locPix = pixels[image_coordinates.y * size.x + image_coordinates.x];
-	pixelValue = glm::vec4(locPix, 1.);
-	delete[] pixels;
+	glReadPixels(image_coordinates.x, image_coordinates.y, 1, 1, GL_RGBA, GL_FLOAT, glm::value_ptr(pixelValue));
 
 	return pixelValue;
 }
@@ -2844,7 +2799,7 @@ void Scene::togglePlaneVisibility(planes _plane) {
 	if (_plane == planes::y) { this->planeVisibility.y = not this->planeVisibility.y; }
 	if (_plane == planes::z) { this->planeVisibility.z = not this->planeVisibility.z; }
 	std::cerr << "Visibilities : {" << std::boolalpha << this->planeVisibility.x << ',' <<
-		     this->planeVisibility.y << ',' << this->planeVisibility.z << "}\n";
+			 this->planeVisibility.y << ',' << this->planeVisibility.z << "}\n";
 	return;
 }
 
@@ -3246,23 +3201,23 @@ void Scene::tex3D_buildBuffers(VolMesh& volMesh) {
 
 	// vertex coords array
 	GLfloat vertices[] = {v3[0],v3[1],v3[2],  v1[0],v1[1],v1[2],  v2[0],v2[1],v2[2],        // v3-v1-v2
-			      v3[0],v3[1],v3[2],  v2[0],v2[1],v2[2],  v1[0],v1[1],v1[2],        // v3-v2-v1
-			      v3[0],v3[1],v3[2],  v0[0],v0[1],v0[2],  v1[0],v1[1],v1[2],        // v3-v0-v1
-			      v2[0],v2[1],v2[2],  v1[0],v1[1],v1[2],  v0[0],v0[1],v0[2]};       // v2-v1-v0
+				  v3[0],v3[1],v3[2],  v2[0],v2[1],v2[2],  v1[0],v1[1],v1[2],        // v3-v2-v1
+				  v3[0],v3[1],v3[2],  v0[0],v0[1],v0[2],  v1[0],v1[1],v1[2],        // v3-v0-v1
+				  v2[0],v2[1],v2[2],  v1[0],v1[1],v1[2],  v0[0],v0[1],v0[2]};       // v2-v1-v0
 	// normal array
 	GLfloat normals[] = {v3[0],v3[1],v3[2],  v1[0],v1[1],v1[2],  v2[0],v2[1],v2[2],        // v3-v1-v2
-			     v3[0],v3[1],v3[2],  v2[0],v2[1],v2[2],  v1[0],v1[1],v1[2],        // v3-v2-v1
-			     v3[0],v3[1],v3[2],  v0[0],v0[1],v0[2],  v1[0],v1[1],v1[2],        // v3-v0-v1
-			     v2[0],v2[1],v2[2],  v1[0],v1[1],v1[2],  v0[0],v0[1],v0[2]};       // v2-v1-v0
+				 v3[0],v3[1],v3[2],  v2[0],v2[1],v2[2],  v1[0],v1[1],v1[2],        // v3-v2-v1
+				 v3[0],v3[1],v3[2],  v0[0],v0[1],v0[2],  v1[0],v1[1],v1[2],        // v3-v0-v1
+				 v2[0],v2[1],v2[2],  v1[0],v1[1],v1[2],  v0[0],v0[1],v0[2]};       // v2-v1-v0
 	// index array of vertex array for glDrawElements()
 	// Notice the indices are listed straight from beginning to end as exactly
 	// same order of vertex array without hopping, because of different normals at
 	// a shared vertex. For this case, glDrawArrays() and glDrawElements() have no
 	// difference.
 	GLushort indices[] = {0,1,2,
-			      3,4,5,
-			      6,7,8,
-			      9,10,11};
+				  3,4,5,
+				  6,7,8,
+				  9,10,11};
 	// texture coords :
 	GLfloat textureCoords[] = {0.,0.,1. ,1. ,2. ,2. ,
 				   3.,3.,4. ,4. ,5. ,5. ,

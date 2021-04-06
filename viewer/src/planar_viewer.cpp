@@ -15,7 +15,6 @@ PlanarViewer::PlanarViewer(Scene* const _scene, planes _p, planeHeading _h, QWid
 
 	// Default render texture is not initialized :
 	this->renderTarget = 0;
-	this->renderTargetCopy = 0;
 	this->minZoomRatio = .1f;
 	this->zoomRatio = 1.f;
 	this->maxZoomRatio = 500.f;
@@ -23,6 +22,7 @@ PlanarViewer::PlanarViewer(Scene* const _scene, planes _p, planeHeading _h, QWid
 	this->mouse_isPressed = false;
 	this->ctrl_pressed = false;
 	this->planeDepth = -1.f;
+	this->posRequest = glm::ivec2{-1, -1};
 
 	this->refreshTimer = new QTimer();
 	// ~7 ms for 144fps, ~16ms for 60fps and ~33ms for 30 FPS
@@ -54,17 +54,21 @@ void PlanarViewer::init(void) {
 }
 
 void PlanarViewer::draw(void) {
-	glClearColor(.8, .8, .8, 1.);
+	glClearColor(.8, .8, .8, .0);
 
 	QSize viewerSize = this->size();
 	glm::vec2 fbDims = glm::vec2(static_cast<float>(viewerSize.width()), static_cast<float>(viewerSize.height()));
 
-	glm::vec4 p = this->sceneToShow->drawPlaneView(fbDims, this->planeToShow, this->planeOrientation, this->zoomRatio, this->offset, this->renderTargetCopy, this->posRequest);
+	this->sceneToShow->drawPlaneView(fbDims, this->planeToShow, this->planeOrientation, this->zoomRatio, this->offset);
 
 	if (this->posRequest.x > -1) {
-		std::cerr << "Value from scene : {" << p.x << ", " << p.y << ", " << p.z << ", " << p.w << "}\n";
+		glm::vec4 pixelValue = this->sceneToShow->readFramebufferContents(this->defaultFramebufferObject(), this->posRequest);
+		if (pixelValue.w > .01f) {
+			glm::vec4 p = pixelValue;
+			std::cerr << "Value in fbo : {" << p.x << ", " << p.y << ", " << p.z << ", " << p.w << "}\n";
+		}
+		this->posRequest = glm::vec2{-1, -1};
 	}
-	this->posRequest = glm::vec2{-1, -1};
 }
 
 void PlanarViewer::guessScenePosition(void) {
@@ -73,96 +77,16 @@ void PlanarViewer::guessScenePosition(void) {
 
 	// Get framebuffer size, and (current) relative mouse position to the widget origin :
 	QSize wSize = this->size();
-	glm::vec2 fbDims = glm::convert_to<float>(glm::ivec2(wSize.width(), wSize.height()));
-	glm::vec2 rawMousePos = glm::convert_to<float>(glm::ivec2(
-								this->cursorPosition_current.x(),
-								this->cursorPosition_current.y()
-							));
+	glm::ivec2 fbDims = glm::ivec2(wSize.width(), wSize.height());
+	glm::ivec2 rawMousePos = glm::ivec2(this->cursorPosition_current.x(), this->cursorPosition_current.y());
 	// If already outside of the framebuffer, return and do nothing :
-	if (rawMousePos.x < .0f || rawMousePos.x > fbDims.x || rawMousePos.y < .0f || rawMousePos.y > fbDims.y) {
+	if (rawMousePos.x < 0 || rawMousePos.x > fbDims.x || rawMousePos.y < 0 || rawMousePos.y > fbDims.y) {
 		return;
 	}
 
-	std::cerr << "[LOG] Framebuffer size   : [" << fbDims.x << ", " << fbDims.y << "]\n";
-	std::cerr << "[LOG] Raw mouse position : [" << rawMousePos.x << ", " << rawMousePos.y << "]\n";
-
-	// OpenGL NDC coordinates have their 0 at the center, negative coordinates
-	// on the left and bottom and positive ones on the top and right. Flip the
-	// mouse position, normalize it and scale to [-1; 1] :
-	glm::vec2 flippedMousePos = glm::vec2(rawMousePos.x, fbDims.y - rawMousePos.y);	// Flip on Y
-	this->posRequest = flippedMousePos;
-	/*
-	glm::vec2 normalizedMousePos = (flippedMousePos / fbDims) * 2.f;				// Normalize
-	glm::vec2 ndcMousePos = normalizedMousePos - glm::vec2{1.f, 1.f};				// Set in [-1;1]
-
-	std::cerr << "[LOG] NDC mouse position : [" << ndcMousePos.x << ", " << ndcMousePos.y << "]\n";
-
-	// Get the bounding box size to use for this particular plane :
-	DiscreteGrid::bbox_t sceneBox = this->sceneToShow->getSceneBoundingBox();
-	glm::vec3 bbSceneDims = glm::convert_to<float>(sceneBox.getDiagonal());
-
-	// Determine the dimensions of the plane to show :
-	glm::vec2 bbDims{};
-	if (this->planeToShow == planes::x) {
-		std::cerr << "[LOG] Plane shown : X\n";
-		bbDims.x = bbSceneDims.y;
-		bbDims.y = bbSceneDims.z;
-	} else if (this->planeToShow == planes::y) {
-		std::cerr << "[LOG] Plane shown : Y\n";
-		bbDims.x = bbSceneDims.x;
-		bbDims.y = bbSceneDims.z;
-	} else if (this->planeToShow == planes::z) {
-		std::cerr << "[LOG] Plane shown : Z\n";
-		bbDims.x = bbSceneDims.x;
-		bbDims.y = bbSceneDims.y;
-	} else {
-		std::cerr << "[ERROR] Cannot guess plane position of plane other than X, Y or Z\n";
-		return;
-	}
-
-	if (this->planeOrientation != planeHeading::Right && this->planeOrientation != planeHeading::Left) {
-		std::cerr << "[LOG] Swapping plane dimensions relative to orientation ...\n";
-		bbDims = glm::vec2(bbDims.y, bbDims.x);
-	}
-
-	std::cerr << "[LOG] Bouding box size : {" << bbDims.x << ", " << bbDims.y << "}\n";
-
-	// The plane multiplier :
-	glm::vec2 multiplier{1., 1.};
-	// The ratios of the framebuffer, and of the bounding box :
-	float fbRatio = fbDims.x / fbDims.y;
-	float bbRatio = bbDims.x / bbDims.y;
-
-	// Guess the ratio used to 'compress' the plane to fit the bb in the frame :
-	if (bbRatio > fbRatio) {
-		multiplier.y = fbRatio / bbRatio;
-	} else {
-		float fbRatioInv = fbDims.y / fbDims.x;
-		float bbRatioInv = bbDims.y / bbDims.x;
-		multiplier.x = fbRatioInv / bbRatioInv;
-	}
-
-	// Multiplier represents how much of the current frame buffer the projected
-	// quad takes.
-	std::cerr << "[LOG] Multiplier computed : {" << multiplier.x << ", " << multiplier.y << "}\n";
-
-	// Simulate the fact the plane will be shrunk by 'multiplier' and centered :
-	glm::vec2 bbPosInFb = glm::vec2{-1.f,-1.f} * multiplier;
-	glm::vec2 bbPosInFbMax = glm::vec2{1.f,1.f} * multiplier;
-	glm::vec2 bbSizeInFb = bbPosInFbMax - bbPosInFb;
-
-	std::cerr << "[LOG] Bounding box size in framebuffer : {" << bbSizeInFb.x << ", " << bbSizeInFb.y << "}\n";
-	std::cerr << "[LOG] Bounding box plane coordinates in NDC : {" << bbPosInFb.x << ", " << bbPosInFb.y << "}\n";
-	std::cerr << "[LOG] Bounding box plane coordinates in NDC : {" << bbPosInFbMax.x << ", " << bbPosInFbMax.y << "}\n";
-	if (ndcMousePos.x > bbPosInFb.x && ndcMousePos.x < bbPosInFbMax.x &&
-			ndcMousePos.y > bbPosInFb.x && ndcMousePos.y < bbPosInFbMax.y) {
-		glm::vec2 relativeBBPos = (ndcMousePos - bbPosInFb) / bbSizeInFb;
-		glm::vec2 realBBPos = bbDims * relativeBBPos;
-		std::cerr << "[LOG] Found a point. Normalized coordinates : {" << relativeBBPos.x << ", " << relativeBBPos.y << "}\n";
-		std::cerr << "[LOG] Found a point. Real coordinates : {" << realBBPos.x << ", " << realBBPos.y << "}\n";
-	}
-	std::cerr << '\n';
-	*/
+	// OpenGL FBO coordinates have their 0 at the bottom left. Flip the
+	// Y coordinate so it reflects the OpenGL framebuffer coordinates :
+	this->posRequest = glm::convert_to<int>(glm::vec2(rawMousePos.x, fbDims.y - rawMousePos.y));
 }
 
 void PlanarViewer::keyPressEvent(QKeyEvent* _e) {
@@ -197,14 +121,12 @@ void PlanarViewer::keyPressEvent(QKeyEvent* _e) {
 }
 
 void PlanarViewer::mousePressEvent(QMouseEvent* _e) {
+	this->cursorPosition_last = _e->pos();
+	this->cursorPosition_current = this->cursorPosition_last;
 	if (_e->buttons().testFlag(Qt::MouseButton::LeftButton)) {
-		this->cursorPosition_last = _e->pos();
-		this->cursorPosition_current = this->cursorPosition_last;
 		this->mouse_isPressed = 1;
 	}
-	if (_e->buttons().testFlag(Qt::MouseButton::RightButton) && !_e->buttons().testFlag(Qt::MouseButton::LeftButton)) {
-		this->cursorPosition_last = _e->pos();
-		this->cursorPosition_current = this->cursorPosition_last;
+	if (_e->buttons().testFlag(Qt::MouseButton::RightButton)) {
 		this->guessScenePosition();
 	}
 
@@ -223,9 +145,12 @@ void PlanarViewer::mouseMoveEvent(QMouseEvent* _m) {
 		glm::vec2 absPosMouse = glm::convert_to<float>(glm::ivec2(currentPos.x(), currentPos.y()));
 		glm::vec2 absPosLastPos = glm::convert_to<float>(glm::ivec2(this->cursorPosition_last.x(), this->cursorPosition_last.y()));
 		this->offset += (absPosMouse - absPosLastPos) / (maxViewer - minViewer);
-		this->cursorPosition_last = this->cursorPosition_current;
-		this->cursorPosition_current = currentPos;
 		this->mouse_isPressed += 1u;
+	}
+	this->cursorPosition_last = this->cursorPosition_current;
+	this->cursorPosition_current = _m->pos();
+	if (_m->buttons().testFlag(Qt::MouseButton::RightButton)) {
+		this->guessScenePosition();
 	}
 	QGLViewer::mouseMoveEvent(_m);
 	return;
@@ -262,9 +187,9 @@ void PlanarViewer::resizeGL(int w, int h) {
 
 	// Is the scene initialized ? (might not on first call to this function)
 	if (this->sceneToShow->isSceneInitialized()) {
-		glm::ivec2 s{w,h}; // framebuffer size
-		this->renderTarget = this->sceneToShow->createRenderTexture(s, this->defaultFramebufferObject(), this->renderTarget);
-		this->renderTargetCopy = this->sceneToShow->createRenderTextureCopy(s, this->renderTargetCopy);
+		this->renderTarget = this->sceneToShow->updateFBOOutputs(glm::ivec2{w,h},
+							this->defaultFramebufferObject(),
+							this->renderTarget);
 	}
 }
 

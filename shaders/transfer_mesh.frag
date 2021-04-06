@@ -26,7 +26,8 @@ in float visibility;
 /****************************************/
 /*************** Outputs ****************/
 /****************************************/
-out vec4 colorOut;
+layout(location = 0) out vec4 colorOut;
+layout(location = 1) out vec4 sceneSpaceFragmentPos;
 
 /****************************************/
 /*************** Uniforms ***************/
@@ -111,6 +112,8 @@ vec3 phongComputation(vec4 position, vec3 normal, vec4 color, vec3 lightPos, vec
 #line 2111
 
 void main (void) {
+	sceneSpaceFragmentPos = vec4(.0,.0,.0,.0);
+
 	if( visibility > 3500. ) discard;
 
 	/*
@@ -122,11 +125,12 @@ void main (void) {
 	if (distMin < epsilon) {// && visibility > 0.) {
 		float factor = (visibility/3500.);
 		colorOut = vec4(1.-factor, factor, 1.-factor, 1.);
+		textureCoordinatesWorldSpace = vec4(P.xyz, 2.f);
 		return;
 	}
 	*/
 
-	// Default color of the fragment : cyan
+	// Default color of the fragment
 	colorOut = vec4(.0, .0, .0, .0);
 
 	vec3 V = normalize(P.xyz - cam);
@@ -270,6 +274,8 @@ void main (void) {
 	colorOut.xyz += phongComputation(Pos, n, color, lightPositions[4], phongDetails, lightDetails);
 	// Phong for camera light :
 	colorOut.xyz += phongComputation(Pos, n, color, cam, phongDetails, lightDetails);
+
+	sceneSpaceFragmentPos = Pos;
 
 	return;
 }

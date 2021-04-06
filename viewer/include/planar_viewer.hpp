@@ -55,7 +55,6 @@ class PlanarViewer : public QGLViewer {
 
 		glm::ivec2 posRequest;			///< A texture position request for the render
 		GLuint renderTarget;			///< The texture to render to for additional info
-		GLuint renderTargetCopy;		///< The texture to render to for additional info
 		float minZoomRatio;				///< minimum value of the zoom applied to the image
 		float maxZoomRatio;				///< maximum value of the zoom applied to the image
 		float zoomRatio;				///< The current zoom level applied to the image

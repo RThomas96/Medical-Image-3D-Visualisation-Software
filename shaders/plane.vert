@@ -52,13 +52,17 @@ void main(void) {
 	/*
 	Vertex position will always be normalized (i.e., in [0, 1]). We need to apply the correct size multiplier and
 	the correct displacement in order to get the 'real' position of a vertex within that plane.
+
+	Also : the fact we can load grids with offsets, but keep the offset separate from the transform matrix
+	means we have to first determine the position in world space without that offset (directly below) and
+	_then_ add the offset to the world space position (gl_Position) to make it work.
 	*/
-	vec4 vPos_ws = sceneBBPosition4 + (vertexPosition * vec4(sceneBBDiagonal,1.)) + planeIdxToPlanePosition(currentPlane);
+	vec4 vPos_ws = (vertexPosition * vec4(sceneBBDiagonal,1.)) + planeIdxToPlanePosition(currentPlane);
 	// We want to make the positions go from WS to GS, so invert the matrix to transform :
-	vec4 vPos_gs = inverse(gridTransform) * vPos_ws;
+	vec4 vPos_gs = inverse(gridTransform) * (vPos_ws);
 	vec4 vPos_ts = (vPos_gs) / gridDimensions4;
 
-	vPos = vPos_ws;
+	vPos = sceneBBPosition4 + vPos_ws;
 	vNorm = norMat * vertexNormal;
 	texCoord = vPos_ts.xyz;
 	vPos_PS = vertexPosition;

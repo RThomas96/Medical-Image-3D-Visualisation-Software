@@ -1,5 +1,5 @@
 #version 400 core
-// TEXTURE_EXPLORER.FRAG
+
 // Signals we're in the main shader, for any shaders inserted into this one.
 #define MAIN_SHADER_UNIT
 
@@ -16,8 +16,8 @@ layout(location = 3) in vec2 planeMultiplier;	// The multiplier used to 'stretch
 /****************************************/
 /*************** Outputs ****************/
 /****************************************/
-layout (location = 0) out vec4 color; // This fragment's color
-layout (location = 1) out vec3 finalGridCoordinates;
+layout(location = 0) out vec4 color; // This fragment's color
+layout(location = 1) out vec4 finalGridCoordinates;	// The normalized scene coordinates used to fetch textures
 
 /****************************************/
 /*************** Uniforms ***************/
@@ -28,6 +28,8 @@ uniform vec2 colorBounds;
 uniform vec2 textureBounds;
 uniform vec2 colorBoundsAlternate;
 uniform vec2 textureBoundsAlternate;
+uniform vec4 sceneBBDiagonal;	// The grid's world-space bounding box diagonal
+uniform vec4 sceneBBPosition;	// The grid's world-space bounding box position
 
 uniform vec3 color0;		// Color 0, channel 0
 uniform vec3 color1;		// Color 1, channel 0
@@ -59,28 +61,30 @@ bool checkAndColorizeVoxel(in uvec3 voxel, out vec4 color) ;
 /***************** Main *****************/
 /****************************************/
 void main() {
-	if (shouldDiscard()) { if (!shouldDrawBorder()) { discard; } }
+	if (shouldDiscard()) { if (!shouldDrawBorder()) { finalGridCoordinates = vec4(.0,.0,.0,.0); discard; } }
 
 	// Default color : plane color
 	color = planeIdxToColor(planeIndex);
 
 	// If in the border area, stop there :
-	if (shouldDrawBorder()) { return; }
+	if (shouldDrawBorder() == false) {
+		// Get the texture data :
+		uvec3 tex = texture(texData, vTexCoords).rgb;
 
-	color.xyz = vTexCoords;
-	color.a = 1.f;
-	// Get the texture data :
-	uvec3 tex = texture(texData, vTexCoords).rgb;
-
-	vec4 final_color;
-	if (checkAndColorizeVoxel(tex, final_color)) {
-		color = final_color;
-	} else {
-		color = voxelIdxToColor(tex);
-		color.a = .1;
+		vec4 final_color;
+		if (checkAndColorizeVoxel(tex, final_color)) {
+			color = final_color;
+		} else {
+			// Otherwise, still compute the value but set it with a low alpha
+			// to have a bit of context around the texture data.
+			color = voxelIdxToColor(tex);
+			color.a = .1;
+		}
 	}
 
-	finalGridCoordinates = vTexCoords;
+	// Alpha is set to a 2.f to signify we're in the texture (the rest will be set to
+	// the value specified udring the call to glClearColor, which is usually in [0, 1]).
+	finalGridCoordinates = sceneBBDiagonal * vec4(vTexCoords, 1.f); + sceneBBPosition;
 }
 
 /****************************************/

@@ -14,7 +14,8 @@ in vec4 vPos_PS;
 /****************************************/
 /*************** Outputs ****************/
 /****************************************/
-out vec4 color;			// This fragment's color
+layout(location = 0) out vec4 color;		// This fragment's color
+layout(location = 1) out vec4 worldPosition;	// This fragment's world position
 
 /****************************************/
 /*************** Uniforms ***************/
@@ -71,17 +72,19 @@ bool checkAndColorizeVoxel(in uvec3 color, out vec4 return_color);
 /****************************************/
 void main(void)
 {
+	worldPosition = vec4(.0,.0,.0,.0);
 	// Early discard if the plane shouldn't be shown :
 	if (isPlaneVisible(intersectPlanes) == false) { discard; }
 
 	// not in border :
-
 	vec4 colorTex = vec4(.0, .0, .0, .0);
 	if (texCoord.x > 0. && texCoord.x < 1.) {
 		if (texCoord.y > .0 && texCoord.y < 1.) {
 			if (texCoord.z > 0. && texCoord.z < 1.) {
 				if (isPlaneVisible(true) && showTex == true) {
 					uvec3 tex = texture(texData, texCoord).xyz;
+					worldPosition.xyz = sceneBBPosition + texCoord * sceneBBDiagonal;
+					worldPosition.w = 1.f;
 					if (!checkAndColorizeVoxel(tex, colorTex)) {
 						colorTex=vec4(.8, .8, .8, 1.);
 					}
@@ -95,7 +98,7 @@ void main(void)
 	}
 
 
-	if (color.a < .1f) { discard; }
+	if (color.a < .1f) { worldPosition.w = .0f; discard; }
 }
 
 /****************************************/

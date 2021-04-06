@@ -86,17 +86,13 @@ class Scene : public QOpenGLFunctions_4_0_Core {
 		void draw3DView(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, bool showTexOnPlane = true);
 
 		/// @b Draw a given plane 'view' (single plane on the framebuffer).
-		glm::vec4 drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading, float zoomRatio, glm::vec2 offset, GLuint tex_handle, glm::ivec2 fbCoords = glm::ivec2{-1,-1});
+		void drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading, float zoomRatio, glm::vec2 offset);
 
 		/// @b Create a texture suited for framebuffer rendering, by passing the dimensions of it to the function.
-		GLuint createRenderTexture(glm::ivec2 dimensions, GLuint fb_handle, GLuint old_texture = 0);
-		/// @b Create a texture suitable for copying framebuffer contents, at each frame
-		GLuint createRenderTextureCopy(glm::ivec2 dimensions, GLuint old_texture = 0);
+		GLuint updateFBOOutputs(glm::ivec2 dimensions, GLuint fb_handle, GLuint old_texture = 0);
 
 		/// @b Read the specified texture 'tex_handl', at coordinates 'image_coordinates' and return the RGB[A] value
-		glm::vec4 readFramebufferContents(GLuint fb_handle, GLuint tex_handle, glm::ivec2 image_coordinates);
-		/// @b Read the specified texture 'tex_handl', at coordinates 'image_coordinates' and return the RGB[A] value
-		glm::vec4 readCopiedFramebufferContents(GLuint tex_handle, glm::ivec2 image_coordinates, glm::ivec2 size);
+		glm::vec4 readFramebufferContents(GLuint fb_handle, glm::ivec2 image_coordinates);
 
 		/// @b Returns the current scene boundaries.
 		glm::vec3 getSceneBoundaries() const;
