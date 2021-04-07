@@ -60,6 +60,7 @@ class PlanarViewer : public QGLViewer {
 		float zoomRatio;				///< The current zoom level applied to the image
 		float planeDepth;				///< The normalized plane depth, set from the viewer's header slider
 		glm::vec2 offset;				///< Normalized offset from the window's origin
+		glm::vec2 tempOffset;			///< Temporary offset applied to the rendered image while moving around
 		std::size_t mouse_isPressed;	///< Is the mouse pressed ? Counted in number of frames
 		bool ctrl_pressed;				///< Is the Ctrl keymod pressed ?
 		QPoint cursorPosition_last;		///< Last known position, relative to window coordinates
