@@ -1002,6 +1002,9 @@ namespace IO {
 
 	libTIFFReader::libTIFFReader(data_t thresh) : GenericGridReader(thresh) {
 		this->frames.clear();
+		#ifdef VISUALIZATION_USE_READ_CACHE
+		this->cache.clearCache();
+		#endif
 	}
 
 	libTIFFReader::~libTIFFReader() {
@@ -1188,7 +1191,10 @@ namespace IO {
 			}
 			task->advance();
 		}
-
+		#ifdef VISUALIZATION_USE_READ_CACHE
+		// Clear the cache, we don't need it anymore :
+		this->cache.clearCache();
+		#endif
 		return *this;
 	}
 
@@ -1301,6 +1307,78 @@ namespace IO {
 	}
 
 	libTIFFReader::data_t libTIFFReader::getPixel(std::size_t i, std::size_t j, std::size_t k) {
+		#ifdef VISUALIZATION_USE_READ_CACHE
+		if (k >= this->frames.size()) { return 0; }
+		// k will be used to get the right frame :
+		const TIFFFrame& frame = this->frames[k];
+		TIFFSetErrorHandler(nullify_tiff_errors);
+		TIFFSetWarningHandler(nullify_tiff_errors);
+		// The loaded frame data :
+		std::shared_ptr<frame_data_t> frameData = nullptr;
+		// The resulting pixel value :
+		data_t result;
+
+		// If the cache doesn't have the loaded frame, load it :
+		if ( (frameData = this->cache.getData(k)) == nullptr) {
+#if 0
+			// Open the tiff file and set the directory appropriately :
+			TIFF* file = TIFFOpen(frame.filename.c_str(), "r");
+			TIFFSetDirectory(file, frame.directoryOffset);
+
+			// Compute pixel offset for the image :
+			uint64_t pixelOffset = 0;
+			uint64_t pixelOffsetBits = 0;
+			for (uint16_t px = 0; px < frame.samplesPerPixel; ++px) { pixelOffsetBits += frame.bitsPerSample[px]; }
+			pixelOffset = pixelOffsetBits / (8*sizeof(data_t)); // get the number of data_t elements in the buffer
+			// size of the buffer to allocate for a single strip :
+			std::size_t bufSize = frame.rowsPerStrip*frame.width*pixelOffset;
+			// buffer to hold a single strip :
+			data_t* stripBuffer = nullptr;
+
+			// Make a new shared_ptr to hold the frame data :
+			frameData = std::make_shared<frame_data_t>(frame.width*frame.height);
+			// Start idx : start (in frame buffer) of each strip of data to copy (updated at each pixel copy) :
+			uint16_t start_idx = 0;
+			// Read all strips :
+			for (std::size_t strip_it = 0; strip_it < frame.stripsPerImage; ++strip_it) {
+				// if we're at the last strip, handle it differently :
+				if (strip_it == frame.stripsPerImage-1) {
+					// last strip can possibly read fewer bytes (store less than rowsperstrip), act accordingly :
+					tsize_t last_strip_row_count = frame.height - (frame.stripsPerImage - 1)*frame.rowsPerStrip;
+					if (last_strip_row_count == 0) { throw std::runtime_error("Last strip was 0 rows tall !"); }
+					bufSize = last_strip_row_count * frame.width * pixelOffset; //how many samples are in the last strip
+				}
+
+				// allocate enough data to read into :
+				stripBuffer = new data_t[bufSize];
+				// note : tiffreadencodedstip() takes a size in _bytes_ as the last argument (number of bytes to decode)
+				// need to multiply it by sizeof(data_t) to read the whole image/strip :
+				TIFFReadEncodedStrip(file, strip_it, stripBuffer, bufSize*pixelOffset*sizeof(data_t));
+				// Copy the data back into the right buffer (we always read the first sample, but might be more than one
+				// so increment by pixelOffset each time) :
+				for (std::size_t in_strip = 0; in_strip < bufSize; in_strip+=pixelOffset) {
+					(*frameData)[start_idx] = stripBuffer[in_strip];
+					start_idx++;
+				}
+				delete[] stripBuffer;
+			}
+			// Reading is finished, can close the file :
+			TIFFClose(file);
+#else
+			frameData = std::make_shared<frame_data_t>(frame.width*frame.height);
+			this->loadSlice(k, *frameData);
+#endif
+
+			// Add to the cache :
+			this->cache.loadData(k, frameData);
+		}
+
+		// frameData has the entire frame loaded, get the right pixel :
+		std::size_t idx = frame.width * j + i;
+		result = (*frameData)[idx];
+
+		return result;
+		#else
 		if (k >= this->frames.size()) { return 0; }
 		// k will be used to get the right frame :
 		const TIFFFrame& frame = this->frames[k];
@@ -1340,6 +1418,7 @@ namespace IO {
 		TIFFClose(file);
 
 		return result;
+		#endif
 	}
 
 	libTIFFReader::data_t libTIFFReader::getPixel_ImageSpace(glm::vec4 pos) {

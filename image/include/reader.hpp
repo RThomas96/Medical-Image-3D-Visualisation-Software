@@ -120,45 +120,82 @@ namespace IO {
 
 	/// @brief Very simple read cache which supports arbitrary indexes and data arrays.
 	template <typename cache_idx, typename cache_data>
-	struct ReadCache : public std::enable_shared_from_this<ReadCache<cache_idx, cache_data>> {
+	struct ReadCache {
 		public:
 			/// @brief Type alias to the internal index representation
-			using Index = cache_idx;
+			using index_t = cache_idx;
 
 			/// @brief Type alias to the internal data representation
-			using Data = cache_data;
-
-			/// @brief Type alias of a shared pointer to this class
-			using Ptr = std::shared_ptr<ReadCache<Index, Data>>;
+			using data_t_ptr = std::shared_ptr<cache_data>;
+		protected:
+			/// @brief The internal structuring of data in the cache vector
+			using cached_data_t = std::pair<index_t, data_t_ptr>;
 
 		public:
 			/// @brief Default ctor. Allocates just enough memory for the empty struct.
-			ReadCache(void);
+			ReadCache(void) : m_data(0), lastInsertedElement(0) {}
 
 			/// @brief Default dtor. Deallocates any elements
-			~ReadCache(void);
+			~ReadCache(void) { this->clearCache(); }
 
 			/// @brief Returns true if the cache has the data named referenced by Index 'x'
-			bool hasData(const Index&) const;
+			bool hasData(const index_t searched) const {
+				// For this, we don't need to conform to the lastInsertedElement index.
+				// Just check we have the data requested :
+				for (std::size_t i = 0; i < this->m_data.size(); ++i) {
+					if (this->m_data[i].first == searched) { return true; }
+				}
+				return false;
+			}
 
-			/// @brief Returns the data at Index 'i'
-			Data& getData(const Index& i) const;
+			/// @brief Returns a reference to the data at Index 'i'
+			data_t_ptr getData(const index_t searched) const {
+				// Check if we have the data, and if we do return it immediately :
+				for (std::size_t i = 0; i < this->m_data.size(); ++i) {
+					if (this->m_data[i].first == searched) { return this->m_data[i].second; }
+				}
+				// Otherwise, return a nullptr :
+				return nullptr;
+			}
 
 			/// @brief Loads the data into the cache, cleearing up a space if necessary.
-			void loadData(const Index&, const Data&);
+			void loadData(const index_t index, data_t_ptr& data) {
+				// If we already have filled the vector, wrap around with the help of lastInsertedElement :
+				if (this->m_data.size() == this->maxCachedElements) {
+					// Might need to wrap around :
+					if (this->lastInsertedElement == this->maxCachedElements-1) { this->lastInsertedElement = 0; }
+					else { this->lastInsertedElement++; }
+					// Remove the element in the place of lastInsertedElement, and replace it with the new data :
+					this->m_data[this->lastInsertedElement].first = index;
+					this->m_data[this->lastInsertedElement].second.swap(data);
+				} else {
+					// Otherwise, just call emplace_back() to add to the vector :
+					this->lastInsertedElement = this->m_data.size();
+					this->m_data.emplace_back(index, data);
+				}
+				return;
+			}
+
+			/// @brief Clears the cache manually.
+			void clearCache(void) {
+				// Reset the shared_ptrs so they can be deleted later (once they're all freed) :
+				for (std::pair<index_t, data_t_ptr>& cached : this->m_data) { cached.second.reset(); }
+				// Clear the vector :
+				this->m_data.clear();
+			}
 
 		protected:
-			/// @brief The internal structuring of data in the cache vector
-			using CachedData = std::pair<Index, Data>;
-
 			///  @brief The maximum number of elements we can have stored at any time during the cache's lifetime
-			constexpr static std::size_t maxCachedElements = 10;
+			constexpr static std::size_t maxCachedElements = 16;
 
 			/// @brief The actual cached data.
-			std::vector<CachedData> m_data;
+			std::vector<cached_data_t> m_data;
+
+			/// @brief The position of the last inserted element in the vector of data.
+			std::size_t lastInsertedElement;
 	};
 
-	/// \brief Describes a downsampling level to apply when loading the image.
+	/// @brief Describes a downsampling level to apply when loading the image.
 	enum DownsamplingLevel {
 		Original = 0,	///< Does not downsample an image upon loading.
 		Low = 1,		///< Downsamples the image using a 2x2x2 sub-region for one pixel.
@@ -170,19 +207,19 @@ namespace IO {
 	/// @note The function signature is made to be compatible with both TIFFErrorHandler and TIFFWarningHandler.
 	void nullify_tiff_errors(const char* module, const char* fmt, va_list _va_);
 
-	/// \brief Checks if the file given in argument exists
-	/// \param filename The name of the file to check
+	/// @brief Checks if the file given in argument exists
+	/// @param filename The name of the file to check
 	bool FileExists(const char* filename);
 
-	/// \brief Returns the file base name (the name, without the extension at the end).
-	/// \param filename The full name of the file, possibly with an extension or leading paths
-	/// \warning If the file doesn't have an extension, returns nullptr.
+	/// @brief Returns the file base name (the name, without the extension at the end).
+	/// @param filename The full name of the file, possibly with an extension or leading paths
+	/// @warning If the file doesn't have an extension, returns nullptr.
 	char* FileBaseName(const char* filename);
 
-	/// \brief Appends the required extension to the provided base name
-	/// \param basename The base name of the file
-	/// \param extension The extension to append to it.
-	/// \return A new char array containing <basename>.<extension>, or nullptr if an error occured
+	/// @brief Appends the required extension to the provided base name
+	/// @param basename The base name of the file
+	/// @param extension The extension to append to it.
+	/// @return A new char array containing <basename>.<extension>, or nullptr if an error occured
 	char* AppendExtension(char* basename, const char* extension);
 
 	/// @brief This class implements a basic reader to load data from disk
@@ -453,7 +490,12 @@ namespace IO {
 			virtual data_t getPixel_ImageSpace(glm::vec4 pos) override;
 
 		protected:
-			std::vector<TIFFFrame> frames;	///< The frames contained in this stack of images
+			/// @brief The frames contained in this stack of images
+			std::vector<TIFFFrame> frames;
+			/// @brief The frame data type (once loaded, this is what it is loaded as)
+			using frame_data_t = typename std::vector<GenericGridReader::data_t>;
+			/// @brief A cache, retaining the last few frames loaded
+			ReadCache<std::size_t, frame_data_t> cache;
 	};
 
 	/// @b Overload of the basic libTIFF reader, which implements a custom parsing function reading the header.
