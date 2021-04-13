@@ -1307,7 +1307,6 @@ namespace IO {
 	}
 
 	libTIFFReader::data_t libTIFFReader::getPixel(std::size_t i, std::size_t j, std::size_t k) {
-		#ifdef VISUALIZATION_USE_READ_CACHE
 		if (k >= this->frames.size()) { return 0; }
 		// k will be used to get the right frame :
 		const TIFFFrame& frame = this->frames[k];
@@ -1320,54 +1319,8 @@ namespace IO {
 
 		// If the cache doesn't have the loaded frame, load it :
 		if ( (frameData = this->cache.getData(k)) == nullptr) {
-#if 0
-			// Open the tiff file and set the directory appropriately :
-			TIFF* file = TIFFOpen(frame.filename.c_str(), "r");
-			TIFFSetDirectory(file, frame.directoryOffset);
-
-			// Compute pixel offset for the image :
-			uint64_t pixelOffset = 0;
-			uint64_t pixelOffsetBits = 0;
-			for (uint16_t px = 0; px < frame.samplesPerPixel; ++px) { pixelOffsetBits += frame.bitsPerSample[px]; }
-			pixelOffset = pixelOffsetBits / (8*sizeof(data_t)); // get the number of data_t elements in the buffer
-			// size of the buffer to allocate for a single strip :
-			std::size_t bufSize = frame.rowsPerStrip*frame.width*pixelOffset;
-			// buffer to hold a single strip :
-			data_t* stripBuffer = nullptr;
-
-			// Make a new shared_ptr to hold the frame data :
-			frameData = std::make_shared<frame_data_t>(frame.width*frame.height);
-			// Start idx : start (in frame buffer) of each strip of data to copy (updated at each pixel copy) :
-			uint16_t start_idx = 0;
-			// Read all strips :
-			for (std::size_t strip_it = 0; strip_it < frame.stripsPerImage; ++strip_it) {
-				// if we're at the last strip, handle it differently :
-				if (strip_it == frame.stripsPerImage-1) {
-					// last strip can possibly read fewer bytes (store less than rowsperstrip), act accordingly :
-					tsize_t last_strip_row_count = frame.height - (frame.stripsPerImage - 1)*frame.rowsPerStrip;
-					if (last_strip_row_count == 0) { throw std::runtime_error("Last strip was 0 rows tall !"); }
-					bufSize = last_strip_row_count * frame.width * pixelOffset; //how many samples are in the last strip
-				}
-
-				// allocate enough data to read into :
-				stripBuffer = new data_t[bufSize];
-				// note : tiffreadencodedstip() takes a size in _bytes_ as the last argument (number of bytes to decode)
-				// need to multiply it by sizeof(data_t) to read the whole image/strip :
-				TIFFReadEncodedStrip(file, strip_it, stripBuffer, bufSize*pixelOffset*sizeof(data_t));
-				// Copy the data back into the right buffer (we always read the first sample, but might be more than one
-				// so increment by pixelOffset each time) :
-				for (std::size_t in_strip = 0; in_strip < bufSize; in_strip+=pixelOffset) {
-					(*frameData)[start_idx] = stripBuffer[in_strip];
-					start_idx++;
-				}
-				delete[] stripBuffer;
-			}
-			// Reading is finished, can close the file :
-			TIFFClose(file);
-#else
 			frameData = std::make_shared<frame_data_t>(frame.width*frame.height);
 			this->loadSlice(k, *frameData);
-#endif
 
 			// Add to the cache :
 			this->cache.loadData(k, frameData);
@@ -1378,47 +1331,6 @@ namespace IO {
 		result = (*frameData)[idx];
 
 		return result;
-		#else
-		if (k >= this->frames.size()) { return 0; }
-		// k will be used to get the right frame :
-		const TIFFFrame& frame = this->frames[k];
-		TIFFSetErrorHandler(nullify_tiff_errors);
-		TIFFSetWarningHandler(nullify_tiff_errors);
-		TIFF* file = TIFFOpen(frame.filename.c_str(), "r");
-
-		TIFFSetDirectory(file, frame.directoryOffset);
-
-		// j is used to get the right strip within the frame :
-		const uint16_t strip = j / frame.rowsPerStrip;
-		// Offset of rows within the strip :
-		const uint16_t offsetInStrip = j - (strip*frame.rowsPerStrip);
-
-		// compute pixel offset :
-		uint64_t pixelOffset = 0;
-		for (uint16_t px = 0; px < frame.samplesPerPixel; ++px) { pixelOffset += frame.bitsPerSample[px]; }
-		pixelOffset/=(8*sizeof(data_t)); // get the number of data_t elements in the buffer
-
-		std::size_t bufSize = frame.rowsPerStrip*frame.width*pixelOffset;
-		if (strip == frame.stripsPerImage-1) {
-			// last strip must read fewer bytes :
-			tsize_t last_strip_row_count = frame.height - (frame.stripsPerImage - 1)*frame.rowsPerStrip;
-			if (last_strip_row_count == 0) { throw std::runtime_error("Last strip was 0 rows tall ! Something went wrong beforehand."); }
-			bufSize = last_strip_row_count * frame.width * pixelOffset;
-		}
-
-		// Read the strip, and then get the right data from it :
-		data_t* rawData = new data_t[bufSize];
-		// note : tiffreadencodedstip() takes a size in _bytes_ as the last argument (number of bytes to decode/read).
-		// need to multiply it to read the whole image
-		TIFFReadEncodedStrip(file, strip, rawData, bufSize*pixelOffset*sizeof(data_t));
-		data_t result = rawData[i*pixelOffset + frame.width*pixelOffset*offsetInStrip];
-
-		delete[] rawData;
-
-		TIFFClose(file);
-
-		return result;
-		#endif
 	}
 
 	libTIFFReader::data_t libTIFFReader::getPixel_ImageSpace(glm::vec4 pos) {
