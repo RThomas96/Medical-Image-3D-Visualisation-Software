@@ -9,7 +9,7 @@ IF(WIN32 OR MINGW OR MSVC)
 		SET(libTIFF_LIBRARY_NAME "libtiff.dll.a")
 ENDIF()
 
-SET(LOCAL_COMPILED_LIBS "${CMAKE_SOURCE_DIR}/lib")
+SET(LOCAL_COMPILED_LIBS "${CMAKE_SOURCE_DIR}/third_party/compiled_libraries")
 
 MESSAGE(STATUS "Looking for libTIFF in ${LOCAL_COMPILED_LIBS} ...")
 

@@ -6,7 +6,7 @@
 
 # We cannot currently compile on Windows (coming at a later date)
 IF(WIN32 OR MINGW OR MSVC)
-        LIST(APPEND CMAKE_PREFIX_PATH "${GLM_HINT}")
+	LIST(APPEND CMAKE_PREFIX_PATH "${GLM_HINT}")
 ENDIF()
 
 # Warning : CMAKE_CURRENT_LIST_DIR is set here to ./cmake !
@@ -60,8 +60,6 @@ SET(CMAKE_AUTORCC ON)
 SET(CMAKE_AUTOMOC ON)
 SET(CMAKE_AUTOUIC ON)
 
-# Check if the library directory exists :
-IF(NOT EXISTS ${PROJECT_BINARY_DIR}/../lib/)
-	FILE(MAKE_DIRECTORY "../lib")
-ENDIF()
+# Set the local directory for third-party libraries :
+SET(LOCAL_COMPILED_LIBS_PATH ${CMAKE_SOURCE_DIR}/third_party/compiled_libraries)
 

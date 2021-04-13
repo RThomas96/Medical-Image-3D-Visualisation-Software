@@ -4,6 +4,7 @@ build
 release/
 debug/
 reldebug/
+reldebuginfo/
 
 # Ignore compiled libs :
 lib/
