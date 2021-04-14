@@ -1,4 +1,5 @@
-#version 400 core
+#version 150 core
+#extension GL_ARB_separate_shader_objects : enable
 
 #pragma optimize(off)
 #pragma debug(on)
@@ -68,7 +69,7 @@ bool checkAndColorizeVoxel(in uvec3 voxel, out vec4 return_color);
 
 #pragma include_color_shader;
 
-#line 2066
+#line 2072
 
 void main(void)
 {

@@ -1,4 +1,5 @@
-#version 400 core
+#version 150 core
+#extension GL_ARB_separate_shader_objects : enable
 
 // Signals we're in the main shader, for any shaders inserted into this one.
 #define MAIN_SHADER_UNIT
@@ -65,7 +66,7 @@ bool checkAndColorizeVoxel(in uvec3 color, out vec4 return_color);
 
 #pragma include_color_shader;
 
-#line 2066
+#line 2069
 
 /****************************************/
 /***************** Main *****************/

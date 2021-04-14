@@ -1,4 +1,4 @@
-#version 400 core
+#version 150 core
 
 #extension GL_ARB_separate_shader_objects : enable
 
@@ -60,7 +60,7 @@ void main(void) {
 	*/
 	vec2 bb = bbDims.xy;
 	vec2 fb = fbDims.xy;
-	if (heading == 1 || heading == 3) { bb = bb.yx; }
+	if (heading == 1u || heading == 3u) { bb = bb.yx; }
 
 	// Reminder : FB/BB dimensions are expressed as { width, height }
 	float ratio_fb = fb.x / fb.y;
@@ -103,17 +103,17 @@ void main(void) {
 /************** Functions ***************/
 /****************************************/
 vec4 planeCoordsToGLPosition(in vec4 position) {
-	if (planeIndex == 1) { return position.yzxw; }
-	if (planeIndex == 2) { return position.xzyw; }
+	if (planeIndex == 1u) { return position.yzxw; }
+	if (planeIndex == 2u) { return position.xzyw; }
 	return position.xyzw;
 }
 
 vec4 planeDisplacementCompute(in uint idx) {
 	vec4 displ = vec4(.0f, .0f, .0f, .0f);
 	vec3 diff=  planePositions - sceneBBPosition.xyz;
-	if (idx == 1) { displ.x = diff.x; }
-	if (idx == 2) { displ.y = diff.y; }
-	if (idx == 3) { displ.z = diff.z; }
+	if (idx == 1u) { displ.x = diff.x; }
+	if (idx == 2u) { displ.y = diff.y; }
+	if (idx == 3u) { displ.z = diff.z; }
 	return displ;
 }
 

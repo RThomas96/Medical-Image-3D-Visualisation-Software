@@ -1,4 +1,4 @@
-#version 400 core
+#version 150 core
 
 // Signals we're in the main shader, for any shaders inserted into this one.
 #define MAIN_SHADER_UNIT
@@ -51,11 +51,11 @@ uniform uint g_nbChannels;	// nb of channels in the image in total (R, RG, RGB ?
 vec4 planeIdxToColor(in uint idx);
 bool shouldDiscard();
 bool shouldDrawBorder();
-bool checkAndColorizeVoxel(in uvec3 voxel, out vec4 color) ;
+bool checkAndColorizeVoxel(in uvec3 voxel, out vec4 color);
 
 #pragma include_color_shader;
 
-#line 2055
+#line 2058
 
 /****************************************/
 /***************** Main *****************/
@@ -91,9 +91,9 @@ void main() {
 /************** Functions ***************/
 /****************************************/
 vec4 planeIdxToColor(in uint idx) {
-	if (idx == 1) { return vec4(1., .0, .0, 1.); }
-	if (idx == 2) { return vec4(.0, 1., .0, 1.); }
-	if (idx == 3) { return vec4(.0, .0, 1., 1.); }
+	if (idx == 1u) { return vec4(1., .0, .0, 1.); }
+	if (idx == 2u) { return vec4(.0, 1., .0, 1.); }
+	if (idx == 3u) { return vec4(.0, .0, 1., 1.); }
 	return vec4(.27, .27, .27, 1.);
 }
 

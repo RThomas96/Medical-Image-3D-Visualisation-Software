@@ -21,6 +21,7 @@
 #include "./viewer_structs.hpp"
 // Qt headers :
 #include <QOpenGLFunctions_4_0_Core>
+#include <QOpenGLFunctions_3_2_Core>
 #include <QOpenGLFunctions_4_0_Compatibility>
 #include <QOpenGLDebugLogger>
 #include <QStatusBar>
@@ -48,7 +49,7 @@ enum planes { x = 1, y = 2, z = 3 };
 /// @b Simple enum to keep track of a plane's orientation.
 enum planeHeading { North = 0, East = 1, South = 2, West = 3, Up = North, Right = East, Down = South, Left = West };
 
-class Scene : public QOpenGLFunctions_4_0_Core {
+class Scene : public QOpenGLFunctions_3_2_Core {
 		typedef glm::vec<4, unsigned int, glm::defaultp> uvec4;
 		typedef glm::uvec3 uvec3;
 	public:

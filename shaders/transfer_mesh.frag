@@ -1,4 +1,5 @@
-#version 400
+#version 150
+#extension GL_ARB_separate_shader_objects : enable
 
 // Signals we're in the main shader, for any shaders inserted into this one.
 #define MAIN_SHADER_UNIT
@@ -109,7 +110,7 @@ vec3 phongComputation(vec4 position, vec3 normal, vec4 color, vec3 lightPos, vec
 
 #pragma include_color_shader;
 
-#line 2111
+#line 2113
 
 void main (void) {
 	sceneSpaceFragmentPos = vec4(.0,.0,.0,.0);
@@ -590,7 +591,6 @@ bool checkAndColorizeVoxel(in uvec3 voxel, out vec4 return_color) {
 		voxel.g = uint(colorBoundsAlternate.x);
 		vis_g = 1.f;
 	}
-
 	if (rgbMode == 1u) { // Only show greyscale ...
 		// If visible, color the voxel
 		if (vis_r > 0.) {
