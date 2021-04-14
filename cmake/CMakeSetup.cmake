@@ -12,10 +12,11 @@ ENDIF()
 # Warning : CMAKE_CURRENT_LIST_DIR is set here to ./cmake !
 # (since list dir is the dir of the current cmake file, not
 # necessarily the top CMakeLists.txt) :
-IF(NOT EXISTS ${CMAKE_CURRENT_LIST_DIR}/../lib)
-	MESSAGE(FATAL_ERROR "TinyTIFF has not yet been compiled ! Run ./configure.sh or ./configure.bat first.")
+IF(NOT EXISTS ${CMAKE_CURRENT_LIST_DIR}/../third_party/compiled_libraries/)
+        MESSAGE(FATAL_ERROR "Third-party libraries have not yet been compiled !"
+		"Run 'configure.sh' or 'configure.ps1' from the third_party/ directory first.")
 ELSE()
-	MESSAGE(STATUS "TinyTIFF has previously been installed.")
+        MESSAGE(STATUS "Third-party libraries have previously been compiled in the third_party/ directory.")
 ENDIF()
 
 # Export compile commands for clangd and other language servers

@@ -19,7 +19,7 @@ FIND_PACKAGE(TinyTIFF REQUIRED PATHS ${CMAKE_CURRENT_LIST_DIR}/third_party/compi
 # If TinyTIFF's not found, it stops CMake's generation process with an error message.
 # }}}
 
-ADD_SUBDIRECTORY(third_party/glm)
+ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/third_party/glm)
 
 # Library for image reading/writing {{{
 ADD_LIBRARY(ImageIO STATIC
@@ -30,8 +30,11 @@ ADD_LIBRARY(ImageIO STATIC
 	./image/src/writer.cpp
 )
 TARGET_INCLUDE_DIRECTORIES(ImageIO
-	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/glm/
+	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/third_party/glm/
 	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include
+	# Nifti uses brace-include without the 'nifti/' prefix, leading
+	# to manually have to include the lib's include dir in targets:
+	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include/nifti
 	PRIVATE ${libTIFF_HEADER_DIR}
 )
 TARGET_LINK_LIBRARIES(ImageIO
@@ -39,7 +42,6 @@ TARGET_LINK_LIBRARIES(ImageIO
 	PUBLIC ${libTIFF}
 	PUBLIC Qt5::Xml
 )
-#SET_TARGET_PROPERTIES(ImageIO PROPERTIES AUTOMOC OFF AUTORCC OFF AUTOUIC OFF)
 # }}}
 
 # Library for DiscreteGrid and TetMesh {{{
@@ -56,8 +58,11 @@ ADD_LIBRARY(DiscreteGrid STATIC
 	./grid/src/output_discrete_grid.cpp
 )
 TARGET_INCLUDE_DIRECTORIES(DiscreteGrid
-	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/glm/
+	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/third_party/glm/
 	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include
+	# Nifti uses brace-include without the 'nifti/' prefix, leading
+	# to manually have to include the lib's include dir in targets:
+	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include/nifti
 )
 TARGET_LINK_LIBRARIES(DiscreteGrid
 	PUBLIC ImageIO
@@ -94,8 +99,11 @@ ADD_LIBRARY(VisualisationWidgets STATIC
 	./qt/src/loader_widget.cpp
 )
 TARGET_INCLUDE_DIRECTORIES(VisualisationWidgets
-	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/glm/
+	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/third_party/glm/
 	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include
+	# Nifti uses brace-include without the 'nifti/' prefix, leading
+	# to manually have to include the lib's include dir in targets:
+	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include/nifti
 	PRIVATE ${QGLViewer_HEADER_DIR}
 )
 TARGET_LINK_LIBRARIES(VisualisationWidgets
@@ -142,8 +150,11 @@ TARGET_PRECOMPILE_HEADERS(neighbor_visu
 TARGET_INCLUDE_DIRECTORIES(neighbor_visu
 	PRIVATE ${OPENGL_INCLUDE_DIRS}
 	PRIVATE ${QGLViewer_HEADER_DIR}
-	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/glm/
+	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/third_party/glm/
 	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include
+	# Nifti uses brace-include without the 'nifti/' prefix, leading
+	# to manually have to include the lib's include dir in targets:
+	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include/nifti
 )
 TARGET_LINK_LIBRARIES(neighbor_visu
 	PUBLIC Qt5::Core
