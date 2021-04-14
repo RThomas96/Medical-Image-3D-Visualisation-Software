@@ -1,20 +1,19 @@
 #ifndef IMAGE_INCLUDE_READER_HPP_
 #define IMAGE_INCLUDE_READER_HPP_
-
-#ifdef IMPLEMENTED_SLICE_CACHE
-#include "./linked_image_cache.hpp"
-#endif
-
+// Program wide features and macros :
 #include "../../macros.hpp"
 #include "../../features.hpp"
-
+// Grid bounding box and reader interpolator structs :
 #include "../../grid/include/bounding_box.hpp"
 #include "../include/interpolator.hpp"
-
+// TinyTIFF header :
 #include <tinytiffreader.h>
-
+// libTIFF header :
 #include <tiffio.h>
-
+// NIFTI header(s) :
+#include <nifti/nifti1_io.h>
+//#include <nifti/nifti2_io.h>
+// GLM header :
 #include <glm/glm.hpp>
 
 #include <vector>
@@ -505,6 +504,20 @@ namespace IO {
 			virtual ~OMETIFFReader(void) = default;
 		public:
 			virtual OMETIFFReader& parseImageInfo(ThreadedTask::Ptr& task) noexcept(false) override;
+	};
+
+	class NIFTIReader : public GenericGridReader {
+		public:
+			NIFTIReader(data_t thresh);
+			virtual ~NIFTIReader(void);
+
+			/// @brief Parses the image given by the user.
+			virtual NIFTIReader& parseImageInfo(ThreadedTask::Ptr& task) noexcept(false) override;
+			virtual NIFTIReader& openFile(const std::string& filename) override;
+			virtual void preAllocateStorage();
+		protected:
+			///	@brief The image struct used to read NIFTI images.
+			nifti_image* image;
 	};
 
 	namespace Reader {
