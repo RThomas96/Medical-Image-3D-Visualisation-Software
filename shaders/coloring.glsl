@@ -112,36 +112,59 @@ vec4 colorSegmentColoration(in vec2 cbounds, in vec3 color0, in vec3 color1, in 
 	return vec4(mix(color0, color1, t), 1.);
 }
 
-vec4 voxelIdxToColor(in uvec3 ucolor) {
+vec4 color_red(in uvec3 ucolor) {
+	if (r_channelView == 1u) {	// Greyscale
+		float val = (float(ucolor.r) - colorBounds.x)/(colorBounds.y-colorBounds.x);
+		return vec4(val, val, val, 1.);
+	}
+	// N°2 is HandE coloration, only available if both channels are visible
+	if (r_channelView == 3u) {	// HSV-2-RGB
+		return hsv2rgb(ucolor.r, colorBounds);
+	}
+	if (r_channelView == 4u){	// User-defined colors
+		return colorSegmentColoration(colorBounds, color0, color1, ucolor.r);
+	}
+}
+
+vec4 color_green(in uvec3 ucolor) {
+	if (g_channelView == 1u) {	// Greyscale
+		float alpha = 1.f;
+		float val = (float(ucolor.g) - colorBoundsAlternate.x)/(colorBoundsAlternate.y-colorBoundsAlternate.x);
+		return vec4(val, val, val, alpha);
+	}
+	// N°2 is HandE coloration, only available if both channels are visible
+	if (g_channelView == 3u) {	// HSV-2-RGB
+		return hsv2rgb(ucolor.g, colorBoundsAlternate);
+	}
+	if (g_channelView == 4u){	// User-defined colors
+		return colorSegmentColoration(colorBoundsAlternate, color0Alternate, color1Alternate, ucolor.g);
+	}
+}
+
+vec4 voxelIdxToColor(in uvec3 ucolor, in vec2 vis) {
 	if (rgbMode == 1u) {
-		if (r_channelView == 1u) {	// Greyscale
-			float val = (float(ucolor.r) - colorBounds.x)/(colorBounds.y-colorBounds.x);
-			return vec4(val, val, val, 1.);
-		}
-		// N°2 is HandE coloration, only available if both channels are visible
-		if (r_channelView == 3u) {	// HSV-2-RGB
-			return hsv2rgb(ucolor.r, colorBounds);
-		}
-		if (r_channelView == 4u){	// User-defined colors
-			return colorSegmentColoration(colorBounds, color0, color1, ucolor.r);
-		}
+		return color_red(ucolor);
 	}
 	if (rgbMode == 2u) {
-		if (g_channelView == 1u) {	// Greyscale
-			float alpha = 1.f;
-			float val = (float(ucolor.g) - colorBoundsAlternate.x)/(colorBoundsAlternate.y-colorBoundsAlternate.x);
-			return vec4(val, val, val, alpha);
-		}
-		// N°2 is HandE coloration, only available if both channels are visible
-		if (g_channelView == 3u) {	// HSV-2-RGB
-			return hsv2rgb(ucolor.g, colorBoundsAlternate);
-		}
-		if (g_channelView == 4u){	// User-defined colors
-			return colorSegmentColoration(colorBoundsAlternate, color0Alternate, color1Alternate, ucolor.g);
-		}
+		return color_green(ucolor);
 	}
 	if (rgbMode == 3u) {
 		// Only support HandE mode for now :
+		// return voxelIdxToColor_2channel(ucolor);
+		if (vis.y > .5f) {
+			return color_green(ucolor);
+		}
+		/*if (vis.x > .5f ){
+			return color_red(ucolor);
+		}*/
+		return vec4(.0,.0,.0,1.);
+		// Still color it, with green channel :
+		vec4 fincolor = color_green(ucolor);
+		// set alpha to 0 and return :
+		fincolor.a = .0f;
+		return fincolor;
+	}
+	if (rgbMode == 4u) {
 		return voxelIdxToColor_2channel(ucolor);
 	}
 }

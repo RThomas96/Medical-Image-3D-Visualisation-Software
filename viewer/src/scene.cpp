@@ -77,7 +77,7 @@ Scene::Scene() {
 	this->sceneBB = DiscreteGrid::bbox_t(min, max);
 	this->clipDistanceFromCamera = 5.f;
 	this->drawMode = DrawMode::Solid;
-	this->rgbMode = RGBMode::RedAndGreen;
+	this->rgbMode = RGBMode::HandEColouring;
 	this->channels_r = ColorFunction::SingleChannel;
 	this->channels_g = ColorFunction::SingleChannel;
 
@@ -2728,6 +2728,7 @@ void Scene::setRGBMode(RGBMode _mode) {
 		case RGBMode::RedOnly : std::cerr << "Set mode to red" << '\n'; break;
 		case RGBMode::GreenOnly : std::cerr << "Set mode to green" << '\n'; break;
 		case RGBMode::RedAndGreen: std::cerr << "Set mode to both channels" << '\n'; break;
+		case RGBMode::HandEColouring: std::cerr << "Set mode to both channels" << '\n'; break;
 		default: std::cerr << "Cannot set unknown mode\n"; break;
 	}
 }

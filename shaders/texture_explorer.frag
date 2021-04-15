@@ -77,7 +77,7 @@ void main() {
 		} else {
 			// Otherwise, still compute the value but set it with a low alpha
 			// to have a bit of context around the texture data.
-			color = voxelIdxToColor(tex);
+			color = final_color;
 			color.a = .1;
 		}
 	}
@@ -118,44 +118,28 @@ bool shouldDrawBorder() {
 }
 
 bool checkAndColorizeVoxel(in uvec3 voxel, out vec4 return_color) {
-	// In this function, we'll determine the color the voxel should have. Here is how
-	// we determine which channel should be shown, and which should not :
-	//	- If there is only one channel to show : (nbChannels == 1)
-	//		- Then we colorize the voxel the regular way : with voxel.r
-	//	- If not, we'll read the value of the 'primaryChannel' uniform :
-	//		- Allows to set the primary[_.*] and secondary[_.*] variables
-	//		- Check primary is within its bounds, _AND_ visible in texture :
-	//			- if it is, color the voxel according to this and return TRUE
-	//			- Otherwise, do the same for secondary. Check bounds, visibility and :
-	//				- If available, show it and return TRUE !
-	//				- If not, return FALSE !
-	// But for now, as long as there's no uniform blocks, the primary channel will always be green.
-
 	// texture coords for visibility :
 	float voxVal;
 	vec2 cB, tB;
 	bool canSwitch = false;
-	vec4 compColor = voxelIdxToColor(voxel);
 
-	if (rgbMode == 1u) {
-		voxVal = float(voxel.r);
-		if (voxVal >= textureBounds.x && voxVal < textureBounds.y) {
-			compColor = voxelIdxToColor(voxel);
-		} else { return false; }
+	vec2 vis = vec2(.0f, .0f);
+
+	voxVal = float(voxel.r);
+	if (voxVal >= textureBounds.x && voxVal < textureBounds.y) {
+		vis.r = 1.f;
 	}
-	if (rgbMode == 2u) {
-		voxVal = float(voxel.g);
-		if (voxVal >= textureBoundsAlternate.x && voxVal < textureBoundsAlternate.y) {
-			compColor = voxelIdxToColor(voxel);
-		} else { return false; }
-	}
-	if (rgbMode == 3u) {
-		// Just color the thing, see later for boundary conditions :
-		compColor = voxelIdxToColor(voxel);
+	voxVal = float(voxel.g);
+	if (voxVal >= textureBoundsAlternate.x && voxVal < textureBoundsAlternate.y) {
+		vis.g = 1.f;
 	}
 
-	if (compColor.a < .0f) { return false; }
-	// unreachable ?
-	return_color = compColor;
+	/*
+	WARNING : Since we still want to show the background values of the image here,
+	we must still compute the value of return_color but return false.
+	*/
+	return_color = voxelIdxToColor(voxel, vis);
+	if (vis.r < .5f && vis.g < .5f) { return false; }
+	if (return_color.a < .0f) { return false; }
 	return true;
 }

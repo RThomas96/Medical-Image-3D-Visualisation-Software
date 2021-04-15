@@ -118,26 +118,14 @@ bool checkAndColorizeVoxel(in uvec3 voxel, out vec4 return_color) {
 	bool isRed = false;
 	bool canSwitch = false;
 
-	vec4 compColor = voxelIdxToColor(voxel);
+	vec2 vis = vec2(.0f, .0f);
 
-	if (rgbMode == 1u) {
-		voxVal = float(voxel.r);
-		if (voxVal >= textureBounds.x && voxVal < textureBounds.y) {
-			compColor = voxelIdxToColor(voxel);
-		} else { return false; }
-	}
-	if (rgbMode == 2u) {
-		voxVal = float(voxel.g);
-		if (voxVal >= textureBoundsAlternate.x && voxVal < textureBoundsAlternate.y) {
-			compColor = voxelIdxToColor(voxel);
-		} else { return false; }
-	}
-	if (rgbMode == 3u) {
-		// Just color the thing, see later for boundary conditions :
-		compColor = voxelIdxToColor(voxel);
-	}
+	voxVal = float(voxel.r);
+	if (voxVal >= textureBounds.x && voxVal < textureBounds.y) {vis.r = 1.f;}
+	voxVal = float(voxel.g);
+	if (voxVal >= textureBoundsAlternate.x && voxVal < textureBoundsAlternate.y) {vis.g = 1.f;}
 
-	if (compColor.a < .0f) { return false; }
-	return_color = compColor;
+	return_color = voxelIdxToColor(voxel, vis);
+	if (return_color.a < .0f) { return false; }
 	return true;
 }

@@ -584,34 +584,20 @@ bool checkAndColorizeVoxel(in uvec3 voxel, out vec4 return_color) {
 	int widthAlt = textureSize(visiblity_map_alternate, 0).x;
 	ivec2 tcfv_alt = Convert1DIndexTo2DIndex_Unnormed(voxel.g, widthAlt);
 
-	float vis_r = texelFetch(visiblity_map, tcfv, 0).x;
-	float vis_g = texelFetch(visiblity_map_alternate, tcfv_alt, 0).x;
+	vec2 vis = vec2(.0f, .0f);
+	// Get visibility of both channels :
+	vis.r = texelFetch(visiblity_map, tcfv, 0).x;
+	vis.g = texelFetch(visiblity_map_alternate, tcfv_alt, 0).x;
 
+	// If only one channel in the texture :
 	if (g_nbChannels == 0u) {
 		voxel.g = uint(colorBoundsAlternate.x);
-		vis_g = 1.f;
-	}
-	if (rgbMode == 1u) { // Only show greyscale ...
-		// If visible, color the voxel
-		if (vis_r > 0.) {
-			return_color = voxelIdxToColor(voxel);
-			return true;
-		}
-		return false;
-	}
-	if (rgbMode == 2u) {
-		if (vis_g > 0.) {
-			return_color = voxelIdxToColor(voxel);
-			return true;
-		}
-		return false;
-	}
-	if (rgbMode == 3u) {
-		if (vis_r > .5f && (vis_g > .5f)) {
-			return_color = voxelIdxToColor(voxel);
-			return true;
-		}
+		vis.g = 0.f;
 	}
 
-	return false; // Don't need to compute color, nothing would have been shown ...
+	// Don't need to compute color, nothing would have been shown ...
+	if (vis.r < .5f && vis.g < .5f) { return false; }
+
+	return_color = voxelIdxToColor(voxel, vis);
+	return true;
 }

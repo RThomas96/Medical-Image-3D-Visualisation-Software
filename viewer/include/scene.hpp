@@ -41,7 +41,7 @@ class ControlPanel; // Forward declaration
 /// @b Simple enum to keep track of the different viewing primitives for the program.
 enum DrawMode { Solid, Volumetric, VolumetricBoxed };
 /// @b The RGB mode chosen by the user
-enum RGBMode { None = 0, RedOnly = 1, GreenOnly = 2, RedAndGreen = 3};
+enum RGBMode { None = 0, RedOnly = 1, GreenOnly = 2, RedAndGreen = 3, HandEColouring = 4};
 /// @b Simple enum to keep track of which color function to apply to the viewers.
 enum ColorFunction { SingleChannel, HistologyHandE, HSV2RGB, ColorMagnitude };
 /// @b Simple enum to define which plane we are drawing
