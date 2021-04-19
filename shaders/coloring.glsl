@@ -142,21 +142,24 @@ vec4 color_green(in uvec3 ucolor) {
 }
 
 vec4 voxelIdxToColor(in uvec3 ucolor, in vec2 vis) {
-	if (rgbMode == 1u) {
+	if (rgbMode == 1u && r_nbChannels > 0u) {
 		return color_red(ucolor);
 	}
-	if (rgbMode == 2u) {
+	if (rgbMode == 2u && g_nbChannels > 0u) {
 		return color_green(ucolor);
 	}
 	if (rgbMode == 3u) {
 		// Only support HandE mode for now :
 		// return voxelIdxToColor_2channel(ucolor);
-		if (vis.y > .5f) {
+		if (vis.y > .5f && vis.x > .5f) {
+			return (ucolor.r > ucolor.g) ? color_red(ucolor) : color_green(ucolor);
+		}
+		if (vis.y > .5f && vis.x < .5f) {
 			return color_green(ucolor);
 		}
-		/*if (vis.x > .5f ){
+		if (vis.x > .5f && vis.y < .5f){
 			return color_red(ucolor);
-		}*/
+		}
 		return vec4(.0,.0,.0,1.);
 		// Still color it, with green channel :
 		vec4 fincolor = color_green(ucolor);
