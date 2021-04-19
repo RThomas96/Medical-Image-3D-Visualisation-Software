@@ -1,12 +1,22 @@
 [submodule "TinyTIFF"]
-	path = TinyTIFF
+	path = third_party/TinyTIFF
 	url = https://github.com/jkriege2/TinyTIFF.git
+	ignore = untracked
 [submodule "gl"]
 	path = gl
 	url = git@gitlab.com:thibaulltt/glhandler.git
 [submodule "glm"]
-	path = glm
+	path = third_party/glm
 	url = git@github.com:g-truc/glm.git
 [submodule "QGLViewer"]
-	path = libQGLViewer
+	path = third_party/libQGLViewer
 	url = git@github.com:GillesDebunne/libQGLViewer.git
+	ignore = untracked
+[submodule "libtiff"]
+	path = third_party/libtiff
+	url = git@gitlab.com:libtiff/libtiff.git
+	ignore = untracked
+[submodule "third_party/nifticlib"]
+	path = third_party/nifticlib
+	url = git@github.com:NIFTI-Imaging/nifti_clib.git
+	ignore = untracked

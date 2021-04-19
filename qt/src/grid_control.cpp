@@ -8,12 +8,13 @@
 #include <QFileDialog>
 #include <QMessageBox>
 
-GridControl::GridControl(std::shared_ptr<DiscreteGrid> vg, std::shared_ptr<TetMesh>& tetMesh, Scene* _scene, QWidget* parent) : QWidget(parent) {
-	this->voxelGrid = vg;
+GridControl::GridControl(std::shared_ptr<DiscreteGrid> _vg, std::shared_ptr<TetMesh> _tm, Scene* _scene, QWidget* parent) : QWidget(parent) {
+	this->voxelGrid = _vg;
+	this->mesh = _tm;
 	this->scene = _scene;
-	this->mesh = tetMesh;
 	this->baseDir.setPath(QDir::homePath());
 	this->setupWidgets();
+
 	if (this->voxelGrid != nullptr) {
 		this->updateValues();
 		if (this->voxelGrid->isModifiable()) {
@@ -22,6 +23,15 @@ GridControl::GridControl(std::shared_ptr<DiscreteGrid> vg, std::shared_ptr<TetMe
 			this->disableWidgets();
 		}
 	}
+
+	// Different output grids available to the user :
+	this->output_R = nullptr;
+	this->output_B = nullptr;
+	this->output_RGB = nullptr;
+	// Different interpolation structures available to the user :
+	this->interpolator_R = nullptr;
+	this->interpolator_G = nullptr;
+	this->interpolator_RGB = nullptr;
 
 	this->setAttribute(Qt::WA_DeleteOnClose);
 }
@@ -342,7 +352,7 @@ void GridControl::setupSignals() {
 	connect(this->button_SaveButton, &QPushButton::clicked, this, &GridControl::saveToFile);
 
 	connect(this->button_modifyBaseDir, &QPushButton::clicked, [this]() {
-		QDir newDir = QFileDialog::getExistingDirectory(this, "Pick a save dialog", this->baseDir.path());
+		QDir newDir = QFileDialog::getExistingDirectory(this, "Pick a save dialog", this->baseDir.path(), QFileDialog::DontUseNativeDialog);
 		if (newDir.isReadable()) {
 			this->baseDir = newDir;
 		} else {
@@ -384,7 +394,7 @@ void GridControl::setupSpinBoxBounds(QSpinBox *sb) {
 
 void GridControl::setupDoubleSpinBoxBounds(QDoubleSpinBox *dsb, bool lowOrReal) {
 	dsb->setSingleStep(.5);
-	// if true, defined in [.0, +inf], otherwise [-inf, +inf]
+	// if true, defined in [.0, +inf/2], otherwise [-inf/2, +inf/2]
 	if (lowOrReal) {
 		dsb->setMinimum(std::numeric_limits<double>::min());
 	} else {
@@ -508,31 +518,95 @@ void GridControl::saveToFile() {
 		return;
 	}
 
-	QString fileName = this->lineEdit_baseName->text();
+	/*================================================*/
+	/* It's a this moment we'll populate the right    */
+	/* writers, grids, and interpolators to generate  */
+	/* the grid the user requested.                   */
+	/*================================================*/
 
-	std::shared_ptr<IO::GenericGridWriter> writer = nullptr;
+	std::string basePath = this->baseDir.path().toStdString();
+	QString fileName = this->lineEdit_baseName->text();
+	QString filenameR = fileName + "_0";
+	QString filenameB = fileName + "_1";
+
+	std::shared_ptr<IO::GenericGridWriter> writerR = nullptr;
+	std::shared_ptr<IO::GenericGridWriter> writerB = nullptr;
+	std::shared_ptr<IO::GenericGridWriter> writerRGB = nullptr;
+
+	bool doubleoutput = (this->mesh->getInputGrids().size() > 1);
+	bool rgboutput = this->radioButton_rgb->isChecked();
+
+	std::function<std::shared_ptr<IO::GenericGridWriter>(const std::string, const std::string)> generator;
+
 	switch (this->comboBox_filetype->currentIndex()) {
 		case 0:
-			// DIM/IMA at 0 :
-			writer = std::make_shared<IO::Writer::DIM>(fileName.toStdString(), this->baseDir.path().toStdString());
+			generator = std::bind(&std::make_shared<IO::Writer::DIM, const std::string, const std::string>,
+					std::placeholders::_1, std::placeholders::_2);
 		break;
 		case 1:
-			// DIM/IMA at 0 :
-			writer = std::make_shared<IO::Writer::MultiTIFF>(fileName.toStdString(), this->baseDir.path().toStdString());
+			generator = std::bind(&std::make_shared<IO::Writer::MultiTIFF, const std::string, const std::string>,
+					std::placeholders::_1, std::placeholders::_2);
 		break;
 		default:
 			std::cerr << "[ERROR] No value was recognized for the writer picker." << '\n';
 			std::cerr << "[ERROR] No grid will be written." << '\n';
+			return;
 		break;
 	}
 
-	this->voxelGrid->setGridWriter(writer);
-	writer->setGrid(this->voxelGrid);
-	std::cerr << "Writing to file with basename : \"" << fileName.toStdString() << '\"' << '\n';
+	if (doubleoutput) {
+		if (rgboutput) {
+			writerRGB = generator(fileName.toStdString(), basePath);
+			this->voxelGrid->setOffline().setGridWriter(writerRGB);
 
-	this->launchGridFill();
+			this->setGridBoundingBox();
+			this->setGridVoxelSize();
+			this->setGridResolution();
 
-	std::cerr << "Wrote grid to the file \"" << fileName.toStdString() << "\"\n";
+			this->mesh->printInfo();
+
+			this->mesh->populateOutputGrid_RGB(this->method);
+
+			std::cerr << "RGB image was generated at a rate of " << this->mesh->getGenerationRate() << "Gv/h.\n";
+		} else {
+			writerR = generator(filenameR.toStdString(), basePath);
+			writerB = generator(filenameB.toStdString(), basePath);
+			this->output_R = std::make_shared<OutputGrid>(std::dynamic_pointer_cast<OutputGrid>(this->voxelGrid));
+			this->output_B = std::make_shared<OutputGrid>(std::dynamic_pointer_cast<OutputGrid>(this->voxelGrid));
+			this->output_R->setOffline().setGridWriter(writerR);
+			this->output_B->setOffline().setGridWriter(writerB);
+
+			const std::vector<std::shared_ptr<InputGrid>>& grids = this->mesh->getInputGrids();
+			this->interpolator_R = std::make_shared<TetMesh>();
+			this->interpolator_G = std::make_shared<TetMesh>();
+			this->interpolator_R->addInputGrid(grids[0]);
+			this->interpolator_R->setOutputGrid(this->output_R);
+			this->interpolator_G->addInputGrid(grids[1]);
+			this->interpolator_G->setOutputGrid(this->output_B);
+
+			this->setGridBoundingBox();
+			this->setGridVoxelSize();
+			this->setGridResolution();
+
+			std::cerr << "Testing both output streams.\n";
+			std::cerr << "Writing red grid to the path " << filenameR.toStdString() << " ...\n";
+			this->interpolator_R->populateOutputGrid(this->method);
+			std::cerr << "Wrote grid to file \"" << filenameR.toStdString() << "\"\n";
+
+			std::cerr << "Writing blue grid to the path " << filenameB.toStdString() << " ...\n";
+			this->interpolator_G->populateOutputGrid(this->method);
+			std::cerr << "Wrote grid to file \"" << filenameB.toStdString() << "\"\n";
+
+			std::cerr << "Red channel was generated at a rate of " << this->interpolator_R->getGenerationRate() << "Gv/h.\n";
+			std::cerr << "Blue channel was generated at a rate of " << this->interpolator_G->getGenerationRate() << "Gv/h.\n";
+		}
+	} else {
+		writerR = generator(fileName.toStdString(), basePath);
+		this->voxelGrid->setOffline().setGridWriter(writerR);
+		std::cerr << "Writing to file with basename : \"" << fileName.toStdString() << '\"' << '\n';
+		this->launchGridFill();
+		std::cerr << "Wrote grid to the file \"" << fileName.toStdString() << "\"\n";
+	}
 
 	// Once done, close the widget in order to remove the grid from the scene !
 	this->close();
@@ -550,6 +624,9 @@ void GridControl::setGridResolution() {
 	userRes.z = static_cast<DiscreteGrid::sizevec3::value_type>(this->input_GridSizeZ->value());
 
 	this->voxelGrid->setResolution(userRes);
+	if (this->output_R) { this->output_R->setResolution(userRes); }
+	if (this->output_B) { this->output_B->setResolution(userRes); }
+	if (this->output_RGB) { this->output_RGB->setResolution(userRes); }
 
 	// update fields and labels :
 	this->updateValues();
@@ -574,6 +651,9 @@ void GridControl::setGridBoundingBox() {
 	DiscreteGrid::bbox_t userBBox = DiscreteGrid::bbox_t(userBBoxMin, userBBoxMax);
 
 	this->voxelGrid->setBoundingBox(userBBox);
+	if (this->output_R) { this->output_R->setBoundingBox(userBBox); }
+	if (this->output_B) { this->output_B->setBoundingBox(userBBox); }
+	if (this->output_RGB) { this->output_RGB->setBoundingBox(userBBox); }
 
 	// update fields and labels :
 	this->updateValues();
@@ -591,6 +671,9 @@ void GridControl::setGridVoxelSize() {
 	userVxDims.z = static_cast<glm::vec3::value_type>(this->input_VoxelSizeZ->value());
 
 	this->voxelGrid->setVoxelDimensions(userVxDims);
+	if (this->output_R) { this->output_R->setVoxelDimensions(userVxDims); }
+	if (this->output_B) { this->output_B->setVoxelDimensions(userVxDims); }
+	if (this->output_RGB) { this->output_RGB->setVoxelDimensions(userVxDims); }
 
 	// update fields and labels :
 	this->updateValues();

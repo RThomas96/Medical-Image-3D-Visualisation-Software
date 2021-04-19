@@ -1,6 +1,10 @@
 # Ignore build directories from Qt :
 build_*
 build
+release/
+debug/
+reldebug/
+reldebuginfo/
 
 # Ignore compiled libs :
 lib/

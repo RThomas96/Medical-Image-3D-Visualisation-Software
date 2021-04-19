@@ -28,8 +28,9 @@ int main(int argc, char* argv[]) {
 	QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
 
 	QSurfaceFormat fmt;
+	fmt.setProfile(QSurfaceFormat::CoreProfile);
 	fmt.setOption(QSurfaceFormat::DebugContext); // adds GL_KHR_debug extension to the OpenGL context creation
-	fmt.setSamples(4); // enables multi-sampling
+	//fmt.setSamples(4); // enables multi-sampling
 	QSurfaceFormat::setDefaultFormat(fmt);
 
 	QApplication app(argc, argv);

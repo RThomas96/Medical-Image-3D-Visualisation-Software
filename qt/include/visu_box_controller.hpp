@@ -6,11 +6,12 @@
 #include <QPushButton>
 
 class Scene; // Fwd-decl
+class MainWidget; // Fwd-decl
 
 class VisuBoxController : public QWidget {
 	Q_OBJECT
 	public:
-		VisuBoxController(Scene* _scene);
+		VisuBoxController(Scene* _scene, MainWidget* _widget);
 		~VisuBoxController(void);
 	public:
 		void updateValues();
@@ -21,13 +22,15 @@ class VisuBoxController : public QWidget {
 		void updateBox(void);
 	protected:
 		Scene* scene;			///< The scene to control
-		QDoubleSpinBox* input_BBMinX;	///< Controls the min point's X coordinate
-		QDoubleSpinBox* input_BBMinY;	///< Controls the min point's Y coordinate
-		QDoubleSpinBox* input_BBMinZ;	///< Controls the min point's Z coordinate
-		QDoubleSpinBox* input_BBMaxX;	///< Controls the max point's X coordinate
-		QDoubleSpinBox* input_BBMaxY;	///< Controls the max point's Y coordinate
-		QDoubleSpinBox* input_BBMaxZ;	///< Controls the max point's Z coordinate
+		MainWidget* main;		///< The main widget to call
+		QSpinBox* input_coordMinX;
+		QSpinBox* input_coordMinY;
+		QSpinBox* input_coordMinZ;
+		QSpinBox* input_coordMaxX;
+		QSpinBox* input_coordMaxY;
+		QSpinBox* input_coordMaxZ;
 		QPushButton* button_resetBox;	///< Resets the visu box coordinates
+		QPushButton* button_loadROI;	///< Loads the defined coordinates as the current image
 		std::vector<QObject*> strayObj;	///< Stray objects created in the widget's setup process
 };
 

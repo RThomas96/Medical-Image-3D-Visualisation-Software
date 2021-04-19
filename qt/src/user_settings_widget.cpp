@@ -13,7 +13,6 @@ UserSettings::~UserSettings() = default;
 
 UserSettings UserSettings::getInstance() {
 	static UserSettings settings{};
-	std::cerr << "querying an instance" << '\n';
 	if (settings.isInit == false) { settings.init(); }
 	return settings;
 }
@@ -44,11 +43,13 @@ void UserSettings::init() {
 		// size is in bytes here (convert to bits) :
 		this->userAllowedBitSize = static_cast<std::size_t>(memstats.ullAvailPhys*8/2);
 	}
+	this->userLoadedSize = 0;
+	this->userRemainingBitSize = this->userAllowedBitSize - this->userLoadedSize;
 	this->isInit = true;
 	return;
 	#endif
 
-	#if defined(__linux__) || defined(__gnu_linux__) || defined(__GNUC__) || defined(__clang__)
+	#if defined(__linux__) || defined(__gnu_linux__)
 	std::ifstream meminfo("/proc/meminfo", std::ios_base::in);
 	std::string data = "";
 	std::string matching = "MemAvailable";
@@ -61,7 +62,8 @@ void UserSettings::init() {
 	}
 	// size is in bytes here (convert to bits) :
 	this->userAllowedBitSize = static_cast<std::size_t>(avail*1024*8/2);
-	this->userRemainingBitSize = this->userAllowedBitSize;
+	this->userLoadedSize = 0;
+	this->userRemainingBitSize = this->userAllowedBitSize - this->userLoadedSize;
 	this->isInit = true;
 	return;
 	#endif

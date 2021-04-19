@@ -28,6 +28,8 @@ struct TextureUpload {
 		TextureUpload& operator= (const TextureUpload&) = delete;
 		/// @b Move operator for the TextureUpload class
 		TextureUpload& operator= (TextureUpload&&) = delete;
+		/// @b Print info about the struct
+		void printInfo();
 		/// @b Default destructor
 		~TextureUpload();
 	public:
@@ -144,8 +146,12 @@ struct VolMesh {
 /// as `const std::shared_ptr<>` since we want the reference to be held during the lifetime of the object.
 struct GridGLView {
 	public:
+		using Ptr = std::shared_ptr<GridGLView>;
+	public:
 		/// @b Default constructor for the grid view. Must be associated to one and only one grid.
-		GridGLView(const std::shared_ptr<DiscreteGrid>& _g);
+		GridGLView(const std::initializer_list<std::shared_ptr<DiscreteGrid>> _g);
+		/// @b Default constructor for two grids.
+		explicit GridGLView(const std::shared_ptr<DiscreteGrid>, const std::shared_ptr<DiscreteGrid>);
 		/// @b Copy constructor of the GridGLView struct.
 		GridGLView(const GridGLView&) = default;
 		/// @b Move constructor of the GridGLView struct.
@@ -157,18 +163,32 @@ struct GridGLView {
 		/// @b Default destructor of the GridGLView struct.
 		~GridGLView(void);
 	public:
+		using data_t = DiscreteGrid::data_t;
+		using data_2 = glm::vec<2, data_t, glm::defaultp>;
+		using data_3 = glm::vec<3, data_t, glm::defaultp>;
+		using color_3 = glm::vec3;
 		/// @b The pointer to the grid we want to show.
-		std::shared_ptr<DiscreteGrid> grid;
+		std::vector<std::shared_ptr<DiscreteGrid>> grid;
 		/// @b The texture handle to access the grid data in shaders.
 		GLuint gridTexture;
-		/// @b The volumetric mesh handles to use when drawing
-		VolMesh volumetricMesh;
-		/// @b The bounding box's color, as a triplet of normalized values for R, G, and B.
-		glm::vec3 boundingBoxColor;
-		/// @b The epsilon to provide for the volumetric viewing method
-		glm::vec3 defaultEpsilon;
 		/// @b The number of channels contained in the image
 		unsigned int nbChannels;
+		/// @b The volumetric mesh handles to use when drawing
+		VolMesh volumetricMesh;
+		/// @b The epsilon to provide for the volumetric viewing method
+		glm::vec3 defaultEpsilon;
+		/// @b The bounding box's color, as a triplet of normalized values for R, G, and B.
+		color_3 boundingBoxColor;
+		/// @b The 'base' color for the user-defined color scale
+		color_3 color_0;
+		/// @b The 'final' color for the user-defined color scale
+		color_3 color_1;
+		/// @b The minimum and maximum texture values to display
+		data_2 texBounds0;
+		data_2 texBounds1;
+		/// @b The minimum and maximum values of the color scale
+		data_2 colorBounds0;
+		data_2 colorBounds1;
 };
 
 #endif // VISUALIZATION_VIEWER_INCLUDE_VIEWER_STRUCTS_HPP_

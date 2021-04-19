@@ -17,6 +17,7 @@ MainWidget::MainWidget() {
 	this->widgetSizeSet = false;
 	this->usettings = nullptr;
 	this->loaderWidget = nullptr;
+	this->boxController = nullptr;
 	// Query a user settings instance to initialize it :
 	UserSettings set = UserSettings::getInstance();
 }
@@ -26,6 +27,9 @@ MainWidget::~MainWidget() {
 	this->headerZ->unregisterPlaneViewer();
 	this->headerY->unregisterPlaneViewer();
 	this->headerX->unregisterPlaneViewer();
+	if (this->boxController) { this->boxController->close(); }
+	#warning Might segfault on close
+	this->boxController = nullptr;
 
 	this->action_addGrid->disconnect();
 	this->action_saveGrid->disconnect();
@@ -41,6 +45,7 @@ MainWidget::~MainWidget() {
 	delete this->headerZ;
 	delete this->headerY;
 	delete this->headerX;
+
 	for (std::size_t i = 0; i < this->strayObj.size(); ++i) {
 		if (this->strayObj[i] != nullptr) {
 			delete this->strayObj[i];
@@ -97,15 +102,28 @@ void MainWidget::setupWidgets() {
 	// Connect actions to the slots/functions in the program :
 	QObject::connect(this->action_addGrid, &QAction::triggered, [this](){
 		if (this->loaderWidget == nullptr) {
-			this->loaderWidget = new GridLoaderWidget(this->scene, this->viewer);
+			this->loaderWidget = new GridLoaderWidget(this->scene, this->viewer, this->controlPanel);
 			QObject::connect(this->loaderWidget, &QWidget::destroyed, [this]() {
 				this->loaderWidget = nullptr;
 			});
 		}
 		this->loaderWidget->show();
+		this->loaderWidget->raise();
 	});
 	QObject::connect(this->action_saveGrid, &QAction::triggered, [this](){this->scene->launchSaveDialog();});
-	QObject::connect(this->action_showVisuBox, &QAction::triggered, [this](){this->scene->showVisuBoxController();});
+	QObject::connect(this->action_showVisuBox, &QAction::triggered, [this](){
+		if (this->boxController == nullptr) {
+			this->boxController = new VisuBoxController(this->scene, this);
+			// Connect the destruction of this widget with the closing of the box controller, if opened :
+			QObject::connect(this, &QWidget::destroyed, this->boxController, &VisuBoxController::close);
+			// Connect the destruction of the box controller with its removal from the scene and from this widget :
+			QObject::connect(this->boxController, &QWidget::destroyed, this, [this](void) -> void {
+				this->scene->removeVisuBoxController();
+				this->boxController = nullptr;
+			});
+		}
+		this->scene->showVisuBoxController(this->boxController);
+	});
 	QObject::connect(this->action_exitProgram, &QAction::triggered, this, &QMainWindow::close);
 	QObject::connect(this->action_drawModeS, &QAction::triggered, [this](){this->scene->setDrawMode(DrawMode::Solid);});
 	QObject::connect(this->action_drawModeV, &QAction::triggered, [this](){this->scene->setDrawMode(DrawMode::Volumetric);});
@@ -113,10 +131,11 @@ void MainWidget::setupWidgets() {
 	QObject::connect(this->action_showHelp3D, &QAction::triggered, [this](){this->viewer->help();});
 	QObject::connect(this->action_showHelpPlane, &QAction::triggered, [this](){this->viewer_planeX->help();});
 	QObject::connect(this->action_showSettings, &QAction::triggered, [this](){
-		if (this->usettings != nullptr) { this->usettings->show(); }
+		if (this->usettings != nullptr) { this->usettings->show(); this->usettings->raise(); }
 		else {
 			this->usettings = new UserSettingsWidget;
 			this->usettings->show();
+			this->usettings->raise();
 			QObject::connect(this->usettings, &QWidget::destroyed, [this](){
 				this->usettings = nullptr;
 			});
@@ -222,14 +241,14 @@ void MainWidget::setupWidgets() {
 }
 
 bool MainWidget::eventFilter(QObject* obj, QEvent* e) {
-	// Set our code to run after the original event handling :
+	// Set our code to run after the original "Show" event :
 	if (this->widgetSizeSet == false && obj == this && e->type() == QEvent::Show) {
 		this->widgetSizeSet = true;
-		this->resize(1024, 576);
+		this->resize(1280, 720);
 		this->setMinimumSize(768, 432);
 		// lock control panel size to the current size it has :
 		QSize centerSize = this->size();
-		this->controlPanel->setMinimumWidth(static_cast<int>(static_cast<float>(centerSize.width()) * .9f));
+		this->controlPanel->setMinimumWidth(static_cast<int>(static_cast<float>(centerSize.width()) * .99f));
 	}
 	// Return false, to handle the rest of the event normally
 	return false;

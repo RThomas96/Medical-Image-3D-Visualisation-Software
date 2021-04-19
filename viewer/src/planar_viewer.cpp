@@ -13,10 +13,17 @@ PlanarViewer::PlanarViewer(Scene* const _scene, planes _p, planeHeading _h, QWid
 
 	this->viewerController = nullptr;
 
+	// Default render texture is not initialized :
+	this->renderTarget = 0;
 	this->minZoomRatio = .1f;
 	this->zoomRatio = 1.f;
 	this->maxZoomRatio = 500.f;
 	this->offset = glm::vec2(0.f, 0.f);
+	this->mouse_isPressed = false;
+	this->ctrl_pressed = false;
+	this->planeDepth = -1.f;
+	this->posRequest = glm::ivec2{-1, -1};
+	this->tempOffset = glm::vec2{.0f, .0f};
 
 	this->refreshTimer = new QTimer();
 	// ~7 ms for 144fps, ~16ms for 60fps and ~33ms for 30 FPS
@@ -30,12 +37,15 @@ PlanarViewer::~PlanarViewer(void) {
 	if (this->viewerController != nullptr) {
 		this->viewerController->unregisterPlaneViewer();
 	}
+	this->refreshTimer->disconnect();
+	delete this->refreshTimer;
 }
 
 void PlanarViewer::init(void) {
 	if (this->sceneToShow == nullptr) {
 		throw std::runtime_error("[ERROR] Scene was nullptr when initialized.");
 	}
+	this->setUpdateBehavior(UpdateBehavior::NoPartialUpdate);
 
 	this->makeCurrent();
 
@@ -45,12 +55,40 @@ void PlanarViewer::init(void) {
 }
 
 void PlanarViewer::draw(void) {
-	glClearColor(.8, .8, .8, 1.);
+	glClearColor(.8, .8, .8, .0);
 
 	QSize viewerSize = this->size();
 	glm::vec2 fbDims = glm::vec2(static_cast<float>(viewerSize.width()), static_cast<float>(viewerSize.height()));
 
-	this->sceneToShow->drawPlaneView(fbDims, this->planeToShow, this->planeOrientation, this->zoomRatio, this->offset);
+	glm::vec2 fullOffset = this->offset + this->tempOffset;
+	this->sceneToShow->drawPlaneView(fbDims, this->planeToShow, this->planeOrientation, this->zoomRatio, fullOffset);
+
+	if (this->posRequest.x > -1) {
+		glm::vec4 pixelValue = this->sceneToShow->readFramebufferContents(this->defaultFramebufferObject(), this->posRequest);
+		if (pixelValue.w > .01f) {
+			glm::vec4 p = pixelValue;
+			std::cerr << "Value in fbo : {" << p.x << ", " << p.y << ", " << p.z << ", " << p.w << "}\n";
+		}
+		this->posRequest = glm::vec2{-1, -1};
+	}
+}
+
+void PlanarViewer::guessScenePosition(void) {
+	// If the plane depth is invalid, return :
+	if (this->planeDepth < .0f) { return; }
+
+	// Get framebuffer size, and (current) relative mouse position to the widget origin :
+	QSize wSize = this->size();
+	glm::ivec2 fbDims = glm::ivec2(wSize.width(), wSize.height());
+	glm::ivec2 rawMousePos = glm::ivec2(this->cursorPosition_current.x(), this->cursorPosition_current.y());
+	// If already outside of the framebuffer, return and do nothing :
+	if (rawMousePos.x < 0 || rawMousePos.x > fbDims.x || rawMousePos.y < 0 || rawMousePos.y > fbDims.y) {
+		return;
+	}
+
+	// OpenGL FBO coordinates have their 0 at the bottom left. Flip the
+	// Y coordinate so it reflects the OpenGL framebuffer coordinates :
+	this->posRequest = glm::convert_to<int>(glm::vec2(rawMousePos.x, fbDims.y - rawMousePos.y));
 }
 
 void PlanarViewer::keyPressEvent(QKeyEvent* _e) {
@@ -58,18 +96,6 @@ void PlanarViewer::keyPressEvent(QKeyEvent* _e) {
 		/*
 		SHADER PROGRAMS
 		*/
-		case Qt::Key::Key_F1:
-			this->sceneToShow->setDisplayChannel(DisplayChannel::RedAndGreen);
-			this->update();
-		break;
-		case Qt::Key::Key_F2:
-			this->sceneToShow->setDisplayChannel(DisplayChannel::Red);
-			this->update();
-		break;
-		case Qt::Key::Key_F3:
-			this->sceneToShow->setDisplayChannel(DisplayChannel::Green);
-			this->update();
-		break;
 		case Qt::Key::Key_F5:
 			this->sceneToShow->recompileShaders();
 			this->update();
@@ -78,6 +104,7 @@ void PlanarViewer::keyPressEvent(QKeyEvent* _e) {
 			this->sceneToShow->printVAOStateNext();
 			this->update();
 		break;
+
 		/*
 		MOUSE MOVEMENT
 		*/
@@ -96,37 +123,52 @@ void PlanarViewer::keyPressEvent(QKeyEvent* _e) {
 }
 
 void PlanarViewer::mousePressEvent(QMouseEvent* _e) {
-	if (_e->buttons().testFlag(Qt::MouseButton::RightButton)) {
-		this->mouse_isPressed = true;
-		this->lastPosition = _e->pos();
+	// update both positions to the same position (interaction began) :
+	this->cursorPosition_last = _e->pos();
+	this->cursorPosition_current = this->cursorPosition_last;
+	if (_e->buttons().testFlag(Qt::MouseButton::LeftButton)) {
+		// Start "tracking" the mouse
+		this->mouse_isPressed = 1;
 	}
+	if (_e->buttons().testFlag(Qt::MouseButton::RightButton)) {
+		this->guessScenePosition();
+	}
+
 	QGLViewer::mousePressEvent(_e);
 	this->update();
 }
 
 void PlanarViewer::mouseMoveEvent(QMouseEvent* _m) {
-	if (this->mouse_isPressed) {
-		QPoint currentPos = _m->pos();
+	if (this->mouse_isPressed >= 1u) {
+		// Gather current viewport dimensions :
 		QSize viewerSize = this->size();
-		QPoint viewerPos = this->pos();
-		glm::vec2 minViewer = glm::vec2(static_cast<float>(viewerPos.x()), static_cast<float>(viewerPos.y()));
-		glm::vec2 maxViewer = minViewer + glm::vec2(static_cast<float>(viewerSize.width()), static_cast<float>(viewerSize.height()));
-		// absolute positions of the mouse in last pos and current pos :
-		glm::vec2 absPosMouse = glm::vec2(static_cast<float>(currentPos.x()), static_cast<float>(currentPos.y()));
-		glm::vec2 absPosLastPos = glm::vec2(static_cast<float>(this->lastPosition.x()), static_cast<float>(this->lastPosition.y()));
-		this->offset += (absPosMouse - absPosLastPos) / (maxViewer - minViewer);
-		this->lastPosition = currentPos;
-	} else {
+		glm::vec2 viewportSize = glm::convert_to<float>(glm::ivec2(viewerSize.width(), viewerSize.height()));
+		// Gather current mouse coordinates, relative to the viewer's origin point :
+		QPoint currentPos = _m->pos();
+		glm::vec2 mousePosAbs = glm::convert_to<float>(glm::ivec2(currentPos.x(), currentPos.y()));
+		glm::vec2 mousePosLast = glm::convert_to<float>(glm::ivec2(this->cursorPosition_last.x(), this->cursorPosition_last.y()));
+		glm::vec2 mousePosNormalized = (mousePosAbs-mousePosLast) / viewportSize;
+		// OpenGL NDC are in [-1; 1], so :
+		this->tempOffset = mousePosNormalized*2.f;
+		this->mouse_isPressed += 1u;
+	}
+	this->cursorPosition_current = _m->pos();
+	if (_m->buttons().testFlag(Qt::MouseButton::RightButton)) {
+		this->guessScenePosition();
 	}
 	QGLViewer::mouseMoveEvent(_m);
 	return;
 }
 
 void PlanarViewer::mouseReleaseEvent(QMouseEvent* _m) {
-	//
-	if (_m->button() == Qt::MouseButton::RightButton) {
-		this->mouse_isPressed = false;
-		this->lastPosition = _m->pos();
+	// If left button is not pressed anymore :
+	if (_m->buttons().testFlag(Qt::MouseButton::LeftButton) == false) {
+		this->mouse_isPressed = 0;
+		this->offset += this->tempOffset;
+		// Reset temp offset :
+		this->tempOffset = glm::vec2{.0f, .0f};
+		this->cursorPosition_last = _m->pos();
+		this->cursorPosition_current = this->cursorPosition_last;
 	}
 	QGLViewer::mouseReleaseEvent(_m);
 	this->update();
@@ -146,6 +188,18 @@ void PlanarViewer::wheelEvent(QWheelEvent* _w) {
 	this->update();
 }
 
+void PlanarViewer::resizeGL(int w, int h) {
+	// First, call the superclass' function
+	QGLViewer::resizeGL(w,h);
+
+	// Is the scene initialized ? (might not on first call to this function)
+	if (this->sceneToShow->isSceneInitialized()) {
+		this->renderTarget = this->sceneToShow->updateFBOOutputs(glm::ivec2{w,h},
+							this->defaultFramebufferObject(),
+							this->renderTarget);
+	}
+}
+
 void PlanarViewer::setController(ViewerHeader* _header) {
 	this->viewerController = _header;
 }
@@ -158,6 +212,7 @@ void PlanarViewer::updateView() {
 
 void PlanarViewer::updatePlaneDepth(int newVal) {
 	float scalar = static_cast<float>(newVal) / 1000.f;
+	this->planeDepth = scalar;
 	if (this->planeToShow == planes::x) { this->sceneToShow->slotSetPlaneDisplacementX(scalar); }
 	if (this->planeToShow == planes::y) { this->sceneToShow->slotSetPlaneDisplacementY(scalar); }
 	if (this->planeToShow == planes::z) { this->sceneToShow->slotSetPlaneDisplacementZ(scalar); }

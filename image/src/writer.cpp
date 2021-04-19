@@ -51,6 +51,10 @@ namespace IO {
 		return *this;
 	}
 
+	GenericGridWriter& GenericGridWriter::writeSlice_RGB(const std::vector<data_t> &sliceData, std::size_t sliceIdx) {
+		return *this;
+	}
+
 	void GenericGridWriter::openFile() {
 		return; // To be implemented in daughter classes.
 	}
@@ -89,7 +93,6 @@ namespace IO {
 		this->openFile();
 
 		auto dims = this->grid->getResolution();
-		std::cerr << "[LOG] preallocate() : Grid dimensions : " << dims.x << ',' << dims.y << ',' << dims.z << '\n';
 		std::size_t streamsize = dims.x * dims.y;
 		std::vector<data_t> emptydata(streamsize);
 		for (std::size_t i = 0; i < dims.z; ++i) {
@@ -201,7 +204,7 @@ namespace IO {
 		#endif
 
 		// Writes the voxel's dimensions within the grid :
-		glm::vec3 vxDim	= this->grid->getVoxelDimensions();
+		glm::vec3 vxDim = this->grid->getVoxelDimensions();
 		*this->outputDIM << "-dx " << vxDim.x << '\n';
 		*this->outputDIM << "-dy " << vxDim.y << '\n';
 		*this->outputDIM << "-dz " << vxDim.z << '\n';
@@ -324,7 +327,7 @@ namespace IO {
 		// Iterate on each 'face' :
 		for (std::size_t i = 0; i < gridDims.z; ++i) {
 			//open file:
-			this->openVersionnedTIFFFile(i);
+			this->openVersionnedTIFFFile(i, 1);
 			//get data:
 			const data_t* frame = &(data[i * faceOffset]);
 			// write and check for errors :
@@ -341,12 +344,32 @@ namespace IO {
 	StaggeredTIFFWriter& StaggeredTIFFWriter::writeSlice(const std::vector<data_t> &sliceData, std::size_t sliceIdx) {
 		if (sliceData.empty()) { return *this; }
 		// open and write :
-		this->openVersionnedTIFFFile(sliceIdx);
+		this->openVersionnedTIFFFile(sliceIdx,1);
 		TinyTIFFWriter_writeImage(this->tiffFile, sliceData.data());
+		if (TinyTIFFWriter_wasError(this->tiffFile)) {
+			std::cerr << "Error : writing slice " << sliceIdx << " to files resulted in an error.\n";
+			std::cerr << "Message : " << TinyTIFFWriter_getLastError(this->tiffFile);
+		}
+		TinyTIFFWriter_close(this->tiffFile);
+		this->tiffFile = nullptr;
 		return *this;
 	}
 
-	void StaggeredTIFFWriter::openVersionnedTIFFFile(std::size_t index) {
+	StaggeredTIFFWriter& StaggeredTIFFWriter::writeSlice_RGB(const std::vector<data_t> &sliceData, std::size_t sliceIdx) {
+		if (sliceData.empty()) { return *this; }
+		// open and write :
+		this->openVersionnedTIFFFile(sliceIdx,3);
+		TinyTIFFWriter_writeImageMultiSample(this->tiffFile, sliceData.data(), TinyTIFF_Interleaved, TinyTIFF_Interleaved);
+		if (TinyTIFFWriter_wasError(this->tiffFile)) {
+			std::cerr << "Error : writing slice " << sliceIdx << " to files resulted in an error.\n";
+			std::cerr << "Message : " << TinyTIFFWriter_getLastError(this->tiffFile);
+		}
+		TinyTIFFWriter_close_withdescription(this->tiffFile, std::string("RGB image generated from " + std::string(__FUNCTION__)).c_str());
+		this->tiffFile = nullptr;
+		return *this;
+	}
+
+	void StaggeredTIFFWriter::openVersionnedTIFFFile(std::size_t index, std::size_t _samples) {
 		std::string fullpath = this->basePath + '/' + this->createSuffixedFilename(index) + ".tif";
 		if (this->tiffFile != nullptr) {
 			TinyTIFFWriter_close(this->tiffFile);
@@ -356,14 +379,10 @@ namespace IO {
 		// We deal in Uints here :
 		TinyTIFFWriterSampleFormat sf = TinyTIFFWriter_UInt;
 		// we only have grayscale :
-		uint16_t samples = 1;
+		uint16_t samples = static_cast<uint16_t>(_samples);
 		TinyTIFFWriterSampleInterpretation si = TinyTIFFWriter_Greyscale;
-		if (this->nbChannels == 3) {
+		if (samples == 3) {
 			si = TinyTIFFWriter_RGB;
-			samples=3;
-		}
-		if (this->nbChannels != 1 && this->nbChannels != 3) {
-			throw std::runtime_error("Trying to write something different from 1 or 3 channels");
 		}
 		// set width/height :
 		auto dims = this->grid->getResolution();

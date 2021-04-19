@@ -23,6 +23,7 @@ class OpenGLDebugLog : public QWidget {
 	protected:
 		QLayout* layout;
 		QPlainTextEdit* messageOutput;
+		std::size_t groupDepth;
 };
 
 #endif // VISUALIZATION_QT_INCLUDE_OPENGL_DEBUG_LOG_HPP_

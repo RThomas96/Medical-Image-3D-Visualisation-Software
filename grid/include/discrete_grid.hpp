@@ -14,10 +14,10 @@
 #include <string>
 #include <memory>
 
-#define INSERTION_BASED_COPY
-
 /// @brief Definition of a 3 dimensionnal vector to store this grid's dimensions, amongst other things.
 typedef glm::vec<3, std::size_t, glm::defaultp> svec3;
+
+class TetMesh; // Fwd-decl
 
 /// @brief Representation of a discrete grid (as a stack of images, or a voxel grid) which can be queried from world space.
 /// @note Although some functions in this class may mention 'texels', they are in no way, shape, or form tied to the visualization aspect of the project.
@@ -25,6 +25,7 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 
 	//friend class GridControl;
 	friend class GridDetailedView;
+	friend class TetMesh;
 
 	public:
 		typedef glm::vec<3, std::size_t, glm::defaultp> sizevec3;
@@ -56,6 +57,9 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 
 	public:
 
+		/// @b Creator from a resolution and a render window
+		DiscreteGrid(sizevec3 dims, bbox_t window);
+
 		/// @brief Default destructor, removes any storage associated with the grid.
 		~DiscreteGrid(void);
 
@@ -63,6 +67,7 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 		virtual DataType getPixel(std::size_t x, std::size_t y, std::size_t z) const;
 
 		/// @brief Allows to set a value for the pixel at the coordinates 'x,y,z'.
+		/// @note This is defined for all grid types, although it will only affect output grids (which are modifiable)
 		virtual DiscreteGrid& setPixel(std::size_t x, std::size_t y, std::size_t z, DataType value);
 
 		/// @brief Updates this grid's data with data computed from a grid reader.
@@ -78,9 +83,14 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 		virtual std::shared_ptr<IO::GenericGridWriter> getGridWriter(void) const;
 		/// @brief Set the data reads/writes to be offline or not
 		virtual DiscreteGrid& setOffline(bool off = true);
+		/// @brief Queries if the grid is offline or not
+		virtual bool isGridOffline(void) { return this->isOffline; }
 
 		/// @brief Returns the given point (originally world space) in grid space.
 		virtual glm::vec4 toGridSpace(glm::vec4 pos_ws) const;
+
+		/// @brief Returns the voxel index at position 'p'
+		virtual glm::uvec3 worldPositionToIndex(glm::vec4 p) const;
 
 		/// @brief Returns the given point (originally grid space) in world space.
 		virtual glm::vec4 toWorldSpace(glm::vec4 pos_gs) const;
@@ -147,6 +157,15 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 		/// @brief Sets the bounding box of the discrete grid.
 		virtual DiscreteGrid& setBoundingBox(bbox_t renderWindow);
 
+		/// @brief Sets the offset of the whole grid as 'position', defined in world space.
+		virtual glm::vec4 getOriginOffset_WorldSpace(void) const;
+
+		/// @brief Sets the offset of the whole grid as 'position', defined in world space.
+		virtual DiscreteGrid& setOriginOffset_WorldSpace(glm::vec4 position);
+
+		/// @brief Shifts the bounding box of the grid by 'position' amount.
+		virtual DiscreteGrid& setOriginOffset_GridSpace(glm::vec4 position);
+
 		/// @brief Gets the bounding box of the grid.
 		bbox_t getBoundingBoxWorldSpace(void) const;
 		/// @brief Gets the bounding box of the grid.
@@ -185,11 +204,22 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 		/// @brief Updates the voxel dimensions of the grid, each time the BB or the resolution changes.
 		void updateVoxelDimensions(void);
 
-		/// @brief Sets the filenames associated with the grid to 'fnames'. Useful in the offline versions of the string.
-		virtual DiscreteGrid& setFilenames(std::vector<std::string> fnames);
-
-		/// @brief Sets the filenames associated with the grid to 'fnames'. Useful in the offline versions of the string.
-		const std::vector<std::string>& getFilenames(void) const;
+	protected:
+		/// @b For the output grids, write the current slice to disk.
+		/// @n This is a hack.
+		virtual DiscreteGrid& writeSlice();
+		/// @b Prealocate enough space to fit all data in the data vector.
+		/// @n This is a hack.
+		virtual DiscreteGrid& preallocateData(void);
+		/// @b Pre-allocate the data necessary to fit 'size' elements of data in the class.
+		/// @n This is a hack.
+		virtual DiscreteGrid& preallocateData(sizevec3 size);
+		/// @b Updates the render window of output grids.
+		/// @n This is a hack.
+		virtual DiscreteGrid& updateRenderBox(const bbox_t& newbox);
+		/// @b For output grids, set the current slice to write to disk.
+		/// @n This is a hack.
+		virtual DiscreteGrid& setCurrentSlice(std::size_t cs);
 
 	protected:
 		/// @brief Checks if the grid's properties can be modified (data will always be modifiable, dimensions might not)
@@ -197,6 +227,8 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 		bool modifiable;
 		/// @brief Checks if we want to query/write data directly to disk or not
 		bool isOffline;
+		/// @brief The offset set to the grid by setOriginOffset_WorldSpace
+		glm::vec4 offset;
 		/// @brief Stores the data associated with the grid.
 		/// @details Arranged in order : X, Y, Z. Meaning, we first get a 'width'-sized
 		/// array of values, followed by 'height'-sized arrays of 'width'-sized arrays
@@ -221,12 +253,13 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 		bbox_t dataBoundingBox;
 		/// @brief The name of the grid, used to identify it on a
 		std::string gridName;
-		/// @brief Filenames associated with the grid. Used in offline versions of the grid.
-		std::vector<std::string> filenames;
 		/// @brief File reader
 		std::shared_ptr<IO::GenericGridReader> gridReader;
 		/// @brief File writer
 		std::shared_ptr<IO::GenericGridWriter> gridWriter;
+		/// @b For offline output grids, the slice currently being edited.
+		/// @n This is currently a hack.
+		std::size_t currentSlice;
 };
 
 /// @brief Computes a transformation matrix from an origin and an angle, for our use case.

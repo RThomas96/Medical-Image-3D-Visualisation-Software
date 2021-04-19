@@ -7,6 +7,7 @@
 #include "../../grid/include/discrete_grid.hpp"
 #include "../../grid/include/input_discrete_grid.hpp"
 #include "../../viewer/include/neighbor_visu_viewer.hpp"
+#include "./scene_control.hpp"
 
 #include <QDir>
 #include <QLabel>
@@ -20,12 +21,13 @@
 #include <QGridLayout>
 #include <QRadioButton>
 #include <QDoubleSpinBox>
+#include <QProgressBar>
 
 class GridLoaderWidget : public QWidget {
 		Q_OBJECT
 	public:
 		/// @brief Default constructor. Builds the widget's layout and sets up signals
-		GridLoaderWidget(Scene* _scene, Viewer* _viewer, QWidget* parent = nullptr);
+		GridLoaderWidget(Scene* _scene, Viewer* _viewer, ControlPanel* _cp, QWidget* parent = nullptr);
 		/// @brief Default destructor
 		~GridLoaderWidget(void);
 		/// @brief Sets up the different widgets
@@ -39,16 +41,22 @@ class GridLoaderWidget : public QWidget {
 		/// @brief Computes the grid information based on the new data available
 		void computeGridInfoLabel();
 		void disableWidgets();
+	protected:
+		/// @brief Updates the voxel dimensions as specified by the reader, without emitting signals.
+		void updateVoxelDimensions_silent();
 	public slots:
 		void loadGridDIM1channel();
 		void loadGridTIF1channel();
+		void loadGridOME1channel();
 		void loadGridDIM2channel();
 		void loadGridTIF2channel();
+		void loadGridOME2channel();
 		void loadGrid();
 	protected:
 		QDir basePath;				///< Last path opened, or $HOME
 		Scene* scene;				///< The scene to control/add grids to.
 		Viewer* viewer;				///< The viewer to call when uploading the grid.
+		ControlPanel* _cp;			///< The control panel to update
 		std::shared_ptr<IO::GenericGridReader> readerR;	///< The pointer to a generic grid reader for R channel
 		std::shared_ptr<IO::GenericGridReader> readerG;	///< The pointer to a generic grid reader for G channel
 		std::shared_ptr<InputGrid> inputGridR;		///< The pointer to an input grid for R channel
@@ -69,6 +77,8 @@ class GridLoaderWidget : public QWidget {
 		QPushButton* button_loadDIM_2channel;	///< Button to load DIM/IMA files with two channels.
 		QPushButton* button_loadTIF_1channel;	///< Button to load TIF[F] files with one channel.
 		QPushButton* button_loadTIF_2channel;	///< Button to load TIF[F] files with two channels.
+		QPushButton* button_loadOME_1channel;	///< Button to load TIF[F] files with one channel.
+		QPushButton* button_loadOME_2channel;	///< Button to load TIF[F] files with two channels.
 		QPushButton* button_loadGrids;		///< Button to launch the grid loader.
 
 		QDoubleSpinBox* dsb_transformationA;	///< Double spinbox for the angle of the capture
@@ -82,6 +92,19 @@ class GridLoaderWidget : public QWidget {
 		QGridLayout* layout_transfoDetails;	///< Layout for the transformation details
 		QHBoxLayout* layout_downsampling;	///< Layout for the downsampling group box
 		QGridLayout* layout_interpolator;	///< Layout for the interpolator group box
+		QGridLayout* layout_roiSelection;	///< Layout for the ROI selection
+
+		QGroupBox* groupbox_userLimits;		///< Does the user have min/max bounds of the ROI for the image ?
+		QSpinBox* spinbox_userLimitMin;		///< Minimum value to define the ROI of the image
+		QSpinBox* spinbox_userLimitMax;		///< Maximum value to define the ROI of the image
+		QLabel* label_roiMin;				///< Label for the min ROI selector
+		QLabel* label_roiMax;				///< Label for the max ROI selector
+
+		QGroupBox* groupbox_originalOffset;	///< Does the grid have an offset (either user-given or parsed from file)
+		QDoubleSpinBox* dsb_offsetX;		///< The offset amount on X
+		QDoubleSpinBox* dsb_offsetY;		///< The offset amount on Y
+		QDoubleSpinBox* dsb_offsetZ;		///< The offset amount on Z
+		QHBoxLayout* layout_gb_offset;		///< The layout of the offset parameter
 
 		QFrame* frame_load1channel;		///< Frame surrounding the load '1-channel' widgets
 		QFrame* frame_load2channel;		///< Frame surrounding the load '2-channel' widgets
@@ -99,6 +122,8 @@ class GridLoaderWidget : public QWidget {
 		QRadioButton* radioButton_mp;		///< Interpolator option : most present label within subpixel
 		QRadioButton* radioButton_min;		///< Interpolator option : minimum label within subpixel
 		QRadioButton* radioButton_max;		///< Interpolator option : maximum label within subpixel
+
+		QProgressBar* progress_load;
 };
 
 #endif // QT_INCLUDE_LOADER_WIDGET_HPP_

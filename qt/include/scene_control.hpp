@@ -3,11 +3,16 @@
 
 #include "../../macros.hpp"
 #include "../../features.hpp"
+#include "../../grid/include/discrete_grid.hpp"
+
+#include "./range_slider.hpp"
 
 #include <QLabel>
 #include <QWidget>
 #include <QSlider>
 #include <QCheckBox>
+#include <QGroupBox>
+#include <QComboBox>
 #include <QPushButton>
 #include <QDoubleSpinBox>
 
@@ -18,6 +23,46 @@
 class Scene; // forward declaration
 class Viewer; // forward declaration
 
+class ColorButton : public QWidget {
+	Q_OBJECT
+	public:
+		ColorButton(QColor _color, QWidget* parent = nullptr);
+		virtual ~ColorButton(void) = default;
+	signals:
+		void colorChanged(QColor color);
+	public slots:
+		void setColor(QColor _color);
+	public:
+		QColor getColor(void) const;
+	protected:
+		QPushButton* button;
+		QPixmap* pixmap;
+		QIcon* icon;
+		QColor color;
+		QVBoxLayout* layout;
+};
+
+class ColorBoundsControl : public QWidget {
+	Q_OBJECT
+	public:
+		ColorBoundsControl(Scene* scene, bool _primary, QWidget* parent = nullptr);
+		virtual ~ColorBoundsControl(void);
+	signals:
+		void minChanged(int val);
+		void maxChanged(int val);
+	public:
+		int getMin(void) const;
+		int getMax(void) const;
+	protected:
+		void getCurrentValues();
+	protected:
+		bool _primary;
+		Scene* scene;
+		QSpinBox* sb_min;
+		QSpinBox* sb_max;
+		QGridLayout* layout;
+};
+
 class ControlPanel : public QWidget {
 		Q_OBJECT
 	public:
@@ -27,27 +72,69 @@ class ControlPanel : public QWidget {
 		void initSignals(void);
 		void updateViewers(void);
 	public slots:
-		void activatePanels(bool activeStatus = true);
+		void updateLabels();
 		void updateValues(void);
+		void updateMinValue(int val);
+		void updateMaxValue(int val);
+		void updateMinValueAlternate(int val);
+		void updateMaxValueAlternate(int val);
+		void updateRGBMode(void);
+		void updateChannelRed(int value);
+		void updateChannelGreen(int value);
+		void launchRedColorBounds(void);
+		void launchGreenColorBounds(void);
 	private:
+		/// @b The scene to control !
 		Scene* const sceneToControl;
 
-		QSlider* minValueTexture; ///< Slider to determine the min value in the texture which constitutes viable information
-		QSlider* maxValueTexture; ///< Slider to determine the max value in the texture which constitutes viable information
+		/// @b Box regrouping the controls of the red channel
+		QGroupBox* groupbox_red;
+		/// @b Box regrouping the controls of the green channel
+		QGroupBox* groupbox_green;
 
-		QLabel* label_minTexLeft;	///< Label for the min value of the texture slider (left)
-		QLabel* label_maxTexLeft;	///< Label for the max value of the texture slider (left)
-		QLabel* label_minTexRight;	///< Label for the min value of the texture slider (right)
-		QLabel* label_maxTexRight;	///< Label for the max value of the texture slider (right)
+		/// @b Range controller for the red texture bounds
+		RangeSlider* rangeslider_red;
+		/// @b Range controller for the green texture bounds
+		RangeSlider* rangeslider_green;
 
-		QWidget* controlContainer;
+		/// @b The layout of the red groupbox
+		QGridLayout* layout_widgets_red;
+		/// @b The layout of the green groupbox
+		QGridLayout* layout_widgets_green;
+
+		/// @b Minimum color of the color segment for the red channel
+		ColorButton* colorbutton_red_min;
+		/// @b Maximum color of the color segment for the red channel
+		ColorButton* colorbutton_red_max;
+		/// @b Minimum color of the color segment for the green channel
+		ColorButton* colorbutton_green_min;
+		/// @b Minimum color of the color segment for the green channel
+		ColorButton* colorbutton_green_max;
+
+		/// @b Button to launch a dialog to change the color bounds or the red channel
+		QPushButton* button_red_colorbounds;
+		ColorBoundsControl* cb_red_bounds;
+		/// @b Button to launch a dialog to change the color bounds or the green channel
+		QPushButton* button_green_colorbounds;
+		ColorBoundsControl* cb_green_bounds;
+
+		/// @b Picker for the coloration method of the red channel
+		QComboBox* red_coloration;
+		/// @b Picker for the coloration method of the green channel
+		QComboBox* green_coloration;
+
+		/// @b The viewer to update on value changes
 		Viewer* const viewer;
+		/// @b Texture bounds for red channel
+		DiscreteGrid::data_t min, max;
+		/// @b Texture bounds for green channel
+		DiscreteGrid::data_t minAlternate, maxAlternate;
 
 	public slots:
 		void setMinTexVal(int val);
 		void setMaxTexVal(int val);
-		void setMinColVal(int val);
-		void setMaxColVal(int val);
+		void setMinTexValBottom(int val);
+		void setMaxTexValBottom(int val);
 		void setClipDistance(double val);
 };
 

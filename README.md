@@ -22,8 +22,10 @@ $ git submodule init && git submodule update
 To compile the project, you'll need to have `cmake`, `Qt 5`, and an implementation of OpenGL (usually bundled with your graphic card's video driver, or with the `mesa` library for the integrated Intel GPUs for example). Once those pre-requisites are installed, you have to first configure the project with those commands :
 
 ```sh
+$ cd third_party/
 $ ./configure.ps1 # For Windows
 $ ./configure.sh  # For Linux
+$ cd ..
 ```
 
 N.B. : On Windows, you can also open an explorer window in the project's folder, and double-click on the "configure.ps1" file.
@@ -33,13 +35,14 @@ N.B. : On Windows, you can also open an explorer window in the project's folder,
 Once the configuration part is done, we can build the project :
 
 ```sh
-$ cmake -S ./ -B build
-$ cmake --build build --parallel
+# In the root directory of the project :
+$ cmake -S ./ -B <a build path>
+$ cmake --build <the same build path> --parallel
 ```
 
 Then, you can launch the program with :
 
 ```sh
-$ ./buildDir/visualisation
+$ ./<your build path>/visualisation
 ```
 

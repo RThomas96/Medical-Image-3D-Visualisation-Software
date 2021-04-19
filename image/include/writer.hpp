@@ -91,6 +91,15 @@ namespace IO {
 			/// @returns A reference to *this, to chain function calls.
 			virtual GenericGridWriter& writeSlice(const std::vector<data_t>& sliceData, std::size_t sliceIdx);
 
+			/// @brief Writes a slice of the image to the file system as RGB.
+			/// @details The specific behaviour of this function will be implemented in derived classes.
+			/// This function writes a slice of data to the filesystem. This allows to have a buffer of
+			/// generated data in the generator classes, but still have an incremental file update.
+			/// @param sliceData The slice's data, as a vector of GenericGridWriter::data_t.
+			/// @param sliceIdx  The slice index, to know which file to write.
+			/// @returns A reference to *this, to chain function calls.
+			virtual GenericGridWriter& writeSlice_RGB(const std::vector<data_t>& sliceData, std::size_t sliceIdx);
+
 			/// @brief Sets the 'comment' to be written to the file, overwriting any previous value.
 			/// @details Most file formats will not allow a comment, but if the writer you
 			/// are using allows for comments (such as PNG, JPEG, TIF ...) this will be
@@ -247,10 +256,13 @@ namespace IO {
 			/// @brief Writes a whole slice of data to a file.
 			virtual StaggeredTIFFWriter& writeSlice(const std::vector<data_t>& sliceData, std::size_t sliceIdx) override;
 
+			/// @brief Writes a whole slice of data to a file.
+			virtual StaggeredTIFFWriter& writeSlice_RGB(const std::vector<data_t>& sliceData, std::size_t sliceIdx) override;
+
 		protected:
 			/// @brief Opens the file corresponding to the depth level 'n', to be the next one
 			/// written when called with `write()`.
-			void openVersionnedTIFFFile(std::size_t index);
+			void openVersionnedTIFFFile(std::size_t index, std::size_t samples);
 
 			/// @brief Computes the length of the suffix to append, equal to log10(maxDepth).
 			/// @details Computes the total number of digits to have in the suffix, in order to

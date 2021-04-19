@@ -6,17 +6,21 @@
 
 # We cannot currently compile on Windows (coming at a later date)
 IF(WIN32 OR MINGW OR MSVC)
-        LIST(APPEND CMAKE_PREFIX_PATH "${GLM_HINT}")
+	LIST(APPEND CMAKE_PREFIX_PATH "${GLM_HINT}")
 ENDIF()
 
 # Warning : CMAKE_CURRENT_LIST_DIR is set here to ./cmake !
 # (since list dir is the dir of the current cmake file, not
 # necessarily the top CMakeLists.txt) :
-IF(NOT EXISTS ${CMAKE_CURRENT_LIST_DIR}/../lib)
-	MESSAGE(FATAL_ERROR "TinyTIFF has not yet been compiled ! Run ./configure.sh or ./configure.bat first.")
+IF(NOT EXISTS ${CMAKE_CURRENT_LIST_DIR}/../third_party/compiled_libraries/)
+        MESSAGE(FATAL_ERROR "Third-party libraries have not yet been compiled !"
+		"Run 'configure.sh' or 'configure.ps1' from the third_party/ directory first.")
 ELSE()
-	MESSAGE(STATUS "TinyTIFF has previously been installed.")
+        MESSAGE(STATUS "Third-party libraries have previously been compiled in the third_party/ directory.")
 ENDIF()
+
+# Export compile commands for clangd and other language servers
+SET(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Requiring an out-of-source build
 IF(CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR)
@@ -39,7 +43,7 @@ MESSAGE(STATUS "Currently compiling in ${CMAKE_BUILD_TYPE} mode.")
 IF(CMAKE_BUILD_TYPE MATCHES Debug)
 	SET(GCC_COMPILE_FLAGS "-gdwarf-2 --pedantic")
 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_COMPILE_FLAGS}")
-	#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fsanitize=undefined -fsanitize=null -fsanitize=return -fsanitize=bounds")
 ENDIF(CMAKE_BUILD_TYPE MATCHES Debug)
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
@@ -57,8 +61,6 @@ SET(CMAKE_AUTORCC ON)
 SET(CMAKE_AUTOMOC ON)
 SET(CMAKE_AUTOUIC ON)
 
-# Check if the library directory exists :
-IF(NOT EXISTS ${PROJECT_BINARY_DIR}/../lib/)
-	FILE(MAKE_DIRECTORY "../lib")
-ENDIF()
+# Set the local directory for third-party libraries :
+SET(LOCAL_COMPILED_LIBS_PATH ${CMAKE_SOURCE_DIR}/third_party/compiled_libraries)
 

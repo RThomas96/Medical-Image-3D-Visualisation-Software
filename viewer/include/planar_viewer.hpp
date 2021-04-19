@@ -33,27 +33,38 @@ class PlanarViewer : public QGLViewer {
 		virtual void mouseReleaseEvent(QMouseEvent* _m) override;
 		/// @brief Overrides the mouse wheel events from the user.
 		virtual void wheelEvent(QWheelEvent* _w) override;
+		/// @b Overrides the function to resize the widget.
+		virtual void resizeGL(int w, int h) override;
 		/// @b Defines the 'Help'/'About' string defined for this viewer.
 		virtual QString helpString(void) const override;
 		/// @b Defines the 'Help'/'About' string for the keyboard for this viewer.
 		virtual QString keyboardString(void) const override;
 		/// @b Defines the 'Help'/'About' string for the mouse for this viewer.
 		virtual QString mouseString(void) const override;
+		/// @b Guess the scene position from the fragment position after rendering
+		virtual void guessScenePosition(void);
 	protected:
 		/// @b Sets the widget in charge of controlling the viewer
 		void setController(ViewerHeader* _header);
 	protected:
-		Scene* sceneToShow; ///< The scene to draw.
-		planes planeToShow; ///< The plane to show.
-		planeHeading planeOrientation; ///< This plane's orientation
-		QTimer* refreshTimer; ///< Triggers a scene reload
-		ViewerHeader* viewerController; ///< The widget that controls this widget
-		float minZoomRatio; ///< minimum value of the zoom applied to the image
-		float maxZoomRatio; ///< maximum value of the zoom applied to the image
-		float zoomRatio; ///< The current zoom level applied to the image
-		bool mouse_isPressed;
-		glm::vec2 offset; ///< Normalized offset
-		QPoint lastPosition;
+		Scene* sceneToShow;				///< The scene to draw.
+		planes planeToShow;				///< The plane to show.
+		QTimer* refreshTimer;			///< Triggers a scene reload
+		planeHeading planeOrientation;	///< This plane's orientation
+		ViewerHeader* viewerController;	///< The widget that controls this widget
+
+		glm::ivec2 posRequest;			///< A texture position request for the render
+		GLuint renderTarget;			///< The texture to render to for additional info
+		float minZoomRatio;				///< minimum value of the zoom applied to the image
+		float maxZoomRatio;				///< maximum value of the zoom applied to the image
+		float zoomRatio;				///< The current zoom level applied to the image
+		float planeDepth;				///< The normalized plane depth, set from the viewer's header slider
+		glm::vec2 offset;				///< Normalized offset from the window's origin
+		glm::vec2 tempOffset;			///< Temporary offset applied to the rendered image while moving around
+		std::size_t mouse_isPressed;	///< Is the mouse pressed ? Counted in number of frames
+		bool ctrl_pressed;				///< Is the Ctrl keymod pressed ?
+		QPoint cursorPosition_last;		///< Last known position, relative to window coordinates
+		QPoint cursorPosition_current;	///< Current mouse position, relative to window coordinates
 	public slots:
 		/// @brief Update the view, as a slot without any arguments
 		void updateView(void);

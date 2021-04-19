@@ -29,6 +29,13 @@ Viewer::Viewer(Scene* const scene, QWidget* parent) :
 
 	this->drawVolumetric = true;
 	this->shouldCapture = false;
+	this->renderTarget = 0;
+	this->selectMode = false;
+	this->fbSize = glm::ivec2{0,0};
+	this->cursorPos_current = glm::ivec2{0,0};
+	this->cursorPos_last = glm::ivec2{0,0};
+	this->framesHeld = 0;
+	this->posRequest = glm::ivec2{-1,-1};
 }
 
 Viewer::~Viewer() {
@@ -38,6 +45,7 @@ Viewer::~Viewer() {
 
 void Viewer::init() {
 	this->makeCurrent();
+	this->setMouseTracking(true);
 
 	this->scene->initGl(this->context());
 
@@ -56,7 +64,7 @@ void Viewer::draw() {
 	GLfloat mvMat[16];
 	GLfloat pMat[16];
 
-	glClearColor(.8, .8, .8, 1.);
+	glClearColor(.8, .8, .8, .0);
 
 	this->camera()->getModelViewMatrix(mvMat);
 	this->camera()->getProjectionMatrix(pMat);
@@ -65,25 +73,28 @@ void Viewer::draw() {
 	glm::vec3 camPos = glm::vec3(static_cast<float>(cam.x), static_cast<float>(cam.y), static_cast<float>(cam.z));
 
 	this->scene->draw3DView(mvMat, pMat, camPos);
+
+	if (this->posRequest.x > -1) {
+		glm::vec4 p = this->scene->readFramebufferContents(this->defaultFramebufferObject(), this->posRequest);
+		if (p.w > .01f) {
+			std::cerr << "3D viewer : Value in fbo : {" << p.x << ", " << p.y << ", " << p.z << ", " << p.w << "}\n";
+		}
+		this->posRequest = glm::ivec2{-1,-1};
+	}
 }
 
 void Viewer::keyPressEvent(QKeyEvent *e) {
 	switch (e->key()) {
 		/*
+		VIEWER BEHAVIOUR
+		*/
+		case Qt::Key::Key_Space:
+			this->selectMode = not this->selectMode;
+			std::cerr << "Selection mode : " << std::boolalpha << this->selectMode << '\n';
+		break;
+		/*
 		SHADER PROGRAMS
 		*/
-		case Qt::Key::Key_F1:
-			this->scene->setDisplayChannel(DisplayChannel::RedAndGreen);
-			this->update();
-		break;
-		case Qt::Key::Key_F2:
-			this->scene->setDisplayChannel(DisplayChannel::Red);
-			this->update();
-		break;
-		case Qt::Key::Key_F3:
-			this->scene->setDisplayChannel(DisplayChannel::Green);
-			this->update();
-		break;
 		case Qt::Key::Key_F5:
 			this->scene->recompileShaders();
 			this->update();
@@ -124,10 +135,11 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 }
 
 void Viewer::centerScene(void) {
-	glm::vec3 scene_center = this->scene->getSceneCenter();
-	float scene_radius = this->scene->getSceneRadius();
+	// Don't update the scene radius, cuts off some drawn primitives (like bounding box for example) :
+	//float scene_radius = this->scene->getSceneRadius();
+	//this->setSceneRadius(qreal(scene_radius));
 
-	this->setSceneRadius(qreal(scene_radius));
+	glm::vec3 scene_center = this->scene->getSceneCenter();
 	qglviewer::Vec cnt(scene_center.x, scene_center.y, scene_center.z);
 	this->setSceneCenter(cnt);
 	this->camera()->centerScene();
@@ -135,7 +147,38 @@ void Viewer::centerScene(void) {
 }
 
 void Viewer::mousePressEvent(QMouseEvent* e) {
+	// When the RMB causes the event, start the 'framesHeld' counter in select mode :
+	if (e->button() == Qt::MouseButton::RightButton) {
+		if (this->selectMode) {
+			this->framesHeld = 1;
+			// update cursor position :
+			this->cursorPos_last = this->cursorPos_current = glm::ivec2{e->pos().x(), e->pos().y()};
+			std::cerr << "Pressed RMB.\n";
+			this->guessMousePosition();
+			e->accept(); // stop the event from propagating upwards !
+			return;
+		}
+	}
+	// If not in select mode, process the event normally :
 	QGLViewer::mousePressEvent(e);
+}
+
+void Viewer::mouseMoveEvent(QMouseEvent* e) {
+	// If tracking the mouse, update its position :
+	if (this->selectMode && this->framesHeld > 0) {
+		this->cursorPos_last = this->cursorPos_current;
+		this->cursorPos_current = glm::ivec2{e->pos().x(), e->pos().y()};
+		this->framesHeld += 1;
+		this->guessMousePosition();
+	}
+	QGLViewer::mouseMoveEvent(e);
+}
+
+void Viewer::mouseReleaseEvent(QMouseEvent* e) {
+	if (e->buttons().testFlag(Qt::MouseButton::RightButton) == false) {
+		this->framesHeld = 0;
+	}
+	QGLViewer::mouseReleaseEvent(e);
 }
 
 void Viewer::wheelEvent(QWheelEvent* _w) {
@@ -148,6 +191,30 @@ void Viewer::wheelEvent(QWheelEvent* _w) {
 	}
 	QGLViewer::wheelEvent(_w);
 	this->update();
+}
+
+void Viewer::resizeGL(int w, int h) {
+	// First, call the superclass' function
+	QGLViewer::resizeGL(w,h);
+
+	this->fbSize = glm::ivec2{w,h};
+
+	// Is the scene initialized ? (might not on first call to this function)
+	if (this->scene->isSceneInitialized()) {
+		// Update the texture accompanying the framebuffer to reflect its size change
+		this->renderTarget = this->scene->updateFBOOutputs(this->fbSize,
+							this->defaultFramebufferObject(),
+							this->renderTarget);
+	}
+}
+
+void Viewer::guessMousePosition() {
+	glm::ivec2 rawMousePos = this->cursorPos_current;
+	if (rawMousePos.x < 0 || rawMousePos.x > this->fbSize.x || rawMousePos.y < 0 || rawMousePos.y > this->fbSize.y) {
+		return;
+	}
+
+	this->posRequest = glm::ivec2(rawMousePos.x, this->fbSize.y - rawMousePos.y);
 }
 
 QString Viewer::helpString() const {
@@ -246,8 +313,6 @@ void Viewer::loadGrid(const std::shared_ptr<InputGrid>& g) {
 	this->scene->addGrid(g, "");
 	this->doneCurrent();
 
-	std::cerr << "Added input grid to scene\n";
-
 	glm::vec3 bbDiag = this->scene->getSceneBoundaries();
 	float sceneSize = glm::length(bbDiag);
 
@@ -264,8 +329,6 @@ void Viewer::loadTwoGrids(const std::shared_ptr<InputGrid>& g1, const std::share
 	this->makeCurrent();
 	this->scene->addTwoGrids(g1, g2, "");
 	this->doneCurrent();
-
-	std::cerr << "Added 2 input grids to scene\n";
 
 	glm::vec3 bbDiag = this->scene->getSceneBoundaries();
 	float sceneSize = glm::length(bbDiag);

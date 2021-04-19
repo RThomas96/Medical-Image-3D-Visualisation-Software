@@ -1,18 +1,20 @@
-#version 400
+#version 150
+#extension GL_ARB_separate_shader_objects : enable
 
-// Vertex, vertex texture coordinate and vertex visibility :
+// Signals we're in the main shader, for any shaders inserted into this one.
+#define MAIN_SHADER_UNIT
+
+/****************************************/
+/**************** Inputs ****************/
+/****************************************/
 in vec4 P;
 in vec3 text3DCoord;
-
 in vec4 P0;
 in vec3 text3DCoordP0;
-
 in vec4 P1;
 in vec3 text3DCoordP1;
-
 in vec4 P2;
 in vec3 text3DCoordP2;
-
 in vec4 P3;
 in vec3 text3DCoordP3;
 
@@ -22,44 +24,40 @@ in vec3 largestDelta;
 in float instanceId;
 in float visibility;
 
-// Fragment color :
-out vec4 colorOut;
+/****************************************/
+/*************** Outputs ****************/
+/****************************************/
+layout(location = 0) out vec4 colorOut;
+layout(location = 1) out vec4 sceneSpaceFragmentPos;
 
-// --------------------------------------------------
-// Uniforms
-// --------------------------------------------------
-
-// Samplers :
-uniform usampler3D Mask; // déclaration de la map mask : texture 3D à raycaster
+/****************************************/
+/*************** Uniforms ***************/
+/****************************************/
+uniform usampler3D texData; // déclaration de la map mask : texture 3D à raycaster
 uniform sampler2D vertices_translations;
 uniform sampler2D normals_translations;
 uniform sampler2D texture_coordinates;
 uniform sampler2D visibility_texture;
 uniform sampler2D neighbors;
 uniform sampler2D visiblity_map;
-
-uniform float maxValData = 65535.f;
+uniform sampler2D visiblity_map_alternate;
 
 // Phong :
 uniform float diffuseRef;
 uniform float specRef;
-// uniform float shininess;
 // Light positions
 uniform vec3 lightPositions[8];
 
-// Camera position world-space :
-uniform vec3 cam;
-
 // Grid voxel dimensions :
 uniform vec3 voxelSize;
-
 uniform ivec3 gridSize;
 
-uniform float clipDistanceFromCamera;
-
+// Camera position world-space :
+uniform vec3 cam;
 // Variables for visibility :
 uniform vec3 cut;
 uniform vec3 cutDirection;
+uniform float clipDistanceFromCamera;
 
 uniform mat4 mMat;
 uniform mat4 vMat;
@@ -67,92 +65,225 @@ uniform mat4 pMat;
 
 uniform vec2 colorBounds;
 uniform vec2 textureBounds;
+uniform vec2 colorBoundsAlternate;
+uniform vec2 textureBoundsAlternate;
 
 uniform vec3 visuBBMin;
 uniform vec3 visuBBMax;
 uniform bool shouldUseBB;
 
-uniform uint nbChannels;
+uniform vec3 color0;		// Color 0, channel 0
+uniform vec3 color1;		// Color 1, channel 0
+uniform vec3 color0Alternate;	// Color 0, channel 1
+uniform vec3 color1Alternate;	// Color 1, channel 1
 
-uniform uint channelView;	// What channels do we visualize ? R+G = 1, R = 2, G = 3
-uniform double maxTexPossible;	// maximum tex value possible, variable depending on the data type
+uniform uint rgbMode;	// Show only R, only G, or RG
 
-vec4 voxelIdxToColor_1channel(in uvec3 ucolor) {
-	// Have the R and G color channels clamped to the min/max of the scale
-	// (mimics under or over-exposure)
-	float color_r = clamp(float(ucolor.r), colorBounds.x, colorBounds.y);
-	float color_g = clamp(float(ucolor.r), colorBounds.x, colorBounds.y);
-	// Compute the color as Brian's paper describes it :
-	float color_k = 2.5;
-	float sc = colorBounds.y - colorBounds.x;
-	float eosin = (color_r - colorBounds.x)/(sc);
-	float dna = (color_g - colorBounds.x)/(sc); // B is on G channel because OpenGL only allows 2 channels upload to be RG, not RB
+uniform uint r_channelView;	// The coloration function chosen
+uniform uint r_selectedChannel;	// The currently selected channel
+uniform uint r_nbChannels;	// nb of channels in the image in total (R, RG, RGB ?)
+uniform uint g_channelView;	// The coloration function chosen
+uniform uint g_selectedChannel;	// The currently selected channel
+uniform uint g_nbChannels;	// nb of channels in the image in total (R, RG, RGB ?)
 
-	float eosin_r_coef = 0.050;
-	float eosin_g_coef = 1.000;
-	float eosin_b_coef = 0.544;
+// General utility functions :
+vec3 crossProduct( vec3 a, vec3 b );
+vec3 getWorldCoordinates(in ivec3 _gridCoord);
+ivec3 getGridCoordinates( in vec4 _P );
 
-	float hematoxylin_r_coef = 0.860;
-	float hematoxylin_g_coef = 1.000;
-	float hematoxylin_b_coef = 0.300;
+// Coordinate changes for textures :
+ivec2 Convert1DIndexTo2DIndex_Unnormed( in uint uiIndexToConvert, in int iWrapSize );
+ivec2 Convert1DIndexTo2DIndex_Unnormed_Flipped( in uint uiIndexToConvert, in int iWrapSize );
 
-	float r_coef = eosin_r_coef;
-	float g_coef = eosin_g_coef;
-	float b_coef = eosin_b_coef;
+// Barycentric search :
+bool computeBarycentricCoordinates(in vec3 point, out float ld0, out float ld1, out float ld2, out float ld3);
+bool computeBarycentricCoordinates(in vec3 point, out float ld0, out float ld1, out float ld2, out float ld3, in int id_tetra_start, out int id_tetra_end, out vec3 Current_text3DCoord);
+bool computeBarycentricCoordinatesRecursive(in vec3 point, out float ld0, out float ld1, out float ld2, out float ld3, in int id_tetra_start, out int id_tetra_end, int max_iter, out vec3 result_text_coord);
+void getFirstRayVoxelIntersection( in vec3 origin, in vec3 direction, out ivec3 v0, out vec3 t_n);
 
-	return vec4(
-		exp(-hematoxylin_r_coef * dna * color_k) * exp(-eosin_r_coef * eosin * color_k),
-		exp(-hematoxylin_g_coef * dna * color_k) * exp(-eosin_g_coef * eosin * color_k),
-		exp(-hematoxylin_b_coef * dna * color_k) * exp(-eosin_b_coef * eosin * color_k),
-		1.
-	);
-}
+// Compute a fragment's visibility :
+bool ComputeVisibility(vec3 point);
 
-vec4 voxelIdxToColor_2channel(in uvec3 ucolor) {
-	// Have the R and G color channels clamped to the min/max of the scale
-	// (mimics under or over-exposure)
-	float color_r = clamp(float(ucolor.r), colorBounds.x, colorBounds.y);
-	float color_g = clamp(float(ucolor.g), colorBounds.x, colorBounds.y);
-	// Compute the color as Brian's paper describes it :
-	float color_k = 2.5;
-	float sc = colorBounds.y - colorBounds.x;
-	float eosin = (color_r - colorBounds.x)/(sc);
-	float dna = (color_g - colorBounds.x)/(sc); // B is on G channel because OpenGL only allows 2 channels upload to be RG, not RB
+// Color and shading :
+bool checkAndColorizeVoxel(in uvec3 voxel, out vec4 color) ;
+vec3 phongComputation(vec4 position, vec3 normal, vec4 color, vec3 lightPos, vec3 phongDetails, mat3 lightDetails);
 
-	float eosin_r_coef = 0.050;
-	float eosin_g_coef = 1.000;
-	float eosin_b_coef = 0.544;
+#pragma include_color_shader;
 
-	float hematoxylin_r_coef = 0.860;
-	float hematoxylin_g_coef = 1.000;
-	float hematoxylin_b_coef = 0.300;
+#line 2113
 
-	float r_coef = eosin_r_coef;
-	float g_coef = eosin_g_coef;
-	float b_coef = eosin_b_coef;
+void main (void) {
+	sceneSpaceFragmentPos = vec4(.0,.0,.0,.0);
 
-	return vec4(
-		exp(-hematoxylin_r_coef * dna * color_k) * exp(-eosin_r_coef * eosin * color_k),
-		exp(-hematoxylin_g_coef * dna * color_k) * exp(-eosin_g_coef * eosin * color_k),
-		exp(-hematoxylin_b_coef * dna * color_k) * exp(-eosin_b_coef * eosin * color_k),
-		1.
-	);
-}
+	if( visibility > 3500. ) discard;
 
-vec4 voxelIdxToColor(in uvec3 ucolor) {
-	if (channelView == 1u) {
-		if (nbChannels == 1u) { return voxelIdxToColor_1channel(ucolor); }
-		else { return voxelIdxToColor_2channel(ucolor); }
-	} else if (channelView == 2u) {
-		float alpha = 1.f;
-		float val = (float(ucolor.r) - colorBounds.x)/(colorBounds.y-colorBounds.x);
-		return vec4(val, val, val, alpha);
-	} else if (channelView == 3u) {
-		float alpha = 1.f;
-		float val = (float(ucolor.g) - colorBounds.x)/(colorBounds.y-colorBounds.x);
-		return vec4(val, val, val, alpha);
+	/*
+	// Shows the wireframe of the mesh :
+	float epsilon = 0.008;
+	float distMin = min(barycentricCoords.x/largestDelta.x, min(barycentricCoords.y/largestDelta.y, barycentricCoords.z/largestDelta.z));
+
+	// Enables a 1-pass wireframe mode :
+	if (distMin < epsilon) {// && visibility > 0.) {
+		float factor = (visibility/3500.);
+		colorOut = vec4(1.-factor, factor, 1.-factor, 1.);
+		textureCoordinatesWorldSpace = vec4(P.xyz, 2.f);
+		return;
 	}
+	*/
+
+	// Default color of the fragment
+	colorOut = vec4(.0, .0, .0, .0);
+
+	vec3 V = normalize(P.xyz - cam);
+
+	bool hit = false; // have we hit a voxle that is supposed to be shown yet ?
+	bool in_tet = true; // are we in a tetrahedron ? (prevents analyzing ray when not needed)
+
+	vec3 t_next; // The delta-t in all axes for the DDA analysis
+	ivec3 next_voxel; // The next voxel index in the grid
+	ivec3 origin_voxel; // The ray's origin voxel for the grid
+
+	// imitates the normals of a cube of size 1.
+	vec3 normals[6];
+	normals[0] = vec3( 1., 0., 0.); normals[1] = vec3( -1.,  0.,  0.);
+	normals[2] = vec3( 0., 1., 0.); normals[3] = vec3(  0., -1.,  0.);
+	normals[4] = vec3( 0., 0., 1.); normals[5] = vec3(  0.,  0., -1.);
+
+	// Stepping increments to traverse the grid :
+	ivec3 grid_step = ivec3 (-1, -1, -1);
+	if( V.x > 0 ) grid_step.x = 1;
+	if( V.y > 0 ) grid_step.y = 1;
+	if( V.z > 0 ) grid_step.z = 1;
+
+	// keeps track of the smallest coordinate of the 't' vector (scalar of V for raycasting)
+	float t_min = 0;
+
+	/**************initialization******************/
+
+	vec3 Current_P = P.xyz;
+
+	// Start the raytracing path right before the actual hit, caused interferences before
+	Current_P = Current_P - .1*V;
+
+	//Find the first intersection of the ray with the grid
+	getFirstRayVoxelIntersection(Current_P, V, origin_voxel, t_next );
+
+
+	//vec3 dt = vec3( abs(voxelSize.xyz/V.xyz) );
+	vec3 dt = vec3( abs(voxelSize.x/V.x), abs(voxelSize.y/V.y), abs(voxelSize.z/V.z) );
+
+
+	/***********************************************/
+
+	vec3 Current_text3DCoord;
+
+	vec4 Pos = vec4(0.,0.,0.,1.);
+
+	vec4 color = vec4 (0.6,0.,0.6,1.);
+
+	float v_step = voxelSize.x;
+	if( v_step > voxelSize.y ) v_step = voxelSize.y;
+	if( v_step > voxelSize.z ) v_step = voxelSize.z;
+
+	next_voxel = origin_voxel;
+
+	int maxFragIter = 200;
+	int maxTetrIter =  50;
+
+	vec3 n = vec3(0.,0.,0.);
+
+	int fragmentIteration = 0;
+	while( in_tet && !hit && fragmentIteration < maxFragIter ){
+		fragmentIteration++;
+		// step in the smallest direction : x, y, or z
+		if( t_next.x < t_next.y && t_next.x < t_next.z ){
+			Current_P = P.xyz + t_next.x*V;
+			t_min = t_next.x;
+			t_next.x = t_next.x + dt.x;
+			next_voxel.x = next_voxel.x + grid_step.x;
+			if( V.x > 0 )
+				n = normals[1];
+			else
+				n = normals[0];
+		} else if( t_next.y < t_next.x && t_next.y < t_next.z ){
+			Current_P = P.xyz + t_next.y*V;
+			t_min = t_next.y;
+			t_next.y = t_next.y + dt.y;
+			next_voxel.y = next_voxel.y + grid_step.y;
+			if( V.y > 0 )
+				n = normals[3];
+			else
+				n = normals[2];
+		} else{
+			Current_P = P.xyz + t_next.z*V;
+			t_min = t_next.z;
+			t_next.z = t_next.z + dt.z;
+			next_voxel.z = next_voxel.z + grid_step.z;
+			if( V.z > 0 )
+				n = normals[5];
+			else
+				n = normals[4];
+		}
+
+		float ld0, ld1, ld2, ld3;
+		Current_P = Current_P + 0.0001*v_step*V; // guess it's for not self-intersecting ?
+		// If the barycentric coordinates are valid, then :
+		if(computeBarycentricCoordinates(Current_P, ld0, ld1, ld2, ld3)) {
+			int id_tet;
+			vec3 voxel_center_P = getWorldCoordinates(next_voxel);
+			if( ComputeVisibility(voxel_center_P.xyz) ) {
+				// Traverse the texture, using barycentric coords to 'jump' to another tetrahedra if needed :
+				if(computeBarycentricCoordinatesRecursive(voxel_center_P, ld0, ld1, ld2, ld3, int(instanceId+0.5), id_tet, maxTetrIter, Current_text3DCoord)){
+					// Get this voxel's value :
+					uvec3 voxelIndex = texture(texData, Current_text3DCoord).xyz;
+					vec4 finalValue;
+					if (checkAndColorizeVoxel(voxelIndex, finalValue)) {
+						color = finalValue;
+						// Current position will change :
+						Pos = vec4(Current_P.xyz, 1.);
+						hit = true;
+					}
+
+				}
+			}
+
+		} else {
+			in_tet = false;
+		}
+
+	}
+
+	if(!in_tet || !hit) discard;
+
+	// Phong details :
+	float phongAmbient = .75;	// How much of the original color to keep [0-1]
+	float factor = (1. - phongAmbient) / 3.;
+	mat3 lightDetails = mat3(
+		vec3(1., 1., 1.),	// light diffuse color
+		vec3(1., 1., 1.),	// light specular color
+		vec3(.0, .0, .0)	// nothing
+	);
+	vec3 phongDetails = vec3(
+		factor*.9,	// kd = diffuse coefficient
+		factor*.1,	// ks = specular coefficient
+		5.	// Shininess
+	);
+	colorOut.a = 1.;
+	colorOut.xyz += phongAmbient * color.xyz;
+	// Phong computation :
+	colorOut.xyz += phongComputation(Pos, n, color, lightPositions[0], phongDetails, lightDetails);
+	colorOut.xyz += phongComputation(Pos, n, color, lightPositions[4], phongDetails, lightDetails);
+	// Phong for camera light :
+	colorOut.xyz += phongComputation(Pos, n, color, cam, phongDetails, lightDetails);
+
+	sceneSpaceFragmentPos = Pos;
+
+	return;
 }
+
+/****************************************/
+/************** Functions ***************/
+/****************************************/
 
 bool ComputeVisibility(vec3 point)
 {
@@ -383,6 +514,7 @@ bool computeBarycentricCoordinatesRecursive(in vec3 point, out float ld0 , out f
 	return false;
 }
 
+
 void getFirstRayVoxelIntersection( in vec3 origin, in vec3 direction, out ivec3 v0, out vec3 t_n)
 {
 	// 	vec3 origin = o;
@@ -430,173 +562,42 @@ vec3 phongComputation(vec4 position, vec3 normal, vec4 color, vec3 lightPos, vec
 	return phong_Diffuse * max(.0, dotlmn) * lightDiffuse + phong_Specular * pow(max(.0, dot(r, v)), phong_Shininess) * lightSpecular;
 }
 
-void main (void) {
-	if( visibility > 3500. ) discard;
+bool checkAndColorizeVoxel(in uvec3 voxel, out vec4 return_color) {
+	// In this function, we'll determine the color the voxel should have. Here is how
+	// we determine which channel should be shown, and which should not :
+	//	- If there is only one channel to show : (nbChannels == 1)
+	//		- Then we colorize the voxel the regular way : with voxel.r
+	//	- If not, we'll read the value of the 'primaryChannel' uniform :
+	//		- Allows to set the primary[_.*] and secondary[_.*] variables
+	//		- Check primary is within its bounds, _AND_ visible in texture :
+	//			- if it is, color the voxel according to this and return TRUE
+	//			- Otherwise, do the same for secondary. Check bounds, visibility and :
+	//				- If available, show it and return TRUE !
+	//				- If not, return FALSE !
 
-	/*
-	float epsilon = 0.00; //3;
-	float distMin = min(barycentricCoords.x/largestDelta.x, min(barycentricCoords.y/largestDelta.y, barycentricCoords.z/largestDelta.z));
+	// data to show :
+	float voxVal;
+	vec2 cB, tB;
 
-	// Enables a 1-pass wireframe mode :
-	if (distMin < epsilon) {// && visibility > 0.) {
-		float factor = (visibility/3500.);
-		colorOut = vec4(1.-factor, factor, 1.-factor, 1.);
-		return;
-	}
-	*/
+	int width = textureSize(visiblity_map, 0).x;
+	ivec2 tcfv = Convert1DIndexTo2DIndex_Unnormed(voxel.r, width);
+	int widthAlt = textureSize(visiblity_map_alternate, 0).x;
+	ivec2 tcfv_alt = Convert1DIndexTo2DIndex_Unnormed(voxel.g, widthAlt);
 
-	// Default color of the fragment : cyan
-	colorOut = vec4(.0, .0, .0, .0);
+	vec2 vis = vec2(.0f, .0f);
+	// Get visibility of both channels :
+	vis.r = texelFetch(visiblity_map, tcfv, 0).x;
+	vis.g = texelFetch(visiblity_map_alternate, tcfv_alt, 0).x;
 
-	vec3 V = normalize(P.xyz - cam);
-
-	bool hit = false; // have we hit a voxle that is supposed to be shown yet ?
-	bool in_tet = true; // are we in a tetrahedron ? (prevents analyzing ray when not needed)
-
-	vec3 t_next; // The delta-t in all axes for the DDA analysis
-	ivec3 next_voxel; // The next voxel index in the grid
-	ivec3 origin_voxel; // The ray's origin voxel for the grid
-
-	// imitates the normals of a cube of size 1.
-	vec3 normals[6];
-	normals[0] = vec3( 1., 0., 0.); normals[1] = vec3( -1.,  0.,  0.);
-	normals[2] = vec3( 0., 1., 0.); normals[3] = vec3(  0., -1.,  0.);
-	normals[4] = vec3( 0., 0., 1.); normals[5] = vec3(  0.,  0., -1.);
-
-	// Stepping increments to traverse the grid :
-	ivec3 grid_step = ivec3 (-1, -1, -1);
-	if( V.x > 0 ) grid_step.x = 1;
-	if( V.y > 0 ) grid_step.y = 1;
-	if( V.z > 0 ) grid_step.z = 1;
-
-	// keeps track of the smallest coordinate of the 't' vector (scalar of V for raycasting)
-	float t_min = 0;
-
-	/**************initialization******************/
-
-	vec3 Current_P = P.xyz;
-
-	//Find the first intersection of the ray with the grid
-	getFirstRayVoxelIntersection(Current_P, V, origin_voxel, t_next );
-
-	//vec3 dt = vec3( abs(voxelSize.xyz/V.xyz) );
-	vec3 dt = vec3( abs(voxelSize.x/V.x), abs(voxelSize.y/V.y), abs(voxelSize.z/V.z) );
-
-
-	/***********************************************/
-
-	vec3 Current_text3DCoord;
-
-	vec4 Pos = vec4(0.,0.,0.,1.);
-
-	vec4 color = vec4 (0.6,0.,0.6,1.);
-
-	float v_step = voxelSize.x;
-	if( v_step > voxelSize.y ) v_step = voxelSize.y;
-	if( v_step > voxelSize.z ) v_step = voxelSize.z;
-
-	next_voxel = origin_voxel;
-
-	int maxFragIter = 100;
-	int maxTetrIter =  50;
-
-	vec3 n = vec3(0.,0.,0.);
-
-	int fragmentIteration = 0;
-	while( in_tet && !hit && fragmentIteration < maxFragIter ){
-		fragmentIteration++;
-		// step in the smallest direction : x, y, or z
-		if( t_next.x < t_next.y && t_next.x < t_next.z ){
-			Current_P = P.xyz + t_next.x*V;
-			t_min = t_next.x;
-			t_next.x = t_next.x + dt.x;
-			next_voxel.x = next_voxel.x + grid_step.x;
-			if( V.x > 0 )
-				n = normals[1];
-			else
-				n = normals[0];
-		} else if( t_next.y < t_next.x && t_next.y < t_next.z ){
-			Current_P = P.xyz + t_next.y*V;
-			t_min = t_next.y;
-			t_next.y = t_next.y + dt.y;
-			next_voxel.y = next_voxel.y + grid_step.y;
-			if( V.y > 0 )
-				n = normals[3];
-			else
-				n = normals[2];
-		} else{
-			Current_P = P.xyz + t_next.z*V;
-			t_min = t_next.z;
-			t_next.z = t_next.z + dt.z;
-			next_voxel.z = next_voxel.z + grid_step.z;
-			if( V.z > 0 )
-				n = normals[5];
-			else
-				n = normals[4];
-		}
-
-		// if (next_voxel.x < 0) { colorOut.x += .3; }
-		// if (next_voxel.y < 0) { colorOut.y += .3; }
-		// if (next_voxel.z < 0) { colorOut.z += .5; }
-
-		float ld0, ld1, ld2, ld3;
-		Current_P = Current_P + 0.0001*v_step*V; // guess it's for not self-intersecting ?
-		// If the barycentric coordinates are valid, then :
-		if( computeBarycentricCoordinates( Current_P, ld0, ld1, ld2, ld3) ){
-			int id_tet;
-			vec3 voxel_center_P = getWorldCoordinates( next_voxel );
-			// Recursively traverse the texture, using barycentric coords to 'jump' to another
-			// tetrahedra if needed :
-			if( computeBarycentricCoordinatesRecursive( voxel_center_P, ld0, ld1, ld2, ld3, int(instanceId+0.5), id_tet, maxTetrIter, Current_text3DCoord ) ){
-				// Get this voxel's value :
-				uvec3 voxelIndex = texture(Mask, Current_text3DCoord).xyz;
-				uint rawVal = voxelIndex.r;
-				// If we only show green, make the visibility check on green :
-				if (channelView == 3u) { rawVal = voxelIndex.g; }
-				// Get texture size :
-				int width = textureSize(visiblity_map, 0).x;
-				// texture coords for visibility :
-				ivec2 tcfv = Convert1DIndexTo2DIndex_Unnormed(rawVal, width);
-				// If it's visible : (texelFetch here to take advantage of using ivec2 rather than normalized vec2)
-				if (texelFetch(visiblity_map, tcfv, 0).x > 0.) {
-					// Get the corresponding color :
-					// color = texelFetch(color_texture, int(voxelIndex.x), 0);
-					color = voxelIdxToColor(voxelIndex);
-					Pos = vec4(Current_P.xyz, 1.); // vec4( (ld0*P0 + ld1*P1 + ld2*P2 + ld3*P3).xyz, 1. );
-					if( ComputeVisibility(voxel_center_P.xyz) )
-						hit = true;
-				}
-
-			}
-
-		} else {
-			in_tet = false;
-		}
-
+	// If only one channel in the texture :
+	if (g_nbChannels == 0u) {
+		voxel.g = uint(colorBoundsAlternate.x);
+		vis.g = 0.f;
 	}
 
-	if(!in_tet || !hit) discard;
+	// Don't need to compute color, nothing would have been shown ...
+	if (vis.r < .5f && vis.g < .5f) { return false; }
 
-	// Phong details :
-	float phongAmbient = .5;
-	mat3 lightDetails = mat3(
-		vec3(.9, .9, .9),	// light diffuse color
-		vec3(1., 1., 1.),	// light specular color
-		vec3(.0, .0, .0)	// nothing
-	);
-	float factor = (1. - phongAmbient) / 3.;
-	vec3 phongDetails = vec3(
-		factor*.8,	// kd = diffuse coefficient
-		factor*.2,	// ks = specular coefficient
-		5.	// Shininess
-	);
-	colorOut.a = 1.;
-	colorOut.xyz += phongAmbient * color.xyz;
-	// Phong computation :
-	colorOut.xyz += phongComputation(Pos, n, color, lightPositions[0], phongDetails, lightDetails);
-	colorOut.xyz += phongComputation(Pos, n, color, lightPositions[4], phongDetails, lightDetails);
-	// Phong for camera light :
-	colorOut.xyz += phongComputation(Pos, n, color, cam, phongDetails, lightDetails);
-
-	return;
+	return_color = voxelIdxToColor(voxel, vis);
+	return true;
 }
