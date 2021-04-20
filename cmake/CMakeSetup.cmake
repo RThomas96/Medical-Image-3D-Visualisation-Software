@@ -63,4 +63,5 @@ SET(CMAKE_AUTOUIC ON)
 
 # Set the local directory for third-party libraries :
 SET(LOCAL_COMPILED_LIBS_PATH ${CMAKE_SOURCE_DIR}/third_party/compiled_libraries)
+SET(QGLVIEWER_MAIN_DIR ${CMAKE_SOURCE_DIR}/third_party/libQGLViewer/QGLViewer)
 
