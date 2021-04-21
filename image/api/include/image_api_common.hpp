@@ -1,12 +1,15 @@
 #ifndef VISUALIZATION_IMAGE_API_IMAGE_API_INCLUDE_COMMON_HPP_
 #define VISUALIZATION_IMAGE_API_IMAGE_API_INCLUDE_COMMON_HPP_
 
+#include "../../macros.hpp"
+
 #include <glm/glm.hpp>
 
 #include <type_traits>
 #include <memory>
 
 namespace Image {
+
 	/**
 	 * @brief The ImageDataType enum allows to know what bit-width and signed-ness an image implementation really holds.
 	 * @note This enum is OR-able, in order to do things like : `imgType = (Bit_8 | Unsigned); // ==> uint8_t | uchar`
@@ -22,8 +25,16 @@ namespace Image {
 		Signed   = 0b01000000,
 	};
 
+	/// @b Makes the ImageDataType enumeration OR-able, to have multiple flags.
+	inline ImageDataType operator| (ImageDataType lhs, ImageDataType rhs) {
+		return static_cast<ImageDataType>(static_cast<std::uint8_t>(lhs) | static_cast<std::uint8_t>(rhs));
+	}
+
 	/// @b Simple typedef for a 3-component GLM vector, useful for image resolution
 	typedef glm::vec<3, std::size_t, glm::defaultp> svec3;
+
+	/// @b Simple typedef for a 3-component GLM vector, useful for image resolution
+	typedef glm::vec<2, std::size_t, glm::defaultp> svec2;
 
 }
 
