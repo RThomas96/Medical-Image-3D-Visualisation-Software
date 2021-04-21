@@ -36,7 +36,8 @@ namespace Image {
 			/// opened ! For example, if a TIFF file is given, but it has a tag we don't support, we can return false.
 			static bool canReadImage(const std::string& image_name);
 
-			virtual ImageDataType getInternalDataType(void) const;
+			/// @b Returns the internal data type represented in the input files.
+			virtual ImageDataType getInternalDataType(void) const { return this->internal_data_type; }
 
 			/// @b Simple call to parse images, the functionnality will be added in derived classes.
 			virtual ThreadedTask::Ptr parseImageInfo(void) noexcept(false) = 0;
@@ -97,6 +98,12 @@ namespace Image {
 
 			/// @b The internal data type representation, stored in the image.
 			ImageDataType internal_data_type;
+
+			/// @b The voxel dimensions, as parsed by the discrete implementation in derived classes.
+			glm::vec3 voxelDimensions;
+
+			/// @b The image resolution, as parsed by the discrete implementation in derived classes.
+			svec3 imageResolution;
 	};
 
 } // namespace Image
