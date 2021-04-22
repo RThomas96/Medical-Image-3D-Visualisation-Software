@@ -15,10 +15,13 @@ namespace Tiff {
 		this->rowsPerStrip = 0;
 		this->samplesPerPixel = 0;
 		this->stripsPerImage = 0;
-		this->bitsPerSample.clear();
+		this->bitsPerSample = 0;
+
+		this->loadTIFFInfo(fname);
 	}
 
-	void Frame::loadTIFFInfo() {
+	void Frame::loadTIFFInfo(std::string_view fname) {
+		UNUSED_PARAMETER(fname);
 		int result = 0;
 
 		if (this->sourceFile.empty() == false) {
@@ -27,11 +30,11 @@ namespace Tiff {
 			TIFFSetWarningHandler(tiff_warning_redirection);
 
 			// Open the file :
-			TIFF* file = TIFFOpen(this->sourceFile.c_str(), "r");
+			TIFF* file = TIFFOpen(this->sourceFile.data(), "r");
 			// We don't currently support tiled images :
 			if (TIFFIsTiled(file)) { throw std::runtime_error("Cannot read tiled images"); }
 
-			// Set the current directory (should already be there, but just to be sure) :
+			// Set the current directory (since we just opened the file) :
 			result = TIFFSetDirectory(file, this->directoryOffset);
 			// for some reason, we might read past-the-end on some directories. Handle the case :
 			if (result != 1) {
@@ -45,11 +48,7 @@ namespace Tiff {
 				// Some images do not have a default-given field for the sample format, so
 				// assign one now in order to parse the file regardless :
 				result = TIFFGetFieldDefaulted(file, TIFFTAG_SAMPLEFORMAT, &sampleformat);
-				if (result != 1) {
-					std::cerr << "[MAJOR_WARNING] The file \"" << this->sourceFile << "\" has no SAMPLEFORMAT.\n";
-					std::cerr << "[MAJOR_WARNING] Interpreting the data as 'uint' by default.\n";
-					sampleformat = SAMPLEFORMAT_UINT;
-				}
+				if (result != 1) { sampleformat = SAMPLEFORMAT_UINT; }
 			}
 
 			uint16_t pconfig = 0;
@@ -62,21 +61,13 @@ namespace Tiff {
 			// Get the number of samples per-pixel :
 			result = TIFFGetField(file, TIFFTAG_SAMPLESPERPIXEL, &this->samplesPerPixel);
 			if (result != 1) { throw std::runtime_error("Cannot read SamplesPerPixel."); }
+			if (this->samplesPerPixel > 1) { throw std::runtime_error("No support more than one sample per pixel."); }
 
 			// Get the number of bits per sample :
-			this->bitsPerSample.resize(this->samplesPerPixel);
-			result = TIFFGetField(file, TIFFTAG_BITSPERSAMPLE, this->bitsPerSample.data());
+			result = TIFFGetField(file, TIFFTAG_BITSPERSAMPLE, &this->bitsPerSample);
 			if (result != 1) { throw std::runtime_error("Cannot read BitsPerPixel."); }
 
-			#warning Support for more than 3 samples per pixel is limited.
-			// If more than 3 samples per pixel are present, we throw an error.
-			// Would be nice if we could integrate them into the image data.
-
-			// If there are more than 3 samples per pixel, then extra samples are used.
-			// We don't support this currently.
-			if (this->samplesPerPixel > 3u) { throw std::runtime_error("cant parse images with more than 3 samples."); }
-
-			// Get image width and height :
+			// Now that we have enough information about the image, (try to) read the width and height :
 			result = TIFFGetField(file, TIFFTAG_IMAGEWIDTH, &this->width);
 			if (result != 1) { throw std::runtime_error("cannot read width field in this directory"); }
 			result = TIFFGetField(file, TIFFTAG_IMAGELENGTH, &this->height);
@@ -90,7 +81,6 @@ namespace Tiff {
 			this->stripsPerImage = (this->height + this->rowsPerStrip - 1)/this->rowsPerStrip;
 
 			TIFFClose(file);
-			std::cerr.flush();
 		}
 	}
 

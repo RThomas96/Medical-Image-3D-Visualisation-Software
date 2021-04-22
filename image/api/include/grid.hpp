@@ -28,7 +28,11 @@ namespace Image {
 		public:
 			virtual ~Grid(void) = default;
 
+			/// @b Returns the internal data type represented by the grid.
 			ImageDataType getInternalDataType(void) const;
+
+			/// @b Returns the number of components in each voxel of this grid.
+			std::size_t getVoxelDimensionality(void) const;
 
 			/// @b Returns the name of this grid, if applicable.
 			std::string getImageName(void) const;
@@ -52,8 +56,13 @@ namespace Image {
 			static Grid::Ptr createGrid(std::vector<std::vector<std::string>>& _filenames);
 
 		protected:
+#ifdef PIMPL_USE_EXPERIMENTAL_PROPAGATE_CONST
+			/// @b The opaque pointer which will perform all the logic in regards to the reading of data.
+			std::experimental::propagate_const<ImageBackendImpl::Ptr> pImpl;
+#else
 			/// @b The opaque pointer which will perform all the logic in regards to the reading of data.
 			ImageBackendImpl::Ptr pImpl;
+#endif
 			/// @b The grid from which this one is either a downsampled version or a sub-region.
 			Grid::Ptr parentGrid;
 			/// @b If the grid has a parent, stores the size of this current grid (whether sub-region, or downsampled).

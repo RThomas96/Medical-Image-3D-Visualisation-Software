@@ -5,17 +5,39 @@
 #include "../../api/include/read_cache.hpp"
 
 namespace Image {
+namespace Tiff {
 
 	template <typename img_t>
-	class TIFFReader : public Tiff::TIFFPrivate {
+	class TIFFReader : public TIFFPrivate {
+		public:
+			typedef ReadCache<std::size_t, std::vector<img_t>> cache_t;
 		protected:
 			TIFFReader();
 		public:
 			/// @b Default dtor for the backend, which releases the cached data.
 			virtual ~TIFFReader(void) { this->cachedSlices.clearCache(); };
 
-			template <typename target_t>
-			void getRangeValues(glm::vec<2, target_t, glm::defaultp>& _range);
+			/// @b Returns the range of values present (or representable) in the file, converted to the 'target_t' type.
+			template <typename target_t> void getRangeValues(glm::vec<2, target_t, glm::defaultp>& _range) const;
+
+			/// @b Template to read a single pixel's value(s) in the image.
+			/// @note This will call `pImpl->readPixel<>();`.
+			template <typename target_t> void readPixel(svec3 index, std::vector<target_t>& values);
+
+			/// @b Template to read a single line of voxels in ihe image.
+			/// @note This will call `pImpl->readLine<>();`.
+			template <typename target_t> void readLine(svec2 line_idx, std::vector<target_t>& values);
+
+			/// @b Template to read a whole slice of voxels in the image at once.
+			/// @note This will call `pImpl->readSlice<>();`.
+			template <typename target_t> void readSlice(std::size_t slice_idx, std::vector<target_t>& values);
+
+		protected:
+			/// @b Loads and puts into the cache the slice requested. Returns its cache index if loaded previously.
+			/// @details The loaded slice will be not only loaded, but converted and put into the cache encoded in
+			/// this class' internal type.
+			/// @note This function will be the main source of reading procedures for the class
+			virtual std::size_t loadAndCacheSlice(std::size_t) ;
 
 		protected:
 			/// @b The min and max of the image (if specified in the header)
@@ -27,55 +49,9 @@ namespace Image {
 			ReadCache<std::size_t, std::vector<img_t>> cachedSlices;
 	};
 
-	template <>
-	TIFFReader<float>::TIFFReader() : Tiff::TIFFPrivate() {
-		this->internal_data_type = ImageDataType::Floating | ImageDataType::Bit_32;
-	}
-
-	template <>
-	TIFFReader<double>::TIFFReader() : Tiff::TIFFPrivate() {
-		this->internal_data_type = ImageDataType::Floating | ImageDataType::Bit_64;
-	}
-
-	template <>
-	TIFFReader<std::uint8_t>::TIFFReader() : Tiff::TIFFPrivate() {
-		this->internal_data_type = ImageDataType::Unsigned | ImageDataType::Bit_8;
-	}
-
-	template <>
-	TIFFReader<std::uint16_t>::TIFFReader() : Tiff::TIFFPrivate() {
-		this->internal_data_type = ImageDataType::Unsigned | ImageDataType::Bit_16;
-	}
-
-	template <>
-	TIFFReader<std::uint32_t>::TIFFReader() : Tiff::TIFFPrivate() {
-		this->internal_data_type = ImageDataType::Unsigned | ImageDataType::Bit_32;
-	}
-
-	template <>
-	TIFFReader<std::uint64_t>::TIFFReader() : Tiff::TIFFPrivate() {
-		this->internal_data_type = ImageDataType::Unsigned | ImageDataType::Bit_64;
-	}
-
-	template <>
-	TIFFReader<std::int8_t>::TIFFReader() : Tiff::TIFFPrivate() {
-		this->internal_data_type = ImageDataType::Signed | ImageDataType::Bit_8;
-	}
-
-	template <>
-	TIFFReader<std::int16_t>::TIFFReader() : Tiff::TIFFPrivate() {
-		this->internal_data_type = ImageDataType::Signed | ImageDataType::Bit_16;
-	}
-
-	template <>
-	TIFFReader<std::int32_t>::TIFFReader() : Tiff::TIFFPrivate() {
-		this->internal_data_type = ImageDataType::Signed | ImageDataType::Bit_32;
-	}
-
-	template <>
-	TIFFReader<std::int64_t>::TIFFReader() : Tiff::TIFFPrivate() {
-		this->internal_data_type = ImageDataType::Signed | ImageDataType::Bit_64;
-	}
 }
+}
+
+#include "./tiff_template.impl.hpp"
 
 #endif // VISUALIZATION_IMAGE_TIFF_INCLUDE_TIFF_TEMPLATE_HPP_

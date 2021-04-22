@@ -25,7 +25,7 @@ namespace Image {
 
 		protected:
 			/// @b Default ctor of an image backend. Declared protected to not be instanciated alone.
-			ImageBackendImpl(std::vector<std::vector<std::string>> fns);
+			ImageBackendImpl(const std::vector<std::vector<std::string>>& fns);
 
 		public:
 			/// @b Default dtor of the class : frees up all allocated resources, and returns.
@@ -37,22 +37,19 @@ namespace Image {
 			static bool canReadImage(const std::string& image_name);
 
 			/// @b Returns the internal data type represented in the input files.
-			virtual ImageDataType getInternalDataType(void) const { return this->internal_data_type; }
+			virtual ImageDataType getInternalDataType(void) const;
 
 			/// @b Simple call to parse images, the functionnality will be added in derived classes.
 			virtual ThreadedTask::Ptr parseImageInfo(void) noexcept(false) = 0;
 
 			/// @b Returns the number of channels of the image
-			virtual std::size_t getVoxelDimensionality(void) = 0;
-
-			/// @b Returns the image's internal representation for data.
-			virtual ImageDataType getVoxelDataType(void) = 0;
+			virtual std::size_t getVoxelDimensionality(void) const;
 
 			/// @b Returns the image's defined voxel resolutions, if applicable.
-			virtual glm::vec3 getVoxelDimensions(void) = 0;
+			virtual glm::vec3 getVoxelDimensions(void) const;
 
 			/// @b Returns the dimensions of the image.
-			virtual svec3 getResolution(void) = 0;
+			virtual svec3 getResolution(void) const;
 
 			/// @b If the file format allows and includes it, the name of the acquisition.
 			/// @details Otherwise, this is the name of the first file in the stack, minus the  extension and possibly
@@ -60,7 +57,7 @@ namespace Image {
 			virtual std::string getImageName(void) const = 0;
 
 			/// @b Returns the image bounding box, either as computed (voxel sizes x res), or defined in file.
-			virtual BoundingBox_General<float> getBoundingBox(void) = 0;
+			virtual BoundingBox_General<float> getBoundingBox(void) const = 0;
 
 			/// @b Template to return the minimum and maximum values stored in the file, if given.
 			/// @note By default, returns the internal data type's min and max values.
@@ -71,17 +68,17 @@ namespace Image {
 			/// @b Template to read a single pixel's value(s) in the image.
 			/// @warning This function is left undefined here : it is implemented in derived classes, and
 			/// trying to call it directly will lead to linker errors !
-			template <typename data_t, size_t dim> void readPixel(svec3 index, std::array<data_t, dim>& values);
+			template <typename data_t> void readPixel(svec3 index, std::vector<data_t>& values);
 
 			/// @b Template to read a single line of voxels in ihe image.
 			/// @warning This function is left undefined here : it is implemented in derived classes, and
 			/// trying to call it directly will lead to linker errors !
-			template <typename data_t, size_t dim> void readLine(svec2 line_idx, std::array<data_t, dim>& values);
+			template <typename data_t> void readLine(svec2 line_idx, std::vector<data_t>& values);
 
 			/// @b Template to read a whole slice of voxels in the image at once.
 			/// @warning This function is left undefined here : it is implemented in derived classes, and
 			/// trying to call it directly will lead to linker errors !
-			template <typename data_t, size_t dim> void readSlice(std::size_t slice_idx, std::array<data_t, dim>& values);
+			template <typename data_t> void readSlice(std::size_t slice_idx, std::vector<data_t>& values);
 
 		protected:
 			/// @b Parse image info in a single thread. Useful for things that are _not_ parallelizable.
@@ -93,17 +90,19 @@ namespace Image {
 			virtual void parseImageInfo_thread(ThreadedTask::Ptr&) noexcept(false) = 0;
 
 		protected:
-			/// @b The filenames which the backends must parse in order to load the image.
-			std::vector<std::vector<std::string>> filenames;
-
 			/// @b The internal data type representation, stored in the image.
 			ImageDataType internal_data_type;
 
 			/// @b The voxel dimensions, as parsed by the discrete implementation in derived classes.
 			glm::vec3 voxelDimensions;
 
+			/// @b The number of components per voxel. Its extraction depends on the derived implementation used.
+			std::size_t dimensionality;
+
 			/// @b The image resolution, as parsed by the discrete implementation in derived classes.
 			svec3 imageResolution;
+
+			BoundingBox_General<float> imageBoundingBox;
 	};
 
 } // namespace Image

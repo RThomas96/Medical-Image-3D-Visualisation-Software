@@ -48,6 +48,22 @@ namespace Image {
 				return nullptr;
 			}
 
+			std::size_t findIndex(const index_t searched) {
+				// Check if we have the data, and if we do return it immediately :
+				for (std::size_t i = 0; i < this->m_data.size(); ++i) {
+					if (this->m_data[i].first == searched) { return i; }
+				}
+				// Otherwise, return a nullptr :
+				return this->maxCachedElements;
+			}
+
+			data_t_ptr getDataIndexed(const std::size_t idx) {
+				// Check if we have the data, and if we do return it immediately :
+				if (idx >= this->maxCachedElements || idx >= this->m_data.size()) { return nullptr; }
+				// Otherwise, return a nullptr :
+				return this->m_data[idx].second;
+			}
+
 			/// @brief Loads the data into the cache, cleearing up a space if necessary.
 			void loadData(const index_t index, data_t_ptr& data) {
 				// If we already have filled the vector, wrap around with the help of lastInsertedElement :

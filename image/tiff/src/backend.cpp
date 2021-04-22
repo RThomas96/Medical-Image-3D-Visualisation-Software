@@ -4,6 +4,9 @@
 
 namespace Image {
 
+	TIFFBackend::TIFFBackend(const std::vector<std::vector<std::string>>& fns) : ImageBackendImpl(fns) {
+	}
+
 	bool TIFFBackend::canReadImage(const std::string& image_name) {
 		// Check the file ends with a known and good extension, and then check we can open it.
 		std::size_t extPos = image_name.find_last_of(".");
@@ -49,12 +52,6 @@ namespace Image {
 		parseThread.detach();
 
 		return parseTask;
-	}
-
-	std::size_t TIFFBackend::getVoxelDimensionality() {
-		/* The parse image info function will have weeded out any images that don't fit the scheme of the
-		 * images loaded (in order to have a consistent image). */
-		return static_cast<std::size_t>(this->frames[0]->samplesPerPixel);
 	}
 
 }
