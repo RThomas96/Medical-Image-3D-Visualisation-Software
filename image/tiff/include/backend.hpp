@@ -75,6 +75,16 @@ namespace Image {
 			/// @warning Can only work for this TIFF implementation, not any derived classes ! (OME-TIFF)
 			virtual void parseImageInfo_thread(ThreadedTask::Ptr& task) override;
 
+			/// @b Creates the right type of image backend to process this type of image.
+			virtual void createTiffBackend(int tiff_tag, uint16_t bps);
+
+			/// @b Checks all files are valid, before starting to parse them
+			/// @details Will check we have the right
+			virtual bool checkFilenamesAreValid(ThreadedTask::Ptr&) const;
+
+			/// @b Cleans up the resources of the TIFF backend. Also removes the pImpl pointer.
+			virtual void internal_cleanup_after_error(void) override;
+
 		protected:
 #ifdef PIMPL_USE_EXPERIMENTAL_PROPAGATE_CONST
 			/// @b The pointer which can interface directly with the files on disk.

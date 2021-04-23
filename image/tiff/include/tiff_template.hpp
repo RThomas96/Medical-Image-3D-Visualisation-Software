@@ -17,6 +17,10 @@ namespace Tiff {
 			/// @b Default dtor for the backend, which releases the cached data.
 			virtual ~TIFFReader(void) { this->cachedSlices.clearCache(); };
 
+			static TIFFPrivate::Ptr createTIFFBackend(void) {
+				return TIFFPrivate::Ptr(new TIFFReader<img_t>());
+			}
+
 			/// @b Returns the range of values present (or representable) in the file, converted to the 'target_t' type.
 			template <typename target_t> void getRangeValues(glm::vec<2, target_t, glm::defaultp>& _range) const;
 

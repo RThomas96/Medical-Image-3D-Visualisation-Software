@@ -15,18 +15,10 @@ namespace Image {
 namespace Tiff {
 
 	/// @b Redirects the error messages from the TIFF files.
-	void tiff_error_redirection(const char* module, const char* fmt, va_list _va_) {
-		UNUSED_PARAMETER(module)
-		UNUSED_PARAMETER(fmt)
-		UNUSED_PARAMETER(_va_)
-	}
+	void tiff_error_redirection(const char* module, const char* fmt, va_list _va_);
 
 	/// @b Redirects the warning messages from the TIFF files.
-	void tiff_warning_redirection(const char* module, const char* fmt, va_list _va_) {
-		UNUSED_PARAMETER(module)
-		UNUSED_PARAMETER(fmt)
-		UNUSED_PARAMETER(_va_)
-	}
+	void tiff_warning_redirection(const char* module, const char* fmt, va_list _va_);
 
 	struct Frame {
 		public:
@@ -39,16 +31,23 @@ namespace Tiff {
 			/// @b Default dtor, which releases the information required by this frame
 			~Frame(void) = default;
 
-			/// @b Loads information from the TIFF file, in order to parse it efficiently later.
-			/// @warning This TIFF frame implementation only supports one sample per pixel, for now.
-			void loadTIFFInfo(std::string_view sourceFile) noexcept(false);
-
 			/// @b Returns true if the two frames are 'compatible'.
 			/// @details Two frames are considered compatible if and only if they have the same width & the same height.
 			/// Anything else is not taken into account, for example if we have one frame which has two samples per
 			/// pixel and another which has only one, they are still considered compatible if they have the same width
 			/// and height.
 			bool isCompatibleWith(const Frame& f);
+
+			/// @b Returns the value of TIFFTAG_SAMPLEFORMAT from the opened frame.
+			int getInternalType(void) const;
+
+			/// @b Extracts the number of directories of a given file.
+			static tdir_t numberOfDirectories(std::string_view fname);
+
+		protected:
+			/// @b Loads information from the TIFF file, in order to parse it efficiently later.
+			/// @warning This TIFF frame implementation only supports one sample per pixel, for now.
+			void loadTIFFInfo(std::string_view sourceFile) noexcept(false);
 
 		public:
 			/// @b The filename of the TIFF file this frame is located in.
@@ -67,6 +66,8 @@ namespace Tiff {
 			uint16_t bitsPerSample;
 			/// @b The number of strips per image.
 			uint64_t stripsPerImage;
+			/// @b The internal data representation of the file.
+			uint16_t sampleFormat;
 
 	};
 

@@ -50,7 +50,11 @@ namespace Tiff {
 			/// @b Add a fully specified image to the stack.
 			TIFFPrivate& addImage(TIFFImage& img);
 
-			TIFFPrivate& setVoxelDimension(std::size_t dim);
+			/// @b Sets the voxel dimensions, if the file format specifies it.
+			TIFFPrivate& setDimensionality(std::size_t dim);
+
+			/// @b returns the internal type represented by the images.
+			ImageDataType getInternalType(void) const;
 
 			/// @b If the value range of the image is defined elsewhere (like OME-TIFF specifies) we can set it here.
 			template <typename source_t> void setRangeValues(glm::vec<2, source_t, glm::defaultp>& _range);

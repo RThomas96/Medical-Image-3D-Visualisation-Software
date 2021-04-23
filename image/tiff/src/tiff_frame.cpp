@@ -9,6 +9,19 @@ namespace Image {
 
 namespace Tiff {
 
+	/// @b Redirects the error messages from the TIFF files.
+	void tiff_error_redirection(const char* module, const char* fmt, va_list _va_) {
+		UNUSED_PARAMETER(module)
+		UNUSED_PARAMETER(fmt)
+		UNUSED_PARAMETER(_va_)
+	}
+
+	void tiff_warning_redirection(const char* module, const char* fmt, va_list _va_) {
+		UNUSED_PARAMETER(module)
+		UNUSED_PARAMETER(fmt)
+		UNUSED_PARAMETER(_va_)
+	}
+
 	Frame::Frame(const std::string& fname, const tdir_t dirOff) : sourceFile(fname), directoryOffset(dirOff) {
 		this->width = 0;
 		this->height = 0;
@@ -16,8 +29,22 @@ namespace Tiff {
 		this->samplesPerPixel = 0;
 		this->stripsPerImage = 0;
 		this->bitsPerSample = 0;
+		this->sampleFormat = 0;
 
 		this->loadTIFFInfo(fname);
+	}
+
+	bool Frame::isCompatibleWith(const Frame &f) {
+		bool width_compatible = this->width == f.width;
+		bool height_compatible = this->height == f.height;
+		return width_compatible && height_compatible;
+	}
+
+	tdir_t Frame::numberOfDirectories(std::string_view fname) {
+		TIFF* file = TIFFOpen(fname.data(), "r");
+		tdir_t nb = TIFFNumberOfDirectories(file);
+		TIFFClose(file);
+		return nb;
 	}
 
 	void Frame::loadTIFFInfo(std::string_view fname) {
@@ -42,13 +69,12 @@ namespace Tiff {
 			}
 
 			// Check the sample format of the directory :
-			uint16_t sampleformat = SAMPLEFORMAT_UINT;
-			result = TIFFGetField(file, TIFFTAG_SAMPLEFORMAT, &sampleformat);
+			result = TIFFGetField(file, TIFFTAG_SAMPLEFORMAT, &this->sampleFormat);
 			if (result != 1) {
 				// Some images do not have a default-given field for the sample format, so
 				// assign one now in order to parse the file regardless :
-				result = TIFFGetFieldDefaulted(file, TIFFTAG_SAMPLEFORMAT, &sampleformat);
-				if (result != 1) { sampleformat = SAMPLEFORMAT_UINT; }
+				result = TIFFGetFieldDefaulted(file, TIFFTAG_SAMPLEFORMAT, &this->sampleFormat);
+				if (result != 1) { this->sampleFormat = SAMPLEFORMAT_UINT; }
 			}
 
 			uint16_t pconfig = 0;

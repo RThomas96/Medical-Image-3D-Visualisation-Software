@@ -21,6 +21,8 @@ FIND_PACKAGE(TinyTIFF REQUIRED PATHS ${CMAKE_CURRENT_LIST_DIR}/third_party/compi
 
 ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/third_party/glm)
 
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/image)
+
 # Library for image reading/writing {{{
 ADD_LIBRARY(ImageIO STATIC
 	./image/include/reader.hpp
@@ -39,6 +41,7 @@ TARGET_INCLUDE_DIRECTORIES(ImageIO
 )
 TARGET_LINK_LIBRARIES(ImageIO
 	PUBLIC TinyTIFF
+	PUBLIC grid_tiff_backend
 	PUBLIC ${libTIFF}
 	PUBLIC Qt5::Xml
 )

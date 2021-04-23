@@ -65,7 +65,7 @@ namespace Image {
 			}
 
 			/// @brief Loads the data into the cache, cleearing up a space if necessary.
-			void loadData(const index_t index, data_t_ptr& data) {
+			std::size_t loadData(const index_t index, data_t_ptr& data) {
 				// If we already have filled the vector, wrap around with the help of lastInsertedElement :
 				if (this->m_data.size() == this->maxCachedElements) {
 					// Might need to wrap around :
@@ -79,7 +79,7 @@ namespace Image {
 					this->lastInsertedElement = this->m_data.size();
 					this->m_data.emplace_back(index, data);
 				}
-				return;
+				return this->lastInsertedElement;
 			}
 
 			/// @brief Clears the cache manually.

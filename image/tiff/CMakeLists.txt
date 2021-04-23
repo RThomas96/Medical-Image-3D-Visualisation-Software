@@ -8,7 +8,7 @@ ENDIF()
 # libTIFF : libtiff's path to the compiled lib
 # libTIFF_HEADER_DIR : path to libtiff headers
 
-ADD_LIBRARY(grid_tiff_backend
+ADD_LIBRARY(grid_tiff_backend SHARED
 	src/backend.cpp
 	src/tiff_frame.cpp
 	src/tiff_private.cpp
@@ -21,9 +21,10 @@ ADD_LIBRARY(grid_tiff_backend
 )
 TARGET_INCLUDE_DIRECTORIES(grid_tiff_backend
 	PUBLIC ${libTIFF_HEADER_DIR}
-	// Also add GLM headers here !
+	# Also add GLM headers here !
 )
 TARGET_LINK_LIBRARIES(grid_tiff_backend
+	PUBLIC imagegrid # Parent lib
 	PUBLIC ${libTIFF}
 )
 

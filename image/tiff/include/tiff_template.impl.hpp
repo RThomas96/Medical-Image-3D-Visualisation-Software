@@ -154,22 +154,25 @@ namespace Tiff {
 		std::size_t imgsize = width * this->voxel_dimensionalty * height;
 
 		// Read all values for all frames at index slice_idx :
-		std::vector<std::vector<img_t>> framedata(this->voxel_dimensionalty);
+		std::vector<img_t> framedata(width*height);
 		// The target vector to combine into :
-		std::vector<img_t> full_image(0);
+		std::shared_ptr<std::vector<img_t>> full_image = std::make_shared<std::vector<img_t>>(framedata.size()*this->voxel_dimensionalty);
 
+		// Result for libTIFF operations. For most ops, returns 1 on success.
 		int result = 1;
 
+		// Iterate on all planes :
 		for (std::size_t i = 0; i < this->voxel_dimensionalty; ++i) {
+			// Get the right frame :
 			const Frame::Ptr& frame = this->images[slice_idx][i];
+			// Open the file, and set it to the right directory :
 			TIFF* file = TIFFOpen(frame->sourceFile.c_str(), "r");
 			result = TIFFSetDirectory(file, frame->directoryOffset);
 			if (result != 1) { throw std::runtime_error("Could not set the directory of file "+frame->sourceFile); }
 
-			framedata[i].resize(frame->width*frame->height);
-
+			// Read all strips :
 			for (uint64_t i = 0; i < frame->stripsPerImage; ++i) {
-				tsize_t readPixelSize = 0;
+				tsize_t readPixelSize = 0; // bytes to read from file
 				if (i == frame->stripsPerImage-1) {
 					// The last strip is handled differently than the rest. Fewer bytes should be read.
 					// compute the remaining rows, to get the number of bytes :
@@ -185,7 +188,7 @@ namespace Tiff {
 				tsize_t readBytesSize = readPixelSize*(frame->bitsPerSample/8);	// strip size, in bytes
 				tsize_t stripPixelSize = frame->width * frame->rowsPerStrip;	// The size of a strip, in rows
 
-				tmsize_t read = TIFFReadEncodedStrip(file, i, framedata[i].data()+i*stripPixelSize, readBytesSize);
+				tmsize_t read = TIFFReadEncodedStrip(file, i, framedata.data()+i*stripPixelSize, readBytesSize);
 				if (read < 0) {
 					// print width for numbers :
 					std::size_t pwidth = static_cast<std::size_t>(std::ceil(std::log10(static_cast<double>(frame->stripsPerImage))));
@@ -194,8 +197,18 @@ namespace Tiff {
 				}
 			}
 
+			// Close the tiff file (mostly to free up one file descriptor) :
 			TIFFClose(file);
+
+			// Copy the strips' data to the full image :
+			typename std::vector<img_t>::iterator full_img_pos = full_image->begin() + i; // begin + current color plane queried
+			std::for_each(framedata.cbegin(), framedata.cend(), [this, &full_img_pos](const img_t pixval) -> void {
+				*full_img_pos = pixval;
+				full_img_pos += this->voxel_dimensionalty;
+			});
 		}
+
+		return this->cachedSlices.loadData(slice_idx, full_image);
 	}
 
 }

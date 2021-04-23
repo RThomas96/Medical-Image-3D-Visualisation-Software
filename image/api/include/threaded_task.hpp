@@ -4,6 +4,7 @@
 #include <atomic>
 #include <memory>
 #include <mutex>
+#include <queue>
 
 namespace Image {
 
@@ -23,6 +24,7 @@ namespace Image {
 			}
 			/// @b Default dtor for the class.
 			~ThreadedTask(void) = default;
+
 			/// @b Checks if the task is complete.
 			bool isComplete(void) {
 				bool retval = false;
@@ -32,6 +34,7 @@ namespace Image {
 				}
 				return retval;
 			}
+
 			/// @b Allows to immediately end a task.
 			void end(void) {
 				if (this->m_lock.try_lock_for(this->timeInterval)) {
@@ -45,6 +48,7 @@ namespace Image {
 				}
 				return;
 			}
+
 			/// @b Check if the task has steps.
 			bool hasSteps(void) {
 				bool retval = false;
@@ -54,6 +58,7 @@ namespace Image {
 				}
 				return retval;
 			}
+
 			/// @b Get the maximum number of steps possible
 			std::size_t getMaxSteps(void) {
 				std::size_t retval = 0;
@@ -63,6 +68,7 @@ namespace Image {
 				}
 				return retval;
 			}
+
 			/// @b Set the max number of steps for the task
 			void setSteps(std::size_t _ms) {
 				if (this->m_lock.try_lock_for(this->timeInterval)) {
@@ -71,6 +77,7 @@ namespace Image {
 				}
 				return;
 			}
+
 			/// @b Get current advancement of the task
 			std::size_t getAdvancement(void) {
 				std::size_t retval = 0;
@@ -80,6 +87,7 @@ namespace Image {
 				}
 				return retval;
 			}
+
 			void setAdvancement(std::size_t newcurrentvalue) {
 				if (this->m_lock.try_lock_for(this->timeInterval)) {
 					this->currentStep = newcurrentvalue;
@@ -87,6 +95,7 @@ namespace Image {
 				}
 				return;
 			}
+
 			/// @b Advances a step (thread-safe)
 			void advance(void) {
 				if (this->m_lock.try_lock_for(this->timeInterval)) {
@@ -95,11 +104,33 @@ namespace Image {
 				}
 				return;
 			}
+
+			/// @b Pushes a new message into the FIFO.
+			void pushMessage(std::string msg) {
+				if (this->m_lock.try_lock_for(this->timeInterval)) {
+					this->msgs.push(msg);
+					this->m_lock.unlock();
+				}
+			}
+
+			/// @b Pops the top message of the FIFO. Returns true if there still was
+			bool popMessage(std::string& msg) {
+				if (this->m_lock.try_lock_for(this->timeInterval)) {
+					if (this->msgs.empty()) { return false; }
+					// copy string, front returns ref and obj is destroyed when pop()-ed :
+					msg = std::string(this->msgs.front());
+					this->msgs.pop();
+					this->m_lock.unlock();
+					return true;
+				}
+				return false;
+			}
 		protected:
-			std::timed_mutex m_lock;				/// @b The mutex resposible for thread-safety.
-			std::atomic<std::size_t> currentStep;	/// @b The current number of steps achieved
-			std::size_t maxSteps;					/// @b The maximum number of steps. If 0, task has not been initialized.
-			std::chrono::milliseconds timeInterval;	/// @b The time interval to use for try_lock() on the mutex
+			std::timed_mutex m_lock;				///< The mutex resposible for thread-safety.
+			std::atomic<std::size_t> currentStep;	///< The current number of steps achieved
+			std::size_t maxSteps;					///< The maximum number of steps. If 0, task not initialized.
+			std::chrono::milliseconds timeInterval;	///< The time interval to use for try_lock() on the mutex
+			std::queue<std::string> msgs;			///< A queue holding all error/warning messages from the thread(s)
 	};
 }
 

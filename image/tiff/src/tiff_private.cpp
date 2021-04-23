@@ -33,13 +33,17 @@ namespace Tiff {
 	}
 
 	TIFFPrivate& TIFFPrivate::addImage(TIFFImage &img) {
+		if (img.empty()) { return *this; }
 		this->images.push_back(img);
 		return *this;
 	}
 
-	TIFFPrivate& TIFFPrivate::setVoxelDimension(std::size_t dim) {
+	TIFFPrivate& TIFFPrivate::setDimensionality(std::size_t dim) {
 		this->voxel_dimensionalty = dim;
+		return *this;
 	}
+
+	ImageDataType TIFFPrivate::getInternalType() const { return this->internal_data_type; }
 
 }
 }

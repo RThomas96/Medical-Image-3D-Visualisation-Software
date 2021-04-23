@@ -37,7 +37,7 @@ namespace Image {
 			static bool canReadImage(const std::string& image_name);
 
 			/// @b Returns the internal data type represented in the input files.
-			virtual ImageDataType getInternalDataType(void) const;
+			virtual ImageDataType getInternalDataType(void) const = 0;
 
 			/// @b Simple call to parse images, the functionnality will be added in derived classes.
 			virtual ThreadedTask::Ptr parseImageInfo(void) noexcept(false) = 0;
@@ -89,7 +89,16 @@ namespace Image {
 			/// differently depending on the derived class' implementation.
 			virtual void parseImageInfo_thread(ThreadedTask::Ptr&) noexcept(false) = 0;
 
+			/// @b Cleans up the members of this class and derivatives. Usually performed after an error.
+			/// @details This will be implemented in derived classes, because its behaviour is depdendant upon the
+			/// members of each class. Sets the class object as though it is newly created. The only thing not touched
+			/// are the filenames, in case the files on disk have changed and the user wants to reload the stack.
+			virtual void internal_cleanup_after_error(void) = 0;
+
 		protected:
+			/// @b The filenames of the implementation.
+			std::vector<std::vector<std::string>> filenames;
+
 			/// @b The internal data type representation, stored in the image.
 			ImageDataType internal_data_type;
 
