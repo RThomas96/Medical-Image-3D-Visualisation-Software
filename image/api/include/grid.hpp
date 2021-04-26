@@ -26,6 +26,7 @@ namespace Image {
 			explicit Grid(Grid::Ptr parent, svec3 begin, svec3 end);
 
 		public:
+			/// @b Default dtor of the Grid class. De-allocates averything associated with the grid.
 			virtual ~Grid(void) = default;
 
 			//////////////////////////////////////////////////////
@@ -38,6 +39,9 @@ namespace Image {
 			/// @details If such a grid cannot be created, returns nullptr. This function will iterate over the known
 			/// image backends to try and generate a right grid object which can read the data from the images as the
 			/// user requested.
+			/// @warning For now, it is a huge if/else mega function which returns a suitable grid type based on
+			/// extensions of the first few files given. Should be re-done in the future (is not suitable when many
+			/// filetypes are supported).
 			static Grid::Ptr createGrid(std::vector<std::vector<std::string>>& _filenames);
 
 			//////////////////////////////////////////////////////
@@ -86,22 +90,28 @@ namespace Image {
 			/// @note By default, returns the internal data type's min and max values.
 			/// @warning This function is left undefined here : it is implemented in derived classes, and
 			/// trying to call it directly will lead to linker errors !
-			template <typename data_t> void getRangeValues(glm::vec<2, data_t, glm::defaultp>& _range);
+			template <typename data_t> bool getRangeValues(glm::vec<2, data_t, glm::defaultp>& _range);
 
 			/// @b Template to read a single pixel's value(s) in the image.
 			/// @warning This function is left undefined here : it is implemented in derived classes, and
 			/// trying to call it directly will lead to linker errors !
-			template <typename data_t> void readPixel(svec3 index, std::vector<data_t>& values);
+			template <typename data_t> bool readPixel(svec3 index, std::vector<data_t>& values);
+
+			/// @b Template to read a single pixel's value(s) in the image.
+			/// @warning This function is left undefined here : it is implemented in derived classes, and
+			/// trying to call it directly will lead to linker errors !
+			/// @note This is the same as the function above, but accepting a (possibly) negative index
+			template <typename data_t> bool readPixel(glm::ivec3 index, std::vector<data_t>& values);
 
 			/// @b Template to read a single line of voxels in ihe image.
 			/// @warning This function is left undefined here : it is implemented in derived classes, and
 			/// trying to call it directly will lead to linker errors !
-			template <typename data_t> void readLine(svec2 line_idx, std::vector<data_t>& values);
+			template <typename data_t> bool readLine(svec2 line_idx, std::vector<data_t>& values);
 
 			/// @b Template to read a whole slice of voxels in the image at once.
 			/// @warning This function is left undefined here : it is implemented in derived classes, and
 			/// trying to call it directly will lead to linker errors !
-			template <typename data_t> void readSlice(std::size_t slice_idx, std::vector<data_t>& values);
+			template <typename data_t> bool readSlice(std::size_t slice_idx, std::vector<data_t>& values);
 
 		protected:
 #ifdef PIMPL_USE_EXPERIMENTAL_PROPAGATE_CONST
@@ -120,6 +130,46 @@ namespace Image {
 			/// @b This grid's name,
 			std::string gridName;
 	};
+
+	template <typename data_t>
+	bool Grid::readPixel(svec3 index, std::vector<data_t>& values) {
+		// Checks the position is valid, the backend implementation is valid and returns the value
+		if (index.x < this->imageSize.x && index.y < this->imageSize.y && index.z < this->imageSize.z) {
+			if (this->pImpl) {
+				this->pImpl->readPixel<data_t>(index, values);
+				return true;
+			}
+			return false;
+		}
+		// position is out of bounds :
+		return false;
+	}
+
+	template <typename data_t>
+	bool Grid::readLine(svec2 index, std::vector<data_t>& values) {
+		// Checks the position requested is valid, then calls the implementation's function if valid.
+		if (index.x < this->imageSize.y && index.y < this->imageSize.z) {
+			if (this->pImpl) {
+				this->pImpl->readLine<data_t>(index, values);
+				return true;
+			}
+			return false;
+		}
+		return false;
+	}
+
+	template <typename data_t>
+	bool Grid::readSlice(std::size_t slice_idx, std::vector<data_t>& values) {
+		// Checks the slice index is valid, then reads it if the implementation is valid :
+		if (slice_idx < this->imageSize.z) {
+			if (this->pImpl) {
+				this->pImpl->readSlice<data_t>(slice_idx, values);
+				return true;
+			}
+			return false;
+		}
+		return false;
+	}
 
 }
 
