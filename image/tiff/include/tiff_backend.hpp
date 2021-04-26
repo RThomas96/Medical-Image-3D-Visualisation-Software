@@ -1,13 +1,10 @@
 #ifndef VISUALIZATION_IMAGE_TIFF_INCLUDE_TIFF_HPP_
 #define VISUALIZATION_IMAGE_TIFF_INCLUDE_TIFF_HPP_
 
+#include "./tiff_include_common.hpp"
+
 #include "./tiff_frame.hpp"
 #include "./tiff_private.hpp"
-
-#include "../../api/include/image_api_common.hpp"
-#include "../../api/include/backend.hpp"
-#include "../../api/include/read_cache.hpp"
-#include "../../api/include/threaded_task.hpp"
 
 namespace Image {
 
@@ -51,35 +48,35 @@ namespace Image {
 			/// @b Returns the dimensions of the image.
 			virtual svec3 getResolution(void) const override;
 
-			/// @b Returns the image bounding box, either as computed (voxel sizes x res), or defined in file.
-			virtual BoundingBox_General<float> getBoundingBox(void) const override;
-
 			/// @b Template to return the minimum and maximum values stored in the file, if given.
 			/// @note For the regular TIFF files, returns the internal data type's min and max values.
 			/// @note This will call `pImpl->getRangeValues<>();`.
-			template <typename data_t> void getRangeValues(glm::vec<2, data_t, glm::defaultp>& _range);
+			template <typename data_t> bool getRangeValues(glm::vec<2, data_t, glm::defaultp>& _range);
 
 			/// @b Template to read a single pixel's value(s) in the image.
 			/// @note This will call `pImpl->readPixel<>();`.
-			template <typename data_t> void readPixel(svec3 index, std::vector<data_t>& values);
+			template <typename data_t> bool readPixel(svec3 index, std::vector<data_t>& values);
 
 			/// @b Template to read a single line of voxels in ihe image.
 			/// @note This will call `pImpl->readLine<>();`.
-			template <typename data_t> void readLine(svec2 line_idx, std::vector<data_t>& values);
+			template <typename data_t> bool readLine(svec2 line_idx, std::vector<data_t>& values);
 
 			/// @b Template to read a whole slice of voxels in the image at once.
 			/// @note This will call `pImpl->readSlice<>();`.
-			template <typename data_t> void readSlice(std::size_t slice_idx, std::vector<data_t>& values);
+			template <typename data_t> bool readSlice(std::size_t slice_idx, std::vector<data_t>& values);
+
 		protected:
 			/// @b Parses the information from the images in a separate thread.
 			/// @warning Can only work for this TIFF implementation, not any derived classes ! (OME-TIFF)
 			virtual void parseImageInfo_thread(ThreadedTask::Ptr& task) override;
 
 			/// @b Creates the right type of image backend to process this type of image.
-			virtual void createTiffBackend(int tiff_tag, uint16_t bps);
+			/// @param reference_frame The frame used to get the settings of the concrete backend object
+			/// @return	A TIFF implementation that can be used to parse the frames in input
+			virtual void createTiffBackend(Tiff::Frame::Ptr reference_frame);
 
 			/// @b Checks all files are valid, before starting to parse them
-			/// @details Will check we have the right
+			/// @details Will check we have the same number of files per component loaded in memory.
 			virtual bool checkFilenamesAreValid(ThreadedTask::Ptr&) const;
 
 			/// @b Cleans up the resources of the TIFF backend. Also removes the pImpl pointer.
@@ -97,30 +94,30 @@ namespace Image {
 
 	/// @b Returns the data read by the pImpl pointer in this class.
 	template <typename data_t>
-	void TIFFBackend::getRangeValues(glm::vec<2, data_t, glm::defaultp>& _range) {
-		if (this->pImpl) { this->pImpl->getRangeValues<data_t>(_range); }
-		return;
+	bool TIFFBackend::getRangeValues(glm::vec<2, data_t, glm::defaultp>& _range) {
+		if (this->pImpl) { this->pImpl->getRangeValues<data_t>(_range); return true; }
+		return false;
 	}
 
 	/// @b Returns the data read by the pImpl pointer in this class.
 	template <typename data_t>
-	void TIFFBackend::readPixel(svec3 index, std::vector<data_t>& values) {
-		if (this->pImpl) { this->pImpl->readPixel<data_t>(index, values); }
-		return;
+	bool TIFFBackend::readPixel(svec3 index, std::vector<data_t>& values) {
+		if (this->pImpl) { this->pImpl->readPixel<data_t>(index, values); return true; }
+		return false;
 	}
 
 	/// @b Returns the data read by the pImpl pointer in this class.
 	template <typename data_t>
-	void TIFFBackend::readLine(svec2 index, std::vector<data_t>& values) {
-		if (this->pImpl) { this->pImpl->readLine<data_t>(index, values); }
-		return;
+	bool TIFFBackend::readLine(svec2 index, std::vector<data_t>& values) {
+		if (this->pImpl) { this->pImpl->readLine<data_t>(index, values); return true; }
+		return false;
 	}
 
 	/// @b Returns the data read by the pImpl pointer in this class.
 	template <typename data_t>
-	void TIFFBackend::readSlice(std::size_t index, std::vector<data_t>& values) {
-		if (this->pImpl) { this->pImpl->readSlice<data_t>(index, values); }
-		return;
+	bool TIFFBackend::readSlice(std::size_t index, std::vector<data_t>& values) {
+		if (this->pImpl) { this->pImpl->readSlice<data_t>(index, values); return true; }
+		return false;
 	}
 
 } // namespace Image

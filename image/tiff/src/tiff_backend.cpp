@@ -1,4 +1,4 @@
-#include "../include/backend.hpp"
+#include "../include/tiff_backend.hpp"
 
 #include "../include/tiff_template.hpp"
 
@@ -85,22 +85,33 @@ namespace Image {
 
 		try {
 			// Allocate the right backend for this task :
-			this->createTiffBackend(reference_frame->sampleFormat, reference_frame->bitsPerSample);
+			this->createTiffBackend(reference_frame);
 		} catch (std::runtime_error _e) {
 			task->pushMessage(std::string("Error while creating TIFF reading backend.\nError message : ")+_e.what());
 			task->end();
 			return;
 		}
 
+		// Get some info about the reference frame :
+		TIFF* reference_handle = reference_frame->getLibraryHandle();
+		uint32_t w = reference_frame->width(reference_handle);
+		uint32_t h = reference_frame->height(reference_handle);
+		uint16_t bps = reference_frame->bitsPerSample(reference_handle);
+		TIFFClose(reference_handle);
+
 		// We can already set the dimensionality of the dataset :
 		this->dimensionality = this->filenames.size();
-		std::size_t total_frame_count = 0;
+		// Since checkFilenamesAreValid() returned true, the # of frames (Z-depth) is set into task->maxSteps !
+		// We can thus already set the image resolution here :
+		this->imageResolution = svec3(w, h, task->getMaxSteps());
+		// We can also set some other known data here :
+		this->voxelDimensions = glm::vec3(1.f, 1.f, 1.f);
+		this->internal_data_type = this->pImpl->getInternalType();
 
 		// Iterate on all filenames, extract frames :
 		for (std::size_t name_it = 0; name_it < this->filenames[0].size(); ++name_it) {
 			// Number of frames inside the current file :
-			tsize_t dirSize = Tiff::Frame::numberOfDirectories(this->filenames[name_it][0]);
-			total_frame_count += dirSize;
+			tsize_t dirSize = Tiff::countDirectories(this->filenames[name_it][0]);
 
 			// Iterate on all frames :
 			for (tdir_t fr_it = 0; fr_it < dirSize; ++fr_it) {
@@ -113,9 +124,9 @@ namespace Image {
 						// Create and push back a new frame of this filename, at IFD index 'fr_it' :
 						Tiff::Frame::Ptr fr = std::make_shared<Tiff::Frame>(this->filenames[c_it][name_it], fr_it);
 						// If the frame's not compatible, return error to the user :
-						if (reference_frame->isCompatibleWith(*fr) == false) {
+						if (fr->isCompatibleWith(w, h, bps) == false) {
 							std::string err = "WARNING: Frame "+std::to_string(fr_it)+", ch. "+std::to_string(c_it)+
-											" does not have the same resolution as the reference frames. Skipping ...";
+											" does not have the same resolution as the reference frames. Stopping ...";
 							task->pushMessage(err);
 							imgframes.clear();
 							task->end();
@@ -139,50 +150,54 @@ namespace Image {
 			}
 		}
 
-		this->imageResolution = svec3(reference_frame->width, reference_frame->height, total_frame_count);
-		this->voxelDimensions = glm::vec3(1.f, 1.f, 1.f);
-		this->internal_data_type = this->pImpl->getInternalType();
-
 		task->end();
 		return;
 	}
-
-	BoundingBox_General<float> TIFFBackend::getBoundingBox() const { return this->imageBoundingBox; }
 
 	svec3 TIFFBackend::getResolution() const {
 		return this->imageResolution;
 	}
 
-	void TIFFBackend::createTiffBackend(int tiff_tag, uint16_t bps) {
-		switch (tiff_tag) {
+	void TIFFBackend::createTiffBackend(Tiff::Frame::Ptr reference_frame) {
+		// get the file handle by libtiff :
+		TIFF* f = reference_frame->getLibraryHandle();
+		// get the number of bits per pixel :
+		uint16_t bps = reference_frame->bitsPerSample(f);
+		// get frame information :
+		uint32_t w = reference_frame->width(f);
+		uint32_t h = reference_frame->height(f);
+		uint16_t sf = reference_frame->sampleFormat(f);
+		TIFFClose(f);
+
+		switch (sf) {
 			case SAMPLEFORMAT_VOID:
 				throw std::runtime_error("Internal type of the frame was void.");
 			break;
 
 			case SAMPLEFORMAT_UINT: {
-				if (bps == 8) { this->pImpl = Tiff::TIFFReader<std::uint8_t>::createTIFFBackend(); return; }
-				if (bps == 16) { this->pImpl = Tiff::TIFFReader<std::uint16_t>::createTIFFBackend(); return; }
-				if (bps == 32) { this->pImpl = Tiff::TIFFReader<std::uint32_t>::createTIFFBackend(); return; }
-				if (bps == 64) { this->pImpl = Tiff::TIFFReader<std::uint64_t>::createTIFFBackend(); return; }
+				if (bps == 8) { this->pImpl = Tiff::TIFFReader<std::uint8_t>::createTIFFBackend(w, h); return; }
+				if (bps == 16) { this->pImpl = Tiff::TIFFReader<std::uint16_t>::createTIFFBackend(w, h); return; }
+				if (bps == 32) { this->pImpl = Tiff::TIFFReader<std::uint32_t>::createTIFFBackend(w, h); return; }
+				if (bps == 64) { this->pImpl = Tiff::TIFFReader<std::uint64_t>::createTIFFBackend(w, h); return; }
 				std::string err = "Sample was UInt, but no matching ctor was found for "+std::to_string(bps) + " bits.";
 				throw std::runtime_error(err);
 			}
 			break;
 
 			case SAMPLEFORMAT_INT: {
-				if (bps == 8) { this->pImpl = Tiff::TIFFReader<std::int8_t>::createTIFFBackend(); return; }
-				if (bps == 16) { this->pImpl = Tiff::TIFFReader<std::int16_t>::createTIFFBackend(); return; }
-				if (bps == 32) { this->pImpl = Tiff::TIFFReader<std::int32_t>::createTIFFBackend(); return; }
-				if (bps == 64) { this->pImpl = Tiff::TIFFReader<std::int64_t>::createTIFFBackend(); return; }
+				if (bps == 8) { this->pImpl = Tiff::TIFFReader<std::int8_t>::createTIFFBackend(w, h); return; }
+				if (bps == 16) { this->pImpl = Tiff::TIFFReader<std::int16_t>::createTIFFBackend(w, h); return; }
+				if (bps == 32) { this->pImpl = Tiff::TIFFReader<std::int32_t>::createTIFFBackend(w, h); return; }
+				if (bps == 64) { this->pImpl = Tiff::TIFFReader<std::int64_t>::createTIFFBackend(w, h); return; }
 				std::string err = "Sample was Int, but no matching ctor was found for "+std::to_string(bps) + " bits.";
 				throw std::runtime_error(err);
 			}
 			break;
 
 			case SAMPLEFORMAT_IEEEFP: {
-				if (bps == 32) { this->pImpl = Tiff::TIFFReader<float>::createTIFFBackend(); return; }
-				if (bps == 64) { this->pImpl = Tiff::TIFFReader<double>::createTIFFBackend(); return; }
-				std::string err = "Sample was floatint point , but no matching ctor was found for "+std::to_string(bps)
+				if (bps == 32) { this->pImpl = Tiff::TIFFReader<float>::createTIFFBackend(w, h); return; }
+				if (bps == 64) { this->pImpl = Tiff::TIFFReader<double>::createTIFFBackend(w, h); return; }
+				std::string err = "Sample was floating point , but no matching ctor was found for "+std::to_string(bps)
 								+ " bits.";
 				throw std::runtime_error(err);
 			}
@@ -221,9 +236,9 @@ namespace Image {
 		// Then, for each file in the components, we have to check it has the same # of directories :
 		for (std::size_t i = 0; i < this->filenames[0].size(); ++i) {
 			// ref for component 0 :
-			tdir_t ref_frame_count = Tiff::Frame::numberOfDirectories(this->filenames[0][i]);
+			tdir_t ref_frame_count = Tiff::countDirectories(this->filenames[0][i]);
 			for (tdir_t j = 0; j < this->filenames.size();	++j) {
-				tdir_t cur_frame_count = Tiff::Frame::numberOfDirectories(this->filenames[j][i]);
+				tdir_t cur_frame_count = Tiff::countDirectories(this->filenames[j][i]);
 				if (cur_frame_count != ref_frame_count) {
 					std::string err = "Error : file \"" + this->filenames[j][i] + " contained " +
 										std::to_string(cur_frame_count) + " instead of the " +

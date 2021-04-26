@@ -9,13 +9,17 @@ ENDIF()
 # libTIFF_HEADER_DIR : path to libtiff headers
 
 ADD_LIBRARY(grid_tiff_backend SHARED
-	src/backend.cpp
+	src/tiff_backend.cpp
 	src/tiff_frame.cpp
 	src/tiff_private.cpp
+	src/tiff_helpers.cpp
 
-	include/backend.hpp
+	include/tiff_include_common.hpp
+
+	include/tiff_backend.hpp
 	include/tiff_frame.hpp
 	include/tiff_private.hpp
+	include/tiff_helpers.hpp
 	include/tiff_template.hpp
 	include/tiff_template.impl.hpp
 )

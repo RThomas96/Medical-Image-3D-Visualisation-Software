@@ -61,24 +61,28 @@ namespace Image {
 
 			/// @b Template to return the minimum and maximum values stored in the file, if given.
 			/// @note By default, returns the internal data type's min and max values.
+			/// @return True if the data could be accessed, and false if something went wrong.
 			/// @warning This function is left undefined here : it is implemented in derived classes, and
 			/// trying to call it directly will lead to linker errors !
-			template <typename data_t> void getRangeValues(glm::vec<2, data_t, glm::defaultp>& _range);
+			template <typename data_t> bool getRangeValues(glm::vec<2, data_t, glm::defaultp>& _range);
 
 			/// @b Template to read a single pixel's value(s) in the image.
+			/// @return True if the data could be accessed, and false if something went wrong.
 			/// @warning This function is left undefined here : it is implemented in derived classes, and
 			/// trying to call it directly will lead to linker errors !
-			template <typename data_t> void readPixel(svec3 index, std::vector<data_t>& values);
+			template <typename data_t> bool readPixel(svec3 index, std::vector<data_t>& values);
 
 			/// @b Template to read a single line of voxels in ihe image.
+			/// @return True if the data could be accessed, and false if something went wrong.
 			/// @warning This function is left undefined here : it is implemented in derived classes, and
 			/// trying to call it directly will lead to linker errors !
-			template <typename data_t> void readLine(svec2 line_idx, std::vector<data_t>& values);
+			template <typename data_t> bool readLine(svec2 line_idx, std::vector<data_t>& values);
 
 			/// @b Template to read a whole slice of voxels in the image at once.
+			/// @return True if the data could be accessed, and false if something went wrong.
 			/// @warning This function is left undefined here : it is implemented in derived classes, and
 			/// trying to call it directly will lead to linker errors !
-			template <typename data_t> void readSlice(std::size_t slice_idx, std::vector<data_t>& values);
+			template <typename data_t> bool readSlice(std::size_t slice_idx, std::vector<data_t>& values);
 
 		protected:
 			/// @b Parse image info in a single thread. Useful for things that are _not_ parallelizable.
@@ -102,16 +106,14 @@ namespace Image {
 			/// @b The internal data type representation, stored in the image.
 			ImageDataType internal_data_type;
 
-			/// @b The voxel dimensions, as parsed by the discrete implementation in derived classes.
-			glm::vec3 voxelDimensions;
+			/// @b The image resolution, as parsed by the discrete implementation in derived classes.
+			svec3 imageResolution;
 
 			/// @b The number of components per voxel. Its extraction depends on the derived implementation used.
 			std::size_t dimensionality;
 
-			/// @b The image resolution, as parsed by the discrete implementation in derived classes.
-			svec3 imageResolution;
-
-			BoundingBox_General<float> imageBoundingBox;
+			/// @b The voxel dimensions, as parsed by the discrete implementation in derived classes.
+			glm::vec3 voxelDimensions;
 	};
 
 } // namespace Image

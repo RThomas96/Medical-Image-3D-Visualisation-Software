@@ -1,18 +1,9 @@
 #ifndef VISUALIZATION_IMAGE_TIFF_INCLUDE_TIFF_PRIVATE_HPP_
 #define VISUALIZATION_IMAGE_TIFF_INCLUDE_TIFF_PRIVATE_HPP_
 
+#include "./tiff_include_common.hpp"
+
 #include "./tiff_frame.hpp"
-
-#include "../../api/include/image_api_common.hpp"
-#include "../../api/include/read_cache.hpp"
-#include "../../api/include/threaded_task.hpp"
-
-#include <tiff.h>
-#include <tiffio.h>
-
-#include <string>
-#include <vector>
-#include <memory>
 
 namespace Image {
 namespace Tiff {
@@ -32,7 +23,7 @@ namespace Tiff {
 
 		protected:
 			/// @b Default ctor.
-			TIFFPrivate();
+			TIFFPrivate(uint32_t w, uint32_t h);
 
 		public:
 			/// @b Default dtor for the backend, which releases the cached data.
@@ -78,14 +69,26 @@ namespace Tiff {
 			template <typename data_t> void readSlice(std::size_t slice_idx, std::vector<data_t>& values);
 
 		protected:
+			/// @b The loaded frames, which are created by the parsing function.
+			std::vector<TIFFImage> images;
+
 			/// @b The internal data type represented by the struct.
 			ImageDataType internal_data_type;
 
+			/// @b The number of bits per sample in the internal representation of the file.
+			uint16_t bitsPerSample;
+
+			/// @b The sample format used (from libTIFF macros)
+			uint16_t sampleFormat;
+
+			/// @b The width of the frames
+			uint32_t width;
+
+			/// @b The height of the frames
+			uint32_t height;
+
 			/// @b The number of components in a voxel for this image.
 			std::size_t voxel_dimensionalty;
-
-			/// @b The loaded frames, which are created by the parsing function.
-			std::vector<TIFFImage> images;
 	};
 
 }

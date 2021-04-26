@@ -3,10 +3,10 @@
 namespace Image {
 namespace Tiff {
 
-	TIFFPrivate::TIFFPrivate() {
+	TIFFPrivate::TIFFPrivate(uint32_t w, uint32_t h) {
+		UNUSED_PARAMETER(w)
+		UNUSED_PARAMETER(h)
 		this->internal_data_type = ImageDataType::Unknown;
-		this->voxel_dimensionalty = 0;
-		this->images.clear();
 	}
 
 	TIFFPrivate& TIFFPrivate::resizeImages(std::size_t imgcount) {

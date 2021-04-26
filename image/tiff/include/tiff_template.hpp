@@ -2,7 +2,6 @@
 #define VISUALIZATION_IMAGE_TIFF_INCLUDE_TIFF_TEMPLATE_HPP_
 
 #include "./tiff_private.hpp"
-#include "../../api/include/read_cache.hpp"
 
 namespace Image {
 namespace Tiff {
@@ -12,17 +11,20 @@ namespace Tiff {
 		public:
 			typedef ReadCache<std::size_t, std::vector<img_t>> cache_t;
 		protected:
-			TIFFReader();
+			TIFFReader(uint32_t w, uint32_t h);
 		public:
 			/// @b Default dtor for the backend, which releases the cached data.
 			virtual ~TIFFReader(void) { this->cachedSlices.clearCache(); };
 
-			static TIFFPrivate::Ptr createTIFFBackend(void) {
-				return TIFFPrivate::Ptr(new TIFFReader<img_t>());
+			static TIFFPrivate::Ptr createTIFFBackend(uint32_t width, uint32_t height) {
+				return TIFFPrivate::Ptr(new TIFFReader<img_t>(width, height));
 			}
 
 			/// @b Returns the range of values present (or representable) in the file, converted to the 'target_t' type.
-			template <typename target_t> void getRangeValues(glm::vec<2, target_t, glm::defaultp>& _range) const;
+			template <typename source_t> TIFFReader& setRangeValues(glm::vec<2, source_t, glm::defaultp>& _range);
+
+			/// @b Returns the range of values present (or representable) in the file, converted to the 'target_t' type.
+			template <typename target_t> bool getRangeValues(glm::vec<2, target_t, glm::defaultp>& _range) const;
 
 			/// @b Template to read a single pixel's value(s) in the image.
 			/// @note This will call `pImpl->readPixel<>();`.
