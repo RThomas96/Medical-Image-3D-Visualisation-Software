@@ -21,6 +21,7 @@ class Viewer : public QGLViewer {
 		~Viewer();
 		/// @brief Multiplier to apply to scene radii for the scene's view.
 		static float sceneRadiusMultiplier;
+		void addStatusBar(QStatusBar* bar);
 	protected:
 		/// @brief Initializes the scene, and the viewer's variables.
 		virtual void init() override;
@@ -51,6 +52,8 @@ class Viewer : public QGLViewer {
 		bool drawVolumetric;
 		/// @brief A refresh timer for the viewer, to update in real time.
 		QTimer* refreshTimer;
+		/// @brief the program's status bar
+		QStatusBar* statusbar;
 		/// @b Should we capture a frame ?
 		bool shouldCapture;
 		/// @b Is the Ctrl key pressed down ?

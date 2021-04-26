@@ -18,6 +18,8 @@ class PlanarViewer : public QGLViewer {
 		PlanarViewer(Scene* const _scene, planes _p, planeHeading _h = North, QWidget* parent = nullptr);
 		/// @brief Default destructor for the viewer.
 		~PlanarViewer(void);
+		/// @b Links with the parent widget, to have access to the statusbar :)
+		void addParentStatusBar(QStatusBar* main);
 	protected:
 		/// @brief Initializes the scene, and the viewer's variables.
 		virtual void init(void) override;
@@ -52,6 +54,7 @@ class PlanarViewer : public QGLViewer {
 		QTimer* refreshTimer;			///< Triggers a scene reload
 		planeHeading planeOrientation;	///< This plane's orientation
 		ViewerHeader* viewerController;	///< The widget that controls this widget
+		QStatusBar* statusbar;			///< The main statusbar !
 
 		glm::ivec2 posRequest;			///< A texture position request for the render
 		GLuint renderTarget;			///< The texture to render to for additional info

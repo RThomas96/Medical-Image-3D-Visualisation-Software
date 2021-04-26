@@ -36,6 +36,7 @@ Viewer::Viewer(Scene* const scene, QWidget* parent) :
 	this->cursorPos_last = glm::ivec2{0,0};
 	this->framesHeld = 0;
 	this->posRequest = glm::ivec2{-1,-1};
+	this->statusbar = nullptr;
 }
 
 Viewer::~Viewer() {
@@ -60,6 +61,8 @@ void Viewer::init() {
 	this->refreshTimer->start(); // Update every 'n' milliseconds from here on out
 }
 
+void Viewer::addStatusBar(QStatusBar *bar) { this->statusbar = bar; }
+
 void Viewer::draw() {
 	GLfloat mvMat[16];
 	GLfloat pMat[16];
@@ -76,8 +79,18 @@ void Viewer::draw() {
 
 	if (this->posRequest.x > -1) {
 		glm::vec4 p = this->scene->readFramebufferContents(this->defaultFramebufferObject(), this->posRequest);
-		if (p.w > .01f) {
+		if (p.w > .01f && this->statusbar != nullptr) {
 			std::cerr << "3D viewer : Value in fbo : {" << p.x << ", " << p.y << ", " << p.z << ", " << p.w << "}\n";
+			auto all_input = this->scene->getInputGrids();
+			for (const auto& grid : all_input) {
+				using sizevec3 = glm::vec<3, std::size_t, glm::defaultp>;
+				sizevec3 index = sizevec3(0, 0, 0);
+				QString msg = "Message from 3D viewer ";
+				if (grid->indexFromWorldSpace(p, index)) {
+					msg += "Index in picture : " + QString::number(index.x) + ", " + QString::number(index.y) + ", " + QString::number(index.z);
+					this->statusbar->showMessage(msg, 5000);
+				}
+			}
 		}
 		this->posRequest = glm::ivec2{-1,-1};
 	}

@@ -162,6 +162,22 @@ glm::vec4 DiscreteGrid::toWorldSpace(glm::vec4 pos_gs) const {
 	return this->transform_gridToWorld * pos_gs;
 }
 
+bool DiscreteGrid::indexFromWorldSpace(glm::vec4 pos_ws, sizevec3 &index) const {
+	// Convert to grid space :
+	glm::vec4 pos_gs = this->toGridSpace(pos_ws);
+	//if (this->includesPointGridSpace(pos_gs)) {
+		// Convert to index :
+		DiscreteGrid::bbox_t::vec minBB = this->boundingBox.getMin();
+		/// If the grid is offline, we don't want to divide the indices (can be divided in case the grid was downsampled)
+		glm::vec3 vxDiv = this->gridReader->getOriginalVoxelDimensions();
+		index.x = static_cast<std::size_t>(std::floor((pos_gs.x - minBB.x) / vxDiv.x));
+		index.y = static_cast<std::size_t>(std::floor((pos_gs.y - minBB.y) / vxDiv.y));
+		index.z = static_cast<std::size_t>(std::floor((pos_gs.z - minBB.z) / vxDiv.z));
+		return true;
+	//}
+	return false;
+}
+
 DiscreteGrid::DataType DiscreteGrid::fetchTexelWorldSpace(glm::vec4 pos_ws, bool verbose) const {
 	if (verbose) { std::cerr << "texelWorldSpace() {" << pos_ws.x << ',' << pos_ws.y << ',' << pos_ws.z << ',' << pos_ws.a << "} ... "; }
 	glm::vec4 pos_gs = this->toGridSpace(pos_ws);

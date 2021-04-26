@@ -95,6 +95,9 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 		/// @brief Returns the given point (originally grid space) in world space.
 		virtual glm::vec4 toWorldSpace(glm::vec4 pos_gs) const;
 
+		/// @brief Estimates the index (in the grid) of the point pos_ws, and returns true if it can be found.
+		virtual bool indexFromWorldSpace(glm::vec4 pos_ws, sizevec3& index) const;
+
 		/// @brief Fetches the voxel at the given position, in grid space.
 		virtual DataType fetchTexelGridSpace(glm::vec4 pos_gs, bool verbose = false) const;
 

@@ -150,6 +150,11 @@ void MainWidget::setupWidgets() {
 	this->controlPanel = new ControlPanel(this->scene, this->viewer, nullptr);
 	this->scene->setControlPanel(this->controlPanel);
 
+	this->viewer->addStatusBar(this->statusBar);
+	this->viewer_planeX->addParentStatusBar(this->statusBar);
+	this->viewer_planeY->addParentStatusBar(this->statusBar);
+	this->viewer_planeZ->addParentStatusBar(this->statusBar);
+
 	// Sliders for each plane (also sets range and values) :
 	this->header3d = new ViewerHeader3D(this->viewer, this->scene, nullptr);
 	this->headerX = new ViewerHeader("X Plane"); this->headerX->connectToViewer(this->viewer_planeX);

@@ -1,5 +1,7 @@
 #include "../include/planar_viewer.hpp"
 
+#include "../../qt/include/neighbor_visu_main_widget.hpp"
+
 #include <QCoreApplication>
 #include <QProgressDialog>
 #include <QMouseEvent>
@@ -12,6 +14,7 @@ PlanarViewer::PlanarViewer(Scene* const _scene, planes _p, planeHeading _h, QWid
 	this->setCameraIsEdited(false);
 
 	this->viewerController = nullptr;
+	this->statusbar = nullptr;
 
 	// Default render texture is not initialized :
 	this->renderTarget = 0;
@@ -31,6 +34,8 @@ PlanarViewer::PlanarViewer(Scene* const _scene, planes _p, planeHeading _h, QWid
 	this->refreshTimer->setSingleShot(false);
 	connect(this->refreshTimer, &QTimer::timeout, this, &PlanarViewer::updateView);
 }
+
+void PlanarViewer::addParentStatusBar(QStatusBar *main) { this->statusbar = main; }
 
 PlanarViewer::~PlanarViewer(void) {
 	// Nothing here yet.
@@ -63,11 +68,25 @@ void PlanarViewer::draw(void) {
 	glm::vec2 fullOffset = this->offset + this->tempOffset;
 	this->sceneToShow->drawPlaneView(fbDims, this->planeToShow, this->planeOrientation, this->zoomRatio, fullOffset);
 
-	if (this->posRequest.x > -1) {
+	if (this->posRequest.x > -1 && this->statusbar != nullptr) {
 		glm::vec4 pixelValue = this->sceneToShow->readFramebufferContents(this->defaultFramebufferObject(), this->posRequest);
 		if (pixelValue.w > .01f) {
 			glm::vec4 p = pixelValue;
 			std::cerr << "Value in fbo : {" << p.x << ", " << p.y << ", " << p.z << ", " << p.w << "}\n";
+			auto all_input = this->sceneToShow->getInputGrids();
+			for (const auto& grid : all_input) {
+				using sizevec3 = glm::vec<3, std::size_t, glm::defaultp>;
+				sizevec3 index = sizevec3(0, 0, 0);
+				QString msg = "Message from plane ";
+				if (this->planeToShow == planes::x) { msg += "X "; }
+				else if (this->planeToShow == planes::y) { msg += "Y "; }
+				else if (this->planeToShow == planes::z) { msg += "Z "; }
+				else { msg += "<unknown> "; }
+				if (grid->indexFromWorldSpace(p, index)) {
+					msg += "Index in picture : " + QString::number(index.x) + ", " + QString::number(index.y) + ", " + QString::number(index.z);
+					this->statusbar->showMessage(msg, 5000);
+				}
+			}
 		}
 		this->posRequest = glm::vec2{-1, -1};
 	}
