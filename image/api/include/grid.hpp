@@ -74,6 +74,9 @@ namespace Image {
 			/// @b Returns the number of components in each voxel of this grid.
 			std::size_t getVoxelDimensionality(void) const;
 
+			/// @b Returns the voxel dimensions, from the info provided by the image implementation.
+			glm::vec3 getVoxelDimensions(void) const;
+
 			/// @b Returns the resolution of the grid, as read by the backend implementation.
 			svec3 getResolution(void) const;
 
@@ -96,12 +99,6 @@ namespace Image {
 			/// @warning This function is left undefined here : it is implemented in derived classes, and
 			/// trying to call it directly will lead to linker errors !
 			template <typename data_t> bool readPixel(svec3 index, std::vector<data_t>& values);
-
-			/// @b Template to read a single pixel's value(s) in the image.
-			/// @warning This function is left undefined here : it is implemented in derived classes, and
-			/// trying to call it directly will lead to linker errors !
-			/// @note This is the same as the function above, but accepting a (possibly) negative index
-			template <typename data_t> bool readPixel(glm::ivec3 index, std::vector<data_t>& values);
 
 			/// @b Template to read a single line of voxels in ihe image.
 			/// @warning This function is left undefined here : it is implemented in derived classes, and

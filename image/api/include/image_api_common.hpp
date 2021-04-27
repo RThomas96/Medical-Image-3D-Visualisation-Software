@@ -30,6 +30,11 @@ namespace Image {
 		return static_cast<ImageDataType>(static_cast<std::uint8_t>(lhs) | static_cast<std::uint8_t>(rhs));
 	}
 
+	/// @b Allows to check for the status of a particular flag in the image type enum.
+	inline bool operator& (ImageDataType lhs, ImageDataType rhs) {
+		return static_cast<int>(lhs) & static_cast<int>(rhs);
+	}
+
 	/// @b Simple typedef for a 3-component GLM vector, useful for image resolution
 	typedef glm::vec<3, std::size_t, glm::defaultp> svec3;
 

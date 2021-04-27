@@ -25,9 +25,7 @@ namespace Image {
 	}
 
 	ImageDataType Grid::getInternalDataType() const {
-		if (this->pImpl) {
-			return this->pImpl->getInternalDataType();
-		}
+		if (this->pImpl) { return this->pImpl->getInternalDataType(); }
 		return ImageDataType::Unknown;
 	}
 
