@@ -24,8 +24,9 @@ ADD_LIBRARY(grid_tiff_backend SHARED
 	include/tiff_template.impl.hpp
 )
 TARGET_INCLUDE_DIRECTORIES(grid_tiff_backend
-	PUBLIC ${libTIFF_HEADER_DIR}
+	PRIVATE ${libTIFF_HEADER_DIR}
 	# Also add GLM headers here !
+	PRIVATE ${LOCAL_GLM_HEADER_DIR}
 )
 TARGET_LINK_LIBRARIES(grid_tiff_backend
 	PUBLIC imagegrid # Parent lib

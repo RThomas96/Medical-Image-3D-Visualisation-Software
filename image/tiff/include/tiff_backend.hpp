@@ -48,6 +48,11 @@ namespace Image {
 			/// @b Returns the dimensions of the image.
 			virtual svec3 getResolution(void) const override;
 
+			virtual ImageDataType getInternalDataType(void) const override { if (this->pImpl) { return this->pImpl->getInternalType(); } return ImageDataType::Unknown; }
+			virtual bool presentOnDisk(void) const override { return true; }
+			virtual std::string getImageName(void) const override { return "tiff_backend"; }
+			virtual BoundingBox_General<float> getBoundingBox(void) const override { return BoundingBox_General<float>(); }
+
 			/// @b Template to return the minimum and maximum values stored in the file, if given.
 			/// @note For the regular TIFF files, returns the internal data type's min and max values.
 			/// @note This will call `pImpl->getRangeValues<>();`.
@@ -69,6 +74,7 @@ namespace Image {
 			/// @b Parses the information from the images in a separate thread.
 			/// @warning Can only work for this TIFF implementation, not any derived classes ! (OME-TIFF)
 			virtual void parseImageInfo_thread(ThreadedTask::Ptr& task) override;
+			virtual void parseImageInfo_sequential(ThreadedTask::Ptr& task) override { task->end(); return; }
 
 			/// @b Creates the right type of image backend to process this type of image.
 			/// @param reference_frame The frame used to get the settings of the concrete backend object

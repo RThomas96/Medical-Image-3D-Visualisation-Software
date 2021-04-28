@@ -3,6 +3,10 @@
 #include <QXmlStreamReader>
 #include <QDir>
 
+#include "../api/include/grid.hpp"
+#include "../api/include/backend.hpp"
+#include "../tiff/include/tiff_backend.hpp"
+
 #include <cstring>
 #include <memory>
 #include <iomanip>
@@ -1036,7 +1040,7 @@ namespace IO {
 		std::cerr << "Files opened, frame count : " << this->frames.size() << "\n";
 
 		task->setAdvancement(0);
-		task->setSteps(this->frames.size());
+		task->setSteps(this->frames.size()+1);
 
 		this->imageDimensions.x = this->frames[0].width;
 		this->imageDimensions.y = this->frames[0].height;
@@ -1052,6 +1056,15 @@ namespace IO {
 			}
 			task->advance();
 		});
+
+		// Try to create a grid :
+		std::cerr << "Trying to create a grid !!!\n";
+		std::vector<std::vector<std::string>> fnames = std::vector<std::vector<std::string>>();
+		fnames.push_back(this->filenames);
+		Image::Grid::Ptr testGrid = Image::Grid::createGrid(fnames);
+		std::cerr << "DONE DOING THE GRID\n";
+
+		task->advance();
 
 		this->voxelDimensions = glm::vec3(1., 1., 1.);
 		this->voxelMultiplier = glm::vec3(1., 1., 1.);

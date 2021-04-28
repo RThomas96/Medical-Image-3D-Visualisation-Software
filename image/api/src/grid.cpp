@@ -30,7 +30,8 @@ namespace Image {
 	}
 
 	std::size_t Grid::getVoxelDimensionality() const {
-		return this->pImpl->getVoxelDimensionality();
+		if (this->pImpl) { return this->pImpl->getVoxelDimensionality(); }
+		return 0;
 	}
 
 	std::string Grid::getImageName() const {

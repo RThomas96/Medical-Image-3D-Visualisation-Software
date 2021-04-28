@@ -35,6 +35,10 @@ namespace Image {
 		return false;
 	}
 
+	ImageBackendImpl::Ptr TIFFBackend::createBackend(std::vector<std::vector<std::string>> fns) {
+		return ImageBackendImpl::Ptr(new TIFFBackend(fns));
+	}
+
 	ThreadedTask::Ptr TIFFBackend::parseImageInfo(void) {
 		/* Parses the image in a separate thread. Detaches it from the main thread, in order to
 		 * let it free up its own resources. */
