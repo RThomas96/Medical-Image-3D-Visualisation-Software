@@ -581,6 +581,73 @@ void Scene::addGrid(const std::shared_ptr<DiscreteGrid> _grid, std::string meshP
 	this->resetVisuBox();
 }
 
+void Scene::addGridNewAPI(Image::Grid::Ptr gridLoaded) {
+	if (this->grids.size() > 0) {
+		this->shouldDeleteGrid = true;
+		std::cerr << "Deleting grids ...\n";
+		for (std::size_t i = 0; i < this->grids.size(); ++i) { this->delGrid.push_back(i); }
+		std::cerr << "Pushed back elements ...\n";
+		this->deleteGridNow();
+		std::cerr << "Deleted grids.\n";
+	}
+	glm::vec<4, std::size_t, glm::defaultp> dimensions{gridLoaded->getResolution(), gridLoaded->getVoxelDimensionality()};
+
+	GridGLView::Ptr gridView = std::make_shared<GridGLView>();
+
+	TextureUpload _gridTex{};
+	_gridTex.minmag.x = GL_NEAREST;
+	_gridTex.minmag.y = GL_NEAREST;
+	_gridTex.lod.y = -1000.f;
+	_gridTex.wrap.x = GL_CLAMP_TO_EDGE;
+	_gridTex.wrap.y = GL_CLAMP_TO_EDGE;
+	_gridTex.wrap.z = GL_CLAMP_TO_EDGE;
+	_gridTex.swizzle.r = GL_RED;
+	if (dimensions.a > 1) { _gridTex.swizzle.g = GL_GREEN; } else { _gridTex.swizzle.g = GL_ZERO; }
+	if (dimensions.a > 2) { _gridTex.swizzle.b = GL_BLUE; } else { _gridTex.swizzle.b = GL_BLUE; }
+	if (dimensions.a > 3) { _gridTex.swizzle.a = GL_ALPHA; } else { _gridTex.swizzle.y = GL_ONE; }
+	_gridTex.alignment.x = 1;
+	_gridTex.alignment.y = 2;
+	switch (dimensions.a) {
+		case 1: _gridTex.internalFormat = GL_R16UI; break;
+		case 2: _gridTex.internalFormat = GL_RG16UI; break;
+		case 3: _gridTex.internalFormat = GL_RGB16UI; break;
+		case 4: _gridTex.internalFormat = GL_RGBA16UI; break;
+	}
+	_gridTex.type = GL_UNSIGNED_SHORT;
+	std::cerr << "Made the upload texture struct.\n";
+
+	_gridTex.size.x = dimensions.x;
+	_gridTex.size.y = dimensions.y;
+	_gridTex.size.z = dimensions.z;
+
+	std::vector<std::uint16_t> slices(dimensions.x * dimensions.y * dimensions.a);
+	gridView->gridTexture = this->uploadTexture3DNewAPI_allocateonly(_gridTex);
+
+#warning Make the upload here
+	for (std::size_t s = 0; s < dimensions.z; ++s) {
+		if (gridLoaded->readData(slices)) {
+			this->uploadTexture3DNewAPI(gridView->gridTexture, _gridTex, s, slices);
+		} else {
+			std::cerr << "Scene texture upload : Could not read the data at index " << s << " !\n";
+		}
+	}
+
+	gridView->boundingBoxColor = glm::vec3(.4, .6, .3); // olive-colored by default
+	gridView->nbChannels = 2; // loaded 2 channels in the image
+
+	this->tex3D_buildMesh(gridView, "");
+	this->tex3D_buildVisTexture(gridView->volumetricMesh);
+	this->tex3D_buildBuffers(gridView->volumetricMesh);
+
+	this->grids.push_back(gridView);
+
+	this->updateVis();
+	this->updateBoundingBox();
+	this->setVisuBoxMinCoord(glm::uvec3());
+	this->setVisuBoxMaxCoord(gridLoaded->getResolution());
+	this->resetVisuBox();
+}
+
 void Scene::addTwoGrids(const std::shared_ptr<DiscreteGrid> _gridR, const std::shared_ptr<DiscreteGrid> _gridB, std::string meshPath) {
 	if (this->grids.size() > 0) {
 		this->shouldDeleteGrid = true;
@@ -1133,6 +1200,74 @@ GLuint Scene::uploadTexture3D_iterative(const TextureUpload &tex, const std::sha
 	}
 
 	this->debugLog->popGroup();
+
+	return texHandle;
+}
+
+GLuint Scene::uploadTexture3DNewAPI_allocateonly(const TextureUpload &tex) {
+	if (this->context != nullptr) {
+		if (this->context->isValid() == false) {
+			throw std::runtime_error("No associated valid context");
+		}
+	} else {
+		throw std::runtime_error("nullptr as context");
+	}
+
+	glEnable(GL_TEXTURE_3D);
+
+	GLuint texHandle = 0;
+	glGenTextures(1, &texHandle);
+	glBindTexture(GL_TEXTURE_3D, texHandle);
+
+	// Min and mag filters :
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, tex.minmag.x);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, tex.minmag.y);
+
+	// Set the min and max LOD values :
+	glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_MIN_LOD, tex.lod.x);
+	glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_MAX_LOD, tex.lod.y);
+
+	// Set the wrap parameters :
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, tex.wrap.x);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, tex.wrap.y);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, tex.wrap.z);
+
+	// Set the swizzle the user wants :
+	glTexParameteriv(GL_TEXTURE_3D, GL_TEXTURE_SWIZZLE_RGBA, glm::value_ptr(tex.swizzle));
+
+	// Set the pixel alignment :
+	glPixelStorei(GL_PACK_ALIGNMENT, tex.alignment.x);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, tex.alignment.y);
+
+	glTexImage3D(GL_TEXTURE_3D,		// GLenum : Target
+		static_cast<GLint>(tex.level),	// GLint  : Level of detail of the current texture (0 = original)
+		tex.internalFormat,		// GLint  : Number of color components in the picture. Here grayscale so GL_RED
+		tex.size.x,			// GLsizei: Image width
+		tex.size.y,			// GLsizei: Image height
+		tex.size.z,			// GLsizei: Image depth (number of layers)
+		static_cast<GLint>(0),		// GLint  : Border. This value MUST be 0.
+		tex.format,			// GLenum : Format of the pixel data
+		tex.type,			// GLenum : Type (the data type as in uchar, uint, float ...)
+		nullptr		// no data here !
+	);
+
+
+	return texHandle;
+}
+
+GLuint Scene::uploadTexture3DNewAPI(const GLuint texHandle, const TextureUpload &tex, std::size_t s, std::vector<std::uint16_t> &data) {
+	if (this->context != nullptr) {
+		if (this->context->isValid() == false) {
+			throw std::runtime_error("No associated valid context");
+		}
+	} else {
+		throw std::runtime_error("nullptr as context");
+	}
+
+	glEnable(GL_TEXTURE_3D);
+	glBindTexture(GL_TEXTURE_3D, texHandle);
+
+	glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, s, tex.size.x, tex.size.y, 1, tex.format, tex.type, data.data());
 
 	return texHandle;
 }

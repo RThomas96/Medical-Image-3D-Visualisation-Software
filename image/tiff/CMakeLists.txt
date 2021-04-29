@@ -8,7 +8,7 @@ ENDIF()
 # libTIFF : libtiff's path to the compiled lib
 # libTIFF_HEADER_DIR : path to libtiff headers
 
-ADD_LIBRARY(grid_tiff_backend SHARED
+ADD_LIBRARY(grid_tiff_backend STATIC
 	src/tiff_backend.cpp
 	src/tiff_frame.cpp
 	src/tiff_private.cpp
@@ -32,6 +32,7 @@ TARGET_LINK_LIBRARIES(grid_tiff_backend
 	PUBLIC imagegrid # Parent lib
 	PUBLIC ${libTIFF}
 )
+SET_TARGET_PROPERTIES(grid_tiff_backend PROPERTIES AUTOMOC OFF AUTORCC OFF AUTOUIC OFF)
 
 # Once the compilation is conditional, maybe add that lib to a list of compilable libs which
 # then get linked by the top CMakeLists.txt ??? Just a random thought.

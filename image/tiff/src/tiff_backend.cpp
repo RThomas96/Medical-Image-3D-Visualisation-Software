@@ -115,7 +115,7 @@ namespace Image {
 		// Iterate on all filenames, extract frames :
 		for (std::size_t name_it = 0; name_it < this->filenames[0].size(); ++name_it) {
 			// Number of frames inside the current file :
-			tsize_t dirSize = Tiff::countDirectories(this->filenames[name_it][0]);
+			tsize_t dirSize = Tiff::countDirectories(this->filenames[0][name_it]);
 
 			// Iterate on all frames :
 			for (tdir_t fr_it = 0; fr_it < dirSize; ++fr_it) {
@@ -267,6 +267,12 @@ namespace Image {
 		this->imageResolution = svec3(0, 0, 0);
 		this->internal_data_type = ImageDataType::Unknown;
 		this->pImpl = nullptr;
+	}
+
+	bool TIFFBackend::readData(ImageBackendImpl::restrict_tag<std::uint16_t> t, std::vector<std::uint16_t>& data) {
+		std::cerr << "Calling " << __PRETTY_FUNCTION__ << " : \n";
+		data.clear();
+		return false;
 	}
 
 }

@@ -24,6 +24,9 @@ namespace Image {
 			typedef std::unique_ptr<ImageBackendImpl> Ptr;
 
 		protected:
+			template <typename T> struct restrict_tag {};
+
+		protected:
 			/// @b Default ctor of an image backend. Declared protected to not be instanciated alone.
 			ImageBackendImpl(const std::vector<std::vector<std::string>>& fns);
 
@@ -87,6 +90,11 @@ namespace Image {
 			/// trying to call it directly will lead to linker errors !
 			template <typename data_t> bool readSlice(std::size_t slice_idx, std::vector<data_t>& values);
 
+			/// @b Template to a virtual function which is hopefully resolved at compile time
+			template <typename data_t> bool readData(std::vector<data_t>& data) {
+				return this->readData(restrict_tag<data_t>{}, data);
+			}
+
 		protected:
 			/// @b Parse image info in a single thread. Useful for things that are _not_ parallelizable.
 			virtual void parseImageInfo_sequential(ThreadedTask::Ptr&) noexcept(false) = 0;
@@ -101,6 +109,8 @@ namespace Image {
 			/// members of each class. Sets the class object as though it is newly created. The only thing not touched
 			/// are the filenames, in case the files on disk have changed and the user wants to reload the stack.
 			virtual void internal_cleanup_after_error(void) = 0;
+
+			virtual bool readData(restrict_tag<std::uint16_t> tag, std::vector<std::uint16_t>& data) = 0;
 
 		protected:
 			/// @b The filenames of the implementation.

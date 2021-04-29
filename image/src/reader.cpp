@@ -1057,13 +1057,6 @@ namespace IO {
 			task->advance();
 		});
 
-		// Try to create a grid :
-		std::cerr << "Trying to create a grid !!!\n";
-		std::vector<std::vector<std::string>> fnames = std::vector<std::vector<std::string>>();
-		fnames.push_back(this->filenames);
-		Image::Grid::Ptr testGrid = Image::Grid::createGrid(fnames);
-		std::cerr << "DONE DOING THE GRID\n";
-
 		task->advance();
 
 		this->voxelDimensions = glm::vec3(1., 1., 1.);

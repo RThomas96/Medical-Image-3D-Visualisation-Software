@@ -19,6 +19,9 @@
 #include "../../qt/include/opengl_debug_log.hpp"
 // Helper structs and functions :
 #include "./viewer_structs.hpp"
+// New grid API :
+#include "../../image/api/include/grid.hpp"
+#include "../../image/tiff/include/tiff_backend.hpp"
 // Qt headers :
 #include <QOpenGLFunctions_4_0_Core>
 #include <QOpenGLFunctions_3_2_Core>
@@ -82,6 +85,8 @@ class Scene : public QOpenGLFunctions_3_2_Core {
 		void addGrid(const std::shared_ptr<DiscreteGrid> _grid, std::string meshPath);
 		/// @b Adds a grid to the list of grids present and to be drawn, which is composed of two separate grids' data.
 		void addTwoGrids(const std::shared_ptr<DiscreteGrid> _gridR, const std::shared_ptr<DiscreteGrid> _gridG, std::string meshPath);
+
+		void addGridNewAPI(Image::Grid::Ptr gridLoaded);
 
 		/// @b Draw the 3D view of the scene.
 		void draw3DView(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, bool showTexOnPlane = true);
@@ -153,6 +158,9 @@ class Scene : public QOpenGLFunctions_3_2_Core {
 		GLuint uploadTexture2D(const TextureUpload& tex);
 		/// @brief Upload a 3D texture with the given parameters.
 		GLuint uploadTexture3D(const TextureUpload& tex);
+		/// @brief Upload a 3D texture with the given parameters.
+		GLuint uploadTexture3DNewAPI(const GLuint handle, const TextureUpload& tex, std::size_t s, std::vector<std::uint16_t> & data);
+		GLuint uploadTexture3DNewAPI_allocateonly(const TextureUpload& tex);
 		/// @brief Upload a 3D texture with the given parameters.
 		GLuint uploadTexture3D_iterative(const TextureUpload& tex, const std::shared_ptr<DiscreteGrid>&, const std::shared_ptr<DiscreteGrid>&);
 		/// @brief Tests the texture upload capabilities of OpenGL

@@ -2,7 +2,7 @@
 # CMake file compiling the grid API and the image backend interface
 #
 
-ADD_LIBRARY(imagegrid SHARED
+ADD_LIBRARY(imagegrid STATIC
 	include/backend.hpp
 	include/grid.hpp
 	include/image_api_common.hpp
@@ -13,7 +13,10 @@ ADD_LIBRARY(imagegrid SHARED
 	src/grid.cpp
 	src/grid_creator.cpp
 )
-#TARGET_LINK_LIBRARIES(imagegrid)
+TARGET_LINK_LIBRARIES(imagegrid
+	PUBLIC grid_tiff_backend
+)
 TARGET_INCLUDE_DIRECTORIES(imagegrid
 	PRIVATE ${LOCAL_GLM_HEADER_DIR}
 )
+SET_TARGET_PROPERTIES(imagegrid PROPERTIES AUTOMOC OFF AUTORCC OFF AUTOUIC OFF)

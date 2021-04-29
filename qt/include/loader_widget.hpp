@@ -9,6 +9,10 @@
 #include "../../viewer/include/neighbor_visu_viewer.hpp"
 #include "./scene_control.hpp"
 
+// New grid API :
+#include "../../image/api/include/grid.hpp"
+#include "../../image/tiff/include/tiff_backend.hpp"
+
 #include <QDir>
 #include <QLabel>
 #include <QFrame>
@@ -51,7 +55,10 @@ class GridLoaderWidget : public QWidget {
 		void loadGridDIM2channel();
 		void loadGridTIF2channel();
 		void loadGridOME2channel();
+		void loadNewGridAPI();
 		void loadGrid();
+		void loadGrid_oldAPI();
+		void loadGrid_newAPI();
 	protected:
 		QDir basePath;				///< Last path opened, or $HOME
 		Scene* scene;				///< The scene to control/add grids to.
@@ -63,6 +70,9 @@ class GridLoaderWidget : public QWidget {
 		std::shared_ptr<InputGrid> inputGridG;		///< The pointer to an input grid for G channel
 		IO::DownsamplingLevel dsLevel;		///< Currently selected downsampling method
 		std::shared_ptr<Interpolators::genericInterpolator<DiscreteGrid::data_t>> interpolator; ///< interpolator
+
+		Image::Grid::Ptr _testing_grid;
+		bool useLegacyGrids; ///< should we use the new grid api or the new one ?
 
 		QLabel* label_headerLoader;		///< Label header for the entire widget
 		QLabel* label_load1channel;		///< Label before the 1-channel loading buttons
@@ -79,6 +89,7 @@ class GridLoaderWidget : public QWidget {
 		QPushButton* button_loadTIF_2channel;	///< Button to load TIF[F] files with two channels.
 		QPushButton* button_loadOME_1channel;	///< Button to load TIF[F] files with one channel.
 		QPushButton* button_loadOME_2channel;	///< Button to load TIF[F] files with two channels.
+		QPushButton* button_loadNewGridAPI;	///< Button to load TIF[F] files with two channels.
 		QPushButton* button_loadGrids;		///< Button to launch the grid loader.
 
 		QDoubleSpinBox* dsb_transformationA;	///< Double spinbox for the angle of the capture

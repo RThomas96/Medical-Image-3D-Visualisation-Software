@@ -88,6 +88,8 @@ namespace Image {
 			/// @b Cleans up the resources of the TIFF backend. Also removes the pImpl pointer.
 			virtual void internal_cleanup_after_error(void) override;
 
+			virtual bool readData(restrict_tag<std::uint16_t> tag, std::vector<std::uint16_t>& data) override;
+
 		protected:
 #ifdef PIMPL_USE_EXPERIMENTAL_PROPAGATE_CONST
 			/// @b The pointer which can interface directly with the files on disk.

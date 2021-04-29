@@ -148,6 +148,8 @@ struct GridGLView {
 	public:
 		using Ptr = std::shared_ptr<GridGLView>;
 	public:
+		/// @b Default ctor for no views :
+		GridGLView(void);
 		/// @b Default constructor for the grid view. Must be associated to one and only one grid.
 		GridGLView(const std::initializer_list<std::shared_ptr<DiscreteGrid>> _g);
 		/// @b Default constructor for two grids.

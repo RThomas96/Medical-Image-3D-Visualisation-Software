@@ -24,6 +24,8 @@ GridLoaderWidget::GridLoaderWidget(Scene* _scene, Viewer* _viewer, ControlPanel*
 	this->spinbox_userLimitMin = nullptr;
 	this->spinbox_userLimitMax = nullptr;
 	this->progress_load = nullptr;
+	this->_testing_grid = nullptr;
+	this->button_loadNewGridAPI = nullptr;
 	this->setupWidgets();
 	this->setupLayouts();
 	this->setupSignals();
@@ -83,6 +85,7 @@ void GridLoaderWidget::setupWidgets() {
 	this->label_transformationDimensions = new QLabel("Physical resolution of a pixel (micrometers, on X, Y, and Z) :");
 	this->label_gridInfoR = new QLabel("<No grid loaded>");
 	this->label_gridInfoG = new QLabel("");
+	this->button_loadNewGridAPI = new QPushButton("Load with new grid API");
 
 	this->progress_load = new QProgressBar;
 	QSizePolicy retain_size_policy = this->progress_load->sizePolicy();
@@ -246,6 +249,7 @@ void GridLoaderWidget::setupLayouts() {
 	this->layout_mainLayout->addWidget(this->label_headerLoader, 0, Qt::AlignCenter);
 	this->layout_mainLayout->addWidget(this->frame_load1channel);
 	this->layout_mainLayout->addWidget(this->frame_load2channel);
+	this->layout_mainLayout->addWidget(this->button_loadNewGridAPI);
 	this->layout_mainLayout->addWidget(this->groupBox_downsampling);
 	this->layout_mainLayout->addWidget(this->groupBox_interpolator);
 	this->layout_mainLayout->addWidget(this->groupbox_userLimits);
@@ -287,6 +291,7 @@ void GridLoaderWidget::setupSignals() {
 	QObject::connect(this->button_loadTIF_2channel, &QPushButton::clicked, this, &GridLoaderWidget::loadGridTIF2channel);
 	QObject::connect(this->button_loadOME_1channel, &QPushButton::clicked, this, &GridLoaderWidget::loadGridOME1channel);
 	QObject::connect(this->button_loadOME_2channel, &QPushButton::clicked, this, &GridLoaderWidget::loadGridOME2channel);
+	QObject::connect(this->button_loadNewGridAPI, &QPushButton::clicked, this, &GridLoaderWidget::loadNewGridAPI);
 
 	// load grid into mem :
 	QObject::connect(this->button_loadGrids, &QPushButton::clicked, this, &GridLoaderWidget::loadGrid);
@@ -414,6 +419,15 @@ void GridLoaderWidget::resetGridInfoLabel() {
 }
 
 void GridLoaderWidget::computeGridInfoLabel() {
+	if (this->useLegacyGrids == false) {
+		auto dims = this->_testing_grid->getResolution();
+		auto v = this->_testing_grid->getVoxelDimensionality();
+		QString infogrid = "Image dimensions : " + QString::number(dims.x) + "x" + QString::number(dims.y) + "x" +
+						   QString::number(dims.z) + " on " + QString::number(v) + " channels.";
+		this->label_gridInfoR->setText(infogrid);
+		return;
+	}
+
 	if (this->readerR == nullptr) {
 		this->label_gridInfoR->setText("<No grid loaded>");
 		this->label_gridInfoG->setText("");
@@ -524,6 +538,7 @@ void GridLoaderWidget::loadGridDIM1channel() {
 	this->progress_load->setVisible(false);
 
 	this->computeGridInfoLabel();
+	this->useLegacyGrids = true;
 }
 
 void GridLoaderWidget::loadGridDIM2channel() {
@@ -609,6 +624,7 @@ void GridLoaderWidget::loadGridDIM2channel() {
 	this->progress_load->setVisible(false);
 
 	this->computeGridInfoLabel();
+	this->useLegacyGrids = true;
 }
 
 void GridLoaderWidget::loadGridTIF1channel() {
@@ -675,6 +691,7 @@ void GridLoaderWidget::loadGridTIF1channel() {
 	this->progress_load->setVisible(false);
 
 	this->computeGridInfoLabel();
+	this->useLegacyGrids = true;
 }
 
 void GridLoaderWidget::loadGridTIF2channel() {
@@ -686,6 +703,8 @@ void GridLoaderWidget::loadGridTIF2channel() {
 	// if an error occurs :
 	QMessageBox* msgBox = new QMessageBox;
 	msgBox->setAttribute(Qt::WA_DeleteOnClose);
+
+	this->useLegacyGrids = true;
 
 	QStringList filenamesR = QFileDialog::getOpenFileNames(nullptr, "Open TIFF images (Red channel)", this->basePath.path(), "TIFF files (*.tiff *.tif)", 0, QFileDialog::DontUseNativeDialog);
 	if (filenamesR.empty()) {
@@ -763,6 +782,88 @@ void GridLoaderWidget::loadGridTIF2channel() {
 	this->computeGridInfoLabel();
 }
 
+void GridLoaderWidget::loadNewGridAPI() {
+	this->useLegacyGrids = false;
+	this->readerR.reset(); this->readerR = nullptr;
+	this->readerG.reset(); this->readerG = nullptr;
+
+	// if an error occurs :
+	QMessageBox* msgBox = new QMessageBox;
+	msgBox->setAttribute(Qt::WA_DeleteOnClose);
+
+	QStringList filenamesR = QFileDialog::getOpenFileNames(nullptr, "Open TIFF images (Red channel)", this->basePath.path(), "TIFF files (*.tiff *.tif)", 0, QFileDialog::DontUseNativeDialog);
+	if (filenamesR.empty()) {
+		msgBox->critical(this, "Error !", "No filenames provided !");
+		this->computeGridInfoLabel();
+		return;
+	}
+	// update path from last file picker :
+	this->basePath.setPath(QFileInfo(filenamesR[0]).path());
+
+	QStringList filenamesG = QFileDialog::getOpenFileNames(nullptr, "Open TIFF images (Blue channel)", this->basePath.path(), "TIFF files (*.tiff *.tif)", 0, QFileDialog::DontUseNativeDialog);
+	if (filenamesG.empty()) {
+		msgBox->critical(this, "Error !", "No filenames provided !");
+		this->computeGridInfoLabel();
+		return;
+	}
+	// update path from last file picker :
+	this->basePath.setPath(QFileInfo(filenamesG[0]).path());
+
+	std::vector<std::string> fnR;	// filenames, red channel
+	for (int i = 0; i < filenamesR.size(); ++i) { fnR.push_back(filenamesR[i].toStdString()); }
+	std::vector<std::string> fnG;	// filenames, green channel
+	for (int i = 0; i < filenamesG.size(); ++i) { fnG.push_back(filenamesG[i].toStdString()); }
+
+	// Try to create a grid :
+	std::cerr << "Trying to create a grid !!!\n";
+	std::vector<std::vector<std::string>> fnames_grid{fnR, fnG};
+	this->_testing_grid = Image::Grid::createGrid(fnames_grid);
+
+	// Start parsing the information :
+	std::cerr << "Grid created, updating info from disk ...\n";
+	auto task = this->_testing_grid->updateInfoFromDisk();
+
+	// Set and show progress bar :
+	this->progress_load->setRange(0, task->getMaxSteps());
+	this->progress_load->setValue(0);
+	this->progress_load->setFormat("Parsing image data ... (%p%)");
+	this->progress_load->setVisible(true);
+
+	// Parse the grid :
+	do {
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		std::size_t steps = task->getMaxSteps();
+		std::size_t adv = task->getAdvancement();
+		this->progress_load->setRange(0, steps);
+		this->progress_load->setValue(adv);
+		// Needed to update the main window ...
+		QCoreApplication::processEvents();
+		this->update();
+	} while (not task->isComplete());
+
+	std::cerr << "\n[TASK] Done parsing the grid ... \n";
+	std::string errmsg = "";
+	bool isComplete = true;
+	while (task->popMessage(errmsg)) {
+		std::cerr << "[Task error] Message : " << errmsg << '\n';
+		isComplete = false;
+	}
+	if (isComplete) {
+		std::cerr << "Grid dimensionality : " << this->_testing_grid->getVoxelDimensionality() << '\n';
+		Image::svec3 res = this->_testing_grid->getResolution();
+		glm::vec3 vx = this->_testing_grid->getVoxelDimensions();
+		std::cerr << "Grid resolution : " << res.x << ", " << res.y << ", " << res.z << "\n";
+		std::cerr << "Voxel dimensions : " << vx.x << ", " << vx.y << ", " << vx.z << "\n";
+		std::cerr << "Data internal representation : " << this->_testing_grid->getInternalDataType() << '\n';
+	}
+	std::cerr << "DONE DOING THE GRID\n";
+
+	this->computeGridInfoLabel();
+
+	this->progress_load->reset();
+	this->progress_load->setVisible(false);
+}
+
 void GridLoaderWidget::loadGridOME1channel() {
 	if (this->readerR != nullptr) { this->readerR.reset(); }
 	if (this->readerG != nullptr) { this->readerG.reset(); }
@@ -827,6 +928,7 @@ void GridLoaderWidget::loadGridOME1channel() {
 	this->progress_load->setVisible(false);
 
 	this->computeGridInfoLabel();
+	this->useLegacyGrids = true;
 }
 
 void GridLoaderWidget::loadGridOME2channel() {
@@ -913,9 +1015,14 @@ void GridLoaderWidget::loadGridOME2channel() {
 	this->progress_load->setVisible(false);
 
 	this->computeGridInfoLabel();
+	this->useLegacyGrids = true;
 }
 
 void GridLoaderWidget::loadGrid() {
+	if (this->useLegacyGrids) { this->loadGrid_oldAPI(); } else { this->loadGrid_newAPI(); }
+}
+
+void GridLoaderWidget::loadGrid_oldAPI() {
 	if (readerR == nullptr) {
 		QMessageBox* msgBox = new QMessageBox;
 		msgBox->setAttribute(Qt::WA_DeleteOnClose);
@@ -1088,6 +1195,26 @@ void GridLoaderWidget::loadGrid() {
 		this->viewer->loadTwoGrids(this->inputGridR, this->inputGridG);
 	}
 	this->viewer->centerScene();
+
+	this->close();
+}
+
+void GridLoaderWidget::loadGrid_newAPI() {
+	bool hasUserBounds = this->groupbox_userLimits->isChecked();
+	DiscreteGrid::data_t userMin = static_cast<DiscreteGrid::data_t>(this->spinbox_userLimitMin->value());
+	DiscreteGrid::data_t userMax = static_cast<DiscreteGrid::data_t>(this->spinbox_userLimitMax->value());
+	std::cerr << "Loading new grid API" << '\n';
+
+	float dx = this->dsb_transformationDX->value();
+	float dy = this->dsb_transformationDY->value();
+	float dz = this->dsb_transformationDZ->value();
+
+	#warning TODO : Enable downsampling options from grid here
+	#warning TODO : Enable user voxel sizes here (via a transformation matrix ?)
+	#warning TODO : Enable computation of approximate voxel size here
+
+	// Load the grid data, and make a copy here
+	this->scene->addGridNewAPI(this->_testing_grid);
 
 	this->close();
 }

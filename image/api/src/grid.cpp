@@ -24,6 +24,18 @@ namespace Image {
 		this->imageSize = imgsize;
 	}
 
+	constexpr bool Grid::hasValidImplementation() const {
+		#warning TODO : add a isValid() function to the ImageBackendImpl
+		return this->pImpl != nullptr;
+	}
+
+	ThreadedTask::Ptr Grid::updateInfoFromDisk() {
+		if (this->pImpl) { return this->pImpl->parseImageInfo(); }
+		ThreadedTask::Ptr task = std::make_shared<ThreadedTask>();
+		task->end();
+		return task;
+	}
+
 	ImageDataType Grid::getInternalDataType() const {
 		if (this->pImpl) { return this->pImpl->getInternalDataType(); }
 		return ImageDataType::Unknown;
@@ -32,6 +44,16 @@ namespace Image {
 	std::size_t Grid::getVoxelDimensionality() const {
 		if (this->pImpl) { return this->pImpl->getVoxelDimensionality(); }
 		return 0;
+	}
+
+	glm::vec3 Grid::getVoxelDimensions() const {
+		if (this->pImpl) { return this->pImpl->getVoxelDimensions(); }
+		return glm::vec3(-1.f, -1.f, -1.f);
+	}
+
+	svec3 Grid::getResolution() const {
+		if (this->pImpl) { return this->pImpl->getResolution(); }
+		return svec3(0, 0, 0);
 	}
 
 	std::string Grid::getImageName() const {

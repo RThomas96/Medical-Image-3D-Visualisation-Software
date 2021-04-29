@@ -62,7 +62,7 @@ namespace Tiff {
 	uint16_t Frame::bitsPerSample(TIFF *fhandle) const {
 		if (fhandle == nullptr) { fhandle = this->getLibraryHandle(); }
 		uint16_t bps = 0;
-		int result = TIFFGetField(fhandle, TIFFTAG_SAMPLEFORMAT, &bps);
+		int result = TIFFGetField(fhandle, TIFFTAG_BITSPERSAMPLE, &bps);
 		if (result != 1) { return 0; } // Malformed BitsPerSample do not allow to read the file.
 		return bps;
 	}

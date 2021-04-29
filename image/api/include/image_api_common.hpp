@@ -25,14 +25,29 @@ namespace Image {
 		Signed   = 0b01000000,
 	};
 
-	/// @b Makes the ImageDataType enumeration OR-able, to have multiple flags.
-	inline ImageDataType operator| (ImageDataType lhs, ImageDataType rhs) {
-		return static_cast<ImageDataType>(static_cast<std::uint8_t>(lhs) | static_cast<std::uint8_t>(rhs));
-	}
-
 	/// @b Allows to check for the status of a particular flag in the image type enum.
 	inline bool operator& (ImageDataType lhs, ImageDataType rhs) {
 		return static_cast<int>(lhs) & static_cast<int>(rhs);
+	}
+
+	/// @b Makes the ImageDataType enumeration OR-able, to have multiple flags.
+	/// @details Disallows to set the same flag multiple times.
+	inline ImageDataType operator| (ImageDataType lhs, ImageDataType rhs) {
+		if (lhs & rhs) { return lhs; }
+		return static_cast<ImageDataType>(static_cast<std::uint8_t>(lhs) | static_cast<std::uint8_t>(rhs));
+	}
+
+	inline std::ostream& operator<<(std::ostream& _os, ImageDataType d) {
+		if (d & ImageDataType::Unknown) { _os << "<unknown>"; return _os; }
+		_os << "type : ";
+		if (d & ImageDataType::Unsigned) { _os << "unsigned "; }
+		if (d & ImageDataType::Floating) { _os << "floating "; }
+		if (d & ImageDataType::Signed) { _os << "signed "; }
+		if (d & ImageDataType::Bit_8) { _os << "width : 8b "; }
+		if (d & ImageDataType::Bit_16) { _os << "width : 16b "; }
+		if (d & ImageDataType::Bit_32) { _os << "width : 32b "; }
+		if (d & ImageDataType::Bit_64) { _os << "width : 64b "; }
+		return _os;
 	}
 
 	/// @b Simple typedef for a 3-component GLM vector, useful for image resolution
