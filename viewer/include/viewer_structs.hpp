@@ -4,6 +4,8 @@
 #include "../../macros.hpp"
 #include "../../grid/include/discrete_grid.hpp"
 
+#include "../../image/api/include/grid.hpp"
+
 #include <glm/glm.hpp>
 
 #include <QOpenGLFunctions_4_0_Core>
@@ -148,8 +150,6 @@ struct GridGLView {
 	public:
 		using Ptr = std::shared_ptr<GridGLView>;
 	public:
-		/// @b Default ctor for no views :
-		GridGLView(void);
 		/// @b Default constructor for the grid view. Must be associated to one and only one grid.
 		GridGLView(const std::initializer_list<std::shared_ptr<DiscreteGrid>> _g);
 		/// @b Default constructor for two grids.
@@ -171,6 +171,55 @@ struct GridGLView {
 		using color_3 = glm::vec3;
 		/// @b The pointer to the grid we want to show.
 		std::vector<std::shared_ptr<DiscreteGrid>> grid;
+		/// @b The texture handle to access the grid data in shaders.
+		GLuint gridTexture;
+		/// @b The number of channels contained in the image
+		unsigned int nbChannels;
+		/// @b The volumetric mesh handles to use when drawing
+		VolMesh volumetricMesh;
+		/// @b The epsilon to provide for the volumetric viewing method
+		glm::vec3 defaultEpsilon;
+		/// @b The bounding box's color, as a triplet of normalized values for R, G, and B.
+		color_3 boundingBoxColor;
+		/// @b The 'base' color for the user-defined color scale
+		color_3 color_0;
+		/// @b The 'final' color for the user-defined color scale
+		color_3 color_1;
+		/// @b The minimum and maximum texture values to display
+		data_2 texBounds0;
+		data_2 texBounds1;
+		/// @b The minimum and maximum values of the color scale
+		data_2 colorBounds0;
+		data_2 colorBounds1;
+};
+
+
+/// @b Simple structure merging all resources necessary to view a grid in 3D.
+/// @details This structure must be associated to one grid, and one grid only. Thus, the pointer to the grid is defined
+/// as `const std::shared_ptr<>` since we want the reference to be held during the lifetime of the object.
+struct NewAPI_GridGLView {
+	public:
+		using Ptr = std::shared_ptr<NewAPI_GridGLView>;
+	public:
+		/// @b Default constructor for the grid view. Must be associated to one and only one grid.
+		NewAPI_GridGLView(const Image::Grid::Ptr _g);
+		/// @b Copy constructor of the NewAPI_GridGLView struct.
+		NewAPI_GridGLView(const NewAPI_GridGLView&) = default;
+		/// @b Move constructor of the NewAPI_GridGLView struct.
+		NewAPI_GridGLView(NewAPI_GridGLView&&) = default;
+		/// @b Copy operator of the NewAPI_GridGLView struct.
+		NewAPI_GridGLView& operator= (const NewAPI_GridGLView&) = default;
+		/// @b Move operator of the NewAPI_GridGLView struct.
+		NewAPI_GridGLView& operator= (NewAPI_GridGLView&&) = default;
+		/// @b Default destructor of the NewAPI_GridGLView struct.
+		~NewAPI_GridGLView(void) = default;
+	public:
+		using data_t = DiscreteGrid::data_t;
+		using data_2 = glm::vec<2, data_t, glm::defaultp>;
+		using data_3 = glm::vec<3, data_t, glm::defaultp>;
+		using color_3 = glm::vec3;
+		/// @b The pointer to the grid we want to show.
+		Image::Grid::Ptr grid;
 		/// @b The texture handle to access the grid data in shaders.
 		GLuint gridTexture;
 		/// @b The number of channels contained in the image

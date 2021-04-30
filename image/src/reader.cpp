@@ -860,8 +860,8 @@ namespace IO {
 		Here, we want to load directly an entire frame. We will read the current frame of the opened TIFF, and
 		then go onto either the next frame in the file, OR the next file.
 		*/
-		#warning Defaults to using 8 bit values for all images loaded !
-		#warning Assumes the vector is of the right size !
+		// #warning Defaults to using 8 bit values for all images loaded !
+		// #warning Assumes the vector is of the right size !
 		TinyTIFFReader_getSampleData(this->tiffFile, tgt.data(), 0);
 
 		if (TinyTIFFReader_hasNext(this->tiffFile)) {
@@ -1448,7 +1448,7 @@ namespace IO {
 						filename = filenameRef.toString();
 						/// Check if file exists :
 						if (QFileInfo::exists(defaultDir.path() + "/" + filename)) {
-							#warning Here, we exploit the fact the data is separated. To fix with new interface(soon)
+							// #warning Here, we exploit the fact the data is separated. To fix with new interface(soon)
 							// File exists, we can add it to the list:
 							std::string real_filename = defaultDir.path().toStdString() + "/" + filename.toStdString();
 							this->frames.emplace_back(real_filename, ifd_index);

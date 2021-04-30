@@ -43,7 +43,97 @@ namespace Tiff {
 			/// @details The loaded slice will be not only loaded, but converted and put into the cache encoded in
 			/// this class' internal type.
 			/// @note This function will be the main source of reading procedures for the class
-			virtual std::size_t loadAndCacheSlice(std::size_t) ;
+			virtual std::size_t loadAndCacheSlice(std::size_t);
+
+			/// @b Reads the given subregion and converts it to the output value type into the given vector.
+			template <typename out_t>
+			bool template_tiff_read_sub_region(svec3 origin, svec3 size, std::vector<out_t>& values);
+
+			//////////////////////////////////////////////////////
+			//													//
+			//             SUB-REGION READ FUNCTIONS            //
+			//													//
+			//////////////////////////////////////////////////////
+
+			/// @b Read a sub-region of the image, implemented in the derived classes.  8-bit unsigned version.
+			virtual bool tiff_readSubRegion(::Image::tag<std::uint8_t> tag, svec3 origin, svec3 size,
+											std::vector<std::uint8_t>& data) override {
+				UNUSED_PARAMETER(tag);
+				PRINT_FN_ENTRY;
+				return this->template_tiff_read_sub_region(origin, size, data);
+			}
+
+			/// @b Read a sub-region of the image, implemented in the derived classes. 16-bit unsigned version.
+			virtual bool tiff_readSubRegion(::Image::tag<std::uint16_t> tag, svec3 origin, svec3 size,
+											std::vector<std::uint16_t>& data) override {
+				UNUSED_PARAMETER(tag);
+				PRINT_FN_ENTRY;
+				return this->template_tiff_read_sub_region(origin, size, data);
+			}
+
+			/// @b Read a sub-region of the image, implemented in the derived classes. 32-bit unsigned version.
+			virtual bool tiff_readSubRegion(::Image::tag<std::uint32_t> tag, svec3 origin, svec3 size,
+											std::vector<std::uint32_t>& data) override {
+				UNUSED_PARAMETER(tag);
+				PRINT_FN_ENTRY;
+				return this->template_tiff_read_sub_region(origin, size, data);
+			}
+
+			/// @b Read a sub-region of the image, implemented in the derived classes. 64-bit unsigned version.
+			virtual bool tiff_readSubRegion(::Image::tag<std::uint64_t> tag, svec3 origin, svec3 size,
+											std::vector<std::uint64_t>& data) override {
+				UNUSED_PARAMETER(tag);
+				PRINT_FN_ENTRY;
+				return this->template_tiff_read_sub_region(origin, size, data);
+			}
+
+			/// @b Read a sub-region of the image, implemented in the derived classes.  8-bit   signed version.
+			virtual bool tiff_readSubRegion(::Image::tag<std::int8_t> tag, svec3 origin, svec3 size,
+											std::vector<std::int8_t>& data) override {
+				UNUSED_PARAMETER(tag);
+				PRINT_FN_ENTRY;
+				return this->template_tiff_read_sub_region(origin, size, data);
+			}
+
+			/// @b Read a sub-region of the image, implemented in the derived classes. 16-bit   signed version.
+			virtual bool tiff_readSubRegion(::Image::tag<std::int16_t> tag, svec3 origin, svec3 size,
+											std::vector<std::int16_t>& data) override {
+				UNUSED_PARAMETER(tag);
+				PRINT_FN_ENTRY;
+				return this->template_tiff_read_sub_region(origin, size, data);
+			}
+
+			/// @b Read a sub-region of the image, implemented in the derived classes. 32-bit   signed version.
+			virtual bool tiff_readSubRegion(::Image::tag<std::int32_t> tag, svec3 origin, svec3 size,
+											std::vector<std::int32_t>& data) override {
+				UNUSED_PARAMETER(tag);
+				PRINT_FN_ENTRY;
+				return this->template_tiff_read_sub_region(origin, size, data);
+			}
+
+			/// @b Read a sub-region of the image, implemented in the derived classes. 64-bit   signed version.
+			virtual bool tiff_readSubRegion(::Image::tag<std::int64_t> tag, svec3 origin, svec3 size,
+											std::vector<std::int64_t>& data) override {
+				UNUSED_PARAMETER(tag);
+				PRINT_FN_ENTRY;
+				return this->template_tiff_read_sub_region(origin, size, data);
+			}
+
+			/// @b Read a sub-region of the image, implemented in the derived classes, single precision floating point.
+			virtual bool tiff_readSubRegion(::Image::tag<float> tag, svec3 origin, svec3 size,
+											std::vector<float>& data) override {
+				UNUSED_PARAMETER(tag);
+				PRINT_FN_ENTRY;
+				return this->template_tiff_read_sub_region(origin, size, data);
+			}
+
+			/// @b Read a sub-region of the image, implemented in the derived classes, double precision floating point.
+			virtual bool tiff_readSubRegion(::Image::tag<double> tag, svec3 origin, svec3 size,
+											std::vector<double>& data) override {
+				UNUSED_PARAMETER(tag);
+				PRINT_FN_ENTRY;
+				return this->template_tiff_read_sub_region(origin, size, data);
+			}
 
 		protected:
 			/// @b The min and max of the image (if specified in the header)

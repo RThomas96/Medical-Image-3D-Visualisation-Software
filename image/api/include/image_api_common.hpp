@@ -6,9 +6,23 @@
 #include <glm/glm.hpp>
 
 #include <type_traits>
+#include <typeinfo>
 #include <memory>
+#include <ostream>
+
+// A compiler-specific header, used to un-mangle names returned by typeid<>::name()
+#include <cxxabi.h>
+
+#define PRINT_FN_ENTRY
+//#define PRINT_FN_ENTRY std::cerr << "Entry point : " << __PRETTY_FUNCTION__ << "\n"
 
 namespace Image {
+
+	/// @b Simple typedef for a 3-component GLM vector, useful for image resolution
+	typedef glm::vec<2, std::size_t, glm::defaultp> svec2;
+
+	/// @b Simple typedef for a 3-component GLM vector, useful for image resolution
+	typedef glm::vec<3, std::size_t, glm::defaultp> svec3;
 
 	/**
 	 * @brief The ImageDataType enum allows to know what bit-width and signed-ness an image implementation really holds.
@@ -50,11 +64,19 @@ namespace Image {
 		return _os;
 	}
 
-	/// @b Simple typedef for a 3-component GLM vector, useful for image resolution
-	typedef glm::vec<3, std::size_t, glm::defaultp> svec3;
+	/// @b A simple tagging system, allowing for explicit concrete function calls from a template interface.
+	template <typename restict_t> struct tag {};
 
-	/// @b Simple typedef for a 3-component GLM vector, useful for image resolution
-	typedef glm::vec<2, std::size_t, glm::defaultp> svec2;
+	/// @b Simple extraction operator to print the type of the tag to something like std::cout, std::cerr ...
+	template <typename tag_t> inline std::ostream& operator<<(std::ostream& _os, tag<tag_t> t) {
+		UNUSED_PARAMETER(t);
+		int status = 0;
+		char* unmangled_type = abi::__cxa_demangle(typeid(tag_t).name(), nullptr, nullptr, &status);
+		if (status == -1) { unmangled_type = (char*)"<malloc_error>"; }
+		if (status == -2) { unmangled_type = (char*)"<invalid_typename>"; }
+		if (status == -3) { unmangled_type = (char*)"<invalid_arg>"; }
+		return _os << "{tag_t: " << unmangled_type << "}";
+	}
 
 }
 

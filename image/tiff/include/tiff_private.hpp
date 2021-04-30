@@ -68,6 +68,53 @@ namespace Tiff {
 			/// trying to call it directly will lead to linker errors !
 			template <typename data_t> void readSlice(std::size_t slice_idx, std::vector<data_t>& values);
 
+		public:
+			//////////////////////////////////////////////////////
+			//													//
+			//             SUB-REGION READ FUNCTIONS            //
+			//													//
+			//////////////////////////////////////////////////////
+
+			/// @b Read a sub-region of the image, implemented in the derived classes.  8-bit unsigned version.
+			virtual bool tiff_readSubRegion(::Image::tag<std::uint8_t> tag, svec3 origin, svec3 size,
+									   std::vector<std::uint8_t>& data) = 0;
+
+			/// @b Read a sub-region of the image, implemented in the derived classes. 16-bit unsigned version.
+			virtual bool tiff_readSubRegion(::Image::tag<std::uint16_t> tag, svec3 origin, svec3 size,
+									   std::vector<std::uint16_t>& data) = 0;
+
+			/// @b Read a sub-region of the image, implemented in the derived classes. 32-bit unsigned version.
+			virtual bool tiff_readSubRegion(::Image::tag<std::uint32_t> tag, svec3 origin, svec3 size,
+									   std::vector<std::uint32_t>& data) = 0;
+
+			/// @b Read a sub-region of the image, implemented in the derived classes. 64-bit unsigned version.
+			virtual bool tiff_readSubRegion(::Image::tag<std::uint64_t> tag, svec3 origin, svec3 size,
+									   std::vector<std::uint64_t>& data) = 0;
+
+			/// @b Read a sub-region of the image, implemented in the derived classes.  8-bit   signed version.
+			virtual bool tiff_readSubRegion(::Image::tag<std::int8_t> tag, svec3 origin, svec3 size,
+									   std::vector<std::int8_t>& data) = 0;
+
+			/// @b Read a sub-region of the image, implemented in the derived classes. 16-bit   signed version.
+			virtual bool tiff_readSubRegion(::Image::tag<std::int16_t> tag, svec3 origin, svec3 size,
+									   std::vector<std::int16_t>& data) = 0;
+
+			/// @b Read a sub-region of the image, implemented in the derived classes. 32-bit   signed version.
+			virtual bool tiff_readSubRegion(::Image::tag<std::int32_t> tag, svec3 origin, svec3 size,
+									   std::vector<std::int32_t>& data) = 0;
+
+			/// @b Read a sub-region of the image, implemented in the derived classes. 64-bit   signed version.
+			virtual bool tiff_readSubRegion(::Image::tag<std::int64_t> tag, svec3 origin, svec3 size,
+									   std::vector<std::int64_t>& data) = 0;
+
+			/// @b Read a sub-region of the image, implemented in the derived classes, single precision floating point.
+			virtual bool tiff_readSubRegion(::Image::tag<float> tag, svec3 origin, svec3 size,
+									   std::vector<float>& data) = 0;
+
+			/// @b Read a sub-region of the image, implemented in the derived classes, double precision floating point.
+			virtual bool tiff_readSubRegion(::Image::tag<double> tag, svec3 origin, svec3 size,
+									   std::vector<double>& data) = 0;
+
 		protected:
 			/// @b The loaded frames, which are created by the parsing function.
 			std::vector<TIFFImage> images;

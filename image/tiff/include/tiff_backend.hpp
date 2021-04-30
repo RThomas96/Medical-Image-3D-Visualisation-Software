@@ -48,10 +48,17 @@ namespace Image {
 			/// @b Returns the dimensions of the image.
 			virtual svec3 getResolution(void) const override;
 
-			virtual ImageDataType getInternalDataType(void) const override { if (this->pImpl) { return this->pImpl->getInternalType(); } return ImageDataType::Unknown; }
-			virtual bool presentOnDisk(void) const override { return true; }
-			virtual std::string getImageName(void) const override { return "tiff_backend"; }
-			virtual BoundingBox_General<float> getBoundingBox(void) const override { return BoundingBox_General<float>(); }
+			/// @b Returns the internal data type represented in the images.
+			virtual ImageDataType getInternalDataType(void) const override;
+
+			/// @b Checks if the implementation is not only valid, but the data source is from the user disk (not RAM)
+			virtual bool presentOnDisk(void) const override;
+
+			/// @b Returns the name of this image, determined from the files taken as input.
+			virtual std::string getImageName(void) const override;
+
+			/// @b Returns the bounding box surrounding the image in its own space.
+			virtual BoundingBox_General<float> getBoundingBox(void) const override;
 
 			/// @b Template to return the minimum and maximum values stored in the file, if given.
 			/// @note For the regular TIFF files, returns the internal data type's min and max values.
@@ -73,8 +80,10 @@ namespace Image {
 		protected:
 			/// @b Parses the information from the images in a separate thread.
 			/// @warning Can only work for this TIFF implementation, not any derived classes ! (OME-TIFF)
-			virtual void parseImageInfo_thread(ThreadedTask::Ptr& task) override;
-			virtual void parseImageInfo_sequential(ThreadedTask::Ptr& task) override { task->end(); return; }
+			virtual void parseImageInfo_thread(ThreadedTask::Ptr& task);
+
+			/// @b Does a cleanup of the internal data structure when an error occured during parsing.
+			void internal_cleanup_after_error();
 
 			/// @b Creates the right type of image backend to process this type of image.
 			/// @param reference_frame The frame used to get the settings of the concrete backend object
@@ -85,10 +94,51 @@ namespace Image {
 			/// @details Will check we have the same number of files per component loaded in memory.
 			virtual bool checkFilenamesAreValid(ThreadedTask::Ptr&) const;
 
-			/// @b Cleans up the resources of the TIFF backend. Also removes the pImpl pointer.
-			virtual void internal_cleanup_after_error(void) override;
+			//////////////////////////////////////////////////////
+			//													//
+			//             SUB-REGION READ FUNCTIONS            //
+			//													//
+			//////////////////////////////////////////////////////
 
-			virtual bool readData(restrict_tag<std::uint16_t> tag, std::vector<std::uint16_t>& data) override;
+			/// @b Read a sub-region of the image, implemented in the derived classes.  8-bit unsigned version.
+			virtual bool internal_readSubRegion(::Image::tag<std::uint8_t> tag, svec3 origin, svec3 size,
+									   std::vector<std::uint8_t>& data) override;
+
+			/// @b Read a sub-region of the image, implemented in the derived classes. 16-bit unsigned version.
+			virtual bool internal_readSubRegion(::Image::tag<std::uint16_t> tag, svec3 origin, svec3 size,
+									   std::vector<std::uint16_t>& data) override;
+
+			/// @b Read a sub-region of the image, implemented in the derived classes. 32-bit unsigned version.
+			virtual bool internal_readSubRegion(::Image::tag<std::uint32_t> tag, svec3 origin, svec3 size,
+									   std::vector<std::uint32_t>& data) override;
+
+			/// @b Read a sub-region of the image, implemented in the derived classes. 64-bit unsigned version.
+			virtual bool internal_readSubRegion(::Image::tag<std::uint64_t> tag, svec3 origin, svec3 size,
+									   std::vector<std::uint64_t>& data) override;
+
+			/// @b Read a sub-region of the image, implemented in the derived classes.  8-bit   signed version.
+			virtual bool internal_readSubRegion(::Image::tag<std::int8_t> tag, svec3 origin, svec3 size,
+									   std::vector<std::int8_t>& data) override;
+
+			/// @b Read a sub-region of the image, implemented in the derived classes. 16-bit   signed version.
+			virtual bool internal_readSubRegion(::Image::tag<std::int16_t> tag, svec3 origin, svec3 size,
+									   std::vector<std::int16_t>& data) override;
+
+			/// @b Read a sub-region of the image, implemented in the derived classes. 32-bit   signed version.
+			virtual bool internal_readSubRegion(::Image::tag<std::int32_t> tag, svec3 origin, svec3 size,
+									   std::vector<std::int32_t>& data) override;
+
+			/// @b Read a sub-region of the image, implemented in the derived classes. 64-bit   signed version.
+			virtual bool internal_readSubRegion(::Image::tag<std::int64_t> tag, svec3 origin, svec3 size,
+									   std::vector<std::int64_t>& data) override;
+
+			/// @b Read a sub-region of the image, implemented in the derived classes, single precision floating point.
+			virtual bool internal_readSubRegion(::Image::tag<float> tag, svec3 origin, svec3 size,
+									   std::vector<float>& data) override;
+
+			/// @b Read a sub-region of the image, implemented in the derived classes, double precision floating point.
+			virtual bool internal_readSubRegion(::Image::tag<double> tag, svec3 origin, svec3 size,
+									   std::vector<double>& data) override;
 
 		protected:
 #ifdef PIMPL_USE_EXPERIMENTAL_PROPAGATE_CONST

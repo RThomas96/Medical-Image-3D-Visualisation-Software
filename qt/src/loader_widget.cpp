@@ -849,6 +849,7 @@ void GridLoaderWidget::loadNewGridAPI() {
 		isComplete = false;
 	}
 	if (isComplete) {
+		this->_testing_grid->updateInfoFromGrid();
 		std::cerr << "Grid dimensionality : " << this->_testing_grid->getVoxelDimensionality() << '\n';
 		Image::svec3 res = this->_testing_grid->getResolution();
 		glm::vec3 vx = this->_testing_grid->getVoxelDimensions();
@@ -857,6 +858,10 @@ void GridLoaderWidget::loadNewGridAPI() {
 		std::cerr << "Data internal representation : " << this->_testing_grid->getInternalDataType() << '\n';
 	}
 	std::cerr << "DONE DOING THE GRID\n";
+
+	Image::tag<std::uint16_t> tag{};
+
+	std::cerr << "Tagging system returns : " << tag << '\n';
 
 	this->computeGridInfoLabel();
 
@@ -1214,7 +1219,7 @@ void GridLoaderWidget::loadGrid_newAPI() {
 	#warning TODO : Enable computation of approximate voxel size here
 
 	// Load the grid data, and make a copy here
-	this->scene->addGridNewAPI(this->_testing_grid);
+	this->scene->newAPI_addGrid(this->_testing_grid);
 
 	this->close();
 }

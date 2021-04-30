@@ -24,6 +24,10 @@ namespace Image {
 			typedef std::unique_ptr<ImageBackendImpl> Ptr;
 
 		protected:
+			/// @b Simple tag which discriminates which function to call when called from a template.
+			/// @details Allow to have multiple implementations of a function foo() (for different data types, in this
+			/// case) which can thus be called from a function `template<> foo<>()`. This allows to leave the foo()
+			/// implementation to derived classes, where the information actually is.
 			template <typename T> struct restrict_tag {};
 
 		protected:
@@ -68,49 +72,89 @@ namespace Image {
 			/// @b Template to return the minimum and maximum values stored in the file, if given.
 			/// @note By default, returns the internal data type's min and max values.
 			/// @return True if the data could be accessed, and false if something went wrong.
-			/// @warning This function is left undefined here : it is implemented in derived classes, and
-			/// trying to call it directly will lead to linker errors !
-			template <typename data_t> bool getRangeValues(glm::vec<2, data_t, glm::defaultp>& _range);
+			template <typename data_t>
+			bool getRangeValues(glm::vec<2, data_t, glm::defaultp>& _range);
 
 			/// @b Template to read a single pixel's value(s) in the image.
 			/// @return True if the data could be accessed, and false if something went wrong.
-			/// @warning This function is left undefined here : it is implemented in derived classes, and
-			/// trying to call it directly will lead to linker errors !
-			template <typename data_t> bool readPixel(svec3 index, std::vector<data_t>& values);
+			template <typename data_t>
+			bool readPixel(svec3 index, std::vector<data_t>& values);
 
 			/// @b Template to read a single line of voxels in ihe image.
 			/// @return True if the data could be accessed, and false if something went wrong.
-			/// @warning This function is left undefined here : it is implemented in derived classes, and
-			/// trying to call it directly will lead to linker errors !
-			template <typename data_t> bool readLine(svec2 line_idx, std::vector<data_t>& values);
+			template <typename data_t>
+			bool readLine(svec2 line_idx, std::vector<data_t>& values) {
+				svec3 read_origin = svec3(0, line_idx.x, line_idx.y);
+				svec3 read_region_size(this->getResolution());
+				read_region_size.y = 1;
+				read_region_size.z = 1;
+				return this->internal_readSubRegion(::Image::tag<data_t>{}, read_origin, read_region_size, values);
+			}
 
 			/// @b Template to read a whole slice of voxels in the image at once.
 			/// @return True if the data could be accessed, and false if something went wrong.
-			/// @warning This function is left undefined here : it is implemented in derived classes, and
-			/// trying to call it directly will lead to linker errors !
-			template <typename data_t> bool readSlice(std::size_t slice_idx, std::vector<data_t>& values);
+			template <typename data_t>
+			bool readSlice(std::size_t slice_idx, std::vector<data_t>& values) {
+				svec3 read_origin = svec3(0, 0, slice_idx);
+				svec3 read_region_size(this->getResolution());
+				read_region_size.z = 1;
+				PRINT_FN_ENTRY;
+				return this->internal_readSubRegion(::Image::tag<data_t>{}, read_origin, read_region_size, values);
+			}
 
-			/// @b Template to a virtual function which is hopefully resolved at compile time
-			template <typename data_t> bool readData(std::vector<data_t>& data) {
-				return this->readData(restrict_tag<data_t>{}, data);
+			/// @b Template to read a sub-region of the voxels in the image at once.
+			/// @return True if the data could be accessed, and false if something went wrong.
+			template <typename data_t>
+			bool readSubRegion(svec3 read_origin, svec3 read_size, std::vector<data_t>& values) {
+				return this->internal_readSubRegion(read_origin, read_size, values);
 			}
 
 		protected:
-			/// @b Parse image info in a single thread. Useful for things that are _not_ parallelizable.
-			virtual void parseImageInfo_sequential(ThreadedTask::Ptr&) noexcept(false) = 0;
+			//////////////////////////////////////////////////////
+			//													//
+			//             SUB-REGION READ FUNCTIONS            //
+			//													//
+			//////////////////////////////////////////////////////
 
-			/// @b Simple call to parse images, the functionnality will be added in derived classes.
-			/// @note This version launches the image parsing in separate thread(s), which can be implemented
-			/// differently depending on the derived class' implementation.
-			virtual void parseImageInfo_thread(ThreadedTask::Ptr&) noexcept(false) = 0;
+			/// @b Read a sub-region of the image, implemented in the derived classes.  8-bit unsigned version.
+			virtual bool internal_readSubRegion(::Image::tag<std::uint8_t> tag, svec3 origin, svec3 size,
+									   std::vector<std::uint8_t>& data) = 0;
 
-			/// @b Cleans up the members of this class and derivatives. Usually performed after an error.
-			/// @details This will be implemented in derived classes, because its behaviour is depdendant upon the
-			/// members of each class. Sets the class object as though it is newly created. The only thing not touched
-			/// are the filenames, in case the files on disk have changed and the user wants to reload the stack.
-			virtual void internal_cleanup_after_error(void) = 0;
+			/// @b Read a sub-region of the image, implemented in the derived classes. 16-bit unsigned version.
+			virtual bool internal_readSubRegion(::Image::tag<std::uint16_t> tag, svec3 origin, svec3 size,
+									   std::vector<std::uint16_t>& data) = 0;
 
-			virtual bool readData(restrict_tag<std::uint16_t> tag, std::vector<std::uint16_t>& data) = 0;
+			/// @b Read a sub-region of the image, implemented in the derived classes. 32-bit unsigned version.
+			virtual bool internal_readSubRegion(::Image::tag<std::uint32_t> tag, svec3 origin, svec3 size,
+									   std::vector<std::uint32_t>& data) = 0;
+
+			/// @b Read a sub-region of the image, implemented in the derived classes. 64-bit unsigned version.
+			virtual bool internal_readSubRegion(::Image::tag<std::uint64_t> tag, svec3 origin, svec3 size,
+									   std::vector<std::uint64_t>& data) = 0;
+
+			/// @b Read a sub-region of the image, implemented in the derived classes.  8-bit   signed version.
+			virtual bool internal_readSubRegion(::Image::tag<std::int8_t> tag, svec3 origin, svec3 size,
+									   std::vector<std::int8_t>& data) = 0;
+
+			/// @b Read a sub-region of the image, implemented in the derived classes. 16-bit   signed version.
+			virtual bool internal_readSubRegion(::Image::tag<std::int16_t> tag, svec3 origin, svec3 size,
+									   std::vector<std::int16_t>& data) = 0;
+
+			/// @b Read a sub-region of the image, implemented in the derived classes. 32-bit   signed version.
+			virtual bool internal_readSubRegion(::Image::tag<std::int32_t> tag, svec3 origin, svec3 size,
+									   std::vector<std::int32_t>& data) = 0;
+
+			/// @b Read a sub-region of the image, implemented in the derived classes. 64-bit   signed version.
+			virtual bool internal_readSubRegion(::Image::tag<std::int64_t> tag, svec3 origin, svec3 size,
+									   std::vector<std::int64_t>& data) = 0;
+
+			/// @b Read a sub-region of the image, implemented in the derived classes, single precision floating point.
+			virtual bool internal_readSubRegion(::Image::tag<float> tag, svec3 origin, svec3 size,
+									   std::vector<float>& data) = 0;
+
+			/// @b Read a sub-region of the image, implemented in the derived classes, double precision floating point.
+			virtual bool internal_readSubRegion(::Image::tag<double> tag, svec3 origin, svec3 size,
+									   std::vector<double>& data) = 0;
 
 		protected:
 			/// @b The filenames of the implementation.

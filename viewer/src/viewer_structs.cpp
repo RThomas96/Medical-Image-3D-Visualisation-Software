@@ -130,7 +130,7 @@ void TextureUpload::printInfo() {
 		DEFAULT_GL();
 	}
 	std::cerr << "],\n\t- alignment:{" << this->alignment.x << "," << this->alignment.y <<
-		     "}\n\t- level : " << this->level << ",\n\t- internalFormat : ";
+			 "}\n\t- level : " << this->level << ",\n\t- internalFormat : ";
 	switch (this->internalFormat) {
 		CASE_GL(GL_R16UI);
 		CASE_GL(GL_R8UI);
@@ -139,7 +139,7 @@ void TextureUpload::printInfo() {
 		DEFAULT_GL();
 	}
 	std::cerr << ",\n\t- size:[" << this->size.x << "," << this->size.y << "," <<
-		     this->size.z << "],\n\t- format : ";
+			 this->size.z << "],\n\t- format : ";
 	switch(this->format) {
 		CASE_GL(GL_RED);
 		CASE_GL(GL_RED_INTEGER);
@@ -251,19 +251,6 @@ GridGLView::GridGLView(const std::initializer_list<std::shared_ptr<DiscreteGrid>
 	}
 }
 
-GridGLView::GridGLView() {
-	this->gridTexture = 0;
-	this->volumetricMesh = {};
-	this->boundingBoxColor = glm::vec3(.257, .257, .257);
-	this->nbChannels = 1;
-	this->defaultEpsilon = glm::vec3(1.5, 1.5, 1.5);
-	data_2 min(0,0);
-	this->texBounds0 = min;
-	this->texBounds1 = min;
-	this->colorBounds0 = min;
-	this->colorBounds1 = min;
-}
-
 GridGLView::GridGLView(const std::shared_ptr<DiscreteGrid> _red,
 			   const std::shared_ptr<DiscreteGrid> _blue) {
 	this->grid.emplace_back(_red);
@@ -288,6 +275,23 @@ GridGLView::GridGLView(const std::shared_ptr<DiscreteGrid> _red,
 		this->colorBounds0 = min;
 		this->colorBounds1 = min;
 	}
+}
+
+NewAPI_GridGLView::NewAPI_GridGLView(const Image::Grid::Ptr _grid) {
+	this->grid = _grid;
+	this->gridTexture = 0;
+	this->volumetricMesh = {};
+	this->boundingBoxColor = glm::vec3(.257, .257, .257);
+	this->nbChannels = 1;
+	this->defaultEpsilon = glm::vec3(1.5, 1.5, 1.5);
+	this->nbChannels = this->grid->getVoxelDimensionality();
+	data_2 min(0,std::numeric_limits<data_2::value_type>::max());
+	this->texBounds0 = min;
+	this->texBounds1 = min;
+	this->colorBounds0 = min;
+	this->colorBounds1 = min;
+	this->boundingBoxColor = glm::vec3(.257, .257, .257);
+	this->defaultEpsilon = glm::vec3(1.f, 1.f, 1.f);
 }
 
 GridGLView::~GridGLView(void) { /* Nothing here for now. */ }

@@ -59,6 +59,24 @@ namespace Image {
 		return parseTask;
 	}
 
+	ImageDataType TIFFBackend::getInternalDataType() const {
+		if (this->pImpl) { return this->pImpl->getInternalType(); }
+		return ImageDataType::Unknown;
+	}
+
+	bool TIFFBackend::presentOnDisk() const {
+		if (this->pImpl) { return true; }
+		return false;
+	}
+
+	std::string TIFFBackend::getImageName() const {
+		return "tiff_backend_implementation";
+	}
+
+	BoundingBox_General<float> TIFFBackend::getBoundingBox() const {
+		return BoundingBox_General<float>();
+	}
+
 	std::size_t TIFFBackend::getVoxelDimensionality() const {
 		return this->dimensionality;
 	}
@@ -269,9 +287,93 @@ namespace Image {
 		this->pImpl = nullptr;
 	}
 
-	bool TIFFBackend::readData(ImageBackendImpl::restrict_tag<std::uint16_t> t, std::vector<std::uint16_t>& data) {
-		std::cerr << "Calling " << __PRETTY_FUNCTION__ << " : \n";
-		data.clear();
+	/// @b Read a sub-region of the image, implemented in the derived classes.  8-bit unsigned version.
+	bool TIFFBackend::internal_readSubRegion(::Image::tag<std::uint8_t> tag,
+		svec3 origin, svec3 size, std::vector<std::uint8_t>& data)
+	{
+		PRINT_FN_ENTRY;
+		if (this->pImpl) { return this->pImpl->tiff_readSubRegion(tag, origin, size, data); }
+		return false;
+	}
+
+	/// @b Read a sub-region of the image, implemented in the derived classes. 16-bit unsigned version.
+	bool TIFFBackend::internal_readSubRegion(::Image::tag<std::uint16_t> tag,
+		svec3 origin, svec3 size, std::vector<std::uint16_t>& data)
+	{
+		PRINT_FN_ENTRY;
+		if (this->pImpl) { return this->pImpl->tiff_readSubRegion(tag, origin, size, data); }
+		return false;
+	}
+
+	/// @b Read a sub-region of the image, implemented in the derived classes. 32-bit unsigned version.
+	bool TIFFBackend::internal_readSubRegion(::Image::tag<std::uint32_t> tag,
+		svec3 origin, svec3 size, std::vector<std::uint32_t>& data)
+	{
+		PRINT_FN_ENTRY;
+		if (this->pImpl) { return this->pImpl->tiff_readSubRegion(tag, origin, size, data); }
+		return false;
+	}
+
+	/// @b Read a sub-region of the image, implemented in the derived classes. 64-bit unsigned version.
+	bool TIFFBackend::internal_readSubRegion(::Image::tag<std::uint64_t> tag,
+		svec3 origin, svec3 size, std::vector<std::uint64_t>& data)
+	{
+		PRINT_FN_ENTRY;
+		if (this->pImpl) { return this->pImpl->tiff_readSubRegion(tag, origin, size, data); }
+		return false;
+	}
+
+	/// @b Read a sub-region of the image, implemented in the derived classes.  8-bit   signed version.
+	bool TIFFBackend::internal_readSubRegion(::Image::tag<std::int8_t> tag,
+		svec3 origin, svec3 size, std::vector<std::int8_t>& data)
+	{
+		PRINT_FN_ENTRY;
+		if (this->pImpl) { return this->pImpl->tiff_readSubRegion(tag, origin, size, data); }
+		return false;
+	}
+
+	/// @b Read a sub-region of the image, implemented in the derived classes. 16-bit   signed version.
+	bool TIFFBackend::internal_readSubRegion(::Image::tag<std::int16_t> tag,
+		svec3 origin, svec3 size, std::vector<std::int16_t>& data)
+	{
+		PRINT_FN_ENTRY;
+		if (this->pImpl) { return this->pImpl->tiff_readSubRegion(tag, origin, size, data); }
+		return false;
+	}
+
+	/// @b Read a sub-region of the image, implemented in the derived classes. 32-bit   signed version.
+	bool TIFFBackend::internal_readSubRegion(::Image::tag<std::int32_t> tag,
+		svec3 origin, svec3 size, std::vector<std::int32_t>& data)
+	{
+		PRINT_FN_ENTRY;
+		if (this->pImpl) { return this->pImpl->tiff_readSubRegion(tag, origin, size, data); }
+		return false;
+	}
+
+	/// @b Read a sub-region of the image, implemented in the derived classes. 64-bit   signed version.
+	bool TIFFBackend::internal_readSubRegion(::Image::tag<std::int64_t> tag,
+		svec3 origin, svec3 size, std::vector<std::int64_t>& data)
+	{
+		PRINT_FN_ENTRY;
+		if (this->pImpl) { return this->pImpl->tiff_readSubRegion(tag, origin, size, data); }
+		return false;
+	}
+
+	/// @b Read a sub-region of the image, implemented in the derived classes, single precision floating point.
+	bool TIFFBackend::internal_readSubRegion(::Image::tag<float> tag,
+		svec3 origin, svec3 size, std::vector<float>& data)
+	{
+		PRINT_FN_ENTRY;
+		if (this->pImpl) { return this->pImpl->tiff_readSubRegion(tag, origin, size, data); }
+		return false;
+	}
+
+	/// @b Read a sub-region of the image, implemented in the derived classes, double precision floating point.
+	bool TIFFBackend::internal_readSubRegion(::Image::tag<double> tag,
+		svec3 origin, svec3 size, std::vector<double>& data)
+	{
+		PRINT_FN_ENTRY;
+		if (this->pImpl) { return this->pImpl->tiff_readSubRegion(tag, origin, size, data); }
 		return false;
 	}
 

@@ -295,6 +295,78 @@ namespace Tiff {
 		return this->cachedSlices.loadData(slice_idx, full_image);
 	}
 
+	template <typename img_t>
+	template <typename data_t>
+	bool TIFFReader<img_t>::template_tiff_read_sub_region(svec3 origin, svec3 size, std::vector<data_t>& out) {
+		/// @b Const iterator type for the cached data, which does not modify the data itself
+		using cache_iterator_t = typename cache_t::data_t_ptr::element_type::const_iterator;
+		/// @b Iterator type for the target data
+		using target_iterator_t = typename std::vector<data_t>::iterator;
+
+		// ensure we have the right size for the buffer, fill it with 0s for now :
+		out.resize(size.x * size.y * size.z * this->voxel_dimensionalty);
+		std::fill(out.begin(), out.end(), data_t(0));
+
+		//
+		// Check for outliers :
+		// If origin's coordinates are bigger than this stack's dimensions, the whole subregion will be outside.
+		// Simply fill the vector with null values and return
+		//
+		if (origin.x >= this->width || origin.y >= this->height || origin.z >= this->images.size()){ return true; }
+
+		/// @b Beginning of slices to load and cache
+		std::size_t src_slice_begin = origin.z;
+		/// @b end of slices to cache or end of slices available
+		std::size_t src_slice_end = (src_slice_begin + size.z >= this->images.size()) ?
+						this->images.size() : src_slice_begin + size.z;
+
+		// the number of slices which will be read by the first for-loop :
+		std::size_t tgt_slices_readable = src_slice_end - src_slice_begin;
+
+		/// @b Index of the last line we can read from the source buffer
+		std::size_t src_height_idx_end= (origin.y + size.y >= this->height) ?
+						this->height - origin.y : size.y;
+
+		/// @b the number of lines that can be read from the source buffer :
+		std::size_t src_height_readable = src_height_idx_end - origin.y;
+
+		/// @b total length of a line in the source
+		std::size_t src_line_size = this->width * this->voxel_dimensionalty;
+		/// @b beginning of a line to read from the source buffer
+		std::size_t src_line_idx_begin = origin.x * this->voxel_dimensionalty;
+		/// @b amount of values to read into the target buffer from the source
+		std::size_t src_line_idx_end = (src_line_idx_begin + size.x * this->voxel_dimensionalty >= src_line_size) ?
+					src_line_size : src_line_idx_begin + size.x * this->voxel_dimensionalty;
+
+		/// @b Line length in the buffer to write to
+		std::size_t target_line_length = size.x * this->voxel_dimensionalty;
+		/// @b image length in the buffer to write to
+		std::size_t target_image_length = size.y * target_line_length;
+
+		std::size_t y = 0, z = 0;
+
+		// Iterate on slices :
+		for (z = 0;	z < tgt_slices_readable ; ++z) {
+			// load and cache the slice to load in memory (or fetch it directly if already cached) :
+			std::size_t cache_idx = this->loadAndCacheSlice(src_slice_begin + z);
+			// get img data from cache :
+			typename cache_t::data_t_ptr image_data = this->cachedSlices.getDataIndexed(cache_idx);
+			// read all lines we _can_ from the source :
+			for (y = 0; y < src_height_readable; ++y) {
+				// Figure out the right location in the source buffer :
+				cache_iterator_t begin = image_data->cbegin() + (origin.y + y) * src_line_size + src_line_idx_begin;
+				// Read <source begin> + [size to read | rest of source line] :
+				cache_iterator_t end   = image_data->cbegin() + (origin.y + y) * src_line_size + src_line_idx_end;
+				// beginning in target buffer :
+				target_iterator_t target_begin = out.begin() + z * target_image_length + y * target_line_length;
+				// Copy a whole line at once :
+				std::copy(begin, end, target_begin);
+			}
+		}
+		// don't need to pad the remaining slices (if any) because of the first call to fill()
+		return true;
+	}
+
 }
 }
 

@@ -36,6 +36,13 @@ namespace Image {
 		return task;
 	}
 
+	void Grid::updateInfoFromGrid() {
+		if (this->pImpl) {
+			this->imageSize = this->pImpl->getResolution();
+			this->gridName = this->pImpl->getImageName();
+		}
+	}
+
 	ImageDataType Grid::getInternalDataType() const {
 		if (this->pImpl) { return this->pImpl->getInternalDataType(); }
 		return ImageDataType::Unknown;

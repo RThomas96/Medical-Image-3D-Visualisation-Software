@@ -74,6 +74,8 @@ namespace Image {
 			/// @b Simply calls the parse function for the image implementation^
 			ThreadedTask::Ptr updateInfoFromDisk(void);
 
+			void updateInfoFromGrid(void);
+
 			/// @b Returns the internal data type represented by the grid.
 			ImageDataType getInternalDataType(void) const;
 
@@ -115,10 +117,6 @@ namespace Image {
 			/// @warning This function is left undefined here : it is implemented in derived classes, and
 			/// trying to call it directly will lead to linker errors !
 			template <typename data_t> bool readSlice(std::size_t slice_idx, std::vector<data_t>& values);
-
-			template <typename data_t> bool readData(std::vector<data_t>& data) {
-				return this->pImpl->readData(data);
-			}
 
 		protected:
 #ifdef PIMPL_USE_EXPERIMENTAL_PROPAGATE_CONST
@@ -167,6 +165,7 @@ namespace Image {
 
 	template <typename data_t>
 	bool Grid::readSlice(std::size_t slice_idx, std::vector<data_t>& values) {
+		PRINT_FN_ENTRY;
 		// Checks the slice index is valid, then reads it if the implementation is valid :
 		if (slice_idx < this->imageSize.z) {
 			if (this->pImpl) {

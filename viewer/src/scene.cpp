@@ -581,7 +581,7 @@ void Scene::addGrid(const std::shared_ptr<DiscreteGrid> _grid, std::string meshP
 	this->resetVisuBox();
 }
 
-void Scene::addGridNewAPI(Image::Grid::Ptr gridLoaded) {
+void Scene::newAPI_addGrid(Image::Grid::Ptr gridLoaded) {
 	if (this->grids.size() > 0) {
 		this->shouldDeleteGrid = true;
 		std::cerr << "Deleting grids ...\n";
@@ -592,7 +592,7 @@ void Scene::addGridNewAPI(Image::Grid::Ptr gridLoaded) {
 	}
 	glm::vec<4, std::size_t, glm::defaultp> dimensions{gridLoaded->getResolution(), gridLoaded->getVoxelDimensionality()};
 
-	GridGLView::Ptr gridView = std::make_shared<GridGLView>();
+	NewAPI_GridGLView::Ptr gridView = std::make_shared<NewAPI_GridGLView>(gridLoaded);
 
 	TextureUpload _gridTex{};
 	_gridTex.minmag.x = GL_NEAREST;
@@ -621,12 +621,11 @@ void Scene::addGridNewAPI(Image::Grid::Ptr gridLoaded) {
 	_gridTex.size.z = dimensions.z;
 
 	std::vector<std::uint16_t> slices(dimensions.x * dimensions.y * dimensions.a);
-	gridView->gridTexture = this->uploadTexture3DNewAPI_allocateonly(_gridTex);
+	gridView->gridTexture = this->newAPI_uploadTexture3D_allocateonly(_gridTex);
 
-#warning Make the upload here
 	for (std::size_t s = 0; s < dimensions.z; ++s) {
-		if (gridLoaded->readData(slices)) {
-			this->uploadTexture3DNewAPI(gridView->gridTexture, _gridTex, s, slices);
+		if (gridLoaded->readSlice(s, slices)) {
+			this->newAPI_uploadTexture3D(gridView->gridTexture, _gridTex, s, slices);
 		} else {
 			std::cerr << "Scene texture upload : Could not read the data at index " << s << " !\n";
 		}
@@ -635,11 +634,11 @@ void Scene::addGridNewAPI(Image::Grid::Ptr gridLoaded) {
 	gridView->boundingBoxColor = glm::vec3(.4, .6, .3); // olive-colored by default
 	gridView->nbChannels = 2; // loaded 2 channels in the image
 
-	this->tex3D_buildMesh(gridView, "");
+	/*this->tex3D_buildMesh(gridView, "");
 	this->tex3D_buildVisTexture(gridView->volumetricMesh);
 	this->tex3D_buildBuffers(gridView->volumetricMesh);
 
-	this->grids.push_back(gridView);
+	this->grids.push_back(gridView);*/
 
 	this->updateVis();
 	this->updateBoundingBox();
@@ -1204,7 +1203,7 @@ GLuint Scene::uploadTexture3D_iterative(const TextureUpload &tex, const std::sha
 	return texHandle;
 }
 
-GLuint Scene::uploadTexture3DNewAPI_allocateonly(const TextureUpload &tex) {
+GLuint Scene::newAPI_uploadTexture3D_allocateonly(const TextureUpload &tex) {
 	if (this->context != nullptr) {
 		if (this->context->isValid() == false) {
 			throw std::runtime_error("No associated valid context");
@@ -1255,7 +1254,7 @@ GLuint Scene::uploadTexture3DNewAPI_allocateonly(const TextureUpload &tex) {
 	return texHandle;
 }
 
-GLuint Scene::uploadTexture3DNewAPI(const GLuint texHandle, const TextureUpload &tex, std::size_t s, std::vector<std::uint16_t> &data) {
+GLuint Scene::newAPI_uploadTexture3D(const GLuint texHandle, const TextureUpload &tex, std::size_t s, std::vector<std::uint16_t> &data) {
 	if (this->context != nullptr) {
 		if (this->context->isValid() == false) {
 			throw std::runtime_error("No associated valid context");
