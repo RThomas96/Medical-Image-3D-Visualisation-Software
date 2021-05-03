@@ -170,7 +170,6 @@ namespace Image {
 
 	template <typename data_t>
 	bool Grid::readSlice(std::size_t slice_idx, std::vector<data_t>& values) {
-		PRINT_FN_ENTRY;
 		// Checks the slice index is valid, then reads it if the implementation is valid :
 		if (slice_idx < this->imageSize.z) {
 			if (this->pImpl) {

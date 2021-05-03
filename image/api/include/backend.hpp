@@ -98,7 +98,6 @@ namespace Image {
 				svec3 read_origin = svec3(0, 0, slice_idx);
 				svec3 read_region_size(this->getResolution());
 				read_region_size.z = 1;
-				PRINT_FN_ENTRY;
 				return this->internal_readSubRegion(::Image::tag<data_t>{}, read_origin, read_region_size, values);
 			}
 

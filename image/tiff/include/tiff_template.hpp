@@ -11,13 +11,13 @@ namespace Tiff {
 		public:
 			typedef ReadCache<std::size_t, std::vector<img_t>> cache_t;
 		protected:
-			TIFFReader(uint32_t w, uint32_t h);
+			TIFFReader(uint32_t w, uint32_t h, std::size_t _dim);
 		public:
 			/// @b Default dtor for the backend, which releases the cached data.
 			virtual ~TIFFReader(void) { this->cachedSlices.clearCache(); };
 
-			static TIFFPrivate::Ptr createTIFFBackend(uint32_t width, uint32_t height) {
-				return TIFFPrivate::Ptr(new TIFFReader<img_t>(width, height));
+			static TIFFPrivate::Ptr createTIFFBackend(uint32_t width, uint32_t height, std::size_t dim) {
+				return TIFFPrivate::Ptr(new TIFFReader<img_t>(width, height, dim));
 			}
 
 			/// @b Returns the range of values present (or representable) in the file, converted to the 'target_t' type.
@@ -59,7 +59,6 @@ namespace Tiff {
 			virtual bool tiff_readSubRegion(::Image::tag<std::uint8_t> tag, svec3 origin, svec3 size,
 											std::vector<std::uint8_t>& data) override {
 				UNUSED_PARAMETER(tag);
-				PRINT_FN_ENTRY;
 				return this->template_tiff_read_sub_region(origin, size, data);
 			}
 
@@ -67,7 +66,6 @@ namespace Tiff {
 			virtual bool tiff_readSubRegion(::Image::tag<std::uint16_t> tag, svec3 origin, svec3 size,
 											std::vector<std::uint16_t>& data) override {
 				UNUSED_PARAMETER(tag);
-				PRINT_FN_ENTRY;
 				return this->template_tiff_read_sub_region(origin, size, data);
 			}
 
@@ -75,7 +73,6 @@ namespace Tiff {
 			virtual bool tiff_readSubRegion(::Image::tag<std::uint32_t> tag, svec3 origin, svec3 size,
 											std::vector<std::uint32_t>& data) override {
 				UNUSED_PARAMETER(tag);
-				PRINT_FN_ENTRY;
 				return this->template_tiff_read_sub_region(origin, size, data);
 			}
 

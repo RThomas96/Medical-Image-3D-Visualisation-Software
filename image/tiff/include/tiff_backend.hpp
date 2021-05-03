@@ -174,7 +174,6 @@ namespace Image {
 	/// @b Returns the data read by the pImpl pointer in this class.
 	template <typename data_t>
 	bool TIFFBackend::readSlice(std::size_t index, std::vector<data_t>& values) {
-		PRINT_FN_ENTRY;
 		if (this->pImpl) { this->pImpl->readSlice<data_t>(index, values); return true; }
 		return false;
 	}

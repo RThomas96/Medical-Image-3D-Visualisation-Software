@@ -627,10 +627,6 @@ void Scene::newAPI_addGrid(Image::Grid::Ptr gridLoaded) {
 
 	for (std::size_t s = 0; s < dimensions.z; ++s) {
 		if (gridLoaded->readSlice(s, slices)) {
-			std::size_t diff_from_zero = 0;
-			std::for_each(slices.cbegin(), slices.cend(), [&](std::uint16_t val) {if (val) { diff_from_zero++; }});
-			std::cerr << "Different from 0 : " << diff_from_zero << '\n';
-			std::cerr << '\n';
 			this->newAPI_uploadTexture3D(gridView->gridTexture, _gridTex, s, slices);
 		} else {
 			std::cerr << "Scene texture upload : Could not read the data at index " << s << " !\n";

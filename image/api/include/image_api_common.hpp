@@ -15,8 +15,8 @@
 // A compiler-specific header, used to un-mangle names returned by typeid<>::name()
 #include <cxxabi.h>
 
-//#define PRINT_FN_ENTRY
-#define PRINT_FN_ENTRY std::cerr << "Entry point : " << __PRETTY_FUNCTION__ << "\n"
+#define PRINT_FN_ENTRY
+//#define PRINT_FN_ENTRY std::cerr << "Entry point : " << __PRETTY_FUNCTION__ << "\n"
 
 namespace Image {
 

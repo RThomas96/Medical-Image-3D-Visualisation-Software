@@ -15,128 +15,129 @@ namespace Tiff {
 
 	// Default templated ctor of the TIFFReader class, throwing an error for unsupported (not specialized) types.
 	template <typename unsupported_t>
-	TIFFReader<unsupported_t>::TIFFReader(uint32_t w, uint32_t h) {
-		UNUSED_PARAMETER(w)
-		UNUSED_PARAMETER(h)
+	TIFFReader<unsupported_t>::TIFFReader(uint32_t w, uint32_t h, std::size_t _dim) {
+		UNUSED_PARAMETER(w);
+		UNUSED_PARAMETER(h);
+		UNUSED_PARAMETER(_dim);
 		throw std::runtime_error("Type given to private TIFF implementation is not supported.");
 	}
 
 	template <>
-	TIFFReader<std::uint8_t>::TIFFReader(uint32_t w, uint32_t h) : Tiff::TIFFPrivate(w, h) {
+	TIFFReader<std::uint8_t>::TIFFReader(uint32_t w, uint32_t h, std::size_t _dim) : Tiff::TIFFPrivate(w, h) {
 		this->internal_data_type = ImageDataType::Unsigned | ImageDataType::Bit_8;
 		this->width = w;
 		this->height = h;
 		this->bitsPerSample = 8;
 		this->sampleFormat = SAMPLEFORMAT_UINT;
-		this->voxel_dimensionalty = 0;
+		this->voxel_dimensionalty = _dim;
 		this->images.clear();
 		std::cout << "Creating a TIFF backend of type " << pnt(std::uint8_t) << '\n';
 	}
 
 	template <>
-	TIFFReader<std::uint16_t>::TIFFReader(uint32_t w, uint32_t h) : Tiff::TIFFPrivate(w, h) {
+	TIFFReader<std::uint16_t>::TIFFReader(uint32_t w, uint32_t h, std::size_t _dim) : Tiff::TIFFPrivate(w, h) {
 		this->internal_data_type = ImageDataType::Unsigned | ImageDataType::Bit_16;
 		this->width = w;
 		this->height = h;
 		this->bitsPerSample = 16;
 		this->sampleFormat = SAMPLEFORMAT_UINT;
-		this->voxel_dimensionalty = 0;
+		this->voxel_dimensionalty = _dim;
 		this->images.clear();
 		std::cout << "Creating a TIFF backend of type " << pnt(std::uint16_t) << '\n';
 	}
 
 	template <>
-	TIFFReader<std::uint32_t>::TIFFReader(uint32_t w, uint32_t h) : Tiff::TIFFPrivate(w, h) {
+	TIFFReader<std::uint32_t>::TIFFReader(uint32_t w, uint32_t h, std::size_t _dim) : Tiff::TIFFPrivate(w, h) {
 		this->internal_data_type = ImageDataType::Unsigned | ImageDataType::Bit_32;
 		this->width = w;
 		this->height = h;
 		this->bitsPerSample = 32;
 		this->sampleFormat = SAMPLEFORMAT_UINT;
-		this->voxel_dimensionalty = 0;
+		this->voxel_dimensionalty = _dim;
 		this->images.clear();
 		std::cout << "Creating a TIFF backend of type " << pnt(std::uint32_t) << '\n';
 	}
 
 	template <>
-	TIFFReader<std::uint64_t>::TIFFReader(uint32_t w, uint32_t h) : Tiff::TIFFPrivate(w, h) {
+	TIFFReader<std::uint64_t>::TIFFReader(uint32_t w, uint32_t h, std::size_t _dim) : Tiff::TIFFPrivate(w, h) {
 		this->internal_data_type = ImageDataType::Unsigned | ImageDataType::Bit_64;
 		this->width = w;
 		this->height = h;
 		this->bitsPerSample = 64;
 		this->sampleFormat = SAMPLEFORMAT_UINT;
-		this->voxel_dimensionalty = 0;
+		this->voxel_dimensionalty = _dim;
 		this->images.clear();
 		std::cout << "Creating a TIFF backend of type " << pnt(std::uint64_t) << '\n';
 	}
 
 	template <>
-	TIFFReader<std::int8_t>::TIFFReader(uint32_t w, uint32_t h) : Tiff::TIFFPrivate(w, h) {
+	TIFFReader<std::int8_t>::TIFFReader(uint32_t w, uint32_t h, std::size_t _dim) : Tiff::TIFFPrivate(w, h) {
 		this->internal_data_type = ImageDataType::Signed | ImageDataType::Bit_8;
 		this->width = w;
 		this->height = h;
 		this->bitsPerSample = 8;
 		this->sampleFormat = SAMPLEFORMAT_INT;
-		this->voxel_dimensionalty = 0;
+		this->voxel_dimensionalty = _dim;
 		this->images.clear();
 		std::cout << "Creating a TIFF backend of type " << pnt(std::int8_t) << '\n';
 	}
 
 	template <>
-	TIFFReader<std::int16_t>::TIFFReader(uint32_t w, uint32_t h) : Tiff::TIFFPrivate(w, h) {
+	TIFFReader<std::int16_t>::TIFFReader(uint32_t w, uint32_t h, std::size_t _dim) : Tiff::TIFFPrivate(w, h) {
 		this->internal_data_type = ImageDataType::Signed | ImageDataType::Bit_16;
 		this->width = w;
 		this->height = h;
 		this->bitsPerSample = 16;
 		this->sampleFormat = SAMPLEFORMAT_INT;
-		this->voxel_dimensionalty = 0;
+		this->voxel_dimensionalty = _dim;
 		this->images.clear();
 		std::cout << "Creating a TIFF backend of type " << pnt(std::int16_t) << '\n';
 	}
 
 	template <>
-	TIFFReader<std::int32_t>::TIFFReader(uint32_t w, uint32_t h) : Tiff::TIFFPrivate(w, h) {
+	TIFFReader<std::int32_t>::TIFFReader(uint32_t w, uint32_t h, std::size_t _dim) : Tiff::TIFFPrivate(w, h) {
 		this->internal_data_type = ImageDataType::Signed | ImageDataType::Bit_32;
 		this->width = w;
 		this->height = h;
 		this->bitsPerSample = 32;
 		this->sampleFormat = SAMPLEFORMAT_INT;
-		this->voxel_dimensionalty = 0;
+		this->voxel_dimensionalty = _dim;
 		this->images.clear();
 		std::cout << "Creating a TIFF backend of type " << pnt(std::int32_t) << '\n';
 	}
 
 	template <>
-	TIFFReader<std::int64_t>::TIFFReader(uint32_t w, uint32_t h) : Tiff::TIFFPrivate(w, h) {
+	TIFFReader<std::int64_t>::TIFFReader(uint32_t w, uint32_t h, std::size_t _dim) : Tiff::TIFFPrivate(w, h) {
 		this->internal_data_type = ImageDataType::Signed | ImageDataType::Bit_64;
 		this->width = w;
 		this->height = h;
 		this->bitsPerSample = 64;
 		this->sampleFormat = SAMPLEFORMAT_INT;
-		this->voxel_dimensionalty = 0;
+		this->voxel_dimensionalty = _dim;
 		this->images.clear();
 		std::cout << "Creating a TIFF backend of type " << pnt(std::int64_t) << '\n';
 	}
 
 	template <>
-	TIFFReader<float>::TIFFReader(uint32_t w, uint32_t h) : Tiff::TIFFPrivate(w, h) {
+	TIFFReader<float>::TIFFReader(uint32_t w, uint32_t h, std::size_t _dim) : Tiff::TIFFPrivate(w, h) {
 		this->internal_data_type = ImageDataType::Floating | ImageDataType::Bit_32;
 		this->width = w;
 		this->height = h;
 		this->bitsPerSample = 32;
 		this->sampleFormat = SAMPLEFORMAT_IEEEFP;
-		this->voxel_dimensionalty = 0;
+		this->voxel_dimensionalty = _dim;
 		this->images.clear();
 		std::cout << "Creating a TIFF backend of type " << pnt(float) << '\n';
 	}
 
 	template <>
-	TIFFReader<double>::TIFFReader(uint32_t w, uint32_t h) : Tiff::TIFFPrivate(w, h) {
+	TIFFReader<double>::TIFFReader(uint32_t w, uint32_t h, std::size_t _dim) : Tiff::TIFFPrivate(w, h) {
 		this->internal_data_type = ImageDataType::Floating | ImageDataType::Bit_64;
 		this->width = w;
 		this->height = h;
 		this->bitsPerSample = 64;
 		this->sampleFormat = SAMPLEFORMAT_IEEEFP;
-		this->voxel_dimensionalty = 0;
+		this->voxel_dimensionalty = _dim;
 		this->images.clear();
 		std::cout << "Creating a TIFF backend of type " << pnt(double) << '\n';
 	}
@@ -298,7 +299,6 @@ namespace Tiff {
 	template <typename img_t>
 	template <typename data_t>
 	bool TIFFReader<img_t>::template_tiff_read_sub_region(svec3 origin, svec3 size, std::vector<data_t>& out) {
-		PRINT_FN_ENTRY;
 		/// @b Const iterator type for the cached data, which does not modify the data itself
 		using cache_iterator_t = typename cache_t::data_t_ptr::element_type::const_iterator;
 		/// @b Iterator type for the target data
@@ -313,7 +313,7 @@ namespace Tiff {
 		// If origin's coordinates are bigger than this stack's dimensions, the whole subregion will be outside.
 		// Simply fill the vector with null values and return
 		//
-		if (origin.x >= this->width || origin.y >= this->height || origin.z >= this->images.size()){ std::cerr << "OOB\n"; return true; }
+		if (origin.x >= this->width || origin.y >= this->height || origin.z >= this->images.size()){ return true; }
 
 		/// @b Beginning of slices to load and cache
 		std::size_t src_slice_begin = origin.z;
@@ -346,7 +346,6 @@ namespace Tiff {
 
 		std::size_t y = 0, z = 0;
 
-		std::cerr << "Reading " << tgt_slices_readable << " slices ...\n";
 		// Iterate on slices :
 		for (z = 0;	z < tgt_slices_readable ; ++z) {
 			// load and cache the slice to load in memory (or fetch it directly if already cached) :

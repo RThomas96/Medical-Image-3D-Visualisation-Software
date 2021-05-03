@@ -420,12 +420,14 @@ void GridLoaderWidget::resetGridInfoLabel() {
 
 void GridLoaderWidget::computeGridInfoLabel() {
 	if (this->useLegacyGrids == false) {
-		auto dims = this->_testing_grid->getResolution();
-		auto v = this->_testing_grid->getVoxelDimensionality();
-		QString infogrid = "Image dimensions : " + QString::number(dims.x) + "x" + QString::number(dims.y) + "x" +
-						   QString::number(dims.z) + " on " + QString::number(v) + " channels.";
-		this->label_gridInfoR->setText(infogrid);
-		return;
+		if (this->_testing_grid != nullptr) {
+			auto dims = this->_testing_grid->getResolution();
+			auto v = this->_testing_grid->getVoxelDimensionality();
+			QString infogrid = "Image dimensions : " + QString::number(dims.x) + "x" + QString::number(dims.y) + "x" +
+							   QString::number(dims.z) + " on " + QString::number(v) + " channels.";
+			this->label_gridInfoR->setText(infogrid);
+			return;
+		}
 	}
 
 	if (this->readerR == nullptr) {
@@ -857,11 +859,6 @@ void GridLoaderWidget::loadNewGridAPI() {
 		std::cerr << "Voxel dimensions : " << vx.x << ", " << vx.y << ", " << vx.z << "\n";
 		std::cerr << "Data internal representation : " << this->_testing_grid->getInternalDataType() << '\n';
 	}
-	std::cerr << "DONE DOING THE GRID\n";
-
-	Image::tag<std::uint16_t> tag{};
-
-	std::cerr << "Tagging system returns : " << tag << '\n';
 
 	this->computeGridInfoLabel();
 
