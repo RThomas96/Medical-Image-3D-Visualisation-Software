@@ -340,3 +340,19 @@ void Viewer::loadTwoGrids(const std::shared_ptr<InputGrid>& g1, const std::share
 	this->updateCameraPosition();
 	this->centerScene();
 }
+
+void Viewer::newAPI_loadGrid(Image::Grid::Ptr ptr) {
+	if (this->scene == nullptr) { return; }
+	this->makeCurrent();
+	this->scene->newAPI_addGrid(ptr);this->doneCurrent();
+
+	glm::vec3 bbDiag = this->scene->getSceneBoundaries();
+	float sceneSize = glm::length(bbDiag);
+
+	this->setSceneRadius(sceneSize*sceneRadiusMultiplier);
+	// center scene on center of grid
+	this->setSceneCenter(qglviewer::Vec(bbDiag.x/2., bbDiag.y/2., bbDiag.z/2.));
+	this->showEntireScene();
+	this->updateCameraPosition();
+	this->centerScene();
+}

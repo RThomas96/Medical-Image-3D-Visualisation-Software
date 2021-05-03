@@ -3,6 +3,8 @@
 
 #include "../../macros.hpp"
 
+#include "../../grid/include/bounding_box.hpp"
+
 #include <glm/glm.hpp>
 
 #include <type_traits>
@@ -13,8 +15,8 @@
 // A compiler-specific header, used to un-mangle names returned by typeid<>::name()
 #include <cxxabi.h>
 
-#define PRINT_FN_ENTRY
-//#define PRINT_FN_ENTRY std::cerr << "Entry point : " << __PRETTY_FUNCTION__ << "\n"
+//#define PRINT_FN_ENTRY
+#define PRINT_FN_ENTRY std::cerr << "Entry point : " << __PRETTY_FUNCTION__ << "\n"
 
 namespace Image {
 
@@ -50,6 +52,9 @@ namespace Image {
 		if (lhs & rhs) { return lhs; }
 		return static_cast<ImageDataType>(static_cast<std::uint8_t>(lhs) | static_cast<std::uint8_t>(rhs));
 	}
+
+	/// @b Handy typedef to a bounding box type
+	typedef BoundingBox_General<float> bbox_t;
 
 	inline std::ostream& operator<<(std::ostream& _os, ImageDataType d) {
 		if (d & ImageDataType::Unknown) { _os << "<unknown>"; return _os; }

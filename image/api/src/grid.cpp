@@ -68,6 +68,12 @@ namespace Image {
 		return this->pImpl->getImageName();
 	}
 
+	Image::bbox_t Grid::getBoundingBox() const {
+		if (this->pImpl) {
+			return this->pImpl->getBoundingBox();
+		} else { return Image::bbox_t(); }
+	}
+
 	bool Grid::isRootGrid() const {
 		return this->parentGrid == nullptr;
 	}

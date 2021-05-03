@@ -1219,7 +1219,8 @@ void GridLoaderWidget::loadGrid_newAPI() {
 	#warning TODO : Enable computation of approximate voxel size here
 
 	// Load the grid data, and make a copy here
-	this->scene->newAPI_addGrid(this->_testing_grid);
+	//this->scene->newAPI_addGrid(this->_testing_grid);
+	this->viewer->newAPI_loadGrid(this->_testing_grid);
 
 	this->close();
 }

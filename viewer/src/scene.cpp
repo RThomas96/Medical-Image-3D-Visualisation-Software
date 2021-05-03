@@ -601,17 +601,19 @@ void Scene::newAPI_addGrid(Image::Grid::Ptr gridLoaded) {
 	_gridTex.wrap.x = GL_CLAMP_TO_EDGE;
 	_gridTex.wrap.y = GL_CLAMP_TO_EDGE;
 	_gridTex.wrap.z = GL_CLAMP_TO_EDGE;
+	std::cerr << "Activated channels : red, ";
 	_gridTex.swizzle.r = GL_RED;
 	if (dimensions.a > 1) { _gridTex.swizzle.g = GL_GREEN; } else { _gridTex.swizzle.g = GL_ZERO; }
-	if (dimensions.a > 2) { _gridTex.swizzle.b = GL_BLUE; } else { _gridTex.swizzle.b = GL_BLUE; }
-	if (dimensions.a > 3) { _gridTex.swizzle.a = GL_ALPHA; } else { _gridTex.swizzle.y = GL_ONE; }
+	if (dimensions.a > 2) { _gridTex.swizzle.b = GL_BLUE; } else { _gridTex.swizzle.b = GL_ZERO; }
+	if (dimensions.a > 3) { _gridTex.swizzle.a = GL_ALPHA; } else { _gridTex.swizzle.a = GL_ONE; }
+	std::cerr << '\n',
 	_gridTex.alignment.x = 1;
 	_gridTex.alignment.y = 2;
 	switch (dimensions.a) {
-		case 1: _gridTex.internalFormat = GL_R16UI; break;
-		case 2: _gridTex.internalFormat = GL_RG16UI; break;
-		case 3: _gridTex.internalFormat = GL_RGB16UI; break;
-		case 4: _gridTex.internalFormat = GL_RGBA16UI; break;
+		case 1:_gridTex.format = GL_RED_INTEGER; _gridTex.internalFormat = GL_R16UI; break;
+		case 2:_gridTex.format = GL_RG_INTEGER; _gridTex.internalFormat = GL_RG16UI; break;
+		case 3:_gridTex.format = GL_RGB_INTEGER; _gridTex.internalFormat = GL_RGB16UI; break;
+		case 4:_gridTex.format = GL_RGBA_INTEGER; _gridTex.internalFormat = GL_RGBA16UI; break;
 	}
 	_gridTex.type = GL_UNSIGNED_SHORT;
 	std::cerr << "Made the upload texture struct.\n";
@@ -625,6 +627,10 @@ void Scene::newAPI_addGrid(Image::Grid::Ptr gridLoaded) {
 
 	for (std::size_t s = 0; s < dimensions.z; ++s) {
 		if (gridLoaded->readSlice(s, slices)) {
+			std::size_t diff_from_zero = 0;
+			std::for_each(slices.cbegin(), slices.cend(), [&](std::uint16_t val) {if (val) { diff_from_zero++; }});
+			std::cerr << "Different from 0 : " << diff_from_zero << '\n';
+			std::cerr << '\n';
 			this->newAPI_uploadTexture3D(gridView->gridTexture, _gridTex, s, slices);
 		} else {
 			std::cerr << "Scene texture upload : Could not read the data at index " << s << " !\n";
@@ -634,11 +640,11 @@ void Scene::newAPI_addGrid(Image::Grid::Ptr gridLoaded) {
 	gridView->boundingBoxColor = glm::vec3(.4, .6, .3); // olive-colored by default
 	gridView->nbChannels = 2; // loaded 2 channels in the image
 
-	/*this->tex3D_buildMesh(gridView, "");
+	this->newAPI_tex3D_buildMesh(gridView, "");
 	this->tex3D_buildVisTexture(gridView->volumetricMesh);
 	this->tex3D_buildBuffers(gridView->volumetricMesh);
 
-	this->grids.push_back(gridView);*/
+	this->newGrids.push_back(gridView);
 
 	this->updateVis();
 	this->updateBoundingBox();
@@ -749,6 +755,13 @@ void Scene::updateBoundingBox(void) {
 			this->sceneBB.addPoints(box.getAllCorners());
 			this->sceneDataBB.addPoints(dbox.getAllCorners());
 		});
+	}
+	for (std::size_t i = 0; i < this->newGrids.size(); ++i) {
+		const Image::Grid::Ptr _g = this->newGrids[i]->grid;
+		DiscreteGrid::bbox_t box = _g->getBoundingBox();
+		DiscreteGrid::bbox_t dbox =_g->getBoundingBox();
+		this->sceneBB.addPoints(box.getAllCorners());
+		this->sceneDataBB.addPoints(dbox.getAllCorners());
 	}
 
 	// Update light positions :
@@ -1524,6 +1537,27 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, cons
 	this->drawBoundingBox(grid->grid[0]->getBoundingBoxWorldSpace(), grid->boundingBoxColor, mvMat, pMat);
 }
 
+void Scene::newAPI_drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, const NewAPI_GridGLView::Ptr& grid) {
+	if (grid->gridTexture > 0) {
+		glUseProgram(this->programHandle_VolumetricViewer);
+
+		this->newAPI_prepareUniforms_Volumetric(mvMat, pMat, camPos, grid);
+
+		this->tex3D_bindVAO();
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_Texture3D_VertIdx);
+
+		glDrawElementsInstanced(GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, (void*)0, grid->volumetricMesh.tetrahedraCount);
+
+		// Unbind program, buffers and VAO :
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
+		glUseProgram(0);
+	}
+
+	// draw grid BB :
+	this->drawBoundingBox(grid->grid->getBoundingBox(), grid->boundingBoxColor, mvMat, pMat);
+}
+
 void Scene::drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane) {
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
@@ -1694,6 +1728,118 @@ void Scene::prepareUniforms_3DSolid(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lig
 	glUniform4fv(lightPos_Loc, 1, glm::value_ptr(lightPos));
 }
 
+void Scene::newAPI_prepareUniforms_3DSolid(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, const NewAPI_GridGLView::Ptr& gridView) {
+	// Get the world to grid transform :
+	glm::mat4 transfoMat = baseMatrix ;
+	#warning For the moment, no transformation is applied to the grid.
+
+	auto getUniform = [&](const char* name) -> GLint {
+		GLint g = glGetUniformLocation(this->programHandle_projectedTex, name);
+		if (this->showVAOstate) {
+			if (g >= 0) {
+			std::cerr << "[LOG]\tLocation [" << +g << "] for uniform " << name << '\n';
+			} else {
+				std::cerr << "[LOG]\tCannot find uniform " << name << "\n";
+			}
+		}
+		return g;
+	};
+
+	if (this->showVAOstate) {
+		LOG_ENTER(Scene::prepareUniforms_3DSolid);
+		std::cerr << "[LOG] Uniform locations for " << __FUNCTION__ << " : \n";
+	}
+
+	// Get the uniform locations :
+	GLint mMatrix_Loc =						getUniform("mMatrix");
+	GLint vMatrix_Loc =						getUniform("vMatrix");
+	GLint pMatrix_Loc =						getUniform("pMatrix");
+	GLint lightPos_Loc =					getUniform("lightPos");
+	GLint voxelGridOrigin_Loc =				getUniform("voxelGridOrigin");
+	GLint voxelGridSize_Loc =				getUniform("voxelGridSize");
+	GLint voxelSize_Loc =					getUniform("voxelSize");
+	GLint drawMode_Loc =					getUniform("drawMode");
+	GLint texDataLoc =						getUniform("texData");
+	GLint planePositionsLoc =				getUniform("planePositions");
+	GLint location_planeDirections =		getUniform("planeDirections");
+	GLint gridPositionLoc =					getUniform("gridPosition");
+	GLint location_colorBounds =			getUniform("colorBounds");
+	GLint location_colorBoundsAlternate =	getUniform("colorBoundsAlternate");
+	GLint location_textureBounds =			getUniform("textureBounds");
+	GLint location_textureBoundsAlternate =	getUniform("textureBoundsAlternate");
+	GLint location_color0 =					getUniform("color0");
+	GLint location_color1 =					getUniform("color1");
+	GLint location_color0Alt =				getUniform("color0Alternate");
+	GLint location_color1Alt =				getUniform("color1Alternate");
+	GLint location_r_channelView =			getUniform("r_channelView");
+	GLint location_r_selectedChannel =		getUniform("r_selectedChannel");
+	GLint location_r_nbChannels =			getUniform("r_nbChannels");
+	GLint location_g_channelView =			getUniform("g_channelView");
+	GLint location_g_selectedChannel =		getUniform("g_selectedChannel");
+	GLint location_g_nbChannels =			getUniform("g_nbChannels");
+	GLint location_rgbMode =				getUniform("rgbMode");
+
+	DiscreteGrid::bbox_t::vec origin = gridView->grid->getBoundingBox().getMin();
+	DiscreteGrid::bbox_t::vec originWS = gridView->grid->getBoundingBox().getMin();
+	DiscreteGrid::sizevec3 gridDims = gridView->grid->getResolution();
+	glm::vec3 dims = glm::convert_to<float>(gridDims);
+
+	if (showVAOstate) {
+		PRINTVAL(gridDims.x);
+		PRINTVAL(gridDims.y);
+		PRINTVAL(gridDims.z);
+	}
+
+	glm::vec2 tb0 = glm::convert_to<float>(this->textureBounds0);
+	glm::vec2 tb1 = glm::convert_to<float>(this->textureBounds1);
+
+	glUniform1ui(location_rgbMode, this->rgbMode);
+	glUniform3fv(voxelGridOrigin_Loc, 1, glm::value_ptr(origin));
+	glUniform3fv(voxelGridSize_Loc, 1, glm::value_ptr(dims));
+	glUniform3fv(voxelSize_Loc, 1, glm::value_ptr(gridView->grid->getVoxelDimensions()));
+	glUniform2fv(location_colorBounds, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds0)));
+	glUniform2fv(location_colorBoundsAlternate, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds1)));
+	glUniform2fv(location_textureBounds, 1, glm::value_ptr(tb0));
+	glUniform2fv(location_textureBoundsAlternate, 1, glm::value_ptr(tb1));
+	glUniform3fv(location_color0, 1, glm::value_ptr(this->color0));
+	glUniform3fv(location_color1, 1, glm::value_ptr(this->color1));
+	glUniform3fv(location_color0Alt, 1, glm::value_ptr(this->color0_second));
+	glUniform3fv(location_color1Alt, 1, glm::value_ptr(this->color1_second));
+	if (gridView->nbChannels > 1) {
+		glUniform1ui(location_r_selectedChannel, this->selectedChannel_r);
+		glUniform1ui(location_g_selectedChannel, this->selectedChannel_g);
+	} else {
+		glUniform1ui(location_r_selectedChannel, 0);
+		glUniform1ui(location_g_selectedChannel, 0);
+	}
+	glUniform1ui(drawMode_Loc, this->drawMode);
+	glUniform1ui(location_r_nbChannels, 1);
+	glUniform1ui(location_g_nbChannels, 1);
+
+	// Textures :
+	glActiveTexture(GL_TEXTURE0 + 0);
+	glEnable(GL_TEXTURE_3D);
+	glBindTexture(GL_TEXTURE_3D, gridView->gridTexture);
+	glUniform1i(texDataLoc, 0);
+
+	uint chan = this->colorFunctionToUniform(this->channels_r);
+	uint chan2 = this->colorFunctionToUniform(this->channels_g);
+	glUniform1ui(location_r_channelView, chan);
+	glUniform1ui(location_g_channelView, chan2);
+
+	glm::vec3 planePos = this->computePlanePositions();
+
+	glUniform3fv(planePositionsLoc, 1, glm::value_ptr(planePos));
+	glUniform3fv(location_planeDirections, 1, glm::value_ptr(this->planeDirection));
+	glUniform3fv(gridPositionLoc, 1, glm::value_ptr(originWS));
+
+	// Apply the uniforms :
+	glUniformMatrix4fv(mMatrix_Loc, 1, GL_FALSE, glm::value_ptr(transfoMat));
+	glUniformMatrix4fv(vMatrix_Loc, 1, GL_FALSE, &mvMat[0]);
+	glUniformMatrix4fv(pMatrix_Loc, 1, GL_FALSE, &pMat[0]);
+	glUniform4fv(lightPos_Loc, 1, glm::value_ptr(lightPos));
+}
+
 void Scene::prepareUniforms_3DPlane(GLfloat *mvMat, GLfloat *pMat, planes _plane, const GridGLView::Ptr& grid, bool showTexOnPlane) {
 	bool shouldHide = false;
 	if (_plane == planes::x) { shouldHide = this->planeVisibility.x; }
@@ -1811,6 +1957,125 @@ void Scene::prepareUniforms_3DPlane(GLfloat *mvMat, GLfloat *pMat, planes _plane
 	glUniform1i(location_texData, 0);
 }
 
+void Scene::newAPI_prepareUniforms_3DPlane(GLfloat *mvMat, GLfloat *pMat, planes _plane, const NewAPI_GridGLView::Ptr& grid, bool showTexOnPlane) {
+	bool shouldHide = false;
+	if (_plane == planes::x) { shouldHide = this->planeVisibility.x; }
+	if (_plane == planes::y) { shouldHide = this->planeVisibility.y; }
+	if (_plane == planes::z) { shouldHide = this->planeVisibility.z; }
+
+	auto getUniform = [&](const char* name) -> GLint {
+		GLint g = glGetUniformLocation(this->programHandle_Plane3D, name);
+		if (this->showVAOstate) {
+			if (g >= 0) {
+			std::cerr << "[LOG]\tLocation [" << +g << "] for uniform " << name << '\n';
+			} else {
+				std::cerr << "[LOG]\tCannot find uniform " << name << "\n";
+			}
+		}
+		return g;
+	};
+
+	if (this->showVAOstate) {
+		LOG_ENTER(Scene::prepareUniforms_3DPlane);
+		std::cerr << "[LOG] Uniform locations for " << __FUNCTION__ << " : \n";
+	}
+
+	// Get uniform locations for the program :
+	GLint location_mMatrix =				getUniform("model_Mat");
+	GLint location_vMatrix =				getUniform("view_Mat");
+	GLint location_pMatrix =				getUniform("projection_Mat");
+	GLint location_gridTransform =			getUniform("gridTransform");
+	GLint location_gridSize =				getUniform("gridSize");
+	GLint location_gridDimensions =			getUniform("gridDimensions");
+
+	// Shader uniforms :
+	GLint location_texData =				getUniform("texData");
+	GLint location_planePosition =			getUniform("planePositions");
+	GLint location_planeDirection =			getUniform("planeDirections");
+	GLint location_sceneBBPosition =		getUniform("sceneBBPosition");
+	GLint location_sceneBBDiagonal =		getUniform("sceneBBDiagonal");
+	GLint location_colorBounds =			getUniform("colorBounds");
+	GLint location_textureBounds =			getUniform("textureBounds");
+	GLint location_colorBoundsAlternate =	getUniform("colorBoundsAlternate");
+	GLint location_textureBoundsAlternate =	getUniform("textureBoundsAlternate");
+	GLint location_currentPlane =			getUniform("currentPlane");
+	GLint location_showTex =				getUniform("showTex");
+	GLint location_drawOnlyData =			getUniform("drawOnlyData");
+
+	GLint location_color0 =					getUniform("color0");
+	GLint location_color1 =					getUniform("color1");
+	GLint location_color0Alt =				getUniform("color0Alternate");
+	GLint location_color1Alt =				getUniform("color1Alternate");
+	GLint location_r_channelView =			getUniform("r_channelView");
+	GLint location_r_selectedChannel =		getUniform("r_selectedChannel");
+	GLint location_r_nbChannels =			getUniform("r_nbChannels");
+	GLint location_g_channelView =			getUniform("g_channelView");
+	GLint location_g_selectedChannel =		getUniform("g_selectedChannel");
+	GLint location_g_nbChannels =			getUniform("g_nbChannels");
+	GLint location_rgbMode =				getUniform("rgbMode");
+
+	if (grid->nbChannels > 1) {
+		glUniform1ui(location_r_selectedChannel, this->selectedChannel_r);
+		glUniform1ui(location_g_selectedChannel, this->selectedChannel_g);
+	} else {
+		glUniform1ui(location_r_selectedChannel, 0);
+		glUniform1ui(location_g_selectedChannel, 0);
+	}
+	glUniform3fv(location_color0, 1, glm::value_ptr(this->color0));
+	glUniform3fv(location_color1, 1, glm::value_ptr(this->color1));
+	glUniform3fv(location_color0Alt, 1, glm::value_ptr(this->color0_second));
+	glUniform3fv(location_color1Alt, 1, glm::value_ptr(this->color1_second));
+	glUniform1ui(location_rgbMode, this->rgbMode);
+
+	// Generate the data we need :
+	glm::mat4 transform = glm::mat4(1.f);
+	glm::mat4 gridTransfo = glm::mat4(1.); //grid->grid->getTransform_GridToWorld();
+	#warning For the moment, no transformation is applied to grids.
+	DiscreteGrid::bbox_t bbws = grid->grid->getBoundingBox();
+	glm::vec3 dims = glm::convert_to<glm::vec3::value_type>(grid->grid->getResolution()) * grid->grid->getVoxelDimensions();
+	glm::vec3 size = bbws.getDiagonal();
+	GLint plIdx = (_plane == planes::x) ? 1 : (_plane == planes::y) ? 2 : 3;
+
+	// gridTransfo = glm::mat4(1.);
+	gridTransfo = glm::mat4(1.f); //grid->grid->getTransform_GridToWorld();
+	#warning For the moment, no transformation is applied to grids.
+
+	DiscreteGrid::bbox_t::vec position = this->sceneBB.getMin();
+	DiscreteGrid::bbox_t::vec diagonal = this->sceneBB.getDiagonal();
+	glm::vec3 planePos = this->computePlanePositions();
+
+	glUniformMatrix4fv(location_mMatrix, 1, GL_FALSE, glm::value_ptr(transform));
+	glUniformMatrix4fv(location_vMatrix, 1, GL_FALSE, mvMat);
+	glUniformMatrix4fv(location_pMatrix, 1, GL_FALSE, pMat);
+	glUniformMatrix4fv(location_gridTransform, 1, GL_FALSE, glm::value_ptr(gridTransfo));
+	glUniform3fv(location_sceneBBPosition, 1, glm::value_ptr(position));
+	glUniform3fv(location_sceneBBDiagonal, 1, glm::value_ptr(diagonal));
+	glUniform3fv(location_gridSize, 1, glm::value_ptr(size));
+	glUniform3fv(location_gridDimensions, 1, glm::value_ptr(dims));
+	glUniform1i(location_currentPlane, plIdx);
+	glUniform1ui(location_r_nbChannels, 1);
+	glUniform1ui(location_g_nbChannels, 1);
+	glUniform1ui(location_r_channelView, this->colorFunctionToUniform(this->channels_r));
+	glUniform1ui(location_g_channelView, this->colorFunctionToUniform(this->channels_g));
+	glUniform1ui(location_drawOnlyData, shouldHide ? 1 : 0);
+
+	glm::vec2 tb0 = glm::convert_to<float>(this->textureBounds0);
+	glm::vec2 tb1 = glm::convert_to<float>(this->textureBounds1);
+
+	glUniform2fv(location_colorBounds, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds0)));
+	glUniform2fv(location_colorBoundsAlternate, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds1)));
+	glUniform2f (location_textureBounds, tb0.x, tb0.y);
+	glUniform2f (location_textureBoundsAlternate, tb1.x, tb1.y);
+
+	glUniform3fv(location_planePosition, 1, glm::value_ptr(planePos));
+	glUniform3fv(location_planeDirection, 1, glm::value_ptr(this->planeDirection));
+	glUniform1i(location_showTex, showTexOnPlane ? 1 : 0);
+	glActiveTexture(GL_TEXTURE0 + 0);
+	glEnable(GL_TEXTURE_3D);
+	glBindTexture(GL_TEXTURE_3D, grid->gridTexture);
+	glUniform1i(location_texData, 0);
+}
+
 void Scene::prepareUniforms_PlaneViewer(planes _plane, planeHeading _heading, glm::vec2 fbDims, float zoomRatio, glm::vec2 offset, const GridGLView::Ptr& _grid) {
 	glUseProgram(this->programHandle_PlaneViewer);
 	// The BB used is the scene's bounding box :
@@ -1829,6 +2094,123 @@ void Scene::prepareUniforms_PlaneViewer(planes _plane, planeHeading _heading, gl
 	glm::mat4 gridTransform = _grid->grid[0]->getTransform_WorldToGrid();
 	// Grid dimensions :
 	glm::vec3 gridDimensions = glm::convert_to<glm::vec3::value_type>(_grid->grid[0]->getBoundingBox().getDiagonal());
+	// Depth of the plane :
+	glm::vec3 planePos = this->computePlanePositions();
+
+	auto getUniform = [&](const char* name) -> GLint {
+		GLint g = glGetUniformLocation(this->programHandle_PlaneViewer, name);
+		if (this->showVAOstate) {
+			if (g >= 0) {
+			std::cerr << "[LOG]\tLocation [" << +g << "] for uniform " << name << '\n';
+			} else {
+				std::cerr << "[LOG]\tCannot find uniform " << name << "\n";
+			}
+		}
+		return g;
+	};
+
+	if (this->showVAOstate) {
+		LOG_ENTER(Scene::prepareUniforms_PlaneViewer);
+		std::cerr << "[LOG] Uniform locations for " << __FUNCTION__ << " : \n";
+	}
+
+	// Uniform locations :
+	// VShader :
+	GLint location_fbDims =					getUniform("fbDims");
+	GLint location_bbDims =					getUniform("bbDims");
+	GLint location_planeIndex =				getUniform("planeIndex");
+	GLint location_gridTransform =			getUniform("gridTransform");
+	GLint location_gridDimensions =			getUniform("gridDimensions");
+	GLint location_gridBBDiagonal =			getUniform("sceneBBDiagonal");
+	GLint location_gridBBPosition =			getUniform("sceneBBPosition");
+	GLint location_planePositions =			getUniform("planePositions");
+	GLint location_heading =				getUniform("heading");
+	GLint location_zoom =					getUniform("zoom");
+	GLint location_offset =					getUniform("offset");
+	// FShader :
+	GLint location_texData =				getUniform("texData");
+	GLint location_colorBounds =			getUniform("colorBounds");
+	GLint location_colorBoundsAlternate =	getUniform("colorBoundsAlternate");
+	GLint location_textureBounds =			getUniform("textureBounds");
+	GLint location_textureBoundsAlternate = getUniform("textureBoundsAlternate");
+	GLint location_color0 =					getUniform("color0");
+	GLint location_color1 =					getUniform("color1");
+	GLint location_color0Alt =				getUniform("color0Alternate");
+	GLint location_color1Alt =				getUniform("color1Alternate");
+	GLint location_r_channelView =			getUniform("r_channelView");
+	GLint location_r_selectedChannel =		getUniform("r_selectedChannel");
+	GLint location_r_nbChannels =			getUniform("r_nbChannels");
+	GLint location_g_channelView =			getUniform("g_channelView");
+	GLint location_g_selectedChannel =		getUniform("g_selectedChannel");
+	GLint location_g_nbChannels =			getUniform("g_nbChannels");
+	GLint location_rgbMode =				getUniform("rgbMode");
+
+	glUniform1ui(location_rgbMode, this->rgbMode);
+
+	glUniform1ui(location_r_channelView, this->colorFunctionToUniform(this->channels_r));
+	glUniform1ui(location_g_channelView, this->colorFunctionToUniform(this->channels_g));
+
+	glUniform3fv(location_color0, 1, glm::value_ptr(this->color0));
+	glUniform3fv(location_color1, 1, glm::value_ptr(this->color1));
+	glUniform3fv(location_color0Alt, 1, glm::value_ptr(this->color0_second));
+	glUniform3fv(location_color1Alt, 1, glm::value_ptr(this->color1_second));
+	if (_grid->nbChannels > 1) {
+		glUniform1ui(location_r_selectedChannel, this->selectedChannel_r);
+		glUniform1ui(location_g_selectedChannel, this->selectedChannel_g);
+	} else {
+		glUniform1ui(location_r_selectedChannel, 0);
+		glUniform1ui(location_g_selectedChannel, 0);
+	}
+
+	glm::vec2 tb0 = glm::convert_to<float>(this->textureBounds0);
+	glm::vec2 tb1 = glm::convert_to<float>(this->textureBounds1);
+
+	// Uniform variables :
+	glUniform2fv(location_fbDims, 1, glm::value_ptr(fbDims));
+	glUniform2fv(location_bbDims, 1, glm::value_ptr(gridBBDims));
+	glUniform1ui(location_planeIndex, (_plane == planes::x) ? 1 : (_plane == planes::y) ? 2 : 3);
+	glUniformMatrix4fv(location_gridTransform, 1, GL_FALSE, glm::value_ptr(gridTransform));
+	glUniform4f(location_gridDimensions, gridDimensions.x, gridDimensions.y, gridDimensions.z, 1.f);
+	glUniform4f(location_gridBBDiagonal, bbox.x, bbox.y, bbox.z, 1.f);
+	glUniform4f(location_gridBBPosition, posBox.x, posBox.y, posBox.z, .0f);
+	glUniform3fv(location_planePositions, 1, glm::value_ptr(planePos));
+	glUniform2fv(location_colorBounds, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds0)));
+	glUniform2fv(location_colorBoundsAlternate, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds1)));
+	glUniform2f (location_textureBounds, tb0.x, tb0.y);
+	glUniform2f (location_textureBoundsAlternate, tb1.x, tb1.y);
+	glUniform1ui(location_heading, plane_heading);
+	glUniform1f(location_zoom, zoomRatio);
+	glUniform1ui(location_r_nbChannels, 1);
+	glUniform1ui(location_g_nbChannels, 1);
+	glm::vec2 realOffset = offset;
+	realOffset.y = -realOffset.y;
+	glUniform2fv(location_offset, 1, glm::value_ptr(realOffset));
+
+	// Uniform samplers :
+	glActiveTexture(GL_TEXTURE0 + 0);
+	glBindTexture(GL_TEXTURE_3D, _grid->gridTexture);
+	glUniform1i(location_texData, 0);
+}
+
+void Scene::newAPI_prepareUniforms_PlaneViewer(planes _plane, planeHeading _heading, glm::vec2 fbDims, float zoomRatio, glm::vec2 offset, const NewAPI_GridGLView::Ptr& _grid) {
+	glUseProgram(this->programHandle_PlaneViewer);
+	// The BB used is the scene's bounding box :
+	const DiscreteGrid::bbox_t::vec& bbox = this->sceneBB.getDiagonal();
+	const DiscreteGrid::bbox_t::vec& posBox = this->sceneBB.getMin();
+
+	// The correct bounding box coordinates :
+	glm::vec2 gridBBDims;
+	if (_plane == planes::x) { gridBBDims.x = bbox.y; gridBBDims.y = bbox.z; }
+	if (_plane == planes::y) { gridBBDims.x = bbox.x; gridBBDims.y = bbox.z; }
+	if (_plane == planes::z) { gridBBDims.x = bbox.x; gridBBDims.y = bbox.y; }
+
+	// Plane heading as a integer value (valid for shaders) :
+	uint plane_heading = planeHeadingToIndex(_heading);
+	// Grid transform :
+	glm::mat4 gridTransform = glm::mat4(1.); //_grid->grid->getTransform_WorldToGrid();
+	#warning For the moment, no transformation is applied to grids.
+	// Grid dimensions :
+	glm::vec3 gridDimensions = glm::convert_to<glm::vec3::value_type>(_grid->grid->getBoundingBox().getDiagonal());
 	// Depth of the plane :
 	glm::vec3 planePos = this->computePlanePositions();
 
@@ -2140,6 +2522,221 @@ void Scene::prepareUniforms_Volumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 
 	}
 }
 
+void Scene::newAPI_prepareUniforms_Volumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, const NewAPI_GridGLView::Ptr &_grid) {
+	// We assume the right program has been bound.
+
+	/// @b Shortcut for glGetUniform, since this can result in long lines.
+	auto getUniform = [&](const char* name) -> GLint {
+		GLint g = glGetUniformLocation(this->programHandle_VolumetricViewer, name);if (this->showVAOstate) {
+			if (g >= 0) {
+			std::cerr << "[LOG]\tLocation [" << +g << "] for uniform " << name << '\n';
+			} else {
+				std::cerr << "[LOG]\tCannot find uniform " << name << "\n";
+			}
+		}
+		return g;
+	};
+
+	if (this->showVAOstate) {
+		LOG_ENTER(Scene::drawVolumetric)
+		std::cerr << "[LOG] Uniform locations for " << __FUNCTION__ << " : \n";
+	}
+
+	// Texture handles :
+	GLint location_vertices_translation =	getUniform("vertices_translations");
+	GLint location_normals_translation =	getUniform("normals_translations");
+	GLint location_visibility_texture =		getUniform("visibility_texture");
+	GLint location_texture_coordinates =	getUniform("texture_coordinates");
+	GLint location_neighbors =				getUniform("neighbors");
+	GLint location_Mask =					getUniform("texData");
+	GLint location_visibilityMap =			getUniform("visiblity_map");
+	GLint location_visibilityMapAlternate =	getUniform("visiblity_map_alternate");
+
+	std::size_t tex = 0;
+	glActiveTexture(GL_TEXTURE0 + tex);
+	glBindTexture(GL_TEXTURE_2D, _grid->volumetricMesh.vertexPositions);
+	glUniform1i(location_vertices_translation, tex);
+	tex++;
+
+	glActiveTexture(GL_TEXTURE0 + tex);
+	glBindTexture(GL_TEXTURE_2D, _grid->volumetricMesh.faceNormals);
+	glUniform1i(location_normals_translation, tex);
+	tex++;
+
+	glActiveTexture(GL_TEXTURE0 + tex);
+	glBindTexture(GL_TEXTURE_2D, _grid->volumetricMesh.visibilityMap);
+	glUniform1i(location_visibility_texture, tex);
+	tex++;
+
+	glActiveTexture(GL_TEXTURE0 + tex);
+	glBindTexture(GL_TEXTURE_2D, _grid->volumetricMesh.textureCoordinates);
+	glUniform1i(location_texture_coordinates, tex);
+	tex++;
+
+	glActiveTexture(GL_TEXTURE0 + tex);
+	glBindTexture(GL_TEXTURE_2D, _grid->volumetricMesh.neighborhood);
+	glUniform1i(location_neighbors, tex);
+	tex++;
+
+	glActiveTexture(GL_TEXTURE0 + tex);
+	glBindTexture(GL_TEXTURE_3D, _grid->gridTexture);
+	glUniform1i(location_Mask, tex);
+	tex++;
+
+	glActiveTexture(GL_TEXTURE0 + tex);
+	glBindTexture(GL_TEXTURE_2D, this->texHandle_ColorScaleGrid);
+	glUniform1i(location_visibilityMap, tex);
+	tex++;
+
+	glActiveTexture(GL_TEXTURE0 + tex);
+	glBindTexture(GL_TEXTURE_2D, this->texHandle_ColorScaleGridAlternate);
+	glUniform1i(location_visibilityMapAlternate, tex);
+	tex++;
+
+	// Scalars :
+	GLint location_voxelSize =				getUniform("voxelSize");
+	GLint location_gridSize =				getUniform("gridSize");
+
+	glm::vec3 floatres = glm::convert_to<float>(_grid->grid->getResolution());
+
+	glUniform3fv(location_voxelSize, 1, glm::value_ptr(_grid->grid->getVoxelDimensions()));
+	glUniform3fv(location_gridSize, 1, glm::value_ptr(floatres));
+
+	// Vectors/arrays :
+	GLint location_cam =					getUniform("cam");
+	GLint location_cut =					getUniform("cut");
+	GLint location_cutDirection =			getUniform("cutDirection");
+	GLint location_clipDistanceFromCamera = getUniform("clipDistanceFromCamera");
+	GLint location_visuBBMin =				getUniform("visuBBMin");
+	GLint location_visuBBMax =				getUniform("visuBBMax");
+	GLint location_shouldUseBB =			getUniform("shouldUseBB");
+	GLint location_volumeEpsilon =			getUniform("volumeEpsilon");
+
+	glm::vec3 planePos = this->computePlanePositions();
+	DiscreteGrid::bbox_t::vec min = this->visuBox.getMin();
+	DiscreteGrid::bbox_t::vec max = this->visuBox.getMax();
+
+	glUniform3fv(location_cam, 1, glm::value_ptr(camPos));
+	glUniform3fv(location_cut, 1, glm::value_ptr(planePos));
+	glUniform3fv(location_cutDirection, 1, glm::value_ptr(this->planeDirection));
+	glUniform1f (location_clipDistanceFromCamera, this->clipDistanceFromCamera);
+	glUniform3fv(location_visuBBMin, 1, glm::value_ptr(min));
+	glUniform3fv(location_visuBBMax, 1, glm::value_ptr(max));
+	glUniform1ui(location_shouldUseBB, ((this->drawMode == DrawMode::VolumetricBoxed) ? 1 : 0));
+	glUniform3fv(location_volumeEpsilon, 1, glm::value_ptr(_grid->defaultEpsilon));
+
+	// Matrices :
+	GLint location_mMat = getUniform("mMat");
+	GLint location_vMat = getUniform("vMat");
+	GLint location_pMat = getUniform("pMat");
+
+	//const glm::mat4& gridTransfo = _grid->grid->getTransform_GridToWorld();
+	#warning For the moment, no transformation is applied to grids.
+	const glm::mat4 gridTransfo = glm::mat4(1.f);
+	glUniformMatrix4fv(location_mMat, 1, GL_FALSE, glm::value_ptr(gridTransfo));
+	glUniformMatrix4fv(location_vMat, 1, GL_FALSE, mvMat);
+	glUniformMatrix4fv(location_pMat, 1, GL_FALSE, pMat);
+
+	// Light positions :
+	GLint location_light0 = getUniform("lightPositions[0]");
+	GLint location_light1 = getUniform("lightPositions[1]");
+	GLint location_light2 = getUniform("lightPositions[2]");
+	GLint location_light3 = getUniform("lightPositions[3]");
+	GLint location_light4 = getUniform("lightPositions[4]");
+	GLint location_light5 = getUniform("lightPositions[5]");
+	GLint location_light6 = getUniform("lightPositions[6]");
+	GLint location_light7 = getUniform("lightPositions[7]");
+
+	glUniform3fv(location_light0, 1, glm::value_ptr(this->lightPositions[0]));
+	glUniform3fv(location_light1, 1, glm::value_ptr(this->lightPositions[1]));
+	glUniform3fv(location_light2, 1, glm::value_ptr(this->lightPositions[2]));
+	glUniform3fv(location_light3, 1, glm::value_ptr(this->lightPositions[3]));
+	glUniform3fv(location_light4, 1, glm::value_ptr(this->lightPositions[4]));
+	glUniform3fv(location_light5, 1, glm::value_ptr(this->lightPositions[5]));
+	glUniform3fv(location_light6, 1, glm::value_ptr(this->lightPositions[6]));
+	glUniform3fv(location_light7, 1, glm::value_ptr(this->lightPositions[7]));
+
+	// Limits :
+	GLint location_colorBounds =			getUniform("colorBounds");
+	GLint location_colorBoundsAlternate =	getUniform("colorBoundsAlternate");
+	GLint location_textureBounds =			getUniform("textureBounds");
+	GLint location_textureBoundsAlternate =	getUniform("textureBoundsAlternate");
+
+	glUniform2fv(location_colorBounds, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds0)));
+	glUniform2fv(location_colorBoundsAlternate, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds1)));
+	glUniform2fv(location_textureBounds, 1, glm::value_ptr(glm::convert_to<float>(this->textureBounds0)));
+	glUniform2fv(location_textureBoundsAlternate, 1, glm::value_ptr(glm::convert_to<float>(this->textureBounds1)));
+
+	// Color and shading parameters :
+	GLint location_specRef =			getUniform("specRef");
+	GLint location_shininess =			getUniform("shininess");
+	GLint location_diffuseRef =			getUniform("diffuseRef");
+	GLint location_rgbMode =			getUniform("rgbMode");
+	GLint location_r_channelView =		getUniform("r_channelView");
+	GLint location_r_selectedChannel =	getUniform("r_selectedChannel");
+	GLint location_r_nbChannels =		getUniform("r_nbChannels");
+	GLint location_g_channelView =		getUniform("g_channelView");
+	GLint location_g_selectedChannel =	getUniform("g_selectedChannel");
+	GLint location_g_nbChannels =		getUniform("g_nbChannels");
+
+	uint chan_r = this->colorFunctionToUniform(this->channels_r);
+	uint chan_g = this->colorFunctionToUniform(this->channels_g);
+
+	glUniform1f (location_specRef, .8f);
+	glUniform1f (location_shininess, .8f);
+	glUniform1f (location_diffuseRef, .8f);
+	glUniform1ui(location_rgbMode, this->rgbMode);
+	glUniform1ui(location_r_channelView, chan_r);
+	glUniform1ui(location_g_channelView, chan_g);
+	glUniform1ui(location_r_nbChannels, 1);
+	glUniform1ui(location_g_nbChannels, (_grid->grid->getVoxelDimensionality() > 1) ? 1 : 0); // only set this if there's two grids
+	if (_grid->nbChannels > 1) {
+		glUniform1ui(location_r_selectedChannel, this->selectedChannel_r);
+		glUniform1ui(location_g_selectedChannel, this->selectedChannel_g);
+	} else {
+		glUniform1ui(location_r_selectedChannel, 0);
+		glUniform1ui(location_g_selectedChannel, 0);
+	}
+
+	// User-defined colors :
+	GLint location_color0 =		getUniform("color0");
+	GLint location_color1 =		getUniform("color1");
+	GLint location_color0Alt =	getUniform("color0Alternate");
+	GLint location_color1Alt =	getUniform("color1Alternate");
+
+	glUniform3fv(location_color0, 1, glm::value_ptr(this->color0));
+	glUniform3fv(location_color1, 1, glm::value_ptr(this->color1));
+	glUniform3fv(location_color0Alt, 1, glm::value_ptr(this->color0_second));
+	glUniform3fv(location_color1Alt, 1, glm::value_ptr(this->color1_second));
+
+	// print uniform values :
+	if (this->showVAOstate) {
+		auto vx = _grid->grid->getVoxelDimensions();
+		std::cerr << "[LOG] " << __FUNCTION__ << " has uniform values :\n";
+		std::cerr << "[LOG]\tMax possible value        : " << static_cast<double>(std::numeric_limits<DiscreteGrid::data_t>::max()) << '\n';
+		std::cerr << "[LOG]\tDraw mode                : " << +this->drawMode << '\n';
+		std::cerr << "[LOG]\tNumber of channels        : " << +_grid->nbChannels << '\n';
+		std::cerr << "[LOG]\tClip distance from camera : " << +clipDistanceFromCamera << '\n';
+		std::cerr << "[LOG]\tVoxel dimensions          : [" << vx.x << ',' << vx.y << ',' << vx.z << "]\n";
+		std::cerr << "[LOG]\tGrid resolution           : [" << floatres.x << ',' << floatres.y << ',' << floatres.z << "]\n";
+		std::cerr << "[LOG]\tVolume epsilon            : [" << _grid->defaultEpsilon.x << ',' << _grid->defaultEpsilon.y << ',' << _grid->defaultEpsilon.z << "]\n";
+		std::cerr << "[LOG]\tCamera position           : [" << camPos.x << ',' << camPos.y << ',' << camPos.z << "]\n";
+		std::cerr << "[LOG]\tPlane positions           : [" << planePos.x << ',' << planePos.y << ',' << planePos.z << "]\n";
+		std::cerr << "[LOG]\tPlane directions          : [" << +this->planeDirection.x << ',' << +this->planeDirection.y << ',' << this->planeDirection.z << "]\n";
+		std::cerr << "[LOG]\tTexture bounds            : [" << +this->textureBounds0.x << ',' << +this->textureBounds0.y << "]\n";
+		std::cerr << "[LOG]\tTexture bounds alt        : [" << +this->textureBounds1.x << ',' << +this->textureBounds1.y << "]\n";
+		std::cerr << "[LOG]\tColor bounds              : [" << +this->colorBounds0.x << ',' << +this->colorBounds0.y << "]\n";
+		std::cerr << "[LOG]\tColor bounds alt          : [" << +this->colorBounds1.x << ',' << +this->colorBounds1.y << "]\n";
+		std::cerr << "[LOG]\tVisu BB min               : [" << +min.x << ',' << +min.y << ',' << +min.z << "]\n";
+		std::cerr << "[LOG]\tVisu BB max               : [" << +max.x << ',' << +max.y << ',' << +max.z << "]\n";
+		for (std::size_t i = 0; i < this->lightPositions.size(); ++i) {
+			std::cerr << "[LOG]\tLight " << i << "                   : [" << +this->lightPositions[i].x << ',' <<
+				+this->lightPositions[i].y << ',' << +this->lightPositions[i].z << "]\n";
+		}
+		LOG_LEAVE(Scene::drawVolumetric)
+	}
+}
+
 void Scene::drawGrid(GLfloat *mvMat, GLfloat *pMat, glm::mat4 baseMatrix, const GridGLView::Ptr& grid) {
 	glm::vec4 lightPos = glm::vec4(-0.25, -0.25, -0.25, 1.0);
 
@@ -2161,6 +2758,29 @@ void Scene::drawGrid(GLfloat *mvMat, GLfloat *pMat, glm::mat4 baseMatrix, const 
 
 	// No matter the grid's state, print the bounding box :
 	this->drawBoundingBox(grid->grid[0]->getBoundingBoxWorldSpace(), grid->boundingBoxColor, mvMat, pMat);
+}
+
+void Scene::newAPI_drawGrid(GLfloat *mvMat, GLfloat *pMat, glm::mat4 baseMatrix, const NewAPI_GridGLView::Ptr& grid) {
+	glm::vec4 lightPos = glm::vec4(-0.25, -0.25, -0.25, 1.0);
+
+	// If the grid has been uploaded, show it :
+	if (grid->gridTexture > 0) {
+		glUseProgram(this->programHandle_projectedTex);
+		glBindVertexArray(this->vaoHandle);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_Element);
+
+		this->newAPI_prepareUniforms_3DSolid(mvMat, pMat, lightPos, baseMatrix, grid);
+		this->setupVAOPointers();
+
+		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(this->renderSize), GL_UNSIGNED_INT, (void*)0);
+
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
+		glUseProgram(0);
+	}
+
+	// No matter the grid's state, print the bounding box :
+	this->drawBoundingBox(grid->grid->getBoundingBox(), grid->boundingBoxColor, mvMat, pMat);
 }
 
 void Scene::draw3DView(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, bool showTexOnPlane) {
@@ -2186,9 +2806,15 @@ void Scene::draw3DView(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, bool sho
 		for (std::size_t i = 0; i < this->grids.size(); ++i) {
 			this->drawGrid(mvMat, pMat, transfoMat, this->grids[i]);
 		}
+		for (std::size_t i = 0; i < this->newGrids.size(); ++i) {
+			this->newAPI_drawGrid(mvMat, pMat, transfoMat, this->newGrids[i]);
+		}
 	} else if (this->drawMode == DrawMode::Volumetric || this->drawMode == DrawMode::VolumetricBoxed) {
 		for (std::size_t i = 0; i < this->grids.size(); ++i) {
 			this->drawVolumetric(mvMat, pMat, camPos, this->grids[i]);
+		}
+		for (std::size_t i = 0; i < this->newGrids.size(); ++i) {
+			this->newAPI_drawVolumetric(mvMat, pMat, camPos, this->newGrids[i]);
 		}
 
 		if (this->drawMode == DrawMode::VolumetricBoxed) {
@@ -2752,15 +3378,25 @@ void Scene::updateVisuBoxCoordinates() {
 	using vec = DiscreteGrid::bbox_t::vec;
 	this->visuBox = DiscreteGrid::bbox_t();
 
-	// Add all corners of bounding boxes from the grids :
-	for (const std::shared_ptr<DiscreteGrid>& g : this->grids[0]->grid) {
-		// Get the bounding box of the coordinates in grid space :
-		auto min = g->getVoxelPositionGridSpace(this->visuMin);
-		auto max = g->getVoxelPositionGridSpace(this->visuMax);
-		DiscreteGrid::bbox_t imgBox = DiscreteGrid::bbox_t(vec(min.x, min.y, min.z), vec(max.x, max.y, max.z));
+	if (this->grids.size()) {
+		// Add all corners of bounding boxes from the grids :
+		for (const std::shared_ptr<DiscreteGrid>& g : this->grids[0]->grid) {
+			// Get the bounding box of the coordinates in grid space :
+			auto min = g->getVoxelPositionGridSpace(this->visuMin);
+			auto max = g->getVoxelPositionGridSpace(this->visuMax);
+			DiscreteGrid::bbox_t imgBox = DiscreteGrid::bbox_t(vec(min.x, min.y, min.z), vec(max.x, max.y, max.z));
 
-		// Add the world-space-transformed version of it to the visu box :
-		this->visuBox.addPoints(imgBox.transformTo(g->getTransform_GridToWorld()).getAllCorners());
+			// Add the world-space-transformed version of it to the visu box :
+			this->visuBox.addPoints(imgBox.transformTo(g->getTransform_GridToWorld()).getAllCorners());
+		}
+	}
+
+	if (this->newGrids.size()) {
+		Image::Grid::Ptr g = this->newGrids[0]->grid;
+		auto min = glm::vec3(.0);
+		auto max = glm::convert_to<float>(g->getResolution());
+		Image::bbox_t imgBox = Image::bbox_t(min, max);
+		this->visuBox.addPoints(imgBox.getAllCorners());
 	}
 
 	return;
@@ -2769,14 +3405,23 @@ void Scene::updateVisuBoxCoordinates() {
 void Scene::resetVisuBox() {
 	this->visuBox = this->sceneDataBB;
 
-	if (this->grids.size() == 0) { return; }
-	if (this->grids[0]->grid.size() == 0) { return; }
+	if (this->grids.size()) {
+		if (this->grids[0]->grid.size() == 0) { return; }
 
-	this->visuMin = glm::uvec3(0,0,0);
-	auto max = this->grids[0]->grid[0]->getResolution();
-	this->visuMax = glm::uvec3(max.x, max.y, max.z);
-	this->updateVisuBoxCoordinates();
-	return;
+		this->visuMin = glm::uvec3(0,0,0);
+		Image::svec3 max = Image::svec3(0,0,0);
+		max = this->grids[0]->grid[0]->getResolution();
+		if (this->newGrids.size()) { max = glm::max(max, this->newGrids[0]->grid->getResolution()); }
+		this->visuMax = glm::uvec3(max.x, max.y, max.z);
+		this->updateVisuBoxCoordinates();
+	}
+
+	if (this->newGrids.size()) {
+		this->visuMin = glm::uvec3(0,0,0);
+		Image::svec3 max = this->newGrids[0]->grid->getResolution();
+		this->visuMax = glm::uvec3(max.x, max.y, max.z);
+		this->updateVisuBoxCoordinates();
+	}
 }
 
 float Scene::getSceneRadius() {
@@ -3107,6 +3752,169 @@ void Scene::tex3D_buildMesh(GridGLView::Ptr& grid, const std::string path) {
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
+void Scene::newAPI_tex3D_buildMesh(NewAPI_GridGLView::Ptr& grid, const std::string path) {
+	/* Here, we'll build the tetrahedral mesh used to visualize the 3D structure of the acquisition in real-time. */
+	/* Textures built : index of vertices, index of per-face normals for tetrahedra, index of per-face neighbors
+	 * for tetrehedra */
+
+	VolMeshData mesh{};
+
+	if (path.empty()) {
+		this->newAPI_tex3D_generateMESH(grid, mesh);
+	} else {
+		this->newAPI_tex3D_loadMESHFile(path, grid, mesh);
+	}
+
+	// Hard-coded indices smh, got to move to a more portable (and readable) solution :
+	std::size_t indices[4][3];
+	indices[0][0] = 3; indices[0][1] = 1; indices[0][2] = 2;
+	indices[1][0] = 3; indices[1][1] = 2; indices[1][2] = 0;
+	indices[2][0] = 3; indices[2][1] = 0; indices[2][2] = 1;
+	indices[3][0] = 2; indices[3][1] = 1; indices[3][2] = 0;
+
+	// INIT NEIGHBORS :
+	mesh.neighbors.clear();
+	mesh.neighbors.resize(mesh.tetrahedra.size());
+	for(std::size_t i = 0 ; i < mesh.tetrahedra.size() ; i++ ){
+		mesh.neighbors[i].resize(4, -1);
+		mesh.normals.push_back(std::array<glm::vec4, 4>{glm::vec4(.0f), glm::vec4(.0f), glm::vec4(.0f), glm::vec4(.0f)});
+	}
+
+	// Adjacency map :
+	std::map< Face , std::pair<int, int> > adjacent_faces;
+	// generate the correspondance by looking at which faces are similar : [MEDIUM/HEAVY COMPUTATION]
+	for(std::size_t i = 0 ; i < mesh.tetrahedra.size() ; i ++ ){
+		for( int v = 0 ; v < 4 ; v++ ){
+			// find similar face in other tetrahedrons :
+			Face face = Face(mesh.tetrahedra[i][indices[v][0]],
+					mesh.tetrahedra[i][indices[v][1]],
+					mesh.tetrahedra[i][indices[v][2]]);
+			std::map< Face , std::pair<int, int> >::iterator it = adjacent_faces.find(face);
+			if( it == adjacent_faces.end() ){
+				adjacent_faces[face] = std::make_pair(static_cast<int>(i),v);
+			} else {
+				mesh.neighbors[i][v] = it->second.first;
+				mesh.neighbors[it->second.first][it->second.second] = i;
+			}
+		}
+	}
+
+	// determine the size of the texture, depending on the # of tetrahedron neighbors :
+	std::size_t vertWidth = 0, vertHeight = 0;
+	std::size_t normWidth = 0, normHeight = 0;
+	std::size_t coorWidth = 0, coorHeight = 0;
+	std::size_t neighbWidth = 0, neighbHeight = 0;
+
+	__GetTexSize(mesh.tetrahedra.size()*4*3, &vertWidth, &vertHeight);
+	__GetTexSize(mesh.tetrahedra.size()*4, &normWidth, &normHeight);
+	__GetTexSize(mesh.tetrahedra.size()*4*3, &coorWidth, &coorHeight);
+	__GetTexSize(mesh.tetrahedra.size()*4, &neighbWidth, &neighbHeight);
+
+	grid->volumetricMesh.tetrahedraCount = mesh.tetrahedra.size();
+
+	#ifdef DIRECT_FROM_VOLMESH_TO_ARRAY_SIZE
+	GLfloat* rawVertices = new GLfloat[grid.volumetricMesh.tetrahedraCount*4*3*3];
+	GLfloat* rawNormals = new GLfloat[grid.volumetricMesh.tetrahedraCount*4*4];
+	GLfloat* tex = new GLfloat[grid.volumetricMesh.tetrahedraCount*4*3*3];
+	GLfloat* rawNeighbors = new GLfloat[grid.volumetricMesh.tetrahedraCount*4*3];
+	#else
+	GLfloat* rawVertices = new GLfloat[vertWidth * vertHeight *3];
+	GLfloat* rawNormals = new GLfloat[normWidth * normHeight *4];
+	GLfloat* tex = new GLfloat[coorWidth * coorHeight *3];
+	GLfloat* rawNeighbors = new GLfloat[neighbWidth * neighbHeight *3];
+	#endif
+
+	/*
+	Warning : the loop that follows is horribly bad : it duplicates every texture coordinate by the number of times
+	the vertex is used within the mesh. It MUST be improved once the method is working, to save up on video memory.
+	It does the same for the vertex positions.
+	*/
+	std::size_t iter = 0;
+	std::size_t texcnt = 0;
+	std::size_t ncount = 0;
+	for(std::size_t t = 0; t < mesh.tetrahedra.size(); ++t) {
+		// For each tet :
+		const std::array<std::size_t, 4>& tetrahedron = mesh.tetrahedra[t];
+		// For each tet's face :
+		for (std::size_t i = 0; i < 4; ++i) {
+			// For all vertices within that face :
+			for (std::size_t j = 0; j < 3; ++j) {
+				// Get the vertex's position and tex coord :
+				const glm::vec4& position = mesh.positions[tetrahedron[indices[i][j]]];
+				const glm::vec3& tetCoord = mesh.texture[tetrahedron[indices[i][j]]];
+				// And put it in the array :
+				for (std::size_t k = 0; k < 3; ++k) {
+					rawVertices[texcnt] = position[k];
+					tex[texcnt] = tetCoord[k];
+					texcnt++;
+				}
+			}
+
+			// Compute this face's normal :
+			glm::vec4 n1 = mesh.positions[tetrahedron[indices[i][1]]] - mesh.positions[tetrahedron[indices[i][0]]];
+			glm::vec4 n2 = mesh.positions[tetrahedron[indices[i][2]]] - mesh.positions[tetrahedron[indices[i][0]]];
+			glm::vec4 norm = glm::normalize(glm::cross(n1, n2));
+			// Put inverse of dot with opposing vertex in norm.w :
+			glm::vec4 v1 = mesh.positions[tetrahedron[i]] - mesh.positions[tetrahedron[(i+1)%4]];
+			glm::vec4::value_type val = 1. / glm::dot(v1, norm);
+			norm.w = val;
+			// Put it in the array :
+			for (std::size_t n = 0; n < 4; ++n) {
+				rawNormals[ncount++] = norm[n];
+			}
+
+			rawNeighbors[iter] = static_cast<GLfloat>(mesh.neighbors[t][i]);
+			iter+=3;
+		}
+	}
+
+	// Struct to upload the texture to OpenGL :
+	TextureUpload texParams = {};
+
+	// Vertex positions :
+	texParams.minmag.x = GL_NEAREST;
+	texParams.minmag.y = GL_NEAREST;
+	texParams.lod.y = -1000.f;
+	texParams.wrap.s = GL_CLAMP;
+	texParams.wrap.t = GL_CLAMP;
+	// Swizzle and alignment unchanged, not present in Texture3D
+	texParams.internalFormat = GL_RGB32F;
+	texParams.size.x = vertWidth;
+	texParams.size.y = vertHeight;
+	texParams.format = GL_RGB;
+	texParams.type = GL_FLOAT;
+	texParams.data = rawVertices;
+	grid->volumetricMesh.vertexPositions = this->uploadTexture2D(texParams);
+
+	// Face normals :
+	texParams.internalFormat = GL_RGBA32F;
+	texParams.size.x = normWidth;
+	texParams.size.y = normHeight;
+	texParams.format = GL_RGBA;
+	texParams.data = rawNormals;
+	grid->volumetricMesh.faceNormals = this->uploadTexture2D(texParams);
+
+	// Texture coordinates :
+	texParams.internalFormat = GL_RGB32F;
+	texParams.size.x = coorWidth;
+	texParams.size.y = coorHeight;
+	texParams.format = GL_RGB;
+	texParams.data = tex;
+	grid->volumetricMesh.textureCoordinates = this->uploadTexture2D(texParams);
+
+	// Neighborhood information :
+	texParams.size.x = neighbWidth;
+	texParams.size.y = neighbHeight;
+	texParams.data = rawNeighbors;
+	grid->volumetricMesh.neighborhood = this->uploadTexture2D(texParams);
+
+	delete[] tex;
+	delete[] rawVertices;
+	delete[] rawNormals;
+	delete[] rawNeighbors;
+	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
 void Scene::tex3D_loadMESHFile(const std::string file, const GridGLView::Ptr& grid, VolMeshData& mesh) {
 	DiscreteGrid::bbox_t box = grid->grid[0]->getBoundingBox();
 
@@ -3211,6 +4019,110 @@ void Scene::tex3D_loadMESHFile(const std::string file, const GridGLView::Ptr& gr
 	myfile.close ();
 }
 
+void Scene::newAPI_tex3D_loadMESHFile(const std::string file, const NewAPI_GridGLView::Ptr& grid, VolMeshData& mesh) {
+	DiscreteGrid::bbox_t box = grid->grid->getBoundingBox();
+
+	std::ifstream myfile(file.c_str());
+
+	if (not myfile.is_open()) {
+		throw std::runtime_error("could not open mesh file");
+	}
+
+	std::string meshString;
+	std::size_t sizeV, sizeT, sizeTet, dimension;
+
+	myfile >> meshString;
+	while (meshString.find("Dimension") == std::string::npos)
+		myfile >> meshString;
+
+	myfile>> dimension;
+	while (meshString.find("Vertices") == std::string::npos)
+		myfile >> meshString;
+
+	myfile >> sizeV;
+
+	float maxX = 0, maxY = 0, maxZ = 0;
+
+	std::vector<glm::vec4> rawVert;
+	DiscreteGrid::bbox_t normalBox;
+	DiscreteGrid::bbox_t deformedBox;
+
+	int s;
+	for (unsigned int i = 0; i < sizeV; i++) {
+		float p[3];
+		for (unsigned int j = 0; j < 3; j++)
+			myfile >> p[j];
+
+		if (p[0] > maxX) { maxX = p[0]; }
+		if (p[1] > maxY) { maxY = p[1]; }
+		if (p[2] > maxZ) { maxZ = p[2]; }
+		glm::vec4 position = glm::vec4(p[0], p[1], p[2], 1.);
+		normalBox.addPoint(DiscreteGrid::bbox_t::vec(p[0],p[1],p[2]));
+		rawVert.push_back(position);
+		#warning For the moment, no transformation is applied to grids.
+		deformedBox.addPoint(DiscreteGrid::bbox_t::vec(position.x, position.y, position.z));
+		mesh.positions.push_back(position);
+/*
+		texCoords.push_back(glm::vec3(
+			std::min(1.f,(p[0] - bmin.x)/diag.x),
+			std::min(1.f,(p[1] - bmin.y)/diag.y),
+			std::min(1.f,(p[2] - bmin.z)/diag.z)
+		));
+*/
+		myfile >> s;
+	}
+
+	// Current mesh size :
+	glm::vec3 size{maxX, maxY, maxZ};
+	// Grid size divided by mesh size gives a scalar to apply to the mesh to make it grid-sized :
+	glm::vec3 gridsize = glm::convert_to<float>(grid->grid->getResolution()) * grid->grid->getVoxelDimensions();
+	glm::vec4 scale = glm::vec4(gridsize / size, 1.);
+
+	std::cerr << "[LOG][" << __FILE__ << ':' << __LINE__ << "] Max dimensions of the mesh : [" << maxX << ',' << maxY << ',' << maxZ << "]\n";
+	for (std::size_t i = 0; i < mesh.positions.size(); ++i) {
+		//mesh.positions[i] *= scale;
+		mesh.texture.push_back(glm::vec3(
+			std::min(1.f,rawVert[i].x/size.x),
+			std::min(1.f,rawVert[i].y/size.y),
+			std::min(1.f,rawVert[i].z/size.z)
+		));
+	}
+	std::cerr << "done.\n";
+
+	rawVert.clear();
+
+	while (meshString.find("Triangles") == std::string::npos)
+		myfile >> meshString;
+
+	myfile >> sizeT;
+	unsigned int v[3];
+	for (unsigned int i = 0; i < sizeT; i++) {
+		for (unsigned int j = 0; j < 3; j++)
+			myfile >> v[j];
+		myfile >> s;
+	}
+
+	if( dimension == 3 ){
+		while (meshString.find("Tetrahedra") == std::string::npos)
+			myfile >> meshString;
+
+		myfile >> sizeTet;
+		unsigned int t[4];
+		for (unsigned int i = 0; i < sizeTet; i++) {
+			for (unsigned int j = 0; j < 4; j++) {
+				myfile >> t[j];
+			}
+			myfile >> s;
+			if( s > 0 ) {
+				mesh.tetrahedra.push_back({t[0]-1, t[1]-1, t[2]-1, t[3]-1});
+			}
+		}
+	}
+	std::cerr << "loadMesh() done\n";
+
+	myfile.close ();
+}
+
 void Scene::tex3D_generateMESH(GridGLView::Ptr& grid, VolMeshData& mesh) {
 	// typedef for bounding box's vector type :
 	using vec_t = typename DiscreteGrid::bbox_t::vec;
@@ -3232,6 +4144,82 @@ void Scene::tex3D_generateMESH(GridGLView::Ptr& grid, VolMeshData& mesh) {
 	glm::vec3 tex = glm::vec3();
 	// Transformation to apply to the mesh :
 	glm::mat4 transfo = grid->grid[0]->getTransform_GridToWorld();
+
+	// Create vertices along with their texture coordinates. We
+	// need to go one after because we want _n_ tetrahedra, and
+	// thus must finish the last 'row'/'column' of tetrahedra :
+	for (std::size_t k = 0; k <= zv; ++k) {
+		for (std::size_t j = 0; j <= yv; ++j) {
+			for (std::size_t i = 0; i <= xv; ++i) {
+				pos = transfo * glm::vec4(
+					min.x + static_cast<vec_t::value_type>(i)*xs,
+					min.y + static_cast<vec_t::value_type>(j)*ys,
+					min.z + static_cast<vec_t::value_type>(k)*zs,
+					1.
+				);
+				tex = glm::vec3(
+					static_cast<vec_t::value_type>(i)/static_cast<vec_t::value_type>(xv),
+					static_cast<vec_t::value_type>(j)/static_cast<vec_t::value_type>(yv),
+					static_cast<vec_t::value_type>(k)/static_cast<vec_t::value_type>(zv)
+				);
+
+				mesh.positions.push_back(pos);
+				mesh.texture.push_back(tex);
+			}
+		}
+	}
+
+	// Return position for vertex generated at indices I, J, K :
+	std::size_t xt = xv+1; std::size_t yt = yv+1;
+	auto getIndice = [&, xt, yt](std::size_t i, std::size_t j, std::size_t k) -> std::size_t {
+		return i + j * xt + k * xt * yt;
+	};
+
+	// Create tetrahedra :
+	for (std::size_t k = 0; k < zv; ++k) {
+		for (std::size_t j = 0; j < yv; ++j) {
+			for (std::size_t i = 0; i < xv; ++i) {
+				mesh.tetrahedra.push_back({getIndice(i+1, j  , k  ), getIndice(i+1, j+1, k  ), getIndice(i  , j+1, k  ), getIndice(i+1, j+1, k+1)});
+				mesh.tetrahedra.push_back({getIndice(i  , j  , k+1), getIndice(i  , j  , k  ), getIndice(i  , j+1, k+1), getIndice(i+1, j  , k+1)});
+				mesh.tetrahedra.push_back({getIndice(i  , j+1, k+1), getIndice(i+1, j  , k  ), getIndice(i+1, j+1, k+1), getIndice(i+1, j  , k+1)});
+				mesh.tetrahedra.push_back({getIndice(i  , j  , k  ), getIndice(i+1, j  , k  ), getIndice(i  , j+1, k+1), getIndice(i+1, j  , k+1)});
+				mesh.tetrahedra.push_back({getIndice(i  , j  , k  ), getIndice(i+1, j  , k  ), getIndice(i  , j+1, k  ), getIndice(i  , j+1, k+1)});
+				mesh.tetrahedra.push_back({getIndice(i  , j+1, k  ), getIndice(i+1, j  , k  ), getIndice(i+1, j+1, k+1), getIndice(i  , j+1, k+1)});
+
+			}
+		}
+	}
+
+	/* Mesh is now built, and should conform to the grid well enough.
+	 * Some artefacts might appear at some orientations, due to floating
+	 * point imprecision in the DDA tracing. They will be along the edge
+	 * of the mesh's tetrahedra. */
+
+	return;
+}
+
+void Scene::newAPI_tex3D_generateMESH(NewAPI_GridGLView::Ptr& grid, VolMeshData& mesh) {
+	// typedef for bounding box's vector type :
+	using vec_t = typename DiscreteGrid::bbox_t::vec;
+
+	//Min and diagonal of the bounding box (used for position computation) :
+	const vec_t min = grid->grid->getBoundingBox().getMin();
+	const vec_t diag = grid->grid->getBoundingBox().getDiagonal();
+	// Dimensions, subject to change :
+	std::size_t xv = 10 ; glm::vec4::value_type xs = diag.x / static_cast<glm::vec4::value_type>(xv);
+	std::size_t yv = 10 ; glm::vec4::value_type ys = diag.y / static_cast<glm::vec4::value_type>(yv);
+	std::size_t zv = 10 ; glm::vec4::value_type zs = diag.z / static_cast<glm::vec4::value_type>(zv);
+
+	// Size of tetrahedra, to compute epsilon :
+	glm::vec3 epsVolu = glm::vec3(xs, ys, zs);
+	grid->defaultEpsilon = epsVolu;
+
+	// Containers for the computation of positions and texture coordinates :
+	glm::vec4 pos = glm::vec4();
+	glm::vec3 tex = glm::vec3();
+	// Transformation to apply to the mesh :
+	glm::mat4 transfo = glm::mat4(1.);
+	#warning For the moment, no transformation is applied to grids.
 
 	// Create vertices along with their texture coordinates. We
 	// need to go one after because we want _n_ tetrahedra, and

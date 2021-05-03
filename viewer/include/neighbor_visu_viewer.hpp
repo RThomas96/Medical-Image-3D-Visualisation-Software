@@ -78,6 +78,7 @@ class Viewer : public QGLViewer {
 		void loadGrid(const std::shared_ptr<InputGrid>& g);
 		/// @b Asks the scene to load two grids into itself.
 		void loadTwoGrids(const std::shared_ptr<InputGrid>& g1, const std::shared_ptr<InputGrid>& g2);
+		void newAPI_loadGrid(Image::Grid::Ptr ptr);
 		/// @b Re-centers the camera around the scene-defined center point
 		void centerScene(void);
 		void guessMousePosition(void);

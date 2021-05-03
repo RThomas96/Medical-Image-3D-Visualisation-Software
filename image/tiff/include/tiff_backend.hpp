@@ -88,7 +88,7 @@ namespace Image {
 			/// @b Creates the right type of image backend to process this type of image.
 			/// @param reference_frame The frame used to get the settings of the concrete backend object
 			/// @return	A TIFF implementation that can be used to parse the frames in input
-			virtual void createTiffBackend(Tiff::Frame::Ptr reference_frame);
+			virtual void createTiffBackend(Tiff::Frame::Ptr reference_frame, std::size_t _dimensionality);
 
 			/// @b Checks all files are valid, before starting to parse them
 			/// @details Will check we have the same number of files per component loaded in memory.
@@ -174,6 +174,7 @@ namespace Image {
 	/// @b Returns the data read by the pImpl pointer in this class.
 	template <typename data_t>
 	bool TIFFBackend::readSlice(std::size_t index, std::vector<data_t>& values) {
+		PRINT_FN_ENTRY;
 		if (this->pImpl) { this->pImpl->readSlice<data_t>(index, values); return true; }
 		return false;
 	}

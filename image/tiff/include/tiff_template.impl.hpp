@@ -230,7 +230,7 @@ namespace Tiff {
 		if (slice_idx >= this->images.size()) { throw std::runtime_error("Tried to load past-the-end image."); }
 
 		// If the image is already loaded, return its index :
-		if (this->cachedSlices.hasData(slice_idx)) { return this->cachedSlices.findIndex(slice_idx); }
+		if (this->cachedSlices.hasData(slice_idx)) { std::cerr << "Already cached previously\n"; return this->cachedSlices.findIndex(slice_idx); }
 
 		// Image dimensions :
 		std::size_t imgsize = this->width * this->voxel_dimensionalty * this->height;
@@ -298,6 +298,7 @@ namespace Tiff {
 	template <typename img_t>
 	template <typename data_t>
 	bool TIFFReader<img_t>::template_tiff_read_sub_region(svec3 origin, svec3 size, std::vector<data_t>& out) {
+		PRINT_FN_ENTRY;
 		/// @b Const iterator type for the cached data, which does not modify the data itself
 		using cache_iterator_t = typename cache_t::data_t_ptr::element_type::const_iterator;
 		/// @b Iterator type for the target data
@@ -312,7 +313,7 @@ namespace Tiff {
 		// If origin's coordinates are bigger than this stack's dimensions, the whole subregion will be outside.
 		// Simply fill the vector with null values and return
 		//
-		if (origin.x >= this->width || origin.y >= this->height || origin.z >= this->images.size()){ return true; }
+		if (origin.x >= this->width || origin.y >= this->height || origin.z >= this->images.size()){ std::cerr << "OOB\n"; return true; }
 
 		/// @b Beginning of slices to load and cache
 		std::size_t src_slice_begin = origin.z;
@@ -345,6 +346,7 @@ namespace Tiff {
 
 		std::size_t y = 0, z = 0;
 
+		std::cerr << "Reading " << tgt_slices_readable << " slices ...\n";
 		// Iterate on slices :
 		for (z = 0;	z < tgt_slices_readable ; ++z) {
 			// load and cache the slice to load in memory (or fetch it directly if already cached) :

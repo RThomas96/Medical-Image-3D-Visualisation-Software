@@ -74,7 +74,7 @@ namespace Image {
 	}
 
 	BoundingBox_General<float> TIFFBackend::getBoundingBox() const {
-		return BoundingBox_General<float>();
+		return Image::bbox_t(glm::vec3(.0f, .0f, .0f), glm::convert_to<float>(this->getResolution()));
 	}
 
 	std::size_t TIFFBackend::getVoxelDimensionality() const {
@@ -107,7 +107,7 @@ namespace Image {
 
 		try {
 			// Allocate the right backend for this task :
-			this->createTiffBackend(reference_frame);
+			this->createTiffBackend(reference_frame, this->filenames.size());
 		} catch (std::runtime_error _e) {
 			task->pushMessage(std::string("Error while creating TIFF reading backend.\nError message : ")+_e.what());
 			task->end();
@@ -180,7 +180,7 @@ namespace Image {
 		return this->imageResolution;
 	}
 
-	void TIFFBackend::createTiffBackend(Tiff::Frame::Ptr reference_frame) {
+	void TIFFBackend::createTiffBackend(Tiff::Frame::Ptr reference_frame, std::size_t _dimensionality) {
 		// get the file handle by libtiff :
 		TIFF* f = reference_frame->getLibraryHandle();
 		// get the number of bits per pixel :
@@ -197,28 +197,44 @@ namespace Image {
 			break;
 
 			case SAMPLEFORMAT_UINT: {
-				if (bps == 8) { this->pImpl = Tiff::TIFFReader<std::uint8_t>::createTIFFBackend(w, h); return; }
-				if (bps == 16) { this->pImpl = Tiff::TIFFReader<std::uint16_t>::createTIFFBackend(w, h); return; }
-				if (bps == 32) { this->pImpl = Tiff::TIFFReader<std::uint32_t>::createTIFFBackend(w, h); return; }
-				if (bps == 64) { this->pImpl = Tiff::TIFFReader<std::uint64_t>::createTIFFBackend(w, h); return; }
+				if (bps == 8) {
+					this->pImpl = Tiff::TIFFReader<std::uint8_t>::createTIFFBackend(w, h);
+					this->pImpl->setDimensionality(_dimensionality);
+					return;
+				}
+				if (bps == 16) {
+					this->pImpl = Tiff::TIFFReader<std::uint16_t>::createTIFFBackend(w, h);
+					this->pImpl->setDimensionality(_dimensionality);
+					return;
+				}
+				if (bps == 32) {
+					this->pImpl = Tiff::TIFFReader<std::uint32_t>::createTIFFBackend(w, h);
+					this->pImpl->setDimensionality(_dimensionality);
+					return;
+				}
+				if (bps == 64) {
+					this->pImpl = Tiff::TIFFReader<std::uint64_t>::createTIFFBackend(w, h);
+					this->pImpl->setDimensionality(_dimensionality);
+					return;
+				}
 				std::string err = "Sample was UInt, but no matching ctor was found for "+std::to_string(bps) + " bits.";
 				throw std::runtime_error(err);
 			}
 			break;
 
 			case SAMPLEFORMAT_INT: {
-				if (bps == 8) { this->pImpl = Tiff::TIFFReader<std::int8_t>::createTIFFBackend(w, h); return; }
-				if (bps == 16) { this->pImpl = Tiff::TIFFReader<std::int16_t>::createTIFFBackend(w, h); return; }
-				if (bps == 32) { this->pImpl = Tiff::TIFFReader<std::int32_t>::createTIFFBackend(w, h); return; }
-				if (bps == 64) { this->pImpl = Tiff::TIFFReader<std::int64_t>::createTIFFBackend(w, h); return; }
+				if (bps == 8) { this->pImpl = Tiff::TIFFReader<std::int8_t>::createTIFFBackend(w, h); this->pImpl->setDimensionality(_dimensionality); return; }
+				if (bps == 16) { this->pImpl = Tiff::TIFFReader<std::int16_t>::createTIFFBackend(w, h); this->pImpl->setDimensionality(_dimensionality); return; }
+				if (bps == 32) { this->pImpl = Tiff::TIFFReader<std::int32_t>::createTIFFBackend(w, h); this->pImpl->setDimensionality(_dimensionality); return; }
+				if (bps == 64) { this->pImpl = Tiff::TIFFReader<std::int64_t>::createTIFFBackend(w, h); this->pImpl->setDimensionality(_dimensionality); return; }
 				std::string err = "Sample was Int, but no matching ctor was found for "+std::to_string(bps) + " bits.";
 				throw std::runtime_error(err);
 			}
 			break;
 
 			case SAMPLEFORMAT_IEEEFP: {
-				if (bps == 32) { this->pImpl = Tiff::TIFFReader<float>::createTIFFBackend(w, h); return; }
-				if (bps == 64) { this->pImpl = Tiff::TIFFReader<double>::createTIFFBackend(w, h); return; }
+				if (bps == 32) { this->pImpl = Tiff::TIFFReader<float>::createTIFFBackend(w, h); this->pImpl->setDimensionality(_dimensionality); return; }
+				if (bps == 64) { this->pImpl = Tiff::TIFFReader<double>::createTIFFBackend(w, h); this->pImpl->setDimensionality(_dimensionality); return; }
 				std::string err = "Sample was floating point , but no matching ctor was found for "+std::to_string(bps)
 								+ " bits.";
 				throw std::runtime_error(err);
@@ -268,8 +284,8 @@ namespace Image {
 					task->pushMessage(err);
 					return false;
 				}
-				total_dir_count += ref_frame_count;
 			}
+			total_dir_count += ref_frame_count;
 		}
 
 		// This stack now has :

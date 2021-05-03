@@ -276,19 +276,25 @@ class Scene : public QOpenGLFunctions_3_2_Core {
 
 		/// @b preps uniforms for a grid
 		void prepareUniforms_3DSolid(GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, const GridGLView::Ptr& grid);
+		void newAPI_prepareUniforms_3DSolid(GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, const NewAPI_GridGLView::Ptr& grid);
 		/// @b preps uniforms for a given plane
 		void prepareUniforms_3DPlane(GLfloat *mvMat, GLfloat *pMat, planes _plane, const GridGLView::Ptr& grid, bool showTexOnPlane = true);
+		void newAPI_prepareUniforms_3DPlane(GLfloat *mvMat, GLfloat *pMat, planes _plane, const NewAPI_GridGLView::Ptr& grid, bool showTexOnPlane = true);
 		/// @brief prep the plane uniforms to draw in space
 		void prepareUniforms_PlaneViewer(planes _plane, planeHeading _heading, glm::vec2 fbDims, float zoomRatio, glm::vec2 offset, const GridGLView::Ptr& _grid);
+		void newAPI_prepareUniforms_PlaneViewer(planes _plane, planeHeading _heading, glm::vec2 fbDims, float zoomRatio, glm::vec2 offset, const NewAPI_GridGLView::Ptr& _grid);
 		/// @brief Prepare the uniforms for volumetric drawing
 		void prepareUniforms_Volumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, const GridGLView::Ptr& _grid);
+		void newAPI_prepareUniforms_Volumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, const NewAPI_GridGLView::Ptr& _grid);
 
 		/// @brief draw the planes, in the real space
 		void drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane = true);
 		/// @b draws a grid, slightly more generic than drawVoxelGrid()
 		void drawGrid(GLfloat mvMat[], GLfloat pMat[], glm::mat4 baseMatrix, const GridGLView::Ptr& grid);
+		void newAPI_drawGrid(GLfloat mvMat[], GLfloat pMat[], glm::mat4 baseMatrix, const NewAPI_GridGLView::Ptr& grid);
 		/// @brief Draws the 3D texture with a volumetric-like visualization method
 		void drawVolumetric(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, const GridGLView::Ptr& grid);
+		void newAPI_drawVolumetric(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, const NewAPI_GridGLView::Ptr& grid);
 
 		/// @b Prints grid info.
 		void printGridInfo(const std::shared_ptr<DiscreteGrid>& grid);
@@ -322,11 +328,14 @@ class Scene : public QOpenGLFunctions_3_2_Core {
 		/*************************************/
 		/*************************************/
 		void tex3D_buildMesh(GridGLView::Ptr& grid, const std::string path = "");
+		void newAPI_tex3D_buildMesh(NewAPI_GridGLView::Ptr& grid, const std::string path = "");
 		void tex3D_buildVisTexture(VolMesh& volMesh);
 		void tex3D_buildBuffers(VolMesh& volMesh);
 		void tex3D_bindVAO();
 		void tex3D_loadMESHFile(const std::string name, const GridGLView::Ptr& grid, VolMeshData& _mesh);
+		void newAPI_tex3D_loadMESHFile(const std::string name, const NewAPI_GridGLView::Ptr& grid, VolMeshData& _mesh);
 		void tex3D_generateMESH(GridGLView::Ptr& grid, VolMeshData& _mesh);
+		void newAPI_tex3D_generateMESH(NewAPI_GridGLView::Ptr& grid, VolMeshData& _mesh);
 	protected:
 		bool isInitialized;						///< tracks if the scene was initialized or not
 		bool showVAOstate;						///< Do we need to print the VAO/program state on next draw ?
@@ -336,6 +345,7 @@ class Scene : public QOpenGLFunctions_3_2_Core {
 
 		// Grids :
 		std::vector<GridGLView::Ptr> grids;		///< Grids to display in the different views.
+		std::vector<NewAPI_GridGLView::Ptr> newGrids;	///< Grids, but with the new API.
 
 		// OpenGL-related stuff :
 		QOpenGLContext* context;				///< The context with which the scene has been created with

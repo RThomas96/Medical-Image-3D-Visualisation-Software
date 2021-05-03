@@ -74,7 +74,9 @@ namespace Image {
 			/// @b Simply calls the parse function for the image implementation^
 			ThreadedTask::Ptr updateInfoFromDisk(void);
 
+			/// @b Once the information from the implementation is parsed, update the internal contents of the grid structure.
 			void updateInfoFromGrid(void);
+			#warning TODO : replace updateInfoFromGrid with a more user-friendly interface (wouldnt have to do this)
 
 			/// @b Returns the internal data type represented by the grid.
 			ImageDataType getInternalDataType(void) const;
@@ -90,6 +92,9 @@ namespace Image {
 
 			/// @b Returns the name of this grid, if applicable.
 			std::string getImageName(void) const;
+
+			/// @b Returns the bounding box of the currently loaded information
+			Image::bbox_t getBoundingBox(void) const;
 
 			//////////////////////////////////////////////////////
 			//													//

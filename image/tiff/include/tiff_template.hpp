@@ -83,7 +83,6 @@ namespace Tiff {
 			virtual bool tiff_readSubRegion(::Image::tag<std::uint64_t> tag, svec3 origin, svec3 size,
 											std::vector<std::uint64_t>& data) override {
 				UNUSED_PARAMETER(tag);
-				PRINT_FN_ENTRY;
 				return this->template_tiff_read_sub_region(origin, size, data);
 			}
 
@@ -91,7 +90,6 @@ namespace Tiff {
 			virtual bool tiff_readSubRegion(::Image::tag<std::int8_t> tag, svec3 origin, svec3 size,
 											std::vector<std::int8_t>& data) override {
 				UNUSED_PARAMETER(tag);
-				PRINT_FN_ENTRY;
 				return this->template_tiff_read_sub_region(origin, size, data);
 			}
 
@@ -99,7 +97,6 @@ namespace Tiff {
 			virtual bool tiff_readSubRegion(::Image::tag<std::int16_t> tag, svec3 origin, svec3 size,
 											std::vector<std::int16_t>& data) override {
 				UNUSED_PARAMETER(tag);
-				PRINT_FN_ENTRY;
 				return this->template_tiff_read_sub_region(origin, size, data);
 			}
 
@@ -107,7 +104,6 @@ namespace Tiff {
 			virtual bool tiff_readSubRegion(::Image::tag<std::int32_t> tag, svec3 origin, svec3 size,
 											std::vector<std::int32_t>& data) override {
 				UNUSED_PARAMETER(tag);
-				PRINT_FN_ENTRY;
 				return this->template_tiff_read_sub_region(origin, size, data);
 			}
 
@@ -115,7 +111,6 @@ namespace Tiff {
 			virtual bool tiff_readSubRegion(::Image::tag<std::int64_t> tag, svec3 origin, svec3 size,
 											std::vector<std::int64_t>& data) override {
 				UNUSED_PARAMETER(tag);
-				PRINT_FN_ENTRY;
 				return this->template_tiff_read_sub_region(origin, size, data);
 			}
 
@@ -123,7 +118,6 @@ namespace Tiff {
 			virtual bool tiff_readSubRegion(::Image::tag<float> tag, svec3 origin, svec3 size,
 											std::vector<float>& data) override {
 				UNUSED_PARAMETER(tag);
-				PRINT_FN_ENTRY;
 				return this->template_tiff_read_sub_region(origin, size, data);
 			}
 
@@ -131,7 +125,6 @@ namespace Tiff {
 			virtual bool tiff_readSubRegion(::Image::tag<double> tag, svec3 origin, svec3 size,
 											std::vector<double>& data) override {
 				UNUSED_PARAMETER(tag);
-				PRINT_FN_ENTRY;
 				return this->template_tiff_read_sub_region(origin, size, data);
 			}
 
