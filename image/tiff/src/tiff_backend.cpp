@@ -377,4 +377,74 @@ namespace Image {
 		return false;
 	}
 
+	bool TIFFBackend::internal_getRangeValues(::Image::tag<std::int8_t> tag, std::size_t channel,
+											  glm::vec<2, std::int8_t, glm::defaultp> &_values)
+	{
+		if (this->pImpl) { return this->pImpl->tiff_getRangeSubValues(tag, channel, _values); }
+		return false;
+	}
+
+	bool TIFFBackend::internal_getRangeValues(::Image::tag<std::int16_t> tag, std::size_t channel,
+											  glm::vec<2, std::int16_t, glm::defaultp> &_values)
+	{
+		if (this->pImpl) { return this->pImpl->tiff_getRangeSubValues(tag, channel, _values); }
+		return false;
+	}
+
+	bool TIFFBackend::internal_getRangeValues(::Image::tag<std::int32_t> tag, std::size_t channel,
+											  glm::vec<2, std::int32_t, glm::defaultp> &_values)
+	{
+		if (this->pImpl) { return this->pImpl->tiff_getRangeSubValues(tag, channel, _values); }
+		return false;
+	}
+
+	bool TIFFBackend::internal_getRangeValues(::Image::tag<std::int64_t> tag, std::size_t channel,
+											  glm::vec<2, std::int64_t, glm::defaultp> &_values)
+	{
+		if (this->pImpl) { return this->pImpl->tiff_getRangeSubValues(tag, channel, _values); }
+		return false;
+	}
+
+	bool TIFFBackend::internal_getRangeValues(::Image::tag<std::uint8_t> tag, std::size_t channel,
+											  glm::vec<2, std::uint8_t, glm::defaultp> &_values)
+	{
+		if (this->pImpl) { return this->pImpl->tiff_getRangeSubValues(tag, channel, _values); }
+		return false;
+	}
+
+	bool TIFFBackend::internal_getRangeValues(::Image::tag<std::uint16_t> tag, std::size_t channel,
+											  glm::vec<2, std::uint16_t, glm::defaultp> &_values)
+	{
+		if (this->pImpl) { return this->pImpl->tiff_getRangeSubValues(tag, channel, _values); }
+		return false;
+	}
+
+	bool TIFFBackend::internal_getRangeValues(::Image::tag<std::uint32_t> tag, std::size_t channel,
+											  glm::vec<2, std::uint32_t, glm::defaultp> &_values)
+	{
+		if (this->pImpl) { return this->pImpl->tiff_getRangeSubValues(tag, channel, _values); }
+		return false;
+	}
+
+	bool TIFFBackend::internal_getRangeValues(::Image::tag<std::uint64_t> tag, std::size_t channel,
+											  glm::vec<2, std::uint64_t, glm::defaultp> &_values)
+	{
+		if (this->pImpl) { return this->pImpl->tiff_getRangeSubValues(tag, channel, _values); }
+		return false;
+	}
+
+	bool TIFFBackend::internal_getRangeValues(::Image::tag<float> tag, std::size_t channel,
+											  glm::vec<2, float, glm::defaultp> &_values)
+	{
+		if (this->pImpl) { return this->pImpl->tiff_getRangeSubValues(tag, channel, _values); }
+		return false;
+	}
+
+	bool TIFFBackend::internal_getRangeValues(::Image::tag<double> tag, std::size_t channel,
+											  glm::vec<2, double, glm::defaultp> &_values)
+	{
+		if (this->pImpl) { return this->pImpl->tiff_getRangeSubValues(tag, channel, _values); }
+		return false;
+	}
+
 }

@@ -73,7 +73,7 @@ namespace Image {
 			/// @note By default, returns the internal data type's min and max values.
 			/// @return True if the data could be accessed, and false if something went wrong.
 			template <typename data_t>
-			bool getRangeValues(glm::vec<2, data_t, glm::defaultp>& _range);
+			bool getRangeValues(std::size_t channel, glm::vec<2, data_t, glm::defaultp>& _range);
 
 			/// @b Template to read a single pixel's value(s) in the image.
 			/// @return True if the data could be accessed, and false if something went wrong.
@@ -154,6 +154,46 @@ namespace Image {
 			/// @b Read a sub-region of the image, implemented in the derived classes, double precision floating point.
 			virtual bool internal_readSubRegion(::Image::tag<double> tag, svec3 origin, svec3 size,
 									   std::vector<double>& data) = 0;
+
+			/// @b Reads the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			virtual bool internal_getRangeValues(::Image::tag<std::int8_t> tag, std::size_t channel,
+												 glm::vec<2, std::int8_t, glm::defaultp>& _values) = 0;
+
+			/// @b Reads the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			virtual bool internal_getRangeValues(::Image::tag<std::int16_t> tag, std::size_t channel,
+												 glm::vec<2, std::int16_t, glm::defaultp>& _values) = 0;
+
+			/// @b Reads the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			virtual bool internal_getRangeValues(::Image::tag<std::int32_t> tag, std::size_t channel,
+												 glm::vec<2, std::int32_t, glm::defaultp>& _values) = 0;
+
+			/// @b Reads the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			virtual bool internal_getRangeValues(::Image::tag<std::int64_t> tag, std::size_t channel,
+												 glm::vec<2, std::int64_t, glm::defaultp>& _values) = 0;
+
+			/// @b Reads the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			virtual bool internal_getRangeValues(::Image::tag<std::uint8_t> tag, std::size_t channel,
+												 glm::vec<2, std::uint8_t, glm::defaultp>& _values) = 0;
+
+			/// @b Reads the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			virtual bool internal_getRangeValues(::Image::tag<std::uint16_t> tag, std::size_t channel,
+												 glm::vec<2, std::uint16_t, glm::defaultp>& _values) = 0;
+
+			/// @b Reads the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			virtual bool internal_getRangeValues(::Image::tag<std::uint32_t> tag, std::size_t channel,
+												 glm::vec<2, std::uint32_t, glm::defaultp>& _values) = 0;
+
+			/// @b Reads the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			virtual bool internal_getRangeValues(::Image::tag<std::uint64_t> tag, std::size_t channel,
+												 glm::vec<2, std::uint64_t, glm::defaultp>& _values) = 0;
+
+			/// @b Reads the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			virtual bool internal_getRangeValues(::Image::tag<float> tag, std::size_t channel,
+												 glm::vec<2, float, glm::defaultp>& _values) = 0;
+
+			/// @b Reads the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			virtual bool internal_getRangeValues(::Image::tag<double> tag, std::size_t channel,
+												 glm::vec<2, double, glm::defaultp>& _values) = 0;
 
 		protected:
 			/// @b The filenames of the implementation.

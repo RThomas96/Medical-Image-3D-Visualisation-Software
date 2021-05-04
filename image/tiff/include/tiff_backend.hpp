@@ -63,7 +63,7 @@ namespace Image {
 			/// @b Template to return the minimum and maximum values stored in the file, if given.
 			/// @note For the regular TIFF files, returns the internal data type's min and max values.
 			/// @note This will call `pImpl->getRangeValues<>();`.
-			template <typename data_t> bool getRangeValues(glm::vec<2, data_t, glm::defaultp>& _range);
+			template <typename data_t> bool getRangeValues(std::size_t channel, glm::vec<2, data_t, glm::defaultp>& _range);
 
 			/// @b Template to read a single pixel's value(s) in the image.
 			/// @note This will call `pImpl->readPixel<>();`.
@@ -140,6 +140,46 @@ namespace Image {
 			virtual bool internal_readSubRegion(::Image::tag<double> tag, svec3 origin, svec3 size,
 									   std::vector<double>& data) override;
 
+			/// @b Reads the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			virtual bool internal_getRangeValues(::Image::tag<std::int8_t> tag, std::size_t channel,
+												 glm::vec<2, std::int8_t, glm::defaultp>& _values) override;
+
+			/// @b Reads the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			virtual bool internal_getRangeValues(::Image::tag<std::int16_t> tag, std::size_t channel,
+												 glm::vec<2, std::int16_t, glm::defaultp>& _values) override;
+
+			/// @b Reads the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			virtual bool internal_getRangeValues(::Image::tag<std::int32_t> tag, std::size_t channel,
+												 glm::vec<2, std::int32_t, glm::defaultp>& _values) override;
+
+			/// @b Reads the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			virtual bool internal_getRangeValues(::Image::tag<std::int64_t> tag, std::size_t channel,
+												 glm::vec<2, std::int64_t, glm::defaultp>& _values) override;
+
+			/// @b Reads the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			virtual bool internal_getRangeValues(::Image::tag<std::uint8_t> tag, std::size_t channel,
+												 glm::vec<2, std::uint8_t, glm::defaultp>& _values) override;
+
+			/// @b Reads the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			virtual bool internal_getRangeValues(::Image::tag<std::uint16_t> tag, std::size_t channel,
+												 glm::vec<2, std::uint16_t, glm::defaultp>& _values) override;
+
+			/// @b Reads the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			virtual bool internal_getRangeValues(::Image::tag<std::uint32_t> tag, std::size_t channel,
+												 glm::vec<2, std::uint32_t, glm::defaultp>& _values) override;
+
+			/// @b Reads the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			virtual bool internal_getRangeValues(::Image::tag<std::uint64_t> tag, std::size_t channel,
+												 glm::vec<2, std::uint64_t, glm::defaultp>& _values) override;
+
+			/// @b Reads the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			virtual bool internal_getRangeValues(::Image::tag<float> tag, std::size_t channel,
+												 glm::vec<2, float, glm::defaultp>& _values) override;
+
+			/// @b Reads the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			virtual bool internal_getRangeValues(::Image::tag<double> tag, std::size_t channel,
+												 glm::vec<2, double, glm::defaultp>& _values) override;
+
 		protected:
 #ifdef PIMPL_USE_EXPERIMENTAL_PROPAGATE_CONST
 			/// @b The pointer which can interface directly with the files on disk.
@@ -152,7 +192,7 @@ namespace Image {
 
 	/// @b Returns the data read by the pImpl pointer in this class.
 	template <typename data_t>
-	bool TIFFBackend::getRangeValues(glm::vec<2, data_t, glm::defaultp>& _range) {
+	bool TIFFBackend::getRangeValues(std::size_t channel, glm::vec<2, data_t, glm::defaultp>& _range) {
 		if (this->pImpl) { this->pImpl->getRangeValues<data_t>(_range); return true; }
 		return false;
 	}

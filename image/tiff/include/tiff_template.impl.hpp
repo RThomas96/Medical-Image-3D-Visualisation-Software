@@ -151,15 +151,6 @@ namespace Tiff {
 
 	template <typename img_t>
 	template <typename target_t>
-	bool TIFFReader<img_t>::getRangeValues(glm::vec<2, target_t, glm::defaultp>& _r) const {
-		#warning a static cast is done for range values, without any checks or proper conversions
-		_r.x = static_cast<target_t>(this->dataRange.x);
-		_r.y = static_cast<target_t>(this->dataRange.y);
-		return true;
-	}
-
-	template <typename img_t>
-	template <typename target_t>
 	void TIFFReader<img_t>::readPixel(svec3 pixel_index, std::vector<target_t>& values) {
 		// Load and cache (or retrieve) the image data :
 		std::size_t sliceidx = this->loadAndCacheSlice(pixel_index.z);
@@ -365,6 +356,14 @@ namespace Tiff {
 			}
 		}
 		// don't need to pad the remaining slices (if any) because of the first call to fill()
+		return true;
+	}
+
+	template <typename img_t>
+	template <typename data_t>
+	bool TIFFReader<img_t>::template_tiff_get_sub_range_values(std::size_t channel, glm::vec<2, data_t, glm::defaultp>& _values) {
+		if (this->dataRange.size() >= channel ) { return false; }
+		_values = glm::convert_to<data_t>(this->dataRange[channel]);
 		return true;
 	}
 

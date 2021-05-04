@@ -23,9 +23,6 @@ namespace Tiff {
 			/// @b Returns the range of values present (or representable) in the file, converted to the 'target_t' type.
 			template <typename source_t> TIFFReader& setRangeValues(glm::vec<2, source_t, glm::defaultp>& _range);
 
-			/// @b Returns the range of values present (or representable) in the file, converted to the 'target_t' type.
-			template <typename target_t> bool getRangeValues(glm::vec<2, target_t, glm::defaultp>& _range) const;
-
 			/// @b Template to read a single pixel's value(s) in the image.
 			/// @note This will call `pImpl->readPixel<>();`.
 			template <typename target_t> void readPixel(svec3 index, std::vector<target_t>& values);
@@ -48,6 +45,9 @@ namespace Tiff {
 			/// @b Reads the given subregion and converts it to the output value type into the given vector.
 			template <typename out_t>
 			bool template_tiff_read_sub_region(svec3 origin, svec3 size, std::vector<out_t>& values);
+
+			template <typename range_t>
+			bool template_tiff_get_sub_range_values(std::size_t channel, glm::vec<2, range_t, glm::defaultp>& _values);
 
 			//////////////////////////////////////////////////////
 			//													//
@@ -125,11 +125,77 @@ namespace Tiff {
 				return this->template_tiff_read_sub_region(origin, size, data);
 			}
 
+			//////////////////////////////////////////////////////
+			//													//
+			//          VALUE RANGE GETTER FUNCTIONS            //
+			//													//
+			//////////////////////////////////////////////////////
+
+			virtual bool tiff_getRangeSubValues(::Image::tag<std::int8_t> tag, std::size_t channel,
+												 glm::vec<2, std::int8_t, glm::defaultp>& values) override {
+				UNUSED_PARAMETER(tag);
+				return this->template_tiff_get_sub_range_values(channel, values);
+			}
+
+			virtual bool tiff_getRangeSubValues(::Image::tag<std::int16_t> tag, std::size_t channel,
+												 glm::vec<2, std::int16_t, glm::defaultp>& values) override {
+				UNUSED_PARAMETER(tag);
+				return this->template_tiff_get_sub_range_values(channel, values);
+			}
+
+			virtual bool tiff_getRangeSubValues(::Image::tag<std::int32_t> tag, std::size_t channel,
+												 glm::vec<2, std::int32_t, glm::defaultp>& values) override {
+				UNUSED_PARAMETER(tag);
+				return this->template_tiff_get_sub_range_values(channel, values);
+			}
+
+			virtual bool tiff_getRangeSubValues(::Image::tag<std::int64_t> tag, std::size_t channel,
+												 glm::vec<2, std::int64_t, glm::defaultp>& values) override {
+				UNUSED_PARAMETER(tag);
+				return this->template_tiff_get_sub_range_values(channel, values);
+			}
+
+			virtual bool tiff_getRangeSubValues(::Image::tag<std::uint8_t> tag, std::size_t channel,
+												 glm::vec<2, std::uint8_t, glm::defaultp>& values) override {
+				UNUSED_PARAMETER(tag);
+				return this->template_tiff_get_sub_range_values(channel, values);
+			}
+
+			virtual bool tiff_getRangeSubValues(::Image::tag<std::uint16_t> tag, std::size_t channel,
+												 glm::vec<2, std::uint16_t, glm::defaultp>& values) override {
+				UNUSED_PARAMETER(tag);
+				return this->template_tiff_get_sub_range_values(channel, values);
+			}
+
+			virtual bool tiff_getRangeSubValues(::Image::tag<std::uint32_t> tag, std::size_t channel,
+												 glm::vec<2, std::uint32_t, glm::defaultp>& values) override {
+				UNUSED_PARAMETER(tag);
+				return this->template_tiff_get_sub_range_values(channel, values);
+			}
+
+			virtual bool tiff_getRangeSubValues(::Image::tag<std::uint64_t> tag, std::size_t channel,
+												 glm::vec<2, std::uint64_t, glm::defaultp>& values) override {
+				UNUSED_PARAMETER(tag);
+				return this->template_tiff_get_sub_range_values(channel, values);
+			}
+
+			virtual bool tiff_getRangeSubValues(::Image::tag<float> tag, std::size_t channel,
+												 glm::vec<2, float, glm::defaultp>& values) override {
+				UNUSED_PARAMETER(tag);
+				return this->template_tiff_get_sub_range_values(channel, values);
+			}
+
+			virtual bool tiff_getRangeSubValues(::Image::tag<double> tag, std::size_t channel,
+												 glm::vec<2, double, glm::defaultp>& values) override {
+				UNUSED_PARAMETER(tag);
+				return this->template_tiff_get_sub_range_values(channel, values);
+			}
+
 		protected:
 			/// @b The min and max of the image (if specified in the header)
 			/// @details If specified in the header, those values will be returned. Instead, returns the min/max of the
 			/// data type the image is saved as.
-			glm::vec<2, img_t, glm::defaultp> dataRange;
+			std::vector<glm::vec<2, img_t, glm::defaultp>> dataRange;
 
 			/// @b A cache of recently loaded slices.
 			ReadCache<std::size_t, std::vector<img_t>> cachedSlices;

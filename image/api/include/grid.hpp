@@ -106,7 +106,7 @@ namespace Image {
 			/// @note By default, returns the internal data type's min and max values.
 			/// @warning This function is left undefined here : it is implemented in derived classes, and
 			/// trying to call it directly will lead to linker errors !
-			template <typename data_t> bool getRangeValues(glm::vec<2, data_t, glm::defaultp>& _range);
+			template <typename data_t> bool getRangeValues(std::size_t channel, glm::vec<2, data_t, glm::defaultp>& _range);
 
 			/// @b Template to read a single pixel's value(s) in the image.
 			/// @warning This function is left undefined here : it is implemented in derived classes, and
@@ -140,6 +140,15 @@ namespace Image {
 			/// @b This grid's name,
 			std::string gridName;
 	};
+
+	template <typename data_t>
+	bool Grid::getRangeValues(std::size_t channel, glm::vec<2, data_t, glm::defaultp>& values) {
+		// Checks the implementation pointer is valid, if it is return the data
+		// from there, and if not return an invalid range of values :
+		if (this->pImpl) { this->pImpl->getRangeValues(channel, values); return true; }
+		values = glm::vec<2, data_t, glm::defaultp>(std::numeric_limits<data_t>::lowest(), std::numeric_limits<data_t>::max());
+		return false;
+	}
 
 	template <typename data_t>
 	bool Grid::readPixel(svec3 index, std::vector<data_t>& values) {

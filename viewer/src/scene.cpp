@@ -601,12 +601,10 @@ void Scene::newAPI_addGrid(Image::Grid::Ptr gridLoaded) {
 	_gridTex.wrap.x = GL_CLAMP_TO_EDGE;
 	_gridTex.wrap.y = GL_CLAMP_TO_EDGE;
 	_gridTex.wrap.z = GL_CLAMP_TO_EDGE;
-	std::cerr << "Activated channels : red, ";
 	_gridTex.swizzle.r = GL_RED;
 	if (dimensions.a > 1) { _gridTex.swizzle.g = GL_GREEN; } else { _gridTex.swizzle.g = GL_ZERO; }
 	if (dimensions.a > 2) { _gridTex.swizzle.b = GL_BLUE; } else { _gridTex.swizzle.b = GL_ZERO; }
 	if (dimensions.a > 3) { _gridTex.swizzle.a = GL_ALPHA; } else { _gridTex.swizzle.a = GL_ONE; }
-	std::cerr << '\n',
 	_gridTex.alignment.x = 1;
 	_gridTex.alignment.y = 2;
 	switch (dimensions.a) {

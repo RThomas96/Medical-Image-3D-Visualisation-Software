@@ -48,7 +48,7 @@ namespace Tiff {
 			ImageDataType getInternalType(void) const;
 
 			/// @b If the value range of the image is defined elsewhere (like OME-TIFF specifies) we can set it here.
-			template <typename source_t> void setRangeValues(glm::vec<2, source_t, glm::defaultp>& _range);
+			template <typename source_t> void setRangeValues(std::size_t channel, glm::vec<2, source_t, glm::defaultp>& _range);
 
 			/// @b Returns the min and max values in the image, or representable by the internal type.
 			template <typename target_t> void getRangeValues(glm::vec<2, target_t, glm::defaultp>& _range) const;
@@ -114,6 +114,52 @@ namespace Tiff {
 			/// @b Read a sub-region of the image, implemented in the derived classes, double precision floating point.
 			virtual bool tiff_readSubRegion(::Image::tag<double> tag, svec3 origin, svec3 size,
 									   std::vector<double>& data) = 0;
+
+			//////////////////////////////////////////////////////
+			//													//
+			//          VALUE RANGE GETTER FUNCTIONS            //
+			//													//
+			//////////////////////////////////////////////////////
+
+			/// @b Read the (potentially present) range of values available in the image
+			virtual bool tiff_getRangeSubValues(::Image::tag<std::int8_t> tag, std::size_t channel,
+												glm::vec<2, std::int8_t, glm::defaultp>& values) = 0;
+
+			/// @b Read the (potentially present) range of values available in the image
+			virtual bool tiff_getRangeSubValues(::Image::tag<std::int16_t> tag, std::size_t channel,
+												glm::vec<2, std::int16_t, glm::defaultp>& values) = 0;
+
+			/// @b Read the (potentially present) range of values available in the image
+			virtual bool tiff_getRangeSubValues(::Image::tag<std::int32_t> tag, std::size_t channel,
+												glm::vec<2, std::int32_t, glm::defaultp>& values) = 0;
+
+			/// @b Read the (potentially present) range of values available in the image
+			virtual bool tiff_getRangeSubValues(::Image::tag<std::int64_t> tag, std::size_t channel,
+												glm::vec<2, std::int64_t, glm::defaultp>& values) = 0;
+
+			/// @b Read the (potentially present) range of values available in the image
+			virtual bool tiff_getRangeSubValues(::Image::tag<std::uint8_t> tag, std::size_t channel,
+												glm::vec<2, std::uint8_t, glm::defaultp>& values) = 0;
+
+			/// @b Read the (potentially present) range of values available in the image
+			virtual bool tiff_getRangeSubValues(::Image::tag<std::uint16_t> tag, std::size_t channel,
+												glm::vec<2, std::uint16_t, glm::defaultp>& values) = 0;
+
+			/// @b Read the (potentially present) range of values available in the image
+			virtual bool tiff_getRangeSubValues(::Image::tag<std::uint32_t> tag, std::size_t channel,
+												glm::vec<2, std::uint32_t, glm::defaultp>& values) = 0;
+
+			/// @b Read the (potentially present) range of values available in the image
+			virtual bool tiff_getRangeSubValues(::Image::tag<std::uint64_t> tag, std::size_t channel,
+												glm::vec<2, std::uint64_t, glm::defaultp>& values) = 0;
+
+			/// @b Read the (potentially present) range of values available in the image
+			virtual bool tiff_getRangeSubValues(::Image::tag<float> tag, std::size_t channel,
+												glm::vec<2, float, glm::defaultp>& values) = 0;
+
+			/// @b Read the (potentially present) range of values available in the image
+			virtual bool tiff_getRangeSubValues(::Image::tag<double> tag, std::size_t channel,
+												glm::vec<2, double, glm::defaultp>& values) = 0;
 
 		protected:
 			/// @b The loaded frames, which are created by the parsing function.
