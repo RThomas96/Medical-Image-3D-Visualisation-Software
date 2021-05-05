@@ -57,6 +57,9 @@ namespace Image {
 			/// @b Returns the name of this image, determined from the files taken as input.
 			virtual std::string getImageName(void) const override;
 
+			/// @b Allows to set a user-defined name for this acquisition.
+			virtual void setImageName(std::string& _user_defined_name_) override;
+
 			/// @b Returns the bounding box surrounding the image in its own space.
 			virtual BoundingBox_General<float> getBoundingBox(void) const override;
 
@@ -193,7 +196,7 @@ namespace Image {
 	/// @b Returns the data read by the pImpl pointer in this class.
 	template <typename data_t>
 	bool TIFFBackend::getRangeValues(std::size_t channel, glm::vec<2, data_t, glm::defaultp>& _range) {
-		if (this->pImpl) { this->pImpl->getRangeValues<data_t>(_range); return true; }
+		if (this->pImpl) { this->pImpl->tiff_getRangeSubValues(channel, _range); return true; }
 		return false;
 	}
 

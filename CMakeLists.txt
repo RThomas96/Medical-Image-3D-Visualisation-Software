@@ -42,8 +42,7 @@ TARGET_INCLUDE_DIRECTORIES(ImageIO
 )
 TARGET_LINK_LIBRARIES(ImageIO
 	PUBLIC TinyTIFF
-	PUBLIC imagegrid
-	PUBLIC grid_tiff_backend
+	PUBLIC grid_api
 	PUBLIC ${libTIFF}
 	PUBLIC Qt5::Xml
 )

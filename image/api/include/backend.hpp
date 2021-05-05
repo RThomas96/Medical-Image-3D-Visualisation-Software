@@ -24,13 +24,6 @@ namespace Image {
 			typedef std::unique_ptr<ImageBackendImpl> Ptr;
 
 		protected:
-			/// @b Simple tag which discriminates which function to call when called from a template.
-			/// @details Allow to have multiple implementations of a function foo() (for different data types, in this
-			/// case) which can thus be called from a function `template<> foo<>()`. This allows to leave the foo()
-			/// implementation to derived classes, where the information actually is.
-			template <typename T> struct restrict_tag {};
-
-		protected:
 			/// @b Default ctor of an image backend. Declared protected to not be instanciated alone.
 			ImageBackendImpl(const std::vector<std::vector<std::string>>& fns);
 
@@ -61,10 +54,14 @@ namespace Image {
 			/// @b Returns the dimensions of the image.
 			virtual svec3 getResolution(void) const;
 
-			/// @b If the file format allows and includes it, the name of the acquisition.
-			/// @details Otherwise, this is the name of the first file in the stack, minus the  extension and possibly
-			/// any string of identifiers for single slices (if filename = 'file_z000_c0.ext', this returns 'file').
+			/// @b Allows to get the name of the loaded image(s).
+			/// @details If the file format does not support defining the name of the grid in its files or metadata
+			/// (like the TIFF format for example), then the name returned is either a previously user-defined name, or
+			/// the name of the first image/file loaded.
 			virtual std::string getImageName(void) const = 0;
+
+			/// @b Allows for the user to specify a custom name for the grid.
+			virtual void setImageName(std::string& _user_defined_name_) = 0;
 
 			/// @b Returns the image bounding box, either as computed (voxel sizes x res), or defined in file.
 			virtual BoundingBox_General<float> getBoundingBox(void) const = 0;
@@ -73,12 +70,20 @@ namespace Image {
 			/// @note By default, returns the internal data type's min and max values.
 			/// @return True if the data could be accessed, and false if something went wrong.
 			template <typename data_t>
-			bool getRangeValues(std::size_t channel, glm::vec<2, data_t, glm::defaultp>& _range);
+			bool getRangeValues(std::size_t channel, glm::vec<2, data_t, glm::defaultp>& _range) {
+				return this->internal_getRangeValues(::Image::tag<data_t>{}, channel, _range);
+			}
 
 			/// @b Template to read a single pixel's value(s) in the image.
 			/// @return True if the data could be accessed, and false if something went wrong.
 			template <typename data_t>
-			bool readPixel(svec3 index, std::vector<data_t>& values);
+			bool readPixel(svec3 index, std::vector<data_t>& values) {
+				svec3 read_region_size(this->getResolution());
+				read_region_size.x = 1;
+				read_region_size.y = 1;
+				read_region_size.z = 1;
+				return this->internal_readSubRegion(::Image::tag<data_t>{}, index, read_region_size, values);
+			}
 
 			/// @b Template to read a single line of voxels in ihe image.
 			/// @return True if the data could be accessed, and false if something went wrong.

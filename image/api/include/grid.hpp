@@ -137,16 +137,16 @@ namespace Image {
 			svec3 imageSize;
 			/// @b If the grid is a sub-region of a bigger grid, this will be its starting point in the parent.
 			svec3 voxelOffset;
-			/// @b This grid's name,
-			std::string gridName;
 	};
 
 	template <typename data_t>
 	bool Grid::getRangeValues(std::size_t channel, glm::vec<2, data_t, glm::defaultp>& values) {
+		using return_vec_t = glm::vec<2, data_t, glm::defaultp>;
 		// Checks the implementation pointer is valid, if it is return the data
 		// from there, and if not return an invalid range of values :
 		if (this->pImpl) { this->pImpl->getRangeValues(channel, values); return true; }
-		values = glm::vec<2, data_t, glm::defaultp>(std::numeric_limits<data_t>::lowest(), std::numeric_limits<data_t>::max());
+		// If the pointer to implementation is not here, we should probably throw or return erroneous values ...
+		values = return_vec_t(std::numeric_limits<data_t>::min(), std::numeric_limits<data_t>::max());
 		return false;
 	}
 
@@ -155,7 +155,7 @@ namespace Image {
 		// Checks the position is valid, the backend implementation is valid and returns the value
 		if (index.x < this->imageSize.x && index.y < this->imageSize.y && index.z < this->imageSize.z) {
 			if (this->pImpl) {
-				this->pImpl->readPixel<data_t>(index, values);
+				this->pImpl->readPixel(index, values);
 				return true;
 			}
 			return false;

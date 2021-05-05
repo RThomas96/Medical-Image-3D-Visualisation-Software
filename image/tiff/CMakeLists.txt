@@ -32,7 +32,12 @@ TARGET_LINK_LIBRARIES(grid_tiff_backend
 	PUBLIC imagegrid # Parent lib
 	PUBLIC ${libTIFF}
 )
-SET_TARGET_PROPERTIES(grid_tiff_backend PROPERTIES AUTOMOC OFF AUTORCC OFF AUTOUIC OFF)
+SET_TARGET_PROPERTIES(grid_tiff_backend PROPERTIES
+	AUTOMOC OFF
+	AUTORCC OFF
+	AUTOUIC OFF
+	POSITION_INDEPENDENT_CODE ON
+)
 
 # Once the compilation is conditional, maybe add that lib to a list of compilable libs which
 # then get linked by the top CMakeLists.txt ??? Just a random thought.
