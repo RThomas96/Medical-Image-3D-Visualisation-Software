@@ -223,6 +223,10 @@ class Scene : public QOpenGLFunctions_3_2_Core {
 		/// @b Signals all planes they need to be inverted.
 		void toggleAllPlaneDirections();
 
+		void setPositionResponse(glm::vec4 _resp);
+		void drawPositionResponse(float radius, bool drawOnTop = false);
+		void resetPositionResponse(void);
+
 		std::vector<std::shared_ptr<DiscreteGrid>> getInputGrids(void) const;
 		std::size_t getInputGridCount(void) const;
 
@@ -328,6 +332,9 @@ class Scene : public QOpenGLFunctions_3_2_Core {
 
 		// Grids :
 		std::vector<GridGLView::Ptr> grids;		///< Grids to display in the different views.
+
+		qglviewer::Frame* posFrame;
+		glm::vec4 posRequest;
 
 		// OpenGL-related stuff :
 		QOpenGLContext* context;				///< The context with which the scene has been created with

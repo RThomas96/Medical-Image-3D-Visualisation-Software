@@ -15,7 +15,7 @@ class PlanarViewer : public QGLViewer {
 		friend class ViewerHeader;
 	public:
 		/// @brief Default constructor for the viewer.
-		PlanarViewer(Scene* const _scene, planes _p, planeHeading _h = North, QWidget* parent = nullptr);
+		PlanarViewer(Scene* const _scene, planes _p, QStatusBar* status_bar, planeHeading _h = North, QWidget* parent = nullptr);
 		/// @brief Default destructor for the viewer.
 		~PlanarViewer(void);
 	protected:
@@ -65,6 +65,7 @@ class PlanarViewer : public QGLViewer {
 		bool ctrl_pressed;				///< Is the Ctrl keymod pressed ?
 		QPoint cursorPosition_last;		///< Last known position, relative to window coordinates
 		QPoint cursorPosition_current;	///< Current mouse position, relative to window coordinates
+		QStatusBar* status_bar;
 	public slots:
 		/// @brief Update the view, as a slot without any arguments
 		void updateView(void);
