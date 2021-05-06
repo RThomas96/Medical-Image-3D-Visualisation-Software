@@ -3,15 +3,15 @@
 // Signals we're in the main shader, for any shaders inserted into this one.
 #define MAIN_SHADER_UNIT
 
-#extension GL_ARB_separate_shader_objects : enable
+#extension GL_ARB_explicit_attrib_location : require
 
 /****************************************/
 /**************** Inputs ****************/
 /****************************************/
-layout(location = 0) in vec4 vPos;		// The vertex's positions
-layout(location = 1) in vec3 vOriginalCoords;	// The vertex's normal
-layout(location = 2) in vec3 vTexCoords;	// The vertex's texture coordinates
-layout(location = 3) in vec2 planeMultiplier;	// The multiplier used to 'stretch' the plane
+in vec4 vPos;		// The vertex's positions
+in vec3 vOriginalCoords;	// The vertex's normal
+in vec3 vTexCoords;	// The vertex's texture coordinates
+in vec2 planeMultiplier;	// The multiplier used to 'stretch' the plane
 
 /****************************************/
 /*************** Outputs ****************/

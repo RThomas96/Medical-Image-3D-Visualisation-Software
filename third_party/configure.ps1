@@ -1,4 +1,10 @@
-param([switch]$clean)
+#param(
+#	[Switch]$clean = $false,
+#	[Switch]$nifti = $false,
+#	[Switch]$libtiff = $false,
+#	[Switch]$tinytiff = $false,
+#	[Switch]$qglviewer = $false
+#)
 
 # Executable paths :
 [string]$CMakeCmdPath = ""
@@ -13,6 +19,7 @@ param([switch]$clean)
 [string]$TinyTIFFPath = ($ProjectRootPath)+"\TinyTIFF"
 [string]$libTIFFPath = ($ProjectRootPath)+"\libtiff"
 [string]$niftiPath = ($ProjectRootPath)+"\nifticlib"
+[string]$zlibPath = ($ProjectRootPath)+"\zlib"
 [string]$CompiledLibPath = ($ProjectRootPath)+"\compiled_libraries"
 
 function Clear-GitAll {
@@ -44,6 +51,15 @@ function Clear-GitAll {
 		Write-Host "NIFTI's CMake folder was removed."
 	} else {
 		Write-Host "NIFTI was not compiled by this script, or at all."
+	}
+
+	# Zlib :
+	Set-Location $zlibPath
+	if ( Test-Path -Path "release" ) {
+		Remove-Item -Path "release" -Recurse
+		Write-Host "Zlib's CMake folder was removed"
+	} else {
+		Write-Host "Zlib was not compiled by this script, or at all."
 	}
 
 	# QGLViewer :
@@ -146,7 +162,7 @@ function Publish-GitQGLViewer {
 		$env:LIBRARY_PATH+=";$qglviewerPath;$qglviewerPath\QGLViewer;$env:PATH";
 		# Call GNU's make :
 		Start-Process -FilePath $Global:GNUMakeCmdPath -NoNewWindow -Wait -ArgumentList `
-			"--no-print-directory install"
+			"--no-print-directory --silent -j sub-QGLViewer"
 	}
 	# Finish the process :
 	Write-Host "Configuration of QGLViewer done."
@@ -164,13 +180,31 @@ function Publish-GitNifti {
 
 		# Start the CMake generation process :
 		Start-Process -FilePath $Global:CMakeCmdPath -NoNewWindow -Wait -ArgumentList `
-			"-S. -Brelease -G `"MinGW Makefiles`" -DCMAKE_BUILD_TYPE=Release -DNIFTI_BUILD_TESTING=OFF -DNIFTI_SHELL_SCRIPT_TESTS=OFF -DNIFTI_INSTALL_NO_DOCS=TRUE -DCMAKE_INSTALL_PREFIX=$CompiledLibPath "
+			"-S. -Brelease -G `"MinGW Makefiles`" -DCMAKE_BUILD_TYPE=Release -DZLIB-ROOT=$CompiledLibPath -DNIFTI_BUILD_TESTING=OFF -DNIFTI_SHELL_SCRIPT_TESTS=OFF -DNIFTI_BUILD_APPLICATIONS=OFF -DNIFTI_INSTALL_NO_DOCS=TRUE -DCMAKE_INSTALL_PREFIX=$CompiledLibPath "
 		# Call CMake to compile the project :
 		Start-Process -FilePath $Global:CMakeCmdPath -NoNewWindow -Wait -ArgumentList `
 			"--build release --target install"
 	}
 	# Finish the process :
 	Write-Host "Configuration of NIFTI CLib done."
+	Set-Location $ProjectRootPath
+}
+
+function Publish-GitZlib {
+	Write-Host "Configuring Zlib ..."
+	Set-Location $zlibPath
+	if ( Test-Path -Path "release" ) {
+		//
+	} else {
+		[void](New-Item -Force -Path $zlibPath -Name "release" -ItemType "directory")
+
+		Start-Process -FilePath $Global:CMakeCmdPath -NoNewWindow -Wait -ArgumentList `
+			"-S. -Brelease -G `"MinGW Makefiles`" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$CompiledLibPath "
+		Start-Process -FilePath $Global:CMakeCmdPath -NoNewWindow -Wait -ArgumentList `
+			"--build release --target install"
+	}
+	# Finish the process :
+	Write-Host "Configuration of Zlib done."
 	Set-Location $ProjectRootPath
 }
 
@@ -185,21 +219,41 @@ if (!$IsSystemValid) {
 	exit 0;
 } else {
 	Write-Host "System configuration is valid !"
-}
-
-# Clean, if that's waht the user wants :
-if ($clean) {
-	Clear-GitAll
-	exit
-}
-
-# Otherwise, create the compiling directory and compile in it :
-if ($IsSystemValid) {
-	# Create new folder :
+	# Create new folder, if already exists do nothing :
 	[void](New-Item -Force -Path . -Name "compiled_libraries" -ItemType "directory")
+}
+
+if ($args.Count -gt 0) {
+	# Clean, if that's what the user wants :
+	if ($args.Contains("clean")) {
+		Clear-GitAll
+		exit
+	}
+
+	if ($args.Contains("zlib")) {
+		Publish-GitZlib
+	}
+	# If NIFTI as passed in argument, compile it :
+	if ($args.Contains("nifti")) {
+		Publish-GitNifti
+	}
+	# Do the same for libtiff :
+	if ($args.Contains("libtiff")) {
+		Publish-GitlibTIFF
+	}
+	# And TinyTIFF :
+	if ($args.Contains("tinytiff")) {
+		Publish-GitlibTIFF
+	}
+	# And finally with QGLViewer :
+	if ($args.Contains("qglviewer")) {
+		Publish-GitQGLViewer
+	}
+	exit
 }
 
 Publish-GitlibTIFF
 Publish-GitQGLViewer
+Publish-GitZlib
 Publish-GitNifti
 Publish-GitTinyTIFF

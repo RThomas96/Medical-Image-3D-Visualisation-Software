@@ -697,10 +697,10 @@ void Scene::updateBoundingBox(void) {
 }
 
 void Scene::recompileShaders(bool verbose) {
-	GLuint newProgram = this->compileShaders("../shaders/voxelgrid.vert", "../shaders/voxelgrid.geom", "../shaders/voxelgrid.frag", verbose);
+	GLuint newProgram = this->compileShaders("../shaders/voxelgrid.vert", "", "../shaders/voxelgrid.frag", verbose);
 	GLuint newPlaneProgram = this->compileShaders("../shaders/plane.vert", "", "../shaders/plane.frag", verbose);
 	GLuint newPlaneViewerProgram = this->compileShaders("../shaders/texture_explorer.vert", "", "../shaders/texture_explorer.frag", verbose);
-	GLuint newVolumetricProgram = this->compileShaders("../shaders/transfer_mesh.vert", "../shaders/transfer_mesh.geom", "../shaders/transfer_mesh.frag", verbose);
+	GLuint newVolumetricProgram = this->compileShaders("../shaders/transfer_mesh.vert", "", "../shaders/transfer_mesh.frag", verbose);
 	GLuint newBoundingBoxProgram = this->compileShaders("../shaders/bounding_box.vert", "", "../shaders/bounding_box.frag", verbose);
 
 	if (newProgram) {

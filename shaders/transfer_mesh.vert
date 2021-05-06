@@ -1,5 +1,5 @@
 #version 150
-#extension GL_ARB_separate_shader_objects : enable
+#extension GL_ARB_explicit_attrib_location : require
 
 layout (location = 0) in vec3 position;
 layout (location = 1) in vec3 normal;
@@ -8,18 +8,18 @@ layout (location = 2) in vec2 texCoord;
 // --------------------------------------------------
 // VShader outputs :
 // --------------------------------------------------
-out vec4 P_VS;
-out vec3 text3DCoord_VS;
-out vec4 P0_VS;
-out vec3 text3DCoordP0_VS;
-out vec4 P1_VS;
-out vec3 text3DCoordP1_VS;
-out vec4 P2_VS;
-out vec3 text3DCoordP2_VS;
-out vec4 P3_VS;
-out vec3 text3DCoordP3_VS;
-out float instanceId_VS;
-out float visibility_VS;
+out vec4 P;
+out vec3 text3DCoord;
+out vec4 P0;
+out vec3 text3DCoordP0;
+out vec4 P1;
+out vec3 text3DCoordP1;
+out vec4 P2;
+out vec3 text3DCoordP2;
+out vec4 P3;
+out vec3 text3DCoordP3;
+out float instanceId;
+out float visibility;
 
 // --------------------------------------------------
 // Uniform variables:
@@ -53,8 +53,8 @@ uniform bool shouldUseBB;
 */
 ivec2 Convert1DIndexTo2DIndex_Unnormed( in uint uiIndexToConvert, in int iWrapSize )
 {
-	int iY = int( uiIndexToConvert / unsigned int(iWrapSize) );
-	int iX = int( uiIndexToConvert - ( unsigned int(iY) * unsigned int(iWrapSize) ) );
+	int iY = int( uiIndexToConvert / uint(iWrapSize) );
+	int iX = int( uiIndexToConvert - ( uint(iY) * uint(iWrapSize) ) );
 	return ivec2( iX, iY );
 }
 
@@ -99,36 +99,36 @@ void main()
 
 	vec3 textValue = texelFetch(vertices_translations, textCoord, 0).xyz;
 
-	instanceId_VS = float(gl_InstanceID);
+	instanceId = float(gl_InstanceID);
 
-	P_VS = vec4(textValue.xyz, 1.);
+	P = vec4(textValue.xyz, 1.);
 
-	text3DCoord_VS = texelFetch(texture_coordinates, textCoord, 0).xyz;
+	text3DCoord = texelFetch(texture_coordinates, textCoord, 0).xyz;
 
 	//Storing instance vertices informations: position and texture coordinates
-	textCoord = Convert1DIndexTo2DIndex_Unnormed(unsigned int(gl_InstanceID*12 ), vertWidth);
-	P3_VS = vec4( texelFetch(vertices_translations, textCoord, 0).xyz, 1. );
-	text3DCoordP3_VS = texelFetch(texture_coordinates, textCoord, 0).xyz;;
+	textCoord = Convert1DIndexTo2DIndex_Unnormed(uint(gl_InstanceID*12 ), vertWidth);
+	P3 = vec4( texelFetch(vertices_translations, textCoord, 0).xyz, 1. );
+	text3DCoordP3 = texelFetch(texture_coordinates, textCoord, 0).xyz;;
 
-	visibility_VS = ComputeVisibility(P3_VS.xyz);
+	visibility = ComputeVisibility(P3.xyz);
 
-	textCoord = Convert1DIndexTo2DIndex_Unnormed(unsigned int(gl_InstanceID*12 + 1 ), vertWidth);
-	P1_VS = vec4( texelFetch(vertices_translations, textCoord, 0).xyz, 1. );
-	text3DCoordP1_VS = texelFetch(texture_coordinates, textCoord, 0).xyz;;
+	textCoord = Convert1DIndexTo2DIndex_Unnormed(uint(gl_InstanceID*12 + 1 ), vertWidth);
+	P1 = vec4( texelFetch(vertices_translations, textCoord, 0).xyz, 1. );
+	text3DCoordP1 = texelFetch(texture_coordinates, textCoord, 0).xyz;;
 
-	visibility_VS += ComputeVisibility(P1_VS.xyz);
+	visibility += ComputeVisibility(P1.xyz);
 
-	textCoord = Convert1DIndexTo2DIndex_Unnormed(unsigned int(gl_InstanceID*12 + 2 ), vertWidth);
-	P2_VS = vec4( texelFetch(vertices_translations, textCoord, 0).xyz, 1. );
-	text3DCoordP2_VS = texelFetch(texture_coordinates, textCoord, 0).xyz;;
+	textCoord = Convert1DIndexTo2DIndex_Unnormed(uint(gl_InstanceID*12 + 2 ), vertWidth);
+	P2 = vec4( texelFetch(vertices_translations, textCoord, 0).xyz, 1. );
+	text3DCoordP2 = texelFetch(texture_coordinates, textCoord, 0).xyz;;
 
-	visibility_VS += ComputeVisibility(P2_VS.xyz);
+	visibility += ComputeVisibility(P2.xyz);
 
-	textCoord = Convert1DIndexTo2DIndex_Unnormed(unsigned int(gl_InstanceID*12 + 5 ), vertWidth);
-	P0_VS = vec4( texelFetch(vertices_translations, textCoord, 0).xyz, 1. );
-	text3DCoordP0_VS = texelFetch(texture_coordinates, textCoord, 0).xyz;
+	textCoord = Convert1DIndexTo2DIndex_Unnormed(uint(gl_InstanceID*12 + 5 ), vertWidth);
+	P0 = vec4( texelFetch(vertices_translations, textCoord, 0).xyz, 1. );
+	text3DCoordP0 = texelFetch(texture_coordinates, textCoord, 0).xyz;
 
-	visibility_VS += ComputeVisibility(P0_VS.xyz);
+	visibility += ComputeVisibility(P0.xyz);
 
-	gl_Position = pMat*vMat*P_VS;
+	gl_Position = pMat*vMat*P;
 }

@@ -1,5 +1,5 @@
 #version 150 core
-#extension GL_ARB_separate_shader_objects : enable
+#extension GL_ARB_explicit_attrib_location : require
 
 #pragma optimize(off)
 #pragma debug(on)
@@ -10,8 +10,6 @@
 in vec4 vPos_WS;
 in vec4 vNorm_WS;
 in vec3 texCoord;
-in vec3 barycentricCoords;
-in vec3 largestDelta;
 
 in vec4 vPos_CS;
 in vec4 vNorm_CS;
@@ -77,7 +75,9 @@ void main(void)
 	if (isFragmentVisible() == false) { worldPosition.w = .0f; discard; }
 
 	float epsilon = .03;
+	/*
 	float distMin = min(barycentricCoords.x/largestDelta.x, min(barycentricCoords.y/largestDelta.y, barycentricCoords.z/largestDelta.z));
+	*/
 
 	vec4 basecolor;
 	uvec3 ui = texture(texData, texCoord).xyz;

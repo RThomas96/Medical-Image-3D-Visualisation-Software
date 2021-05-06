@@ -1,11 +1,9 @@
 #version 150 core
 
-#extension GL_ARB_separate_shader_objects : enable
-
 /****************************************/
 /**************** Inputs ****************/
 /****************************************/
-layout(location=0) in vec4 vPos;	// Vertex position, in world space
+in vec4 vPos;	// Vertex position, in world space
 
 /****************************************/
 /*************** Outputs ****************/

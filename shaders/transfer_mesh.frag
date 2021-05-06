@@ -1,5 +1,5 @@
 #version 150
-#extension GL_ARB_separate_shader_objects : enable
+#extension GL_ARB_explicit_attrib_location : require
 
 // Signals we're in the main shader, for any shaders inserted into this one.
 #define MAIN_SHADER_UNIT
@@ -17,9 +17,6 @@ in vec4 P2;
 in vec3 text3DCoordP2;
 in vec4 P3;
 in vec3 text3DCoordP3;
-
-in vec3 barycentricCoords;
-in vec3 largestDelta;
 
 in float instanceId;
 in float visibility;

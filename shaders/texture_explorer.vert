@@ -1,6 +1,6 @@
 #version 150 core
 
-#extension GL_ARB_separate_shader_objects : enable
+#extension GL_ARB_explicit_attrib_location : require
 
 /****************************************/
 /**************** Inputs ****************/
@@ -12,10 +12,10 @@ layout(location = 2) in vec3 vertexTexCoord;	// Actually position within the fin
 /****************************************/
 /*************** Outputs ****************/
 /****************************************/
-layout(location = 0) out vec4 vPos;		// The vertex's positions
-layout(location = 1) out vec3 vOriginalCoords;	// Original coords in plane-space
-layout(location = 2) out vec3 vTexCoord;	// The vertex's texture coordinates
-layout(location = 3) out vec2 planeMultiplier;	// The multiplier used to 'stretch' the plane
+out vec4 vPos;		// The vertex's positions
+out vec3 vOriginalCoords;	// Original coords in plane-space
+out vec3 vTexCoords;	// The vertex's texture coordinates
+out vec2 planeMultiplier;	// The multiplier used to 'stretch' the plane
 
 /****************************************/
 /*************** Uniforms ***************/
@@ -95,7 +95,7 @@ void main(void) {
 
 	vPos = vertexPosition;
 	vOriginalCoords = vertexTexCoord;
-	vTexCoord = vPos_TS.xyz;
+	vTexCoords = vPos_TS.xyz;
 	planeMultiplier = multiplier.xy;
 }
 
