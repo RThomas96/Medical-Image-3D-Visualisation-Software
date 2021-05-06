@@ -20,3 +20,6 @@
 	path = third_party/nifticlib
 	url = git@github.com:NIFTI-Imaging/nifti_clib.git
 	ignore = untracked
+[submodule "third_party/zlib"]
+	path = third_party/zlib
+	url = git@github.com:madler/zlib.git
