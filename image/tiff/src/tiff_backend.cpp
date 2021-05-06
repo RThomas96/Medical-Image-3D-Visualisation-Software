@@ -288,7 +288,7 @@ namespace Image {
 	}
 
 	/// @b Read a sub-region of the image, implemented in the derived classes.  8-bit unsigned version.
-	bool TIFFBackend::internal_readSubRegion(::Image::tag<std::uint8_t> tag,
+	bool TIFFBackend::internal_readSubRegion(tag<std::uint8_t> tag,
 		svec3 origin, svec3 size, std::vector<std::uint8_t>& data)
 	{
 		PRINT_FN_ENTRY;
@@ -297,7 +297,7 @@ namespace Image {
 	}
 
 	/// @b Read a sub-region of the image, implemented in the derived classes. 16-bit unsigned version.
-	bool TIFFBackend::internal_readSubRegion(::Image::tag<std::uint16_t> tag,
+	bool TIFFBackend::internal_readSubRegion(tag<std::uint16_t> tag,
 		svec3 origin, svec3 size, std::vector<std::uint16_t>& data)
 	{
 		PRINT_FN_ENTRY;
@@ -306,7 +306,7 @@ namespace Image {
 	}
 
 	/// @b Read a sub-region of the image, implemented in the derived classes. 32-bit unsigned version.
-	bool TIFFBackend::internal_readSubRegion(::Image::tag<std::uint32_t> tag,
+	bool TIFFBackend::internal_readSubRegion(tag<std::uint32_t> tag,
 		svec3 origin, svec3 size, std::vector<std::uint32_t>& data)
 	{
 		PRINT_FN_ENTRY;
@@ -315,7 +315,7 @@ namespace Image {
 	}
 
 	/// @b Read a sub-region of the image, implemented in the derived classes. 64-bit unsigned version.
-	bool TIFFBackend::internal_readSubRegion(::Image::tag<std::uint64_t> tag,
+	bool TIFFBackend::internal_readSubRegion(tag<std::uint64_t> tag,
 		svec3 origin, svec3 size, std::vector<std::uint64_t>& data)
 	{
 		PRINT_FN_ENTRY;
@@ -324,7 +324,7 @@ namespace Image {
 	}
 
 	/// @b Read a sub-region of the image, implemented in the derived classes.  8-bit   signed version.
-	bool TIFFBackend::internal_readSubRegion(::Image::tag<std::int8_t> tag,
+	bool TIFFBackend::internal_readSubRegion(tag<std::int8_t> tag,
 		svec3 origin, svec3 size, std::vector<std::int8_t>& data)
 	{
 		PRINT_FN_ENTRY;
@@ -333,7 +333,7 @@ namespace Image {
 	}
 
 	/// @b Read a sub-region of the image, implemented in the derived classes. 16-bit   signed version.
-	bool TIFFBackend::internal_readSubRegion(::Image::tag<std::int16_t> tag,
+	bool TIFFBackend::internal_readSubRegion(tag<std::int16_t> tag,
 		svec3 origin, svec3 size, std::vector<std::int16_t>& data)
 	{
 		PRINT_FN_ENTRY;
@@ -342,7 +342,7 @@ namespace Image {
 	}
 
 	/// @b Read a sub-region of the image, implemented in the derived classes. 32-bit   signed version.
-	bool TIFFBackend::internal_readSubRegion(::Image::tag<std::int32_t> tag,
+	bool TIFFBackend::internal_readSubRegion(tag<std::int32_t> tag,
 		svec3 origin, svec3 size, std::vector<std::int32_t>& data)
 	{
 		PRINT_FN_ENTRY;
@@ -351,7 +351,7 @@ namespace Image {
 	}
 
 	/// @b Read a sub-region of the image, implemented in the derived classes. 64-bit   signed version.
-	bool TIFFBackend::internal_readSubRegion(::Image::tag<std::int64_t> tag,
+	bool TIFFBackend::internal_readSubRegion(tag<std::int64_t> tag,
 		svec3 origin, svec3 size, std::vector<std::int64_t>& data)
 	{
 		PRINT_FN_ENTRY;
@@ -360,7 +360,7 @@ namespace Image {
 	}
 
 	/// @b Read a sub-region of the image, implemented in the derived classes, single precision floating point.
-	bool TIFFBackend::internal_readSubRegion(::Image::tag<float> tag,
+	bool TIFFBackend::internal_readSubRegion(tag<float> tag,
 		svec3 origin, svec3 size, std::vector<float>& data)
 	{
 		PRINT_FN_ENTRY;
@@ -369,7 +369,7 @@ namespace Image {
 	}
 
 	/// @b Read a sub-region of the image, implemented in the derived classes, double precision floating point.
-	bool TIFFBackend::internal_readSubRegion(::Image::tag<double> tag,
+	bool TIFFBackend::internal_readSubRegion(tag<double> tag,
 		svec3 origin, svec3 size, std::vector<double>& data)
 	{
 		PRINT_FN_ENTRY;
@@ -377,70 +377,70 @@ namespace Image {
 		return false;
 	}
 
-	bool TIFFBackend::internal_getRangeValues(::Image::tag<std::int8_t> tag, std::size_t channel,
+	bool TIFFBackend::internal_getRangeValues(tag<std::int8_t> tag, std::size_t channel,
 											  glm::vec<2, std::int8_t, glm::defaultp> &_values)
 	{
 		if (this->pImpl) { return this->pImpl->tiff_getRangeSubValues(tag, channel, _values); }
 		return false;
 	}
 
-	bool TIFFBackend::internal_getRangeValues(::Image::tag<std::int16_t> tag, std::size_t channel,
+	bool TIFFBackend::internal_getRangeValues(tag<std::int16_t> tag, std::size_t channel,
 											  glm::vec<2, std::int16_t, glm::defaultp> &_values)
 	{
 		if (this->pImpl) { return this->pImpl->tiff_getRangeSubValues(tag, channel, _values); }
 		return false;
 	}
 
-	bool TIFFBackend::internal_getRangeValues(::Image::tag<std::int32_t> tag, std::size_t channel,
+	bool TIFFBackend::internal_getRangeValues(tag<std::int32_t> tag, std::size_t channel,
 											  glm::vec<2, std::int32_t, glm::defaultp> &_values)
 	{
 		if (this->pImpl) { return this->pImpl->tiff_getRangeSubValues(tag, channel, _values); }
 		return false;
 	}
 
-	bool TIFFBackend::internal_getRangeValues(::Image::tag<std::int64_t> tag, std::size_t channel,
+	bool TIFFBackend::internal_getRangeValues(tag<std::int64_t> tag, std::size_t channel,
 											  glm::vec<2, std::int64_t, glm::defaultp> &_values)
 	{
 		if (this->pImpl) { return this->pImpl->tiff_getRangeSubValues(tag, channel, _values); }
 		return false;
 	}
 
-	bool TIFFBackend::internal_getRangeValues(::Image::tag<std::uint8_t> tag, std::size_t channel,
+	bool TIFFBackend::internal_getRangeValues(tag<std::uint8_t> tag, std::size_t channel,
 											  glm::vec<2, std::uint8_t, glm::defaultp> &_values)
 	{
 		if (this->pImpl) { return this->pImpl->tiff_getRangeSubValues(tag, channel, _values); }
 		return false;
 	}
 
-	bool TIFFBackend::internal_getRangeValues(::Image::tag<std::uint16_t> tag, std::size_t channel,
+	bool TIFFBackend::internal_getRangeValues(tag<std::uint16_t> tag, std::size_t channel,
 											  glm::vec<2, std::uint16_t, glm::defaultp> &_values)
 	{
 		if (this->pImpl) { return this->pImpl->tiff_getRangeSubValues(tag, channel, _values); }
 		return false;
 	}
 
-	bool TIFFBackend::internal_getRangeValues(::Image::tag<std::uint32_t> tag, std::size_t channel,
+	bool TIFFBackend::internal_getRangeValues(tag<std::uint32_t> tag, std::size_t channel,
 											  glm::vec<2, std::uint32_t, glm::defaultp> &_values)
 	{
 		if (this->pImpl) { return this->pImpl->tiff_getRangeSubValues(tag, channel, _values); }
 		return false;
 	}
 
-	bool TIFFBackend::internal_getRangeValues(::Image::tag<std::uint64_t> tag, std::size_t channel,
+	bool TIFFBackend::internal_getRangeValues(tag<std::uint64_t> tag, std::size_t channel,
 											  glm::vec<2, std::uint64_t, glm::defaultp> &_values)
 	{
 		if (this->pImpl) { return this->pImpl->tiff_getRangeSubValues(tag, channel, _values); }
 		return false;
 	}
 
-	bool TIFFBackend::internal_getRangeValues(::Image::tag<float> tag, std::size_t channel,
+	bool TIFFBackend::internal_getRangeValues(tag<float> tag, std::size_t channel,
 											  glm::vec<2, float, glm::defaultp> &_values)
 	{
 		if (this->pImpl) { return this->pImpl->tiff_getRangeSubValues(tag, channel, _values); }
 		return false;
 	}
 
-	bool TIFFBackend::internal_getRangeValues(::Image::tag<double> tag, std::size_t channel,
+	bool TIFFBackend::internal_getRangeValues(tag<double> tag, std::size_t channel,
 											  glm::vec<2, double, glm::defaultp> &_values)
 	{
 		if (this->pImpl) { return this->pImpl->tiff_getRangeSubValues(tag, channel, _values); }

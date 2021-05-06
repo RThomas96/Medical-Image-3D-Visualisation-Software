@@ -92,6 +92,25 @@ namespace Tiff {
 				throw std::runtime_error("We currently do not support planar configurations other than 1.");
 			}
 
+			uint16_t photometric_interpretation = 0; // 0 is MinIsWhite
+			result = TIFFGetField(file, TIFFTAG_PHOTOMETRIC, &photometric_interpretation);
+			if (result != 1) { throw std::runtime_error("Cannot get PhotometricInterpretation. Image is malformed."); }
+			if (photometric_interpretation == PHOTOMETRIC_PALETTE) {
+				throw std::runtime_error("We currently do not support TIFF files with a color palette.");
+			}
+			if (photometric_interpretation == PHOTOMETRIC_MASK) {
+				throw std::runtime_error("We currently do not support TIFF files which represent a holdout mask.");
+			}
+			if (photometric_interpretation == PHOTOMETRIC_SEPARATED) {
+				throw std::runtime_error("We currently do not support TIFF files with separated components (CMYK).");
+			}
+			if (photometric_interpretation == PHOTOMETRIC_LOGL) {
+				throw std::runtime_error("We currently do not support images encoded with Pixar's LogL encoding.");
+			}
+			if (photometric_interpretation == PHOTOMETRIC_LOGLUV) {
+				throw std::runtime_error("We currently do not support images encoded with Pixar's LogLuv encoding.");
+			}
+
 			// Get the number of samples per-pixel :
 			result = TIFFGetField(file, TIFFTAG_SAMPLESPERPIXEL, &this->samplesPerPixel);
 			if (result != 1) { throw std::runtime_error("Cannot read SamplesPerPixel."); }
