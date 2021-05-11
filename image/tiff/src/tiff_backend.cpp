@@ -73,6 +73,11 @@ namespace Image {
 		return "tiff_backend_implementation";
 	}
 
+	void TIFFBackend::setImageName(std::string &_user_defined_name_) {
+		UNUSED_PARAMETER(_user_defined_name_);
+		return;
+	}
+
 	BoundingBox_General<float> TIFFBackend::getBoundingBox() const {
 		return Image::bbox_t(glm::vec3(.0f, .0f, .0f), glm::convert_to<float>(this->getResolution()));
 	}

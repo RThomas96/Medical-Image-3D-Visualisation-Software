@@ -363,6 +363,7 @@ namespace Tiff {
 	template <typename data_t>
 	bool TIFFReader<img_t>::template_tiff_get_sub_range_values(std::size_t channel, glm::vec<2, data_t, glm::defaultp>& _values) {
 		if (this->dataRange.size() >= channel ) { return false; }
+		#warning The conversion to target_t is performed here, without clamping/transform/rounding
 		_values = glm::convert_to<data_t>(this->dataRange[channel]);
 		return true;
 	}

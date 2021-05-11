@@ -138,29 +138,34 @@ Scene::~Scene(void) {
 void Scene::initGl(QOpenGLContext* _context) {
 	// Check if the scene has been initialized, share contexts if it has been :
 	if (this->isInitialized == true) {
-		if (this->context != nullptr && _context != 0 && _context != nullptr) {
+		if (this->context != nullptr && (_context != 0 && _context != nullptr)) {
 			_context->setShareContext(this->context);
 			if (_context->create() == false) {
 				// throw std::runtime_error("Couldn't re-create context with shared context added\n");
 				std::cerr << "Couldn't re-create context with shared context added\n";
+			} else {
+				std::cerr << "init() : Switching to context " << _context << '\n';
 			}
 		}
 		return;
-	}
-	// If the scene had not yet been initialized, it is now :
-	this->isInitialized = true;
+	} else {
+		// If the scene had not yet been initialized, it is now :
+		this->isInitialized = true;
 
-	// Set the context for later viewers that want to connect to the scene :
-	if (_context == 0) { throw std::runtime_error("Warning : this->context() returned 0 or nullptr !") ; }
-	if (_context == nullptr) { std::cerr << "Warning : Initializing a scene without a valid OpenGL context !" << '\n' ; }
-	this->context = _context;
+		// Set the context for later viewers that want to connect to the scene :
+		if (_context == 0) { throw std::runtime_error("Warning : this->context() returned 0 or nullptr !") ; }
+		if (_context == nullptr) { std::cerr << "Warning : Initializing a scene without a valid OpenGL context !" << '\n' ; }
+		this->context = _context;
+
+		// Get OpenGL functions from the currently bound context :
+		if (this->initializeOpenGLFunctions() == false) {
+			throw std::runtime_error("Could not initialize OpenGL functions.");
+		}
+	}
 
 	auto maj = this->context->format().majorVersion();
 	auto min = this->context->format().minorVersion();
 	std::cerr << "OpenGL version " << maj << '.' << min << '\n';
-
-	// Get OpenGL functions from the currently bound context :
-	this->initializeOpenGLFunctions();
 
 	std::cerr << "OpenGL vendor string : " << glGetString(GL_VENDOR) << '\n';
 	std::cerr << "OpenGL renderer string : " << glGetString(GL_RENDERER) << '\n';

@@ -6,7 +6,7 @@ namespace Image {
 		this->parentGrid = nullptr;
 		this->voxelOffset = svec3(0,0,0);
 		this->imageSize = svec3(0,0,0);
-		this->gridName = "<unknown grid>";
+		//this->gridName = "<unknown grid>";
 	}
 
 	Grid::Grid(Grid::Ptr parent, svec3 size) {
@@ -39,7 +39,7 @@ namespace Image {
 	void Grid::updateInfoFromGrid() {
 		if (this->pImpl) {
 			this->imageSize = this->pImpl->getResolution();
-			this->gridName = this->pImpl->getImageName();
+			//this->gridName = this->pImpl->getImageName();
 		}
 	}
 
