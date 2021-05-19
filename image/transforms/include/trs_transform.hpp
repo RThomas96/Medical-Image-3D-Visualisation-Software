@@ -5,6 +5,8 @@
 
 class TRSTransform : public ITransform {
 	public:
+		typedef std::shared_ptr<TRSTransform> Ptr;
+	public:
 		TRSTransform(void);
 
 		/// @b Default dtor for the TRS transforms.

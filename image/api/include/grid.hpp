@@ -3,6 +3,7 @@
 
 #include "image_api_common.hpp"
 #include "backend.hpp"
+#include "../../transforms/include/transform_stack.hpp"
 
 #include <memory>
 #include <string>
@@ -98,6 +99,21 @@ namespace Image {
 
 			//////////////////////////////////////////////////////
 			//													//
+			//           GETTERS FOR GRID TRANSFORM(S)	        //
+			//													//
+			//////////////////////////////////////////////////////
+
+			/// @b Returns the current transform stack, with all used transforms.
+			TransformStack::Ptr getTransformStack() const;
+
+			/// @b Returns the transform stack's precomputed matrix
+			MatrixTransform::Ptr getPrecomputedMatrix() const;
+
+			/// @b Add a transform to the transform stack.
+			void addTransform(ITransform::Ptr _transform_to_add);
+
+			//////////////////////////////////////////////////////
+			//													//
 			//			  READ GRID DATA INTO A BUFFER			//
 			//													//
 			//////////////////////////////////////////////////////
@@ -137,6 +153,8 @@ namespace Image {
 			svec3 imageSize;
 			/// @b If the grid is a sub-region of a bigger grid, this will be its starting point in the parent.
 			svec3 voxelOffset;
+			/// @b Transform stack for the grid
+			TransformStack::Ptr grid_transforms;
 	};
 
 	template <typename data_t>

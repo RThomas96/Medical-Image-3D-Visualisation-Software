@@ -137,4 +137,9 @@ class GridLoaderWidget : public QWidget {
 		QProgressBar* progress_load;
 };
 
+/// @brief Computes a transformation matrix from an origin and an angle, for our use case.
+/// @details This computes a transformation matrix to fit our purpose, might not be adapted
+/// to any use case !
+glm::mat4 computeTransfoShear_newAPI(double angleDeg, const Image::Grid::Ptr&, glm::vec3 vxdims);
+
 #endif // QT_INCLUDE_LOADER_WIDGET_HPP_

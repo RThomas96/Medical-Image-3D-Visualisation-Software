@@ -1729,14 +1729,15 @@ void Scene::prepareUniforms_3DSolid(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lig
 
 void Scene::newAPI_prepareUniforms_3DSolid(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, const NewAPI_GridGLView::Ptr& gridView) {
 	// Get the world to grid transform :
-	glm::mat4 transfoMat = baseMatrix ;
-	#warning For the moment, no transformation is applied to the grid.
+	MatrixTransform::Ptr grid_transform_pointer = std::dynamic_pointer_cast<MatrixTransform>(gridView->grid->getPrecomputedMatrix());
+	glm::mat4 transfoMat = baseMatrix * grid_transform_pointer->matrix();
+	#warning For the moment, no transformation is applied to grids.
 
 	auto getUniform = [&](const char* name) -> GLint {
 		GLint g = glGetUniformLocation(this->programHandle_projectedTex, name);
 		if (this->showVAOstate) {
 			if (g >= 0) {
-			std::cerr << "[LOG]\tLocation [" << +g << "] for uniform " << name << '\n';
+				std::cerr << "[LOG]\tLocation [" << +g << "] for uniform " << name << '\n';
 			} else {
 				std::cerr << "[LOG]\tCannot find uniform " << name << "\n";
 			}
@@ -2027,17 +2028,14 @@ void Scene::newAPI_prepareUniforms_3DPlane(GLfloat *mvMat, GLfloat *pMat, planes
 	glUniform1ui(location_rgbMode, this->rgbMode);
 
 	// Generate the data we need :
+	MatrixTransform::Ptr grid_transform_pointer = std::dynamic_pointer_cast<MatrixTransform>(grid->grid->getPrecomputedMatrix());
 	glm::mat4 transform = glm::mat4(1.f);
-	glm::mat4 gridTransfo = glm::mat4(1.); //grid->grid->getTransform_GridToWorld();
+	glm::mat4 gridTransfo = grid_transform_pointer->matrix(); //grid->grid->getTransform_GridToWorld();
 	#warning For the moment, no transformation is applied to grids.
 	DiscreteGrid::bbox_t bbws = grid->grid->getBoundingBox();
 	glm::vec3 dims = glm::convert_to<glm::vec3::value_type>(grid->grid->getResolution()) * grid->grid->getVoxelDimensions();
 	glm::vec3 size = bbws.getDiagonal();
 	GLint plIdx = (_plane == planes::x) ? 1 : (_plane == planes::y) ? 2 : 3;
-
-	// gridTransfo = glm::mat4(1.);
-	gridTransfo = glm::mat4(1.f); //grid->grid->getTransform_GridToWorld();
-	#warning For the moment, no transformation is applied to grids.
 
 	DiscreteGrid::bbox_t::vec position = this->sceneBB.getMin();
 	DiscreteGrid::bbox_t::vec diagonal = this->sceneBB.getDiagonal();
@@ -2205,8 +2203,9 @@ void Scene::newAPI_prepareUniforms_PlaneViewer(planes _plane, planeHeading _head
 
 	// Plane heading as a integer value (valid for shaders) :
 	uint plane_heading = planeHeadingToIndex(_heading);
+	MatrixTransform::Ptr grid_transform_pointer = std::dynamic_pointer_cast<MatrixTransform>(_grid->grid->getPrecomputedMatrix());
 	// Grid transform :
-	glm::mat4 gridTransform = glm::mat4(1.); //_grid->grid->getTransform_WorldToGrid();
+	glm::mat4 gridTransform = grid_transform_pointer->matrix(); //_grid->grid->getTransform_WorldToGrid();
 	#warning For the moment, no transformation is applied to grids.
 	// Grid dimensions :
 	glm::vec3 gridDimensions = glm::convert_to<glm::vec3::value_type>(_grid->grid->getBoundingBox().getDiagonal());
@@ -2631,7 +2630,8 @@ void Scene::newAPI_prepareUniforms_Volumetric(GLfloat *mvMat, GLfloat *pMat, glm
 
 	//const glm::mat4& gridTransfo = _grid->grid->getTransform_GridToWorld();
 	#warning For the moment, no transformation is applied to grids.
-	const glm::mat4 gridTransfo = glm::mat4(1.f);
+	MatrixTransform::Ptr grid_transform_pointer = std::dynamic_pointer_cast<MatrixTransform>(_grid->grid->getPrecomputedMatrix());
+	const glm::mat4 gridTransfo = grid_transform_pointer->matrix();
 	glUniformMatrix4fv(location_mMat, 1, GL_FALSE, glm::value_ptr(gridTransfo));
 	glUniformMatrix4fv(location_vMat, 1, GL_FALSE, mvMat);
 	glUniformMatrix4fv(location_pMat, 1, GL_FALSE, pMat);
@@ -4217,7 +4217,8 @@ void Scene::newAPI_tex3D_generateMESH(NewAPI_GridGLView::Ptr& grid, VolMeshData&
 	glm::vec4 pos = glm::vec4();
 	glm::vec3 tex = glm::vec3();
 	// Transformation to apply to the mesh :
-	glm::mat4 transfo = glm::mat4(1.);
+	MatrixTransform::Ptr grid_transform_pointer = std::dynamic_pointer_cast<MatrixTransform>(grid->grid->getPrecomputedMatrix());
+	glm::mat4 transfo = grid_transform_pointer->matrix();
 	#warning For the moment, no transformation is applied to grids.
 
 	// Create vertices along with their texture coordinates. We

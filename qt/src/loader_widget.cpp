@@ -1,6 +1,10 @@
 #include "../include/loader_widget.hpp"
 
 #include "../include/user_settings_widget.hpp"
+#include "../../../image/transforms/include/transform_stack.hpp"
+#include "../../../image/transforms/include/transform_interface.hpp"
+#include "../../../image/transforms/include/trs_transform.hpp"
+#include "../../../image/transforms/include/affine_transform.hpp"
 
 #include <QMessageBox>
 #include <QDialog>
@@ -785,6 +789,7 @@ void GridLoaderWidget::loadGridTIF2channel() {
 }
 
 void GridLoaderWidget::loadNewGridAPI() {
+	std::cerr << __PRETTY_FUNCTION__ << '\n' ;
 	this->useLegacyGrids = false;
 	this->readerR.reset(); this->readerR = nullptr;
 	this->readerG.reset(); this->readerG = nullptr;
@@ -825,6 +830,17 @@ void GridLoaderWidget::loadNewGridAPI() {
 	std::cerr << "Grid created, updating info from disk ...\n";
 	auto task = this->_testing_grid->updateInfoFromDisk();
 
+	// may be already ended with errors, show them :
+	std::string before_error_message;
+	std::string full_msg;
+	if (task->popMessage(before_error_message)) {
+		do {
+			full_msg += before_error_message + '\n';
+		} while (task->popMessage(before_error_message));
+		msgBox->critical(this, "Error while parsing files !", QString(before_error_message.c_str()));
+		return;
+	}
+
 	// Set and show progress bar :
 	this->progress_load->setRange(0, task->getMaxSteps());
 	this->progress_load->setValue(0);
@@ -840,15 +856,22 @@ void GridLoaderWidget::loadNewGridAPI() {
 		this->progress_load->setValue(adv);
 		// Needed to update the main window ...
 		QCoreApplication::processEvents();
+		std::cerr << "Progress has " << steps << " tasks\n";
 		this->update();
 	} while (not task->isComplete());
 
 	std::cerr << "\n[TASK] Done parsing the grid ... \n";
 	std::string errmsg = "";
+	std::string all_errors;
 	bool isComplete = true;
 	while (task->popMessage(errmsg)) {
 		std::cerr << "[Task error] Message : " << errmsg << '\n';
 		isComplete = false;
+		all_errors += errmsg + '\n';
+	}
+	if (not all_errors.empty()) {
+		msgBox->critical(this, "Errors while parsing the files", QString(all_errors.c_str()));
+		return;
 	}
 	if (isComplete) {
 		this->_testing_grid->updateInfoFromGrid();
@@ -859,11 +882,14 @@ void GridLoaderWidget::loadNewGridAPI() {
 		std::cerr << "Voxel dimensions : " << vx.x << ", " << vx.y << ", " << vx.z << "\n";
 		std::cerr << "Data internal representation : " << this->_testing_grid->getInternalDataType() << '\n';
 	}
+	std::cerr << "Finished with the task ?...\n";
 
 	this->computeGridInfoLabel();
 
 	this->progress_load->reset();
 	this->progress_load->setVisible(false);
+
+	std::cerr << "Leaving " << __PRETTY_FUNCTION__ << '\n';
 }
 
 void GridLoaderWidget::loadGridOME1channel() {
@@ -1215,9 +1241,44 @@ void GridLoaderWidget::loadGrid_newAPI() {
 	#warning TODO : Enable user voxel sizes here (via a transformation matrix ?)
 	#warning TODO : Enable computation of approximate voxel size here
 
+	glm::vec3 vxdims = glm::vec3(
+		static_cast<float>(this->dsb_transformationDX->value()),
+		static_cast<float>(this->dsb_transformationDY->value()),
+		static_cast<float>(this->dsb_transformationDZ->value())
+	);
+	svec3 dims = this->inputGridR->getResolution();
+	float a = this->dsb_transformationA->value();
+	auto transfo_matrix = computeTransfoShear_newAPI(a, this->_testing_grid, vxdims);
+
+	MatrixTransform::Ptr grid_transform = std::make_shared<MatrixTransform>(transfo_matrix);
+	this->_testing_grid->addTransform(grid_transform);
+
 	// Load the grid data, and make a copy here
 	//this->scene->newAPI_addGrid(this->_testing_grid);
 	this->viewer->newAPI_loadGrid(this->_testing_grid);
 
 	this->close();
+}
+
+glm::mat4 computeTransfoShear_newAPI(double angleDeg, const Image::Grid::Ptr& grid, glm::vec3 vxdims) {
+	glm::mat4 transfoMat = glm::mat4(1.0);
+
+	double angleRad = (angleDeg * M_PI) / 180.;
+
+	transfoMat[0][0] = /* vxdims.x */ std::cos(angleRad);
+	transfoMat[0][2] = /* vxdims.x */ std::sin(angleRad);
+	transfoMat[1][1] = /* vxdims.y */ 1.f;
+	transfoMat[2][2] = /* vxdims.z */ std::cos(angleRad);
+
+	/*
+	if (angleDeg < 0.) {
+		auto dims = grid->getBoundingBox().getDiagonal();
+		// compute translation along Z :
+		float w = static_cast<float>(dims.x); //vxdims.x;
+		float displacement = w * std::abs(std::sin(angleRad));
+		transfoMat = glm::translate(transfoMat, glm::vec3(.0, .0, displacement));
+	}
+	*/
+
+	return transfoMat;
 }

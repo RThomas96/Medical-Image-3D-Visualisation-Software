@@ -52,7 +52,7 @@ namespace Image {
 		// Launch the parsing of files in a separate thread :
 		std::thread parseThread = std::thread(&TIFFBackend::parseImageInfo_thread, this, std::ref(parseTask));
 		// Wait for the task to be initialized, in 5ms increments :
-		while (parseTask->getMaxSteps() == 0) { std::this_thread::sleep_for(std::chrono::milliseconds(5)); }
+		while (parseTask->getMaxSteps() == 0 && not parseTask->isComplete()) { std::this_thread::sleep_for(std::chrono::milliseconds(5)); }
 		// Detach the thread, allowing it to continue executing outside of this scope :
 		parseThread.detach();
 
@@ -161,7 +161,6 @@ namespace Image {
 						} else {
 							// add the frame :
 							imgframes.push_back(fr);
-							task->advance();
 						}
 					} catch(std::runtime_error _e) {
 						// IF the frame's creation triggered a runtime error, stop and return :
@@ -171,6 +170,7 @@ namespace Image {
 						return;
 					}
 				}
+				task->advance();
 
 				// Add newly created image to the implementation :
 				this->pImpl->addImage(imgframes);
@@ -178,6 +178,7 @@ namespace Image {
 		}
 
 		task->end();
+		// exit the thread :
 		return;
 	}
 

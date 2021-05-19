@@ -8,6 +8,8 @@
 /// @b An overload of ITransform, representing an immutable matrix transform.
 /// @details An inverse matrix is precomputed for quicker image-to-world space conversions.
 class MatrixTransform : public ITransform {
+	public:
+		typedef std::shared_ptr<MatrixTransform> Ptr;
 	protected:
 		/// @b Protected ctor, giving this object an identity matrix as both forward and inverse transforms.
 		explicit MatrixTransform(void);
@@ -43,6 +45,7 @@ class MatrixTransform : public ITransform {
 /// @note Has all the same features as MatrixTransform, but represents an identity transformation.
 class DefaultTransform : public MatrixTransform {
 	public:
+		typedef std::shared_ptr<DefaultTransform> Ptr;
 		/// @b Default and only ctor, assigning an identity matrix to this transform.
 		DefaultTransform(void) : MatrixTransform() {}
 

@@ -31,6 +31,10 @@ class TransformStack {
 		/// @b Transform a point from image space, to world space using the precomputed transforms.
 		glm::vec4 to_world(glm::vec4 image_space_location) const;
 
+		#warning This will not be always here, removed when more transform types are added
+		/// @b Get the precomputed matrix
+		MatrixTransform::Ptr getPrecomputedMatrix();
+
 	protected:
 		/// @b Update the precomputed matrix transform in this class.
 		void update_precomputed_matrix();

@@ -28,6 +28,7 @@ ADD_LIBRARY(grid_api SHARED
 TARGET_LINK_LIBRARIES(grid_api
 	PUBLIC grid_tiff_backend
 	PUBLIC imagegrid
+	PUBLIC transform_types
 )
 TARGET_INCLUDE_DIRECTORIES(grid_api
 	PRIVATE ${LOCAL_GLM_HEADER_DIR}

@@ -2,7 +2,7 @@
 
 namespace Image {
 
-	Grid::Grid(ImageBackendImpl::Ptr _ptr) : pImpl(std::move(_ptr)) {
+	Grid::Grid(ImageBackendImpl::Ptr _ptr) : pImpl(std::move(_ptr)), grid_transforms(std::make_shared<TransformStack>()) {
 		this->parentGrid = nullptr;
 		this->voxelOffset = svec3(0,0,0);
 		this->imageSize = svec3(0,0,0);
@@ -70,8 +70,24 @@ namespace Image {
 
 	Image::bbox_t Grid::getBoundingBox() const {
 		if (this->pImpl) {
-			return this->pImpl->getBoundingBox();
+			MatrixTransform::Ptr grid_transform_pointer = std::dynamic_pointer_cast<MatrixTransform>(this->getPrecomputedMatrix());
+			glm::mat4 transform = grid_transform_pointer->matrix();
+			return this->pImpl->getBoundingBox().transformTo(transform);
 		} else { return Image::bbox_t(); }
+	}
+
+	TransformStack::Ptr Grid::getTransformStack() const {
+		// return a _copy_ of the smart pointer to the stack :
+		return TransformStack::Ptr(this->grid_transforms);
+	}
+
+	MatrixTransform::Ptr Grid::getPrecomputedMatrix() const {
+		// return a _copy_ of the matrix transform pointer
+		return MatrixTransform::Ptr(this->grid_transforms->getPrecomputedMatrix());
+	}
+
+	void Grid::addTransform(ITransform::Ptr _transform_to_add) {
+		this->grid_transforms->pushTransform(_transform_to_add);
 	}
 
 	bool Grid::isRootGrid() const {

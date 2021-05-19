@@ -1,9 +1,12 @@
 #include "../include/transform_stack.hpp"
 
+#include <algorithm>
+#include <iostream>
+
 TransformStack::TransformStack(void) {
 	this->head_transform = std::make_shared<DefaultTransform>();
 	this->transform_stack_depth = 1;
-	this->precomputedTransform = this->head_transform;
+	this->precomputedTransform = std::dynamic_pointer_cast<DefaultTransform>(this->head_transform);
 }
 
 TransformStack& TransformStack::pushTransform(ITransform::Ptr _transform) {
@@ -13,6 +16,7 @@ TransformStack& TransformStack::pushTransform(ITransform::Ptr _transform) {
 	// increment stack depth, and
 	this->transform_stack_depth++;
 	this->update_precomputed_matrix();
+	return *this;
 }
 
 ITransform::Ptr TransformStack::popTransform() {
@@ -52,6 +56,10 @@ glm::vec4 TransformStack::to_world(glm::vec4 image_space_location) const {
 	return this->precomputedTransform->to_world(image_space_location);
 }
 
+MatrixTransform::Ptr TransformStack::getPrecomputedMatrix() {
+	return MatrixTransform::Ptr(std::dynamic_pointer_cast<MatrixTransform>(this->precomputedTransform));
+}
+
 void TransformStack::update_precomputed_matrix() {
 	// build a stack of the known matrices :
 	ITransform::Ptr iterator = this->head_transform;
@@ -86,7 +94,7 @@ void TransformStack::update_precomputed_matrix() {
 
 	glm::mat4 resultMatrix = glm::identity<glm::mat4>();
 
-	std::for_each(matrices.crend(), matrices.crbegin(), [&resultMatrix](const glm::mat4 curMatrix) {
+	std::for_each(matrices.crbegin(), matrices.crend(), [&resultMatrix](const glm::mat4 curMatrix) {
 		resultMatrix = resultMatrix * curMatrix;
 	});
 	this->precomputedTransform = std::make_shared<MatrixTransform>(resultMatrix);

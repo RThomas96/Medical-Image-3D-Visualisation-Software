@@ -39,7 +39,7 @@ class ITransform {
 		ITransform::Ptr nextTransform(void) const { return ITransform::Ptr(this->m_nextTransform); }
 
 		/// @b Sets the next transform to the given transform pointer.
-		virtual ITransform& setNextTransform(ITransform::Ptr _next) { this->m_nextTransform = _next; }
+		virtual ITransform& setNextTransform(ITransform::Ptr _next) { this->m_nextTransform = _next; return *this; }
 
 		/// @b Transform a world-space location to the image space.
 		virtual glm::vec4 to_image(glm::vec4 world_space_location) const = 0;
