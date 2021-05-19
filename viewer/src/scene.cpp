@@ -1607,6 +1607,56 @@ void Scene::drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane) {
 	glDisable(GL_BLEND);
 }
 
+void Scene::newAPI_drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane) {
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+
+	#warning drawPlanes() : Only draws the first grid for each plane !
+
+	// Plane X :
+	glUseProgram(this->programHandle_Plane3D);
+	glBindVertexArray(this->vaoHandle);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_PlaneElement);
+	if (not this->grids.empty()) {
+		this->newAPI_prepareUniforms_3DPlane(mvMat, pMat, planes::x, this->newGrids[0], showTexOnPlane);
+		this->setupVAOPointers();
+		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(6), GL_UNSIGNED_INT, static_cast<GLvoid*>(0));
+	}
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+	glUseProgram(0);
+
+	// Plane Y :
+	glUseProgram(this->programHandle_Plane3D);
+	glBindVertexArray(this->vaoHandle);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_PlaneElement);
+	if (not this->grids.empty()) {
+		this->newAPI_prepareUniforms_3DPlane(mvMat, pMat, planes::y, this->newGrids[0], showTexOnPlane);
+		this->setupVAOPointers();
+
+		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(6), GL_UNSIGNED_INT, (GLvoid*)(6*sizeof(GLuint)));
+	}
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+	glUseProgram(0);
+
+	// Plane Z :
+	glUseProgram(this->programHandle_Plane3D);
+	glBindVertexArray(this->vaoHandle);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_PlaneElement);
+	if (not this->grids.empty()) {
+		this->newAPI_prepareUniforms_3DPlane(mvMat, pMat, planes::z, this->newGrids[0], showTexOnPlane);
+		this->setupVAOPointers();
+
+		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(6), GL_UNSIGNED_INT, (GLvoid*)(12*sizeof(GLuint)));
+	}
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+	glUseProgram(0);
+
+	glDisable(GL_BLEND);
+}
+
 glm::vec3 Scene::computePlanePositions() {
 	DiscreteGrid::bbox_t::vec position = this->sceneBB.getMin();
 	DiscreteGrid::bbox_t::vec diagonal = this->sceneBB.getDiagonal();
@@ -2821,7 +2871,13 @@ void Scene::draw3DView(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, bool sho
 		}
 	}
 
-	this->drawPlanes(mvMat, pMat, this->drawMode == DrawMode::Solid);
+
+	if (not this->newGrids.empty()) {
+		std::cerr << "drawing planes !!!\n";
+		this->newAPI_drawPlanes(mvMat, pMat, this->drawMode == DrawMode::Solid);
+	} else if (not this->grids.empty()) {
+		this->drawPlanes(mvMat, pMat, this->drawMode == DrawMode::Solid);
+	}
 	this->drawBoundingBox(this->sceneBB, glm::vec4(.5, .5, .0, 1.), mvMat, pMat);
 	this->showVAOstate = false;
 }

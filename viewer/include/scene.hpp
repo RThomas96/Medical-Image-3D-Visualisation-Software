@@ -289,6 +289,8 @@ class Scene : public QOpenGLFunctions_3_2_Core {
 
 		/// @brief draw the planes, in the real space
 		void drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane = true);
+		/// @brief draw the planes, in the real space using the new api
+		void newAPI_drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane = true);
 		/// @b draws a grid, slightly more generic than drawVoxelGrid()
 		void drawGrid(GLfloat mvMat[], GLfloat pMat[], glm::mat4 baseMatrix, const GridGLView::Ptr& grid);
 		void newAPI_drawGrid(GLfloat mvMat[], GLfloat pMat[], glm::mat4 baseMatrix, const NewAPI_GridGLView::Ptr& grid);
