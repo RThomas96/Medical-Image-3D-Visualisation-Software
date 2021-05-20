@@ -9,6 +9,7 @@ ADD_LIBRARY(imagegrid STATIC
 	include/threaded_task.hpp
 
 	src/backend.cpp
+	src/threaded_task.cpp
 )
 TARGET_INCLUDE_DIRECTORIES(imagegrid
 	PRIVATE ${LOCAL_GLM_HEADER_DIR}
