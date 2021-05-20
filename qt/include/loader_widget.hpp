@@ -44,10 +44,16 @@ class GridLoaderWidget : public QWidget {
 		void resetGridInfoLabel();
 		/// @brief Computes the grid information based on the new data available
 		void computeGridInfoLabel();
+		/// @b Disables the widgets in this view
 		void disableWidgets();
+		/// @b Sets the 'enabled' state of all widgets to the user-given value (default = true)
+		void setWidgetsEnabled(bool _enabled = true);
 	protected:
 		/// @brief Updates the voxel dimensions as specified by the reader, without emitting signals.
 		void updateVoxelDimensions_silent();
+		void progressBar_init_undefined(QString format_message);
+		void progressBar_init_defined(int min, int max, int current_value, QString progress_format);
+		void progressBar_reset();
 	public slots:
 		void loadGridDIM1channel();
 		void loadGridTIF1channel();

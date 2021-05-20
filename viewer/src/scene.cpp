@@ -1481,7 +1481,7 @@ void Scene::deleteGridNow() {
 }
 
 void Scene::drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading, float zoomRatio, glm::vec2 offset) {
-	if (this->grids.size() == 0) { return; }
+	if (this->grids.empty() && this->newGrids.empty()) { return; }
 
 	glEnable(GL_DEPTH_TEST);
 	//glEnable(GL_BLEND);
@@ -1501,6 +1501,12 @@ void Scene::drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading
 	#warning drawPlaneView() : Only draws the first grid !
 	if (this->grids.size() > 0) {
 		this->prepareUniforms_PlaneViewer(_plane, _heading, fbDims, zoomRatio, offset, this->grids[0]);
+
+		this->setupVAOPointers();
+
+		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(6), GL_UNSIGNED_INT, (GLvoid*)(min*sizeof(GLuint)));
+	} else if (not this->newGrids.empty()) {
+		this->newAPI_prepareUniforms_PlaneViewer(_plane, _heading, fbDims, zoomRatio, offset, this->newGrids[0]);
 
 		this->setupVAOPointers();
 
@@ -1617,7 +1623,7 @@ void Scene::newAPI_drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPla
 	glUseProgram(this->programHandle_Plane3D);
 	glBindVertexArray(this->vaoHandle);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_PlaneElement);
-	if (not this->grids.empty()) {
+	if (not this->newGrids.empty()) {
 		this->newAPI_prepareUniforms_3DPlane(mvMat, pMat, planes::x, this->newGrids[0], showTexOnPlane);
 		this->setupVAOPointers();
 		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(6), GL_UNSIGNED_INT, static_cast<GLvoid*>(0));
@@ -1630,7 +1636,7 @@ void Scene::newAPI_drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPla
 	glUseProgram(this->programHandle_Plane3D);
 	glBindVertexArray(this->vaoHandle);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_PlaneElement);
-	if (not this->grids.empty()) {
+	if (not this->newGrids.empty()) {
 		this->newAPI_prepareUniforms_3DPlane(mvMat, pMat, planes::y, this->newGrids[0], showTexOnPlane);
 		this->setupVAOPointers();
 
@@ -1644,7 +1650,7 @@ void Scene::newAPI_drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPla
 	glUseProgram(this->programHandle_Plane3D);
 	glBindVertexArray(this->vaoHandle);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_PlaneElement);
-	if (not this->grids.empty()) {
+	if (not this->newGrids.empty()) {
 		this->newAPI_prepareUniforms_3DPlane(mvMat, pMat, planes::z, this->newGrids[0], showTexOnPlane);
 		this->setupVAOPointers();
 
@@ -2873,7 +2879,6 @@ void Scene::draw3DView(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, bool sho
 
 
 	if (not this->newGrids.empty()) {
-		std::cerr << "drawing planes !!!\n";
 		this->newAPI_drawPlanes(mvMat, pMat, this->drawMode == DrawMode::Solid);
 	} else if (not this->grids.empty()) {
 		this->drawPlanes(mvMat, pMat, this->drawMode == DrawMode::Solid);

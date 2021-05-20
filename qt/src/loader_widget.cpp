@@ -416,6 +416,49 @@ void GridLoaderWidget::disableWidgets() {
 	this->radioButton_max->setDisabled(true);
 }
 
+void GridLoaderWidget::setWidgetsEnabled(bool _enabled) {
+	this->button_loadDIM_1channel->setEnabled(_enabled);
+	this->button_loadDIM_2channel->setEnabled(_enabled);
+	this->button_loadTIF_1channel->setEnabled(_enabled);
+	this->button_loadTIF_2channel->setEnabled(_enabled);
+	this->button_loadOME_1channel->setEnabled(_enabled);
+	this->button_loadOME_2channel->setEnabled(_enabled);
+	this->button_loadGrids->setEnabled(_enabled);
+
+	this->dsb_transformationA->setEnabled(_enabled);
+	this->dsb_transformationDX->setEnabled(_enabled);
+	this->dsb_transformationDY->setEnabled(_enabled);
+	this->dsb_transformationDZ->setEnabled(_enabled);
+
+	this->frame_load1channel->setEnabled(_enabled);
+	this->frame_load2channel->setEnabled(_enabled);
+	this->frame_transfoDetails->setEnabled(_enabled);
+
+	this->groupBox_downsampling->setEnabled(_enabled);
+	this->groupBox_interpolator->setEnabled(_enabled);
+	this->groupbox_userLimits->setEnabled(_enabled);
+	this->groupbox_originalOffset->setEnabled(_enabled);
+
+	this->label_headerLoader->setEnabled(_enabled);
+	this->label_load1channel->setEnabled(_enabled);
+	this->label_load2channel->setEnabled(_enabled);
+	this->label_headerTransformation->setEnabled(_enabled);
+	this->label_transformationAngle->setEnabled(_enabled);
+	this->label_transformationDimensions->setEnabled(_enabled);
+	this->label_gridInfoR->setEnabled(_enabled);
+	this->label_gridInfoG->setEnabled(_enabled);
+
+	this->radioButton_original->setEnabled(_enabled);
+	this->radioButton_low->setEnabled(_enabled);
+	this->radioButton_lower->setEnabled(_enabled);
+	this->radioButton_lowest->setEnabled(_enabled);
+	this->radioButton_nn->setEnabled(_enabled);
+	this->radioButton_mean->setEnabled(_enabled);
+	this->radioButton_mp->setEnabled(_enabled);
+	this->radioButton_min->setEnabled(_enabled);
+	this->radioButton_max->setEnabled(_enabled);
+}
+
 void GridLoaderWidget::resetGridInfoLabel() {
 	this->label_gridInfoR->setText("Loading grid information ...");
 	this->label_gridInfoG->setText("");
@@ -478,6 +521,34 @@ void GridLoaderWidget::updateVoxelDimensions_silent() {
 	this->dsb_transformationDX->blockSignals(false);
 
 	return;
+}
+
+void GridLoaderWidget::progressBar_init_undefined(QString format_message) {
+	// set a new progress bar :
+	this->progress_load->setRange(0, 0);
+	this->progress_load->setValue(0);
+	this->progress_load->setFormat(format_message);
+	if (not this->progress_load->isVisible()) { this->progress_load->setVisible(true); }
+	// update and show the bar :
+	QCoreApplication::processEvents();
+	this->update();
+}
+
+void GridLoaderWidget::progressBar_init_defined(int min, int max, int current_value, QString format_string) {
+	this->progress_load->setRange(min, max);
+	this->progress_load->setValue(current_value);
+	this->progress_load->setFormat(format_string);
+	if (not this->progress_load->isVisible()) { this->progress_load->setVisible(true); }
+	// update and show the bar :
+	QCoreApplication::processEvents();
+	this->update();
+}
+
+void GridLoaderWidget::progressBar_reset() {
+	this->progress_load->reset();
+	if (this->progress_load->isVisible()) { this->progress_load->setVisible(false); }
+	QCoreApplication::processEvents();
+	this->update();
 }
 
 void GridLoaderWidget::loadGridDIM1channel() {
@@ -816,6 +887,12 @@ void GridLoaderWidget::loadNewGridAPI() {
 	// update path from last file picker :
 	this->basePath.setPath(QFileInfo(filenamesG[0]).path());
 
+	// disable widgets, in order to let the parsing function actually start !!!
+	this->setWidgetsEnabled(false);
+
+	// set a undefined progress bar to the screen, showing initialization of the
+	this->progressBar_init_undefined("Initializing image reader ...");
+
 	std::vector<std::string> fnR;	// filenames, red channel
 	for (int i = 0; i < filenamesR.size(); ++i) { fnR.push_back(filenamesR[i].toStdString()); }
 	std::vector<std::string> fnG;	// filenames, green channel
@@ -838,14 +915,12 @@ void GridLoaderWidget::loadNewGridAPI() {
 			full_msg += before_error_message + '\n';
 		} while (task->popMessage(before_error_message));
 		msgBox->critical(this, "Error while parsing files !", QString(before_error_message.c_str()));
+		this->setWidgetsEnabled();
 		return;
 	}
 
 	// Set and show progress bar :
-	this->progress_load->setRange(0, task->getMaxSteps());
-	this->progress_load->setValue(0);
-	this->progress_load->setFormat("Parsing image data ... (%p%)");
-	this->progress_load->setVisible(true);
+	this->progressBar_init_defined(0, task->getMaxSteps(), 0, "Parsing image data ... (%p%)");
 
 	// Parse the grid :
 	do {
@@ -856,7 +931,6 @@ void GridLoaderWidget::loadNewGridAPI() {
 		this->progress_load->setValue(adv);
 		// Needed to update the main window ...
 		QCoreApplication::processEvents();
-		std::cerr << "Progress has " << steps << " tasks\n";
 		this->update();
 	} while (not task->isComplete());
 
@@ -871,6 +945,7 @@ void GridLoaderWidget::loadNewGridAPI() {
 	}
 	if (not all_errors.empty()) {
 		msgBox->critical(this, "Errors while parsing the files", QString(all_errors.c_str()));
+		this->setWidgetsEnabled();
 		return;
 	}
 	if (isComplete) {
@@ -886,10 +961,8 @@ void GridLoaderWidget::loadNewGridAPI() {
 
 	this->computeGridInfoLabel();
 
-	this->progress_load->reset();
-	this->progress_load->setVisible(false);
-
-	std::cerr << "Leaving " << __PRETTY_FUNCTION__ << '\n';
+	this->progressBar_reset();
+	this->setWidgetsEnabled();
 }
 
 void GridLoaderWidget::loadGridOME1channel() {
@@ -1228,6 +1301,9 @@ void GridLoaderWidget::loadGrid_oldAPI() {
 }
 
 void GridLoaderWidget::loadGrid_newAPI() {
+	// prevent changing the values of the inputs
+	this->disableWidgets();
+
 	bool hasUserBounds = this->groupbox_userLimits->isChecked();
 	DiscreteGrid::data_t userMin = static_cast<DiscreteGrid::data_t>(this->spinbox_userLimitMin->value());
 	DiscreteGrid::data_t userMax = static_cast<DiscreteGrid::data_t>(this->spinbox_userLimitMax->value());
@@ -1256,6 +1332,7 @@ void GridLoaderWidget::loadGrid_newAPI() {
 	// Load the grid data, and make a copy here
 	//this->scene->newAPI_addGrid(this->_testing_grid);
 	this->viewer->newAPI_loadGrid(this->_testing_grid);
+	this->viewer->centerScene();
 
 	this->close();
 }
