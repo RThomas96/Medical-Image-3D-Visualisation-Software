@@ -47,6 +47,11 @@ namespace Tiff {
 			/// @warning This TIFF frame implementation only supports one sample per pixel, for now.
 			void loadTIFFInfo(std::string_view sourceFile) noexcept(false);
 
+			/// @b Returns true if the frame has a valid bits per sample count.
+			/// @details The number of bits per sample is defined as 'correct' or 'valid' if all the samples are
+			/// expressed using the same number of bits, even for the extra samples given they are present.
+			bool hasValidBitsPerSample(TIFF* frame_handle) const;
+
 		public:
 			/// @b The filename of the TIFF file this frame is located in.
 			const std::string sourceFile;
@@ -58,7 +63,6 @@ namespace Tiff {
 			uint32_t rowsPerStrip;
 			/// @b The number of strips per image.
 			uint64_t stripsPerImage;
-
 	};
 
 } // namespace TIFF

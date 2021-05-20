@@ -39,24 +39,25 @@ namespace Image {
 		return ImageBackendImpl::Ptr(new TIFFBackend(fns));
 	}
 
-	ThreadedTask::Ptr TIFFBackend::parseImageInfo(void) {
+	ThreadedTask::Ptr TIFFBackend::parseImageInfo(ThreadedTask::Ptr pre_existing_task) {
 		/* Parses the image in a separate thread. Detaches it from the main thread, in order to
 		 * let it free up its own resources. */
-
-		// Create a task object :
-		ThreadedTask::Ptr parseTask = std::make_shared<ThreadedTask>();
+		if (pre_existing_task == nullptr) { pre_existing_task = std::make_shared<ThreadedTask>(); }
 
 		// If no filenames are provided, just return and end the task :
-		if (this->filenames.empty()) { parseTask->end(); return parseTask; }
+		if (this->filenames.empty()) { pre_existing_task ->end(); return pre_existing_task ; }
 
 		// Launch the parsing of files in a separate thread :
-		std::thread parseThread = std::thread(&TIFFBackend::parseImageInfo_thread, this, std::ref(parseTask));
+		std::thread parseThread = std::thread(&TIFFBackend::parseImageInfo_thread, this, std::ref(pre_existing_task));
+
 		// Wait for the task to be initialized, in 5ms increments :
-		while (parseTask->getMaxSteps() == 0 && not parseTask->isComplete()) { std::this_thread::sleep_for(std::chrono::milliseconds(5)); }
+		while (pre_existing_task->getMaxSteps() == 0 && not pre_existing_task->isComplete()) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(5));
+		}
 		// Detach the thread, allowing it to continue executing outside of this scope :
 		parseThread.detach();
 
-		return parseTask;
+		return pre_existing_task ;
 	}
 
 	ImageDataType TIFFBackend::getInternalDataType() const {
@@ -92,10 +93,14 @@ namespace Image {
 
 	void TIFFBackend::parseImageInfo_thread(ThreadedTask::Ptr &task) {
 		// IF no filenames, return and end task :
-		if (this->filenames.empty()) { task->end(); return; }
+		if (this->filenames.empty()) {
+			task->pushMessage("Filenames were empty.");
+			task->end(false);
+			return;
+		}
 
 		if (this->checkFilenamesAreValid(task) == false) {
-			task->end();
+			task->end(false);
 			return;
 		}
 
@@ -104,9 +109,9 @@ namespace Image {
 		try {
 			reference_frame = std::make_shared<Tiff::Frame>(this->filenames[0][0], 0);
 		}  catch (std::runtime_error _e) {
-			task->pushMessage(std::string("Error : could not parse file (reference frame was not parsed).\n"
+			task->pushMessage(std::string("Could not parse files (reference frame was not properly parsed).\n"
 										  "Error message from TIFF backend : ")+_e.what());
-			task->end();
+			task->end(false);
 			return;
 		}
 
@@ -115,7 +120,7 @@ namespace Image {
 			this->createTiffBackend(reference_frame, this->filenames.size());
 		} catch (std::runtime_error _e) {
 			task->pushMessage(std::string("Error while creating TIFF reading backend.\nError message : ")+_e.what());
-			task->end();
+			task->end(false);
 			return;
 		}
 
@@ -250,7 +255,7 @@ namespace Image {
 		std::size_t ref_file_count = this->filenames[0].size();
 		for (std::size_t i = 0; i < this->filenames.size(); ++i) {
 			if (this->filenames[i].size() != ref_file_count) {
-				std::string err = "Error in component " + std::to_string(i) + " : expected " +
+				std::string err = "Component " + std::to_string(i) + " : expected " +
 									std::to_string(ref_file_count) + " files, but got " +
 									std::to_string(this->filenames[i].size()) + " instead.";
 				task->pushMessage(err);

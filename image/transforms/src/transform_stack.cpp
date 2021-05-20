@@ -57,7 +57,7 @@ glm::vec4 TransformStack::to_world(glm::vec4 image_space_location) const {
 }
 
 MatrixTransform::Ptr TransformStack::getPrecomputedMatrix() {
-	return MatrixTransform::Ptr(std::dynamic_pointer_cast<MatrixTransform>(this->precomputedTransform));
+	return MatrixTransform::Ptr(this->precomputedTransform);
 }
 
 void TransformStack::update_precomputed_matrix() {

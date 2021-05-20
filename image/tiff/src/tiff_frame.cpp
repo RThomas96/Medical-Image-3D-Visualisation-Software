@@ -113,6 +113,7 @@ namespace Tiff {
 
 			// Get the number of samples per-pixel :
 			result = TIFFGetField(file, TIFFTAG_SAMPLESPERPIXEL, &this->samplesPerPixel);
+			#warning to change, we support more than one sample now
 			if (result != 1) { throw std::runtime_error("Cannot read SamplesPerPixel."); }
 			if (this->samplesPerPixel > 1) { throw std::runtime_error("No support more than one sample per pixel."); }
 
@@ -125,6 +126,33 @@ namespace Tiff {
 
 			TIFFClose(file);
 		}
+	}
+
+	bool Frame::hasValidBitsPerSample(TIFF* lib_handle) const {
+		uint16_t extra_samples = 0;
+		uint16_t* extra_samples_type = nullptr;
+		uint16_t* sample_counts = nullptr;
+		int result = 1; // by default, success
+
+		result = TIFFGetField(lib_handle, TIFFTAG_SAMPLESPERPIXEL, &this->samplesPerPixel);
+		if (result != 1) { throw std::runtime_error("The SamplesPerPixel field is not present."); }
+
+		result = TIFFGetField(lib_handle, TIFFTAG_EXTRASAMPLES, &extra_samples, &extra_samples_type);
+		if(result != 1) { throw std::runtime_error("Cannot read extrasamples field."); }
+
+		uint16_t total_samples = this->samplesPerPixel + extra_samples;
+		result = TIFFGetField(lib_handle, TIFFTAG_BITSPERSAMPLE, &sample_counts);
+		if (result != 1) { throw std::runtime_error("Cannot read bits per sample !"); }
+		#warning malformed bits per sample do not allow to read the file !
+
+		// get a reference to compare against
+		uint16_t ref_bits_per_sample = sample_counts[0];
+
+		for (uint16_t sample = 0; sample < this->samplesPerPixel; ++sample) {
+			if (sample_counts[sample] != ref_bits_per_sample) { return false; }
+		}
+
+		return true;
 	}
 
 } // namespace Tiff

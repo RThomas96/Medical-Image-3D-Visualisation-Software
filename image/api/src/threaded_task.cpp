@@ -2,14 +2,15 @@
 
 namespace Image {
 
-	ThreadedTask::ThreadedTask(std::size_t _max_steps) : m()  {
+	ThreadedTask::ThreadedTask(std::size_t _max_steps) : m() {
 		this->maxSteps = _max_steps;
 		this->currentStep = 0;
 		this->timeInterval = std::chrono::milliseconds(10);
 		this->msgs = {};
+		this->task_state = TaskState::Created;
 	}
 
-	bool ThreadedTask::isComplete() {
+	bool ThreadedTask::isComplete() const {
 		bool retval = false;
 		std::unique_lock m_lock(this->m, std::defer_lock);
 		if (m_lock.try_lock_for(this->timeInterval)) {
@@ -19,17 +20,23 @@ namespace Image {
 		return retval;
 	}
 
-	void ThreadedTask::end() {
+	void ThreadedTask::end(bool success) {
 		std::unique_lock m_lock(this->m, std::defer_lock);
 		if (m_lock.try_lock_for(this->timeInterval)) {
+			// end the task by setting the
 			this->maxSteps = 0;
 			this->currentStep = 1;
+
+			// set the task's state :
+			if (success) { this->task_state = TaskState::End_Success; }
+			else { this->task_state = TaskState::End_Failure; }
+
 			m_lock.unlock();
 		}
 		return;
 	}
 
-	bool ThreadedTask::hasSteps() {
+	bool ThreadedTask::hasSteps() const {
 		bool retval = false;
 		std::unique_lock m_lock(this->m, std::defer_lock);
 		if (m_lock.try_lock_for(this->timeInterval)) {
@@ -39,7 +46,7 @@ namespace Image {
 		return retval;
 	}
 
-	std::size_t ThreadedTask::getMaxSteps() {
+	std::size_t ThreadedTask::getMaxSteps() const {
 		std::size_t retval = 0;
 		std::unique_lock m_lock(this->m, std::defer_lock);
 		if (m_lock.try_lock_for(this->timeInterval)) {
@@ -58,7 +65,7 @@ namespace Image {
 		return;
 	}
 
-	std::size_t ThreadedTask::getAdvancement() {
+	std::size_t ThreadedTask::getAdvancement() const {
 		std::size_t retval = 0;
 		std::unique_lock m_lock(this->m, std::defer_lock);
 		if (m_lock.try_lock_for(this->timeInterval)) {
@@ -75,6 +82,25 @@ namespace Image {
 			m_lock.unlock();
 		}
 		return;
+	}
+
+	void ThreadedTask::setState(TaskState _new_state) {
+		std::unique_lock m_lock(this->m, std::defer_lock);
+		if (m_lock.try_lock_for(this->timeInterval)) {
+			this->task_state = _new_state;
+			m_lock.unlock();
+		}
+		return;
+	}
+
+	TaskState ThreadedTask::getState() const {
+		TaskState _current_state = TaskState::Created;
+		std::unique_lock m_lock(this->m, std::defer_lock);
+		if (m_lock.try_lock_for(this->timeInterval)) {
+			_current_state = this->task_state;
+			m_lock.unlock();
+		}
+		return _current_state;
 	}
 
 	void ThreadedTask::advance() {

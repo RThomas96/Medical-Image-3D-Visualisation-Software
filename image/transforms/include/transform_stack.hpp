@@ -5,11 +5,15 @@
 #include "./affine_transform.hpp"
 #include "./trs_transform.hpp"
 
-/// @b This class represents a stack of transforms. It computes a
+/// @b This class represents a stack of transforms.
+/// @details In addition, it also computes a pre-computed matrix transform. This will likely change in the future, once
+/// we migrate away from supporting _only_ matrix transforms. Thus, the precomputed matrix represents the whole
+/// transformation stack for now. It is updated every time a matrix is pushed to/popped from the stack.
 class TransformStack {
 	public:
 		/// @b Pointer type to the transform stack.
 		using Ptr = std::shared_ptr<TransformStack>;
+
 	public:
 		/// @b Default ctor for a transform stack, only initializes a default transform.
 		TransformStack(void);
