@@ -22,7 +22,7 @@ namespace Image {
 	class TIFFBackend : public ImageBackendImpl {
 		protected:
 			/// @b Default ctor for the implementation, simply calling its superclass ctor.
-			TIFFBackend(const std::vector<std::vector<std::string>>& fns);
+			TIFFBackend();
 
 		public:
 			/// @b Default dtor for the class
@@ -34,10 +34,10 @@ namespace Image {
 			static bool canReadImage(const std::string& image_name);
 
 			/// @b Creates a backend implementation which can read the data, if possible. Returns nullptr otherwise.
-			static ImageBackendImpl::Ptr createBackend(std::vector<std::vector<std::string>> fns);
+			static ImageBackendImpl::Ptr createBackend();
 
 			/// @b Simple call to parse images given in the ctor.
-			virtual ThreadedTask::Ptr parseImageInfo(ThreadedTask::Ptr pre_existing_task) noexcept(false) override;
+			virtual ThreadedTask::Ptr parseImageInfo(ThreadedTask::Ptr pre_existing_task, const std::vector<std::vector<std::string>>& _filenames) noexcept(false) override;
 
 			/// @b Get the number of elements present in each voxel.
 			virtual std::size_t getVoxelDimensionality(void) const override;
@@ -66,7 +66,7 @@ namespace Image {
 		protected:
 			/// @b Parses the information from the images in a separate thread.
 			/// @warning Can only work for this TIFF implementation, not any derived classes ! (OME-TIFF)
-			virtual void parseImageInfo_thread(ThreadedTask::Ptr& task);
+			virtual void parseImageInfo_thread(ThreadedTask::Ptr& task, const std::vector<std::vector<std::string>>& _filenames);
 
 			/// @b Does a cleanup of the internal data structure when an error occured during parsing.
 			void internal_cleanup_after_error();
@@ -76,9 +76,10 @@ namespace Image {
 			/// @return	A TIFF implementation that can be used to parse the frames in input
 			virtual void createTiffBackend(Tiff::Frame::Ptr reference_frame, std::size_t _dimensionality);
 
-			/// @b Checks all files are valid, before starting to parse them
+			/// @b Checks all files are valid, and performs some checks and initializations.
 			/// @details Will check we have the same number of files per component loaded in memory.
-			virtual bool checkFilenamesAreValid(ThreadedTask::Ptr&) const;
+			/// @returns True if the process went smoothly and the files can be read from afterwards, false otherwise.
+			virtual bool preprocessFilenames(ThreadedTask::Ptr&, const std::vector<std::vector<std::string>>& _filenames) const;
 
 			//////////////////////////////////////////////////////
 			//													//
@@ -162,6 +163,12 @@ namespace Image {
 			/// @b The pointer which can interface directly with the files on disk.
 			Tiff::TIFFPrivate::Ptr pImpl
 #endif
+			/// @b The voxel dimensions. In regular TIFF, it will always be a unit vector.
+			glm::vec3 voxel_dimensions;
+			/// @b The image's resolution, as stored on disk
+			svec3 resolution;
+			/// @b the number of elements per pixel
+			std::size_t voxel_dimensionality;
 	};
 
 } // namespace Image

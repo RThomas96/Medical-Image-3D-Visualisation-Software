@@ -29,6 +29,10 @@ namespace Tiff {
 			/// @b Default dtor for the backend, which releases the cached data.
 			virtual ~TIFFPrivate(void) = default;
 
+			virtual svec3 getResolution() const = 0;
+			virtual glm::vec3 getVoxelDimensions() const = 0;
+			virtual std::size_t getVoxelDimensionality() const = 0;
+
 			/// @b Resizes the internal buffer of frames to the specified amount
 			TIFFPrivate& resizeImages(std::size_t imgcount);
 
@@ -161,6 +165,8 @@ namespace Tiff {
 
 			/// @b The height of the frames
 			uint32_t height;
+
+			uint16_t samplesPerPixel;
 
 			/// @b The number of components in a voxel for this image.
 			std::size_t voxel_dimensionalty;

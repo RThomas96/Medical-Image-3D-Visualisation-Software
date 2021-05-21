@@ -25,34 +25,29 @@ namespace Image {
 
 		protected:
 			/// @b Default ctor of an image backend. Declared protected to not be instanciated alone.
-			ImageBackendImpl(const std::vector<std::vector<std::string>>& fns);
+			ImageBackendImpl() : internal_data_type(ImageDataType::Unknown) {}
 
 		public:
 			/// @b Default dtor of the class : frees up all allocated resources, and returns.
 			virtual ~ImageBackendImpl(void) = default;
 
-			/// @b Checks if the given image backend can read the file given in argument.
-			/// @details Checks not only for the extension of the file, but could also for the file information once
-			/// opened ! For example, if a TIFF file is given, but it has a tag we don't support, we can return false.
-			static bool canReadImage(const std::string& image_name);
-
 			/// @b Returns the internal data type represented in the input files.
 			virtual ImageDataType getInternalDataType(void) const = 0;
 
 			/// @b Simple call to parse images, the functionnality will be added in derived classes.
-			virtual ThreadedTask::Ptr parseImageInfo(ThreadedTask::Ptr pre_existing_task) noexcept(false) = 0;
+			virtual ThreadedTask::Ptr parseImageInfo(ThreadedTask::Ptr pre_existing_task, const std::vector<std::vector<std::string>>& _filenames) noexcept(false) = 0;
 
 			/// @b Checks if the information present in this implementation is present on disk, or in memory.
 			virtual bool presentOnDisk(void) const = 0;
 
 			/// @b Returns the number of channels of the image
-			virtual std::size_t getVoxelDimensionality(void) const;
+			virtual std::size_t getVoxelDimensionality(void) const = 0;
 
 			/// @b Returns the image's defined voxel resolutions, if applicable.
-			virtual glm::vec3 getVoxelDimensions(void) const;
+			virtual glm::vec3 getVoxelDimensions(void) const = 0;
 
 			/// @b Returns the dimensions of the image.
-			virtual svec3 getResolution(void) const;
+			virtual svec3 getResolution(void) const = 0;
 
 			/// @b Allows to get the name of the loaded image(s).
 			/// @details If the file format does not support defining the name of the grid in its files or metadata
@@ -189,20 +184,8 @@ namespace Image {
 												 glm::tvec2<double>& _values) = 0;
 
 		protected:
-			/// @b The filenames of the implementation.
-			std::vector<std::vector<std::string>> filenames;
-
 			/// @b The internal data type representation, stored in the image.
 			ImageDataType internal_data_type;
-
-			/// @b The image resolution, as parsed by the discrete implementation in derived classes.
-			svec3 imageResolution;
-
-			/// @b The number of components per voxel. Its extraction depends on the derived implementation used.
-			std::size_t dimensionality;
-
-			/// @b The voxel dimensions, as parsed by the discrete implementation in derived classes.
-			glm::vec3 voxelDimensions;
 	};
 
 } // namespace Image

@@ -901,6 +901,8 @@ void GridLoaderWidget::loadNewGridAPI() {
 	// Try to create a grid :
 	std::cerr << "Trying to create a grid !!!\n";
 	std::vector<std::vector<std::string>> fnames_grid{fnR, fnG};
+	// FIXME : The API has changed. Grid::createGrid should only return an empty TIFF implementation, and
+	// the parsing function is the one to take the files as an input.
 	this->_testing_grid = Image::Grid::createGrid(fnames_grid);
 
 	// Start parsing the information :

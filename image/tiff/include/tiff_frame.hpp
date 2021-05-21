@@ -27,6 +27,16 @@ namespace Tiff {
 			/// they have the same width, height, and BpS.
 			bool isCompatibleWith(uint32_t w, uint32_t h, uint16_t bps);
 
+			bool isCompatibleWidth(const Frame& _frame);
+
+			bool hasSameEncoding(const Frame& _frame);
+
+			/// @b Returns the value of the planar configuration of the frame.
+			uint16_t planarConfiguration(TIFF* handle = nullptr) const;
+
+			/// @b Returns the value of the photometric interpretation of the frame.
+			uint16_t photometricInterpretation(TIFF* handle = nullptr) const;
+
 			/// @b Returns a libTIFF-managed handle to read information from the file
 			TIFF* getLibraryHandle(void) const;
 
@@ -57,7 +67,7 @@ namespace Tiff {
 			const std::string sourceFile;
 			/// @b The directory offset into the file
 			const tdir_t directoryOffset;
-			/// @b The number of samples per pixel. Per the TIFF spec, is contained in [1, 3]
+			/// @b The number of samples per pixel. Contains the original value ([1-3]) with the ExtraSamples added.
 			uint16_t samplesPerPixel;
 			/// @b The number of rows per strip
 			uint32_t rowsPerStrip;

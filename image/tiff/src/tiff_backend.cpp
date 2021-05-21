@@ -6,7 +6,7 @@
 
 namespace Image {
 
-	TIFFBackend::TIFFBackend(const std::vector<std::vector<std::string>>& fns): ImageBackendImpl(fns), pImpl(nullptr) {}
+	TIFFBackend::TIFFBackend(): ImageBackendImpl(), pImpl(nullptr) {}
 
 	bool TIFFBackend::canReadImage(const std::string& image_name) {
 		// Check the file ends with a known and good extension, and then check we can open it.
@@ -35,20 +35,21 @@ namespace Image {
 		return false;
 	}
 
-	ImageBackendImpl::Ptr TIFFBackend::createBackend(std::vector<std::vector<std::string>> fns) {
-		return ImageBackendImpl::Ptr(new TIFFBackend(fns));
+	ImageBackendImpl::Ptr TIFFBackend::createBackend() {
+		return ImageBackendImpl::Ptr(new TIFFBackend());
 	}
 
-	ThreadedTask::Ptr TIFFBackend::parseImageInfo(ThreadedTask::Ptr pre_existing_task) {
+	ThreadedTask::Ptr TIFFBackend::parseImageInfo(ThreadedTask::Ptr pre_existing_task, const std::vector<std::vector<std::string>>& _filenames) {
 		/* Parses the image in a separate thread. Detaches it from the main thread, in order to
 		 * let it free up its own resources. */
 		if (pre_existing_task == nullptr) { pre_existing_task = std::make_shared<ThreadedTask>(); }
 
 		// If no filenames are provided, just return and end the task :
-		if (this->filenames.empty()) { pre_existing_task ->end(); return pre_existing_task ; }
+		if (_filenames.empty()) { pre_existing_task ->end(); return pre_existing_task ; }
 
 		// Launch the parsing of files in a separate thread :
-		std::thread parseThread = std::thread(&TIFFBackend::parseImageInfo_thread, this, std::ref(pre_existing_task));
+		std::thread parseThread = std::thread(&TIFFBackend::parseImageInfo_thread,
+											  this, std::ref(pre_existing_task), std::ref(_filenames));
 
 		// Wait for the task to be initialized, in 5ms increments :
 		while (pre_existing_task->getMaxSteps() == 0 && not pre_existing_task->isComplete()) {
@@ -88,18 +89,28 @@ namespace Image {
 	}
 
 	glm::vec3 TIFFBackend::getVoxelDimensions() const {
-		return this->voxelDimensions;
+		if (this->pImpl) { return this->pImpl->getVoxelDimensions(); }
+		else return glm::vec3(.0f, .0f, .0f);
 	}
 
-	void TIFFBackend::parseImageInfo_thread(ThreadedTask::Ptr &task) {
+	void TIFFBackend::parseImageInfo_thread(ThreadedTask::Ptr &task, const std::vector<std::vector<std::string>>& _filenames) {
 		// IF no filenames, return and end task :
-		if (this->filenames.empty()) {
+		if (_filenames.empty()) {
 			task->pushMessage("Filenames were empty.");
 			task->end(false);
 			return;
 		}
 
-		if (this->checkFilenamesAreValid(task) == false) {
+		/**
+		 * Steps to perform :
+		 *		- Initialize reference frame to be the first frame of the first file
+		 *		- For all vectors of filenames :
+		 *			- For all files within it :
+		 *				- For all frames within those files :
+		 *					-
+		 */
+
+		if (this->preprocessFilenames(task, _filenames) == false) {
 			task->end(false);
 			return;
 		}
@@ -107,7 +118,7 @@ namespace Image {
 		// Try to allocate and parse reference frame :
 		Tiff::Frame::Ptr reference_frame;
 		try {
-			reference_frame = std::make_shared<Tiff::Frame>(this->filenames[0][0], 0);
+			reference_frame = std::make_shared<Tiff::Frame>(_filenames[0][0], 0);
 		}  catch (std::runtime_error _e) {
 			task->pushMessage(std::string("Could not parse files (reference frame was not properly parsed).\n"
 										  "Error message from TIFF backend : ")+_e.what());
@@ -117,7 +128,7 @@ namespace Image {
 
 		try {
 			// Allocate the right backend for this task :
-			this->createTiffBackend(reference_frame, this->filenames.size());
+			this->createTiffBackend(reference_frame, _filenames.size());
 		} catch (std::runtime_error _e) {
 			task->pushMessage(std::string("Error while creating TIFF reading backend.\nError message : ")+_e.what());
 			task->end(false);
@@ -132,7 +143,7 @@ namespace Image {
 		TIFFClose(reference_handle);
 
 		// We can already set the dimensionality of the dataset :
-		this->dimensionality = this->filenames.size();
+		this->dimensionality = _filenames.size();
 		// Since checkFilenamesAreValid() returned true, the # of frames (Z-depth) is set into task->maxSteps !
 		// We can thus already set the image resolution here :
 		this->imageResolution = svec3(w, h, task->getMaxSteps());
@@ -141,9 +152,9 @@ namespace Image {
 		this->internal_data_type = this->pImpl->getInternalType();
 
 		// Iterate on all filenames, extract frames :
-		for (std::size_t name_it = 0; name_it < this->filenames[0].size(); ++name_it) {
+		for (std::size_t name_it = 0; name_it < _filenames[0].size(); ++name_it) {
 			// Number of frames inside the current file :
-			tsize_t dirSize = Tiff::countDirectories(this->filenames[0][name_it]);
+			tsize_t dirSize = Tiff::countDirectories(_filenames[0][name_it]);
 
 			// Iterate on all frames :
 			for (tdir_t fr_it = 0; fr_it < dirSize; ++fr_it) {
@@ -154,7 +165,7 @@ namespace Image {
 				for (std::size_t c_it = 0; c_it < this->dimensionality; ++c_it) {
 					try {
 						// Create and push back a new frame of this filename, at IFD index 'fr_it' :
-						Tiff::Frame::Ptr fr = std::make_shared<Tiff::Frame>(this->filenames[c_it][name_it], fr_it);
+						Tiff::Frame::Ptr fr = std::make_shared<Tiff::Frame>(_filenames[c_it][name_it], fr_it);
 						// If the frame's not compatible, return error to the user :
 						if (fr->isCompatibleWith(w, h, bps) == false) {
 							std::string err = "WARNING: Frame "+std::to_string(fr_it)+", ch. "+std::to_string(c_it)+
@@ -188,7 +199,8 @@ namespace Image {
 	}
 
 	svec3 TIFFBackend::getResolution() const {
-		return this->imageResolution;
+		if (this->pImpl) { };
+		return svec3(0,0,0);
 	}
 
 	void TIFFBackend::createTiffBackend(Tiff::Frame::Ptr reference_frame, std::size_t _dim) {
@@ -250,14 +262,14 @@ namespace Image {
 		}
 	}
 
-	bool TIFFBackend::checkFilenamesAreValid(ThreadedTask::Ptr& task) const {
+	bool TIFFBackend::preprocessFilenames(ThreadedTask::Ptr& task, const std::vector<std::vector<std::string>>& _filenames) const {
 		// We first have to check there are the same number of files in each component :
-		std::size_t ref_file_count = this->filenames[0].size();
-		for (std::size_t i = 0; i < this->filenames.size(); ++i) {
-			if (this->filenames[i].size() != ref_file_count) {
+		std::size_t ref_file_count = _filenames[0].size();
+		for (std::size_t i = 0; i < _filenames.size(); ++i) {
+			if (_filenames[i].size() != ref_file_count) {
 				std::string err = "Component " + std::to_string(i) + " : expected " +
 									std::to_string(ref_file_count) + " files, but got " +
-									std::to_string(this->filenames[i].size()) + " instead.";
+									std::to_string(_filenames[i].size()) + " instead.";
 				task->pushMessage(err);
 				return false;
 			}
@@ -267,13 +279,13 @@ namespace Image {
 		tdir_t total_dir_count = 0;
 
 		// Then, for each file in the components, we have to check it has the same # of directories :
-		for (std::size_t i = 0; i < this->filenames[0].size(); ++i) {
+		for (std::size_t i = 0; i < _filenames[0].size(); ++i) {
 			// ref for component 0 :
-			tdir_t ref_frame_count = Tiff::countDirectories(this->filenames[0][i]);
-			for (tdir_t j = 0; j < this->filenames.size();	++j) {
-				tdir_t cur_frame_count = Tiff::countDirectories(this->filenames[j][i]);
+			tdir_t ref_frame_count = Tiff::countDirectories(_filenames[0][i]);
+			for (tdir_t j = 0; j < _filenames.size();	++j) {
+				tdir_t cur_frame_count = Tiff::countDirectories(_filenames[j][i]);
 				if (cur_frame_count != ref_frame_count) {
-					std::string err = "Error : file \"" + this->filenames[j][i] + " contained " +
+					std::string err = "Error : file \"" + _filenames[j][i] + " contained " +
 										std::to_string(cur_frame_count) + " instead of the " +
 										std::to_string(ref_frame_count) + " expected.";
 					task->pushMessage(err);

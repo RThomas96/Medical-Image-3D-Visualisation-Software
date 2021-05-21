@@ -21,11 +21,55 @@ namespace Tiff {
 		return width_compatible && height_compatible && bps_compatible;
 	}
 
+	bool Frame::isCompatibleWidth(const Frame &_frame) {
+
+		TIFF* _self_handle = this->getLibraryHandle();
+		TIFF* _other_handle = _frame.getLibraryHandle();
+
+		// pretty thourough checks :
+		bool w = (this->width(_self_handle) == _frame.width(_other_handle));
+		bool h = (this->height(_self_handle) == _frame.height(_other_handle));
+		bool b = (this->bitsPerSample(_self_handle) == _frame.bitsPerSample(_other_handle));
+		bool i = (this->photometricInterpretation(_self_handle) == this->photometricInterpretation(_other_handle));
+		bool p = (this->planarConfiguration(_self_handle) == _frame.planarConfiguration(_other_handle));
+		bool t = (TIFFIsTiled(_self_handle) == TIFFIsTiled(_other_handle));
+
+		TIFFClose(_self_handle);
+		TIFFClose(_other_handle);
+
+		return w && h && b && i && p && t;
+
+	}
+
+	bool Frame::hasSameEncoding(const Frame &_frame) {
+		//
+	}
+
 	TIFF* Frame::getLibraryHandle(void) const {
 		TIFF* fhandle = TIFFOpen(this->sourceFile.data(), "r");
 		int result = TIFFSetDirectory(fhandle, this->directoryOffset);
 		if (result != 1) { return nullptr; } // Something happened which cannot get us to the right IFD.
 		return fhandle;
+	}
+
+	uint16_t Frame::planarConfiguration(TIFF *fhandle) const {
+		if (fhandle == nullptr) {
+			fhandle = this->getLibraryHandle();
+		}
+		uint16_t pc = 0;
+		int result = TIFFGetField(fhandle, TIFFTAG_PLANARCONFIG, &pc);
+		if (result != 1) { return PLANARCONFIG_CONTIG; }
+		return pc;
+	}
+
+	uint16_t Frame::photometricInterpretation(TIFF *fhandle) const {
+		if (fhandle == nullptr) {
+			fhandle = this->getLibraryHandle();
+		}
+		uint16_t pi = 0;
+		int result = TIFFGetField(fhandle, TIFFTAG_PHOTOMETRIC, &pi);
+		if (result != 1) { return PHOTOMETRIC_MINISWHITE; }
+		return pi;
 	}
 
 	uint32_t Frame::width(TIFF* fhandle) const {
@@ -83,7 +127,10 @@ namespace Tiff {
 			}
 
 			// We don't currently support tiled images :
-			if (TIFFIsTiled(file)) { throw std::runtime_error("Cannot read tiled images"); }
+			if (TIFFIsTiled(file)) { throw std::runtime_error("Cannot read tiled images yet"); }
+
+			// evaluate the # of samples per pixel :
+
 
 			uint16_t pconfig = 0;
 			result = TIFFGetField(file, TIFFTAG_PLANARCONFIG, &pconfig);
@@ -128,7 +175,7 @@ namespace Tiff {
 		}
 	}
 
-	bool Frame::hasValidBitsPerSample(TIFF* lib_handle) const {
+	bool Frame::fetchSamplesPerPixel(TIFF* lib_handle) const {
 		uint16_t extra_samples = 0;
 		uint16_t* extra_samples_type = nullptr;
 		uint16_t* sample_counts = nullptr;
