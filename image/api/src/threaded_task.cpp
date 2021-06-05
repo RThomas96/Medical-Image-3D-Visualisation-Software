@@ -10,7 +10,7 @@ namespace Image {
 		this->task_state = TaskState::Created;
 	}
 
-	bool ThreadedTask::isComplete() const {
+	bool ThreadedTask::isComplete() {
 		bool retval = false;
 		std::unique_lock m_lock(this->m, std::defer_lock);
 		if (m_lock.try_lock_for(this->timeInterval)) {
@@ -36,7 +36,7 @@ namespace Image {
 		return;
 	}
 
-	bool ThreadedTask::hasSteps() const {
+	bool ThreadedTask::hasSteps() {
 		bool retval = false;
 		std::unique_lock m_lock(this->m, std::defer_lock);
 		if (m_lock.try_lock_for(this->timeInterval)) {
@@ -46,7 +46,7 @@ namespace Image {
 		return retval;
 	}
 
-	std::size_t ThreadedTask::getMaxSteps() const {
+	std::size_t ThreadedTask::getMaxSteps() {
 		std::size_t retval = 0;
 		std::unique_lock m_lock(this->m, std::defer_lock);
 		if (m_lock.try_lock_for(this->timeInterval)) {
@@ -65,7 +65,7 @@ namespace Image {
 		return;
 	}
 
-	std::size_t ThreadedTask::getAdvancement() const {
+	std::size_t ThreadedTask::getAdvancement() {
 		std::size_t retval = 0;
 		std::unique_lock m_lock(this->m, std::defer_lock);
 		if (m_lock.try_lock_for(this->timeInterval)) {
@@ -93,7 +93,7 @@ namespace Image {
 		return;
 	}
 
-	TaskState ThreadedTask::getState() const {
+	TaskState ThreadedTask::getState() {
 		TaskState _current_state = TaskState::Created;
 		std::unique_lock m_lock(this->m, std::defer_lock);
 		if (m_lock.try_lock_for(this->timeInterval)) {

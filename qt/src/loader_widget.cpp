@@ -907,7 +907,7 @@ void GridLoaderWidget::loadNewGridAPI() {
 
 	// Start parsing the information :
 	std::cerr << "Grid created, updating info from disk ...\n";
-	auto task = this->_testing_grid->updateInfoFromDisk();
+	auto task = this->_testing_grid->updateInfoFromDisk(fnames_grid);
 
 	// may be already ended with errors, show them :
 	std::string before_error_message;

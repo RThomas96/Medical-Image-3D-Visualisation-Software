@@ -20,6 +20,10 @@ namespace Tiff {
 				return TIFFPrivate::Ptr(new TIFFReader<img_t>(width, height, dim));
 			}
 
+			virtual svec3 getResolution() const override { return svec3(this->width, this->height, this->images.size()); }
+			virtual glm::vec3 getVoxelDimensions() const override { return glm::vec3(1.f); }
+			virtual std::size_t getVoxelDimensionality() const override { return this->voxel_dimensionalty; }
+
 			/// @b Returns the range of values present (or representable) in the file, converted to the 'target_t' type.
 			template <typename source_t> TIFFReader& setRangeValues(glm::vec<2, source_t, glm::defaultp>& _range);
 

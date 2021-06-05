@@ -35,7 +35,9 @@ namespace Image {
 			virtual ImageDataType getInternalDataType(void) const = 0;
 
 			/// @b Simple call to parse images, the functionnality will be added in derived classes.
-			virtual ThreadedTask::Ptr parseImageInfo(ThreadedTask::Ptr pre_existing_task, const std::vector<std::vector<std::string>>& _filenames) noexcept(false) = 0;
+			virtual ThreadedTask::Ptr parseImageInfo(ThreadedTask::Ptr pre_existing_task,
+													 const std::vector<std::vector<std::string>>& _filenames
+													 ) noexcept(false) = 0;
 
 			/// @b Checks if the information present in this implementation is present on disk, or in memory.
 			virtual bool presentOnDisk(void) const = 0;

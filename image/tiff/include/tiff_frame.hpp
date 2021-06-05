@@ -60,7 +60,7 @@ namespace Tiff {
 			/// @b Returns true if the frame has a valid bits per sample count.
 			/// @details The number of bits per sample is defined as 'correct' or 'valid' if all the samples are
 			/// expressed using the same number of bits, even for the extra samples given they are present.
-			bool hasValidBitsPerSample(TIFF* frame_handle) const;
+			bool fetchSamplesPerPixel(TIFF* frame_handle) const;
 
 		public:
 			/// @b The filename of the TIFF file this frame is located in.

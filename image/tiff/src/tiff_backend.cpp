@@ -85,7 +85,7 @@ namespace Image {
 	}
 
 	std::size_t TIFFBackend::getVoxelDimensionality() const {
-		return this->dimensionality;
+		return this->voxel_dimensionality;
 	}
 
 	glm::vec3 TIFFBackend::getVoxelDimensions() const {
@@ -107,7 +107,7 @@ namespace Image {
 		 *		- For all vectors of filenames :
 		 *			- For all files within it :
 		 *				- For all frames within those files :
-		 *					-
+		 *					- Check theya re compatible in bitwidths with the main file
 		 */
 
 		if (this->preprocessFilenames(task, _filenames) == false) {
@@ -116,9 +116,9 @@ namespace Image {
 		}
 
 		// Try to allocate and parse reference frame :
-		Tiff::Frame::Ptr reference_frame;
+		Tiff::Frame::Ptr reference_frame_main;
 		try {
-			reference_frame = std::make_shared<Tiff::Frame>(_filenames[0][0], 0);
+			reference_frame_main = std::make_shared<Tiff::Frame>(_filenames[0][0], 0);
 		}  catch (std::runtime_error _e) {
 			task->pushMessage(std::string("Could not parse files (reference frame was not properly parsed).\n"
 										  "Error message from TIFF backend : ")+_e.what());
@@ -128,7 +128,7 @@ namespace Image {
 
 		try {
 			// Allocate the right backend for this task :
-			this->createTiffBackend(reference_frame, _filenames.size());
+			this->createTiffBackend(reference_frame_main, _filenames.size());
 		} catch (std::runtime_error _e) {
 			task->pushMessage(std::string("Error while creating TIFF reading backend.\nError message : ")+_e.what());
 			task->end(false);
@@ -136,19 +136,19 @@ namespace Image {
 		}
 
 		// Get some info about the reference frame :
-		TIFF* reference_handle = reference_frame->getLibraryHandle();
-		uint32_t w = reference_frame->width(reference_handle);
-		uint32_t h = reference_frame->height(reference_handle);
-		uint16_t bps = reference_frame->bitsPerSample(reference_handle);
+		TIFF* reference_handle = reference_frame_main->getLibraryHandle();
+		uint32_t w = reference_frame_main->width(reference_handle);
+		uint32_t h = reference_frame_main->height(reference_handle);
+		uint16_t bps = reference_frame_main->bitsPerSample(reference_handle);
 		TIFFClose(reference_handle);
 
 		// We can already set the dimensionality of the dataset :
-		this->dimensionality = _filenames.size();
+		this->voxel_dimensionality = _filenames.size();
 		// Since checkFilenamesAreValid() returned true, the # of frames (Z-depth) is set into task->maxSteps !
 		// We can thus already set the image resolution here :
-		this->imageResolution = svec3(w, h, task->getMaxSteps());
+		this->resolution = svec3(w, h, task->getMaxSteps());
 		// We can also set some other known data here :
-		this->voxelDimensions = glm::vec3(1.f, 1.f, 1.f);
+		this->voxel_dimensions = glm::vec3(1.f, 1.f, 1.f);
 		this->internal_data_type = this->pImpl->getInternalType();
 
 		// Iterate on all filenames, extract frames :
@@ -162,7 +162,7 @@ namespace Image {
 				Tiff::TIFFPrivate::TIFFImage imgframes;
 
 				// For all color channels :
-				for (std::size_t c_it = 0; c_it < this->dimensionality; ++c_it) {
+				for (std::size_t c_it = 0; c_it < this->voxel_dimensionality; ++c_it) {
 					try {
 						// Create and push back a new frame of this filename, at IFD index 'fr_it' :
 						Tiff::Frame::Ptr fr = std::make_shared<Tiff::Frame>(_filenames[c_it][name_it], fr_it);
@@ -304,8 +304,8 @@ namespace Image {
 	}
 
 	void TIFFBackend::internal_cleanup_after_error() {
-		this->voxelDimensions = glm::vec3(-1.f, -1.f, -1.f);
-		this->imageResolution = svec3(0, 0, 0);
+		this->voxel_dimensions = glm::vec3(-1.f, -1.f, -1.f);
+		this->resolution = svec3(0, 0, 0);
 		this->internal_data_type = ImageDataType::Unknown;
 		this->pImpl = nullptr;
 	}

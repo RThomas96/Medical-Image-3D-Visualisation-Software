@@ -8,7 +8,7 @@ ADD_LIBRARY(imagegrid STATIC
 	include/read_cache.hpp
 	include/threaded_task.hpp
 
-	src/backend.cpp
+	#src/backend.cpp
 	src/threaded_task.cpp
 )
 TARGET_INCLUDE_DIRECTORIES(imagegrid

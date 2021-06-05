@@ -37,7 +37,9 @@ namespace Image {
 			static ImageBackendImpl::Ptr createBackend();
 
 			/// @b Simple call to parse images given in the ctor.
-			virtual ThreadedTask::Ptr parseImageInfo(ThreadedTask::Ptr pre_existing_task, const std::vector<std::vector<std::string>>& _filenames) noexcept(false) override;
+			virtual ThreadedTask::Ptr parseImageInfo(ThreadedTask::Ptr pre_existing_task,
+													 const std::vector<std::vector<std::string>>& _filenames
+													 ) noexcept(false) override;
 
 			/// @b Get the number of elements present in each voxel.
 			virtual std::size_t getVoxelDimensionality(void) const override;

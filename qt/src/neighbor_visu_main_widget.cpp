@@ -249,6 +249,7 @@ bool MainWidget::eventFilter(QObject* obj, QEvent* e) {
 		// lock control panel size to the current size it has :
 		QSize centerSize = this->size();
 		this->controlPanel->setMinimumWidth(static_cast<int>(static_cast<float>(centerSize.width()) * .99f));
+		this->controlPanel->setMaximumHeight(static_cast<int>(this->controlPanel->height()));
 	}
 	// Return false, to handle the rest of the event normally
 	return false;

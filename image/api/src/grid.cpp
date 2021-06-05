@@ -29,10 +29,9 @@ namespace Image {
 		return this->pImpl != nullptr;
 	}
 
-	ThreadedTask::Ptr Grid::updateInfoFromDisk() {
-		if (this->pImpl) { return this->pImpl->parseImageInfo(); }
+	ThreadedTask::Ptr Grid::updateInfoFromDisk(const std::vector<std::vector<std::string>>& filenames) {
 		ThreadedTask::Ptr task = std::make_shared<ThreadedTask>();
-		task->end();
+		if (this->pImpl) { return this->pImpl->parseImageInfo(task, filenames); }
 		return task;
 	}
 

@@ -15,7 +15,7 @@ namespace Image {
 		// extract substring of extension :
 		std::string ext	= reference_file.substr(iter, std::string::npos);
 		if (ext == ".tif" || ext == ".tiff") {
-			return Grid::Ptr(new Grid(TIFFBackend::createBackend(_filenames)));
+			return Grid::Ptr(new Grid(TIFFBackend::createBackend()));
 		}
 
 		return nullptr;

@@ -72,8 +72,8 @@ namespace Image {
 			/// @b Checks the grid holds an image implementation, and that this implementation is valid.
 			constexpr bool hasValidImplementation(void) const;
 
-			/// @b Simply calls the parse function for the image implementation^
-			ThreadedTask::Ptr updateInfoFromDisk(void);
+			/// @b Simply calls the parse function for the image implementation
+			ThreadedTask::Ptr updateInfoFromDisk(const std::vector<std::vector<std::string>>& filenames);
 
 			/// @b Once the information from the implementation is parsed, update the internal contents of the grid structure.
 			void updateInfoFromGrid(void);

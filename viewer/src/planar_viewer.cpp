@@ -55,7 +55,9 @@ void PlanarViewer::init(void) {
 }
 
 void PlanarViewer::draw(void) {
-	glClearColor(.8, .8, .8, .0);
+	float white_shade = 245./255.;
+
+	glClearColor(white_shade, white_shade, white_shade, .0);
 
 	QSize viewerSize = this->size();
 	glm::vec2 fbDims = glm::vec2(static_cast<float>(viewerSize.width()), static_cast<float>(viewerSize.height()));

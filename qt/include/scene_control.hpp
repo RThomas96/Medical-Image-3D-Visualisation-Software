@@ -5,7 +5,7 @@
 #include "../../features.hpp"
 #include "../../grid/include/discrete_grid.hpp"
 
-#include "./range_slider.hpp"
+#include "./double_slider.hpp"
 
 #include <QLabel>
 #include <QWidget>
@@ -15,6 +15,7 @@
 #include <QComboBox>
 #include <QPushButton>
 #include <QDoubleSpinBox>
+#include <QGridLayout>
 
 #include <iostream>
 
@@ -93,14 +94,14 @@ class ControlPanel : public QWidget {
 		QGroupBox* groupbox_green;
 
 		/// @b Range controller for the red texture bounds
-		RangeSlider* rangeslider_red;
+		DoubleSlider* rangeslider_red;
 		/// @b Range controller for the green texture bounds
-		RangeSlider* rangeslider_green;
+		DoubleSlider* rangeslider_green;
 
 		/// @b The layout of the red groupbox
-		QGridLayout* layout_widgets_red;
+		QHBoxLayout* layout_widgets_red;
 		/// @b The layout of the green groupbox
-		QGridLayout* layout_widgets_green;
+		QHBoxLayout* layout_widgets_green;
 
 		/// @b Minimum color of the color segment for the red channel
 		ColorButton* colorbutton_red_min;

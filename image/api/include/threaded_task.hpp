@@ -36,22 +36,22 @@ namespace Image {
 			~ThreadedTask(void) = default;
 
 			/// @b Checks if the task is complete.
-			bool isComplete(void) const;
+			bool isComplete(void);
 
 			/// @b Allows to immediately end a task.
 			void end(bool success = true);
 
 			/// @b Check if the task has steps.
-			bool hasSteps(void) const;
+			bool hasSteps(void);
 
 			/// @b Get the maximum number of steps possible
-			std::size_t getMaxSteps(void) const;
+			std::size_t getMaxSteps(void);
 
 			/// @b Set the max number of steps for the task
 			void setSteps(std::size_t _ms);
 
 			/// @b Get current advancement of the task
-			std::size_t getAdvancement(void) const;
+			std::size_t getAdvancement(void);
 
 			/// @b Set the current progress of the task
 			void setAdvancement(std::size_t newcurrentvalue);
@@ -60,7 +60,7 @@ namespace Image {
 			void setState(TaskState _new_state);
 
 			/// @b Get the current task's state.
-			TaskState getState(void) const;
+			TaskState getState(void);
 
 			/// @b Advances a step (thread-safe)
 			void advance(void);
