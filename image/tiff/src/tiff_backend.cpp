@@ -186,6 +186,7 @@ namespace Image {
 						return;
 					}
 				}
+				std::cerr << "Currently at step " << fr_it << "(pointer of task : " << task << ", used in " << task.use_count() << " contexts)\n";
 				task->advance();
 
 				// Add newly created image to the implementation :

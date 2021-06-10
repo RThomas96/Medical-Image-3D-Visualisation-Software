@@ -33,7 +33,9 @@ namespace Image {
 			/// @b Ctor for a threaded task.
 			ThreadedTask(std::size_t _maxSteps = 0);
 			/// @b Default dtor for the class.
-			~ThreadedTask(void) = default;
+			~ThreadedTask(void) {
+				std::cerr << "WARNING ! DESTROYING THREADED TASK !!!\n";
+			}
 
 			/// @b Checks if the task is complete.
 			bool isComplete(void);
