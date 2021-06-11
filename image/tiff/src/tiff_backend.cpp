@@ -49,7 +49,7 @@ namespace Image {
 
 		// Launch the parsing of files in a separate thread :
 		std::thread parseThread = std::thread(&TIFFBackend::parseImageInfo_thread,
-											  this, std::ref(pre_existing_task), std::ref(_filenames));
+											  this, pre_existing_task, std::ref(_filenames));
 
 		// Wait for the task to be initialized, in 5ms increments :
 		while (pre_existing_task->getMaxSteps() == 0 && not pre_existing_task->isComplete()) {
@@ -93,7 +93,7 @@ namespace Image {
 		else return glm::vec3(.0f, .0f, .0f);
 	}
 
-	void TIFFBackend::parseImageInfo_thread(ThreadedTask::Ptr &task, const std::vector<std::vector<std::string>>& _filenames) {
+	void TIFFBackend::parseImageInfo_thread(ThreadedTask::Ptr task, const std::vector<std::vector<std::string>>& _filenames) {
 		// IF no filenames, return and end task :
 		if (_filenames.empty()) {
 			task->pushMessage("Filenames were empty.");
@@ -156,6 +156,8 @@ namespace Image {
 			// Number of frames inside the current file :
 			tsize_t dirSize = Tiff::countDirectories(_filenames[0][name_it]);
 
+			std::cerr << "Iterating over " << dirSize << " directories.\n";
+
 			// Iterate on all frames :
 			for (tdir_t fr_it = 0; fr_it < dirSize; ++fr_it) {
 				// will hold all loaded and parsed frames :
@@ -186,7 +188,6 @@ namespace Image {
 						return;
 					}
 				}
-				std::cerr << "Currently at step " << fr_it << "(pointer of task : " << task << ", used in " << task.use_count() << " contexts)\n";
 				task->advance();
 
 				// Add newly created image to the implementation :
@@ -194,13 +195,16 @@ namespace Image {
 			}
 		}
 
+		auto res = this->getResolution();
+		std::cerr << "Finished parsing, resolution : [" << res.x << ", " << res.y << ", " << res.z << "]\n";
+
 		task->end();
 		// exit the thread :
 		return;
 	}
 
 	svec3 TIFFBackend::getResolution() const {
-		if (this->pImpl) { };
+		if (this->pImpl) { return this->pImpl->getResolution(); }
 		return svec3(0,0,0);
 	}
 

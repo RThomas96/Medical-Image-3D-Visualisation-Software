@@ -26,16 +26,18 @@ namespace Image {
 	 * @brief The ThreadedTask class provides a simple way to interact with a task done in a separate thread.
 	 * @note Shamelessly stolen from `image/include/reader.hpp`.
 	 */
-	class ThreadedTask {
+	class ThreadedTask : public std::enable_shared_from_this<ThreadedTask> {
 		public:
+			/// @b A simple typedef enclosing a pointer to a threaded task
 			using Ptr = std::shared_ptr<ThreadedTask>;
 		public:
 			/// @b Ctor for a threaded task.
 			ThreadedTask(std::size_t _maxSteps = 0);
 			/// @b Default dtor for the class.
-			~ThreadedTask(void) {
-				std::cerr << "WARNING ! DESTROYING THREADED TASK !!!\n";
-			}
+			~ThreadedTask(void) = default;
+
+			/// @b Returns the result of std::enable_shared_from_this<>::shared_from_this()
+			ThreadedTask::Ptr getPtr();
 
 			/// @b Checks if the task is complete.
 			bool isComplete(void);

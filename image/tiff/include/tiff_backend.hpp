@@ -68,7 +68,7 @@ namespace Image {
 		protected:
 			/// @b Parses the information from the images in a separate thread.
 			/// @warning Can only work for this TIFF implementation, not any derived classes ! (OME-TIFF)
-			virtual void parseImageInfo_thread(ThreadedTask::Ptr& task, const std::vector<std::vector<std::string>>& _filenames);
+			virtual void parseImageInfo_thread(ThreadedTask::Ptr task, const std::vector<std::vector<std::string>>& _filenames);
 
 			/// @b Does a cleanup of the internal data structure when an error occured during parsing.
 			void internal_cleanup_after_error();

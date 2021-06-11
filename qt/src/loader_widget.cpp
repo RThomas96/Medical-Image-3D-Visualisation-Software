@@ -524,14 +524,15 @@ void GridLoaderWidget::updateVoxelDimensions_silent() {
 }
 
 void GridLoaderWidget::progressBar_init_undefined(QString format_message) {
+	assert(this->progress_load != nullptr);
 	// set a new progress bar :
 	this->progress_load->setRange(0, 0);
 	this->progress_load->setValue(0);
 	this->progress_load->setFormat(format_message);
 	if (not this->progress_load->isVisible()) { this->progress_load->setVisible(true); }
 	// update and show the bar :
-	QCoreApplication::processEvents();
-	this->update();
+	//QCoreApplication::processEvents();
+	//this->update();
 }
 
 void GridLoaderWidget::progressBar_init_defined(int min, int max, int current_value, QString format_string) {
@@ -931,6 +932,7 @@ void GridLoaderWidget::loadNewGridAPI() {
 		std::size_t adv = task->getAdvancement();
 		this->progress_load->setRange(0, steps);
 		this->progress_load->setValue(adv);
+		this->progress_load->setFormat("Parsing image data ... (%p%)");
 		// Needed to update the main window ...
 		QCoreApplication::processEvents();
 		this->update();

@@ -2,6 +2,10 @@
 
 namespace Image {
 
+	ThreadedTask::Ptr ThreadedTask::getPtr()  {
+		return this->shared_from_this();
+	}
+
 	ThreadedTask::ThreadedTask(std::size_t _max_steps) : m() {
 		this->maxSteps = _max_steps;
 		this->currentStep = 0;

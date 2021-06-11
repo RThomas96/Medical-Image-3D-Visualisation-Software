@@ -31,7 +31,7 @@ namespace Image {
 
 	ThreadedTask::Ptr Grid::updateInfoFromDisk(const std::vector<std::vector<std::string>>& filenames) {
 		ThreadedTask::Ptr task = std::make_shared<ThreadedTask>();
-		if (this->pImpl) { return this->pImpl->parseImageInfo(task, filenames); }
+		if (this->pImpl) { return this->pImpl->parseImageInfo(task->getPtr(), filenames); }
 		return task;
 	}
 
