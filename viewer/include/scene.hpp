@@ -274,6 +274,12 @@ class Scene : public QOpenGLFunctions_3_2_Core {
 		/// Updates the progress bar added to the main statusbar
 		void updateProgressBar();
 
+		/// @b Test function to print all the new uniforms in the
+		void newSHADERS_print_all_uniforms(GLuint program);
+
+		/// @b Create the color scales used for the program.
+		void newSHADERS_generateColorScales(void);
+
 		/// @b preps uniforms for a grid
 		void prepareUniforms_3DSolid(GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, const GridGLView::Ptr& grid);
 		void newAPI_prepareUniforms_3DSolid(GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, const NewAPI_GridGLView::Ptr& grid);
@@ -425,6 +431,9 @@ class Scene : public QOpenGLFunctions_3_2_Core {
 		float* visibleDomains;					///< Array deciding which values are visible
 		float* visibleDomainsAlternate;			///< Array deciding which values are visible
 
+		GLuint texHandle_colorScale_greyscale;
+		GLuint texHandle_colorScale_hsv2rgb;
+
 		/********************************************/
 		/* Threaded loading of high-resolution grid */
 		/********************************************/
@@ -437,6 +446,8 @@ class Scene : public QOpenGLFunctions_3_2_Core {
 		QProgressBar* pb_loadProgress;
 		bool isFinishedLoading;
 		void replaceGridsWithHighRes();
+
+		void printAllUniforms(GLuint _shader_program);
 };
 
 /// @brief Type-safe conversion of enum values to unsigned ints.

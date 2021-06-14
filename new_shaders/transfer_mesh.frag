@@ -73,7 +73,7 @@ uniform vec3 visuBBMax;
 uniform bool shouldUseBB;
 
 // The structure which defines every attributes for the color channels.
-layout(std140) struct colorChannelAttributes {
+struct colorChannelAttributes {
 	uint isVisible;			// /*align : ui64*/ Is this color channel enabled/visible ?
 	uint colorScaleIndex;	// /*align : ui64*/ The color channel to choose
 	uvec2 visibleBounds;	// /*align : vec4*/ The bounds of the visible values
@@ -82,7 +82,9 @@ layout(std140) struct colorChannelAttributes {
 
 uniform uint mainChannelIndex;						// The index of the main channel in the voxel data
 uniform sampler1D colorScales[4];					// All the color scales available (all encoded as 1D textures)
-uniform colorChannelAttributes colorChannels[4];	// Color attributes laid out in this way : [ main, R, G, B ]
+layout(std140) uniform ColorBlock {
+	colorChannelAttributes attributes[4];	// Color attributes laid out in this way : [ main, R, G, B ]
+} colorChannels;
 
 // Evaluate the fragment with per-channel color scales :
 vec4 fragmentEvaluationSingleChannel(in uvec3 color);
@@ -111,7 +113,7 @@ vec3 phongComputation(vec4 position, vec3 normal, vec4 color, vec3 lightPos, vec
 
 #pragma include_color_shader;
 
-#line 2114
+#line 2116
 
 void main (void) {
 	sceneSpaceFragmentPos = vec4(.0,.0,.0,.0);

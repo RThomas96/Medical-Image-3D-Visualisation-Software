@@ -7,7 +7,7 @@
 
 #ifndef MAIN_SHADER_UNIT
 // The structure which defines every attributes for the color channels.
-layout(std140) struct colorChannelAttributes {
+struct colorChannelAttributes {
 	uint isVisible;			// /*align : ui64*/ Is this color channel enabled/visible ?
 	uint colorScaleIndex;	// /*align : ui64*/ The color channel to choose
 	uvec2 visibleBounds;	// /*align : vec4*/ The bounds of the visible values
@@ -16,14 +16,16 @@ layout(std140) struct colorChannelAttributes {
 
 uniform uint mainChannelIndex;						// The index of the main channel in the voxel data
 uniform sampler1D colorScales[4];					// All the color scales available (all encoded as 1D textures)
-uniform colorChannelAttributes colorChannels[4];	// Color attributes laid out in this way : [ main, R, G, B ]
+layout(std140) uniform ColorBlock {
+	colorChannelAttributes attributes[4];	// Color attributes laid out in this way : [ main, R, G, B ]
+} colorChannels;
 #endif
 
 /// Determines if the color channel is visible or not, given a certain value for the channel.
 bool isColorChannelVisible(in uint index, in uint value) {
-	return (colorChannels[index].isVisible > 0u) &&
-			( uint(colorChannels[index].visibleBounds.x) >= value &&
-			uint(colorChannels[index].visibleBounds.y) <= value );
+	return (colorChannels.attributes[index].isVisible > 0u) &&
+			( uint(colorChannels.attributes[index].visibleBounds.x) >= value &&
+			uint(colorChannels.attributes[index].visibleBounds.y) <= value );
 }
 
 vec4 colorizeFragmentSingleChannel(in uint color_channel_index, in uint value) {
@@ -31,25 +33,25 @@ vec4 colorizeFragmentSingleChannel(in uint color_channel_index, in uint value) {
 	// We're guaranteed to not only have the color channel activated, but also that
 	// the given value is _always_ within the visible bounds.
 
-	vec2 colorScaleBounds = colorChannels[color_channel_index].colorScaleBounds;
+	vec2 colorScaleBounds = colorChannels.attributes[color_channel_index].colorScaleBounds;
 	float normalized_value = float(value - colorScaleBounds.x) / float(colorScaleBounds.y - colorScaleBounds.x);
-	uint colorScaleIndex = colorChannels[color_channel_index].colorScaleIndex;
+	uint colorScaleIndex = colorChannels.attributes[color_channel_index].colorScaleIndex;
 	return texture(colorScales[colorScaleIndex], normalized_value);
 }
 
 vec4 fragmentEvaluationSingleChannel(in uvec3 color) {
 	// Get the main color's channel :
 	uint mainValue;
-	if (mainChannelIndex == 0) {
+	if (mainChannelIndex == 0u) {
 		mainValue = color.r;
-	} else if (mainChannelIndex == 1) {
+	} else if (mainChannelIndex == 1u) {
 		mainValue = color.g;
 	} else {
 		mainValue = color.b;
 	}
 
 	// Handy predefined uint for all color channels in uniforms :
-	uint main = 0, red = 1, green = 2, blue = 3;
+	uint main = 0u, red = 1u, green = 2u, blue = 3u;
 	// Precompute the visibility of all color channels :
 	bool visible_main  = isColorChannelVisible(main, mainValue);
 	bool visible_red   = isColorChannelVisible(red, color.r);

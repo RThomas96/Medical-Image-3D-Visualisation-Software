@@ -292,6 +292,17 @@ NewAPI_GridGLView::NewAPI_GridGLView(const Image::Grid::Ptr _grid) {
 	this->colorBounds1 = min;
 	this->boundingBoxColor = glm::vec3(.257, .257, .257);
 	this->defaultEpsilon = glm::vec3(1.f, 1.f, 1.f);
+
+	this->colorChannelAttributes.clear();
+	// Create three color channel attributes for the grid view :
+	this->colorChannelAttributes.emplace_back();
+	this->colorChannelAttributes.emplace_back();
+	this->colorChannelAttributes.emplace_back();
+
+	// hide unused channels :
+	for (std::size_t c = this->grid->getVoxelDimensionality(); c < 3; ++c) {
+		this->colorChannelAttributes[c].setHidden();
+	}
 }
 
 GridGLView::~GridGLView(void) { /* Nothing here for now. */ }
@@ -309,3 +320,45 @@ void colorChannelAttributes_GL::toggleVisible() {
 	if (this->isVisible > 0) { this->isVisible = 0; return; }
 	else { this->isVisible = 1; }
 }
+
+void colorChannelAttributes_GL::setVisible(bool v) {
+	this->isVisible = (v) ? 1 : 0;
+	return;
+}
+
+void colorChannelAttributes_GL::setHidden(bool v) {
+	this->isVisible = (v) ? 0 : 1;
+	return;
+}
+
+std::uint32_t colorChannelAttributes_GL::getVisibility() const { return this->isVisible; }
+
+void colorChannelAttributes_GL::setColorScale(std::uint32_t new_color_scale_index) {
+	this->colorScaleIndex = new_color_scale_index;
+}
+
+std::uint32_t colorChannelAttributes_GL::getColorScale() const { return this->colorScaleIndex; }
+
+void colorChannelAttributes_GL::setMinVisible(bound_t::value_type _new_min) {
+	this->visibleBounds.x = _new_min;
+	return;
+}
+
+void colorChannelAttributes_GL::setMaxVisible(bound_t::value_type _new_max) {
+	this->visibleBounds.y = _new_max;
+	return;
+}
+
+void colorChannelAttributes_GL::setMinColorScale(bound_t::value_type _new_min) {
+	this->colorScaleBounds.x = _new_min;
+	return;
+}
+
+void colorChannelAttributes_GL::setMaxColorScale(bound_t::value_type _new_max) {
+	this->colorScaleBounds.y = _new_max;
+	return;
+}
+
+colorChannelAttributes_GL::bound_t colorChannelAttributes_GL::getVisibleRange() const { return this->visibleBounds; }
+
+colorChannelAttributes_GL::bound_t colorChannelAttributes_GL::getColorRange() const { return this->colorScaleBounds; }

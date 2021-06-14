@@ -31,7 +31,7 @@ uniform bool showTex;		// Do we show the texture on the plane, or not ?
 uniform bool drawOnlyData;	// Should we draw only the data ? not any other plane ?
 
 // The structure which defines every attributes for the color channels.
-layout(std140) struct colorChannelAttributes {
+struct colorChannelAttributes {
 	uint isVisible;			// /*align : ui64*/ Is this color channel enabled/visible ?
 	uint colorScaleIndex;	// /*align : ui64*/ The color channel to choose
 	uvec2 visibleBounds;	// /*align : vec4*/ The bounds of the visible values
@@ -40,7 +40,9 @@ layout(std140) struct colorChannelAttributes {
 
 uniform uint mainChannelIndex;						// The index of the main channel in the voxel data
 uniform sampler1D colorScales[4];					// All the color scales available (all encoded as 1D textures)
-uniform colorChannelAttributes colorChannels[4];	// Color attributes laid out in this way : [ main, R, G, B ]
+layout(std140) uniform ColorBlock {
+	colorChannelAttributes attributes[4];	// Color attributes laid out in this way : [ main, R, G, B ]
+} colorChannels;
 
 uniform bool intersectPlanes = false;	// Should the planes intersect each other ? (hide other planes)
 
@@ -62,7 +64,7 @@ vec4 fragmentEvaluationSingleChannel(in uvec3 color);
 
 #pragma include_color_shader;
 
-#line 2065
+#line 2067
 
 /****************************************/
 /***************** Main *****************/

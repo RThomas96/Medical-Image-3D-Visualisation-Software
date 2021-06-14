@@ -193,6 +193,34 @@ struct GridGLView {
 		data_2 colorBounds1;
 };
 
+struct colorChannelAttributes_GL {
+	public:
+		typedef glm::tvec2<std::uint16_t> bound_t;
+	protected:
+		std::uint32_t isVisible;
+		std::uint32_t colorScaleIndex;
+		bound_t visibleBounds;
+		bound_t colorScaleBounds;
+	public:
+		colorChannelAttributes_GL(void);
+		~colorChannelAttributes_GL(void) = default;
+	public:
+		void toggleVisible();
+		void setVisible(bool v = true);
+		void setHidden(bool h = true);
+		std::uint32_t getVisibility() const;
+
+		void setColorScale(std::uint32_t new_color_scale_index);
+		std::uint32_t getColorScale(void) const;
+
+		void setMinVisible(bound_t::value_type _new_min);
+		void setMaxVisible(bound_t::value_type _new_max);
+		void setMinColorScale(bound_t::value_type _new_min);
+		void setMaxColorScale(bound_t::value_type _new_max);
+		bound_t getVisibleRange() const;
+		bound_t getColorRange() const;
+};
+
 
 /// @b Simple structure merging all resources necessary to view a grid in 3D.
 /// @details This structure must be associated to one grid, and one grid only. Thus, the pointer to the grid is defined
@@ -240,34 +268,9 @@ struct NewAPI_GridGLView {
 		/// @b The minimum and maximum values of the color scale
 		data_2 colorBounds0;
 		data_2 colorBounds1;
-};
 
-struct colorChannelAttributes_GL {
-	public:
-		typedef glm::tvec2<std::uint16_t> bound_t;
-	protected:
-		std::uint32_t isVisible;
-		std::uint32_t colorScaleIndex;
-		bound_t visibleBounds;
-		bound_t colorScaleBounds;
-	public:
-		colorChannelAttributes_GL(void);
-		~colorChannelAttributes_GL(void) = default;
-	public:
-		void toggleVisible();
-		void setVisible(bool v = true);
-		void setHidden(bool h = true);
-		std::uint32_t getVisibility() const;
-
-		void setColorScale(std::uint32_t new_color_scale_index);
-		std::uint32_t getColorScale(void) const;
-
-		void setMinVisible(bound_t::value_type _new_min);
-		void setMaxVisible(bound_t::value_type _new_max);
-		void setMinColorScale(bound_t::value_type _new_min);
-		void setMaxColorScale(bound_t::value_type _new_max);
-		bound_t getVisibleRange() const;
-		bound_t getColorRange() const;
+		/// @b The color channel attributes.
+		std::vector<colorChannelAttributes_GL> colorChannelAttributes;
 };
 
 #endif // VISUALIZATION_VIEWER_INCLUDE_VIEWER_STRUCTS_HPP_

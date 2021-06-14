@@ -773,11 +773,11 @@ void Scene::updateBoundingBox(void) {
 }
 
 void Scene::recompileShaders(bool verbose) {
-	GLuint newProgram = this->compileShaders("../shaders/voxelgrid.vert", "../shaders/voxelgrid.geom", "../shaders/voxelgrid.frag", verbose);
-	GLuint newPlaneProgram = this->compileShaders("../shaders/plane.vert", "", "../shaders/plane.frag", verbose);
-	GLuint newPlaneViewerProgram = this->compileShaders("../shaders/texture_explorer.vert", "", "../shaders/texture_explorer.frag", verbose);
-	GLuint newVolumetricProgram = this->compileShaders("../shaders/transfer_mesh.vert", "../shaders/transfer_mesh.geom", "../shaders/transfer_mesh.frag", verbose);
-	GLuint newBoundingBoxProgram = this->compileShaders("../shaders/bounding_box.vert", "", "../shaders/bounding_box.frag", verbose);
+	GLuint newProgram = this->compileShaders("../new_shaders/voxelgrid.vert", "../new_shaders/voxelgrid.geom", "../new_shaders/voxelgrid.frag", verbose);
+	GLuint newPlaneProgram = this->compileShaders("../new_shaders/plane.vert", "", "../new_shaders/plane.frag", verbose);
+	GLuint newPlaneViewerProgram = this->compileShaders("../new_shaders/texture_explorer.vert", "", "../new_shaders/texture_explorer.frag", verbose);
+	GLuint newVolumetricProgram = this->compileShaders("../new_shaders/transfer_mesh.vert", "../new_shaders/transfer_mesh.geom", "../new_shaders/transfer_mesh.frag", verbose);
+	GLuint newBoundingBoxProgram = this->compileShaders("../new_shaders/bounding_box.vert", "", "../new_shaders/bounding_box.frag", verbose);
 
 	if (newProgram) {
 		glDeleteProgram(this->programHandle_projectedTex);
@@ -843,7 +843,7 @@ GLuint Scene::compileShader(const std::string& path, const GLenum shaType, bool 
 
 	if (shaType == GL_FRAGMENT_SHADER) {
 		includeColorShader = true;
-		std::ifstream colFile = std::ifstream("../shaders/coloring.glsl", std::ios_base::in | std::ios_base::binary);
+		std::ifstream colFile = std::ifstream("../new_shaders/colorize_new_flow.glsl", std::ios_base::in | std::ios_base::binary);
 		if (!colFile.is_open()) {
 			std::cerr << "[" << __FILE__ << ":" << __LINE__ << "] Error : could not get the color shader loaded.\n";
 			return -1;
@@ -1795,7 +1795,7 @@ void Scene::newAPI_prepareUniforms_3DSolid(GLfloat *mvMat, GLfloat *pMat, glm::v
 			if (g >= 0) {
 				std::cerr << "[LOG]\tLocation [" << +g << "] for uniform " << name << '\n';
 			} else {
-				std::cerr << "[LOG]\tCannot find uniform " << name << "\n";
+				std::cerr << "[LOG]\tCannot find uniform \"" << name << "\"\n";
 			}
 		}
 		return g;
@@ -1804,6 +1804,8 @@ void Scene::newAPI_prepareUniforms_3DSolid(GLfloat *mvMat, GLfloat *pMat, glm::v
 	if (this->showVAOstate) {
 		LOG_ENTER(Scene::prepareUniforms_3DSolid);
 		std::cerr << "[LOG] Uniform locations for " << __FUNCTION__ << " : \n";
+		this->newSHADERS_print_all_uniforms(this->programHandle_projectedTex);
+		glUseProgram(this->programHandle_projectedTex);
 	}
 
 	// Get the uniform locations :
@@ -1894,6 +1896,85 @@ void Scene::newAPI_prepareUniforms_3DSolid(GLfloat *mvMat, GLfloat *pMat, glm::v
 	glUniformMatrix4fv(vMatrix_Loc, 1, GL_FALSE, &mvMat[0]);
 	glUniformMatrix4fv(pMatrix_Loc, 1, GL_FALSE, &pMat[0]);
 	glUniform4fv(lightPos_Loc, 1, glm::value_ptr(lightPos));
+
+	/**
+	 * NOTE : assumes the main color channel is always green, a.k.a. colorChannels[1]
+	 * Load all the available color channels in the shader program, using the discrete identifiers :
+	 */
+	GLint location_colorChannel0 =					getUniform("ColorBlock.attributes[0]");
+	GLint location_colorChannel0_isVisible =		getUniform("ColorBlock.attributes[0].isVisible");
+	GLint location_colorChannel0_colorScaleIndex =	getUniform("ColorBlock.attributes[0].colorScaleIndex");
+	GLint location_colorChannel0_visibleBounds =	getUniform("ColorBlock.attributes[0].visibleBounds");
+	GLint location_colorChannel0_colorScaleBounds =	getUniform("ColorBlock.attributes[0].colorScaleBounds");
+	glm::uvec2 view0 = glm::convert_to<std::uint32_t>(gridView->colorChannelAttributes[1].getVisibleRange());
+	glm::uvec2 color0 = glm::convert_to<std::uint32_t>(gridView->colorChannelAttributes[1].getColorRange());
+	glUniform1ui(location_colorChannel0_isVisible, gridView->colorChannelAttributes[1].getVisibility());
+	glUniform1ui(location_colorChannel0_colorScaleIndex, gridView->colorChannelAttributes[1].getColorScale());
+	glUniform2uiv(location_colorChannel0_visibleBounds, 1, glm::value_ptr(view0));
+	glUniform2uiv(location_colorChannel0_colorScaleBounds, 1, glm::value_ptr(color0));
+
+	GLint location_colorChannel1 =					getUniform("ColorBlock.attributes[1]");
+	GLint location_colorChannel1_isVisible =		getUniform("ColorBlock.attributes[1].isVisible");
+	GLint location_colorChannel1_colorScaleIndex =	getUniform("ColorBlock.attributes[1].colorScaleIndex");
+	GLint location_colorChannel1_visibleBounds =	getUniform("ColorBlock.attributes[1].visibleBounds");
+	GLint location_colorChannel1_colorScaleBounds =	getUniform("ColorBlock.attributes[1].colorScaleBounds");
+	glm::uvec2 view1 = glm::convert_to<std::uint32_t>(gridView->colorChannelAttributes[0].getVisibleRange());
+	glm::uvec2 color1 = glm::convert_to<std::uint32_t>(gridView->colorChannelAttributes[0].getColorRange());
+	glUniform1ui(location_colorChannel1_isVisible, gridView->colorChannelAttributes[0].getVisibility());
+	glUniform1ui(location_colorChannel1_colorScaleIndex, gridView->colorChannelAttributes[0].getColorScale());
+	glUniform2uiv(location_colorChannel1_visibleBounds, 1, glm::value_ptr(view1));
+	glUniform2uiv(location_colorChannel1_colorScaleBounds, 1, glm::value_ptr(color1));
+
+	GLint location_colorChannel2 =					getUniform("ColorBlock.attributes[2]");
+	GLint location_colorChannel2_isVisible =		getUniform("ColorBlock.attributes[2].isVisible");
+	GLint location_colorChannel2_colorScaleIndex =	getUniform("ColorBlock.attributes[2].colorScaleIndex");
+	GLint location_colorChannel2_visibleBounds =	getUniform("ColorBlock.attributes[2].visibleBounds");
+	GLint location_colorChannel2_colorScaleBounds =	getUniform("ColorBlock.attributes[2].colorScaleBounds");
+	glm::uvec2 view2 = glm::convert_to<std::uint32_t>(gridView->colorChannelAttributes[1].getVisibleRange());
+	glm::uvec2 color2 = glm::convert_to<std::uint32_t>(gridView->colorChannelAttributes[1].getColorRange());
+	glUniform1ui(location_colorChannel2_isVisible, gridView->colorChannelAttributes[1].getVisibility());
+	glUniform1ui(location_colorChannel2_colorScaleIndex, gridView->colorChannelAttributes[1].getColorScale());
+	glUniform2uiv(location_colorChannel2_visibleBounds, 1, glm::value_ptr(view2));
+	glUniform2uiv(location_colorChannel2_colorScaleBounds, 1, glm::value_ptr(color2));
+
+	GLint location_colorChannel3 =					getUniform("ColorBlock.attributes[3]");
+	GLint location_colorChannel3_isVisible =		getUniform("ColorBlock.attributes[3].isVisible");
+	GLint location_colorChannel3_colorScaleIndex =	getUniform("ColorBlock.attributes[3].colorScaleIndex");
+	GLint location_colorChannel3_visibleBounds =	getUniform("ColorBlock.attributes[3].visibleBounds");
+	GLint location_colorChannel3_colorScaleBounds =	getUniform("ColorBlock.attributes[3].colorScaleBounds");
+	glm::uvec2 view3 = glm::convert_to<std::uint32_t>(gridView->colorChannelAttributes[2].getVisibleRange());
+	glm::uvec2 color3 = glm::convert_to<std::uint32_t>(gridView->colorChannelAttributes[2].getColorRange());
+	glUniform1ui(location_colorChannel3_isVisible, gridView->colorChannelAttributes[2].getVisibility());
+	glUniform1ui(location_colorChannel3_colorScaleIndex, gridView->colorChannelAttributes[2].getColorScale());
+	glUniform2uiv(location_colorChannel3_visibleBounds, 1, glm::value_ptr(view3));
+	glUniform2uiv(location_colorChannel3_colorScaleBounds, 1, glm::value_ptr(color3));
+
+	if (this->showVAOstate) {
+		this->printAllUniforms(this->programHandle_projectedTex);
+	}
+}
+
+void Scene::printAllUniforms(GLuint _shader_program) {
+	GLint i;
+	GLint count; // count of how many variables are there
+
+	GLint size; // size of the variable
+	GLenum type; // type of the variable (float, vec3 or mat4, etc)
+
+	const GLsizei bufSize = 64; // maximum name length
+	GLchar name[bufSize]; // variable name in GLSL
+	GLsizei length; // name length
+
+	glGetProgramiv(_shader_program, GL_ACTIVE_UNIFORMS, &count);
+	fprintf(stderr, "Active Uniforms: %d\n", count);
+
+	for (i = 0; i < count; i++)
+	{
+		glGetActiveUniform(_shader_program, (GLuint)i, bufSize, &length, &size, &type, name);
+
+		fprintf(stderr, "Uniform #%d Type: %u Name: %s\n", i, type, name);
+	}
+
 }
 
 void Scene::prepareUniforms_3DPlane(GLfloat *mvMat, GLfloat *pMat, planes _plane, const GridGLView::Ptr& grid, bool showTexOnPlane) {
@@ -2836,6 +2917,37 @@ void Scene::newAPI_drawGrid(GLfloat *mvMat, GLfloat *pMat, glm::mat4 baseMatrix,
 
 	// No matter the grid's state, print the bounding box :
 	this->drawBoundingBox(grid->grid->getBoundingBox(), grid->boundingBoxColor, mvMat, pMat);
+}
+
+void Scene::newSHADERS_print_all_uniforms(GLuint _shader_program) {
+	// Assume the program used is the right one :
+	glUseProgram(_shader_program);
+	GLuint uni_block = glGetUniformBlockIndex(_shader_program, "ColorBlock");
+	if (uni_block == GL_INVALID_INDEX) {
+		std::cerr << "Color block uniform has an invalid index\n";
+	} else {
+		std::cerr << "Color block binding is : " << uni_block << '\n';
+	}
+	std::cerr << "Color attributes uniforms :\n";
+
+	std::string baseArrayName = "ColorBlock.attributes";
+	std::string uniformArrayName = "";
+	for (std::size_t i = 0; i < 4; ++i) {
+		uniformArrayName = baseArrayName + '[' + std::to_string(i) + ']';
+		GLint block_loc = glGetUniformLocation(_shader_program, (uniformArrayName).c_str());
+		GLint uni_visible = glGetUniformLocation(_shader_program, (uniformArrayName+".isVisible").c_str());
+		GLint uni_index = glGetUniformLocation(_shader_program, (uniformArrayName+".colorScaleIndex").c_str());
+		GLint uni_visbounds = glGetUniformLocation(_shader_program, (uniformArrayName+".visibleBounds").c_str());
+		GLint uni_colorBounds = glGetUniformLocation(_shader_program, (uniformArrayName+".colorScaleBounds").c_str());
+		std::cerr << "\t" << uniformArrayName << " = " << block_loc << " {\n";
+		std::cerr << "\t\t.isVisible = " << uni_visible << ",\n";
+		std::cerr << "\t\t.colorScaleIndex = " << uni_index << ",\n";
+		std::cerr << "\t\t.visibleBounds = " << uni_visbounds << ",\n";
+		std::cerr << "\t\t.colorScaleBounds = " << uni_colorBounds << "\n";
+		std::cerr << "\t},\n";
+	}
+	std::cerr << "Ending of new color uniforms\n";
+	glUseProgram(0);
 }
 
 void Scene::draw3DView(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, bool showTexOnPlane) {

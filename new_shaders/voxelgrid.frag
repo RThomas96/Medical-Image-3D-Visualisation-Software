@@ -7,6 +7,14 @@
 // Signals we're in the main shader, for any shaders inserted into this one.
 #define MAIN_SHADER_UNIT
 
+// The structure which defines every attributes for the color channels.
+struct colorChannelAttributes {
+	uint isVisible;			// /*align : ui64*/ Is this color channel enabled/visible ?
+	uint colorScaleIndex;	// /*align : ui64*/ The color channel to choose
+	uvec2 visibleBounds;	// /*align : vec4*/ The bounds of the visible values
+	uvec2 colorScaleBounds;	// /*align : vec4*/ The value bounds for the color scale
+};
+
 in vec4 vPos_WS;
 in vec4 vNorm_WS;
 in vec3 texCoord;
@@ -41,17 +49,11 @@ uniform vec3 voxelGridOrigin;
 uniform vec3 voxelGridSize;
 uniform vec3 voxelSize;
 
-// The structure which defines every attributes for the color channels.
-layout(std140) struct colorChannelAttributes {
-	uint isVisible;			// /*align : ui64*/ Is this color channel enabled/visible ?
-	uint colorScaleIndex;	// /*align : ui64*/ The color channel to choose
-	uvec2 visibleBounds;	// /*align : vec4*/ The bounds of the visible values
-	uvec2 colorScaleBounds;	// /*align : vec4*/ The value bounds for the color scale
-};
-
 uniform uint mainChannelIndex;						// The index of the main channel in the voxel data
 uniform sampler1D colorScales[4];					// All the color scales available (all encoded as 1D textures)
-uniform colorChannelAttributes colorChannels[4];	// Color attributes laid out in this way : [ main, R, G, B ]
+layout(std140) uniform ColorBlock {
+	colorChannelAttributes attributes[4];	// Color attributes laid out in this way : [ main, R, G, B ]
+} colorChannels;
 
 // Get a plane's coordinate in its axis.
 float planeIdxToPlanePosition(int id);
@@ -64,7 +66,7 @@ vec4 fragmentEvaluationSingleChannel(in uvec3 color);
 
 #pragma include_color_shader;
 
-#line 2067
+#line 2069
 
 void main(void)
 {
