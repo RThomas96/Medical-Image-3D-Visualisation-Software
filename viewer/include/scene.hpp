@@ -330,6 +330,8 @@ class Scene : public QOpenGLFunctions_3_2_Core {
 		void updateBoundingBox(void);
 		void updateVisuBoxCoordinates(void);
 
+		void initialize_limits(void);
+
 		/*************************************/
 		/*************************************/
 		/****** TEXTURE3D VISUALIZATION ******/
@@ -433,6 +435,10 @@ class Scene : public QOpenGLFunctions_3_2_Core {
 
 		GLuint texHandle_colorScale_greyscale;
 		GLuint texHandle_colorScale_hsv2rgb;
+		GLuint texHandle_colorScale_user0;
+		GLuint texHandle_colorScale_user1;
+
+		void generateColorScales();
 
 		/********************************************/
 		/* Threaded loading of high-resolution grid */
@@ -448,6 +454,11 @@ class Scene : public QOpenGLFunctions_3_2_Core {
 		void replaceGridsWithHighRes();
 
 		void printAllUniforms(GLuint _shader_program);
+
+		/********************************************/
+		/*    Keeps track of the limits of the GL   */
+		/********************************************/
+		GLint gl_limit_max_texture_size;
 };
 
 /// @brief Type-safe conversion of enum values to unsigned ints.

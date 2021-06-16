@@ -176,6 +176,9 @@ void Scene::initGl(QOpenGLContext* _context) {
 	// The default parameters have already been set in the constructor. We
 	// need to initialize the OpenGL objects now. Shaders, VAOs, VBOs.
 
+	this->initialize_limits();
+	this->generateColorScales();
+
 	// Compile the shaders :
 	this->recompileShaders(false);
 
@@ -187,6 +190,84 @@ void Scene::initGl(QOpenGLContext* _context) {
 	this->texHandle_ColorScaleGrid = 0;
 	this->generateColorScale();
 	this->uploadColorScale();
+}
+
+void Scene::initialize_limits() {
+	this->gl_limit_max_texture_size = 0;
+
+	glGetIntegerv(GL_MAX_3D_TEXTURE_SIZE, &gl_limit_max_texture_size);
+	std::cerr << "Info : max texture size was set to : " << this->gl_limit_max_texture_size << "\n";
+
+	return;
+}
+
+void Scene::generateColorScales() {
+	TextureUpload colorScaleUploadParameters;
+
+	std::size_t textureSize = this->gl_limit_max_texture_size/2u;
+	float textureSize_f = static_cast<float>(this->gl_limit_max_texture_size/2u);
+
+	std::vector<glm::vec3> colorScaleData_greyscale(textureSize);
+	std::vector<glm::vec3> colorScaleData_hsv2rgb(textureSize);
+	std::vector<glm::vec3> colorScaleData_user0(textureSize);
+	std::vector<glm::vec3> colorScaleData_user1(textureSize);
+
+	// Generate the greyscale :
+	for (std::size_t i = 0; i < textureSize; ++i) {
+		float intensity = static_cast<float>(i) / textureSize_f;
+		glm::vec3 currentGreyscale(intensity, intensity, intensity);
+		colorScaleData_greyscale[i] = currentGreyscale;
+	}
+
+	std::cerr << "Generated data for the greyscale color scale\n";
+
+	// Generate the HSV2RGB :
+	for (std::size_t i = 0; i < textureSize; ++i) {
+		glm::vec3 hsv = glm::vec3 (float(i)/textureSize_f, 1., 1.);
+		hsv.x = glm::mod( 100.0 + hsv.x, 1.0 ); // Ensure [0,1[
+		float   HueSlice = 6.0 * hsv.x; // In [0,6[
+		float   HueSliceInteger = floor( HueSlice );
+		float   HueSliceInterpolant = HueSlice - HueSliceInteger; // In [0,1[ for each hue slice
+		glm::vec3 TempRGB = glm::vec3(   hsv.z * (1.0 - hsv.y), hsv.z * (1.0 - hsv.y * HueSliceInterpolant), hsv.z * (1.0 - hsv.y * (1.0 - HueSliceInterpolant)) );
+		float   IsOddSlice = glm::mod( HueSliceInteger, 2.0f ); // 0 if even (slices 0, 2, 4), 1 if odd (slices 1, 3, 5)
+		float   ThreeSliceSelector = 0.5 * (HueSliceInteger - IsOddSlice); // (0, 1, 2) corresponding to slices (0, 2, 4) and (1, 3, 5)
+		glm::vec3    ScrollingRGBForEvenSlices = glm::vec3( hsv.z, TempRGB.z, TempRGB.x );           // (V, Temp Blue, Temp Red) for even slices (0, 2, 4)
+		glm::vec3    ScrollingRGBForOddSlices = glm::vec3( TempRGB.y, hsv.z, TempRGB.x );  // (Temp Green, V, Temp Red) for odd slices (1, 3, 5)
+		glm::vec3    ScrollingRGB = mix( ScrollingRGBForEvenSlices, ScrollingRGBForOddSlices, IsOddSlice );
+		float   IsNotFirstSlice = glm::clamp( ThreeSliceSelector, 0.0f, 1.0f );                   // 1 if NOT the first slice (true for slices 1 and 2)
+		float   IsNotSecondSlice = glm::clamp( ThreeSliceSelector-1.0f, 0.0f,1.f );              // 1 if NOT the first or second slice (true only for slice 2)
+		colorScaleData_hsv2rgb[i] = glm::vec4(glm::mix(glm::vec3(ScrollingRGB), glm::mix(
+									glm::vec3(ScrollingRGB.z, ScrollingRGB.x, ScrollingRGB.y),
+									glm::vec3(ScrollingRGB.y, ScrollingRGB.z, ScrollingRGB.x),
+									IsNotSecondSlice),IsNotFirstSlice),1.f);    // Make the RGB rotate right depending on final slice index
+	}
+
+	std::cerr << "Generated data for the HSV2RGB color scale" << '\n';
+
+
+	colorScaleUploadParameters.minmag.x = GL_LINEAR;
+	colorScaleUploadParameters.minmag.y = GL_LINEAR;
+	colorScaleUploadParameters.lod.y = -1000.f;
+	colorScaleUploadParameters.wrap.x = GL_CLAMP_TO_EDGE;
+	colorScaleUploadParameters.wrap.y = GL_CLAMP_TO_EDGE;
+	colorScaleUploadParameters.wrap.z = GL_CLAMP_TO_EDGE;
+	colorScaleUploadParameters.swizzle.r = GL_RED;
+	colorScaleUploadParameters.swizzle.g = GL_GREEN;
+	colorScaleUploadParameters.swizzle.b = GL_BLUE;
+	colorScaleUploadParameters.swizzle.a = GL_ONE;
+
+	colorScaleUploadParameters.level = 0;
+	colorScaleUploadParameters.internalFormat = GL_RGB;
+	colorScaleUploadParameters.size.x = textureSize;
+	colorScaleUploadParameters.size.y = 1;
+	colorScaleUploadParameters.size.z = 1;
+	colorScaleUploadParameters.format = GL_RGB;
+	colorScaleUploadParameters.type = GL_FLOAT;
+	colorScaleUploadParameters.data = colorScaleData_greyscale.data();
+	this->texHandle_colorScale_greyscale = this->uploadTexture1D(colorScaleUploadParameters);
+
+	colorScaleUploadParameters.data = colorScaleData_hsv2rgb.data();
+	this->texHandle_colorScale_greyscale = this->uploadTexture1D(colorScaleUploadParameters);
 }
 
 void Scene::addOpenGLOutput(OpenGLDebugLog* glLog) {
