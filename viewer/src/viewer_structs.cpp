@@ -293,16 +293,23 @@ NewAPI_GridGLView::NewAPI_GridGLView(const Image::Grid::Ptr _grid) {
 	this->boundingBoxColor = glm::vec3(.257, .257, .257);
 	this->defaultEpsilon = glm::vec3(1.f, 1.f, 1.f);
 
-	this->colorChannelAttributes.clear();
-	// Create three color channel attributes for the grid view :
-	this->colorChannelAttributes.emplace_back();
-	this->colorChannelAttributes.emplace_back();
-	this->colorChannelAttributes.emplace_back();
+	// Fill with default attributes
+	this->colorChannelAttributes.fill(colorChannelAttributes_GL{});
 
 	// hide unused channels :
 	for (std::size_t c = this->grid->getVoxelDimensionality(); c < 3; ++c) {
 		this->colorChannelAttributes[c].setHidden();
 	}
+}
+
+colorChannelAttributes_GL& NewAPI_GridGLView::mainColorChannelAttributes() {
+	return this->colorChannelAttributes[this->mainColorChannel];
+}
+
+void NewAPI_GridGLView::setMainColorChannel(std::size_t color_channel) {
+	assert((color_channel < 3) && "color channel was not under 3");
+
+	this->mainColorChannel = color_channel;
 }
 
 GridGLView::~GridGLView(void) { /* Nothing here for now. */ }

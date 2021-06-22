@@ -184,6 +184,11 @@ class Scene : public QOpenGLFunctions_3_2_Core {
 		/// @b Set the color of the beginning of the color segment for the segmented color scale
 		void setColor1Alternate(qreal r, qreal g, qreal b);
 
+		/// @b Create a uniform buffer of size `size_bytes` and fill it with null data.
+		GLuint createUniformBuffer(std::size_t size_bytes, GLenum draw_mode);
+		/// @b Overwrite data at position 'begin_bytes' with 'size_bytes' of 'data'.
+		void setUniformBufferData(GLuint uniform_buffer, std::size_t begin_bytes, std::size_t size_bytes, GLvoid* data);
+
 		/// @brief Set X's plane displacement within the bounding box to be `scalar`
 		void slotSetPlaneDisplacementX(float scalar);
 		/// @brief Set Y's plane displacement within the bounding box to be `scalar`
@@ -285,6 +290,8 @@ class Scene : public QOpenGLFunctions_3_2_Core {
 		/// @b Signals to update user-defined color scales whenever is next appropriate.
 		void signal_updateUserColorScales();
 
+		void newSHADERS_updateUBOData();
+
 		/// @b preps uniforms for a grid
 		void prepareUniforms_3DSolid(GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, const GridGLView::Ptr& grid);
 		void newAPI_prepareUniforms_3DSolid(GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, const NewAPI_GridGLView::Ptr& grid);
@@ -324,6 +331,9 @@ class Scene : public QOpenGLFunctions_3_2_Core {
 
 		/// @b Updates the visibility array to only show values between the min and max tex values
 		void updateVis();
+
+		/// @b Updates the color and visibility ranges for all visible grids.
+		void updateCVR();
 
 		/// @b Creates the VBO/VAO handles for bounding boxes
 		void createBoundingBoxBuffers();
@@ -443,9 +453,11 @@ class Scene : public QOpenGLFunctions_3_2_Core {
 		GLuint texHandle_colorScale_user0;
 		GLuint texHandle_colorScale_user1;
 
+		/// @b Generate the default color scales' data, and upload them.
 		void generateColorScales();
 
-		bool shouldUpdateUserColorScales;
+		bool shouldUpdateUserColorScales; ///< Should we update the color scale data next drawcall ?
+		bool shouldUpdateUBOData; ///< Should we update all UBO data next drawcall ?
 
 		/********************************************/
 		/* Threaded loading of high-resolution grid */
@@ -460,6 +472,10 @@ class Scene : public QOpenGLFunctions_3_2_Core {
 		bool isFinishedLoading;
 		void replaceGridsWithHighRes();
 
+		/// @b Prints all uniforms contained in the compiled program.
+		/// @details  Simple print debug for a shader's uniforms, notably to see which uniforms are available after
+		/// the GLSL compiler's optimization. Also prints all subparts of uniforms (array indices for arrays, and
+		/// fields for user-defined structs). Does _not_ print the attributes.
 		void printAllUniforms(GLuint _shader_program);
 
 		/********************************************/

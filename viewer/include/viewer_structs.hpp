@@ -193,14 +193,14 @@ struct GridGLView {
 		data_2 colorBounds1;
 };
 
-struct colorChannelAttributes_GL {
+struct alignas(32) colorChannelAttributes_GL {
 	public:
-		typedef glm::tvec2<std::uint16_t> bound_t;
+		typedef glm::tvec2<std::uint32_t> bound_t;
 	protected:
-		std::uint32_t isVisible;
-		std::uint32_t colorScaleIndex;
-		bound_t visibleBounds;
-		bound_t colorScaleBounds;
+		alignas(alignof(std::uint32_t)) std::uint32_t isVisible;
+		alignas(alignof(std::uint32_t)) std::uint32_t colorScaleIndex;
+		alignas(alignof(bound_t))		bound_t visibleBounds;
+		alignas(alignof(bound_t))		bound_t colorScaleBounds;
 	public:
 		colorChannelAttributes_GL(void);
 		~colorChannelAttributes_GL(void) = default;
@@ -241,6 +241,11 @@ struct NewAPI_GridGLView {
 		NewAPI_GridGLView& operator= (NewAPI_GridGLView&&) = default;
 		/// @b Default destructor of the NewAPI_GridGLView struct.
 		~NewAPI_GridGLView(void) = default;
+
+		/// @b Sets the main color channel for this grid view
+		void setMainColorChannel(std::size_t index);
+		/// @b Gets the attributes of the main color channel
+		colorChannelAttributes_GL& mainColorChannelAttributes();
 	public:
 		using data_t = DiscreteGrid::data_t;
 		using data_2 = glm::vec<2, data_t, glm::defaultp>;
@@ -268,9 +273,14 @@ struct NewAPI_GridGLView {
 		/// @b The minimum and maximum values of the color scale
 		data_2 colorBounds0;
 		data_2 colorBounds1;
-
+		/// @b Handle for the uniform buffer with the channel attributes
+		GLuint uboHandle_colorAttributes;
 		/// @b The color channel attributes.
-		std::vector<colorChannelAttributes_GL> colorChannelAttributes;
+		std::array<colorChannelAttributes_GL, 3> colorChannelAttributes;
+	protected:
+		/// @b The index of the main color channel.
+		/// @details Protected so as not to accidentally set it to something invalid during runtime.
+		std::size_t mainColorChannel;
 };
 
 #endif // VISUALIZATION_VIEWER_INCLUDE_VIEWER_STRUCTS_HPP_

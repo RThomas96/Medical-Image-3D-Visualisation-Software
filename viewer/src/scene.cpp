@@ -129,6 +129,7 @@ Scene::Scene() {
 	this->timer_refreshProgress = nullptr;
 	this->isFinishedLoading = false;
 	this->shouldUpdateUserColorScales = false;
+	this->shouldUpdateUBOData = false;
 }
 
 Scene::~Scene(void) {
@@ -717,6 +718,14 @@ void Scene::newAPI_addGrid(Image::Grid::Ptr gridLoaded) {
 
 	gridView->boundingBoxColor = glm::vec3(.4, .6, .3); // olive-colored by default
 	gridView->nbChannels = 2; // loaded 2 channels in the image
+
+	// Create the uniform buffer :
+	auto mainColorChannel  = gridView->mainColorChannelAttributes();
+	gridView->uboHandle_colorAttributes = this->createUniformBuffer(4*sizeof(colorChannelAttributes_GL), GL_STATIC_DRAW);
+	this->setUniformBufferData(gridView->uboHandle_colorAttributes, 0, 32, &mainColorChannel);
+	this->setUniformBufferData(gridView->uboHandle_colorAttributes, 32, 32, &gridView->colorChannelAttributes[0]);
+	this->setUniformBufferData(gridView->uboHandle_colorAttributes, 64, 32, &gridView->colorChannelAttributes[1]);
+	this->setUniformBufferData(gridView->uboHandle_colorAttributes, 96, 32, &gridView->colorChannelAttributes[2]);
 
 	this->newAPI_tex3D_buildMesh(gridView, "");
 	this->tex3D_buildVisTexture(gridView->volumetricMesh);
@@ -1982,57 +1991,69 @@ void Scene::newAPI_prepareUniforms_3DSolid(GLfloat *mvMat, GLfloat *pMat, glm::v
 	 * NOTE : assumes the main color channel is always green, a.k.a. colorChannels[1]
 	 * Load all the available color channels in the shader program, using the discrete identifiers :
 	 */
-	GLint location_colorChannel0 =					getUniform("ColorBlock.attributes[0]");
-	GLint location_colorChannel0_isVisible =		getUniform("ColorBlock.attributes[0].isVisible");
-	GLint location_colorChannel0_colorScaleIndex =	getUniform("ColorBlock.attributes[0].colorScaleIndex");
-	GLint location_colorChannel0_visibleBounds =	getUniform("ColorBlock.attributes[0].visibleBounds");
-	GLint location_colorChannel0_colorScaleBounds =	getUniform("ColorBlock.attributes[0].colorScaleBounds");
-	glm::uvec2 view0 = glm::convert_to<std::uint32_t>(gridView->colorChannelAttributes[1].getVisibleRange());
-	glm::uvec2 color0 = glm::convert_to<std::uint32_t>(gridView->colorChannelAttributes[1].getColorRange());
-	glUniform1ui(location_colorChannel0_isVisible, gridView->colorChannelAttributes[1].getVisibility());
-	glUniform1ui(location_colorChannel0_colorScaleIndex, gridView->colorChannelAttributes[1].getColorScale());
-	glUniform2uiv(location_colorChannel0_visibleBounds, 1, glm::value_ptr(view0));
-	glUniform2uiv(location_colorChannel0_colorScaleBounds, 1, glm::value_ptr(color0));
-
-	GLint location_colorChannel1 =					getUniform("ColorBlock.attributes[1]");
-	GLint location_colorChannel1_isVisible =		getUniform("ColorBlock.attributes[1].isVisible");
-	GLint location_colorChannel1_colorScaleIndex =	getUniform("ColorBlock.attributes[1].colorScaleIndex");
-	GLint location_colorChannel1_visibleBounds =	getUniform("ColorBlock.attributes[1].visibleBounds");
-	GLint location_colorChannel1_colorScaleBounds =	getUniform("ColorBlock.attributes[1].colorScaleBounds");
-	glm::uvec2 view1 = glm::convert_to<std::uint32_t>(gridView->colorChannelAttributes[0].getVisibleRange());
-	glm::uvec2 color1 = glm::convert_to<std::uint32_t>(gridView->colorChannelAttributes[0].getColorRange());
-	glUniform1ui(location_colorChannel1_isVisible, gridView->colorChannelAttributes[0].getVisibility());
-	glUniform1ui(location_colorChannel1_colorScaleIndex, gridView->colorChannelAttributes[0].getColorScale());
-	glUniform2uiv(location_colorChannel1_visibleBounds, 1, glm::value_ptr(view1));
-	glUniform2uiv(location_colorChannel1_colorScaleBounds, 1, glm::value_ptr(color1));
-
-	GLint location_colorChannel2 =					getUniform("ColorBlock.attributes[2]");
-	GLint location_colorChannel2_isVisible =		getUniform("ColorBlock.attributes[2].isVisible");
-	GLint location_colorChannel2_colorScaleIndex =	getUniform("ColorBlock.attributes[2].colorScaleIndex");
-	GLint location_colorChannel2_visibleBounds =	getUniform("ColorBlock.attributes[2].visibleBounds");
-	GLint location_colorChannel2_colorScaleBounds =	getUniform("ColorBlock.attributes[2].colorScaleBounds");
-	glm::uvec2 view2 = glm::convert_to<std::uint32_t>(gridView->colorChannelAttributes[1].getVisibleRange());
-	glm::uvec2 color2 = glm::convert_to<std::uint32_t>(gridView->colorChannelAttributes[1].getColorRange());
-	glUniform1ui(location_colorChannel2_isVisible, gridView->colorChannelAttributes[1].getVisibility());
-	glUniform1ui(location_colorChannel2_colorScaleIndex, gridView->colorChannelAttributes[1].getColorScale());
-	glUniform2uiv(location_colorChannel2_visibleBounds, 1, glm::value_ptr(view2));
-	glUniform2uiv(location_colorChannel2_colorScaleBounds, 1, glm::value_ptr(color2));
-
-	GLint location_colorChannel3 =					getUniform("ColorBlock.attributes[3]");
-	GLint location_colorChannel3_isVisible =		getUniform("ColorBlock.attributes[3].isVisible");
-	GLint location_colorChannel3_colorScaleIndex =	getUniform("ColorBlock.attributes[3].colorScaleIndex");
-	GLint location_colorChannel3_visibleBounds =	getUniform("ColorBlock.attributes[3].visibleBounds");
-	GLint location_colorChannel3_colorScaleBounds =	getUniform("ColorBlock.attributes[3].colorScaleBounds");
-	glm::uvec2 view3 = glm::convert_to<std::uint32_t>(gridView->colorChannelAttributes[2].getVisibleRange());
-	glm::uvec2 color3 = glm::convert_to<std::uint32_t>(gridView->colorChannelAttributes[2].getColorRange());
-	glUniform1ui(location_colorChannel3_isVisible, gridView->colorChannelAttributes[2].getVisibility());
-	glUniform1ui(location_colorChannel3_colorScaleIndex, gridView->colorChannelAttributes[2].getColorScale());
-	glUniform2uiv(location_colorChannel3_visibleBounds, 1, glm::value_ptr(view3));
-	glUniform2uiv(location_colorChannel3_colorScaleBounds, 1, glm::value_ptr(color3));
+	const GLchar uniform_block_name[] = "ColorBlock";
+	GLuint colorBlock_index = glGetUniformBlockIndex(this->programHandle_projectedTex, uniform_block_name);
+	glUniformBlockBinding(this->programHandle_projectedTex, colorBlock_index, 0);
+	glBindBufferBase(GL_UNIFORM_BUFFER, 0, gridView->uboHandle_colorAttributes);
 
 	if (this->showVAOstate) {
 		this->printAllUniforms(this->programHandle_projectedTex);
+
+		GLuint uni_size = 4;
+		std::array<const char*, 4> uni_names = { "ColorBlock.attributes[0]", "ColorBlock.attributes[1]", "ColorBlock.attributes[2]", "ColorBlock.attributes[3]"};
+		std::array<GLuint, 4> uni_indices = {0, 0, 0, 0};
+		// Get indices :
+		glGetUniformIndices(this->programHandle_projectedTex, uni_size, uni_names.data(), uni_indices.data());
+		for (std::size_t i = 0; i < uni_size; ++i) {
+			std::cerr << "Uniform " << i << " named " << uni_names[i] << " at index : " <<
+					(uni_indices[i] == GL_INVALID_INDEX ? std::to_string(uni_indices[i]) : "<invalid index>") << "\n";
+		}
+
+		const GLchar uniform_block_name[] = "ColorBlock";
+		GLuint blkidx = glGetUniformBlockIndex(this->programHandle_projectedTex, uniform_block_name);
+		if (blkidx == GL_INVALID_INDEX) {
+			std::cerr << "ERROR : Invalid block index for uniform \'" << uniform_block_name << "\'\n";
+		} else {
+			GLint binding = 0, size = 0, name_length = 0, active_uniforms = 0, ref_by_frag = 0;
+			std::vector<GLint> uniform_indices;
+			glGetActiveUniformBlockiv(this->programHandle_projectedTex, blkidx, GL_UNIFORM_BLOCK_BINDING, &binding);
+			glGetActiveUniformBlockiv(this->programHandle_projectedTex, blkidx, GL_UNIFORM_BLOCK_DATA_SIZE, &size);
+			glGetActiveUniformBlockiv(this->programHandle_projectedTex, blkidx, GL_UNIFORM_BLOCK_NAME_LENGTH, &name_length);
+			glGetActiveUniformBlockiv(this->programHandle_projectedTex, blkidx, GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &active_uniforms);
+			glGetActiveUniformBlockiv(this->programHandle_projectedTex, blkidx, GL_UNIFORM_BLOCK_REFERENCED_BY_FRAGMENT_SHADER, &ref_by_frag);
+			std::cerr << "[LOG] Uniform block data :\n";
+			std::cerr << "[LOG]\t- binding : " << binding << '\n';
+			std::cerr << "[LOG]\t- size : " << size << '\n';
+			std::cerr << "[LOG]\t- uniform name length : " << name_length << '\n';
+			std::cerr << "[LOG]\t- referenced in fragment shader : " << ref_by_frag << '\n';
+			std::cerr << "[LOG]\t- # of active uniforms : " << active_uniforms << '\n';
+			if (active_uniforms) {
+				uniform_indices.resize(active_uniforms);
+				glGetActiveUniformBlockiv(this->programHandle_projectedTex, blkidx, GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, uniform_indices.data());
+				std::cerr << "[LOG]\t\t- { ";
+				for (const auto& index : uniform_indices) { std::cerr << index << ' '; }
+				std::cerr << "}\n";
+			}
+		}
 	}
+}
+
+GLuint Scene::createUniformBuffer(std::size_t size_bytes, GLenum draw_mode) {
+	GLuint uniform_to_create = 0;
+	glGenBuffers(1, &uniform_to_create);
+	glBindBuffer(GL_UNIFORM_BUFFER, uniform_to_create);
+	glBufferData(GL_UNIFORM_BUFFER, size_bytes, NULL, draw_mode);
+	if (glIsBuffer(uniform_to_create) == GL_FALSE) {
+		std::cerr << "Error : tried to create a " << size_bytes << " bytes buffer but failed.\n";
+		uniform_to_create = 0;
+	}
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+	return uniform_to_create;
+}
+
+void Scene::setUniformBufferData(GLuint uniform_buffer, std::size_t begin_bytes, std::size_t size_bytes, GLvoid *data) {
+	glBindBuffer(GL_UNIFORM_BUFFER, uniform_buffer);
+	glBufferSubData(GL_UNIFORM_BUFFER, begin_bytes, size_bytes, data);
 }
 
 void Scene::printAllUniforms(GLuint _shader_program) {
@@ -2052,8 +2073,7 @@ void Scene::printAllUniforms(GLuint _shader_program) {
 	for (i = 0; i < count; i++)
 	{
 		glGetActiveUniform(_shader_program, (GLuint)i, bufSize, &length, &size, &type, name);
-
-		fprintf(stderr, "Uniform #%d Type: %u Name: %s\n", i, type, name);
+		fprintf(stderr, "\t- Uniform #%d : \"%s\"\n", i, name);
 	}
 
 }
@@ -3041,15 +3061,10 @@ void Scene::draw3DView(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, bool sho
 		this->generateColorScale();
 		this->uploadColorScale();
 	}
-	if (this->shouldDeleteGrid) {
-		this->deleteGridNow();
-	}
-	if (this->isFinishedLoading) {
-		this->replaceGridsWithHighRes();
-	}
-	if (this->shouldUpdateUserColorScales) {
-		this->newSHADERS_updateUserColorScales();
-	}
+	if (this->shouldDeleteGrid) { this->deleteGridNow(); }
+	if (this->isFinishedLoading) { this->replaceGridsWithHighRes(); }
+	if (this->shouldUpdateUserColorScales) { this->newSHADERS_updateUserColorScales(); }
+	if (this->shouldUpdateUBOData) { this->newSHADERS_updateUBOData(); }
 	glEnable(GL_DEPTH_TEST);
 	glEnablei(GL_BLEND, 0);
 	glEnable(GL_TEXTURE_3D);
@@ -3085,6 +3100,16 @@ void Scene::draw3DView(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, bool sho
 	}
 	this->drawBoundingBox(this->sceneBB, glm::vec4(.5, .5, .0, 1.), mvMat, pMat);
 	this->showVAOstate = false;
+}
+
+void Scene::newSHADERS_updateUBOData() {
+	this->shouldUpdateUBOData = false;
+	for (const auto& grid : this->newGrids) {
+		this->setUniformBufferData(grid->uboHandle_colorAttributes, 0, 32, &grid->mainColorChannelAttributes());
+		this->setUniformBufferData(grid->uboHandle_colorAttributes, 32, 32, &grid->colorChannelAttributes[0]);
+		this->setUniformBufferData(grid->uboHandle_colorAttributes, 64, 32, &grid->colorChannelAttributes[1]);
+		this->setUniformBufferData(grid->uboHandle_colorAttributes, 96, 32, &grid->colorChannelAttributes[2]);
+	}
 }
 
 GLuint Scene::updateFBOOutputs(glm::ivec2 dimensions, GLuint fb_handle, GLuint old_texture) {
@@ -3783,15 +3808,15 @@ void Scene::slotTogglePlaneDirectionY() { this->planeDirection.y = - this->plane
 void Scene::slotTogglePlaneDirectionZ() { this->planeDirection.z = - this->planeDirection.z; }
 void Scene::toggleAllPlaneDirections() { this->planeDirection = - this->planeDirection; }
 
-void Scene::slotSetMinTexValue(DiscreteGrid::data_t val) { this->textureBounds0.x = val; this->updateVis(); }
-void Scene::slotSetMaxTexValue(DiscreteGrid::data_t val) { this->textureBounds0.y = val; this->updateVis(); }
-void Scene::slotSetMinTexValueAlternate(DiscreteGrid::data_t val) { this->textureBounds1.x = val; this->updateVis(); }
-void Scene::slotSetMaxTexValueAlternate(DiscreteGrid::data_t val) { this->textureBounds1.y = val; this->updateVis(); }
+void Scene::slotSetMinTexValue(DiscreteGrid::data_t val) { this->textureBounds0.x = val; this->updateVis(); this->updateCVR(); }
+void Scene::slotSetMaxTexValue(DiscreteGrid::data_t val) { this->textureBounds0.y = val; this->updateVis(); this->updateCVR(); }
+void Scene::slotSetMinTexValueAlternate(DiscreteGrid::data_t val) { this->textureBounds1.x = val; this->updateVis(); this->updateCVR(); }
+void Scene::slotSetMaxTexValueAlternate(DiscreteGrid::data_t val) { this->textureBounds1.y = val; this->updateVis(); this->updateCVR(); }
 
-void Scene::slotSetMinColorValue(DiscreteGrid::data_t val) { this->colorBounds0.x = val; }
-void Scene::slotSetMaxColorValue(DiscreteGrid::data_t val) { this->colorBounds0.y = val; }
-void Scene::slotSetMinColorValueAlternate(DiscreteGrid::data_t val) { this->colorBounds1.x = val; }
-void Scene::slotSetMaxColorValueAlternate(DiscreteGrid::data_t val) { this->colorBounds1.y = val; }
+void Scene::slotSetMinColorValue(DiscreteGrid::data_t val) { this->colorBounds0.x = val; this->updateCVR(); }
+void Scene::slotSetMaxColorValue(DiscreteGrid::data_t val) { this->colorBounds0.y = val; this->updateCVR(); }
+void Scene::slotSetMinColorValueAlternate(DiscreteGrid::data_t val) { this->colorBounds1.x = val; this->updateCVR(); }
+void Scene::slotSetMaxColorValueAlternate(DiscreteGrid::data_t val) { this->colorBounds1.y = val; this->updateCVR(); }
 
 void Scene::setColor0(qreal r, qreal g, qreal b) {
 	glm::vec<3, qreal, glm::highp> qtcolor(r,g,b);
@@ -3826,6 +3851,7 @@ void Scene::signal_updateUserColorScales() {
 }
 
 void Scene::newSHADERS_updateUserColorScales() {
+	this->shouldUpdateUserColorScales = false;
 	TextureUpload colorScaleUploadParameters;
 	std::size_t textureSize = this->gl_limit_max_texture_size/2u;
 	float textureSize_f = static_cast<float>(this->gl_limit_max_texture_size/2u);
@@ -3861,6 +3887,22 @@ void Scene::newSHADERS_updateUserColorScales() {
 
 	colorScaleUploadParameters.data = colorScaleData_user1.data();
 	this->texHandle_colorScale_user1 = this->uploadTexture1D(colorScaleUploadParameters);
+}
+
+void Scene::updateCVR() {
+	// For all grids, signal they need to be
+	for (const auto& grid : this->newGrids) {
+		grid->colorChannelAttributes[0].setMinVisible(this->textureBounds0.x);
+		grid->colorChannelAttributes[0].setMaxVisible(this->textureBounds0.y);
+		grid->colorChannelAttributes[0].setMinColorScale(this->colorBounds0.x);
+		grid->colorChannelAttributes[0].setMaxColorScale(this->colorBounds0.y);
+		grid->colorChannelAttributes[1].setMinVisible(this->textureBounds1.x);
+		grid->colorChannelAttributes[1].setMaxVisible(this->textureBounds1.y);
+		grid->colorChannelAttributes[1].setMinColorScale(this->colorBounds1.x);
+		grid->colorChannelAttributes[1].setMaxColorScale(this->colorBounds1.y);
+	}
+
+	this->shouldUpdateUBOData = true;
 }
 
 void Scene::setDrawMode(DrawMode _mode) {
