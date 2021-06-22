@@ -128,6 +128,7 @@ Scene::Scene() {
 	this->pb_loadProgress = nullptr;
 	this->timer_refreshProgress = nullptr;
 	this->isFinishedLoading = false;
+	this->shouldUpdateUserColorScales = false;
 }
 
 Scene::~Scene(void) {
@@ -177,7 +178,7 @@ void Scene::initGl(QOpenGLContext* _context) {
 	// need to initialize the OpenGL objects now. Shaders, VAOs, VBOs.
 
 	this->initialize_limits();
-	this->generateColorScales();
+	this->newSHADERS_generateColorScales();
 
 	// Compile the shaders :
 	this->recompileShaders(false);
@@ -209,8 +210,6 @@ void Scene::generateColorScales() {
 
 	std::vector<glm::vec3> colorScaleData_greyscale(textureSize);
 	std::vector<glm::vec3> colorScaleData_hsv2rgb(textureSize);
-	std::vector<glm::vec3> colorScaleData_user0(textureSize);
-	std::vector<glm::vec3> colorScaleData_user1(textureSize);
 
 	// Generate the greyscale :
 	for (std::size_t i = 0; i < textureSize; ++i) {
@@ -244,7 +243,6 @@ void Scene::generateColorScales() {
 
 	std::cerr << "Generated data for the HSV2RGB color scale" << '\n';
 
-
 	colorScaleUploadParameters.minmag.x = GL_LINEAR;
 	colorScaleUploadParameters.minmag.y = GL_LINEAR;
 	colorScaleUploadParameters.lod.y = -1000.f;
@@ -267,7 +265,7 @@ void Scene::generateColorScales() {
 	this->texHandle_colorScale_greyscale = this->uploadTexture1D(colorScaleUploadParameters);
 
 	colorScaleUploadParameters.data = colorScaleData_hsv2rgb.data();
-	this->texHandle_colorScale_greyscale = this->uploadTexture1D(colorScaleUploadParameters);
+	this->texHandle_colorScale_hsv2rgb = this->uploadTexture1D(colorScaleUploadParameters);
 }
 
 void Scene::addOpenGLOutput(OpenGLDebugLog* glLog) {
@@ -1075,6 +1073,8 @@ GLuint Scene::uploadTexture1D(const TextureUpload& tex) {
 	} else {
 		throw std::runtime_error("nullptr as context");
 	}
+
+	std::cerr << "Uploading 1D texture ..." << '\n';
 
 	glEnable(GL_TEXTURE_1D);
 
@@ -3031,6 +3031,10 @@ void Scene::newSHADERS_print_all_uniforms(GLuint _shader_program) {
 	glUseProgram(0);
 }
 
+void Scene::newSHADERS_generateColorScales() {
+	this->generateColorScales();
+}
+
 void Scene::draw3DView(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, bool showTexOnPlane) {
 	if (this->shouldUpdateVis) {
 		this->shouldUpdateVis = false;
@@ -3042,6 +3046,9 @@ void Scene::draw3DView(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, bool sho
 	}
 	if (this->isFinishedLoading) {
 		this->replaceGridsWithHighRes();
+	}
+	if (this->shouldUpdateUserColorScales) {
+		this->newSHADERS_updateUserColorScales();
 	}
 	glEnable(GL_DEPTH_TEST);
 	glEnablei(GL_BLEND, 0);
@@ -3789,25 +3796,71 @@ void Scene::slotSetMaxColorValueAlternate(DiscreteGrid::data_t val) { this->colo
 void Scene::setColor0(qreal r, qreal g, qreal b) {
 	glm::vec<3, qreal, glm::highp> qtcolor(r,g,b);
 	this->color0 = glm::convert_to<float>(qtcolor);
+	this->signal_updateUserColorScales();
 	return;
 }
 
 void Scene::setColor1(qreal r, qreal g, qreal b) {
 	glm::vec<3, qreal, glm::highp> qtcolor(r,g,b);
 	this->color1 = glm::convert_to<float>(qtcolor);
+	this->signal_updateUserColorScales();
 	return;
 }
 
 void Scene::setColor0Alternate(qreal r, qreal g, qreal b) {
 	glm::vec<3, qreal, glm::highp> qtcolor(r,g,b);
 	this->color0_second = glm::convert_to<float>(qtcolor);
+	this->signal_updateUserColorScales();
 	return;
 }
 
 void Scene::setColor1Alternate(qreal r, qreal g, qreal b) {
 	glm::vec<3, qreal, glm::highp> qtcolor(r,g,b);
 	this->color1_second = glm::convert_to<float>(qtcolor);
+	this->signal_updateUserColorScales();
 	return;
+}
+
+void Scene::signal_updateUserColorScales() {
+	this->shouldUpdateUserColorScales = true;
+}
+
+void Scene::newSHADERS_updateUserColorScales() {
+	TextureUpload colorScaleUploadParameters;
+	std::size_t textureSize = this->gl_limit_max_texture_size/2u;
+	float textureSize_f = static_cast<float>(this->gl_limit_max_texture_size/2u);
+	std::vector<glm::vec3> colorScaleData_user0(textureSize);
+	std::vector<glm::vec3> colorScaleData_user1(textureSize);
+
+	// The color scale 0 first :
+	for (std::size_t i = 0; i < textureSize; ++i) {
+		colorScaleData_user0[i] = glm::mix(this->color0, this->color1, static_cast<float>(i) / textureSize_f);
+		colorScaleData_user1[i] = glm::mix(this->color0_second, this->color1_second, static_cast<float>(i) / textureSize_f);
+	}
+
+	colorScaleUploadParameters.minmag.x = GL_LINEAR;
+	colorScaleUploadParameters.minmag.y = GL_LINEAR;
+	colorScaleUploadParameters.lod.y = -1000.f;
+	colorScaleUploadParameters.wrap.x = GL_CLAMP_TO_EDGE;
+	colorScaleUploadParameters.wrap.y = GL_CLAMP_TO_EDGE;
+	colorScaleUploadParameters.wrap.z = GL_CLAMP_TO_EDGE;
+	colorScaleUploadParameters.swizzle.r = GL_RED;
+	colorScaleUploadParameters.swizzle.g = GL_GREEN;
+	colorScaleUploadParameters.swizzle.b = GL_BLUE;
+	colorScaleUploadParameters.swizzle.a = GL_ONE;
+
+	colorScaleUploadParameters.level = 0;
+	colorScaleUploadParameters.internalFormat = GL_RGB;
+	colorScaleUploadParameters.size.x = textureSize;
+	colorScaleUploadParameters.size.y = 1;
+	colorScaleUploadParameters.size.z = 1;
+	colorScaleUploadParameters.format = GL_RGB;
+	colorScaleUploadParameters.type = GL_FLOAT;
+	colorScaleUploadParameters.data = colorScaleData_user0.data();
+	this->texHandle_colorScale_user0 = this->uploadTexture1D(colorScaleUploadParameters);
+
+	colorScaleUploadParameters.data = colorScaleData_user1.data();
+	this->texHandle_colorScale_user1 = this->uploadTexture1D(colorScaleUploadParameters);
 }
 
 void Scene::setDrawMode(DrawMode _mode) {

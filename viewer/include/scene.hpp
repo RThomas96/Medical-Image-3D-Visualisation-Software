@@ -280,6 +280,11 @@ class Scene : public QOpenGLFunctions_3_2_Core {
 		/// @b Create the color scales used for the program.
 		void newSHADERS_generateColorScales(void);
 
+		/// @b Update the user-defined color scales
+		void newSHADERS_updateUserColorScales();
+		/// @b Signals to update user-defined color scales whenever is next appropriate.
+		void signal_updateUserColorScales();
+
 		/// @b preps uniforms for a grid
 		void prepareUniforms_3DSolid(GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, const GridGLView::Ptr& grid);
 		void newAPI_prepareUniforms_3DSolid(GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, const NewAPI_GridGLView::Ptr& grid);
@@ -387,10 +392,10 @@ class Scene : public QOpenGLFunctions_3_2_Core {
 		DiscreteGrid::bbox_t visuBox;			///< Used to restrict the view to a box with its coordinates
 		DrawMode drawMode;						///< Current 3D draw mode
 		RGBMode rgbMode;						///< Current RGB mode
-		ColorFunction channels_r;					///< Channel(s) to display on the viewers
-		GLuint selectedChannel_r;					///< The currently selected channel for greyscale mode.
-		ColorFunction channels_g;					///< Channel(s) to display on the viewers
-		GLuint selectedChannel_g;					///< The currently selected channel for greyscale mode.
+		ColorFunction channels_r;				///< Channel(s) to display on the viewers
+		GLuint selectedChannel_r;				///< The currently selected channel for greyscale mode.
+		ColorFunction channels_g;				///< Channel(s) to display on the viewers
+		GLuint selectedChannel_g;				///< The currently selected channel for greyscale mode.
 
 		glm::vec3 color0;			///< The color segment when approaching 0
 		glm::vec3 color1;			///< The color segment when approaching 1
@@ -439,6 +444,8 @@ class Scene : public QOpenGLFunctions_3_2_Core {
 		GLuint texHandle_colorScale_user1;
 
 		void generateColorScales();
+
+		bool shouldUpdateUserColorScales;
 
 		/********************************************/
 		/* Threaded loading of high-resolution grid */
