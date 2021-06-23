@@ -1083,8 +1083,6 @@ GLuint Scene::uploadTexture1D(const TextureUpload& tex) {
 		throw std::runtime_error("nullptr as context");
 	}
 
-	std::cerr << "Uploading 1D texture ..." << '\n';
-
 	glEnable(GL_TEXTURE_1D);
 
 	GLuint texHandle = 0;
@@ -1927,6 +1925,11 @@ void Scene::newAPI_prepareUniforms_3DSolid(GLfloat *mvMat, GLfloat *pMat, glm::v
 	GLint location_g_nbChannels =			getUniform("g_nbChannels");
 	GLint location_rgbMode =				getUniform("rgbMode");
 
+	GLint location_colorScales0 =			getUniform("colorScales[0]");
+	GLint location_colorScales1 =			getUniform("colorScales[1]");
+	GLint location_colorScales2 =			getUniform("colorScales[2]");
+	GLint location_colorScales3 =			getUniform("colorScales[3]");
+
 	DiscreteGrid::bbox_t::vec origin = gridView->grid->getBoundingBox().getMin();
 	DiscreteGrid::bbox_t::vec originWS = gridView->grid->getBoundingBox().getMin();
 	DiscreteGrid::sizevec3 gridDims = gridView->grid->getResolution();
@@ -1964,11 +1967,36 @@ void Scene::newAPI_prepareUniforms_3DSolid(GLfloat *mvMat, GLfloat *pMat, glm::v
 	glUniform1ui(location_r_nbChannels, 1);
 	glUniform1ui(location_g_nbChannels, 1);
 
+	GLuint enabled_textures = 0;
+
 	// Textures :
-	glActiveTexture(GL_TEXTURE0 + 0);
+	glActiveTexture(GL_TEXTURE0 + enabled_textures);
 	glEnable(GL_TEXTURE_3D);
 	glBindTexture(GL_TEXTURE_3D, gridView->gridTexture);
-	glUniform1i(texDataLoc, 0);
+	glUniform1i(texDataLoc, enabled_textures);
+	enabled_textures++;
+
+	glActiveTexture(GL_TEXTURE0 + enabled_textures);
+	glEnable(GL_TEXTURE_1D);
+	glBindTexture(GL_TEXTURE_1D, this->texHandle_colorScale_greyscale);
+	glUniform1i(location_colorScales0, enabled_textures);
+	enabled_textures++;
+
+	glActiveTexture(GL_TEXTURE0 + enabled_textures);
+	glEnable(GL_TEXTURE_1D);
+	glBindTexture(GL_TEXTURE_1D, this->texHandle_colorScale_hsv2rgb);
+	glUniform1i(location_colorScales1, enabled_textures);
+	enabled_textures++;
+
+	glActiveTexture(GL_TEXTURE0 + enabled_textures);
+	glBindTexture(GL_TEXTURE_1D, this->texHandle_colorScale_user0);
+	glUniform1i(location_colorScales2, enabled_textures);
+	enabled_textures++;
+
+	glActiveTexture(GL_TEXTURE0 + enabled_textures);
+	glBindTexture(GL_TEXTURE_1D, this->texHandle_colorScale_user1);
+	glUniform1i(location_colorScales3, enabled_textures);
+	enabled_textures++;
 
 	uint chan = this->colorFunctionToUniform(this->channels_r);
 	uint chan2 = this->colorFunctionToUniform(this->channels_g);
@@ -1998,43 +2026,6 @@ void Scene::newAPI_prepareUniforms_3DSolid(GLfloat *mvMat, GLfloat *pMat, glm::v
 
 	if (this->showVAOstate) {
 		this->printAllUniforms(this->programHandle_projectedTex);
-
-		GLuint uni_size = 4;
-		std::array<const char*, 4> uni_names = { "ColorBlock.attributes[0]", "ColorBlock.attributes[1]", "ColorBlock.attributes[2]", "ColorBlock.attributes[3]"};
-		std::array<GLuint, 4> uni_indices = {0, 0, 0, 0};
-		// Get indices :
-		glGetUniformIndices(this->programHandle_projectedTex, uni_size, uni_names.data(), uni_indices.data());
-		for (std::size_t i = 0; i < uni_size; ++i) {
-			std::cerr << "Uniform " << i << " named " << uni_names[i] << " at index : " <<
-					(uni_indices[i] == GL_INVALID_INDEX ? std::to_string(uni_indices[i]) : "<invalid index>") << "\n";
-		}
-
-		const GLchar uniform_block_name[] = "ColorBlock";
-		GLuint blkidx = glGetUniformBlockIndex(this->programHandle_projectedTex, uniform_block_name);
-		if (blkidx == GL_INVALID_INDEX) {
-			std::cerr << "ERROR : Invalid block index for uniform \'" << uniform_block_name << "\'\n";
-		} else {
-			GLint binding = 0, size = 0, name_length = 0, active_uniforms = 0, ref_by_frag = 0;
-			std::vector<GLint> uniform_indices;
-			glGetActiveUniformBlockiv(this->programHandle_projectedTex, blkidx, GL_UNIFORM_BLOCK_BINDING, &binding);
-			glGetActiveUniformBlockiv(this->programHandle_projectedTex, blkidx, GL_UNIFORM_BLOCK_DATA_SIZE, &size);
-			glGetActiveUniformBlockiv(this->programHandle_projectedTex, blkidx, GL_UNIFORM_BLOCK_NAME_LENGTH, &name_length);
-			glGetActiveUniformBlockiv(this->programHandle_projectedTex, blkidx, GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &active_uniforms);
-			glGetActiveUniformBlockiv(this->programHandle_projectedTex, blkidx, GL_UNIFORM_BLOCK_REFERENCED_BY_FRAGMENT_SHADER, &ref_by_frag);
-			std::cerr << "[LOG] Uniform block data :\n";
-			std::cerr << "[LOG]\t- binding : " << binding << '\n';
-			std::cerr << "[LOG]\t- size : " << size << '\n';
-			std::cerr << "[LOG]\t- uniform name length : " << name_length << '\n';
-			std::cerr << "[LOG]\t- referenced in fragment shader : " << ref_by_frag << '\n';
-			std::cerr << "[LOG]\t- # of active uniforms : " << active_uniforms << '\n';
-			if (active_uniforms) {
-				uniform_indices.resize(active_uniforms);
-				glGetActiveUniformBlockiv(this->programHandle_projectedTex, blkidx, GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, uniform_indices.data());
-				std::cerr << "[LOG]\t\t- { ";
-				for (const auto& index : uniform_indices) { std::cerr << index << ' '; }
-				std::cerr << "}\n";
-			}
-		}
 	}
 }
 

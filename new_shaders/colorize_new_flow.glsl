@@ -24,8 +24,10 @@ layout(std140) uniform ColorBlock {
 /// Determines if the color channel is visible or not, given a certain value for the channel.
 bool isColorChannelVisible(in uint index, in uint value) {
 	return (colorChannels.attributes[index].isVisible > 0u) &&
-			( uint(colorChannels.attributes[index].visibleBounds.x) >= value &&
-			uint(colorChannels.attributes[index].visibleBounds.y) <= value );
+			(
+				value >= uint(colorChannels.attributes[index].visibleBounds.x)
+				&& value <= uint(colorChannels.attributes[index].visibleBounds.y)
+			);
 }
 
 vec4 colorizeFragmentSingleChannel(in uint color_channel_index, in uint value) {
@@ -33,8 +35,8 @@ vec4 colorizeFragmentSingleChannel(in uint color_channel_index, in uint value) {
 	// We're guaranteed to not only have the color channel activated, but also that
 	// the given value is _always_ within the visible bounds.
 
-	vec2 colorScaleBounds = colorChannels.attributes[color_channel_index].colorScaleBounds;
-	float normalized_value = float(value - colorScaleBounds.x) / float(colorScaleBounds.y - colorScaleBounds.x);
+	vec2 csB = colorChannels.attributes[color_channel_index].colorScaleBounds;
+	float normalized_value = (float(value) - float(csB.x)) / (float(csB.y) - float(csB.x));
 	uint colorScaleIndex = colorChannels.attributes[color_channel_index].colorScaleIndex;
 	return texture(colorScales[colorScaleIndex], normalized_value);
 }

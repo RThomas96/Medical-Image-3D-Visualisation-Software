@@ -239,6 +239,8 @@ class Scene : public QOpenGLFunctions_3_2_Core {
 		std::vector<std::shared_ptr<DiscreteGrid>> getInputGrids(void) const;
 		std::size_t getInputGridCount(void) const;
 
+		QOpenGLContext* get_context() const { return this->context; }
+
 		/// @b computes the transformation matrix of the input grid
 		glm::mat4 computeTransformationMatrix(const std::shared_ptr<DiscreteGrid>& _grid) const;
 

@@ -292,6 +292,8 @@ NewAPI_GridGLView::NewAPI_GridGLView(const Image::Grid::Ptr _grid) {
 	this->colorBounds1 = min;
 	this->boundingBoxColor = glm::vec3(.257, .257, .257);
 	this->defaultEpsilon = glm::vec3(1.f, 1.f, 1.f);
+	this->mainColorChannel = 1;
+	this->uboHandle_colorAttributes = 0;
 
 	// Fill with default attributes
 	this->colorChannelAttributes.fill(colorChannelAttributes_GL{});

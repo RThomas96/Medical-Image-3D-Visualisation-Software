@@ -84,8 +84,10 @@ void main(void)
 	vec4 compColor = vec4(.1,.1, .1, 1.);
 	vec4 finalColor = fragmentEvaluationSingleChannel(ui);
 	if (finalColor.a < .005f) {
-		compColor = vec4(.8, .8, .8, 1.);
+		compColor = vec4(.8, .8, .8, .1);
 		worldPosition.w = .0f;
+	} else {
+		compColor = finalColor;
 	}
 
 	color = compColor;

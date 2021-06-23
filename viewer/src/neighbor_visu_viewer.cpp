@@ -47,6 +47,10 @@ void Viewer::init() {
 	this->makeCurrent();
 	this->setMouseTracking(true);
 
+	if (this->format().profile() != QSurfaceFormat::CoreProfile) {
+		std::cerr << "Error : surface format was not core.\n";
+	}
+
 	this->scene->initGl(this->context());
 
 	glm::vec3 bbDiag = this->scene->getSceneBoundaries();
@@ -120,9 +124,6 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 				this->update();
 			}
 		break;
-		/*
-		RENDERDOC
-		*/
 		case Qt::Key::Key_C:
 			this->shouldCapture = true;
 			this->update();
