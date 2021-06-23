@@ -64,9 +64,9 @@ ColorBoundsControl::ColorBoundsControl(Scene *_scene, bool _prim, QWidget *paren
 	QObject::connect(this->sb_max, QOverload<int>::of(&QSpinBox::valueChanged), this, &ColorBoundsControl::maxChanged);
 	this->setAttribute(Qt::WA_DeleteOnClose);
 	if (this->_primary) {
-		this->setWindowTitle("Red bounds");
+		this->setWindowTitle("Channel 1 bounds");
 	} else {
-		this->setWindowTitle("Green bounds");
+		this->setWindowTitle("Channel 2 bounds");
 	}
 }
 

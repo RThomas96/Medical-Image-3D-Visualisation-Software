@@ -319,8 +319,8 @@ GridGLView::~GridGLView(void) { /* Nothing here for now. */ }
 colorChannelAttributes_GL::colorChannelAttributes_GL() {
 	this->isVisible = true;
 	this->colorScaleIndex = 0;
-	auto min = std::numeric_limits<bound_t::value_type>::min();
-	auto max = std::numeric_limits<bound_t::value_type>::max();
+	auto min = std::numeric_limits<std::uint16_t>::min();
+	auto max = std::numeric_limits<std::uint16_t>::max();
 	this->visibleBounds = bound_t(min, max);
 	this->colorScaleBounds = bound_t(min, max);
 }

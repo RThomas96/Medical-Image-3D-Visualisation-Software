@@ -561,7 +561,7 @@ void GridLoaderWidget::loadGridDIM1channel() {
 	QMessageBox* msgBox = new QMessageBox;
 	msgBox->setAttribute(Qt::WA_DeleteOnClose);
 
-	QString filenameR = QFileDialog::getOpenFileName(this, "Open DIM/IMA image", this->basePath.path(), "DIM/IMA header files (*.dim)", nullptr, QFileDialog::DontUseNativeDialog);
+	QString filenameR = QFileDialog::getOpenFileName(this, "Open DIM/IMA image (single channel)", this->basePath.path(), "DIM/IMA header files (*.dim)", nullptr, QFileDialog::DontUseNativeDialog);
 	if (filenameR.isEmpty()) {
 		msgBox->critical(this, "Error !", "No filenames provided !");
 		this->readerR.reset(); this->readerR = nullptr;
@@ -629,7 +629,7 @@ void GridLoaderWidget::loadGridDIM2channel() {
 	QMessageBox* msgBox = new QMessageBox;
 	msgBox->setAttribute(Qt::WA_DeleteOnClose);
 
-	QString filenameR = QFileDialog::getOpenFileName(this, "Open DIM/IMA image (Red channel)", this->basePath.path(), "DIM/IMA header files (*.dim)", nullptr, QFileDialog::DontUseNativeDialog);
+	QString filenameR = QFileDialog::getOpenFileName(this, "Open DIM/IMA image (first channel)", this->basePath.path(), "DIM/IMA header files (*.dim)", nullptr, QFileDialog::DontUseNativeDialog);
 	if (filenameR.isEmpty()) {
 		msgBox->critical(this, "Error !", "No filenames provided !");
 		this->readerR.reset(); this->readerR = nullptr;
@@ -640,7 +640,7 @@ void GridLoaderWidget::loadGridDIM2channel() {
 	// update path from last file picker :
 	this->basePath.setPath(QFileInfo(filenameR).path());
 
-	QString filenameG = QFileDialog::getOpenFileName(this, "Open DIM/IMA image (Blue channel)", this->basePath.path(), "DIM/IMA header files (*.dim)", nullptr, QFileDialog::DontUseNativeDialog);
+	QString filenameG = QFileDialog::getOpenFileName(this, "Open DIM/IMA image (second channel)", this->basePath.path(), "DIM/IMA header files (*.dim)", nullptr, QFileDialog::DontUseNativeDialog);
 	if (filenameG.isEmpty()) {
 		msgBox->critical(this, "Error !", "No filenames provided !");
 		this->readerR.reset(); this->readerR = nullptr;
@@ -714,7 +714,7 @@ void GridLoaderWidget::loadGridTIF1channel() {
 	QMessageBox* msgBox = new QMessageBox;
 	msgBox->setAttribute(Qt::WA_DeleteOnClose);
 
-	QStringList filenamesR = QFileDialog::getOpenFileNames(nullptr, "Open TIFF images (Red channel)", this->basePath.path(), "TIFF files (*.tiff *.tif)", 0, QFileDialog::DontUseNativeDialog);
+	QStringList filenamesR = QFileDialog::getOpenFileNames(nullptr, "Open TIFF images (single channel)", this->basePath.path(), "TIFF files (*.tiff *.tif)", 0, QFileDialog::DontUseNativeDialog);
 	if (filenamesR.empty()) {
 		msgBox->critical(this, "Error !", "No filenames provided !");
 		this->readerR.reset(); this->readerR = nullptr;
@@ -784,7 +784,7 @@ void GridLoaderWidget::loadGridTIF2channel() {
 
 	this->useLegacyGrids = true;
 
-	QStringList filenamesR = QFileDialog::getOpenFileNames(nullptr, "Open TIFF images (Red channel)", this->basePath.path(), "TIFF files (*.tiff *.tif)", 0, QFileDialog::DontUseNativeDialog);
+	QStringList filenamesR = QFileDialog::getOpenFileNames(nullptr, "Open TIFF images (first channel)", this->basePath.path(), "TIFF files (*.tiff *.tif)", 0, QFileDialog::DontUseNativeDialog);
 	if (filenamesR.empty()) {
 		msgBox->critical(this, "Error !", "No filenames provided !");
 		this->readerR.reset(); this->readerR = nullptr;
@@ -795,7 +795,7 @@ void GridLoaderWidget::loadGridTIF2channel() {
 	// update path from last file picker :
 	this->basePath.setPath(QFileInfo(filenamesR[0]).path());
 
-	QStringList filenamesG = QFileDialog::getOpenFileNames(nullptr, "Open TIFF images (Blue channel)", this->basePath.path(), "TIFF files (*.tiff *.tif)", 0, QFileDialog::DontUseNativeDialog);
+	QStringList filenamesG = QFileDialog::getOpenFileNames(nullptr, "Open TIFF images (second channel)", this->basePath.path(), "TIFF files (*.tiff *.tif)", 0, QFileDialog::DontUseNativeDialog);
 	if (filenamesG.empty()) {
 		msgBox->critical(this, "Error !", "No filenames provided !");
 		this->readerR.reset(); this->readerR = nullptr;
@@ -870,7 +870,7 @@ void GridLoaderWidget::loadNewGridAPI() {
 	QMessageBox* msgBox = new QMessageBox;
 	msgBox->setAttribute(Qt::WA_DeleteOnClose);
 
-	QStringList filenamesR = QFileDialog::getOpenFileNames(nullptr, "Open TIFF images (Red channel)", this->basePath.path(), "TIFF files (*.tiff *.tif)", 0, QFileDialog::DontUseNativeDialog);
+	QStringList filenamesR = QFileDialog::getOpenFileNames(nullptr, "Open TIFF images (first channel)", this->basePath.path(), "TIFF files (*.tiff *.tif)", 0, QFileDialog::DontUseNativeDialog);
 	if (filenamesR.empty()) {
 		msgBox->critical(this, "Error !", "No filenames provided !");
 		this->computeGridInfoLabel();
@@ -879,7 +879,7 @@ void GridLoaderWidget::loadNewGridAPI() {
 	// update path from last file picker :
 	this->basePath.setPath(QFileInfo(filenamesR[0]).path());
 
-	QStringList filenamesG = QFileDialog::getOpenFileNames(nullptr, "Open TIFF images (Blue channel)", this->basePath.path(), "TIFF files (*.tiff *.tif)", 0, QFileDialog::DontUseNativeDialog);
+	QStringList filenamesG = QFileDialog::getOpenFileNames(nullptr, "Open TIFF images (second channel)", this->basePath.path(), "TIFF files (*.tiff *.tif)", 0, QFileDialog::DontUseNativeDialog);
 	if (filenamesG.empty()) {
 		msgBox->critical(this, "Error !", "No filenames provided !");
 		this->computeGridInfoLabel();
@@ -978,7 +978,7 @@ void GridLoaderWidget::loadGridOME1channel() {
 	QMessageBox* msgBox = new QMessageBox;
 	msgBox->setAttribute(Qt::WA_DeleteOnClose);
 
-	QStringList filenamesR = QFileDialog::getOpenFileNames(nullptr, "Open OME-TIFF images (Red channel)", this->basePath.path(), "OME-TIFF files (*.ome.tiff *.ome.tif)", 0, QFileDialog::DontUseNativeDialog);
+	QStringList filenamesR = QFileDialog::getOpenFileNames(nullptr, "Open OME-TIFF images (first channel)", this->basePath.path(), "OME-TIFF files (*.ome.tiff *.ome.tif)", 0, QFileDialog::DontUseNativeDialog);
 	if (filenamesR.empty()) {
 		msgBox->critical(this, "Error !", "No filenames provided !");
 		this->readerR.reset(); this->readerR = nullptr;
@@ -1046,7 +1046,7 @@ void GridLoaderWidget::loadGridOME2channel() {
 	QMessageBox* msgBox = new QMessageBox;
 	msgBox->setAttribute(Qt::WA_DeleteOnClose);
 
-	QStringList filenamesR = QFileDialog::getOpenFileNames(nullptr, "Open OME-TIFF images (Red channel)", this->basePath.path(), "OME-TIFF files (*.ome.tiff *.ome.tif)", 0, QFileDialog::DontUseNativeDialog);
+	QStringList filenamesR = QFileDialog::getOpenFileNames(nullptr, "Open OME-TIFF images (first channel)", this->basePath.path(), "OME-TIFF files (*.ome.tiff *.ome.tif)", 0, QFileDialog::DontUseNativeDialog);
 	if (filenamesR.empty()) {
 		msgBox->critical(this, "Error !", "No filenames provided !");
 		this->readerR.reset(); this->readerR = nullptr;
@@ -1057,7 +1057,7 @@ void GridLoaderWidget::loadGridOME2channel() {
 	// update path from last file picker :
 	this->basePath.setPath(QFileInfo(filenamesR[0]).path());
 
-	QStringList filenamesG = QFileDialog::getOpenFileNames(nullptr, "Open OME-TIFF images (Blue channel)", this->basePath.path(), "OME-TIFF files (*.ome.tiff *.ome.tif)", 0, QFileDialog::DontUseNativeDialog);
+	QStringList filenamesG = QFileDialog::getOpenFileNames(nullptr, "Open OME-TIFF images (second channel)", this->basePath.path(), "OME-TIFF files (*.ome.tiff *.ome.tif)", 0, QFileDialog::DontUseNativeDialog);
 	if (filenamesG.empty()) {
 		msgBox->critical(this, "Error !", "No filenames provided !");
 		this->readerR.reset(); this->readerR = nullptr;
