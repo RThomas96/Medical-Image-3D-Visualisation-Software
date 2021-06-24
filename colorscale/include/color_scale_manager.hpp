@@ -34,6 +34,9 @@ namespace Color {
 			/// @b Return the default greyscale color scale.
 			SimpleGradientColorScale::Ptr getDefaultColorScale_greyscale();
 
+			/// @b Return the default greyscale color scale.
+			ColorScaleFunctor::Ptr getDefaultColorScale_hsv2rgb();
+
 		signals:
 			void addedColorScale(ColorScaleBase::Ptr _new_color);
 			void removedColorScale(ColorScaleBase::Ptr _to_remove);

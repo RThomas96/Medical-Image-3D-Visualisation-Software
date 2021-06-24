@@ -1,5 +1,7 @@
 #include "../include/color_scale_manager.hpp"
 
+#include <algorithm>
+
 namespace Color {
 
 ColorScaleManager::ColorScaleManager() {
@@ -39,6 +41,42 @@ void ColorScaleManager::init_default_color_scales() {
 
 	this->greyscale->setName("Greyscale");
 	this->hsv2rgb->setName("HSV to RGB");
+}
+
+void ColorScaleManager::addColorScale(ColorScaleBase::Ptr _to_add) {
+	this->color_scale_user.push_back(_to_add);
+	emit this->addedColorScale(_to_add);
+}
+
+void ColorScaleManager::removeColorScale(ColorScaleBase::Ptr to_remove) {
+	// reorder the vector to put the target color scale at the end if it's in here :
+	auto remove_iterator = std::remove_if(this->color_scale_user.begin(), this->color_scale_user.end(),
+	[=](const ColorScaleBase::Ptr& c) -> bool {
+		if (to_remove.get() == c.get()) { return true; }
+		return false;
+	});
+
+	// remove the color scale, if it was here :
+	this->color_scale_user.erase(remove_iterator, this->color_scale_user.end());
+	emit this->removedColorScale(to_remove);
+}
+
+SimpleGradientColorScale::Ptr ColorScaleManager::addGradientScale(glm::vec3 _min, glm::vec3 _max) {
+	SimpleGradientColorScale::Ptr new_scale = std::make_shared<SimpleGradientColorScale>(_min, _max);
+	this->addColorScale(new_scale);
+}
+
+ColorScaleFunctor::Ptr ColorScaleManager::addFunctorScale(ColorScaleFunctor::functor_type &&_functor) {
+	ColorScaleFunctor::Ptr new_scale = std::make_shared<ColorScaleFunctor>(_functor);
+	this->addColorScale(new_scale);
+}
+
+SimpleGradientColorScale::Ptr ColorScaleManager::getDefaultColorScale_greyscale() {
+	return this->greyscale;
+}
+
+ColorScaleFunctor::Ptr ColorScaleManager::getDefaultColorScale_hsv2rgb() {
+	return this->hsv2rgb;
 }
 
 }
