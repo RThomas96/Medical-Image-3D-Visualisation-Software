@@ -62,6 +62,13 @@ class Scene : public QOpenGLFunctions_3_2_Core {
 		/// @brief initialize the variables of the scene
 		void initGl(QOpenGLContext* context);
 
+		/// @brief Upload a 1D texture with the given parameters.
+		GLuint uploadTexture1D(const TextureUpload& tex);
+		/// @brief Upload a 2D texture with the given parameters.
+		GLuint uploadTexture2D(const TextureUpload& tex);
+		/// @brief Upload a 3D texture with the given parameters.
+		GLuint uploadTexture3D(const TextureUpload& tex);
+
 		/// @brief Show the Visualization box controller
 		void showVisuBoxController(VisuBoxController* _controller);
 		/// @brief Remove the visu box controller if it closes
@@ -152,12 +159,6 @@ class Scene : public QOpenGLFunctions_3_2_Core {
 		/// @brief Returns the current scene bounding box.
 		DiscreteGrid::bbox_t getSceneBoundingBox() const;
 
-		/// @brief Upload a 1D texture with the given parameters.
-		GLuint uploadTexture1D(const TextureUpload& tex);
-		/// @brief Upload a 2D texture with the given parameters.
-		GLuint uploadTexture2D(const TextureUpload& tex);
-		/// @brief Upload a 3D texture with the given parameters.
-		GLuint uploadTexture3D(const TextureUpload& tex);
 		/// @brief Upload a 3D texture with the given parameters.
 		GLuint newAPI_uploadTexture3D(const GLuint handle, const TextureUpload& tex, std::size_t s, std::vector<std::uint16_t> & data);
 		GLuint newAPI_uploadTexture3D_allocateonly(const TextureUpload& tex);

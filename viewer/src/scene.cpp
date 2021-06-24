@@ -2296,10 +2296,43 @@ void Scene::newAPI_prepareUniforms_3DPlane(GLfloat *mvMat, GLfloat *pMat, planes
 	glUniform3fv(location_planePosition, 1, glm::value_ptr(planePos));
 	glUniform3fv(location_planeDirection, 1, glm::value_ptr(this->planeDirection));
 	glUniform1i(location_showTex, showTexOnPlane ? 1 : 0);
-	glActiveTexture(GL_TEXTURE0 + 0);
+
+	GLint location_colorScales0 =			getUniform("colorScales[0]");
+	GLint location_colorScales1 =			getUniform("colorScales[1]");
+	GLint location_colorScales2 =			getUniform("colorScales[2]");
+	GLint location_colorScales3 =			getUniform("colorScales[3]");
+
+	GLint enabled_textures = 0;
+	glActiveTexture(GL_TEXTURE0 + enabled_textures);
 	glEnable(GL_TEXTURE_3D);
 	glBindTexture(GL_TEXTURE_3D, grid->gridTexture);
-	glUniform1i(location_texData, 0);
+	glUniform1i(location_texData, enabled_textures);
+	enabled_textures++;
+
+	glActiveTexture(GL_TEXTURE0 + enabled_textures);
+	glBindTexture(GL_TEXTURE_1D, this->texHandle_colorScale_greyscale);
+	glUniform1i(location_colorScales0, enabled_textures);
+	enabled_textures++;
+
+	glActiveTexture(GL_TEXTURE0 + enabled_textures);
+	glBindTexture(GL_TEXTURE_1D, this->texHandle_colorScale_hsv2rgb);
+	glUniform1i(location_colorScales1, enabled_textures);
+	enabled_textures++;
+
+	glActiveTexture(GL_TEXTURE0 + enabled_textures);
+	glBindTexture(GL_TEXTURE_1D, this->texHandle_colorScale_user0);
+	glUniform1i(location_colorScales2, enabled_textures);
+	enabled_textures++;
+
+	glActiveTexture(GL_TEXTURE0 + enabled_textures);
+	glBindTexture(GL_TEXTURE_1D, this->texHandle_colorScale_user1);
+	glUniform1i(location_colorScales3, enabled_textures);
+	enabled_textures++;
+
+	const GLchar uniform_block_name[] = "ColorBlock";
+	GLuint colorBlock_index = glGetUniformBlockIndex(this->programHandle_projectedTex, uniform_block_name);
+	glUniformBlockBinding(this->programHandle_projectedTex, colorBlock_index, 0);
+	glBindBufferBase(GL_UNIFORM_BUFFER, 0, grid->uboHandle_colorAttributes);
 }
 
 void Scene::prepareUniforms_PlaneViewer(planes _plane, planeHeading _heading, glm::vec2 fbDims, float zoomRatio, glm::vec2 offset, const GridGLView::Ptr& _grid) {
@@ -2531,9 +2564,41 @@ void Scene::newAPI_prepareUniforms_PlaneViewer(planes _plane, planeHeading _head
 	glUniform2fv(location_offset, 1, glm::value_ptr(realOffset));
 
 	// Uniform samplers :
-	glActiveTexture(GL_TEXTURE0 + 0);
+	GLint tex = 0;
+	glActiveTexture(GL_TEXTURE0 + tex);
 	glBindTexture(GL_TEXTURE_3D, _grid->gridTexture);
-	glUniform1i(location_texData, 0);
+	glUniform1i(location_texData, tex);
+	tex++;
+
+	GLint location_colorScales0 =		getUniform("colorScales[0]");
+	GLint location_colorScales1 =		getUniform("colorScales[1]");
+	GLint location_colorScales2 =		getUniform("colorScales[2]");
+	GLint location_colorScales3 =		getUniform("colorScales[3]");
+
+	glActiveTexture(GL_TEXTURE0 + tex);
+	glBindTexture(GL_TEXTURE_1D, this->texHandle_colorScale_greyscale);
+	glUniform1i(location_colorScales0, tex);
+	tex++;
+
+	glActiveTexture(GL_TEXTURE0 + tex);
+	glBindTexture(GL_TEXTURE_1D, this->texHandle_colorScale_hsv2rgb);
+	glUniform1i(location_colorScales1, tex);
+	tex++;
+
+	glActiveTexture(GL_TEXTURE0 + tex);
+	glBindTexture(GL_TEXTURE_1D, this->texHandle_colorScale_user0);
+	glUniform1i(location_colorScales2, tex);
+	tex++;
+
+	glActiveTexture(GL_TEXTURE0 + tex);
+	glBindTexture(GL_TEXTURE_1D, this->texHandle_colorScale_user1);
+	glUniform1i(location_colorScales3, tex);
+	tex++;
+
+	const GLchar uniform_block_name[] = "ColorBlock";
+	GLuint colorBlock_index = glGetUniformBlockIndex(this->programHandle_projectedTex, uniform_block_name);
+	glUniformBlockBinding(this->programHandle_projectedTex, colorBlock_index, 0);
+	glBindBufferBase(GL_UNIFORM_BUFFER, 0, _grid->uboHandle_colorAttributes);
 }
 
 void Scene::prepareUniforms_Volumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, const GridGLView::Ptr &_grid) {
@@ -2936,6 +3001,36 @@ void Scene::newAPI_prepareUniforms_Volumetric(GLfloat *mvMat, GLfloat *pMat, glm
 	glUniform3fv(location_color1, 1, glm::value_ptr(this->color1));
 	glUniform3fv(location_color0Alt, 1, glm::value_ptr(this->color0_second));
 	glUniform3fv(location_color1Alt, 1, glm::value_ptr(this->color1_second));
+
+	GLint location_colorScales0 =		getUniform("colorScales[0]");
+	GLint location_colorScales1 =		getUniform("colorScales[1]");
+	GLint location_colorScales2 =		getUniform("colorScales[2]");
+	GLint location_colorScales3 =		getUniform("colorScales[3]");
+
+	glActiveTexture(GL_TEXTURE0 + tex);
+	glBindTexture(GL_TEXTURE_1D, this->texHandle_colorScale_greyscale);
+	glUniform1i(location_colorScales0, tex);
+	tex++;
+
+	glActiveTexture(GL_TEXTURE0 + tex);
+	glBindTexture(GL_TEXTURE_1D, this->texHandle_colorScale_hsv2rgb);
+	glUniform1i(location_colorScales1, tex);
+	tex++;
+
+	glActiveTexture(GL_TEXTURE0 + tex);
+	glBindTexture(GL_TEXTURE_1D, this->texHandle_colorScale_user0);
+	glUniform1i(location_colorScales2, tex);
+	tex++;
+
+	glActiveTexture(GL_TEXTURE0 + tex);
+	glBindTexture(GL_TEXTURE_1D, this->texHandle_colorScale_user1);
+	glUniform1i(location_colorScales3, tex);
+	tex++;
+
+	const GLchar uniform_block_name[] = "ColorBlock";
+	GLuint colorBlock_index = glGetUniformBlockIndex(this->programHandle_projectedTex, uniform_block_name);
+	glUniformBlockBinding(this->programHandle_projectedTex, colorBlock_index, 0);
+	glBindBufferBase(GL_UNIFORM_BUFFER, 0, _grid->uboHandle_colorAttributes);
 
 	// print uniform values :
 	if (this->showVAOstate) {
@@ -3764,6 +3859,7 @@ void Scene::setColorFunction_r(ColorFunction _c) {
 		this->selectedChannel_r = (this->selectedChannel_r+1)%2;
 	}
 	this->channels_r = _c;
+	for (auto& grid : newGrids) { grid->colorChannelAttributes[0].setColorScale(static_cast<int>(_c)); }
 }
 
 void Scene::setColorFunction_g(ColorFunction _c) {
@@ -3774,6 +3870,7 @@ void Scene::setColorFunction_g(ColorFunction _c) {
 		this->selectedChannel_g = (this->selectedChannel_g+1)%2;
 	}
 	this->channels_g = _c;
+	for (auto& grid : newGrids) { grid->colorChannelAttributes[1].setColorScale(static_cast<int>(_c)); }
 }
 
 void Scene::setRGBMode(RGBMode _mode) {

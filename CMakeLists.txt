@@ -23,6 +23,7 @@ ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/third_party/glm)
 SET(LOCAL_GLM_HEADER_DIR "${CMAKE_CURRENT_LIST_DIR}/third_party/glm/")
 
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/image)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/colorscale)
 
 # Library for image reading/writing {{{
 ADD_LIBRARY(ImageIO STATIC
@@ -33,7 +34,7 @@ ADD_LIBRARY(ImageIO STATIC
 	./image/src/writer.cpp
 )
 TARGET_INCLUDE_DIRECTORIES(ImageIO
-	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/third_party/glm/
+	PRIVATE ${LOCAL_GLM_HEADER_DIR}
 	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include
 	# Nifti uses brace-include without the 'nifti/' prefix, leading
 	# to manually have to include the lib's include dir in targets:
