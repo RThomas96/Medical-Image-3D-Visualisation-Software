@@ -18,6 +18,7 @@ ColorScaleManager::~ColorScaleManager() {
 }
 
 void ColorScaleManager::init_default_color_scales() {
+	// Create the default color scales :
 	this->greyscale = std::make_shared<SimpleGradientColorScale>(glm::vec3(.0f,.0f,.0f), glm::vec3(1.f,1.f,1.f));
 	this->hsv2rgb = std::make_shared<ColorScaleFunctor>([](float f) -> glm::vec3 {
 		glm::vec3 hsv = glm::vec3 (f, 1., 1.);
@@ -39,8 +40,13 @@ void ColorScaleManager::init_default_color_scales() {
 				IsNotSecondSlice),IsNotFirstSlice));    // Make the RGB rotate right depending on final slice index
 	});
 
+	// Set their names :
 	this->greyscale->setName("Greyscale");
 	this->hsv2rgb->setName("HSV to RGB");
+
+	// Add them to the color scales available :
+	this->color_scale_user.push_back(this->greyscale);
+	this->color_scale_user.push_back(this->hsv2rgb);
 }
 
 void ColorScaleManager::addColorScale(ColorScaleBase::Ptr _to_add) {
@@ -49,6 +55,9 @@ void ColorScaleManager::addColorScale(ColorScaleBase::Ptr _to_add) {
 }
 
 void ColorScaleManager::removeColorScale(ColorScaleBase::Ptr to_remove) {
+	// Don't remove the default color scales
+	if (to_remove == this->greyscale || to_remove == this->hsv2rgb) { return; }
+
 	// reorder the vector to put the target color scale at the end if it's in here :
 	auto remove_iterator = std::remove_if(this->color_scale_user.begin(), this->color_scale_user.end(),
 	[=](const ColorScaleBase::Ptr& c) -> bool {

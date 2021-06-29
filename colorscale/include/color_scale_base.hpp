@@ -67,6 +67,9 @@ namespace Color {
 			/// @b Allows to sample the whole color scale, using a user-defined number of samples.
 			virtual std::vector<glm::vec3> getColorScale(std::size_t number_of_steps) const = 0;
 
+			/// @b Returns the color scale's type, defined by the enum values contained within.
+			ColorScale_t getColorScaleType() const noexcept { return this->cs_type; }
+
 		signals:
 			/// @b Signal fired when the user-defined name of the color scale changes.
 			void nameChanged();
