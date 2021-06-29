@@ -1,4 +1,4 @@
-\section{Software components}
+\chapter{Software components}\label{text:03_software_components}
 
 \begin{comment}
 	What are the major software components of the program, what is(are) their role(s)
@@ -13,3 +13,70 @@
 		- Tasks / multi-threaded stuff
 		- General purpose / other things that didn't fit into above
 \end{comment}
+
+% Quick intro about the general organisation of tasks and files ... etc
+This section is aimed more at developers which will take over this project and extend it. It describes in detail the different software components in the program, as they are at the end of my engineering contract.
+
+However, do note that \textit{this is not a precise documentation of every function and class of the program}, this is simply an enumeration of the different concepts present in the code, where to find them and how they are used within the context of the program. For a complete documentation, please see the code or the \textsc{Doxygen} file for a more detailed listing of available classes and functions.
+
+For every concept and class described here, there will be a path allowing you to find them in the code. This path is always relative to the root of the git repository that was cloned in order to get this code. In addition, there will be additional information present here about the state of the concepts/classes (if they are in-progress or not).
+
+\section{Internal image representation}\label{text:03_software_components:01_image_representation}
+{
+	\textit{N.B.} : Throughout this part, I'll use the terms \textit{grid} and \textit{image} interchangeably. This is only because we consider the three-dimensional images to be a regularly sampled 3D grid, of dimensions similar to the image dimensions and with additional metadata which we can garner from the image files themselves.
+
+	Due to a slightly chaotic organization on my part regarding the different software components, there are actually two ways to represent grids within the program.
+
+	Those two implementations both serve the same purpose : to deliver a way to get information about the grid easily from within the code. However, that's where the similarities end.
+
+	I'll go over the legacy way of loading and addressing grids first. I'll explain what I did and why I did it before going over the recommended way of loading grids. I'll also explain why this implementation is better, even if it does mean having a bit more trouble to write the code to access the grid's data.
+
+	\subsection{Legacy grid representation : \textsc{DiscreteGrid}}\label{text:03_software_components:01_image_representation:01_legacy_discretegrid}
+	{
+		% Where are the files within the git repository ?
+		% What does the class do ?
+		% Where/How is it used ?
+		% What doesn't it do ?
+		% Why is it deprecated ?
+	}
+
+	\subsection{Modern grid representation : \textsc{Grid}}\label{text:03_software_components:01_image_representation:02_modern_grid}
+	{
+		% Where are the files within the git repository ?
+		% What does the class do ?
+		% Where/How is it used ?
+		%	HOW DOES IT WORK ? (explain the template functions and the explicit tagging system for them)
+		% What doesn't it do ?
+		% Why is it better than DiscreteGrid ?
+		% How can we extend it ?
+	}
+
+	\subsection{Code migration}\label{text:03_software_components:01_image_representation:03_migration}
+	{
+		% Explain what parts are not et migrated to the new code
+		% How can we migrate them ?
+	}
+}
+
+\section{Visualization of different components}\label{text:03_software_components:02_visualization}
+{
+	%
+}
+
+\section{Generation primitives}\label{text:03_software_components:03_generation_primitives}
+{
+	%
+}
+
+\section{Tasks and multi-threading}\label{text:03_software_components:04_tasks}
+{
+	%
+}
+
+\section{Other structures}\label{text:03_software_components:05_other}
+{
+	%
+}
+
+% Vim modeline, do not touch !
+% vim: set fdm=indent
