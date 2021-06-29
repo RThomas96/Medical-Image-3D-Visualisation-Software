@@ -1,0 +1,32 @@
+\documentclass[a4paper,12pt]{report}
+
+\usepackage{graphicx}
+\usepackage[T1]{fontenc}
+\usepackage{float}
+\usepackage{comment}
+\usepackage{hyperref}
+\usepackage[french]{babel}
+
+\title{Hello, world}
+\author{Thibault de Villèle}
+\date{Juillet 2021}
+
+\renewcommand\maketitle{}
+
+\begin{document}
+
+\maketitle
+
+% Introduction and how to read this manual :
+\input{intro}
+% How does the program work in the background :
+\input{pipeline}
+% What components are there, how do they interact (...) :
+\input{components}
+% How do I do X ? (F.A.Q.-like section for both users and developers)
+\input{howto}
+
+\textit{This is the end.}\\\hline{}
+
+\end{document}
+

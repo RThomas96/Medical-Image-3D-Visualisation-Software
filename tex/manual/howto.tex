@@ -1,0 +1,37 @@
+\section{How do I ...}
+\begin{comment}
+	What will be included in this chapter :
+		- User-facing stuff :
+			- how to open/use the program, in general
+				- use the help guide
+				- say what can be loaded
+				- describe interactions
+				- describe viewing modes
+				- describe output data (generation)
+			- how to load data
+				- what kind of filetypes are supported
+				- what are some caveats/'gotchas' of the program
+				- some of the options within the loading dialog
+				- what the loading dialog should result in
+			- how to generate grids
+				- what the intent was to do something like this
+				- how to use it
+				- specify the process is blocking !!! no progressbar
+				- what can be done with this
+		- Dev-facing stuff :
+				- How do I compile the program ?
+					- Compile the libs with the ./third_party/compile.{ps/sh} utilities
+					- Use CMake
+					- Learn about CMake flags !!!
+				- How do I debug something ? -- Graphical
+					- use renderdoc ! wonderful
+				- How do I debug something ? -- Code
+					- Learn a debugger (Qt's one is good)
+					- Most code is documented, use this as a first step
+					- Be warned, some things are multi-threaded so printf() might not always result in a useful thing.
+				- How do I draw something ? [ NEEDED ??? ]
+					- make sure context is bound
+					- specify commands with an instance of QOpenGLFunctions (Scene, or within a drawable class)
+					- some words about the composition of the widget, that all should be drawn and that Qt will do its stuff later
+					- ping the reader back to the documentation of the pipeline
+\end{comment}
