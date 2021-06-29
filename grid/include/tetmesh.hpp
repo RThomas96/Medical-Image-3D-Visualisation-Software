@@ -29,17 +29,18 @@ enum InterpolationMethods {
 /// You can analyse the neighbors of a voxel by supplying it a position, which will update the positions and
 /// the values of each member of the mesh. Right now, the class only supports Nearest-Neighbor querying of
 /// voxels, due to the limitations of the TextureStorage class.
-class TetMesh {
+class InterpolationMesh {
 	public:
 		using data_t = DiscreteGrid::data_t;
+		using Ptr = std::shared_ptr<InterpolationMesh>;
 	public:
 		/// @brief Constructs a mesh, devoid of any associated image stack.
-		TetMesh(void);
+		InterpolationMesh(void);
 
 		/// @brief Add a grid as an input to the mesh's reconstruction algorithm.
 		/// @param toAdd A shared pointer to the grid to add to this mesh as an input for data reconstruction.
 		/// @returns A reference to (this), to chain function calls.
-		TetMesh& addInputGrid(const std::shared_ptr<InputGrid>& toAdd);
+		InterpolationMesh& addInputGrid(const std::shared_ptr<InputGrid>& toAdd);
 
 		/// @brief Returns the currently associated input grids
 		/// @return The input grids.
@@ -49,25 +50,25 @@ class TetMesh {
 		/// @details Sets the positions of the mesh vertices when the output mesh is set.
 		/// @param toSet A raw pointer to the grid to populate for the reconstruction.
 		/// @returns A reference to (this), to chain function calls.
-		TetMesh& setOutputGrid(const std::shared_ptr<OutputGrid>& toSet);
+		InterpolationMesh& setOutputGrid(const std::shared_ptr<OutputGrid>& toSet);
 
 		/// @brief Set the grid to sample data into from the input grids.
 		/// @details Sets the positions of the mesh vertices when the output mesh is set.
 		/// @param toSet A raw pointer to the grid to populate for the reconstruction.
 		/// @returns A reference to (this), to chain function calls.
-		TetMesh& setOutputGrid_raw(const std::shared_ptr<DiscreteGrid>& toSet);
+		InterpolationMesh& setOutputGrid_raw(const std::shared_ptr<DiscreteGrid>& toSet);
 
 		/// @brief Populate the output grid with data from the input grids.
 		/// @param method The interpolation method used to determine the values of the neighbor grid.
-		TetMesh& populateOutputGrid(InterpolationMethods method);
+		InterpolationMesh& populateOutputGrid(InterpolationMethods method);
 
 		/// @brief Populate the output grid with data from the input grids.
 		/// @param method The interpolation method used to determine the values of the neighbor grid.
-		TetMesh& populateOutputGrid_threaded(InterpolationMethods method, IO::ThreadedTask::Ptr&);
+		InterpolationMesh& populateOutputGrid_threaded(InterpolationMethods method, IO::ThreadedTask::Ptr&);
 
 		/// @brief Populate the output grid with data from the input grids.
 		/// @param method The interpolation method used to determine the values of the neighbor grid.
-		TetMesh& populateOutputGrid_RGB(InterpolationMethods method);
+		InterpolationMesh& populateOutputGrid_RGB(InterpolationMethods method);
 
 		/// @brief Returns the interpolated value from 'grid', interpolated using 'method'
 		/// @param grid The grid to sample data from
@@ -77,13 +78,13 @@ class TetMesh {
 
 		/// @brief Prints info about the current position and values of the neighbor grid.
 		/// @returns A reference to (this), to chain function calls.
-		TetMesh& printInfo(void);
+		InterpolationMesh& printInfo(void);
 
 		/// @brief Returns the rate at which we can generate voxels.
 		double getGenerationRate(void) const;
 
 		/// @brief Destructs the mesh.
-		~TetMesh(void);
+		~InterpolationMesh(void);
 	protected:
 		std::vector<std::shared_ptr<InputGrid>> inputGrids; ///< Input grids, to sample data from
 		std::shared_ptr<DiscreteGrid> outputGrid; ///< Output grid, to populate
@@ -112,10 +113,10 @@ class TetMesh {
 		glm::vec<3, data_t, glm::defaultp> h_and_e_colouring(data_t _r, std::shared_ptr<InputGrid>& _rg, data_t _b, std::shared_ptr<InputGrid>& _bg);
 
 		/// @brief Updates the relative positions of the grid to the sizes of the outputgrid's voxels.
-		TetMesh& updateVoxelSizes(void);
+		InterpolationMesh& updateVoxelSizes(void);
 
 		/// @brief Updates the output grid's size, resolution (...) when an input grid is added, or when an output grid is set.
-		TetMesh& updateOutputGridData(void);
+		InterpolationMesh& updateOutputGridData(void);
 
 		/// @brief Get the real position of the vertex at index 'idx'.
 		/// @details Since the neighborhood grid never really moves, and is only offset by a certain amount,
@@ -129,8 +130,8 @@ class TetMesh {
 		data_t getVertexValue(const std::shared_ptr<InputGrid> grid, std::size_t idx, bool verbose = false) const;
 
 	protected:
-		TetMesh::data_t interpolate_NearestNeighbor(const std::shared_ptr<InputGrid> grid, bool verbose = false) const; ///< Interpolates a given point in initial space with the Nearest Neighbor technique
-		TetMesh::data_t interpolate_TriLinear(const std::shared_ptr<InputGrid> grid, bool verbose = false) const; ///< Interpolates a given point in initial space with the Trilinear technique
+		InterpolationMesh::data_t interpolate_NearestNeighbor(const std::shared_ptr<InputGrid> grid, bool verbose = false) const; ///< Interpolates a given point in initial space with the Nearest Neighbor technique
+		InterpolationMesh::data_t interpolate_TriLinear(const std::shared_ptr<InputGrid> grid, bool verbose = false) const; ///< Interpolates a given point in initial space with the Trilinear technique
 };
 
 #ifndef GLM_CROSS_VEC4_OVERRIDE

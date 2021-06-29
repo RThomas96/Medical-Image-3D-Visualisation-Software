@@ -17,7 +17,7 @@
 /// @brief Definition of a 3 dimensionnal vector to store this grid's dimensions, amongst other things.
 typedef glm::vec<3, std::size_t, glm::defaultp> svec3;
 
-class TetMesh; // Fwd-decl
+class InterpolationMesh; // Fwd-decl
 
 /// @brief Representation of a discrete grid (as a stack of images, or a voxel grid) which can be queried from world space.
 /// @note Although some functions in this class may mention 'texels', they are in no way, shape, or form tied to the visualization aspect of the project.
@@ -25,7 +25,7 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 
 	//friend class GridControl;
 	friend class GridDetailedView;
-	friend class TetMesh;
+	friend class InterpolationMesh;
 
 	public:
 		typedef glm::vec<3, std::size_t, glm::defaultp> sizevec3;

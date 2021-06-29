@@ -476,7 +476,7 @@ void Scene::loadGridROI() {
 			DiscreteGrid::sizevec3 dims = glm::convert_to<std::size_t>(this->visuBox.getDiagonal() / voxelDims);
 
 			// Create a tetrahedral mesh :
-			std::unique_ptr<TetMesh> tetMesh = std::make_unique<TetMesh>();
+			std::unique_ptr<InterpolationMesh> tetMesh = std::make_unique<InterpolationMesh>();
 			// Add the unique "input" grid to it :
 			tetMesh->addInputGrid(std::dynamic_pointer_cast<InputGrid>(grid));
 
@@ -1466,7 +1466,7 @@ void Scene::launchSaveDialog() {
 	std::shared_ptr<OutputGrid> outputGrid = std::make_shared<OutputGrid>();
 	outputGrid->setOffline();
 
-	std::shared_ptr<TetMesh> tetmesh = std::make_shared<TetMesh>();
+	InterpolationMesh::Ptr tetmesh = std::make_shared<InterpolationMesh>();
 	// add the grids to the tetmesh
 	for (std::size_t i = 0; i < this->grids.size(); ++i) {
 		std::for_each(this->grids[i]->grid.cbegin(), this->grids[i]->grid.cend(),

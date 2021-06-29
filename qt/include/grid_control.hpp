@@ -36,7 +36,7 @@ class GridControl : public QWidget {
 		Q_OBJECT
 	public:
 		/// @brief Default constructor of the class, providing a valid scene pointer.
-		GridControl(std::shared_ptr<DiscreteGrid> _vg, std::shared_ptr<TetMesh> _tm, Scene* _scene, QWidget* parent = nullptr);
+		GridControl(std::shared_ptr<DiscreteGrid> _vg, InterpolationMesh::Ptr _tm, Scene* _scene, QWidget* parent = nullptr);
 		/// @brief Default destructor of the class. Removes the output grid and unregisters itself from the scene.
 		~GridControl(void);
 		/// @brief Ovverides the default show event in order to lock its size, disabling later resize events.
@@ -80,13 +80,13 @@ class GridControl : public QWidget {
 		std::shared_ptr<OutputGrid> output_B;
 		std::shared_ptr<OutputGrid> output_RGB;
 		// Different interpolation structures available to the user :
-		std::shared_ptr<TetMesh> interpolator_R;
-		std::shared_ptr<TetMesh> interpolator_G;
-		std::shared_ptr<TetMesh> interpolator_RGB;
+		InterpolationMesh::Ptr interpolator_R;
+		InterpolationMesh::Ptr interpolator_G;
+		InterpolationMesh::Ptr interpolator_RGB;
 
 		// Variables retrieved from the constructor :
 		std::shared_ptr<DiscreteGrid> voxelGrid; ///< Voxel grid to control.
-		std::shared_ptr<TetMesh> mesh; ///< Tetrahedral mesh responsible for the generation of the grid
+		InterpolationMesh::Ptr mesh; ///< Tetrahedral mesh responsible for the generation of the grid
 		Scene* scene; ///< The scene to control.
 
 		// Qt stuff :
