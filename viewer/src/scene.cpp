@@ -3060,6 +3060,14 @@ void Scene::newAPI_prepareUniforms_Volumetric(GLfloat *mvMat, GLfloat *pMat, glm
 	}
 }
 
+GLuint Scene::getVolumetricProgram() { return this->programHandle_VolumetricViewer; }
+
+void Scene::useProgram(GLuint _program_handle) { glUseProgram(_program_handle); }
+
+GLint Scene::findUniform(GLuint _program_handle, const char *_uniform_name) {
+	return glGetUniformLocation(_program_handle, _uniform_name);
+}
+
 void Scene::drawGrid(GLfloat *mvMat, GLfloat *pMat, glm::mat4 baseMatrix, const GridGLView::Ptr& grid) {
 	glm::vec4 lightPos = glm::vec4(-0.25, -0.25, -0.25, 1.0);
 

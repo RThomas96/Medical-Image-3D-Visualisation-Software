@@ -13,7 +13,7 @@
 class Scene; // fwd-declaration
 
 /// @b This class is a proxy object, enabling to display a grid in real-time.
-class VolumetricGridViewer : public QObject {
+class GridViewer : public QObject {
 		// Define this class to be signal-able via Qt's slot-signal system.
 		Q_OBJECT;
 	public:
@@ -30,11 +30,10 @@ class VolumetricGridViewer : public QObject {
 
 	public:
 		/// @b The default ctor for the class. Queues up the initialization of the GL for the next screen refresh.
-		/// @todo Re-enable this ctor once the class is more fleshed out.
-		VolumetricGridViewer(void) = delete;
+		GridViewer(Image::Grid::Ptr& _grid_to_show);
 
 		/// @b Default ctor for the grid viewer. Tries to clear the
-		~VolumetricGridViewer(void);
+		~GridViewer(void);
 
 		/// @b Initializes all the data that's possible on the host side, before the
 		void initializeData(void);
@@ -43,9 +42,9 @@ class VolumetricGridViewer : public QObject {
 		void initializeGLData(Scene* _scene_to_modify);
 
 		/// @b Draw the grid, using the right underlying method call to draw it in the right mode.
-		/// @details Under the hood, binds the uniforms for the current program, and
+		/// @details Under the hood, binds the uniforms for the current program, and binds the UBO.
 		/// @warning Assumes a GL context is current, valid, and bound.
-		void draw(Scene* _scene_functions);
+		void draw3D(Scene* _scene_functions);
 
 		/// @b Returns true if the grid is hidden, otherwise returns false.
 		bool hidden() const noexcept;
@@ -78,25 +77,39 @@ class VolumetricGridViewer : public QObject {
 
 	protected:
 		/// @b Draw the grid, in solid mode.
-		void draw_solid(void);
+		void draw_solid(Scene* _scene);
 
 		/// @b Draw the grid, in volumetric mode.
-		void draw_volumetric(void);
+		void draw_volumetric(Scene* _scene);
 
 		/// @b Draw the grid, in boxed volumetric mode.
-		void draw_volumetric_boxed();
+		void draw_volumetric_boxed(Scene* _scene);
 
 		/// @b Bind the uniform buffer that the grid requires.
-		void bindUniformBuffer(void);
+		void bindUniformBuffer(Scene* _scene, GLuint _program_handle, const char* uniform_buffer_name);
 
 		/// @b Binds the textures of the grid to the current GL program / draw call.
-		/// @details Will only bind the necessary textures. If drawing in solid mode, binds only the grid texture
-		/// alongside the color channels. If drawing in volumetric (boxed) mode, will also bind the volumetric mesh
-		/// textures in order to draw them properly.
-		void bindTextures();
+		void bindTextures_Solid(Scene* _scene);
+		/// @b Binds the textures of the grid to the current GL program / draw call.
+		void bindTextures_Volumetric(Scene* _scene);
+		/// @b Binds the textures of the grid to the current GL program / draw call.
+		void bindTextures_VolumetricBoxed(Scene* _scene);
+
+		/// @b Binds the solid viewing program uniforms to the current GL context.
+		void bindUniforms_Solid(Scene* _scene);
+		/// @b Binds the volumetric viewing program uniforms to the current GL context.
+		void bindUniforms_Volumetric(Scene* _scene);
+		/// @b Binds the volumetric boxed viewing program uniforms to the current GL context.
+		void bindUniforms_VolumetricBoxed(Scene* _scene);
 
 		/// @b Update the main channel data within the UBO data on the GL side.
-		void updateMainChannel_UBO();
+		/// @warning Assumes the GL context used in the scene is bound and made current.
+		void updateMainChannel_UBO(Scene* _scene);
+
+		/// @b Generates the mesh data, for the initialization functions.
+		/// @details It only generates the mesh data on the host (CPU) side. The function tasked with uploading the
+		/// data to the device (GPU) side is integrated in the initializeGLData() function.
+		void generateMeshData();
 
 	protected:
 		/// @b Is this grid supposed to be shown or not ?
@@ -117,6 +130,8 @@ class VolumetricGridViewer : public QObject {
 		std::uint8_t main_channel_index;
 		/// @b The color channel attributes for the R, G, and B channels of the uploaded texture.
 		std::array<colorChannelAttributes_GL, 3> colorChannelAttributes;
+		/// @b The epsilon to add to the volumetric viewer in order not to cut tetrahedrons too early.
+		glm::vec3 volumetric_epsilon;
 };
 
 #endif // VISUALIZATION_VIEWER_INCLUDE_VOLUMETRIC_GRID_VIEWER_HPP_

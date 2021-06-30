@@ -248,6 +248,22 @@ class Scene : public QOpenGLFunctions_3_2_Core {
 
 		/// @b Checks if the scene is already initialized.
 		bool isSceneInitialized(void) const { return this->isInitialized; }
+
+		/// @b Returns the volumetric GL program handle.
+		GLuint getVolumetricProgram(void);
+		/// @b Returns the handle for the solid viewing program
+		GLuint getSolidProgram(void);
+		/// @b Returns the handle for the 3D plane program
+		GLuint get3DPlaneProgram(void);
+		/// @b Returns the handle for the texture explorer program
+		GLuint getTextureExplorerProgram(void);
+
+		/// @b Binds a given program instance.
+		void useProgram(GLuint _program_handle);
+
+		/// @b Find the given uniform name in the given program.
+		GLint findUniform(GLuint _program_handle, const char* _uniform_name);
+
 	private :
 		/// @b compile the given shader at 'path' as a shader of type 'shaType'
 		GLuint compileShader(const std::string& path, const GLenum shaType, bool verbose = false);
