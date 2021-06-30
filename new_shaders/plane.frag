@@ -86,7 +86,8 @@ void main(void)
 					worldPosition.w = 1.f;
 					colorTex = fragmentEvaluationSingleChannel(tex);
 					if (colorTex.w < 0.005f) {
-						colorTex=vec4(.8, .8, .8, 1.);
+						float white_shade = 245.f/255.f;
+						colorTex = vec4(white_shade, white_shade, white_shade, 1.);
 					}
 				}
 			}
@@ -98,7 +99,7 @@ void main(void)
 	}
 
 
-	if (color.a < .1f) { worldPosition.w = .0f; discard; }
+	if (color.a < .005f) { worldPosition.w = .0f; discard; }
 }
 
 /****************************************/

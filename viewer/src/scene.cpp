@@ -3859,7 +3859,12 @@ void Scene::setColorFunction_r(ColorFunction _c) {
 		this->selectedChannel_r = (this->selectedChannel_r+1)%2;
 	}
 	this->channels_r = _c;
+	// WARNING : below is a dirty hack, since UBO expects a color scale index but this gives it a constant
+	// value that only has a meaning on the host (CPU) side.
+	if (_c == ColorFunction::ColorMagnitude) _c = ColorFunction::HSV2RGB;
+	if (_c == ColorFunction::HSV2RGB) _c = ColorFunction::HistologyHandE;
 	for (auto& grid : newGrids) { grid->colorChannelAttributes[0].setColorScale(static_cast<int>(_c)); }
+	this->shouldUpdateUBOData = true;
 }
 
 void Scene::setColorFunction_g(ColorFunction _c) {
@@ -3870,7 +3875,11 @@ void Scene::setColorFunction_g(ColorFunction _c) {
 		this->selectedChannel_g = (this->selectedChannel_g+1)%2;
 	}
 	this->channels_g = _c;
+	// WARNING : below is a dirty hack, since UBO expects a color scale index but this gives it a constant
+	// value that only has a meaning on the host (CPU) side.
+	if (_c == ColorFunction::HSV2RGB) _c = ColorFunction::HistologyHandE;
 	for (auto& grid : newGrids) { grid->colorChannelAttributes[1].setColorScale(static_cast<int>(_c)); }
+	this->shouldUpdateUBOData = true;
 }
 
 void Scene::setRGBMode(RGBMode _mode) {

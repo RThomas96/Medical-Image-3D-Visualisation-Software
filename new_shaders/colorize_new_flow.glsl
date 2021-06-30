@@ -48,7 +48,7 @@ vec4 fragmentEvaluationSingleChannel(in uvec3 color) {
 		mainValue = color.r;
 	} else if (mainChannelIndex == 1u) {
 		mainValue = color.g;
-	} else {
+	} else if (mainChannelIndex == 2u) {
 		mainValue = color.b;
 	}
 

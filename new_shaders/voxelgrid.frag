@@ -71,7 +71,7 @@ vec4 fragmentEvaluationSingleChannel(in uvec3 color);
 void main(void)
 {
 	// Compute the cutting plane position so that we can threshold the fragments :
-	if (isFragmentVisible() == false) { worldPosition.w = .0f; discard; }
+	if (isFragmentVisible() == false) { color=vec4(.8, .8, .3, 1.); worldPosition.w = .0f; discard; }
 
 	float epsilon = .03;
 	float distMin = min(barycentricCoords.x/largestDelta.x, min(barycentricCoords.y/largestDelta.y, barycentricCoords.z/largestDelta.z));
@@ -81,10 +81,11 @@ void main(void)
 	worldPosition.w = 1.f;
 
 	// computed color :
-	vec4 compColor = vec4(.1,.1, .1, 1.);
+	vec4 compColor = vec4(.1, .1, .1, 1.);
 	vec4 finalColor = fragmentEvaluationSingleChannel(ui);
 	if (finalColor.a < .005f) {
-		compColor = vec4(.8, .8, .8, .1);
+		float white_shade = 245.f/255.f;
+		compColor = vec4(white_shade, white_shade, white_shade, 1.);
 		worldPosition.w = .0f;
 	} else {
 		compColor = finalColor;

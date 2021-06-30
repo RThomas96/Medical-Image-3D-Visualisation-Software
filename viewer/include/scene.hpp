@@ -40,6 +40,7 @@
 #define PLANE_POS_FLOOR
 
 class ControlPanel; // Forward declaration
+class VolumetricGridViewer; /// fwd-decl
 
 /// @b Simple enum to keep track of the different viewing primitives for the program.
 enum DrawMode { Solid, Volumetric, VolumetricBoxed };
