@@ -89,17 +89,73 @@ void GridViewer::initializeGLData(Scene *_scene) {
 	emit this->afterGLInit();
 }
 
-void GridViewer::draw3D(Scene *_scene_functions) {
-	if (this->vis_mode == VisualizationMode::Solid) { this->draw_solid(_scene_functions); }
-	else if (this->vis_mode == VisualizationMode::Volumetric) { this->draw_volumetric(_scene_functions); }
-	else if (this->vis_mode == VisualizationMode::VolumetricBoxed) { this->draw_volumetric_boxed(_scene_functions); }
-	else { std::cerr << "Error : no drawing mode defined for grid " << this->source_grid->getImageName() << '\n'; }
+void GridViewer::draw3D(Scene *_scene_functions, GLfloat* view_matrix, GLfloat* projection_matrix) {
+	if (this->vis_mode == VisualizationMode::Solid) {
+		this->draw_solid(_scene_functions, view_matrix, projection_matrix);
+	} else if (this->vis_mode == VisualizationMode::Volumetric) {
+		this->draw_volumetric(_scene_functions, view_matrix, projection_matrix);
+	} else if (this->vis_mode == VisualizationMode::VolumetricBoxed) {
+		this->draw_volumetric_boxed(_scene_functions, view_matrix, projection_matrix);
+	} else {
+		std::cerr << "Error : no drawing mode defined for grid " << this->source_grid->getImageName() << '\n';
+	}
+}
+
+void GridViewer::draw_solid(Scene* _scene, GLfloat* view_matrix, GLfloat* projection_matrix) {
+	// Get the program handle to draw and use it :
+	GLuint _program_handle = _scene->getSolidProgram();
+	_scene->glUseProgram(_program_handle);
+
+	// Bind the necessary uniforms and the UBO :
+	this->bindUniforms_Solid(_scene, view_matrix, projection_matrix);
+	this->bindTextures_Solid(_scene);
+	this->bindUniformBuffer(_scene, _program_handle, "ColorBlock");
+
+	// Bind the VAO and draw it !
+}
+
+void GridViewer::draw_volumetric(Scene* _scene, GLfloat* view_matrix, GLfloat* projection_matrix) {
+	// Get the program handle to draw and use it :
+	GLuint _program_handle = _scene->getVolumetricProgram();
+	_scene->glUseProgram(_program_handle);
+
+	// Bind the necessary uniforms and the UBO :
+	this->bindUniforms_Volumetric(_scene, view_matrix, projection_matrix);
+	this->bindTextures_Volumetric(_scene);
+	this->bindUniformBuffer(_scene, _program_handle, "ColorBlock");
+
+	// Bind the VAO and draw it !
+}
+
+void GridViewer::draw_volumetric_boxed(Scene* _scene, GLfloat* view_matrix, GLfloat* projection_matrix) {
+	// Get the program handle to draw and use it :
+	GLuint _program_handle = _scene->getVolumetricProgram();
+	_scene->glUseProgram(_program_handle);
+
+	// Bind the necessary uniforms and the UBO :
+	this->bindUniforms_VolumetricBoxed(_scene, view_matrix, projection_matrix);
+	this->bindTextures_VolumetricBoxed(_scene);
+	this->bindUniformBuffer(_scene, _program_handle, "ColorBlock");
+
+	// Bind the VAO and draw it !
 }
 
 void GridViewer::bindUniformBuffer(Scene* _scene, GLuint _program_handle, const char* uniform_buffer_name) {
 	GLuint block_index = _scene->glGetUniformBlockIndex(_program_handle, uniform_buffer_name);
 	_scene->glUniformBlockBinding(_program_handle, block_index, 0);
 	_scene->glBindBufferBase(GL_UNIFORM_BUFFER, 0, this->ubo_handle);
+}
+
+void GridViewer::bindUniforms_Solid(Scene* _scene, GLfloat* view_matrix, GLfloat* projection_matrix) {
+	//
+}
+
+void GridViewer::bindUniforms_Volumetric(Scene* _scene, GLfloat* view_matrix, GLfloat* projection_matrix) {
+	//
+}
+
+void GridViewer::bindUniforms_VolumetricBoxed(Scene* _scene, GLfloat* view_matrix, GLfloat* projection_matrix) {
+	//
 }
 
 void GridViewer::updateMainChannel_UBO(Scene* _scene) {
@@ -112,19 +168,6 @@ void GridViewer::updateMainChannel_UBO(Scene* _scene) {
 	// N.B. : main color channel is always in first, so offset from start is 0
 
 	return;
-}
-
-void GridViewer::draw_solid(Scene* _scene) {
-	// Get the program handle to draw and use it :
-	GLuint _program_handle = _scene->getSolidProgram();
-	_scene->glUseProgram(_program_handle);
-
-	// Bind the necessary uniforms and the UBO :
-	this->bindUniforms_Solid(_scene);
-	this->bindTextures_Solid(_scene);
-	this->bindUniformBuffer(_scene, _program_handle, "ColorBlock");
-
-	// Bind the VAO and draw it !
 }
 
 void GridViewer::generateMeshData() {

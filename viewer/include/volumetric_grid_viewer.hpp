@@ -44,7 +44,7 @@ class GridViewer : public QObject {
 		/// @b Draw the grid, using the right underlying method call to draw it in the right mode.
 		/// @details Under the hood, binds the uniforms for the current program, and binds the UBO.
 		/// @warning Assumes a GL context is current, valid, and bound.
-		void draw3D(Scene* _scene_functions);
+		void draw3D(Scene* _scene_functions, GLfloat* view_matrix, GLfloat* projection_matrix);
 
 		/// @b Returns true if the grid is hidden, otherwise returns false.
 		bool hidden() const noexcept;
@@ -77,13 +77,13 @@ class GridViewer : public QObject {
 
 	protected:
 		/// @b Draw the grid, in solid mode.
-		void draw_solid(Scene* _scene);
+		void draw_solid(Scene* _scene, GLfloat* view_matrix, GLfloat* projection_matrix);
 
 		/// @b Draw the grid, in volumetric mode.
-		void draw_volumetric(Scene* _scene);
+		void draw_volumetric(Scene* _scene, GLfloat* view_matrix, GLfloat* projection_matrix);
 
 		/// @b Draw the grid, in boxed volumetric mode.
-		void draw_volumetric_boxed(Scene* _scene);
+		void draw_volumetric_boxed(Scene* _scene, GLfloat* view_matrix, GLfloat* projection_matrix);
 
 		/// @b Bind the uniform buffer that the grid requires.
 		void bindUniformBuffer(Scene* _scene, GLuint _program_handle, const char* uniform_buffer_name);
@@ -96,11 +96,11 @@ class GridViewer : public QObject {
 		void bindTextures_VolumetricBoxed(Scene* _scene);
 
 		/// @b Binds the solid viewing program uniforms to the current GL context.
-		void bindUniforms_Solid(Scene* _scene);
+		void bindUniforms_Solid(Scene* _scene, GLfloat* view_matrix, GLfloat* projection_matrix);
 		/// @b Binds the volumetric viewing program uniforms to the current GL context.
-		void bindUniforms_Volumetric(Scene* _scene);
+		void bindUniforms_Volumetric(Scene* _scene, GLfloat* view_matrix, GLfloat* projection_matrix);
 		/// @b Binds the volumetric boxed viewing program uniforms to the current GL context.
-		void bindUniforms_VolumetricBoxed(Scene* _scene);
+		void bindUniforms_VolumetricBoxed(Scene* _scene, GLfloat* view_matrix, GLfloat* projection_matrix);
 
 		/// @b Update the main channel data within the UBO data on the GL side.
 		/// @warning Assumes the GL context used in the scene is bound and made current.
