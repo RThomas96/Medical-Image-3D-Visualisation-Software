@@ -5,13 +5,29 @@
 \usepackage{float}
 \usepackage{comment}
 \usepackage{hyperref}
-\usepackage[french]{babel}
+\usepackage[english]{babel}
 
-\title{Hello, world}
+% Useful to show frame around objects :
+\usepackage[showframe]{geometry}
+
+% Sticks the footnotes to the bottom of the page, not after the content :
+\usepackage[bottom]{footmisc}
+
+% Indent first paragraph after section beginning
+\usepackage{indentfirst}
+
+% N.B. this package requires XeLaTeX or LuaTeX :
+\usepackage{fontspec}
+\usepackage{xunicode}
+\setmainfont[Mapping=tex-text]{Linux Libertine}
+
+\title{Manual for the Prostate3D project}
 \author{Thibault de Villèle}
-\date{Juillet 2021}
+\date{July 2021}
 
-\renewcommand\maketitle{}
+% To make TexLaB shut up on Ubuntu, but also causes the title
+% page to disappear. Keeping it here as a reminder.
+%\renewcommand\maketitle{}
 
 \begin{document}
 
