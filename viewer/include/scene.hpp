@@ -94,7 +94,19 @@ class Scene : public QOpenGLFunctions_3_2_Core {
 		/// @b Adds a grid to the list of grids present and to be drawn, which is composed of two separate grids' data.
 		void addTwoGrids(const std::shared_ptr<DiscreteGrid> _gridR, const std::shared_ptr<DiscreteGrid> _gridG, std::string meshPath);
 
+		/// @b Add grids, with the new API (more streamlined)
 		void newAPI_addGrid(Image::Grid::Ptr gridLoaded);
+
+		/// @b Computes the planes positions based on their parameters.
+		glm::vec3 computePlanePositions();
+		/// @b Returns the plane directions for outside use
+		glm::vec3 getPlaneDirections() const;
+		/// @b Get the lights, from outside.
+		const std::vector<glm::vec3>& getLights() const;
+
+		/// @b return the ids of the color scales, for now
+		/// @note will switch over to the color scale manager once this is over.
+		glm::tvec4<GLuint> draft_getGeneratedColorScales();
 
 		/// @b Draw the 3D view of the scene.
 		void draw3DView(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, bool showTexOnPlane = true);
@@ -292,9 +304,6 @@ class Scene : public QOpenGLFunctions_3_2_Core {
 		void setupGLOutput();
 		/// @b Print the OpenGL message to std::cerr, if no OpenGLDebugLogMessages are enabled.
 		void printOpenGLMessage(const QOpenGLDebugMessage& message);
-
-		/// @b Computes the planes positions based on their parameters.
-		glm::vec3 computePlanePositions();
 
 		/// Updates the progress bar added to the main statusbar
 		void updateProgressBar();

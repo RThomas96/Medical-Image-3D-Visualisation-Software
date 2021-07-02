@@ -1875,7 +1875,7 @@ void Scene::newAPI_prepareUniforms_3DSolid(GLfloat *mvMat, GLfloat *pMat, glm::v
 	// Get the world to grid transform :
 	MatrixTransform::Ptr grid_transform_pointer = std::dynamic_pointer_cast<MatrixTransform>(gridView->grid->getPrecomputedMatrix());
 	glm::mat4 transfoMat = baseMatrix * grid_transform_pointer->matrix();
-	#warning For the moment, no transformation is applied to grids.
+	#warning Transform API is still in-progress.
 
 	auto getUniform = [&](const char* name) -> GLint {
 		GLint g = glGetUniformLocation(this->programHandle_projectedTex, name);
@@ -1909,21 +1909,6 @@ void Scene::newAPI_prepareUniforms_3DSolid(GLfloat *mvMat, GLfloat *pMat, glm::v
 	GLint planePositionsLoc =				getUniform("planePositions");
 	GLint location_planeDirections =		getUniform("planeDirections");
 	GLint gridPositionLoc =					getUniform("gridPosition");
-	GLint location_colorBounds =			getUniform("colorBounds");
-	GLint location_colorBoundsAlternate =	getUniform("colorBoundsAlternate");
-	GLint location_textureBounds =			getUniform("textureBounds");
-	GLint location_textureBoundsAlternate =	getUniform("textureBoundsAlternate");
-	GLint location_color0 =					getUniform("color0");
-	GLint location_color1 =					getUniform("color1");
-	GLint location_color0Alt =				getUniform("color0Alternate");
-	GLint location_color1Alt =				getUniform("color1Alternate");
-	GLint location_r_channelView =			getUniform("r_channelView");
-	GLint location_r_selectedChannel =		getUniform("r_selectedChannel");
-	GLint location_r_nbChannels =			getUniform("r_nbChannels");
-	GLint location_g_channelView =			getUniform("g_channelView");
-	GLint location_g_selectedChannel =		getUniform("g_selectedChannel");
-	GLint location_g_nbChannels =			getUniform("g_nbChannels");
-	GLint location_rgbMode =				getUniform("rgbMode");
 
 	GLint location_colorScales0 =			getUniform("colorScales[0]");
 	GLint location_colorScales1 =			getUniform("colorScales[1]");
@@ -1941,31 +1926,22 @@ void Scene::newAPI_prepareUniforms_3DSolid(GLfloat *mvMat, GLfloat *pMat, glm::v
 		PRINTVAL(gridDims.z);
 	}
 
-	glm::vec2 tb0 = glm::convert_to<float>(this->textureBounds0);
-	glm::vec2 tb1 = glm::convert_to<float>(this->textureBounds1);
-
-	glUniform1ui(location_rgbMode, this->rgbMode);
 	glUniform3fv(voxelGridOrigin_Loc, 1, glm::value_ptr(origin));
 	glUniform3fv(voxelGridSize_Loc, 1, glm::value_ptr(dims));
 	glUniform3fv(voxelSize_Loc, 1, glm::value_ptr(gridView->grid->getVoxelDimensions()));
-	glUniform2fv(location_colorBounds, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds0)));
-	glUniform2fv(location_colorBoundsAlternate, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds1)));
-	glUniform2fv(location_textureBounds, 1, glm::value_ptr(tb0));
-	glUniform2fv(location_textureBoundsAlternate, 1, glm::value_ptr(tb1));
-	glUniform3fv(location_color0, 1, glm::value_ptr(this->color0));
-	glUniform3fv(location_color1, 1, glm::value_ptr(this->color1));
-	glUniform3fv(location_color0Alt, 1, glm::value_ptr(this->color0_second));
-	glUniform3fv(location_color1Alt, 1, glm::value_ptr(this->color1_second));
-	if (gridView->nbChannels > 1) {
-		glUniform1ui(location_r_selectedChannel, this->selectedChannel_r);
-		glUniform1ui(location_g_selectedChannel, this->selectedChannel_g);
-	} else {
-		glUniform1ui(location_r_selectedChannel, 0);
-		glUniform1ui(location_g_selectedChannel, 0);
-	}
 	glUniform1ui(drawMode_Loc, this->drawMode);
-	glUniform1ui(location_r_nbChannels, 1);
-	glUniform1ui(location_g_nbChannels, 1);
+
+	glm::vec3 planePos = this->computePlanePositions();
+
+	glUniform3fv(planePositionsLoc, 1, glm::value_ptr(planePos));
+	glUniform3fv(location_planeDirections, 1, glm::value_ptr(this->planeDirection));
+	glUniform3fv(gridPositionLoc, 1, glm::value_ptr(originWS));
+
+	// Apply the uniforms :
+	glUniformMatrix4fv(mMatrix_Loc, 1, GL_FALSE, glm::value_ptr(transfoMat));
+	glUniformMatrix4fv(vMatrix_Loc, 1, GL_FALSE, &mvMat[0]);
+	glUniformMatrix4fv(pMatrix_Loc, 1, GL_FALSE, &pMat[0]);
+	glUniform4fv(lightPos_Loc, 1, glm::value_ptr(lightPos));
 
 	GLuint enabled_textures = 0;
 
@@ -1998,23 +1974,6 @@ void Scene::newAPI_prepareUniforms_3DSolid(GLfloat *mvMat, GLfloat *pMat, glm::v
 	glUniform1i(location_colorScales3, enabled_textures);
 	enabled_textures++;
 
-	uint chan = this->colorFunctionToUniform(this->channels_r);
-	uint chan2 = this->colorFunctionToUniform(this->channels_g);
-	glUniform1ui(location_r_channelView, chan);
-	glUniform1ui(location_g_channelView, chan2);
-
-	glm::vec3 planePos = this->computePlanePositions();
-
-	glUniform3fv(planePositionsLoc, 1, glm::value_ptr(planePos));
-	glUniform3fv(location_planeDirections, 1, glm::value_ptr(this->planeDirection));
-	glUniform3fv(gridPositionLoc, 1, glm::value_ptr(originWS));
-
-	// Apply the uniforms :
-	glUniformMatrix4fv(mMatrix_Loc, 1, GL_FALSE, glm::value_ptr(transfoMat));
-	glUniformMatrix4fv(vMatrix_Loc, 1, GL_FALSE, &mvMat[0]);
-	glUniformMatrix4fv(pMatrix_Loc, 1, GL_FALSE, &pMat[0]);
-	glUniform4fv(lightPos_Loc, 1, glm::value_ptr(lightPos));
-
 	/**
 	 * NOTE : assumes the main color channel is always green, a.k.a. colorChannels[1]
 	 * Load all the available color channels in the shader program, using the discrete identifiers :
@@ -2027,6 +1986,15 @@ void Scene::newAPI_prepareUniforms_3DSolid(GLfloat *mvMat, GLfloat *pMat, glm::v
 	if (this->showVAOstate) {
 		this->printAllUniforms(this->programHandle_projectedTex);
 	}
+}
+
+glm::vec3 Scene::getPlaneDirections() const { return this->planeDirection; }
+
+glm::tvec4<GLuint> Scene::draft_getGeneratedColorScales() {
+	return glm::tvec4<GLuint>(
+		this->texHandle_colorScale_greyscale, this->texHandle_colorScale_hsv2rgb,
+		this->texHandle_colorScale_user0, this->texHandle_colorScale_user1
+	);
 }
 
 GLuint Scene::createUniformBuffer(std::size_t size_bytes, GLenum draw_mode) {
@@ -2260,7 +2228,7 @@ void Scene::newAPI_prepareUniforms_3DPlane(GLfloat *mvMat, GLfloat *pMat, planes
 	MatrixTransform::Ptr grid_transform_pointer = std::dynamic_pointer_cast<MatrixTransform>(grid->grid->getPrecomputedMatrix());
 	glm::mat4 transform = glm::mat4(1.f);
 	glm::mat4 gridTransfo = grid_transform_pointer->matrix(); //grid->grid->getTransform_GridToWorld();
-	#warning For the moment, no transformation is applied to grids.
+	#warning Transform API is still in-progress.
 	DiscreteGrid::bbox_t bbws = grid->grid->getBoundingBox();
 	glm::vec3 dims = glm::convert_to<glm::vec3::value_type>(grid->grid->getResolution()) * grid->grid->getVoxelDimensions();
 	glm::vec3 size = bbws.getDiagonal();
@@ -2468,7 +2436,7 @@ void Scene::newAPI_prepareUniforms_PlaneViewer(planes _plane, planeHeading _head
 	MatrixTransform::Ptr grid_transform_pointer = std::dynamic_pointer_cast<MatrixTransform>(_grid->grid->getPrecomputedMatrix());
 	// Grid transform :
 	glm::mat4 gridTransform = grid_transform_pointer->matrix(); //_grid->grid->getTransform_WorldToGrid();
-	#warning For the moment, no transformation is applied to grids.
+	#warning Transform API is still in-progress.
 	// Grid dimensions :
 	glm::vec3 gridDimensions = glm::convert_to<glm::vec3::value_type>(_grid->grid->getBoundingBox().getDiagonal());
 	// Depth of the plane :
@@ -2923,7 +2891,7 @@ void Scene::newAPI_prepareUniforms_Volumetric(GLfloat *mvMat, GLfloat *pMat, glm
 	GLint location_pMat = getUniform("pMat");
 
 	//const glm::mat4& gridTransfo = _grid->grid->getTransform_GridToWorld();
-	#warning For the moment, no transformation is applied to grids.
+	#warning Transform API is still in-progress.
 	MatrixTransform::Ptr grid_transform_pointer = std::dynamic_pointer_cast<MatrixTransform>(_grid->grid->getPrecomputedMatrix());
 	const glm::mat4 gridTransfo = grid_transform_pointer->matrix();
 	glUniformMatrix4fv(location_mMat, 1, GL_FALSE, glm::value_ptr(gridTransfo));
@@ -2949,47 +2917,45 @@ void Scene::newAPI_prepareUniforms_Volumetric(GLfloat *mvMat, GLfloat *pMat, glm
 	glUniform3fv(location_light6, 1, glm::value_ptr(this->lightPositions[6]));
 	glUniform3fv(location_light7, 1, glm::value_ptr(this->lightPositions[7]));
 
-	// Limits :
-	GLint location_colorBounds =			getUniform("colorBounds");
-	GLint location_colorBoundsAlternate =	getUniform("colorBoundsAlternate");
-	GLint location_textureBounds =			getUniform("textureBounds");
-	GLint location_textureBoundsAlternate =	getUniform("textureBoundsAlternate");
+//	// Limits :
+//	GLint location_colorBounds =			getUniform("colorBounds");
+//	GLint location_colorBoundsAlternate =	getUniform("colorBoundsAlternate");
+//	GLint location_textureBounds =			getUniform("textureBounds");
+//	GLint location_textureBoundsAlternate =	getUniform("textureBoundsAlternate");
 
-	glUniform2fv(location_colorBounds, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds0)));
-	glUniform2fv(location_colorBoundsAlternate, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds1)));
-	glUniform2fv(location_textureBounds, 1, glm::value_ptr(glm::convert_to<float>(this->textureBounds0)));
-	glUniform2fv(location_textureBoundsAlternate, 1, glm::value_ptr(glm::convert_to<float>(this->textureBounds1)));
+//	glUniform2fv(location_colorBounds, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds0)));
+//	glUniform2fv(location_colorBoundsAlternate, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds1)));
+//	glUniform2fv(location_textureBounds, 1, glm::value_ptr(glm::convert_to<float>(this->textureBounds0)));
+//	glUniform2fv(location_textureBoundsAlternate, 1, glm::value_ptr(glm::convert_to<float>(this->textureBounds1)));
 
 	// Color and shading parameters :
 	GLint location_specRef =			getUniform("specRef");
 	GLint location_shininess =			getUniform("shininess");
 	GLint location_diffuseRef =			getUniform("diffuseRef");
-	GLint location_rgbMode =			getUniform("rgbMode");
-	GLint location_r_channelView =		getUniform("r_channelView");
-	GLint location_r_selectedChannel =	getUniform("r_selectedChannel");
-	GLint location_r_nbChannels =		getUniform("r_nbChannels");
-	GLint location_g_channelView =		getUniform("g_channelView");
-	GLint location_g_selectedChannel =	getUniform("g_selectedChannel");
-	GLint location_g_nbChannels =		getUniform("g_nbChannels");
-
-	uint chan_r = this->colorFunctionToUniform(this->channels_r);
-	uint chan_g = this->colorFunctionToUniform(this->channels_g);
-
+//	GLint location_rgbMode =			getUniform("rgbMode");
+//	GLint location_r_channelView =		getUniform("r_channelView");
+//	GLint location_r_selectedChannel =	getUniform("r_selectedChannel");
+//	GLint location_r_nbChannels =		getUniform("r_nbChannels");
+//	GLint location_g_channelView =		getUniform("g_channelView");
+//	GLint location_g_selectedChannel =	getUniform("g_selectedChannel");
+//	GLint location_g_nbChannels =		getUniform("g_nbChannels");
+//	uint chan_r = this->colorFunctionToUniform(this->channels_r);
+//	uint chan_g = this->colorFunctionToUniform(this->channels_g);
 	glUniform1f (location_specRef, .8f);
 	glUniform1f (location_shininess, .8f);
 	glUniform1f (location_diffuseRef, .8f);
-	glUniform1ui(location_rgbMode, this->rgbMode);
-	glUniform1ui(location_r_channelView, chan_r);
-	glUniform1ui(location_g_channelView, chan_g);
-	glUniform1ui(location_r_nbChannels, 1);
-	glUniform1ui(location_g_nbChannels, (_grid->grid->getVoxelDimensionality() > 1) ? 1 : 0); // only set this if there's two grids
-	if (_grid->nbChannels > 1) {
-		glUniform1ui(location_r_selectedChannel, this->selectedChannel_r);
-		glUniform1ui(location_g_selectedChannel, this->selectedChannel_g);
-	} else {
-		glUniform1ui(location_r_selectedChannel, 0);
-		glUniform1ui(location_g_selectedChannel, 0);
-	}
+//	glUniform1ui(location_rgbMode, this->rgbMode);
+//	glUniform1ui(location_r_channelView, chan_r);
+//	glUniform1ui(location_g_channelView, chan_g);
+//	glUniform1ui(location_r_nbChannels, 1);
+//	glUniform1ui(location_g_nbChannels, (_grid->grid->getVoxelDimensionality() > 1) ? 1 : 0); // only set this if there's two grids
+//	if (_grid->nbChannels > 1) {
+//		glUniform1ui(location_r_selectedChannel, this->selectedChannel_r);
+//		glUniform1ui(location_g_selectedChannel, this->selectedChannel_g);
+//	} else {
+//		glUniform1ui(location_r_selectedChannel, 0);
+//		glUniform1ui(location_g_selectedChannel, 0);
+//	}
 
 	// User-defined colors :
 	GLint location_color0 =		getUniform("color0");
@@ -4512,7 +4478,7 @@ void Scene::newAPI_tex3D_loadMESHFile(const std::string file, const NewAPI_GridG
 		glm::vec4 position = glm::vec4(p[0], p[1], p[2], 1.);
 		normalBox.addPoint(DiscreteGrid::bbox_t::vec(p[0],p[1],p[2]));
 		rawVert.push_back(position);
-		#warning For the moment, no transformation is applied to grids.
+		#warning Transform API is still in-progress.
 		deformedBox.addPoint(DiscreteGrid::bbox_t::vec(position.x, position.y, position.z));
 		mesh.positions.push_back(position);
 /*
@@ -4673,7 +4639,7 @@ void Scene::newAPI_tex3D_generateMESH(NewAPI_GridGLView::Ptr& grid, VolMeshData&
 	// Transformation to apply to the mesh :
 	MatrixTransform::Ptr grid_transform_pointer = std::dynamic_pointer_cast<MatrixTransform>(grid->grid->getPrecomputedMatrix());
 	glm::mat4 transfo = grid_transform_pointer->matrix();
-	#warning For the moment, no transformation is applied to grids.
+	#warning Transform API is still in-progress.
 
 	// Create vertices along with their texture coordinates. We
 	// need to go one after because we want _n_ tetrahedra, and

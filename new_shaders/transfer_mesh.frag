@@ -63,11 +63,6 @@ uniform mat4 mMat;
 uniform mat4 vMat;
 uniform mat4 pMat;
 
-uniform vec2 colorBounds;
-uniform vec2 textureBounds;
-uniform vec2 colorBoundsAlternate;
-uniform vec2 textureBoundsAlternate;
-
 uniform vec3 visuBBMin;
 uniform vec3 visuBBMax;
 uniform bool shouldUseBB;
@@ -113,7 +108,7 @@ vec3 phongComputation(vec4 position, vec3 normal, vec4 color, vec3 lightPos, vec
 
 #pragma include_color_shader;
 
-#line 2116
+#line 2111
 
 void main (void) {
 	sceneSpaceFragmentPos = vec4(.0,.0,.0,.0);
