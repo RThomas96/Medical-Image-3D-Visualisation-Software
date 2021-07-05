@@ -18,16 +18,13 @@
 	\vspace{\baselineskip}
 
 	% Why tho ?
-	In the original context of the project, the images to manage, process and visualize would have been acquired using a \textit{di-SPIM} microscope. This microscope is a light-sheet microscope which uses two camera modules in order to counter the most prevalent caveat in light-sheet microscopy : anisotropy. As such, it produces two stacks of images defined in two different affine spaces which need to be processed as a single stack of images down the line.\par
-	This additional deformation constraint meant no existing software solutions would be able to handle our data out-of-the-box, so we had to roll out our own. And, over the course of one Master's internship and a 10 month engineering employment contract, a first draft of such a software package has been created.
+	In the original context of the project, the images to manage, process and visualize would have been acquired using a \textit{di-SPIM} microscope. This microscope uses the light-sheet microscopy technique, and in this particular case leveraging the information from two camera modules in order to counter the biggest caveat of the technique : image anisotropy. However, this means the microscope produces two stacks of images defined in two different affine spaces which need to be processed as a single stack of images down the line.\par
+	This additional deformation constraint meant no existing software solutions would be able to handle our data out-of-the-box, so we had to roll out our own. And, over the course of one Master's internship and a 10 month engineering employment contract, a first draft of such a software package has been created.\par
+	While the software was made with this particular use case in mind, regular undistorted 3D images can also be imported and visualized. This allows to not only look at the raw (distorted) datasets, but also to visualize the same datasets after a series of operations has been applied (registration or deconvolution for example).
 
 	\vspace{\baselineskip}
 
-	% Alright. What are the caveats ?
-	However, it has to be made abundantly clear that whoever picks up this project down the line must not feel obligated to go down the same path taken here. Some bad design decisions might have been made due to a lack of foresight, or simply due to a lack of knowledge about the task of creating such a piece of software.
-
-	% What's the deal, man ? Give us the deets.
-	%% Over the course of this manual, you will learn about the work done over the last year, the work to do and the specifics of the software solution deployed here.
+	The proposed software solution implements its components to fit within the constraints of the project, as well as to give the developers and users more flexibility about the type and format of input data (see chapter \ref{text:01_intro} for more info\footnote{Change chapter to chapter 03 : software components}). However, whoever picks up this project down the line can heavily refactor some of the components, if they deem it necessary. Some bad design decisions in the current implementation might have been made due to a lack of foresight, or simply due to a lack of knowledge about the task of creating such a piece of software.
 }
 
 \section{What are the main goals of the program ?}\label{text:01_intro:01_goals}
@@ -44,7 +41,7 @@
 	% Engineering : do the same generation, but offline
 	% Tasks that can be done : visualize, deform (dumb uninteractive way), resample
 
-	While those tasks were implemented at the end of my internship, we later more features in the following engineering position. We added a real-time volumetric visualization method, allowing to see the sample in three-dimensions interactively. We also added the ability to load grids that would not fit within the memory budget, and downsample them on the fly at loading time in order to visualize bigger acquisitions. We also added the ability to generate the sub-parts of the image in an \guillemotleft~out-of-core~\guillemotright fashion, meaning it does not need to store neither the source image(s) or the resulting image(s) in memory, doing the processing directly from and to the disk.
+	While those tasks were implemented at the end of my internship, we later more features in the following engineering position. We added a real-time volumetric visualization method, allowing to see the sample in three-dimensions interactively. We also added the ability to load grids that would not fit within the memory budget, and downsample them \textit{on-the-fly} at loading time in order to visualize bigger acquisitions. We also added the ability to generate the sub-parts of the image in an \guillemotleft~out-of-core~\guillemotright fashion, meaning it does not need to store neither the source image(s) nor the resulting image(s) in memory, instead processing data directly to and from the disk.
 }
 
 \section{How to read this manual ?}\label{text:01_intro:02_howtoread}
@@ -54,10 +51,11 @@
 	% Manual is for everyone on the project, but some parts for software devs only
 
 	% TODO : add the references to the pipeline and code chapters here
-	While chapters \ref{text:01_intro}\footnotemark and \ref{text:01_intro}\footnotemark will be more oriented towards the developers, the more curious users can peruse those parts of the manual in order to gain a better understanding of the inner workings of the code underneath.
+	Chapters \ref{text:01_intro}\footnotemark and \ref{text:01_intro}\footnotemark[\value{footnote}] will focus heavily on the current processing pipeline and the existing software components. While this part is aimed at developers, some users may want to read it to gain a deeper understanding of the code running underneath.
 	\footnotetext{TODO: change the references to the pipeline and code chapters of this manual.}
+	Chapter \ref{text:01_intro}\footnotemark[\value{footnote}-1] will be a FAQ section, where users may find small tutorials on how to do basic tasks with the program (opening images, manipulating the different viewers and the cutting planes in the program \ldots{} etc)
 
-	A small note for the developers : this code was made heavily re-done between the internship and the engineering contract to simplify the development of new features, but some parts of it are still a work-in-progress (they will be designated as such in here). If you feel the need to refactor or change large parts of the codebase in order to either specialize or generalize a certain block of code, you're welcome to do it. However, I'd ask you update this documentation to mirror those changes.
+	A small note for the developers : this code was heavily refactored between the internship and the engineering contract to simplify the development of new features, but some parts of it are still a work-in-progress (they will be designated as such). If you feel the need to refactor or change large parts of the codebase in order to either specialize or generalize a certain block of code, you're welcome to do it.
 }
 
 \section{Glossary}\label{text:01_intro:03_definitions}
@@ -65,7 +63,7 @@
 	For the sake of clarity, here are a few definitions of the words used within this manual, in no particular order :
 
 	\begin{itemize}
-		\item \textbf{dataset} : this can be used to design one or multiple images that make up an acquisition
+		\item \textbf{dataset} : this can be used to describe one or multiple images that make up an acquisition
 	\end{itemize}
 }
 

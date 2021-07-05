@@ -74,7 +74,7 @@ namespace Image {
 
 	/// @b Simple extraction operator to print the type of the tag to something like std::cout, std::cerr ...
 	template <typename tag_t> inline std::ostream& operator<<(std::ostream& _os, tag<tag_t> t) {
-		UNUSED_PARAMETER(t);
+		UNUSED(t);
 		int status = 0;
 		char* unmangled_type = abi::__cxa_demangle(typeid(tag_t).name(), nullptr, nullptr, &status);
 		if (status == -1) { unmangled_type = (char*)"<malloc_error>"; }

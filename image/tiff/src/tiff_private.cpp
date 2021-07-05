@@ -4,8 +4,8 @@ namespace Image {
 namespace Tiff {
 
 	TIFFPrivate::TIFFPrivate(uint32_t w, uint32_t h) {
-		UNUSED_PARAMETER(w)
-		UNUSED_PARAMETER(h)
+		UNUSED(w)
+		UNUSED(h)
 		this->internal_data_type = ImageDataType::Unknown;
 	}
 

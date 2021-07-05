@@ -112,7 +112,7 @@ namespace Tiff {
 	}
 
 	void Frame::loadTIFFInfo(std::string_view fname) {
-		UNUSED_PARAMETER(fname);
+		UNUSED(fname);
 		int result = 0;
 
 		if (this->sourceFile.empty() == false) {

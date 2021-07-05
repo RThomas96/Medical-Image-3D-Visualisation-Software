@@ -62,61 +62,61 @@ namespace Tiff {
 			/// @b Read a sub-region of the image, implemented in the derived classes.  8-bit unsigned version.
 			virtual bool tiff_readSubRegion(tag<std::uint8_t> tag, svec3 origin, svec3 size,
 											std::vector<std::uint8_t>& data) override {
-				UNUSED_PARAMETER(tag);
+				UNUSED(tag);
 				return this->template_tiff_read_sub_region(origin, size, data);
 			}
 			/// @b Read a sub-region of the image, implemented in the derived classes. 16-bit unsigned version.
 			virtual bool tiff_readSubRegion(tag<std::uint16_t> tag, svec3 origin, svec3 size,
 											std::vector<std::uint16_t>& data) override {
-				UNUSED_PARAMETER(tag);
+				UNUSED(tag);
 				return this->template_tiff_read_sub_region(origin, size, data);
 			}
 			/// @b Read a sub-region of the image, implemented in the derived classes. 32-bit unsigned version.
 			virtual bool tiff_readSubRegion(tag<std::uint32_t> tag, svec3 origin, svec3 size,
 											std::vector<std::uint32_t>& data) override {
-				UNUSED_PARAMETER(tag);
+				UNUSED(tag);
 				return this->template_tiff_read_sub_region(origin, size, data);
 			}
 			/// @b Read a sub-region of the image, implemented in the derived classes. 64-bit unsigned version.
 			virtual bool tiff_readSubRegion(tag<std::uint64_t> tag, svec3 origin, svec3 size,
 											std::vector<std::uint64_t>& data) override {
-				UNUSED_PARAMETER(tag);
+				UNUSED(tag);
 				return this->template_tiff_read_sub_region(origin, size, data);
 			}
 			/// @b Read a sub-region of the image, implemented in the derived classes.  8-bit   signed version.
 			virtual bool tiff_readSubRegion(tag<std::int8_t> tag, svec3 origin, svec3 size,
 											std::vector<std::int8_t>& data) override {
-				UNUSED_PARAMETER(tag);
+				UNUSED(tag);
 				return this->template_tiff_read_sub_region(origin, size, data);
 			}
 			/// @b Read a sub-region of the image, implemented in the derived classes. 16-bit   signed version.
 			virtual bool tiff_readSubRegion(tag<std::int16_t> tag, svec3 origin, svec3 size,
 											std::vector<std::int16_t>& data) override {
-				UNUSED_PARAMETER(tag);
+				UNUSED(tag);
 				return this->template_tiff_read_sub_region(origin, size, data);
 			}
 			/// @b Read a sub-region of the image, implemented in the derived classes. 32-bit   signed version.
 			virtual bool tiff_readSubRegion(tag<std::int32_t> tag, svec3 origin, svec3 size,
 											std::vector<std::int32_t>& data) override {
-				UNUSED_PARAMETER(tag);
+				UNUSED(tag);
 				return this->template_tiff_read_sub_region(origin, size, data);
 			}
 			/// @b Read a sub-region of the image, implemented in the derived classes. 64-bit   signed version.
 			virtual bool tiff_readSubRegion(tag<std::int64_t> tag, svec3 origin, svec3 size,
 											std::vector<std::int64_t>& data) override {
-				UNUSED_PARAMETER(tag);
+				UNUSED(tag);
 				return this->template_tiff_read_sub_region(origin, size, data);
 			}
 			/// @b Read a sub-region of the image, implemented in the derived classes, single precision floating point.
 			virtual bool tiff_readSubRegion(tag<float> tag, svec3 origin, svec3 size,
 											std::vector<float>& data) override {
-				UNUSED_PARAMETER(tag);
+				UNUSED(tag);
 				return this->template_tiff_read_sub_region(origin, size, data);
 			}
 			/// @b Read a sub-region of the image, implemented in the derived classes, double precision floating point.
 			virtual bool tiff_readSubRegion(tag<double> tag, svec3 origin, svec3 size,
 											std::vector<double>& data) override {
-				UNUSED_PARAMETER(tag);
+				UNUSED(tag);
 				return this->template_tiff_read_sub_region(origin, size, data);
 			}
 
@@ -128,52 +128,52 @@ namespace Tiff {
 
 			virtual bool tiff_getRangeSubValues(tag<std::int8_t> tag, std::size_t channel,
 												 glm::vec<2, std::int8_t, glm::defaultp>& values) override {
-				UNUSED_PARAMETER(tag);
+				UNUSED(tag);
 				return this->template_tiff_get_sub_range_values(channel, values);
 			}
 			virtual bool tiff_getRangeSubValues(tag<std::int16_t> tag, std::size_t channel,
 												 glm::vec<2, std::int16_t, glm::defaultp>& values) override {
-				UNUSED_PARAMETER(tag);
+				UNUSED(tag);
 				return this->template_tiff_get_sub_range_values(channel, values);
 			}
 			virtual bool tiff_getRangeSubValues(tag<std::int32_t> tag, std::size_t channel,
 												 glm::vec<2, std::int32_t, glm::defaultp>& values) override {
-				UNUSED_PARAMETER(tag);
+				UNUSED(tag);
 				return this->template_tiff_get_sub_range_values(channel, values);
 			}
 			virtual bool tiff_getRangeSubValues(tag<std::int64_t> tag, std::size_t channel,
 												 glm::vec<2, std::int64_t, glm::defaultp>& values) override {
-				UNUSED_PARAMETER(tag);
+				UNUSED(tag);
 				return this->template_tiff_get_sub_range_values(channel, values);
 			}
 			virtual bool tiff_getRangeSubValues(tag<std::uint8_t> tag, std::size_t channel,
 												 glm::vec<2, std::uint8_t, glm::defaultp>& values) override {
-				UNUSED_PARAMETER(tag);
+				UNUSED(tag);
 				return this->template_tiff_get_sub_range_values(channel, values);
 			}
 			virtual bool tiff_getRangeSubValues(tag<std::uint16_t> tag, std::size_t channel,
 												 glm::vec<2, std::uint16_t, glm::defaultp>& values) override {
-				UNUSED_PARAMETER(tag);
+				UNUSED(tag);
 				return this->template_tiff_get_sub_range_values(channel, values);
 			}
 			virtual bool tiff_getRangeSubValues(tag<std::uint32_t> tag, std::size_t channel,
 												 glm::vec<2, std::uint32_t, glm::defaultp>& values) override {
-				UNUSED_PARAMETER(tag);
+				UNUSED(tag);
 				return this->template_tiff_get_sub_range_values(channel, values);
 			}
 			virtual bool tiff_getRangeSubValues(tag<std::uint64_t> tag, std::size_t channel,
 												 glm::vec<2, std::uint64_t, glm::defaultp>& values) override {
-				UNUSED_PARAMETER(tag);
+				UNUSED(tag);
 				return this->template_tiff_get_sub_range_values(channel, values);
 			}
 			virtual bool tiff_getRangeSubValues(tag<float> tag, std::size_t channel,
 												 glm::vec<2, float, glm::defaultp>& values) override {
-				UNUSED_PARAMETER(tag);
+				UNUSED(tag);
 				return this->template_tiff_get_sub_range_values(channel, values);
 			}
 			virtual bool tiff_getRangeSubValues(tag<double> tag, std::size_t channel,
 												 glm::vec<2, double, glm::defaultp>& values) override {
-				UNUSED_PARAMETER(tag);
+				UNUSED(tag);
 				return this->template_tiff_get_sub_range_values(channel, values);
 			}
 
@@ -184,7 +184,7 @@ namespace Tiff {
 			std::vector<glm::vec<2, img_t, glm::defaultp>> dataRange;
 
 			/// @b A cache of recently loaded slices.
-			ReadCache<std::size_t, std::vector<img_t>> cachedSlices;
+			cache_t cachedSlices;
 	};
 
 }

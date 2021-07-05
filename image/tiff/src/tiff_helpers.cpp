@@ -5,15 +5,15 @@ namespace Image {
 namespace Tiff {
 
 	void tiff_error_redirection(const char* module, const char* fmt, va_list _va_) {
-		UNUSED_PARAMETER(module)
-		UNUSED_PARAMETER(fmt)
-		UNUSED_PARAMETER(_va_)
+		UNUSED(module)
+		UNUSED(fmt)
+		UNUSED(_va_)
 	}
 
 	void tiff_warning_redirection(const char* module, const char* fmt, va_list _va_) {
-		UNUSED_PARAMETER(module)
-		UNUSED_PARAMETER(fmt)
-		UNUSED_PARAMETER(_va_)
+		UNUSED(module)
+		UNUSED(fmt)
+		UNUSED(_va_)
 	}
 
 	tdir_t countDirectories(std::string_view _file_name) {

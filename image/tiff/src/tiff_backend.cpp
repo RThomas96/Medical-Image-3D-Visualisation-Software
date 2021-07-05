@@ -76,7 +76,7 @@ namespace Image {
 	}
 
 	void TIFFBackend::setImageName(std::string &_user_defined_name_) {
-		UNUSED_PARAMETER(_user_defined_name_);
+		UNUSED(_user_defined_name_);
 		return;
 	}
 

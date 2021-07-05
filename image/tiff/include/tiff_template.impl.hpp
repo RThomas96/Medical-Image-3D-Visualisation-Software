@@ -16,9 +16,9 @@ namespace Tiff {
 	// Default templated ctor of the TIFFReader class, throwing an error for unsupported (not specialized) types.
 	template <typename unsupported_t>
 	TIFFReader<unsupported_t>::TIFFReader(uint32_t w, uint32_t h, std::size_t _dim) {
-		UNUSED_PARAMETER(w);
-		UNUSED_PARAMETER(h);
-		UNUSED_PARAMETER(_dim);
+		UNUSED(w);
+		UNUSED(h);
+		UNUSED(_dim);
 		throw std::runtime_error("Type given to private TIFF implementation is not supported.");
 	}
 

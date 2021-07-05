@@ -1,7 +1,11 @@
 #ifndef MACROS_HPP
 #define MACROS_HPP
 
-#define UNUSED_PARAMETER(x) (void)x;
+#ifndef UNUSED
+#	define UNUSED(x) (void)x;
+#else
+#	warning The macro "UNUSED" is already defined. Lets hope it does what it says it does.
+#endif
 
 #define FUNC_ERR(s) __attribute__((error(s)))
 #define FUNC_WARN(s) __attribute__((warning(s)))
