@@ -6,6 +6,8 @@
 
 namespace Image {
 
+namespace Tiff {
+
 	/// @b The base class for the TIFF template
 	class TIFFBackendImpl : public ImageBackendImpl {
 		public:
@@ -30,8 +32,8 @@ namespace Image {
 
 			/// @b Simple call to parse images given in the ctor.
 			virtual ThreadedTask::Ptr parseImageInfo(ThreadedTask::Ptr pre_existing_task,
-													 const std::vector<std::vector<std::string>>& filenames
-													 ) noexcept(false) override;
+													const std::vector<std::vector<std::string>>& filenames
+													) noexcept(false) override;
 
 			/// @b Get the number of elements present in each voxel.
 			virtual std::size_t getVoxelDimensionality(void) const override;
@@ -58,9 +60,17 @@ namespace Image {
 			virtual BoundingBox_General<float> getBoundingBox(void) const override;
 
 		protected:
+			/// @b Parse the filename's information into a separate thread.
+			/// @note The ThreadedTask pointer is a shared resource that allows to know the progress of the task.
+			virtual void parse_info_in_separate_thread(ThreadedTask::Ptr t, const std::vector<std::vector<std::string>>& _f) = 0;
+
+			/// @b Cleans up the allocated resources after an error has occured.
+			/// @note Can also be called in the dtor.
+			virtual void cleanResources(void) = 0;
 
 		protected:
-			// As a reminder, the internal_image_type member variable is defined in the ImageBackendImpl class.
+			/// @b The filenames, as provided by the parsing function
+			std::vector<std::string> filenames;
 
 			/// @b The images loaded from the disk
 			std::vector<TIFFImage> images;
@@ -74,6 +84,10 @@ namespace Image {
 			/// @b The number of elements per pixel
 			std::size_t voxel_dimensionality;
 
+			/// @b The basename of the stack, computed when parsing the stack.
+			/// @note Can be either user-defined or derived from the stack's file names.
+			std::string stack_base_name;
+
 			/// @b The number of bits per sample in the internal representation of the file.
 			uint16_t bitsPerSample;
 
@@ -83,6 +97,7 @@ namespace Image {
 			/// @b The number of samples per pixel
 			uint16_t samplesPerPixel;
 	};
+}
 
 }
 

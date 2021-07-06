@@ -25,9 +25,10 @@ namespace Tiff {
 			/// number of bits per pixel. Anything else is not taken into account, for example if we have one frame
 			/// which has two samples per pixel and another which has only one, they are still considered compatible if
 			/// they have the same width, height, and BpS.
-			bool isCompatibleWith(uint32_t w, uint32_t h, uint16_t bps);
+			bool isCompatibleWith(const Frame& _frame);
 
-			bool isCompatibleWidth(const Frame& _frame);
+			/// @b Returns true if the current frame is 'compatible' with the given width, height, and bits per pixel.
+			bool isCompatibleWith(uint32_t w, uint32_t h, uint16_t bps);
 
 			bool hasSameEncoding(const Frame& _frame);
 

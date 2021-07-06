@@ -129,16 +129,16 @@ namespace Image {
 			/// @b Read a sub-region of the image, implemented in the derived classes. 64-bit unsigned version.
 			virtual bool internal_readSubRegion(tag<std::uint64_t> tag, svec3 origin, svec3 size,
 									   std::vector<std::uint64_t>& data) = 0;
-			/// @b Read a sub-region of the image, implemented in the derived classes.  8-bit   signed version.
+			/// @b Read a sub-region of the image, implemented in the derived classes.  8-bit signed version.
 			virtual bool internal_readSubRegion(tag<std::int8_t> tag, svec3 origin, svec3 size,
 									   std::vector<std::int8_t>& data) = 0;
-			/// @b Read a sub-region of the image, implemented in the derived classes. 16-bit   signed version.
+			/// @b Read a sub-region of the image, implemented in the derived classes. 16-bit signed version.
 			virtual bool internal_readSubRegion(tag<std::int16_t> tag, svec3 origin, svec3 size,
 									   std::vector<std::int16_t>& data) = 0;
-			/// @b Read a sub-region of the image, implemented in the derived classes. 32-bit   signed version.
+			/// @b Read a sub-region of the image, implemented in the derived classes. 32-bit signed version.
 			virtual bool internal_readSubRegion(tag<std::int32_t> tag, svec3 origin, svec3 size,
 									   std::vector<std::int32_t>& data) = 0;
-			/// @b Read a sub-region of the image, implemented in the derived classes. 64-bit   signed version.
+			/// @b Read a sub-region of the image, implemented in the derived classes. 64-bit signed version.
 			virtual bool internal_readSubRegion(tag<std::int64_t> tag, svec3 origin, svec3 size,
 									   std::vector<std::int64_t>& data) = 0;
 			/// @b Read a sub-region of the image, implemented in the derived classes, single precision floating point.
@@ -185,6 +185,44 @@ namespace Image {
 			virtual bool internal_getRangeValues(tag<double> tag, std::size_t channel,
 												 glm::tvec2<double>& _values) = 0;
 
+#if ENABLE_RANGE_SETTING_FUNCTIONS
+			//////////////////////////////////////////////////////
+			//													//
+			//          VALUE RANGE SETTER FUNCTIONS            //
+			//													//
+			//////////////////////////////////////////////////////
+
+			/// @b Sets the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			virtual bool internal_setRangeValues(tag<std::int8_t> tag, std::size_t channel,
+												 glm::tvec2<std::int8_t> _values) = 0;
+			/// @b Sets the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			virtual bool internal_setRangeValues(tag<std::int16_t> tag, std::size_t channel,
+												 glm::tvec2<std::int16_t> _values) = 0;
+			/// @b Sets the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			virtual bool internal_setRangeValues(tag<std::int32_t> tag, std::size_t channel,
+												 glm::tvec2<std::int32_t> _values) = 0;
+			/// @b Sets the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			virtual bool internal_setRangeValues(tag<std::int64_t> tag, std::size_t channel,
+												 glm::tvec2<std::int64_t> _values) = 0;
+			/// @b Sets the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			virtual bool internal_setRangeValues(tag<std::uint8_t> tag, std::size_t channel,
+												 glm::tvec2<std::uint8_t> _values) = 0;
+			/// @b Sets the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			virtual bool internal_setRangeValues(tag<std::uint16_t> tag, std::size_t channel,
+												 glm::tvec2<std::uint16_t> _values) = 0;
+			/// @b Sets the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			virtual bool internal_setRangeValues(tag<std::uint32_t> tag, std::size_t channel,
+												 glm::tvec2<std::uint32_t> _values) = 0;
+			/// @b Sets the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			virtual bool internal_setRangeValues(tag<std::uint64_t> tag, std::size_t channel,
+												 glm::tvec2<std::uint64_t> _values) = 0;
+			/// @b Sets the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			virtual bool internal_setRangeValues(tag<float> tag, std::size_t channel,
+												 glm::tvec2<float> _values) = 0;
+			/// @b Sets the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			virtual bool internal_setRangeValues(tag<double> tag, std::size_t channel,
+												 glm::tvec2<double> _values) = 0;
+#endif
 		protected:
 			/// @b The internal data type representation, stored in the image.
 			ImageDataType internal_data_type;

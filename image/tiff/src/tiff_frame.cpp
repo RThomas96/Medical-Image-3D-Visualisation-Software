@@ -21,7 +21,7 @@ namespace Tiff {
 		return width_compatible && height_compatible && bps_compatible;
 	}
 
-	bool Frame::isCompatibleWidth(const Frame &_frame) {
+	bool Frame::isCompatibleWith(const Frame &_frame) {
 
 		TIFF* _self_handle = this->getLibraryHandle();
 		TIFF* _other_handle = _frame.getLibraryHandle();
