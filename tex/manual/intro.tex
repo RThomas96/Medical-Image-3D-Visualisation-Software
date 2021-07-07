@@ -9,32 +9,45 @@
 			- notably, the use of certain terms (dataset = 1/multiple 3D image(s))
 \end{comment}
 
+% Section 1 : Project presentation {{{
 \section{What is the goal of the project ?}\label{text:01_intro:00_project}
 {
 	% Why was the project started ?
 	This project's overarching goal is to provide a set of software tools to manage, process and visualize high-resolution medical images.\par
-	It started out with analysis of prostate cancer tissue as its main \guillemotleft~target~\guillemotright~, however as time went on it was also used to visualize images of mice brain in collaboration with the IGF\footnote{\textit{Institut de Génomique Fonctionnelle},~\href{https://www.igf.cnrs.fr/index.php/en/}{\underline{\textit{website}}}~}.
+	It started out with analysis of prostate cancer tissue as its main \guillemotleft~target~\guillemotright~, however as time went on it was also used to visualize images of mice brain in collaboration with the IGF\footnote{\textit{Institut de Génomique Fonctionnelle},~\href{https://www.igf.cnrs.fr/index.php/en/}{~\underline{\textit{website}}~}~}.
 
 	\vspace{\baselineskip}
 
 	% Why tho ?
 	In the original context of the project, the images to manage, process and visualize would have been acquired using a \textit{di-SPIM} microscope. This microscope uses the light-sheet microscopy technique, and in this particular case leveraging the information from two camera modules in order to counter the biggest caveat of the technique : image anisotropy. However, this means the microscope produces two stacks of images defined in two different affine spaces which need to be processed as a single stack of images down the line.\par
+
+	\vspace{\baselineskip}
+
 	This additional deformation constraint meant no existing software solutions would be able to handle our data out-of-the-box, so we had to roll out our own. And, over the course of one Master's internship and a 10 month engineering employment contract, a first draft of such a software package has been created.\par
+
+	\vspace{\baselineskip}
+
 	While the software was made with this particular use case in mind, regular undistorted 3D images can also be imported and visualized. This allows to not only look at the raw (distorted) datasets, but also to visualize the same datasets after a series of operations has been applied (registration or deconvolution for example).
 
 	\vspace{\baselineskip}
 
 	The proposed software solution implements its components to fit within the constraints of the project, as well as to give the developers and users more flexibility about the type and format of input data (see chapter \ref{text:01_intro} for more info\footnote{Change chapter to chapter 03 : software components}). However, whoever picks up this project down the line can heavily refactor some of the components, if they deem it necessary. Some bad design decisions in the current implementation might have been made due to a lack of foresight, or simply due to a lack of knowledge about the task of creating such a piece of software.
 }
+% }}}
 
+% Section 2 : Program presentation {{{
 \section{What are the main goals of the program ?}\label{text:01_intro:01_goals}
 {
 	% Why was the program created, what does it do ?
 
 	The current software solution was first created during the internship, titled "Visualization, management and processing of high-resolution medical images". This internship was done while studying at the University of Montpellier. It was then continued during the engineering position in 2020/2021. This is the result of those few months of work.
 
+	\vspace{\baselineskip}
+
 	% Original goal : load image, store it in memory and re-sample it in high res.
 	Its original goal (during the internship) was to provide a simple way to generate high-resolution medical images, outside of the affine space mentionned earlier. To this goal, it had to load a 3D image, downsampled enough to fit within the GPU's memory budget and deform it in order to visualize the resulting image interactively. It then had to allow the user to re-sample a part of the image, and save it to disk for later processing.
+
+	\vspace{\baselineskip}
 
 	% Additional goal : visualize it in 3D
 	% Engineering : implement a volumetric visualization method (first experimented during intership)
@@ -43,7 +56,9 @@
 
 	While those tasks were implemented at the end of my internship, we later more features in the following engineering position. We added a real-time volumetric visualization method, allowing to see the sample in three-dimensions interactively. We also added the ability to load grids that would not fit within the memory budget, and downsample them \textit{on-the-fly} at loading time in order to visualize bigger acquisitions. We also added the ability to generate the sub-parts of the image in an \guillemotleft~out-of-core~\guillemotright fashion, meaning it does not need to store neither the source image(s) nor the resulting image(s) in memory, instead processing data directly to and from the disk.
 }
+% }}}
 
+% Section 3 : How to read {{{
 \section{How to read this manual ?}\label{text:01_intro:02_howtoread}
 {
 	% How to read the manual : in any way you see fit.
@@ -55,15 +70,26 @@
 	\footnotetext{TODO: change the references to the pipeline and code chapters of this manual.}
 	Chapter \ref{text:01_intro}\footnotemark[\value{footnote}-1] will be a FAQ section, where users may find small tutorials on how to do basic tasks with the program (opening images, manipulating the different viewers and the cutting planes in the program \ldots{} etc)
 
+	\vspace{\baselineskip}
+
 	A small note for the developers : this code was heavily refactored between the internship and the engineering contract to simplify the development of new features, but some parts of it are still a work-in-progress (they will be designated as such). If you feel the need to refactor or change large parts of the codebase in order to either specialize or generalize a certain block of code, you're welcome to do it.
 }
+% }}}
 
+% Section 4 : Glossary {{{
 \section{Glossary}\label{text:01_intro:03_definitions}
 {
 	For the sake of clarity, here are a few definitions of the words used within this manual, in no particular order :
 
 	\begin{itemize}
-		\item \textbf{dataset} : this can be used to describe one or multiple images that make up an acquisition
+		\item \textbf{acquisition} : the set of images resulting from the capture of a sample with a microscope
+		\item \textbf{dataset} : this describes one or multiple images that make up an acquisition
+		\item \textbf{initial space} : the space where the datasets are defined
+		\item \textbf{world space} : the space where all undistorted images are defined
 	\end{itemize}
 }
+% }}}
+
+% VIM modeline, don't touch !
+% vim: set breakindentopt=shift:2 :
 

@@ -9,6 +9,7 @@
 
 % Useful to show frame around objects :
 \usepackage[showframe]{geometry}
+% reminder : "showframe" option shows the margins/building rules of the document
 
 % Sticks the footnotes to the bottom of the page, not after the content :
 \usepackage[bottom]{footmisc}
@@ -19,7 +20,14 @@
 % N.B. this package requires XeLaTeX or LuaTeX :
 \usepackage{fontspec}
 \usepackage{xunicode}
-\setmainfont[Mapping=tex-text]{Linux Libertine}
+\setmainfont[Mapping=tex-text]{Linux Libertine O}
+
+% Explicitely set item spacing in lists (as well as top separation with previous textbox) :
+\usepackage{enumitem}
+\setlist{topsep=5pt,itemsep=5pt}
+
+% Simple command to force the separation of two paragraphs :
+\newcommand{\myparspace}{\vspace{\baselineskip}}
 
 \title{Manual for the Prostate3D project}
 \author{Thibault de Villèle}

@@ -3,7 +3,7 @@
 
 pdfile: main.tex components.tex howto.tex intro.tex pipeline.tex
 	@echo "Making PDF file ..."
-	@xelatex -interaction=nonstopmode main.tex
+	@xelatex -interaction=nonstopmode main.tex 2>&1 > /dev/null
 	@echo "Done."
 
 clean:

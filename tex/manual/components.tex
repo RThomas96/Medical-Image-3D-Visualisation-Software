@@ -1,5 +1,6 @@
 \chapter{Software components}\label{text:03_software_components}
 
+% Outline of the file {{{
 \begin{comment}
 	What are the major software components of the program, what is(are) their role(s)
 		- Image representation in memory
@@ -13,70 +14,174 @@
 		- Tasks / multi-threaded stuff
 		- General purpose / other things that didn't fit into above
 \end{comment}
+% }}}
 
-% Quick intro about the general organisation of tasks and files ... etc
+% Quick intro about the general organisation of tasks and files ... etc {{{
 This section is aimed more at developers which will take over this project and extend it. It describes in detail the different software components in the program, as they are at the end of my engineering contract.
+
+\vspace{\baselineskip}
 
 However, do note that \textit{this is not a precise documentation of every function and class of the program}, this is simply an enumeration of the different concepts present in the code, where to find them and how they are used within the context of the program. For a complete documentation, please see the code or the \textsc{Doxygen} file for a more detailed listing of available classes and functions.
 
-For every concept and class described here, there will be a path allowing you to find them in the code. This path is always relative to the root of the git repository that was cloned in order to get this code. In addition, there will be additional information present here about the state of the concepts/classes (if they are in-progress or not).
+\vspace{\baselineskip}
 
+For every concept and class described here, there will be a path allowing you to find them in the code. This path is always relative to the root of the git repository that was cloned in order to get this code. In addition, there will be additional information present here about the state of the concepts/classes (if they are in-progress or not).
+% }}}
+
+% Section 1 : image representation {{{
 \section{Internal image representation}\label{text:03_software_components:01_image_representation}
 {
-	\textit{N.B.} : Throughout this part, I'll use the terms \textit{grid} and \textit{image} interchangeably. This is only because we consider the three-dimensional images to be a regularly sampled 3D grid, of dimensions similar to the image dimensions and with additional metadata which we can garner from the image files themselves.
+	% Intro to the internal image representation {{{
+	\textit{N.B.} : Throughout this part, I'll use the terms \textit{grid} and \textit{image} interchangeably. This is only because we consider the three-dimensional images to be a regularly sampled 3D grid, of resolution equal to the image resolution and with additional metadata which we can garner either from the image files themselves, or from user input.
+	% TODO : Maybe put the paragraph above in a 'quote' block ?
+	% Meaning, grey background, font a bit smaller and italic all the way through
 
-	Due to a slightly chaotic organization on my part regarding the different software components, there are actually two ways to represent grids within the program.
+	\vspace{\baselineskip}
 
-	Those two implementations both serve the same purpose : to deliver a way to get information about the grid easily from within the code. However, that's where the similarities end.
+	Due to a slightly chaotic organization on my part regarding the different software components, there are actually two ways to represent grids within the program. Those two implementations both serve the same purpose : to deliver a way to get information about the grid easily from within the code. However, that's where the similarities end. The two grids differ quite a bit in their implementation, but the interoperability of the two function interfaces is quite good.
+
+	\vspace{\baselineskip}
 
 	I'll go over the legacy way of loading and addressing grids first. I'll explain what I did and why I did it before going over the recommended way of loading grids. I'll also explain why this implementation is better, even if it does mean having a bit more trouble to write the code to access the grid's data.
+	% }}}
 
-	\subsection{Legacy grid representation : \textsc{DiscreteGrid}}\label{text:03_software_components:01_image_representation:01_legacy_discretegrid}
+	% DiscreteGrid explanation {{{
+	\subsection{Legacy grid representation : \texttt{DiscreteGrid}}\label{text:03_software_components:01_image_representation:01_legacy_discretegrid}
 	{
 		% Where are the files within the git repository ?
 		% What does the class do ?
 		% Where/How is it used ?
 		% What doesn't it do ?
 		% Why is it deprecated ?
-	}
 
-	\subsection{Modern grid representation : \textsc{Grid}}\label{text:03_software_components:01_image_representation:02_modern_grid}
+		\texttt{DiscreteGrid} is the legacy implementation of a voxel grid. It was developed during the last few weeks of the internship, and the first couple of weeks of the engineering contract. You can find it in the repository under the \texttt{grid/} folder. The header files are under \texttt{grid/include/} while the implementation is under \texttt{grid/src/}. This was the main way to represent a grid in memory until a new and admittedly better implementation came along.\par
+
+		\vspace{\baselineskip}
+
+		This class is able to represent a dense\footnote{non-sparse}, regularly sampled three dimensional voxel grid. This voxel grid has a few different attributes which we can gather and modify from the images loaded :\begin{itemize}
+			\item the grid's resolution,
+			\item the voxel sizes of the grid,
+			\item the transform to go to and from the image space
+			\item the surrounding bounding box (in image space)
+		\end{itemize}\par
+
+		\vspace{\baselineskip}
+
+		Those attributes were not always set based on the information found in the image files It was a first naive implementation of a voxel grid, and as such it has a few pros and cons to be aware of :\begin{itemize}
+			\item the grid can only load single-channel data (no two channel data, no RGB \ldots{})
+			\item the \texttt{DiscreteGrid} class is actually a virtual class. The concrete implementations have different uses and are defined as :\begin{itemize}
+					\item input grids (defined by the \texttt{InputGrid} class). This represents the grids taken from on-disk 3D images, and its data cannot be modified. All of its data can either be \textit{entirely} loaded in memory, or \textit{entirely} left on-disk (a small cache of recently accessed slices is kept)
+					\item output grids (defined by the \texttt{OutputGrid} class). This represents grids generated during the runtime of the program, and cannot have on-disk images as an input. All its data \textit{must} be in-memory.
+			\end{itemize}
+			\item the grid provides access to limited information about the grid (expressed in the list above)
+			\item we can transform point to and from the image's initial space
+			\item the class can store different types and sizes of data (signed or unsigned, 8/16/32 bits \ldots{}). This type is also used in the classes that read the data from and write the data to the disk.
+		\end{itemize}
+
+		\vspace{\baselineskip}
+
+		This particular structure was made with the idea that the reading and writing logic for the different file types was uncorrelated with the grid, and could be put in a separate set of classes : the \texttt{GenericGridReader} and \texttt{GenericGridWriter} classes respectively. Over time, the grid and reader/writer classes were becoming so similar that most of the data was effectively duplicated.
+
+		As a first draft of a grid representation, it did the job pretty well. However, some severe limitations quickly arose. Most importantly, the clear separation between input and output grids which was thought to be very important at the beginning proved to be more of a hindrance than anything else (as a result, the code implementing the input and output grids was slowly upstreamed into the \texttt{DiscreteGrid} class over time).\par
+
+		\vspace{\baselineskip}
+
+		Additionally, the fact that changing the grid input type requires a recompilation of the program to be updated is not optimal not only for the user of the program which can thus only load a certain type of data, but also for the developer which would be forced to reimplement the whole thing for different types (yes, the architecture was \textit{that} bad).\par
+
+		As such, it became clear that a new implementation of a grid was necessary not only for the ease of use it would provide, but also for the developers of the project.
+	}
+	% }}}
+
+	% Modern `Grid` class {{{
+	\subsection{Modern grid representation : \texttt{Grid}}\label{text:03_software_components:01_image_representation:02_modern_grid}
 	{
 		% Where are the files within the git repository ?
 		% What does the class do ?
 		% Where/How is it used ?
-		%	HOW DOES IT WORK ? (explain the template functions and the explicit tagging system for them)
+		% HOW DOES IT WORK ? (explain the template functions and the explicit tagging system for them)
 		% What doesn't it do ?
 		% Why is it better than DiscreteGrid ?
 		% How can we extend it ?
-	}
 
+		To replace the old \texttt{DiscreteGrid} implementation, a new grid representation was developed : \texttt{Grid}. The files for this implementation can be found in the repository under the \texttt{image} folder, more specifically in the \texttt{api}, \texttt{tiff} and \texttt{transform} folders.\par
+
+		\vspace{\baselineskip}
+
+		% list of features {{{
+		This new implementation of the voxel grid is still a bit of a work in progress on some fronts. This refactoring of the internal grid representation had a few goals over the existing solution :\begin{itemize}
+			\item allow to load multiple types and sizes of data using the same class and function interface
+			\item consolidate the different (input/output) grid types into a single class since their separation is not necessary
+			\item have the reading/writing logic directly set into the class itself, since it is an integral part of the grid
+			\item allow for multi-channel data (the current implementation actually supports any number of channels, even though it's mostly RGB data that will be loaded)
+		\end{itemize}
+		%}}}
+
+		% we chose pimpl {{{
+		There were a myriad of ways to implement an interface with all those goals. The most popular way to implement such a set of features uses template meta-programming to perform type erasure on the image struct. It is quite common to see this in widely used C++ image toolkits such as \textsc{Vtk} or \textsc{Itk}. However, this method requires a deep and intrinsic knowledge of how templates work, and makes the code a bit less readable. As such, the one chosen here follows the \texttt{pImpl}\footnote{\href{https://en.cppreference.com/w/cpp/language/pimpl}{https://en.cppreference.com/w/cpp/language/pimpl}} idiom : it hides the implementation details of a class behind a private pointer. It is what's used for most of \textsc{Qt}'s widgets. \par
+
+		\myparspace
+		% }}}
+
+		% pimpl is flexible for image formats/types/sizes {{{
+		This flexibility in the implementation details or \guillemotleft{}~backend~\guillemotright{}~of the grid allows us to effectively make as many implementations as necessary, and choose the correct one at runtime. As an added bonus, it provides the developers of the program with a single, non-templated interface which they can use to access a multitude of different image formats, and data types and sizes.\par
+
+		\myparspace
+		% }}}
+
+		% more details about interaction grid/image_backend {{{
+		The \texttt{Grid} class is a well-defined, concrete type that can only be constructed using a valid pointer to a previously-allocated \texttt{ImageBackendImpl}. Whenever a function is called on a \texttt{Grid} object, the class calls a similar function in the image backend, allowing to define the proper behaviour dynamically.\par
+		The \texttt{ImageBackendImpl} class is a virtual-only class which serves as an interface for the different backends that can be implemented. This allows to write a specialized class for each image type that we want to support. Let's study the implementation details of a particular file type : the \texttt{Tiff} file type.
+		% }}}
+
+		\subsubsection{Case study : the \texttt{Tiff} image backend}
+		{
+			% How it's structured - TIFF {{{
+			\texttt{Tiff} is a popular file format that allows the storage of one or multiple 2D images. It does this by defining a \textit{directory} type, which is a fully documented subsection of the file containing the image data of a single image. The \texttt{Tiff} specification\footnote{\href{https://www.adobe.io/content/dam/udp/en/open/standards/tiff/TIFF6.pdf}{\texttt{Tiff} specification, v6.0 (adobe.io)}} also states that data can be encoded as signed integers, unsigned integers, floating-point or complex numbers with sizes between 1 and 4 bytes per sample. There can be from 1 to 5 samples per pixel\footnote{RGB data along with 2 additional samples usually reserved for raw and premultiplied alpha}.
+			% }}}
+
+			With such a breadth of possibilities for the \texttt{Tiff} format, we have to provide an implementation which will cover most of usual configurations of data that can be saved in a \texttt{Tiff} file. As such, a \texttt{TIFFBackendImpl} class was implemented, which inherits the \texttt{ImageBackendImpl} class. This is the base class for our \texttt{Tiff} implementation.\par
+			To tackle most possible configurations of \texttt{Tiff} files, this class is then derived once more into a templated class : \texttt{TIFFBackendDetail<pixel\_t>}. This class's template argument, \texttt{pixel\_t} is the type of data contained within the file. This is the lowest-level class in our hierarchy, and this is also the once which implements the \guillemotleft{}~low-level~\guillemotright{} logic to handle \texttt{Tiff} files.\par
+		}
+	}
+	% }}}
+
+	% Migration between the two : progress {{{
 	\subsection{Code migration}\label{text:03_software_components:01_image_representation:03_migration}
 	{
 		% Explain what parts are not et migrated to the new code
 		% How can we migrate them ?
 	}
+	% }}}
 }
+% }}}
 
+% Section 2 : Visualization components {{{
 \section{Visualization of different components}\label{text:03_software_components:02_visualization}
 {
 	%
 }
+% }}}
 
+% Section 3 : generation primitives {{{
 \section{Generation primitives}\label{text:03_software_components:03_generation_primitives}
 {
 	%
 }
+% }}}
 
+% Section 4 : about multi-threading {{{
 \section{Tasks and multi-threading}\label{text:03_software_components:04_tasks}
 {
 	%
 }
+% }}}
 
+% Section 5 : other stuff {{{
 \section{Other structures}\label{text:03_software_components:05_other}
 {
 	%
 }
+% }}}
 
 % Vim modeline, do not touch !
-% vim: set fdm=indent
+% vim: set breakindentopt=shift\:2 :
