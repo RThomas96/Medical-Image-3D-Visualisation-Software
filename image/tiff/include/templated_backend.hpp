@@ -48,6 +48,7 @@ namespace Tiff {
 			/// @details Defined as the first image's file name, without the path, extension and (possibly) numerical
 			/// suffixe(s) (can be separated by a dash, underscore or something else). If the name is fully numerical,
 			/// can also be computed by using similarities between the names of the different filenames.
+			/// @todo For now, only returns 'default_grid_name' and should be implemented more thoroughly.
 			void compute_stack_basename(void);
 
 			/// @b Asks the cache for a given slice 's'. If already cached, return the data but load it otherwise.
@@ -62,6 +63,8 @@ namespace Tiff {
 
 			/// @b Reads the min and max ranges of the image, if available.
 			/// @note If not available in the metadata, returns the internal type's min and max values.
+			/// @warning For now, sets the range values implicitely, without explicit or safe casting.
+			/// @todo Implement a 'safe' version of glm::convert_to<>() that clips to the smallest type's limits.
 			template <typename range_t>
 			bool template_tiff_get_sub_range_values(std::size_t channel, glm::vec<2, range_t, glm::defaultp>& _values);
 
@@ -212,5 +215,7 @@ namespace Tiff {
 }
 
 }
+
+#include "./templated_backend.impl.hpp"
 
 #endif // VISUALIAZTION_IMAGE_TIFF_INCLUDE_TEMPLATED_BACKEND_HPP_

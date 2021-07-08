@@ -8,21 +8,22 @@ namespace Image {
 
 namespace Tiff {
 
-	/// @b The base class for the TIFF template
+	/// @b The TIFFBackendImpl class is the base class that implements the necessary logic to read TIFF images.
 	class TIFFBackendImpl : public ImageBackendImpl {
 		public:
 			/// @b A simple typedef which restricts the class to be owned by one object only
 			typedef std::unique_ptr<TIFFBackendImpl> Ptr;
 
-			/// @b A simple typedef which restricts the class to be owned by one object only
+			/// @b TIFFImage represents a series of TIFF directories which make up a single image in the grid.
 			typedef std::vector<Tiff::Frame::Ptr> TIFFImage;
 
 		protected:
-			/// @b Default ctor, initializes the needed variables from the
+			/// @b Default ctor, only initializes the top-level class.
 			TIFFBackendImpl(void);
 
 		public:
 			/// @b Default dtor for the	class.
+			/// @note Since no allocation or 'special' logic takes place in this class, left as `default`.
 			virtual ~TIFFBackendImpl(void) = default;
 
 			/// @b Returns true if the TIFF file provided can be read by this image implementation.
@@ -48,7 +49,7 @@ namespace Tiff {
 			virtual ImageDataType getInternalDataType(void) const override;
 
 			/// @b Checks if the implementation is not only valid, but the data source is from the user disk (not RAM)
-			virtual bool presentOnDisk(void) const override;
+			virtual bool presentOnDisk(void) const override { return true; }
 
 			/// @b Returns the name of this image, determined from the files taken as input.
 			virtual std::string getImageName(void) const override;
@@ -70,7 +71,7 @@ namespace Tiff {
 
 		protected:
 			/// @b The filenames, as provided by the parsing function
-			std::vector<std::string> filenames;
+			std::vector<std::vector<std::string>> filenames;
 
 			/// @b The images loaded from the disk
 			std::vector<TIFFImage> images;
@@ -97,7 +98,12 @@ namespace Tiff {
 			/// @b The number of samples per pixel
 			uint16_t samplesPerPixel;
 	};
-}
+
+	/// @b Creates a suitable backend for the given files.
+	/// @param filenames the filenames to open
+	TIFFBackendImpl::Ptr createBackend(std::string reference_filename);
+
+} // namespace Tiff
 
 }
 

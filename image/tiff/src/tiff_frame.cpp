@@ -22,7 +22,6 @@ namespace Tiff {
 	}
 
 	bool Frame::isCompatibleWith(const Frame &_frame) {
-
 		TIFF* _self_handle = this->getLibraryHandle();
 		TIFF* _other_handle = _frame.getLibraryHandle();
 
@@ -38,7 +37,6 @@ namespace Tiff {
 		TIFFClose(_other_handle);
 
 		return w && h && b && i && p && t;
-
 	}
 
 	bool Frame::hasSameEncoding(const Frame &_frame) {

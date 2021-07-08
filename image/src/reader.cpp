@@ -5,7 +5,6 @@
 
 #include "../api/include/grid.hpp"
 #include "../api/include/backend.hpp"
-#include "../tiff/include/tiff_backend.hpp"
 
 #include <cstring>
 #include <memory>

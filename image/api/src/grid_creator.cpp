@@ -1,6 +1,6 @@
 #include "../include/grid.hpp"
 
-#include "../../tiff/include/tiff_backend.hpp"
+#include "../../tiff/include/backend.hpp"
 
 namespace Image {
 
@@ -15,7 +15,7 @@ namespace Image {
 		// extract substring of extension :
 		std::string ext	= reference_file.substr(iter, std::string::npos);
 		if (ext == ".tif" || ext == ".tiff") {
-			return Grid::Ptr(new Grid(TIFFBackend::createBackend()));
+			return Grid::Ptr(new Grid(Tiff::createBackend(reference_file)));
 		}
 
 		return nullptr;

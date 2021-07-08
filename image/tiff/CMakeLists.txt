@@ -9,19 +9,17 @@ ENDIF()
 # libTIFF_HEADER_DIR : path to libtiff headers
 
 ADD_LIBRARY(grid_tiff_backend STATIC
-	src/tiff_backend.cpp
 	src/tiff_frame.cpp
-	src/tiff_private.cpp
 	src/tiff_helpers.cpp
+	src/backend.cpp
 
 	include/tiff_include_common.hpp
 
-	include/tiff_backend.hpp
+	include/backend.hpp
+	include/templated_backend.hpp
+	include/templated_backend.impl.hpp
 	include/tiff_frame.hpp
-	include/tiff_private.hpp
 	include/tiff_helpers.hpp
-	include/tiff_template.hpp
-	include/tiff_template.impl.hpp
 )
 TARGET_INCLUDE_DIRECTORIES(grid_tiff_backend
 	PRIVATE ${libTIFF_HEADER_DIR}
@@ -38,6 +36,7 @@ SET_TARGET_PROPERTIES(grid_tiff_backend PROPERTIES
 	AUTOUIC OFF
 	POSITION_INDEPENDENT_CODE ON
 )
+
 
 # Once the compilation is conditional, maybe add that lib to a list of compilable libs which
 # then get linked by the top CMakeLists.txt ??? Just a random thought.

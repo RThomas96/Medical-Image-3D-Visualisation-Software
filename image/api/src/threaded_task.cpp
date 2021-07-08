@@ -27,7 +27,7 @@ namespace Image {
 	void ThreadedTask::end(bool success) {
 		std::unique_lock m_lock(this->m, std::defer_lock);
 		if (m_lock.try_lock_for(this->timeInterval)) {
-			// end the task by setting the
+			// end the task by setting the current step > max step
 			this->maxSteps = 0;
 			this->currentStep = 1;
 

@@ -5,6 +5,8 @@
 #include "./templated_backend.hpp"		// Included between header guards to have code completion in QtCreator.
 #endif
 
+#include <iomanip>
+
 namespace Image {
 
 namespace Tiff {
@@ -205,6 +207,11 @@ TIFFBackendDetail<double>::TIFFBackendDetail(uint32_t w, uint32_t h, std::size_t
 	#endif
 }
 
+template <typename element_t>
+TIFFBackendDetail<element_t>::~TIFFBackendDetail() {
+	this->cleanResources();
+}
+
 template <typename element_t> typename TIFFBackendDetail<element_t>::Ptr
 TIFFBackendDetail<element_t>::createBackend(uint32_t width, uint32_t height, std::size_t _dim) {
 	return Ptr(new TIFFBackendDetail<pixel_t>(width, height, _dim));
@@ -232,14 +239,145 @@ void TIFFBackendDetail<element_t>::compute_stack_basename(void) {
 }
 
 template <typename element_t>
-std::size_t TIFFBackendDetail<element_t>::loadSlice(std::size_t i) {
-	// TODO: import from the existing loadslice funtion
+std::size_t TIFFBackendDetail<element_t>::loadSlice(std::size_t slice_idx) {
+	if (slice_idx >= this->images.size()) { throw std::runtime_error("Tried to load past-the-end image."); }
+
+	// If the image is already loaded, return its index :
+	if (this->cachedSlices.hasData(slice_idx)) { std::cerr << "Already cached previously\n"; return this->cachedSlices.findIndex(slice_idx); }
+
+	// Image dimensions :
+	std::size_t imgsize = this->resolution.x * this->voxel_dimensionality * this->resolution.y;
+
+	// Typedef of cache-able data :
+	using ImagePtr = typename cache_t::data_t_ptr; // So : std::shared_ptr< std::vector<img_t> >
+
+	// Read all values for all frames at index slice_idx :
+	std::vector<pixel_t> framedata(this->resolution.x*this->resolution.y);
+	// The target vector to combine into :
+	ImagePtr full_image = std::make_shared<std::vector<pixel_t>>(framedata.size()*this->voxel_dimensionality);
+
+	// Result for libTIFF operations. For most ops, returns 1 on success.
+	int result = 1;
+
+	// Iterate on all planes :
+	for (std::size_t i = 0; i < this->voxel_dimensionality; ++i) {
+		// Get the right frame :
+		const Frame::Ptr& frame = this->images[slice_idx][i];
+		// Open the file, and set it to the right directory :
+		TIFF* file = frame->getLibraryHandle();
+		if (file == nullptr) { throw std::runtime_error("Could not set the directory of file "+frame->sourceFile); }
+
+		// Read all strips :
+		for (uint64_t i = 0; i < frame->stripsPerImage; ++i) {
+			tsize_t readPixelSize = 0; // bytes to read from file
+			if (i == frame->stripsPerImage-1) {
+				// The last strip is handled differently than the rest. Fewer bytes should be read.
+				// compute the remaining rows, to get the number of bytes :
+				tsize_t last_strip_row_count = this->resolution.y - (frame->stripsPerImage - 1)*frame->rowsPerStrip;
+				if (last_strip_row_count == 0) {
+					throw std::runtime_error("Last strip was 0 rows tall ! Something went wrong beforehand.");
+				}
+				readPixelSize = last_strip_row_count * this->resolution.x;
+			} else {
+				readPixelSize = this->resolution.x * frame->rowsPerStrip;	// strip size, in pixels
+			}
+
+			tsize_t readBytesSize = readPixelSize*(this->bitsPerSample/8);	// strip size, in bytes
+			tsize_t stripPixelSize = this->resolution.x * frame->rowsPerStrip;	// The size of a strip, in rows
+
+			tmsize_t read = TIFFReadEncodedStrip(file, i, framedata.data()+i*stripPixelSize, readBytesSize);
+			if (read < 0) {
+				// print width for numbers :
+				std::size_t pwidth = static_cast<std::size_t>(std::ceil(std::log10(static_cast<double>(frame->stripsPerImage))));
+				std::cerr << "[DEBUG]\t\t(" << std::setw(pwidth) << i << "/" << frame->stripsPerImage << ") ERROR:";
+				std::cerr << "Could not read strip " << i << " from the frame.\n";
+			}
+		}
+
+		// Close the tiff file (mostly to free up one file descriptor) :
+		TIFFClose(file);
+
+		// Copy the strips' data to the full image :
+		typename std::vector<pixel_t>::iterator full_img_pos = full_image->begin() + i; // begin + current color plane queried
+		std::for_each(framedata.cbegin(), framedata.cend(), [this, &full_img_pos](const pixel_t pixval) -> void {
+			*full_img_pos = pixval;
+			full_img_pos += this->voxel_dimensionality;
+		});
+	}
+
+	return this->cachedSlices.loadData(slice_idx, full_image);
 }
 
 template <typename element_t>
 template <typename out_t>
 bool TIFFBackendDetail<element_t>::template_tiff_read_sub_region(svec3 origin, svec3 size, std::vector<out_t>& values) {
-	// TODO: import from the existing read subregion function
+	/// @b Const iterator type for the cached data, which does not modify the data itself
+	using cache_iterator_t = typename cache_t::data_t_ptr::element_type::const_iterator;
+	/// @b Iterator type for the target data
+	using target_iterator_t = typename std::vector<out_t>::iterator;
+
+	// ensure we have the right size for the buffer, fill it with 0s for now :
+	values.resize(size.x * size.y * size.z * this->voxel_dimensionality);
+	std::fill(values.begin(), values.end(), pixel_t(0));
+
+	//
+	// Check for outliers :
+	// If origin's coordinates are bigger than this stack's dimensions, the whole subregion will be outside.
+	// Simply fill the vector with null values and return
+	//
+	if (origin.x >= this->resolution.x || origin.y >= this->resolution.y || origin.z >= this->images.size()){ return true; }
+
+	/// @b Beginning of slices to load and cache
+	std::size_t src_slice_begin = origin.z;
+	/// @b end of slices to cache or end of slices available
+	std::size_t src_slice_end = (src_slice_begin + size.z >= this->images.size()) ?
+					this->images.size() : src_slice_begin + size.z;
+
+	// the number of slices which will be read by the first for-loop :
+	std::size_t tgt_slices_readable = src_slice_end - src_slice_begin;
+
+	/// @b Index of the last line we can read from the source buffer
+	std::size_t src_height_idx_end= (origin.y + size.y >= this->resolution.y) ?
+					this->resolution.y - origin.y : size.y;
+
+	/// @b the number of lines that can be read from the source buffer :
+	std::size_t src_height_readable = src_height_idx_end - origin.y;
+
+	/// @b total length of a line in the source
+	std::size_t src_line_size = this->resolution.x * this->voxel_dimensionality;
+	/// @b beginning of a line to read from the source buffer
+	std::size_t src_line_idx_begin = origin.x * this->voxel_dimensionality;
+	/// @b amount of values to read into the target buffer from the source
+	std::size_t src_line_idx_end = (src_line_idx_begin + size.x * this->voxel_dimensionality >= src_line_size) ?
+				src_line_size : src_line_idx_begin + size.x * this->voxel_dimensionality;
+
+	/// @b Line length in the buffer to write to
+	std::size_t target_line_length = size.x * this->voxel_dimensionality;
+	/// @b image length in the buffer to write to
+	std::size_t target_image_length = size.y * target_line_length;
+
+	std::size_t y = 0, z = 0;
+
+	// Iterate on slices :
+	for (z = 0;	z < tgt_slices_readable ; ++z) {
+		// load and cache the slice to load in memory (or fetch it directly if already cached) :
+		std::size_t cache_idx = this->loadSlice(src_slice_begin + z);
+		// get img data from cache :
+		typename cache_t::data_t_ptr image_data = this->cachedSlices.getDataIndexed(cache_idx);
+		// read all lines we _can_ from the source :
+		for (y = 0; y < src_height_readable; ++y) {
+			// Figure out the right location in the source buffer :
+			cache_iterator_t begin = image_data->cbegin() + (origin.y + y) * src_line_size + src_line_idx_begin;
+			// Read <source begin> + [size to read | rest of source line] :
+			cache_iterator_t end   = image_data->cbegin() + (origin.y + y) * src_line_size + src_line_idx_end;
+			// beginning in target buffer :
+			target_iterator_t target_begin = values.begin() + z * target_image_length + y * target_line_length;
+			// Copy a whole line at once :
+			std::copy(begin, end, target_begin);
+		}
+	}
+	// don't need to pad the remaining slices (if any) because of the first call to fill()
+	return true;
 }
 
 template <typename element_t>
@@ -262,28 +400,59 @@ void TIFFBackendDetail<element_t>::parse_info_in_separate_thread(ThreadedTask::P
 		return;
 	}
 
-	// First of all, we should check the current object is of the right type !
-	Frame::Ptr reference_frame = nullptr;
-	try {
-		reference_frame = std::make_shared<Frame>(user_filenames[0][0], 0);
-	}  catch (std::exception& e) {
-		_task->pushMessage(std::string("Error : could not create a ref.frame for file parsing. Message : \n")+e.what());
-		_task->end(false);
-		return;
-	}
-	if (not this->is_frame_compatible_with_backend(_task, reference_frame)) {
+	_task->setState(TaskState::Launched);
+
+	{{{ // Check there are no empty vectors in the provided filenames :
+	bool files_valid = true;
+	std::size_t integer_iterator = 0;
+	std::for_each(user_filenames.begin(), user_filenames.end(),
+	[&files_valid, &_task, &integer_iterator](const std::vector<std::string>& v) -> void {
+		if (v.empty()) {
+			files_valid = false;
+			_task->pushMessage(std::string("Error : stack number ")+std::to_string(integer_iterator)+std::string(" of"
+			"filenames was empty. Please remove it and retry parsing the files."));
+		}
+		integer_iterator++;
+	});
+	// if anything happened return with a failure state :
+	if (not files_valid) {
 		_task->end(false);
 		this->cleanResources();
 		return;
 	}
+	}}}
 
-	// Check the same number of files are here per stack of filenames.
+	// Used to check all frames are compatible with each other, and with the current object
+	Frame::Ptr reference_frame = nullptr;
+
+	{{{ // Check current object is of right type
+	try {
+		reference_frame = std::make_shared<Frame>(user_filenames[0][0], 0);
+	}  catch (std::exception& e) {
+		_task->pushMessage(std::string("Error : could not create a reference frame from the first file to parse the "
+			"rest of the files. Erorr message : \n")+e.what());
+		_task->end(false);
+		this->cleanResources();
+		return;
+	}
+	// if not compatible, stop parsing files !
+	if (not this->is_frame_compatible_with_backend(_task, reference_frame)) {
+		_task->pushMessage("Error : given frames are not compatible with the currently created implementation.");
+		_task->end(false);
+		this->cleanResources();
+		return;
+	}
+	}}}
+
+	{{{ // Check the same number of files are here (per stack of filenames).
 	// If there's only one do nothing. Otherwise :
 	if (user_filenames.size() > 1) {
 		// Otherwise, check each additionnal stack and see if they have the same # of files :
 		bool valid = true;
 		std::size_t ref_count = user_filenames[0].size(); // reference count
 
+		// Note : could find any stack with diff nb of files with std::find[firstt_of|last_of]() but this way I can log
+		// which ones are not compatible and tell the user exactly what needs to change in its input :
 		for (std::size_t i = 1; i < user_filenames.size()-1; i++) {
 			if (user_filenames[i].size() != ref_count) {
 				// signal it's not valid, but don't stop here.
@@ -299,11 +468,16 @@ void TIFFBackendDetail<element_t>::parse_info_in_separate_thread(ThreadedTask::P
 		// after all stacks are done, stop here if an error occured.
 		if (not valid) { this->cleanResources(); _task->end(false); return; }
 	}
+	}}}
+
+	// Preliminary parsing of the file stack is done :
+	_task->setSteps(user_filenames[0].size());
+	_task->setState(TaskState::Running);
 
 	// The number of file stacks :
 	std::size_t file_channels = user_filenames.size();
 
-	// Then, check the files are the 'same' (same encoding [bitsperpixel, samplesperpixel] and size and frame count)
+	{{{ // Then, check the files are the 'same' (same encoding [bitsperpixel, samplesperpixel] and size and frame count)
 	for (std::size_t file_index = 0; file_index < user_filenames[0].size(); ++file_index) {
 
 		// Get the number of available directories :
@@ -363,19 +537,57 @@ void TIFFBackendDetail<element_t>::parse_info_in_separate_thread(ThreadedTask::P
 			// push current image to the stack :
 			this->images.push_back(current_image);
 		}
-	}
 
-	// Reminder : in the ctor, we must specify the width and height of the grid, as well as te voxel dimensionality
-
-	// populate the fields with the right information from the loaded data :
-	std::size_t total_samples = 0;
-	for (std::size_t i = 0; i < file_channels; ++i) {
-		total_samples += this->images[0][i]->samplesPerPixel;
+		_task->advance();
 	}
-	// set samples per pixel :
-	this->samplesPerPixel = total_samples;
+	}}}
+
+	_task->setState(TaskState::Finishing);
+
+	// Values already set in the ctor based on TIFF's capabilities and provided info :
+	// - resolution (on X and Y)
+	// - voxel dimensionality (supposed to be equal to samplesperpixel BUT CHECKED)
+	// - internal_data_type (based on template parameters)
+	// - bitsPerSample (based on template parameters)
+	// - sampleFormat (based on template parameters)
+	// - voxel_dimensions (TIFF doesn't carry any physical information)
+
+	// Still to define :
+	// - images (done above)
+	// - filenames
+	// - samplesPerPixel
+	// - stack_base_name
+	// - resolution (on Z)
+
 	// set stack depth :
 	this->resolution.z = this->images.size();
+
+	// Copy filenames to local storage and then compute basename of this stack :
+	this->filenames = user_filenames;
+	this->compute_stack_basename();
+	// Reset cache :
+	this->cachedSlices.clearCache();
+
+	using limits = std::numeric_limits<pixel_t>;
+	// TIFF doesn't store the min/max values of the image in the metadata. Set to default :
+	glm::tvec2<pixel_t> default_ranges{limits::lowest(), limits::max()};
+	// set all channels to be between {min, max} of the value type
+	this->value_ranges.resize(this->samplesPerPixel, default_ranges);
+
+	// All directories are compatible and at least one frame is available. Count total # of samples :
+	std::size_t total_samples = 0;
+	for (std::size_t i = 0; i < file_channels; ++i) { total_samples += this->images[0][i]->samplesPerPixel; }
+	// set samples per pixel :
+	this->samplesPerPixel = total_samples;
+	if (this->samplesPerPixel != this->voxel_dimensionality) {
+		std::cerr << "Warning : samples per pixel (computed) and voxel dimensionality (provided) are different. " <<
+					"Overwriting previous value." << '\n';
+		this->voxel_dimensionality = this->samplesPerPixel;
+	}
+
+	// Finish the current task :
+	_task->end();
+	return;
 }
 
 template <typename element_t>
