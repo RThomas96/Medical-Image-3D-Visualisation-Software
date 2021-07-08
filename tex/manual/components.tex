@@ -139,9 +139,60 @@ For every concept and class described here, there will be a path allowing you to
 			\texttt{Tiff} is a popular file format that allows the storage of one or multiple 2D images. It does this by defining a \textit{directory} type, which is a fully documented subsection of the file containing the image data of a single image. The \texttt{Tiff} specification\footnote{\href{https://www.adobe.io/content/dam/udp/en/open/standards/tiff/TIFF6.pdf}{\texttt{Tiff} specification, v6.0 (adobe.io)}} also states that data can be encoded as signed integers, unsigned integers, floating-point or complex numbers with sizes between 1 and 4 bytes per sample. There can be from 1 to 5 samples per pixel\footnote{RGB data along with 2 additional samples usually reserved for raw and premultiplied alpha}.
 			% }}}
 
+			% Many possibilities, so implemented a base class and template spacializations {{{
 			With such a breadth of possibilities for the \texttt{Tiff} format, we have to provide an implementation which will cover most of usual configurations of data that can be saved in a \texttt{Tiff} file. As such, a \texttt{TIFFBackendImpl} class was implemented, which inherits the \texttt{ImageBackendImpl} class. This is the base class for our \texttt{Tiff} implementation.\par
 			To tackle most possible configurations of \texttt{Tiff} files, this class is then derived once more into a templated class : \texttt{TIFFBackendDetail<pixel\_t>}. This class's template argument, \texttt{pixel\_t} is the type of data contained within the file. This is the lowest-level class in our hierarchy, and this is also the once which implements the \guillemotleft{}~low-level~\guillemotright{} logic to handle \texttt{Tiff} files.\par
+			% }}}
+
+			\myparspace
+
+			Due to the ability of C++ to perform runtime polymorphism, we can specify that the \texttt{Grid} class accepts a pointer of type \texttt{ImageBackendImpl} and specify the right type of backend to create at runtime. Here's a short example :
+
+			% Code listing : grid creation example {{{
+\begin{lstlisting}[style=cppbasicstyle, caption={Creating a grid}]
+std::vector<std::string> filenames = /* ask user ... */ 
+// Assume the internal data type is 'pixel_type' :
+Grid::Ptr grid = Grid::createGrid(
+ TIFFBackendDetail<pixel_type>::createBackend(filenames)
+);
+// Grid is created, and will sample the user-given files
+\end{lstlisting}
+			% }}}
+
+			If any problem occurs during the file parsing, the error is propagated up through the call stack and can be caught by the caller of the \texttt{Grid::createGrid()} function. This allows the user to know the source of the problem, and rectify it.
 		}
+		\myparspace
+
+		Once the grid and corresponding backend is created, we have to be able to give access to the data contained in the source image files.
+
+		\subsubsection{Accessing the grid}
+		{
+			% C++ being a real pain about templates+runtime polymorphism causes issues {{{
+			Due to the wide variety of possible data types being loaded into memory, a template function is essential. However, C++ does not allow to specify templated function definitions as virtual when the base class itself is not templated. Due to this language limitation, we cannot directly access the data contained in the underlying concrete implementations (such as \texttt{TIFFBackendDetail<>}). Furthermore, the base class of \texttt{ImageBackendImpl} carries no information about the internal fundamental type used by the concrete implementation.\par
+			% }}}
+
+			% Impl of the read functions : call hierarchy {{{
+			To circumvent this limitation, we implemented the pixel read functions on multiple levels :\begin{enumerate}
+				\item the \texttt{Grid} class contains a templated member function to read pixels, lines or entire slices of the dataset.
+				\item the \texttt{ImageBackendImpl} base class contains a templated equivalent of the \texttt{Grid} functions which calls an internal function : \texttt{internal\_readRegion()} which is \textit{not} templated
+				\item since the \texttt{internal\_readRegion()} function is not templated, it can be declared as virtual and thus can be overridden in derived classes.
+			\end{enumerate}\par
+			The \texttt{internal\_readRegion()} functions do however need to be specialized for each type to support (in our case, nearly all fundamental arithmetic types from the STL). This would normally cause an overload problem, where many functions are defined with a different signature. However, we can avoid this trouble entirely by relying on an explicit tagging system by providing a templated, unused object in the function definition which allows C++'s argument-dependant lookup to find the right signature for a given call. Here's an example of the definition of such functions :
+
+			\begin{lstlisting}[style=cppbasicstyle, caption={Example of the explicit tagging system in use}]
+// When called from a 'std::uint8_t' template :
+void internal_readRegion(tag<std::uint8_t> tag, ... );
+// When called from a 'std::uint16_t' template :
+void internal_readRegion(tag<std::uint16_t> tag, ... );
+// When called from a 'double' template :
+void internal_readRegion(tag<double> tag, ... );
+			\end{lstlisting}
+			% }}}
+		}
+
+		% Why better than DiscreteGrid ? {{{
+		This architecture offers some obvious benefits over the legacy implementation given by the \texttt{DiscreteGrid} class. The most obvious one being the flexibility given to load images of different internal types at runtime.
+		% }}}
 	}
 	% }}}
 
