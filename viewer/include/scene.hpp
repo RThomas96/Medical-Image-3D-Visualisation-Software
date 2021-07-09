@@ -250,8 +250,17 @@ class Scene : public QOpenGLFunctions_3_2_Core {
 		/// @b Signals all planes they need to be inverted.
 		void toggleAllPlaneDirections();
 
+		void setPositionResponse(glm::vec4 _resp);
+		void drawPositionResponse(float radius, bool drawOnTop = false);
+		void resetPositionResponse(void);
+
 		std::vector<std::shared_ptr<DiscreteGrid>> getInputGrids(void) const;
 		std::size_t getInputGridCount(void) const;
+
+		/// @b Applies a user-defined function on grids, with the constraint it must be const.
+		void lambdaOnGrids(std::function<void(const NewAPI_GridGLView::Ptr&)>& callable) const {
+			std::for_each(this->newGrids.begin(), this->newGrids.end(), callable);
+		}
 
 		QOpenGLContext* get_context() const { return this->context; }
 
@@ -400,6 +409,9 @@ class Scene : public QOpenGLFunctions_3_2_Core {
 		// Grids :
 		std::vector<GridGLView::Ptr> grids;		///< Grids to display in the different views.
 		std::vector<NewAPI_GridGLView::Ptr> newGrids;	///< Grids, but with the new API.
+
+		qglviewer::Frame* posFrame;
+		glm::vec4 posRequest;
 
 		// OpenGL-related stuff :
 		QOpenGLContext* context;				///< The context with which the scene has been created with

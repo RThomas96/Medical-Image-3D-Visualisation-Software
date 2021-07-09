@@ -5,6 +5,7 @@
 
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/io.hpp>
 
 #include <QGLViewer/manipulatedFrame.h>
 
@@ -19,9 +20,10 @@
 
 float Viewer::sceneRadiusMultiplier{.5f};
 
-Viewer::Viewer(Scene* const scene, QWidget* parent) :
+Viewer::Viewer(Scene* const scene, QStatusBar* _program_bar, QWidget* parent) :
 	QGLViewer(parent), scene(scene) {
 
+	this->statusBar = _program_bar;
 	this->refreshTimer = new QTimer();
 	this->refreshTimer->setInterval(std::chrono::milliseconds(7)); // ~7 ms for 144fps, ~16ms for 60fps and ~33ms for 30 FPS
 	this->refreshTimer->setSingleShot(false);
@@ -36,6 +38,7 @@ Viewer::Viewer(Scene* const scene, QWidget* parent) :
 	this->cursorPos_last = glm::ivec2{0,0};
 	this->framesHeld = 0;
 	this->posRequest = glm::ivec2{-1,-1};
+	this->drawAxisOnTop = false;
 }
 
 Viewer::~Viewer() {
@@ -79,24 +82,28 @@ void Viewer::draw() {
 	glm::vec3 camPos = glm::vec3(static_cast<float>(cam.x), static_cast<float>(cam.y), static_cast<float>(cam.z));
 
 	this->scene->draw3DView(mvMat, pMat, camPos);
-
-	if (this->posRequest.x > -1) {
-		glm::vec4 p = this->scene->readFramebufferContents(this->defaultFramebufferObject(), this->posRequest);
-		if (p.w > .01f) {
-			std::cerr << "3D viewer : Value in fbo : {" << p.x << ", " << p.y << ", " << p.z << ", " << p.w << "}\n";
-		}
-		this->posRequest = glm::ivec2{-1,-1};
-	}
+	this->scene->drawPositionResponse(this->sceneRadius()/10., this->drawAxisOnTop);
 }
 
 void Viewer::keyPressEvent(QKeyEvent *e) {
+	// 'msg' allocated here not to have curly braces in
+	// all case statements that need to show a message:
+	QString msg = "";
+
 	switch (e->key()) {
 		/*
 		VIEWER BEHAVIOUR
 		*/
 		case Qt::Key::Key_Space:
 			this->selectMode = not this->selectMode;
-			std::cerr << "Selection mode : " << std::boolalpha << this->selectMode << '\n';
+			msg = "Turned selection mode " + (this->selectMode ? QString("on") : QString("off"));
+			this->statusBar->showMessage(msg, 5000);
+		break;
+		case Qt::Key::Key_R:
+			this->scene->resetPositionResponse();
+		break;
+		case Qt::Key::Key_T:
+			this->drawAxisOnTop = not this->drawAxisOnTop;
 		break;
 		/*
 		SHADER PROGRAMS
@@ -218,6 +225,47 @@ void Viewer::guessMousePosition() {
 	}
 
 	this->posRequest = glm::ivec2(rawMousePos.x, this->fbSize.y - rawMousePos.y);
+	this->makeCurrent();
+	glm::vec4 p = this->scene->readFramebufferContents(this->defaultFramebufferObject(), this->posRequest);
+	std::cerr << "3D viewer : Value in fbo : {" << p.x << ", " << p.y << ", " <<
+				 p.z << ", " << p.w << "}\n";
+	if (p.w > .01f) {
+		this->scene->setPositionResponse(p);
+		auto inputs = this->scene->getInputGrids();
+		for (const auto& grid : inputs) {
+			if (grid->includesPointWorldSpace(p)) {
+				IO::GenericGridReader::sizevec3 index = grid->worldPositionToIndex(p);
+				QString msg = "Position in image space : " + QString::number(index.x) + ", " +
+							  QString::number(index.y) + ", " + QString::number(index.z) +", in grid " +
+							  QString::fromStdString(grid->getGridName()) ;
+				this->statusBar->showMessage(msg, 10000);
+			}
+		}
+		std::function<void(const NewAPI_GridGLView::Ptr&)> findSuitablePoint =
+		[this, p](const NewAPI_GridGLView::Ptr& gridView) -> void {
+			const Image::Grid::Ptr grid = gridView->grid;
+			TransformStack::Ptr gridTransform = grid->getTransformStack();
+			BoundingBox_General<float> bb = grid->getBoundingBox();
+			glm::vec4 p_prime = gridTransform->to_image(p);
+			if (bb.contains(p_prime)) {
+				glm::vec3 voxdim = grid->getVoxelDimensions();
+				glm::tvec3<std::size_t> index = p_prime / glm::vec4(voxdim, 1.f);
+				QString msg = "Position in image space : " + QString::number(index.x) + ", " +
+							  QString::number(index.y) + ", " + QString::number(index.z) +", in grid " +
+							  QString::fromStdString(grid->getImageName()) ;
+				this->statusBar->showMessage(msg, 1000);
+			} else {
+				std::cerr << "Error : grid " << grid->getImageName() << " does not contain the point\n";
+			}
+		};
+		this->scene->lambdaOnGrids(findSuitablePoint);
+		//
+	}
+	this->doneCurrent();
+}
+
+void Viewer::resetLocalPointQuery() {
+	this->posRequest = glm::ivec2{-1, -1};
 }
 
 QString Viewer::helpString() const {

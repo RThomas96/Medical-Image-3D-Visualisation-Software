@@ -5,13 +5,14 @@
 #include <QMouseEvent>
 #include <QGuiApplication>
 
-PlanarViewer::PlanarViewer(Scene* const _scene, planes _p, planeHeading _h, QWidget* parent) :
+PlanarViewer::PlanarViewer(Scene* const _scene, planes _p, QStatusBar* _sb, planeHeading _h, QWidget* parent) :
 		QGLViewer(parent), sceneToShow(_scene), planeToShow(_p), planeOrientation(_h) {
 	this->setGridIsDrawn(false);
 	this->setAxisIsDrawn(false);
 	this->setCameraIsEdited(false);
 
 	this->viewerController = nullptr;
+	this->status_bar = _sb;
 
 	// Default render texture is not initialized :
 	this->renderTarget = 0;
@@ -21,7 +22,7 @@ PlanarViewer::PlanarViewer(Scene* const _scene, planes _p, planeHeading _h, QWid
 	this->offset = glm::vec2(0.f, 0.f);
 	this->mouse_isPressed = false;
 	this->ctrl_pressed = false;
-	this->planeDepth = -1.f;
+	this->planeDepth = .0f;
 	this->posRequest = glm::ivec2{-1, -1};
 	this->tempOffset = glm::vec2{.0f, .0f};
 
@@ -76,9 +77,6 @@ void PlanarViewer::draw(void) {
 }
 
 void PlanarViewer::guessScenePosition(void) {
-	// If the plane depth is invalid, return :
-	if (this->planeDepth < .0f) { return; }
-
 	// Get framebuffer size, and (current) relative mouse position to the widget origin :
 	QSize wSize = this->size();
 	glm::ivec2 fbDims = glm::ivec2(wSize.width(), wSize.height());
@@ -91,6 +89,25 @@ void PlanarViewer::guessScenePosition(void) {
 	// OpenGL FBO coordinates have their 0 at the bottom left. Flip the
 	// Y coordinate so it reflects the OpenGL framebuffer coordinates :
 	this->posRequest = glm::convert_to<int>(glm::vec2(rawMousePos.x, fbDims.y - rawMousePos.y));
+	this->makeCurrent();
+	glm::vec4 pixelValue = this->sceneToShow->readFramebufferContents(this->defaultFramebufferObject(), this->posRequest);
+	if (pixelValue.w > .01f) {
+		glm::vec4 p = pixelValue;
+		std::cerr << "Value in fbo : {" << p.x << ", " << p.y << ", " << p.z << ", " << p.w << "}\n";
+		this->sceneToShow->setPositionResponse(pixelValue);
+		auto inputs = this->sceneToShow->getInputGrids();
+		for (const auto& grid : inputs) {
+			if (grid->includesPointWorldSpace(pixelValue)) {
+				IO::GenericGridReader::sizevec3 index = grid->worldPositionToIndex(p);
+				QString msg = "Position in image space : " + QString::number(index.x) + ", " +
+							  QString::number(index.y) + ", " + QString::number(index.z) +", in grid " +
+							  QString::fromStdString(grid->getGridName()) ;
+				std::cerr << "Message from plane viewer : " << msg.toStdString() << "\n";
+				this->status_bar->showMessage(msg, 10000);
+			}
+		}
+	}
+	this->doneCurrent();
 }
 
 void PlanarViewer::keyPressEvent(QKeyEvent* _e) {

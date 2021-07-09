@@ -143,10 +143,10 @@ void MainWidget::setupWidgets() {
 	});
 
 	// Viewer(s) creation along with control panel :
-	this->viewer = new Viewer(this->scene, nullptr);
-	this->viewer_planeX = new PlanarViewer(this->scene, planes::x, planeHeading::North, nullptr);
-	this->viewer_planeY = new PlanarViewer(this->scene, planes::y, planeHeading::North, nullptr);
-	this->viewer_planeZ = new PlanarViewer(this->scene, planes::z, planeHeading::North, nullptr);
+	this->viewer = new Viewer(this->scene, this->statusBar, nullptr);
+	this->viewer_planeX = new PlanarViewer(this->scene, planes::x, this->statusBar, planeHeading::North, nullptr);
+	this->viewer_planeY = new PlanarViewer(this->scene, planes::y, this->statusBar, planeHeading::North, nullptr);
+	this->viewer_planeZ = new PlanarViewer(this->scene, planes::z, this->statusBar, planeHeading::North, nullptr);
 	this->controlPanel = new ControlPanel(this->scene, this->viewer, nullptr);
 	this->scene->setControlPanel(this->controlPanel);
 

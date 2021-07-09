@@ -30,6 +30,9 @@ To compile the project, you'll need to have `cmake`, `Qt 5`, and an implementati
 ```sh
 $ cd third_party/
 $ ./configure.ps1 # For Windows
+$ # For Windows, if the script fails check the path to
+$ # QMake is right (line 88). Modify it if necessary
+$ # since it depends on the Qt version installed.
 $ ./configure.sh  # For Linux
 $ cd ..
 ```

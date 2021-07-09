@@ -130,6 +130,8 @@ Scene::Scene() {
 	this->isFinishedLoading = false;
 	this->shouldUpdateUserColorScales = false;
 	this->shouldUpdateUBOData = false;
+
+	this->posFrame = nullptr;
 }
 
 Scene::~Scene(void) {
@@ -4821,5 +4823,29 @@ void Scene::tex3D_bindVAO() {
 	glEnableVertexAttribArray(2);
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_Texture3D_VertTex);
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+}
+
+void Scene::setPositionResponse(glm::vec4 _pos) {
+	this->posRequest = _pos;
+	if (this->posFrame == nullptr) {
+		std::cerr << "Allocating new frame for scene\n";
+		this->posFrame = new qglviewer::Frame();
+	}
+	this->posFrame->setPosition(_pos.x, _pos.y, _pos.z);
+}
+
+void Scene::drawPositionResponse(float radius, bool drawOnTop) {
+	if (this->posFrame == nullptr) { return; }
+	if (drawOnTop) { glClear(GL_DEPTH_BUFFER_BIT); }
+	// ddraw the axes :
+	glPushMatrix();
+	glMultMatrixd(this->posFrame->matrix());
+	QGLViewer::drawAxis(radius);
+	glPopMatrix();
+}
+
+void Scene::resetPositionResponse() {
+	delete this->posFrame;
+	this->posFrame = nullptr;
 }
 

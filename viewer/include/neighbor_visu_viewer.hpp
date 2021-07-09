@@ -17,7 +17,7 @@ class Viewer : public QGLViewer {
 		Q_OBJECT
 	public:
 		/// @brief Default constructor for the viewer.
-		Viewer(Scene* const scene, QWidget* parent = nullptr);
+		Viewer(Scene* const scene, QStatusBar* program_bar, QWidget* parent = nullptr);
 		~Viewer();
 		/// @brief Multiplier to apply to scene radii for the scene's view.
 		static float sceneRadiusMultiplier;
@@ -44,6 +44,8 @@ class Viewer : public QGLViewer {
 		virtual QString mouseString(void) const override;
 		/// @b Overrides the function to resize the widget.
 		virtual void resizeGL(int w, int h) override;
+		/// @b Resets and removes the local point query
+		void resetLocalPointQuery();
 	private:
 		/// @brief The scene to control.
 		Scene* const scene;
@@ -69,6 +71,9 @@ class Viewer : public QGLViewer {
 		std::size_t framesHeld;
 		/// @b Request to read a fragment"s position
 		glm::ivec2 posRequest;
+		/// @b Program's status bar
+		QStatusBar* statusBar;
+		bool drawAxisOnTop;
 	public slots:
 		/// @brief Update the view, as a slot without any arguments (currently only used by QTimer)
 		void updateView() { this->update(); }
