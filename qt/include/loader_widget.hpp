@@ -27,6 +27,9 @@
 #include <QDoubleSpinBox>
 #include <QProgressBar>
 
+/// @b The GridLoaderWidget is the class representing the widget to load the grids.
+/// @details This is the widget that launches when selecting 'File' > 'Open Images' or pressing Ctrl+'O'. It is
+/// responsible to let the user select their own files to load into the program.
 class GridLoaderWidget : public QWidget {
 		Q_OBJECT
 	public:

@@ -905,6 +905,7 @@ void GridLoaderWidget::loadNewGridAPI() {
 	// FIXME : The API has changed. Grid::createGrid should only return an empty TIFF implementation, and
 	// the parsing function is the one to take the files as an input.
 	this->_testing_grid = Image::Grid::createGrid(fnames_grid);
+	if (this->_testing_grid == nullptr) { std::cerr << "Error : createGrid() returned nullptr !\n"; return; }
 
 	// Start parsing the information :
 	std::cerr << "Grid created, updating info from disk ...\n";
@@ -961,7 +962,6 @@ void GridLoaderWidget::loadNewGridAPI() {
 		std::cerr << "Voxel dimensions : " << vx.x << ", " << vx.y << ", " << vx.z << "\n";
 		std::cerr << "Data internal representation : " << this->_testing_grid->getInternalDataType() << '\n';
 	}
-	std::cerr << "Finished with the task ?...\n";
 
 	this->computeGridInfoLabel();
 

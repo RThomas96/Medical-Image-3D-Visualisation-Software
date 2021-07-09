@@ -53,6 +53,40 @@ namespace Tiff {
 			/// @b Reads the BitsPerSample field in the TIFF IFD.
 			uint16_t bitsPerSample(TIFF* handle = nullptr) const;
 
+			/// @b Sets the min and max values that _can_ be present in the directory into the range parameter.
+			/// @note This is based on the SMinSampleValue tag that is part of standard ('baseline') TIFF, but mostly
+			/// ignored or unset. In this case, it returns the min/max values of the out_t type.
+			template <typename out_t> void getMinMaxSample(std::size_t sample, glm::tvec2<out_t>& range, TIFF* handle = nullptr) {
+				bool shouldClose = false;
+				if (handle == nullptr) {
+					shouldClose = true;
+					handle = this->getLibraryHandle();
+				}
+
+				if (sample >= this->samplesPerPixel) { TIFFClose(handle); return; }
+
+				// Read the sample values :
+				out_t* min_samples = nullptr;
+				out_t* max_samples = nullptr;
+				int result = 1;
+
+				result = TIFFGetField(handle, TIFFTAG_SMINSAMPLEVALUE, &min_samples);
+				if (result == 0) {
+					result = TIFFGetFieldDefaulted(handle, TIFFTAG_SMINSAMPLEVALUE, &min_samples);
+					if (result == 0) { range.x = std::numeric_limits<out_t>::lowest(); }
+				} else { range.x = min_samples[sample]; }
+
+				result = TIFFGetField(handle, TIFFTAG_SMAXSAMPLEVALUE, &max_samples);
+				if (result == 0) {
+					result = TIFFGetFieldDefaulted(handle, TIFFTAG_SMAXSAMPLEVALUE, &max_samples);
+					if (result == 0) { range.y = std::numeric_limits<out_t>::max(); }
+				} else { range.y = max_samples[sample]; }
+
+				if (shouldClose) { TIFFClose(handle); }
+
+				return;
+			}
+
 		protected:
 			/// @b Loads information from the TIFF file, in order to parse it efficiently later.
 			/// @warning This TIFF frame implementation only supports one sample per pixel, for now.

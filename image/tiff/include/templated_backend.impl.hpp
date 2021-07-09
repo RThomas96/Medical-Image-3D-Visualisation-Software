@@ -424,6 +424,7 @@ void TIFFBackendDetail<element_t>::parse_info_in_separate_thread(ThreadedTask::P
 
 	// Used to check all frames are compatible with each other, and with the current object
 	Frame::Ptr reference_frame = nullptr;
+	std::uint16_t incremental_samples_per_pixel = 0;
 
 	{{{ // Check current object is of right type
 	try {
@@ -444,6 +445,10 @@ void TIFFBackendDetail<element_t>::parse_info_in_separate_thread(ThreadedTask::P
 	}
 	}}}
 
+	incremental_samples_per_pixel += reference_frame->samplesPerPixel;
+	std::cerr << "Reference frame had " << incremental_samples_per_pixel << " samples\n";
+	std::cerr << "Stack count : " << user_filenames.size() << '\n';
+
 	{{{ // Check the same number of files are here (per stack of filenames).
 	// If there's only one do nothing. Otherwise :
 	if (user_filenames.size() > 1) {
@@ -453,7 +458,7 @@ void TIFFBackendDetail<element_t>::parse_info_in_separate_thread(ThreadedTask::P
 
 		// Note : could find any stack with diff nb of files with std::find[firstt_of|last_of]() but this way I can log
 		// which ones are not compatible and tell the user exactly what needs to change in its input :
-		for (std::size_t i = 1; i < user_filenames.size()-1; i++) {
+		for (std::size_t i = 1; i < user_filenames.size(); i++) {
 			if (user_filenames[i].size() != ref_count) {
 				// signal it's not valid, but don't stop here.
 				valid = false;
@@ -463,12 +468,25 @@ void TIFFBackendDetail<element_t>::parse_info_in_separate_thread(ThreadedTask::P
 					", instead of the expected ")+std::to_string(ref_count)+std::string(").")
 				);
 			}
+			if (not user_filenames.empty()) {
+				try {
+					Frame::Ptr additional_frame = std::make_shared<Frame>(user_filenames[i][0], 0);
+					incremental_samples_per_pixel += additional_frame->samplesPerPixel;
+					std::cerr << "Additional frames on stack " << i << " have " << additional_frame->samplesPerPixel <<
+								 " additionnal samples\n";
+				} catch (std::exception& _e) {
+					std::cerr << "Error : exception thrown when creating a frame in stack " << i << '\n';
+				}
+			}
 		}
 
 		// after all stacks are done, stop here if an error occured.
 		if (not valid) { this->cleanResources(); _task->end(false); return; }
 	}
 	}}}
+
+	this->samplesPerPixel = incremental_samples_per_pixel;
+	this->value_ranges.resize(this->samplesPerPixel);
 
 	// Preliminary parsing of the file stack is done :
 	_task->setSteps(user_filenames[0].size());
@@ -503,6 +521,8 @@ void TIFFBackendDetail<element_t>::parse_info_in_separate_thread(ThreadedTask::P
 			// Create a container for the image :
 			TIFFImage current_image = TIFFImage();
 			Tiff::Frame::Ptr current_frame = nullptr;
+			// offset to apply when getting/setting color channels of the grid from the context of a single frame
+			std::size_t channel_offset = 0;
 
 			// iterate on all file stacks :
 			for (std::size_t c = 0; c < file_channels; ++c) {
@@ -532,6 +552,21 @@ void TIFFBackendDetail<element_t>::parse_info_in_separate_thread(ThreadedTask::P
 
 				// push the full slice onto the stack :
 				current_image.push_back(current_frame);
+
+				// update ranges for each sample, in case they exist in the metadata :
+				for (std::size_t s = 0; s < current_frame->samplesPerPixel; ++s) {
+					glm::tvec2<pixel_t> frame_range{};
+					// try to read from the frame :
+					current_frame->getMinMaxSample(s, frame_range);
+					// update values for the sample :
+					this->value_ranges[channel_offset + s] = glm::tvec2<pixel_t>{
+						glm::min(frame_range.x, this->value_ranges[channel_offset + s].x),
+						glm::max(frame_range.y, this->value_ranges[channel_offset + s].y)
+					};
+				}
+
+				// next frame will set different channels' data :
+				channel_offset += current_frame->samplesPerPixel;
 			}
 
 			// push current image to the stack :
@@ -568,21 +603,18 @@ void TIFFBackendDetail<element_t>::parse_info_in_separate_thread(ThreadedTask::P
 	// Reset cache :
 	this->cachedSlices.clearCache();
 
-	using limits = std::numeric_limits<pixel_t>;
-	// TIFF doesn't store the min/max values of the image in the metadata. Set to default :
-	glm::tvec2<pixel_t> default_ranges{limits::lowest(), limits::max()};
-	// set all channels to be between {min, max} of the value type
-	this->value_ranges.resize(this->samplesPerPixel, default_ranges);
-
 	// All directories are compatible and at least one frame is available. Count total # of samples :
 	std::size_t total_samples = 0;
 	for (std::size_t i = 0; i < file_channels; ++i) { total_samples += this->images[0][i]->samplesPerPixel; }
-	// set samples per pixel :
-	this->samplesPerPixel = total_samples;
-	if (this->samplesPerPixel != this->voxel_dimensionality) {
+	if (total_samples != this->voxel_dimensionality) {
 		std::cerr << "Warning : samples per pixel (computed) and voxel dimensionality (provided) are different. " <<
-					"Overwriting previous value." << '\n';
-		this->voxel_dimensionality = this->samplesPerPixel;
+					"Overwriting previous value (" << this->voxel_dimensionality << " != " << total_samples << ")\n";
+		this->voxel_dimensionality = total_samples;
+	}
+	if (total_samples != this->samplesPerPixel) {
+		std::cerr << "Warning : previous incremental count of samples per pixel is erroneous (" << this->samplesPerPixel
+				<< " != " << total_samples << ")\n";
+		this->samplesPerPixel = total_samples;
 	}
 
 	// Finish the current task :
@@ -599,16 +631,11 @@ bool TIFFBackendDetail<element_t>::is_frame_compatible_with_backend(ThreadedTask
 	bool valid = true;
 	std::uint16_t bits_per_sample = reference_frame->bitsPerSample(lib_handle);
 	std::uint16_t sample_format = reference_frame->sampleFormat(lib_handle);
-	std::uint16_t samples_per_pixel = reference_frame->samplesPerPixel;
 	std::uint32_t width = reference_frame->width(lib_handle);
 	std::uint32_t height = reference_frame->height(lib_handle);
 
 	if (this->sampleFormat != sample_format) {
 		_task->pushMessage("Error : sample format was not identical between reference frame and current TIFF backend.");
-		valid = false;
-	}
-	if (this->samplesPerPixel != samples_per_pixel) {
-		_task->pushMessage("Error : samples/pixel was not identical between reference frame and current TIFF backend.");
 		valid = false;
 	}
 	if (this->bitsPerSample != bits_per_sample) {

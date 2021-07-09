@@ -99,6 +99,8 @@ namespace Tiff {
 		uint16_t sf = reference_frame->sampleFormat(f);
 		TIFFClose(f);
 
+		std::cerr << "Reference frame's samples per pixel : " << reference_frame->samplesPerPixel << "\n";
+
 		// Chooses the right type based on sample formats, and bit widths of the samples :
 		switch (sf) {
 			case SAMPLEFORMAT_VOID:

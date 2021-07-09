@@ -3858,6 +3858,30 @@ void Scene::setColorFunction_g(ColorFunction _c) {
 
 void Scene::setRGBMode(RGBMode _mode) {
 	this->rgbMode = _mode;
+	std::for_each(this->newGrids.begin(), this->newGrids.end(), [this](NewAPI_GridGLView::Ptr &gridView) {
+		switch (this->rgbMode) {
+			case RGBMode::None:
+				gridView->colorChannelAttributes[0].setHidden();
+				gridView->colorChannelAttributes[1].setHidden();
+			break;
+			case RGBMode::RedOnly:
+				gridView->colorChannelAttributes[0].setHidden(false);
+				gridView->colorChannelAttributes[1].setHidden();
+			break;
+			case RGBMode::GreenOnly:
+				gridView->colorChannelAttributes[0].setHidden();
+				gridView->colorChannelAttributes[1].setHidden(false);
+			break;
+			case RGBMode::RedAndGreen:
+				gridView->colorChannelAttributes[0].setHidden(false);
+				gridView->colorChannelAttributes[1].setHidden(false);
+			break;
+			default:
+				// do nothing
+			break;
+		}
+	});
+	this->shouldUpdateUBOData = true;
 	switch (_mode) {
 		case RGBMode::None : std::cerr << "Set mode to none" << '\n'; break;
 		case RGBMode::RedOnly : std::cerr << "Set mode to red" << '\n'; break;
