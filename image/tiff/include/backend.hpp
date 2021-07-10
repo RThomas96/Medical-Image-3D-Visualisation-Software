@@ -9,6 +9,8 @@ namespace Image {
 namespace Tiff {
 
 	/// @b The TIFFBackendImpl class is the base class that implements the necessary logic to read TIFF images.
+	/// @details This base class is then derived into template versions of this backend, which can read values directly
+	/// from the images on disk into memory.
 	class TIFFBackendImpl : public ImageBackendImpl {
 		public:
 			/// @b A simple typedef which restricts the class to be owned by one object only
@@ -62,7 +64,8 @@ namespace Tiff {
 
 		protected:
 			/// @b Parse the filename's information into a separate thread.
-			/// @note The ThreadedTask pointer is a shared resource that allows to know the progress of the task.
+			/// @param t the progress tracker for this operation
+			/// @param _f the filenames to parse
 			virtual void parse_info_in_separate_thread(ThreadedTask::Ptr t, const std::vector<std::vector<std::string>>& _f) = 0;
 
 			/// @b Cleans up the allocated resources after an error has occured.
@@ -100,7 +103,10 @@ namespace Tiff {
 	};
 
 	/// @b Creates a suitable backend for the given files.
+	/// @details Tries to open a reference TIFF directory (the first directory of the first file in the first stack) and
+	/// attempts to create a suitable TIFFBackendImpl-derived class that can read the data from disk.
 	/// @param filenames the filenames to open
+	/// @returns A suitable TIFF backend for the files given.
 	TIFFBackendImpl::Ptr createBackend(std::string reference_filename);
 
 } // namespace Tiff

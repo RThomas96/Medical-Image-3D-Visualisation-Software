@@ -259,6 +259,7 @@ std::size_t TIFFBackendDetail<element_t>::loadSlice(std::size_t slice_idx) {
 	// Result for libTIFF operations. For most ops, returns 1 on success.
 	int result = 1;
 
+	#warning Only works for single-channel images. Should take into account the nb of tiff frames, not voxel dimensionality
 	// Iterate on all planes :
 	for (std::size_t i = 0; i < this->voxel_dimensionality; ++i) {
 		// Get the right frame :
@@ -275,6 +276,7 @@ std::size_t TIFFBackendDetail<element_t>::loadSlice(std::size_t slice_idx) {
 				// compute the remaining rows, to get the number of bytes :
 				tsize_t last_strip_row_count = this->resolution.y - (frame->stripsPerImage - 1)*frame->rowsPerStrip;
 				if (last_strip_row_count == 0) {
+					TIFFClose(file);
 					throw std::runtime_error("Last strip was 0 rows tall ! Something went wrong beforehand.");
 				}
 				readPixelSize = last_strip_row_count * this->resolution.x;

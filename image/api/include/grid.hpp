@@ -119,34 +119,25 @@ namespace Image {
 			//////////////////////////////////////////////////////
 
 			/// @b Template to return the minimum and maximum values stored in the file, if given.
-			/// @note By default, returns the internal data type's min and max values.
-			/// @warning This function is left undefined here : it is implemented in derived classes, and
-			/// trying to call it directly will lead to linker errors !
+			/// @note By default, returns the internal data type's min and max values. Not all filetypes carry the
+			/// information about the min and max sample values.
 			template <typename data_t> bool getRangeValues(std::size_t channel, glm::vec<2, data_t, glm::defaultp>& _range);
 
 			/// @b Template to read a single pixel's value(s) in the image.
-			/// @warning This function is left undefined here : it is implemented in derived classes, and
-			/// trying to call it directly will lead to linker errors !
 			template <typename data_t> bool readPixel(svec3 index, std::vector<data_t>& values);
 
 			/// @b Template to read a single line of voxels in ihe image.
-			/// @warning This function is left undefined here : it is implemented in derived classes, and
-			/// trying to call it directly will lead to linker errors !
 			template <typename data_t> bool readLine(svec2 line_idx, std::vector<data_t>& values);
 
 			/// @b Template to read a whole slice of voxels in the image at once.
-			/// @warning This function is left undefined here : it is implemented in derived classes, and
-			/// trying to call it directly will lead to linker errors !
 			template <typename data_t> bool readSlice(std::size_t slice_idx, std::vector<data_t>& values);
 
+			/// @b Template to read a subregion of voxels in the image.
+			template <typename data_t> bool readSubRegion(svec3 origin, svec3 size, std::vector<data_t>& values);
+
 		protected:
-#ifdef PIMPL_USE_EXPERIMENTAL_PROPAGATE_CONST
 			/// @b The opaque pointer which will perform all the logic in regards to the reading of data.
 			std::experimental::propagate_const<ImageBackendImpl::Ptr> pImpl;
-#else
-			/// @b The opaque pointer which will perform all the logic in regards to the reading of data.
-			ImageBackendImpl::Ptr pImpl;
-#endif
 			/// @b The grid from which this one is either a downsampled version or a sub-region.
 			Grid::Ptr parentGrid;
 			/// @b If the grid has a parent, stores the size of this current grid (whether sub-region, or downsampled).
@@ -162,7 +153,7 @@ namespace Image {
 		using return_vec_t = glm::vec<2, data_t, glm::defaultp>;
 		// Checks the implementation pointer is valid, if it is return the data
 		// from there, and if not return an invalid range of values :
-		if (this->pImpl) { this->pImpl->getRangeValues(channel, values); return true; }
+		if (this->pImpl) { return this->pImpl->getRangeValues(channel, values); }
 		// If the pointer to implementation is not here, we should probably throw or return erroneous values ...
 		values = return_vec_t(std::numeric_limits<data_t>::min(), std::numeric_limits<data_t>::max());
 		return false;
@@ -173,8 +164,7 @@ namespace Image {
 		// Checks the position is valid, the backend implementation is valid and returns the value
 		if (index.x < this->imageSize.x && index.y < this->imageSize.y && index.z < this->imageSize.z) {
 			if (this->pImpl) {
-				this->pImpl->readPixel(index, values);
-				return true;
+				return this->pImpl->readPixel(index, values);
 			}
 			return false;
 		}
@@ -187,8 +177,7 @@ namespace Image {
 		// Checks the position requested is valid, then calls the implementation's function if valid.
 		if (index.x < this->imageSize.y && index.y < this->imageSize.z) {
 			if (this->pImpl) {
-				this->pImpl->readLine<data_t>(index, values);
-				return true;
+				return this->pImpl->readLine<data_t>(index, values);
 			}
 			return false;
 		}
@@ -200,10 +189,17 @@ namespace Image {
 		// Checks the slice index is valid, then reads it if the implementation is valid :
 		if (slice_idx < this->imageSize.z) {
 			if (this->pImpl) {
-				this->pImpl->readSlice<data_t>(slice_idx, values);
-				return true;
+				return this->pImpl->readSlice<data_t>(slice_idx, values);;
 			}
 			return false;
+		}
+		return false;
+	}
+
+	template <typename data_t>
+	bool Grid::readSubRegion(svec3 origin, svec3 size, std::vector<data_t>& values) {
+		if (this->pImpl) {
+			return this->pImpl->readSubRegion<data_t>(origin, size, values);
 		}
 		return false;
 	}
