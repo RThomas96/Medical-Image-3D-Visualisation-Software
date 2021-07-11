@@ -6,7 +6,7 @@
 
 This project aims to provide an easy way to visualize high-resolution medical images.
 
-You can load and visualize TIFF, OME-TIFF and NiftI images in real-time. You can choose from a variety of color scales to apply to all or a part of the displayed values on screen.
+You can load and visualize TIFF, OME-TIFF and DIM/IMA images in real-time. You can choose from a variety of color scales to apply to all or a part of the displayed values on screen.
 
 Some screen captures will be coming soon.
 

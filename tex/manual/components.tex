@@ -133,6 +133,7 @@ For every concept and class described here, there will be a path allowing you to
 		The \texttt{ImageBackendImpl} class is a virtual-only class which serves as an interface for the different backends that can be implemented. This allows to write a specialized class for each image type that we want to support. Let's study the implementation details of a particular file type : the \texttt{Tiff} file type.
 		% }}}
 
+		% Case study : TIFF implementation {{{
 		\subsubsection{Case study : the \texttt{Tiff} image backend}
 		{
 			% How it's structured - TIFF {{{
@@ -162,9 +163,11 @@ Grid::Ptr grid = Grid::createGrid(
 			If any problem occurs during the file parsing, the error is propagated up through the call stack and can be caught by the caller of the \texttt{Grid::createGrid()} function. This allows the user to know the source of the problem, and rectify it.
 		}
 		\myparspace
+		% }}}
 
 		Once the grid and corresponding backend is created, we have to be able to give access to the data contained in the source image files.
 
+		% Accessing the grid {{{
 		\subsubsection{Accessing the grid}
 		{
 			% C++ being a real pain about templates+runtime polymorphism causes issues {{{
@@ -177,8 +180,9 @@ Grid::Ptr grid = Grid::createGrid(
 				\item the \texttt{ImageBackendImpl} base class contains a templated equivalent of the \texttt{Grid} functions which calls an internal function : \texttt{internal\_readRegion()} which is \textit{not} templated
 				\item since the \texttt{internal\_readRegion()} function is not templated, it can be declared as virtual and thus can be overridden in derived classes.
 			\end{enumerate}\par
-			The \texttt{internal\_readRegion()} functions do however need to be specialized for each type to support (in our case, nearly all fundamental arithmetic types from the STL). This would normally cause an overload problem, where many functions are defined with a different signature. However, we can avoid this trouble entirely by relying on an explicit tagging system by providing a templated, unused object in the function definition which allows C++'s argument-dependant lookup to find the right signature for a given call. Here's an example of the definition of such functions :
+			The \texttt{internal\_readRegion()} functions do however need to be specialized for each type to support (in our case, nearly all fundamental arithmetic types from the STL). This would normally cause a compile-time error, where many functions with the same identifier are defined with a different signature. However, we can avoid this trouble entirely by relying on an explicit tagging system by providing a templated, unused object in the function definition which allows C++'s argument-dependent lookup to find the right signature for a given call. Here's an example of the definition of such functions :
 
+			% Code : accesing grid with internal_readRegion() {{{
 			\begin{lstlisting}[style=cppbasicstyle, caption={Example of the explicit tagging system in use}]
 // When called from a 'std::uint8_t' template :
 void internal_readRegion(tag<std::uint8_t> tag, ... );
@@ -188,10 +192,21 @@ void internal_readRegion(tag<std::uint16_t> tag, ... );
 void internal_readRegion(tag<double> tag, ... );
 			\end{lstlisting}
 			% }}}
+	
+			% }}}
 		}
+		% }}}
 
 		% Why better than DiscreteGrid ? {{{
-		This architecture offers some obvious benefits over the legacy implementation given by the \texttt{DiscreteGrid} class. The most obvious one being the flexibility given to load images of different internal types at runtime.
+		This architecture offers some obvious benefits over the legacy implementation given by the \texttt{DiscreteGrid} class. The most obvious one being the flexibility given to load images of different internal types at runtime.\par
+		This flexibility is especially important to be able to give a simpler representation of the grid to visualize it, while still performing heavy computations using the internal types of the input images.\par
+		\myparspace
+		Another big advantage is that this implementation provides a clear and well-defined function interface that can be called from anywhere in the code. Since the \texttt{Grid} class is not a template class gives us more flexibility in its use in different parts of the code. As such, we can build the rest of the codebase by using templates only where it's necessary and build the rest of the code template-free.\par
+		\myparspace
+		Furthermore, the distinction between input and output grids have been eliminated completely. This brings the program to be more inline with other real-time image visualizers (like \textit{Fiji}\footnotemark~for example) by allowing the user to modify certain parts of the grid during the program's runtime, but not propagating those changes to disk unless asked to.
+		\footnotetext{\href{https://fiji.sc/}{\underline{\textit{Fiji : ImageJ with \guillemotleft{}~batteries included~\guillemotright{}}~}~}}\par
+		\myparspace
+		Another change that should be noted is the separation of the grid data with its transform matrix. The transform matrix (to go from world space to initial space) used to be bundled in with the grid and not really modifiable once the grid was loaded. Now, the transform is handled by a \texttt{TransformStack} that can hold multiple user-defined and user-modifiable transformations. This is a very simple stack of transforms which also caches a compound transform to perform space changes quicker. You'll find more detailed documentation on how the transform stack works in the doxygen-generated documentation.
 		% }}}
 	}
 	% }}}
@@ -199,8 +214,13 @@ void internal_readRegion(tag<double> tag, ... );
 	% Migration between the two : progress {{{
 	\subsection{Code migration}\label{text:03_software_components:01_image_representation:03_migration}
 	{
-		% Explain what parts are not et migrated to the new code
+		% Explain what parts are not yet migrated to the new code
 		% How can we migrate them ?
+		However, creating this new \texttt{Grid} interface and migrating the old code to it was no easy task. As such, some parts of the codebase were migrated to the new interface while some still use the legacy implementation.\par
+		While the function interface is mostly similar, this is not a drop-in replacement. Some functions are no longer present due to the changes in the way data is handled, and some functions have a different signature.\par
+		Most notably, the grids no longer have functions to transform a point $P$ into their initial space, as this is now handled by the transform stack present in each grid.\par
+		\myparspace
+		Some core functionalities of the program still rely on the legacy grid implementation, but should not pose any major problem to port to the new grid interface. Those functionalities include the re-sampling of grids as explained in section \ref{text:03_software_components:03_generated_primitives}, the visualization pipeline (in some aspects) and most of the code used to write files to the disk.
 	}
 	% }}}
 }
@@ -209,21 +229,96 @@ void internal_readRegion(tag<double> tag, ... );
 % Section 2 : Visualization components {{{
 \section{Visualization of different components}\label{text:03_software_components:02_visualization}
 {
-	%
+	% intro : multiple methods present here {{{
+	One of the main goals of the project was to be able to visualize high-resolution medical images in real-time. Based on feedback given to us by the IGF team and the Tulane team, it was important to have multiple visualization modalities.\par
+	As such, we have implemented a few visualization techniques, in 2D and 3D :\begin{itemize}
+		\item a \guillemotleft{}~solid~\guillemotright{}~visualization technique, which project the texture onto a simple parallelepiped with no transparency whatsoever,
+		\item a volumetric visualization technique, which allows the user to visualize the three dimensional representation of the sample acquired which can occlude certain value ranges in the image,
+		\item a planar viewer, which allows to visualize the contents of the loaded grid at the position of the cutting planes in three-dimensional space.
+	\end{itemize}\par
+	\myparspace
+	% }}}
+	% scene is a god-object {{{
+	Since we had to allow the user to visualize the same grid under those different modalities, we implemented a \texttt{Scene} class, which holds the necessary resources for drawing the grids and any other primitives to the screen. However, it quickly morphed into a \guillemotleft{}~\textit{god-object}\guillemotright{}\footnotemark~ as time went on.\par
+	\footnotetext{a \guillemotleft{}~\textit{god-object}~\guillemotright{}~is an object-oriented programming anti-pattern (\href{https://en.wikipedia.org/wiki/God\_object}{\underline{\textit{Wikipedia}}~})}
+	This is not only due to the fact that \textsc{Qt}'s OpenGL classes must all depend on their re-implementation of the functions (in the form of a \texttt{QOpenGLFunctions} class), but also because features were slowly added over time to this scene class, and no time was taken to re-organize the rendering architecture (yet!).\par
+	\myparspace
+	% }}}
+
+	% the different grid visu techniques {{{
+	\subsection{Grid visualization techniques}\label{text:03_software_components:02_visualization:01_grids}
+	{
+		In this section, we'll describe how the different techniques listed above work, and where they are located in the code. Let's first start by the \guillemotleft{}~solid~\guillemotright{}~ visualization method.
+		% the first : solid rendering {{{
+		\subsubsection{Texture projection}\label{text:03_software_components:02_visualization:01_grids:01_solid}
+		{
+			%
+		}
+		% }}}
+		% second : volumetric rendering {{{
+		\subsubsection{Volumetric rendering}\label{text:03_software_components:02_visualization:01_grids:01_volumetric}
+		{
+			%
+		}
+		% }}}
+		% third : planar viewers {{{
+		\subsubsection{Planar viewers}\label{text:03_software_components:02_visualization:01_grids:01_planar}
+		{
+			%
+		}
+		% }}}
+	}
+	% }}}
+
+	% other primitives {{{
+	\subsection{Other primitives}\label{text:03_software_components:02_visualization:02_other}
+	{
+
+	}
+	% }}}
 }
 % }}}
 
 % Section 3 : generation primitives {{{
-\section{Generation primitives}\label{text:03_software_components:03_generation_primitives}
+\section{Generated primitives}\label{text:03_software_components:03_generated_primitives}
 {
-	%
+	% intro
+
+	% the tetrahedral mesh {{{
+	\subsection{Tetrahedral mesh}
+	{
+		% where to find it
+		% what's it used for
+		% how its generated
+		% final : can deform along w/ grid, but not done yet
+	}
+	% }}}
+
+	% the interpolation mesh {{{
+	\subsection{Interpolation mesh}
+	{
+	}
+	% }}}
 }
 % }}}
 
 % Section 4 : about multi-threading {{{
 \section{Tasks and multi-threading}\label{text:03_software_components:04_tasks}
 {
-	%
+	% intro
+
+	% the threaded parts of the program AND :
+	% need for threading ?
+	\subsection{The multithreaded parts of the program}
+	{
+		%
+	}
+
+	% the threadedtask object
+	\subsection{\texttt{ThreadedTask} : a simple synchronization object}
+	{
+		%
+	}
 }
 % }}}
 
