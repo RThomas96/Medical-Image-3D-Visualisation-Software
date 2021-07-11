@@ -1,6 +1,8 @@
 % Chapter 5 : Conclusion, réflection & difficultés rencontrées, ouverture
-\chapter{Conclusion}\label{chapter05:conclusion}
+\chapter{Conclusion}\label{chapter:06:conclusion}
 {
+    \iffalse
+    % plan {{{
 	\commentaire{
 		\begin{enumerate}
 			% conclusion {{{
@@ -11,7 +13,7 @@
 				\end{itemize}
 				\item Exploration interactive [x] :~\begin{itemize}
 					\item On peut utiliser des plans de coupe dans l'application en single-view, pour traverser le volume (plans de coupe surement ajoutés dans vue double sous peu, mais peut être après rapport/soutenance)
-					\item Techniquement, on pourait aussi exporter une grille et le voir avec Texture3D
+					\item Techniquement, on pourrait aussi exporter une grille et le voir avec Texture3D
 				\end{itemize}
 				\item Visualisation multi-résolution~\begin{itemize}
 					\item Ce but est plus flou, parce que oui, on peut générer des grilles à plusieurs résolutions et les voir, mais bon, ca casse le côté interactif de la visu ...
@@ -42,33 +44,45 @@
 			% }}}
 		\end{enumerate}
 	}
-
-	\section{Travail réalisé}
+	% }}}
+	\fi
+	
+	\section{Contributions}
 	{
-		Durant ce stage, nous devions achever les trois objectifs suivants :~\begin{itemize}
-			\item une méthode de gestion de données massives,
-			\item une méthode d'exploration interactive de ces données,
-			\item et une méthode de visualisation multi-résolution.
-		\end{itemize}\par
-		Nous avons pu en effet gérer les données massives venant du processus de capture développé par l'université de Tulane. Grâce à l'utilisation d'une simplification des images à la volée, nous pouvons confortablement charger une pile d'image entière en mémoire. De plus, nous avons présenté une méthode plus intelligente de chargement des données, qui permettrait de réduire l'empreinte mémoire de notre programme\todo{pour que plus de systèmes le fassent tourner, à mentionner ?}.\par
-		Nous avons également présenté deux méthodes pour l'exploration interactive des données, une fois chargés en mémoire, avec deux cas d'utilisation différents. Ces deux méthodes nous permettent de visualiser interactivement les modèles selon le type de données en entrée, et le type d'observation à effectuer.\par
-		Enfin, même si ces travaux s'achèveront au courant du mois de juillet, la vue en multi-résolution des données est possible car nous avons créé deux méthodes permettant d'analyser les données et d'en générer de nouvelles de résolution et tailles différentes, à la volée.\par
+        Au début de ce stage, nous avions 3 objectifs :~\begin{itemize}
+			\item proposer une méthode de gestion de données massives,
+			\item proposer une méthode d'exploration interactive de ces données,
+			\item et proposer une méthode de visualisation multi-résolution.
+        \end{itemize}
+
+        Nous avons pu proposer une première méthode de gestion des données, sur la base des jeux de données que nous ont fournis l'université de Tulane. Cette gestion permet de charger une version sous-échantillonnée d'une image à la volée, afin de limiter l'espace mémoire occupé par les images pour des tâches où avoir le plus d'informations n'est pas nécessaire, comme par exemple la visualisation, où grâce à la résolution spatiale du microscope nous pouvons toujours visualiser la morphologie des glandes sans perte d'informations.
+
+        Nous avons ensuite proposé deux méthodes d'exploration interactive de ces données. Une première méthode par plans de coupe, permettant une traversée interactive des données chargées en mémoire, et une méthode de visualisation par sous domaine facilement extensible à des images non segmentées. Ces deux méthodes d'exploration permettent de manipuler en temps réel une grille de voxels pour des buts d'examens approfondis des captures de prostate.
+
+        Nous avons également proposé une méthode de reconstruction de grille de voxels effectuée à la volée, qui pourra permettre la mise en place d'une architecture de visualisation multi-résolution des acquisitions de prostate. En plus de cela, cette méthode de génération de grilles est générique, afin de permettre la génération de grilles de voxels de taille et résolutions arbitraires. Cette méthode est plus rapide que la méthode que Tulane emploie, et permettrait de recréer des échantillons de prostate en trois dimensions peu de temps après le prélèvement chez un patient.
 	}
 
 	\section{Réflexion}
 	{
-		\commentaire{Cette partie est entièrement personnelle, donc utilisation naturelle de la première personne. À garder, ou réécrire en non-inclusif (qui rendrait cette partie non nécessaire) ? Si réécriture en non-personnel, uniquement parler des problèmes techniques, et laisser les explications personnelles pour la soutenance peut être ?}\par
-		Il est impossible de parler des difficultés rencontrées pendant le stage sans parler de la période de confinement engagée par l'\'Etat Français. En effet, la mise en place d'une mesure de confinement à domicile a rendu beaucoup plus compliqué les réunions entre toutes les personnes dans le stage. La distanciation sociale ne fut pas que physique, elle fut aussi mentale, pesant lourd sur les résultats du stage et les travaux accomplis. Une des conséquences de cette distanciation fut accrue par un problème technique que j'ai rencontré, qui a mis beaucoup trop de temps à être réglé à cause de cette baisse de moral, qui entraîne un cercle vicieux.\par
-		De plus, un de mes gros défauts personnels viennent d'un manque d'organisation : je n'arrive pas à découper les tâches en morceaux assez petits pour permettre une progression fluide des travaux de recherche. Je me retrouve uniquement coincé devant un immense mur de tâches monolithiques duquel je ne peux pas m'échapper. Et la distanciation, couplée à un très grand sentiment de monotonie pendant le confinement ont impacté fortement mes capacités à travailler efficacement pendant plus d'un mois.\par
-		Mais tout n'est pas perdu. Le retour progressif à la normale va me forcer à reprendre un rythme plus soutenu, me forcer à reprendre l'habitude de montrer une amélioration plus souvent, et je vais bien entendu faire de mon possible pour toujours essayer de décomposer au plus les problèmes afin de ne plus me retrouver bloqué comme pendant cette période de confinement.
+        L'effet qu'a eu le confinement déclaré par l'\'Etat Français afin d'endiguer la pandémie de \textit{COVID-19} ne peut être négligé. Cette période d'isolement social et mental fut compliquée à vivre. Elle a permis de faire ressortir des failles dans mes méthodes de travail, qui sont principalement un manque de capacité à découper un problème en sous-problèmes, ainsi qu'un manque de communication envers mes tuteurs et collègues lorsque nous sommes en distanciel. Le fait de ne pas pouvoir diviser des tâches efficacement est l'une des raisons principales qui m'a poussé à prendre du retard pendant ce stage. Toutefois, une fois ces problèmes identifiés et la période de confinement levée, j'ai pu discuter de ces problèmes avec mes encadrants et nous avons pu travailler sur des méthodes de travail afin d'éliminer progressivement ces problèmes.
+
+		Durant ce stage, j'ai pu découvrir plusieurs aspects de l'analyse et la détection du cancer de la prostate grâce à ce sujet proposé en collaboration avec l'université de Tulane. J'ai aussi pu approfondir mes connaissances en reconstruction 3D, en manipulations d'espaces affines, ainsi qu'en interpolations en trois dimensions. En effet, ces thématiques étaient abordées dans le cursus de la spécialité IMAGINA, mais n'étaient pas autant détaillées. De plus, j'ai pu apprendre le fonctionnement de plusieurs techniques de visualisation en temps réel, et approfondir mes connaissances techniques sur le lancer de rayons, une technique utile en informatique graphique. Enfin, j'ai pris beaucoup de plaisir à aider Mme \textit{Faraj} à la soumission de son article scientifique à la convention IEEE VIS 2020, même si notre papier n'a pas été retenu.
 	}
 
-	\section{Futurs travaux}
+	\section{Travaux futurs}
 	{
-		\wip{Changer : multi-échelle après, uniquement si temps : d'abord offline et incrémentale}\par
-		Malgré les difficultés rencontrées, nous avons réussis à atteindre la majorité de nos objectifs au moment de l'écriture du rapport. Mais nous avons encore du travail à effectuer avant la fin du stage en fin juillet. Il nous reste bien sûr à finir les fonctionnalités en cours d'implémentation comme discuté auparavant : une possibilité de visualisation multi-échelle par génération de multiples grilles hiérarchiques, la possibilité d'effectuer le processus de reconstruction hors-ligne, afin de pouvoir s'affranchir de la visualisation et de permettre de faire fonctionner la reconstruction sur un serveur distant sans sortie vidéo.\par
-		%
+		Malgré les difficultés rencontrées engendrées par le changement d'organisation dû au COVID-19, nous avons réussi à créer une bonne base depuis lequel ce projet pourra avancer. Bien sûr, nous pouvons améliorer les performances du programme en parallélisant la génération de grilles, ou encore nous pouvons implémenter la méthode de génération de grilles hors-ligne comme discuté en section \ref{section:implementation}. Cela permettrait de s'affranchir des contraintes mémoire pour la génération de grille, et ainsi l'exécuter sur des grilles bien plus grandes.
+
+		Pour ce qui est de la continuation directe du projet, nous pourrions implémenter une méthode de recalage d'images, afin de fusionner plusieurs prises de vues du même échantillon (voir figure \ref{img:multiple_image_captures}). Ou encore, nous pourrions continuer d'implémenter des méthodes de visualisation pour implémenter une visualisation multi-échelle, comme l'avait originellement prévu le stage. Nous pourrions également implémenter une méthode de déconvolution multi-vue, afin de l'adapter et de l'optimiser à notre besoin spécifique.
 	}
+	
+	% etudes si deconv après reconstruction est judicieuse, étude si mélange de piles pour reconstruction bien réalisé (sert à refaire la vraie donnée) ...
+	% etudes a long terme de l'analyse des glandes :
+	%    - recalage
+	%    - déconv multi-vue refaite ?
+	%    - extraction de formes ?
+	%    - classification ?
+	%    - etude statistique de forme/taille/caractéristiques pour détection
 }
 
 % VIM modeline : do not touch !

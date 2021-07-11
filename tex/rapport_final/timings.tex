@@ -1,0 +1,51 @@
+All the times measured here were sampled on a laptop using an Intel core i7 9750H @ 4.9 GHz, and a GTX 1070 MaxQ from Nvidia. The system was running Linux version 5.6, using the latest NVidia drivers providing support for OpenGL 4.6.
+
+We tested each model and resolution in three stages, using 3 different methods. For the first stage, we had the full model represented in the window, for the second stage we zoomed in so that only half of the model was represented, and for the final stage, we zoomed in even more to be able to inspect fine details of the grid. The different stages are represented by the left-most column in the following table. Each stage had three manipulation methods : we first let the model rotate by itself automatically, we then manipulated it manually to see the front
+of the model, and finally we did the same on the other side. Each different manipulation method is represented in each cell, in order.
+
+The results in this table are the average of a period of 10 seconds for each method, to avoid benefiting from increases in render times due to cached memory areas, or being hindered by decreases in render time by the system doing other tasks in the background.
+
+\begin{tabular}{|c|c||c|c|c|}
+	\hline
+	Resolution & Model & Stage 1 & Stage 2 & Stage 3 \\
+	\hline
+	\hline
+	\multirow{13}{*}[-7em]{$677\times796$} & \shortstack{Thelonious} & 200,140,160 & 125,105,100 & 100,110,100 \\\cline{2-5}
+					& \shortstack{Dizzy} & 160,150,145 & 110,120,100 & 115,110,130 \\\cline{2-5}
+	                                & \shortstack{Roberta} & 240,230,220 & 150,120,150 & 160,145,180 \\\cline{2-5}
+	                                & \shortstack{Eartha} & 300,230,250 & 200,140,140 & 200,120,110 \\\cline{2-5}
+					& \shortstack{Louis} & 180,140,110 & 110,105,95 & 160,150,135 \\\cline{2-5}
+	                                & \shortstack{Louis,\\cut} & 120,140,100 & 85,62,60 & 67,60,65 \\\cline{2-5}
+	                                & \shortstack{Visible\\Human 0\\LR mesh} & 70,85,100 & 50,40,70 & 30,35,90 \\\cline{2-5}
+	                                & \shortstack{Visible\\Human 0\\HR mesh} & 67,87,90 & 51,50,70 & 30,50,65 \\\cline{2-5}
+	                                & \shortstack{Visible\\Human 1\\LR mesh} & 40,44,60 & 30,22,40 & 25,20,55 \\\cline{2-5}
+	                                & \shortstack{Visible\\Human 1\\HR mesh} & 38,50,60 & 27,30,45 & 29,28,35 \\\cline{2-5}
+	                                & \shortstack{Visible\\Human 0\\LR mesh, cut} & 70,80,79 & 35,40,30 & 35,35,25 \\\cline{2-5}
+	                                & \shortstack{Visible\\Human 0\\HR mesh, cut} & 75,80,65 & 30,35,35 & 35,40,30 \\\cline{2-5}
+					& \shortstack{Visible\\Human 1\\LR mesh, cut} & 40,45,45 & 25,20,15 & 20,20,18 \\\cline{2-5}
+					& \shortstack{Visible\\Human 1\\HR mesh, cut} & 45,50,35 & 25,20,20 & 30,25,17 \\\cline{2-5}
+	\hline
+\end{tabular}\\
+
+\begin{tabular}{|c|c||c|c|c|}
+	\hline
+	Resolution & Model & Stage 1 & Stage 2 & Stage 3 \\
+	\hline
+	\hline
+	\multirow{13}{*}[-7em]{$1347\times807$}& \shortstack{Thelonious} & 175,160,160 & 120,115,100 & 85,85,80 \\\cline{2-5}
+	                                & \shortstack{Dizzy} & 180,190,190 & 105,97,95 & 70,80,80 \\\cline{2-5}
+	                                & \shortstack{Roberta} & 200,210,220 & 110,130,110 & 90,115,105 \\\cline{2-5}
+	                                & \shortstack{Eartha} & 280,260,250 & 165,150,145 & 120,110,105 \\\cline{2-5}
+					& \shortstack{Louis} & 180,140,110 & 110,105,95 & 160,150,135 \\\cline{2-5}
+	                                & \shortstack{Louis} & 130,120,110 & 75,97,102 & 85,75,85 \\\cline{2-5}
+	                                & \shortstack{Louis,\\cut} & 110,140,109 & 75,60,75 & 65,70,53 \\\cline{2-5}
+	                                & \shortstack{Visible\\Human 0\\LR mesh} & 75,75,90 & 52,40,70 & 33,23,57 \\\cline{2-5}
+	                                & \shortstack{Visible\\Human 0\\HR mesh} & 67,80,90 & 40,50,70 & 40,43,60 \\\cline{2-5}
+	                                & \shortstack{Visible\\Human 1\\LR mesh} & 40,44,55 & 30,20,40 & 20,20,42 \\\cline{2-5}
+	                                & \shortstack{Visible\\Human 1\\HR mesh} & 37,43,63 & 25,27,44 & 22,24,30 \\\cline{2-5}
+	                                & \shortstack{Visible\\Human 0\\LR mesh, cut} & 55,70,65 & 35,40,30 & 25,25,15 \\\cline{2-5}
+	                                & \shortstack{Visible\\Human 0\\HR mesh, cut} & 65,90,70 & 40,45,40 & 35,37,20 \\\cline{2-5}
+					& \shortstack{Visible\\Human 1\\LR mesh, cut} & 35,50,40 & 22,22,16 & 15,12,9 \\\cline{2-5}
+					& \shortstack{Visible\\Human 1\\HR mesh, cut} & 35,50,40 & 20,25,20 & 15,18,12 \\\cline{2-5}
+	\hline
+\end{tabular}

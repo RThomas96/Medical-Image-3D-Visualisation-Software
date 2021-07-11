@@ -1,49 +1,63 @@
 % Chapitre 1 : Introduction
 \chapter{Introduction}\label{chapter:01:introduction}
 {
-	\commentaire{Cette introduction est fluide : elle changera jusqu'au dernier moment}\\
-	% Plan originel {{{
-	\iffalse{Plan de l'intro :
-		\begin{enumerate}
-			\item introduction au sujet de stage~\begin{itemize}
-				\item présentation de la reconstruction 3D (overview très générale, avantage par rapport 2D)
-				\item intérêt dans le médical $\rightarrow$ vue volumétrique
-				\item transition : présentation de la prostate (à revoir)
-			\end{itemize}
-			\item introduction à la problématique (coupes histologiques, Gleason, ...)~\begin{itemize}
-				\item prostate : beaucoup de cancers (nombres de l'OMS)
-				\item cancer de la prostate : identification/diagnostic $\rightarrow$ échelle de Gleason
-				\item présentation rapide de l'échelle de Gleason
-				\item présentation problèmes encourus par utilisation échelle de Gleason (dépendance d'angle coupe $\rightarrow$ faux pronostic)
-				\item intérêt de la reconstruction 3D : vraie forme des glandes, pas comme coupe 2D
-				\item intérêt du stage : Tulane ne le fait pas (pas leur domaine), du coup on le fait $\rightarrow$ collaboration internationale
-				\item transition
-			\end{itemize}
-			\item rapide overview du travail fait~\begin{itemize}
-				\item présentation du chargement des images
-				\item présentation de la recherche de voisins
-				\item présentation de la génération de grille de voxels
-			\end{itemize}
-		\end{enumerate}
-	}\par\fi
+    \section{Diagnostics du cancer de la prostate}\label{section:contexte} % "par coupes histologies" en plus ?
+    {
+        \emph{Ce stage, financé par le LabEx NUMEV, s'inscrit dans le cadre d'une collaboration internationale entre l'université de Tulane dans la ville de Nouvelle Orléans, et l'université de Montpellier sur un projet d'aide à la détection du cancer de la prostate.}\medskip
+
+        Le cancer de la prostate est aujourd'hui diagnostiqué grâce à l'échelle de Gleason (décrite à la section \ref{section:gleason_scale}) qui représente les contours des glandes de la prostate à différent stade de la maladie. L'échelle de Gleason est construite à partir de coupes histologiques\definition{Coupes effectuées dans un tissu biologique} planaires et comporte des croquis de chaque type de glandes. Cette méthode de diagnostic présente une grande variabilité selon l'opérateur (figure \ref{img:gleason_bias}). Ces différences dans le diagnostic peuvent être expliquées par deux facteurs: la variance de la forme des glandes engendrée par le choix de l'orientation des plans de coupe dans le tissu, mais aussi par le manque de précision des dessins servant de référence dans l'échelle de Gleason (figure \ref{img:gleason_scale}). Afin d'améliorer le diagnostic du cancer de la prostate, il apparaît nécessaire de développer de nouvelles techniques de détection de structures cancéreuses. L'approche envisagée ici est l'étude tridimensionnelle de la forme des glandes dans un échantillon de prostate, permettant ainsi d'éliminer la variabilité due à l'angle de coupe dans la méthode de Gleason. Nos collaborateurs de l'université de Tulane à la Nouvelle Orléans ont pour cela développé un microscope à feuillet de lumière permettant de capturer une image 3D d'un échantillon de tissu humain (voir la section \ref{section:microscopy}). Une reconstruction volumique d'un échantillon de prostate permettra une étude morphologique et topologique des glandes afin d'enrichir les méthodes de diagnostic du cancer.
+
+        \begin{figure}[h]
+            \centering
+            \includegraphics[width=.7\linewidth]{img/gleason_bias.png}
+            \captionsetup{width=.8\linewidth, labelfont=bf}
+            \caption{Variabilité inter-opérateur pour les diagnostics de l'échelle de Gleason d'un même échantillon.\cite{cite_gleason_bias}}
+            \label{img:gleason_bias}
+        \end{figure}
+        
+        Le microscope créé par les chercheurs de l'université de Tulane est extrêmement précis, générant des images dont la résolution spatiale est inférieure au micromètre. Leur technique d'acquisition (voir section \ref{section:microscopy} pour plus d'informations) nécessite l'utilisation de deux capteurs en tandem effectuant des vues par coupe de l'échantillon. Cela génère, pour une seule acquisition, deux piles d'images correspondant à des points de vue différents. Ces deux piles d'images doivent donc être fusionnées de manière cohérente pour reconstruire la structure 3D et visualiser l'échantillon. Mais la taille des images, ainsi le nombre de prises de vues, rend impossible le stockage en mémoire vive d'une acquisition. Cela rend l'analyse de l'échantillon particulièrement complexe.
+        }
+        
+\section{Objectif du stage: Vers une modélisation 3D des glandes de la prostate}\label{section:contrib}
+    {
+        L'objectif de ce stage est de proposer un système de visualisation interactive des données, permettant une première exploration de la forme des glandes. Notre travail comporte deux axes principaux. Le premier axe présente plusieurs méthodes de visualisation permettant d'afficher un jeu de données massif: une exploration par plans de coupes ou une visualisation volumique par sous-domaine. %Afin d'atteindre cet objectif, une prise en main des outils de développement sera nécessaire, pour se familiariser avec les jeux de données. Ensuite, il nous faudra établir une méthode permettant la gestion des données, afin de pouvoir les afficher à l'écran, et les manipuler en temps réel.
+        Les données ne pouvant pas rentrer en mémoire sur des stations de travail standard, une première méthode de pré-traitement pour la visualisation sera mise en place, ne chargeant qu'une version basse résolution des images. Pour finir, nous proposerons deux méthodes de visualisations pour les jeux de données. Une première méthode permettra une exploration interactive des jeux de données chargés en mémoire par l'utilisation de plans de coupe. Ensuite, une autre méthode de visualisation par sous-domaine sera présentée. Cette méthode fut originellement développée pour visualiser des images segmentées, mais peut être adaptée pour visualiser des images non-segmentées. Les travaux réalisés sur la méthode de visualisation par sous-domaines ont fait l'objet d'une soumission à la conférence IEEE VIS 2020, en collaboration avec Mme \textsc{Faraj} ainsi que M.\textsc{Summa}.
+
+        Par la suite, il nous faudra proposer une méthode reconstruisant les deux piles présentes dans le jeu de données en une seule image médicale, en tenant compte des différentes caractéristiques des prises de vues. Pour ce faire, il faudra proposer une méthode de reconstruction prenant en compte les conditions de prises de vues particulières des piles d'images stockées en mémoire. Nous commencerons par proposer une méthode de recherche de voisins en espace affine, et continuerons sur une méthode de génération de grille prenant en compte cette recherche de voisins, afin de créer des grilles de résolution et de taille arbitraire. Afin de réduire l'empreinte mémoire, ces deux méthodes sont réalisées à la volée pour permettre le traitement d'une plus grande quantité de données.
+
+        \iffalse
+        \noindent\commentaire{Nouveau plan suggéré (majoritairement réorganisation, pas de contenu en +) :\begin{itemize}
+            \item Intro
+            \item partie 'prise en main' :\begin{itemize}
+                \item chargement des données\begin{itemize}
+                    \item présentation méthode de stockage mémoire (section 2.1 maintenant)
+                    \item présentation interpolation
+                \end{itemize}
+                \item visu par plans de coupe (même texte)
+                \item visu par sous-domaines (même texte)
+            \end{itemize}
+            \item partie travail de stage :\begin{itemize}
+                \item présentation du problème (présentation des différents espaces depuis fig 4.1 principalement, plus présentation dual-visu en adéquation avec le problème)
+                \item recherche de voisins\begin{itemize}
+                    \item méthodes d'interpolation (comparaison, à faire après résultats)
+                    \item implémentation
+                    \item résultats (ici, ou plutot dans résultats génération grille ?)
+                \end{itemize}
+                \item reconstruction de grilles\begin{itemize}
+                    \item méthode utilisée
+                    \item implémentation
+                    \item tests
+                    \item résultats (à venir)
+                \end{itemize}
+            \end{itemize}
+            \item conclusion
+        \end{itemize}}
+        \fi
+    }
+    
+        
 	% }}}
 
-	%\wip{\todo{Mettre dans l'abstract ?}}\\
-
-	La reconstruction 3D est un processus permettant d'obtenir une représentation tridimensionnelle d'un objet ou d'une scène à partir d'un ensemble de primitives, tells que des points, des images ou d'autres ensembles tridimensionnels. Ces représentations tridimensionnelles des objets nous permettent de percevoir la forme réelle d'un objet, même si celle-ci est projetée sur un écran 2D.\todo{Vraiment nécessaire ? On sait que c'est mieux en 3D, mais trouver plus de raisons} De plus, elle permet l'analyse de ces formes par des algorithmes en tous genres, comme des algorithmes d'analyse morphologique, des algorithmes d'extraction de points caractéristiques, ou encore des algorithmes d'apprentissage machine.\\
-
-	\commentaire{Ajouter des illustrations de reconstruction 3D ici}\\
-
-	Ainsi, dans le domaine du médical, une représentation tridimensionnelle d'un échantillon de tissu humain permettrait d'analyser sa morphologie ainsi que ses propriétés de façon automatique ou semi-automatique, afin d'aider les médecins à faire des analyses plus approfondies par la suite.\\
-
-	\'Etant donné que ce stage repose sur la développement d'une méthode visant à aider au diagnostic du cancer de la prostate, il est nécessaire de préciser certaines choses sur les caractéristiques de cette pathologie. Tout d'abord, selon l'IARC, l'Agence Internationale pour la Recherche sur le Cancer de l'Organisation Mondiale de la Santé, le cancer de la prostate était l'un des types de cancers les plus courants tous sexes confondus en 2018\footnote{Voir : \protect{\url{https://gco.iarc.fr/today/home}}}. Cette même année, plus d'un million de nouveaux cas de cancers de la prostate furent diagnostiqués dans le monde.\\
-
-	Le meilleur pronostic disponible contre ce cancer est une échelle histologique, appelée échelle de Gleason. Celle ci attribue un score, appelé score de Gleason, en se basant sur l'observation des formes des glandes dans une coupe du tissu de la prostate d'un patient. Or, étant une échelle se basant sur une observation morphologique dans une coupe histologique, donc effectivement bidimensionnelle, d'un objet tridimensionnel, le biais induit par la direction de la coupe, l'angle de celle-ci, son orientation ainsi que le type d'intersection avec la glande influera beaucoup le pronostic final donné par un médecin. Ainsi, cette méthode peut engendrer de faux positifs, pouvant causer des frais médicaux non nécessaires pour un patient sain, ainsi que des faux négatifs, pouvant laisser le cancer d'un patient se développer librement sans aucune action prise à son encontre.\\
-
-	Dans ce contexte, une méthode de reconstruction 3D de ce même échantillon permettrait d'effectuer un meilleur pronostic en étudiant la forme réelle des glandes. Le but du projet, à très long terme, serait de créer une nouvelle procédure d'aide au diagnostic du cancer de la prostate, utilisant l'information contenue dans la morphologie tridimensionnelle des glandes. Actuellement, nos collaborateurs de l'Université de Tulane possèdent un microscope planaire à émission par feuillet de lumière (appelé microscope \textit{LSM}) afin d'observer avec précision la forme des glandes sur plusieurs plans de coupe. Malheureusement, ils ne possèdent pas d'experts en reconstruction 3D, car ce n'ést pas leur domaine de recherche principal. De ce fait, ils ne peuvent pas efficacement reconstruire les échantillons acquis en trois dimensions. L'Université de Montpellier, et plus particulièrement l'équipe ICAR, se sont engagés à apporter leur aide dans le cadre d'une collaboration internationale et pluridisciplinaire s'étendant sur plusieurs années.\\Pour ce stage, deux principaux axes de recherche\todo{Garder ceci, ou présentation des objectifs originaux du stage puis axes de recherche pour rapport ?} ont étés explorés, et continueront à l'être jusqu'à fin juillet\todo{Trouver une meilleure façon de glisser cette information} :\begin{itemize}
-		\item la gestion de données massives et leur visualisation,
-		\item l'analyse de ces dernières et la génération de représentations volumiques
-	\end{itemize}\par~Chacun de ces axes est exploré en détail dans ce rapport, et à la fin de celui-ci, plusieurs axes de recherche vont être mentionnés pour une continuation de ce projet en thèse, encadrée par Mme \textsc{FARAJ}\todo{Doit on garder cette information ici ?}.\\
 }
 % VIM modeline : do not touch !
 % vim: set spell spelllang=fr :
