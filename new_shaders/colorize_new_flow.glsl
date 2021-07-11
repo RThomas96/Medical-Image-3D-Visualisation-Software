@@ -65,31 +65,13 @@ vec4 fragmentEvaluationSingleChannel(in uvec3 color) {
 		if (mainValue >= color.r && mainValue >= color.g && mainValue >= color.b) {
 			return colorizeFragmentSingleChannel(main, mainValue);
 		}
-	} else {
-		if (visible_red) {
-			if (visible_green) {
-				if (color.r >= color.g) {
-					if (visible_blue) {
-						if (color.r > color.b) {
-							return colorizeFragmentSingleChannel(red, color.r);
-						} else {
-							return colorizeFragmentSingleChannel(blue, color.b);
-						}
-					} else {
-						return colorizeFragmentSingleChannel(red, color.r);
-					}
-				} else {
-					if (visible_blue) {
-						if (color.g > color.b) {
-							return colorizeFragmentSingleChannel(green, color.g);
-						} else {
-							return colorizeFragmentSingleChannel(blue, color.b);
-						}
-					} else {
-						return colorizeFragmentSingleChannel(green, color.g);
-					}
-				}
-			} else {
+	}
+	// Here, no 'else' condition since we don't want to end if the second condition
+	// for the main channel fails ! It created 'noise' where the values of the main
+	// channel are not above other channels.
+	if (visible_red) {
+		if (visible_green) {
+			if (color.r >= color.g) {
 				if (visible_blue) {
 					if (color.r > color.b) {
 						return colorizeFragmentSingleChannel(red, color.r);
@@ -99,9 +81,7 @@ vec4 fragmentEvaluationSingleChannel(in uvec3 color) {
 				} else {
 					return colorizeFragmentSingleChannel(red, color.r);
 				}
-			}
-		} else {
-			if (visible_green) {
+			} else {
 				if (visible_blue) {
 					if (color.g > color.b) {
 						return colorizeFragmentSingleChannel(green, color.g);
@@ -111,12 +91,34 @@ vec4 fragmentEvaluationSingleChannel(in uvec3 color) {
 				} else {
 					return colorizeFragmentSingleChannel(green, color.g);
 				}
-			} else {
-				if (visible_blue) {
-					return colorizeFragmentSingleChannel(blue, color.b);
+			}
+		} else {
+			if (visible_blue) {
+				if (color.r > color.b) {
+					return colorizeFragmentSingleChannel(red, color.r);
 				} else {
-					return vec4(.0, .0, .0, .0);
+					return colorizeFragmentSingleChannel(blue, color.b);
 				}
+			} else {
+				return colorizeFragmentSingleChannel(red, color.r);
+			}
+		}
+	} else {
+		if (visible_green) {
+			if (visible_blue) {
+				if (color.g > color.b) {
+					return colorizeFragmentSingleChannel(green, color.g);
+				} else {
+					return colorizeFragmentSingleChannel(blue, color.b);
+				}
+			} else {
+				return colorizeFragmentSingleChannel(green, color.g);
+			}
+		} else {
+			if (visible_blue) {
+				return colorizeFragmentSingleChannel(blue, color.b);
+			} else {
+				return vec4(.0, .0, .0, .0);
 			}
 		}
 	}

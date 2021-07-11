@@ -74,7 +74,7 @@ For every concept and class described here, there will be a path allowing you to
 					\item output grids (defined by the \texttt{OutputGrid} class). This represents grids generated during the runtime of the program, and cannot have on-disk images as an input. All its data \textit{must} be in-memory.
 			\end{itemize}
 			\item the grid provides access to limited information about the grid (expressed in the list above)
-			\item we can transform point to and from the image's initial space
+			\item we can transform a point's coordinates to and from the image's initial space
 			\item the class can store different types and sizes of data (signed or unsigned, 8/16/32 bits \ldots{}). This type is also used in the classes that read the data from and write the data to the disk.
 		\end{itemize}
 
@@ -241,7 +241,7 @@ void internal_readRegion(tag<double> tag, ... );
 	% scene is a god-object {{{
 	Since we had to allow the user to visualize the same grid under those different modalities, we implemented a \texttt{Scene} class, which holds the necessary resources for drawing the grids and any other primitives to the screen. However, it quickly morphed into a \guillemotleft{}~\textit{god-object}\guillemotright{}\footnotemark~ as time went on.\par
 	\footnotetext{a \guillemotleft{}~\textit{god-object}~\guillemotright{}~is an object-oriented programming anti-pattern (\href{https://en.wikipedia.org/wiki/God\_object}{\underline{\textit{Wikipedia}}~})}
-	This is not only due to the fact that \textsc{Qt}'s OpenGL classes must all depend on their re-implementation of the functions (in the form of a \texttt{QOpenGLFunctions} class), but also because features were slowly added over time to this scene class, and no time was taken to re-organize the rendering architecture (yet!).\par
+	This is not only due to the fact that \textsc{Qt}'s OpenGL classes must all depend on their re-implementation of the functions (in the form of a \texttt{QOpenGLFunctions} class, which \texttt{Scene} inherits from), but also because features were slowly added over the course of several months to this class, and no time was taken to re-organize the rendering architecture (yet!).\par
 	\myparspace
 	% }}}
 

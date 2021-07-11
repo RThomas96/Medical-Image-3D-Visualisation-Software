@@ -107,8 +107,32 @@
 	% visualization & interaction w/ grids {{{
 	\subsubsection{Visualizing and interacting with the loaded image}
 	{
+		% figure : ui, after modifying some ranges (v1) {{{
+		\begin{figure}[h]
+			\centering
+			\label{figure:program_default}
+			\includegraphics[width=.8\textwidth]{./img/program_03.png}
+			\caption{Visualizing a grid using the default visualizer layout. Only a range of values from each color channel is visible.}
+		\end{figure}
+		% }}}
+		% once grid loaded, what's done ? {{{
 		After the user specified the grid to load as well as its parameters, the data contained in the grid is processed and uploaded to the GPU. A quick processing step (that might freeze the window) later, and the grid is ready to be visualized.\par
-		The controls for the visualization are located at the bottom of the grid, and allow to specify multiple parameters : the range of values to display, as well as the color scale to use.
+		Each of the visualizers can be resized and even hidden, as shown in figure \ref{figure:program_centered01}. The controls for the visualization are located at the bottom of the grid, and allow to specify multiple parameters : the range of values to display, as well as the color scale to use.\par\myparspace
+		% }}}
+		% figure : ui, after modifying some ranges (v2) {{{
+		\begin{figure}[h]
+			\centering
+			\label{figure:program_centered01}
+			\includegraphics[width=.8\textwidth]{./img/program_02.png}
+			\caption{Visualizing the same grid as before, centered around a particular structure and only showing a certain range of values in the second channel.}
+		\end{figure}
+		% }}}
+		% explain the slider and min/max ranges {{{
+		As shown in figure \ref{figure:program_centered01}, the user can freely specify the visible ranges of each color channel using the controls at the bottom, or even disable them altogether by unselecting them. The slider contained in the controller represents the range of visible values. The limits of this range slider represent the range of values over which the selected color scale should be normalized. It can be changed using the \guillemotleft{}~Change min/max~\guillemotright{}~ buttons for each channel. Clicking on the button creates a dialog where the user can specify the minimum and maximum values of this range.\par
+		% }}}
+		% specify the use of the color buttons {{{
+		Furthermore, the user can specify what color scale is used by selecting a specific item in the dropdown menu at the right of each color channel's controller. There are three choices : \textit{Greyscale}, \textit{HSV2RGB}, and \textit{User colors}. The two first color scales in this list cannot be modified, however the last one can be user-specified using the two colored buttons at the ends of the sliders. The \textit{User colors} color scale will then be an interpolation between the two user-defined colors.
+		% }}}
 	}
 	% }}}
 
@@ -125,7 +149,7 @@
 % program flow, object lifetime in the program {{{
 \section{Program lifetime}\label{text:02_program_flow:02_object_lifetime}
 {
-	This section is mainly aimed at developers. It will go through the same program workflow, and detail what resources are created, how they are created and how to find them in the code.
+	This section is mainly aimed at developers. It will go through the same program workflow, and detail what resources are created, how they are created and where to find them in the code.
 
 	% opening the program {{{
 	\subsubsection{Opening the program}
@@ -144,7 +168,7 @@
 	% visualization / interaction {{{
 	\subsubsection{Visualizing and interacting with the loaded image}
 	{
-		The visualization pipeline is written to be compliant with OpenGL 3.2. This choice was made to ensure a wider portion of the currently-used graphics hardware could run the program. Most notably, the computers at the IGF were not updated to the latest graphics driver (to ensure compatibility with a proprietary software they use), forcing us to downgrade the OpenGL version required to be 3.2.\par
+		First of all, let's discuss the oddities of the implementation for the visualization pipeline.It is written in compliance with OpenGL version 3.2. This choice was made to ensure a wider portion of the currently-used graphics hardware could run the program. Most notably, the computers at the IGF were not updated to the latest graphics driver (to ensure compatibility with a proprietary software they use), forcing us to downgrade the OpenGL version required to be 3.2.\par
 		Most of the program \textit{should} work with OpenGL 2.0, as long as some extensions are required when the program starts (most notably, vertex array objects and buffers should be present). See \textit{Qt}'s and OpenGL's documentation on how to get the available extensions on a system at runtime, and read on to see the technical requirements of the program.
 
 		% should talk about :
