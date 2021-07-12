@@ -59,6 +59,7 @@ enum planes { x = 1, y = 2, z = 3 };
 /// @brief Simple enum to keep track of a plane's orientation.
 enum planeHeading { North = 0, East = 1, South = 2, West = 3, Up = North, Right = East, Down = South, Left = West };
 
+/// @ingroup graphpipe
 /// @brief The Scene class is the gateway to the OpenGL functions attached to the GL context of the program.
 /// @note As you might see, this kind of turned into a god-object. Although dismantling it is not that hard !
 /// @details This class evolved from a simple scene representation at the start to a nearly all-encompassing OpenGL

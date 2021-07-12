@@ -12,6 +12,7 @@
 
 #include <memory>
 
+/// @ingroup graphpipe
 /// @brief A viewer that displays a scene, either in real space or in initial space
 class Viewer : public QGLViewer {
 		Q_OBJECT

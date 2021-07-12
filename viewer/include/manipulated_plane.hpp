@@ -11,6 +11,9 @@
 
 #include <glm/glm.hpp>
 
+/// @ingroup graphpipe
+/// @brief Supposed to be a manipulable plane in 3D using QGLViewer.
+/// @note Not tested in any way, shape or form.
 class ManipulatedPlane : public qglviewer::MouseGrabber {
 	protected:
 		ManipulatedPlane(void);

@@ -9,6 +9,7 @@
 /// @brief Contains multiple general-purpose interpolators for pixel values.
 namespace Interpolators {
 
+	/// @brief Provides a generic function interface for a generic interpolator.
 	template <typename DataType>
 	struct genericInterpolator {
 		public:
@@ -22,6 +23,7 @@ namespace Interpolators {
 			}
 	};
 
+	/// @brief Specialization of the genericInterpolator class for nearest neighbor interpolation.
 	template <typename DataType>
 	struct nearestNeighboor : public genericInterpolator<DataType> {
 		public:
@@ -38,6 +40,7 @@ namespace Interpolators {
 			}
 	};
 
+	/// @brief Specialization of the genericInterpolator class for mean value interpolation.
 	template <typename DataType>
 	struct meanValue : public genericInterpolator<DataType> {
 		public:
@@ -57,6 +60,8 @@ namespace Interpolators {
 			}
 	};
 
+	/// @brief Specialization of the genericInterpolator class for most present identifier in a set of values.
+	/// @warning Only works for integer values.
 	template <typename DataType, restrict_integer_check<DataType> = nullptr>
 	struct mostPresent : public genericInterpolator<DataType> {
 		public:
@@ -86,6 +91,7 @@ namespace Interpolators {
 			}
 	};
 
+	/// @brief Specialization of the genericInterpolator class that chooses the minimum available value.
 	template <typename DataType>
 	struct min : public genericInterpolator<DataType> {
 		public:
@@ -101,6 +107,7 @@ namespace Interpolators {
 			}
 	};
 
+	/// @brief Specialization of the genericInterpolator class that chooses the maximum available value.
 	template <typename DataType>
 	struct max : public genericInterpolator<DataType> {
 		public:

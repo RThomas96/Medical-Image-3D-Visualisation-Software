@@ -14,6 +14,7 @@
 
 class Scene; // Fwd-declaration
 
+/// @ingroup graphpipe
 /// @brief Simple struct to hold the values passed to glTexImage<n>D() functions.
 /// @details Allows to pass a single structure for any type of {1,2,3}D textures when uploaded to OpenGL. The default
 /// values of this struct for the texture parameters (the parameters not present in glTexImage() functions) will be
@@ -59,6 +60,7 @@ struct TextureUpload {
 		const void* data;
 };
 
+/// @ingroup graphpipe
 /// @brief Helper class regrouping the positions, normals, texture coordinates and indices of a mesh.
 /// @details Used to generate the default mesh in the main program. There is multiple index buffers, since
 /// we have multiple things to draw, in different ways (this will be uploaded to one VAO only).
@@ -91,6 +93,7 @@ struct Mesh {
 		std::vector<unsigned int> planar_view;
 };
 
+/// @ingroup graphpipe
 /// @brief Helper class regrouping the data of a tetrahedral mesh.
 struct VolMeshData {
 	public:
@@ -119,6 +122,11 @@ struct VolMeshData {
 		std::vector<std::array<glm::vec4, 4>> normals;
 };
 
+/// @ingroup graphpipe
+/// @brief The VolMesh structure holds all of the texture handles necessary to make our volumetric visualization method
+/// work.
+/// @details It is used in conjonction with the VolMeshData struct in order to provide a simple and centralized
+/// repository for all allocated textures.
 struct VolMesh {
 	public:
 		/// @brief Default constructor for the VolMesh struct.
@@ -142,7 +150,7 @@ struct VolMesh {
 		GLsizei tetrahedraCount;
 };
 
-
+/// @ingroup graphpipe
 /// @brief Simple structure merging all resources necessary to view a grid in 3D.
 /// @details This structure must be associated to one grid, and one grid only. Thus, the pointer to the grid is defined
 /// as `const std::shared_ptr<>` since we want the reference to be held during the lifetime of the object.
@@ -193,6 +201,9 @@ struct GridGLView {
 		data_2 colorBounds1;
 };
 
+/// @ingroup graphpipe
+/// @brief The colorChannelAttributes_GL struct is mirroring the contents of the similarly-named uniform in GLSL.
+/// @details It is defined this way to be simply `memcpy`'d over to the GPU, without any hassle.
 struct alignas(32) colorChannelAttributes_GL {
 	public:
 		typedef glm::tvec2<std::uint32_t> bound_t;
@@ -221,7 +232,7 @@ struct alignas(32) colorChannelAttributes_GL {
 		bound_t getColorRange() const;
 };
 
-
+/// @ingroup graphpipe
 /// @brief Simple structure merging all resources necessary to view a grid in 3D.
 /// @details This structure must be associated to one grid, and one grid only. Thus, the pointer to the grid is defined
 /// as `const std::shared_ptr<>` since we want the reference to be held during the lifetime of the object.
