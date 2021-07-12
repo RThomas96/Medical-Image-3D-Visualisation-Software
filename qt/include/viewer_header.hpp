@@ -14,6 +14,7 @@
 // Fwd-declaration
 class PlanarViewer;
 
+/// @ingroup qtwidgets
 /// @brief Header of a planar viewer, with the name of the plane controlled as well as a slider to control it
 /// @details Will also include buttons to rotate the plane clockwise and counter-clockwise, as weel as include a button
 /// to invert the plane's cutting direction
@@ -70,6 +71,10 @@ class ViewerHeader : public QWidget {
 		QIcon* icon_rotatePlane;
 };
 
+/// @ingroup qtwidgets
+/// @brief Provides the same functionnality as the ViewerHeader class, but with more specialized buttons for the 3D
+/// viewport.
+/// @details Provides buttons to control the visualization mode, as well as a button to hide all planes at once.
 class ViewerHeader3D : public QWidget {
 		Q_OBJECT
 	public:

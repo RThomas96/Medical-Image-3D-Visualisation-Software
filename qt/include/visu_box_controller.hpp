@@ -8,6 +8,10 @@
 class Scene; // Fwd-decl
 class MainWidget; // Fwd-decl
 
+/// @ingroup qtwidgets
+/// @brief Provides a controller for the visu box in volumetric mode.
+/// @details Thsi widget allows to provide the min and max coordinates (in voxel coordinates) of a grid, and restrict
+/// the volumetric visualization to only this area.
 class VisuBoxController : public QWidget {
 	Q_OBJECT
 	public:

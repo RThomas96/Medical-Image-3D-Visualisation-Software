@@ -17,15 +17,15 @@
 #define ENABLE_QUAD_VIEW
 
 /// @defgroup qtwidgets Qt Widgets
-/// @brief All Qt UI widget classes that don't yet have a group.
+/// @brief All Qt widget/object classes that don't yet have a group.
 ///
 /// The Widgets namespace groups all in-use Qt widgets in the program. Some of them will be denoted as 'legacy', meaning
 /// they implement features that use the legacy `DiscreteGrid` implementation of a voxel grid.
 ///
 /// Otherwise, those Qt widgets are all still in use in the program.
 ///
-/// However, please note that not all classes deriving from Qt object classes are here. This group only contains the UI
-/// widgets deriving from Qt's classes.
+/// However, please note that not all classes deriving from Qt object classes are here. Some might be more suited to
+/// another module.
 
 class ColorBoundWidget;
 

@@ -16,6 +16,10 @@
 
 class GridDetailedView; // [Fwd-declaration]
 
+/// @ingroup qtwidgets
+/// @brief This was supposed to be a list of loaded grids that we could interact with. Never used.
+/// @warning Legacy code. Do not use directly.
+/// @note For a more convenient way to do this, see Qt's help page on Model-View architecture.
 class GridView : public QWidget {
 	public:
 		using resolution_t = DiscreteGrid::sizevec3; ///< Typedef for the size vector of DiscreteGrid.

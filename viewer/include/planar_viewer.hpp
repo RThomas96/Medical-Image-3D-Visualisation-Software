@@ -10,6 +10,11 @@
 
 #include <memory>
 
+/// @ingroup graphpipe
+/// @brief The PlanarViewer class handles the OpenGL widget responsible for showing the contents present at the cutting
+/// plane's positions.
+/// @details While this is inheriting from QGLViewer, it does not use any of the camera settings. It uses a completely
+/// custom rendering pipeline.
 class PlanarViewer : public QGLViewer {
 	protected:
 		friend class ViewerHeader;

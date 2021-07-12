@@ -7,6 +7,9 @@
 #include <QGridLayout>
 #include "./range_slider.hpp"
 
+/// @ingroup qtwidgets
+/// @brief Was supposed to provide a range slider, allowing to specify min and max values over a predefined range.
+/// @warning Does not work, and is not used in the code.
 class DoubleSlider : public QWidget {
 		Q_OBJECT
 	public:

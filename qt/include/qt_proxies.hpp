@@ -10,10 +10,14 @@
 #include <QWidget>
 
 #include <variant>
+
+/// @brief Namespace used to define some Qt-based proxies for regular classes.
 namespace Proxies {
 
+	/// @ingroup qtwidgets
 	/// @brief Creates a proxy to a bounding box, in order to allow control through Qt's signal/slot mechanism.
 	/// @note Each instance pf a BoundingBox_Proxy will only control one bounding box.
+	/// @warning Legacy code.
 	class BoundingBox : public QWidget {
 		Q_OBJECT
 		private:
@@ -50,6 +54,9 @@ namespace Proxies {
 			std::shared_ptr<DiscreteGrid> grid;
 	};
 
+	/// @ingroup qtwidgets
+	/// @brief Serves as a proxy for setting and modifying a glm::vec3 with Qt's signal/slot mechanism.
+	/// @warning Legacy code.
 	class Resolution : public QWidget {
 		Q_OBJECT
 		private:

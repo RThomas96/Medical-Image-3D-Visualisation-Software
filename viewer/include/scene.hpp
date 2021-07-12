@@ -39,6 +39,12 @@
 
 #define PLANE_POS_FLOOR
 
+/// @defgroup graphpipe Graphics pipeline
+/// @brief This group contains all classes closely or loosely related to the graphics pipeline.
+/// @details There are very few classes in this group, but that's only because Scene is a god-object. Some attempt was
+/// made to move much of the code for displaying a grid over to the GridViewer class, altough that has not been tested.
+/// @warning Spaghetti code ahead.
+
 class ControlPanel; // Forward declaration
 class VolumetricGridViewer; /// fwd-decl
 
@@ -53,6 +59,11 @@ enum planes { x = 1, y = 2, z = 3 };
 /// @brief Simple enum to keep track of a plane's orientation.
 enum planeHeading { North = 0, East = 1, South = 2, West = 3, Up = North, Right = East, Down = South, Left = West };
 
+/// @brief The Scene class is the gateway to the OpenGL functions attached to the GL context of the program.
+/// @note As you might see, this kind of turned into a god-object. Although dismantling it is not that hard !
+/// @details This class evolved from a simple scene representation at the start to a nearly all-encompassing OpenGL
+/// gateway for any and all operations. It should be <b><i>heavily</i></b> refactored.
+/// @warning Spaghetti code ahead.
 class Scene : public QOpenGLFunctions_3_2_Core {
 		typedef glm::vec<4, unsigned int, glm::defaultp> uvec4;
 		typedef glm::uvec3 uvec3;

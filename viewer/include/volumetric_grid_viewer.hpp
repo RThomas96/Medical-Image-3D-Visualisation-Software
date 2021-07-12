@@ -12,7 +12,9 @@
 
 class Scene; // fwd-declaration
 
+/// @ingroup graphpipe
 /// @brief This class is a proxy object, enabling to display a grid in real-time.
+/// @warning Not yet tested.
 class GridViewer : public QObject {
 		// Define this class to be signal-able via Qt's slot-signal system.
 		Q_OBJECT;

@@ -21,6 +21,10 @@
 #include <memory>
 #include <vector>
 
+/// @ingroup qtwidgets
+/// @brief This was supposed to be a widget where we could see all the loaded grids, and their details.
+/// @warning Legacy code, never used. Do not use directly.
+/// @note For a more convenient way to do this, see Qt's help page on Model-View architecture.
 class GridController : public QMainWindow {
 	public:
 		/// @brief Constructor of the offline grid generation widget.

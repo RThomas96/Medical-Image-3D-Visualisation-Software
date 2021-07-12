@@ -6,8 +6,10 @@
 class QStylePainter;
 class RangeSliderPrivate;
 
-/// @brief This class is lifted directly from Kitware's ctkWidgets. Get them on GitHub.
-/// @warning Should probably read up on how I can legally use
+/// @ingroup qtwidgets
+/// @brief Provides a range slider, allowing to specify min and max values over a wider range.
+/// @note This class is lifted directly from Kitware's ctkWidgets. Get them on GitHub.
+/// @warning Should probably read up on how I can legally use this code...
 class RangeSlider : public QSlider
 {
 		Q_OBJECT

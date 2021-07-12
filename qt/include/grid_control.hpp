@@ -26,12 +26,13 @@
 
 class Scene; // Fwd-declaration
 
+/// @ingroup qtwidgets
 /// @brief Simple widget allowing the control (if possible) of a grid's resolution, voxel sizes and bounding box.
 /// @note In this class, the bounding box controlled will always be defined as existing within grid space. It makes no
 /// sense to try and convert to world space the bounding box defined by the spinboxes, to then re-convert this bounding
 /// box into grid space, which would give another bounding volume. As such, this will only be defined in grid space.
-/// @note Since the bounding box is defined in grid space, then the TetMesh that is responsible for the computation of
-/// the output grid will also go through the grid in grid space.
+/// @note Since the bounding box is defined in grid space, then the InterpolationMesh that is responsible for the
+/// computation of the output grid will also go through the grid in grid space.
 class GridControl : public QWidget {
 		Q_OBJECT
 	public:

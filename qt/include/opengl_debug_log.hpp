@@ -7,10 +7,10 @@
 
 #include <QOpenGLDebugMessage>
 
+/// @ingroup qtwidgets
 /// @brief The OpenGLDebugLog class represents a simple plaintext widget showing the output of OpenGL messages.
 /// @note This might not always be enabled. Most notably, if the OpenGL context does not support the debug extension
 /// (GL_KHR_debug), nothing will be popping up in this widget.
-/// @ingroup qtwidgets
 class OpenGLDebugLog : public QWidget {
 	public:
 		OpenGLDebugLog(void);

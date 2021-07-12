@@ -1,5 +1,7 @@
 #include "../include/double_slider.hpp"
+
 #include <iostream>
+
 DoubleSlider::DoubleSlider(QWidget* parent) : QWidget(parent) {
 	this->value_slider = new RangeSlider(Qt::Horizontal);
 	this->value_slider->setHandleToolTip("%1");

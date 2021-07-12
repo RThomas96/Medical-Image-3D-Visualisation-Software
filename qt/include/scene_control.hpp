@@ -24,6 +24,8 @@
 class Scene; // forward declaration
 class Viewer; // forward declaration
 
+/// @ingroup qtwidgets
+/// @brief Provides a simple button with a pixmap as a label, allowing to color the button.
 class ColorButton : public QWidget {
 	Q_OBJECT
 	public:
@@ -43,6 +45,8 @@ class ColorButton : public QWidget {
 		QVBoxLayout* layout;
 };
 
+/// @ingroup qtwidgets
+/// @brief Provides a small window where one can provide a minimum and maximum value to normalize a color scale over.
 class ColorBoundsControl : public QWidget {
 	Q_OBJECT
 	public:
@@ -64,6 +68,12 @@ class ColorBoundsControl : public QWidget {
 		QGridLayout* layout;
 };
 
+/// @ingroup qtwidgets
+/// @brief The ControlPanel class represents the widget present at the bottom of the program.
+/// @details It allows to set the visible ranges of each color channel in the program, as well as allowing to select a
+/// color scale, and min and max values to normalize the color scale over.
+/// @note Even though this code was supposed to be for DiscreteGrid, all its signals and parameters are actually
+/// controlled by the Scene class. Can be used with the new Grid interface.
 class ControlPanel : public QWidget {
 		Q_OBJECT
 	public:

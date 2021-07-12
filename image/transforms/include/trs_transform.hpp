@@ -3,6 +3,11 @@
 
 #include "transform_interface.hpp"
 
+/// @ingroup newgrid
+/// @brief The TRSTransform class represents a translation/rotation/scale matrix.
+/// @details This kind of transform is quite popular in 3D software, and I thought it would be good to have a similar
+/// feature. Allows to provide magnitudes for 3 vectors (translation, rotation, scale) independently.
+/// @warning Not yet tested.
 class TRSTransform : public ITransform {
 	public:
 		typedef std::shared_ptr<TRSTransform> Ptr;
