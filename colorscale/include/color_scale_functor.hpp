@@ -7,41 +7,47 @@
 
 namespace Color {
 
+	/// @ingroup colorscales
+	/// @brief The ColorScaleFunctor class defines a color scale which sampling equation is a `std::function<>` object.
+	/// @details This specialization of the ColorScaleBase class allows to have lambda functions (any callable object)
+	/// define a particular color scale. This is especially useful in the HSV-to-RGB color scale, where the function
+	/// was already in the codebase, and only needed to be ported over to this class.
+	/// @note Not used yet in the visualization pipeline.
 	class ColorScaleFunctor : public ColorScaleBase {
 		public:
-			/// @b Functor type accepted by the color scale
+			/// @brief Functor type accepted by the color scale
 			typedef std::function<glm::vec3(float)> functor_type;
 
 			Q_OBJECT;
 			Q_PROPERTY(functor_type sampling_functor READ getFunctor WRITE setFunctor NOTIFY functorChanged);
 
 		public:
-			/// @b Redefinition of the pointer type for this class.
+			/// @brief Redefinition of the pointer type for this class.
 			typedef std::shared_ptr<ColorScaleFunctor> Ptr;
 
-			/// @b Default ctor for the function, accepts a functor and initializes the sampler based on it.
+			/// @brief Default ctor for the function, accepts a functor and initializes the sampler based on it.
 			ColorScaleFunctor(functor_type&& _functor);
 
-			/// @b Dtor for the color scale
+			/// @brief Dtor for the color scale
 			~ColorScaleFunctor(void);
 
-			/// @b Returns the functor type used in the class instance.
+			/// @brief Returns the functor type used in the class instance.
 			functor_type getFunctor(void) const;
 
-			/// @b Sets a new sampling functor
+			/// @brief Sets a new sampling functor
 			void setFunctor(functor_type&& _func);
 
-			/// @b Samples the color scale at a certain point between O (min) and 1 (max).
+			/// @brief Samples the color scale at a certain point between O (min) and 1 (max).
 			virtual glm::vec3 sample(float sample_factor) const override;
 
-			/// @b Allows to sample the whole color scale, using the internal number of samples.
+			/// @brief Allows to sample the whole color scale, using the internal number of samples.
 			virtual std::vector<glm::vec3> getColorScale() const override;
 
-			/// @b Allows to sample the whole color scale, using a user-defined number of samples.
+			/// @brief Allows to sample the whole color scale, using a user-defined number of samples.
 			virtual std::vector<glm::vec3> getColorScale(std::size_t number_of_steps) const override;
 
 		signals:
-			/// @b Signals the functor in the color scale has changed, and it's time to update it.
+			/// @brief Signals the functor in the color scale has changed, and it's time to update it.
 			void functorChanged();
 
 		protected:

@@ -15,27 +15,27 @@ class ManipulatedPlane : public qglviewer::MouseGrabber {
 	protected:
 		ManipulatedPlane(void);
 	public:
-		/// @b Create a manipulated plane from a normal and a distance from the origin.
+		/// @brief Create a manipulated plane from a normal and a distance from the origin.
 		static std::shared_ptr<ManipulatedPlane> createPlane(glm::vec3 normal, float distance);
-		/// @b Create a manipulated plane from a plane equation.
+		/// @brief Create a manipulated plane from a plane equation.
 		static std::shared_ptr<ManipulatedPlane> createPlane(glm::vec4 plane_equation);
-		/// @b Default dtor for a manipulated plane.
+		/// @brief Default dtor for a manipulated plane.
 		~ManipulatedPlane(void);
 
 	public: // Getters, setters
 
 	public:
-		/// @b Inverts the plane's orientation
+		/// @brief Inverts the plane's orientation
 		void invertPlane(void);
 
 	protected:
-		/// @b The plane equation
+		/// @brief The plane equation
 		glm::vec4 planeEq;
-		/// @b The plane's position, for drawing the fresnel guides
+		/// @brief The plane's position, for drawing the fresnel guides
 		glm::vec4 planePosition;
-		/// @b The min point of the "viewport" on this plane
+		/// @brief The min point of the "viewport" on this plane
 		glm::vec2 viewportMin;
-		/// @b The max point of the "viewport" on this plane
+		/// @brief The max point of the "viewport" on this plane
 		glm::vec2 viewportMax;
 };
 

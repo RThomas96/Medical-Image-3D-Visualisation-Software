@@ -85,50 +85,50 @@ class ControlPanel : public QWidget {
 		void launchRedColorBounds(void);
 		void launchGreenColorBounds(void);
 	private:
-		/// @b The scene to control !
+		/// @brief The scene to control !
 		Scene* const sceneToControl;
 
-		/// @b Box regrouping the controls of the red channel
+		/// @brief Box regrouping the controls of the red channel
 		QGroupBox* groupbox_red;
-		/// @b Box regrouping the controls of the green channel
+		/// @brief Box regrouping the controls of the green channel
 		QGroupBox* groupbox_green;
 
-		/// @b Range controller for the red texture bounds
+		/// @brief Range controller for the red texture bounds
 		DoubleSlider* rangeslider_red;
-		/// @b Range controller for the green texture bounds
+		/// @brief Range controller for the green texture bounds
 		DoubleSlider* rangeslider_green;
 
-		/// @b The layout of the red groupbox
+		/// @brief The layout of the red groupbox
 		QHBoxLayout* layout_widgets_red;
-		/// @b The layout of the green groupbox
+		/// @brief The layout of the green groupbox
 		QHBoxLayout* layout_widgets_green;
 
-		/// @b Minimum color of the color segment for the red channel
+		/// @brief Minimum color of the color segment for the red channel
 		ColorButton* colorbutton_red_min;
-		/// @b Maximum color of the color segment for the red channel
+		/// @brief Maximum color of the color segment for the red channel
 		ColorButton* colorbutton_red_max;
-		/// @b Minimum color of the color segment for the green channel
+		/// @brief Minimum color of the color segment for the green channel
 		ColorButton* colorbutton_green_min;
-		/// @b Minimum color of the color segment for the green channel
+		/// @brief Minimum color of the color segment for the green channel
 		ColorButton* colorbutton_green_max;
 
-		/// @b Button to launch a dialog to change the color bounds or the red channel
+		/// @brief Button to launch a dialog to change the color bounds or the red channel
 		QPushButton* button_red_colorbounds;
 		ColorBoundsControl* cb_red_bounds;
-		/// @b Button to launch a dialog to change the color bounds or the green channel
+		/// @brief Button to launch a dialog to change the color bounds or the green channel
 		QPushButton* button_green_colorbounds;
 		ColorBoundsControl* cb_green_bounds;
 
-		/// @b Picker for the coloration method of the red channel
+		/// @brief Picker for the coloration method of the red channel
 		QComboBox* red_coloration;
-		/// @b Picker for the coloration method of the green channel
+		/// @brief Picker for the coloration method of the green channel
 		QComboBox* green_coloration;
 
-		/// @b The viewer to update on value changes
+		/// @brief The viewer to update on value changes
 		Viewer* const viewer;
-		/// @b Texture bounds for red channel
+		/// @brief Texture bounds for red channel
 		DiscreteGrid::data_t min, max;
-		/// @b Texture bounds for green channel
+		/// @brief Texture bounds for green channel
 		DiscreteGrid::data_t minAlternate, maxAlternate;
 
 	public slots:

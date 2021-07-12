@@ -14,13 +14,23 @@
 #include <string>
 #include <memory>
 
+/// @defgroup discreteGrid DiscreteGrid (legacy)
+/// @brief The legacy voxel grid representation.
+/// @details This group contains all the classes pertaining to the legacy implementation of `DiscreteGrid`. Those
+/// classes should not be used in new code and should be instead replaced by the Grid class and its ImageBackendImpl
+/// implementation.
+/// @warning This group only contains legacy components.
+
 /// @brief Definition of a 3 dimensionnal vector to store this grid's dimensions, amongst other things.
 typedef glm::vec<3, std::size_t, glm::defaultp> svec3;
 
 class InterpolationMesh; // Fwd-decl
 
-/// @brief Representation of a discrete grid (as a stack of images, or a voxel grid) which can be queried from world space.
-/// @note Although some functions in this class may mention 'texels', they are in no way, shape, or form tied to the visualization aspect of the project.
+/// @ingroup discreteGrid
+/// @brief Representation of a discrete grid (a stack of images, or a voxel grid) which can be queried from world space.
+/// @note Although some functions in this class may mention 'texels', they are in no way, shape, or form tied to the
+/// visualization aspect of the project.
+/// @warning This is a legacy implementation of the voxel grid. See the Grid class.
 class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 
 	//friend class GridControl;
@@ -57,13 +67,13 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 
 	public:
 
-		/// @b Creator from a resolution and a render window
+		/// @brief Creator from a resolution and a render window
 		DiscreteGrid(sizevec3 dims, bbox_t window);
 
 		/// @brief Default destructor, removes any storage associated with the grid.
 		~DiscreteGrid(void);
 
-		/// @b Return a read-only reference to a pixel's value.
+		/// @brief Return a read-only reference to a pixel's value.
 		virtual DataType getPixel(std::size_t x, std::size_t y, std::size_t z) const;
 
 		/// @brief Allows to set a value for the pixel at the coordinates 'x,y,z'.
@@ -205,19 +215,19 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 		void updateVoxelDimensions(void);
 
 	protected:
-		/// @b For the output grids, write the current slice to disk.
+		/// @brief For the output grids, write the current slice to disk.
 		/// @n This is a hack.
 		virtual DiscreteGrid& writeSlice();
-		/// @b Prealocate enough space to fit all data in the data vector.
+		/// @brief Prealocate enough space to fit all data in the data vector.
 		/// @n This is a hack.
 		virtual DiscreteGrid& preallocateData(void);
-		/// @b Pre-allocate the data necessary to fit 'size' elements of data in the class.
+		/// @brief Pre-allocate the data necessary to fit 'size' elements of data in the class.
 		/// @n This is a hack.
 		virtual DiscreteGrid& preallocateData(sizevec3 size);
-		/// @b Updates the render window of output grids.
+		/// @brief Updates the render window of output grids.
 		/// @n This is a hack.
 		virtual DiscreteGrid& updateRenderBox(const bbox_t& newbox);
-		/// @b For output grids, set the current slice to write to disk.
+		/// @brief For output grids, set the current slice to write to disk.
 		/// @n This is a hack.
 		virtual DiscreteGrid& setCurrentSlice(std::size_t cs);
 
@@ -257,7 +267,7 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 		std::shared_ptr<IO::GenericGridReader> gridReader;
 		/// @brief File writer
 		std::shared_ptr<IO::GenericGridWriter> gridWriter;
-		/// @b For offline output grids, the slice currently being edited.
+		/// @brief For offline output grids, the slice currently being edited.
 		/// @n This is currently a hack.
 		std::size_t currentSlice;
 };

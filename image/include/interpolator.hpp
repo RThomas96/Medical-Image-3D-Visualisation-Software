@@ -6,6 +6,7 @@
 #include <vector>
 #include <map>
 
+/// @brief Contains multiple general-purpose interpolators for pixel values.
 namespace Interpolators {
 
 	template <typename DataType>

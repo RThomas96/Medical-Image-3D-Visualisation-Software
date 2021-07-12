@@ -392,7 +392,7 @@ void Scene::printGridInfo(const std::shared_ptr<DiscreteGrid>& grid) {
 }
 
 void Scene::createBuffers() {
-	/// @b Create a vertex array, bind it and see if it has been succesfully created server-side.
+	/// @brief Create a vertex array, bind it and see if it has been succesfully created server-side.
 	auto createVAO = [&, this](std::string name) -> GLuint {
 		GLuint buf = 0;
 		this->glGenVertexArrays(1, &buf);
@@ -403,7 +403,7 @@ void Scene::createBuffers() {
 		return buf;
 	};
 
-	/// @b Create a buffer, bind it and see if it has been succesfully created server-side.
+	/// @brief Create a buffer, bind it and see if it has been succesfully created server-side.
 	auto createVBO = [&, this](GLenum bufType, std::string name) -> GLuint {
 		GLuint buf = 0;
 		this->glGenBuffers(1, &buf);
@@ -2574,7 +2574,7 @@ void Scene::newAPI_prepareUniforms_PlaneViewer(planes _plane, planeHeading _head
 void Scene::prepareUniforms_Volumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, const GridGLView::Ptr &_grid) {
 	// We assume the right program has been bound.
 
-	/// @b Shortcut for glGetUniform, since this can result in long lines.
+	/// @brief Shortcut for glGetUniform, since this can result in long lines.
 	auto getUniform = [&](const char* name) -> GLint {
 		GLint g = glGetUniformLocation(this->programHandle_VolumetricViewer, name);if (this->showVAOstate) {
 			if (g >= 0) {
@@ -2787,7 +2787,7 @@ void Scene::prepareUniforms_Volumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 
 void Scene::newAPI_prepareUniforms_Volumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, const NewAPI_GridGLView::Ptr &_grid) {
 	// We assume the right program has been bound.
 
-	/// @b Shortcut for glGetUniform, since this can result in long lines.
+	/// @brief Shortcut for glGetUniform, since this can result in long lines.
 	auto getUniform = [&](const char* name) -> GLint {
 		GLint g = glGetUniformLocation(this->programHandle_VolumetricViewer, name);if (this->showVAOstate) {
 			if (g >= 0) {
@@ -3837,8 +3837,8 @@ void Scene::setColorFunction_r(ColorFunction _c) {
 	this->channels_r = _c;
 	// WARNING : below is a dirty hack, since UBO expects a color scale index but this gives it a constant
 	// value that only has a meaning on the host (CPU) side.
-	if (_c == ColorFunction::ColorMagnitude) _c = ColorFunction::HSV2RGB;
-	if (_c == ColorFunction::HSV2RGB) _c = ColorFunction::HistologyHandE;
+	if (_c == ColorFunction::ColorMagnitude) { _c = ColorFunction::HSV2RGB; }
+	else if (_c == ColorFunction::HSV2RGB) { _c = ColorFunction::HistologyHandE; }
 	for (auto& grid : newGrids) { grid->colorChannelAttributes[0].setColorScale(static_cast<int>(_c)); }
 	this->shouldUpdateUBOData = true;
 }
@@ -3853,7 +3853,7 @@ void Scene::setColorFunction_g(ColorFunction _c) {
 	this->channels_g = _c;
 	// WARNING : below is a dirty hack, since UBO expects a color scale index but this gives it a constant
 	// value that only has a meaning on the host (CPU) side.
-	if (_c == ColorFunction::HSV2RGB) _c = ColorFunction::HistologyHandE;
+	if (_c == ColorFunction::HSV2RGB) { _c = ColorFunction::HistologyHandE; }
 	for (auto& grid : newGrids) { grid->colorChannelAttributes[1].setColorScale(static_cast<int>(_c)); }
 	this->shouldUpdateUBOData = true;
 }

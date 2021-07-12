@@ -93,6 +93,12 @@ GridSubRegionDetail<double>::GridSubRegionDetail(svec3 _o, svec3 _s, Grid::Ptr _
 }
 
 template <typename element_t>
+GridSubRegionDetail<element_t>::~GridSubRegionDetail() {
+	this->read_cache.clearCache();
+	this->parent_grid.reset();
+}
+
+template <typename element_t>
 std::size_t GridSubRegionDetail<element_t>::load_slice_from_parent_grid(std::size_t slice_idx) {
 	// typedef for cached data :
 	using ImagePtr = typename cache_t::data_t_ptr; // So : std::shared_ptr< std::vector<element_t> >
@@ -128,9 +134,9 @@ bool GridSubRegionDetail<element_t>::templated_read_region(svec3 origin, svec3 s
 	// Reminder : the availability of the grid coordinates have been checked before.
 	// As such, we can read the data directly.
 
-	/// @b Const iterator type for the cached data, which does not modify the data itself
+	/// @brief Const iterator type for the cached data, which does not modify the data itself
 	using cache_iterator_t = typename cache_t::data_t_ptr::element_type::const_iterator;
-	/// @b Iterator type for the target data
+	/// @brief Iterator type for the target data
 	using target_iterator_t = typename std::vector<out_t>::iterator;
 
 	std::size_t voxel_dimensionality = this->getVoxelDimensionality();
@@ -147,33 +153,33 @@ bool GridSubRegionDetail<element_t>::templated_read_region(svec3 origin, svec3 s
 	//
 	if (origin.x >= resolution.x || origin.y >= resolution.y || origin.z >= resolution.z){ return true; }
 
-	/// @b Beginning of slices to load and cache
+	/// @brief Beginning of slices to load and cache
 	std::size_t src_slice_begin = origin.z;
-	/// @b end of slices to cache or end of slices available
+	/// @brief end of slices to cache or end of slices available
 	std::size_t src_slice_end = (src_slice_begin + size.z >= resolution.z) ?
 					resolution.z : src_slice_begin + size.z;
 
 	// the number of slices which will be read by the first for-loop :
 	std::size_t tgt_slices_readable = src_slice_end - src_slice_begin;
 
-	/// @b Index of the last line we can read from the source buffer
+	/// @brief Index of the last line we can read from the source buffer
 	std::size_t src_height_idx_end= (origin.y + size.y >= resolution.y) ?
 					resolution.y - origin.y : size.y;
 
-	/// @b the number of lines that can be read from the source buffer :
+	/// @brief the number of lines that can be read from the source buffer :
 	std::size_t src_height_readable = src_height_idx_end - origin.y;
 
-	/// @b total length of a line in the source
+	/// @brief total length of a line in the source
 	std::size_t src_line_size = resolution.x * voxel_dimensionality;
-	/// @b beginning of a line to read from the source buffer
+	/// @brief beginning of a line to read from the source buffer
 	std::size_t src_line_idx_begin = origin.x * voxel_dimensionality;
-	/// @b amount of values to read into the target buffer from the source
+	/// @brief amount of values to read into the target buffer from the source
 	std::size_t src_line_idx_end = (src_line_idx_begin + size.x * voxel_dimensionality >= src_line_size) ?
 				src_line_size : src_line_idx_begin + size.x * voxel_dimensionality;
 
-	/// @b Line length in the buffer to write to
+	/// @brief Line length in the buffer to write to
 	std::size_t target_line_length = size.x * voxel_dimensionality;
-	/// @b image length in the buffer to write to
+	/// @brief image length in the buffer to write to
 	std::size_t target_image_length = size.y * target_line_length;
 
 	std::size_t y = 0, z = 0;

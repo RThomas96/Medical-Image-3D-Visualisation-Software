@@ -27,7 +27,7 @@
 #include <QDoubleSpinBox>
 #include <QProgressBar>
 
-/// @b The GridLoaderWidget is the class representing the widget to load the grids.
+/// @brief The GridLoaderWidget is the class representing the widget to load the grids.
 /// @details This is the widget that launches when selecting 'File' > 'Open Images' or pressing Ctrl+'O'. It is
 /// responsible to let the user select their own files to load into the program.
 class GridLoaderWidget : public QWidget {
@@ -47,9 +47,9 @@ class GridLoaderWidget : public QWidget {
 		void resetGridInfoLabel();
 		/// @brief Computes the grid information based on the new data available
 		void computeGridInfoLabel();
-		/// @b Disables the widgets in this view
+		/// @brief Disables the widgets in this view
 		void disableWidgets();
-		/// @b Sets the 'enabled' state of all widgets to the user-given value (default = true)
+		/// @brief Sets the 'enabled' state of all widgets to the user-given value (default = true)
 		void setWidgetsEnabled(bool _enabled = true);
 	protected:
 		/// @brief Updates the voxel dimensions as specified by the reader, without emitting signals.

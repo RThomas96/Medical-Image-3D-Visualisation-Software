@@ -64,7 +64,7 @@ using restrict_integer_check = typename std::enable_if<std::is_integral<T>::valu
 
 namespace glm {
 
-	/// @b Specifies a conversion function for a GLM vec2 of a certain type into another type.
+	/// @brief Specifies a conversion function for a GLM vec2 of a certain type into another type.
 	template <typename out, typename in, qualifier prec>
 	GLM_FUNC_DECL GLM_CONSTEXPR glm::vec<2, out, prec> convert_to(glm::vec<2, in, prec> origin) {
 		return glm::vec<2, out, prec>(
@@ -73,7 +73,7 @@ namespace glm {
 		);
 	}
 
-	/// @b Specifies a conversion function for a GLM vec3 of a certain type into another type.
+	/// @brief Specifies a conversion function for a GLM vec3 of a certain type into another type.
 	template <typename out, typename in, qualifier prec>
 	GLM_FUNC_DECL GLM_CONSTEXPR glm::vec<3, out, prec> convert_to(glm::vec<3, in, prec> origin) {
 		return glm::vec<3, out, prec>(
@@ -83,7 +83,7 @@ namespace glm {
 		);
 	}
 
-	/// @b Specifies a conversion function for a GLM vec4 of a certain type into another type.
+	/// @brief Specifies a conversion function for a GLM vec4 of a certain type into another type.
 	template <typename out, typename in, qualifier prec>
 	GLM_FUNC_DECL GLM_CONSTEXPR glm::vec<4, out, prec> convert_to(glm::vec<4, in, prec> origin) {
 		return glm::vec<4, out, prec>(
@@ -94,7 +94,7 @@ namespace glm {
 		);
 	}
 
-	/// @b Declaration of a safe conversion function from type `in`to type `out`.
+	/// @brief Declaration of a safe conversion function from type `in`to type `out`.
 	/// @details Safe-ness of this function is defined by the fact that the values of the input vector are explicitely
 	/// clipped against the upper and lower bounds of the smallest type from the two given. This definition is then
 	/// specialized manually to provide this function only for the allowed fundamental types.

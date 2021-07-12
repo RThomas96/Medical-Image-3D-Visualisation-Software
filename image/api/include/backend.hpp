@@ -11,59 +11,71 @@
 #include <string>
 #include <vector>
 
+/// @defgroup newgrid Grid Implementation
+/// @brief Contains all classes related to the new Grid representation of a voxel grid.
+/// @details The new Grid implementation brings many improvements over the DiscreteGrid implementation, not only for the
+/// users but also for the developers. See the documentation of the different classes included in this group to know
+/// more about this new implementation.
+/// @note Some parts of the implementation of this function interface are not yet finalized, and should be done in order
+/// to progress any further for most aspects of the program.
+
+/// @brief The Image namespace groups many classes, all related to the Grid implementation.
+/// @details It also acts as a top-level namespace for each file type supported in the program. For example, the TIFF
+/// implementation details are filed under the Tiff namespace.
 namespace Image {
 
 	/**
+	 * @ingroup newgrid
 	 * @brief The ImageBackendImpl class aims to provide a simple, yet usable API to query data from a set of files.
 	 * @details This is only a base class, all its functionnality will be implemented in derived classes. As such, we
 	 * can provide support for a wide range of data types, while having a stable API.
 	 */
 	class ImageBackendImpl {
 		public:
-			/// @b Simple typedef for a unique_ptr of an image backend.
+			/// @brief Simple typedef for a unique_ptr of an image backend.
 			typedef std::unique_ptr<ImageBackendImpl> Ptr;
 
 		protected:
-			/// @b Default ctor of an image backend. Declared protected to not be instanciated alone.
+			/// @brief Default ctor of an image backend. Declared protected to not be instanciated alone.
 			ImageBackendImpl() : internal_data_type(ImageDataType::Unknown) {}
 
 		public:
-			/// @b Default dtor of the class : frees up all allocated resources, and returns.
+			/// @brief Default dtor of the class : frees up all allocated resources, and returns.
 			virtual ~ImageBackendImpl(void) = default;
 
-			/// @b Returns the internal data type represented in the input files.
+			/// @brief Returns the internal data type represented in the input files.
 			virtual ImageDataType getInternalDataType(void) const = 0;
 
-			/// @b Simple call to parse images, the functionnality will be added in derived classes.
+			/// @brief Simple call to parse images, the functionnality will be added in derived classes.
 			virtual ThreadedTask::Ptr parseImageInfo(ThreadedTask::Ptr pre_existing_task,
 													 const std::vector<std::vector<std::string>>& _filenames
 													 ) noexcept(false) = 0;
 
-			/// @b Checks if the information present in this implementation is present on disk, or in memory.
+			/// @brief Checks if the information present in this implementation is present on disk, or in memory.
 			virtual bool presentOnDisk(void) const = 0;
 
-			/// @b Returns the number of channels of the image
+			/// @brief Returns the number of channels of the image
 			virtual std::size_t getVoxelDimensionality(void) const = 0;
 
-			/// @b Returns the image's defined voxel resolutions, if applicable.
+			/// @brief Returns the image's defined voxel resolutions, if applicable.
 			virtual glm::vec3 getVoxelDimensions(void) const = 0;
 
-			/// @b Returns the dimensions of the image.
+			/// @brief Returns the dimensions of the image.
 			virtual svec3 getResolution(void) const = 0;
 
-			/// @b Allows to get the name of the loaded image(s).
+			/// @brief Allows to get the name of the loaded image(s).
 			/// @details If the file format does not support defining the name of the grid in its files or metadata
 			/// (like the TIFF format for example), then the name returned is either a previously user-defined name, or
 			/// the name of the first image/file loaded.
 			virtual std::string getImageName(void) const = 0;
 
-			/// @b Allows for the user to specify a custom name for the grid.
+			/// @brief Allows for the user to specify a custom name for the grid.
 			virtual void setImageName(std::string& _user_defined_name_) = 0;
 
-			/// @b Returns the image bounding box, either as computed (voxel sizes x res), or defined in file.
+			/// @brief Returns the image bounding box, either as computed (voxel sizes x res), or defined in file.
 			virtual BoundingBox_General<float> getBoundingBox(void) const = 0;
 
-			/// @b Template to return the minimum and maximum values stored in the file, if given.
+			/// @brief Template to return the minimum and maximum values stored in the file, if given.
 			/// @note By default, returns the internal data type's min and max values.
 			/// @return True if the data could be accessed, and false if something went wrong.
 			template <typename data_t>
@@ -71,7 +83,7 @@ namespace Image {
 				return this->internal_getRangeValues(tag<data_t>{}, channel, _range);
 			}
 
-			/// @b Template to read a single pixel's value(s) in the image.
+			/// @brief Template to read a single pixel's value(s) in the image.
 			/// @return True if the data could be accessed, and false if something went wrong.
 			template <typename data_t>
 			bool readPixel(svec3 index, std::vector<data_t>& values) {
@@ -82,7 +94,7 @@ namespace Image {
 				return this->internal_readSubRegion(tag<data_t>{}, index, read_region_size, values);
 			}
 
-			/// @b Template to read a single line of voxels in ihe image.
+			/// @brief Template to read a single line of voxels in ihe image.
 			/// @return True if the data could be accessed, and false if something went wrong.
 			template <typename data_t>
 			bool readLine(svec2 line_idx, std::vector<data_t>& values) {
@@ -93,7 +105,7 @@ namespace Image {
 				return this->internal_readSubRegion(tag<data_t>{}, read_origin, read_region_size, values);
 			}
 
-			/// @b Template to read a whole slice of voxels in the image at once.
+			/// @brief Template to read a whole slice of voxels in the image at once.
 			/// @return True if the data could be accessed, and false if something went wrong.
 			template <typename data_t>
 			bool readSlice(std::size_t slice_idx, std::vector<data_t>& values) {
@@ -103,7 +115,7 @@ namespace Image {
 				return this->internal_readSubRegion(tag<data_t>{}, read_origin, read_region_size, values);
 			}
 
-			/// @b Template to read a sub-region of the voxels in the image at once.
+			/// @brief Template to read a sub-region of the voxels in the image at once.
 			/// @return True if the data could be accessed, and false if something went wrong.
 			template <typename data_t>
 			bool readSubRegion(svec3 read_origin, svec3 read_size, std::vector<data_t>& values) {
@@ -117,34 +129,34 @@ namespace Image {
 			//													//
 			//////////////////////////////////////////////////////
 
-			/// @b Read a sub-region of the image, implemented in the derived classes.  8-bit unsigned version.
+			/// @brief Read a sub-region of the image, implemented in the derived classes.  8-bit unsigned version.
 			virtual bool internal_readSubRegion(tag<std::uint8_t> tag, svec3 origin, svec3 size,
 									   std::vector<std::uint8_t>& data) = 0;
-			/// @b Read a sub-region of the image, implemented in the derived classes. 16-bit unsigned version.
+			/// @brief Read a sub-region of the image, implemented in the derived classes. 16-bit unsigned version.
 			virtual bool internal_readSubRegion(tag<std::uint16_t> tag, svec3 origin, svec3 size,
 									   std::vector<std::uint16_t>& data) = 0;
-			/// @b Read a sub-region of the image, implemented in the derived classes. 32-bit unsigned version.
+			/// @brief Read a sub-region of the image, implemented in the derived classes. 32-bit unsigned version.
 			virtual bool internal_readSubRegion(tag<std::uint32_t> tag, svec3 origin, svec3 size,
 									   std::vector<std::uint32_t>& data) = 0;
-			/// @b Read a sub-region of the image, implemented in the derived classes. 64-bit unsigned version.
+			/// @brief Read a sub-region of the image, implemented in the derived classes. 64-bit unsigned version.
 			virtual bool internal_readSubRegion(tag<std::uint64_t> tag, svec3 origin, svec3 size,
 									   std::vector<std::uint64_t>& data) = 0;
-			/// @b Read a sub-region of the image, implemented in the derived classes.  8-bit signed version.
+			/// @brief Read a sub-region of the image, implemented in the derived classes.  8-bit signed version.
 			virtual bool internal_readSubRegion(tag<std::int8_t> tag, svec3 origin, svec3 size,
 									   std::vector<std::int8_t>& data) = 0;
-			/// @b Read a sub-region of the image, implemented in the derived classes. 16-bit signed version.
+			/// @brief Read a sub-region of the image, implemented in the derived classes. 16-bit signed version.
 			virtual bool internal_readSubRegion(tag<std::int16_t> tag, svec3 origin, svec3 size,
 									   std::vector<std::int16_t>& data) = 0;
-			/// @b Read a sub-region of the image, implemented in the derived classes. 32-bit signed version.
+			/// @brief Read a sub-region of the image, implemented in the derived classes. 32-bit signed version.
 			virtual bool internal_readSubRegion(tag<std::int32_t> tag, svec3 origin, svec3 size,
 									   std::vector<std::int32_t>& data) = 0;
-			/// @b Read a sub-region of the image, implemented in the derived classes. 64-bit signed version.
+			/// @brief Read a sub-region of the image, implemented in the derived classes. 64-bit signed version.
 			virtual bool internal_readSubRegion(tag<std::int64_t> tag, svec3 origin, svec3 size,
 									   std::vector<std::int64_t>& data) = 0;
-			/// @b Read a sub-region of the image, implemented in the derived classes, single precision floating point.
+			/// @brief Read a sub-region of the image, implemented in the derived classes, single precision floating point.
 			virtual bool internal_readSubRegion(tag<float> tag, svec3 origin, svec3 size,
 									   std::vector<float>& data) = 0;
-			/// @b Read a sub-region of the image, implemented in the derived classes, double precision floating point.
+			/// @brief Read a sub-region of the image, implemented in the derived classes, double precision floating point.
 			virtual bool internal_readSubRegion(tag<double> tag, svec3 origin, svec3 size,
 									   std::vector<double>& data) = 0;
 
@@ -154,34 +166,34 @@ namespace Image {
 			//													//
 			//////////////////////////////////////////////////////
 
-			/// @b Reads the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			/// @brief Reads the range of the loaded data, if specified by the file format or a subsequent image analysis.
 			virtual bool internal_getRangeValues(tag<std::int8_t> tag, std::size_t channel,
 												 glm::tvec2<std::int8_t>& _values) = 0;
-			/// @b Reads the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			/// @brief Reads the range of the loaded data, if specified by the file format or a subsequent image analysis.
 			virtual bool internal_getRangeValues(tag<std::int16_t> tag, std::size_t channel,
 												 glm::tvec2<std::int16_t>& _values) = 0;
-			/// @b Reads the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			/// @brief Reads the range of the loaded data, if specified by the file format or a subsequent image analysis.
 			virtual bool internal_getRangeValues(tag<std::int32_t> tag, std::size_t channel,
 												 glm::tvec2<std::int32_t>& _values) = 0;
-			/// @b Reads the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			/// @brief Reads the range of the loaded data, if specified by the file format or a subsequent image analysis.
 			virtual bool internal_getRangeValues(tag<std::int64_t> tag, std::size_t channel,
 												 glm::tvec2<std::int64_t>& _values) = 0;
-			/// @b Reads the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			/// @brief Reads the range of the loaded data, if specified by the file format or a subsequent image analysis.
 			virtual bool internal_getRangeValues(tag<std::uint8_t> tag, std::size_t channel,
 												 glm::tvec2<std::uint8_t>& _values) = 0;
-			/// @b Reads the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			/// @brief Reads the range of the loaded data, if specified by the file format or a subsequent image analysis.
 			virtual bool internal_getRangeValues(tag<std::uint16_t> tag, std::size_t channel,
 												 glm::tvec2<std::uint16_t>& _values) = 0;
-			/// @b Reads the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			/// @brief Reads the range of the loaded data, if specified by the file format or a subsequent image analysis.
 			virtual bool internal_getRangeValues(tag<std::uint32_t> tag, std::size_t channel,
 												 glm::tvec2<std::uint32_t>& _values) = 0;
-			/// @b Reads the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			/// @brief Reads the range of the loaded data, if specified by the file format or a subsequent image analysis.
 			virtual bool internal_getRangeValues(tag<std::uint64_t> tag, std::size_t channel,
 												 glm::tvec2<std::uint64_t>& _values) = 0;
-			/// @b Reads the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			/// @brief Reads the range of the loaded data, if specified by the file format or a subsequent image analysis.
 			virtual bool internal_getRangeValues(tag<float> tag, std::size_t channel,
 												 glm::tvec2<float>& _values) = 0;
-			/// @b Reads the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			/// @brief Reads the range of the loaded data, if specified by the file format or a subsequent image analysis.
 			virtual bool internal_getRangeValues(tag<double> tag, std::size_t channel,
 												 glm::tvec2<double>& _values) = 0;
 
@@ -192,39 +204,39 @@ namespace Image {
 			//													//
 			//////////////////////////////////////////////////////
 
-			/// @b Sets the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			/// @brief Sets the range of the loaded data, if specified by the file format or a subsequent image analysis.
 			virtual bool internal_setRangeValues(tag<std::int8_t> tag, std::size_t channel,
 												 glm::tvec2<std::int8_t> _values) = 0;
-			/// @b Sets the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			/// @brief Sets the range of the loaded data, if specified by the file format or a subsequent image analysis.
 			virtual bool internal_setRangeValues(tag<std::int16_t> tag, std::size_t channel,
 												 glm::tvec2<std::int16_t> _values) = 0;
-			/// @b Sets the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			/// @brief Sets the range of the loaded data, if specified by the file format or a subsequent image analysis.
 			virtual bool internal_setRangeValues(tag<std::int32_t> tag, std::size_t channel,
 												 glm::tvec2<std::int32_t> _values) = 0;
-			/// @b Sets the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			/// @brief Sets the range of the loaded data, if specified by the file format or a subsequent image analysis.
 			virtual bool internal_setRangeValues(tag<std::int64_t> tag, std::size_t channel,
 												 glm::tvec2<std::int64_t> _values) = 0;
-			/// @b Sets the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			/// @brief Sets the range of the loaded data, if specified by the file format or a subsequent image analysis.
 			virtual bool internal_setRangeValues(tag<std::uint8_t> tag, std::size_t channel,
 												 glm::tvec2<std::uint8_t> _values) = 0;
-			/// @b Sets the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			/// @brief Sets the range of the loaded data, if specified by the file format or a subsequent image analysis.
 			virtual bool internal_setRangeValues(tag<std::uint16_t> tag, std::size_t channel,
 												 glm::tvec2<std::uint16_t> _values) = 0;
-			/// @b Sets the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			/// @brief Sets the range of the loaded data, if specified by the file format or a subsequent image analysis.
 			virtual bool internal_setRangeValues(tag<std::uint32_t> tag, std::size_t channel,
 												 glm::tvec2<std::uint32_t> _values) = 0;
-			/// @b Sets the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			/// @brief Sets the range of the loaded data, if specified by the file format or a subsequent image analysis.
 			virtual bool internal_setRangeValues(tag<std::uint64_t> tag, std::size_t channel,
 												 glm::tvec2<std::uint64_t> _values) = 0;
-			/// @b Sets the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			/// @brief Sets the range of the loaded data, if specified by the file format or a subsequent image analysis.
 			virtual bool internal_setRangeValues(tag<float> tag, std::size_t channel,
 												 glm::tvec2<float> _values) = 0;
-			/// @b Sets the range of the loaded data, if specified by the file format or a subsequent image analysis.
+			/// @brief Sets the range of the loaded data, if specified by the file format or a subsequent image analysis.
 			virtual bool internal_setRangeValues(tag<double> tag, std::size_t channel,
 												 glm::tvec2<double> _values) = 0;
 #endif
 		protected:
-			/// @b The internal data type representation, stored in the image.
+			/// @brief The internal data type representation stored in the image, kept as an enum.
 			ImageDataType internal_data_type;
 	};
 

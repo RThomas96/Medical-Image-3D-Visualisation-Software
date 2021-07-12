@@ -11,23 +11,29 @@
 
 namespace Image {
 
+	/// @ingroup newgrid
+	/// @brief The Grid class is the new and recommended representation of a voxel grid.
+	/// @details Due to the breadth of file types and data types that the program must support, the decision to overhaul
+	/// the DiscreteGrid set of classes was taken, and this is what resulted. This class uses the pImpl idiom in order
+	/// to provide a stable, non-templated function interface to an underlying image representation.
+	/// @note Some parts of this function interface are subject to change as it develops.
 	class Grid : public std::enable_shared_from_this<Grid> {
 		public:
-			/// @b Handy typedef for a pointer to a grid
+			/// @brief Handy typedef for a pointer to a grid
 			typedef std::shared_ptr<Grid> Ptr;
 
 		protected:
-			/// @b Default grid ctor, made protected so it is not instanciated directly.
+			/// @brief Default grid ctor, made protected so it is not instanciated directly.
 			Grid(ImageBackendImpl::Ptr _backend);
 
-			/// @b Creates a grid, downsampled from their parent.
+			/// @brief Creates a grid, downsampled from their parent.
 			explicit Grid(Grid::Ptr parent, svec3 size);
 
-			/// @b Creates a grid from a sub-region of this grid.
+			/// @brief Creates a grid from a sub-region of this grid.
 			explicit Grid(Grid::Ptr parent, svec3 begin, svec3 end);
 
 		public:
-			/// @b Default dtor of the Grid class. De-allocates averything associated with the grid.
+			/// @brief Default dtor of the Grid class. De-allocates averything associated with the grid.
 			virtual ~Grid(void) = default;
 
 			//////////////////////////////////////////////////////
@@ -36,7 +42,7 @@ namespace Image {
 			//													//
 			//////////////////////////////////////////////////////
 
-			/// @b Static function which automatially creates a grid of the right type.
+			/// @brief Static function which automatially creates a grid of the right type.
 			/// @details If such a grid cannot be created, returns nullptr. This function will iterate over the known
 			/// image backends to try and generate a right grid object which can read the data from the images as the
 			/// user requested.
@@ -51,16 +57,16 @@ namespace Image {
 			//													//
 			//////////////////////////////////////////////////////
 
-			/// @b Returns true if the grid has no parent, false otherwise.
+			/// @brief Returns true if the grid has no parent, false otherwise.
 			bool isRootGrid(void) const;
 
-			/// @b Returns the parent grid, or nullptr if the grid is a 'root' grid.
+			/// @brief Returns the parent grid, or nullptr if the grid is a 'root' grid.
 			Grid::Ptr getParentGrid(void) const;
 
-			/// @b Creates a new grid, which will be a sub-region of this grid
+			/// @brief Creates a new grid, which will be a sub-region of this grid
 			Grid::Ptr requestSubRegion(svec3 begin, svec3 end);
 
-			/// @b Creates a new grid, which will be a downsampled version of this grid
+			/// @brief Creates a new grid, which will be a downsampled version of this grid
 			Grid::Ptr requestDownsampledVersion(svec3 target_size);
 
 			//////////////////////////////////////////////////////
@@ -69,32 +75,32 @@ namespace Image {
 			//													//
 			//////////////////////////////////////////////////////
 
-			/// @b Checks the grid holds an image implementation, and that this implementation is valid.
+			/// @brief Checks the grid holds an image implementation, and that this implementation is valid.
 			constexpr bool hasValidImplementation(void) const;
 
-			/// @b Simply calls the parse function for the image implementation
+			/// @brief Simply calls the parse function for the image implementation
 			ThreadedTask::Ptr updateInfoFromDisk(const std::vector<std::vector<std::string>>& filenames);
 
-			/// @b Once the information from the implementation is parsed, update the internal contents of the grid structure.
+			/// @brief Once the information from the implementation is parsed, update the internal contents of the grid structure.
 			void updateInfoFromGrid(void);
-			#warning TODO : replace updateInfoFromGrid with a more user-friendly interface (wouldnt have to do this)
+			// #warning TODO : replace updateInfoFromGrid with a more user-friendly interface (wouldnt have to do this)
 
-			/// @b Returns the internal data type represented by the grid.
+			/// @brief Returns the internal data type represented by the grid.
 			ImageDataType getInternalDataType(void) const;
 
-			/// @b Returns the number of components in each voxel of this grid.
+			/// @brief Returns the number of components in each voxel of this grid.
 			std::size_t getVoxelDimensionality(void) const;
 
-			/// @b Returns the voxel dimensions, from the info provided by the image implementation.
+			/// @brief Returns the voxel dimensions, from the info provided by the image implementation.
 			glm::vec3 getVoxelDimensions(void) const;
 
-			/// @b Returns the resolution of the grid, as read by the backend implementation.
+			/// @brief Returns the resolution of the grid, as read by the backend implementation.
 			svec3 getResolution(void) const;
 
-			/// @b Returns the name of this grid, if applicable.
+			/// @brief Returns the name of this grid, if applicable.
 			std::string getImageName(void) const;
 
-			/// @b Returns the bounding box of the currently loaded information
+			/// @brief Returns the bounding box of the currently loaded information
 			Image::bbox_t getBoundingBox(void) const;
 
 			//////////////////////////////////////////////////////
@@ -103,13 +109,13 @@ namespace Image {
 			//													//
 			//////////////////////////////////////////////////////
 
-			/// @b Returns the current transform stack, with all used transforms.
+			/// @brief Returns the current transform stack, with all used transforms.
 			TransformStack::Ptr getTransformStack() const;
 
-			/// @b Returns the transform stack's precomputed matrix
+			/// @brief Returns the transform stack's precomputed matrix
 			MatrixTransform::Ptr getPrecomputedMatrix() const;
 
-			/// @b Add a transform to the transform stack.
+			/// @brief Add a transform to the transform stack.
 			void addTransform(ITransform::Ptr _transform_to_add);
 
 			//////////////////////////////////////////////////////
@@ -118,33 +124,33 @@ namespace Image {
 			//													//
 			//////////////////////////////////////////////////////
 
-			/// @b Template to return the minimum and maximum values stored in the file, if given.
+			/// @brief Template to return the minimum and maximum values stored in the file, if given.
 			/// @note By default, returns the internal data type's min and max values. Not all filetypes carry the
 			/// information about the min and max sample values.
 			template <typename data_t> bool getRangeValues(std::size_t channel, glm::vec<2, data_t, glm::defaultp>& _range);
 
-			/// @b Template to read a single pixel's value(s) in the image.
+			/// @brief Template to read a single pixel's value(s) in the image.
 			template <typename data_t> bool readPixel(svec3 index, std::vector<data_t>& values);
 
-			/// @b Template to read a single line of voxels in ihe image.
+			/// @brief Template to read a single line of voxels in ihe image.
 			template <typename data_t> bool readLine(svec2 line_idx, std::vector<data_t>& values);
 
-			/// @b Template to read a whole slice of voxels in the image at once.
+			/// @brief Template to read a whole slice of voxels in the image at once.
 			template <typename data_t> bool readSlice(std::size_t slice_idx, std::vector<data_t>& values);
 
-			/// @b Template to read a subregion of voxels in the image.
+			/// @brief Template to read a subregion of voxels in the image.
 			template <typename data_t> bool readSubRegion(svec3 origin, svec3 size, std::vector<data_t>& values);
 
 		protected:
-			/// @b The opaque pointer which will perform all the logic in regards to the reading of data.
+			/// @brief The opaque pointer which will perform all the logic in regards to the reading of data.
 			std::experimental::propagate_const<ImageBackendImpl::Ptr> pImpl;
-			/// @b The grid from which this one is either a downsampled version or a sub-region.
+			/// @brief The grid from which this one is either a downsampled version or a sub-region.
 			Grid::Ptr parentGrid;
-			/// @b If the grid has a parent, stores the size of this current grid (whether sub-region, or downsampled).
+			/// @brief If the grid has a parent, stores the size of this current grid (whether sub-region, or downsampled).
 			svec3 imageSize;
-			/// @b If the grid is a sub-region of a bigger grid, this will be its starting point in the parent.
+			/// @brief If the grid is a sub-region of a bigger grid, this will be its starting point in the parent.
 			svec3 voxelOffset;
-			/// @b Transform stack for the grid
+			/// @brief Transform stack for the grid
 			TransformStack::Ptr grid_transforms;
 	};
 

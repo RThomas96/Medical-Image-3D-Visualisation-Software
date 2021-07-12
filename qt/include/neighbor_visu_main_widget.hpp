@@ -16,8 +16,25 @@
 
 #define ENABLE_QUAD_VIEW
 
+/// @defgroup qtwidgets Qt Widgets
+/// @brief All Qt UI widget classes that don't yet have a group.
+///
+/// The Widgets namespace groups all in-use Qt widgets in the program. Some of them will be denoted as 'legacy', meaning
+/// they implement features that use the legacy `DiscreteGrid` implementation of a voxel grid.
+///
+/// Otherwise, those Qt widgets are all still in use in the program.
+///
+/// However, please note that not all classes deriving from Qt object classes are here. This group only contains the UI
+/// widgets deriving from Qt's classes.
+
 class ColorBoundWidget;
 
+/// @ingroup qtwidgets
+/// @brief The MainWidget class represents the top-level widget, created when the program is run.
+/// @details It holds references to the top menu bar, the status bar of the program, the button to show the GL log and
+/// all of the possible actions available for the program (in Qt lingo, actions = events from keyboard, mouse, other).
+/// In addition, it also holds references to the Scene class, the Viewer (s) and their ViewerHeader (s), as well as the
+/// ControlPanel that controls many aspects of the scene, and the GL debug log.
 class MainWidget : public QMainWindow {
 		Q_OBJECT
 	public:
@@ -25,9 +42,9 @@ class MainWidget : public QMainWindow {
 		~MainWidget();
 		Viewer* getViewer3D() const { return this->viewer; }
 	protected:
-		/// @b Setup all widgets, and connect their signals.
+		/// @brief Setup all widgets, and connect their signals.
 		void setupWidgets();
-		/// @b Allow to run code on any widget event
+		/// @brief Allow to run code on any widget event
 		/// @details In this case, set the minimum width and height of widgets in order to
 		/// have them both square, and not too small.
 		bool eventFilter(QObject* obj, QEvent* e) override;

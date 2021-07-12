@@ -20,10 +20,10 @@
 
 namespace Image {
 
-	/// @b Simple typedef for a 3-component GLM vector, useful for image resolution
+	/// @brief Simple typedef for a 3-component GLM vector, useful for image resolution
 	typedef glm::vec<2, std::size_t, glm::defaultp> svec2;
 
-	/// @b Simple typedef for a 3-component GLM vector, useful for image resolution
+	/// @brief Simple typedef for a 3-component GLM vector, useful for image resolution
 	typedef glm::vec<3, std::size_t, glm::defaultp> svec3;
 
 	/**
@@ -41,19 +41,19 @@ namespace Image {
 		Signed   = 0b01000000,
 	};
 
-	/// @b Allows to check for the status of a particular flag in the image type enum.
+	/// @brief Allows to check for the status of a particular flag in the image type enum.
 	inline bool operator& (ImageDataType lhs, ImageDataType rhs) {
 		return static_cast<int>(lhs) & static_cast<int>(rhs);
 	}
 
-	/// @b Makes the ImageDataType enumeration OR-able, to have multiple flags.
+	/// @brief Makes the ImageDataType enumeration OR-able, to have multiple flags.
 	/// @details Disallows to set the same flag multiple times.
 	inline ImageDataType operator| (ImageDataType lhs, ImageDataType rhs) {
 		if (lhs & rhs) { return lhs; }
 		return static_cast<ImageDataType>(static_cast<std::uint8_t>(lhs) | static_cast<std::uint8_t>(rhs));
 	}
 
-	/// @b Handy typedef to a bounding box type
+	/// @brief Handy typedef to a bounding box type
 	typedef BoundingBox_General<float> bbox_t;
 
 	inline std::ostream& operator<<(std::ostream& _os, ImageDataType d) {
@@ -69,10 +69,10 @@ namespace Image {
 		return _os;
 	}
 
-	/// @b A simple tagging system, allowing for explicit concrete function calls from a template interface.
+	/// @brief A simple tagging system, allowing for explicit concrete function calls from a template interface.
 	template <typename restict_t> struct tag {};
 
-	/// @b Simple extraction operator to print the type of the tag to something like std::cout, std::cerr ...
+	/// @brief Simple extraction operator to print the type of the tag to something like std::cout, std::cerr ...
 	template <typename tag_t> inline std::ostream& operator<<(std::ostream& _os, tag<tag_t> t) {
 		UNUSED(t);
 		int status = 0;

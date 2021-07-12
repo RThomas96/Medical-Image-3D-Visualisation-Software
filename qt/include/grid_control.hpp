@@ -128,7 +128,7 @@ class GridControl : public QWidget {
 		QLabel* info_TotalTime; ///< Total time it took to fill the grid
 		QLabel* info_VoxelRate; ///< Rate of filling, in gigavoxels/hour.
 		QLabel* info_MemorySize; ///< Size of the voxel grid, in GB.
-		/// @b Updates the fields relating to the time/size/memory footprint of the generated grid.
+		/// @brief Updates the fields relating to the time/size/memory footprint of the generated grid.
 		void updateDebugInfoFields(void);
 };
 

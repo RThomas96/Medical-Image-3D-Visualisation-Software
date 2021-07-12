@@ -5,52 +5,51 @@
 #include "./affine_transform.hpp"
 #include "./trs_transform.hpp"
 
-/// @b This class represents a stack of transforms.
+/// @brief This class represents a stack of transforms.
 /// @details In addition, it also computes a pre-computed matrix transform. This will likely change in the future, once
 /// we migrate away from supporting _only_ matrix transforms. Thus, the precomputed matrix represents the whole
 /// transformation stack for now. It is updated every time a matrix is pushed to/popped from the stack.
 class TransformStack {
 	public:
-		/// @b Pointer type to the transform stack.
+		/// @brief Pointer type to the transform stack.
 		using Ptr = std::shared_ptr<TransformStack>;
 
 	public:
-		/// @b Default ctor for a transform stack, only initializes a default transform.
+		/// @brief Default ctor for a transform stack, only initializes a default transform.
 		TransformStack(void);
-		/// @b Default dtor, removing a reference to the head, which should remove any dangling references
+		/// @brief Default dtor, removing a reference to the head, which should remove any dangling references
 		~TransformStack(void) = default;
 
-		/// @b Add a transform to the stack; recomputing the cached compoited transform.
+		/// @brief Add a transform to the stack; recomputing the cached compoited transform.
 		TransformStack& pushTransform(ITransform::Ptr _transform);
 
-		/// @b Remove the top transform from the stack,
+		/// @brief Remove the top transform from the stack,
 		ITransform::Ptr popTransform(void);
 
-		/// @b Swap the two transforms in the stack, and update the cached composition of matrices.
+		/// @brief Swap the two transforms in the stack, and update the cached composition of matrices.
 		TransformStack& swap(ITransform::Ptr lhs, ITransform::Ptr rhs);
 
-		/// @b Transform a point from world space, to image space using the precomputed transforms.
+		/// @brief Transform a point from world space, to image space using the precomputed transforms.
 		glm::vec4 to_image(glm::vec4 world_space_location) const;
 
-		/// @b Transform a point from image space, to world space using the precomputed transforms.
+		/// @brief Transform a point from image space, to world space using the precomputed transforms.
 		glm::vec4 to_world(glm::vec4 image_space_location) const;
 
-		#warning This will not be always here, removed when more transform types are added
-		/// @b Get the precomputed matrix
+		/// @brief Get the precomputed matrix
 		MatrixTransform::Ptr getPrecomputedMatrix();
 
 	protected:
-		/// @b Update the precomputed matrix transform in this class.
+		/// @brief Update the precomputed matrix transform in this class.
 		void update_precomputed_matrix();
 
 	protected:
-		/// @b Current top transform of the stack.
+		/// @brief Current top transform of the stack.
 		ITransform::Ptr head_transform;
 
-		/// @b Quick access to the number of transforms in the stack
+		/// @brief Quick access to the number of transforms in the stack
 		std::size_t transform_stack_depth;
 
-		/// @b The result of the pre-computation of the available transforms.
+		/// @brief The result of the pre-computation of the available transforms.
 		MatrixTransform::Ptr precomputedTransform;
 };
 

@@ -9,7 +9,7 @@
 
 namespace Image {
 
-	/// @b Simple enum to track the stack's state. Can be conveted to integer for easier comparison.
+	/// @brief Simple enum to track the stack's state. Can be conveted to integer for easier comparison.
 	/// @note Also contains two exit states : End_Success and End_Failure.
 	enum TaskState {
 		Created		= 0,
@@ -28,51 +28,51 @@ namespace Image {
 	 */
 	class ThreadedTask : public std::enable_shared_from_this<ThreadedTask> {
 		public:
-			/// @b A simple typedef enclosing a pointer to a threaded task
+			/// @brief A simple typedef enclosing a pointer to a threaded task
 			using Ptr = std::shared_ptr<ThreadedTask>;
 		public:
-			/// @b Ctor for a threaded task.
+			/// @brief Ctor for a threaded task.
 			ThreadedTask(std::size_t _maxSteps = 0);
-			/// @b Default dtor for the class.
+			/// @brief Default dtor for the class.
 			~ThreadedTask(void) = default;
 
-			/// @b Returns the result of std::enable_shared_from_this<>::shared_from_this()
+			/// @brief Returns the result of std::enable_shared_from_this<>::shared_from_this()
 			ThreadedTask::Ptr getPtr();
 
-			/// @b Checks if the task is complete.
+			/// @brief Checks if the task is complete.
 			bool isComplete(void);
 
-			/// @b Allows to immediately end a task.
+			/// @brief Allows to immediately end a task.
 			void end(bool success = true);
 
-			/// @b Check if the task has steps.
+			/// @brief Check if the task has steps.
 			bool hasSteps(void);
 
-			/// @b Get the maximum number of steps possible
+			/// @brief Get the maximum number of steps possible
 			std::size_t getMaxSteps(void);
 
-			/// @b Set the max number of steps for the task
+			/// @brief Set the max number of steps for the task
 			void setSteps(std::size_t _ms);
 
-			/// @b Get current advancement of the task
+			/// @brief Get current advancement of the task
 			std::size_t getAdvancement(void);
 
-			/// @b Set the current progress of the task
+			/// @brief Set the current progress of the task
 			void setAdvancement(std::size_t newcurrentvalue);
 
-			/// @b Set the task's state
+			/// @brief Set the task's state
 			void setState(TaskState _new_state);
 
-			/// @b Get the current task's state.
+			/// @brief Get the current task's state.
 			TaskState getState(void);
 
-			/// @b Advances a step (thread-safe)
+			/// @brief Advances a step (thread-safe)
 			void advance(void);
 
-			/// @b Pushes a new message into the FIFO.
+			/// @brief Pushes a new message into the FIFO.
 			void pushMessage(std::string msg);
 
-			/// @b Pops the top message of the FIFO. Returns true if there still was
+			/// @brief Pops the top message of the FIFO. Returns true if there still was
 			bool popMessage(std::string& msg);
 
 		protected:

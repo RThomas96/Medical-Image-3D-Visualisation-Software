@@ -14,7 +14,8 @@
 
 class DiscreteGrid; // Fwd-declaration
 
-/// @brief A namespace for file inputs and outputs for the program.
+/// @brief A namespace for file inputs and outputs for the program. Contains only legacy classes.
+/// @ingroup discreteGrid
 namespace IO {
 
 	/// @brief A generic class to implement writing a voxel grid to disk. [<F2> : See more.]

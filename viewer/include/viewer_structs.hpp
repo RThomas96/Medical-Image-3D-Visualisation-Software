@@ -14,181 +14,181 @@
 
 class Scene; // Fwd-declaration
 
-/// @b Simple struct to hold the values passed to glTexImage<n>D() functions.
+/// @brief Simple struct to hold the values passed to glTexImage<n>D() functions.
 /// @details Allows to pass a single structure for any type of {1,2,3}D textures when uploaded to OpenGL. The default
 /// values of this struct for the texture parameters (the parameters not present in glTexImage() functions) will be
 /// the default values of the OpenGL spec.
 struct TextureUpload {
 	public:
-		/// @b Default constructor for the TextureUpload class
+		/// @brief Default constructor for the TextureUpload class
 		TextureUpload(void);
-		/// @b Copy constructor for the TextureUpload class
+		/// @brief Copy constructor for the TextureUpload class
 		TextureUpload(const TextureUpload&) = delete;
-		/// @b Move constructor for the TextureUpload class
+		/// @brief Move constructor for the TextureUpload class
 		TextureUpload(TextureUpload&&) = delete;
-		/// @b Copy operator for the TextureUpload class
+		/// @brief Copy operator for the TextureUpload class
 		TextureUpload& operator= (const TextureUpload&) = delete;
-		/// @b Move operator for the TextureUpload class
+		/// @brief Move operator for the TextureUpload class
 		TextureUpload& operator= (TextureUpload&&) = delete;
-		/// @b Print info about the struct
+		/// @brief Print info about the struct
 		void printInfo();
-		/// @b Default destructor
+		/// @brief Default destructor
 		~TextureUpload();
 	public:
-		/// @b Min/mag filters for the texture. X = min filter, Y = mag filter
+		/// @brief Min/mag filters for the texture. X = min filter, Y = mag filter
 		glm::vec<2, GLint, glm::defaultp> minmag;
-		/// @b Minimum and maximum values for the LOD (x = min, y = max). Default : {-1000; 1000}.
+		/// @brief Minimum and maximum values for the LOD (x = min, y = max). Default : {-1000; 1000}.
 		glm::vec<2, GLfloat, glm::defaultp> lod;
-		/// @b Wrap parameters for all dimensions.
+		/// @brief Wrap parameters for all dimensions.
 		glm::vec<3, GLint, glm::defaultp> wrap;
-		/// @b Defines the default swizzle parameter for the texture.
+		/// @brief Defines the default swizzle parameter for the texture.
 		glm::vec<4, GLint, glm::defaultp> swizzle;
-		/// @b Defines the pixel pack and unpack alignment. X = pack, Y = unpack.
+		/// @brief Defines the pixel pack and unpack alignment. X = pack, Y = unpack.
 		glm::vec<2, GLint, glm::defaultp> alignment;
-		/// @b The level of the texture uploaded.
+		/// @brief The level of the texture uploaded.
 		GLint level;
-		/// @b The internal pixel format of the texture uploaded. Ex : GL_RGB, GL_R8UI (...)
+		/// @brief The internal pixel format of the texture uploaded. Ex : GL_RGB, GL_R8UI (...)
 		GLint internalFormat;
-		/// @b Texture size, in all dimensions.
+		/// @brief Texture size, in all dimensions.
 		glm::vec<3, GLsizei, glm::defaultp> size;
-		/// @b Pixel format for texture upload. Ex : GL_RED, GL_RGB (...)
+		/// @brief Pixel format for texture upload. Ex : GL_RED, GL_RGB (...)
 		GLenum format;
-		/// @b Pixel type for texture upload. Ex : GL_FLOAT, GL_UNSIGNED_BYTE (...)
+		/// @brief Pixel type for texture upload. Ex : GL_FLOAT, GL_UNSIGNED_BYTE (...)
 		GLenum type;
-		/// @b The data to upload to OpenGL
+		/// @brief The data to upload to OpenGL
 		const void* data;
 };
 
-/// @b Helper class regrouping the positions, normals, texture coordinates and indices of a mesh.
+/// @brief Helper class regrouping the positions, normals, texture coordinates and indices of a mesh.
 /// @details Used to generate the default mesh in the main program. There is multiple index buffers, since
 /// we have multiple things to draw, in different ways (this will be uploaded to one VAO only).
 struct Mesh {
 	public:
-		/// @b Default constructor for the Mesh class.
+		/// @brief Default constructor for the Mesh class.
 		Mesh(void);
-		/// @b Copy constructor for the Mesh class.
+		/// @brief Copy constructor for the Mesh class.
 		Mesh(const Mesh&) = delete;
-		/// @b Move constructor for the Mesh class.
+		/// @brief Move constructor for the Mesh class.
 		Mesh(Mesh&&) = delete;
-		/// @b Copy operator for the Mesh class.
+		/// @brief Copy operator for the Mesh class.
 		Mesh& operator= (const Mesh&) = delete;
-		/// @b Move operator for the Mesh class.
+		/// @brief Move operator for the Mesh class.
 		Mesh& operator= (Mesh&&) = delete;
-		/// @b Default destructor for the Mesh class.
+		/// @brief Default destructor for the Mesh class.
 		~Mesh();
 	public:
-		/// @b The positions of the mesh.
+		/// @brief The positions of the mesh.
 		std::vector<glm::vec4> positions;
-		/// @b The normals of each vertex.
+		/// @brief The normals of each vertex.
 		std::vector<glm::vec4> normals;
-		/// @b The texture coordinates of each vertex.
+		/// @brief The texture coordinates of each vertex.
 		std::vector<glm::vec3> texture;
-		/// @b The indices used to draw the unit cube used for the program.
+		/// @brief The indices used to draw the unit cube used for the program.
 		std::vector<unsigned int> indices;
-		/// @b The indices used to draw the cutting planes in the 3D view.
+		/// @brief The indices used to draw the cutting planes in the 3D view.
 		std::vector<unsigned int> cutting_planes;
-		/// @b The indices used to draw the planes in the planar viewers.
+		/// @brief The indices used to draw the planes in the planar viewers.
 		std::vector<unsigned int> planar_view;
 };
 
-/// @b Helper class regrouping the data of a tetrahedral mesh.
+/// @brief Helper class regrouping the data of a tetrahedral mesh.
 struct VolMeshData {
 	public:
-		/// @b Default constructor for the Mesh class.
+		/// @brief Default constructor for the Mesh class.
 		VolMeshData(void);
-		/// @b Copy constructor for the Mesh class.
+		/// @brief Copy constructor for the Mesh class.
 		VolMeshData(const VolMeshData&) = delete;
-		/// @b Move constructor for the Mesh class.
+		/// @brief Move constructor for the Mesh class.
 		VolMeshData(VolMeshData&&) = delete;
-		/// @b Copy operator for the Mesh class.
+		/// @brief Copy operator for the Mesh class.
 		VolMeshData& operator= (const VolMeshData&) = delete;
-		/// @b Move operator for the Mesh class.
+		/// @brief Move operator for the Mesh class.
 		VolMeshData& operator= (VolMeshData&&) = delete;
-		/// @b Default destructor for the Mesh class.
+		/// @brief Default destructor for the Mesh class.
 		~VolMeshData(void);
 	public:
-		/// @b The positions of the mesh.
+		/// @brief The positions of the mesh.
 		std::vector<glm::vec4> positions;
-		/// @b The texture coordinates of each vertex.
+		/// @brief The texture coordinates of each vertex.
 		std::vector<glm::vec3> texture;
-		/// @b Stores the indices of vertices needed for a tetrahedron
+		/// @brief Stores the indices of vertices needed for a tetrahedron
 		std::vector<std::array<std::size_t, 4>> tetrahedra;
-		/// @b Stores the indices of neighboring tetrahedra
+		/// @brief Stores the indices of neighboring tetrahedra
 		std::vector<std::vector<int>> neighbors;
-		/// @b Per-face normals of each tetrahedron
+		/// @brief Per-face normals of each tetrahedron
 		std::vector<std::array<glm::vec4, 4>> normals;
 };
 
 struct VolMesh {
 	public:
-		/// @b Default constructor for the VolMesh struct.
+		/// @brief Default constructor for the VolMesh struct.
 		VolMesh(void);
-		/// @b Default destructor for the VolMesh struct.
+		/// @brief Default destructor for the VolMesh struct.
 		~VolMesh(void);
-		/// @b Checks if the handles are valid (different from 0) and it has something to draw (tetCount > 0)
+		/// @brief Checks if the handles are valid (different from 0) and it has something to draw (tetCount > 0)
 		bool isValid(void);
 	public:
-		/// @b The texture handle for the visible domains/intensities in the image.
+		/// @brief The texture handle for the visible domains/intensities in the image.
 		GLuint visibilityMap;
-		/// @b The texture handle for the vertex positions.
+		/// @brief The texture handle for the vertex positions.
 		GLuint vertexPositions;
-		/// @b The texture handle for the vertices' texture coordinates.
+		/// @brief The texture handle for the vertices' texture coordinates.
 		GLuint textureCoordinates;
-		/// @b The texture handle for the tetrahedra neighborhoods.
+		/// @brief The texture handle for the tetrahedra neighborhoods.
 		GLuint neighborhood;
-		/// @b The texture handle for the per-tetrahedra face normals.
+		/// @brief The texture handle for the per-tetrahedra face normals.
 		GLuint faceNormals;
-		/// @b The number of tetrahedra to render once `glDrawElementsInstanced()` is called.
+		/// @brief The number of tetrahedra to render once `glDrawElementsInstanced()` is called.
 		GLsizei tetrahedraCount;
 };
 
 
-/// @b Simple structure merging all resources necessary to view a grid in 3D.
+/// @brief Simple structure merging all resources necessary to view a grid in 3D.
 /// @details This structure must be associated to one grid, and one grid only. Thus, the pointer to the grid is defined
 /// as `const std::shared_ptr<>` since we want the reference to be held during the lifetime of the object.
 struct GridGLView {
 	public:
 		using Ptr = std::shared_ptr<GridGLView>;
 	public:
-		/// @b Default constructor for the grid view. Must be associated to one and only one grid.
+		/// @brief Default constructor for the grid view. Must be associated to one and only one grid.
 		GridGLView(const std::initializer_list<std::shared_ptr<DiscreteGrid>> _g);
-		/// @b Default constructor for two grids.
+		/// @brief Default constructor for two grids.
 		explicit GridGLView(const std::shared_ptr<DiscreteGrid>, const std::shared_ptr<DiscreteGrid>);
-		/// @b Copy constructor of the GridGLView struct.
+		/// @brief Copy constructor of the GridGLView struct.
 		GridGLView(const GridGLView&) = default;
-		/// @b Move constructor of the GridGLView struct.
+		/// @brief Move constructor of the GridGLView struct.
 		GridGLView(GridGLView&&) = default;
-		/// @b Copy operator of the GridGLView struct.
+		/// @brief Copy operator of the GridGLView struct.
 		GridGLView& operator= (const GridGLView&) = default;
-		/// @b Move operator of the GridGLView struct.
+		/// @brief Move operator of the GridGLView struct.
 		GridGLView& operator= (GridGLView&&) = default;
-		/// @b Default destructor of the GridGLView struct.
+		/// @brief Default destructor of the GridGLView struct.
 		~GridGLView(void);
 	public:
 		using data_t = DiscreteGrid::data_t;
 		using data_2 = glm::vec<2, data_t, glm::defaultp>;
 		using data_3 = glm::vec<3, data_t, glm::defaultp>;
 		using color_3 = glm::vec3;
-		/// @b The pointer to the grid we want to show.
+		/// @brief The pointer to the grid we want to show.
 		std::vector<std::shared_ptr<DiscreteGrid>> grid;
-		/// @b The texture handle to access the grid data in shaders.
+		/// @brief The texture handle to access the grid data in shaders.
 		GLuint gridTexture;
-		/// @b The number of channels contained in the image
+		/// @brief The number of channels contained in the image
 		unsigned int nbChannels;
-		/// @b The volumetric mesh handles to use when drawing
+		/// @brief The volumetric mesh handles to use when drawing
 		VolMesh volumetricMesh;
-		/// @b The epsilon to provide for the volumetric viewing method
+		/// @brief The epsilon to provide for the volumetric viewing method
 		glm::vec3 defaultEpsilon;
-		/// @b The bounding box's color, as a triplet of normalized values for R, G, and B.
+		/// @brief The bounding box's color, as a triplet of normalized values for R, G, and B.
 		color_3 boundingBoxColor;
-		/// @b The 'base' color for the user-defined color scale
+		/// @brief The 'base' color for the user-defined color scale
 		color_3 color_0;
-		/// @b The 'final' color for the user-defined color scale
+		/// @brief The 'final' color for the user-defined color scale
 		color_3 color_1;
-		/// @b The minimum and maximum texture values to display
+		/// @brief The minimum and maximum texture values to display
 		data_2 texBounds0;
 		data_2 texBounds1;
-		/// @b The minimum and maximum values of the color scale
+		/// @brief The minimum and maximum values of the color scale
 		data_2 colorBounds0;
 		data_2 colorBounds1;
 };
@@ -222,63 +222,63 @@ struct alignas(32) colorChannelAttributes_GL {
 };
 
 
-/// @b Simple structure merging all resources necessary to view a grid in 3D.
+/// @brief Simple structure merging all resources necessary to view a grid in 3D.
 /// @details This structure must be associated to one grid, and one grid only. Thus, the pointer to the grid is defined
 /// as `const std::shared_ptr<>` since we want the reference to be held during the lifetime of the object.
 struct NewAPI_GridGLView {
 	public:
 		using Ptr = std::shared_ptr<NewAPI_GridGLView>;
 	public:
-		/// @b Default constructor for the grid view. Must be associated to one and only one grid.
+		/// @brief Default constructor for the grid view. Must be associated to one and only one grid.
 		NewAPI_GridGLView(const Image::Grid::Ptr _g);
-		/// @b Copy constructor of the NewAPI_GridGLView struct.
+		/// @brief Copy constructor of the NewAPI_GridGLView struct.
 		NewAPI_GridGLView(const NewAPI_GridGLView&) = default;
-		/// @b Move constructor of the NewAPI_GridGLView struct.
+		/// @brief Move constructor of the NewAPI_GridGLView struct.
 		NewAPI_GridGLView(NewAPI_GridGLView&&) = default;
-		/// @b Copy operator of the NewAPI_GridGLView struct.
+		/// @brief Copy operator of the NewAPI_GridGLView struct.
 		NewAPI_GridGLView& operator= (const NewAPI_GridGLView&) = default;
-		/// @b Move operator of the NewAPI_GridGLView struct.
+		/// @brief Move operator of the NewAPI_GridGLView struct.
 		NewAPI_GridGLView& operator= (NewAPI_GridGLView&&) = default;
-		/// @b Default destructor of the NewAPI_GridGLView struct.
+		/// @brief Default destructor of the NewAPI_GridGLView struct.
 		~NewAPI_GridGLView(void) = default;
 
-		/// @b Sets the main color channel for this grid view
+		/// @brief Sets the main color channel for this grid view
 		void setMainColorChannel(std::size_t index);
-		/// @b Gets the attributes of the main color channel
+		/// @brief Gets the attributes of the main color channel
 		colorChannelAttributes_GL& mainColorChannelAttributes();
 	public:
 		using data_t = DiscreteGrid::data_t;
 		using data_2 = glm::vec<2, data_t, glm::defaultp>;
 		using data_3 = glm::vec<3, data_t, glm::defaultp>;
 		using color_3 = glm::vec3;
-		/// @b The pointer to the grid we want to show.
+		/// @brief The pointer to the grid we want to show.
 		Image::Grid::Ptr grid;
-		/// @b The texture handle to access the grid data in shaders.
+		/// @brief The texture handle to access the grid data in shaders.
 		GLuint gridTexture;
-		/// @b The number of channels contained in the image
+		/// @brief The number of channels contained in the image
 		unsigned int nbChannels;
-		/// @b The volumetric mesh handles to use when drawing
+		/// @brief The volumetric mesh handles to use when drawing
 		VolMesh volumetricMesh;
-		/// @b The epsilon to provide for the volumetric viewing method
+		/// @brief The epsilon to provide for the volumetric viewing method
 		glm::vec3 defaultEpsilon;
-		/// @b The bounding box's color, as a triplet of normalized values for R, G, and B.
+		/// @brief The bounding box's color, as a triplet of normalized values for R, G, and B.
 		color_3 boundingBoxColor;
-		/// @b The 'base' color for the user-defined color scale
+		/// @brief The 'base' color for the user-defined color scale
 		color_3 color_0;
-		/// @b The 'final' color for the user-defined color scale
+		/// @brief The 'final' color for the user-defined color scale
 		color_3 color_1;
-		/// @b The minimum and maximum texture values to display
+		/// @brief The minimum and maximum texture values to display
 		data_2 texBounds0;
 		data_2 texBounds1;
-		/// @b The minimum and maximum values of the color scale
+		/// @brief The minimum and maximum values of the color scale
 		data_2 colorBounds0;
 		data_2 colorBounds1;
-		/// @b Handle for the uniform buffer with the channel attributes
+		/// @brief Handle for the uniform buffer with the channel attributes
 		GLuint uboHandle_colorAttributes;
-		/// @b The color channel attributes.
+		/// @brief The color channel attributes.
 		std::array<colorChannelAttributes_GL, 3> colorChannelAttributes;
 	protected:
-		/// @b The index of the main color channel.
+		/// @brief The index of the main color channel.
 		/// @details Protected so as not to accidentally set it to something invalid during runtime.
 		std::size_t mainColorChannel;
 };

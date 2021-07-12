@@ -19,19 +19,24 @@
 
 #define TETMESH_OPTI __attribute__((flatten))
 
+/// @brief Simple enum to define the interpolation type to use in the generation of the grid by InterpolationMesh.
 enum InterpolationMethods {
 	NearestNeighbor,
 	TriLinear
 };
 
+/// @ingroup discreteGrid
 /// @brief Represents a tetrahedral mesh in initial space, to interpolate a voxel's value at a given position.
 /// @details This class represents a tetrahedral mesh which vertices are the dual of a voxel's direct neighbors.
 /// You can analyse the neighbors of a voxel by supplying it a position, which will update the positions and
 /// the values of each member of the mesh. Right now, the class only supports Nearest-Neighbor querying of
 /// voxels, due to the limitations of the TextureStorage class.
+/// @warning This class contains legacy code. Should be updated to the new Grid class.
 class InterpolationMesh {
 	public:
+		/// @brief Publicly-available typedef of the internal data type of this class.
 		using data_t = DiscreteGrid::data_t;
+		/// @brief Pointer type for this class.
 		using Ptr = std::shared_ptr<InterpolationMesh>;
 	public:
 		/// @brief Constructs a mesh, devoid of any associated image stack.
@@ -138,7 +143,7 @@ class InterpolationMesh {
 #define GLM_CROSS_VEC4_OVERRIDE
 namespace glm {
 	namespace detail {
-		///! @brief Redefinition of glm::detail::compute_cross<> for vec4s instead of vec3s (for convenience)
+		/// @brief Redefinition of `glm::detail::compute_cross<>` for vec4s instead of vec3s (for convenience)
 		template<typename T, qualifier Q, bool Aligned>
 		struct compute_cross_vec4
 		{
@@ -153,7 +158,7 @@ namespace glm {
 			}
 		};
 	}
-	///! @brief Computes glm::cross(), but with vec4s instead of vec3s (ignores last component)
+	/// @brief Computes glm::cross(), but with vec4s instead of vec3s (ignores last component)
 	template<typename T, qualifier Q>
 	GLM_FUNC_QUALIFIER vec<4, T, Q> cross(vec<4, T, Q> const& x, vec<4, T, Q> const& y)
 	{

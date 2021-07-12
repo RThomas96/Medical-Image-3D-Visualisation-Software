@@ -9,51 +9,56 @@ namespace Image {
 
 namespace Tiff {
 
+	/// @ingroup tiff
+	/// @brief The Frame class is an internal representation of a TIFF directory.
+	/// @details This class contains convenience code to access the properties of a given TIFF directory in a given
+	/// file on disk. It is also used to 'compare' directories between themselves, to see if they are compatible or not
+	/// (compatibility being defined in the isCompatibleWith function).
 	struct Frame {
 		public:
 			typedef std::shared_ptr<Frame> Ptr;
 
 		public:
-			/// @b Default ctor, which constructs the frame, but doesn't parse the information in it.
+			/// @brief Default ctor, which constructs the frame, but doesn't parse the information in it.
 			/// @warning If the frame cannot be parsed, throws an exception.
 			Frame(const std::string& _v, const tdir_t _cur_directory) noexcept(false);
-			/// @b Default dtor, which releases the information required by this frame
+			/// @brief Default dtor, which releases the information required by this frame
 			~Frame(void) = default;
 
-			/// @b Returns true if the two frames are 'compatible'.
+			/// @brief Returns true if the two frames are 'compatible'.
 			/// @details Two frames are considered compatible if they have the same width; the same height, and the same
 			/// number of bits per pixel. Anything else is not taken into account, for example if we have one frame
 			/// which has two samples per pixel and another which has only one, they are still considered compatible if
 			/// they have the same width, height, and BpS.
 			bool isCompatibleWith(const Frame& _frame);
 
-			/// @b Returns true if the current frame is 'compatible' with the given width, height, and bits per pixel.
+			/// @brief Returns true if the current frame is 'compatible' with the given width, height, and bits per pixel.
 			bool isCompatibleWith(uint32_t w, uint32_t h, uint16_t bps);
 
 			bool hasSameEncoding(const Frame& _frame);
 
-			/// @b Returns the value of the planar configuration of the frame.
+			/// @brief Returns the value of the planar configuration of the frame.
 			uint16_t planarConfiguration(TIFF* handle = nullptr) const;
 
-			/// @b Returns the value of the photometric interpretation of the frame.
+			/// @brief Returns the value of the photometric interpretation of the frame.
 			uint16_t photometricInterpretation(TIFF* handle = nullptr) const;
 
-			/// @b Returns a libTIFF-managed handle to read information from the file
+			/// @brief Returns a libTIFF-managed handle to read information from the file
 			TIFF* getLibraryHandle(void) const;
 
-			/// @b Reads the width of the frame
+			/// @brief Reads the width of the frame
 			uint32_t width(TIFF* handle = nullptr) const;
 
-			/// @b Reads the height of the frame
+			/// @brief Reads the height of the frame
 			uint32_t height(TIFF* handle = nullptr) const;
 
-			/// @b Read the SampleFormat field in the TIFF IFD.
+			/// @brief Read the SampleFormat field in the TIFF IFD.
 			uint16_t sampleFormat(TIFF* handle = nullptr) const;
 
-			/// @b Reads the BitsPerSample field in the TIFF IFD.
+			/// @brief Reads the BitsPerSample field in the TIFF IFD.
 			uint16_t bitsPerSample(TIFF* handle = nullptr) const;
 
-			/// @b Sets the min and max values that _can_ be present in the directory into the range parameter.
+			/// @brief Sets the min and max values that _can_ be present in the directory into the range parameter.
 			/// @note This is based on the SMinSampleValue tag that is part of standard ('baseline') TIFF, but mostly
 			/// ignored or unset. In this case, it returns the min/max values of the out_t type.
 			template <typename out_t> void getMinMaxSample(std::size_t sample, glm::tvec2<out_t>& range, TIFF* handle = nullptr) {
@@ -88,25 +93,25 @@ namespace Tiff {
 			}
 
 		protected:
-			/// @b Loads information from the TIFF file, in order to parse it efficiently later.
+			/// @brief Loads information from the TIFF file, in order to parse it efficiently later.
 			/// @warning This TIFF frame implementation only supports one sample per pixel, for now.
 			void loadTIFFInfo(std::string_view sourceFile) noexcept(false);
 
-			/// @b Returns true if the frame has a valid bits per sample count.
+			/// @brief Returns true if the frame has a valid bits per sample count.
 			/// @details The number of bits per sample is defined as 'correct' or 'valid' if all the samples are
 			/// expressed using the same number of bits, even for the extra samples given they are present.
 			bool fetchSamplesPerPixel(TIFF* frame_handle) const;
 
 		public:
-			/// @b The filename of the TIFF file this frame is located in.
+			/// @brief The filename of the TIFF file this frame is located in.
 			const std::string sourceFile;
-			/// @b The directory offset into the file
+			/// @brief The directory offset into the file
 			const tdir_t directoryOffset;
-			/// @b The number of samples per pixel. Contains the original value ([1-3]) with the ExtraSamples added.
+			/// @brief The number of samples per pixel. Contains the original value ([1-3]) with the ExtraSamples added.
 			uint16_t samplesPerPixel;
-			/// @b The number of rows per strip
+			/// @brief The number of rows per strip
 			uint32_t rowsPerStrip;
-			/// @b The number of strips per image.
+			/// @brief The number of strips per image.
 			uint64_t stripsPerImage;
 	};
 

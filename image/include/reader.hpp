@@ -28,18 +28,24 @@
 
 namespace IO {
 
+	/// @ingroup discreteGrid
+	/// @brief The Threaded task class is a simple progress tracker for a task in a different thread.
+	/// @warning This class has been superseeded by the Image::ThreadedTask class.
+	/// @details This class allows to know how many steps the task has left, and if it's finished or not. Here, a task
+	/// is defined as any callable in a spearate thread. Requires manual intervention (does not track progress
+	/// automatically, see reference functions).
 	class ThreadedTask {
 		public:
 			using Ptr = std::shared_ptr<ThreadedTask>;
 		public:
-			/// @b Ctor for a threaded task.
+			/// @brief Ctor for a threaded task.
 			ThreadedTask(std::size_t _maxSteps = 0) : m_lock() {
 				this->maxSteps = _maxSteps;
 				this->currentStep = 0;
 			}
-			/// @b Default dtor for the class.
+			/// @brief Default dtor for the class.
 			~ThreadedTask(void) = default;
-			/// @b Checks if the task is complete.
+			/// @brief Checks if the task is complete.
 			bool isComplete(void) {
 				bool retval = false;
 				if (this->m_lock.try_lock_for(std::chrono::milliseconds(100))) {
@@ -48,7 +54,7 @@ namespace IO {
 				}
 				return retval;
 			}
-			/// @b Allows to immediately end a task.
+			/// @brief Allows to immediately end a task.
 			void end(void) {
 				if (this->m_lock.try_lock_for(std::chrono::milliseconds(100))) {
 					if (this->maxSteps == 0) {
@@ -61,7 +67,7 @@ namespace IO {
 				}
 				return;
 			}
-			/// @b Check if the task has steps.
+			/// @brief Check if the task has steps.
 			bool hasSteps(void) {
 				bool retval = false;
 				if (this->m_lock.try_lock_for(std::chrono::milliseconds(100))) {
@@ -70,7 +76,7 @@ namespace IO {
 				}
 				return retval;
 			}
-			/// @b Get the maximum number of steps possible
+			/// @brief Get the maximum number of steps possible
 			std::size_t getMaxSteps(void) {
 				std::size_t retval = 0;
 				if (this->m_lock.try_lock_for(std::chrono::milliseconds(100))) {
@@ -79,7 +85,7 @@ namespace IO {
 				}
 				return retval;
 			}
-			/// @b Set the max number of steps for the task
+			/// @brief Set the max number of steps for the task
 			void setSteps(std::size_t _ms) {
 				if (this->m_lock.try_lock_for(std::chrono::milliseconds(100))) {
 					this->maxSteps = _ms;
@@ -87,7 +93,7 @@ namespace IO {
 				}
 				return;
 			}
-			/// @b Get current advancement of the task
+			/// @brief Get current advancement of the task
 			std::size_t getAdvancement(void) {
 				std::size_t retval = 0;
 				if (this->m_lock.try_lock_for(std::chrono::milliseconds(100))) {
@@ -103,7 +109,7 @@ namespace IO {
 				}
 				return;
 			}
-			/// @b Advances a step (thread-safe)
+			/// @brief Advances a step (thread-safe)
 			void advance(void) {
 				if (this->m_lock.try_lock_for(std::chrono::milliseconds(100))) {
 					this->currentStep++;
@@ -112,12 +118,17 @@ namespace IO {
 				return;
 			}
 		protected:
-			std::timed_mutex m_lock;				/// @b The mutex resposible for thread-safety.
-			std::atomic<std::size_t> currentStep;	/// @b The current number of steps achieved
-			std::size_t maxSteps;					/// @b The maximum number of steps. If 0, task has not been initialized.
+			std::timed_mutex m_lock;				/// @brief The mutex resposible for thread-safety.
+			std::atomic<std::size_t> currentStep;	/// @brief The current number of steps achieved
+			std::size_t maxSteps;					/// @brief The maximum number of steps. If 0, task has not been initialized.
 	};
 
+	/// @ingroup discreteGrid
 	/// @brief Very simple read cache which supports arbitrary indexes and data arrays.
+	/// @warning This class has been superseeded by the Image::ReadCache class.
+	/// @details This class allows to keep a few user-allocated data vectors, mostly used to keep slices of a grid in
+	/// memory. Once the capacity (defined in maxCachedElements) is reached, the first element (chronologically) that
+	/// was inserted is removed. This makes the class act as a FIFO data structure.
 	template <typename cache_idx, typename cache_data>
 	struct ReadCache {
 		public:
@@ -202,27 +213,36 @@ namespace IO {
 		Lowest = 3		///< Downsamples the image using a 8x8x8 sub-region for one pixel.
 	};
 
+	/// @ingroup discreteGrid
 	/// @brief Redirection for TIFF errors and warnings, which suppresses them.
 	/// @note The function signature is made to be compatible with both TIFFErrorHandler and TIFFWarningHandler.
 	void nullify_tiff_errors(const char* module, const char* fmt, va_list _va_);
 
+	/// @ingroup discreteGrid
 	/// @brief Checks if the file given in argument exists
 	/// @param filename The name of the file to check
 	bool FileExists(const char* filename);
 
+	/// @ingroup discreteGrid
 	/// @brief Returns the file base name (the name, without the extension at the end).
 	/// @param filename The full name of the file, possibly with an extension or leading paths
 	/// @warning If the file doesn't have an extension, returns nullptr.
 	char* FileBaseName(const char* filename);
 
+	/// @ingroup discreteGrid
 	/// @brief Appends the required extension to the provided base name
 	/// @param basename The base name of the file
 	/// @param extension The extension to append to it.
 	/// @return A new char array containing <basename>.<extension>, or nullptr if an error occured
 	char* AppendExtension(char* basename, const char* extension);
 
-	/// @brief This class implements a basic reader to load data from disk
-	/// directly into a voxel grid.
+	/// @ingroup discreteGrid
+	/// @brief This class implements a basic reader to load data from disk directly into a voxel grid.
+	/// @details This is the base class of many reader implementations. It defines a function interface to query data
+	/// from disk. However, it can only work with one data type, and cannot be changed unless recompiled with another
+	/// format in mind. Code is not automatically adapted to the new format, and should not be used anymore.
+	/// @see Image::Grid Image::ImageBackendImpl
+	/// @warning This class is kept here as legacy code is being migrated. Do not use it in any new code.
 	class GenericGridReader {
 		public:
 			/// @brief Vector to store grid dimensions.
@@ -366,6 +386,9 @@ namespace IO {
 			std::shared_ptr<Interpolators::genericInterpolator<data_t>> interpolator;
 	};
 
+	/// @ingroup discreteGrid
+	/// @brief The specialization of GenericGridReader for DIM/IMA files.
+	/// @warning This class is kept here as legacy code is being migrated. Do not use it in any new code.
 	class DIMReader : public GenericGridReader {
 		public:
 			DIMReader(data_t _thresh);
@@ -390,6 +413,9 @@ namespace IO {
 			std::ifstream* imaFile;
 	};
 
+	/// @ingroup discreteGrid
+	/// @brief The specialization of GenericGridReader for TIFF images, using the TinyTIFF library.
+	/// @warning This class is kept here as legacy code is being migrated. Do not use it in any new code.
 	class StackedTIFFReader : public GenericGridReader {
 		public:
 			StackedTIFFReader(data_t thresh);
@@ -429,7 +455,9 @@ namespace IO {
 			std::vector<std::pair<std::size_t, std::size_t>> sliceToFilename;
 	};
 
-	/// @b TIFF file reader, using libTIFF as its backend for I/O
+	/// @ingroup discreteGrid
+	/// @brief The specialization of GenericGridReader for TIFF images, using libTIFF.
+	/// @warning This class is kept here as legacy code is being migrated. Do not use it in any new code.
 	class libTIFFReader : public GenericGridReader {
 		private:
 			struct TIFFFrame {
@@ -497,7 +525,9 @@ namespace IO {
 			ReadCache<std::size_t, frame_data_t> cache;
 	};
 
-	/// @b Overload of the basic libTIFF reader, which implements a custom parsing function reading the header.
+	/// @ingroup discreteGrid
+	/// @brief Overload of the basic libTIFF reader, which implements a custom parsing function reading the header.
+	/// @warning This class is kept here as legacy code is being migrated. Do not use it in any new code.
 	class OMETIFFReader : public libTIFFReader {
 		public:
 			OMETIFFReader(data_t thresh);
@@ -506,6 +536,9 @@ namespace IO {
 			virtual OMETIFFReader& parseImageInfo(ThreadedTask::Ptr& task) noexcept(false) override;
 	};
 
+	/// @ingroup discreteGrid
+	/// @brief The specialization of GenericGridReader for NiftI images, using the nifti2 library.
+	/// @warning This class is kept here as legacy code is being migrated. Do not use it in any new code.
 	class NIFTIReader : public GenericGridReader {
 		public:
 			NIFTIReader(data_t thresh);
