@@ -174,6 +174,8 @@ TARGET_LINK_LIBRARIES(neighbor_visu
 	PUBLIC ImageIO
 	PUBLIC DiscreteGrid
 	PUBLIC VisualisationWidgets
+	PUBLIC writergrid
+	PUBLIC writergrid_tiff
 )
 # }}}
 

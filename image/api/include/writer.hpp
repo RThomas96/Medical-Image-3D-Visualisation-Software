@@ -63,7 +63,7 @@ namespace Image {
 			/// @returns true if the write operation encountered no errors, and false otherwise.
 			/// @note For the moment, the write is synchronous. But a ThreadedTask object is specified here in order to
 			/// be able to queue up the tasks later.
-			bool writeGrid(Grid::Ptr src_grid, ThreadedTask::Ptr task) noexcept(false);
+			bool writeGrid(Grid::Ptr src_grid, ThreadedTask::Ptr& task) noexcept(false);
 
 		protected:
 			/// @b The pointer type which holds the logic for writing files to disk.

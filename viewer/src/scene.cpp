@@ -2005,12 +2005,24 @@ glm::tvec4<GLuint> Scene::draft_getGeneratedColorScales() {
 void Scene::draft_tryAndSaveFirstGrid() {
 	if (this->newGrids.size() == 0) { std::cerr << "Error : no new grids loaded.\n"; return; }
 
+	Image::ThreadedTask::Ptr task = std::make_shared<Image::ThreadedTask>();
 	// get the grid
 	Image::Grid::Ptr gridToSave = this->newGrids[0]->grid;
 	// Create a writer backend :
-	Image::Writer gridWriter = Image::Writer(
-		Image::Tiff::TIFFWriterDetail<std::uint16_t>::createBackend("tiff_grid", "/home/thibault/Pictures/tiff")
-	);
+	Image::Writer::Ptr gridWriter = nullptr;
+	std::cerr << "Creating grid writer ...\n";
+	try {
+		gridWriter = std::make_shared<Image::Writer>(
+			Image::Tiff::TIFFWriterDetail<std::uint32_t>::createBackend("tiff_grid", "/home/thibault/Pictures/tiff")
+		);
+		if (not gridWriter->writeGrid(gridToSave, task)) {
+			std::cerr << "Error : cannot write grid.\n";
+		}
+	}  catch (std::exception& _e) {
+		std::cerr << "Error : exception caught !\n";
+		std::cerr << "Error message : " << _e.what() << '\n';
+	}
+	std::cerr << "Grid writer finished writing.\n";
 }
 
 GLuint Scene::createUniformBuffer(std::size_t size_bytes, GLenum draw_mode) {

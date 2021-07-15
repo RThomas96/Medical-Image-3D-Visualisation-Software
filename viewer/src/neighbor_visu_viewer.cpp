@@ -135,6 +135,11 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 			this->shouldCapture = true;
 			this->update();
 		break;
+
+		case Qt::Key::Key_G:
+			this->scene->draft_tryAndSaveFirstGrid();
+			this->update();
+		break;
 		/*
 		Default handler.
 		*/

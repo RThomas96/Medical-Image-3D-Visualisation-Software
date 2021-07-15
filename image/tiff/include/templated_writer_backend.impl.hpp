@@ -268,23 +268,26 @@ namespace Tiff {
 		TIFFSetField(file, TIFFTAG_IMAGEWIDTH, resolution.x);
 		TIFFSetField(file, TIFFTAG_IMAGELENGTH, resolution.y);
 		TIFFSetField(file, TIFFTAG_SAMPLESPERPIXEL, 1);
+		TIFFSetField(file, TIFFTAG_BITSPERSAMPLE, this->bits_per_sample);
 		TIFFSetField(file, TIFFTAG_PHOTOMETRIC, photometric_interpretation);
 		TIFFSetField(file, TIFFTAG_EXTRASAMPLES, 0, nullptr); // no extra samples [ MIGHT SEGFAULT ] because of nullptr
 
 		// Required fields from the TIFF spec for greyscale images :
 		TIFFSetField(file, TIFFTAG_COMPRESSION, COMPRESSION_NONE);		// No compression applied
 		TIFFSetField(file, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);	// sets contiguous arrays in mem
+		TIFFSetField(file, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);	// Top-left is 0,0
 
 		// Set the X and Y resolutions (with corresponding units) :
 		TIFFSetField(file, TIFFTAG_RESOLUTIONUNIT, RESUNIT_CENTIMETER);
-		// get voxel dimensions (expressed in micrometers, divided to get back to centimeters) :
-		glm::vec3 voxel_dimensions = grid->getVoxelDimensions() * 1.e-3f;
+		// get voxel dimensions (expressed in micrometers, divided to get back to centimeters and inverted because the
+		// value expresses how many pixels in one ResolutionUnit, apparently) :
+		glm::vec3 voxel_dimensions = 1.0f / (grid->getVoxelDimensions() * 1.e-4f);
 		TIFFSetField(file, TIFFTAG_XRESOLUTION, voxel_dimensions.x);
 		TIFFSetField(file, TIFFTAG_YRESOLUTION, voxel_dimensions.y);
 
 		// Compute the expected rowspersample :
 		// note : last param of TIFFDefaultStripSize is an estimate of the desired size of the strip
-		std::uint32_t rows_per_strip = TIFFDefaultStripSize(file, resolution.x * sizeof(pixel_t));
+		std::uint32_t rows_per_strip = TIFFDefaultStripSize(file, 0);
 		// And set it in the file :
 		TIFFSetField(file, TIFFTAG_ROWSPERSTRIP, rows_per_strip);
 
@@ -298,9 +301,10 @@ namespace Tiff {
 		// check fi the # of samples in src are all filled :
 		if (src.size() % samples_in_src > 0) { std::cerr << "Warning : not enough samples in the src vector !\n"; }
 		// if reading no samples or wrong arguments, return null vector :
-		if (beg >= samples_in_src) { return std::vector<pixel_t>(); }
-		// compute # of samples to read :
-		std::size_t sample_read_src = beg;
+		if (beg >= samples_in_src) {
+			std::cerr << "Error : trying to read past-the-end of data vector in writer\n";
+			return std::vector<pixel_t>();
+		}
 
 		// compute the number of pixels in src :
 		std::size_t pixel_count = src.size() / samples_in_src;
@@ -311,12 +315,9 @@ namespace Tiff {
 		std::size_t samples_read = 0;
 		// iterate on all pixels of src, starting at [beg] and with a stride of [samples_in_src] :
 		for (std::size_t src_iter = beg; src_iter < src.size(); src_iter += samples_in_src) {
-			// read pixels from source into out :
-			for (std::size_t src_read = 0; src_read < sample_read_src; ++src_read) {
-				out[samples_read + src_read] = src[src_iter + src_read];
-			}
+			out[samples_read] = src[src_iter];
 			// increment read counter :
-			samples_read += sample_read_src;
+			samples_read++;
 		}
 		// vector should be all read.
 
@@ -343,7 +344,7 @@ namespace Tiff {
 
 		for (std::size_t current_row = 0; current_row < height; current_row++) {
 			// copy data over from the width buffer :
-			_TIFFmemcpy(tiff_buffer, &(data[current_row*width]), current_row*sizeof(pixel_t));
+			_TIFFmemcpy(tiff_buffer, &(data[current_row*width]), width*sizeof(pixel_t));
 			// attempt to write the scanline to the file :
 			if (TIFFWriteScanline(file, tiff_buffer, current_row) < 0) {
 				std::cerr << "ERROR could not write the contents of the row " << current_row << " of the file \"" <<

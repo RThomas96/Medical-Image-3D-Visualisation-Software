@@ -36,4 +36,14 @@ void Writer::setBackend(WriterBackendImpl::Ptr _new_backend) {
 	return;
 }
 
+bool Writer::writeSlice(Grid::Ptr src_grid, std::size_t slice, ThreadedTask::Ptr &task) {
+	if (this->pImpl) { return this->pImpl->writeSlice(src_grid, slice, task); }
+	return false;
+}
+
+bool Writer::writeGrid(Grid::Ptr src_grid, ThreadedTask::Ptr &task) {
+	if (this->pImpl) { return this->pImpl->writeGrid(src_grid, task); }
+	return false;
+}
+
 }
