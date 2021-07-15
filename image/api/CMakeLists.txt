@@ -21,6 +21,22 @@ SET_TARGET_PROPERTIES(imagegrid PROPERTIES
 	POSITION_INDEPENDENT_CODE ON
 )
 
+ADD_LIBRARY(writergrid STATIC
+	include/writer.hpp
+	include/writer_backend.hpp
+	src/writer.cpp
+	src/writer_backend.cpp
+)
+TARGET_INCLUDE_DIRECTORIES(writergrid
+	PRIVATE ${LOCAL_GLM_HEADER_DIR}
+)
+SET_TARGET_PROPERTIES(writergrid PROPERTIES
+	AUTOMOC OFF
+	AUTORCC OFF
+	AUTOUIC OFF
+	POSITION_INDEPENDENT_CODE ON
+)
+
 ADD_LIBRARY(grid_api SHARED
 	include/grid.hpp
 	src/grid.cpp
@@ -30,6 +46,8 @@ TARGET_LINK_LIBRARIES(grid_api
 	PUBLIC grid_tiff_backend
 	PUBLIC imagegrid
 	PUBLIC transform_types
+	PUBLIC writergrid
+	PUBLIC writergrid_tiff
 )
 TARGET_INCLUDE_DIRECTORIES(grid_api
 	PRIVATE ${LOCAL_GLM_HEADER_DIR}

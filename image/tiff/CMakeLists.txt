@@ -37,6 +37,28 @@ SET_TARGET_PROPERTIES(grid_tiff_backend PROPERTIES
 	POSITION_INDEPENDENT_CODE ON
 )
 
+ADD_LIBRARY(writergrid_tiff STATIC
+	include/writer_backend.hpp
+	src/writer_backend.cpp
+	include/templated_writer_backend.hpp
+	include/templated_writer_backend.impl.hpp
+)
+TARGET_INCLUDE_DIRECTORIES(writergrid_tiff
+	PRIVATE ${libTIFF_HEADER_DIR}
+	# Also add GLM headers here !
+	PRIVATE ${LOCAL_GLM_HEADER_DIR}
+)
+TARGET_LINK_LIBRARIES(writergrid_tiff
+	PUBLIC writergrid # Parent lib
+	PUBLIC ${libTIFF}
+)
+SET_TARGET_PROPERTIES(writergrid_tiff PROPERTIES
+	AUTOMOC OFF
+	AUTORCC OFF
+	AUTOUIC OFF
+	POSITION_INDEPENDENT_CODE ON
+)
+
 
 # Once the compilation is conditional, maybe add that lib to a list of compilable libs which
 # then get linked by the top CMakeLists.txt ??? Just a random thought.

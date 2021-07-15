@@ -39,7 +39,7 @@ namespace Image {
 				/// @b Attempts to open a TIFF file with the given '_name', along with the given 'permissions' (default is
 				/// wb, write binary because windows requires binary).
 				/// @returns A valid handle to a TIFF file with the given permissions, or nullptr.
-				TIFF* open_file(std::string _name, char* permissions = "wb");
+				TIFF* open_file(std::string _name, std::string permissions = "wb");
 
 				/// @b Closes the given file, previously opened by libTIFF's TIFFOpen()
 				void close_file(TIFF* handle);

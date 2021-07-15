@@ -29,21 +29,22 @@ namespace Tiff {
 		// slice index can be up to 99'999, so count the # of leading 0s there should be :
 		float f_slice_idx = static_cast<float>(slice_idx);
 		std::size_t leading_0_slice = 5 - static_cast<std::size_t>(std::floor(std::log10(f_slice_idx)) + 1.f);
+		if (slice_idx == 0) { leading_0_slice = 4; } // special case for 0 since log10(0) == -inf
 		std::string number_prefix = "";
 		if (leading_0_slice > 0) { number_prefix = std::string(leading_0_slice, '0'); }
 		slice_string = number_prefix + std::to_string(slice_idx);
 
-		final_name = this->file_base_path;									// start with base path
+		final_name = path;													// start with base path
 		if (final_name[final_name.size()-1] != '/') { final_name += "/"; }	// add path separator at the end, if needed
-		final_name += this->file_base_name;									// add file name
+		final_name += name;													// add file name
 		if (final_name[final_name.size()-1] != '_') { final_name += "_"; }	// add underscore for numbering if not
 		final_name += channel_string + "_" + slice_string + ".tiff";		// add suffixes and file extension
 
 		return final_name;
 	}
 
-	TIFF* TIFFWriterBackend::open_file(std::string file_name, char* permissions) {
-		TIFF* file = TIFFOpen(file_name.data(), permissions);
+	TIFF* TIFFWriterBackend::open_file(std::string file_name, std::string permissions) {
+		TIFF* file = TIFFOpen(file_name.data(), permissions.data());
 		if (file == NULL) {} // empty for now
 		return file;
 	}

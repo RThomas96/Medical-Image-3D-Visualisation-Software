@@ -3,6 +3,9 @@
 #include "../../qt/include/scene_control.hpp"
 #include "../../image/include/reader.hpp"
 #include "../../image/include/writer.hpp"
+#include "../../image/api/include/writer.hpp"
+#include "../../image/tiff/include/writer_backend.hpp"
+#include "../../image/tiff/include/templated_writer_backend.hpp"
 
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -1996,6 +1999,17 @@ glm::tvec4<GLuint> Scene::draft_getGeneratedColorScales() {
 	return glm::tvec4<GLuint>(
 		this->texHandle_colorScale_greyscale, this->texHandle_colorScale_hsv2rgb,
 		this->texHandle_colorScale_user0, this->texHandle_colorScale_user1
+	);
+}
+
+void Scene::draft_tryAndSaveFirstGrid() {
+	if (this->newGrids.size() == 0) { std::cerr << "Error : no new grids loaded.\n"; return; }
+
+	// get the grid
+	Image::Grid::Ptr gridToSave = this->newGrids[0]->grid;
+	// Create a writer backend :
+	Image::Writer gridWriter = Image::Writer(
+		Image::Tiff::TIFFWriterDetail<std::uint16_t>::createBackend("tiff_grid", "/home/thibault/Pictures/tiff")
 	);
 }
 

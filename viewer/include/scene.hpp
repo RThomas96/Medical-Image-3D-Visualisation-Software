@@ -66,7 +66,9 @@ enum planeHeading { North = 0, East = 1, South = 2, West = 3, Up = North, Right 
 /// gateway for any and all operations. It should be <b><i>heavily</i></b> refactored.
 /// @warning Spaghetti code ahead.
 class Scene : public QOpenGLFunctions_3_2_Core {
+		/// @brief typedef similar to a glm::uvec4
 		typedef glm::vec<4, unsigned int, glm::defaultp> uvec4;
+		/// @brief typedef to omit glm:: from a 'uvec3'
 		typedef glm::uvec3 uvec3;
 	public:
 		Scene(); ///< default constructor
@@ -120,6 +122,9 @@ class Scene : public QOpenGLFunctions_3_2_Core {
 		/// @note will switch over to the color scale manager once this is over.
 		glm::tvec4<GLuint> draft_getGeneratedColorScales();
 
+		/// @brief Will attempt to do a grid save, to test the new writer backend.
+		void draft_tryAndSaveFirstGrid(void);
+
 		/// @brief Draw the 3D view of the scene.
 		void draw3DView(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, bool showTexOnPlane = true);
 
@@ -169,10 +174,13 @@ class Scene : public QOpenGLFunctions_3_2_Core {
 
 		/// @brief Returns the current visu box
 		DiscreteGrid::bbox_t getVisuBox(void);
+		/// @brief Returns the image coordinates of the visu box.
 		std::pair<glm::uvec3, glm::uvec3> getVisuBoxCoordinates(void);
 		/// @brief Sets the visu box
 		void setVisuBox(DiscreteGrid::bbox_t box);
+		/// @brief Sets the min coordinate of the visu box
 		void setVisuBoxMinCoord(glm::uvec3 coor_min);
+		/// @brief Sets the max coordinate of the visu box
 		void setVisuBoxMaxCoord(glm::uvec3 coor_max);
 		/// @brief Resets the visu box
 		void resetVisuBox();
@@ -186,6 +194,7 @@ class Scene : public QOpenGLFunctions_3_2_Core {
 
 		/// @brief Upload a 3D texture with the given parameters.
 		GLuint newAPI_uploadTexture3D(const GLuint handle, const TextureUpload& tex, std::size_t s, std::vector<std::uint16_t> & data);
+		/// @brief Allocate a texture conformant with the given settings, but don't fill it with data yet.
 		GLuint newAPI_uploadTexture3D_allocateonly(const TextureUpload& tex);
 		/// @brief Upload a 3D texture with the given parameters.
 		GLuint uploadTexture3D_iterative(const TextureUpload& tex, const std::shared_ptr<DiscreteGrid>&, const std::shared_ptr<DiscreteGrid>&);
@@ -262,18 +271,26 @@ class Scene : public QOpenGLFunctions_3_2_Core {
 		/// @brief Signals all planes they need to be inverted.
 		void toggleAllPlaneDirections();
 
+		/// @brief Position a qglviewer::Frame at the given position, in 3D space.
 		void setPositionResponse(glm::vec4 _resp);
+		/// @brief Draw a set of arrows at the position designated by setPositionResponse()
 		void drawPositionResponse(float radius, bool drawOnTop = false);
+		/// @brief Reset the axis positions.
 		void resetPositionResponse(void);
 
+		/// @brief Returns all of the loaded grids in the scene.
 		std::vector<std::shared_ptr<DiscreteGrid>> getInputGrids(void) const;
+		/// @brief Simply returns the number of loaded grids in the scene.
 		std::size_t getInputGridCount(void) const;
 
 		/// @brief Applies a user-defined function on grids, with the constraint it must be const.
+		/// @warning Only applies the lambda on the new Image::Grid interface, and only when it is wrapped in the
+		/// NewAPI_GridGLView helper class !!!
 		void lambdaOnGrids(std::function<void(const NewAPI_GridGLView::Ptr&)>& callable) const {
-			std::for_each(this->newGrids.begin(), this->newGrids.end(), callable);
+			std::for_each(this->newGrids.cbegin(), this->newGrids.cend(), callable);
 		}
 
+		/// @brief Returns the context, for external use.
 		QOpenGLContext* get_context() const { return this->context; }
 
 		/// @brief computes the transformation matrix of the input grid
@@ -326,7 +343,7 @@ class Scene : public QOpenGLFunctions_3_2_Core {
 		/// @brief Print the OpenGL message to std::cerr, if no OpenGLDebugLogMessages are enabled.
 		void printOpenGLMessage(const QOpenGLDebugMessage& message);
 
-		/// Updates the progress bar added to the main statusbar
+		/// @brief Updates the progress bar added to the main statusbar
 		void updateProgressBar();
 
 		/// @brief Test function to print all the new uniforms in the
@@ -340,19 +357,24 @@ class Scene : public QOpenGLFunctions_3_2_Core {
 		/// @brief Signals to update user-defined color scales whenever is next appropriate.
 		void signal_updateUserColorScales();
 
+		/// @brief Upload the data necessary to make the UBO work for a grid.
 		void newSHADERS_updateUBOData();
 
 		/// @brief preps uniforms for a grid
 		void prepareUniforms_3DSolid(GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, const GridGLView::Ptr& grid);
+		/// @brief preps uniforms for a grid [[NEW API]]
 		void newAPI_prepareUniforms_3DSolid(GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, const NewAPI_GridGLView::Ptr& grid);
 		/// @brief preps uniforms for a given plane
 		void prepareUniforms_3DPlane(GLfloat *mvMat, GLfloat *pMat, planes _plane, const GridGLView::Ptr& grid, bool showTexOnPlane = true);
+		/// @brief preps uniforms for a given plane [[NEW API]]
 		void newAPI_prepareUniforms_3DPlane(GLfloat *mvMat, GLfloat *pMat, planes _plane, const NewAPI_GridGLView::Ptr& grid, bool showTexOnPlane = true);
 		/// @brief prep the plane uniforms to draw in space
 		void prepareUniforms_PlaneViewer(planes _plane, planeHeading _heading, glm::vec2 fbDims, float zoomRatio, glm::vec2 offset, const GridGLView::Ptr& _grid);
+		/// @brief prep the plane uniforms to draw in space [[NEW API]]
 		void newAPI_prepareUniforms_PlaneViewer(planes _plane, planeHeading _heading, glm::vec2 fbDims, float zoomRatio, glm::vec2 offset, const NewAPI_GridGLView::Ptr& _grid);
 		/// @brief Prepare the uniforms for volumetric drawing
 		void prepareUniforms_Volumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, const GridGLView::Ptr& _grid);
+		/// @brief Prepare the uniforms for volumetric drawing [[NEW API]]
 		void newAPI_prepareUniforms_Volumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, const NewAPI_GridGLView::Ptr& _grid);
 
 		/// @brief draw the planes, in the real space
@@ -361,9 +383,11 @@ class Scene : public QOpenGLFunctions_3_2_Core {
 		void newAPI_drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane = true);
 		/// @brief draws a grid, slightly more generic than drawVoxelGrid()
 		void drawGrid(GLfloat mvMat[], GLfloat pMat[], glm::mat4 baseMatrix, const GridGLView::Ptr& grid);
+		/// @brief draws a grid, slightly more generic than drawVoxelGrid() [[NEW API]]
 		void newAPI_drawGrid(GLfloat mvMat[], GLfloat pMat[], glm::mat4 baseMatrix, const NewAPI_GridGLView::Ptr& grid);
 		/// @brief Draws the 3D texture with a volumetric-like visualization method
 		void drawVolumetric(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, const GridGLView::Ptr& grid);
+		/// @brief Draws the 3D texture with a volumetric-like visualization method [[NEW API]]
 		void newAPI_drawVolumetric(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, const NewAPI_GridGLView::Ptr& grid);
 
 		/// @brief Prints grid info.
@@ -395,6 +419,7 @@ class Scene : public QOpenGLFunctions_3_2_Core {
 		void updateBoundingBox(void);
 		void updateVisuBoxCoordinates(void);
 
+		/// @brief Stub function to initialize some system-level limits. Currently only fetches max texture size.
 		void initialize_limits(void);
 
 		/*************************************/
@@ -402,14 +427,23 @@ class Scene : public QOpenGLFunctions_3_2_Core {
 		/****** TEXTURE3D VISUALIZATION ******/
 		/*************************************/
 		/*************************************/
+		/// @brief Build a tetrahedral mesh for a loaded grid (building == creating all neighborhoods & metadata)
 		void tex3D_buildMesh(GridGLView::Ptr& grid, const std::string path = "");
+		/// @brief Build a tetrahedral mesh for a loaded grid. [[NEW API]]
 		void newAPI_tex3D_buildMesh(NewAPI_GridGLView::Ptr& grid, const std::string path = "");
+		/// @brief Build the visibility texture for a grid.
 		void tex3D_buildVisTexture(VolMesh& volMesh);
+		/// @brief Build the draw buffers for a grid.
 		void tex3D_buildBuffers(VolMesh& volMesh);
+		/// @brief Bind the VAO created for the volumetric drawing method.
 		void tex3D_bindVAO();
+		/// @brief Load a .mesh file for the tetrahedral mesh, instead of generating it.
 		void tex3D_loadMESHFile(const std::string name, const GridGLView::Ptr& grid, VolMeshData& _mesh);
+		/// @brief Load a .mesh file for the tetrahedral mesh, instead of generating it. [[NEW API]]
 		void newAPI_tex3D_loadMESHFile(const std::string name, const NewAPI_GridGLView::Ptr& grid, VolMeshData& _mesh);
+		/// @brief Generate a surrounding tetrahedral mesh for the loaded grid.
 		void tex3D_generateMESH(GridGLView::Ptr& grid, VolMeshData& _mesh);
+		/// @brief Generate a surrounding tetrahedral mesh for the loaded grid. [[NEW API]]
 		void newAPI_tex3D_generateMESH(NewAPI_GridGLView::Ptr& grid, VolMeshData& _mesh);
 	protected:
 		bool isInitialized;						///< tracks if the scene was initialized or not

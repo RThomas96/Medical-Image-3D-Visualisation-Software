@@ -32,6 +32,13 @@ namespace Image {
 				/// @brief The writer's default ctor, de-allocating any resources it holds.
 				virtual ~TIFFWriterDetail(void);
 
+				static Ptr createBackend(std::string bname) {
+					return std::make_unique<TIFFWriterDetail<pixel_t>>(bname);
+				}
+				static Ptr createBackend(std::string bname, std::string bpath) {
+					return std::make_unique<TIFFWriterDetail<pixel_t>>(bname, bpath);
+				}
+
 			public:
 				/// @brief Virtual function call to write a grid's slice to disk. TIFF specialization.
 				/// @details Takes a pointer to a grid and a slice index in parameter. It will then write the contents of
@@ -60,7 +67,8 @@ namespace Image {
 				/// @param grid The grid to get information from
 				/// @param slice_idx The index for the slice to write to disk
 				/// @param start If more than 3 samples are present, specifies the index of the first sample to write.
-				void write_tiff_tags(TIFF* file, Grid::Ptr grid, std::size_t slice_idx, std::size_t start);
+				/// @returns The set strip size, according to all of the other parameters set beforehand.
+				std::uint32_t write_tiff_tags(TIFF* file, Grid::Ptr grid, std::size_t slice_idx, std::size_t start);
 
 				/// @brief Reads the specified subpixel in all voxels from the source vector into the final vector.
 				/// @param src The source data vector
@@ -69,6 +77,20 @@ namespace Image {
 				/// @return The vector comprising of every sample in [beg, end] extracted from the source
 				std::vector<pixel_t> read_subpixels_from_slice(std::vector<pixel_t>& src, std::size_t samples_in_src,
 															   std::size_t idx);
+
+				/// @brief Writes the data in strips to the TIFF file.
+				/// @param file The TIFF file to write to
+				/// @param data The entire data to write.
+				/// @param width The width of the image
+				/// @param height The number of rows to write to the file.
+				/// @param estimated_strip_size The strip size, returned by TIFFDefaultStripSize() for this file
+				/// @returns Returns true if the write could happen without hurdles, and false if some error occured.
+				/// @details The recommended buffer size for TIFF strips is around 8KB of information (from the TIFF
+				/// specification at https://www.adobe.io/content/dam/udp/en/open/standards/tiff/TIFF6.pdf , page 39.
+				/// However, we alreay set the number of rows per strip in write_tiff_tags() so we only write row per
+				/// row (or scanline by scanline using TIFF terminology).
+				bool write_tiff_strips(TIFF* file, std::vector<pixel_t>& data, std::size_t width, std::size_t height,
+									   std::uint32_t estimated_strip_size);
 
 			protected:
 				uint16_t bits_per_sample;	///< The number of bits per sample, defined by the template instanciation.
@@ -79,5 +101,7 @@ namespace Image {
 	}
 
 } // namespace Image
+
+#include "./templated_writer_backend.impl.hpp"
 
 #endif // VISUALIZATION_IMAGE_TIFF_INCLUDE_TEMPLATED_WRITER_BACKEND_HPP_

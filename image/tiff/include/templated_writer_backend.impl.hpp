@@ -14,6 +14,12 @@ namespace Tiff {
 		throw std::runtime_error("Error : cannot create a TIFF writer backend with unsupported type.");
 	}
 
+	template <typename unsupported_element_t>
+	TIFFWriterDetail<unsupported_element_t>::TIFFWriterDetail(std::string bname, std::string bpath) :
+	TIFFWriterBackend(bname, bpath) {
+		throw std::runtime_error("Error : cannot create a TIFF writer backend with unsupported type.");
+	}
+
 	template <>
 	TIFFWriterDetail<std::uint8_t>::TIFFWriterDetail(std::string bname) : TIFFWriterBackend(bname) {
 		this->sample_format = SAMPLEFORMAT_UINT;
@@ -43,28 +49,32 @@ namespace Tiff {
 	}
 
 	template <>
-	TIFFWriterDetail<std::uint8_t>::TIFFWriterDetail(std::string bname, std::string bpath) : TIFFWriterBackend(bname, bpath) {
+	TIFFWriterDetail<std::uint8_t>::TIFFWriterDetail(std::string bname, std::string bpath) :
+	TIFFWriterBackend(bname, bpath) {
 		this->sample_format = SAMPLEFORMAT_UINT;
 		this->bits_per_sample = 8;
 		this->planar_config = PLANARCONFIG_CONTIG;
 	}
 
 	template <>
-	TIFFWriterDetail<std::uint16_t>::TIFFWriterDetail(std::string bname, std::string bpath) : TIFFWriterBackend(bname, bpath) {
+	TIFFWriterDetail<std::uint16_t>::TIFFWriterDetail(std::string bname, std::string bpath) :
+	TIFFWriterBackend(bname, bpath) {
 		this->sample_format = SAMPLEFORMAT_UINT;
 		this->bits_per_sample = 16;
 		this->planar_config = PLANARCONFIG_CONTIG;
 	}
 
 	template <>
-	TIFFWriterDetail<std::uint32_t>::TIFFWriterDetail(std::string bname, std::string bpath) : TIFFWriterBackend(bname, bpath) {
+	TIFFWriterDetail<std::uint32_t>::TIFFWriterDetail(std::string bname, std::string bpath) :
+	TIFFWriterBackend(bname, bpath) {
 		this->sample_format = SAMPLEFORMAT_UINT;
 		this->bits_per_sample = 32;
 		this->planar_config = PLANARCONFIG_CONTIG;
 	}
 
 	template <>
-	TIFFWriterDetail<std::uint64_t>::TIFFWriterDetail(std::string bname, std::string bpath) : TIFFWriterBackend(bname, bpath) {
+	TIFFWriterDetail<std::uint64_t>::TIFFWriterDetail(std::string bname, std::string bpath) :
+	TIFFWriterBackend(bname, bpath) {
 		this->sample_format = SAMPLEFORMAT_UINT;
 		this->bits_per_sample = 64;
 		this->planar_config = PLANARCONFIG_CONTIG;
@@ -99,28 +109,32 @@ namespace Tiff {
 	}
 
 	template <>
-	TIFFWriterDetail<std::int8_t>::TIFFWriterDetail(std::string bname, std::string bpath) : TIFFWriterBackend(bname, bpath) {
+	TIFFWriterDetail<std::int8_t>::TIFFWriterDetail(std::string bname, std::string bpath) :
+	TIFFWriterBackend(bname, bpath) {
 		this->sample_format = SAMPLEFORMAT_INT;
 		this->bits_per_sample = 8;
 		this->planar_config = PLANARCONFIG_CONTIG;
 	}
 
 	template <>
-	TIFFWriterDetail<std::int16_t>::TIFFWriterDetail(std::string bname, std::string bpath) : TIFFWriterBackend(bname, bpath) {
+	TIFFWriterDetail<std::int16_t>::TIFFWriterDetail(std::string bname, std::string bpath) :
+	TIFFWriterBackend(bname, bpath) {
 		this->sample_format = SAMPLEFORMAT_INT;
 		this->bits_per_sample = 16;
 		this->planar_config = PLANARCONFIG_CONTIG;
 	}
 
 	template <>
-	TIFFWriterDetail<std::int32_t>::TIFFWriterDetail(std::string bname, std::string bpath) : TIFFWriterBackend(bname, bpath) {
+	TIFFWriterDetail<std::int32_t>::TIFFWriterDetail(std::string bname, std::string bpath) :
+	TIFFWriterBackend(bname, bpath) {
 		this->sample_format = SAMPLEFORMAT_INT;
 		this->bits_per_sample = 32;
 		this->planar_config = PLANARCONFIG_CONTIG;
 	}
 
 	template <>
-	TIFFWriterDetail<std::int64_t>::TIFFWriterDetail(std::string bname, std::string bpath) : TIFFWriterBackend(bname, bpath) {
+	TIFFWriterDetail<std::int64_t>::TIFFWriterDetail(std::string bname, std::string bpath) :
+	TIFFWriterBackend(bname, bpath) {
 		this->sample_format = SAMPLEFORMAT_INT;
 		this->bits_per_sample = 64;
 		this->planar_config = PLANARCONFIG_CONTIG;
@@ -155,6 +169,9 @@ namespace Tiff {
 	}
 
 	template <typename element_t>
+	TIFFWriterDetail<element_t>::~TIFFWriterDetail() {}
+
+	template <typename element_t>
 	bool TIFFWriterDetail<element_t>::writeSlice(Grid::Ptr src_grid, std::size_t slice, ThreadedTask::Ptr task) {
 		// Warning : will only write SINGLE-CHANNEL IMAGES.
 
@@ -176,6 +193,7 @@ namespace Tiff {
 		// get data from the grid :
 		std::vector<pixel_t> slice_values;
 		src_grid->readSlice(slice, slice_values);
+		bool successful_write = true;
 
 		// start to iterate on the voxel dimensionality :
 		for (std::size_t channel = 0; channel < dimensionality; ++channel) {
@@ -184,13 +202,23 @@ namespace Tiff {
 			// open TIFF file :
 			TIFF* file = this->open_file(target_name);
 			// write directory headers :
-			this->write_tiff_tags(file, src_grid, slice, channel);
+			std::uint32_t strip_size = this->write_tiff_tags(file, src_grid, slice, channel);
+			// check no error occured :
+			if (strip_size == 0) {
+				std::cerr << "Error : slice " << slice << ", channel " << channel << " of file \"" << target_name <<
+							 "\" cannot be written to (no strip size).";
+				successful_write = false;
+				continue;
+			}
 			// extract data from data vector :
-			std::vector<pixel_t> current_data = this->read_subpixels_from_slice(slice_values, dimensionality,)
+			std::vector<pixel_t> current_data = this->read_subpixels_from_slice(slice_values, dimensionality, channel);
 			// write the data to file :
-
+			this->write_tiff_strips(file, current_data, resolution.x, resolution.y, strip_size);
+			// close the file, and switch to the next one
 			this->close_file(file);
 		}
+
+		return successful_write;
 	}
 
 	template <typename element_t>
@@ -217,15 +245,15 @@ namespace Tiff {
 	}
 
 	template <typename element_t>
-	void TIFFWriterDetail<element_t>::write_tiff_tags(TIFF* file, Grid::Ptr grid, std::size_t slice_idx, std::size_t start) {
+	std::uint32_t TIFFWriterDetail<element_t>::write_tiff_tags(TIFF* file, Grid::Ptr grid, std::size_t slice_idx, std::size_t start) {
 		// cannot write to non-open file :
-		if (file == nullptr || file == NULL) { return; }
+		if (file == nullptr || file == NULL) { return 0; }
 
 		// gather info from the grid first :
 		svec3 resolution = grid->getResolution();
 		std::size_t vox_dimensionality = grid->getVoxelDimensionality();
 		// if trying to write with a start sample bigger than the number of samples, return.
-		if (start >= vox_dimensionality) { return; }
+		if (start >= vox_dimensionality) { return 0; }
 
 		// REMINDER : will only write single-channel TIFF images.
 		// as such, set photometric interpretation to minisblack :
@@ -244,7 +272,8 @@ namespace Tiff {
 		TIFFSetField(file, TIFFTAG_EXTRASAMPLES, 0, nullptr); // no extra samples [ MIGHT SEGFAULT ] because of nullptr
 
 		// Required fields from the TIFF spec for greyscale images :
-		TIFFSetField(file, TIFFTAG_COMPRESSION, COMPRESSION_NONE);
+		TIFFSetField(file, TIFFTAG_COMPRESSION, COMPRESSION_NONE);		// No compression applied
+		TIFFSetField(file, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);	// sets contiguous arrays in mem
 
 		// Set the X and Y resolutions (with corresponding units) :
 		TIFFSetField(file, TIFFTAG_RESOLUTIONUNIT, RESUNIT_CENTIMETER);
@@ -252,6 +281,14 @@ namespace Tiff {
 		glm::vec3 voxel_dimensions = grid->getVoxelDimensions() * 1.e-3f;
 		TIFFSetField(file, TIFFTAG_XRESOLUTION, voxel_dimensions.x);
 		TIFFSetField(file, TIFFTAG_YRESOLUTION, voxel_dimensions.y);
+
+		// Compute the expected rowspersample :
+		// note : last param of TIFFDefaultStripSize is an estimate of the desired size of the strip
+		std::uint32_t rows_per_strip = TIFFDefaultStripSize(file, resolution.x * sizeof(pixel_t));
+		// And set it in the file :
+		TIFFSetField(file, TIFFTAG_ROWSPERSTRIP, rows_per_strip);
+
+		return rows_per_strip;
 	}
 
 	template <typename element_t>
@@ -284,6 +321,41 @@ namespace Tiff {
 		// vector should be all read.
 
 		return out;
+	}
+
+	template <typename element_t>
+	bool TIFFWriterDetail<element_t>::write_tiff_strips(TIFF* file, std::vector<element_t>& data, std::size_t width,
+														std::size_t height, std::uint32_t estimated_strip_size) {
+		// check parameters are valid :
+		if (file == NULL || file == nullptr) { std::cerr << "Tried to write to NULL.\n"; return false; }
+		if (data.size() == 0) { std::cerr << "Tried to write no data.\n"; return false; }
+
+		// ADDITIONAL CHECK : see if data has a round multiple of 'width' elements :
+		if ((data.size() % width) != 0) { std::cerr<<"ERROR : too many components (over="<<data.size()%width<<")\n"; }
+
+		// pre-allocate a copy buffer for libtiff :
+		void* tiff_buffer = _TIFFmalloc(width*sizeof(pixel_t));
+		if (tiff_buffer == NULL) { std::cerr << "couldn't allocate tiff buffer"; return false; }
+
+		// tracks if any strips have not been written to the file
+		bool write_successful = true;
+		// WARNING : doing it this way may produce a corrupted TIFF file, where some rows/strips are missing !!!
+
+		for (std::size_t current_row = 0; current_row < height; current_row++) {
+			// copy data over from the width buffer :
+			_TIFFmemcpy(tiff_buffer, &(data[current_row*width]), current_row*sizeof(pixel_t));
+			// attempt to write the scanline to the file :
+			if (TIFFWriteScanline(file, tiff_buffer, current_row) < 0) {
+				std::cerr << "ERROR could not write the contents of the row " << current_row << " of the file \"" <<
+							 TIFFFileName(file) << "\"\n";
+				write_successful = false;
+			}
+		}
+
+		// free up the local buffer :
+		_TIFFfree(tiff_buffer);
+
+		return write_successful;
 	}
 
 } // namespace Tiff
