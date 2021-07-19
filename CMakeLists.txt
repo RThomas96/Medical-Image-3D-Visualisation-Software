@@ -21,9 +21,10 @@ FIND_PACKAGE(TinyTIFF REQUIRED PATHS ${CMAKE_CURRENT_LIST_DIR}/third_party/compi
 
 ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/third_party/glm)
 SET(LOCAL_GLM_HEADER_DIR "${CMAKE_CURRENT_LIST_DIR}/third_party/glm/")
+SET(LIBS_COMPILED_HEADERS "${CMAKE_CURRENT_LIST_DIR}/third_party/compiled_libraries/include")
 
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/image)
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/colorscale)
+ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/image)
+ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/colorscale)
 
 # Library for image reading/writing {{{
 ADD_LIBRARY(ImageIO STATIC

@@ -85,7 +85,7 @@ void TransformStack::update_precomputed_matrix() {
 			case TransformType::Default:
 				matrices.push_back(glm::identity<glm::mat4>());
 				[[fallthrough]];
-			case TransformType::Unknown:
+			case TransformType::Transform_Unknown:
 			break;
 		}
 		// advance in the list

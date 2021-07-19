@@ -22,6 +22,8 @@ extern "C"
 int main(int argc, char* argv[]) {
 
 	QSurfaceFormat fmt;
+	fmt.setMajorVersion(3);
+	fmt.setMinorVersion(2);
 	fmt.setProfile(QSurfaceFormat::CoreProfile);
 	fmt.setOption(QSurfaceFormat::DebugContext); // adds GL_KHR_debug extension to the OpenGL context creation
 	//fmt.setSamples(4); // enables multi-sampling

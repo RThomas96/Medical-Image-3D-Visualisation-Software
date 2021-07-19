@@ -8,7 +8,8 @@
 
 enum TransformType {
 	/// @brief Invalid type, reserved for un-initialized transforms.
-	Unknown,
+	/// @note Must have a prefix, and cannot simply be named Unknown (conflicts with Windows _MEDIA_TYPE enum)
+	Transform_Unknown,
 	/// @brief Default transform type, representing an identity matrix.
 	Default,
 	/// @brief Transform-Rotate-Scale transforms, which are the easiest to manipulate in a GUI.
@@ -26,7 +27,7 @@ class ITransform {
 
 	protected:
 		/// @brief Default ctor for the ITransform class.
-		ITransform(TransformType _type = Unknown) : m_transformType(_type), m_nextTransform(nullptr) {}
+		ITransform(TransformType _type = Transform_Unknown) : m_transformType(_type), m_nextTransform(nullptr){}
 
 	public:
 		/// @brief Default dtor for the ITransform class.
