@@ -34,9 +34,25 @@ MainWidget::~MainWidget() {
 	this->action_addGrid->disconnect();
 	this->action_saveGrid->disconnect();
 	this->action_exitProgram->disconnect();
+	this->action_drawModeS->disconnect();
+	this->action_drawModeV->disconnect();
+	this->action_drawModeVB->disconnect();
+	this->action_showVisuBox->disconnect();
+	this->action_showSettings->disconnect();
+	this->action_showHelp3D->disconnect();
+	this->action_showHelpPlane->disconnect();
+
+	delete this->action_showHelp3D;
+	delete this->action_showHelpPlane;
+	delete this->action_showSettings;
 
 	delete this->action_addGrid;
 	delete this->action_saveGrid;
+	delete this->action_exitProgram;
+	delete this->action_drawModeVB;
+	delete this->action_drawModeV;
+	delete this->action_drawModeS;
+	delete this->action_showVisuBox;
 	delete this->viewer_planeZ;
 	delete this->viewer_planeY;
 	delete this->viewer_planeX;
@@ -45,6 +61,9 @@ MainWidget::~MainWidget() {
 	delete this->headerZ;
 	delete this->headerY;
 	delete this->headerX;
+	delete this->header3d;
+
+	this->showGLLog->disconnect();
 
 	for (std::size_t i = 0; i < this->strayObj.size(); ++i) {
 		if (this->strayObj[i] != nullptr) {

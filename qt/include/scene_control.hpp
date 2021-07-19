@@ -30,7 +30,7 @@ class ColorButton : public QWidget {
 	Q_OBJECT
 	public:
 		ColorButton(QColor _color, QWidget* parent = nullptr);
-		virtual ~ColorButton(void) = default;
+		virtual ~ColorButton(void);
 	signals:
 		void colorChanged(QColor color);
 	public slots:
@@ -78,7 +78,7 @@ class ControlPanel : public QWidget {
 		Q_OBJECT
 	public:
 		ControlPanel(Scene* const scene, Viewer* lv, QWidget* parent = nullptr);
-		~ControlPanel();
+		virtual ~ControlPanel();
 	protected:
 		void initSignals(void);
 		void updateViewers(void);

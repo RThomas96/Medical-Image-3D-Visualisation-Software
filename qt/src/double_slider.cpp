@@ -6,15 +6,13 @@ DoubleSlider::DoubleSlider(QWidget* parent) : QWidget(parent) {
 	this->value_slider = new RangeSlider(Qt::Horizontal);
 	this->value_slider->setHandleToolTip("%1");
 	this->label_min_header_current = new QLabel("");
-	this->label_max_header_current = new QLabel("");
 	this->label_header_min = new QLabel("Min : ");
 	this->label_header_max = new QLabel("Max : ");
 	this->label_min_value_current = new QLabel(QString::number(65535));
-	this->label_max_value_current = new QLabel(QString::number(65535));
 	this->label_value_min = new QLabel(QString::number(65535));
 	this->label_value_max = new QLabel(QString::number(65535));
 
-	// Columns :
+	// Columns : [ Warning, outdated ]
 	// 0 : header min
 	// 1 : value min
 	// 2 : slider			(stretchable to infinity)
@@ -63,8 +61,6 @@ void DoubleSlider::disable(bool _dis) {
 	this->label_min_value_current->setDisabled(_dis);
 	this->label_value_max->setDisabled(_dis);
 	this->label_value_min->setDisabled(_dis);
-	this->label_max_header_current->setDisabled(_dis);
-	this->label_max_value_current->setDisabled(_dis);
 }
 
 void DoubleSlider::setRange(int min, int max) {
@@ -111,7 +107,7 @@ void DoubleSlider::setMax(int max) {
 void DoubleSlider::setMinValue(int min) {
 	int other = this->value_slider->maximumValue();
 	if (min >= other) {
-		if (other >= this->value_slider->maximum()-1) {
+		if (other >= this->value_slider->maximum()) {
 			this->value_slider->setMinimumValue(min-1);
 			this->value_slider->setMinimumPosition(min-1);
 			return;
@@ -127,7 +123,7 @@ void DoubleSlider::setMinValue(int min) {
 void DoubleSlider::setMaxValue(int max) {
 	int other = this->value_slider->minimumValue();
 	if (max <= other) {
-		if (other <= this->value_slider->minimum()+1) {
+		if (other <= this->value_slider->minimum()) {
 			this->value_slider->setMaximumValue(max+1);
 			this->value_slider->setMaximumPosition(max+1);
 			return;
@@ -143,7 +139,7 @@ void DoubleSlider::setMaxValue(int max) {
 void DoubleSlider::changeMin(int min) {
 	int other = this->value_slider->maximumValue();
 	if (min >= other) {
-		if (other >= this->value_slider->maximum()-1) {
+		if (other >= this->value_slider->maximum()) {
 			this->value_slider->setMinimumValue(min-1);
 			this->value_slider->setMinimumPosition(min-1);
 			return;
@@ -157,7 +153,7 @@ void DoubleSlider::changeMin(int min) {
 void DoubleSlider::changeMax(int max) {
 	int other = this->value_slider->minimumValue();
 	if (max <= other) {
-		if (other <= this->value_slider->minimum()+1) {
+		if (other <= this->value_slider->minimum()) {
 			this->value_slider->setMaximumValue(max+1);
 			this->value_slider->setMaximumPosition(max+1);
 			return;

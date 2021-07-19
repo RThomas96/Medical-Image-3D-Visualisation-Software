@@ -39,7 +39,7 @@ class MainWidget : public QMainWindow {
 		Q_OBJECT
 	public:
 		MainWidget();
-		~MainWidget();
+		virtual ~MainWidget();
 		Viewer* getViewer3D() const { return this->viewer; }
 	protected:
 		/// @brief Setup all widgets, and connect their signals.

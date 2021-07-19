@@ -35,11 +35,9 @@ class DoubleSlider : public QWidget {
 		QLabel* label_header_min;
 		QLabel* label_header_max;
 		QLabel* label_min_header_current;
-		QLabel* label_max_header_current;
 		QLabel* label_value_min;
 		QLabel* label_value_max;
 		QLabel* label_min_value_current;
-		QLabel* label_max_value_current;
 		RangeSlider* value_slider;
 		QGridLayout* layout_grid;
 };

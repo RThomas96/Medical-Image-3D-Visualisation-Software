@@ -67,6 +67,10 @@ ViewerHeader::~ViewerHeader() {
 	delete this->button_rotateClockwise;
 	delete this->button_togglePlane;
 	delete this->slider_planeDepth;
+	delete this->icon_togglePlane_Off;
+	delete this->icon_togglePlane_On;
+	delete this->icon_rotatePlane;
+	delete this->icon_invertPlane;
 	delete this->layout;
 }
 
@@ -168,6 +172,13 @@ ViewerHeader3D::ViewerHeader3D(Viewer* _viewer, Scene* _scene, QWidget* parent) 
 ViewerHeader3D::~ViewerHeader3D() {
 	if (this->button_invertPlaneCut) { this->button_invertPlaneCut->disconnect(); }
 	if (this->button_togglePlane) { this->button_togglePlane->disconnect(); }
+
+	delete this->icon_hide;
+	delete this->icon_show;
+	delete this->icon_invert;
+	delete this->icon_volumetric_boxed;
+	delete this->icon_volumetric;
+	delete this->icon_solid;
 }
 
 void ViewerHeader3D::setupWidgets() {

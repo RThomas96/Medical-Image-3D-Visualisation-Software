@@ -28,6 +28,12 @@ ColorButton::ColorButton(QColor _color, QWidget* parent) : QWidget(parent) {
 	});
 }
 
+ColorButton::~ColorButton() {
+	delete this->icon;
+	delete this->pixmap;
+	delete this->button;
+}
+
 void ColorButton::setColor(QColor _color) {
 	this->color = _color;
 	this->pixmap->fill(this->color);
@@ -112,7 +118,6 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, QWidget* parent) : QW
 	this->rangeslider_green = new DoubleSlider;
 
 	this->red_coloration = new QComboBox;
-	this->green_coloration = new QComboBox;
 	this->red_coloration->addItem("Greyscale", ColorFunction::SingleChannel);
 	this->red_coloration->addItem("HSV to RGB", ColorFunction::HSV2RGB);
 	this->red_coloration->addItem("User colors", ColorFunction::ColorMagnitude);
@@ -183,7 +188,20 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, QWidget* parent) : QW
 	}
 }
 
-ControlPanel::~ControlPanel() = default;
+ControlPanel::~ControlPanel() {
+	delete this->button_green_colorbounds;
+	delete this->button_red_colorbounds;
+	delete this->green_coloration;
+	delete this->red_coloration;
+	delete this->colorbutton_green_max;
+	delete this->colorbutton_green_min;
+	delete this->colorbutton_red_max;
+	delete this->colorbutton_red_min;
+	delete this->rangeslider_green;
+	delete this->rangeslider_red;
+	delete this->groupbox_green;
+	delete this->groupbox_red;
+}
 
 void ControlPanel::initSignals() {
 	// Modifies the min/max values of the texture to be considered valuable data :
