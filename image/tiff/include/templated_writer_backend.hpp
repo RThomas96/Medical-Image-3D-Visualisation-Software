@@ -32,9 +32,12 @@ namespace Image {
 				/// @brief The writer's default ctor, de-allocating any resources it holds.
 				virtual ~TIFFWriterDetail(void);
 
+				/// @brief Creates a suitable backend of the current type (TIFFWriterDetail<element_t>)
 				static Ptr createBackend(std::string bname) {
 					return std::make_unique<TIFFWriterDetail<pixel_t>>(bname);
 				}
+
+				/// @brief Creates a suitable backend of the current type (TIFFWriterDetail<element_t>)
 				static Ptr createBackend(std::string bname, std::string bpath) {
 					return std::make_unique<TIFFWriterDetail<pixel_t>>(bname, bpath);
 				}

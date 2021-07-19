@@ -9,43 +9,45 @@
 
 namespace Image {
 
-	/// @b This is a generic function interface for a class that writes images to disk.
+	/// @brief This is a generic function interface for a class that writes images to disk.
+	/// @details Akin to the ImageBackendImpl class, the WriterBackendImpl class is a function interface that allows to
+	/// write many different kinds of image stacks to disk.
 	/// @note Due to the highly variable nature of the grid it might be 'referencing', the particular behaviour of each
 	/// filetype's writing procedures will take place in derived classes, like the ImageBackendImpl class.
 	class WriterBackendImpl {
 		public:
-			/// @b Unique pointer type to an object of this class.
+			/// @brief Unique pointer type to an object of this class.
 			typedef std::unique_ptr<WriterBackendImpl> Ptr;
 
 		protected:
-			/// @b A default ctor which defines a basename for the files, with the base path being the user's HOME.
+			/// @brief A default ctor which defines a basename for the files, with the base path being the user's HOME.
 			WriterBackendImpl(std::string basename);
 
-			/// @b A 'full' ctor which defines a basename for the file, as well as a base path to save them.
+			/// @brief A 'full' ctor which defines a basename for the file, as well as a base path to save them.
 			WriterBackendImpl(std::string basename, std::string basepath);
 
 		public:
-			/// @b The writer's default ctor, de-allocating any resources it holds.
+			/// @brief The writer's default ctor, de-allocating any resources it holds.
 			virtual ~WriterBackendImpl(void) = default;
 
 		public:
-			/// @b Sets the base name of the files to a user-defined constant.
+			/// @brief Sets the base name of the files to a user-defined constant.
 			/// @note By default, it is defined as 'grid'.
 			void setBaseName(std::string basename);
 
-			/// @b Returns the base name of the files this writer will produce.
+			/// @brief Returns the base name of the files this writer will produce.
 			/// @note By default, it is defined as 'grid'.
 			std::string getBaseName(void) const;
 
-			/// @b Sets the base path where this writer will write files to.
+			/// @brief Sets the base path where this writer will write files to.
 			/// @note By default, it is the user's HOME directory.
 			void setBasePath(std::string basepath);
 
-			/// @b Returns the base path where this writer will write files to.
+			/// @brief Returns the base path where this writer will write files to.
 			/// @note By default, it is the user's HOME directory.
 			std::string getBasePath(void) const;
 
-			/// @b Virtual function call to write a grid's slice to disk. Specialized in derived classes.
+			/// @brief Virtual function call to write a grid's slice to disk. Specialized in derived classes.
 			/// @details Takes a pointer to a grid and a slice index in parameter. It will then write the contents of
 			/// this slice to disk, according to the capabilities of the paritcular writer backend implemented.
 			/// @param src_grid The grid to get the contents of the image from
@@ -56,7 +58,7 @@ namespace Image {
 			/// be able to queue up the tasks later.
 			virtual bool writeSlice(Grid::Ptr src_grid, std::size_t slice, ThreadedTask::Ptr task) noexcept(false) = 0;
 
-			/// @b Virtual function call to write a whole grid to disk. Specialized in derived classes.
+			/// @brief Virtual function call to write a whole grid to disk. Specialized in derived classes.
 			/// @details Takes a pointer to a grid to write to disk in parameter. It will then write the contents of
 			/// the whole grid to the disk, according to the capabilities of the paritcular writer backend implemented.
 			/// @param src_grid The grid to get the contents of the image from
@@ -67,10 +69,10 @@ namespace Image {
 			virtual bool writeGrid(Grid::Ptr src_grid, ThreadedTask::Ptr task) noexcept(false) = 0;
 
 		protected:
-			/// @b The basename of the grids to write
+			/// @brief The basename of the grids to write
 			std::string file_base_name;
 
-			/// @b The base path of the files to write to disk.
+			/// @brief The base path of the files to write to disk.
 			std::string file_base_path;
 	};
 

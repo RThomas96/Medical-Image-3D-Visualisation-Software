@@ -11,7 +11,9 @@
 namespace Image {
 
 	/// @brief The Writer class allows to write images from a grid to disk.
-	/// @details Akin to the Grid class, this class uses the pImpl idiom to have multiple
+	/// @details Akin to the Grid class, this class uses the pImpl idiom to have multiple possible implementations that
+	/// depend on the file type desired, and on the data type required. As such, this structure can write whatever kind
+	/// of image stack the user desires, as long as it has a valid implementation as a backend.
 	class Writer {
 		public:
 			/// @brief Shared pointer type to an object of this class.
@@ -55,7 +57,7 @@ namespace Image {
 			/// be able to queue up the tasks later.
 			bool writeSlice(Grid::Ptr src_grid, std::size_t slice, ThreadedTask::Ptr& task) noexcept(false);
 
-			/// @b Virtual function call to write a whole grid to disk.
+			/// @brief Virtual function call to write a whole grid to disk.
 			/// @details Takes a pointer to a grid to write to disk in parameter. It will then write the contents of
 			/// the whole grid to the disk, according to the capabilities of the pImpl object.
 			/// @param src_grid The grid to get the contents of the image from
@@ -66,7 +68,7 @@ namespace Image {
 			bool writeGrid(Grid::Ptr src_grid, ThreadedTask::Ptr& task) noexcept(false);
 
 		protected:
-			/// @b The pointer type which holds the logic for writing files to disk.
+			/// @brief The pointer type which holds the logic for writing files to disk.
 			std::experimental::propagate_const<WriterBackendImpl::Ptr> pImpl;
 	};
 
