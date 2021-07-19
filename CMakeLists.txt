@@ -9,6 +9,9 @@ INCLUDE(CMakeSetup)
 INCLUDE(FindQGLViewer)
 # Find the local libTIFF version :
 INCLUDE(FindLocalTIFF)
+# Add the GLSL and icons dependencies :
+INCLUDE(ShaderDependency)
+INCLUDE(ResourceDependency)
 
 # Required libraries {{{
 FIND_PACKAGE(Qt5 REQUIRED COMPONENTS Core Gui Widgets Xml OpenGL)
@@ -154,6 +157,9 @@ TARGET_PRECOMPILE_HEADERS(neighbor_visu
 	# shut up about the deprecated functions used within :
 	PRIVATE ${QGLViewer_HEADER_DIR}/QGLViewer/qglviewer.h
 	# Also, dramatically reduces compilation time.
+)
+SET_TARGET_PROPERTIES(neighbor_visu PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${VISU_OUTPUT_DIR}
 )
 TARGET_INCLUDE_DIRECTORIES(neighbor_visu
 	PRIVATE ${OPENGL_INCLUDE_DIRS}
