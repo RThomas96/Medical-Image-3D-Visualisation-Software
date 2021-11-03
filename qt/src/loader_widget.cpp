@@ -1326,7 +1326,7 @@ void GridLoaderWidget::loadGrid_newAPI() {
 		static_cast<float>(this->dsb_transformationDY->value()),
 		static_cast<float>(this->dsb_transformationDZ->value())
 	);
-	svec3 dims = this->inputGridR->getResolution();
+    //svec3 dims = this->inputGridR->getResolution();
 	float a = this->dsb_transformationA->value();
 	auto transfo_matrix = computeTransfoShear_newAPI(a, this->_testing_grid, vxdims);
 
