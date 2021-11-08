@@ -1,4 +1,4 @@
-#include "../include/writer_backend.hpp"
+#include "../include/grid_writer_interface.hpp"
 
 namespace Image {
 

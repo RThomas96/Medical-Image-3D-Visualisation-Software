@@ -24,10 +24,10 @@ SET_TARGET_PROPERTIES(grid_api PROPERTIES
 )
 
 ADD_LIBRARY(writergrid STATIC
-	include/writer.hpp
-	include/writer_backend.hpp
-	src/writer.cpp
-	src/writer_backend.cpp
+	include/grid_writer.hpp
+	include/grid_writer_interface.hpp
+	src/grid_writer.cpp
+	src/grid_writer_interface.cpp
 )
 TARGET_INCLUDE_DIRECTORIES(writergrid
 	PRIVATE ${LOCAL_GLM_HEADER_DIR}
