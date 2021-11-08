@@ -1,10 +1,10 @@
 #ifndef VISUALIZATION_IMAGE_API_BACKEND_HPP_
 #define VISUALIZATION_IMAGE_API_BACKEND_HPP_
 
-#include "image_api_common.hpp"
-#include "threaded_task.hpp"
+#include "../utils/include/image_api_common.hpp"
+#include "../utils/include/threaded_task.hpp"
 // Needed for bounding box :
-#include "../../../grid/include/bounding_box.hpp"
+#include "../../grid/include/bounding_box.hpp"
 
 #include <array>
 #include <memory>

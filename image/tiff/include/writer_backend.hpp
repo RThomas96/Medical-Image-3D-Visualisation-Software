@@ -4,8 +4,8 @@
 #include "./backend.hpp"
 
 #include "../../../new_grid/include/grid.hpp"
-#include "../../api/include/backend.hpp"
-#include "../../api/include/writer_backend.hpp"
+#include "../../interface/backend.hpp"
+#include "../../../new_grid/include/writer_backend.hpp"
 
 namespace Image {
 

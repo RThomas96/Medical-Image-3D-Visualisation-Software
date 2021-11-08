@@ -22,3 +22,19 @@ SET_TARGET_PROPERTIES(grid_api PROPERTIES
 	AUTORCC OFF
 	AUTOUIC OFF
 )
+
+ADD_LIBRARY(writergrid STATIC
+	include/writer.hpp
+	include/writer_backend.hpp
+	src/writer.cpp
+	src/writer_backend.cpp
+)
+TARGET_INCLUDE_DIRECTORIES(writergrid
+	PRIVATE ${LOCAL_GLM_HEADER_DIR}
+)
+SET_TARGET_PROPERTIES(writergrid PROPERTIES
+	AUTOMOC OFF
+	AUTORCC OFF
+	AUTOUIC OFF
+	POSITION_INDEPENDENT_CODE ON
+)

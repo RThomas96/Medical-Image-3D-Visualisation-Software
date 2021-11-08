@@ -11,10 +11,10 @@
 #include "../../macros.hpp"
 
 // Grid and Image APIs :
-#include "../../api/include/image_api_common.hpp"
-#include "../../api/include/backend.hpp"
-#include "../../api/include/read_cache.hpp"
-#include "../../api/include/threaded_task.hpp"
+#include "../../utils/include/image_api_common.hpp"
+#include "../../interface/backend.hpp"
+#include "../../utils/include/read_cache.hpp"
+#include "../../utils/include/threaded_task.hpp"
 
 // libTIFF headers :
 #include <tiff.h>

@@ -1,7 +1,7 @@
 #ifndef VISUALIAZTION_IMAGE_TIFF_INCLUDE_BACKEND_HPP_
 #define VISUALIAZTION_IMAGE_TIFF_INCLUDE_BACKEND_HPP_
 
-#include "../../api/include/backend.hpp"
+#include "../../interface/backend.hpp"
 #include "./tiff_frame.hpp"
 
 /// @defgroup tiff TIFF file handling

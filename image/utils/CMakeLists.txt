@@ -3,7 +3,7 @@
 #
 
 ADD_LIBRARY(imagegrid STATIC
-	include/backend.hpp
+	../interface/backend.hpp
 	include/image_api_common.hpp
 	include/read_cache.hpp
 	include/threaded_task.hpp
@@ -15,22 +15,6 @@ TARGET_INCLUDE_DIRECTORIES(imagegrid
 	PRIVATE ${LOCAL_GLM_HEADER_DIR}
 )
 SET_TARGET_PROPERTIES(imagegrid PROPERTIES
-	AUTOMOC OFF
-	AUTORCC OFF
-	AUTOUIC OFF
-	POSITION_INDEPENDENT_CODE ON
-)
-
-ADD_LIBRARY(writergrid STATIC
-	include/writer.hpp
-	include/writer_backend.hpp
-	src/writer.cpp
-	src/writer_backend.cpp
-)
-TARGET_INCLUDE_DIRECTORIES(writergrid
-	PRIVATE ${LOCAL_GLM_HEADER_DIR}
-)
-SET_TARGET_PROPERTIES(writergrid PROPERTIES
 	AUTOMOC OFF
 	AUTORCC OFF
 	AUTOUIC OFF
