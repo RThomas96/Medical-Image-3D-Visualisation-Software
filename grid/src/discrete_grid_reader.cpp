@@ -1,4 +1,4 @@
-#include "../include/grid_reader.hpp"
+#include "../include/discrete_grid_reader.hpp"
 
 #include <QXmlStreamReader>
 #include <QDir>

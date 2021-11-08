@@ -3,7 +3,7 @@
 
 #include "../../macros.hpp"
 #include "../../features.hpp"
-#include "./grid_reader.hpp"
+#include "./discrete_grid_reader.hpp"
 
 #include <tinytiffwriter.h>
 

@@ -3,7 +3,7 @@
 
 #include "../../macros.hpp"
 #include "../../viewer/include/scene.hpp"
-#include "../../grid/include/grid_reader.hpp"
+#include "../../grid/include/discrete_grid_reader.hpp"
 #include "../../grid/include/discrete_grid.hpp"
 #include "../../grid/include/input_discrete_grid.hpp"
 #include "../../viewer/include/neighbor_visu_viewer.hpp"

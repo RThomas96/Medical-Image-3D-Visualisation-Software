@@ -4,8 +4,8 @@
 #include "../../macros.hpp"
 #include "../../features.hpp"
 
-#include "./grid_reader.hpp"
-#include "./grid_writer.hpp"
+#include "./discrete_grid_reader.hpp"
+#include "./discrete_grid_writer.hpp"
 #include "./bounding_box.hpp"
 
 #include <glm/glm.hpp>

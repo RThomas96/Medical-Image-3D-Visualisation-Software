@@ -1,5 +1,5 @@
 #include "../include/grid_control.hpp"
-#include "../../grid/include/grid_writer.hpp"
+#include "../../grid/include/discrete_grid_writer.hpp"
 #include "../../viewer/include/scene.hpp"
 
 #include <QHBoxLayout>
