@@ -1,7 +1,7 @@
 #ifndef VISUALIAZTION_IMAGE_TIFF_INCLUDE_TEMPLATED_BACKEND_HPP_
 #define VISUALIAZTION_IMAGE_TIFF_INCLUDE_TEMPLATED_BACKEND_HPP_
 
-#include "./TIFFReaderInterface.hpp"
+#include "./tiff_reader_interface.hpp"
 
 namespace Image {
 
@@ -220,6 +220,6 @@ namespace Tiff {
 
 }
 
-#include "./templated_backend.impl.hpp"
+#include "./tiff_reader_templated.impl.hpp"
 
 #endif // VISUALIAZTION_IMAGE_TIFF_INCLUDE_TEMPLATED_BACKEND_HPP_

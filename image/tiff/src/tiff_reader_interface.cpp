@@ -1,6 +1,6 @@
-#include "../include/TIFFReaderInterface.hpp"
+#include "../include/tiff_reader_interface.hpp"
 
-#include "../include/templated_backend.hpp"
+#include "../include/tiff_reader_templated.hpp"
 
 #include <thread>
 #include <memory>

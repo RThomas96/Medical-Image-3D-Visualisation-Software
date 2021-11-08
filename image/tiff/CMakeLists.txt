@@ -11,13 +11,13 @@ ENDIF()
 ADD_LIBRARY(grid_tiff_backend STATIC
 	src/tiff_frame.cpp
 	src/tiff_helpers.cpp
-    src/TIFFReaderInterface.cpp
+    src/tiff_reader_interface.cpp
 
 	include/tiff_include_common.hpp
 
-    include/TIFFReaderInterface.hpp
-	include/templated_backend.hpp
-	include/templated_backend.impl.hpp
+    include/tiff_reader_interface.hpp
+	include/tiff_reader_templated.hpp
+	include/tiff_reader_templated.impl.hpp
 	include/tiff_frame.hpp
 	include/tiff_helpers.hpp
 )
@@ -41,8 +41,8 @@ SET_TARGET_PROPERTIES(grid_tiff_backend PROPERTIES
 ADD_LIBRARY(writergrid_tiff STATIC
 	include/writer_backend.hpp
 	src/writer_backend.cpp
-	include/templated_writer_backend.hpp
-	include/templated_writer_backend.impl.hpp
+	include/tiff_reader_templated.hpp
+	include/tiff_reader_templated.impl.hpp
 )
 TARGET_INCLUDE_DIRECTORIES(writergrid_tiff
 	PRIVATE ${libTIFF_HEADER_DIR}
