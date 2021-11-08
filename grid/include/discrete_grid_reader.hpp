@@ -241,7 +241,7 @@ namespace IO {
 	/// @details This is the base class of many reader implementations. It defines a function interface to query data
 	/// from disk. However, it can only work with one data type, and cannot be changed unless recompiled with another
 	/// format in mind. Code is not automatically adapted to the new format, and should not be used anymore.
-	/// @see Image::Grid Image::ImageBackendImpl
+	/// @see Image::Grid Image::ImageReaderInterface
 	/// @warning This class is kept here as legacy code is being migrated. Do not use it in any new code.
 	class GenericGridReader {
 		public:

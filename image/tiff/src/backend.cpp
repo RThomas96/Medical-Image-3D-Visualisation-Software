@@ -12,7 +12,7 @@ namespace Image {
 
 namespace Tiff {
 
-	TIFFBackendImpl::TIFFBackendImpl(void) : ImageBackendImpl() {}
+	TIFFBackendImpl::TIFFBackendImpl(void) : ImageReaderInterface() {}
 
 	std::string TIFFBackendImpl::getImageName() const { return this->stack_base_name; }
 

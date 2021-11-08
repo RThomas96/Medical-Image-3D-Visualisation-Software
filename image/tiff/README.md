@@ -1,4 +1,4 @@
-# libTIFF implementation of ImageBackendImpl
+# libTIFF implementation of ImageReaderInterface
 
 ## What files are supported ?
 

@@ -26,22 +26,22 @@ namespace Image {
 
 	/**
 	 * @ingroup newgrid
-	 * @brief The ImageBackendImpl class aims to provide a simple, yet usable API to query data from a set of files.
+	 * @brief The ImageReaderInterface class aims to provide a simple, yet usable API to query data from a set of files.
 	 * @details This is only a base class, all its functionnality will be implemented in derived classes. As such, we
 	 * can provide support for a wide range of data types, while having a stable API.
 	 */
-	class ImageBackendImpl {
+	class ImageReaderInterface {
 		public:
 			/// @brief Simple typedef for a unique_ptr of an image backend.
-			typedef std::unique_ptr<ImageBackendImpl> Ptr;
+			typedef std::unique_ptr<ImageReaderInterface> Ptr;
 
 		protected:
 			/// @brief Default ctor of an image backend. Declared protected to not be instanciated alone.
-			ImageBackendImpl() : internal_data_type(ImageDataType::Unknown) {}
+			ImageReaderInterface() : internal_data_type(ImageDataType::Unknown) {}
 
 		public:
 			/// @brief Default dtor of the class : frees up all allocated resources, and returns.
-			virtual ~ImageBackendImpl(void) = default;
+			virtual ~ImageReaderInterface(void) = default;
 
 			/// @brief Returns the internal data type represented in the input files.
 			virtual ImageDataType getInternalDataType(void) const = 0;

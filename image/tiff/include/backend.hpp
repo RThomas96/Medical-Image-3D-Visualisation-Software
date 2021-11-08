@@ -1,7 +1,7 @@
 #ifndef VISUALIAZTION_IMAGE_TIFF_INCLUDE_BACKEND_HPP_
 #define VISUALIAZTION_IMAGE_TIFF_INCLUDE_BACKEND_HPP_
 
-#include "../../interface/backend.hpp"
+#include "../../interface/image_reader_interface.hpp"
 #include "./tiff_frame.hpp"
 
 /// @defgroup tiff TIFF file handling
@@ -19,7 +19,7 @@ namespace Tiff {
 	/// @brief The TIFFBackendImpl class is the base class that implements the necessary logic to read TIFF images.
 	/// @details This base class is then derived into template versions of this backend, which can read values directly
 	/// from the images on disk into memory.
-	class TIFFBackendImpl : public ImageBackendImpl {
+	class TIFFBackendImpl : public ImageReaderInterface {
 		public:
 			/// @brief A simple typedef which restricts the class to be owned by one object only
 			typedef std::unique_ptr<TIFFBackendImpl> Ptr;

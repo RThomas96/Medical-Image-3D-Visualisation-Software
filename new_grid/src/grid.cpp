@@ -2,7 +2,7 @@
 
 namespace Image {
 
-	Grid::Grid(ImageBackendImpl::Ptr _ptr) : pImpl(std::move(_ptr)), grid_transforms(std::make_shared<TransformStack>()) {
+	Grid::Grid(ImageReaderInterface::Ptr _ptr) : pImpl(std::move(_ptr)), grid_transforms(std::make_shared<TransformStack>()) {
 		this->parentGrid = nullptr;
 		this->voxelOffset = svec3(0,0,0);
 		this->imageSize = svec3(0,0,0);
@@ -25,7 +25,7 @@ namespace Image {
 	}
 
 	constexpr bool Grid::hasValidImplementation() const {
-		#warning TODO : add a isValid() function to the ImageBackendImpl
+		#warning TODO : add a isValid() function to the ImageReaderInterface
 		return this->pImpl != nullptr;
 	}
 

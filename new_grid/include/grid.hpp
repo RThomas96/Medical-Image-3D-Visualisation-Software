@@ -2,7 +2,7 @@
 #define VISUALIZATION_IMAGE_API_GRID_HPP_
 
 #include "../../image/utils/include/image_api_common.hpp"
-#include "../../image/interface/backend.hpp"
+#include "../../image/interface/image_reader_interface.hpp"
 #include "../../image/transforms/include/transform_stack.hpp"
 
 #include <memory>
@@ -24,7 +24,7 @@ namespace Image {
 
 		protected:
 			/// @brief Default grid ctor, made protected so it is not instanciated directly.
-			Grid(ImageBackendImpl::Ptr _backend);
+			Grid(ImageReaderInterface::Ptr _backend);
 
 			/// @brief Creates a grid, downsampled from their parent.
 			explicit Grid(Grid::Ptr parent, svec3 size);
@@ -143,7 +143,7 @@ namespace Image {
 
 		protected:
 			/// @brief The opaque pointer which will perform all the logic in regards to the reading of data.
-			std::experimental::propagate_const<ImageBackendImpl::Ptr> pImpl;
+			std::experimental::propagate_const<ImageReaderInterface::Ptr> pImpl;
 			/// @brief The grid from which this one is either a downsampled version or a sub-region.
 			Grid::Ptr parentGrid;
 			/// @brief If the grid has a parent, stores the size of this current grid (whether sub-region, or downsampled).
