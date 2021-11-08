@@ -25,3 +25,6 @@ utilities/
 
 # Ignore tag file
 tags
+
+# Ignore vim files
+*.swp
