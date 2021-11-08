@@ -105,6 +105,6 @@ namespace Image {
 
 } // namespace Image
 
-#include "./templated_writer_backend.impl.hpp"
+#include "./tiff_writer_templated.impl.hpp"
 
 #endif // VISUALIZATION_IMAGE_TIFF_INCLUDE_TEMPLATED_WRITER_BACKEND_HPP_
