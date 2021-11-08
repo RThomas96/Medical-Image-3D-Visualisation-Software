@@ -10,7 +10,7 @@ namespace Image {
 	/// @brief The GridSubRegion class is the base class for all versions of a backend sampling a sub region of a grid.
 	/// @details This class is a base class implementing some general-purpose behaviours that are useful in the context
 	/// of a backend image representation sampling a sub-region of a grid.
-	class GridSubregion : public ImageReaderInterface {
+	class GridSubregion : public GenericImageReader {
 		public:
 			/// @brief Pointer type for this backend image implementation.
 			typedef std::unique_ptr<GridSubregion> Ptr;

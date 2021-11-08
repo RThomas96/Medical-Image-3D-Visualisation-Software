@@ -17,7 +17,7 @@
 /// @defgroup discreteGrid DiscreteGrid (legacy)
 /// @brief The legacy voxel grid representation.
 /// @details This group contains all the classes pertaining to the legacy implementation of `DiscreteGrid`. Those
-/// classes should not be used in new code and should be instead replaced by the Grid class and its ImageReaderInterface
+/// classes should not be used in new code and should be instead replaced by the Grid class and its GenericImageReader
 /// implementation.
 /// @warning This group only contains legacy components.
 

@@ -2,7 +2,7 @@
 
 namespace Image {
 
-GridWriter::GridWriter(GridWriterInterface::Ptr _existing_backend) : pImpl(std::move(_existing_backend)) {}
+GridWriter::GridWriter(GenericGridWriter::Ptr _existing_backend) : pImpl(std::move(_existing_backend)) {}
 
 GridWriter::~GridWriter(void) {
 	this->pImpl = nullptr; // reset the pointer and de-allocate it
@@ -30,9 +30,9 @@ std::string GridWriter::getBasePath() const {
 	return "";
 }
 
-void GridWriter::setBackend(GridWriterInterface::Ptr _new_backend) {
+void GridWriter::setBackend(GenericGridWriter::Ptr _new_backend) {
 	if (_new_backend == nullptr) { return; }
-	this->pImpl = GridWriterInterface::Ptr(std::move(_new_backend)); // move the damn thing
+	this->pImpl = GenericGridWriter::Ptr(std::move(_new_backend)); // move the damn thing
 	return;
 }
 

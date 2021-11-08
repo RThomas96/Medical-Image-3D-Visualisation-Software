@@ -39,8 +39,8 @@ SET_TARGET_PROPERTIES(grid_tiff_backend PROPERTIES
 )
 
 ADD_LIBRARY(writergrid_tiff STATIC
-	include/tiff_writer.hpp
-	src/tiff_writer.cpp
+	include/tiff_grid_writer.hpp
+	src/tiff_grid_writer.cpp
 	include/tiff_reader_templated.hpp
 	include/tiff_reader_templated.impl.hpp
 )

@@ -1,4 +1,4 @@
-# libTIFF implementation of ImageReaderInterface
+# libTIFF implementation of GenericImageReader
 
 ## What files are supported ?
 

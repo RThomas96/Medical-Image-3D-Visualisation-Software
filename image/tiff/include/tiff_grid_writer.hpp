@@ -4,31 +4,31 @@
 #include "./tiff_reader.hpp"
 
 #include "../../../new_grid/include/grid.hpp"
-#include "../../interface/image_reader_interface.hpp"
-#include "../../../new_grid/include/grid_writer_interface.hpp"
+#include "../../interface/generic_image_reader.hpp"
+#include "../../../new_grid/include/generic_grid_writer.hpp"
 
 namespace Image {
 
 	namespace Tiff {
 
 		/// @brief Re-implementation of the writer backend class for the TIFF type.
-		/// @note For now, does not re-implement any of the functionnalities of the GridWriterInterface class, as the
+		/// @note For now, does not re-implement any of the functionnalities of the GenericGridWriter class, as the
 		/// important parts of the code happen in the templated classes behind this code.
-		class TIFFWriter : public GridWriterInterface {
+		class TIFFGridWriter : public GenericGridWriter {
 			public:
 				/// @brief Unique pointer type to an object of this class.
-				typedef std::unique_ptr<TIFFWriter> Ptr;
+				typedef std::unique_ptr<TIFFGridWriter> Ptr;
 
 			protected:
 				/// @brief A default ctor which defines a name for the files, with the default path being the disk root
-				TIFFWriter(std::string basename);
+				TIFFGridWriter(std::string basename);
 
 				/// @brief A 'full' ctor which defines a base name for the file, as well as a base path to save them.
-				TIFFWriter(std::string basename, std::string basepath);
+				TIFFGridWriter(std::string basename, std::string basepath);
 
 			public:
 				/// @brief The writer's default ctor, de-allocating any resources it holds.
-				virtual ~TIFFWriter(void);
+				virtual ~TIFFGridWriter(void);
 
 			protected:
 				/// @brief Builds a filename composed of the base name, channel index and slice index (in that order).

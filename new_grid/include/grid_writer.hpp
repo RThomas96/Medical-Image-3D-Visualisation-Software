@@ -2,8 +2,8 @@
 #define VISUALIZATION_IMAGE_API_INCLUDE_WRITER_HPP_
 
 #include "../../new_grid/include/grid.hpp"
-#include "../../image/interface/image_reader_interface.hpp"
-#include "./grid_writer_interface.hpp"
+#include "../../image/interface/generic_image_reader.hpp"
+#include "./generic_grid_writer.hpp"
 
 #include <memory>
 #include <string>
@@ -21,7 +21,7 @@ namespace Image {
 
 		public:
 			/// @brief Default ctor, which moves the given pointer to implementation to its member field.
-			GridWriter(GridWriterInterface::Ptr _backend);
+			GridWriter(GenericGridWriter::Ptr _backend);
 
 			/// @brief default dtor for the class. De-allocates any ressources it took.
 			~GridWriter(void);
@@ -44,7 +44,7 @@ namespace Image {
 			std::string getBasePath(void) const;
 
 			/// @brief Replaces the backend of the writer object with a new backend type.
-			void setBackend(GridWriterInterface::Ptr _new_backend);
+			void setBackend(GenericGridWriter::Ptr _new_backend);
 
 			/// @brief Virtual function call to write a grid's slice to disk.
 			/// @details Takes a pointer to a grid and a slice index in parameter. It will then write the contents of
@@ -69,7 +69,7 @@ namespace Image {
 
 		protected:
 			/// @brief The pointer type which holds the logic for writing files to disk.
-			std::experimental::propagate_const<GridWriterInterface::Ptr> pImpl;
+			std::experimental::propagate_const<GenericGridWriter::Ptr> pImpl;
 	};
 
 } // namespace Image

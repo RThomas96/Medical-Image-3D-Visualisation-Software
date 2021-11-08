@@ -2,7 +2,7 @@
 #define VISUALIZATION_IMAGE_API_INCLUDE_WRITER_BACKEND_HPP_
 
 #include "../../new_grid/include/grid.hpp"
-#include "../../image/interface/image_reader_interface.hpp"
+#include "../../image/interface/generic_image_reader.hpp"
 
 #include <string>
 #include <memory>
@@ -10,25 +10,25 @@
 namespace Image {
 
 	/// @brief This is a generic function interface for a class that writes images to disk.
-	/// @details Akin to the ImageReaderInterface class, the GridWriterInterface class is a function interface that allows to
+	/// @details Akin to the GenericImageReader class, the GenericGridWriter class is a function interface that allows to
 	/// write many different kinds of image stacks to disk.
 	/// @note Due to the highly variable nature of the grid it might be 'referencing', the particular behaviour of each
-	/// filetype's writing procedures will take place in derived classes, like the ImageReaderInterface class.
-	class GridWriterInterface {
+	/// filetype's writing procedures will take place in derived classes, like the GenericImageReader class.
+	class GenericGridWriter {
 		public:
 			/// @brief Unique pointer type to an object of this class.
-			typedef std::unique_ptr<GridWriterInterface> Ptr;
+			typedef std::unique_ptr<GenericGridWriter> Ptr;
 
 		protected:
 			/// @brief A default ctor which defines a basename for the files, with the base path being the user's HOME.
-			GridWriterInterface(std::string basename);
+			GenericGridWriter(std::string basename);
 
 			/// @brief A 'full' ctor which defines a basename for the file, as well as a base path to save them.
-			GridWriterInterface(std::string basename, std::string basepath);
+			GenericGridWriter(std::string basename, std::string basepath);
 
 		public:
 			/// @brief The writer's default ctor, de-allocating any resources it holds.
-			virtual ~GridWriterInterface(void) = default;
+			virtual ~GenericGridWriter(void) = default;
 
 		public:
 			/// @brief Sets the base name of the files to a user-defined constant.

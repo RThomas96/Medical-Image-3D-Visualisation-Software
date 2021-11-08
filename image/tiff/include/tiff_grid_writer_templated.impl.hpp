@@ -10,169 +10,169 @@ namespace Image {
 namespace Tiff {
 
 	template <typename unsupported_element_t>
-	TIFFWriterDetail<unsupported_element_t>::TIFFWriterDetail(std::string bname) : TIFFWriter(bname) {
+	TIFFGridWriterTemplated<unsupported_element_t>::TIFFGridWriterTemplated(std::string bname) : TIFFGridWriter(bname) {
 		throw std::runtime_error("Error : cannot create a TIFF writer backend with unsupported type.");
 	}
 
 	template <typename unsupported_element_t>
-	TIFFWriterDetail<unsupported_element_t>::TIFFWriterDetail(std::string bname, std::string bpath) :
-	TIFFWriter(bname, bpath) {
+	TIFFGridWriterTemplated<unsupported_element_t>::TIFFGridWriterTemplated(std::string bname, std::string bpath) :
+	TIFFGridWriter(bname, bpath) {
 		throw std::runtime_error("Error : cannot create a TIFF writer backend with unsupported type.");
 	}
 
 	template <>
-	TIFFWriterDetail<std::uint8_t>::TIFFWriterDetail(std::string bname) : TIFFWriter(bname) {
+	TIFFGridWriterTemplated<std::uint8_t>::TIFFGridWriterTemplated(std::string bname) : TIFFGridWriter(bname) {
 		this->sample_format = SAMPLEFORMAT_UINT;
 		this->bits_per_sample = 8;
 		this->planar_config = PLANARCONFIG_CONTIG;
 	}
 
 	template <>
-	TIFFWriterDetail<std::uint16_t>::TIFFWriterDetail(std::string bname) : TIFFWriter(bname) {
+	TIFFGridWriterTemplated<std::uint16_t>::TIFFGridWriterTemplated(std::string bname) : TIFFGridWriter(bname) {
 		this->sample_format = SAMPLEFORMAT_UINT;
 		this->bits_per_sample = 16;
 		this->planar_config = PLANARCONFIG_CONTIG;
 	}
 
 	template <>
-	TIFFWriterDetail<std::uint32_t>::TIFFWriterDetail(std::string bname) : TIFFWriter(bname) {
+	TIFFGridWriterTemplated<std::uint32_t>::TIFFGridWriterTemplated(std::string bname) : TIFFGridWriter(bname) {
 		this->sample_format = SAMPLEFORMAT_UINT;
 		this->bits_per_sample = 32;
 		this->planar_config = PLANARCONFIG_CONTIG;
 	}
 
 	template <>
-	TIFFWriterDetail<std::uint64_t>::TIFFWriterDetail(std::string bname) : TIFFWriter(bname) {
+	TIFFGridWriterTemplated<std::uint64_t>::TIFFGridWriterTemplated(std::string bname) : TIFFGridWriter(bname) {
 		this->sample_format = SAMPLEFORMAT_UINT;
 		this->bits_per_sample = 64;
 		this->planar_config = PLANARCONFIG_CONTIG;
 	}
 
 	template <>
-	TIFFWriterDetail<std::uint8_t>::TIFFWriterDetail(std::string bname, std::string bpath) :
-	TIFFWriter(bname, bpath) {
+	TIFFGridWriterTemplated<std::uint8_t>::TIFFGridWriterTemplated(std::string bname, std::string bpath) :
+	TIFFGridWriter(bname, bpath) {
 		this->sample_format = SAMPLEFORMAT_UINT;
 		this->bits_per_sample = 8;
 		this->planar_config = PLANARCONFIG_CONTIG;
 	}
 
 	template <>
-	TIFFWriterDetail<std::uint16_t>::TIFFWriterDetail(std::string bname, std::string bpath) :
-	TIFFWriter(bname, bpath) {
+	TIFFGridWriterTemplated<std::uint16_t>::TIFFGridWriterTemplated(std::string bname, std::string bpath) :
+	TIFFGridWriter(bname, bpath) {
 		this->sample_format = SAMPLEFORMAT_UINT;
 		this->bits_per_sample = 16;
 		this->planar_config = PLANARCONFIG_CONTIG;
 	}
 
 	template <>
-	TIFFWriterDetail<std::uint32_t>::TIFFWriterDetail(std::string bname, std::string bpath) :
-	TIFFWriter(bname, bpath) {
+	TIFFGridWriterTemplated<std::uint32_t>::TIFFGridWriterTemplated(std::string bname, std::string bpath) :
+	TIFFGridWriter(bname, bpath) {
 		this->sample_format = SAMPLEFORMAT_UINT;
 		this->bits_per_sample = 32;
 		this->planar_config = PLANARCONFIG_CONTIG;
 	}
 
 	template <>
-	TIFFWriterDetail<std::uint64_t>::TIFFWriterDetail(std::string bname, std::string bpath) :
-	TIFFWriter(bname, bpath) {
+	TIFFGridWriterTemplated<std::uint64_t>::TIFFGridWriterTemplated(std::string bname, std::string bpath) :
+	TIFFGridWriter(bname, bpath) {
 		this->sample_format = SAMPLEFORMAT_UINT;
 		this->bits_per_sample = 64;
 		this->planar_config = PLANARCONFIG_CONTIG;
 	}
 
 	template <>
-	TIFFWriterDetail<std::int8_t>::TIFFWriterDetail(std::string bname) : TIFFWriter(bname) {
+	TIFFGridWriterTemplated<std::int8_t>::TIFFGridWriterTemplated(std::string bname) : TIFFGridWriter(bname) {
 		this->sample_format = SAMPLEFORMAT_INT;
 		this->bits_per_sample = 8;
 		this->planar_config = PLANARCONFIG_CONTIG;
 	}
 
 	template <>
-	TIFFWriterDetail<std::int16_t>::TIFFWriterDetail(std::string bname) : TIFFWriter(bname) {
+	TIFFGridWriterTemplated<std::int16_t>::TIFFGridWriterTemplated(std::string bname) : TIFFGridWriter(bname) {
 		this->sample_format = SAMPLEFORMAT_INT;
 		this->bits_per_sample = 16;
 		this->planar_config = PLANARCONFIG_CONTIG;
 	}
 
 	template <>
-	TIFFWriterDetail<std::int32_t>::TIFFWriterDetail(std::string bname) : TIFFWriter(bname) {
+	TIFFGridWriterTemplated<std::int32_t>::TIFFGridWriterTemplated(std::string bname) : TIFFGridWriter(bname) {
 		this->sample_format = SAMPLEFORMAT_INT;
 		this->bits_per_sample = 32;
 		this->planar_config = PLANARCONFIG_CONTIG;
 	}
 
 	template <>
-	TIFFWriterDetail<std::int64_t>::TIFFWriterDetail(std::string bname) : TIFFWriter(bname) {
+	TIFFGridWriterTemplated<std::int64_t>::TIFFGridWriterTemplated(std::string bname) : TIFFGridWriter(bname) {
 		this->sample_format = SAMPLEFORMAT_INT;
 		this->bits_per_sample = 64;
 		this->planar_config = PLANARCONFIG_CONTIG;
 	}
 
 	template <>
-	TIFFWriterDetail<std::int8_t>::TIFFWriterDetail(std::string bname, std::string bpath) :
-	TIFFWriter(bname, bpath) {
+	TIFFGridWriterTemplated<std::int8_t>::TIFFGridWriterTemplated(std::string bname, std::string bpath) :
+	TIFFGridWriter(bname, bpath) {
 		this->sample_format = SAMPLEFORMAT_INT;
 		this->bits_per_sample = 8;
 		this->planar_config = PLANARCONFIG_CONTIG;
 	}
 
 	template <>
-	TIFFWriterDetail<std::int16_t>::TIFFWriterDetail(std::string bname, std::string bpath) :
-	TIFFWriter(bname, bpath) {
+	TIFFGridWriterTemplated<std::int16_t>::TIFFGridWriterTemplated(std::string bname, std::string bpath) :
+	TIFFGridWriter(bname, bpath) {
 		this->sample_format = SAMPLEFORMAT_INT;
 		this->bits_per_sample = 16;
 		this->planar_config = PLANARCONFIG_CONTIG;
 	}
 
 	template <>
-	TIFFWriterDetail<std::int32_t>::TIFFWriterDetail(std::string bname, std::string bpath) :
-	TIFFWriter(bname, bpath) {
+	TIFFGridWriterTemplated<std::int32_t>::TIFFGridWriterTemplated(std::string bname, std::string bpath) :
+	TIFFGridWriter(bname, bpath) {
 		this->sample_format = SAMPLEFORMAT_INT;
 		this->bits_per_sample = 32;
 		this->planar_config = PLANARCONFIG_CONTIG;
 	}
 
 	template <>
-	TIFFWriterDetail<std::int64_t>::TIFFWriterDetail(std::string bname, std::string bpath) :
-	TIFFWriter(bname, bpath) {
+	TIFFGridWriterTemplated<std::int64_t>::TIFFGridWriterTemplated(std::string bname, std::string bpath) :
+	TIFFGridWriter(bname, bpath) {
 		this->sample_format = SAMPLEFORMAT_INT;
 		this->bits_per_sample = 64;
 		this->planar_config = PLANARCONFIG_CONTIG;
 	}
 
 	template <>
-	TIFFWriterDetail<float>::TIFFWriterDetail(std::string bname) : TIFFWriter(bname) {
+	TIFFGridWriterTemplated<float>::TIFFGridWriterTemplated(std::string bname) : TIFFGridWriter(bname) {
 		this->sample_format = SAMPLEFORMAT_IEEEFP;
 		this->bits_per_sample = 32;
 		this->planar_config = PLANARCONFIG_CONTIG;
 	}
 
 	template <>
-	TIFFWriterDetail<double>::TIFFWriterDetail(std::string bname) : TIFFWriter(bname) {
+	TIFFGridWriterTemplated<double>::TIFFGridWriterTemplated(std::string bname) : TIFFGridWriter(bname) {
 		this->sample_format = SAMPLEFORMAT_IEEEFP;
 		this->bits_per_sample = 64;
 		this->planar_config = PLANARCONFIG_CONTIG;
 	}
 
 	template <>
-	TIFFWriterDetail<float>::TIFFWriterDetail(std::string bname, std::string bpath) : TIFFWriter(bname, bpath) {
+	TIFFGridWriterTemplated<float>::TIFFGridWriterTemplated(std::string bname, std::string bpath) : TIFFGridWriter(bname, bpath) {
 		this->sample_format = SAMPLEFORMAT_IEEEFP;
 		this->bits_per_sample = 32;
 		this->planar_config = PLANARCONFIG_CONTIG;
 	}
 
 	template <>
-	TIFFWriterDetail<double>::TIFFWriterDetail(std::string bname, std::string bpath) : TIFFWriter(bname, bpath) {
+	TIFFGridWriterTemplated<double>::TIFFGridWriterTemplated(std::string bname, std::string bpath) : TIFFGridWriter(bname, bpath) {
 		this->sample_format = SAMPLEFORMAT_IEEEFP;
 		this->bits_per_sample = 64;
 		this->planar_config = PLANARCONFIG_CONTIG;
 	}
 
 	template <typename element_t>
-	TIFFWriterDetail<element_t>::~TIFFWriterDetail() {}
+	TIFFGridWriterTemplated<element_t>::~TIFFGridWriterTemplated() {}
 
 	template <typename element_t>
-	bool TIFFWriterDetail<element_t>::writeSlice(Grid::Ptr src_grid, std::size_t slice, ThreadedTask::Ptr task) {
+	bool TIFFGridWriterTemplated<element_t>::writeSlice(Grid::Ptr src_grid, std::size_t slice, ThreadedTask::Ptr task) {
 		// Warning : will only write SINGLE-CHANNEL IMAGES.
 
 		// if nothing is given, nothing'll be written :
@@ -222,7 +222,7 @@ namespace Tiff {
 	}
 
 	template <typename element_t>
-	bool TIFFWriterDetail<element_t>::writeGrid(Grid::Ptr src_grid, ThreadedTask::Ptr task) {
+	bool TIFFGridWriterTemplated<element_t>::writeGrid(Grid::Ptr src_grid, ThreadedTask::Ptr task) {
 		if (src_grid == nullptr) { return false; }
 
 		// Call write slice on all slices of the grid :
@@ -245,7 +245,7 @@ namespace Tiff {
 	}
 
 	template <typename element_t>
-	std::uint32_t TIFFWriterDetail<element_t>::write_tiff_tags(TIFF* file, Grid::Ptr grid, std::size_t slice_idx, std::size_t start) {
+	std::uint32_t TIFFGridWriterTemplated<element_t>::write_tiff_tags(TIFF* file, Grid::Ptr grid, std::size_t slice_idx, std::size_t start) {
 		// cannot write to non-open file :
 		if (file == nullptr || file == NULL) { return 0; }
 
@@ -295,7 +295,7 @@ namespace Tiff {
 	}
 
 	template <typename element_t>
-	std::vector<element_t> TIFFWriterDetail<element_t>::read_subpixels_from_slice(std::vector<pixel_t>& src,
+	std::vector<element_t> TIFFGridWriterTemplated<element_t>::read_subpixels_from_slice(std::vector<pixel_t>& src,
 																				  std::size_t samples_in_src,
 																				  std::size_t beg) {
 		// check fi the # of samples in src are all filled :
@@ -325,7 +325,7 @@ namespace Tiff {
 	}
 
 	template <typename element_t>
-	bool TIFFWriterDetail<element_t>::write_tiff_strips(TIFF* file, std::vector<element_t>& data, std::size_t width,
+	bool TIFFGridWriterTemplated<element_t>::write_tiff_strips(TIFF* file, std::vector<element_t>& data, std::size_t width,
 														std::size_t height, std::uint32_t estimated_strip_size) {
 		// check parameters are valid :
 		if (file == NULL || file == nullptr) { std::cerr << "Tried to write to NULL.\n"; return false; }
