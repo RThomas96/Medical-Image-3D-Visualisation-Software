@@ -15,7 +15,7 @@ ADD_LIBRARY(grid_tiff_backend STATIC
 
 	include/tiff_include_common.hpp
 
-	include/backend.hpp
+    include/TIFFReader.hpp
 	include/templated_backend.hpp
 	include/templated_backend.impl.hpp
 	include/tiff_frame.hpp

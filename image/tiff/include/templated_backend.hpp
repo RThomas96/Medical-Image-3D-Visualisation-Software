@@ -8,12 +8,12 @@ namespace Image {
 namespace Tiff {
 
 	/// @ingroup tiff newgrid
-	/// @brief The implementation template of the TIFFBackendImpl class.
-	/// @details This is the templated version of the TIFFBackendImpl class, that actually interacts with the TIFF files
+	/// @brief The implementation template of the TIFFReader class.
+	/// @details This is the templated version of the TIFFReader class, that actually interacts with the TIFF files
 	/// on disk. This allows to read files of any internal data types and provide access to them in a Grid object.
 	/// @tparam element_type The fundamental type used for reading. Supports `std::[u]int{8|16|32|64}_t|double|float`.
 	template <typename element_type>
-	class TIFFBackendDetail : public TIFFBackendImpl {
+	class TIFFBackendDetail : public TIFFReader {
 
 		public:
 			/// @brief The type of the data loaded in.

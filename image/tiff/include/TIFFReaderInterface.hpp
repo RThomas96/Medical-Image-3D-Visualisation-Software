@@ -16,25 +16,25 @@ namespace Image {
 namespace Tiff {
 
 	/// @ingroup tiff newgrid
-	/// @brief The TIFFBackendImpl class is the base class that implements the necessary logic to read TIFF images.
+	/// @brief The TIFFReaderInterface class is the base class that implements the necessary logic to read TIFF images.
 	/// @details This base class is then derived into template versions of this backend, which can read values directly
 	/// from the images on disk into memory.
-	class TIFFBackendImpl : public ImageReaderInterface {
+	class TIFFReaderInterface : public ImageReaderInterface {
 		public:
 			/// @brief A simple typedef which restricts the class to be owned by one object only
-			typedef std::unique_ptr<TIFFBackendImpl> Ptr;
+			typedef std::unique_ptr<TIFFReaderInterface> Ptr;
 
 			/// @brief TIFFImage represents a series of TIFF directories which make up a single image in the grid.
 			typedef std::vector<Tiff::Frame::Ptr> TIFFImage;
 
 		protected:
 			/// @brief Default ctor, only initializes the top-level class.
-			TIFFBackendImpl(void);
+			TIFFReaderInterface(void);
 
 		public:
 			/// @brief Default dtor for the	class.
 			/// @note Since no allocation or 'special' logic takes place in this class, left as `default`.
-			virtual ~TIFFBackendImpl(void) = default;
+			virtual ~TIFFReaderInterface(void) = default;
 
 			/// @brief Returns true if the TIFF file provided can be read by this image implementation.
 			/// @note This static function only works for _basic TIFF files_. The OME-TIFF backend implementation which
@@ -112,10 +112,10 @@ namespace Tiff {
 
 	/// @brief Creates a suitable backend for the given files.
 	/// @details Tries to open a reference TIFF directory (the first directory of the first file in the first stack) and
-	/// attempts to create a suitable TIFFBackendImpl-derived class that can read the data from disk.
+	/// attempts to create a suitable TIFFReaderInterface-derived class that can read the data from disk.
 	/// @param filenames the filenames to open
 	/// @returns A suitable TIFF backend for the files given.
-	TIFFBackendImpl::Ptr createBackend(std::string reference_filename);
+	TIFFReaderInterface::Ptr createBackend(std::string reference_filename);
 
 } // namespace Tiff
 
