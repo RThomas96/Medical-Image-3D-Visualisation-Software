@@ -1,7 +1,7 @@
 #ifndef VISUALIZATION_IMAGE_API_INCLUDE_WRITER_HPP_
 #define VISUALIZATION_IMAGE_API_INCLUDE_WRITER_HPP_
 
-#include "./grid.hpp"
+#include "../../new_grid/include/grid.hpp"
 #include "./backend.hpp"
 #include "./writer_backend.hpp"
 

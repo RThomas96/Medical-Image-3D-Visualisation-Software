@@ -1,6 +1,6 @@
 #include "../include/grid.hpp"
 
-#include "../../tiff/include/backend.hpp"
+#include "../../image/tiff/include/backend.hpp"
 
 namespace Image {
 

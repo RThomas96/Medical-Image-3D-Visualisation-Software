@@ -4,7 +4,7 @@
 #include "../../macros.hpp"
 #include "../../grid/include/discrete_grid.hpp"
 
-#include "../../image/api/include/grid.hpp"
+#include "../../new_grid/include/grid.hpp"
 
 #include <glm/glm.hpp>
 

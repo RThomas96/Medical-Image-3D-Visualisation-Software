@@ -10,7 +10,7 @@
 #include "./scene_control.hpp"
 
 // New grid API :
-#include "../../image/api/include/grid.hpp"
+#include "../../new_grid/include/grid.hpp"
 #include "../../image/tiff/include/backend.hpp"
 
 #include <QDir>

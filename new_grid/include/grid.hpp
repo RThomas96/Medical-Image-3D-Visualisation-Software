@@ -1,9 +1,9 @@
 #ifndef VISUALIZATION_IMAGE_API_GRID_HPP_
 #define VISUALIZATION_IMAGE_API_GRID_HPP_
 
-#include "image_api_common.hpp"
-#include "backend.hpp"
-#include "../../transforms/include/transform_stack.hpp"
+#include "../../image/api/include/image_api_common.hpp"
+#include "../../image/api/include/backend.hpp"
+#include "../../image/transforms/include/transform_stack.hpp"
 
 #include <memory>
 #include <string>

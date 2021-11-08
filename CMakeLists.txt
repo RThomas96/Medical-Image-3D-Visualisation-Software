@@ -27,6 +27,7 @@ SET(LOCAL_GLM_HEADER_DIR "${CMAKE_CURRENT_LIST_DIR}/third_party/glm/")
 SET(LIBS_COMPILED_HEADERS "${CMAKE_CURRENT_LIST_DIR}/third_party/compiled_libraries/include")
 
 ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/image)
+ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/new_grid)
 ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/colorscale)
 
 # Library for image reading/writing {{{

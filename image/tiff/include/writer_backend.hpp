@@ -3,7 +3,7 @@
 
 #include "./backend.hpp"
 
-#include "../../api/include/grid.hpp"
+#include "../../../new_grid/include/grid.hpp"
 #include "../../api/include/backend.hpp"
 #include "../../api/include/writer_backend.hpp"
 

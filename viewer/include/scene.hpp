@@ -20,7 +20,7 @@
 // Helper structs and functions :
 #include "./viewer_structs.hpp"
 // New grid API :
-#include "../../image/api/include/grid.hpp"
+#include "../../new_grid/include/grid.hpp"
 #include "../../image/tiff/include/backend.hpp"
 // Qt headers :
 #include <QOpenGLFunctions_4_0_Core>
