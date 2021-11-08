@@ -32,11 +32,11 @@ ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/colorscale)
 
 # Library for image reading/writing {{{
 ADD_LIBRARY(ImageIO STATIC
-	./image/include/reader.hpp
-	./image/include/writer.hpp
+	./grid/include/grid_reader.hpp
+	./grid/include/grid_writer.hpp
 
-	./image/src/reader.cpp
-	./image/src/writer.cpp
+	./grid/src/grid_reader.cpp
+	./grid/src/grid_writer.cpp
 )
 TARGET_INCLUDE_DIRECTORIES(ImageIO
 	PRIVATE ${LOCAL_GLM_HEADER_DIR}

@@ -1,10 +1,10 @@
-#include "../include/reader.hpp"
+#include "../include/grid_reader.hpp"
 
 #include <QXmlStreamReader>
 #include <QDir>
 
 #include "../../new_grid/include/grid.hpp"
-#include "../api/include/backend.hpp"
+#include "../../image/api/include/backend.hpp"
 
 #include <cstring>
 #include <memory>

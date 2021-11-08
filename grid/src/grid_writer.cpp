@@ -1,4 +1,4 @@
-#include "../include/writer.hpp"
+#include "../include/grid_writer.hpp"
 #include "../../grid/include/discrete_grid.hpp"
 
 namespace IO {

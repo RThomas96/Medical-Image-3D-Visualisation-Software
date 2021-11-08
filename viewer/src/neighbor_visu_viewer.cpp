@@ -1,5 +1,5 @@
 #include "../include/neighbor_visu_viewer.hpp"
-#include "../../image/include/writer.hpp"
+#include "../../grid/include/grid_writer.hpp"
 #include "../../features.hpp"
 #include "../../qt/include/user_settings_widget.hpp"
 
