@@ -1,4 +1,4 @@
-#include "../include/writer_backend.hpp"
+#include "../include/tiff_writer.hpp"
 
 namespace Image {
 

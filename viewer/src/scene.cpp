@@ -4,7 +4,7 @@
 #include "../../grid/include/discrete_grid_reader.hpp"
 #include "../../grid/include/discrete_grid_writer.hpp"
 #include "../../new_grid/include/grid_writer.hpp"
-#include "../../image/tiff/include/writer_backend.hpp"
+#include "../../image/tiff/include/tiff_writer.hpp"
 #include "../../image/tiff/include/templated_writer_backend.hpp"
 
 #include <glm/gtx/transform.hpp>

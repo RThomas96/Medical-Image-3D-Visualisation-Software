@@ -1,7 +1,7 @@
 #ifndef VISUALIZATION_IMAGE_TIFF_INCLUDE_TEMPLATED_WRITER_BACKEND_HPP_
 #define VISUALIZATION_IMAGE_TIFF_INCLUDE_TEMPLATED_WRITER_BACKEND_HPP_
 
-#include "./writer_backend.hpp"
+#include "./tiff_writer.hpp"
 
 namespace Image {
 

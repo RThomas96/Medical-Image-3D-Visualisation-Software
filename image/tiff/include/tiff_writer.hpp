@@ -5,7 +5,7 @@
 
 #include "../../../new_grid/include/grid.hpp"
 #include "../../interface/image_reader_interface.hpp"
-#include "../../../new_grid/include/writer_backend.hpp"
+#include "../../../new_grid/include/grid_writer_interface.hpp"
 
 namespace Image {
 
