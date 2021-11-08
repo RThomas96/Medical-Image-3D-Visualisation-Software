@@ -2009,10 +2009,10 @@ void Scene::draft_tryAndSaveFirstGrid() {
 	// get the grid
 	Image::Grid::Ptr gridToSave = this->newGrids[0]->grid;
 	// Create a writer backend :
-	Image::Writer::Ptr gridWriter = nullptr;
+	Image::GridWriter::Ptr gridWriter = nullptr;
 	std::cerr << "Creating grid writer ...\n";
 	try {
-		gridWriter = std::make_shared<Image::Writer>(
+		gridWriter = std::make_shared<Image::GridWriter>(
 			Image::Tiff::TIFFWriterDetail<std::uint32_t>::createBackend("tiff_grid", "/home/thibault/Pictures/tiff")
 		);
 		if (not gridWriter->writeGrid(gridToSave, task)) {

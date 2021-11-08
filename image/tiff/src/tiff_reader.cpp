@@ -1,4 +1,4 @@
-#include "../include/tiff_reader_interface.hpp"
+#include "../include/tiff_reader.hpp"
 
 #include "../include/tiff_reader_templated.hpp"
 
@@ -12,31 +12,31 @@ namespace Image {
 
 namespace Tiff {
 
-	TIFFReaderInterface::TIFFReaderInterface(void) : ImageReaderInterface() {}
+	TIFFReader::TIFFReader(void) : ImageReaderInterface() {}
 
-	std::string TIFFReaderInterface::getImageName() const { return this->stack_base_name; }
+	std::string TIFFReader::getImageName() const { return this->stack_base_name; }
 
-	void TIFFReaderInterface::setImageName(std::string &_user_defined_name_) {
+	void TIFFReader::setImageName(std::string &_user_defined_name_) {
 		if (_user_defined_name_.empty()) { return; }
 		this->stack_base_name = _user_defined_name_;
 	}
 
-	std::size_t TIFFReaderInterface::getVoxelDimensionality() const { return this->voxel_dimensionality; }
+	std::size_t TIFFReader::getVoxelDimensionality() const { return this->voxel_dimensionality; }
 
-	glm::vec3 TIFFReaderInterface::getVoxelDimensions() const { return this->voxel_dimensions; }
+	glm::vec3 TIFFReader::getVoxelDimensions() const { return this->voxel_dimensions; }
 
-	svec3 TIFFReaderInterface::getResolution() const { return this->resolution; }
+	svec3 TIFFReader::getResolution() const { return this->resolution; }
 
-	ImageDataType TIFFReaderInterface::getInternalDataType() const { return this->internal_data_type; }
+	ImageDataType TIFFReader::getInternalDataType() const { return this->internal_data_type; }
 
-	BoundingBox_General<float> TIFFReaderInterface::getBoundingBox() const {
+	BoundingBox_General<float> TIFFReader::getBoundingBox() const {
 		// By default, in image space bounding box is resolution * voxel dimensions
 		glm::vec3 dimensions = glm::convert_to<float>(this->resolution);
 		glm::vec3 size = dimensions * this->voxel_dimensions;
 		return BoundingBox_General<float>(glm::vec3{.0f, .0f, .0f}, size);
 	}
 
-	ThreadedTask::Ptr TIFFReaderInterface::parseImageInfo(ThreadedTask::Ptr pre_existing_task,
+	ThreadedTask::Ptr TIFFReader::parseImageInfo(ThreadedTask::Ptr pre_existing_task,
 													  const std::vector<std::vector<std::string>>& filenames) {
 		// Use the high-resolution clock and its typedefs for time points and durations
 		using clock_t = std::chrono::high_resolution_clock;
@@ -61,7 +61,7 @@ namespace Tiff {
 
 		// Launch the parsing of files :
 		before_thread_launch = clock_t::now();
-		std::thread parsing_thread = std::thread(&TIFFReaderInterface::parse_info_in_separate_thread,
+		std::thread parsing_thread = std::thread(&TIFFReader::parse_info_in_separate_thread,
 												 this, pre_existing_task, std::cref(filenames));
 		after_thread_launch = clock_t::now();
 		// Let the thread detach naturally :
@@ -76,7 +76,7 @@ namespace Tiff {
 		return pre_existing_task;
 	}
 
-	TIFFReaderInterface::Ptr createBackend(const std::string reference_filename) {
+	TIFFReader::Ptr createBackend(const std::string reference_filename) {
 		Frame::Ptr reference_frame = nullptr;
 
 		try {
@@ -86,7 +86,7 @@ namespace Tiff {
 			return nullptr;
 		}
 
-		TIFFReaderInterface::Ptr pImpl = nullptr;
+		TIFFReader::Ptr pImpl = nullptr;
 		std::size_t _dim = 0;
 
 		// get the file handle by libtiff :

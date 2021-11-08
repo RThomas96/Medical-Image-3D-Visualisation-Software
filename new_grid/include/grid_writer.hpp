@@ -14,17 +14,17 @@ namespace Image {
 	/// @details Akin to the Grid class, this class uses the pImpl idiom to have multiple possible implementations that
 	/// depend on the file type desired, and on the data type required. As such, this structure can write whatever kind
 	/// of image stack the user desires, as long as it has a valid implementation as a backend.
-	class Writer {
+	class GridWriter {
 		public:
 			/// @brief Shared pointer type to an object of this class.
-			typedef std::shared_ptr<Writer> Ptr;
+			typedef std::shared_ptr<GridWriter> Ptr;
 
 		public:
 			/// @brief Default ctor, which moves the given pointer to implementation to its member field.
-			Writer(WriterBackendImpl::Ptr _backend);
+			GridWriter(GridWriterInterface::Ptr _backend);
 
 			/// @brief default dtor for the class. De-allocates any ressources it took.
-			~Writer(void);
+			~GridWriter(void);
 
 		public:
 			/// @brief Sets the base name of the files to a user-defined constant.
@@ -44,7 +44,7 @@ namespace Image {
 			std::string getBasePath(void) const;
 
 			/// @brief Replaces the backend of the writer object with a new backend type.
-			void setBackend(WriterBackendImpl::Ptr _new_backend);
+			void setBackend(GridWriterInterface::Ptr _new_backend);
 
 			/// @brief Virtual function call to write a grid's slice to disk.
 			/// @details Takes a pointer to a grid and a slice index in parameter. It will then write the contents of
@@ -69,7 +69,7 @@ namespace Image {
 
 		protected:
 			/// @brief The pointer type which holds the logic for writing files to disk.
-			std::experimental::propagate_const<WriterBackendImpl::Ptr> pImpl;
+			std::experimental::propagate_const<GridWriterInterface::Ptr> pImpl;
 	};
 
 } // namespace Image

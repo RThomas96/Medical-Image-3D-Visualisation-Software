@@ -8,13 +8,13 @@ namespace Image {
 	namespace Tiff {
 
 		/// @ingroup tiff newgrid
-		/// @brief The implementation template of the TIFFWriterBackend class.
+		/// @brief The implementation template of the TIFFWriter class.
 		/// @details Allows to write TIFF files of a given type, directly to disk. Can be used to write slices of a grid
 		/// or the whole grid completely. However, do note that this implementation will always write single-channel
 		/// (greyscale) images. So if a grid has more than 1 channel, then there will be as many 'file stacks' as there
 		/// are channels.
 		template <typename element_t>
-		class TIFFWriterDetail : public TIFFWriterBackend {
+		class TIFFWriterDetail : public TIFFWriter {
 			public:
 				/// @brief Public typedef to the internal type of the backend implementation.
 				typedef element_t pixel_t;

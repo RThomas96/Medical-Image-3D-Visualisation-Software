@@ -1,7 +1,7 @@
 #ifndef VISUALIZATION_IMAGE_TIFF_INCLUDE_WRITER_BACKEND_HPP_
 #define VISUALIZATION_IMAGE_TIFF_INCLUDE_WRITER_BACKEND_HPP_
 
-#include "./tiff_reader_interface.hpp"
+#include "./tiff_reader.hpp"
 
 #include "../../../new_grid/include/grid.hpp"
 #include "../../interface/image_reader_interface.hpp"
@@ -12,23 +12,23 @@ namespace Image {
 	namespace Tiff {
 
 		/// @brief Re-implementation of the writer backend class for the TIFF type.
-		/// @note For now, does not re-implement any of the functionnalities of the WriterBackendImpl class, as the
+		/// @note For now, does not re-implement any of the functionnalities of the GridWriterInterface class, as the
 		/// important parts of the code happen in the templated classes behind this code.
-		class TIFFWriterBackend : public WriterBackendImpl {
+		class TIFFWriter : public GridWriterInterface {
 			public:
 				/// @brief Unique pointer type to an object of this class.
-				typedef std::unique_ptr<TIFFWriterBackend> Ptr;
+				typedef std::unique_ptr<TIFFWriter> Ptr;
 
 			protected:
 				/// @brief A default ctor which defines a name for the files, with the default path being the disk root
-				TIFFWriterBackend(std::string basename);
+				TIFFWriter(std::string basename);
 
 				/// @brief A 'full' ctor which defines a base name for the file, as well as a base path to save them.
-				TIFFWriterBackend(std::string basename, std::string basepath);
+				TIFFWriter(std::string basename, std::string basepath);
 
 			public:
 				/// @brief The writer's default ctor, de-allocating any resources it holds.
-				virtual ~TIFFWriterBackend(void);
+				virtual ~TIFFWriter(void);
 
 			protected:
 				/// @brief Builds a filename composed of the base name, channel index and slice index (in that order).

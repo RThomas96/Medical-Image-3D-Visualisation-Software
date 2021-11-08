@@ -1,7 +1,7 @@
 #ifndef VISUALIAZTION_IMAGE_TIFF_INCLUDE_TEMPLATED_BACKEND_HPP_
 #define VISUALIAZTION_IMAGE_TIFF_INCLUDE_TEMPLATED_BACKEND_HPP_
 
-#include "./tiff_reader_interface.hpp"
+#include "./tiff_reader.hpp"
 
 namespace Image {
 
@@ -13,7 +13,7 @@ namespace Tiff {
 	/// on disk. This allows to read files of any internal data types and provide access to them in a Grid object.
 	/// @tparam element_type The fundamental type used for reading. Supports `std::[u]int{8|16|32|64}_t|double|float`.
 	template <typename element_type>
-	class TIFFReaderTemplated : public TIFFReaderInterface {
+	class TIFFReaderTemplated : public TIFFReader {
 
 		public:
 			/// @brief The type of the data loaded in.

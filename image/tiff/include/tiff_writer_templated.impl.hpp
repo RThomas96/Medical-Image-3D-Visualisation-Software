@@ -10,39 +10,39 @@ namespace Image {
 namespace Tiff {
 
 	template <typename unsupported_element_t>
-	TIFFWriterDetail<unsupported_element_t>::TIFFWriterDetail(std::string bname) : TIFFWriterBackend(bname) {
+	TIFFWriterDetail<unsupported_element_t>::TIFFWriterDetail(std::string bname) : TIFFWriter(bname) {
 		throw std::runtime_error("Error : cannot create a TIFF writer backend with unsupported type.");
 	}
 
 	template <typename unsupported_element_t>
 	TIFFWriterDetail<unsupported_element_t>::TIFFWriterDetail(std::string bname, std::string bpath) :
-	TIFFWriterBackend(bname, bpath) {
+	TIFFWriter(bname, bpath) {
 		throw std::runtime_error("Error : cannot create a TIFF writer backend with unsupported type.");
 	}
 
 	template <>
-	TIFFWriterDetail<std::uint8_t>::TIFFWriterDetail(std::string bname) : TIFFWriterBackend(bname) {
+	TIFFWriterDetail<std::uint8_t>::TIFFWriterDetail(std::string bname) : TIFFWriter(bname) {
 		this->sample_format = SAMPLEFORMAT_UINT;
 		this->bits_per_sample = 8;
 		this->planar_config = PLANARCONFIG_CONTIG;
 	}
 
 	template <>
-	TIFFWriterDetail<std::uint16_t>::TIFFWriterDetail(std::string bname) : TIFFWriterBackend(bname) {
+	TIFFWriterDetail<std::uint16_t>::TIFFWriterDetail(std::string bname) : TIFFWriter(bname) {
 		this->sample_format = SAMPLEFORMAT_UINT;
 		this->bits_per_sample = 16;
 		this->planar_config = PLANARCONFIG_CONTIG;
 	}
 
 	template <>
-	TIFFWriterDetail<std::uint32_t>::TIFFWriterDetail(std::string bname) : TIFFWriterBackend(bname) {
+	TIFFWriterDetail<std::uint32_t>::TIFFWriterDetail(std::string bname) : TIFFWriter(bname) {
 		this->sample_format = SAMPLEFORMAT_UINT;
 		this->bits_per_sample = 32;
 		this->planar_config = PLANARCONFIG_CONTIG;
 	}
 
 	template <>
-	TIFFWriterDetail<std::uint64_t>::TIFFWriterDetail(std::string bname) : TIFFWriterBackend(bname) {
+	TIFFWriterDetail<std::uint64_t>::TIFFWriterDetail(std::string bname) : TIFFWriter(bname) {
 		this->sample_format = SAMPLEFORMAT_UINT;
 		this->bits_per_sample = 64;
 		this->planar_config = PLANARCONFIG_CONTIG;
@@ -50,7 +50,7 @@ namespace Tiff {
 
 	template <>
 	TIFFWriterDetail<std::uint8_t>::TIFFWriterDetail(std::string bname, std::string bpath) :
-	TIFFWriterBackend(bname, bpath) {
+	TIFFWriter(bname, bpath) {
 		this->sample_format = SAMPLEFORMAT_UINT;
 		this->bits_per_sample = 8;
 		this->planar_config = PLANARCONFIG_CONTIG;
@@ -58,7 +58,7 @@ namespace Tiff {
 
 	template <>
 	TIFFWriterDetail<std::uint16_t>::TIFFWriterDetail(std::string bname, std::string bpath) :
-	TIFFWriterBackend(bname, bpath) {
+	TIFFWriter(bname, bpath) {
 		this->sample_format = SAMPLEFORMAT_UINT;
 		this->bits_per_sample = 16;
 		this->planar_config = PLANARCONFIG_CONTIG;
@@ -66,7 +66,7 @@ namespace Tiff {
 
 	template <>
 	TIFFWriterDetail<std::uint32_t>::TIFFWriterDetail(std::string bname, std::string bpath) :
-	TIFFWriterBackend(bname, bpath) {
+	TIFFWriter(bname, bpath) {
 		this->sample_format = SAMPLEFORMAT_UINT;
 		this->bits_per_sample = 32;
 		this->planar_config = PLANARCONFIG_CONTIG;
@@ -74,35 +74,35 @@ namespace Tiff {
 
 	template <>
 	TIFFWriterDetail<std::uint64_t>::TIFFWriterDetail(std::string bname, std::string bpath) :
-	TIFFWriterBackend(bname, bpath) {
+	TIFFWriter(bname, bpath) {
 		this->sample_format = SAMPLEFORMAT_UINT;
 		this->bits_per_sample = 64;
 		this->planar_config = PLANARCONFIG_CONTIG;
 	}
 
 	template <>
-	TIFFWriterDetail<std::int8_t>::TIFFWriterDetail(std::string bname) : TIFFWriterBackend(bname) {
+	TIFFWriterDetail<std::int8_t>::TIFFWriterDetail(std::string bname) : TIFFWriter(bname) {
 		this->sample_format = SAMPLEFORMAT_INT;
 		this->bits_per_sample = 8;
 		this->planar_config = PLANARCONFIG_CONTIG;
 	}
 
 	template <>
-	TIFFWriterDetail<std::int16_t>::TIFFWriterDetail(std::string bname) : TIFFWriterBackend(bname) {
+	TIFFWriterDetail<std::int16_t>::TIFFWriterDetail(std::string bname) : TIFFWriter(bname) {
 		this->sample_format = SAMPLEFORMAT_INT;
 		this->bits_per_sample = 16;
 		this->planar_config = PLANARCONFIG_CONTIG;
 	}
 
 	template <>
-	TIFFWriterDetail<std::int32_t>::TIFFWriterDetail(std::string bname) : TIFFWriterBackend(bname) {
+	TIFFWriterDetail<std::int32_t>::TIFFWriterDetail(std::string bname) : TIFFWriter(bname) {
 		this->sample_format = SAMPLEFORMAT_INT;
 		this->bits_per_sample = 32;
 		this->planar_config = PLANARCONFIG_CONTIG;
 	}
 
 	template <>
-	TIFFWriterDetail<std::int64_t>::TIFFWriterDetail(std::string bname) : TIFFWriterBackend(bname) {
+	TIFFWriterDetail<std::int64_t>::TIFFWriterDetail(std::string bname) : TIFFWriter(bname) {
 		this->sample_format = SAMPLEFORMAT_INT;
 		this->bits_per_sample = 64;
 		this->planar_config = PLANARCONFIG_CONTIG;
@@ -110,7 +110,7 @@ namespace Tiff {
 
 	template <>
 	TIFFWriterDetail<std::int8_t>::TIFFWriterDetail(std::string bname, std::string bpath) :
-	TIFFWriterBackend(bname, bpath) {
+	TIFFWriter(bname, bpath) {
 		this->sample_format = SAMPLEFORMAT_INT;
 		this->bits_per_sample = 8;
 		this->planar_config = PLANARCONFIG_CONTIG;
@@ -118,7 +118,7 @@ namespace Tiff {
 
 	template <>
 	TIFFWriterDetail<std::int16_t>::TIFFWriterDetail(std::string bname, std::string bpath) :
-	TIFFWriterBackend(bname, bpath) {
+	TIFFWriter(bname, bpath) {
 		this->sample_format = SAMPLEFORMAT_INT;
 		this->bits_per_sample = 16;
 		this->planar_config = PLANARCONFIG_CONTIG;
@@ -126,7 +126,7 @@ namespace Tiff {
 
 	template <>
 	TIFFWriterDetail<std::int32_t>::TIFFWriterDetail(std::string bname, std::string bpath) :
-	TIFFWriterBackend(bname, bpath) {
+	TIFFWriter(bname, bpath) {
 		this->sample_format = SAMPLEFORMAT_INT;
 		this->bits_per_sample = 32;
 		this->planar_config = PLANARCONFIG_CONTIG;
@@ -134,35 +134,35 @@ namespace Tiff {
 
 	template <>
 	TIFFWriterDetail<std::int64_t>::TIFFWriterDetail(std::string bname, std::string bpath) :
-	TIFFWriterBackend(bname, bpath) {
+	TIFFWriter(bname, bpath) {
 		this->sample_format = SAMPLEFORMAT_INT;
 		this->bits_per_sample = 64;
 		this->planar_config = PLANARCONFIG_CONTIG;
 	}
 
 	template <>
-	TIFFWriterDetail<float>::TIFFWriterDetail(std::string bname) : TIFFWriterBackend(bname) {
+	TIFFWriterDetail<float>::TIFFWriterDetail(std::string bname) : TIFFWriter(bname) {
 		this->sample_format = SAMPLEFORMAT_IEEEFP;
 		this->bits_per_sample = 32;
 		this->planar_config = PLANARCONFIG_CONTIG;
 	}
 
 	template <>
-	TIFFWriterDetail<double>::TIFFWriterDetail(std::string bname) : TIFFWriterBackend(bname) {
+	TIFFWriterDetail<double>::TIFFWriterDetail(std::string bname) : TIFFWriter(bname) {
 		this->sample_format = SAMPLEFORMAT_IEEEFP;
 		this->bits_per_sample = 64;
 		this->planar_config = PLANARCONFIG_CONTIG;
 	}
 
 	template <>
-	TIFFWriterDetail<float>::TIFFWriterDetail(std::string bname, std::string bpath) : TIFFWriterBackend(bname, bpath) {
+	TIFFWriterDetail<float>::TIFFWriterDetail(std::string bname, std::string bpath) : TIFFWriter(bname, bpath) {
 		this->sample_format = SAMPLEFORMAT_IEEEFP;
 		this->bits_per_sample = 32;
 		this->planar_config = PLANARCONFIG_CONTIG;
 	}
 
 	template <>
-	TIFFWriterDetail<double>::TIFFWriterDetail(std::string bname, std::string bpath) : TIFFWriterBackend(bname, bpath) {
+	TIFFWriterDetail<double>::TIFFWriterDetail(std::string bname, std::string bpath) : TIFFWriter(bname, bpath) {
 		this->sample_format = SAMPLEFORMAT_IEEEFP;
 		this->bits_per_sample = 64;
 		this->planar_config = PLANARCONFIG_CONTIG;

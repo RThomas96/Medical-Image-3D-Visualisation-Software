@@ -1,6 +1,6 @@
 #include "../include/grid.hpp"
 
-#include "../../image/tiff/include/tiff_reader_interface.hpp"
+#include "../../image/tiff/include/tiff_reader.hpp"
 
 namespace Image {
 

@@ -10,25 +10,25 @@
 namespace Image {
 
 	/// @brief This is a generic function interface for a class that writes images to disk.
-	/// @details Akin to the ImageReaderInterface class, the WriterBackendImpl class is a function interface that allows to
+	/// @details Akin to the ImageReaderInterface class, the GridWriterInterface class is a function interface that allows to
 	/// write many different kinds of image stacks to disk.
 	/// @note Due to the highly variable nature of the grid it might be 'referencing', the particular behaviour of each
 	/// filetype's writing procedures will take place in derived classes, like the ImageReaderInterface class.
-	class WriterBackendImpl {
+	class GridWriterInterface {
 		public:
 			/// @brief Unique pointer type to an object of this class.
-			typedef std::unique_ptr<WriterBackendImpl> Ptr;
+			typedef std::unique_ptr<GridWriterInterface> Ptr;
 
 		protected:
 			/// @brief A default ctor which defines a basename for the files, with the base path being the user's HOME.
-			WriterBackendImpl(std::string basename);
+			GridWriterInterface(std::string basename);
 
 			/// @brief A 'full' ctor which defines a basename for the file, as well as a base path to save them.
-			WriterBackendImpl(std::string basename, std::string basepath);
+			GridWriterInterface(std::string basename, std::string basepath);
 
 		public:
 			/// @brief The writer's default ctor, de-allocating any resources it holds.
-			virtual ~WriterBackendImpl(void) = default;
+			virtual ~GridWriterInterface(void) = default;
 
 		public:
 			/// @brief Sets the base name of the files to a user-defined constant.
