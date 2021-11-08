@@ -11,11 +11,11 @@ ENDIF()
 ADD_LIBRARY(grid_tiff_backend STATIC
 	src/tiff_frame.cpp
 	src/tiff_helpers.cpp
-	src/backend.cpp
+    src/TIFFReaderInterface.cpp
 
 	include/tiff_include_common.hpp
 
-    include/TIFFReader.hpp
+    include/TIFFReaderInterface.hpp
 	include/templated_backend.hpp
 	include/templated_backend.impl.hpp
 	include/tiff_frame.hpp

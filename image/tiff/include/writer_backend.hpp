@@ -1,7 +1,7 @@
 #ifndef VISUALIZATION_IMAGE_TIFF_INCLUDE_WRITER_BACKEND_HPP_
 #define VISUALIZATION_IMAGE_TIFF_INCLUDE_WRITER_BACKEND_HPP_
 
-#include "./backend.hpp"
+#include "./TIFFReaderInterface.hpp"
 
 #include "../../../new_grid/include/grid.hpp"
 #include "../../interface/image_reader_interface.hpp"

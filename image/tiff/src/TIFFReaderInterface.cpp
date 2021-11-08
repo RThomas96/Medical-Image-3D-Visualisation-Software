@@ -1,4 +1,4 @@
-#include "../include/backend.hpp"
+#include "../include/TIFFReaderInterface.hpp"
 
 #include "../include/templated_backend.hpp"
 
@@ -108,28 +108,28 @@ namespace Tiff {
 			break;
 
 			case SAMPLEFORMAT_UINT: {
-				if (bps == 8) { pImpl = TIFFBackendDetail<std::uint8_t>::createBackend(w, h, _dim); return pImpl; }
-				if (bps == 16) { pImpl = TIFFBackendDetail<std::uint16_t>::createBackend(w, h, _dim); return pImpl; }
-				if (bps == 32) { pImpl = TIFFBackendDetail<std::uint32_t>::createBackend(w, h, _dim); return pImpl; }
-				if (bps == 64) { pImpl = TIFFBackendDetail<std::uint64_t>::createBackend(w, h, _dim); return pImpl; }
+				if (bps == 8) { pImpl = TIFFReaderTemplated<std::uint8_t>::createBackend(w, h, _dim); return pImpl; }
+				if (bps == 16) { pImpl = TIFFReaderTemplated<std::uint16_t>::createBackend(w, h, _dim); return pImpl; }
+				if (bps == 32) { pImpl = TIFFReaderTemplated<std::uint32_t>::createBackend(w, h, _dim); return pImpl; }
+				if (bps == 64) { pImpl = TIFFReaderTemplated<std::uint64_t>::createBackend(w, h, _dim); return pImpl; }
 				std::string err = "Sample was UInt, but no matching ctor was found for "+std::to_string(bps)+" bits.";
 				throw std::runtime_error(err);
 			}
 			break;
 
 			case SAMPLEFORMAT_INT: {
-				if (bps == 8) { pImpl = TIFFBackendDetail<std::int8_t>::createBackend(w, h, _dim); return pImpl; }
-				if (bps == 16) { pImpl = TIFFBackendDetail<std::int16_t>::createBackend(w, h, _dim); return pImpl; }
-				if (bps == 32) { pImpl = TIFFBackendDetail<std::int32_t>::createBackend(w, h, _dim); return pImpl; }
-				if (bps == 64) { pImpl = TIFFBackendDetail<std::int64_t>::createBackend(w, h, _dim); return pImpl; }
+				if (bps == 8) { pImpl = TIFFReaderTemplated<std::int8_t>::createBackend(w, h, _dim); return pImpl; }
+				if (bps == 16) { pImpl = TIFFReaderTemplated<std::int16_t>::createBackend(w, h, _dim); return pImpl; }
+				if (bps == 32) { pImpl = TIFFReaderTemplated<std::int32_t>::createBackend(w, h, _dim); return pImpl; }
+				if (bps == 64) { pImpl = TIFFReaderTemplated<std::int64_t>::createBackend(w, h, _dim); return pImpl; }
 				std::string err = "Sample was Int, but no matching ctor was found for "+std::to_string(bps) + " bits.";
 				throw std::runtime_error(err);
 			}
 			break;
 
 			case SAMPLEFORMAT_IEEEFP: {
-				if (bps == 32) { pImpl = TIFFBackendDetail<float>::createBackend(w, h, _dim); return pImpl; }
-				if (bps == 64) { pImpl = TIFFBackendDetail<double>::createBackend(w, h, _dim); return pImpl; }
+				if (bps == 32) { pImpl = TIFFReaderTemplated<float>::createBackend(w, h, _dim); return pImpl; }
+				if (bps == 64) { pImpl = TIFFReaderTemplated<double>::createBackend(w, h, _dim); return pImpl; }
 				std::string err = "Sample was floating point , but no matching ctor was found for "+std::to_string(bps)
 								+ " bits.";
 				throw std::runtime_error(err);

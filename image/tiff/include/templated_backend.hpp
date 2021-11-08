@@ -1,7 +1,7 @@
 #ifndef VISUALIAZTION_IMAGE_TIFF_INCLUDE_TEMPLATED_BACKEND_HPP_
 #define VISUALIAZTION_IMAGE_TIFF_INCLUDE_TEMPLATED_BACKEND_HPP_
 
-#include "./backend.hpp"
+#include "./TIFFReaderInterface.hpp"
 
 namespace Image {
 
@@ -13,25 +13,25 @@ namespace Tiff {
 	/// on disk. This allows to read files of any internal data types and provide access to them in a Grid object.
 	/// @tparam element_type The fundamental type used for reading. Supports `std::[u]int{8|16|32|64}_t|double|float`.
 	template <typename element_type>
-	class TIFFBackendDetail : public TIFFReader {
+	class TIFFReaderTemplated : public TIFFReaderInterface {
 
 		public:
 			/// @brief The type of the data loaded in.
 			typedef element_type pixel_t;
 
 			/// @brief Redefinition of the pointer type for this particular class.
-			typedef std::unique_ptr<TIFFBackendDetail<element_type>> Ptr;
+			typedef std::unique_ptr<TIFFReaderTemplated<element_type>> Ptr;
 
 			/// @brief Typedef for the cache structure which holds recently accessed data.
 			typedef ReadCache<std::size_t, std::vector<element_type>> cache_t;
 
 		protected:
 			/// @brief Default ctor for the class, initializing the right variables.
-			TIFFBackendDetail(uint32_t w, uint32_t h, std::size_t _dim);
+			TIFFReaderTemplated(uint32_t w, uint32_t h, std::size_t _dim);
 
 		public:
 			/// @brief Default dtor for the class, removing all allocated data from the program's memory pool.
-			virtual ~TIFFBackendDetail(void);
+			virtual ~TIFFReaderTemplated(void);
 
 			/// @brief Static function, creating a backend with the given specs.
 			static Ptr createBackend(uint32_t width, uint32_t height, std::size_t dim);

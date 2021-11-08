@@ -12,13 +12,13 @@ namespace Image {
 namespace Tiff {
 
 template <typename unsupported_element_t>
-TIFFBackendDetail<unsupported_element_t>::TIFFBackendDetail(uint32_t w, uint32_t h, std::size_t _dim) {
+TIFFReaderTemplated<unsupported_element_t>::TIFFReaderTemplated(uint32_t w, uint32_t h, std::size_t _dim) {
 	UNUSED(w); UNUSED(h); UNUSED(_dim);
-	throw std::runtime_error("Error : unsupported type passed to the TIFFBackendDetail constructor.");
+	throw std::runtime_error("Error : unsupported type passed to the TIFFReaderTemplated constructor.");
 }
 
 template <>
-TIFFBackendDetail<std::uint8_t>::TIFFBackendDetail(uint32_t w, uint32_t h, std::size_t _dim) {
+TIFFReaderTemplated<std::uint8_t>::TIFFReaderTemplated(uint32_t w, uint32_t h, std::size_t _dim) {
 	this->images.clear();
 
 	this->resolution.x = w;
@@ -37,7 +37,7 @@ TIFFBackendDetail<std::uint8_t>::TIFFBackendDetail(uint32_t w, uint32_t h, std::
 }
 
 template <>
-TIFFBackendDetail<std::uint16_t>::TIFFBackendDetail(uint32_t w, uint32_t h, std::size_t _dim) {
+TIFFReaderTemplated<std::uint16_t>::TIFFReaderTemplated(uint32_t w, uint32_t h, std::size_t _dim) {
 	this->images.clear();
 
 	this->resolution.x = w;
@@ -56,7 +56,7 @@ TIFFBackendDetail<std::uint16_t>::TIFFBackendDetail(uint32_t w, uint32_t h, std:
 }
 
 template <>
-TIFFBackendDetail<std::uint32_t>::TIFFBackendDetail(uint32_t w, uint32_t h, std::size_t _dim) {
+TIFFReaderTemplated<std::uint32_t>::TIFFReaderTemplated(uint32_t w, uint32_t h, std::size_t _dim) {
 	this->images.clear();
 
 	this->resolution.x = w;
@@ -75,7 +75,7 @@ TIFFBackendDetail<std::uint32_t>::TIFFBackendDetail(uint32_t w, uint32_t h, std:
 }
 
 template <>
-TIFFBackendDetail<std::uint64_t>::TIFFBackendDetail(uint32_t w, uint32_t h, std::size_t _dim) {
+TIFFReaderTemplated<std::uint64_t>::TIFFReaderTemplated(uint32_t w, uint32_t h, std::size_t _dim) {
 	this->images.clear();
 
 	this->resolution.x = w;
@@ -94,7 +94,7 @@ TIFFBackendDetail<std::uint64_t>::TIFFBackendDetail(uint32_t w, uint32_t h, std:
 }
 
 template <>
-TIFFBackendDetail<std::int8_t>::TIFFBackendDetail(uint32_t w, uint32_t h, std::size_t _dim) {
+TIFFReaderTemplated<std::int8_t>::TIFFReaderTemplated(uint32_t w, uint32_t h, std::size_t _dim) {
 	this->images.clear();
 
 	this->resolution.x = w;
@@ -113,7 +113,7 @@ TIFFBackendDetail<std::int8_t>::TIFFBackendDetail(uint32_t w, uint32_t h, std::s
 }
 
 template <>
-TIFFBackendDetail<std::int16_t>::TIFFBackendDetail(uint32_t w, uint32_t h, std::size_t _dim) {
+TIFFReaderTemplated<std::int16_t>::TIFFReaderTemplated(uint32_t w, uint32_t h, std::size_t _dim) {
 	this->images.clear();
 
 	this->resolution.x = w;
@@ -132,7 +132,7 @@ TIFFBackendDetail<std::int16_t>::TIFFBackendDetail(uint32_t w, uint32_t h, std::
 }
 
 template <>
-TIFFBackendDetail<std::int32_t>::TIFFBackendDetail(uint32_t w, uint32_t h, std::size_t _dim) {
+TIFFReaderTemplated<std::int32_t>::TIFFReaderTemplated(uint32_t w, uint32_t h, std::size_t _dim) {
 	this->images.clear();
 
 	this->resolution.x = w;
@@ -151,7 +151,7 @@ TIFFBackendDetail<std::int32_t>::TIFFBackendDetail(uint32_t w, uint32_t h, std::
 }
 
 template <>
-TIFFBackendDetail<std::int64_t>::TIFFBackendDetail(uint32_t w, uint32_t h, std::size_t _dim) {
+TIFFReaderTemplated<std::int64_t>::TIFFReaderTemplated(uint32_t w, uint32_t h, std::size_t _dim) {
 	this->images.clear();
 
 	this->resolution.x = w;
@@ -170,7 +170,7 @@ TIFFBackendDetail<std::int64_t>::TIFFBackendDetail(uint32_t w, uint32_t h, std::
 }
 
 template <>
-TIFFBackendDetail<float>::TIFFBackendDetail(uint32_t w, uint32_t h, std::size_t _dim) {
+TIFFReaderTemplated<float>::TIFFReaderTemplated(uint32_t w, uint32_t h, std::size_t _dim) {
 	this->images.clear();
 
 	this->resolution.x = w;
@@ -189,7 +189,7 @@ TIFFBackendDetail<float>::TIFFBackendDetail(uint32_t w, uint32_t h, std::size_t 
 }
 
 template <>
-TIFFBackendDetail<double>::TIFFBackendDetail(uint32_t w, uint32_t h, std::size_t _dim) {
+TIFFReaderTemplated<double>::TIFFReaderTemplated(uint32_t w, uint32_t h, std::size_t _dim) {
 	this->images.clear();
 
 	this->resolution.x = w;
@@ -208,17 +208,17 @@ TIFFBackendDetail<double>::TIFFBackendDetail(uint32_t w, uint32_t h, std::size_t
 }
 
 template <typename element_t>
-TIFFBackendDetail<element_t>::~TIFFBackendDetail() {
+TIFFReaderTemplated<element_t>::~TIFFReaderTemplated() {
 	this->cleanResources();
 }
 
-template <typename element_t> typename TIFFBackendDetail<element_t>::Ptr
-TIFFBackendDetail<element_t>::createBackend(uint32_t width, uint32_t height, std::size_t _dim) {
-	return Ptr(new TIFFBackendDetail<pixel_t>(width, height, _dim));
+template <typename element_t> typename TIFFReaderTemplated<element_t>::Ptr
+TIFFReaderTemplated<element_t>::createBackend(uint32_t width, uint32_t height, std::size_t _dim) {
+	return Ptr(new TIFFReaderTemplated<pixel_t>(width, height, _dim));
 }
 
 template <typename element_t>
-void TIFFBackendDetail<element_t>::cleanResources() {
+void TIFFReaderTemplated<element_t>::cleanResources() {
 	// Clear cache and loaded image data :
 	this->cachedSlices.clearCache();
 	this->images.clear();
@@ -233,13 +233,13 @@ void TIFFBackendDetail<element_t>::cleanResources() {
 }
 
 template <typename element_t>
-void TIFFBackendDetail<element_t>::compute_stack_basename(void) {
+void TIFFReaderTemplated<element_t>::compute_stack_basename(void) {
 	if (this->images.empty()) { this->stack_base_name = "<undefined>"; }
 	this->stack_base_name = "default_grid_name";
 }
 
 template <typename element_t>
-std::size_t TIFFBackendDetail<element_t>::loadSlice(std::size_t slice_idx) {
+std::size_t TIFFReaderTemplated<element_t>::loadSlice(std::size_t slice_idx) {
 	if (slice_idx >= this->images.size()) { throw std::runtime_error("Tried to load past-the-end image."); }
 
 	// If the image is already loaded, return its index :
@@ -312,7 +312,7 @@ std::size_t TIFFBackendDetail<element_t>::loadSlice(std::size_t slice_idx) {
 
 template <typename element_t>
 template <typename out_t>
-bool TIFFBackendDetail<element_t>::template_tiff_read_sub_region(svec3 origin, svec3 size, std::vector<out_t>& values) {
+bool TIFFReaderTemplated<element_t>::template_tiff_read_sub_region(svec3 origin, svec3 size, std::vector<out_t>& values) {
 	/// @brief Const iterator type for the cached data, which does not modify the data itself
 	using cache_iterator_t = typename cache_t::data_t_ptr::element_type::const_iterator;
 	/// @brief Iterator type for the target data
@@ -384,7 +384,7 @@ bool TIFFBackendDetail<element_t>::template_tiff_read_sub_region(svec3 origin, s
 
 template <typename element_t>
 template <typename range_t>
-bool TIFFBackendDetail<element_t>::template_tiff_get_sub_range_values(std::size_t channel, glm::tvec2<range_t>& range) {
+bool TIFFReaderTemplated<element_t>::template_tiff_get_sub_range_values(std::size_t channel, glm::tvec2<range_t>& range) {
 	// If channel unavailable, return false and leave the ranges uninitialized.
 	if (channel >= this->voxel_dimensionality) { return false; }
 	// If the channel is available, return the value ranges :
@@ -393,7 +393,7 @@ bool TIFFBackendDetail<element_t>::template_tiff_get_sub_range_values(std::size_
 }
 
 template <typename element_t>
-void TIFFBackendDetail<element_t>::parse_info_in_separate_thread(ThreadedTask::Ptr _task,
+void TIFFReaderTemplated<element_t>::parse_info_in_separate_thread(ThreadedTask::Ptr _task,
 												const std::vector<std::vector<std::string>>& user_filenames) {
 	// Should be checked in the launcher of this thread, but just to be sure :
 	if (user_filenames.empty()) {
@@ -625,7 +625,7 @@ void TIFFBackendDetail<element_t>::parse_info_in_separate_thread(ThreadedTask::P
 }
 
 template <typename element_t>
-bool TIFFBackendDetail<element_t>::is_frame_compatible_with_backend(ThreadedTask::Ptr& _task,
+bool TIFFReaderTemplated<element_t>::is_frame_compatible_with_backend(ThreadedTask::Ptr& _task,
 																	Frame::Ptr& reference_frame) const {
 	// Open the file :
 	TIFF* lib_handle = reference_frame->getLibraryHandle();

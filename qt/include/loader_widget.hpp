@@ -11,7 +11,7 @@
 
 // New grid API :
 #include "../../new_grid/include/grid.hpp"
-#include "../../image/tiff/include/backend.hpp"
+#include "../../image/tiff/include/TIFFReaderInterface.hpp"
 
 #include <QDir>
 #include <QLabel>

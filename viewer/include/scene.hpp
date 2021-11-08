@@ -21,7 +21,7 @@
 #include "./viewer_structs.hpp"
 // New grid API :
 #include "../../new_grid/include/grid.hpp"
-#include "../../image/tiff/include/backend.hpp"
+#include "../../image/tiff/include/TIFFReaderInterface.hpp"
 // Qt headers :
 #include <QOpenGLFunctions_4_0_Core>
 #include <QOpenGLFunctions_3_2_Core>
