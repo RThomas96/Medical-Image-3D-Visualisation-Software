@@ -14,21 +14,21 @@ namespace Image {
 		/// @brief Re-implementation of the writer backend class for the TIFF type.
 		/// @note For now, does not re-implement any of the functionnalities of the GenericGridWriter class, as the
 		/// important parts of the code happen in the templated classes behind this code.
-		class TIFFGridWriter : public GenericGridWriter {
+		class TIFFWriter : public GenericGridWriter {
 			public:
 				/// @brief Unique pointer type to an object of this class.
-				typedef std::unique_ptr<TIFFGridWriter> Ptr;
+				typedef std::unique_ptr<TIFFWriter> Ptr;
 
 			protected:
 				/// @brief A default ctor which defines a name for the files, with the default path being the disk root
-				TIFFGridWriter(std::string basename);
+				TIFFWriter(std::string basename);
 
 				/// @brief A 'full' ctor which defines a base name for the file, as well as a base path to save them.
-				TIFFGridWriter(std::string basename, std::string basepath);
+				TIFFWriter(std::string basename, std::string basepath);
 
 			public:
 				/// @brief The writer's default ctor, de-allocating any resources it holds.
-				virtual ~TIFFGridWriter(void);
+				virtual ~TIFFWriter(void);
 
 			protected:
 				/// @brief Builds a filename composed of the base name, channel index and slice index (in that order).

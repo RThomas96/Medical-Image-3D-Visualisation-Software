@@ -4,8 +4,8 @@
 #include "../../grid/include/discrete_grid_reader.hpp"
 #include "../../grid/include/discrete_grid_writer.hpp"
 #include "../../new_grid/include/grid_writer.hpp"
-#include "../../image/tiff/include/tiff_grid_writer.hpp"
-#include "../../image/tiff/include/tiff_grid_writer_templated.hpp"
+#include "../../image/tiff/include/tiff_writer.hpp"
+#include "../../image/tiff/include/tiff_writer_templated.hpp"
 
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -2013,7 +2013,7 @@ void Scene::draft_tryAndSaveFirstGrid() {
 	std::cerr << "Creating grid writer ...\n";
 	try {
 		gridWriter = std::make_shared<Image::GridWriter>(
-			Image::Tiff::TIFFGridWriterTemplated<std::uint32_t>::createBackend("tiff_grid", "/home/thibault/Pictures/tiff")
+			Image::Tiff::TIFFWriterTemplated<std::uint32_t>::createBackend("tiff_grid", "/home/thibault/Pictures/tiff")
 		);
 		if (not gridWriter->writeGrid(gridToSave, task)) {
 			std::cerr << "Error : cannot write grid.\n";

@@ -1,45 +1,45 @@
 #ifndef VISUALIZATION_IMAGE_TIFF_INCLUDE_TEMPLATED_WRITER_BACKEND_HPP_
 #define VISUALIZATION_IMAGE_TIFF_INCLUDE_TEMPLATED_WRITER_BACKEND_HPP_
 
-#include "./tiff_grid_writer.hpp"
+#include "./tiff_writer.hpp"
 
 namespace Image {
 
 	namespace Tiff {
 
 		/// @ingroup tiff newgrid
-		/// @brief The implementation template of the TIFFGridWriter class.
+		/// @brief The implementation template of the TIFFWriter class.
 		/// @details Allows to write TIFF files of a given type, directly to disk. Can be used to write slices of a grid
 		/// or the whole grid completely. However, do note that this implementation will always write single-channel
 		/// (greyscale) images. So if a grid has more than 1 channel, then there will be as many 'file stacks' as there
 		/// are channels.
 		template <typename element_t>
-		class TIFFGridWriterTemplated : public TIFFGridWriter {
+		class TIFFWriterTemplated : public TIFFWriter {
 			public:
 				/// @brief Public typedef to the internal type of the backend implementation.
 				typedef element_t pixel_t;
 
 				/// @brief Unique pointer type to an object of this class.
-				typedef std::unique_ptr<TIFFGridWriterTemplated<pixel_t>> Ptr;
+				typedef std::unique_ptr<TIFFWriterTemplated<pixel_t>> Ptr;
 
 			public:
 				/// @brief A default ctor which defines a basename for the files, with the base path being the root.
-				TIFFGridWriterTemplated(std::string bname);
+				TIFFWriterTemplated(std::string bname);
 
 				/// @brief A 'full' ctor which defines a basename for the file, as well as a base path to save them.
-				TIFFGridWriterTemplated(std::string bname, std::string bpath);
+				TIFFWriterTemplated(std::string bname, std::string bpath);
 
 				/// @brief The writer's default ctor, de-allocating any resources it holds.
-				virtual ~TIFFGridWriterTemplated(void);
+				virtual ~TIFFWriterTemplated(void);
 
-				/// @brief Creates a suitable backend of the current type (TIFFGridWriterTemplated<element_t>)
+				/// @brief Creates a suitable backend of the current type (TIFFWriterTemplated<element_t>)
 				static Ptr createBackend(std::string bname) {
-					return std::make_unique<TIFFGridWriterTemplated<pixel_t>>(bname);
+					return std::make_unique<TIFFWriterTemplated<pixel_t>>(bname);
 				}
 
-				/// @brief Creates a suitable backend of the current type (TIFFGridWriterTemplated<element_t>)
+				/// @brief Creates a suitable backend of the current type (TIFFWriterTemplated<element_t>)
 				static Ptr createBackend(std::string bname, std::string bpath) {
-					return std::make_unique<TIFFGridWriterTemplated<pixel_t>>(bname, bpath);
+					return std::make_unique<TIFFWriterTemplated<pixel_t>>(bname, bpath);
 				}
 
 			public:
@@ -105,6 +105,6 @@ namespace Image {
 
 } // namespace Image
 
-#include "./tiff_grid_writer_templated.impl.hpp"
+#include "./tiff_writer_templated.impl.hpp"
 
 #endif // VISUALIZATION_IMAGE_TIFF_INCLUDE_TEMPLATED_WRITER_BACKEND_HPP_

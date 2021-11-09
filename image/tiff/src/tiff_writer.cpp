@@ -1,16 +1,16 @@
-#include "../include/tiff_grid_writer.hpp"
+#include "../include/tiff_writer.hpp"
 
 namespace Image {
 
 namespace Tiff {
 
-	TIFFGridWriter::TIFFGridWriter(std::string bname) : GenericGridWriter(bname) {}
+	TIFFWriter::TIFFWriter(std::string bname) : GenericGridWriter(bname) {}
 
-	TIFFGridWriter::TIFFGridWriter(std::string bname, std::string bpath) : GenericGridWriter(bname, bpath) {}
+	TIFFWriter::TIFFWriter(std::string bname, std::string bpath) : GenericGridWriter(bname, bpath) {}
 
-	TIFFGridWriter::~TIFFGridWriter() {}
+	TIFFWriter::~TIFFWriter() {}
 
-	std::string TIFFGridWriter::build_iterative_filename(std::size_t slice_idx, std::size_t channel) {
+	std::string TIFFWriter::build_iterative_filename(std::size_t slice_idx, std::size_t channel) {
 		// take base name, append after base path (with '/' if not present) :
 		//	if ends with '_' do nothing, otherwise add it
 		//	add numbered channel count (with 1 leading 0s, as if there could be up to 99 channels)
@@ -43,13 +43,13 @@ namespace Tiff {
 		return final_name;
 	}
 
-	TIFF* TIFFGridWriter::open_file(std::string file_name, std::string permissions) {
+	TIFF* TIFFWriter::open_file(std::string file_name, std::string permissions) {
 		TIFF* file = TIFFOpen(file_name.data(), permissions.data());
 		if (file == NULL) {} // empty for now
 		return file;
 	}
 
-	void TIFFGridWriter::close_file(TIFF *handle) {
+	void TIFFWriter::close_file(TIFF *handle) {
 		if (handle == nullptr || handle == NULL) { return; }
 		TIFFClose(handle);
 		return;
