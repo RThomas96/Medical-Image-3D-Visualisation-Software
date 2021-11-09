@@ -3,7 +3,7 @@
 
 #include "../../new_grid/include/grid.hpp"
 #include "../../image/interface/generic_image_reader.hpp"
-#include "./generic_grid_writer.hpp"
+#include "../interface/generic_grid_writer.hpp"
 
 #include <memory>
 #include <string>

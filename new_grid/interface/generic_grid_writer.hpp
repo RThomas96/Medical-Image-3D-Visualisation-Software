@@ -10,7 +10,7 @@
 namespace Image {
 
 	/// @brief This is a generic function interface for a class that writes images to disk.
-	/// @details Akin to the GenericImageReader class, the GenericGridWriter class is a function interface that allows to
+	/// @details Akin to the GenericImageReader class, the GenericGenericGridWriter class is a function interface that allows to
 	/// write many different kinds of image stacks to disk.
 	/// @note Due to the highly variable nature of the grid it might be 'referencing', the particular behaviour of each
 	/// filetype's writing procedures will take place in derived classes, like the GenericImageReader class.
