@@ -4,6 +4,9 @@
 #include "../../macros.hpp"
 #include <iostream>
 
+/// @brief Simple class tracking user settings. Currently only tracks the allowed memory pool.
+/// @details Can be extended to include more user settings, but for now only tracks a single parameter.
+/// @note Is accessed through a singleton instance.
 class UserSettings {
 	protected:
 		UserSettings(void);
@@ -33,6 +36,8 @@ class UserSettings {
 #include <QComboBox>
 #include <QHBoxLayout>
 
+/// @ingroup qtwidgets
+/// @brief Provides a widget to control the UserSettings singleton.
 class UserSettingsWidget : public QWidget {
 	Q_OBJECT;
 	public:

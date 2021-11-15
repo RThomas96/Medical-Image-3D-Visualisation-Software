@@ -1,0 +1,76 @@
+\documentclass[a4paper,12pt,utf8]{report}
+
+\usepackage{graphicx}
+\usepackage[T1]{fontenc}
+\usepackage{float}
+\usepackage{comment}
+\usepackage{hyperref}
+\usepackage[english]{babel}
+
+% Useful to show frame around objects :
+\usepackage[]{geometry}
+% reminder : "showframe" option shows the margins/building rules of the document
+
+% Sticks the footnotes to the bottom of the page, not after the content :
+\usepackage[bottom]{footmisc}
+
+% Indent first paragraph after section beginning
+\usepackage{indentfirst}
+
+% N.B. this package requires XeLaTeX or LuaTeX :
+\usepackage{fontspec}
+\usepackage{xunicode}
+\setmainfont[Mapping=tex-text]{Linux Libertine O}
+
+% Explicitely set item spacing in lists (as well as top separation with previous textbox) :
+\usepackage{enumitem}
+\setlist{topsep=5pt,itemsep=5pt}
+
+% Useful for code blocks :
+\usepackage{listings}
+\usepackage{xcolor}
+\definecolor{solarizedbase3}{HTML}{eee8d5}
+\definecolor{mylightcyan}{HTML}{2AA198}
+\definecolor{mylightgray}{HTML}{657b83}
+\lstdefinestyle{cppbasicstyle}{
+	language=c++, 
+	linewidth=.9\linewidth,
+	basicstyle=\ttfamily\small,
+	commentstyle=\ttfamily\small\color{mylightgray},
+	identifierstyle=\ttfamily\small,
+	keywordstyle=\ttfamily\small,
+	frame=single,
+	framexrightmargin=28pt,
+	xleftmargin=.1\linewidth,
+	%backgroundcolor=\color{solarizedbase3},
+	numbers=left
+}
+
+% Simple command to force the separation of two paragraphs :
+\newcommand{\myparspace}{\vspace{\baselineskip}}
+
+\title{Manual for the Prostate3D project}
+\author{Thibault de Villèle}
+\date{July 2021}
+
+% To make TexLaB shut up on Ubuntu, but also causes the title
+% page to disappear. Keeping it here as a reminder.
+%\renewcommand\maketitle{}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+% Introduction and how to read this manual :
+\input{intro}
+% How does the program work in the background :
+\input{pipeline}
+% What components are there, how do they interact (...) :
+\input{components}
+% How do I do X ? (F.A.Q.-like section for both users and developers)
+\input{howto}
+
+\end{document}
+

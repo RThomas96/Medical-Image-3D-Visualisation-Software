@@ -1,5 +1,5 @@
 #include "../include/grid_control.hpp"
-#include "../../image/include/writer.hpp"
+#include "../../grid/include/discrete_grid_writer.hpp"
 #include "../../viewer/include/scene.hpp"
 
 #include <QHBoxLayout>
@@ -8,7 +8,7 @@
 #include <QFileDialog>
 #include <QMessageBox>
 
-GridControl::GridControl(std::shared_ptr<DiscreteGrid> _vg, std::shared_ptr<TetMesh> _tm, Scene* _scene, QWidget* parent) : QWidget(parent) {
+GridControl::GridControl(std::shared_ptr<DiscreteGrid> _vg, InterpolationMesh::Ptr _tm, Scene* _scene, QWidget* parent) : QWidget(parent) {
 	this->voxelGrid = _vg;
 	this->mesh = _tm;
 	this->scene = _scene;
@@ -577,8 +577,8 @@ void GridControl::saveToFile() {
 			this->output_B->setOffline().setGridWriter(writerB);
 
 			const std::vector<std::shared_ptr<InputGrid>>& grids = this->mesh->getInputGrids();
-			this->interpolator_R = std::make_shared<TetMesh>();
-			this->interpolator_G = std::make_shared<TetMesh>();
+			this->interpolator_R = std::make_shared<InterpolationMesh>();
+			this->interpolator_G = std::make_shared<InterpolationMesh>();
 			this->interpolator_R->addInputGrid(grids[0]);
 			this->interpolator_R->setOutputGrid(this->output_R);
 			this->interpolator_G->addInputGrid(grids[1]);

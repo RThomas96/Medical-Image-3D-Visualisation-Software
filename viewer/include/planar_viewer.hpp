@@ -10,12 +10,17 @@
 
 #include <memory>
 
+/// @ingroup graphpipe
+/// @brief The PlanarViewer class handles the OpenGL widget responsible for showing the contents present at the cutting
+/// plane's positions.
+/// @details While this is inheriting from QGLViewer, it does not use any of the camera settings. It uses a completely
+/// custom rendering pipeline.
 class PlanarViewer : public QGLViewer {
 	protected:
 		friend class ViewerHeader;
 	public:
 		/// @brief Default constructor for the viewer.
-		PlanarViewer(Scene* const _scene, planes _p, planeHeading _h = North, QWidget* parent = nullptr);
+		PlanarViewer(Scene* const _scene, planes _p, QStatusBar* status_bar, planeHeading _h = North, QWidget* parent = nullptr);
 		/// @brief Default destructor for the viewer.
 		~PlanarViewer(void);
 		/// @b Links with the parent widget, to have access to the statusbar :)
@@ -29,24 +34,24 @@ class PlanarViewer : public QGLViewer {
 		virtual void keyPressEvent(QKeyEvent* _e) override;
 		/// @brief Handles mouse events from the user.
 		virtual void mousePressEvent(QMouseEvent* _m) override;
-		/// @b Event raised when the mouse moves
+		/// @brief Event raised when the mouse moves
 		virtual void mouseMoveEvent(QMouseEvent* _m) override;
-		/// @b Event raised when the mouse is released
+		/// @brief Event raised when the mouse is released
 		virtual void mouseReleaseEvent(QMouseEvent* _m) override;
 		/// @brief Overrides the mouse wheel events from the user.
 		virtual void wheelEvent(QWheelEvent* _w) override;
-		/// @b Overrides the function to resize the widget.
+		/// @brief Overrides the function to resize the widget.
 		virtual void resizeGL(int w, int h) override;
-		/// @b Defines the 'Help'/'About' string defined for this viewer.
+		/// @brief Defines the 'Help'/'About' string defined for this viewer.
 		virtual QString helpString(void) const override;
-		/// @b Defines the 'Help'/'About' string for the keyboard for this viewer.
+		/// @brief Defines the 'Help'/'About' string for the keyboard for this viewer.
 		virtual QString keyboardString(void) const override;
-		/// @b Defines the 'Help'/'About' string for the mouse for this viewer.
+		/// @brief Defines the 'Help'/'About' string for the mouse for this viewer.
 		virtual QString mouseString(void) const override;
-		/// @b Guess the scene position from the fragment position after rendering
+		/// @brief Guess the scene position from the fragment position after rendering
 		virtual void guessScenePosition(void);
 	protected:
-		/// @b Sets the widget in charge of controlling the viewer
+		/// @brief Sets the widget in charge of controlling the viewer
 		void setController(ViewerHeader* _header);
 	protected:
 		Scene* sceneToShow;				///< The scene to draw.
@@ -71,15 +76,15 @@ class PlanarViewer : public QGLViewer {
 	public slots:
 		/// @brief Update the view, as a slot without any arguments
 		void updateView(void);
-		/// @b Signal from a slider to update the value of the cutting plane.
+		/// @brief Signal from a slider to update the value of the cutting plane.
 		void updatePlaneDepth(int newVal);
-		/// @b Signal from a push button to flip the plane's cutting direction.
+		/// @brief Signal from a push button to flip the plane's cutting direction.
 		void flipPlaneDirection(void);
-		/// @b Rotates a plane in a clockwise fashion.
+		/// @brief Rotates a plane in a clockwise fashion.
 		void rotatePlaneClockwise(void);
-		/// @b Rotates a plane in a counter-clockwise fashion.
+		/// @brief Rotates a plane in a counter-clockwise fashion.
 		void rotatePlaneCounterClockwise(void);
-		/// @b Toggles the corresponding plane's visibility in the scene
+		/// @brief Toggles the corresponding plane's visibility in the scene
 		void togglePlaneVisibility(void);
 };
 

@@ -12,12 +12,16 @@
 \DeclareOption{draft}{
 	\drafttrue
 }
+\DeclareOption{final}{
+    \draftfalse
+}
 
 \ProcessOptions\relax
 
 % Some useful commands when writing :
 \providecommand\wip[1]{}
 \providecommand\todo[1]{}
+\providecommand\todoHere[1]{}
 \providecommand\commentaire[1]{}
 \providecommand\definition[1]{}
 \definecolor{darkgreen}{rgb}{0.0, 0.42, 0.24}
@@ -26,8 +30,15 @@
 \ifdraft
 	\renewcommand\wip[1]{{\raggedright{\color{red}\fontfamily{\firamono@family}\selectfont\small[WIP] : #1}}}
 	\renewcommand\todo[1]{\footnote{\color{darkgreen}\textit{TODO : #1}}}
+	\renewcommand\todoHere[1]{{\color{darkgreen}\fontfamily{\firamono@family}\selectfont\small\textit{TODO : #1}}}
 	\renewcommand\commentaire[1]{{\color{blue}\fontfamily{\fira@family}\selectfont\small\textit{Commentaire : #1}}}
-	\renewcommand\definition[1]{\footnote{#1. Voir glossaire pour plus d'informations.}\todo{Glossaire}}
+	\renewcommand\definition[1]{\footnote{#1. Voir glossaire pour plus d'informations.}}%\todo{Glossaire}}
+\else
+	\renewcommand\wip[1]{}
+	\renewcommand\todo[1]{}
+	\renewcommand\todoHere[1]{}
+	\renewcommand\commentaire[1]{}
+	\renewcommand\definition[1]{\footnote{#1.}}
 \fi
 
 \endinput

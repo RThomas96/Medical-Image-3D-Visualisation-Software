@@ -3,19 +3,34 @@
 
 \usepackage{graphicx}
 \usepackage[T1]{fontenc}
+\usepackage{array} % for tables in the Qt supplemental section
 \usepackage{float}
+\usepackage{amsmath} % math-mode commands
+\usepackage{siunitx} % universal system units
 \usepackage{hyperref}
+%\usepackage[showframe]{geometry} % Uncomment if you want to make your layout appear
+\usepackage{subcaption}
+\usepackage[french,ruled,vlined]{algorithm2e}
 \usepackage[french]{babel}
-\usepackage[draft]{commands} % Custom commands, defined in this folder
+\usepackage[final]{commands} % Custom commands, defined in this folder
 \setsecnumdepth{subsection} % Numérotation des subsections, peu importe le type de doc
 
-\supervisors{Noura \textsc{Faraj}\\Christophe \textsc{Fiorio}\\Benjamin \textsc{Charlier}}
+% Types colonnes pour placer texte et image côte à côte :
+\newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+\newcolumntype{L}[1]{>{\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+
+% Édite le style des légendes sous les images :
+\captionsetup{format=plain, labelfont=bf, labelsep=endash, indention=.05\textwidth, width=.8\linewidth}
+
+\supervisors{Noura \textsc{Faraj}\\Christophe \textsc{Fiorio}\\Benjamin \textsc{Charlier}\\Brian \textsc{Summa}, Université de Tulane, Nouvelle Orléans (co-encadrant)}
 \location{LIRMM UM5506 - CNRS, Université de Montpellier}
 \title{Gestion, traitement et visualisation d'images médicales à très haute résolution}
 \track{IMAGINA}
-\date{2 Juillet 2020}
-\author{Thibault}
-\abstractfr{Ce sujet de stage s'inscrit dans un effort de collaboration internationale entre l'université de Tulane à la Nouvelle Orléans, et l'université de Montpellier dans le cadre d'un projet pour l'aide à la détection et au diagnostic du cancer de la prostate.}
+\date{31 Ao\^ut 2020}
+\author{Thibault de Villèle}
+\abstractfr{Le diagnostic du cancer de la prostate est actuellement basé sur un indicateur empirique nommé échelle de Gleason. Bien que largement utilisée, elle génère une très grande variablilité de jugement selon l'opérateur analysant le prélèvement de tissu chez un patient donné. Afin d'atténuer cette variabilité, l'équipe de bio-ingénierie de l'université de Tulane à la Nouvelle-Orléans a développé un microscope permettant de faire des acquisitions tridimensionnelles très précises (en espace et en résolution) d'un échantillon de tissus. Leur processus de traitement génère des jeux de données de l'ordre de plusieurs dizaine de tera-octets. Le but de ce stage est de développer une méthode permettant de reconstruire en trois dimensions un échantillon de prostate à partir des données brutes tout en étant rapide et efficace en mémoire. Le premier axe de recherche de ce stage est donc orienté sur la gestion et la visualisation en temps réel de ces données. Le deuxième axe de recherche porte la génération, en temps réel, de grilles de voxels à plusieurs résolutions nécessitant une exploration efficace des données (recherche de voisinage). 
+
+Ce travail est la première partie d'un projet collaboratif entre les universités de Tulane et Montpellier, qui se poursuivra en thèse. Les travaux effectués pendant ce stage sont disponibles publiquement aux adresses suivantes: \url{gitlab.com/thibaulltt/visualisation} ainsi que \url{gitlab.com/thibaulltt/kidpocketframework}}
 
 \begin{document}
 	\selectlanguage{french}
@@ -23,8 +38,6 @@
 	\cleardoublepage
 	%\settocdepth{subsection} % Mettre subsections dans table des matières
 	\tableofcontents \mainmatter
-
-	\commentaire{Ajouter un glossaire et annexes techniques. la première : toutes technos, présentées (très) vite fait, avec leur logo, leur langage de prog et 2/3 infos pour + de compréhension du lecteur, et ensuite toutes annexes techniques nécessaires (exemple : fonctionnement d'opengl en mode direct et indirect)}
 
 	\input{chapter01}
 	\input{chapter02}
@@ -37,6 +50,23 @@
 	\selectlanguage{french}
 	\bibliography{references}{}
 	\bibliographystyle{plain}
+	
+	\chapter*{Annexes}
+	{
+	    \addcontentsline{toc}{chapter}{Annexes}
+	    \section*{Annexe technique - Qt}
+	    \addcontentsline{toc}{section}{Annexe technique - Qt}
+	    \input{qt}
+	    \clearpage
+	    \section*{Annexe technique - Rendu graphique et OpenGL}
+	    \addcontentsline{toc}{section}{Annexe technique - Rendu graphique et OpenGL}
+	    \input{opengl}
+	    \clearpage
+	    \section*{Annexe informative - Résultats de performances pour visualisation par sous-domaines}
+	    \addcontentsline{toc}{section}{Annexe informative - Résultats de performances pour visualisation par sous-domaines}
+	    \input{timings}
+	    \clearpage
+	}
 
 \end{document}
 

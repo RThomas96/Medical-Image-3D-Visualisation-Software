@@ -14,7 +14,7 @@ the compiled code, by enabling or disabling certain parts of it.
 // Enable ellipsis if the name of a grid is too long in the list view :
 // #define GRID_LIST_ITEM_ENABLE_ELLIPSIS_TEXT
 
-/// @b If defined, asks the user for images to load. Otherwise, loads the first 50 images of the 'Blue' dataset.
+/// @brief If defined, asks the user for images to load. Otherwise, loads the first 50 images of the 'Blue' dataset.
 #define USER_DEFINED_IMAGE_LOADING
 
 //#define LOAD_RED_AND_BLUE_IMAGE_STACKS

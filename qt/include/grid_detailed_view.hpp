@@ -24,6 +24,10 @@
 #include <array>
 #include <variant>
 
+/// @ingroup qtwidgets
+/// @brief Provides	a detailed view of a DiscreteGrid's contents. Never actually used in production code.
+/// @warning Legacy code. Do not use.
+/// @note For a more convenient way to do this, see Qt's help page on Model-View architecture.
 class GridDetailedView : public QWidget {
 	public:
 		/// @brief Creates an empty detailed view of a grid.

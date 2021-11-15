@@ -28,6 +28,12 @@ ColorButton::ColorButton(QColor _color, QWidget* parent) : QWidget(parent) {
 	});
 }
 
+ColorButton::~ColorButton() {
+	delete this->icon;
+	delete this->pixmap;
+	delete this->button;
+}
+
 void ColorButton::setColor(QColor _color) {
 	this->color = _color;
 	this->pixmap->fill(this->color);
@@ -64,9 +70,9 @@ ColorBoundsControl::ColorBoundsControl(Scene *_scene, bool _prim, QWidget *paren
 	QObject::connect(this->sb_max, QOverload<int>::of(&QSpinBox::valueChanged), this, &ColorBoundsControl::maxChanged);
 	this->setAttribute(Qt::WA_DeleteOnClose);
 	if (this->_primary) {
-		this->setWindowTitle("Red bounds");
+		this->setWindowTitle("Channel 1 bounds");
 	} else {
-		this->setWindowTitle("Green bounds");
+		this->setWindowTitle("Channel 2 bounds");
 	}
 }
 
@@ -100,18 +106,18 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, QWidget* parent) : QW
 	// Create the groupboxes and their layouts :
 	this->groupbox_red = new QGroupBox;
 	this->groupbox_green = new QGroupBox;
-	this->layout_widgets_red = new QGridLayout;
-	this->layout_widgets_green = new QGridLayout;
+	this->layout_widgets_red = new QHBoxLayout;
+	this->layout_widgets_green = new QHBoxLayout;
 	this->groupbox_red->setCheckable(true);
 	this->groupbox_green->setCheckable(true);
-	this->groupbox_red->setTitle("Red");
-	this->groupbox_green->setTitle("Green");
+	this->groupbox_red->setTitle("Channel 1");
+	this->groupbox_green->setTitle("Channel 2");
 
 	// Texture bounds for red and green channels :
-	this->rangeslider_red = new RangeSlider;
-	this->rangeslider_green = new RangeSlider;
+	this->rangeslider_red = new DoubleSlider;
+	this->rangeslider_green = new DoubleSlider;
 
-	this->red_coloration = new QComboBox;this->green_coloration = new QComboBox;
+	this->red_coloration = new QComboBox;
 	this->red_coloration->addItem("Greyscale", ColorFunction::SingleChannel);
 	this->red_coloration->addItem("HSV to RGB", ColorFunction::HSV2RGB);
 	this->red_coloration->addItem("User colors", ColorFunction::ColorMagnitude);
@@ -141,20 +147,20 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, QWidget* parent) : QW
 	this->rangeslider_green->setMinValue(0);
 	this->rangeslider_green->setMaxValue(this->max-2);
 
-	this->layout_widgets_red->addWidget(this->colorbutton_red_min, 0, 0, 2, 1);
-	this->layout_widgets_red->addWidget(this->rangeslider_red, 0, 1, 2, 1);
-	this->layout_widgets_red->setColumnStretch(1, 10);
-	this->layout_widgets_red->addWidget(this->colorbutton_red_max, 0, 2, 2, 1);
-	this->layout_widgets_red->addWidget(this->red_coloration, 0, 3, 1, 1);
-	this->layout_widgets_red->addWidget(this->button_red_colorbounds, 1, 3, 1, 1);
+	this->layout_widgets_red->addWidget(this->colorbutton_red_min);
+	this->layout_widgets_red->addWidget(this->rangeslider_red);
+//	this->layout_widgets_red->setColumnStretch(1, 10);
+	this->layout_widgets_red->addWidget(this->colorbutton_red_max);
+	this->layout_widgets_red->addWidget(this->red_coloration);
+	this->layout_widgets_red->addWidget(this->button_red_colorbounds);
 	this->groupbox_red->setLayout(this->layout_widgets_red);
 
-	this->layout_widgets_green->addWidget(this->colorbutton_green_min, 0, 0, 2, 1);
-	this->layout_widgets_green->addWidget(this->rangeslider_green, 0, 1, 2, 1);
-	this->layout_widgets_green->setColumnStretch(1, 10);
-	this->layout_widgets_green->addWidget(this->colorbutton_green_max, 0, 2, 2, 1);
-	this->layout_widgets_green->addWidget(this->green_coloration, 0, 3, 1, 1);
-	this->layout_widgets_green->addWidget(this->button_green_colorbounds, 1, 3, 1, 1);
+	this->layout_widgets_green->addWidget(this->colorbutton_green_min);
+	this->layout_widgets_green->addWidget(this->rangeslider_green);
+//	this->layout_widgets_green->setColumnStretch(1, 10);
+	this->layout_widgets_green->addWidget(this->colorbutton_green_max);
+	this->layout_widgets_green->addWidget(this->green_coloration);
+	this->layout_widgets_green->addWidget(this->button_green_colorbounds);
 	this->groupbox_green->setLayout(this->layout_widgets_green);
 
 	QLabel* label_Texture = new QLabel("Image intensities");
@@ -167,24 +173,43 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, QWidget* parent) : QW
 	grid->addWidget(label_Texture, 0, 0, 2, 1, Qt::AlignCenter);
 	grid->addWidget(this->groupbox_red, 0, 1, 1, 20);
 	grid->addWidget(this->groupbox_green, 1, 1, 1, 20);
+	grid->setRowStretch(0, 0);
+	grid->setRowStretch(1, 0);
 	this->setLayout(grid);
 
 	this->initSignals();
+
+//	this->layout_widgets_red->setSizeConstraint(QLayout::SizeConstraint::SetFixedSize);
+//	this->layout_widgets_green->setSizeConstraint(QLayout::SizeConstraint::SetFixedSize);
+//	this->layout()->setSizeConstraint(QLayout::SizeConstraint::SetFixedSize);
 
 	if (this->sceneToControl != nullptr) {
 		this->updateValues();
 	}
 }
 
-ControlPanel::~ControlPanel() = default;
+ControlPanel::~ControlPanel() {
+	delete this->button_green_colorbounds;
+	delete this->button_red_colorbounds;
+	delete this->green_coloration;
+	delete this->red_coloration;
+	delete this->colorbutton_green_max;
+	delete this->colorbutton_green_min;
+	delete this->colorbutton_red_max;
+	delete this->colorbutton_red_min;
+	delete this->rangeslider_green;
+	delete this->rangeslider_red;
+	delete this->groupbox_green;
+	delete this->groupbox_red;
+}
 
 void ControlPanel::initSignals() {
 	// Modifies the min/max values of the texture to be considered valuable data :
-	QObject::connect(this->rangeslider_red, &RangeSlider::minChanged, this, &ControlPanel::setMinTexVal);
-	QObject::connect(this->rangeslider_red, &RangeSlider::maxChanged, this, &ControlPanel::setMaxTexVal);
+	QObject::connect(this->rangeslider_red, &DoubleSlider::minChanged, this, &ControlPanel::setMinTexVal);
+	QObject::connect(this->rangeslider_red, &DoubleSlider::maxChanged, this, &ControlPanel::setMaxTexVal);
 
-	QObject::connect(this->rangeslider_green, &RangeSlider::minChanged, this, &ControlPanel::setMinTexValBottom);
-	QObject::connect(this->rangeslider_green, &RangeSlider::maxChanged, this, &ControlPanel::setMaxTexValBottom);
+	QObject::connect(this->rangeslider_green, &DoubleSlider::minChanged, this, &ControlPanel::setMinTexValBottom);
+	QObject::connect(this->rangeslider_green, &DoubleSlider::maxChanged, this, &ControlPanel::setMaxTexValBottom);
 
 	// Connect color changes to their respective slots :
 	QObject::connect(this->colorbutton_red_min, &ColorButton::colorChanged, this, [this](QColor c) -> void {

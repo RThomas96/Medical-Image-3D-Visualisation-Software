@@ -21,17 +21,16 @@ extern "C"
 
 int main(int argc, char* argv[]) {
 
+	QSurfaceFormat fmt;
+	fmt.setOption(QSurfaceFormat::DebugContext); // adds GL_KHR_debug extension to the OpenGL context creation
+	//fmt.setSamples(4); // enables multi-sampling
+	QSurfaceFormat::setDefaultFormat(fmt);
+
 	QCoreApplication::setApplicationName("Medical Image Visualizer");
 	QCoreApplication::setOrganizationName("LIRMM");
 	QCoreApplication::setApplicationVersion(QT_VERSION_STR);
 	// Share OpenGL context when possible :
-	QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
-
-	QSurfaceFormat fmt;
-	fmt.setProfile(QSurfaceFormat::CoreProfile);
-	fmt.setOption(QSurfaceFormat::DebugContext); // adds GL_KHR_debug extension to the OpenGL context creation
-	//fmt.setSamples(4); // enables multi-sampling
-	QSurfaceFormat::setDefaultFormat(fmt);
+	//QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
 
 	QApplication app(argc, argv);
 

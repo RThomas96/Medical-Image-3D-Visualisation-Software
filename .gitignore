@@ -22,3 +22,9 @@ compile_commands.json
 
 # Ignore local utility folder :
 utilities/
+
+# Ignore tag file
+tags
+
+# Ignore vim files
+*.swp

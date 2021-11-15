@@ -6,6 +6,12 @@
 
 #include "./discrete_grid.hpp"
 
+/// @ingroup discreteGrid
+/// @brief Specialization of DiscreteGrid for grids contained on disk.
+/// @details This specialization was originally done in order to separate (in concept) grids on disk from grids
+/// generated at runtime. Over time, this distinction was no longer necessary and the code contained here was merged in
+/// the DiscreteGrid class.
+/// @warning Legacy class. Should not be used in new code.
 class InputGrid : public DiscreteGrid {
 	public:
 		/// @brief Nothing to be done in the constructor.

@@ -26,17 +26,18 @@
 
 class Scene; // Fwd-declaration
 
+/// @ingroup qtwidgets
 /// @brief Simple widget allowing the control (if possible) of a grid's resolution, voxel sizes and bounding box.
 /// @note In this class, the bounding box controlled will always be defined as existing within grid space. It makes no
 /// sense to try and convert to world space the bounding box defined by the spinboxes, to then re-convert this bounding
 /// box into grid space, which would give another bounding volume. As such, this will only be defined in grid space.
-/// @note Since the bounding box is defined in grid space, then the TetMesh that is responsible for the computation of
-/// the output grid will also go through the grid in grid space.
+/// @note Since the bounding box is defined in grid space, then the InterpolationMesh that is responsible for the
+/// computation of the output grid will also go through the grid in grid space.
 class GridControl : public QWidget {
 		Q_OBJECT
 	public:
 		/// @brief Default constructor of the class, providing a valid scene pointer.
-		GridControl(std::shared_ptr<DiscreteGrid> _vg, std::shared_ptr<TetMesh> _tm, Scene* _scene, QWidget* parent = nullptr);
+		GridControl(std::shared_ptr<DiscreteGrid> _vg, InterpolationMesh::Ptr _tm, Scene* _scene, QWidget* parent = nullptr);
 		/// @brief Default destructor of the class. Removes the output grid and unregisters itself from the scene.
 		~GridControl(void);
 		/// @brief Ovverides the default show event in order to lock its size, disabling later resize events.
@@ -80,13 +81,13 @@ class GridControl : public QWidget {
 		std::shared_ptr<OutputGrid> output_B;
 		std::shared_ptr<OutputGrid> output_RGB;
 		// Different interpolation structures available to the user :
-		std::shared_ptr<TetMesh> interpolator_R;
-		std::shared_ptr<TetMesh> interpolator_G;
-		std::shared_ptr<TetMesh> interpolator_RGB;
+		InterpolationMesh::Ptr interpolator_R;
+		InterpolationMesh::Ptr interpolator_G;
+		InterpolationMesh::Ptr interpolator_RGB;
 
 		// Variables retrieved from the constructor :
 		std::shared_ptr<DiscreteGrid> voxelGrid; ///< Voxel grid to control.
-		std::shared_ptr<TetMesh> mesh; ///< Tetrahedral mesh responsible for the generation of the grid
+		InterpolationMesh::Ptr mesh; ///< Tetrahedral mesh responsible for the generation of the grid
 		Scene* scene; ///< The scene to control.
 
 		// Qt stuff :
@@ -128,7 +129,7 @@ class GridControl : public QWidget {
 		QLabel* info_TotalTime; ///< Total time it took to fill the grid
 		QLabel* info_VoxelRate; ///< Rate of filling, in gigavoxels/hour.
 		QLabel* info_MemorySize; ///< Size of the voxel grid, in GB.
-		/// @b Updates the fields relating to the time/size/memory footprint of the generated grid.
+		/// @brief Updates the fields relating to the time/size/memory footprint of the generated grid.
 		void updateDebugInfoFields(void);
 };
 

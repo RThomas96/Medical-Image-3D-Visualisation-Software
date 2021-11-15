@@ -34,9 +34,25 @@ MainWidget::~MainWidget() {
 	this->action_addGrid->disconnect();
 	this->action_saveGrid->disconnect();
 	this->action_exitProgram->disconnect();
+	this->action_drawModeS->disconnect();
+	this->action_drawModeV->disconnect();
+	this->action_drawModeVB->disconnect();
+	this->action_showVisuBox->disconnect();
+	this->action_showSettings->disconnect();
+	this->action_showHelp3D->disconnect();
+	this->action_showHelpPlane->disconnect();
+
+	delete this->action_showHelp3D;
+	delete this->action_showHelpPlane;
+	delete this->action_showSettings;
 
 	delete this->action_addGrid;
 	delete this->action_saveGrid;
+	delete this->action_exitProgram;
+	delete this->action_drawModeVB;
+	delete this->action_drawModeV;
+	delete this->action_drawModeS;
+	delete this->action_showVisuBox;
 	delete this->viewer_planeZ;
 	delete this->viewer_planeY;
 	delete this->viewer_planeX;
@@ -45,6 +61,9 @@ MainWidget::~MainWidget() {
 	delete this->headerZ;
 	delete this->headerY;
 	delete this->headerX;
+	delete this->header3d;
+
+	this->showGLLog->disconnect();
 
 	for (std::size_t i = 0; i < this->strayObj.size(); ++i) {
 		if (this->strayObj[i] != nullptr) {
@@ -143,10 +162,10 @@ void MainWidget::setupWidgets() {
 	});
 
 	// Viewer(s) creation along with control panel :
-	this->viewer = new Viewer(this->scene, nullptr);
-	this->viewer_planeX = new PlanarViewer(this->scene, planes::x, planeHeading::North, nullptr);
-	this->viewer_planeY = new PlanarViewer(this->scene, planes::y, planeHeading::North, nullptr);
-	this->viewer_planeZ = new PlanarViewer(this->scene, planes::z, planeHeading::North, nullptr);
+	this->viewer = new Viewer(this->scene, this->statusBar, nullptr);
+	this->viewer_planeX = new PlanarViewer(this->scene, planes::x, this->statusBar, planeHeading::North, nullptr);
+	this->viewer_planeY = new PlanarViewer(this->scene, planes::y, this->statusBar, planeHeading::North, nullptr);
+	this->viewer_planeZ = new PlanarViewer(this->scene, planes::z, this->statusBar, planeHeading::North, nullptr);
 	this->controlPanel = new ControlPanel(this->scene, this->viewer, nullptr);
 	this->scene->setControlPanel(this->controlPanel);
 
@@ -254,6 +273,7 @@ bool MainWidget::eventFilter(QObject* obj, QEvent* e) {
 		// lock control panel size to the current size it has :
 		QSize centerSize = this->size();
 		this->controlPanel->setMinimumWidth(static_cast<int>(static_cast<float>(centerSize.width()) * .99f));
+		this->controlPanel->setMaximumHeight(static_cast<int>(this->controlPanel->height()));
 	}
 	// Return false, to handle the rest of the event normally
 	return false;

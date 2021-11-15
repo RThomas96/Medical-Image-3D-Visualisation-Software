@@ -1,6 +1,10 @@
 #include "../include/loader_widget.hpp"
 
 #include "../include/user_settings_widget.hpp"
+#include "../../../image/transforms/include/transform_stack.hpp"
+#include "../../../image/transforms/include/transform_interface.hpp"
+#include "../../../image/transforms/include/trs_transform.hpp"
+#include "../../../image/transforms/include/affine_transform.hpp"
 
 #include <QMessageBox>
 #include <QDialog>
@@ -24,6 +28,8 @@ GridLoaderWidget::GridLoaderWidget(Scene* _scene, Viewer* _viewer, ControlPanel*
 	this->spinbox_userLimitMin = nullptr;
 	this->spinbox_userLimitMax = nullptr;
 	this->progress_load = nullptr;
+	this->_testing_grid = nullptr;
+	this->button_loadNewGridAPI = nullptr;
 	this->setupWidgets();
 	this->setupLayouts();
 	this->setupSignals();
@@ -83,6 +89,7 @@ void GridLoaderWidget::setupWidgets() {
 	this->label_transformationDimensions = new QLabel("Physical resolution of a pixel (micrometers, on X, Y, and Z) :");
 	this->label_gridInfoR = new QLabel("<No grid loaded>");
 	this->label_gridInfoG = new QLabel("");
+	this->button_loadNewGridAPI = new QPushButton("Load with new grid API");
 
 	this->progress_load = new QProgressBar;
 	QSizePolicy retain_size_policy = this->progress_load->sizePolicy();
@@ -246,6 +253,7 @@ void GridLoaderWidget::setupLayouts() {
 	this->layout_mainLayout->addWidget(this->label_headerLoader, 0, Qt::AlignCenter);
 	this->layout_mainLayout->addWidget(this->frame_load1channel);
 	this->layout_mainLayout->addWidget(this->frame_load2channel);
+	this->layout_mainLayout->addWidget(this->button_loadNewGridAPI);
 	this->layout_mainLayout->addWidget(this->groupBox_downsampling);
 	this->layout_mainLayout->addWidget(this->groupBox_interpolator);
 	this->layout_mainLayout->addWidget(this->groupbox_userLimits);
@@ -287,6 +295,7 @@ void GridLoaderWidget::setupSignals() {
 	QObject::connect(this->button_loadTIF_2channel, &QPushButton::clicked, this, &GridLoaderWidget::loadGridTIF2channel);
 	QObject::connect(this->button_loadOME_1channel, &QPushButton::clicked, this, &GridLoaderWidget::loadGridOME1channel);
 	QObject::connect(this->button_loadOME_2channel, &QPushButton::clicked, this, &GridLoaderWidget::loadGridOME2channel);
+	QObject::connect(this->button_loadNewGridAPI, &QPushButton::clicked, this, &GridLoaderWidget::loadNewGridAPI);
 
 	// load grid into mem :
 	QObject::connect(this->button_loadGrids, &QPushButton::clicked, this, &GridLoaderWidget::loadGrid);
@@ -407,6 +416,49 @@ void GridLoaderWidget::disableWidgets() {
 	this->radioButton_max->setDisabled(true);
 }
 
+void GridLoaderWidget::setWidgetsEnabled(bool _enabled) {
+	this->button_loadDIM_1channel->setEnabled(_enabled);
+	this->button_loadDIM_2channel->setEnabled(_enabled);
+	this->button_loadTIF_1channel->setEnabled(_enabled);
+	this->button_loadTIF_2channel->setEnabled(_enabled);
+	this->button_loadOME_1channel->setEnabled(_enabled);
+	this->button_loadOME_2channel->setEnabled(_enabled);
+	this->button_loadGrids->setEnabled(_enabled);
+
+	this->dsb_transformationA->setEnabled(_enabled);
+	this->dsb_transformationDX->setEnabled(_enabled);
+	this->dsb_transformationDY->setEnabled(_enabled);
+	this->dsb_transformationDZ->setEnabled(_enabled);
+
+	this->frame_load1channel->setEnabled(_enabled);
+	this->frame_load2channel->setEnabled(_enabled);
+	this->frame_transfoDetails->setEnabled(_enabled);
+
+	this->groupBox_downsampling->setEnabled(_enabled);
+	this->groupBox_interpolator->setEnabled(_enabled);
+	this->groupbox_userLimits->setEnabled(_enabled);
+	this->groupbox_originalOffset->setEnabled(_enabled);
+
+	this->label_headerLoader->setEnabled(_enabled);
+	this->label_load1channel->setEnabled(_enabled);
+	this->label_load2channel->setEnabled(_enabled);
+	this->label_headerTransformation->setEnabled(_enabled);
+	this->label_transformationAngle->setEnabled(_enabled);
+	this->label_transformationDimensions->setEnabled(_enabled);
+	this->label_gridInfoR->setEnabled(_enabled);
+	this->label_gridInfoG->setEnabled(_enabled);
+
+	this->radioButton_original->setEnabled(_enabled);
+	this->radioButton_low->setEnabled(_enabled);
+	this->radioButton_lower->setEnabled(_enabled);
+	this->radioButton_lowest->setEnabled(_enabled);
+	this->radioButton_nn->setEnabled(_enabled);
+	this->radioButton_mean->setEnabled(_enabled);
+	this->radioButton_mp->setEnabled(_enabled);
+	this->radioButton_min->setEnabled(_enabled);
+	this->radioButton_max->setEnabled(_enabled);
+}
+
 void GridLoaderWidget::resetGridInfoLabel() {
 	this->label_gridInfoR->setText("Loading grid information ...");
 	this->label_gridInfoG->setText("");
@@ -414,6 +466,17 @@ void GridLoaderWidget::resetGridInfoLabel() {
 }
 
 void GridLoaderWidget::computeGridInfoLabel() {
+	if (this->useLegacyGrids == false) {
+		if (this->_testing_grid != nullptr) {
+			auto dims = this->_testing_grid->getResolution();
+			auto v = this->_testing_grid->getVoxelDimensionality();
+			QString infogrid = "Image dimensions : " + QString::number(dims.x) + "x" + QString::number(dims.y) + "x" +
+							   QString::number(dims.z) + " on " + QString::number(v) + " channels.";
+			this->label_gridInfoR->setText(infogrid);
+			return;
+		}
+	}
+
 	if (this->readerR == nullptr) {
 		this->label_gridInfoR->setText("<No grid loaded>");
 		this->label_gridInfoG->setText("");
@@ -460,6 +523,35 @@ void GridLoaderWidget::updateVoxelDimensions_silent() {
 	return;
 }
 
+void GridLoaderWidget::progressBar_init_undefined(QString format_message) {
+	assert(this->progress_load != nullptr);
+	// set a new progress bar :
+	this->progress_load->setRange(0, 0);
+	this->progress_load->setValue(0);
+	this->progress_load->setFormat(format_message);
+	if (not this->progress_load->isVisible()) { this->progress_load->setVisible(true); }
+	// update and show the bar :
+	//QCoreApplication::processEvents();
+	//this->update();
+}
+
+void GridLoaderWidget::progressBar_init_defined(int min, int max, int current_value, QString format_string) {
+	this->progress_load->setRange(min, max);
+	this->progress_load->setValue(current_value);
+	this->progress_load->setFormat(format_string);
+	if (not this->progress_load->isVisible()) { this->progress_load->setVisible(true); }
+	// update and show the bar :
+	QCoreApplication::processEvents();
+	this->update();
+}
+
+void GridLoaderWidget::progressBar_reset() {
+	this->progress_load->reset();
+	if (this->progress_load->isVisible()) { this->progress_load->setVisible(false); }
+	QCoreApplication::processEvents();
+	this->update();
+}
+
 void GridLoaderWidget::loadGridDIM1channel() {
 	if (this->readerR != nullptr) { this->readerR.reset(); this->readerR = nullptr; }
 	if (this->readerG != nullptr) { this->readerG.reset(); this->readerG = nullptr; }
@@ -469,7 +561,7 @@ void GridLoaderWidget::loadGridDIM1channel() {
 	QMessageBox* msgBox = new QMessageBox;
 	msgBox->setAttribute(Qt::WA_DeleteOnClose);
 
-	QString filenameR = QFileDialog::getOpenFileName(this, "Open DIM/IMA image", this->basePath.path(), "DIM/IMA header files (*.dim)", nullptr, QFileDialog::DontUseNativeDialog);
+	QString filenameR = QFileDialog::getOpenFileName(this, "Open DIM/IMA image (single channel)", this->basePath.path(), "DIM/IMA header files (*.dim)", nullptr, QFileDialog::DontUseNativeDialog);
 	if (filenameR.isEmpty()) {
 		msgBox->critical(this, "Error !", "No filenames provided !");
 		this->readerR.reset(); this->readerR = nullptr;
@@ -524,6 +616,7 @@ void GridLoaderWidget::loadGridDIM1channel() {
 	this->progress_load->setVisible(false);
 
 	this->computeGridInfoLabel();
+	this->useLegacyGrids = true;
 }
 
 void GridLoaderWidget::loadGridDIM2channel() {
@@ -536,7 +629,7 @@ void GridLoaderWidget::loadGridDIM2channel() {
 	QMessageBox* msgBox = new QMessageBox;
 	msgBox->setAttribute(Qt::WA_DeleteOnClose);
 
-	QString filenameR = QFileDialog::getOpenFileName(this, "Open DIM/IMA image (Red channel)", this->basePath.path(), "DIM/IMA header files (*.dim)", nullptr, QFileDialog::DontUseNativeDialog);
+	QString filenameR = QFileDialog::getOpenFileName(this, "Open DIM/IMA image (first channel)", this->basePath.path(), "DIM/IMA header files (*.dim)", nullptr, QFileDialog::DontUseNativeDialog);
 	if (filenameR.isEmpty()) {
 		msgBox->critical(this, "Error !", "No filenames provided !");
 		this->readerR.reset(); this->readerR = nullptr;
@@ -547,7 +640,7 @@ void GridLoaderWidget::loadGridDIM2channel() {
 	// update path from last file picker :
 	this->basePath.setPath(QFileInfo(filenameR).path());
 
-	QString filenameG = QFileDialog::getOpenFileName(this, "Open DIM/IMA image (Blue channel)", this->basePath.path(), "DIM/IMA header files (*.dim)", nullptr, QFileDialog::DontUseNativeDialog);
+	QString filenameG = QFileDialog::getOpenFileName(this, "Open DIM/IMA image (second channel)", this->basePath.path(), "DIM/IMA header files (*.dim)", nullptr, QFileDialog::DontUseNativeDialog);
 	if (filenameG.isEmpty()) {
 		msgBox->critical(this, "Error !", "No filenames provided !");
 		this->readerR.reset(); this->readerR = nullptr;
@@ -609,6 +702,7 @@ void GridLoaderWidget::loadGridDIM2channel() {
 	this->progress_load->setVisible(false);
 
 	this->computeGridInfoLabel();
+	this->useLegacyGrids = true;
 }
 
 void GridLoaderWidget::loadGridTIF1channel() {
@@ -620,7 +714,7 @@ void GridLoaderWidget::loadGridTIF1channel() {
 	QMessageBox* msgBox = new QMessageBox;
 	msgBox->setAttribute(Qt::WA_DeleteOnClose);
 
-	QStringList filenamesR = QFileDialog::getOpenFileNames(nullptr, "Open TIFF images (Red channel)", this->basePath.path(), "TIFF files (*.tiff *.tif)", 0, QFileDialog::DontUseNativeDialog);
+	QStringList filenamesR = QFileDialog::getOpenFileNames(nullptr, "Open TIFF images (single channel)", this->basePath.path(), "TIFF files (*.tiff *.tif)", 0, QFileDialog::DontUseNativeDialog);
 	if (filenamesR.empty()) {
 		msgBox->critical(this, "Error !", "No filenames provided !");
 		this->readerR.reset(); this->readerR = nullptr;
@@ -675,6 +769,7 @@ void GridLoaderWidget::loadGridTIF1channel() {
 	this->progress_load->setVisible(false);
 
 	this->computeGridInfoLabel();
+	this->useLegacyGrids = true;
 }
 
 void GridLoaderWidget::loadGridTIF2channel() {
@@ -687,7 +782,9 @@ void GridLoaderWidget::loadGridTIF2channel() {
 	QMessageBox* msgBox = new QMessageBox;
 	msgBox->setAttribute(Qt::WA_DeleteOnClose);
 
-	QStringList filenamesR = QFileDialog::getOpenFileNames(nullptr, "Open TIFF images (Red channel)", this->basePath.path(), "TIFF files (*.tiff *.tif)", 0, QFileDialog::DontUseNativeDialog);
+	this->useLegacyGrids = true;
+
+	QStringList filenamesR = QFileDialog::getOpenFileNames(nullptr, "Open TIFF images (first channel)", this->basePath.path(), "TIFF files (*.tiff *.tif)", 0, QFileDialog::DontUseNativeDialog);
 	if (filenamesR.empty()) {
 		msgBox->critical(this, "Error !", "No filenames provided !");
 		this->readerR.reset(); this->readerR = nullptr;
@@ -698,7 +795,7 @@ void GridLoaderWidget::loadGridTIF2channel() {
 	// update path from last file picker :
 	this->basePath.setPath(QFileInfo(filenamesR[0]).path());
 
-	QStringList filenamesG = QFileDialog::getOpenFileNames(nullptr, "Open TIFF images (Blue channel)", this->basePath.path(), "TIFF files (*.tiff *.tif)", 0, QFileDialog::DontUseNativeDialog);
+	QStringList filenamesG = QFileDialog::getOpenFileNames(nullptr, "Open TIFF images (second channel)", this->basePath.path(), "TIFF files (*.tiff *.tif)", 0, QFileDialog::DontUseNativeDialog);
 	if (filenamesG.empty()) {
 		msgBox->critical(this, "Error !", "No filenames provided !");
 		this->readerR.reset(); this->readerR = nullptr;
@@ -763,6 +860,115 @@ void GridLoaderWidget::loadGridTIF2channel() {
 	this->computeGridInfoLabel();
 }
 
+void GridLoaderWidget::loadNewGridAPI() {
+	std::cerr << __PRETTY_FUNCTION__ << '\n' ;
+	this->useLegacyGrids = false;
+	this->readerR.reset(); this->readerR = nullptr;
+	this->readerG.reset(); this->readerG = nullptr;
+
+	// if an error occurs :
+	QMessageBox* msgBox = new QMessageBox;
+	msgBox->setAttribute(Qt::WA_DeleteOnClose);
+
+	QStringList filenamesR = QFileDialog::getOpenFileNames(nullptr, "Open TIFF images (first channel)", this->basePath.path(), "TIFF files (*.tiff *.tif)", 0, QFileDialog::DontUseNativeDialog);
+	if (filenamesR.empty()) {
+		msgBox->critical(this, "Error !", "No filenames provided !");
+		this->computeGridInfoLabel();
+		return;
+	}
+	// update path from last file picker :
+	this->basePath.setPath(QFileInfo(filenamesR[0]).path());
+
+	QStringList filenamesG = QFileDialog::getOpenFileNames(nullptr, "Open TIFF images (second channel)", this->basePath.path(), "TIFF files (*.tiff *.tif)", 0, QFileDialog::DontUseNativeDialog);
+	if (filenamesG.empty()) {
+		msgBox->critical(this, "Error !", "No filenames provided !");
+		this->computeGridInfoLabel();
+		return;
+	}
+	// update path from last file picker :
+	this->basePath.setPath(QFileInfo(filenamesG[0]).path());
+
+	// disable widgets, in order to let the parsing function actually start !!!
+	this->setWidgetsEnabled(false);
+
+	// set a undefined progress bar to the screen, showing initialization of the
+	this->progressBar_init_undefined("Initializing image reader ...");
+
+	std::vector<std::string> fnR;	// filenames, red channel
+	for (int i = 0; i < filenamesR.size(); ++i) { fnR.push_back(filenamesR[i].toStdString()); }
+	std::vector<std::string> fnG;	// filenames, green channel
+	for (int i = 0; i < filenamesG.size(); ++i) { fnG.push_back(filenamesG[i].toStdString()); }
+
+	// Try to create a grid :
+	std::cerr << "Trying to create a grid !!!\n";
+	std::vector<std::vector<std::string>> fnames_grid{fnR, fnG};
+	// FIXME : The API has changed. Grid::createGrid should only return an empty TIFF implementation, and
+	// the parsing function is the one to take the files as an input.
+	this->_testing_grid = Image::Grid::createGrid(fnames_grid);
+	if (this->_testing_grid == nullptr) { std::cerr << "Error : createGrid() returned nullptr !\n"; return; }
+
+	// Start parsing the information :
+	std::cerr << "Grid created, updating info from disk ...\n";
+	auto task = this->_testing_grid->updateInfoFromDisk(fnames_grid);
+
+	// may be already ended with errors, show them :
+	std::string before_error_message;
+	std::string full_msg;
+	if (task->popMessage(before_error_message)) {
+		do {
+			full_msg += before_error_message + '\n';
+		} while (task->popMessage(before_error_message));
+		msgBox->critical(this, "Error while parsing files !", QString(before_error_message.c_str()));
+		this->setWidgetsEnabled();
+		return;
+	}
+
+	// Set and show progress bar :
+	this->progressBar_init_defined(0, task->getMaxSteps(), 0, "Parsing image data ... (%p%)");
+
+	// Parse the grid :
+	do {
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		std::size_t steps = task->getMaxSteps();
+		std::size_t adv = task->getAdvancement();
+		this->progress_load->setRange(0, steps);
+		this->progress_load->setValue(adv);
+		this->progress_load->setFormat("Parsing image data ... (%p%)");
+		// Needed to update the main window ...
+		QCoreApplication::processEvents();
+		this->update();
+	} while (not task->isComplete());
+
+	std::cerr << "\n[TASK] Done parsing the grid ... \n";
+	std::string errmsg = "";
+	std::string all_errors;
+	bool isComplete = true;
+	while (task->popMessage(errmsg)) {
+		std::cerr << "[Task error] Message : " << errmsg << '\n';
+		isComplete = false;
+		all_errors += errmsg + '\n';
+	}
+	if (not all_errors.empty()) {
+		msgBox->critical(this, "Errors while parsing the files", QString(all_errors.c_str()));
+		this->setWidgetsEnabled();
+		return;
+	}
+	if (isComplete) {
+		this->_testing_grid->updateInfoFromGrid();
+		std::cerr << "Grid dimensionality : " << this->_testing_grid->getVoxelDimensionality() << '\n';
+		Image::svec3 res = this->_testing_grid->getResolution();
+		glm::vec3 vx = this->_testing_grid->getVoxelDimensions();
+		std::cerr << "Grid resolution : " << res.x << ", " << res.y << ", " << res.z << "\n";
+		std::cerr << "Voxel dimensions : " << vx.x << ", " << vx.y << ", " << vx.z << "\n";
+		std::cerr << "Data internal representation : " << this->_testing_grid->getInternalDataType() << '\n';
+	}
+
+	this->computeGridInfoLabel();
+
+	this->progressBar_reset();
+	this->setWidgetsEnabled();
+}
+
 void GridLoaderWidget::loadGridOME1channel() {
 	if (this->readerR != nullptr) { this->readerR.reset(); }
 	if (this->readerG != nullptr) { this->readerG.reset(); }
@@ -772,7 +978,7 @@ void GridLoaderWidget::loadGridOME1channel() {
 	QMessageBox* msgBox = new QMessageBox;
 	msgBox->setAttribute(Qt::WA_DeleteOnClose);
 
-	QStringList filenamesR = QFileDialog::getOpenFileNames(nullptr, "Open OME-TIFF images (Red channel)", this->basePath.path(), "OME-TIFF files (*.ome.tiff *.ome.tif)", 0, QFileDialog::DontUseNativeDialog);
+	QStringList filenamesR = QFileDialog::getOpenFileNames(nullptr, "Open OME-TIFF images (first channel)", this->basePath.path(), "OME-TIFF files (*.ome.tiff *.ome.tif)", 0, QFileDialog::DontUseNativeDialog);
 	if (filenamesR.empty()) {
 		msgBox->critical(this, "Error !", "No filenames provided !");
 		this->readerR.reset(); this->readerR = nullptr;
@@ -827,6 +1033,7 @@ void GridLoaderWidget::loadGridOME1channel() {
 	this->progress_load->setVisible(false);
 
 	this->computeGridInfoLabel();
+	this->useLegacyGrids = true;
 }
 
 void GridLoaderWidget::loadGridOME2channel() {
@@ -839,7 +1046,7 @@ void GridLoaderWidget::loadGridOME2channel() {
 	QMessageBox* msgBox = new QMessageBox;
 	msgBox->setAttribute(Qt::WA_DeleteOnClose);
 
-	QStringList filenamesR = QFileDialog::getOpenFileNames(nullptr, "Open OME-TIFF images (Red channel)", this->basePath.path(), "OME-TIFF files (*.ome.tiff *.ome.tif)", 0, QFileDialog::DontUseNativeDialog);
+	QStringList filenamesR = QFileDialog::getOpenFileNames(nullptr, "Open OME-TIFF images (first channel)", this->basePath.path(), "OME-TIFF files (*.ome.tiff *.ome.tif)", 0, QFileDialog::DontUseNativeDialog);
 	if (filenamesR.empty()) {
 		msgBox->critical(this, "Error !", "No filenames provided !");
 		this->readerR.reset(); this->readerR = nullptr;
@@ -850,7 +1057,7 @@ void GridLoaderWidget::loadGridOME2channel() {
 	// update path from last file picker :
 	this->basePath.setPath(QFileInfo(filenamesR[0]).path());
 
-	QStringList filenamesG = QFileDialog::getOpenFileNames(nullptr, "Open OME-TIFF images (Blue channel)", this->basePath.path(), "OME-TIFF files (*.ome.tiff *.ome.tif)", 0, QFileDialog::DontUseNativeDialog);
+	QStringList filenamesG = QFileDialog::getOpenFileNames(nullptr, "Open OME-TIFF images (second channel)", this->basePath.path(), "OME-TIFF files (*.ome.tiff *.ome.tif)", 0, QFileDialog::DontUseNativeDialog);
 	if (filenamesG.empty()) {
 		msgBox->critical(this, "Error !", "No filenames provided !");
 		this->readerR.reset(); this->readerR = nullptr;
@@ -913,9 +1120,14 @@ void GridLoaderWidget::loadGridOME2channel() {
 	this->progress_load->setVisible(false);
 
 	this->computeGridInfoLabel();
+	this->useLegacyGrids = true;
 }
 
 void GridLoaderWidget::loadGrid() {
+	if (this->useLegacyGrids) { this->loadGrid_oldAPI(); } else { this->loadGrid_newAPI(); }
+}
+
+void GridLoaderWidget::loadGrid_oldAPI() {
 	if (readerR == nullptr) {
 		QMessageBox* msgBox = new QMessageBox;
 		msgBox->setAttribute(Qt::WA_DeleteOnClose);
@@ -1090,4 +1302,64 @@ void GridLoaderWidget::loadGrid() {
 	this->viewer->centerScene();
 
 	this->close();
+}
+
+void GridLoaderWidget::loadGrid_newAPI() {
+	// prevent changing the values of the inputs
+	this->disableWidgets();
+
+	bool hasUserBounds = this->groupbox_userLimits->isChecked();
+	DiscreteGrid::data_t userMin = static_cast<DiscreteGrid::data_t>(this->spinbox_userLimitMin->value());
+	DiscreteGrid::data_t userMax = static_cast<DiscreteGrid::data_t>(this->spinbox_userLimitMax->value());
+	std::cerr << "Loading new grid API" << '\n';
+
+	float dx = this->dsb_transformationDX->value();
+	float dy = this->dsb_transformationDY->value();
+	float dz = this->dsb_transformationDZ->value();
+
+	#warning TODO : Enable downsampling options from grid here
+	#warning TODO : Enable user voxel sizes here (via a transformation matrix ?)
+	#warning TODO : Enable computation of approximate voxel size here
+
+	glm::vec3 vxdims = glm::vec3(
+		static_cast<float>(this->dsb_transformationDX->value()),
+		static_cast<float>(this->dsb_transformationDY->value()),
+		static_cast<float>(this->dsb_transformationDZ->value())
+	);
+    //svec3 dims = this->inputGridR->getResolution();
+	float a = this->dsb_transformationA->value();
+	auto transfo_matrix = computeTransfoShear_newAPI(a, this->_testing_grid, vxdims);
+
+	MatrixTransform::Ptr grid_transform = std::make_shared<MatrixTransform>(transfo_matrix);
+	this->_testing_grid->addTransform(grid_transform);
+
+	// Load the grid data, and make a copy here
+	//this->scene->newAPI_addGrid(this->_testing_grid);
+	this->viewer->newAPI_loadGrid(this->_testing_grid);
+	this->viewer->centerScene();
+
+	this->close();
+}
+
+glm::mat4 computeTransfoShear_newAPI(double angleDeg, const Image::Grid::Ptr& grid, glm::vec3 vxdims) {
+	glm::mat4 transfoMat = glm::mat4(1.0);
+
+	double angleRad = (angleDeg * M_PI) / 180.;
+
+	transfoMat[0][0] = /* vxdims.x */ std::cos(angleRad);
+	transfoMat[0][2] = /* vxdims.x */ std::sin(angleRad);
+	transfoMat[1][1] = /* vxdims.y */ 1.f;
+	transfoMat[2][2] = /* vxdims.z */ std::cos(angleRad);
+
+	/*
+	if (angleDeg < 0.) {
+		auto dims = grid->getBoundingBox().getDiagonal();
+		// compute translation along Z :
+		float w = static_cast<float>(dims.x); //vxdims.x;
+		float displacement = w * std::abs(std::sin(angleRad));
+		transfoMat = glm::translate(transfoMat, glm::vec3(.0, .0, displacement));
+	}
+	*/
+
+	return transfoMat;
 }

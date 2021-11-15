@@ -18,12 +18,13 @@
 /// thus provide the precision to which a point is defined. The second template parameter is a compile-time check which
 /// ensures the DataType passed to the template to be a floating point type only (float, double, long double, and some
 /// variants of float such as fp16, fp32 if those are enabled by the compiler with std::is_floating_point<> traits)
-template <typename DataType, restrict_floating_point_check<DataType> = nullptr>
-class BoundingBox_General {
+template <typename DataType, restrict_floating_point_check<DataType> = nullptr> class BoundingBox_General {
 
 	public:
 		/// @brief Defines a vector of the type defined by the instanced template.
 		typedef glm::vec<3, DataType, glm::defaultp> vec;
+
+		/// @brief Allows to get the internal data type as a typedef from outside the class.
 		using data_t = DataType;
 
 	public:

@@ -3,7 +3,7 @@
 #include <random>
 #include <iomanip>
 
-TetMesh::TetMesh() {
+InterpolationMesh::InterpolationMesh() {
 	// Initialises all the values of the mesh to their default values.
 	// Centers the mesh around the space's origin. Also, makes the mesh
 	// by a call to TetMesh::makeTetrahedra().
@@ -18,36 +18,36 @@ TetMesh::TetMesh() {
 	this->makeTetrahedra();
 }
 
-TetMesh::~TetMesh() {
+InterpolationMesh::~InterpolationMesh() {
 	// Free all storage allocated for the current mesh.
 	this->vertices.clear();
 	this->tetrahedra.clear();
 }
 
-TetMesh& TetMesh::addInputGrid(const std::shared_ptr<InputGrid>& toAdd) {
+InterpolationMesh& InterpolationMesh::addInputGrid(const std::shared_ptr<InputGrid>& toAdd) {
 	this->inputGrids.push_back(toAdd);
 	this->updateOutputGridData();
 	return *this;
 }
 
-std::vector<std::shared_ptr<InputGrid>> TetMesh::getInputGrids() const {
+std::vector<std::shared_ptr<InputGrid>> InterpolationMesh::getInputGrids() const {
 	return this->inputGrids;
 }
 
-TetMesh& TetMesh::setOutputGrid(const std::shared_ptr<OutputGrid>& toSet) {
+InterpolationMesh& InterpolationMesh::setOutputGrid(const std::shared_ptr<OutputGrid>& toSet) {
 	this->outputGrid = toSet;
 	this->updateOutputGridData();
 	this->updateVoxelSizes();
 	return *this;
 }
 
-TetMesh& TetMesh::setOutputGrid_raw(const std::shared_ptr<DiscreteGrid>& toSet) {
+InterpolationMesh& InterpolationMesh::setOutputGrid_raw(const std::shared_ptr<DiscreteGrid>& toSet) {
 	this->outputGrid = toSet;
 	this->updateVoxelSizes();
 	return *this;
 }
 
-TetMesh& TetMesh::populateOutputGrid(InterpolationMethods method) {
+InterpolationMesh& InterpolationMesh::populateOutputGrid(InterpolationMethods method) {
 	// early returns :
 	if (this->outputGrid == nullptr) { return *this; }
 	if (this->inputGrids.size() == 0) { return *this; }
@@ -143,7 +143,7 @@ TetMesh& TetMesh::populateOutputGrid(InterpolationMethods method) {
 	return *this;
 }
 
-TetMesh& TetMesh::populateOutputGrid_threaded(InterpolationMethods method, IO::ThreadedTask::Ptr& task) {
+InterpolationMesh& InterpolationMesh::populateOutputGrid_threaded(InterpolationMethods method, IO::ThreadedTask::Ptr& task) {
 	// early returns :
 	if (this->outputGrid == nullptr) { return *this; }
 	if (this->inputGrids.size() == 0) { return *this; }
@@ -219,7 +219,7 @@ TetMesh& TetMesh::populateOutputGrid_threaded(InterpolationMethods method, IO::T
 	return *this;
 }
 
-TetMesh& TetMesh::populateOutputGrid_RGB(InterpolationMethods method) {
+InterpolationMesh& InterpolationMesh::populateOutputGrid_RGB(InterpolationMethods method) {
 	// early returns :
 	if (this->outputGrid == nullptr) { return *this; }
 	if (this->inputGrids.size() == 0) { return *this; }
@@ -332,7 +332,7 @@ TetMesh& TetMesh::populateOutputGrid_RGB(InterpolationMethods method) {
 	return *this;
 }
 
-glm::vec<3, TetMesh::data_t, glm::defaultp> TetMesh::h_and_e_colouring(data_t _r, std::shared_ptr<InputGrid> &_rg, data_t _b, std::shared_ptr<InputGrid> &_bg) {
+glm::vec<3, InterpolationMesh::data_t, glm::defaultp> InterpolationMesh::h_and_e_colouring(data_t _r, std::shared_ptr<InputGrid> &_rg, data_t _b, std::shared_ptr<InputGrid> &_bg) {
 	glm::vec2 bounds_r = glm::convert_to<float>(_rg->getGridReader()->getTextureLimits());
 	glm::vec2 bounds_b = glm::convert_to<float>(_bg->getGridReader()->getTextureLimits());
 	glm::vec2 color_bounds = glm::vec2(
@@ -371,7 +371,7 @@ glm::vec<3, TetMesh::data_t, glm::defaultp> TetMesh::h_and_e_colouring(data_t _r
 	return color;
 }
 
-TetMesh::data_t TetMesh::getInterpolatedValue(std::shared_ptr<InputGrid> grid, InterpolationMethods method, DiscreteGrid::sizevec3 idx, bool verbose) const {
+InterpolationMesh::data_t InterpolationMesh::getInterpolatedValue(std::shared_ptr<InputGrid> grid, InterpolationMethods method, DiscreteGrid::sizevec3 idx, bool verbose) const {
 	switch (method) {
 		case InterpolationMethods::NearestNeighbor:
 			return this->interpolate_NearestNeighbor(grid, verbose);
@@ -384,7 +384,7 @@ TetMesh::data_t TetMesh::getInterpolatedValue(std::shared_ptr<InputGrid> grid, I
 	return 0;
 }
 
-TetMesh& TetMesh::printInfo() {
+InterpolationMesh& InterpolationMesh::printInfo() {
 	// Prints info about the mesh :
 	// input grid data (resolution, render window)
 
@@ -433,18 +433,18 @@ TetMesh& TetMesh::printInfo() {
 	return *this;
 }
 
-double TetMesh::getGenerationRate() const {
+double InterpolationMesh::getGenerationRate() const {
 	return this->generationRate;
 }
 
-TetMesh::data_t TetMesh::interpolate_NearestNeighbor(const std::shared_ptr<InputGrid> grid, bool verbose) const {
+InterpolationMesh::data_t InterpolationMesh::interpolate_NearestNeighbor(const std::shared_ptr<InputGrid> grid, bool verbose) const {
 	// DiscreteGrid::fetchTexelWorldSpace already applies NearestNeighbor on the position
 	// given in argument, so we just fetch the value of the origin, giving us a NN interpolation :
 	if (verbose) { std::cerr << "[LOG]\t\t"; }
 	return grid->fetchTexelWorldSpace(this->origin_WS, verbose);
 }
 
-TetMesh::data_t TetMesh::interpolate_TriLinear(const std::shared_ptr<InputGrid> grid, bool verbose) const {
+InterpolationMesh::data_t InterpolationMesh::interpolate_TriLinear(const std::shared_ptr<InputGrid> grid, bool verbose) const {
 	// For this trilinear interpolation, the point will always be at the center of the mesh created earlier.
 	// However, we want this method to be as generic as possible, in the event of a catastrophic failure on our part.
 	// We want the point in the center of the mesh to be a trilinear interpolation of the corners of the mesh.
@@ -496,7 +496,7 @@ TetMesh::data_t TetMesh::interpolate_TriLinear(const std::shared_ptr<InputGrid> 
 	return result;
 }
 
-TetMesh& TetMesh::updateVoxelSizes() {
+InterpolationMesh& InterpolationMesh::updateVoxelSizes() {
 	/* TODO : we should probably soft-fail here instead of ignoring the potential problem. To debate. */
 	if (this->outputGrid == nullptr) { return *this; }
 
@@ -505,17 +505,17 @@ TetMesh& TetMesh::updateVoxelSizes() {
 	return *this;
 }
 
-glm::vec4 TetMesh::getVertexPosition(std::size_t idx) const {
+glm::vec4 InterpolationMesh::getVertexPosition(std::size_t idx) const {
 	return this->vertices[idx] + this->origin;
 }
 
-TetMesh::data_t TetMesh::getVertexValue(const std::shared_ptr<InputGrid> grid, std::size_t idx, bool verbose) const {
+InterpolationMesh::data_t InterpolationMesh::getVertexValue(const std::shared_ptr<InputGrid> grid, std::size_t idx, bool verbose) const {
 	auto out = this->outputGrid->toWorldSpace(this->getVertexPosition(idx));
 	if (verbose) { std::cerr << "[LOG]\t\t\t"; }
 	return grid->fetchTexelWorldSpace(out, verbose);
 }
 
-TetMesh& TetMesh::updateOutputGridData() {
+InterpolationMesh& InterpolationMesh::updateOutputGridData() {
 	// If there aren't any input grids nor any output grid, return early :
 	if (this->inputGrids.size() == 0) { return *this; }
 	if (this->outputGrid == nullptr) { return *this; }
@@ -540,7 +540,7 @@ TetMesh& TetMesh::updateOutputGridData() {
 	return *this;
 }
 
-void TetMesh::makeTetrahedra(glm::vec3 vxDims, std::size_t size) {
+void InterpolationMesh::makeTetrahedra(glm::vec3 vxDims, std::size_t size) {
 	// For now, a mesh of side 1, centered at the origin
 	this->vertices.clear();
 	this->tetrahedra.clear();

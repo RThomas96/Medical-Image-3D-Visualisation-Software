@@ -3,11 +3,15 @@
 
 #include "../../macros.hpp"
 #include "../../viewer/include/scene.hpp"
-#include "../../image/include/reader.hpp"
+#include "../../grid/include/discrete_grid_reader.hpp"
 #include "../../grid/include/discrete_grid.hpp"
 #include "../../grid/include/input_discrete_grid.hpp"
 #include "../../viewer/include/neighbor_visu_viewer.hpp"
 #include "./scene_control.hpp"
+
+// New grid API :
+#include "../../new_grid/include/grid.hpp"
+#include "../../image/tiff/include/tiff_reader.hpp"
 
 #include <QDir>
 #include <QLabel>
@@ -23,6 +27,11 @@
 #include <QDoubleSpinBox>
 #include <QProgressBar>
 
+/// @ingroup qtwidgets
+/// @brief The GridLoaderWidget is the class representing the widget to load the grids.
+/// @details This is the widget that launches when selecting 'File' > 'Open Images' or pressing Ctrl+'O'. It is
+/// responsible to let the user select their own files to load into the program.
+/// @note Has implementations for loading both old-style DiscreteGrid grids, and the new Grid implementation.
 class GridLoaderWidget : public QWidget {
 		Q_OBJECT
 	public:
@@ -40,10 +49,16 @@ class GridLoaderWidget : public QWidget {
 		void resetGridInfoLabel();
 		/// @brief Computes the grid information based on the new data available
 		void computeGridInfoLabel();
+		/// @brief Disables the widgets in this view
 		void disableWidgets();
+		/// @brief Sets the 'enabled' state of all widgets to the user-given value (default = true)
+		void setWidgetsEnabled(bool _enabled = true);
 	protected:
 		/// @brief Updates the voxel dimensions as specified by the reader, without emitting signals.
 		void updateVoxelDimensions_silent();
+		void progressBar_init_undefined(QString format_message);
+		void progressBar_init_defined(int min, int max, int current_value, QString progress_format);
+		void progressBar_reset();
 	public slots:
 		void loadGridDIM1channel();
 		void loadGridTIF1channel();
@@ -51,7 +66,10 @@ class GridLoaderWidget : public QWidget {
 		void loadGridDIM2channel();
 		void loadGridTIF2channel();
 		void loadGridOME2channel();
+		void loadNewGridAPI();
 		void loadGrid();
+		void loadGrid_oldAPI();
+		void loadGrid_newAPI();
 	protected:
 		QDir basePath;				///< Last path opened, or $HOME
 		Scene* scene;				///< The scene to control/add grids to.
@@ -63,6 +81,9 @@ class GridLoaderWidget : public QWidget {
 		std::shared_ptr<InputGrid> inputGridG;		///< The pointer to an input grid for G channel
 		IO::DownsamplingLevel dsLevel;		///< Currently selected downsampling method
 		std::shared_ptr<Interpolators::genericInterpolator<DiscreteGrid::data_t>> interpolator; ///< interpolator
+
+		Image::Grid::Ptr _testing_grid;
+		bool useLegacyGrids; ///< should we use the new grid api or the new one ?
 
 		QLabel* label_headerLoader;		///< Label header for the entire widget
 		QLabel* label_load1channel;		///< Label before the 1-channel loading buttons
@@ -79,6 +100,7 @@ class GridLoaderWidget : public QWidget {
 		QPushButton* button_loadTIF_2channel;	///< Button to load TIF[F] files with two channels.
 		QPushButton* button_loadOME_1channel;	///< Button to load TIF[F] files with one channel.
 		QPushButton* button_loadOME_2channel;	///< Button to load TIF[F] files with two channels.
+		QPushButton* button_loadNewGridAPI;	///< Button to load TIF[F] files with two channels.
 		QPushButton* button_loadGrids;		///< Button to launch the grid loader.
 
 		QDoubleSpinBox* dsb_transformationA;	///< Double spinbox for the angle of the capture
@@ -125,5 +147,10 @@ class GridLoaderWidget : public QWidget {
 
 		QProgressBar* progress_load;
 };
+
+/// @brief Computes a transformation matrix from an origin and an angle, for our use case.
+/// @details This computes a transformation matrix to fit our purpose, might not be adapted
+/// to any use case !
+glm::mat4 computeTransfoShear_newAPI(double angleDeg, const Image::Grid::Ptr&, glm::vec3 vxdims);
 
 #endif // QT_INCLUDE_LOADER_WIDGET_HPP_

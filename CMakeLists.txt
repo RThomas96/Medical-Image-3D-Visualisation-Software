@@ -9,6 +9,9 @@ INCLUDE(CMakeSetup)
 INCLUDE(FindQGLViewer)
 # Find the local libTIFF version :
 INCLUDE(FindLocalTIFF)
+# Add the GLSL and icons dependencies :
+INCLUDE(ShaderDependency)
+INCLUDE(ResourceDependency)
 
 # Required libraries {{{
 FIND_PACKAGE(Qt5 REQUIRED COMPONENTS Core Gui Widgets Xml OpenGL)
@@ -20,17 +23,23 @@ FIND_PACKAGE(TinyTIFF REQUIRED PATHS ${CMAKE_CURRENT_LIST_DIR}/third_party/compi
 # }}}
 
 ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/third_party/glm)
+SET(LOCAL_GLM_HEADER_DIR "${CMAKE_CURRENT_LIST_DIR}/third_party/glm/")
+SET(LIBS_COMPILED_HEADERS "${CMAKE_CURRENT_LIST_DIR}/third_party/compiled_libraries/include")
+
+ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/image)
+ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/new_grid)
+ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/colorscale)
 
 # Library for image reading/writing {{{
 ADD_LIBRARY(ImageIO STATIC
-	./image/include/reader.hpp
-	./image/include/writer.hpp
+	./grid/include/discrete_grid_reader.hpp
+	./grid/include/discrete_grid_writer.hpp
 
-	./image/src/reader.cpp
-	./image/src/writer.cpp
+	./grid/src/discrete_grid_reader.cpp
+	./grid/src/discrete_grid_writer.cpp
 )
 TARGET_INCLUDE_DIRECTORIES(ImageIO
-	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/third_party/glm/
+	PRIVATE ${LOCAL_GLM_HEADER_DIR}
 	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include
 	# Nifti uses brace-include without the 'nifti/' prefix, leading
 	# to manually have to include the lib's include dir in targets:
@@ -39,6 +48,7 @@ TARGET_INCLUDE_DIRECTORIES(ImageIO
 )
 TARGET_LINK_LIBRARIES(ImageIO
 	PUBLIC TinyTIFF
+	PUBLIC grid_api
 	PUBLIC ${libTIFF}
 	PUBLIC Qt5::Xml
 )
@@ -81,6 +91,7 @@ ADD_LIBRARY(VisualisationWidgets STATIC
 	./qt/include/viewer_header.hpp
 	./qt/include/visu_box_controller.hpp
 	./qt/include/opengl_debug_log.hpp
+	./qt/include/double_slider.hpp
 	./qt/include/range_slider.hpp
 	./qt/include/user_settings_widget.hpp
 	./qt/include/loader_widget.hpp
@@ -94,6 +105,7 @@ ADD_LIBRARY(VisualisationWidgets STATIC
 	./qt/src/viewer_header.cpp
 	./qt/src/visu_box_controller.cpp
 	./qt/src/opengl_debug_log.cpp
+	./qt/src/double_slider.cpp
 	./qt/src/range_slider.cpp
 	./qt/src/user_settings_widget.cpp
 	./qt/src/loader_widget.cpp
@@ -147,6 +159,9 @@ TARGET_PRECOMPILE_HEADERS(neighbor_visu
 	PRIVATE ${QGLViewer_HEADER_DIR}/QGLViewer/qglviewer.h
 	# Also, dramatically reduces compilation time.
 )
+SET_TARGET_PROPERTIES(neighbor_visu PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${VISU_OUTPUT_DIR}
+)
 TARGET_INCLUDE_DIRECTORIES(neighbor_visu
 	PRIVATE ${OPENGL_INCLUDE_DIRS}
 	PRIVATE ${QGLViewer_HEADER_DIR}
@@ -167,6 +182,8 @@ TARGET_LINK_LIBRARIES(neighbor_visu
 	PUBLIC ImageIO
 	PUBLIC DiscreteGrid
 	PUBLIC VisualisationWidgets
+	PUBLIC writergrid
+	PUBLIC writergrid_tiff
 )
 # }}}
 
