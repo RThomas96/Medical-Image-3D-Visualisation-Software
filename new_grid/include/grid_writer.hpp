@@ -2,8 +2,8 @@
 #define VISUALIZATION_IMAGE_API_INCLUDE_WRITER_HPP_
 
 #include "../../new_grid/include/grid.hpp"
-#include "../../image/interface/generic_image_reader.hpp"
-#include "../interface/generic_grid_writer.hpp"
+#include "../../image/generic/include/generic_image_reader.hpp"
+#include "../include/generic_grid_writer.hpp"
 
 #include <memory>
 #include <string>

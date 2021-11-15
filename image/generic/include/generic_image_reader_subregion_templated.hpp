@@ -9,23 +9,23 @@
 namespace Image {
 
 	template <typename element_t>
-	class GridSubRegionDetail : public GridSubregion {
+	class GenericImageReaderSubregionTemplated : public GenericImageReaderSubregion {
 		public:
 			/// @brief Public typedef to the internal pixel type.
 			typedef element_t pixel_t;
 
 			/// @brief Pointer type to reference this backend implementation detail.
-			typedef std::unique_ptr<GridSubRegionDetail<pixel_t>> Ptr;
+			typedef std::unique_ptr<GenericImageReaderSubregionTemplated<pixel_t>> Ptr;
 
 			/// @brief The type of a simple read cache, keeping the last few slices in memory.
 			typedef ReadCache<std::size_t, std::vector<pixel_t>> cache_t;
 
 		protected:
 			/// @brief Sets the right variables when creating a grid.
-			GridSubRegionDetail(svec3 origin, svec3 size, Grid::Ptr parent_grid);
+			GenericImageReaderSubregionTemplated(svec3 origin, svec3 size, Grid::Ptr parent_grid);
 
 		public:
-			virtual ~GridSubRegionDetail(void);
+			virtual ~GenericImageReaderSubregionTemplated(void);
 
 		protected:
 			/// @brief Loads a slice from the parent grid, and cache it for later use.

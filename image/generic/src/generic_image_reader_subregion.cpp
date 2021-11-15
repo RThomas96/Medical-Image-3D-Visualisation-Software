@@ -2,7 +2,7 @@
 
 namespace Image {
 
-GridSubregion::GridSubregion(svec3 _o, svec3 _s, Grid::Ptr _p) :
+GenericImageReaderSubregion::GenericImageReaderSubregion(svec3 _o, svec3 _s, Grid::Ptr _p) :
 	sampling_region_origin(_o), sampling_region_size(_s), parent_grid(_p) {
 	// manually set the internal data type.
 	if (_p != nullptr) {
@@ -24,11 +24,11 @@ GridSubregion::GridSubregion(svec3 _o, svec3 _s, Grid::Ptr _p) :
 	}
 }
 
-ImageDataType GridSubregion::getInternalDataType() const {
+ImageDataType GenericImageReaderSubregion::getInternalDataType() const {
 	return this->internal_data_type;
 }
 
-ThreadedTask::Ptr GridSubregion::parseImageInfo(ThreadedTask::Ptr pre_existing_task,
+ThreadedTask::Ptr GenericImageReaderSubregion::parseImageInfo(ThreadedTask::Ptr pre_existing_task,
 												const std::vector<std::vector<std::string>> &_filenames) {
 	UNUSED(_filenames);
 	// Ignores filenames entirely. This is simply a grid subregion.
@@ -40,23 +40,23 @@ ThreadedTask::Ptr GridSubregion::parseImageInfo(ThreadedTask::Ptr pre_existing_t
 	return pre_existing_task;
 }
 
-bool GridSubregion::presentOnDisk() const { return false; }
+bool GenericImageReaderSubregion::presentOnDisk() const { return false; }
 
-std::size_t GridSubregion::getVoxelDimensionality() const { return this->parent_grid->getVoxelDimensionality(); }
+std::size_t GenericImageReaderSubregion::getVoxelDimensionality() const { return this->parent_grid->getVoxelDimensionality(); }
 
-glm::vec3 GridSubregion::getVoxelDimensions() const { return this->parent_grid->getVoxelDimensions(); }
+glm::vec3 GenericImageReaderSubregion::getVoxelDimensions() const { return this->parent_grid->getVoxelDimensions(); }
 
-svec3 GridSubregion::getResolution() const { return this->sampling_region_size; }
+svec3 GenericImageReaderSubregion::getResolution() const { return this->sampling_region_size; }
 
-std::string GridSubregion::getImageName() const { return this->custom_name; }
+std::string GenericImageReaderSubregion::getImageName() const { return this->custom_name; }
 
-void GridSubregion::setImageName(std::string &_user_defined_name_) {
+void GenericImageReaderSubregion::setImageName(std::string &_user_defined_name_) {
 	if (not _user_defined_name_.empty()) {
 		this->custom_name = _user_defined_name_;
 	}
 }
 
-BoundingBox_General<float> GridSubregion::getBoundingBox() const {
+BoundingBox_General<float> GenericImageReaderSubregion::getBoundingBox() const {
 	// get origin and its opposite corner from voxel indices to image coords :
 	glm::vec3 origin_position = glm::convert_to<float>(this->sampling_region_origin) * this->getVoxelDimensions();
 	glm::vec3 physical_size = glm::convert_to<float>(this->sampling_region_size) * this->getVoxelDimensions();

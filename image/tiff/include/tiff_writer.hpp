@@ -4,8 +4,8 @@
 #include "./tiff_reader.hpp"
 
 #include "../../../new_grid/include/grid.hpp"
-#include "../../interface/generic_image_reader.hpp"
-#include "../../../new_grid/interface/generic_grid_writer.hpp"
+#include "../../generic/include/generic_image_reader.hpp"
+#include "../../../new_grid/include/generic_grid_writer.hpp"
 
 namespace Image {
 

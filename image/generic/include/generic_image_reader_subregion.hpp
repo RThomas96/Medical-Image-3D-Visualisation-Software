@@ -1,8 +1,8 @@
 #ifndef VISUALIZATION_IMAGE_API_INCLUDE_GRID_SUBREGION_HPP_
 #define VISUALIZATION_IMAGE_API_INCLUDE_GRID_SUBREGION_HPP_
 
-#include "./grid.hpp"
-#include "./backend.hpp"
+#include "../new_grid/include/grid.hpp"
+#include "./generic_image_reader.hpp"
 
 namespace Image {
 
@@ -10,18 +10,18 @@ namespace Image {
 	/// @brief The GridSubRegion class is the base class for all versions of a backend sampling a sub region of a grid.
 	/// @details This class is a base class implementing some general-purpose behaviours that are useful in the context
 	/// of a backend image representation sampling a sub-region of a grid.
-	class GridSubregion : public GenericImageReader {
+	class GenericImageReaderSubregion : public GenericImageReader {
 		public:
 			/// @brief Pointer type for this backend image implementation.
-			typedef std::unique_ptr<GridSubregion> Ptr;
+			typedef std::unique_ptr<GenericImageReaderSubregion> Ptr;
 
 		protected:
 			/// @brief Default ctor for the class, creates a backend that will sample the given grid in the given region.
-			GridSubregion(svec3 origin, svec3 size, Grid::Ptr parent_grid);
+			GenericImageReaderSubregion(svec3 origin, svec3 size, Grid::Ptr parent_grid);
 
 		public:
 			/// @brief Dtor for the class. Releases all allocated resources.
-			virtual ~GridSubregion(void) = default;
+			virtual ~GenericImageReaderSubregion(void) = default;
 
 			/// @brief Returns the internal type of the backend, based on the internal type of the grid sampled.
 			virtual ImageDataType getInternalDataType(void) const override;

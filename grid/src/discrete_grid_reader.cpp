@@ -4,7 +4,7 @@
 #include <QDir>
 
 #include "../../new_grid/include/grid.hpp"
-#include "../../image/interface/generic_image_reader.hpp"
+#include "../../image/generic/include/generic_image_reader.hpp"
 
 #include <cstring>
 #include <memory>

@@ -1,4 +1,4 @@
-#include "../interface/generic_grid_writer.hpp"
+#include "../include/generic_grid_writer.hpp"
 
 namespace Image {
 

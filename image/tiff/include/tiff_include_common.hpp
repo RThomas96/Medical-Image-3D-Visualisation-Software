@@ -12,7 +12,7 @@
 
 // Grid and Image APIs :
 #include "../../utils/include/image_api_common.hpp"
-#include "../../interface/generic_image_reader.hpp"
+#include "../../generic/include/generic_image_reader.hpp"
 #include "../../utils/include/read_cache.hpp"
 #include "../../utils/include/threaded_task.hpp"
 

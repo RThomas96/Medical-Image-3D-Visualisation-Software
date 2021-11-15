@@ -3,7 +3,7 @@
 #
 
 ADD_LIBRARY(imagegrid STATIC
-    ../interface/generic_image_reader.hpp
+    ../generic/include/generic_image_reader.hpp
 	include/image_api_common.hpp
 	include/read_cache.hpp
 	include/threaded_task.hpp

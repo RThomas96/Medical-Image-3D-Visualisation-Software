@@ -8,12 +8,12 @@
 namespace Image {
 
 template <typename unsupported_element_type>
-GridSubRegionDetail<unsupported_element_type>::GridSubRegionDetail(svec3 _o, svec3 _s, Grid::Ptr _g) {
+GenericImageReaderSubregionTemplated<unsupported_element_type>::GenericImageReaderSubregionTemplated(svec3 _o, svec3 _s, Grid::Ptr _g) {
 	throw std::runtime_error("Error : trying to create a grid subregion backend with an unsupported type.");
 }
 
 template <>
-GridSubRegionDetail<std::uint8_t>::GridSubRegionDetail(svec3 _o, svec3 _s, Grid::Ptr _g) : GridSubregion(_o, _s, _g) {
+GenericImageReaderSubregionTemplated<std::uint8_t>::GenericImageReaderSubregionTemplated(svec3 _o, svec3 _s, Grid::Ptr _g) : GenericImageReaderSubregion(_o, _s, _g) {
 	ImageDataType reference_type= ImageDataType::Unsigned | ImageDataType::Bit_8;
 	if (this->internal_data_type != reference_type) {
 		throw std::runtime_error("Error : subregion does not contain the same internal type as the parent grid.");
@@ -21,7 +21,7 @@ GridSubRegionDetail<std::uint8_t>::GridSubRegionDetail(svec3 _o, svec3 _s, Grid:
 }
 
 template <>
-GridSubRegionDetail<std::uint16_t>::GridSubRegionDetail(svec3 _o, svec3 _s, Grid::Ptr _g) : GridSubregion(_o, _s, _g) {
+GenericImageReaderSubregionTemplated<std::uint16_t>::GenericImageReaderSubregionTemplated(svec3 _o, svec3 _s, Grid::Ptr _g) : GenericImageReaderSubregion(_o, _s, _g) {
 	ImageDataType reference_type= ImageDataType::Unsigned | ImageDataType::Bit_16;
 	if (this->internal_data_type != reference_type) {
 		throw std::runtime_error("Error : subregion does not contain the same internal type as the parent grid.");
@@ -29,7 +29,7 @@ GridSubRegionDetail<std::uint16_t>::GridSubRegionDetail(svec3 _o, svec3 _s, Grid
 }
 
 template <>
-GridSubRegionDetail<std::uint32_t>::GridSubRegionDetail(svec3 _o, svec3 _s, Grid::Ptr _g) : GridSubregion(_o, _s, _g) {
+GenericImageReaderSubregionTemplated<std::uint32_t>::GenericImageReaderSubregionTemplated(svec3 _o, svec3 _s, Grid::Ptr _g) : GenericImageReaderSubregion(_o, _s, _g) {
 	ImageDataType reference_type= ImageDataType::Unsigned | ImageDataType::Bit_32;
 	if (this->internal_data_type != reference_type) {
 		throw std::runtime_error("Error : subregion does not contain the same internal type as the parent grid.");
@@ -37,7 +37,7 @@ GridSubRegionDetail<std::uint32_t>::GridSubRegionDetail(svec3 _o, svec3 _s, Grid
 }
 
 template <>
-GridSubRegionDetail<std::uint64_t>::GridSubRegionDetail(svec3 _o, svec3 _s, Grid::Ptr _g) : GridSubregion(_o, _s, _g) {
+GenericImageReaderSubregionTemplated<std::uint64_t>::GenericImageReaderSubregionTemplated(svec3 _o, svec3 _s, Grid::Ptr _g) : GenericImageReaderSubregion(_o, _s, _g) {
 	ImageDataType reference_type= ImageDataType::Unsigned | ImageDataType::Bit_64;
 	if (this->internal_data_type != reference_type) {
 		throw std::runtime_error("Error : subregion does not contain the same internal type as the parent grid.");
@@ -45,7 +45,7 @@ GridSubRegionDetail<std::uint64_t>::GridSubRegionDetail(svec3 _o, svec3 _s, Grid
 }
 
 template <>
-GridSubRegionDetail<std::int8_t>::GridSubRegionDetail(svec3 _o, svec3 _s, Grid::Ptr _g) : GridSubregion(_o, _s, _g) {
+GenericImageReaderSubregionTemplated<std::int8_t>::GenericImageReaderSubregionTemplated(svec3 _o, svec3 _s, Grid::Ptr _g) : GenericImageReaderSubregion(_o, _s, _g) {
 	ImageDataType reference_type= ImageDataType::Signed | ImageDataType::Bit_8;
 	if (this->internal_data_type != reference_type) {
 		throw std::runtime_error("Error : subregion does not contain the same internal type as the parent grid.");
@@ -53,7 +53,7 @@ GridSubRegionDetail<std::int8_t>::GridSubRegionDetail(svec3 _o, svec3 _s, Grid::
 }
 
 template <>
-GridSubRegionDetail<std::int16_t>::GridSubRegionDetail(svec3 _o, svec3 _s, Grid::Ptr _g) : GridSubregion(_o, _s, _g) {
+GenericImageReaderSubregionTemplated<std::int16_t>::GenericImageReaderSubregionTemplated(svec3 _o, svec3 _s, Grid::Ptr _g) : GenericImageReaderSubregion(_o, _s, _g) {
 	ImageDataType reference_type= ImageDataType::Signed | ImageDataType::Bit_16;
 	if (this->internal_data_type != reference_type) {
 		throw std::runtime_error("Error : subregion does not contain the same internal type as the parent grid.");
@@ -61,7 +61,7 @@ GridSubRegionDetail<std::int16_t>::GridSubRegionDetail(svec3 _o, svec3 _s, Grid:
 }
 
 template <>
-GridSubRegionDetail<std::int32_t>::GridSubRegionDetail(svec3 _o, svec3 _s, Grid::Ptr _g) : GridSubregion(_o, _s, _g) {
+GenericImageReaderSubregionTemplated<std::int32_t>::GenericImageReaderSubregionTemplated(svec3 _o, svec3 _s, Grid::Ptr _g) : GenericImageReaderSubregion(_o, _s, _g) {
 	ImageDataType reference_type= ImageDataType::Signed | ImageDataType::Bit_32;
 	if (this->internal_data_type != reference_type) {
 		throw std::runtime_error("Error : subregion does not contain the same internal type as the parent grid.");
@@ -69,7 +69,7 @@ GridSubRegionDetail<std::int32_t>::GridSubRegionDetail(svec3 _o, svec3 _s, Grid:
 }
 
 template <>
-GridSubRegionDetail<std::int64_t>::GridSubRegionDetail(svec3 _o, svec3 _s, Grid::Ptr _g) : GridSubregion(_o, _s, _g) {
+GenericImageReaderSubregionTemplated<std::int64_t>::GenericImageReaderSubregionTemplated(svec3 _o, svec3 _s, Grid::Ptr _g) : GenericImageReaderSubregion(_o, _s, _g) {
 	ImageDataType reference_type= ImageDataType::Signed | ImageDataType::Bit_64;
 	if (this->internal_data_type != reference_type) {
 		throw std::runtime_error("Error : subregion does not contain the same internal type as the parent grid.");
@@ -77,7 +77,7 @@ GridSubRegionDetail<std::int64_t>::GridSubRegionDetail(svec3 _o, svec3 _s, Grid:
 }
 
 template <>
-GridSubRegionDetail<float>::GridSubRegionDetail(svec3 _o, svec3 _s, Grid::Ptr _g) : GridSubregion(_o, _s, _g) {
+GenericImageReaderSubregionTemplated<float>::GenericImageReaderSubregionTemplated(svec3 _o, svec3 _s, Grid::Ptr _g) : GenericImageReaderSubregion(_o, _s, _g) {
 	ImageDataType reference_type= ImageDataType::Floating | ImageDataType::Bit_32;
 	if (this->internal_data_type != reference_type) {
 		throw std::runtime_error("Error : subregion does not contain the same internal type as the parent grid.");
@@ -85,7 +85,7 @@ GridSubRegionDetail<float>::GridSubRegionDetail(svec3 _o, svec3 _s, Grid::Ptr _g
 }
 
 template <>
-GridSubRegionDetail<double>::GridSubRegionDetail(svec3 _o, svec3 _s, Grid::Ptr _g) : GridSubregion(_o, _s, _g) {
+GenericImageReaderSubregionTemplated<double>::GenericImageReaderSubregionTemplated(svec3 _o, svec3 _s, Grid::Ptr _g) : GenericImageReaderSubregion(_o, _s, _g) {
 	ImageDataType reference_type= ImageDataType::Floating | ImageDataType::Bit_64;
 	if (this->internal_data_type != reference_type) {
 		throw std::runtime_error("Error : subregion does not contain the same internal type as the parent grid.");
@@ -93,13 +93,13 @@ GridSubRegionDetail<double>::GridSubRegionDetail(svec3 _o, svec3 _s, Grid::Ptr _
 }
 
 template <typename element_t>
-GridSubRegionDetail<element_t>::~GridSubRegionDetail() {
+GenericImageReaderSubregionTemplated<element_t>::~GenericImageReaderSubregionTemplated() {
 	this->read_cache.clearCache();
 	this->parent_grid.reset();
 }
 
 template <typename element_t>
-std::size_t GridSubRegionDetail<element_t>::load_slice_from_parent_grid(std::size_t slice_idx) {
+std::size_t GenericImageReaderSubregionTemplated<element_t>::load_slice_from_parent_grid(std::size_t slice_idx) {
 	// typedef for cached data :
 	using ImagePtr = typename cache_t::data_t_ptr; // So : std::shared_ptr< std::vector<element_t> >
 	// resolution of current image :
@@ -130,7 +130,7 @@ std::size_t GridSubRegionDetail<element_t>::load_slice_from_parent_grid(std::siz
 
 template <typename element_t>
 template <typename out_t>
-bool GridSubRegionDetail<element_t>::templated_read_region(svec3 origin, svec3 size, std::vector<out_t>& values) {
+bool GenericImageReaderSubregionTemplated<element_t>::templated_read_region(svec3 origin, svec3 size, std::vector<out_t>& values) {
 	// Reminder : the availability of the grid coordinates have been checked before.
 	// As such, we can read the data directly.
 

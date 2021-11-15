@@ -2,7 +2,7 @@
 #define VISUALIZATION_IMAGE_API_GRID_HPP_
 
 #include "../../image/utils/include/image_api_common.hpp"
-#include "../../image/interface/generic_image_reader.hpp"
+#include "../../image/generic/include/generic_image_reader.hpp"
 #include "../../image/transforms/include/transform_stack.hpp"
 
 #include <memory>

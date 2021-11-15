@@ -25,7 +25,7 @@ SET_TARGET_PROPERTIES(grid_api PROPERTIES
 
 ADD_LIBRARY(writergrid STATIC
 	include/grid_writer.hpp
-	interface/generic_grid_writer.hpp
+	include/generic_grid_writer.hpp
 	src/grid_writer.cpp
 	src/generic_grid_writer.cpp
 )
