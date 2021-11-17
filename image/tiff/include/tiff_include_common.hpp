@@ -11,8 +11,8 @@
 #include "../../macros.hpp"
 
 // Grid and Image APIs :
-#include "../../utils/include/image_api_common.hpp"
 #include "../../generic/include/generic_image_reader.hpp"
+#include "../../utils/include/image_api_common.hpp"
 #include "../../utils/include/read_cache.hpp"
 #include "../../utils/include/threaded_task.hpp"
 
@@ -21,10 +21,10 @@
 #include <tiffio.h>
 
 // STD headers :
-#include <string>
-#include <memory>
-#include <vector>
 #include <iostream>
+#include <memory>
+#include <string>
 #include <string_view>
+#include <vector>
 
-#endif // VISUALIZATION_IMAGE_TIFF_INCLUDE_TIFF_INCLUDE_COMMON_HPP_
+#endif	  // VISUALIZATION_IMAGE_TIFF_INCLUDE_TIFF_INCLUDE_COMMON_HPP_

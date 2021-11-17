@@ -7,14 +7,15 @@
 
 namespace Image {
 
-namespace Tiff {
+	namespace Tiff {
 
-	/// @ingroup tiff
-	/// @brief The Frame class is an internal representation of a TIFF directory.
-	/// @details This class contains convenience code to access the properties of a given TIFF directory in a given
-	/// file on disk. It is also used to 'compare' directories between themselves, to see if they are compatible or not
-	/// (compatibility being defined in the isCompatibleWith function).
-	struct Frame {
+		/// @ingroup tiff
+		/// @brief The Frame class is an internal representation of a TIFF directory.
+		/// @details This class contains convenience code to access the properties of a given TIFF directory in a given
+		/// file on disk. It is also used to 'compare' directories between themselves, to see if they are compatible or not
+		/// (compatibility being defined in the isCompatibleWith function).
+		struct Frame
+		{
 		public:
 			typedef std::shared_ptr<Frame> Ptr;
 
@@ -61,33 +62,47 @@ namespace Tiff {
 			/// @brief Sets the min and max values that _can_ be present in the directory into the range parameter.
 			/// @note This is based on the SMinSampleValue tag that is part of standard ('baseline') TIFF, but mostly
 			/// ignored or unset. In this case, it returns the min/max values of the out_t type.
-			template <typename out_t> void getMinMaxSample(std::size_t sample, glm::tvec2<out_t>& range, TIFF* handle = nullptr) {
+			template <typename out_t>
+			void getMinMaxSample(std::size_t sample, glm::tvec2<out_t>& range, TIFF* handle = nullptr) {
 				bool shouldClose = false;
 				if (handle == nullptr) {
 					shouldClose = true;
-					handle = this->getLibraryHandle();
+					handle		= this->getLibraryHandle();
 				}
 
-				if (sample >= this->samplesPerPixel) { TIFFClose(handle); return; }
+				if (sample >= this->samplesPerPixel) {
+					TIFFClose(handle);
+					return;
+				}
 
 				// Read the sample values :
 				out_t* min_samples = nullptr;
 				out_t* max_samples = nullptr;
-				int result = 1;
+				int result		   = 1;
 
 				result = TIFFGetField(handle, TIFFTAG_SMINSAMPLEVALUE, &min_samples);
 				if (result == 0) {
 					result = TIFFGetFieldDefaulted(handle, TIFFTAG_SMINSAMPLEVALUE, &min_samples);
-					if (result == 0) { range.x = std::numeric_limits<out_t>::lowest(); }
-				} else { range.x = min_samples[sample]; }
+					if (result == 0) {
+						range.x = std::numeric_limits<out_t>::lowest();
+					}
+				} else {
+					range.x = min_samples[sample];
+				}
 
 				result = TIFFGetField(handle, TIFFTAG_SMAXSAMPLEVALUE, &max_samples);
 				if (result == 0) {
 					result = TIFFGetFieldDefaulted(handle, TIFFTAG_SMAXSAMPLEVALUE, &max_samples);
-					if (result == 0) { range.y = std::numeric_limits<out_t>::max(); }
-				} else { range.y = max_samples[sample]; }
+					if (result == 0) {
+						range.y = std::numeric_limits<out_t>::max();
+					}
+				} else {
+					range.y = max_samples[sample];
+				}
 
-				if (shouldClose) { TIFFClose(handle); }
+				if (shouldClose) {
+					TIFFClose(handle);
+				}
 
 				return;
 			}
@@ -113,10 +128,10 @@ namespace Tiff {
 			uint32_t rowsPerStrip;
 			/// @brief The number of strips per image.
 			uint64_t stripsPerImage;
-	};
+		};
 
-} // namespace TIFF
+	}	 // namespace Tiff
 
-} // namespace Image
+}	 // namespace Image
 
-#endif // VISUALIZATION_IMAGE_TIFF_INCLUDE_TIFF_FRAME_HPP_
+#endif	  // VISUALIZATION_IMAGE_TIFF_INCLUDE_TIFF_FRAME_HPP_

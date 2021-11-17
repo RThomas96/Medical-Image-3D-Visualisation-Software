@@ -2,10 +2,10 @@
 #define VISUALIZATION_IMAGE_API_INCLUDE_THREADED_TASK_HPP_
 
 #include <atomic>
+#include <iostream>
 #include <memory>
 #include <mutex>
 #include <queue>
-#include <iostream>
 
 namespace Image {
 
@@ -18,8 +18,8 @@ namespace Image {
 		Running		= 3,
 		Finishing	= 4,
 		Finished	= 5,
-		End_Success	= 6,
-		End_Failure	= 7
+		End_Success = 6,
+		End_Failure = 7
 	};
 
 	/**
@@ -27,62 +27,63 @@ namespace Image {
 	 * @note Shamelessly stolen from `image/include/reader.hpp`.
 	 */
 	class ThreadedTask : public std::enable_shared_from_this<ThreadedTask> {
-		public:
-			/// @brief A simple typedef enclosing a pointer to a threaded task
-			using Ptr = std::shared_ptr<ThreadedTask>;
-		public:
-			/// @brief Ctor for a threaded task.
-			ThreadedTask(std::size_t _maxSteps = 0);
-			/// @brief Default dtor for the class.
-			~ThreadedTask(void) = default;
+	public:
+		/// @brief A simple typedef enclosing a pointer to a threaded task
+		using Ptr = std::shared_ptr<ThreadedTask>;
 
-			/// @brief Returns the result of std::enable_shared_from_this<>::shared_from_this()
-			ThreadedTask::Ptr getPtr();
+	public:
+		/// @brief Ctor for a threaded task.
+		ThreadedTask(std::size_t _maxSteps = 0);
+		/// @brief Default dtor for the class.
+		~ThreadedTask(void) = default;
 
-			/// @brief Checks if the task is complete.
-			bool isComplete(void);
+		/// @brief Returns the result of std::enable_shared_from_this<>::shared_from_this()
+		ThreadedTask::Ptr getPtr();
 
-			/// @brief Allows to immediately end a task.
-			void end(bool success = true);
+		/// @brief Checks if the task is complete.
+		bool isComplete(void);
 
-			/// @brief Check if the task has steps.
-			bool hasSteps(void);
+		/// @brief Allows to immediately end a task.
+		void end(bool success = true);
 
-			/// @brief Get the maximum number of steps possible
-			std::size_t getMaxSteps(void);
+		/// @brief Check if the task has steps.
+		bool hasSteps(void);
 
-			/// @brief Set the max number of steps for the task
-			void setSteps(std::size_t _ms);
+		/// @brief Get the maximum number of steps possible
+		std::size_t getMaxSteps(void);
 
-			/// @brief Get current advancement of the task
-			std::size_t getAdvancement(void);
+		/// @brief Set the max number of steps for the task
+		void setSteps(std::size_t _ms);
 
-			/// @brief Set the current progress of the task
-			void setAdvancement(std::size_t newcurrentvalue);
+		/// @brief Get current advancement of the task
+		std::size_t getAdvancement(void);
 
-			/// @brief Set the task's state
-			void setState(TaskState _new_state);
+		/// @brief Set the current progress of the task
+		void setAdvancement(std::size_t newcurrentvalue);
 
-			/// @brief Get the current task's state.
-			TaskState getState(void);
+		/// @brief Set the task's state
+		void setState(TaskState _new_state);
 
-			/// @brief Advances a step (thread-safe)
-			void advance(void);
+		/// @brief Get the current task's state.
+		TaskState getState(void);
 
-			/// @brief Pushes a new message into the FIFO.
-			void pushMessage(std::string msg);
+		/// @brief Advances a step (thread-safe)
+		void advance(void);
 
-			/// @brief Pops the top message of the FIFO. Returns true if there still was
-			bool popMessage(std::string& msg);
+		/// @brief Pushes a new message into the FIFO.
+		void pushMessage(std::string msg);
 
-		protected:
-			std::timed_mutex m;						///< The lock resposible for thread-safety.
-			std::atomic<std::size_t> currentStep;	///< The current number of steps achieved
-			std::size_t maxSteps;					///< The maximum number of steps. If 0, task not initialized.
-			std::chrono::milliseconds timeInterval;	///< The time interval to use for try_lock() on the mutex
-			std::queue<std::string> msgs;			///< A queue holding all error/warning messages from the thread(s)
-			TaskState task_state;					///< The state of the current task
+		/// @brief Pops the top message of the FIFO. Returns true if there still was
+		bool popMessage(std::string& msg);
+
+	protected:
+		std::timed_mutex m;	   ///< The lock resposible for thread-safety.
+		std::atomic<std::size_t> currentStep;	 ///< The current number of steps achieved
+		std::size_t maxSteps;	 ///< The maximum number of steps. If 0, task not initialized.
+		std::chrono::milliseconds timeInterval;	   ///< The time interval to use for try_lock() on the mutex
+		std::queue<std::string> msgs;	 ///< A queue holding all error/warning messages from the thread(s)
+		TaskState task_state;	 ///< The state of the current task
 	};
-}
+}	 // namespace Image
 
-#endif // VISUALIZATION_IMAGE_API_INCLUDE_THREADED_TASK_HPP_
+#endif	  // VISUALIZATION_IMAGE_API_INCLUDE_THREADED_TASK_HPP_
