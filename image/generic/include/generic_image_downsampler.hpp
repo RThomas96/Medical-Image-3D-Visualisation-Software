@@ -1,5 +1,5 @@
-#ifndef VISUALIZATION_IMAGE_API_INCLUDE_GRID_SUBREGION_HPP_
-#define VISUALIZATION_IMAGE_API_INCLUDE_GRID_SUBREGION_HPP_
+#ifndef VISUALISATION_IMAGE_GENERIC_INCLUDE_GENERIC_IMAGE_DOWNSAMPLER_HPP_
+#define VISUALISATION_IMAGE_GENERIC_INCLUDE_GENERIC_IMAGE_DOWNSAMPLER_HPP_
 
 #include "../../../new_grid/include/grid.hpp"
 #include "./generic_image_reader.hpp"
@@ -7,24 +7,25 @@
 namespace Image {
 
 	/// @ingroup newgrid
-	/// @brief The GridSubRegion class is the base class for all versions of a backend sampling a sub region of a grid.
-	/// @details This class is a base class implementing some general-purpose behaviours that are useful in the context
-	/// of a backend image representation sampling a sub-region of a grid.
-	class GenericImageReaderSubregion : public GenericImageReader {
+	/// @brief The GenericImageDownsampler class provides a downsampled version of a parent grid to the user.
+	/// @details Its design follows the GenericImageReaderSubRegion class, in that it takes as input two variables: the
+	/// desired target size of the grid, and the original size of the parent grid.
+	class GenericImageDownsampler : public GenericImageReader {
+
 	public:
 		/// @brief Pointer type for this backend image implementation.
-		typedef std::unique_ptr<GenericImageReaderSubregion> Ptr;
+		typedef std::unique_ptr<GenericImageDownsampler> Ptr;
 
 	protected:
-		/// @brief Default ctor for the class, creates a backend that will sample the given grid in the given region.
-		GenericImageReaderSubregion(svec3 origin, svec3 size, Grid::Ptr parent_grid);
+		/// @brief Default ctor for the class. Constructs a grid representation at the given resolution.
+		GenericImageDownsampler(const svec3 desired_resolution, Grid::Ptr parent_grid);
 
 	public:
-		/// @brief Dtor for the class. Releases all allocated resources.
-		virtual ~GenericImageReaderSubregion(void) = default;
+		/// @brief Default dtor for this backend image representation.
+		virtual ~GenericImageDownsampler() = default;
 
 		/// @brief Returns the internal type of the backend, based on the internal type of the grid sampled.
-		virtual ImageDataType getInternalDataType(void) const override;
+		virtual ImageDataType getInternalDataType() const override;
 
 		/// @brief Should parse images, but since we're sampling a known grid this just initializes the right variables.
 		virtual ThreadedTask::Ptr parseImageInfo(ThreadedTask::Ptr pre_existing_task,
@@ -54,20 +55,20 @@ namespace Image {
 		/// @brief Returns the image bounding box, either as computed (voxel sizes x res), or defined in file.
 		virtual BoundingBox_General<float> getBoundingBox(void) const override;
 
-	protected:
-		/// @brief The origin of the sampling region, expressed as voxel indices.
-		svec3 sampling_region_origin;
+	private:
+		/// @brief Target resolution desired by the user.
+		svec3 target_resolution;
 
-		/// @brief The size of the sampling region, expressed as voxel indices.
-		svec3 sampling_region_size;
+		/// @brief Source resolution of the grid
+		svec3 source_resolution;
 
-		/// @brief The grid to sample data from.
+		/// @brief Parent grid to sample from
 		Grid::Ptr parent_grid;
 
-		/// @brief This image's name. By default, is set to <parent grid name>_subregion but can be user-defined.
+		/// @brief The image's name. By default, is set to <parent grid name>_downsampled but can be user-defined.
 		std::string custom_name;
 	};
 
-}	 // namespace Image
+}
 
-#endif	  // VISUALIZATION_IMAGE_API_INCLUDE_GRID_SUBREGION_HPP_
+#endif // VISUALISATION_IMAGE_GENERIC_INCLUDE_GENERIC_IMAGE_DOWNSAMPLER_HPP_

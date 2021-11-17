@@ -47,6 +47,7 @@ SET_TARGET_PROPERTIES(image_subregion PROPERTIES
 # Downsamplers :
 ADD_LIBRARY(image_downsampler
 	include/generic_image_downsampler.hpp
+	src/generic_image_downsampler.cpp
 	#include/generic_image_downsampler_templated.hpp
 	#include/generic_image_downsampler_templated.impl.hpp
 	#src/generic_image_reader_subregion.cpp
