@@ -15,7 +15,7 @@
 # The Powershell path is already in the third_party directory, no
 # need to append it once more to the library path :
 [string]$ProjectRootPath = (Split-Path -Parent $PSCommandPath)
-[string]$qglviewerPath = ($ProjectRootPath)+"\libQGLViewer"
+[string]$qglviewerPath = ($ProjectRootPath)+"\libQGLViewer\QGLViewer"
 [string]$TinyTIFFPath = ($ProjectRootPath)+"\TinyTIFF"
 [string]$libTIFFPath = ($ProjectRootPath)+"\libtiff"
 [string]$niftiPath = ($ProjectRootPath)+"\nifticlib"
@@ -162,7 +162,7 @@ function Publish-GitQGLViewer {
 		$env:LIBRARY_PATH+=";$qglviewerPath;$qglviewerPath\QGLViewer;$env:PATH";
 		# Call GNU's make :
 		Start-Process -FilePath $Global:GNUMakeCmdPath -NoNewWindow -Wait -ArgumentList `
-			"--no-print-directory --silent -j sub-QGLViewer"
+			"--no-print-directory --silent -j release"
 	}
 	# Finish the process :
 	Write-Host "Configuration of QGLViewer done."
@@ -194,7 +194,7 @@ function Publish-GitZlib {
 	Write-Host "Configuring Zlib ..."
 	Set-Location $zlibPath
 	if ( Test-Path -Path "release" ) {
-		//
+		Write-Host "Zlib was already compiled by this script."
 	} else {
 		[void](New-Item -Force -Path $zlibPath -Name "release" -ItemType "directory")
 
