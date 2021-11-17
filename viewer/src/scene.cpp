@@ -1,18 +1,18 @@
 #include "../include/scene.hpp"
-#include "../include/planar_viewer.hpp"
-#include "../../qt/include/scene_control.hpp"
 #include "../../grid/include/discrete_grid_reader.hpp"
 #include "../../grid/include/discrete_grid_writer.hpp"
-#include "../../new_grid/include/grid_writer.hpp"
 #include "../../image/tiff/include/tiff_writer.hpp"
 #include "../../image/tiff/include/tiff_writer_templated.hpp"
+#include "../../new_grid/include/grid_writer.hpp"
+#include "../../qt/include/scene_control.hpp"
+#include "../include/planar_viewer.hpp"
 
-#include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/transform.hpp>
 
-#include <QOpenGLContext>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QOpenGLContext>
 #include <QSurface>
 
 #include <fstream>
@@ -21,118 +21,126 @@
 
 inline unsigned int planeHeadingToIndex(planeHeading _heading) {
 	switch (_heading) {
-		case planeHeading::North : return 1;
-		case planeHeading::East  : return 2;
-		case planeHeading::South : return 3;
-		case planeHeading::West  : return 4;
-		default : return 1; // If no value is recognized, return a north heading (default value)
+		case planeHeading::North:
+			return 1;
+		case planeHeading::East:
+			return 2;
+		case planeHeading::South:
+			return 3;
+		case planeHeading::West:
+			return 4;
+		default:
+			return 1;	 // If no value is recognized, return a north heading (default value)
 	}
 }
 
 inline void __GetTexSize(std::size_t numTexNeeded, std::size_t* opt_width, std::size_t* opt_height) {
-	std::size_t iRoot = ( std::size_t )sqrtf(static_cast<float>(numTexNeeded));
+	std::size_t iRoot = (std::size_t) sqrtf(static_cast<float>(numTexNeeded));
 
-	*opt_width = iRoot + 1;
+	*opt_width	= iRoot + 1;
 	*opt_height = iRoot;
-	if ( ((*opt_width) * (*opt_height)) < numTexNeeded ) { (*opt_height)++; }
-	if ( ((*opt_width) * (*opt_height)) < numTexNeeded ) { (*opt_width)++; }
+	if (((*opt_width) * (*opt_height)) < numTexNeeded) {
+		(*opt_height)++;
+	}
+	if (((*opt_width) * (*opt_height)) < numTexNeeded) {
+		(*opt_width)++;
+	}
 }
 
 Scene::Scene() {
 	/** This constructor not only creates the object, but also sets the default values for the Scene in order
 	 *  to be drawn, even if it is empty at the time of the first call to a draw function.
 	 */
-	this->isInitialized = false;
-	this->showVAOstate = false;
+	this->isInitialized	   = false;
+	this->showVAOstate	   = false;
 	this->shouldDeleteGrid = false;
 
 	this->grids.clear();
 
-	this->context = nullptr;
-	this->debugLog = nullptr;
-	this->glOutput = nullptr;
-	this->controlPanel = nullptr;
-	this->gridControl = nullptr;
+	this->context			= nullptr;
+	this->debugLog			= nullptr;
+	this->glOutput			= nullptr;
+	this->controlPanel		= nullptr;
+	this->gridControl		= nullptr;
 	this->visuBoxController = nullptr;
-	this->programStatusBar = nullptr;
+	this->programStatusBar	= nullptr;
 
 	DiscreteGrid::data_t minTexVal = DiscreteGrid::data_t(1);
 	DiscreteGrid::data_t maxTexVal = DiscreteGrid::data_t(std::numeric_limits<DiscreteGrid::data_t>::max());
-	this->textureBounds0 = GridGLView::data_2(minTexVal, maxTexVal);
-	this->textureBounds1 = GridGLView::data_2(minTexVal, maxTexVal);
-	this->colorBounds0 = GridGLView::data_2(0, maxTexVal);
-	this->colorBounds1 = GridGLView::data_2(0, maxTexVal);
-	this->selectedChannel_r = 0; // by default, the R channel
-	this->selectedChannel_g = 0; // by default, the R channel
+	this->textureBounds0		   = GridGLView::data_2(minTexVal, maxTexVal);
+	this->textureBounds1		   = GridGLView::data_2(minTexVal, maxTexVal);
+	this->colorBounds0			   = GridGLView::data_2(0, maxTexVal);
+	this->colorBounds1			   = GridGLView::data_2(0, maxTexVal);
+	this->selectedChannel_r		   = 0;	   // by default, the R channel
+	this->selectedChannel_g		   = 0;	   // by default, the R channel
 
 	this->renderSize = 0;
 
 	// Default light positions : at the vertices of a unit cube.
 	this->lightPositions = {
-		glm::vec3(.0, .0, .0), glm::vec3(1., .0, .0), glm::vec3(.0, 1., .0), glm::vec3(1., 1., .0),
-		glm::vec3(.0, .0, 1.), glm::vec3(1., .0, 1.), glm::vec3(.0, 1., 1.), glm::vec3(1., 1., 1.)
-	};
+	  glm::vec3(.0, .0, .0), glm::vec3(1., .0, .0), glm::vec3(.0, 1., .0), glm::vec3(1., 1., .0),
+	  glm::vec3(.0, .0, 1.), glm::vec3(1., .0, 1.), glm::vec3(.0, 1., 1.), glm::vec3(1., 1., 1.)};
 
-	this->planeDirection = glm::vec3(1., 1., 1.);
+	this->planeDirection	= glm::vec3(1., 1., 1.);
 	this->planeDisplacement = glm::vec3(.0, .0, .0);
 	DiscreteGrid::bbox_t::vec min(.0, .0, .0);
 	DiscreteGrid::bbox_t::vec max(1., 1., 1.);
-	this->sceneBB = DiscreteGrid::bbox_t(min, max);
+	this->sceneBB				 = DiscreteGrid::bbox_t(min, max);
 	this->clipDistanceFromCamera = 5.f;
-	this->drawMode = DrawMode::Solid;
-	this->rgbMode = RGBMode::HandEColouring;
-	this->channels_r = ColorFunction::SingleChannel;
-	this->channels_g = ColorFunction::SingleChannel;
+	this->drawMode				 = DrawMode::Solid;
+	this->rgbMode				 = RGBMode::HandEColouring;
+	this->channels_r			 = ColorFunction::SingleChannel;
+	this->channels_g			 = ColorFunction::SingleChannel;
 
 	// Show all planes as default :
 	this->planeVisibility = glm::vec<3, bool, glm::defaultp>(true, true, true);
 
-	this->vaoHandle = 0;
+	this->vaoHandle					  = 0;
 	this->vaoHandle_VolumetricBuffers = 0;
-	this->vaoHandle_boundingBox = 0;
+	this->vaoHandle_boundingBox		  = 0;
 
-	this->vboHandle_VertPos = 0;
-	this->vboHandle_VertNorm = 0;
-	this->vboHandle_VertTex = 0;
-	this->vboHandle_Element = 0;
-	this->vboHandle_PlaneElement = 0;
-	this->vboHandle_SinglePlaneElement = 0;
+	this->vboHandle_VertPos				= 0;
+	this->vboHandle_VertNorm			= 0;
+	this->vboHandle_VertTex				= 0;
+	this->vboHandle_Element				= 0;
+	this->vboHandle_PlaneElement		= 0;
+	this->vboHandle_SinglePlaneElement	= 0;
 	this->vboHandle_boundingBoxVertices = 0;
-	this->vboHandle_boundingBoxIndices = 0;
+	this->vboHandle_boundingBoxIndices	= 0;
 
-	this->programHandle_projectedTex = 0;
-	this->programHandle_Plane3D = 0;
-	this->programHandle_PlaneViewer = 0;
+	this->programHandle_projectedTex	 = 0;
+	this->programHandle_Plane3D			 = 0;
+	this->programHandle_PlaneViewer		 = 0;
 	this->programHandle_VolumetricViewer = 0;
-	this->programHandle_BoundingBox = 0;
+	this->programHandle_BoundingBox		 = 0;
 
-	this->texHandle_ColorScaleGrid = 0;
+	this->texHandle_ColorScaleGrid			= 0;
 	this->texHandle_ColorScaleGridAlternate = 0;
-	this->shouldUpdateVis = false;
-	this->volumetricMesh = {};
-	this->vboHandle_Texture3D_VertPos = 0;
-	this->vboHandle_Texture3D_VertNorm = 0;
-	this->vboHandle_Texture3D_VertTex = 0;
-	this->vboHandle_Texture3D_VertIdx = 0;
+	this->shouldUpdateVis					= false;
+	this->volumetricMesh					= {};
+	this->vboHandle_Texture3D_VertPos		= 0;
+	this->vboHandle_Texture3D_VertNorm		= 0;
+	this->vboHandle_Texture3D_VertTex		= 0;
+	this->vboHandle_Texture3D_VertIdx		= 0;
 
-	this->color0 = glm::vec3(1., .0, .0);
-	this->color1 = glm::vec3(.0, .0, 1.);
+	this->color0		= glm::vec3(1., .0, .0);
+	this->color1		= glm::vec3(.0, .0, 1.);
 	this->color0_second = glm::vec3(1., .0, .0);
 	this->color1_second = glm::vec3(.0, .0, 1.);
 
 	std::cerr << "Allocating " << +std::numeric_limits<DiscreteGrid::data_t>::max() << " elements for vis ...\n";
-	this->visibleDomains = new float[std::numeric_limits<DiscreteGrid::data_t>::max()];
+	this->visibleDomains		  = new float[std::numeric_limits<DiscreteGrid::data_t>::max()];
 	this->visibleDomainsAlternate = new float[std::numeric_limits<DiscreteGrid::data_t>::max()];
 	for (std::size_t i = 0; i < std::numeric_limits<DiscreteGrid::data_t>::max(); ++i) {
-		this->visibleDomains[i] = .5f;
+		this->visibleDomains[i]			 = .5f;
 		this->visibleDomainsAlternate[i] = .5f;
 	}
 
-	this->pb_loadProgress = nullptr;
-	this->timer_refreshProgress = nullptr;
-	this->isFinishedLoading = false;
+	this->pb_loadProgress			  = nullptr;
+	this->timer_refreshProgress		  = nullptr;
+	this->isFinishedLoading			  = false;
 	this->shouldUpdateUserColorScales = false;
-	this->shouldUpdateUBOData = false;
+	this->shouldUpdateUBOData		  = false;
 
 	this->posFrame = nullptr;
 }
@@ -160,8 +168,12 @@ void Scene::initGl(QOpenGLContext* _context) {
 		this->isInitialized = true;
 
 		// Set the context for later viewers that want to connect to the scene :
-		if (_context == 0) { throw std::runtime_error("Warning : this->context() returned 0 or nullptr !") ; }
-		if (_context == nullptr) { std::cerr << "Warning : Initializing a scene without a valid OpenGL context !" << '\n' ; }
+		if (_context == 0) {
+			throw std::runtime_error("Warning : this->context() returned 0 or nullptr !");
+		}
+		if (_context == nullptr) {
+			std::cerr << "Warning : Initializing a scene without a valid OpenGL context !" << '\n';
+		}
 		this->context = _context;
 
 		// Get OpenGL functions from the currently bound context :
@@ -211,8 +223,8 @@ void Scene::initialize_limits() {
 void Scene::generateColorScales() {
 	TextureUpload colorScaleUploadParameters;
 
-	std::size_t textureSize = this->gl_limit_max_texture_size/2u;
-	float textureSize_f = static_cast<float>(this->gl_limit_max_texture_size/2u);
+	std::size_t textureSize = this->gl_limit_max_texture_size / 2u;
+	float textureSize_f		= static_cast<float>(this->gl_limit_max_texture_size / 2u);
 
 	std::vector<glm::vec3> colorScaleData_greyscale(textureSize);
 	std::vector<glm::vec3> colorScaleData_hsv2rgb(textureSize);
@@ -228,56 +240,57 @@ void Scene::generateColorScales() {
 
 	// Generate the HSV2RGB :
 	for (std::size_t i = 0; i < textureSize; ++i) {
-		glm::vec3 hsv = glm::vec3 (float(i)/textureSize_f, 1., 1.);
-		hsv.x = glm::mod( 100.0 + hsv.x, 1.0 ); // Ensure [0,1[
-		float   HueSlice = 6.0 * hsv.x; // In [0,6[
-		float   HueSliceInteger = floor( HueSlice );
-		float   HueSliceInterpolant = HueSlice - HueSliceInteger; // In [0,1[ for each hue slice
-		glm::vec3 TempRGB = glm::vec3(   hsv.z * (1.0 - hsv.y), hsv.z * (1.0 - hsv.y * HueSliceInterpolant), hsv.z * (1.0 - hsv.y * (1.0 - HueSliceInterpolant)) );
-		float   IsOddSlice = glm::mod( HueSliceInteger, 2.0f ); // 0 if even (slices 0, 2, 4), 1 if odd (slices 1, 3, 5)
-		float   ThreeSliceSelector = 0.5 * (HueSliceInteger - IsOddSlice); // (0, 1, 2) corresponding to slices (0, 2, 4) and (1, 3, 5)
-		glm::vec3    ScrollingRGBForEvenSlices = glm::vec3( hsv.z, TempRGB.z, TempRGB.x );           // (V, Temp Blue, Temp Red) for even slices (0, 2, 4)
-		glm::vec3    ScrollingRGBForOddSlices = glm::vec3( TempRGB.y, hsv.z, TempRGB.x );  // (Temp Green, V, Temp Red) for odd slices (1, 3, 5)
-		glm::vec3    ScrollingRGB = mix( ScrollingRGBForEvenSlices, ScrollingRGBForOddSlices, IsOddSlice );
-		float   IsNotFirstSlice = glm::clamp( ThreeSliceSelector, 0.0f, 1.0f );                   // 1 if NOT the first slice (true for slices 1 and 2)
-		float   IsNotSecondSlice = glm::clamp( ThreeSliceSelector-1.0f, 0.0f,1.f );              // 1 if NOT the first or second slice (true only for slice 2)
-		colorScaleData_hsv2rgb[i] = glm::vec4(glm::mix(glm::vec3(ScrollingRGB), glm::mix(
-									glm::vec3(ScrollingRGB.z, ScrollingRGB.x, ScrollingRGB.y),
-									glm::vec3(ScrollingRGB.y, ScrollingRGB.z, ScrollingRGB.x),
-									IsNotSecondSlice),IsNotFirstSlice),1.f);    // Make the RGB rotate right depending on final slice index
+		glm::vec3 hsv						= glm::vec3(float(i) / textureSize_f, 1., 1.);
+		hsv.x								= glm::mod(100.0 + hsv.x, 1.0);	   // Ensure [0,1[
+		float HueSlice						= 6.0 * hsv.x;	  // In [0,6[
+		float HueSliceInteger				= floor(HueSlice);
+		float HueSliceInterpolant			= HueSlice - HueSliceInteger;	 // In [0,1[ for each hue slice
+		glm::vec3 TempRGB					= glm::vec3(hsv.z * (1.0 - hsv.y), hsv.z * (1.0 - hsv.y * HueSliceInterpolant), hsv.z * (1.0 - hsv.y * (1.0 - HueSliceInterpolant)));
+		float IsOddSlice					= glm::mod(HueSliceInteger, 2.0f);	  // 0 if even (slices 0, 2, 4), 1 if odd (slices 1, 3, 5)
+		float ThreeSliceSelector			= 0.5 * (HueSliceInteger - IsOddSlice);	   // (0, 1, 2) corresponding to slices (0, 2, 4) and (1, 3, 5)
+		glm::vec3 ScrollingRGBForEvenSlices = glm::vec3(hsv.z, TempRGB.z, TempRGB.x);	 // (V, Temp Blue, Temp Red) for even slices (0, 2, 4)
+		glm::vec3 ScrollingRGBForOddSlices	= glm::vec3(TempRGB.y, hsv.z, TempRGB.x);	 // (Temp Green, V, Temp Red) for odd slices (1, 3, 5)
+		glm::vec3 ScrollingRGB				= mix(ScrollingRGBForEvenSlices, ScrollingRGBForOddSlices, IsOddSlice);
+		float IsNotFirstSlice				= glm::clamp(ThreeSliceSelector, 0.0f, 1.0f);	 // 1 if NOT the first slice (true for slices 1 and 2)
+		float IsNotSecondSlice				= glm::clamp(ThreeSliceSelector - 1.0f, 0.0f, 1.f);	   // 1 if NOT the first or second slice (true only for slice 2)
+		colorScaleData_hsv2rgb[i]			= glm::vec4(glm::mix(glm::vec3(ScrollingRGB), glm::mix(glm::vec3(ScrollingRGB.z, ScrollingRGB.x, ScrollingRGB.y), glm::vec3(ScrollingRGB.y, ScrollingRGB.z, ScrollingRGB.x), IsNotSecondSlice), IsNotFirstSlice), 1.f);	   // Make the RGB rotate right depending on final slice index
 	}
 
 	std::cerr << "Generated data for the HSV2RGB color scale" << '\n';
 
-	colorScaleUploadParameters.minmag.x = GL_LINEAR;
-	colorScaleUploadParameters.minmag.y = GL_LINEAR;
-	colorScaleUploadParameters.lod.y = -1000.f;
-	colorScaleUploadParameters.wrap.x = GL_CLAMP_TO_EDGE;
-	colorScaleUploadParameters.wrap.y = GL_CLAMP_TO_EDGE;
-	colorScaleUploadParameters.wrap.z = GL_CLAMP_TO_EDGE;
+	colorScaleUploadParameters.minmag.x	 = GL_LINEAR;
+	colorScaleUploadParameters.minmag.y	 = GL_LINEAR;
+	colorScaleUploadParameters.lod.y	 = -1000.f;
+	colorScaleUploadParameters.wrap.x	 = GL_CLAMP_TO_EDGE;
+	colorScaleUploadParameters.wrap.y	 = GL_CLAMP_TO_EDGE;
+	colorScaleUploadParameters.wrap.z	 = GL_CLAMP_TO_EDGE;
 	colorScaleUploadParameters.swizzle.r = GL_RED;
 	colorScaleUploadParameters.swizzle.g = GL_GREEN;
 	colorScaleUploadParameters.swizzle.b = GL_BLUE;
 	colorScaleUploadParameters.swizzle.a = GL_ONE;
 
-	colorScaleUploadParameters.level = 0;
+	colorScaleUploadParameters.level		  = 0;
 	colorScaleUploadParameters.internalFormat = GL_RGB;
-	colorScaleUploadParameters.size.x = textureSize;
-	colorScaleUploadParameters.size.y = 1;
-	colorScaleUploadParameters.size.z = 1;
-	colorScaleUploadParameters.format = GL_RGB;
-	colorScaleUploadParameters.type = GL_FLOAT;
-	colorScaleUploadParameters.data = colorScaleData_greyscale.data();
-	this->texHandle_colorScale_greyscale = this->uploadTexture1D(colorScaleUploadParameters);
+	colorScaleUploadParameters.size.x		  = textureSize;
+	colorScaleUploadParameters.size.y		  = 1;
+	colorScaleUploadParameters.size.z		  = 1;
+	colorScaleUploadParameters.format		  = GL_RGB;
+	colorScaleUploadParameters.type			  = GL_FLOAT;
+	colorScaleUploadParameters.data			  = colorScaleData_greyscale.data();
+	this->texHandle_colorScale_greyscale	  = this->uploadTexture1D(colorScaleUploadParameters);
 
-	colorScaleUploadParameters.data = colorScaleData_hsv2rgb.data();
+	colorScaleUploadParameters.data	   = colorScaleData_hsv2rgb.data();
 	this->texHandle_colorScale_hsv2rgb = this->uploadTexture1D(colorScaleUploadParameters);
 }
 
 void Scene::addOpenGLOutput(OpenGLDebugLog* glLog) {
 	// if an output is already enabled, stop there
-	if (this->glOutput != nullptr) { return; }
-	if (glLog == nullptr) { return; }
+	if (this->glOutput != nullptr) {
+		return;
+	}
+	if (glLog == nullptr) {
+		return;
+	}
 
 	// add the glOutput to this class :
 	this->glOutput = glLog;
@@ -290,15 +303,19 @@ void Scene::addOpenGLOutput(OpenGLDebugLog* glLog) {
 	}
 }
 
-void Scene::addStatusBar(QStatusBar *_s) {
-	if (this->programStatusBar != nullptr) { return; }
+void Scene::addStatusBar(QStatusBar* _s) {
+	if (this->programStatusBar != nullptr) {
+		return;
+	}
 
 	this->programStatusBar = _s;
 }
 
 void Scene::setupGLOutput() {
 	// if no context is available, end the func now.
-	if (this->context == nullptr) { return; }
+	if (this->context == nullptr) {
+		return;
+	}
 
 	// If the context supports the GL_KHR_debug extension, enable a logger :
 	if (this->context->hasExtension(QByteArrayLiteral("GL_KHR_debug"))) {
@@ -307,7 +324,7 @@ void Scene::setupGLOutput() {
 			if (this->glOutput != nullptr) {
 				// Connect debug logger to gl output class :
 				QObject::connect(this->debugLog, &QOpenGLDebugLogger::messageLogged,
-						this->glOutput, &OpenGLDebugLog::addOpenGLMessage);
+				  this->glOutput, &OpenGLDebugLog::addOpenGLMessage);
 			} else {
 				// connect directly to std::cerr if no gl outputs are available
 				QObject::connect(this->debugLog, &QOpenGLDebugLogger::messageLogged, [this](QOpenGLDebugMessage _m) {
@@ -343,29 +360,63 @@ void Scene::printOpenGLMessage(const QOpenGLDebugMessage& message) {
 	std::string sev = "";
 	std::string typ = "";
 	QFlags severity = message.severity();
-	QFlags type = message.type();
-	QFlags source = message.source();
+	QFlags type		= message.type();
+	QFlags source	= message.source();
 
 	//if (severity & QOpenGLDebugMessage::Severity::NotificationSeverity)	{ sev += "{Notif}"; }
-	if (severity & QOpenGLDebugMessage::Severity::LowSeverity)		{ sev += "{Low}"; }
-	if (severity & QOpenGLDebugMessage::Severity::MediumSeverity)		{ sev += "{Med}"; }
-	if (severity & QOpenGLDebugMessage::Severity::HighSeverity)		{ sev += "{High}"; }
+	if (severity & QOpenGLDebugMessage::Severity::LowSeverity) {
+		sev += "{Low}";
+	}
+	if (severity & QOpenGLDebugMessage::Severity::MediumSeverity) {
+		sev += "{Med}";
+	}
+	if (severity & QOpenGLDebugMessage::Severity::HighSeverity) {
+		sev += "{High}";
+	}
 
-	if (type & QOpenGLDebugMessage::Type::ErrorType)			{ typ += "[ERROR]"; }
-	if (type & QOpenGLDebugMessage::Type::DeprecatedBehaviorType)		{ typ += "[DEPR. BEHAVIOUR]"; }
-	if (type & QOpenGLDebugMessage::Type::UndefinedBehaviorType)		{ typ += "[UNDEF. BEHAVIOUR]"; }
-	if (type & QOpenGLDebugMessage::Type::PortabilityType)			{ typ += "[PORTABILITY]"; }
-	if (type & QOpenGLDebugMessage::Type::PerformanceType)			{ typ += "[PERF]"; }
-	if (type & QOpenGLDebugMessage::Type::OtherType)			{ typ += "[OTHER]"; }
-	if (type & QOpenGLDebugMessage::Type::MarkerType)			{ typ += "[MARKER]"; }
-	if (type & QOpenGLDebugMessage::Type::GroupPushType)			{ typ += "[GROUP PUSH]"; }
-	if (type & QOpenGLDebugMessage::Type::GroupPopType)			{ typ += "[GROUP POP]"; }
+	if (type & QOpenGLDebugMessage::Type::ErrorType) {
+		typ += "[ERROR]";
+	}
+	if (type & QOpenGLDebugMessage::Type::DeprecatedBehaviorType) {
+		typ += "[DEPR. BEHAVIOUR]";
+	}
+	if (type & QOpenGLDebugMessage::Type::UndefinedBehaviorType) {
+		typ += "[UNDEF. BEHAVIOUR]";
+	}
+	if (type & QOpenGLDebugMessage::Type::PortabilityType) {
+		typ += "[PORTABILITY]";
+	}
+	if (type & QOpenGLDebugMessage::Type::PerformanceType) {
+		typ += "[PERF]";
+	}
+	if (type & QOpenGLDebugMessage::Type::OtherType) {
+		typ += "[OTHER]";
+	}
+	if (type & QOpenGLDebugMessage::Type::MarkerType) {
+		typ += "[MARKER]";
+	}
+	if (type & QOpenGLDebugMessage::Type::GroupPushType) {
+		typ += "[GROUP PUSH]";
+	}
+	if (type & QOpenGLDebugMessage::Type::GroupPopType) {
+		typ += "[GROUP POP]";
+	}
 
-	if (source & QOpenGLDebugMessage::Source::APISource)			{ src += "[OpenGL]"; }
-	if (source & QOpenGLDebugMessage::Source::WindowSystemSource)		{ src += "[WinSys]"; }
-	if (source & QOpenGLDebugMessage::Source::ShaderCompilerSource)		{ src += "[ShaComp]"; }
-	if (source & QOpenGLDebugMessage::Source::ThirdPartySource)		{ src += "[3rdParty]"; }
-	if (source & QOpenGLDebugMessage::Source::OtherSource)			{ src += "[Other]"; }
+	if (source & QOpenGLDebugMessage::Source::APISource) {
+		src += "[OpenGL]";
+	}
+	if (source & QOpenGLDebugMessage::Source::WindowSystemSource) {
+		src += "[WinSys]";
+	}
+	if (source & QOpenGLDebugMessage::Source::ShaderCompilerSource) {
+		src += "[ShaComp]";
+	}
+	if (source & QOpenGLDebugMessage::Source::ThirdPartySource) {
+		src += "[3rdParty]";
+	}
+	if (source & QOpenGLDebugMessage::Source::OtherSource) {
+		src += "[Other]";
+	}
 
 	// Currently outputs any message on the GL stack, regardless of severity, type, or source :
 	std::cerr << sev << ' ' << typ << ' ' << src << ' ' << +message.id() << " : " << message.message().toStdString() << '\n';
@@ -373,25 +424,25 @@ void Scene::printOpenGLMessage(const QOpenGLDebugMessage& message) {
 
 void Scene::printGridInfo(const std::shared_ptr<DiscreteGrid>& grid) {
 	std::cerr << "[INFO] Information about the grid " << grid->getGridName() << " :\n";
-	DiscreteGrid::sizevec3 res = grid->getResolution();
-	const glm::vec3& dims = grid->getVoxelDimensions();
-	const DiscreteGrid::bbox_t& dataBB = grid->getDataBoundingBox();
+	DiscreteGrid::sizevec3 res				 = grid->getResolution();
+	const glm::vec3& dims					 = grid->getVoxelDimensions();
+	const DiscreteGrid::bbox_t& dataBB		 = grid->getDataBoundingBox();
 	const DiscreteGrid::bbox_t::vec& dataBBm = dataBB.getMin();
 	const DiscreteGrid::bbox_t::vec& dataBBM = dataBB.getMax();
 	std::cerr << "[INFO]\tResolution : [" << res.x << ", " << res.y << ", " << res.z << "]\n";
 	std::cerr << "[INFO]\tVoxel dimensions : [" << dims.x << ", " << dims.y << ", " << dims.z << "]\n";
 	std::cerr << "[INFO]\tData Bounding box : [" << dataBBm.x << ", " << dataBBm.y << ", " << dataBBm.z << "] to ["
-		  << dataBBM.x << ", " << dataBBM.y << ", " << dataBBM.z << "]\n";
-	const DiscreteGrid::bbox_t& bbGS = grid->getBoundingBox();
+			  << dataBBM.x << ", " << dataBBM.y << ", " << dataBBM.z << "]\n";
+	const DiscreteGrid::bbox_t& bbGS	   = grid->getBoundingBox();
 	const DiscreteGrid::bbox_t::vec& bbGSm = bbGS.getMin();
 	const DiscreteGrid::bbox_t::vec& bbGSM = bbGS.getMax();
 	std::cerr << "[INFO]\tBounding box GS : [" << bbGSm.x << ", " << bbGSm.y << ", " << bbGSm.z << "] to ["
-		  << bbGSM.x << ", " << bbGSM.y << ", " << bbGSM.z << "]\n";
-	const DiscreteGrid::bbox_t& bbWS = grid->getBoundingBoxWorldSpace();
+			  << bbGSM.x << ", " << bbGSM.y << ", " << bbGSM.z << "]\n";
+	const DiscreteGrid::bbox_t& bbWS	   = grid->getBoundingBoxWorldSpace();
 	const DiscreteGrid::bbox_t::vec& bbWSm = bbWS.getMin();
 	const DiscreteGrid::bbox_t::vec& bbWSM = bbWS.getMax();
 	std::cerr << "[INFO]\tBounding box WS : [" << bbWSm.x << ", " << bbWSm.y << ", " << bbWSm.z << "] to ["
-		  << bbWSM.x << ", " << bbWSM.y << ", " << bbWSM.z << "]\n";
+			  << bbWSM.x << ", " << bbWSM.y << ", " << bbWSM.z << "]\n";
 }
 
 void Scene::createBuffers() {
@@ -401,7 +452,7 @@ void Scene::createBuffers() {
 		this->glGenVertexArrays(1, &buf);
 		this->glBindVertexArray(buf);
 		if (this->glIsVertexArray(buf) == GL_FALSE) {
-			std::cerr << "[ERROR]["<< __FILE__ << ":" << __LINE__ <<"] : Could not create VAO object " << name << '\n';
+			std::cerr << "[ERROR][" << __FILE__ << ":" << __LINE__ << "] : Could not create VAO object " << name << '\n';
 		}
 		return buf;
 	};
@@ -412,31 +463,31 @@ void Scene::createBuffers() {
 		this->glGenBuffers(1, &buf);
 		this->glBindBuffer(bufType, buf);
 		if (this->glIsBuffer(buf) == GL_FALSE) {
-			std::cerr << "[ERROR]["<< __FILE__ << ":" << __LINE__ <<"] : Could not create buffer object " << name << '\n';
+			std::cerr << "[ERROR][" << __FILE__ << ":" << __LINE__ << "] : Could not create buffer object " << name << '\n';
 		}
 		return buf;
 	};
 
 	// For the default VAO :
-	this->vaoHandle = createVAO("vaoHandle");
-	this->vboHandle_VertPos = createVBO(GL_ARRAY_BUFFER, "vboHandle_VertPos");
-	this->vboHandle_VertNorm= createVBO(GL_ARRAY_BUFFER, "vboHandle_VertNorm");
-	this->vboHandle_VertTex = createVBO(GL_ARRAY_BUFFER, "vboHandle_VertTex");
-	this->vboHandle_Element = createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_Element");
-	this->vboHandle_PlaneElement = createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_PlaneElement");
+	this->vaoHandle					   = createVAO("vaoHandle");
+	this->vboHandle_VertPos			   = createVBO(GL_ARRAY_BUFFER, "vboHandle_VertPos");
+	this->vboHandle_VertNorm		   = createVBO(GL_ARRAY_BUFFER, "vboHandle_VertNorm");
+	this->vboHandle_VertTex			   = createVBO(GL_ARRAY_BUFFER, "vboHandle_VertTex");
+	this->vboHandle_Element			   = createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_Element");
+	this->vboHandle_PlaneElement	   = createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_PlaneElement");
 	this->vboHandle_SinglePlaneElement = createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_SinglePlaneElement");
 
 	// For the texture3D visualization method :
-	this->vaoHandle_VolumetricBuffers = createVAO("vaoHandle_VolumetricBuffers");
-	this->vboHandle_Texture3D_VertPos = createVBO(GL_ARRAY_BUFFER, "vboHandle_Texture3D_VertPos");
+	this->vaoHandle_VolumetricBuffers  = createVAO("vaoHandle_VolumetricBuffers");
+	this->vboHandle_Texture3D_VertPos  = createVBO(GL_ARRAY_BUFFER, "vboHandle_Texture3D_VertPos");
 	this->vboHandle_Texture3D_VertNorm = createVBO(GL_ARRAY_BUFFER, "vboHandle_Texture3D_VertNorm");
-	this->vboHandle_Texture3D_VertTex = createVBO(GL_ARRAY_BUFFER, "vboHandle_Texture3D_VertTex");
-	this->vboHandle_Texture3D_VertIdx = createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_Texture3D_VertIdx");
+	this->vboHandle_Texture3D_VertTex  = createVBO(GL_ARRAY_BUFFER, "vboHandle_Texture3D_VertTex");
+	this->vboHandle_Texture3D_VertIdx  = createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_Texture3D_VertIdx");
 
 	// For the bounding boxes we have to create/show :
-	this->vaoHandle_boundingBox = createVAO("vaoHandle_boundingBox");
+	this->vaoHandle_boundingBox			= createVAO("vaoHandle_boundingBox");
 	this->vboHandle_boundingBoxVertices = createVBO(GL_ARRAY_BUFFER, "vboHandle_boundingBoxVertices");
-	this->vboHandle_boundingBoxIndices = createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_boundingBoxIndices");
+	this->vboHandle_boundingBoxIndices	= createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_boundingBoxIndices");
 
 	return;
 }
@@ -446,8 +497,12 @@ void Scene::loadGridROI() {
 	// It will load the grid, based on the visu box coordinates !
 	// The context will be made current at this stage, no need to worry :)
 
-	if (this->grids.size() == 0) { return; }
-	if (this->grids[0]->grid.size() == 0) { return; }
+	if (this->grids.size() == 0) {
+		return;
+	}
+	if (this->grids[0]->grid.size() == 0) {
+		return;
+	}
 
 	// Warn the user we will load the image in high resolution :
 	QMessageBox* msgBox = new QMessageBox;
@@ -456,7 +511,9 @@ void Scene::loadGridROI() {
 	QPushButton* deny_button = msgBox->addButton("Cancel", QMessageBox::ButtonRole::RejectRole);
 	msgBox->addButton("Ok", QMessageBox::ButtonRole::AcceptRole);
 	msgBox->exec();
-	if (msgBox->clickedButton() == deny_button) { return; }
+	if (msgBox->clickedButton() == deny_button) {
+		return;
+	}
 
 	// Iterate over the grids loaded, and generate them with the coordinates given.
 	// Copy the populate grid function to load the current grid
@@ -474,7 +531,9 @@ void Scene::loadGridROI() {
 
 			// Get the original voxel dimensions :
 			glm::vec3 voxelDims = grid->getVoxelDimensions();
-			if (grid->getGridReader() != nullptr) { voxelDims = grid->getGridReader()->getOriginalVoxelDimensions(); }
+			if (grid->getGridReader() != nullptr) {
+				voxelDims = grid->getGridReader()->getOriginalVoxelDimensions();
+			}
 			// Compute the positions for the bounding box from the given coordinates :
 			DiscreteGrid::bbox_t renderBox = this->visuBox;
 			// The resolution is going to be defined so the voxel dimensions are the original voxel dimensions :
@@ -488,7 +547,7 @@ void Scene::loadGridROI() {
 			// Create a new output grid :
 			std::shared_ptr<DiscreteGrid> outputGrid = std::make_shared<DiscreteGrid>(dims, renderBox);
 			// Specifies the grid size, and bounding box of the grid
-			outputGrid->setOffline(false); // we want to keep the grid in memory
+			outputGrid->setOffline(false);	  // we want to keep the grid in memory
 
 			tetMesh->setOutputGrid_raw(outputGrid);
 
@@ -528,7 +587,9 @@ void Scene::loadGridROI() {
 		this->timer_refreshProgress = new QTimer;
 		this->timer_refreshProgress->setSingleShot(false);
 		this->timer_refreshProgress->setInterval(50);
-		QObject::connect(this->timer_refreshProgress, &QTimer::timeout, [this](void){this->updateProgressBar();});
+		QObject::connect(this->timer_refreshProgress, &QTimer::timeout, [this](void) {
+			this->updateProgressBar();
+		});
 		this->timer_refreshProgress->start();
 	}
 
@@ -536,7 +597,9 @@ void Scene::loadGridROI() {
 }
 
 void Scene::replaceGridsWithHighRes() {
-	if (this->gridsToAdd.size() == 0) { return; }
+	if (this->gridsToAdd.size() == 0) {
+		return;
+	}
 
 	// Remove old grids :
 	this->delGrid.push_back(0);
@@ -551,7 +614,9 @@ void Scene::replaceGridsWithHighRes() {
 
 	// Update the visu box coordinates :
 	this->resetVisuBox();
-	if (this->visuBoxController != nullptr) { this->visuBoxController->updateValues(); }
+	if (this->visuBoxController != nullptr) {
+		this->visuBoxController->updateValues();
+	}
 	this->updateBoundingBox();
 	this->sceneBB.printInfo("After adding the grids", "[TRACE]");
 
@@ -560,12 +625,14 @@ void Scene::replaceGridsWithHighRes() {
 }
 
 void Scene::updateProgressBar() {
-	if (this->tasks.size() == 0) { return; }
+	if (this->tasks.size() == 0) {
+		return;
+	}
 
 	// Track progress of tasks :
-	std::size_t current = 0;
+	std::size_t current	 = 0;
 	std::size_t maxSteps = 0;
-	std::for_each(this->tasks.cbegin(), this->tasks.cend(), [&current, &maxSteps](const IO::ThreadedTask::Ptr& task){
+	std::for_each(this->tasks.cbegin(), this->tasks.cend(), [&current, &maxSteps](const IO::ThreadedTask::Ptr& task) {
 		maxSteps += task->getMaxSteps();
 		current += task->getAdvancement();
 	});
@@ -584,7 +651,7 @@ void Scene::updateProgressBar() {
 		delete this->programStatusBar;
 		delete this->timer_refreshProgress;
 		// remove pointer values :
-		this->programStatusBar = nullptr;
+		this->programStatusBar		= nullptr;
 		this->timer_refreshProgress = nullptr;
 
 		// Join threads :
@@ -610,22 +677,24 @@ void Scene::updateProgressBar() {
 void Scene::addGrid(const std::shared_ptr<DiscreteGrid> _grid, std::string meshPath) {
 	if (this->grids.size() > 0) {
 		this->shouldDeleteGrid = true;
-		for (std::size_t i = 0; i < this->grids.size(); ++i) { this->delGrid.push_back(i); }
+		for (std::size_t i = 0; i < this->grids.size(); ++i) {
+			this->delGrid.push_back(i);
+		}
 		this->deleteGridNow();
 	}
 	GridGLView::Ptr gridView = std::make_shared<GridGLView>(std::initializer_list<std::shared_ptr<DiscreteGrid>>({_grid}));
 
 	TextureUpload gridTexture{};
-	gridTexture.minmag.x = GL_NEAREST;
-	gridTexture.minmag.y = GL_NEAREST;
-	gridTexture.lod.y = -1000.f;
-	gridTexture.wrap.x = GL_CLAMP_TO_EDGE;
-	gridTexture.wrap.y = GL_CLAMP_TO_EDGE;
-	gridTexture.wrap.z = GL_CLAMP_TO_EDGE;
-	gridTexture.swizzle.r = GL_RED;
-	gridTexture.swizzle.g = GL_ZERO;
-	gridTexture.swizzle.b = GL_ZERO;
-	gridTexture.swizzle.a = GL_ONE;
+	gridTexture.minmag.x	= GL_NEAREST;
+	gridTexture.minmag.y	= GL_NEAREST;
+	gridTexture.lod.y		= -1000.f;
+	gridTexture.wrap.x		= GL_CLAMP_TO_EDGE;
+	gridTexture.wrap.y		= GL_CLAMP_TO_EDGE;
+	gridTexture.wrap.z		= GL_CLAMP_TO_EDGE;
+	gridTexture.swizzle.r	= GL_RED;
+	gridTexture.swizzle.g	= GL_ZERO;
+	gridTexture.swizzle.b	= GL_ZERO;
+	gridTexture.swizzle.a	= GL_ONE;
 	gridTexture.alignment.x = 1;
 	gridTexture.alignment.y = 1;
 
@@ -633,27 +702,27 @@ void Scene::addGrid(const std::shared_ptr<DiscreteGrid> _grid, std::string meshP
 	auto dimensions = _grid->getResolution();
 	if (dimensions.x > 0 && dimensions.y > 0 && dimensions.z > 0) {
 		gridTexture.level = 0;
-		#ifdef VISUALISATION_USE_UINT8
+#ifdef VISUALISATION_USE_UINT8
 		gridTexture.internalFormat = GL_R8UI;
-		#endif
-		#ifdef VISUALISATION_USE_UINT16
+#endif
+#ifdef VISUALISATION_USE_UINT16
 		gridTexture.internalFormat = GL_R16UI;
-		#endif
+#endif
 		gridTexture.size.x = dimensions.x;
 		gridTexture.size.y = dimensions.y;
 		gridTexture.size.z = dimensions.z;
 		gridTexture.format = GL_RED_INTEGER;
-		#ifdef VISUALISATION_USE_UINT8
+#ifdef VISUALISATION_USE_UINT8
 		gridTexture.type = GL_UNSIGNED_BYTE;
-		#endif
-		#ifdef VISUALISATION_USE_UINT16
+#endif
+#ifdef VISUALISATION_USE_UINT16
 		gridTexture.type = GL_UNSIGNED_SHORT;
-		#endif
-		gridTexture.data = _grid->getDataPtr();
+#endif
+		gridTexture.data	  = _grid->getDataPtr();
 		gridView->gridTexture = this->uploadTexture3D(gridTexture);
 	}
 
-	gridView->boundingBoxColor = glm::vec3(.4, .6, .3); // olive-colored by default
+	gridView->boundingBoxColor = glm::vec3(.4, .6, .3);	   // olive-colored by default
 
 	this->tex3D_buildMesh(gridView, meshPath);
 	this->tex3D_buildVisTexture(gridView->volumetricMesh);
@@ -675,7 +744,9 @@ void Scene::newAPI_addGrid(Image::Grid::Ptr gridLoaded) {
 	if (this->grids.size() > 0) {
 		this->shouldDeleteGrid = true;
 		std::cerr << "Deleting grids ...\n";
-		for (std::size_t i = 0; i < this->grids.size(); ++i) { this->delGrid.push_back(i); }
+		for (std::size_t i = 0; i < this->grids.size(); ++i) {
+			this->delGrid.push_back(i);
+		}
 		std::cerr << "Pushed back elements ...\n";
 		this->deleteGridNow();
 		std::cerr << "Deleted grids.\n";
@@ -685,23 +756,47 @@ void Scene::newAPI_addGrid(Image::Grid::Ptr gridLoaded) {
 	NewAPI_GridGLView::Ptr gridView = std::make_shared<NewAPI_GridGLView>(gridLoaded);
 
 	TextureUpload _gridTex{};
-	_gridTex.minmag.x = GL_NEAREST;
-	_gridTex.minmag.y = GL_NEAREST;
-	_gridTex.lod.y = -1000.f;
-	_gridTex.wrap.x = GL_CLAMP_TO_EDGE;
-	_gridTex.wrap.y = GL_CLAMP_TO_EDGE;
-	_gridTex.wrap.z = GL_CLAMP_TO_EDGE;
+	_gridTex.minmag.x  = GL_NEAREST;
+	_gridTex.minmag.y  = GL_NEAREST;
+	_gridTex.lod.y	   = -1000.f;
+	_gridTex.wrap.x	   = GL_CLAMP_TO_EDGE;
+	_gridTex.wrap.y	   = GL_CLAMP_TO_EDGE;
+	_gridTex.wrap.z	   = GL_CLAMP_TO_EDGE;
 	_gridTex.swizzle.r = GL_RED;
-	if (dimensions.a > 1) { _gridTex.swizzle.g = GL_GREEN; } else { _gridTex.swizzle.g = GL_ZERO; }
-	if (dimensions.a > 2) { _gridTex.swizzle.b = GL_BLUE; } else { _gridTex.swizzle.b = GL_ZERO; }
-	if (dimensions.a > 3) { _gridTex.swizzle.a = GL_ALPHA; } else { _gridTex.swizzle.a = GL_ONE; }
+	if (dimensions.a > 1) {
+		_gridTex.swizzle.g = GL_GREEN;
+	} else {
+		_gridTex.swizzle.g = GL_ZERO;
+	}
+	if (dimensions.a > 2) {
+		_gridTex.swizzle.b = GL_BLUE;
+	} else {
+		_gridTex.swizzle.b = GL_ZERO;
+	}
+	if (dimensions.a > 3) {
+		_gridTex.swizzle.a = GL_ALPHA;
+	} else {
+		_gridTex.swizzle.a = GL_ONE;
+	}
 	_gridTex.alignment.x = 1;
 	_gridTex.alignment.y = 2;
 	switch (dimensions.a) {
-		case 1:_gridTex.format = GL_RED_INTEGER; _gridTex.internalFormat = GL_R16UI; break;
-		case 2:_gridTex.format = GL_RG_INTEGER; _gridTex.internalFormat = GL_RG16UI; break;
-		case 3:_gridTex.format = GL_RGB_INTEGER; _gridTex.internalFormat = GL_RGB16UI; break;
-		case 4:_gridTex.format = GL_RGBA_INTEGER; _gridTex.internalFormat = GL_RGBA16UI; break;
+		case 1:
+			_gridTex.format			= GL_RED_INTEGER;
+			_gridTex.internalFormat = GL_R16UI;
+			break;
+		case 2:
+			_gridTex.format			= GL_RG_INTEGER;
+			_gridTex.internalFormat = GL_RG16UI;
+			break;
+		case 3:
+			_gridTex.format			= GL_RGB_INTEGER;
+			_gridTex.internalFormat = GL_RGB16UI;
+			break;
+		case 4:
+			_gridTex.format			= GL_RGBA_INTEGER;
+			_gridTex.internalFormat = GL_RGBA16UI;
+			break;
 	}
 	_gridTex.type = GL_UNSIGNED_SHORT;
 	std::cerr << "Made the upload texture struct.\n";
@@ -721,12 +816,12 @@ void Scene::newAPI_addGrid(Image::Grid::Ptr gridLoaded) {
 		}
 	}
 
-	gridView->boundingBoxColor = glm::vec3(.4, .6, .3); // olive-colored by default
-	gridView->nbChannels = 2; // loaded 2 channels in the image
+	gridView->boundingBoxColor = glm::vec3(.4, .6, .3);	   // olive-colored by default
+	gridView->nbChannels	   = 2;	   // loaded 2 channels in the image
 
 	// Create the uniform buffer :
-	auto mainColorChannel  = gridView->mainColorChannelAttributes();
-	gridView->uboHandle_colorAttributes = this->createUniformBuffer(4*sizeof(colorChannelAttributes_GL), GL_STATIC_DRAW);
+	auto mainColorChannel				= gridView->mainColorChannelAttributes();
+	gridView->uboHandle_colorAttributes = this->createUniformBuffer(4 * sizeof(colorChannelAttributes_GL), GL_STATIC_DRAW);
 	this->setUniformBufferData(gridView->uboHandle_colorAttributes, 0, 32, &mainColorChannel);
 	this->setUniformBufferData(gridView->uboHandle_colorAttributes, 32, 32, &gridView->colorChannelAttributes[0]);
 	this->setUniformBufferData(gridView->uboHandle_colorAttributes, 64, 32, &gridView->colorChannelAttributes[1]);
@@ -749,7 +844,9 @@ void Scene::addTwoGrids(const std::shared_ptr<DiscreteGrid> _gridR, const std::s
 	if (this->grids.size() > 0) {
 		this->shouldDeleteGrid = true;
 		std::cerr << "Deleting grids ...\n";
-		for (std::size_t i = 0; i < this->grids.size(); ++i) { this->delGrid.push_back(i); }
+		for (std::size_t i = 0; i < this->grids.size(); ++i) {
+			this->delGrid.push_back(i);
+		}
 		std::cerr << "Pushed back elements ...\n";
 		this->deleteGridNow();
 		std::cerr << "Deleted grids.\n";
@@ -759,16 +856,16 @@ void Scene::addTwoGrids(const std::shared_ptr<DiscreteGrid> _gridR, const std::s
 	std::cerr << "Made the GridGLView pointer.\n";
 
 	TextureUpload _gridTex{};
-	_gridTex.minmag.x = GL_NEAREST;
-	_gridTex.minmag.y = GL_NEAREST;
-	_gridTex.lod.y = -1000.f;
-	_gridTex.wrap.x = GL_CLAMP_TO_EDGE;
-	_gridTex.wrap.y = GL_CLAMP_TO_EDGE;
-	_gridTex.wrap.z = GL_CLAMP_TO_EDGE;
-	_gridTex.swizzle.r = GL_RED;
-	_gridTex.swizzle.g = GL_GREEN;
-	_gridTex.swizzle.b = GL_ZERO;
-	_gridTex.swizzle.a = GL_ONE;
+	_gridTex.minmag.x	 = GL_NEAREST;
+	_gridTex.minmag.y	 = GL_NEAREST;
+	_gridTex.lod.y		 = -1000.f;
+	_gridTex.wrap.x		 = GL_CLAMP_TO_EDGE;
+	_gridTex.wrap.y		 = GL_CLAMP_TO_EDGE;
+	_gridTex.wrap.z		 = GL_CLAMP_TO_EDGE;
+	_gridTex.swizzle.r	 = GL_RED;
+	_gridTex.swizzle.g	 = GL_GREEN;
+	_gridTex.swizzle.b	 = GL_ZERO;
+	_gridTex.swizzle.a	 = GL_ONE;
 	_gridTex.alignment.x = 1;
 	_gridTex.alignment.y = 2;
 	std::cerr << "Made the upload texture struct.\n";
@@ -777,22 +874,22 @@ void Scene::addTwoGrids(const std::shared_ptr<DiscreteGrid> _gridR, const std::s
 	auto dimensions = _gridR->getResolution();
 	if (dimensions.x > 0 && dimensions.y > 0 && dimensions.z > 0) {
 		_gridTex.level = 0;
-		#ifdef VISUALISATION_USE_UINT8
+#ifdef VISUALISATION_USE_UINT8
 		_gridTex.internalFormat = GL_RG8UI;
-		#endif
-		#ifdef VISUALISATION_USE_UINT16
+#endif
+#ifdef VISUALISATION_USE_UINT16
 		_gridTex.internalFormat = GL_RG16UI;
-		#endif
+#endif
 		_gridTex.size.x = dimensions.x;
 		_gridTex.size.y = dimensions.y;
 		_gridTex.size.z = dimensions.z;
 		_gridTex.format = GL_RG_INTEGER;
-		#ifdef VISUALISATION_USE_UINT8
+#ifdef VISUALISATION_USE_UINT8
 		_gridTex.type = GL_UNSIGNED_BYTE;
-		#endif
-		#ifdef VISUALISATION_USE_UINT16
+#endif
+#ifdef VISUALISATION_USE_UINT16
 		_gridTex.type = GL_UNSIGNED_SHORT;
-		#endif
+#endif
 
 		_gridTex.printInfo();
 		std::cerr << "Made the upload texture struct.\n";
@@ -800,8 +897,8 @@ void Scene::addTwoGrids(const std::shared_ptr<DiscreteGrid> _gridR, const std::s
 		gridView->gridTexture = this->uploadTexture3D_iterative(_gridTex, _gridR, _gridB);
 	}
 
-	gridView->boundingBoxColor = glm::vec3(.4, .6, .3); // olive-colored by default
-	gridView->nbChannels = 2; // loaded 2 channels in the image
+	gridView->boundingBoxColor = glm::vec3(.4, .6, .3);	   // olive-colored by default
+	gridView->nbChannels	   = 2;	   // loaded 2 channels in the image
 
 	this->tex3D_buildMesh(gridView, meshPath);
 	this->tex3D_buildVisTexture(gridView->volumetricMesh);
@@ -837,21 +934,21 @@ void Scene::addTwoGrids(const std::shared_ptr<DiscreteGrid> _gridR, const std::s
 }
 
 void Scene::updateBoundingBox(void) {
-	this->sceneBB = DiscreteGrid::bbox_t();
+	this->sceneBB	  = DiscreteGrid::bbox_t();
 	this->sceneDataBB = DiscreteGrid::bbox_t();
 	for (std::size_t i = 0; i < this->grids.size(); ++i) {
 		std::for_each(this->grids[i]->grid.cbegin(), this->grids[i]->grid.cend(),
-		[this](const std::shared_ptr<DiscreteGrid>& _g) {
-			DiscreteGrid::bbox_t box = _g->getBoundingBoxWorldSpace();
-			DiscreteGrid::bbox_t dbox =_g->getDataBoundingBoxWorldSpace();
-			this->sceneBB.addPoints(box.getAllCorners());
-			this->sceneDataBB.addPoints(dbox.getAllCorners());
-		});
+		  [this](const std::shared_ptr<DiscreteGrid>& _g) {
+			  DiscreteGrid::bbox_t box	= _g->getBoundingBoxWorldSpace();
+			  DiscreteGrid::bbox_t dbox = _g->getDataBoundingBoxWorldSpace();
+			  this->sceneBB.addPoints(box.getAllCorners());
+			  this->sceneDataBB.addPoints(dbox.getAllCorners());
+		  });
 	}
 	for (std::size_t i = 0; i < this->newGrids.size(); ++i) {
 		const Image::Grid::Ptr _g = this->newGrids[i]->grid;
-		DiscreteGrid::bbox_t box = _g->getBoundingBox();
-		DiscreteGrid::bbox_t dbox =_g->getBoundingBox();
+		DiscreteGrid::bbox_t box  = _g->getBoundingBox();
+		DiscreteGrid::bbox_t dbox = _g->getBoundingBox();
 		this->sceneBB.addPoints(box.getAllCorners());
 		this->sceneDataBB.addPoints(dbox.getAllCorners());
 	}
@@ -866,10 +963,10 @@ void Scene::updateBoundingBox(void) {
 }
 
 void Scene::recompileShaders(bool verbose) {
-	GLuint newProgram = this->compileShaders("../new_shaders/voxelgrid.vert", "../new_shaders/voxelgrid.geom", "../new_shaders/voxelgrid.frag", verbose);
-	GLuint newPlaneProgram = this->compileShaders("../new_shaders/plane.vert", "", "../new_shaders/plane.frag", verbose);
+	GLuint newProgram			 = this->compileShaders("../new_shaders/voxelgrid.vert", "../new_shaders/voxelgrid.geom", "../new_shaders/voxelgrid.frag", verbose);
+	GLuint newPlaneProgram		 = this->compileShaders("../new_shaders/plane.vert", "", "../new_shaders/plane.frag", verbose);
 	GLuint newPlaneViewerProgram = this->compileShaders("../new_shaders/texture_explorer.vert", "", "../new_shaders/texture_explorer.frag", verbose);
-	GLuint newVolumetricProgram = this->compileShaders("../new_shaders/transfer_mesh.vert", "../new_shaders/transfer_mesh.geom", "../new_shaders/transfer_mesh.frag", verbose);
+	GLuint newVolumetricProgram	 = this->compileShaders("../new_shaders/transfer_mesh.vert", "../new_shaders/transfer_mesh.geom", "../new_shaders/transfer_mesh.frag", verbose);
 	GLuint newBoundingBoxProgram = this->compileShaders("../new_shaders/bounding_box.vert", "", "../new_shaders/bounding_box.frag", verbose);
 
 	if (newProgram) {
@@ -905,23 +1002,39 @@ GLuint Scene::compileShaders(std::string _vPath, std::string _gPath, std::string
 		exit(EXIT_FAILURE);
 	}
 
-	if (verbose) { if (not _vPath.empty()) { std::cerr << "[LOG][" << __FILE__ << ":" << __LINE__ << "] Compiling vertex shader \"" << _vPath << "\"...\n"; } }
+	if (verbose) {
+		if (not _vPath.empty()) {
+			std::cerr << "[LOG][" << __FILE__ << ":" << __LINE__ << "] Compiling vertex shader \"" << _vPath << "\"...\n";
+		}
+	}
 	GLuint _vSha = this->compileShader(_vPath, GL_VERTEX_SHADER, verbose);
 
-	if (verbose) { if (not _gPath.empty()) { std::cerr << "[LOG][" << __FILE__ << ":" << __LINE__ << "] Compiling geometry shader \"" << _gPath << "\"...\n"; } }
+	if (verbose) {
+		if (not _gPath.empty()) {
+			std::cerr << "[LOG][" << __FILE__ << ":" << __LINE__ << "] Compiling geometry shader \"" << _gPath << "\"...\n";
+		}
+	}
 	GLuint _gSha = this->compileShader(_gPath, GL_GEOMETRY_SHADER, verbose);
 
-	if (verbose) { if (not _fPath.empty()) { std::cerr << "[LOG][" << __FILE__ << ":" << __LINE__ << "] Compiling fragment shader \"" << _fPath << "\"...\n"; } }
+	if (verbose) {
+		if (not _fPath.empty()) {
+			std::cerr << "[LOG][" << __FILE__ << ":" << __LINE__ << "] Compiling fragment shader \"" << _fPath << "\"...\n";
+		}
+	}
 	GLuint _fSha = this->compileShader(_fPath, GL_FRAGMENT_SHADER, verbose);
 
-	if (verbose) { std::cerr << "[LOG][" << __FILE__ << ":" << __LINE__ << "] Compiling program ...\n"; }
+	if (verbose) {
+		std::cerr << "[LOG][" << __FILE__ << ":" << __LINE__ << "] Compiling program ...\n";
+	}
 	GLuint _prog = this->compileProgram(_vSha, _gSha, _fSha, verbose);
 
 	return _prog;
 }
 
 GLuint Scene::compileShader(const std::string& path, const GLenum shaType, bool verbose) {
-	if (path.empty()) { return 0; }
+	if (path.empty()) {
+		return 0;
+	}
 	// Check the given type is accepted :
 	if (shaType != GL_VERTEX_SHADER && shaType != GL_GEOMETRY_SHADER && shaType != GL_FRAGMENT_SHADER) {
 		std::cerr << "[" << __FILE__ << ":" << __LINE__ << "] Error : unrecognized shader type (vertex, geometry and fragment shaders)\n";
@@ -932,12 +1045,12 @@ GLuint Scene::compileShader(const std::string& path, const GLenum shaType, bool 
 	GLuint _sha = glCreateShader(shaType);
 
 	std::string color_functions = "";
-	bool includeColorShader = false;
+	bool includeColorShader		= false;
 
 	if (shaType == GL_FRAGMENT_SHADER) {
-		includeColorShader = true;
+		includeColorShader	  = true;
 		std::ifstream colFile = std::ifstream("../new_shaders/colorize_new_flow.glsl", std::ios_base::in | std::ios_base::binary);
-		if (!colFile.is_open()) {
+		if (! colFile.is_open()) {
 			std::cerr << "[" << __FILE__ << ":" << __LINE__ << "] Error : could not get the color shader loaded.\n";
 			return -1;
 		}
@@ -950,7 +1063,7 @@ GLuint Scene::compileShader(const std::string& path, const GLenum shaType, bool 
 
 	// Open the file :
 	std::ifstream shaFile = std::ifstream(path.c_str(), std::ios_base::in | std::ios_base::binary);
-	if (!shaFile.is_open()) {
+	if (! shaFile.is_open()) {
 		std::cerr << "[" << __FILE__ << ":" << __LINE__ << "] Error : could not get the contents of shader file " << path << '\n';
 		return -1;
 	}
@@ -975,11 +1088,11 @@ GLuint Scene::compileShader(const std::string& path, const GLenum shaType, bool 
 			}
 			shader_contents += read_buffer + '\n';
 		}
-		shaSource = shader_contents.data();
+		shaSource	= shader_contents.data();
 		shaFileSize = shader_contents.size();
 	} else {
 		// Get the file's contents and null-terminate it :
-		shaSource = new char[shaFileSize+1];
+		shaSource = new char[shaFileSize + 1];
 		shaFile.read(shaSource, shaFileSize);
 		shaSource[shaFileSize] = '\0';
 	}
@@ -993,8 +1106,8 @@ GLuint Scene::compileShader(const std::string& path, const GLenum shaType, bool 
 	glCompileShader(_sha);
 
 	GLint shaderInfoLength = 0;
-	GLint charsWritten = 0;
-	char* shaderInfoLog = nullptr;
+	GLint charsWritten	   = 0;
+	char* shaderInfoLog	   = nullptr;
 
 	// Get shader information after compilation :
 	glGetShaderiv(_sha, GL_INFO_LOG_LENGTH, &shaderInfoLength);
@@ -1008,7 +1121,7 @@ GLuint Scene::compileShader(const std::string& path, const GLenum shaType, bool 
 		delete[] shaderInfoLog;
 
 		std::cerr << __FILE__ << ":" << __LINE__ << " : end Log ***********************************************" << '\n';
-		#ifdef ENABLE_SHADER_CONTENTS_ON_FAILURE
+#ifdef ENABLE_SHADER_CONTENTS_ON_FAILURE
 		std::cerr << "Shader contents :" << '\n';
 		std::cerr << "=============================================================================================\n";
 		std::cerr << "=============================================================================================\n";
@@ -1016,7 +1129,7 @@ GLuint Scene::compileShader(const std::string& path, const GLenum shaType, bool 
 		std::cerr << "=============================================================================================\n";
 		std::cerr << "=============================================================================================\n";
 		std::cerr << "End shader contents" << '\n';
-		#endif
+#endif
 	}
 
 	GLint result = GL_FALSE;
@@ -1033,21 +1146,27 @@ GLuint Scene::compileShader(const std::string& path, const GLenum shaType, bool 
 GLuint Scene::compileProgram(const GLuint vSha, const GLuint gSha, const GLuint fSha, bool verbose) {
 	// Check any shader was passed to the program :
 	if (vSha == 0 && gSha == 0 && fSha == 0) {
-		std::cerr << "[" << __FILE__ << ":" << __LINE__ << "] : No shader IDs were passed to the function.\n" <<
-			"\tArguments : vSha(" << vSha << "), gSha(" << gSha << "), fSha(" << fSha << ")";
+		std::cerr << "[" << __FILE__ << ":" << __LINE__ << "] : No shader IDs were passed to the function.\n"
+				  << "\tArguments : vSha(" << vSha << "), gSha(" << gSha << "), fSha(" << fSha << ")";
 	}
 
 	GLuint _prog = glCreateProgram();
-	if (vSha != 0) { glAttachShader(_prog, vSha); }
-	if (gSha != 0) { glAttachShader(_prog, gSha); }
-	if (fSha != 0) { glAttachShader(_prog, fSha); }
+	if (vSha != 0) {
+		glAttachShader(_prog, vSha);
+	}
+	if (gSha != 0) {
+		glAttachShader(_prog, gSha);
+	}
+	if (fSha != 0) {
+		glAttachShader(_prog, fSha);
+	}
 
 	glLinkProgram(_prog);
 
 	int InfoLogLength = 0;
 	glGetProgramiv(_prog, GL_INFO_LOG_LENGTH, &InfoLogLength);
-	if ( InfoLogLength > 0 ){
-		std::vector<char> ProgramErrorMessage(InfoLogLength+1);
+	if (InfoLogLength > 0) {
+		std::vector<char> ProgramErrorMessage(InfoLogLength + 1);
 		glGetProgramInfoLog(_prog, InfoLogLength, NULL, &ProgramErrorMessage[0]);
 		std::cerr << __FILE__ << ":" << __LINE__ << " : Warning : errors while linking program :" << '\n';
 		std::cerr << "------------------------------------------------------------------" << '\n';
@@ -1064,17 +1183,33 @@ GLuint Scene::compileProgram(const GLuint vSha, const GLuint gSha, const GLuint 
 		std::cerr << "[" << __FILE__ << ":" << __LINE__ << "] : Could not link shader.\n";
 		return 0;
 	} else {
-		if (verbose) {std::cerr<<"[LOG]["<<__FILE__ << ":" << __LINE__<<"] Compiled program. New name : "<< _prog <<"\n";}
+		if (verbose) {
+			std::cerr << "[LOG][" << __FILE__ << ":" << __LINE__ << "] Compiled program. New name : " << _prog << "\n";
+		}
 	}
 
-	if (verbose) { std::cerr << '\n'; } // Put an empty line between all program compilations (more readable)
+	if (verbose) {
+		std::cerr << '\n';
+	}	 // Put an empty line between all program compilations (more readable)
 
-	if (vSha != 0) { glDetachShader(_prog, vSha); }
-	if (gSha != 0) { glDetachShader(_prog, gSha); }
-	if (fSha != 0) { glDetachShader(_prog, fSha); }
-	if (vSha != 0) { glDeleteShader(vSha); }
-	if (gSha != 0) { glDeleteShader(gSha); }
-	if (fSha != 0) { glDeleteShader(fSha); }
+	if (vSha != 0) {
+		glDetachShader(_prog, vSha);
+	}
+	if (gSha != 0) {
+		glDetachShader(_prog, gSha);
+	}
+	if (fSha != 0) {
+		glDetachShader(_prog, fSha);
+	}
+	if (vSha != 0) {
+		glDeleteShader(vSha);
+	}
+	if (gSha != 0) {
+		glDeleteShader(gSha);
+	}
+	if (fSha != 0) {
+		glDeleteShader(fSha);
+	}
 
 	return _prog;
 }
@@ -1112,14 +1247,14 @@ GLuint Scene::uploadTexture1D(const TextureUpload& tex) {
 	glPixelStorei(GL_PACK_ALIGNMENT, tex.alignment.x);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, tex.alignment.y);
 
-	glTexImage1D(GL_TEXTURE_1D,		// GLenum : Target
-		static_cast<GLint>(tex.level),	// GLint  : Level of detail of the current texture (0 = original)
-		tex.internalFormat,		// GLint  : Number of color components in the picture.
-		tex.size.x,			// GLsizei: Image width
-		static_cast<GLint>(0),		// GLint  : Border. This value MUST be 0.
-		tex.format,			// GLenum : Format of the pixel data
-		tex.type,			// GLenum : Type (the data type as in uchar, uint, float ...)
-		tex.data			// void*  : Data to load into the buffer
+	glTexImage1D(GL_TEXTURE_1D,	   // GLenum : Target
+	  static_cast<GLint>(tex.level),	// GLint  : Level of detail of the current texture (0 = original)
+	  tex.internalFormat,	 // GLint  : Number of color components in the picture.
+	  tex.size.x,	 // GLsizei: Image width
+	  static_cast<GLint>(0),	// GLint  : Border. This value MUST be 0.
+	  tex.format,	 // GLenum : Format of the pixel data
+	  tex.type,	   // GLenum : Type (the data type as in uchar, uint, float ...)
+	  tex.data	  // void*  : Data to load into the buffer
 	);
 
 	return texHandle;
@@ -1159,17 +1294,16 @@ GLuint Scene::uploadTexture2D(const TextureUpload& tex) {
 	glPixelStorei(GL_PACK_ALIGNMENT, tex.alignment.x);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, tex.alignment.y);
 
-	glTexImage2D(GL_TEXTURE_2D,		// GLenum : Target
-		static_cast<GLint>(tex.level),	// GLint  : Level of detail of the current texture (0 = original)
-		tex.internalFormat,		// GLint  : Number of color components in the picture. Here grayscale so GL_RED
-		tex.size.x,			// GLsizei: Image width
-		tex.size.y,			// GLsizei: Image height
-		static_cast<GLint>(0),		// GLint  : Border. This value MUST be 0.
-		tex.format,			// GLenum : Format of the pixel data
-		tex.type,			// GLenum : Type (the data type as in uchar, uint, float ...)
-		tex.data			// void*  : Data to load into the buffer
+	glTexImage2D(GL_TEXTURE_2D,	   // GLenum : Target
+	  static_cast<GLint>(tex.level),	// GLint  : Level of detail of the current texture (0 = original)
+	  tex.internalFormat,	 // GLint  : Number of color components in the picture. Here grayscale so GL_RED
+	  tex.size.x,	 // GLsizei: Image width
+	  tex.size.y,	 // GLsizei: Image height
+	  static_cast<GLint>(0),	// GLint  : Border. This value MUST be 0.
+	  tex.format,	 // GLenum : Format of the pixel data
+	  tex.type,	   // GLenum : Type (the data type as in uchar, uint, float ...)
+	  tex.data	  // void*  : Data to load into the buffer
 	);
-
 
 	return texHandle;
 }
@@ -1209,23 +1343,22 @@ GLuint Scene::uploadTexture3D(const TextureUpload& tex) {
 	glPixelStorei(GL_PACK_ALIGNMENT, tex.alignment.x);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, tex.alignment.y);
 
-	glTexImage3D(GL_TEXTURE_3D,		// GLenum : Target
-		static_cast<GLint>(tex.level),	// GLint  : Level of detail of the current texture (0 = original)
-		tex.internalFormat,		// GLint  : Number of color components in the picture. Here grayscale so GL_RED
-		tex.size.x,			// GLsizei: Image width
-		tex.size.y,			// GLsizei: Image height
-		tex.size.z,			// GLsizei: Image depth (number of layers)
-		static_cast<GLint>(0),		// GLint  : Border. This value MUST be 0.
-		tex.format,			// GLenum : Format of the pixel data
-		tex.type,			// GLenum : Type (the data type as in uchar, uint, float ...)
-		tex.data			// void*  : Data to load into the buffer
+	glTexImage3D(GL_TEXTURE_3D,	   // GLenum : Target
+	  static_cast<GLint>(tex.level),	// GLint  : Level of detail of the current texture (0 = original)
+	  tex.internalFormat,	 // GLint  : Number of color components in the picture. Here grayscale so GL_RED
+	  tex.size.x,	 // GLsizei: Image width
+	  tex.size.y,	 // GLsizei: Image height
+	  tex.size.z,	 // GLsizei: Image depth (number of layers)
+	  static_cast<GLint>(0),	// GLint  : Border. This value MUST be 0.
+	  tex.format,	 // GLenum : Format of the pixel data
+	  tex.type,	   // GLenum : Type (the data type as in uchar, uint, float ...)
+	  tex.data	  // void*  : Data to load into the buffer
 	);
-
 
 	return texHandle;
 }
 
-GLuint Scene::uploadTexture3D_iterative(const TextureUpload &tex, const std::shared_ptr<DiscreteGrid>& red, const std::shared_ptr<DiscreteGrid>& blue) {
+GLuint Scene::uploadTexture3D_iterative(const TextureUpload& tex, const std::shared_ptr<DiscreteGrid>& red, const std::shared_ptr<DiscreteGrid>& blue) {
 	if (this->context != nullptr) {
 		if (this->context->isValid() == false) {
 			throw std::runtime_error("No associated valid context");
@@ -1263,16 +1396,16 @@ GLuint Scene::uploadTexture3D_iterative(const TextureUpload &tex, const std::sha
 	this->debugLog->pushGroup("Texture upload");
 
 	std::cerr << "[LOG] Allocating memory ...";
-	glTexImage3D(GL_TEXTURE_3D,		// GLenum : Target
-		static_cast<GLint>(tex.level),	// GLint  : Level of detail of the current texture (0 = original)
-		tex.internalFormat,		// GLint  : Number of color components in the picture. Here grayscale so GL_RED
-		tex.size.x,			// GLsizei: Image width
-		tex.size.y,			// GLsizei: Image height
-		tex.size.z,			// GLsizei: Image depth (number of layers)
-		static_cast<GLint>(0),		// GLint  : Border. This value MUST be 0.
-		tex.format,			// GLenum : Format of the pixel data
-		tex.type,			// GLenum : Type (the data type as in uchar, uint, float ...)
-		nullptr		// null for the moment, to allocate data only
+	glTexImage3D(GL_TEXTURE_3D,	   // GLenum : Target
+	  static_cast<GLint>(tex.level),	// GLint  : Level of detail of the current texture (0 = original)
+	  tex.internalFormat,	 // GLint  : Number of color components in the picture. Here grayscale so GL_RED
+	  tex.size.x,	 // GLsizei: Image width
+	  tex.size.y,	 // GLsizei: Image height
+	  tex.size.z,	 // GLsizei: Image depth (number of layers)
+	  static_cast<GLint>(0),	// GLint  : Border. This value MUST be 0.
+	  tex.format,	 // GLenum : Format of the pixel data
+	  tex.type,	   // GLenum : Type (the data type as in uchar, uint, float ...)
+	  nullptr	 // null for the moment, to allocate data only
 	);
 	std::cerr << "done.\n";
 
@@ -1285,7 +1418,7 @@ GLuint Scene::uploadTexture3D_iterative(const TextureUpload &tex, const std::sha
 
 	std::size_t imgSize = tex.size.x * tex.size.y;
 	std::vector<DiscreteGrid::data_t> image(imgSize * 2, DiscreteGrid::data_t(0));
-	const DiscreteGrid::data_t* redPtr = red->getDataPtr();
+	const DiscreteGrid::data_t* redPtr	= red->getDataPtr();
 	const DiscreteGrid::data_t* bluePtr = blue->getDataPtr();
 
 	// upload the texture slice by slice :
@@ -1293,8 +1426,8 @@ GLuint Scene::uploadTexture3D_iterative(const TextureUpload &tex, const std::sha
 		std::cerr << "[LOG] Uploading slice " << z << " ... \n";
 		std::size_t baseIdx = z * imgSize;
 		for (std::size_t i = 0; i < imgSize; ++i) {
-			image[2*i + 0] = redPtr[baseIdx + i];
-			image[2*i + 1] = bluePtr[baseIdx + i];
+			image[2 * i + 0] = redPtr[baseIdx + i];
+			image[2 * i + 1] = bluePtr[baseIdx + i];
 		}
 		glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, z, tex.size.x, tex.size.y, 1, tex.format, tex.type, image.data());
 		err = glGetError();
@@ -1308,7 +1441,7 @@ GLuint Scene::uploadTexture3D_iterative(const TextureUpload &tex, const std::sha
 	return texHandle;
 }
 
-GLuint Scene::newAPI_uploadTexture3D_allocateonly(const TextureUpload &tex) {
+GLuint Scene::newAPI_uploadTexture3D_allocateonly(const TextureUpload& tex) {
 	if (this->context != nullptr) {
 		if (this->context->isValid() == false) {
 			throw std::runtime_error("No associated valid context");
@@ -1343,23 +1476,22 @@ GLuint Scene::newAPI_uploadTexture3D_allocateonly(const TextureUpload &tex) {
 	glPixelStorei(GL_PACK_ALIGNMENT, tex.alignment.x);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, tex.alignment.y);
 
-	glTexImage3D(GL_TEXTURE_3D,		// GLenum : Target
-		static_cast<GLint>(tex.level),	// GLint  : Level of detail of the current texture (0 = original)
-		tex.internalFormat,		// GLint  : Number of color components in the picture. Here grayscale so GL_RED
-		tex.size.x,			// GLsizei: Image width
-		tex.size.y,			// GLsizei: Image height
-		tex.size.z,			// GLsizei: Image depth (number of layers)
-		static_cast<GLint>(0),		// GLint  : Border. This value MUST be 0.
-		tex.format,			// GLenum : Format of the pixel data
-		tex.type,			// GLenum : Type (the data type as in uchar, uint, float ...)
-		nullptr		// no data here !
+	glTexImage3D(GL_TEXTURE_3D,	   // GLenum : Target
+	  static_cast<GLint>(tex.level),	// GLint  : Level of detail of the current texture (0 = original)
+	  tex.internalFormat,	 // GLint  : Number of color components in the picture. Here grayscale so GL_RED
+	  tex.size.x,	 // GLsizei: Image width
+	  tex.size.y,	 // GLsizei: Image height
+	  tex.size.z,	 // GLsizei: Image depth (number of layers)
+	  static_cast<GLint>(0),	// GLint  : Border. This value MUST be 0.
+	  tex.format,	 // GLenum : Format of the pixel data
+	  tex.type,	   // GLenum : Type (the data type as in uchar, uint, float ...)
+	  nullptr	 // no data here !
 	);
-
 
 	return texHandle;
 }
 
-GLuint Scene::newAPI_uploadTexture3D(const GLuint texHandle, const TextureUpload &tex, std::size_t s, std::vector<std::uint16_t> &data) {
+GLuint Scene::newAPI_uploadTexture3D(const GLuint texHandle, const TextureUpload& tex, std::size_t s, std::vector<std::uint16_t>& data) {
 	if (this->context != nullptr) {
 		if (this->context->isValid() == false) {
 			throw std::runtime_error("No associated valid context");
@@ -1377,16 +1509,16 @@ GLuint Scene::newAPI_uploadTexture3D(const GLuint texHandle, const TextureUpload
 }
 
 GLuint Scene::testTextureUpload(GLuint nbTex, DiscreteGrid::sizevec3 dims) {
-	GLuint *textures = new GLuint[nbTex];
+	GLuint* textures = new GLuint[nbTex];
 
 	glGenTextures(nbTex, textures);
 
 	// connect to cerr output, to have messages on the console
 	auto connection = QObject::connect(this->debugLog, &QOpenGLDebugLogger::messageLogged,
-	[this](const QOpenGLDebugMessage m) {
-			std::cerr << "OpenGL Message logged :";
-			this->openGLDebugLogger_inserter(m);
-	});
+	  [this](const QOpenGLDebugMessage m) {
+		  std::cerr << "OpenGL Message logged :";
+		  this->openGLDebugLogger_inserter(m);
+	  });
 
 	for (GLuint i = 0; i < nbTex; ++i) {
 		std::cerr << "Binding texture " << i << "/" << nbTex << " ... \n";
@@ -1394,17 +1526,16 @@ GLuint Scene::testTextureUpload(GLuint nbTex, DiscreteGrid::sizevec3 dims) {
 		glBindTexture(GL_TEXTURE_3D, textures[i]);
 		// Allocate texture :
 		glTexImage3D(
-			GL_TEXTURE_3D,
-			0,
-			GL_RG16UI,
-			dims.x,
-			dims.y,
-			dims.z,
-			0,
-			GL_RG_INTEGER,
-			GL_UNSIGNED_SHORT,
-			nullptr
-		);
+		  GL_TEXTURE_3D,
+		  0,
+		  GL_RG16UI,
+		  dims.x,
+		  dims.y,
+		  dims.z,
+		  0,
+		  GL_RG_INTEGER,
+		  GL_UNSIGNED_SHORT,
+		  nullptr);
 	}
 
 	// Disconnect the cerr output
@@ -1418,33 +1549,69 @@ GLuint Scene::testTextureUpload(GLuint nbTex, DiscreteGrid::sizevec3 dims) {
 }
 
 void Scene::openGLDebugLogger_inserter(const QOpenGLDebugMessage message) {
-	QString src = "";
-	QString sev = "";
-	QString typ = "";
+	QString src		= "";
+	QString sev		= "";
+	QString typ		= "";
 	QFlags severity = message.severity();
-	QFlags type = message.type();
-	QFlags source = message.source();
+	QFlags type		= message.type();
+	QFlags source	= message.source();
 
-	if (severity & QOpenGLDebugMessage::Severity::NotificationSeverity)	{ sev += "{Notif}"; }
-	if (severity & QOpenGLDebugMessage::Severity::LowSeverity)			{ sev += "{Low  }"; }
-	if (severity & QOpenGLDebugMessage::Severity::MediumSeverity)		{ sev += "{Med  }"; }
-	if (severity & QOpenGLDebugMessage::Severity::HighSeverity)			{ sev += "{High }"; }
+	if (severity & QOpenGLDebugMessage::Severity::NotificationSeverity) {
+		sev += "{Notif}";
+	}
+	if (severity & QOpenGLDebugMessage::Severity::LowSeverity) {
+		sev += "{Low  }";
+	}
+	if (severity & QOpenGLDebugMessage::Severity::MediumSeverity) {
+		sev += "{Med  }";
+	}
+	if (severity & QOpenGLDebugMessage::Severity::HighSeverity) {
+		sev += "{High }";
+	}
 
-	if (type & QOpenGLDebugMessage::Type::ErrorType)					{ typ += "[	ERROR     ]"; }
-	if (type & QOpenGLDebugMessage::Type::DeprecatedBehaviorType)		{ typ += "[ DEPRE. BEHAV. ]"; }
-	if (type & QOpenGLDebugMessage::Type::UndefinedBehaviorType)		{ typ += "[ UNDEF. BEHAV. ]"; }
-	if (type & QOpenGLDebugMessage::Type::PortabilityType)				{ typ += "[  PORTABILITY  ]"; }
-	if (type & QOpenGLDebugMessage::Type::PerformanceType)				{ typ += "[      PERF     ]"; }
-	if (type & QOpenGLDebugMessage::Type::OtherType)					{ typ += "[     OTHER	  ]"; }
-	if (type & QOpenGLDebugMessage::Type::MarkerType)					{ typ += "[     MARKER    ]"; }
-	if (type & QOpenGLDebugMessage::Type::GroupPushType)				{ typ += "[  GROUP PUSH   ]"; }
-	if (type & QOpenGLDebugMessage::Type::GroupPopType)					{ typ += "[   GROUP POP   ]"; }
+	if (type & QOpenGLDebugMessage::Type::ErrorType) {
+		typ += "[	ERROR     ]";
+	}
+	if (type & QOpenGLDebugMessage::Type::DeprecatedBehaviorType) {
+		typ += "[ DEPRE. BEHAV. ]";
+	}
+	if (type & QOpenGLDebugMessage::Type::UndefinedBehaviorType) {
+		typ += "[ UNDEF. BEHAV. ]";
+	}
+	if (type & QOpenGLDebugMessage::Type::PortabilityType) {
+		typ += "[  PORTABILITY  ]";
+	}
+	if (type & QOpenGLDebugMessage::Type::PerformanceType) {
+		typ += "[      PERF     ]";
+	}
+	if (type & QOpenGLDebugMessage::Type::OtherType) {
+		typ += "[     OTHER	  ]";
+	}
+	if (type & QOpenGLDebugMessage::Type::MarkerType) {
+		typ += "[     MARKER    ]";
+	}
+	if (type & QOpenGLDebugMessage::Type::GroupPushType) {
+		typ += "[  GROUP PUSH   ]";
+	}
+	if (type & QOpenGLDebugMessage::Type::GroupPopType) {
+		typ += "[   GROUP POP   ]";
+	}
 
-	if (source & QOpenGLDebugMessage::Source::APISource)				{ src += "[OpenGL  ]"; }
-	if (source & QOpenGLDebugMessage::Source::WindowSystemSource)		{ src += "[WinSys  ]"; }
-	if (source & QOpenGLDebugMessage::Source::ShaderCompilerSource)		{ src += "[ShaComp ]"; }
-	if (source & QOpenGLDebugMessage::Source::ThirdPartySource)			{ src += "[3rdParty]"; }
-	if (source & QOpenGLDebugMessage::Source::OtherSource)				{ src += "[Other   ]"; }
+	if (source & QOpenGLDebugMessage::Source::APISource) {
+		src += "[OpenGL  ]";
+	}
+	if (source & QOpenGLDebugMessage::Source::WindowSystemSource) {
+		src += "[WinSys  ]";
+	}
+	if (source & QOpenGLDebugMessage::Source::ShaderCompilerSource) {
+		src += "[ShaComp ]";
+	}
+	if (source & QOpenGLDebugMessage::Source::ThirdPartySource) {
+		src += "[3rdParty]";
+	}
+	if (source & QOpenGLDebugMessage::Source::OtherSource) {
+		src += "[Other   ]";
+	}
 
 	QString glMessage = sev + typ + src + " [ID:" + QString::number(message.id()) + "] : " + message.message() + "\n";
 
@@ -1455,8 +1622,8 @@ void Scene::launchSaveDialog() {
 	// if no grids are loaded, do nothing !
 	if (this->grids.size() == 0) {
 		QMessageBox messageBox;
-		messageBox.critical(nullptr, "Error","Cannot save a grid when nothing is loaded !");
-		messageBox.setFixedSize(500,200);
+		messageBox.critical(nullptr, "Error", "Cannot save a grid when nothing is loaded !");
+		messageBox.setFixedSize(500, 200);
 		return;
 	}
 
@@ -1475,9 +1642,9 @@ void Scene::launchSaveDialog() {
 	// add the grids to the tetmesh
 	for (std::size_t i = 0; i < this->grids.size(); ++i) {
 		std::for_each(this->grids[i]->grid.cbegin(), this->grids[i]->grid.cend(),
-		[&tetmesh](const std::shared_ptr<DiscreteGrid>& _g) {
-			tetmesh->addInputGrid(std::dynamic_pointer_cast<InputGrid>(_g));
-		});
+		  [&tetmesh](const std::shared_ptr<DiscreteGrid>& _g) {
+			  tetmesh->addInputGrid(std::dynamic_pointer_cast<InputGrid>(_g));
+		  });
 	}
 	// add the output grid
 	tetmesh->setOutputGrid(outputGrid);
@@ -1529,7 +1696,7 @@ void Scene::removeController() {
 	this->gridControl = nullptr;
 }
 
-void Scene::deleteGrid(const std::shared_ptr<DiscreteGrid> &_grid) {
+void Scene::deleteGrid(const std::shared_ptr<DiscreteGrid>& _grid) {
 	std::cerr << "Deleting a grid" << '\n';
 	std::size_t i = 0, j = 0;
 	for (i = 0; i < this->grids.size(); ++i) {
@@ -1564,46 +1731,57 @@ void Scene::deleteGridNow() {
 	}
 
 	// Remove all items from grids which have no channels :
-	this->grids.erase(std::remove_if(this->grids.begin(), this->grids.end(), [](const GridGLView::Ptr& v){
-		if (v->nbChannels == 0) { return true; }
+	this->grids.erase(std::remove_if(this->grids.begin(), this->grids.end(), [](const GridGLView::Ptr& v) {
+		if (v->nbChannels == 0) {
+			return true;
+		}
 		return false;
-	}), this->grids.end());
+	}),
+	  this->grids.end());
 	this->delGrid.clear();
 
 	this->updateBoundingBox();
 }
 
 void Scene::drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading, float zoomRatio, glm::vec2 offset) {
-	if (this->grids.empty() && this->newGrids.empty()) { return; }
+	if (this->grids.empty() && this->newGrids.empty()) {
+		return;
+	}
 
 	glEnable(GL_DEPTH_TEST);
 	//glEnable(GL_BLEND);
 	glEnablei(GL_BLEND, 0);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	uint min = 0; // min index for drawing commands
-	if (_plane == planes::x) { min =  0; }
-	if (_plane == planes::y) { min =  6; }
-	if (_plane == planes::z) { min = 12; }
+	uint min = 0;	 // min index for drawing commands
+	if (_plane == planes::x) {
+		min = 0;
+	}
+	if (_plane == planes::y) {
+		min = 6;
+	}
+	if (_plane == planes::z) {
+		min = 12;
+	}
 
 	glUseProgram(this->programHandle_PlaneViewer);
 	glBindVertexArray(this->vaoHandle);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_SinglePlaneElement);
 
-	// Do for all grids :
-	#warning drawPlaneView() : Only draws the first grid !
+// Do for all grids :
+#warning drawPlaneView() : Only draws the first grid !
 	if (this->grids.size() > 0) {
 		this->prepareUniforms_PlaneViewer(_plane, _heading, fbDims, zoomRatio, offset, this->grids[0]);
 
 		this->setupVAOPointers();
 
-		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(6), GL_UNSIGNED_INT, (GLvoid*)(min*sizeof(GLuint)));
+		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(6), GL_UNSIGNED_INT, (GLvoid*) (min * sizeof(GLuint)));
 	} else if (not this->newGrids.empty()) {
 		this->newAPI_prepareUniforms_PlaneViewer(_plane, _heading, fbDims, zoomRatio, offset, this->newGrids[0]);
 
 		this->setupVAOPointers();
 
-		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(6), GL_UNSIGNED_INT, (GLvoid*)(min*sizeof(GLuint)));
+		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(6), GL_UNSIGNED_INT, (GLvoid*) (min * sizeof(GLuint)));
 	}
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -1614,7 +1792,7 @@ void Scene::drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading
 	return;
 }
 
-void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, const GridGLView::Ptr& grid) {
+void Scene::drawVolumetric(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const GridGLView::Ptr& grid) {
 	if (grid->gridTexture > 0) {
 		glUseProgram(this->programHandle_VolumetricViewer);
 
@@ -1623,7 +1801,7 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, cons
 		this->tex3D_bindVAO();
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_Texture3D_VertIdx);
 
-		glDrawElementsInstanced(GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, (void*)0, grid->volumetricMesh.tetrahedraCount);
+		glDrawElementsInstanced(GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, (void*) 0, grid->volumetricMesh.tetrahedraCount);
 
 		// Unbind program, buffers and VAO :
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -1635,7 +1813,7 @@ void Scene::drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, cons
 	this->drawBoundingBox(grid->grid[0]->getBoundingBoxWorldSpace(), grid->boundingBoxColor, mvMat, pMat);
 }
 
-void Scene::newAPI_drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, const NewAPI_GridGLView::Ptr& grid) {
+void Scene::newAPI_drawVolumetric(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const NewAPI_GridGLView::Ptr& grid) {
 	if (grid->gridTexture > 0) {
 		glUseProgram(this->programHandle_VolumetricViewer);
 
@@ -1644,7 +1822,7 @@ void Scene::newAPI_drawVolumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPo
 		this->tex3D_bindVAO();
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_Texture3D_VertIdx);
 
-		glDrawElementsInstanced(GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, (void*)0, grid->volumetricMesh.tetrahedraCount);
+		glDrawElementsInstanced(GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, (void*) 0, grid->volumetricMesh.tetrahedraCount);
 
 		// Unbind program, buffers and VAO :
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -1660,7 +1838,7 @@ void Scene::drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane) {
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 
-	#warning drawPlanes() : Only draws the first grid for each plane !
+#warning drawPlanes() : Only draws the first grid for each plane !
 
 	// Plane X :
 	glUseProgram(this->programHandle_Plane3D);
@@ -1683,7 +1861,7 @@ void Scene::drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane) {
 		this->prepareUniforms_3DPlane(mvMat, pMat, planes::y, this->grids[0], showTexOnPlane);
 		this->setupVAOPointers();
 
-		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(6), GL_UNSIGNED_INT, (GLvoid*)(6*sizeof(GLuint)));
+		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(6), GL_UNSIGNED_INT, (GLvoid*) (6 * sizeof(GLuint)));
 	}
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
@@ -1697,7 +1875,7 @@ void Scene::drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane) {
 		this->prepareUniforms_3DPlane(mvMat, pMat, planes::z, this->grids[0], showTexOnPlane);
 		this->setupVAOPointers();
 
-		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(6), GL_UNSIGNED_INT, (GLvoid*)(12*sizeof(GLuint)));
+		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(6), GL_UNSIGNED_INT, (GLvoid*) (12 * sizeof(GLuint)));
 	}
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
@@ -1710,7 +1888,7 @@ void Scene::newAPI_drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPla
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 
-	#warning drawPlanes() : Only draws the first grid for each plane !
+#warning drawPlanes() : Only draws the first grid for each plane !
 
 	// Plane X :
 	glUseProgram(this->programHandle_Plane3D);
@@ -1733,7 +1911,7 @@ void Scene::newAPI_drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPla
 		this->newAPI_prepareUniforms_3DPlane(mvMat, pMat, planes::y, this->newGrids[0], showTexOnPlane);
 		this->setupVAOPointers();
 
-		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(6), GL_UNSIGNED_INT, (GLvoid*)(6*sizeof(GLuint)));
+		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(6), GL_UNSIGNED_INT, (GLvoid*) (6 * sizeof(GLuint)));
 	}
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
@@ -1747,7 +1925,7 @@ void Scene::newAPI_drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPla
 		this->newAPI_prepareUniforms_3DPlane(mvMat, pMat, planes::z, this->newGrids[0], showTexOnPlane);
 		this->setupVAOPointers();
 
-		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(6), GL_UNSIGNED_INT, (GLvoid*)(12*sizeof(GLuint)));
+		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(6), GL_UNSIGNED_INT, (GLvoid*) (12 * sizeof(GLuint)));
 	}
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
@@ -1759,11 +1937,11 @@ void Scene::newAPI_drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPla
 glm::vec3 Scene::computePlanePositions() {
 	DiscreteGrid::bbox_t::vec position = this->sceneBB.getMin();
 	DiscreteGrid::bbox_t::vec diagonal = this->sceneBB.getDiagonal();
-	glm::vec3 planePos = (position + this->planeDisplacement * diagonal);
+	glm::vec3 planePos				   = (position + this->planeDisplacement * diagonal);
 	return planePos;
 }
 
-void Scene::prepareUniforms_3DSolid(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, const GridGLView::Ptr& gridView) {
+void Scene::prepareUniforms_3DSolid(GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, const GridGLView::Ptr& gridView) {
 	// Get the world to grid transform :
 	glm::mat4 transfoMat = baseMatrix * gridView->grid[0]->getTransform_GridToWorld();
 
@@ -1771,7 +1949,7 @@ void Scene::prepareUniforms_3DSolid(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lig
 		GLint g = glGetUniformLocation(this->programHandle_projectedTex, name);
 		if (this->showVAOstate) {
 			if (g >= 0) {
-			std::cerr << "[LOG]\tLocation [" << +g << "] for uniform " << name << '\n';
+				std::cerr << "[LOG]\tLocation [" << +g << "] for uniform " << name << '\n';
 			} else {
 				std::cerr << "[LOG]\tCannot find uniform " << name << "\n";
 			}
@@ -1785,38 +1963,38 @@ void Scene::prepareUniforms_3DSolid(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lig
 	}
 
 	// Get the uniform locations :
-	GLint mMatrix_Loc =						getUniform("mMatrix");
-	GLint vMatrix_Loc =						getUniform("vMatrix");
-	GLint pMatrix_Loc =						getUniform("pMatrix");
-	GLint lightPos_Loc =					getUniform("lightPos");
-	GLint voxelGridOrigin_Loc =				getUniform("voxelGridOrigin");
-	GLint voxelGridSize_Loc =				getUniform("voxelGridSize");
-	GLint voxelSize_Loc =					getUniform("voxelSize");
-	GLint drawMode_Loc =					getUniform("drawMode");
-	GLint texDataLoc =						getUniform("texData");
-	GLint planePositionsLoc =				getUniform("planePositions");
-	GLint location_planeDirections =		getUniform("planeDirections");
-	GLint gridPositionLoc =					getUniform("gridPosition");
-	GLint location_colorBounds =			getUniform("colorBounds");
-	GLint location_colorBoundsAlternate =	getUniform("colorBoundsAlternate");
-	GLint location_textureBounds =			getUniform("textureBounds");
-	GLint location_textureBoundsAlternate =	getUniform("textureBoundsAlternate");
-	GLint location_color0 =					getUniform("color0");
-	GLint location_color1 =					getUniform("color1");
-	GLint location_color0Alt =				getUniform("color0Alternate");
-	GLint location_color1Alt =				getUniform("color1Alternate");
-	GLint location_r_channelView =			getUniform("r_channelView");
-	GLint location_r_selectedChannel =		getUniform("r_selectedChannel");
-	GLint location_r_nbChannels =			getUniform("r_nbChannels");
-	GLint location_g_channelView =			getUniform("g_channelView");
-	GLint location_g_selectedChannel =		getUniform("g_selectedChannel");
-	GLint location_g_nbChannels =			getUniform("g_nbChannels");
-	GLint location_rgbMode =				getUniform("rgbMode");
+	GLint mMatrix_Loc					  = getUniform("mMatrix");
+	GLint vMatrix_Loc					  = getUniform("vMatrix");
+	GLint pMatrix_Loc					  = getUniform("pMatrix");
+	GLint lightPos_Loc					  = getUniform("lightPos");
+	GLint voxelGridOrigin_Loc			  = getUniform("voxelGridOrigin");
+	GLint voxelGridSize_Loc				  = getUniform("voxelGridSize");
+	GLint voxelSize_Loc					  = getUniform("voxelSize");
+	GLint drawMode_Loc					  = getUniform("drawMode");
+	GLint texDataLoc					  = getUniform("texData");
+	GLint planePositionsLoc				  = getUniform("planePositions");
+	GLint location_planeDirections		  = getUniform("planeDirections");
+	GLint gridPositionLoc				  = getUniform("gridPosition");
+	GLint location_colorBounds			  = getUniform("colorBounds");
+	GLint location_colorBoundsAlternate	  = getUniform("colorBoundsAlternate");
+	GLint location_textureBounds		  = getUniform("textureBounds");
+	GLint location_textureBoundsAlternate = getUniform("textureBoundsAlternate");
+	GLint location_color0				  = getUniform("color0");
+	GLint location_color1				  = getUniform("color1");
+	GLint location_color0Alt			  = getUniform("color0Alternate");
+	GLint location_color1Alt			  = getUniform("color1Alternate");
+	GLint location_r_channelView		  = getUniform("r_channelView");
+	GLint location_r_selectedChannel	  = getUniform("r_selectedChannel");
+	GLint location_r_nbChannels			  = getUniform("r_nbChannels");
+	GLint location_g_channelView		  = getUniform("g_channelView");
+	GLint location_g_selectedChannel	  = getUniform("g_selectedChannel");
+	GLint location_g_nbChannels			  = getUniform("g_nbChannels");
+	GLint location_rgbMode				  = getUniform("rgbMode");
 
-	DiscreteGrid::bbox_t::vec origin = gridView->grid[0]->getBoundingBox().getMin();
+	DiscreteGrid::bbox_t::vec origin   = gridView->grid[0]->getBoundingBox().getMin();
 	DiscreteGrid::bbox_t::vec originWS = gridView->grid[0]->getBoundingBoxWorldSpace().getMin();
-	DiscreteGrid::sizevec3 gridDims = gridView->grid[0]->getResolution();
-	glm::vec3 dims = glm::convert_to<float>(gridDims);
+	DiscreteGrid::sizevec3 gridDims	   = gridView->grid[0]->getResolution();
+	glm::vec3 dims					   = glm::convert_to<float>(gridDims);
 
 	if (showVAOstate) {
 		PRINTVAL(gridDims.x);
@@ -1858,7 +2036,7 @@ void Scene::prepareUniforms_3DSolid(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lig
 		glUniform1i(texDataLoc, 0);
 	}
 
-	uint chan = this->colorFunctionToUniform(this->channels_r);
+	uint chan  = this->colorFunctionToUniform(this->channels_r);
 	uint chan2 = this->colorFunctionToUniform(this->channels_g);
 	glUniform1ui(location_r_channelView, chan);
 	glUniform1ui(location_g_channelView, chan2);
@@ -1876,11 +2054,11 @@ void Scene::prepareUniforms_3DSolid(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lig
 	glUniform4fv(lightPos_Loc, 1, glm::value_ptr(lightPos));
 }
 
-void Scene::newAPI_prepareUniforms_3DSolid(GLfloat *mvMat, GLfloat *pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, const NewAPI_GridGLView::Ptr& gridView) {
+void Scene::newAPI_prepareUniforms_3DSolid(GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, const NewAPI_GridGLView::Ptr& gridView) {
 	// Get the world to grid transform :
 	MatrixTransform::Ptr grid_transform_pointer = std::dynamic_pointer_cast<MatrixTransform>(gridView->grid->getPrecomputedMatrix());
-	glm::mat4 transfoMat = baseMatrix * grid_transform_pointer->matrix();
-	#warning Transform API is still in-progress.
+	glm::mat4 transfoMat						= baseMatrix * grid_transform_pointer->matrix();
+#warning Transform API is still in-progress.
 
 	auto getUniform = [&](const char* name) -> GLint {
 		GLint g = glGetUniformLocation(this->programHandle_projectedTex, name);
@@ -1902,28 +2080,28 @@ void Scene::newAPI_prepareUniforms_3DSolid(GLfloat *mvMat, GLfloat *pMat, glm::v
 	}
 
 	// Get the uniform locations :
-	GLint mMatrix_Loc =						getUniform("mMatrix");
-	GLint vMatrix_Loc =						getUniform("vMatrix");
-	GLint pMatrix_Loc =						getUniform("pMatrix");
-	GLint lightPos_Loc =					getUniform("lightPos");
-	GLint voxelGridOrigin_Loc =				getUniform("voxelGridOrigin");
-	GLint voxelGridSize_Loc =				getUniform("voxelGridSize");
-	GLint voxelSize_Loc =					getUniform("voxelSize");
-	GLint drawMode_Loc =					getUniform("drawMode");
-	GLint texDataLoc =						getUniform("texData");
-	GLint planePositionsLoc =				getUniform("planePositions");
-	GLint location_planeDirections =		getUniform("planeDirections");
-	GLint gridPositionLoc =					getUniform("gridPosition");
+	GLint mMatrix_Loc			   = getUniform("mMatrix");
+	GLint vMatrix_Loc			   = getUniform("vMatrix");
+	GLint pMatrix_Loc			   = getUniform("pMatrix");
+	GLint lightPos_Loc			   = getUniform("lightPos");
+	GLint voxelGridOrigin_Loc	   = getUniform("voxelGridOrigin");
+	GLint voxelGridSize_Loc		   = getUniform("voxelGridSize");
+	GLint voxelSize_Loc			   = getUniform("voxelSize");
+	GLint drawMode_Loc			   = getUniform("drawMode");
+	GLint texDataLoc			   = getUniform("texData");
+	GLint planePositionsLoc		   = getUniform("planePositions");
+	GLint location_planeDirections = getUniform("planeDirections");
+	GLint gridPositionLoc		   = getUniform("gridPosition");
 
-	GLint location_colorScales0 =			getUniform("colorScales[0]");
-	GLint location_colorScales1 =			getUniform("colorScales[1]");
-	GLint location_colorScales2 =			getUniform("colorScales[2]");
-	GLint location_colorScales3 =			getUniform("colorScales[3]");
+	GLint location_colorScales0 = getUniform("colorScales[0]");
+	GLint location_colorScales1 = getUniform("colorScales[1]");
+	GLint location_colorScales2 = getUniform("colorScales[2]");
+	GLint location_colorScales3 = getUniform("colorScales[3]");
 
-	DiscreteGrid::bbox_t::vec origin = gridView->grid->getBoundingBox().getMin();
+	DiscreteGrid::bbox_t::vec origin   = gridView->grid->getBoundingBox().getMin();
 	DiscreteGrid::bbox_t::vec originWS = gridView->grid->getBoundingBox().getMin();
-	DiscreteGrid::sizevec3 gridDims = gridView->grid->getResolution();
-	glm::vec3 dims = glm::convert_to<float>(gridDims);
+	DiscreteGrid::sizevec3 gridDims	   = gridView->grid->getResolution();
+	glm::vec3 dims					   = glm::convert_to<float>(gridDims);
 
 	if (showVAOstate) {
 		PRINTVAL(gridDims.x);
@@ -1984,7 +2162,7 @@ void Scene::newAPI_prepareUniforms_3DSolid(GLfloat *mvMat, GLfloat *pMat, glm::v
 	 * Load all the available color channels in the shader program, using the discrete identifiers :
 	 */
 	const GLchar uniform_block_name[] = "ColorBlock";
-	GLuint colorBlock_index = glGetUniformBlockIndex(this->programHandle_projectedTex, uniform_block_name);
+	GLuint colorBlock_index			  = glGetUniformBlockIndex(this->programHandle_projectedTex, uniform_block_name);
 	glUniformBlockBinding(this->programHandle_projectedTex, colorBlock_index, 0);
 	glBindBufferBase(GL_UNIFORM_BUFFER, 0, gridView->uboHandle_colorAttributes);
 
@@ -1993,17 +2171,21 @@ void Scene::newAPI_prepareUniforms_3DSolid(GLfloat *mvMat, GLfloat *pMat, glm::v
 	}
 }
 
-glm::vec3 Scene::getPlaneDirections() const { return this->planeDirection; }
+glm::vec3 Scene::getPlaneDirections() const {
+	return this->planeDirection;
+}
 
 glm::tvec4<GLuint> Scene::draft_getGeneratedColorScales() {
 	return glm::tvec4<GLuint>(
-		this->texHandle_colorScale_greyscale, this->texHandle_colorScale_hsv2rgb,
-		this->texHandle_colorScale_user0, this->texHandle_colorScale_user1
-	);
+	  this->texHandle_colorScale_greyscale, this->texHandle_colorScale_hsv2rgb,
+	  this->texHandle_colorScale_user0, this->texHandle_colorScale_user1);
 }
 
 void Scene::draft_tryAndSaveFirstGrid() {
-	if (this->newGrids.size() == 0) { std::cerr << "Error : no new grids loaded.\n"; return; }
+	if (this->newGrids.size() == 0) {
+		std::cerr << "Error : no new grids loaded.\n";
+		return;
+	}
 
 	Image::ThreadedTask::Ptr task = std::make_shared<Image::ThreadedTask>();
 	// get the grid
@@ -2013,12 +2195,11 @@ void Scene::draft_tryAndSaveFirstGrid() {
 	std::cerr << "Creating grid writer ...\n";
 	try {
 		gridWriter = std::make_shared<Image::GridWriter>(
-			Image::Tiff::TIFFWriterTemplated<std::uint32_t>::createBackend("tiff_grid", "/home/thibault/Pictures/tiff")
-		);
+		  Image::Tiff::TIFFWriterTemplated<std::uint32_t>::createBackend("tiff_grid", "/home/thibault/Pictures/tiff"));
 		if (not gridWriter->writeGrid(gridToSave, task)) {
 			std::cerr << "Error : cannot write grid.\n";
 		}
-	}  catch (std::exception& _e) {
+	} catch (std::exception& _e) {
 		std::cerr << "Error : exception caught !\n";
 		std::cerr << "Error message : " << _e.what() << '\n';
 	}
@@ -2038,44 +2219,49 @@ GLuint Scene::createUniformBuffer(std::size_t size_bytes, GLenum draw_mode) {
 	return uniform_to_create;
 }
 
-void Scene::setUniformBufferData(GLuint uniform_buffer, std::size_t begin_bytes, std::size_t size_bytes, GLvoid *data) {
+void Scene::setUniformBufferData(GLuint uniform_buffer, std::size_t begin_bytes, std::size_t size_bytes, GLvoid* data) {
 	glBindBuffer(GL_UNIFORM_BUFFER, uniform_buffer);
 	glBufferSubData(GL_UNIFORM_BUFFER, begin_bytes, size_bytes, data);
 }
 
 void Scene::printAllUniforms(GLuint _shader_program) {
 	GLint i;
-	GLint count; // count of how many variables are there
+	GLint count;	// count of how many variables are there
 
-	GLint size; // size of the variable
-	GLenum type; // type of the variable (float, vec3 or mat4, etc)
+	GLint size;	   // size of the variable
+	GLenum type;	// type of the variable (float, vec3 or mat4, etc)
 
-	const GLsizei bufSize = 64; // maximum name length
-	GLchar name[bufSize]; // variable name in GLSL
-	GLsizei length; // name length
+	const GLsizei bufSize = 64;	   // maximum name length
+	GLchar name[bufSize];	 // variable name in GLSL
+	GLsizei length;	   // name length
 
 	glGetProgramiv(_shader_program, GL_ACTIVE_UNIFORMS, &count);
 	fprintf(stderr, "Active Uniforms: %d\n", count);
 
 	for (i = 0; i < count; i++)
 	{
-		glGetActiveUniform(_shader_program, (GLuint)i, bufSize, &length, &size, &type, name);
+		glGetActiveUniform(_shader_program, (GLuint) i, bufSize, &length, &size, &type, name);
 		fprintf(stderr, "\t- Uniform #%d : \"%s\"\n", i, name);
 	}
-
 }
 
-void Scene::prepareUniforms_3DPlane(GLfloat *mvMat, GLfloat *pMat, planes _plane, const GridGLView::Ptr& grid, bool showTexOnPlane) {
+void Scene::prepareUniforms_3DPlane(GLfloat* mvMat, GLfloat* pMat, planes _plane, const GridGLView::Ptr& grid, bool showTexOnPlane) {
 	bool shouldHide = false;
-	if (_plane == planes::x) { shouldHide = this->planeVisibility.x; }
-	if (_plane == planes::y) { shouldHide = this->planeVisibility.y; }
-	if (_plane == planes::z) { shouldHide = this->planeVisibility.z; }
+	if (_plane == planes::x) {
+		shouldHide = this->planeVisibility.x;
+	}
+	if (_plane == planes::y) {
+		shouldHide = this->planeVisibility.y;
+	}
+	if (_plane == planes::z) {
+		shouldHide = this->planeVisibility.z;
+	}
 
 	auto getUniform = [&](const char* name) -> GLint {
 		GLint g = glGetUniformLocation(this->programHandle_Plane3D, name);
 		if (this->showVAOstate) {
 			if (g >= 0) {
-			std::cerr << "[LOG]\tLocation [" << +g << "] for uniform " << name << '\n';
+				std::cerr << "[LOG]\tLocation [" << +g << "] for uniform " << name << '\n';
 			} else {
 				std::cerr << "[LOG]\tCannot find uniform " << name << "\n";
 			}
@@ -2089,38 +2275,38 @@ void Scene::prepareUniforms_3DPlane(GLfloat *mvMat, GLfloat *pMat, planes _plane
 	}
 
 	// Get uniform locations for the program :
-	GLint location_mMatrix =				getUniform("model_Mat");
-	GLint location_vMatrix =				getUniform("view_Mat");
-	GLint location_pMatrix =				getUniform("projection_Mat");
-	GLint location_gridTransform =			getUniform("gridTransform");
-	GLint location_gridSize =				getUniform("gridSize");
-	GLint location_gridDimensions =			getUniform("gridDimensions");
+	GLint location_mMatrix		  = getUniform("model_Mat");
+	GLint location_vMatrix		  = getUniform("view_Mat");
+	GLint location_pMatrix		  = getUniform("projection_Mat");
+	GLint location_gridTransform  = getUniform("gridTransform");
+	GLint location_gridSize		  = getUniform("gridSize");
+	GLint location_gridDimensions = getUniform("gridDimensions");
 
 	// Shader uniforms :
-	GLint location_texData =				getUniform("texData");
-	GLint location_planePosition =			getUniform("planePositions");
-	GLint location_planeDirection =			getUniform("planeDirections");
-	GLint location_sceneBBPosition =		getUniform("sceneBBPosition");
-	GLint location_sceneBBDiagonal =		getUniform("sceneBBDiagonal");
-	GLint location_colorBounds =			getUniform("colorBounds");
-	GLint location_textureBounds =			getUniform("textureBounds");
-	GLint location_colorBoundsAlternate =	getUniform("colorBoundsAlternate");
-	GLint location_textureBoundsAlternate =	getUniform("textureBoundsAlternate");
-	GLint location_currentPlane =			getUniform("currentPlane");
-	GLint location_showTex =				getUniform("showTex");
-	GLint location_drawOnlyData =			getUniform("drawOnlyData");
+	GLint location_texData				  = getUniform("texData");
+	GLint location_planePosition		  = getUniform("planePositions");
+	GLint location_planeDirection		  = getUniform("planeDirections");
+	GLint location_sceneBBPosition		  = getUniform("sceneBBPosition");
+	GLint location_sceneBBDiagonal		  = getUniform("sceneBBDiagonal");
+	GLint location_colorBounds			  = getUniform("colorBounds");
+	GLint location_textureBounds		  = getUniform("textureBounds");
+	GLint location_colorBoundsAlternate	  = getUniform("colorBoundsAlternate");
+	GLint location_textureBoundsAlternate = getUniform("textureBoundsAlternate");
+	GLint location_currentPlane			  = getUniform("currentPlane");
+	GLint location_showTex				  = getUniform("showTex");
+	GLint location_drawOnlyData			  = getUniform("drawOnlyData");
 
-	GLint location_color0 =					getUniform("color0");
-	GLint location_color1 =					getUniform("color1");
-	GLint location_color0Alt =				getUniform("color0Alternate");
-	GLint location_color1Alt =				getUniform("color1Alternate");
-	GLint location_r_channelView =			getUniform("r_channelView");
-	GLint location_r_selectedChannel =		getUniform("r_selectedChannel");
-	GLint location_r_nbChannels =			getUniform("r_nbChannels");
-	GLint location_g_channelView =			getUniform("g_channelView");
-	GLint location_g_selectedChannel =		getUniform("g_selectedChannel");
-	GLint location_g_nbChannels =			getUniform("g_nbChannels");
-	GLint location_rgbMode =				getUniform("rgbMode");
+	GLint location_color0			 = getUniform("color0");
+	GLint location_color1			 = getUniform("color1");
+	GLint location_color0Alt		 = getUniform("color0Alternate");
+	GLint location_color1Alt		 = getUniform("color1Alternate");
+	GLint location_r_channelView	 = getUniform("r_channelView");
+	GLint location_r_selectedChannel = getUniform("r_selectedChannel");
+	GLint location_r_nbChannels		 = getUniform("r_nbChannels");
+	GLint location_g_channelView	 = getUniform("g_channelView");
+	GLint location_g_selectedChannel = getUniform("g_selectedChannel");
+	GLint location_g_nbChannels		 = getUniform("g_nbChannels");
+	GLint location_rgbMode			 = getUniform("rgbMode");
 
 	if (grid->nbChannels > 1) {
 		glUniform1ui(location_r_selectedChannel, this->selectedChannel_r);
@@ -2136,19 +2322,19 @@ void Scene::prepareUniforms_3DPlane(GLfloat *mvMat, GLfloat *pMat, planes _plane
 	glUniform1ui(location_rgbMode, this->rgbMode);
 
 	// Generate the data we need :
-	glm::mat4 transform = glm::mat4(1.f);
-	glm::mat4 gridTransfo = grid->grid[0]->getTransform_GridToWorld();
+	glm::mat4 transform		  = glm::mat4(1.f);
+	glm::mat4 gridTransfo	  = grid->grid[0]->getTransform_GridToWorld();
 	DiscreteGrid::bbox_t bbws = grid->grid[0]->getBoundingBoxWorldSpace();
-	glm::vec3 dims = glm::convert_to<glm::vec3::value_type>(grid->grid[0]->getResolution()) * grid->grid[0]->getVoxelDimensions();
-	glm::vec3 size = bbws.getDiagonal();
-	GLint plIdx = (_plane == planes::x) ? 1 : (_plane == planes::y) ? 2 : 3;
+	glm::vec3 dims			  = glm::convert_to<glm::vec3::value_type>(grid->grid[0]->getResolution()) * grid->grid[0]->getVoxelDimensions();
+	glm::vec3 size			  = bbws.getDiagonal();
+	GLint plIdx				  = (_plane == planes::x) ? 1 : (_plane == planes::y) ? 2 : 3;
 
 	// gridTransfo = glm::mat4(1.);
 	gridTransfo = grid->grid[0]->getTransform_GridToWorld();
 
 	DiscreteGrid::bbox_t::vec position = this->sceneBB.getMin();
 	DiscreteGrid::bbox_t::vec diagonal = this->sceneBB.getDiagonal();
-	glm::vec3 planePos = this->computePlanePositions();
+	glm::vec3 planePos				   = this->computePlanePositions();
 
 	glUniformMatrix4fv(location_mMatrix, 1, GL_FALSE, glm::value_ptr(transform));
 	glUniformMatrix4fv(location_vMatrix, 1, GL_FALSE, mvMat);
@@ -2170,8 +2356,8 @@ void Scene::prepareUniforms_3DPlane(GLfloat *mvMat, GLfloat *pMat, planes _plane
 
 	glUniform2fv(location_colorBounds, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds0)));
 	glUniform2fv(location_colorBoundsAlternate, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds1)));
-	glUniform2f (location_textureBounds, tb0.x, tb0.y);
-	glUniform2f (location_textureBoundsAlternate, tb1.x, tb1.y);
+	glUniform2f(location_textureBounds, tb0.x, tb0.y);
+	glUniform2f(location_textureBoundsAlternate, tb1.x, tb1.y);
 
 	glUniform3fv(location_planePosition, 1, glm::value_ptr(planePos));
 	glUniform3fv(location_planeDirection, 1, glm::value_ptr(this->planeDirection));
@@ -2182,17 +2368,23 @@ void Scene::prepareUniforms_3DPlane(GLfloat *mvMat, GLfloat *pMat, planes _plane
 	glUniform1i(location_texData, 0);
 }
 
-void Scene::newAPI_prepareUniforms_3DPlane(GLfloat *mvMat, GLfloat *pMat, planes _plane, const NewAPI_GridGLView::Ptr& grid, bool showTexOnPlane) {
+void Scene::newAPI_prepareUniforms_3DPlane(GLfloat* mvMat, GLfloat* pMat, planes _plane, const NewAPI_GridGLView::Ptr& grid, bool showTexOnPlane) {
 	bool shouldHide = false;
-	if (_plane == planes::x) { shouldHide = this->planeVisibility.x; }
-	if (_plane == planes::y) { shouldHide = this->planeVisibility.y; }
-	if (_plane == planes::z) { shouldHide = this->planeVisibility.z; }
+	if (_plane == planes::x) {
+		shouldHide = this->planeVisibility.x;
+	}
+	if (_plane == planes::y) {
+		shouldHide = this->planeVisibility.y;
+	}
+	if (_plane == planes::z) {
+		shouldHide = this->planeVisibility.z;
+	}
 
 	auto getUniform = [&](const char* name) -> GLint {
 		GLint g = glGetUniformLocation(this->programHandle_Plane3D, name);
 		if (this->showVAOstate) {
 			if (g >= 0) {
-			std::cerr << "[LOG]\tLocation [" << +g << "] for uniform " << name << '\n';
+				std::cerr << "[LOG]\tLocation [" << +g << "] for uniform " << name << '\n';
 			} else {
 				std::cerr << "[LOG]\tCannot find uniform " << name << "\n";
 			}
@@ -2206,38 +2398,38 @@ void Scene::newAPI_prepareUniforms_3DPlane(GLfloat *mvMat, GLfloat *pMat, planes
 	}
 
 	// Get uniform locations for the program :
-	GLint location_mMatrix =				getUniform("model_Mat");
-	GLint location_vMatrix =				getUniform("view_Mat");
-	GLint location_pMatrix =				getUniform("projection_Mat");
-	GLint location_gridTransform =			getUniform("gridTransform");
-	GLint location_gridSize =				getUniform("gridSize");
-	GLint location_gridDimensions =			getUniform("gridDimensions");
+	GLint location_mMatrix		  = getUniform("model_Mat");
+	GLint location_vMatrix		  = getUniform("view_Mat");
+	GLint location_pMatrix		  = getUniform("projection_Mat");
+	GLint location_gridTransform  = getUniform("gridTransform");
+	GLint location_gridSize		  = getUniform("gridSize");
+	GLint location_gridDimensions = getUniform("gridDimensions");
 
 	// Shader uniforms :
-	GLint location_texData =				getUniform("texData");
-	GLint location_planePosition =			getUniform("planePositions");
-	GLint location_planeDirection =			getUniform("planeDirections");
-	GLint location_sceneBBPosition =		getUniform("sceneBBPosition");
-	GLint location_sceneBBDiagonal =		getUniform("sceneBBDiagonal");
-	GLint location_colorBounds =			getUniform("colorBounds");
-	GLint location_textureBounds =			getUniform("textureBounds");
-	GLint location_colorBoundsAlternate =	getUniform("colorBoundsAlternate");
-	GLint location_textureBoundsAlternate =	getUniform("textureBoundsAlternate");
-	GLint location_currentPlane =			getUniform("currentPlane");
-	GLint location_showTex =				getUniform("showTex");
-	GLint location_drawOnlyData =			getUniform("drawOnlyData");
+	GLint location_texData				  = getUniform("texData");
+	GLint location_planePosition		  = getUniform("planePositions");
+	GLint location_planeDirection		  = getUniform("planeDirections");
+	GLint location_sceneBBPosition		  = getUniform("sceneBBPosition");
+	GLint location_sceneBBDiagonal		  = getUniform("sceneBBDiagonal");
+	GLint location_colorBounds			  = getUniform("colorBounds");
+	GLint location_textureBounds		  = getUniform("textureBounds");
+	GLint location_colorBoundsAlternate	  = getUniform("colorBoundsAlternate");
+	GLint location_textureBoundsAlternate = getUniform("textureBoundsAlternate");
+	GLint location_currentPlane			  = getUniform("currentPlane");
+	GLint location_showTex				  = getUniform("showTex");
+	GLint location_drawOnlyData			  = getUniform("drawOnlyData");
 
-	GLint location_color0 =					getUniform("color0");
-	GLint location_color1 =					getUniform("color1");
-	GLint location_color0Alt =				getUniform("color0Alternate");
-	GLint location_color1Alt =				getUniform("color1Alternate");
-	GLint location_r_channelView =			getUniform("r_channelView");
-	GLint location_r_selectedChannel =		getUniform("r_selectedChannel");
-	GLint location_r_nbChannels =			getUniform("r_nbChannels");
-	GLint location_g_channelView =			getUniform("g_channelView");
-	GLint location_g_selectedChannel =		getUniform("g_selectedChannel");
-	GLint location_g_nbChannels =			getUniform("g_nbChannels");
-	GLint location_rgbMode =				getUniform("rgbMode");
+	GLint location_color0			 = getUniform("color0");
+	GLint location_color1			 = getUniform("color1");
+	GLint location_color0Alt		 = getUniform("color0Alternate");
+	GLint location_color1Alt		 = getUniform("color1Alternate");
+	GLint location_r_channelView	 = getUniform("r_channelView");
+	GLint location_r_selectedChannel = getUniform("r_selectedChannel");
+	GLint location_r_nbChannels		 = getUniform("r_nbChannels");
+	GLint location_g_channelView	 = getUniform("g_channelView");
+	GLint location_g_selectedChannel = getUniform("g_selectedChannel");
+	GLint location_g_nbChannels		 = getUniform("g_nbChannels");
+	GLint location_rgbMode			 = getUniform("rgbMode");
 
 	if (grid->nbChannels > 1) {
 		glUniform1ui(location_r_selectedChannel, this->selectedChannel_r);
@@ -2254,17 +2446,17 @@ void Scene::newAPI_prepareUniforms_3DPlane(GLfloat *mvMat, GLfloat *pMat, planes
 
 	// Generate the data we need :
 	MatrixTransform::Ptr grid_transform_pointer = std::dynamic_pointer_cast<MatrixTransform>(grid->grid->getPrecomputedMatrix());
-	glm::mat4 transform = glm::mat4(1.f);
-	glm::mat4 gridTransfo = grid_transform_pointer->matrix(); //grid->grid->getTransform_GridToWorld();
-	#warning Transform API is still in-progress.
+	glm::mat4 transform							= glm::mat4(1.f);
+	glm::mat4 gridTransfo						= grid_transform_pointer->matrix();	   //grid->grid->getTransform_GridToWorld();
+#warning Transform API is still in-progress.
 	DiscreteGrid::bbox_t bbws = grid->grid->getBoundingBox();
-	glm::vec3 dims = glm::convert_to<glm::vec3::value_type>(grid->grid->getResolution()) * grid->grid->getVoxelDimensions();
-	glm::vec3 size = bbws.getDiagonal();
-	GLint plIdx = (_plane == planes::x) ? 1 : (_plane == planes::y) ? 2 : 3;
+	glm::vec3 dims			  = glm::convert_to<glm::vec3::value_type>(grid->grid->getResolution()) * grid->grid->getVoxelDimensions();
+	glm::vec3 size			  = bbws.getDiagonal();
+	GLint plIdx				  = (_plane == planes::x) ? 1 : (_plane == planes::y) ? 2 : 3;
 
 	DiscreteGrid::bbox_t::vec position = this->sceneBB.getMin();
 	DiscreteGrid::bbox_t::vec diagonal = this->sceneBB.getDiagonal();
-	glm::vec3 planePos = this->computePlanePositions();
+	glm::vec3 planePos				   = this->computePlanePositions();
 
 	glUniformMatrix4fv(location_mMatrix, 1, GL_FALSE, glm::value_ptr(transform));
 	glUniformMatrix4fv(location_vMatrix, 1, GL_FALSE, mvMat);
@@ -2286,17 +2478,17 @@ void Scene::newAPI_prepareUniforms_3DPlane(GLfloat *mvMat, GLfloat *pMat, planes
 
 	glUniform2fv(location_colorBounds, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds0)));
 	glUniform2fv(location_colorBoundsAlternate, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds1)));
-	glUniform2f (location_textureBounds, tb0.x, tb0.y);
-	glUniform2f (location_textureBoundsAlternate, tb1.x, tb1.y);
+	glUniform2f(location_textureBounds, tb0.x, tb0.y);
+	glUniform2f(location_textureBoundsAlternate, tb1.x, tb1.y);
 
 	glUniform3fv(location_planePosition, 1, glm::value_ptr(planePos));
 	glUniform3fv(location_planeDirection, 1, glm::value_ptr(this->planeDirection));
 	glUniform1i(location_showTex, showTexOnPlane ? 1 : 0);
 
-	GLint location_colorScales0 =			getUniform("colorScales[0]");
-	GLint location_colorScales1 =			getUniform("colorScales[1]");
-	GLint location_colorScales2 =			getUniform("colorScales[2]");
-	GLint location_colorScales3 =			getUniform("colorScales[3]");
+	GLint location_colorScales0 = getUniform("colorScales[0]");
+	GLint location_colorScales1 = getUniform("colorScales[1]");
+	GLint location_colorScales2 = getUniform("colorScales[2]");
+	GLint location_colorScales3 = getUniform("colorScales[3]");
 
 	GLint enabled_textures = 0;
 	glActiveTexture(GL_TEXTURE0 + enabled_textures);
@@ -2326,7 +2518,7 @@ void Scene::newAPI_prepareUniforms_3DPlane(GLfloat *mvMat, GLfloat *pMat, planes
 	enabled_textures++;
 
 	const GLchar uniform_block_name[] = "ColorBlock";
-	GLuint colorBlock_index = glGetUniformBlockIndex(this->programHandle_projectedTex, uniform_block_name);
+	GLuint colorBlock_index			  = glGetUniformBlockIndex(this->programHandle_projectedTex, uniform_block_name);
 	glUniformBlockBinding(this->programHandle_projectedTex, colorBlock_index, 0);
 	glBindBufferBase(GL_UNIFORM_BUFFER, 0, grid->uboHandle_colorAttributes);
 }
@@ -2334,14 +2526,23 @@ void Scene::newAPI_prepareUniforms_3DPlane(GLfloat *mvMat, GLfloat *pMat, planes
 void Scene::prepareUniforms_PlaneViewer(planes _plane, planeHeading _heading, glm::vec2 fbDims, float zoomRatio, glm::vec2 offset, const GridGLView::Ptr& _grid) {
 	glUseProgram(this->programHandle_PlaneViewer);
 	// The BB used is the scene's bounding box :
-	const DiscreteGrid::bbox_t::vec& bbox = this->sceneBB.getDiagonal();
+	const DiscreteGrid::bbox_t::vec& bbox	= this->sceneBB.getDiagonal();
 	const DiscreteGrid::bbox_t::vec& posBox = this->sceneBB.getMin();
 
 	// The correct bounding box coordinates :
 	glm::vec2 gridBBDims;
-	if (_plane == planes::x) { gridBBDims.x = bbox.y; gridBBDims.y = bbox.z; }
-	if (_plane == planes::y) { gridBBDims.x = bbox.x; gridBBDims.y = bbox.z; }
-	if (_plane == planes::z) { gridBBDims.x = bbox.x; gridBBDims.y = bbox.y; }
+	if (_plane == planes::x) {
+		gridBBDims.x = bbox.y;
+		gridBBDims.y = bbox.z;
+	}
+	if (_plane == planes::y) {
+		gridBBDims.x = bbox.x;
+		gridBBDims.y = bbox.z;
+	}
+	if (_plane == planes::z) {
+		gridBBDims.x = bbox.x;
+		gridBBDims.y = bbox.y;
+	}
 
 	// Plane heading as a integer value (valid for shaders) :
 	uint plane_heading = planeHeadingToIndex(_heading);
@@ -2356,7 +2557,7 @@ void Scene::prepareUniforms_PlaneViewer(planes _plane, planeHeading _heading, gl
 		GLint g = glGetUniformLocation(this->programHandle_PlaneViewer, name);
 		if (this->showVAOstate) {
 			if (g >= 0) {
-			std::cerr << "[LOG]\tLocation [" << +g << "] for uniform " << name << '\n';
+				std::cerr << "[LOG]\tLocation [" << +g << "] for uniform " << name << '\n';
 			} else {
 				std::cerr << "[LOG]\tCannot find uniform " << name << "\n";
 			}
@@ -2371,34 +2572,34 @@ void Scene::prepareUniforms_PlaneViewer(planes _plane, planeHeading _heading, gl
 
 	// Uniform locations :
 	// VShader :
-	GLint location_fbDims =					getUniform("fbDims");
-	GLint location_bbDims =					getUniform("bbDims");
-	GLint location_planeIndex =				getUniform("planeIndex");
-	GLint location_gridTransform =			getUniform("gridTransform");
-	GLint location_gridDimensions =			getUniform("gridDimensions");
-	GLint location_gridBBDiagonal =			getUniform("sceneBBDiagonal");
-	GLint location_gridBBPosition =			getUniform("sceneBBPosition");
-	GLint location_planePositions =			getUniform("planePositions");
-	GLint location_heading =				getUniform("heading");
-	GLint location_zoom =					getUniform("zoom");
-	GLint location_offset =					getUniform("offset");
+	GLint location_fbDims		  = getUniform("fbDims");
+	GLint location_bbDims		  = getUniform("bbDims");
+	GLint location_planeIndex	  = getUniform("planeIndex");
+	GLint location_gridTransform  = getUniform("gridTransform");
+	GLint location_gridDimensions = getUniform("gridDimensions");
+	GLint location_gridBBDiagonal = getUniform("sceneBBDiagonal");
+	GLint location_gridBBPosition = getUniform("sceneBBPosition");
+	GLint location_planePositions = getUniform("planePositions");
+	GLint location_heading		  = getUniform("heading");
+	GLint location_zoom			  = getUniform("zoom");
+	GLint location_offset		  = getUniform("offset");
 	// FShader :
-	GLint location_texData =				getUniform("texData");
-	GLint location_colorBounds =			getUniform("colorBounds");
-	GLint location_colorBoundsAlternate =	getUniform("colorBoundsAlternate");
-	GLint location_textureBounds =			getUniform("textureBounds");
+	GLint location_texData				  = getUniform("texData");
+	GLint location_colorBounds			  = getUniform("colorBounds");
+	GLint location_colorBoundsAlternate	  = getUniform("colorBoundsAlternate");
+	GLint location_textureBounds		  = getUniform("textureBounds");
 	GLint location_textureBoundsAlternate = getUniform("textureBoundsAlternate");
-	GLint location_color0 =					getUniform("color0");
-	GLint location_color1 =					getUniform("color1");
-	GLint location_color0Alt =				getUniform("color0Alternate");
-	GLint location_color1Alt =				getUniform("color1Alternate");
-	GLint location_r_channelView =			getUniform("r_channelView");
-	GLint location_r_selectedChannel =		getUniform("r_selectedChannel");
-	GLint location_r_nbChannels =			getUniform("r_nbChannels");
-	GLint location_g_channelView =			getUniform("g_channelView");
-	GLint location_g_selectedChannel =		getUniform("g_selectedChannel");
-	GLint location_g_nbChannels =			getUniform("g_nbChannels");
-	GLint location_rgbMode =				getUniform("rgbMode");
+	GLint location_color0				  = getUniform("color0");
+	GLint location_color1				  = getUniform("color1");
+	GLint location_color0Alt			  = getUniform("color0Alternate");
+	GLint location_color1Alt			  = getUniform("color1Alternate");
+	GLint location_r_channelView		  = getUniform("r_channelView");
+	GLint location_r_selectedChannel	  = getUniform("r_selectedChannel");
+	GLint location_r_nbChannels			  = getUniform("r_nbChannels");
+	GLint location_g_channelView		  = getUniform("g_channelView");
+	GLint location_g_selectedChannel	  = getUniform("g_selectedChannel");
+	GLint location_g_nbChannels			  = getUniform("g_nbChannels");
+	GLint location_rgbMode				  = getUniform("rgbMode");
 
 	glUniform1ui(location_rgbMode, this->rgbMode);
 
@@ -2431,14 +2632,14 @@ void Scene::prepareUniforms_PlaneViewer(planes _plane, planeHeading _heading, gl
 	glUniform3fv(location_planePositions, 1, glm::value_ptr(planePos));
 	glUniform2fv(location_colorBounds, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds0)));
 	glUniform2fv(location_colorBoundsAlternate, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds1)));
-	glUniform2f (location_textureBounds, tb0.x, tb0.y);
-	glUniform2f (location_textureBoundsAlternate, tb1.x, tb1.y);
+	glUniform2f(location_textureBounds, tb0.x, tb0.y);
+	glUniform2f(location_textureBoundsAlternate, tb1.x, tb1.y);
 	glUniform1ui(location_heading, plane_heading);
 	glUniform1f(location_zoom, zoomRatio);
 	glUniform1ui(location_r_nbChannels, 1);
 	glUniform1ui(location_g_nbChannels, 1);
 	glm::vec2 realOffset = offset;
-	realOffset.y = -realOffset.y;
+	realOffset.y		 = -realOffset.y;
 	glUniform2fv(location_offset, 1, glm::value_ptr(realOffset));
 
 	// Uniform samplers :
@@ -2450,21 +2651,30 @@ void Scene::prepareUniforms_PlaneViewer(planes _plane, planeHeading _heading, gl
 void Scene::newAPI_prepareUniforms_PlaneViewer(planes _plane, planeHeading _heading, glm::vec2 fbDims, float zoomRatio, glm::vec2 offset, const NewAPI_GridGLView::Ptr& _grid) {
 	glUseProgram(this->programHandle_PlaneViewer);
 	// The BB used is the scene's bounding box :
-	const DiscreteGrid::bbox_t::vec& bbox = this->sceneBB.getDiagonal();
+	const DiscreteGrid::bbox_t::vec& bbox	= this->sceneBB.getDiagonal();
 	const DiscreteGrid::bbox_t::vec& posBox = this->sceneBB.getMin();
 
 	// The correct bounding box coordinates :
 	glm::vec2 gridBBDims;
-	if (_plane == planes::x) { gridBBDims.x = bbox.y; gridBBDims.y = bbox.z; }
-	if (_plane == planes::y) { gridBBDims.x = bbox.x; gridBBDims.y = bbox.z; }
-	if (_plane == planes::z) { gridBBDims.x = bbox.x; gridBBDims.y = bbox.y; }
+	if (_plane == planes::x) {
+		gridBBDims.x = bbox.y;
+		gridBBDims.y = bbox.z;
+	}
+	if (_plane == planes::y) {
+		gridBBDims.x = bbox.x;
+		gridBBDims.y = bbox.z;
+	}
+	if (_plane == planes::z) {
+		gridBBDims.x = bbox.x;
+		gridBBDims.y = bbox.y;
+	}
 
 	// Plane heading as a integer value (valid for shaders) :
-	uint plane_heading = planeHeadingToIndex(_heading);
+	uint plane_heading							= planeHeadingToIndex(_heading);
 	MatrixTransform::Ptr grid_transform_pointer = std::dynamic_pointer_cast<MatrixTransform>(_grid->grid->getPrecomputedMatrix());
 	// Grid transform :
-	glm::mat4 gridTransform = grid_transform_pointer->matrix(); //_grid->grid->getTransform_WorldToGrid();
-	#warning Transform API is still in-progress.
+	glm::mat4 gridTransform = grid_transform_pointer->matrix();	   //_grid->grid->getTransform_WorldToGrid();
+#warning Transform API is still in-progress.
 	// Grid dimensions :
 	glm::vec3 gridDimensions = glm::convert_to<glm::vec3::value_type>(_grid->grid->getBoundingBox().getDiagonal());
 	// Depth of the plane :
@@ -2474,7 +2684,7 @@ void Scene::newAPI_prepareUniforms_PlaneViewer(planes _plane, planeHeading _head
 		GLint g = glGetUniformLocation(this->programHandle_PlaneViewer, name);
 		if (this->showVAOstate) {
 			if (g >= 0) {
-			std::cerr << "[LOG]\tLocation [" << +g << "] for uniform " << name << '\n';
+				std::cerr << "[LOG]\tLocation [" << +g << "] for uniform " << name << '\n';
 			} else {
 				std::cerr << "[LOG]\tCannot find uniform " << name << "\n";
 			}
@@ -2489,34 +2699,34 @@ void Scene::newAPI_prepareUniforms_PlaneViewer(planes _plane, planeHeading _head
 
 	// Uniform locations :
 	// VShader :
-	GLint location_fbDims =					getUniform("fbDims");
-	GLint location_bbDims =					getUniform("bbDims");
-	GLint location_planeIndex =				getUniform("planeIndex");
-	GLint location_gridTransform =			getUniform("gridTransform");
-	GLint location_gridDimensions =			getUniform("gridDimensions");
-	GLint location_gridBBDiagonal =			getUniform("sceneBBDiagonal");
-	GLint location_gridBBPosition =			getUniform("sceneBBPosition");
-	GLint location_planePositions =			getUniform("planePositions");
-	GLint location_heading =				getUniform("heading");
-	GLint location_zoom =					getUniform("zoom");
-	GLint location_offset =					getUniform("offset");
+	GLint location_fbDims		  = getUniform("fbDims");
+	GLint location_bbDims		  = getUniform("bbDims");
+	GLint location_planeIndex	  = getUniform("planeIndex");
+	GLint location_gridTransform  = getUniform("gridTransform");
+	GLint location_gridDimensions = getUniform("gridDimensions");
+	GLint location_gridBBDiagonal = getUniform("sceneBBDiagonal");
+	GLint location_gridBBPosition = getUniform("sceneBBPosition");
+	GLint location_planePositions = getUniform("planePositions");
+	GLint location_heading		  = getUniform("heading");
+	GLint location_zoom			  = getUniform("zoom");
+	GLint location_offset		  = getUniform("offset");
 	// FShader :
-	GLint location_texData =				getUniform("texData");
-	GLint location_colorBounds =			getUniform("colorBounds");
-	GLint location_colorBoundsAlternate =	getUniform("colorBoundsAlternate");
-	GLint location_textureBounds =			getUniform("textureBounds");
+	GLint location_texData				  = getUniform("texData");
+	GLint location_colorBounds			  = getUniform("colorBounds");
+	GLint location_colorBoundsAlternate	  = getUniform("colorBoundsAlternate");
+	GLint location_textureBounds		  = getUniform("textureBounds");
 	GLint location_textureBoundsAlternate = getUniform("textureBoundsAlternate");
-	GLint location_color0 =					getUniform("color0");
-	GLint location_color1 =					getUniform("color1");
-	GLint location_color0Alt =				getUniform("color0Alternate");
-	GLint location_color1Alt =				getUniform("color1Alternate");
-	GLint location_r_channelView =			getUniform("r_channelView");
-	GLint location_r_selectedChannel =		getUniform("r_selectedChannel");
-	GLint location_r_nbChannels =			getUniform("r_nbChannels");
-	GLint location_g_channelView =			getUniform("g_channelView");
-	GLint location_g_selectedChannel =		getUniform("g_selectedChannel");
-	GLint location_g_nbChannels =			getUniform("g_nbChannels");
-	GLint location_rgbMode =				getUniform("rgbMode");
+	GLint location_color0				  = getUniform("color0");
+	GLint location_color1				  = getUniform("color1");
+	GLint location_color0Alt			  = getUniform("color0Alternate");
+	GLint location_color1Alt			  = getUniform("color1Alternate");
+	GLint location_r_channelView		  = getUniform("r_channelView");
+	GLint location_r_selectedChannel	  = getUniform("r_selectedChannel");
+	GLint location_r_nbChannels			  = getUniform("r_nbChannels");
+	GLint location_g_channelView		  = getUniform("g_channelView");
+	GLint location_g_selectedChannel	  = getUniform("g_selectedChannel");
+	GLint location_g_nbChannels			  = getUniform("g_nbChannels");
+	GLint location_rgbMode				  = getUniform("rgbMode");
 
 	glUniform1ui(location_rgbMode, this->rgbMode);
 
@@ -2549,14 +2759,14 @@ void Scene::newAPI_prepareUniforms_PlaneViewer(planes _plane, planeHeading _head
 	glUniform3fv(location_planePositions, 1, glm::value_ptr(planePos));
 	glUniform2fv(location_colorBounds, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds0)));
 	glUniform2fv(location_colorBoundsAlternate, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds1)));
-	glUniform2f (location_textureBounds, tb0.x, tb0.y);
-	glUniform2f (location_textureBoundsAlternate, tb1.x, tb1.y);
+	glUniform2f(location_textureBounds, tb0.x, tb0.y);
+	glUniform2f(location_textureBoundsAlternate, tb1.x, tb1.y);
 	glUniform1ui(location_heading, plane_heading);
 	glUniform1f(location_zoom, zoomRatio);
 	glUniform1ui(location_r_nbChannels, 1);
 	glUniform1ui(location_g_nbChannels, 1);
 	glm::vec2 realOffset = offset;
-	realOffset.y = -realOffset.y;
+	realOffset.y		 = -realOffset.y;
 	glUniform2fv(location_offset, 1, glm::value_ptr(realOffset));
 
 	// Uniform samplers :
@@ -2566,10 +2776,10 @@ void Scene::newAPI_prepareUniforms_PlaneViewer(planes _plane, planeHeading _head
 	glUniform1i(location_texData, tex);
 	tex++;
 
-	GLint location_colorScales0 =		getUniform("colorScales[0]");
-	GLint location_colorScales1 =		getUniform("colorScales[1]");
-	GLint location_colorScales2 =		getUniform("colorScales[2]");
-	GLint location_colorScales3 =		getUniform("colorScales[3]");
+	GLint location_colorScales0 = getUniform("colorScales[0]");
+	GLint location_colorScales1 = getUniform("colorScales[1]");
+	GLint location_colorScales2 = getUniform("colorScales[2]");
+	GLint location_colorScales3 = getUniform("colorScales[3]");
 
 	glActiveTexture(GL_TEXTURE0 + tex);
 	glBindTexture(GL_TEXTURE_1D, this->texHandle_colorScale_greyscale);
@@ -2592,19 +2802,20 @@ void Scene::newAPI_prepareUniforms_PlaneViewer(planes _plane, planeHeading _head
 	tex++;
 
 	const GLchar uniform_block_name[] = "ColorBlock";
-	GLuint colorBlock_index = glGetUniformBlockIndex(this->programHandle_projectedTex, uniform_block_name);
+	GLuint colorBlock_index			  = glGetUniformBlockIndex(this->programHandle_projectedTex, uniform_block_name);
 	glUniformBlockBinding(this->programHandle_projectedTex, colorBlock_index, 0);
 	glBindBufferBase(GL_UNIFORM_BUFFER, 0, _grid->uboHandle_colorAttributes);
 }
 
-void Scene::prepareUniforms_Volumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, const GridGLView::Ptr &_grid) {
+void Scene::prepareUniforms_Volumetric(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const GridGLView::Ptr& _grid) {
 	// We assume the right program has been bound.
 
 	/// @brief Shortcut for glGetUniform, since this can result in long lines.
 	auto getUniform = [&](const char* name) -> GLint {
-		GLint g = glGetUniformLocation(this->programHandle_VolumetricViewer, name);if (this->showVAOstate) {
+		GLint g = glGetUniformLocation(this->programHandle_VolumetricViewer, name);
+		if (this->showVAOstate) {
 			if (g >= 0) {
-			std::cerr << "[LOG]\tLocation [" << +g << "] for uniform " << name << '\n';
+				std::cerr << "[LOG]\tLocation [" << +g << "] for uniform " << name << '\n';
 			} else {
 				std::cerr << "[LOG]\tCannot find uniform " << name << "\n";
 			}
@@ -2618,14 +2829,14 @@ void Scene::prepareUniforms_Volumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 
 	}
 
 	// Texture handles :
-	GLint location_vertices_translation =	getUniform("vertices_translations");
-	GLint location_normals_translation =	getUniform("normals_translations");
-	GLint location_visibility_texture =		getUniform("visibility_texture");
-	GLint location_texture_coordinates =	getUniform("texture_coordinates");
-	GLint location_neighbors =				getUniform("neighbors");
-	GLint location_Mask =					getUniform("texData");
-	GLint location_visibilityMap =			getUniform("visiblity_map");
-	GLint location_visibilityMapAlternate =	getUniform("visiblity_map_alternate");
+	GLint location_vertices_translation	  = getUniform("vertices_translations");
+	GLint location_normals_translation	  = getUniform("normals_translations");
+	GLint location_visibility_texture	  = getUniform("visibility_texture");
+	GLint location_texture_coordinates	  = getUniform("texture_coordinates");
+	GLint location_neighbors			  = getUniform("neighbors");
+	GLint location_Mask					  = getUniform("texData");
+	GLint location_visibilityMap		  = getUniform("visiblity_map");
+	GLint location_visibilityMapAlternate = getUniform("visiblity_map_alternate");
 
 	std::size_t tex = 0;
 	glActiveTexture(GL_TEXTURE0 + tex);
@@ -2669,8 +2880,8 @@ void Scene::prepareUniforms_Volumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 
 	tex++;
 
 	// Scalars :
-	GLint location_voxelSize =				getUniform("voxelSize");
-	GLint location_gridSize =				getUniform("gridSize");
+	GLint location_voxelSize = getUniform("voxelSize");
+	GLint location_gridSize	 = getUniform("gridSize");
 
 	glm::vec3 floatres = glm::convert_to<float>(_grid->grid[0]->getResolution());
 
@@ -2678,23 +2889,23 @@ void Scene::prepareUniforms_Volumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 
 	glUniform3fv(location_gridSize, 1, glm::value_ptr(floatres));
 
 	// Vectors/arrays :
-	GLint location_cam =					getUniform("cam");
-	GLint location_cut =					getUniform("cut");
-	GLint location_cutDirection =			getUniform("cutDirection");
+	GLint location_cam					  = getUniform("cam");
+	GLint location_cut					  = getUniform("cut");
+	GLint location_cutDirection			  = getUniform("cutDirection");
 	GLint location_clipDistanceFromCamera = getUniform("clipDistanceFromCamera");
-	GLint location_visuBBMin =				getUniform("visuBBMin");
-	GLint location_visuBBMax =				getUniform("visuBBMax");
-	GLint location_shouldUseBB =			getUniform("shouldUseBB");
-	GLint location_volumeEpsilon =			getUniform("volumeEpsilon");
+	GLint location_visuBBMin			  = getUniform("visuBBMin");
+	GLint location_visuBBMax			  = getUniform("visuBBMax");
+	GLint location_shouldUseBB			  = getUniform("shouldUseBB");
+	GLint location_volumeEpsilon		  = getUniform("volumeEpsilon");
 
-	glm::vec3 planePos = this->computePlanePositions();
+	glm::vec3 planePos			  = this->computePlanePositions();
 	DiscreteGrid::bbox_t::vec min = this->visuBox.getMin();
 	DiscreteGrid::bbox_t::vec max = this->visuBox.getMax();
 
 	glUniform3fv(location_cam, 1, glm::value_ptr(camPos));
 	glUniform3fv(location_cut, 1, glm::value_ptr(planePos));
 	glUniform3fv(location_cutDirection, 1, glm::value_ptr(this->planeDirection));
-	glUniform1f (location_clipDistanceFromCamera, this->clipDistanceFromCamera);
+	glUniform1f(location_clipDistanceFromCamera, this->clipDistanceFromCamera);
 	glUniform3fv(location_visuBBMin, 1, glm::value_ptr(min));
 	glUniform3fv(location_visuBBMax, 1, glm::value_ptr(max));
 	glUniform1ui(location_shouldUseBB, ((this->drawMode == DrawMode::VolumetricBoxed) ? 1 : 0));
@@ -2730,10 +2941,10 @@ void Scene::prepareUniforms_Volumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 
 	glUniform3fv(location_light7, 1, glm::value_ptr(this->lightPositions[7]));
 
 	// Limits :
-	GLint location_colorBounds =			getUniform("colorBounds");
-	GLint location_colorBoundsAlternate =	getUniform("colorBoundsAlternate");
-	GLint location_textureBounds =			getUniform("textureBounds");
-	GLint location_textureBoundsAlternate =	getUniform("textureBoundsAlternate");
+	GLint location_colorBounds			  = getUniform("colorBounds");
+	GLint location_colorBoundsAlternate	  = getUniform("colorBoundsAlternate");
+	GLint location_textureBounds		  = getUniform("textureBounds");
+	GLint location_textureBoundsAlternate = getUniform("textureBoundsAlternate");
 
 	glUniform2fv(location_colorBounds, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds0)));
 	glUniform2fv(location_colorBoundsAlternate, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds1)));
@@ -2741,28 +2952,28 @@ void Scene::prepareUniforms_Volumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 
 	glUniform2fv(location_textureBoundsAlternate, 1, glm::value_ptr(glm::convert_to<float>(this->textureBounds1)));
 
 	// Color and shading parameters :
-	GLint location_specRef =			getUniform("specRef");
-	GLint location_shininess =			getUniform("shininess");
-	GLint location_diffuseRef =			getUniform("diffuseRef");
-	GLint location_rgbMode =			getUniform("rgbMode");
-	GLint location_r_channelView =		getUniform("r_channelView");
-	GLint location_r_selectedChannel =	getUniform("r_selectedChannel");
-	GLint location_r_nbChannels =		getUniform("r_nbChannels");
-	GLint location_g_channelView =		getUniform("g_channelView");
-	GLint location_g_selectedChannel =	getUniform("g_selectedChannel");
-	GLint location_g_nbChannels =		getUniform("g_nbChannels");
+	GLint location_specRef			 = getUniform("specRef");
+	GLint location_shininess		 = getUniform("shininess");
+	GLint location_diffuseRef		 = getUniform("diffuseRef");
+	GLint location_rgbMode			 = getUniform("rgbMode");
+	GLint location_r_channelView	 = getUniform("r_channelView");
+	GLint location_r_selectedChannel = getUniform("r_selectedChannel");
+	GLint location_r_nbChannels		 = getUniform("r_nbChannels");
+	GLint location_g_channelView	 = getUniform("g_channelView");
+	GLint location_g_selectedChannel = getUniform("g_selectedChannel");
+	GLint location_g_nbChannels		 = getUniform("g_nbChannels");
 
 	uint chan_r = this->colorFunctionToUniform(this->channels_r);
 	uint chan_g = this->colorFunctionToUniform(this->channels_g);
 
-	glUniform1f (location_specRef, .8f);
-	glUniform1f (location_shininess, .8f);
-	glUniform1f (location_diffuseRef, .8f);
+	glUniform1f(location_specRef, .8f);
+	glUniform1f(location_shininess, .8f);
+	glUniform1f(location_diffuseRef, .8f);
 	glUniform1ui(location_rgbMode, this->rgbMode);
 	glUniform1ui(location_r_channelView, chan_r);
 	glUniform1ui(location_g_channelView, chan_g);
 	glUniform1ui(location_r_nbChannels, 1);
-	glUniform1ui(location_g_nbChannels, (_grid->grid.size() > 1) ? 1 : 0); // only set this if there's two grids
+	glUniform1ui(location_g_nbChannels, (_grid->grid.size() > 1) ? 1 : 0);	  // only set this if there's two grids
 	if (_grid->nbChannels > 1) {
 		glUniform1ui(location_r_selectedChannel, this->selectedChannel_r);
 		glUniform1ui(location_g_selectedChannel, this->selectedChannel_g);
@@ -2772,10 +2983,10 @@ void Scene::prepareUniforms_Volumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 
 	}
 
 	// User-defined colors :
-	GLint location_color0 =		getUniform("color0");
-	GLint location_color1 =		getUniform("color1");
-	GLint location_color0Alt =	getUniform("color0Alternate");
-	GLint location_color1Alt =	getUniform("color1Alternate");
+	GLint location_color0	 = getUniform("color0");
+	GLint location_color1	 = getUniform("color1");
+	GLint location_color0Alt = getUniform("color0Alternate");
+	GLint location_color1Alt = getUniform("color1Alternate");
 
 	glUniform3fv(location_color0, 1, glm::value_ptr(this->color0));
 	glUniform3fv(location_color1, 1, glm::value_ptr(this->color1));
@@ -2803,21 +3014,21 @@ void Scene::prepareUniforms_Volumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 
 		std::cerr << "[LOG]\tVisu BB min               : [" << +min.x << ',' << +min.y << ',' << +min.z << "]\n";
 		std::cerr << "[LOG]\tVisu BB max               : [" << +max.x << ',' << +max.y << ',' << +max.z << "]\n";
 		for (std::size_t i = 0; i < this->lightPositions.size(); ++i) {
-			std::cerr << "[LOG]\tLight " << i << "                   : [" << +this->lightPositions[i].x << ',' <<
-				+this->lightPositions[i].y << ',' << +this->lightPositions[i].z << "]\n";
+			std::cerr << "[LOG]\tLight " << i << "                   : [" << +this->lightPositions[i].x << ',' << +this->lightPositions[i].y << ',' << +this->lightPositions[i].z << "]\n";
 		}
 		LOG_LEAVE(Scene::drawVolumetric)
 	}
 }
 
-void Scene::newAPI_prepareUniforms_Volumetric(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, const NewAPI_GridGLView::Ptr &_grid) {
+void Scene::newAPI_prepareUniforms_Volumetric(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const NewAPI_GridGLView::Ptr& _grid) {
 	// We assume the right program has been bound.
 
 	/// @brief Shortcut for glGetUniform, since this can result in long lines.
 	auto getUniform = [&](const char* name) -> GLint {
-		GLint g = glGetUniformLocation(this->programHandle_VolumetricViewer, name);if (this->showVAOstate) {
+		GLint g = glGetUniformLocation(this->programHandle_VolumetricViewer, name);
+		if (this->showVAOstate) {
 			if (g >= 0) {
-			std::cerr << "[LOG]\tLocation [" << +g << "] for uniform " << name << '\n';
+				std::cerr << "[LOG]\tLocation [" << +g << "] for uniform " << name << '\n';
 			} else {
 				std::cerr << "[LOG]\tCannot find uniform " << name << "\n";
 			}
@@ -2831,14 +3042,14 @@ void Scene::newAPI_prepareUniforms_Volumetric(GLfloat *mvMat, GLfloat *pMat, glm
 	}
 
 	// Texture handles :
-	GLint location_vertices_translation =	getUniform("vertices_translations");
-	GLint location_normals_translation =	getUniform("normals_translations");
-	GLint location_visibility_texture =		getUniform("visibility_texture");
-	GLint location_texture_coordinates =	getUniform("texture_coordinates");
-	GLint location_neighbors =				getUniform("neighbors");
-	GLint location_Mask =					getUniform("texData");
-	GLint location_visibilityMap =			getUniform("visiblity_map");
-	GLint location_visibilityMapAlternate =	getUniform("visiblity_map_alternate");
+	GLint location_vertices_translation	  = getUniform("vertices_translations");
+	GLint location_normals_translation	  = getUniform("normals_translations");
+	GLint location_visibility_texture	  = getUniform("visibility_texture");
+	GLint location_texture_coordinates	  = getUniform("texture_coordinates");
+	GLint location_neighbors			  = getUniform("neighbors");
+	GLint location_Mask					  = getUniform("texData");
+	GLint location_visibilityMap		  = getUniform("visiblity_map");
+	GLint location_visibilityMapAlternate = getUniform("visiblity_map_alternate");
 
 	std::size_t tex = 0;
 	glActiveTexture(GL_TEXTURE0 + tex);
@@ -2882,8 +3093,8 @@ void Scene::newAPI_prepareUniforms_Volumetric(GLfloat *mvMat, GLfloat *pMat, glm
 	tex++;
 
 	// Scalars :
-	GLint location_voxelSize =				getUniform("voxelSize");
-	GLint location_gridSize =				getUniform("gridSize");
+	GLint location_voxelSize = getUniform("voxelSize");
+	GLint location_gridSize	 = getUniform("gridSize");
 
 	glm::vec3 floatres = glm::convert_to<float>(_grid->grid->getResolution());
 
@@ -2891,23 +3102,23 @@ void Scene::newAPI_prepareUniforms_Volumetric(GLfloat *mvMat, GLfloat *pMat, glm
 	glUniform3fv(location_gridSize, 1, glm::value_ptr(floatres));
 
 	// Vectors/arrays :
-	GLint location_cam =					getUniform("cam");
-	GLint location_cut =					getUniform("cut");
-	GLint location_cutDirection =			getUniform("cutDirection");
+	GLint location_cam					  = getUniform("cam");
+	GLint location_cut					  = getUniform("cut");
+	GLint location_cutDirection			  = getUniform("cutDirection");
 	GLint location_clipDistanceFromCamera = getUniform("clipDistanceFromCamera");
-	GLint location_visuBBMin =				getUniform("visuBBMin");
-	GLint location_visuBBMax =				getUniform("visuBBMax");
-	GLint location_shouldUseBB =			getUniform("shouldUseBB");
-	GLint location_volumeEpsilon =			getUniform("volumeEpsilon");
+	GLint location_visuBBMin			  = getUniform("visuBBMin");
+	GLint location_visuBBMax			  = getUniform("visuBBMax");
+	GLint location_shouldUseBB			  = getUniform("shouldUseBB");
+	GLint location_volumeEpsilon		  = getUniform("volumeEpsilon");
 
-	glm::vec3 planePos = this->computePlanePositions();
+	glm::vec3 planePos			  = this->computePlanePositions();
 	DiscreteGrid::bbox_t::vec min = this->visuBox.getMin();
 	DiscreteGrid::bbox_t::vec max = this->visuBox.getMax();
 
 	glUniform3fv(location_cam, 1, glm::value_ptr(camPos));
 	glUniform3fv(location_cut, 1, glm::value_ptr(planePos));
 	glUniform3fv(location_cutDirection, 1, glm::value_ptr(this->planeDirection));
-	glUniform1f (location_clipDistanceFromCamera, this->clipDistanceFromCamera);
+	glUniform1f(location_clipDistanceFromCamera, this->clipDistanceFromCamera);
 	glUniform3fv(location_visuBBMin, 1, glm::value_ptr(min));
 	glUniform3fv(location_visuBBMax, 1, glm::value_ptr(max));
 	glUniform1ui(location_shouldUseBB, ((this->drawMode == DrawMode::VolumetricBoxed) ? 1 : 0));
@@ -2918,10 +3129,10 @@ void Scene::newAPI_prepareUniforms_Volumetric(GLfloat *mvMat, GLfloat *pMat, glm
 	GLint location_vMat = getUniform("vMat");
 	GLint location_pMat = getUniform("pMat");
 
-	//const glm::mat4& gridTransfo = _grid->grid->getTransform_GridToWorld();
-	#warning Transform API is still in-progress.
+//const glm::mat4& gridTransfo = _grid->grid->getTransform_GridToWorld();
+#warning Transform API is still in-progress.
 	MatrixTransform::Ptr grid_transform_pointer = std::dynamic_pointer_cast<MatrixTransform>(_grid->grid->getPrecomputedMatrix());
-	const glm::mat4 gridTransfo = grid_transform_pointer->matrix();
+	const glm::mat4 gridTransfo					= grid_transform_pointer->matrix();
 	glUniformMatrix4fv(location_mMat, 1, GL_FALSE, glm::value_ptr(gridTransfo));
 	glUniformMatrix4fv(location_vMat, 1, GL_FALSE, mvMat);
 	glUniformMatrix4fv(location_pMat, 1, GL_FALSE, pMat);
@@ -2945,61 +3156,61 @@ void Scene::newAPI_prepareUniforms_Volumetric(GLfloat *mvMat, GLfloat *pMat, glm
 	glUniform3fv(location_light6, 1, glm::value_ptr(this->lightPositions[6]));
 	glUniform3fv(location_light7, 1, glm::value_ptr(this->lightPositions[7]));
 
-//	// Limits :
-//	GLint location_colorBounds =			getUniform("colorBounds");
-//	GLint location_colorBoundsAlternate =	getUniform("colorBoundsAlternate");
-//	GLint location_textureBounds =			getUniform("textureBounds");
-//	GLint location_textureBoundsAlternate =	getUniform("textureBoundsAlternate");
+	//	// Limits :
+	//	GLint location_colorBounds =			getUniform("colorBounds");
+	//	GLint location_colorBoundsAlternate =	getUniform("colorBoundsAlternate");
+	//	GLint location_textureBounds =			getUniform("textureBounds");
+	//	GLint location_textureBoundsAlternate =	getUniform("textureBoundsAlternate");
 
-//	glUniform2fv(location_colorBounds, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds0)));
-//	glUniform2fv(location_colorBoundsAlternate, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds1)));
-//	glUniform2fv(location_textureBounds, 1, glm::value_ptr(glm::convert_to<float>(this->textureBounds0)));
-//	glUniform2fv(location_textureBoundsAlternate, 1, glm::value_ptr(glm::convert_to<float>(this->textureBounds1)));
+	//	glUniform2fv(location_colorBounds, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds0)));
+	//	glUniform2fv(location_colorBoundsAlternate, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds1)));
+	//	glUniform2fv(location_textureBounds, 1, glm::value_ptr(glm::convert_to<float>(this->textureBounds0)));
+	//	glUniform2fv(location_textureBoundsAlternate, 1, glm::value_ptr(glm::convert_to<float>(this->textureBounds1)));
 
 	// Color and shading parameters :
-	GLint location_specRef =			getUniform("specRef");
-	GLint location_shininess =			getUniform("shininess");
-	GLint location_diffuseRef =			getUniform("diffuseRef");
-//	GLint location_rgbMode =			getUniform("rgbMode");
-//	GLint location_r_channelView =		getUniform("r_channelView");
-//	GLint location_r_selectedChannel =	getUniform("r_selectedChannel");
-//	GLint location_r_nbChannels =		getUniform("r_nbChannels");
-//	GLint location_g_channelView =		getUniform("g_channelView");
-//	GLint location_g_selectedChannel =	getUniform("g_selectedChannel");
-//	GLint location_g_nbChannels =		getUniform("g_nbChannels");
-//	uint chan_r = this->colorFunctionToUniform(this->channels_r);
-//	uint chan_g = this->colorFunctionToUniform(this->channels_g);
-	glUniform1f (location_specRef, .8f);
-	glUniform1f (location_shininess, .8f);
-	glUniform1f (location_diffuseRef, .8f);
-//	glUniform1ui(location_rgbMode, this->rgbMode);
-//	glUniform1ui(location_r_channelView, chan_r);
-//	glUniform1ui(location_g_channelView, chan_g);
-//	glUniform1ui(location_r_nbChannels, 1);
-//	glUniform1ui(location_g_nbChannels, (_grid->grid->getVoxelDimensionality() > 1) ? 1 : 0); // only set this if there's two grids
-//	if (_grid->nbChannels > 1) {
-//		glUniform1ui(location_r_selectedChannel, this->selectedChannel_r);
-//		glUniform1ui(location_g_selectedChannel, this->selectedChannel_g);
-//	} else {
-//		glUniform1ui(location_r_selectedChannel, 0);
-//		glUniform1ui(location_g_selectedChannel, 0);
-//	}
+	GLint location_specRef	  = getUniform("specRef");
+	GLint location_shininess  = getUniform("shininess");
+	GLint location_diffuseRef = getUniform("diffuseRef");
+	//	GLint location_rgbMode =			getUniform("rgbMode");
+	//	GLint location_r_channelView =		getUniform("r_channelView");
+	//	GLint location_r_selectedChannel =	getUniform("r_selectedChannel");
+	//	GLint location_r_nbChannels =		getUniform("r_nbChannels");
+	//	GLint location_g_channelView =		getUniform("g_channelView");
+	//	GLint location_g_selectedChannel =	getUniform("g_selectedChannel");
+	//	GLint location_g_nbChannels =		getUniform("g_nbChannels");
+	//	uint chan_r = this->colorFunctionToUniform(this->channels_r);
+	//	uint chan_g = this->colorFunctionToUniform(this->channels_g);
+	glUniform1f(location_specRef, .8f);
+	glUniform1f(location_shininess, .8f);
+	glUniform1f(location_diffuseRef, .8f);
+	//	glUniform1ui(location_rgbMode, this->rgbMode);
+	//	glUniform1ui(location_r_channelView, chan_r);
+	//	glUniform1ui(location_g_channelView, chan_g);
+	//	glUniform1ui(location_r_nbChannels, 1);
+	//	glUniform1ui(location_g_nbChannels, (_grid->grid->getVoxelDimensionality() > 1) ? 1 : 0); // only set this if there's two grids
+	//	if (_grid->nbChannels > 1) {
+	//		glUniform1ui(location_r_selectedChannel, this->selectedChannel_r);
+	//		glUniform1ui(location_g_selectedChannel, this->selectedChannel_g);
+	//	} else {
+	//		glUniform1ui(location_r_selectedChannel, 0);
+	//		glUniform1ui(location_g_selectedChannel, 0);
+	//	}
 
 	// User-defined colors :
-	GLint location_color0 =		getUniform("color0");
-	GLint location_color1 =		getUniform("color1");
-	GLint location_color0Alt =	getUniform("color0Alternate");
-	GLint location_color1Alt =	getUniform("color1Alternate");
+	GLint location_color0	 = getUniform("color0");
+	GLint location_color1	 = getUniform("color1");
+	GLint location_color0Alt = getUniform("color0Alternate");
+	GLint location_color1Alt = getUniform("color1Alternate");
 
 	glUniform3fv(location_color0, 1, glm::value_ptr(this->color0));
 	glUniform3fv(location_color1, 1, glm::value_ptr(this->color1));
 	glUniform3fv(location_color0Alt, 1, glm::value_ptr(this->color0_second));
 	glUniform3fv(location_color1Alt, 1, glm::value_ptr(this->color1_second));
 
-	GLint location_colorScales0 =		getUniform("colorScales[0]");
-	GLint location_colorScales1 =		getUniform("colorScales[1]");
-	GLint location_colorScales2 =		getUniform("colorScales[2]");
-	GLint location_colorScales3 =		getUniform("colorScales[3]");
+	GLint location_colorScales0 = getUniform("colorScales[0]");
+	GLint location_colorScales1 = getUniform("colorScales[1]");
+	GLint location_colorScales2 = getUniform("colorScales[2]");
+	GLint location_colorScales3 = getUniform("colorScales[3]");
 
 	glActiveTexture(GL_TEXTURE0 + tex);
 	glBindTexture(GL_TEXTURE_1D, this->texHandle_colorScale_greyscale);
@@ -3022,7 +3233,7 @@ void Scene::newAPI_prepareUniforms_Volumetric(GLfloat *mvMat, GLfloat *pMat, glm
 	tex++;
 
 	const GLchar uniform_block_name[] = "ColorBlock";
-	GLuint colorBlock_index = glGetUniformBlockIndex(this->programHandle_projectedTex, uniform_block_name);
+	GLuint colorBlock_index			  = glGetUniformBlockIndex(this->programHandle_projectedTex, uniform_block_name);
 	glUniformBlockBinding(this->programHandle_projectedTex, colorBlock_index, 0);
 	glBindBufferBase(GL_UNIFORM_BUFFER, 0, _grid->uboHandle_colorAttributes);
 
@@ -3047,22 +3258,25 @@ void Scene::newAPI_prepareUniforms_Volumetric(GLfloat *mvMat, GLfloat *pMat, glm
 		std::cerr << "[LOG]\tVisu BB min               : [" << +min.x << ',' << +min.y << ',' << +min.z << "]\n";
 		std::cerr << "[LOG]\tVisu BB max               : [" << +max.x << ',' << +max.y << ',' << +max.z << "]\n";
 		for (std::size_t i = 0; i < this->lightPositions.size(); ++i) {
-			std::cerr << "[LOG]\tLight " << i << "                   : [" << +this->lightPositions[i].x << ',' <<
-				+this->lightPositions[i].y << ',' << +this->lightPositions[i].z << "]\n";
+			std::cerr << "[LOG]\tLight " << i << "                   : [" << +this->lightPositions[i].x << ',' << +this->lightPositions[i].y << ',' << +this->lightPositions[i].z << "]\n";
 		}
 		LOG_LEAVE(Scene::drawVolumetric)
 	}
 }
 
-GLuint Scene::getVolumetricProgram() { return this->programHandle_VolumetricViewer; }
+GLuint Scene::getVolumetricProgram() {
+	return this->programHandle_VolumetricViewer;
+}
 
-void Scene::useProgram(GLuint _program_handle) { glUseProgram(_program_handle); }
+void Scene::useProgram(GLuint _program_handle) {
+	glUseProgram(_program_handle);
+}
 
-GLint Scene::findUniform(GLuint _program_handle, const char *_uniform_name) {
+GLint Scene::findUniform(GLuint _program_handle, const char* _uniform_name) {
 	return glGetUniformLocation(_program_handle, _uniform_name);
 }
 
-void Scene::drawGrid(GLfloat *mvMat, GLfloat *pMat, glm::mat4 baseMatrix, const GridGLView::Ptr& grid) {
+void Scene::drawGrid(GLfloat* mvMat, GLfloat* pMat, glm::mat4 baseMatrix, const GridGLView::Ptr& grid) {
 	glm::vec4 lightPos = glm::vec4(-0.25, -0.25, -0.25, 1.0);
 
 	// If the grid has been uploaded, show it :
@@ -3074,7 +3288,7 @@ void Scene::drawGrid(GLfloat *mvMat, GLfloat *pMat, glm::mat4 baseMatrix, const 
 		this->prepareUniforms_3DSolid(mvMat, pMat, lightPos, baseMatrix, grid);
 		this->setupVAOPointers();
 
-		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(this->renderSize), GL_UNSIGNED_INT, (void*)0);
+		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(this->renderSize), GL_UNSIGNED_INT, (void*) 0);
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		glBindVertexArray(0);
@@ -3085,7 +3299,7 @@ void Scene::drawGrid(GLfloat *mvMat, GLfloat *pMat, glm::mat4 baseMatrix, const 
 	this->drawBoundingBox(grid->grid[0]->getBoundingBoxWorldSpace(), grid->boundingBoxColor, mvMat, pMat);
 }
 
-void Scene::newAPI_drawGrid(GLfloat *mvMat, GLfloat *pMat, glm::mat4 baseMatrix, const NewAPI_GridGLView::Ptr& grid) {
+void Scene::newAPI_drawGrid(GLfloat* mvMat, GLfloat* pMat, glm::mat4 baseMatrix, const NewAPI_GridGLView::Ptr& grid) {
 	glm::vec4 lightPos = glm::vec4(-0.25, -0.25, -0.25, 1.0);
 
 	// If the grid has been uploaded, show it :
@@ -3097,7 +3311,7 @@ void Scene::newAPI_drawGrid(GLfloat *mvMat, GLfloat *pMat, glm::mat4 baseMatrix,
 		this->newAPI_prepareUniforms_3DSolid(mvMat, pMat, lightPos, baseMatrix, grid);
 		this->setupVAOPointers();
 
-		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(this->renderSize), GL_UNSIGNED_INT, (void*)0);
+		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(this->renderSize), GL_UNSIGNED_INT, (void*) 0);
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		glBindVertexArray(0);
@@ -3119,15 +3333,15 @@ void Scene::newSHADERS_print_all_uniforms(GLuint _shader_program) {
 	}
 	std::cerr << "Color attributes uniforms :\n";
 
-	std::string baseArrayName = "ColorBlock.attributes";
+	std::string baseArrayName	 = "ColorBlock.attributes";
 	std::string uniformArrayName = "";
 	for (std::size_t i = 0; i < 4; ++i) {
-		uniformArrayName = baseArrayName + '[' + std::to_string(i) + ']';
-		GLint block_loc = glGetUniformLocation(_shader_program, (uniformArrayName).c_str());
-		GLint uni_visible = glGetUniformLocation(_shader_program, (uniformArrayName+".isVisible").c_str());
-		GLint uni_index = glGetUniformLocation(_shader_program, (uniformArrayName+".colorScaleIndex").c_str());
-		GLint uni_visbounds = glGetUniformLocation(_shader_program, (uniformArrayName+".visibleBounds").c_str());
-		GLint uni_colorBounds = glGetUniformLocation(_shader_program, (uniformArrayName+".colorScaleBounds").c_str());
+		uniformArrayName	  = baseArrayName + '[' + std::to_string(i) + ']';
+		GLint block_loc		  = glGetUniformLocation(_shader_program, (uniformArrayName).c_str());
+		GLint uni_visible	  = glGetUniformLocation(_shader_program, (uniformArrayName + ".isVisible").c_str());
+		GLint uni_index		  = glGetUniformLocation(_shader_program, (uniformArrayName + ".colorScaleIndex").c_str());
+		GLint uni_visbounds	  = glGetUniformLocation(_shader_program, (uniformArrayName + ".visibleBounds").c_str());
+		GLint uni_colorBounds = glGetUniformLocation(_shader_program, (uniformArrayName + ".colorScaleBounds").c_str());
 		std::cerr << "\t" << uniformArrayName << " = " << block_loc << " {\n";
 		std::cerr << "\t\t.isVisible = " << uni_visible << ",\n";
 		std::cerr << "\t\t.colorScaleIndex = " << uni_index << ",\n";
@@ -3143,16 +3357,24 @@ void Scene::newSHADERS_generateColorScales() {
 	this->generateColorScales();
 }
 
-void Scene::draw3DView(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, bool showTexOnPlane) {
+void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool showTexOnPlane) {
 	if (this->shouldUpdateVis) {
 		this->shouldUpdateVis = false;
 		this->generateColorScale();
 		this->uploadColorScale();
 	}
-	if (this->shouldDeleteGrid) { this->deleteGridNow(); }
-	if (this->isFinishedLoading) { this->replaceGridsWithHighRes(); }
-	if (this->shouldUpdateUserColorScales) { this->newSHADERS_updateUserColorScales(); }
-	if (this->shouldUpdateUBOData) { this->newSHADERS_updateUBOData(); }
+	if (this->shouldDeleteGrid) {
+		this->deleteGridNow();
+	}
+	if (this->isFinishedLoading) {
+		this->replaceGridsWithHighRes();
+	}
+	if (this->shouldUpdateUserColorScales) {
+		this->newSHADERS_updateUserColorScales();
+	}
+	if (this->shouldUpdateUBOData) {
+		this->newSHADERS_updateUBOData();
+	}
 	glEnable(GL_DEPTH_TEST);
 	glEnablei(GL_BLEND, 0);
 	glEnable(GL_TEXTURE_3D);
@@ -3180,7 +3402,6 @@ void Scene::draw3DView(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, bool sho
 		}
 	}
 
-
 	if (not this->newGrids.empty()) {
 		this->newAPI_drawPlanes(mvMat, pMat, this->drawMode == DrawMode::Solid);
 	} else if (not this->grids.empty()) {
@@ -3203,21 +3424,28 @@ void Scene::newSHADERS_updateUBOData() {
 GLuint Scene::updateFBOOutputs(glm::ivec2 dimensions, GLuint fb_handle, GLuint old_texture) {
 	// Silently ignore attempts to modify the 0-th FBO, which is provided by the
 	// windowing system, and thus unmodifiable from GL/application code.
-	if (fb_handle == 0) { return 0; }
+	if (fb_handle == 0) {
+		return 0;
+	}
 	// Remove old textures, if updating the FBO from a resize event for example.
-	if (old_texture != 0) { glDeleteTextures(1, &old_texture); }
+	if (old_texture != 0) {
+		glDeleteTextures(1, &old_texture);
+	}
 
 	// Upload an _empty_ texture with no mipmapping, and nearest neighbor :
 	GLuint new_tex = 0;
 	TextureUpload t{};
-	t.minmag = glm::ivec2{GL_NEAREST, GL_NEAREST};
-	t.lod = glm::vec2{-1000.f, -1000.f};
-	t.internalFormat = GL_RGBA32F; // RGBA 32-bit floating point, unnormalized
-	t.size = glm::ivec3(dimensions, 0);
+	t.minmag		 = glm::ivec2{GL_NEAREST, GL_NEAREST};
+	t.lod			 = glm::vec2{-1000.f, -1000.f};
+	t.internalFormat = GL_RGBA32F;	  // RGBA 32-bit floating point, unnormalized
+	t.size			 = glm::ivec3(dimensions, 0);
 
 	// Create the texture object itself :
 	new_tex = this->uploadTexture2D(t);
-	if (new_tex == 0) { std::cerr << "Error : Could not create a framebuffer texture.\n"; return 0; }
+	if (new_tex == 0) {
+		std::cerr << "Error : Could not create a framebuffer texture.\n";
+		return 0;
+	}
 
 	// Bind framebuffer, and bind texture to a color attachment :
 	glBindFramebuffer(GL_FRAMEBUFFER, fb_handle);
@@ -3274,44 +3502,89 @@ void Scene::generatePlanesArray(Mesh& _mesh) {
 
 	glm::vec4 center = glm::vec4(.5f, .5f, .5f, 1.f);
 	// Create new vertices :
-	glm::vec4 apos=glm::vec4(.0, .0, .0, 1.); glm::vec4 anorm=apos-center;
-	glm::vec4 bpos=glm::vec4(1., .0, .0, 1.); glm::vec4 bnorm=bpos-center;
-	glm::vec4 cpos=glm::vec4(.0, 1., .0, 1.); glm::vec4 cnorm=cpos-center;
-	glm::vec4 dpos=glm::vec4(1., 1., .0, 1.); glm::vec4 dnorm=dpos-center;
-	glm::vec4 epos=glm::vec4(.0, .0, 1., 1.); glm::vec4 enorm=epos-center;
-	glm::vec4 fpos=glm::vec4(1., .0, 1., 1.); glm::vec4 fnorm=fpos-center;
-	glm::vec4 gpos=glm::vec4(.0, 1., 1., 1.); glm::vec4 gnorm=gpos-center;
+	glm::vec4 apos	= glm::vec4(.0, .0, .0, 1.);
+	glm::vec4 anorm = apos - center;
+	glm::vec4 bpos	= glm::vec4(1., .0, .0, 1.);
+	glm::vec4 bnorm = bpos - center;
+	glm::vec4 cpos	= glm::vec4(.0, 1., .0, 1.);
+	glm::vec4 cnorm = cpos - center;
+	glm::vec4 dpos	= glm::vec4(1., 1., .0, 1.);
+	glm::vec4 dnorm = dpos - center;
+	glm::vec4 epos	= glm::vec4(.0, .0, 1., 1.);
+	glm::vec4 enorm = epos - center;
+	glm::vec4 fpos	= glm::vec4(1., .0, 1., 1.);
+	glm::vec4 fnorm = fpos - center;
+	glm::vec4 gpos	= glm::vec4(.0, 1., 1., 1.);
+	glm::vec4 gnorm = gpos - center;
 	// Create texture coordinates serving as framebuffer positions once all is done :
-	glm::vec3 ll = glm::vec3(-1., -1., .0);	// lower-left
-	glm::vec3 lr = glm::vec3(-1., 1., .0);	// lower-right
-	glm::vec3 hl = glm::vec3(1., -1., .0);	// higher-left
-	glm::vec3 hr = glm::vec3(1., 1., .0);	// higher-right
+	glm::vec3 ll = glm::vec3(-1., -1., .0);	   // lower-left
+	glm::vec3 lr = glm::vec3(-1., 1., .0);	  // lower-right
+	glm::vec3 hl = glm::vec3(1., -1., .0);	  // higher-left
+	glm::vec3 hr = glm::vec3(1., 1., .0);	 // higher-right
 
 	// Push them into the vectors, so they can be drawn without indices :
 	// Plane X :
-	_mesh.positions.push_back(apos); _mesh.normals.push_back(anorm); _mesh.texture.push_back(ll);
-	_mesh.positions.push_back(cpos); _mesh.normals.push_back(cnorm); _mesh.texture.push_back(lr);
-	_mesh.positions.push_back(epos); _mesh.normals.push_back(enorm); _mesh.texture.push_back(hl);
-	_mesh.positions.push_back(epos); _mesh.normals.push_back(enorm); _mesh.texture.push_back(hl);
-	_mesh.positions.push_back(cpos); _mesh.normals.push_back(cnorm); _mesh.texture.push_back(lr);
-	_mesh.positions.push_back(gpos); _mesh.normals.push_back(gnorm); _mesh.texture.push_back(hr);
+	_mesh.positions.push_back(apos);
+	_mesh.normals.push_back(anorm);
+	_mesh.texture.push_back(ll);
+	_mesh.positions.push_back(cpos);
+	_mesh.normals.push_back(cnorm);
+	_mesh.texture.push_back(lr);
+	_mesh.positions.push_back(epos);
+	_mesh.normals.push_back(enorm);
+	_mesh.texture.push_back(hl);
+	_mesh.positions.push_back(epos);
+	_mesh.normals.push_back(enorm);
+	_mesh.texture.push_back(hl);
+	_mesh.positions.push_back(cpos);
+	_mesh.normals.push_back(cnorm);
+	_mesh.texture.push_back(lr);
+	_mesh.positions.push_back(gpos);
+	_mesh.normals.push_back(gnorm);
+	_mesh.texture.push_back(hr);
 	// Plane Y :
-	_mesh.positions.push_back(apos); _mesh.normals.push_back(anorm); _mesh.texture.push_back(ll);
-	_mesh.positions.push_back(bpos); _mesh.normals.push_back(bnorm); _mesh.texture.push_back(lr);
-	_mesh.positions.push_back(epos); _mesh.normals.push_back(enorm); _mesh.texture.push_back(hl);
-	_mesh.positions.push_back(epos); _mesh.normals.push_back(enorm); _mesh.texture.push_back(hl);
-	_mesh.positions.push_back(bpos); _mesh.normals.push_back(bnorm); _mesh.texture.push_back(lr);
-	_mesh.positions.push_back(fpos); _mesh.normals.push_back(fnorm); _mesh.texture.push_back(hr);
+	_mesh.positions.push_back(apos);
+	_mesh.normals.push_back(anorm);
+	_mesh.texture.push_back(ll);
+	_mesh.positions.push_back(bpos);
+	_mesh.normals.push_back(bnorm);
+	_mesh.texture.push_back(lr);
+	_mesh.positions.push_back(epos);
+	_mesh.normals.push_back(enorm);
+	_mesh.texture.push_back(hl);
+	_mesh.positions.push_back(epos);
+	_mesh.normals.push_back(enorm);
+	_mesh.texture.push_back(hl);
+	_mesh.positions.push_back(bpos);
+	_mesh.normals.push_back(bnorm);
+	_mesh.texture.push_back(lr);
+	_mesh.positions.push_back(fpos);
+	_mesh.normals.push_back(fnorm);
+	_mesh.texture.push_back(hr);
 	// Plane Z :
-	_mesh.positions.push_back(apos); _mesh.normals.push_back(anorm); _mesh.texture.push_back(ll);
-	_mesh.positions.push_back(bpos); _mesh.normals.push_back(bnorm); _mesh.texture.push_back(lr);
-	_mesh.positions.push_back(cpos); _mesh.normals.push_back(cnorm); _mesh.texture.push_back(hl);
-	_mesh.positions.push_back(cpos); _mesh.normals.push_back(cnorm); _mesh.texture.push_back(hl);
-	_mesh.positions.push_back(bpos); _mesh.normals.push_back(bnorm); _mesh.texture.push_back(lr);
-	_mesh.positions.push_back(dpos); _mesh.normals.push_back(dnorm); _mesh.texture.push_back(hr);
+	_mesh.positions.push_back(apos);
+	_mesh.normals.push_back(anorm);
+	_mesh.texture.push_back(ll);
+	_mesh.positions.push_back(bpos);
+	_mesh.normals.push_back(bnorm);
+	_mesh.texture.push_back(lr);
+	_mesh.positions.push_back(cpos);
+	_mesh.normals.push_back(cnorm);
+	_mesh.texture.push_back(hl);
+	_mesh.positions.push_back(cpos);
+	_mesh.normals.push_back(cnorm);
+	_mesh.texture.push_back(hl);
+	_mesh.positions.push_back(bpos);
+	_mesh.normals.push_back(bnorm);
+	_mesh.texture.push_back(lr);
+	_mesh.positions.push_back(dpos);
+	_mesh.normals.push_back(dnorm);
+	_mesh.texture.push_back(hr);
 
 	// Push back enough indices to draw the planes all at once :
-	for (unsigned int i = 0; i < _mesh.positions.size()-base; ++i) { _mesh.planar_view.push_back(base + i); }
+	for (unsigned int i = 0; i < _mesh.positions.size() - base; ++i) {
+		_mesh.planar_view.push_back(base + i);
+	}
 
 	return;
 }
@@ -3327,44 +3600,65 @@ void Scene::setPlaneHeading(planes _plane, planeHeading _heading) {
 	 */
 
 	// Create texture coordinates serving as framebuffer positions once all is done :
-	glm::vec3 ll = glm::vec3(-1., -1., .0);	// lower-left
-	glm::vec3 lr = glm::vec3(-1., 1., .0);	// lower-right
-	glm::vec3 hl = glm::vec3(1., -1., .0);	// higher-left
-	glm::vec3 hr = glm::vec3(1., 1., .0);	// higher-right
+	glm::vec3 ll = glm::vec3(-1., -1., .0);	   // lower-left
+	glm::vec3 lr = glm::vec3(-1., 1., .0);	  // lower-right
+	glm::vec3 hl = glm::vec3(1., -1., .0);	  // higher-left
+	glm::vec3 hr = glm::vec3(1., 1., .0);	 // higher-right
 
 	// Create arrays of 'positions' depending on the heading :
-	std::vector<glm::vec3> north{ll, lr, hl, hl, lr, hr}; // default orientation
-	std::vector<glm::vec3> east {lr, hr, ll, ll, hr, hl};
-	std::vector<glm::vec3> west {hl, ll, hr, hr, ll, lr};
+	std::vector<glm::vec3> north{ll, lr, hl, hl, lr, hr};	 // default orientation
+	std::vector<glm::vec3> east{lr, hr, ll, ll, hr, hl};
+	std::vector<glm::vec3> west{hl, ll, hr, hr, ll, lr};
 	std::vector<glm::vec3> south{hr, hl, lr, lr, hl, ll};
 
 	// Get the offset into the buffer to read from :
 	GLsizeiptr planeBegin = 0;
 	QString planeName;
 	switch (_plane) {
-		case planes::x : planeBegin = 0; planeName = "X"; break;
-		case planes::y : planeBegin = 6; planeName = "Y"; break;
-		case planes::z : planeBegin =12; planeName = "Z"; break;
+		case planes::x:
+			planeBegin = 0;
+			planeName  = "X";
+			break;
+		case planes::y:
+			planeBegin = 6;
+			planeName  = "Y";
+			break;
+		case planes::z:
+			planeBegin = 12;
+			planeName  = "Z";
+			break;
 	}
 
 	// Add 8 here because the 8 vertices of the cube will be placed
 	// before the tex coordinates we're interested in :
-	GLsizeiptr begin = (planeBegin + 8)*sizeof(glm::vec3);
+	GLsizeiptr begin = (planeBegin + 8) * sizeof(glm::vec3);
 
 	QString h;
 	// Select the vertices' tex coordinates in order to draw it the 'right' way up :
 	void* data = nullptr;
-	switch(_heading) {
-		case North: data = (void*) north.data(); h = "N"; break;
-		case East : data = (void*) east.data();  h = "E"; break;
-		case West : data = (void*) west.data();  h = "W"; break;
-		case South: data = (void*) south.data(); h = "S"; break;
+	switch (_heading) {
+		case North:
+			data = (void*) north.data();
+			h	 = "N";
+			break;
+		case East:
+			data = (void*) east.data();
+			h	 = "E";
+			break;
+		case West:
+			data = (void*) west.data();
+			h	 = "W";
+			break;
+		case South:
+			data = (void*) south.data();
+			h	 = "S";
+			break;
 	}
 
 	// Bind vertex texture coordinate buffer :
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_VertTex);
 	// Modify a part of the data :
-	glBufferSubData(GL_ARRAY_BUFFER, begin, 6*sizeof(glm::vec3), data);
+	glBufferSubData(GL_ARRAY_BUFFER, begin, 6 * sizeof(glm::vec3), data);
 
 	if (this->programStatusBar != nullptr) {
 		QString message = "Plane " + planeName + " is now oriented " + h;
@@ -3392,49 +3686,89 @@ void Scene::generateTexCube(Mesh& _mesh) {
 	 *+x
 	 */
 	// Build position, normals, and tex coordinates all in one line for each vertex
-	glm::vec4 apos=glm::vec4(.0, .0, .0, 1.); glm::vec4 anorm=apos-center; glm::vec3 atex = glm::vec3(.0, .0, .0);
-	glm::vec4 bpos=glm::vec4(1., .0, .0, 1.); glm::vec4 bnorm=bpos-center; glm::vec3 btex = glm::vec3(1., .0, .0);
-	glm::vec4 cpos=glm::vec4(.0, 1., .0, 1.); glm::vec4 cnorm=cpos-center; glm::vec3 ctex = glm::vec3(.0, 1., .0);
-	glm::vec4 dpos=glm::vec4(1., 1., .0, 1.); glm::vec4 dnorm=dpos-center; glm::vec3 dtex = glm::vec3(1., 1., .0);
-	glm::vec4 epos=glm::vec4(.0, .0, 1., 1.); glm::vec4 enorm=epos-center; glm::vec3 etex = glm::vec3(.0, .0, 1.);
-	glm::vec4 fpos=glm::vec4(1., .0, 1., 1.); glm::vec4 fnorm=fpos-center; glm::vec3 ftex = glm::vec3(1., .0, 1.);
-	glm::vec4 gpos=glm::vec4(.0, 1., 1., 1.); glm::vec4 gnorm=gpos-center; glm::vec3 gtex = glm::vec3(.0, 1., 1.);
-	glm::vec4 hpos=glm::vec4(1., 1., 1., 1.); glm::vec4 hnorm=hpos-center; glm::vec3 htex = glm::vec3(1., 1., 1.);
-	_mesh.positions.push_back(apos); _mesh.normals.push_back(anorm); _mesh.texture.push_back(atex);
-	_mesh.positions.push_back(bpos); _mesh.normals.push_back(bnorm); _mesh.texture.push_back(btex);
-	_mesh.positions.push_back(cpos); _mesh.normals.push_back(cnorm); _mesh.texture.push_back(ctex);
-	_mesh.positions.push_back(dpos); _mesh.normals.push_back(dnorm); _mesh.texture.push_back(dtex);
-	_mesh.positions.push_back(epos); _mesh.normals.push_back(enorm); _mesh.texture.push_back(etex);
-	_mesh.positions.push_back(fpos); _mesh.normals.push_back(fnorm); _mesh.texture.push_back(ftex);
-	_mesh.positions.push_back(gpos); _mesh.normals.push_back(gnorm); _mesh.texture.push_back(gtex);
-	_mesh.positions.push_back(hpos); _mesh.normals.push_back(hnorm); _mesh.texture.push_back(htex);
-	unsigned int a = 0; unsigned int b = 1; unsigned int c = 2; unsigned int d = 3;
-	unsigned int e = 4; unsigned int f = 5; unsigned int g = 6; unsigned int h = 7;
-	unsigned int faceIdx1[]	= {a, d, c, a, b, d, e, b, a, e, f, b, g, e, a, g, a, c};
+	glm::vec4 apos	= glm::vec4(.0, .0, .0, 1.);
+	glm::vec4 anorm = apos - center;
+	glm::vec3 atex	= glm::vec3(.0, .0, .0);
+	glm::vec4 bpos	= glm::vec4(1., .0, .0, 1.);
+	glm::vec4 bnorm = bpos - center;
+	glm::vec3 btex	= glm::vec3(1., .0, .0);
+	glm::vec4 cpos	= glm::vec4(.0, 1., .0, 1.);
+	glm::vec4 cnorm = cpos - center;
+	glm::vec3 ctex	= glm::vec3(.0, 1., .0);
+	glm::vec4 dpos	= glm::vec4(1., 1., .0, 1.);
+	glm::vec4 dnorm = dpos - center;
+	glm::vec3 dtex	= glm::vec3(1., 1., .0);
+	glm::vec4 epos	= glm::vec4(.0, .0, 1., 1.);
+	glm::vec4 enorm = epos - center;
+	glm::vec3 etex	= glm::vec3(.0, .0, 1.);
+	glm::vec4 fpos	= glm::vec4(1., .0, 1., 1.);
+	glm::vec4 fnorm = fpos - center;
+	glm::vec3 ftex	= glm::vec3(1., .0, 1.);
+	glm::vec4 gpos	= glm::vec4(.0, 1., 1., 1.);
+	glm::vec4 gnorm = gpos - center;
+	glm::vec3 gtex	= glm::vec3(.0, 1., 1.);
+	glm::vec4 hpos	= glm::vec4(1., 1., 1., 1.);
+	glm::vec4 hnorm = hpos - center;
+	glm::vec3 htex	= glm::vec3(1., 1., 1.);
+	_mesh.positions.push_back(apos);
+	_mesh.normals.push_back(anorm);
+	_mesh.texture.push_back(atex);
+	_mesh.positions.push_back(bpos);
+	_mesh.normals.push_back(bnorm);
+	_mesh.texture.push_back(btex);
+	_mesh.positions.push_back(cpos);
+	_mesh.normals.push_back(cnorm);
+	_mesh.texture.push_back(ctex);
+	_mesh.positions.push_back(dpos);
+	_mesh.normals.push_back(dnorm);
+	_mesh.texture.push_back(dtex);
+	_mesh.positions.push_back(epos);
+	_mesh.normals.push_back(enorm);
+	_mesh.texture.push_back(etex);
+	_mesh.positions.push_back(fpos);
+	_mesh.normals.push_back(fnorm);
+	_mesh.texture.push_back(ftex);
+	_mesh.positions.push_back(gpos);
+	_mesh.normals.push_back(gnorm);
+	_mesh.texture.push_back(gtex);
+	_mesh.positions.push_back(hpos);
+	_mesh.normals.push_back(hnorm);
+	_mesh.texture.push_back(htex);
+	unsigned int a			= 0;
+	unsigned int b			= 1;
+	unsigned int c			= 2;
+	unsigned int d			= 3;
+	unsigned int e			= 4;
+	unsigned int f			= 5;
+	unsigned int g			= 6;
+	unsigned int h			= 7;
+	unsigned int faceIdx1[] = {a, d, c, a, b, d, e, b, a, e, f, b, g, e, a, g, a, c};
 	unsigned int faceIdx2[] = {h, e, g, h, f, e, h, g, c, h, c, d, h, d, b, h, f, b};
-	_mesh.indices.insert(_mesh.indices.end(), faceIdx1, faceIdx1+18);
-	_mesh.indices.insert(_mesh.indices.end(), faceIdx2, faceIdx2+18);
+	_mesh.indices.insert(_mesh.indices.end(), faceIdx1, faceIdx1 + 18);
+	_mesh.indices.insert(_mesh.indices.end(), faceIdx2, faceIdx2 + 18);
 }
 
 void Scene::setupVBOData(const Mesh& _mesh) {
-	if (glIsVertexArray(this->vaoHandle) == GL_FALSE) { throw std::runtime_error("The vao handle generated by OpenGL has been invalidated !"); }
+	if (glIsVertexArray(this->vaoHandle) == GL_FALSE) {
+		throw std::runtime_error("The vao handle generated by OpenGL has been invalidated !");
+	}
 
 	// UPLOAD DATA (VBOs have previously been created in createBuffers() :
 
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_VertPos);
-	glBufferData(GL_ARRAY_BUFFER, _mesh.positions.size()*sizeof(glm::vec4), _mesh.positions.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, _mesh.positions.size() * sizeof(glm::vec4), _mesh.positions.data(), GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_VertNorm);
-	glBufferData(GL_ARRAY_BUFFER, _mesh.normals.size()*sizeof(glm::vec4), _mesh.normals.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, _mesh.normals.size() * sizeof(glm::vec4), _mesh.normals.data(), GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_VertTex);
-	glBufferData(GL_ARRAY_BUFFER, _mesh.texture.size()*sizeof(glm::vec3), _mesh.texture.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, _mesh.texture.size() * sizeof(glm::vec3), _mesh.texture.data(), GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_Element);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, _mesh.indices.size()*sizeof(unsigned int), _mesh.indices.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, _mesh.indices.size() * sizeof(unsigned int), _mesh.indices.data(), GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_PlaneElement);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, _mesh.cutting_planes.size()*sizeof(unsigned int), _mesh.cutting_planes.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, _mesh.cutting_planes.size() * sizeof(unsigned int), _mesh.cutting_planes.data(), GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_SinglePlaneElement);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, _mesh.planar_view.size() * sizeof(unsigned int), _mesh.planar_view.data(), GL_STATIC_DRAW);
@@ -3445,15 +3779,15 @@ void Scene::setupVBOData(const Mesh& _mesh) {
 void Scene::setupVAOPointers() {
 	glEnableVertexAttribArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_VertPos);
-	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, (void*) 0);
 
 	glEnableVertexAttribArray(1);
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_VertNorm);
-	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*) 0);
 
 	glEnableVertexAttribArray(2);
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_VertTex);
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
 }
 
 glm::vec3 Scene::getSceneBoundaries() const {
@@ -3461,28 +3795,28 @@ glm::vec3 Scene::getSceneBoundaries() const {
 }
 
 void Scene::printProgramUniforms(const GLuint _pid) {
-	const GLsizei bufSize = 256; // maximum name length
-	GLchar name[bufSize]; // variable name in GLSL
-	GLsizei length = 0; // name length
-	GLint attrCount = 0; // the count of attributes/uniforms
-	GLenum type = GL_NONE; // type of the variable (float, vec3 or mat4, etc)
-	GLint size = 0; // size of the variable
+	const GLsizei bufSize = 256;	// maximum name length
+	GLchar name[bufSize];	 // variable name in GLSL
+	GLsizei length	= 0;	// name length
+	GLint attrCount = 0;	// the count of attributes/uniforms
+	GLenum type		= GL_NONE;	  // type of the variable (float, vec3 or mat4, etc)
+	GLint size		= 0;	// size of the variable
 
 	std::cerr << "[TRACE] Printing attributes of the program " << +_pid << '\n';
 	glUseProgram(_pid);
 
 	std::cerr << "[TRACE]\t\tActive attributes :\n";
 	glGetProgramiv(_pid, GL_ACTIVE_ATTRIBUTES, &attrCount);
-	for (GLint i = 0; i < attrCount; ++i ) {
+	for (GLint i = 0; i < attrCount; ++i) {
 		//std::cerr << "[TRACE]\t" << ;
-		glGetActiveAttrib(_pid, (GLuint)i, bufSize, &length, &size, &type, name);
+		glGetActiveAttrib(_pid, (GLuint) i, bufSize, &length, &size, &type, name);
 		fprintf(stderr, "[TRACE]\t\t\tAttribute #%d Type: %u Name: %s\n", i, type, name);
 	}
 
 	std::cerr << "[TRACE]\t\tActive uniforms :\n";
 	glGetProgramiv(_pid, GL_ACTIVE_UNIFORMS, &attrCount);
-	for (GLint i = 0; i < attrCount; ++i ) {
-		glGetActiveUniform(_pid, (GLuint)i, bufSize, &length, &size, &type, name);
+	for (GLint i = 0; i < attrCount; ++i) {
+		glGetActiveUniform(_pid, (GLuint) i, bufSize, &length, &size, &type, name);
 		fprintf(stderr, "[TRACE]\t\t\tUniform #%d Type: %u Name: %s\n", i, type, name);
 	}
 }
@@ -3496,9 +3830,9 @@ glm::mat4 Scene::computeTransformationMatrix(const std::shared_ptr<DiscreteGrid>
 	if (angleDeg < 0.) {
 		DiscreteGrid::sizevec3 d = _grid->getResolution();
 		// compute translation along Z :
-		float w = static_cast<float>(d.x) * .39;
+		float w			   = static_cast<float>(d.x) * .39;
 		float displacement = w * std::abs(std::sin(angleRad));
-		transfoMat = glm::translate(transfoMat, glm::vec3(.0, .0, displacement));
+		transfoMat		   = glm::translate(transfoMat, glm::vec3(.0, .0, displacement));
 	}
 
 	transfoMat[0][0] = 0.39 * std::cos(angleRad);
@@ -3520,7 +3854,9 @@ glm::mat4 Scene::computeTransformationMatrix(const std::shared_ptr<DiscreteGrid>
 }
 
 void Scene::generateColorScale() {
-	for (DiscreteGrid::data_t i = 0; i < this->textureBounds0.x; ++i) { this->visibleDomains[i] = 0.f; }
+	for (DiscreteGrid::data_t i = 0; i < this->textureBounds0.x; ++i) {
+		this->visibleDomains[i] = 0.f;
+	}
 	for (DiscreteGrid::data_t i = this->textureBounds0.x; i < this->textureBounds0.y; ++i) {
 		this->visibleDomains[i] = 1.f;
 	}
@@ -3528,7 +3864,9 @@ void Scene::generateColorScale() {
 		this->visibleDomains[i] = 0.f;
 	}
 
-	for (DiscreteGrid::data_t i = 0; i < this->textureBounds1.x; ++i) { this->visibleDomainsAlternate[i] = 0.f; }
+	for (DiscreteGrid::data_t i = 0; i < this->textureBounds1.x; ++i) {
+		this->visibleDomainsAlternate[i] = 0.f;
+	}
 	for (DiscreteGrid::data_t i = this->textureBounds1.x; i < this->textureBounds1.y; ++i) {
 		this->visibleDomainsAlternate[i] = 1.f;
 	}
@@ -3558,27 +3896,27 @@ void Scene::uploadColorScale() {
 	}
 
 	// Vertex positions :
-	texParams.minmag.x = GL_NEAREST;
-	texParams.minmag.y = GL_NEAREST;
-	texParams.lod.y = -1000.f;
-	texParams.wrap.s = GL_CLAMP_TO_EDGE;
-	texParams.wrap.t = GL_CLAMP_TO_EDGE;
+	texParams.minmag.x	= GL_NEAREST;
+	texParams.minmag.y	= GL_NEAREST;
+	texParams.lod.y		= -1000.f;
+	texParams.wrap.s	= GL_CLAMP_TO_EDGE;
+	texParams.wrap.t	= GL_CLAMP_TO_EDGE;
 	texParams.swizzle.y = GL_ZERO;
 	texParams.swizzle.z = GL_ZERO;
 	texParams.swizzle.a = GL_ONE;
 	// Swizzle and alignment unchanged, not present in Texture3D
 	texParams.internalFormat = GL_R32F;
-	texParams.size.x = 256;
-	#ifdef VISUALISATION_USE_UINT16
+	texParams.size.x		 = 256;
+#ifdef VISUALISATION_USE_UINT16
 	texParams.size.y = 256;
-	#else
+#else
 	texParams.size.y = 1;
-	#endif
-	texParams.format = GL_RED;
-	texParams.type = GL_FLOAT;
-	texParams.data = this->visibleDomains;
-	this->texHandle_ColorScaleGrid = this->uploadTexture2D(texParams);
-	texParams.data = this->visibleDomainsAlternate;
+#endif
+	texParams.format						= GL_RED;
+	texParams.type							= GL_FLOAT;
+	texParams.data							= this->visibleDomains;
+	this->texHandle_ColorScaleGrid			= this->uploadTexture2D(texParams);
+	texParams.data							= this->visibleDomainsAlternate;
 	this->texHandle_ColorScaleGridAlternate = this->uploadTexture2D(texParams);
 }
 
@@ -3597,11 +3935,11 @@ void Scene::createBoundingBoxBuffers() {
 	DiscreteGrid::bbox_t defaultBB = this->sceneBB;
 	// Get all corners and put them sequentially in an array :
 	std::vector<DiscreteGrid::bbox_t::vec> corners = defaultBB.getAllCorners();
-	GLfloat* rawVertices = new GLfloat[corners.size()*3];
+	GLfloat* rawVertices						   = new GLfloat[corners.size() * 3];
 	for (std::size_t i = 0; i < corners.size(); ++i) {
-		rawVertices[3*i + 0] = corners[i].x;
-		rawVertices[3*i + 1] = corners[i].y;
-		rawVertices[3*i + 2] = corners[i].z;
+		rawVertices[3 * i + 0] = corners[i].x;
+		rawVertices[3 * i + 1] = corners[i].y;
+		rawVertices[3 * i + 2] = corners[i].z;
 	}
 
 	/**
@@ -3616,12 +3954,12 @@ void Scene::createBoundingBoxBuffers() {
 	// Bind the vertex buffer :
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_boundingBoxVertices);
 	// Upload data to OpenGL :
-	glBufferData(GL_ARRAY_BUFFER, corners.size()*3*sizeof(GLfloat), rawVertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, corners.size() * 3 * sizeof(GLfloat), rawVertices, GL_STATIC_DRAW);
 
 	// Bind the index buffer :
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_boundingBoxIndices);
 	// Upload data to OpenGL :
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 24*sizeof(GLuint), &(rawIndices[0]), GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 24 * sizeof(GLuint), &(rawIndices[0]), GL_STATIC_DRAW);
 	// Unbind the buffer :
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
@@ -3645,7 +3983,7 @@ void Scene::setupVAOBoundingBox() {
 	// Enable VAO pointer 0 : vertices
 	glEnableVertexAttribArray(0);
 	// Enable VAO pointer for 3-component vectors, non-normalized starting at index 0 :
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
 }
 
 void Scene::drawBoundingBox(const DiscreteGrid::bbox_t& _box, glm::vec3 color, GLfloat* vMat, GLfloat* pMat) {
@@ -3654,13 +3992,13 @@ void Scene::drawBoundingBox(const DiscreteGrid::bbox_t& _box, glm::vec3 color, G
 	glLineWidth(2.0f);
 
 	// Locate uniforms :
-	GLint location_pMat = glGetUniformLocation(this->programHandle_BoundingBox, "pMat");
-	GLint location_vMat = glGetUniformLocation(this->programHandle_BoundingBox, "vMat");
+	GLint location_pMat	   = glGetUniformLocation(this->programHandle_BoundingBox, "pMat");
+	GLint location_vMat	   = glGetUniformLocation(this->programHandle_BoundingBox, "vMat");
 	GLint location_bbColor = glGetUniformLocation(this->programHandle_BoundingBox, "bbColor");
-	GLint location_bbSize = glGetUniformLocation(this->programHandle_BoundingBox, "bbSize");
-	GLint location_bbPos = glGetUniformLocation(this->programHandle_BoundingBox, "bbPos");
+	GLint location_bbSize  = glGetUniformLocation(this->programHandle_BoundingBox, "bbSize");
+	GLint location_bbPos   = glGetUniformLocation(this->programHandle_BoundingBox, "bbPos");
 
-	DiscreteGrid::bbox_t::vec min = _box.getMin();
+	DiscreteGrid::bbox_t::vec min  = _box.getMin();
 	DiscreteGrid::bbox_t::vec diag = _box.getDiagonal();
 
 	// Set uniforms :
@@ -3684,7 +4022,7 @@ void Scene::drawBoundingBox(const DiscreteGrid::bbox_t& _box, glm::vec3 color, G
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_boundingBoxIndices);
 	this->setupVAOBoundingBox();
 
-	glDrawElements(GL_LINES, 24, GL_UNSIGNED_INT, (void*)0);
+	glDrawElements(GL_LINES, 24, GL_UNSIGNED_INT, (void*) 0);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
@@ -3693,7 +4031,9 @@ void Scene::drawBoundingBox(const DiscreteGrid::bbox_t& _box, glm::vec3 color, G
 }
 
 void Scene::showVisuBoxController(VisuBoxController* _controller) {
-	if (this->visuBoxController != nullptr) { std::cerr << "Warning : rewriting visu box controller.\n"; }
+	if (this->visuBoxController != nullptr) {
+		std::cerr << "Warning : rewriting visu box controller.\n";
+	}
 	this->visuBoxController = _controller;
 	this->visuBoxController->raise();
 	this->visuBoxController->show();
@@ -3715,14 +4055,18 @@ DiscreteGrid::bbox_t Scene::getVisuBox() {
 }
 
 std::pair<glm::uvec3, glm::uvec3> Scene::getVisuBoxCoordinates() {
-	if (this->grids.size() == 0) { return std::make_pair<glm::uvec3, glm::uvec3>(glm::uvec3(), glm::uvec3()); }
-	if (this->grids[0]->grid.size() == 0) { return std::make_pair<glm::uvec3, glm::uvec3>(glm::uvec3(), glm::uvec3()); }
+	if (this->grids.size() == 0) {
+		return std::make_pair<glm::uvec3, glm::uvec3>(glm::uvec3(), glm::uvec3());
+	}
+	if (this->grids[0]->grid.size() == 0) {
+		return std::make_pair<glm::uvec3, glm::uvec3>(glm::uvec3(), glm::uvec3());
+	}
 
 	std::pair<glm::uvec3, glm::uvec3> result;
 
-	auto mi = this->computePlanePositions();
+	auto mi		   = this->computePlanePositions();
 	glm::uvec3 min = this->grids[0]->grid[0]->worldPositionToIndex(glm::vec4(mi, 1.));
-	result.first = min;
+	result.first   = min;
 
 	// The second coordinate can be directly taken from the current value (automatically max of scene)
 	result.second = this->visuMax;
@@ -3745,18 +4089,20 @@ void Scene::setVisuBoxMaxCoord(glm::uvec3 coor_max) {
 }
 
 void Scene::updateVisuBoxCoordinates() {
-	if (this->grids.size() == 0) { return; }
+	if (this->grids.size() == 0) {
+		return;
+	}
 
 	// Reset the visu box :
-	using vec = DiscreteGrid::bbox_t::vec;
+	using vec	  = DiscreteGrid::bbox_t::vec;
 	this->visuBox = DiscreteGrid::bbox_t();
 
 	if (this->grids.size()) {
 		// Add all corners of bounding boxes from the grids :
 		for (const std::shared_ptr<DiscreteGrid>& g : this->grids[0]->grid) {
 			// Get the bounding box of the coordinates in grid space :
-			auto min = g->getVoxelPositionGridSpace(this->visuMin);
-			auto max = g->getVoxelPositionGridSpace(this->visuMax);
+			auto min					= g->getVoxelPositionGridSpace(this->visuMin);
+			auto max					= g->getVoxelPositionGridSpace(this->visuMax);
 			DiscreteGrid::bbox_t imgBox = DiscreteGrid::bbox_t(vec(min.x, min.y, min.z), vec(max.x, max.y, max.z));
 
 			// Add the world-space-transformed version of it to the visu box :
@@ -3765,9 +4111,9 @@ void Scene::updateVisuBoxCoordinates() {
 	}
 
 	if (this->newGrids.size()) {
-		Image::Grid::Ptr g = this->newGrids[0]->grid;
-		auto min = glm::vec3(.0);
-		auto max = glm::convert_to<float>(g->getResolution());
+		Image::Grid::Ptr g	 = this->newGrids[0]->grid;
+		auto min			 = glm::vec3(.0);
+		auto max			 = glm::convert_to<float>(g->getResolution());
 		Image::bbox_t imgBox = Image::bbox_t(min, max);
 		this->visuBox.addPoints(imgBox.getAllCorners());
 	}
@@ -3779,39 +4125,63 @@ void Scene::resetVisuBox() {
 	this->visuBox = this->sceneDataBB;
 
 	if (this->grids.size()) {
-		if (this->grids[0]->grid.size() == 0) { return; }
+		if (this->grids[0]->grid.size() == 0) {
+			return;
+		}
 
-		this->visuMin = glm::uvec3(0,0,0);
-		Image::svec3 max = Image::svec3(0,0,0);
-		max = this->grids[0]->grid[0]->getResolution();
-		if (this->newGrids.size()) { max = glm::max(max, this->newGrids[0]->grid->getResolution()); }
+		this->visuMin	 = glm::uvec3(0, 0, 0);
+		Image::svec3 max = Image::svec3(0, 0, 0);
+		max				 = this->grids[0]->grid[0]->getResolution();
+		if (this->newGrids.size()) {
+			max = glm::max(max, this->newGrids[0]->grid->getResolution());
+		}
 		this->visuMax = glm::uvec3(max.x, max.y, max.z);
 		this->updateVisuBoxCoordinates();
 	}
 
 	if (this->newGrids.size()) {
-		this->visuMin = glm::uvec3(0,0,0);
+		this->visuMin	 = glm::uvec3(0, 0, 0);
 		Image::svec3 max = this->newGrids[0]->grid->getResolution();
-		this->visuMax = glm::uvec3(max.x, max.y, max.z);
+		this->visuMax	 = glm::uvec3(max.x, max.y, max.z);
 		this->updateVisuBoxCoordinates();
 	}
 }
 
 float Scene::getSceneRadius() {
 	// in case of box visu, it's easy :
-	if (this->drawMode == VolumetricBoxed) { return glm::length(this->visuBox.getDiagonal()); }
+	if (this->drawMode == VolumetricBoxed) {
+		return glm::length(this->visuBox.getDiagonal());
+	}
 	// if draw solid or volumetric, focus on the part of the scene's BB we want to see
 	// need to compute plane positions, and get the god min/max points according to it
 	if (this->drawMode == Solid || this->drawMode == Volumetric) {
 		// get plane positions :
-		glm::vec3 bbmin = this->sceneBB.getMin();
-		glm::vec3 bbmax = this->sceneBB.getMax();
+		glm::vec3 bbmin	   = this->sceneBB.getMin();
+		glm::vec3 bbmax	   = this->sceneBB.getMax();
 		glm::vec3 planePos = (this->sceneBB.getMin() + this->planeDisplacement * this->sceneBB.getDiagonal());
 		glm::vec3 min = glm::vec3(), max = glm::vec3();
 
-		if (this->planeDirection.x < 0) { min.x = bbmin.x; max.x = planePos.x; } else { min.x = planePos.x; max.x = bbmax.x; }
-		if (this->planeDirection.y < 0) { min.y = bbmin.y; max.y = planePos.y; } else { min.y = planePos.y; max.y = bbmax.y; }
-		if (this->planeDirection.z < 0) { min.z = bbmin.z; max.z = planePos.z; } else { min.z = planePos.z; max.z = bbmax.z; }
+		if (this->planeDirection.x < 0) {
+			min.x = bbmin.x;
+			max.x = planePos.x;
+		} else {
+			min.x = planePos.x;
+			max.x = bbmax.x;
+		}
+		if (this->planeDirection.y < 0) {
+			min.y = bbmin.y;
+			max.y = planePos.y;
+		} else {
+			min.y = planePos.y;
+			max.y = bbmax.y;
+		}
+		if (this->planeDirection.z < 0) {
+			min.z = bbmin.z;
+			max.z = planePos.z;
+		} else {
+			min.z = planePos.z;
+			max.z = bbmax.z;
+		}
 
 		glm::vec3 diag = max - min;
 		return glm::length(diag);
@@ -3822,22 +4192,42 @@ float Scene::getSceneRadius() {
 
 glm::vec3 Scene::getSceneCenter() {
 	// in case of box visu, it's easy :
-	if (this->drawMode == VolumetricBoxed) { return this->visuBox.getMin() + (this->visuBox.getDiagonal()/2.f); }
+	if (this->drawMode == VolumetricBoxed) {
+		return this->visuBox.getMin() + (this->visuBox.getDiagonal() / 2.f);
+	}
 	// if draw solid, or volumetric focus on the part of the scene's BB we want to see
 	// need to compute plane positions, and get the god min/max points according to it
 	if (this->drawMode == Solid || this->drawMode == Volumetric) {
 		// get plane positions :
-		glm::vec3 bbmin = this->sceneBB.getMin();
-		glm::vec3 bbmax = this->sceneBB.getMax();
+		glm::vec3 bbmin	   = this->sceneBB.getMin();
+		glm::vec3 bbmax	   = this->sceneBB.getMax();
 		glm::vec3 planePos = (this->sceneBB.getMin() + this->planeDisplacement * this->sceneBB.getDiagonal());
 		glm::vec3 min = glm::vec3(), max = glm::vec3();
 
-		if (this->planeDirection.x < 0) { min.x = bbmin.x; max.x = planePos.x; } else { min.x = planePos.x; max.x = bbmax.x; }
-		if (this->planeDirection.y < 0) { min.y = bbmin.y; max.y = planePos.y; } else { min.y = planePos.y; max.y = bbmax.y; }
-		if (this->planeDirection.z < 0) { min.z = bbmin.z; max.z = planePos.z; } else { min.z = planePos.z; max.z = bbmax.z; }
+		if (this->planeDirection.x < 0) {
+			min.x = bbmin.x;
+			max.x = planePos.x;
+		} else {
+			min.x = planePos.x;
+			max.x = bbmax.x;
+		}
+		if (this->planeDirection.y < 0) {
+			min.y = bbmin.y;
+			max.y = planePos.y;
+		} else {
+			min.y = planePos.y;
+			max.y = bbmax.y;
+		}
+		if (this->planeDirection.z < 0) {
+			min.z = bbmin.z;
+			max.z = planePos.z;
+		} else {
+			min.z = planePos.z;
+			max.z = bbmax.z;
+		}
 
 		glm::vec3 diag = max - min;
-		return min + diag/2.f;
+		return min + diag / 2.f;
 	}
 	// default value, for no
 	return glm::vec3(.5, .5, .5);
@@ -3845,10 +4235,14 @@ glm::vec3 Scene::getSceneCenter() {
 
 uint Scene::colorFunctionToUniform(ColorFunction _c) {
 	switch (_c) {
-		case ColorFunction::SingleChannel: return 1;
-		case ColorFunction::HistologyHandE: return 2;
-		case ColorFunction::HSV2RGB: return 3;
-		case ColorFunction::ColorMagnitude: return 4;
+		case ColorFunction::SingleChannel:
+			return 1;
+		case ColorFunction::HistologyHandE:
+			return 2;
+		case ColorFunction::HSV2RGB:
+			return 3;
+		case ColorFunction::ColorMagnitude:
+			return 4;
 	}
 	return 0;
 }
@@ -3858,14 +4252,19 @@ void Scene::setColorFunction_r(ColorFunction _c) {
 		this->selectedChannel_r = 0;
 	}
 	if (_c == ColorFunction::SingleChannel && this->channels_r == ColorFunction::SingleChannel) {
-		this->selectedChannel_r = (this->selectedChannel_r+1)%2;
+		this->selectedChannel_r = (this->selectedChannel_r + 1) % 2;
 	}
 	this->channels_r = _c;
 	// WARNING : below is a dirty hack, since UBO expects a color scale index but this gives it a constant
 	// value that only has a meaning on the host (CPU) side.
-	if (_c == ColorFunction::ColorMagnitude) { _c = ColorFunction::HSV2RGB; }
-	else if (_c == ColorFunction::HSV2RGB) { _c = ColorFunction::HistologyHandE; }
-	for (auto& grid : newGrids) { grid->colorChannelAttributes[0].setColorScale(static_cast<int>(_c)); }
+	if (_c == ColorFunction::ColorMagnitude) {
+		_c = ColorFunction::HSV2RGB;
+	} else if (_c == ColorFunction::HSV2RGB) {
+		_c = ColorFunction::HistologyHandE;
+	}
+	for (auto& grid : newGrids) {
+		grid->colorChannelAttributes[0].setColorScale(static_cast<int>(_c));
+	}
 	this->shouldUpdateUBOData = true;
 }
 
@@ -3874,96 +4273,156 @@ void Scene::setColorFunction_g(ColorFunction _c) {
 		this->selectedChannel_g = 0;
 	}
 	if (_c == ColorFunction::SingleChannel && this->channels_g == ColorFunction::SingleChannel) {
-		this->selectedChannel_g = (this->selectedChannel_g+1)%2;
+		this->selectedChannel_g = (this->selectedChannel_g + 1) % 2;
 	}
 	this->channels_g = _c;
 	// WARNING : below is a dirty hack, since UBO expects a color scale index but this gives it a constant
 	// value that only has a meaning on the host (CPU) side.
-	if (_c == ColorFunction::HSV2RGB) { _c = ColorFunction::HistologyHandE; }
-	for (auto& grid : newGrids) { grid->colorChannelAttributes[1].setColorScale(static_cast<int>(_c)); }
+	if (_c == ColorFunction::HSV2RGB) {
+		_c = ColorFunction::HistologyHandE;
+	}
+	for (auto& grid : newGrids) {
+		grid->colorChannelAttributes[1].setColorScale(static_cast<int>(_c));
+	}
 	this->shouldUpdateUBOData = true;
 }
 
 void Scene::setRGBMode(RGBMode _mode) {
 	this->rgbMode = _mode;
-	std::for_each(this->newGrids.begin(), this->newGrids.end(), [this](NewAPI_GridGLView::Ptr &gridView) {
+	std::for_each(this->newGrids.begin(), this->newGrids.end(), [this](NewAPI_GridGLView::Ptr& gridView) {
 		switch (this->rgbMode) {
 			case RGBMode::None:
 				gridView->colorChannelAttributes[0].setHidden();
 				gridView->colorChannelAttributes[1].setHidden();
-			break;
+				break;
 			case RGBMode::RedOnly:
 				gridView->colorChannelAttributes[0].setHidden(false);
 				gridView->colorChannelAttributes[1].setHidden();
-			break;
+				break;
 			case RGBMode::GreenOnly:
 				gridView->colorChannelAttributes[0].setHidden();
 				gridView->colorChannelAttributes[1].setHidden(false);
-			break;
+				break;
 			case RGBMode::RedAndGreen:
 				gridView->colorChannelAttributes[0].setHidden(false);
 				gridView->colorChannelAttributes[1].setHidden(false);
-			break;
+				break;
 			default:
 				// do nothing
-			break;
+				break;
 		}
 	});
 	this->shouldUpdateUBOData = true;
 	switch (_mode) {
-		case RGBMode::None : std::cerr << "Set mode to none" << '\n'; break;
-		case RGBMode::RedOnly : std::cerr << "Set mode to red" << '\n'; break;
-		case RGBMode::GreenOnly : std::cerr << "Set mode to green" << '\n'; break;
-		case RGBMode::RedAndGreen: std::cerr << "Set mode to both channels" << '\n'; break;
-		case RGBMode::HandEColouring: std::cerr << "Set mode to both channels" << '\n'; break;
-		default: std::cerr << "Cannot set unknown mode\n"; break;
+		case RGBMode::None:
+			std::cerr << "Set mode to none" << '\n';
+			break;
+		case RGBMode::RedOnly:
+			std::cerr << "Set mode to red" << '\n';
+			break;
+		case RGBMode::GreenOnly:
+			std::cerr << "Set mode to green" << '\n';
+			break;
+		case RGBMode::RedAndGreen:
+			std::cerr << "Set mode to both channels" << '\n';
+			break;
+		case RGBMode::HandEColouring:
+			std::cerr << "Set mode to both channels" << '\n';
+			break;
+		default:
+			std::cerr << "Cannot set unknown mode\n";
+			break;
 	}
 }
 
-DiscreteGrid::bbox_t Scene::getSceneBoundingBox() const { return this->sceneBB; };
+DiscreteGrid::bbox_t Scene::getSceneBoundingBox() const {
+	return this->sceneBB;
+};
 
-void Scene::slotSetPlaneDisplacementX(float scalar) { this->planeDisplacement.x = scalar; }
-void Scene::slotSetPlaneDisplacementY(float scalar) { this->planeDisplacement.y = scalar; }
-void Scene::slotSetPlaneDisplacementZ(float scalar) { this->planeDisplacement.z = scalar; }
+void Scene::slotSetPlaneDisplacementX(float scalar) {
+	this->planeDisplacement.x = scalar;
+}
+void Scene::slotSetPlaneDisplacementY(float scalar) {
+	this->planeDisplacement.y = scalar;
+}
+void Scene::slotSetPlaneDisplacementZ(float scalar) {
+	this->planeDisplacement.z = scalar;
+}
 
-void Scene::slotTogglePlaneDirectionX() { this->planeDirection.x = - this->planeDirection.x; }
-void Scene::slotTogglePlaneDirectionY() { this->planeDirection.y = - this->planeDirection.y; }
-void Scene::slotTogglePlaneDirectionZ() { this->planeDirection.z = - this->planeDirection.z; }
-void Scene::toggleAllPlaneDirections() { this->planeDirection = - this->planeDirection; }
+void Scene::slotTogglePlaneDirectionX() {
+	this->planeDirection.x = -this->planeDirection.x;
+}
+void Scene::slotTogglePlaneDirectionY() {
+	this->planeDirection.y = -this->planeDirection.y;
+}
+void Scene::slotTogglePlaneDirectionZ() {
+	this->planeDirection.z = -this->planeDirection.z;
+}
+void Scene::toggleAllPlaneDirections() {
+	this->planeDirection = -this->planeDirection;
+}
 
-void Scene::slotSetMinTexValue(DiscreteGrid::data_t val) { this->textureBounds0.x = val; this->updateVis(); this->updateCVR(); }
-void Scene::slotSetMaxTexValue(DiscreteGrid::data_t val) { this->textureBounds0.y = val; this->updateVis(); this->updateCVR(); }
-void Scene::slotSetMinTexValueAlternate(DiscreteGrid::data_t val) { this->textureBounds1.x = val; this->updateVis(); this->updateCVR(); }
-void Scene::slotSetMaxTexValueAlternate(DiscreteGrid::data_t val) { this->textureBounds1.y = val; this->updateVis(); this->updateCVR(); }
+void Scene::slotSetMinTexValue(DiscreteGrid::data_t val) {
+	this->textureBounds0.x = val;
+	this->updateVis();
+	this->updateCVR();
+}
+void Scene::slotSetMaxTexValue(DiscreteGrid::data_t val) {
+	this->textureBounds0.y = val;
+	this->updateVis();
+	this->updateCVR();
+}
+void Scene::slotSetMinTexValueAlternate(DiscreteGrid::data_t val) {
+	this->textureBounds1.x = val;
+	this->updateVis();
+	this->updateCVR();
+}
+void Scene::slotSetMaxTexValueAlternate(DiscreteGrid::data_t val) {
+	this->textureBounds1.y = val;
+	this->updateVis();
+	this->updateCVR();
+}
 
-void Scene::slotSetMinColorValue(DiscreteGrid::data_t val) { this->colorBounds0.x = val; this->updateCVR(); }
-void Scene::slotSetMaxColorValue(DiscreteGrid::data_t val) { this->colorBounds0.y = val; this->updateCVR(); }
-void Scene::slotSetMinColorValueAlternate(DiscreteGrid::data_t val) { this->colorBounds1.x = val; this->updateCVR(); }
-void Scene::slotSetMaxColorValueAlternate(DiscreteGrid::data_t val) { this->colorBounds1.y = val; this->updateCVR(); }
+void Scene::slotSetMinColorValue(DiscreteGrid::data_t val) {
+	this->colorBounds0.x = val;
+	this->updateCVR();
+}
+void Scene::slotSetMaxColorValue(DiscreteGrid::data_t val) {
+	this->colorBounds0.y = val;
+	this->updateCVR();
+}
+void Scene::slotSetMinColorValueAlternate(DiscreteGrid::data_t val) {
+	this->colorBounds1.x = val;
+	this->updateCVR();
+}
+void Scene::slotSetMaxColorValueAlternate(DiscreteGrid::data_t val) {
+	this->colorBounds1.y = val;
+	this->updateCVR();
+}
 
 void Scene::setColor0(qreal r, qreal g, qreal b) {
-	glm::vec<3, qreal, glm::highp> qtcolor(r,g,b);
+	glm::vec<3, qreal, glm::highp> qtcolor(r, g, b);
 	this->color0 = glm::convert_to<float>(qtcolor);
 	this->signal_updateUserColorScales();
 	return;
 }
 
 void Scene::setColor1(qreal r, qreal g, qreal b) {
-	glm::vec<3, qreal, glm::highp> qtcolor(r,g,b);
+	glm::vec<3, qreal, glm::highp> qtcolor(r, g, b);
 	this->color1 = glm::convert_to<float>(qtcolor);
 	this->signal_updateUserColorScales();
 	return;
 }
 
 void Scene::setColor0Alternate(qreal r, qreal g, qreal b) {
-	glm::vec<3, qreal, glm::highp> qtcolor(r,g,b);
+	glm::vec<3, qreal, glm::highp> qtcolor(r, g, b);
 	this->color0_second = glm::convert_to<float>(qtcolor);
 	this->signal_updateUserColorScales();
 	return;
 }
 
 void Scene::setColor1Alternate(qreal r, qreal g, qreal b) {
-	glm::vec<3, qreal, glm::highp> qtcolor(r,g,b);
+	glm::vec<3, qreal, glm::highp> qtcolor(r, g, b);
 	this->color1_second = glm::convert_to<float>(qtcolor);
 	this->signal_updateUserColorScales();
 	return;
@@ -3976,8 +4435,8 @@ void Scene::signal_updateUserColorScales() {
 void Scene::newSHADERS_updateUserColorScales() {
 	this->shouldUpdateUserColorScales = false;
 	TextureUpload colorScaleUploadParameters;
-	std::size_t textureSize = this->gl_limit_max_texture_size/2u;
-	float textureSize_f = static_cast<float>(this->gl_limit_max_texture_size/2u);
+	std::size_t textureSize = this->gl_limit_max_texture_size / 2u;
+	float textureSize_f		= static_cast<float>(this->gl_limit_max_texture_size / 2u);
 	std::vector<glm::vec3> colorScaleData_user0(textureSize);
 	std::vector<glm::vec3> colorScaleData_user1(textureSize);
 
@@ -3987,28 +4446,28 @@ void Scene::newSHADERS_updateUserColorScales() {
 		colorScaleData_user1[i] = glm::mix(this->color0_second, this->color1_second, static_cast<float>(i) / textureSize_f);
 	}
 
-	colorScaleUploadParameters.minmag.x = GL_LINEAR;
-	colorScaleUploadParameters.minmag.y = GL_LINEAR;
-	colorScaleUploadParameters.lod.y = -1000.f;
-	colorScaleUploadParameters.wrap.x = GL_CLAMP_TO_EDGE;
-	colorScaleUploadParameters.wrap.y = GL_CLAMP_TO_EDGE;
-	colorScaleUploadParameters.wrap.z = GL_CLAMP_TO_EDGE;
+	colorScaleUploadParameters.minmag.x	 = GL_LINEAR;
+	colorScaleUploadParameters.minmag.y	 = GL_LINEAR;
+	colorScaleUploadParameters.lod.y	 = -1000.f;
+	colorScaleUploadParameters.wrap.x	 = GL_CLAMP_TO_EDGE;
+	colorScaleUploadParameters.wrap.y	 = GL_CLAMP_TO_EDGE;
+	colorScaleUploadParameters.wrap.z	 = GL_CLAMP_TO_EDGE;
 	colorScaleUploadParameters.swizzle.r = GL_RED;
 	colorScaleUploadParameters.swizzle.g = GL_GREEN;
 	colorScaleUploadParameters.swizzle.b = GL_BLUE;
 	colorScaleUploadParameters.swizzle.a = GL_ONE;
 
-	colorScaleUploadParameters.level = 0;
+	colorScaleUploadParameters.level		  = 0;
 	colorScaleUploadParameters.internalFormat = GL_RGB;
-	colorScaleUploadParameters.size.x = textureSize;
-	colorScaleUploadParameters.size.y = 1;
-	colorScaleUploadParameters.size.z = 1;
-	colorScaleUploadParameters.format = GL_RGB;
-	colorScaleUploadParameters.type = GL_FLOAT;
-	colorScaleUploadParameters.data = colorScaleData_user0.data();
-	this->texHandle_colorScale_user0 = this->uploadTexture1D(colorScaleUploadParameters);
+	colorScaleUploadParameters.size.x		  = textureSize;
+	colorScaleUploadParameters.size.y		  = 1;
+	colorScaleUploadParameters.size.z		  = 1;
+	colorScaleUploadParameters.format		  = GL_RGB;
+	colorScaleUploadParameters.type			  = GL_FLOAT;
+	colorScaleUploadParameters.data			  = colorScaleData_user0.data();
+	this->texHandle_colorScale_user0		  = this->uploadTexture1D(colorScaleUploadParameters);
 
-	colorScaleUploadParameters.data = colorScaleData_user1.data();
+	colorScaleUploadParameters.data	 = colorScaleData_user1.data();
 	this->texHandle_colorScale_user1 = this->uploadTexture1D(colorScaleUploadParameters);
 }
 
@@ -4032,25 +4491,30 @@ void Scene::setDrawMode(DrawMode _mode) {
 	this->drawMode = _mode;
 	if (this->programStatusBar != nullptr) {
 		switch (_mode) {
-			case DrawMode::Solid :
+			case DrawMode::Solid:
 				this->programStatusBar->showMessage("Set draw mode to Solid.\n", 5000);
-			break;
-			case DrawMode::Volumetric :
+				break;
+			case DrawMode::Volumetric:
 				this->programStatusBar->showMessage("Set draw mode to Volumetric.\n", 5000);
-			break;
-			case DrawMode::VolumetricBoxed :
+				break;
+			case DrawMode::VolumetricBoxed:
 				this->programStatusBar->showMessage("Set draw mode to VolumetricBoxed.\n", 5000);
-			break;
+				break;
 		}
 	}
 }
 
 void Scene::togglePlaneVisibility(planes _plane) {
-	if (_plane == planes::x) { this->planeVisibility.x = not this->planeVisibility.x; }
-	if (_plane == planes::y) { this->planeVisibility.y = not this->planeVisibility.y; }
-	if (_plane == planes::z) { this->planeVisibility.z = not this->planeVisibility.z; }
-	std::cerr << "Visibilities : {" << std::boolalpha << this->planeVisibility.x << ',' <<
-			 this->planeVisibility.y << ',' << this->planeVisibility.z << "}\n";
+	if (_plane == planes::x) {
+		this->planeVisibility.x = not this->planeVisibility.x;
+	}
+	if (_plane == planes::y) {
+		this->planeVisibility.y = not this->planeVisibility.y;
+	}
+	if (_plane == planes::z) {
+		this->planeVisibility.z = not this->planeVisibility.z;
+	}
+	std::cerr << "Visibilities : {" << std::boolalpha << this->planeVisibility.x << ',' << this->planeVisibility.y << ',' << this->planeVisibility.z << "}\n";
 	return;
 }
 
@@ -4075,33 +4539,41 @@ void Scene::tex3D_buildMesh(GridGLView::Ptr& grid, const std::string path) {
 
 	// Hard-coded indices smh, got to move to a more portable (and readable) solution :
 	std::size_t indices[4][3];
-	indices[0][0] = 3; indices[0][1] = 1; indices[0][2] = 2;
-	indices[1][0] = 3; indices[1][1] = 2; indices[1][2] = 0;
-	indices[2][0] = 3; indices[2][1] = 0; indices[2][2] = 1;
-	indices[3][0] = 2; indices[3][1] = 1; indices[3][2] = 0;
+	indices[0][0] = 3;
+	indices[0][1] = 1;
+	indices[0][2] = 2;
+	indices[1][0] = 3;
+	indices[1][1] = 2;
+	indices[1][2] = 0;
+	indices[2][0] = 3;
+	indices[2][1] = 0;
+	indices[2][2] = 1;
+	indices[3][0] = 2;
+	indices[3][1] = 1;
+	indices[3][2] = 0;
 
 	// INIT NEIGHBORS :
 	mesh.neighbors.clear();
 	mesh.neighbors.resize(mesh.tetrahedra.size());
-	for(std::size_t i = 0 ; i < mesh.tetrahedra.size() ; i++ ){
+	for (std::size_t i = 0; i < mesh.tetrahedra.size(); i++) {
 		mesh.neighbors[i].resize(4, -1);
 		mesh.normals.push_back(std::array<glm::vec4, 4>{glm::vec4(.0f), glm::vec4(.0f), glm::vec4(.0f), glm::vec4(.0f)});
 	}
 
 	// Adjacency map :
-	std::map< Face , std::pair<int, int> > adjacent_faces;
+	std::map<Face, std::pair<int, int>> adjacent_faces;
 	// generate the correspondance by looking at which faces are similar : [MEDIUM/HEAVY COMPUTATION]
-	for(std::size_t i = 0 ; i < mesh.tetrahedra.size() ; i ++ ){
-		for( int v = 0 ; v < 4 ; v++ ){
+	for (std::size_t i = 0; i < mesh.tetrahedra.size(); i++) {
+		for (int v = 0; v < 4; v++) {
 			// find similar face in other tetrahedrons :
-			Face face = Face(mesh.tetrahedra[i][indices[v][0]],
-					mesh.tetrahedra[i][indices[v][1]],
-					mesh.tetrahedra[i][indices[v][2]]);
-			std::map< Face , std::pair<int, int> >::iterator it = adjacent_faces.find(face);
-			if( it == adjacent_faces.end() ){
-				adjacent_faces[face] = std::make_pair(static_cast<int>(i),v);
+			Face face										 = Face(mesh.tetrahedra[i][indices[v][0]],
+				 mesh.tetrahedra[i][indices[v][1]],
+				 mesh.tetrahedra[i][indices[v][2]]);
+			std::map<Face, std::pair<int, int>>::iterator it = adjacent_faces.find(face);
+			if (it == adjacent_faces.end()) {
+				adjacent_faces[face] = std::make_pair(static_cast<int>(i), v);
 			} else {
-				mesh.neighbors[i][v] = it->second.first;
+				mesh.neighbors[i][v]								= it->second.first;
 				mesh.neighbors[it->second.first][it->second.second] = i;
 			}
 		}
@@ -4113,34 +4585,34 @@ void Scene::tex3D_buildMesh(GridGLView::Ptr& grid, const std::string path) {
 	std::size_t coorWidth = 0, coorHeight = 0;
 	std::size_t neighbWidth = 0, neighbHeight = 0;
 
-	__GetTexSize(mesh.tetrahedra.size()*4*3, &vertWidth, &vertHeight);
-	__GetTexSize(mesh.tetrahedra.size()*4, &normWidth, &normHeight);
-	__GetTexSize(mesh.tetrahedra.size()*4*3, &coorWidth, &coorHeight);
-	__GetTexSize(mesh.tetrahedra.size()*4, &neighbWidth, &neighbHeight);
+	__GetTexSize(mesh.tetrahedra.size() * 4 * 3, &vertWidth, &vertHeight);
+	__GetTexSize(mesh.tetrahedra.size() * 4, &normWidth, &normHeight);
+	__GetTexSize(mesh.tetrahedra.size() * 4 * 3, &coorWidth, &coorHeight);
+	__GetTexSize(mesh.tetrahedra.size() * 4, &neighbWidth, &neighbHeight);
 
 	grid->volumetricMesh.tetrahedraCount = mesh.tetrahedra.size();
 
-	#ifdef DIRECT_FROM_VOLMESH_TO_ARRAY_SIZE
-	GLfloat* rawVertices = new GLfloat[grid.volumetricMesh.tetrahedraCount*4*3*3];
-	GLfloat* rawNormals = new GLfloat[grid.volumetricMesh.tetrahedraCount*4*4];
-	GLfloat* tex = new GLfloat[grid.volumetricMesh.tetrahedraCount*4*3*3];
-	GLfloat* rawNeighbors = new GLfloat[grid.volumetricMesh.tetrahedraCount*4*3];
-	#else
-	GLfloat* rawVertices = new GLfloat[vertWidth * vertHeight *3];
-	GLfloat* rawNormals = new GLfloat[normWidth * normHeight *4];
-	GLfloat* tex = new GLfloat[coorWidth * coorHeight *3];
-	GLfloat* rawNeighbors = new GLfloat[neighbWidth * neighbHeight *3];
-	#endif
+#ifdef DIRECT_FROM_VOLMESH_TO_ARRAY_SIZE
+	GLfloat* rawVertices  = new GLfloat[grid.volumetricMesh.tetrahedraCount * 4 * 3 * 3];
+	GLfloat* rawNormals	  = new GLfloat[grid.volumetricMesh.tetrahedraCount * 4 * 4];
+	GLfloat* tex		  = new GLfloat[grid.volumetricMesh.tetrahedraCount * 4 * 3 * 3];
+	GLfloat* rawNeighbors = new GLfloat[grid.volumetricMesh.tetrahedraCount * 4 * 3];
+#else
+	GLfloat* rawVertices = new GLfloat[vertWidth * vertHeight * 3];
+	GLfloat* rawNormals = new GLfloat[normWidth * normHeight * 4];
+	GLfloat* tex = new GLfloat[coorWidth * coorHeight * 3];
+	GLfloat* rawNeighbors = new GLfloat[neighbWidth * neighbHeight * 3];
+#endif
 
 	/*
 	Warning : the loop that follows is horribly bad : it duplicates every texture coordinate by the number of times
 	the vertex is used within the mesh. It MUST be improved once the method is working, to save up on video memory.
 	It does the same for the vertex positions.
 	*/
-	std::size_t iter = 0;
+	std::size_t iter   = 0;
 	std::size_t texcnt = 0;
 	std::size_t ncount = 0;
-	for(std::size_t t = 0; t < mesh.tetrahedra.size(); ++t) {
+	for (std::size_t t = 0; t < mesh.tetrahedra.size(); ++t) {
 		// For each tet :
 		const std::array<std::size_t, 4>& tetrahedron = mesh.tetrahedra[t];
 		// For each tet's face :
@@ -4153,26 +4625,26 @@ void Scene::tex3D_buildMesh(GridGLView::Ptr& grid, const std::string path) {
 				// And put it in the array :
 				for (std::size_t k = 0; k < 3; ++k) {
 					rawVertices[texcnt] = position[k];
-					tex[texcnt] = tetCoord[k];
+					tex[texcnt]			= tetCoord[k];
 					texcnt++;
 				}
 			}
 
 			// Compute this face's normal :
-			glm::vec4 n1 = mesh.positions[tetrahedron[indices[i][1]]] - mesh.positions[tetrahedron[indices[i][0]]];
-			glm::vec4 n2 = mesh.positions[tetrahedron[indices[i][2]]] - mesh.positions[tetrahedron[indices[i][0]]];
+			glm::vec4 n1   = mesh.positions[tetrahedron[indices[i][1]]] - mesh.positions[tetrahedron[indices[i][0]]];
+			glm::vec4 n2   = mesh.positions[tetrahedron[indices[i][2]]] - mesh.positions[tetrahedron[indices[i][0]]];
 			glm::vec4 norm = glm::normalize(glm::cross(n1, n2));
 			// Put inverse of dot with opposing vertex in norm.w :
-			glm::vec4 v1 = mesh.positions[tetrahedron[i]] - mesh.positions[tetrahedron[(i+1)%4]];
+			glm::vec4 v1			  = mesh.positions[tetrahedron[i]] - mesh.positions[tetrahedron[(i + 1) % 4]];
 			glm::vec4::value_type val = 1. / glm::dot(v1, norm);
-			norm.w = val;
+			norm.w					  = val;
 			// Put it in the array :
 			for (std::size_t n = 0; n < 4; ++n) {
 				rawNormals[ncount++] = norm[n];
 			}
 
 			rawNeighbors[iter] = static_cast<GLfloat>(mesh.neighbors[t][i]);
-			iter+=3;
+			iter += 3;
 		}
 	}
 
@@ -4182,38 +4654,38 @@ void Scene::tex3D_buildMesh(GridGLView::Ptr& grid, const std::string path) {
 	// Vertex positions :
 	texParams.minmag.x = GL_NEAREST;
 	texParams.minmag.y = GL_NEAREST;
-	texParams.lod.y = -1000.f;
-	texParams.wrap.s = GL_CLAMP;
-	texParams.wrap.t = GL_CLAMP;
+	texParams.lod.y	   = -1000.f;
+	texParams.wrap.s   = GL_CLAMP;
+	texParams.wrap.t   = GL_CLAMP;
 	// Swizzle and alignment unchanged, not present in Texture3D
-	texParams.internalFormat = GL_RGB32F;
-	texParams.size.x = vertWidth;
-	texParams.size.y = vertHeight;
-	texParams.format = GL_RGB;
-	texParams.type = GL_FLOAT;
-	texParams.data = rawVertices;
+	texParams.internalFormat			 = GL_RGB32F;
+	texParams.size.x					 = vertWidth;
+	texParams.size.y					 = vertHeight;
+	texParams.format					 = GL_RGB;
+	texParams.type						 = GL_FLOAT;
+	texParams.data						 = rawVertices;
 	grid->volumetricMesh.vertexPositions = this->uploadTexture2D(texParams);
 
 	// Face normals :
-	texParams.internalFormat = GL_RGBA32F;
-	texParams.size.x = normWidth;
-	texParams.size.y = normHeight;
-	texParams.format = GL_RGBA;
-	texParams.data = rawNormals;
+	texParams.internalFormat		 = GL_RGBA32F;
+	texParams.size.x				 = normWidth;
+	texParams.size.y				 = normHeight;
+	texParams.format				 = GL_RGBA;
+	texParams.data					 = rawNormals;
 	grid->volumetricMesh.faceNormals = this->uploadTexture2D(texParams);
 
 	// Texture coordinates :
-	texParams.internalFormat = GL_RGB32F;
-	texParams.size.x = coorWidth;
-	texParams.size.y = coorHeight;
-	texParams.format = GL_RGB;
-	texParams.data = tex;
+	texParams.internalFormat				= GL_RGB32F;
+	texParams.size.x						= coorWidth;
+	texParams.size.y						= coorHeight;
+	texParams.format						= GL_RGB;
+	texParams.data							= tex;
 	grid->volumetricMesh.textureCoordinates = this->uploadTexture2D(texParams);
 
 	// Neighborhood information :
-	texParams.size.x = neighbWidth;
-	texParams.size.y = neighbHeight;
-	texParams.data = rawNeighbors;
+	texParams.size.x				  = neighbWidth;
+	texParams.size.y				  = neighbHeight;
+	texParams.data					  = rawNeighbors;
 	grid->volumetricMesh.neighborhood = this->uploadTexture2D(texParams);
 
 	delete[] tex;
@@ -4238,33 +4710,41 @@ void Scene::newAPI_tex3D_buildMesh(NewAPI_GridGLView::Ptr& grid, const std::stri
 
 	// Hard-coded indices smh, got to move to a more portable (and readable) solution :
 	std::size_t indices[4][3];
-	indices[0][0] = 3; indices[0][1] = 1; indices[0][2] = 2;
-	indices[1][0] = 3; indices[1][1] = 2; indices[1][2] = 0;
-	indices[2][0] = 3; indices[2][1] = 0; indices[2][2] = 1;
-	indices[3][0] = 2; indices[3][1] = 1; indices[3][2] = 0;
+	indices[0][0] = 3;
+	indices[0][1] = 1;
+	indices[0][2] = 2;
+	indices[1][0] = 3;
+	indices[1][1] = 2;
+	indices[1][2] = 0;
+	indices[2][0] = 3;
+	indices[2][1] = 0;
+	indices[2][2] = 1;
+	indices[3][0] = 2;
+	indices[3][1] = 1;
+	indices[3][2] = 0;
 
 	// INIT NEIGHBORS :
 	mesh.neighbors.clear();
 	mesh.neighbors.resize(mesh.tetrahedra.size());
-	for(std::size_t i = 0 ; i < mesh.tetrahedra.size() ; i++ ){
+	for (std::size_t i = 0; i < mesh.tetrahedra.size(); i++) {
 		mesh.neighbors[i].resize(4, -1);
 		mesh.normals.push_back(std::array<glm::vec4, 4>{glm::vec4(.0f), glm::vec4(.0f), glm::vec4(.0f), glm::vec4(.0f)});
 	}
 
 	// Adjacency map :
-	std::map< Face , std::pair<int, int> > adjacent_faces;
+	std::map<Face, std::pair<int, int>> adjacent_faces;
 	// generate the correspondance by looking at which faces are similar : [MEDIUM/HEAVY COMPUTATION]
-	for(std::size_t i = 0 ; i < mesh.tetrahedra.size() ; i ++ ){
-		for( int v = 0 ; v < 4 ; v++ ){
+	for (std::size_t i = 0; i < mesh.tetrahedra.size(); i++) {
+		for (int v = 0; v < 4; v++) {
 			// find similar face in other tetrahedrons :
-			Face face = Face(mesh.tetrahedra[i][indices[v][0]],
-					mesh.tetrahedra[i][indices[v][1]],
-					mesh.tetrahedra[i][indices[v][2]]);
-			std::map< Face , std::pair<int, int> >::iterator it = adjacent_faces.find(face);
-			if( it == adjacent_faces.end() ){
-				adjacent_faces[face] = std::make_pair(static_cast<int>(i),v);
+			Face face										 = Face(mesh.tetrahedra[i][indices[v][0]],
+				 mesh.tetrahedra[i][indices[v][1]],
+				 mesh.tetrahedra[i][indices[v][2]]);
+			std::map<Face, std::pair<int, int>>::iterator it = adjacent_faces.find(face);
+			if (it == adjacent_faces.end()) {
+				adjacent_faces[face] = std::make_pair(static_cast<int>(i), v);
 			} else {
-				mesh.neighbors[i][v] = it->second.first;
+				mesh.neighbors[i][v]								= it->second.first;
 				mesh.neighbors[it->second.first][it->second.second] = i;
 			}
 		}
@@ -4276,34 +4756,34 @@ void Scene::newAPI_tex3D_buildMesh(NewAPI_GridGLView::Ptr& grid, const std::stri
 	std::size_t coorWidth = 0, coorHeight = 0;
 	std::size_t neighbWidth = 0, neighbHeight = 0;
 
-	__GetTexSize(mesh.tetrahedra.size()*4*3, &vertWidth, &vertHeight);
-	__GetTexSize(mesh.tetrahedra.size()*4, &normWidth, &normHeight);
-	__GetTexSize(mesh.tetrahedra.size()*4*3, &coorWidth, &coorHeight);
-	__GetTexSize(mesh.tetrahedra.size()*4, &neighbWidth, &neighbHeight);
+	__GetTexSize(mesh.tetrahedra.size() * 4 * 3, &vertWidth, &vertHeight);
+	__GetTexSize(mesh.tetrahedra.size() * 4, &normWidth, &normHeight);
+	__GetTexSize(mesh.tetrahedra.size() * 4 * 3, &coorWidth, &coorHeight);
+	__GetTexSize(mesh.tetrahedra.size() * 4, &neighbWidth, &neighbHeight);
 
 	grid->volumetricMesh.tetrahedraCount = mesh.tetrahedra.size();
 
-	#ifdef DIRECT_FROM_VOLMESH_TO_ARRAY_SIZE
-	GLfloat* rawVertices = new GLfloat[grid.volumetricMesh.tetrahedraCount*4*3*3];
-	GLfloat* rawNormals = new GLfloat[grid.volumetricMesh.tetrahedraCount*4*4];
-	GLfloat* tex = new GLfloat[grid.volumetricMesh.tetrahedraCount*4*3*3];
-	GLfloat* rawNeighbors = new GLfloat[grid.volumetricMesh.tetrahedraCount*4*3];
-	#else
-	GLfloat* rawVertices = new GLfloat[vertWidth * vertHeight *3];
-	GLfloat* rawNormals = new GLfloat[normWidth * normHeight *4];
-	GLfloat* tex = new GLfloat[coorWidth * coorHeight *3];
-	GLfloat* rawNeighbors = new GLfloat[neighbWidth * neighbHeight *3];
-	#endif
+#ifdef DIRECT_FROM_VOLMESH_TO_ARRAY_SIZE
+	GLfloat* rawVertices  = new GLfloat[grid.volumetricMesh.tetrahedraCount * 4 * 3 * 3];
+	GLfloat* rawNormals	  = new GLfloat[grid.volumetricMesh.tetrahedraCount * 4 * 4];
+	GLfloat* tex		  = new GLfloat[grid.volumetricMesh.tetrahedraCount * 4 * 3 * 3];
+	GLfloat* rawNeighbors = new GLfloat[grid.volumetricMesh.tetrahedraCount * 4 * 3];
+#else
+	GLfloat* rawVertices = new GLfloat[vertWidth * vertHeight * 3];
+	GLfloat* rawNormals = new GLfloat[normWidth * normHeight * 4];
+	GLfloat* tex = new GLfloat[coorWidth * coorHeight * 3];
+	GLfloat* rawNeighbors = new GLfloat[neighbWidth * neighbHeight * 3];
+#endif
 
 	/*
 	Warning : the loop that follows is horribly bad : it duplicates every texture coordinate by the number of times
 	the vertex is used within the mesh. It MUST be improved once the method is working, to save up on video memory.
 	It does the same for the vertex positions.
 	*/
-	std::size_t iter = 0;
+	std::size_t iter   = 0;
 	std::size_t texcnt = 0;
 	std::size_t ncount = 0;
-	for(std::size_t t = 0; t < mesh.tetrahedra.size(); ++t) {
+	for (std::size_t t = 0; t < mesh.tetrahedra.size(); ++t) {
 		// For each tet :
 		const std::array<std::size_t, 4>& tetrahedron = mesh.tetrahedra[t];
 		// For each tet's face :
@@ -4316,26 +4796,26 @@ void Scene::newAPI_tex3D_buildMesh(NewAPI_GridGLView::Ptr& grid, const std::stri
 				// And put it in the array :
 				for (std::size_t k = 0; k < 3; ++k) {
 					rawVertices[texcnt] = position[k];
-					tex[texcnt] = tetCoord[k];
+					tex[texcnt]			= tetCoord[k];
 					texcnt++;
 				}
 			}
 
 			// Compute this face's normal :
-			glm::vec4 n1 = mesh.positions[tetrahedron[indices[i][1]]] - mesh.positions[tetrahedron[indices[i][0]]];
-			glm::vec4 n2 = mesh.positions[tetrahedron[indices[i][2]]] - mesh.positions[tetrahedron[indices[i][0]]];
+			glm::vec4 n1   = mesh.positions[tetrahedron[indices[i][1]]] - mesh.positions[tetrahedron[indices[i][0]]];
+			glm::vec4 n2   = mesh.positions[tetrahedron[indices[i][2]]] - mesh.positions[tetrahedron[indices[i][0]]];
 			glm::vec4 norm = glm::normalize(glm::cross(n1, n2));
 			// Put inverse of dot with opposing vertex in norm.w :
-			glm::vec4 v1 = mesh.positions[tetrahedron[i]] - mesh.positions[tetrahedron[(i+1)%4]];
+			glm::vec4 v1			  = mesh.positions[tetrahedron[i]] - mesh.positions[tetrahedron[(i + 1) % 4]];
 			glm::vec4::value_type val = 1. / glm::dot(v1, norm);
-			norm.w = val;
+			norm.w					  = val;
 			// Put it in the array :
 			for (std::size_t n = 0; n < 4; ++n) {
 				rawNormals[ncount++] = norm[n];
 			}
 
 			rawNeighbors[iter] = static_cast<GLfloat>(mesh.neighbors[t][i]);
-			iter+=3;
+			iter += 3;
 		}
 	}
 
@@ -4345,38 +4825,38 @@ void Scene::newAPI_tex3D_buildMesh(NewAPI_GridGLView::Ptr& grid, const std::stri
 	// Vertex positions :
 	texParams.minmag.x = GL_NEAREST;
 	texParams.minmag.y = GL_NEAREST;
-	texParams.lod.y = -1000.f;
-	texParams.wrap.s = GL_CLAMP;
-	texParams.wrap.t = GL_CLAMP;
+	texParams.lod.y	   = -1000.f;
+	texParams.wrap.s   = GL_CLAMP;
+	texParams.wrap.t   = GL_CLAMP;
 	// Swizzle and alignment unchanged, not present in Texture3D
-	texParams.internalFormat = GL_RGB32F;
-	texParams.size.x = vertWidth;
-	texParams.size.y = vertHeight;
-	texParams.format = GL_RGB;
-	texParams.type = GL_FLOAT;
-	texParams.data = rawVertices;
+	texParams.internalFormat			 = GL_RGB32F;
+	texParams.size.x					 = vertWidth;
+	texParams.size.y					 = vertHeight;
+	texParams.format					 = GL_RGB;
+	texParams.type						 = GL_FLOAT;
+	texParams.data						 = rawVertices;
 	grid->volumetricMesh.vertexPositions = this->uploadTexture2D(texParams);
 
 	// Face normals :
-	texParams.internalFormat = GL_RGBA32F;
-	texParams.size.x = normWidth;
-	texParams.size.y = normHeight;
-	texParams.format = GL_RGBA;
-	texParams.data = rawNormals;
+	texParams.internalFormat		 = GL_RGBA32F;
+	texParams.size.x				 = normWidth;
+	texParams.size.y				 = normHeight;
+	texParams.format				 = GL_RGBA;
+	texParams.data					 = rawNormals;
 	grid->volumetricMesh.faceNormals = this->uploadTexture2D(texParams);
 
 	// Texture coordinates :
-	texParams.internalFormat = GL_RGB32F;
-	texParams.size.x = coorWidth;
-	texParams.size.y = coorHeight;
-	texParams.format = GL_RGB;
-	texParams.data = tex;
+	texParams.internalFormat				= GL_RGB32F;
+	texParams.size.x						= coorWidth;
+	texParams.size.y						= coorHeight;
+	texParams.format						= GL_RGB;
+	texParams.data							= tex;
 	grid->volumetricMesh.textureCoordinates = this->uploadTexture2D(texParams);
 
 	// Neighborhood information :
-	texParams.size.x = neighbWidth;
-	texParams.size.y = neighbHeight;
-	texParams.data = rawNeighbors;
+	texParams.size.x				  = neighbWidth;
+	texParams.size.y				  = neighbHeight;
+	texParams.data					  = rawNeighbors;
 	grid->volumetricMesh.neighborhood = this->uploadTexture2D(texParams);
 
 	delete[] tex;
@@ -4402,7 +4882,7 @@ void Scene::tex3D_loadMESHFile(const std::string file, const GridGLView::Ptr& gr
 	while (meshString.find("Dimension") == std::string::npos)
 		myfile >> meshString;
 
-	myfile>> dimension;
+	myfile >> dimension;
 	while (meshString.find("Vertices") == std::string::npos)
 		myfile >> meshString;
 
@@ -4420,16 +4900,22 @@ void Scene::tex3D_loadMESHFile(const std::string file, const GridGLView::Ptr& gr
 		for (unsigned int j = 0; j < 3; j++)
 			myfile >> p[j];
 
-		if (p[0] > maxX) { maxX = p[0]; }
-		if (p[1] > maxY) { maxY = p[1]; }
-		if (p[2] > maxZ) { maxZ = p[2]; }
+		if (p[0] > maxX) {
+			maxX = p[0];
+		}
+		if (p[1] > maxY) {
+			maxY = p[1];
+		}
+		if (p[2] > maxZ) {
+			maxZ = p[2];
+		}
 		glm::vec4 position = glm::vec4(p[0], p[1], p[2], 1.);
-		normalBox.addPoint(DiscreteGrid::bbox_t::vec(p[0],p[1],p[2]));
+		normalBox.addPoint(DiscreteGrid::bbox_t::vec(p[0], p[1], p[2]));
 		rawVert.push_back(position);
 		position = grid->grid[0]->getTransform_GridToWorld() * position;
 		deformedBox.addPoint(DiscreteGrid::bbox_t::vec(position.x, position.y, position.z));
 		mesh.positions.push_back(position);
-/*
+		/*
 		texCoords.push_back(glm::vec3(
 			std::min(1.f,(p[0] - bmin.x)/diag.x),
 			std::min(1.f,(p[1] - bmin.y)/diag.y),
@@ -4443,16 +4929,15 @@ void Scene::tex3D_loadMESHFile(const std::string file, const GridGLView::Ptr& gr
 	glm::vec3 size{maxX, maxY, maxZ};
 	// Grid size divided by mesh size gives a scalar to apply to the mesh to make it grid-sized :
 	glm::vec3 gridsize = glm::convert_to<float>(grid->grid[0]->getResolution()) * grid->grid[0]->getVoxelDimensions();
-	glm::vec4 scale = glm::vec4(gridsize / size, 1.);
+	glm::vec4 scale	   = glm::vec4(gridsize / size, 1.);
 
 	std::cerr << "[LOG][" << __FILE__ << ':' << __LINE__ << "] Max dimensions of the mesh : [" << maxX << ',' << maxY << ',' << maxZ << "]\n";
 	for (std::size_t i = 0; i < mesh.positions.size(); ++i) {
 		//mesh.positions[i] *= scale;
 		mesh.texture.push_back(glm::vec3(
-			std::min(1.f,rawVert[i].x/size.x),
-			std::min(1.f,rawVert[i].y/size.y),
-			std::min(1.f,rawVert[i].z/size.z)
-		));
+		  std::min(1.f, rawVert[i].x / size.x),
+		  std::min(1.f, rawVert[i].y / size.y),
+		  std::min(1.f, rawVert[i].z / size.z)));
 	}
 	std::cerr << "done.\n";
 
@@ -4469,7 +4954,7 @@ void Scene::tex3D_loadMESHFile(const std::string file, const GridGLView::Ptr& gr
 		myfile >> s;
 	}
 
-	if( dimension == 3 ){
+	if (dimension == 3) {
 		while (meshString.find("Tetrahedra") == std::string::npos)
 			myfile >> meshString;
 
@@ -4480,14 +4965,14 @@ void Scene::tex3D_loadMESHFile(const std::string file, const GridGLView::Ptr& gr
 				myfile >> t[j];
 			}
 			myfile >> s;
-			if( s > 0 ) {
-				mesh.tetrahedra.push_back({t[0]-1, t[1]-1, t[2]-1, t[3]-1});
+			if (s > 0) {
+				mesh.tetrahedra.push_back({t[0] - 1, t[1] - 1, t[2] - 1, t[3] - 1});
 			}
 		}
 	}
 	std::cerr << "loadMesh() done\n";
 
-	myfile.close ();
+	myfile.close();
 }
 
 void Scene::newAPI_tex3D_loadMESHFile(const std::string file, const NewAPI_GridGLView::Ptr& grid, VolMeshData& mesh) {
@@ -4506,7 +4991,7 @@ void Scene::newAPI_tex3D_loadMESHFile(const std::string file, const NewAPI_GridG
 	while (meshString.find("Dimension") == std::string::npos)
 		myfile >> meshString;
 
-	myfile>> dimension;
+	myfile >> dimension;
 	while (meshString.find("Vertices") == std::string::npos)
 		myfile >> meshString;
 
@@ -4524,16 +5009,22 @@ void Scene::newAPI_tex3D_loadMESHFile(const std::string file, const NewAPI_GridG
 		for (unsigned int j = 0; j < 3; j++)
 			myfile >> p[j];
 
-		if (p[0] > maxX) { maxX = p[0]; }
-		if (p[1] > maxY) { maxY = p[1]; }
-		if (p[2] > maxZ) { maxZ = p[2]; }
+		if (p[0] > maxX) {
+			maxX = p[0];
+		}
+		if (p[1] > maxY) {
+			maxY = p[1];
+		}
+		if (p[2] > maxZ) {
+			maxZ = p[2];
+		}
 		glm::vec4 position = glm::vec4(p[0], p[1], p[2], 1.);
-		normalBox.addPoint(DiscreteGrid::bbox_t::vec(p[0],p[1],p[2]));
+		normalBox.addPoint(DiscreteGrid::bbox_t::vec(p[0], p[1], p[2]));
 		rawVert.push_back(position);
-		#warning Transform API is still in-progress.
+#warning Transform API is still in-progress.
 		deformedBox.addPoint(DiscreteGrid::bbox_t::vec(position.x, position.y, position.z));
 		mesh.positions.push_back(position);
-/*
+		/*
 		texCoords.push_back(glm::vec3(
 			std::min(1.f,(p[0] - bmin.x)/diag.x),
 			std::min(1.f,(p[1] - bmin.y)/diag.y),
@@ -4547,16 +5038,15 @@ void Scene::newAPI_tex3D_loadMESHFile(const std::string file, const NewAPI_GridG
 	glm::vec3 size{maxX, maxY, maxZ};
 	// Grid size divided by mesh size gives a scalar to apply to the mesh to make it grid-sized :
 	glm::vec3 gridsize = glm::convert_to<float>(grid->grid->getResolution()) * grid->grid->getVoxelDimensions();
-	glm::vec4 scale = glm::vec4(gridsize / size, 1.);
+	glm::vec4 scale	   = glm::vec4(gridsize / size, 1.);
 
 	std::cerr << "[LOG][" << __FILE__ << ':' << __LINE__ << "] Max dimensions of the mesh : [" << maxX << ',' << maxY << ',' << maxZ << "]\n";
 	for (std::size_t i = 0; i < mesh.positions.size(); ++i) {
 		//mesh.positions[i] *= scale;
 		mesh.texture.push_back(glm::vec3(
-			std::min(1.f,rawVert[i].x/size.x),
-			std::min(1.f,rawVert[i].y/size.y),
-			std::min(1.f,rawVert[i].z/size.z)
-		));
+		  std::min(1.f, rawVert[i].x / size.x),
+		  std::min(1.f, rawVert[i].y / size.y),
+		  std::min(1.f, rawVert[i].z / size.z)));
 	}
 	std::cerr << "done.\n";
 
@@ -4573,7 +5063,7 @@ void Scene::newAPI_tex3D_loadMESHFile(const std::string file, const NewAPI_GridG
 		myfile >> s;
 	}
 
-	if( dimension == 3 ){
+	if (dimension == 3) {
 		while (meshString.find("Tetrahedra") == std::string::npos)
 			myfile >> meshString;
 
@@ -4584,14 +5074,14 @@ void Scene::newAPI_tex3D_loadMESHFile(const std::string file, const NewAPI_GridG
 				myfile >> t[j];
 			}
 			myfile >> s;
-			if( s > 0 ) {
-				mesh.tetrahedra.push_back({t[0]-1, t[1]-1, t[2]-1, t[3]-1});
+			if (s > 0) {
+				mesh.tetrahedra.push_back({t[0] - 1, t[1] - 1, t[2] - 1, t[3] - 1});
 			}
 		}
 	}
 	std::cerr << "loadMesh() done\n";
 
-	myfile.close ();
+	myfile.close();
 }
 
 void Scene::tex3D_generateMESH(GridGLView::Ptr& grid, VolMeshData& mesh) {
@@ -4599,15 +5089,18 @@ void Scene::tex3D_generateMESH(GridGLView::Ptr& grid, VolMeshData& mesh) {
 	using vec_t = typename DiscreteGrid::bbox_t::vec;
 
 	//Min and diagonal of the bounding box (used for position computation) :
-	const vec_t min = grid->grid[0]->getBoundingBox().getMin();
+	const vec_t min	 = grid->grid[0]->getBoundingBox().getMin();
 	const vec_t diag = grid->grid[0]->getBoundingBox().getDiagonal();
 	// Dimensions, subject to change :
-	std::size_t xv = 10 ; glm::vec4::value_type xs = diag.x / static_cast<glm::vec4::value_type>(xv);
-	std::size_t yv = 10 ; glm::vec4::value_type ys = diag.y / static_cast<glm::vec4::value_type>(yv);
-	std::size_t zv = 10 ; glm::vec4::value_type zs = diag.z / static_cast<glm::vec4::value_type>(zv);
+	std::size_t xv			 = 10;
+	glm::vec4::value_type xs = diag.x / static_cast<glm::vec4::value_type>(xv);
+	std::size_t yv			 = 10;
+	glm::vec4::value_type ys = diag.y / static_cast<glm::vec4::value_type>(yv);
+	std::size_t zv			 = 10;
+	glm::vec4::value_type zs = diag.z / static_cast<glm::vec4::value_type>(zv);
 
 	// Size of tetrahedra, to compute epsilon :
-	glm::vec3 epsVolu = glm::vec3(xs, ys, zs);
+	glm::vec3 epsVolu	 = glm::vec3(xs, ys, zs);
 	grid->defaultEpsilon = epsVolu;
 
 	// Containers for the computation of positions and texture coordinates :
@@ -4623,16 +5116,14 @@ void Scene::tex3D_generateMESH(GridGLView::Ptr& grid, VolMeshData& mesh) {
 		for (std::size_t j = 0; j <= yv; ++j) {
 			for (std::size_t i = 0; i <= xv; ++i) {
 				pos = transfo * glm::vec4(
-					min.x + static_cast<vec_t::value_type>(i)*xs,
-					min.y + static_cast<vec_t::value_type>(j)*ys,
-					min.z + static_cast<vec_t::value_type>(k)*zs,
-					1.
-				);
+								  min.x + static_cast<vec_t::value_type>(i) * xs,
+								  min.y + static_cast<vec_t::value_type>(j) * ys,
+								  min.z + static_cast<vec_t::value_type>(k) * zs,
+								  1.);
 				tex = glm::vec3(
-					static_cast<vec_t::value_type>(i)/static_cast<vec_t::value_type>(xv),
-					static_cast<vec_t::value_type>(j)/static_cast<vec_t::value_type>(yv),
-					static_cast<vec_t::value_type>(k)/static_cast<vec_t::value_type>(zv)
-				);
+				  static_cast<vec_t::value_type>(i) / static_cast<vec_t::value_type>(xv),
+				  static_cast<vec_t::value_type>(j) / static_cast<vec_t::value_type>(yv),
+				  static_cast<vec_t::value_type>(k) / static_cast<vec_t::value_type>(zv));
 
 				mesh.positions.push_back(pos);
 				mesh.texture.push_back(tex);
@@ -4641,7 +5132,8 @@ void Scene::tex3D_generateMESH(GridGLView::Ptr& grid, VolMeshData& mesh) {
 	}
 
 	// Return position for vertex generated at indices I, J, K :
-	std::size_t xt = xv+1; std::size_t yt = yv+1;
+	std::size_t xt = xv + 1;
+	std::size_t yt = yv + 1;
 	auto getIndice = [&, xt, yt](std::size_t i, std::size_t j, std::size_t k) -> std::size_t {
 		return i + j * xt + k * xt * yt;
 	};
@@ -4650,13 +5142,12 @@ void Scene::tex3D_generateMESH(GridGLView::Ptr& grid, VolMeshData& mesh) {
 	for (std::size_t k = 0; k < zv; ++k) {
 		for (std::size_t j = 0; j < yv; ++j) {
 			for (std::size_t i = 0; i < xv; ++i) {
-				mesh.tetrahedra.push_back({getIndice(i+1, j  , k  ), getIndice(i+1, j+1, k  ), getIndice(i  , j+1, k  ), getIndice(i+1, j+1, k+1)});
-				mesh.tetrahedra.push_back({getIndice(i  , j  , k+1), getIndice(i  , j  , k  ), getIndice(i  , j+1, k+1), getIndice(i+1, j  , k+1)});
-				mesh.tetrahedra.push_back({getIndice(i  , j+1, k+1), getIndice(i+1, j  , k  ), getIndice(i+1, j+1, k+1), getIndice(i+1, j  , k+1)});
-				mesh.tetrahedra.push_back({getIndice(i  , j  , k  ), getIndice(i+1, j  , k  ), getIndice(i  , j+1, k+1), getIndice(i+1, j  , k+1)});
-				mesh.tetrahedra.push_back({getIndice(i  , j  , k  ), getIndice(i+1, j  , k  ), getIndice(i  , j+1, k  ), getIndice(i  , j+1, k+1)});
-				mesh.tetrahedra.push_back({getIndice(i  , j+1, k  ), getIndice(i+1, j  , k  ), getIndice(i+1, j+1, k+1), getIndice(i  , j+1, k+1)});
-
+				mesh.tetrahedra.push_back({getIndice(i + 1, j, k), getIndice(i + 1, j + 1, k), getIndice(i, j + 1, k), getIndice(i + 1, j + 1, k + 1)});
+				mesh.tetrahedra.push_back({getIndice(i, j, k + 1), getIndice(i, j, k), getIndice(i, j + 1, k + 1), getIndice(i + 1, j, k + 1)});
+				mesh.tetrahedra.push_back({getIndice(i, j + 1, k + 1), getIndice(i + 1, j, k), getIndice(i + 1, j + 1, k + 1), getIndice(i + 1, j, k + 1)});
+				mesh.tetrahedra.push_back({getIndice(i, j, k), getIndice(i + 1, j, k), getIndice(i, j + 1, k + 1), getIndice(i + 1, j, k + 1)});
+				mesh.tetrahedra.push_back({getIndice(i, j, k), getIndice(i + 1, j, k), getIndice(i, j + 1, k), getIndice(i, j + 1, k + 1)});
+				mesh.tetrahedra.push_back({getIndice(i, j + 1, k), getIndice(i + 1, j, k), getIndice(i + 1, j + 1, k + 1), getIndice(i, j + 1, k + 1)});
 			}
 		}
 	}
@@ -4674,15 +5165,18 @@ void Scene::newAPI_tex3D_generateMESH(NewAPI_GridGLView::Ptr& grid, VolMeshData&
 	using vec_t = typename DiscreteGrid::bbox_t::vec;
 
 	//Min and diagonal of the bounding box (used for position computation) :
-	const vec_t min = grid->grid->getBoundingBox().getMin();
+	const vec_t min	 = grid->grid->getBoundingBox().getMin();
 	const vec_t diag = grid->grid->getBoundingBox().getDiagonal();
 	// Dimensions, subject to change :
-	std::size_t xv = 10 ; glm::vec4::value_type xs = diag.x / static_cast<glm::vec4::value_type>(xv);
-	std::size_t yv = 10 ; glm::vec4::value_type ys = diag.y / static_cast<glm::vec4::value_type>(yv);
-	std::size_t zv = 10 ; glm::vec4::value_type zs = diag.z / static_cast<glm::vec4::value_type>(zv);
+	std::size_t xv			 = 10;
+	glm::vec4::value_type xs = diag.x / static_cast<glm::vec4::value_type>(xv);
+	std::size_t yv			 = 10;
+	glm::vec4::value_type ys = diag.y / static_cast<glm::vec4::value_type>(yv);
+	std::size_t zv			 = 10;
+	glm::vec4::value_type zs = diag.z / static_cast<glm::vec4::value_type>(zv);
 
 	// Size of tetrahedra, to compute epsilon :
-	glm::vec3 epsVolu = glm::vec3(xs, ys, zs);
+	glm::vec3 epsVolu	 = glm::vec3(xs, ys, zs);
 	grid->defaultEpsilon = epsVolu;
 
 	// Containers for the computation of positions and texture coordinates :
@@ -4690,8 +5184,8 @@ void Scene::newAPI_tex3D_generateMESH(NewAPI_GridGLView::Ptr& grid, VolMeshData&
 	glm::vec3 tex = glm::vec3();
 	// Transformation to apply to the mesh :
 	MatrixTransform::Ptr grid_transform_pointer = std::dynamic_pointer_cast<MatrixTransform>(grid->grid->getPrecomputedMatrix());
-	glm::mat4 transfo = grid_transform_pointer->matrix();
-	#warning Transform API is still in-progress.
+	glm::mat4 transfo							= grid_transform_pointer->matrix();
+#warning Transform API is still in-progress.
 
 	// Create vertices along with their texture coordinates. We
 	// need to go one after because we want _n_ tetrahedra, and
@@ -4700,16 +5194,14 @@ void Scene::newAPI_tex3D_generateMESH(NewAPI_GridGLView::Ptr& grid, VolMeshData&
 		for (std::size_t j = 0; j <= yv; ++j) {
 			for (std::size_t i = 0; i <= xv; ++i) {
 				pos = transfo * glm::vec4(
-					min.x + static_cast<vec_t::value_type>(i)*xs,
-					min.y + static_cast<vec_t::value_type>(j)*ys,
-					min.z + static_cast<vec_t::value_type>(k)*zs,
-					1.
-				);
+								  min.x + static_cast<vec_t::value_type>(i) * xs,
+								  min.y + static_cast<vec_t::value_type>(j) * ys,
+								  min.z + static_cast<vec_t::value_type>(k) * zs,
+								  1.);
 				tex = glm::vec3(
-					static_cast<vec_t::value_type>(i)/static_cast<vec_t::value_type>(xv),
-					static_cast<vec_t::value_type>(j)/static_cast<vec_t::value_type>(yv),
-					static_cast<vec_t::value_type>(k)/static_cast<vec_t::value_type>(zv)
-				);
+				  static_cast<vec_t::value_type>(i) / static_cast<vec_t::value_type>(xv),
+				  static_cast<vec_t::value_type>(j) / static_cast<vec_t::value_type>(yv),
+				  static_cast<vec_t::value_type>(k) / static_cast<vec_t::value_type>(zv));
 
 				mesh.positions.push_back(pos);
 				mesh.texture.push_back(tex);
@@ -4718,7 +5210,8 @@ void Scene::newAPI_tex3D_generateMESH(NewAPI_GridGLView::Ptr& grid, VolMeshData&
 	}
 
 	// Return position for vertex generated at indices I, J, K :
-	std::size_t xt = xv+1; std::size_t yt = yv+1;
+	std::size_t xt = xv + 1;
+	std::size_t yt = yv + 1;
 	auto getIndice = [&, xt, yt](std::size_t i, std::size_t j, std::size_t k) -> std::size_t {
 		return i + j * xt + k * xt * yt;
 	};
@@ -4727,13 +5220,12 @@ void Scene::newAPI_tex3D_generateMESH(NewAPI_GridGLView::Ptr& grid, VolMeshData&
 	for (std::size_t k = 0; k < zv; ++k) {
 		for (std::size_t j = 0; j < yv; ++j) {
 			for (std::size_t i = 0; i < xv; ++i) {
-				mesh.tetrahedra.push_back({getIndice(i+1, j  , k  ), getIndice(i+1, j+1, k  ), getIndice(i  , j+1, k  ), getIndice(i+1, j+1, k+1)});
-				mesh.tetrahedra.push_back({getIndice(i  , j  , k+1), getIndice(i  , j  , k  ), getIndice(i  , j+1, k+1), getIndice(i+1, j  , k+1)});
-				mesh.tetrahedra.push_back({getIndice(i  , j+1, k+1), getIndice(i+1, j  , k  ), getIndice(i+1, j+1, k+1), getIndice(i+1, j  , k+1)});
-				mesh.tetrahedra.push_back({getIndice(i  , j  , k  ), getIndice(i+1, j  , k  ), getIndice(i  , j+1, k+1), getIndice(i+1, j  , k+1)});
-				mesh.tetrahedra.push_back({getIndice(i  , j  , k  ), getIndice(i+1, j  , k  ), getIndice(i  , j+1, k  ), getIndice(i  , j+1, k+1)});
-				mesh.tetrahedra.push_back({getIndice(i  , j+1, k  ), getIndice(i+1, j  , k  ), getIndice(i+1, j+1, k+1), getIndice(i  , j+1, k+1)});
-
+				mesh.tetrahedra.push_back({getIndice(i + 1, j, k), getIndice(i + 1, j + 1, k), getIndice(i, j + 1, k), getIndice(i + 1, j + 1, k + 1)});
+				mesh.tetrahedra.push_back({getIndice(i, j, k + 1), getIndice(i, j, k), getIndice(i, j + 1, k + 1), getIndice(i + 1, j, k + 1)});
+				mesh.tetrahedra.push_back({getIndice(i, j + 1, k + 1), getIndice(i + 1, j, k), getIndice(i + 1, j + 1, k + 1), getIndice(i + 1, j, k + 1)});
+				mesh.tetrahedra.push_back({getIndice(i, j, k), getIndice(i + 1, j, k), getIndice(i, j + 1, k + 1), getIndice(i + 1, j, k + 1)});
+				mesh.tetrahedra.push_back({getIndice(i, j, k), getIndice(i + 1, j, k), getIndice(i, j + 1, k), getIndice(i, j + 1, k + 1)});
+				mesh.tetrahedra.push_back({getIndice(i, j + 1, k), getIndice(i + 1, j, k), getIndice(i + 1, j + 1, k + 1), getIndice(i, j + 1, k + 1)});
 			}
 		}
 	}
@@ -4750,12 +5242,12 @@ void Scene::tex3D_buildVisTexture(VolMesh& volMesh) {
 	std::size_t visWidth = 0, visHeight = 0;
 	__GetTexSize(256, &visWidth, &visHeight);
 
-	GLfloat* rawVisibility = new GLfloat[256*3];
+	GLfloat* rawVisibility = new GLfloat[256 * 3];
 
 	for (std::size_t i = 0; i < 256; ++i) {
-		rawVisibility[i*3 + 0] = 100.f;
-		rawVisibility[i*3 + 1] = 100.f;
-		rawVisibility[i*3 + 2] = 100.f;
+		rawVisibility[i * 3 + 0] = 100.f;
+		rawVisibility[i * 3 + 1] = 100.f;
+		rawVisibility[i * 3 + 2] = 100.f;
 	}
 
 	// Struct to upload the texture to OpenGL :
@@ -4764,17 +5256,17 @@ void Scene::tex3D_buildVisTexture(VolMesh& volMesh) {
 	// Vertex positions :
 	texParams.minmag.x = GL_NEAREST;
 	texParams.minmag.y = GL_NEAREST;
-	texParams.lod.y = -1000.f;
-	texParams.wrap.s = GL_CLAMP;
-	texParams.wrap.t = GL_CLAMP;
+	texParams.lod.y	   = -1000.f;
+	texParams.wrap.s   = GL_CLAMP;
+	texParams.wrap.t   = GL_CLAMP;
 	// Swizzle and alignment unchanged, not present in Texture3D
 	texParams.internalFormat = GL_RGB32F;
-	texParams.size.x = visWidth;
-	texParams.size.y = visHeight;
-	texParams.format = GL_RGB;
-	texParams.type = GL_FLOAT;
-	texParams.data = rawVisibility;
-	volMesh.visibilityMap = this->uploadTexture2D(texParams);
+	texParams.size.x		 = visWidth;
+	texParams.size.y		 = visHeight;
+	texParams.format		 = GL_RGB;
+	texParams.type			 = GL_FLOAT;
+	texParams.data			 = rawVisibility;
+	volMesh.visibilityMap	 = this->uploadTexture2D(texParams);
 
 	delete[] rawVisibility;
 }
@@ -4789,47 +5281,47 @@ void Scene::tex3D_buildBuffers(VolMesh& volMesh) {
 	//  |/      |/
 	//  v1------v
 
-	float v0 [3] = { -1, -1,  1 };
-	float v1 [3] = { -1,  1, -1 };
-	float v2 [3] = {  1, -1, -1 };
-	float v3 [3] = {  1,  1,  1 };
+	float v0[3] = {-1, -1, 1};
+	float v1[3] = {-1, 1, -1};
+	float v2[3] = {1, -1, -1};
+	float v3[3] = {1, 1, 1};
 
 	// vertex coords array
-	GLfloat vertices[] = {v3[0],v3[1],v3[2],  v1[0],v1[1],v1[2],  v2[0],v2[1],v2[2],        // v3-v1-v2
-				  v3[0],v3[1],v3[2],  v2[0],v2[1],v2[2],  v1[0],v1[1],v1[2],        // v3-v2-v1
-				  v3[0],v3[1],v3[2],  v0[0],v0[1],v0[2],  v1[0],v1[1],v1[2],        // v3-v0-v1
-				  v2[0],v2[1],v2[2],  v1[0],v1[1],v1[2],  v0[0],v0[1],v0[2]};       // v2-v1-v0
+	GLfloat vertices[] = {v3[0], v3[1], v3[2], v1[0], v1[1], v1[2], v2[0], v2[1], v2[2],	// v3-v1-v2
+	  v3[0], v3[1], v3[2], v2[0], v2[1], v2[2], v1[0], v1[1], v1[2],	// v3-v2-v1
+	  v3[0], v3[1], v3[2], v0[0], v0[1], v0[2], v1[0], v1[1], v1[2],	// v3-v0-v1
+	  v2[0], v2[1], v2[2], v1[0], v1[1], v1[2], v0[0], v0[1], v0[2]};	 // v2-v1-v0
 	// normal array
-	GLfloat normals[] = {v3[0],v3[1],v3[2],  v1[0],v1[1],v1[2],  v2[0],v2[1],v2[2],        // v3-v1-v2
-				 v3[0],v3[1],v3[2],  v2[0],v2[1],v2[2],  v1[0],v1[1],v1[2],        // v3-v2-v1
-				 v3[0],v3[1],v3[2],  v0[0],v0[1],v0[2],  v1[0],v1[1],v1[2],        // v3-v0-v1
-				 v2[0],v2[1],v2[2],  v1[0],v1[1],v1[2],  v0[0],v0[1],v0[2]};       // v2-v1-v0
+	GLfloat normals[] = {v3[0], v3[1], v3[2], v1[0], v1[1], v1[2], v2[0], v2[1], v2[2],	   // v3-v1-v2
+	  v3[0], v3[1], v3[2], v2[0], v2[1], v2[2], v1[0], v1[1], v1[2],	// v3-v2-v1
+	  v3[0], v3[1], v3[2], v0[0], v0[1], v0[2], v1[0], v1[1], v1[2],	// v3-v0-v1
+	  v2[0], v2[1], v2[2], v1[0], v1[1], v1[2], v0[0], v0[1], v0[2]};	 // v2-v1-v0
 	// index array of vertex array for glDrawElements()
 	// Notice the indices are listed straight from beginning to end as exactly
 	// same order of vertex array without hopping, because of different normals at
 	// a shared vertex. For this case, glDrawArrays() and glDrawElements() have no
 	// difference.
-	GLushort indices[] = {0,1,2,
-				  3,4,5,
-				  6,7,8,
-				  9,10,11};
+	GLushort indices[] = {0, 1, 2,
+	  3, 4, 5,
+	  6, 7, 8,
+	  9, 10, 11};
 	// texture coords :
-	GLfloat textureCoords[] = {0.,0.,1. ,1. ,2. ,2. ,
-				   3.,3.,4. ,4. ,5. ,5. ,
-				   6.,6.,7. ,7. ,8. ,8. ,
-				   9.,9.,10.,10.,11.,11.};
+	GLfloat textureCoords[] = {0., 0., 1., 1., 2., 2.,
+	  3., 3., 4., 4., 5., 5.,
+	  6., 6., 7., 7., 8., 8.,
+	  9., 9., 10., 10., 11., 11.};
 
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_Texture3D_VertPos);
-	glBufferData(GL_ARRAY_BUFFER, 12*3*sizeof(GLfloat), vertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, 12 * 3 * sizeof(GLfloat), vertices, GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_Texture3D_VertNorm);
-	glBufferData(GL_ARRAY_BUFFER, 12*3*sizeof(GLfloat), normals, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, 12 * 3 * sizeof(GLfloat), normals, GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_Texture3D_VertTex);
-	glBufferData(GL_ARRAY_BUFFER, 12*2*sizeof(GLfloat), textureCoords, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, 12 * 2 * sizeof(GLfloat), textureCoords, GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_Texture3D_VertIdx);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 12*sizeof(GLushort), indices, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 12 * sizeof(GLushort), indices, GL_STATIC_DRAW);
 
 	glBindVertexArray(this->vaoHandle_VolumetricBuffers);
 	this->tex3D_bindVAO();
@@ -4840,15 +5332,15 @@ void Scene::tex3D_bindVAO() {
 
 	glEnableVertexAttribArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_Texture3D_VertPos);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
 
 	glEnableVertexAttribArray(1);
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_Texture3D_VertNorm);
-	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*) 0);
 
 	glEnableVertexAttribArray(2);
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_Texture3D_VertTex);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*) 0);
 }
 
 void Scene::setPositionResponse(glm::vec4 _pos) {
@@ -4861,8 +5353,12 @@ void Scene::setPositionResponse(glm::vec4 _pos) {
 }
 
 void Scene::drawPositionResponse(float radius, bool drawOnTop) {
-	if (this->posFrame == nullptr) { return; }
-	if (drawOnTop) { glClear(GL_DEPTH_BUFFER_BIT); }
+	if (this->posFrame == nullptr) {
+		return;
+	}
+	if (drawOnTop) {
+		glClear(GL_DEPTH_BUFFER_BIT);
+	}
 	// ddraw the axes :
 	glPushMatrix();
 	glMultMatrixd(this->posFrame->matrix());
@@ -4874,4 +5370,3 @@ void Scene::resetPositionResponse() {
 	delete this->posFrame;
 	this->posFrame = nullptr;
 }
-
