@@ -128,7 +128,7 @@ IndentCaseLabels: true
 # Same for goto labels (takes indent of parent block)
 IndentGotoLabels: true							
 # Indent preprocessor declarations after the hash
-IndentPPDirectives: AfterHash					
+IndentPPDirectives: None					
 # indent long function names
 IndentWrappedFunctionNames: true				
 # Don't keep empty blocks at the beginning of blocks
