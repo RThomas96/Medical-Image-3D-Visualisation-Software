@@ -1,4 +1,4 @@
-#include "../include/grid_subregion.hpp"
+#include "../include/generic_image_reader_subregion.hpp"
 
 namespace Image {
 

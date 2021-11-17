@@ -1,7 +1,7 @@
 #ifndef VISUALIZATION_IMAGE_API_INCLUDE_GRID_SUBREGION_HPP_
 #define VISUALIZATION_IMAGE_API_INCLUDE_GRID_SUBREGION_HPP_
 
-#include "../new_grid/include/grid.hpp"
+#include "../../../new_grid/include/grid.hpp"
 #include "./generic_image_reader.hpp"
 
 namespace Image {
