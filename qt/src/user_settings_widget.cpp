@@ -3,9 +3,9 @@
 #include <fstream>
 
 UserSettings::UserSettings() {
-	this->isInit = false;
-	this->userAllowedBitSize = 0;
-	this->userLoadedSize = 0;
+	this->isInit			   = false;
+	this->userAllowedBitSize   = 0;
+	this->userLoadedSize	   = 0;
 	this->userRemainingBitSize = 0;
 }
 
@@ -13,13 +13,17 @@ UserSettings::~UserSettings() = default;
 
 UserSettings UserSettings::getInstance() {
 	static UserSettings settings{};
-	if (settings.isInit == false) { settings.init(); }
+	if (settings.isInit == false) {
+		settings.init();
+	}
 	return settings;
 }
 
 bool UserSettings::canLoadImageSize(std::size_t sizeBits) {
 	// If the allowed size is 0, then no limit is applied.
-	if (this->userAllowedBitSize == 0) { return true; }
+	if (this->userAllowedBitSize == 0) {
+		return true;
+	}
 	return this->userLoadedSize + sizeBits < this->userAllowedBitSize;
 }
 
@@ -33,26 +37,28 @@ void UserSettings::setUserAllowedBitSize(std::size_t uabs) {
 }
 
 void UserSettings::init() {
-	if (this->isInit == true) { return; }
-	#if defined(WIN32) || defined(WIN64) || defined(_MSC_VER) || defined(_WIN32)
+	if (this->isInit == true) {
+		return;
+	}
+#if defined(WIN32) || defined(WIN64) || defined(_MSC_VER) || defined(_WIN32)
 	MEMORYSTATUSEX memstats{};
 	memstats.dwLength = sizeof(memstats);
 	if (GlobalMemoryStatusEx(&memstats) == 0) {
-		this->userAllowedBitSize = 2ull * 1024ull * 1024ull * 1024ull; // 2GB by default
+		this->userAllowedBitSize = 2ull * 1024ull * 1024ull * 1024ull;	  // 2GB by default
 	} else {
 		// size is in bytes here (convert to bits) :
-		this->userAllowedBitSize = static_cast<std::size_t>(memstats.ullAvailPhys*8/2);
+		this->userAllowedBitSize = static_cast<std::size_t>(memstats.ullAvailPhys * 8 / 2);
 	}
-	this->userLoadedSize = 0;
+	this->userLoadedSize	   = 0;
 	this->userRemainingBitSize = this->userAllowedBitSize - this->userLoadedSize;
-	this->isInit = true;
+	this->isInit			   = true;
 	return;
-	#endif
+#endif
 
-	#if defined(__linux__) || defined(__gnu_linux__)
+#if defined(__linux__) || defined(__gnu_linux__)
 	std::ifstream meminfo("/proc/meminfo", std::ios_base::in);
-	std::string data = "";
-	std::string matching = "MemAvailable";
+	std::string data		 = "";
+	std::string matching	 = "MemAvailable";
 	unsigned long long avail = 0;
 	while (meminfo.good() && not meminfo.eof()) {
 		meminfo >> data;
@@ -61,17 +67,18 @@ void UserSettings::init() {
 		}
 	}
 	// size is in bytes here (convert to bits) :
-	this->userAllowedBitSize = static_cast<std::size_t>(avail*1024*8/2);
-	this->userLoadedSize = 0;
+	this->userAllowedBitSize   = static_cast<std::size_t>(avail * 1024 * 8 / 2);
+	this->userLoadedSize	   = 0;
 	this->userRemainingBitSize = this->userAllowedBitSize - this->userLoadedSize;
-	this->isInit = true;
+	this->isInit			   = true;
 	return;
-	#endif
+#endif
 
-	#warning Implement the logic for macOS here ?
+#warning Implement the logic for macOS here ?
 }
 
-UserSettingsWidget::UserSettingsWidget(QWidget* parent) : QWidget(parent), settings(UserSettings::getInstance()) {
+UserSettingsWidget::UserSettingsWidget(QWidget* parent) :
+	QWidget(parent), settings(UserSettings::getInstance()) {
 	this->setAttribute(Qt::WA_DeleteOnClose);
 	this->initWidgets();
 	this->initSignals();
@@ -88,8 +95,8 @@ UserSettingsWidget::~UserSettingsWidget() {
 
 void UserSettingsWidget::initWidgets() {
 	this->spinbox_allowedMemory = new QSpinBox;
-	this->label_mem = new QLabel("Maximum amount of memory used (bits) : ");
-	this->comboBox_memUnit = new QComboBox;
+	this->label_mem				= new QLabel("Maximum amount of memory used (bits) : ");
+	this->comboBox_memUnit		= new QComboBox;
 
 	this->comboBox_memUnit->addItem("B");
 	this->comboBox_memUnit->addItem("kB");
@@ -130,10 +137,18 @@ void UserSettingsWidget::updateMemUnit(int comboBoxValue) {
 	// directly from it rather than from the spinbox :
 	std::size_t rawvalue = this->settings.getUserAllowedBitSize();
 	std::cerr << "Current bit size : " << rawvalue << '\n';
-	if (comboBoxValue >= 0) { rawvalue /=    8; }	// chose bytes
-	if (comboBoxValue >= 1) { rawvalue /= 1024; }	// chose bytes, or kilobytes
-	if (comboBoxValue >= 2) { rawvalue /= 1024; }	// chose bytes, or kilobytes, or megabytes
-	if (comboBoxValue >= 3) { rawvalue /= 1024; }	// chose bytes, or kilobytes, or megabytes, or gigabytes
+	if (comboBoxValue >= 0) {
+		rawvalue /= 8;
+	}	 // chose bytes
+	if (comboBoxValue >= 1) {
+		rawvalue /= 1024;
+	}	 // chose bytes, or kilobytes
+	if (comboBoxValue >= 2) {
+		rawvalue /= 1024;
+	}	 // chose bytes, or kilobytes, or megabytes
+	if (comboBoxValue >= 3) {
+		rawvalue /= 1024;
+	}	 // chose bytes, or kilobytes, or megabytes, or gigabytes
 	std::cerr << "Output bit size : " << rawvalue << '\n';
 	// update value :
 	this->spinbox_allowedMemory->blockSignals(true);
@@ -152,14 +167,22 @@ void UserSettingsWidget::updateMemValue(int value) {
 		this->comboBox_memUnit->setEnabled(true);
 	}
 	// get index of chosen unit :
-	int comboBoxValue = this->comboBox_memUnit->currentIndex();
+	int comboBoxValue	 = this->comboBox_memUnit->currentIndex();
 	std::size_t rawvalue = static_cast<std::size_t>(value);
 	std::cerr << "V Current bit size : " << rawvalue << '\n';
 	// scale new value by the unit chosen :
-	if (comboBoxValue >= 0) { rawvalue *=    8; }	// chose bytes
-	if (comboBoxValue >= 1) { rawvalue *= 1024; }	// chose bytes, or kilobytes
-	if (comboBoxValue >= 2) { rawvalue *= 1024; }	// chose bytes, or kilobytes, or megabytes
-	if (comboBoxValue >= 3) { rawvalue *= 1024; }	// chose bytes, or kilobytes, or megabytes, or gigabytes
+	if (comboBoxValue >= 0) {
+		rawvalue *= 8;
+	}	 // chose bytes
+	if (comboBoxValue >= 1) {
+		rawvalue *= 1024;
+	}	 // chose bytes, or kilobytes
+	if (comboBoxValue >= 2) {
+		rawvalue *= 1024;
+	}	 // chose bytes, or kilobytes, or megabytes
+	if (comboBoxValue >= 3) {
+		rawvalue *= 1024;
+	}	 // chose bytes, or kilobytes, or megabytes, or gigabytes
 	std::cerr << "V Output bit size : " << rawvalue << '\n';
 	this->settings.setUserAllowedBitSize(rawvalue);
 }

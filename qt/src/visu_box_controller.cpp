@@ -1,13 +1,14 @@
 #include "../include/visu_box_controller.hpp"
 
-#include "../include/neighbor_visu_main_widget.hpp"
-#include "../../viewer/include/scene.hpp"
 #include "../../viewer/include/neighbor_visu_viewer.hpp"
+#include "../../viewer/include/scene.hpp"
+#include "../include/neighbor_visu_main_widget.hpp"
 
-#include <QLabel>
 #include <QGridLayout>
+#include <QLabel>
 
-VisuBoxController::VisuBoxController(Scene* _scene, MainWidget* _main) : QWidget(nullptr) {
+VisuBoxController::VisuBoxController(Scene* _scene, MainWidget* _main) :
+	QWidget(nullptr) {
 	this->strayObj.clear();
 	this->input_coordMinX = nullptr;
 	this->input_coordMinY = nullptr;
@@ -15,8 +16,8 @@ VisuBoxController::VisuBoxController(Scene* _scene, MainWidget* _main) : QWidget
 	this->input_coordMaxX = nullptr;
 	this->input_coordMaxY = nullptr;
 	this->input_coordMaxZ = nullptr;
-	this->scene = _scene;
-	this->main = _main;
+	this->scene			  = _scene;
+	this->main			  = _main;
 	this->setupWidgets();
 	this->setAttribute(Qt::WA_DeleteOnClose);
 
@@ -54,7 +55,7 @@ void VisuBoxController::setupWidgets() {
 	this->input_coordMaxY = new QSpinBox;
 	this->input_coordMaxZ = new QSpinBox;
 	this->button_resetBox = new QPushButton("Reset coordinates");
-	this->button_loadROI = new QPushButton("Load high-res");
+	this->button_loadROI  = new QPushButton("Load high-res");
 
 	auto dsbLimits = [](QSpinBox* d) -> void {
 		d->setRange(0, std::numeric_limits<int>::max());
@@ -69,21 +70,27 @@ void VisuBoxController::setupWidgets() {
 	dsbLimits(this->input_coordMaxY);
 	dsbLimits(this->input_coordMaxZ);
 
-	int bRow = 0; // row counter for 'bounding box' layout
-	int mRow = 0; // row counter for 'main' layout
+	int bRow = 0;	 // row counter for 'bounding box' layout
+	int mRow = 0;	 // row counter for 'main' layout
 
 	// Labels needed for the layouts :
-	QLabel* label_gridControl = new QLabel("Visu Box Control"); this->strayObj.push_back(label_gridControl);
-	QLabel* label_Header_X = new QLabel(" X "); this->strayObj.push_back(label_Header_X);
-	QLabel* label_Header_Y = new QLabel(" Y "); this->strayObj.push_back(label_Header_Y);
-	QLabel* label_Header_Z = new QLabel(" Z "); this->strayObj.push_back(label_Header_Z);
-	QLabel* label_position = new QLabel("Position : "); this->strayObj.push_back(label_position);
-	QLabel* label_diagonal = new QLabel("Diagonal : "); this->strayObj.push_back(label_diagonal);
+	QLabel* label_gridControl = new QLabel("Visu Box Control");
+	this->strayObj.push_back(label_gridControl);
+	QLabel* label_Header_X = new QLabel(" X ");
+	this->strayObj.push_back(label_Header_X);
+	QLabel* label_Header_Y = new QLabel(" Y ");
+	this->strayObj.push_back(label_Header_Y);
+	QLabel* label_Header_Z = new QLabel(" Z ");
+	this->strayObj.push_back(label_Header_Z);
+	QLabel* label_position = new QLabel("Position : ");
+	this->strayObj.push_back(label_position);
+	QLabel* label_diagonal = new QLabel("Diagonal : ");
+	this->strayObj.push_back(label_diagonal);
 
 	// create a few layouts :
 	QGridLayout* layout_BoundingBox = new QGridLayout;
-	QGridLayout* mainLayout = new QGridLayout;
-	QFrame* frame_BoundingBox = new QFrame;
+	QGridLayout* mainLayout			= new QGridLayout;
+	QFrame* frame_BoundingBox		= new QFrame;
 
 	//===========================//
 	// Add bounding box controls //
@@ -114,9 +121,11 @@ void VisuBoxController::setupWidgets() {
 	// Merge grid/voxel and BB layouts in one //
 	//========================================//
 	// First, add header and grid name :
-	mainLayout->addWidget(label_gridControl, mRow, 0, 1, -1, Qt::AlignHCenter); mRow += 2; // bit of spacing
+	mainLayout->addWidget(label_gridControl, mRow, 0, 1, -1, Qt::AlignHCenter);
+	mRow += 2;	  // bit of spacing
 	// Add bb controls :
-	mainLayout->addWidget(frame_BoundingBox, mRow, 0, 1, -1); mRow+=2; // space to next widget
+	mainLayout->addWidget(frame_BoundingBox, mRow, 0, 1, -1);
+	mRow += 2;	  // space to next widget
 	mRow++;
 
 	this->setLayout(mainLayout);
@@ -132,11 +141,15 @@ void VisuBoxController::setupSignals() {
 	QObject::connect(this->input_coordMaxY, QOverload<int>::of(&QSpinBox::valueChanged), this, &VisuBoxController::updateBox);
 	QObject::connect(this->input_coordMaxZ, QOverload<int>::of(&QSpinBox::valueChanged), this, &VisuBoxController::updateBox);
 	QObject::connect(this->button_resetBox, &QPushButton::clicked, [this]() {
-		if (this->scene != nullptr) { this->scene->resetVisuBox(); }
+		if (this->scene != nullptr) {
+			this->scene->resetVisuBox();
+		}
 		this->updateValues();
 	});
 	QObject::connect(this->button_loadROI, &QPushButton::clicked, this, [this](void) -> void {
-		if (this->scene == nullptr) { return; }
+		if (this->scene == nullptr) {
+			return;
+		}
 		Viewer* viewer = this->main->getViewer3D();
 		viewer->makeCurrent();
 		this->scene->loadGridROI();

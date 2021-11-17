@@ -4,9 +4,9 @@
 #include "../../grid/include/output_discrete_grid.hpp"
 
 GridDetailedView::GridDetailedView() {
-	this->grid = nullptr;
+	this->grid				= nullptr;
 	this->proxy_boundingBox = nullptr;
-	this->gridListItem = nullptr;
+	this->gridListItem		= nullptr;
 
 	// For the moment, no grid has been set. We can only create the widget but not populate them :
 	this->createWidgets();
@@ -52,7 +52,9 @@ void GridDetailedView::setNonEditable() {
 
 void GridDetailedView::updateSignals(void) {
 	// Early sanity check :
-	if (this->grid == nullptr) { return; }
+	if (this->grid == nullptr) {
+		return;
+	}
 	// Disconnect already connected signals :
 	this->disconnectSignals();
 	this->updateValues();
@@ -72,33 +74,33 @@ void GridDetailedView::updateSignals(void) {
 
 	if (this->grid->isModifiable()) {
 		// Create a new proxy for the bounding box and resolution of this grid :
-		this->proxy_boundingBox = std::make_shared<Proxies::BoundingBox>(this->grid, &this->grid.get()->boundingBox);
+		this->proxy_boundingBox	   = std::make_shared<Proxies::BoundingBox>(this->grid, &this->grid.get()->boundingBox);
 		this->proxy_gridResolution = std::make_shared<Proxies::Resolution>(this->grid, &this->grid->gridDimensions);
 
 		// Connect the bounding box to the proxy :
 		if (this->proxy_boundingBox != nullptr) {
 			// Setting the min point of the bounding box :
 			connect(this->editable_BBControls[0], QOverload<double>::of(&QDoubleSpinBox::valueChanged),
-				this->proxy_boundingBox.get(), &Proxies::BoundingBox::setMinX);
+			  this->proxy_boundingBox.get(), &Proxies::BoundingBox::setMinX);
 			connect(this->editable_BBControls[1], QOverload<double>::of(&QDoubleSpinBox::valueChanged),
-				this->proxy_boundingBox.get(), &Proxies::BoundingBox::setMinY);
+			  this->proxy_boundingBox.get(), &Proxies::BoundingBox::setMinY);
 			connect(this->editable_BBControls[2], QOverload<double>::of(&QDoubleSpinBox::valueChanged),
-				this->proxy_boundingBox.get(), &Proxies::BoundingBox::setMinZ);
+			  this->proxy_boundingBox.get(), &Proxies::BoundingBox::setMinZ);
 
 			// Setting the max point of the bounding box :
 			connect(this->editable_BBControls[3], QOverload<double>::of(&QDoubleSpinBox::valueChanged),
-				this->proxy_boundingBox.get(), &Proxies::BoundingBox::setMaxX);
+			  this->proxy_boundingBox.get(), &Proxies::BoundingBox::setMaxX);
 			connect(this->editable_BBControls[4], QOverload<double>::of(&QDoubleSpinBox::valueChanged),
-				this->proxy_boundingBox.get(), &Proxies::BoundingBox::setMaxY);
+			  this->proxy_boundingBox.get(), &Proxies::BoundingBox::setMaxY);
 			connect(this->editable_BBControls[5], QOverload<double>::of(&QDoubleSpinBox::valueChanged),
-				this->proxy_boundingBox.get(), &Proxies::BoundingBox::setMaxZ);
+			  this->proxy_boundingBox.get(), &Proxies::BoundingBox::setMaxZ);
 			//connect(this->editable_GridResolution[0], QOverload<int>::of(&QSpinBox::valueChanged),);
 			connect(this->editable_GridResolution[0], QOverload<int>::of(&QSpinBox::valueChanged),
-				this->proxy_gridResolution.get(), &Proxies::Resolution::setResolutionX);
+			  this->proxy_gridResolution.get(), &Proxies::Resolution::setResolutionX);
 			connect(this->editable_GridResolution[1], QOverload<int>::of(&QSpinBox::valueChanged),
-				this->proxy_gridResolution.get(), &Proxies::Resolution::setResolutionY);
+			  this->proxy_gridResolution.get(), &Proxies::Resolution::setResolutionY);
 			connect(this->editable_GridResolution[2], QOverload<int>::of(&QSpinBox::valueChanged),
-				this->proxy_gridResolution.get(), &Proxies::Resolution::setResolutionZ);
+			  this->proxy_gridResolution.get(), &Proxies::Resolution::setResolutionZ);
 		}
 	} else {
 		// Do nothing.
@@ -107,7 +109,7 @@ void GridDetailedView::updateSignals(void) {
 
 void GridDetailedView::showGrid(GridView* _caller, const std::shared_ptr<DiscreteGrid>& _grid) {
 	this->grid.reset();
-	this->grid = _grid;
+	this->grid		   = _grid;
 	this->gridListItem = _caller;
 
 	this->updateValues();
@@ -133,39 +135,36 @@ void GridDetailedView::proxy_ChangeGridName(const QString& newText) {
 
 void GridDetailedView::createWidgets(void) {
 	// Create layouts :
-	this->layout_leftPane = new QVBoxLayout();
-	this->layout_rightPane = new QVBoxLayout();
-	this->layout_widget = new QVBoxLayout();
-	this->layout_separator = new QFrame();
+	this->layout_leftPane	= new QVBoxLayout();
+	this->layout_rightPane	= new QVBoxLayout();
+	this->layout_widget		= new QVBoxLayout();
+	this->layout_separator	= new QFrame();
 	this->layout_sideBySide = new QHBoxLayout();
 
 	// Create group boxes :
-	this->groupBox_viewer = new QGroupBox();
-	this->groupBox_transformation = new QGroupBox();
+	this->groupBox_viewer				 = new QGroupBox();
+	this->groupBox_transformation		 = new QGroupBox();
 	this->groupBox_transformationDetails = new QGroupBox("Transformation Details");
-	this->groupBox_gridDetails = new QGroupBox("Grid details");
-	this->groupBox_boundingBox = new QGroupBox("Bounding box controls :");
+	this->groupBox_gridDetails			 = new QGroupBox("Grid details");
+	this->groupBox_boundingBox			 = new QGroupBox("Bounding box controls :");
 
 	// Create labels :
-	this->label_headerGridName = new QLabel("Name :");
+	this->label_headerGridName		 = new QLabel("Name :");
 	this->label_headerGridResolution = new QLabel("Size :");
-	this->label_headerDetailedView = new QLabel("<h1>Grid details</h1>");
+	this->label_headerDetailedView	 = new QLabel("<h1>Grid details</h1>");
 	this->label_headerTransformation = new QLabel("Transformation details :");
 
 	// Create resolution controls :
-	this->editable_GridResolution=  {
-		new QSpinBox(), new QSpinBox(), new QSpinBox()
-	};
+	this->editable_GridResolution = {
+	  new QSpinBox(), new QSpinBox(), new QSpinBox()};
 	// Create the bounding box controls ...
 	this->editable_BBControls = {
-		new QDoubleSpinBox(), new QDoubleSpinBox(), new QDoubleSpinBox(),
-		new QDoubleSpinBox(), new QDoubleSpinBox(), new QDoubleSpinBox()
-	};
+	  new QDoubleSpinBox(), new QDoubleSpinBox(), new QDoubleSpinBox(),
+	  new QDoubleSpinBox(), new QDoubleSpinBox(), new QDoubleSpinBox()};
 	// ... and their labels :
 	this->label_BBControls = {
-		new QLabel("Min X :"), new QLabel("Min Y :"), new QLabel("Min Z :"),
-		new QLabel("Max X :"), new QLabel("Max Y :"), new QLabel("Max Z :")
-	};
+	  new QLabel("Min X :"), new QLabel("Min Y :"), new QLabel("Min Z :"),
+	  new QLabel("Max X :"), new QLabel("Max Y :"), new QLabel("Max Z :")};
 
 	// Get the bounding box's data type :
 	using data_t = typename std::decay_t<decltype(*this->grid.get())>::bbox_t::data_t;
@@ -189,12 +188,12 @@ void GridDetailedView::createWidgets(void) {
 	this->layout_separator->setFrameShape(QFrame::VLine);
 	this->layout_separator->setFrameShadow(QFrame::Plain);
 
-	QGridLayout* detailsView = new QGridLayout(); ///< Grid layout for the grid details
-	QGridLayout* bbView = new QGridLayout(); ///< Grid layout for the BB controls
-	QGridLayout* trView = new QGridLayout(); ///< Grid layout for the transformation picker
-	QHBoxLayout* tempLayout = new QHBoxLayout(); ///< HBox layout to fill the transformation groupbox
-	QHBoxLayout* rightL = new QHBoxLayout(); ///< HBox layout to fill the transformation groupbox
-	QHBoxLayout* resLayout = new QHBoxLayout(); ///< HBoxlayout to control the grid resolution
+	QGridLayout* detailsView = new QGridLayout();	 ///< Grid layout for the grid details
+	QGridLayout* bbView		 = new QGridLayout();	 ///< Grid layout for the BB controls
+	QGridLayout* trView		 = new QGridLayout();	 ///< Grid layout for the transformation picker
+	QHBoxLayout* tempLayout	 = new QHBoxLayout();	 ///< HBox layout to fill the transformation groupbox
+	QHBoxLayout* rightL		 = new QHBoxLayout();	 ///< HBox layout to fill the transformation groupbox
+	QHBoxLayout* resLayout	 = new QHBoxLayout();	 ///< HBoxlayout to control the grid resolution
 
 #ifdef GRID_DETAILS_ENABLE_TRANSFORMATION_VIEWER
 	std::cerr << "[WARNING][" << __PRETTY_FUNCTION__ << "] : Did not implement the transformation viewer !\n";
@@ -241,10 +240,10 @@ void GridDetailedView::createWidgets(void) {
 	this->layout_leftPane->addWidget(this->groupBox_boundingBox);
 
 	trView->addWidget(this->label_headerTransformation, 0, 0, Qt::AlignLeft);
-	#ifdef GRID_DETAILS_ENABLE_TRANSFORMATION_PICKER
+#ifdef GRID_DETAILS_ENABLE_TRANSFORMATION_PICKER
 	trView->addWidget(this->picker_transformationStyle)
-	#endif
-	this->groupBox_transformationDetails->setLayout(tempLayout);
+#endif
+	  this->groupBox_transformationDetails->setLayout(tempLayout);
 	trView->addWidget(this->groupBox_transformationDetails, 1, 0, Qt::AlignCenter);
 	this->layout_leftPane->addLayout(trView);
 
@@ -285,14 +284,22 @@ void GridDetailedView::deleteWidgets(void) {
 }
 
 void GridDetailedView::disconnectSignals(void) {
-	for (auto& b : this->editable_GridResolution) { b->disconnect(); }
-	for (auto& b : this->editable_BBControls) { b->disconnect(); }
+	for (auto& b : this->editable_GridResolution) {
+		b->disconnect();
+	}
+	for (auto& b : this->editable_BBControls) {
+		b->disconnect();
+	}
 	this->editable_gridName->disconnect();
 }
 
 void GridDetailedView::blockEverySignal(bool _block) {
-	for (auto& b : this->editable_BBControls) { b->blockSignals(_block); }
-	for (auto& b : this->editable_GridResolution) { b->blockSignals(_block); }
+	for (auto& b : this->editable_BBControls) {
+		b->blockSignals(_block);
+	}
+	for (auto& b : this->editable_GridResolution) {
+		b->blockSignals(_block);
+	}
 	this->editable_gridName->blockSignals(_block);
 }
 
@@ -304,7 +311,7 @@ void GridDetailedView::updateValues(void) {
 		throw std::runtime_error("[ERROR][Fatal] Grid shared_ptr was 'nullptr' when showing the grid.");
 	}
 	this->editable_gridName->setText(QString(this->grid->getGridName().c_str()));
-	DiscreteGrid::sizevec3 dims = this->grid->getResolution();
+	DiscreteGrid::sizevec3 dims		= this->grid->getResolution();
 	DiscreteGrid::bbox_t::vec minBB = this->grid->getBoundingBox().getMin();
 	DiscreteGrid::bbox_t::vec maxBB = this->grid->getBoundingBox().getMax();
 
