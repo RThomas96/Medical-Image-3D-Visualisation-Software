@@ -41,9 +41,11 @@ MESSAGE(STATUS "Currently compiling in ${CMAKE_BUILD_TYPE} mode.")
 
 # Additionnal flags for Debug mode :
 IF(CMAKE_BUILD_TYPE MATCHES Debug)
-	SET(GCC_COMPILE_FLAGS "-gdwarf-2 --pedantic")
+	SET(GCC_COMPILE_FLAGS " --pedantic")
 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_COMPILE_FLAGS}")
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fsanitize=undefined -fsanitize=null -fsanitize=return -fsanitize=bounds")
+	IF(NOT (WIN32 OR MSVC OR MINGW))
+		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fsanitize=undefined -fsanitize=null -fsanitize=return -fsanitize=bounds")
+	ENDIF()
 ENDIF(CMAKE_BUILD_TYPE MATCHES Debug)
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
