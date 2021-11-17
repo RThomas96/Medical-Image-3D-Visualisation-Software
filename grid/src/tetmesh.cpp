@@ -1,7 +1,7 @@
 #include "../include/tetmesh.hpp"
 
-#include <random>
 #include <iomanip>
+#include <random>
 
 InterpolationMesh::InterpolationMesh() {
 	// Initialises all the values of the mesh to their default values.
@@ -49,8 +49,12 @@ InterpolationMesh& InterpolationMesh::setOutputGrid_raw(const std::shared_ptr<Di
 
 InterpolationMesh& InterpolationMesh::populateOutputGrid(InterpolationMethods method) {
 	// early returns :
-	if (this->outputGrid == nullptr) { return *this; }
-	if (this->inputGrids.size() == 0) { return *this; }
+	if (this->outputGrid == nullptr) {
+		return *this;
+	}
+	if (this->inputGrids.size() == 0) {
+		return *this;
+	}
 
 	this->updateVoxelSizes();
 
@@ -79,8 +83,8 @@ InterpolationMesh& InterpolationMesh::populateOutputGrid(InterpolationMethods me
 
 	bool verbose = false;
 
-	using clock_t = std::chrono::high_resolution_clock;
-	using duration_t = clock_t::duration;
+	using clock_t	  = std::chrono::high_resolution_clock;
+	using duration_t  = clock_t::duration;
 	using timepoint_t = clock_t::time_point;
 
 	timepoint_t start, end;
@@ -94,7 +98,7 @@ InterpolationMesh& InterpolationMesh::populateOutputGrid(InterpolationMethods me
 		for (std::size_t j = 0; j < dims.y; ++j) {
 			for (std::size_t i = 0; i < dims.x; ++i) {
 				// generate 3D index :
-				DiscreteGrid::sizevec3 idx = DiscreteGrid::sizevec3(i,j,k);
+				DiscreteGrid::sizevec3 idx = DiscreteGrid::sizevec3(i, j, k);
 
 				// get grid-space origin :
 				this->origin = this->outputGrid->getVoxelPositionGridSpace(idx, verbose);
@@ -145,8 +149,12 @@ InterpolationMesh& InterpolationMesh::populateOutputGrid(InterpolationMethods me
 
 InterpolationMesh& InterpolationMesh::populateOutputGrid_threaded(InterpolationMethods method, IO::ThreadedTask::Ptr& task) {
 	// early returns :
-	if (this->outputGrid == nullptr) { return *this; }
-	if (this->inputGrids.size() == 0) { return *this; }
+	if (this->outputGrid == nullptr) {
+		return *this;
+	}
+	if (this->inputGrids.size() == 0) {
+		return *this;
+	}
 
 	this->updateVoxelSizes();
 
@@ -165,8 +173,8 @@ InterpolationMesh& InterpolationMesh::populateOutputGrid_threaded(InterpolationM
 	// reserve and allocate space :
 	this->outputGrid->preallocateData();
 
-	using clock_t = std::chrono::high_resolution_clock;
-	using duration_t = clock_t::duration;
+	using clock_t	  = std::chrono::high_resolution_clock;
+	using duration_t  = clock_t::duration;
 	using timepoint_t = clock_t::time_point;
 
 	timepoint_t start, end;
@@ -180,7 +188,7 @@ InterpolationMesh& InterpolationMesh::populateOutputGrid_threaded(InterpolationM
 		for (std::size_t j = 0; j < dims.y; ++j) {
 			for (std::size_t i = 0; i < dims.x; ++i) {
 				// generate 3D index :
-				DiscreteGrid::sizevec3 idx = DiscreteGrid::sizevec3(i,j,k);
+				DiscreteGrid::sizevec3 idx = DiscreteGrid::sizevec3(i, j, k);
 
 				// get grid-space origin :
 				this->origin = this->outputGrid->getVoxelPositionGridSpace(idx);
@@ -221,8 +229,12 @@ InterpolationMesh& InterpolationMesh::populateOutputGrid_threaded(InterpolationM
 
 InterpolationMesh& InterpolationMesh::populateOutputGrid_RGB(InterpolationMethods method) {
 	// early returns :
-	if (this->outputGrid == nullptr) { return *this; }
-	if (this->inputGrids.size() == 0) { return *this; }
+	if (this->outputGrid == nullptr) {
+		return *this;
+	}
+	if (this->inputGrids.size() == 0) {
+		return *this;
+	}
 
 	this->updateVoxelSizes();
 
@@ -251,8 +263,8 @@ InterpolationMesh& InterpolationMesh::populateOutputGrid_RGB(InterpolationMethod
 
 	bool verbose = false;
 
-	using clock_t = std::chrono::high_resolution_clock;
-	using duration_t = clock_t::duration;
+	using clock_t	  = std::chrono::high_resolution_clock;
+	using duration_t  = clock_t::duration;
 	using timepoint_t = clock_t::time_point;
 
 	timepoint_t start, end;
@@ -276,7 +288,7 @@ InterpolationMesh& InterpolationMesh::populateOutputGrid_RGB(InterpolationMethod
 		for (std::size_t j = 0; j < dims.y; ++j) {
 			for (std::size_t i = 0; i < dims.x; ++i) {
 				// generate 3D index :
-				DiscreteGrid::sizevec3 idx = DiscreteGrid::sizevec3(i,j,k);
+				DiscreteGrid::sizevec3 idx = DiscreteGrid::sizevec3(i, j, k);
 
 				// get grid-space origin :
 				this->origin = this->outputGrid->getVoxelPositionGridSpace(idx, verbose);
@@ -296,7 +308,7 @@ InterpolationMesh& InterpolationMesh::populateOutputGrid_RGB(InterpolationMethod
 					std::cerr << "[ERROR] For iteration {" << i << ',' << j << ',' << k << "}, no ";
 					std::cerr << "RGB output was possible. [COLOR_OUT]\n";
 				}
-				glm::vec<3, data_t, glm::defaultp> color ;
+				glm::vec<3, data_t, glm::defaultp> color;
 				if (values.size() > 0) {
 					color = this->h_and_e_colouring(values[0], this->inputGrids[0], values[1], this->inputGrids[1]);
 				} else {
@@ -305,7 +317,7 @@ InterpolationMesh& InterpolationMesh::populateOutputGrid_RGB(InterpolationMethod
 
 				// Copy into the img buffer :
 				for (std::size_t c = 0; c < 3; ++c) {
-					imgdata[j*dims.x*3 + i*3 + c] = color[c];
+					imgdata[j * dims.x * 3 + i * 3 + c] = color[c];
 				}
 			}
 		}
@@ -332,21 +344,20 @@ InterpolationMesh& InterpolationMesh::populateOutputGrid_RGB(InterpolationMethod
 	return *this;
 }
 
-glm::vec<3, InterpolationMesh::data_t, glm::defaultp> InterpolationMesh::h_and_e_colouring(data_t _r, std::shared_ptr<InputGrid> &_rg, data_t _b, std::shared_ptr<InputGrid> &_bg) {
-	glm::vec2 bounds_r = glm::convert_to<float>(_rg->getGridReader()->getTextureLimits());
-	glm::vec2 bounds_b = glm::convert_to<float>(_bg->getGridReader()->getTextureLimits());
+glm::vec<3, InterpolationMesh::data_t, glm::defaultp> InterpolationMesh::h_and_e_colouring(data_t _r, std::shared_ptr<InputGrid>& _rg, data_t _b, std::shared_ptr<InputGrid>& _bg) {
+	glm::vec2 bounds_r	   = glm::convert_to<float>(_rg->getGridReader()->getTextureLimits());
+	glm::vec2 bounds_b	   = glm::convert_to<float>(_bg->getGridReader()->getTextureLimits());
 	glm::vec2 color_bounds = glm::vec2(
-		std::min(bounds_r.x, bounds_b.x),
-		std::max(bounds_r.y, bounds_b.y)
-	);
+	  std::min(bounds_r.x, bounds_b.x),
+	  std::max(bounds_r.y, bounds_b.y));
 
 	float color_r = static_cast<float>(_r);
 	float color_b = static_cast<float>(_b);
 	/* No need to discard or clamp for texels outside the texture range, we aren't doing alpha nor discards */
 	float color_k = 2.5;
-	float sc = color_bounds.y - color_bounds.x;
-	float eosin = (color_r - color_bounds.x) / sc;
-	float dna = (color_b - color_bounds.x) / sc;
+	float sc	  = color_bounds.y - color_bounds.x;
+	float eosin	  = (color_r - color_bounds.x) / sc;
+	float dna	  = (color_b - color_bounds.x) / sc;
 
 	float eosin_r_coef = 0.050;
 	float eosin_g_coef = 1.000;
@@ -357,16 +368,14 @@ glm::vec<3, InterpolationMesh::data_t, glm::defaultp> InterpolationMesh::h_and_e
 	float hematoxylin_b_coef = 0.300;
 
 	glm::vec3 real_color = glm::vec3(
-		std::exp(-hematoxylin_r_coef * dna * color_k) * std::exp(-eosin_r_coef * eosin * color_k),
-		std::exp(-hematoxylin_g_coef * dna * color_k) * std::exp(-eosin_g_coef * eosin * color_k),
-		std::exp(-hematoxylin_b_coef * dna * color_k) * std::exp(-eosin_b_coef * eosin * color_k)
-	);
+	  std::exp(-hematoxylin_r_coef * dna * color_k) * std::exp(-eosin_r_coef * eosin * color_k),
+	  std::exp(-hematoxylin_g_coef * dna * color_k) * std::exp(-eosin_g_coef * eosin * color_k),
+	  std::exp(-hematoxylin_b_coef * dna * color_k) * std::exp(-eosin_b_coef * eosin * color_k));
 
 	glm::vec<3, data_t, glm::defaultp> color = glm::vec<3, data_t, glm::defaultp>(
-		static_cast<data_t>(color_bounds.x + real_color.x * sc),
-		static_cast<data_t>(color_bounds.x + real_color.y * sc),
-		static_cast<data_t>(color_bounds.x + real_color.z * sc)
-	);
+	  static_cast<data_t>(color_bounds.x + real_color.x * sc),
+	  static_cast<data_t>(color_bounds.x + real_color.y * sc),
+	  static_cast<data_t>(color_bounds.x + real_color.z * sc));
 
 	return color;
 }
@@ -377,7 +386,7 @@ InterpolationMesh::data_t InterpolationMesh::getInterpolatedValue(std::shared_pt
 			return this->interpolate_NearestNeighbor(grid, verbose);
 		case InterpolationMethods::TriLinear:
 			return this->interpolate_TriLinear(grid, verbose);
-		default: // should never be encountered as long as all enum values are above, just to check
+		default:	// should never be encountered as long as all enum values are above, just to check
 			std::cerr << "[ERROR] Interpolation method not recognized.\n";
 			break;
 	}
@@ -404,11 +413,11 @@ InterpolationMesh& InterpolationMesh::printInfo() {
 			DiscreteGrid::sizevec3 dims = grid->getResolution();
 			std::cerr << "[INFO]\t\tResolution : " << dims.x << 'x' << dims.y << 'x' << dims.z << '\n';
 			// Bounding box dimensions :
-			const DiscreteGrid::bbox_t& box = grid->getBoundingBox();
+			const DiscreteGrid::bbox_t& box		 = grid->getBoundingBox();
 			const DiscreteGrid::bbox_t::vec& min = box.getMin();
 			const DiscreteGrid::bbox_t::vec& max = box.getMax();
 			std::cerr << "[INFO]\t\tBounding box (initial space) : [" << min.x << 'x' << min.y << 'x' << min.z
-					<< "] to [" << max.x << 'x' << max.y << 'x' << max.z << "]\n";
+					  << "] to [" << max.x << 'x' << max.y << 'x' << max.z << "]\n";
 			std::cerr << "[INFO]\t\tThis grid is " << ((grid->isModifiable()) ? "not modifiable" : "modifiable") << '\n';
 		}
 	}
@@ -419,11 +428,11 @@ InterpolationMesh& InterpolationMesh::printInfo() {
 		std::cerr << "[INFO]\t\tResolution : " << dims.x << 'x' << dims.y << 'x' << dims.z << '\n';
 
 		// Bounding box dimensions :
-		const DiscreteGrid::bbox_t& box = this->outputGrid->getBoundingBox();
+		const DiscreteGrid::bbox_t& box		 = this->outputGrid->getBoundingBox();
 		const DiscreteGrid::bbox_t::vec& min = box.getMin();
 		const DiscreteGrid::bbox_t::vec& max = box.getMax();
 		std::cerr << "[INFO]\t\tBounding box (initial space) : [" << min.x << 'x' << min.y << 'x' << min.z
-				<< "] to [" << max.x << 'x' << max.y << 'x' << max.z << "]\n";
+				  << "] to [" << max.x << 'x' << max.y << 'x' << max.z << "]\n";
 
 		std::cerr << "[INFO]\t\tThis grid is " << ((this->outputGrid->isModifiable()) ? "modifiable" : "not modifiable") << '\n';
 	} else {
@@ -440,7 +449,9 @@ double InterpolationMesh::getGenerationRate() const {
 InterpolationMesh::data_t InterpolationMesh::interpolate_NearestNeighbor(const std::shared_ptr<InputGrid> grid, bool verbose) const {
 	// DiscreteGrid::fetchTexelWorldSpace already applies NearestNeighbor on the position
 	// given in argument, so we just fetch the value of the origin, giving us a NN interpolation :
-	if (verbose) { std::cerr << "[LOG]\t\t"; }
+	if (verbose) {
+		std::cerr << "[LOG]\t\t";
+	}
 	return grid->fetchTexelWorldSpace(this->origin_WS, verbose);
 }
 
@@ -450,14 +461,14 @@ InterpolationMesh::data_t InterpolationMesh::interpolate_TriLinear(const std::sh
 	// We want the point in the center of the mesh to be a trilinear interpolation of the corners of the mesh.
 	// The grid is constructed in arrays along X first, then along Y, then along Z.
 	// As such :
-	std::size_t pxyz =  0; // Those indices are arranged such
-	std::size_t pxyZ = 18; // that if an axis letter is uppercased,
-	std::size_t pxYz =  6; // it means we take the index of the
-	std::size_t pxYZ = 24; // point which is at the end of this
-	std::size_t pXyz =  2; // axis in the 'cube' the mesh is
-	std::size_t pXyZ = 20; // representing.
-	std::size_t pXYz =  8; // Can be confusing given their order,
-	std::size_t pXYZ = 26; // but ensures a good interpolation.
+	std::size_t pxyz = 0;	 // Those indices are arranged such
+	std::size_t pxyZ = 18;	  // that if an axis letter is uppercased,
+	std::size_t pxYz = 6;	 // it means we take the index of the
+	std::size_t pxYZ = 24;	  // point which is at the end of this
+	std::size_t pXyz = 2;	 // axis in the 'cube' the mesh is
+	std::size_t pXyZ = 20;	  // representing.
+	std::size_t pXYz = 8;	 // Can be confusing given their order,
+	std::size_t pXYZ = 26;	  // but ensures a good interpolation.
 
 	// We also already know the point to interpolate for is at the center of this cube. We can set the coefficients
 	// for trilinear interpolation directly hardcoded in the computation, since they'll all be 0.5 :
@@ -498,7 +509,9 @@ InterpolationMesh::data_t InterpolationMesh::interpolate_TriLinear(const std::sh
 
 InterpolationMesh& InterpolationMesh::updateVoxelSizes() {
 	/* TODO : we should probably soft-fail here instead of ignoring the potential problem. To debate. */
-	if (this->outputGrid == nullptr) { return *this; }
+	if (this->outputGrid == nullptr) {
+		return *this;
+	}
 
 	this->makeTetrahedra(this->outputGrid->getVoxelDimensions(), 1);
 
@@ -511,14 +524,20 @@ glm::vec4 InterpolationMesh::getVertexPosition(std::size_t idx) const {
 
 InterpolationMesh::data_t InterpolationMesh::getVertexValue(const std::shared_ptr<InputGrid> grid, std::size_t idx, bool verbose) const {
 	auto out = this->outputGrid->toWorldSpace(this->getVertexPosition(idx));
-	if (verbose) { std::cerr << "[LOG]\t\t\t"; }
+	if (verbose) {
+		std::cerr << "[LOG]\t\t\t";
+	}
 	return grid->fetchTexelWorldSpace(out, verbose);
 }
 
 InterpolationMesh& InterpolationMesh::updateOutputGridData() {
 	// If there aren't any input grids nor any output grid, return early :
-	if (this->inputGrids.size() == 0) { return *this; }
-	if (this->outputGrid == nullptr) { return *this; }
+	if (this->inputGrids.size() == 0) {
+		return *this;
+	}
+	if (this->outputGrid == nullptr) {
+		return *this;
+	}
 	this->outputGrid->setBoundingBox(DiscreteGrid::bbox_t());
 
 	for (const std::shared_ptr<InputGrid>& grid : this->inputGrids) {
@@ -531,10 +550,9 @@ InterpolationMesh& InterpolationMesh::updateOutputGridData() {
 	DiscreteGrid::bbox_t::vec diag = this->outputGrid->getBoundingBox().getDiagonal();
 	// set resolution so each voxel's side length is a bit less than 1 :
 	DiscreteGrid::sizevec3 dimensions = DiscreteGrid::sizevec3(
-		static_cast<std::size_t>(std::ceil(diag.x)),
-		static_cast<std::size_t>(std::ceil(diag.y)),
-		static_cast<std::size_t>(std::ceil(diag.z))
-	);
+	  static_cast<std::size_t>(std::ceil(diag.x)),
+	  static_cast<std::size_t>(std::ceil(diag.y)),
+	  static_cast<std::size_t>(std::ceil(diag.z)));
 	this->outputGrid->setResolution(dimensions);
 
 	return *this;
@@ -561,11 +579,11 @@ void InterpolationMesh::makeTetrahedra(glm::vec3 vxDims, std::size_t size) {
 		for (int j = -isize; j <= isize; ++j) {
 			for (int i = -isize; i <= isize; ++i) {
 				this->vertices.emplace_back(
-					static_cast<float>(i) * vxDims.x,
-					static_cast<float>(j) * vxDims.y,
-					static_cast<float>(k) * vxDims.z,
-					.0	// 0 here since those positions will serve
-					// as offsets applied to a world space position
+				  static_cast<float>(i) * vxDims.x,
+				  static_cast<float>(j) * vxDims.y,
+				  static_cast<float>(k) * vxDims.z,
+				  .0	// 0 here since those positions will serve
+				  // as offsets applied to a world space position
 				);
 			}
 		}
@@ -575,104 +593,38 @@ void InterpolationMesh::makeTetrahedra(glm::vec3 vxDims, std::size_t size) {
 		for (std::size_t j = 0; j < neighborWidth; ++j) {
 			for (std::size_t i = 0; i < neighborWidth; ++i) {
 				// Tetrahedra 1 :
-				this->tetrahedra.push_back({
-					getIndex(i+1, j+0, k+0),
-					getIndex(i+1, j+1, k+0),
-					getIndex(i+0, j+1, k+0),
-					getIndex(i+1, j+1, k+1)
-				});
+				this->tetrahedra.push_back({getIndex(i + 1, j + 0, k + 0),
+				  getIndex(i + 1, j + 1, k + 0),
+				  getIndex(i + 0, j + 1, k + 0),
+				  getIndex(i + 1, j + 1, k + 1)});
 				// Tetrahedra 2 :
-				this->tetrahedra.push_back({
-					getIndex(i+0, j+0, k+1),
-					getIndex(i+0, j+0, k+0),
-					getIndex(i+0, j+1, k+1),
-					getIndex(i+1, j+0, k+1)
-				});
+				this->tetrahedra.push_back({getIndex(i + 0, j + 0, k + 1),
+				  getIndex(i + 0, j + 0, k + 0),
+				  getIndex(i + 0, j + 1, k + 1),
+				  getIndex(i + 1, j + 0, k + 1)});
 				// Tetrahedra 3 :
-				this->tetrahedra.push_back({
-					getIndex(i+0, j+1, k+1),
-					getIndex(i+1, j+0, k+0),
-					getIndex(i+1, j+1, k+1),
-					getIndex(i+1, j+0, k+1)
-				});
+				this->tetrahedra.push_back({getIndex(i + 0, j + 1, k + 1),
+				  getIndex(i + 1, j + 0, k + 0),
+				  getIndex(i + 1, j + 1, k + 1),
+				  getIndex(i + 1, j + 0, k + 1)});
 				// Tetrahedra 4 :
-				this->tetrahedra.push_back({
-					getIndex(i+0, j+0, k+0),
-					getIndex(i+1, j+0, k+0),
-					getIndex(i+0, j+1, k+1),
-					getIndex(i+1, j+0, k+1)
-				});
+				this->tetrahedra.push_back({getIndex(i + 0, j + 0, k + 0),
+				  getIndex(i + 1, j + 0, k + 0),
+				  getIndex(i + 0, j + 1, k + 1),
+				  getIndex(i + 1, j + 0, k + 1)});
 				// Tetrahedra 5 :
-				this->tetrahedra.push_back({
-					getIndex(i+0, j+0, k+0),
-					getIndex(i+1, j+0, k+0),
-					getIndex(i+0, j+1, k+0),
-					getIndex(i+0, j+1, k+1)
-				});
+				this->tetrahedra.push_back({getIndex(i + 0, j + 0, k + 0),
+				  getIndex(i + 1, j + 0, k + 0),
+				  getIndex(i + 0, j + 1, k + 0),
+				  getIndex(i + 0, j + 1, k + 1)});
 				// Tetrahedra 6 :
-				this->tetrahedra.push_back({
-					getIndex(i+0, j+1, k+0),
-					getIndex(i+1, j+0, k+0),
-					getIndex(i+1, j+1, k+1),
-					getIndex(i+0, j+1, k+1)
-				});
+				this->tetrahedra.push_back({getIndex(i + 0, j + 1, k + 0),
+				  getIndex(i + 1, j + 0, k + 0),
+				  getIndex(i + 1, j + 1, k + 1),
+				  getIndex(i + 0, j + 1, k + 1)});
 			}
 		}
 	}
 
 	// The mesh is now constructed. Or at least, it should be.
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

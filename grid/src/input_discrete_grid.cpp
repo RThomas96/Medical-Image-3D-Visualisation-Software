@@ -1,7 +1,7 @@
 #include "../include/input_discrete_grid.hpp"
 
-InputGrid::InputGrid(void){
-	this->gridName = "defaultInputGrid";
+InputGrid::InputGrid(void) {
+	this->gridName				= "defaultInputGrid";
 	this->transform_gridToWorld = glm::mat4(1.f);
 	this->transform_worldToGrid = glm::mat4(1.f);
 
@@ -11,7 +11,8 @@ InputGrid::InputGrid(void){
 	this->modifiable = false;
 }
 
-InputGrid::~InputGrid() {}
+InputGrid::~InputGrid() {
+}
 
 InputGrid& InputGrid::preAllocateImageData(sizevec3 dimensions) {
 	this->gridDimensions = dimensions;
@@ -25,21 +26,24 @@ InputGrid& InputGrid::preAllocateImageData(sizevec3 dimensions) {
 	return *this;
 }
 
-InputGrid& InputGrid::addImage(std::vector<DataType> imgData, std::size_t imgIndex)  {
-	if (imgIndex > this->gridDimensions.z) { std::cerr << "[ERROR] Tried to access image at depth of "
-	<< imgIndex << " out of " << this->gridDimensions.z << '\n'; return *this; }
+InputGrid& InputGrid::addImage(std::vector<DataType> imgData, std::size_t imgIndex) {
+	if (imgIndex > this->gridDimensions.z) {
+		std::cerr << "[ERROR] Tried to access image at depth of "
+				  << imgIndex << " out of " << this->gridDimensions.z << '\n';
+		return *this;
+	}
 	// Overrides any data previously here, and assumes the image is the same
 	// resolution as the grid it's inserted into :
 	std::size_t startIdx = this->gridDimensions.x * this->gridDimensions.y * imgIndex;
 	// Copy the data :
-	std::copy(imgData.begin(), imgData.end(), this->data.begin()+startIdx);
+	std::copy(imgData.begin(), imgData.end(), this->data.begin() + startIdx);
 	// data copied, but we should not update the data bounding box.
 	return *this;
 }
 
 InputGrid& InputGrid::setGrid(std::vector<DataType> imgData, sizevec3 dimensions) {
 	this->data.clear();
-	this->data.resize(dimensions.x*dimensions.y*dimensions.z);
+	this->data.resize(dimensions.x * dimensions.y * dimensions.z);
 	std::copy(imgData.begin(), imgData.end(), this->data.begin());
 	// Set the grid's dimensions :
 	this->gridDimensions = dimensions;
@@ -52,8 +56,14 @@ InputGrid& InputGrid::setGrid(std::vector<DataType> imgData, sizevec3 dimensions
 	return *this;
 }
 
-InputGrid& InputGrid::setModifiable(bool b) { return *this; }
+InputGrid& InputGrid::setModifiable(bool b) {
+	return *this;
+}
 
-InputGrid& InputGrid::setResolution(sizevec3 newRes) { return *this; }
+InputGrid& InputGrid::setResolution(sizevec3 newRes) {
+	return *this;
+}
 
-InputGrid& InputGrid::setBoundingBox(bbox_t renderWindow) { return *this; }
+InputGrid& InputGrid::setBoundingBox(bbox_t renderWindow) {
+	return *this;
+}
