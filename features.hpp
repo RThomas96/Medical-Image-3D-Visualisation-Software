@@ -24,4 +24,4 @@ the compiled code, by enabling or disabling certain parts of it.
 extern RENDERDOC_API_1_4_1* rdocAPI;
 */
 
-#endif // FEATURES_HPP
+#endif	  // FEATURES_HPP
