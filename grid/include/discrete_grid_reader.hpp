@@ -451,7 +451,6 @@ namespace IO {
 
 		/// @brief Opens the specified file to be able to read it later.
 		virtual StackedTIFFReader& openFile(const std::string& filename) override;
-		;
 
 		/// @brief Loads the image at index 'idx' in the filenames in memory.
 		virtual StackedTIFFReader& loadSlice(std::size_t idx, std::vector<data_t>& tgt) override;

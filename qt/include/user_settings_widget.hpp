@@ -44,7 +44,7 @@ protected:
 /// @ingroup qtwidgets
 /// @brief Provides a widget to control the UserSettings singleton.
 class UserSettingsWidget : public QWidget {
-	Q_OBJECT;
+	Q_OBJECT
 
 public:
 	UserSettingsWidget(QWidget* parent = nullptr);

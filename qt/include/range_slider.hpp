@@ -166,8 +166,8 @@ protected:
 	QScopedPointer<RangeSliderPrivate> d_ptr;
 
 private:
-	Q_DECLARE_PRIVATE(RangeSlider);
-	Q_DISABLE_COPY(RangeSlider);
+	Q_DECLARE_PRIVATE(RangeSlider)
+	Q_DISABLE_COPY(RangeSlider)
 };
 
 #endif	  // VISUALIZATION_QT_INCLUDE_RANGE_SLIDER_HPP_

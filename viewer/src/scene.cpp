@@ -4337,7 +4337,7 @@ void Scene::setRGBMode(RGBMode _mode) {
 
 DiscreteGrid::bbox_t Scene::getSceneBoundingBox() const {
 	return this->sceneBB;
-};
+}
 
 void Scene::slotSetPlaneDisplacementX(float scalar) {
 	this->planeDisplacement.x = scalar;
