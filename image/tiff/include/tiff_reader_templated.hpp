@@ -26,14 +26,14 @@ namespace Image {
 
 		protected:
 			/// @brief Default ctor for the class, initializing the right variables.
-			TIFFReaderTemplated(uint32_t w, uint32_t h, std::size_t _dim);
+			TIFFReaderTemplated(uint32_t width, uint32_t height, std::size_t dim, uint32_t z, glm::vec3 voxel_dim);
 
 		public:
 			/// @brief Default dtor for the class, removing all allocated data from the program's memory pool.
 			virtual ~TIFFReaderTemplated(void);
 
 			/// @brief Static function, creating a backend with the given specs.
-			static Ptr createBackend(uint32_t width, uint32_t height, std::size_t dim);
+			static Ptr createBackend(uint32_t width, uint32_t height, std::size_t dim, uint32_t z, glm::vec3 voxel_dim);
 
 		protected:
 			/// @brief Cleans up the allocated resources after an error has occured.

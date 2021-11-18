@@ -12,14 +12,14 @@
 
 namespace Image {
 
-	/// @brief Encloses all classes interacting with the TIFF file format.
-	namespace Tiff {
+/// @brief Encloses all classes interacting with the TIFF file format.
+namespace Tiff {
 
-		/// @ingroup tiff newgrid
-		/// @brief The TIFFReader class is the base class that implements the necessary logic to read TIFF images.
-		/// @details This base class is then derived into template versions of this backend, which can read values directly
-		/// from the images on disk into memory.
-		class TIFFReader : public GenericImageReader {
+	/// @ingroup tiff newgrid
+	/// @brief The TIFFReader class is the base class that implements the necessary logic to read TIFF images.
+	/// @details This base class is then derived into template versions of this backend, which can read values directly
+	/// from the images on disk into memory.
+	class TIFFReader : public GenericImageReader {
 		public:
 			/// @brief A simple typedef which restricts the class to be owned by one object only
 			typedef std::unique_ptr<TIFFReader> Ptr;
@@ -43,7 +43,8 @@ namespace Image {
 
 			/// @brief Simple call to parse images given in the ctor.
 			virtual ThreadedTask::Ptr parseImageInfo(ThreadedTask::Ptr pre_existing_task,
-			  const std::vector<std::vector<std::string>>& filenames) noexcept(false) override;
+													const std::vector<std::vector<std::string>>& filenames
+													) noexcept(false) override;
 
 			/// @brief Get the number of elements present in each voxel.
 			virtual std::size_t getVoxelDimensionality(void) const override;
@@ -107,17 +108,18 @@ namespace Image {
 
 			/// @brief The number of samples per pixel
 			uint16_t samplesPerPixel;
-		};
+	};
 
-		/// @brief Creates a suitable backend for the given files.
-		/// @details Tries to open a reference TIFF directory (the first directory of the first file in the first stack) and
-		/// attempts to create a suitable TIFFReader-derived class that can read the data from disk.
-		/// @param filenames the filenames to open
-		/// @returns A suitable TIFF backend for the files given.
-		TIFFReader::Ptr createBackend(std::string reference_filename);
+	/// @brief Creates a suitable backend for the given files.
+	/// @details Tries to open a reference TIFF directory (the first directory of the first file in the first stack) and
+	/// attempts to create a suitable TIFFReader-derived class that can read the data from disk.
+	/// @param filenames the filenames to open
+	/// @param indicate if the file is OMETIFF format 
+	/// @returns A suitable TIFF backend for the files given.
+	TIFFReader::Ptr createBackend(std::string reference_filename, bool isOMETIFF);
 
-	}	 // namespace Tiff
+} // namespace Tiff
 
-}	 // namespace Image
+}
 
-#endif	  // VISUALIAZTION_IMAGE_TIFF_INCLUDE_BACKEND_HPP_
+#endif // VISUALIAZTION_IMAGE_TIFF_INCLUDE_BACKEND_HPP_
