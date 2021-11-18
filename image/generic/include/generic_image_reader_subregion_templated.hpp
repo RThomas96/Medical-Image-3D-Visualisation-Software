@@ -1,10 +1,11 @@
 #ifndef VISUALIZATION_IMAGE_API_INCLUDE_GRID_SUBREGION_TEMPLATE_HPP_
 #define VISUALIZATION_IMAGE_API_INCLUDE_GRID_SUBREGION_TEMPLATE_HPP_
 
-#include "./backend.hpp"
-#include "./grid.hpp"
-#include "./grid_subregion.hpp"
-#include "./read_cache.hpp"
+#include "./generic_image_reader.hpp"
+#include "./generic_image_reader_subregion.hpp"
+#include "../../utils/include/read_cache.hpp"
+
+#include "../../new_grid/include/grid.hpp"
 
 namespace Image {
 
@@ -26,6 +27,9 @@ namespace Image {
 
 	public:
 		virtual ~GenericImageReaderSubregionTemplated(void);
+
+		/// @brief Create an appropriate backend for this class.
+		static Ptr createBackend(svec3 origin, svec3 size, Grid::Ptr parent);
 
 	protected:
 		/// @brief Loads a slice from the parent grid, and cache it for later use.
@@ -180,6 +184,6 @@ namespace Image {
 
 }	 // namespace Image
 
-#include "./grid_subregion_template.impl.hpp"
+#include "./generic_image_reader_subregion_templated.impl.hpp"
 
 #endif	  // VISUALIZATION_IMAGE_API_INCLUDE_GRID_SUBREGION_TEMPLATE_HPP_

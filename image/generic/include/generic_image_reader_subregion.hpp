@@ -68,6 +68,13 @@ namespace Image {
 		std::string custom_name;
 	};
 
+	namespace SubRegion {
+
+		/// @brief Creates a reader for a grid's subregion.
+		GenericImageReaderSubregion::Ptr createBackend(svec3 origin, svec3 size, Grid::Ptr grid);
+
+	}	// namespace SubRegion
+
 }	 // namespace Image
 
 #endif	  // VISUALIZATION_IMAGE_API_INCLUDE_GRID_SUBREGION_HPP_

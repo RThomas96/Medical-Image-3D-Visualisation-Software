@@ -10,6 +10,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <functional>
 
 /// @defgroup newgrid Grid Implementation
 /// @brief Contains all classes related to the new Grid representation of a voxel grid.
@@ -119,7 +120,7 @@ namespace Image {
 		/// @return True if the data could be accessed, and false if something went wrong.
 		template <typename data_t>
 		bool readSubRegion(svec3 read_origin, svec3 read_size, std::vector<data_t>& values) {
-			return this->internal_readSubRegion(read_origin, read_size, values);
+			return this->internal_readSubRegion(tag<data_t>{}, read_origin, read_size, values);
 		}
 
 	protected:
@@ -239,6 +240,20 @@ namespace Image {
 		/// @brief The internal data type representation stored in the image, kept as an enum.
 		ImageDataType internal_data_type;
 	};
+
+	/// @brief The functor type returning a pixel value for a given position.
+	/// @details The method will sample the positions it requires in any direction in the 'target' grid, without any transformation. Since we're
+	/// directly sampling a grid without any intermediary transformations, we do not need to take into account transformations and can sample
+	/// neighboring positions directly.
+	/// @tparam element_t The pixel type for the grid
+	/// @tparam grid_t The grid type (will always be Image::Grid but is not yet defined here)
+	/// @param position The real-world position of the sample
+	/// @param element_size The voxel size of the SOURCE grid.
+	/// @param index The indexed position of the SOURCE grid.
+	/// @param grid The TARGET grid to sample from.
+	/// @note This is all subject to change. Not sure we need all those parameters.
+	template <typename element_t, class grid_t>
+	using resampler_functor = std::function<element_t(const glm::vec3 position, const glm::vec3 element_size, const svec3 index, const std::shared_ptr<grid_t> grid)>;
 
 }	 // namespace Image
 

@@ -8,8 +8,8 @@ namespace Image {
 
 	/// @ingroup newgrid
 	/// @brief The GenericImageDownsampler class provides a downsampled version of a parent grid to the user.
-	/// @details Its design follows the GenericImageReaderSubRegion class, in that it takes as input two variables: the
-	/// desired target size of the grid, and the original size of the parent grid.
+	/// @details Its design follows the GenericImageReaderSubRegion class, in that it takes as input a single variable: the desired size of the grid.
+	/// The downsampling method will be defined by the template argument passed in the specific instanciation of a downsampled grid.
 	class GenericImageDownsampler : public GenericImageReader {
 
 	public:
@@ -68,6 +68,13 @@ namespace Image {
 		/// @brief The image's name. By default, is set to <parent grid name>_downsampled but can be user-defined.
 		std::string custom_name;
 	};
+
+	namespace Downsampled {
+
+		/// @brief Create a backend of the desired type for a downsampled region of an image.
+		GenericImageDownsampler::Ptr createBackend(Grid::Ptr parent, svec3 size, ImageResamplingTechnique method);
+
+	} // namespace Downsampled
 
 }
 

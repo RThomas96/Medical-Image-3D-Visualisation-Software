@@ -2,7 +2,7 @@
 #define	VISUALIAZTION_IMAGE_TIFF_INCLUDE_TEMPLATED_BACKEND_IMPL_HPP_
 
 #ifndef  VISUALIAZTION_IMAGE_TIFF_INCLUDE_TEMPLATED_BACKEND_HPP_
-#include "./templated_backend.hpp"		// Included between header guards to have code completion in QtCreator.
+#include "./tiff_reader_templated.hpp"		// Included between header guards to have code completion in QtCreator.
 #endif
 
 #include <iomanip>

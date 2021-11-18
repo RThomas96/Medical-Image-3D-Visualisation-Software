@@ -1,5 +1,8 @@
 #include "../include/grid.hpp"
 
+#include "../../image/generic/include/generic_image_downsampler.hpp"
+#include "../../image/generic/include/generic_image_reader_subregion.hpp"
+
 namespace Image {
 
 	Grid::Grid(GenericImageReader::Ptr _ptr) :
@@ -7,18 +10,15 @@ namespace Image {
 		this->parentGrid  = nullptr;
 		this->voxelOffset = svec3(0, 0, 0);
 		this->imageSize	  = svec3(0, 0, 0);
-		//this->gridName = "<unknown grid>";
 	}
 
-	Grid::Grid(Grid::Ptr parent, svec3 size) {
-		this->pImpl		  = nullptr;
+	Grid::Grid(Grid::Ptr parent, svec3 size, ImageResamplingTechnique sampler) : Grid(Image::Downsampled::createBackend(parent, size, sampler)) {
 		this->parentGrid  = parent;
 		this->voxelOffset = svec3(0, 0, 0);
 		this->imageSize	  = size;
 	}
 
-	Grid::Grid(Grid::Ptr parent, svec3 begin, svec3 end) {
-		this->pImpl		  = nullptr;
+	Grid::Grid(Grid::Ptr parent, svec3 begin, svec3 end) : Grid(Image::SubRegion::createBackend(begin, end - begin, parent)) {
 		this->parentGrid  = parent;
 		svec3 imgsize	  = end - begin;
 		this->voxelOffset = begin;
@@ -40,6 +40,7 @@ namespace Image {
 
 	void Grid::updateInfoFromGrid() {
 		if (this->pImpl) {
+#warning Invalid for subsampled regions ! Should not be updated if that's the case.
 			this->imageSize = this->pImpl->getResolution();
 			//this->gridName = this->pImpl->getImageName();
 		}
@@ -116,7 +117,8 @@ namespace Image {
 		return Grid::Ptr(new Grid(this->shared_from_this(), begin, end));
 	}
 
-	Grid::Ptr Grid::requestDownsampledVersion(svec3 target_size) {
-		return Grid::Ptr(new Grid(this->shared_from_this(), target_size));
+	Grid::Ptr Grid::requestDownsampledVersion(svec3 target_size, ImageResamplingTechnique sampler) {
+		return Grid::Ptr(new Grid(this->shared_from_this(), target_size, sampler));
 	}
+
 }	 // namespace Image

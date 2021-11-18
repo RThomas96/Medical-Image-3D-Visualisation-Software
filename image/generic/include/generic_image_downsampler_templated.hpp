@@ -2,38 +2,46 @@
 #define VISUALISATION_IMAGE_GENERIC_INCLUDE_GENERIC_IMAGE_DOWNSAMPLER_TEMPLATED_HPP_
 
 #include "./generic_image_downsampler.hpp"
+#include "./generic_image_reader.hpp"
 
-#include <functional>
+#include "../../../new_grid/include/grid.hpp"
+
+#include "../../utils/include/read_cache.hpp"
 
 namespace Image {
 
-	/// @brief The functor type returning a pixel value for a given position
-	template <typename element_t>
-	using resampler_t<element_t> = std::function<element_t(svec3 position)>;
-
-	template <typename element_t, class resampler_t<element_t>>
+	/// @brief The GenericImageDownsamplerTemplated class is the templated instance of the GenericImageDownsampler class.
+	/// @details When instanciating a variable of this class, two template arguments are required : the pixel data type and the downsampling method
+	/// as a functor defined elsewhere. Since the user is really unlikely to require changing the downsampling method after loading the grid (and
+	/// since it would require a new scan of the original grid anyway), this is passed as a template argument.
+	/// @tparam element_t The pixel data type. Determined by the grid we are sampling from
+	/// @tparam resampler_t The functor responsible for the resampling algorithm.
+	/// @todo Define functors for some interpolation methods : nearest neighbor, [bi/tri]linear, [bi/tri]cubic ...
+	template <typename element_t, template <typename, class> class resampler_t>
 	class GenericImageDownsamplerTemplated : public GenericImageDownsampler {
 
 	public:
 		/// @brief Public typedef to the internal pixel type.
-		typedef element_t pixel_t;
+		using pixel_t = element_t;
 
 		/// @brief Public typedef to the internal up/downsampler type.
-		template <typename pixel_t> using sampler_t = resampler_t<pixel_t>;
+		using sampler_t = resampler_t<pixel_t, Grid>;
 
 		/// @brief Pointer type to the current instanciation of GenericImageDownsamplerTemplated.
-		typedef std::unique_ptr<GenericImageDownsamplerTemplated<element_t>> Ptr;
+		using Ptr = std::unique_ptr<GenericImageDownsamplerTemplated<pixel_t, resampler_t>>;
 
 		/// @brief The type of the associated read cache.
-		typedef ReadCache<std::size_t, std::vector<pixel_t>> cache_t;
+		using cache_t = ReadCache<std::size_t, std::vector<pixel_t>>;
 
 	protected:
 		/// @brief The default ctor for this template, setting the right variables for the instance.
-		GenericImageDownsamplerTemplated(const svec3 desired_dimension, Grid::Ptr parentgrid);
+		GenericImageDownsamplerTemplated(svec3 desired_dimension, Grid::Ptr parentgrid, sampler_t resampler);
 
 	public:
-		/// @brief Default ctor for the
+		/// @brief Default dtor for the class, set to default for now.
 		virtual ~GenericImageDownsamplerTemplated() = default;
+
+		static Ptr createBackend(svec3 size, Grid::Ptr parentgrid, sampler_t resampler);
 
 	protected:
 		/// @brief Loads a slice from the parent grid, and cache it for later use.
@@ -184,8 +192,13 @@ namespace Image {
 	private:
 		/// @brief The cached slices, kept in memory
 		cache_t read_cache;
+
+		/// @brief The resampling method the user required.
+		sampler_t resampling_method;
 	};
 
 }
+
+#include "./generic_image_downsampler_templated.impl.hpp"
 
 #endif // VISUALISATION_IMAGE_GENERIC_INCLUDE_GENERIC_IMAGE_DOWNSAMPLER_TEMPLATED_HPP_

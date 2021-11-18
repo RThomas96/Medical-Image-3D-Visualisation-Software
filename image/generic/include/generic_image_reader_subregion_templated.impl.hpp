@@ -2,7 +2,7 @@
 #define VISUALIZATION_IMAGE_API_INCLUDE_GRID_SUBREGION_TEMPLATE_IMPL_HPP_
 
 #ifndef VISUALIZATION_IMAGE_API_INCLUDE_GRID_SUBREGION_TEMPLATE_HPP_
-#include "./grid_subregion_template.hpp"
+//#include "./generic_image_reader_subregion_templated.hpp"
 #endif
 
 namespace Image {
@@ -109,6 +109,11 @@ namespace Image {
 	}
 
 	template <typename element_t>
+	typename GenericImageReaderSubregionTemplated<element_t>::Ptr GenericImageReaderSubregionTemplated<element_t>::createBackend(svec3 origin, svec3 size, Grid::Ptr parent) {
+		return Ptr(new GenericImageReaderSubregionTemplated<pixel_t>(origin, size, parent));
+	}
+
+	template <typename element_t>
 	std::size_t GenericImageReaderSubregionTemplated<element_t>::load_slice_from_parent_grid(std::size_t slice_idx) {
 		// typedef for cached data :
 		using ImagePtr = typename cache_t::data_t_ptr;	  // So : std::shared_ptr< std::vector<element_t> >
@@ -135,7 +140,7 @@ namespace Image {
 		// If got here, should load image directly from source. Create target vector for all data channels :
 		ImagePtr full_image_data = std::make_shared<std::vector<pixel_t>>(resolution.x * resolution.y * dimensionality);
 		// Read data directly from parent grid :
-		bool could_read_data = this->parent_grid->readSubregion(origin, size, *full_image_data);
+		bool could_read_data = this->parent_grid->readSubRegion(origin, size, *full_image_data);
 		if (not could_read_data) {
 			throw std::runtime_error("Error : could not read data from the parent grid.");
 		}
@@ -210,7 +215,7 @@ namespace Image {
 			// load and cache the slice to load in memory (or fetch it directly if already cached) :
 			std::size_t cache_idx = this->load_slice_from_parent_grid(src_slice_begin + z);
 			// get img data from cache :
-			typename cache_t::data_t_ptr image_data = this->cachedSlices.getDataIndexed(cache_idx);
+			typename cache_t::data_t_ptr image_data = this->read_cache.getDataIndexed(cache_idx);
 			// read all lines we _can_ from the source :
 			for (y = 0; y < src_height_readable; ++y) {
 				// Figure out the right location in the source buffer :
@@ -224,6 +229,13 @@ namespace Image {
 			}
 		}
 		// don't need to pad the remaining slices (if any) because of the first call to fill()
+		return true;
+	}
+
+	template <typename element_t>
+	template <typename range_t>
+	bool GenericImageReaderSubregionTemplated<element_t>::templated_read_ranges(std::size_t channel, glm::tvec2<range_t>& ranges) {
+		ranges = glm::tvec2<pixel_t>{};
 		return true;
 	}
 

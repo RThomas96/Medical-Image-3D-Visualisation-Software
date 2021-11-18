@@ -21,15 +21,13 @@
 namespace Image {
 
 	/// @brief Simple typedef for a 3-component GLM vector, useful for image resolution
-	typedef glm::vec<2, std::size_t, glm::defaultp> svec2;
+	typedef glm::tvec2<std::size_t> svec2;
 
 	/// @brief Simple typedef for a 3-component GLM vector, useful for image resolution
-	typedef glm::vec<3, std::size_t, glm::defaultp> svec3;
+	typedef glm::tvec3<std::size_t> svec3;
 
-	/**
-	 * @brief The ImageDataType enum allows to know what bit-width and signed-ness an image implementation really holds.
-	 * @note This enum is OR-able, in order to do things like : `imgType = (Bit_8 | Unsigned); // ==> uint8_t | uchar`
-	 */
+	/// @brief The ImageDataType enum allows to know what bit-width and signed-ness an image implementation really holds.
+	/// @note This enum is OR-able, in order to do things like : `imgType = (Bit_8 | Unsigned); // ==> uint8_t | uchar`
 	enum ImageDataType {
 		Unknown	 = 0b00000000,
 		Bit_8	 = 0b00000001,
@@ -39,6 +37,16 @@ namespace Image {
 		Unsigned = 0b00010000,
 		Floating = 0b00100000,
 		Signed	 = 0b01000000,
+	};
+
+	/// @brief The ImageResamplingTechnique enum allows to pick a sampling method for re-sampled grids at runtime for a given instance.
+	/// @note This is only for information purposes, it allows to pick the right functor when instanciating the downsampled grid interface and to
+	/// query it later from elsewhere in the program.
+	enum ImageResamplingTechnique {
+		None			= 0x00,
+		NearestNeighbor	= 0x01,
+		Linear			= 0x02,
+		Cubic			= 0x04,
 	};
 
 	/// @brief Allows to check for the status of a particular flag in the image type enum.

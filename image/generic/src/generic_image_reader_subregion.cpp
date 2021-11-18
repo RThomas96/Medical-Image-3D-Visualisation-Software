@@ -1,5 +1,7 @@
 #include "../include/generic_image_reader_subregion.hpp"
 
+#include "../include/generic_image_reader_subregion_templated.hpp"
+
 namespace Image {
 
 	GenericImageReaderSubregion::GenericImageReaderSubregion(svec3 _o, svec3 _s, Grid::Ptr _p) :
@@ -63,6 +65,57 @@ namespace Image {
 		glm::vec3 opposite_position = origin_position + physical_size;
 
 		return BoundingBox_General<float>(glm::vec4{origin_position, 1.f}, glm::vec4{opposite_position, 1.f});
+	}
+
+	namespace SubRegion {
+
+		GenericImageReaderSubregion::Ptr createBackend(svec3 origin, svec3 size, Grid::Ptr grid) {
+			ImageDataType parent_data_type = grid->getInternalDataType();
+
+			if (parent_data_type & ImageDataType::Floating) {
+				if (parent_data_type & ImageDataType::Bit_32) {
+					return GenericImageReaderSubregionTemplated<float>::createBackend(origin, size, grid);
+				}
+				if (parent_data_type & ImageDataType::Bit_64) {
+					return GenericImageReaderSubregionTemplated<double>::createBackend(origin, size, grid);
+				}
+				throw std::runtime_error("Error : trying to create a subregion of a floating-point grid with bit widths different from 32/64");
+			}
+
+			if (parent_data_type && ImageDataType::Unsigned) {
+				if (parent_data_type & ImageDataType::Bit_8) {
+					return GenericImageReaderSubregionTemplated<std::uint8_t>::createBackend(origin, size, grid);
+				}
+				if (parent_data_type & ImageDataType::Bit_16) {
+					return GenericImageReaderSubregionTemplated<std::uint16_t>::createBackend(origin, size, grid);
+				}
+				if (parent_data_type & ImageDataType::Bit_32) {
+					return GenericImageReaderSubregionTemplated<std::uint32_t>::createBackend(origin, size, grid);
+				}
+				if (parent_data_type & ImageDataType::Bit_64) {
+					return GenericImageReaderSubregionTemplated<std::uint64_t>::createBackend(origin, size, grid);
+				}
+				throw std::runtime_error("Error : trying to create a subregion of an unsigned grid with bit widths different from 8/16/32/64");
+			}
+
+			if (parent_data_type && ImageDataType::Signed) {
+				if (parent_data_type & ImageDataType::Bit_8) {
+					return GenericImageReaderSubregionTemplated<std::int8_t>::createBackend(origin, size, grid);
+				}
+				if (parent_data_type & ImageDataType::Bit_16) {
+					return GenericImageReaderSubregionTemplated<std::int16_t>::createBackend(origin, size, grid);
+				}
+				if (parent_data_type & ImageDataType::Bit_32) {
+					return GenericImageReaderSubregionTemplated<std::int32_t>::createBackend(origin, size, grid);
+				}
+				if (parent_data_type & ImageDataType::Bit_64) {
+					return GenericImageReaderSubregionTemplated<std::int64_t>::createBackend(origin, size, grid);
+				}
+				throw std::runtime_error("Error : trying to create a subregion of a signed grid with bit widths different from 8/16/32/64");
+			}
+			throw std::runtime_error("Error : trying to create a subregion of an unknown pixel type (not floating or [un]signed)");
+		}
+
 	}
 
 }	 // namespace Image
