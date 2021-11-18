@@ -422,29 +422,6 @@ void Scene::printOpenGLMessage(const QOpenGLDebugMessage& message) {
 	std::cerr << sev << ' ' << typ << ' ' << src << ' ' << +message.id() << " : " << message.message().toStdString() << '\n';
 }
 
-void Scene::printGridInfo(const std::shared_ptr<DiscreteGrid>& grid) {
-	std::cerr << "[INFO] Information about the grid " << grid->getGridName() << " :\n";
-	DiscreteGrid::sizevec3 res				 = grid->getResolution();
-	const glm::vec3& dims					 = grid->getVoxelDimensions();
-	const DiscreteGrid::bbox_t& dataBB		 = grid->getDataBoundingBox();
-	const DiscreteGrid::bbox_t::vec& dataBBm = dataBB.getMin();
-	const DiscreteGrid::bbox_t::vec& dataBBM = dataBB.getMax();
-	std::cerr << "[INFO]\tResolution : [" << res.x << ", " << res.y << ", " << res.z << "]\n";
-	std::cerr << "[INFO]\tVoxel dimensions : [" << dims.x << ", " << dims.y << ", " << dims.z << "]\n";
-	std::cerr << "[INFO]\tData Bounding box : [" << dataBBm.x << ", " << dataBBm.y << ", " << dataBBm.z << "] to ["
-			  << dataBBM.x << ", " << dataBBM.y << ", " << dataBBM.z << "]\n";
-	const DiscreteGrid::bbox_t& bbGS	   = grid->getBoundingBox();
-	const DiscreteGrid::bbox_t::vec& bbGSm = bbGS.getMin();
-	const DiscreteGrid::bbox_t::vec& bbGSM = bbGS.getMax();
-	std::cerr << "[INFO]\tBounding box GS : [" << bbGSm.x << ", " << bbGSm.y << ", " << bbGSm.z << "] to ["
-			  << bbGSM.x << ", " << bbGSM.y << ", " << bbGSM.z << "]\n";
-	const DiscreteGrid::bbox_t& bbWS	   = grid->getBoundingBoxWorldSpace();
-	const DiscreteGrid::bbox_t::vec& bbWSm = bbWS.getMin();
-	const DiscreteGrid::bbox_t::vec& bbWSM = bbWS.getMax();
-	std::cerr << "[INFO]\tBounding box WS : [" << bbWSm.x << ", " << bbWSm.y << ", " << bbWSm.z << "] to ["
-			  << bbWSM.x << ", " << bbWSM.y << ", " << bbWSM.z << "]\n";
-}
-
 void Scene::createBuffers() {
 	/// @brief Create a vertex array, bind it and see if it has been succesfully created server-side.
 	auto createVAO = [&, this](std::string name) -> GLuint {
@@ -572,7 +549,8 @@ void Scene::loadGridROI() {
 			// Add the grid to the list of grids to be added later
 			{
 				std::lock_guard<std::mutex> locking(this->mutexadd);
-				this->gridsToAdd.push_back(outputGrid);
+                // TODO: new API
+				//this->gridsToAdd.push_back(outputGrid);
 			}
 		});
 
@@ -594,34 +572,6 @@ void Scene::loadGridROI() {
 	}
 
 	LOG_LEAVE(Scene::loadGridROI)
-}
-
-void Scene::replaceGridsWithHighRes() {
-	if (this->gridsToAdd.size() == 0) {
-		return;
-	}
-
-	// Remove old grids :
-	this->delGrid.push_back(0);
-	this->deleteGridNow();
-
-	// Replace with new ones :
-	if (this->gridsToAdd.size() == 1) {
-		this->addGrid(this->gridsToAdd[0], "");
-	} else {
-		this->addTwoGrids(this->gridsToAdd[0], this->gridsToAdd[1], "");
-	}
-
-	// Update the visu box coordinates :
-	this->resetVisuBox();
-	if (this->visuBoxController != nullptr) {
-		this->visuBoxController->updateValues();
-	}
-	this->updateBoundingBox();
-	this->sceneBB.printInfo("After adding the grids", "[TRACE]");
-
-	this->isFinishedLoading = false;
-	this->gridsToAdd.clear();
 }
 
 void Scene::updateProgressBar() {
@@ -672,72 +622,6 @@ void Scene::updateProgressBar() {
 	}
 
 	return;
-}
-
-void Scene::addGrid(const std::shared_ptr<DiscreteGrid> _grid, std::string meshPath) {
-	if (this->grids.size() > 0) {
-		this->shouldDeleteGrid = true;
-		for (std::size_t i = 0; i < this->grids.size(); ++i) {
-			this->delGrid.push_back(i);
-		}
-		this->deleteGridNow();
-	}
-	GridGLView::Ptr gridView = std::make_shared<GridGLView>(std::initializer_list<std::shared_ptr<DiscreteGrid>>({_grid}));
-
-	TextureUpload gridTexture{};
-	gridTexture.minmag.x	= GL_NEAREST;
-	gridTexture.minmag.y	= GL_NEAREST;
-	gridTexture.lod.y		= -1000.f;
-	gridTexture.wrap.x		= GL_CLAMP_TO_EDGE;
-	gridTexture.wrap.y		= GL_CLAMP_TO_EDGE;
-	gridTexture.wrap.z		= GL_CLAMP_TO_EDGE;
-	gridTexture.swizzle.r	= GL_RED;
-	gridTexture.swizzle.g	= GL_ZERO;
-	gridTexture.swizzle.b	= GL_ZERO;
-	gridTexture.swizzle.a	= GL_ONE;
-	gridTexture.alignment.x = 1;
-	gridTexture.alignment.y = 1;
-
-	// Tex upload function :
-	auto dimensions = _grid->getResolution();
-	if (dimensions.x > 0 && dimensions.y > 0 && dimensions.z > 0) {
-		gridTexture.level = 0;
-#ifdef VISUALISATION_USE_UINT8
-		gridTexture.internalFormat = GL_R8UI;
-#endif
-#ifdef VISUALISATION_USE_UINT16
-		gridTexture.internalFormat = GL_R16UI;
-#endif
-		gridTexture.size.x = dimensions.x;
-		gridTexture.size.y = dimensions.y;
-		gridTexture.size.z = dimensions.z;
-		gridTexture.format = GL_RED_INTEGER;
-#ifdef VISUALISATION_USE_UINT8
-		gridTexture.type = GL_UNSIGNED_BYTE;
-#endif
-#ifdef VISUALISATION_USE_UINT16
-		gridTexture.type = GL_UNSIGNED_SHORT;
-#endif
-		gridTexture.data	  = _grid->getDataPtr();
-		gridView->gridTexture = this->uploadTexture3D(gridTexture);
-	}
-
-	gridView->boundingBoxColor = glm::vec3(.4, .6, .3);	   // olive-colored by default
-
-	this->tex3D_buildMesh(gridView, meshPath);
-	this->tex3D_buildVisTexture(gridView->volumetricMesh);
-	this->tex3D_buildBuffers(gridView->volumetricMesh);
-
-	this->grids.push_back(gridView);
-
-	this->updateVis();
-
-	_grid->setOffline(true);
-
-	this->updateBoundingBox();
-	this->setVisuBoxMinCoord(glm::uvec3());
-	this->setVisuBoxMaxCoord(_grid->getResolution());
-	this->resetVisuBox();
 }
 
 void Scene::newAPI_addGrid(Image::Grid::Ptr gridLoaded) {
@@ -837,99 +721,6 @@ void Scene::newAPI_addGrid(Image::Grid::Ptr gridLoaded) {
 	this->updateBoundingBox();
 	this->setVisuBoxMinCoord(glm::uvec3());
 	this->setVisuBoxMaxCoord(gridLoaded->getResolution());
-	this->resetVisuBox();
-}
-
-void Scene::addTwoGrids(const std::shared_ptr<DiscreteGrid> _gridR, const std::shared_ptr<DiscreteGrid> _gridB, std::string meshPath) {
-	if (this->grids.size() > 0) {
-		this->shouldDeleteGrid = true;
-		std::cerr << "Deleting grids ...\n";
-		for (std::size_t i = 0; i < this->grids.size(); ++i) {
-			this->delGrid.push_back(i);
-		}
-		std::cerr << "Pushed back elements ...\n";
-		this->deleteGridNow();
-		std::cerr << "Deleted grids.\n";
-	}
-	std::cerr << "Making the GridGLView pointer ...\n";
-	GridGLView::Ptr gridView = std::make_shared<GridGLView>(_gridR, _gridB);
-	std::cerr << "Made the GridGLView pointer.\n";
-
-	TextureUpload _gridTex{};
-	_gridTex.minmag.x	 = GL_NEAREST;
-	_gridTex.minmag.y	 = GL_NEAREST;
-	_gridTex.lod.y		 = -1000.f;
-	_gridTex.wrap.x		 = GL_CLAMP_TO_EDGE;
-	_gridTex.wrap.y		 = GL_CLAMP_TO_EDGE;
-	_gridTex.wrap.z		 = GL_CLAMP_TO_EDGE;
-	_gridTex.swizzle.r	 = GL_RED;
-	_gridTex.swizzle.g	 = GL_GREEN;
-	_gridTex.swizzle.b	 = GL_ZERO;
-	_gridTex.swizzle.a	 = GL_ONE;
-	_gridTex.alignment.x = 1;
-	_gridTex.alignment.y = 2;
-	std::cerr << "Made the upload texture struct.\n";
-
-	// Tex upload function :
-	auto dimensions = _gridR->getResolution();
-	if (dimensions.x > 0 && dimensions.y > 0 && dimensions.z > 0) {
-		_gridTex.level = 0;
-#ifdef VISUALISATION_USE_UINT8
-		_gridTex.internalFormat = GL_RG8UI;
-#endif
-#ifdef VISUALISATION_USE_UINT16
-		_gridTex.internalFormat = GL_RG16UI;
-#endif
-		_gridTex.size.x = dimensions.x;
-		_gridTex.size.y = dimensions.y;
-		_gridTex.size.z = dimensions.z;
-		_gridTex.format = GL_RG_INTEGER;
-#ifdef VISUALISATION_USE_UINT8
-		_gridTex.type = GL_UNSIGNED_BYTE;
-#endif
-#ifdef VISUALISATION_USE_UINT16
-		_gridTex.type = GL_UNSIGNED_SHORT;
-#endif
-
-		_gridTex.printInfo();
-		std::cerr << "Made the upload texture struct.\n";
-
-		gridView->gridTexture = this->uploadTexture3D_iterative(_gridTex, _gridR, _gridB);
-	}
-
-	gridView->boundingBoxColor = glm::vec3(.4, .6, .3);	   // olive-colored by default
-	gridView->nbChannels	   = 2;	   // loaded 2 channels in the image
-
-	this->tex3D_buildMesh(gridView, meshPath);
-	this->tex3D_buildVisTexture(gridView->volumetricMesh);
-	this->tex3D_buildBuffers(gridView->volumetricMesh);
-
-	this->grids.push_back(gridView);
-
-	this->updateVis();
-
-	// Only set those grids to be offline if they don't contain any data ! (downsampled reader)
-	if (_gridR->getGridReader() != nullptr) {
-		if (_gridR->getGridReader()->downsamplingLevel() != IO::DownsamplingLevel::Original) {
-			_gridR->setOffline(true);
-		}
-	} else {
-		_gridR->setOffline(false);
-	}
-	if (_gridB->getGridReader() != nullptr) {
-		if (_gridB->getGridReader()->downsamplingLevel() != IO::DownsamplingLevel::Original) {
-			_gridB->setOffline(true);
-		}
-	} else {
-		_gridB->setOffline(false);
-	}
-
-	auto res = _gridR->getResolution();
-	std::cerr << "Resolution for visu box : " << res.x << ", " << res.y << ", " << res.z << "\n";
-
-	this->updateBoundingBox();
-	this->setVisuBoxMinCoord(glm::uvec3());
-	this->setVisuBoxMaxCoord(_gridR->getResolution());
 	this->resetVisuBox();
 }
 
@@ -1358,88 +1149,6 @@ GLuint Scene::uploadTexture3D(const TextureUpload& tex) {
 	return texHandle;
 }
 
-GLuint Scene::uploadTexture3D_iterative(const TextureUpload& tex, const std::shared_ptr<DiscreteGrid>& red, const std::shared_ptr<DiscreteGrid>& blue) {
-	if (this->context != nullptr) {
-		if (this->context->isValid() == false) {
-			throw std::runtime_error("No associated valid context");
-		}
-	} else {
-		throw std::runtime_error("nullptr as context");
-	}
-
-	glEnable(GL_TEXTURE_3D);
-
-	GLuint texHandle = 0;
-	glGenTextures(1, &texHandle);
-	glBindTexture(GL_TEXTURE_3D, texHandle);
-
-	// Min and mag filters :
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, tex.minmag.x);
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, tex.minmag.y);
-
-	// Set the min and max LOD values :
-	glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_MIN_LOD, tex.lod.x);
-	glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_MAX_LOD, tex.lod.y);
-
-	// Set the wrap parameters :
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, tex.wrap.x);
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, tex.wrap.y);
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, tex.wrap.z);
-
-	// Set the swizzle the user wants :
-	glTexParameteriv(GL_TEXTURE_3D, GL_TEXTURE_SWIZZLE_RGBA, glm::value_ptr(tex.swizzle));
-
-	// Set the pixel alignment :
-	glPixelStorei(GL_PACK_ALIGNMENT, tex.alignment.x);
-	glPixelStorei(GL_UNPACK_ALIGNMENT, tex.alignment.y);
-
-	this->debugLog->pushGroup("Texture upload");
-
-	std::cerr << "[LOG] Allocating memory ...";
-	glTexImage3D(GL_TEXTURE_3D,	   // GLenum : Target
-	  static_cast<GLint>(tex.level),	// GLint  : Level of detail of the current texture (0 = original)
-	  tex.internalFormat,	 // GLint  : Number of color components in the picture. Here grayscale so GL_RED
-	  tex.size.x,	 // GLsizei: Image width
-	  tex.size.y,	 // GLsizei: Image height
-	  tex.size.z,	 // GLsizei: Image depth (number of layers)
-	  static_cast<GLint>(0),	// GLint  : Border. This value MUST be 0.
-	  tex.format,	 // GLenum : Format of the pixel data
-	  tex.type,	   // GLenum : Type (the data type as in uchar, uint, float ...)
-	  nullptr	 // null for the moment, to allocate data only
-	);
-	std::cerr << "done.\n";
-
-	// check for error, and throw a std::runtime_error() for now
-	GLenum err = glGetError();
-	if (err == GL_OUT_OF_MEMORY) {
-		std::cerr << "[ERROR] Application could not allocate enough memory.\n";
-		return 0;
-	}
-
-	std::size_t imgSize = tex.size.x * tex.size.y;
-	std::vector<DiscreteGrid::data_t> image(imgSize * 2, DiscreteGrid::data_t(0));
-	const DiscreteGrid::data_t* redPtr	= red->getDataPtr();
-	const DiscreteGrid::data_t* bluePtr = blue->getDataPtr();
-
-	// upload the texture slice by slice :
-	for (GLint z = 0; z < tex.size.z; ++z) {
-		std::cerr << "[LOG] Uploading slice " << z << " ... \n";
-		std::size_t baseIdx = z * imgSize;
-		for (std::size_t i = 0; i < imgSize; ++i) {
-			image[2 * i + 0] = redPtr[baseIdx + i];
-			image[2 * i + 1] = bluePtr[baseIdx + i];
-		}
-		glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, z, tex.size.x, tex.size.y, 1, tex.format, tex.type, image.data());
-		err = glGetError();
-		if (err == GL_OUT_OF_MEMORY) {
-			std::cerr << "[ERROR] Application could not allocate enough memory for slice " << z << "\n";
-		}
-	}
-
-	this->debugLog->popGroup();
-
-	return texHandle;
-}
 
 GLuint Scene::newAPI_uploadTexture3D_allocateonly(const TextureUpload& tex) {
 	if (this->context != nullptr) {
@@ -1506,46 +1215,6 @@ GLuint Scene::newAPI_uploadTexture3D(const GLuint texHandle, const TextureUpload
 	glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, s, tex.size.x, tex.size.y, 1, tex.format, tex.type, data.data());
 
 	return texHandle;
-}
-
-GLuint Scene::testTextureUpload(GLuint nbTex, DiscreteGrid::sizevec3 dims) {
-	GLuint* textures = new GLuint[nbTex];
-
-	glGenTextures(nbTex, textures);
-
-	// connect to cerr output, to have messages on the console
-	auto connection = QObject::connect(this->debugLog, &QOpenGLDebugLogger::messageLogged,
-	  [this](const QOpenGLDebugMessage m) {
-		  std::cerr << "OpenGL Message logged :";
-		  this->openGLDebugLogger_inserter(m);
-	  });
-
-	for (GLuint i = 0; i < nbTex; ++i) {
-		std::cerr << "Binding texture " << i << "/" << nbTex << " ... \n";
-		// Bind texture to Tex3D binding point :
-		glBindTexture(GL_TEXTURE_3D, textures[i]);
-		// Allocate texture :
-		glTexImage3D(
-		  GL_TEXTURE_3D,
-		  0,
-		  GL_RG16UI,
-		  dims.x,
-		  dims.y,
-		  dims.z,
-		  0,
-		  GL_RG_INTEGER,
-		  GL_UNSIGNED_SHORT,
-		  nullptr);
-	}
-
-	// Disconnect the cerr output
-	this->debugLog->disconnect(connection);
-
-	glDeleteTextures(nbTex, textures);
-
-	delete[] textures;
-
-	return 0;
 }
 
 void Scene::openGLDebugLogger_inserter(const QOpenGLDebugMessage message) {
@@ -1634,46 +1303,34 @@ void Scene::launchSaveDialog() {
 		return;
 	}
 
-	// create an output grid AND a tetmesh to generate it :
-	std::shared_ptr<OutputGrid> outputGrid = std::make_shared<OutputGrid>();
-	outputGrid->setOffline();
+    // TODO 
+    // Add calls to tetmesh and grid control when they will be compatible with new API 
 
-	InterpolationMesh::Ptr tetmesh = std::make_shared<InterpolationMesh>();
-	// add the grids to the tetmesh
-	for (std::size_t i = 0; i < this->grids.size(); ++i) {
-		std::for_each(this->grids[i]->grid.cbegin(), this->grids[i]->grid.cend(),
-		  [&tetmesh](const std::shared_ptr<DiscreteGrid>& _g) {
-			  tetmesh->addInputGrid(std::dynamic_pointer_cast<InputGrid>(_g));
-		  });
-	}
-	// add the output grid
-	tetmesh->setOutputGrid(outputGrid);
+	//// create an output grid AND a tetmesh to generate it :
+	//std::shared_ptr<OutputGrid> outputGrid = std::make_shared<OutputGrid>();
+	//outputGrid->setOffline();
 
-	// So we can draw it :
-	GridGLView::Ptr outputGridView = std::make_shared<GridGLView>(std::initializer_list<std::shared_ptr<DiscreteGrid>>({outputGrid}));
-	this->grids.push_back(outputGridView);
+	//InterpolationMesh::Ptr tetmesh = std::make_shared<InterpolationMesh>();
+	//// add the grids to the tetmesh
+	//for (std::size_t i = 0; i < this->grids.size(); ++i) {
+	//	std::for_each(this->grids[i]->grid.cbegin(), this->grids[i]->grid.cend(),
+	//	  [&tetmesh](const std::shared_ptr<DiscreteGrid>& _g) {
+	//		  tetmesh->addInputGrid(std::dynamic_pointer_cast<InputGrid>(_g));
+	//	  });
+	//}
+	//// add the output grid
+	//tetmesh->setOutputGrid(outputGrid);
 
-	// create a grid controller to generate a new outputgrid
-	this->gridControl = new GridControl(outputGrid, tetmesh, this);
-	// show it :
-	gridControl->show();
-	// done
+	//// So we can draw it :
+	//GridGLView::Ptr outputGridView = std::make_shared<GridGLView>(std::initializer_list<std::shared_ptr<DiscreteGrid>>({outputGrid}));
+	//this->grids.push_back(outputGridView);
+
+	//// create a grid controller to generate a new outputgrid
+	//this->gridControl = new GridControl(outputGrid, tetmesh, this);
+	//// show it :
+	//gridControl->show();
+	//// done
 	return;
-}
-
-std::vector<std::shared_ptr<DiscreteGrid>> Scene::getInputGrids() const {
-	std::vector<std::shared_ptr<DiscreteGrid>> igrids;
-
-	// For each GLView, if the grid is an
-	std::for_each(std::cbegin(this->grids), std::cend(this->grids), [&igrids](const GridGLView::Ptr& v) {
-		std::for_each(v->grid.cbegin(), v->grid.cend(), [&igrids](const std::shared_ptr<DiscreteGrid>& _g) {
-			if (std::dynamic_pointer_cast<InputGrid>(_g) != nullptr) {
-				igrids.push_back(_g);
-			}
-		});
-	});
-
-	return igrids;
 }
 
 std::size_t Scene::getInputGridCount() const {
@@ -1694,26 +1351,6 @@ std::size_t Scene::getInputGridCount() const {
 
 void Scene::removeController() {
 	this->gridControl = nullptr;
-}
-
-void Scene::deleteGrid(const std::shared_ptr<DiscreteGrid>& _grid) {
-	std::cerr << "Deleting a grid" << '\n';
-	std::size_t i = 0, j = 0;
-	for (i = 0; i < this->grids.size(); ++i) {
-		std::cerr << "Checking value " << i << '\n';
-		for (j = 0; j < this->grids[i]->grid.size(); ++j) {
-			if (this->grids[i]->grid[j] == _grid) {
-				std::cerr << "Found at index " << i << '\n';
-				// Delete the texture and associated meshes on next refresh :
-				this->shouldDeleteGrid = true;
-				this->delGrid.push_back(i);
-			}
-		}
-	}
-	if (this->shouldDeleteGrid == false) {
-		std::cerr << "No grid found !";
-		return;
-	}
 }
 
 void Scene::deleteGridNow() {
@@ -3366,9 +3003,6 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 	if (this->shouldDeleteGrid) {
 		this->deleteGridNow();
 	}
-	if (this->isFinishedLoading) {
-		this->replaceGridsWithHighRes();
-	}
 	if (this->shouldUpdateUserColorScales) {
 		this->newSHADERS_updateUserColorScales();
 	}
@@ -3821,38 +3455,6 @@ void Scene::printProgramUniforms(const GLuint _pid) {
 	}
 }
 
-glm::mat4 Scene::computeTransformationMatrix(const std::shared_ptr<DiscreteGrid>& _grid) const {
-	glm::mat4 transfoMat = glm::mat4(1.0);
-
-	double angleDeg = -45.;
-	double angleRad = (angleDeg * M_PI) / 180.;
-
-	if (angleDeg < 0.) {
-		DiscreteGrid::sizevec3 d = _grid->getResolution();
-		// compute translation along Z :
-		float w			   = static_cast<float>(d.x) * .39;
-		float displacement = w * std::abs(std::sin(angleRad));
-		transfoMat		   = glm::translate(transfoMat, glm::vec3(.0, .0, displacement));
-	}
-
-	transfoMat[0][0] = 0.39 * std::cos(angleRad);
-	transfoMat[0][2] = 0.39 * std::sin(angleRad);
-	transfoMat[1][1] = 0.39;
-	transfoMat[2][2] = 1.927 * std::cos(angleRad);
-
-	/*
-	std::cerr << "Matrix : " << '\n';
-	for (int i = 0; i < 4; ++i) {
-		std::cerr << '{' << transfoMat[i][0] << ", " << transfoMat[i][1] << ", " << transfoMat[i][2] << ", " << transfoMat[i][3] << "}\n";
-	}
-	std::cerr << '\n';
-	*/
-
-	return transfoMat;
-	// return glm::mat4(1.f);
-	// return glm::translate(glm::mat4(1.f), glm::vec3(.0, .0, 20.));
-}
-
 void Scene::generateColorScale() {
 	for (DiscreteGrid::data_t i = 0; i < this->textureBounds0.x; ++i) {
 		this->visibleDomains[i] = 0.f;
@@ -3986,7 +3588,7 @@ void Scene::setupVAOBoundingBox() {
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
 }
 
-void Scene::drawBoundingBox(const DiscreteGrid::bbox_t& _box, glm::vec3 color, GLfloat* vMat, GLfloat* pMat) {
+void Scene::drawBoundingBox(const Image::bbox_t& _box, glm::vec3 color, GLfloat* vMat, GLfloat* pMat) {
 	glUseProgram(this->programHandle_BoundingBox);
 
 	glLineWidth(2.0f);
@@ -4043,17 +3645,6 @@ void Scene::removeVisuBoxController() {
 	this->visuBoxController = nullptr;
 }
 
-DiscreteGrid::bbox_t Scene::getVisuBox() {
-	// This function should get the plane positions, determine the closest voxel position in grid space, and
-	// return an integer bounding box in order to be controlled by the visu box controller.
-	glm::vec3 min = this->computePlanePositions();
-	glm::vec3 max = this->visuBox.getMax();
-	this->visuBox = DiscreteGrid::bbox_t();
-	this->visuBox.addPoint(min);
-	this->visuBox.addPoint(max);
-	return this->visuBox;
-}
-
 std::pair<glm::uvec3, glm::uvec3> Scene::getVisuBoxCoordinates() {
 	if (this->grids.size() == 0) {
 		return std::make_pair<glm::uvec3, glm::uvec3>(glm::uvec3(), glm::uvec3());
@@ -4071,11 +3662,6 @@ std::pair<glm::uvec3, glm::uvec3> Scene::getVisuBoxCoordinates() {
 	// The second coordinate can be directly taken from the current value (automatically max of scene)
 	result.second = this->visuMax;
 	return result;
-}
-
-void Scene::setVisuBox(DiscreteGrid::bbox_t box) {
-	this->visuBox = box;
-	return;
 }
 
 void Scene::setVisuBoxMinCoord(glm::uvec3 coor_min) {
@@ -4335,10 +3921,6 @@ void Scene::setRGBMode(RGBMode _mode) {
 	}
 }
 
-DiscreteGrid::bbox_t Scene::getSceneBoundingBox() const {
-	return this->sceneBB;
-}
-
 void Scene::slotSetPlaneDisplacementX(float scalar) {
 	this->planeDisplacement.x = scalar;
 }
@@ -4360,44 +3942,6 @@ void Scene::slotTogglePlaneDirectionZ() {
 }
 void Scene::toggleAllPlaneDirections() {
 	this->planeDirection = -this->planeDirection;
-}
-
-void Scene::slotSetMinTexValue(DiscreteGrid::data_t val) {
-	this->textureBounds0.x = val;
-	this->updateVis();
-	this->updateCVR();
-}
-void Scene::slotSetMaxTexValue(DiscreteGrid::data_t val) {
-	this->textureBounds0.y = val;
-	this->updateVis();
-	this->updateCVR();
-}
-void Scene::slotSetMinTexValueAlternate(DiscreteGrid::data_t val) {
-	this->textureBounds1.x = val;
-	this->updateVis();
-	this->updateCVR();
-}
-void Scene::slotSetMaxTexValueAlternate(DiscreteGrid::data_t val) {
-	this->textureBounds1.y = val;
-	this->updateVis();
-	this->updateCVR();
-}
-
-void Scene::slotSetMinColorValue(DiscreteGrid::data_t val) {
-	this->colorBounds0.x = val;
-	this->updateCVR();
-}
-void Scene::slotSetMaxColorValue(DiscreteGrid::data_t val) {
-	this->colorBounds0.y = val;
-	this->updateCVR();
-}
-void Scene::slotSetMinColorValueAlternate(DiscreteGrid::data_t val) {
-	this->colorBounds1.x = val;
-	this->updateCVR();
-}
-void Scene::slotSetMaxColorValueAlternate(DiscreteGrid::data_t val) {
-	this->colorBounds1.y = val;
-	this->updateCVR();
 }
 
 void Scene::setColor0(qreal r, qreal g, qreal b) {

@@ -230,16 +230,17 @@ void Viewer::guessMousePosition() {
 	std::cerr << "3D viewer : Value in fbo : {" << p.x << ", " << p.y << ", " << p.z << ", " << p.w << "}\n";
 	if (p.w > .01f) {
 		this->scene->setPositionResponse(p);
-		auto inputs = this->scene->getInputGrids();
-		for (const auto& grid : inputs) {
-			if (grid->includesPointWorldSpace(p)) {
-				IO::GenericGridReader::sizevec3 index = grid->worldPositionToIndex(p);
-				QString msg							  = "Position in image space : " + QString::number(index.x) + ", " +
-							  QString::number(index.y) + ", " + QString::number(index.z) + ", in grid " +
-							  QString::fromStdString(grid->getGridName());
-				this->statusBar->showMessage(msg, 10000);
-			}
-		}
+        // TODO: new API
+		//auto inputs = this->scene->getInputGrids();
+		//for (const auto& grid : inputs) {
+		//	if (grid->includesPointWorldSpace(p)) {
+		//		IO::GenericGridReader::sizevec3 index = grid->worldPositionToIndex(p);
+		//		QString msg							  = "Position in image space : " + QString::number(index.x) + ", " +
+		//					  QString::number(index.y) + ", " + QString::number(index.z) + ", in grid " +
+		//					  QString::fromStdString(grid->getGridName());
+		//		this->statusBar->showMessage(msg, 10000);
+		//	}
+		//}
 		std::function<void(const NewAPI_GridGLView::Ptr&)> findSuitablePoint =
 		  [this, p](const NewAPI_GridGLView::Ptr& gridView) -> void {
 			const Image::Grid::Ptr grid		  = gridView->grid;
@@ -356,41 +357,6 @@ QString Viewer::mouseString() const {
 }
 
 void Viewer::updateCameraPosition() {
-}
-
-void Viewer::loadGrid(const std::shared_ptr<InputGrid>& g) {
-	this->makeCurrent();
-	this->scene->addGrid(g, "");
-	this->doneCurrent();
-
-	glm::vec3 bbDiag = this->scene->getSceneBoundaries();
-	float sceneSize	 = glm::length(bbDiag);
-
-	this->setSceneRadius(sceneSize * sceneRadiusMultiplier);
-	// center scene on center of grid
-	this->setSceneCenter(qglviewer::Vec(bbDiag.x / 2., bbDiag.y / 2., bbDiag.z / 2.));
-	this->showEntireScene();
-	this->updateCameraPosition();
-	this->centerScene();
-}
-
-void Viewer::loadTwoGrids(const std::shared_ptr<InputGrid>& g1, const std::shared_ptr<InputGrid>& g2) {
-	if (this->scene == nullptr) {
-		return;
-	}
-	this->makeCurrent();
-	this->scene->addTwoGrids(g1, g2, "");
-	this->doneCurrent();
-
-	glm::vec3 bbDiag = this->scene->getSceneBoundaries();
-	float sceneSize	 = glm::length(bbDiag);
-
-	this->setSceneRadius(sceneSize * sceneRadiusMultiplier);
-	// center scene on center of grid
-	this->setSceneCenter(qglviewer::Vec(bbDiag.x / 2., bbDiag.y / 2., bbDiag.z / 2.));
-	this->showEntireScene();
-	this->updateCameraPosition();
-	this->centerScene();
 }
 
 void Viewer::newAPI_loadGrid(Image::Grid::Ptr ptr) {

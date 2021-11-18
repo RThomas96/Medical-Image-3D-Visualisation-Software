@@ -95,17 +95,18 @@ void PlanarViewer::guessScenePosition(void) {
 		glm::vec4 p = pixelValue;
 		std::cerr << "Value in fbo : {" << p.x << ", " << p.y << ", " << p.z << ", " << p.w << "}\n";
 		this->sceneToShow->setPositionResponse(pixelValue);
-		auto inputs = this->sceneToShow->getInputGrids();
-		for (const auto& grid : inputs) {
-			if (grid->includesPointWorldSpace(pixelValue)) {
-				IO::GenericGridReader::sizevec3 index = grid->worldPositionToIndex(p);
-				QString msg							  = "Position in image space : " + QString::number(index.x) + ", " +
-							  QString::number(index.y) + ", " + QString::number(index.z) + ", in grid " +
-							  QString::fromStdString(grid->getGridName());
-				std::cerr << "Message from plane viewer : " << msg.toStdString() << "\n";
-				this->status_bar->showMessage(msg, 10000);
-			}
-		}
+        // TODO: new API
+		// auto inputs = this->sceneToShow->getInputGrids();
+		// for (const auto& grid : inputs) {
+		// 	if (grid->includesPointWorldSpace(pixelValue)) {
+		// 		IO::GenericGridReader::sizevec3 index = grid->worldPositionToIndex(p);
+		// 		QString msg							  = "Position in image space : " + QString::number(index.x) + ", " +
+		// 					  QString::number(index.y) + ", " + QString::number(index.z) + ", in grid " +
+		// 					  QString::fromStdString(grid->getGridName());
+		// 		std::cerr << "Message from plane viewer : " << msg.toStdString() << "\n";
+		// 		this->status_bar->showMessage(msg, 10000);
+		// 	}
+		// }
 	}
 	this->doneCurrent();
 }

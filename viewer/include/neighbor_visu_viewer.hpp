@@ -83,9 +83,9 @@ public slots:
 	/// @brief Updates the camera position once one or two grids are loaded in the scene.
 	void updateCameraPosition(void);
 	/// @brief Asks the scene to load a grid into itself.
-	void loadGrid(const std::shared_ptr<InputGrid>& g);
+	// void loadGrid(const std::shared_ptr<InputGrid>& g);
 	/// @brief Asks the scene to load two grids into itself.
-	void loadTwoGrids(const std::shared_ptr<InputGrid>& g1, const std::shared_ptr<InputGrid>& g2);
+	// void loadTwoGrids(const std::shared_ptr<InputGrid>& g1, const std::shared_ptr<InputGrid>& g2);
 	void newAPI_loadGrid(Image::Grid::Ptr ptr);
 	/// @brief Re-centers the camera around the scene-defined center point
 	void centerScene(void);

@@ -69,7 +69,6 @@ public slots:
 	void loadGridOME2channel();
 	void loadNewGridAPI();
 	void loadGrid();
-	void loadGrid_oldAPI();
 	void loadGrid_newAPI();
 
 protected:

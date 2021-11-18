@@ -122,10 +122,6 @@ public:
 
 	/// @brief Loads a designated ROI in high-resolution
 	void loadGridROI(void);
-	/// @brief Adds a grid to the list of grids present and to be drawn, and generates the data structure to visualize it.
-	void addGrid(const std::shared_ptr<DiscreteGrid> _grid, std::string meshPath);
-	/// @brief Adds a grid to the list of grids present and to be drawn, which is composed of two separate grids' data.
-	void addTwoGrids(const std::shared_ptr<DiscreteGrid> _gridR, const std::shared_ptr<DiscreteGrid> _gridG, std::string meshPath);
 
 	/// @brief Add grids, with the new API (more streamlined)
 	void newAPI_addGrid(Image::Grid::Ptr gridLoaded);
@@ -164,23 +160,9 @@ public:
 
 	/// @brief Launches a save dialog, to generate a grid.
 	void launchSaveDialog();
-	/// @brief Adds a 'dummy' grid, to draw its bounding box only.
-	void addDummyGrid(std::shared_ptr<DiscreteGrid>& _grid);
-
-	/// @brief Deletes a grid from the array of grids to show
-	void deleteGrid(const std::shared_ptr<DiscreteGrid>& _grid);
 
 	/// @brief Prints info about the VAO on next refresh
 	void printVAOStateNext() { this->showVAOstate = true; }
-
-	/// @brief Get the minimum texture value to represent
-	DiscreteGrid::data_t getMinTexValue(void) const { return this->textureBounds0.x; }
-	/// @brief Get the maximum texture value to represent
-	DiscreteGrid::data_t getMaxTexValue(void) const { return this->textureBounds0.y; }
-	/// @brief Get the minimum texture value to represent
-	DiscreteGrid::data_t getMinTexValueAlternate(void) const { return this->textureBounds1.x; }
-	/// @brief Get the maximum texture value to represent
-	DiscreteGrid::data_t getMaxTexValueAlternate(void) const { return this->textureBounds1.y; }
 
 	/// @brief Get the minimum color value, for the color scale resizing.
 	uint getMinColorValue(void) const { return this->colorBounds0.x; }
@@ -191,12 +173,8 @@ public:
 	/// @brief Get the maximum color value, for the color scale resizing.
 	uint getMaxColorValueAlternate(void) const { return this->colorBounds1.y; }
 
-	/// @brief Returns the current visu box
-	DiscreteGrid::bbox_t getVisuBox(void);
 	/// @brief Returns the image coordinates of the visu box.
 	std::pair<glm::uvec3, glm::uvec3> getVisuBoxCoordinates(void);
-	/// @brief Sets the visu box
-	void setVisuBox(DiscreteGrid::bbox_t box);
 	/// @brief Sets the min coordinate of the visu box
 	void setVisuBoxMinCoord(glm::uvec3 coor_min);
 	/// @brief Sets the max coordinate of the visu box
@@ -208,17 +186,11 @@ public:
 	float getSceneRadius();
 	/// @brief Get the scene center at this time
 	glm::vec3 getSceneCenter();
-	/// @brief Returns the current scene bounding box.
-	DiscreteGrid::bbox_t getSceneBoundingBox() const;
 
 	/// @brief Upload a 3D texture with the given parameters.
 	GLuint newAPI_uploadTexture3D(const GLuint handle, const TextureUpload& tex, std::size_t s, std::vector<std::uint16_t>& data);
 	/// @brief Allocate a texture conformant with the given settings, but don't fill it with data yet.
 	GLuint newAPI_uploadTexture3D_allocateonly(const TextureUpload& tex);
-	/// @brief Upload a 3D texture with the given parameters.
-	GLuint uploadTexture3D_iterative(const TextureUpload& tex, const std::shared_ptr<DiscreteGrid>&, const std::shared_ptr<DiscreteGrid>&);
-	/// @brief Tests the texture upload capabilities of OpenGL
-	GLuint testTextureUpload(GLuint nbTex, DiscreteGrid::sizevec3 dims);
 	/// @brief Inserts a debug message from OpenGL directly to stderr
 	void openGLDebugLogger_inserter(const QOpenGLDebugMessage m);
 
@@ -249,23 +221,6 @@ public:
 	void slotSetPlaneDisplacementY(float scalar);
 	/// @brief Set Z's plane displacement within the bounding box to be `scalar`
 	void slotSetPlaneDisplacementZ(float scalar);
-
-	/// @brief Set minimum texture intensity.
-	void slotSetMinTexValue(DiscreteGrid::data_t val);
-	/// @brief Set maximum texture intensity.
-	void slotSetMaxTexValue(DiscreteGrid::data_t val);
-	/// @brief Set minimum texture intensity.
-	void slotSetMinTexValueAlternate(DiscreteGrid::data_t val);
-	/// @brief Set maximum texture intensity.
-	void slotSetMaxTexValueAlternate(DiscreteGrid::data_t val);
-	/// @brief Set minimum color intensity.
-	void slotSetMinColorValue(DiscreteGrid::data_t val);
-	/// @brief Set maximum color intensity.
-	void slotSetMaxColorValue(DiscreteGrid::data_t val);
-	/// @brief Set minimum color intensity.
-	void slotSetMinColorValueAlternate(DiscreteGrid::data_t val);
-	/// @brief Set maximum color intensity.
-	void slotSetMaxColorValueAlternate(DiscreteGrid::data_t val);
 
 	/// @brief set the clip plane distance from camera to be `val`
 	void slotSetClipDistance(double val) {
@@ -300,8 +255,6 @@ public:
 	/// @brief Reset the axis positions.
 	void resetPositionResponse(void);
 
-	/// @brief Returns all of the loaded grids in the scene.
-	std::vector<std::shared_ptr<DiscreteGrid>> getInputGrids(void) const;
 	/// @brief Simply returns the number of loaded grids in the scene.
 	std::size_t getInputGridCount(void) const;
 
@@ -314,9 +267,6 @@ public:
 
 	/// @brief Returns the context, for external use.
 	QOpenGLContext* get_context() const { return this->context; }
-
-	/// @brief computes the transformation matrix of the input grid
-	glm::mat4 computeTransformationMatrix(const std::shared_ptr<DiscreteGrid>& _grid) const;
 
 	/// @brief Checks if the scene is already initialized.
 	bool isSceneInitialized(void) const { return this->isInitialized; }
@@ -412,9 +362,6 @@ private:
 	/// @brief Draws the 3D texture with a volumetric-like visualization method [[NEW API]]
 	void newAPI_drawVolumetric(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, const NewAPI_GridGLView::Ptr& grid);
 
-	/// @brief Prints grid info.
-	void printGridInfo(const std::shared_ptr<DiscreteGrid>& grid);
-
 	/// @brief Generate a scale of colors for the program.
 	void generateColorScale();
 	/// @brief Uploads the color scale to OpenGL
@@ -436,7 +383,7 @@ private:
 	/// @brief Orders the VAO pointers for the bounding box
 	void setupVAOBoundingBox();
 	/// @brief Draw a bounding box
-	void drawBoundingBox(const DiscreteGrid::bbox_t& _box, glm::vec3 color, GLfloat* vMat, GLfloat* pMat);
+	void drawBoundingBox(const Image::bbox_t& _box, glm::vec3 color, GLfloat* vMat, GLfloat* pMat);
 	/// @brief Update the scene's bounding box with the currently drawn grids.
 	void updateBoundingBox(void);
 	void updateVisuBoxCoordinates(void);
@@ -504,12 +451,12 @@ protected:
 	glm::bvec3 planeVisibility;	   ///< Should we show each plane (X, Y, Z)
 	glm::vec3 planeDirection;	 ///< Cutting plane directions (-1 or 1 on each axis)
 	glm::vec3 planeDisplacement;	///< %age of the scene bounding box to place the planes
-	DiscreteGrid::bbox_t sceneBB;	 ///< Outer BB of the scene
-	DiscreteGrid::bbox_t sceneDataBB;	 ///< Outer BB of the scene's data
+	Image::bbox_t sceneBB;	 ///< Outer BB of the scene
+	Image::bbox_t sceneDataBB;	 ///< Outer BB of the scene's data
 	float clipDistanceFromCamera;	 /// Distance from the camera to its clip plane
 	glm::uvec3 visuMin;	   ///< The min image coordinate to display on the visu box mode
 	glm::uvec3 visuMax;	   ///< The max image coordinate to display on the visu box mode
-	DiscreteGrid::bbox_t visuBox;	 ///< Used to restrict the view to a box with its coordinates
+	Image::bbox_t visuBox;	 ///< Used to restrict the view to a box with its coordinates
 	DrawMode drawMode;	  ///< Current 3D draw mode
 	RGBMode rgbMode;	///< Current RGB mode
 	ColorFunction channels_r;	 ///< Channel(s) to display on the viewers
@@ -574,7 +521,6 @@ protected:
 	/********************************************/
 	std::mutex mutexout;
 	std::mutex mutexadd;
-	std::vector<std::shared_ptr<DiscreteGrid>> gridsToAdd;
 	std::vector<IO::ThreadedTask::Ptr> tasks;
 	std::vector<std::shared_ptr<std::thread>> runningThreads;
 	QTimer* timer_refreshProgress;

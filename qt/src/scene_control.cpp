@@ -285,10 +285,11 @@ void ControlPanel::updateValues(void) {
 	this->rangeslider_red->blockSignals(true);
 	this->rangeslider_green->blockSignals(true);
 
-	this->min		   = this->sceneToControl->getMinTexValue();
-	this->max		   = this->sceneToControl->getMaxTexValue();
-	this->minAlternate = this->sceneToControl->getMinTexValueAlternate();
-	this->maxAlternate = this->sceneToControl->getMaxTexValueAlternate();
+    // TODO: new API comptatibility
+	//this->min		   = this->sceneToControl->getMinTexValue();
+	//this->max		   = this->sceneToControl->getMaxTexValue();
+	//this->minAlternate = this->sceneToControl->getMinTexValueAlternate();
+	//this->maxAlternate = this->sceneToControl->getMaxTexValueAlternate();
 
 	this->rangeslider_red->setRange(this->min, this->max);
 	this->rangeslider_green->setRange(this->minAlternate, this->maxAlternate);
@@ -310,11 +311,13 @@ void ControlPanel::launchRedColorBounds() {
 		});
 		QObject::connect(this->cb_red_bounds, &ColorBoundsControl::minChanged, this, [this](int val) {
 			this->updateMinValue(val);
-			this->sceneToControl->slotSetMinColorValue(static_cast<DiscreteGrid::data_t>(val));
+            //TODO: new API
+			//this->sceneToControl->slotSetMinColorValue(static_cast<DiscreteGrid::data_t>(val));
 		});
 		QObject::connect(this->cb_red_bounds, &ColorBoundsControl::maxChanged, this, [this](int val) {
 			this->updateMaxValue(val);
-			this->sceneToControl->slotSetMaxColorValue(static_cast<DiscreteGrid::data_t>(val));
+            //TODO: new API
+			//this->sceneToControl->slotSetMaxColorValue(static_cast<DiscreteGrid::data_t>(val));
 		});
 	}
 	this->cb_red_bounds->raise();
@@ -329,11 +332,13 @@ void ControlPanel::launchGreenColorBounds() {
 		});
 		QObject::connect(this->cb_green_bounds, &ColorBoundsControl::minChanged, this, [this](int val) {
 			this->updateMinValueAlternate(val);
-			this->sceneToControl->slotSetMinColorValueAlternate(static_cast<DiscreteGrid::data_t>(val));
+            //TODO: new API
+			//this->sceneToControl->slotSetMinColorValueAlternate(static_cast<DiscreteGrid::data_t>(val));
 		});
 		QObject::connect(this->cb_green_bounds, &ColorBoundsControl::maxChanged, this, [this](int val) {
 			this->updateMaxValueAlternate(val);
-			this->sceneToControl->slotSetMaxColorValueAlternate(static_cast<DiscreteGrid::data_t>(val));
+            //TODO: new API
+			//this->sceneToControl->slotSetMaxColorValueAlternate(static_cast<DiscreteGrid::data_t>(val));
 		});
 	}
 	this->cb_green_bounds->raise();
@@ -412,7 +417,8 @@ void ControlPanel::setMinTexVal(int val) {
 	this->min = static_cast<DiscreteGrid::data_t>(val);
 	// update scene data :
 	if (this->sceneToControl) {
-		this->sceneToControl->slotSetMinTexValue(static_cast<DiscreteGrid::data_t>(val));
+        //TODO: new API
+		//this->sceneToControl->slotSetMinTexValue(static_cast<DiscreteGrid::data_t>(val));
 	}
 	this->updateViewers();
 }
@@ -420,7 +426,8 @@ void ControlPanel::setMinTexVal(int val) {
 void ControlPanel::setMaxTexVal(int val) {
 	this->max = static_cast<DiscreteGrid::data_t>(val);
 	if (this->sceneToControl) {
-		this->sceneToControl->slotSetMaxTexValue(static_cast<DiscreteGrid::data_t>(val));
+        //TODO: new API
+		//this->sceneToControl->slotSetMaxTexValue(static_cast<DiscreteGrid::data_t>(val));
 	}
 	this->updateViewers();
 }
@@ -429,7 +436,8 @@ void ControlPanel::setMinTexValBottom(int val) {
 	this->minAlternate = static_cast<DiscreteGrid::data_t>(val);
 	// update scene data :
 	if (this->sceneToControl) {
-		this->sceneToControl->slotSetMinTexValueAlternate(static_cast<DiscreteGrid::data_t>(val));
+        //TODO: new API
+		//this->sceneToControl->slotSetMinTexValueAlternate(static_cast<DiscreteGrid::data_t>(val));
 	}
 	this->updateViewers();
 }
@@ -437,7 +445,8 @@ void ControlPanel::setMinTexValBottom(int val) {
 void ControlPanel::setMaxTexValBottom(int val) {
 	this->maxAlternate = static_cast<DiscreteGrid::data_t>(val);
 	if (this->sceneToControl) {
-		this->sceneToControl->slotSetMaxTexValueAlternate(static_cast<DiscreteGrid::data_t>(val));
+        //TODO: new API
+		//this->sceneToControl->slotSetMaxTexValueAlternate(static_cast<DiscreteGrid::data_t>(val));
 	}
 	this->updateViewers();
 }
