@@ -177,13 +177,13 @@ void GridLoaderWidget::setupWidgets() {
 	this->label_roiMax = new QLabel("Minimum intensity : ");
 
 	this->spinbox_userLimitMin = new QSpinBox;
-	this->spinbox_userLimitMin->setMinimum(static_cast<int>(std::numeric_limits<DiscreteGrid::data_t>::lowest()));
-	this->spinbox_userLimitMin->setMaximum(static_cast<int>(std::numeric_limits<DiscreteGrid::data_t>::max()));
-	this->spinbox_userLimitMin->setValue(static_cast<int>(std::numeric_limits<DiscreteGrid::data_t>::lowest()));
+	this->spinbox_userLimitMin->setMinimum(getMinNumericLimit(_testing_grid->getInternalDataType()));
+	this->spinbox_userLimitMin->setMaximum(getMaxNumericLimit(_testing_grid->getInternalDataType()));
+	this->spinbox_userLimitMin->setValue(getMinNumericLimit(_testing_grid->getInternalDataType()));
 	this->spinbox_userLimitMax = new QSpinBox;
-	this->spinbox_userLimitMax->setMinimum(static_cast<int>(std::numeric_limits<DiscreteGrid::data_t>::lowest()));
-	this->spinbox_userLimitMax->setMaximum(static_cast<int>(std::numeric_limits<DiscreteGrid::data_t>::max()));
-	this->spinbox_userLimitMax->setValue(static_cast<int>(std::numeric_limits<DiscreteGrid::data_t>::max()));
+	this->spinbox_userLimitMax->setMinimum(getMinNumericLimit(_testing_grid->getInternalDataType()));
+	this->spinbox_userLimitMax->setMaximum(getMaxNumericLimit(_testing_grid->getInternalDataType()));
+	this->spinbox_userLimitMax->setValue(getMaxNumericLimit(_testing_grid->getInternalDataType()));
 
 	this->groupBox_interpolator->setDisabled(true);
 	this->radioButton_original->setChecked(true);
@@ -1275,8 +1275,9 @@ void GridLoaderWidget::loadGrid_newAPI() {
 	this->disableWidgets();
 
 	bool hasUserBounds			 = this->groupbox_userLimits->isChecked();
-	DiscreteGrid::data_t userMin = static_cast<DiscreteGrid::data_t>(this->spinbox_userLimitMin->value());
-	DiscreteGrid::data_t userMax = static_cast<DiscreteGrid::data_t>(this->spinbox_userLimitMax->value());
+    // Impossible with the new API as the data_t data type isn't known at compile time
+	// DiscreteGrid::data_t userMin = static_cast<DiscreteGrid::data_t>(this->spinbox_userLimitMin->value());
+	// DiscreteGrid::data_t userMax = static_cast<DiscreteGrid::data_t>(this->spinbox_userLimitMax->value());
 	std::cerr << "Loading new grid API" << '\n';
 
 	float dx = this->dsb_transformationDX->value();

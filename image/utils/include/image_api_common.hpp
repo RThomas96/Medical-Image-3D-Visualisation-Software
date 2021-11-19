@@ -119,6 +119,76 @@ namespace Image {
 		return _os << "{tag_t: " << unmangled_type << "}";
 	}
 
+    inline int getMinNumericLimit(ImageDataType imageDataType) {
+        if(imageDataType == (Bit_8 | Signed))
+            return static_cast<int>(std::numeric_limits<int8_t>::lowest());
+
+        if(imageDataType == (Bit_16 | Signed))
+            return static_cast<int>(std::numeric_limits<int16_t>::lowest());
+
+        if(imageDataType == (Bit_32 | Signed))
+            return static_cast<int>(std::numeric_limits<int32_t>::lowest());
+
+        if(imageDataType == (Bit_64 | Signed))
+            return static_cast<int>(std::numeric_limits<int64_t>::lowest());
+
+        if(imageDataType == (Bit_8 | Unsigned))
+            return static_cast<int>(std::numeric_limits<uint8_t>::lowest());
+
+        if(imageDataType == (Bit_16 | Unsigned))
+            return static_cast<int>(std::numeric_limits<uint16_t>::lowest());
+
+        if(imageDataType == (Bit_32 | Unsigned))
+            return static_cast<int>(std::numeric_limits<uint32_t>::lowest());
+
+        if(imageDataType == (Bit_64 | Unsigned))
+            return static_cast<int>(std::numeric_limits<uint64_t>::lowest());
+        
+        if(imageDataType == (Bit_32 | Floating))
+            return static_cast<int>(std::numeric_limits<float>::lowest());
+
+        if(imageDataType == (Bit_64 | Floating))
+            return static_cast<int>(std::numeric_limits<double>::lowest());
+
+        if (imageDataType == Unknown)
+            throw std::runtime_error("[ERROR] cannot query min numeric limit of an unknown data type."); 
+    }
+
+    inline int getMaxNumericLimit(ImageDataType imageDataType) {
+        if(imageDataType == (Bit_8 | Signed))
+            return static_cast<int>(std::numeric_limits<int8_t>::max());
+
+        if(imageDataType == (Bit_16 | Signed))
+            return static_cast<int>(std::numeric_limits<int16_t>::max());
+
+        if(imageDataType == (Bit_32 | Signed))
+            return static_cast<int>(std::numeric_limits<int32_t>::max());
+
+        if(imageDataType == (Bit_64 | Signed))
+            return static_cast<int>(std::numeric_limits<int64_t>::max());
+
+        if(imageDataType == (Bit_8 | Unsigned))
+            return static_cast<int>(std::numeric_limits<uint8_t>::max());
+
+        if(imageDataType == (Bit_16 | Unsigned))
+            return static_cast<int>(std::numeric_limits<uint16_t>::max());
+
+        if(imageDataType == (Bit_32 | Unsigned))
+            return static_cast<int>(std::numeric_limits<uint32_t>::max());
+
+        if(imageDataType == (Bit_64 | Unsigned))
+            return static_cast<int>(std::numeric_limits<uint64_t>::max());
+        
+        if(imageDataType == (Bit_32 | Floating))
+            return static_cast<int>(std::numeric_limits<float>::max());
+
+        if(imageDataType == (Bit_64 | Floating))
+            return static_cast<int>(std::numeric_limits<double>::max());
+
+        if (imageDataType == Unknown)
+            throw std::runtime_error("[ERROR] cannot query max numeric limit of an unknown data type."); 
+    }
+
 }	 // namespace Image
 
 #endif	  // VISUALIZATION_IMAGE_API_IMAGE_API_INCLUDE_COMMON_HPP_
