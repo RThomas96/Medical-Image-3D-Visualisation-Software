@@ -253,7 +253,7 @@ namespace Image {
 	/// @param grid The TARGET grid to sample from.
 	/// @note This is all subject to change. Not sure we need all those parameters.
 	template <typename element_t, class grid_t>
-	using resampler_functor = std::function<element_t(const glm::vec3 position, const glm::vec3 element_size, const svec3 index, const std::shared_ptr<grid_t> grid)>;
+	using resampler_functor = std::function<element_t(const std::shared_ptr<grid_t> source_grid, const std::shared_ptr<grid_t> target_grid, const svec3 index)>;
 
 }	 // namespace Image
 

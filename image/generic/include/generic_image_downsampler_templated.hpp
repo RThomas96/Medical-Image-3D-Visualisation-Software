@@ -6,6 +6,7 @@
 
 #include "../../../new_grid/include/grid.hpp"
 
+#include "../../utils/include/local_cache.hpp"
 #include "../../utils/include/read_cache.hpp"
 
 namespace Image {
@@ -33,6 +34,9 @@ namespace Image {
 		/// @brief The type of the associated read cache.
 		using cache_t = ReadCache<std::size_t, std::vector<pixel_t>>;
 
+		/// @brief The type of locally-stored slices.
+		using storage_t = Image::LocalCache<std::size_t, std::vector<pixel_t>>;
+
 	protected:
 		/// @brief The default ctor for this template, setting the right variables for the instance.
 		GenericImageDownsamplerTemplated(svec3 desired_dimension, Grid::Ptr parentgrid, sampler_t resampler);
@@ -41,11 +45,15 @@ namespace Image {
 		/// @brief Default dtor for the class, set to default for now.
 		virtual ~GenericImageDownsamplerTemplated() = default;
 
+		/// @brief Returns a suitable backend for the given grid at the given resolution with the given resampler.
 		static Ptr createBackend(svec3 size, Grid::Ptr parentgrid, sampler_t resampler);
 
 	protected:
 		/// @brief Loads a slice from the parent grid, and cache it for later use.
 		std::size_t load_slice_from_parent_grid(std::size_t slice_idx);
+
+		/// @brief Downsampling operation upon grid loading.
+		virtual void downsample_in_separate_thread(ThreadedTask::Ptr progress_tracker) override;
 
 		/// @brief Single function to call when trying to read a sub-region of the parent grid.
 		template <typename out_t>
@@ -192,6 +200,9 @@ namespace Image {
 	private:
 		/// @brief The cached slices, kept in memory
 		cache_t read_cache;
+
+		/// @brief The downsampled slices.
+		storage_t downsampled_slices;
 
 		/// @brief The resampling method the user required.
 		sampler_t resampling_method;

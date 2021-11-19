@@ -8,10 +8,12 @@ namespace Image {
 		target_resolution(desired_resolution), parent_grid(parent) {
 		// manually set the internal data type.
 		if (parent != nullptr) {
-			this->internal_data_type = this->parent_grid->getInternalDataType();
-			this->custom_name		 = this->parent_grid->getImageName() + std::string("_downsampled");
+			this->custom_name			= this->parent_grid->getImageName() + std::string("_downsampled");
+			this->source_resolution		= this->parent_grid->getResolution();
+			this->internal_data_type	= this->parent_grid->getInternalDataType();
+			this->voxel_dimensionality	= this->parent_grid->getVoxelDimensionality();
 		} else {
-			throw std::runtime_error("Error : cannot create a grid subregion without a valid grid !");
+			throw std::runtime_error("Error : cannot downsample a grid without a valid grid as parent !");
 		}
 	}
 
@@ -22,7 +24,8 @@ namespace Image {
 	ThreadedTask::Ptr GenericImageDownsampler::parseImageInfo(ThreadedTask::Ptr pre_existing_task,
 	  const std::vector<std::vector<std::string>> &_filenames) {
 		UNUSED(_filenames);
-		// Ignores filenames entirely. This is simply a grid subregion.
+		// Ignores filenames entirely. This is a downsampled grid.
+		// And we can skip loading the grid entirely, it will be loaded whenever querying some specific slice.
 
 		if (pre_existing_task == nullptr) {
 			pre_existing_task = std::make_shared<ThreadedTask>();
@@ -64,7 +67,7 @@ namespace Image {
 			ImageDataType parent_data_type = parent->getInternalDataType();
 
 #define DEFAULT_SAMPLER_FUNC(type) \
-	resampler_functor<type, Grid> sampler = [](const glm::vec3 p, const glm::vec3 s, const svec3 i, const Grid::Ptr g) -> type {return type(0);};
+	resampler_functor<type, Grid> sampler = [](const Grid::Ptr s, const Grid::Ptr t, const svec3 i) -> type {return type(0);};
 
 
 			if (parent_data_type & ImageDataType::Floating) {

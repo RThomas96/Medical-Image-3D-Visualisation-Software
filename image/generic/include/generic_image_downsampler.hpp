@@ -55,12 +55,19 @@ namespace Image {
 		/// @brief Returns the image bounding box, either as computed (voxel sizes x res), or defined in file.
 		virtual BoundingBox_General<float> getBoundingBox(void) const override;
 
+	protected:
+		/// @brief Downsamples all source images in a separate thread and fills the local cache.
+		virtual void downsample_in_separate_thread(ThreadedTask::Ptr progress_tracker) = 0;
+
 	private:
 		/// @brief Target resolution desired by the user.
 		svec3 target_resolution;
 
 		/// @brief Source resolution of the grid
 		svec3 source_resolution;
+
+		/// @brief Voxel element size (1/2/3D, more ?)
+		std::size_t voxel_dimensionality;
 
 		/// @brief Parent grid to sample from
 		Grid::Ptr parent_grid;

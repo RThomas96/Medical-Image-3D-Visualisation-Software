@@ -4,6 +4,7 @@
 
 ADD_LIBRARY(imagegrid_utils STATIC
 	include/image_api_common.hpp
+	include/local_cache.hpp
 	include/read_cache.hpp
 	include/threaded_task.hpp
 
