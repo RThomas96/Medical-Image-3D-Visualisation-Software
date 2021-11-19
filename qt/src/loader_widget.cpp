@@ -176,11 +176,11 @@ void GridLoaderWidget::setupWidgets() {
 	this->label_roiMin = new QLabel("Minimum intensity : ");
 	this->label_roiMax = new QLabel("Minimum intensity : ");
 
-	this->spinbox_userLimitMin = new QSpinBox;
+	this->spinbox_userLimitMin = new QDoubleSpinBox;
 	this->spinbox_userLimitMin->setMinimum(getMinNumericLimit(_testing_grid->getInternalDataType()));
 	this->spinbox_userLimitMin->setMaximum(getMaxNumericLimit(_testing_grid->getInternalDataType()));
 	this->spinbox_userLimitMin->setValue(getMinNumericLimit(_testing_grid->getInternalDataType()));
-	this->spinbox_userLimitMax = new QSpinBox;
+	this->spinbox_userLimitMax = new QDoubleSpinBox;
 	this->spinbox_userLimitMax->setMinimum(getMinNumericLimit(_testing_grid->getInternalDataType()));
 	this->spinbox_userLimitMax->setMaximum(getMaxNumericLimit(_testing_grid->getInternalDataType()));
 	this->spinbox_userLimitMax->setValue(getMaxNumericLimit(_testing_grid->getInternalDataType()));

@@ -118,8 +118,8 @@ protected:
 	QGridLayout* layout_roiSelection;	 ///< Layout for the ROI selection
 
 	QGroupBox* groupbox_userLimits;	   ///< Does the user have min/max bounds of the ROI for the image ?
-	QSpinBox* spinbox_userLimitMin;	   ///< Minimum value to define the ROI of the image
-	QSpinBox* spinbox_userLimitMax;	   ///< Maximum value to define the ROI of the image
+	QDoubleSpinBox* spinbox_userLimitMin;	   ///< Minimum value to define the ROI of the image
+	QDoubleSpinBox* spinbox_userLimitMax;	   ///< Maximum value to define the ROI of the image
 	QLabel* label_roiMin;	 ///< Label for the min ROI selector
 	QLabel* label_roiMax;	 ///< Label for the max ROI selector
 
