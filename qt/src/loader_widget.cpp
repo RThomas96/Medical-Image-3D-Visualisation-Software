@@ -174,16 +174,26 @@ void GridLoaderWidget::setupWidgets() {
 	this->groupbox_userLimits->setChecked(false);
 
 	this->label_roiMin = new QLabel("Minimum intensity : ");
-	this->label_roiMax = new QLabel("Minimum intensity : ");
+	this->label_roiMax = new QLabel("Maximum intensity : ");
 
 	this->spinbox_userLimitMin = new QDoubleSpinBox;
-	this->spinbox_userLimitMin->setMinimum(getMinNumericLimit(_testing_grid->getInternalDataType()));
-	this->spinbox_userLimitMin->setMaximum(getMaxNumericLimit(_testing_grid->getInternalDataType()));
-	this->spinbox_userLimitMin->setValue(getMinNumericLimit(_testing_grid->getInternalDataType()));
 	this->spinbox_userLimitMax = new QDoubleSpinBox;
-	this->spinbox_userLimitMax->setMinimum(getMinNumericLimit(_testing_grid->getInternalDataType()));
-	this->spinbox_userLimitMax->setMaximum(getMaxNumericLimit(_testing_grid->getInternalDataType()));
-	this->spinbox_userLimitMax->setValue(getMaxNumericLimit(_testing_grid->getInternalDataType()));
+
+    if(_testing_grid) {
+	    this->spinbox_userLimitMin->setMinimum(getMinNumericLimit(_testing_grid->getInternalDataType()));
+	    this->spinbox_userLimitMin->setMaximum(getMaxNumericLimit(_testing_grid->getInternalDataType()));
+	    this->spinbox_userLimitMin->setValue(getMinNumericLimit(_testing_grid->getInternalDataType()));
+	    this->spinbox_userLimitMax->setMinimum(getMinNumericLimit(_testing_grid->getInternalDataType()));
+	    this->spinbox_userLimitMax->setMaximum(getMaxNumericLimit(_testing_grid->getInternalDataType()));
+	    this->spinbox_userLimitMax->setValue(getMaxNumericLimit(_testing_grid->getInternalDataType()));
+    } else {
+	    this->spinbox_userLimitMin->setMinimum(0);
+	    this->spinbox_userLimitMin->setMaximum(10);
+	    this->spinbox_userLimitMin->setValue(0);
+	    this->spinbox_userLimitMax->setMinimum(0);
+	    this->spinbox_userLimitMax->setMaximum(10);
+	    this->spinbox_userLimitMax->setValue(10);
+    }
 
 	this->groupBox_interpolator->setDisabled(true);
 	this->radioButton_original->setChecked(true);
