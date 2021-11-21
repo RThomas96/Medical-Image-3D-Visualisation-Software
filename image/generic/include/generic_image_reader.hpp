@@ -241,19 +241,30 @@ namespace Image {
 		ImageDataType internal_data_type;
 	};
 
-	/// @brief The functor type returning a pixel value for a given position.
+	/// @brief The functor type returning a complete voxel value for a given position.
 	/// @details The method will sample the positions it requires in any direction in the 'target' grid, without any transformation. Since we're
 	/// directly sampling a grid without any intermediary transformations, we do not need to take into account transformations and can sample
 	/// neighboring positions directly.
 	/// @tparam element_t The pixel type for the grid
 	/// @tparam grid_t The grid type (will always be Image::Grid but is not yet defined here)
-	/// @param position The real-world position of the sample
-	/// @param element_size The voxel size of the SOURCE grid.
-	/// @param index The indexed position of the SOURCE grid.
-	/// @param grid The TARGET grid to sample from.
+	/// @param sampled_grid The grid to sample FROM.
+	/// @param index The indexed position of the grid to sample TO.
+	/// @param channels_to_sample The number of channels to sample in the grid to sample TO.
+	/// @param source_resolution The resolution of the grid to sample TO.
+	/// @param source_position The real-world position of the sample of the grid to sample TO.
+	/// @param source_voxel_sizes The voxel size of the grid to sample TO.
+	/// @returns The sample values for the current pixel, over ALL color channels.
+	/// @warning This function returns a vector, in which each element is the value of the sample in the corresponding color channel !
 	/// @note This is all subject to change. Not sure we need all those parameters.
 	template <typename element_t, class grid_t>
-	using resampler_functor = std::function<element_t(const std::shared_ptr<grid_t> source_grid, const std::shared_ptr<grid_t> target_grid, const svec3 index)>;
+	using resampler_functor = std::function<std::vector<element_t>(
+		const std::shared_ptr<grid_t> sampled_grid,
+		const svec3 index,
+		const std::size_t channels_to_sample,
+		const svec3 source_resolution,
+		const glm::vec3 source_position,
+		const glm::vec3 source_voxel_sizes
+	)>;
 
 }	 // namespace Image
 

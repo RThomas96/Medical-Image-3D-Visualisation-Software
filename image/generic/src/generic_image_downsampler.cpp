@@ -21,19 +21,6 @@ namespace Image {
 		return this->internal_data_type;
 	}
 
-	ThreadedTask::Ptr GenericImageDownsampler::parseImageInfo(ThreadedTask::Ptr pre_existing_task,
-	  const std::vector<std::vector<std::string>> &_filenames) {
-		UNUSED(_filenames);
-		// Ignores filenames entirely. This is a downsampled grid.
-		// And we can skip loading the grid entirely, it will be loaded whenever querying some specific slice.
-
-		if (pre_existing_task == nullptr) {
-			pre_existing_task = std::make_shared<ThreadedTask>();
-			pre_existing_task->end();
-		}
-		return pre_existing_task;
-	}
-
 	bool GenericImageDownsampler::presentOnDisk() const { return false; }
 
 	std::size_t GenericImageDownsampler::getVoxelDimensionality() const { return this->parent_grid->getVoxelDimensionality(); }
@@ -66,11 +53,23 @@ namespace Image {
 		GenericImageDownsampler::Ptr createBackend(Grid::Ptr parent, svec3 size, ImageResamplingTechnique method) {
 			ImageDataType parent_data_type = parent->getInternalDataType();
 
+			// Define a custom empty lambda which always returns 0, in order to have a quick and dirty way to compile
+			// the project while developing :
 #define DEFAULT_SAMPLER_FUNC(type) \
-	resampler_functor<type, Grid> sampler = [](const Grid::Ptr s, const Grid::Ptr t, const svec3 i) -> type {return type(0);};
+	resampler_functor<type, Grid> sampler = \
+		[](const Grid::Ptr t, const svec3 i, const std::size_t c, const svec3 r, const glm::vec3 p, const glm::vec3 v) \
+		-> std::vector<type> \
+		{\
+			UNUSED(t);\
+			UNUSED(i);\
+			UNUSED(r);\
+			UNUSED(p);\
+			UNUSED(v);\
+			return std::vector<type>(c, 0);\
+		};
 
 
-			if (parent_data_type & ImageDataType::Floating) {
+			if (parent_data_type && ImageDataType::Floating) {
 				if (parent_data_type & ImageDataType::Bit_32) {
 					DEFAULT_SAMPLER_FUNC(float);
 					return GenericImageDownsamplerTemplated<float, resampler_functor>::createBackend(size, parent, sampler);

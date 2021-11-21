@@ -27,10 +27,6 @@ namespace Image {
 		/// @brief Returns the internal type of the backend, based on the internal type of the grid sampled.
 		virtual ImageDataType getInternalDataType() const override;
 
-		/// @brief Should parse images, but since we're sampling a known grid this just initializes the right variables.
-		virtual ThreadedTask::Ptr parseImageInfo(ThreadedTask::Ptr pre_existing_task,
-		  const std::vector<std::vector<std::string>>& _filenames) noexcept(false) override;
-
 		/// @brief Checks if the information present in this implementation is present on disk, or in memory.
 		virtual bool presentOnDisk(void) const override;
 
@@ -59,7 +55,7 @@ namespace Image {
 		/// @brief Downsamples all source images in a separate thread and fills the local cache.
 		virtual void downsample_in_separate_thread(ThreadedTask::Ptr progress_tracker) = 0;
 
-	private:
+	protected:
 		/// @brief Target resolution desired by the user.
 		svec3 target_resolution;
 

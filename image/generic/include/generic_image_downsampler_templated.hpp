@@ -48,8 +48,14 @@ namespace Image {
 		/// @brief Returns a suitable backend for the given grid at the given resolution with the given resampler.
 		static Ptr createBackend(svec3 size, Grid::Ptr parentgrid, sampler_t resampler);
 
+		/// @brief Should parse images, but since we're sampling a known grid this just initializes the right variables.
+		virtual ThreadedTask::Ptr parseImageInfo(ThreadedTask::Ptr pre_existing_task,
+		  const std::vector<std::vector<std::string>>& _filenames) noexcept(false) override;
+
 	protected:
 		/// @brief Loads a slice from the parent grid, and cache it for later use.
+		/// @note This is not supposed to be called anywhere else than in the parsing/loading function ! All other read
+		/// operations are supposed to directly read from the local cache.
 		std::size_t load_slice_from_parent_grid(std::size_t slice_idx);
 
 		/// @brief Downsampling operation upon grid loading.
