@@ -65,8 +65,8 @@ Scene::Scene() {
 	this->visuBoxController = nullptr;
 	this->programStatusBar	= nullptr;
 
-	DiscreteGrid::data_t minTexVal = DiscreteGrid::data_t(1);
-	DiscreteGrid::data_t maxTexVal = DiscreteGrid::data_t(std::numeric_limits<DiscreteGrid::data_t>::max());
+	double minTexVal = 1;
+	double maxTexVal = std::numeric_limits<double>::max();
 	this->textureBounds0		   = GridGLView::data_2(minTexVal, maxTexVal);
 	this->textureBounds1		   = GridGLView::data_2(minTexVal, maxTexVal);
 	this->colorBounds0			   = GridGLView::data_2(0, maxTexVal);
@@ -3942,6 +3942,44 @@ void Scene::slotTogglePlaneDirectionZ() {
 }
 void Scene::toggleAllPlaneDirections() {
 	this->planeDirection = -this->planeDirection;
+}
+
+void Scene::slotSetMinTexValue(double val) {
+	this->textureBounds0.x = val;
+	this->updateVis();
+	this->updateCVR();
+}
+void Scene::slotSetMaxTexValue(double val) {
+	this->textureBounds0.y = val;
+	this->updateVis();
+	this->updateCVR();
+}
+void Scene::slotSetMinTexValueAlternate(double val) {
+	this->textureBounds1.x = val;
+	this->updateVis();
+	this->updateCVR();
+}
+void Scene::slotSetMaxTexValueAlternate(double val) {
+	this->textureBounds1.y = val;
+	this->updateVis();
+	this->updateCVR();
+}
+
+void Scene::slotSetMinColorValue(double val) {
+	this->colorBounds0.x = val;
+	this->updateCVR();
+}
+void Scene::slotSetMaxColorValue(double val) {
+	this->colorBounds0.y = val;
+	this->updateCVR();
+}
+void Scene::slotSetMinColorValueAlternate(double val) {
+	this->colorBounds1.x = val;
+	this->updateCVR();
+}
+void Scene::slotSetMaxColorValueAlternate(double val) {
+	this->colorBounds1.y = val;
+	this->updateCVR();
 }
 
 void Scene::setColor0(qreal r, qreal g, qreal b) {

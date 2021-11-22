@@ -85,16 +85,20 @@ public:
 	ControlPanel(Scene* const scene, Viewer* lv, QWidget* parent = nullptr);
 	virtual ~ControlPanel();
 
+    /// @brief Set min and max values of sliders according to the grids datatype numerical limit
+    /// TODO: change this function to set sliders according to min/max values in image
+    void setSlidersToNumericalLimits(void);
+
 protected:
 	void initSignals(void);
 	void updateViewers(void);
 public slots:
 	void updateLabels();
 	void updateValues(void);
-	void updateMinValue(int val);
-	void updateMaxValue(int val);
-	void updateMinValueAlternate(int val);
-	void updateMaxValueAlternate(int val);
+	void updateMinValue(double val);
+	void updateMaxValue(double val);
+	void updateMinValueAlternate(double val);
+	void updateMaxValueAlternate(double val);
 	void updateRGBMode(void);
 	void updateChannelRed(int value);
 	void updateChannelGreen(int value);
@@ -144,15 +148,19 @@ private:
 	/// @brief The viewer to update on value changes
 	Viewer* const viewer;
 	/// @brief Texture bounds for red channel
-	DiscreteGrid::data_t min, max;
+	double min, max;
 	/// @brief Texture bounds for green channel
-	DiscreteGrid::data_t minAlternate, maxAlternate;
+	double minAlternate, maxAlternate;
 
 public slots:
-	void setMinTexVal(int val);
-	void setMaxTexVal(int val);
-	void setMinTexValBottom(int val);
-	void setMaxTexValBottom(int val);
+    // @brief Set the min value to display of the first grid
+	void setMinTexVal(double val);
+    // @brief Set the max value to display of the first grid
+	void setMaxTexVal(double val);
+    // @brief Set the min value to display of the second grid
+	void setMinTexValAlternate(double val);
+    // @brief Set the max value to display of the second grid
+	void setMaxTexValAlternate(double val);
 	void setClipDistance(double val);
 };
 

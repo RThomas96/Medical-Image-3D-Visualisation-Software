@@ -161,11 +161,43 @@ public:
 	/// @brief Launches a save dialog, to generate a grid.
 	void launchSaveDialog();
 
-	/// @brief Prints info about the VAO on next refresh
-	void printVAOStateNext() { this->showVAOstate = true; }
+    /// @brief Prints info about the VAO on next refresh
+    void printVAOStateNext() { this->showVAOstate = true; }
 
-	/// @brief Get the minimum color value, for the color scale resizing.
-	uint getMinColorValue(void) const { return this->colorBounds0.x; }
+    /// @brief Get the minimum value that the grid at gridIndex can contain 
+    double getMinNumericLimit(size_t gridIndex) const { return Image::getMinNumericLimit(newGrids[gridIndex]->grid->getInternalDataType()); }
+    /// @brief Get the maximum value that the grid at gridIndex can contain 
+    double getMaxNumericLimit(size_t gridIndex) const{ return Image::getMaxNumericLimit(newGrids[gridIndex]->grid->getInternalDataType()); }
+
+    /// @brief Get the minimum texture value to represent
+    double getMinTexValue(void) const { return static_cast<double>(this->textureBounds0.x); }
+    /// @brief Get the maximum texture value to represent
+    double getMaxTexValue(void) const { return static_cast<double>(this->textureBounds0.y); }
+    /// @brief Get the minimum texture value to represent
+    double getMinTexValueAlternate(void) const { return static_cast<double>(this->textureBounds1.x); }
+    /// @brief Get the maximum texture value to represent 
+    double getMaxTexValueAlternate(void) const { return static_cast<double>(this->textureBounds1.y); }
+
+    /// These functions are used by the sliders to control what image values to display
+    /// @brief Set minimum texture intensity.
+    void slotSetMinTexValue(double val); 	
+    /// @brief Set maximum texture intensity. 	
+    void slotSetMaxTexValue(double val); 	
+    /// @brief Set minimum texture intensity. 	
+    void slotSetMinTexValueAlternate(double val); 	
+    /// @brief Set maximum texture intensity. 	
+    void slotSetMaxTexValueAlternate(double val); 	
+    /// @brief Set minimum color intensity. 	
+    void slotSetMinColorValue(double val); 	
+    /// @brief Set maximum color intensity. 	
+    void slotSetMaxColorValue(double val); 	
+    /// @brief Set minimum color intensity. 	
+    void slotSetMinColorValueAlternate(double val); 	
+    /// @brief Set maximum color intensity. 	
+    void slotSetMaxColorValueAlternate(double val);
+
+    /// @brief Get the minimum color value, for the color scale resizing.
+    uint getMinColorValue(void) const { return this->colorBounds0.x; }
 	/// @brief Get the maximum color value, for the color scale resizing.
 	uint getMaxColorValue(void) const { return this->colorBounds0.y; }
 	/// @brief Get the minimum color value, for the color scale resizing.
