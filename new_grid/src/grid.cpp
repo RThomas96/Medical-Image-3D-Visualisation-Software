@@ -40,7 +40,7 @@ namespace Image {
 
 	void Grid::updateInfoFromGrid() {
 		if (this->pImpl) {
-#warning Invalid for subsampled regions ! Should not be updated if that's the case.
+#warning Invalid for subsampled regions ! Should not be updated if thats the case.
 			this->imageSize = this->pImpl->getResolution();
 			//this->gridName = this->pImpl->getImageName();
 		}

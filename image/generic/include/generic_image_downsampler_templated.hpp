@@ -25,11 +25,14 @@ namespace Image {
 		/// @brief Public typedef to the internal pixel type.
 		using pixel_t = element_t;
 
-		/// @brief Public typedef to the internal up/downsampler type.
+		/// @brief Public typedef to the internal up/downsampler type (useful when referencing member functions/variables).
 		using sampler_t = resampler_t<pixel_t, Grid>;
 
+		/// @brief Public typedef to the current instanciated type.
+		using self_t = GenericImageDownsamplerTemplated<pixel_t, resampler_t>;
+
 		/// @brief Pointer type to the current instanciation of GenericImageDownsamplerTemplated.
-		using Ptr = std::unique_ptr<GenericImageDownsamplerTemplated<pixel_t, resampler_t>>;
+		using Ptr = std::unique_ptr<self_t>;
 
 		/// @brief The type of the associated read cache.
 		using cache_t = ReadCache<std::size_t, std::vector<pixel_t>>;

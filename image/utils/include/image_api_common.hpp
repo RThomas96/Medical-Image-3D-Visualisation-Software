@@ -63,6 +63,13 @@ namespace Image {
 		return static_cast<ImageDataType>(static_cast<std::uint8_t>(lhs) | static_cast<std::uint8_t>(rhs));
 	}
 
+	/// @brief Boolean operation to check if a certain enum value has been OR-ed into a variable.
+	inline bool operator&(ImageResamplingTechnique lhs, ImageResamplingTechnique rhs) {
+		// Enum is only defined in 8 bits :
+		using data_t = unsigned char;
+		return (static_cast<data_t>(lhs)) && (static_cast<data_t>(rhs));
+	}
+
 	/// @brief Handy typedef to a bounding box type
 	typedef BoundingBox_General<float> bbox_t;
 

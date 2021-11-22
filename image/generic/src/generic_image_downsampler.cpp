@@ -12,6 +12,9 @@ namespace Image {
 			this->source_resolution		= this->parent_grid->getResolution();
 			this->internal_data_type	= this->parent_grid->getInternalDataType();
 			this->voxel_dimensionality	= this->parent_grid->getVoxelDimensionality();
+			// Compute voxel sizes of this downsampled version of the grid :
+			glm::vec3 size_factor		= glm::convert_to<float>(this->source_resolution) / glm::convert_to<float>(this->target_resolution);
+			this->voxel_sizes			= this->parent_grid->getVoxelDimensions() * size_factor;
 		} else {
 			throw std::runtime_error("Error : cannot downsample a grid without a valid grid as parent !");
 		}
@@ -26,11 +29,8 @@ namespace Image {
 	std::size_t GenericImageDownsampler::getVoxelDimensionality() const { return this->parent_grid->getVoxelDimensionality(); }
 
 	glm::vec3 GenericImageDownsampler::getVoxelDimensions() const {
-		// Get scaling factor for all dimensions :
-		glm::vec3 float_target_resolution = glm::convert_to<float>(this->target_resolution);
-		glm::vec3 float_source_resolution = glm::convert_to<float>(this->source_resolution);
-		// Scale voxel dimensions by that much :
-		return this->parent_grid->getVoxelDimensions() * (float_source_resolution / float_target_resolution);
+		// precomputed in the ctor for this class !
+		return this->voxel_sizes;
 	}
 
 	svec3 GenericImageDownsampler::getResolution() const { return this->target_resolution; }
@@ -53,76 +53,53 @@ namespace Image {
 		GenericImageDownsampler::Ptr createBackend(Grid::Ptr parent, svec3 size, ImageResamplingTechnique method) {
 			ImageDataType parent_data_type = parent->getInternalDataType();
 
-			// Define a custom empty lambda which always returns 0, in order to have a quick and dirty way to compile
-			// the project while developing :
-#define DEFAULT_SAMPLER_FUNC(type) \
-	resampler_functor<type, Grid> sampler = \
-		[](const Grid::Ptr t, const svec3 i, const std::size_t c, const svec3 r, const glm::vec3 p, const glm::vec3 v) \
-		-> std::vector<type> \
-		{\
-			UNUSED(t);\
-			UNUSED(i);\
-			UNUSED(r);\
-			UNUSED(p);\
-			UNUSED(v);\
-			return std::vector<type>(c, 0);\
-		};
+			/* Huge and dirty switch-like method for returning the right instance of a downsampler given the parent's type : */
 
-
-			if (parent_data_type && ImageDataType::Floating) {
+			// Floating-point types :
+			if (parent_data_type & ImageDataType::Floating) {
 				if (parent_data_type & ImageDataType::Bit_32) {
-					DEFAULT_SAMPLER_FUNC(float);
-					return GenericImageDownsamplerTemplated<float, resampler_functor>::createBackend(size, parent, sampler);
+					return GenericImageDownsamplerTemplated<float, resampler_functor>::createBackend(size, parent, findRightInterpolatorType<float>(method));
 				}
 				if (parent_data_type & ImageDataType::Bit_64) {
-					DEFAULT_SAMPLER_FUNC(double);
-					return GenericImageDownsamplerTemplated<double, resampler_functor>::createBackend(size, parent, sampler);
+					return GenericImageDownsamplerTemplated<double, resampler_functor>::createBackend(size, parent, findRightInterpolatorType<double>(method));
 				}
 				throw std::runtime_error("Error : trying to create a subregion of a floating-point grid with bit widths different from 32/64");
 			}
 
-			if (parent_data_type && ImageDataType::Unsigned) {
+			// Unsigned types :
+			if (parent_data_type & ImageDataType::Unsigned) {
 				if (parent_data_type & ImageDataType::Bit_8) {
-					DEFAULT_SAMPLER_FUNC(std::uint8_t);
-					return GenericImageDownsamplerTemplated<std::uint8_t, resampler_functor>::createBackend(size, parent, sampler);
+					return GenericImageDownsamplerTemplated<std::uint8_t, resampler_functor>::createBackend(size, parent, findRightInterpolatorType<std::uint8_t>(method));
 				}
 				if (parent_data_type & ImageDataType::Bit_16) {
-					DEFAULT_SAMPLER_FUNC(std::uint16_t);
-					return GenericImageDownsamplerTemplated<std::uint16_t, resampler_functor>::createBackend(size, parent, sampler);
+					return GenericImageDownsamplerTemplated<std::uint16_t, resampler_functor>::createBackend(size, parent, findRightInterpolatorType<std::uint16_t>(method));
 				}
 				if (parent_data_type & ImageDataType::Bit_32) {
-					DEFAULT_SAMPLER_FUNC(std::uint32_t);
-					return GenericImageDownsamplerTemplated<std::uint32_t, resampler_functor>::createBackend(size, parent, sampler);
+					return GenericImageDownsamplerTemplated<std::uint32_t, resampler_functor>::createBackend(size, parent, findRightInterpolatorType<std::uint32_t>(method));
 				}
 				if (parent_data_type & ImageDataType::Bit_64) {
-					DEFAULT_SAMPLER_FUNC(std::uint64_t);
-					return GenericImageDownsamplerTemplated<std::uint64_t, resampler_functor>::createBackend(size, parent, sampler);
+					return GenericImageDownsamplerTemplated<std::uint64_t, resampler_functor>::createBackend(size, parent, findRightInterpolatorType<std::uint64_t>(method));
 				}
 				throw std::runtime_error("Error : trying to create a subregion of an unsigned grid with bit widths different from 8/16/32/64");
 			}
 
-			if (parent_data_type && ImageDataType::Signed) {
+			// Signed types :
+			if (parent_data_type & ImageDataType::Signed) {
 				if (parent_data_type & ImageDataType::Bit_8) {
-					DEFAULT_SAMPLER_FUNC(std::int8_t);
-					return GenericImageDownsamplerTemplated<std::int8_t, resampler_functor>::createBackend(size, parent, sampler);
+					return GenericImageDownsamplerTemplated<std::int8_t, resampler_functor>::createBackend(size, parent, findRightInterpolatorType<std::int8_t>(method));
 				}
 				if (parent_data_type & ImageDataType::Bit_16) {
-					DEFAULT_SAMPLER_FUNC(std::int16_t);
-					return GenericImageDownsamplerTemplated<std::int16_t, resampler_functor>::createBackend(size, parent, sampler);
+					return GenericImageDownsamplerTemplated<std::int16_t, resampler_functor>::createBackend(size, parent, findRightInterpolatorType<std::int16_t>(method));
 				}
 				if (parent_data_type & ImageDataType::Bit_32) {
-					DEFAULT_SAMPLER_FUNC(std::int32_t);
-					return GenericImageDownsamplerTemplated<std::int32_t, resampler_functor>::createBackend(size, parent, sampler);
+					return GenericImageDownsamplerTemplated<std::int32_t, resampler_functor>::createBackend(size, parent, findRightInterpolatorType<std::int32_t>(method));
 				}
 				if (parent_data_type & ImageDataType::Bit_64) {
-					DEFAULT_SAMPLER_FUNC(std::int64_t);
-					return GenericImageDownsamplerTemplated<std::int64_t, resampler_functor>::createBackend(size, parent, sampler);
+					return GenericImageDownsamplerTemplated<std::int64_t, resampler_functor>::createBackend(size, parent, findRightInterpolatorType<std::int64_t>(method));
 				}
 				throw std::runtime_error("Error : trying to create a subregion of a signed grid with bit widths different from 8/16/32/64");
 			}
 			throw std::runtime_error("Error : trying to create a subregion of an unknown pixel type (not floating or [un]signed)");
-
-#undef DEFAULT_SAMPLER_FUNC
 
 		}
 

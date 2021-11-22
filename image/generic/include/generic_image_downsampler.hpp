@@ -2,6 +2,7 @@
 #define VISUALISATION_IMAGE_GENERIC_INCLUDE_GENERIC_IMAGE_DOWNSAMPLER_HPP_
 
 #include "../../../new_grid/include/grid.hpp"
+#include "../include/generic_image_interpolators.hpp"
 #include "./generic_image_reader.hpp"
 
 namespace Image {
@@ -62,6 +63,9 @@ namespace Image {
 		/// @brief Source resolution of the grid
 		svec3 source_resolution;
 
+		/// @brief Voxel sizes, computed at creation time.
+		glm::vec3 voxel_sizes;
+
 		/// @brief Voxel element size (1/2/3D, more ?)
 		std::size_t voxel_dimensionality;
 
@@ -76,6 +80,27 @@ namespace Image {
 
 		/// @brief Create a backend of the desired type for a downsampled region of an image.
 		GenericImageDownsampler::Ptr createBackend(Grid::Ptr parent, svec3 size, ImageResamplingTechnique method);
+
+		/// @brief Return an instance of interpolator with the right type and resampling technique.
+		/// @details This function is used to get the right instance of a resampling technique with a given grid type (always Image::Grid in this
+		/// context) and a given pixel data type (float, u16, i32 ...). The functor returned will be used in the constructor of a
+		/// GenericImageDownsampledTemplated<> instance.
+		/// @tparam element_t The type of the pixel data contained in the grid (float, u16, i32 ...).
+		/// @param technique An enum value (of type ImageResamplingTechnique) that determines which resampling algorithm will be applied to the grid.
+		/// @returns A functor suitable for use within a ctor of a GenericImageDownsampledTemplated<> instance.
+		template <typename element_t>
+		resampler_functor<element_t, Image::Grid> findRightInterpolatorType(ImageResamplingTechnique technique) {
+			if (technique & ImageResamplingTechnique::None)				{ return Interpolators::null_interpolator<element_t, Grid>; }
+			if (technique & ImageResamplingTechnique::NearestNeighbor)	{ return Interpolators::nearest_neighbor_interpolator<element_t, Grid>; }
+			if (technique & ImageResamplingTechnique::Linear)			{ return Interpolators::null_interpolator<element_t, Grid>; }
+			if (technique & ImageResamplingTechnique::Cubic)			{ return Interpolators::null_interpolator<element_t, Grid>; }
+
+			// No matching value, print an error and return a default interpolator type :
+			std::cerr << "Error : trying to find a right interpolator with no valid enum values given (value : "
+					  << std::hex << (int)technique << std::dec
+					  << ")\n";
+			return Interpolators::null_interpolator<element_t, Grid>;
+		}
 
 	} // namespace Downsampled
 

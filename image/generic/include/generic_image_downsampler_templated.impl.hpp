@@ -40,9 +40,6 @@ namespace Image {
 
 		pre_existing_task->setState(TaskState::Ready);
 
-
-		// Simple shortcut to this function's class type definition :
-		using self_t = GenericImageDownsamplerTemplated<element_t, resampler_t>;
 		// Launch the downsampling thread and detach it, in order to let it perform its downsampling algorithms :
 		std::thread parsing_thread = std::thread(&self_t::downsample_in_separate_thread, this, pre_existing_task);
 		parsing_thread.detach();
@@ -79,10 +76,11 @@ namespace Image {
 					// compute position of sampled data within image :
 					std::size_t source_index = y * line_size + x * this->voxel_dimensionality;
 					svec3 sample_index = svec3(x, y, slice_idx);
+					// compute sample position (should take the center of the voxel as position, so add half a voxel's size to it) :
+					glm::vec3 sample_position = glm::convert_to<float>(sample_index) * this->voxel_sizes + (0.5f * this->voxel_sizes);
 
 					// compute resampling !
-#warning Should get the real position from within the grid !!!
-					auto values = this->resampling_method(this->parent_grid, sample_index, this->voxel_dimensionality, this->target_resolution, glm::vec3{}, vxdims);
+					std::vector<pixel_t> values = this->resampling_method(this->parent_grid, sample_index, this->voxel_dimensionality, this->target_resolution, sample_position, vxdims);
 
 					// copy values into the destination buffer :
 					std::copy(values.begin(), values.end(), image_data->begin()+source_index);
