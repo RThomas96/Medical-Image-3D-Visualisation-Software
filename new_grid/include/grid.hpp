@@ -5,11 +5,18 @@
 #include "../../image/transforms/include/transform_stack.hpp"
 #include "../../image/utils/include/image_api_common.hpp"
 
+#include "../../grid/include/bounding_box.hpp"
+
 #include <memory>
 #include <string>
 #include <vector>
 
 namespace Image {
+    
+    /// @brief Old bbox definition
+    //  TODO: wtf are you doing here
+    typedef BoundingBox_General<float> bbox_t;
+
 
 	/// @ingroup newgrid
 	/// @brief The Grid class is the new and recommended representation of a voxel grid.
@@ -21,7 +28,7 @@ namespace Image {
 	public:
 		/// @brief Handy typedef for a pointer to a grid
 		typedef std::shared_ptr<Grid> Ptr;
-
+        
 	protected:
 		/// @brief Default grid ctor, made protected so it is not instanciated directly.
 		Grid(GenericImageReader::Ptr _backend);

@@ -83,9 +83,9 @@ Scene::Scene() {
 
 	this->planeDirection	= glm::vec3(1., 1., 1.);
 	this->planeDisplacement = glm::vec3(.0, .0, .0);
-	DiscreteGrid::bbox_t::vec min(.0, .0, .0);
-	DiscreteGrid::bbox_t::vec max(1., 1., 1.);
-	this->sceneBB				 = DiscreteGrid::bbox_t(min, max);
+	Image::bbox_t::vec min(.0, .0, .0);
+	Image::bbox_t::vec max(1., 1., 1.);
+	this->sceneBB				 = Image::bbox_t(min, max);
 	this->clipDistanceFromCamera = 5.f;
 	this->drawMode				 = DrawMode::Solid;
 	this->rgbMode				 = RGBMode::HandEColouring;
@@ -512,7 +512,7 @@ void Scene::loadGridROI() {
 				voxelDims = grid->getGridReader()->getOriginalVoxelDimensions();
 			}
 			// Compute the positions for the bounding box from the given coordinates :
-			DiscreteGrid::bbox_t renderBox = this->visuBox;
+			Image::bbox_t renderBox = this->visuBox;
 			// The resolution is going to be defined so the voxel dimensions are the original voxel dimensions :
 			DiscreteGrid::sizevec3 dims = glm::convert_to<std::size_t>(this->visuBox.getDiagonal() / voxelDims);
 
@@ -725,21 +725,21 @@ void Scene::newAPI_addGrid(Image::Grid::Ptr gridLoaded) {
 }
 
 void Scene::updateBoundingBox(void) {
-	this->sceneBB	  = DiscreteGrid::bbox_t();
-	this->sceneDataBB = DiscreteGrid::bbox_t();
+	this->sceneBB	  = Image::bbox_t();
+	this->sceneDataBB = Image::bbox_t();
 	for (std::size_t i = 0; i < this->grids.size(); ++i) {
 		std::for_each(this->grids[i]->grid.cbegin(), this->grids[i]->grid.cend(),
 		  [this](const std::shared_ptr<DiscreteGrid>& _g) {
-			  DiscreteGrid::bbox_t box	= _g->getBoundingBoxWorldSpace();
-			  DiscreteGrid::bbox_t dbox = _g->getDataBoundingBoxWorldSpace();
+			  Image::bbox_t box	= _g->getBoundingBoxWorldSpace();
+			  Image::bbox_t dbox = _g->getDataBoundingBoxWorldSpace();
 			  this->sceneBB.addPoints(box.getAllCorners());
 			  this->sceneDataBB.addPoints(dbox.getAllCorners());
 		  });
 	}
 	for (std::size_t i = 0; i < this->newGrids.size(); ++i) {
 		const Image::Grid::Ptr _g = this->newGrids[i]->grid;
-		DiscreteGrid::bbox_t box  = _g->getBoundingBox();
-		DiscreteGrid::bbox_t dbox = _g->getBoundingBox();
+		Image::bbox_t box  = _g->getBoundingBox();
+		Image::bbox_t dbox = _g->getBoundingBox();
 		this->sceneBB.addPoints(box.getAllCorners());
 		this->sceneDataBB.addPoints(dbox.getAllCorners());
 	}
@@ -1572,8 +1572,8 @@ void Scene::newAPI_drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPla
 }
 
 glm::vec3 Scene::computePlanePositions() {
-	DiscreteGrid::bbox_t::vec position = this->sceneBB.getMin();
-	DiscreteGrid::bbox_t::vec diagonal = this->sceneBB.getDiagonal();
+	Image::bbox_t::vec position = this->sceneBB.getMin();
+	Image::bbox_t::vec diagonal = this->sceneBB.getDiagonal();
 	glm::vec3 planePos				   = (position + this->planeDisplacement * diagonal);
 	return planePos;
 }
@@ -1628,8 +1628,8 @@ void Scene::prepareUniforms_3DSolid(GLfloat* mvMat, GLfloat* pMat, glm::vec4 lig
 	GLint location_g_nbChannels			  = getUniform("g_nbChannels");
 	GLint location_rgbMode				  = getUniform("rgbMode");
 
-	DiscreteGrid::bbox_t::vec origin   = gridView->grid[0]->getBoundingBox().getMin();
-	DiscreteGrid::bbox_t::vec originWS = gridView->grid[0]->getBoundingBoxWorldSpace().getMin();
+	Image::bbox_t::vec origin   = gridView->grid[0]->getBoundingBox().getMin();
+	Image::bbox_t::vec originWS = gridView->grid[0]->getBoundingBoxWorldSpace().getMin();
 	DiscreteGrid::sizevec3 gridDims	   = gridView->grid[0]->getResolution();
 	glm::vec3 dims					   = glm::convert_to<float>(gridDims);
 
@@ -1735,8 +1735,8 @@ void Scene::newAPI_prepareUniforms_3DSolid(GLfloat* mvMat, GLfloat* pMat, glm::v
 	GLint location_colorScales2 = getUniform("colorScales[2]");
 	GLint location_colorScales3 = getUniform("colorScales[3]");
 
-	DiscreteGrid::bbox_t::vec origin   = gridView->grid->getBoundingBox().getMin();
-	DiscreteGrid::bbox_t::vec originWS = gridView->grid->getBoundingBox().getMin();
+	Image::bbox_t::vec origin   = gridView->grid->getBoundingBox().getMin();
+	Image::bbox_t::vec originWS = gridView->grid->getBoundingBox().getMin();
 	DiscreteGrid::sizevec3 gridDims	   = gridView->grid->getResolution();
 	glm::vec3 dims					   = glm::convert_to<float>(gridDims);
 
@@ -1961,7 +1961,7 @@ void Scene::prepareUniforms_3DPlane(GLfloat* mvMat, GLfloat* pMat, planes _plane
 	// Generate the data we need :
 	glm::mat4 transform		  = glm::mat4(1.f);
 	glm::mat4 gridTransfo	  = grid->grid[0]->getTransform_GridToWorld();
-	DiscreteGrid::bbox_t bbws = grid->grid[0]->getBoundingBoxWorldSpace();
+	Image::bbox_t bbws = grid->grid[0]->getBoundingBoxWorldSpace();
 	glm::vec3 dims			  = glm::convert_to<glm::vec3::value_type>(grid->grid[0]->getResolution()) * grid->grid[0]->getVoxelDimensions();
 	glm::vec3 size			  = bbws.getDiagonal();
 	GLint plIdx				  = (_plane == planes::x) ? 1 : (_plane == planes::y) ? 2 : 3;
@@ -1969,8 +1969,8 @@ void Scene::prepareUniforms_3DPlane(GLfloat* mvMat, GLfloat* pMat, planes _plane
 	// gridTransfo = glm::mat4(1.);
 	gridTransfo = grid->grid[0]->getTransform_GridToWorld();
 
-	DiscreteGrid::bbox_t::vec position = this->sceneBB.getMin();
-	DiscreteGrid::bbox_t::vec diagonal = this->sceneBB.getDiagonal();
+	Image::bbox_t::vec position = this->sceneBB.getMin();
+	Image::bbox_t::vec diagonal = this->sceneBB.getDiagonal();
 	glm::vec3 planePos				   = this->computePlanePositions();
 
 	glUniformMatrix4fv(location_mMatrix, 1, GL_FALSE, glm::value_ptr(transform));
@@ -2086,13 +2086,13 @@ void Scene::newAPI_prepareUniforms_3DPlane(GLfloat* mvMat, GLfloat* pMat, planes
 	glm::mat4 transform							= glm::mat4(1.f);
 	glm::mat4 gridTransfo						= grid_transform_pointer->matrix();	   //grid->grid->getTransform_GridToWorld();
 #warning Transform API is still in-progress.
-	DiscreteGrid::bbox_t bbws = grid->grid->getBoundingBox();
+	Image::bbox_t bbws = grid->grid->getBoundingBox();
 	glm::vec3 dims			  = glm::convert_to<glm::vec3::value_type>(grid->grid->getResolution()) * grid->grid->getVoxelDimensions();
 	glm::vec3 size			  = bbws.getDiagonal();
 	GLint plIdx				  = (_plane == planes::x) ? 1 : (_plane == planes::y) ? 2 : 3;
 
-	DiscreteGrid::bbox_t::vec position = this->sceneBB.getMin();
-	DiscreteGrid::bbox_t::vec diagonal = this->sceneBB.getDiagonal();
+	Image::bbox_t::vec position = this->sceneBB.getMin();
+	Image::bbox_t::vec diagonal = this->sceneBB.getDiagonal();
 	glm::vec3 planePos				   = this->computePlanePositions();
 
 	glUniformMatrix4fv(location_mMatrix, 1, GL_FALSE, glm::value_ptr(transform));
@@ -2163,8 +2163,8 @@ void Scene::newAPI_prepareUniforms_3DPlane(GLfloat* mvMat, GLfloat* pMat, planes
 void Scene::prepareUniforms_PlaneViewer(planes _plane, planeHeading _heading, glm::vec2 fbDims, float zoomRatio, glm::vec2 offset, const GridGLView::Ptr& _grid) {
 	glUseProgram(this->programHandle_PlaneViewer);
 	// The BB used is the scene's bounding box :
-	const DiscreteGrid::bbox_t::vec& bbox	= this->sceneBB.getDiagonal();
-	const DiscreteGrid::bbox_t::vec& posBox = this->sceneBB.getMin();
+	const Image::bbox_t::vec& bbox	= this->sceneBB.getDiagonal();
+	const Image::bbox_t::vec& posBox = this->sceneBB.getMin();
 
 	// The correct bounding box coordinates :
 	glm::vec2 gridBBDims;
@@ -2288,8 +2288,8 @@ void Scene::prepareUniforms_PlaneViewer(planes _plane, planeHeading _heading, gl
 void Scene::newAPI_prepareUniforms_PlaneViewer(planes _plane, planeHeading _heading, glm::vec2 fbDims, float zoomRatio, glm::vec2 offset, const NewAPI_GridGLView::Ptr& _grid) {
 	glUseProgram(this->programHandle_PlaneViewer);
 	// The BB used is the scene's bounding box :
-	const DiscreteGrid::bbox_t::vec& bbox	= this->sceneBB.getDiagonal();
-	const DiscreteGrid::bbox_t::vec& posBox = this->sceneBB.getMin();
+	const Image::bbox_t::vec& bbox	= this->sceneBB.getDiagonal();
+	const Image::bbox_t::vec& posBox = this->sceneBB.getMin();
 
 	// The correct bounding box coordinates :
 	glm::vec2 gridBBDims;
@@ -2536,8 +2536,8 @@ void Scene::prepareUniforms_Volumetric(GLfloat* mvMat, GLfloat* pMat, glm::vec3 
 	GLint location_volumeEpsilon		  = getUniform("volumeEpsilon");
 
 	glm::vec3 planePos			  = this->computePlanePositions();
-	DiscreteGrid::bbox_t::vec min = this->visuBox.getMin();
-	DiscreteGrid::bbox_t::vec max = this->visuBox.getMax();
+	Image::bbox_t::vec min = this->visuBox.getMin();
+	Image::bbox_t::vec max = this->visuBox.getMax();
 
 	glUniform3fv(location_cam, 1, glm::value_ptr(camPos));
 	glUniform3fv(location_cut, 1, glm::value_ptr(planePos));
@@ -2634,7 +2634,7 @@ void Scene::prepareUniforms_Volumetric(GLfloat* mvMat, GLfloat* pMat, glm::vec3 
 	if (this->showVAOstate) {
 		auto vx = _grid->grid[0]->getVoxelDimensions();
 		std::cerr << "[LOG] " << __FUNCTION__ << " has uniform values :\n";
-		std::cerr << "[LOG]\tMax possible value        : " << static_cast<double>(std::numeric_limits<DiscreteGrid::data_t>::max()) << '\n';
+		//std::cerr << "[LOG]\tMax possible value        : " << static_cast<double>(std::numeric_limits<DiscreteGrid::data_t>::max()) << '\n';
 		std::cerr << "[LOG]\tDraw mode                : " << +this->drawMode << '\n';
 		std::cerr << "[LOG]\tNumber of channels        : " << +_grid->nbChannels << '\n';
 		std::cerr << "[LOG]\tClip distance from camera : " << +clipDistanceFromCamera << '\n';
@@ -2749,8 +2749,8 @@ void Scene::newAPI_prepareUniforms_Volumetric(GLfloat* mvMat, GLfloat* pMat, glm
 	GLint location_volumeEpsilon		  = getUniform("volumeEpsilon");
 
 	glm::vec3 planePos			  = this->computePlanePositions();
-	DiscreteGrid::bbox_t::vec min = this->visuBox.getMin();
-	DiscreteGrid::bbox_t::vec max = this->visuBox.getMax();
+	Image::bbox_t::vec min = this->visuBox.getMin();
+	Image::bbox_t::vec max = this->visuBox.getMax();
 
 	glUniform3fv(location_cam, 1, glm::value_ptr(camPos));
 	glUniform3fv(location_cut, 1, glm::value_ptr(planePos));
@@ -2878,7 +2878,7 @@ void Scene::newAPI_prepareUniforms_Volumetric(GLfloat* mvMat, GLfloat* pMat, glm
 	if (this->showVAOstate) {
 		auto vx = _grid->grid->getVoxelDimensions();
 		std::cerr << "[LOG] " << __FUNCTION__ << " has uniform values :\n";
-		std::cerr << "[LOG]\tMax possible value        : " << static_cast<double>(std::numeric_limits<DiscreteGrid::data_t>::max()) << '\n';
+		//std::cerr << "[LOG]\tMax possible value        : " << static_cast<double>(std::numeric_limits<DiscreteGrid::data_t>::max()) << '\n';
 		std::cerr << "[LOG]\tDraw mode                : " << +this->drawMode << '\n';
 		std::cerr << "[LOG]\tNumber of channels        : " << +_grid->nbChannels << '\n';
 		std::cerr << "[LOG]\tClip distance from camera : " << +clipDistanceFromCamera << '\n';
@@ -3534,9 +3534,9 @@ void Scene::createBoundingBoxBuffers() {
 	 * in total to draw a 'cube').
 	 */
 	// Create a basic bounding box :
-	DiscreteGrid::bbox_t defaultBB = this->sceneBB;
+	Image::bbox_t defaultBB = this->sceneBB;
 	// Get all corners and put them sequentially in an array :
-	std::vector<DiscreteGrid::bbox_t::vec> corners = defaultBB.getAllCorners();
+	std::vector<Image::bbox_t::vec> corners = defaultBB.getAllCorners();
 	GLfloat* rawVertices						   = new GLfloat[corners.size() * 3];
 	for (std::size_t i = 0; i < corners.size(); ++i) {
 		rawVertices[3 * i + 0] = corners[i].x;
@@ -3600,8 +3600,8 @@ void Scene::drawBoundingBox(const Image::bbox_t& _box, glm::vec3 color, GLfloat*
 	GLint location_bbSize  = glGetUniformLocation(this->programHandle_BoundingBox, "bbSize");
 	GLint location_bbPos   = glGetUniformLocation(this->programHandle_BoundingBox, "bbPos");
 
-	DiscreteGrid::bbox_t::vec min  = _box.getMin();
-	DiscreteGrid::bbox_t::vec diag = _box.getDiagonal();
+	Image::bbox_t::vec min  = _box.getMin();
+	Image::bbox_t::vec diag = _box.getDiagonal();
 
 	// Set uniforms :
 	glUniformMatrix4fv(location_pMat, 1, GL_FALSE, pMat);
@@ -3680,8 +3680,8 @@ void Scene::updateVisuBoxCoordinates() {
 	}
 
 	// Reset the visu box :
-	using vec	  = DiscreteGrid::bbox_t::vec;
-	this->visuBox = DiscreteGrid::bbox_t();
+	using vec	  = Image::bbox_t::vec;
+	this->visuBox = Image::bbox_t();
 
 	if (this->grids.size()) {
 		// Add all corners of bounding boxes from the grids :
@@ -3689,7 +3689,7 @@ void Scene::updateVisuBoxCoordinates() {
 			// Get the bounding box of the coordinates in grid space :
 			auto min					= g->getVoxelPositionGridSpace(this->visuMin);
 			auto max					= g->getVoxelPositionGridSpace(this->visuMax);
-			DiscreteGrid::bbox_t imgBox = DiscreteGrid::bbox_t(vec(min.x, min.y, min.z), vec(max.x, max.y, max.z));
+			Image::bbox_t imgBox = Image::bbox_t(vec(min.x, min.y, min.z), vec(max.x, max.y, max.z));
 
 			// Add the world-space-transformed version of it to the visu box :
 			this->visuBox.addPoints(imgBox.transformTo(g->getTransform_GridToWorld()).getAllCorners());
@@ -4449,7 +4449,7 @@ void Scene::newAPI_tex3D_buildMesh(NewAPI_GridGLView::Ptr& grid, const std::stri
 }
 
 void Scene::tex3D_loadMESHFile(const std::string file, const GridGLView::Ptr& grid, VolMeshData& mesh) {
-	DiscreteGrid::bbox_t box = grid->grid[0]->getBoundingBox();
+	Image::bbox_t box = grid->grid[0]->getBoundingBox();
 
 	std::ifstream myfile(file.c_str());
 
@@ -4473,8 +4473,8 @@ void Scene::tex3D_loadMESHFile(const std::string file, const GridGLView::Ptr& gr
 	float maxX = 0, maxY = 0, maxZ = 0;
 
 	std::vector<glm::vec4> rawVert;
-	DiscreteGrid::bbox_t normalBox;
-	DiscreteGrid::bbox_t deformedBox;
+	Image::bbox_t normalBox;
+	Image::bbox_t deformedBox;
 
 	int s;
 	for (unsigned int i = 0; i < sizeV; i++) {
@@ -4492,10 +4492,10 @@ void Scene::tex3D_loadMESHFile(const std::string file, const GridGLView::Ptr& gr
 			maxZ = p[2];
 		}
 		glm::vec4 position = glm::vec4(p[0], p[1], p[2], 1.);
-		normalBox.addPoint(DiscreteGrid::bbox_t::vec(p[0], p[1], p[2]));
+		normalBox.addPoint(Image::bbox_t::vec(p[0], p[1], p[2]));
 		rawVert.push_back(position);
 		position = grid->grid[0]->getTransform_GridToWorld() * position;
-		deformedBox.addPoint(DiscreteGrid::bbox_t::vec(position.x, position.y, position.z));
+		deformedBox.addPoint(Image::bbox_t::vec(position.x, position.y, position.z));
 		mesh.positions.push_back(position);
 		/*
 		texCoords.push_back(glm::vec3(
@@ -4558,7 +4558,7 @@ void Scene::tex3D_loadMESHFile(const std::string file, const GridGLView::Ptr& gr
 }
 
 void Scene::newAPI_tex3D_loadMESHFile(const std::string file, const NewAPI_GridGLView::Ptr& grid, VolMeshData& mesh) {
-	DiscreteGrid::bbox_t box = grid->grid->getBoundingBox();
+	Image::bbox_t box = grid->grid->getBoundingBox();
 
 	std::ifstream myfile(file.c_str());
 
@@ -4582,8 +4582,8 @@ void Scene::newAPI_tex3D_loadMESHFile(const std::string file, const NewAPI_GridG
 	float maxX = 0, maxY = 0, maxZ = 0;
 
 	std::vector<glm::vec4> rawVert;
-	DiscreteGrid::bbox_t normalBox;
-	DiscreteGrid::bbox_t deformedBox;
+	Image::bbox_t normalBox;
+	Image::bbox_t deformedBox;
 
 	int s;
 	for (unsigned int i = 0; i < sizeV; i++) {
@@ -4601,10 +4601,10 @@ void Scene::newAPI_tex3D_loadMESHFile(const std::string file, const NewAPI_GridG
 			maxZ = p[2];
 		}
 		glm::vec4 position = glm::vec4(p[0], p[1], p[2], 1.);
-		normalBox.addPoint(DiscreteGrid::bbox_t::vec(p[0], p[1], p[2]));
+		normalBox.addPoint(Image::bbox_t::vec(p[0], p[1], p[2]));
 		rawVert.push_back(position);
 #warning Transform API is still in-progress.
-		deformedBox.addPoint(DiscreteGrid::bbox_t::vec(position.x, position.y, position.z));
+		deformedBox.addPoint(Image::bbox_t::vec(position.x, position.y, position.z));
 		mesh.positions.push_back(position);
 		/*
 		texCoords.push_back(glm::vec3(
@@ -4668,7 +4668,7 @@ void Scene::newAPI_tex3D_loadMESHFile(const std::string file, const NewAPI_GridG
 
 void Scene::tex3D_generateMESH(GridGLView::Ptr& grid, VolMeshData& mesh) {
 	// typedef for bounding box's vector type :
-	using vec_t = typename DiscreteGrid::bbox_t::vec;
+	using vec_t = typename Image::bbox_t::vec;
 
 	//Min and diagonal of the bounding box (used for position computation) :
 	const vec_t min	 = grid->grid[0]->getBoundingBox().getMin();
@@ -4744,7 +4744,7 @@ void Scene::tex3D_generateMESH(GridGLView::Ptr& grid, VolMeshData& mesh) {
 
 void Scene::newAPI_tex3D_generateMESH(NewAPI_GridGLView::Ptr& grid, VolMeshData& mesh) {
 	// typedef for bounding box's vector type :
-	using vec_t = typename DiscreteGrid::bbox_t::vec;
+	using vec_t = typename Image::bbox_t::vec;
 
 	//Min and diagonal of the bounding box (used for position computation) :
 	const vec_t min	 = grid->grid->getBoundingBox().getMin();
