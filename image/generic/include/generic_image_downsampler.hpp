@@ -91,7 +91,7 @@ namespace Image {
 		template <typename element_t>
 		resampler_functor<element_t, Image::Grid> findRightInterpolatorType(ImageResamplingTechnique technique) {
 			if (technique & ImageResamplingTechnique::None)				{ return Interpolators::null_interpolator<element_t, Grid>; }
-			if (technique & ImageResamplingTechnique::NearestNeighbor)	{ return Interpolators::nearest_neighbor_interpolator<element_t, Grid>; }
+			if (technique & ImageResamplingTechnique::NearestNeighbor)	{ return Interpolators::nearest_neighbor_interpolator<element_t>; }
 			if (technique & ImageResamplingTechnique::Linear)			{ return Interpolators::null_interpolator<element_t, Grid>; }
 			if (technique & ImageResamplingTechnique::Cubic)			{ return Interpolators::null_interpolator<element_t, Grid>; }
 

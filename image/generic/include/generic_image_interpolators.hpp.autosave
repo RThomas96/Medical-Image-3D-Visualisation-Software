@@ -28,12 +28,23 @@ namespace Interpolators {
 		const glm::vec3 source_position,
 		const glm::vec3 source_voxel_sizes
 	);
-
+	
 	/// @brief A nearest-neighbor interpolator for the downsampled image reader.
 	/// @details Performs a nearest neighbor interpolation by computing the index corresponsing to the given position within the grid to sample, and
 	/// calling Grid::readPixel() in the position.
 	template <typename element_t>
 	std::vector<element_t> nearest_neighbor_interpolator(
+		const Grid::Ptr sampled_grid,
+		const svec3 index,
+		const std::size_t channels_to_sample,
+		const svec3 source_resolution,
+		const glm::vec3 source_position,
+		const glm::vec3 source_voxel_sizes
+	);
+	
+	/// @brief A trilinear interpolator for the downsampled image reader.
+	template <typename element_t>
+	std::vector<element_t> linear_interpolator(
 		const Grid::Ptr sampled_grid,
 		const svec3 index,
 		const std::size_t channels_to_sample,
