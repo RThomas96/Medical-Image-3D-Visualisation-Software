@@ -42,6 +42,17 @@ namespace Interpolators {
 		const glm::vec3 source_voxel_sizes
 	);
 
+	/// @brief A trilinear interpolator for the downsampled image reader.
+	template <typename element_t>
+	std::vector<element_t> linear_interpolator(
+		const Grid::Ptr sampled_grid,
+		const svec3 index,
+		const std::size_t channels_to_sample,
+		const svec3 source_resolution,
+		const glm::vec3 source_position,
+		const glm::vec3 source_voxel_sizes
+	);
+
 } // namespace Downsamplers
 
 } // namespace Image
