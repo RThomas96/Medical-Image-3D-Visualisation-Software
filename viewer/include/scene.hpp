@@ -367,16 +367,10 @@ private:
 
 	/// @brief preps uniforms for a grid [[NEW API]]
 	void newAPI_prepareUniforms_3DSolid(GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, const NewAPI_GridGLView::Ptr& grid);
-	/// @brief preps uniforms for a given plane
-	void prepareUniforms_3DPlane(GLfloat* mvMat, GLfloat* pMat, planes _plane, const GridGLView::Ptr& grid, bool showTexOnPlane = true);
 	/// @brief preps uniforms for a given plane [[NEW API]]
 	void newAPI_prepareUniforms_3DPlane(GLfloat* mvMat, GLfloat* pMat, planes _plane, const NewAPI_GridGLView::Ptr& grid, bool showTexOnPlane = true);
-	/// @brief prep the plane uniforms to draw in space
-	void prepareUniforms_PlaneViewer(planes _plane, planeHeading _heading, glm::vec2 fbDims, float zoomRatio, glm::vec2 offset, const GridGLView::Ptr& _grid);
 	/// @brief prep the plane uniforms to draw in space [[NEW API]]
 	void newAPI_prepareUniforms_PlaneViewer(planes _plane, planeHeading _heading, glm::vec2 fbDims, float zoomRatio, glm::vec2 offset, const NewAPI_GridGLView::Ptr& _grid);
-	/// @brief Prepare the uniforms for volumetric drawing
-	void prepareUniforms_Volumetric(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const GridGLView::Ptr& _grid);
 	/// @brief Prepare the uniforms for volumetric drawing [[NEW API]]
 	void newAPI_prepareUniforms_Volumetric(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const NewAPI_GridGLView::Ptr& _grid);
 
@@ -384,8 +378,6 @@ private:
 	void newAPI_drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane = true);
 	/// @brief draws a grid, slightly more generic than drawVoxelGrid() [[NEW API]]
 	void newAPI_drawGrid(GLfloat mvMat[], GLfloat pMat[], glm::mat4 baseMatrix, const NewAPI_GridGLView::Ptr& grid);
-	/// @brief Draws the 3D texture with a volumetric-like visualization method
-	void drawVolumetric(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, const GridGLView::Ptr& grid);
 	/// @brief Draws the 3D texture with a volumetric-like visualization method [[NEW API]]
 	void newAPI_drawVolumetric(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, const NewAPI_GridGLView::Ptr& grid);
 
