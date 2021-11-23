@@ -2,12 +2,10 @@
 	path = third_party/TinyTIFF
 	url = https://github.com/jkriege2/TinyTIFF.git
 	ignore = dirty
-[submodule "gl"]
-	path = gl
-	url = git@gitlab.com:thibaulltt/glhandler.git
 [submodule "glm"]
 	path = third_party/glm
 	url = git@github.com:g-truc/glm.git
+	ignore = dirty
 [submodule "QGLViewer"]
 	path = third_party/libQGLViewer
 	url = git@github.com:GillesDebunne/libQGLViewer.git
