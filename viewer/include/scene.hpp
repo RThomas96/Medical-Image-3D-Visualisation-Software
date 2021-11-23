@@ -121,6 +121,7 @@ public:
 	void recompileShaders(bool verbose = true);
 
 	/// @brief Loads a designated ROI in high-resolution
+    // DEPRECATED
 	void loadGridROI(void);
 
 	/// @brief Add grids, with the new API (more streamlined)
@@ -364,8 +365,6 @@ private:
 	/// @brief Upload the data necessary to make the UBO work for a grid.
 	void newSHADERS_updateUBOData();
 
-	/// @brief preps uniforms for a grid
-	void prepareUniforms_3DSolid(GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, const GridGLView::Ptr& grid);
 	/// @brief preps uniforms for a grid [[NEW API]]
 	void newAPI_prepareUniforms_3DSolid(GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, const NewAPI_GridGLView::Ptr& grid);
 	/// @brief preps uniforms for a given plane
@@ -381,12 +380,8 @@ private:
 	/// @brief Prepare the uniforms for volumetric drawing [[NEW API]]
 	void newAPI_prepareUniforms_Volumetric(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const NewAPI_GridGLView::Ptr& _grid);
 
-	/// @brief draw the planes, in the real space
-	void drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane = true);
 	/// @brief draw the planes, in the real space using the new api
 	void newAPI_drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane = true);
-	/// @brief draws a grid, slightly more generic than drawVoxelGrid()
-	void drawGrid(GLfloat mvMat[], GLfloat pMat[], glm::mat4 baseMatrix, const GridGLView::Ptr& grid);
 	/// @brief draws a grid, slightly more generic than drawVoxelGrid() [[NEW API]]
 	void newAPI_drawGrid(GLfloat mvMat[], GLfloat pMat[], glm::mat4 baseMatrix, const NewAPI_GridGLView::Ptr& grid);
 	/// @brief Draws the 3D texture with a volumetric-like visualization method
@@ -455,7 +450,7 @@ protected:
 	std::vector<std::size_t> delGrid;	 ///< Grids to delete at next refresh
 
 	// Grids :
-	std::vector<GridGLView::Ptr> grids;	   ///< Grids to display in the different views.
+	// std::vector<GridGLView::Ptr> grids;	   ///< Grids to display in the different views.
 	std::vector<NewAPI_GridGLView::Ptr> newGrids;	 ///< Grids, but with the new API.
 
 	qglviewer::Frame* posFrame;

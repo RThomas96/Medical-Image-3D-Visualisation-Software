@@ -163,6 +163,7 @@ void VisuBoxController::updateValues() {
 		return;
 	}
 	this->blockSignals(true);
+    // WARNING This function is broken due to new API update
 	auto box = this->scene->getVisuBoxCoordinates();
 	this->input_coordMinX->setValue(box.first.x);
 	this->input_coordMinY->setValue(box.first.y);
