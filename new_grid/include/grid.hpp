@@ -166,6 +166,40 @@ namespace Image {
 		TransformStack::Ptr grid_transforms;
 	};
 
+	/// @brief Quick and hacky way to have a centralized grid repository
+	struct GridRepo {
+	public:
+		using grid_iter = std::vector<Grid::Ptr>::iterator;
+	protected:
+		GridRepo() : grids(0), is_init(false) {}
+	public:
+		~GridRepo() = default;
+
+		/// @brief Adds a grid to the loaded grids :
+		void addGrid(const Grid::Ptr& _to_add) { this->grids.push_back(_to_add); }
+		/// @brief Attempts to find if the grid is loaded
+		/// @warning I think comparing shared_ptr objects is UB in certain C++ versions, better to check the pointers themselves. Doing it later.
+		/// @todo Check if comparing two different shared_ptr objects actually checks if the underlying pointer is the same.
+		bool hasGrid(const Grid::Ptr& _looked) { return std::find(this->grids.cbegin(), this->grids.cend(), _looked) != this->grids.cend(); }
+
+		static GridRepo& getInstance() {
+			static GridRepo singleton_instance;
+			if (singleton_instance.is_init == false) {
+				std::cerr << "First request of a grid repo." << '\n';
+				singleton_instance.is_init = true;
+			}
+			return singleton_instance;
+		}
+
+		std::vector<Grid::Ptr>::const_iterator	cbegin(void) { return this->grids.cbegin(); }
+		std::vector<Grid::Ptr>::const_iterator	cend(void) { return this->grids.cend(); }
+		std::vector<Grid::Ptr>::iterator		begin(void) { return this->grids.begin(); }
+		std::vector<Grid::Ptr>::iterator		end(void) { return this->grids.end(); }
+	protected:
+		std::vector<Grid::Ptr> grids; ///< The loaded grids
+		bool is_init; ///< Stub for tracking initialization status later.
+	};
+
 }	 // namespace Image
 
 // Template definitions of the grid class :
