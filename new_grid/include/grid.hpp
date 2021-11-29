@@ -16,7 +16,7 @@ namespace Image {
     /// @brief Old bbox definition
     //  TODO: wtf are you doing here
     typedef BoundingBox_General<float> bbox_t;
-
+    typedef glm::vec<3, std::size_t, glm::defaultp> sizevec3;
 
 	/// @ingroup newgrid
 	/// @brief The Grid class is the new and recommended representation of a voxel grid.

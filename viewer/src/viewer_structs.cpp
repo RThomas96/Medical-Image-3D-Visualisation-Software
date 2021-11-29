@@ -230,66 +230,6 @@ bool VolMesh::isValid() {
 VolMesh::~VolMesh(void) { /* Nothing here for now. */
 }
 
-GridGLView::GridGLView(const std::initializer_list<std::shared_ptr<DiscreteGrid>> _g) {
-	if (_g.size() == 0) {
-		throw std::runtime_error("Cannot create GL view from no grids");
-	}
-	if (_g.size() > 2) {
-		throw std::runtime_error("Cannot create GL view from more than 2 grids");
-	}
-
-	std::for_each(_g.begin(), _g.end(), [this](const std::shared_ptr<DiscreteGrid>& _grid) {
-		this->grid.emplace_back(_grid);
-	});
-	this->nbChannels = this->grid.size();
-
-	this->gridTexture	   = 0;
-	this->volumetricMesh   = {};
-	this->boundingBoxColor = glm::vec3(.257, .257, .257);
-	this->nbChannels	   = 1;
-	this->defaultEpsilon   = glm::vec3(1.5, 1.5, 1.5);
-	if (this->grid[0]->getGridReader() != nullptr) {
-		this->texBounds0   = this->grid[0]->getGridReader()->getTextureLimits();
-		this->colorBounds0 = this->texBounds0;
-		if (nbChannels > 1) {
-			this->texBounds1   = this->grid[1]->getGridReader()->getTextureLimits();
-			this->colorBounds1 = this->texBounds1;
-		}
-	} else {
-		data_2 min(0, 0);
-		this->texBounds0   = min;
-		this->texBounds1   = min;
-		this->colorBounds0 = min;
-		this->colorBounds1 = min;
-	}
-}
-
-GridGLView::GridGLView(const std::shared_ptr<DiscreteGrid> _red,
-  const std::shared_ptr<DiscreteGrid> _blue) {
-	this->grid.emplace_back(_red);
-	this->grid.emplace_back(_blue);
-
-	this->gridTexture	   = 0;
-	this->volumetricMesh   = {};
-	this->boundingBoxColor = glm::vec3(.257, .257, .257);
-	this->nbChannels	   = 1;
-	this->defaultEpsilon   = glm::vec3(1.5, 1.5, 1.5);
-	if (this->grid[0]->getGridReader() != nullptr) {
-		this->texBounds0   = this->grid[0]->getGridReader()->getTextureLimits();
-		this->colorBounds0 = this->texBounds0;
-		if (nbChannels > 1) {
-			this->texBounds1   = this->grid[1]->getGridReader()->getTextureLimits();
-			this->colorBounds1 = this->texBounds1;
-		}
-	} else {
-		data_2 min(0, 0);
-		this->texBounds0   = min;
-		this->texBounds1   = min;
-		this->colorBounds0 = min;
-		this->colorBounds1 = min;
-	}
-}
-
 NewAPI_GridGLView::NewAPI_GridGLView(const Image::Grid::Ptr _grid) {
 	this->grid			   = _grid;
 	this->gridTexture	   = 0;
@@ -325,9 +265,6 @@ void NewAPI_GridGLView::setMainColorChannel(std::size_t color_channel) {
 	assert((color_channel < 3) && "color channel was not under 3");
 
 	this->mainColorChannel = color_channel;
-}
-
-GridGLView::~GridGLView(void) { /* Nothing here for now. */
 }
 
 colorChannelAttributes_GL::colorChannelAttributes_GL() {

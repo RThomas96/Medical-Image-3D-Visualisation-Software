@@ -37,7 +37,7 @@ class DiscreteGrid : public std::enable_shared_from_this<DiscreteGrid> {
 	friend class InterpolationMesh;
 
 public:
-	typedef glm::vec<3, std::size_t, glm::defaultp> sizevec3;
+    typedef glm::vec<3, std::size_t, glm::defaultp> sizevec3;
 	/// @brief Simple typedef in order to to a templat-ing of this class later.
 	using DataType = IO::GenericGridReader::data_t;
 	/// @brief Type of bounding box used

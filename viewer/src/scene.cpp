@@ -66,11 +66,11 @@ Scene::Scene() {
 	this->programStatusBar	= nullptr;
 
 	double minTexVal = 1;
-	double maxTexVal = std::numeric_limits<double>::max();
-	this->textureBounds0		   = GridGLView::data_2(minTexVal, maxTexVal);
-	this->textureBounds1		   = GridGLView::data_2(minTexVal, maxTexVal);
-	this->colorBounds0			   = GridGLView::data_2(0, maxTexVal);
-	this->colorBounds1			   = GridGLView::data_2(0, maxTexVal);
+	double maxTexVal = std::numeric_limits<int>::max();
+	this->textureBounds0		   = NewAPI_GridGLView::data_2(minTexVal, maxTexVal);
+	this->textureBounds1		   = NewAPI_GridGLView::data_2(minTexVal, maxTexVal);
+	this->colorBounds0			   = NewAPI_GridGLView::data_2(0, maxTexVal);
+	this->colorBounds1			   = NewAPI_GridGLView::data_2(0, maxTexVal);
 	this->selectedChannel_r		   = 0;	   // by default, the R channel
 	this->selectedChannel_g		   = 0;	   // by default, the R channel
 
@@ -128,13 +128,7 @@ Scene::Scene() {
 	this->color0_second = glm::vec3(1., .0, .0);
 	this->color1_second = glm::vec3(.0, .0, 1.);
 
-	std::cerr << "Allocating " << +std::numeric_limits<DiscreteGrid::data_t>::max() << " elements for vis ...\n";
-	this->visibleDomains		  = new float[std::numeric_limits<DiscreteGrid::data_t>::max()];
-	this->visibleDomainsAlternate = new float[std::numeric_limits<DiscreteGrid::data_t>::max()];
-	for (std::size_t i = 0; i < std::numeric_limits<DiscreteGrid::data_t>::max(); ++i) {
-		this->visibleDomains[i]			 = .5f;
-		this->visibleDomainsAlternate[i] = .5f;
-	}
+	std::cerr << "Allocating " << +std::numeric_limits<NewAPI_GridGLView::data_t>::max() << " elements for vis ...\n";
 
 	this->pb_loadProgress			  = nullptr;
 	this->timer_refreshProgress		  = nullptr;
@@ -207,8 +201,6 @@ void Scene::initGl(QOpenGLContext* _context) {
 
 	// Generate visibility array :
 	this->texHandle_ColorScaleGrid = 0;
-	this->generateColorScale();
-	this->uploadColorScale();
 }
 
 void Scene::initialize_limits() {
@@ -1526,7 +1518,7 @@ void Scene::newAPI_prepareUniforms_3DSolid(GLfloat* mvMat, GLfloat* pMat, glm::v
 
 	Image::bbox_t::vec origin   = gridView->grid->getBoundingBox().getMin();
 	Image::bbox_t::vec originWS = gridView->grid->getBoundingBox().getMin();
-	DiscreteGrid::sizevec3 gridDims	   = gridView->grid->getResolution();
+	Image::sizevec3 gridDims	   = gridView->grid->getResolution();
 	glm::vec3 dims					   = glm::convert_to<float>(gridDims);
 
 	if (showVAOstate) {
@@ -2302,8 +2294,6 @@ void Scene::newSHADERS_generateColorScales() {
 void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool showTexOnPlane) {
 	if (this->shouldUpdateVis) {
 		this->shouldUpdateVis = false;
-		this->generateColorScale();
-		this->uploadColorScale();
 	}
 	if (this->shouldDeleteGrid) {
 		this->deleteGridNow();
@@ -2750,73 +2740,6 @@ void Scene::printProgramUniforms(const GLuint _pid) {
 		glGetActiveUniform(_pid, (GLuint) i, bufSize, &length, &size, &type, name);
 		fprintf(stderr, "[TRACE]\t\t\tUniform #%d Type: %u Name: %s\n", i, type, name);
 	}
-}
-
-void Scene::generateColorScale() {
-	for (DiscreteGrid::data_t i = 0; i < this->textureBounds0.x; ++i) {
-		this->visibleDomains[i] = 0.f;
-	}
-	for (DiscreteGrid::data_t i = this->textureBounds0.x; i < this->textureBounds0.y; ++i) {
-		this->visibleDomains[i] = 1.f;
-	}
-	for (DiscreteGrid::data_t i = this->textureBounds0.y; i < std::numeric_limits<DiscreteGrid::data_t>::max(); ++i) {
-		this->visibleDomains[i] = 0.f;
-	}
-
-	for (DiscreteGrid::data_t i = 0; i < this->textureBounds1.x; ++i) {
-		this->visibleDomainsAlternate[i] = 0.f;
-	}
-	for (DiscreteGrid::data_t i = this->textureBounds1.x; i < this->textureBounds1.y; ++i) {
-		this->visibleDomainsAlternate[i] = 1.f;
-	}
-	for (DiscreteGrid::data_t i = this->textureBounds1.y; i < std::numeric_limits<DiscreteGrid::data_t>::max(); ++i) {
-		this->visibleDomainsAlternate[i] = 0.f;
-	}
-}
-
-void Scene::uploadColorScale() {
-	TextureUpload texParams = {};
-
-	if (this->texHandle_ColorScaleGrid != 0) {
-		if (glIsTexture(this->texHandle_ColorScaleGrid) == GL_TRUE) {
-			glDeleteTextures(1, &this->texHandle_ColorScaleGrid);
-		} else {
-			std::cerr << "[LOG] Texture handle for visibility was not 0, but not a texture either.\n";
-		}
-		this->texHandle_ColorScaleGrid = 0;
-	}
-	if (this->texHandle_ColorScaleGridAlternate != 0) {
-		if (glIsTexture(this->texHandle_ColorScaleGridAlternate) == GL_TRUE) {
-			glDeleteTextures(1, &this->texHandle_ColorScaleGridAlternate);
-		} else {
-			std::cerr << "[LOG] Texture handle for visibility was not 0, but not a texture either.\n";
-		}
-		this->texHandle_ColorScaleGridAlternate = 0;
-	}
-
-	// Vertex positions :
-	texParams.minmag.x	= GL_NEAREST;
-	texParams.minmag.y	= GL_NEAREST;
-	texParams.lod.y		= -1000.f;
-	texParams.wrap.s	= GL_CLAMP_TO_EDGE;
-	texParams.wrap.t	= GL_CLAMP_TO_EDGE;
-	texParams.swizzle.y = GL_ZERO;
-	texParams.swizzle.z = GL_ZERO;
-	texParams.swizzle.a = GL_ONE;
-	// Swizzle and alignment unchanged, not present in Texture3D
-	texParams.internalFormat = GL_R32F;
-	texParams.size.x		 = 256;
-#ifdef VISUALISATION_USE_UINT16
-	texParams.size.y = 256;
-#else
-	texParams.size.y = 1;
-#endif
-	texParams.format						= GL_RED;
-	texParams.type							= GL_FLOAT;
-	texParams.data							= this->visibleDomains;
-	this->texHandle_ColorScaleGrid			= this->uploadTexture2D(texParams);
-	texParams.data							= this->visibleDomainsAlternate;
-	this->texHandle_ColorScaleGridAlternate = this->uploadTexture2D(texParams);
 }
 
 void Scene::updateVis() {
@@ -3378,177 +3301,6 @@ void Scene::toggleAllPlaneVisibilities() {
 	this->planeVisibility.z = not this->planeVisibility.z;
 }
 
-void Scene::tex3D_buildMesh(GridGLView::Ptr& grid, const std::string path) {
-	/* Here, we'll build the tetrahedral mesh used to visualize the 3D structure of the acquisition in real-time. */
-	/* Textures built : index of vertices, index of per-face normals for tetrahedra, index of per-face neighbors
-	 * for tetrehedra */
-
-	VolMeshData mesh{};
-
-	if (path.empty()) {
-		this->tex3D_generateMESH(grid, mesh);
-	} else {
-		this->tex3D_loadMESHFile(path, grid, mesh);
-	}
-
-	// Hard-coded indices smh, got to move to a more portable (and readable) solution :
-	std::size_t indices[4][3];
-	indices[0][0] = 3;
-	indices[0][1] = 1;
-	indices[0][2] = 2;
-	indices[1][0] = 3;
-	indices[1][1] = 2;
-	indices[1][2] = 0;
-	indices[2][0] = 3;
-	indices[2][1] = 0;
-	indices[2][2] = 1;
-	indices[3][0] = 2;
-	indices[3][1] = 1;
-	indices[3][2] = 0;
-
-	// INIT NEIGHBORS :
-	mesh.neighbors.clear();
-	mesh.neighbors.resize(mesh.tetrahedra.size());
-	for (std::size_t i = 0; i < mesh.tetrahedra.size(); i++) {
-		mesh.neighbors[i].resize(4, -1);
-		mesh.normals.push_back(std::array<glm::vec4, 4>{glm::vec4(.0f), glm::vec4(.0f), glm::vec4(.0f), glm::vec4(.0f)});
-	}
-
-	// Adjacency map :
-	std::map<Face, std::pair<int, int>> adjacent_faces;
-	// generate the correspondance by looking at which faces are similar : [MEDIUM/HEAVY COMPUTATION]
-	for (std::size_t i = 0; i < mesh.tetrahedra.size(); i++) {
-		for (int v = 0; v < 4; v++) {
-			// find similar face in other tetrahedrons :
-			Face face										 = Face(mesh.tetrahedra[i][indices[v][0]],
-				 mesh.tetrahedra[i][indices[v][1]],
-				 mesh.tetrahedra[i][indices[v][2]]);
-			std::map<Face, std::pair<int, int>>::iterator it = adjacent_faces.find(face);
-			if (it == adjacent_faces.end()) {
-				adjacent_faces[face] = std::make_pair(static_cast<int>(i), v);
-			} else {
-				mesh.neighbors[i][v]								= it->second.first;
-				mesh.neighbors[it->second.first][it->second.second] = i;
-			}
-		}
-	}
-
-	// determine the size of the texture, depending on the # of tetrahedron neighbors :
-	std::size_t vertWidth = 0, vertHeight = 0;
-	std::size_t normWidth = 0, normHeight = 0;
-	std::size_t coorWidth = 0, coorHeight = 0;
-	std::size_t neighbWidth = 0, neighbHeight = 0;
-
-	__GetTexSize(mesh.tetrahedra.size() * 4 * 3, &vertWidth, &vertHeight);
-	__GetTexSize(mesh.tetrahedra.size() * 4, &normWidth, &normHeight);
-	__GetTexSize(mesh.tetrahedra.size() * 4 * 3, &coorWidth, &coorHeight);
-	__GetTexSize(mesh.tetrahedra.size() * 4, &neighbWidth, &neighbHeight);
-
-	grid->volumetricMesh.tetrahedraCount = mesh.tetrahedra.size();
-
-#ifdef DIRECT_FROM_VOLMESH_TO_ARRAY_SIZE
-	GLfloat* rawVertices  = new GLfloat[grid.volumetricMesh.tetrahedraCount * 4 * 3 * 3];
-	GLfloat* rawNormals	  = new GLfloat[grid.volumetricMesh.tetrahedraCount * 4 * 4];
-	GLfloat* tex		  = new GLfloat[grid.volumetricMesh.tetrahedraCount * 4 * 3 * 3];
-	GLfloat* rawNeighbors = new GLfloat[grid.volumetricMesh.tetrahedraCount * 4 * 3];
-#else
-	GLfloat* rawVertices = new GLfloat[vertWidth * vertHeight * 3];
-	GLfloat* rawNormals = new GLfloat[normWidth * normHeight * 4];
-	GLfloat* tex = new GLfloat[coorWidth * coorHeight * 3];
-	GLfloat* rawNeighbors = new GLfloat[neighbWidth * neighbHeight * 3];
-#endif
-
-	/*
-	Warning : the loop that follows is horribly bad : it duplicates every texture coordinate by the number of times
-	the vertex is used within the mesh. It MUST be improved once the method is working, to save up on video memory.
-	It does the same for the vertex positions.
-	*/
-	std::size_t iter   = 0;
-	std::size_t texcnt = 0;
-	std::size_t ncount = 0;
-	for (std::size_t t = 0; t < mesh.tetrahedra.size(); ++t) {
-		// For each tet :
-		const std::array<std::size_t, 4>& tetrahedron = mesh.tetrahedra[t];
-		// For each tet's face :
-		for (std::size_t i = 0; i < 4; ++i) {
-			// For all vertices within that face :
-			for (std::size_t j = 0; j < 3; ++j) {
-				// Get the vertex's position and tex coord :
-				const glm::vec4& position = mesh.positions[tetrahedron[indices[i][j]]];
-				const glm::vec3& tetCoord = mesh.texture[tetrahedron[indices[i][j]]];
-				// And put it in the array :
-				for (std::size_t k = 0; k < 3; ++k) {
-					rawVertices[texcnt] = position[k];
-					tex[texcnt]			= tetCoord[k];
-					texcnt++;
-				}
-			}
-
-			// Compute this face's normal :
-			glm::vec4 n1   = mesh.positions[tetrahedron[indices[i][1]]] - mesh.positions[tetrahedron[indices[i][0]]];
-			glm::vec4 n2   = mesh.positions[tetrahedron[indices[i][2]]] - mesh.positions[tetrahedron[indices[i][0]]];
-			glm::vec4 norm = glm::normalize(glm::cross(n1, n2));
-			// Put inverse of dot with opposing vertex in norm.w :
-			glm::vec4 v1			  = mesh.positions[tetrahedron[i]] - mesh.positions[tetrahedron[(i + 1) % 4]];
-			glm::vec4::value_type val = 1. / glm::dot(v1, norm);
-			norm.w					  = val;
-			// Put it in the array :
-			for (std::size_t n = 0; n < 4; ++n) {
-				rawNormals[ncount++] = norm[n];
-			}
-
-			rawNeighbors[iter] = static_cast<GLfloat>(mesh.neighbors[t][i]);
-			iter += 3;
-		}
-	}
-
-	// Struct to upload the texture to OpenGL :
-	TextureUpload texParams = {};
-
-	// Vertex positions :
-	texParams.minmag.x = GL_NEAREST;
-	texParams.minmag.y = GL_NEAREST;
-	texParams.lod.y	   = -1000.f;
-	texParams.wrap.s   = GL_CLAMP;
-	texParams.wrap.t   = GL_CLAMP;
-	// Swizzle and alignment unchanged, not present in Texture3D
-	texParams.internalFormat			 = GL_RGB32F;
-	texParams.size.x					 = vertWidth;
-	texParams.size.y					 = vertHeight;
-	texParams.format					 = GL_RGB;
-	texParams.type						 = GL_FLOAT;
-	texParams.data						 = rawVertices;
-	grid->volumetricMesh.vertexPositions = this->uploadTexture2D(texParams);
-
-	// Face normals :
-	texParams.internalFormat		 = GL_RGBA32F;
-	texParams.size.x				 = normWidth;
-	texParams.size.y				 = normHeight;
-	texParams.format				 = GL_RGBA;
-	texParams.data					 = rawNormals;
-	grid->volumetricMesh.faceNormals = this->uploadTexture2D(texParams);
-
-	// Texture coordinates :
-	texParams.internalFormat				= GL_RGB32F;
-	texParams.size.x						= coorWidth;
-	texParams.size.y						= coorHeight;
-	texParams.format						= GL_RGB;
-	texParams.data							= tex;
-	grid->volumetricMesh.textureCoordinates = this->uploadTexture2D(texParams);
-
-	// Neighborhood information :
-	texParams.size.x				  = neighbWidth;
-	texParams.size.y				  = neighbHeight;
-	texParams.data					  = rawNeighbors;
-	grid->volumetricMesh.neighborhood = this->uploadTexture2D(texParams);
-
-	delete[] tex;
-	delete[] rawVertices;
-	delete[] rawNormals;
-	delete[] rawNeighbors;
-	glBindTexture(GL_TEXTURE_2D, 0);
-}
-
 void Scene::newAPI_tex3D_buildMesh(NewAPI_GridGLView::Ptr& grid, const std::string path) {
 	/* Here, we'll build the tetrahedral mesh used to visualize the 3D structure of the acquisition in real-time. */
 	/* Textures built : index of vertices, index of per-face normals for tetrahedra, index of per-face neighbors
@@ -3720,115 +3472,6 @@ void Scene::newAPI_tex3D_buildMesh(NewAPI_GridGLView::Ptr& grid, const std::stri
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void Scene::tex3D_loadMESHFile(const std::string file, const GridGLView::Ptr& grid, VolMeshData& mesh) {
-	Image::bbox_t box = grid->grid[0]->getBoundingBox();
-
-	std::ifstream myfile(file.c_str());
-
-	if (not myfile.is_open()) {
-		throw std::runtime_error("could not open mesh file");
-	}
-
-	std::string meshString;
-	std::size_t sizeV, sizeT, sizeTet, dimension;
-
-	myfile >> meshString;
-	while (meshString.find("Dimension") == std::string::npos)
-		myfile >> meshString;
-
-	myfile >> dimension;
-	while (meshString.find("Vertices") == std::string::npos)
-		myfile >> meshString;
-
-	myfile >> sizeV;
-
-	float maxX = 0, maxY = 0, maxZ = 0;
-
-	std::vector<glm::vec4> rawVert;
-	Image::bbox_t normalBox;
-	Image::bbox_t deformedBox;
-
-	int s;
-	for (unsigned int i = 0; i < sizeV; i++) {
-		float p[3];
-		for (unsigned int j = 0; j < 3; j++)
-			myfile >> p[j];
-
-		if (p[0] > maxX) {
-			maxX = p[0];
-		}
-		if (p[1] > maxY) {
-			maxY = p[1];
-		}
-		if (p[2] > maxZ) {
-			maxZ = p[2];
-		}
-		glm::vec4 position = glm::vec4(p[0], p[1], p[2], 1.);
-		normalBox.addPoint(Image::bbox_t::vec(p[0], p[1], p[2]));
-		rawVert.push_back(position);
-		position = grid->grid[0]->getTransform_GridToWorld() * position;
-		deformedBox.addPoint(Image::bbox_t::vec(position.x, position.y, position.z));
-		mesh.positions.push_back(position);
-		/*
-		texCoords.push_back(glm::vec3(
-			std::min(1.f,(p[0] - bmin.x)/diag.x),
-			std::min(1.f,(p[1] - bmin.y)/diag.y),
-			std::min(1.f,(p[2] - bmin.z)/diag.z)
-		));
-*/
-		myfile >> s;
-	}
-
-	// Current mesh size :
-	glm::vec3 size{maxX, maxY, maxZ};
-	// Grid size divided by mesh size gives a scalar to apply to the mesh to make it grid-sized :
-	glm::vec3 gridsize = glm::convert_to<float>(grid->grid[0]->getResolution()) * grid->grid[0]->getVoxelDimensions();
-	glm::vec4 scale	   = glm::vec4(gridsize / size, 1.);
-
-	std::cerr << "[LOG][" << __FILE__ << ':' << __LINE__ << "] Max dimensions of the mesh : [" << maxX << ',' << maxY << ',' << maxZ << "]\n";
-	for (std::size_t i = 0; i < mesh.positions.size(); ++i) {
-		//mesh.positions[i] *= scale;
-		mesh.texture.push_back(glm::vec3(
-		  std::min(1.f, rawVert[i].x / size.x),
-		  std::min(1.f, rawVert[i].y / size.y),
-		  std::min(1.f, rawVert[i].z / size.z)));
-	}
-	std::cerr << "done.\n";
-
-	rawVert.clear();
-
-	while (meshString.find("Triangles") == std::string::npos)
-		myfile >> meshString;
-
-	myfile >> sizeT;
-	unsigned int v[3];
-	for (unsigned int i = 0; i < sizeT; i++) {
-		for (unsigned int j = 0; j < 3; j++)
-			myfile >> v[j];
-		myfile >> s;
-	}
-
-	if (dimension == 3) {
-		while (meshString.find("Tetrahedra") == std::string::npos)
-			myfile >> meshString;
-
-		myfile >> sizeTet;
-		unsigned int t[4];
-		for (unsigned int i = 0; i < sizeTet; i++) {
-			for (unsigned int j = 0; j < 4; j++) {
-				myfile >> t[j];
-			}
-			myfile >> s;
-			if (s > 0) {
-				mesh.tetrahedra.push_back({t[0] - 1, t[1] - 1, t[2] - 1, t[3] - 1});
-			}
-		}
-	}
-	std::cerr << "loadMesh() done\n";
-
-	myfile.close();
-}
-
 void Scene::newAPI_tex3D_loadMESHFile(const std::string file, const NewAPI_GridGLView::Ptr& grid, VolMeshData& mesh) {
 	Image::bbox_t box = grid->grid->getBoundingBox();
 
@@ -3936,82 +3579,6 @@ void Scene::newAPI_tex3D_loadMESHFile(const std::string file, const NewAPI_GridG
 	std::cerr << "loadMesh() done\n";
 
 	myfile.close();
-}
-
-void Scene::tex3D_generateMESH(GridGLView::Ptr& grid, VolMeshData& mesh) {
-	// typedef for bounding box's vector type :
-	using vec_t = typename Image::bbox_t::vec;
-
-	//Min and diagonal of the bounding box (used for position computation) :
-	const vec_t min	 = grid->grid[0]->getBoundingBox().getMin();
-	const vec_t diag = grid->grid[0]->getBoundingBox().getDiagonal();
-	// Dimensions, subject to change :
-	std::size_t xv			 = 10;
-	glm::vec4::value_type xs = diag.x / static_cast<glm::vec4::value_type>(xv);
-	std::size_t yv			 = 10;
-	glm::vec4::value_type ys = diag.y / static_cast<glm::vec4::value_type>(yv);
-	std::size_t zv			 = 10;
-	glm::vec4::value_type zs = diag.z / static_cast<glm::vec4::value_type>(zv);
-
-	// Size of tetrahedra, to compute epsilon :
-	glm::vec3 epsVolu	 = glm::vec3(xs, ys, zs);
-	grid->defaultEpsilon = epsVolu;
-
-	// Containers for the computation of positions and texture coordinates :
-	glm::vec4 pos = glm::vec4();
-	glm::vec3 tex = glm::vec3();
-	// Transformation to apply to the mesh :
-	glm::mat4 transfo = grid->grid[0]->getTransform_GridToWorld();
-
-	// Create vertices along with their texture coordinates. We
-	// need to go one after because we want _n_ tetrahedra, and
-	// thus must finish the last 'row'/'column' of tetrahedra :
-	for (std::size_t k = 0; k <= zv; ++k) {
-		for (std::size_t j = 0; j <= yv; ++j) {
-			for (std::size_t i = 0; i <= xv; ++i) {
-				pos = transfo * glm::vec4(
-								  min.x + static_cast<vec_t::value_type>(i) * xs,
-								  min.y + static_cast<vec_t::value_type>(j) * ys,
-								  min.z + static_cast<vec_t::value_type>(k) * zs,
-								  1.);
-				tex = glm::vec3(
-				  static_cast<vec_t::value_type>(i) / static_cast<vec_t::value_type>(xv),
-				  static_cast<vec_t::value_type>(j) / static_cast<vec_t::value_type>(yv),
-				  static_cast<vec_t::value_type>(k) / static_cast<vec_t::value_type>(zv));
-
-				mesh.positions.push_back(pos);
-				mesh.texture.push_back(tex);
-			}
-		}
-	}
-
-	// Return position for vertex generated at indices I, J, K :
-	std::size_t xt = xv + 1;
-	std::size_t yt = yv + 1;
-	auto getIndice = [&, xt, yt](std::size_t i, std::size_t j, std::size_t k) -> std::size_t {
-		return i + j * xt + k * xt * yt;
-	};
-
-	// Create tetrahedra :
-	for (std::size_t k = 0; k < zv; ++k) {
-		for (std::size_t j = 0; j < yv; ++j) {
-			for (std::size_t i = 0; i < xv; ++i) {
-				mesh.tetrahedra.push_back({getIndice(i + 1, j, k), getIndice(i + 1, j + 1, k), getIndice(i, j + 1, k), getIndice(i + 1, j + 1, k + 1)});
-				mesh.tetrahedra.push_back({getIndice(i, j, k + 1), getIndice(i, j, k), getIndice(i, j + 1, k + 1), getIndice(i + 1, j, k + 1)});
-				mesh.tetrahedra.push_back({getIndice(i, j + 1, k + 1), getIndice(i + 1, j, k), getIndice(i + 1, j + 1, k + 1), getIndice(i + 1, j, k + 1)});
-				mesh.tetrahedra.push_back({getIndice(i, j, k), getIndice(i + 1, j, k), getIndice(i, j + 1, k + 1), getIndice(i + 1, j, k + 1)});
-				mesh.tetrahedra.push_back({getIndice(i, j, k), getIndice(i + 1, j, k), getIndice(i, j + 1, k), getIndice(i, j + 1, k + 1)});
-				mesh.tetrahedra.push_back({getIndice(i, j + 1, k), getIndice(i + 1, j, k), getIndice(i + 1, j + 1, k + 1), getIndice(i, j + 1, k + 1)});
-			}
-		}
-	}
-
-	/* Mesh is now built, and should conform to the grid well enough.
-	 * Some artefacts might appear at some orientations, due to floating
-	 * point imprecision in the DDA tracing. They will be along the edge
-	 * of the mesh's tetrahedra. */
-
-	return;
 }
 
 void Scene::newAPI_tex3D_generateMESH(NewAPI_GridGLView::Ptr& grid, VolMeshData& mesh) {

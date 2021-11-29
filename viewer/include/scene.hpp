@@ -381,10 +381,6 @@ private:
 	/// @brief Draws the 3D texture with a volumetric-like visualization method [[NEW API]]
 	void newAPI_drawVolumetric(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, const NewAPI_GridGLView::Ptr& grid);
 
-	/// @brief Generate a scale of colors for the program.
-	void generateColorScale();
-	/// @brief Uploads the color scale to OpenGL
-	void uploadColorScale();
 	/// @brief Returns an unsigned int (suitable for uniforms) from a color function
 	uint colorFunctionToUniform(ColorFunction _c);
 
@@ -415,8 +411,6 @@ private:
 	/****** TEXTURE3D VISUALIZATION ******/
 	/*************************************/
 	/*************************************/
-	/// @brief Build a tetrahedral mesh for a loaded grid (building == creating all neighborhoods & metadata)
-	void tex3D_buildMesh(GridGLView::Ptr& grid, const std::string path = "");
 	/// @brief Build a tetrahedral mesh for a loaded grid. [[NEW API]]
 	void newAPI_tex3D_buildMesh(NewAPI_GridGLView::Ptr& grid, const std::string path = "");
 	/// @brief Build the visibility texture for a grid.
@@ -425,12 +419,8 @@ private:
 	void tex3D_buildBuffers(VolMesh& volMesh);
 	/// @brief Bind the VAO created for the volumetric drawing method.
 	void tex3D_bindVAO();
-	/// @brief Load a .mesh file for the tetrahedral mesh, instead of generating it.
-	void tex3D_loadMESHFile(const std::string name, const GridGLView::Ptr& grid, VolMeshData& _mesh);
 	/// @brief Load a .mesh file for the tetrahedral mesh, instead of generating it. [[NEW API]]
 	void newAPI_tex3D_loadMESHFile(const std::string name, const NewAPI_GridGLView::Ptr& grid, VolMeshData& _mesh);
-	/// @brief Generate a surrounding tetrahedral mesh for the loaded grid.
-	void tex3D_generateMESH(GridGLView::Ptr& grid, VolMeshData& _mesh);
 	/// @brief Generate a surrounding tetrahedral mesh for the loaded grid. [[NEW API]]
 	void newAPI_tex3D_generateMESH(NewAPI_GridGLView::Ptr& grid, VolMeshData& _mesh);
 
@@ -461,10 +451,10 @@ protected:
 
 	// Render parameters :
 	std::size_t renderSize;	   ///< Number of primitives to render for the solid view mode.
-	GridGLView::data_2 textureBounds0;
-	GridGLView::data_2 textureBounds1;
-	GridGLView::data_2 colorBounds0;
-	GridGLView::data_2 colorBounds1;
+	NewAPI_GridGLView::data_2 textureBounds0;
+	NewAPI_GridGLView::data_2 textureBounds1;
+	NewAPI_GridGLView::data_2 colorBounds0;
+	NewAPI_GridGLView::data_2 colorBounds1;
 	std::array<glm::vec3, 8> lightPositions;	///< Scene lights (positionned at the corners of the scene BB)
 
 	glm::bvec3 planeVisibility;	   ///< Should we show each plane (X, Y, Z)

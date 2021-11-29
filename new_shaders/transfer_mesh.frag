@@ -39,8 +39,6 @@ uniform sampler2D normals_translations;
 uniform sampler2D texture_coordinates;
 uniform sampler2D visibility_texture;
 uniform sampler2D neighbors;
-uniform sampler2D visiblity_map;
-uniform sampler2D visiblity_map_alternate;
 
 // Phong :
 uniform float diffuseRef;
