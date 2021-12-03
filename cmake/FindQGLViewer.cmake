@@ -33,6 +33,9 @@ IF(WIN32 OR MINGW OR MSVC)
 		MESSAGE(STATUS "Found libQGLViewer : ${QGLViewer_HEADER_DIR}")
 	ENDIF()
 	SET(CMAKE_FIND_DEBUG_MODE FALSE)
+
+	# Copy the DLL file in order to have it in the executable folder
+	FILE(COPY ${QGLViewer_HEADER_DIR}/QGLViewer/QGLViewer2.dll DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 ELSE()
 	SET(QGLVIEWER_LIBRARY_NAME "libQGLViewer-qt5.so")
 	FIND_LIBRARY(QGLViewer

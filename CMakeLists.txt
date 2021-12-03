@@ -12,6 +12,8 @@ INCLUDE(FindLocalTIFF)
 # Add the GLSL and icons dependencies :
 INCLUDE(ShaderDependency)
 INCLUDE(ResourceDependency)
+# Find the local SuiteSparse and GSL libraries : (windows-only for now)
+INCLUDE(FindSuiteSparse_Windows)
 
 # Required libraries {{{
 FIND_PACKAGE(Qt5 REQUIRED COMPONENTS Core Gui Widgets Xml OpenGL)
@@ -29,6 +31,7 @@ SET(LIBS_COMPILED_HEADERS "${CMAKE_CURRENT_LIST_DIR}/third_party/compiled_librar
 ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/image)
 ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/new_grid)
 ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/colorscale)
+ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/meshes)
 
 # Library for image reading/writing {{{
 ADD_LIBRARY(ImageIO STATIC
@@ -158,9 +161,6 @@ TARGET_PRECOMPILE_HEADERS(neighbor_visu
 	# shut up about the deprecated functions used within :
 	PRIVATE ${QGLViewer_HEADER_DIR}/QGLViewer/qglviewer.h
 	# Also, dramatically reduces compilation time.
-)
-SET_TARGET_PROPERTIES(neighbor_visu PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${VISU_OUTPUT_DIR}
 )
 TARGET_INCLUDE_DIRECTORIES(neighbor_visu
 	PRIVATE ${OPENGL_INCLUDE_DIRS}
