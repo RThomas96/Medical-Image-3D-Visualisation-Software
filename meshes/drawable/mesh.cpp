@@ -65,13 +65,17 @@ void DrawableMesh::fastDraw(GLfloat *proj_mat, GLfloat *view_mat, glm::vec4 came
 }
 
 void DrawableMesh::makeVAO(void) {
-	std::vector<glm::vec2> texture_dummy(this->mesh->getVertices().size(), glm::vec2{});
+	auto vertices = this->mesh->getVertices();
+	auto normals = this->mesh->getNormals();
+	std::vector<glm::vec2> texture_dummy(vertices.size(), glm::vec2{});
 	std::vector<GLuint> final_order; // indices to draw the mesh with
 	for (const auto& triangle : this->mesh->getTriangles()) {
 		final_order.emplace_back(triangle.getVertex(0));
 		final_order.emplace_back(triangle.getVertex(1));
 		final_order.emplace_back(triangle.getVertex(2));
 	}
+
+	std::cerr << "Building DrawableMesh with " << vertices.size() << " vertices and " << normals.size() << " normals.\n";
 
 	// Create the VAO :
 	this->gl->glGenVertexArrays(1, &this->vao);
@@ -82,13 +86,13 @@ void DrawableMesh::makeVAO(void) {
 	this->gl->glGenBuffers(1, &this->vbo_vertices);
 	this->gl->glEnableVertexAttribArray(0);
 	this->gl->glBindBuffer(GL_ARRAY_BUFFER, this->vbo_vertices);
-	this->gl->glBufferData(GL_ARRAY_BUFFER, this->mesh->getVertices().size() * 3 * sizeof(GLfloat), this->mesh->getVertices().data(), GL_STATIC_DRAW);
+	this->gl->glBufferData(GL_ARRAY_BUFFER, vertices.size() * 3 * sizeof(GLfloat), vertices.data(), GL_STATIC_DRAW);
 	this->gl->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 	// normal buffer :
 	this->gl->glGenBuffers(1, &this->vbo_normals);
 	this->gl->glEnableVertexAttribArray(1);
 	this->gl->glBindBuffer(GL_ARRAY_BUFFER, this->vbo_normals);
-	this->gl->glBufferData(GL_ARRAY_BUFFER, this->mesh->getNormals().size() * 3 * sizeof(GLfloat), this->mesh->getNormals().data(), GL_STATIC_DRAW);
+	this->gl->glBufferData(GL_ARRAY_BUFFER, normals.size() * 3 * sizeof(GLfloat), normals.data(), GL_STATIC_DRAW);
 	this->gl->glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 	// texture buffer :
 	this->gl->glGenBuffers(1, &this->vbo_texture);

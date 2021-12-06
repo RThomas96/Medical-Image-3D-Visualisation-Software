@@ -41,7 +41,6 @@ public:
 
 	void invertNormal(){normalDirection *= -1;}
 protected:
-	void init();
 
 	void computeBB();
 

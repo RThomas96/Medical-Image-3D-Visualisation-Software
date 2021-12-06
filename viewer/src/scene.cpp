@@ -1257,8 +1257,11 @@ void Scene::loadMesh() {
 
 	// Create a mesh structure :
 	auto mesh_to_load = std::make_shared<Mesh>();
+	auto& vertices = mesh_to_load->getVertices();
+	auto& normals = mesh_to_load->getNormals();
 	// Load that OFF file :
 	FileIO::openOFF(file_name.toStdString(), mesh_to_load->getVertices(), mesh_to_load->getTriangles());
+	mesh_to_load->update();
 	this->meshes.emplace_back(mesh_to_load);
 
 	auto mesh_drawable = std::make_shared<DrawableMesh>(mesh_to_load);
