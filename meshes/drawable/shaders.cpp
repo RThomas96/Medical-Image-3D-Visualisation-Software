@@ -96,27 +96,51 @@ bool ShaderCompiler::compileShaders() {
 		if (new_vshader != 0) {
 			// If gotten here, shader is validated :
 			this->vshader_handle = new_vshader;
+		} else {
+			this->error_text += "Error building vshader...\n";
 		}
-	} else { return false; }
+	} else {
+		this->error_text += "Error compiling shaders : vertex shader was empty\n";
+		return false;
+	}
 	if (not this->gshader_contents.empty()){
 		GLuint new_gshader = this->compile_shader(this->gshader_contents, GL_GEOMETRY_SHADER);
 		if (new_gshader != 0) {
 			// If gotten here, shader is validated :
 			this->gshader_handle = new_gshader;
+		} else {
+			this->error_text += "Error building gshader...\n";
 		}
-	} else { return false; }
+	}
 	if (not this->fshader_contents.empty()) {
 		GLuint new_fshader = this->compile_shader(this->fshader_contents, GL_FRAGMENT_SHADER);
 		if (new_fshader != 0) {
 			// If gotten here, shader is validated :
 			this->fshader_handle = new_fshader;
+		} else {
+			this->error_text += "Error building fshader...\n";
 		}
-	} else { return false; }
+	} else {
+		this->error_text += "Error compiling shaders : fragment shader was empty\n";
+		return false;
+	}
 
 	GLuint new_program = this->gl->glCreateProgram();
-	if (this->vshader_handle != 0) { this->gl->glAttachShader(new_program, this->vshader_handle); } else { return false; }
-	if (this->gshader_handle != 0) { this->gl->glAttachShader(new_program, this->gshader_handle); }
-	if (this->fshader_handle != 0) { this->gl->glAttachShader(new_program, this->fshader_handle); } else { return false; }
+	if (this->vshader_handle != 0) {
+		this->gl->glAttachShader(new_program, this->vshader_handle);
+	} else {
+		this->error_text += "Linking error - vertex shader error\n";
+		return false;
+	}
+	if (this->gshader_handle != 0) {
+		this->gl->glAttachShader(new_program, this->gshader_handle);
+	}
+	if (this->fshader_handle != 0) {
+		this->gl->glAttachShader(new_program, this->fshader_handle);
+	} else {
+		this->error_text += "Linking error - fragment shader error\n";
+		return false;
+	}
 
 	this->gl->glLinkProgram(new_program);
 
@@ -141,6 +165,8 @@ bool ShaderCompiler::compileShaders() {
 		error_feed << "[" << __FILE__ << ":" << __LINE__ << "] : Could not link shader.\n";
 		this->error_text += error_feed.str();
 		return false;
+	} else {
+		error_feed << "Successfully compiled shader. Id : " << new_program << '\n';
 	}
 	// Change the shader associated !
 	this->program_handle = new_program;
@@ -227,12 +253,6 @@ GLuint ShaderCompiler::compile_shader(std::string contents, GLuint type) {
 		delete[] shaderInfoLog;
 
 		error_feed << __FILE__ << ":" << __LINE__ << " : end Log ***********************************************" << '\n';
-
-		/*error_feed << "Shader contents ... ===============================\n";
-		error_feed << "Shader contents ... ===============================\n";
-		error_feed << contents;
-		error_feed << "Shader contents ... ===============================\n";
-		error_feed << "Shader contents ... ===============================\n";*/
 	}
 	this->error_text += error_feed.str();
 	error_feed.str(""); // this resets the contents of the stringstream
@@ -241,7 +261,8 @@ GLuint ShaderCompiler::compile_shader(std::string contents, GLuint type) {
 	GLint result = GL_FALSE;
 	this->gl->glGetShaderiv(shader_id, GL_COMPILE_STATUS, &result);
 	if (result == GL_FALSE) {
-		error_feed << "[" << __FILE__ << ":" << __LINE__ << "] : Could not compile shader.\n";
+		error_feed << "[" << __FILE__ << ":" << __LINE__ << "] : Could not compile " << shader_type_str << " shader.\n";
+		this->error_text += error_feed.str();
 		return 0;
 	}
 

@@ -66,21 +66,21 @@ public:
 /// @brief Helper class regrouping the positions, normals, texture coordinates and indices of a mesh.
 /// @details Used to generate the default mesh in the main program. There is multiple index buffers, since
 /// we have multiple things to draw, in different ways (this will be uploaded to one VAO only).
-struct Mesh
+struct SimpleVolMesh
 {
 public:
 	/// @brief Default constructor for the Mesh class.
-	Mesh(void);
+	SimpleVolMesh(void);
 	/// @brief Copy constructor for the Mesh class.
-	Mesh(const Mesh&) = delete;
+	SimpleVolMesh(const SimpleVolMesh&) = delete;
 	/// @brief Move constructor for the Mesh class.
-	Mesh(Mesh&&) = delete;
+	SimpleVolMesh(SimpleVolMesh&&) = delete;
 	/// @brief Copy operator for the Mesh class.
-	Mesh& operator=(const Mesh&) = delete;
+	SimpleVolMesh& operator=(const SimpleVolMesh&) = delete;
 	/// @brief Move operator for the Mesh class.
-	Mesh& operator=(Mesh&&) = delete;
+	SimpleVolMesh& operator=(SimpleVolMesh&&) = delete;
 	/// @brief Default destructor for the Mesh class.
-	~Mesh();
+	~SimpleVolMesh();
 
 public:
 	/// @brief The positions of the mesh.

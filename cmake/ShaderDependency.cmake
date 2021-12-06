@@ -78,3 +78,13 @@ CONFIGURE_FILE(
 	${SHADER_OUTPUT_DIR}/voxelgrid.vert
 	COPYONLY)
 
+CONFIGURE_FILE(
+	${CMAKE_SOURCE_DIR}/new_shaders/base_mesh.vert
+	${SHADER_OUTPUT_DIR}/base_mesh.vert
+	COPYONLY)
+
+CONFIGURE_FILE(
+	${CMAKE_SOURCE_DIR}/new_shaders/base_mesh.frag
+	${SHADER_OUTPUT_DIR}/base_mesh.frag
+	COPYONLY)
+

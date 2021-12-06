@@ -1,20 +1,5 @@
 # GL structs to draw meshes and other mesh operations
 
-ADD_LIBRARY(${CMAKE_PROJECT_NAME}_drawable_meshes
-	# Sources
-	base.hpp
-	mesh.hpp
-	mesh.cpp
-)
-TARGET_INCLUDE_DIRECTORIES(${CMAKE_PROJECT_NAME}_drawable_meshes
-	PRIVATE ${LOCAL_GLM_HEADER_DIR}
-	PRIVATE ${OPENGL_INCLUDE_DIRS}
-)
-TARGET_LINK_LIBRARIES(${CMAKE_PROJECT_NAME}_drawable_meshes
-	PUBLIC Qt5::OpenGL
-	PUBLIC glm::glm
-)
-
 ADD_LIBRARY(${CMAKE_PROJECT_NAME}_shaders
 	shaders.cpp
 	shaders.hpp
@@ -35,4 +20,22 @@ SET_TARGET_PROPERTIES(${CMAKE_PROJECT_NAME}_shaders PROPERTIES
 	AUTORCC OFF
 	AUTOUIC OFF
 	AUTOMOC OFF
+)
+
+ADD_LIBRARY(${CMAKE_PROJECT_NAME}_drawable_meshes
+	# Sources
+	base.hpp
+	mesh.hpp
+	mesh.cpp
+)
+TARGET_INCLUDE_DIRECTORIES(${CMAKE_PROJECT_NAME}_drawable_meshes
+	PRIVATE ${LOCAL_GLM_HEADER_DIR}
+	PRIVATE ${OPENGL_INCLUDE_DIRS}
+	PRIVATE ${OPENGL_INCLUDE_DIRS}
+)
+TARGET_LINK_LIBRARIES(${CMAKE_PROJECT_NAME}_drawable_meshes
+	PUBLIC Qt5::OpenGL
+	PUBLIC glm::glm
+	PUBLIC ${OPENGL_LIBRARIES}
+	PUBLIC ${CMAKE_PROJECT_NAME}_shaders
 )

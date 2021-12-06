@@ -8,6 +8,10 @@
 #include "../../qt/include/scene_control.hpp"
 // Shader compiler :
 #include "../../meshes/drawable/shaders.hpp"
+// Meshes :
+#include "../../meshes/base_mesh/mesh_io.hpp"
+#include "../../meshes/base_mesh/Mesh.hpp"
+#include "../../meshes/drawable/mesh.hpp"
 // Discrete grid and grid generation :
 #include "../../grid/include/discrete_grid.hpp"
 #include "../../grid/include/input_discrete_grid.hpp"
@@ -109,6 +113,9 @@ public:
 	void showVisuBoxController(VisuBoxController* _controller);
 	/// @brief Remove the visu box controller if it closes
 	void removeVisuBoxController();
+
+	/// @brief Loads a mesh (OFF) and uploads it to the GL.
+	void loadMesh(void);
 
 	/// @brief Adds a widget to which redirect to OpenGL output.
 	void addOpenGLOutput(OpenGLDebugLog* _gldl);
@@ -334,11 +341,11 @@ private:
 	/// @brief Generate the unit cube used to draw the grid in non-volumetric mode, as well as the plane positions and bounding box buffers.
 	void generateSceneData();
 	/// @brief Generates the vertices, normals, and tex coordinates for a basic unit cube
-	void generateTexCube(Mesh& _mesh);
+	void generateTexCube(SimpleVolMesh& _mesh);
 	/// @brief Generates the plane's vertices array indexes
-	void generatePlanesArray(Mesh& _mesh);
+	void generatePlanesArray(SimpleVolMesh& _mesh);
 	/// @brief setup the buffers' data
-	void setupVBOData(const Mesh& _mesh);
+	void setupVBOData(const SimpleVolMesh& _mesh);
 	/// @brief setup the vao binding setup
 	void setupVAOPointers();
 
@@ -432,6 +439,10 @@ protected:
 	bool shouldUpdateVis;	 ///< Should we update visibility on next draw ?
 	bool shouldDeleteGrid;	  ///< Should we delete a grid on next draw ?
 	std::vector<std::size_t> delGrid;	 ///< Grids to delete at next refresh
+
+	std::queue<std::shared_ptr<DrawableBase>> to_init;		///< A set of drawables that have not been initialized yet
+	std::vector<std::shared_ptr<DrawableBase>> drawables;	///< The drawables to display
+	std::vector<std::shared_ptr<Mesh>> meshes;				///< The loaded meshes
 
 	// Grids :
 	// std::vector<GridGLView::Ptr> grids;	   ///< Grids to display in the different views.

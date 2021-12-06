@@ -172,7 +172,7 @@ void TextureUpload::printInfo() {
 TextureUpload::~TextureUpload() {
 }
 
-Mesh::Mesh(void) {
+SimpleVolMesh::SimpleVolMesh(void) {
 	this->positions.clear();
 	this->normals.clear();
 	this->texture.clear();
@@ -181,7 +181,7 @@ Mesh::Mesh(void) {
 	this->planar_view.clear();
 }
 
-Mesh::~Mesh(void) {
+SimpleVolMesh::~SimpleVolMesh(void) {
 	this->positions.clear();
 	this->normals.clear();
 	this->texture.clear();
