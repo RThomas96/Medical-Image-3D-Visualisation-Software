@@ -46,15 +46,9 @@ void Mesh::clear(){
 
 }
 
-
-
-
-
 void Mesh::recomputeNormals () {
-
 	computeTriangleNormals();
 	computeVerticesNormals();
-
 }
 
 void Mesh::computeTriangleNormals(){

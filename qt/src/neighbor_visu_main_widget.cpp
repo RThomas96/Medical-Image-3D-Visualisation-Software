@@ -290,7 +290,7 @@ bool MainWidget::eventFilter(QObject* obj, QEvent* e) {
 	// Set our code to run after the original "Show" event :
 	if (this->widgetSizeSet == false && obj == this && e->type() == QEvent::Show) {
 		this->widgetSizeSet = true;
-		this->resize(1280, 720);
+		this->resize(2560, 1440);
 		this->setMinimumSize(768, 432);
 		// lock control panel size to the current size it has :
 		QSize centerSize = this->size();

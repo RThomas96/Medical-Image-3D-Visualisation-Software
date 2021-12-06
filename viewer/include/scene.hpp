@@ -6,6 +6,8 @@
 #include "../../macros.hpp"
 // Scene control panel :
 #include "../../qt/include/scene_control.hpp"
+// Shader compiler :
+#include "../../meshes/drawable/shaders.hpp"
 // Discrete grid and grid generation :
 #include "../../grid/include/discrete_grid.hpp"
 #include "../../grid/include/input_discrete_grid.hpp"
@@ -491,6 +493,9 @@ protected:
 	GLuint vboHandle_SinglePlaneElement;
 	GLuint vboHandle_boundingBoxVertices;
 	GLuint vboHandle_boundingBoxIndices;
+
+	/// @brief A compiler for the shaders
+	std::unique_ptr<ShaderCompiler> shaderCompiler;
 
 	// Program handles :
 	GLuint programHandle_projectedTex;

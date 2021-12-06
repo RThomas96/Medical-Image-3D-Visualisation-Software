@@ -184,6 +184,7 @@ TARGET_LINK_LIBRARIES(neighbor_visu
 	PUBLIC VisualisationWidgets
 	PUBLIC writergrid
 	PUBLIC writergrid_tiff
+	PUBLIC ${CMAKE_PROJECT_NAME}_shaders
 )
 # }}}
 

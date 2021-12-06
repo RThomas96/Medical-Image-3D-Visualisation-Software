@@ -192,6 +192,8 @@ void Scene::initGl(QOpenGLContext* _context) {
 	this->initialize_limits();
 	this->newSHADERS_generateColorScales();
 
+	this->shaderCompiler = std::make_unique<ShaderCompiler>(this);
+
 	// Compile the shaders :
 	this->recompileShaders(false);
 
@@ -769,42 +771,14 @@ void Scene::recompileShaders(bool verbose) {
 
 GLuint Scene::compileShaders(std::string _vPath, std::string _gPath, std::string _fPath, bool verbose) {
 	glUseProgram(0);
-
-	// Checks if we have an available compiler, or exit ! We can't do shit otherwise.
-	GLboolean compilerAvailable = GL_FALSE;
-	glGetBooleanv(GL_SHADER_COMPILER, &compilerAvailable);
-	if (compilerAvailable == GL_FALSE) {
-		std::cerr << "[" << __FILE__ << ":" << __LINE__ << "] : No shader compiler was available.\nExiting the program.\n";
-		exit(EXIT_FAILURE);
+	this->shaderCompiler->reset();
+	this->shaderCompiler->pragmaReplacement_file("include_color_shader", "../new_shaders/colorize_new_flow.glsl");
+	this->shaderCompiler->vertexShader_file(_vPath).geometryShader_file(_gPath).fragmentShader_file(_fPath);
+	if (this->shaderCompiler->compileShaders()) {
+		return this->shaderCompiler->programName();
 	}
-
-	if (verbose) {
-		if (not _vPath.empty()) {
-			std::cerr << "[LOG][" << __FILE__ << ":" << __LINE__ << "] Compiling vertex shader \"" << _vPath << "\"...\n";
-		}
-	}
-	GLuint _vSha = this->compileShader(_vPath, GL_VERTEX_SHADER, verbose);
-
-	if (verbose) {
-		if (not _gPath.empty()) {
-			std::cerr << "[LOG][" << __FILE__ << ":" << __LINE__ << "] Compiling geometry shader \"" << _gPath << "\"...\n";
-		}
-	}
-	GLuint _gSha = this->compileShader(_gPath, GL_GEOMETRY_SHADER, verbose);
-
-	if (verbose) {
-		if (not _fPath.empty()) {
-			std::cerr << "[LOG][" << __FILE__ << ":" << __LINE__ << "] Compiling fragment shader \"" << _fPath << "\"...\n";
-		}
-	}
-	GLuint _fSha = this->compileShader(_fPath, GL_FRAGMENT_SHADER, verbose);
-
-	if (verbose) {
-		std::cerr << "[LOG][" << __FILE__ << ":" << __LINE__ << "] Compiling program ...\n";
-	}
-	GLuint _prog = this->compileProgram(_vSha, _gSha, _fSha, verbose);
-
-	return _prog;
+	std::cerr << this->shaderCompiler->errorString() << '\n';
+	return 0;
 }
 
 GLuint Scene::compileShader(const std::string& path, const GLenum shaType, bool verbose) {
