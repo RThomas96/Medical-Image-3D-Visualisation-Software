@@ -43,6 +43,8 @@
 #include <mutex>
 #include <vector>
 
+#include "../../third_party/primitive/Sphere.h"
+
 /// @defgroup graphpipe Graphics pipeline
 /// @brief This group contains all classes closely or loosely related to the graphics pipeline.
 /// @details There are very few classes in this group, but that's only because Scene is a god-object. Some attempt was
@@ -138,10 +140,16 @@ public:
 	void draft_tryAndSaveFirstGrid(void);
 
 	/// @brief Draw the 3D view of the scene.
-	void draw3DView(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, bool showTexOnPlane = true);
+    void draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool showTexOnPlane, std::vector<glm::vec3> controllerPos);
 
 	/// @brief Draw a given plane 'view' (single plane on the framebuffer).
 	void drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading, float zoomRatio, glm::vec2 offset);
+
+    void prepareSphere(std::vector<glm::vec3> controllerPos);
+
+    void drawSphere(GLfloat* mvMat, GLfloat* pMat, GLfloat* mMat, int nbController);
+
+    void getTetraMeshPoints(std::vector<glm::vec3>& points);
 
 	/// @brief Create a texture suited for framebuffer rendering, by passing the dimensions of it to the function.
 	GLuint updateFBOOutputs(glm::ivec2 dimensions, GLuint fb_handle, GLuint old_texture = 0);
@@ -157,6 +165,12 @@ public:
 
 	/// @brief Launches a save dialog, to generate a grid.
 	void launchSaveDialog();
+
+	/// @brief Launches the grid deformation
+    void launchDeformation(int tetIdx, glm::vec3& point);
+
+	/// @brief Return the position of the tetrahedra point index
+    glm::vec3 getVertexPosition(int index);
 
     /// @brief Prints info about the VAO on next refresh
     void printVAOStateNext() { this->showVAOstate = true; }
@@ -391,11 +405,14 @@ private:
 	void newAPI_tex3D_generateMESH(NewAPI_GridGLView::Ptr& grid, VolMeshData& _mesh);
 
 protected:
-	bool isInitialized;					///< tracks if the scene was initialized or not
-	bool showVAOstate;					///< Do we need to print the VAO/program state on next draw ?
-	bool shouldUpdateVis;				///< Should we update visibility on next draw ?
-	bool shouldDeleteGrid;				///< Should we delete a grid on next draw ?
-	std::vector<std::size_t> delGrid;	///< Grids to delete at next refresh
+    
+	Sphere sphere;
+
+	bool isInitialized;	   ///< tracks if the scene was initialized or not
+	bool showVAOstate;	  ///< Do we need to print the VAO/program state on next draw ?
+	bool shouldUpdateVis;	 ///< Should we update visibility on next draw ?
+	bool shouldDeleteGrid;	  ///< Should we delete a grid on next draw ?
+	std::vector<std::size_t> delGrid;	 ///< Grids to delete at next refresh
 
 	std::queue<std::shared_ptr<DrawableBase>> to_init;		///< A set of drawables that have not been initialized yet
 	std::vector<std::shared_ptr<DrawableBase>> drawables;	///< The drawables to display
@@ -452,6 +469,7 @@ protected:
 	GLuint vaoHandle;
 	GLuint vaoHandle_VolumetricBuffers;
 	GLuint vaoHandle_boundingBox;
+	GLuint vaoHandle_Sphere;
 	// VBO handles :
 	GLuint vboHandle_VertPos;				///< The VBO for the vertex positions.
 	GLuint vboHandle_VertNorm;				///< The VBO for the vertex normals.
@@ -461,6 +479,8 @@ protected:
 	GLuint vboHandle_SinglePlaneElement;	///< The vertex indices necessary to draw a single plane.
 	GLuint vboHandle_boundingBoxVertices;
 	GLuint vboHandle_boundingBoxIndices;
+    GLuint vboHandle_SphereVertices;
+    GLuint vboHandle_SphereIndices; 
 
 	/// @brief A compiler for the shaders
 	std::unique_ptr<ShaderCompiler> shaderCompiler;
@@ -471,6 +491,7 @@ protected:
 	GLuint programHandle_PlaneViewer;
 	GLuint programHandle_VolumetricViewer;
 	GLuint programHandle_BoundingBox;
+    GLuint programHandle_Sphere;
 
 	/*************************************/
 	/*************************************/
@@ -484,13 +505,15 @@ protected:
 	GLuint vboHandle_Texture3D_VertNorm;
 	GLuint vboHandle_Texture3D_VertTex;
 	GLuint vboHandle_Texture3D_VertIdx;
-	float* visibleDomains;	  ///< Array deciding which values are visible
-	float* visibleDomainsAlternate;	   ///< Array deciding which values are visible
+	// float* visibleDomains;	  ///< Array deciding which values are visible
+	// float* visibleDomainsAlternate;	   ///< Array deciding which values are visible
 
 	GLuint texHandle_colorScale_greyscale;
 	GLuint texHandle_colorScale_hsv2rgb;
 	GLuint texHandle_colorScale_user0;
 	GLuint texHandle_colorScale_user1;
+
+    GLuint texHandle_sphere;
 
 	/// @brief Generate the default color scales' data, and upload them.
 	void generateColorScales();

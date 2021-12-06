@@ -140,6 +140,7 @@ ADD_EXECUTABLE(neighbor_visu
 	./viewer/include/planar_viewer.hpp
 	./viewer/include/neighbor_visu_viewer.hpp
 	./viewer/include/viewer_structs.hpp
+    ./third_party/primitive/Sphere.h
 
 	# Main file :
 	./neighbor_visu_main.cpp
@@ -149,6 +150,7 @@ ADD_EXECUTABLE(neighbor_visu
 	./viewer/src/planar_viewer.cpp
 	./viewer/src/neighbor_visu_viewer.cpp
 	./viewer/src/viewer_structs.cpp
+    ./third_party/primitive/Sphere.cpp
 )
 TARGET_COMPILE_OPTIONS(neighbor_visu
 	# Set so CMake (more precisely clang/gcc) will not print 30-80 warnings about QGLViewer's

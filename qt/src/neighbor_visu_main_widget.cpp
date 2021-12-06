@@ -66,6 +66,7 @@ MainWidget::~MainWidget() {
 	delete this->header3d;
 
 	this->showGLLog->disconnect();
+	this->deform->disconnect();
 
 	for (std::size_t i = 0; i < this->strayObj.size(); ++i) {
 		if (this->strayObj[i] != nullptr) {
@@ -83,10 +84,18 @@ void MainWidget::setupWidgets() {
 
 	this->statusBar = new QStatusBar;
 	this->showGLLog = new QPushButton("Show GL log");
+	this->deform = new QPushButton("Deform the grid");
 	this->statusBar->addPermanentWidget(this->showGLLog);
+	this->statusBar->addPermanentWidget(this->deform);
+
 	this->setStatusBar(this->statusBar);
 	this->scene->addStatusBar(this->statusBar);
+
 	QObject::connect(this->showGLLog, &QPushButton::clicked, this->glDebug, &QWidget::show);
+	QObject::connect(this->deform, &QPushButton::clicked, [this]() {
+            //
+            // TODO: affiche les controllers
+	});
 
 	// Actions creation :
 	this->action_addGrid		= new QAction("Open images");

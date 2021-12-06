@@ -126,6 +126,15 @@ public:
 	std::vector<std::vector<int>> neighbors;
 	/// @brief Per-face normals of each tetrahedron
 	std::vector<std::array<glm::vec4, 4>> normals;
+
+	GLfloat* rawVertices;
+	GLfloat* rawNormals;
+    /// @brief Temporary struct to map points to indices
+    // 0: to Positions
+    // 1: to raw Vertices
+    // 2: to raw Normals
+    // 3: to Tetrahedra index 
+    std::vector<std::pair<glm::vec4, std::vector<std::vector<int>>>> idxMap;
 };
 
 /// @ingroup graphpipe
@@ -236,6 +245,8 @@ public:
 	unsigned int nbChannels;
 	/// @brief The volumetric mesh handles to use when drawing
 	VolMesh volumetricMesh;
+	/// @brief The volumetric mesh handles to use when drawing
+	VolMeshData volumetricMeshData;
 	/// @brief The epsilon to provide for the volumetric viewing method
 	glm::vec3 defaultEpsilon;
 	/// @brief The bounding box's color, as a triplet of normalized values for R, G, and B.

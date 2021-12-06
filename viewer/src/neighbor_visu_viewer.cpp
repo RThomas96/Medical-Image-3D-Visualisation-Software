@@ -21,7 +21,7 @@
 float Viewer::sceneRadiusMultiplier{.5f};
 
 Viewer::Viewer(Scene* const scene, QStatusBar* _program_bar, QWidget* parent) :
-	QGLViewer(parent), scene(scene) {
+	QGLViewer(parent), scene(scene), manipulatorManager(ManipulatorManager(36)) {
 	this->statusBar	   = _program_bar;
 	this->refreshTimer = new QTimer();
 	this->refreshTimer->setInterval(std::chrono::milliseconds(7));	  // ~7 ms for 144fps, ~16ms for 60fps and ~33ms for 30 FPS
@@ -36,8 +36,23 @@ Viewer::Viewer(Scene* const scene, QStatusBar* _program_bar, QWidget* parent) :
 	this->cursorPos_current = glm::ivec2{0, 0};
 	this->cursorPos_last	= glm::ivec2{0, 0};
 	this->framesHeld		= 0;
-	this->posRequest		= glm::ivec2{-1, -1};
-	this->drawAxisOnTop		= false;
+    this->posRequest		= glm::ivec2{-1, -1};
+    this->drawAxisOnTop		= false;
+
+    // Setup the alt key binding to move an object
+    setMouseBinding(Qt::AltModifier, Qt::LeftButton, QGLViewer::FRAME, QGLViewer::ROTATE);
+    setMouseBinding(Qt::AltModifier, Qt::RightButton, QGLViewer::FRAME, QGLViewer::TRANSLATE);
+    setMouseBinding(Qt::AltModifier, Qt::MidButton, QGLViewer::FRAME, QGLViewer::ZOOM);
+    //setWheelBinding(Qt::AltModifier, QGLViewer::FRAME, QGLViewer::ZOOM);
+
+    setManipulatedFrame(&this->manipulatorManager.activeManipulator->manipulatedFrame);
+    updateManipulatorsPositions(); 
+}
+
+void Viewer::updateManipulatorsPositions() {
+    std::vector<glm::vec3> vecpos;
+    scene->getTetraMeshPoints(vecpos);
+    this->manipulatorManager.populatePositions(vecpos);
 }
 
 Viewer::~Viewer() {
@@ -76,8 +91,24 @@ void Viewer::draw() {
 	qglviewer::Vec cam = this->camera()->worldCoordinatesOf(qglviewer::Vec(0., 0., 0.));
 	glm::vec3 camPos   = glm::vec3(static_cast<float>(cam.x), static_cast<float>(cam.y), static_cast<float>(cam.z));
 
-	this->scene->draw3DView(mvMat, pMat, camPos);
+    std::vector<glm::vec3> vecpos;
+    this->manipulatorManager.getPositionVector(vecpos);
+	this->scene->draw3DView(mvMat, pMat, camPos, false, vecpos);
 	this->scene->drawPositionResponse(this->sceneRadius() / 10., this->drawAxisOnTop);
+
+    int currentFrame = this->manipulatorManager.getActiveFrame();
+    if(currentFrame != -1) {
+        this->manipulatorManager.activeManipulator = &this->manipulatorManager.manipulators[currentFrame];
+        //this->manipulatorManager.applyConstraintToActiveManipulator();
+        setManipulatedFrame(&this->manipulatorManager.manipulators[currentFrame].manipulatedFrame);
+    }
+
+    if(this->manipulatorManager.isActiveManipulatorManipuled()) {
+        
+        glm::vec3 position = this->manipulatorManager.getActiveManipulatedPos();
+        this->scene->launchDeformation(this->manipulatorManager.getAssignedPoint(currentFrame), position);
+        this->manipulatorManager.print();
+    }
 }
 
 void Viewer::keyPressEvent(QKeyEvent* e) {
@@ -400,4 +431,5 @@ void Viewer::newAPI_loadGrid(Image::Grid::Ptr ptr) {
 	this->showEntireScene();
 	this->updateCameraPosition();
 	this->centerScene();
+    this->updateManipulatorsPositions();
 }

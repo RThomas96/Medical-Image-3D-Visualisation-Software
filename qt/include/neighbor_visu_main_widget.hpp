@@ -94,6 +94,7 @@ private:
 	QAction* action_loadMesh;		///< The action to load a mesh into the scene.
 	QStatusBar* statusBar;	  ///< Status bar
 	QPushButton* showGLLog;	   ///< Button to open the QOpenGLDebugLog message box.
+	QPushButton* deform;	    ///< The 'Deform' button for debug purpose
 };
 
 #endif	  // QT_INCLUDE_NEIGHBOR_VISU_MAIN_WIDGET_HPP_

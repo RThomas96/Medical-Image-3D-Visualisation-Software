@@ -79,6 +79,16 @@ CONFIGURE_FILE(
 	COPYONLY)
 
 CONFIGURE_FILE(
+	${CMAKE_SOURCE_DIR}/new_shaders/sphere.vert
+	${SHADER_OUTPUT_DIR}/sphere.vert
+	COPYONLY)
+
+CONFIGURE_FILE(
+	${CMAKE_SOURCE_DIR}/new_shaders/sphere.frag
+	${SHADER_OUTPUT_DIR}/sphere.frag
+	COPYONLY)
+
+CONFIGURE_FILE(
 	${CMAKE_SOURCE_DIR}/new_shaders/base_mesh.vert
 	${SHADER_OUTPUT_DIR}/base_mesh.vert
 	COPYONLY)
@@ -87,4 +97,3 @@ CONFIGURE_FILE(
 	${CMAKE_SOURCE_DIR}/new_shaders/base_mesh.frag
 	${SHADER_OUTPUT_DIR}/base_mesh.frag
 	COPYONLY)
-

@@ -196,6 +196,7 @@ VolMeshData::VolMeshData() {
 	this->tetrahedra.clear();
 	this->neighbors.clear();
 	this->normals.clear();
+    this->rawVertices = nullptr;
 }
 
 VolMeshData::~VolMeshData() {
@@ -204,6 +205,7 @@ VolMeshData::~VolMeshData() {
 	this->tetrahedra.clear();
 	this->neighbors.clear();
 	this->normals.clear();
+    delete[] this->rawVertices;
 }
 
 VolMesh::VolMesh(void) {

@@ -113,7 +113,7 @@ void main (void) {
 
 	if( visibility > 3500. ) discard;
 
-	/*
+	
 	// Shows the wireframe of the mesh :
 	float epsilon = 0.008;
 	float distMin = min(barycentricCoords.x/largestDelta.x, min(barycentricCoords.y/largestDelta.y, barycentricCoords.z/largestDelta.z));
@@ -122,10 +122,10 @@ void main (void) {
 	if (distMin < epsilon) {// && visibility > 0.) {
 		float factor = (visibility/3500.);
 		colorOut = vec4(1.-factor, factor, 1.-factor, 1.);
-		textureCoordinatesWorldSpace = vec4(P.xyz, 2.f);
+		sceneSpaceFragmentPos = vec4(P.xyz, 2.f);
 		return;
 	}
-	*/
+	
 
 	// Default color of the fragment
 	colorOut = vec4(.0, .0, .0, .0);
@@ -298,6 +298,9 @@ bool ComputeVisibility(vec3 point)
 		clippingPoint += clippingNormal * clipDistanceFromCamera ;
 		vec4 pos = point4 - clippingPoint;
 		float vis = dot( clippingNormal, pos );
+
+        return true;
+        // TODO: reactivate z clipping
 
 		if( xVis < 0.|| yVis < 0.|| zVis < 0. || vis < .0)
 			return false;
