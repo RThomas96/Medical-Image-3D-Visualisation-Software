@@ -42,7 +42,7 @@ public:
 
 	void draw();
 
-	std::vector<glm::vec3> dummy_deformation(float threshold_on_x, glm::vec3 displacement);
+	std::vector<glm::vec3> dummy_deformation(float threshold_on_x, glm::vec3 displacement, glm::vec3 min, glm::vec3 max);
 
 	void clear();
 

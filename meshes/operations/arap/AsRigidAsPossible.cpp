@@ -167,12 +167,23 @@ void AsRigidAsPossible::setHandles(const std::vector< bool > & _handles){
     std::cout << "Nombres de contraintes " << constrainedNb <<  std::endl;
 }
 
-std::vector<glm::vec3> AsRigidAsPossible::dummy_deformation(float threshold_on_x, glm::vec3 displacement) {
+std::vector<glm::vec3> AsRigidAsPossible::dummy_deformation(float threshold_on_both_sides, glm::vec3 displacement, glm::vec3 min, glm::vec3 max) {
 	std::vector<bool> handles(this->vertices.size(), false);
 	std::vector<glm::vec3> targets(this->vertices); // copy data directly from the vertex buffer
 
+	glm::vec2 x_range{min.x, max.x};
+	glm::vec2 y_range{min.y, max.y};
+	glm::vec2 z_range{min.z, max.z};
+	auto normalize_x = [=](float y) -> float { return (y - x_range.x)/(x_range.y - x_range.x);};
+	auto normalize_y = [=](float y) -> float { return (y - y_range.x)/(y_range.y - y_range.x);};
+	auto normalize_z = [=](float y) -> float { return (y - z_range.x)/(z_range.y - z_range.x);};
+
 	for (std::size_t i = 0; i < this->vertices.size(); ++i) {
-		if (this->vertices[i].x > threshold_on_x) {
+		if (normalize_x(this->vertices[i].x) < threshold_on_both_sides) {
+			handles[i] = true;
+			targets[i] = this->vertices[i] - displacement;
+		}
+		if (normalize_x(this->vertices[i].x) > (1.f - threshold_on_both_sides)) {
 			handles[i] = true;
 			targets[i] = this->vertices[i] + displacement;
 		}

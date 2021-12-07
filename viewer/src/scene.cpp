@@ -770,9 +770,9 @@ void Scene::dummy_perform_arap_on_first_mesh() {
 	// Threshold on X is 15% of the left-most points that will be translated. Compute from bb :
 	auto mesh_bb = mesh_to_deform->getBoundingBox();
 	glm::vec3::value_type threshold = (mesh_bb.first + (0.85f * (mesh_bb.second - mesh_bb.first))).x;
-	glm::vec3 translate = 0.25f * (mesh_bb.second - mesh_bb.first);
+	glm::vec3 translate = glm::vec3((mesh_bb.second - mesh_bb.first).x * 0.1f, .0f, .0f);
 
-	auto vertices = arap_deformation.dummy_deformation(threshold, translate);
+	auto vertices = arap_deformation.dummy_deformation(0.05, translate, mesh_bb.first, mesh_bb.second);
 
 	for (std::size_t i = 0; i < _mesh->getVertices().size(); ++i) {
 		_mesh->setVertices(i, vertices[i]);

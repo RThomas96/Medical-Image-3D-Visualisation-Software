@@ -19,6 +19,6 @@ void main() {
 	mat3 normal_matrix_3 = inverse(transpose(begin_normal_matrix));
 	gl_Position = proj * view * vec4(in_position, 1.f);
 	position = gl_Position;
-	normal = vec4(normal_matrix_3 * in_normal, .0f);
+	normal = vec4(in_normal, .0f);
 	texture = in_texture;
 }
