@@ -10,8 +10,6 @@
 
 #include <iostream>
 
-// to include : gsl/gsl_linalg.h and choldmod.h ...
-
 namespace BasicGL {
 	void drawSphere(float x, float y, float z, float radius, int slices, int stacks);
 }

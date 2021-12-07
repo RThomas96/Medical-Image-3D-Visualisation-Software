@@ -442,13 +442,6 @@ void ControlPanel::setMaxTexValAlternate(double val) {
 	this->updateViewers();
 }
 
-void ControlPanel::setClipDistance(double val) {
-	if (this->sceneToControl) {
-		this->sceneToControl->slotSetClipDistance(val);
-	}
-	this->updateViewers();
-}
-
 void ControlPanel::setSlidersToNumericalLimits(void) {
     // TODO: make the slider a ratio
     

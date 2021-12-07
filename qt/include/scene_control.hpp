@@ -161,7 +161,6 @@ public slots:
 	void setMinTexValAlternate(double val);
     // @brief Set the max value to display of the second grid
 	void setMaxTexValAlternate(double val);
-	void setClipDistance(double val);
 };
 
 #endif	  // QT_INCLUDE_SCENE_CONTROL_HPP_

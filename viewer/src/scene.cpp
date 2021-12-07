@@ -75,8 +75,11 @@ Scene::Scene() {
 
 	// Default light positions : at the vertices of a unit cube.
 	this->lightPositions = {
-	  glm::vec3(.0, .0, .0), glm::vec3(1., .0, .0), glm::vec3(.0, 1., .0), glm::vec3(1., 1., .0),
-	  glm::vec3(.0, .0, 1.), glm::vec3(1., .0, 1.), glm::vec3(.0, 1., 1.), glm::vec3(1., 1., 1.)};
+		glm::vec3(.0, .0, .0), glm::vec3(1., .0, .0),
+		glm::vec3(.0, 1., .0), glm::vec3(1., 1., .0),
+		glm::vec3(.0, .0, 1.), glm::vec3(1., .0, 1.),
+		glm::vec3(.0, 1., 1.), glm::vec3(1., 1., 1.)
+	};
 
 	this->planeDirection	= glm::vec3(1., 1., 1.);
 	this->planeDisplacement = glm::vec3(.0, .0, .0);
@@ -360,63 +363,33 @@ void Scene::printOpenGLMessage(const QOpenGLDebugMessage& message) {
 	QFlags type		= message.type();
 	QFlags source	= message.source();
 
+	// clang-format off
+
 	//if (severity & QOpenGLDebugMessage::Severity::NotificationSeverity)	{ sev += "{Notif}"; }
-	if (severity & QOpenGLDebugMessage::Severity::LowSeverity) {
-		sev += "{Low}";
-	}
-	if (severity & QOpenGLDebugMessage::Severity::MediumSeverity) {
-		sev += "{Med}";
-	}
-	if (severity & QOpenGLDebugMessage::Severity::HighSeverity) {
-		sev += "{High}";
-	}
+	if (severity & QOpenGLDebugMessage::Severity::LowSeverity)		{ sev += "{Low}"; }
+	if (severity & QOpenGLDebugMessage::Severity::MediumSeverity)	{ sev += "{Med}"; }
+	if (severity & QOpenGLDebugMessage::Severity::HighSeverity)		{ sev += "{High}"; }
 
-	if (type & QOpenGLDebugMessage::Type::ErrorType) {
-		typ += "[ERROR]";
-	}
-	if (type & QOpenGLDebugMessage::Type::DeprecatedBehaviorType) {
-		typ += "[DEPR. BEHAVIOUR]";
-	}
-	if (type & QOpenGLDebugMessage::Type::UndefinedBehaviorType) {
-		typ += "[UNDEF. BEHAVIOUR]";
-	}
-	if (type & QOpenGLDebugMessage::Type::PortabilityType) {
-		typ += "[PORTABILITY]";
-	}
-	if (type & QOpenGLDebugMessage::Type::PerformanceType) {
-		typ += "[PERF]";
-	}
-	if (type & QOpenGLDebugMessage::Type::OtherType) {
-		typ += "[OTHER]";
-	}
-	if (type & QOpenGLDebugMessage::Type::MarkerType) {
-		typ += "[MARKER]";
-	}
-	if (type & QOpenGLDebugMessage::Type::GroupPushType) {
-		typ += "[GROUP PUSH]";
-	}
-	if (type & QOpenGLDebugMessage::Type::GroupPopType) {
-		typ += "[GROUP POP]";
-	}
+	if (type & QOpenGLDebugMessage::Type::ErrorType)				{ typ += "[ERROR]"; }
+	if (type & QOpenGLDebugMessage::Type::DeprecatedBehaviorType)	{ typ += "[DEPR. BEHAVIOUR]"; }
+	if (type & QOpenGLDebugMessage::Type::UndefinedBehaviorType)	{ typ += "[UNDEF. BEHAVIOUR]"; }
+	if (type & QOpenGLDebugMessage::Type::PortabilityType)			{ typ += "[PORTABILITY]"; }
+	if (type & QOpenGLDebugMessage::Type::PerformanceType)			{ typ += "[PERF]"; }
+	if (type & QOpenGLDebugMessage::Type::OtherType)				{ typ += "[OTHER]"; }
+	if (type & QOpenGLDebugMessage::Type::MarkerType)				{ typ += "[MARKER]"; }
+	if (type & QOpenGLDebugMessage::Type::GroupPushType)			{ typ += "[GROUP PUSH]"; }
+	if (type & QOpenGLDebugMessage::Type::GroupPopType)				{ typ += "[GROUP POP]"; }
 
-	if (source & QOpenGLDebugMessage::Source::APISource) {
-		src += "[OpenGL]";
-	}
-	if (source & QOpenGLDebugMessage::Source::WindowSystemSource) {
-		src += "[WinSys]";
-	}
-	if (source & QOpenGLDebugMessage::Source::ShaderCompilerSource) {
-		src += "[ShaComp]";
-	}
-	if (source & QOpenGLDebugMessage::Source::ThirdPartySource) {
-		src += "[3rdParty]";
-	}
-	if (source & QOpenGLDebugMessage::Source::OtherSource) {
-		src += "[Other]";
-	}
+	if (source & QOpenGLDebugMessage::Source::APISource)			{ src += "[OpenGL]"; }
+	if (source & QOpenGLDebugMessage::Source::WindowSystemSource)	{ src += "[WinSys]"; }
+	if (source & QOpenGLDebugMessage::Source::ShaderCompilerSource)	{ src += "[ShaComp]"; }
+	if (source & QOpenGLDebugMessage::Source::ThirdPartySource)		{ src += "[3rdParty]"; }
+	if (source & QOpenGLDebugMessage::Source::OtherSource)			{ src += "[Other]"; }
 
 	// Currently outputs any message on the GL stack, regardless of severity, type, or source :
 	std::cerr << sev << ' ' << typ << ' ' << src << ' ' << +message.id() << " : " << message.message().toStdString() << '\n';
+
+	// clang-format on
 }
 
 void Scene::createBuffers() {
@@ -717,15 +690,7 @@ void Scene::updateBoundingBox(void) {
     std::cerr << "Error: updateBoundingBox brocken due to new API update" << std::endl;
 	this->sceneBB	  = Image::bbox_t();
 	this->sceneDataBB = Image::bbox_t();
-	// for (std::size_t i = 0; i < this->grids.size(); ++i) {
-	// 	std::for_each(this->grids[i]->grid.cbegin(), this->grids[i]->grid.cend(),
-	// 	  [this](const std::shared_ptr<DiscreteGrid>& _g) {
-	// 		  Image::bbox_t box	= _g->getBoundingBoxWorldSpace();
-	// 		  Image::bbox_t dbox = _g->getDataBoundingBoxWorldSpace();
-	// 		  this->sceneBB.addPoints(box.getAllCorners());
-	// 		  this->sceneDataBB.addPoints(dbox.getAllCorners());
-	// 	  });
-	// }
+
 	for (std::size_t i = 0; i < this->newGrids.size(); ++i) {
 		const Image::Grid::Ptr _g = this->newGrids[i]->grid;
 		Image::bbox_t box  = _g->getBoundingBox();
@@ -823,189 +788,6 @@ GLuint Scene::compileShaders(std::string _vPath, std::string _gPath, std::string
 	}
 	std::cerr << this->shaderCompiler->errorString() << '\n';
 	return 0;
-}
-
-GLuint Scene::compileShader(const std::string& path, const GLenum shaType, bool verbose) {
-	if (path.empty()) {
-		return 0;
-	}
-	// Check the given type is accepted :
-	if (shaType != GL_VERTEX_SHADER && shaType != GL_GEOMETRY_SHADER && shaType != GL_FRAGMENT_SHADER) {
-		std::cerr << "[" << __FILE__ << ":" << __LINE__ << "] Error : unrecognized shader type (vertex, geometry and fragment shaders)\n";
-		return -1;
-	}
-
-	// Create a shader object :
-	GLuint _sha = glCreateShader(shaType);
-
-	std::string color_functions = "";
-	bool includeColorShader		= false;
-
-	if (shaType == GL_FRAGMENT_SHADER) {
-		includeColorShader	  = true;
-		std::ifstream colFile = std::ifstream("../new_shaders/colorize_new_flow.glsl", std::ios_base::in | std::ios_base::binary);
-		if (! colFile.is_open()) {
-			std::cerr << "[" << __FILE__ << ":" << __LINE__ << "] Error : could not get the color shader loaded.\n";
-			return -1;
-		}
-		colFile.seekg(0, colFile.end);
-		std::size_t colShaSize = static_cast<std::size_t>(colFile.tellg());
-		colFile.seekg(0, colFile.beg);
-		color_functions.resize(colShaSize);
-		colFile.read(color_functions.data(), colShaSize);
-	}
-
-	// Open the file :
-	std::ifstream shaFile = std::ifstream(path.c_str(), std::ios_base::in | std::ios_base::binary);
-	if (! shaFile.is_open()) {
-		std::cerr << "[" << __FILE__ << ":" << __LINE__ << "] Error : could not get the contents of shader file " << path << '\n';
-		return -1;
-	}
-
-	// Get the file's length in characters :
-	shaFile.seekg(0, shaFile.end);
-	std::size_t shaFileSize = static_cast<std::size_t>(shaFile.tellg());
-	shaFile.seekg(0, shaFile.beg);
-
-	char* shaSource = nullptr;
-	std::string read_buffer;
-	std::string shader_contents;
-
-	if (includeColorShader) {
-		while (getline(shaFile, read_buffer)) {
-#if defined(WIN32) || defined(WIN64) || defined(_MSC_VER) || defined(_WIN32)
-			if (read_buffer.find("#pragma include_color_shader;") != std::string::npos) {
-#else
-			if (read_buffer == "#pragma include_color_shader;") {
-#endif
-				read_buffer = color_functions;
-			}
-			shader_contents += read_buffer + '\n';
-		}
-		shaSource	= shader_contents.data();
-		shaFileSize = shader_contents.size();
-	} else {
-		// Get the file's contents and null-terminate it :
-		shaSource = new char[shaFileSize + 1];
-		shaFile.read(shaSource, shaFileSize);
-		shaSource[shaFileSize] = '\0';
-	}
-
-	// Source it into the shader object :
-	glShaderSource(_sha, 1, const_cast<const char**>(&shaSource), 0);
-
-	// We can free up the host memory now :
-	shaFile.close();
-
-	glCompileShader(_sha);
-
-	GLint shaderInfoLength = 0;
-	GLint charsWritten	   = 0;
-	char* shaderInfoLog	   = nullptr;
-
-	// Get shader information after compilation :
-	glGetShaderiv(_sha, GL_INFO_LOG_LENGTH, &shaderInfoLength);
-	if (shaderInfoLength > 1) {
-		std::cerr << __FILE__ << ":" << __LINE__ << " : start Log ***********************************************" << '\n';
-
-		std::cerr << __FILE__ << ":" << __LINE__ << " : Information about shader " << path << " : " << '\n';
-		shaderInfoLog = new char[shaderInfoLength];
-		glGetShaderInfoLog(_sha, shaderInfoLength, &charsWritten, shaderInfoLog);
-		std::cerr << shaderInfoLog << '\n';
-		delete[] shaderInfoLog;
-
-		std::cerr << __FILE__ << ":" << __LINE__ << " : end Log ***********************************************" << '\n';
-#ifdef ENABLE_SHADER_CONTENTS_ON_FAILURE
-		std::cerr << "Shader contents :" << '\n';
-		std::cerr << "=============================================================================================\n";
-		std::cerr << "=============================================================================================\n";
-		std::cerr << shaSource << '\n';
-		std::cerr << "=============================================================================================\n";
-		std::cerr << "=============================================================================================\n";
-		std::cerr << "End shader contents" << '\n';
-#endif
-	}
-
-	GLint result = GL_FALSE;
-	glGetShaderiv(_sha, GL_COMPILE_STATUS, &result);
-	if (result == GL_FALSE) {
-		std::cerr << "[" << __FILE__ << ":" << __LINE__ << "] : Could not compile shader.\n";
-		return 0;
-	}
-
-	return _sha;
-}
-
-// line 572 for compileShader
-GLuint Scene::compileProgram(const GLuint vSha, const GLuint gSha, const GLuint fSha, bool verbose) {
-	// Check any shader was passed to the program :
-	if (vSha == 0 && gSha == 0 && fSha == 0) {
-		std::cerr << "[" << __FILE__ << ":" << __LINE__ << "] : No shader IDs were passed to the function.\n"
-				  << "\tArguments : vSha(" << vSha << "), gSha(" << gSha << "), fSha(" << fSha << ")";
-	}
-
-	GLuint _prog = glCreateProgram();
-	if (vSha != 0) {
-		glAttachShader(_prog, vSha);
-	}
-	if (gSha != 0) {
-		glAttachShader(_prog, gSha);
-	}
-	if (fSha != 0) {
-		glAttachShader(_prog, fSha);
-	}
-
-	glLinkProgram(_prog);
-
-	int InfoLogLength = 0;
-	glGetProgramiv(_prog, GL_INFO_LOG_LENGTH, &InfoLogLength);
-	if (InfoLogLength > 0) {
-		std::vector<char> ProgramErrorMessage(InfoLogLength + 1);
-		glGetProgramInfoLog(_prog, InfoLogLength, NULL, &ProgramErrorMessage[0]);
-		std::cerr << __FILE__ << ":" << __LINE__ << " : Warning : errors while linking program :" << '\n';
-		std::cerr << "------------------------------------------------------------------" << '\n';
-		std::cerr << "------------------------------------------------------------------" << '\n';
-		std::cerr << ProgramErrorMessage.data() << '\n';
-		std::cerr << "------------------------------------------------------------------" << '\n';
-		std::cerr << "------------------------------------------------------------------" << '\n';
-	}
-
-	GLint Result = 0;
-	glGetProgramiv(_prog, GL_LINK_STATUS, &Result);
-	if (Result == GL_FALSE) {
-		// Return 0 (no program created) :
-		std::cerr << "[" << __FILE__ << ":" << __LINE__ << "] : Could not link shader.\n";
-		return 0;
-	} else {
-		if (verbose) {
-			std::cerr << "[LOG][" << __FILE__ << ":" << __LINE__ << "] Compiled program. New name : " << _prog << "\n";
-		}
-	}
-
-	if (verbose) {
-		std::cerr << '\n';
-	}	 // Put an empty line between all program compilations (more readable)
-
-	if (vSha != 0) {
-		glDetachShader(_prog, vSha);
-	}
-	if (gSha != 0) {
-		glDetachShader(_prog, gSha);
-	}
-	if (fSha != 0) {
-		glDetachShader(_prog, fSha);
-	}
-	if (vSha != 0) {
-		glDeleteShader(vSha);
-	}
-	if (gSha != 0) {
-		glDeleteShader(gSha);
-	}
-	if (fSha != 0) {
-		glDeleteShader(fSha);
-	}
-
-	return _prog;
 }
 
 GLuint Scene::uploadTexture1D(const TextureUpload& tex) {
@@ -1218,76 +1000,6 @@ GLuint Scene::newAPI_uploadTexture3D(const GLuint texHandle, const TextureUpload
 	glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, s, tex.size.x, tex.size.y, 1, tex.format, tex.type, data.data());
 
 	return texHandle;
-}
-
-void Scene::openGLDebugLogger_inserter(const QOpenGLDebugMessage message) {
-	QString src		= "";
-	QString sev		= "";
-	QString typ		= "";
-	QFlags severity = message.severity();
-	QFlags type		= message.type();
-	QFlags source	= message.source();
-
-	if (severity & QOpenGLDebugMessage::Severity::NotificationSeverity) {
-		sev += "{Notif}";
-	}
-	if (severity & QOpenGLDebugMessage::Severity::LowSeverity) {
-		sev += "{Low  }";
-	}
-	if (severity & QOpenGLDebugMessage::Severity::MediumSeverity) {
-		sev += "{Med  }";
-	}
-	if (severity & QOpenGLDebugMessage::Severity::HighSeverity) {
-		sev += "{High }";
-	}
-
-	if (type & QOpenGLDebugMessage::Type::ErrorType) {
-		typ += "[	ERROR     ]";
-	}
-	if (type & QOpenGLDebugMessage::Type::DeprecatedBehaviorType) {
-		typ += "[ DEPRE. BEHAV. ]";
-	}
-	if (type & QOpenGLDebugMessage::Type::UndefinedBehaviorType) {
-		typ += "[ UNDEF. BEHAV. ]";
-	}
-	if (type & QOpenGLDebugMessage::Type::PortabilityType) {
-		typ += "[  PORTABILITY  ]";
-	}
-	if (type & QOpenGLDebugMessage::Type::PerformanceType) {
-		typ += "[      PERF     ]";
-	}
-	if (type & QOpenGLDebugMessage::Type::OtherType) {
-		typ += "[     OTHER	  ]";
-	}
-	if (type & QOpenGLDebugMessage::Type::MarkerType) {
-		typ += "[     MARKER    ]";
-	}
-	if (type & QOpenGLDebugMessage::Type::GroupPushType) {
-		typ += "[  GROUP PUSH   ]";
-	}
-	if (type & QOpenGLDebugMessage::Type::GroupPopType) {
-		typ += "[   GROUP POP   ]";
-	}
-
-	if (source & QOpenGLDebugMessage::Source::APISource) {
-		src += "[OpenGL  ]";
-	}
-	if (source & QOpenGLDebugMessage::Source::WindowSystemSource) {
-		src += "[WinSys  ]";
-	}
-	if (source & QOpenGLDebugMessage::Source::ShaderCompilerSource) {
-		src += "[ShaComp ]";
-	}
-	if (source & QOpenGLDebugMessage::Source::ThirdPartySource) {
-		src += "[3rdParty]";
-	}
-	if (source & QOpenGLDebugMessage::Source::OtherSource) {
-		src += "[Other   ]";
-	}
-
-	QString glMessage = sev + typ + src + " [ID:" + QString::number(message.id()) + "] : " + message.message() + "\n";
-
-	std::cerr << glMessage.toStdString() << '\n';
 }
 
 void Scene::loadMesh() {
@@ -1628,16 +1340,6 @@ void Scene::newAPI_prepareUniforms_3DSolid(GLfloat* mvMat, GLfloat* pMat, glm::v
 	if (this->showVAOstate) {
 		this->printAllUniforms(this->programHandle_projectedTex);
 	}
-}
-
-glm::vec3 Scene::getPlaneDirections() const {
-	return this->planeDirection;
-}
-
-glm::tvec4<GLuint> Scene::draft_getGeneratedColorScales() {
-	return glm::tvec4<GLuint>(
-	  this->texHandle_colorScale_greyscale, this->texHandle_colorScale_hsv2rgb,
-	  this->texHandle_colorScale_user0, this->texHandle_colorScale_user1);
 }
 
 void Scene::draft_tryAndSaveFirstGrid() {
@@ -2154,45 +1856,13 @@ void Scene::newAPI_prepareUniforms_Volumetric(GLfloat* mvMat, GLfloat* pMat, glm
 	glUniform3fv(location_light6, 1, glm::value_ptr(this->lightPositions[6]));
 	glUniform3fv(location_light7, 1, glm::value_ptr(this->lightPositions[7]));
 
-	//	// Limits :
-	//	GLint location_colorBounds =			getUniform("colorBounds");
-	//	GLint location_colorBoundsAlternate =	getUniform("colorBoundsAlternate");
-	//	GLint location_textureBounds =			getUniform("textureBounds");
-	//	GLint location_textureBoundsAlternate =	getUniform("textureBoundsAlternate");
-
-	//	glUniform2fv(location_colorBounds, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds0)));
-	//	glUniform2fv(location_colorBoundsAlternate, 1, glm::value_ptr(glm::convert_to<float>(this->colorBounds1)));
-	//	glUniform2fv(location_textureBounds, 1, glm::value_ptr(glm::convert_to<float>(this->textureBounds0)));
-	//	glUniform2fv(location_textureBoundsAlternate, 1, glm::value_ptr(glm::convert_to<float>(this->textureBounds1)));
-
 	// Color and shading parameters :
 	GLint location_specRef	  = getUniform("specRef");
 	GLint location_shininess  = getUniform("shininess");
 	GLint location_diffuseRef = getUniform("diffuseRef");
-	//	GLint location_rgbMode =			getUniform("rgbMode");
-	//	GLint location_r_channelView =		getUniform("r_channelView");
-	//	GLint location_r_selectedChannel =	getUniform("r_selectedChannel");
-	//	GLint location_r_nbChannels =		getUniform("r_nbChannels");
-	//	GLint location_g_channelView =		getUniform("g_channelView");
-	//	GLint location_g_selectedChannel =	getUniform("g_selectedChannel");
-	//	GLint location_g_nbChannels =		getUniform("g_nbChannels");
-	//	uint chan_r = this->colorFunctionToUniform(this->channels_r);
-	//	uint chan_g = this->colorFunctionToUniform(this->channels_g);
 	glUniform1f(location_specRef, .8f);
 	glUniform1f(location_shininess, .8f);
 	glUniform1f(location_diffuseRef, .8f);
-	//	glUniform1ui(location_rgbMode, this->rgbMode);
-	//	glUniform1ui(location_r_channelView, chan_r);
-	//	glUniform1ui(location_g_channelView, chan_g);
-	//	glUniform1ui(location_r_nbChannels, 1);
-	//	glUniform1ui(location_g_nbChannels, (_grid->grid->getVoxelDimensionality() > 1) ? 1 : 0); // only set this if there's two grids
-	//	if (_grid->nbChannels > 1) {
-	//		glUniform1ui(location_r_selectedChannel, this->selectedChannel_r);
-	//		glUniform1ui(location_g_selectedChannel, this->selectedChannel_g);
-	//	} else {
-	//		glUniform1ui(location_r_selectedChannel, 0);
-	//		glUniform1ui(location_g_selectedChannel, 0);
-	//	}
 
 	// User-defined colors :
 	GLint location_color0	 = getUniform("color0");
@@ -2237,41 +1907,8 @@ void Scene::newAPI_prepareUniforms_Volumetric(GLfloat* mvMat, GLfloat* pMat, glm
 
 	// print uniform values :
 	if (this->showVAOstate) {
-		auto vx = _grid->grid->getVoxelDimensions();
-		std::cerr << "[LOG] " << __FUNCTION__ << " has uniform values :\n";
-		//std::cerr << "[LOG]\tMax possible value        : " << static_cast<double>(std::numeric_limits<DiscreteGrid::data_t>::max()) << '\n';
-		std::cerr << "[LOG]\tDraw mode                : " << +this->drawMode << '\n';
-		std::cerr << "[LOG]\tNumber of channels        : " << +_grid->nbChannels << '\n';
-		std::cerr << "[LOG]\tClip distance from camera : " << +clipDistanceFromCamera << '\n';
-		std::cerr << "[LOG]\tVoxel dimensions          : [" << vx.x << ',' << vx.y << ',' << vx.z << "]\n";
-		std::cerr << "[LOG]\tGrid resolution           : [" << floatres.x << ',' << floatres.y << ',' << floatres.z << "]\n";
-		std::cerr << "[LOG]\tVolume epsilon            : [" << _grid->defaultEpsilon.x << ',' << _grid->defaultEpsilon.y << ',' << _grid->defaultEpsilon.z << "]\n";
-		std::cerr << "[LOG]\tCamera position           : [" << camPos.x << ',' << camPos.y << ',' << camPos.z << "]\n";
-		std::cerr << "[LOG]\tPlane positions           : [" << planePos.x << ',' << planePos.y << ',' << planePos.z << "]\n";
-		std::cerr << "[LOG]\tPlane directions          : [" << +this->planeDirection.x << ',' << +this->planeDirection.y << ',' << this->planeDirection.z << "]\n";
-		std::cerr << "[LOG]\tTexture bounds            : [" << +this->textureBounds0.x << ',' << +this->textureBounds0.y << "]\n";
-		std::cerr << "[LOG]\tTexture bounds alt        : [" << +this->textureBounds1.x << ',' << +this->textureBounds1.y << "]\n";
-		std::cerr << "[LOG]\tColor bounds              : [" << +this->colorBounds0.x << ',' << +this->colorBounds0.y << "]\n";
-		std::cerr << "[LOG]\tColor bounds alt          : [" << +this->colorBounds1.x << ',' << +this->colorBounds1.y << "]\n";
-		std::cerr << "[LOG]\tVisu BB min               : [" << +min.x << ',' << +min.y << ',' << +min.z << "]\n";
-		std::cerr << "[LOG]\tVisu BB max               : [" << +max.x << ',' << +max.y << ',' << +max.z << "]\n";
-		for (std::size_t i = 0; i < this->lightPositions.size(); ++i) {
-			std::cerr << "[LOG]\tLight " << i << "                   : [" << +this->lightPositions[i].x << ',' << +this->lightPositions[i].y << ',' << +this->lightPositions[i].z << "]\n";
-		}
 		LOG_LEAVE(Scene::drawVolumetric)
 	}
-}
-
-GLuint Scene::getVolumetricProgram() {
-	return this->programHandle_VolumetricViewer;
-}
-
-void Scene::useProgram(GLuint _program_handle) {
-	glUseProgram(_program_handle);
-}
-
-GLint Scene::findUniform(GLuint _program_handle, const char* _uniform_name) {
-	return glGetUniformLocation(_program_handle, _uniform_name);
 }
 
 void Scene::newAPI_drawGrid(GLfloat* mvMat, GLfloat* pMat, glm::mat4 baseMatrix, const NewAPI_GridGLView::Ptr& grid) {
@@ -2499,64 +2136,30 @@ void Scene::generatePlanesArray(SimpleVolMesh& _mesh) {
 	glm::vec3 hl = glm::vec3(1., -1., .0);	  // higher-left
 	glm::vec3 hr = glm::vec3(1., 1., .0);	 // higher-right
 
+	// clang-format off
 	// Push them into the vectors, so they can be drawn without indices :
 	// Plane X :
-	_mesh.positions.push_back(apos);
-	_mesh.normals.push_back(anorm);
-	_mesh.texture.push_back(ll);
-	_mesh.positions.push_back(cpos);
-	_mesh.normals.push_back(cnorm);
-	_mesh.texture.push_back(lr);
-	_mesh.positions.push_back(epos);
-	_mesh.normals.push_back(enorm);
-	_mesh.texture.push_back(hl);
-	_mesh.positions.push_back(epos);
-	_mesh.normals.push_back(enorm);
-	_mesh.texture.push_back(hl);
-	_mesh.positions.push_back(cpos);
-	_mesh.normals.push_back(cnorm);
-	_mesh.texture.push_back(lr);
-	_mesh.positions.push_back(gpos);
-	_mesh.normals.push_back(gnorm);
-	_mesh.texture.push_back(hr);
+	_mesh.positions.push_back(apos); _mesh.normals.push_back(anorm); _mesh.texture.push_back(ll);
+	_mesh.positions.push_back(cpos); _mesh.normals.push_back(cnorm); _mesh.texture.push_back(lr);
+	_mesh.positions.push_back(epos); _mesh.normals.push_back(enorm); _mesh.texture.push_back(hl);
+	_mesh.positions.push_back(epos); _mesh.normals.push_back(enorm); _mesh.texture.push_back(hl);
+	_mesh.positions.push_back(cpos); _mesh.normals.push_back(cnorm); _mesh.texture.push_back(lr);
+	_mesh.positions.push_back(gpos); _mesh.normals.push_back(gnorm); _mesh.texture.push_back(hr);
 	// Plane Y :
-	_mesh.positions.push_back(apos);
-	_mesh.normals.push_back(anorm);
-	_mesh.texture.push_back(ll);
-	_mesh.positions.push_back(bpos);
-	_mesh.normals.push_back(bnorm);
-	_mesh.texture.push_back(lr);
-	_mesh.positions.push_back(epos);
-	_mesh.normals.push_back(enorm);
-	_mesh.texture.push_back(hl);
-	_mesh.positions.push_back(epos);
-	_mesh.normals.push_back(enorm);
-	_mesh.texture.push_back(hl);
-	_mesh.positions.push_back(bpos);
-	_mesh.normals.push_back(bnorm);
-	_mesh.texture.push_back(lr);
-	_mesh.positions.push_back(fpos);
-	_mesh.normals.push_back(fnorm);
-	_mesh.texture.push_back(hr);
+	_mesh.positions.push_back(apos); _mesh.normals.push_back(anorm); _mesh.texture.push_back(ll);
+	_mesh.positions.push_back(bpos); _mesh.normals.push_back(bnorm); _mesh.texture.push_back(lr);
+	_mesh.positions.push_back(epos); _mesh.normals.push_back(enorm); _mesh.texture.push_back(hl);
+	_mesh.positions.push_back(epos); _mesh.normals.push_back(enorm); _mesh.texture.push_back(hl);
+	_mesh.positions.push_back(bpos); _mesh.normals.push_back(bnorm); _mesh.texture.push_back(lr);
+	_mesh.positions.push_back(fpos); _mesh.normals.push_back(fnorm); _mesh.texture.push_back(hr);
 	// Plane Z :
-	_mesh.positions.push_back(apos);
-	_mesh.normals.push_back(anorm);
-	_mesh.texture.push_back(ll);
-	_mesh.positions.push_back(bpos);
-	_mesh.normals.push_back(bnorm);
-	_mesh.texture.push_back(lr);
-	_mesh.positions.push_back(cpos);
-	_mesh.normals.push_back(cnorm);
-	_mesh.texture.push_back(hl);
-	_mesh.positions.push_back(cpos);
-	_mesh.normals.push_back(cnorm);
-	_mesh.texture.push_back(hl);
-	_mesh.positions.push_back(bpos);
-	_mesh.normals.push_back(bnorm);
-	_mesh.texture.push_back(lr);
-	_mesh.positions.push_back(dpos);
-	_mesh.normals.push_back(dnorm);
-	_mesh.texture.push_back(hr);
+	_mesh.positions.push_back(apos); _mesh.normals.push_back(anorm); _mesh.texture.push_back(ll);
+	_mesh.positions.push_back(bpos); _mesh.normals.push_back(bnorm); _mesh.texture.push_back(lr);
+	_mesh.positions.push_back(cpos); _mesh.normals.push_back(cnorm); _mesh.texture.push_back(hl);
+	_mesh.positions.push_back(cpos); _mesh.normals.push_back(cnorm); _mesh.texture.push_back(hl);
+	_mesh.positions.push_back(bpos); _mesh.normals.push_back(bnorm); _mesh.texture.push_back(lr);
+	_mesh.positions.push_back(dpos); _mesh.normals.push_back(dnorm); _mesh.texture.push_back(hr);
+	//clang-format on
 
 	// Push back enough indices to draw the planes all at once :
 	for (unsigned int i = 0; i < _mesh.positions.size() - base; ++i) {
@@ -2662,67 +2265,37 @@ void Scene::generateTexCube(SimpleVolMesh& _mesh) {
 	 *  /
 	 *+x
 	 */
+	// clang-format off
 	// Build position, normals, and tex coordinates all in one line for each vertex
-	glm::vec4 apos	= glm::vec4(.0, .0, .0, 1.);
-	glm::vec4 anorm = apos - center;
-	glm::vec3 atex	= glm::vec3(.0, .0, .0);
-	glm::vec4 bpos	= glm::vec4(1., .0, .0, 1.);
-	glm::vec4 bnorm = bpos - center;
-	glm::vec3 btex	= glm::vec3(1., .0, .0);
-	glm::vec4 cpos	= glm::vec4(.0, 1., .0, 1.);
-	glm::vec4 cnorm = cpos - center;
-	glm::vec3 ctex	= glm::vec3(.0, 1., .0);
-	glm::vec4 dpos	= glm::vec4(1., 1., .0, 1.);
-	glm::vec4 dnorm = dpos - center;
-	glm::vec3 dtex	= glm::vec3(1., 1., .0);
-	glm::vec4 epos	= glm::vec4(.0, .0, 1., 1.);
-	glm::vec4 enorm = epos - center;
-	glm::vec3 etex	= glm::vec3(.0, .0, 1.);
-	glm::vec4 fpos	= glm::vec4(1., .0, 1., 1.);
-	glm::vec4 fnorm = fpos - center;
-	glm::vec3 ftex	= glm::vec3(1., .0, 1.);
-	glm::vec4 gpos	= glm::vec4(.0, 1., 1., 1.);
-	glm::vec4 gnorm = gpos - center;
-	glm::vec3 gtex	= glm::vec3(.0, 1., 1.);
-	glm::vec4 hpos	= glm::vec4(1., 1., 1., 1.);
-	glm::vec4 hnorm = hpos - center;
-	glm::vec3 htex	= glm::vec3(1., 1., 1.);
-	_mesh.positions.push_back(apos);
-	_mesh.normals.push_back(anorm);
-	_mesh.texture.push_back(atex);
-	_mesh.positions.push_back(bpos);
-	_mesh.normals.push_back(bnorm);
-	_mesh.texture.push_back(btex);
-	_mesh.positions.push_back(cpos);
-	_mesh.normals.push_back(cnorm);
-	_mesh.texture.push_back(ctex);
-	_mesh.positions.push_back(dpos);
-	_mesh.normals.push_back(dnorm);
-	_mesh.texture.push_back(dtex);
-	_mesh.positions.push_back(epos);
-	_mesh.normals.push_back(enorm);
-	_mesh.texture.push_back(etex);
-	_mesh.positions.push_back(fpos);
-	_mesh.normals.push_back(fnorm);
-	_mesh.texture.push_back(ftex);
-	_mesh.positions.push_back(gpos);
-	_mesh.normals.push_back(gnorm);
-	_mesh.texture.push_back(gtex);
-	_mesh.positions.push_back(hpos);
-	_mesh.normals.push_back(hnorm);
-	_mesh.texture.push_back(htex);
-	unsigned int a			= 0;
-	unsigned int b			= 1;
-	unsigned int c			= 2;
-	unsigned int d			= 3;
-	unsigned int e			= 4;
-	unsigned int f			= 5;
-	unsigned int g			= 6;
-	unsigned int h			= 7;
+	glm::vec4 apos	= glm::vec4(.0, .0, .0, 1.); glm::vec4 anorm = apos - center; glm::vec3 atex = glm::vec3(.0, .0, .0);
+	glm::vec4 bpos	= glm::vec4(1., .0, .0, 1.); glm::vec4 bnorm = bpos - center; glm::vec3 btex = glm::vec3(1., .0, .0);
+	glm::vec4 cpos	= glm::vec4(.0, 1., .0, 1.); glm::vec4 cnorm = cpos - center; glm::vec3 ctex = glm::vec3(.0, 1., .0);
+	glm::vec4 dpos	= glm::vec4(1., 1., .0, 1.); glm::vec4 dnorm = dpos - center; glm::vec3 dtex = glm::vec3(1., 1., .0);
+	glm::vec4 epos	= glm::vec4(.0, .0, 1., 1.); glm::vec4 enorm = epos - center; glm::vec3 etex = glm::vec3(.0, .0, 1.);
+	glm::vec4 fpos	= glm::vec4(1., .0, 1., 1.); glm::vec4 fnorm = fpos - center; glm::vec3 ftex = glm::vec3(1., .0, 1.);
+	glm::vec4 gpos	= glm::vec4(.0, 1., 1., 1.); glm::vec4 gnorm = gpos - center; glm::vec3 gtex = glm::vec3(.0, 1., 1.);
+	glm::vec4 hpos	= glm::vec4(1., 1., 1., 1.); glm::vec4 hnorm = hpos - center; glm::vec3 htex = glm::vec3(1., 1., 1.);
+	_mesh.positions.push_back(apos); _mesh.normals.push_back(anorm); _mesh.texture.push_back(atex);
+	_mesh.positions.push_back(bpos); _mesh.normals.push_back(bnorm); _mesh.texture.push_back(btex);
+	_mesh.positions.push_back(cpos); _mesh.normals.push_back(cnorm); _mesh.texture.push_back(ctex);
+	_mesh.positions.push_back(dpos); _mesh.normals.push_back(dnorm); _mesh.texture.push_back(dtex);
+	_mesh.positions.push_back(epos); _mesh.normals.push_back(enorm); _mesh.texture.push_back(etex);
+	_mesh.positions.push_back(fpos); _mesh.normals.push_back(fnorm); _mesh.texture.push_back(ftex);
+	_mesh.positions.push_back(gpos); _mesh.normals.push_back(gnorm); _mesh.texture.push_back(gtex);
+	_mesh.positions.push_back(hpos); _mesh.normals.push_back(hnorm); _mesh.texture.push_back(htex);
+	unsigned int a = 0;
+	unsigned int b = 1;
+	unsigned int c = 2;
+	unsigned int d = 3;
+	unsigned int e = 4;
+	unsigned int f = 5;
+	unsigned int g = 6;
+	unsigned int h = 7;
 	unsigned int faceIdx1[] = {a, d, c, a, b, d, e, b, a, e, f, b, g, e, a, g, a, c};
 	unsigned int faceIdx2[] = {h, e, g, h, f, e, h, g, c, h, c, d, h, d, b, h, f, b};
 	_mesh.indices.insert(_mesh.indices.end(), faceIdx1, faceIdx1 + 18);
 	_mesh.indices.insert(_mesh.indices.end(), faceIdx2, faceIdx2 + 18);
+	// clang-format on
 }
 
 void Scene::setupVBOData(const SimpleVolMesh& _mesh) {
@@ -2769,33 +2342,6 @@ void Scene::setupVAOPointers() {
 
 glm::vec3 Scene::getSceneBoundaries() const {
 	return this->sceneBB.getDiagonal();
-}
-
-void Scene::printProgramUniforms(const GLuint _pid) {
-	const GLsizei bufSize = 256;	// maximum name length
-	GLchar name[bufSize];	 // variable name in GLSL
-	GLsizei length	= 0;	// name length
-	GLint attrCount = 0;	// the count of attributes/uniforms
-	GLenum type		= GL_NONE;	  // type of the variable (float, vec3 or mat4, etc)
-	GLint size		= 0;	// size of the variable
-
-	std::cerr << "[TRACE] Printing attributes of the program " << +_pid << '\n';
-	glUseProgram(_pid);
-
-	std::cerr << "[TRACE]\t\tActive attributes :\n";
-	glGetProgramiv(_pid, GL_ACTIVE_ATTRIBUTES, &attrCount);
-	for (GLint i = 0; i < attrCount; ++i) {
-		//std::cerr << "[TRACE]\t" << ;
-		glGetActiveAttrib(_pid, (GLuint) i, bufSize, &length, &size, &type, name);
-		fprintf(stderr, "[TRACE]\t\t\tAttribute #%d Type: %u Name: %s\n", i, type, name);
-	}
-
-	std::cerr << "[TRACE]\t\tActive uniforms :\n";
-	glGetProgramiv(_pid, GL_ACTIVE_UNIFORMS, &attrCount);
-	for (GLint i = 0; i < attrCount; ++i) {
-		glGetActiveUniform(_pid, (GLuint) i, bufSize, &length, &size, &type, name);
-		fprintf(stderr, "[TRACE]\t\t\tUniform #%d Type: %u Name: %s\n", i, type, name);
-	}
 }
 
 void Scene::updateVis() {

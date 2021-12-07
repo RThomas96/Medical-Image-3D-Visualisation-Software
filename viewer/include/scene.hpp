@@ -43,8 +43,6 @@
 #include <mutex>
 #include <vector>
 
-#define PLANE_POS_FLOOR
-
 /// @defgroup graphpipe Graphics pipeline
 /// @brief This group contains all classes closely or loosely related to the graphics pipeline.
 /// @details There are very few classes in this group, but that's only because Scene is a god-object. Some attempt was
@@ -52,7 +50,6 @@
 /// @warning Spaghetti code ahead.
 
 class ControlPanel;	   // Forward declaration
-class VolumetricGridViewer;	   /// fwd-decl
 
 /// @brief Simple enum to keep track of the different viewing primitives for the program.
 enum DrawMode { Solid,
@@ -90,8 +87,6 @@ enum planeHeading { North = 0,
 /// gateway for any and all operations. It should be <b><i>heavily</i></b> refactored.
 /// @warning Spaghetti code ahead.
 class Scene : public QOpenGLFunctions_3_2_Core {
-	/// @brief typedef similar to a glm::uvec4
-	typedef glm::vec<4, unsigned int, glm::defaultp> uvec4;
 	/// @brief typedef to omit glm:: from a 'uvec3'
 	typedef glm::uvec3 uvec3;
 
@@ -138,14 +133,6 @@ public:
 
 	/// @brief Computes the planes positions based on their parameters.
 	glm::vec3 computePlanePositions();
-	/// @brief Returns the plane directions for outside use
-	glm::vec3 getPlaneDirections() const;
-	/// @brief Get the lights, from outside.
-	const std::vector<glm::vec3>& getLights() const;
-
-	/// @brief return the ids of the color scales, for now
-	/// @note will switch over to the color scale manager once this is over.
-	glm::tvec4<GLuint> draft_getGeneratedColorScales();
 
 	/// @brief Will attempt to do a grid save, to test the new writer backend.
 	void draft_tryAndSaveFirstGrid(void);
@@ -235,8 +222,6 @@ public:
 	GLuint newAPI_uploadTexture3D(const GLuint handle, const TextureUpload& tex, std::size_t s, std::vector<std::uint16_t>& data);
 	/// @brief Allocate a texture conformant with the given settings, but don't fill it with data yet.
 	GLuint newAPI_uploadTexture3D_allocateonly(const TextureUpload& tex);
-	/// @brief Inserts a debug message from OpenGL directly to stderr
-	void openGLDebugLogger_inserter(const QOpenGLDebugMessage m);
 
 	/// @brief This performs ARAP deformation on the first mesh found.
 	/// @note THIS IS A WIP/DRAFT FUNCTION, NOT DESIGNED FOR PRODUCTION RELEASE
@@ -270,15 +255,6 @@ public:
 	/// @brief Set Z's plane displacement within the bounding box to be `scalar`
 	void slotSetPlaneDisplacementZ(float scalar);
 
-	/// @brief set the clip plane distance from camera to be `val`
-	void slotSetClipDistance(double val) {
-		this->clipDistanceFromCamera = static_cast<float>(val);
-		return;
-	}
-
-	/// @brief Get clipping distance from camera
-	float getClipDistance(void) { return this->clipDistanceFromCamera; }
-
 	/// @brief Toggles the visibility of the plane in argument
 	void togglePlaneVisibility(planes _plane);
 	/// @brief Signals all planes they need to be to be [in]visible.
@@ -303,9 +279,6 @@ public:
 	/// @brief Reset the axis positions.
 	void resetPositionResponse(void);
 
-	/// @brief Simply returns the number of loaded grids in the scene.
-	std::size_t getInputGridCount(void) const;
-
 	/// @brief Applies a user-defined function on grids, with the constraint it must be const.
 	/// @warning Only applies the lambda on the new Image::Grid interface, and only when it is wrapped in the
 	/// NewAPI_GridGLView helper class !!!
@@ -319,26 +292,7 @@ public:
 	/// @brief Checks if the scene is already initialized.
 	bool isSceneInitialized(void) const { return this->isInitialized; }
 
-	/// @brief Returns the volumetric GL program handle.
-	GLuint getVolumetricProgram(void);
-	/// @brief Returns the handle for the solid viewing program
-	GLuint getSolidProgram(void);
-	/// @brief Returns the handle for the 3D plane program
-	GLuint get3DPlaneProgram(void);
-	/// @brief Returns the handle for the texture explorer program
-	GLuint getTextureExplorerProgram(void);
-
-	/// @brief Binds a given program instance.
-	void useProgram(GLuint _program_handle);
-
-	/// @brief Find the given uniform name in the given program.
-	GLint findUniform(GLuint _program_handle, const char* _uniform_name);
-
 private:
-	/// @brief compile the given shader at 'path' as a shader of type 'shaType'
-	GLuint compileShader(const std::string& path, const GLenum shaType, bool verbose = false);
-	/// @brief Create and link a program, with the given (valid) shader IDs.
-	GLuint compileProgram(const GLuint vSha = 0, const GLuint gSha = 0, const GLuint fSha = 0, bool verbose = false);
 	/// @brief Compile the given shaders, and return the ID of the program generated. On any error, returns 0.
 	GLuint compileShaders(std::string vPath, std::string gPath, std::string fPath, bool verbose = false);
 
@@ -399,9 +353,6 @@ private:
 	/// @brief Returns an unsigned int (suitable for uniforms) from a color function
 	uint colorFunctionToUniform(ColorFunction _c);
 
-	/// @brief Prints the accessible uniforms and attributes of the given program.
-	void printProgramUniforms(const GLuint _pid);
-
 	/// @brief Updates the visibility array to only show values between the min and max tex values
 	void updateVis();
 
@@ -440,11 +391,11 @@ private:
 	void newAPI_tex3D_generateMESH(NewAPI_GridGLView::Ptr& grid, VolMeshData& _mesh);
 
 protected:
-	bool isInitialized;	   ///< tracks if the scene was initialized or not
-	bool showVAOstate;	  ///< Do we need to print the VAO/program state on next draw ?
-	bool shouldUpdateVis;	 ///< Should we update visibility on next draw ?
-	bool shouldDeleteGrid;	  ///< Should we delete a grid on next draw ?
-	std::vector<std::size_t> delGrid;	 ///< Grids to delete at next refresh
+	bool isInitialized;					///< tracks if the scene was initialized or not
+	bool showVAOstate;					///< Do we need to print the VAO/program state on next draw ?
+	bool shouldUpdateVis;				///< Should we update visibility on next draw ?
+	bool shouldDeleteGrid;				///< Should we delete a grid on next draw ?
+	std::vector<std::size_t> delGrid;	///< Grids to delete at next refresh
 
 	std::queue<std::shared_ptr<DrawableBase>> to_init;		///< A set of drawables that have not been initialized yet
 	std::vector<std::shared_ptr<DrawableBase>> drawables;	///< The drawables to display
@@ -502,12 +453,12 @@ protected:
 	GLuint vaoHandle_VolumetricBuffers;
 	GLuint vaoHandle_boundingBox;
 	// VBO handles :
-	GLuint vboHandle_VertPos;
-	GLuint vboHandle_VertNorm;
-	GLuint vboHandle_VertTex;
-	GLuint vboHandle_Element;
-	GLuint vboHandle_PlaneElement;
-	GLuint vboHandle_SinglePlaneElement;
+	GLuint vboHandle_VertPos;				///< The VBO for the vertex positions.
+	GLuint vboHandle_VertNorm;				///< The VBO for the vertex normals.
+	GLuint vboHandle_VertTex;				///< The VBO for the texture data.
+	GLuint vboHandle_Element;				///< The vertex indices necessary to draw the tetrahedral mesh.
+	GLuint vboHandle_PlaneElement;			///< The vertex indices necessary to draw the planes (a collection of the 3 main planes X/Y/Z).
+	GLuint vboHandle_SinglePlaneElement;	///< The vertex indices necessary to draw a single plane.
 	GLuint vboHandle_boundingBoxVertices;
 	GLuint vboHandle_boundingBoxIndices;
 
@@ -551,13 +502,11 @@ protected:
 	/* Threaded loading of high-resolution grid */
 	/********************************************/
 	std::mutex mutexout;
-	std::mutex mutexadd;
 	std::vector<IO::ThreadedTask::Ptr> tasks;
 	std::vector<std::shared_ptr<std::thread>> runningThreads;
 	QTimer* timer_refreshProgress;
 	QProgressBar* pb_loadProgress;
 	bool isFinishedLoading;
-	void replaceGridsWithHighRes();
 
 	/// @brief Prints all uniforms contained in the compiled program.
 	/// @details  Simple print debug for a shader's uniforms, notably to see which uniforms are available after
