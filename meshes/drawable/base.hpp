@@ -23,6 +23,7 @@ class DrawableBase {
 	using Ptr = std::shared_ptr<DrawableBase>;
 protected:
 	DrawableBase() : bound_context(nullptr), gl(nullptr),
+		should_update_on_next_draw(false),
 		bbmin(), bbmax() {
 		glm::vec3::value_type min = std::numeric_limits<glm::vec3::value_type>::lowest();
 		glm::vec3::value_type max = std::numeric_limits<glm::vec3::value_type>::max();
@@ -52,11 +53,16 @@ public:
 	/// @brief Returns the min and max coordinates of an axis-aligned bounding box around the object.
 	virtual std::pair<glm::vec3, glm::vec3> getBoundingBox() const { return std::make_pair(this->bbmin, this->bbmax); }
 
+	/// @brief Forces an update on the next draw call.
+	virtual void updateOnNextDraw(void) { this->should_update_on_next_draw = true; }
+
 protected:
 	/// @brief The context in which the drawable was initialized.
 	QOpenGLContext* bound_context;
 	/// @brief A pointer to a struct of functors to call OpenGL functions through Qt.
 	ShaderCompiler::GLFunctions* gl;
+
+	bool should_update_on_next_draw;
 
 	glm::vec3 bbmin; ///< The min point of the bounding box of the element to draw.
 	glm::vec3 bbmax; ///< The max point of the bounding box of the element to draw.

@@ -27,9 +27,15 @@ public:
 	/// @note For now, calls draw().
 	virtual void fastDraw(GLfloat* proj_mat, GLfloat* view_mat, glm::vec4 camera) override;
 
+	/// @brief Returns a reference to the mesh pointer.
+	virtual std::shared_ptr<Mesh>& getMesh() { return this->mesh; }
+
 protected:
 	/// @brief Create the VAO, the VBOs and upload data
 	void makeVAO(void);
+
+	/// @brief Re-samples the data in the mesh and uploads it to the GL.
+	void updateData(void);
 
 protected:
 	GLuint program_handle_draw;		///< The program name used in the regular drawing method.

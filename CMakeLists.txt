@@ -186,6 +186,7 @@ TARGET_LINK_LIBRARIES(neighbor_visu
 	PUBLIC writergrid_tiff
 	PUBLIC ${CMAKE_PROJECT_NAME}_shaders
 	PUBLIC ${CMAKE_PROJECT_NAME}_mesh
+	PUBLIC ${CMAKE_PROJECT_NAME}_meshop_arap
 	PUBLIC ${CMAKE_PROJECT_NAME}_drawable_meshes
 )
 # }}}

@@ -140,6 +140,8 @@ void Viewer::keyPressEvent(QKeyEvent* e) {
 				this->updateCameraPosition();
 			} else if ((e->modifiers() & Qt::KeyboardModifier::ShiftModifier) != 0) {
 				// perform dummy ARAP deformation
+				this->scene->dummy_perform_arap_on_first_mesh();
+				this->update();
 			} else {
 				QGLViewer::keyPressEvent(e);
 			}

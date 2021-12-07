@@ -1,14 +1,16 @@
 #ifndef ASRIGIDASPOSSIBLE_H
 #define ASRIGIDASPOSSIBLE_H
 
-#include <iostream>
-
-#include <glm/glm.hpp>
 #include "Edge.h"
 #include "../../base_mesh/Triangle.h"
-#include "gsl/gsl_linalg.h"
 
-#include "cholmod.h"
+#include <glm/glm.hpp>
+#include <gsl/gsl_linalg.h>
+#include <suitesparse/cholmod.h>
+
+#include <iostream>
+
+// to include : gsl/gsl_linalg.h and choldmod.h ...
 
 namespace BasicGL {
 	void drawSphere(float x, float y, float z, float radius, int slices, int stacks);
@@ -39,6 +41,8 @@ public:
 	unsigned int getIterationNb(){ return iterationNb; }
 
 	void draw();
+
+	std::vector<glm::vec3> dummy_deformation(float threshold_on_x, glm::vec3 displacement);
 
 	void clear();
 

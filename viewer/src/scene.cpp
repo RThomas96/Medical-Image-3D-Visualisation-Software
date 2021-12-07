@@ -3,6 +3,7 @@
 #include "../../image/tiff/include/tiff_writer_templated.hpp"
 #include "../../new_grid/include/grid_writer.hpp"
 #include "../include/planar_viewer.hpp"
+#include "../../meshes/operations/arap/AsRigidAsPossible.h"
 
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/io.hpp>
@@ -751,6 +752,36 @@ void Scene::updateBoundingBox(void) {
 	}
 
 	return;
+}
+
+void Scene::dummy_perform_arap_on_first_mesh() {
+	if (this->drawables.size() == 0) { std::cerr << "Error : no meshes loaded.\n"; return; }
+	auto to_deform = this->drawables.at(0);
+
+	auto mesh_to_deform = std::dynamic_pointer_cast<DrawableMesh>(to_deform);
+	if (mesh_to_deform == nullptr) { std::cerr << "Error : could not get the first drawable as a DrawableMesh.\n"; return; }
+	std::shared_ptr<Mesh> _mesh = mesh_to_deform->getMesh();
+
+	AsRigidAsPossible arap_deformation;
+	arap_deformation.clear();
+	arap_deformation.init(_mesh->getVertices(), _mesh->getTriangles());
+	arap_deformation.setIterationNb(5); // 5 iterations maximum
+
+	// Threshold on X is 15% of the left-most points that will be translated. Compute from bb :
+	auto mesh_bb = mesh_to_deform->getBoundingBox();
+	glm::vec3::value_type threshold = (mesh_bb.first + (0.85f * (mesh_bb.second - mesh_bb.first))).x;
+	glm::vec3 translate = 0.25f * (mesh_bb.second - mesh_bb.first);
+
+	auto vertices = arap_deformation.dummy_deformation(threshold, translate);
+
+	for (std::size_t i = 0; i < _mesh->getVertices().size(); ++i) {
+		_mesh->setVertices(i, vertices[i]);
+	}
+	_mesh->update();
+
+	this->updateBoundingBox();
+
+	to_deform->updateOnNextDraw();
 }
 
 void Scene::recompileShaders(bool verbose) {

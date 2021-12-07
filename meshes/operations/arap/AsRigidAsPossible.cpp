@@ -167,6 +167,26 @@ void AsRigidAsPossible::setHandles(const std::vector< bool > & _handles){
     std::cout << "Nombres de contraintes " << constrainedNb <<  std::endl;
 }
 
+std::vector<glm::vec3> AsRigidAsPossible::dummy_deformation(float threshold_on_x, glm::vec3 displacement) {
+	std::vector<bool> handles(this->vertices.size(), false);
+	std::vector<glm::vec3> targets(this->vertices); // copy data directly from the vertex buffer
+
+	for (std::size_t i = 0; i < this->vertices.size(); ++i) {
+		if (this->vertices[i].x > threshold_on_x) {
+			handles[i] = true;
+			targets[i] = this->vertices[i] + displacement;
+		}
+	}
+
+	std::cerr << "SETTING ARAP HANDLES !!!" << '\n';
+	this->setHandles(handles);
+	std::cerr << "COMPUTING ARAP DEFORMATION !!!" << '\n';
+	this->compute_deformation(targets);
+	std::cerr << "FINISHED ARAP DEFORMATION !!!" << '\n';
+
+	return targets;
+}
+
 
 void AsRigidAsPossible::setDefaultRotations(){
 

@@ -35,6 +35,8 @@ void DrawableMesh::initialize(QOpenGLContext *_context, ShaderCompiler::GLFuncti
 }
 
 void DrawableMesh::draw(GLfloat *proj_mat, GLfloat *view_mat, glm::vec4 camera) {
+	if (this->should_update_on_next_draw) { this->updateData(); }
+
 	// Bind the VAO & program
 	this->gl->glUseProgram(this->program_handle_draw);
 	this->gl->glBindVertexArray(this->vao);
@@ -118,4 +120,16 @@ void DrawableMesh::makeVAO(void) {
 	this->gl->glBindBuffer(GL_ARRAY_BUFFER, this->vbo_texture);
 	this->gl->glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
+}
+
+void DrawableMesh::updateData(void) {
+	auto vertices = this->mesh->getVertices();
+	auto normals = this->mesh->getVertexNormals();
+	// we assume that the triangles and texture data do not change ...
+	this->gl->glBindBuffer(GL_ARRAY_BUFFER, this->vbo_vertices);
+	this->gl->glBufferData(GL_ARRAY_BUFFER, vertices.size() * 3 * sizeof(GLfloat), vertices.data(), GL_STATIC_DRAW);
+	this->gl->glBindBuffer(GL_ARRAY_BUFFER, this->vbo_normals);
+	this->gl->glBufferData(GL_ARRAY_BUFFER, normals.size() * 3 * sizeof(GLfloat), normals.data(), GL_STATIC_DRAW);
+	// disable update for new draw call :
+	this->should_update_on_next_draw = false;
 }

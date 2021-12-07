@@ -238,6 +238,10 @@ public:
 	/// @brief Inserts a debug message from OpenGL directly to stderr
 	void openGLDebugLogger_inserter(const QOpenGLDebugMessage m);
 
+	/// @brief This performs ARAP deformation on the first mesh found.
+	/// @note THIS IS A WIP/DRAFT FUNCTION, NOT DESIGNED FOR PRODUCTION RELEASE
+	void dummy_perform_arap_on_first_mesh(void);
+
 	/// @brief Changes the texture coloration mode to the desired setting
 	void setColorFunction_r(ColorFunction _c);
 	void setColorFunction_g(ColorFunction _c);
