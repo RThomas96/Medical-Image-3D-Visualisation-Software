@@ -33,7 +33,6 @@ std::vector<glm::vec3> Mesh::getBB()
 void Mesh::update(){
 	computeBB();
 	recomputeNormals();
-	std::cout << "Mesh : " << vertices.size() << " vertices, " << triangles.size() << " triangles " << std::endl;
 }
 
 void Mesh::clear(){

@@ -180,6 +180,7 @@ void MainWidget::setupWidgets() {
 	});
 	QObject::connect(this->action_loadMesh, &QAction::triggered, [this]() {
 		this->scene->loadMesh();
+		this->viewer->updateInfoFromScene();
 	});
 
 	// Viewer(s) creation along with control panel :

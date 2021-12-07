@@ -18,6 +18,9 @@ public:
 	std::vector<glm::vec3> & getVertices(){return vertices;}
 	const std::vector<glm::vec3> & getVertices()const {return vertices;}
 
+	std::vector<glm::vec3>& getVertexNormals() { return this->verticesNormals; }
+	const std::vector<glm::vec3>& getVertexNormals() const { return this->verticesNormals; }
+
 	std::vector<Triangle> & getTriangles(){return triangles;}
 	const std::vector<Triangle> & getTriangles()const {return triangles;}
 

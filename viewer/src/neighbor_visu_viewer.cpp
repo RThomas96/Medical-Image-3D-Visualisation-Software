@@ -135,6 +135,16 @@ void Viewer::keyPressEvent(QKeyEvent* e) {
 			this->scene->draft_tryAndSaveFirstGrid();
 			this->update();
 			break;
+		case Qt::Key::Key_A:
+			if ((e->modifiers() & Qt::KeyboardModifier::ControlModifier) != 0) {
+				this->updateCameraPosition();
+			} else if ((e->modifiers() & Qt::KeyboardModifier::ShiftModifier) != 0) {
+				// perform dummy ARAP deformation
+			} else {
+				QGLViewer::keyPressEvent(e);
+			}
+			this->update();
+			break;
 		/*
 		Default handler.
 		*/
@@ -357,6 +367,18 @@ QString Viewer::mouseString() const {
 }
 
 void Viewer::updateCameraPosition() {
+	auto bb = this->scene->getSceneBoundingBox();
+	auto center = bb.getMin() + (bb.getDiagonal()/2.f);
+	auto radius = glm::length(bb.getDiagonal());
+	this->setSceneCenter(qglviewer::Vec(center.x, center.y, center.z));
+	this->setSceneRadius(radius * sceneRadiusMultiplier);
+	this->showEntireScene();
+}
+
+void Viewer::updateInfoFromScene() {
+	this->update();
+	this->updateCameraPosition();
+	this->update();
 }
 
 void Viewer::newAPI_loadGrid(Image::Grid::Ptr ptr) {

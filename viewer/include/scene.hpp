@@ -228,6 +228,8 @@ public:
 	float getSceneRadius();
 	/// @brief Get the scene center at this time
 	glm::vec3 getSceneCenter();
+	/// @brief Returns the bounding box of the scene.
+	Image::bbox_t getSceneBoundingBox() const;
 
 	/// @brief Upload a 3D texture with the given parameters.
 	GLuint newAPI_uploadTexture3D(const GLuint handle, const TextureUpload& tex, std::size_t s, std::vector<std::uint16_t>& data);

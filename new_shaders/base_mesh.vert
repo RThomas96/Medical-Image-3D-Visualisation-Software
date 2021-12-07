@@ -15,9 +15,10 @@ uniform mat4 model;
 uniform vec4 camera_pos;
 
 void main() {
-	gl_Position = vec4(in_position, 1.f) * model * view * proj;
+	mat3 begin_normal_matrix = mat3(view[0].xyz, view[1].xyz, view[2].xyz);
+	mat3 normal_matrix_3 = inverse(transpose(begin_normal_matrix));
+	gl_Position = proj * view * vec4(in_position, 1.f);
 	position = gl_Position;
-
-	normal = vec4(in_normal, .0f);
+	normal = vec4(normal_matrix_3 * in_normal, .0f);
 	texture = in_texture;
 }

@@ -10,6 +10,7 @@
 #include <QOpenGLFunctions_3_2_Compatibility>
 
 #include <glm/glm.hpp>
+#include <glm/vector_relational.hpp>
 
 #include <vector>
 #include <memory>
@@ -21,12 +22,20 @@
 class DrawableBase {
 	using Ptr = std::shared_ptr<DrawableBase>;
 protected:
-	DrawableBase() : bound_context(nullptr), gl(nullptr) {}
+	DrawableBase() : bound_context(nullptr), gl(nullptr),
+		bbmin(), bbmax() {
+		glm::vec3::value_type min = std::numeric_limits<glm::vec3::value_type>::lowest();
+		glm::vec3::value_type max = std::numeric_limits<glm::vec3::value_type>::max();
+		this->bbmin = glm::vec3{max, max, max};
+		this->bbmax = glm::vec3{min, min, min};
+	}
 public:
 	~DrawableBase() = default;
 
 	/// @brief Checks if the object has been initialized
-	virtual bool isInitialized() const { return this->bound_context != nullptr; }
+	virtual bool isInitialized() const {
+		return this->bound_context != nullptr && (glm::lessThan(this->bbmin, this->bbmax) == glm::vec3::bool_type{true, true, true});
+	}
 
 	/// @brief Initializes the object.
 	virtual void initialize(QOpenGLContext* context, ShaderCompiler::GLFunctions* functions) {
@@ -40,11 +49,17 @@ public:
 	/// @brief Draws the object (fast version).
 	virtual void fastDraw(GLfloat* proj_mat, GLfloat* view_mat, glm::vec4 camera) {};
 
+	/// @brief Returns the min and max coordinates of an axis-aligned bounding box around the object.
+	virtual std::pair<glm::vec3, glm::vec3> getBoundingBox() const { return std::make_pair(this->bbmin, this->bbmax); }
+
 protected:
 	/// @brief The context in which the drawable was initialized.
 	QOpenGLContext* bound_context;
 	/// @brief A pointer to a struct of functors to call OpenGL functions through Qt.
 	ShaderCompiler::GLFunctions* gl;
+
+	glm::vec3 bbmin; ///< The min point of the bounding box of the element to draw.
+	glm::vec3 bbmax; ///< The max point of the bounding box of the element to draw.
 };
 
 #endif // VISUALISATION_MESHES_DRAWABLE_BASE_HPP_

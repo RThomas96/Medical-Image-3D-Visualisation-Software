@@ -23,6 +23,9 @@ public:
 	/// @brief Multiplier to apply to scene radii for the scene's view.
 	static float sceneRadiusMultiplier;
 
+	/// @brief Updates info from the scene, binding its context for rendering.
+	void updateInfoFromScene();
+
 protected:
 	/// @brief Initializes the scene, and the viewer's variables.
 	virtual void init() override;

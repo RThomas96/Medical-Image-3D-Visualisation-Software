@@ -5,6 +5,7 @@
 #include "../include/planar_viewer.hpp"
 
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/io.hpp>
 
 #include <QMessageBox>
 #include <QFileDialog>
@@ -730,6 +731,17 @@ void Scene::updateBoundingBox(void) {
 		Image::bbox_t dbox = _g->getBoundingBox();
 		this->sceneBB.addPoints(box.getAllCorners());
 		this->sceneDataBB.addPoints(dbox.getAllCorners());
+	}
+
+	// Take into account drawables :
+	for (auto drawable : this->drawables) {
+		if (drawable->isInitialized()) {
+			auto drawable_bb = drawable->getBoundingBox();
+			this->sceneBB.addPoint(drawable_bb.first);
+			this->sceneBB.addPoint(drawable_bb.second);
+			this->sceneDataBB.addPoint(drawable_bb.first);
+			this->sceneDataBB.addPoint(drawable_bb.second);
+		}
 	}
 
 	// Update light positions :
@@ -2303,12 +2315,16 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 		this->newSHADERS_updateUBOData();
 	}
 	if (not this->to_init.empty()) {
-		std::cerr << "Initializing a new drawable !!!" << '\n';
-		auto to_initialize = this->to_init.back();
-		to_initialize->initialize(this->context, this);
-		this->drawables.emplace_back(to_initialize);
-		this->to_init.pop();
+		// Initialize all meshes to load into the scene :
+		while (not this->to_init.empty()) {
+			auto to_initialize = this->to_init.back();
+			to_initialize->initialize(this->context, this);
+			this->drawables.emplace_back(to_initialize);
+			this->to_init.pop();
+		}
+		this->updateBoundingBox();
 	}
+
 	glEnable(GL_DEPTH_TEST);
 	glEnablei(GL_BLEND, 0);
 	glEnable(GL_TEXTURE_3D);
@@ -3184,6 +3200,10 @@ void Scene::slotSetMinColorValueAlternate(double val) {
 void Scene::slotSetMaxColorValueAlternate(double val) {
 	this->colorBounds1.y = val;
 	this->updateCVR();
+}
+
+Image::bbox_t Scene::getSceneBoundingBox() const {
+	return this->sceneBB;
 }
 
 void Scene::setColor0(qreal r, qreal g, qreal b) {
