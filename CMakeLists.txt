@@ -135,6 +135,7 @@ TARGET_LINK_LIBRARIES(VisualisationWidgets
 
 # Neighbor visualisation {{{
 ADD_EXECUTABLE(neighbor_visu
+	./qt/include/dialog_pick_grids_from_scene.hpp
 	# Header files, for Qt MOCS compilation :
 	./viewer/include/scene.hpp
 	./viewer/include/planar_viewer.hpp

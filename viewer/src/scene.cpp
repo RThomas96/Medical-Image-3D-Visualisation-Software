@@ -4,6 +4,7 @@
 #include "../../new_grid/include/grid_writer.hpp"
 #include "../include/planar_viewer.hpp"
 #include "../../meshes/operations/arap/AsRigidAsPossible.h"
+#include "../../qt/include/dialog_pick_grids_from_scene.hpp"
 
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/io.hpp>
@@ -1016,6 +1017,23 @@ void Scene::loadMesh() {
 	auto& normals = mesh_to_load->getNormals();
 	// Load that OFF file :
 	FileIO::openOFF(file_name.toStdString(), mesh_to_load->getVertices(), mesh_to_load->getTriangles());
+	mesh_to_load->update();
+
+	// If any images loaded, ask with which image to be paired with :
+	if (this->newGrids.size()) {
+		// TODO add a picker for the grids
+		GridPickerFromScene* picker = new GridPickerFromScene();
+		picker->chooseGrids(this->newGrids);
+		if (picker->choice_Accepted()) {
+			// pair the image here
+			std::cerr << "choice accepted !\n";
+		} else {
+			std::cerr << "choice not accepted !\n";
+		}
+	} else {
+		std::cerr << "No grids to pair with ..." << '\n';
+	}
+
 	mesh_to_load->update();
 	this->meshes.emplace_back(mesh_to_load);
 
