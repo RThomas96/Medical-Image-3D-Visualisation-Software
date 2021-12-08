@@ -166,8 +166,8 @@ namespace Image {
 
 			if (this->sourceFile.empty() == false) {
 				// Nullify errors and warnings from the command line :
-				//TIFFSetErrorHandler(tiff_error_redirection);
-				//TIFFSetWarningHandler(tiff_warning_redirection);
+				TIFFSetErrorHandler(tiff_error_redirection);
+				TIFFSetWarningHandler(tiff_warning_redirection);
 
 				// Open the file :
 				TIFF* file = this->getLibraryHandle();
