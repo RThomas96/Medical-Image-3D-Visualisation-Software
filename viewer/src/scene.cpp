@@ -2099,6 +2099,138 @@ void Scene::generateSceneData() {
 	this->generatePlanesArray(mesh);
 	this->setupVBOData(mesh);
 	this->createBoundingBoxBuffers();
+
+	this->generateSphereData();
+}
+
+void Scene::generateSphereData() {
+	std::size_t segments_around = 8;
+	std::size_t segments_height = 8;
+
+	std::vector<glm::vec4> positions; // also serves as normals ...
+	std::vector<unsigned int> indices;
+
+	// Iterate and create positions around the sphere :
+	for (std::size_t i = 1; i <= segments_height; ++i) {
+		for (std::size_t j = 0; j < segments_around; ++j) {
+			double theta = 2 * M_PI * static_cast<float>(j) / static_cast<float>(segments_around);
+			double phi = M_PI * static_cast<float>(i) / static_cast<float>(segments_height+1);
+			positions.push_back(glm::normalize(glm::vec4{
+				static_cast<float>(sin(phi) * cos(theta)),
+				static_cast<float>(sin(phi) * sin(theta)),
+				static_cast<float>(cos(phi)), 1.f
+			}));
+		}
+	}
+	positions.push_back(glm::normalize(glm::vec4{
+	  static_cast<float>(sin(.0f) * cos(2*M_PI)),
+	  static_cast<float>(sin(.0f) * sin(2*M_PI)),
+	  static_cast<float>(cos(.0f)), 1.f
+	}));
+	positions.push_back(glm::normalize(glm::vec4{
+	  static_cast<float>(sin(M_PI) * cos(2*M_PI)),
+	  static_cast<float>(sin(M_PI) * sin(2*M_PI)),
+	  static_cast<float>(cos(M_PI)), 1.f
+	}));
+	// link the sphere faces :
+	for (std::size_t i = 0; i < segments_height-1; ++i) {
+		std::size_t next_segment_height = i+1;
+		for (std::size_t j = 0; j < segments_around; ++j) {
+			std::size_t next_segment_around = j+1;
+			if (next_segment_around == segments_around) { next_segment_around = 0; }
+
+			// The four corners below define a quad (region of the sphere).
+			std::size_t p1 = i * segments_around + j;
+			std::size_t p2 = i * segments_around + next_segment_around;
+			std::size_t p3 = next_segment_height * segments_around + j;
+			std::size_t p4 = next_segment_height * segments_around + next_segment_around;
+			// Link them as two triangles :
+			indices.push_back(p1);
+			indices.push_back(p2);
+			indices.push_back(p3);
+			indices.push_back(p3);
+			indices.push_back(p2);
+			indices.push_back(p4);
+		}
+	}
+	// Link the top and bottom 'cones' :
+	for (std::size_t i = 0; i < segments_around; ++i) {
+		std::size_t next_segment_around = i+1;
+		if (next_segment_around == segments_around) { next_segment_around = 0; }
+		indices.push_back(i);
+		indices.push_back(next_segment_around);
+		indices.push_back(positions.size()-2); // actually the top point
+	}
+	for (std::size_t i = 0; i < segments_around; ++i) {
+		std::size_t next_segment_around = i+1;
+		if (next_segment_around == segments_around) { next_segment_around = 0; }
+		indices.push_back(positions.size() - segments_around + i);
+		indices.push_back(positions.size() - segments_around + next_segment_around);
+		indices.push_back(positions.size()-1); // actually the bottom point
+	}
+
+
+	// Create VAO/VBO and upload data :
+	glGenVertexArrays(1, &this->vaoHandle_spheres);
+	glBindVertexArray(this->vaoHandle_spheres);
+
+	glGenBuffers(1, &this->vboHandle_spherePositions);
+	glGenBuffers(1, &this->vboHandle_sphereNormals);
+	glGenBuffers(1, &this->vboHandle_sphereIndices);
+
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_spherePositions);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec4::value_type) * 4 * positions.size(), positions.data(), GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_sphereNormals);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec4::value_type) * 4 * positions.size(), positions.data(), GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_sphereIndices);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * indices.size(), indices.data(), GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_spherePositions);
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
+	glEnableVertexAttribArray(1);
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_sphereNormals);
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+	if (this->shaderCompiler) { this->shaderCompiler.reset(); }
+	this->shaderCompiler = std::make_unique<ShaderCompiler>(this);
+
+	this->shaderCompiler->vertexShader_file("../new_shaders/base_sphere.vert").fragmentShader_file("../new_shaders/base_sphere.frag");
+	bool program_valid = this->shaderCompiler->compileShaders();
+	if (program_valid) {
+		this->programHandle_sphere = this->shaderCompiler->programName();
+	} else {
+		std::cerr << "Error while compiling sphere shaders.\n";
+	}
+	std::cerr << "Messages for sphere shaders !!!\n" << this->shaderCompiler->errorString() << '\n';
+
+	this->sphere_size_to_draw = indices.size();
+
+}
+
+void Scene::drawPointSpheres_quick(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const std::vector<glm::vec3>& positions, float radius) {
+	this->glUseProgram(this->programHandle_sphere);
+	this->glBindVertexArray(this->vaoHandle_spheres);
+
+	auto location_proj = this->glGetUniformLocation(this->programHandle_sphere, "proj");
+	auto location_view = this->glGetUniformLocation(this->programHandle_sphere, "view");
+	auto location_scale = this->glGetUniformLocation(this->programHandle_sphere, "scale");
+	auto location_pos = this->glGetUniformLocation(this->programHandle_sphere, "position");
+
+	this->glUniformMatrix4fv(location_proj, 1, GL_FALSE, pMat);
+	this->glUniformMatrix4fv(location_view, 1, GL_FALSE, mvMat);
+	this->glUniform1f(location_scale, radius);
+
+	// For all spheres, draw them in a different position :
+	for (std::size_t sphere_idx = 0; sphere_idx < positions.size(); ++sphere_idx) {
+		this->glUniform3fv(location_pos, 1, glm::value_ptr(positions[sphere_idx]));
+
+		this->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_sphereIndices);
+		this->glDrawElements(GL_TRIANGLES, this->sphere_size_to_draw, GL_UNSIGNED_INT, (void*)0);
+	}
+	this->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	this->glBindVertexArray(0);
+	this->glUseProgram(0);
 }
 
 void Scene::generatePlanesArray(SimpleVolMesh& _mesh) {

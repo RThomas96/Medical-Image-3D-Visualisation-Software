@@ -143,6 +143,9 @@ public:
 	/// @brief Draw a given plane 'view' (single plane on the framebuffer).
 	void drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading, float zoomRatio, glm::vec2 offset);
 
+	/// @brief Draws a set of spheres at the positions given in argument
+	void drawPointSpheres_quick(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, const std::vector<glm::vec3>& positions, float radius);
+
 	/// @brief Create a texture suited for framebuffer rendering, by passing the dimensions of it to the function.
 	GLuint updateFBOOutputs(glm::ivec2 dimensions, GLuint fb_handle, GLuint old_texture = 0);
 
@@ -308,6 +311,8 @@ private:
 	void setupVBOData(const SimpleVolMesh& _mesh);
 	/// @brief setup the vao binding setup
 	void setupVAOPointers();
+	/// @brief Generates the data necessary to draw a sphere.
+	void generateSphereData();
 
 	/// @brief Immediate deletion of the grid index to delete
 	void deleteGridNow();
@@ -461,6 +466,14 @@ protected:
 	GLuint vboHandle_SinglePlaneElement;	///< The vertex indices necessary to draw a single plane.
 	GLuint vboHandle_boundingBoxVertices;
 	GLuint vboHandle_boundingBoxIndices;
+
+	/// Necessary for the spheres :
+	GLuint vaoHandle_spheres;
+	GLuint vboHandle_spherePositions;
+	GLuint vboHandle_sphereNormals;
+	GLuint vboHandle_sphereIndices;
+	GLuint programHandle_sphere;
+	GLuint sphere_size_to_draw;
 
 	/// @brief A compiler for the shaders
 	std::unique_ptr<ShaderCompiler> shaderCompiler;
