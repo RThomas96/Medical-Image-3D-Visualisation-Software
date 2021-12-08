@@ -3,7 +3,10 @@
 #include "../../image/tiff/include/tiff_writer_templated.hpp"
 #include "../../new_grid/include/grid_writer.hpp"
 #include "../include/planar_viewer.hpp"
+
+#ifndef NEED_ARAP
 #include "../../meshes/operations/arap/AsRigidAsPossible.h"
+#endif
 
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/io.hpp>
@@ -728,6 +731,7 @@ void Scene::updateBoundingBox(void) {
 }
 
 void Scene::dummy_perform_arap_on_first_mesh() {
+#ifdef NEED_ARAP
 	if (this->drawables.size() == 0) { std::cerr << "Error : no meshes loaded.\n"; return; }
 	auto to_deform = this->drawables.at(0);
 
@@ -755,6 +759,9 @@ void Scene::dummy_perform_arap_on_first_mesh() {
 	this->updateBoundingBox();
 
 	to_deform->updateOnNextDraw();
+#else
+    std::cerr << "[ERROR]: ARAP canno't be compiled on Linux yet. Operation canceled" << std::endl;
+#endif
 }
 
 void Scene::recompileShaders(bool verbose) {

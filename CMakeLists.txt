@@ -1,6 +1,8 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.14)
 PROJECT(visualisation)
 
+# add_compile_definitions(NEED_ARAP)
+
 # Append current cmake/ directory to CMake file paths :
 LIST(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 # CMake Setup :
@@ -173,6 +175,7 @@ TARGET_INCLUDE_DIRECTORIES(neighbor_visu
 	# to manually have to include the lib's include dir in targets:
 	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include/nifti
 )
+IF (WIN32)
 TARGET_LINK_LIBRARIES(neighbor_visu
 	PUBLIC Qt5::Core
 	PUBLIC Qt5::Gui
@@ -191,6 +194,25 @@ TARGET_LINK_LIBRARIES(neighbor_visu
 	PUBLIC ${CMAKE_PROJECT_NAME}_meshop_arap
 	PUBLIC ${CMAKE_PROJECT_NAME}_drawable_meshes
 )
+ELSE()
+TARGET_LINK_LIBRARIES(neighbor_visu
+	PUBLIC Qt5::Core
+	PUBLIC Qt5::Gui
+	PUBLIC Qt5::Xml
+	PUBLIC Qt5::Widgets
+	PUBLIC Qt5::OpenGL
+	PUBLIC ${OPENGL_LIBRARIES}
+	PUBLIC ${QGLViewer}
+	PUBLIC ImageIO
+	PUBLIC DiscreteGrid
+	PUBLIC VisualisationWidgets
+	PUBLIC writergrid
+	PUBLIC writergrid_tiff
+	PUBLIC ${CMAKE_PROJECT_NAME}_shaders
+	PUBLIC ${CMAKE_PROJECT_NAME}_mesh
+	PUBLIC ${CMAKE_PROJECT_NAME}_drawable_meshes
+)
+ENDIF()
 # }}}
 
 # vim: foldmethod=marker : foldmarker={{{,}}} : tabstop=8
