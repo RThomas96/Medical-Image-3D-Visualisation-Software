@@ -280,6 +280,10 @@ if ($args.Count -gt 0) {
 	if ($args.Contains("tinytiff")) {
 		Publish-GitTinyTIFF
 	}
+	# And nanoflann :
+	if ($args.Contains("nanoflann")) {
+		Publish-GitNanoFLANN
+	}
 	# And finally with QGLViewer :
 	if ($args.Contains("qglviewer")) {
 		Publish-GitQGLViewer
