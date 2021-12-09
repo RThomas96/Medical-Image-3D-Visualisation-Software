@@ -93,8 +93,8 @@ void MainWidget::setupWidgets() {
 
 	QObject::connect(this->showGLLog, &QPushButton::clicked, this->glDebug, &QWidget::show);
 	QObject::connect(this->deform, &QPushButton::clicked, [this]() {
-            //
-            // TODO: affiche les controllers
+            this->scene->toggleManipulatorDisplay();
+            this->viewer->toggleManipulators();
 	});
 
 	// Actions creation :

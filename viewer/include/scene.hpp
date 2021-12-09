@@ -43,7 +43,8 @@
 #include <mutex>
 #include <vector>
 
-#include "../../third_party/primitive/Sphere.h"
+// New structure
+#include "../../qt/include/GLmanipulator.hpp"
 
 /// @defgroup graphpipe Graphics pipeline
 /// @brief This group contains all classes closely or loosely related to the graphics pipeline.
@@ -52,6 +53,11 @@
 /// @warning Spaghetti code ahead.
 
 class ControlPanel;	   // Forward declaration
+namespace UITool {
+    namespace GL {
+        class MeshManipulator;	   // Forward declaration
+    }
+}
 
 /// @brief Simple enum to keep track of the different viewing primitives for the program.
 enum DrawMode { Solid,
@@ -140,14 +146,10 @@ public:
 	void draft_tryAndSaveFirstGrid(void);
 
 	/// @brief Draw the 3D view of the scene.
-    void draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool showTexOnPlane, std::vector<glm::vec3> controllerPos);
+    void draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool showTexOnPlane);
 
 	/// @brief Draw a given plane 'view' (single plane on the framebuffer).
 	void drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading, float zoomRatio, glm::vec2 offset);
-
-    void prepareSphere(std::vector<glm::vec3> controllerPos);
-
-    void drawSphere(GLfloat* mvMat, GLfloat* pMat, GLfloat* mMat, int nbController);
 
     void getTetraMeshPoints(std::vector<glm::vec3>& points);
 
@@ -167,7 +169,7 @@ public:
 	void launchSaveDialog();
 
 	/// @brief Launches the grid deformation
-    void launchDeformation(int tetIdx, glm::vec3& point);
+    void launchDeformation(int tetIdx, glm::vec3 point);
 
 	/// @brief Return the position of the tetrahedra point index
     glm::vec3 getVertexPosition(int index);
@@ -306,6 +308,11 @@ public:
 	/// @brief Checks if the scene is already initialized.
 	bool isSceneInitialized(void) const { return this->isInitialized; }
 
+    void bindMeshManipulator(UITool::MeshManipulator * meshManipulator);
+    void toggleManipulatorDisplay();
+    void toggleWireframe();
+
+
 private:
 	/// @brief Compile the given shaders, and return the ID of the program generated. On any error, returns 0.
 	GLuint compileShaders(std::string vPath, std::string gPath, std::string fPath, bool verbose = false);
@@ -404,10 +411,10 @@ private:
 	/// @brief Generate a surrounding tetrahedral mesh for the loaded grid. [[NEW API]]
 	void newAPI_tex3D_generateMESH(NewAPI_GridGLView::Ptr& grid, VolMeshData& _mesh);
 
-protected:
-    
-	Sphere sphere;
+private:
 
+    UITool::GL::MeshManipulator * glMeshManipulator;
+    
 	bool isInitialized;	   ///< tracks if the scene was initialized or not
 	bool showVAOstate;	  ///< Do we need to print the VAO/program state on next draw ?
 	bool shouldUpdateVis;	 ///< Should we update visibility on next draw ?
@@ -469,7 +476,6 @@ protected:
 	GLuint vaoHandle;
 	GLuint vaoHandle_VolumetricBuffers;
 	GLuint vaoHandle_boundingBox;
-	GLuint vaoHandle_Sphere;
 	// VBO handles :
 	GLuint vboHandle_VertPos;				///< The VBO for the vertex positions.
 	GLuint vboHandle_VertNorm;				///< The VBO for the vertex normals.
@@ -479,8 +485,6 @@ protected:
 	GLuint vboHandle_SinglePlaneElement;	///< The vertex indices necessary to draw a single plane.
 	GLuint vboHandle_boundingBoxVertices;
 	GLuint vboHandle_boundingBoxIndices;
-    GLuint vboHandle_SphereVertices;
-    GLuint vboHandle_SphereIndices; 
 
 	/// @brief A compiler for the shaders
 	std::unique_ptr<ShaderCompiler> shaderCompiler;
@@ -491,7 +495,6 @@ protected:
 	GLuint programHandle_PlaneViewer;
 	GLuint programHandle_VolumetricViewer;
 	GLuint programHandle_BoundingBox;
-    GLuint programHandle_Sphere;
 
 	/*************************************/
 	/*************************************/
@@ -513,7 +516,6 @@ protected:
 	GLuint texHandle_colorScale_user0;
 	GLuint texHandle_colorScale_user1;
 
-    GLuint texHandle_sphere;
 
 	/// @brief Generate the default color scales' data, and upload them.
 	void generateColorScales();

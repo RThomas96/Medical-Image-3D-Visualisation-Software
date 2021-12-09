@@ -65,6 +65,8 @@ uniform vec3 visuBBMin;
 uniform vec3 visuBBMax;
 uniform bool shouldUseBB;
 
+uniform bool displayWireframe;
+
 // The structure which defines every attributes for the color channels.
 struct colorChannelAttributes {
 	uint isVisible;			// /*align : ui64*/ Is this color channel enabled/visible ?
@@ -109,22 +111,24 @@ vec3 phongComputation(vec4 position, vec3 normal, vec4 color, vec3 lightPos, vec
 #line 2111
 
 void main (void) {
-	sceneSpaceFragmentPos = vec4(.0,.0,.0,.0);
+    sceneSpaceFragmentPos = vec4(.0,.0,.0,.0);
 
-	if( visibility > 3500. ) discard;
+    if( visibility > 3500. ) discard;
 
-	
-	// Shows the wireframe of the mesh :
-	float epsilon = 0.008;
-	float distMin = min(barycentricCoords.x/largestDelta.x, min(barycentricCoords.y/largestDelta.y, barycentricCoords.z/largestDelta.z));
 
-	// Enables a 1-pass wireframe mode :
-	if (distMin < epsilon) {// && visibility > 0.) {
-		float factor = (visibility/3500.);
-		colorOut = vec4(1.-factor, factor, 1.-factor, 1.);
-		sceneSpaceFragmentPos = vec4(P.xyz, 2.f);
-		return;
-	}
+    // Shows the wireframe of the mesh :
+    if(displayWireframe == true) {
+        float epsilon = 0.008;
+        float distMin = min(barycentricCoords.x/largestDelta.x, min(barycentricCoords.y/largestDelta.y, barycentricCoords.z/largestDelta.z));
+
+        // Enables a 1-pass wireframe mode :
+        if (distMin < epsilon) {// && visibility > 0.) {
+            float factor = (visibility/3500.);
+            colorOut = vec4(1.-factor, factor, 1.-factor, 1.);
+            sceneSpaceFragmentPos = vec4(P.xyz, 2.f);
+            return;
+        }
+    }
 	
 
 	// Default color of the fragment

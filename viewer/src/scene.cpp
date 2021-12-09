@@ -50,7 +50,7 @@ inline void __GetTexSize(std::size_t numTexNeeded, std::size_t* opt_width, std::
 /** This constructor not only creates the object, but also sets the default values for the Scene in order
  *  to be drawn, even if it is empty at the time of the first call to a draw function.
  */
-Scene::Scene() {
+Scene::Scene(): glMeshManipulator(new UITool::GL::MeshManipulator(this, 0)) {
 	this->isInitialized	   = false;
 	this->showVAOstate	   = false;
 	this->shouldDeleteGrid = false;
@@ -110,15 +110,12 @@ Scene::Scene() {
 	this->vboHandle_SinglePlaneElement	= 0;
 	this->vboHandle_boundingBoxVertices = 0;
 	this->vboHandle_boundingBoxIndices	= 0;
-    this->vboHandle_SphereVertices      = 0;
-    this->vboHandle_SphereIndices       = 0; 
 
 	this->programHandle_projectedTex	 = 0;
 	this->programHandle_Plane3D			 = 0;
 	this->programHandle_PlaneViewer		 = 0;
 	this->programHandle_VolumetricViewer = 0;
 	this->programHandle_BoundingBox		 = 0;
-	this->programHandle_Sphere		     = 0;
 
 	this->texHandle_ColorScaleGrid			= 0;
 	this->texHandle_ColorScaleGridAlternate = 0;
@@ -143,8 +140,6 @@ Scene::Scene() {
 	this->shouldUpdateUBOData		  = false;
 
 	this->posFrame = nullptr;
-
-    	this->sphere = Sphere(50.f);
 }
 
 Scene::~Scene(void) {
@@ -211,11 +206,8 @@ void Scene::initGl(QOpenGLContext* _context) {
 	this->texHandle_ColorScaleGrid = 0;
 
     // Generate controller positions
-    std::vector<glm::vec3> pos;
-    pos.push_back(glm::vec3(0., 0., 0.));
-    pos.push_back(glm::vec3(1., 0., 0.));
-    pos.push_back(glm::vec3(2., 0., 0.));
-    this->prepareSphere(pos);
+    this->glMeshManipulator->initGL(this->get_context());
+    //this->glMeshManipulator->prepareSphere();
 }
 
 void Scene::initialize_limits() {
@@ -443,9 +435,9 @@ void Scene::createBuffers() {
 	this->vboHandle_boundingBoxVertices = createVBO(GL_ARRAY_BUFFER, "vboHandle_boundingBoxVertices");
 	this->vboHandle_boundingBoxIndices	= createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_boundingBoxIndices");
 
-	this->vaoHandle_Sphere			       = createVAO("vaoHandle_Sphere");
-    this->vboHandle_SphereVertices = createVBO(GL_ARRAY_BUFFER, "vboHandle_SphereVertices");
-    this->vboHandle_SphereIndices  = createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_SphereIndices");
+	this->glMeshManipulator->setVao(createVAO("vaoHandle_Sphere"));
+    this->glMeshManipulator->setVboVertices(createVBO(GL_ARRAY_BUFFER, "vboHandle_SphereVertices"));
+    this->glMeshManipulator->setVboIndices(createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_SphereIndices"));
 
 	return;
 }
@@ -793,8 +785,8 @@ void Scene::recompileShaders(bool verbose) {
 		this->programHandle_BoundingBox = newBoundingBoxProgram;
 	}
 	if (newSphereProgram) {
-		glDeleteProgram(this->programHandle_Sphere);
-		this->programHandle_Sphere = newSphereProgram;
+		glDeleteProgram(this->glMeshManipulator->getProgram());
+		this->glMeshManipulator->setProgram(newSphereProgram);
 	}
 }
 
@@ -1059,7 +1051,7 @@ void Scene::getTetraMeshPoints(std::vector<glm::vec3>& points) {
     }
 }
 
-void Scene::launchDeformation(int tetIdx, glm::vec3& point) {
+void Scene::launchDeformation(int tetIdx, glm::vec3 point) {
 	// if no grids are loaded, do nothing !
 	// QMessageBox messageBox;
 	// messageBox.critical(nullptr, "Error", "Coucou je vais bientôt deformé la grille quand je serais branché !");
@@ -1297,145 +1289,6 @@ void Scene::drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading
 	this->showVAOstate = false;
 
 	return;
-}
-
-void Scene::prepareSphere(std::vector<glm::vec3> controllerPos) {
-	auto getUniform = [&](const char* name) -> GLint {
-		GLint g = glGetUniformLocation(this->programHandle_Sphere, name);
-		if (this->showVAOstate) {
-			if (g >= 0) {
-				std::cerr << "[LOG]\tLocation [" << +g << "] for uniform " << name << '\n';
-			} else {
-				std::cerr << "[LOG]\tCannot find uniform " << name << "\n";
-			}
-		}
-		return g;
-	};
-
-	GLint location_tex = getUniform("positions");
-    
-	// Struct to upload the texture to OpenGL :
-	TextureUpload texParams = {};
-
-	texParams.minmag.x = GL_NEAREST;
-	texParams.minmag.y = GL_NEAREST;
-	texParams.lod.y	   = -1000.f;
-	texParams.wrap.s   = GL_CLAMP;
-	texParams.wrap.t   = GL_CLAMP;
-
-	texParams.internalFormat = GL_RGB32F;
-	texParams.size.x		  = controllerPos.size();;
-	texParams.size.y		  = 1;
-	texParams.size.z		  = 1;
-	texParams.format		  = GL_RGB;
-	texParams.type			  = GL_FLOAT;
-	texParams.data			  = controllerPos.data();
-	//texParams.data			  = controllerPos;
-	this->texHandle_sphere    = this->uploadTexture1D(texParams);
-
-	glBindTexture(GL_TEXTURE_1D, 0);
-}
-
-void Scene::drawSphere(GLfloat* mvMat, GLfloat* pMat, GLfloat* mMat, int nbController) {
-
-	auto getUniform = [&](const char* name) -> GLint {
-		GLint g = glGetUniformLocation(this->programHandle_Sphere, name);
-		if (this->showVAOstate) {
-			if (g >= 0) {
-				std::cerr << "[LOG]\tLocation [" << +g << "] for uniform " << name << '\n';
-			} else {
-				std::cerr << "[LOG]\tCannot find uniform " << name << "\n";
-			}
-		}
-		return g;
-	};
-
-    glUseProgram(this->programHandle_Sphere);
-
-    //////////////////////
-    /* Prepare uniforms */
-    //////////////////////
-
-	GLint location_mMat = getUniform("mMat");
-	GLint location_vMat = getUniform("vMat");
-	GLint location_pMat = getUniform("pMat");
-	GLint location_tex = getUniform("positions");
-
-    // Create identity mat
-	glUniformMatrix4fv(location_mMat, 1, GL_FALSE, mMat);
-	glUniformMatrix4fv(location_vMat, 1, GL_FALSE, mvMat);
-	glUniformMatrix4fv(location_pMat, 1, GL_FALSE, pMat);
-
-    //////////////
-    /* Texture */
-    //////////////
-    
-	std::size_t tex = 0;
-	glActiveTexture(GL_TEXTURE0 + tex);
-	glBindTexture(GL_TEXTURE_1D, this->texHandle_sphere);
-	glUniform1i(location_tex, tex);
-	tex++;
-
-    //////////////
-    /* Bind VAO */
-    //////////////
-
-    GLuint vboId = this->vboHandle_SphereVertices;
-    GLuint iboId = this->vboHandle_SphereIndices;
-
-    glBindBuffer(GL_ARRAY_BUFFER, vboId);           // for vertex data
-    glBufferData(GL_ARRAY_BUFFER,                   // target
-            this->sphere.getInterleavedVertexSize(), // data size, # of bytes
-            this->sphere.getInterleavedVertices(),   // ptr to vertex data
-            GL_STATIC_DRAW);                   // usage
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, iboId);   // for index data
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER,           // target
-            this->sphere.getIndexSize(),             // data size, # of bytes
-            this->sphere.getIndices(),               // ptr to index data
-            GL_STATIC_DRAW);                   // usage
-
-
-    //////////////////////
-    /* Bind to location */
-    //////////////////////
-
-    // bind VBOs
-
-    // Encapsulate all this stuff in the VAO
-	glBindVertexArray(this->vaoHandle_Sphere);
-    int stride = this->sphere.getInterleavedStride();     // should be 32 bytes
-	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_SphereVertices);
-    glVertexAttribPointer(0,   3, GL_FLOAT, false, stride, (void*)0);
-
-	glEnableVertexAttribArray(1);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_SphereIndices);
-    glVertexAttribPointer(1,   3, GL_FLOAT, false, stride, (void*)(sizeof(float)*3));
-
-	//glEnableVertexAttribArray(2);
-	//glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_VertTex);
-    //glVertexAttribPointer(2, 2, GL_FLOAT, false, stride, (void*)(sizeof(float)*6));
-
-    //////////////////
-
-    // For wireframe
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glDrawElementsInstanced(GL_TRIANGLES,
-            this->sphere.getIndexCount(),
-            GL_UNSIGNED_INT,
-            (void*)0, nbController);
-
-    glBindVertexArray(0);
-    // deactivate attrib arrays
-    glDisableVertexAttribArray(0);
-    glDisableVertexAttribArray(1);
-    //glDisableVertexAttribArray(2);
-    
-    // Unbind program, buffers and VAO :
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    glUseProgram(0);
 }
 
 void Scene::newAPI_drawVolumetric(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const NewAPI_GridGLView::Ptr& grid) {
@@ -2100,6 +1953,7 @@ void Scene::newAPI_prepareUniforms_Volumetric(GLfloat* mvMat, GLfloat* pMat, glm
 	GLint location_visuBBMin			  = getUniform("visuBBMin");
 	GLint location_visuBBMax			  = getUniform("visuBBMax");
 	GLint location_shouldUseBB			  = getUniform("shouldUseBB");
+	GLint location_displayWireframe		  = getUniform("displayWireframe");
 	GLint location_volumeEpsilon		  = getUniform("volumeEpsilon");
 
 	glm::vec3 planePos			  = this->computePlanePositions();
@@ -2113,6 +1967,7 @@ void Scene::newAPI_prepareUniforms_Volumetric(GLfloat* mvMat, GLfloat* pMat, glm
 	glUniform3fv(location_visuBBMin, 1, glm::value_ptr(min));
 	glUniform3fv(location_visuBBMax, 1, glm::value_ptr(max));
 	glUniform1ui(location_shouldUseBB, ((this->drawMode == DrawMode::VolumetricBoxed) ? 1 : 0));
+	glUniform1ui(location_displayWireframe, this->glMeshManipulator->isDisplayed());
 	glUniform3fv(location_volumeEpsilon, 1, glm::value_ptr(_grid->defaultEpsilon));
 
 	// Matrices :
@@ -2260,7 +2115,7 @@ void Scene::newSHADERS_generateColorScales() {
 	this->generateColorScales();
 }
 
-void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool showTexOnPlane, std::vector<glm::vec3> controllerPos) {
+void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool showTexOnPlane) {
 	if (this->shouldUpdateVis) {
 		this->shouldUpdateVis = false;
 	}
@@ -2300,8 +2155,8 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
         /* Manipulator drawing  */
 
         glm::mat4 mMat(1.0f);
-        this->prepareSphere(controllerPos);
-        this->drawSphere(mvMat, pMat, glm::value_ptr(mMat), controllerPos.size());
+        this->glMeshManipulator->prepareSphere();
+        this->glMeshManipulator->drawSphere(mvMat, pMat, glm::value_ptr(mMat));
 
         /***********************/
 
@@ -3741,4 +3596,27 @@ void Scene::drawPositionResponse(float radius, bool drawOnTop) {
 void Scene::resetPositionResponse() {
 	delete this->posFrame;
 	this->posFrame = nullptr;
+}
+
+void Scene::bindMeshManipulator(UITool::MeshManipulator * meshManipulator) {
+   this->glMeshManipulator->bind(meshManipulator); 
+}
+void Scene::toggleManipulatorDisplay() {
+    this->glMeshManipulator->toggleDisplay();
+}
+
+void Scene::toggleWireframe() {
+	auto getUniform = [&](const char* name) -> GLint {
+		GLint g = glGetUniformLocation(this->programHandle_VolumetricViewer, name);
+		if (this->showVAOstate) {
+			if (g >= 0) {
+				std::cerr << "[LOG]\tLocation [" << +g << "] for uniform " << name << '\n';
+			} else {
+				std::cerr << "[LOG]\tCannot find uniform " << name << "\n";
+			}
+		}
+		return g;
+	};
+	GLint location_displayWireframe		  = getUniform("displayWireframe");
+	glUniform1ui(location_displayWireframe, this->glMeshManipulator->isDisplayed());
 }

@@ -143,6 +143,8 @@ ADD_EXECUTABLE(neighbor_visu
 	./viewer/include/neighbor_visu_viewer.hpp
 	./viewer/include/viewer_structs.hpp
     ./third_party/primitive/Sphere.h
+    ./qt/include/GLmanipulator.hpp
+    ./qt/include/manipulator.hpp
 
 	# Main file :
 	./neighbor_visu_main.cpp
@@ -153,6 +155,8 @@ ADD_EXECUTABLE(neighbor_visu
 	./viewer/src/neighbor_visu_viewer.cpp
 	./viewer/src/viewer_structs.cpp
     ./third_party/primitive/Sphere.cpp
+    ./qt/src/GLmanipulator.cpp
+    ./qt/src/manipulator.cpp
 )
 TARGET_COMPILE_OPTIONS(neighbor_visu
 	# Set so CMake (more precisely clang/gcc) will not print 30-80 warnings about QGLViewer's
@@ -216,3 +220,9 @@ ENDIF()
 # }}}
 
 # vim: foldmethod=marker : foldmarker={{{,}}} : tabstop=8
+
+option(RELEASE_WITH_ASSERT "Build a release version with assert" OFF)
+if(RELEASE_WITH_ASSERT)
+    message(STATUS "WARNING: Build in release using assertion")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+endif(RELEASE_WITH_ASSERT)
