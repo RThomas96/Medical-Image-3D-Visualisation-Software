@@ -113,6 +113,7 @@ function configure_libtiff {
 	echo "Configuration of libTIFF done."
 }
 
+# Configure NIFTI's C library :
 function configure_nifti {
 	echo "Configuring NIFTI's C library ..."
 	cd nifticlib
@@ -128,6 +129,23 @@ function configure_nifti {
 	echo "Configuration of NIFTI's C library done."
 }
 
+# Configure nanoflann :
+function configure_nanoflann {
+	#
+	echo "Configuring nanoflann ..."
+	cd nanoflann
+	if [ -d release ]; then echo "NIFTI was already configured."; cd ..; return; fi
+	mkdir release
+	${CMAKE_PATH} -S. -Brelease -DCMAKE_BUILD_TYPE=Release \
+		-DNANOFLANN_BUILD_EXAMPLES=OFF \
+		-DNANOFLANN_BUILD_BENCHMARKS=OFF \
+		-DNANOFLANN_BUILD_TESTS=OFF \
+		-DCMAKE_INSTALL_PREFIX=$(pwd)/../compiled_libraries
+	${CMAKE_PATH} --build release --target install --parallel
+	cd ..
+	echo "Configuration of nanoflann done."
+}
+
 # Check if system config is valid :
 check_needed_programs
 if [ $? -ne 1 ]; then
@@ -141,6 +159,26 @@ if [ $# -eq 1 ] && [ $1 == "clean" ]; then
 	exit 0
 fi
 
+if [ $# -gt 0 ]; then
+	for arg in $@
+	do
+		lowercasearg=$(echo $arg | awk '{print tolower($0)}')
+		case $lowercasearg in
+			("qglviewer") configure_qglviewer;;
+			("qglviewer/") configure_qglviewer;;
+			("libtiff") configure_libtiff;;
+			("libtiff/") configure_libtiff;;
+			("tinytiff") configure_tinytiff;;
+			("tinytiff/") configure_tinytiff;;
+			("nifti") configure_nifti;;
+			("nifti/") configure_nifti;;
+			("nanoflann") configure_nanoflann;;
+			("nanoflann/") configure_nanoflann;;
+			(*) echo "Argument ${lowercasearg} not recognized";;
+		esac
+	done
+fi
+
 # Create needed directory :
 check_compiled_directory
 
@@ -149,4 +187,5 @@ configure_libtiff
 configure_qglviewer
 configure_tinytiff
 configure_nifti
+configure_nanoflann
 

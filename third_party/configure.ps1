@@ -4,6 +4,7 @@
 #	[Switch]$libtiff = $false,
 #	[Switch]$tinytiff = $false,
 #	[Switch]$qglviewer = $false
+#	[Switch]$nanoflann = $false
 #)
 
 # Executable paths :
@@ -21,6 +22,7 @@
 [string]$libTIFFPath = ($ProjectRootPath)+"\libtiff"
 [string]$niftiPath = ($ProjectRootPath)+"\nifticlib"
 [string]$zlibPath = ($ProjectRootPath)+"\zlib"
+[string]$nanoflannPath = ($ProjectRootPath)+"\nanoflann"
 [string]$CompiledLibPath = ($ProjectRootPath)+"\compiled_libraries"
 
 function Clear-GitAll {
@@ -216,6 +218,28 @@ function Publish-GitZlib {
 	}
 	# Finish the process :
 	Write-Host "Configuration of Zlib done."
+	Set-Location $ProjectRootPath
+}
+
+function Publish-GitNanoFLANN {
+	Write-Host "Configuring nanoflann ..."
+	Set-Location $nanoflannPath
+	if ( Test-Path -Path $nanoflannPath+"\release" ) {
+		Write-Host "nanoflann was already compiled by this script."
+	} else {
+		# Here we cast the result to void in order to have no output on the CMD/PS :
+		[void](New-Item -Force -Path $nanoflannPath -Name "release" -ItemType "directory")
+
+		[string]$cmakeBuildArgs="-S. -Brelease -G `"MinGW Makefiles`" -DCMAKE_BUILD_TYPE=Release -DNANOFLANN_BUILD_EXAMPLES=OFF -DNANOFLANN_BUILD_BENCHMARKS=OFF -DNANOFLANN_BUILD_TESTS=OFF -DCMAKE_INSTALL_PREFIX=$CompiledLibPath "
+
+		# Start the CMake generation process :
+		Start-Process -FilePath $Global:CMakeCmdPath -NoNewWindow -Wait -ArgumentList $cmakeBuildArgs
+		# Call CMake to compile the project :
+		Start-Process -FilePath $Global:CMakeCmdPath -NoNewWindow -Wait -ArgumentList `
+			"--build release --target install"
+	}
+	# Finish the process :
+	Write-Host "Configuration of nanoflann done."
 	Set-Location $ProjectRootPath
 }
 
