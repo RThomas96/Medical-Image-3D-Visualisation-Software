@@ -10,6 +10,10 @@ DrawableMesh::DrawableMesh(std::shared_ptr<Mesh>& _mesh) : mesh(_mesh), Drawable
 	this->vbo_normals = 0;
 	this->vbo_texture = 0;
 	this->vbo_indices = 0;
+
+	auto mesh_bb = this->mesh->getBB();
+	this->bounding_box_min = mesh_bb[0];
+	this->bounding_box_max = mesh_bb[1];
 }
 
 void DrawableMesh::initialize(QOpenGLContext *_context, ShaderCompiler::GLFunctions* functions) {
@@ -29,8 +33,8 @@ void DrawableMesh::initialize(QOpenGLContext *_context, ShaderCompiler::GLFuncti
 
 	auto bb = this->mesh->getBB();
 	for (const auto& bbpoint : bb) {
-		this->bbmin = glm::min(bbpoint, this->bbmin);
-		this->bbmax = glm::max(bbpoint, this->bbmax);
+		this->bounding_box_min = glm::min(bbpoint, this->bounding_box_min);
+		this->bounding_box_max = glm::max(bbpoint, this->bounding_box_max);
 	}
 }
 
@@ -47,16 +51,9 @@ void DrawableMesh::draw(GLfloat *proj_mat, GLfloat *view_mat, glm::vec4 camera) 
 	GLint location_model = this->gl->glGetUniformLocation(this->program_handle_draw, "model");
 	GLint location_camera_pos = this->gl->glGetUniformLocation(this->program_handle_draw, "camera_pos");
 
-	glm::mat4 model_matrix{
-	  glm::vec4{1.f, .0f, .0f, .0f},
-	  glm::vec4{.0f, 1.f, .0f, .0f},
-	  glm::vec4{.0f, .0f, 1.f, .0f},
-	  glm::vec4{.0f, .0f, .0f, 1.f}
-	};
-
 	this->gl->glUniformMatrix4fv(location_proj, 1, GL_FALSE, proj_mat);
 	this->gl->glUniformMatrix4fv(location_view, 1, GL_FALSE, view_mat);
-	this->gl->glUniformMatrix4fv(location_model, 1, GL_FALSE, glm::value_ptr(model_matrix));
+	this->gl->glUniformMatrix4fv(location_model, 1, GL_FALSE, glm::value_ptr(this->transformation_matrix));
 	this->gl->glUniform4fv(location_camera_pos, 1, glm::value_ptr(camera));
 
 	// Launch a glDrawElements() command
@@ -73,6 +70,7 @@ void DrawableMesh::fastDraw(GLfloat *proj_mat, GLfloat *view_mat, glm::vec4 came
 }
 
 void DrawableMesh::makeVAO(void) {
+	// Fetch the mesh information :
 	auto vertices = this->mesh->getVertices();
 	auto normals = this->mesh->getVertexNormals();
 	std::vector<glm::vec2> texture_dummy(vertices.size(), glm::vec2{});
@@ -106,6 +104,7 @@ void DrawableMesh::makeVAO(void) {
 	this->gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vbo_indices);
 	this->gl->glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr>(final_order.size()) * sizeof(GLuint), final_order.data(), GL_STATIC_DRAW);
 
+	// Populate the VAO :
 	this->gl->glBindVertexArray(this->vao);
 	// layout(location=0) : vertices (vec3)
 	this->gl->glEnableVertexAttribArray(0);

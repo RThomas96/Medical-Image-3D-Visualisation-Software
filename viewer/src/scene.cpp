@@ -1015,29 +1015,47 @@ void Scene::loadMesh() {
 	auto mesh_to_load = std::make_shared<Mesh>();
 	auto& vertices = mesh_to_load->getVertices();
 	auto& normals = mesh_to_load->getNormals();
-	// Load that OFF file :
+	// Load that OFF file and then update the mesh :
 	FileIO::openOFF(file_name.toStdString(), mesh_to_load->getVertices(), mesh_to_load->getTriangles());
 	mesh_to_load->update();
 
-	// If any images loaded, ask with which image to be paired with :
-	if (this->newGrids.size()) {
-		// TODO add a picker for the grids
-		GridPickerFromScene* picker = new GridPickerFromScene();
-		picker->chooseGrids(this->newGrids);
-		if (picker->choice_Accepted()) {
-			// pair the image here
-			std::cerr << "choice accepted !\n";
-		} else {
-			std::cerr << "choice not accepted !\n";
-		}
-	} else {
-		std::cerr << "No grids to pair with ..." << '\n';
-	}
-
-	mesh_to_load->update();
 	this->meshes.emplace_back(mesh_to_load);
 
 	auto mesh_drawable = std::make_shared<DrawableMesh>(mesh_to_load);
+
+	// If any images loaded, ask with which image to be paired with :
+	if (this->newGrids.size()) {
+		auto picker = new GridPickerFromScene();
+		picker->chooseGrids(this->newGrids);
+		if (picker->choice_Accepted()) {
+			// Get the user-requested image's bounding box details :
+			auto selected_grid = this->newGrids[picker->choice_getGrid()];
+			Image::bbox_t selected_grid_bb = selected_grid->grid->getBoundingBox();
+			Image::bbox_t::vec selected_grid_bb_diagonal = selected_grid_bb.getDiagonal(); // gets the scale factors on X, Y, Z
+			Image::bbox_t::vec selected_grid_bb_center = selected_grid_bb.getMin() + (selected_grid_bb_diagonal / 2.f);
+
+			// The scaling done here is _very_ approximate in order to get a rough estimate of the size of the image :
+			float scaling_factor = glm::length(selected_grid_bb_diagonal) / glm::length(mesh_to_load->getBB()[1] - mesh_to_load->getBB()[0]) * .7f;
+			glm::mat4 scaling_matrix = glm::scale(glm::mat4(1.f), glm::vec3(scaling_factor));
+			mesh_drawable->setTransformation(scaling_matrix);
+
+			// And base the computation of the translations from the scaled bounding box.
+			auto scaled_bb = mesh_drawable->getBoundingBox();
+			std::cerr << "Updated bounding box : " << scaled_bb.first << ", " << scaled_bb.second << '\n';
+			auto mesh_to_image_translation = (selected_grid_bb.getMin() - scaled_bb.first);
+			auto shift_image_translation = glm::vec3(-(scaled_bb.second - scaled_bb.first).x, .0f, .0f) + mesh_to_image_translation;
+			// Determine the best transformation to apply by shifting the mesh's BB to be aligned with the image's BB, and
+			// let the user put points later on the mesh in order to get a first alignment of the image/mesh.
+			// Then, translate that by the mesh's bounding box in order to place them one beside another :
+			glm::mat4 final_transformation = mesh_drawable->getTransformation();
+			final_transformation[3][0] += shift_image_translation.x;
+			final_transformation[3][1] += shift_image_translation.y;
+			final_transformation[3][2] += shift_image_translation.z;
+
+			mesh_drawable->setTransformation(final_transformation);
+		}
+		// the user didn't want to pair the image with a grid, do nothing else.
+	}
 
 	// Insert it into the meshes to initialize :
 	this->to_init.emplace(mesh_drawable);

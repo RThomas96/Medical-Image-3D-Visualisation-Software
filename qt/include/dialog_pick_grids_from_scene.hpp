@@ -32,7 +32,7 @@ protected:
 		hori->addWidget(this->button_cancel);
 		hori->addWidget(this->button_accept);
 		vert->addWidget(this->user_choice);
-		vert->addLayout(vert);
+		vert->addLayout(hori);
 
 		this->setLayout(vert);
 		this->setWindowTitle("Pair the mesh with a grid ?");

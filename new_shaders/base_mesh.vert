@@ -17,8 +17,8 @@ uniform vec4 camera_pos;
 void main() {
 	mat3 begin_normal_matrix = mat3(view[0].xyz, view[1].xyz, view[2].xyz);
 	mat3 normal_matrix_3 = inverse(transpose(begin_normal_matrix));
-	gl_Position = proj * view * vec4(in_position, 1.f);
-	position = vec4(in_position, 1.f);
+	position = model * vec4(in_position, 1.f);
+	gl_Position = proj * view * position;
 	normal = vec4(in_normal, .0f);
 	texture = in_texture;
 }
