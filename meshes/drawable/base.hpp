@@ -20,6 +20,7 @@
 /// @details It provides virtual functions for initializing an object, and drawing it one of two ways:
 /// either a 'complete' draw or a 'fast' draw.
 class DrawableBase {
+public:
 	using Ptr = std::shared_ptr<DrawableBase>;
 protected:
 	DrawableBase() : bound_context(nullptr), gl(nullptr),

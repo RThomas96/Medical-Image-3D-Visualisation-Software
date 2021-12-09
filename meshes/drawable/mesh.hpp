@@ -12,6 +12,7 @@
 /// classes from Qt providing access to OpenGL functions (where X = major version, Y = minor version, Z = Core/Compatibility).
 class DrawableMesh : public DrawableBase {
 public:
+	typedef std::shared_ptr<DrawableMesh> Ptr;
 	/// @brief Default ctor for the class, initializing the pointer to the mesh and the GL names.
 	DrawableMesh(std::shared_ptr<Mesh>& _mesh);
 	/// @brief Default dtor for the mesh, default-defined.
@@ -39,7 +40,7 @@ protected:
 
 protected:
 	GLuint program_handle_draw;		///< The program name used in the regular drawing method.
-	GLuint program_handle_fastdraw;	///< The program name ued in the 'fast' drawing method.
+	GLuint program_handle_fastdraw;	///< The program name used in the 'fast' drawing method.
 
 	GLuint vao;				///< The VAO name to use in order to draw the mesh.
 	GLuint vbo_vertices;	///< The VBO name for the vertex data.

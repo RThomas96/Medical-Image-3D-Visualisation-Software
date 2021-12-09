@@ -229,6 +229,22 @@ public:
 	/// @brief This performs ARAP deformation on the first mesh found.
 	/// @note THIS IS A WIP/DRAFT FUNCTION, NOT DESIGNED FOR PRODUCTION RELEASE
 	void dummy_perform_arap_on_first_mesh(void);
+	/// @brief This performs ARAP deformation on the mesh associated with the first loaded image.
+	/// @note THIS IS A WIP/DRAFT FUNCTION, NOT DESIGNED FOR PRODUCTION RELEASE
+	void dummy_perform_constrained_arap_on_image_mesh(void);
+	/// @brief This adds a constraint for image 'img_idx' at position 'img_pos'.
+	/// @note THIS IS A WIP/DRAFT FUNCTION, NOT DESIGNED FOR PRODUCTION RELEASE
+	void dummy_add_image_constraint(std::size_t img_idx, glm::vec3 img_pos);
+	/// @brief This checks if the given query point is contained in the bounding box
+	/// @param query The position to query
+	/// @param mesh_index The index of the first mesh that contains it, INDEXED AT 1. If 0, no meshes contain it.
+	/// @note THIS IS A WIP/DRAFT FUNCTION, NOT DESIGNED FOR PRODUCTION RELEASE
+	void dummy_check_point_in_mesh_bb(glm::vec3 query, std::size_t& mesh_index);
+	/// @brief Returns the i-th drawable loaded in the scene.
+	/// @note THIS IS A WIP/DRAFT FUNCTION, NOT DESIGNED FOR PRODUCTION RELEASE
+	DrawableBase::Ptr dummy_getDrawable(std::size_t idx);
+	/// @brief Adds to the 'i-th' mesh a constraint at vertex 'n'
+	void dummy_add_arap_constraint_mesh(std::size_t drawable, std::size_t vtx_idx);
 
 	/// @brief Changes the texture coloration mode to the desired setting
 	void setColorFunction_r(ColorFunction _c);
@@ -467,13 +483,21 @@ protected:
 	GLuint vboHandle_boundingBoxVertices;
 	GLuint vboHandle_boundingBoxIndices;
 
+	///
 	/// Necessary for the spheres :
+	///
 	GLuint vaoHandle_spheres;
 	GLuint vboHandle_spherePositions;
 	GLuint vboHandle_sphereNormals;
 	GLuint vboHandle_sphereIndices;
 	GLuint programHandle_sphere;
 	GLuint sphere_size_to_draw;
+
+	///
+	/// Only for ARAP integration testing :
+	///
+	std::vector<std::pair<std::size_t, std::size_t>> mesh_idx_constraints; ///< The mesh vertices considered constraints. Pair = <mesh_idx , vertex_idx>
+	std::vector<glm::vec3> image_constraints;	///< The positions of those constraints explained abovepositions of those constraints explained above
 
 	/// @brief A compiler for the shaders
 	std::unique_ptr<ShaderCompiler> shaderCompiler;

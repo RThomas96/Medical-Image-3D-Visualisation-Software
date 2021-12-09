@@ -750,6 +750,111 @@ void Scene::dummy_perform_arap_on_first_mesh() {
 	to_deform->updateOnNextDraw();
 }
 
+void Scene::dummy_perform_constrained_arap_on_image_mesh() {
+	if (this->drawables.size() == 0) { std::cerr << "Error : no meshes loaded.\n"; return; }
+	auto to_deform = this->drawables.at(0);
+
+	auto mesh_to_deform = std::dynamic_pointer_cast<DrawableMesh>(to_deform);
+	if (mesh_to_deform == nullptr) { std::cerr << "Error : could not get the first drawable as a DrawableMesh.\n"; return; }
+	std::shared_ptr<Mesh> _mesh = mesh_to_deform->getMesh();
+
+	AsRigidAsPossible arap_deformation;
+	arap_deformation.clear();
+	arap_deformation.init(_mesh->getVertices(), _mesh->getTriangles());
+	arap_deformation.setIterationNb(5); // 5 iterations maximum
+
+	std::vector<std::pair<glm::vec3, glm::vec3>> pairings;
+	std::vector<glm::vec3> transforms;
+
+	std::cerr << "Generating vertex handles ..." << '\n';
+	std::vector<bool> handles(_mesh->getVertices().size(), false);
+	std::vector<glm::vec3> targets(_mesh->getVertices());
+	for (std::size_t i = 0; i < this->mesh_idx_constraints.size(); ++i) {
+		auto constraint = this->mesh_idx_constraints[i];
+		auto position = this->image_constraints[i];
+		// NOTE : Always performed on the first mesh !!! So only filter through those with index 0.
+		if (constraint.first == 0) {
+			handles[constraint.second] = true;
+			glm::vec3 estimated_transform = targets[constraint.second] - position;
+			targets[constraint.second] = position;
+			transforms.push_back(estimated_transform);
+		}
+	}
+	glm::vec3 best_guess_transform = glm::vec3{};
+	for (std::size_t i = 0; i < transforms.size(); ++i) {
+		best_guess_transform += transforms[i];
+	}
+	best_guess_transform /= static_cast<glm::vec3::value_type>(transforms.size());
+	auto current_transform = mesh_to_deform->getTransformation();
+	current_transform[3][0] += best_guess_transform[0];
+	current_transform[3][1] += best_guess_transform[1];
+	current_transform[3][2] += best_guess_transform[2];
+	mesh_to_deform->setTransformation(current_transform);
+	// ERROR : the mesh underneath is not transformed, would need to get the inverse transform of the drawable to get the real mesh positions !!!
+	std::cerr << "Generated vertex handles." << '\n';
+
+	std::cerr << "Setting handles on ARAP ...\n";
+	arap_deformation.setHandles(handles);
+	std::cerr << "Computing constrained ARAP ...\n";
+	arap_deformation.compute_deformation(targets);
+	std::cerr << "Computed constrained ARAP. Propagating vertex positions ...\n";
+
+	for (std::size_t i = 0; i < _mesh->getVertices().size(); ++i) {
+		_mesh->setVertices(i, targets[i]);
+	}
+	_mesh->update();
+
+	this->updateBoundingBox();
+	std::cerr << "Finished.\n";
+
+	to_deform->updateOnNextDraw();
+}
+
+void Scene::dummy_add_image_constraint(std::size_t img_idx, glm::vec3 img_pos) {
+	this->image_constraints.push_back(img_pos);
+}
+
+vois Scene::dummy_add_arap_constraint_mesh(std::size_t drawable, std::size_t vtx_idx) {
+	if (drawable == 0) { return; }
+	if (drawable == this->drawables.size()) { return; }
+	this->mesh_idx_constraints.push_back((std::make_pair(drawable-1, vtx_idx)));
+	std::cerr << "[Scene] Added constraint " << vtx_idx << " to mesh " << drawable << "\n";
+}
+
+void Scene::dummy_check_point_in_mesh_bb(glm::vec3 query, std::size_t& mesh_index) {
+	mesh_index = 0;
+	for (std::size_t i = 0; i < this->drawables.size(); ++i) {
+		const auto& drawable = this->drawables[i];
+		auto mesh_drawable = std::dynamic_pointer_cast<DrawableMesh>(drawable);
+		if (mesh_drawable != nullptr) {
+			// get BB, check if inside :
+			auto mesh_bb = mesh_drawable->getBoundingBox();
+			if (
+				query.x > mesh_bb.first.x && query.x < mesh_bb.second.x &&
+				query.y > mesh_bb.first.y && query.y < mesh_bb.second.y &&
+				query.z > mesh_bb.first.z && query.z < mesh_bb.second.z
+			) {
+				mesh_index = i+1;
+				return;
+			}
+		}
+		// else do nothing.
+	}
+}
+
+DrawableBase::Ptr Scene::dummy_getDrawable(std::size_t idx) {
+	// reminder : this is indexed at one since it should be the result of Scene::dummy_check_point_in_mesh_bb().
+	if (idx == 0) { return nullptr; }
+	if (idx > this->drawables.size()) { return nullptr; }
+	return this->drawables[idx-1];
+}
+
+void Scene::dummy_add_arap_constraint_mesh(std::size_t drawable, std::size_t vtx_idx) {
+	if (drawable == 0) { return; }
+	if (drawable > this->drawables.size()) { return; }
+	this->mesh_idx_constraints.push_back(std::make_pair(drawable-1, vtx_idx));
+}
+
 void Scene::recompileShaders(bool verbose) {
 	GLuint newProgram			 = this->compileShaders("../new_shaders/voxelgrid.vert", "../new_shaders/voxelgrid.geom", "../new_shaders/voxelgrid.frag", verbose);
 	GLuint newPlaneProgram		 = this->compileShaders("../new_shaders/plane.vert", "", "../new_shaders/plane.frag", verbose);
@@ -1029,6 +1134,9 @@ void Scene::loadMesh() {
 		picker->chooseGrids(this->newGrids);
 		if (picker->choice_Accepted()) {
 			// Get the user-requested image's bounding box details :
+			if (picker->choice_getGrid() >= this->newGrids.size()) {
+				std::cerr << "Error : grid index was not valid ...\n";
+			}
 			auto selected_grid = this->newGrids[picker->choice_getGrid()];
 			Image::bbox_t selected_grid_bb = selected_grid->grid->getBoundingBox();
 			Image::bbox_t::vec selected_grid_bb_diagonal = selected_grid_bb.getDiagonal(); // gets the scale factors on X, Y, Z
@@ -1038,21 +1146,20 @@ void Scene::loadMesh() {
 			float scaling_factor = glm::length(selected_grid_bb_diagonal) / glm::length(mesh_to_load->getBB()[1] - mesh_to_load->getBB()[0]) * .7f;
 			glm::mat4 scaling_matrix = glm::scale(glm::mat4(1.f), glm::vec3(scaling_factor));
 			mesh_drawable->setTransformation(scaling_matrix);
+			// We apply the transformation here in order to get an updated bounding box.
 
 			// And base the computation of the translations from the scaled bounding box.
 			auto scaled_bb = mesh_drawable->getBoundingBox();
-			std::cerr << "Updated bounding box : " << scaled_bb.first << ", " << scaled_bb.second << '\n';
 			auto mesh_to_image_translation = (selected_grid_bb.getMin() - scaled_bb.first);
 			auto shift_image_translation = glm::vec3(-(scaled_bb.second - scaled_bb.first).x, .0f, .0f) + mesh_to_image_translation;
 			// Determine the best transformation to apply by shifting the mesh's BB to be aligned with the image's BB, and
 			// let the user put points later on the mesh in order to get a first alignment of the image/mesh.
 			// Then, translate that by the mesh's bounding box in order to place them one beside another :
-			glm::mat4 final_transformation = mesh_drawable->getTransformation();
-			final_transformation[3][0] += shift_image_translation.x;
-			final_transformation[3][1] += shift_image_translation.y;
-			final_transformation[3][2] += shift_image_translation.z;
+			scaling_matrix[3][0] += shift_image_translation.x;
+			scaling_matrix[3][1] += shift_image_translation.y;
+			scaling_matrix[3][2] += shift_image_translation.z;
 
-			mesh_drawable->setTransformation(final_transformation);
+			mesh_drawable->setTransformation(scaling_matrix);
 		}
 		// the user didn't want to pair the image with a grid, do nothing else.
 	}

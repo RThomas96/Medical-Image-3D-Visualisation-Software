@@ -3,6 +3,32 @@
 #include <algorithm>
 #include <float.h>
 
+Mesh::Mesh() :
+	vertices(), normals(), verticesNormals(), triangles(),
+	BBMin(), BBMax(), radius(1.f), normalDirection(1.),
+	kdtree(3, this->vertices, 10)
+{
+	glm::vec3::value_type min = std::numeric_limits<glm::vec3::value_type>::lowest();
+	glm::vec3::value_type max = std::numeric_limits<glm::vec3::value_type>::max();
+
+	this->BBMin = glm::vec3(max, max, max);
+	this->BBMax = glm::vec3(min, min, min);
+}
+
+Mesh::Mesh(std::vector<glm::vec3>& _vertex, std::vector<Triangle>& _tris) :
+  vertices(_vertex), normals(), verticesNormals(), triangles(_tris),
+  BBMin(), BBMax(), radius(1.f), normalDirection(1.),
+  kdtree(3, this->vertices, 10)
+{
+	glm::vec3::value_type min = std::numeric_limits<glm::vec3::value_type>::lowest();
+	glm::vec3::value_type max = std::numeric_limits<glm::vec3::value_type>::max();
+
+	this->BBMin = glm::vec3(max, max, max);
+	this->BBMax = glm::vec3(min, min, min);
+
+	this->update();
+}
+
 void Mesh::computeBB(){
 	BBMin = glm::vec3( FLT_MAX, FLT_MAX, FLT_MAX );
 	BBMax = glm::vec3( -FLT_MAX, -FLT_MAX, -FLT_MAX );
@@ -31,6 +57,7 @@ std::vector<glm::vec3> Mesh::getBB()
 }
 
 void Mesh::update(){
+	this->kdtree.buildIndex();
 	computeBB();
 	recomputeNormals();
 }
@@ -43,6 +70,21 @@ void Mesh::clear(){
 	normals.clear();
 	verticesNormals.clear();
 
+}
+
+glm::vec3 Mesh::closestPointTo(glm::vec3 query, std::size_t& vertex_idx) const {
+	// WARNING : This is ripped straight from one of nanoflann's examples [1]. Should be fine to use it legally.
+	// [1] : https://github.com/jlblancoc/nanoflann/blob/master/examples/pointcloud_adaptor_example.cpp#L131
+	// do a knn search
+	const size_t num_results = 1;
+	size_t ret_index;
+	float out_dist_sqr;
+	nanoflann::KNNResultSet<float> resultSet(num_results);
+	resultSet.init(&ret_index, &out_dist_sqr );
+	this->kdtree.findNeighbors(resultSet, &query[0], nanoflann::SearchParams(10));
+	// return the index of the closes vertex
+	vertex_idx = ret_index;
+	return this->vertices[ret_index];
 }
 
 void Mesh::recomputeNormals () {

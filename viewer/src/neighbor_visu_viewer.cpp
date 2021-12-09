@@ -21,7 +21,7 @@
 float Viewer::sceneRadiusMultiplier{.5f};
 
 Viewer::Viewer(Scene* const scene, QStatusBar* _program_bar, QWidget* parent) :
-	QGLViewer(parent), scene(scene) {
+	QGLViewer(parent), scene(scene), spheres(), sphere_size(.1f) {
 	this->statusBar	   = _program_bar;
 	this->refreshTimer = new QTimer();
 	this->refreshTimer->setInterval(std::chrono::milliseconds(7));	  // ~7 ms for 144fps, ~16ms for 60fps and ~33ms for 30 FPS
@@ -78,6 +78,13 @@ void Viewer::draw() {
 
 	this->scene->draw3DView(mvMat, pMat, camPos);
 	this->scene->drawPositionResponse(this->sceneRadius() / 10., this->drawAxisOnTop);
+
+	std::vector<glm::vec3> spheres_to_draw(this->spheres);
+	if (this->temp_mesh_idx) {
+		spheres_to_draw.push_back(this->temp_sphere_position);
+	}
+
+	this->scene->drawPointSpheres_quick(mvMat, pMat, camPos, spheres_to_draw, this->sphere_size);
 }
 
 void Viewer::keyPressEvent(QKeyEvent* e) {
@@ -146,6 +153,21 @@ void Viewer::keyPressEvent(QKeyEvent* e) {
 				QGLViewer::keyPressEvent(e);
 			}
 			this->update();
+			break;
+		case Qt::Key::Key_Enter:
+			if (e->modifiers() & Qt::KeyboardModifier::ShiftModifier) {
+				// add the vertex as an arap constraint to the concerned mesh
+				if (this->temp_mesh_idx) {
+					this->scene->dummy_add_arap_constraint_mesh(this->temp_mesh_idx, this->temp_mesh_vtx_idx);
+					std::cerr << "Added mesh constraint at position " << this->temp_mesh_vtx_idx << " for mesh " << this->temp_mesh_idx << '\n';
+					this->temp_mesh_idx = 0;
+				}
+			} else if ((e->modifiers() & Qt::KeyboardModifier::ControlModifier) != 0) {
+				if (this->temp_img_idx) {
+					this->scene->dummy_add_image_constraint(this->temp_img_idx, this->temp_img_pos);
+					std::cerr << "Added image constraint at position " << this->temp_img_pos << '\n';
+				}
+			}
 			break;
 		/*
 		Default handler.
@@ -266,12 +288,32 @@ void Viewer::guessMousePosition() {
 							  QString::number(index.y) + ", " + QString::number(index.z) + ", in grid " +
 							  QString::fromStdString(grid->getImageName());
 				this->statusBar->showMessage(msg, 1000);
+				this->temp_img_pos = glm::vec3(p);
 			} else {
 				std::cerr << "Error : grid " << grid->getImageName() << " does not contain the point\n";
 			}
 		};
 		this->scene->lambdaOnGrids(findSuitablePoint);
-		//
+
+		// Look for the point in the meshes loaded :
+		std::size_t mesh_idx = 0;
+		this->scene->dummy_check_point_in_mesh_bb(glm::vec3(p), mesh_idx);
+		if (mesh_idx) {
+			this->temp_mesh_idx = mesh_idx;
+			std::cerr << "Found point in the mesh " << mesh_idx-1 << '\n';
+			DrawableBase::Ptr drawable_base = this->scene->dummy_getDrawable(mesh_idx);
+			if (drawable_base == nullptr) { std::cerr << "ERROR : couldn't find the associated drawable :c\n"; }
+			else {
+				// get mesh drawable and get closest point from mesh underneath :
+				DrawableMesh::Ptr drawable_mesh = std::dynamic_pointer_cast<DrawableMesh>(drawable_base);
+				if (drawable_mesh != nullptr) {
+					this->temp_sphere_position = drawable_mesh->getMesh()->closestPointTo(glm::vec3(p), this->temp_mesh_vtx_idx);
+				}
+			}
+		} else {
+			//reset mesh idx, not on a mesh means last position should be invalidated
+			this->temp_mesh_idx = 0;
+		}
 	}
 	this->doneCurrent();
 }

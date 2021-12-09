@@ -19,9 +19,11 @@ INCLUDE(FindSuiteSparse_Windows)
 FIND_PACKAGE(Qt5 REQUIRED COMPONENTS Core Gui Widgets Xml OpenGL)
 FIND_PACKAGE(OpenGL REQUIRED)
 FIND_PACKAGE(Threads REQUIRED)
-# Find TinyTIFF compiled locally :
+
+# Find locally-compiled libraries :
+# If any of them aren't found, it stops CMake's generation process with an error message.
 FIND_PACKAGE(TinyTIFF REQUIRED PATHS ${CMAKE_CURRENT_LIST_DIR}/third_party/compiled_libraries/lib/cmake PATH_SUFFIXES TinyTIFF)
-# If TinyTIFF's not found, it stops CMake's generation process with an error message.
+FIND_PACKAGE(nanoflann REQUIRED PATHS ${CMAKE_CURRENT_LIST_DIR}/third_party/compiled_libraries/lib/cmake PATH_SUFFIXES nanoflann)
 # }}}
 
 ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/third_party/glm)
