@@ -1,8 +1,11 @@
 #version 150 core
 #extension GL_ARB_separate_shader_objects : enable
+#extension GL_ARB_explicit_attrib_location : enable
 
 #pragma optimize(off)
 #pragma debug(on)
+
+#define INLAYOUT
 
 // Signals we're in the main shader, for any shaders inserted into this one.
 #define MAIN_SHADER_UNIT
@@ -15,16 +18,16 @@ struct colorChannelAttributes {
 	uvec2 colorScaleBounds;	// /*align : vec4*/ The value bounds for the color scale
 };
 
-in vec4 vPos_WS;
-in vec4 vNorm_WS;
-in vec3 texCoord;
-in vec3 barycentricCoords;
-in vec3 largestDelta;
+INLAYOUT in vec4 vPos_WS;
+INLAYOUT in vec4 vNorm_WS;
+INLAYOUT in vec3 texCoord;
+INLAYOUT in vec3 barycentricCoords;
+INLAYOUT in vec3 largestDelta;
 
-in vec4 vPos_CS;
-in vec4 vNorm_CS;
-in vec4 lightDir_CS;
-in vec4 eyeDir_CS;
+noperspective in vec4 vPos_CS;
+noperspective in vec4 vNorm_CS;
+noperspective in vec4 lightDir_CS;
+noperspective in vec4 eyeDir_CS;
 
 layout(location = 0) out vec4 color;
 layout(location = 1) out vec4 worldPosition;
