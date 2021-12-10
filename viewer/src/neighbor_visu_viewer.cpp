@@ -410,6 +410,8 @@ void Viewer::newAPI_loadGrid(Image::Grid::Ptr ptr) {
 	}
 	this->makeCurrent();
 	this->scene->newAPI_addGrid(ptr);
+    this->updateManipulatorsPositions();
+    this->scene->prepareManipulators();
 	this->doneCurrent();
 
 	glm::vec3 bbDiag = this->scene->getSceneBoundaries();
@@ -421,7 +423,6 @@ void Viewer::newAPI_loadGrid(Image::Grid::Ptr ptr) {
 	this->showEntireScene();
 	this->updateCameraPosition();
 	this->centerScene();
-    this->updateManipulatorsPositions();
 }
 
 void Viewer::toggleManipulators() {

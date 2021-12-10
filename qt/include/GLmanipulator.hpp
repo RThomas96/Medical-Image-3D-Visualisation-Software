@@ -10,16 +10,18 @@
 #include <QOpenGLFunctions_4_0_Compatibility>
 #include <QOpenGLFunctions_4_0_Core>
 
+class SceneGL;
+
 namespace UITool {
 
 /// @defgroup gl GL
 /// @brief All classes that interact with OpenGL. Allow a separation between backend and frontend.
 namespace GL {
 
-class MeshManipulator : public QOpenGLFunctions_3_2_Core {
+class MeshManipulator {
 public:
 
-    MeshManipulator(Scene * scene, int nbManipulators, float manipulatorRadius = 50.f): manipulatorRadius(manipulatorRadius), manipulatorMesh(Sphere(manipulatorRadius)), scene(scene), meshManipulator(nullptr) {
+    MeshManipulator(SceneGL * scene, int nbManipulators, float manipulatorRadius = 50.f): manipulatorRadius(manipulatorRadius), manipulatorMesh(Sphere(manipulatorRadius)), sceneGL(scene), meshManipulator(nullptr) {
         this->program = 0;
         this->vao = 0;
         this->vboVertices = 0;
@@ -28,24 +30,8 @@ public:
         this->displayed = false;
     }
 
-    void initGL(QOpenGLContext * context) {
-        // Set the context for later viewers that want to connect to the scene :
-        if (context == 0) {
-            throw std::runtime_error("Warning : this->context() returned 0 or nullptr !");
-        }
-        if (context == nullptr) {
-            std::cerr << "Warning : Initializing a scene without a valid OpenGL context !" << '\n';
-        }
-        this->context = context;
-
-        // Get OpenGL functions from the currently bound context :
-        if (this->initializeOpenGLFunctions() == false) {
-            throw std::runtime_error("Could not initialize OpenGL functions.");
-        }
-    }
-
-    void prepareSphere();
-    void drawSphere(GLfloat* mvMat, GLfloat* pMat, GLfloat* mMat);
+    void prepare();
+    void draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* mMat);
 
     void bind(UITool::MeshManipulator * meshManipulatorToBind) { this->meshManipulator = meshManipulatorToBind; };
 
@@ -74,14 +60,15 @@ private:
     float manipulatorRadius;
     Sphere manipulatorMesh;
 
-    Scene * scene;
-	QOpenGLContext* context;
+    SceneGL * sceneGL;
 
     GLuint program;
 	GLuint vao;
     GLuint vboVertices;
     GLuint vboIndices; 
     GLuint tex;
+
+    TextureUpload texParams;
 
     bool displayed;
 };

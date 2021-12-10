@@ -88,6 +88,33 @@ enum planeHeading { North = 0,
 	Down				  = South,
 	Left				  = West };
 
+/**********************************************************************/
+/**********************************************************************/
+
+class SceneGL : public QOpenGLFunctions_3_2_Core {
+
+public:
+
+	SceneGL();
+	~SceneGL(void);
+
+	void initGl(QOpenGLContext* context);
+
+	GLuint uploadTexture1D(const TextureUpload& tex);
+	GLuint uploadTexture2D(const TextureUpload& tex);
+
+	QOpenGLContext* get_context() const { return this->context; }
+
+	bool isSceneInitialized(void) const { return this->isInitialized; }
+
+private:
+	bool isInitialized;
+	QOpenGLContext* context;
+};
+
+/**********************************************************************/
+/**********************************************************************/
+
 /// @ingroup graphpipe
 /// @brief The Scene class is the gateway to the OpenGL functions attached to the GL context of the program.
 /// @note As you might see, this kind of turned into a god-object. Although dismantling it is not that hard !
@@ -311,7 +338,7 @@ public:
     void bindMeshManipulator(UITool::MeshManipulator * meshManipulator);
     void toggleManipulatorDisplay();
     void toggleWireframe();
-
+    void prepareManipulators();
 
 private:
 	/// @brief Compile the given shaders, and return the ID of the program generated. On any error, returns 0.
@@ -414,7 +441,7 @@ private:
 private:
 
     UITool::GL::MeshManipulator * glMeshManipulator;
-    
+
 	bool isInitialized;	   ///< tracks if the scene was initialized or not
 	bool showVAOstate;	  ///< Do we need to print the VAO/program state on next draw ?
 	bool shouldUpdateVis;	 ///< Should we update visibility on next draw ?
@@ -543,6 +570,9 @@ private:
 	/*    Keeps track of the limits of the GL   */
 	/********************************************/
 	GLint gl_limit_max_texture_size;
+
+public:
+    SceneGL sceneGL;
 };
 
 /// @brief Type-safe conversion of enum values to unsigned ints.
