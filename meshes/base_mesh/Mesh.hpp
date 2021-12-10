@@ -4,6 +4,7 @@
 #include "Triangle.h"
 #include <glm/glm.hpp>
 #include <nanoflann.hpp>
+#include <memory>
 #include <queue>
 
 template <typename vec_t>
@@ -20,7 +21,7 @@ public:
 	inline const vec_t& derived() const { return this->vertex_array; }
 
 	/// @brief Returns the number of data points
-	inline size_t kdtree_get_point_count() const { return derived().size(); }
+	inline size_t kdtree_get_point_count() const { std::cerr << "Fetched size.\n"; return derived().size(); }
 
 	// Returns the dim'th component of the idx'th point in the class:
 	// Since this is inlined and the "dim" argument is typically an immediate value, the
@@ -40,7 +41,10 @@ public:
 };
 
 typedef MeshVerticesNanoFLANNAdaptor<std::vector<glm::vec3>> mesh_kdtree_adaptor;
-typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<glm::vec3::value_type, mesh_kdtree_adaptor>, mesh_kdtree_adaptor,3> mesh_kdtree_t;
+typedef nanoflann::KDTreeSingleIndexAdaptor<
+  nanoflann::L2_Simple_Adaptor<glm::vec3::value_type, mesh_kdtree_adaptor>,
+  mesh_kdtree_adaptor,3
+> mesh_kdtree_t;
 
 class Mesh {
 
@@ -106,7 +110,8 @@ protected:
 
 	int normalDirection;
 
-	mesh_kdtree_t kdtree;
+	std::shared_ptr<mesh_kdtree_t> kdtree;
+	std::shared_ptr<mesh_kdtree_adaptor> kdtree_adaptor;
 };
 
 #endif // MESH_H

@@ -228,10 +228,10 @@ public:
 
 	/// @brief This performs ARAP deformation on the first mesh found.
 	/// @note THIS IS A WIP/DRAFT FUNCTION, NOT DESIGNED FOR PRODUCTION RELEASE
-	void dummy_perform_arap_on_first_mesh(void);
+	void dummy_perform_arap_on_first_mesh();
 	/// @brief This performs ARAP deformation on the mesh associated with the first loaded image.
 	/// @note THIS IS A WIP/DRAFT FUNCTION, NOT DESIGNED FOR PRODUCTION RELEASE
-	void dummy_perform_constrained_arap_on_image_mesh(void);
+	void dummy_perform_constrained_arap_on_image_mesh();
 	/// @brief This adds a constraint for image 'img_idx' at position 'img_pos'.
 	/// @note THIS IS A WIP/DRAFT FUNCTION, NOT DESIGNED FOR PRODUCTION RELEASE
 	void dummy_add_image_constraint(std::size_t img_idx, glm::vec3 img_pos);

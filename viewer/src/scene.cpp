@@ -814,7 +814,7 @@ void Scene::dummy_add_image_constraint(std::size_t img_idx, glm::vec3 img_pos) {
 	this->image_constraints.push_back(img_pos);
 }
 
-vois Scene::dummy_add_arap_constraint_mesh(std::size_t drawable, std::size_t vtx_idx) {
+void Scene::dummy_add_arap_constraint_mesh(std::size_t drawable, std::size_t vtx_idx) {
 	if (drawable == 0) { return; }
 	if (drawable == this->drawables.size()) { return; }
 	this->mesh_idx_constraints.push_back((std::make_pair(drawable-1, vtx_idx)));
@@ -834,6 +834,7 @@ void Scene::dummy_check_point_in_mesh_bb(glm::vec3 query, std::size_t& mesh_inde
 				query.y > mesh_bb.first.y && query.y < mesh_bb.second.y &&
 				query.z > mesh_bb.first.z && query.z < mesh_bb.second.z
 			) {
+				std::cerr << "Found the mesh !\n";
 				mesh_index = i+1;
 				return;
 			}
@@ -847,12 +848,6 @@ DrawableBase::Ptr Scene::dummy_getDrawable(std::size_t idx) {
 	if (idx == 0) { return nullptr; }
 	if (idx > this->drawables.size()) { return nullptr; }
 	return this->drawables[idx-1];
-}
-
-void Scene::dummy_add_arap_constraint_mesh(std::size_t drawable, std::size_t vtx_idx) {
-	if (drawable == 0) { return; }
-	if (drawable > this->drawables.size()) { return; }
-	this->mesh_idx_constraints.push_back(std::make_pair(drawable-1, vtx_idx));
 }
 
 void Scene::recompileShaders(bool verbose) {
@@ -1116,8 +1111,9 @@ void Scene::loadMesh() {
 		return;
 	}
 
+	std::shared_ptr<Mesh> mesh_to_load = nullptr;
 	// Create a mesh structure :
-	auto mesh_to_load = std::make_shared<Mesh>();
+	mesh_to_load = std::make_shared<Mesh>();
 	auto& vertices = mesh_to_load->getVertices();
 	auto& normals = mesh_to_load->getNormals();
 	// Load that OFF file and then update the mesh :

@@ -21,7 +21,7 @@
 float Viewer::sceneRadiusMultiplier{.5f};
 
 Viewer::Viewer(Scene* const scene, QStatusBar* _program_bar, QWidget* parent) :
-	QGLViewer(parent), scene(scene), spheres(), sphere_size(.1f) {
+	QGLViewer(parent), scene(scene), spheres(), sphere_size(.1f), temp_mesh_idx(0), temp_img_idx(0), temp_sphere_position(std::numeric_limits<float>::lowest()) {
 	this->statusBar	   = _program_bar;
 	this->refreshTimer = new QTimer();
 	this->refreshTimer->setInterval(std::chrono::milliseconds(7));	  // ~7 ms for 144fps, ~16ms for 60fps and ~33ms for 30 FPS
@@ -299,15 +299,20 @@ void Viewer::guessMousePosition() {
 		std::size_t mesh_idx = 0;
 		this->scene->dummy_check_point_in_mesh_bb(glm::vec3(p), mesh_idx);
 		if (mesh_idx) {
-			this->temp_mesh_idx = mesh_idx;
-			std::cerr << "Found point in the mesh " << mesh_idx-1 << '\n';
 			DrawableBase::Ptr drawable_base = this->scene->dummy_getDrawable(mesh_idx);
-			if (drawable_base == nullptr) { std::cerr << "ERROR : couldn't find the associated drawable :c\n"; }
-			else {
+			if (drawable_base == nullptr) {
+				this->temp_mesh_idx = 0;
+			} else {
 				// get mesh drawable and get closest point from mesh underneath :
 				DrawableMesh::Ptr drawable_mesh = std::dynamic_pointer_cast<DrawableMesh>(drawable_base);
 				if (drawable_mesh != nullptr) {
-					this->temp_sphere_position = drawable_mesh->getMesh()->closestPointTo(glm::vec3(p), this->temp_mesh_vtx_idx);
+					auto mesh = drawable_mesh->getMesh();
+					if (mesh == nullptr) {
+						this->temp_mesh_idx = 0;
+					} else {
+						this->temp_mesh_idx = mesh_idx;
+						this->temp_sphere_position = mesh->closestPointTo(glm::vec3(p), this->temp_mesh_vtx_idx);
+					}
 				}
 			}
 		} else {
