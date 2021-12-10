@@ -7,32 +7,32 @@
 /**************** Inputs ****************/
 /****************************************/
 layout(location = 0) in vec4 vertexPosition;	// Vertex position
-layout(location = 1) in vec4 vertexNormal;	// In this shader : does nothing
+layout(location = 1) in vec4 vertexNormal;		// In this shader : does nothing
 layout(location = 2) in vec3 vertexTexCoord;	// Actually position within the final FB : [-1;1] on axes
 
 /****************************************/
 /*************** Outputs ****************/
 /****************************************/
-layout(location = 0) out vec4 vPos;		// The vertex's positions
+layout(location = 0) out vec4 vPos;				// The vertex's positions
 layout(location = 1) out vec3 vOriginalCoords;	// Original coords in plane-space
-layout(location = 2) out vec3 vTexCoord;	// The vertex's texture coordinates
+layout(location = 2) out vec3 vTexCoord;		// The vertex's texture coordinates
 layout(location = 3) out vec2 planeMultiplier;	// The multiplier used to 'stretch' the plane
 
 /****************************************/
 /*************** Uniforms ***************/
 /****************************************/
 /* For the FB/BB dimensions, the X coordinate will be width, and Y will be height. */
-uniform vec2 fbDims;		// Framebuffer dimensions
-uniform vec2 bbDims;		// Scene's bounding box dimensions on this plane
-uniform uint planeIndex;	// The identifier of the currently drawn plane.
-uniform mat4 gridTransform;	// The grid's world-space → grid-space transform
+uniform vec2 fbDims;			// Framebuffer dimensions
+uniform vec2 bbDims;			// Scene's bounding box dimensions on this plane
+uniform uint planeIndex;		// The identifier of the currently drawn plane.
+uniform mat4 gridTransform;		// The grid's world-space → grid-space transform
 uniform vec4 gridDimensions;	// The grid dimensions (used to compute tex-space coordinates)
 uniform vec4 sceneBBDiagonal;	// The grid's world-space bounding box diagonal
 uniform vec4 sceneBBPosition;	// The grid's world-space bounding box position
 uniform vec3 planePositions;	// The plane positions, in world space
-uniform vec2 offset;		// The offset from the origin, to move the viewer
-uniform uint heading;		// The plane's 'up' orientation (up [default] = 0, right = 1, down = 2, left = 3)
-uniform float zoom;		// The zoom factor for the current view
+uniform vec2 offset;			// The offset from the origin, to move the viewer
+uniform uint heading;			// The plane's 'up' orientation (up [default] = 0, right = 1, down = 2, left = 3)
+uniform float zoom;				// The zoom factor for the current view
 
 /****************************************/
 /*********** Function headers ***********/

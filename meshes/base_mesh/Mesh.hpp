@@ -21,7 +21,7 @@ public:
 	inline const vec_t& derived() const { return this->vertex_array; }
 
 	/// @brief Returns the number of data points
-	inline size_t kdtree_get_point_count() const { std::cerr << "Fetched size.\n"; return derived().size(); }
+	inline size_t kdtree_get_point_count() const { return derived().size(); }
 
 	// Returns the dim'th component of the idx'th point in the class:
 	// Since this is inlined and the "dim" argument is typically an immediate value, the
@@ -40,10 +40,10 @@ public:
 	bool kdtree_get_bbox(BBOX& /*bb*/) const { return false; }
 };
 
-typedef MeshVerticesNanoFLANNAdaptor<std::vector<glm::vec3>> mesh_kdtree_adaptor;
+typedef MeshVerticesNanoFLANNAdaptor<std::vector<glm::vec3>> mesh_kdtree_adaptor_t;
 typedef nanoflann::KDTreeSingleIndexAdaptor<
-  nanoflann::L2_Simple_Adaptor<glm::vec3::value_type, mesh_kdtree_adaptor>,
-  mesh_kdtree_adaptor,3
+  nanoflann::L2_Simple_Adaptor<glm::vec3::value_type, mesh_kdtree_adaptor_t>,
+  mesh_kdtree_adaptor_t,3
 > mesh_kdtree_t;
 
 class Mesh {
@@ -64,6 +64,8 @@ public:
 
 	std::vector<glm::vec3> & getNormals(){return normals;}
 	const std::vector<glm::vec3> & getNormals()const {return normals;}
+
+	void applyTransformation(glm::mat4 transformation);
 
 	glm::vec3 closestPointTo(glm::vec3 query, std::size_t& vertex_idx) const;
 
@@ -110,8 +112,10 @@ protected:
 
 	int normalDirection;
 
+	/// @brief The kd-tree responsible for fast spatial queries on the mesh
 	std::shared_ptr<mesh_kdtree_t> kdtree;
-	std::shared_ptr<mesh_kdtree_adaptor> kdtree_adaptor;
+	/// @brief The adaptor between nanoFLANN and the vertices vector.
+	std::shared_ptr<mesh_kdtree_adaptor_t> kdtree_adaptor;
 };
 
 #endif // MESH_H

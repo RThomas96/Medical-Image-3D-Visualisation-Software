@@ -56,11 +56,22 @@ std::vector<glm::vec3> Mesh::getBB()
 	return bb;
 }
 
+void Mesh::applyTransformation(glm::mat4 transformation) {
+	glm::vec4 translation = transformation[3];
+	translation.w = .0f;
+	transformation[3] = glm::vec4{.0f, .0f, .0f, 1.f};
+	for (auto& vertex : this->vertices) {
+		vertex = glm::vec3(transformation * (glm::vec4(vertex, 1.f) - translation));
+	}
+
+	this->update();
+}
+
 void Mesh::update(){
 	computeBB();
 	recomputeNormals();
 	if (this->kdtree_adaptor == nullptr) {
-		this->kdtree_adaptor = std::make_shared<mesh_kdtree_adaptor>(this->vertices);
+		this->kdtree_adaptor = std::make_shared<mesh_kdtree_adaptor_t>(this->vertices);
 	}
 	if (this->kdtree == nullptr) {
 		this->kdtree = std::make_shared<mesh_kdtree_t>(3, *this->kdtree_adaptor.get(), 10);
