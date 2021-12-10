@@ -83,8 +83,7 @@ void main(void)
 			if (texCoord.z > 0. && texCoord.z < 1.) {
 				if (isPlaneVisible(true) && showTex == true) {
 					uvec3 tex = texture(texData, texCoord).xyz;
-					worldPosition.xyz = sceneBBPosition + texCoord * sceneBBDiagonal;
-					worldPosition.w = 1.f;
+					worldPosition = vPos;
 					colorTex = fragmentEvaluationSingleChannel(tex);
 					if (colorTex.w < 0.005f) {
 						float white_shade = 245.f/255.f;

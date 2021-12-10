@@ -155,6 +155,7 @@ void Viewer::keyPressEvent(QKeyEvent* e) {
 			this->update();
 			break;
 		case Qt::Key::Key_Enter:
+			// Shift-Enter adds the current vertex as a constraint for ARAP in the mesh.
 			if (e->modifiers() & Qt::KeyboardModifier::ShiftModifier) {
 				// add the vertex as an arap constraint to the concerned mesh
 				if (this->temp_mesh_idx) {
@@ -162,12 +163,23 @@ void Viewer::keyPressEvent(QKeyEvent* e) {
 					std::cerr << "Added mesh constraint at position " << this->temp_mesh_vtx_idx << " for mesh " << this->temp_mesh_idx << '\n';
 					this->temp_mesh_idx = 0;
 				}
-			} else if ((e->modifiers() & Qt::KeyboardModifier::ControlModifier) != 0) {
+			}
+			// Ctrl-Enter adds the current image position as the image constraint for ARAP
+			else if ((e->modifiers() & Qt::KeyboardModifier::ControlModifier) != 0) {
 				if (this->temp_img_idx) {
 					this->scene->dummy_add_image_constraint(this->temp_img_idx, this->temp_img_pos);
 					std::cerr << "Added image constraint at position " << this->temp_img_pos << '\n';
 				}
 			}
+			break;
+		case Qt::Key::Key_Plus:
+			// don't cap the highest size
+			this->sphere_size *= 1.1f;
+			break;
+		case Qt::Key::Key_Minus:
+			this->sphere_size /= 1.1f;
+			// cap the smallest size at 1x10^-3
+			this->sphere_size = std::max(1e-3f, this->sphere_size);
 			break;
 		/*
 		Default handler.
@@ -261,7 +273,6 @@ void Viewer::guessMousePosition() {
 	this->posRequest = glm::ivec2(rawMousePos.x, this->fbSize.y - rawMousePos.y);
 	this->makeCurrent();
 	glm::vec4 p = this->scene->readFramebufferContents(this->defaultFramebufferObject(), this->posRequest);
-	std::cerr << "3D viewer : Value in fbo : {" << p.x << ", " << p.y << ", " << p.z << ", " << p.w << "}\n";
 	if (p.w > .01f) {
 		this->scene->setPositionResponse(p);
         // TODO: new API
@@ -287,7 +298,7 @@ void Viewer::guessMousePosition() {
 				QString msg					  = "Position in image space : " + QString::number(index.x) + ", " +
 							  QString::number(index.y) + ", " + QString::number(index.z) + ", in grid " +
 							  QString::fromStdString(grid->getImageName());
-				this->statusBar->showMessage(msg, 1000);
+				this->statusBar->showMessage(msg, 10000);
 				this->temp_img_pos = glm::vec3(p);
 			} else {
 				std::cerr << "Error : grid " << grid->getImageName() << " does not contain the point\n";
@@ -311,7 +322,14 @@ void Viewer::guessMousePosition() {
 						this->temp_mesh_idx = 0;
 					} else {
 						this->temp_mesh_idx = mesh_idx;
-						this->temp_sphere_position = mesh->closestPointTo(glm::vec3(p), this->temp_mesh_vtx_idx);
+						// Transform the point to mesh-local coordinates !
+						// get transfo and extract translation component
+						glm::mat4 mesh_transfo = drawable_mesh->getTransformation();
+						glm::vec4 mesh_translation = glm::vec4(mesh_transfo[3]); mesh_translation.w = .0f;
+						mesh_transfo[3] = glm::vec4{.0f, .0f, .0f, 1.f};
+						glm::vec4 mesh_local_position = glm::inverse(mesh_transfo) * (p - mesh_translation);
+						this->temp_sphere_position = mesh->closestPointTo(glm::vec3(mesh_local_position), this->temp_mesh_vtx_idx);
+						this->temp_sphere_position = glm::vec3(mesh_transfo * glm::vec4(this->temp_sphere_position, 1.f) + mesh_translation);
 					}
 				}
 			}

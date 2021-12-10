@@ -758,38 +758,65 @@ void Scene::dummy_perform_constrained_arap_on_image_mesh() {
 	if (mesh_to_deform == nullptr) { std::cerr << "Error : could not get the first drawable as a DrawableMesh.\n"; return; }
 	std::shared_ptr<Mesh> _mesh = mesh_to_deform->getMesh();
 
+
 	AsRigidAsPossible arap_deformation;
 	arap_deformation.clear();
 	arap_deformation.init(_mesh->getVertices(), _mesh->getTriangles());
 	arap_deformation.setIterationNb(5); // 5 iterations maximum
 
-	std::vector<std::pair<glm::vec3, glm::vec3>> pairings;
-	std::vector<glm::vec3> transforms;
+	std::vector<std::pair<std::size_t, glm::vec3>> pairings; // precomputed handle indices and positions for the second loop later
+	std::vector<glm::vec3> transforms; // estimated translations between current point position and ARAP handle on the image
+	auto current_transform = mesh_to_deform->getTransformation();
+	// extract translation from the transformation :
+	auto current_translation = current_transform[3];
+	current_translation.w = .0f;
+	current_transform[3] = glm::vec4{.0f, .0f, .0f, 1.f};
+	// precompute the inverse transform :
+	auto inverse_transform = glm::inverse(current_transform);
 
-	std::cerr << "Generating vertex handles ..." << '\n';
-	std::vector<bool> handles(_mesh->getVertices().size(), false);
-	std::vector<glm::vec3> targets(_mesh->getVertices());
+	std::cerr << "Generating 'best' estimated transform for the mesh ..." << '\n';
 	for (std::size_t i = 0; i < this->mesh_idx_constraints.size(); ++i) {
 		auto constraint = this->mesh_idx_constraints[i];
 		auto position = this->image_constraints[i];
 		// NOTE : Always performed on the first mesh !!! So only filter through those with index 0.
 		if (constraint.first == 0) {
-			handles[constraint.second] = true;
-			glm::vec3 estimated_transform = targets[constraint.second] - position;
-			targets[constraint.second] = position;
+			// Get current position :
+			auto mesh_original_position = _mesh->getVertices()[constraint.second];
+			// Transform it into the coordinates shown on screen :
+			auto mesh_transformed_position = glm::vec3(inverse_transform * (glm::vec4(mesh_original_position, 1.f) - current_translation));
+			// Guess the best translation between this current position and the image-bound position :
+			glm::vec3 estimated_transform = mesh_transformed_position - position;
 			transforms.push_back(estimated_transform);
+
+			pairings.push_back(std::make_pair(constraint.second, position));
 		}
 	}
+
+	// Compute 'best' translation (avg translation) :
 	glm::vec3 best_guess_transform = glm::vec3{};
 	for (std::size_t i = 0; i < transforms.size(); ++i) {
 		best_guess_transform += transforms[i];
 	}
 	best_guess_transform /= static_cast<glm::vec3::value_type>(transforms.size());
-	auto current_transform = mesh_to_deform->getTransformation();
 	current_transform[3][0] += best_guess_transform[0];
 	current_transform[3][1] += best_guess_transform[1];
 	current_transform[3][2] += best_guess_transform[2];
+	std::cerr << "Generated 'best' estimated transform for the mesh : " << best_guess_transform << '\n';
+
+
+	// Apply the transformation to the mesh before ARAP !!! We want to place the mesh around the center of
+	// the image in order for ARAP to have less guesswork to do.
 	mesh_to_deform->setTransformation(current_transform);
+	_mesh->applyTransformation(current_transform);
+
+	std::cerr << "Generating vertex handles ..." << '\n';
+	std::vector<bool> handles(_mesh->getVertices().size(), false);
+	std::vector<glm::vec3> targets(_mesh->getVertices());
+	for (auto pairing : pairings) {
+		handles[pairing.first] = true;
+		targets[pairing.first] = pairing.second;
+	}
+
 	// ERROR : the mesh underneath is not transformed, would need to get the inverse transform of the drawable to get the real mesh positions !!!
 	std::cerr << "Generated vertex handles." << '\n';
 
@@ -834,7 +861,6 @@ void Scene::dummy_check_point_in_mesh_bb(glm::vec3 query, std::size_t& mesh_inde
 				query.y > mesh_bb.first.y && query.y < mesh_bb.second.y &&
 				query.z > mesh_bb.first.z && query.z < mesh_bb.second.z
 			) {
-				std::cerr << "Found the mesh !\n";
 				mesh_index = i+1;
 				return;
 			}
