@@ -244,7 +244,11 @@ public:
 	/// @note THIS IS A WIP/DRAFT FUNCTION, NOT DESIGNED FOR PRODUCTION RELEASE
 	DrawableBase::Ptr dummy_getDrawable(std::size_t idx);
 	/// @brief Adds to the 'i-th' mesh a constraint at vertex 'n'
+	/// @note THIS IS A WIP/DRAFT FUNCTION, NOT DESIGNED FOR PRODUCTION RELEASE
 	void dummy_add_arap_constraint_mesh(std::size_t drawable, std::size_t vtx_idx);
+	/// @brief Prints the ARAP constraints as they currently are set in the program.
+	/// @note THIS IS A WIP/DRAFT FUNCTION, NOT DESIGNED FOR PRODUCTION RELEASE
+	void dummy_print_arap_constraints();
 
 	/// @brief Changes the texture coloration mode to the desired setting
 	void setColorFunction_r(ColorFunction _c);

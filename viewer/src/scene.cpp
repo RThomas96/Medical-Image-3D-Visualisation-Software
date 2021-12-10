@@ -788,6 +788,8 @@ void Scene::dummy_perform_constrained_arap_on_image_mesh() {
 			glm::vec3 estimated_transform = mesh_transformed_position - position;
 			transforms.push_back(estimated_transform);
 
+			// TODO : the transform appears to modify the vertices in an unconventional way.
+
 			pairings.push_back(std::make_pair(constraint.second, position));
 		}
 	}
@@ -843,9 +845,24 @@ void Scene::dummy_add_image_constraint(std::size_t img_idx, glm::vec3 img_pos) {
 
 void Scene::dummy_add_arap_constraint_mesh(std::size_t drawable, std::size_t vtx_idx) {
 	if (drawable == 0) { return; }
-	if (drawable == this->drawables.size()) { return; }
+	if (drawable > this->drawables.size()) { return; }
 	this->mesh_idx_constraints.push_back((std::make_pair(drawable-1, vtx_idx)));
 	std::cerr << "[Scene] Added constraint " << vtx_idx << " to mesh " << drawable << "\n";
+}
+
+void Scene::dummy_print_arap_constraints() {
+	std::cerr << "[LOG] ===============================================\n";
+	std::cerr << "[LOG] ARAP constraints at this point in the program :\n";
+	std::cerr << "[LOG] Mesh indices :\n";
+	for (const auto& mesh_constraint : this->mesh_idx_constraints) {
+		std::cerr << "[LOG]\t - { mesh_idx : " << (+mesh_constraint.first)-1 << ", vertex_idx : " << mesh_constraint.second << " }\n";
+	}
+	std::cerr << "[LOG] Image constraints : \n";
+	for (const auto& image_constraint : this->image_constraints) {
+		std::cerr << "[LOG]\t -" << image_constraint << '\n';
+	}
+	std::cerr << "[LOG] ARAP constraints at this point in the program :\n";
+	std::cerr << "[LOG] ===============================================\n";
 }
 
 void Scene::dummy_check_point_in_mesh_bb(glm::vec3 query, std::size_t& mesh_index) {

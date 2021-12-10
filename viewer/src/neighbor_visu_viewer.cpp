@@ -133,10 +133,6 @@ void Viewer::keyPressEvent(QKeyEvent* e) {
 				this->update();
 			}
 			break;
-		case Qt::Key::Key_C:
-			this->shouldCapture = true;
-			this->update();
-			break;
 
 		case Qt::Key::Key_G:
 			this->scene->draft_tryAndSaveFirstGrid();
@@ -147,17 +143,21 @@ void Viewer::keyPressEvent(QKeyEvent* e) {
 				this->updateCameraPosition();
 			} else if ((e->modifiers() & Qt::KeyboardModifier::ShiftModifier) != 0) {
 				// perform dummy ARAP deformation
-				this->scene->dummy_perform_arap_on_first_mesh();
+				this->scene->dummy_print_arap_constraints();
 				this->update();
 			} else {
 				QGLViewer::keyPressEvent(e);
 			}
 			this->update();
 			break;
-		case Qt::Key::Key_Enter:
+		case Qt::Key::Key_X:
+			this->scene->dummy_perform_constrained_arap_on_image_mesh();
+			break;
+		case Qt::Key::Key_C:
 			// Shift-Enter adds the current vertex as a constraint for ARAP in the mesh.
 			if (e->modifiers() & Qt::KeyboardModifier::ShiftModifier) {
 				// add the vertex as an arap constraint to the concerned mesh
+				std::cerr << "Attempting to push constraint to mesh ..." << this->temp_mesh_idx << "\n";
 				if (this->temp_mesh_idx) {
 					this->scene->dummy_add_arap_constraint_mesh(this->temp_mesh_idx, this->temp_mesh_vtx_idx);
 					std::cerr << "Added mesh constraint at position " << this->temp_mesh_vtx_idx << " for mesh " << this->temp_mesh_idx << '\n';
@@ -166,10 +166,9 @@ void Viewer::keyPressEvent(QKeyEvent* e) {
 			}
 			// Ctrl-Enter adds the current image position as the image constraint for ARAP
 			else if ((e->modifiers() & Qt::KeyboardModifier::ControlModifier) != 0) {
-				if (this->temp_img_idx) {
-					this->scene->dummy_add_image_constraint(this->temp_img_idx, this->temp_img_pos);
-					std::cerr << "Added image constraint at position " << this->temp_img_pos << '\n';
-				}
+				std::cerr << "Attempting to push constraint to image ..." << this->temp_img_idx << "\n";
+				this->scene->dummy_add_image_constraint(this->temp_img_idx, this->temp_img_pos);
+				std::cerr << "Added image constraint at position " << this->temp_img_pos << '\n';
 			}
 			break;
 		case Qt::Key::Key_Plus:
@@ -300,8 +299,6 @@ void Viewer::guessMousePosition() {
 							  QString::fromStdString(grid->getImageName());
 				this->statusBar->showMessage(msg, 10000);
 				this->temp_img_pos = glm::vec3(p);
-			} else {
-				std::cerr << "Error : grid " << grid->getImageName() << " does not contain the point\n";
 			}
 		};
 		this->scene->lambdaOnGrids(findSuitablePoint);
