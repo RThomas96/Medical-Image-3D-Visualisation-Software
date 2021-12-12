@@ -57,11 +57,9 @@ std::vector<glm::vec3> Mesh::getBB()
 }
 
 void Mesh::applyTransformation(glm::mat4 transformation) {
-	glm::vec4 translation = transformation[3];
-	translation.w = .0f;
-	transformation[3] = glm::vec4{.0f, .0f, .0f, 1.f};
-	for (auto& vertex : this->vertices) {
-		vertex = glm::vec3(transformation * (glm::vec4(vertex, 1.f) - translation));
+	for (std::size_t i = 0; i < this->vertices.size(); ++i) {
+		glm::vec3 vertex = this->vertices[i];
+		this->vertices[i] = glm::vec3(transformation * (glm::vec4(vertex, 1.f)));
 	}
 
 	this->update();

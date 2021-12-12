@@ -138,6 +138,9 @@ void Viewer::keyPressEvent(QKeyEvent* e) {
 			this->scene->draft_tryAndSaveFirstGrid();
 			this->update();
 			break;
+			/*
+			 * ARAP !
+			 */
 		case Qt::Key::Key_A:
 			if ((e->modifiers() & Qt::KeyboardModifier::ControlModifier) != 0) {
 				this->updateCameraPosition();
@@ -151,7 +154,17 @@ void Viewer::keyPressEvent(QKeyEvent* e) {
 			this->update();
 			break;
 		case Qt::Key::Key_X:
-			this->scene->dummy_perform_constrained_arap_on_image_mesh();
+			if ((e->modifiers() & Qt::KeyboardModifier::ControlModifier) != 0) {
+				std::cerr << "Applying constrained ARAP ...\n";
+				this->scene->dummy_perform_constrained_arap_on_image_mesh();
+				std::cerr << "Applied constrained ARAP.\n";
+			} else if ((e->modifiers() & Qt::KeyboardModifier::ShiftModifier) != 0) {
+				// apply alignment before ARAP deformation
+				std::cerr << "Applying transformation to the mesh ...\n";
+				this->scene->dummy_apply_alignment_before_arap();
+				std::cerr << "Applied transformation to the mesh.\n";
+			}
+			this->update();
 			break;
 		case Qt::Key::Key_C:
 			// Shift-Enter adds the current vertex as a constraint for ARAP in the mesh.
@@ -174,11 +187,13 @@ void Viewer::keyPressEvent(QKeyEvent* e) {
 		case Qt::Key::Key_Plus:
 			// don't cap the highest size
 			this->sphere_size *= 1.1f;
+			std::cerr << "Sphere size now at : " << std::setprecision(5) << this->sphere_size << '\n';
 			break;
 		case Qt::Key::Key_Minus:
 			this->sphere_size /= 1.1f;
 			// cap the smallest size at 1x10^-3
 			this->sphere_size = std::max(1e-3f, this->sphere_size);
+			std::cerr << "Sphere size now at : " << std::setprecision(5) << this->sphere_size << '\n';
 			break;
 		/*
 		Default handler.

@@ -73,6 +73,7 @@ public:
 
 	// modify vertices
 	void setVertices(unsigned int index, glm::vec3 vertex){vertices[index] = vertex;this->update();}
+	void setNewVertexPositions(std::vector<glm::vec3>& new_positions) { this->vertices = new_positions; this->update(); }
 
 	void draw();
 	void draw( std::vector<bool> & selected, std::vector<bool> & fixed);

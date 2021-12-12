@@ -249,6 +249,8 @@ public:
 	/// @brief Prints the ARAP constraints as they currently are set in the program.
 	/// @note THIS IS A WIP/DRAFT FUNCTION, NOT DESIGNED FOR PRODUCTION RELEASE
 	void dummy_print_arap_constraints();
+	/// @brief Applies the mesh alignment before the ARAP solver
+	void dummy_apply_alignment_before_arap();
 
 	/// @brief Changes the texture coloration mode to the desired setting
 	void setColorFunction_r(ColorFunction _c);
