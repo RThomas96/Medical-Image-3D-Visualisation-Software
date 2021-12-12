@@ -113,6 +113,7 @@ vec3 phongComputation(vec4 position, vec3 normal, vec4 color, vec3 lightPos, vec
 
 void main (void) {
 	sceneSpaceFragmentPos = vec4(.0,.0,.0,.0);
+	gl_FragDepth = gl_FragCoord.z;
 
 	if( visibility > 3500. ) discard;
 
@@ -277,6 +278,10 @@ void main (void) {
 	colorOut.xyz += phongComputation(Pos, n, color, cam, phongDetails, lightDetails);
 
 	sceneSpaceFragmentPos = Pos;
+
+	// Update fragment depth to prevent sorting issues !!!
+	vec4 compute_depth = pMat * vMat * sceneSpaceFragmentPos;
+	gl_FragDepth = 0.5f * ((compute_depth.z / compute_depth.w) + 1.f);
 
 	return;
 }
