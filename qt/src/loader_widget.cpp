@@ -23,10 +23,10 @@ GridLoaderWidget::GridLoaderWidget(Scene* _scene, Viewer* _viewer, ControlPanel*
 	this->viewer				= _viewer;
 	this->_cp					= cp;
 	this->dsLevel				= IO::DownsamplingLevel::Original;
-	this->readerR				= nullptr;
-	this->readerG				= nullptr;
-	this->inputGridR			= nullptr;
-	this->inputGridG			= nullptr;
+	//this->readerR				= nullptr;
+	//this->readerG				= nullptr;
+	//this->inputGridR			= nullptr;
+	//this->inputGridG			= nullptr;
 	this->groupbox_userLimits	= nullptr;
 	this->spinbox_userLimitMin	= nullptr;
 	this->spinbox_userLimitMax	= nullptr;
@@ -39,13 +39,13 @@ GridLoaderWidget::GridLoaderWidget(Scene* _scene, Viewer* _viewer, ControlPanel*
 }
 
 GridLoaderWidget::~GridLoaderWidget() {
-	this->inputGridR.reset();
-	this->inputGridG.reset();
-	this->readerR.reset();
-	this->readerG.reset();
+	//this->inputGridR.reset();
+	//this->inputGridG.reset();
+	//this->readerR.reset();
+	//this->readerG.reset();
 	this->scene	 = nullptr;
 	this->viewer = nullptr;
-	this->interpolator.reset();
+	//this->interpolator.reset();
 
 	this->button_loadDIM_1channel->disconnect();
 	this->button_loadDIM_2channel->disconnect();
@@ -200,7 +200,7 @@ void GridLoaderWidget::setupWidgets() {
 	this->groupBox_interpolator->setDisabled(true);
 	this->radioButton_original->setChecked(true);
 	this->radioButton_nn->setChecked(true);
-	this->interpolator = std::make_shared<Interpolators::nearestNeighboor<DiscreteGrid::data_t>>();
+	//this->interpolator = std::make_shared<Interpolators::nearestNeighboor<DiscreteGrid::data_t>>();
 }
 
 void GridLoaderWidget::setupLayouts() {
@@ -302,12 +302,12 @@ void GridLoaderWidget::setupSignals() {
 	}
 
 	// load from DIM/IMA/TIFF files :
-	QObject::connect(this->button_loadDIM_1channel, &QPushButton::clicked, this, &GridLoaderWidget::loadGridDIM1channel);
-	QObject::connect(this->button_loadDIM_2channel, &QPushButton::clicked, this, &GridLoaderWidget::loadGridDIM2channel);
-	QObject::connect(this->button_loadTIF_1channel, &QPushButton::clicked, this, &GridLoaderWidget::loadGridTIF1channel);
-	QObject::connect(this->button_loadTIF_2channel, &QPushButton::clicked, this, &GridLoaderWidget::loadGridTIF2channel);
-	QObject::connect(this->button_loadOME_1channel, &QPushButton::clicked, this, &GridLoaderWidget::loadGridOME1channel);
-	QObject::connect(this->button_loadOME_2channel, &QPushButton::clicked, this, &GridLoaderWidget::loadGridOME2channel);
+	//QObject::connect(this->button_loadDIM_1channel, &QPushButton::clicked, this, &GridLoaderWidget::loadGridDIM1channel);
+	//QObject::connect(this->button_loadDIM_2channel, &QPushButton::clicked, this, &GridLoaderWidget::loadGridDIM2channel);
+	//QObject::connect(this->button_loadTIF_1channel, &QPushButton::clicked, this, &GridLoaderWidget::loadGridTIF1channel);
+	//QObject::connect(this->button_loadTIF_2channel, &QPushButton::clicked, this, &GridLoaderWidget::loadGridTIF2channel);
+	//QObject::connect(this->button_loadOME_1channel, &QPushButton::clicked, this, &GridLoaderWidget::loadGridOME1channel);
+	//QObject::connect(this->button_loadOME_2channel, &QPushButton::clicked, this, &GridLoaderWidget::loadGridOME2channel);
 	QObject::connect(this->button_loadNewGridAPI, &QPushButton::clicked, this, &GridLoaderWidget::loadNewGridAPI);
 
 	// load grid into mem :
@@ -318,12 +318,12 @@ void GridLoaderWidget::setupSignals() {
 		if (this->radioButton_original->isChecked()) {
 			this->dsLevel = IO::DownsamplingLevel::Original;
 			this->groupBox_interpolator->setEnabled(false);
-			if (this->readerR != nullptr) {
-				this->readerR->enableDownsampling(this->dsLevel);
-			}
-			if (this->readerG != nullptr) {
-				this->readerG->enableDownsampling(this->dsLevel);
-			}
+			//if (this->readerR != nullptr) {
+				//this->readerR->enableDownsampling(this->dsLevel);
+			//}
+			//if (this->readerG != nullptr) {
+				//this->readerG->enableDownsampling(this->dsLevel);
+			//}
 		}
 		this->computeGridInfoLabel();
 	});
@@ -332,12 +332,12 @@ void GridLoaderWidget::setupSignals() {
 		if (this->radioButton_low->isChecked()) {
 			this->dsLevel = IO::DownsamplingLevel::Low;
 			this->groupBox_interpolator->setEnabled(true);
-			if (this->readerR != nullptr) {
-				this->readerR->enableDownsampling(this->dsLevel);
-			}
-			if (this->readerG != nullptr) {
-				this->readerG->enableDownsampling(this->dsLevel);
-			}
+			//if (this->readerR != nullptr) {
+				//this->readerR->enableDownsampling(this->dsLevel);
+			//}
+			//if (this->readerG != nullptr) {
+				//this->readerG->enableDownsampling(this->dsLevel);
+			//}
 		}
 		this->computeGridInfoLabel();
 	});
@@ -346,12 +346,12 @@ void GridLoaderWidget::setupSignals() {
 		if (this->radioButton_lower->isChecked()) {
 			this->dsLevel = IO::DownsamplingLevel::Lower;
 			this->groupBox_interpolator->setEnabled(true);
-			if (this->readerR != nullptr) {
-				this->readerR->enableDownsampling(this->dsLevel);
-			}
-			if (this->readerG != nullptr) {
-				this->readerG->enableDownsampling(this->dsLevel);
-			}
+			//if (this->readerR != nullptr) {
+			//	this->readerR->enableDownsampling(this->dsLevel);
+			//}
+			//if (this->readerG != nullptr) {
+				//this->readerG->enableDownsampling(this->dsLevel);
+			//}
 		}
 		this->computeGridInfoLabel();
 	});
@@ -360,44 +360,44 @@ void GridLoaderWidget::setupSignals() {
 		if (this->radioButton_lowest->isChecked()) {
 			this->dsLevel = IO::DownsamplingLevel::Lowest;
 			this->groupBox_interpolator->setEnabled(true);
-			if (this->readerR != nullptr) {
-				this->readerR->enableDownsampling(this->dsLevel);
-			}
-			if (this->readerG != nullptr) {
-				this->readerG->enableDownsampling(this->dsLevel);
-			}
+			//if (this->readerR != nullptr) {
+			//	this->readerR->enableDownsampling(this->dsLevel);
+			//}
+			//if (this->readerG != nullptr) {
+			//	this->readerG->enableDownsampling(this->dsLevel);
+			//}
 		}
 		this->computeGridInfoLabel();
 	});
 
 	QObject::connect(this->radioButton_nn, &QRadioButton::toggled, [this]() {
 		if (this->radioButton_nn->isChecked()) {
-			this->interpolator.reset();
-			this->interpolator = std::make_shared<Interpolators::nearestNeighboor<DiscreteGrid::data_t>>();
+			//this->interpolator.reset();
+			//this->interpolator = std::make_shared<Interpolators::nearestNeighboor<DiscreteGrid::data_t>>();
 		}
 	});
 	QObject::connect(this->radioButton_mean, &QRadioButton::toggled, [this]() {
 		if (this->radioButton_mean->isChecked()) {
-			this->interpolator.reset();
-			this->interpolator = std::make_shared<Interpolators::meanValue<DiscreteGrid::data_t>>();
+			//this->interpolator.reset();
+			//this->interpolator = std::make_shared<Interpolators::meanValue<DiscreteGrid::data_t>>();
 		}
 	});
 	QObject::connect(this->radioButton_mp, &QRadioButton::toggled, [this]() {
 		if (this->radioButton_mp->isChecked()) {
-			this->interpolator.reset();
-			this->interpolator = std::make_shared<Interpolators::mostPresent<DiscreteGrid::data_t>>();
+			//this->interpolator.reset();
+			//this->interpolator = std::make_shared<Interpolators::mostPresent<DiscreteGrid::data_t>>();
 		}
 	});
 	QObject::connect(this->radioButton_min, &QRadioButton::toggled, [this]() {
 		if (this->radioButton_min->isChecked()) {
-			this->interpolator.reset();
-			this->interpolator = std::make_shared<Interpolators::min<DiscreteGrid::data_t>>();
+			//this->interpolator.reset();
+			//this->interpolator = std::make_shared<Interpolators::min<DiscreteGrid::data_t>>();
 		}
 	});
 	QObject::connect(this->radioButton_max, &QRadioButton::toggled, [this]() {
 		if (this->radioButton_max->isChecked()) {
-			this->interpolator.reset();
-			this->interpolator = std::make_shared<Interpolators::max<DiscreteGrid::data_t>>();
+			//this->interpolator.reset();
+			//this->interpolator = std::make_shared<Interpolators::max<DiscreteGrid::data_t>>();
 		}
 	});
 }
@@ -506,50 +506,50 @@ void GridLoaderWidget::computeGridInfoLabel() {
 		}
 	}
 
-	if (this->readerR == nullptr) {
-		this->label_gridInfoR->setText("<No grid loaded>");
-		this->label_gridInfoG->setText("");
-		return;
-	}
+	//if (this->readerR == nullptr) {
+	//	this->label_gridInfoR->setText("<No grid loaded>");
+	//	this->label_gridInfoG->setText("");
+	//	return;
+	//}
 
-	this->readerR->enableDownsampling(this->dsLevel);
-	auto dims		   = this->readerR->getGridDimensions();
-	std::size_t fnSize = this->readerR->getFilenames().size();
-	QString infoGridR  = "Image dimensions : " + QString::number(dims.x) + "x" + QString::number(dims.y) + "x" +
-						QString::number(dims.z) + " in " + QString::number(fnSize) + " images.";
-	this->label_gridInfoR->setText(infoGridR);
-	this->updateVoxelDimensions_silent();
+	//this->readerR->enableDownsampling(this->dsLevel);
+	//auto dims		   = this->readerR->getGridDimensions();
+	//std::size_t fnSize = this->readerR->getFilenames().size();
+	//QString infoGridR  = "Image dimensions : " + QString::number(dims.x) + "x" + QString::number(dims.y) + "x" +
+	//					QString::number(dims.z) + " in " + QString::number(fnSize) + " images.";
+	//this->label_gridInfoR->setText(infoGridR);
+	//this->updateVoxelDimensions_silent();
 
-	if (this->readerG != nullptr) {
-		this->readerG->enableDownsampling(this->dsLevel);
-		auto dimsG			= this->readerG->getGridDimensions();
-		std::size_t fnSizeG = this->readerG->getFilenames().size();
-		QString g			= "Image dimensions : " + QString::number(dimsG.x) + "x" + QString::number(dimsG.y) + "x" +
-					QString::number(dimsG.z) + " in " + QString::number(fnSizeG) + " images.";
-		this->label_gridInfoG->setText(g);
-	}
+	//if (this->readerG != nullptr) {
+	//	this->readerG->enableDownsampling(this->dsLevel);
+	//	auto dimsG			= this->readerG->getGridDimensions();
+	//	std::size_t fnSizeG = this->readerG->getFilenames().size();
+	//	QString g			= "Image dimensions : " + QString::number(dimsG.x) + "x" + QString::number(dimsG.y) + "x" +
+	//				QString::number(dimsG.z) + " in " + QString::number(fnSizeG) + " images.";
+	//	this->label_gridInfoG->setText(g);
+	//}
 }
 
 void GridLoaderWidget::updateVoxelDimensions_silent() {
-	if (this->readerR == nullptr) {
+	//if (this->readerR == nullptr) {
 		return;
-	}
+	//}
 
 	// NOTE : we only rely on the red reader's voxel dimensions, because we assume
 	// the voxel dimensions _do not change_ between color channels.
 
-	auto vxDims = this->readerR->getVoxelDimensions();
-	this->dsb_transformationDX->blockSignals(true);
-	this->dsb_transformationDY->blockSignals(true);
-	this->dsb_transformationDZ->blockSignals(true);
+	//auto vxDims = this->readerR->getVoxelDimensions();
+	//this->dsb_transformationDX->blockSignals(true);
+	//this->dsb_transformationDY->blockSignals(true);
+	//this->dsb_transformationDZ->blockSignals(true);
 
-	this->dsb_transformationDX->setValue(vxDims.x);
-	this->dsb_transformationDY->setValue(vxDims.y);
-	this->dsb_transformationDZ->setValue(vxDims.z);
+	//this->dsb_transformationDX->setValue(vxDims.x);
+	//this->dsb_transformationDY->setValue(vxDims.y);
+	//this->dsb_transformationDZ->setValue(vxDims.z);
 
-	this->dsb_transformationDZ->blockSignals(false);
-	this->dsb_transformationDY->blockSignals(false);
-	this->dsb_transformationDX->blockSignals(false);
+	//this->dsb_transformationDZ->blockSignals(false);
+	//this->dsb_transformationDY->blockSignals(false);
+	//this->dsb_transformationDX->blockSignals(false);
 
 	return;
 }
@@ -589,393 +589,393 @@ void GridLoaderWidget::progressBar_reset() {
 	this->update();
 }
 
-void GridLoaderWidget::loadGridDIM1channel() {
-	if (this->readerR != nullptr) {
-		this->readerR.reset();
-		this->readerR = nullptr;
-	}
-	if (this->readerG != nullptr) {
-		this->readerG.reset();
-		this->readerG = nullptr;
-	}
-	IO::GenericGridReader::data_t defaultThreshold = 5;
-	this->readerR								   = std::make_shared<IO::DIMReader>(defaultThreshold);
-	// if an error occurs :
-	QMessageBox* msgBox = new QMessageBox;
-	msgBox->setAttribute(Qt::WA_DeleteOnClose);
+//void GridLoaderWidget::loadGridDIM1channel() {
+//	if (this->readerR != nullptr) {
+//		this->readerR.reset();
+//		this->readerR = nullptr;
+//	}
+//	if (this->readerG != nullptr) {
+//		this->readerG.reset();
+//		this->readerG = nullptr;
+//	}
+//	IO::GenericGridReader::data_t defaultThreshold = 5;
+//	this->readerR								   = std::make_shared<IO::DIMReader>(defaultThreshold);
+//	// if an error occurs :
+//	QMessageBox* msgBox = new QMessageBox;
+//	msgBox->setAttribute(Qt::WA_DeleteOnClose);
+//
+//	QString filenameR = QFileDialog::getOpenFileName(this, "Open DIM/IMA image (single channel)", this->basePath.path(), "DIM/IMA header files (*.dim)", nullptr, QFileDialog::DontUseNativeDialog);
+//	if (filenameR.isEmpty()) {
+//		msgBox->critical(this, "Error !", "No filenames provided !");
+//		this->readerR.reset();
+//		this->readerR = nullptr;
+//		this->computeGridInfoLabel();
+//		return;
+//	}
+//	// update path from last file picker :
+//	this->basePath.setPath(QFileInfo(filenameR).path());
+//
+//	std::vector<std::string> fnR;	 // filenames, red channel
+//	fnR.push_back(filenameR.toStdString());
+//
+//	delete msgBox;
+//
+//	this->readerR->setFilenames(fnR);
+//
+//	// Create task and thread :
+//	IO::ThreadedTask::Ptr parseTask = std::make_shared<IO::ThreadedTask>();
+//	std::thread parseThread([this, &parseTask](void) -> void {
+//		this->readerR->parseImageInfo(parseTask);
+//	});
+//	// Wait for task initialization
+//	do {
+//		std::this_thread::sleep_for(std::chrono::milliseconds(5));
+//		QCoreApplication::processEvents();
+//		this->update();
+//	} while (not parseTask->hasSteps());
+//	// Set and show progress bar :
+//	this->progress_load->setRange(0, parseTask->getMaxSteps());
+//	this->progress_load->setValue(parseTask->getAdvancement());
+//	this->progress_load->setFormat("Parsing image data ... (%p%)");
+//	this->progress_load->setVisible(true);
+//
+//	// Loop while parsing files in other thread :
+//	bool shouldStop = false;
+//	do {
+//		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+//		std::size_t currentSteps = 0;
+//		if (parseTask->hasSteps()) {
+//			currentSteps = parseTask->getAdvancement();
+//		}
+//
+//		this->progress_load->setRange(0, parseTask->getMaxSteps());
+//		this->progress_load->setValue(currentSteps);
+//		// Needed to update the main window ...
+//		QCoreApplication::processEvents();
+//		this->update();
+//
+//		shouldStop = parseTask->isComplete();
+//	} while (shouldStop == false);
+//	if (parseThread.joinable()) {
+//		parseThread.join();
+//	}
+//
+//	this->progress_load->reset();
+//	this->progress_load->setVisible(false);
+//
+//	this->computeGridInfoLabel();
+//	this->useLegacyGrids = true;
+//}
 
-	QString filenameR = QFileDialog::getOpenFileName(this, "Open DIM/IMA image (single channel)", this->basePath.path(), "DIM/IMA header files (*.dim)", nullptr, QFileDialog::DontUseNativeDialog);
-	if (filenameR.isEmpty()) {
-		msgBox->critical(this, "Error !", "No filenames provided !");
-		this->readerR.reset();
-		this->readerR = nullptr;
-		this->computeGridInfoLabel();
-		return;
-	}
-	// update path from last file picker :
-	this->basePath.setPath(QFileInfo(filenameR).path());
+//void GridLoaderWidget::loadGridDIM2channel() {
+//	if (this->readerR != nullptr) {
+//		this->readerR.reset();
+//		this->readerR = nullptr;
+//	}
+//	if (this->readerG != nullptr) {
+//		this->readerG.reset();
+//		this->readerG = nullptr;
+//	}
+//	IO::GenericGridReader::data_t defaultThreshold = 5;
+//	this->readerR								   = std::make_shared<IO::DIMReader>(defaultThreshold);
+//	this->readerG								   = std::make_shared<IO::DIMReader>(defaultThreshold);
+//	// if an error occurs :
+//	QMessageBox* msgBox = new QMessageBox;
+//	msgBox->setAttribute(Qt::WA_DeleteOnClose);
+//
+//	QString filenameR = QFileDialog::getOpenFileName(this, "Open DIM/IMA image (first channel)", this->basePath.path(), "DIM/IMA header files (*.dim)", nullptr, QFileDialog::DontUseNativeDialog);
+//	if (filenameR.isEmpty()) {
+//		msgBox->critical(this, "Error !", "No filenames provided !");
+//		this->readerR.reset();
+//		this->readerR = nullptr;
+//		this->readerG.reset();
+//		this->readerG = nullptr;
+//		this->computeGridInfoLabel();
+//		return;
+//	}
+//	// update path from last file picker :
+//	this->basePath.setPath(QFileInfo(filenameR).path());
+//
+//	QString filenameG = QFileDialog::getOpenFileName(this, "Open DIM/IMA image (second channel)", this->basePath.path(), "DIM/IMA header files (*.dim)", nullptr, QFileDialog::DontUseNativeDialog);
+//	if (filenameG.isEmpty()) {
+//		msgBox->critical(this, "Error !", "No filenames provided !");
+//		this->readerR.reset();
+//		this->readerR = nullptr;
+//		this->readerG.reset();
+//		this->readerG = nullptr;
+//		this->computeGridInfoLabel();
+//		return;
+//	}
+//	// update path from last file picker :
+//	this->basePath.setPath(QFileInfo(filenameG).path());
+//
+//	std::vector<std::string> fnR;	 // filenames, red channel
+//	fnR.push_back(filenameR.toStdString());
+//	std::vector<std::string> fnG;	 // filenames, green channel
+//	fnG.push_back(filenameG.toStdString());
+//
+//	delete msgBox;
+//	this->readerR->setFilenames(fnR);
+//	this->readerG->setFilenames(fnG);
+//
+//	// Create task and thread :
+//	IO::ThreadedTask::Ptr parseTask_R = std::make_shared<IO::ThreadedTask>();
+//	IO::ThreadedTask::Ptr parseTask_G = std::make_shared<IO::ThreadedTask>();
+//	std::thread parseThread_R([this, &parseTask_R](void) -> void {
+//		this->readerR->parseImageInfo(parseTask_R);
+//	});
+//	std::thread parseThread_G([this, &parseTask_G](void) -> void {
+//		this->readerG->parseImageInfo(parseTask_G);
+//	});
+//	// Wait for task initialization
+//	do {
+//		std::this_thread::sleep_for(std::chrono::milliseconds(5));
+//		QCoreApplication::processEvents();
+//		this->update();
+//	} while (not (parseTask_R->hasSteps() && parseTask_G->hasSteps()));
+//	std::size_t maxSteps = parseTask_G->getMaxSteps() + parseTask_R->getMaxSteps();
+//	// Set and show progress bar :
+//	this->progress_load->setRange(0, maxSteps);
+//	this->progress_load->setValue(0);
+//	this->progress_load->setFormat("Parsing image data ... (%p%)");
+//	this->progress_load->setVisible(true);
+//
+//	// Loop while parsing files in other thread :
+//	bool shouldStop = false;
+//	do {
+//		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+//		std::size_t currentSteps = 0;
+//		std::size_t maxStepsLoop = 0;
+//		if (parseTask_R->hasSteps()) {
+//			currentSteps += parseTask_R->getAdvancement();
+//			maxStepsLoop += parseTask_R->getMaxSteps();
+//		}
+//		if (parseTask_G->hasSteps()) {
+//			currentSteps += parseTask_G->getAdvancement();
+//			maxStepsLoop += parseTask_G->getMaxSteps();
+//		}
+//
+//		this->progress_load->setRange(0, maxStepsLoop);
+//		this->progress_load->setValue(currentSteps);
+//		// Needed to update the main window ...
+//		QCoreApplication::processEvents();
+//		this->update();
+//
+//		shouldStop = parseTask_R->isComplete() && parseTask_G->isComplete();
+//	} while (shouldStop == false);
+//	if (parseThread_R.joinable()) {
+//		parseThread_R.join();
+//	}
+//	if (parseThread_G.joinable()) {
+//		parseThread_G.join();
+//	}
+//
+//	this->progress_load->reset();
+//	this->progress_load->setVisible(false);
+//
+//	this->computeGridInfoLabel();
+//	this->useLegacyGrids = true;
+//}
 
-	std::vector<std::string> fnR;	 // filenames, red channel
-	fnR.push_back(filenameR.toStdString());
+//void GridLoaderWidget::loadGridTIF1channel() {
+//	if (this->readerR != nullptr) {
+//		this->readerR.reset();
+//	}
+//	if (this->readerG != nullptr) {
+//		this->readerG.reset();
+//	}
+//	IO::GenericGridReader::data_t defaultThreshold = 5;
+//	this->readerR								   = std::make_shared<IO::libTIFFReader>(defaultThreshold);
+//	// if an error occurs :
+//	QMessageBox* msgBox = new QMessageBox;
+//	msgBox->setAttribute(Qt::WA_DeleteOnClose);
+//
+//	QStringList filenamesR = QFileDialog::getOpenFileNames(nullptr, "Open TIFF images (single channel)", this->basePath.path(), "TIFF files (*.tiff *.tif)", 0, QFileDialog::DontUseNativeDialog);
+//	if (filenamesR.empty()) {
+//		msgBox->critical(this, "Error !", "No filenames provided !");
+//		this->readerR.reset();
+//		this->readerR = nullptr;
+//		this->computeGridInfoLabel();
+//		return;
+//	}
+//	// update path from last file picker :
+//	this->basePath.setPath(QFileInfo(filenamesR[0]).path());
+//
+//	std::vector<std::string> fnR;	 // filenames, red channel
+//	for (int i = 0; i < filenamesR.size(); ++i) {
+//		fnR.push_back(filenamesR[i].toStdString());
+//	}
+//
+//	delete msgBox;
+//
+//	this->readerR->setFilenames(fnR);
+//
+//	// Create task and thread :
+//	IO::ThreadedTask::Ptr parseTask = std::make_shared<IO::ThreadedTask>();
+//	std::thread parseThread([this, &parseTask](void) -> void {
+//		this->readerR->parseImageInfo(parseTask);
+//	});
+//	// Wait for task initialization
+//	do {
+//		std::this_thread::sleep_for(std::chrono::milliseconds(5));
+//		QCoreApplication::processEvents();
+//		this->update();
+//	} while (not parseTask->hasSteps());
+//	// Set and show progress bar :
+//	this->progress_load->setRange(0, parseTask->getMaxSteps());
+//	this->progress_load->setValue(parseTask->getAdvancement());
+//	this->progress_load->setFormat("Parsing image data ... (%p%)");
+//	this->progress_load->setVisible(true);
+//
+//	// Loop while parsing files in other thread :
+//	bool shouldStop = false;
+//	do {
+//		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+//		std::size_t currentSteps = 0;
+//		if (parseTask->hasSteps()) {
+//			currentSteps = parseTask->getAdvancement();
+//		}
+//
+//		this->progress_load->setRange(0, parseTask->getMaxSteps());
+//		this->progress_load->setValue(currentSteps);
+//		// Needed to update the main window ...
+//		QCoreApplication::processEvents();
+//		this->update();
+//
+//		shouldStop = parseTask->isComplete();
+//	} while (shouldStop == false);
+//	if (parseThread.joinable()) {
+//		parseThread.join();
+//	}
+//
+//	this->progress_load->reset();
+//	this->progress_load->setVisible(false);
+//
+//	this->computeGridInfoLabel();
+//	this->useLegacyGrids = true;
+//}
 
-	delete msgBox;
-
-	this->readerR->setFilenames(fnR);
-
-	// Create task and thread :
-	IO::ThreadedTask::Ptr parseTask = std::make_shared<IO::ThreadedTask>();
-	std::thread parseThread([this, &parseTask](void) -> void {
-		this->readerR->parseImageInfo(parseTask);
-	});
-	// Wait for task initialization
-	do {
-		std::this_thread::sleep_for(std::chrono::milliseconds(5));
-		QCoreApplication::processEvents();
-		this->update();
-	} while (not parseTask->hasSteps());
-	// Set and show progress bar :
-	this->progress_load->setRange(0, parseTask->getMaxSteps());
-	this->progress_load->setValue(parseTask->getAdvancement());
-	this->progress_load->setFormat("Parsing image data ... (%p%)");
-	this->progress_load->setVisible(true);
-
-	// Loop while parsing files in other thread :
-	bool shouldStop = false;
-	do {
-		std::this_thread::sleep_for(std::chrono::milliseconds(10));
-		std::size_t currentSteps = 0;
-		if (parseTask->hasSteps()) {
-			currentSteps = parseTask->getAdvancement();
-		}
-
-		this->progress_load->setRange(0, parseTask->getMaxSteps());
-		this->progress_load->setValue(currentSteps);
-		// Needed to update the main window ...
-		QCoreApplication::processEvents();
-		this->update();
-
-		shouldStop = parseTask->isComplete();
-	} while (shouldStop == false);
-	if (parseThread.joinable()) {
-		parseThread.join();
-	}
-
-	this->progress_load->reset();
-	this->progress_load->setVisible(false);
-
-	this->computeGridInfoLabel();
-	this->useLegacyGrids = true;
-}
-
-void GridLoaderWidget::loadGridDIM2channel() {
-	if (this->readerR != nullptr) {
-		this->readerR.reset();
-		this->readerR = nullptr;
-	}
-	if (this->readerG != nullptr) {
-		this->readerG.reset();
-		this->readerG = nullptr;
-	}
-	IO::GenericGridReader::data_t defaultThreshold = 5;
-	this->readerR								   = std::make_shared<IO::DIMReader>(defaultThreshold);
-	this->readerG								   = std::make_shared<IO::DIMReader>(defaultThreshold);
-	// if an error occurs :
-	QMessageBox* msgBox = new QMessageBox;
-	msgBox->setAttribute(Qt::WA_DeleteOnClose);
-
-	QString filenameR = QFileDialog::getOpenFileName(this, "Open DIM/IMA image (first channel)", this->basePath.path(), "DIM/IMA header files (*.dim)", nullptr, QFileDialog::DontUseNativeDialog);
-	if (filenameR.isEmpty()) {
-		msgBox->critical(this, "Error !", "No filenames provided !");
-		this->readerR.reset();
-		this->readerR = nullptr;
-		this->readerG.reset();
-		this->readerG = nullptr;
-		this->computeGridInfoLabel();
-		return;
-	}
-	// update path from last file picker :
-	this->basePath.setPath(QFileInfo(filenameR).path());
-
-	QString filenameG = QFileDialog::getOpenFileName(this, "Open DIM/IMA image (second channel)", this->basePath.path(), "DIM/IMA header files (*.dim)", nullptr, QFileDialog::DontUseNativeDialog);
-	if (filenameG.isEmpty()) {
-		msgBox->critical(this, "Error !", "No filenames provided !");
-		this->readerR.reset();
-		this->readerR = nullptr;
-		this->readerG.reset();
-		this->readerG = nullptr;
-		this->computeGridInfoLabel();
-		return;
-	}
-	// update path from last file picker :
-	this->basePath.setPath(QFileInfo(filenameG).path());
-
-	std::vector<std::string> fnR;	 // filenames, red channel
-	fnR.push_back(filenameR.toStdString());
-	std::vector<std::string> fnG;	 // filenames, green channel
-	fnG.push_back(filenameG.toStdString());
-
-	delete msgBox;
-	this->readerR->setFilenames(fnR);
-	this->readerG->setFilenames(fnG);
-
-	// Create task and thread :
-	IO::ThreadedTask::Ptr parseTask_R = std::make_shared<IO::ThreadedTask>();
-	IO::ThreadedTask::Ptr parseTask_G = std::make_shared<IO::ThreadedTask>();
-	std::thread parseThread_R([this, &parseTask_R](void) -> void {
-		this->readerR->parseImageInfo(parseTask_R);
-	});
-	std::thread parseThread_G([this, &parseTask_G](void) -> void {
-		this->readerG->parseImageInfo(parseTask_G);
-	});
-	// Wait for task initialization
-	do {
-		std::this_thread::sleep_for(std::chrono::milliseconds(5));
-		QCoreApplication::processEvents();
-		this->update();
-	} while (not (parseTask_R->hasSteps() && parseTask_G->hasSteps()));
-	std::size_t maxSteps = parseTask_G->getMaxSteps() + parseTask_R->getMaxSteps();
-	// Set and show progress bar :
-	this->progress_load->setRange(0, maxSteps);
-	this->progress_load->setValue(0);
-	this->progress_load->setFormat("Parsing image data ... (%p%)");
-	this->progress_load->setVisible(true);
-
-	// Loop while parsing files in other thread :
-	bool shouldStop = false;
-	do {
-		std::this_thread::sleep_for(std::chrono::milliseconds(10));
-		std::size_t currentSteps = 0;
-		std::size_t maxStepsLoop = 0;
-		if (parseTask_R->hasSteps()) {
-			currentSteps += parseTask_R->getAdvancement();
-			maxStepsLoop += parseTask_R->getMaxSteps();
-		}
-		if (parseTask_G->hasSteps()) {
-			currentSteps += parseTask_G->getAdvancement();
-			maxStepsLoop += parseTask_G->getMaxSteps();
-		}
-
-		this->progress_load->setRange(0, maxStepsLoop);
-		this->progress_load->setValue(currentSteps);
-		// Needed to update the main window ...
-		QCoreApplication::processEvents();
-		this->update();
-
-		shouldStop = parseTask_R->isComplete() && parseTask_G->isComplete();
-	} while (shouldStop == false);
-	if (parseThread_R.joinable()) {
-		parseThread_R.join();
-	}
-	if (parseThread_G.joinable()) {
-		parseThread_G.join();
-	}
-
-	this->progress_load->reset();
-	this->progress_load->setVisible(false);
-
-	this->computeGridInfoLabel();
-	this->useLegacyGrids = true;
-}
-
-void GridLoaderWidget::loadGridTIF1channel() {
-	if (this->readerR != nullptr) {
-		this->readerR.reset();
-	}
-	if (this->readerG != nullptr) {
-		this->readerG.reset();
-	}
-	IO::GenericGridReader::data_t defaultThreshold = 5;
-	this->readerR								   = std::make_shared<IO::libTIFFReader>(defaultThreshold);
-	// if an error occurs :
-	QMessageBox* msgBox = new QMessageBox;
-	msgBox->setAttribute(Qt::WA_DeleteOnClose);
-
-	QStringList filenamesR = QFileDialog::getOpenFileNames(nullptr, "Open TIFF images (single channel)", this->basePath.path(), "TIFF files (*.tiff *.tif)", 0, QFileDialog::DontUseNativeDialog);
-	if (filenamesR.empty()) {
-		msgBox->critical(this, "Error !", "No filenames provided !");
-		this->readerR.reset();
-		this->readerR = nullptr;
-		this->computeGridInfoLabel();
-		return;
-	}
-	// update path from last file picker :
-	this->basePath.setPath(QFileInfo(filenamesR[0]).path());
-
-	std::vector<std::string> fnR;	 // filenames, red channel
-	for (int i = 0; i < filenamesR.size(); ++i) {
-		fnR.push_back(filenamesR[i].toStdString());
-	}
-
-	delete msgBox;
-
-	this->readerR->setFilenames(fnR);
-
-	// Create task and thread :
-	IO::ThreadedTask::Ptr parseTask = std::make_shared<IO::ThreadedTask>();
-	std::thread parseThread([this, &parseTask](void) -> void {
-		this->readerR->parseImageInfo(parseTask);
-	});
-	// Wait for task initialization
-	do {
-		std::this_thread::sleep_for(std::chrono::milliseconds(5));
-		QCoreApplication::processEvents();
-		this->update();
-	} while (not parseTask->hasSteps());
-	// Set and show progress bar :
-	this->progress_load->setRange(0, parseTask->getMaxSteps());
-	this->progress_load->setValue(parseTask->getAdvancement());
-	this->progress_load->setFormat("Parsing image data ... (%p%)");
-	this->progress_load->setVisible(true);
-
-	// Loop while parsing files in other thread :
-	bool shouldStop = false;
-	do {
-		std::this_thread::sleep_for(std::chrono::milliseconds(10));
-		std::size_t currentSteps = 0;
-		if (parseTask->hasSteps()) {
-			currentSteps = parseTask->getAdvancement();
-		}
-
-		this->progress_load->setRange(0, parseTask->getMaxSteps());
-		this->progress_load->setValue(currentSteps);
-		// Needed to update the main window ...
-		QCoreApplication::processEvents();
-		this->update();
-
-		shouldStop = parseTask->isComplete();
-	} while (shouldStop == false);
-	if (parseThread.joinable()) {
-		parseThread.join();
-	}
-
-	this->progress_load->reset();
-	this->progress_load->setVisible(false);
-
-	this->computeGridInfoLabel();
-	this->useLegacyGrids = true;
-}
-
-void GridLoaderWidget::loadGridTIF2channel() {
-	if (this->readerR != nullptr) {
-		this->readerR.reset();
-	}
-	if (this->readerG != nullptr) {
-		this->readerG.reset();
-	}
-	IO::GenericGridReader::data_t defaultThreshold = 5;
-	this->readerR								   = std::make_shared<IO::libTIFFReader>(defaultThreshold);
-	this->readerG								   = std::make_shared<IO::libTIFFReader>(defaultThreshold);
-	// if an error occurs :
-	QMessageBox* msgBox = new QMessageBox;
-	msgBox->setAttribute(Qt::WA_DeleteOnClose);
-
-	this->useLegacyGrids = true;
-
-	QStringList filenamesR = QFileDialog::getOpenFileNames(nullptr, "Open TIFF images (first channel)", this->basePath.path(), "TIFF files (*.tiff *.tif)", 0, QFileDialog::DontUseNativeDialog);
-	if (filenamesR.empty()) {
-		msgBox->critical(this, "Error !", "No filenames provided !");
-		this->readerR.reset();
-		this->readerR = nullptr;
-		this->readerG.reset();
-		this->readerG = nullptr;
-		this->computeGridInfoLabel();
-		return;
-	}
-	// update path from last file picker :
-	this->basePath.setPath(QFileInfo(filenamesR[0]).path());
-
-	QStringList filenamesG = QFileDialog::getOpenFileNames(nullptr, "Open TIFF images (second channel)", this->basePath.path(), "TIFF files (*.tiff *.tif)", 0, QFileDialog::DontUseNativeDialog);
-	if (filenamesG.empty()) {
-		msgBox->critical(this, "Error !", "No filenames provided !");
-		this->readerR.reset();
-		this->readerR = nullptr;
-		this->readerG.reset();
-		this->readerG = nullptr;
-		this->computeGridInfoLabel();
-		return;
-	}
-	// update path from last file picker :
-	this->basePath.setPath(QFileInfo(filenamesG[0]).path());
-
-	std::vector<std::string> fnR;	 // filenames, red channel
-	for (int i = 0; i < filenamesR.size(); ++i) {
-		fnR.push_back(filenamesR[i].toStdString());
-	}
-	std::vector<std::string> fnG;	 // filenames, green channel
-	for (int i = 0; i < filenamesG.size(); ++i) {
-		fnG.push_back(filenamesG[i].toStdString());
-	}
-
-	delete msgBox;
-
-	this->readerR->setFilenames(fnR);
-	this->readerG->setFilenames(fnG);
-
-	// Create task and thread :
-	IO::ThreadedTask::Ptr parseTask_R = std::make_shared<IO::ThreadedTask>();
-	IO::ThreadedTask::Ptr parseTask_G = std::make_shared<IO::ThreadedTask>();
-	std::thread parseThread_R([this, &parseTask_R](void) -> void {
-		this->readerR->parseImageInfo(parseTask_R);
-	});
-	std::thread parseThread_G([this, &parseTask_G](void) -> void {
-		this->readerG->parseImageInfo(parseTask_G);
-	});
-	// Wait for task initialization
-	do {
-		std::this_thread::sleep_for(std::chrono::milliseconds(5));
-		QCoreApplication::processEvents();
-		this->update();
-	} while (not (parseTask_R->hasSteps() && parseTask_G->hasSteps()));
-	std::size_t maxSteps = parseTask_G->getMaxSteps() + parseTask_R->getMaxSteps();
-	// Set and show progress bar :
-	this->progress_load->setRange(0, maxSteps);
-	this->progress_load->setValue(0);
-	this->progress_load->setFormat("Parsing image data ... (%p%)");
-	this->progress_load->setVisible(true);
-
-	// Loop while parsing files in other thread :
-	bool shouldStop = false;
-	do {
-		std::this_thread::sleep_for(std::chrono::milliseconds(10));
-		std::size_t currentSteps = 0;
-		std::size_t maxStepsLoop = 0;
-		if (parseTask_R->hasSteps()) {
-			currentSteps += parseTask_R->getAdvancement();
-			maxStepsLoop += parseTask_R->getMaxSteps();
-		}
-		if (parseTask_G->hasSteps()) {
-			currentSteps += parseTask_G->getAdvancement();
-			maxStepsLoop += parseTask_G->getMaxSteps();
-		}
-
-		this->progress_load->setRange(0, maxStepsLoop);
-		this->progress_load->setValue(currentSteps);
-		// Needed to update the main window ...
-		QCoreApplication::processEvents();
-		this->update();
-
-		shouldStop = parseTask_R->isComplete() && parseTask_G->isComplete();
-	} while (shouldStop == false);
-	if (parseThread_R.joinable()) {
-		parseThread_R.join();
-	}
-	if (parseThread_G.joinable()) {
-		parseThread_G.join();
-	}
-
-	this->progress_load->reset();
-	this->progress_load->setVisible(false);
-
-	this->computeGridInfoLabel();
-}
+//void GridLoaderWidget::loadGridTIF2channel() {
+//	if (this->readerR != nullptr) {
+//		this->readerR.reset();
+//	}
+//	if (this->readerG != nullptr) {
+//		this->readerG.reset();
+//	}
+//	IO::GenericGridReader::data_t defaultThreshold = 5;
+//	this->readerR								   = std::make_shared<IO::libTIFFReader>(defaultThreshold);
+//	this->readerG								   = std::make_shared<IO::libTIFFReader>(defaultThreshold);
+//	// if an error occurs :
+//	QMessageBox* msgBox = new QMessageBox;
+//	msgBox->setAttribute(Qt::WA_DeleteOnClose);
+//
+//	this->useLegacyGrids = true;
+//
+//	QStringList filenamesR = QFileDialog::getOpenFileNames(nullptr, "Open TIFF images (first channel)", this->basePath.path(), "TIFF files (*.tiff *.tif)", 0, QFileDialog::DontUseNativeDialog);
+//	if (filenamesR.empty()) {
+//		msgBox->critical(this, "Error !", "No filenames provided !");
+//		this->readerR.reset();
+//		this->readerR = nullptr;
+//		this->readerG.reset();
+//		this->readerG = nullptr;
+//		this->computeGridInfoLabel();
+//		return;
+//	}
+//	// update path from last file picker :
+//	this->basePath.setPath(QFileInfo(filenamesR[0]).path());
+//
+//	QStringList filenamesG = QFileDialog::getOpenFileNames(nullptr, "Open TIFF images (second channel)", this->basePath.path(), "TIFF files (*.tiff *.tif)", 0, QFileDialog::DontUseNativeDialog);
+//	if (filenamesG.empty()) {
+//		msgBox->critical(this, "Error !", "No filenames provided !");
+//		this->readerR.reset();
+//		this->readerR = nullptr;
+//		this->readerG.reset();
+//		this->readerG = nullptr;
+//		this->computeGridInfoLabel();
+//		return;
+//	}
+//	// update path from last file picker :
+//	this->basePath.setPath(QFileInfo(filenamesG[0]).path());
+//
+//	std::vector<std::string> fnR;	 // filenames, red channel
+//	for (int i = 0; i < filenamesR.size(); ++i) {
+//		fnR.push_back(filenamesR[i].toStdString());
+//	}
+//	std::vector<std::string> fnG;	 // filenames, green channel
+//	for (int i = 0; i < filenamesG.size(); ++i) {
+//		fnG.push_back(filenamesG[i].toStdString());
+//	}
+//
+//	delete msgBox;
+//
+//	this->readerR->setFilenames(fnR);
+//	this->readerG->setFilenames(fnG);
+//
+//	// Create task and thread :
+//	IO::ThreadedTask::Ptr parseTask_R = std::make_shared<IO::ThreadedTask>();
+//	IO::ThreadedTask::Ptr parseTask_G = std::make_shared<IO::ThreadedTask>();
+//	std::thread parseThread_R([this, &parseTask_R](void) -> void {
+//		this->readerR->parseImageInfo(parseTask_R);
+//	});
+//	std::thread parseThread_G([this, &parseTask_G](void) -> void {
+//		this->readerG->parseImageInfo(parseTask_G);
+//	});
+//	// Wait for task initialization
+//	do {
+//		std::this_thread::sleep_for(std::chrono::milliseconds(5));
+//		QCoreApplication::processEvents();
+//		this->update();
+//	} while (not (parseTask_R->hasSteps() && parseTask_G->hasSteps()));
+//	std::size_t maxSteps = parseTask_G->getMaxSteps() + parseTask_R->getMaxSteps();
+//	// Set and show progress bar :
+//	this->progress_load->setRange(0, maxSteps);
+//	this->progress_load->setValue(0);
+//	this->progress_load->setFormat("Parsing image data ... (%p%)");
+//	this->progress_load->setVisible(true);
+//
+//	// Loop while parsing files in other thread :
+//	bool shouldStop = false;
+//	do {
+//		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+//		std::size_t currentSteps = 0;
+//		std::size_t maxStepsLoop = 0;
+//		if (parseTask_R->hasSteps()) {
+//			currentSteps += parseTask_R->getAdvancement();
+//			maxStepsLoop += parseTask_R->getMaxSteps();
+//		}
+//		if (parseTask_G->hasSteps()) {
+//			currentSteps += parseTask_G->getAdvancement();
+//			maxStepsLoop += parseTask_G->getMaxSteps();
+//		}
+//
+//		this->progress_load->setRange(0, maxStepsLoop);
+//		this->progress_load->setValue(currentSteps);
+//		// Needed to update the main window ...
+//		QCoreApplication::processEvents();
+//		this->update();
+//
+//		shouldStop = parseTask_R->isComplete() && parseTask_G->isComplete();
+//	} while (shouldStop == false);
+//	if (parseThread_R.joinable()) {
+//		parseThread_R.join();
+//	}
+//	if (parseThread_G.joinable()) {
+//		parseThread_G.join();
+//	}
+//
+//	this->progress_load->reset();
+//	this->progress_load->setVisible(false);
+//
+//	this->computeGridInfoLabel();
+//}
 
 void GridLoaderWidget::loadNewGridAPI() {
 	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	this->useLegacyGrids = false;
-	this->readerR.reset();
-	this->readerR = nullptr;
-	this->readerG.reset();
-	this->readerG = nullptr;
+	//this->readerR.reset();
+	//this->readerR = nullptr;
+	//this->readerG.reset();
+	//this->readerG = nullptr;
 
 	// if an error occurs :
 	QMessageBox* msgBox = new QMessageBox;
@@ -1087,196 +1087,196 @@ void GridLoaderWidget::loadNewGridAPI() {
 	this->setWidgetsEnabled();
 }
 
-void GridLoaderWidget::loadGridOME1channel() {
-	if (this->readerR != nullptr) {
-		this->readerR.reset();
-	}
-	if (this->readerG != nullptr) {
-		this->readerG.reset();
-	}
-	IO::GenericGridReader::data_t defaultThreshold = 5;
-	this->readerR								   = std::make_shared<IO::OMETIFFReader>(defaultThreshold);
-	// if an error occurs :
-	QMessageBox* msgBox = new QMessageBox;
-	msgBox->setAttribute(Qt::WA_DeleteOnClose);
+//void GridLoaderWidget::loadGridOME1channel() {
+//	if (this->readerR != nullptr) {
+//		this->readerR.reset();
+//	}
+//	if (this->readerG != nullptr) {
+//		this->readerG.reset();
+//	}
+//	IO::GenericGridReader::data_t defaultThreshold = 5;
+//	this->readerR								   = std::make_shared<IO::OMETIFFReader>(defaultThreshold);
+//	// if an error occurs :
+//	QMessageBox* msgBox = new QMessageBox;
+//	msgBox->setAttribute(Qt::WA_DeleteOnClose);
+//
+//	QStringList filenamesR = QFileDialog::getOpenFileNames(nullptr, "Open OME-TIFF images (first channel)", this->basePath.path(), "OME-TIFF files (*.ome.tiff *.ome.tif)", 0, QFileDialog::DontUseNativeDialog);
+//	if (filenamesR.empty()) {
+//		msgBox->critical(this, "Error !", "No filenames provided !");
+//		this->readerR.reset();
+//		this->readerR = nullptr;
+//		this->computeGridInfoLabel();
+//		return;
+//	}
+//	// update path from last file picker :
+//	this->basePath.setPath(QFileInfo(filenamesR[0]).path());
+//
+//	std::vector<std::string> fnR;	 // filenames, red channel
+//	for (int i = 0; i < filenamesR.size(); ++i) {
+//		fnR.push_back(filenamesR[i].toStdString());
+//	}
+//
+//	delete msgBox;
+//
+//	this->readerR->setFilenames(fnR);
+//
+//	// Create task and thread :
+//	IO::ThreadedTask::Ptr parseTask = std::make_shared<IO::ThreadedTask>();
+//	std::thread parseThread([this, &parseTask](void) -> void {
+//		this->readerR->parseImageInfo(parseTask);
+//	});
+//	// Wait for task initialization
+//	do {
+//		std::this_thread::sleep_for(std::chrono::milliseconds(5));
+//		QCoreApplication::processEvents();
+//		this->update();
+//	} while (not parseTask->hasSteps());
+//	// Set and show progress bar :
+//	this->progress_load->setRange(0, parseTask->getMaxSteps());
+//	this->progress_load->setValue(parseTask->getAdvancement());
+//	this->progress_load->setFormat("Parsing image data ... (%p%)");
+//	this->progress_load->setVisible(true);
+//
+//	// Loop while parsing files in other thread :
+//	bool shouldStop = false;
+//	do {
+//		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+//		std::size_t currentSteps = 0;
+//		if (parseTask->hasSteps()) {
+//			currentSteps = parseTask->getAdvancement();
+//		}
+//
+//		this->progress_load->setRange(0, parseTask->getMaxSteps());
+//		this->progress_load->setValue(currentSteps);
+//		// Needed to update the main window ...
+//		QCoreApplication::processEvents();
+//		this->update();
+//
+//		shouldStop = parseTask->isComplete();
+//	} while (shouldStop == false);
+//	if (parseThread.joinable()) {
+//		parseThread.join();
+//	}
+//
+//	this->progress_load->reset();
+//	this->progress_load->setVisible(false);
+//
+//	this->computeGridInfoLabel();
+//	this->useLegacyGrids = true;
+//}
 
-	QStringList filenamesR = QFileDialog::getOpenFileNames(nullptr, "Open OME-TIFF images (first channel)", this->basePath.path(), "OME-TIFF files (*.ome.tiff *.ome.tif)", 0, QFileDialog::DontUseNativeDialog);
-	if (filenamesR.empty()) {
-		msgBox->critical(this, "Error !", "No filenames provided !");
-		this->readerR.reset();
-		this->readerR = nullptr;
-		this->computeGridInfoLabel();
-		return;
-	}
-	// update path from last file picker :
-	this->basePath.setPath(QFileInfo(filenamesR[0]).path());
-
-	std::vector<std::string> fnR;	 // filenames, red channel
-	for (int i = 0; i < filenamesR.size(); ++i) {
-		fnR.push_back(filenamesR[i].toStdString());
-	}
-
-	delete msgBox;
-
-	this->readerR->setFilenames(fnR);
-
-	// Create task and thread :
-	IO::ThreadedTask::Ptr parseTask = std::make_shared<IO::ThreadedTask>();
-	std::thread parseThread([this, &parseTask](void) -> void {
-		this->readerR->parseImageInfo(parseTask);
-	});
-	// Wait for task initialization
-	do {
-		std::this_thread::sleep_for(std::chrono::milliseconds(5));
-		QCoreApplication::processEvents();
-		this->update();
-	} while (not parseTask->hasSteps());
-	// Set and show progress bar :
-	this->progress_load->setRange(0, parseTask->getMaxSteps());
-	this->progress_load->setValue(parseTask->getAdvancement());
-	this->progress_load->setFormat("Parsing image data ... (%p%)");
-	this->progress_load->setVisible(true);
-
-	// Loop while parsing files in other thread :
-	bool shouldStop = false;
-	do {
-		std::this_thread::sleep_for(std::chrono::milliseconds(10));
-		std::size_t currentSteps = 0;
-		if (parseTask->hasSteps()) {
-			currentSteps = parseTask->getAdvancement();
-		}
-
-		this->progress_load->setRange(0, parseTask->getMaxSteps());
-		this->progress_load->setValue(currentSteps);
-		// Needed to update the main window ...
-		QCoreApplication::processEvents();
-		this->update();
-
-		shouldStop = parseTask->isComplete();
-	} while (shouldStop == false);
-	if (parseThread.joinable()) {
-		parseThread.join();
-	}
-
-	this->progress_load->reset();
-	this->progress_load->setVisible(false);
-
-	this->computeGridInfoLabel();
-	this->useLegacyGrids = true;
-}
-
-void GridLoaderWidget::loadGridOME2channel() {
-	if (this->readerR != nullptr) {
-		this->readerR.reset();
-	}
-	if (this->readerG != nullptr) {
-		this->readerG.reset();
-	}
-	IO::GenericGridReader::data_t defaultThreshold = 5;
-	this->readerR								   = std::make_shared<IO::OMETIFFReader>(defaultThreshold);
-	this->readerG								   = std::make_shared<IO::OMETIFFReader>(defaultThreshold);
-	// if an error occurs :
-	QMessageBox* msgBox = new QMessageBox;
-	msgBox->setAttribute(Qt::WA_DeleteOnClose);
-
-	QStringList filenamesR = QFileDialog::getOpenFileNames(nullptr, "Open OME-TIFF images (first channel)", this->basePath.path(), "OME-TIFF files (*.ome.tiff *.ome.tif)", 0, QFileDialog::DontUseNativeDialog);
-	if (filenamesR.empty()) {
-		msgBox->critical(this, "Error !", "No filenames provided !");
-		this->readerR.reset();
-		this->readerR = nullptr;
-		this->readerG.reset();
-		this->readerG = nullptr;
-		this->computeGridInfoLabel();
-		return;
-	}
-	// update path from last file picker :
-	this->basePath.setPath(QFileInfo(filenamesR[0]).path());
-
-	QStringList filenamesG = QFileDialog::getOpenFileNames(nullptr, "Open OME-TIFF images (second channel)", this->basePath.path(), "OME-TIFF files (*.ome.tiff *.ome.tif)", 0, QFileDialog::DontUseNativeDialog);
-	if (filenamesG.empty()) {
-		msgBox->critical(this, "Error !", "No filenames provided !");
-		this->readerR.reset();
-		this->readerR = nullptr;
-		this->readerG.reset();
-		this->readerG = nullptr;
-		this->computeGridInfoLabel();
-		return;
-	}
-	// update path from last file picker :
-	this->basePath.setPath(QFileInfo(filenamesG[0]).path());
-
-	std::vector<std::string> fnR;	 // filenames, red channel
-	for (int i = 0; i < filenamesR.size(); ++i) {
-		fnR.push_back(filenamesR[i].toStdString());
-	}
-	std::vector<std::string> fnG;	 // filenames, green channel
-	for (int i = 0; i < filenamesG.size(); ++i) {
-		fnG.push_back(filenamesG[i].toStdString());
-	}
-
-	delete msgBox;
-
-	this->readerR->setFilenames(fnR);
-	this->readerG->setFilenames(fnG);
-
-	// Create task and thread :
-	IO::ThreadedTask::Ptr parseTask_R = std::make_shared<IO::ThreadedTask>();
-	IO::ThreadedTask::Ptr parseTask_G = std::make_shared<IO::ThreadedTask>();
-	std::thread parseThread_R([this, &parseTask_R](void) -> void {
-		this->readerR->parseImageInfo(parseTask_R);
-	});
-	std::thread parseThread_G([this, &parseTask_G](void) -> void {
-		this->readerG->parseImageInfo(parseTask_G);
-	});
-	// Wait for task initialization
-	do {
-		std::this_thread::sleep_for(std::chrono::milliseconds(5));
-		QCoreApplication::processEvents();
-		this->update();
-	} while (not (parseTask_R->hasSteps() && parseTask_G->hasSteps()));
-	std::size_t maxSteps = parseTask_G->getMaxSteps() + parseTask_R->getMaxSteps();
-	// Set and show progress bar :
-	this->progress_load->setRange(0, maxSteps);
-	this->progress_load->setValue(0);
-	this->progress_load->setFormat("Parsing image data ... (%p%)");
-	this->progress_load->setVisible(true);
-
-	// Loop while parsing files in other thread :
-	bool shouldStop = false;
-	do {
-		std::this_thread::sleep_for(std::chrono::milliseconds(10));
-		std::size_t currentSteps = 0;
-		std::size_t maxStepsLoop = 0;
-		if (parseTask_R->hasSteps()) {
-			currentSteps += parseTask_R->getAdvancement();
-			maxStepsLoop += parseTask_R->getMaxSteps();
-		}
-		if (parseTask_G->hasSteps()) {
-			currentSteps += parseTask_G->getAdvancement();
-			maxStepsLoop += parseTask_G->getMaxSteps();
-		}
-
-		this->progress_load->setRange(0, maxStepsLoop);
-		this->progress_load->setValue(currentSteps);
-		// Needed to update the main window ...
-		QCoreApplication::processEvents();
-		this->update();
-
-		shouldStop = parseTask_R->isComplete() && parseTask_G->isComplete();
-	} while (shouldStop == false);
-	if (parseThread_R.joinable()) {
-		parseThread_R.join();
-	}
-	if (parseThread_G.joinable()) {
-		parseThread_G.join();
-	}
-
-	this->progress_load->reset();
-	this->progress_load->setVisible(false);
-
-	this->computeGridInfoLabel();
-	this->useLegacyGrids = true;
-}
+//void GridLoaderWidget::loadGridOME2channel() {
+//	if (this->readerR != nullptr) {
+//		this->readerR.reset();
+//	}
+//	if (this->readerG != nullptr) {
+//		this->readerG.reset();
+//	}
+//	IO::GenericGridReader::data_t defaultThreshold = 5;
+//	this->readerR								   = std::make_shared<IO::OMETIFFReader>(defaultThreshold);
+//	this->readerG								   = std::make_shared<IO::OMETIFFReader>(defaultThreshold);
+//	// if an error occurs :
+//	QMessageBox* msgBox = new QMessageBox;
+//	msgBox->setAttribute(Qt::WA_DeleteOnClose);
+//
+//	QStringList filenamesR = QFileDialog::getOpenFileNames(nullptr, "Open OME-TIFF images (first channel)", this->basePath.path(), "OME-TIFF files (*.ome.tiff *.ome.tif)", 0, QFileDialog::DontUseNativeDialog);
+//	if (filenamesR.empty()) {
+//		msgBox->critical(this, "Error !", "No filenames provided !");
+//		this->readerR.reset();
+//		this->readerR = nullptr;
+//		this->readerG.reset();
+//		this->readerG = nullptr;
+//		this->computeGridInfoLabel();
+//		return;
+//	}
+//	// update path from last file picker :
+//	this->basePath.setPath(QFileInfo(filenamesR[0]).path());
+//
+//	QStringList filenamesG = QFileDialog::getOpenFileNames(nullptr, "Open OME-TIFF images (second channel)", this->basePath.path(), "OME-TIFF files (*.ome.tiff *.ome.tif)", 0, QFileDialog::DontUseNativeDialog);
+//	if (filenamesG.empty()) {
+//		msgBox->critical(this, "Error !", "No filenames provided !");
+//		this->readerR.reset();
+//		this->readerR = nullptr;
+//		this->readerG.reset();
+//		this->readerG = nullptr;
+//		this->computeGridInfoLabel();
+//		return;
+//	}
+//	// update path from last file picker :
+//	this->basePath.setPath(QFileInfo(filenamesG[0]).path());
+//
+//	std::vector<std::string> fnR;	 // filenames, red channel
+//	for (int i = 0; i < filenamesR.size(); ++i) {
+//		fnR.push_back(filenamesR[i].toStdString());
+//	}
+//	std::vector<std::string> fnG;	 // filenames, green channel
+//	for (int i = 0; i < filenamesG.size(); ++i) {
+//		fnG.push_back(filenamesG[i].toStdString());
+//	}
+//
+//	delete msgBox;
+//
+//	this->readerR->setFilenames(fnR);
+//	this->readerG->setFilenames(fnG);
+//
+//	// Create task and thread :
+//	IO::ThreadedTask::Ptr parseTask_R = std::make_shared<IO::ThreadedTask>();
+//	IO::ThreadedTask::Ptr parseTask_G = std::make_shared<IO::ThreadedTask>();
+//	std::thread parseThread_R([this, &parseTask_R](void) -> void {
+//		this->readerR->parseImageInfo(parseTask_R);
+//	});
+//	std::thread parseThread_G([this, &parseTask_G](void) -> void {
+//		this->readerG->parseImageInfo(parseTask_G);
+//	});
+//	// Wait for task initialization
+//	do {
+//		std::this_thread::sleep_for(std::chrono::milliseconds(5));
+//		QCoreApplication::processEvents();
+//		this->update();
+//	} while (not (parseTask_R->hasSteps() && parseTask_G->hasSteps()));
+//	std::size_t maxSteps = parseTask_G->getMaxSteps() + parseTask_R->getMaxSteps();
+//	// Set and show progress bar :
+//	this->progress_load->setRange(0, maxSteps);
+//	this->progress_load->setValue(0);
+//	this->progress_load->setFormat("Parsing image data ... (%p%)");
+//	this->progress_load->setVisible(true);
+//
+//	// Loop while parsing files in other thread :
+//	bool shouldStop = false;
+//	do {
+//		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+//		std::size_t currentSteps = 0;
+//		std::size_t maxStepsLoop = 0;
+//		if (parseTask_R->hasSteps()) {
+//			currentSteps += parseTask_R->getAdvancement();
+//			maxStepsLoop += parseTask_R->getMaxSteps();
+//		}
+//		if (parseTask_G->hasSteps()) {
+//			currentSteps += parseTask_G->getAdvancement();
+//			maxStepsLoop += parseTask_G->getMaxSteps();
+//		}
+//
+//		this->progress_load->setRange(0, maxStepsLoop);
+//		this->progress_load->setValue(currentSteps);
+//		// Needed to update the main window ...
+//		QCoreApplication::processEvents();
+//		this->update();
+//
+//		shouldStop = parseTask_R->isComplete() && parseTask_G->isComplete();
+//	} while (shouldStop == false);
+//	if (parseThread_R.joinable()) {
+//		parseThread_R.join();
+//	}
+//	if (parseThread_G.joinable()) {
+//		parseThread_G.join();
+//	}
+//
+//	this->progress_load->reset();
+//	this->progress_load->setVisible(false);
+//
+//	this->computeGridInfoLabel();
+//	this->useLegacyGrids = true;
+//}
 
 void GridLoaderWidget::loadGrid() {
 	this->loadGrid_newAPI();
