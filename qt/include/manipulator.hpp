@@ -43,7 +43,10 @@ public:
 /// @note It's a simple wrapper around qglviewer::ManipulatedFrame to be used with glm::vec3.
 class Manipulator {
 public:
-    Manipulator(){}
+    Manipulator(){
+       manipulatedFrame.setSpinningSensitivity(100.0); // Prevent the manipulator to spin
+       manipulatedFrame.setRotationSensitivity(0.0); // Prevent the manipulator to rotate
+    }
 
     qglviewer::ManipulatedFrame& getManipulatedFrame() { return this->manipulatedFrame; };
 
