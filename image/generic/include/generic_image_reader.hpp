@@ -4,7 +4,8 @@
 #include "../../utils/include/image_api_common.hpp"
 #include "../../utils/include/threaded_task.hpp"
 // Needed for bounding box :
-#include "../../grid/include/bounding_box.hpp"
+//#include "../../grid/include/bounding_box.hpp"
+#include "../../utils/include/bounding_box.hpp"
 
 #include <array>
 #include <functional>

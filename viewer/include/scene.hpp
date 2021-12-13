@@ -16,14 +16,12 @@
 // Curve :
 #include "../../meshes/deformable_curve/curve.hpp"
 // Discrete grid and grid generation :
-#include "../../grid/include/discrete_grid.hpp"
-#include "../../grid/include/input_discrete_grid.hpp"
-#include "../../grid/include/output_discrete_grid.hpp"
-#include "../../grid/include/tetmesh.hpp"
+//#include "../../grid/include/discrete_grid.hpp"
+//#include "../../grid/include/input_discrete_grid.hpp"
+//#include "../../grid/include/output_discrete_grid.hpp"
+//#include "../../grid/include/tetmesh.hpp"
 // UI elements :
 #include "../../qt/include/grid_control.hpp"
-#include "../../qt/include/grid_detailed_view.hpp"
-#include "../../qt/include/grid_list_view.hpp"
 #include "../../qt/include/opengl_debug_log.hpp"
 #include "../../qt/include/visu_box_controller.hpp"
 #include "../../qt/include/manipulator.hpp"
@@ -61,6 +59,10 @@ namespace UITool {
 	namespace GL {
 		class MeshManipulator;	  // Forward declaration
 	}
+}	 // namespace UITool
+
+namespace UITool {
+		class MeshManipulator;	  // Forward declaration
 }	 // namespace UITool
 
 /// @brief Simple enum to keep track of the different viewing primitives for the program.

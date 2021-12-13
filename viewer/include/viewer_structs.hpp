@@ -1,7 +1,7 @@
 #ifndef VISUALIZATION_VIEWER_INCLUDE_VIEWER_STRUCTS_HPP_
 #define VISUALIZATION_VIEWER_INCLUDE_VIEWER_STRUCTS_HPP_
 
-#include "../../grid/include/discrete_grid.hpp"
+//#include "../../grid/include/discrete_grid.hpp"
 #include "../../macros.hpp"
 
 #include "../../new_grid/include/grid.hpp"
