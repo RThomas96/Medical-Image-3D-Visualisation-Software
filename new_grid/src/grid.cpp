@@ -12,13 +12,15 @@ namespace Image {
 		this->imageSize	  = svec3(0, 0, 0);
 	}
 
-	Grid::Grid(Grid::Ptr parent, svec3 size, ImageResamplingTechnique sampler) : Grid(Image::Downsampled::createBackend(parent, size, sampler)) {
+	Grid::Grid(Grid::Ptr parent, svec3 size, ImageResamplingTechnique sampler) :
+		Grid(Image::Downsampled::createBackend(parent, size, sampler)) {
 		this->parentGrid  = parent;
 		this->voxelOffset = svec3(0, 0, 0);
 		this->imageSize	  = size;
 	}
 
-	Grid::Grid(Grid::Ptr parent, svec3 begin, svec3 end) : Grid(Image::SubRegion::createBackend(begin, end - begin, parent)) {
+	Grid::Grid(Grid::Ptr parent, svec3 begin, svec3 end) :
+		Grid(Image::SubRegion::createBackend(begin, end - begin, parent)) {
 		this->parentGrid  = parent;
 		svec3 imgsize	  = end - begin;
 		this->voxelOffset = begin;

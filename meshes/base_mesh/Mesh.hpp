@@ -3,20 +3,22 @@
 
 #include "Triangle.h"
 #include <glm/glm.hpp>
-#include <nanoflann.hpp>
 #include <memory>
+#include <nanoflann.hpp>
 #include <queue>
 
 template <typename vec_t>
-struct MeshVerticesNanoFLANNAdaptor {
+struct MeshVerticesNanoFLANNAdaptor
+{
 public:
 	typedef typename vec_t::value_type vertex_t;	///< In our case, std::vector<glm::vec3<<::value_type == glm::vec3
-	typedef typename vertex_t::value_type coord_t;	///< In our case, glm::vec3::value_type == float
+	typedef typename vertex_t::value_type coord_t;	  ///< In our case, glm::vec3::value_type == float
 
 	/// @brief The reference to the vertices array, a std::vector !
 	const vec_t& vertex_array;
 
-	MeshVerticesNanoFLANNAdaptor(const vec_t& _data) : vertex_array(_data) {}
+	MeshVerticesNanoFLANNAdaptor(const vec_t& _data) :
+		vertex_array(_data) {}
 
 	inline const vec_t& derived() const { return this->vertex_array; }
 
@@ -26,11 +28,13 @@ public:
 	// Returns the dim'th component of the idx'th point in the class:
 	// Since this is inlined and the "dim" argument is typically an immediate value, the
 	//  "if/else's" are actually solved at compile time.
-	inline coord_t kdtree_get_pt(const size_t idx, const size_t dim) const
-	{
-		if (dim == 0) return derived()[idx].x;
-		else if (dim == 1) return derived()[idx].y;
-		else return derived()[idx].z;
+	inline coord_t kdtree_get_pt(const size_t idx, const size_t dim) const {
+		if (dim == 0)
+			return derived()[idx].x;
+		else if (dim == 1)
+			return derived()[idx].y;
+		else
+			return derived()[idx].z;
 	}
 
 	// Optional bounding-box computation: return false to default to a standard bbox computation loop.
@@ -43,8 +47,8 @@ public:
 typedef MeshVerticesNanoFLANNAdaptor<std::vector<glm::vec3>> mesh_kdtree_adaptor_t;
 typedef nanoflann::KDTreeSingleIndexAdaptor<
   nanoflann::L2_Simple_Adaptor<glm::vec3::value_type, mesh_kdtree_adaptor_t>,
-  mesh_kdtree_adaptor_t,3
-> mesh_kdtree_t;
+  mesh_kdtree_adaptor_t, 3>
+  mesh_kdtree_t;
 
 class Mesh {
 public:
@@ -52,20 +56,20 @@ public:
 
 public:
 	Mesh();
-	Mesh(std::vector<glm::vec3> & vertices, std::vector<Triangle> & triangles);
+	Mesh(std::vector<glm::vec3>& vertices, std::vector<Triangle>& triangles);
 	~Mesh() = default;
 
-	std::vector<glm::vec3> & getVertices(){return vertices;}
-	const std::vector<glm::vec3> & getVertices()const {return vertices;}
+	std::vector<glm::vec3>& getVertices() { return vertices; }
+	const std::vector<glm::vec3>& getVertices() const { return vertices; }
 
 	std::vector<glm::vec3>& getVertexNormals() { return this->verticesNormals; }
 	const std::vector<glm::vec3>& getVertexNormals() const { return this->verticesNormals; }
 
-	std::vector<Triangle> & getTriangles(){return triangles;}
-	const std::vector<Triangle> & getTriangles()const {return triangles;}
+	std::vector<Triangle>& getTriangles() { return triangles; }
+	const std::vector<Triangle>& getTriangles() const { return triangles; }
 
-	std::vector<glm::vec3> & getNormals(){return normals;}
-	const std::vector<glm::vec3> & getNormals()const {return normals;}
+	std::vector<glm::vec3>& getNormals() { return normals; }
+	const std::vector<glm::vec3>& getNormals() const { return normals; }
 
 	void applyTransformation(glm::mat4 transformation);
 
@@ -74,25 +78,31 @@ public:
 	std::vector<glm::vec3> getBB();
 
 	// modify vertices
-	void setVertices(unsigned int index, glm::vec3 vertex){vertices[index] = vertex;this->update();}
-	void setNewVertexPositions(std::vector<glm::vec3>& new_positions) { this->vertices = new_positions; this->update(); }
+	void setVertices(unsigned int index, glm::vec3 vertex) {
+		vertices[index] = vertex;
+		this->update();
+	}
+	void setNewVertexPositions(std::vector<glm::vec3>& new_positions) {
+		this->vertices = new_positions;
+		this->update();
+	}
 
 	void draw();
-	void draw( std::vector<bool> & selected, std::vector<bool> & fixed);
+	void draw(std::vector<bool>& selected, std::vector<bool>& fixed);
 
 	void recomputeNormals();
 	void update();
 
 	void clear();
 
-	typedef std::priority_queue< std::pair< float , int > , std::deque< std::pair< float , int > > , std::greater< std::pair< float , int > > > FacesQueue;
+	typedef std::priority_queue<std::pair<float, int>, std::deque<std::pair<float, int>>, std::greater<std::pair<float, int>>> FacesQueue;
 
-	void invertNormal(){normalDirection *= -1;}
+	void invertNormal() { normalDirection *= -1; }
+
 protected:
-
 	void computeBB();
 
-	void collectOneRing (std::vector<std::vector<unsigned int> > & oneRing) const;
+	void collectOneRing(std::vector<std::vector<unsigned int>>& oneRing) const;
 
 	void computeTriangleNormals();
 	glm::vec3 computeTriangleNormal(int t);
@@ -101,10 +111,10 @@ protected:
 
 	void glTriangle(unsigned int i);
 
-	void sortFaces( FacesQueue & facesQueue );
+	void sortFaces(FacesQueue& facesQueue);
 
-	std::vector <glm::vec3> vertices;
-	std::vector <Triangle> triangles;
+	std::vector<glm::vec3> vertices;
+	std::vector<Triangle> triangles;
 
 	std::vector<glm::vec3> normals;
 	std::vector<glm::vec3> verticesNormals;
@@ -121,4 +131,4 @@ protected:
 	std::shared_ptr<mesh_kdtree_adaptor_t> kdtree_adaptor;
 };
 
-#endif // MESH_H
+#endif	  // MESH_H

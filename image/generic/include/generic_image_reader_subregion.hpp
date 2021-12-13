@@ -73,7 +73,7 @@ namespace Image {
 		/// @brief Creates a reader for a grid's subregion.
 		GenericImageReaderSubregion::Ptr createBackend(svec3 origin, svec3 size, Grid::Ptr grid);
 
-	}	// namespace SubRegion
+	}	 // namespace SubRegion
 
 }	 // namespace Image
 

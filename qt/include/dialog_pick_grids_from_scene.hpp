@@ -1,18 +1,18 @@
 #ifndef VISUALISATION_DIALOG_PICK_GRIDS_FROM_SCENE_H
 #define VISUALISATION_DIALOG_PICK_GRIDS_FROM_SCENE_H
 
+#include "../../meshes/base_mesh/Mesh.hpp"
 #include "../../new_grid/include/grid.hpp"
 #include "../../viewer/include/viewer_structs.hpp"
-#include "../../meshes/base_mesh/Mesh.hpp"
 
-#include <QDialog>
-#include <QLabel>
 #include <QComboBox>
-#include <QPushButton>
-#include <QLayout>
+#include <QDialog>
 #include <QHBoxLayout>
-#include <QVBoxLayout>
+#include <QLabel>
+#include <QLayout>
+#include <QPushButton>
 #include <QSpacerItem>
+#include <QVBoxLayout>
 
 /// @brief Allows to pick a grid from the scene, in order to 'pair' a mesh with it.
 /// @warning Those names are horribly chosen. Pick better ones, or drop this class altogether.
@@ -20,14 +20,15 @@ class GridPickerFromScene : public QDialog {
 public:
 	GridPickerFromScene() { init(); }
 	virtual ~GridPickerFromScene() = default;
+
 protected:
 	void init() {
-		this->user_choice = new QComboBox();
+		this->user_choice	= new QComboBox();
 		this->button_cancel = new QPushButton("Cancel");
 		this->button_accept = new QPushButton("OK");
 
-		QHBoxLayout* hori = new QHBoxLayout();
-		QVBoxLayout* vert = new QVBoxLayout();
+		QHBoxLayout* hori  = new QHBoxLayout();
+		QVBoxLayout* vert  = new QVBoxLayout();
 		QLabel* user_label = new QLabel("What grid do you want to pair the mesh with ?");
 
 		hori->addWidget(this->button_cancel);
@@ -46,10 +47,18 @@ public:
 			this->user_choice->addItem(QString(grid->grid->getImageName().c_str()));
 		}
 		this->selected_grid = 0;
-		this->pressed_ok = false;
-		QObject::connect(this->user_choice, QOverload<int>::of(&QComboBox::currentIndexChanged), [&](int i) { this->selected_grid = i; });
-		QObject::connect(this->button_cancel, &QPushButton::pressed, this, [&]() { this->pressed_ok = false; this->close(); });
-		QObject::connect(this->button_accept, &QPushButton::pressed, this, [&]() { this->pressed_ok = true; this->close(); });
+		this->pressed_ok	= false;
+		QObject::connect(this->user_choice, QOverload<int>::of(&QComboBox::currentIndexChanged), [&](int i) {
+			this->selected_grid = i;
+		});
+		QObject::connect(this->button_cancel, &QPushButton::pressed, this, [&]() {
+			this->pressed_ok = false;
+			this->close();
+		});
+		QObject::connect(this->button_accept, &QPushButton::pressed, this, [&]() {
+			this->pressed_ok = true;
+			this->close();
+		});
 		this->exec();
 	}
 	bool choice_Cancelled() { return pressed_ok == false; }
@@ -68,14 +77,15 @@ class MeshPickerFromScene : public QDialog {
 public:
 	MeshPickerFromScene() { init(); }
 	virtual ~MeshPickerFromScene() = default;
+
 protected:
 	void init() {
-		this->user_choice = new QComboBox();
+		this->user_choice	= new QComboBox();
 		this->button_cancel = new QPushButton("Cancel");
 		this->button_accept = new QPushButton("OK");
 
-		QHBoxLayout* hori = new QHBoxLayout();
-		QVBoxLayout* vert = new QVBoxLayout();
+		QHBoxLayout* hori  = new QHBoxLayout();
+		QVBoxLayout* vert  = new QVBoxLayout();
 		QLabel* user_label = new QLabel("What mesh do you want to pair the curve with a mesh ?");
 
 		hori->addWidget(this->button_cancel);
@@ -94,10 +104,18 @@ public:
 			this->user_choice->addItem(QString::number(i));
 		}
 		this->selected_grid = 0;
-		this->pressed_ok = false;
-		QObject::connect(this->user_choice, QOverload<int>::of(&QComboBox::currentIndexChanged), [&](int i) { this->selected_grid = i; });
-		QObject::connect(this->button_cancel, &QPushButton::pressed, this, [&]() { this->pressed_ok = false; this->close(); });
-		QObject::connect(this->button_accept, &QPushButton::pressed, this, [&]() { this->pressed_ok = true; this->close(); });
+		this->pressed_ok	= false;
+		QObject::connect(this->user_choice, QOverload<int>::of(&QComboBox::currentIndexChanged), [&](int i) {
+			this->selected_grid = i;
+		});
+		QObject::connect(this->button_cancel, &QPushButton::pressed, this, [&]() {
+			this->pressed_ok = false;
+			this->close();
+		});
+		QObject::connect(this->button_accept, &QPushButton::pressed, this, [&]() {
+			this->pressed_ok = true;
+			this->close();
+		});
 		this->exec();
 	}
 	bool choice_Cancelled() { return pressed_ok == false; }

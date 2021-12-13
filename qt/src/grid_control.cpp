@@ -40,7 +40,7 @@ GridControl::GridControl(std::shared_ptr<DiscreteGrid> _vg, InterpolationMesh::P
 GridControl::~GridControl() {
 	std::cerr << "Deleting the GridControl panel ...\n";
 	if (this->scene != nullptr) {
-        // TODO: replace with deleteGridNow
+		// TODO: replace with deleteGridNow
 		//this->scene->deleteGrid(this->voxelGrid);
 		this->scene->removeController();
 	}

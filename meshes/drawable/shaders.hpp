@@ -2,15 +2,14 @@
 #define VISUALISATION_SHADERS_HPP
 
 #include <QOpenGLFunctions>
-#include <QOpenGLFunctions_3_2_Core>
 #include <QOpenGLFunctions_3_2_Compatibility>
-#include <QOpenGLFunctions_4_0_Core>
+#include <QOpenGLFunctions_3_2_Core>
 #include <QOpenGLFunctions_4_0_Compatibility>
+#include <QOpenGLFunctions_4_0_Core>
 #include <QOpenGLVersionFunctions>
 
 #include <algorithm>
 #include <utility>
-
 
 class ShaderCompiler {
 public:
@@ -94,4 +93,4 @@ protected:
 	std::vector<PragmaReplacement> pragma_replacements;
 };
 
-#endif // VISUALISATION_SHADERS_HPP
+#endif	  // VISUALISATION_SHADERS_HPP

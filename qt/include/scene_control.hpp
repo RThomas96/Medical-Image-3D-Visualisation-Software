@@ -85,9 +85,9 @@ public:
 	ControlPanel(Scene* const scene, Viewer* lv, QWidget* parent = nullptr);
 	virtual ~ControlPanel();
 
-    /// @brief Set min and max values of sliders according to the grids datatype numerical limit
-    /// TODO: change this function to set sliders according to min/max values in image
-    void setSlidersToNumericalLimits(void);
+	/// @brief Set min and max values of sliders according to the grids datatype numerical limit
+	/// TODO: change this function to set sliders according to min/max values in image
+	void setSlidersToNumericalLimits(void);
 
 protected:
 	void initSignals(void);
@@ -153,13 +153,13 @@ private:
 	double minAlternate, maxAlternate;
 
 public slots:
-    // @brief Set the min value to display of the first grid
+	// @brief Set the min value to display of the first grid
 	void setMinTexVal(double val);
-    // @brief Set the max value to display of the first grid
+	// @brief Set the max value to display of the first grid
 	void setMaxTexVal(double val);
-    // @brief Set the min value to display of the second grid
+	// @brief Set the min value to display of the second grid
 	void setMinTexValAlternate(double val);
-    // @brief Set the max value to display of the second grid
+	// @brief Set the max value to display of the second grid
 	void setMaxTexValAlternate(double val);
 };
 

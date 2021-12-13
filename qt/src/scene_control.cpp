@@ -101,7 +101,7 @@ void ColorBoundsControl::getCurrentValues() {
 
 ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, QWidget* parent) :
 	QWidget(parent), sceneToControl(scene), viewer(lv) {
-	this->min		   = 0; 
+	this->min		   = 0;
 	this->max		   = 1;
 	this->minAlternate = 0;
 	this->maxAlternate = 1;
@@ -443,31 +443,30 @@ void ControlPanel::setMaxTexValAlternate(double val) {
 }
 
 void ControlPanel::setSlidersToNumericalLimits(void) {
-    // TODO: make the slider a ratio
-    
-    double minValue = sceneToControl->getMinNumericLimit(0);
-    double maxValue = sceneToControl->getMaxNumericLimit(0);
+	// TODO: make the slider a ratio
 
-    if(minValue < static_cast<double>(std::numeric_limits<int>::lowest())) {
-        minValue = static_cast<double>(std::numeric_limits<int>::lowest());
-        std::cerr << "Error: sliders cannot handle datatypes bigger than integer. Values are crop." << std::endl;
-    }
+	double minValue = sceneToControl->getMinNumericLimit(0);
+	double maxValue = sceneToControl->getMaxNumericLimit(0);
 
-    if(maxValue > static_cast<double>(std::numeric_limits<int>::max())) {
-        maxValue = static_cast<double>(std::numeric_limits<int>::max());
-        std::cerr << "Error: sliders cannot handle datatypes bigger than integer. Values are crop." << std::endl;
-    }
+	if (minValue < static_cast<double>(std::numeric_limits<int>::lowest())) {
+		minValue = static_cast<double>(std::numeric_limits<int>::lowest());
+		std::cerr << "Error: sliders cannot handle datatypes bigger than integer. Values are crop." << std::endl;
+	}
 
+	if (maxValue > static_cast<double>(std::numeric_limits<int>::max())) {
+		maxValue = static_cast<double>(std::numeric_limits<int>::max());
+		std::cerr << "Error: sliders cannot handle datatypes bigger than integer. Values are crop." << std::endl;
+	}
 
-    setMinTexVal(minValue);
-    setMaxTexVal(maxValue);
+	setMinTexVal(minValue);
+	setMaxTexVal(maxValue);
 
-    updateMinValue(minValue);
-    updateMaxValue(maxValue);
+	updateMinValue(minValue);
+	updateMaxValue(maxValue);
 
-    setMinTexValAlternate(minValue);
-    setMaxTexValAlternate(maxValue);
+	setMinTexValAlternate(minValue);
+	setMaxTexValAlternate(maxValue);
 
-    updateMinValueAlternate(minValue);
-    updateMaxValueAlternate(maxValue);
+	updateMinValueAlternate(minValue);
+	updateMaxValueAlternate(maxValue);
 }

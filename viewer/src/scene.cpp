@@ -10,8 +10,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/io.hpp>
 
-#include <QMessageBox>
 #include <QFileDialog>
+#include <QMessageBox>
 #include <QOpenGLContext>
 #include <QSurface>
 
@@ -49,7 +49,8 @@ inline void __GetTexSize(std::size_t numTexNeeded, std::size_t* opt_width, std::
 /** This constructor not only creates the object, but also sets the default values for the Scene in order
  *  to be drawn, even if it is empty at the time of the first call to a draw function.
  */
-Scene::Scene(): glMeshManipulator(new UITool::GL::MeshManipulator(&this->sceneGL, 0)) {
+Scene::Scene() :
+	glMeshManipulator(new UITool::GL::MeshManipulator(&this->sceneGL, 0)) {
 	this->isInitialized	   = false;
 	this->showVAOstate	   = false;
 	this->shouldDeleteGrid = false;
@@ -64,24 +65,23 @@ Scene::Scene(): glMeshManipulator(new UITool::GL::MeshManipulator(&this->sceneGL
 	this->visuBoxController = nullptr;
 	this->programStatusBar	= nullptr;
 
-	double minTexVal = 1;
-	double maxTexVal = std::numeric_limits<int>::max();
-	this->textureBounds0		   = NewAPI_GridGLView::data_2(minTexVal, maxTexVal);
-	this->textureBounds1		   = NewAPI_GridGLView::data_2(minTexVal, maxTexVal);
-	this->colorBounds0			   = NewAPI_GridGLView::data_2(0, maxTexVal);
-	this->colorBounds1			   = NewAPI_GridGLView::data_2(0, maxTexVal);
-	this->selectedChannel_r		   = 0;	   // by default, the R channel
-	this->selectedChannel_g		   = 0;	   // by default, the R channel
+	double minTexVal		= 1;
+	double maxTexVal		= std::numeric_limits<int>::max();
+	this->textureBounds0	= NewAPI_GridGLView::data_2(minTexVal, maxTexVal);
+	this->textureBounds1	= NewAPI_GridGLView::data_2(minTexVal, maxTexVal);
+	this->colorBounds0		= NewAPI_GridGLView::data_2(0, maxTexVal);
+	this->colorBounds1		= NewAPI_GridGLView::data_2(0, maxTexVal);
+	this->selectedChannel_r = 0;	// by default, the R channel
+	this->selectedChannel_g = 0;	// by default, the R channel
 
 	this->renderSize = 0;
 
 	// Default light positions : at the vertices of a unit cube.
 	this->lightPositions = {
-		glm::vec3(.0, .0, .0), glm::vec3(1., .0, .0),
-		glm::vec3(.0, 1., .0), glm::vec3(1., 1., .0),
-		glm::vec3(.0, .0, 1.), glm::vec3(1., .0, 1.),
-		glm::vec3(.0, 1., 1.), glm::vec3(1., 1., 1.)
-	};
+	  glm::vec3(.0, .0, .0), glm::vec3(1., .0, .0),
+	  glm::vec3(.0, 1., .0), glm::vec3(1., 1., .0),
+	  glm::vec3(.0, .0, 1.), glm::vec3(1., .0, 1.),
+	  glm::vec3(.0, 1., 1.), glm::vec3(1., 1., 1.)};
 
 	this->planeDirection	= glm::vec3(1., 1., 1.);
 	this->planeDisplacement = glm::vec3(.0, .0, .0);
@@ -142,7 +142,7 @@ Scene::Scene(): glMeshManipulator(new UITool::GL::MeshManipulator(&this->sceneGL
 
 	this->meshes.clear();
 	this->drawables.clear();
-	this->curve = nullptr;
+	this->curve		 = nullptr;
 	this->curve_draw = nullptr;
 }
 
@@ -180,7 +180,7 @@ void Scene::initGl(QOpenGLContext* _context) {
 			throw std::runtime_error("Could not initialize OpenGL functions.");
 		}
 	}
-    this->sceneGL.initGl(_context);
+	this->sceneGL.initGl(_context);
 
 	auto maj = this->context->format().majorVersion();
 	auto min = this->context->format().minorVersion();
@@ -210,10 +210,10 @@ void Scene::initGl(QOpenGLContext* _context) {
 	// Generate visibility array :
 	this->texHandle_ColorScaleGrid = 0;
 
-    // Generate controller positions
-    //this->glMeshManipulator->initGL(this->get_context());
-    this->sceneGL.initGl(this->get_context());
-    //this->glMeshManipulator->prepareSphere();
+	// Generate controller positions
+	//this->glMeshManipulator->initGL(this->get_context());
+	this->sceneGL.initGl(this->get_context());
+	//this->glMeshManipulator->prepareSphere();
 }
 
 void Scene::initialize_limits() {
@@ -442,8 +442,8 @@ void Scene::createBuffers() {
 	this->vboHandle_boundingBoxIndices	= createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_boundingBoxIndices");
 
 	this->glMeshManipulator->setVao(createVAO("vaoHandle_Sphere"));
-    this->glMeshManipulator->setVboVertices(createVBO(GL_ARRAY_BUFFER, "vboHandle_SphereVertices"));
-    this->glMeshManipulator->setVboIndices(createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_SphereIndices"));
+	this->glMeshManipulator->setVboVertices(createVBO(GL_ARRAY_BUFFER, "vboHandle_SphereVertices"));
+	this->glMeshManipulator->setVboIndices(createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_SphereIndices"));
 
 	return;
 }
@@ -452,8 +452,8 @@ void Scene::loadGridROI() {
 	LOG_ENTER(Scene::loadGridROI)
 	// It will load the grid, based on the visu box coordinates !
 	// The context will be made current at this stage, no need to worry :)
-    
-    std::cerr << "Error: visu box controller is broken for now due to new API update" << std::endl;
+
+	std::cerr << "Error: visu box controller is broken for now due to new API update" << std::endl;
 
 	// if (this->grids.size() == 0) {
 	// 	return;
@@ -530,7 +530,7 @@ void Scene::loadGridROI() {
 	// 		// Add the grid to the list of grids to be added later
 	// 		{
 	// 			std::lock_guard<std::mutex> locking(this->mutexadd);
-    //             // TODO: new API
+	//             // TODO: new API
 	// 			//this->gridsToAdd.push_back(outputGrid);
 	// 		}
 	// 	});
@@ -696,14 +696,14 @@ void Scene::newAPI_addGrid(Image::Grid::Ptr gridLoaded) {
 }
 
 void Scene::updateBoundingBox(void) {
-    std::cerr << "Error: updateBoundingBox brocken due to new API update" << std::endl;
+	std::cerr << "Error: updateBoundingBox brocken due to new API update" << std::endl;
 	this->sceneBB	  = Image::bbox_t();
 	this->sceneDataBB = Image::bbox_t();
 
 	for (std::size_t i = 0; i < this->newGrids.size(); ++i) {
 		const Image::Grid::Ptr _g = this->newGrids[i]->grid;
-		Image::bbox_t box  = _g->getBoundingBox();
-		Image::bbox_t dbox = _g->getBoundingBox();
+		Image::bbox_t box		  = _g->getBoundingBox();
+		Image::bbox_t dbox		  = _g->getBoundingBox();
 		this->sceneBB.addPoints(box.getAllCorners());
 		this->sceneDataBB.addPoints(dbox.getAllCorners());
 	}
@@ -730,22 +730,28 @@ void Scene::updateBoundingBox(void) {
 
 void Scene::dummy_perform_arap_on_first_mesh() {
 #ifdef NEED_ARAP
-	if (this->drawables.size() == 0) { std::cerr << "Error : no meshes loaded.\n"; return; }
+	if (this->drawables.size() == 0) {
+		std::cerr << "Error : no meshes loaded.\n";
+		return;
+	}
 	auto to_deform = this->drawables.at(0);
 
 	auto mesh_to_deform = std::dynamic_pointer_cast<DrawableMesh>(to_deform);
-	if (mesh_to_deform == nullptr) { std::cerr << "Error : could not get the first drawable as a DrawableMesh.\n"; return; }
+	if (mesh_to_deform == nullptr) {
+		std::cerr << "Error : could not get the first drawable as a DrawableMesh.\n";
+		return;
+	}
 	std::shared_ptr<Mesh> _mesh = mesh_to_deform->getMesh();
 
 	AsRigidAsPossible arap_deformation;
 	arap_deformation.clear();
 	arap_deformation.init(_mesh->getVertices(), _mesh->getTriangles());
-	arap_deformation.setIterationNb(5); // 5 iterations maximum
+	arap_deformation.setIterationNb(5);	   // 5 iterations maximum
 
 	// Threshold on X is 15% of the left-most points that will be translated. Compute from bb :
-	auto mesh_bb = mesh_to_deform->getBoundingBox();
+	auto mesh_bb					= mesh_to_deform->getBoundingBox();
 	glm::vec3::value_type threshold = (mesh_bb.first + (0.85f * (mesh_bb.second - mesh_bb.first))).x;
-	glm::vec3 translate = glm::vec3((mesh_bb.second - mesh_bb.first).x * 0.1f, .0f, .0f);
+	glm::vec3 translate				= glm::vec3((mesh_bb.second - mesh_bb.first).x * 0.1f, .0f, .0f);
 
 	auto vertices = arap_deformation.dummy_deformation(0.05, translate, mesh_bb.first, mesh_bb.second);
 
@@ -758,26 +764,32 @@ void Scene::dummy_perform_arap_on_first_mesh() {
 
 	to_deform->updateOnNextDraw();
 #else
-    std::cerr << "[ERROR]: ARAP cannot be compiled on Linux yet. Operation canceled" << std::endl;
+	std::cerr << "[ERROR]: ARAP cannot be compiled on Linux yet. Operation canceled" << std::endl;
 #endif
 }
 
 void Scene::dummy_apply_alignment_before_arap() {
 #ifdef NEED_ARAP
-	if (this->drawables.empty()) { std::cerr << "Error : no meshes loaded.\n"; return; }
+	if (this->drawables.empty()) {
+		std::cerr << "Error : no meshes loaded.\n";
+		return;
+	}
 	auto to_deform = this->drawables.at(0);
 
 	auto mesh_to_deform = std::dynamic_pointer_cast<DrawableMesh>(to_deform);
-	if (mesh_to_deform == nullptr) { std::cerr << "Error : could not get the first drawable as a DrawableMesh.\n"; return; }
+	if (mesh_to_deform == nullptr) {
+		std::cerr << "Error : could not get the first drawable as a DrawableMesh.\n";
+		return;
+	}
 	std::shared_ptr<Mesh> _mesh = mesh_to_deform->getMesh();
 
-	std::vector<glm::vec3> transforms; // estimated translations between current point position and ARAP handle on the image
+	std::vector<glm::vec3> transforms;	  // estimated translations between current point position and ARAP handle on the image
 	auto current_transform = mesh_to_deform->getTransformation();
 
 	std::cerr << "Generating 'best' estimated transform for the mesh ..." << '\n';
 	for (std::size_t i = 0; i < this->mesh_idx_constraints.size(); ++i) {
 		auto constraint = this->mesh_idx_constraints[i];
-		auto position = this->image_constraints[i];
+		auto position	= this->image_constraints[i];
 		// NOTE : Always performed on the first mesh !!! So only filter through those with index 0.
 		if (constraint.first == 0) {
 			// Get current position :
@@ -813,7 +825,7 @@ void Scene::dummy_apply_alignment_before_arap() {
 	}
 	to_deform->updateOnNextDraw();
 #else
-    std::cerr << "[ERROR]: ARAP cannot be compiled on Linux yet. Operation canceled" << std::endl;
+	std::cerr << "[ERROR]: ARAP cannot be compiled on Linux yet. Operation canceled" << std::endl;
 #endif
 }
 
@@ -869,7 +881,7 @@ void Scene::dummy_perform_constrained_arap_on_image_mesh() {
 		this->curve_draw->updateOnNextDraw();
 	}
 #else
-    std::cerr << "[ERROR]: ARAP cannot be compiled on Linux yet. Operation canceled" << std::endl;
+	std::cerr << "[ERROR]: ARAP cannot be compiled on Linux yet. Operation canceled" << std::endl;
 #endif
 }
 
@@ -878,9 +890,13 @@ void Scene::dummy_add_image_constraint(std::size_t img_idx, glm::vec3 img_pos) {
 }
 
 void Scene::dummy_add_arap_constraint_mesh(std::size_t drawable, std::size_t vtx_idx) {
-	if (drawable == 0) { return; }
-	if (drawable > this->drawables.size()) { return; }
-	this->mesh_idx_constraints.push_back((std::make_pair(drawable-1, vtx_idx)));
+	if (drawable == 0) {
+		return;
+	}
+	if (drawable > this->drawables.size()) {
+		return;
+	}
+	this->mesh_idx_constraints.push_back((std::make_pair(drawable - 1, vtx_idx)));
 	std::cerr << "[Scene] Added constraint " << vtx_idx << " to mesh " << drawable << "\n";
 }
 
@@ -889,7 +905,7 @@ void Scene::dummy_print_arap_constraints() {
 	std::cerr << "[LOG] ARAP constraints at this point in the program :\n";
 	std::cerr << "[LOG] Mesh indices :\n";
 	for (const auto& mesh_constraint : this->mesh_idx_constraints) {
-		std::cerr << "[LOG]\t - { mesh_idx : " << (+mesh_constraint.first)-1 << ", vertex_idx : " << mesh_constraint.second << " }\n";
+		std::cerr << "[LOG]\t - { mesh_idx : " << (+mesh_constraint.first) - 1 << ", vertex_idx : " << mesh_constraint.second << " }\n";
 	}
 	std::cerr << "[LOG] Image constraints : \n";
 	for (const auto& image_constraint : this->image_constraints) {
@@ -903,16 +919,15 @@ void Scene::dummy_check_point_in_mesh_bb(glm::vec3 query, std::size_t& mesh_inde
 	mesh_index = 0;
 	for (std::size_t i = 0; i < this->drawables.size(); ++i) {
 		const auto& drawable = this->drawables[i];
-		auto mesh_drawable = std::dynamic_pointer_cast<DrawableMesh>(drawable);
+		auto mesh_drawable	 = std::dynamic_pointer_cast<DrawableMesh>(drawable);
 		if (mesh_drawable != nullptr) {
 			// get BB, check if inside :
 			auto mesh_bb = mesh_drawable->getBoundingBox();
 			if (
-				query.x > mesh_bb.first.x && query.x < mesh_bb.second.x &&
-				query.y > mesh_bb.first.y && query.y < mesh_bb.second.y &&
-				query.z > mesh_bb.first.z && query.z < mesh_bb.second.z
-			) {
-				mesh_index = i+1;
+			  query.x > mesh_bb.first.x && query.x < mesh_bb.second.x &&
+			  query.y > mesh_bb.first.y && query.y < mesh_bb.second.y &&
+			  query.z > mesh_bb.first.z && query.z < mesh_bb.second.z) {
+				mesh_index = i + 1;
 				return;
 			}
 		}
@@ -922,9 +937,13 @@ void Scene::dummy_check_point_in_mesh_bb(glm::vec3 query, std::size_t& mesh_inde
 
 DrawableBase::Ptr Scene::dummy_getDrawable(std::size_t idx) {
 	// reminder : this is indexed at one since it should be the result of Scene::dummy_check_point_in_mesh_bb().
-	if (idx == 0) { return nullptr; }
-	if (idx > this->drawables.size()) { return nullptr; }
-	return this->drawables[idx-1];
+	if (idx == 0) {
+		return nullptr;
+	}
+	if (idx > this->drawables.size()) {
+		return nullptr;
+	}
+	return this->drawables[idx - 1];
 }
 
 void Scene::recompileShaders(bool verbose) {
@@ -1117,7 +1136,6 @@ GLuint Scene::uploadTexture3D(const TextureUpload& tex) {
 	return texHandle;
 }
 
-
 GLuint Scene::newAPI_uploadTexture3D_allocateonly(const TextureUpload& tex) {
 	if (this->context != nullptr) {
 		if (this->context->isValid() == false) {
@@ -1195,9 +1213,9 @@ void Scene::loadMesh() {
 
 	std::shared_ptr<Mesh> mesh_to_load = nullptr;
 	// Create a mesh structure :
-	mesh_to_load = std::make_shared<Mesh>();
+	mesh_to_load   = std::make_shared<Mesh>();
 	auto& vertices = mesh_to_load->getVertices();
-	auto& normals = mesh_to_load->getNormals();
+	auto& normals  = mesh_to_load->getNormals();
 	// Load that OFF file and then update the mesh :
 	FileIO::openOFF(file_name.toStdString(), mesh_to_load->getVertices(), mesh_to_load->getTriangles());
 	mesh_to_load->update();
@@ -1215,21 +1233,21 @@ void Scene::loadMesh() {
 			if (picker->choice_getGrid() >= this->newGrids.size()) {
 				std::cerr << "Error : grid index was not valid ...\n";
 			}
-			auto selected_grid = this->newGrids[picker->choice_getGrid()];
-			Image::bbox_t selected_grid_bb = selected_grid->grid->getBoundingBox();
-			Image::bbox_t::vec selected_grid_bb_diagonal = selected_grid_bb.getDiagonal(); // gets the scale factors on X, Y, Z
-			Image::bbox_t::vec selected_grid_bb_center = selected_grid_bb.getMin() + (selected_grid_bb_diagonal / 2.f);
+			auto selected_grid							 = this->newGrids[picker->choice_getGrid()];
+			Image::bbox_t selected_grid_bb				 = selected_grid->grid->getBoundingBox();
+			Image::bbox_t::vec selected_grid_bb_diagonal = selected_grid_bb.getDiagonal();	  // gets the scale factors on X, Y, Z
+			Image::bbox_t::vec selected_grid_bb_center	 = selected_grid_bb.getMin() + (selected_grid_bb_diagonal / 2.f);
 
 			// The scaling done here is _very_ approximate in order to get a rough estimate of the size of the image :
-			float scaling_factor = glm::length(selected_grid_bb_diagonal) / glm::length(mesh_to_load->getBB()[1] - mesh_to_load->getBB()[0]) * .7f;
+			float scaling_factor	 = glm::length(selected_grid_bb_diagonal) / glm::length(mesh_to_load->getBB()[1] - mesh_to_load->getBB()[0]) * .7f;
 			glm::mat4 scaling_matrix = glm::scale(glm::mat4(1.f), glm::vec3(scaling_factor));
 			mesh_drawable->setTransformation(scaling_matrix);
 			// We apply the transformation here in order to get an updated bounding box.
 
 			// And base the computation of the translations from the scaled bounding box.
-			auto scaled_bb = mesh_drawable->getBoundingBox();
+			auto scaled_bb				   = mesh_drawable->getBoundingBox();
 			auto mesh_to_image_translation = (selected_grid_bb.getMin() - scaled_bb.first);
-			auto shift_image_translation = glm::vec3(-(scaled_bb.second - scaled_bb.first).x, .0f, .0f) + mesh_to_image_translation;
+			auto shift_image_translation   = glm::vec3(-(scaled_bb.second - scaled_bb.first).x, .0f, .0f) + mesh_to_image_translation;
 			// Determine the best transformation to apply by shifting the mesh's BB to be aligned with the image's BB, and
 			// let the user put points later on the mesh in order to get a first alignment of the image/mesh.
 			// Then, translate that by the mesh's bounding box in order to place them one beside another :
@@ -1247,17 +1265,17 @@ void Scene::loadMesh() {
 }
 
 void Scene::getTetraMeshPoints(std::vector<glm::vec3>& points) {
-    if(this->newGrids.size() > 0) {
-        VolMeshData &mesh = this->newGrids[0]->volumetricMeshData;
+	if (this->newGrids.size() > 0) {
+		VolMeshData& mesh = this->newGrids[0]->volumetricMeshData;
 
-        for(int i = 0; i < mesh.idxMap.size(); ++i) {
-            glm::vec3 point = glm::vec3(0., 0., 0.);
-            for(int k = 0; k < 3; ++k) {
-                point[k] = mesh.positions[mesh.idxMap[i].second[0][0]][k];
-            }
-            points.push_back(point);
-        }
-    }
+		for (int i = 0; i < mesh.idxMap.size(); ++i) {
+			glm::vec3 point = glm::vec3(0., 0., 0.);
+			for (int k = 0; k < 3; ++k) {
+				point[k] = mesh.positions[mesh.idxMap[i].second[0][0]][k];
+			}
+			points.push_back(point);
+		}
+	}
 }
 
 void Scene::launchDeformation(int tetIdx, glm::vec3 point) {
@@ -1265,11 +1283,11 @@ void Scene::launchDeformation(int tetIdx, glm::vec3 point) {
 	// QMessageBox messageBox;
 	// messageBox.critical(nullptr, "Error", "Coucou je vais bientôt deformé la grille quand je serais branché !");
 	// messageBox.setFixedSize(500, 200);
-    
-    // param:
 
-	VolMeshData &mesh = this->newGrids[0]->volumetricMeshData;
-    //this->newAPI_tex3D_generateMESH(this->newGrids[0], mesh);
+	// param:
+
+	VolMeshData& mesh = this->newGrids[0]->volumetricMeshData;
+	//this->newAPI_tex3D_generateMESH(this->newGrids[0], mesh);
 
 	std::size_t indices[4][3];
 	indices[0][0] = 3;
@@ -1290,82 +1308,80 @@ void Scene::launchDeformation(int tetIdx, glm::vec3 point) {
 
 	__GetTexSize(mesh.tetrahedra.size() * 4 * 3, &vertWidth, &vertHeight);
 	__GetTexSize(mesh.tetrahedra.size() * 4, &normWidth, &normHeight);
-    
-    std::vector<std::vector<int>> indexesToModif = mesh.idxMap[tetIdx].second;
-    for(int i = 0; i < indexesToModif.size(); ++i) {
-        for(int k = 0; k < 3; ++k) {
-            //mesh.positions[indexesToModif[i][0]][k] = this->manipulated_pos[k+manipulatorIdx*3];
-            //mesh.rawVertices[indexesToModif[i][1]+k] = this->manipulated_pos[k+manipulatorIdx*3];
-            mesh.positions[indexesToModif[i][0]][k] = point[k];
-            mesh.rawVertices[indexesToModif[i][1]+k] = point[k];
-        }
 
-    }
+	std::vector<std::vector<int>> indexesToModif = mesh.idxMap[tetIdx].second;
+	for (int i = 0; i < indexesToModif.size(); ++i) {
+		for (int k = 0; k < 3; ++k) {
+			//mesh.positions[indexesToModif[i][0]][k] = this->manipulated_pos[k+manipulatorIdx*3];
+			//mesh.rawVertices[indexesToModif[i][1]+k] = this->manipulated_pos[k+manipulatorIdx*3];
+			mesh.positions[indexesToModif[i][0]][k]	   = point[k];
+			mesh.rawVertices[indexesToModif[i][1] + k] = point[k];
+		}
+	}
 
-    std::vector<int> alreadyUpdatedTet;
-    for(int i = 0; i < indexesToModif.size(); ++i) {
-        int tetIndex = indexesToModif[i][3];
-        if(std::find(alreadyUpdatedTet.begin(), alreadyUpdatedTet.end(), tetIndex) == alreadyUpdatedTet.end()) {
-            // Because we pushed 3 times more in mapIdx
-            const std::array<std::size_t, 4>& tetrahedron = mesh.tetrahedra[tetIndex];
-            // For each tet's face :
-            for (std::size_t j = 0; j < 4; ++j) {
-                // Compute this face's normal :
-                glm::vec4 n1   = mesh.positions[tetrahedron[indices[j][1]]] - mesh.positions[tetrahedron[indices[j][0]]];
-                glm::vec4 n2   = mesh.positions[tetrahedron[indices[j][2]]] - mesh.positions[tetrahedron[indices[j][0]]];
-                glm::vec4 norm = glm::normalize(glm::cross(n1, n2));
-                // Put inverse of dot with opposing vertex in norm.w :
-                glm::vec4 v1			  = mesh.positions[tetrahedron[j]] - mesh.positions[tetrahedron[(j + 1) % 4]];
-                glm::vec4::value_type val = 1. / glm::dot(v1, norm);
-                norm.w					  = val;
-                // Put it in the array :
-                for (std::size_t n = 0; n < 4; ++n) {
-                    mesh.rawNormals[tetIndex*16 + j*4 + n] = norm[n];
-                }
-            }
-            alreadyUpdatedTet.push_back(tetIndex);
-        }
-    }
-
+	std::vector<int> alreadyUpdatedTet;
+	for (int i = 0; i < indexesToModif.size(); ++i) {
+		int tetIndex = indexesToModif[i][3];
+		if (std::find(alreadyUpdatedTet.begin(), alreadyUpdatedTet.end(), tetIndex) == alreadyUpdatedTet.end()) {
+			// Because we pushed 3 times more in mapIdx
+			const std::array<std::size_t, 4>& tetrahedron = mesh.tetrahedra[tetIndex];
+			// For each tet's face :
+			for (std::size_t j = 0; j < 4; ++j) {
+				// Compute this face's normal :
+				glm::vec4 n1   = mesh.positions[tetrahedron[indices[j][1]]] - mesh.positions[tetrahedron[indices[j][0]]];
+				glm::vec4 n2   = mesh.positions[tetrahedron[indices[j][2]]] - mesh.positions[tetrahedron[indices[j][0]]];
+				glm::vec4 norm = glm::normalize(glm::cross(n1, n2));
+				// Put inverse of dot with opposing vertex in norm.w :
+				glm::vec4 v1			  = mesh.positions[tetrahedron[j]] - mesh.positions[tetrahedron[(j + 1) % 4]];
+				glm::vec4::value_type val = 1. / glm::dot(v1, norm);
+				norm.w					  = val;
+				// Put it in the array :
+				for (std::size_t n = 0; n < 4; ++n) {
+					mesh.rawNormals[tetIndex * 16 + j * 4 + n] = norm[n];
+				}
+			}
+			alreadyUpdatedTet.push_back(tetIndex);
+		}
+	}
 
 	TextureUpload texParams = {};
 	// Swizzle and alignment unchanged, not present in Texture3D
-	texParams.internalFormat			 = GL_RGB32F;
-	texParams.size.x					 = vertWidth;
-	texParams.size.y					 = vertHeight;
-	texParams.format					 = GL_RGB;
-	texParams.type						 = GL_FLOAT;
-	texParams.data						 = mesh.rawVertices;
+	texParams.internalFormat = GL_RGB32F;
+	texParams.size.x		 = vertWidth;
+	texParams.size.y		 = vertHeight;
+	texParams.format		 = GL_RGB;
+	texParams.type			 = GL_FLOAT;
+	texParams.data			 = mesh.rawVertices;
 
 	glBindTexture(GL_TEXTURE_2D, this->newGrids[0]->volumetricMesh.vertexPositions);
 	glTexImage2D(GL_TEXTURE_2D,	   // GLenum : Target
-	  static_cast<GLint>(texParams.level),	// GLint  : Level of detail of the current texParamsture (0 = original)
-	  texParams.internalFormat,	 // GLint  : Number of color components in the picture. Here grayscale so GL_RED
-	  texParams.size.x,	 // GLsizei: Image width
-	  texParams.size.y,	 // GLsizei: Image height
+	  static_cast<GLint>(texParams.level),	  // GLint  : Level of detail of the current texParamsture (0 = original)
+	  texParams.internalFormat,	   // GLint  : Number of color components in the picture. Here grayscale so GL_RED
+	  texParams.size.x,	   // GLsizei: Image width
+	  texParams.size.y,	   // GLsizei: Image height
 	  static_cast<GLint>(0),	// GLint  : Border. This value MUST be 0.
-	  texParams.format,	 // GLenum : Format of the pixel data
-	  texParams.type,	   // GLenum : Type (the data type as in uchar, uint, float ...)
-	  texParams.data	  // void*  : Data to load into the buffer
+	  texParams.format,	   // GLenum : Format of the pixel data
+	  texParams.type,	 // GLenum : Type (the data type as in uchar, uint, float ...)
+	  texParams.data	// void*  : Data to load into the buffer
 	);
 
 	// Face normals :
-	 texParams.internalFormat		 = GL_RGBA32F;
-	 texParams.size.x				 = normWidth;
-	 texParams.size.y				 = normHeight;
-	 texParams.format				 = GL_RGBA;
-	 texParams.data					 = mesh.rawNormals;
+	texParams.internalFormat = GL_RGBA32F;
+	texParams.size.x		 = normWidth;
+	texParams.size.y		 = normHeight;
+	texParams.format		 = GL_RGBA;
+	texParams.data			 = mesh.rawNormals;
 
-    glBindTexture(GL_TEXTURE_2D, this->newGrids[0]->volumetricMesh.faceNormals);
+	glBindTexture(GL_TEXTURE_2D, this->newGrids[0]->volumetricMesh.faceNormals);
 	glTexImage2D(GL_TEXTURE_2D,	   // GLenum : Target
-	  static_cast<GLint>(texParams.level),	// GLint  : Level of detail of the current texParamsture (0 = original)
-	  texParams.internalFormat,	 // GLint  : Number of color components in the picture. Here grayscale so GL_RED
-	  texParams.size.x,	 // GLsizei: Image width
-	  texParams.size.y,	 // GLsizei: Image height
+	  static_cast<GLint>(texParams.level),	  // GLint  : Level of detail of the current texParamsture (0 = original)
+	  texParams.internalFormat,	   // GLint  : Number of color components in the picture. Here grayscale so GL_RED
+	  texParams.size.x,	   // GLsizei: Image width
+	  texParams.size.y,	   // GLsizei: Image height
 	  static_cast<GLint>(0),	// GLint  : Border. This value MUST be 0.
-	  texParams.format,	 // GLenum : Format of the pixel data
-	  texParams.type,	   // GLenum : Type (the data type as in uchar, uint, float ...)
-	  texParams.data	  // void*  : Data to load into the buffer
+	  texParams.format,	   // GLenum : Format of the pixel data
+	  texParams.type,	 // GLenum : Type (the data type as in uchar, uint, float ...)
+	  texParams.data	// void*  : Data to load into the buffer
 	);
 
 	//delete[] rawNormals;
@@ -1375,7 +1391,7 @@ void Scene::launchDeformation(int tetIdx, glm::vec3 point) {
 
 glm::vec3 Scene::getVertexPosition(int index) {
 	VolMeshData& mesh = this->newGrids[0]->volumetricMeshData;
-    return mesh.idxMap[index].first;
+	return mesh.idxMap[index].first;
 }
 
 void Scene::loadCurve() {
@@ -1392,9 +1408,9 @@ void Scene::loadCurve() {
 		this->curve.reset();
 		this->curve_draw.reset();
 		auto selected_mesh = this->meshes[picker->choice_getMesh()];
-		auto fname = file_name.toStdString();
-		this->curve = openCurveFromOBJ(fname, selected_mesh);
-		glm::mat4 transfo = glm::mat4(1.f);
+		auto fname		   = file_name.toStdString();
+		this->curve		   = openCurveFromOBJ(fname, selected_mesh);
+		glm::mat4 transfo  = glm::mat4(1.f);
 		// try to find the right transformation to apply to the curve for it to 'follow' the mesh :
 		// !!! /!\ VERY HACKY, DO NOT ATTEMPT AT HOME /!\ !!!
 		for (const auto& drawable : this->drawables) {
@@ -1431,8 +1447,8 @@ void Scene::launchSaveDialog() {
 		return;
 	}
 
-    // TODO 
-    // Add calls to tetmesh and grid control when they will be compatible with new API 
+	// TODO
+	// Add calls to tetmesh and grid control when they will be compatible with new API
 
 	//// create an output grid AND a tetmesh to generate it :
 	//std::shared_ptr<OutputGrid> outputGrid = std::make_shared<OutputGrid>();
@@ -1466,8 +1482,8 @@ void Scene::removeController() {
 }
 
 void Scene::deleteGridNow() {
-    std::cerr << "WARNING: try to delete old API grid" << std::endl;
-    // TODO: port this function to new API
+	std::cerr << "WARNING: try to delete old API grid" << std::endl;
+	// TODO: port this function to new API
 	// this->shouldDeleteGrid = false;
 	// for (std::size_t g : this->delGrid) {
 	// 	// Delete 'raw' grid texture
@@ -1611,7 +1627,7 @@ void Scene::newAPI_drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPla
 glm::vec3 Scene::computePlanePositions() {
 	Image::bbox_t::vec position = this->sceneBB.getMin();
 	Image::bbox_t::vec diagonal = this->sceneBB.getDiagonal();
-	glm::vec3 planePos				   = (position + this->planeDisplacement * diagonal);
+	glm::vec3 planePos			= (position + this->planeDisplacement * diagonal);
 	return planePos;
 }
 
@@ -1659,10 +1675,10 @@ void Scene::newAPI_prepareUniforms_3DSolid(GLfloat* mvMat, GLfloat* pMat, glm::v
 	GLint location_colorScales2 = getUniform("colorScales[2]");
 	GLint location_colorScales3 = getUniform("colorScales[3]");
 
-	Image::bbox_t::vec origin   = gridView->grid->getBoundingBox().getMin();
+	Image::bbox_t::vec origin	= gridView->grid->getBoundingBox().getMin();
 	Image::bbox_t::vec originWS = gridView->grid->getBoundingBox().getMin();
-	Image::sizevec3 gridDims	   = gridView->grid->getResolution();
-	glm::vec3 dims					   = glm::convert_to<float>(gridDims);
+	Image::sizevec3 gridDims	= gridView->grid->getResolution();
+	glm::vec3 dims				= glm::convert_to<float>(gridDims);
 
 	if (showVAOstate) {
 		PRINTVAL(gridDims.x);
@@ -1878,13 +1894,14 @@ void Scene::newAPI_prepareUniforms_3DPlane(GLfloat* mvMat, GLfloat* pMat, planes
 	glm::mat4 gridTransfo						= grid_transform_pointer->matrix();	   //grid->grid->getTransform_GridToWorld();
 #warning Transform API is still in-progress.
 	Image::bbox_t bbws = grid->grid->getBoundingBox();
-	glm::vec3 dims			  = glm::convert_to<glm::vec3::value_type>(grid->grid->getResolution()) * grid->grid->getVoxelDimensions();
-	glm::vec3 size			  = bbws.getDiagonal();
-	GLint plIdx				  = (_plane == planes::x) ? 1 : (_plane == planes::y) ? 2 : 3;
+	glm::vec3 dims	   = glm::convert_to<glm::vec3::value_type>(grid->grid->getResolution()) * grid->grid->getVoxelDimensions();
+	glm::vec3 size	   = bbws.getDiagonal();
+	GLint plIdx		   = (_plane == planes::x) ? 1 : (_plane == planes::y) ? 2 :
+																			   3;
 
 	Image::bbox_t::vec position = this->sceneBB.getMin();
 	Image::bbox_t::vec diagonal = this->sceneBB.getDiagonal();
-	glm::vec3 planePos				   = this->computePlanePositions();
+	glm::vec3 planePos			= this->computePlanePositions();
 
 	glUniformMatrix4fv(location_mMatrix, 1, GL_FALSE, glm::value_ptr(transform));
 	glUniformMatrix4fv(location_vMatrix, 1, GL_FALSE, mvMat);
@@ -1954,7 +1971,7 @@ void Scene::newAPI_prepareUniforms_3DPlane(GLfloat* mvMat, GLfloat* pMat, planes
 void Scene::newAPI_prepareUniforms_PlaneViewer(planes _plane, planeHeading _heading, glm::vec2 fbDims, float zoomRatio, glm::vec2 offset, const NewAPI_GridGLView::Ptr& _grid) {
 	glUseProgram(this->programHandle_PlaneViewer);
 	// The BB used is the scene's bounding box :
-	const Image::bbox_t::vec& bbox	= this->sceneBB.getDiagonal();
+	const Image::bbox_t::vec& bbox	 = this->sceneBB.getDiagonal();
 	const Image::bbox_t::vec& posBox = this->sceneBB.getMin();
 
 	// The correct bounding box coordinates :
@@ -2054,7 +2071,8 @@ void Scene::newAPI_prepareUniforms_PlaneViewer(planes _plane, planeHeading _head
 	// Uniform variables :
 	glUniform2fv(location_fbDims, 1, glm::value_ptr(fbDims));
 	glUniform2fv(location_bbDims, 1, glm::value_ptr(gridBBDims));
-	glUniform1ui(location_planeIndex, (_plane == planes::x) ? 1 : (_plane == planes::y) ? 2 : 3);
+	glUniform1ui(location_planeIndex, (_plane == planes::x) ? 1 : (_plane == planes::y) ? 2 :
+																							3);
 	glUniformMatrix4fv(location_gridTransform, 1, GL_FALSE, glm::value_ptr(gridTransform));
 	glUniform4f(location_gridDimensions, gridDimensions.x, gridDimensions.y, gridDimensions.z, 1.f);
 	glUniform4f(location_gridBBDiagonal, bbox.x, bbox.y, bbox.z, 1.f);
@@ -2202,7 +2220,7 @@ void Scene::newAPI_prepareUniforms_Volumetric(GLfloat* mvMat, GLfloat* pMat, glm
 	GLint location_displayWireframe		  = getUniform("displayWireframe");
 	GLint location_volumeEpsilon		  = getUniform("volumeEpsilon");
 
-	glm::vec3 planePos			  = this->computePlanePositions();
+	glm::vec3 planePos	   = this->computePlanePositions();
 	Image::bbox_t::vec min = this->visuBox.getMin();
 	Image::bbox_t::vec max = this->visuBox.getMax();
 
@@ -2397,13 +2415,12 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 			this->newAPI_drawGrid(mvMat, pMat, transfoMat, this->newGrids[i]);
 		}
 	} else if (this->drawMode == DrawMode::Volumetric || this->drawMode == DrawMode::VolumetricBoxed) {
+		/* Manipulator drawing  */
 
-        /* Manipulator drawing  */
+		glm::mat4 mMat(1.0f);
+		this->glMeshManipulator->draw(mvMat, pMat, glm::value_ptr(mMat));
 
-        glm::mat4 mMat(1.0f);
-        this->glMeshManipulator->draw(mvMat, pMat, glm::value_ptr(mMat));
-
-        /***********************/
+		/***********************/
 
 		for (std::size_t i = 0; i < this->newGrids.size(); ++i) {
 			this->newAPI_drawVolumetric(mvMat, pMat, camPos, this->newGrids[i]);
@@ -2412,7 +2429,6 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 		if (this->drawMode == DrawMode::VolumetricBoxed) {
 			this->drawBoundingBox(this->visuBox, glm::vec3(1., .0, .0), mvMat, pMat);
 		}
-
 	}
 
 	for (auto& drawable : this->drawables) {
@@ -2421,7 +2437,7 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 
 	if (not this->newGrids.empty()) {
 		this->newAPI_drawPlanes(mvMat, pMat, this->drawMode == DrawMode::Solid);
-	} 
+	}
 
 	this->drawBoundingBox(this->sceneBB, glm::vec4(.5, .5, .0, 1.), mvMat, pMat);
 	this->showVAOstate = false;
@@ -2509,37 +2525,36 @@ void Scene::generateSphereData() {
 	std::size_t segments_around = 8;
 	std::size_t segments_height = 8;
 
-	std::vector<glm::vec4> positions; // also serves as normals ...
+	std::vector<glm::vec4> positions;	 // also serves as normals ...
 	std::vector<unsigned int> indices;
 
 	// Iterate and create positions around the sphere :
 	for (std::size_t i = 1; i <= segments_height; ++i) {
 		for (std::size_t j = 0; j < segments_around; ++j) {
 			double theta = 2 * M_PI * static_cast<float>(j) / static_cast<float>(segments_around);
-			double phi = M_PI * static_cast<float>(i) / static_cast<float>(segments_height+1);
+			double phi	 = M_PI * static_cast<float>(i) / static_cast<float>(segments_height + 1);
 			positions.push_back(glm::normalize(glm::vec4{
-				static_cast<float>(sin(phi) * cos(theta)),
-				static_cast<float>(sin(phi) * sin(theta)),
-				static_cast<float>(cos(phi)), 1.f
-			}));
+			  static_cast<float>(sin(phi) * cos(theta)),
+			  static_cast<float>(sin(phi) * sin(theta)),
+			  static_cast<float>(cos(phi)), 1.f}));
 		}
 	}
 	positions.push_back(glm::normalize(glm::vec4{
-	  static_cast<float>(sin(.0f) * cos(2*M_PI)),
-	  static_cast<float>(sin(.0f) * sin(2*M_PI)),
-	  static_cast<float>(cos(.0f)), 1.f
-	}));
+	  static_cast<float>(sin(.0f) * cos(2 * M_PI)),
+	  static_cast<float>(sin(.0f) * sin(2 * M_PI)),
+	  static_cast<float>(cos(.0f)), 1.f}));
 	positions.push_back(glm::normalize(glm::vec4{
-	  static_cast<float>(sin(M_PI) * cos(2*M_PI)),
-	  static_cast<float>(sin(M_PI) * sin(2*M_PI)),
-	  static_cast<float>(cos(M_PI)), 1.f
-	}));
+	  static_cast<float>(sin(M_PI) * cos(2 * M_PI)),
+	  static_cast<float>(sin(M_PI) * sin(2 * M_PI)),
+	  static_cast<float>(cos(M_PI)), 1.f}));
 	// link the sphere faces :
-	for (std::size_t i = 0; i < segments_height-1; ++i) {
-		std::size_t next_segment_height = i+1;
+	for (std::size_t i = 0; i < segments_height - 1; ++i) {
+		std::size_t next_segment_height = i + 1;
 		for (std::size_t j = 0; j < segments_around; ++j) {
-			std::size_t next_segment_around = j+1;
-			if (next_segment_around == segments_around) { next_segment_around = 0; }
+			std::size_t next_segment_around = j + 1;
+			if (next_segment_around == segments_around) {
+				next_segment_around = 0;
+			}
 
 			// The four corners below define a quad (region of the sphere).
 			std::size_t p1 = i * segments_around + j;
@@ -2557,20 +2572,23 @@ void Scene::generateSphereData() {
 	}
 	// Link the top and bottom 'cones' :
 	for (std::size_t i = 0; i < segments_around; ++i) {
-		std::size_t next_segment_around = i+1;
-		if (next_segment_around == segments_around) { next_segment_around = 0; }
+		std::size_t next_segment_around = i + 1;
+		if (next_segment_around == segments_around) {
+			next_segment_around = 0;
+		}
 		indices.push_back(i);
 		indices.push_back(next_segment_around);
-		indices.push_back(positions.size()-2); // actually the top point
+		indices.push_back(positions.size() - 2);	// actually the top point
 	}
 	for (std::size_t i = 0; i < segments_around; ++i) {
-		std::size_t next_segment_around = i+1;
-		if (next_segment_around == segments_around) { next_segment_around = 0; }
+		std::size_t next_segment_around = i + 1;
+		if (next_segment_around == segments_around) {
+			next_segment_around = 0;
+		}
 		indices.push_back(positions.size() - segments_around + i);
 		indices.push_back(positions.size() - segments_around + next_segment_around);
-		indices.push_back(positions.size()-1); // actually the bottom point
+		indices.push_back(positions.size() - 1);	// actually the bottom point
 	}
-
 
 	// Create VAO/VBO and upload data :
 	glGenVertexArrays(1, &this->vaoHandle_spheres);
@@ -2589,12 +2607,14 @@ void Scene::generateSphereData() {
 
 	glEnableVertexAttribArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_spherePositions);
-	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, (void*) 0);
 	glEnableVertexAttribArray(1);
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_sphereNormals);
-	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*) 0);
 
-	if (this->shaderCompiler) { this->shaderCompiler.reset(); }
+	if (this->shaderCompiler) {
+		this->shaderCompiler.reset();
+	}
 	this->shaderCompiler = std::make_unique<ShaderCompiler>(this);
 
 	this->shaderCompiler->vertexShader_file("../new_shaders/base_sphere.vert").fragmentShader_file("../new_shaders/base_sphere.frag");
@@ -2604,20 +2624,20 @@ void Scene::generateSphereData() {
 	} else {
 		std::cerr << "Error while compiling sphere shaders.\n";
 	}
-	std::cerr << "Messages for sphere shaders !!!\n" << this->shaderCompiler->errorString() << '\n';
+	std::cerr << "Messages for sphere shaders !!!\n"
+			  << this->shaderCompiler->errorString() << '\n';
 
 	this->sphere_size_to_draw = indices.size();
-
 }
 
 void Scene::drawPointSpheres_quick(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const std::vector<glm::vec3>& positions, float radius) {
 	this->glUseProgram(this->programHandle_sphere);
 	this->glBindVertexArray(this->vaoHandle_spheres);
 
-	auto location_proj = this->glGetUniformLocation(this->programHandle_sphere, "proj");
-	auto location_view = this->glGetUniformLocation(this->programHandle_sphere, "view");
+	auto location_proj	= this->glGetUniformLocation(this->programHandle_sphere, "proj");
+	auto location_view	= this->glGetUniformLocation(this->programHandle_sphere, "view");
 	auto location_scale = this->glGetUniformLocation(this->programHandle_sphere, "scale");
-	auto location_pos = this->glGetUniformLocation(this->programHandle_sphere, "position");
+	auto location_pos	= this->glGetUniformLocation(this->programHandle_sphere, "position");
 
 	this->glUniformMatrix4fv(location_proj, 1, GL_FALSE, pMat);
 	this->glUniformMatrix4fv(location_view, 1, GL_FALSE, mvMat);
@@ -2628,7 +2648,7 @@ void Scene::drawPointSpheres_quick(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camP
 		this->glUniform3fv(location_pos, 1, glm::value_ptr(positions[sphere_idx]));
 
 		this->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_sphereIndices);
-		this->glDrawElements(GL_TRIANGLES, this->sphere_size_to_draw, GL_UNSIGNED_INT, (void*)0);
+		this->glDrawElements(GL_TRIANGLES, this->sphere_size_to_draw, GL_UNSIGNED_INT, (void*) 0);
 	}
 	this->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	this->glBindVertexArray(0);
@@ -2893,7 +2913,7 @@ void Scene::createBoundingBoxBuffers() {
 	Image::bbox_t defaultBB = this->sceneBB;
 	// Get all corners and put them sequentially in an array :
 	std::vector<Image::bbox_t::vec> corners = defaultBB.getAllCorners();
-	GLfloat* rawVertices						   = new GLfloat[corners.size() * 3];
+	GLfloat* rawVertices					= new GLfloat[corners.size() * 3];
 	for (std::size_t i = 0; i < corners.size(); ++i) {
 		rawVertices[3 * i + 0] = corners[i].x;
 		rawVertices[3 * i + 1] = corners[i].y;
@@ -2956,7 +2976,7 @@ void Scene::drawBoundingBox(const Image::bbox_t& _box, glm::vec3 color, GLfloat*
 	GLint location_bbSize  = glGetUniformLocation(this->programHandle_BoundingBox, "bbSize");
 	GLint location_bbPos   = glGetUniformLocation(this->programHandle_BoundingBox, "bbPos");
 
-	Image::bbox_t::vec min  = _box.getMin();
+	Image::bbox_t::vec min	= _box.getMin();
 	Image::bbox_t::vec diag = _box.getDiagonal();
 
 	// Set uniforms :
@@ -3002,8 +3022,8 @@ void Scene::removeVisuBoxController() {
 }
 
 std::pair<glm::uvec3, glm::uvec3> Scene::getVisuBoxCoordinates() {
-    std::cerr << "WARNING: trying to call Scene::getVisuBoxCoordinates() on old grid API" << std::endl;
-    // TODO: port this function to new API
+	std::cerr << "WARNING: trying to call Scene::getVisuBoxCoordinates() on old grid API" << std::endl;
+	// TODO: port this function to new API
 	// if (this->grids.size() == 0) {
 	// 	return std::make_pair<glm::uvec3, glm::uvec3>(glm::uvec3(), glm::uvec3());
 	// }
@@ -3441,16 +3461,16 @@ void Scene::toggleAllPlaneVisibilities() {
 	this->planeVisibility.z = not this->planeVisibility.z;
 }
 
-bool compPt (std::pair<glm::vec4, std::vector<std::vector<int>>> i,std::pair<glm::vec4, std::vector<std::vector<int>>> j) { 
-    for(int x = 2; x >= 0; --x) {
-        if(i.first[x] < j.first[x])
-            return true;
+bool compPt(std::pair<glm::vec4, std::vector<std::vector<int>>> i, std::pair<glm::vec4, std::vector<std::vector<int>>> j) {
+	for (int x = 2; x >= 0; --x) {
+		if (i.first[x] < j.first[x])
+			return true;
 
-        if(i.first[x] > j.first[x])
-            return false;
-    }
+		if (i.first[x] > j.first[x])
+			return false;
+	}
 
-    return false;
+	return false;
 }
 
 void Scene::newAPI_tex3D_buildMesh(NewAPI_GridGLView::Ptr& gridGLView, const std::string path) {
@@ -3522,14 +3542,14 @@ void Scene::newAPI_tex3D_buildMesh(NewAPI_GridGLView::Ptr& gridGLView, const std
 	gridGLView->volumetricMesh.tetrahedraCount = mesh.tetrahedra.size();
 
 #ifdef DIRECT_FROM_VOLMESH_TO_ARRAY_SIZE
-	mesh.rawVertices  = new GLfloat[gridGLView.volumetricMesh.tetrahedraCount * 4 * 3 * 3];
-	mesh.rawNormals	  = new GLfloat[gridGLView.volumetricMesh.tetrahedraCount * 4 * 4];
+	mesh.rawVertices	  = new GLfloat[gridGLView.volumetricMesh.tetrahedraCount * 4 * 3 * 3];
+	mesh.rawNormals		  = new GLfloat[gridGLView.volumetricMesh.tetrahedraCount * 4 * 4];
 	GLfloat* tex		  = new GLfloat[gridGLView.volumetricMesh.tetrahedraCount * 4 * 3 * 3];
 	GLfloat* rawNeighbors = new GLfloat[gridGLView.volumetricMesh.tetrahedraCount * 4 * 3];
 #else
-	mesh.rawVertices = new GLfloat[vertWidth * vertHeight * 3];
-	mesh.rawNormals = new GLfloat[normWidth * normHeight * 4];
-	GLfloat* tex = new GLfloat[coorWidth * coorHeight * 3];
+	mesh.rawVertices	  = new GLfloat[vertWidth * vertHeight * 3];
+	mesh.rawNormals		  = new GLfloat[normWidth * normHeight * 4];
+	GLfloat* tex		  = new GLfloat[coorWidth * coorHeight * 3];
 	GLfloat* rawNeighbors = new GLfloat[neighbWidth * neighbHeight * 3];
 #endif
 
@@ -3553,35 +3573,35 @@ void Scene::newAPI_tex3D_buildMesh(NewAPI_GridGLView::Ptr& gridGLView, const std
 				const glm::vec4& position = mesh.positions[tetrahedron[indices[i][j]]];
 				const glm::vec3& tetCoord = mesh.texture[tetrahedron[indices[i][j]]];
 
-                // Update the map struct
-                bool insert = false;
-                for(int l = 0; l < mesh.idxMap.size(); ++l) {
-                    if(position == mesh.idxMap[l].first) {
-                        std::vector<int> value;
-                        value.push_back(tetrahedron[indices[i][j]]);
-                        value.push_back(texcnt);
-                        value.push_back(ncount);
-                        value.push_back(t);
-                        mesh.idxMap[l].second.push_back(value);
-                        insert = true;
-                    }
-                }
+				// Update the map struct
+				bool insert = false;
+				for (int l = 0; l < mesh.idxMap.size(); ++l) {
+					if (position == mesh.idxMap[l].first) {
+						std::vector<int> value;
+						value.push_back(tetrahedron[indices[i][j]]);
+						value.push_back(texcnt);
+						value.push_back(ncount);
+						value.push_back(t);
+						mesh.idxMap[l].second.push_back(value);
+						insert = true;
+					}
+				}
 
-                if(!insert){
-                    std::vector<int> values;
-                    values.push_back(tetrahedron[indices[i][j]]);
-                    values.push_back(texcnt);
-                    values.push_back(ncount);
-                    values.push_back(t);
-                    std::vector<std::vector<int>> val;
-                    val.push_back(values);
-                    mesh.idxMap.push_back(std::make_pair(position, val));
-                }
+				if (! insert) {
+					std::vector<int> values;
+					values.push_back(tetrahedron[indices[i][j]]);
+					values.push_back(texcnt);
+					values.push_back(ncount);
+					values.push_back(t);
+					std::vector<std::vector<int>> val;
+					val.push_back(values);
+					mesh.idxMap.push_back(std::make_pair(position, val));
+				}
 
 				// And put it in the array :
 				for (std::size_t k = 0; k < 3; ++k) {
 					mesh.rawVertices[texcnt] = position[k];
-					tex[texcnt]			= tetCoord[k];
+					tex[texcnt]				 = tetCoord[k];
 					texcnt++;
 				}
 			}
@@ -3604,9 +3624,9 @@ void Scene::newAPI_tex3D_buildMesh(NewAPI_GridGLView::Ptr& gridGLView, const std
 		}
 	}
 
-    // Create the posMap
-    
-    std::sort(mesh.idxMap.begin(), mesh.idxMap.end(), compPt);
+	// Create the posMap
+
+	std::sort(mesh.idxMap.begin(), mesh.idxMap.end(), compPt);
 
 	// Struct to upload the texture to OpenGL :
 	TextureUpload texParams = {};
@@ -3618,34 +3638,34 @@ void Scene::newAPI_tex3D_buildMesh(NewAPI_GridGLView::Ptr& gridGLView, const std
 	texParams.wrap.s   = GL_CLAMP;
 	texParams.wrap.t   = GL_CLAMP;
 	// Swizzle and alignment unchanged, not present in Texture3D
-	texParams.internalFormat			 = GL_RGB32F;
-	texParams.size.x					 = vertWidth;
-	texParams.size.y					 = vertHeight;
-	texParams.format					 = GL_RGB;
-	texParams.type						 = GL_FLOAT;
-	texParams.data						 = mesh.rawVertices;
+	texParams.internalFormat				   = GL_RGB32F;
+	texParams.size.x						   = vertWidth;
+	texParams.size.y						   = vertHeight;
+	texParams.format						   = GL_RGB;
+	texParams.type							   = GL_FLOAT;
+	texParams.data							   = mesh.rawVertices;
 	gridGLView->volumetricMesh.vertexPositions = this->uploadTexture2D(texParams);
 
 	// Face normals :
-	texParams.internalFormat		 = GL_RGBA32F;
-	texParams.size.x				 = normWidth;
-	texParams.size.y				 = normHeight;
-	texParams.format				 = GL_RGBA;
-	texParams.data					 = mesh.rawNormals;
+	texParams.internalFormat			   = GL_RGBA32F;
+	texParams.size.x					   = normWidth;
+	texParams.size.y					   = normHeight;
+	texParams.format					   = GL_RGBA;
+	texParams.data						   = mesh.rawNormals;
 	gridGLView->volumetricMesh.faceNormals = this->uploadTexture2D(texParams);
 
 	// Texture coordinates :
-	texParams.internalFormat				= GL_RGB32F;
-	texParams.size.x						= coorWidth;
-	texParams.size.y						= coorHeight;
-	texParams.format						= GL_RGB;
-	texParams.data							= tex;
+	texParams.internalFormat					  = GL_RGB32F;
+	texParams.size.x							  = coorWidth;
+	texParams.size.y							  = coorHeight;
+	texParams.format							  = GL_RGB;
+	texParams.data								  = tex;
 	gridGLView->volumetricMesh.textureCoordinates = this->uploadTexture2D(texParams);
 
 	// Neighborhood information :
-	texParams.size.x				  = neighbWidth;
-	texParams.size.y				  = neighbHeight;
-	texParams.data					  = rawNeighbors;
+	texParams.size.x						= neighbWidth;
+	texParams.size.y						= neighbHeight;
+	texParams.data							= rawNeighbors;
 	gridGLView->volumetricMesh.neighborhood = this->uploadTexture2D(texParams);
 
 	delete[] tex;
@@ -3975,11 +3995,11 @@ void Scene::resetPositionResponse() {
 	this->posFrame = nullptr;
 }
 
-void Scene::bindMeshManipulator(UITool::MeshManipulator * meshManipulator) {
-   this->glMeshManipulator->bind(meshManipulator); 
+void Scene::bindMeshManipulator(UITool::MeshManipulator* meshManipulator) {
+	this->glMeshManipulator->bind(meshManipulator);
 }
 void Scene::toggleManipulatorDisplay() {
-    this->glMeshManipulator->toggleDisplay();
+	this->glMeshManipulator->toggleDisplay();
 }
 
 void Scene::toggleWireframe() {
@@ -3994,20 +4014,20 @@ void Scene::toggleWireframe() {
 		}
 		return g;
 	};
-	GLint location_displayWireframe		  = getUniform("displayWireframe");
+	GLint location_displayWireframe = getUniform("displayWireframe");
 	glUniform1ui(location_displayWireframe, this->glMeshManipulator->isDisplayed());
 }
 
 void Scene::prepareManipulators() {
-    this->glMeshManipulator->prepare();
+	this->glMeshManipulator->prepare();
 }
 
 /**********************************************************************/
 /**********************************************************************/
 
 SceneGL::SceneGL() {
-    this->isInitialized = true;
-    this->context = nullptr;
+	this->isInitialized = true;
+	this->context		= nullptr;
 }
 
 SceneGL::~SceneGL(void) {
@@ -4015,7 +4035,7 @@ SceneGL::~SceneGL(void) {
 
 void SceneGL::initGl(QOpenGLContext* _context) {
 	// Check if the scene has been initialized, share contexts if it has been :
-    this->context = _context; 
+	this->context = _context;
 	if (this->initializeOpenGLFunctions() == false) {
 		throw std::runtime_error("Could not initialize OpenGL functions for Scene GL.");
 	}

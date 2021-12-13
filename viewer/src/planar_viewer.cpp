@@ -35,7 +35,9 @@ PlanarViewer::PlanarViewer(Scene* const _scene, planes _p, QStatusBar* _sb, plan
 	connect(this->refreshTimer, &QTimer::timeout, this, &PlanarViewer::updateView);
 }
 
-void PlanarViewer::addParentStatusBar(QStatusBar *main) { this->status_bar = main; }
+void PlanarViewer::addParentStatusBar(QStatusBar* main) {
+	this->status_bar = main;
+}
 
 PlanarViewer::~PlanarViewer(void) {
 	// Nothing here yet.
@@ -114,7 +116,7 @@ void PlanarViewer::guessScenePosition(void) {
 		glm::vec4 p = pixelValue;
 		std::cerr << "Value in fbo : {" << p.x << ", " << p.y << ", " << p.z << ", " << p.w << "}\n";
 		this->sceneToShow->setPositionResponse(pixelValue);
-        // TODO: new API
+		// TODO: new API
 		// auto inputs = this->sceneToShow->getInputGrids();
 		// for (const auto& grid : inputs) {
 		// 	if (grid->includesPointWorldSpace(pixelValue)) {

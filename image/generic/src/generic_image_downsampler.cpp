@@ -8,13 +8,13 @@ namespace Image {
 		target_resolution(desired_resolution), parent_grid(parent) {
 		// manually set the internal data type.
 		if (parent != nullptr) {
-			this->custom_name			= this->parent_grid->getImageName() + std::string("_downsampled");
-			this->source_resolution		= this->parent_grid->getResolution();
-			this->internal_data_type	= this->parent_grid->getInternalDataType();
-			this->voxel_dimensionality	= this->parent_grid->getVoxelDimensionality();
+			this->custom_name		   = this->parent_grid->getImageName() + std::string("_downsampled");
+			this->source_resolution	   = this->parent_grid->getResolution();
+			this->internal_data_type   = this->parent_grid->getInternalDataType();
+			this->voxel_dimensionality = this->parent_grid->getVoxelDimensionality();
 			// Compute voxel sizes of this downsampled version of the grid :
-			glm::vec3 size_factor		= glm::convert_to<float>(this->source_resolution) / glm::convert_to<float>(this->target_resolution);
-			this->voxel_sizes			= this->parent_grid->getVoxelDimensions() * size_factor;
+			glm::vec3 size_factor = glm::convert_to<float>(this->source_resolution) / glm::convert_to<float>(this->target_resolution);
+			this->voxel_sizes	  = this->parent_grid->getVoxelDimensions() * size_factor;
 		} else {
 			throw std::runtime_error("Error : cannot downsample a grid without a valid grid as parent !");
 		}
@@ -100,9 +100,8 @@ namespace Image {
 				throw std::runtime_error("Error : trying to create a subregion of a signed grid with bit widths different from 8/16/32/64");
 			}
 			throw std::runtime_error("Error : trying to create a subregion of an unknown pixel type (not floating or [un]signed)");
-
 		}
 
-	} // namespace Downsampled
+	}	 // namespace Downsampled
 
-}
+}	 // namespace Image

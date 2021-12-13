@@ -1,8 +1,8 @@
 #ifndef VISUALISATION_MESH_POINT_SELECTOR_HPP
 #define VISUALISATION_MESH_POINT_SELECTOR_HPP
 
-#include "../../viewer/include/planar_viewer.hpp"
 #include "../../viewer/include/neighbor_visu_viewer.hpp"
+#include "../../viewer/include/planar_viewer.hpp"
 
 #include <QGLViewer/qglviewer.h>
 

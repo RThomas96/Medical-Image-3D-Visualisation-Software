@@ -4,7 +4,7 @@
 // For linters, include the header file between header guards :
 #ifndef VISUALISATION_IMAGE_GENERIC_INCLUDE_GENERIC_IMAGE_DOWNSAMPLER_TEMPLATED_HPP_
 #include "./generic_image_downsampler_templated.hpp"
-#endif // VISUALISATION_IMAGE_GENERIC_INCLUDE_GENERIC_IMAGE_DOWNSAMPLER_TEMPLATED_HPP_
+#endif	  // VISUALISATION_IMAGE_GENERIC_INCLUDE_GENERIC_IMAGE_DOWNSAMPLER_TEMPLATED_HPP_
 
 #include <string>
 #include <thread>
@@ -21,14 +21,13 @@ namespace Image {
 
 	template <typename element_t, template <typename, class> typename resampler_t>
 	typename GenericImageDownsamplerTemplated<element_t, resampler_t>::Ptr GenericImageDownsamplerTemplated<element_t, resampler_t>::createBackend(
-			const svec3 size, Grid::Ptr parent, const sampler_t resampler)
-	{
+	  const svec3 size, Grid::Ptr parent, const sampler_t resampler) {
 		return Ptr(new GenericImageDownsamplerTemplated<element_t, resampler_t>(size, parent, resampler));
 	}
 
 	template <typename element_t, template <typename, class> typename resampler_t>
 	ThreadedTask::Ptr GenericImageDownsamplerTemplated<element_t, resampler_t>::parseImageInfo(ThreadedTask::Ptr pre_existing_task,
-	  const std::vector<std::vector<std::string>> &_filenames) {
+	  const std::vector<std::vector<std::string>>& _filenames) {
 		UNUSED(_filenames);
 		// filenames are ignored entirely, but the grid will need to be downsampled now, in order to have a local cache
 		// of downsampled slices to read.
@@ -64,18 +63,18 @@ namespace Image {
 		if (this->downsampled_slices.hasSlice(slice_idx)) {
 			return this->downsampled_slices.findIndex(slice_idx);
 		} else {
-			std::size_t line_size = this->target_resolution.x * this->voxel_dimensionality;
-			std::size_t image_size = this->target_resolution.y * line_size;
+			std::size_t line_size							 = this->target_resolution.x * this->voxel_dimensionality;
+			std::size_t image_size							 = this->target_resolution.y * line_size;
 			std::shared_ptr<std::vector<pixel_t>> image_data = std::make_shared<std::vector<pixel_t>>(image_size);
-			glm::vec3 vxdims = this->getVoxelDimensions();
-			TransformStack::Ptr parent_transform_stack = this->parent_grid->getTransformStack();
+			glm::vec3 vxdims								 = this->getVoxelDimensions();
+			TransformStack::Ptr parent_transform_stack		 = this->parent_grid->getTransformStack();
 
 			// Load the image by iterating on each line/pixel of the slice requested :
 			for (std::size_t y = 0; y < this->target_resolution.y; ++y) {
-				for (std::size_t x = 0; x < this->target_resolution.x; ++x)	{
+				for (std::size_t x = 0; x < this->target_resolution.x; ++x) {
 					// compute position of sampled data within image :
 					std::size_t source_index = y * line_size + x * this->voxel_dimensionality;
-					svec3 sample_index = svec3(x, y, slice_idx);
+					svec3 sample_index		 = svec3(x, y, slice_idx);
 					// compute sample position (should take the center of the voxel as position, so add half a voxel's size to it) :
 					glm::vec3 sample_position = glm::convert_to<float>(sample_index) * this->voxel_sizes + (0.5f * this->voxel_sizes);
 
@@ -83,7 +82,7 @@ namespace Image {
 					std::vector<pixel_t> values = this->resampling_method(this->parent_grid, sample_index, this->voxel_dimensionality, this->target_resolution, sample_position, vxdims);
 
 					// copy values into the destination buffer :
-					std::copy(values.begin(), values.end(), image_data->begin()+source_index);
+					std::copy(values.begin(), values.end(), image_data->begin() + source_index);
 				}
 			}
 		}
@@ -103,7 +102,7 @@ namespace Image {
 		// Load the slices from the parent grid :
 		for (std::size_t z = 0; z < this->target_resolution.z; ++z) {
 			// Load slice and check if something went wrong :
-			if ((load_status =this->load_slice_from_parent_grid(z)) == this->target_resolution.z) {
+			if ((load_status = this->load_slice_from_parent_grid(z)) == this->target_resolution.z) {
 				std::string errormsg = "Error trying to load slice " + std::to_string(z) + " into memory.";
 				progress_tracker->pushMessage(errormsg);
 				progress_tracker->end(false);
@@ -140,7 +139,7 @@ namespace Image {
 		// max indices to read :
 		svec3 read_end = read_origin + read_size;
 		// sizes of primitives in the image :
-		std::size_t line_size = read_size.x * this->voxel_dimensionality;
+		std::size_t line_size  = read_size.x * this->voxel_dimensionality;
 		std::size_t slice_size = read_size.y * line_size;
 
 		// for all slices to be read :
@@ -160,7 +159,7 @@ namespace Image {
 					std::size_t slice_pixel_index_base = s_y * line_size + s_x * this->voxel_dimensionality;
 					// Copy from the loaded slice :
 					for (std::size_t s_v = 0; s_v < this->voxel_dimensionality; ++s_v) {
-						return_values[z*slice_size + y * line_size + x * this->voxel_dimensionality + s_v]  = (*slice_data)[slice_pixel_index_base];
+						return_values[z * slice_size + y * line_size + x * this->voxel_dimensionality + s_v] = (*slice_data)[slice_pixel_index_base];
 					}
 				}
 
@@ -168,7 +167,7 @@ namespace Image {
 				for (s_x = this->target_resolution.x; s_x < read_end.x; ++s_x) {
 					x = s_x - read_origin.x;
 					for (std::size_t s_v = 0; s_v < this->voxel_dimensionality; ++s_v) {
-						return_values[z*slice_size + y * line_size + x * this->voxel_dimensionality + s_v] = static_cast<pixel_t>(0.f);
+						return_values[z * slice_size + y * line_size + x * this->voxel_dimensionality + s_v] = static_cast<pixel_t>(0.f);
 					}
 				}
 			}
@@ -180,7 +179,7 @@ namespace Image {
 				for (s_x = read_origin.x; s_x < read_end.x; ++s_x) {
 					x = s_x - read_origin.x;
 					for (std::size_t s_v = 0; s_v < this->voxel_dimensionality; ++s_v) {
-						return_values[z*slice_size + y * line_size + x * this->voxel_dimensionality + s_v] = static_cast<pixel_t>(0.f);
+						return_values[z * slice_size + y * line_size + x * this->voxel_dimensionality + s_v] = static_cast<pixel_t>(0.f);
 					}
 				}
 			}
@@ -196,7 +195,7 @@ namespace Image {
 				for (s_x = read_origin.x; s_x < read_end.x; ++s_x) {
 					x = s_x - read_origin.x;
 					for (std::size_t s_v = 0; s_v < this->voxel_dimensionality; ++s_v) {
-						return_values[z*slice_size + y * line_size + x * this->voxel_dimensionality + s_v] = static_cast<pixel_t>(0.f);
+						return_values[z * slice_size + y * line_size + x * this->voxel_dimensionality + s_v] = static_cast<pixel_t>(0.f);
 					}
 				}
 			}
@@ -210,6 +209,6 @@ namespace Image {
 		return true;
 	}
 
-}
+}	 // namespace Image
 
-#endif // VISUALISATION_IMAGE_GENERIC_INCLUDE_GENERIC_IMAGE_DOWNSAMPLER_TEMPLATED_IMPL_HPP_
+#endif	  // VISUALISATION_IMAGE_GENERIC_INCLUDE_GENERIC_IMAGE_DOWNSAMPLER_TEMPLATED_IMPL_HPP_

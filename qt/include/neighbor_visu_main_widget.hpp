@@ -91,11 +91,11 @@ private:
 	QAction* action_showHelp3D;	   ///< Action to show the help dialog for the 3D viewer
 	QAction* action_showHelpPlane;	  ///< Action to show the help dialog for the planar viewers
 	QAction* action_showSettings;	 ///< Action to show user settings
-	QAction* action_loadMesh;		///< The action to load a mesh into the scene.
-	QAction* action_loadCurve;		///< The action to load a mesh into the scene.
+	QAction* action_loadMesh;	 ///< The action to load a mesh into the scene.
+	QAction* action_loadCurve;	  ///< The action to load a mesh into the scene.
 	QStatusBar* statusBar;	  ///< Status bar
 	QPushButton* showGLLog;	   ///< Button to open the QOpenGLDebugLog message box.
-	QPushButton* deform;	    ///< The 'Deform' button for debug purpose
+	QPushButton* deform;	///< The 'Deform' button for debug purpose
 };
 
 #endif	  // QT_INCLUDE_NEIGHBOR_VISU_MAIN_WIDGET_HPP_

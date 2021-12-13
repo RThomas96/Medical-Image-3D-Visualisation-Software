@@ -5,19 +5,18 @@
 #include <glm/gtx/io.hpp>
 
 Curve::Ptr openCurveFromOBJ(std::string& filename, std::shared_ptr<Mesh>& mesh) {
-
 	std::vector<glm::vec3> vertex_positions;
 	std::vector<Triangle> triangles;
 	// Load the OBJ file :
 	FileIO::objLoader(filename, vertex_positions, triangles);
 
 	// The cage weights :
-	std::vector<std::vector<std::pair< std::size_t , float >>> phi;
+	std::vector<std::vector<std::pair<std::size_t, float>>> phi;
 
 	// Convert mesh triangles to a series of vectors :
 	std::vector<std::vector<std::size_t>> cageTriangles;
 
-	for(std::size_t i=0; i< mesh->getTriangles().size() ; i++ )
+	for (std::size_t i = 0; i < mesh->getTriangles().size(); i++)
 	{
 		std::vector<std::size_t> currentTriangle;
 
@@ -31,11 +30,11 @@ Curve::Ptr openCurveFromOBJ(std::string& filename, std::shared_ptr<Mesh>& mesh) 
 	std::cout << "Triangles container modified" << std::endl;
 
 	// containers to stock the coordinates
-	std::vector<std::pair< std::size_t , float >> _phi;
+	std::vector<std::pair<std::size_t, float>> _phi;
 
-	for(std::size_t i=0 ; i<vertex_positions.size() ; i++)
+	for (std::size_t i = 0; i < vertex_positions.size(); i++)
 	{
-		MVCCoords::computeMVCCoordinatesOf3dPoint(vertex_positions[i],cageTriangles,mesh->getVertices(),mesh->getNormals(),_phi);
+		MVCCoords::computeMVCCoordinatesOf3dPoint(vertex_positions[i], cageTriangles, mesh->getVertices(), mesh->getNormals(), _phi);
 		phi.push_back(_phi);
 	}
 
@@ -46,9 +45,9 @@ Curve::Ptr openCurveFromOBJ(std::string& filename, std::shared_ptr<Mesh>& mesh) 
 	glm::vec3 normalSum;
 	glm::vec3 sum;
 
-	for(std::size_t j=0; j<phi[0].size(); j++)
+	for (std::size_t j = 0; j < phi[0].size(); j++)
 	{
-		vertexSum = vertexSum + phi[0][j].second*mesh->getVertices()[phi[0][j].first];
+		vertexSum = vertexSum + phi[0][j].second * mesh->getVertices()[phi[0][j].first];
 	}
 
 	sum = vertexSum;
@@ -83,8 +82,8 @@ void Curve::deformFromMeshData() {
 void Curve::update() {
 	glm::vec3::value_type min = std::numeric_limits<glm::vec3::value_type>::lowest();
 	glm::vec3::value_type max = std::numeric_limits<glm::vec3::value_type>::max();
-	this->bb_min = glm::vec3(max, max, max);
-	this->bb_max = glm::vec3(min, min, min);
+	this->bb_min			  = glm::vec3(max, max, max);
+	this->bb_max			  = glm::vec3(min, min, min);
 
 	for (const auto& vertex : this->positions) {
 		this->bb_min.x = std::min(vertex.x, this->bb_min.x);

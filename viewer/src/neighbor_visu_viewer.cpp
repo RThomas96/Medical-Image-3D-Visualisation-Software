@@ -36,25 +36,25 @@ Viewer::Viewer(Scene* const scene, QStatusBar* _program_bar, QWidget* parent) :
 	this->cursorPos_current = glm::ivec2{0, 0};
 	this->cursorPos_last	= glm::ivec2{0, 0};
 	this->framesHeld		= 0;
-    this->posRequest		= glm::ivec2{-1, -1};
-    this->drawAxisOnTop		= false;
+	this->posRequest		= glm::ivec2{-1, -1};
+	this->drawAxisOnTop		= false;
 
-    // Setup the alt key binding to move an object
-    setMouseBinding(Qt::AltModifier, Qt::LeftButton, QGLViewer::FRAME, QGLViewer::ROTATE);
-    setMouseBinding(Qt::AltModifier, Qt::RightButton, QGLViewer::FRAME, QGLViewer::TRANSLATE);
-    setMouseBinding(Qt::AltModifier, Qt::MidButton, QGLViewer::FRAME, QGLViewer::ZOOM);
-    //setWheelBinding(Qt::AltModifier, QGLViewer::FRAME, QGLViewer::ZOOM);
+	// Setup the alt key binding to move an object
+	setMouseBinding(Qt::AltModifier, Qt::LeftButton, QGLViewer::FRAME, QGLViewer::ROTATE);
+	setMouseBinding(Qt::AltModifier, Qt::RightButton, QGLViewer::FRAME, QGLViewer::TRANSLATE);
+	setMouseBinding(Qt::AltModifier, Qt::MidButton, QGLViewer::FRAME, QGLViewer::ZOOM);
+	//setWheelBinding(Qt::AltModifier, QGLViewer::FRAME, QGLViewer::ZOOM);
 
-    //setManipulatedFrame(&this->meshManipulator.getActiveManipulator().getManipulatedFrame());
-    updateManipulatorsPositions(); 
-    //this->scene->glMeshManipulator->bind(&this->meshManipulator);
-    this->scene->bindMeshManipulator(&this->meshManipulator);
+	//setManipulatedFrame(&this->meshManipulator.getActiveManipulator().getManipulatedFrame());
+	updateManipulatorsPositions();
+	//this->scene->glMeshManipulator->bind(&this->meshManipulator);
+	this->scene->bindMeshManipulator(&this->meshManipulator);
 }
 
 void Viewer::updateManipulatorsPositions() {
-    std::vector<glm::vec3> vecpos;
-    scene->getTetraMeshPoints(vecpos);
-    this->meshManipulator.setAllPositions(vecpos);
+	std::vector<glm::vec3> vecpos;
+	scene->getTetraMeshPoints(vecpos);
+	this->meshManipulator.setAllPositions(vecpos);
 }
 
 Viewer::~Viewer() {
@@ -79,7 +79,9 @@ void Viewer::init() {
 	this->refreshTimer->start();	// Update every 'n' milliseconds from here on out
 }
 
-void Viewer::addStatusBar(QStatusBar *bar) { this->statusBar = bar; }
+void Viewer::addStatusBar(QStatusBar* bar) {
+	this->statusBar = bar;
+}
 
 void Viewer::draw() {
 	GLfloat mvMat[16];
@@ -98,9 +100,9 @@ void Viewer::draw() {
 	this->scene->draw3DView(mvMat, pMat, camPos, false);
 	this->scene->drawPositionResponse(this->sceneRadius() / 10., this->drawAxisOnTop);
 
-    if(this->meshManipulator.isActiveManipulatorManipuled()) {
-        this->scene->launchDeformation(this->meshManipulator.getActiveManipulatorAssignedIdx(), this->meshManipulator.getActiveManipulatorPos());
-    }
+	if (this->meshManipulator.isActiveManipulatorManipuled()) {
+		this->scene->launchDeformation(this->meshManipulator.getActiveManipulatorAssignedIdx(), this->meshManipulator.getActiveManipulatorPos());
+	}
 
 	std::vector<glm::vec3> spheres_to_draw(this->spheres);
 	if (this->temp_mesh_idx) {
@@ -202,7 +204,8 @@ void Viewer::keyPressEvent(QKeyEvent* e) {
 				}
 			}
 			// Ctrl-Enter adds the current image position as the image constraint for ARAP
-			else if ((e->modifiers() & Qt::KeyboardModifier::ControlModifier) != 0) {
+			else if ((e->modifiers() & Qt::KeyboardModifier::ControlModifier) != 0)
+			{
 				std::cerr << "Attempting to push constraint to image ..." << this->temp_img_idx << "\n";
 				this->scene->dummy_add_image_constraint(this->temp_img_idx, this->temp_img_pos);
 				this->spheres.push_back(this->temp_img_pos);
@@ -314,7 +317,7 @@ void Viewer::guessMousePosition() {
 	glm::vec4 p = this->scene->readFramebufferContents(this->defaultFramebufferObject(), this->posRequest);
 	if (p.w > .01f) {
 		this->scene->setPositionResponse(p);
-        // TODO: new API
+		// TODO: new API
 		//auto inputs = this->scene->getInputGrids();
 		//for (const auto& grid : inputs) {
 		//	if (grid->includesPointWorldSpace(p)) {
@@ -361,12 +364,13 @@ void Viewer::guessMousePosition() {
 						this->temp_mesh_idx = mesh_idx;
 						// Transform the point to mesh-local coordinates !
 						// get transfo and extract translation component
-						glm::mat4 mesh_transfo = drawable_mesh->getTransformation();
-						glm::vec4 mesh_translation = glm::vec4(mesh_transfo[3]); mesh_translation.w = .0f;
-						mesh_transfo[3] = glm::vec4{.0f, .0f, .0f, 1.f};
+						glm::mat4 mesh_transfo		  = drawable_mesh->getTransformation();
+						glm::vec4 mesh_translation	  = glm::vec4(mesh_transfo[3]);
+						mesh_translation.w			  = .0f;
+						mesh_transfo[3]				  = glm::vec4{.0f, .0f, .0f, 1.f};
 						glm::vec4 mesh_local_position = glm::inverse(mesh_transfo) * (p - mesh_translation);
-						this->temp_sphere_position = mesh->closestPointTo(glm::vec3(mesh_local_position), this->temp_mesh_vtx_idx);
-						this->temp_sphere_position = glm::vec3(mesh_transfo * glm::vec4(this->temp_sphere_position, 1.f) + mesh_translation);
+						this->temp_sphere_position	  = mesh->closestPointTo(glm::vec3(mesh_local_position), this->temp_mesh_vtx_idx);
+						this->temp_sphere_position	  = glm::vec3(mesh_transfo * glm::vec4(this->temp_sphere_position, 1.f) + mesh_translation);
 					}
 				}
 			}
@@ -471,8 +475,8 @@ QString Viewer::mouseString() const {
 }
 
 void Viewer::updateCameraPosition() {
-	auto bb = this->scene->getSceneBoundingBox();
-	auto center = bb.getMin() + (bb.getDiagonal()/2.f);
+	auto bb		= this->scene->getSceneBoundingBox();
+	auto center = bb.getMin() + (bb.getDiagonal() / 2.f);
 	auto radius = glm::length(bb.getDiagonal());
 	this->setSceneCenter(qglviewer::Vec(center.x, center.y, center.z));
 	this->setSceneRadius(radius * sceneRadiusMultiplier);
@@ -491,8 +495,8 @@ void Viewer::newAPI_loadGrid(Image::Grid::Ptr ptr) {
 	}
 	this->makeCurrent();
 	this->scene->newAPI_addGrid(ptr);
-    this->updateManipulatorsPositions();
-    this->scene->prepareManipulators();
+	this->updateManipulatorsPositions();
+	this->scene->prepareManipulators();
 	this->doneCurrent();
 
 	glm::vec3 bbDiag = this->scene->getSceneBoundaries();
@@ -507,5 +511,5 @@ void Viewer::newAPI_loadGrid(Image::Grid::Ptr ptr) {
 }
 
 void Viewer::toggleManipulators() {
-    this->meshManipulator.toggleActivation();
+	this->meshManipulator.toggleActivation();
 }

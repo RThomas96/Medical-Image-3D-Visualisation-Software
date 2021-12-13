@@ -9,10 +9,10 @@
 // Shader compiler :
 #include "../../meshes/drawable/shaders.hpp"
 // Meshes :
-#include "../../meshes/base_mesh/mesh_io.hpp"
 #include "../../meshes/base_mesh/Mesh.hpp"
-#include "../../meshes/drawable/mesh.hpp"
+#include "../../meshes/base_mesh/mesh_io.hpp"
 #include "../../meshes/drawable/curve.hpp"
+#include "../../meshes/drawable/mesh.hpp"
 // Curve :
 #include "../../meshes/deformable_curve/curve.hpp"
 // Discrete grid and grid generation :
@@ -57,10 +57,10 @@
 
 class ControlPanel;	   // Forward declaration
 namespace UITool {
-    namespace GL {
-        class MeshManipulator;	   // Forward declaration
-    }
-}
+	namespace GL {
+		class MeshManipulator;	  // Forward declaration
+	}
+}	 // namespace UITool
 
 /// @brief Simple enum to keep track of the different viewing primitives for the program.
 enum DrawMode { Solid,
@@ -95,9 +95,7 @@ enum planeHeading { North = 0,
 /**********************************************************************/
 
 class SceneGL : public QOpenGLFunctions_3_2_Core {
-
 public:
-
 	SceneGL();
 	~SceneGL(void);
 
@@ -160,7 +158,7 @@ public:
 	void recompileShaders(bool verbose = true);
 
 	/// @brief Loads a designated ROI in high-resolution
-    // DEPRECATED
+	// DEPRECATED
 	void loadGridROI(void);
 
 	/// @brief Add grids, with the new API (more streamlined)
@@ -173,12 +171,12 @@ public:
 	void draft_tryAndSaveFirstGrid(void);
 
 	/// @brief Draw the 3D view of the scene.
-    void draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool showTexOnPlane);
+	void draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool showTexOnPlane);
 
 	/// @brief Draw a given plane 'view' (single plane on the framebuffer).
 	void drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading, float zoomRatio, glm::vec2 offset);
 
-    void getTetraMeshPoints(std::vector<glm::vec3>& points);
+	void getTetraMeshPoints(std::vector<glm::vec3>& points);
 
 	/// @brief Draws a set of spheres at the positions given in argument
 	void drawPointSpheres_quick(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, const std::vector<glm::vec3>& positions, float radius);
@@ -199,48 +197,48 @@ public:
 	void launchSaveDialog();
 
 	/// @brief Launches the grid deformation
-    void launchDeformation(int tetIdx, glm::vec3 point);
+	void launchDeformation(int tetIdx, glm::vec3 point);
 
 	/// @brief Return the position of the tetrahedra point index
-    glm::vec3 getVertexPosition(int index);
+	glm::vec3 getVertexPosition(int index);
 
-    /// @brief Prints info about the VAO on next refresh
-    void printVAOStateNext() { this->showVAOstate = true; }
+	/// @brief Prints info about the VAO on next refresh
+	void printVAOStateNext() { this->showVAOstate = true; }
 
-    /// @brief Get the minimum value that the grid at gridIndex can contain 
-    double getMinNumericLimit(size_t gridIndex) const { return Image::getMinNumericLimit(newGrids[gridIndex]->grid->getInternalDataType()); }
-    /// @brief Get the maximum value that the grid at gridIndex can contain 
-    double getMaxNumericLimit(size_t gridIndex) const{ return Image::getMaxNumericLimit(newGrids[gridIndex]->grid->getInternalDataType()); }
+	/// @brief Get the minimum value that the grid at gridIndex can contain
+	double getMinNumericLimit(size_t gridIndex) const { return Image::getMinNumericLimit(newGrids[gridIndex]->grid->getInternalDataType()); }
+	/// @brief Get the maximum value that the grid at gridIndex can contain
+	double getMaxNumericLimit(size_t gridIndex) const { return Image::getMaxNumericLimit(newGrids[gridIndex]->grid->getInternalDataType()); }
 
-    /// @brief Get the minimum texture value to represent
-    double getMinTexValue(void) const { return static_cast<double>(this->textureBounds0.x); }
-    /// @brief Get the maximum texture value to represent
-    double getMaxTexValue(void) const { return static_cast<double>(this->textureBounds0.y); }
-    /// @brief Get the minimum texture value to represent
-    double getMinTexValueAlternate(void) const { return static_cast<double>(this->textureBounds1.x); }
-    /// @brief Get the maximum texture value to represent 
-    double getMaxTexValueAlternate(void) const { return static_cast<double>(this->textureBounds1.y); }
+	/// @brief Get the minimum texture value to represent
+	double getMinTexValue(void) const { return static_cast<double>(this->textureBounds0.x); }
+	/// @brief Get the maximum texture value to represent
+	double getMaxTexValue(void) const { return static_cast<double>(this->textureBounds0.y); }
+	/// @brief Get the minimum texture value to represent
+	double getMinTexValueAlternate(void) const { return static_cast<double>(this->textureBounds1.x); }
+	/// @brief Get the maximum texture value to represent
+	double getMaxTexValueAlternate(void) const { return static_cast<double>(this->textureBounds1.y); }
 
-    /// These functions are used by the sliders to control what image values to display
-    /// @brief Set minimum texture intensity.
-    void slotSetMinTexValue(double val); 	
-    /// @brief Set maximum texture intensity. 	
-    void slotSetMaxTexValue(double val); 	
-    /// @brief Set minimum texture intensity. 	
-    void slotSetMinTexValueAlternate(double val); 	
-    /// @brief Set maximum texture intensity. 	
-    void slotSetMaxTexValueAlternate(double val); 	
-    /// @brief Set minimum color intensity. 	
-    void slotSetMinColorValue(double val); 	
-    /// @brief Set maximum color intensity. 	
-    void slotSetMaxColorValue(double val); 	
-    /// @brief Set minimum color intensity. 	
-    void slotSetMinColorValueAlternate(double val); 	
-    /// @brief Set maximum color intensity. 	
-    void slotSetMaxColorValueAlternate(double val);
+	/// These functions are used by the sliders to control what image values to display
+	/// @brief Set minimum texture intensity.
+	void slotSetMinTexValue(double val);
+	/// @brief Set maximum texture intensity.
+	void slotSetMaxTexValue(double val);
+	/// @brief Set minimum texture intensity.
+	void slotSetMinTexValueAlternate(double val);
+	/// @brief Set maximum texture intensity.
+	void slotSetMaxTexValueAlternate(double val);
+	/// @brief Set minimum color intensity.
+	void slotSetMinColorValue(double val);
+	/// @brief Set maximum color intensity.
+	void slotSetMaxColorValue(double val);
+	/// @brief Set minimum color intensity.
+	void slotSetMinColorValueAlternate(double val);
+	/// @brief Set maximum color intensity.
+	void slotSetMaxColorValueAlternate(double val);
 
-    /// @brief Get the minimum color value, for the color scale resizing.
-    uint getMinColorValue(void) const { return this->colorBounds0.x; }
+	/// @brief Get the minimum color value, for the color scale resizing.
+	uint getMinColorValue(void) const { return this->colorBounds0.x; }
 	/// @brief Get the maximum color value, for the color scale resizing.
 	uint getMaxColorValue(void) const { return this->colorBounds0.y; }
 	/// @brief Get the minimum color value, for the color scale resizing.
@@ -364,10 +362,10 @@ public:
 	/// @brief Checks if the scene is already initialized.
 	bool isSceneInitialized(void) const { return this->isInitialized; }
 
-    void bindMeshManipulator(UITool::MeshManipulator * meshManipulator);
-    void toggleManipulatorDisplay();
-    void toggleWireframe();
-    void prepareManipulators();
+	void bindMeshManipulator(UITool::MeshManipulator* meshManipulator);
+	void toggleManipulatorDisplay();
+	void toggleWireframe();
+	void prepareManipulators();
 
 private:
 	/// @brief Compile the given shaders, and return the ID of the program generated. On any error, returns 0.
@@ -470,8 +468,7 @@ private:
 	void newAPI_tex3D_generateMESH(NewAPI_GridGLView::Ptr& grid, VolMeshData& _mesh);
 
 private:
-
-    UITool::GL::MeshManipulator * glMeshManipulator;
+	UITool::GL::MeshManipulator* glMeshManipulator;
 
 	bool isInitialized;	   ///< tracks if the scene was initialized or not
 	bool showVAOstate;	  ///< Do we need to print the VAO/program state on next draw ?
@@ -479,10 +476,10 @@ private:
 	bool shouldDeleteGrid;	  ///< Should we delete a grid on next draw ?
 	std::vector<std::size_t> delGrid;	 ///< Grids to delete at next refresh
 
-	std::queue<std::shared_ptr<DrawableBase>> to_init;		///< A set of drawables that have not been initialized yet
-	std::vector<std::shared_ptr<DrawableBase>> drawables;	///< The drawables to display
-	std::vector<Mesh::Ptr> meshes;				///< The loaded meshes
-	Curve::Ptr curve;		///< The loaded curve, if any
+	std::queue<std::shared_ptr<DrawableBase>> to_init;	  ///< A set of drawables that have not been initialized yet
+	std::vector<std::shared_ptr<DrawableBase>> drawables;	 ///< The drawables to display
+	std::vector<Mesh::Ptr> meshes;	  ///< The loaded meshes
+	Curve::Ptr curve;	 ///< The loaded curve, if any
 	std::shared_ptr<DrawableCurve> curve_draw;
 
 	// Grids :
@@ -514,12 +511,12 @@ private:
 	glm::bvec3 planeVisibility;	   ///< Should we show each plane (X, Y, Z)
 	glm::vec3 planeDirection;	 ///< Cutting plane directions (-1 or 1 on each axis)
 	glm::vec3 planeDisplacement;	///< %age of the scene bounding box to place the planes
-	Image::bbox_t sceneBB;	 ///< Outer BB of the scene
-	Image::bbox_t sceneDataBB;	 ///< Outer BB of the scene's data
+	Image::bbox_t sceneBB;	  ///< Outer BB of the scene
+	Image::bbox_t sceneDataBB;	  ///< Outer BB of the scene's data
 	float clipDistanceFromCamera;	 /// Distance from the camera to its clip plane
 	glm::uvec3 visuMin;	   ///< The min image coordinate to display on the visu box mode
 	glm::uvec3 visuMax;	   ///< The max image coordinate to display on the visu box mode
-	Image::bbox_t visuBox;	 ///< Used to restrict the view to a box with its coordinates
+	Image::bbox_t visuBox;	  ///< Used to restrict the view to a box with its coordinates
 	DrawMode drawMode;	  ///< Current 3D draw mode
 	RGBMode rgbMode;	///< Current RGB mode
 	ColorFunction channels_r;	 ///< Channel(s) to display on the viewers
@@ -537,11 +534,11 @@ private:
 	GLuint vaoHandle_VolumetricBuffers;
 	GLuint vaoHandle_boundingBox;
 	// VBO handles :
-	GLuint vboHandle_VertPos;				///< The VBO for the vertex positions.
-	GLuint vboHandle_VertNorm;				///< The VBO for the vertex normals.
-	GLuint vboHandle_VertTex;				///< The VBO for the texture data.
-	GLuint vboHandle_Element;				///< The vertex indices necessary to draw the tetrahedral mesh.
-	GLuint vboHandle_PlaneElement;			///< The vertex indices necessary to draw the planes (a collection of the 3 main planes X/Y/Z).
+	GLuint vboHandle_VertPos;	 ///< The VBO for the vertex positions.
+	GLuint vboHandle_VertNorm;	  ///< The VBO for the vertex normals.
+	GLuint vboHandle_VertTex;	 ///< The VBO for the texture data.
+	GLuint vboHandle_Element;	 ///< The vertex indices necessary to draw the tetrahedral mesh.
+	GLuint vboHandle_PlaneElement;	  ///< The vertex indices necessary to draw the planes (a collection of the 3 main planes X/Y/Z).
 	GLuint vboHandle_SinglePlaneElement;	///< The vertex indices necessary to draw a single plane.
 	GLuint vboHandle_boundingBoxVertices;
 	GLuint vboHandle_boundingBoxIndices;
@@ -559,8 +556,8 @@ private:
 	///
 	/// Only for ARAP integration testing :
 	///
-	std::vector<std::pair<std::size_t, std::size_t>> mesh_idx_constraints; ///< The mesh vertices considered constraints. Pair = <mesh_idx , vertex_idx>
-	std::vector<glm::vec3> image_constraints;	///< The positions of those constraints explained abovepositions of those constraints explained above
+	std::vector<std::pair<std::size_t, std::size_t>> mesh_idx_constraints;	  ///< The mesh vertices considered constraints. Pair = <mesh_idx , vertex_idx>
+	std::vector<glm::vec3> image_constraints;	 ///< The positions of those constraints explained abovepositions of those constraints explained above
 
 	/// @brief A compiler for the shaders
 	std::unique_ptr<ShaderCompiler> shaderCompiler;
@@ -592,7 +589,6 @@ private:
 	GLuint texHandle_colorScale_user0;
 	GLuint texHandle_colorScale_user1;
 
-
 	/// @brief Generate the default color scales' data, and upload them.
 	void generateColorScales();
 
@@ -621,7 +617,7 @@ private:
 	GLint gl_limit_max_texture_size;
 
 public:
-    SceneGL sceneGL;
+	SceneGL sceneGL;
 };
 
 /// @brief Type-safe conversion of enum values to unsigned ints.

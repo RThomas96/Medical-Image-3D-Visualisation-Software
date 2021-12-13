@@ -181,21 +181,21 @@ void GridLoaderWidget::setupWidgets() {
 	this->spinbox_userLimitMin = new QDoubleSpinBox;
 	this->spinbox_userLimitMax = new QDoubleSpinBox;
 
-    if(_testing_grid) {
-	    this->spinbox_userLimitMin->setMinimum(getMinNumericLimit(_testing_grid->getInternalDataType()));
-	    this->spinbox_userLimitMin->setMaximum(getMaxNumericLimit(_testing_grid->getInternalDataType()));
-	    this->spinbox_userLimitMin->setValue(getMinNumericLimit(_testing_grid->getInternalDataType()));
-	    this->spinbox_userLimitMax->setMinimum(getMinNumericLimit(_testing_grid->getInternalDataType()));
-	    this->spinbox_userLimitMax->setMaximum(getMaxNumericLimit(_testing_grid->getInternalDataType()));
-	    this->spinbox_userLimitMax->setValue(getMaxNumericLimit(_testing_grid->getInternalDataType()));
-    } else {
-	    this->spinbox_userLimitMin->setMinimum(0);
-	    this->spinbox_userLimitMin->setMaximum(10);
-	    this->spinbox_userLimitMin->setValue(0);
-	    this->spinbox_userLimitMax->setMinimum(0);
-	    this->spinbox_userLimitMax->setMaximum(10);
-	    this->spinbox_userLimitMax->setValue(10);
-    }
+	if (_testing_grid) {
+		this->spinbox_userLimitMin->setMinimum(getMinNumericLimit(_testing_grid->getInternalDataType()));
+		this->spinbox_userLimitMin->setMaximum(getMaxNumericLimit(_testing_grid->getInternalDataType()));
+		this->spinbox_userLimitMin->setValue(getMinNumericLimit(_testing_grid->getInternalDataType()));
+		this->spinbox_userLimitMax->setMinimum(getMinNumericLimit(_testing_grid->getInternalDataType()));
+		this->spinbox_userLimitMax->setMaximum(getMaxNumericLimit(_testing_grid->getInternalDataType()));
+		this->spinbox_userLimitMax->setValue(getMaxNumericLimit(_testing_grid->getInternalDataType()));
+	} else {
+		this->spinbox_userLimitMin->setMinimum(0);
+		this->spinbox_userLimitMin->setMaximum(10);
+		this->spinbox_userLimitMin->setValue(0);
+		this->spinbox_userLimitMax->setMinimum(0);
+		this->spinbox_userLimitMax->setMaximum(10);
+		this->spinbox_userLimitMax->setValue(10);
+	}
 
 	this->groupBox_interpolator->setDisabled(true);
 	this->radioButton_original->setChecked(true);
@@ -1279,15 +1279,15 @@ void GridLoaderWidget::loadGridOME2channel() {
 }
 
 void GridLoaderWidget::loadGrid() {
-    this->loadGrid_newAPI();
+	this->loadGrid_newAPI();
 }
 
 void GridLoaderWidget::loadGrid_newAPI() {
 	// prevent changing the values of the inputs
 	this->disableWidgets();
 
-	bool hasUserBounds			 = this->groupbox_userLimits->isChecked();
-    // Impossible with the new API as the data_t data type isn't known at compile time
+	bool hasUserBounds = this->groupbox_userLimits->isChecked();
+	// Impossible with the new API as the data_t data type isn't known at compile time
 	// DiscreteGrid::data_t userMin = static_cast<DiscreteGrid::data_t>(this->spinbox_userLimitMin->value());
 	// DiscreteGrid::data_t userMax = static_cast<DiscreteGrid::data_t>(this->spinbox_userLimitMax->value());
 	std::cerr << "Loading new grid API" << '\n';
@@ -1317,9 +1317,13 @@ void GridLoaderWidget::loadGrid_newAPI() {
 	// Here, load the downsampled grid if necessary :
 	if (this->dsLevel != IO::DownsamplingLevel::Original) {
 		svec3 target_resolution = this->_testing_grid->getResolution();
-			 if (this->dsLevel == IO::DownsamplingLevel::Low)    { target_resolution /= 2u; }
-		else if (this->dsLevel == IO::DownsamplingLevel::Lower)  { target_resolution /= 4u; }
-		else if (this->dsLevel == IO::DownsamplingLevel::Lowest) { target_resolution /= 8u; }
+		if (this->dsLevel == IO::DownsamplingLevel::Low) {
+			target_resolution /= 2u;
+		} else if (this->dsLevel == IO::DownsamplingLevel::Lower) {
+			target_resolution /= 4u;
+		} else if (this->dsLevel == IO::DownsamplingLevel::Lowest) {
+			target_resolution /= 8u;
+		}
 		std::cerr << "Downsampling applied, target resolution is : [" << target_resolution << "]\n";
 
 		Image::Grid::Ptr downsampled_grid = this->_testing_grid->requestDownsampledVersion(target_resolution, Image::ImageResamplingTechnique::NearestNeighbor);

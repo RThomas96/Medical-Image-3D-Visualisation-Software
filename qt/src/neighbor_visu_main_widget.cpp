@@ -84,7 +84,7 @@ void MainWidget::setupWidgets() {
 
 	this->statusBar = new QStatusBar;
 	this->showGLLog = new QPushButton("Show GL log");
-	this->deform = new QPushButton("Deform the grid");
+	this->deform	= new QPushButton("Deform the grid");
 	this->statusBar->addPermanentWidget(this->showGLLog);
 	this->statusBar->addPermanentWidget(this->deform);
 
@@ -93,23 +93,23 @@ void MainWidget::setupWidgets() {
 
 	QObject::connect(this->showGLLog, &QPushButton::clicked, this->glDebug, &QWidget::show);
 	QObject::connect(this->deform, &QPushButton::clicked, [this]() {
-            this->scene->toggleManipulatorDisplay();
-            this->viewer->toggleManipulators();
+		this->scene->toggleManipulatorDisplay();
+		this->viewer->toggleManipulators();
 	});
 
 	// Actions creation :
-	this->action_addGrid		= new QAction("Open images");
-	this->action_saveGrid		= new QAction("Save acquisition");
-	this->action_showVisuBox	= new QAction("Show visu box controller");
-	this->action_exitProgram	= new QAction("Exit program");
-	this->action_drawModeS		= new QAction("Set draw mode to Solid");
-	this->action_drawModeV		= new QAction("Set draw mode to Volumetric");
-	this->action_drawModeVB		= new QAction("Set draw mode to Volumetric(Boxed)");
-	this->action_showHelp3D		= new QAction("3D Viewer Help Page");
-	this->action_showHelpPlane	= new QAction("Planar Viewer Help Page");
-	this->action_showSettings	= new QAction("Settings");
-	this->action_loadMesh		= new QAction("Load mesh (OFF)");
-	this->action_loadCurve		= new QAction("Load curve (OBJ)");
+	this->action_addGrid	   = new QAction("Open images");
+	this->action_saveGrid	   = new QAction("Save acquisition");
+	this->action_showVisuBox   = new QAction("Show visu box controller");
+	this->action_exitProgram   = new QAction("Exit program");
+	this->action_drawModeS	   = new QAction("Set draw mode to Solid");
+	this->action_drawModeV	   = new QAction("Set draw mode to Volumetric");
+	this->action_drawModeVB	   = new QAction("Set draw mode to Volumetric(Boxed)");
+	this->action_showHelp3D	   = new QAction("3D Viewer Help Page");
+	this->action_showHelpPlane = new QAction("Planar Viewer Help Page");
+	this->action_showSettings  = new QAction("Settings");
+	this->action_loadMesh	   = new QAction("Load mesh (OFF)");
+	this->action_loadCurve	   = new QAction("Load curve (OBJ)");
 
 	this->action_addGrid->setShortcut(QKeySequence::Open);
 

@@ -1,9 +1,9 @@
 #ifndef VISUALIZATION_IMAGE_API_INCLUDE_GRID_SUBREGION_TEMPLATE_HPP_
 #define VISUALIZATION_IMAGE_API_INCLUDE_GRID_SUBREGION_TEMPLATE_HPP_
 
+#include "../../utils/include/read_cache.hpp"
 #include "./generic_image_reader.hpp"
 #include "./generic_image_reader_subregion.hpp"
-#include "../../utils/include/read_cache.hpp"
 
 #include "../../new_grid/include/grid.hpp"
 

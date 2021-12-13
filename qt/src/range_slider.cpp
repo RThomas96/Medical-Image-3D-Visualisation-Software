@@ -591,8 +591,8 @@ void RangeSlider::mousePressEvent(QMouseEvent* mouseEvent) {
 		return;
 	}
 	int mepos = this->orientation() == Qt::Horizontal ?
-				  mouseEvent->pos().x() :
-				  mouseEvent->pos().y();
+					mouseEvent->pos().x() :
+					mouseEvent->pos().y();
 
 	QStyleOptionSlider option;
 	this->initStyleOption(&option);
@@ -603,13 +603,13 @@ void RangeSlider::mousePressEvent(QMouseEvent* mouseEvent) {
 	if (handle_ != RangeSliderPrivate::NoHandle)
 	{
 		d->m_SubclassPosition = (handle_ == RangeSliderPrivate::MinimumHandle) ?
-								  d->m_MinimumPosition :
-								  d->m_MaximumPosition;
+									d->m_MinimumPosition :
+									d->m_MaximumPosition;
 
 		// save the position of the mouse inside the handle for later
 		d->m_SubclassClickOffset = mepos - (this->orientation() == Qt::Horizontal ?
-											   handleRect.left() :
-											   handleRect.top());
+												 handleRect.left() :
+												 handleRect.top());
 
 		this->setSliderDown(true);
 
@@ -631,11 +631,11 @@ void RangeSlider::mousePressEvent(QMouseEvent* mouseEvent) {
 	QRect sr = style()->subControlRect(
 	  QStyle::CC_Slider, &option, QStyle::SC_SliderGroove, this);
 	int minCenter = (this->orientation() == Qt::Horizontal ?
-					   handleRect.left() :
-					   handleRect.top());
+						 handleRect.left() :
+						 handleRect.top());
 	int maxCenter = (this->orientation() == Qt::Horizontal ?
-					   handleRect.right() :
-					   handleRect.bottom());
+						 handleRect.right() :
+						 handleRect.bottom());
 	if (control == QStyle::SC_SliderGroove &&
 		mepos > minCenter && mepos < maxCenter)
 	{
@@ -668,8 +668,8 @@ void RangeSlider::mouseMoveEvent(QMouseEvent* mouseEvent) {
 		return;
 	}
 	int mepos = this->orientation() == Qt::Horizontal ?
-				  mouseEvent->pos().x() :
-				  mouseEvent->pos().y();
+					mouseEvent->pos().x() :
+					mouseEvent->pos().y();
 
 	QStyleOptionSlider option;
 	this->initStyleOption(&option);

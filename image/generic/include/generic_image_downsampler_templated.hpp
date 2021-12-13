@@ -20,7 +20,6 @@ namespace Image {
 	/// @todo Define functors for some interpolation methods : nearest neighbor, [bi/tri]linear, [bi/tri]cubic ...
 	template <typename element_t, template <typename, class> class resampler_t>
 	class GenericImageDownsamplerTemplated : public GenericImageDownsampler {
-
 	public:
 		/// @brief Public typedef to the internal pixel type.
 		using pixel_t = element_t;
@@ -217,8 +216,8 @@ namespace Image {
 		sampler_t resampling_method;
 	};
 
-}
+}	 // namespace Image
 
 #include "./generic_image_downsampler_templated.impl.hpp"
 
-#endif // VISUALISATION_IMAGE_GENERIC_INCLUDE_GENERIC_IMAGE_DOWNSAMPLER_TEMPLATED_HPP_
+#endif	  // VISUALISATION_IMAGE_GENERIC_INCLUDE_GENERIC_IMAGE_DOWNSAMPLER_TEMPLATED_HPP_

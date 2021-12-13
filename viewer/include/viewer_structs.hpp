@@ -129,12 +129,12 @@ public:
 
 	GLfloat* rawVertices;
 	GLfloat* rawNormals;
-    /// @brief Temporary struct to map points to indices
-    // 0: to Positions
-    // 1: to raw Vertices
-    // 2: to raw Normals
-    // 3: to Tetrahedra index 
-    std::vector<std::pair<glm::vec4, std::vector<std::vector<int>>>> idxMap;
+	/// @brief Temporary struct to map points to indices
+	// 0: to Positions
+	// 1: to raw Vertices
+	// 2: to raw Normals
+	// 3: to Tetrahedra index
+	std::vector<std::pair<glm::vec4, std::vector<std::vector<int>>>> idxMap;
 };
 
 /// @ingroup graphpipe
@@ -236,7 +236,7 @@ public:
 	using data_3  = glm::vec<3, data_t, glm::defaultp>;
 	using color_3 = glm::vec3;
 
-	using int_pair  = glm::vec<2, int, glm::defaultp>;
+	using int_pair = glm::vec<2, int, glm::defaultp>;
 	/// @brief The pointer to the grid we want to show.
 	Image::Grid::Ptr grid;
 	/// @brief The texture handle to access the grid data in shaders.

@@ -7,10 +7,10 @@
 #include "../../grid/include/bounding_box.hpp"
 
 #include <array>
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
-#include <functional>
 
 /// @defgroup newgrid Grid Implementation
 /// @brief Contains all classes related to the new Grid representation of a voxel grid.
@@ -263,13 +263,12 @@ namespace Image {
 	/// @note This is all subject to change. Not sure we need all those parameters.
 	template <typename element_t, class grid_t>
 	using resampler_functor = std::function<std::vector<element_t>(
-		const std::shared_ptr<grid_t> sampled_grid,
-		const svec3 index,
-		const std::size_t channels_to_sample,
-		const svec3 source_resolution,
-		const glm::vec3 source_position,
-		const glm::vec3 source_voxel_sizes
-	)>;
+	  const std::shared_ptr<grid_t> sampled_grid,
+	  const svec3 index,
+	  const std::size_t channels_to_sample,
+	  const svec3 source_resolution,
+	  const glm::vec3 source_position,
+	  const glm::vec3 source_voxel_sizes)>;
 
 }	 // namespace Image
 

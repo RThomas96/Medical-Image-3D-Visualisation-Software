@@ -13,12 +13,13 @@ namespace Image {
 	{
 	public:
 		/// @brief The index type of the slice (usually std::size_t)
-		using index_t = cache_idx;
-		using data_t = cache_data;
+		using index_t	 = cache_idx;
+		using data_t	 = cache_data;
 		using data_t_ptr = std::shared_ptr<data_t>;
 
 	protected:
 		using cached_data_t = std::pair<index_t, data_t_ptr>;
+
 	public:
 		LocalCache() = default;
 
@@ -62,7 +63,9 @@ namespace Image {
 
 		/// @brief Returns the data at index 'index'
 		data_t_ptr getDataIndexed(const std::size_t index) const {
-			if (index != this->m_data.size()) { return this->m_data[index]; }
+			if (index != this->m_data.size()) {
+				return this->m_data[index];
+			}
 			return nullptr;
 		}
 
@@ -75,6 +78,6 @@ namespace Image {
 		std::vector<cached_data_t> m_data;
 	};
 
-} // namespace Image
+}	 // namespace Image
 
-#endif // VISUALISATION_IMAGE_UTILS_INCLUDE_LOCAL_CACHE_HPP_
+#endif	  // VISUALISATION_IMAGE_UTILS_INCLUDE_LOCAL_CACHE_HPP_

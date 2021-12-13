@@ -44,7 +44,7 @@ namespace Image {
 	/// query it later from elsewhere in the program.
 	enum ImageResamplingTechnique {
 		None			= 0x00,
-		NearestNeighbor	= 0x01,
+		NearestNeighbor = 0x01,
 		Linear			= 0x02,
 		Cubic			= 0x04,
 	};
@@ -126,75 +126,75 @@ namespace Image {
 		return _os << "{tag_t: " << unmangled_type << "}";
 	}
 
-    inline double getMinNumericLimit(ImageDataType imageDataType) {
-        if(imageDataType == (Bit_8 | Signed))
-            return static_cast<double>(std::numeric_limits<int8_t>::lowest());
+	inline double getMinNumericLimit(ImageDataType imageDataType) {
+		if (imageDataType == (Bit_8 | Signed))
+			return static_cast<double>(std::numeric_limits<int8_t>::lowest());
 
-        if(imageDataType == (Bit_16 | Signed))
-            return static_cast<double>(std::numeric_limits<int16_t>::lowest());
+		if (imageDataType == (Bit_16 | Signed))
+			return static_cast<double>(std::numeric_limits<int16_t>::lowest());
 
-        if(imageDataType == (Bit_32 | Signed))
-            return static_cast<double>(std::numeric_limits<int32_t>::lowest());
+		if (imageDataType == (Bit_32 | Signed))
+			return static_cast<double>(std::numeric_limits<int32_t>::lowest());
 
-        if(imageDataType == (Bit_64 | Signed))
-            return static_cast<double>(std::numeric_limits<int64_t>::lowest());
+		if (imageDataType == (Bit_64 | Signed))
+			return static_cast<double>(std::numeric_limits<int64_t>::lowest());
 
-        if(imageDataType == (Bit_8 | Unsigned))
-            return static_cast<double>(std::numeric_limits<uint8_t>::lowest());
+		if (imageDataType == (Bit_8 | Unsigned))
+			return static_cast<double>(std::numeric_limits<uint8_t>::lowest());
 
-        if(imageDataType == (Bit_16 | Unsigned))
-            return static_cast<double>(std::numeric_limits<uint16_t>::lowest());
+		if (imageDataType == (Bit_16 | Unsigned))
+			return static_cast<double>(std::numeric_limits<uint16_t>::lowest());
 
-        if(imageDataType == (Bit_32 | Unsigned))
-            return static_cast<double>(std::numeric_limits<uint32_t>::lowest());
+		if (imageDataType == (Bit_32 | Unsigned))
+			return static_cast<double>(std::numeric_limits<uint32_t>::lowest());
 
-        if(imageDataType == (Bit_64 | Unsigned))
-            return static_cast<double>(std::numeric_limits<uint64_t>::lowest());
-        
-        if(imageDataType == (Bit_32 | Floating))
-            return static_cast<double>(std::numeric_limits<float>::lowest());
+		if (imageDataType == (Bit_64 | Unsigned))
+			return static_cast<double>(std::numeric_limits<uint64_t>::lowest());
 
-        if(imageDataType == (Bit_64 | Floating))
-            return static_cast<double>(std::numeric_limits<double>::lowest());
+		if (imageDataType == (Bit_32 | Floating))
+			return static_cast<double>(std::numeric_limits<float>::lowest());
 
-        if (imageDataType == Unknown)
-            throw std::runtime_error("[ERROR] cannot query min numeric limit of an unknown data type."); 
-    }
+		if (imageDataType == (Bit_64 | Floating))
+			return static_cast<double>(std::numeric_limits<double>::lowest());
 
-    inline double getMaxNumericLimit(ImageDataType imageDataType) {
-        if(imageDataType == (Bit_8 | Signed))
-            return static_cast<double>(std::numeric_limits<int8_t>::max());
+		if (imageDataType == Unknown)
+			throw std::runtime_error("[ERROR] cannot query min numeric limit of an unknown data type.");
+	}
 
-        if(imageDataType == (Bit_16 | Signed))
-            return static_cast<double>(std::numeric_limits<int16_t>::max());
+	inline double getMaxNumericLimit(ImageDataType imageDataType) {
+		if (imageDataType == (Bit_8 | Signed))
+			return static_cast<double>(std::numeric_limits<int8_t>::max());
 
-        if(imageDataType == (Bit_32 | Signed))
-            return static_cast<double>(std::numeric_limits<int32_t>::max());
+		if (imageDataType == (Bit_16 | Signed))
+			return static_cast<double>(std::numeric_limits<int16_t>::max());
 
-        if(imageDataType == (Bit_64 | Signed))
-            return static_cast<double>(std::numeric_limits<int64_t>::max());
+		if (imageDataType == (Bit_32 | Signed))
+			return static_cast<double>(std::numeric_limits<int32_t>::max());
 
-        if(imageDataType == (Bit_8 | Unsigned))
-            return static_cast<double>(std::numeric_limits<uint8_t>::max());
+		if (imageDataType == (Bit_64 | Signed))
+			return static_cast<double>(std::numeric_limits<int64_t>::max());
 
-        if(imageDataType == (Bit_16 | Unsigned))
-            return static_cast<double>(std::numeric_limits<uint16_t>::max());
+		if (imageDataType == (Bit_8 | Unsigned))
+			return static_cast<double>(std::numeric_limits<uint8_t>::max());
 
-        if(imageDataType == (Bit_32 | Unsigned))
-            return static_cast<double>(std::numeric_limits<uint32_t>::max());
+		if (imageDataType == (Bit_16 | Unsigned))
+			return static_cast<double>(std::numeric_limits<uint16_t>::max());
 
-        if(imageDataType == (Bit_64 | Unsigned))
-            return static_cast<double>(std::numeric_limits<uint64_t>::max());
-        
-        if(imageDataType == (Bit_32 | Floating))
-            return static_cast<double>(std::numeric_limits<float>::max());
+		if (imageDataType == (Bit_32 | Unsigned))
+			return static_cast<double>(std::numeric_limits<uint32_t>::max());
 
-        if(imageDataType == (Bit_64 | Floating))
-            return static_cast<double>(std::numeric_limits<double>::max());
+		if (imageDataType == (Bit_64 | Unsigned))
+			return static_cast<double>(std::numeric_limits<uint64_t>::max());
 
-        if (imageDataType == Unknown)
-            throw std::runtime_error("[ERROR] cannot query max numeric limit of an unknown data type."); 
-    }
+		if (imageDataType == (Bit_32 | Floating))
+			return static_cast<double>(std::numeric_limits<float>::max());
+
+		if (imageDataType == (Bit_64 | Floating))
+			return static_cast<double>(std::numeric_limits<double>::max());
+
+		if (imageDataType == Unknown)
+			throw std::runtime_error("[ERROR] cannot query max numeric limit of an unknown data type.");
+	}
 
 }	 // namespace Image
 

@@ -27,6 +27,7 @@ public:
 
 	/// @brief Add a status bar pointer to the viewer, in order to show messages
 	virtual void addParentStatusBar(QStatusBar* _sb);
+
 protected:
 	/// @brief Initializes the scene, and the viewer's variables.
 	virtual void init(void) override;
@@ -76,7 +77,7 @@ protected:
 	bool ctrl_pressed;	  ///< Is the Ctrl keymod pressed ?
 	QPoint cursorPosition_last;	   ///< Last known position, relative to window coordinates
 	QPoint cursorPosition_current;	  ///< Current mouse position, relative to window coordinates
-	QStatusBar* status_bar;	///< The status bar in which to show the positions extracted from the mesh
+	QStatusBar* status_bar;	   ///< The status bar in which to show the positions extracted from the mesh
 public slots:
 	/// @brief Update the view, as a slot without any arguments
 	void updateView(void);

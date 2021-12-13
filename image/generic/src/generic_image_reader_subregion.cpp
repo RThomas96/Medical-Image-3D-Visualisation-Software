@@ -116,6 +116,6 @@ namespace Image {
 			throw std::runtime_error("Error : trying to create a subregion of an unknown pixel type (not floating or [un]signed)");
 		}
 
-	}
+	}	 // namespace SubRegion
 
 }	 // namespace Image

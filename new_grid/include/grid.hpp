@@ -12,11 +12,11 @@
 #include <vector>
 
 namespace Image {
-    
-    /// @brief Old bbox definition
-    //  TODO: wtf are you doing here
-    typedef BoundingBox_General<float> bbox_t;
-    typedef glm::vec<3, std::size_t, glm::defaultp> sizevec3;
+
+	/// @brief Old bbox definition
+	//  TODO: wtf are you doing here
+	typedef BoundingBox_General<float> bbox_t;
+	typedef glm::vec<3, std::size_t, glm::defaultp> sizevec3;
 
 	/// @ingroup newgrid
 	/// @brief The Grid class is the new and recommended representation of a voxel grid.
@@ -28,7 +28,7 @@ namespace Image {
 	public:
 		/// @brief Handy typedef for a pointer to a grid
 		typedef std::shared_ptr<Grid> Ptr;
-        
+
 	protected:
 		/// @brief Default grid ctor, made protected so it is not instanciated directly.
 		Grid(GenericImageReader::Ptr _backend);
@@ -167,11 +167,15 @@ namespace Image {
 	};
 
 	/// @brief Quick and hacky way to have a centralized grid repository
-	struct GridRepo {
+	struct GridRepo
+	{
 	public:
 		using grid_iter = std::vector<Grid::Ptr>::iterator;
+
 	protected:
-		GridRepo() : grids(0), is_init(false) {}
+		GridRepo() :
+			grids(0), is_init(false) {}
+
 	public:
 		~GridRepo() = default;
 
@@ -191,13 +195,14 @@ namespace Image {
 			return singleton_instance;
 		}
 
-		std::vector<Grid::Ptr>::const_iterator	cbegin(void) { return this->grids.cbegin(); }
-		std::vector<Grid::Ptr>::const_iterator	cend(void) { return this->grids.cend(); }
-		std::vector<Grid::Ptr>::iterator		begin(void) { return this->grids.begin(); }
-		std::vector<Grid::Ptr>::iterator		end(void) { return this->grids.end(); }
+		std::vector<Grid::Ptr>::const_iterator cbegin(void) { return this->grids.cbegin(); }
+		std::vector<Grid::Ptr>::const_iterator cend(void) { return this->grids.cend(); }
+		std::vector<Grid::Ptr>::iterator begin(void) { return this->grids.begin(); }
+		std::vector<Grid::Ptr>::iterator end(void) { return this->grids.end(); }
+
 	protected:
-		std::vector<Grid::Ptr> grids; ///< The loaded grids
-		bool is_init; ///< Stub for tracking initialization status later.
+		std::vector<Grid::Ptr> grids;	 ///< The loaded grids
+		bool is_init;	 ///< Stub for tracking initialization status later.
 	};
 
 }	 // namespace Image

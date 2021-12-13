@@ -66,6 +66,6 @@ namespace Image {
 		return false;
 	}
 
-}
+}	 // namespace Image
 
-#endif // VISUALISATION_GRID_INCLUDE_GRID_IMPL_HPP_
+#endif	  // VISUALISATION_GRID_INCLUDE_GRID_IMPL_HPP_

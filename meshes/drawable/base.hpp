@@ -3,18 +3,18 @@
 
 #include "./shaders.hpp"
 
-#include <QOpenGLFunctions>
 #include <QOpenGLContext>
 #include <QOpenGLExtraFunctions>
-#include <QOpenGLFunctions_3_2_Core>
+#include <QOpenGLFunctions>
 #include <QOpenGLFunctions_3_2_Compatibility>
+#include <QOpenGLFunctions_3_2_Core>
 
 #include <glm/glm.hpp>
 #include <glm/vector_relational.hpp>
 
-#include <vector>
-#include <memory>
 #include <iostream>
+#include <memory>
+#include <vector>
 
 /// @brief The DrawableBase class represents a base structure for all drawable objects in the program.
 /// @details It provides virtual functions for initializing an object, and drawing it one of two ways:
@@ -22,8 +22,10 @@
 class DrawableBase {
 public:
 	using Ptr = std::shared_ptr<DrawableBase>;
+
 protected:
-	DrawableBase() : bound_context(nullptr), gl(nullptr),
+	DrawableBase() :
+		bound_context(nullptr), gl(nullptr),
 		should_update_on_next_draw(false),
 		bounding_box_min(), bounding_box_max(), transformation_matrix(1.f) {
 		glm::vec3::value_type min = std::numeric_limits<glm::vec3::value_type>::lowest();
@@ -31,6 +33,7 @@ protected:
 		this->bounding_box_min	  = glm::vec3{max, max, max};
 		this->bounding_box_max	  = glm::vec3{min, min, min};
 	}
+
 public:
 	~DrawableBase() = default;
 
@@ -42,14 +45,14 @@ public:
 	/// @brief Initializes the object.
 	virtual void initialize(QOpenGLContext* context, ShaderCompiler::GLFunctions* functions) {
 		this->bound_context = context;
-		this->gl = functions;
+		this->gl			= functions;
 	}
 
 	/// @brief Draws the object.
 	virtual void draw(GLfloat* proj_mat, GLfloat* view_mat, glm::vec4 camera) {}
 
 	/// @brief Draws the object (fast version).
-	virtual void fastDraw(GLfloat* proj_mat, GLfloat* view_mat, glm::vec4 camera) {};
+	virtual void fastDraw(GLfloat* proj_mat, GLfloat* view_mat, glm::vec4 camera){};
 
 	/// @brief Returns the min and max coordinates of an axis-aligned bounding box around the object.
 	[[nodiscard]] virtual std::pair<glm::vec3, glm::vec3> getBoundingBox() const {
@@ -76,10 +79,10 @@ protected:
 
 	bool should_update_on_next_draw;
 
-	glm::mat4 transformation_matrix; // The transformation matrix to apply to the mesh.
+	glm::mat4 transformation_matrix;	// The transformation matrix to apply to the mesh.
 
-	glm::vec3 bounding_box_min; ///< The min point of the bounding box of the element to draw.
-	glm::vec3 bounding_box_max; ///< The max point of the bounding box of the element to draw.
+	glm::vec3 bounding_box_min;	   ///< The min point of the bounding box of the element to draw.
+	glm::vec3 bounding_box_max;	   ///< The max point of the bounding box of the element to draw.
 };
 
-#endif // VISUALISATION_MESHES_DRAWABLE_BASE_HPP_
+#endif	  // VISUALISATION_MESHES_DRAWABLE_BASE_HPP_

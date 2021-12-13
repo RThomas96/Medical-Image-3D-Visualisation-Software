@@ -180,16 +180,16 @@ namespace Image {
 		std::size_t src_slice_begin = origin.z;
 		/// @brief end of slices to cache or end of slices available
 		std::size_t src_slice_end = (src_slice_begin + size.z >= resolution.z) ?
-									  resolution.z :
-									  src_slice_begin + size.z;
+										resolution.z :
+										src_slice_begin + size.z;
 
 		// the number of slices which will be read by the first for-loop :
 		std::size_t tgt_slices_readable = src_slice_end - src_slice_begin;
 
 		/// @brief Index of the last line we can read from the source buffer
 		std::size_t src_height_idx_end = (origin.y + size.y >= resolution.y) ?
-										   resolution.y - origin.y :
-										   size.y;
+											 resolution.y - origin.y :
+											 size.y;
 
 		/// @brief the number of lines that can be read from the source buffer :
 		std::size_t src_height_readable = src_height_idx_end - origin.y;
@@ -200,8 +200,8 @@ namespace Image {
 		std::size_t src_line_idx_begin = origin.x * voxel_dimensionality;
 		/// @brief amount of values to read into the target buffer from the source
 		std::size_t src_line_idx_end = (src_line_idx_begin + size.x * voxel_dimensionality >= src_line_size) ?
-										 src_line_size :
-										 src_line_idx_begin + size.x * voxel_dimensionality;
+										   src_line_size :
+										   src_line_idx_begin + size.x * voxel_dimensionality;
 
 		/// @brief Line length in the buffer to write to
 		std::size_t target_line_length = size.x * voxel_dimensionality;

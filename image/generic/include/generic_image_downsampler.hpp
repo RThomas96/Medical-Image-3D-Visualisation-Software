@@ -12,7 +12,6 @@ namespace Image {
 	/// @details Its design follows the GenericImageReaderSubRegion class, in that it takes as input a single variable: the desired size of the grid.
 	/// The downsampling method will be defined by the template argument passed in the specific instanciation of a downsampled grid.
 	class GenericImageDownsampler : public GenericImageReader {
-
 	public:
 		/// @brief Pointer type for this backend image implementation.
 		typedef std::unique_ptr<GenericImageDownsampler> Ptr;
@@ -90,20 +89,28 @@ namespace Image {
 		/// @returns A functor suitable for use within a ctor of a GenericImageDownsampledTemplated<> instance.
 		template <typename element_t>
 		resampler_functor<element_t, Image::Grid> findRightInterpolatorType(ImageResamplingTechnique technique) {
-			if (technique & ImageResamplingTechnique::None)				{ return Interpolators::null_interpolator<element_t, Grid>; }
-			if (technique & ImageResamplingTechnique::NearestNeighbor)	{ return Interpolators::nearest_neighbor_interpolator<element_t>; }
-			if (technique & ImageResamplingTechnique::Linear)			{ return Interpolators::linear_interpolator<element_t>; }
-			if (technique & ImageResamplingTechnique::Cubic)			{ return Interpolators::null_interpolator<element_t, Grid>; }
+			if (technique & ImageResamplingTechnique::None) {
+				return Interpolators::null_interpolator<element_t, Grid>;
+			}
+			if (technique & ImageResamplingTechnique::NearestNeighbor) {
+				return Interpolators::nearest_neighbor_interpolator<element_t>;
+			}
+			if (technique & ImageResamplingTechnique::Linear) {
+				return Interpolators::linear_interpolator<element_t>;
+			}
+			if (technique & ImageResamplingTechnique::Cubic) {
+				return Interpolators::null_interpolator<element_t, Grid>;
+			}
 
 			// No matching value, print an error and return a default interpolator type :
 			std::cerr << "Error : trying to find a right interpolator with no valid enum values given (value : "
-					  << std::hex << (int)technique << std::dec
+					  << std::hex << (int) technique << std::dec
 					  << ")\n";
 			return Interpolators::null_interpolator<element_t, Grid>;
 		}
 
-	} // namespace Downsampled
+	}	 // namespace Downsampled
 
-}
+}	 // namespace Image
 
-#endif // VISUALISATION_IMAGE_GENERIC_INCLUDE_GENERIC_IMAGE_DOWNSAMPLER_HPP_
+#endif	  // VISUALISATION_IMAGE_GENERIC_INCLUDE_GENERIC_IMAGE_DOWNSAMPLER_HPP_

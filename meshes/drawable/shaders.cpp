@@ -9,8 +9,7 @@
 ShaderCompiler::ShaderCompiler(ShaderCompiler::GLFunctions* functions) :
 	vshader_contents(), gshader_contents(), fshader_contents(),
 	vshader_handle(0), gshader_handle(0), fshader_handle(0),
-	program_handle(0), error_text(), pragma_replacements()
-{
+	program_handle(0), error_text(), pragma_replacements() {
 	this->gl = functions;
 }
 
@@ -21,10 +20,14 @@ const std::vector<ShaderCompiler::PragmaReplacement>& ShaderCompiler::pragmaRepl
 }
 
 ShaderCompiler& ShaderCompiler::pragmaReplacement_file(std::string pragma, std::string filename) {
-	if (pragma.empty()) { return *this; }
+	if (pragma.empty()) {
+		return *this;
+	}
 	std::ifstream file_in(filename, std::ios_base::in | std::ios_base::binary);
-	if (not file_in.is_open()) { return *this; }
-	std::size_t file_size = 0;
+	if (not file_in.is_open()) {
+		return *this;
+	}
+	std::size_t file_size	  = 0;
 	std::string file_contents = "";
 
 	file_in.seekg(0, file_in.end);
@@ -47,7 +50,9 @@ const GLuint ShaderCompiler::vertexShader() const {
 }
 
 ShaderCompiler& ShaderCompiler::vertexShader_file(const std::string& _vshader_file) {
-	if (_vshader_file.empty()) { return *this; }
+	if (_vshader_file.empty()) {
+		return *this;
+	}
 	std::string shader_contents = this->parse_file(_vshader_file);
 	if (not shader_contents.empty()) {
 		this->vshader_contents = shader_contents;
@@ -60,7 +65,9 @@ const GLuint ShaderCompiler::geometryShader() const {
 }
 
 ShaderCompiler& ShaderCompiler::geometryShader_file(const std::string& _gshader_file) {
-	if (_gshader_file.empty()) { return *this; }
+	if (_gshader_file.empty()) {
+		return *this;
+	}
 	std::string shader_contents = this->parse_file(_gshader_file);
 	if (not shader_contents.empty()) {
 		this->gshader_contents = shader_contents;
@@ -73,7 +80,9 @@ const GLuint ShaderCompiler::fragmentShader() const {
 }
 
 ShaderCompiler& ShaderCompiler::fragmentShader_file(const std::string& _fshader_file) {
-	if (_fshader_file.empty()) { return *this; }
+	if (_fshader_file.empty()) {
+		return *this;
+	}
 	std::string shader_contents = this->parse_file(_fshader_file);
 	if (not shader_contents.empty()) {
 		this->fshader_contents = shader_contents;
@@ -103,7 +112,7 @@ bool ShaderCompiler::compileShaders() {
 		this->error_text += "Error compiling shaders : vertex shader was empty\n";
 		return false;
 	}
-	if (not this->gshader_contents.empty()){
+	if (not this->gshader_contents.empty()) {
 		GLuint new_gshader = this->compile_shader(this->gshader_contents, GL_GEOMETRY_SHADER);
 		if (new_gshader != 0) {
 			// If gotten here, shader is validated :
@@ -210,7 +219,7 @@ std::string ShaderCompiler::parse_file(std::string filename) {
 }
 
 std::string ShaderCompiler::token_to_replacement(std::string pragma_token) {
-	for(const auto& pragma_replacement : this->pragma_replacements) {
+	for (const auto& pragma_replacement : this->pragma_replacements) {
 		if (pragma_token.find(pragma_replacement.first) != std::string::npos) {
 			return pragma_replacement.second;
 		}
@@ -220,8 +229,8 @@ std::string ShaderCompiler::token_to_replacement(std::string pragma_token) {
 
 GLuint ShaderCompiler::compile_shader(std::string contents, GLuint type) {
 	// Create handle, and source the file :
-	GLuint shader_id = this->gl->glCreateShader(type);
-	std::size_t shader_size = contents.size();
+	GLuint shader_id			= this->gl->glCreateShader(type);
+	std::size_t shader_size		= contents.size();
 	const char* shader_contents = contents.c_str();
 	this->gl->glShaderSource(shader_id, 1, const_cast<const char**>(&shader_contents), NULL);
 	this->gl->glCompileShader(shader_id);
@@ -232,13 +241,27 @@ GLuint ShaderCompiler::compile_shader(std::string contents, GLuint type) {
 	std::stringstream error_feed;
 	std::string shader_type_str = "";
 	switch (type) {
-		case GL_VERTEX_SHADER :			shader_type_str = "vertex"; break;
-		case GL_GEOMETRY_SHADER :		shader_type_str = "geometry"; break;
-		case GL_FRAGMENT_SHADER :		shader_type_str = "fragment"; break;
-		case GL_COMPUTE_SHADER :		shader_type_str = "compute"; break;
-		case GL_TESS_EVALUATION_SHADER:	shader_type_str = "tesselation evaluation"; break;
-		case GL_TESS_CONTROL_SHADER:	shader_type_str = "tesselation control"; break;
-		default:						shader_type_str = "<unknown>"; break;
+		case GL_VERTEX_SHADER:
+			shader_type_str = "vertex";
+			break;
+		case GL_GEOMETRY_SHADER:
+			shader_type_str = "geometry";
+			break;
+		case GL_FRAGMENT_SHADER:
+			shader_type_str = "fragment";
+			break;
+		case GL_COMPUTE_SHADER:
+			shader_type_str = "compute";
+			break;
+		case GL_TESS_EVALUATION_SHADER:
+			shader_type_str = "tesselation evaluation";
+			break;
+		case GL_TESS_CONTROL_SHADER:
+			shader_type_str = "tesselation control";
+			break;
+		default:
+			shader_type_str = "<unknown>";
+			break;
 	}
 
 	// Get shader information after compilation :
@@ -255,7 +278,7 @@ GLuint ShaderCompiler::compile_shader(std::string contents, GLuint type) {
 		error_feed << __FILE__ << ":" << __LINE__ << " : end Log ***********************************************" << '\n';
 	}
 	this->error_text += error_feed.str();
-	error_feed.str(""); // this resets the contents of the stringstream
+	error_feed.str("");	   // this resets the contents of the stringstream
 
 	// Check compilation status :
 	GLint result = GL_FALSE;
@@ -274,10 +297,10 @@ void ShaderCompiler::reset() {
 	this->vshader_contents = "";
 	this->gshader_contents = "";
 	this->fshader_contents = "";
-	this->vshader_handle = 0;
-	this->gshader_handle = 0;
-	this->fshader_handle = 0;
-	this->program_handle = 0;
-	this->error_text = "";
+	this->vshader_handle   = 0;
+	this->gshader_handle   = 0;
+	this->fshader_handle   = 0;
+	this->program_handle   = 0;
+	this->error_text	   = "";
 	this->pragma_replacements.clear();
 }

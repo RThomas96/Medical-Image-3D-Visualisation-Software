@@ -8,22 +8,22 @@
 #include <QOpenGLFunctions>
 
 #include <glm/glm.hpp>
-#include <vector>
 #include <memory>
+#include <vector>
 
 class Curve {
 public:
 	using Ptr = std::shared_ptr<Curve>;
+
 public:
 	/// @brief Fully-spec'd ctor. Initializes all fields except for the deformed curve positions, left at the origin.
 	Curve(
 	  Mesh::Ptr& deformer_mesh,
 	  std::vector<glm::vec3>& curve_positions,
-	  std::vector<std::vector<std::pair<std::size_t, float>>>& weights
-	) : mesh_cage(deformer_mesh),
+	  std::vector<std::vector<std::pair<std::size_t, float>>>& weights) :
+		mesh_cage(deformer_mesh),
 		positions(curve_positions),
-		phi(weights)
-	{
+		phi(weights) {
 		this->update();
 	}
 	~Curve() = default;

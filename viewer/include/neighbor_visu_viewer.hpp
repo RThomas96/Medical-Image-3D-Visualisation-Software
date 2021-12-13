@@ -82,18 +82,18 @@ private:
 	QStatusBar* statusBar;
 	bool drawAxisOnTop;
 
-    UITool::MeshManipulator meshManipulator;
+	UITool::MeshManipulator meshManipulator;
 
 	//
 	// Stubs for ARAP integration
 	//
-	std::vector<glm::vec3> spheres;	///< Spheres to draw
-	float sphere_size;				///< Sphere size in the renderer
-	glm::vec3 temp_sphere_position;	///< Last-requested sphere position
-	std::size_t temp_mesh_idx;		///< The mesh index selected
-	std::size_t temp_mesh_vtx_idx;	///< The mesh vertex idx of the selected vertex (temp_sphere_position)
-	std::size_t temp_img_idx;		///< The image index if found. WARNING : WE ASSUME IT IS ALWAYS 0, EVEN IF NO IMAGES ARE LOADED
-	glm::vec3 temp_img_pos;			///< The position of that image index
+	std::vector<glm::vec3> spheres;	   ///< Spheres to draw
+	float sphere_size;	  ///< Sphere size in the renderer
+	glm::vec3 temp_sphere_position;	   ///< Last-requested sphere position
+	std::size_t temp_mesh_idx;	  ///< The mesh index selected
+	std::size_t temp_mesh_vtx_idx;	  ///< The mesh vertex idx of the selected vertex (temp_sphere_position)
+	std::size_t temp_img_idx;	 ///< The image index if found. WARNING : WE ASSUME IT IS ALWAYS 0, EVEN IF NO IMAGES ARE LOADED
+	glm::vec3 temp_img_pos;	   ///< The position of that image index
 
 public slots:
 	/// @brief Update the view, as a slot without any arguments (currently only used by QTimer)
@@ -109,9 +109,9 @@ public slots:
 	void centerScene(void);
 	void guessMousePosition(void);
 
-    void updateManipulatorsPositions(void);
+	void updateManipulatorsPositions(void);
 
-    void toggleManipulators(void);
+	void toggleManipulators(void);
 };
 
 #endif	  // VIEWER_INCLUDE_NEIGHBOR_VISU_VIEWER_HPP_

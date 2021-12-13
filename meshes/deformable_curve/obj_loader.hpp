@@ -1,13 +1,13 @@
 #ifndef VISUALISATION_OBJ_LOADER_HPP
 #define VISUALISATION_OBJ_LOADER_HPP
 
-#include <vector>
-#include <memory>
 #include <cfloat>
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
-#include <cstdlib>
+#include <memory>
 #include <sstream>
+#include <vector>
 
 namespace FileIO {
 	template <typename Point, typename Face>
@@ -50,7 +50,7 @@ namespace FileIO {
 			if (keyWrd == "mtllib" || keyWrd == "usemtl")
 			{
 			}
-				// vertex
+			// vertex
 			else if (keyWrd == "v")
 			{
 				stream >> x;
@@ -61,11 +61,11 @@ namespace FileIO {
 					vertices.push_back(Point(x, y, z));
 			}
 
-				// texture coord
+			// texture coord
 			else if (keyWrd == "vt" || keyWrd == "vn")
 			{
 			}
-				// face
+			// face
 			else if (keyWrd == "f")
 			{
 				int component(0), nV(0);
@@ -208,8 +208,8 @@ namespace FileIO {
 
 	template <typename Point, typename Face>
 	void openHomemadeOBJ(std::string const& filename, std::vector<Point>& vertices, std::vector<Face>& triangles,
-						 std::vector<int>& movedVertexIndices, std::vector<Point>& leftCondyle, std::vector<Point>& rightCondyle,
-						 std::vector<Point>& chin) {
+	  std::vector<int>& movedVertexIndices, std::vector<Point>& leftCondyle, std::vector<Point>& rightCondyle,
+	  std::vector<Point>& chin) {
 		std::ifstream myfile;
 		myfile.open(filename.c_str());
 
@@ -254,6 +254,6 @@ namespace FileIO {
 		}
 	}
 
-}
+}	 // namespace FileIO
 
 #endif	  // VISUALISATION_OBJ_LOADER_HPP
