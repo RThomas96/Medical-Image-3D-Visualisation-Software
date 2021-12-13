@@ -15,7 +15,11 @@ INCLUDE(FindLocalTIFF)
 INCLUDE(ShaderDependency)
 INCLUDE(ResourceDependency)
 # Find the local SuiteSparse and GSL libraries : (windows-only for now)
-INCLUDE(FindSuiteSparse_Windows)
+IF (WIN32 OR MINGW OR MSVC)
+	INCLUDE(FindSuiteSparse_Windows)
+ELSE()
+	INCLUDE(FindSuiteSparse_Linux)
+ENDIF()
 
 # Required libraries {{{
 FIND_PACKAGE(Qt5 REQUIRED COMPONENTS Core Gui Widgets Xml OpenGL)
