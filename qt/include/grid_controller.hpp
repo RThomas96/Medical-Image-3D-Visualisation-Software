@@ -5,7 +5,7 @@
 #include "../../macros.hpp"
 
 #include "../../grid/include/discrete_grid.hpp"
-#include "../../grid/include/grid_pool.hpp"
+//#include "../../grid/include/grid_pool.hpp"
 #include "./grid_detailed_view.hpp"
 #include "./grid_list_view.hpp"
 

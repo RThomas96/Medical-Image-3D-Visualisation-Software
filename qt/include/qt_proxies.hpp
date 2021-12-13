@@ -4,7 +4,7 @@
 #include "../../features.hpp"
 #include "../../macros.hpp"
 
-#include "../../grid/include/bounding_box.hpp"
+//#include "../../grid/include/bounding_box.hpp"
 #include "../../grid/include/discrete_grid.hpp"
 
 #include <QWidget>

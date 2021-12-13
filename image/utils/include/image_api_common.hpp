@@ -3,7 +3,7 @@
 
 #include "../../macros.hpp"
 
-#include "../../grid/include/bounding_box.hpp"
+//#include "../../grid/include/bounding_box.hpp"
 
 #include <glm/glm.hpp>
 
@@ -71,7 +71,7 @@ namespace Image {
 	}
 
 	/// @brief Handy typedef to a bounding box type
-	typedef BoundingBox_General<float> bbox_t;
+	//typedef BoundingBox_General<float> bbox_t;
 
 	inline std::ostream& operator<<(std::ostream& _os, ImageDataType d) {
 		if (d & ImageDataType::Unknown) {

@@ -5,7 +5,7 @@
 #include "../../image/transforms/include/transform_stack.hpp"
 #include "../../image/utils/include/image_api_common.hpp"
 
-#include "../../grid/include/bounding_box.hpp"
+//#include "../../grid/include/bounding_box.hpp"
 
 #include <memory>
 #include <string>
