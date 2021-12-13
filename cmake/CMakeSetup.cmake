@@ -41,9 +41,11 @@ MESSAGE(STATUS "Currently compiling in ${CMAKE_BUILD_TYPE} mode.")
 
 # Additionnal flags for Debug mode :
 IF(CMAKE_BUILD_TYPE MATCHES Debug)
-	SET(GCC_COMPILE_FLAGS "-gdwarf-2 --pedantic")
+	SET(GCC_COMPILE_FLAGS " --pedantic")
 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_COMPILE_FLAGS}")
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fsanitize=undefined -fsanitize=null -fsanitize=return -fsanitize=bounds")
+	IF(NOT (WIN32 OR MSVC OR MINGW))
+		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fsanitize=undefined -fsanitize=null -fsanitize=return -fsanitize=bounds")
+	ENDIF()
 ENDIF(CMAKE_BUILD_TYPE MATCHES Debug)
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
@@ -73,5 +75,6 @@ FILE(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/resources)		# For misc resources (icons)
 # Set shortcuts to the folders in question :
 SET(SHADER_OUTPUT_DIR ${CMAKE_BINARY_DIR}/new_shaders)
 SET(RESOURCE_OUTPUT_DIR ${CMAKE_BINARY_DIR}/resources)
-SET(VISU_OUTPUT_DIR ${CMAKE_BINARY_DIR}/bin)
+SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 

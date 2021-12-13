@@ -1,0 +1,196 @@
+---
+Language: Cpp
+BasedOnStyle: LLVM
+IndentWidth: 4
+AccessModifierOffset: -4
+TabWidth: 4
+# No colmn limits :
+ColumnLimit: 0
+UseCRLF: false
+UseTab: Always
+
+# Other options derived from default config :
+# Don't align after open bracket/parenthesis if doesn"t fit on line
+AlignAfterOpenBracket: DontAlign				
+# Align consecutive macro definitions
+AlignConsecutiveMacros: true					
+# Align consecutive variable assignments
+AlignConsecutiveAssignments: true				
+# Do not align variable names in declarations
+AlignConsecutiveDeclarations: false				
+# Align '\' characters on left-most column in multi-line macros
+AlignEscapedNewlines: Left						
+# Align operands for multi-line binary expressions (+,*,...)
+AlignOperands:   true							
+# Do not align trailing comments between them
+AlignTrailingComments: false					
+# Can put all args on next line if init doesn't fit on one
+AllowAllArgumentsOnNextLine: true				
+# Same for ctors
+AllowAllConstructorInitializersOnNextLine: true	
+# Same for functors/functions
+AllowAllParametersOfDeclarationOnNextLine: true	
+# Only allow empty scopes/blocks in a single line, not short ones
+AllowShortBlocksOnASingleLine: Empty			
+# Do not compact short case labels
+AllowShortCaseLabelsOnASingleLine: false		
+# Only allow short inline functions on 1 line
+AllowShortFunctionsOnASingleLine: InlineOnly	
+# Only allow empty lambdas on one line
+AllowShortLambdasOnASingleLine: Empty			
+# Always have multi-line if statements (even when it has no block)
+AllowShortIfStatementsOnASingleLine: Never		
+# Don't allow short loops on one line
+AllowShortLoopsOnASingleLine: false				
+# deperecated
+AlwaysBreakAfterDefinitionReturnType: None		
+# Don't break after returns types on declarations/definitions
+AlwaysBreakAfterReturnType: None				
+# Don't put multi-line strings on their own line
+AlwaysBreakBeforeMultilineStrings: false		
+# Always break after template declarations
+AlwaysBreakTemplateDeclarations: Yes			
+# Try to pack multiple arguments on one line for function calls
+BinPackArguments: true							
+# Same as above for declarations/definitions
+BinPackParameters: true							
+BraceWrapping:
+  AfterCaseLabel:  false
+  AfterClass:      false
+  AfterControlStatement: MultiLine
+  AfterEnum:       false
+  AfterFunction:   false
+  AfterNamespace:  false
+  AfterObjCDeclaration: false
+  AfterStruct:     true
+  AfterUnion:      true
+  AfterExternBlock: true
+  BeforeCatch:     false
+  BeforeElse:      false
+  IndentBraces:    false
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: false
+# Break _after_ operators
+BreakBeforeBinaryOperators: None				
+# Use the above BraceWrapping struct
+BreakBeforeBraces: Custom						
+BreakBeforeInheritanceComma: false
+# Break inheritance declarations after the colon
+BreakInheritanceList: AfterColon				
+BreakBeforeTernaryOperators: false
+BreakConstructorInitializersBeforeComma: false
+# Break ctors after the colon
+BreakConstructorInitializers: AfterColon		
+# Allow to break long strings into multiple string literals
+BreakStringLiterals: true						
+# Do not compact sequential namespace declarations
+CompactNamespaces: false						
+# Put ctor arguments on multiple lines if they don't fit
+ConstructorInitializerAllOnOneLineOrOnePerLine: false 
+# Width of indent for ctor initializer and inheritance lists
+ConstructorInitializerIndentWidth: 4			
+# The continuation width for ctor args/inheritance lists
+ContinuationIndentWidth: 2						
+# Enable C++11 braced lists (like function calls)
+Cpp11BracedListStyle: true						
+# Automatically determine CRLF/CR based on occurences
+DeriveLineEnding: true							
+# Same for pointer alignments of & and *
+DerivePointerAlignment: true					
+# Enable clang-format !!!
+DisableFormat:   false							
+# [EXPERIMENTAL] autodetect bin-packing (see above)
+ExperimentalAutoDetectBinPacking: false			
+# auto. add '// namespace <name>' at the end of namespaces
+FixNamespaceComments: true						
+ForEachMacros:
+  - foreach
+  - Q_FOREACH
+  - BOOST_FOREACH
+# Do not touch blocks of include declarations
+IncludeBlocks:   Preserve						
+# Default categories for include declarations
+IncludeCategories:								
+  - Regex:           '^"(llvm|llvm-c|clang|clang-c)/'
+    Priority:        2
+    SortPriority:    0
+  - Regex:           '^(<|"(gtest|gmock|isl|json)/)'
+    Priority:        3
+    SortPriority:    0
+  - Regex:           '.*'
+    Priority:        1
+    SortPriority:    0
+IncludeIsMainRegex: '(Test)?$'
+IncludeIsMainSourceRegex: ''
+# Indent switch case labels
+IndentCaseLabels: true							
+# Same for goto labels (takes indent of parent block)
+IndentGotoLabels: true							
+# Indent preprocessor declarations after the hash
+IndentPPDirectives: None					
+# indent long function names
+IndentWrappedFunctionNames: true				
+# Don't keep empty blocks at the beginning of blocks
+KeepEmptyLinesAtTheStartOfBlocks: false			
+MacroBlockBegin: ''
+MacroBlockEnd:   ''
+# Allow one empty line max between code and/or comment lines
+MaxEmptyLinesToKeep: 1							
+# Indent everything in namespaces
+NamespaceIndentation: All						
+PenaltyBreakAssignment: 2
+PenaltyBreakBeforeFirstCallParameter: 19
+PenaltyBreakComment: 300
+PenaltyBreakFirstLessLess: 120
+PenaltyBreakString: 1000
+PenaltyBreakTemplateDeclaration: 10
+PenaltyExcessCharacter: 1000000
+PenaltyReturnTypeOnItsOwnLine: 60
+# How to align pointer symbols (*, &)
+PointerAlignment: Right							
+# Attempt to reflow comments
+ReflowComments:  true							
+# Sort includes in blocks
+SortIncludes:    true							
+# same for 'using'
+SortUsingDeclarations: true						
+# Space after '(type) var' casts
+SpaceAfterCStyleCast: true						
+# Space after '!' operator (more clarity)
+SpaceAfterLogicalNot: true						
+# Space on underscore : 'template_<type> ...'
+SpaceAfterTemplateKeyword: true					
+# Space on underscore : 'type var_= value;'
+SpaceBeforeAssignmentOperators: true			
+# Space on underscore : 'type var_{initializers};'
+SpaceBeforeCpp11BracedList: false				
+# Space on underscore : 'Foo::Foo()_: init(value) {}'
+SpaceBeforeCtorInitializerColon: true			
+# Space on underscore : 'class Foo_: Bar {'
+SpaceBeforeInheritanceColon: true				
+# Only have spaces before parentheses on control statements
+SpaceBeforeParens: ControlStatements			
+# Space before for loops (on ranges/collections)
+SpaceBeforeRangeBasedForLoopColon: true			
+# self-explanatory
+SpaceInEmptyBlock: false						
+# idem
+SpaceInEmptyParentheses: false					
+# spaces between content and trailing comments
+SpacesBeforeTrailingComments: 4					
+# Don't put spaces before/after angle bracket contents
+SpacesInAngles:  false							
+SpacesInConditionalStatement: false
+# self-explanatory
+SpacesInContainerLiterals: false				
+SpacesInCStyleCastParentheses: false
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+SpaceBeforeSquareBrackets: false
+# Use C++17 formatting
+Standard:        c++17							
+StatementMacros:
+  - Q_UNUSED
+  - QT_REQUIRE_VERSION
+

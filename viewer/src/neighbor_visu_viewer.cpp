@@ -1,44 +1,60 @@
 #include "../include/neighbor_visu_viewer.hpp"
-#include "../../grid/include/discrete_grid_writer.hpp"
 #include "../../features.hpp"
+#include "../../grid/include/discrete_grid_writer.hpp"
 #include "../../qt/include/user_settings_widget.hpp"
 
-#include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/io.hpp>
+#include <glm/gtx/transform.hpp>
 
 #include <QGLViewer/manipulatedFrame.h>
 
 #include <QCoreApplication>
-#include <QProgressDialog>
-#include <QKeyEvent>
-#include <QMessageBox>
 #include <QFileDialog>
 #include <QGuiApplication>
+#include <QKeyEvent>
+#include <QMessageBox>
+#include <QProgressDialog>
 
 #include <fstream>
 
 float Viewer::sceneRadiusMultiplier{.5f};
 
 Viewer::Viewer(Scene* const scene, QStatusBar* _program_bar, QWidget* parent) :
-	QGLViewer(parent), scene(scene) {
-
-	this->statusBar = _program_bar;
+	QGLViewer(parent), scene(scene), meshManipulator(UITool::MeshManipulator(36)), spheres(), sphere_size(.1f), temp_mesh_idx(0), temp_img_idx(0), temp_sphere_position(std::numeric_limits<float>::lowest()) {
+	this->statusBar	   = _program_bar;
 	this->refreshTimer = new QTimer();
-	this->refreshTimer->setInterval(std::chrono::milliseconds(7)); // ~7 ms for 144fps, ~16ms for 60fps and ~33ms for 30 FPS
+	this->refreshTimer->setInterval(std::chrono::milliseconds(7));	  // ~7 ms for 144fps, ~16ms for 60fps and ~33ms for 30 FPS
 	this->refreshTimer->setSingleShot(false);
 	connect(this->refreshTimer, &QTimer::timeout, this, &Viewer::updateView);
 
-	this->drawVolumetric = true;
-	this->shouldCapture = false;
-	this->renderTarget = 0;
-	this->selectMode = false;
-	this->fbSize = glm::ivec2{0,0};
-	this->cursorPos_current = glm::ivec2{0,0};
-	this->cursorPos_last = glm::ivec2{0,0};
-	this->framesHeld = 0;
-	this->posRequest = glm::ivec2{-1,-1};
-	this->drawAxisOnTop = false;
+	this->drawVolumetric	= true;
+	this->shouldCapture		= false;
+	this->renderTarget		= 0;
+	this->selectMode		= false;
+	this->fbSize			= glm::ivec2{0, 0};
+	this->cursorPos_current = glm::ivec2{0, 0};
+	this->cursorPos_last	= glm::ivec2{0, 0};
+	this->framesHeld		= 0;
+    this->posRequest		= glm::ivec2{-1, -1};
+    this->drawAxisOnTop		= false;
+
+    // Setup the alt key binding to move an object
+    setMouseBinding(Qt::AltModifier, Qt::LeftButton, QGLViewer::FRAME, QGLViewer::ROTATE);
+    setMouseBinding(Qt::AltModifier, Qt::RightButton, QGLViewer::FRAME, QGLViewer::TRANSLATE);
+    setMouseBinding(Qt::AltModifier, Qt::MidButton, QGLViewer::FRAME, QGLViewer::ZOOM);
+    //setWheelBinding(Qt::AltModifier, QGLViewer::FRAME, QGLViewer::ZOOM);
+
+    //setManipulatedFrame(&this->meshManipulator.getActiveManipulator().getManipulatedFrame());
+    updateManipulatorsPositions(); 
+    //this->scene->glMeshManipulator->bind(&this->meshManipulator);
+    this->scene->bindMeshManipulator(&this->meshManipulator);
+}
+
+void Viewer::updateManipulatorsPositions() {
+    std::vector<glm::vec3> vecpos;
+    scene->getTetraMeshPoints(vecpos);
+    this->meshManipulator.setAllPositions(vecpos);
 }
 
 Viewer::~Viewer() {
@@ -53,14 +69,14 @@ void Viewer::init() {
 	this->scene->initGl(this->context());
 
 	glm::vec3 bbDiag = this->scene->getSceneBoundaries();
-	float sceneSize = glm::length(bbDiag);
+	float sceneSize	 = glm::length(bbDiag);
 
-	this->setSceneRadius(sceneSize*sceneRadiusMultiplier);
+	this->setSceneRadius(sceneSize * sceneRadiusMultiplier);
 	// center scene on center of grid
-	this->setSceneCenter(qglviewer::Vec(bbDiag.x/2., bbDiag.y/2., bbDiag.z/2.));
+	this->setSceneCenter(qglviewer::Vec(bbDiag.x / 2., bbDiag.y / 2., bbDiag.z / 2.));
 	this->showEntireScene();
 
-	this->refreshTimer->start(); // Update every 'n' milliseconds from here on out
+	this->refreshTimer->start();	// Update every 'n' milliseconds from here on out
 }
 
 void Viewer::addStatusBar(QStatusBar *bar) { this->statusBar = bar; }
@@ -69,7 +85,7 @@ void Viewer::draw() {
 	GLfloat mvMat[16];
 	GLfloat pMat[16];
 
-	float white_shade = 245./255.;
+	float white_shade = 245. / 255.;
 
 	glClearColor(white_shade, white_shade, white_shade, .0);
 
@@ -77,34 +93,24 @@ void Viewer::draw() {
 	this->camera()->getProjectionMatrix(pMat);
 
 	qglviewer::Vec cam = this->camera()->worldCoordinatesOf(qglviewer::Vec(0., 0., 0.));
-	glm::vec3 camPos = glm::vec3(static_cast<float>(cam.x), static_cast<float>(cam.y), static_cast<float>(cam.z));
+	glm::vec3 camPos   = glm::vec3(static_cast<float>(cam.x), static_cast<float>(cam.y), static_cast<float>(cam.z));
 
-	this->scene->draw3DView(mvMat, pMat, camPos);
-<<<<<<< HEAD
+	this->scene->draw3DView(mvMat, pMat, camPos, false);
+	this->scene->drawPositionResponse(this->sceneRadius() / 10., this->drawAxisOnTop);
 
-	if (this->posRequest.x > -1) {
-		glm::vec4 p = this->scene->readFramebufferContents(this->defaultFramebufferObject(), this->posRequest);
-		if (p.w > .01f && this->statusbar != nullptr) {
-			std::cerr << "3D viewer : Value in fbo : {" << p.x << ", " << p.y << ", " << p.z << ", " << p.w << "}\n";
-			auto all_input = this->scene->getInputGrids();
-			for (const auto& grid : all_input) {
-				using sizevec3 = glm::vec<3, std::size_t, glm::defaultp>;
-				sizevec3 index = sizevec3(0, 0, 0);
-				QString msg = "Message from 3D viewer ";
-				if (grid->indexFromWorldSpace(p, index)) {
-					msg += "Index in picture : " + QString::number(index.x) + ", " + QString::number(index.y) + ", " + QString::number(index.z);
-					this->statusBar->showMessage(msg, 5000);
-				}
-			}
-		}
-		this->posRequest = glm::ivec2{-1,-1};
+    if(this->meshManipulator.isActiveManipulatorManipuled()) {
+        this->scene->launchDeformation(this->meshManipulator.getActiveManipulatorAssignedIdx(), this->meshManipulator.getActiveManipulatorPos());
+    }
+
+	std::vector<glm::vec3> spheres_to_draw(this->spheres);
+	if (this->temp_mesh_idx) {
+		spheres_to_draw.push_back(this->temp_sphere_position);
 	}
-=======
-	this->scene->drawPositionResponse(this->sceneRadius()/10., this->drawAxisOnTop);
->>>>>>> grid_interface_rework
+
+	this->scene->drawPointSpheres_quick(mvMat, pMat, camPos, spheres_to_draw, this->sphere_size);
 }
 
-void Viewer::keyPressEvent(QKeyEvent *e) {
+void Viewer::keyPressEvent(QKeyEvent* e) {
 	// 'msg' allocated here not to have curly braces in
 	// all case statements that need to show a message:
 	QString msg = "";
@@ -115,25 +121,25 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 		*/
 		case Qt::Key::Key_Space:
 			this->selectMode = not this->selectMode;
-			msg = "Turned selection mode " + (this->selectMode ? QString("on") : QString("off"));
+			msg				 = "Turned selection mode " + (this->selectMode ? QString("on") : QString("off"));
 			this->statusBar->showMessage(msg, 5000);
-		break;
+			break;
 		case Qt::Key::Key_R:
 			this->scene->resetPositionResponse();
-		break;
+			break;
 		case Qt::Key::Key_T:
 			this->drawAxisOnTop = not this->drawAxisOnTop;
-		break;
+			break;
 		/*
 		SHADER PROGRAMS
 		*/
 		case Qt::Key::Key_F5:
 			this->scene->recompileShaders();
 			this->update();
-		break;
+			break;
 		case Qt::Key::Key_P:
 			this->scene->printVAOStateNext();
-		break;
+			break;
 		case Qt::Key::Key_V:
 			if ((e->modifiers() & Qt::KeyboardModifier::ShiftModifier) != 0) {
 				this->scene->setDrawMode(DrawMode::VolumetricBoxed);
@@ -141,7 +147,7 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 				this->scene->setDrawMode(DrawMode::Volumetric);
 			}
 			this->update();
-		break;
+			break;
 		case Qt::Key::Key_S:
 			if ((e->modifiers() & Qt::KeyboardModifier::ControlModifier) != 0) {
 				this->scene->launchSaveDialog();
@@ -149,22 +155,77 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
 				this->scene->setDrawMode(DrawMode::Solid);
 				this->update();
 			}
-		break;
-		case Qt::Key::Key_C:
-			this->shouldCapture = true;
-			this->update();
-		break;
+			break;
 
 		case Qt::Key::Key_G:
 			this->scene->draft_tryAndSaveFirstGrid();
 			this->update();
-		break;
+			break;
+			/*
+			 * ARAP !
+			 */
+		case Qt::Key::Key_A:
+			if ((e->modifiers() & Qt::KeyboardModifier::ControlModifier) != 0) {
+				this->updateCameraPosition();
+			} else if ((e->modifiers() & Qt::KeyboardModifier::ShiftModifier) != 0) {
+				// perform dummy ARAP deformation
+				this->scene->dummy_print_arap_constraints();
+				this->update();
+			} else {
+				QGLViewer::keyPressEvent(e);
+			}
+			this->update();
+			break;
+		case Qt::Key::Key_X:
+			if ((e->modifiers() & Qt::KeyboardModifier::ControlModifier) != 0) {
+				std::cerr << "Applying constrained ARAP ...\n";
+				this->scene->dummy_perform_constrained_arap_on_image_mesh();
+				std::cerr << "Applied constrained ARAP.\n";
+			} else if ((e->modifiers() & Qt::KeyboardModifier::ShiftModifier) != 0) {
+				// apply alignment before ARAP deformation
+				std::cerr << "Applying transformation to the mesh ...\n";
+				this->scene->dummy_apply_alignment_before_arap();
+				std::cerr << "Applied transformation to the mesh.\n";
+			}
+			this->update();
+			break;
+		case Qt::Key::Key_C:
+			// Shift-Enter adds the current vertex as a constraint for ARAP in the mesh.
+			if (e->modifiers() & Qt::KeyboardModifier::ShiftModifier) {
+				// add the vertex as an arap constraint to the concerned mesh
+				std::cerr << "Attempting to push constraint to mesh ..." << this->temp_mesh_idx << "\n";
+				if (this->temp_mesh_idx) {
+					this->scene->dummy_add_arap_constraint_mesh(this->temp_mesh_idx, this->temp_mesh_vtx_idx);
+					std::cerr << "Added mesh constraint at position " << this->temp_mesh_vtx_idx << " for mesh " << this->temp_mesh_idx << '\n';
+					this->spheres.push_back(this->temp_sphere_position);
+					this->temp_mesh_idx = 0;
+				}
+			}
+			// Ctrl-Enter adds the current image position as the image constraint for ARAP
+			else if ((e->modifiers() & Qt::KeyboardModifier::ControlModifier) != 0) {
+				std::cerr << "Attempting to push constraint to image ..." << this->temp_img_idx << "\n";
+				this->scene->dummy_add_image_constraint(this->temp_img_idx, this->temp_img_pos);
+				this->spheres.push_back(this->temp_img_pos);
+				std::cerr << "Added image constraint at position " << this->temp_img_pos << '\n';
+			}
+			break;
+		case Qt::Key::Key_Plus:
+			// don't cap the highest size
+			this->sphere_size *= 1.1f;
+			std::cerr << "Sphere size now at : " << std::setprecision(5) << this->sphere_size << '\n';
+			break;
+		case Qt::Key::Key_Minus:
+			this->sphere_size /= 1.1f;
+			// cap the smallest size at 1x10^-3
+			this->sphere_size = std::max(1e-3f, this->sphere_size);
+			std::cerr << "Sphere size now at : " << std::setprecision(5) << this->sphere_size << '\n';
+			break;
 		/*
 		Default handler.
 		*/
 		default:
 			QGLViewer::keyPressEvent(e);
-		break;
+			break;
 	}
 }
 
@@ -189,7 +250,7 @@ void Viewer::mousePressEvent(QMouseEvent* e) {
 			this->cursorPos_last = this->cursorPos_current = glm::ivec2{e->pos().x(), e->pos().y()};
 			std::cerr << "Pressed RMB.\n";
 			this->guessMousePosition();
-			e->accept(); // stop the event from propagating upwards !
+			e->accept();	// stop the event from propagating upwards !
 			return;
 		}
 	}
@@ -200,7 +261,7 @@ void Viewer::mousePressEvent(QMouseEvent* e) {
 void Viewer::mouseMoveEvent(QMouseEvent* e) {
 	// If tracking the mouse, update its position :
 	if (this->selectMode && this->framesHeld > 0) {
-		this->cursorPos_last = this->cursorPos_current;
+		this->cursorPos_last	= this->cursorPos_current;
 		this->cursorPos_current = glm::ivec2{e->pos().x(), e->pos().y()};
 		this->framesHeld += 1;
 		this->guessMousePosition();
@@ -229,16 +290,16 @@ void Viewer::wheelEvent(QWheelEvent* _w) {
 
 void Viewer::resizeGL(int w, int h) {
 	// First, call the superclass' function
-	QGLViewer::resizeGL(w,h);
+	QGLViewer::resizeGL(w, h);
 
-	this->fbSize = glm::ivec2{w,h};
+	this->fbSize = glm::ivec2{w, h};
 
 	// Is the scene initialized ? (might not on first call to this function)
 	if (this->scene->isSceneInitialized()) {
 		// Update the texture accompanying the framebuffer to reflect its size change
 		this->renderTarget = this->scene->updateFBOOutputs(this->fbSize,
-							this->defaultFramebufferObject(),
-							this->renderTarget);
+		  this->defaultFramebufferObject(),
+		  this->renderTarget);
 	}
 }
 
@@ -251,39 +312,68 @@ void Viewer::guessMousePosition() {
 	this->posRequest = glm::ivec2(rawMousePos.x, this->fbSize.y - rawMousePos.y);
 	this->makeCurrent();
 	glm::vec4 p = this->scene->readFramebufferContents(this->defaultFramebufferObject(), this->posRequest);
-	std::cerr << "3D viewer : Value in fbo : {" << p.x << ", " << p.y << ", " <<
-				 p.z << ", " << p.w << "}\n";
 	if (p.w > .01f) {
 		this->scene->setPositionResponse(p);
-		auto inputs = this->scene->getInputGrids();
-		for (const auto& grid : inputs) {
-			if (grid->includesPointWorldSpace(p)) {
-				IO::GenericGridReader::sizevec3 index = grid->worldPositionToIndex(p);
-				QString msg = "Position in image space : " + QString::number(index.x) + ", " +
-							  QString::number(index.y) + ", " + QString::number(index.z) +", in grid " +
-							  QString::fromStdString(grid->getGridName()) ;
-				this->statusBar->showMessage(msg, 10000);
-			}
-		}
+        // TODO: new API
+		//auto inputs = this->scene->getInputGrids();
+		//for (const auto& grid : inputs) {
+		//	if (grid->includesPointWorldSpace(p)) {
+		//		IO::GenericGridReader::sizevec3 index = grid->worldPositionToIndex(p);
+		//		QString msg							  = "Position in image space : " + QString::number(index.x) + ", " +
+		//					  QString::number(index.y) + ", " + QString::number(index.z) + ", in grid " +
+		//					  QString::fromStdString(grid->getGridName());
+		//		this->statusBar->showMessage(msg, 10000);
+		//	}
+		//}
 		std::function<void(const NewAPI_GridGLView::Ptr&)> findSuitablePoint =
-		[this, p](const NewAPI_GridGLView::Ptr& gridView) -> void {
-			const Image::Grid::Ptr grid = gridView->grid;
+		  [this, p](const NewAPI_GridGLView::Ptr& gridView) -> void {
+			const Image::Grid::Ptr grid		  = gridView->grid;
 			TransformStack::Ptr gridTransform = grid->getTransformStack();
-			BoundingBox_General<float> bb = grid->getBoundingBox();
-			glm::vec4 p_prime = gridTransform->to_image(p);
+			BoundingBox_General<float> bb	  = grid->getBoundingBox();
+			glm::vec4 p_prime				  = gridTransform->to_image(p);
 			if (bb.contains(p_prime)) {
-				glm::vec3 voxdim = grid->getVoxelDimensions();
+				glm::vec3 voxdim			  = grid->getVoxelDimensions();
 				glm::tvec3<std::size_t> index = p_prime / glm::vec4(voxdim, 1.f);
-				QString msg = "Position in image space : " + QString::number(index.x) + ", " +
-							  QString::number(index.y) + ", " + QString::number(index.z) +", in grid " +
-							  QString::fromStdString(grid->getImageName()) ;
-				this->statusBar->showMessage(msg, 1000);
-			} else {
-				std::cerr << "Error : grid " << grid->getImageName() << " does not contain the point\n";
+				QString msg					  = "Position in image space : " + QString::number(index.x) + ", " +
+							  QString::number(index.y) + ", " + QString::number(index.z) + ", in grid " +
+							  QString::fromStdString(grid->getImageName());
+				this->statusBar->showMessage(msg, 10000);
+				this->temp_img_pos = glm::vec3(p);
 			}
 		};
 		this->scene->lambdaOnGrids(findSuitablePoint);
-		//
+
+		// Look for the point in the meshes loaded :
+		std::size_t mesh_idx = 0;
+		this->scene->dummy_check_point_in_mesh_bb(glm::vec3(p), mesh_idx);
+		if (mesh_idx) {
+			DrawableBase::Ptr drawable_base = this->scene->dummy_getDrawable(mesh_idx);
+			if (drawable_base == nullptr) {
+				this->temp_mesh_idx = 0;
+			} else {
+				// get mesh drawable and get closest point from mesh underneath :
+				DrawableMesh::Ptr drawable_mesh = std::dynamic_pointer_cast<DrawableMesh>(drawable_base);
+				if (drawable_mesh != nullptr) {
+					auto mesh = drawable_mesh->getMesh();
+					if (mesh == nullptr) {
+						this->temp_mesh_idx = 0;
+					} else {
+						this->temp_mesh_idx = mesh_idx;
+						// Transform the point to mesh-local coordinates !
+						// get transfo and extract translation component
+						glm::mat4 mesh_transfo = drawable_mesh->getTransformation();
+						glm::vec4 mesh_translation = glm::vec4(mesh_transfo[3]); mesh_translation.w = .0f;
+						mesh_transfo[3] = glm::vec4{.0f, .0f, .0f, 1.f};
+						glm::vec4 mesh_local_position = glm::inverse(mesh_transfo) * (p - mesh_translation);
+						this->temp_sphere_position = mesh->closestPointTo(glm::vec3(mesh_local_position), this->temp_mesh_vtx_idx);
+						this->temp_sphere_position = glm::vec3(mesh_transfo * glm::vec4(this->temp_sphere_position, 1.f) + mesh_translation);
+					}
+				}
+			}
+		} else {
+			//reset mesh idx, not on a mesh means last position should be invalidated
+			this->temp_mesh_idx = 0;
+		}
 	}
 	this->doneCurrent();
 }
@@ -338,22 +428,22 @@ QString Viewer::helpString() const {
 QString Viewer::keyboardString() const {
 	QString message("");
 	message += "<ul>";
-		message += "<li>3D viewer :";
-			message += "<ul>";
-				message += "<li><b>S</b> : set draw mode to \'Solid\'</li>";
-				message += "<li><b>V</b> : set draw mode to \'Volumetric\'</li>";
-				message += "<li><i>Shift</i>+<b>V</b> : set draw mode to \'Volumetric Boxed\'</li>";
-				message += "<li><i>Ctrl</i>+<b>S</b> : Generate a grid, if any are loaded.</li>";
-			message += "</ul>";
-		message += "</li>";
-		message += "<li> Planar viewer(s) :";
-			message += "<ul>";
-				message += "<li><b>R</b> : Reset size and position to default values</li>";
-			message += "</ul>";
-		message += "</li>";
-		message += "<li>Developper options :";
-		message += "<ul><li><b>F5</b> : Reload shaders</li></ul>";
-		message += "</li>";
+	message += "<li>3D viewer :";
+	message += "<ul>";
+	message += "<li><b>S</b> : set draw mode to \'Solid\'</li>";
+	message += "<li><b>V</b> : set draw mode to \'Volumetric\'</li>";
+	message += "<li><i>Shift</i>+<b>V</b> : set draw mode to \'Volumetric Boxed\'</li>";
+	message += "<li><i>Ctrl</i>+<b>S</b> : Generate a grid, if any are loaded.</li>";
+	message += "</ul>";
+	message += "</li>";
+	message += "<li> Planar viewer(s) :";
+	message += "<ul>";
+	message += "<li><b>R</b> : Reset size and position to default values</li>";
+	message += "</ul>";
+	message += "</li>";
+	message += "<li>Developper options :";
+	message += "<ul><li><b>F5</b> : Reload shaders</li></ul>";
+	message += "</li>";
 	message += "</ul>";
 
 	return message;
@@ -362,72 +452,60 @@ QString Viewer::keyboardString() const {
 QString Viewer::mouseString() const {
 	QString message("");
 	message += "<ul>";
-		message += "<li>3D viewer :";
-			message += "<ul>";
-				message += "<li><i>Left-click & drag</i> : Rotate around the loaded image stack(s)</li>";
-				message += "<li><i>Right-click & drag</i> : Pan the camera</li>";
-				message += "<li><i>Scroll up/down</i> : zoom in/out (respectively)</li>";
-			message += "</ul>";
-		message += "</li>";
-		message += "<li> Planar viewer(s) :";
-			message += "<ul>";
-				message += "<li><i>Right-click & drag</i> : pan the image</li>";
-				message += "<li><i>Scroll up/down</i> : zoom in/out (respectively)</li>";
-			message += "</ul>";
-		message += "</li>";
+	message += "<li>3D viewer :";
+	message += "<ul>";
+	message += "<li><i>Left-click & drag</i> : Rotate around the loaded image stack(s)</li>";
+	message += "<li><i>Right-click & drag</i> : Pan the camera</li>";
+	message += "<li><i>Scroll up/down</i> : zoom in/out (respectively)</li>";
+	message += "</ul>";
+	message += "</li>";
+	message += "<li> Planar viewer(s) :";
+	message += "<ul>";
+	message += "<li><i>Right-click & drag</i> : pan the image</li>";
+	message += "<li><i>Scroll up/down</i> : zoom in/out (respectively)</li>";
+	message += "</ul>";
+	message += "</li>";
 	message += "</ul>";
 
 	return message;
 }
 
 void Viewer::updateCameraPosition() {
+	auto bb = this->scene->getSceneBoundingBox();
+	auto center = bb.getMin() + (bb.getDiagonal()/2.f);
+	auto radius = glm::length(bb.getDiagonal());
+	this->setSceneCenter(qglviewer::Vec(center.x, center.y, center.z));
+	this->setSceneRadius(radius * sceneRadiusMultiplier);
+	this->showEntireScene();
 }
 
-void Viewer::loadGrid(const std::shared_ptr<InputGrid>& g) {
-	this->makeCurrent();
-	this->scene->addGrid(g, "");
-	this->doneCurrent();
-
-	glm::vec3 bbDiag = this->scene->getSceneBoundaries();
-	float sceneSize = glm::length(bbDiag);
-
-	this->setSceneRadius(sceneSize*sceneRadiusMultiplier);
-	// center scene on center of grid
-	this->setSceneCenter(qglviewer::Vec(bbDiag.x/2., bbDiag.y/2., bbDiag.z/2.));
-	this->showEntireScene();
+void Viewer::updateInfoFromScene() {
+	this->update();
 	this->updateCameraPosition();
-	this->centerScene();
-}
-
-void Viewer::loadTwoGrids(const std::shared_ptr<InputGrid>& g1, const std::shared_ptr<InputGrid>& g2) {
-	if (this->scene == nullptr) { return; }
-	this->makeCurrent();
-	this->scene->addTwoGrids(g1, g2, "");
-	this->doneCurrent();
-
-	glm::vec3 bbDiag = this->scene->getSceneBoundaries();
-	float sceneSize = glm::length(bbDiag);
-
-	this->setSceneRadius(sceneSize*sceneRadiusMultiplier);
-	// center scene on center of grid
-	this->setSceneCenter(qglviewer::Vec(bbDiag.x/2., bbDiag.y/2., bbDiag.z/2.));
-	this->showEntireScene();
-	this->updateCameraPosition();
-	this->centerScene();
+	this->update();
 }
 
 void Viewer::newAPI_loadGrid(Image::Grid::Ptr ptr) {
-	if (this->scene == nullptr) { return; }
+	if (this->scene == nullptr) {
+		return;
+	}
 	this->makeCurrent();
-	this->scene->newAPI_addGrid(ptr);this->doneCurrent();
+	this->scene->newAPI_addGrid(ptr);
+    this->updateManipulatorsPositions();
+    this->scene->prepareManipulators();
+	this->doneCurrent();
 
 	glm::vec3 bbDiag = this->scene->getSceneBoundaries();
-	float sceneSize = glm::length(bbDiag);
+	float sceneSize	 = glm::length(bbDiag);
 
-	this->setSceneRadius(sceneSize*sceneRadiusMultiplier);
+	this->setSceneRadius(sceneSize * sceneRadiusMultiplier);
 	// center scene on center of grid
-	this->setSceneCenter(qglviewer::Vec(bbDiag.x/2., bbDiag.y/2., bbDiag.z/2.));
+	this->setSceneCenter(qglviewer::Vec(bbDiag.x / 2., bbDiag.y / 2., bbDiag.z / 2.));
 	this->showEntireScene();
 	this->updateCameraPosition();
 	this->centerScene();
+}
+
+void Viewer::toggleManipulators() {
+    this->meshManipulator.toggleActivation();
 }

@@ -1,4 +1,7 @@
 #version 150
+#extension GL_ARB_explicit_attrib_location : enable
+
+#define OUTLAYOUT
 
 layout(triangles) in;
 layout(triangle_strip, max_vertices=3) out;
@@ -12,15 +15,15 @@ in vec4 vNorm_CS_VS[];
 in vec4 lightDir_CS_VS[];
 in vec4 eyeDir_CS_VS[];
 
-noperspective out vec4 vPos_WS;
-noperspective out vec4 vNorm_WS;
-noperspective out vec3 texCoord;
-noperspective out vec3 barycentricCoords;
-noperspective out vec3 largestDelta;
-noperspective out vec4 vPos_CS;
-noperspective out vec4 vNorm_CS;
-noperspective out vec4 lightDir_CS;
-noperspective out vec4 eyeDir_CS;
+OUTLAYOUT out vec4 vPos_WS;
+OUTLAYOUT out vec4 vNorm_WS;
+OUTLAYOUT out vec3 texCoord;
+OUTLAYOUT out vec3 barycentricCoords;
+OUTLAYOUT out vec3 largestDelta;
+OUTLAYOUT out vec4 vPos_CS;
+OUTLAYOUT out vec4 vNorm_CS;
+OUTLAYOUT out vec4 lightDir_CS;
+OUTLAYOUT out vec4 eyeDir_CS;
 
 void main() {
 	vec3 p0 = vPos_CS_VS[0].xyz;
@@ -50,6 +53,7 @@ void main() {
 	lightDir_CS = lightDir_CS_VS[0];
 	eyeDir_CS = eyeDir_CS_VS[0];
 	EmitVertex();
+
 	gl_Position = gl_in[1].gl_Position;
 	barycentricCoords = vec3(.0, dist_p1e3, .0);
 	vPos_WS = vPos_WS_VS[1];
@@ -61,6 +65,7 @@ void main() {
 	lightDir_CS = lightDir_CS_VS[1];
 	eyeDir_CS = eyeDir_CS_VS[1];
 	EmitVertex();
+
 	gl_Position = gl_in[2].gl_Position;
 	barycentricCoords = vec3(.0, .0, dist_p2e1);
 	vPos_WS = vPos_WS_VS[2];
@@ -72,5 +77,6 @@ void main() {
 	lightDir_CS = lightDir_CS_VS[2];
 	eyeDir_CS = eyeDir_CS_VS[2];
 	EmitVertex();
+
 	EndPrimitive();
 }

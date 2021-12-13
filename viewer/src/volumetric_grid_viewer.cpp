@@ -10,12 +10,12 @@ GridViewer::GridViewer(Image::Grid::Ptr& _grid_to_show) {
 	// TODO: Downsample the grid given in argument here.
 
 	// By default, the grid is hidden because the data is not yet initialized.
-	this->is_grid_hidden = true;
-	this->grid_texture = GL_INVALID_INDEX;
-	this->ubo_handle = GL_INVALID_INDEX;
-	this->texture_handles = VolMesh{};
+	this->is_grid_hidden	 = true;
+	this->grid_texture		 = GL_INVALID_INDEX;
+	this->ubo_handle		 = GL_INVALID_INDEX;
+	this->texture_handles	 = VolMesh{};
 	this->main_channel_index = 0;
-	this->source_grid = _grid_to_show;
+	this->source_grid		 = _grid_to_show;
 	this->volumetric_epsilon = glm::vec3{.0f, .0f, .0f};
 
 	// Let the initialization of the color channel data to the initialization functions.
@@ -36,7 +36,7 @@ void GridViewer::initializeData() {
 	emit this->afterCPUInit();
 }
 
-void GridViewer::initializeGLData(Scene *_scene) {
+void GridViewer::initializeGLData(Scene* _scene) {
 	emit this->beforeGLInit();
 
 	// Get grid dimensions :
@@ -44,25 +44,49 @@ void GridViewer::initializeGLData(Scene *_scene) {
 
 	// Upload the texture to the GPU :
 	TextureUpload _gridTex{};
-	_gridTex.minmag.x = GL_NEAREST;
-	_gridTex.minmag.y = GL_NEAREST;
-	_gridTex.lod.y = -1000.f;
-	_gridTex.wrap.x = GL_CLAMP_TO_EDGE;
-	_gridTex.wrap.y = GL_CLAMP_TO_EDGE;
-	_gridTex.wrap.z = GL_CLAMP_TO_EDGE;
+	_gridTex.minmag.x  = GL_NEAREST;
+	_gridTex.minmag.y  = GL_NEAREST;
+	_gridTex.lod.y	   = -1000.f;
+	_gridTex.wrap.x	   = GL_CLAMP_TO_EDGE;
+	_gridTex.wrap.y	   = GL_CLAMP_TO_EDGE;
+	_gridTex.wrap.z	   = GL_CLAMP_TO_EDGE;
 	_gridTex.swizzle.r = GL_RED;
-	if (dimensions.a > 1) { _gridTex.swizzle.g = GL_GREEN; } else { _gridTex.swizzle.g = GL_ZERO; }
-	if (dimensions.a > 2) { _gridTex.swizzle.b = GL_BLUE ; } else { _gridTex.swizzle.b = GL_ZERO; }
-	if (dimensions.a > 3) { _gridTex.swizzle.a = GL_ALPHA; } else { _gridTex.swizzle.a = GL_ONE ; }
+	if (dimensions.a > 1) {
+		_gridTex.swizzle.g = GL_GREEN;
+	} else {
+		_gridTex.swizzle.g = GL_ZERO;
+	}
+	if (dimensions.a > 2) {
+		_gridTex.swizzle.b = GL_BLUE;
+	} else {
+		_gridTex.swizzle.b = GL_ZERO;
+	}
+	if (dimensions.a > 3) {
+		_gridTex.swizzle.a = GL_ALPHA;
+	} else {
+		_gridTex.swizzle.a = GL_ONE;
+	}
 	_gridTex.alignment.x = 1;
 	_gridTex.alignment.y = 2;
 	switch (dimensions.a) {
-		case 1: _gridTex.format = GL_RED_INTEGER ; _gridTex.internalFormat = GL_R16UI   ; break;
-		case 2: _gridTex.format = GL_RG_INTEGER  ; _gridTex.internalFormat = GL_RG16UI  ; break;
-		case 3: _gridTex.format = GL_RGB_INTEGER ; _gridTex.internalFormat = GL_RGB16UI ; break;
-		case 4: _gridTex.format = GL_RGBA_INTEGER; _gridTex.internalFormat = GL_RGBA16UI; break;
+		case 1:
+			_gridTex.format			= GL_RED_INTEGER;
+			_gridTex.internalFormat = GL_R16UI;
+			break;
+		case 2:
+			_gridTex.format			= GL_RG_INTEGER;
+			_gridTex.internalFormat = GL_RG16UI;
+			break;
+		case 3:
+			_gridTex.format			= GL_RGB_INTEGER;
+			_gridTex.internalFormat = GL_RGB16UI;
+			break;
+		case 4:
+			_gridTex.format			= GL_RGBA_INTEGER;
+			_gridTex.internalFormat = GL_RGBA16UI;
+			break;
 	}
-	_gridTex.type = GL_UNSIGNED_SHORT;
+	_gridTex.type	= GL_UNSIGNED_SHORT;
 	_gridTex.size.x = dimensions.x;
 	_gridTex.size.y = dimensions.y;
 	_gridTex.size.z = dimensions.z;
@@ -79,24 +103,24 @@ void GridViewer::initializeGLData(Scene *_scene) {
 	}
 
 	// Create the UBO :
-	this->ubo_handle = _scene->createUniformBuffer(4*sizeof(colorChannelAttributes_GL), GL_STATIC_DRAW);
-	std::size_t color_s = sizeof(colorChannelAttributes);
+	this->ubo_handle		= _scene->createUniformBuffer(4 * sizeof(colorChannelAttributes_GL), GL_STATIC_DRAW);
+	std::size_t color_s		= sizeof(colorChannelAttributes);
 	auto& main_channel_data = this->colorChannelAttributes[this->main_channel_index];
 	// Upload data : main channel, then red, green, and blue all at once
-	_scene->setUniformBufferData(this->ubo_handle, 0*color_s, color_s, &main_channel_data);
+	_scene->setUniformBufferData(this->ubo_handle, 0 * color_s, color_s, &main_channel_data);
 	// offset by one sizeof(colorChannelAttributes_GL) and upload 3 times that amount at once
-	_scene->setUniformBufferData(this->ubo_handle, color_s, 3*color_s, this->colorChannelAttributes.data());
+	_scene->setUniformBufferData(this->ubo_handle, color_s, 3 * color_s, this->colorChannelAttributes.data());
 
 	// Upload the volumetric mesh's data
 
 	emit this->afterGLInit();
 }
 
-void GridViewer::draw3D(Scene *_scene_functions, GLfloat* view_matrix, GLfloat* projection_matrix, glm::vec3 cam_pos) {
+void GridViewer::draw3D(Scene* _scene_functions, GLfloat* view_matrix, GLfloat* projection_matrix, glm::vec3 cam_pos) {
 	if (this->vis_mode == VisualizationMode::Solid) {
 		this->program_handle = _scene_functions->getSolidProgram();
 		this->draw_solid(_scene_functions, view_matrix, projection_matrix);
-	} else if (this->vis_mode == VisualizationMode::Volumetric || this->vis_mode == VisualizationMode::VolumetricBoxed){
+	} else if (this->vis_mode == VisualizationMode::Volumetric || this->vis_mode == VisualizationMode::VolumetricBoxed) {
 		this->program_handle = _scene_functions->getVolumetricProgram();
 		this->draw_volumetric(_scene_functions, view_matrix, projection_matrix, cam_pos);
 	} else {
@@ -138,30 +162,30 @@ void GridViewer::bindUniformBuffer(Scene* _scene, const char* uniform_buffer_nam
 }
 
 void GridViewer::bindUniforms_Solid(Scene* _scene, GLfloat* view_matrix, GLfloat* projection_matrix) {
-	GLint mMatrix_Loc =						_scene->findUniform(this->program_handle, "mMatrix");
-	GLint vMatrix_Loc =						_scene->findUniform(this->program_handle, "vMatrix");
-	GLint pMatrix_Loc =						_scene->findUniform(this->program_handle, "pMatrix");
-	GLint lightPos_Loc =					_scene->findUniform(this->program_handle, "lightPos");
-	GLint voxelGridOrigin_Loc =				_scene->findUniform(this->program_handle, "voxelGridOrigin");
-	GLint voxelGridSize_Loc =				_scene->findUniform(this->program_handle, "voxelGridSize");
-	GLint voxelSize_Loc =					_scene->findUniform(this->program_handle, "voxelSize");
-	GLint drawMode_Loc =					_scene->findUniform(this->program_handle, "drawMode");
-	GLint planePositionsLoc =				_scene->findUniform(this->program_handle, "planePositions");
-	GLint location_planeDirections =		_scene->findUniform(this->program_handle, "planeDirections");
-	GLint gridPositionLoc =					_scene->findUniform(this->program_handle, "gridPosition");
+	GLint mMatrix_Loc			   = _scene->findUniform(this->program_handle, "mMatrix");
+	GLint vMatrix_Loc			   = _scene->findUniform(this->program_handle, "vMatrix");
+	GLint pMatrix_Loc			   = _scene->findUniform(this->program_handle, "pMatrix");
+	GLint lightPos_Loc			   = _scene->findUniform(this->program_handle, "lightPos");
+	GLint voxelGridOrigin_Loc	   = _scene->findUniform(this->program_handle, "voxelGridOrigin");
+	GLint voxelGridSize_Loc		   = _scene->findUniform(this->program_handle, "voxelGridSize");
+	GLint voxelSize_Loc			   = _scene->findUniform(this->program_handle, "voxelSize");
+	GLint drawMode_Loc			   = _scene->findUniform(this->program_handle, "drawMode");
+	GLint planePositionsLoc		   = _scene->findUniform(this->program_handle, "planePositions");
+	GLint location_planeDirections = _scene->findUniform(this->program_handle, "planeDirections");
+	GLint gridPositionLoc		   = _scene->findUniform(this->program_handle, "gridPosition");
 
 	// Get bounding box details :
-	DiscreteGrid::bbox_t::vec origin = this->source_grid->getBoundingBox().getMin();
+	DiscreteGrid::bbox_t::vec origin   = this->source_grid->getBoundingBox().getMin();
 	DiscreteGrid::bbox_t::vec originWS = this->source_grid->getBoundingBox().getMin();
-	DiscreteGrid::sizevec3 gridDims = this->source_grid->getResolution();
-	glm::vec3 dims = glm::convert_to<float>(gridDims);
+	DiscreteGrid::sizevec3 gridDims	   = this->source_grid->getResolution();
+	glm::vec3 dims					   = glm::convert_to<float>(gridDims);
 
 	// get plane and light position, and plane direction :
 	glm::vec3 planePos = _scene->computePlanePositions();
 	glm::vec3 planeDir = _scene->getPlaneDirections();
 	glm::vec4 lightPos = glm::vec4(-0.25, -0.25, -0.25, 1.0);
 
-	TransformStack::Ptr stack = this->source_grid->getTransformStack();
+	TransformStack::Ptr stack	 = this->source_grid->getTransformStack();
 	MatrixTransform::Ptr transfo = stack->getPrecomputedMatrix();
 
 	_scene->glUniform3fv(voxelGridOrigin_Loc, 1, glm::value_ptr(origin));
@@ -183,12 +207,12 @@ void GridViewer::bindUniforms_Solid(Scene* _scene, GLfloat* view_matrix, GLfloat
 
 void GridViewer::bindTextures_Solid(Scene* _scene) {
 	// Grid textures :
-	GLint texDataLoc =						_scene->findUniform(this->program_handle, "texData");
+	GLint texDataLoc = _scene->findUniform(this->program_handle, "texData");
 	// The color scales :
-	GLint location_colorScales0 =			_scene->findUniform(this->program_handle, "colorScales[0]");
-	GLint location_colorScales1 =			_scene->findUniform(this->program_handle, "colorScales[1]");
-	GLint location_colorScales2 =			_scene->findUniform(this->program_handle, "colorScales[2]");
-	GLint location_colorScales3 =			_scene->findUniform(this->program_handle, "colorScales[3]");
+	GLint location_colorScales0 = _scene->findUniform(this->program_handle, "colorScales[0]");
+	GLint location_colorScales1 = _scene->findUniform(this->program_handle, "colorScales[1]");
+	GLint location_colorScales2 = _scene->findUniform(this->program_handle, "colorScales[2]");
+	GLint location_colorScales3 = _scene->findUniform(this->program_handle, "colorScales[3]");
 
 	glm::tvec4<GLuint> colorscales = _scene->draft_getGeneratedColorScales();
 
@@ -223,21 +247,21 @@ void GridViewer::bindTextures_Solid(Scene* _scene) {
 
 void GridViewer::bindUniforms_Volumetric(Scene* _scene, GLfloat* view_matrix, GLfloat* projection_matrix, glm::vec3 cam_pos) {
 	// Vectors/arrays :
-	GLint location_voxelSize =				_scene->findUniform(this->program_handle, "voxelSize");
-	GLint location_gridSize =				_scene->findUniform(this->program_handle, "gridSize");
-	GLint location_cam =					_scene->findUniform(this->program_handle, "cam");
-	GLint location_cut =					_scene->findUniform(this->program_handle, "cut");
-	GLint location_cutDirection =			_scene->findUniform(this->program_handle, "cutDirection");
-	GLint location_visuBBMin =				_scene->findUniform(this->program_handle, "visuBBMin");
-	GLint location_visuBBMax =				_scene->findUniform(this->program_handle, "visuBBMax");
-	GLint location_shouldUseBB =			_scene->findUniform(this->program_handle, "shouldUseBB");
-	GLint location_volumeEpsilon =			_scene->findUniform(this->program_handle, "volumeEpsilon");
+	GLint location_voxelSize			  = _scene->findUniform(this->program_handle, "voxelSize");
+	GLint location_gridSize				  = _scene->findUniform(this->program_handle, "gridSize");
+	GLint location_cam					  = _scene->findUniform(this->program_handle, "cam");
+	GLint location_cut					  = _scene->findUniform(this->program_handle, "cut");
+	GLint location_cutDirection			  = _scene->findUniform(this->program_handle, "cutDirection");
+	GLint location_visuBBMin			  = _scene->findUniform(this->program_handle, "visuBBMin");
+	GLint location_visuBBMax			  = _scene->findUniform(this->program_handle, "visuBBMax");
+	GLint location_shouldUseBB			  = _scene->findUniform(this->program_handle, "shouldUseBB");
+	GLint location_volumeEpsilon		  = _scene->findUniform(this->program_handle, "volumeEpsilon");
 	GLint location_clipDistanceFromCamera = _scene->findUniform(this->program_handle, "clipDistanceFromCamera");
 
-	glm::vec3 floatres = glm::convert_to<float>(this->source_grid->getResolution());
-	glm::vec3 planePos = _scene->computePlanePositions();
-	glm::vec3 planeDir = _scene->getPlaneDirections();
-	DiscreteGrid::bbox_t box = _scene->getVisuBox();
+	glm::vec3 floatres			  = glm::convert_to<float>(this->source_grid->getResolution());
+	glm::vec3 planePos			  = _scene->computePlanePositions();
+	glm::vec3 planeDir			  = _scene->getPlaneDirections();
+	DiscreteGrid::bbox_t box	  = _scene->getVisuBox();
 	DiscreteGrid::bbox_t::vec min = box.getMin();
 	DiscreteGrid::bbox_t::vec max = box.getMax();
 
@@ -250,7 +274,7 @@ void GridViewer::bindUniforms_Volumetric(Scene* _scene, GLfloat* view_matrix, GL
 	_scene->glUniform3fv(location_visuBBMax, 1, glm::value_ptr(max));
 	_scene->glUniform1ui(location_shouldUseBB, ((this->vis_mode == VisualizationMode::VolumetricBoxed) ? 1 : 0));
 	_scene->glUniform3fv(location_volumeEpsilon, 1, glm::value_ptr(this->volumetric_epsilon));
-	_scene->glUniform1f (location_clipDistanceFromCamera, 5.f);
+	_scene->glUniform1f(location_clipDistanceFromCamera, 5.f);
 	// TODO: Argument above should be clipDistanceFromCamera, and should be user-defined (or at least user-modifiable)
 
 	// Matrices :
@@ -259,23 +283,23 @@ void GridViewer::bindUniforms_Volumetric(Scene* _scene, GLfloat* view_matrix, GL
 	GLint location_pMat = _scene->findUniform(this->program_handle, "pMat");
 
 	MatrixTransform::Ptr grid_transform_pointer = this->source_grid->getTransformStack()->getPrecomputedMatrix();
-	const glm::mat4 gridTransfo = grid_transform_pointer->matrix();
+	const glm::mat4 gridTransfo					= grid_transform_pointer->matrix();
 
 	_scene->glUniformMatrix4fv(location_mMat, 1, GL_FALSE, glm::value_ptr(gridTransfo));
 	_scene->glUniformMatrix4fv(location_vMat, 1, GL_FALSE, &view_matrix[0]);
 	_scene->glUniformMatrix4fv(location_pMat, 1, GL_FALSE, &projection_matrix[0]);
 
 	// Color and shading parameters :
-	GLint location_specRef =			_scene->findUniform(this->program_handle, "specRef");
-	GLint location_shininess =			_scene->findUniform(this->program_handle, "shininess");
-	GLint location_diffuseRef =			_scene->findUniform(this->program_handle, "diffuseRef");
+	GLint location_specRef	  = _scene->findUniform(this->program_handle, "specRef");
+	GLint location_shininess  = _scene->findUniform(this->program_handle, "shininess");
+	GLint location_diffuseRef = _scene->findUniform(this->program_handle, "diffuseRef");
 
 	_scene->glUniform1f(location_specRef, .8f);
 	_scene->glUniform1f(location_shininess, .8f);
 	_scene->glUniform1f(location_diffuseRef, .8f);
 
 	// Light positions :
-	auto lightPositions = _scene->getLights();
+	auto lightPositions	  = _scene->getLights();
 	GLint location_light0 = _scene->findUniform(this->program_handle, "lightPositions[0]");
 	GLint location_light1 = _scene->findUniform(this->program_handle, "lightPositions[1]");
 	GLint location_light2 = _scene->findUniform(this->program_handle, "lightPositions[2]");
@@ -300,14 +324,14 @@ void GridViewer::bindTextures_Volumetric(Scene* _scene) {
 	glm::tvec4<GLuint> textures = _scene->draft_getGeneratedColorScales();
 
 	// Texture handles :
-	GLint location_vertices_translation =	_scene->findUniform(this->program_handle, "vertices_translations");
-	GLint location_normals_translation =	_scene->findUniform(this->program_handle, "normals_translations");
-	GLint location_visibility_texture =		_scene->findUniform(this->program_handle, "visibility_texture");
-	GLint location_texture_coordinates =	_scene->findUniform(this->program_handle, "texture_coordinates");
-	GLint location_neighbors =				_scene->findUniform(this->program_handle, "neighbors");
-	GLint location_Mask =					_scene->findUniform(this->program_handle, "texData");
-	GLint location_visibilityMap =			_scene->findUniform(this->program_handle, "visiblity_map");
-	GLint location_visibilityMapAlternate =	_scene->findUniform(this->program_handle, "visiblity_map_alternate");
+	GLint location_vertices_translation	  = _scene->findUniform(this->program_handle, "vertices_translations");
+	GLint location_normals_translation	  = _scene->findUniform(this->program_handle, "normals_translations");
+	GLint location_visibility_texture	  = _scene->findUniform(this->program_handle, "visibility_texture");
+	GLint location_texture_coordinates	  = _scene->findUniform(this->program_handle, "texture_coordinates");
+	GLint location_neighbors			  = _scene->findUniform(this->program_handle, "neighbors");
+	GLint location_Mask					  = _scene->findUniform(this->program_handle, "texData");
+	GLint location_visibilityMap		  = _scene->findUniform(this->program_handle, "visiblity_map");
+	GLint location_visibilityMapAlternate = _scene->findUniform(this->program_handle, "visiblity_map_alternate");
 
 	std::size_t tex = 0;
 	_scene->glActiveTexture(GL_TEXTURE0 + tex);
@@ -341,7 +365,7 @@ void GridViewer::bindTextures_Volumetric(Scene* _scene) {
 	tex++;
 
 	_scene->glActiveTexture(GL_TEXTURE0 + tex);
-	#warning Should be called only after the generateAndUploadVisibilityTexture() function is implemented ! \
+#warning Should be called only after the generateAndUploadVisibilityTexture() function is implemented ! \
 			Will not see anything otherwise !!!
 	_scene->glBindTexture(GL_TEXTURE_2D, this->visibility_texture);
 	_scene->glUniform1i(location_visibilityMap, tex);
@@ -375,7 +399,9 @@ void GridViewer::bindTextures_Volumetric(Scene* _scene) {
 
 void GridViewer::updateMainChannel_UBO(Scene* _scene) {
 	// If the data was not already set and created, do nothing
-	if (this->ubo_handle == GL_INVALID_INDEX) { return; }
+	if (this->ubo_handle == GL_INVALID_INDEX) {
+		return;
+	}
 
 	// Get the right data, and upload it to the UBO :
 	auto main_channel_data = this->colorChannelAttributes[this->main_channel_index];
@@ -390,15 +416,18 @@ void GridViewer::generateMeshData() {
 	using vec_t = typename DiscreteGrid::bbox_t::vec;
 
 	//Min and diagonal of the bounding box (used for position computation) :
-	const vec_t min = this->source_grid->getBoundingBox().getMin();
+	const vec_t min	 = this->source_grid->getBoundingBox().getMin();
 	const vec_t diag = this->source_grid->getBoundingBox().getDiagonal();
 	// Dimensions, subject to change :
-	std::size_t xv = 10 ; glm::vec4::value_type xs = diag.x / static_cast<glm::vec4::value_type>(xv);
-	std::size_t yv = 10 ; glm::vec4::value_type ys = diag.y / static_cast<glm::vec4::value_type>(yv);
-	std::size_t zv = 10 ; glm::vec4::value_type zs = diag.z / static_cast<glm::vec4::value_type>(zv);
+	std::size_t xv			 = 10;
+	glm::vec4::value_type xs = diag.x / static_cast<glm::vec4::value_type>(xv);
+	std::size_t yv			 = 10;
+	glm::vec4::value_type ys = diag.y / static_cast<glm::vec4::value_type>(yv);
+	std::size_t zv			 = 10;
+	glm::vec4::value_type zs = diag.z / static_cast<glm::vec4::value_type>(zv);
 
 	// Size of tetrahedra, to compute epsilon :
-	glm::vec3 epsVolu = glm::vec3(xs, ys, zs);
+	glm::vec3 epsVolu		 = glm::vec3(xs, ys, zs);
 	this->volumetric_epsilon = epsVolu;
 
 	// Containers for the computation of positions and texture coordinates :
@@ -406,7 +435,7 @@ void GridViewer::generateMeshData() {
 	glm::vec3 tex = glm::vec3();
 	// Transformation to apply to the mesh :
 	MatrixTransform::Ptr grid_transform_pointer =
-			std::dynamic_pointer_cast<MatrixTransform>(this->source_grid->getPrecomputedMatrix());
+	  std::dynamic_pointer_cast<MatrixTransform>(this->source_grid->getPrecomputedMatrix());
 
 	// If the std::dynamic_pointer_cast<>() failed, replace with a default transform :
 	if (grid_transform_pointer == nullptr) {
@@ -425,14 +454,13 @@ void GridViewer::generateMeshData() {
 	for (std::size_t k = 0; k <= zv; ++k) {
 		for (std::size_t j = 0; j <= yv; ++j) {
 			for (std::size_t i = 0; i <= xv; ++i) {
-				pos = transfo * glm::vec4(min.x + static_cast<val_t>(i)*xs, min.y + static_cast<val_t>(j)*ys,
-										  min.z + static_cast<val_t>(k)*zs, 1.f);
+				pos = transfo * glm::vec4(min.x + static_cast<val_t>(i) * xs, min.y + static_cast<val_t>(j) * ys,
+								  min.z + static_cast<val_t>(k) * zs, 1.f);
 				//
 				tex = glm::vec3(
-					static_cast<val_t>(i)/static_cast<val_t>(xv),
-					static_cast<val_t>(j)/static_cast<val_t>(yv),
-					static_cast<val_t>(k)/static_cast<val_t>(zv)
-				);
+				  static_cast<val_t>(i) / static_cast<val_t>(xv),
+				  static_cast<val_t>(j) / static_cast<val_t>(yv),
+				  static_cast<val_t>(k) / static_cast<val_t>(zv));
 
 				this->volumetric_mesh.positions.push_back(pos);
 				this->volumetric_mesh.texture.push_back(tex);
@@ -441,7 +469,8 @@ void GridViewer::generateMeshData() {
 	}
 
 	// Return position for vertex generated at indices I, J, K :
-	std::size_t xt = xv+1; std::size_t yt = yv+1;
+	std::size_t xt = xv + 1;
+	std::size_t yt = yv + 1;
 	auto getIndice = [&, xt, yt](std::size_t i, std::size_t j, std::size_t k) -> std::size_t {
 		return i + j * xt + k * xt * yt;
 	};
@@ -450,12 +479,12 @@ void GridViewer::generateMeshData() {
 	for (std::size_t k = 0; k < zv; ++k) {
 		for (std::size_t j = 0; j < yv; ++j) {
 			for (std::size_t i = 0; i < xv; ++i) {
-				this->volumetric_mesh.tetrahedra.push_back({getIndice(i+1, j  , k  ), getIndice(i+1, j+1, k  ), getIndice(i  , j+1, k  ), getIndice(i+1, j+1, k+1)});
-				this->volumetric_mesh.tetrahedra.push_back({getIndice(i  , j  , k+1), getIndice(i  , j  , k  ), getIndice(i  , j+1, k+1), getIndice(i+1, j  , k+1)});
-				this->volumetric_mesh.tetrahedra.push_back({getIndice(i  , j+1, k+1), getIndice(i+1, j  , k  ), getIndice(i+1, j+1, k+1), getIndice(i+1, j  , k+1)});
-				this->volumetric_mesh.tetrahedra.push_back({getIndice(i  , j  , k  ), getIndice(i+1, j  , k  ), getIndice(i  , j+1, k+1), getIndice(i+1, j  , k+1)});
-				this->volumetric_mesh.tetrahedra.push_back({getIndice(i  , j  , k  ), getIndice(i+1, j  , k  ), getIndice(i  , j+1, k  ), getIndice(i  , j+1, k+1)});
-				this->volumetric_mesh.tetrahedra.push_back({getIndice(i  , j+1, k  ), getIndice(i+1, j  , k  ), getIndice(i+1, j+1, k+1), getIndice(i  , j+1, k+1)});
+				this->volumetric_mesh.tetrahedra.push_back({getIndice(i + 1, j, k), getIndice(i + 1, j + 1, k), getIndice(i, j + 1, k), getIndice(i + 1, j + 1, k + 1)});
+				this->volumetric_mesh.tetrahedra.push_back({getIndice(i, j, k + 1), getIndice(i, j, k), getIndice(i, j + 1, k + 1), getIndice(i + 1, j, k + 1)});
+				this->volumetric_mesh.tetrahedra.push_back({getIndice(i, j + 1, k + 1), getIndice(i + 1, j, k), getIndice(i + 1, j + 1, k + 1), getIndice(i + 1, j, k + 1)});
+				this->volumetric_mesh.tetrahedra.push_back({getIndice(i, j, k), getIndice(i + 1, j, k), getIndice(i, j + 1, k + 1), getIndice(i + 1, j, k + 1)});
+				this->volumetric_mesh.tetrahedra.push_back({getIndice(i, j, k), getIndice(i + 1, j, k), getIndice(i, j + 1, k), getIndice(i, j + 1, k + 1)});
+				this->volumetric_mesh.tetrahedra.push_back({getIndice(i, j + 1, k), getIndice(i + 1, j, k), getIndice(i + 1, j + 1, k + 1), getIndice(i, j + 1, k + 1)});
 			}
 		}
 	}
@@ -469,17 +498,16 @@ void GridViewer::generateMeshData() {
 }
 
 void GridViewer::generateAndUploadVisibilityTexture(Scene* _scene) {
-	#warning For now, must pass the Scene in argument but should be done differently.
+#warning For now, must pass the Scene in argument but should be done differently.
 	std::size_t vox_dim = this->source_grid->getVoxelDimensionality();
-	float* visibility = new float[std::size_t(256ul)*std::size_t(256ul)*vox_dim];
+	float* visibility	= new float[std::size_t(256ul) * std::size_t(256ul) * vox_dim];
 
 	using bound_t = colorChannelAttributes_GL::bound_t;
 
 	std::array<bound_t, 3> bounds = {
-		this->colorChannelAttributes[0].getVisibleRange(),
-		this->colorChannelAttributes[1].getVisibleRange(),
-		this->colorChannelAttributes[2].getVisibleRange()
-	};
+	  this->colorChannelAttributes[0].getVisibleRange(),
+	  this->colorChannelAttributes[1].getVisibleRange(),
+	  this->colorChannelAttributes[2].getVisibleRange()};
 
 	// for all values in the visible range :
 	for (std::size_t i = 0; i < 65536ul; ++i) {
@@ -488,34 +516,49 @@ void GridViewer::generateAndUploadVisibilityTexture(Scene* _scene) {
 			// is the value 'i' visible on channel 'v' ?
 			bool visible = (i >= bounds[v].x && i <= bounds[v].y);
 			// act accordingly :
-			visibility[i*vox_dim + v] = visible ? 1.f : 0.f;
+			visibility[i * vox_dim + v] = visible ? 1.f : 0.f;
 		}
 	}
 
 	TextureUpload texParams;
 	// create texture upload data :
-	texParams.minmag.x = GL_NEAREST;
-	texParams.minmag.y = GL_NEAREST;
-	texParams.lod.y = -1000.f;
-	texParams.wrap.s = GL_CLAMP_TO_EDGE;
-	texParams.wrap.t = GL_CLAMP_TO_EDGE;
-	texParams.swizzle.x = GL_RED; // At least one channel visible.
+	texParams.minmag.x	= GL_NEAREST;
+	texParams.minmag.y	= GL_NEAREST;
+	texParams.lod.y		= -1000.f;
+	texParams.wrap.s	= GL_CLAMP_TO_EDGE;
+	texParams.wrap.t	= GL_CLAMP_TO_EDGE;
+	texParams.swizzle.x = GL_RED;	 // At least one channel visible.
 	// if more, 'enable' more channels (don't swizzle them)
-	if (vox_dim > 1) { texParams.swizzle.y = GL_GREEN; } else { texParams.swizzle.y = GL_ZERO; }
-	if (vox_dim > 2) { texParams.swizzle.z = GL_BLUE;  } else { texParams.swizzle.z = GL_ZERO; }
+	if (vox_dim > 1) {
+		texParams.swizzle.y = GL_GREEN;
+	} else {
+		texParams.swizzle.y = GL_ZERO;
+	}
+	if (vox_dim > 2) {
+		texParams.swizzle.z = GL_BLUE;
+	} else {
+		texParams.swizzle.z = GL_ZERO;
+	}
 	// alpha is always one, we're doing RGB channels only here :
 	texParams.swizzle.a = GL_ONE;
 
 	// Set the right internal format and pixel format :
-	if (vox_dim == 1)      { texParams.internalFormat = GL_R32F;   texParams.format = GL_RED; }
-	else if (vox_dim == 2) { texParams.internalFormat = GL_RG32F;  texParams.format = GL_RG;  }
-	else if (vox_dim == 3) { texParams.internalFormat = GL_RGB32F; texParams.format = GL_RGB; }
+	if (vox_dim == 1) {
+		texParams.internalFormat = GL_R32F;
+		texParams.format		 = GL_RED;
+	} else if (vox_dim == 2) {
+		texParams.internalFormat = GL_RG32F;
+		texParams.format		 = GL_RG;
+	} else if (vox_dim == 3) {
+		texParams.internalFormat = GL_RGB32F;
+		texParams.format		 = GL_RGB;
+	}
 	// For now, size'll always be 65536 (so 256 squared) :
 	texParams.size.x = 256;
 	texParams.size.y = 256;
-	texParams.type = GL_FLOAT;
+	texParams.type	 = GL_FLOAT;
 	// The data generated beforehand :
-	texParams.data = visibility;
+	texParams.data			 = visibility;
 	this->visibility_texture = _scene->uploadTexture2D(texParams);
 }
 
@@ -530,7 +573,9 @@ void GridViewer::setViewMode(GridViewer::VisualizationMode _new_mode) {
 }
 
 void GridViewer::setMainChannel(std::uint8_t _new_main_channel) {
-	if (_new_main_channel >= 3) { return; }
+	if (_new_main_channel >= 3) {
+		return;
+	}
 	this->main_channel_index = _new_main_channel;
 	emit this->mainChannelChanged(_new_main_channel);
 }

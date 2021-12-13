@@ -1,6 +1,8 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.14)
 PROJECT(visualisation)
 
+ADD_COMPILE_DEFINITIONS(NEED_ARAP)
+
 # Append current cmake/ directory to CMake file paths :
 LIST(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 # CMake Setup :
@@ -12,14 +14,22 @@ INCLUDE(FindLocalTIFF)
 # Add the GLSL and icons dependencies :
 INCLUDE(ShaderDependency)
 INCLUDE(ResourceDependency)
+# Find the local SuiteSparse and GSL libraries : (windows-only for now)
+IF (WIN32 OR MINGW OR MSVC)
+	INCLUDE(FindSuiteSparse_Windows)
+ELSE()
+	INCLUDE(FindSuiteSparse_Linux)
+ENDIF()
 
 # Required libraries {{{
 FIND_PACKAGE(Qt5 REQUIRED COMPONENTS Core Gui Widgets Xml OpenGL)
 FIND_PACKAGE(OpenGL REQUIRED)
 FIND_PACKAGE(Threads REQUIRED)
-# Find TinyTIFF compiled locally :
+
+# Find locally-compiled libraries :
+# If any of them aren't found, it stops CMake's generation process with an error message.
 FIND_PACKAGE(TinyTIFF REQUIRED PATHS ${CMAKE_CURRENT_LIST_DIR}/third_party/compiled_libraries/lib/cmake PATH_SUFFIXES TinyTIFF)
-# If TinyTIFF's not found, it stops CMake's generation process with an error message.
+FIND_PACKAGE(nanoflann REQUIRED PATHS ${CMAKE_CURRENT_LIST_DIR}/third_party/compiled_libraries/lib/cmake PATH_SUFFIXES nanoflann)
 # }}}
 
 ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/third_party/glm)
@@ -29,6 +39,7 @@ SET(LIBS_COMPILED_HEADERS "${CMAKE_CURRENT_LIST_DIR}/third_party/compiled_librar
 ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/image)
 ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/new_grid)
 ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/colorscale)
+ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/meshes)
 
 # Library for image reading/writing {{{
 ADD_LIBRARY(ImageIO STATIC
@@ -66,7 +77,7 @@ ADD_LIBRARY(DiscreteGrid STATIC
 	./grid/src/discrete_grid.cpp
 	./grid/src/input_discrete_grid.cpp
 	./grid/src/output_discrete_grid.cpp
-)
+        meshes/deformable_curve/curve.hpp)
 TARGET_INCLUDE_DIRECTORIES(DiscreteGrid
 	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/third_party/glm/
 	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include
@@ -132,11 +143,15 @@ TARGET_LINK_LIBRARIES(VisualisationWidgets
 
 # Neighbor visualisation {{{
 ADD_EXECUTABLE(neighbor_visu
+	./qt/include/dialog_pick_grids_from_scene.hpp
 	# Header files, for Qt MOCS compilation :
 	./viewer/include/scene.hpp
 	./viewer/include/planar_viewer.hpp
 	./viewer/include/neighbor_visu_viewer.hpp
 	./viewer/include/viewer_structs.hpp
+    ./third_party/primitive/Sphere.h
+    ./qt/include/GLmanipulator.hpp
+    ./qt/include/manipulator.hpp
 
 	# Main file :
 	./neighbor_visu_main.cpp
@@ -146,6 +161,9 @@ ADD_EXECUTABLE(neighbor_visu
 	./viewer/src/planar_viewer.cpp
 	./viewer/src/neighbor_visu_viewer.cpp
 	./viewer/src/viewer_structs.cpp
+    ./third_party/primitive/Sphere.cpp
+    ./qt/src/GLmanipulator.cpp
+    ./qt/src/manipulator.cpp
 )
 TARGET_COMPILE_OPTIONS(neighbor_visu
 	# Set so CMake (more precisely clang/gcc) will not print 30-80 warnings about QGLViewer's
@@ -158,9 +176,6 @@ TARGET_PRECOMPILE_HEADERS(neighbor_visu
 	# shut up about the deprecated functions used within :
 	PRIVATE ${QGLViewer_HEADER_DIR}/QGLViewer/qglviewer.h
 	# Also, dramatically reduces compilation time.
-)
-SET_TARGET_PROPERTIES(neighbor_visu PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${VISU_OUTPUT_DIR}
 )
 TARGET_INCLUDE_DIRECTORIES(neighbor_visu
 	PRIVATE ${OPENGL_INCLUDE_DIRS}
@@ -184,7 +199,18 @@ TARGET_LINK_LIBRARIES(neighbor_visu
 	PUBLIC VisualisationWidgets
 	PUBLIC writergrid
 	PUBLIC writergrid_tiff
+	PUBLIC ${CMAKE_PROJECT_NAME}_shaders
+	PUBLIC ${CMAKE_PROJECT_NAME}_mesh
+	PUBLIC ${CMAKE_PROJECT_NAME}_deformable_curve
+	PUBLIC ${CMAKE_PROJECT_NAME}_meshop_arap
+	PUBLIC ${CMAKE_PROJECT_NAME}_drawable_meshes
 )
 # }}}
 
 # vim: foldmethod=marker : foldmarker={{{,}}} : tabstop=8
+
+option(RELEASE_WITH_ASSERT "Build a release version with assert" OFF)
+if(RELEASE_WITH_ASSERT)
+    message(STATUS "WARNING: Build in release using assertion")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+endif(RELEASE_WITH_ASSERT)

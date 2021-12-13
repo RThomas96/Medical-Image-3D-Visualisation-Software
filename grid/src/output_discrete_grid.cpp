@@ -1,44 +1,47 @@
 #include "../include/output_discrete_grid.hpp"
 
-#include <iomanip>
 #include <fstream>
+#include <iomanip>
 
-OutputGrid::OutputGrid(void) : DiscreteGrid() {
+OutputGrid::OutputGrid(void) :
+	DiscreteGrid() {
 	this->setModifiable(true);
 	this->data.clear();
-	this->gridName = "defaultOutputGrid";
-	this->boundingBox = bbox_t();
+	this->gridName				= "defaultOutputGrid";
+	this->boundingBox			= bbox_t();
 	this->transform_gridToWorld = glm::mat4(1.f);
 	this->transform_worldToGrid = glm::mat4(1.f);
 }
 
 OutputGrid::OutputGrid(const std::shared_ptr<OutputGrid>& _og) {
 	this->modifiable = _og->modifiable;
-	this->isOffline = _og->isOffline;
+	this->isOffline	 = _og->isOffline;
 	if (not this->isOffline) {
 		this->data = _og->data;
 	} else {
 		this->data.clear();
 	}
 
-	this->gridDimensions = _og->gridDimensions;
-	this->gridReader = _og->gridReader;
-	this->gridWriter = _og->gridWriter;
-	this->gridName = _og->gridName;
-	this->voxelDimensions = _og->voxelDimensions;
+	this->gridDimensions		= _og->gridDimensions;
+	this->gridReader			= _og->gridReader;
+	this->gridWriter			= _og->gridWriter;
+	this->gridName				= _og->gridName;
+	this->voxelDimensions		= _og->voxelDimensions;
 	this->transform_gridToWorld = _og->transform_gridToWorld;
 	this->transform_worldToGrid = _og->transform_worldToGrid;
-	this->boundingBox = _og->boundingBox;
-	this->dataThreshold = _og->dataThreshold;
-	this->dataBoundingBox = _og->dataBoundingBox;
+	this->boundingBox			= _og->boundingBox;
+	this->dataThreshold			= _og->dataThreshold;
+	this->dataBoundingBox		= _og->dataBoundingBox;
 }
 
-OutputGrid::OutputGrid(sizevec3 resolution, bbox_t renderWindow) : OutputGrid() {
+OutputGrid::OutputGrid(sizevec3 resolution, bbox_t renderWindow) :
+	OutputGrid() {
 	this->setBoundingBox(renderWindow);
 	this->setResolution(resolution);
 }
 
-OutputGrid::~OutputGrid() {}
+OutputGrid::~OutputGrid() {
+}
 
 /*
 OutputGrid& OutputGrid::preallocateData() {

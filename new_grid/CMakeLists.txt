@@ -10,6 +10,8 @@ ADD_LIBRARY(grid_api SHARED
 TARGET_LINK_LIBRARIES(grid_api
 	PUBLIC grid_tiff_backend
 	PUBLIC imagegrid
+	PUBLIC image_subregion
+	PUBLIC image_downsampler
 	PUBLIC transform_types
 	PUBLIC writergrid
 	PUBLIC writergrid_tiff

@@ -2,15 +2,15 @@
 #define MACROS_HPP
 
 #ifndef UNUSED
-#	define UNUSED(x) (void)x;
+#define UNUSED(x) (void) x;
 #else
-#	warning The macro "UNUSED" is already defined. Lets hope it does what it says it does.
+#warning The macro "UNUSED" is already defined. Lets hope it does what it says it does.
 #endif
 
-#define FUNC_ERR(s) __attribute__((error(s)))
+#define FUNC_ERR(s)	 __attribute__((error(s)))
 #define FUNC_WARN(s) __attribute__((warning(s)))
 
-#define FUNC_FLATTEN __attribute__((flatten))
+#define FUNC_FLATTEN	   __attribute__((flatten))
 #define FUNC_ALWAYS_INLINE __attribute__((always_inline))
 
 /// Enables or disables the use of std::experimental::propagate_const<> on pImpl members of a class.
@@ -32,11 +32,11 @@
 // (useful for printing function names for example, or macros as their name)
 #define pnt(x) #x
 
-#define LOG_ENTER(x) std::cerr << "[LOG] Entered function " << pnt(x) << " :\n";
-#define LOG_LEAVE(x) std::cerr << "[LOG] Left function " << pnt(x) << " :\n";
+#define LOG_ENTER(x)		 std::cerr << "[LOG] Entered function " << pnt(x) << " :\n";
+#define LOG_LEAVE(x)		 std::cerr << "[LOG] Left function " << pnt(x) << " :\n";
 #define PRINTVAL_NAMED(x, v) std::cerr << "[LOG] Value of " << pnt(x) << " : " << +v << '\n';
-#define PRINTVAL_VAR(x, v) std::cerr << "[LOG] Value of " << x << " : " << +v << '\n';
-#define PRINTVAL(x) PRINTVAL_NAMED(x, x)
+#define PRINTVAL_VAR(x, v)	 std::cerr << "[LOG] Value of " << x << " : " << +v << '\n';
+#define PRINTVAL(x)			 PRINTVAL_NAMED(x, x)
 
 #if defined(WIN32) || defined(WIN64) || defined(_MSC_VER) || defined(_WIN32)
 #define WIN32_LEAN_AND_MEAN
@@ -47,12 +47,14 @@
 This file exists to define some macros used through the program.
 **/
 #include <glm/glm.hpp>
-#include <type_traits>
 #include <iostream>
+#include <type_traits>
 
 /// @brief Template used to iterate over some const containers, to get the underlying object
-template<class T>
-std::remove_reference_t<T> const& as_const(T&&t){return t;}
+template <class T>
+std::remove_reference_t<T> const& as_const(T&& t) {
+	return t;
+}
 
 /// @brief Allows to restrict a template to use only floating point values for the type T.
 template <typename T>
@@ -68,30 +70,27 @@ namespace glm {
 	template <typename out, typename in, qualifier prec>
 	GLM_FUNC_DECL GLM_CONSTEXPR glm::vec<2, out, prec> convert_to(glm::vec<2, in, prec> origin) {
 		return glm::vec<2, out, prec>(
-			static_cast<out>(origin.x),
-			static_cast<out>(origin.y)
-		);
+		  static_cast<out>(origin.x),
+		  static_cast<out>(origin.y));
 	}
 
 	/// @brief Specifies a conversion function for a GLM vec3 of a certain type into another type.
 	template <typename out, typename in, qualifier prec>
 	GLM_FUNC_DECL GLM_CONSTEXPR glm::vec<3, out, prec> convert_to(glm::vec<3, in, prec> origin) {
 		return glm::vec<3, out, prec>(
-			static_cast<out>(origin.x),
-			static_cast<out>(origin.y),
-			static_cast<out>(origin.z)
-		);
+		  static_cast<out>(origin.x),
+		  static_cast<out>(origin.y),
+		  static_cast<out>(origin.z));
 	}
 
 	/// @brief Specifies a conversion function for a GLM vec4 of a certain type into another type.
 	template <typename out, typename in, qualifier prec>
 	GLM_FUNC_DECL GLM_CONSTEXPR glm::vec<4, out, prec> convert_to(glm::vec<4, in, prec> origin) {
 		return glm::vec<4, out, prec>(
-			static_cast<out>(origin.x),
-			static_cast<out>(origin.y),
-			static_cast<out>(origin.z),
-			static_cast<out>(origin.a)
-		);
+		  static_cast<out>(origin.x),
+		  static_cast<out>(origin.y),
+		  static_cast<out>(origin.z),
+		  static_cast<out>(origin.a));
 	}
 
 	/// @brief Declaration of a safe conversion function from type `in`to type `out`.
@@ -102,6 +101,6 @@ namespace glm {
 	template <typename out, typename in, qualifier prec>
 	GLM_FUNC_DECL GLM_CONSTEXPR glm::vec<2, out, prec> safe_convert_to(glm::vec<2, in, prec> origin);
 
-} // glm namespace
+}	 // namespace glm
 
-#endif // MACROS_HPP
+#endif	  // MACROS_HPP

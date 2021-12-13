@@ -1,34 +1,37 @@
 #include "../include/loader_widget.hpp"
 
-#include "../include/user_settings_widget.hpp"
-#include "../../../image/transforms/include/transform_stack.hpp"
-#include "../../../image/transforms/include/transform_interface.hpp"
-#include "../../../image/transforms/include/trs_transform.hpp"
 #include "../../../image/transforms/include/affine_transform.hpp"
+#include "../../../image/transforms/include/transform_interface.hpp"
+#include "../../../image/transforms/include/transform_stack.hpp"
+#include "../../../image/transforms/include/trs_transform.hpp"
+#include "../include/user_settings_widget.hpp"
 
-#include <QMessageBox>
+#include <glm/gtx/io.hpp>
+
+#include <QCoreApplication>
 #include <QDialog>
 #include <QFileDialog>
-#include <QCoreApplication>
+#include <QMessageBox>
 
 #include <iomanip>
 
-GridLoaderWidget::GridLoaderWidget(Scene* _scene, Viewer* _viewer, ControlPanel* cp, QWidget* parent) : QWidget(parent) {
-	this->setAttribute(Qt::WA_DeleteOnClose); // delete widget and resources on close.
+GridLoaderWidget::GridLoaderWidget(Scene* _scene, Viewer* _viewer, ControlPanel* cp, QWidget* parent) :
+	QWidget(parent) {
+	this->setAttribute(Qt::WA_DeleteOnClose);	 // delete widget and resources on close.
 	this->basePath.setPath(QDir::homePath());
-	this->scene = _scene;
-	this->viewer = _viewer;
-	this->_cp = cp;
-	this->dsLevel = IO::DownsamplingLevel::Original;
-	this->readerR = nullptr;
-	this->readerG = nullptr;
-	this->inputGridR = nullptr;
-	this->inputGridG = nullptr;
-	this->groupbox_userLimits = nullptr;
-	this->spinbox_userLimitMin = nullptr;
-	this->spinbox_userLimitMax = nullptr;
-	this->progress_load = nullptr;
-	this->_testing_grid = nullptr;
+	this->scene					= _scene;
+	this->viewer				= _viewer;
+	this->_cp					= cp;
+	this->dsLevel				= IO::DownsamplingLevel::Original;
+	this->readerR				= nullptr;
+	this->readerG				= nullptr;
+	this->inputGridR			= nullptr;
+	this->inputGridG			= nullptr;
+	this->groupbox_userLimits	= nullptr;
+	this->spinbox_userLimitMin	= nullptr;
+	this->spinbox_userLimitMax	= nullptr;
+	this->progress_load			= nullptr;
+	this->_testing_grid			= nullptr;
 	this->button_loadNewGridAPI = nullptr;
 	this->setupWidgets();
 	this->setupLayouts();
@@ -40,7 +43,7 @@ GridLoaderWidget::~GridLoaderWidget() {
 	this->inputGridG.reset();
 	this->readerR.reset();
 	this->readerG.reset();
-	this->scene = nullptr;
+	this->scene	 = nullptr;
 	this->viewer = nullptr;
 	this->interpolator.reset();
 
@@ -81,17 +84,17 @@ GridLoaderWidget::~GridLoaderWidget() {
 }
 
 void GridLoaderWidget::setupWidgets() {
-	this->label_headerLoader = new QLabel("<h2><i>Load a grid</i></h2>");
-	this->label_load1channel = new QLabel("Load a grid containing 1 color channel : ");
-	this->label_load2channel = new QLabel("Load a grid containing 2 color channels : ");
-	this->label_headerTransformation = new QLabel("Transformation details");
-	this->label_transformationAngle = new QLabel("Angle of capture (degrees) : ");
+	this->label_headerLoader			 = new QLabel("<h2><i>Load a grid</i></h2>");
+	this->label_load1channel			 = new QLabel("Load a grid containing 1 color channel : ");
+	this->label_load2channel			 = new QLabel("Load a grid containing 2 color channels : ");
+	this->label_headerTransformation	 = new QLabel("Transformation details");
+	this->label_transformationAngle		 = new QLabel("Angle of capture (degrees) : ");
 	this->label_transformationDimensions = new QLabel("Physical resolution of a pixel (micrometers, on X, Y, and Z) :");
-	this->label_gridInfoR = new QLabel("<No grid loaded>");
-	this->label_gridInfoG = new QLabel("");
-	this->button_loadNewGridAPI = new QPushButton("Load with new grid API");
+	this->label_gridInfoR				 = new QLabel("<No grid loaded>");
+	this->label_gridInfoG				 = new QLabel("");
+	this->button_loadNewGridAPI			 = new QPushButton("Load with new grid API");
 
-	this->progress_load = new QProgressBar;
+	this->progress_load			   = new QProgressBar;
 	QSizePolicy retain_size_policy = this->progress_load->sizePolicy();
 	retain_size_policy.setRetainSizeWhenHidden(true);
 	this->progress_load->setSizePolicy(retain_size_policy);
@@ -102,7 +105,7 @@ void GridLoaderWidget::setupWidgets() {
 	this->button_loadTIF_2channel = new QPushButton("TIFF");
 	this->button_loadOME_1channel = new QPushButton("OME-TIFF");
 	this->button_loadOME_2channel = new QPushButton("OME-TIFF");
-	this->button_loadGrids = new QPushButton("Load grids into program");
+	this->button_loadGrids		  = new QPushButton("Load grids into program");
 
 	this->dsb_transformationA  = new QDoubleSpinBox;
 	this->dsb_transformationDX = new QDoubleSpinBox;
@@ -140,8 +143,8 @@ void GridLoaderWidget::setupWidgets() {
 	this->dsb_offsetZ->setRange(min, max);
 	this->dsb_offsetZ->setSingleStep(.01);
 
-	this->frame_load1channel = new QFrame;
-	this->frame_load2channel = new QFrame;
+	this->frame_load1channel   = new QFrame;
+	this->frame_load2channel   = new QFrame;
 	this->frame_transfoDetails = new QFrame;
 
 	this->frame_load1channel->setFrameShape(QFrame::Shape::StyledPanel);
@@ -151,38 +154,48 @@ void GridLoaderWidget::setupWidgets() {
 	this->frame_load2channel->setFrameShadow(QFrame::Shadow::Raised);
 	this->frame_transfoDetails->setFrameShadow(QFrame::Shadow::Raised);
 
-	this->groupBox_downsampling = new QGroupBox("Image resolution to load");
-	this->groupBox_interpolator = new QGroupBox("Interpolation to use");
+	this->groupBox_downsampling	  = new QGroupBox("Image resolution to load");
+	this->groupBox_interpolator	  = new QGroupBox("Interpolation to use");
 	this->groupbox_originalOffset = new QGroupBox("Sample position");
 	this->groupbox_originalOffset->setToolTip("Original sample position relative to the microscope.");
 	this->groupbox_originalOffset->setCheckable(true);
 	this->groupbox_originalOffset->setChecked(false);
 
 	this->radioButton_original = new QRadioButton("Original");
-	this->radioButton_low = new QRadioButton("Low");
-	this->radioButton_lower = new QRadioButton("Lower");
-	this->radioButton_lowest = new QRadioButton("Lowest");
-	this->radioButton_nn = new QRadioButton("Nearest neighbor");
-	this->radioButton_mean = new QRadioButton("Mean value");
-	this->radioButton_mp = new QRadioButton("Most present value");
-	this->radioButton_min = new QRadioButton("Min value");
-	this->radioButton_max = new QRadioButton("Max value");
+	this->radioButton_low	   = new QRadioButton("Low");
+	this->radioButton_lower	   = new QRadioButton("Lower");
+	this->radioButton_lowest   = new QRadioButton("Lowest");
+	this->radioButton_nn	   = new QRadioButton("Nearest neighbor");
+	this->radioButton_mean	   = new QRadioButton("Mean value");
+	this->radioButton_mp	   = new QRadioButton("Most present value");
+	this->radioButton_min	   = new QRadioButton("Min value");
+	this->radioButton_max	   = new QRadioButton("Max value");
 
 	this->groupbox_userLimits = new QGroupBox("Predefined minimum and maximum intensities to evaluate");
 	this->groupbox_userLimits->setCheckable(true);
 	this->groupbox_userLimits->setChecked(false);
 
 	this->label_roiMin = new QLabel("Minimum intensity : ");
-	this->label_roiMax = new QLabel("Minimum intensity : ");
+	this->label_roiMax = new QLabel("Maximum intensity : ");
 
-	this->spinbox_userLimitMin = new QSpinBox;
-	this->spinbox_userLimitMin->setMinimum(static_cast<int>(std::numeric_limits<DiscreteGrid::data_t>::lowest()));
-	this->spinbox_userLimitMin->setMaximum(static_cast<int>(std::numeric_limits<DiscreteGrid::data_t>::max()));
-	this->spinbox_userLimitMin->setValue(static_cast<int>(std::numeric_limits<DiscreteGrid::data_t>::lowest()));
-	this->spinbox_userLimitMax = new QSpinBox;
-	this->spinbox_userLimitMax->setMinimum(static_cast<int>(std::numeric_limits<DiscreteGrid::data_t>::lowest()));
-	this->spinbox_userLimitMax->setMaximum(static_cast<int>(std::numeric_limits<DiscreteGrid::data_t>::max()));
-	this->spinbox_userLimitMax->setValue(static_cast<int>(std::numeric_limits<DiscreteGrid::data_t>::max()));
+	this->spinbox_userLimitMin = new QDoubleSpinBox;
+	this->spinbox_userLimitMax = new QDoubleSpinBox;
+
+    if(_testing_grid) {
+	    this->spinbox_userLimitMin->setMinimum(getMinNumericLimit(_testing_grid->getInternalDataType()));
+	    this->spinbox_userLimitMin->setMaximum(getMaxNumericLimit(_testing_grid->getInternalDataType()));
+	    this->spinbox_userLimitMin->setValue(getMinNumericLimit(_testing_grid->getInternalDataType()));
+	    this->spinbox_userLimitMax->setMinimum(getMinNumericLimit(_testing_grid->getInternalDataType()));
+	    this->spinbox_userLimitMax->setMaximum(getMaxNumericLimit(_testing_grid->getInternalDataType()));
+	    this->spinbox_userLimitMax->setValue(getMaxNumericLimit(_testing_grid->getInternalDataType()));
+    } else {
+	    this->spinbox_userLimitMin->setMinimum(0);
+	    this->spinbox_userLimitMin->setMaximum(10);
+	    this->spinbox_userLimitMin->setValue(0);
+	    this->spinbox_userLimitMax->setMinimum(0);
+	    this->spinbox_userLimitMax->setMaximum(10);
+	    this->spinbox_userLimitMax->setValue(10);
+    }
 
 	this->groupBox_interpolator->setDisabled(true);
 	this->radioButton_original->setChecked(true);
@@ -191,13 +204,13 @@ void GridLoaderWidget::setupWidgets() {
 }
 
 void GridLoaderWidget::setupLayouts() {
-	this->layout_mainLayout = new QVBoxLayout;
-	this->layout_load1channel = new QHBoxLayout;
-	this->layout_load2channel = new QHBoxLayout;
+	this->layout_mainLayout		= new QVBoxLayout;
+	this->layout_load1channel	= new QHBoxLayout;
+	this->layout_load2channel	= new QHBoxLayout;
 	this->layout_transfoDetails = new QGridLayout;
-	this->layout_downsampling = new QHBoxLayout;
-	this->layout_interpolator = new QGridLayout;
-	this->layout_roiSelection = new QGridLayout;
+	this->layout_downsampling	= new QHBoxLayout;
+	this->layout_interpolator	= new QGridLayout;
+	this->layout_roiSelection	= new QGridLayout;
 
 	this->layout_gb_offset = new QHBoxLayout;
 
@@ -305,8 +318,12 @@ void GridLoaderWidget::setupSignals() {
 		if (this->radioButton_original->isChecked()) {
 			this->dsLevel = IO::DownsamplingLevel::Original;
 			this->groupBox_interpolator->setEnabled(false);
-			if (this->readerR != nullptr) { this->readerR->enableDownsampling(this->dsLevel); }
-			if (this->readerG != nullptr) { this->readerG->enableDownsampling(this->dsLevel); }
+			if (this->readerR != nullptr) {
+				this->readerR->enableDownsampling(this->dsLevel);
+			}
+			if (this->readerG != nullptr) {
+				this->readerG->enableDownsampling(this->dsLevel);
+			}
 		}
 		this->computeGridInfoLabel();
 	});
@@ -315,8 +332,12 @@ void GridLoaderWidget::setupSignals() {
 		if (this->radioButton_low->isChecked()) {
 			this->dsLevel = IO::DownsamplingLevel::Low;
 			this->groupBox_interpolator->setEnabled(true);
-			if (this->readerR != nullptr) { this->readerR->enableDownsampling(this->dsLevel); }
-			if (this->readerG != nullptr) { this->readerG->enableDownsampling(this->dsLevel); }
+			if (this->readerR != nullptr) {
+				this->readerR->enableDownsampling(this->dsLevel);
+			}
+			if (this->readerG != nullptr) {
+				this->readerG->enableDownsampling(this->dsLevel);
+			}
 		}
 		this->computeGridInfoLabel();
 	});
@@ -325,8 +346,12 @@ void GridLoaderWidget::setupSignals() {
 		if (this->radioButton_lower->isChecked()) {
 			this->dsLevel = IO::DownsamplingLevel::Lower;
 			this->groupBox_interpolator->setEnabled(true);
-			if (this->readerR != nullptr) { this->readerR->enableDownsampling(this->dsLevel); }
-			if (this->readerG != nullptr) { this->readerG->enableDownsampling(this->dsLevel); }
+			if (this->readerR != nullptr) {
+				this->readerR->enableDownsampling(this->dsLevel);
+			}
+			if (this->readerG != nullptr) {
+				this->readerG->enableDownsampling(this->dsLevel);
+			}
 		}
 		this->computeGridInfoLabel();
 	});
@@ -335,8 +360,12 @@ void GridLoaderWidget::setupSignals() {
 		if (this->radioButton_lowest->isChecked()) {
 			this->dsLevel = IO::DownsamplingLevel::Lowest;
 			this->groupBox_interpolator->setEnabled(true);
-			if (this->readerR != nullptr) { this->readerR->enableDownsampling(this->dsLevel); }
-			if (this->readerG != nullptr) { this->readerG->enableDownsampling(this->dsLevel); }
+			if (this->readerR != nullptr) {
+				this->readerR->enableDownsampling(this->dsLevel);
+			}
+			if (this->readerG != nullptr) {
+				this->readerG->enableDownsampling(this->dsLevel);
+			}
 		}
 		this->computeGridInfoLabel();
 	});
@@ -468,8 +497,8 @@ void GridLoaderWidget::resetGridInfoLabel() {
 void GridLoaderWidget::computeGridInfoLabel() {
 	if (this->useLegacyGrids == false) {
 		if (this->_testing_grid != nullptr) {
-			auto dims = this->_testing_grid->getResolution();
-			auto v = this->_testing_grid->getVoxelDimensionality();
+			auto dims		 = this->_testing_grid->getResolution();
+			auto v			 = this->_testing_grid->getVoxelDimensionality();
 			QString infogrid = "Image dimensions : " + QString::number(dims.x) + "x" + QString::number(dims.y) + "x" +
 							   QString::number(dims.z) + " on " + QString::number(v) + " channels.";
 			this->label_gridInfoR->setText(infogrid);
@@ -484,25 +513,27 @@ void GridLoaderWidget::computeGridInfoLabel() {
 	}
 
 	this->readerR->enableDownsampling(this->dsLevel);
-	auto dims = this->readerR->getGridDimensions();
+	auto dims		   = this->readerR->getGridDimensions();
 	std::size_t fnSize = this->readerR->getFilenames().size();
-	QString infoGridR = "Image dimensions : " + QString::number(dims.x) + "x" + QString::number(dims.y) + "x" +
-				QString::number(dims.z) + " in " + QString::number(fnSize) + " images.";
+	QString infoGridR  = "Image dimensions : " + QString::number(dims.x) + "x" + QString::number(dims.y) + "x" +
+						QString::number(dims.z) + " in " + QString::number(fnSize) + " images.";
 	this->label_gridInfoR->setText(infoGridR);
 	this->updateVoxelDimensions_silent();
 
 	if (this->readerG != nullptr) {
 		this->readerG->enableDownsampling(this->dsLevel);
-		auto dimsG = this->readerG->getGridDimensions();
+		auto dimsG			= this->readerG->getGridDimensions();
 		std::size_t fnSizeG = this->readerG->getFilenames().size();
-		QString g = "Image dimensions : " + QString::number(dimsG.x) + "x" + QString::number(dimsG.y) + "x" +
-				QString::number(dimsG.z) + " in " + QString::number(fnSizeG) + " images.";
+		QString g			= "Image dimensions : " + QString::number(dimsG.x) + "x" + QString::number(dimsG.y) + "x" +
+					QString::number(dimsG.z) + " in " + QString::number(fnSizeG) + " images.";
 		this->label_gridInfoG->setText(g);
 	}
 }
 
 void GridLoaderWidget::updateVoxelDimensions_silent() {
-	if (this->readerR == nullptr) { return; }
+	if (this->readerR == nullptr) {
+		return;
+	}
 
 	// NOTE : we only rely on the red reader's voxel dimensions, because we assume
 	// the voxel dimensions _do not change_ between color channels.
@@ -529,7 +560,9 @@ void GridLoaderWidget::progressBar_init_undefined(QString format_message) {
 	this->progress_load->setRange(0, 0);
 	this->progress_load->setValue(0);
 	this->progress_load->setFormat(format_message);
-	if (not this->progress_load->isVisible()) { this->progress_load->setVisible(true); }
+	if (not this->progress_load->isVisible()) {
+		this->progress_load->setVisible(true);
+	}
 	// update and show the bar :
 	//QCoreApplication::processEvents();
 	//this->update();
@@ -539,7 +572,9 @@ void GridLoaderWidget::progressBar_init_defined(int min, int max, int current_va
 	this->progress_load->setRange(min, max);
 	this->progress_load->setValue(current_value);
 	this->progress_load->setFormat(format_string);
-	if (not this->progress_load->isVisible()) { this->progress_load->setVisible(true); }
+	if (not this->progress_load->isVisible()) {
+		this->progress_load->setVisible(true);
+	}
 	// update and show the bar :
 	QCoreApplication::processEvents();
 	this->update();
@@ -547,16 +582,24 @@ void GridLoaderWidget::progressBar_init_defined(int min, int max, int current_va
 
 void GridLoaderWidget::progressBar_reset() {
 	this->progress_load->reset();
-	if (this->progress_load->isVisible()) { this->progress_load->setVisible(false); }
+	if (this->progress_load->isVisible()) {
+		this->progress_load->setVisible(false);
+	}
 	QCoreApplication::processEvents();
 	this->update();
 }
 
 void GridLoaderWidget::loadGridDIM1channel() {
-	if (this->readerR != nullptr) { this->readerR.reset(); this->readerR = nullptr; }
-	if (this->readerG != nullptr) { this->readerG.reset(); this->readerG = nullptr; }
+	if (this->readerR != nullptr) {
+		this->readerR.reset();
+		this->readerR = nullptr;
+	}
+	if (this->readerG != nullptr) {
+		this->readerG.reset();
+		this->readerG = nullptr;
+	}
 	IO::GenericGridReader::data_t defaultThreshold = 5;
-	this->readerR = std::make_shared<IO::DIMReader>(defaultThreshold);
+	this->readerR								   = std::make_shared<IO::DIMReader>(defaultThreshold);
 	// if an error occurs :
 	QMessageBox* msgBox = new QMessageBox;
 	msgBox->setAttribute(Qt::WA_DeleteOnClose);
@@ -564,14 +607,15 @@ void GridLoaderWidget::loadGridDIM1channel() {
 	QString filenameR = QFileDialog::getOpenFileName(this, "Open DIM/IMA image (single channel)", this->basePath.path(), "DIM/IMA header files (*.dim)", nullptr, QFileDialog::DontUseNativeDialog);
 	if (filenameR.isEmpty()) {
 		msgBox->critical(this, "Error !", "No filenames provided !");
-		this->readerR.reset(); this->readerR = nullptr;
+		this->readerR.reset();
+		this->readerR = nullptr;
 		this->computeGridInfoLabel();
 		return;
 	}
 	// update path from last file picker :
 	this->basePath.setPath(QFileInfo(filenameR).path());
 
-	std::vector<std::string> fnR;	// filenames, red channel
+	std::vector<std::string> fnR;	 // filenames, red channel
 	fnR.push_back(filenameR.toStdString());
 
 	delete msgBox;
@@ -600,7 +644,9 @@ void GridLoaderWidget::loadGridDIM1channel() {
 	do {
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 		std::size_t currentSteps = 0;
-		if (parseTask->hasSteps()) { currentSteps = parseTask->getAdvancement(); }
+		if (parseTask->hasSteps()) {
+			currentSteps = parseTask->getAdvancement();
+		}
 
 		this->progress_load->setRange(0, parseTask->getMaxSteps());
 		this->progress_load->setValue(currentSteps);
@@ -610,7 +656,9 @@ void GridLoaderWidget::loadGridDIM1channel() {
 
 		shouldStop = parseTask->isComplete();
 	} while (shouldStop == false);
-	if (parseThread.joinable()) { parseThread.join(); }
+	if (parseThread.joinable()) {
+		parseThread.join();
+	}
 
 	this->progress_load->reset();
 	this->progress_load->setVisible(false);
@@ -620,11 +668,17 @@ void GridLoaderWidget::loadGridDIM1channel() {
 }
 
 void GridLoaderWidget::loadGridDIM2channel() {
-	if (this->readerR != nullptr) { this->readerR.reset(); this->readerR = nullptr; }
-	if (this->readerG != nullptr) { this->readerG.reset(); this->readerG = nullptr; }
+	if (this->readerR != nullptr) {
+		this->readerR.reset();
+		this->readerR = nullptr;
+	}
+	if (this->readerG != nullptr) {
+		this->readerG.reset();
+		this->readerG = nullptr;
+	}
 	IO::GenericGridReader::data_t defaultThreshold = 5;
-	this->readerR = std::make_shared<IO::DIMReader>(defaultThreshold);
-	this->readerG = std::make_shared<IO::DIMReader>(defaultThreshold);
+	this->readerR								   = std::make_shared<IO::DIMReader>(defaultThreshold);
+	this->readerG								   = std::make_shared<IO::DIMReader>(defaultThreshold);
 	// if an error occurs :
 	QMessageBox* msgBox = new QMessageBox;
 	msgBox->setAttribute(Qt::WA_DeleteOnClose);
@@ -632,8 +686,10 @@ void GridLoaderWidget::loadGridDIM2channel() {
 	QString filenameR = QFileDialog::getOpenFileName(this, "Open DIM/IMA image (first channel)", this->basePath.path(), "DIM/IMA header files (*.dim)", nullptr, QFileDialog::DontUseNativeDialog);
 	if (filenameR.isEmpty()) {
 		msgBox->critical(this, "Error !", "No filenames provided !");
-		this->readerR.reset(); this->readerR = nullptr;
-		this->readerG.reset(); this->readerG = nullptr;
+		this->readerR.reset();
+		this->readerR = nullptr;
+		this->readerG.reset();
+		this->readerG = nullptr;
 		this->computeGridInfoLabel();
 		return;
 	}
@@ -643,17 +699,19 @@ void GridLoaderWidget::loadGridDIM2channel() {
 	QString filenameG = QFileDialog::getOpenFileName(this, "Open DIM/IMA image (second channel)", this->basePath.path(), "DIM/IMA header files (*.dim)", nullptr, QFileDialog::DontUseNativeDialog);
 	if (filenameG.isEmpty()) {
 		msgBox->critical(this, "Error !", "No filenames provided !");
-		this->readerR.reset(); this->readerR = nullptr;
-		this->readerG.reset(); this->readerG = nullptr;
+		this->readerR.reset();
+		this->readerR = nullptr;
+		this->readerG.reset();
+		this->readerG = nullptr;
 		this->computeGridInfoLabel();
 		return;
 	}
 	// update path from last file picker :
 	this->basePath.setPath(QFileInfo(filenameG).path());
 
-	std::vector<std::string> fnR;	// filenames, red channel
+	std::vector<std::string> fnR;	 // filenames, red channel
 	fnR.push_back(filenameR.toStdString());
-	std::vector<std::string> fnG;	// filenames, green channel
+	std::vector<std::string> fnG;	 // filenames, green channel
 	fnG.push_back(filenameG.toStdString());
 
 	delete msgBox;
@@ -663,8 +721,12 @@ void GridLoaderWidget::loadGridDIM2channel() {
 	// Create task and thread :
 	IO::ThreadedTask::Ptr parseTask_R = std::make_shared<IO::ThreadedTask>();
 	IO::ThreadedTask::Ptr parseTask_G = std::make_shared<IO::ThreadedTask>();
-	std::thread parseThread_R([this, &parseTask_R](void) -> void { this->readerR->parseImageInfo(parseTask_R); });
-	std::thread parseThread_G([this, &parseTask_G](void) -> void { this->readerG->parseImageInfo(parseTask_G); });
+	std::thread parseThread_R([this, &parseTask_R](void) -> void {
+		this->readerR->parseImageInfo(parseTask_R);
+	});
+	std::thread parseThread_G([this, &parseTask_G](void) -> void {
+		this->readerG->parseImageInfo(parseTask_G);
+	});
 	// Wait for task initialization
 	do {
 		std::this_thread::sleep_for(std::chrono::milliseconds(5));
@@ -684,8 +746,14 @@ void GridLoaderWidget::loadGridDIM2channel() {
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 		std::size_t currentSteps = 0;
 		std::size_t maxStepsLoop = 0;
-		if (parseTask_R->hasSteps()) { currentSteps += parseTask_R->getAdvancement(); maxStepsLoop += parseTask_R->getMaxSteps(); }
-		if (parseTask_G->hasSteps()) { currentSteps += parseTask_G->getAdvancement(); maxStepsLoop += parseTask_G->getMaxSteps(); }
+		if (parseTask_R->hasSteps()) {
+			currentSteps += parseTask_R->getAdvancement();
+			maxStepsLoop += parseTask_R->getMaxSteps();
+		}
+		if (parseTask_G->hasSteps()) {
+			currentSteps += parseTask_G->getAdvancement();
+			maxStepsLoop += parseTask_G->getMaxSteps();
+		}
 
 		this->progress_load->setRange(0, maxStepsLoop);
 		this->progress_load->setValue(currentSteps);
@@ -695,8 +763,12 @@ void GridLoaderWidget::loadGridDIM2channel() {
 
 		shouldStop = parseTask_R->isComplete() && parseTask_G->isComplete();
 	} while (shouldStop == false);
-	if (parseThread_R.joinable()) { parseThread_R.join(); }
-	if (parseThread_G.joinable()) { parseThread_G.join(); }
+	if (parseThread_R.joinable()) {
+		parseThread_R.join();
+	}
+	if (parseThread_G.joinable()) {
+		parseThread_G.join();
+	}
 
 	this->progress_load->reset();
 	this->progress_load->setVisible(false);
@@ -706,10 +778,14 @@ void GridLoaderWidget::loadGridDIM2channel() {
 }
 
 void GridLoaderWidget::loadGridTIF1channel() {
-	if (this->readerR != nullptr) { this->readerR.reset(); }
-	if (this->readerG != nullptr) { this->readerG.reset(); }
+	if (this->readerR != nullptr) {
+		this->readerR.reset();
+	}
+	if (this->readerG != nullptr) {
+		this->readerG.reset();
+	}
 	IO::GenericGridReader::data_t defaultThreshold = 5;
-	this->readerR = std::make_shared<IO::libTIFFReader>(defaultThreshold);
+	this->readerR								   = std::make_shared<IO::libTIFFReader>(defaultThreshold);
 	// if an error occurs :
 	QMessageBox* msgBox = new QMessageBox;
 	msgBox->setAttribute(Qt::WA_DeleteOnClose);
@@ -717,15 +793,18 @@ void GridLoaderWidget::loadGridTIF1channel() {
 	QStringList filenamesR = QFileDialog::getOpenFileNames(nullptr, "Open TIFF images (single channel)", this->basePath.path(), "TIFF files (*.tiff *.tif)", 0, QFileDialog::DontUseNativeDialog);
 	if (filenamesR.empty()) {
 		msgBox->critical(this, "Error !", "No filenames provided !");
-		this->readerR.reset(); this->readerR = nullptr;
+		this->readerR.reset();
+		this->readerR = nullptr;
 		this->computeGridInfoLabel();
 		return;
 	}
 	// update path from last file picker :
 	this->basePath.setPath(QFileInfo(filenamesR[0]).path());
 
-	std::vector<std::string> fnR;	// filenames, red channel
-	for (int i = 0; i < filenamesR.size(); ++i) { fnR.push_back(filenamesR[i].toStdString()); }
+	std::vector<std::string> fnR;	 // filenames, red channel
+	for (int i = 0; i < filenamesR.size(); ++i) {
+		fnR.push_back(filenamesR[i].toStdString());
+	}
 
 	delete msgBox;
 
@@ -753,7 +832,9 @@ void GridLoaderWidget::loadGridTIF1channel() {
 	do {
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 		std::size_t currentSteps = 0;
-		if (parseTask->hasSteps()) { currentSteps = parseTask->getAdvancement(); }
+		if (parseTask->hasSteps()) {
+			currentSteps = parseTask->getAdvancement();
+		}
 
 		this->progress_load->setRange(0, parseTask->getMaxSteps());
 		this->progress_load->setValue(currentSteps);
@@ -763,7 +844,9 @@ void GridLoaderWidget::loadGridTIF1channel() {
 
 		shouldStop = parseTask->isComplete();
 	} while (shouldStop == false);
-	if (parseThread.joinable()) { parseThread.join(); }
+	if (parseThread.joinable()) {
+		parseThread.join();
+	}
 
 	this->progress_load->reset();
 	this->progress_load->setVisible(false);
@@ -773,11 +856,15 @@ void GridLoaderWidget::loadGridTIF1channel() {
 }
 
 void GridLoaderWidget::loadGridTIF2channel() {
-	if (this->readerR != nullptr) { this->readerR.reset(); }
-	if (this->readerG != nullptr) { this->readerG.reset(); }
+	if (this->readerR != nullptr) {
+		this->readerR.reset();
+	}
+	if (this->readerG != nullptr) {
+		this->readerG.reset();
+	}
 	IO::GenericGridReader::data_t defaultThreshold = 5;
-	this->readerR = std::make_shared<IO::libTIFFReader>(defaultThreshold);
-	this->readerG = std::make_shared<IO::libTIFFReader>(defaultThreshold);
+	this->readerR								   = std::make_shared<IO::libTIFFReader>(defaultThreshold);
+	this->readerG								   = std::make_shared<IO::libTIFFReader>(defaultThreshold);
 	// if an error occurs :
 	QMessageBox* msgBox = new QMessageBox;
 	msgBox->setAttribute(Qt::WA_DeleteOnClose);
@@ -787,8 +874,10 @@ void GridLoaderWidget::loadGridTIF2channel() {
 	QStringList filenamesR = QFileDialog::getOpenFileNames(nullptr, "Open TIFF images (first channel)", this->basePath.path(), "TIFF files (*.tiff *.tif)", 0, QFileDialog::DontUseNativeDialog);
 	if (filenamesR.empty()) {
 		msgBox->critical(this, "Error !", "No filenames provided !");
-		this->readerR.reset(); this->readerR = nullptr;
-		this->readerG.reset(); this->readerG = nullptr;
+		this->readerR.reset();
+		this->readerR = nullptr;
+		this->readerG.reset();
+		this->readerG = nullptr;
 		this->computeGridInfoLabel();
 		return;
 	}
@@ -798,18 +887,24 @@ void GridLoaderWidget::loadGridTIF2channel() {
 	QStringList filenamesG = QFileDialog::getOpenFileNames(nullptr, "Open TIFF images (second channel)", this->basePath.path(), "TIFF files (*.tiff *.tif)", 0, QFileDialog::DontUseNativeDialog);
 	if (filenamesG.empty()) {
 		msgBox->critical(this, "Error !", "No filenames provided !");
-		this->readerR.reset(); this->readerR = nullptr;
-		this->readerG.reset(); this->readerG = nullptr;
+		this->readerR.reset();
+		this->readerR = nullptr;
+		this->readerG.reset();
+		this->readerG = nullptr;
 		this->computeGridInfoLabel();
 		return;
 	}
 	// update path from last file picker :
 	this->basePath.setPath(QFileInfo(filenamesG[0]).path());
 
-	std::vector<std::string> fnR;	// filenames, red channel
-	for (int i = 0; i < filenamesR.size(); ++i) { fnR.push_back(filenamesR[i].toStdString()); }
-	std::vector<std::string> fnG;	// filenames, green channel
-	for (int i = 0; i < filenamesG.size(); ++i) { fnG.push_back(filenamesG[i].toStdString()); }
+	std::vector<std::string> fnR;	 // filenames, red channel
+	for (int i = 0; i < filenamesR.size(); ++i) {
+		fnR.push_back(filenamesR[i].toStdString());
+	}
+	std::vector<std::string> fnG;	 // filenames, green channel
+	for (int i = 0; i < filenamesG.size(); ++i) {
+		fnG.push_back(filenamesG[i].toStdString());
+	}
 
 	delete msgBox;
 
@@ -819,8 +914,12 @@ void GridLoaderWidget::loadGridTIF2channel() {
 	// Create task and thread :
 	IO::ThreadedTask::Ptr parseTask_R = std::make_shared<IO::ThreadedTask>();
 	IO::ThreadedTask::Ptr parseTask_G = std::make_shared<IO::ThreadedTask>();
-	std::thread parseThread_R([this, &parseTask_R](void) -> void { this->readerR->parseImageInfo(parseTask_R); });
-	std::thread parseThread_G([this, &parseTask_G](void) -> void { this->readerG->parseImageInfo(parseTask_G); });
+	std::thread parseThread_R([this, &parseTask_R](void) -> void {
+		this->readerR->parseImageInfo(parseTask_R);
+	});
+	std::thread parseThread_G([this, &parseTask_G](void) -> void {
+		this->readerG->parseImageInfo(parseTask_G);
+	});
 	// Wait for task initialization
 	do {
 		std::this_thread::sleep_for(std::chrono::milliseconds(5));
@@ -840,8 +939,14 @@ void GridLoaderWidget::loadGridTIF2channel() {
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 		std::size_t currentSteps = 0;
 		std::size_t maxStepsLoop = 0;
-		if (parseTask_R->hasSteps()) { currentSteps += parseTask_R->getAdvancement(); maxStepsLoop += parseTask_R->getMaxSteps(); }
-		if (parseTask_G->hasSteps()) { currentSteps += parseTask_G->getAdvancement(); maxStepsLoop += parseTask_G->getMaxSteps(); }
+		if (parseTask_R->hasSteps()) {
+			currentSteps += parseTask_R->getAdvancement();
+			maxStepsLoop += parseTask_R->getMaxSteps();
+		}
+		if (parseTask_G->hasSteps()) {
+			currentSteps += parseTask_G->getAdvancement();
+			maxStepsLoop += parseTask_G->getMaxSteps();
+		}
 
 		this->progress_load->setRange(0, maxStepsLoop);
 		this->progress_load->setValue(currentSteps);
@@ -851,8 +956,12 @@ void GridLoaderWidget::loadGridTIF2channel() {
 
 		shouldStop = parseTask_R->isComplete() && parseTask_G->isComplete();
 	} while (shouldStop == false);
-	if (parseThread_R.joinable()) { parseThread_R.join(); }
-	if (parseThread_G.joinable()) { parseThread_G.join(); }
+	if (parseThread_R.joinable()) {
+		parseThread_R.join();
+	}
+	if (parseThread_G.joinable()) {
+		parseThread_G.join();
+	}
 
 	this->progress_load->reset();
 	this->progress_load->setVisible(false);
@@ -861,10 +970,12 @@ void GridLoaderWidget::loadGridTIF2channel() {
 }
 
 void GridLoaderWidget::loadNewGridAPI() {
-	std::cerr << __PRETTY_FUNCTION__ << '\n' ;
+	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	this->useLegacyGrids = false;
-	this->readerR.reset(); this->readerR = nullptr;
-	this->readerG.reset(); this->readerG = nullptr;
+	this->readerR.reset();
+	this->readerR = nullptr;
+	this->readerG.reset();
+	this->readerG = nullptr;
 
 	// if an error occurs :
 	QMessageBox* msgBox = new QMessageBox;
@@ -894,10 +1005,14 @@ void GridLoaderWidget::loadNewGridAPI() {
 	// set a undefined progress bar to the screen, showing initialization of the
 	this->progressBar_init_undefined("Initializing image reader ...");
 
-	std::vector<std::string> fnR;	// filenames, red channel
-	for (int i = 0; i < filenamesR.size(); ++i) { fnR.push_back(filenamesR[i].toStdString()); }
-	std::vector<std::string> fnG;	// filenames, green channel
-	for (int i = 0; i < filenamesG.size(); ++i) { fnG.push_back(filenamesG[i].toStdString()); }
+	std::vector<std::string> fnR;	 // filenames, red channel
+	for (int i = 0; i < filenamesR.size(); ++i) {
+		fnR.push_back(filenamesR[i].toStdString());
+	}
+	std::vector<std::string> fnG;	 // filenames, green channel
+	for (int i = 0; i < filenamesG.size(); ++i) {
+		fnG.push_back(filenamesG[i].toStdString());
+	}
 
 	// Try to create a grid :
 	std::cerr << "Trying to create a grid !!!\n";
@@ -905,7 +1020,10 @@ void GridLoaderWidget::loadNewGridAPI() {
 	// FIXME : The API has changed. Grid::createGrid should only return an empty TIFF implementation, and
 	// the parsing function is the one to take the files as an input.
 	this->_testing_grid = Image::Grid::createGrid(fnames_grid);
-	if (this->_testing_grid == nullptr) { std::cerr << "Error : createGrid() returned nullptr !\n"; return; }
+	if (this->_testing_grid == nullptr) {
+		std::cerr << "Error : createGrid() returned nullptr !\n";
+		return;
+	}
 
 	// Start parsing the information :
 	std::cerr << "Grid created, updating info from disk ...\n";
@@ -930,7 +1048,7 @@ void GridLoaderWidget::loadNewGridAPI() {
 	do {
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 		std::size_t steps = task->getMaxSteps();
-		std::size_t adv = task->getAdvancement();
+		std::size_t adv	  = task->getAdvancement();
 		this->progress_load->setRange(0, steps);
 		this->progress_load->setValue(adv);
 		this->progress_load->setFormat("Parsing image data ... (%p%)");
@@ -957,7 +1075,7 @@ void GridLoaderWidget::loadNewGridAPI() {
 		this->_testing_grid->updateInfoFromGrid();
 		std::cerr << "Grid dimensionality : " << this->_testing_grid->getVoxelDimensionality() << '\n';
 		Image::svec3 res = this->_testing_grid->getResolution();
-		glm::vec3 vx = this->_testing_grid->getVoxelDimensions();
+		glm::vec3 vx	 = this->_testing_grid->getVoxelDimensions();
 		std::cerr << "Grid resolution : " << res.x << ", " << res.y << ", " << res.z << "\n";
 		std::cerr << "Voxel dimensions : " << vx.x << ", " << vx.y << ", " << vx.z << "\n";
 		std::cerr << "Data internal representation : " << this->_testing_grid->getInternalDataType() << '\n';
@@ -970,10 +1088,14 @@ void GridLoaderWidget::loadNewGridAPI() {
 }
 
 void GridLoaderWidget::loadGridOME1channel() {
-	if (this->readerR != nullptr) { this->readerR.reset(); }
-	if (this->readerG != nullptr) { this->readerG.reset(); }
+	if (this->readerR != nullptr) {
+		this->readerR.reset();
+	}
+	if (this->readerG != nullptr) {
+		this->readerG.reset();
+	}
 	IO::GenericGridReader::data_t defaultThreshold = 5;
-	this->readerR = std::make_shared<IO::OMETIFFReader>(defaultThreshold);
+	this->readerR								   = std::make_shared<IO::OMETIFFReader>(defaultThreshold);
 	// if an error occurs :
 	QMessageBox* msgBox = new QMessageBox;
 	msgBox->setAttribute(Qt::WA_DeleteOnClose);
@@ -981,15 +1103,18 @@ void GridLoaderWidget::loadGridOME1channel() {
 	QStringList filenamesR = QFileDialog::getOpenFileNames(nullptr, "Open OME-TIFF images (first channel)", this->basePath.path(), "OME-TIFF files (*.ome.tiff *.ome.tif)", 0, QFileDialog::DontUseNativeDialog);
 	if (filenamesR.empty()) {
 		msgBox->critical(this, "Error !", "No filenames provided !");
-		this->readerR.reset(); this->readerR = nullptr;
+		this->readerR.reset();
+		this->readerR = nullptr;
 		this->computeGridInfoLabel();
 		return;
 	}
 	// update path from last file picker :
 	this->basePath.setPath(QFileInfo(filenamesR[0]).path());
 
-	std::vector<std::string> fnR;	// filenames, red channel
-	for (int i = 0; i < filenamesR.size(); ++i) { fnR.push_back(filenamesR[i].toStdString()); }
+	std::vector<std::string> fnR;	 // filenames, red channel
+	for (int i = 0; i < filenamesR.size(); ++i) {
+		fnR.push_back(filenamesR[i].toStdString());
+	}
 
 	delete msgBox;
 
@@ -1017,7 +1142,9 @@ void GridLoaderWidget::loadGridOME1channel() {
 	do {
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 		std::size_t currentSteps = 0;
-		if (parseTask->hasSteps()) { currentSteps = parseTask->getAdvancement(); }
+		if (parseTask->hasSteps()) {
+			currentSteps = parseTask->getAdvancement();
+		}
 
 		this->progress_load->setRange(0, parseTask->getMaxSteps());
 		this->progress_load->setValue(currentSteps);
@@ -1027,7 +1154,9 @@ void GridLoaderWidget::loadGridOME1channel() {
 
 		shouldStop = parseTask->isComplete();
 	} while (shouldStop == false);
-	if (parseThread.joinable()) { parseThread.join(); }
+	if (parseThread.joinable()) {
+		parseThread.join();
+	}
 
 	this->progress_load->reset();
 	this->progress_load->setVisible(false);
@@ -1037,11 +1166,15 @@ void GridLoaderWidget::loadGridOME1channel() {
 }
 
 void GridLoaderWidget::loadGridOME2channel() {
-	if (this->readerR != nullptr) { this->readerR.reset(); }
-	if (this->readerG != nullptr) { this->readerG.reset(); }
+	if (this->readerR != nullptr) {
+		this->readerR.reset();
+	}
+	if (this->readerG != nullptr) {
+		this->readerG.reset();
+	}
 	IO::GenericGridReader::data_t defaultThreshold = 5;
-	this->readerR = std::make_shared<IO::OMETIFFReader>(defaultThreshold);
-	this->readerG = std::make_shared<IO::OMETIFFReader>(defaultThreshold);
+	this->readerR								   = std::make_shared<IO::OMETIFFReader>(defaultThreshold);
+	this->readerG								   = std::make_shared<IO::OMETIFFReader>(defaultThreshold);
 	// if an error occurs :
 	QMessageBox* msgBox = new QMessageBox;
 	msgBox->setAttribute(Qt::WA_DeleteOnClose);
@@ -1049,8 +1182,10 @@ void GridLoaderWidget::loadGridOME2channel() {
 	QStringList filenamesR = QFileDialog::getOpenFileNames(nullptr, "Open OME-TIFF images (first channel)", this->basePath.path(), "OME-TIFF files (*.ome.tiff *.ome.tif)", 0, QFileDialog::DontUseNativeDialog);
 	if (filenamesR.empty()) {
 		msgBox->critical(this, "Error !", "No filenames provided !");
-		this->readerR.reset(); this->readerR = nullptr;
-		this->readerG.reset(); this->readerG = nullptr;
+		this->readerR.reset();
+		this->readerR = nullptr;
+		this->readerG.reset();
+		this->readerG = nullptr;
 		this->computeGridInfoLabel();
 		return;
 	}
@@ -1060,18 +1195,24 @@ void GridLoaderWidget::loadGridOME2channel() {
 	QStringList filenamesG = QFileDialog::getOpenFileNames(nullptr, "Open OME-TIFF images (second channel)", this->basePath.path(), "OME-TIFF files (*.ome.tiff *.ome.tif)", 0, QFileDialog::DontUseNativeDialog);
 	if (filenamesG.empty()) {
 		msgBox->critical(this, "Error !", "No filenames provided !");
-		this->readerR.reset(); this->readerR = nullptr;
-		this->readerG.reset(); this->readerG = nullptr;
+		this->readerR.reset();
+		this->readerR = nullptr;
+		this->readerG.reset();
+		this->readerG = nullptr;
 		this->computeGridInfoLabel();
 		return;
 	}
 	// update path from last file picker :
 	this->basePath.setPath(QFileInfo(filenamesG[0]).path());
 
-	std::vector<std::string> fnR;	// filenames, red channel
-	for (int i = 0; i < filenamesR.size(); ++i) { fnR.push_back(filenamesR[i].toStdString()); }
-	std::vector<std::string> fnG;	// filenames, green channel
-	for (int i = 0; i < filenamesG.size(); ++i) { fnG.push_back(filenamesG[i].toStdString()); }
+	std::vector<std::string> fnR;	 // filenames, red channel
+	for (int i = 0; i < filenamesR.size(); ++i) {
+		fnR.push_back(filenamesR[i].toStdString());
+	}
+	std::vector<std::string> fnG;	 // filenames, green channel
+	for (int i = 0; i < filenamesG.size(); ++i) {
+		fnG.push_back(filenamesG[i].toStdString());
+	}
 
 	delete msgBox;
 
@@ -1081,8 +1222,12 @@ void GridLoaderWidget::loadGridOME2channel() {
 	// Create task and thread :
 	IO::ThreadedTask::Ptr parseTask_R = std::make_shared<IO::ThreadedTask>();
 	IO::ThreadedTask::Ptr parseTask_G = std::make_shared<IO::ThreadedTask>();
-	std::thread parseThread_R([this, &parseTask_R](void) -> void { this->readerR->parseImageInfo(parseTask_R); });
-	std::thread parseThread_G([this, &parseTask_G](void) -> void { this->readerG->parseImageInfo(parseTask_G); });
+	std::thread parseThread_R([this, &parseTask_R](void) -> void {
+		this->readerR->parseImageInfo(parseTask_R);
+	});
+	std::thread parseThread_G([this, &parseTask_G](void) -> void {
+		this->readerG->parseImageInfo(parseTask_G);
+	});
 	// Wait for task initialization
 	do {
 		std::this_thread::sleep_for(std::chrono::milliseconds(5));
@@ -1102,8 +1247,14 @@ void GridLoaderWidget::loadGridOME2channel() {
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 		std::size_t currentSteps = 0;
 		std::size_t maxStepsLoop = 0;
-		if (parseTask_R->hasSteps()) { currentSteps += parseTask_R->getAdvancement(); maxStepsLoop += parseTask_R->getMaxSteps(); }
-		if (parseTask_G->hasSteps()) { currentSteps += parseTask_G->getAdvancement(); maxStepsLoop += parseTask_G->getMaxSteps(); }
+		if (parseTask_R->hasSteps()) {
+			currentSteps += parseTask_R->getAdvancement();
+			maxStepsLoop += parseTask_R->getMaxSteps();
+		}
+		if (parseTask_G->hasSteps()) {
+			currentSteps += parseTask_G->getAdvancement();
+			maxStepsLoop += parseTask_G->getMaxSteps();
+		}
 
 		this->progress_load->setRange(0, maxStepsLoop);
 		this->progress_load->setValue(currentSteps);
@@ -1113,8 +1264,12 @@ void GridLoaderWidget::loadGridOME2channel() {
 
 		shouldStop = parseTask_R->isComplete() && parseTask_G->isComplete();
 	} while (shouldStop == false);
-	if (parseThread_R.joinable()) { parseThread_R.join(); }
-	if (parseThread_G.joinable()) { parseThread_G.join(); }
+	if (parseThread_R.joinable()) {
+		parseThread_R.join();
+	}
+	if (parseThread_G.joinable()) {
+		parseThread_G.join();
+	}
 
 	this->progress_load->reset();
 	this->progress_load->setVisible(false);
@@ -1124,219 +1279,134 @@ void GridLoaderWidget::loadGridOME2channel() {
 }
 
 void GridLoaderWidget::loadGrid() {
-	if (this->useLegacyGrids) { this->loadGrid_oldAPI(); } else { this->loadGrid_newAPI(); }
-}
-
-void GridLoaderWidget::loadGrid_oldAPI() {
-	if (readerR == nullptr) {
-		QMessageBox* msgBox = new QMessageBox;
-		msgBox->setAttribute(Qt::WA_DeleteOnClose);
-		msgBox->critical(this, "Error", "No grid was selected.");
-		return;
-	}
-
-	bool hasUserBounds = this->groupbox_userLimits->isChecked();
-	DiscreteGrid::data_t userMin = static_cast<DiscreteGrid::data_t>(this->spinbox_userLimitMin->value());
-	DiscreteGrid::data_t userMax = static_cast<DiscreteGrid::data_t>(this->spinbox_userLimitMax->value());
-
-	float dx = this->dsb_transformationDX->value();
-	float dy = this->dsb_transformationDY->value();
-	float dz = this->dsb_transformationDZ->value();
-
-	this->readerR->enableDownsampling(this->dsLevel);
-	this->readerR->setUserVoxelSize(dx, dy, dz);
-	if (hasUserBounds) { this->readerR->setUserIntensityLimits(userMin, userMax); }
-	if (this->readerG != nullptr) {
-		this->readerG->enableDownsampling(this->dsLevel);
-		this->readerG->setUserVoxelSize(dx, dy, dz);
-		if (hasUserBounds) { this->readerG->setUserIntensityLimits(userMin, userMax); }
-	}
-
-	if (this->dsLevel != IO::DownsamplingLevel::Original) {
-		this->readerR->setInterpolationMethod(this->interpolator);
-		if (this->readerG != nullptr) {
-			this->readerG->setInterpolationMethod(this->interpolator);
-		}
-	}
-
-	std::size_t completeSizeBits = this->readerR->getGridSizeBytes() * 8;
-	if (this->readerG != nullptr) {
-		completeSizeBits += this->readerG->getGridSizeBytes() * 8;
-	}
-
-	// Check user memory allowed, and ask for confirmation if necessary :
-	UserSettings settings = UserSettings::getInstance();
-	if (settings.getUserRemainingBitSize() < completeSizeBits) {
-		QMessageBox* confirmBox = new QMessageBox();
-		confirmBox->setWindowTitle("Warning : Memory load");
-		confirmBox->setText("Loading those images will go over your max memory budget. Would you like to continue regardless ?");
-		QPushButton* confirm_Accept = confirmBox->addButton("Yes", QMessageBox::ButtonRole::AcceptRole);
-		QPushButton* confirm_Deny = confirmBox->addButton("No, take me back", QMessageBox::ButtonRole::RejectRole);
-
-		confirmBox->exec();
-		if (confirmBox->clickedButton() == confirm_Deny) {
-			// if the user doesn't want anything like this, return.
-			return;
-		}
-
-		// user wants to do this.
-		settings.loadImageSize(completeSizeBits);
-	}
-
-	IO::ThreadedTask::Ptr taskR = std::make_shared<IO::ThreadedTask>();
-	IO::ThreadedTask::Ptr taskG = std::make_shared<IO::ThreadedTask>();
-	std::size_t maxSteps;
-
-	std::thread threadRed = std::thread([this, &taskR](void) -> void {
-		this->readerR->loadImage(taskR);
-	});
-	do {
-		std::this_thread::sleep_for(std::chrono::milliseconds(50));
-	} while (not taskR->hasSteps());
-	maxSteps += taskR->getMaxSteps();
-
-	std::thread threadGreen;
-
-	if (this->readerG != nullptr) {
-		threadGreen = std::thread([this, &taskG](void) -> void {
-			this->readerG->loadImage(taskG);
-		});
-		do {
-			std::this_thread::sleep_for(std::chrono::milliseconds(50));
-		} while (not taskG->hasSteps());
-		maxSteps += taskG->getMaxSteps();
-	}
-
-	// Setup the progress bar :
-	this->progress_load->setRange(0,maxSteps);
-	this->progress_load->setValue(0);
-	this->progress_load->setVisible(true);
-	this->progress_load->setFormat("Loading images in memory ... %v/%m (%p%)");
-	this->disableWidgets();
-
-	////////////////////////////////////////
-	// WAIT FOR THREADS TO FINISH LOADING //
-	////////////////////////////////////////
-	bool shouldStop = false;
-	do {
-		std::this_thread::sleep_for(std::chrono::milliseconds(10));
-		std::size_t currentSteps = 0;
-		if (taskR->hasSteps()) { currentSteps += taskR->getAdvancement(); }
-		if (taskG->hasSteps()) { currentSteps += taskG->getAdvancement(); }
-
-		this->progress_load->setValue(currentSteps);
-		// Needed to update the main window ...
-		QCoreApplication::processEvents();
-		this->update();
-
-		shouldStop = taskR->isComplete();
-		if (this->readerG != nullptr) {
-			shouldStop = shouldStop && taskG->isComplete();
-		}
-	} while (shouldStop == false);
-	// Join the threads, just in case :
-	threadRed.join();
-	if (threadGreen.joinable()) { threadGreen.join(); }
-	////////////////////////////////////////
-	// WAIT FOR THREADS TO FINISH LOADING //
-	////////////////////////////////////////
-
-	this->progress_load->setRange(0,0);
-
-	// generate input grids :
-	this->inputGridR = std::make_shared<InputGrid>();
-	this->inputGridR->setGridReader(this->readerR);
-	this->inputGridR->fromGridReader();
-
-	if (this->readerG != nullptr) {
-		this->inputGridG = std::make_shared<InputGrid>();
-		this->inputGridG->setGridReader(this->readerG);
-		this->inputGridG->fromGridReader();
-	}
-
-	// setup transformation :
-	glm::vec3 vxdims = glm::vec3(
-		static_cast<float>(this->dsb_transformationDX->value()),
-		static_cast<float>(this->dsb_transformationDY->value()),
-		static_cast<float>(this->dsb_transformationDZ->value())
-	);
-	svec3 dims = this->inputGridR->getResolution();
-	float a = this->dsb_transformationA->value();
-
-	// Add transformation matrix to red, and possibly green matrix :
-	auto colorBoundPrimary = this->readerR->getTextureLimits();
-	this->_cp->updateMinValue(colorBoundPrimary.x);
-	this->_cp->updateMaxValue(colorBoundPrimary.y);
-	this->scene->slotSetMinColorValue(colorBoundPrimary.x);
-	this->scene->slotSetMaxColorValue(colorBoundPrimary.y);
-	this->inputGridR->setTransform_GridToWorld(computeTransfoShear(a, this->inputGridR, vxdims));
-
-	if (this->readerG != nullptr) {
-		dims = this->inputGridG->getResolution();
-		this->inputGridG->setTransform_GridToWorld(computeTransfoShear(a, this->inputGridG, vxdims));
-
-		// Update texture bounds :
-		auto colorBoundSecondary = this->readerG->getTextureLimits();
-		this->_cp->updateMinValueAlternate(colorBoundSecondary.x);
-		this->_cp->updateMaxValueAlternate(colorBoundSecondary.y);
-		this->scene->slotSetMinColorValueAlternate(colorBoundSecondary.x);
-		this->scene->slotSetMaxColorValueAlternate(colorBoundSecondary.y);
-	}
-
-	float ox = 0.f, oy = 0.f, oz = 0.f;
-	if (this->groupbox_originalOffset->isChecked()) {
-		ox = this->dsb_offsetX->value();
-		oy = this->dsb_offsetY->value();
-		oz = this->dsb_offsetZ->value();
-		this->inputGridR->setOriginOffset_WorldSpace(glm::vec4(ox, oy, oz, 1.));
-		if (this->readerG != nullptr) {
-			this->inputGridG->setOriginOffset_WorldSpace(glm::vec4(ox, oy, oz, 1.));
-		}
-	}
-
-	if (this->readerG == nullptr) {
-		this->viewer->loadGrid(this->inputGridR);
-	} else {
-		this->viewer->loadTwoGrids(this->inputGridR, this->inputGridG);
-	}
-	this->viewer->centerScene();
-
-	this->close();
+    this->loadGrid_newAPI();
 }
 
 void GridLoaderWidget::loadGrid_newAPI() {
 	// prevent changing the values of the inputs
 	this->disableWidgets();
 
-	bool hasUserBounds = this->groupbox_userLimits->isChecked();
-	DiscreteGrid::data_t userMin = static_cast<DiscreteGrid::data_t>(this->spinbox_userLimitMin->value());
-	DiscreteGrid::data_t userMax = static_cast<DiscreteGrid::data_t>(this->spinbox_userLimitMax->value());
+	bool hasUserBounds			 = this->groupbox_userLimits->isChecked();
+    // Impossible with the new API as the data_t data type isn't known at compile time
+	// DiscreteGrid::data_t userMin = static_cast<DiscreteGrid::data_t>(this->spinbox_userLimitMin->value());
+	// DiscreteGrid::data_t userMax = static_cast<DiscreteGrid::data_t>(this->spinbox_userLimitMax->value());
 	std::cerr << "Loading new grid API" << '\n';
 
 	float dx = this->dsb_transformationDX->value();
 	float dy = this->dsb_transformationDY->value();
 	float dz = this->dsb_transformationDZ->value();
 
-	#warning TODO : Enable downsampling options from grid here
-	#warning TODO : Enable user voxel sizes here (via a transformation matrix ?)
-	#warning TODO : Enable computation of approximate voxel size here
+#warning TODO : Enable downsampling options from grid here
+#warning TODO : Enable user voxel sizes here (via a transformation matrix ?)
+#warning TODO : Enable computation of approximate voxel size here
 
 	glm::vec3 vxdims = glm::vec3(
-		static_cast<float>(this->dsb_transformationDX->value()),
-		static_cast<float>(this->dsb_transformationDY->value()),
-		static_cast<float>(this->dsb_transformationDZ->value())
-	);
-    //svec3 dims = this->inputGridR->getResolution();
-	float a = this->dsb_transformationA->value();
+	  static_cast<float>(this->dsb_transformationDX->value()),
+	  static_cast<float>(this->dsb_transformationDY->value()),
+	  static_cast<float>(this->dsb_transformationDZ->value()));
+	//svec3 dims = this->inputGridR->getResolution();
+	float a				= this->dsb_transformationA->value();
 	auto transfo_matrix = computeTransfoShear_newAPI(a, this->_testing_grid, vxdims);
 
 	MatrixTransform::Ptr grid_transform = std::make_shared<MatrixTransform>(transfo_matrix);
 	this->_testing_grid->addTransform(grid_transform);
 
-	// Load the grid data, and make a copy here
-	//this->scene->newAPI_addGrid(this->_testing_grid);
-	this->viewer->newAPI_loadGrid(this->_testing_grid);
-	this->viewer->centerScene();
+	Image::GridRepo repo = Image::GridRepo::getInstance();
+	repo.addGrid(this->_testing_grid);
+
+	// Here, load the downsampled grid if necessary :
+	if (this->dsLevel != IO::DownsamplingLevel::Original) {
+		svec3 target_resolution = this->_testing_grid->getResolution();
+			 if (this->dsLevel == IO::DownsamplingLevel::Low)    { target_resolution /= 2u; }
+		else if (this->dsLevel == IO::DownsamplingLevel::Lower)  { target_resolution /= 4u; }
+		else if (this->dsLevel == IO::DownsamplingLevel::Lowest) { target_resolution /= 8u; }
+		std::cerr << "Downsampling applied, target resolution is : [" << target_resolution << "]\n";
+
+		Image::Grid::Ptr downsampled_grid = this->_testing_grid->requestDownsampledVersion(target_resolution, Image::ImageResamplingTechnique::NearestNeighbor);
+
+		// Attempt to load the grid :
+		// TODO : very hacky code, not for release purposes. Should be sanitized and commented more.
+		std::cerr << "Attempting to parse image data ...\n";
+		QMessageBox* msgBox = new QMessageBox;
+		msgBox->setAttribute(Qt::WA_DeleteOnClose);
+		// Try to create a grid :
+		std::cerr << "Trying to create a grid !!!\n";
+		if (downsampled_grid == nullptr) {
+			std::cerr << "Error : Grid::requestDownsampledVersion() returned nullptr !\n";
+			return;
+		}
+
+		// Start parsing the information :
+		std::cerr << "Grid created, updating info from disk ...\n";
+		auto task = downsampled_grid->updateInfoFromDisk(std::vector<std::vector<std::string>>{});
+
+		// may be already ended with errors, show them :
+		std::string before_error_message;
+		std::string full_msg;
+		if (task->popMessage(before_error_message)) {
+			do {
+				full_msg += before_error_message + '\n';
+			} while (task->popMessage(before_error_message));
+			msgBox->critical(this, "Error while parsing files !", QString(before_error_message.c_str()));
+			this->setWidgetsEnabled();
+			return;
+		}
+
+		// Set and show progress bar :
+		this->progressBar_init_defined(0, task->getMaxSteps(), 0, "Parsing image data ... (%p%)");
+
+		// Parse the grid :
+		do {
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+			std::size_t steps = task->getMaxSteps();
+			std::size_t adv	  = task->getAdvancement();
+			this->progress_load->setRange(0, steps);
+			this->progress_load->setValue(adv);
+			this->progress_load->setFormat("Parsing image data ... (%p%)");
+			// Needed to update the main window ...
+			QCoreApplication::processEvents();
+			this->update();
+		} while (not task->isComplete());
+
+		std::cerr << "\n[TASK] Done parsing the grid ... \n";
+		std::string errmsg = "";
+		std::string all_errors;
+		bool isComplete = true;
+		while (task->popMessage(errmsg)) {
+			std::cerr << "[Task error] Message : " << errmsg << '\n';
+			isComplete = false;
+			all_errors += errmsg + '\n';
+		}
+		if (not all_errors.empty()) {
+			msgBox->critical(this, "Errors while parsing the files", QString(all_errors.c_str()));
+			this->setWidgetsEnabled();
+			return;
+		}
+		if (isComplete) {
+			downsampled_grid->updateInfoFromGrid();
+			std::cerr << "Grid dimensionality : " << downsampled_grid->getVoxelDimensionality() << '\n';
+			Image::svec3 res = downsampled_grid->getResolution();
+			glm::vec3 vx	 = downsampled_grid->getVoxelDimensions();
+			std::cerr << "Grid resolution : " << res.x << ", " << res.y << ", " << res.z << "\n";
+			std::cerr << "Voxel dimensions : " << vx.x << ", " << vx.y << ", " << vx.z << "\n";
+			std::cerr << "Data internal representation : " << downsampled_grid->getInternalDataType() << '\n';
+		}
+
+		repo.addGrid(downsampled_grid);
+
+		this->viewer->newAPI_loadGrid(downsampled_grid);
+		this->viewer->centerScene();
+		this->_cp->setSlidersToNumericalLimits();
+	} else {
+		// Load the grid data, and make a copy here
+		//this->scene->newAPI_addGrid(this->_testing_grid);
+		this->viewer->newAPI_loadGrid(this->_testing_grid);
+		this->viewer->centerScene();
+
+		// Update min and max of the control panel
+		// TODO: change this function in order to set slider according to min/max values in the image
+		this->_cp->setSlidersToNumericalLimits();
+	}
 
 	this->close();
 }

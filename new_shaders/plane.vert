@@ -1,5 +1,6 @@
 #version 150 core
 #extension GL_ARB_separate_shader_objects : enable
+#extension GL_ARB_explicit_attrib_location : enable
 
 /****************************************/
 /**************** Inputs ****************/
@@ -19,18 +20,18 @@ out vec4 vPos_PS; // Original position
 /****************************************/
 /*************** Uniforms ***************/
 /****************************************/
-uniform mat4 model_Mat;		// Model matrix
-uniform mat4 view_Mat;		// View matrix
+uniform mat4 model_Mat;			// Model matrix
+uniform mat4 view_Mat;			// View matrix
 uniform mat4 projection_Mat;	// Projection matrix
-uniform mat4 gridTransform;	// The transform used by the grid to change space from grid to world
+uniform mat4 gridTransform;		// The transform used by the grid to change space from grid to world
 uniform vec3 sceneBBPosition;	// The scene's bounding box position
 uniform vec3 sceneBBDiagonal;	// The scene's bounding box diagonal
 uniform vec3 gridBBPosition;	// The grid's bounding box position
 uniform vec3 gridBBDiagonal;	// The grid's bouding box diagonal
-uniform vec3 gridSize;		// The size of the grid's bounding box in world space
+uniform vec3 gridSize;			// The size of the grid's bounding box in world space
 uniform vec3 gridDimensions;	// The dimensions of the grid
 uniform vec3 planePositions;	// World-space positions of all planes, along the axis they cut
-uniform int currentPlane;	// Plane identifier : 1 (x), 2 (y), 3 (z)
+uniform int currentPlane;		// Plane identifier : 1 (x), 2 (y), 3 (z)
 
 /****************************************/
 /*********** Function headers ***********/
@@ -58,12 +59,16 @@ void main(void) {
 	means we have to first determine the position in world space without that offset (directly below) and
 	_then_ add the offset to the world space position (gl_Position) to make it work.
 	*/
-	vec4 vPos_ws = (vertexPosition * vec4(sceneBBDiagonal,1.)) + planeIdxToPlanePosition(currentPlane);
-	// We want to make the positions go from WS to GS, so invert the matrix to transform :
-	vec4 vPos_gs = inverse(gridTransform) * (vPos_ws);
+	vec4 vPos_ws = sceneBBPosition4 + (vertexPosition * vec4(sceneBBDiagonal,1.)) + planeIdxToPlanePosition(currentPlane);
+	// TODO : Grid transformation matrix also contains the translation vector. Remove it before inverting it.
+	// We want to make the positions go from World space to Grid space, so invert the matrix to transform :
+	mat4 raw_gridTransform = gridTransform;
+	vec4 grid_translation = raw_gridTransform[3];
+	raw_gridTransform[3] = vec4(.0f, .0f, .0f, 1.f);
+	vec4 vPos_gs = inverse(raw_gridTransform) * (vPos_ws);
 	vec4 vPos_ts = (vPos_gs) / gridDimensions4;
 
-	vPos = sceneBBPosition4 + vPos_ws;
+	vPos = vPos_ws;
 	vNorm = norMat * vertexNormal;
 	texCoord = vPos_ts.xyz;
 	vPos_PS = vertexPosition;

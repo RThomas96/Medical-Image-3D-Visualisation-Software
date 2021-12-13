@@ -2,7 +2,7 @@
 #define	VISUALIAZTION_IMAGE_TIFF_INCLUDE_TEMPLATED_BACKEND_IMPL_HPP_
 
 #ifndef  VISUALIAZTION_IMAGE_TIFF_INCLUDE_TEMPLATED_BACKEND_HPP_
-#include "./templated_backend.hpp"		// Included between header guards to have code completion in QtCreator.
+#include "./tiff_reader_templated.hpp"		// Included between header guards to have code completion in QtCreator.
 #endif
 
 #include <iomanip>
@@ -12,196 +12,195 @@ namespace Image {
 namespace Tiff {
 
 template <typename unsupported_element_t>
-TIFFReaderTemplated<unsupported_element_t>::TIFFReaderTemplated(uint32_t w, uint32_t h, std::size_t _dim) {
+TIFFReaderTemplated<unsupported_element_t>::TIFFReaderTemplated(uint32_t w, uint32_t h, std::size_t _dim, uint32_t z, glm::vec3 voxel_dim) {
 	UNUSED(w); UNUSED(h); UNUSED(_dim);
 	throw std::runtime_error("Error : unsupported type passed to the TIFFReaderTemplated constructor.");
 }
-
 template <>
-TIFFReaderTemplated<std::uint8_t>::TIFFReaderTemplated(uint32_t w, uint32_t h, std::size_t _dim) {
+TIFFReaderTemplated<std::uint8_t>::TIFFReaderTemplated(uint32_t w, uint32_t h, std::size_t _dim, uint32_t z, glm::vec3 voxel_dim) {
 	this->images.clear();
 
 	this->resolution.x = w;
 	this->resolution.y = h;
-	this->resolution.z = 0;
+	this->resolution.z = z;
 	this->voxel_dimensionality = _dim;
 
 	this->internal_data_type = ImageDataType::Unsigned | ImageDataType::Bit_8;
 
 	this->bitsPerSample = 8;
 	this->sampleFormat = SAMPLEFORMAT_UINT;
-	this->voxel_dimensions = glm::vec3{1.f, 1.f, 1.f};
+	this->voxel_dimensions = voxel_dim;
 	#ifndef NDEBUG
 	std::cerr << "Creating a TIFF backend detail of type " << pnt(std::uint8_t) << '\n';
 	#endif
 }
 
 template <>
-TIFFReaderTemplated<std::uint16_t>::TIFFReaderTemplated(uint32_t w, uint32_t h, std::size_t _dim) {
+TIFFReaderTemplated<std::uint16_t>::TIFFReaderTemplated(uint32_t w, uint32_t h, std::size_t _dim, uint32_t z, glm::vec3 voxel_dim) {
 	this->images.clear();
 
 	this->resolution.x = w;
 	this->resolution.y = h;
-	this->resolution.z = 0;
+	this->resolution.z = z;
 	this->voxel_dimensionality = _dim;
 
 	this->internal_data_type = ImageDataType::Unsigned | ImageDataType::Bit_16;
 
 	this->bitsPerSample = 16;
 	this->sampleFormat = SAMPLEFORMAT_UINT;
-	this->voxel_dimensions = glm::vec3{1.f, 1.f, 1.f};
+	this->voxel_dimensions = voxel_dim;
 	#ifndef NDEBUG
 	std::cerr << "Creating a TIFF backend detail of type " << pnt(std::uint16_t) << '\n';
 	#endif
 }
 
 template <>
-TIFFReaderTemplated<std::uint32_t>::TIFFReaderTemplated(uint32_t w, uint32_t h, std::size_t _dim) {
+TIFFReaderTemplated<std::uint32_t>::TIFFReaderTemplated(uint32_t w, uint32_t h, std::size_t _dim, uint32_t z, glm::vec3 voxel_dim) {
 	this->images.clear();
 
 	this->resolution.x = w;
 	this->resolution.y = h;
-	this->resolution.z = 0;
+	this->resolution.z = z;
 	this->voxel_dimensionality = _dim;
 
 	this->internal_data_type = ImageDataType::Unsigned | ImageDataType::Bit_32;
 
 	this->bitsPerSample = 32;
 	this->sampleFormat = SAMPLEFORMAT_UINT;
-	this->voxel_dimensions = glm::vec3{1.f, 1.f, 1.f};
+	this->voxel_dimensions = voxel_dim;
 	#ifndef NDEBUG
 	std::cerr << "Creating a TIFF backend detail of type " << pnt(std::uint32_t) << '\n';
 	#endif
 }
 
 template <>
-TIFFReaderTemplated<std::uint64_t>::TIFFReaderTemplated(uint32_t w, uint32_t h, std::size_t _dim) {
+TIFFReaderTemplated<std::uint64_t>::TIFFReaderTemplated(uint32_t w, uint32_t h, std::size_t _dim, uint32_t z, glm::vec3 voxel_dim) {
 	this->images.clear();
 
 	this->resolution.x = w;
 	this->resolution.y = h;
-	this->resolution.z = 0;
+	this->resolution.z = z;
 	this->voxel_dimensionality = _dim;
 
 	this->internal_data_type = ImageDataType::Unsigned | ImageDataType::Bit_64;
 
 	this->bitsPerSample = 64;
 	this->sampleFormat = SAMPLEFORMAT_UINT;
-	this->voxel_dimensions = glm::vec3{1.f, 1.f, 1.f};
+	this->voxel_dimensions = voxel_dim;
 	#ifndef NDEBUG
 	std::cerr << "Creating a TIFF backend detail of type " << pnt(std::uint64_t) << '\n';
 	#endif
 }
 
 template <>
-TIFFReaderTemplated<std::int8_t>::TIFFReaderTemplated(uint32_t w, uint32_t h, std::size_t _dim) {
+TIFFReaderTemplated<std::int8_t>::TIFFReaderTemplated(uint32_t w, uint32_t h, std::size_t _dim, uint32_t z, glm::vec3 voxel_dim) {
 	this->images.clear();
 
 	this->resolution.x = w;
 	this->resolution.y = h;
-	this->resolution.z = 0;
+	this->resolution.z = z;
 	this->voxel_dimensionality = _dim;
 
 	this->internal_data_type = ImageDataType::Signed | ImageDataType::Bit_8;
 
 	this->bitsPerSample = 8;
 	this->sampleFormat = SAMPLEFORMAT_INT;
-	this->voxel_dimensions = glm::vec3{1.f, 1.f, 1.f};
+	this->voxel_dimensions = voxel_dim;
 	#ifndef NDEBUG
 	std::cerr << "Creating a TIFF backend detail of type " << pnt(std::int8_t) << '\n';
 	#endif
 }
 
 template <>
-TIFFReaderTemplated<std::int16_t>::TIFFReaderTemplated(uint32_t w, uint32_t h, std::size_t _dim) {
+TIFFReaderTemplated<std::int16_t>::TIFFReaderTemplated(uint32_t w, uint32_t h, std::size_t _dim, uint32_t z, glm::vec3 voxel_dim) {
 	this->images.clear();
 
 	this->resolution.x = w;
 	this->resolution.y = h;
-	this->resolution.z = 0;
+	this->resolution.z = z;
 	this->voxel_dimensionality = _dim;
 
 	this->internal_data_type = ImageDataType::Signed | ImageDataType::Bit_16;
 
 	this->bitsPerSample = 16;
 	this->sampleFormat = SAMPLEFORMAT_INT;
-	this->voxel_dimensions = glm::vec3{1.f, 1.f, 1.f};
+	this->voxel_dimensions = voxel_dim;
 	#ifndef NDEBUG
 	std::cerr << "Creating a TIFF backend detail of type " << pnt(std::int16_t) << '\n';
 	#endif
 }
 
 template <>
-TIFFReaderTemplated<std::int32_t>::TIFFReaderTemplated(uint32_t w, uint32_t h, std::size_t _dim) {
+TIFFReaderTemplated<std::int32_t>::TIFFReaderTemplated(uint32_t w, uint32_t h, std::size_t _dim, uint32_t z, glm::vec3 voxel_dim) {
 	this->images.clear();
 
 	this->resolution.x = w;
 	this->resolution.y = h;
-	this->resolution.z = 0;
+	this->resolution.z = z;
 	this->voxel_dimensionality = _dim;
 
 	this->internal_data_type = ImageDataType::Signed | ImageDataType::Bit_32;
 
 	this->bitsPerSample = 32;
 	this->sampleFormat = SAMPLEFORMAT_INT;
-	this->voxel_dimensions = glm::vec3{1.f, 1.f, 1.f};
+	this->voxel_dimensions = voxel_dim;
 	#ifndef NDEBUG
 	std::cerr << "Creating a TIFF backend detail of type " << pnt(std::int32_t) << '\n';
 	#endif
 }
 
 template <>
-TIFFReaderTemplated<std::int64_t>::TIFFReaderTemplated(uint32_t w, uint32_t h, std::size_t _dim) {
+TIFFReaderTemplated<std::int64_t>::TIFFReaderTemplated(uint32_t w, uint32_t h, std::size_t _dim, uint32_t z, glm::vec3 voxel_dim) {
 	this->images.clear();
 
 	this->resolution.x = w;
 	this->resolution.y = h;
-	this->resolution.z = 0;
+	this->resolution.z = z;
 	this->voxel_dimensionality = _dim;
 
 	this->internal_data_type = ImageDataType::Signed | ImageDataType::Bit_64;
 
 	this->bitsPerSample = 64;
 	this->sampleFormat = SAMPLEFORMAT_INT;
-	this->voxel_dimensions = glm::vec3{1.f, 1.f, 1.f};
+	this->voxel_dimensions = voxel_dim;
 	#ifndef NDEBUG
 	std::cerr << "Creating a TIFF backend detail of type " << pnt(std::int64_t) << '\n';
 	#endif
 }
 
 template <>
-TIFFReaderTemplated<float>::TIFFReaderTemplated(uint32_t w, uint32_t h, std::size_t _dim) {
+TIFFReaderTemplated<float>::TIFFReaderTemplated(uint32_t w, uint32_t h, std::size_t _dim, uint32_t z, glm::vec3 voxel_dim) {
 	this->images.clear();
 
 	this->resolution.x = w;
 	this->resolution.y = h;
-	this->resolution.z = 0;
+	this->resolution.z = z;
 	this->voxel_dimensionality = _dim;
 
 	this->internal_data_type = ImageDataType::Floating | ImageDataType::Bit_32;
 
 	this->bitsPerSample = 32;
 	this->sampleFormat = SAMPLEFORMAT_IEEEFP;
-	this->voxel_dimensions = glm::vec3{1.f, 1.f, 1.f};
+	this->voxel_dimensions = voxel_dim;
 	#ifndef NDEBUG
 	std::cerr << "Creating a TIFF backend detail of type " << pnt(float) << '\n';
 	#endif
 }
 
 template <>
-TIFFReaderTemplated<double>::TIFFReaderTemplated(uint32_t w, uint32_t h, std::size_t _dim) {
+TIFFReaderTemplated<double>::TIFFReaderTemplated(uint32_t w, uint32_t h, std::size_t _dim, uint32_t z, glm::vec3 voxel_dim) {
 	this->images.clear();
 
 	this->resolution.x = w;
 	this->resolution.y = h;
-	this->resolution.z = 0;
+	this->resolution.z = z;
 	this->voxel_dimensionality = _dim;
 
 	this->internal_data_type = ImageDataType::Floating | ImageDataType::Bit_64;
 
 	this->bitsPerSample = 64;
 	this->sampleFormat = SAMPLEFORMAT_IEEEFP;
-	this->voxel_dimensions = glm::vec3{1.f, 1.f, 1.f};
+	this->voxel_dimensions = voxel_dim;
 	#ifndef NDEBUG
 	std::cerr << "Creating a TIFF backend detail of type " << pnt(double) << '\n';
 	#endif
@@ -213,8 +212,8 @@ TIFFReaderTemplated<element_t>::~TIFFReaderTemplated() {
 }
 
 template <typename element_t> typename TIFFReaderTemplated<element_t>::Ptr
-TIFFReaderTemplated<element_t>::createBackend(uint32_t width, uint32_t height, std::size_t _dim) {
-	return Ptr(new TIFFReaderTemplated<pixel_t>(width, height, _dim));
+TIFFReaderTemplated<element_t>::createBackend(uint32_t width, uint32_t height, std::size_t _dim, uint32_t z, glm::vec3 voxel_dim) {
+	return Ptr(new TIFFReaderTemplated<pixel_t>(width, height, _dim, z, voxel_dim));
 }
 
 template <typename element_t>

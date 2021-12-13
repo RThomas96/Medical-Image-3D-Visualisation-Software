@@ -2,32 +2,34 @@
 
 #include "../../viewer/include/planar_viewer.hpp"
 
-ViewerHeader::ViewerHeader(QWidget* parent) : QWidget(parent) {
+ViewerHeader::ViewerHeader(QWidget* parent) :
+	QWidget(parent) {
 	this->layout = nullptr;
 
-	this->viewerToControl = nullptr;
-	this->label_PlaneName = nullptr;
-	this->button_invertPlaneCut = nullptr;
+	this->viewerToControl		 = nullptr;
+	this->label_PlaneName		 = nullptr;
+	this->button_invertPlaneCut	 = nullptr;
 	this->button_rotateClockwise = nullptr;
-	this->button_togglePlane = nullptr;
-	this->slider_planeDepth = nullptr;
-	this->color = Qt::GlobalColor::white;
+	this->button_togglePlane	 = nullptr;
+	this->slider_planeDepth		 = nullptr;
+	this->color					 = Qt::GlobalColor::white;
 }
 
-ViewerHeader::ViewerHeader(std::string name, QWidget* parent) : ViewerHeader(parent) {
-	this->layout = new QHBoxLayout();
+ViewerHeader::ViewerHeader(std::string name, QWidget* parent) :
+	ViewerHeader(parent) {
+	this->layout		  = new QHBoxLayout();
 	this->viewerToControl = nullptr;
 	// Create the label
 	this->label_PlaneName = new QLabel(name.c_str());
 	// Create buttons
-	this->button_invertPlaneCut = new QPushButton();
+	this->button_invertPlaneCut	 = new QPushButton();
 	this->button_rotateClockwise = new QPushButton();
-	this->button_togglePlane = new QPushButton();
+	this->button_togglePlane	 = new QPushButton();
 
-	this->icon_togglePlane_On = new QIcon("../resources/eye_open.png");
+	this->icon_togglePlane_On  = new QIcon("../resources/eye_open.png");
 	this->icon_togglePlane_Off = new QIcon("../resources/eye_close.png");
-	this->icon_rotatePlane = new QIcon("../resources/rotate.png");
-	this->icon_invertPlane = new QIcon("../resources/invert.png");
+	this->icon_rotatePlane	   = new QIcon("../resources/rotate.png");
+	this->icon_invertPlane	   = new QIcon("../resources/invert.png");
 
 	this->button_togglePlane->setProperty("toggled", true);
 
@@ -78,8 +80,10 @@ void ViewerHeader::setName(const std::string _name) {
 	this->label_PlaneName->setText(QString(_name.c_str()));
 }
 
-void ViewerHeader::connectToViewer(PlanarViewer *_viewer) {
-	if (_viewer == nullptr) { return; }
+void ViewerHeader::connectToViewer(PlanarViewer* _viewer) {
+	if (_viewer == nullptr) {
+		return;
+	}
 
 	this->viewerToControl = _viewer;
 	this->registerWithViewer();
@@ -114,7 +118,9 @@ void ViewerHeader::activateWidgets(bool activated) {
 }
 
 void ViewerHeader::registerWithViewer(void) {
-	if (this->viewerToControl == nullptr) { return; }
+	if (this->viewerToControl == nullptr) {
+		return;
+	}
 
 	// Choose the background color in the widget :
 	if (this->viewerToControl->planeToShow == planes::x) {
@@ -134,15 +140,22 @@ void ViewerHeader::registerWithViewer(void) {
 	// Connect plane signals :
 	connect(this->slider_planeDepth, &QSlider::valueChanged, this->viewerToControl, &PlanarViewer::updatePlaneDepth);
 	connect(this->button_invertPlaneCut, &QPushButton::clicked, [this]() {
-		if (this->viewerToControl != nullptr) { this->viewerToControl->flipPlaneDirection(); }
+		if (this->viewerToControl != nullptr) {
+			this->viewerToControl->flipPlaneDirection();
+		}
 	});
 	connect(this->button_togglePlane, &QPushButton::clicked, [this]() {
-		if (this->viewerToControl != nullptr) { this->viewerToControl->togglePlaneVisibility(); }
+		if (this->viewerToControl != nullptr) {
+			this->viewerToControl->togglePlaneVisibility();
+		}
 		// get button state :
 		QVariant toggled = this->button_togglePlane->property("toggled");
 		// switch icons :
-		if (toggled.toBool() == true) { this->button_togglePlane->setIcon(*this->icon_togglePlane_Off); }
-		else { this->button_togglePlane->setIcon(*this->icon_togglePlane_On); }
+		if (toggled.toBool() == true) {
+			this->button_togglePlane->setIcon(*this->icon_togglePlane_Off);
+		} else {
+			this->button_togglePlane->setIcon(*this->icon_togglePlane_On);
+		}
 		// set new prop value :
 		this->button_togglePlane->setProperty("toggled", not toggled.toBool());
 	});
@@ -151,17 +164,19 @@ void ViewerHeader::registerWithViewer(void) {
 	this->activateWidgets(true);
 }
 
-ViewerHeader3D::ViewerHeader3D(QWidget* parent) : QWidget(parent) {
-	this->layout = nullptr;
-	this->sceneToControl = nullptr;
-	this->viewerToUpdate = nullptr;
+ViewerHeader3D::ViewerHeader3D(QWidget* parent) :
+	QWidget(parent) {
+	this->layout				= nullptr;
+	this->sceneToControl		= nullptr;
+	this->viewerToUpdate		= nullptr;
 	this->button_invertPlaneCut = nullptr;
-	this->button_togglePlane = nullptr;
-	this->button_centerCamera = nullptr;
-	this->color = Qt::GlobalColor::darkGray;
+	this->button_togglePlane	= nullptr;
+	this->button_centerCamera	= nullptr;
+	this->color					= Qt::GlobalColor::darkGray;
 }
 
-ViewerHeader3D::ViewerHeader3D(Viewer* _viewer, Scene* _scene, QWidget* parent) : ViewerHeader3D(parent) {
+ViewerHeader3D::ViewerHeader3D(Viewer* _viewer, Scene* _scene, QWidget* parent) :
+	ViewerHeader3D(parent) {
 	this->sceneToControl = _scene;
 	this->viewerToUpdate = _viewer;
 
@@ -170,8 +185,12 @@ ViewerHeader3D::ViewerHeader3D(Viewer* _viewer, Scene* _scene, QWidget* parent) 
 }
 
 ViewerHeader3D::~ViewerHeader3D() {
-	if (this->button_invertPlaneCut) { this->button_invertPlaneCut->disconnect(); }
-	if (this->button_togglePlane) { this->button_togglePlane->disconnect(); }
+	if (this->button_invertPlaneCut) {
+		this->button_invertPlaneCut->disconnect();
+	}
+	if (this->button_togglePlane) {
+		this->button_togglePlane->disconnect();
+	}
 
 	delete this->icon_hide;
 	delete this->icon_show;
@@ -186,25 +205,25 @@ void ViewerHeader3D::setupWidgets() {
 		return;
 	}
 
-	this->button_togglePlane = new QPushButton();
-	this->button_invertPlaneCut = new QPushButton();
-	this->button_centerCamera = new QPushButton("Center camera");
-	this->button_setSolid = new QPushButton();
-	this->button_setVolumetric = new QPushButton();
+	this->button_togglePlane		= new QPushButton();
+	this->button_invertPlaneCut		= new QPushButton();
+	this->button_centerCamera		= new QPushButton("Center camera");
+	this->button_setSolid			= new QPushButton();
+	this->button_setVolumetric		= new QPushButton();
 	this->button_setVolumetricBoxed = new QPushButton();
-	this->label_allPlanes = new QLabel("All planes : ");
-	this->layout = new QHBoxLayout;
-	this->separator = new QFrame;
+	this->label_allPlanes			= new QLabel("All planes : ");
+	this->layout					= new QHBoxLayout;
+	this->separator					= new QFrame;
 	this->separator->setFrameShape(QFrame::VLine);
 	this->separator->setFrameShadow(QFrame::Sunken);
 
-	this->icon_solid = new QIcon("../resources/label_2D.png");
-	this->icon_volumetric = new QIcon("../resources/label_3D.png");
+	this->icon_solid			= new QIcon("../resources/label_2D.png");
+	this->icon_volumetric		= new QIcon("../resources/label_3D.png");
 	this->icon_volumetric_boxed = new QIcon("../resources/label_3D_box.png");
 
 	this->icon_invert = new QIcon("../resources/invert.png");
-	this->icon_show = new QIcon("../resources/eye_open.png");
-	this->icon_hide = new QIcon("../resources/eye_close.png");
+	this->icon_show	  = new QIcon("../resources/eye_open.png");
+	this->icon_hide	  = new QIcon("../resources/eye_close.png");
 
 	this->button_togglePlane->setIcon(*this->icon_show);
 	this->button_togglePlane->setToolTip("Show/hide all planes");
@@ -241,45 +260,70 @@ void ViewerHeader3D::setupSignals() {
 		return;
 	}
 
-	QObject::connect(this->button_setSolid, &QPushButton::clicked, [this]() ->void {
-		if (this->sceneToControl == nullptr) { return; }
+	QObject::connect(this->button_setSolid, &QPushButton::clicked, [this]() -> void {
+		if (this->sceneToControl == nullptr) {
+			return;
+		}
 		this->sceneToControl->setDrawMode(DrawMode::Solid);
-		if (this->viewerToUpdate == nullptr) { return; }
+		if (this->viewerToUpdate == nullptr) {
+			return;
+		}
 		this->viewerToUpdate->update();
 	});
-	QObject::connect(this->button_setVolumetric, &QPushButton::clicked, [this]() ->void {
-		if (this->sceneToControl == nullptr) { return; }
+	QObject::connect(this->button_setVolumetric, &QPushButton::clicked, [this]() -> void {
+		if (this->sceneToControl == nullptr) {
+			return;
+		}
 		this->sceneToControl->setDrawMode(DrawMode::Volumetric);
-		if (this->viewerToUpdate == nullptr) { return; }
+		if (this->viewerToUpdate == nullptr) {
+			return;
+		}
 		this->viewerToUpdate->update();
 	});
-	QObject::connect(this->button_setVolumetricBoxed, &QPushButton::clicked, [this]() ->void {
-		if (this->sceneToControl == nullptr) { return; }
+	QObject::connect(this->button_setVolumetricBoxed, &QPushButton::clicked, [this]() -> void {
+		if (this->sceneToControl == nullptr) {
+			return;
+		}
 		this->sceneToControl->setDrawMode(DrawMode::VolumetricBoxed);
-		if (this->viewerToUpdate == nullptr) { return; }
+		if (this->viewerToUpdate == nullptr) {
+			return;
+		}
 		this->viewerToUpdate->update();
 	});
 	// connect plane visibility button :
-	QObject::connect(this->button_togglePlane, &QPushButton::clicked, [this]() ->void {
-		if (this->sceneToControl == nullptr) { return; }
+	QObject::connect(this->button_togglePlane, &QPushButton::clicked, [this]() -> void {
+		if (this->sceneToControl == nullptr) {
+			return;
+		}
 		this->sceneToControl->toggleAllPlaneVisibilities();
-		if (this->viewerToUpdate == nullptr) { return; }
+		if (this->viewerToUpdate == nullptr) {
+			return;
+		}
 		this->viewerToUpdate->update();
 		bool toggled = this->button_togglePlane->property("toggled").toBool();
-		if (toggled) { this->button_togglePlane->setIcon(*this->icon_hide); }
-		else { this->button_togglePlane->setIcon(*this->icon_show); }
+		if (toggled) {
+			this->button_togglePlane->setIcon(*this->icon_hide);
+		} else {
+			this->button_togglePlane->setIcon(*this->icon_show);
+		}
 		this->button_togglePlane->setProperty("toggled", not toggled);
 	});
 	// connect plane directions button :
-	QObject::connect(this->button_invertPlaneCut, &QPushButton::clicked, [this]() ->void {
-		if (this->sceneToControl == nullptr) { return; }
+	QObject::connect(this->button_invertPlaneCut, &QPushButton::clicked, [this]() -> void {
+		if (this->sceneToControl == nullptr) {
+			return;
+		}
 		this->sceneToControl->toggleAllPlaneDirections();
-		if (this->viewerToUpdate == nullptr) { return; }
+		if (this->viewerToUpdate == nullptr) {
+			return;
+		}
 		this->viewerToUpdate->update();
 	});
 	// connect reset visu box button :
-	QObject::connect(this->button_centerCamera, &QPushButton::clicked, [this]() ->void {
-		if (this->viewerToUpdate == nullptr) { return; }
+	QObject::connect(this->button_centerCamera, &QPushButton::clicked, [this]() -> void {
+		if (this->viewerToUpdate == nullptr) {
+			return;
+		}
 		this->viewerToUpdate->centerScene();
 	});
 

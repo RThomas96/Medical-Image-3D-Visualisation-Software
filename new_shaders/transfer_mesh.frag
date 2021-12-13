@@ -1,5 +1,8 @@
 #version 150
 #extension GL_ARB_separate_shader_objects : enable
+#extension GL_ARB_explicit_attrib_location : enable
+
+#define INLAYOUT
 
 // Signals we're in the main shader, for any shaders inserted into this one.
 #define MAIN_SHADER_UNIT
@@ -7,22 +10,22 @@
 /****************************************/
 /**************** Inputs ****************/
 /****************************************/
-in vec4 P;
-in vec3 text3DCoord;
-in vec4 P0;
-in vec3 text3DCoordP0;
-in vec4 P1;
-in vec3 text3DCoordP1;
-in vec4 P2;
-in vec3 text3DCoordP2;
-in vec4 P3;
-in vec3 text3DCoordP3;
+INLAYOUT in vec4 P;
+INLAYOUT in vec3 text3DCoord;
+INLAYOUT in vec4 P0;
+INLAYOUT in vec3 text3DCoordP0;
+INLAYOUT in vec4 P1;
+INLAYOUT in vec3 text3DCoordP1;
+INLAYOUT in vec4 P2;
+INLAYOUT in vec3 text3DCoordP2;
+INLAYOUT in vec4 P3;
+INLAYOUT in vec3 text3DCoordP3;
 
-in vec3 barycentricCoords;
-in vec3 largestDelta;
+INLAYOUT in vec3 barycentricCoords;
+INLAYOUT in vec3 largestDelta;
 
-in float instanceId;
-in float visibility;
+INLAYOUT in float instanceId;
+INLAYOUT in float visibility;
 
 /****************************************/
 /*************** Outputs ****************/
@@ -39,8 +42,6 @@ uniform sampler2D normals_translations;
 uniform sampler2D texture_coordinates;
 uniform sampler2D visibility_texture;
 uniform sampler2D neighbors;
-uniform sampler2D visiblity_map;
-uniform sampler2D visiblity_map_alternate;
 
 // Phong :
 uniform float diffuseRef;
@@ -66,6 +67,8 @@ uniform mat4 pMat;
 uniform vec3 visuBBMin;
 uniform vec3 visuBBMax;
 uniform bool shouldUseBB;
+
+uniform bool displayWireframe;
 
 // The structure which defines every attributes for the color channels.
 struct colorChannelAttributes {
@@ -112,22 +115,25 @@ vec3 phongComputation(vec4 position, vec3 normal, vec4 color, vec3 lightPos, vec
 
 void main (void) {
 	sceneSpaceFragmentPos = vec4(.0,.0,.0,.0);
+	gl_FragDepth = gl_FragCoord.z;
 
-	if( visibility > 3500. ) discard;
+    if( visibility > 3500. ) discard;
 
-	/*
-	// Shows the wireframe of the mesh :
-	float epsilon = 0.008;
-	float distMin = min(barycentricCoords.x/largestDelta.x, min(barycentricCoords.y/largestDelta.y, barycentricCoords.z/largestDelta.z));
 
-	// Enables a 1-pass wireframe mode :
-	if (distMin < epsilon) {// && visibility > 0.) {
-		float factor = (visibility/3500.);
-		colorOut = vec4(1.-factor, factor, 1.-factor, 1.);
-		textureCoordinatesWorldSpace = vec4(P.xyz, 2.f);
-		return;
-	}
-	*/
+    // Shows the wireframe of the mesh :
+    if(displayWireframe == true) {
+        float epsilon = 0.008;
+        float distMin = min(barycentricCoords.x/largestDelta.x, min(barycentricCoords.y/largestDelta.y, barycentricCoords.z/largestDelta.z));
+
+        // Enables a 1-pass wireframe mode :
+        if (distMin < epsilon) {// && visibility > 0.) {
+            float factor = (visibility/3500.);
+            colorOut = vec4(1.-factor, factor, 1.-factor, 1.);
+            sceneSpaceFragmentPos = vec4(P.xyz, 2.f);
+            return;
+        }
+    }
+	
 
 	// Default color of the fragment
 	colorOut = vec4(.0, .0, .0, .0);
@@ -277,6 +283,10 @@ void main (void) {
 
 	sceneSpaceFragmentPos = Pos;
 
+	// Update fragment depth to prevent sorting issues !!!
+	vec4 compute_depth = pMat * vMat * sceneSpaceFragmentPos;
+	gl_FragDepth = 0.5f * ((compute_depth.z / compute_depth.w) + 1.f);
+
 	return;
 }
 
@@ -300,6 +310,9 @@ bool ComputeVisibility(vec3 point)
 		clippingPoint += clippingNormal * clipDistanceFromCamera ;
 		vec4 pos = point4 - clippingPoint;
 		float vis = dot( clippingNormal, pos );
+
+        return true;
+        // TODO: reactivate z clipping
 
 		if( xVis < 0.|| yVis < 0.|| zVis < 0. || vis < .0)
 			return false;

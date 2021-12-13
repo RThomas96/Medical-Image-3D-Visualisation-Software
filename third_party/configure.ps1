@@ -4,11 +4,13 @@
 #	[Switch]$libtiff = $false,
 #	[Switch]$tinytiff = $false,
 #	[Switch]$qglviewer = $false
+#	[Switch]$nanoflann = $false
 #)
 
 # Executable paths :
 [string]$CMakeCmdPath = ""
 [string]$QMakeCmdPath = ""
+[string]$GitPath = ""
 [string]$GNUMakeCmdPath = ""
 [int]$IsSystemValid = 1;
 
@@ -20,6 +22,7 @@
 [string]$libTIFFPath = ($ProjectRootPath)+"\libtiff"
 [string]$niftiPath = ($ProjectRootPath)+"\nifticlib"
 [string]$zlibPath = ($ProjectRootPath)+"\zlib"
+[string]$nanoflannPath = ($ProjectRootPath)+"\nanoflann"
 [string]$CompiledLibPath = ($ProjectRootPath)+"\compiled_libraries"
 
 function Clear-GitAll {
@@ -84,12 +87,19 @@ function Clear-GitAll {
 
 function Start-GitCompile {
 	# Checks the right programs are available, then creates the compiled_libraries folder :
-	$Global:CMakeCmdPath = (Get-Command -Name cmake.exe).Source
+	$Global:GitPath = (Get-Command -Name git.exe).Source
+	$Global:CMakeCmdPath = "C:\Qt\Tools\CMake_64\bin\cmake.exe"
 	$Global:QMakeCmdPath = "C:\Qt\5.15.2\mingw81_64\bin\qmake.exe"
 	$Global:GNUMakeCmdPath = "C:\Qt\Tools\mingw810_64\bin\mingw32-make.exe"
 
 	if (Test-Path -Path $Global:CMakeCmdPath -PathType Leaf) {
 		Write-Host "CMake was found at : "${Global:CMakeCmdPath}
+	} else {
+		$Global:IsSystemValid = 0;
+	}
+
+	if (Test-Path -Path $Global:GitPath -PathType Leaf) {
+		Write-Host "git was found at : "${Global:GitPath}
 	} else {
 		$Global:IsSystemValid = 0;
 	}
@@ -120,7 +130,7 @@ function Publish-GitTinyTIFF {
 		Start-Process -FilePath $Global:CMakeCmdPath -NoNewWindow -Wait -ArgumentList `
 			"-S. -Brelease -G `"MinGW Makefiles`" -DCMAKE_BUILD_TYPE=Release -DTinyTIFF_BUILD_TESTS=OFF -DTinyTIFF_BUILD_DECORATE_LIBNAMES_WITH_BUILDTYPE=OFF -DCMAKE_INSTALL_PREFIX=$CompiledLibPath -DTinyTIFF_BUILD_STATIC_LIBS=ON"
 		# Call CMake to compile the project :
-		Start-Process cmake -NoNewWindow -Wait -ArgumentList "--build release --target install"
+		Start-Process -FilePath $Global:CMakeCmdPath -NoNewWindow -Wait -ArgumentList "--build release --target install"
 	}
 	# Finish the process :
 	Write-Host "Configuration of TinyTIFF done."
@@ -178,9 +188,12 @@ function Publish-GitNifti {
 		# Here we cast the result to void in order to have no output on the CMD/PS :
 		[void](New-Item -Force -Path $niftiPath -Name "release" -ItemType "directory")
 
+		[string]$cmakeBuildArgs="-S. -Brelease -G `"MinGW Makefiles`" -DCMAKE_BUILD_TYPE=Release -DZLIB_ROOT=`"$CompiledLibPath`" -DNIFTI_BUILD_TESTING=OFF -DNIFTI_SHELL_SCRIPT_TESTS=OFF -DNIFTI_BUILD_APPLICATIONS=OFF -DNIFTI_INSTALL_NO_DOCS=TRUE -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=$CompiledLibPath "
+
+		# Patch the znzlib cmake file to include the local/global zlib include dirs :
+		Start-Process -FilePath $Global:GitPath -NoNewWindow -Wait -ArgumentList " apply ../znz_include_zlib.patch "
 		# Start the CMake generation process :
-		Start-Process -FilePath $Global:CMakeCmdPath -NoNewWindow -Wait -ArgumentList `
-			"-S. -Brelease -G `"MinGW Makefiles`" -DCMAKE_BUILD_TYPE=Release -DZLIB-ROOT=$CompiledLibPath -DNIFTI_BUILD_TESTING=OFF -DNIFTI_SHELL_SCRIPT_TESTS=OFF -DNIFTI_BUILD_APPLICATIONS=OFF -DNIFTI_INSTALL_NO_DOCS=TRUE -DCMAKE_INSTALL_PREFIX=$CompiledLibPath "
+		Start-Process -FilePath $Global:CMakeCmdPath -NoNewWindow -Wait -ArgumentList $cmakeBuildArgs
 		# Call CMake to compile the project :
 		Start-Process -FilePath $Global:CMakeCmdPath -NoNewWindow -Wait -ArgumentList `
 			"--build release --target install"
@@ -194,7 +207,7 @@ function Publish-GitZlib {
 	Write-Host "Configuring Zlib ..."
 	Set-Location $zlibPath
 	if ( Test-Path -Path "release" ) {
-		//
+		Write-Host "Zlib was already compiled by this script."
 	} else {
 		[void](New-Item -Force -Path $zlibPath -Name "release" -ItemType "directory")
 
@@ -205,6 +218,28 @@ function Publish-GitZlib {
 	}
 	# Finish the process :
 	Write-Host "Configuration of Zlib done."
+	Set-Location $ProjectRootPath
+}
+
+function Publish-GitNanoFLANN {
+	Write-Host "Configuring nanoflann ..."
+	Set-Location $nanoflannPath
+	if ( Test-Path -Path $nanoflannPath+"\release" ) {
+		Write-Host "nanoflann was already compiled by this script."
+	} else {
+		# Here we cast the result to void in order to have no output on the CMD/PS :
+		[void](New-Item -Force -Path $nanoflannPath -Name "release" -ItemType "directory")
+
+		[string]$cmakeBuildArgs="-S. -Brelease -G `"MinGW Makefiles`" -DCMAKE_BUILD_TYPE=Release -DNANOFLANN_BUILD_EXAMPLES=OFF -DNANOFLANN_BUILD_BENCHMARKS=OFF -DNANOFLANN_BUILD_TESTS=OFF -DCMAKE_INSTALL_PREFIX=$CompiledLibPath "
+
+		# Start the CMake generation process :
+		Start-Process -FilePath $Global:CMakeCmdPath -NoNewWindow -Wait -ArgumentList $cmakeBuildArgs
+		# Call CMake to compile the project :
+		Start-Process -FilePath $Global:CMakeCmdPath -NoNewWindow -Wait -ArgumentList `
+			"--build release --target install"
+	}
+	# Finish the process :
+	Write-Host "Configuration of nanoflann done."
 	Set-Location $ProjectRootPath
 }
 
@@ -243,7 +278,11 @@ if ($args.Count -gt 0) {
 	}
 	# And TinyTIFF :
 	if ($args.Contains("tinytiff")) {
-		Publish-GitlibTIFF
+		Publish-GitTinyTIFF
+	}
+	# And nanoflann :
+	if ($args.Contains("nanoflann")) {
+		Publish-GitNanoFLANN
 	}
 	# And finally with QGLViewer :
 	if ($args.Contains("qglviewer")) {

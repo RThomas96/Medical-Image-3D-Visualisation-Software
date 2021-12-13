@@ -1,18 +1,19 @@
 #include "../include/scene_control.hpp"
-#include "../../viewer/include/scene.hpp"
 #include "../../viewer/include/neighbor_visu_viewer.hpp"
+#include "../../viewer/include/scene.hpp"
 
-#include <QLabel>
-#include <QHBoxLayout>
-#include <QVBoxLayout>
-#include <QGridLayout>
 #include <QColorDialog>
+#include <QGridLayout>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QVBoxLayout>
 
-ColorButton::ColorButton(QColor _color, QWidget* parent) : QWidget(parent) {
-	this->color = _color;
+ColorButton::ColorButton(QColor _color, QWidget* parent) :
+	QWidget(parent) {
+	this->color	 = _color;
 	this->button = new QPushButton;
-	this->pixmap = new QPixmap(30,30);
-	this->icon = nullptr;
+	this->pixmap = new QPixmap(30, 30);
+	this->icon	 = nullptr;
 	this->setColor(this->color);
 	this->button->setFixedSize(this->button->sizeHint());
 
@@ -22,9 +23,11 @@ ColorButton::ColorButton(QColor _color, QWidget* parent) : QWidget(parent) {
 
 	QObject::connect(this->button, &QPushButton::clicked, this, [this](void) -> void {
 		QColor c = QColorDialog::getColor(this->color, this, "Pick a color", QColorDialog::ColorDialogOption::DontUseNativeDialog);
-		if (c.isValid() == false) { return ; }
+		if (c.isValid() == false) {
+			return;
+		}
 		this->setColor(c);
-		return ;
+		return;
 	});
 }
 
@@ -37,7 +40,9 @@ ColorButton::~ColorButton() {
 void ColorButton::setColor(QColor _color) {
 	this->color = _color;
 	this->pixmap->fill(this->color);
-	if (this->icon != nullptr) { delete this->icon; }
+	if (this->icon != nullptr) {
+		delete this->icon;
+	}
 	this->icon = new QIcon(*this->pixmap);
 	this->button->setIcon(*this->icon);
 	/*
@@ -48,16 +53,19 @@ void ColorButton::setColor(QColor _color) {
 	emit this->colorChanged(this->color);
 }
 
-QColor ColorButton::getColor() const { return this->color; }
+QColor ColorButton::getColor() const {
+	return this->color;
+}
 
-ColorBoundsControl::ColorBoundsControl(Scene *_scene, bool _prim, QWidget *parent) : QWidget(parent) {
+ColorBoundsControl::ColorBoundsControl(Scene* _scene, bool _prim, QWidget* parent) :
+	QWidget(parent) {
 	this->_primary = _prim;
-	this->scene = _scene;
-	this->sb_min = new QSpinBox;
-	this->sb_max = new QSpinBox;
+	this->scene	   = _scene;
+	this->sb_min   = new QSpinBox;
+	this->sb_max   = new QSpinBox;
 	this->sb_min->setRange(0, 65535);
 	this->sb_max->setRange(0, 65535);
-	this->layout = new QGridLayout;
+	this->layout	  = new QGridLayout;
 	QLabel* label_min = new QLabel("Minimum");
 	QLabel* label_max = new QLabel("Maximum");
 	this->getCurrentValues();
@@ -91,22 +99,23 @@ void ColorBoundsControl::getCurrentValues() {
 	this->sb_max->setValue(ma);
 }
 
-ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, QWidget* parent) : QWidget(parent), sceneToControl(scene), viewer(lv) {
-	this->min = std::numeric_limits<DiscreteGrid::data_t>::lowest();
-	this->max = std::numeric_limits<DiscreteGrid::data_t>::max();
-	this->minAlternate = std::numeric_limits<DiscreteGrid::data_t>::lowest();
-	this->maxAlternate = std::numeric_limits<DiscreteGrid::data_t>::max();
+ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, QWidget* parent) :
+	QWidget(parent), sceneToControl(scene), viewer(lv) {
+	this->min		   = 0; 
+	this->max		   = 1;
+	this->minAlternate = 0;
+	this->maxAlternate = 1;
 
-	this->cb_red_bounds = nullptr;
+	this->cb_red_bounds	  = nullptr;
 	this->cb_green_bounds = nullptr;
 
-	this->button_red_colorbounds = new QPushButton("Change min/max");
+	this->button_red_colorbounds   = new QPushButton("Change min/max");
 	this->button_green_colorbounds = new QPushButton("Change min/max");
 
 	// Create the groupboxes and their layouts :
-	this->groupbox_red = new QGroupBox;
-	this->groupbox_green = new QGroupBox;
-	this->layout_widgets_red = new QHBoxLayout;
+	this->groupbox_red		   = new QGroupBox;
+	this->groupbox_green	   = new QGroupBox;
+	this->layout_widgets_red   = new QHBoxLayout;
 	this->layout_widgets_green = new QHBoxLayout;
 	this->groupbox_red->setCheckable(true);
 	this->groupbox_green->setCheckable(true);
@@ -114,7 +123,7 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, QWidget* parent) : QW
 	this->groupbox_green->setTitle("Channel 2");
 
 	// Texture bounds for red and green channels :
-	this->rangeslider_red = new DoubleSlider;
+	this->rangeslider_red	= new DoubleSlider;
 	this->rangeslider_green = new DoubleSlider;
 
 	this->red_coloration = new QComboBox;
@@ -127,12 +136,12 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, QWidget* parent) : QW
 	this->green_coloration->addItem("HSV to RGB", ColorFunction::HSV2RGB);
 	this->green_coloration->addItem("User colors", ColorFunction::ColorMagnitude);
 
-	QColor r = Qt::GlobalColor::red;
-	QColor b = Qt::GlobalColor::blue;
-	QColor d = Qt::GlobalColor::darkCyan;
-	QColor y = Qt::GlobalColor::yellow;
-	this->colorbutton_red_min = new ColorButton(r);
-	this->colorbutton_red_max = new ColorButton(b);
+	QColor r					= Qt::GlobalColor::red;
+	QColor b					= Qt::GlobalColor::blue;
+	QColor d					= Qt::GlobalColor::darkCyan;
+	QColor y					= Qt::GlobalColor::yellow;
+	this->colorbutton_red_min	= new ColorButton(r);
+	this->colorbutton_red_max	= new ColorButton(b);
 	this->colorbutton_green_min = new ColorButton(d);
 	this->colorbutton_green_max = new ColorButton(y);
 	this->sceneToControl->setColor0(r.redF(), r.greenF(), r.blueF());
@@ -140,16 +149,16 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, QWidget* parent) : QW
 	this->sceneToControl->setColor0Alternate(d.redF(), d.greenF(), d.blueF());
 	this->sceneToControl->setColor1Alternate(y.redF(), y.greenF(), y.blueF());
 
-	this->rangeslider_red->setRange(0, this->max-1);
+	this->rangeslider_red->setRange(0, this->max - 1);
 	this->rangeslider_red->setMinValue(0);
-	this->rangeslider_red->setMaxValue(this->max-2);
-	this->rangeslider_green->setRange(0, this->max-1);
+	this->rangeslider_red->setMaxValue(this->max - 2);
+	this->rangeslider_green->setRange(0, this->max - 1);
 	this->rangeslider_green->setMinValue(0);
-	this->rangeslider_green->setMaxValue(this->max-2);
+	this->rangeslider_green->setMaxValue(this->max - 2);
 
 	this->layout_widgets_red->addWidget(this->colorbutton_red_min);
 	this->layout_widgets_red->addWidget(this->rangeslider_red);
-//	this->layout_widgets_red->setColumnStretch(1, 10);
+	//	this->layout_widgets_red->setColumnStretch(1, 10);
 	this->layout_widgets_red->addWidget(this->colorbutton_red_max);
 	this->layout_widgets_red->addWidget(this->red_coloration);
 	this->layout_widgets_red->addWidget(this->button_red_colorbounds);
@@ -157,7 +166,7 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, QWidget* parent) : QW
 
 	this->layout_widgets_green->addWidget(this->colorbutton_green_min);
 	this->layout_widgets_green->addWidget(this->rangeslider_green);
-//	this->layout_widgets_green->setColumnStretch(1, 10);
+	//	this->layout_widgets_green->setColumnStretch(1, 10);
 	this->layout_widgets_green->addWidget(this->colorbutton_green_max);
 	this->layout_widgets_green->addWidget(this->green_coloration);
 	this->layout_widgets_green->addWidget(this->button_green_colorbounds);
@@ -179,9 +188,9 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, QWidget* parent) : QW
 
 	this->initSignals();
 
-//	this->layout_widgets_red->setSizeConstraint(QLayout::SizeConstraint::SetFixedSize);
-//	this->layout_widgets_green->setSizeConstraint(QLayout::SizeConstraint::SetFixedSize);
-//	this->layout()->setSizeConstraint(QLayout::SizeConstraint::SetFixedSize);
+	//	this->layout_widgets_red->setSizeConstraint(QLayout::SizeConstraint::SetFixedSize);
+	//	this->layout_widgets_green->setSizeConstraint(QLayout::SizeConstraint::SetFixedSize);
+	//	this->layout()->setSizeConstraint(QLayout::SizeConstraint::SetFixedSize);
 
 	if (this->sceneToControl != nullptr) {
 		this->updateValues();
@@ -208,8 +217,8 @@ void ControlPanel::initSignals() {
 	QObject::connect(this->rangeslider_red, &DoubleSlider::minChanged, this, &ControlPanel::setMinTexVal);
 	QObject::connect(this->rangeslider_red, &DoubleSlider::maxChanged, this, &ControlPanel::setMaxTexVal);
 
-	QObject::connect(this->rangeslider_green, &DoubleSlider::minChanged, this, &ControlPanel::setMinTexValBottom);
-	QObject::connect(this->rangeslider_green, &DoubleSlider::maxChanged, this, &ControlPanel::setMaxTexValBottom);
+	QObject::connect(this->rangeslider_green, &DoubleSlider::minChanged, this, &ControlPanel::setMinTexValAlternate);
+	QObject::connect(this->rangeslider_green, &DoubleSlider::maxChanged, this, &ControlPanel::setMaxTexValAlternate);
 
 	// Connect color changes to their respective slots :
 	QObject::connect(this->colorbutton_red_min, &ColorButton::colorChanged, this, [this](QColor c) -> void {
@@ -239,41 +248,45 @@ void ControlPanel::initSignals() {
 }
 
 void ControlPanel::updateViewers() {
-	if (this->viewer != nullptr) { this->viewer->update(); }
+	if (this->viewer != nullptr) {
+		this->viewer->update();
+	}
 }
 
-void ControlPanel::updateMinValue(int val) {
-	this->min = static_cast<DiscreteGrid::data_t>(val);
+void ControlPanel::updateMinValue(double val) {
+	this->min = val;
 	this->rangeslider_red->setMin(val);
 	return;
 }
 
-void ControlPanel::updateMaxValue(int val) {
-	this->max = static_cast<DiscreteGrid::data_t>(val);
+void ControlPanel::updateMaxValue(double val) {
+	this->max = val;
 	this->rangeslider_red->setMax(val);
 	return;
 }
 
-void ControlPanel::updateMinValueAlternate(int val) {
-	this->minAlternate = static_cast<DiscreteGrid::data_t>(val);
+void ControlPanel::updateMinValueAlternate(double val) {
+	this->minAlternate = val;
 	this->rangeslider_green->setMin(val);
 	return;
 }
 
-void ControlPanel::updateMaxValueAlternate(int val) {
-	this->maxAlternate = static_cast<DiscreteGrid::data_t>(val);
+void ControlPanel::updateMaxValueAlternate(double val) {
+	this->maxAlternate = val;
 	this->rangeslider_green->setMax(val);
 	return;
 }
 
 void ControlPanel::updateValues(void) {
-	if (this->sceneToControl == nullptr) { return; }
+	if (this->sceneToControl == nullptr) {
+		return;
+	}
 	this->blockSignals(true);
 	this->rangeslider_red->blockSignals(true);
 	this->rangeslider_green->blockSignals(true);
 
-	this->min = this->sceneToControl->getMinTexValue();
-	this->max = this->sceneToControl->getMaxTexValue();
+	this->min		   = this->sceneToControl->getMinTexValue();
+	this->max		   = this->sceneToControl->getMaxTexValue();
 	this->minAlternate = this->sceneToControl->getMinTexValueAlternate();
 	this->maxAlternate = this->sceneToControl->getMaxTexValueAlternate();
 
@@ -297,11 +310,11 @@ void ControlPanel::launchRedColorBounds() {
 		});
 		QObject::connect(this->cb_red_bounds, &ColorBoundsControl::minChanged, this, [this](int val) {
 			this->updateMinValue(val);
-			this->sceneToControl->slotSetMinColorValue(static_cast<DiscreteGrid::data_t>(val));
+			this->sceneToControl->slotSetMinColorValue(static_cast<double>(val));
 		});
 		QObject::connect(this->cb_red_bounds, &ColorBoundsControl::maxChanged, this, [this](int val) {
 			this->updateMaxValue(val);
-			this->sceneToControl->slotSetMaxColorValue(static_cast<DiscreteGrid::data_t>(val));
+			this->sceneToControl->slotSetMaxColorValue(static_cast<double>(val));
 		});
 	}
 	this->cb_red_bounds->raise();
@@ -316,11 +329,11 @@ void ControlPanel::launchGreenColorBounds() {
 		});
 		QObject::connect(this->cb_green_bounds, &ColorBoundsControl::minChanged, this, [this](int val) {
 			this->updateMinValueAlternate(val);
-			this->sceneToControl->slotSetMinColorValueAlternate(static_cast<DiscreteGrid::data_t>(val));
+			this->sceneToControl->slotSetMinColorValueAlternate(static_cast<double>(val));
 		});
 		QObject::connect(this->cb_green_bounds, &ColorBoundsControl::maxChanged, this, [this](int val) {
 			this->updateMaxValueAlternate(val);
-			this->sceneToControl->slotSetMaxColorValueAlternate(static_cast<DiscreteGrid::data_t>(val));
+			this->sceneToControl->slotSetMaxColorValueAlternate(static_cast<double>(val));
 		});
 	}
 	this->cb_green_bounds->raise();
@@ -331,10 +344,22 @@ void ControlPanel::updateRGBMode() {
 	bool r = this->groupbox_red->isChecked();
 	bool g = this->groupbox_green->isChecked();
 
-	if (!r && !g) { this->sceneToControl->setRGBMode(RGBMode::None); return; }
-	if ( r && !g) { this->sceneToControl->setRGBMode(RGBMode::RedOnly); return; }
-	if (!r &&  g) { this->sceneToControl->setRGBMode(RGBMode::GreenOnly); return; }
-	if ( r &&  g) { this->sceneToControl->setRGBMode(RGBMode::RedAndGreen); return; }
+	if (! r && ! g) {
+		this->sceneToControl->setRGBMode(RGBMode::None);
+		return;
+	}
+	if (r && ! g) {
+		this->sceneToControl->setRGBMode(RGBMode::RedOnly);
+		return;
+	}
+	if (! r && g) {
+		this->sceneToControl->setRGBMode(RGBMode::GreenOnly);
+		return;
+	}
+	if (r && g) {
+		this->sceneToControl->setRGBMode(RGBMode::RedAndGreen);
+		return;
+	}
 }
 
 void ControlPanel::updateChannelRed(int value) {
@@ -343,20 +368,20 @@ void ControlPanel::updateChannelRed(int value) {
 			// Should switch to greyscale
 			this->sceneToControl->setColorFunction_r(ColorFunction::SingleChannel);
 			this->updateViewers();
-		break;
+			break;
 		case 1:
 			// Should switch to hsv
 			this->sceneToControl->setColorFunction_r(ColorFunction::HSV2RGB);
 			this->updateViewers();
-		break;
+			break;
 		case 2:
 			// Should switch to hsv
 			this->sceneToControl->setColorFunction_r(ColorFunction::ColorMagnitude);
 			this->updateViewers();
-		break;
+			break;
 		default:
 			std::cerr << "Cannot switch to function " << value << "\n";
-		break;
+			break;
 	}
 }
 
@@ -366,60 +391,83 @@ void ControlPanel::updateChannelGreen(int value) {
 			// Should switch to greyscale
 			this->sceneToControl->setColorFunction_g(ColorFunction::SingleChannel);
 			this->updateViewers();
-		break;
+			break;
 		case 1:
 			// Should switch to hsv
 			this->sceneToControl->setColorFunction_g(ColorFunction::HSV2RGB);
 			this->updateViewers();
-		break;
+			break;
 		case 2:
 			// Should switch to hsv
 			this->sceneToControl->setColorFunction_g(ColorFunction::ColorMagnitude);
 			this->updateViewers();
-		break;
+			break;
 		default:
 			std::cerr << "Cannot switch to function " << value << "\n";
-		break;
+			break;
 	}
 }
 
-void ControlPanel::setMinTexVal(int val) {
-	this->min = static_cast<DiscreteGrid::data_t>(val);
+void ControlPanel::setMinTexVal(double val) {
+	this->min = val;
 	// update scene data :
 	if (this->sceneToControl) {
-		this->sceneToControl->slotSetMinTexValue(static_cast<DiscreteGrid::data_t>(val));
+		this->sceneToControl->slotSetMinTexValue(val);
 	}
 	this->updateViewers();
 }
 
-void ControlPanel::setMaxTexVal(int val) {
-	this->max = static_cast<DiscreteGrid::data_t>(val);
+void ControlPanel::setMaxTexVal(double val) {
+	this->max = val;
 	if (this->sceneToControl) {
-		this->sceneToControl->slotSetMaxTexValue(static_cast<DiscreteGrid::data_t>(val));
+		this->sceneToControl->slotSetMaxTexValue(val);
 	}
 	this->updateViewers();
 }
 
-void ControlPanel::setMinTexValBottom(int val) {
-	this->minAlternate = static_cast<DiscreteGrid::data_t>(val);
+void ControlPanel::setMinTexValAlternate(double val) {
+	this->minAlternate = val;
 	// update scene data :
 	if (this->sceneToControl) {
-		this->sceneToControl->slotSetMinTexValueAlternate(static_cast<DiscreteGrid::data_t>(val));
+		this->sceneToControl->slotSetMinTexValueAlternate(val);
 	}
 	this->updateViewers();
 }
 
-void ControlPanel::setMaxTexValBottom(int val) {
-	this->maxAlternate = static_cast<DiscreteGrid::data_t>(val);
+void ControlPanel::setMaxTexValAlternate(double val) {
+	this->maxAlternate = val;
 	if (this->sceneToControl) {
-		this->sceneToControl->slotSetMaxTexValueAlternate(static_cast<DiscreteGrid::data_t>(val));
+		this->sceneToControl->slotSetMaxTexValueAlternate(val);
 	}
 	this->updateViewers();
 }
 
-void ControlPanel::setClipDistance(double val) {
-	if (this->sceneToControl) {
-		this->sceneToControl->slotSetClipDistance(val);
-	}
-	this->updateViewers();
+void ControlPanel::setSlidersToNumericalLimits(void) {
+    // TODO: make the slider a ratio
+    
+    double minValue = sceneToControl->getMinNumericLimit(0);
+    double maxValue = sceneToControl->getMaxNumericLimit(0);
+
+    if(minValue < static_cast<double>(std::numeric_limits<int>::lowest())) {
+        minValue = static_cast<double>(std::numeric_limits<int>::lowest());
+        std::cerr << "Error: sliders cannot handle datatypes bigger than integer. Values are crop." << std::endl;
+    }
+
+    if(maxValue > static_cast<double>(std::numeric_limits<int>::max())) {
+        maxValue = static_cast<double>(std::numeric_limits<int>::max());
+        std::cerr << "Error: sliders cannot handle datatypes bigger than integer. Values are crop." << std::endl;
+    }
+
+
+    setMinTexVal(minValue);
+    setMaxTexVal(maxValue);
+
+    updateMinValue(minValue);
+    updateMaxValue(maxValue);
+
+    setMinTexValAlternate(minValue);
+    setMaxTexValAlternate(maxValue);
+
+    updateMinValueAlternate(minValue);
+    updateMaxValueAlternate(maxValue);
 }

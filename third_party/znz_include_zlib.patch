@@ -1,0 +1,14 @@
+diff --git a/znzlib/CMakeLists.txt b/znzlib/CMakeLists.txt
+index c188d9b..9513614 100644
+--- a/znzlib/CMakeLists.txt
++++ b/znzlib/CMakeLists.txt
+@@ -2,6 +2,9 @@ set(NIFTI_ZNZLIB_NAME ${NIFTI_PACKAGE_PREFIX}znz)
+ 
+ add_nifti_library(${NIFTI_ZNZLIB_NAME} znzlib.c )
+ target_link_libraries( ${NIFTI_ZNZLIB_NAME} PUBLIC ${NIFTI_ZLIB_LIBRARIES} )
++if (ZLIB_INCLUDE_DIR) 
++target_include_directories( ${NIFTI_ZNZLIB_NAME} PUBLIC ${ZLIB_INCLUDE_DIR} )
++endif()
+ set_target_properties(
+   ${NIFTI_ZNZLIB_NAME}
+   PROPERTIES

@@ -2,16 +2,17 @@
 
 namespace Image {
 
-	ThreadedTask::Ptr ThreadedTask::getPtr()  {
+	ThreadedTask::Ptr ThreadedTask::getPtr() {
 		return this->shared_from_this();
 	}
 
-	ThreadedTask::ThreadedTask(std::size_t _max_steps) : m() {
-		this->maxSteps = _max_steps;
-		this->currentStep = 0;
+	ThreadedTask::ThreadedTask(std::size_t _max_steps) :
+		m() {
+		this->maxSteps	   = _max_steps;
+		this->currentStep  = 0;
 		this->timeInterval = std::chrono::milliseconds(10);
-		this->msgs = {};
-		this->task_state = TaskState::Created;
+		this->msgs		   = {};
+		this->task_state   = TaskState::Created;
 	}
 
 	bool ThreadedTask::isComplete() {
@@ -28,12 +29,15 @@ namespace Image {
 		std::unique_lock m_lock(this->m, std::defer_lock);
 		if (m_lock.try_lock_for(this->timeInterval)) {
 			// end the task by setting the current step > max step
-			this->maxSteps = 0;
+			this->maxSteps	  = 0;
 			this->currentStep = 1;
 
 			// set the task's state :
-			if (success) { this->task_state = TaskState::End_Success; }
-			else { this->task_state = TaskState::End_Failure; }
+			if (success) {
+				this->task_state = TaskState::End_Success;
+			} else {
+				this->task_state = TaskState::End_Failure;
+			}
 
 			m_lock.unlock();
 		}
@@ -127,7 +131,9 @@ namespace Image {
 	bool ThreadedTask::popMessage(std::string &msg) {
 		std::unique_lock m_lock(this->m, std::defer_lock);
 		if (m_lock.try_lock_for(this->timeInterval)) {
-			if (this->msgs.empty()) { return false; }
+			if (this->msgs.empty()) {
+				return false;
+			}
 			// copy string, front returns ref and obj is destroyed when pop()-ed :
 			msg = std::string(this->msgs.front());
 			this->msgs.pop();
@@ -137,4 +143,4 @@ namespace Image {
 		return false;
 	}
 
-} // Image namespace
+}	 // namespace Image

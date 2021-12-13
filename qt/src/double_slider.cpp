@@ -2,15 +2,16 @@
 
 #include <iostream>
 
-DoubleSlider::DoubleSlider(QWidget* parent) : QWidget(parent) {
+DoubleSlider::DoubleSlider(QWidget* parent) :
+	QWidget(parent) {
 	this->value_slider = new RangeSlider(Qt::Horizontal);
 	this->value_slider->setHandleToolTip("%1");
 	this->label_min_header_current = new QLabel("");
-	this->label_header_min = new QLabel("Min : ");
-	this->label_header_max = new QLabel("Max : ");
-	this->label_min_value_current = new QLabel(QString::number(65535));
-	this->label_value_min = new QLabel(QString::number(65535));
-	this->label_value_max = new QLabel(QString::number(65535));
+	this->label_header_min		   = new QLabel("Min : ");
+	this->label_header_max		   = new QLabel("Max : ");
+	this->label_min_value_current  = new QLabel(QString::number(65535));
+	this->label_value_min		   = new QLabel(QString::number(65535));
+	this->label_value_max		   = new QLabel(QString::number(65535));
 
 	// Columns : [ Warning, outdated ]
 	// 0 : header min
@@ -21,13 +22,13 @@ DoubleSlider::DoubleSlider(QWidget* parent) : QWidget(parent) {
 	// 5 : header max
 	// 6 : value max
 	this->layout_grid = new QGridLayout;
-	this->layout_grid->addWidget(this->label_header_min,			0, 0);
-	this->layout_grid->addWidget(this->label_value_min,				0, 1);
-	this->layout_grid->addWidget(this->value_slider,				0, 2);
-	this->layout_grid->addWidget(this->label_min_header_current,	0, 3);
-	this->layout_grid->addWidget(this->label_min_value_current,		0, 4);
-	this->layout_grid->addWidget(this->label_header_max,			0, 5);
-	this->layout_grid->addWidget(this->label_value_max,				0, 6);
+	this->layout_grid->addWidget(this->label_header_min, 0, 0);
+	this->layout_grid->addWidget(this->label_value_min, 0, 1);
+	this->layout_grid->addWidget(this->value_slider, 0, 2);
+	this->layout_grid->addWidget(this->label_min_header_current, 0, 3);
+	this->layout_grid->addWidget(this->label_min_value_current, 0, 4);
+	this->layout_grid->addWidget(this->label_header_max, 0, 5);
+	this->layout_grid->addWidget(this->label_value_max, 0, 6);
 
 	this->layout_grid->setColumnStretch(0, 0);
 	this->layout_grid->setColumnStretch(1, 0);
@@ -78,8 +79,8 @@ void DoubleSlider::setMin(int min) {
 			this->value_slider->setMaximumValue(min);
 			this->value_slider->setMaximumPosition(min);
 		} else {
-			this->value_slider->setMaximumValue(min+1);
-			this->value_slider->setMaximumPosition(min+1);
+			this->value_slider->setMaximumValue(min + 1);
+			this->value_slider->setMaximumPosition(min + 1);
 		}
 	}
 	this->value_slider->setMinimum(min);
@@ -96,8 +97,8 @@ void DoubleSlider::setMax(int max) {
 			this->value_slider->setMinimumValue(max);
 			this->value_slider->setMinimumPosition(max);
 		} else {
-			this->value_slider->setMinimumValue(max-1);
-			this->value_slider->setMinimumPosition(max-1);
+			this->value_slider->setMinimumValue(max - 1);
+			this->value_slider->setMinimumPosition(max - 1);
 		}
 	}
 	this->value_slider->setMaximum(max);
@@ -108,12 +109,12 @@ void DoubleSlider::setMinValue(int min) {
 	int other = this->value_slider->maximumValue();
 	if (min >= other) {
 		if (other >= this->value_slider->maximum()) {
-			this->value_slider->setMinimumValue(min-1);
-			this->value_slider->setMinimumPosition(min-1);
+			this->value_slider->setMinimumValue(min - 1);
+			this->value_slider->setMinimumPosition(min - 1);
 			return;
 		}
-		this->value_slider->setMaximumValue(min+1);
-		this->value_slider->setMaximumPosition(min+1);
+		this->value_slider->setMaximumValue(min + 1);
+		this->value_slider->setMaximumPosition(min + 1);
 	}
 	this->value_slider->setMinimumValue(min);
 	this->value_slider->setMinimumPosition(min);
@@ -124,12 +125,12 @@ void DoubleSlider::setMaxValue(int max) {
 	int other = this->value_slider->minimumValue();
 	if (max <= other) {
 		if (other <= this->value_slider->minimum()) {
-			this->value_slider->setMaximumValue(max+1);
-			this->value_slider->setMaximumPosition(max+1);
+			this->value_slider->setMaximumValue(max + 1);
+			this->value_slider->setMaximumPosition(max + 1);
 			return;
 		}
-		this->value_slider->setMinimumValue(max-1);
-		this->value_slider->setMinimumPosition(max-1);
+		this->value_slider->setMinimumValue(max - 1);
+		this->value_slider->setMinimumPosition(max - 1);
 	}
 	this->value_slider->setMaximumValue(max);
 	this->value_slider->setMaximumPosition(max);
@@ -140,12 +141,12 @@ void DoubleSlider::changeMin(int min) {
 	int other = this->value_slider->maximumValue();
 	if (min >= other) {
 		if (other >= this->value_slider->maximum()) {
-			this->value_slider->setMinimumValue(min-1);
-			this->value_slider->setMinimumPosition(min-1);
+			this->value_slider->setMinimumValue(min - 1);
+			this->value_slider->setMinimumPosition(min - 1);
 			return;
 		}
-		this->value_slider->setMaximumValue(min+1);
-		this->value_slider->setMaximumPosition(min+1);
+		this->value_slider->setMaximumValue(min + 1);
+		this->value_slider->setMaximumPosition(min + 1);
 	}
 	emit this->minChanged(min);
 }
@@ -154,19 +155,18 @@ void DoubleSlider::changeMax(int max) {
 	int other = this->value_slider->minimumValue();
 	if (max <= other) {
 		if (other <= this->value_slider->minimum()) {
-			this->value_slider->setMaximumValue(max+1);
-			this->value_slider->setMaximumPosition(max+1);
+			this->value_slider->setMaximumValue(max + 1);
+			this->value_slider->setMaximumPosition(max + 1);
 			return;
 		}
-		this->value_slider->setMinimumValue(max-1);
-		this->value_slider->setMinimumPosition(max-1);
+		this->value_slider->setMinimumValue(max - 1);
+		this->value_slider->setMinimumPosition(max - 1);
 	}
 	emit this->maxChanged(max);
 }
 
 void DoubleSlider::dumpSliderState() {
-	std::cerr << "Range values : [" << this->value_slider->minimum() << " < " << this->value_slider->minimumValue() <<
-				 " < " << this->value_slider->maximumValue() << this->value_slider->maximum() << "]\n";
+	std::cerr << "Range values : [" << this->value_slider->minimum() << " < " << this->value_slider->minimumValue() << " < " << this->value_slider->maximumValue() << this->value_slider->maximum() << "]\n";
 }
 
 void DoubleSlider::updateLabels() {

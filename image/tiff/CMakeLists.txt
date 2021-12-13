@@ -30,6 +30,7 @@ TARGET_INCLUDE_DIRECTORIES(grid_tiff_backend
 TARGET_LINK_LIBRARIES(grid_tiff_backend
 	PUBLIC imagegrid # Parent lib
 	PUBLIC ${libTIFF}
+    PUBLIC Qt5::Xml
 )
 SET_TARGET_PROPERTIES(grid_tiff_backend PROPERTIES
 	AUTOMOC OFF

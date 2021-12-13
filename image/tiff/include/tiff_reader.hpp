@@ -114,8 +114,9 @@ namespace Tiff {
 	/// @details Tries to open a reference TIFF directory (the first directory of the first file in the first stack) and
 	/// attempts to create a suitable TIFFReader-derived class that can read the data from disk.
 	/// @param filenames the filenames to open
+	/// @param indicate if the file is OMETIFF format 
 	/// @returns A suitable TIFF backend for the files given.
-	TIFFReader::Ptr createBackend(std::string reference_filename);
+	TIFFReader::Ptr createBackend(std::string reference_filename, bool isOMETIFF);
 
 } // namespace Tiff
 

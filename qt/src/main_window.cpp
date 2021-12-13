@@ -7,8 +7,8 @@
 
 #include <QMenuBar>
 
-#include "../include/main_window.hpp"
 #include "../../viewer/include/simple_viewer.hpp"
+#include "../include/main_window.hpp"
 
 main_window::main_window() {
 	// OPTIONNAL : Add a menu bar with commonly accessed functions
