@@ -43,11 +43,9 @@ ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/meshes)
 
 # Library for image reading/writing {{{
 ADD_LIBRARY(ImageIO STATIC
-	./grid/include/discrete_grid_reader.hpp
-	./grid/include/discrete_grid_writer.hpp
-
-	./grid/src/discrete_grid_reader.cpp
-	./grid/src/discrete_grid_writer.cpp
+    ./image/utils/include/read_cache.hpp
+    ./image/utils/include/threaded_task.hpp
+    ./image/utils/include/threaded_task.cpp
 )
 TARGET_INCLUDE_DIRECTORIES(ImageIO
 	PRIVATE ${LOCAL_GLM_HEADER_DIR}
@@ -65,40 +63,10 @@ TARGET_LINK_LIBRARIES(ImageIO
 )
 # }}}
 
-# Library for DiscreteGrid and TetMesh {{{
-ADD_LIBRARY(DiscreteGrid STATIC
-	# Headers :
-	./grid/include/tetmesh.hpp
-	./grid/include/discrete_grid.hpp
-	./grid/include/input_discrete_grid.hpp
-	./grid/include/output_discrete_grid.hpp
-	# Sources :
-	./grid/src/tetmesh.cpp
-	./grid/src/discrete_grid.cpp
-	./grid/src/input_discrete_grid.cpp
-	./grid/src/output_discrete_grid.cpp
-        meshes/deformable_curve/curve.hpp)
-TARGET_INCLUDE_DIRECTORIES(DiscreteGrid
-	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/third_party/glm/
-	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include
-	# Nifti uses brace-include without the 'nifti/' prefix, leading
-	# to manually have to include the lib's include dir in targets:
-	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include/nifti
-)
-TARGET_LINK_LIBRARIES(DiscreteGrid
-	PUBLIC ImageIO
-)
-SET_TARGET_PROPERTIES(DiscreteGrid PROPERTIES AUTOMOC OFF AUTORCC OFF AUTOUIC OFF)
-# }}}
-
 # All the needed widgets for this project, under one target {{{
 ADD_LIBRARY(VisualisationWidgets STATIC
-    #./qt/include/grid_control.hpp
-    #./qt/include/grid_detailed_view.hpp
-    #./qt/include/grid_list_view.hpp
 	./qt/include/neighbor_visu_main_widget.hpp
 	./qt/include/scene_control.hpp
-    #./qt/include/qt_proxies.hpp
 	./qt/include/viewer_header.hpp
 	./qt/include/visu_box_controller.hpp
 	./qt/include/opengl_debug_log.hpp
@@ -107,12 +75,8 @@ ADD_LIBRARY(VisualisationWidgets STATIC
 	./qt/include/user_settings_widget.hpp
 	./qt/include/loader_widget.hpp
 
-    #./qt/src/grid_control.cpp
-    #./qt/src/grid_detailed_view.cpp
-    #./qt/src/grid_list_view.cpp
 	./qt/src/neighbor_visu_main_widget.cpp
 	./qt/src/scene_control.cpp
-    #./qt/src/qt_proxies.cpp
 	./qt/src/viewer_header.cpp
 	./qt/src/visu_box_controller.cpp
 	./qt/src/opengl_debug_log.cpp
@@ -150,6 +114,7 @@ ADD_EXECUTABLE(neighbor_visu
     ./third_party/primitive/Sphere.h
     ./qt/include/GLmanipulator.hpp
     ./qt/include/manipulator.hpp
+    ./new_grid/include/grid.hpp
 
 	# Main file :
 	./neighbor_visu_main.cpp
@@ -162,6 +127,7 @@ ADD_EXECUTABLE(neighbor_visu
     ./third_party/primitive/Sphere.cpp
     ./qt/src/GLmanipulator.cpp
     ./qt/src/manipulator.cpp
+    ./new_grid/src/grid.cpp
 )
 TARGET_COMPILE_OPTIONS(neighbor_visu
 	# Set so CMake (more precisely clang/gcc) will not print 30-80 warnings about QGLViewer's
@@ -192,8 +158,7 @@ TARGET_LINK_LIBRARIES(neighbor_visu
 	PUBLIC Qt5::OpenGL
 	PUBLIC ${OPENGL_LIBRARIES}
 	PUBLIC ${QGLViewer}
-	PUBLIC ImageIO
-	PUBLIC DiscreteGrid
+    PUBLIC ImageIO
 	PUBLIC VisualisationWidgets
 	PUBLIC writergrid
 	PUBLIC writergrid_tiff

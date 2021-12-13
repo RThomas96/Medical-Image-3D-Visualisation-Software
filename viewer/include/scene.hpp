@@ -22,8 +22,6 @@
 //#include "../../grid/include/tetmesh.hpp"
 // UI elements :
 #include "../../qt/include/grid_control.hpp"
-#include "../../qt/include/grid_detailed_view.hpp"
-#include "../../qt/include/grid_list_view.hpp"
 #include "../../qt/include/opengl_debug_log.hpp"
 #include "../../qt/include/visu_box_controller.hpp"
 // Helper structs and functions :

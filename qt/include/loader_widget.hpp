@@ -61,12 +61,12 @@ protected:
 	void progressBar_init_defined(int min, int max, int current_value, QString progress_format);
 	void progressBar_reset();
 public slots:
-	void loadGridDIM1channel();
-	void loadGridTIF1channel();
-	void loadGridOME1channel();
-	void loadGridDIM2channel();
-	void loadGridTIF2channel();
-	void loadGridOME2channel();
+	//void loadGridDIM1channel();
+	//void loadGridTIF1channel();
+	//void loadGridOME1channel();
+	//void loadGridDIM2channel();
+	//void loadGridTIF2channel();
+	//void loadGridOME2channel();
 	void loadNewGridAPI();
 	void loadGrid();
 	void loadGrid_newAPI();
@@ -76,12 +76,12 @@ protected:
 	Scene* scene;	 ///< The scene to control/add grids to.
 	Viewer* viewer;	   ///< The viewer to call when uploading the grid.
 	ControlPanel* _cp;	  ///< The control panel to update
-	std::shared_ptr<IO::GenericGridReader> readerR;	   ///< The pointer to a generic grid reader for R channel
-	std::shared_ptr<IO::GenericGridReader> readerG;	   ///< The pointer to a generic grid reader for G channel
-	std::shared_ptr<InputGrid> inputGridR;	  ///< The pointer to an input grid for R channel
-	std::shared_ptr<InputGrid> inputGridG;	  ///< The pointer to an input grid for G channel
+	//std::shared_ptr<IO::GenericGridReader> readerR;	   ///< The pointer to a generic grid reader for R channel
+	//std::shared_ptr<IO::GenericGridReader> readerG;	   ///< The pointer to a generic grid reader for G channel
+	//std::shared_ptr<InputGrid> inputGridR;	  ///< The pointer to an input grid for R channel
+	//std::shared_ptr<InputGrid> inputGridG;	  ///< The pointer to an input grid for G channel
 	IO::DownsamplingLevel dsLevel;	  ///< Currently selected downsampling method
-	std::shared_ptr<Interpolators::genericInterpolator<DiscreteGrid::data_t>> interpolator;	   ///< interpolator
+	//std::shared_ptr<Interpolators::genericInterpolator<DiscreteGrid::data_t>> interpolator;	   ///< interpolator
 
 	Image::Grid::Ptr _testing_grid;
 	bool useLegacyGrids;	///< should we use the new grid api or the new one ?
