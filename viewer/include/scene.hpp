@@ -24,9 +24,9 @@
 #include "../../qt/include/grid_control.hpp"
 #include "../../qt/include/grid_detailed_view.hpp"
 #include "../../qt/include/grid_list_view.hpp"
+#include "../../qt/include/manipulator.hpp"
 #include "../../qt/include/opengl_debug_log.hpp"
 #include "../../qt/include/visu_box_controller.hpp"
-#include "../../qt/include/manipulator.hpp"
 // Helper structs and functions :
 #include "./viewer_structs.hpp"
 // New grid API :
@@ -270,11 +270,9 @@ public:
 
 	/// @brief Loads a mesh (OFF) and uploads it to the GL.
 	void loadMesh();
+	/// @brief Loads a curve (OBJ) and uploads it to the GL.
 	void loadCurve();
 
-	/// @brief This performs ARAP deformation on the first mesh found.
-	/// @note THIS IS A WIP/DRAFT FUNCTION, NOT DESIGNED FOR PRODUCTION RELEASE
-	void dummy_perform_arap_on_first_mesh();
 	/// @brief This performs ARAP deformation on the mesh associated with the first loaded image.
 	/// @note THIS IS A WIP/DRAFT FUNCTION, NOT DESIGNED FOR PRODUCTION RELEASE
 	void dummy_perform_constrained_arap_on_image_mesh();
@@ -285,10 +283,7 @@ public:
 	/// @param query The position to query
 	/// @param mesh_index The index of the first mesh that contains it, INDEXED AT 1. If 0, no meshes contain it.
 	/// @note THIS IS A WIP/DRAFT FUNCTION, NOT DESIGNED FOR PRODUCTION RELEASE
-	void dummy_check_point_in_mesh_bb(glm::vec3 query, std::size_t& mesh_index);
-	/// @brief Returns the i-th drawable loaded in the scene.
-	/// @note THIS IS A WIP/DRAFT FUNCTION, NOT DESIGNED FOR PRODUCTION RELEASE
-	DrawableBase::Ptr dummy_getDrawable(std::size_t idx);
+	bool dummy_check_point_in_mesh_bb(glm::vec3 query, std::size_t& mesh_index);
 	/// @brief Adds to the 'i-th' mesh a constraint at vertex 'n'
 	/// @note THIS IS A WIP/DRAFT FUNCTION, NOT DESIGNED FOR PRODUCTION RELEASE
 	void dummy_add_arap_constraint_mesh(std::size_t drawable, std::size_t vtx_idx);
@@ -297,6 +292,10 @@ public:
 	void dummy_print_arap_constraints();
 	/// @brief Applies the mesh alignment before the ARAP solver
 	void dummy_apply_alignment_before_arap();
+	const Mesh::Ptr& getMesh() const { return this->mesh; }
+	const Curve::Ptr& getCurve() const { return this->curve; }
+	const DrawableMesh::Ptr getDrawableMesh() const { return this->mesh_draw; }
+	const DrawableCurve::Ptr getDrawableCurve() const { return this->curve_draw; }
 
 	/// @brief Changes the texture coloration mode to the desired setting
 	void setColorFunction_r(ColorFunction _c);
@@ -479,9 +478,10 @@ private:
 
 	std::queue<std::shared_ptr<DrawableBase>> to_init;	  ///< A set of drawables that have not been initialized yet
 	std::vector<std::shared_ptr<DrawableBase>> drawables;	 ///< The drawables to display
-	std::vector<Mesh::Ptr> meshes;	  ///< The loaded meshes
+	Mesh::Ptr mesh;	   ///< The loaded mesh, if any
 	Curve::Ptr curve;	 ///< The loaded curve, if any
-	std::shared_ptr<DrawableCurve> curve_draw;
+	DrawableMesh::Ptr mesh_draw;
+	DrawableCurve::Ptr curve_draw;
 
 	// Grids :
 	// std::vector<GridGLView::Ptr> grids;	   ///< Grids to display in the different views.

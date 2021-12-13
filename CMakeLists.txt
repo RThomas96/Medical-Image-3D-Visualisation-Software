@@ -93,6 +93,7 @@ SET_TARGET_PROPERTIES(DiscreteGrid PROPERTIES AUTOMOC OFF AUTORCC OFF AUTOUIC OF
 
 # All the needed widgets for this project, under one target {{{
 ADD_LIBRARY(VisualisationWidgets STATIC
+	./qt/include/arap_controller.hpp
 	./qt/include/grid_control.hpp
 	./qt/include/grid_detailed_view.hpp
 	./qt/include/grid_list_view.hpp
@@ -107,6 +108,7 @@ ADD_LIBRARY(VisualisationWidgets STATIC
 	./qt/include/user_settings_widget.hpp
 	./qt/include/loader_widget.hpp
 
+	./qt/src/arap_controller.cpp
 	./qt/src/grid_control.cpp
 	./qt/src/grid_detailed_view.cpp
 	./qt/src/grid_list_view.cpp

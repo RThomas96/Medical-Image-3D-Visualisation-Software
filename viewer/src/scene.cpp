@@ -140,9 +140,10 @@ Scene::Scene() :
 
 	this->posFrame = nullptr;
 
-	this->meshes.clear();
 	this->drawables.clear();
+	this->mesh		 = nullptr;
 	this->curve		 = nullptr;
+	this->mesh_draw	 = nullptr;
 	this->curve_draw = nullptr;
 }
 
@@ -728,63 +729,22 @@ void Scene::updateBoundingBox(void) {
 	return;
 }
 
-void Scene::dummy_perform_arap_on_first_mesh() {
-#ifdef NEED_ARAP
-	if (this->drawables.size() == 0) {
-		std::cerr << "Error : no meshes loaded.\n";
-		return;
-	}
-	auto to_deform = this->drawables.at(0);
-
-	auto mesh_to_deform = std::dynamic_pointer_cast<DrawableMesh>(to_deform);
-	if (mesh_to_deform == nullptr) {
-		std::cerr << "Error : could not get the first drawable as a DrawableMesh.\n";
-		return;
-	}
-	std::shared_ptr<Mesh> _mesh = mesh_to_deform->getMesh();
-
-	AsRigidAsPossible arap_deformation;
-	arap_deformation.clear();
-	arap_deformation.init(_mesh->getVertices(), _mesh->getTriangles());
-	arap_deformation.setIterationNb(5);	   // 5 iterations maximum
-
-	// Threshold on X is 15% of the left-most points that will be translated. Compute from bb :
-	auto mesh_bb					= mesh_to_deform->getBoundingBox();
-	glm::vec3::value_type threshold = (mesh_bb.first + (0.85f * (mesh_bb.second - mesh_bb.first))).x;
-	glm::vec3 translate				= glm::vec3((mesh_bb.second - mesh_bb.first).x * 0.1f, .0f, .0f);
-
-	auto vertices = arap_deformation.dummy_deformation(0.05, translate, mesh_bb.first, mesh_bb.second);
-
-	for (std::size_t i = 0; i < _mesh->getVertices().size(); ++i) {
-		_mesh->setVertices(i, vertices[i]);
-	}
-	_mesh->update();
-
-	this->updateBoundingBox();
-
-	to_deform->updateOnNextDraw();
-#else
-	std::cerr << "[ERROR]: ARAP cannot be compiled on Linux yet. Operation canceled" << std::endl;
-#endif
-}
-
 void Scene::dummy_apply_alignment_before_arap() {
 #ifdef NEED_ARAP
-	if (this->drawables.empty()) {
+	if (this->mesh == nullptr) {
 		std::cerr << "Error : no meshes loaded.\n";
 		return;
 	}
 	auto to_deform = this->drawables.at(0);
 
-	auto mesh_to_deform = std::dynamic_pointer_cast<DrawableMesh>(to_deform);
-	if (mesh_to_deform == nullptr) {
+	if (this->mesh_draw == nullptr) {
 		std::cerr << "Error : could not get the first drawable as a DrawableMesh.\n";
 		return;
 	}
-	std::shared_ptr<Mesh> _mesh = mesh_to_deform->getMesh();
+	std::shared_ptr<Mesh> _mesh = this->mesh;
 
 	std::vector<glm::vec3> transforms;	  // estimated translations between current point position and ARAP handle on the image
-	auto current_transform = mesh_to_deform->getTransformation();
+	auto current_transform = this->mesh_draw->getTransformation();
 
 	std::cerr << "Generating 'best' estimated transform for the mesh ..." << '\n';
 	for (std::size_t i = 0; i < this->mesh_idx_constraints.size(); ++i) {
@@ -817,13 +777,13 @@ void Scene::dummy_apply_alignment_before_arap() {
 	// the image in order for ARAP to have less guesswork to do.
 	_mesh->applyTransformation(current_transform);
 	// ... but the drawing of the mesh doesn't need to have it anymore :
-	mesh_to_deform->setTransformation(glm::mat4(1.f));
+	this->mesh_draw->setTransformation(glm::mat4(1.f));
 	if (this->curve) {
 		this->curve->deformFromMeshData();
-		this->curve_draw->setTransformation(mesh_to_deform->getTransformation());
+		this->curve_draw->setTransformation(this->mesh_draw->getTransformation());
 		this->curve_draw->updateOnNextDraw();
 	}
-	to_deform->updateOnNextDraw();
+	this->mesh_draw->updateOnNextDraw();
 #else
 	std::cerr << "[ERROR]: ARAP cannot be compiled on Linux yet. Operation canceled" << std::endl;
 #endif
@@ -831,18 +791,16 @@ void Scene::dummy_apply_alignment_before_arap() {
 
 void Scene::dummy_perform_constrained_arap_on_image_mesh() {
 #ifdef NEED_ARAP
-	if (this->drawables.empty()) {
+	if (this->mesh == nullptr) {
 		std::cerr << "Error : no meshes loaded.\n";
 		return;
 	}
-	auto to_deform = this->drawables.at(0);
-
-	auto mesh_to_deform = std::dynamic_pointer_cast<DrawableMesh>(to_deform);
-	if (mesh_to_deform == nullptr) {
-		std::cerr << "Error : could not get the first drawable as a DrawableMesh.\n";
+	auto mesh_to_deform = this->mesh_draw;
+	if (this->mesh_draw == nullptr) {
+		std::cerr << "Error : DrawableMesh not initialized.\n";
 		return;
 	}
-	std::shared_ptr<Mesh> _mesh = mesh_to_deform->getMesh();
+	std::shared_ptr<Mesh> _mesh = this->mesh;
 
 	AsRigidAsPossible arap_deformation;
 	arap_deformation.clear();
@@ -875,7 +833,7 @@ void Scene::dummy_perform_constrained_arap_on_image_mesh() {
 	this->updateBoundingBox();
 	std::cerr << "Finished.\n";
 
-	to_deform->updateOnNextDraw();
+	this->mesh_draw->updateOnNextDraw();
 	if (this->curve) {
 		this->curve->deformFromMeshData();
 		this->curve_draw->updateOnNextDraw();
@@ -890,12 +848,6 @@ void Scene::dummy_add_image_constraint(std::size_t img_idx, glm::vec3 img_pos) {
 }
 
 void Scene::dummy_add_arap_constraint_mesh(std::size_t drawable, std::size_t vtx_idx) {
-	if (drawable == 0) {
-		return;
-	}
-	if (drawable > this->drawables.size()) {
-		return;
-	}
 	this->mesh_idx_constraints.push_back((std::make_pair(drawable - 1, vtx_idx)));
 	std::cerr << "[Scene] Added constraint " << vtx_idx << " to mesh " << drawable << "\n";
 }
@@ -915,35 +867,15 @@ void Scene::dummy_print_arap_constraints() {
 	std::cerr << "[LOG] ===============================================\n";
 }
 
-void Scene::dummy_check_point_in_mesh_bb(glm::vec3 query, std::size_t& mesh_index) {
-	mesh_index = 0;
-	for (std::size_t i = 0; i < this->drawables.size(); ++i) {
-		const auto& drawable = this->drawables[i];
-		auto mesh_drawable	 = std::dynamic_pointer_cast<DrawableMesh>(drawable);
-		if (mesh_drawable != nullptr) {
-			// get BB, check if inside :
-			auto mesh_bb = mesh_drawable->getBoundingBox();
-			if (
-			  query.x > mesh_bb.first.x && query.x < mesh_bb.second.x &&
-			  query.y > mesh_bb.first.y && query.y < mesh_bb.second.y &&
-			  query.z > mesh_bb.first.z && query.z < mesh_bb.second.z) {
-				mesh_index = i + 1;
-				return;
-			}
-		}
-		// else do nothing.
+bool Scene::dummy_check_point_in_mesh_bb(glm::vec3 query, std::size_t& mesh_index) {
+	auto mesh_bb = this->mesh_draw->getBoundingBox();
+	if (query.x > mesh_bb.first.x && query.x < mesh_bb.second.x &&
+		query.y > mesh_bb.first.y && query.y < mesh_bb.second.y &&
+		query.z > mesh_bb.first.z && query.z < mesh_bb.second.z)
+	{
+		return true;
 	}
-}
-
-DrawableBase::Ptr Scene::dummy_getDrawable(std::size_t idx) {
-	// reminder : this is indexed at one since it should be the result of Scene::dummy_check_point_in_mesh_bb().
-	if (idx == 0) {
-		return nullptr;
-	}
-	if (idx > this->drawables.size()) {
-		return nullptr;
-	}
-	return this->drawables[idx - 1];
+	return false;
 }
 
 void Scene::recompileShaders(bool verbose) {
@@ -1220,7 +1152,7 @@ void Scene::loadMesh() {
 	FileIO::openOFF(file_name.toStdString(), mesh_to_load->getVertices(), mesh_to_load->getTriangles());
 	mesh_to_load->update();
 
-	this->meshes.emplace_back(mesh_to_load);
+	this->mesh = mesh_to_load;
 
 	auto mesh_drawable = std::make_shared<DrawableMesh>(mesh_to_load);
 
@@ -1262,6 +1194,7 @@ void Scene::loadMesh() {
 
 	// Insert it into the meshes to initialize :
 	this->to_init.emplace(mesh_drawable);
+	this->mesh_draw = mesh_drawable;
 }
 
 void Scene::getTetraMeshPoints(std::vector<glm::vec3>& points) {
@@ -1403,25 +1336,16 @@ void Scene::loadCurve() {
 	}
 
 	auto picker = new MeshPickerFromScene();
-	picker->chooseMeshes(this->meshes);
-	if (picker->choice_Accepted()) {
+	if (this->mesh != nullptr) {
 		this->curve.reset();
 		this->curve_draw.reset();
-		auto selected_mesh = this->meshes[picker->choice_getMesh()];
+		auto selected_mesh = this->mesh;
 		auto fname		   = file_name.toStdString();
 		this->curve		   = openCurveFromOBJ(fname, selected_mesh);
 		glm::mat4 transfo  = glm::mat4(1.f);
 		// try to find the right transformation to apply to the curve for it to 'follow' the mesh :
 		// !!! /!\ VERY HACKY, DO NOT ATTEMPT AT HOME /!\ !!!
-		for (const auto& drawable : this->drawables) {
-			std::shared_ptr<DrawableMesh> mesh_drawable = std::dynamic_pointer_cast<DrawableMesh>(drawable);
-			if (mesh_drawable != nullptr) {
-				if (mesh_drawable->getMesh() == selected_mesh) {
-					transfo = mesh_drawable->getTransformation();
-					std::cerr << "Found the right transformation.\n";
-				}
-			}
-		}
+		transfo				= this->mesh_draw->getTransformation();
 		auto drawable_curve = std::make_shared<DrawableCurve>(this->curve);
 		drawable_curve->setTransformation(transfo);
 		this->to_init.emplace(drawable_curve);

@@ -347,36 +347,24 @@ void Viewer::guessMousePosition() {
 		this->scene->lambdaOnGrids(findSuitablePoint);
 
 		// Look for the point in the meshes loaded :
-		std::size_t mesh_idx = 0;
-		this->scene->dummy_check_point_in_mesh_bb(glm::vec3(p), mesh_idx);
-		if (mesh_idx) {
-			DrawableBase::Ptr drawable_base = this->scene->dummy_getDrawable(mesh_idx);
-			if (drawable_base == nullptr) {
-				this->temp_mesh_idx = 0;
-			} else {
-				// get mesh drawable and get closest point from mesh underneath :
-				DrawableMesh::Ptr drawable_mesh = std::dynamic_pointer_cast<DrawableMesh>(drawable_base);
-				if (drawable_mesh != nullptr) {
-					auto mesh = drawable_mesh->getMesh();
-					if (mesh == nullptr) {
-						this->temp_mesh_idx = 0;
-					} else {
-						this->temp_mesh_idx = mesh_idx;
-						// Transform the point to mesh-local coordinates !
-						// get transfo and extract translation component
-						glm::mat4 mesh_transfo		  = drawable_mesh->getTransformation();
-						glm::vec4 mesh_translation	  = glm::vec4(mesh_transfo[3]);
-						mesh_translation.w			  = .0f;
-						mesh_transfo[3]				  = glm::vec4{.0f, .0f, .0f, 1.f};
-						glm::vec4 mesh_local_position = glm::inverse(mesh_transfo) * (p - mesh_translation);
-						this->temp_sphere_position	  = mesh->closestPointTo(glm::vec3(mesh_local_position), this->temp_mesh_vtx_idx);
-						this->temp_sphere_position	  = glm::vec3(mesh_transfo * glm::vec4(this->temp_sphere_position, 1.f) + mesh_translation);
-					}
+		auto mesh_idx = std::size_t(0);
+		if (this->scene->dummy_check_point_in_mesh_bb(glm::vec3(p), mesh_idx)) {
+			DrawableMesh::Ptr drawable_mesh = this->scene->getDrawableMesh();
+			if (drawable_mesh != nullptr) {
+				auto mesh = drawable_mesh->getMesh();
+				if (mesh != nullptr) {
+					// Transform the point to mesh-local coordinates !
+					// get transfo and extract translation component
+					glm::mat4 mesh_transfo		  = drawable_mesh->getTransformation();
+					glm::vec4 mesh_translation	  = glm::vec4(mesh_transfo[3]);
+					mesh_translation.w			  = .0f;
+					mesh_transfo[3]				  = glm::vec4{.0f, .0f, .0f, 1.f};
+					glm::vec4 mesh_local_position = glm::inverse(mesh_transfo) * (p - mesh_translation);
+					this->temp_sphere_position	  = mesh->closestPointTo(glm::vec3(mesh_local_position), this->temp_mesh_vtx_idx);
+					this->temp_sphere_position	  = glm::vec3(mesh_transfo * glm::vec4(this->temp_sphere_position, 1.f) + mesh_translation);
+					this->scene->setPositionResponse(glm::vec4{this->temp_sphere_position, 1.f});
 				}
 			}
-		} else {
-			//reset mesh idx, not on a mesh means last position should be invalidated
-			this->temp_mesh_idx = 0;
 		}
 	}
 	this->doneCurrent();
