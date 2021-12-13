@@ -174,6 +174,7 @@ void Viewer::keyPressEvent(QKeyEvent* e) {
 				if (this->temp_mesh_idx) {
 					this->scene->dummy_add_arap_constraint_mesh(this->temp_mesh_idx, this->temp_mesh_vtx_idx);
 					std::cerr << "Added mesh constraint at position " << this->temp_mesh_vtx_idx << " for mesh " << this->temp_mesh_idx << '\n';
+					this->spheres.push_back(this->temp_sphere_position);
 					this->temp_mesh_idx = 0;
 				}
 			}
@@ -181,6 +182,7 @@ void Viewer::keyPressEvent(QKeyEvent* e) {
 			else if ((e->modifiers() & Qt::KeyboardModifier::ControlModifier) != 0) {
 				std::cerr << "Attempting to push constraint to image ..." << this->temp_img_idx << "\n";
 				this->scene->dummy_add_image_constraint(this->temp_img_idx, this->temp_img_pos);
+				this->spheres.push_back(this->temp_img_pos);
 				std::cerr << "Added image constraint at position " << this->temp_img_pos << '\n';
 			}
 			break;

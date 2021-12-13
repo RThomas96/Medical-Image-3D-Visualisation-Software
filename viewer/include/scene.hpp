@@ -12,6 +12,9 @@
 #include "../../meshes/base_mesh/mesh_io.hpp"
 #include "../../meshes/base_mesh/Mesh.hpp"
 #include "../../meshes/drawable/mesh.hpp"
+#include "../../meshes/drawable/curve.hpp"
+// Curve :
+#include "../../meshes/deformable_curve/curve.hpp"
 // Discrete grid and grid generation :
 #include "../../grid/include/discrete_grid.hpp"
 #include "../../grid/include/input_discrete_grid.hpp"
@@ -108,9 +111,6 @@ public:
 	void showVisuBoxController(VisuBoxController* _controller);
 	/// @brief Remove the visu box controller if it closes
 	void removeVisuBoxController();
-
-	/// @brief Loads a mesh (OFF) and uploads it to the GL.
-	void loadMesh(void);
 
 	/// @brief Adds a widget to which redirect to OpenGL output.
 	void addOpenGLOutput(OpenGLDebugLog* _gldl);
@@ -225,6 +225,10 @@ public:
 	GLuint newAPI_uploadTexture3D(const GLuint handle, const TextureUpload& tex, std::size_t s, std::vector<std::uint16_t>& data);
 	/// @brief Allocate a texture conformant with the given settings, but don't fill it with data yet.
 	GLuint newAPI_uploadTexture3D_allocateonly(const TextureUpload& tex);
+
+	/// @brief Loads a mesh (OFF) and uploads it to the GL.
+	void loadMesh();
+	void loadCurve();
 
 	/// @brief This performs ARAP deformation on the first mesh found.
 	/// @note THIS IS A WIP/DRAFT FUNCTION, NOT DESIGNED FOR PRODUCTION RELEASE
@@ -426,7 +430,9 @@ protected:
 
 	std::queue<std::shared_ptr<DrawableBase>> to_init;		///< A set of drawables that have not been initialized yet
 	std::vector<std::shared_ptr<DrawableBase>> drawables;	///< The drawables to display
-	std::vector<std::shared_ptr<Mesh>> meshes;				///< The loaded meshes
+	std::vector<Mesh::Ptr> meshes;				///< The loaded meshes
+	Curve::Ptr curve;		///< The loaded curve, if any
+	std::shared_ptr<DrawableCurve> curve_draw;
 
 	// Grids :
 	// std::vector<GridGLView::Ptr> grids;	   ///< Grids to display in the different views.

@@ -100,6 +100,7 @@ void MainWidget::setupWidgets() {
 	this->action_showHelpPlane	= new QAction("Planar Viewer Help Page");
 	this->action_showSettings	= new QAction("Settings");
 	this->action_loadMesh		= new QAction("Load mesh (OFF)");
+	this->action_loadCurve		= new QAction("Load curve (OBJ)");
 
 	this->action_addGrid->setShortcut(QKeySequence::Open);
 
@@ -109,6 +110,7 @@ void MainWidget::setupWidgets() {
 	this->fileMenu->addAction(this->action_addGrid);
 	this->fileMenu->addAction(this->action_saveGrid);
 	this->fileMenu->addAction(this->action_loadMesh);
+	this->fileMenu->addAction(this->action_loadCurve);
 	this->fileMenu->addAction(this->action_showSettings);
 	this->fileMenu->addAction(this->action_exitProgram);
 	// view menu :
@@ -180,6 +182,10 @@ void MainWidget::setupWidgets() {
 	});
 	QObject::connect(this->action_loadMesh, &QAction::triggered, [this]() {
 		this->scene->loadMesh();
+		this->viewer->updateInfoFromScene();
+	});
+	QObject::connect(this->action_loadCurve, &QAction::triggered, [this]() {
+		this->scene->loadCurve();
 		this->viewer->updateInfoFromScene();
 	});
 

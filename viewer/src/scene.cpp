@@ -144,6 +144,8 @@ Scene::Scene() {
 
 	this->meshes.clear();
 	this->drawables.clear();
+	this->curve = nullptr;
+	this->curve_draw = nullptr;
 }
 
 Scene::~Scene(void) {
@@ -793,28 +795,39 @@ void Scene::dummy_apply_alignment_before_arap() {
 	_mesh->applyTransformation(current_transform);
 	// ... but the drawing of the mesh doesn't need to have it anymore :
 	mesh_to_deform->setTransformation(glm::mat4(1.f));
+	if (this->curve) {
+		this->curve->deformFromMeshData();
+		this->curve_draw->setTransformation(mesh_to_deform->getTransformation());
+		this->curve_draw->updateOnNextDraw();
+	}
 	to_deform->updateOnNextDraw();
 }
 
 void Scene::dummy_perform_constrained_arap_on_image_mesh() {
-	if (this->drawables.empty()) { std::cerr << "Error : no meshes loaded.\n"; return; }
+	if (this->drawables.empty()) {
+		std::cerr << "Error : no meshes loaded.\n";
+		return;
+	}
 	auto to_deform = this->drawables.at(0);
 
 	auto mesh_to_deform = std::dynamic_pointer_cast<DrawableMesh>(to_deform);
-	if (mesh_to_deform == nullptr) { std::cerr << "Error : could not get the first drawable as a DrawableMesh.\n"; return; }
+	if (mesh_to_deform == nullptr) {
+		std::cerr << "Error : could not get the first drawable as a DrawableMesh.\n";
+		return;
+	}
 	std::shared_ptr<Mesh> _mesh = mesh_to_deform->getMesh();
 
 	AsRigidAsPossible arap_deformation;
 	arap_deformation.clear();
 	arap_deformation.init(_mesh->getVertices(), _mesh->getTriangles());
-	arap_deformation.setIterationNb(5); // 5 iterations maximum
+	arap_deformation.setIterationNb(5);	   // 5 iterations maximum
 
 	std::cerr << "Generating vertex handles ..." << '\n';
 	std::vector<bool> handles(_mesh->getVertices().size(), false);
 	std::vector<glm::vec3> targets(_mesh->getVertices());
 	for (std::size_t i = 0; i < this->mesh_idx_constraints.size(); ++i) {
 		auto constraint = this->mesh_idx_constraints[i];
-		auto position = this->image_constraints[i];
+		auto position	= this->image_constraints[i];
 		// NOTE : Always performed on the first mesh !!! So only filter through those with index 0.
 		if (constraint.first == 0) {
 			handles[constraint.second] = true;
@@ -836,6 +849,10 @@ void Scene::dummy_perform_constrained_arap_on_image_mesh() {
 	std::cerr << "Finished.\n";
 
 	to_deform->updateOnNextDraw();
+	if (this->curve) {
+		this->curve->deformFromMeshData();
+		this->curve_draw->updateOnNextDraw();
+	}
 }
 
 void Scene::dummy_add_image_constraint(std::size_t img_idx, glm::vec3 img_pos) {
@@ -1204,6 +1221,43 @@ void Scene::loadMesh() {
 
 	// Insert it into the meshes to initialize :
 	this->to_init.emplace(mesh_drawable);
+}
+
+void Scene::loadCurve() {
+	// Launch a file picker to get the name of an OFF file :
+	QString file_name = QFileDialog::getOpenFileName(nullptr, "Open a Mesh file (OFF)", QString(), "OBJ files (*.obj)");
+	if (file_name.isEmpty() || not QFileInfo::exists(file_name)) {
+		std::cerr << "Error : nothing to open.\nFile path given : \"" << file_name.toStdString() << "\"\n";
+		return;
+	}
+
+	auto picker = new MeshPickerFromScene();
+	picker->chooseMeshes(this->meshes);
+	if (picker->choice_Accepted()) {
+		this->curve.reset();
+		this->curve_draw.reset();
+		auto selected_mesh = this->meshes[picker->choice_getMesh()];
+		auto fname = file_name.toStdString();
+		this->curve = openCurveFromOBJ(fname, selected_mesh);
+		glm::mat4 transfo = glm::mat4(1.f);
+		// try to find the right transformation to apply to the curve for it to 'follow' the mesh :
+		// !!! /!\ VERY HACKY, DO NOT ATTEMPT AT HOME /!\ !!!
+		for (const auto& drawable : this->drawables) {
+			std::shared_ptr<DrawableMesh> mesh_drawable = std::dynamic_pointer_cast<DrawableMesh>(drawable);
+			if (mesh_drawable != nullptr) {
+				if (mesh_drawable->getMesh() == selected_mesh) {
+					transfo = mesh_drawable->getTransformation();
+					std::cerr << "Found the right transformation.\n";
+				}
+			}
+		}
+		auto drawable_curve = std::make_shared<DrawableCurve>(this->curve);
+		drawable_curve->setTransformation(transfo);
+		this->to_init.emplace(drawable_curve);
+		this->curve_draw = drawable_curve;
+	} else {
+		std::cerr << "Tried to load curve, but no mesh associated.\n";
+	}
 }
 
 void Scene::launchSaveDialog() {

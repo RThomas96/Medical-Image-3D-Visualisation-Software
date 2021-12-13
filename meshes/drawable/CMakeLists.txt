@@ -27,6 +27,8 @@ ADD_LIBRARY(${CMAKE_PROJECT_NAME}_drawable_meshes
 	base.hpp
 	mesh.hpp
 	mesh.cpp
+	curve.hpp
+	curve.cpp
 )
 TARGET_INCLUDE_DIRECTORIES(${CMAKE_PROJECT_NAME}_drawable_meshes
 	PRIVATE ${LOCAL_GLM_HEADER_DIR}
@@ -38,5 +40,7 @@ TARGET_LINK_LIBRARIES(${CMAKE_PROJECT_NAME}_drawable_meshes
 	PUBLIC glm::glm
 	PUBLIC ${OPENGL_LIBRARIES}
 	PUBLIC ${CMAKE_PROJECT_NAME}_shaders
+	PUBLIC ${CMAKE_PROJECT_NAME}_mesh
+	PUBLIC ${CMAKE_PROJECT_NAME}_deformable_curve
 	PUBLIC nanoflann::nanoflann
 )

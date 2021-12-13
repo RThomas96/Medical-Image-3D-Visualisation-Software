@@ -47,6 +47,8 @@ typedef nanoflann::KDTreeSingleIndexAdaptor<
 > mesh_kdtree_t;
 
 class Mesh {
+public:
+	using Ptr = std::shared_ptr<Mesh>;
 
 public:
 	Mesh();

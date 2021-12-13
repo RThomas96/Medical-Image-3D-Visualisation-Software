@@ -71,7 +71,7 @@ ADD_LIBRARY(DiscreteGrid STATIC
 	./grid/src/discrete_grid.cpp
 	./grid/src/input_discrete_grid.cpp
 	./grid/src/output_discrete_grid.cpp
-)
+        meshes/deformable_curve/curve.hpp)
 TARGET_INCLUDE_DIRECTORIES(DiscreteGrid
 	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/third_party/glm/
 	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include
@@ -189,6 +189,7 @@ TARGET_LINK_LIBRARIES(neighbor_visu
 	PUBLIC writergrid_tiff
 	PUBLIC ${CMAKE_PROJECT_NAME}_shaders
 	PUBLIC ${CMAKE_PROJECT_NAME}_mesh
+	PUBLIC ${CMAKE_PROJECT_NAME}_deformable_curve
 	PUBLIC ${CMAKE_PROJECT_NAME}_meshop_arap
 	PUBLIC ${CMAKE_PROJECT_NAME}_drawable_meshes
 )

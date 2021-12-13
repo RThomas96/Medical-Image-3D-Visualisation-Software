@@ -98,3 +98,12 @@ CONFIGURE_FILE(
 	${SHADER_OUTPUT_DIR}/base_sphere.frag
 	COPYONLY)
 
+CONFIGURE_FILE(
+	${CMAKE_SOURCE_DIR}/new_shaders/base_curve.vert
+	${SHADER_OUTPUT_DIR}/base_curve.vert
+	COPYONLY)
+
+CONFIGURE_FILE(
+	${CMAKE_SOURCE_DIR}/new_shaders/base_curve.frag
+	${SHADER_OUTPUT_DIR}/base_curve.frag
+	COPYONLY)
