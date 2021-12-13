@@ -26,6 +26,7 @@
 #include "../../qt/include/grid_list_view.hpp"
 #include "../../qt/include/opengl_debug_log.hpp"
 #include "../../qt/include/visu_box_controller.hpp"
+#include "../../qt/include/manipulator.hpp"
 // Helper structs and functions :
 #include "./viewer_structs.hpp"
 // New grid API :
