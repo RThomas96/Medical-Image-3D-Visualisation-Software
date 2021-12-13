@@ -1,9 +1,9 @@
 #ifndef QT_INCLUDE_LOADER_WIDGET_HPP_
 #define QT_INCLUDE_LOADER_WIDGET_HPP_
 
-#include "../../grid/include/discrete_grid.hpp"
-#include "../../grid/include/discrete_grid_reader.hpp"
-#include "../../grid/include/input_discrete_grid.hpp"
+//#include "../../grid/include/discrete_grid.hpp"
+//#include "../../grid/include/discrete_grid_reader.hpp"
+//#include "../../grid/include/input_discrete_grid.hpp"
 #include "../../macros.hpp"
 #include "../../viewer/include/neighbor_visu_viewer.hpp"
 #include "../../viewer/include/scene.hpp"

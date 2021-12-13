@@ -93,12 +93,12 @@ SET_TARGET_PROPERTIES(DiscreteGrid PROPERTIES AUTOMOC OFF AUTORCC OFF AUTOUIC OF
 
 # All the needed widgets for this project, under one target {{{
 ADD_LIBRARY(VisualisationWidgets STATIC
-	./qt/include/grid_control.hpp
-	./qt/include/grid_detailed_view.hpp
-	./qt/include/grid_list_view.hpp
+    #./qt/include/grid_control.hpp
+    #./qt/include/grid_detailed_view.hpp
+    #./qt/include/grid_list_view.hpp
 	./qt/include/neighbor_visu_main_widget.hpp
 	./qt/include/scene_control.hpp
-	./qt/include/qt_proxies.hpp
+    #./qt/include/qt_proxies.hpp
 	./qt/include/viewer_header.hpp
 	./qt/include/visu_box_controller.hpp
 	./qt/include/opengl_debug_log.hpp
@@ -107,12 +107,12 @@ ADD_LIBRARY(VisualisationWidgets STATIC
 	./qt/include/user_settings_widget.hpp
 	./qt/include/loader_widget.hpp
 
-	./qt/src/grid_control.cpp
-	./qt/src/grid_detailed_view.cpp
-	./qt/src/grid_list_view.cpp
+    #./qt/src/grid_control.cpp
+    #./qt/src/grid_detailed_view.cpp
+    #./qt/src/grid_list_view.cpp
 	./qt/src/neighbor_visu_main_widget.cpp
 	./qt/src/scene_control.cpp
-	./qt/src/qt_proxies.cpp
+    #./qt/src/qt_proxies.cpp
 	./qt/src/viewer_header.cpp
 	./qt/src/visu_box_controller.cpp
 	./qt/src/opengl_debug_log.cpp
@@ -130,8 +130,6 @@ TARGET_INCLUDE_DIRECTORIES(VisualisationWidgets
 	PRIVATE ${QGLViewer_HEADER_DIR}
 )
 TARGET_LINK_LIBRARIES(VisualisationWidgets
-	PUBLIC ImageIO
-	PUBLIC DiscreteGrid
 	PUBLIC Qt5::Core
 	PUBLIC Qt5::Gui
 	PUBLIC Qt5::Xml
