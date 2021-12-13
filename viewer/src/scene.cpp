@@ -140,9 +140,6 @@ Scene::Scene(): glMeshManipulator(new UITool::GL::MeshManipulator(&this->sceneGL
 
 	this->posFrame = nullptr;
 
-	this->visibleDomains = nullptr;
-	this->visibleDomainsAlternate = nullptr;
-
 	this->meshes.clear();
 	this->drawables.clear();
 	this->curve = nullptr;
@@ -761,11 +758,12 @@ void Scene::dummy_perform_arap_on_first_mesh() {
 
 	to_deform->updateOnNextDraw();
 #else
-    std::cerr << "[ERROR]: ARAP canno't be compiled on Linux yet. Operation canceled" << std::endl;
+    std::cerr << "[ERROR]: ARAP cannot be compiled on Linux yet. Operation canceled" << std::endl;
 #endif
 }
 
 void Scene::dummy_apply_alignment_before_arap() {
+#ifdef NEED_ARAP
 	if (this->drawables.empty()) { std::cerr << "Error : no meshes loaded.\n"; return; }
 	auto to_deform = this->drawables.at(0);
 
@@ -814,9 +812,13 @@ void Scene::dummy_apply_alignment_before_arap() {
 		this->curve_draw->updateOnNextDraw();
 	}
 	to_deform->updateOnNextDraw();
+#else
+    std::cerr << "[ERROR]: ARAP cannot be compiled on Linux yet. Operation canceled" << std::endl;
+#endif
 }
 
 void Scene::dummy_perform_constrained_arap_on_image_mesh() {
+#ifdef NEED_ARAP
 	if (this->drawables.empty()) {
 		std::cerr << "Error : no meshes loaded.\n";
 		return;
@@ -866,6 +868,9 @@ void Scene::dummy_perform_constrained_arap_on_image_mesh() {
 		this->curve->deformFromMeshData();
 		this->curve_draw->updateOnNextDraw();
 	}
+#else
+    std::cerr << "[ERROR]: ARAP cannot be compiled on Linux yet. Operation canceled" << std::endl;
+#endif
 }
 
 void Scene::dummy_add_image_constraint(std::size_t img_idx, glm::vec3 img_pos) {
@@ -1408,7 +1413,6 @@ void Scene::loadCurve() {
 	} else {
 		std::cerr << "Tried to load curve, but no mesh associated.\n";
 	}
->>>>>>> arap_integration
 }
 
 void Scene::launchSaveDialog() {

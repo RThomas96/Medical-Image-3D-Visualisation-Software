@@ -96,18 +96,16 @@ void Viewer::draw() {
 	this->scene->draw3DView(mvMat, pMat, camPos, false);
 	this->scene->drawPositionResponse(this->sceneRadius() / 10., this->drawAxisOnTop);
 
-<<<<<<< HEAD
     if(this->meshManipulator.isActiveManipulatorManipuled()) {
         this->scene->launchDeformation(this->meshManipulator.getActiveManipulatorAssignedIdx(), this->meshManipulator.getActiveManipulatorPos());
     }
-=======
+
 	std::vector<glm::vec3> spheres_to_draw(this->spheres);
 	if (this->temp_mesh_idx) {
 		spheres_to_draw.push_back(this->temp_sphere_position);
 	}
 
 	this->scene->drawPointSpheres_quick(mvMat, pMat, camPos, spheres_to_draw, this->sphere_size);
->>>>>>> arap_integration
 }
 
 void Viewer::keyPressEvent(QKeyEvent* e) {
