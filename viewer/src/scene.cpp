@@ -4,9 +4,8 @@
 #include "../../new_grid/include/grid_writer.hpp"
 #include "../include/planar_viewer.hpp"
 
-#ifndef NEED_ARAP
 #include "../../meshes/operations/arap/AsRigidAsPossible.h"
-#endif
+#include "../../qt/include/dialog_pick_grids_from_scene.hpp"
 
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/io.hpp>
@@ -140,6 +139,14 @@ Scene::Scene(): glMeshManipulator(new UITool::GL::MeshManipulator(&this->sceneGL
 	this->shouldUpdateUBOData		  = false;
 
 	this->posFrame = nullptr;
+
+	this->visibleDomains = nullptr;
+	this->visibleDomainsAlternate = nullptr;
+
+	this->meshes.clear();
+	this->drawables.clear();
+	this->curve = nullptr;
+	this->curve_draw = nullptr;
 }
 
 Scene::~Scene(void) {
@@ -758,6 +765,163 @@ void Scene::dummy_perform_arap_on_first_mesh() {
 #endif
 }
 
+void Scene::dummy_apply_alignment_before_arap() {
+	if (this->drawables.empty()) { std::cerr << "Error : no meshes loaded.\n"; return; }
+	auto to_deform = this->drawables.at(0);
+
+	auto mesh_to_deform = std::dynamic_pointer_cast<DrawableMesh>(to_deform);
+	if (mesh_to_deform == nullptr) { std::cerr << "Error : could not get the first drawable as a DrawableMesh.\n"; return; }
+	std::shared_ptr<Mesh> _mesh = mesh_to_deform->getMesh();
+
+	std::vector<glm::vec3> transforms; // estimated translations between current point position and ARAP handle on the image
+	auto current_transform = mesh_to_deform->getTransformation();
+
+	std::cerr << "Generating 'best' estimated transform for the mesh ..." << '\n';
+	for (std::size_t i = 0; i < this->mesh_idx_constraints.size(); ++i) {
+		auto constraint = this->mesh_idx_constraints[i];
+		auto position = this->image_constraints[i];
+		// NOTE : Always performed on the first mesh !!! So only filter through those with index 0.
+		if (constraint.first == 0) {
+			// Get current position :
+			auto mesh_original_position = _mesh->getVertices()[constraint.second];
+			// Transform it into the coordinates shown on screen :
+			auto mesh_transformed_position = glm::vec3(current_transform * (glm::vec4(mesh_original_position, 1.f)));
+			// Guess the best translation between this current position and the image-bound position :
+			glm::vec3 estimated_transform = position - mesh_transformed_position;
+			transforms.push_back(estimated_transform);
+		}
+	}
+	// Compute 'best' translation (avg translation) :
+	glm::vec3 best_guess_transform = glm::vec3{};
+	for (auto& transform : transforms) {
+		best_guess_transform += transform;
+	}
+	best_guess_transform /= static_cast<glm::vec3::value_type>(transforms.size());
+	current_transform[3][0] += best_guess_transform[0];
+	current_transform[3][1] += best_guess_transform[1];
+	current_transform[3][2] += best_guess_transform[2];
+	std::cerr << "Generated 'best' estimated transform for the mesh : " << best_guess_transform << '\n';
+	std::cerr << "Compounded transform for the mesh : " << current_transform << '\n';
+
+	// Apply the transformation to the mesh before ARAP !!! We want to place the mesh around the center of
+	// the image in order for ARAP to have less guesswork to do.
+	_mesh->applyTransformation(current_transform);
+	// ... but the drawing of the mesh doesn't need to have it anymore :
+	mesh_to_deform->setTransformation(glm::mat4(1.f));
+	if (this->curve) {
+		this->curve->deformFromMeshData();
+		this->curve_draw->setTransformation(mesh_to_deform->getTransformation());
+		this->curve_draw->updateOnNextDraw();
+	}
+	to_deform->updateOnNextDraw();
+}
+
+void Scene::dummy_perform_constrained_arap_on_image_mesh() {
+	if (this->drawables.empty()) {
+		std::cerr << "Error : no meshes loaded.\n";
+		return;
+	}
+	auto to_deform = this->drawables.at(0);
+
+	auto mesh_to_deform = std::dynamic_pointer_cast<DrawableMesh>(to_deform);
+	if (mesh_to_deform == nullptr) {
+		std::cerr << "Error : could not get the first drawable as a DrawableMesh.\n";
+		return;
+	}
+	std::shared_ptr<Mesh> _mesh = mesh_to_deform->getMesh();
+
+	AsRigidAsPossible arap_deformation;
+	arap_deformation.clear();
+	arap_deformation.init(_mesh->getVertices(), _mesh->getTriangles());
+	arap_deformation.setIterationNb(5);	   // 5 iterations maximum
+
+	std::cerr << "Generating vertex handles ..." << '\n';
+	std::vector<bool> handles(_mesh->getVertices().size(), false);
+	std::vector<glm::vec3> targets(_mesh->getVertices());
+	for (std::size_t i = 0; i < this->mesh_idx_constraints.size(); ++i) {
+		auto constraint = this->mesh_idx_constraints[i];
+		auto position	= this->image_constraints[i];
+		// NOTE : Always performed on the first mesh !!! So only filter through those with index 0.
+		if (constraint.first == 0) {
+			handles[constraint.second] = true;
+			targets[constraint.second] = position;
+		}
+	}
+	std::cerr << "Generated vertex handles." << '\n';
+
+	std::cerr << "Setting handles on ARAP ...\n";
+	arap_deformation.setHandles(handles);
+	std::cerr << "Computing constrained ARAP ...\n";
+	arap_deformation.compute_deformation(targets);
+	std::cerr << "Computed constrained ARAP. Propagating vertex positions ...\n";
+
+	_mesh->setNewVertexPositions(targets);
+	_mesh->update();
+
+	this->updateBoundingBox();
+	std::cerr << "Finished.\n";
+
+	to_deform->updateOnNextDraw();
+	if (this->curve) {
+		this->curve->deformFromMeshData();
+		this->curve_draw->updateOnNextDraw();
+	}
+}
+
+void Scene::dummy_add_image_constraint(std::size_t img_idx, glm::vec3 img_pos) {
+	this->image_constraints.push_back(img_pos);
+}
+
+void Scene::dummy_add_arap_constraint_mesh(std::size_t drawable, std::size_t vtx_idx) {
+	if (drawable == 0) { return; }
+	if (drawable > this->drawables.size()) { return; }
+	this->mesh_idx_constraints.push_back((std::make_pair(drawable-1, vtx_idx)));
+	std::cerr << "[Scene] Added constraint " << vtx_idx << " to mesh " << drawable << "\n";
+}
+
+void Scene::dummy_print_arap_constraints() {
+	std::cerr << "[LOG] ===============================================\n";
+	std::cerr << "[LOG] ARAP constraints at this point in the program :\n";
+	std::cerr << "[LOG] Mesh indices :\n";
+	for (const auto& mesh_constraint : this->mesh_idx_constraints) {
+		std::cerr << "[LOG]\t - { mesh_idx : " << (+mesh_constraint.first)-1 << ", vertex_idx : " << mesh_constraint.second << " }\n";
+	}
+	std::cerr << "[LOG] Image constraints : \n";
+	for (const auto& image_constraint : this->image_constraints) {
+		std::cerr << "[LOG]\t -" << image_constraint << '\n';
+	}
+	std::cerr << "[LOG] ARAP constraints at this point in the program :\n";
+	std::cerr << "[LOG] ===============================================\n";
+}
+
+void Scene::dummy_check_point_in_mesh_bb(glm::vec3 query, std::size_t& mesh_index) {
+	mesh_index = 0;
+	for (std::size_t i = 0; i < this->drawables.size(); ++i) {
+		const auto& drawable = this->drawables[i];
+		auto mesh_drawable = std::dynamic_pointer_cast<DrawableMesh>(drawable);
+		if (mesh_drawable != nullptr) {
+			// get BB, check if inside :
+			auto mesh_bb = mesh_drawable->getBoundingBox();
+			if (
+				query.x > mesh_bb.first.x && query.x < mesh_bb.second.x &&
+				query.y > mesh_bb.first.y && query.y < mesh_bb.second.y &&
+				query.z > mesh_bb.first.z && query.z < mesh_bb.second.z
+			) {
+				mesh_index = i+1;
+				return;
+			}
+		}
+		// else do nothing.
+	}
+}
+
+DrawableBase::Ptr Scene::dummy_getDrawable(std::size_t idx) {
+	// reminder : this is indexed at one since it should be the result of Scene::dummy_check_point_in_mesh_bb().
+	if (idx == 0) { return nullptr; }
+	if (idx > this->drawables.size()) { return nullptr; }
+	return this->drawables[idx-1];
+}
+
 void Scene::recompileShaders(bool verbose) {
 	GLuint newProgram			 = this->compileShaders("../new_shaders/voxelgrid.vert", "../new_shaders/voxelgrid.geom", "../new_shaders/voxelgrid.frag", verbose);
 	GLuint newPlaneProgram		 = this->compileShaders("../new_shaders/plane.vert", "", "../new_shaders/plane.frag", verbose);
@@ -1024,16 +1188,54 @@ void Scene::loadMesh() {
 		return;
 	}
 
+	std::shared_ptr<Mesh> mesh_to_load = nullptr;
 	// Create a mesh structure :
-	auto mesh_to_load = std::make_shared<Mesh>();
+	mesh_to_load = std::make_shared<Mesh>();
 	auto& vertices = mesh_to_load->getVertices();
 	auto& normals = mesh_to_load->getNormals();
-	// Load that OFF file :
+	// Load that OFF file and then update the mesh :
 	FileIO::openOFF(file_name.toStdString(), mesh_to_load->getVertices(), mesh_to_load->getTriangles());
 	mesh_to_load->update();
+
 	this->meshes.emplace_back(mesh_to_load);
 
 	auto mesh_drawable = std::make_shared<DrawableMesh>(mesh_to_load);
+
+	// If any images loaded, ask with which image to be paired with :
+	if (this->newGrids.size()) {
+		auto picker = new GridPickerFromScene();
+		picker->chooseGrids(this->newGrids);
+		if (picker->choice_Accepted()) {
+			// Get the user-requested image's bounding box details :
+			if (picker->choice_getGrid() >= this->newGrids.size()) {
+				std::cerr << "Error : grid index was not valid ...\n";
+			}
+			auto selected_grid = this->newGrids[picker->choice_getGrid()];
+			Image::bbox_t selected_grid_bb = selected_grid->grid->getBoundingBox();
+			Image::bbox_t::vec selected_grid_bb_diagonal = selected_grid_bb.getDiagonal(); // gets the scale factors on X, Y, Z
+			Image::bbox_t::vec selected_grid_bb_center = selected_grid_bb.getMin() + (selected_grid_bb_diagonal / 2.f);
+
+			// The scaling done here is _very_ approximate in order to get a rough estimate of the size of the image :
+			float scaling_factor = glm::length(selected_grid_bb_diagonal) / glm::length(mesh_to_load->getBB()[1] - mesh_to_load->getBB()[0]) * .7f;
+			glm::mat4 scaling_matrix = glm::scale(glm::mat4(1.f), glm::vec3(scaling_factor));
+			mesh_drawable->setTransformation(scaling_matrix);
+			// We apply the transformation here in order to get an updated bounding box.
+
+			// And base the computation of the translations from the scaled bounding box.
+			auto scaled_bb = mesh_drawable->getBoundingBox();
+			auto mesh_to_image_translation = (selected_grid_bb.getMin() - scaled_bb.first);
+			auto shift_image_translation = glm::vec3(-(scaled_bb.second - scaled_bb.first).x, .0f, .0f) + mesh_to_image_translation;
+			// Determine the best transformation to apply by shifting the mesh's BB to be aligned with the image's BB, and
+			// let the user put points later on the mesh in order to get a first alignment of the image/mesh.
+			// Then, translate that by the mesh's bounding box in order to place them one beside another :
+			scaling_matrix[3][0] += shift_image_translation.x;
+			scaling_matrix[3][1] += shift_image_translation.y;
+			scaling_matrix[3][2] += shift_image_translation.z;
+
+			mesh_drawable->setTransformation(scaling_matrix);
+		}
+		// the user didn't want to pair the image with a grid, do nothing else.
+	}
 
 	// Insert it into the meshes to initialize :
 	this->to_init.emplace(mesh_drawable);
@@ -1169,6 +1371,44 @@ void Scene::launchDeformation(int tetIdx, glm::vec3 point) {
 glm::vec3 Scene::getVertexPosition(int index) {
 	VolMeshData& mesh = this->newGrids[0]->volumetricMeshData;
     return mesh.idxMap[index].first;
+}
+
+void Scene::loadCurve() {
+	// Launch a file picker to get the name of an OFF file :
+	QString file_name = QFileDialog::getOpenFileName(nullptr, "Open a Mesh file (OFF)", QString(), "OBJ files (*.obj)");
+	if (file_name.isEmpty() || not QFileInfo::exists(file_name)) {
+		std::cerr << "Error : nothing to open.\nFile path given : \"" << file_name.toStdString() << "\"\n";
+		return;
+	}
+
+	auto picker = new MeshPickerFromScene();
+	picker->chooseMeshes(this->meshes);
+	if (picker->choice_Accepted()) {
+		this->curve.reset();
+		this->curve_draw.reset();
+		auto selected_mesh = this->meshes[picker->choice_getMesh()];
+		auto fname = file_name.toStdString();
+		this->curve = openCurveFromOBJ(fname, selected_mesh);
+		glm::mat4 transfo = glm::mat4(1.f);
+		// try to find the right transformation to apply to the curve for it to 'follow' the mesh :
+		// !!! /!\ VERY HACKY, DO NOT ATTEMPT AT HOME /!\ !!!
+		for (const auto& drawable : this->drawables) {
+			std::shared_ptr<DrawableMesh> mesh_drawable = std::dynamic_pointer_cast<DrawableMesh>(drawable);
+			if (mesh_drawable != nullptr) {
+				if (mesh_drawable->getMesh() == selected_mesh) {
+					transfo = mesh_drawable->getTransformation();
+					std::cerr << "Found the right transformation.\n";
+				}
+			}
+		}
+		auto drawable_curve = std::make_shared<DrawableCurve>(this->curve);
+		drawable_curve->setTransformation(transfo);
+		this->to_init.emplace(drawable_curve);
+		this->curve_draw = drawable_curve;
+	} else {
+		std::cerr << "Tried to load curve, but no mesh associated.\n";
+	}
+>>>>>>> arap_integration
 }
 
 void Scene::launchSaveDialog() {
@@ -2257,6 +2497,138 @@ void Scene::generateSceneData() {
 	this->generatePlanesArray(mesh);
 	this->setupVBOData(mesh);
 	this->createBoundingBoxBuffers();
+
+	this->generateSphereData();
+}
+
+void Scene::generateSphereData() {
+	std::size_t segments_around = 8;
+	std::size_t segments_height = 8;
+
+	std::vector<glm::vec4> positions; // also serves as normals ...
+	std::vector<unsigned int> indices;
+
+	// Iterate and create positions around the sphere :
+	for (std::size_t i = 1; i <= segments_height; ++i) {
+		for (std::size_t j = 0; j < segments_around; ++j) {
+			double theta = 2 * M_PI * static_cast<float>(j) / static_cast<float>(segments_around);
+			double phi = M_PI * static_cast<float>(i) / static_cast<float>(segments_height+1);
+			positions.push_back(glm::normalize(glm::vec4{
+				static_cast<float>(sin(phi) * cos(theta)),
+				static_cast<float>(sin(phi) * sin(theta)),
+				static_cast<float>(cos(phi)), 1.f
+			}));
+		}
+	}
+	positions.push_back(glm::normalize(glm::vec4{
+	  static_cast<float>(sin(.0f) * cos(2*M_PI)),
+	  static_cast<float>(sin(.0f) * sin(2*M_PI)),
+	  static_cast<float>(cos(.0f)), 1.f
+	}));
+	positions.push_back(glm::normalize(glm::vec4{
+	  static_cast<float>(sin(M_PI) * cos(2*M_PI)),
+	  static_cast<float>(sin(M_PI) * sin(2*M_PI)),
+	  static_cast<float>(cos(M_PI)), 1.f
+	}));
+	// link the sphere faces :
+	for (std::size_t i = 0; i < segments_height-1; ++i) {
+		std::size_t next_segment_height = i+1;
+		for (std::size_t j = 0; j < segments_around; ++j) {
+			std::size_t next_segment_around = j+1;
+			if (next_segment_around == segments_around) { next_segment_around = 0; }
+
+			// The four corners below define a quad (region of the sphere).
+			std::size_t p1 = i * segments_around + j;
+			std::size_t p2 = i * segments_around + next_segment_around;
+			std::size_t p3 = next_segment_height * segments_around + j;
+			std::size_t p4 = next_segment_height * segments_around + next_segment_around;
+			// Link them as two triangles :
+			indices.push_back(p1);
+			indices.push_back(p2);
+			indices.push_back(p3);
+			indices.push_back(p3);
+			indices.push_back(p2);
+			indices.push_back(p4);
+		}
+	}
+	// Link the top and bottom 'cones' :
+	for (std::size_t i = 0; i < segments_around; ++i) {
+		std::size_t next_segment_around = i+1;
+		if (next_segment_around == segments_around) { next_segment_around = 0; }
+		indices.push_back(i);
+		indices.push_back(next_segment_around);
+		indices.push_back(positions.size()-2); // actually the top point
+	}
+	for (std::size_t i = 0; i < segments_around; ++i) {
+		std::size_t next_segment_around = i+1;
+		if (next_segment_around == segments_around) { next_segment_around = 0; }
+		indices.push_back(positions.size() - segments_around + i);
+		indices.push_back(positions.size() - segments_around + next_segment_around);
+		indices.push_back(positions.size()-1); // actually the bottom point
+	}
+
+
+	// Create VAO/VBO and upload data :
+	glGenVertexArrays(1, &this->vaoHandle_spheres);
+	glBindVertexArray(this->vaoHandle_spheres);
+
+	glGenBuffers(1, &this->vboHandle_spherePositions);
+	glGenBuffers(1, &this->vboHandle_sphereNormals);
+	glGenBuffers(1, &this->vboHandle_sphereIndices);
+
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_spherePositions);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec4::value_type) * 4 * positions.size(), positions.data(), GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_sphereNormals);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec4::value_type) * 4 * positions.size(), positions.data(), GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_sphereIndices);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * indices.size(), indices.data(), GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_spherePositions);
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
+	glEnableVertexAttribArray(1);
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_sphereNormals);
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+	if (this->shaderCompiler) { this->shaderCompiler.reset(); }
+	this->shaderCompiler = std::make_unique<ShaderCompiler>(this);
+
+	this->shaderCompiler->vertexShader_file("../new_shaders/base_sphere.vert").fragmentShader_file("../new_shaders/base_sphere.frag");
+	bool program_valid = this->shaderCompiler->compileShaders();
+	if (program_valid) {
+		this->programHandle_sphere = this->shaderCompiler->programName();
+	} else {
+		std::cerr << "Error while compiling sphere shaders.\n";
+	}
+	std::cerr << "Messages for sphere shaders !!!\n" << this->shaderCompiler->errorString() << '\n';
+
+	this->sphere_size_to_draw = indices.size();
+
+}
+
+void Scene::drawPointSpheres_quick(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const std::vector<glm::vec3>& positions, float radius) {
+	this->glUseProgram(this->programHandle_sphere);
+	this->glBindVertexArray(this->vaoHandle_spheres);
+
+	auto location_proj = this->glGetUniformLocation(this->programHandle_sphere, "proj");
+	auto location_view = this->glGetUniformLocation(this->programHandle_sphere, "view");
+	auto location_scale = this->glGetUniformLocation(this->programHandle_sphere, "scale");
+	auto location_pos = this->glGetUniformLocation(this->programHandle_sphere, "position");
+
+	this->glUniformMatrix4fv(location_proj, 1, GL_FALSE, pMat);
+	this->glUniformMatrix4fv(location_view, 1, GL_FALSE, mvMat);
+	this->glUniform1f(location_scale, radius);
+
+	// For all spheres, draw them in a different position :
+	for (std::size_t sphere_idx = 0; sphere_idx < positions.size(); ++sphere_idx) {
+		this->glUniform3fv(location_pos, 1, glm::value_ptr(positions[sphere_idx]));
+
+		this->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_sphereIndices);
+		this->glDrawElements(GL_TRIANGLES, this->sphere_size_to_draw, GL_UNSIGNED_INT, (void*)0);
+	}
+	this->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	this->glBindVertexArray(0);
+	this->glUseProgram(0);
 }
 
 void Scene::generatePlanesArray(SimpleVolMesh& _mesh) {

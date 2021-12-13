@@ -1,5 +1,8 @@
 #version 150
 #extension GL_ARB_separate_shader_objects : enable
+#extension GL_ARB_explicit_attrib_location : enable
+
+#define INLAYOUT
 
 // Signals we're in the main shader, for any shaders inserted into this one.
 #define MAIN_SHADER_UNIT
@@ -7,22 +10,22 @@
 /****************************************/
 /**************** Inputs ****************/
 /****************************************/
-in vec4 P;
-in vec3 text3DCoord;
-in vec4 P0;
-in vec3 text3DCoordP0;
-in vec4 P1;
-in vec3 text3DCoordP1;
-in vec4 P2;
-in vec3 text3DCoordP2;
-in vec4 P3;
-in vec3 text3DCoordP3;
+INLAYOUT in vec4 P;
+INLAYOUT in vec3 text3DCoord;
+INLAYOUT in vec4 P0;
+INLAYOUT in vec3 text3DCoordP0;
+INLAYOUT in vec4 P1;
+INLAYOUT in vec3 text3DCoordP1;
+INLAYOUT in vec4 P2;
+INLAYOUT in vec3 text3DCoordP2;
+INLAYOUT in vec4 P3;
+INLAYOUT in vec3 text3DCoordP3;
 
-in vec3 barycentricCoords;
-in vec3 largestDelta;
+INLAYOUT in vec3 barycentricCoords;
+INLAYOUT in vec3 largestDelta;
 
-in float instanceId;
-in float visibility;
+INLAYOUT in float instanceId;
+INLAYOUT in float visibility;
 
 /****************************************/
 /*************** Outputs ****************/
@@ -111,7 +114,8 @@ vec3 phongComputation(vec4 position, vec3 normal, vec4 color, vec3 lightPos, vec
 #line 2111
 
 void main (void) {
-    sceneSpaceFragmentPos = vec4(.0,.0,.0,.0);
+	sceneSpaceFragmentPos = vec4(.0,.0,.0,.0);
+	gl_FragDepth = gl_FragCoord.z;
 
     if( visibility > 3500. ) discard;
 
@@ -278,6 +282,10 @@ void main (void) {
 	colorOut.xyz += phongComputation(Pos, n, color, cam, phongDetails, lightDetails);
 
 	sceneSpaceFragmentPos = Pos;
+
+	// Update fragment depth to prevent sorting issues !!!
+	vec4 compute_depth = pMat * vMat * sceneSpaceFragmentPos;
+	gl_FragDepth = 0.5f * ((compute_depth.z / compute_depth.w) + 1.f);
 
 	return;
 }

@@ -12,6 +12,9 @@
 #include "../../meshes/base_mesh/mesh_io.hpp"
 #include "../../meshes/base_mesh/Mesh.hpp"
 #include "../../meshes/drawable/mesh.hpp"
+#include "../../meshes/drawable/curve.hpp"
+// Curve :
+#include "../../meshes/deformable_curve/curve.hpp"
 // Discrete grid and grid generation :
 #include "../../grid/include/discrete_grid.hpp"
 #include "../../grid/include/input_discrete_grid.hpp"
@@ -144,9 +147,6 @@ public:
 	/// @brief Remove the visu box controller if it closes
 	void removeVisuBoxController();
 
-	/// @brief Loads a mesh (OFF) and uploads it to the GL.
-	void loadMesh(void);
-
 	/// @brief Adds a widget to which redirect to OpenGL output.
 	void addOpenGLOutput(OpenGLDebugLog* _gldl);
 	/// @brief Add a status bar to the program
@@ -179,6 +179,9 @@ public:
 	void drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading, float zoomRatio, glm::vec2 offset);
 
     void getTetraMeshPoints(std::vector<glm::vec3>& points);
+
+	/// @brief Draws a set of spheres at the positions given in argument
+	void drawPointSpheres_quick(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, const std::vector<glm::vec3>& positions, float radius);
 
 	/// @brief Create a texture suited for framebuffer rendering, by passing the dimensions of it to the function.
 	GLuint updateFBOOutputs(glm::ivec2 dimensions, GLuint fb_handle, GLuint old_texture = 0);
@@ -266,9 +269,35 @@ public:
 	/// @brief Allocate a texture conformant with the given settings, but don't fill it with data yet.
 	GLuint newAPI_uploadTexture3D_allocateonly(const TextureUpload& tex);
 
+	/// @brief Loads a mesh (OFF) and uploads it to the GL.
+	void loadMesh();
+	void loadCurve();
+
 	/// @brief This performs ARAP deformation on the first mesh found.
 	/// @note THIS IS A WIP/DRAFT FUNCTION, NOT DESIGNED FOR PRODUCTION RELEASE
-	void dummy_perform_arap_on_first_mesh(void);
+	void dummy_perform_arap_on_first_mesh();
+	/// @brief This performs ARAP deformation on the mesh associated with the first loaded image.
+	/// @note THIS IS A WIP/DRAFT FUNCTION, NOT DESIGNED FOR PRODUCTION RELEASE
+	void dummy_perform_constrained_arap_on_image_mesh();
+	/// @brief This adds a constraint for image 'img_idx' at position 'img_pos'.
+	/// @note THIS IS A WIP/DRAFT FUNCTION, NOT DESIGNED FOR PRODUCTION RELEASE
+	void dummy_add_image_constraint(std::size_t img_idx, glm::vec3 img_pos);
+	/// @brief This checks if the given query point is contained in the bounding box
+	/// @param query The position to query
+	/// @param mesh_index The index of the first mesh that contains it, INDEXED AT 1. If 0, no meshes contain it.
+	/// @note THIS IS A WIP/DRAFT FUNCTION, NOT DESIGNED FOR PRODUCTION RELEASE
+	void dummy_check_point_in_mesh_bb(glm::vec3 query, std::size_t& mesh_index);
+	/// @brief Returns the i-th drawable loaded in the scene.
+	/// @note THIS IS A WIP/DRAFT FUNCTION, NOT DESIGNED FOR PRODUCTION RELEASE
+	DrawableBase::Ptr dummy_getDrawable(std::size_t idx);
+	/// @brief Adds to the 'i-th' mesh a constraint at vertex 'n'
+	/// @note THIS IS A WIP/DRAFT FUNCTION, NOT DESIGNED FOR PRODUCTION RELEASE
+	void dummy_add_arap_constraint_mesh(std::size_t drawable, std::size_t vtx_idx);
+	/// @brief Prints the ARAP constraints as they currently are set in the program.
+	/// @note THIS IS A WIP/DRAFT FUNCTION, NOT DESIGNED FOR PRODUCTION RELEASE
+	void dummy_print_arap_constraints();
+	/// @brief Applies the mesh alignment before the ARAP solver
+	void dummy_apply_alignment_before_arap();
 
 	/// @brief Changes the texture coloration mode to the desired setting
 	void setColorFunction_r(ColorFunction _c);
@@ -356,6 +385,8 @@ private:
 	void setupVBOData(const SimpleVolMesh& _mesh);
 	/// @brief setup the vao binding setup
 	void setupVAOPointers();
+	/// @brief Generates the data necessary to draw a sphere.
+	void generateSphereData();
 
 	/// @brief Immediate deletion of the grid index to delete
 	void deleteGridNow();
@@ -450,7 +481,9 @@ private:
 
 	std::queue<std::shared_ptr<DrawableBase>> to_init;		///< A set of drawables that have not been initialized yet
 	std::vector<std::shared_ptr<DrawableBase>> drawables;	///< The drawables to display
-	std::vector<std::shared_ptr<Mesh>> meshes;				///< The loaded meshes
+	std::vector<Mesh::Ptr> meshes;				///< The loaded meshes
+	Curve::Ptr curve;		///< The loaded curve, if any
+	std::shared_ptr<DrawableCurve> curve_draw;
 
 	// Grids :
 	// std::vector<GridGLView::Ptr> grids;	   ///< Grids to display in the different views.
@@ -512,6 +545,22 @@ private:
 	GLuint vboHandle_SinglePlaneElement;	///< The vertex indices necessary to draw a single plane.
 	GLuint vboHandle_boundingBoxVertices;
 	GLuint vboHandle_boundingBoxIndices;
+
+	///
+	/// Necessary for the spheres :
+	///
+	GLuint vaoHandle_spheres;
+	GLuint vboHandle_spherePositions;
+	GLuint vboHandle_sphereNormals;
+	GLuint vboHandle_sphereIndices;
+	GLuint programHandle_sphere;
+	GLuint sphere_size_to_draw;
+
+	///
+	/// Only for ARAP integration testing :
+	///
+	std::vector<std::pair<std::size_t, std::size_t>> mesh_idx_constraints; ///< The mesh vertices considered constraints. Pair = <mesh_idx , vertex_idx>
+	std::vector<glm::vec3> image_constraints;	///< The positions of those constraints explained abovepositions of those constraints explained above
 
 	/// @brief A compiler for the shaders
 	std::unique_ptr<ShaderCompiler> shaderCompiler;

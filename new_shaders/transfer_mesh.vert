@@ -1,5 +1,6 @@
 #version 150
 #extension GL_ARB_separate_shader_objects : enable
+#extension GL_ARB_explicit_attrib_location : enable
 
 layout (location = 0) in vec3 position;
 layout (location = 1) in vec3 normal;
@@ -53,8 +54,8 @@ uniform bool shouldUseBB;
 */
 ivec2 Convert1DIndexTo2DIndex_Unnormed( in uint uiIndexToConvert, in int iWrapSize )
 {
-	int iY = int( uiIndexToConvert / unsigned int(iWrapSize) );
-	int iX = int( uiIndexToConvert - ( unsigned int(iY) * unsigned int(iWrapSize) ) );
+	int iY = int( uiIndexToConvert / uint(iWrapSize) );
+	int iX = int( uiIndexToConvert - ( uint(iY) * uint(iWrapSize) ) );
 	return ivec2( iX, iY );
 }
 
@@ -106,25 +107,25 @@ void main()
 	text3DCoord_VS = texelFetch(texture_coordinates, textCoord, 0).xyz;
 
 	//Storing instance vertices informations: position and texture coordinates
-	textCoord = Convert1DIndexTo2DIndex_Unnormed(unsigned int(gl_InstanceID*12 ), vertWidth);
+	textCoord = Convert1DIndexTo2DIndex_Unnormed(uint(gl_InstanceID*12 ), vertWidth);
 	P3_VS = vec4( texelFetch(vertices_translations, textCoord, 0).xyz, 1. );
 	text3DCoordP3_VS = texelFetch(texture_coordinates, textCoord, 0).xyz;;
 
 	visibility_VS = ComputeVisibility(P3_VS.xyz);
 
-	textCoord = Convert1DIndexTo2DIndex_Unnormed(unsigned int(gl_InstanceID*12 + 1 ), vertWidth);
+	textCoord = Convert1DIndexTo2DIndex_Unnormed(uint(gl_InstanceID*12 + 1 ), vertWidth);
 	P1_VS = vec4( texelFetch(vertices_translations, textCoord, 0).xyz, 1. );
 	text3DCoordP1_VS = texelFetch(texture_coordinates, textCoord, 0).xyz;;
 
 	visibility_VS += ComputeVisibility(P1_VS.xyz);
 
-	textCoord = Convert1DIndexTo2DIndex_Unnormed(unsigned int(gl_InstanceID*12 + 2 ), vertWidth);
+	textCoord = Convert1DIndexTo2DIndex_Unnormed(uint(gl_InstanceID*12 + 2 ), vertWidth);
 	P2_VS = vec4( texelFetch(vertices_translations, textCoord, 0).xyz, 1. );
 	text3DCoordP2_VS = texelFetch(texture_coordinates, textCoord, 0).xyz;;
 
 	visibility_VS += ComputeVisibility(P2_VS.xyz);
 
-	textCoord = Convert1DIndexTo2DIndex_Unnormed(unsigned int(gl_InstanceID*12 + 5 ), vertWidth);
+	textCoord = Convert1DIndexTo2DIndex_Unnormed(uint(gl_InstanceID*12 + 5 ), vertWidth);
 	P0_VS = vec4( texelFetch(vertices_translations, textCoord, 0).xyz, 1. );
 	text3DCoordP0_VS = texelFetch(texture_coordinates, textCoord, 0).xyz;
 

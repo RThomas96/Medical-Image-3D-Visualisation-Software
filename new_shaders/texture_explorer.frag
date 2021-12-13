@@ -4,6 +4,7 @@
 #define MAIN_SHADER_UNIT
 
 #extension GL_ARB_separate_shader_objects : enable
+#extension GL_ARB_explicit_attrib_location : enable
 
 /****************************************/
 /**************** Inputs ****************/
@@ -67,6 +68,7 @@ void main() {
 	// If in the border area, stop there :
 	if (shouldDrawBorder() == false) {
 		// Get the texture data :
+		if (vTexCoords.x < .0f || vTexCoords.y < .0f || vTexCoords.z < .0f) { discard; }
 		uvec3 tex = texture(texData, vTexCoords).rgb;
 
 		vec4 final_color = fragmentEvaluationSingleChannel(tex);

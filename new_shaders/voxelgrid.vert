@@ -1,5 +1,6 @@
 #version 150 core
 #extension GL_ARB_separate_shader_objects : enable
+#extension GL_ARB_explicit_attrib_location : enable
 
 // VAO inputs :
 layout(location=0) in vec4 vertexPosition;

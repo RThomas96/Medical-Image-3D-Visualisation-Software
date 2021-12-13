@@ -4,6 +4,7 @@
 #	[Switch]$libtiff = $false,
 #	[Switch]$tinytiff = $false,
 #	[Switch]$qglviewer = $false
+#	[Switch]$nanoflann = $false
 #)
 
 # Executable paths :
@@ -21,6 +22,7 @@
 [string]$libTIFFPath = ($ProjectRootPath)+"\libtiff"
 [string]$niftiPath = ($ProjectRootPath)+"\nifticlib"
 [string]$zlibPath = ($ProjectRootPath)+"\zlib"
+[string]$nanoflannPath = ($ProjectRootPath)+"\nanoflann"
 [string]$CompiledLibPath = ($ProjectRootPath)+"\compiled_libraries"
 
 function Clear-GitAll {
@@ -219,6 +221,28 @@ function Publish-GitZlib {
 	Set-Location $ProjectRootPath
 }
 
+function Publish-GitNanoFLANN {
+	Write-Host "Configuring nanoflann ..."
+	Set-Location $nanoflannPath
+	if ( Test-Path -Path $nanoflannPath+"\release" ) {
+		Write-Host "nanoflann was already compiled by this script."
+	} else {
+		# Here we cast the result to void in order to have no output on the CMD/PS :
+		[void](New-Item -Force -Path $nanoflannPath -Name "release" -ItemType "directory")
+
+		[string]$cmakeBuildArgs="-S. -Brelease -G `"MinGW Makefiles`" -DCMAKE_BUILD_TYPE=Release -DNANOFLANN_BUILD_EXAMPLES=OFF -DNANOFLANN_BUILD_BENCHMARKS=OFF -DNANOFLANN_BUILD_TESTS=OFF -DCMAKE_INSTALL_PREFIX=$CompiledLibPath "
+
+		# Start the CMake generation process :
+		Start-Process -FilePath $Global:CMakeCmdPath -NoNewWindow -Wait -ArgumentList $cmakeBuildArgs
+		# Call CMake to compile the project :
+		Start-Process -FilePath $Global:CMakeCmdPath -NoNewWindow -Wait -ArgumentList `
+			"--build release --target install"
+	}
+	# Finish the process :
+	Write-Host "Configuration of nanoflann done."
+	Set-Location $ProjectRootPath
+}
+
 Write-Verbose "Project root is located at ${ProjectThirdParty_lib_Path}"
 Write-Host "Warning : Most paths for Qt executables are set to my computer's paths."
 Write-Host "Warning : Please change them as necessary."
@@ -255,6 +279,10 @@ if ($args.Count -gt 0) {
 	# And TinyTIFF :
 	if ($args.Contains("tinytiff")) {
 		Publish-GitTinyTIFF
+	}
+	# And nanoflann :
+	if ($args.Contains("nanoflann")) {
+		Publish-GitNanoFLANN
 	}
 	# And finally with QGLViewer :
 	if ($args.Contains("qglviewer")) {

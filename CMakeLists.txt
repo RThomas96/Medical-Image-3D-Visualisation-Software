@@ -21,9 +21,11 @@ INCLUDE(FindSuiteSparse_Windows)
 FIND_PACKAGE(Qt5 REQUIRED COMPONENTS Core Gui Widgets Xml OpenGL)
 FIND_PACKAGE(OpenGL REQUIRED)
 FIND_PACKAGE(Threads REQUIRED)
-# Find TinyTIFF compiled locally :
+
+# Find locally-compiled libraries :
+# If any of them aren't found, it stops CMake's generation process with an error message.
 FIND_PACKAGE(TinyTIFF REQUIRED PATHS ${CMAKE_CURRENT_LIST_DIR}/third_party/compiled_libraries/lib/cmake PATH_SUFFIXES TinyTIFF)
-# If TinyTIFF's not found, it stops CMake's generation process with an error message.
+FIND_PACKAGE(nanoflann REQUIRED PATHS ${CMAKE_CURRENT_LIST_DIR}/third_party/compiled_libraries/lib/cmake PATH_SUFFIXES nanoflann)
 # }}}
 
 ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/third_party/glm)
@@ -71,7 +73,7 @@ ADD_LIBRARY(DiscreteGrid STATIC
 	./grid/src/discrete_grid.cpp
 	./grid/src/input_discrete_grid.cpp
 	./grid/src/output_discrete_grid.cpp
-)
+        meshes/deformable_curve/curve.hpp)
 TARGET_INCLUDE_DIRECTORIES(DiscreteGrid
 	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/third_party/glm/
 	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include
@@ -137,6 +139,7 @@ TARGET_LINK_LIBRARIES(VisualisationWidgets
 
 # Neighbor visualisation {{{
 ADD_EXECUTABLE(neighbor_visu
+	./qt/include/dialog_pick_grids_from_scene.hpp
 	# Header files, for Qt MOCS compilation :
 	./viewer/include/scene.hpp
 	./viewer/include/planar_viewer.hpp
@@ -195,6 +198,7 @@ TARGET_LINK_LIBRARIES(neighbor_visu
 	PUBLIC writergrid_tiff
 	PUBLIC ${CMAKE_PROJECT_NAME}_shaders
 	PUBLIC ${CMAKE_PROJECT_NAME}_mesh
+	PUBLIC ${CMAKE_PROJECT_NAME}_deformable_curve
 	PUBLIC ${CMAKE_PROJECT_NAME}_meshop_arap
 	PUBLIC ${CMAKE_PROJECT_NAME}_drawable_meshes
 )

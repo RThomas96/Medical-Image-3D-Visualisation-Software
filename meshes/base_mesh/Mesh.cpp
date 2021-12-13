@@ -1,14 +1,40 @@
 #include "Mesh.hpp"
 #include <QOpenGLFunctions>
 #include <algorithm>
-#include <float.h>
+#include <memory>
+#include <cfloat>
+
+Mesh::Mesh() :
+	vertices(), normals(), verticesNormals(), triangles(),
+	BBMin(), BBMax(), radius(1.f), normalDirection(1.),
+	kdtree(nullptr), kdtree_adaptor(nullptr)
+{
+	glm::vec3::value_type min = std::numeric_limits<glm::vec3::value_type>::lowest();
+	glm::vec3::value_type max = std::numeric_limits<glm::vec3::value_type>::max();
+
+	this->BBMin = glm::vec3(max, max, max);
+	this->BBMax = glm::vec3(min, min, min);
+}
+
+Mesh::Mesh(std::vector<glm::vec3>& _vertex, std::vector<Triangle>& _tris) :
+	vertices(_vertex), normals(), verticesNormals(), triangles(_tris),
+	BBMin(), BBMax(), radius(1.f), normalDirection(1.),
+	kdtree(nullptr), kdtree_adaptor(nullptr)
+{
+	glm::vec3::value_type min = std::numeric_limits<glm::vec3::value_type>::lowest();
+	glm::vec3::value_type max = std::numeric_limits<glm::vec3::value_type>::max();
+
+	this->BBMin = glm::vec3(max, max, max);
+	this->BBMax = glm::vec3(min, min, min);
+
+	this->update();
+}
 
 void Mesh::computeBB(){
 	BBMin = glm::vec3( FLT_MAX, FLT_MAX, FLT_MAX );
 	BBMax = glm::vec3( -FLT_MAX, -FLT_MAX, -FLT_MAX );
 
-	for( unsigned int i = 0 ; i < vertices.size() ; i ++ ){
-		const glm::vec3 & point = vertices[i];
+	for( const auto& point : this->vertices ){
 		for( int v = 0 ; v < 3 ; v++ ){
 			float value = point[v];
 			if( BBMin[v] > value ) BBMin[v] = value;
@@ -30,9 +56,27 @@ std::vector<glm::vec3> Mesh::getBB()
 	return bb;
 }
 
+void Mesh::applyTransformation(glm::mat4 transformation) {
+	for (std::size_t i = 0; i < this->vertices.size(); ++i) {
+		glm::vec3 vertex = this->vertices[i];
+		this->vertices[i] = glm::vec3(transformation * (glm::vec4(vertex, 1.f)));
+	}
+
+	this->update();
+}
+
 void Mesh::update(){
 	computeBB();
 	recomputeNormals();
+	if (this->kdtree_adaptor == nullptr) {
+		this->kdtree_adaptor = std::make_shared<mesh_kdtree_adaptor_t>(this->vertices);
+	}
+	if (this->kdtree == nullptr) {
+		this->kdtree = std::make_shared<mesh_kdtree_t>(3, *this->kdtree_adaptor.get(), 10);
+	}
+
+	// kdtree should be initialized now :
+	this->kdtree->buildIndex();
 }
 
 void Mesh::clear(){
@@ -43,6 +87,21 @@ void Mesh::clear(){
 	normals.clear();
 	verticesNormals.clear();
 
+}
+
+glm::vec3 Mesh::closestPointTo(glm::vec3 query, std::size_t& vertex_idx) const {
+	// WARNING : This is ripped straight from one of nanoflann's examples [1]. Should be fine to use it legally.
+	// [1] : https://github.com/jlblancoc/nanoflann/blob/master/examples/pointcloud_adaptor_example.cpp#L131
+	// do a knn search
+	const size_t num_results = 1;
+	size_t ret_index;
+	float out_dist_sqr;
+	nanoflann::KNNResultSet<float> resultSet(num_results);
+	resultSet.init(&ret_index, &out_dist_sqr );
+	this->kdtree->findNeighbors(resultSet, &query[0], nanoflann::SearchParams(10));
+	// return the index of the closes vertex
+	vertex_idx = ret_index;
+	return this->vertices[ret_index];
 }
 
 void Mesh::recomputeNormals () {

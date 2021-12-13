@@ -21,7 +21,7 @@
 float Viewer::sceneRadiusMultiplier{.5f};
 
 Viewer::Viewer(Scene* const scene, QStatusBar* _program_bar, QWidget* parent) :
-	QGLViewer(parent), scene(scene), meshManipulator(UITool::MeshManipulator(36)) {
+	QGLViewer(parent), scene(scene), meshManipulator(UITool::MeshManipulator(36)), spheres(), sphere_size(.1f), temp_mesh_idx(0), temp_img_idx(0), temp_sphere_position(std::numeric_limits<float>::lowest()) {
 	this->statusBar	   = _program_bar;
 	this->refreshTimer = new QTimer();
 	this->refreshTimer->setInterval(std::chrono::milliseconds(7));	  // ~7 ms for 144fps, ~16ms for 60fps and ~33ms for 30 FPS
@@ -96,9 +96,18 @@ void Viewer::draw() {
 	this->scene->draw3DView(mvMat, pMat, camPos, false);
 	this->scene->drawPositionResponse(this->sceneRadius() / 10., this->drawAxisOnTop);
 
+<<<<<<< HEAD
     if(this->meshManipulator.isActiveManipulatorManipuled()) {
         this->scene->launchDeformation(this->meshManipulator.getActiveManipulatorAssignedIdx(), this->meshManipulator.getActiveManipulatorPos());
     }
+=======
+	std::vector<glm::vec3> spheres_to_draw(this->spheres);
+	if (this->temp_mesh_idx) {
+		spheres_to_draw.push_back(this->temp_sphere_position);
+	}
+
+	this->scene->drawPointSpheres_quick(mvMat, pMat, camPos, spheres_to_draw, this->sphere_size);
+>>>>>>> arap_integration
 }
 
 void Viewer::keyPressEvent(QKeyEvent* e) {
@@ -147,26 +156,69 @@ void Viewer::keyPressEvent(QKeyEvent* e) {
 				this->update();
 			}
 			break;
-		case Qt::Key::Key_C:
-			this->shouldCapture = true;
-			this->update();
-			break;
 
 		case Qt::Key::Key_G:
 			this->scene->draft_tryAndSaveFirstGrid();
 			this->update();
 			break;
+			/*
+			 * ARAP !
+			 */
 		case Qt::Key::Key_A:
 			if ((e->modifiers() & Qt::KeyboardModifier::ControlModifier) != 0) {
 				this->updateCameraPosition();
 			} else if ((e->modifiers() & Qt::KeyboardModifier::ShiftModifier) != 0) {
 				// perform dummy ARAP deformation
-				this->scene->dummy_perform_arap_on_first_mesh();
+				this->scene->dummy_print_arap_constraints();
 				this->update();
 			} else {
 				QGLViewer::keyPressEvent(e);
 			}
 			this->update();
+			break;
+		case Qt::Key::Key_X:
+			if ((e->modifiers() & Qt::KeyboardModifier::ControlModifier) != 0) {
+				std::cerr << "Applying constrained ARAP ...\n";
+				this->scene->dummy_perform_constrained_arap_on_image_mesh();
+				std::cerr << "Applied constrained ARAP.\n";
+			} else if ((e->modifiers() & Qt::KeyboardModifier::ShiftModifier) != 0) {
+				// apply alignment before ARAP deformation
+				std::cerr << "Applying transformation to the mesh ...\n";
+				this->scene->dummy_apply_alignment_before_arap();
+				std::cerr << "Applied transformation to the mesh.\n";
+			}
+			this->update();
+			break;
+		case Qt::Key::Key_C:
+			// Shift-Enter adds the current vertex as a constraint for ARAP in the mesh.
+			if (e->modifiers() & Qt::KeyboardModifier::ShiftModifier) {
+				// add the vertex as an arap constraint to the concerned mesh
+				std::cerr << "Attempting to push constraint to mesh ..." << this->temp_mesh_idx << "\n";
+				if (this->temp_mesh_idx) {
+					this->scene->dummy_add_arap_constraint_mesh(this->temp_mesh_idx, this->temp_mesh_vtx_idx);
+					std::cerr << "Added mesh constraint at position " << this->temp_mesh_vtx_idx << " for mesh " << this->temp_mesh_idx << '\n';
+					this->spheres.push_back(this->temp_sphere_position);
+					this->temp_mesh_idx = 0;
+				}
+			}
+			// Ctrl-Enter adds the current image position as the image constraint for ARAP
+			else if ((e->modifiers() & Qt::KeyboardModifier::ControlModifier) != 0) {
+				std::cerr << "Attempting to push constraint to image ..." << this->temp_img_idx << "\n";
+				this->scene->dummy_add_image_constraint(this->temp_img_idx, this->temp_img_pos);
+				this->spheres.push_back(this->temp_img_pos);
+				std::cerr << "Added image constraint at position " << this->temp_img_pos << '\n';
+			}
+			break;
+		case Qt::Key::Key_Plus:
+			// don't cap the highest size
+			this->sphere_size *= 1.1f;
+			std::cerr << "Sphere size now at : " << std::setprecision(5) << this->sphere_size << '\n';
+			break;
+		case Qt::Key::Key_Minus:
+			this->sphere_size /= 1.1f;
+			// cap the smallest size at 1x10^-3
+			this->sphere_size = std::max(1e-3f, this->sphere_size);
+			std::cerr << "Sphere size now at : " << std::setprecision(5) << this->sphere_size << '\n';
 			break;
 		/*
 		Default handler.
@@ -260,7 +312,6 @@ void Viewer::guessMousePosition() {
 	this->posRequest = glm::ivec2(rawMousePos.x, this->fbSize.y - rawMousePos.y);
 	this->makeCurrent();
 	glm::vec4 p = this->scene->readFramebufferContents(this->defaultFramebufferObject(), this->posRequest);
-	std::cerr << "3D viewer : Value in fbo : {" << p.x << ", " << p.y << ", " << p.z << ", " << p.w << "}\n";
 	if (p.w > .01f) {
 		this->scene->setPositionResponse(p);
         // TODO: new API
@@ -286,13 +337,43 @@ void Viewer::guessMousePosition() {
 				QString msg					  = "Position in image space : " + QString::number(index.x) + ", " +
 							  QString::number(index.y) + ", " + QString::number(index.z) + ", in grid " +
 							  QString::fromStdString(grid->getImageName());
-				this->statusBar->showMessage(msg, 1000);
-			} else {
-				std::cerr << "Error : grid " << grid->getImageName() << " does not contain the point\n";
+				this->statusBar->showMessage(msg, 10000);
+				this->temp_img_pos = glm::vec3(p);
 			}
 		};
 		this->scene->lambdaOnGrids(findSuitablePoint);
-		//
+
+		// Look for the point in the meshes loaded :
+		std::size_t mesh_idx = 0;
+		this->scene->dummy_check_point_in_mesh_bb(glm::vec3(p), mesh_idx);
+		if (mesh_idx) {
+			DrawableBase::Ptr drawable_base = this->scene->dummy_getDrawable(mesh_idx);
+			if (drawable_base == nullptr) {
+				this->temp_mesh_idx = 0;
+			} else {
+				// get mesh drawable and get closest point from mesh underneath :
+				DrawableMesh::Ptr drawable_mesh = std::dynamic_pointer_cast<DrawableMesh>(drawable_base);
+				if (drawable_mesh != nullptr) {
+					auto mesh = drawable_mesh->getMesh();
+					if (mesh == nullptr) {
+						this->temp_mesh_idx = 0;
+					} else {
+						this->temp_mesh_idx = mesh_idx;
+						// Transform the point to mesh-local coordinates !
+						// get transfo and extract translation component
+						glm::mat4 mesh_transfo = drawable_mesh->getTransformation();
+						glm::vec4 mesh_translation = glm::vec4(mesh_transfo[3]); mesh_translation.w = .0f;
+						mesh_transfo[3] = glm::vec4{.0f, .0f, .0f, 1.f};
+						glm::vec4 mesh_local_position = glm::inverse(mesh_transfo) * (p - mesh_translation);
+						this->temp_sphere_position = mesh->closestPointTo(glm::vec3(mesh_local_position), this->temp_mesh_vtx_idx);
+						this->temp_sphere_position = glm::vec3(mesh_transfo * glm::vec4(this->temp_sphere_position, 1.f) + mesh_translation);
+					}
+				}
+			}
+		} else {
+			//reset mesh idx, not on a mesh means last position should be invalidated
+			this->temp_mesh_idx = 0;
+		}
 	}
 	this->doneCurrent();
 }
