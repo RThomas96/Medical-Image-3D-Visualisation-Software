@@ -3,16 +3,13 @@
 
 #include "../../base_mesh/Triangle.h"
 #include "Edge.h"
+#include "./Manipulator.h"
 
 #include <glm/glm.hpp>
 #include <gsl/gsl_linalg.h>
 #include <suitesparse/cholmod.h>
 
 #include <iostream>
-
-namespace BasicGL {
-	void drawSphere(float x, float y, float z, float radius, int slices, int stacks);
-}
 
 class AsRigidAsPossible {
 public:
