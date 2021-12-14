@@ -748,25 +748,32 @@ void Scene::dummy_apply_alignment_before_arap() {
 
 	std::cerr << "Generating 'best' estimated transform for the mesh ..." << '\n';
 	for (std::size_t i = 0; i < this->mesh_idx_constraints.size(); ++i) {
+		std::cerr << "Analyzing constraint " << i << " ...\n";
 		auto constraint = this->mesh_idx_constraints[i];
 		auto position	= this->image_constraints[i];
-		// NOTE : Always performed on the first mesh !!! So only filter through those with index 0.
-		if (constraint.first == 0) {
-			// Get current position :
-			auto mesh_original_position = _mesh->getVertices()[constraint.second];
-			// Transform it into the coordinates shown on screen :
-			auto mesh_transformed_position = glm::vec3(current_transform * (glm::vec4(mesh_original_position, 1.f)));
-			// Guess the best translation between this current position and the image-bound position :
-			glm::vec3 estimated_transform = position - mesh_transformed_position;
-			transforms.push_back(estimated_transform);
-		}
+		std::cerr << "Analyzing constraint " << i << " ...\n";
+		// Get current position :
+		auto mesh_original_position = _mesh->getVertices()[constraint.second];
+		std::cerr << "\tMesh position : " << mesh_original_position << '\n';
+		// Transform it into the coordinates shown on screen :
+		auto mesh_transformed_position = glm::vec3(current_transform * (glm::vec4(mesh_original_position, 1.f)));
+		std::cerr << "\tMesh transformed position : " << mesh_transformed_position << '\n';
+		// Guess the best translation between this current position and the image-bound position :
+		glm::vec3 estimated_transform = position - mesh_transformed_position;
+		std::cerr << "\tGuessed transform for " << i << " : " << estimated_transform << "\n";
+		transforms.push_back(estimated_transform);
 	}
 	// Compute 'best' translation (avg translation) :
-	glm::vec3 best_guess_transform = glm::vec3{};
+	glm::vec3 best_guess_transform = glm::vec3{.0f};
 	for (auto& transform : transforms) {
 		best_guess_transform += transform;
 	}
 	best_guess_transform /= static_cast<glm::vec3::value_type>(transforms.size());
+	if (std::isnan(best_guess_transform.x) || std::isnan(best_guess_transform.y) || std::isnan(best_guess_transform.z)) {
+		std::cerr << "Error : one or more components of best_guess_transform was NaN !\n";
+		std::cerr << "Alignment not performed.\n";
+		return;
+	}
 	current_transform[3][0] += best_guess_transform[0];
 	current_transform[3][1] += best_guess_transform[1];
 	current_transform[3][2] += best_guess_transform[2];
@@ -814,10 +821,8 @@ void Scene::dummy_perform_constrained_arap_on_image_mesh() {
 		auto constraint = this->mesh_idx_constraints[i];
 		auto position	= this->image_constraints[i];
 		// NOTE : Always performed on the first mesh !!! So only filter through those with index 0.
-		if (constraint.first == 0) {
-			handles[constraint.second] = true;
-			targets[constraint.second] = position;
-		}
+		handles[constraint.second] = true;
+		targets[constraint.second] = position;
 	}
 	std::cerr << "Generated vertex handles." << '\n';
 
@@ -845,6 +850,7 @@ void Scene::dummy_perform_constrained_arap_on_image_mesh() {
 
 void Scene::dummy_add_image_constraint(std::size_t img_idx, glm::vec3 img_pos) {
 	this->image_constraints.push_back(img_pos);
+	std::cerr << "[Scene] Added image constraint at position " << img_pos << '\n';
 }
 
 void Scene::dummy_add_arap_constraint_mesh(std::size_t drawable, std::size_t vtx_idx) {
@@ -868,6 +874,7 @@ void Scene::dummy_print_arap_constraints() {
 }
 
 bool Scene::dummy_check_point_in_mesh_bb(glm::vec3 query, std::size_t& mesh_index) {
+	if (this->mesh_draw == nullptr) { return false; }
 	auto mesh_bb = this->mesh_draw->getBoundingBox();
 	if (query.x > mesh_bb.first.x && query.x < mesh_bb.second.x &&
 		query.y > mesh_bb.first.y && query.y < mesh_bb.second.y &&
@@ -1188,6 +1195,9 @@ void Scene::loadMesh() {
 			scaling_matrix[3][2] += shift_image_translation.z;
 
 			mesh_drawable->setTransformation(scaling_matrix);
+		}
+		else {
+			mesh_drawable->setTransformation(glm::mat4{1.f});
 		}
 		// the user didn't want to pair the image with a grid, do nothing else.
 	}

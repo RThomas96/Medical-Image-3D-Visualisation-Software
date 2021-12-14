@@ -18,6 +18,7 @@ MainWidget::MainWidget() {
 	this->usettings		= nullptr;
 	this->loaderWidget	= nullptr;
 	this->boxController = nullptr;
+	this->viewerHelper = nullptr;
 	// Query a user settings instance to initialize it :
 	UserSettings set = UserSettings::getInstance();
 }
@@ -190,12 +191,16 @@ void MainWidget::setupWidgets() {
 		}
 	});
 	QObject::connect(this->action_loadMesh, &QAction::triggered, [this]() {
+		this->viewer->makeCurrent();
 		this->scene->loadMesh();
 		this->viewer->updateInfoFromScene();
+		this->viewer->doneCurrent();
 	});
 	QObject::connect(this->action_loadCurve, &QAction::triggered, [this]() {
+		this->viewer->makeCurrent();
 		this->scene->loadCurve();
 		this->viewer->updateInfoFromScene();
+		this->viewer->doneCurrent();
 	});
 
 	// Viewer(s) creation along with control panel :
@@ -210,7 +215,6 @@ void MainWidget::setupWidgets() {
 	this->viewer_planeX->addParentStatusBar(this->statusBar);
 	this->viewer_planeY->addParentStatusBar(this->statusBar);
 	this->viewer_planeZ->addParentStatusBar(this->statusBar);
-
 	// Sliders for each plane (also sets range and values) :
 	this->header3d = new ViewerHeader3D(this->viewer, this->scene, nullptr);
 	this->headerX  = new ViewerHeader("X Plane");
@@ -219,6 +223,10 @@ void MainWidget::setupWidgets() {
 	this->headerY->connectToViewer(this->viewer_planeY);
 	this->headerZ = new ViewerHeader("Z Plane");
 	this->headerZ->connectToViewer(this->viewer_planeZ);
+
+	QAction* show_helper = new QAction("Show the helper panel");
+	this->menuBar()->addAction(show_helper);
+	QObject::connect(show_helper, &QAction::triggered, this, &MainWidget::showHelper);
 
 	// Splitters : one main (hor.) and two secondaries (vert.) :
 	QSplitter* mainSplit   = new QSplitter(Qt::Horizontal);
@@ -310,6 +318,15 @@ void MainWidget::setupWidgets() {
 	this->setCentralWidget(mainWidget);
 
 	this->installEventFilter(this);
+}
+
+void MainWidget::showHelper() {
+	if(this->viewerHelper == nullptr) {
+		this->viewerHelper			= new ViewerHelper(this->viewer);
+		QDockWidget* container_dock = new QDockWidget;
+		container_dock->setWidget(this->viewerHelper);
+		this->addDockWidget(Qt::DockWidgetArea::RightDockWidgetArea, container_dock);
+	}
 }
 
 bool MainWidget::eventFilter(QObject* obj, QEvent* e) {

@@ -51,8 +51,8 @@ public:
 		else if ((e->button() == Qt::RightButton))
 		{
 			selectionMode_ = INACTIVE;
-			Q_EMIT apply();
 		}
+		Q_EMIT apply();
 	}
 
 	void mouseMoveEvent(QMouseEvent* e , qglviewer::Camera* const )
@@ -76,19 +76,19 @@ public:
 			rectangle_ = rectangle_.normalized();
 
 			QRectF toQ_EMIT(
-			  (rectangle_.center().x() - ((float)(rectangle_.width())/2.f))/ camera->screenWidth() ,
-			  (rectangle_.center().y() - ((float)(rectangle_.height())/2.f))/ camera->screenHeight() ,
-			  (float)(rectangle_.width())/ camera->screenWidth() ,
-			  (float)(rectangle_.height())/ camera->screenHeight()
+			  (static_cast<float>(rectangle_.center().x()) - ((float)(rectangle_.width())/2.f))/ static_cast<float>(camera->screenWidth()) ,
+			  (static_cast<float>(rectangle_.center().y()) - ((float)(rectangle_.height())/2.f))/ static_cast<float>(camera->screenHeight()) ,
+			  (float)(rectangle_.width())/ static_cast<float>(camera->screenWidth()) ,
+			  (float)(rectangle_.height())/ static_cast<float>(camera->screenHeight())
 			);
 
 			// Use rectangle_.width() , rectangle_.height() , rectangle_.center() to Q_EMIT the signal you want
 			if( this->selectionMode_ == ADD_MOVING )
-			  Q_EMIT add( toQ_EMIT , true );
+				Q_EMIT add( toQ_EMIT , true );
 			if( this->selectionMode_ == ADD_FIXED )
-			  Q_EMIT add( toQ_EMIT , false );
+				Q_EMIT add( toQ_EMIT , false );
 			else if( this->selectionMode_ == REMOVE )
-			  Q_EMIT remove( toQ_EMIT );
+				Q_EMIT remove( toQ_EMIT );
 
 			this->selectionMode_ = ACTIVE;
 		}

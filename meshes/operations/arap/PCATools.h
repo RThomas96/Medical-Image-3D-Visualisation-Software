@@ -7,6 +7,7 @@
 
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_eigen.h>
+#include <glm/glm.hpp>
 
 template< typename point_t , typename normal_t >
 class std_diag_matrix3f {
@@ -51,25 +52,25 @@ public:
 		lambdaX_ = gsl_vector_get (eval, 0);
 		gsl_vector_view evec_i = gsl_matrix_column (evec, 0);
 		RepX_ = normal_t(
-		  gsl_vector_get (&evec_i.vector, 0),
-		  gsl_vector_get (&evec_i.vector, 1),
-		  gsl_vector_get (&evec_i.vector, 2)
+			gsl_vector_get (&evec_i.vector, 0),
+			gsl_vector_get (&evec_i.vector, 1),
+			gsl_vector_get (&evec_i.vector, 2)
 		);
 
 		lambdaY_ = gsl_vector_get (eval, 1);
 		evec_i = gsl_matrix_column (evec, 1);
 		RepY_ = normal_t(
-		  gsl_vector_get (&evec_i.vector, 0),
-		  gsl_vector_get (&evec_i.vector, 1),
-		  gsl_vector_get (&evec_i.vector, 2)
+			gsl_vector_get (&evec_i.vector, 0),
+			gsl_vector_get (&evec_i.vector, 1),
+			gsl_vector_get (&evec_i.vector, 2)
 		);
 
 		lambdaZ_ = gsl_vector_get (eval, 2);
 		evec_i = gsl_matrix_column (evec, 2);
 		RepZ_ = normal_t(
-		  gsl_vector_get (&evec_i.vector, 0),
-		  gsl_vector_get (&evec_i.vector, 1),
-		  gsl_vector_get (&evec_i.vector, 2)
+			gsl_vector_get (&evec_i.vector, 0),
+			gsl_vector_get (&evec_i.vector, 1),
+			gsl_vector_get (&evec_i.vector, 2)
 		);
 
 		//
@@ -310,10 +311,10 @@ namespace PCATools{
 
 			if( this->_order_and_normalize )
 			{
-				RepX_.normalize();
-				RepZ_ = cross(RepX_ , RepY_);
-				RepZ_.normalize();
-				RepY_ = cross(RepZ_ , RepX_);
+				RepX_ = glm::normalize(RepX_);
+				RepZ_ = glm::cross(RepX_ , RepY_);
+				RepZ_ = glm::normalize(RepZ_);
+				RepY_ = glm::cross(RepZ_ , RepX_);
 			}
 		}
 
@@ -486,13 +487,13 @@ namespace PCATools{
 
 #if normal_t != point_t
 		void operator << ( const point_t & p )
-        {
-            this->addPoint( p );
-        }
+		{
+			this->addPoint( p );
+		}
         void operator += ( const point_t & p )
-                         {
-            this->addPoint( p );
-        }
+		{
+			this->addPoint( p );
+		}
 #endif
 
 		void setSolver( const DirectionSolver & S )

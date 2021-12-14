@@ -49,7 +49,6 @@ class MMInterface
 	std::vector< bool > selected_vertices;
 	std::vector< bool > fixed_vertices;
 
-
 	// MESH VISU :
 	std::vector< std::vector< int > > visu_triangles;
 	std::vector< std::vector< int > > visu_quads;
@@ -184,7 +183,7 @@ public:
 		for( unsigned int t = 0 ; t < triangles.size(); ++t )
 		{
 			for( int i = 0 ; i < 3 ; i ++ ){
-				double elenght = (vertices[ triangles[t][(i+1)%3] ] - vertices[ triangles[t][i] ] ).norm();
+				double elenght = glm::length(vertices[ triangles[t][(i+1)%3] ] - vertices[ triangles[t][i] ] );
 				average_edge_halfsize += elenght;
 			}
 		}
@@ -457,7 +456,7 @@ public:
 		{
 			point_t const & center = ( modified_vertices[ triangles[t][0] ] + modified_vertices[ triangles[t][1] ] + modified_vertices[ triangles[t][2] ] ) / 3.f;
 			point_t normal = ( modified_vertices[ triangles[t][1] ] - modified_vertices[ triangles[t][0] ] ) % ( modified_vertices[ triangles[t][2] ] - modified_vertices[ triangles[t][0] ] );
-			normal.normalize();
+			normal = glm::normalize(normal);
 
 			glVertex( center );
 			glVertex( center+normal*scale );
@@ -503,9 +502,9 @@ public:
 		float min_dist = FLT_MAX;
 		for( unsigned int v = 0 ; v < modified_vertices.size() ; ++v )
 		{
-			float dist = (modified_vertices[v] - clicked).norm();
+			float dist = glm::length(modified_vertices[v] - clicked);
 			if( dist <= radius && dist < min_dist ){
-				result = v;
+				result = static_cast<float>(v);
 				min_dist = dist;
 			}
 		}
@@ -620,6 +619,7 @@ public:
 		oo /= nb;
 
 		PCATools::PCASolver3f< glm::vec3 , glm::vec3 > solver;
+		std::cerr << "Set solver origin to " << oo.x << ", " << oo.y << ", " << oo.z << "\n";
 		solver.setOrigine( oo );
 
 		for( unsigned int v = 0 ; v < modified_vertices.size() ; ++v )

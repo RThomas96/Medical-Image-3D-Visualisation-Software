@@ -4,6 +4,7 @@
 #include "../../viewer/include/neighbor_visu_viewer.hpp"
 #include "../../viewer/include/planar_viewer.hpp"
 #include "../../viewer/include/scene.hpp"
+#include "./viewer_helper.hpp"
 #include "./grid_control.hpp"
 #include "./loader_widget.hpp"
 #include "./opengl_debug_log.hpp"
@@ -50,6 +51,8 @@ protected:
 	/// have them both square, and not too small.
 	bool eventFilter(QObject* obj, QEvent* e) override;
 
+	void showHelper();
+
 private:
 	Scene* scene;	 ///< The underlying scene, with the data to display
 
@@ -58,6 +61,8 @@ private:
 
 	ViewerHeader* headerX;	  ///< Header for the X plane viewer
 	PlanarViewer* viewer_planeX;	///< The visualisation of the grid on plane X
+
+	ViewerHelper* viewerHelper;
 
 	ViewerHeader* headerY;	  ///< Header for the Y plane viewer
 	PlanarViewer* viewer_planeY;	///< The visualisation of the grid on plane Y

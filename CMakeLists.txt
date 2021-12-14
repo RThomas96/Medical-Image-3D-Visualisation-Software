@@ -95,6 +95,7 @@ SET_TARGET_PROPERTIES(DiscreteGrid PROPERTIES AUTOMOC OFF AUTORCC OFF AUTOUIC OF
 ADD_LIBRARY(VisualisationWidgets STATIC
 	./qt/include/arap_controller.hpp
 	./qt/include/grid_control.hpp
+	./qt/include/viewer_helper.hpp
 	./qt/include/grid_detailed_view.hpp
 	./qt/include/grid_list_view.hpp
 	./qt/include/neighbor_visu_main_widget.hpp
@@ -122,6 +123,7 @@ ADD_LIBRARY(VisualisationWidgets STATIC
 	./qt/src/range_slider.cpp
 	./qt/src/user_settings_widget.cpp
 	./qt/src/loader_widget.cpp
+	./qt/src/viewer_helper.cpp
 )
 TARGET_INCLUDE_DIRECTORIES(VisualisationWidgets
 	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/third_party/glm/
@@ -130,6 +132,7 @@ TARGET_INCLUDE_DIRECTORIES(VisualisationWidgets
 	# to manually have to include the lib's include dir in targets:
 	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include/nifti
 	PRIVATE ${QGLViewer_HEADER_DIR}
+	PRIVATE ${GSL_INCLUDE_DIRS}
 )
 TARGET_LINK_LIBRARIES(VisualisationWidgets
 	PUBLIC ImageIO
@@ -187,6 +190,7 @@ TARGET_INCLUDE_DIRECTORIES(neighbor_visu
 	# Nifti uses brace-include without the 'nifti/' prefix, leading
 	# to manually have to include the lib's include dir in targets:
 	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include/nifti
+	PRIVATE ${GSL_INCLUDE_DIRS}
 )
 TARGET_LINK_LIBRARIES(neighbor_visu
 	PUBLIC Qt5::Core

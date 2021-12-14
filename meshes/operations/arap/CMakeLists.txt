@@ -5,6 +5,7 @@ ADD_LIBRARY(${CMAKE_PROJECT_NAME}_meshop_arap
 	AsRigidAsPossible.cpp
 	Edge.h
 	Manipulator.h
+	manipulator.cpp
 	mesh_manip_interface.h
 	PCATools.h
 	RectangleSelection.h
@@ -19,6 +20,7 @@ TARGET_LINK_LIBRARIES(${CMAKE_PROJECT_NAME}_meshop_arap
 	PUBLIC Qt5::OpenGL
 	PUBLIC glm::glm
 	PUBLIC ${QGLViewer}
+	PUBLIC Qt5::Xml
 )
 
 IF (WIN32 OR MINGW OR MSVC)

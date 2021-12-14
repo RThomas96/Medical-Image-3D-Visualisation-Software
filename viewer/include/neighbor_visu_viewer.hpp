@@ -4,9 +4,15 @@
 #include "../../features.hpp"
 #include "../../qt/include/manipulator.hpp"
 
+#include "../../meshes/operations/arap/Manipulator.h"
+#include "../../meshes/operations/arap/RectangleSelection.h"
+#include "../../meshes/operations/arap/PCATools.h"
+#include "../../meshes/operations/arap/mesh_manip_interface.h"
+
 #include "./scene.hpp"
 
 #include <QTimer>
+#include <QPoint>
 
 #include <memory>
 
@@ -26,6 +32,21 @@ public:
 
 	/// @brief Add a pointer to the status bar, in order to show messages.
 	void addStatusBar(QStatusBar* _sb);
+
+public slots:
+	/// @brief Slot called when the rectangular selection is used to add vertices.
+	/// @param selection The rectangular area selected by the user, in screen coordinates.
+	/// @param moving Should the vertices be added as movable or fixed handles ?
+	void rectangleSelection_add(QRectF selection, bool moving);
+	/// @brief Slot called when the rectangular selection is used to remove vertices.
+	/// @param selection The selection made by the user.
+	void rectangleSelection_remove(QRectF selection);
+	/// @brief Slot called when the rectangle selection is applied
+	void rectangleSelection_apply();
+	/// @brief Slot called when the manipulator is moved.
+	void arapManipulator_moved();
+	/// @brief Slot called when the manipulator is released.
+	void arapManipulator_released();
 
 protected:
 	/// @brief Initializes the scene, and the viewer's variables.
@@ -52,6 +73,9 @@ protected:
 	virtual void resizeGL(int w, int h) override;
 	/// @brief Resets and removes the local point query
 	void resetLocalPointQuery();
+
+	/// @brief Creates the mesh manip interface and the manipulator
+	void initializeARAPInterface();
 
 private:
 	/// @brief The scene to control.
@@ -95,6 +119,12 @@ private:
 	std::size_t temp_img_idx;	 ///< The image index if found. WARNING : WE ASSUME IT IS ALWAYS 0, EVEN IF NO IMAGES ARE LOADED
 	glm::vec3 temp_img_pos;	   ///< The position of that image index
 
+	//
+	// Stubs for ARAP manipulation :
+	//
+	std::shared_ptr<MMInterface<glm::vec3>> mesh_interface;
+	std::shared_ptr<SimpleManipulator> arapManipulator;
+	std::shared_ptr<RectangleSelection> rectangleSelection;
 public slots:
 	/// @brief Update the view, as a slot without any arguments (currently only used by QTimer)
 	void updateView() { this->update(); }
@@ -107,7 +137,19 @@ public slots:
 	void newAPI_loadGrid(Image::Grid::Ptr ptr);
 	/// @brief Re-centers the camera around the scene-defined center point
 	void centerScene(void);
+	/// @brief Guess the position of the fragment under the mouse cursor
 	void guessMousePosition(void);
+	void alignARAP();
+	void launchARAP();
+	void toggleSelectionMode();
+	void mesh_select_all();
+	void mesh_unselect_all();
+	void printVAOStateNext();
+	void setSphereSize(double);
+	void resetARAPConstraints();
+
+	/// @brief Read the pixel at the screen position given.
+	glm::vec4 readPositionFromFramebuffer();
 
 	void updateManipulatorsPositions(void);
 
