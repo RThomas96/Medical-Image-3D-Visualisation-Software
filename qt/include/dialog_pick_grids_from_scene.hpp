@@ -42,7 +42,7 @@ protected:
 	}
 
 public:
-	void chooseGrids(std::vector<NewAPI_GridGLView::Ptr>& grids) {
+	void chooseGrids(std::vector<GridGLView::Ptr>& grids) {
 		for (const auto& grid : grids) {
 			this->user_choice->addItem(QString(grid->grid->getImageName().c_str()));
 		}
