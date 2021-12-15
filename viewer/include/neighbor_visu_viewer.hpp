@@ -125,6 +125,7 @@ private:
 	std::shared_ptr<MMInterface<glm::vec3>> mesh_interface;
 	std::shared_ptr<SimpleManipulator> arapManipulator;
 	std::shared_ptr<RectangleSelection> rectangleSelection;
+	bool deformation_enabled;
 public slots:
 	/// @brief Update the view, as a slot without any arguments (currently only used by QTimer)
 	void updateView() { this->update(); }
@@ -147,6 +148,7 @@ public slots:
 	void printVAOStateNext();
 	void setSphereSize(double);
 	void resetARAPConstraints();
+	void toggleDeformation();
 
 	/// @brief Read the pixel at the screen position given.
 	glm::vec4 readPositionFromFramebuffer();

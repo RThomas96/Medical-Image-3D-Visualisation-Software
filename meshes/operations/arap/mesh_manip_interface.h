@@ -606,19 +606,20 @@ public:
 		manipulator->clear();
 
 		int nb=0;
-		glm::vec3 oo( 0.f , 0.f , 0.f );
+		point_t oo( 0.f , 0.f , 0.f );
 		for( unsigned int v = 0 ; v < modified_vertices.size() ; ++v )
 		{
 			if( selected_vertices[v] )
 			{
 				point_t const & p = modified_vertices[v];
-				oo += glm::vec3( p[0] , p[1] , p[2] );
+				oo += point_t( p[0] , p[1] , p[2] );
 				++nb;
 			}
 		}
-		oo /= nb;
+		std::cerr << "Before div solver origin is " << oo.x << ", " << oo.y << ", " << oo.z << "\n";
+		oo /= static_cast<float>(nb);
 
-		PCATools::PCASolver3f< glm::vec3 , glm::vec3 > solver;
+		PCATools::PCASolver3f< point_t , point_t > solver;
 		std::cerr << "Set solver origin to " << oo.x << ", " << oo.y << ", " << oo.z << "\n";
 		solver.setOrigine( oo );
 

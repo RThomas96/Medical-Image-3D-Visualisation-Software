@@ -24,6 +24,7 @@ void ViewerHelper::init() {
 	QPushButton* button_select_all = new QPushButton("Select all vertices");
 	QPushButton* button_unselect_all = new QPushButton("Unselect all vertices");
 	QPushButton* button_reset_arap = new QPushButton("Reset ARAP constraints");
+	QPushButton* button_enable_def = new QPushButton("Enable deformation");
 
 	QDoubleSpinBox* sphere_size_slider = new QDoubleSpinBox;
 	sphere_size_slider->setMaximum(1.e15);
@@ -37,6 +38,8 @@ void ViewerHelper::init() {
 	QObject::connect(button_select_all, &QPushButton::pressed, this->viewer, &Viewer::mesh_select_all);
 	QObject::connect(button_unselect_all, &QPushButton::pressed, this->viewer, &Viewer::mesh_unselect_all);
 	QObject::connect(sphere_size_slider, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this->viewer, &Viewer::setSphereSize);
+	QObject::connect(button_reset_arap, &QPushButton::pressed, this->viewer, &Viewer::resetARAPConstraints);
+	QObject::connect(button_enable_def, &QPushButton::pressed, this->viewer, &Viewer::toggleDeformation);
 
 	buttons->addWidget(header);
 	buttons->addWidget(button_selection);
@@ -49,6 +52,8 @@ void ViewerHelper::init() {
 	buttons->addWidget(button_unselect_all);
 	buttons->addWidget(button_alignARAP);
 	buttons->addWidget(button_launchARAP);
+	buttons->addWidget(button_reset_arap);
+	buttons->addWidget(button_enable_def);
 
 	this->setLayout(buttons);
 }

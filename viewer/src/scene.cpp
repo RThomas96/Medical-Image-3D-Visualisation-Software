@@ -2337,10 +2337,10 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 		this->updateBoundingBox();
 	}
 
-	glEnable(GL_DEPTH_TEST);
-	glEnablei(GL_BLEND, 0);
-	glEnable(GL_TEXTURE_3D);
-	glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+	//glEnable(GL_DEPTH_TEST);
+	//glEnablei(GL_BLEND, 0);
+	//glEnable(GL_TEXTURE_3D);
+	//glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
 	glm::mat4 transfoMat = glm::mat4(1.f);
 

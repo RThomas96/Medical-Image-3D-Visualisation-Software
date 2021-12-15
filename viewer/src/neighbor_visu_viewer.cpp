@@ -41,6 +41,8 @@ Viewer::Viewer(Scene* const scene, QStatusBar* _program_bar, QWidget* parent) :
 	this->posRequest		= glm::ivec2{-1, -1};
 	this->drawAxisOnTop		= false;
 
+	this->deformation_enabled = false;
+
 	// Setup the alt key binding to move an object
 	setMouseBinding(Qt::AltModifier, Qt::LeftButton, QGLViewer::FRAME, QGLViewer::ROTATE);
 	setMouseBinding(Qt::AltModifier, Qt::RightButton, QGLViewer::FRAME, QGLViewer::TRANSLATE);
@@ -100,43 +102,34 @@ void Viewer::draw() {
 	glm::vec3 camPos   = glm::vec3(static_cast<float>(cam.x), static_cast<float>(cam.y), static_cast<float>(cam.z));
 
 	this->scene->draw3DView(mvMat, pMat, camPos, false);
-	this->scene->drawPositionResponse(this->sceneRadius() / 10., this->drawAxisOnTop);
+	this->scene->drawPositionResponse(this->sceneRadius() / 10., false);
 
 	if (this->meshManipulator.isActiveManipulatorManipuled()) {
 		this->scene->launchDeformation(this->meshManipulator.getActiveManipulatorAssignedIdx(), this->meshManipulator.getActiveManipulatorPos());
 	}
 
 	std::vector<glm::vec3> spheres_to_draw(this->spheres);
-	if (this->temp_mesh_idx) {
+	std::size_t s;
+	if (this->scene->dummy_check_point_in_mesh_bb(this->temp_sphere_position, s)) {
 		spheres_to_draw.push_back(this->temp_sphere_position);
 	}
 
 	this->scene->drawPointSpheres_quick(mvMat, pMat, camPos, spheres_to_draw, this->sphere_size);
 
 	bool is_color_enabled = this->scene->glIsEnabled(GL_COLOR_MATERIAL);
+	bool is_light_enabled = this->scene->glIsEnabled(GL_LIGHTING);
 	if (is_color_enabled) { this->scene->glDisable(GL_COLOR_MATERIAL); }
-	this->scene->glDisable(GL_COLOR_MATERIAL);
+	if (is_light_enabled) { this->scene->glDisable(GL_LIGHTING); }
 	// Draw manip and mesh interface :
 	if (this->mesh_interface) {
-		glEnable( GL_DEPTH);
-		glEnable( GL_DEPTH_TEST );
-		glEnable(GL_BLEND);
-		glEnable(GL_LIGHTING);
 		this->mesh_interface->drawSelectedVertices();
-	}
-	if (this->arapManipulator) {
-		glDisable(GL_BLEND);
-		glDisable(GL_LIGHTING);
-		glDisable( GL_DEPTH_TEST );
 		this->arapManipulator->draw();
-	}
-	if (this->rectangleSelection) {
 		glEnable(GL_BLEND);
 		this->rectangleSelection->draw();
 		glDisable(GL_BLEND);
-		glEnable(GL_LIGHTING);
 	}
 	if (is_color_enabled) { this->scene->glEnable(GL_COLOR_MATERIAL); }
+	if (is_light_enabled) { this->scene->glEnable(GL_LIGHTING); }
 }
 
 void Viewer::rectangleSelection_add(QRectF selection, bool moving) {
@@ -377,6 +370,12 @@ glm::vec4 Viewer::readPositionFromFramebuffer() {
 	return p;
 }
 
+void Viewer::toggleDeformation() {
+	if (this->mesh_interface == nullptr) { return; }
+	this->deformation_enabled = not this->deformation_enabled;
+	if (this->statusBar) { this->statusBar->showMessage("Enabled deformation", 1000); }
+}
+
 void Viewer::mousePressEvent(QMouseEvent* e) {
 	this->cursorPos_current = glm::ivec2{e->pos().x(), e->pos().y()};
 	// When the RMB causes the event, start the 'framesHeld' counter in select mode :
@@ -390,16 +389,14 @@ void Viewer::mousePressEvent(QMouseEvent* e) {
 		return;
 	}
 	// here we check for rectangleSelection but the rest of the mesh manip interface is also initialized (since they're all created together)
-	if (this->rectangleSelection) {
+	if (this->rectangleSelection && this->deformation_enabled) {
 		if (e->modifiers() & Qt::KeyboardModifier::ShiftModifier) {
-			if (e->button() == Qt::MouseButton::LeftButton) {
-				if (this->rectangleSelection->isInactive()) {
-					this->rectangleSelection->activate();
-				}
-				this->rectangleSelection->mousePressEvent(e, this->camera());
-				this->update();
-				return;
+			if (this->rectangleSelection->isInactive()) {
+				this->rectangleSelection->activate();
 			}
+			this->rectangleSelection->mousePressEvent(e, this->camera());
+			this->update();
+			return;
 		}
 		else if (e->modifiers() & Qt::KeyboardModifier::ControlModifier) {
 			if (e->button() == Qt::MouseButton::MiddleButton) {
@@ -457,6 +454,7 @@ void Viewer::mouseReleaseEvent(QMouseEvent* e) {
 
 	if (this->rectangleSelection) {
 		if (! this->rectangleSelection->isInactive()) {
+			std::cerr << "Releasing rectangle selection !\n";
 			this->rectangleSelection->mouseReleaseEvent(e, this->camera());
 			this->rectangleSelection->deactivate();
 			this->update();

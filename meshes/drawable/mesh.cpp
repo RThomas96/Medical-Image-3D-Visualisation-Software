@@ -55,10 +55,16 @@ void DrawableMesh::draw(GLfloat *proj_mat, GLfloat *view_mat, glm::vec4 camera) 
 	GLint location_model	  = this->gl->glGetUniformLocation(this->program_handle_draw, "model");
 	GLint location_camera_pos = this->gl->glGetUniformLocation(this->program_handle_draw, "camera_pos");
 
+	GLint location_bb_min = this->gl->glGetUniformLocation(this->program_handle_draw, "bb_min");
+	GLint location_bb_max = this->gl->glGetUniformLocation(this->program_handle_draw, "bb_max");
+
 	this->gl->glUniformMatrix4fv(location_proj, 1, GL_FALSE, proj_mat);
 	this->gl->glUniformMatrix4fv(location_view, 1, GL_FALSE, view_mat);
 	this->gl->glUniformMatrix4fv(location_model, 1, GL_FALSE, glm::value_ptr(this->transformation_matrix));
 	this->gl->glUniform4fv(location_camera_pos, 1, glm::value_ptr(camera));
+
+	this->gl->glUniform4f(location_bb_min, this->bounding_box_min.x, this->bounding_box_min.y, this->bounding_box_min.z, 1.f);
+	this->gl->glUniform4f(location_bb_max, this->bounding_box_max.x, this->bounding_box_max.y, this->bounding_box_max.z, 1.f);
 
 	// Launch a glDrawElements() command
 	this->gl->glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(this->mesh->getTriangles().size() * 3), GL_UNSIGNED_INT, 0);

@@ -14,14 +14,9 @@ public:
 	virtual ~ViewerHelper() = default;
 	void init();
 	void initSignals();
-signals:
-	void updateCamera();
-	void launchARAP();
-	void alignARAP();
-	void toggleSelection();
 protected:
 	Viewer* viewer;
 };
 
 
-#endif // VISUALISATION_VIEWER_HELPER_HPP_
+#endif // VISUALISATION_QT_INCLUDE_VIEWER_HELPER_HPP_
