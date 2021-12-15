@@ -42,6 +42,7 @@ Viewer::Viewer(Scene* const scene, QStatusBar* _program_bar, QWidget* parent) :
 	this->drawAxisOnTop		= false;
 
 	this->deformation_enabled = false;
+	this->draw_arap = true;
 
 	// Setup the alt key binding to move an object
 	setMouseBinding(Qt::AltModifier, Qt::LeftButton, QGLViewer::FRAME, QGLViewer::ROTATE);
@@ -87,6 +88,10 @@ void Viewer::addStatusBar(QStatusBar* bar) {
 	this->statusBar = bar;
 }
 
+void Viewer::toggleDrawARAP() {
+	this->draw_arap = not this->draw_arap;
+}
+
 void Viewer::draw() {
 	GLfloat mvMat[16];
 	GLfloat pMat[16];
@@ -113,23 +118,43 @@ void Viewer::draw() {
 	if (this->scene->dummy_check_point_in_mesh_bb(this->temp_sphere_position, s)) {
 		spheres_to_draw.push_back(this->temp_sphere_position);
 	}
-
 	this->scene->drawPointSpheres_quick(mvMat, pMat, camPos, spheres_to_draw, this->sphere_size);
 
-	bool is_color_enabled = this->scene->glIsEnabled(GL_COLOR_MATERIAL);
-	bool is_light_enabled = this->scene->glIsEnabled(GL_LIGHTING);
-	if (is_color_enabled) { this->scene->glDisable(GL_COLOR_MATERIAL); }
-	if (is_light_enabled) { this->scene->glDisable(GL_LIGHTING); }
-	// Draw manip and mesh interface :
-	if (this->mesh_interface) {
-		this->mesh_interface->drawSelectedVertices();
-		this->arapManipulator->draw();
-		glEnable(GL_BLEND);
-		this->rectangleSelection->draw();
-		glDisable(GL_BLEND);
+	if (this->draw_arap) {
+		bool is_color_enabled = this->scene->glIsEnabled(GL_COLOR_MATERIAL);
+		bool is_light_enabled = this->scene->glIsEnabled(GL_LIGHTING);
+		if (is_color_enabled) {
+			this->scene->glDisable(GL_COLOR_MATERIAL);
+		}
+		if (is_light_enabled) {
+			this->scene->glDisable(GL_LIGHTING);
+		}
+		// Draw manip and mesh interface :
+		if (this->mesh_interface) {
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+			glEnable(GL_DEPTH);
+			glEnable(GL_DEPTH_TEST);
+			glEnable(GL_BLEND);
+			glEnable(GL_LIGHTING);
+			this->mesh_interface->drawSelectedVertices();
+			glDisable(GL_BLEND);
+			glDisable(GL_LIGHTING);
+			glDisable(GL_DEPTH_TEST);
+			this->arapManipulator->draw();
+			glEnable(GL_DEPTH_TEST);
+
+			glEnable(GL_BLEND);
+			this->rectangleSelection->draw();
+			glDisable(GL_BLEND);
+			glEnable(GL_LIGHTING);
+		}
+		if (is_color_enabled) {
+			this->scene->glEnable(GL_COLOR_MATERIAL);
+		}
+		if (is_light_enabled) {
+			this->scene->glEnable(GL_LIGHTING);
+		}
 	}
-	if (is_color_enabled) { this->scene->glEnable(GL_COLOR_MATERIAL); }
-	if (is_light_enabled) { this->scene->glEnable(GL_LIGHTING); }
 }
 
 void Viewer::rectangleSelection_add(QRectF selection, bool moving) {
@@ -180,13 +205,20 @@ void Viewer::arapManipulator_moved() {
 		points[i] = modified_vertices[i];
 	}
 	// Recompute mesh normals and update :
-	this->scene->getMesh()->recomputeNormals();
+	this->scene->getMesh()->updateQuick(); // (only updates the BB and normals)
+	this->scene->getDrawableMesh()->updateBoundingBox();
+	this->scene->updateBoundingBox();
 	this->scene->getDrawableMesh()->updateOnNextDraw();
 	this->update();
 }
 
 void Viewer::arapManipulator_released() {
-	//
+	// update the mesh _and_ its kd-tree !
+	this->scene->getMesh()->update();
+	this->scene->getDrawableMesh()->updateBoundingBox();
+	this->scene->updateBoundingBox();
+	this->scene->getDrawableMesh()->updateOnNextDraw();
+	this->update();
 }
 
 void Viewer::initializeARAPInterface() {
@@ -207,12 +239,12 @@ void Viewer::initializeARAPInterface() {
 	}
 	if (this->mesh_interface == nullptr) {
 		this->mesh_interface = std::make_shared<MMInterface<glm::vec3>>();
-		auto mesh = this->scene->getMesh();
-		this->mesh_interface->clear();
-		this->mesh_interface->setMode(MeshModificationMode::INTERACTIVE);
-		this->mesh_interface->loadAndInitialize(mesh->getVertices(), mesh->getTriangles());
-		std::cerr << "Initialized mesh interface.\n";
 	}
+	auto mesh = this->scene->getMesh();
+	this->mesh_interface->clear();
+	this->mesh_interface->setMode(MeshModificationMode::REALTIME);
+	this->mesh_interface->loadAndInitialize(mesh->getVertices(), mesh->getTriangles());
+	std::cerr << "Initialized mesh interface.\n";
 	this->doneCurrent();
 }
 

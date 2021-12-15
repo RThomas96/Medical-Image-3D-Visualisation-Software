@@ -71,6 +71,8 @@ public:
 	/// @brief Retrieves the currently applied transformation
 	virtual glm::mat4 getTransformation() { return this->transformation_matrix; }
 
+	virtual void updateBoundingBox() {}
+
 protected:
 	/// @brief The context in which the drawable was initialized.
 	QOpenGLContext* bound_context;

@@ -64,16 +64,22 @@ void Mesh::applyTransformation(glm::mat4 transformation) {
 	this->update();
 }
 
-void Mesh::update() {
+void Mesh::updateQuick() {
 	computeBB();
 	recomputeNormals();
+}
+
+void Mesh::update() {
+	// first, update BB :
+	this->updateQuick();
+
+	// then update kdtree :
 	if (this->kdtree_adaptor == nullptr) {
 		this->kdtree_adaptor = std::make_shared<mesh_kdtree_adaptor_t>(this->vertices);
 	}
 	if (this->kdtree == nullptr) {
 		this->kdtree = std::make_shared<mesh_kdtree_t>(3, *this->kdtree_adaptor.get(), 10);
 	}
-
 	// kdtree should be initialized now :
 	this->kdtree->buildIndex();
 }

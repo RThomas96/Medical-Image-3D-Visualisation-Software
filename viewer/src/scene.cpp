@@ -14,7 +14,7 @@
 #include <QMessageBox>
 #include <QOpenGLContext>
 #include <QSurface>
-
+#include <QDir>
 #include <fstream>
 #include <type_traits>
 
@@ -885,6 +885,75 @@ bool Scene::dummy_check_point_in_mesh_bb(glm::vec3 query, std::size_t& mesh_inde
 	return false;
 }
 
+void Scene::dummy_save_mesh_to_file() {
+	if (this->mesh == nullptr) { return; }
+	// Ask the user for the save file name & its path :
+	QString home_path = QDir::homePath();
+	QString selected;
+	QString q_file_name = "";
+	q_file_name = QFileDialog::getSaveFileName(nullptr, "Save OFF file", home_path, "OFF files (*.off)", &selected, QFileDialog::DontUseNativeDialog);
+	// Check if the user didn't cancel the dialog :
+	if (q_file_name.isEmpty()) {
+		std::cerr << "Error : no filename chosen.\n";
+		return;
+	}
+
+	std::ofstream myfile;
+	std::string filename = q_file_name.toStdString();
+	myfile.open(filename.c_str());
+	if (!myfile.is_open())
+	{
+		std::cout << filename << " cannot be opened" << std::endl;
+		return;
+	}
+
+	auto vertices = this->mesh->getVertices();
+	auto triangles = this->mesh->getTriangles();
+
+	myfile << "OFF" << std::endl;
+	myfile << (vertices.size()) << " " << triangles.size() << " 0" << std::endl;
+
+	for( unsigned int v = 0 ; v < vertices.size() ; ++v ) {
+		myfile << (vertices[v]) << std::endl;
+	}
+	for( unsigned int t = 0 ; t < triangles.size() ; ++t ) {
+		myfile << "3 " << (triangles[t][0]) << " " << (triangles[t][1]) << " " << (triangles[t][2]) << std::endl;
+	}
+
+	myfile.close();
+	return;
+}
+
+void Scene::dummy_save_curve_to_file() {
+	if (this->curve == nullptr) { return; }
+	// Ask the user for the save file name & its path :
+	QString home_path = QDir::homePath();
+	QString selected;
+	QString q_file_name = "";
+	q_file_name = QFileDialog::getSaveFileName(nullptr, "Save OBJ file", home_path, "Wavefront OBJ files (*.obj)", &selected, QFileDialog::DontUseNativeDialog);
+	// Check if the user didn't cancel the dialog :
+	if (q_file_name.isEmpty()) {
+		std::cerr << "Error : no filename chosen.\n";
+		return;
+	}
+
+	std::ofstream myfile;
+	std::string filename = q_file_name.toStdString();
+	myfile.open(filename.c_str());
+	if(!myfile.is_open()) {
+		std::cout << filename << " cannot be opened" << std::endl;
+	}
+
+	// Only have vertices in the curve !
+	auto vertices = this->curve->getPositions();
+	for( unsigned int v = 0 ; v < vertices.size() ; ++v ) {
+		myfile << "v " << (vertices[v]) << std::endl;
+	}
+
+	myfile.close();
+	return;
+}
+
 void Scene::recompileShaders(bool verbose) {
 	GLuint newProgram			 = this->compileShaders("../new_shaders/voxelgrid.vert", "../new_shaders/voxelgrid.geom", "../new_shaders/voxelgrid.frag", verbose);
 	GLuint newPlaneProgram		 = this->compileShaders("../new_shaders/plane.vert", "", "../new_shaders/plane.frag", verbose);
@@ -940,7 +1009,7 @@ GLuint Scene::uploadTexture1D(const TextureUpload& tex) {
 		throw std::runtime_error("nullptr as context");
 	}
 
-	glEnable(GL_TEXTURE_1D);
+	//glEnable(GL_TEXTURE_1D);
 
 	GLuint texHandle = 0;
 	glGenTextures(1, &texHandle);
@@ -986,7 +1055,7 @@ GLuint Scene::uploadTexture2D(const TextureUpload& tex) {
 		throw std::runtime_error("nullptr as context");
 	}
 
-	glEnable(GL_TEXTURE_2D);
+	//glEnable(GL_TEXTURE_2D);
 
 	GLuint texHandle = 0;
 	glGenTextures(1, &texHandle);
@@ -1034,7 +1103,7 @@ GLuint Scene::uploadTexture3D(const TextureUpload& tex) {
 		throw std::runtime_error("nullptr as context");
 	}
 
-	glEnable(GL_TEXTURE_3D);
+	//glEnable(GL_TEXTURE_3D);
 
 	GLuint texHandle = 0;
 	glGenTextures(1, &texHandle);
@@ -1084,7 +1153,7 @@ GLuint Scene::newAPI_uploadTexture3D_allocateonly(const TextureUpload& tex) {
 		throw std::runtime_error("nullptr as context");
 	}
 
-	glEnable(GL_TEXTURE_3D);
+	//glEnable(GL_TEXTURE_3D);
 
 	GLuint texHandle = 0;
 	glGenTextures(1, &texHandle);
@@ -1134,7 +1203,7 @@ GLuint Scene::newAPI_uploadTexture3D(const GLuint texHandle, const TextureUpload
 		throw std::runtime_error("nullptr as context");
 	}
 
-	glEnable(GL_TEXTURE_3D);
+	//glEnable(GL_TEXTURE_3D);
 	glBindTexture(GL_TEXTURE_3D, texHandle);
 
 	glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, s, tex.size.x, tex.size.y, 1, tex.format, tex.type, data.data());
@@ -1509,8 +1578,8 @@ void Scene::newAPI_drawVolumetric(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPo
 }
 
 void Scene::newAPI_drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane) {
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_BLEND);
+	/*glEnable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);*/
 
 #warning drawPlanes() : Only draws the first grid for each plane !
 
@@ -1555,7 +1624,7 @@ void Scene::newAPI_drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPla
 	glBindVertexArray(0);
 	glUseProgram(0);
 
-	glDisable(GL_BLEND);
+	/* glDisable(GL_BLEND); */
 }
 
 glm::vec3 Scene::computePlanePositions() {
@@ -1641,19 +1710,19 @@ void Scene::newAPI_prepareUniforms_3DSolid(GLfloat* mvMat, GLfloat* pMat, glm::v
 
 	// Textures :
 	glActiveTexture(GL_TEXTURE0 + enabled_textures);
-	glEnable(GL_TEXTURE_3D);
+	//glEnable(GL_TEXTURE_3D);
 	glBindTexture(GL_TEXTURE_3D, gridView->gridTexture);
 	glUniform1i(texDataLoc, enabled_textures);
 	enabled_textures++;
 
 	glActiveTexture(GL_TEXTURE0 + enabled_textures);
-	glEnable(GL_TEXTURE_1D);
+	//glEnable(GL_TEXTURE_1D);
 	glBindTexture(GL_TEXTURE_1D, this->texHandle_colorScale_greyscale);
 	glUniform1i(location_colorScales0, enabled_textures);
 	enabled_textures++;
 
 	glActiveTexture(GL_TEXTURE0 + enabled_textures);
-	glEnable(GL_TEXTURE_1D);
+	//glEnable(GL_TEXTURE_1D);
 	glBindTexture(GL_TEXTURE_1D, this->texHandle_colorScale_hsv2rgb);
 	glUniform1i(location_colorScales1, enabled_textures);
 	enabled_textures++;
@@ -1871,7 +1940,7 @@ void Scene::newAPI_prepareUniforms_3DPlane(GLfloat* mvMat, GLfloat* pMat, planes
 
 	GLint enabled_textures = 0;
 	glActiveTexture(GL_TEXTURE0 + enabled_textures);
-	glEnable(GL_TEXTURE_3D);
+	//glEnable(GL_TEXTURE_3D);
 	glBindTexture(GL_TEXTURE_3D, grid->gridTexture);
 	glUniform1i(location_texData, enabled_textures);
 	enabled_textures++;
@@ -3984,7 +4053,7 @@ GLuint SceneGL::uploadTexture1D(const TextureUpload& tex) {
 		throw std::runtime_error("nullptr as context");
 	}
 
-	glEnable(GL_TEXTURE_1D);
+	//glEnable(GL_TEXTURE_1D);
 
 	GLuint texHandle = 0;
 	glGenTextures(1, &texHandle);
@@ -4030,7 +4099,7 @@ GLuint SceneGL::uploadTexture2D(const TextureUpload& tex) {
 		throw std::runtime_error("nullptr as context");
 	}
 
-	glEnable(GL_TEXTURE_2D);
+	//glEnable(GL_TEXTURE_2D);
 
 	GLuint texHandle = 0;
 	glGenTextures(1, &texHandle);

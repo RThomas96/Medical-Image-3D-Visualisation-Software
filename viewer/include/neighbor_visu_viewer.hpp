@@ -48,6 +48,11 @@ public slots:
 	/// @brief Slot called when the manipulator is released.
 	void arapManipulator_released();
 
+	/// @brief Creates the mesh manip interface and the manipulator
+	void initializeARAPInterface();
+
+	void toggleDrawARAP();
+
 protected:
 	/// @brief Initializes the scene, and the viewer's variables.
 	virtual void init() override;
@@ -73,9 +78,6 @@ protected:
 	virtual void resizeGL(int w, int h) override;
 	/// @brief Resets and removes the local point query
 	void resetLocalPointQuery();
-
-	/// @brief Creates the mesh manip interface and the manipulator
-	void initializeARAPInterface();
 
 private:
 	/// @brief The scene to control.
@@ -126,6 +128,7 @@ private:
 	std::shared_ptr<SimpleManipulator> arapManipulator;
 	std::shared_ptr<RectangleSelection> rectangleSelection;
 	bool deformation_enabled;
+	bool draw_arap;
 public slots:
 	/// @brief Update the view, as a slot without any arguments (currently only used by QTimer)
 	void updateView() { this->update(); }

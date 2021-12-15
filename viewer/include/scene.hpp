@@ -292,6 +292,11 @@ public:
 	void dummy_print_arap_constraints();
 	/// @brief Applies the mesh alignment before the ARAP solver
 	void dummy_apply_alignment_before_arap();
+	/// @brief Save the mesh to a file
+	void dummy_save_mesh_to_file();
+	/// @brief Save the curve to a file
+	void dummy_save_curve_to_file();
+
 	const Mesh::Ptr& getMesh() const { return this->mesh; }
 	const Curve::Ptr& getCurve() const { return this->curve; }
 	const DrawableMesh::Ptr getDrawableMesh() const { return this->mesh_draw; }
@@ -366,6 +371,9 @@ public:
 	void toggleManipulatorDisplay();
 	void toggleWireframe();
 	void prepareManipulators();
+
+	/// @brief Update the scene's bounding box with the currently drawn grids.
+	void updateBoundingBox(void);
 
 private:
 	/// @brief Compile the given shaders, and return the ID of the program generated. On any error, returns 0.
@@ -442,8 +450,6 @@ private:
 	void setupVAOBoundingBox();
 	/// @brief Draw a bounding box
 	void drawBoundingBox(const Image::bbox_t& _box, glm::vec3 color, GLfloat* vMat, GLfloat* pMat);
-	/// @brief Update the scene's bounding box with the currently drawn grids.
-	void updateBoundingBox(void);
 	void updateVisuBoxCoordinates(void);
 
 	/// @brief Stub function to initialize some system-level limits. Currently only fetches max texture size.
