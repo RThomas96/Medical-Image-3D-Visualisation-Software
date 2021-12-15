@@ -14,8 +14,20 @@ public:
 	virtual ~ViewerHelper() = default;
 	void init();
 	void initSignals();
+public slots:
+	void toggleDeformationButtons();
 protected:
 	Viewer* viewer;
+
+	QPushButton* button_selection;
+	QPushButton* button_update;
+	QPushButton* button_alignARAP;
+	QPushButton* button_launchARAP;
+	QPushButton* button_vaoState;
+	QPushButton* button_select_all;
+	QPushButton* button_unselect_all;
+	QPushButton* button_reset_arap;
+	QPushButton* button_enable_def;
 };
 
 

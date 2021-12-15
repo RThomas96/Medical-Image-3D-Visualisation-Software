@@ -92,6 +92,7 @@ public:
 
 	void recomputeNormals();
 	void update();
+	void updateQuick();
 
 	void clear();
 

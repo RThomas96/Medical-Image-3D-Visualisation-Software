@@ -285,23 +285,6 @@ public:
 	/// @brief Loads a curve (OBJ) and uploads it to the GL.
 	void loadCurve();
 
-	/// @brief Slot called when the rectangular selection is used to add vertices.
-	/// @param selection The rectangular area selected by the user, in screen coordinates.
-	/// @param moving Should the vertices be added as movable or fixed handles ?
-	void rectangleSelection_add(QRectF selection, bool moving);
-	/// @brief Slot called when the rectangular selection is used to remove vertices.
-	/// @param selection The selection made by the user.
-	void rectangleSelection_remove(QRectF selection);
-	/// @brief Slot called when the rectangle selection is applied
-	void rectangleSelection_apply();
-	/// @brief Slot called when the manipulator is moved.
-	void arapManipulator_moved();
-	/// @brief Slot called when the manipulator is released.
-	void arapManipulator_released();
-
-	/// @brief Creates the mesh manip interface and the manipulator
-	void initializeARAPInterface();
-
 	/// @brief This performs ARAP deformation on the mesh associated with the first loaded image.
 	/// @note THIS IS A WIP/DRAFT FUNCTION, NOT DESIGNED FOR PRODUCTION RELEASE
 	void dummy_perform_constrained_arap_on_image_mesh();
@@ -326,6 +309,10 @@ public:
 	/// @brief Save the curve to a file
 	void dummy_save_curve_to_file();
 	void dummy_initialize_arap_manipulation();
+
+	std::shared_ptr<MMInterface<glm::vec3>> getMeshInterface() const { return this->mesh_interface; }
+	std::shared_ptr<SimpleManipulator> getManipulator() const { return this->arapManipulator; }
+	std::shared_ptr<RectangleSelection> getRectangleSelection() const { return this->rectangleSelection; }
 
 	const Mesh::Ptr& getMesh() const { return this->mesh; }
 	const Curve::Ptr& getCurve() const { return this->curve; }
@@ -432,6 +419,11 @@ private:
 	/// @brief Updates the progress bar added to the main statusbar
 	void updateProgressBar();
 
+	/// @brief Resize the mesh for the loaded image, or the other way around.
+	void resizeMeshForGrid();
+
+	void updateMeshAndCurve();
+
 	/// @brief Test function to print all the new uniforms in the
 	void newSHADERS_print_all_uniforms(GLuint program);
 
@@ -511,13 +503,6 @@ private:
 	bool shouldDeleteGrid;	  ///< Should we delete a grid on next draw ?
 	std::vector<std::size_t> delGrid;	 ///< Grids to delete at next refresh
 
-	std::queue<std::shared_ptr<DrawableBase>> to_init;	  ///< A set of drawables that have not been initialized yet
-	std::vector<std::shared_ptr<DrawableBase>> drawables;	 ///< The drawables to display
-	Mesh::Ptr mesh;	   ///< The loaded mesh, if any
-	Curve::Ptr curve;	 ///< The loaded curve, if any
-	DrawableMesh::Ptr mesh_draw;
-	DrawableCurve::Ptr curve_draw;
-
 	// Grids :
 	// std::vector<GridGLView::Ptr> grids;	   ///< Grids to display in the different views.
 	std::vector<NewAPI_GridGLView::Ptr> newGrids;	 ///< Grids, but with the new API.
@@ -589,15 +574,15 @@ private:
 	GLuint programHandle_sphere;
 	GLuint sphere_size_to_draw;
 
-	///
-	/// Only for ARAP integration testing :
-	///
-	std::vector<std::pair<std::size_t, std::size_t>> mesh_idx_constraints;	  ///< The mesh vertices considered constraints. Pair = <mesh_idx , vertex_idx>
-	std::vector<glm::vec3> image_constraints;	 ///< The positions of those constraints explained above
-
 	//
 	// Stubs for ARAP manipulation :
 	//
+	Mesh::Ptr mesh;	   ///< The loaded mesh, if any
+	Curve::Ptr curve;	 ///< The loaded curve, if any
+	DrawableMesh::Ptr mesh_draw;
+	DrawableCurve::Ptr curve_draw;
+	std::vector<std::pair<std::size_t, std::size_t>> mesh_idx_constraints;	  ///< The mesh vertices considered constraints. Pair = <mesh_idx , vertex_idx>
+	std::vector<glm::vec3> image_constraints;	 ///< The positions of those constraints explained above
 	std::shared_ptr<MMInterface<glm::vec3>> mesh_interface;
 	std::shared_ptr<SimpleManipulator> arapManipulator;
 	std::shared_ptr<RectangleSelection> rectangleSelection;

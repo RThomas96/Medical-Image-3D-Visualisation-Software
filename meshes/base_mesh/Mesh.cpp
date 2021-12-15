@@ -64,9 +64,13 @@ void Mesh::applyTransformation(glm::mat4 transformation) {
 	this->update();
 }
 
-void Mesh::update() {
+void Mesh::updateQuick() {
 	computeBB();
 	recomputeNormals();
+}
+
+void Mesh::update() {
+	this->updateQuick();
 	if (this->kdtree_adaptor == nullptr) {
 		this->kdtree_adaptor = std::make_shared<mesh_kdtree_adaptor_t>(this->vertices);
 	}

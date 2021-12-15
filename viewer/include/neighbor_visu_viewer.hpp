@@ -119,13 +119,8 @@ private:
 	std::size_t temp_img_idx;	 ///< The image index if found. WARNING : WE ASSUME IT IS ALWAYS 0, EVEN IF NO IMAGES ARE LOADED
 	glm::vec3 temp_img_pos;	   ///< The position of that image index
 
-	//
-	// Stubs for ARAP manipulation :
-	//
-	std::shared_ptr<MMInterface<glm::vec3>> mesh_interface;
-	std::shared_ptr<SimpleManipulator> arapManipulator;
-	std::shared_ptr<RectangleSelection> rectangleSelection;
 	bool deformation_enabled;
+
 public slots:
 	/// @brief Update the view, as a slot without any arguments (currently only used by QTimer)
 	void updateView() { this->update(); }
@@ -146,6 +141,9 @@ public slots:
 	void printVAOStateNext();
 	void setSphereSize(double);
 	void toggleDeformation();
+	void resetARAPConstraints();
+	void mesh_select_all();
+	void mesh_unselect_all();
 
 	/// @brief Read the pixel at the screen position given.
 	glm::vec4 readPositionFromFramebuffer();

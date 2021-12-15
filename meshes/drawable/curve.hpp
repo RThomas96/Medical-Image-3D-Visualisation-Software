@@ -13,7 +13,7 @@ public:
 	/// @brief Default ctor for the class, initializing the pointer to the mesh and the GL names.
 	DrawableCurve(Curve::Ptr& _mesh);
 	/// @brief Default dtor for the mesh, default-defined.
-	~DrawableCurve() = default;
+	virtual ~DrawableCurve();
 
 	/// @brief Initializes the mesh, creates the program and uploads the vertex data to the scene.
 	virtual void initialize(QOpenGLContext* _context, ShaderCompiler::GLFunctions* functions) override;
@@ -26,6 +26,8 @@ public:
 	virtual void fastDraw(GLfloat* proj_mat, GLfloat* view_mat, glm::vec4 camera) override;
 
 	Curve::Ptr getCurve() const { return this->curve; }
+
+	virtual void updateBoundingBox() override;
 
 protected:
 	/// @brief Create the VAO, the VBOs and upload data

@@ -15,6 +15,16 @@ DrawableCurve::DrawableCurve(std::shared_ptr<Curve> &_curve) :
 	this->bounding_box_max = curve_bb[1];
 }
 
+DrawableCurve::~DrawableCurve() noexcept {
+	this->gl->glDeleteBuffers(1, &this->vbo_vertices);
+	this->gl->glDeleteBuffers(1, &this->vbo_normals);
+	this->gl->glDeleteBuffers(1, &this->vbo_texture);
+	this->gl->glDeleteBuffers(1, &this->vbo_indices);
+	this->gl->glDeleteVertexArrays(1, &this->vao);
+	this->gl->glDeleteProgram(this->program_handle_draw);
+	this->gl->glDeleteProgram(this->program_handle_fastdraw);
+}
+
 void DrawableCurve::initialize(QOpenGLContext *_context, ShaderCompiler::GLFunctions *functions) {
 	this->gl			= functions;
 	this->bound_context = _context;
@@ -69,6 +79,12 @@ void DrawableCurve::draw(GLfloat *proj_mat, GLfloat *view_mat, glm::vec4 camera)
 
 void DrawableCurve::fastDraw(GLfloat *proj_mat, GLfloat *view_mat, glm::vec4 camera) {
 	this->draw(proj_mat, view_mat, camera);
+}
+
+void DrawableCurve::updateBoundingBox() {
+	auto bb = this->curve->getBB();
+	this->bounding_box_min = bb[0];
+	this->bounding_box_max = bb[1];
 }
 
 void DrawableCurve::makeVAO(void) {

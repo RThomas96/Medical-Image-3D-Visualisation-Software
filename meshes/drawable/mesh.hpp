@@ -16,7 +16,7 @@ public:
 	/// @brief Default ctor for the class, initializing the pointer to the mesh and the GL names.
 	DrawableMesh(Mesh::Ptr& _mesh);
 	/// @brief Default dtor for the mesh, default-defined.
-	~DrawableMesh() = default;
+	virtual ~DrawableMesh();
 
 	/// @brief Initializes the mesh, creates the program and uploads the vertex data to the scene.
 	virtual void initialize(QOpenGLContext* _context, ShaderCompiler::GLFunctions* functions) override;
@@ -30,6 +30,8 @@ public:
 
 	/// @brief Returns a reference to the mesh pointer.
 	virtual Mesh::Ptr& getMesh() { return this->mesh; }
+
+	virtual void updateBoundingBox() override;
 
 protected:
 	/// @brief Create the VAO, the VBOs and upload data

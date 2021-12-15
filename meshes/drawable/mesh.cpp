@@ -12,9 +12,22 @@ DrawableMesh::DrawableMesh(std::shared_ptr<Mesh> &_mesh) :
 	this->vbo_texture  = 0;
 	this->vbo_indices  = 0;
 
+	this->program_handle_draw = 0;
+	this->program_handle_fastdraw = 0;
+
 	auto mesh_bb		   = this->mesh->getBB();
 	this->bounding_box_min = mesh_bb[0];
 	this->bounding_box_max = mesh_bb[1];
+}
+
+DrawableMesh::~DrawableMesh() noexcept {
+	this->gl->glDeleteBuffers(1, &this->vbo_vertices);
+	this->gl->glDeleteBuffers(1, &this->vbo_normals);
+	this->gl->glDeleteBuffers(1, &this->vbo_texture);
+	this->gl->glDeleteBuffers(1, &this->vbo_indices);
+	this->gl->glDeleteVertexArrays(1, &this->vao);
+	this->gl->glDeleteProgram(this->program_handle_draw);
+	this->gl->glDeleteProgram(this->program_handle_fastdraw);
 }
 
 void DrawableMesh::initialize(QOpenGLContext *_context, ShaderCompiler::GLFunctions *functions) {
@@ -77,6 +90,12 @@ void DrawableMesh::draw(GLfloat *proj_mat, GLfloat *view_mat, glm::vec4 camera) 
 
 void DrawableMesh::fastDraw(GLfloat *proj_mat, GLfloat *view_mat, glm::vec4 camera) {
 	this->draw(proj_mat, view_mat, camera);
+}
+
+void DrawableMesh::updateBoundingBox() {
+	auto bb = this->mesh->getBB();
+	this->bounding_box_min = bb[0];
+	this->bounding_box_max = bb[1];
 }
 
 void DrawableMesh::makeVAO(void) {

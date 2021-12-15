@@ -35,7 +35,7 @@ protected:
 	}
 
 public:
-	~DrawableBase() = default;
+	virtual ~DrawableBase() = default;
 
 	/// @brief Checks if the object has been initialized
 	[[nodiscard]] virtual bool isInitialized() const {
@@ -70,6 +70,8 @@ public:
 
 	/// @brief Retrieves the currently applied transformation
 	virtual glm::mat4 getTransformation() { return this->transformation_matrix; }
+
+	virtual void updateBoundingBox() {}
 
 protected:
 	/// @brief The context in which the drawable was initialized.
