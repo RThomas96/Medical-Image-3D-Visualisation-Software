@@ -71,12 +71,6 @@ void DrawableCurve::fastDraw(GLfloat *proj_mat, GLfloat *view_mat, glm::vec4 cam
 	this->draw(proj_mat, view_mat, camera);
 }
 
-void DrawableCurve::updateBoundingBox() {
-	auto bb = this->curve->getBB();
-	this->bounding_box_min = bb[0];
-	this->bounding_box_max = bb[1];
-}
-
 void DrawableCurve::makeVAO(void) {
 	// Fetch the curve information :
 	auto vertices = this->curve->getPositions();

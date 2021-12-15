@@ -194,16 +194,6 @@ void MainWidget::setupWidgets() {
 		this->viewer->makeCurrent();
 		this->scene->loadMesh();
 		this->viewer->updateInfoFromScene();
-		QMessageBox* msgBox = new QMessageBox;
-		msgBox->setAttribute(Qt::WA_DeleteOnClose);
-		msgBox->setWindowTitle("Load mesh interface ?");
-		msgBox->setText("Do you want to deform the mesh now or later ?");
-		auto accept = msgBox->addButton("Load now", QMessageBox::ButtonRole::YesRole);
-		auto deny = msgBox->addButton("Load later", QMessageBox::ButtonRole::NoRole);
-		msgBox->exec();
-		if (msgBox->clickedButton() == accept) {
-			this->viewer->initializeARAPInterface();
-		}
 		this->viewer->doneCurrent();
 	});
 	QObject::connect(this->action_loadCurve, &QAction::triggered, [this]() {
@@ -332,7 +322,7 @@ void MainWidget::setupWidgets() {
 
 void MainWidget::showHelper() {
 	if(this->viewerHelper == nullptr) {
-		this->viewerHelper			= new ViewerHelper(this->viewer, this->scene);
+		this->viewerHelper			= new ViewerHelper(this->viewer);
 		QDockWidget* container_dock = new QDockWidget;
 		container_dock->setWidget(this->viewerHelper);
 		this->addDockWidget(Qt::DockWidgetArea::RightDockWidgetArea, container_dock);

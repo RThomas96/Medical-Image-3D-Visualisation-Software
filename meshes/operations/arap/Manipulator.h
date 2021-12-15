@@ -18,13 +18,10 @@ namespace BasicGL {
 	void drawSphere(float x, float y, float z, float radius, int slices, int stacks);
 }	 // namespace BasicGL
 
-
 /// @brief Manipulator for a position/rotation/scale of an object.
 /// @details Has two signals : moved() and mouseReleased() which can help another object know what to update and when.
-class SimpleManipulator : public QObject , public qglviewer::MouseGrabber
-{
-
-Q_OBJECT
+class SimpleManipulator : public QObject , public qglviewer::MouseGrabber {
+	Q_OBJECT
 
 	int etat;
 	//  0:  desactive.
@@ -47,17 +44,17 @@ Q_OBJECT
 
 	bool mouse_released;
 
-	qglviewer::Vec Origine;              // (1)
-	qglviewer::Vec RepX, RepY, RepZ;    // (2)
+	glm::vec3 Origine;              // (1)
+	glm::vec3 RepX, RepY, RepZ;    // (2)
 
 	float uTeta , vTeta ;
-	qglviewer::Vec PrevPos ;
+	glm::vec3 PrevPos ;
 
 	float display_scale;
 	float Xscale , Yscale , Zscale;     // (3)
 
-	vector< pair< int , qglviewer::Vec > > coordinates;
-	map< int,int > idpoints;
+	std::vector<std::pair<int, glm::vec3>> coordinates;
+	std::map<int, int> idpoints;
 
 	float m_xx_default , m_yy_default;
 
@@ -65,9 +62,9 @@ public:
 	SimpleManipulator()
 	{
 		mouse_released = true;
-		RepX = qglviewer::Vec(1,0,0);
-		RepY = qglviewer::Vec(0,1,0);
-		RepZ = qglviewer::Vec(0,0,1);
+		RepX = glm::vec3(1,0,0);
+		RepY = glm::vec3(0,1,0);
+		RepZ = glm::vec3(0,0,1);
 		display_scale = 1.f;
 		mode_modification = 0.f;
 		Xscale = Yscale = Zscale = 1.f;
@@ -81,10 +78,10 @@ public:
 	void activate(){ this->setEtat(1); }
 	void deactivate(){ this->setEtat(0); }
 
-	void setOrigine( qglviewer::Vec const & p ){ Origine = p; }
-	void setRepX( qglviewer::Vec const & p ){ RepX = p; }
-	void setRepY( qglviewer::Vec const & p ){ RepY = p; }
-	void setRepZ( qglviewer::Vec const & p ){ RepZ = p; }
+	void setOrigine( glm::vec3 const & p ){ Origine = p; }
+	void setRepX( glm::vec3 const & p ){ RepX = p; }
+	void setRepY( glm::vec3 const & p ){ RepY = p; }
+	void setRepZ( glm::vec3 const & p ){ RepZ = p; }
 
 	void setDisplayScale(float ds){ display_scale = ds; }
 	int getModification(){ return this->mode_modification; }
@@ -94,18 +91,18 @@ public:
 		Xscale = Yscale = Zscale = 1.f;
 	}
 
-	void addPoint(int i , qglviewer::Vec const & p)
+	void addPoint(int i , glm::vec3 const & p)
 	{
 		if( idpoints[i] == 0 )
 		{
-			qglviewer::Vec vr = p - Origine;
-			coordinates.push_back( std::make_pair(i , qglviewer::Vec( vr * RepX , vr * RepY , vr * RepZ ) ) );
+			glm::vec3 vr = p - Origine;
+			coordinates.push_back( std::make_pair(i , glm::vec3{ glm::dot(vr, RepX) , glm::dot(vr, RepY) , glm::dot(vr, RepZ) } ) );
 			idpoints[i] = coordinates.size();
 		}
 		else
 		{
-			qglviewer::Vec vr = p - Origine;
-			coordinates[idpoints[i]-1] = std::make_pair(i , qglviewer::Vec( vr * RepX , vr * RepY , vr * RepZ ) );
+			glm::vec3 vr = p - Origine;
+			coordinates[idpoints[i]-1] = std::make_pair(i , glm::vec3{ glm::dot(vr, RepX) , glm::dot(vr, RepY) , glm::dot(vr, RepZ) } );
 		}
 	}
 
@@ -114,10 +111,10 @@ public:
 		return this->coordinates.size();
 	}
 
-	void getTransformedPoint( unsigned int i , int & idx , qglviewer::Vec & p )
+	void getTransformedPoint( unsigned int i , int & idx , glm::vec3 & p )
 	{
 		idx = this->coordinates[ i ].first;
-		qglviewer::Vec vr = this->coordinates[ i ].second;
+		glm::vec3 vr = this->coordinates[ i ].second;
 		p = Origine + vr[0] * Xscale * RepX + vr[1] * Yscale * RepY + vr[2] * Zscale * RepZ;
 	}
 
@@ -149,15 +146,15 @@ public:
 
 				glDisable(GL_LIGHTING);
 				glLineWidth( 2.f );
-				qglviewer::Vec p;
+				glm::vec3 p;
 				glBegin( GL_LINES );
 				if(mode_modification == 1)
 					glColor3fv( Selection );
 				else
 					glColor3fv( CX );
-				p = Origine - 2 * display_scale * RepX;
+				p = Origine - 2.f * display_scale * RepX;
 				glVertex3f(p[0],p[1],p[2]);
-				p = Origine + 2 * display_scale * RepX;
+				p = Origine + 2.f * display_scale * RepX;
 				glVertex3f(p[0],p[1],p[2]);
 
 				if(mode_modification == 2)
@@ -224,9 +221,9 @@ public:
 					glColor3fv( Selection );
 				else
 					glColor3fv( CX );
-				p = Origine + (1.5 * Xscale * display_scale) * RepX;
+				p = Origine + (1.5f * Xscale * display_scale) * RepX;
 				BasicGL::drawSphere(p[0],p[1],p[2],display_scale/15,5,5);
-				p = Origine - (1.5 * Xscale * display_scale) * RepX;
+				p = Origine - (1.5f * Xscale * display_scale) * RepX;
 				BasicGL::drawSphere(p[0],p[1],p[2],display_scale/15,5,5);
 
 
@@ -234,9 +231,9 @@ public:
 					glColor3fv( Selection );
 				else
 					glColor3fv( CY );
-				p = Origine + (1.5 * Yscale * display_scale) * RepY;
+				p = Origine + (1.5f * Yscale * display_scale) * RepY;
 				BasicGL::drawSphere(p[0],p[1],p[2],display_scale/15,5,5);
-				p = Origine - (1.5 * Yscale * display_scale) * RepY;
+				p = Origine - (1.5f * Yscale * display_scale) * RepY;
 				BasicGL::drawSphere(p[0],p[1],p[2],display_scale/15,5,5);
 
 
@@ -244,9 +241,9 @@ public:
 					glColor3fv( Selection );
 				else
 					glColor3fv( CZ );
-				p = Origine + (1.5 * Zscale * display_scale) * RepZ;
+				p = Origine + (1.5f * Zscale * display_scale) * RepZ;
 				BasicGL::drawSphere(p[0],p[1],p[2],display_scale/15,5,5);
-				p = Origine - (1.5 * Zscale * display_scale) * RepZ;
+				p = Origine - (1.5f * Zscale * display_scale) * RepZ;
 				BasicGL::drawSphere(p[0],p[1],p[2],display_scale/15,5,5);
 			}
 		}
@@ -259,13 +256,13 @@ public:
 
 	void checkIfGrabsMouse(int x, int y,const qglviewer::Camera* const cam)
 	{
-		qglviewer::Vec src;
-		qglviewer::Vec img ;
+		glm::vec3 src;
+		glm::vec3 img ;
 
 		float lambda , epsilon_rotation_detect = 0.2f , epsilon_tranlation_detect = 0.005f;
-		qglviewer::Vec eye,dir;
-		qglviewer::Vec Eye , X , Z;
-		qglviewer::Vec Dir , d , e;
+		glm::vec3 eye,dir;
+		glm::vec3 Eye , X , Z;
+		glm::vec3 Dir , d , e;
 
 		//Ce test marche, et permet maintenant de manipuler une sphre dans un gl, et un modle dans l'autre, ou la sphre de
 		//l'autre gl en mme temps ... parfait :-) ...
@@ -323,23 +320,26 @@ public:
 
 				if( mode_grabbing == 1 )
 				{
-					cam->convertClickToLine(QPoint(x,y),eye,dir);
-					Eye = qglviewer::Vec(eye[0],eye[1],eye[2]);
-					Dir = qglviewer::Vec(dir[0],dir[1],dir[2]);
+					qglviewer::Vec eye_vec, dir_vec;
+					cam->convertClickToLine(QPoint(x,y),eye_vec,dir_vec);
+					eye = glm::vec3{eye_vec.x, eye_vec.y, eye_vec.z};
+					dir = glm::vec3{dir_vec.x, dir_vec.y, dir_vec.z};
+					Eye = glm::vec3(eye[0],eye[1],eye[2]);
+					Dir = glm::vec3(dir[0],dir[1],dir[2]);
 
 					///////////////////////////////////////  Dilatations:   ///////////////////////////////////////
 
 					// Check on sx :
-					X = Origine + (1.5 * Xscale*display_scale) * RepX;
-					lambda = ( X-Eye )*( X-Eye ) - ( (X-Eye)*(Dir) ) * ( (X-Eye)*(Dir) )/(Dir * Dir);
+					X = Origine + (1.5f * Xscale*display_scale) * RepX;
+					lambda = glm::dot(( X-Eye ), ( X-Eye )) - ( glm::dot((X-Eye), (Dir)) ) * ( glm::dot((X-Eye), (Dir)) )/glm::dot(Dir,  Dir);
 					if( lambda < display_scale*display_scale / 100 )
 					{
 						mode_modification = 7;
 						setGrabsMouse(true);
 						return;
 					}
-					X = Origine - (1.5 * Xscale*display_scale) *RepX;
-					lambda = ( X-Eye )*( X-Eye ) - ( (X-Eye)*(Dir) ) * ( (X-Eye)*(Dir) )/(Dir * Dir);
+					X = Origine - (1.5f * Xscale*display_scale) *RepX;
+					lambda = glm::dot(( X-Eye ), ( X-Eye )) - ( glm::dot((X-Eye), (Dir)) ) * ( glm::dot((X-Eye), (Dir)) )/glm::dot(Dir,  Dir);
 					if( lambda < display_scale*display_scale / 100 )
 					{
 						mode_modification = -7;
@@ -348,16 +348,17 @@ public:
 					}
 
 					// Check on sy :
-					X = Origine + (1.5 * Yscale*display_scale) *RepY;
-					lambda = ( X-Eye )*( X-Eye ) - ( (X-Eye)*(Dir) ) * ( (X-Eye)*(Dir) )/(Dir * Dir);
+					X = Origine + (1.5f * Yscale*display_scale) *RepY;
+					lambda = glm::dot(glm::dot(( X-Eye ),( X-Eye )) - ( glm::dot((X-Eye),(Dir)) ), ( glm::dot((X-Eye), (Dir)) )/glm::dot(Dir, Dir));
 					if( lambda < display_scale*display_scale / 100 )
 					{
 						mode_modification = 8;
 						setGrabsMouse(true);
 						return;
 					}
-					X = Origine - (1.5 * Yscale*display_scale) *RepY;
-					lambda = ( X-Eye )*( X-Eye ) - ( (X-Eye)*(Dir) ) * ( (X-Eye)*(Dir) )/(Dir * Dir);
+					X = Origine - (1.5f * Yscale*display_scale) *RepY;
+					// lambda = ( X-Eye )*( X-Eye ) - ( (X-Eye)*(Dir) ) * ( (X-Eye)*(Dir) )/(Dir * Dir);
+					lambda = glm::dot(glm::dot(( X-Eye ),( X-Eye )) - ( glm::dot((X-Eye),(Dir)) ), ( glm::dot((X-Eye), (Dir)) )/glm::dot(Dir, Dir));
 					if( lambda < display_scale*display_scale / 100 )
 					{
 						mode_modification = -8;
@@ -366,16 +367,18 @@ public:
 					}
 
 					// Check on sz :
-					X = Origine + (1.5 * Zscale*display_scale) *RepZ;
-					lambda = ( X-Eye )*( X-Eye ) - ( (X-Eye)*(Dir) ) * ( (X-Eye)*(Dir) )/(Dir * Dir);
+					X = Origine + (1.5f * Zscale*display_scale) *RepZ;
+					//lambda = ( X-Eye )*( X-Eye ) - ( (X-Eye)*(Dir) ) * ( (X-Eye)*(Dir) )/(Dir * Dir);
+					lambda = glm::dot(glm::dot(( X-Eye ),( X-Eye )) - ( glm::dot((X-Eye),(Dir)) ), ( glm::dot((X-Eye), (Dir)) )/glm::dot(Dir, Dir));
 					if( lambda < display_scale*display_scale / 100 )
 					{
 						mode_modification = 9;
 						setGrabsMouse(true);
 						return;
 					}
-					X = Origine - (1.5 * Zscale*display_scale) *RepZ;
-					lambda = ( X-Eye )*( X-Eye ) - ( (X-Eye)*(Dir) ) * ( (X-Eye)*(Dir) )/(Dir * Dir);
+					X = Origine - (1.5f * Zscale*display_scale) *RepZ;
+					//lambda = ( X-Eye )*( X-Eye ) - ( (X-Eye)*(Dir) ) * ( (X-Eye)*(Dir) )/(Dir * Dir);
+					lambda = glm::dot(glm::dot(( X-Eye ),( X-Eye )) - ( glm::dot((X-Eye),(Dir)) ), ( glm::dot((X-Eye), (Dir)) )/glm::dot(Dir, Dir));
 					if( lambda < display_scale*display_scale / 100 )
 					{
 						mode_modification = -9;
@@ -386,9 +389,10 @@ public:
 					///////////////////////////////////////  Rotations:   ///////////////////////////////////////
 
 					// Check on rx :
-					lambda = ( ( Origine - Eye )*( RepX ) )/( ( Dir )*( RepX ) );
+					// lambda = ( ( Origine - Eye )*( RepX ) )/( ( Dir )*( RepX ) );
+					lambda = ( glm::dot(( Origine - Eye ), ( RepX )) )/( glm::dot(( Dir ), ( RepX )) );
 					X = Eye + lambda*Dir;
-					if( fabs( ( (X-Origine)*(X-Origine) )/(display_scale*display_scale) - 1 ) < epsilon_rotation_detect )
+					if( fabs( ( glm::dot((X-Origine), (X-Origine)) )/(display_scale*display_scale) - 1.f ) < epsilon_rotation_detect )
 					{
 						mode_modification = 4;
 						setGrabsMouse(true);
@@ -396,9 +400,10 @@ public:
 					}
 
 					// Check on ry :
-					lambda = ( ( Origine - Eye )*( RepY ) )/( ( Dir )*( RepY ) );
+					// lambda = ( ( Origine - Eye )*( RepY ) )/( ( Dir )*( RepY ) );
+					lambda = ( glm::dot(( Origine - Eye ), ( RepY )) )/( glm::dot(( Dir ), ( RepY )) );
 					X = Eye + lambda*Dir;
-					if( fabs( ( (X-Origine)*(X-Origine) )/(display_scale*display_scale) - 1 ) < epsilon_rotation_detect )
+					if( fabs( ( glm::dot((X-Origine), (X-Origine)) )/(display_scale*display_scale) - 1.f ) < epsilon_rotation_detect )
 					{
 						mode_modification = 5;
 						setGrabsMouse(true);
@@ -406,9 +411,10 @@ public:
 					}
 
 					// Check on rz :
-					lambda = ( ( Origine - Eye )*( RepZ ) )/( ( Dir )*( RepZ ) );
+					// lambda = ( ( Origine - Eye )*( RepZ ) )/( ( Dir )*( RepZ ) );
+					lambda = ( glm::dot(( Origine - Eye ), ( RepZ )) )/( glm::dot(( Dir ), ( RepZ )) );
 					X = Eye + lambda*Dir;
-					if( fabs( ( (X-Origine)*(X-Origine) )/(display_scale*display_scale) - 1 ) < epsilon_rotation_detect )
+					if( fabs( ( glm::dot((X-Origine),(X-Origine)) )/(display_scale*display_scale) - 1.f ) < epsilon_rotation_detect )
 					{
 						mode_modification = 6;
 						setGrabsMouse(true);
@@ -418,14 +424,14 @@ public:
 					///////////////////////////////////////  Translations:   ///////////////////////////////////////
 
 					// Check on tx :
-					d = cross( RepX , Dir );
-					e = cross( Dir , d );
-					lambda = ( ( Eye - Origine )*( e ) ) / ( RepX * e );
+					d = glm::cross( RepX , Dir );
+					e = glm::cross( Dir , d );
+					lambda = ( glm::dot(( Eye - Origine ), ( e )) ) / glm::dot( RepX , e );
 					X = Origine + lambda*RepX;
 					if( lambda < 2.2*display_scale && lambda > -2.2*display_scale )
 					{
 						Z = Eye + ( Dir * ( X-Eye ) )*Dir/sqrt( (Dir*Dir) );
-						if( ( ( Z-X )*( Z-X ) ) < display_scale*display_scale*epsilon_tranlation_detect )
+						if( ( glm::dot(( Z-X ), ( Z-X )) ) < display_scale*display_scale*epsilon_tranlation_detect )
 						{
 							mode_modification = 1;
 							setGrabsMouse(true);
@@ -436,12 +442,12 @@ public:
 					// Check on ty :
 					d = cross( RepY , Dir );
 					e = cross( Dir , d );
-					lambda = ( ( Eye - Origine )*( e ) ) / ( RepY * e );
+					lambda = ( glm::dot(( Eye - Origine ), ( e )) ) / glm::dot( RepY , e );
 					X = Origine + lambda*RepY;
 					if( lambda < 2.2*display_scale && lambda > -2.2*display_scale )
 					{
 						Z = Eye + ( Dir * ( X-Eye ) )*Dir/sqrt( (Dir*Dir) );
-						if( ( ( Z-X )*( Z-X ) ) < display_scale*display_scale*epsilon_tranlation_detect )
+						if( ( glm::dot(( Z-X ), ( Z-X )) ) < display_scale*display_scale*epsilon_tranlation_detect )
 						{
 							mode_modification = 2;
 							setGrabsMouse(true);
@@ -452,12 +458,12 @@ public:
 					// Check on tz :
 					d = cross( RepZ , Dir );
 					e = cross( Dir , d );
-					lambda = ( ( Eye - Origine )*( e ) ) / ( RepZ * e );
+					lambda = ( glm::dot(( Eye - Origine ), ( e )) ) / glm::dot( RepZ , e );
 					X = Origine + lambda*RepZ;
 					if( lambda < 2.2*display_scale && lambda > -2.2*display_scale )
 					{
 						Z = Eye + ( Dir * ( X-Eye ) )*Dir/sqrt( (Dir*Dir) );
-						if( ( ( Z-X )*( Z-X ) ) < display_scale*display_scale*epsilon_tranlation_detect )
+						if( ( glm::dot(( Z-X ), ( Z-X )) ) < display_scale*display_scale*epsilon_tranlation_detect )
 						{
 							mode_modification = 3;
 							setGrabsMouse(true);
@@ -539,25 +545,25 @@ public:
 
 			float lambda;
 			qglviewer::Vec eye,dir;
-			qglviewer::Vec Eye;
-			qglviewer::Vec Ur,Vr,Dir , d , e;
+			glm::vec3 Eye, Dir;
+			glm::vec3 Ur,Vr, d , e;
 			cam->convertClickToLine(event->pos(),eye,dir);
-			Eye = qglviewer::Vec(eye[0],eye[1],eye[2]);
-			Dir = qglviewer::Vec(dir[0],dir[1],dir[2]);
+			Eye = glm::vec3(eye[0],eye[1],eye[2]);
+			Dir = glm::vec3(dir[0],dir[1],dir[2]);
 
 			if( mode_modification == 1 )
 			{
-				d = cross( RepX , Dir );
-				e = cross( Dir , d );
-				lambda = ( ( Eye - Origine )*( e ) ) / ( RepX * e );
+				d = glm::cross( RepX , Dir );
+				e = glm::cross( Dir , d );
+				lambda = ( glm::dot(( Eye - Origine ), ( e )) ) / ( glm::dot(RepX, e) );
 				PrevPos = Origine + lambda*RepX;
 				return;
 			}
 			if( mode_modification == 2 )
 			{
-				d = cross( RepY , Dir );
-				e = cross( Dir , d );
-				lambda = ( ( Eye - Origine )*( e ) ) / ( RepY * e );
+				d = glm::cross( RepY , Dir );
+				e = glm::cross( Dir , d );
+				lambda = ( glm::dot(( Eye - Origine ), ( e )) ) / ( glm::dot(RepY, e) );
 				PrevPos = Origine + lambda*RepY;
 				return;
 			}
@@ -565,7 +571,7 @@ public:
 			{
 				d = cross( RepZ , Dir );
 				e = cross( Dir , d );
-				lambda = ( ( Eye - Origine )*( e ) ) / ( RepZ * e );
+				lambda = ( glm::dot(( Eye - Origine ), ( e )) ) / ( glm::dot(RepZ, e) );
 				PrevPos = Origine + lambda*RepZ;
 				return;
 			}
@@ -573,45 +579,45 @@ public:
 			if( mode_modification == 4 )
 			{
 				// Alors on est en train de tourner autour de (Origine,RepX)
-				lambda = ( ( Origine - Eye )* RepX )/( Dir * RepX );
+				lambda = ( glm::dot(( Origine - Eye ), RepX) )/glm::dot( Dir, RepX );
 				Ur = Eye + lambda*Dir - Origine;
-				Ur.normalize();
-				Vr = cross( RepX , Ur );
-				Vr.normalize();
+				Ur = glm::normalize(Ur);
+				Vr = glm::cross( RepX , Ur );
+				Vr = glm::normalize(Vr);
 				// On a maintenant un repre Ur,Vr du plan orthogonal  RepX, et caractrisant X = le point cliqu sur le plan.
 
-				uTeta = (RepY * Ur);
-				vTeta = (RepY * Vr);
+				uTeta = glm::dot(RepY, Ur);
+				vTeta = glm::dot(RepY, Vr);
 				return;
 			}
 
 			if( mode_modification == 5 )
 			{
 				// Alors on est en train de tourner autour de (Origine,RepY)
-				lambda = ( ( Origine - Eye )* RepY )/( Dir * RepY );
+				lambda = ( glm::dot(( Origine - Eye ), RepX) )/glm::dot( Dir, RepY );
 				Ur = Eye + lambda*Dir - Origine;
-				Ur.normalize();
-				Vr = cross( RepY , Ur );
-				Vr.normalize();
+				Ur = glm::normalize(Ur);
+				Vr = glm::cross( RepY , Ur );
+				Vr = glm::normalize(Vr);
 				// On a maintenant un repre Ur,Vr du plan orthogonal  RepY, et caractrisant X = le point cliqu sur le plan.
 
-				uTeta = (RepZ * Ur);
-				vTeta = (RepZ * Vr);
+				uTeta = glm::dot(RepZ, Ur);
+				vTeta = glm::dot(RepZ, Vr);
 				return;
 			}
 
 			if( mode_modification == 6 )
 			{
 				// Alors on est en train de tourner autour de (Origine,RepZ)
-				lambda = ( ( Origine - Eye )* RepZ )/( Dir * RepZ );
+				lambda = ( glm::dot(( Origine - Eye ), RepX) )/glm::dot( Dir, RepZ );
 				Ur = Eye + lambda*Dir - Origine;
-				Ur.normalize();
-				Vr = cross( RepZ , Ur );
-				Vr.normalize();
+				Ur = glm::normalize(Ur);
+				Vr = glm::cross( RepZ , Ur );
+				Vr = glm::normalize(Vr);
 				// On a maintenant un repre Ur,Vr du plan orthogonal  RepZ, et caractrisant X = le point cliqu sur le plan.
 
-				uTeta = (RepX * Ur);
-				vTeta = (RepX * Vr);
+				uTeta = glm::dot(RepX, Ur);
+				vTeta = glm::dot(RepX, Vr);
 				return;
 			}
 		}
@@ -653,22 +659,22 @@ public:
 			if( mode_grabbing == 1 )
 			{
 				qglviewer::Vec eye,dir;
-				qglviewer::Vec Eye , NewPos;
-				qglviewer::Vec Dir , d , e ;
-				qglviewer::Vec Ur , Vr;
+				glm::vec3 Eye , NewPos;
+				glm::vec3 Dir , d , e ;
+				glm::vec3 Ur , Vr;
 				float lambda;
 
 				cam->convertClickToLine(event->pos(),eye,dir);
-				Eye = qglviewer::Vec(eye[0],eye[1],eye[2]);
-				Dir = qglviewer::Vec(dir[0],dir[1],dir[2]);
+				Eye = glm::vec3(eye[0],eye[1],eye[2]);
+				Dir = glm::vec3(dir[0],dir[1],dir[2]);
 
 				switch(mode_modification)
 				{
 					case 1:
 						// Alors on doit trouver le point sur la droite (Origine,RepX) qui est le plus proche du rayon
-						d = cross( RepX , Dir );
-						e = cross( Dir , d );
-						lambda = ( ( Eye - Origine ) * e ) / ( RepX * e );
+						d = glm::cross( RepX , Dir );
+						e = glm::cross( Dir , d );
+						lambda = ( glm::dot(( Eye - Origine ), e) ) / glm::dot( RepX, e );
 						NewPos = Origine + lambda*RepX;
 						Origine += NewPos - PrevPos;
 						PrevPos = NewPos;
@@ -676,9 +682,9 @@ public:
 						break;
 					case 2:
 						// Alors on doit trouver le point sur la droite (Origine,RepY) qui est le plus proche du rayon
-						d = cross( RepY , Dir );
-						e = cross( Dir , d );
-						lambda = ( ( Eye - Origine ) * e ) / ( RepY * e );
+						d = glm::cross( RepY , Dir );
+						e = glm::cross( Dir , d );
+						lambda = ( glm::dot(( Eye - Origine ), e) ) / glm::dot( RepY, e );
 						NewPos = Origine + lambda*RepY;
 						Origine += NewPos - PrevPos;
 						PrevPos = NewPos;
@@ -686,92 +692,92 @@ public:
 						break;
 					case 3:
 						// Alors on doit trouver le point sur la droite (Origine,RepZ) qui est le plus proche du rayon
-						d = cross( RepZ , Dir );
-						e = cross( Dir , d );
-						lambda = ( ( Eye - Origine ) * e ) / ( RepZ * e );
+						d = glm::cross( RepZ , Dir );
+						e = glm::cross( Dir , d );
+						lambda = ( glm::dot(( Eye - Origine ), e) ) / glm::dot( RepZ, e );
 						NewPos = Origine + lambda*RepZ;
 						Origine += NewPos - PrevPos;
 						PrevPos = NewPos;
 						manipulatedCallback();
 						break;
 					case 4:
-						lambda = ( ( Origine - Eye ) * RepX )/( Dir * RepX );
+						lambda = glm::dot( ( Origine - Eye ), RepX )/glm::dot( Dir, RepX );
 						Ur = Eye + lambda*Dir - Origine;
-						Ur.normalize();
-						Vr = cross( RepX , Ur );
-						Vr.normalize();
+						Ur = glm::normalize(Ur);
+						Vr = glm::cross( RepX , Ur );
+						Vr = glm::normalize(Vr);
 
 						RepY = uTeta * Ur + vTeta * Vr;
-						RepY.normalize();
-						RepZ = cross(RepX,RepY);
+						RepY = glm::normalize(RepY);
+						RepZ = glm::cross(RepX,RepY);
 						manipulatedCallback();
 						break;
 					case 5:
-						lambda = ( ( Origine - Eye ) * RepY )/( Dir * RepY );
+						lambda = glm::dot( ( Origine - Eye ), RepY )/glm::dot( Dir, RepY );
 						Ur = Eye + lambda*Dir - Origine;
-						Ur.normalize();
-						Vr = cross( RepY , Ur );
-						Vr.normalize();
+						Ur = glm::normalize(Ur);
+						Vr = glm::cross( RepY , Ur );
+						Vr = glm::normalize(Vr);
 
 						RepZ = uTeta * Ur + vTeta * Vr;
-						RepZ.normalize();
-						RepX = cross(RepY,RepZ);
+						RepZ = glm::normalize(RepZ);
+						RepX = glm::cross(RepY,RepZ);
 						manipulatedCallback();
 						break;
 					case 6:
-						lambda = ( ( Origine - Eye ) * RepZ )/( Dir * RepZ );
+						lambda = glm::dot( ( Origine - Eye ), RepZ )/glm::dot( Dir, RepZ );
 						Ur = Eye + lambda*Dir - Origine;
-						Ur.normalize();
-						Vr = cross( RepZ , Ur );
-						Vr.normalize();
+						Ur = glm::normalize(Ur);
+						Vr = glm::cross( RepZ , Ur );
+						Vr = glm::normalize(Vr);
 
 						RepX = uTeta * Ur + vTeta * Vr;
-						RepX.normalize();
-						RepY = cross(RepZ,RepX);
+						RepZ = glm::normalize(RepX);
+						RepY = glm::cross(RepZ,RepX);
 						manipulatedCallback();
 						break;
 
 					case 7:
-						d = cross( RepX , Dir );
-						e = cross( Dir , d );
-						lambda = ( ( Eye - Origine ) * e ) / ( RepX * e );
+						d = glm::cross( RepX , Dir );
+						e = glm::cross( Dir , d );
+						lambda = glm::dot( ( Eye - Origine ), e ) / glm::dot( RepX, e );
 						Xscale = lambda / (1.5*display_scale);
 						manipulatedCallback();
 						break;
 					case -7:
-						d = cross( RepX , Dir );
-						e = cross( Dir , d );
-						lambda = ( ( Eye - Origine ) * e ) / ( RepX * e );
+						d = glm::cross( RepX , Dir );
+						e = glm::cross( Dir , d );
+						lambda = glm::dot( ( Eye - Origine ), e ) / glm::dot( RepX, e );
 						Xscale = -lambda / (1.5*display_scale);
 						manipulatedCallback();
 						break;
 
 					case 8:
-						d = cross( RepY , Dir );
-						e = cross( Dir , d );
-						lambda = ( ( Eye - Origine ) * e ) / ( RepY * e );
+						d = glm::cross( RepY , Dir );
+						e = glm::cross( Dir , d );
+						lambda = glm::dot( ( Eye - Origine ), e ) / glm::dot( RepY, e );
 						Yscale = lambda / (1.5*display_scale);
 						manipulatedCallback();
 						break;
 					case -8:
-						d = cross( RepY , Dir );
-						e = cross( Dir , d );
-						lambda = ( ( Eye - Origine ) * e ) / ( RepY * e );
+						d = glm::cross( RepY , Dir );
+						e = glm::cross( Dir , d );
+						lambda = glm::dot( ( Eye - Origine ), e ) / glm::dot( RepY, e );
 						Yscale = -lambda / (1.5*display_scale);
 						manipulatedCallback();
 						break;
 
 					case 9:
-						d = cross( RepZ , Dir );
-						e = cross( Dir , d );
-						lambda = ( ( Eye - Origine ) * e ) / ( RepZ * e );
+						d = glm::cross( RepZ , Dir );
+						e = glm::cross( Dir , d );
+						lambda = glm::dot( ( Eye - Origine ), e ) / glm::dot( RepZ, e );
 						Zscale = lambda / (1.5*display_scale);
 						manipulatedCallback();
 						break;
 					case -9:
-						d = cross( RepZ , Dir );
-						e = cross( Dir , d );
-						lambda = ( ( Eye - Origine ) * e ) / ( RepZ * e );
+						d = glm::cross( RepZ , Dir );
+						e = glm::cross( Dir , d );
+						lambda = glm::dot( ( Eye - Origine ), e ) / glm::dot( RepZ, e );
 						Zscale = -lambda / (1.5*display_scale);
 						manipulatedCallback();
 						break;

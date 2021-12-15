@@ -27,8 +27,6 @@ public:
 
 	Curve::Ptr getCurve() const { return this->curve; }
 
-	virtual void updateBoundingBox() override;
-
 protected:
 	/// @brief Create the VAO, the VBOs and upload data
 	void makeVAO(void);

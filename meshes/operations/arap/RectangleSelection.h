@@ -51,8 +51,8 @@ public:
 		else if ((e->button() == Qt::RightButton))
 		{
 			selectionMode_ = INACTIVE;
-			Q_EMIT apply();
 		}
+		Q_EMIT apply();
 	}
 
 	void mouseMoveEvent(QMouseEvent* e , qglviewer::Camera* const )
@@ -104,9 +104,7 @@ public:
 		if( this->selectionMode_ == INACTIVE || this->selectionMode_ == ACTIVE )
 			return;
 
-		bool enable_clip = glIsEnabled(GL_CLIP_PLANE0);
-
-		if (enable_clip) { glDisable( GL_CLIP_PLANE0 ); }
+		glDisable( GL_CLIP_PLANE0 );
 
 		float viewport[4];
 		glGetFloatv( GL_VIEWPORT , viewport );
@@ -164,7 +162,7 @@ public:
 		glEnable(GL_LIGHTING);
 		glEnable(GL_DEPTH_TEST);
 
-		if (enable_clip) { glEnable( GL_CLIP_PLANE0 ); }
+		glEnable( GL_CLIP_PLANE0 );
 	}
 
 public Q_SLOTS:

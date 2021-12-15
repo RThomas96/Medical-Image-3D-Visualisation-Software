@@ -14,7 +14,7 @@
 #include <QMessageBox>
 #include <QOpenGLContext>
 #include <QSurface>
-#include <QDir>
+
 #include <fstream>
 #include <type_traits>
 
@@ -1099,7 +1099,7 @@ GLuint Scene::uploadTexture1D(const TextureUpload& tex) {
 		throw std::runtime_error("nullptr as context");
 	}
 
-	//glEnable(GL_TEXTURE_1D);
+	glEnable(GL_TEXTURE_1D);
 
 	GLuint texHandle = 0;
 	glGenTextures(1, &texHandle);
@@ -1145,7 +1145,7 @@ GLuint Scene::uploadTexture2D(const TextureUpload& tex) {
 		throw std::runtime_error("nullptr as context");
 	}
 
-	//glEnable(GL_TEXTURE_2D);
+	glEnable(GL_TEXTURE_2D);
 
 	GLuint texHandle = 0;
 	glGenTextures(1, &texHandle);
@@ -1193,7 +1193,7 @@ GLuint Scene::uploadTexture3D(const TextureUpload& tex) {
 		throw std::runtime_error("nullptr as context");
 	}
 
-	//glEnable(GL_TEXTURE_3D);
+	glEnable(GL_TEXTURE_3D);
 
 	GLuint texHandle = 0;
 	glGenTextures(1, &texHandle);
@@ -1243,7 +1243,7 @@ GLuint Scene::newAPI_uploadTexture3D_allocateonly(const TextureUpload& tex) {
 		throw std::runtime_error("nullptr as context");
 	}
 
-	//glEnable(GL_TEXTURE_3D);
+	glEnable(GL_TEXTURE_3D);
 
 	GLuint texHandle = 0;
 	glGenTextures(1, &texHandle);
@@ -1293,7 +1293,7 @@ GLuint Scene::newAPI_uploadTexture3D(const GLuint texHandle, const TextureUpload
 		throw std::runtime_error("nullptr as context");
 	}
 
-	//glEnable(GL_TEXTURE_3D);
+	glEnable(GL_TEXTURE_3D);
 	glBindTexture(GL_TEXTURE_3D, texHandle);
 
 	glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, s, tex.size.x, tex.size.y, 1, tex.format, tex.type, data.data());
@@ -1675,8 +1675,8 @@ void Scene::newAPI_drawVolumetric(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPo
 }
 
 void Scene::newAPI_drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane) {
-	/*glEnable(GL_DEPTH_TEST);
-	glEnable(GL_BLEND);*/
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
 
 #warning drawPlanes() : Only draws the first grid for each plane !
 
@@ -1721,7 +1721,7 @@ void Scene::newAPI_drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPla
 	glBindVertexArray(0);
 	glUseProgram(0);
 
-	/* glDisable(GL_BLEND); */
+	glDisable(GL_BLEND);
 }
 
 glm::vec3 Scene::computePlanePositions() {
@@ -1807,19 +1807,19 @@ void Scene::newAPI_prepareUniforms_3DSolid(GLfloat* mvMat, GLfloat* pMat, glm::v
 
 	// Textures :
 	glActiveTexture(GL_TEXTURE0 + enabled_textures);
-	//glEnable(GL_TEXTURE_3D);
+	glEnable(GL_TEXTURE_3D);
 	glBindTexture(GL_TEXTURE_3D, gridView->gridTexture);
 	glUniform1i(texDataLoc, enabled_textures);
 	enabled_textures++;
 
 	glActiveTexture(GL_TEXTURE0 + enabled_textures);
-	//glEnable(GL_TEXTURE_1D);
+	glEnable(GL_TEXTURE_1D);
 	glBindTexture(GL_TEXTURE_1D, this->texHandle_colorScale_greyscale);
 	glUniform1i(location_colorScales0, enabled_textures);
 	enabled_textures++;
 
 	glActiveTexture(GL_TEXTURE0 + enabled_textures);
-	//glEnable(GL_TEXTURE_1D);
+	glEnable(GL_TEXTURE_1D);
 	glBindTexture(GL_TEXTURE_1D, this->texHandle_colorScale_hsv2rgb);
 	glUniform1i(location_colorScales1, enabled_textures);
 	enabled_textures++;
@@ -2037,7 +2037,7 @@ void Scene::newAPI_prepareUniforms_3DPlane(GLfloat* mvMat, GLfloat* pMat, planes
 
 	GLint enabled_textures = 0;
 	glActiveTexture(GL_TEXTURE0 + enabled_textures);
-	//glEnable(GL_TEXTURE_3D);
+	glEnable(GL_TEXTURE_3D);
 	glBindTexture(GL_TEXTURE_3D, grid->gridTexture);
 	glUniform1i(location_texData, enabled_textures);
 	enabled_textures++;
@@ -4150,7 +4150,7 @@ GLuint SceneGL::uploadTexture1D(const TextureUpload& tex) {
 		throw std::runtime_error("nullptr as context");
 	}
 
-	//glEnable(GL_TEXTURE_1D);
+	glEnable(GL_TEXTURE_1D);
 
 	GLuint texHandle = 0;
 	glGenTextures(1, &texHandle);
@@ -4196,7 +4196,7 @@ GLuint SceneGL::uploadTexture2D(const TextureUpload& tex) {
 		throw std::runtime_error("nullptr as context");
 	}
 
-	//glEnable(GL_TEXTURE_2D);
+	glEnable(GL_TEXTURE_2D);
 
 	GLuint texHandle = 0;
 	glGenTextures(1, &texHandle);

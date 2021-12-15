@@ -468,7 +468,6 @@ public:
 	// This function select the cage vertices drawn inside the QRect "zone"
 	void select( QRectF const & zone, float *modelview, float * projection, bool moving = true )
 	{
-		std::size_t added_vertices = 0;
 		for( unsigned int v = 0 ; v < modified_vertices.size() ; ++v )
 		{
 			point_t const & p = modified_vertices[ v ];
@@ -494,10 +493,8 @@ public:
 			if( zone.contains( xx , yy ) ){
 				selected_vertices[ v ] = moving;
 				fixed_vertices[ v ] = !moving;
-				if (moving) { added_vertices ++; }
 			}
 		}
-		std::cerr << "After select, " << added_vertices << " were added as selected.\n";
 	}
 
 	int index_of_closest_point_in_sphere( const point_t & clicked, float radius ){
@@ -619,12 +616,8 @@ public:
 				++nb;
 			}
 		}
-		std::cerr << "Before div solver origin is " << oo.x << ", " << oo.y << ", " << oo.z << " with " << modified_vertices.size() << " vertices\n";
-		if (nb) {
-			oo /= static_cast<float>(nb);
-		} else {
-			std::cerr << "SOLVER HAD NO SELECTED VERTICES !\n";
-		}
+		std::cerr << "Before div solver origin is " << oo.x << ", " << oo.y << ", " << oo.z << "\n";
+		oo /= static_cast<float>(nb);
 
 		PCATools::PCASolver3f< point_t , point_t > solver;
 		std::cerr << "Set solver origin to " << oo.x << ", " << oo.y << ", " << oo.z << "\n";
@@ -641,14 +634,10 @@ public:
 
 		solver.compute();
 
-		auto rep_x = solver.RepX();
-		auto rep_y = solver.RepY();
-		auto rep_z = solver.RepZ();
-
-		manipulator->setOrigine( qglviewer::Vec(oo.x, oo.y, oo.z) );
-		manipulator->setRepX( qglviewer::Vec(rep_x.x, rep_x.y, rep_x.z) );
-		manipulator->setRepY( qglviewer::Vec(rep_y.x, rep_y.y, rep_y.z) );
-		manipulator->setRepZ( qglviewer::Vec(rep_z.x, rep_z.y, rep_z.z) );
+		manipulator->setOrigine( oo );
+		manipulator->setRepX( solver.RepX() );
+		manipulator->setRepY( solver.RepY() );
+		manipulator->setRepZ( solver.RepZ() );
 
 		for( unsigned int v = 0 ; v < modified_vertices.size() ; ++v )
 		{
@@ -657,8 +646,7 @@ public:
 				/// ! Changed ! ///
 				//selected_vertices[v] = false;
 				point_t const & p = modified_vertices[v];
-				qglviewer::Vec ppp = qglviewer::Vec(p[0], p[1], p[2]);
-				manipulator->addPoint( v , ppp );
+				manipulator->addPoint( v , glm::vec3( p[0] , p[1] , p[2] ) );
 			}
 		}
 
@@ -692,10 +680,9 @@ public:
 		int idx;
 		for( unsigned int i = 0 ; i < n_points ; ++i )
 		{
-			qglviewer::Vec ppp;
-			manipulator->getTransformedPoint( i , idx , ppp );
+			manipulator->getTransformedPoint( i , idx , p );
 
-			modified_vertices[ idx ] = point_t( ppp[0] , ppp[1] , ppp[2] );
+			modified_vertices[ idx ] = point_t( p[0] , p[1] , p[2] );
 		}
 
 		if( deformationMode == REALTIME )

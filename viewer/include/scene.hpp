@@ -402,18 +402,6 @@ public:
 	void toggleWireframe();
 	void prepareManipulators();
 
-	/// @brief Update the scene's bounding box with the currently drawn grids.
-	void updateBoundingBox(void);
-
-	/// @brief Sets the governing QGLViewer's camera.
-	void setCamera(qglviewer::Camera* cam) { this->camera = cam; }
-
-	/// @brief Resets the ARAP constraints of the mesh, if any are already set.
-	void resetARAPConstraints();
-
-	void mesh_select_all();
-	void mesh_unselect_all();
-
 private:
 	/// @brief Compile the given shaders, and return the ID of the program generated. On any error, returns 0.
 	GLuint compileShaders(std::string vPath, std::string gPath, std::string fPath, bool verbose = false);
@@ -489,6 +477,8 @@ private:
 	void setupVAOBoundingBox();
 	/// @brief Draw a bounding box
 	void drawBoundingBox(const Image::bbox_t& _box, glm::vec3 color, GLfloat* vMat, GLfloat* pMat);
+	/// @brief Update the scene's bounding box with the currently drawn grids.
+	void updateBoundingBox(void);
 	void updateVisuBoxCoordinates(void);
 
 	/// @brief Stub function to initialize some system-level limits. Currently only fetches max texture size.

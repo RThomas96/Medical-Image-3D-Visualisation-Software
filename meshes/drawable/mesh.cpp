@@ -79,12 +79,6 @@ void DrawableMesh::fastDraw(GLfloat *proj_mat, GLfloat *view_mat, glm::vec4 came
 	this->draw(proj_mat, view_mat, camera);
 }
 
-void DrawableMesh::updateBoundingBox() {
-	auto bb = this->mesh->getBB();
-	this->bounding_box_min = bb[0];
-	this->bounding_box_max = bb[1];
-}
-
 void DrawableMesh::makeVAO(void) {
 	// Fetch the mesh information :
 	auto vertices = this->mesh->getVertices();

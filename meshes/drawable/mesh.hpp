@@ -31,8 +31,6 @@ public:
 	/// @brief Returns a reference to the mesh pointer.
 	virtual Mesh::Ptr& getMesh() { return this->mesh; }
 
-	virtual void updateBoundingBox() override;
-
 protected:
 	/// @brief Create the VAO, the VBOs and upload data
 	void makeVAO(void);
