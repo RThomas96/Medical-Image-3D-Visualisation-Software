@@ -20,6 +20,11 @@
 #include "../../grid/include/input_discrete_grid.hpp"
 #include "../../grid/include/output_discrete_grid.hpp"
 #include "../../grid/include/tetmesh.hpp"
+// Mesh operations :
+#include "../../meshes/operations/arap/Manipulator.h"
+#include "../../meshes/operations/arap/RectangleSelection.h"
+#include "../../meshes/operations/arap/PCATools.h"
+#include "../../meshes/operations/arap/mesh_manip_interface.h"
 // UI elements :
 #include "../../qt/include/grid_control.hpp"
 #include "../../qt/include/grid_detailed_view.hpp"
@@ -41,6 +46,7 @@
 #include <QStatusBar>
 // libQGLViewer :
 #include <QGLViewer/qglviewer.h>
+#include <QGLViewer/camera.h>
 // glm include :
 #include <glm/glm.hpp>
 // STD headers :
@@ -268,10 +274,33 @@ public:
 	/// @brief Allocate a texture conformant with the given settings, but don't fill it with data yet.
 	GLuint newAPI_uploadTexture3D_allocateonly(const TextureUpload& tex);
 
+	// ******************* //
+	//                     //
+	// ARAP Functions !!!! //
+	//                     //
+	// ******************* //
+
 	/// @brief Loads a mesh (OFF) and uploads it to the GL.
 	void loadMesh();
 	/// @brief Loads a curve (OBJ) and uploads it to the GL.
 	void loadCurve();
+
+	/// @brief Slot called when the rectangular selection is used to add vertices.
+	/// @param selection The rectangular area selected by the user, in screen coordinates.
+	/// @param moving Should the vertices be added as movable or fixed handles ?
+	void rectangleSelection_add(QRectF selection, bool moving);
+	/// @brief Slot called when the rectangular selection is used to remove vertices.
+	/// @param selection The selection made by the user.
+	void rectangleSelection_remove(QRectF selection);
+	/// @brief Slot called when the rectangle selection is applied
+	void rectangleSelection_apply();
+	/// @brief Slot called when the manipulator is moved.
+	void arapManipulator_moved();
+	/// @brief Slot called when the manipulator is released.
+	void arapManipulator_released();
+
+	/// @brief Creates the mesh manip interface and the manipulator
+	void initializeARAPInterface();
 
 	/// @brief This performs ARAP deformation on the mesh associated with the first loaded image.
 	/// @note THIS IS A WIP/DRAFT FUNCTION, NOT DESIGNED FOR PRODUCTION RELEASE
@@ -296,6 +325,7 @@ public:
 	void dummy_save_mesh_to_file();
 	/// @brief Save the curve to a file
 	void dummy_save_curve_to_file();
+	void dummy_initialize_arap_manipulation();
 
 	const Mesh::Ptr& getMesh() const { return this->mesh; }
 	const Curve::Ptr& getCurve() const { return this->curve; }
@@ -374,6 +404,15 @@ public:
 
 	/// @brief Update the scene's bounding box with the currently drawn grids.
 	void updateBoundingBox(void);
+
+	/// @brief Sets the governing QGLViewer's camera.
+	void setCamera(qglviewer::Camera* cam) { this->camera = cam; }
+
+	/// @brief Resets the ARAP constraints of the mesh, if any are already set.
+	void resetARAPConstraints();
+
+	void mesh_select_all();
+	void mesh_unselect_all();
 
 private:
 	/// @brief Compile the given shaders, and return the ID of the program generated. On any error, returns 0.
@@ -564,7 +603,18 @@ private:
 	/// Only for ARAP integration testing :
 	///
 	std::vector<std::pair<std::size_t, std::size_t>> mesh_idx_constraints;	  ///< The mesh vertices considered constraints. Pair = <mesh_idx , vertex_idx>
-	std::vector<glm::vec3> image_constraints;	 ///< The positions of those constraints explained abovepositions of those constraints explained above
+	std::vector<glm::vec3> image_constraints;	 ///< The positions of those constraints explained above
+
+	//
+	// Stubs for ARAP manipulation :
+	//
+	std::shared_ptr<MMInterface<glm::vec3>> mesh_interface;
+	std::shared_ptr<SimpleManipulator> arapManipulator;
+	std::shared_ptr<RectangleSelection> rectangleSelection;
+	bool deformation_enabled;
+
+	/// @brief A pointer to the 3D viewer's camera.
+	qglviewer::Camera* camera;
 
 	/// @brief A compiler for the shaders
 	std::unique_ptr<ShaderCompiler> shaderCompiler;

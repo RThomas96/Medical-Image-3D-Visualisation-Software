@@ -33,26 +33,6 @@ public:
 	/// @brief Add a pointer to the status bar, in order to show messages.
 	void addStatusBar(QStatusBar* _sb);
 
-public slots:
-	/// @brief Slot called when the rectangular selection is used to add vertices.
-	/// @param selection The rectangular area selected by the user, in screen coordinates.
-	/// @param moving Should the vertices be added as movable or fixed handles ?
-	void rectangleSelection_add(QRectF selection, bool moving);
-	/// @brief Slot called when the rectangular selection is used to remove vertices.
-	/// @param selection The selection made by the user.
-	void rectangleSelection_remove(QRectF selection);
-	/// @brief Slot called when the rectangle selection is applied
-	void rectangleSelection_apply();
-	/// @brief Slot called when the manipulator is moved.
-	void arapManipulator_moved();
-	/// @brief Slot called when the manipulator is released.
-	void arapManipulator_released();
-
-	/// @brief Creates the mesh manip interface and the manipulator
-	void initializeARAPInterface();
-
-	void toggleDrawARAP();
-
 protected:
 	/// @brief Initializes the scene, and the viewer's variables.
 	virtual void init() override;
@@ -121,14 +101,6 @@ private:
 	std::size_t temp_img_idx;	 ///< The image index if found. WARNING : WE ASSUME IT IS ALWAYS 0, EVEN IF NO IMAGES ARE LOADED
 	glm::vec3 temp_img_pos;	   ///< The position of that image index
 
-	//
-	// Stubs for ARAP manipulation :
-	//
-	std::shared_ptr<MMInterface<glm::vec3>> mesh_interface;
-	std::shared_ptr<SimpleManipulator> arapManipulator;
-	std::shared_ptr<RectangleSelection> rectangleSelection;
-	bool deformation_enabled;
-	bool draw_arap;
 public slots:
 	/// @brief Update the view, as a slot without any arguments (currently only used by QTimer)
 	void updateView() { this->update(); }
@@ -146,11 +118,8 @@ public slots:
 	void alignARAP();
 	void launchARAP();
 	void toggleSelectionMode();
-	void mesh_select_all();
-	void mesh_unselect_all();
 	void printVAOStateNext();
 	void setSphereSize(double);
-	void resetARAPConstraints();
 	void toggleDeformation();
 
 	/// @brief Read the pixel at the screen position given.

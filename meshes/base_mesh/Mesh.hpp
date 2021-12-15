@@ -82,7 +82,7 @@ public:
 		vertices[index] = vertex;
 		this->update();
 	}
-	void setNewVertexPositions(std::vector<glm::vec3>& new_positions) {
+	void setNewVertexPositions(const std::vector<glm::vec3>& new_positions) {
 		this->vertices = new_positions;
 		this->update();
 	}

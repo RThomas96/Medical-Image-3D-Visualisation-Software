@@ -729,6 +729,107 @@ void Scene::updateBoundingBox(void) {
 	return;
 }
 
+void Scene::arapManipulator_moved() {
+	// Change the data in the MMInterface :
+	this->mesh_interface->changed(this->arapManipulator.get());
+	// Update vertex positions :
+	std::vector<glm::vec3> & points = this->mesh->getVertices();
+	auto modified_vertices = this->mesh_interface->get_modified_vertices();
+	for( unsigned int i = 0 ; i < modified_vertices.size() ; i ++ ){
+		points[i] = modified_vertices[i];
+	}
+	// Recompute mesh normals and update :
+	this->mesh->updateQuick(); // (only updates the BB and normals)
+	if (this->curve) {
+		this->curve->deformFromMeshData();
+	}
+	this->mesh_draw->updateBoundingBox();
+	this->updateBoundingBox();
+	this->mesh_draw->updateOnNextDraw();
+}
+
+void Scene::arapManipulator_released() {
+	// update the mesh _and_ its kd-tree !
+	this->mesh->update();
+	this->mesh_draw->updateBoundingBox();
+	this->updateBoundingBox();
+	this->mesh_draw->updateOnNextDraw();
+}
+
+void Scene::initializeARAPInterface() {
+	if (this->arapManipulator == nullptr) {
+		this->arapManipulator = std::make_shared<SimpleManipulator>();
+		QObject::connect(this->arapManipulator.get(), &SimpleManipulator::moved, this, &Scene::arapManipulator_moved);
+		QObject::connect(this->arapManipulator.get(), &SimpleManipulator::mouseReleased, this, &Scene::arapManipulator_released);
+		this->arapManipulator->setDisplayScale(this->camera->sceneRadius()/9.);
+		std::cerr << "Initialized arap manipulator.\n";
+	}
+	if (this->rectangleSelection == nullptr) {
+		this->rectangleSelection = std::make_shared<RectangleSelection>();
+		QObject::connect(this->rectangleSelection.get(), &RectangleSelection::add, this, &Scene::rectangleSelection_add);
+		QObject::connect(this->rectangleSelection.get(), &RectangleSelection::apply, this, &Scene::rectangleSelection_apply);
+		QObject::connect(this->rectangleSelection.get(), &RectangleSelection::remove, this, &Scene::rectangleSelection_remove);
+		std::cerr << "Initialized rectangle selection.\n";
+	}
+	if (this->mesh_interface == nullptr) {
+		this->mesh_interface = std::make_shared<MMInterface<glm::vec3>>();
+	}
+	this->mesh_interface->clear();
+	this->mesh_interface->setMode(MeshModificationMode::REALTIME);
+	this->mesh_interface->loadAndInitialize(this->mesh->getVertices(), this->mesh->getTriangles());
+	std::cerr << "Initialized mesh interface.\n";
+}
+
+void Scene::resetARAPConstraints() {
+	if (this->arapManipulator == nullptr) { return; }
+	this->mesh_interface->clear_selection();
+	this->arapManipulator->clear();
+}
+
+void Scene::mesh_select_all() {
+	if (this->mesh_interface) {
+		this->mesh_interface->select_all();
+	}
+}
+
+void Scene::mesh_unselect_all() {
+	if (this->mesh_interface) {
+		this->mesh_interface->unselect_all();
+	}
+}
+
+void Scene::rectangleSelection_add(QRectF selection, bool moving) {
+	if (this->mesh_interface == nullptr) { return; }
+	if (this->arapManipulator && this->arapManipulator->getEtat()) {this->arapManipulator->deactivate(); }
+
+	float modelview[16];
+	this->camera->getModelViewMatrix(modelview);
+	float projection[16];
+	this->camera->getProjectionMatrix(projection);
+
+	this->mesh_interface->select(selection , modelview, projection, moving);
+}
+
+void Scene::rectangleSelection_remove(QRectF selection) {
+	if (this->mesh_interface == nullptr) { return; }
+	if (this->arapManipulator && this->arapManipulator->getEtat()) {
+		this->arapManipulator->deactivate();
+	}
+
+	float modelview[16];
+	this->camera->getModelViewMatrix(modelview);
+	float projection[16];
+	this->camera->getProjectionMatrix(projection);
+
+	this->mesh_interface->unselect(selection , modelview, projection);
+}
+
+void Scene::rectangleSelection_apply() {
+	if (this->mesh_interface == nullptr) { std::cerr << "Applying rectangle to nothing.\n"; return; }
+	std::cerr << "Applying rectangle selection ...\n";
+	this->mesh_interface->computeManipulatorForSelection(this->arapManipulator.get());
+}
+
 void Scene::dummy_apply_alignment_before_arap() {
 #ifdef NEED_ARAP
 	if (this->mesh == nullptr) {
@@ -797,43 +898,35 @@ void Scene::dummy_apply_alignment_before_arap() {
 }
 
 void Scene::dummy_perform_constrained_arap_on_image_mesh() {
-#ifdef NEED_ARAP
 	if (this->mesh == nullptr) {
 		std::cerr << "Error : no meshes loaded.\n";
 		return;
 	}
-	auto mesh_to_deform = this->mesh_draw;
 	if (this->mesh_draw == nullptr) {
 		std::cerr << "Error : DrawableMesh not initialized.\n";
 		return;
 	}
+	if (this->mesh_interface == nullptr) {
+		std::cerr << "Error : no manip interface initialized !!!\n";
+		return;
+	}
+	auto mesh_to_deform = this->mesh_draw;
 	std::shared_ptr<Mesh> _mesh = this->mesh;
 
-	AsRigidAsPossible arap_deformation;
-	arap_deformation.clear();
-	arap_deformation.init(_mesh->getVertices(), _mesh->getTriangles());
-	arap_deformation.setIterationNb(5);	   // 5 iterations maximum
-
 	std::cerr << "Generating vertex handles ..." << '\n';
-	std::vector<bool> handles(_mesh->getVertices().size(), false);
-	std::vector<glm::vec3> targets(_mesh->getVertices());
+	std::vector<std::pair<int, glm::vec3>> arap_handles;
 	for (std::size_t i = 0; i < this->mesh_idx_constraints.size(); ++i) {
-		auto constraint = this->mesh_idx_constraints[i];
-		auto position	= this->image_constraints[i];
-		// NOTE : Always performed on the first mesh !!! So only filter through those with index 0.
-		handles[constraint.second] = true;
-		targets[constraint.second] = position;
+		arap_handles.emplace_back(this->mesh_idx_constraints[i].second, this->image_constraints[i]);
 	}
 	std::cerr << "Generated vertex handles." << '\n';
 
 	std::cerr << "Setting handles on ARAP ...\n";
-	arap_deformation.setHandles(handles);
 	std::cerr << "Computing constrained ARAP ...\n";
-	arap_deformation.compute_deformation(targets);
+	this->mesh_interface->changedConstraints(arap_handles);
 	std::cerr << "Computed constrained ARAP. Propagating vertex positions ...\n";
 
-	_mesh->setNewVertexPositions(targets);
-	_mesh->update();
+	this->mesh->setNewVertexPositions(this->mesh_interface->get_modified_vertices());
+	this->mesh->update();
 
 	this->updateBoundingBox();
 	std::cerr << "Finished.\n";
@@ -843,9 +936,6 @@ void Scene::dummy_perform_constrained_arap_on_image_mesh() {
 		this->curve->deformFromMeshData();
 		this->curve_draw->updateOnNextDraw();
 	}
-#else
-	std::cerr << "[ERROR]: ARAP cannot be compiled on Linux yet. Operation canceled" << std::endl;
-#endif
 }
 
 void Scene::dummy_add_image_constraint(std::size_t img_idx, glm::vec3 img_pos) {
@@ -1219,6 +1309,11 @@ void Scene::loadMesh() {
 		return;
 	}
 
+	if (this->mesh != nullptr) {
+		// TODO : free up the mesh structure here
+		// TODO : delete it also from the GPU
+	}
+
 	std::shared_ptr<Mesh> mesh_to_load = nullptr;
 	// Create a mesh structure :
 	mesh_to_load   = std::make_shared<Mesh>();
@@ -1270,6 +1365,8 @@ void Scene::loadMesh() {
 		}
 		// the user didn't want to pair the image with a grid, do nothing else.
 	}
+
+	this->initializeARAPInterface();
 
 	// Insert it into the meshes to initialize :
 	this->to_init.emplace(mesh_drawable);
