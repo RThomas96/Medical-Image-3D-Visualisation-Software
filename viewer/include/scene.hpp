@@ -284,7 +284,11 @@ public:
 	void loadMesh();
 	/// @brief Loads a curve (OBJ) and uploads it to the GL.
 	void loadCurve();
+	/// @brief Sets the corresponding viewer so that we can access it inside the class.
 	void setViewer(Viewer* parent) { this->viewer = parent; }
+
+	/// @brief Updates the mesh _and_ the curve, if both are loaded
+	void updateMeshAndCurve();
 
 	/// @brief This performs ARAP deformation on the mesh associated with the first loaded image.
 	/// @note THIS IS A WIP/DRAFT FUNCTION, NOT DESIGNED FOR PRODUCTION RELEASE
@@ -309,7 +313,8 @@ public:
 	void dummy_save_mesh_to_file();
 	/// @brief Save the curve to a file
 	void dummy_save_curve_to_file();
-	void dummy_initialize_arap_manipulation();
+	/// @brief Loads the constraints for the currently loaded mesh from a file
+	void dummy_loadConstraintsFromFile();
 
 	std::shared_ptr<MMInterface<glm::vec3>> getMeshInterface() const { return this->mesh_interface; }
 	std::shared_ptr<SimpleManipulator> getManipulator() const { return this->arapManipulator; }
@@ -422,8 +427,6 @@ private:
 
 	/// @brief Resize the mesh for the loaded image, or the other way around.
 	void resizeMeshForGrid();
-
-	void updateMeshAndCurve();
 
 	/// @brief Test function to print all the new uniforms in the
 	void newSHADERS_print_all_uniforms(GLuint program);
@@ -588,6 +591,10 @@ private:
 	std::shared_ptr<SimpleManipulator> arapManipulator;
 	std::shared_ptr<RectangleSelection> rectangleSelection;
 	Viewer* viewer;
+
+	std::string arap_mesh_file_path;
+	std::string arap_mesh_file_name;
+	std::string arap_mesh_file_constraints;
 
 	/// @brief A pointer to the 3D viewer's camera.
 	qglviewer::Camera* camera;

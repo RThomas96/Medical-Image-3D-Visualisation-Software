@@ -104,7 +104,8 @@ public:
 		if( this->selectionMode_ == INACTIVE || this->selectionMode_ == ACTIVE )
 			return;
 
-		glDisable( GL_CLIP_PLANE0 );
+		bool enable_clip = glIsEnabled(GL_CLIP_PLANE0);
+		if (enable_clip) { glDisable(GL_CLIP_PLANE0); }
 
 		float viewport[4];
 		glGetFloatv( GL_VIEWPORT , viewport );
@@ -162,7 +163,7 @@ public:
 		glEnable(GL_LIGHTING);
 		glEnable(GL_DEPTH_TEST);
 
-		glEnable( GL_CLIP_PLANE0 );
+		if (enable_clip) { glEnable( GL_CLIP_PLANE0 ); }
 	}
 
 public Q_SLOTS:

@@ -194,8 +194,8 @@ void Viewer::arapManipulator_moved() {
 		points[i] = modified_vertices[i];
 	}
 	// Recompute mesh normals and update :
-	this->scene->getMesh()->recomputeNormals();
-	this->scene->getDrawableMesh()->updateOnNextDraw();
+	this->scene->getMesh()->updateQuick();
+	this->scene->updateMeshAndCurve();
 	this->update();
 }
 
@@ -373,7 +373,19 @@ glm::vec4 Viewer::readPositionFromFramebuffer() {
 void Viewer::toggleDeformation() {
 	if (this->scene->getMeshInterface() == nullptr) { return; }
 	this->deformation_enabled = not this->deformation_enabled;
-	if (this->statusBar) { this->statusBar->showMessage("Enabled deformation", 1000); }
+	QString mesg = "Disabled ";
+	if (this-deformation_enabled) { mesg = "Enabled "; }
+	if (this->statusBar) { this->statusBar->showMessage(mesg+"deformation", 1000); }
+
+	emit this->enableDeformationPanel(this->deformation_enabled);
+}
+
+void Viewer::resetDeformation() {
+	if (this->scene->getMeshInterface() == nullptr) {
+		return;
+	}
+	this->deformation_enabled = false;
+	emit this->enableDeformationPanel(this->deformation_enabled);
 }
 
 void Viewer::mousePressEvent(QMouseEvent* e) {
@@ -642,7 +654,6 @@ QString Viewer::mouseString() const {
 
 void Viewer::updateCameraPosition() {
 	auto bb		= this->scene->getSceneBoundingBox();
-	bb.printInfo("Scene BB for camera update !!!");
 	auto center = bb.getMin() + (bb.getDiagonal() / 2.f);
 	auto radius = glm::length(bb.getDiagonal());
 	this->setSceneCenter(qglviewer::Vec(center.x, center.y, center.z));
@@ -688,6 +699,7 @@ void Viewer::loadMeshToScene() {
 	this->makeCurrent();
 	this->scene->loadMesh();
 	this->doneCurrent();
+	this->resetDeformation();
 	this->updateInfoFromScene();
 
 	auto cam = this->camera()->position();

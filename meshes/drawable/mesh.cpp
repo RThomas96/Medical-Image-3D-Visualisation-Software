@@ -43,7 +43,6 @@ void DrawableMesh::initialize(QOpenGLContext *_context, ShaderCompiler::GLFuncti
 	compiler->vertexShader_file("../new_shaders/base_mesh.vert").fragmentShader_file("../new_shaders/base_mesh.frag");
 	if (compiler->compileShaders()) {
 		this->program_handle_draw = compiler->programName();
-		std::cerr << __PRETTY_FUNCTION__ << " : Program name is " << this->program_handle_draw << '\n';
 	} else {
 		std::cerr << "Error while building shaders for drawable mesh.\n"
 				  << compiler->errorString() << "\n";

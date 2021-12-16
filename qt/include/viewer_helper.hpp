@@ -15,7 +15,7 @@ public:
 	void init();
 	void initSignals();
 public slots:
-	void toggleDeformationButtons();
+	void toggleDeformationButtons(bool is_enabled);
 protected:
 	Viewer* viewer;
 

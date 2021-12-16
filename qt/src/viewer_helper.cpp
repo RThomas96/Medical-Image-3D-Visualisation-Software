@@ -40,6 +40,8 @@ void ViewerHelper::init() {
 	QObject::connect(this->button_reset_arap, &QPushButton::pressed, this->viewer, &Viewer::resetARAPConstraints);
 	QObject::connect(this->button_enable_def, &QPushButton::pressed, this->viewer, &Viewer::toggleDeformation);
 	QObject::connect(sphere_size_slider, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this->viewer, &Viewer::setSphereSize);
+	// Connect the button press of 'Enable deformation' with the actual action of enabling the deformation :
+	QObject::connect(this->viewer, &Viewer::enableDeformationPanel, this, &ViewerHelper::toggleDeformationButtons);
 
 	buttons->addWidget(header);
 	buttons->addWidget(this->button_selection);
@@ -48,27 +50,24 @@ void ViewerHelper::init() {
 	buttons->addWidget(this->button_vaoState);
 	buttons->addWidget(sphere_size_slider);
 	buttons->addWidget(arap);
+	buttons->addWidget(this->button_enable_def);
 	buttons->addWidget(this->button_select_all);
 	buttons->addWidget(this->button_unselect_all);
 	buttons->addWidget(this->button_alignARAP);
 	buttons->addWidget(this->button_launchARAP);
 	buttons->addWidget(this->button_reset_arap);
-	buttons->addWidget(this->button_enable_def);
 
 	this->setLayout(buttons);
 
-	this->toggleDeformationButtons();
+	this->toggleDeformationButtons(false);
 }
 
-void ViewerHelper::toggleDeformationButtons() {
-	bool should_enable = this->button_select_all->isEnabled();
-
-	this->button_select_all->setEnabled(not should_enable);
-	this->button_unselect_all->setEnabled(not should_enable);
-	this->button_alignARAP->setEnabled(not should_enable);
-	this->button_launchARAP->setEnabled(not should_enable);
-	this->button_reset_arap->setEnabled(not should_enable);
-	//this->button_enable_def->setEnabled(not should_enable);
+void ViewerHelper::toggleDeformationButtons(bool should_enable) {
+	this->button_select_all->setEnabled(should_enable);
+	this->button_unselect_all->setEnabled(should_enable);
+	this->button_alignARAP->setEnabled(should_enable);
+	this->button_launchARAP->setEnabled(should_enable);
+	this->button_reset_arap->setEnabled(should_enable);
 }
 
 void ViewerHelper::initSignals() {

@@ -151,6 +151,10 @@ Scene::Scene() :
 
 	this->viewer = nullptr;
 
+	this->arap_mesh_file_name = "";
+	this->arap_mesh_file_path = "";
+	this->arap_mesh_file_constraints = "";
+
 	this->newGrids.clear();
 }
 
@@ -938,12 +942,32 @@ bool Scene::dummy_check_point_in_mesh_bb(glm::vec3 query, std::size_t& mesh_inde
 	return false;
 }
 
-void Scene::dummy_initialize_arap_manipulation() {
-	if (this->mesh_interface == nullptr) {
-		this->mesh_interface = std::make_shared<MMInterface<glm::vec3>>();
-	} else {
-		//
+void Scene::dummy_loadConstraintsFromFile() {
+	if (this->mesh == nullptr) { return; }
+	if (this->mesh_interface == nullptr) { return; }
+	if (this->arap_mesh_file_constraints.empty()) { return; }
+
+	// The file path doesn't have the separator, and I don't have the heart to make
+	// a platform-dependant bit of code just to add it, when Qt already does it. So:
+	QString full_name = QString(this->arap_mesh_file_path.c_str()) + QDir::separator() +
+						QString(this->arap_mesh_file_constraints.c_str());
+
+	std::ifstream constraint_file(full_name.toStdString());
+	if (not constraint_file.is_open()) {
+		std::cerr << "Error ! The constraint file could not be opened.\n";
 	}
+
+	// Read the file like an off file :
+	while (not constraint_file.eof()) {
+		std::size_t constraint = 0;
+		constraint_file >> constraint;
+		std::cerr << "Adding constraint " << constraint << " to mesh ...";
+		this->mesh_idx_constraints.push_back(std::make_pair(0, constraint));
+	}
+
+	constraint_file.close();
+
+	// Maybe update the mesh interface now ?
 }
 
 void Scene::dummy_save_mesh_to_file() {
@@ -1028,13 +1052,9 @@ void Scene::updateMeshAndCurve() {
 		}
 
 		if (this->mesh_interface == nullptr) {
-			std::cerr << "Initializing the mesh interface !!!\n";
+			std::cerr << "Initializing the manipulator and rectangle selection !\n";
 			this->rectangleSelection = std::make_shared<RectangleSelection>();
-			//QObject::connect(this->rectangleSelection.get(), &RectangleSelection::add)
 			this->arapManipulator = std::make_shared<SimpleManipulator>();
-			this->mesh_interface = std::make_shared<MMInterface<glm::vec3>>();
-			this->mesh_interface->setMode(MeshModificationMode::REALTIME);
-
 			if (this->viewer) {
 				QObject::connect(this->rectangleSelection.get(), &RectangleSelection::add, this->viewer, &Viewer::rectangleSelection_add);
 				QObject::connect(this->rectangleSelection.get(), &RectangleSelection::remove, this->viewer, &Viewer::rectangleSelection_remove);
@@ -1043,11 +1063,16 @@ void Scene::updateMeshAndCurve() {
 				QObject::connect(this->arapManipulator.get(), &SimpleManipulator::moved, this->viewer, &Viewer::arapManipulator_moved);
 				QObject::connect(this->arapManipulator.get(), &SimpleManipulator::mouseReleased, this->viewer, &Viewer::arapManipulator_released);
 			}
+
+			std::cerr << "Initializing the mesh interface !!!\n";
+			this->mesh_interface = std::make_shared<MMInterface<glm::vec3>>();
+			this->mesh_interface->setMode(MeshModificationMode::REALTIME);
+			this->mesh_interface->clear();
+			// Re-initialize the mesh interface data with the new data !
+			this->mesh_interface->loadAndInitialize(this->mesh->getVertices(), this->mesh->getTriangles());
 		}
-		this->mesh_interface->clear();
-		// Re-initialize the mesh interface data with the new data !
-		this->mesh_interface->loadAndInitialize(this->mesh->getVertices(), this->mesh->getTriangles());
 	}
+	this->updateBoundingBox();
 }
 
 void Scene::recompileShaders(bool verbose) {
@@ -1329,6 +1354,12 @@ void Scene::loadMesh() {
 		this->curve.reset();
 		this->curve_draw.reset();
 	}
+
+
+	QFileInfo mesh_file_info(file_name);
+	this->arap_mesh_file_path = mesh_file_info.absolutePath().toStdString();
+	this->arap_mesh_file_name = mesh_file_info.fileName().toStdString();
+	this->arap_mesh_file_constraints = this->arap_mesh_file_name + ".constraints";
 
 	// Create a mesh structure :
 	this->mesh   = std::make_shared<Mesh>();

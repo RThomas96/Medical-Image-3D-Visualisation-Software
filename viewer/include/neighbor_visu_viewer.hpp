@@ -154,6 +154,11 @@ public slots:
 	void updateManipulatorsPositions(void);
 
 	void toggleManipulators(void);
+
+	void resetDeformation(void);
+
+signals:
+	void enableDeformationPanel(bool should_enable);
 };
 
 #endif	  // VIEWER_INCLUDE_NEIGHBOR_VISU_VIEWER_HPP_
