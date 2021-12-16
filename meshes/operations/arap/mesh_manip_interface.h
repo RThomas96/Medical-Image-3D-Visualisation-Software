@@ -696,7 +696,7 @@ public:
 	void changedConstraints( std::vector<std::pair<int, point_t> > & input_def )
 	{
 		glm::vec3 p;
-		std::vector<bool> handles (false, vertices.size() );
+		std::vector<bool> handles (vertices.size() , false);
 
 		for( unsigned int i = 0 ; i < input_def.size() ; ++i )
 		{

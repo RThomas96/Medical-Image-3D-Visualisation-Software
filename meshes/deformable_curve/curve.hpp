@@ -30,12 +30,17 @@ public:
 
 	std::vector<glm::vec3> getBB() { return std::vector<glm::vec3>{this->bb_min, this->bb_max}; }
 
+	void setPositions(std::vector<glm::vec3>& positions);
+
 	void deformFromMeshData();
 	void update();
 
 	[[nodiscard]] const Mesh::Ptr getMesh() const { return this->mesh_cage; }
 	[[nodiscard]] const std::vector<glm::vec3>& getPositions() const { return this->positions; }
 	[[nodiscard]] const std::vector<std::vector<std::pair<std::size_t, float>>>& getWeights() const { return this->phi; }
+
+protected:
+	void computeWeightsFromMeshData();
 
 protected:
 	/// @brief Updated curve positions

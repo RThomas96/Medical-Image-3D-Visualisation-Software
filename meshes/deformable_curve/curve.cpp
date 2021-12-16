@@ -57,6 +57,12 @@ Curve::Ptr openCurveFromOBJ(std::string& filename, std::shared_ptr<Mesh>& mesh) 
 	return std::make_shared<Curve>(mesh, vertex_positions, phi);
 }
 
+void Curve::setPositions(std::vector<glm::vec3>& newpositions) {
+	this->positions = newpositions;
+	this->computeWeightsFromMeshData();
+	this->update();
+}
+
 void Curve::deformFromMeshData() {
 	std::cerr << "Updating data from Mesh to curve ...\n";
 
@@ -96,4 +102,52 @@ void Curve::update() {
 	}
 
 	return;
+}
+
+void Curve::computeWeightsFromMeshData() {
+	std::vector<std::vector<std::pair<std::size_t, float>>> new_phi;
+
+	// Convert mesh triangles to a series of vectors :
+	std::vector<std::vector<std::size_t>> cageTriangles;
+
+	for (std::size_t i = 0; i < this->mesh_cage->getTriangles().size(); i++)
+	{
+		std::vector<std::size_t> currentTriangle;
+
+		currentTriangle.push_back(this->mesh_cage->getTriangles()[i].getVertex(0));
+		currentTriangle.push_back(this->mesh_cage->getTriangles()[i].getVertex(1));
+		currentTriangle.push_back(this->mesh_cage->getTriangles()[i].getVertex(2));
+
+		cageTriangles.push_back(currentTriangle);
+	}
+
+	std::cout << "Triangles container modified" << std::endl;
+
+	// containers to stock the coordinates
+	std::vector<std::pair<std::size_t, float>> _phi;
+	const auto& vertex_positions = this->positions;
+
+	for (std::size_t i = 0; i < vertex_positions.size(); i++)
+	{
+		MVCCoords::computeMVCCoordinatesOf3dPoint(vertex_positions[i], cageTriangles, this->mesh_cage->getVertices(), this->mesh_cage->getNormals(), _phi);
+		phi.push_back(_phi);
+	}
+
+	std::cout << "Cage coordinates calculated" << std::endl;
+
+	// Check the curve
+	glm::vec3 vertexSum;
+	glm::vec3 normalSum;
+	glm::vec3 sum;
+
+	for (std::size_t j = 0; j < phi[0].size(); j++)
+	{
+		vertexSum = vertexSum + phi[0][j].second * this->mesh_cage->getVertices()[phi[0][j].first];
+	}
+
+	sum = vertexSum;
+
+	std::cout << "Coordonees du premier point sans tranformation de la cage : " << sum << std::endl;
+
+	this->phi = new_phi;
 }

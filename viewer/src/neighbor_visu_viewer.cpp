@@ -111,7 +111,7 @@ void Viewer::draw() {
 	std::vector<glm::vec3> spheres_to_draw(this->spheres);
 	std::size_t s;
 	auto mesh_ctx = this->scene->dummy_get_loaded_constraint_positions();
-	spheres_to_draw.insert(spheres_to_draw.end(), mesh_ctx.cbegin(), mesh_ctx.cend());
+	std::move(mesh_ctx.begin(), mesh_ctx.end(), std::back_inserter(spheres_to_draw));
 	if (this->scene->dummy_check_point_in_mesh_bb(this->temp_sphere_position, s)) {
 		spheres_to_draw.push_back(this->temp_sphere_position);
 	}
@@ -126,13 +126,19 @@ void Viewer::draw() {
 	if (this->scene->getMeshInterface()) {
 		this->scene->getMeshInterface()->drawSelectedVertices();
 		this->scene->getManipulator()->draw();
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glEnable(GL_BLEND);
+		//this->scene->glEnablei(GL_BLEND, 0);
 		this->scene->getRectangleSelection()->draw();
+		//this->scene->glDisablei(GL_BLEND, 0);
 		glDisable(GL_BLEND);
 	}
 	if (is_color_enabled) { this->scene->glEnable(GL_COLOR_MATERIAL); }
 	if (is_light_enabled) { this->scene->glEnable(GL_LIGHTING); }
 }
+
+void Viewer::saveMesh() { this->scene->dummy_save_mesh_to_file(); }
+void Viewer::saveCurve() { this->scene->dummy_save_curve_to_file(); }
 
 void Viewer::rectangleSelection_add(QRectF selection, bool moving) {
 	if (this->scene->getMeshInterface() == nullptr) { return; }
@@ -318,6 +324,8 @@ void Viewer::keyPressEvent(QKeyEvent* e) {
 				if (this->scene->dummy_check_point_in_mesh_bb(this->temp_sphere_position, dumb)) {
 					this->scene->dummy_add_arap_constraint_mesh(this->temp_mesh_idx, this->temp_mesh_vtx_idx);
 					this->spheres.push_back(this->temp_sphere_position);
+				} else {
+					std::cerr << "Error : point was not in mesh BB :(\n";
 				}
 			}
 			// Ctrl-Enter adds the current image position as the image constraint for ARAP
@@ -338,6 +346,10 @@ void Viewer::keyPressEvent(QKeyEvent* e) {
 			// cap the smallest size at 1x10^-3
 			this->sphere_size = std::max(1e-3f, this->sphere_size);
 			std::cerr << "Sphere size now at : " << std::setprecision(5) << this->sphere_size << '\n';
+			break;
+		case Qt::Key::Key_Space:
+			// Done here in order to prevent a segfault.
+			std::cerr << "Segfault avoided.\n";
 			break;
 		/*
 		Default handler.
@@ -402,6 +414,7 @@ void Viewer::mousePressEvent(QMouseEvent* e) {
 		e->accept();	// stop the event from propagating upwards !
 		return;
 	}
+
 	// here we check for rectangleSelection but the rest of the mesh manip interface is also initialized (since they're all created together)
 	if (this->scene->getRectangleSelection() && this->deformation_enabled) {
 		if (e->modifiers() & Qt::KeyboardModifier::ShiftModifier) {
@@ -416,7 +429,7 @@ void Viewer::mousePressEvent(QMouseEvent* e) {
 			if (e->button() == Qt::MouseButton::MiddleButton) {
 				std::cout << "CTRL+Mid" << std::endl;
 				this->scene->getManipulator()->clear();
-				this->scene->getManipulator()->setDisplayScale(camera()->sceneRadius()/9.);
+				this->scene->getManipulator()->setDisplayScale(camera()->sceneRadius()/5.f);
 				this->scene->getMeshInterface()->make_selected_fixed_handles();
 			} else if (e->button() == Qt::MouseButton::LeftButton) {
 				bool found;
@@ -424,7 +437,7 @@ void Viewer::mousePressEvent(QMouseEvent* e) {
 				if( point.w > 0.1f ){
 					std::cout << "Manip" << std::endl;
 					this->scene->getManipulator()->clear();
-					this->scene->getManipulator()->setDisplayScale(camera()->sceneRadius()/9.);
+					this->scene->getManipulator()->setDisplayScale(camera()->sceneRadius()/5.f);
 					this->scene->getMeshInterface()->make_fixed_handles(glm::vec3(point[0], point[1], point[2]), this->sphere_size);
 				}
 			} else if (e->button() == Qt::MouseButton::RightButton) {
@@ -432,7 +445,7 @@ void Viewer::mousePressEvent(QMouseEvent* e) {
 				glm::vec4 point = this->readPositionFromFramebuffer();
 				if( point.w > 0.1f ){
 					this->scene->getManipulator()->clear();
-					this->scene->getManipulator()->setDisplayScale(camera()->sceneRadius()/9.);
+					this->scene->getManipulator()->setDisplayScale(camera()->sceneRadius()/5.f);
 					this->scene->getMeshInterface()->select(glm::vec3(point[0], point[1], point[2]), this->sphere_size );
 				}
 			}

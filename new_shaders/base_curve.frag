@@ -11,6 +11,6 @@ layout(location = 1) out vec4 worldPosition;
 void main() {
 	gl_FragDepth = .001f;
 	vec3 base_normal = abs(normal.xyz / 1.5f);
-	color = vec4(base_normal, 1.f);
+	color = vec4(1.f, .0f, .0f, 1.f);
 	worldPosition = position;
 }

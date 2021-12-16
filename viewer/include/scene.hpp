@@ -317,6 +317,8 @@ public:
 	void dummy_loadConstraintsFromFile();
 	/// @brief Returns the positions of the mesh constraints, when loaded in.
 	std::vector<glm::vec3> dummy_get_loaded_constraint_positions() const;
+	/// @brief From the loaded mesh/curve combo, load another curve and match their lengths.
+	void dummy_resize_curve_to_match_other_curve();
 
 	std::shared_ptr<MMInterface<glm::vec3>> getMeshInterface() const { return this->mesh_interface; }
 	std::shared_ptr<SimpleManipulator> getManipulator() const { return this->arapManipulator; }

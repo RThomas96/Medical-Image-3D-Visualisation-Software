@@ -148,6 +148,9 @@ public slots:
 	void loadMeshToScene();
 	void loadCurveToScene();
 
+	void saveMesh();
+	void saveCurve();
+
 	/// @brief Read the pixel at the screen position given.
 	glm::vec4 readPositionFromFramebuffer();
 

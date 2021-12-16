@@ -28,6 +28,8 @@ protected:
 	QPushButton* button_unselect_all;
 	QPushButton* button_reset_arap;
 	QPushButton* button_enable_def;
+	QPushButton* button_save_mesh;
+	QPushButton* button_save_curve;
 };
 
 

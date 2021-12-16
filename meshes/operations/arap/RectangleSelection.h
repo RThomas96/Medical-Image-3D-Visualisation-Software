@@ -120,7 +120,12 @@ public:
 		glDisable(GL_LIGHTING);
 		glEnable(GL_BLEND);
 
-		glPolygonMode( GL_FRONT_AND_BACK , GL_FILL );
+		float f;
+		glGetFloatv(GL_LINE_WIDTH, &f);
+		GLint poly_mode;
+		glGetIntegerv(GL_POLYGON_MODE, &poly_mode);
+		glLineWidth(2.f);
+		glPolygonMode( GL_FRONT_AND_BACK , GL_LINE );
 
 		glMatrixMode( GL_PROJECTION );
 		glPushMatrix();
@@ -153,6 +158,9 @@ public:
 		glVertex2f( right , bottom );
 		glVertex2f( right , top );
 		glEnd();
+
+		glLineWidth(f);
+		glPolygonMode(GL_FRONT_AND_BACK, poly_mode);
 
 		glPopMatrix();
 		glMatrixMode( GL_PROJECTION );

@@ -947,9 +947,8 @@ bool Scene::dummy_check_point_in_mesh_bb(glm::vec3 query, std::size_t& mesh_inde
 }
 
 void Scene::dummy_loadConstraintsFromFile() {
-	if (this->mesh == nullptr) { return; }
-	if (this->mesh_interface == nullptr) { return; }
-	if (this->arap_mesh_file_constraints.empty()) { return; }
+	if (this->mesh == nullptr) { std::cerr << "Error : mesh not loaded !\n"; return; }
+	if (this->arap_mesh_file_constraints.empty()) { std::cerr << "Error : mesh file not valid !\n"; return; }
 
 	// The file path doesn't have the separator, and I don't have the heart to make
 	// a platform-dependant bit of code just to add it, when Qt already does it. So:
@@ -958,18 +957,30 @@ void Scene::dummy_loadConstraintsFromFile() {
 
 	std::cerr << "Attempting to load constraint file \"" << full_name.toStdString() << "\" ...\n";
 
-	std::ifstream constraint_file(full_name.toStdString());
+	if (not QFileInfo::exists(full_name)) {
+		std::cerr << "Error : The file does not exist (Qt said so).\n";
+		return;
+	}
+
+	std::ifstream constraint_file(full_name.toStdString(), std::ios_base::in | std::ios_base::binary);
 	if (not constraint_file.is_open()) {
 		std::cerr << "Error ! The constraint file could not be opened.\n";
+		return;
 	}
 
 	// Read the file like an off file :
-	while (not constraint_file.eof()) {
+	while (constraint_file && not constraint_file.eof()) {
 		std::size_t constraint = 0;
 		constraint_file >> constraint;
 		std::cerr << "Adding constraint " << constraint << " to mesh ...";
 		this->mesh_idx_constraints.emplace_back(std::make_pair(0, constraint));
 	}
+
+	std::cerr << "After constraint reading, constraints are : {";
+	for (auto constraint : this->mesh_idx_constraints) {
+		std::cerr << constraint.second << " , ";
+	}
+	std::cerr << "}\n";
 
 	constraint_file.close();
 
@@ -1005,7 +1016,7 @@ void Scene::dummy_save_mesh_to_file() {
 	myfile << (vertices.size()) << " " << triangles.size() << " 0" << std::endl;
 
 	for( unsigned int v = 0 ; v < vertices.size() ; ++v ) {
-		myfile << (vertices[v]) << std::endl;
+		myfile << vertices[v].x << " " << vertices[v].y << " " << vertices[v].z << std::endl;
 	}
 	for( unsigned int t = 0 ; t < triangles.size() ; ++t ) {
 		myfile << "3 " << (triangles[t][0]) << " " << (triangles[t][1]) << " " << (triangles[t][2]) << std::endl;
@@ -1038,11 +1049,67 @@ void Scene::dummy_save_curve_to_file() {
 	// Only have vertices in the curve !
 	auto vertices = this->curve->getPositions();
 	for( unsigned int v = 0 ; v < vertices.size() ; ++v ) {
-		myfile << "v " << (vertices[v]) << std::endl;
+		myfile << "v " << vertices[v].x << " " << vertices[v].y << " " << vertices[v].z << std::endl;
 	}
 
 	myfile.close();
 	return;
+}
+
+void Scene::dummy_resize_curve_to_match_other_curve() {
+	if (this->mesh == nullptr) { return; }
+	if (this->curve == nullptr) { return; }
+	std::cerr << "Loading another curve file ...\n";
+
+	// load the other curve :
+	QString file_name = QFileDialog::getOpenFileName(nullptr, "Open a Curve file (OBJ)", QString(), "OBJ files (*.obj)");
+	if (file_name.isEmpty() || not QFileInfo::exists(file_name)) {
+		std::cerr << "Error : nothing to open.\nFile path given : \"" << file_name.toStdString() << "\"\n";
+		return;
+	}
+
+	// Read points :
+	std::vector<glm::vec3> other_curve_positions;
+	std::vector<Triangle> other_curve_triangles;
+	FileIO::objLoader(file_name.toStdString(), other_curve_positions, other_curve_triangles);
+
+	const auto positions = this->curve->getPositions();
+	if (positions.size() != other_curve_positions.size()) {
+		std::cerr << "Warning : both curves don't have the same number of points !\n";
+	}
+
+	// Get the curve lengths
+	std::vector<float> current_curve_lengths(positions.size() - 1, .0f);
+	std::vector<float> other_curve_lengths(other_curve_positions.size() - 1, .0f);
+	for (std::size_t i = 0; i < other_curve_lengths.size() && i < current_curve_lengths.size(); ++i) {
+		current_curve_lengths[i] = glm::length(positions[i+1] - positions[i]);
+		other_curve_lengths[i] = glm::length(other_curve_positions[i+1] - other_curve_positions[i]);
+	}
+
+	std::cerr << "Got both curves' lengths. Building new curve CPs ...\n";
+
+	std::vector<glm::vec3> new_positions(positions.size(), glm::vec3{});
+	new_positions[0] = positions[0];
+	// Resize them according to their tangent :
+	for (std::size_t i = 1; i < current_curve_lengths.size(); ++i) {
+		// TODO : we're not computing tangents here but directions. Change that.
+		glm::vec3 current_tangent = positions[i] - positions[i-1];
+		float factor = 1.f;
+		if (i <= other_curve_lengths.size()) {
+			other_curve_lengths[i-1] / current_curve_lengths[i-1];
+		}
+
+		new_positions[i] = positions[i-1] + current_tangent * factor;
+	}
+
+	this->curve->setPositions(new_positions);
+
+	std::cerr << "Set new positions for the curve !\n";
+
+	this->curve->update();
+	this->curve_draw->updateOnNextDraw();
+	this->curve_draw->updateBoundingBox();
+	this->updateBoundingBox();
 }
 
 void Scene::updateMeshAndCurve() {
@@ -1362,15 +1429,15 @@ void Scene::loadMesh() {
 	}
 
 	QFileInfo mesh_file_info(file_name);
-	this->arap_mesh_file_path = mesh_file_info.absolutePath().toStdString();
+	this->arap_mesh_file_path = QDir::toNativeSeparators(mesh_file_info.absolutePath()).toStdString();
 	this->arap_mesh_file_name = mesh_file_info.fileName().toStdString();
 	this->arap_mesh_file_constraints = this->arap_mesh_file_name + ".constraints";
 	std::cerr << "Mesh loading beginning ... Paths :\n";
-	std::cerr << "\tMesh : " << this->arap_mesh_file_path << QDir::separator().decomposition().toStdString() << this->arap_mesh_file_name << '\n';
-	std::cerr << "\tConstraints : " << this->arap_mesh_file_path << QDir::separator().decomposition().toStdString() << this->arap_mesh_file_constraints << '\n';
+	std::cerr << "\tMesh : " << this->arap_mesh_file_path << QDir::separator().toLatin1() << this->arap_mesh_file_name << '\n';
+	std::cerr << "\tConstraints : " << this->arap_mesh_file_path << QDir::separator().toLatin1() << this->arap_mesh_file_constraints << '\n';
 
 	// Create a mesh structure :
-	this->mesh   = std::make_shared<Mesh>();
+	this->mesh = std::make_shared<Mesh>();
 	// Load that OFF file and then update the mesh :
 	FileIO::openOFF(file_name.toStdString(), this->mesh->getVertices(), this->mesh->getTriangles());
 	this->mesh->update();
@@ -1572,7 +1639,7 @@ glm::vec3 Scene::getVertexPosition(int index) {
 
 void Scene::loadCurve() {
 	// Launch a file picker to get the name of an OFF file :
-	QString file_name = QFileDialog::getOpenFileName(nullptr, "Open a Mesh file (OFF)", QString(), "OBJ files (*.obj)");
+	QString file_name = QFileDialog::getOpenFileName(nullptr, "Open a Curve file (OBJ)", QString(), "OBJ files (*.obj)");
 	if (file_name.isEmpty() || not QFileInfo::exists(file_name)) {
 		std::cerr << "Error : nothing to open.\nFile path given : \"" << file_name.toStdString() << "\"\n";
 		return;
@@ -1588,7 +1655,6 @@ void Scene::loadCurve() {
 		this->curve		   = openCurveFromOBJ(fname, this->mesh);
 		glm::mat4 transfo  = this->mesh_draw->getTransformation();
 		this->curve_draw = std::make_shared<DrawableCurve>(this->curve);
-		this->curve_draw->initialize(this->context, this);
 		this->curve_draw->setTransformation(transfo);
 		this->curve_draw->updateOnNextDraw();
 		this->updateBoundingBox();
@@ -1686,7 +1752,7 @@ void Scene::drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading
 
 	glEnable(GL_DEPTH_TEST);
 	//glEnable(GL_BLEND);
-	glEnablei(GL_BLEND, 0);
+	//glEnablei(GL_BLEND, 0);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	uint min = 0;	 // min index for drawing commands

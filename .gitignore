@@ -28,3 +28,4 @@ tags
 
 # Ignore vim files
 *.swp
+.idea
