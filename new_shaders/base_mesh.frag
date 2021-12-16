@@ -34,20 +34,35 @@ vec3 ambient_color = vec3(0.95f, 0.95f, 0.95f);
 vec3 specular_color = vec3(0.502f, 0.502f, 0.502f);
 
 void phongComputation(in vec4 normal, in vec4 position, out vec4 color);
+void phongComputation_diffuse_and_specular(in vec4 position, in vec4 normal, in vec4 lightPos, out vec4 diffuse, out vec4 specular);
 
 void main() {
-	vec3 base_normal = abs(normal.xyz / 1.5f);
-	//color = vec4(base_normal, 1.f);
 	phongComputation(normal, position, color);
 	worldPosition = position;
 }
 
 void phongComputation(in vec4 normal, in vec4 position, out vec4 color_out) {
+	// ambient term is always constant :
+	vec3 a = shadingParams.x * ambient_color;
+
 	// first, compute the position of the light (lightPos_model is direction of displacement, and
 	// length of it will be the size of the BB * 2.f from the BB's min position :
 	float factor = length(bb_max - bb_min) * 2.f;
 	vec4 lightPos = bb_min + factor * lightPos_model;
 
+	vec4 d0 = vec4(.0f, .0f, .0f, .0f);
+	vec4 d1 = vec4(.0f, .0f, .0f, .0f);
+	vec4 s0 = vec4(.0f, .0f, .0f, .0f);
+	vec4 s1 = vec4(.0f, .0f, .0f, .0f);
+
+	// Compute diffuse & specular for the BB light first, then the camera :
+	phongComputation_diffuse_and_specular(position, normal, lightPos, d0, s0);
+	phongComputation_diffuse_and_specular(position, normal, camera_pos, d1, s1);
+
+	color_out = vec4(a + ((d0 + s0).xyz + (d1 + s1).xyz)/2.f, 1.f);
+}
+
+void phongComputation_diffuse_and_specular(in vec4 position, in vec4 normal, in vec4 lightPos, out vec4 diffuse, out vec4 specular) {
 	vec3 l = normalize(lightPos.xyz - position.xyz);
 	vec3 n = normalize(normal.xyz);
 	float ln = max(.0f, dot(l, n));
@@ -56,9 +71,9 @@ void phongComputation(in vec4 normal, in vec4 position, out vec4 color_out) {
 	vec3 v = normalize(camera_pos.xyz - position.xyz);
 	float rv = max(.0f, dot(r, v));
 
-	vec3 a = shadingParams.x * ambient_color;								// Ambient param
 	vec3 d = shadingParams.y * ln * bone_base_color;						// Diffuse param
 	vec3 s = shadingParams.z * pow(rv, shadingParams.w) * specular_color;	// Specular param
 
-	color_out = vec4(a + d + s, 1.f);
+	diffuse = vec4(d, 1.f);
+	specular = vec4(s, 1.f);
 }
