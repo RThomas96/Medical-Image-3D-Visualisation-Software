@@ -145,6 +145,9 @@ public slots:
 	void mesh_select_all();
 	void mesh_unselect_all();
 
+	void loadMeshToScene();
+	void loadCurveToScene();
+
 	/// @brief Read the pixel at the screen position given.
 	glm::vec4 readPositionFromFramebuffer();
 

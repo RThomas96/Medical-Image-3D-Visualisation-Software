@@ -15,6 +15,8 @@ DrawableMesh::DrawableMesh(std::shared_ptr<Mesh> &_mesh) :
 	this->program_handle_draw = 0;
 	this->program_handle_fastdraw = 0;
 
+	this->transformation_matrix = glm::mat4(1.f);
+
 	auto mesh_bb		   = this->mesh->getBB();
 	this->bounding_box_min = mesh_bb[0];
 	this->bounding_box_max = mesh_bb[1];
@@ -34,11 +36,14 @@ void DrawableMesh::initialize(QOpenGLContext *_context, ShaderCompiler::GLFuncti
 	this->gl			= functions;
 	this->bound_context = _context;
 
+	std::cerr << "Initializing mesh from " << this->mesh->getVertices().size() << " vertices in the mesh.\n";
+
 	// Create the right shader program :
 	auto compiler = std::make_unique<ShaderCompiler>(functions);
 	compiler->vertexShader_file("../new_shaders/base_mesh.vert").fragmentShader_file("../new_shaders/base_mesh.frag");
 	if (compiler->compileShaders()) {
 		this->program_handle_draw = compiler->programName();
+		std::cerr << __PRETTY_FUNCTION__ << " : Program name is " << this->program_handle_draw << '\n';
 	} else {
 		std::cerr << "Error while building shaders for drawable mesh.\n"
 				  << compiler->errorString() << "\n";
@@ -112,6 +117,7 @@ void DrawableMesh::makeVAO(void) {
 
 	// Create the VAO :
 	this->gl->glGenVertexArrays(1, &this->vao);
+	this->gl->glBindVertexArray(this->vao);
 
 	// Create the VBOs :
 
@@ -134,7 +140,6 @@ void DrawableMesh::makeVAO(void) {
 	this->gl->glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr>(final_order.size()) * sizeof(GLuint), final_order.data(), GL_STATIC_DRAW);
 
 	// Populate the VAO :
-	this->gl->glBindVertexArray(this->vao);
 	// layout(location=0) : vertices (vec3)
 	this->gl->glEnableVertexAttribArray(0);
 	this->gl->glBindBuffer(GL_ARRAY_BUFFER, this->vbo_vertices);

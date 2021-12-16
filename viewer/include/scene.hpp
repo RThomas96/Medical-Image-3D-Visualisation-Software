@@ -284,6 +284,7 @@ public:
 	void loadMesh();
 	/// @brief Loads a curve (OBJ) and uploads it to the GL.
 	void loadCurve();
+	void setViewer(Viewer* parent) { this->viewer = parent; }
 
 	/// @brief This performs ARAP deformation on the mesh associated with the first loaded image.
 	/// @note THIS IS A WIP/DRAFT FUNCTION, NOT DESIGNED FOR PRODUCTION RELEASE
@@ -586,7 +587,7 @@ private:
 	std::shared_ptr<MMInterface<glm::vec3>> mesh_interface;
 	std::shared_ptr<SimpleManipulator> arapManipulator;
 	std::shared_ptr<RectangleSelection> rectangleSelection;
-	bool deformation_enabled;
+	Viewer* viewer;
 
 	/// @brief A pointer to the 3D viewer's camera.
 	qglviewer::Camera* camera;

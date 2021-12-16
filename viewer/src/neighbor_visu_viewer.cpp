@@ -70,6 +70,7 @@ void Viewer::init() {
 	this->setMouseTracking(true);
 
 	this->scene->initGl(this->context());
+	this->scene->setViewer(this);
 
 	glm::vec3 bbDiag = this->scene->getSceneBoundaries();
 	float sceneSize	 = glm::length(bbDiag);
@@ -641,6 +642,7 @@ QString Viewer::mouseString() const {
 
 void Viewer::updateCameraPosition() {
 	auto bb		= this->scene->getSceneBoundingBox();
+	bb.printInfo("Scene BB for camera update !!!");
 	auto center = bb.getMin() + (bb.getDiagonal() / 2.f);
 	auto radius = glm::length(bb.getDiagonal());
 	this->setSceneCenter(qglviewer::Vec(center.x, center.y, center.z));
@@ -680,4 +682,21 @@ void Viewer::newAPI_loadGrid(Image::Grid::Ptr ptr) {
 
 void Viewer::toggleManipulators() {
 	this->meshManipulator.toggleActivation();
+}
+
+void Viewer::loadMeshToScene() {
+	this->makeCurrent();
+	this->scene->loadMesh();
+	this->doneCurrent();
+	this->updateInfoFromScene();
+
+	auto cam = this->camera()->position();
+	std::cerr << "Position of the camera : " << cam.x << ", " << cam.y << ", " << cam.z << ", and radius of " << this->camera()->sceneRadius() << '\n';
+}
+
+void Viewer::loadCurveToScene() {
+	this->makeCurrent();
+	this->scene->loadCurve();
+	this->doneCurrent();
+	this->updateInfoFromScene();
 }

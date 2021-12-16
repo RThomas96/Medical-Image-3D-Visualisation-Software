@@ -148,6 +148,10 @@ Scene::Scene() :
 	this->mesh_interface = nullptr;
 	this->arapManipulator = nullptr;
 	this->rectangleSelection = nullptr;
+
+	this->viewer = nullptr;
+
+	this->newGrids.clear();
 }
 
 Scene::~Scene(void) {
@@ -715,14 +719,14 @@ void Scene::updateBoundingBox(void) {
 	}
 
 	// Take into account drawables :
-	if (this->mesh_draw->isInitialized()) {
+	if (this->mesh_draw) {
 		auto drawable_bb = this->mesh_draw->getBoundingBox();
 		this->sceneBB.addPoint(drawable_bb.first);
 		this->sceneBB.addPoint(drawable_bb.second);
 		this->sceneDataBB.addPoint(drawable_bb.first);
 		this->sceneDataBB.addPoint(drawable_bb.second);
 	}
-	if (this->curve_draw->isInitialized()) {
+	if (this->curve_draw) {
 		auto drawable_bb = this->curve_draw->getBoundingBox();
 		this->sceneBB.addPoint(drawable_bb.first);
 		this->sceneBB.addPoint(drawable_bb.second);
@@ -934,6 +938,14 @@ bool Scene::dummy_check_point_in_mesh_bb(glm::vec3 query, std::size_t& mesh_inde
 	return false;
 }
 
+void Scene::dummy_initialize_arap_manipulation() {
+	if (this->mesh_interface == nullptr) {
+		this->mesh_interface = std::make_shared<MMInterface<glm::vec3>>();
+	} else {
+		//
+	}
+}
+
 void Scene::dummy_save_mesh_to_file() {
 	if (this->mesh == nullptr) { return; }
 	// Ask the user for the save file name & its path :
@@ -1016,16 +1028,26 @@ void Scene::updateMeshAndCurve() {
 		}
 
 		if (this->mesh_interface == nullptr) {
-			this->mesh_interface = std::make_shared<MMInterface<glm::vec3>>();
+			std::cerr << "Initializing the mesh interface !!!\n";
 			this->rectangleSelection = std::make_shared<RectangleSelection>();
+			//QObject::connect(this->rectangleSelection.get(), &RectangleSelection::add)
 			this->arapManipulator = std::make_shared<SimpleManipulator>();
+			this->mesh_interface = std::make_shared<MMInterface<glm::vec3>>();
 			this->mesh_interface->setMode(MeshModificationMode::REALTIME);
+
+			if (this->viewer) {
+				QObject::connect(this->rectangleSelection.get(), &RectangleSelection::add, this->viewer, &Viewer::rectangleSelection_add);
+				QObject::connect(this->rectangleSelection.get(), &RectangleSelection::remove, this->viewer, &Viewer::rectangleSelection_remove);
+				QObject::connect(this->rectangleSelection.get(), &RectangleSelection::apply, this->viewer, &Viewer::rectangleSelection_apply);
+
+				QObject::connect(this->arapManipulator.get(), &SimpleManipulator::moved, this->viewer, &Viewer::arapManipulator_moved);
+				QObject::connect(this->arapManipulator.get(), &SimpleManipulator::mouseReleased, this->viewer, &Viewer::arapManipulator_released);
+			}
 		}
+		this->mesh_interface->clear();
 		// Re-initialize the mesh interface data with the new data !
 		this->mesh_interface->loadAndInitialize(this->mesh->getVertices(), this->mesh->getTriangles());
 	}
-
-	return;
 }
 
 void Scene::recompileShaders(bool verbose) {
@@ -1296,6 +1318,7 @@ void Scene::loadMesh() {
 	// Mesh loading begins. First, a cleanup of possibly loaded data :
 
 	if (this->mesh != nullptr) {
+		std::cerr << "Resetting everything for the mesh & curve ...\n";
 		this->mesh.reset();
 		this->mesh_draw.reset();
 		this->mesh_interface->clear();
@@ -1309,17 +1332,11 @@ void Scene::loadMesh() {
 
 	// Create a mesh structure :
 	this->mesh   = std::make_shared<Mesh>();
-	auto& vertices = this->mesh->getVertices();
-	auto& normals  = this->mesh->getNormals();
 	// Load that OFF file and then update the mesh :
 	FileIO::openOFF(file_name.toStdString(), this->mesh->getVertices(), this->mesh->getTriangles());
 	this->mesh->update();
 
 	this->mesh_draw = std::make_shared<DrawableMesh>(this->mesh);
-	this->mesh_draw->initialize(this->context, this);
-
-	// Try to resize the mesh for a grid if there are any
-	this->resizeMeshForGrid();
 
 	// Update the scene data in order to reflect the changes made here.
 	this->updateMeshAndCurve();
@@ -1358,20 +1375,15 @@ void Scene::resizeMeshForGrid() {
 			scaling_matrix[3][1] += shift_image_translation.y;
 			scaling_matrix[3][2] += shift_image_translation.z;
 
+			std::cerr << "Estimated scaling and rotation : " << shift_image_translation << " and transfo : " << scaling_matrix << '\n';
+
 			this->mesh->applyTransformation(scaling_matrix);
 			this->mesh->update();
-			this->mesh_draw->updateBoundingBox();
-			this->mesh_draw->updateOnNextDraw();
-
-			// If a curve is loaded, carry it with the application of the mesh's deformation :
-			if (this->curve) {
-				this->curve->deformFromMeshData();
-				this->curve_draw->updateBoundingBox();
-				this->curve_draw->updateOnNextDraw();
-			}
 		}
-		this->mesh_draw->setTransformation(glm::mat4{1.f});
+		this->mesh_draw->setTransformation(glm::mat4(1.f));
 		// the user didn't want to pair the image with a grid, do nothing else.
+	} else {
+		std::cerr << "Error : no grids loaded\n";
 	}
 }
 
@@ -2525,7 +2537,18 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 		}
 	}
 
-	if (this->mesh_draw) { this->mesh_draw->draw(pMat, mvMat, glm::vec4(camPos, 1.f)); }
+	if (this->mesh_draw) {
+		if (not this->mesh_draw->isInitialized()) {
+			this->mesh_draw->initialize(this->context, this);
+		}
+		this->mesh_draw->draw(pMat, mvMat, glm::vec4(camPos, 1.f));
+	}
+	if (this->curve_draw) {
+		if (not this->curve_draw->isInitialized()) {
+			this->curve_draw->initialize(this->context, this);
+		}
+		this->curve_draw->draw(pMat, mvMat, glm::vec4(camPos, 1.f));
+	}
 
 	if (not this->newGrids.empty()) {
 		this->newAPI_drawPlanes(mvMat, pMat, this->drawMode == DrawMode::Solid);

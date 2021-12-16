@@ -67,8 +67,8 @@ void ViewerHelper::toggleDeformationButtons() {
 	this->button_unselect_all->setEnabled(not should_enable);
 	this->button_alignARAP->setEnabled(not should_enable);
 	this->button_launchARAP->setEnabled(not should_enable);
-	this->button_enable_def->setEnabled(not should_enable);
 	this->button_reset_arap->setEnabled(not should_enable);
+	//this->button_enable_def->setEnabled(not should_enable);
 }
 
 void ViewerHelper::initSignals() {

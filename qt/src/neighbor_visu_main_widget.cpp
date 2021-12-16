@@ -190,18 +190,6 @@ void MainWidget::setupWidgets() {
 			});
 		}
 	});
-	QObject::connect(this->action_loadMesh, &QAction::triggered, [this]() {
-		this->viewer->makeCurrent();
-		this->scene->loadMesh();
-		this->viewer->updateInfoFromScene();
-		this->viewer->doneCurrent();
-	});
-	QObject::connect(this->action_loadCurve, &QAction::triggered, [this]() {
-		this->viewer->makeCurrent();
-		this->scene->loadCurve();
-		this->viewer->updateInfoFromScene();
-		this->viewer->doneCurrent();
-	});
 
 	// Viewer(s) creation along with control panel :
 	this->viewer		= new Viewer(this->scene, this->statusBar, nullptr);
@@ -210,6 +198,9 @@ void MainWidget::setupWidgets() {
 	this->viewer_planeZ = new PlanarViewer(this->scene, planes::z, this->statusBar, planeHeading::North, nullptr);
 	this->controlPanel	= new ControlPanel(this->scene, this->viewer, nullptr);
 	this->scene->setControlPanel(this->controlPanel);
+
+	QObject::connect(this->action_loadMesh, &QAction::triggered, this->viewer, &Viewer::loadMeshToScene);
+	QObject::connect(this->action_loadCurve, &QAction::triggered, this->viewer, &Viewer::loadCurveToScene);
 
 	this->viewer->addStatusBar(this->statusBar);
 	this->viewer_planeX->addParentStatusBar(this->statusBar);
