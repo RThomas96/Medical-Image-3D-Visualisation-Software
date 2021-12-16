@@ -692,6 +692,8 @@ void Scene::newAPI_addGrid(Image::Grid::Ptr gridLoaded) {
 
 	this->newGrids.push_back(gridView);
 
+	this->updateMeshAndCurve();
+
 	this->updateVis();
 	this->updateBoundingBox();
 	this->setVisuBoxMinCoord(glm::uvec3());
@@ -1014,7 +1016,13 @@ void Scene::updateMeshAndCurve() {
 		}
 
 		if (this->mesh_interface == nullptr) {
+			this->mesh_interface = std::make_shared<MMInterface<glm::vec3>>();
+			this->rectangleSelection = std::make_shared<RectangleSelection>();
+			this->arapManipulator = std::make_shared<SimpleManipulator>();
+			this->mesh_interface->setMode(MeshModificationMode::REALTIME);
 		}
+		// Re-initialize the mesh interface data with the new data !
+		this->mesh_interface->loadAndInitialize(this->mesh->getVertices(), this->mesh->getTriangles());
 	}
 
 	return;
@@ -1313,8 +1321,8 @@ void Scene::loadMesh() {
 	// Try to resize the mesh for a grid if there are any
 	this->resizeMeshForGrid();
 
-	this->mesh_draw->updateOnNextDraw();
-	this->mesh_draw->updateBoundingBox();
+	// Update the scene data in order to reflect the changes made here.
+	this->updateMeshAndCurve();
 	this->updateBoundingBox();
 }
 
