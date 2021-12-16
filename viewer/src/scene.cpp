@@ -814,20 +814,18 @@ void Scene::dummy_apply_alignment_before_arap() {
 	std::vector<glm::vec3> transforms;	  // estimated translations between current point position and ARAP handle on the image
 	auto current_transform = this->mesh_draw->getTransformation();
 
+	// Note : mesh is not transformed in visu only anymore. Once loaded with an image, the transformation is immediately*
+	// applied, so no need to apply it again to the target positions.
 	std::cerr << "Generating 'best' estimated transform for the mesh ..." << '\n';
 	for (std::size_t i = 0; i < this->mesh_idx_constraints.size(); ++i) {
-		std::cerr << "Analyzing constraint " << i << " ...\n";
 		auto constraint = this->mesh_idx_constraints[i];
 		auto position	= this->image_constraints[i];
 		std::cerr << "Analyzing constraint " << i << " ...\n";
 		// Get current position :
 		auto mesh_original_position = _mesh->getVertices()[constraint.second];
 		std::cerr << "\tMesh position : " << mesh_original_position << '\n';
-		// Transform it into the coordinates shown on screen :
-		auto mesh_transformed_position = glm::vec3(current_transform * (glm::vec4(mesh_original_position, 1.f)));
-		std::cerr << "\tMesh transformed position : " << mesh_transformed_position << '\n';
 		// Guess the best translation between this current position and the image-bound position :
-		glm::vec3 estimated_transform = position - mesh_transformed_position;
+		glm::vec3 estimated_transform = position - mesh_original_position;
 		std::cerr << "\tGuessed transform for " << i << " : " << estimated_transform << "\n";
 		transforms.push_back(estimated_transform);
 	}
@@ -853,12 +851,11 @@ void Scene::dummy_apply_alignment_before_arap() {
 	_mesh->applyTransformation(current_transform);
 	// ... but the drawing of the mesh doesn't need to have it anymore :
 	this->mesh_draw->setTransformation(glm::mat4(1.f));
+	this->updateMeshAndCurve();
 	if (this->curve) {
-		this->curve->deformFromMeshData();
+		// not covered in updateMeshAndCurve() :
 		this->curve_draw->setTransformation(this->mesh_draw->getTransformation());
-		this->curve_draw->updateOnNextDraw();
 	}
-	this->mesh_draw->updateOnNextDraw();
 #else
 	std::cerr << "[ERROR]: ARAP cannot be compiled on Linux yet. Operation canceled" << std::endl;
 #endif
@@ -898,11 +895,18 @@ void Scene::dummy_perform_constrained_arap_on_image_mesh() {
 	this->updateBoundingBox();
 	std::cerr << "Finished.\n";
 
-	this->mesh_draw->updateOnNextDraw();
-	if (this->curve) {
-		this->curve->deformFromMeshData();
-		this->curve_draw->updateOnNextDraw();
+	this->updateMeshAndCurve();
+}
+
+std::vector<glm::vec3> Scene::dummy_get_loaded_constraint_positions() const {
+	if (this->mesh == nullptr) { return {}; }
+
+	std::vector<glm::vec3> constraints;
+	const auto& vertices = this->mesh->getVertices();
+	for (const auto& constraint : this->mesh_idx_constraints) {
+		constraints.push_back(vertices[constraint.second]);
 	}
+	return constraints;
 }
 
 void Scene::dummy_add_image_constraint(std::size_t img_idx, glm::vec3 img_pos) {
@@ -952,6 +956,8 @@ void Scene::dummy_loadConstraintsFromFile() {
 	QString full_name = QString(this->arap_mesh_file_path.c_str()) + QDir::separator() +
 						QString(this->arap_mesh_file_constraints.c_str());
 
+	std::cerr << "Attempting to load constraint file \"" << full_name.toStdString() << "\" ...\n";
+
 	std::ifstream constraint_file(full_name.toStdString());
 	if (not constraint_file.is_open()) {
 		std::cerr << "Error ! The constraint file could not be opened.\n";
@@ -962,7 +968,7 @@ void Scene::dummy_loadConstraintsFromFile() {
 		std::size_t constraint = 0;
 		constraint_file >> constraint;
 		std::cerr << "Adding constraint " << constraint << " to mesh ...";
-		this->mesh_idx_constraints.push_back(std::make_pair(0, constraint));
+		this->mesh_idx_constraints.emplace_back(std::make_pair(0, constraint));
 	}
 
 	constraint_file.close();
@@ -1355,11 +1361,13 @@ void Scene::loadMesh() {
 		this->curve_draw.reset();
 	}
 
-
 	QFileInfo mesh_file_info(file_name);
 	this->arap_mesh_file_path = mesh_file_info.absolutePath().toStdString();
 	this->arap_mesh_file_name = mesh_file_info.fileName().toStdString();
 	this->arap_mesh_file_constraints = this->arap_mesh_file_name + ".constraints";
+	std::cerr << "Mesh loading beginning ... Paths :\n";
+	std::cerr << "\tMesh : " << this->arap_mesh_file_path << QDir::separator().decomposition().toStdString() << this->arap_mesh_file_name << '\n';
+	std::cerr << "\tConstraints : " << this->arap_mesh_file_path << QDir::separator().decomposition().toStdString() << this->arap_mesh_file_constraints << '\n';
 
 	// Create a mesh structure :
 	this->mesh   = std::make_shared<Mesh>();
@@ -1368,6 +1376,20 @@ void Scene::loadMesh() {
 	this->mesh->update();
 
 	this->mesh_draw = std::make_shared<DrawableMesh>(this->mesh);
+
+	// Attempt to load the constraints :
+	QMessageBox* ask_constraints = new QMessageBox;
+	ask_constraints->setAttribute(Qt::WA_DeleteOnClose);
+	ask_constraints->setWindowTitle("Mesh constraints");
+	ask_constraints->setText("Do you want to load the mesh anatomical constraints automatically, or set them yourself ?");
+	auto accept_button = ask_constraints->addButton("Load automatically", QMessageBox::ButtonRole::AcceptRole);
+	ask_constraints->addButton("Set them myself", QMessageBox::ButtonRole::RejectRole);
+
+	ask_constraints->exec();
+	if (ask_constraints->clickedButton() == accept_button) {
+		// Load constraints :
+		this->dummy_loadConstraintsFromFile();
+	}
 
 	// Update the scene data in order to reflect the changes made here.
 	this->updateMeshAndCurve();

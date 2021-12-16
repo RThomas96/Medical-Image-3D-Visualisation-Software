@@ -110,6 +110,8 @@ void Viewer::draw() {
 
 	std::vector<glm::vec3> spheres_to_draw(this->spheres);
 	std::size_t s;
+	auto mesh_ctx = this->scene->dummy_get_loaded_constraint_positions();
+	spheres_to_draw.insert(spheres_to_draw.end(), mesh_ctx.cbegin(), mesh_ctx.cend());
 	if (this->scene->dummy_check_point_in_mesh_bb(this->temp_sphere_position, s)) {
 		spheres_to_draw.push_back(this->temp_sphere_position);
 	}
