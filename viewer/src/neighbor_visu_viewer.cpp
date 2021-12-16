@@ -328,8 +328,8 @@ void Viewer::guessMousePosition() {
 		//		this->statusBar->showMessage(msg, 10000);
 		//	}
 		//}
-		std::function<void(const NewAPI_GridGLView::Ptr&)> findSuitablePoint =
-		  [this, p](const NewAPI_GridGLView::Ptr& gridView) -> void {
+		std::function<void(const GridGLView::Ptr&)> findSuitablePoint =
+		  [this, p](const GridGLView::Ptr& gridView) -> void {
 			const Image::Grid::Ptr grid		  = gridView->grid;
 			TransformStack::Ptr gridTransform = grid->getTransformStack();
 			BoundingBox_General<float> bb	  = grid->getBoundingBox();
@@ -494,7 +494,7 @@ void Viewer::newAPI_loadGrid(Image::Grid::Ptr ptr) {
 		return;
 	}
 	this->makeCurrent();
-	this->scene->newAPI_addGrid(ptr);
+	this->scene->addGrid(ptr);
 	this->updateManipulatorsPositions();
 	this->scene->prepareManipulators();
 	this->doneCurrent();

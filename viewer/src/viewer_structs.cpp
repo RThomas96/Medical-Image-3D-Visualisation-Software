@@ -232,7 +232,7 @@ bool VolMesh::isValid() {
 VolMesh::~VolMesh(void) { /* Nothing here for now. */
 }
 
-NewAPI_GridGLView::NewAPI_GridGLView(const Image::Grid::Ptr _grid) {
+GridGLView::GridGLView(const Image::Grid::Ptr _grid) {
 	this->grid			   = _grid;
 	this->gridTexture	   = 0;
 	this->volumetricMesh   = {};
@@ -259,11 +259,11 @@ NewAPI_GridGLView::NewAPI_GridGLView(const Image::Grid::Ptr _grid) {
 	}
 }
 
-colorChannelAttributes_GL& NewAPI_GridGLView::mainColorChannelAttributes() {
+colorChannelAttributes_GL& GridGLView::mainColorChannelAttributes() {
 	return this->colorChannelAttributes[this->mainColorChannel];
 }
 
-void NewAPI_GridGLView::setMainColorChannel(std::size_t color_channel) {
+void GridGLView::setMainColorChannel(std::size_t color_channel) {
 	assert((color_channel < 3) && "color channel was not under 3");
 
 	this->mainColorChannel = color_channel;
