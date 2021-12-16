@@ -1009,6 +1009,9 @@ void GridLoaderWidget::loadNewGridAPI() {
 	for (int i = 0; i < filenamesR.size(); ++i) {
 		fnR.push_back(filenamesR[i].toStdString());
 	}
+    // TODO: bad tricks
+    this->scene->filename = filenamesR[0].toStdString();
+
 	std::vector<std::string> fnG;	 // filenames, green channel
 	for (int i = 0; i < filenamesG.size(); ++i) {
 		fnG.push_back(filenamesG[i].toStdString());

@@ -23,12 +23,12 @@ namespace Image {
 	template <typename data_t>
 	bool Grid::readPixel(svec3 index, std::vector<data_t>& values) {
 		// Checks the position is valid, the backend implementation is valid and returns the value
-		if (index.x < this->imageSize.x && index.y < this->imageSize.y && index.z < this->imageSize.z) {
+		//if (index.x < this->imageSize.x && index.y < this->imageSize.y && index.z < this->imageSize.z) {
 			if (this->pImpl) {
 				return this->pImpl->readPixel(index, values);
 			}
 			return false;
-		}
+		//}
 		// position is out of bounds :
 		return false;
 	}

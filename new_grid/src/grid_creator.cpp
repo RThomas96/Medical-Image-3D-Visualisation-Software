@@ -13,7 +13,7 @@ namespace Image {
 		}
 		// Get the extension of the first filename :
 		const std::string& reference_file = _filenames[0][0];
-		std::size_t iter				  = reference_file.find_first_of('.');
+		std::size_t iter				  = reference_file.find_last_of('.');
 		if (iter == std::string::npos) {
 			return nullptr;
 		}

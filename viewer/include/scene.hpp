@@ -51,6 +51,12 @@
 #include <thread>
 #include "../../image/utils/include/threaded_task.hpp"
 
+// Tinytiff
+#include <tinytiffreader.h>
+#include <tinytiffwriter.h>
+
+#include "../../grid/include/grid.hpp"
+
 /// @defgroup graphpipe Graphics pipeline
 /// @brief This group contains all classes closely or loosely related to the graphics pipeline.
 /// @details There are very few classes in this group, but that's only because Scene is a god-object. Some attempt was
@@ -290,6 +296,7 @@ private:
 
     /* Containers */
 	UITool::GL::MeshManipulator* glMeshManipulator;
+	//std::vector<DeformableGrid*> grids;
 	std::vector<GridGLView::Ptr> grids;
 	std::vector<std::size_t> delGrid;	 ///< Grids to delete at next refresh
 	qglviewer::Frame* posFrame;
@@ -500,6 +507,19 @@ private:
 
 public:
 	SceneGL sceneGL;
+
+/*************/
+/* Temporary */
+/*************/
+public:
+
+    template <typename pixel_t>
+    std::vector<pixel_t> read_subpixels_from_slice(std::vector<pixel_t>& src, std::size_t samples_in_src, std::size_t beg);
+    bool writeGrid(int gridIdx);
+
+    void checkTetMesh();
+
+    std::string filename = "";
 };
 
 /// @brief Type-safe conversion of enum values to unsigned ints.

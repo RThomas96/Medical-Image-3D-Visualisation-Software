@@ -18,6 +18,10 @@
 #include <fstream>
 #include <type_traits>
 
+#include <chrono>
+
+#include "../../grid/include/grid.hpp"
+
 inline unsigned int planeHeadingToIndex(planeHeading _heading) {
 	switch (_heading) {
 		case planeHeading::North:
@@ -143,6 +147,7 @@ Scene::Scene() :
 	this->drawables.clear();
 	this->curve		 = nullptr;
 	this->curve_draw = nullptr;
+    this->checkTetMesh();
 }
 
 Scene::~Scene(void) {
@@ -1423,52 +1428,6 @@ void Scene::loadCurve() {
 	} else {
 		std::cerr << "Tried to load curve, but no mesh associated.\n";
 	}
-}
-
-void Scene::launchSaveDialog() {
-	// if no grids are loaded, do nothing !
-	//if (this->grids.size() == 0) {
-	//	QMessageBox messageBox;
-	//	messageBox.critical(nullptr, "Error", "Cannot save a grid when nothing is loaded !");
-	//	messageBox.setFixedSize(500, 200);
-	//	return;
-	//}
-
-	//if (this->gridControl != nullptr) {
-	//	std::cerr << "Controller was already added, showing it now ...\n";
-	//	this->gridControl->raise();
-	//	this->gridControl->show();
-	//	return;
-	//}
-
-	// TODO
-	// Add calls to tetmesh and grid control when they will be compatible with new API
-
-	//// create an output grid AND a tetmesh to generate it :
-	//std::shared_ptr<OutputGrid> outputGrid = std::make_shared<OutputGrid>();
-	//outputGrid->setOffline();
-
-	//InterpolationMesh::Ptr tetmesh = std::make_shared<InterpolationMesh>();
-	//// add the grids to the tetmesh
-	//for (std::size_t i = 0; i < this->grids.size(); ++i) {
-	//	std::for_each(this->grids[i]->grid.cbegin(), this->grids[i]->grid.cend(),
-	//	  [&tetmesh](const std::shared_ptr<DiscreteGrid>& _g) {
-	//		  tetmesh->addInputGrid(std::dynamic_pointer_cast<InputGrid>(_g));
-	//	  });
-	//}
-	//// add the output grid
-	//tetmesh->setOutputGrid(outputGrid);
-
-	//// So we can draw it :
-	//GridGLView::Ptr outputGridView = std::make_shared<GridGLView>(std::initializer_list<std::shared_ptr<DiscreteGrid>>({outputGrid}));
-	//this->grids.push_back(outputGridView);
-
-	//// create a grid controller to generate a new outputgrid
-	//this->gridControl = new GridControl(outputGrid, tetmesh, this);
-	//// show it :
-	//gridControl->show();
-	//// done
-	return;
 }
 
 void Scene::removeController() {
@@ -4119,3 +4078,238 @@ GLuint SceneGL::uploadTexture2D(const TextureUpload& tex) {
 
 /**********************************************************************/
 /**********************************************************************/
+/* Temporary */
+/**********************************************************************/
+
+template <typename pixel_t>
+std::vector<pixel_t> Scene::read_subpixels_from_slice(std::vector<pixel_t>& src, std::size_t samples_in_src, std::size_t beg) {
+
+    // DOC:
+    // samples_in_src = nb channel
+    // beg = selected channed 
+    // src =  
+    // original data with mixed channel
+
+    // check fi the # of samples in src are all filled :
+    if (src.size() % samples_in_src > 0) {
+        std::cerr << "Warning : not enough samples in the src vector !\n";
+    }
+    // if reading no samples or wrong arguments, return null vector :
+    if (beg >= samples_in_src) {
+        std::cerr << "Error : trying to read past-the-end of data vector in writer\n";
+        return std::vector<pixel_t>();
+    }
+
+    // compute the number of pixels in src :
+    std::size_t pixel_count = src.size() / samples_in_src;
+    // allocate output vector
+    std::vector<pixel_t> out(pixel_count);
+
+    // # of samples read from src, acts as iter into out vector :
+    std::size_t samples_read = 0;
+    // iterate on all pixels of src, starting at [beg] and with a stride of [samples_in_src] :
+    for (std::size_t src_iter = beg; src_iter < src.size(); src_iter += samples_in_src) {
+        out[samples_read] = src[src_iter];
+        // increment read counter :
+        samples_read++;
+    }
+    // vector should be all read.
+
+    return out;
+}
+
+bool Scene::writeGrid(int gridIdx) {
+    Image::svec3 resolution = this->grids[gridIdx]->grid->getResolution();
+    std::size_t dimensionality = this->grids[gridIdx]->grid->getVoxelDimensionality();
+    TinyTIFFWriterFile * tif = TinyTIFFWriter_open("../../../data_debug/img.tif", 16, TinyTIFFWriter_UInt, 1, resolution.x, resolution.y, TinyTIFFWriter_Greyscale);
+    if (tif) {
+        for (uint16_t frame=0; frame<resolution.z; frame++) {
+            std::vector<uint16_t> slice_values;
+            this->grids[gridIdx]->grid->readSlice(frame, slice_values);
+            std::vector<uint16_t> current_data = this->read_subpixels_from_slice<uint16_t>(slice_values, dimensionality, 0);
+            TinyTIFFWriter_writeImage(tif, current_data.data());
+        }
+        TinyTIFFWriter_close(tif);
+    }
+    return true;
+}
+
+/*********************************/
+
+//TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &imagelength);
+//uint16_t sf = SAMPLEFORMAT_VOID;
+//int result	= TIFFGetField(tif, TIFFTAG_SAMPLEFORMAT, &sf);
+//if (result != 1) {
+//	// Try to get the defaulted version of the field :
+//	result = TIFFGetFieldDefaulted(tif, TIFFTAG_SAMPLEFORMAT, &sf);
+//	// Some files might still not get the default info, in that case interpret as UINT
+//	if (result != 1) {
+//		sf = SAMPLEFORMAT_UINT;
+//	}
+//}
+//
+//uint16_t bps = 0;
+//result	 = TIFFGetField(tif, TIFFTAG_BITSPERSAMPLE, &bps);
+//switch (sf) {
+//	case SAMPLEFORMAT_VOID:
+//		throw std::runtime_error("Internal type of the frame was void.");
+//		break;
+//
+//	case SAMPLEFORMAT_UINT: {
+//		if (bps == 8) {
+//            std::cout << "Le type est: uint8_t" << std::endl;
+//			//uint8_t
+//		}
+//		if (bps == 16) {
+//            std::cout << "Le type est: uint16_t" << std::endl;
+//			//uint16_t
+//		}
+//		if (bps == 32) {
+//            std::cout << "Le type est: uint32_t" << std::endl;
+//			//uint32_t
+//		}
+//		if (bps == 64) {
+//            std::cout << "Le type est: uint64_t" << std::endl;
+//			//uint64_t
+//		}
+//	} break;
+//
+//	case SAMPLEFORMAT_INT: {
+//		if (bps == 8) {
+//            std::cout << "Le type est: int8_t" << std::endl;
+//			//int8_t
+//		}
+//		if (bps == 16) {
+//            std::cout << "Le type est: int16_t" << std::endl;
+//			//int16_t
+//		}
+//		if (bps == 32) {
+//            std::cout << "Le type est: int32_t" << std::endl;
+//			//int32_t
+//		}
+//		if (bps == 64) {
+//            std::cout << "Le type est: int64_t" << std::endl;
+//			//int64_t
+//		}
+//	} break;
+//
+//	case SAMPLEFORMAT_IEEEFP: {
+//		if (bps == 32) {
+//            std::cout << "Le type est: float" << std::endl;
+//			//float
+//		}
+//		if (bps == 64) {
+//            std::cout << "Le type est: double" << std::endl;
+//			//double
+//		}
+//	} break;
+//
+//	case SAMPLEFORMAT_COMPLEXINT:
+//		throw std::runtime_error("The file's internal type was complex integers (not supported).");
+//		break;
+//
+//	case SAMPLEFORMAT_COMPLEXIEEEFP:
+//		throw std::runtime_error("The file's internal type was complex floating points (not supported).");
+//		break;
+//
+//	default:
+//		throw std::runtime_error("The file's internal type was not recognized (not in libTIFF's types).");
+//		break;
+//}
+
+/*********************************/
+
+void Scene::checkTetMesh() {
+    //checkTetMeshInTetFct();
+    std::cout << "/********************/" << std::endl;
+    //checkTetMeshBaryCoord();
+    std::cout << "/********************/" << std::endl;
+    //checkTetMeshBuildCube();
+    std::cout << "/********************/" << std::endl;
+    //checkMeshMove();
+    std::cout << "/********************/" << std::endl;
+    //checkPointQuery();
+
+    std::cout << "/********************/" << std::endl;
+    //checkPerf();
+    std::cout << "/********************/" << std::endl;
+    //checkDeformable();
+    std::cout << "/********************/" << std::endl;
+    //check1DTo3D();
+    std::cout << "/********************/" << std::endl;
+    //checkReadSimpleImage();
+    std::cout << "/********************/" << std::endl;
+
+    //throw std::runtime_error("Fin des TU");
+}
+
+void Scene::launchSaveDialog() {
+	// if no grids are loaded, do nothing !
+	//if (this->grids.size() == 0) {
+	//	QMessageBox messageBox;
+	//	messageBox.critical(nullptr, "Error", "Cannot save a grid when nothing is loaded !");
+	//	messageBox.setFixedSize(500, 200);
+	//	return;
+	//}
+
+	//if (this->gridControl != nullptr) {
+	//	std::cerr << "Controller was already added, showing it now ...\n";
+	//	this->gridControl->raise();
+	//	this->gridControl->show();
+	//	return;
+	//}
+
+    //this->writeGrid(0);
+
+    //Simple version
+
+    glm::vec3 nb = glm::vec3(5., 5., 5.);
+
+    std::cout << "The filename is: " << this->filename << std::endl;
+
+    DeformableGrid deformableGrid(this->filename, nb);
+    DeformableGrid initialGrid(this->filename, nb);
+
+    //deformableGrid.movePoint(glm::vec3(1, 1, 1), glm::vec3(600, 0., 0.));
+
+	VolMeshData& mesh = this->grids[0]->volumetricMeshData;
+    std::vector<std::pair<glm::vec4, std::vector<std::vector<int>>>> idxMap = this->grids[0]->volumetricMeshData.idxMap;
+
+    std::vector<glm::vec3> positions;
+    for(int i = 0; i < idxMap.size(); ++i) {
+        positions.push_back(glm::vec3(mesh.positions[idxMap[i].second[0][0]]));
+    }
+
+    deformableGrid.replaceAllPoints(positions);
+    deformableGrid.writeDeformedGrid(initialGrid);
+
+	// TODO
+	// Add calls to tetmesh and grid control when they will be compatible with new API
+
+	//// create an output grid AND a tetmesh to generate it :
+	//std::shared_ptr<OutputGrid> outputGrid = std::make_shared<OutputGrid>();
+	//outputGrid->setOffline();
+
+	//InterpolationMesh::Ptr tetmesh = std::make_shared<InterpolationMesh>();
+	//// add the grids to the tetmesh
+	//for (std::size_t i = 0; i < this->grids.size(); ++i) {
+	//	std::for_each(this->grids[i]->grid.cbegin(), this->grids[i]->grid.cend(),
+	//	  [&tetmesh](const std::shared_ptr<DiscreteGrid>& _g) {
+	//		  tetmesh->addInputGrid(std::dynamic_pointer_cast<InputGrid>(_g));
+	//	  });
+	//}
+	//// add the output grid
+	//tetmesh->setOutputGrid(outputGrid);
+
+	//// So we can draw it :
+	//GridGLView::Ptr outputGridView = std::make_shared<GridGLView>(std::initializer_list<std::shared_ptr<DiscreteGrid>>({outputGrid}));
+	//this->grids.push_back(outputGridView);
+
+	//// create a grid controller to generate a new outputgrid
+	//this->gridControl = new GridControl(outputGrid, tetmesh, this);
+	//// show it :
+	//gridControl->show();
+	//// done
+	return;
+}
+

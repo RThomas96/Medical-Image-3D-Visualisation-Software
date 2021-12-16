@@ -115,6 +115,8 @@ ADD_EXECUTABLE(neighbor_visu
     ./qt/include/GLmanipulator.hpp
     ./qt/include/manipulator.hpp
     ./new_grid/include/grid.hpp
+    ./grid/include/grid.hpp
+    ./grid/include/tetrahedral_mesh.hpp
 
 	# Main file :
 	./neighbor_visu_main.cpp
@@ -128,6 +130,8 @@ ADD_EXECUTABLE(neighbor_visu
     ./qt/src/GLmanipulator.cpp
     ./qt/src/manipulator.cpp
     ./new_grid/src/grid.cpp
+    ./grid/src/grid.cpp
+    ./grid/src/tetrahedral_mesh.cpp
 )
 TARGET_COMPILE_OPTIONS(neighbor_visu
 	# Set so CMake (more precisely clang/gcc) will not print 30-80 warnings about QGLViewer's
