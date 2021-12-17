@@ -1088,29 +1088,37 @@ void Scene::dummy_resize_curve_to_match_other_curve() {
 	// Get the curve lengths
 	std::vector<float> current_curve_lengths(positions.size() - 1, .0f);
 	std::vector<float> other_curve_lengths(other_curve_positions.size() - 1, .0f);
+	float total_length_current = .0f, total_length_other = .0f;
 	for (std::size_t i = 0; i < other_curve_lengths.size() - 1 || i < current_curve_lengths.size() - 1; ++i) {
-		if (i < current_curve_lengths.size() - 1) { current_curve_lengths[i] = glm::length(positions[i+1] - positions[i]); }
-		if (i < other_curve_lengths.size() - 1) { other_curve_lengths[i] = glm::length(other_curve_positions[i+1] - other_curve_positions[i]); }
+		if (i < current_curve_lengths.size() - 1) { current_curve_lengths[i] = glm::length(positions[i+1] - positions[i]); total_length_current += current_curve_lengths[i]; }
+		if (i < other_curve_lengths.size() - 1) { other_curve_lengths[i] = glm::length(other_curve_positions[i+1] - other_curve_positions[i]); total_length_other += other_curve_lengths[i]; }
 	}
+	float resize_factor = total_length_other / total_length_current;
 
 	std::cerr << "Got both curves' lengths. Building new curve CPs ...\n";
+	std::cerr << "Lengths : " << total_length_current << ", " << total_length_other << " // Diff : " << resize_factor << "\n";
 
 	std::vector<glm::vec3> new_positions(positions.size(), glm::vec3{});
 	new_positions[0] = positions[0];
+	std::cerr << "Resizing segments .\n";
+	std::cerr << "Old position : " << positions[0] << " // New position : " << new_positions[0] << '\n';
 	// Resize them according to their tangent :
-	for (std::size_t i = 1; i < current_curve_lengths.size(); ++i) {
-		glm::vec3 prev = positions[i-1], next = positions[i];
-		if (i < current_curve_lengths.size() - 1) { next = positions[i+1]; }
-		glm::vec3 current_tangent = next - prev;
+	for (std::size_t i = 1; i < positions.size(); ++i) {
+		glm::vec3 prev = positions[i-1], current = positions[i];
+		glm::vec3 current_tangent = current - prev;
+		/*
 		float factor = 1.f;
 		if (i <= other_curve_lengths.size()) {
 			factor = other_curve_lengths[i-1] / current_curve_lengths[i-1];
 		}
+		 */
 
-		new_positions[i] = new_positions[i-1] + current_tangent * factor;
+		new_positions[i] = new_positions[i-1] + current_tangent * resize_factor;
+		std::cerr << "Old position : " << positions[i] << " // New position : " << new_positions[i] << '\n';
 	}
 
 	this->curve->setPositions(new_positions);
+	this->curve->computeWeightsFromMeshData();
 
 	std::cerr << "Set new positions for the curve !\n";
 

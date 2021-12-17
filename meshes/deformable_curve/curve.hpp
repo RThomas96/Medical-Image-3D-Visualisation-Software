@@ -39,7 +39,6 @@ public:
 	[[nodiscard]] const std::vector<glm::vec3>& getPositions() const { return this->positions; }
 	[[nodiscard]] const std::vector<std::vector<std::pair<std::size_t, float>>>& getWeights() const { return this->phi; }
 
-protected:
 	void computeWeightsFromMeshData();
 
 protected:

@@ -145,7 +145,7 @@ public:
 				float Selection[3] = {1.f , 0.f , 0.f};
 
 				glDisable(GL_LIGHTING);
-				glLineWidth( 2.f );
+				glLineWidth( 5.f );
 				glm::vec3 p;
 				glBegin( GL_LINES );
 				if(mode_modification == 1)
@@ -256,13 +256,13 @@ public:
 
 	void checkIfGrabsMouse(int x, int y,const qglviewer::Camera* const cam)
 	{
-		glm::vec3 src;
-		glm::vec3 img ;
+		qglviewer::Vec src;
+		qglviewer::Vec img ;
 
 		float lambda , epsilon_rotation_detect = 0.2f , epsilon_tranlation_detect = 0.005f;
-		glm::vec3 eye,dir;
-		glm::vec3 Eye , X , Z;
-		glm::vec3 Dir , d , e;
+		qglviewer::Vec eye,dir;
+		qglviewer::Vec Eye , X , Z;
+		qglviewer::Vec Dir , d , e;
 
 		//Ce test marche, et permet maintenant de manipuler une sphre dans un gl, et un modle dans l'autre, ou la sphre de
 		//l'autre gl en mme temps ... parfait :-) ...
@@ -320,26 +320,23 @@ public:
 
 				if( mode_grabbing == 1 )
 				{
-					qglviewer::Vec eye_vec, dir_vec;
-					cam->convertClickToLine(QPoint(x,y),eye_vec,dir_vec);
-					eye = glm::vec3{eye_vec.x, eye_vec.y, eye_vec.z};
-					dir = glm::vec3{dir_vec.x, dir_vec.y, dir_vec.z};
-					Eye = glm::vec3(eye[0],eye[1],eye[2]);
-					Dir = glm::vec3(dir[0],dir[1],dir[2]);
+					cam->convertClickToLine(QPoint(x,y),eye,dir);
+					Eye = qglviewer::Vec(eye[0],eye[1],eye[2]);
+					Dir = qglviewer::Vec(dir[0],dir[1],dir[2]);
 
 					///////////////////////////////////////  Dilatations:   ///////////////////////////////////////
 
 					// Check on sx :
-					X = Origine + (1.5f * Xscale*display_scale) * RepX;
-					lambda = glm::dot(( X-Eye ), ( X-Eye )) - ( glm::dot((X-Eye), (Dir)) ) * ( glm::dot((X-Eye), (Dir)) )/glm::dot(Dir,  Dir);
+					X = qglviewer::Vec(Origine) + (1.5 * Xscale*display_scale) * qglviewer::Vec(RepX);
+					lambda = ( X-Eye )*( X-Eye ) - ( (X-Eye)*(Dir) ) * ( (X-Eye)*(Dir) )/(Dir * Dir);
 					if( lambda < display_scale*display_scale / 100 )
 					{
 						mode_modification = 7;
 						setGrabsMouse(true);
 						return;
 					}
-					X = Origine - (1.5f * Xscale*display_scale) *RepX;
-					lambda = glm::dot(( X-Eye ), ( X-Eye )) - ( glm::dot((X-Eye), (Dir)) ) * ( glm::dot((X-Eye), (Dir)) )/glm::dot(Dir,  Dir);
+					X = qglviewer::Vec(Origine) - (1.5 * Xscale*display_scale) * qglviewer::Vec(RepX);
+					lambda = ( X-Eye )*( X-Eye ) - ( (X-Eye)*(Dir) ) * ( (X-Eye)*(Dir) )/(Dir * Dir);
 					if( lambda < display_scale*display_scale / 100 )
 					{
 						mode_modification = -7;
@@ -348,17 +345,16 @@ public:
 					}
 
 					// Check on sy :
-					X = Origine + (1.5f * Yscale*display_scale) *RepY;
-					lambda = glm::dot(glm::dot(( X-Eye ),( X-Eye )) - ( glm::dot((X-Eye),(Dir)) ), ( glm::dot((X-Eye), (Dir)) )/glm::dot(Dir, Dir));
+					X = qglviewer::Vec(Origine) + (1.5 * Yscale*display_scale) * qglviewer::Vec(RepY);
+					lambda = ( X-Eye )*( X-Eye ) - ( (X-Eye)*(Dir) ) * ( (X-Eye)*(Dir) )/(Dir * Dir);
 					if( lambda < display_scale*display_scale / 100 )
 					{
 						mode_modification = 8;
 						setGrabsMouse(true);
 						return;
 					}
-					X = Origine - (1.5f * Yscale*display_scale) *RepY;
-					// lambda = ( X-Eye )*( X-Eye ) - ( (X-Eye)*(Dir) ) * ( (X-Eye)*(Dir) )/(Dir * Dir);
-					lambda = glm::dot(glm::dot(( X-Eye ),( X-Eye )) - ( glm::dot((X-Eye),(Dir)) ), ( glm::dot((X-Eye), (Dir)) )/glm::dot(Dir, Dir));
+					X = qglviewer::Vec(Origine) - (1.5 * Yscale*display_scale) * qglviewer::Vec(RepY);
+					lambda = ( X-Eye )*( X-Eye ) - ( (X-Eye)*(Dir) ) * ( (X-Eye)*(Dir) )/(Dir * Dir);
 					if( lambda < display_scale*display_scale / 100 )
 					{
 						mode_modification = -8;
@@ -367,18 +363,16 @@ public:
 					}
 
 					// Check on sz :
-					X = Origine + (1.5f * Zscale*display_scale) *RepZ;
-					//lambda = ( X-Eye )*( X-Eye ) - ( (X-Eye)*(Dir) ) * ( (X-Eye)*(Dir) )/(Dir * Dir);
-					lambda = glm::dot(glm::dot(( X-Eye ),( X-Eye )) - ( glm::dot((X-Eye),(Dir)) ), ( glm::dot((X-Eye), (Dir)) )/glm::dot(Dir, Dir));
+					X = qglviewer::Vec(Origine) + (1.5 * Zscale*display_scale) * qglviewer::Vec(RepZ);
+					lambda = ( X-Eye )*( X-Eye ) - ( (X-Eye)*(Dir) ) * ( (X-Eye)*(Dir) )/(Dir * Dir);
 					if( lambda < display_scale*display_scale / 100 )
 					{
 						mode_modification = 9;
 						setGrabsMouse(true);
 						return;
 					}
-					X = Origine - (1.5f * Zscale*display_scale) *RepZ;
-					//lambda = ( X-Eye )*( X-Eye ) - ( (X-Eye)*(Dir) ) * ( (X-Eye)*(Dir) )/(Dir * Dir);
-					lambda = glm::dot(glm::dot(( X-Eye ),( X-Eye )) - ( glm::dot((X-Eye),(Dir)) ), ( glm::dot((X-Eye), (Dir)) )/glm::dot(Dir, Dir));
+					X = qglviewer::Vec(Origine) - (1.5 * Zscale*display_scale) * qglviewer::Vec(RepZ);
+					lambda = ( X-Eye )*( X-Eye ) - ( (X-Eye)*(Dir) ) * ( (X-Eye)*(Dir) )/(Dir * Dir);
 					if( lambda < display_scale*display_scale / 100 )
 					{
 						mode_modification = -9;
@@ -389,10 +383,9 @@ public:
 					///////////////////////////////////////  Rotations:   ///////////////////////////////////////
 
 					// Check on rx :
-					// lambda = ( ( Origine - Eye )*( RepX ) )/( ( Dir )*( RepX ) );
-					lambda = ( glm::dot(( Origine - Eye ), ( RepX )) )/( glm::dot(( Dir ), ( RepX )) );
+					lambda = ( ( qglviewer::Vec(Origine) - Eye )*( qglviewer::Vec(RepX) ) )/( ( Dir )*( qglviewer::Vec(RepX) ) );
 					X = Eye + lambda*Dir;
-					if( fabs( ( glm::dot((X-Origine), (X-Origine)) )/(display_scale*display_scale) - 1.f ) < epsilon_rotation_detect )
+					if( fabs( ( (X-qglviewer::Vec(Origine))*(X-qglviewer::Vec(Origine)) )/(display_scale*display_scale) - 1 ) < epsilon_rotation_detect )
 					{
 						mode_modification = 4;
 						setGrabsMouse(true);
@@ -400,10 +393,9 @@ public:
 					}
 
 					// Check on ry :
-					// lambda = ( ( Origine - Eye )*( RepY ) )/( ( Dir )*( RepY ) );
-					lambda = ( glm::dot(( Origine - Eye ), ( RepY )) )/( glm::dot(( Dir ), ( RepY )) );
+					lambda = ( ( qglviewer::Vec(Origine) - Eye )*( qglviewer::Vec(RepY) ) )/( ( Dir )*( qglviewer::Vec(RepY) ) );
 					X = Eye + lambda*Dir;
-					if( fabs( ( glm::dot((X-Origine), (X-Origine)) )/(display_scale*display_scale) - 1.f ) < epsilon_rotation_detect )
+					if( fabs( ( (X-qglviewer::Vec(Origine))*(X-qglviewer::Vec(Origine)) )/(display_scale*display_scale) - 1 ) < epsilon_rotation_detect )
 					{
 						mode_modification = 5;
 						setGrabsMouse(true);
@@ -411,10 +403,9 @@ public:
 					}
 
 					// Check on rz :
-					// lambda = ( ( Origine - Eye )*( RepZ ) )/( ( Dir )*( RepZ ) );
-					lambda = ( glm::dot(( Origine - Eye ), ( RepZ )) )/( glm::dot(( Dir ), ( RepZ )) );
+					lambda = ( ( qglviewer::Vec(Origine) - Eye )*( qglviewer::Vec(RepZ) ) )/( ( Dir )*( qglviewer::Vec(RepZ) ) );
 					X = Eye + lambda*Dir;
-					if( fabs( ( glm::dot((X-Origine),(X-Origine)) )/(display_scale*display_scale) - 1.f ) < epsilon_rotation_detect )
+					if( fabs( ( (X-qglviewer::Vec(Origine))*(X-qglviewer::Vec(Origine)) )/(display_scale*display_scale) - 1 ) < epsilon_rotation_detect )
 					{
 						mode_modification = 6;
 						setGrabsMouse(true);
@@ -424,14 +415,14 @@ public:
 					///////////////////////////////////////  Translations:   ///////////////////////////////////////
 
 					// Check on tx :
-					d = glm::cross( RepX , Dir );
-					e = glm::cross( Dir , d );
-					lambda = ( glm::dot(( Eye - Origine ), ( e )) ) / glm::dot( RepX , e );
-					X = Origine + lambda*RepX;
+					d = cross( qglviewer::Vec(RepX) , Dir );
+					e = cross( Dir , d );
+					lambda = ( ( Eye - qglviewer::Vec(Origine) )*( e ) ) / ( qglviewer::Vec(RepX) * e );
+					X = qglviewer::Vec(Origine + lambda*RepX);
 					if( lambda < 2.2*display_scale && lambda > -2.2*display_scale )
 					{
 						Z = Eye + ( Dir * ( X-Eye ) )*Dir/sqrt( (Dir*Dir) );
-						if( ( glm::dot(( Z-X ), ( Z-X )) ) < display_scale*display_scale*epsilon_tranlation_detect )
+						if( ( ( Z-X )*( Z-X ) ) < display_scale*display_scale*epsilon_tranlation_detect )
 						{
 							mode_modification = 1;
 							setGrabsMouse(true);
@@ -440,14 +431,14 @@ public:
 					}
 
 					// Check on ty :
-					d = cross( RepY , Dir );
+					d = cross( qglviewer::Vec(RepY) , Dir );
 					e = cross( Dir , d );
-					lambda = ( glm::dot(( Eye - Origine ), ( e )) ) / glm::dot( RepY , e );
-					X = Origine + lambda*RepY;
+					lambda = ( ( Eye - qglviewer::Vec(Origine) )*( e ) ) / ( qglviewer::Vec(RepY) * e );
+					X = qglviewer::Vec(Origine + lambda*RepY);
 					if( lambda < 2.2*display_scale && lambda > -2.2*display_scale )
 					{
 						Z = Eye + ( Dir * ( X-Eye ) )*Dir/sqrt( (Dir*Dir) );
-						if( ( glm::dot(( Z-X ), ( Z-X )) ) < display_scale*display_scale*epsilon_tranlation_detect )
+						if( ( ( Z-X )*( Z-X ) ) < display_scale*display_scale*epsilon_tranlation_detect )
 						{
 							mode_modification = 2;
 							setGrabsMouse(true);
@@ -456,14 +447,14 @@ public:
 					}
 
 					// Check on tz :
-					d = cross( RepZ , Dir );
+					d = cross( qglviewer::Vec(RepZ) , Dir );
 					e = cross( Dir , d );
-					lambda = ( glm::dot(( Eye - Origine ), ( e )) ) / glm::dot( RepZ , e );
-					X = Origine + lambda*RepZ;
+					lambda = ( ( Eye - qglviewer::Vec(Origine) )*( e ) ) / ( qglviewer::Vec(RepZ) * e );
+					X = qglviewer::Vec(Origine + lambda*RepZ);
 					if( lambda < 2.2*display_scale && lambda > -2.2*display_scale )
 					{
 						Z = Eye + ( Dir * ( X-Eye ) )*Dir/sqrt( (Dir*Dir) );
-						if( ( glm::dot(( Z-X ), ( Z-X )) ) < display_scale*display_scale*epsilon_tranlation_detect )
+						if( ( ( Z-X )*( Z-X ) ) < display_scale*display_scale*epsilon_tranlation_detect )
 						{
 							mode_modification = 3;
 							setGrabsMouse(true);
