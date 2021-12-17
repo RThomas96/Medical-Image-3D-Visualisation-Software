@@ -144,9 +144,11 @@ public slots:
 	void resetARAPConstraints();
 	void mesh_select_all();
 	void mesh_unselect_all();
+	void scaleMeshARAP();
 
 	void loadMeshToScene();
 	void loadCurveToScene();
+	void loadOtherCurveToScene();
 
 	void saveMesh();
 	void saveCurve();

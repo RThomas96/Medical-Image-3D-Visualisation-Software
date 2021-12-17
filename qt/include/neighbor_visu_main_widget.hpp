@@ -98,6 +98,7 @@ private:
 	QAction* action_showSettings;	 ///< Action to show user settings
 	QAction* action_loadMesh;	 ///< The action to load a mesh into the scene.
 	QAction* action_loadCurve;	  ///< The action to load a mesh into the scene.
+	QAction* action_loadOtherCurve; ///< The action to load another curve in order to resize the current one
 	QStatusBar* statusBar;	  ///< Status bar
 	QPushButton* showGLLog;	   ///< Button to open the QOpenGLDebugLog message box.
 	QPushButton* deform;	///< The 'Deform' button for debug purpose

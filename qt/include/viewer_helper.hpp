@@ -22,6 +22,7 @@ protected:
 	QPushButton* button_selection;
 	QPushButton* button_update;
 	QPushButton* button_alignARAP;
+	QPushButton* button_scaleARAP;
 	QPushButton* button_launchARAP;
 	QPushButton* button_vaoState;
 	QPushButton* button_select_all;

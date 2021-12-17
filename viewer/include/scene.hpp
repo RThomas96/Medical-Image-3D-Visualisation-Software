@@ -289,6 +289,11 @@ public:
 
 	/// @brief Updates the mesh _and_ the curve, if both are loaded
 	void updateMeshAndCurve();
+	/// @brief Updates the mesh _and_ the curve, if both are loaded, but don't apply the transformation to them
+	void updateMeshAndCurve_No_Image_Resizing();
+	/// @brief Updates the positions in the mesh manip interface
+	/// @note This really ought to be done automatically, by putting the mesh inside the manip interface instead of copying vertices everytime ...
+	void updateMeshInterface();
 
 	/// @brief This performs ARAP deformation on the mesh associated with the first loaded image.
 	/// @note THIS IS A WIP/DRAFT FUNCTION, NOT DESIGNED FOR PRODUCTION RELEASE
@@ -319,6 +324,8 @@ public:
 	std::vector<glm::vec3> dummy_get_loaded_constraint_positions() const;
 	/// @brief From the loaded mesh/curve combo, load another curve and match their lengths.
 	void dummy_resize_curve_to_match_other_curve();
+	/// @brief Scales the mesh to fit the BB of the selected points
+	void dummy_scale_mesh_to_cp_bb();
 
 	std::shared_ptr<MMInterface<glm::vec3>> getMeshInterface() const { return this->mesh_interface; }
 	std::shared_ptr<SimpleManipulator> getManipulator() const { return this->arapManipulator; }

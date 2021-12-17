@@ -192,6 +192,13 @@ void Viewer::mesh_unselect_all() {
 	}
 }
 
+void Viewer::scaleMeshARAP() {
+	this->makeCurrent();
+	this->scene->dummy_scale_mesh_to_cp_bb();
+	this->doneCurrent();
+	this->updateInfoFromScene();
+}
+
 void Viewer::arapManipulator_moved() {
 	// Change the data in the MMInterface :
 	this->scene->getMeshInterface()->changed(this->scene->getManipulator().get());
@@ -203,12 +210,12 @@ void Viewer::arapManipulator_moved() {
 	}
 	// Recompute mesh normals and update :
 	this->scene->getMesh()->updateQuick();
-	this->scene->updateMeshAndCurve();
+	this->scene->updateMeshAndCurve_No_Image_Resizing();
 	this->update();
 }
 
 void Viewer::arapManipulator_released() {
-	//
+	//this->scene->getCurve()->deformFromMeshData();
 }
 
 void Viewer::initializeARAPInterface() {
@@ -724,6 +731,13 @@ void Viewer::loadMeshToScene() {
 void Viewer::loadCurveToScene() {
 	this->makeCurrent();
 	this->scene->loadCurve();
+	this->doneCurrent();
+	this->updateInfoFromScene();
+}
+
+void Viewer::loadOtherCurveToScene() {
+	this->makeCurrent();
+	this->scene->dummy_resize_curve_to_match_other_curve();
 	this->doneCurrent();
 	this->updateInfoFromScene();
 }

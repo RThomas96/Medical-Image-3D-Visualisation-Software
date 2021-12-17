@@ -111,6 +111,7 @@ void MainWidget::setupWidgets() {
 	this->action_showSettings  = new QAction("Settings");
 	this->action_loadMesh	   = new QAction("Load mesh (OFF)");
 	this->action_loadCurve	   = new QAction("Load curve (OBJ)");
+	this->action_loadOtherCurve= new QAction("Load resizing curve (OBJ)");
 
 	this->action_addGrid->setShortcut(QKeySequence::Open);
 
@@ -121,6 +122,7 @@ void MainWidget::setupWidgets() {
 	this->fileMenu->addAction(this->action_saveGrid);
 	this->fileMenu->addAction(this->action_loadMesh);
 	this->fileMenu->addAction(this->action_loadCurve);
+	this->fileMenu->addAction(this->action_loadOtherCurve);
 	this->fileMenu->addAction(this->action_showSettings);
 	this->fileMenu->addAction(this->action_exitProgram);
 	// view menu :
@@ -201,6 +203,7 @@ void MainWidget::setupWidgets() {
 
 	QObject::connect(this->action_loadMesh, &QAction::triggered, this->viewer, &Viewer::loadMeshToScene);
 	QObject::connect(this->action_loadCurve, &QAction::triggered, this->viewer, &Viewer::loadCurveToScene);
+	QObject::connect(this->action_loadOtherCurve, &QAction::triggered, this->viewer, &Viewer::loadOtherCurveToScene);
 
 	this->viewer->addStatusBar(this->statusBar);
 	this->viewer_planeX->addParentStatusBar(this->statusBar);

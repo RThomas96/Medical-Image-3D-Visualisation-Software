@@ -25,6 +25,7 @@ void ViewerHelper::init() {
 	this->button_unselect_all = new QPushButton("Unselect all vertices");
 	this->button_reset_arap = new QPushButton("Reset ARAP constraints");
 	this->button_enable_def = new QPushButton("Enable deformation");
+	this->button_scaleARAP = new QPushButton("Scale mesh before ARAP");
 
 	this->button_save_mesh = new QPushButton("Save mesh ...");
 	this->button_save_curve = new QPushButton("Save curve ...");
@@ -45,6 +46,7 @@ void ViewerHelper::init() {
 	QObject::connect(sphere_size_slider, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this->viewer, &Viewer::setSphereSize);
 	// Connect the button press of 'Enable deformation' with the actual action of enabling the deformation :
 	QObject::connect(this->viewer, &Viewer::enableDeformationPanel, this, &ViewerHelper::toggleDeformationButtons);
+	QObject::connect(this->button_scaleARAP, &QPushButton::pressed, this->viewer, &Viewer::scaleMeshARAP);
 
 	QObject::connect(this->button_save_mesh, &QPushButton::pressed, this->viewer, &Viewer::saveMesh);
 	QObject::connect(this->button_save_curve, &QPushButton::pressed, this->viewer, &Viewer::saveCurve);
@@ -62,6 +64,7 @@ void ViewerHelper::init() {
 	buttons->addWidget(this->button_select_all);
 	buttons->addWidget(this->button_unselect_all);
 	buttons->addWidget(this->button_alignARAP);
+	buttons->addWidget(this->button_scaleARAP);
 	buttons->addWidget(this->button_launchARAP);
 	buttons->addWidget(this->button_reset_arap);
 

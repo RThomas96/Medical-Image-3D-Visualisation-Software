@@ -701,6 +701,7 @@ void Scene::newAPI_addGrid(Image::Grid::Ptr gridLoaded) {
 	this->newGrids.push_back(gridView);
 
 	this->updateMeshAndCurve();
+	this->updateMeshInterface();
 
 	this->updateVis();
 	this->updateBoundingBox();
@@ -851,7 +852,9 @@ void Scene::dummy_apply_alignment_before_arap() {
 	_mesh->applyTransformation(current_transform);
 	// ... but the drawing of the mesh doesn't need to have it anymore :
 	this->mesh_draw->setTransformation(glm::mat4(1.f));
-	this->updateMeshAndCurve();
+	this->mesh_interface->loadAndInitialize(this->mesh->getVertices(), this->mesh->getTriangles());
+	this->updateMeshAndCurve_No_Image_Resizing();
+	this->updateMeshInterface();
 	if (this->curve) {
 		// not covered in updateMeshAndCurve() :
 		this->curve_draw->setTransformation(this->mesh_draw->getTransformation());
@@ -878,6 +881,10 @@ void Scene::dummy_perform_constrained_arap_on_image_mesh() {
 	std::shared_ptr<Mesh> _mesh = this->mesh;
 
 	std::cerr << "Generating vertex handles ..." << '\n';
+	if (this->mesh_idx_constraints.size() != this->image_constraints.size()) {
+		std::cerr << "Error : cannot perform ARAP, not the same number of constraints.\n";
+		return;
+	}
 	std::vector<std::pair<int, glm::vec3>> arap_handles;
 	for (std::size_t i = 0; i < this->mesh_idx_constraints.size(); ++i) {
 		arap_handles.emplace_back(this->mesh_idx_constraints[i].second, this->image_constraints[i]);
@@ -895,7 +902,7 @@ void Scene::dummy_perform_constrained_arap_on_image_mesh() {
 	this->updateBoundingBox();
 	std::cerr << "Finished.\n";
 
-	this->updateMeshAndCurve();
+	this->updateMeshAndCurve_No_Image_Resizing();
 }
 
 std::vector<glm::vec3> Scene::dummy_get_loaded_constraint_positions() const {
@@ -1081,9 +1088,9 @@ void Scene::dummy_resize_curve_to_match_other_curve() {
 	// Get the curve lengths
 	std::vector<float> current_curve_lengths(positions.size() - 1, .0f);
 	std::vector<float> other_curve_lengths(other_curve_positions.size() - 1, .0f);
-	for (std::size_t i = 0; i < other_curve_lengths.size() && i < current_curve_lengths.size(); ++i) {
-		current_curve_lengths[i] = glm::length(positions[i+1] - positions[i]);
-		other_curve_lengths[i] = glm::length(other_curve_positions[i+1] - other_curve_positions[i]);
+	for (std::size_t i = 0; i < other_curve_lengths.size() - 1 || i < current_curve_lengths.size() - 1; ++i) {
+		if (i < current_curve_lengths.size() - 1) { current_curve_lengths[i] = glm::length(positions[i+1] - positions[i]); }
+		if (i < other_curve_lengths.size() - 1) { other_curve_lengths[i] = glm::length(other_curve_positions[i+1] - other_curve_positions[i]); }
 	}
 
 	std::cerr << "Got both curves' lengths. Building new curve CPs ...\n";
@@ -1092,14 +1099,15 @@ void Scene::dummy_resize_curve_to_match_other_curve() {
 	new_positions[0] = positions[0];
 	// Resize them according to their tangent :
 	for (std::size_t i = 1; i < current_curve_lengths.size(); ++i) {
-		// TODO : we're not computing tangents here but directions. Change that.
-		glm::vec3 current_tangent = positions[i] - positions[i-1];
+		glm::vec3 prev = positions[i-1], next = positions[i];
+		if (i < current_curve_lengths.size() - 1) { next = positions[i+1]; }
+		glm::vec3 current_tangent = next - prev;
 		float factor = 1.f;
 		if (i <= other_curve_lengths.size()) {
-			other_curve_lengths[i-1] / current_curve_lengths[i-1];
+			factor = other_curve_lengths[i-1] / current_curve_lengths[i-1];
 		}
 
-		new_positions[i] = positions[i-1] + current_tangent * factor;
+		new_positions[i] = new_positions[i-1] + current_tangent * factor;
 	}
 
 	this->curve->setPositions(new_positions);
@@ -1110,6 +1118,61 @@ void Scene::dummy_resize_curve_to_match_other_curve() {
 	this->curve_draw->updateOnNextDraw();
 	this->curve_draw->updateBoundingBox();
 	this->updateBoundingBox();
+}
+
+void Scene::dummy_scale_mesh_to_cp_bb() {
+	if (this->mesh == nullptr) {
+		std::cerr << "Error : no meshes loaded.\n";
+		return;
+	}
+	if (this->mesh_draw == nullptr) {
+		std::cerr << "Error : could not get the first drawable as a DrawableMesh.\n";
+		return;
+	}
+
+	if (this->mesh_idx_constraints.empty() || this->image_constraints.empty()) {
+		std::cerr << "Error : no constraints applied\n";
+		return;
+	}
+
+	std::shared_ptr<Mesh> _mesh = this->mesh;
+	Image::bbox_t bb_img;
+	Image::bbox_t bb_mesh;
+
+	// Compute size differential :
+	for (const auto& constraint : this->mesh_idx_constraints) {
+		bb_mesh.addPoint(this->mesh->getVertices()[constraint.second]);
+	}
+	for (const auto& constraint : this->image_constraints) {
+		bb_img.addPoint(constraint);
+	}
+	float size_diff = glm::length(bb_img.getDiagonal()) / glm::length(bb_mesh.getDiagonal());
+
+	// Compute centroid of the mesh for translation :
+	glm::vec3 mesh_centroid;
+	for (const auto& v : this->mesh->getVertices()) {
+		mesh_centroid += v / static_cast<float>(this->mesh->getVertices().size());
+	}
+
+	// Apply transfo(s) to mesh :
+	glm::mat4 base_transfo(1.f);
+	glm::mat4 translate_to_origin = glm::translate(base_transfo, -mesh_centroid);
+	glm::mat4 translate_to_centroid = glm::translate(base_transfo, mesh_centroid);
+	glm::mat4 scaling_matrix = glm::scale(base_transfo, glm::vec3{size_diff, size_diff, size_diff});
+
+	// Apply transfos :
+	this->mesh->applyTransformation(translate_to_origin);
+	this->mesh->applyTransformation(scaling_matrix);
+	this->mesh->applyTransformation(translate_to_centroid);
+
+	// Update data :
+	this->mesh_draw->setTransformation(glm::mat4(1.f));
+	this->updateMeshAndCurve_No_Image_Resizing();
+	this->updateMeshInterface();
+	if (this->curve) {
+		// not covered in updateMeshAndCurve() :
+		this->curve_draw->setTransformation(this->mesh_draw->getTransformation());
+	}
 }
 
 void Scene::updateMeshAndCurve() {
@@ -1140,12 +1203,49 @@ void Scene::updateMeshAndCurve() {
 			std::cerr << "Initializing the mesh interface !!!\n";
 			this->mesh_interface = std::make_shared<MMInterface<glm::vec3>>();
 			this->mesh_interface->setMode(MeshModificationMode::REALTIME);
-			this->mesh_interface->clear();
-			// Re-initialize the mesh interface data with the new data !
-			this->mesh_interface->loadAndInitialize(this->mesh->getVertices(), this->mesh->getTriangles());
 		}
 	}
 	this->updateBoundingBox();
+}
+
+void Scene::updateMeshAndCurve_No_Image_Resizing() {
+	// If a mesh is already loaded, offer to scale it to the loaded image :
+	if (this->mesh != nullptr) {
+		//this->resizeMeshForGrid();
+		this->mesh_draw->updateBoundingBox();
+		this->mesh_draw->updateOnNextDraw();
+		if (this->curve != nullptr) {
+			this->curve->deformFromMeshData();
+			this->curve_draw->updateBoundingBox();
+			this->curve_draw->updateOnNextDraw();
+		}
+
+		if (this->mesh_interface == nullptr) {
+			std::cerr << "Initializing the manipulator and rectangle selection !\n";
+			this->rectangleSelection = std::make_shared<RectangleSelection>();
+			this->arapManipulator = std::make_shared<SimpleManipulator>();
+			if (this->viewer) {
+				QObject::connect(this->rectangleSelection.get(), &RectangleSelection::add, this->viewer, &Viewer::rectangleSelection_add);
+				QObject::connect(this->rectangleSelection.get(), &RectangleSelection::remove, this->viewer, &Viewer::rectangleSelection_remove);
+				QObject::connect(this->rectangleSelection.get(), &RectangleSelection::apply, this->viewer, &Viewer::rectangleSelection_apply);
+
+				QObject::connect(this->arapManipulator.get(), &SimpleManipulator::moved, this->viewer, &Viewer::arapManipulator_moved);
+				QObject::connect(this->arapManipulator.get(), &SimpleManipulator::mouseReleased, this->viewer, &Viewer::arapManipulator_released);
+			}
+
+			std::cerr << "Initializing the mesh interface !!!\n";
+			this->mesh_interface = std::make_shared<MMInterface<glm::vec3>>();
+			this->mesh_interface->setMode(MeshModificationMode::REALTIME);
+		}
+	}
+	this->updateBoundingBox();
+}
+
+void Scene::updateMeshInterface() {
+	if (this->mesh_interface == nullptr) { return; }
+	this->mesh_interface->clear();
+	// Re-initialize the mesh interface data with the new data !
+	this->mesh_interface->loadAndInitialize(this->mesh->getVertices(), this->mesh->getTriangles());
 }
 
 void Scene::recompileShaders(bool verbose) {
@@ -1203,7 +1303,7 @@ GLuint Scene::uploadTexture1D(const TextureUpload& tex) {
 		throw std::runtime_error("nullptr as context");
 	}
 
-	glEnable(GL_TEXTURE_1D);
+	//glEnable(GL_TEXTURE_1D);
 
 	GLuint texHandle = 0;
 	glGenTextures(1, &texHandle);
@@ -1249,7 +1349,7 @@ GLuint Scene::uploadTexture2D(const TextureUpload& tex) {
 		throw std::runtime_error("nullptr as context");
 	}
 
-	glEnable(GL_TEXTURE_2D);
+	//glEnable(GL_TEXTURE_2D);
 
 	GLuint texHandle = 0;
 	glGenTextures(1, &texHandle);
@@ -1297,7 +1397,7 @@ GLuint Scene::uploadTexture3D(const TextureUpload& tex) {
 		throw std::runtime_error("nullptr as context");
 	}
 
-	glEnable(GL_TEXTURE_3D);
+	//glEnable(GL_TEXTURE_3D);
 
 	GLuint texHandle = 0;
 	glGenTextures(1, &texHandle);
@@ -1347,7 +1447,7 @@ GLuint Scene::newAPI_uploadTexture3D_allocateonly(const TextureUpload& tex) {
 		throw std::runtime_error("nullptr as context");
 	}
 
-	glEnable(GL_TEXTURE_3D);
+	//glEnable(GL_TEXTURE_3D);
 
 	GLuint texHandle = 0;
 	glGenTextures(1, &texHandle);
@@ -1397,7 +1497,7 @@ GLuint Scene::newAPI_uploadTexture3D(const GLuint texHandle, const TextureUpload
 		throw std::runtime_error("nullptr as context");
 	}
 
-	glEnable(GL_TEXTURE_3D);
+	//glEnable(GL_TEXTURE_3D);
 	glBindTexture(GL_TEXTURE_3D, texHandle);
 
 	glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, s, tex.size.x, tex.size.y, 1, tex.format, tex.type, data.data());
@@ -1460,6 +1560,7 @@ void Scene::loadMesh() {
 
 	// Update the scene data in order to reflect the changes made here.
 	this->updateMeshAndCurve();
+	this->updateMeshInterface();
 	this->updateBoundingBox();
 }
 
@@ -1750,10 +1851,14 @@ void Scene::drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading
 		return;
 	}
 
+	bool blend_enabled = glIsEnabled(GL_BLEND);
+
 	glEnable(GL_DEPTH_TEST);
-	//glEnable(GL_BLEND);
-	//glEnablei(GL_BLEND, 0);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	if (not blend_enabled) {
+		glEnable(GL_BLEND);
+		glEnablei(GL_BLEND, 0);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	}
 
 	uint min = 0;	 // min index for drawing commands
 	if (_plane == planes::x) {
@@ -1784,6 +1889,11 @@ void Scene::drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading
 	glBindVertexArray(0);
 	glUseProgram(0);
 	this->showVAOstate = false;
+
+	if (not blend_enabled) {
+		glDisablei(GL_BLEND, 0);
+		glDisable(GL_BLEND);
+	}
 
 	return;
 }
@@ -1942,19 +2052,19 @@ void Scene::newAPI_prepareUniforms_3DSolid(GLfloat* mvMat, GLfloat* pMat, glm::v
 
 	// Textures :
 	glActiveTexture(GL_TEXTURE0 + enabled_textures);
-	glEnable(GL_TEXTURE_3D);
+	//glEnable(GL_TEXTURE_3D);
 	glBindTexture(GL_TEXTURE_3D, gridView->gridTexture);
 	glUniform1i(texDataLoc, enabled_textures);
 	enabled_textures++;
 
 	glActiveTexture(GL_TEXTURE0 + enabled_textures);
-	glEnable(GL_TEXTURE_1D);
+	//glEnable(GL_TEXTURE_1D);
 	glBindTexture(GL_TEXTURE_1D, this->texHandle_colorScale_greyscale);
 	glUniform1i(location_colorScales0, enabled_textures);
 	enabled_textures++;
 
 	glActiveTexture(GL_TEXTURE0 + enabled_textures);
-	glEnable(GL_TEXTURE_1D);
+	//glEnable(GL_TEXTURE_1D);
 	glBindTexture(GL_TEXTURE_1D, this->texHandle_colorScale_hsv2rgb);
 	glUniform1i(location_colorScales1, enabled_textures);
 	enabled_textures++;
@@ -2172,7 +2282,7 @@ void Scene::newAPI_prepareUniforms_3DPlane(GLfloat* mvMat, GLfloat* pMat, planes
 
 	GLint enabled_textures = 0;
 	glActiveTexture(GL_TEXTURE0 + enabled_textures);
-	glEnable(GL_TEXTURE_3D);
+	//glEnable(GL_TEXTURE_3D);
 	glBindTexture(GL_TEXTURE_3D, grid->gridTexture);
 	glUniform1i(location_texData, enabled_textures);
 	enabled_textures++;
@@ -2627,11 +2737,14 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 	if (this->shouldUpdateUBOData) {
 		this->newSHADERS_updateUBOData();
 	}
+	bool blend_enabled = glIsEnabled(GL_BLEND);
 
-	//glEnable(GL_DEPTH_TEST);
-	//glEnablei(GL_BLEND, 0);
-	//glEnable(GL_TEXTURE_3D);
-	//glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_DEPTH_TEST);
+	if (not blend_enabled) {
+		glEnable(GL_BLEND);
+		glEnablei(GL_BLEND, 0);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	}
 
 	glm::mat4 transfoMat = glm::mat4(1.f);
 
@@ -2675,6 +2788,11 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 
 	this->drawBoundingBox(this->sceneBB, glm::vec4(.5, .5, .0, 1.), mvMat, pMat);
 	this->showVAOstate = false;
+
+	if (not blend_enabled) {
+		glDisablei(GL_BLEND, 0);
+		glDisable(GL_BLEND);
+	}
 }
 
 void Scene::newSHADERS_updateUBOData() {
@@ -4284,7 +4402,7 @@ GLuint SceneGL::uploadTexture1D(const TextureUpload& tex) {
 		throw std::runtime_error("nullptr as context");
 	}
 
-	glEnable(GL_TEXTURE_1D);
+	//glEnable(GL_TEXTURE_1D);
 
 	GLuint texHandle = 0;
 	glGenTextures(1, &texHandle);
@@ -4330,7 +4448,7 @@ GLuint SceneGL::uploadTexture2D(const TextureUpload& tex) {
 		throw std::runtime_error("nullptr as context");
 	}
 
-	glEnable(GL_TEXTURE_2D);
+	//glEnable(GL_TEXTURE_2D);
 
 	GLuint texHandle = 0;
 	glGenTextures(1, &texHandle);
