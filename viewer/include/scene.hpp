@@ -327,10 +327,18 @@ public:
 	/// @brief Scales the mesh to fit the BB of the selected points
 	void dummy_scale_mesh_to_cp_bb();
 
+	/// @brief Resets the scene data in order for the ARAP controller to perform its duties.
+	void arap_reset_scene_data();
 	/// @brief Loads the mesh data from the ARAP controller.
-	void arap_load_mesh_data();
-	void arap_load_curve_data();
-	void arap_load_image_data();
+	void arap_load_mesh_data(Mesh::Ptr& mesh_to_upload);
+	/// @brief Loads the curve data from the ARAP controller.
+	void arap_load_curve_data(Curve::Ptr& curve_to_upload);
+	/// @brief Loads the image data from the ARAP controller.
+	void arap_load_image_data(Image::Grid::Ptr grid_to_upload);
+
+	void arap_delete_grid_data();
+	void arap_delete_mesh_drawable();
+	void arap_delete_curve_drawable();
 
 	std::shared_ptr<MMInterface<glm::vec3>> getMeshInterface() const { return this->mesh_interface; }
 	std::shared_ptr<SimpleManipulator> getManipulator() const { return this->arapManipulator; }
@@ -405,6 +413,9 @@ public:
 
 	/// @brief Checks if the scene is already initialized.
 	bool isSceneInitialized(void) const { return this->isInitialized; }
+
+	/// @brief Update the scene's bounding box with the currently drawn grids.
+	void updateBoundingBox(void);
 
 	void bindMeshManipulator(UITool::MeshManipulator* meshManipulator);
 	void toggleManipulatorDisplay();
@@ -489,8 +500,6 @@ private:
 	void setupVAOBoundingBox();
 	/// @brief Draw a bounding box
 	void drawBoundingBox(const Image::bbox_t& _box, glm::vec3 color, GLfloat* vMat, GLfloat* pMat);
-	/// @brief Update the scene's bounding box with the currently drawn grids.
-	void updateBoundingBox(void);
 	void updateVisuBoxCoordinates(void);
 
 	/// @brief Stub function to initialize some system-level limits. Currently only fetches max texture size.

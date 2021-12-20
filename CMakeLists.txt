@@ -48,7 +48,7 @@ ADD_LIBRARY(ImageIO STATIC
 
 	./grid/src/discrete_grid_reader.cpp
 	./grid/src/discrete_grid_writer.cpp
-)
+	)
 TARGET_INCLUDE_DIRECTORIES(ImageIO
 	PRIVATE ${LOCAL_GLM_HEADER_DIR}
 	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include
@@ -56,13 +56,13 @@ TARGET_INCLUDE_DIRECTORIES(ImageIO
 	# to manually have to include the lib's include dir in targets:
 	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include/nifti
 	PRIVATE ${libTIFF_HEADER_DIR}
-)
+	)
 TARGET_LINK_LIBRARIES(ImageIO
 	PUBLIC TinyTIFF
 	PUBLIC grid_api
 	PUBLIC ${libTIFF}
 	PUBLIC Qt5::Xml
-)
+	)
 # }}}
 
 # Library for DiscreteGrid and TetMesh {{{
@@ -77,17 +77,17 @@ ADD_LIBRARY(DiscreteGrid STATIC
 	./grid/src/discrete_grid.cpp
 	./grid/src/input_discrete_grid.cpp
 	./grid/src/output_discrete_grid.cpp
-        meshes/deformable_curve/curve.hpp)
+	meshes/deformable_curve/curve.hpp)
 TARGET_INCLUDE_DIRECTORIES(DiscreteGrid
 	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/third_party/glm/
 	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include
 	# Nifti uses brace-include without the 'nifti/' prefix, leading
 	# to manually have to include the lib's include dir in targets:
 	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include/nifti
-)
+	)
 TARGET_LINK_LIBRARIES(DiscreteGrid
 	PUBLIC ImageIO
-)
+	)
 SET_TARGET_PROPERTIES(DiscreteGrid PROPERTIES AUTOMOC OFF AUTORCC OFF AUTOUIC OFF)
 # }}}
 
@@ -124,7 +124,7 @@ ADD_LIBRARY(VisualisationWidgets STATIC
 	./qt/src/user_settings_widget.cpp
 	./qt/src/loader_widget.cpp
 	./qt/src/viewer_helper.cpp
-)
+	)
 TARGET_INCLUDE_DIRECTORIES(VisualisationWidgets
 	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/third_party/glm/
 	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include
@@ -133,7 +133,7 @@ TARGET_INCLUDE_DIRECTORIES(VisualisationWidgets
 	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include/nifti
 	PRIVATE ${QGLViewer_HEADER_DIR}
 	PRIVATE ${GSL_INCLUDE_DIRS}
-)
+	)
 TARGET_LINK_LIBRARIES(VisualisationWidgets
 	PUBLIC ImageIO
 	PUBLIC DiscreteGrid
@@ -143,7 +143,7 @@ TARGET_LINK_LIBRARIES(VisualisationWidgets
 	PUBLIC Qt5::Widgets
 	PUBLIC Qt5::OpenGL
 	PUBLIC Threads::Threads
-)
+	)
 # }}}
 
 # Neighbor visualisation {{{
@@ -154,9 +154,9 @@ ADD_EXECUTABLE(neighbor_visu
 	./viewer/include/planar_viewer.hpp
 	./viewer/include/neighbor_visu_viewer.hpp
 	./viewer/include/viewer_structs.hpp
-    ./third_party/primitive/Sphere.h
-    ./qt/include/GLmanipulator.hpp
-    ./qt/include/manipulator.hpp
+	./third_party/primitive/Sphere.h
+	./qt/include/GLmanipulator.hpp
+	./qt/include/manipulator.hpp
 
 	# Main file :
 	./neighbor_visu_main.cpp
@@ -166,22 +166,22 @@ ADD_EXECUTABLE(neighbor_visu
 	./viewer/src/planar_viewer.cpp
 	./viewer/src/neighbor_visu_viewer.cpp
 	./viewer/src/viewer_structs.cpp
-    ./third_party/primitive/Sphere.cpp
-    ./qt/src/GLmanipulator.cpp
-    ./qt/src/manipulator.cpp
-)
+	./third_party/primitive/Sphere.cpp
+	./qt/src/GLmanipulator.cpp
+	./qt/src/manipulator.cpp
+	)
 TARGET_COMPILE_OPTIONS(neighbor_visu
 	# Set so CMake (more precisely clang/gcc) will not print 30-80 warnings about QGLViewer's
 	# use of QString::null, a deprecated feature (causes long compilation times, and tons of
 	# warnings which make it harder to filter through our own warnings/errors).
 	PUBLIC "-Wno-deprecated-declarations"
-)
+	)
 TARGET_PRECOMPILE_HEADERS(neighbor_visu
 	# Made so that QtCreator will precompile this header and
 	# shut up about the deprecated functions used within :
 	PRIVATE ${QGLViewer_HEADER_DIR}/QGLViewer/qglviewer.h
 	# Also, dramatically reduces compilation time.
-)
+	)
 TARGET_INCLUDE_DIRECTORIES(neighbor_visu
 	PRIVATE ${OPENGL_INCLUDE_DIRS}
 	PRIVATE ${QGLViewer_HEADER_DIR}
@@ -191,7 +191,7 @@ TARGET_INCLUDE_DIRECTORIES(neighbor_visu
 	# to manually have to include the lib's include dir in targets:
 	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include/nifti
 	PRIVATE ${GSL_INCLUDE_DIRS}
-)
+	)
 TARGET_LINK_LIBRARIES(neighbor_visu
 	PUBLIC Qt5::Core
 	PUBLIC Qt5::Gui
@@ -210,13 +210,84 @@ TARGET_LINK_LIBRARIES(neighbor_visu
 	PUBLIC ${CMAKE_PROJECT_NAME}_deformable_curve
 	PUBLIC ${CMAKE_PROJECT_NAME}_meshop_arap
 	PUBLIC ${CMAKE_PROJECT_NAME}_drawable_meshes
-)
+	)
+# }}}
+
+# ARAP deformation {{{
+ADD_EXECUTABLE(arap_deformation
+	./qt/include/dialog_pick_grids_from_scene.hpp
+	# Header files, for Qt MOCS compilation :
+	./viewer/include/scene.hpp
+	./viewer/include/planar_viewer.hpp
+	./viewer/include/neighbor_visu_viewer.hpp
+	./viewer/include/viewer_structs.hpp
+	./third_party/primitive/Sphere.h
+	./qt/include/GLmanipulator.hpp
+	./qt/include/manipulator.hpp
+	./qt/include/arap_controller.hpp
+	./qt/include/arap_main_widget.hpp
+
+	# Main file :
+	./neighbor_visu_main.cpp
+
+	# Source files :
+	./viewer/src/scene.cpp
+	./viewer/src/planar_viewer.cpp
+	./viewer/src/neighbor_visu_viewer.cpp
+	./viewer/src/viewer_structs.cpp
+	./third_party/primitive/Sphere.cpp
+	./qt/src/GLmanipulator.cpp
+	./qt/src/manipulator.cpp
+	./qt/src/arap_controller.cpp
+	./qt/src/arap_main_widget.cpp
+	)
+TARGET_COMPILE_OPTIONS(arap_deformation
+	# Set so CMake (more precisely clang/gcc) will not print 30-80 warnings about QGLViewer's
+	# use of QString::null, a deprecated feature (causes long compilation times, and tons of
+	# warnings which make it harder to filter through our own warnings/errors).
+	PUBLIC "-Wno-deprecated-declarations"
+	)
+TARGET_PRECOMPILE_HEADERS(arap_deformation
+	# Made so that QtCreator will precompile this header and
+	# shut up about the deprecated functions used within :
+	PRIVATE ${QGLViewer_HEADER_DIR}/QGLViewer/qglviewer.h
+	# Also, dramatically reduces compilation time.
+	)
+TARGET_INCLUDE_DIRECTORIES(arap_deformation
+	PRIVATE ${OPENGL_INCLUDE_DIRS}
+	PRIVATE ${QGLViewer_HEADER_DIR}
+	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/third_party/glm/
+	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include
+	# Nifti uses brace-include without the 'nifti/' prefix, leading
+	# to manually have to include the lib's include dir in targets:
+	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include/nifti
+	PRIVATE ${GSL_INCLUDE_DIRS}
+	)
+TARGET_LINK_LIBRARIES(arap_deformation
+	PUBLIC Qt5::Core
+	PUBLIC Qt5::Gui
+	PUBLIC Qt5::Xml
+	PUBLIC Qt5::Widgets
+	PUBLIC Qt5::OpenGL
+	PUBLIC ${OPENGL_LIBRARIES}
+	PUBLIC ${QGLViewer}
+	PUBLIC ImageIO
+	PUBLIC DiscreteGrid
+	PUBLIC VisualisationWidgets
+	PUBLIC writergrid
+	PUBLIC writergrid_tiff
+	PUBLIC ${CMAKE_PROJECT_NAME}_shaders
+	PUBLIC ${CMAKE_PROJECT_NAME}_mesh
+	PUBLIC ${CMAKE_PROJECT_NAME}_deformable_curve
+	PUBLIC ${CMAKE_PROJECT_NAME}_meshop_arap
+	PUBLIC ${CMAKE_PROJECT_NAME}_drawable_meshes
+	)
 # }}}
 
 # vim: foldmethod=marker : foldmarker={{{,}}} : tabstop=8
 
 option(RELEASE_WITH_ASSERT "Build a release version with assert" OFF)
 if(RELEASE_WITH_ASSERT)
-    message(STATUS "WARNING: Build in release using assertion")
-    set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+	message(STATUS "WARNING: Build in release using assertion")
+	set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 endif(RELEASE_WITH_ASSERT)

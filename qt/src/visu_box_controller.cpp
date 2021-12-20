@@ -2,12 +2,11 @@
 
 #include "../../viewer/include/neighbor_visu_viewer.hpp"
 #include "../../viewer/include/scene.hpp"
-#include "../include/neighbor_visu_main_widget.hpp"
 
 #include <QGridLayout>
 #include <QLabel>
 
-VisuBoxController::VisuBoxController(Scene* _scene, MainWidget* _main) :
+VisuBoxController::VisuBoxController(Scene* _scene, Viewer* _main) :
 	QWidget(nullptr) {
 	this->strayObj.clear();
 	this->input_coordMinX = nullptr;
@@ -150,11 +149,10 @@ void VisuBoxController::setupSignals() {
 		if (this->scene == nullptr) {
 			return;
 		}
-		Viewer* viewer = this->main->getViewer3D();
-		viewer->makeCurrent();
+		this->main->makeCurrent();
 		this->scene->loadGridROI();
-		viewer->doneCurrent();
-		viewer->update();
+		this->main->doneCurrent();
+		this->main->update();
 	});
 }
 

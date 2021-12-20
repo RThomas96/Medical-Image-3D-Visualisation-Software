@@ -149,7 +149,7 @@ void MainWidget::setupWidgets() {
 	});
 	QObject::connect(this->action_showVisuBox, &QAction::triggered, [this]() {
 		if (this->boxController == nullptr) {
-			this->boxController = new VisuBoxController(this->scene, this);
+			this->boxController = new VisuBoxController(this->scene, this->viewer);
 			// Connect the destruction of this widget with the closing of the box controller, if opened :
 			QObject::connect(this, &QWidget::destroyed, this->boxController, &VisuBoxController::close);
 			// Connect the destruction of the box controller with its removal from the scene and from this widget :

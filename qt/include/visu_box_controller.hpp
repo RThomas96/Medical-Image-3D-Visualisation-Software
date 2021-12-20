@@ -6,6 +6,7 @@
 #include <QWidget>
 
 class Scene;	// Fwd-decl
+class Viewer;
 class MainWidget;	 // Fwd-decl
 
 /// @ingroup qtwidgets
@@ -15,7 +16,7 @@ class MainWidget;	 // Fwd-decl
 class VisuBoxController : public QWidget {
 	Q_OBJECT
 public:
-	VisuBoxController(Scene* _scene, MainWidget* _widget);
+	VisuBoxController(Scene* _scene, Viewer* _widget);
 	~VisuBoxController(void);
 
 public:
@@ -29,7 +30,7 @@ protected:
 
 protected:
 	Scene* scene;	 ///< The scene to control
-	MainWidget* main;	 ///< The main widget to call
+	Viewer* main;	 ///< The viewer widget
 	QSpinBox* input_coordMinX;
 	QSpinBox* input_coordMinY;
 	QSpinBox* input_coordMinZ;

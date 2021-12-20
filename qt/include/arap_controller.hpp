@@ -1,12 +1,15 @@
 #ifndef VISUALISATION_QT_INCLUDE_ARAP_CONTROLLER_HPP_
 #define VISUALISATION_QT_INCLUDE_ARAP_CONTROLLER_HPP_
 
+// Mesh, curve and ARAP structures :
 #include "../../meshes/base_mesh/Mesh.hpp"
 #include "../../meshes/deformable_curve/curve.hpp"
 #include "../../meshes/operations/arap/Manipulator.h"
 #include "../../meshes/operations/arap/AsRigidAsPossible.h"
 #include "../../meshes/operations/arap/RectangleSelection.h"
 #include "../../meshes/operations/arap/mesh_manip_interface.h"
+// Image data :
+#include "../../new_grid/include/grid.hpp"
 
 #include <glm/glm.hpp>
 
@@ -27,13 +30,18 @@ class Scene;
 
 class ARAPController : public QWidget {
 public:
+	/// @brief Default ctor for the controller. Initializes the viewer and scene fields and creates the widget.
 	ARAPController(Viewer* main_viewer, Scene* _scene);
+	/// @brief Default dtor. Declared as `default`.
 	virtual ~ARAPController() = default;
 
 public:
+	/// @brief Initializes the widget's various buttons, signals, and layouts.
 	void init();
 protected:
+	/// @brief Creates the widget's layout.
 	void initLayout();
+	/// @brief Connects the widget's signals to other structures.
 	void initSignals();
 
 	/**
@@ -50,13 +58,11 @@ protected:
 	 * 		- Selecting a mesh constraint
 	 * 		- Deleting a mesh constraint
 	 * 		- Deleting an image constraint
-	 * - Launching the deformation
-	 * 		- Performing the first alignment of the mesh
-	 * 		- Performing the rough scaling of the mesh
-	 * 		- Performing the ARAP deformation itself
-	 * - Saving the generated data
-	 * 		- Saving the mesh to a file
-	 * 		- Saving the curve to a file
+	 * - Loading the data into the scene
+	 * 		- Calls to the viewer to be made current
+	 * 		- Then call the Scene functions
+	 * 		- Update the Scene members
+	 * 			- N.B. : leave the drawables in the scene
 	 */
 
 public:
@@ -68,11 +74,24 @@ public:
 	const std::shared_ptr<RectangleSelection>& getRectangleSelection() const;
 
 	/// @brief Returns the constraint that's currently being edited bu the user.
-	std::size_t getCurrentlyEditedConstraint() const;
+	/// @warning This returns a value in [1, #constraints] and 0 means no constraint is being edited right now !
+	const size_t getCurrentlyEditedConstraint() const;
 	/// @brief Get the currently loaded image constraints.
-	std::vector<glm::vec4> getImageConstraints() const;
+	const std::vector<glm::vec3>& getImageConstraints() const;
 	/// @brief Get the currently loaded mesh constraints.
-	std::vector<std::size_t> getMeshConstraints() const;
+	const std::vector<std::size_t>& getMeshConstraints() const;
+
+signals:
+	/// @brief Signal raised whenever the patient image is loaded in.
+	void imageIsLoaded();
+	/// @brief Signal raised whenever the mesh data is loaded in.
+	void meshIsLoaded();
+	/// @brief Signal raised whenever the curve data is loaded in.
+	void curveIsLoaded();
+	/// @brief Signal raised whenever the mesh data changed.
+	void meshHasChanged();
+	/// @brief Signal raised whenever the data contained in the curve changes.
+	void curveHasChanged();
 
 protected:
 	/// @brief Uploads the mesh data to the Scene.
@@ -84,6 +103,23 @@ protected:
 	/// @brief Updates the curve data in the Scene.
 	void updateCurveDrawable();
 
+	/// @brief Initializes the mesh interface, rectangle selection and ARAP manipulators.
+	void initializeMeshInterface();
+	/// @brief Resets the mesh interface, rectangle selection and ARAP manipulators.
+	void resetMeshInterface();
+
+	/// @brief Updates the mesh info labels.
+	void updateMeshInfoLabel();
+	/// @brief Updates the grid info labels.
+	void updateGridInfoLabel();
+
+	/// @brief Used to reset the grid data from this class and from the Scene (and the GL context).
+	void deleteGridData();
+	/// @brief Used to reset the mesh data from this class and from the Scene (and the GL context).
+	void deleteMeshData();
+	/// @brief Used to reset the curve data from this class and from the Scene (and the GL context).
+	void deleteCurveData();
+
 protected slots:
 	/// @brief Slot called when the 'Load Image' button is pressed.
 	void loadImageFromFile();
@@ -91,6 +127,33 @@ protected slots:
 	void loadMeshFromFile();
 	/// @brief Slot called when the 'Load constraints' button is pressed.
 	void loadConstraintsFromFile();
+	/// @brief Slot called when the 'Load Curve' button is pressed.
+	void loadCurveFromFile();
+
+	/// @brief Applies the computed (view-dependant) transformation to the mesh.
+	void applyTransformation_Mesh();
+	/// @brief Slot called whenever the mesh data is deformed, in order to update the curve positions.
+	void updateCurveFromMesh();
+
+	/// @brief Slot called whenever the program is in a state where the deformation can be enabled.
+	/// @details Applies the transformation to the mesh and the curve, in order to enable real-time deformation
+	/// of the loaded mesh data according to the user's wishes.
+	void enableDeformation();
+	/// @brief Slot called whenever the program cannot deform the loaded data.
+	/// @details All transformations made when the deformation is not enabled will not be computed directly, but
+	/// applied to the viewport and only applied when the deformation is re-enabled.
+	void disableDeformation();
+	/// @brief Slot called when the 'Align constraints' button is pressed.
+	void arap_performAlignment();
+	/// @brief Slot called when the 'Scale constraints' button is pressed.
+	void arap_performScaling();
+	/// @brief Slot called when the 'Compute deformation' button is pressed.
+	void arap_computeDeformation();
+
+	/// @brief Slot called whenever the 'Save mesh' button is pressed.
+	void saveMesh();
+	/// @brief Slot called whenever the 'Save curve' button is pressed.
+	void saveCurve();
 
 	/**
 	 * Additionnal stuff :
@@ -100,30 +163,21 @@ protected slots:
 
 protected:
 	Viewer* viewer;	///< The viewer responsible for handling all the keyboard/mouse/draw events.
-	Scene* scene;	///< The central repository of information.
+	Scene* scene;	///< The central repository of information (for now).
 
-	// TODO : add an image pointer here.
-	Mesh::Ptr mesh;		///< The reference mesh.
-	Curve::Ptr curve;	///< The curve going through the patient mesh.
+	Mesh::Ptr mesh;			///< The reference mesh, to deform.
+	Curve::Ptr curve;		///< The curve of the reference mesh, to deform.
+	Image::Grid::Ptr image;	///< The loaded patient image.
 
 	std::shared_ptr<MMInterface<glm::vec3>> mesh_interface;	///< The deformation interface for the mesh.
 	std::shared_ptr<SimpleManipulator> arapManipulator;		///< The manipulator for selected vertices.
 	std::shared_ptr<RectangleSelection> rectangleSelection;	///< The rectangle user selection.
 
+	std::vector<glm::vec3> image_constraints;	///< The image constraints (positions in 3D space).
+	std::vector<std::size_t> mesh_constraints;	///< The mesh constraints (vertex indices).
+
 	/**
 	 * Buttons for :
-	 * - loading the data
-	 * 		- Loading the image
-	 * 		- Loading the mesh
-	 * 		- Possibly loading the constraints ???
-	 * - Saving the data
-	 * 		- Saving meshes to a file
-	 * 		- Saving meshes to a file
-	 * - Loading the data into the scene
-	 * 		- Calls to the viewer to be made current
-	 * 		- Then call the Scene functions
-	 * 		- Update the Scene members
-	 * 			- N.B. : leave the drawables in the scene
 	 * - Launching the deformation
 	 * 		- Performing the first alignment of the mesh
 	 * 		- Performing the rough scaling of the mesh
