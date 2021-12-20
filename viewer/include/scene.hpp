@@ -21,7 +21,7 @@
 //#include "../../grid/include/output_discrete_grid.hpp"
 //#include "../../grid/include/tetmesh.hpp"
 // UI elements :
-#include "../../qt/include/grid_control.hpp"
+//#include "../../qt/include/grid_control.hpp"
 #include "../../qt/include/opengl_debug_log.hpp"
 #include "../../qt/include/visu_box_controller.hpp"
 #include "../../qt/include/manipulator.hpp"
@@ -47,6 +47,9 @@
 
 // New structure
 #include "../../qt/include/GLmanipulator.hpp"
+
+#include <thread>
+#include "../../image/utils/include/threaded_task.hpp"
 
 /// @defgroup graphpipe Graphics pipeline
 /// @brief This group contains all classes closely or loosely related to the graphics pipeline.
@@ -322,7 +325,7 @@ private:
 	glm::vec3 color1_second;	///< The color segment when approaching 1
 
     /* Widgets */
-	GridControl* gridControl;	 ///< The controller for the grid 'save' feature (generation)
+	//GridControl* gridControl;	 ///< The controller for the grid 'save' feature (generation)
 	ControlPanel* controlPanel;
 	QStatusBar* programStatusBar;
 	VisuBoxController* visuBoxController;
@@ -331,7 +334,7 @@ private:
 
 	// Thread management 
 	std::mutex mutexout;
-	std::vector<IO::ThreadedTask::Ptr> tasks;
+	std::vector<Image::ThreadedTask::Ptr> tasks;
 	std::vector<std::shared_ptr<std::thread>> runningThreads;
 	QTimer* timer_refreshProgress;
 	QProgressBar* pb_loadProgress;

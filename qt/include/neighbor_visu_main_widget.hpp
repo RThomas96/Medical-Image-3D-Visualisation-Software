@@ -4,7 +4,7 @@
 #include "../../viewer/include/neighbor_visu_viewer.hpp"
 #include "../../viewer/include/planar_viewer.hpp"
 #include "../../viewer/include/scene.hpp"
-#include "./grid_control.hpp"
+//#include "./grid_control.hpp"
 #include "./loader_widget.hpp"
 #include "./opengl_debug_log.hpp"
 #include "./scene_control.hpp"

@@ -61,7 +61,7 @@ Scene::Scene() :
 	this->debugLog			= nullptr;
 	this->glOutput			= nullptr;
 	this->controlPanel		= nullptr;
-	this->gridControl		= nullptr;
+	//this->gridControl		= nullptr;
 	this->visuBoxController = nullptr;
 	this->programStatusBar	= nullptr;
 
@@ -558,7 +558,7 @@ void Scene::updateProgressBar() {
 	// Track progress of tasks :
 	std::size_t current	 = 0;
 	std::size_t maxSteps = 0;
-	std::for_each(this->tasks.cbegin(), this->tasks.cend(), [&current, &maxSteps](const IO::ThreadedTask::Ptr& task) {
+	std::for_each(this->tasks.cbegin(), this->tasks.cend(), [&current, &maxSteps](const Image::ThreadedTask::Ptr& task) {
 		maxSteps += task->getMaxSteps();
 		current += task->getAdvancement();
 	});
@@ -1324,7 +1324,7 @@ void Scene::launchDeformation(int tetIdx, glm::vec3 point) {
 				// Compute this face's normal :
 				glm::vec4 n1   = mesh.positions[tetrahedron[indices[j][1]]] - mesh.positions[tetrahedron[indices[j][0]]];
 				glm::vec4 n2   = mesh.positions[tetrahedron[indices[j][2]]] - mesh.positions[tetrahedron[indices[j][0]]];
-				glm::vec4 norm = glm::normalize(glm::cross(n1, n2));
+				glm::vec4 norm = glm::vec4(glm::normalize(glm::cross(glm::vec3(n1), glm::vec3(n2))), 1.);
 				// Put inverse of dot with opposing vertex in norm.w :
 				glm::vec4 v1			  = mesh.positions[tetrahedron[j]] - mesh.positions[tetrahedron[(j + 1) % 4]];
 				glm::vec4::value_type val = 1. / glm::dot(v1, norm);
@@ -1427,19 +1427,19 @@ void Scene::loadCurve() {
 
 void Scene::launchSaveDialog() {
 	// if no grids are loaded, do nothing !
-	if (this->grids.size() == 0) {
-		QMessageBox messageBox;
-		messageBox.critical(nullptr, "Error", "Cannot save a grid when nothing is loaded !");
-		messageBox.setFixedSize(500, 200);
-		return;
-	}
+	//if (this->grids.size() == 0) {
+	//	QMessageBox messageBox;
+	//	messageBox.critical(nullptr, "Error", "Cannot save a grid when nothing is loaded !");
+	//	messageBox.setFixedSize(500, 200);
+	//	return;
+	//}
 
-	if (this->gridControl != nullptr) {
-		std::cerr << "Controller was already added, showing it now ...\n";
-		this->gridControl->raise();
-		this->gridControl->show();
-		return;
-	}
+	//if (this->gridControl != nullptr) {
+	//	std::cerr << "Controller was already added, showing it now ...\n";
+	//	this->gridControl->raise();
+	//	this->gridControl->show();
+	//	return;
+	//}
 
 	// TODO
 	// Add calls to tetmesh and grid control when they will be compatible with new API
@@ -1472,7 +1472,7 @@ void Scene::launchSaveDialog() {
 }
 
 void Scene::removeController() {
-	this->gridControl = nullptr;
+	//this->gridControl = nullptr;
 }
 
 void Scene::deleteGridNow() {
@@ -3591,7 +3591,7 @@ void Scene::tex3D_buildMesh(GridGLView::Ptr& gridGLView, const std::string path)
 			// Compute this face's normal :
 			glm::vec4 n1   = mesh.positions[tetrahedron[indices[i][1]]] - mesh.positions[tetrahedron[indices[i][0]]];
 			glm::vec4 n2   = mesh.positions[tetrahedron[indices[i][2]]] - mesh.positions[tetrahedron[indices[i][0]]];
-			glm::vec4 norm = glm::normalize(glm::cross(n1, n2));
+		    glm::vec4 norm = glm::vec4(glm::normalize(glm::cross(glm::vec3(n1), glm::vec3(n2))), 1.);
 			// Put inverse of dot with opposing vertex in norm.w :
 			glm::vec4 v1			  = mesh.positions[tetrahedron[i]] - mesh.positions[tetrahedron[(i + 1) % 4]];
 			glm::vec4::value_type val = 1. / glm::dot(v1, norm);

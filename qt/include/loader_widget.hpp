@@ -80,7 +80,7 @@ protected:
 	//std::shared_ptr<IO::GenericGridReader> readerG;	   ///< The pointer to a generic grid reader for G channel
 	//std::shared_ptr<InputGrid> inputGridR;	  ///< The pointer to an input grid for R channel
 	//std::shared_ptr<InputGrid> inputGridG;	  ///< The pointer to an input grid for G channel
-	IO::DownsamplingLevel dsLevel;	  ///< Currently selected downsampling method
+	int dsLevel;	  ///< Currently selected downsampling method
 	//std::shared_ptr<Interpolators::genericInterpolator<DiscreteGrid::data_t>> interpolator;	   ///< interpolator
 
 	Image::Grid::Ptr _testing_grid;

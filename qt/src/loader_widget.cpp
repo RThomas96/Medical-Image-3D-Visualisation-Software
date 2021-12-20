@@ -22,7 +22,7 @@ GridLoaderWidget::GridLoaderWidget(Scene* _scene, Viewer* _viewer, ControlPanel*
 	this->scene					= _scene;
 	this->viewer				= _viewer;
 	this->_cp					= cp;
-	this->dsLevel				= IO::DownsamplingLevel::Original;
+	this->dsLevel				= 0;
 	//this->readerR				= nullptr;
 	//this->readerG				= nullptr;
 	//this->inputGridR			= nullptr;
@@ -316,7 +316,7 @@ void GridLoaderWidget::setupSignals() {
 	QObject::connect(this->radioButton_original, &QRadioButton::toggled, [this]() {
 		this->resetGridInfoLabel();
 		if (this->radioButton_original->isChecked()) {
-			this->dsLevel = IO::DownsamplingLevel::Original;
+			//this->dsLevel = IO::DownsamplingLevel::Original;
 			this->groupBox_interpolator->setEnabled(false);
 			//if (this->readerR != nullptr) {
 				//this->readerR->enableDownsampling(this->dsLevel);
@@ -330,7 +330,7 @@ void GridLoaderWidget::setupSignals() {
 	QObject::connect(this->radioButton_low, &QRadioButton::toggled, [this]() {
 		this->resetGridInfoLabel();
 		if (this->radioButton_low->isChecked()) {
-			this->dsLevel = IO::DownsamplingLevel::Low;
+			//this->dsLevel = IO::DownsamplingLevel::Low;
 			this->groupBox_interpolator->setEnabled(true);
 			//if (this->readerR != nullptr) {
 				//this->readerR->enableDownsampling(this->dsLevel);
@@ -344,7 +344,7 @@ void GridLoaderWidget::setupSignals() {
 	QObject::connect(this->radioButton_lower, &QRadioButton::toggled, [this]() {
 		this->resetGridInfoLabel();
 		if (this->radioButton_lower->isChecked()) {
-			this->dsLevel = IO::DownsamplingLevel::Lower;
+			//this->dsLevel = IO::DownsamplingLevel::Lower;
 			this->groupBox_interpolator->setEnabled(true);
 			//if (this->readerR != nullptr) {
 			//	this->readerR->enableDownsampling(this->dsLevel);
@@ -358,7 +358,7 @@ void GridLoaderWidget::setupSignals() {
 	QObject::connect(this->radioButton_lowest, &QRadioButton::toggled, [this]() {
 		this->resetGridInfoLabel();
 		if (this->radioButton_lowest->isChecked()) {
-			this->dsLevel = IO::DownsamplingLevel::Lowest;
+			//this->dsLevel = IO::DownsamplingLevel::Lowest;
 			this->groupBox_interpolator->setEnabled(true);
 			//if (this->readerR != nullptr) {
 			//	this->readerR->enableDownsampling(this->dsLevel);
@@ -1315,102 +1315,102 @@ void GridLoaderWidget::loadGrid_newAPI() {
 	repo.addGrid(this->_testing_grid);
 
 	// Here, load the downsampled grid if necessary :
-	if (this->dsLevel != IO::DownsamplingLevel::Original) {
-		svec3 target_resolution = this->_testing_grid->getResolution();
-		if (this->dsLevel == IO::DownsamplingLevel::Low) {
-			target_resolution /= 2u;
-		} else if (this->dsLevel == IO::DownsamplingLevel::Lower) {
-			target_resolution /= 4u;
-		} else if (this->dsLevel == IO::DownsamplingLevel::Lowest) {
-			target_resolution /= 8u;
-		}
-		std::cerr << "Downsampling applied, target resolution is : [" << target_resolution << "]\n";
+	//if (this->dsLevel != IO::DownsamplingLevel::Original) {
+	//	svec3 target_resolution = this->_testing_grid->getResolution();
+	//	if (this->dsLevel == IO::DownsamplingLevel::Low) {
+	//		target_resolution /= 2u;
+	//	} else if (this->dsLevel == IO::DownsamplingLevel::Lower) {
+	//		target_resolution /= 4u;
+	//	} else if (this->dsLevel == IO::DownsamplingLevel::Lowest) {
+	//		target_resolution /= 8u;
+	//	}
+	//	std::cerr << "Downsampling applied, target resolution is : [" << target_resolution << "]\n";
 
-		Image::Grid::Ptr downsampled_grid = this->_testing_grid->requestDownsampledVersion(target_resolution, Image::ImageResamplingTechnique::NearestNeighbor);
+	//	Image::Grid::Ptr downsampled_grid = this->_testing_grid->requestDownsampledVersion(target_resolution, Image::ImageResamplingTechnique::NearestNeighbor);
 
-		// Attempt to load the grid :
-		// TODO : very hacky code, not for release purposes. Should be sanitized and commented more.
-		std::cerr << "Attempting to parse image data ...\n";
-		QMessageBox* msgBox = new QMessageBox;
-		msgBox->setAttribute(Qt::WA_DeleteOnClose);
-		// Try to create a grid :
-		std::cerr << "Trying to create a grid !!!\n";
-		if (downsampled_grid == nullptr) {
-			std::cerr << "Error : Grid::requestDownsampledVersion() returned nullptr !\n";
-			return;
-		}
+	//	// Attempt to load the grid :
+	//	// TODO : very hacky code, not for release purposes. Should be sanitized and commented more.
+	//	std::cerr << "Attempting to parse image data ...\n";
+	//	QMessageBox* msgBox = new QMessageBox;
+	//	msgBox->setAttribute(Qt::WA_DeleteOnClose);
+	//	// Try to create a grid :
+	//	std::cerr << "Trying to create a grid !!!\n";
+	//	if (downsampled_grid == nullptr) {
+	//		std::cerr << "Error : Grid::requestDownsampledVersion() returned nullptr !\n";
+	//		return;
+	//	}
 
-		// Start parsing the information :
-		std::cerr << "Grid created, updating info from disk ...\n";
-		auto task = downsampled_grid->updateInfoFromDisk(std::vector<std::vector<std::string>>{});
+	//	// Start parsing the information :
+	//	std::cerr << "Grid created, updating info from disk ...\n";
+	//	auto task = downsampled_grid->updateInfoFromDisk(std::vector<std::vector<std::string>>{});
 
-		// may be already ended with errors, show them :
-		std::string before_error_message;
-		std::string full_msg;
-		if (task->popMessage(before_error_message)) {
-			do {
-				full_msg += before_error_message + '\n';
-			} while (task->popMessage(before_error_message));
-			msgBox->critical(this, "Error while parsing files !", QString(before_error_message.c_str()));
-			this->setWidgetsEnabled();
-			return;
-		}
+	//	// may be already ended with errors, show them :
+	//	std::string before_error_message;
+	//	std::string full_msg;
+	//	if (task->popMessage(before_error_message)) {
+	//		do {
+	//			full_msg += before_error_message + '\n';
+	//		} while (task->popMessage(before_error_message));
+	//		msgBox->critical(this, "Error while parsing files !", QString(before_error_message.c_str()));
+	//		this->setWidgetsEnabled();
+	//		return;
+	//	}
 
-		// Set and show progress bar :
-		this->progressBar_init_defined(0, task->getMaxSteps(), 0, "Parsing image data ... (%p%)");
+	//	// Set and show progress bar :
+	//	this->progressBar_init_defined(0, task->getMaxSteps(), 0, "Parsing image data ... (%p%)");
 
-		// Parse the grid :
-		do {
-			std::this_thread::sleep_for(std::chrono::milliseconds(10));
-			std::size_t steps = task->getMaxSteps();
-			std::size_t adv	  = task->getAdvancement();
-			this->progress_load->setRange(0, steps);
-			this->progress_load->setValue(adv);
-			this->progress_load->setFormat("Parsing image data ... (%p%)");
-			// Needed to update the main window ...
-			QCoreApplication::processEvents();
-			this->update();
-		} while (not task->isComplete());
+	//	// Parse the grid :
+	//	do {
+	//		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+	//		std::size_t steps = task->getMaxSteps();
+	//		std::size_t adv	  = task->getAdvancement();
+	//		this->progress_load->setRange(0, steps);
+	//		this->progress_load->setValue(adv);
+	//		this->progress_load->setFormat("Parsing image data ... (%p%)");
+	//		// Needed to update the main window ...
+	//		QCoreApplication::processEvents();
+	//		this->update();
+	//	} while (not task->isComplete());
 
-		std::cerr << "\n[TASK] Done parsing the grid ... \n";
-		std::string errmsg = "";
-		std::string all_errors;
-		bool isComplete = true;
-		while (task->popMessage(errmsg)) {
-			std::cerr << "[Task error] Message : " << errmsg << '\n';
-			isComplete = false;
-			all_errors += errmsg + '\n';
-		}
-		if (not all_errors.empty()) {
-			msgBox->critical(this, "Errors while parsing the files", QString(all_errors.c_str()));
-			this->setWidgetsEnabled();
-			return;
-		}
-		if (isComplete) {
-			downsampled_grid->updateInfoFromGrid();
-			std::cerr << "Grid dimensionality : " << downsampled_grid->getVoxelDimensionality() << '\n';
-			Image::svec3 res = downsampled_grid->getResolution();
-			glm::vec3 vx	 = downsampled_grid->getVoxelDimensions();
-			std::cerr << "Grid resolution : " << res.x << ", " << res.y << ", " << res.z << "\n";
-			std::cerr << "Voxel dimensions : " << vx.x << ", " << vx.y << ", " << vx.z << "\n";
-			std::cerr << "Data internal representation : " << downsampled_grid->getInternalDataType() << '\n';
-		}
+	//	std::cerr << "\n[TASK] Done parsing the grid ... \n";
+	//	std::string errmsg = "";
+	//	std::string all_errors;
+	//	bool isComplete = true;
+	//	while (task->popMessage(errmsg)) {
+	//		std::cerr << "[Task error] Message : " << errmsg << '\n';
+	//		isComplete = false;
+	//		all_errors += errmsg + '\n';
+	//	}
+	//	if (not all_errors.empty()) {
+	//		msgBox->critical(this, "Errors while parsing the files", QString(all_errors.c_str()));
+	//		this->setWidgetsEnabled();
+	//		return;
+	//	}
+	//	if (isComplete) {
+	//		downsampled_grid->updateInfoFromGrid();
+	//		std::cerr << "Grid dimensionality : " << downsampled_grid->getVoxelDimensionality() << '\n';
+	//		Image::svec3 res = downsampled_grid->getResolution();
+	//		glm::vec3 vx	 = downsampled_grid->getVoxelDimensions();
+	//		std::cerr << "Grid resolution : " << res.x << ", " << res.y << ", " << res.z << "\n";
+	//		std::cerr << "Voxel dimensions : " << vx.x << ", " << vx.y << ", " << vx.z << "\n";
+	//		std::cerr << "Data internal representation : " << downsampled_grid->getInternalDataType() << '\n';
+	//	}
 
-		repo.addGrid(downsampled_grid);
+	//	repo.addGrid(downsampled_grid);
 
-		this->viewer->newAPI_loadGrid(downsampled_grid);
-		this->viewer->centerScene();
-		this->_cp->setSlidersToNumericalLimits();
-	} else {
-		// Load the grid data, and make a copy here
-		//this->scene->newAPI_addGrid(this->_testing_grid);
-		this->viewer->newAPI_loadGrid(this->_testing_grid);
-		this->viewer->centerScene();
+	//	this->viewer->newAPI_loadGrid(downsampled_grid);
+	//	this->viewer->centerScene();
+	//	this->_cp->setSlidersToNumericalLimits();
+	//} else {
+	// Load the grid data, and make a copy here
+	//this->scene->newAPI_addGrid(this->_testing_grid);
+	this->viewer->newAPI_loadGrid(this->_testing_grid);
+	this->viewer->centerScene();
 
-		// Update min and max of the control panel
-		// TODO: change this function in order to set slider according to min/max values in the image
-		this->_cp->setSlidersToNumericalLimits();
-	}
+	// Update min and max of the control panel
+	// TODO: change this function in order to set slider according to min/max values in the image
+	this->_cp->setSlidersToNumericalLimits();
+	//}
 
 	this->close();
 }
