@@ -16,6 +16,7 @@ ARAPMainWidget::ARAPMainWidget() {
 	this->usettings		= nullptr;
 	this->loaderWidget	= nullptr;
 	this->boxController = nullptr;
+	this->arap_controller=nullptr;
 	// Query a user settings instance to initialize it :
 	UserSettings set = UserSettings::getInstance();
 }
@@ -168,6 +169,8 @@ void ARAPMainWidget::setupWidgets() {
 	this->controlPanel	= new ControlPanel(this->scene, this->viewer, nullptr);
 	this->scene->setControlPanel(this->controlPanel);
 
+	this->arap_controller = new ARAPController(this->viewer, this->scene);
+
 	this->viewer->addStatusBar(this->statusBar);
 	this->viewer_planeX->addParentStatusBar(this->statusBar);
 	this->viewer_planeY->addParentStatusBar(this->statusBar);
@@ -269,6 +272,11 @@ void ARAPMainWidget::setupWidgets() {
 
 	QSize v = viewerLayout->sizeHint();
 	this->controlPanel->setMinimumWidth(static_cast<int>(static_cast<float>(v.width()) * .7f));
+
+	auto* container_dock = new QDockWidget;
+	container_dock->setWidget(this->arap_controller);
+	container_dock->setFeatures(QDockWidget::DockWidgetFeature::NoDockWidgetFeatures);
+	this->addDockWidget(Qt::DockWidgetArea::LeftDockWidgetArea, container_dock);
 
 	auto* mainWidget = new QWidget();
 	mainWidget->setLayout(mainLayout);

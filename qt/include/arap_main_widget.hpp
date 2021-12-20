@@ -63,6 +63,8 @@ private:
 	UserSettingsWidget* usettings;	  ///< User settings dialog.
 	GridLoaderWidget* loaderWidget;	   ///< Loader widget
 
+	ARAPController* arap_controller;
+
 	VisuBoxController* boxController;	 ///< The visu box controller
 
 	ControlPanel* controlPanel;	   ///< The control panel at the bottom of the grid

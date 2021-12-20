@@ -29,6 +29,7 @@ class Viewer;
 class Scene;
 
 class ARAPController : public QWidget {
+	Q_OBJECT
 public:
 	/// @brief Default ctor for the controller. Initializes the viewer and scene fields and creates the widget.
 	ARAPController(Viewer* main_viewer, Scene* _scene);
@@ -94,6 +95,9 @@ signals:
 	void curveHasChanged();
 
 protected:
+	/// @brief Slot called when the 'Load constraints' button is pressed.
+	void loadConstraintDataFromFile(const std::string& file_name);
+
 	/// @brief Uploads the mesh data to the Scene.
 	void uploadMeshToScene();
 	/// @brief Uploads the curve data to the Scene.
@@ -177,17 +181,12 @@ protected:
 	std::vector<std::size_t> mesh_constraints;	///< The mesh constraints (vertex indices).
 
 	/**
-	 * Buttons for :
-	 * - Launching the deformation
-	 * 		- Performing the first alignment of the mesh
-	 * 		- Performing the rough scaling of the mesh
-	 * 		- Performing the ARAP deformation itself
-	 *
 	 * 	------- LATER -------
-	 *
+	 * Buttons/sliders for :
 	 * - Settings of the program
 	 * 		- ARAP Iterations
 	 * 		- Removing constraints
+	 * 		- Modifying constraints
 	 */
 
 	QPushButton* button_load_image;			///< Button to load an image from a file.
@@ -208,8 +207,6 @@ protected:
 	QLabel* label_grid_info;	///< The grid info.
 
 	QString dir_last_accessed;	///< The directory last accessed by the user.
-
-	QGridLayout* widget_layout;	///< The layout of this widget.
 
 	// Qt layout/widgets stuff :
 	QListView* listview_mesh_constraints;	///< The list view of all mesh constraints.

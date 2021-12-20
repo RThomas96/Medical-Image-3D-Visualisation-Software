@@ -163,14 +163,14 @@ Scene::~Scene(void) {
 
 void Scene::initGl(QOpenGLContext* _context) {
 	// Check if the scene has been initialized, share contexts if it has been :
-	if (this->isInitialized == true) {
+	if (this->isInitialized) {
 		if (this->context != nullptr && (_context != 0 && _context != nullptr)) {
-			_context->setShareContext(this->context);
-			if (_context->create() == false) {
+			this->context->setShareContext(_context);
+			if (not this->context->create()) {
 				// throw std::runtime_error("Couldn't re-create context with shared context added\n");
 				std::cerr << "Couldn't re-create context with shared context added\n";
 			} else {
-				std::cerr << "init() : Switching to context " << _context << '\n';
+				std::cerr << "init() : Added sharing to context " << _context << '\n';
 			}
 		}
 		return;
@@ -186,6 +186,7 @@ void Scene::initGl(QOpenGLContext* _context) {
 			std::cerr << "Warning : Initializing a scene without a valid OpenGL context !" << '\n';
 		}
 		this->context = _context;
+		std::cerr << "Initialized SCENE with " << this->context << '\n';
 
 		// Get OpenGL functions from the currently bound context :
 		if (this->initializeOpenGLFunctions() == false) {
@@ -799,6 +800,10 @@ void Scene::initializeARAPInterface() {
 	std::cerr << "Initialized mesh interface.\n";
 }
 */
+
+DrawableMesh::Ptr& Scene::arap_get_mesh_drawable() { return this->mesh_draw; }
+DrawableCurve::Ptr& Scene::arap_get_curve_drawable() { return this->curve_draw; }
+
 void Scene::dummy_apply_alignment_before_arap() {
 #ifdef NEED_ARAP
 	if (this->mesh == nullptr) {
@@ -1214,6 +1219,38 @@ void Scene::updateMeshAndCurve() {
 		}
 	}
 	this->updateBoundingBox();
+}
+
+void Scene::arap_reset_scene_data() {
+	// reset drawables :
+	this->mesh_draw.reset();
+	this->curve_draw.reset();
+}
+
+void Scene::arap_load_mesh_data(Mesh::Ptr& mesh_to_upload) {
+	if (this->mesh_draw != nullptr) {
+		this->mesh_draw.reset();
+	}
+	this->mesh_draw = std::make_shared<DrawableMesh>(mesh_to_upload);
+	this->mesh_draw->setTransformation(glm::mat4(1.f));
+	this->mesh_draw->updateOnNextDraw();
+	this->updateBoundingBox();
+}
+
+void Scene::arap_load_image_data(Image::Grid::Ptr& image_to_load) {
+	//:w
+}
+
+void Scene::arap_delete_grid_data() {
+	// TODO
+}
+
+void Scene::arap_delete_mesh_drawable() {
+	// TODO
+}
+
+void Scene::arap_delete_curve_drawable() {
+	// TODO
 }
 
 void Scene::updateMeshAndCurve_No_Image_Resizing() {
@@ -1773,6 +1810,17 @@ void Scene::loadCurve() {
 		msg->critical(nullptr, "Cannot load curve by itself.",
 			"Error : no meshes were loaded previously.\nWe cannot open a curve all by its lonesome.");
 	}
+}
+
+void Scene::arap_load_curve_data(Curve::Ptr& curve_to_upload) {
+	if (this->curve_draw != nullptr) {
+		this->curve_draw.reset();
+	}
+	glm::mat4 transfo  = this->mesh_draw->getTransformation();
+	this->curve_draw = std::make_shared<DrawableCurve>(curve_to_upload);
+	this->curve_draw->setTransformation(transfo);
+	this->curve_draw->updateOnNextDraw();
+	this->updateBoundingBox();
 }
 
 void Scene::launchSaveDialog() {

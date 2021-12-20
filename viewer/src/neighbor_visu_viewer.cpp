@@ -42,6 +42,8 @@ Viewer::Viewer(Scene* const scene, QStatusBar* _program_bar, QWidget* parent) :
 
 	this->deformation_enabled = false;
 
+	this->arap_controller = nullptr;
+
 	// Setup the alt key binding to move an object
 	setMouseBinding(Qt::AltModifier, Qt::LeftButton, QGLViewer::FRAME, QGLViewer::ROTATE);
 	setMouseBinding(Qt::AltModifier, Qt::RightButton, QGLViewer::FRAME, QGLViewer::TRANSLATE);
@@ -243,6 +245,15 @@ void Viewer::initializeARAPInterface() {
 		std::cerr << "Initialized mesh interface.\n";
 	}
 	this->doneCurrent();
+}
+
+void Viewer::initializeARAPManipulationInterface() {
+	// Called from ARAPController::initializeMeshInterface :
+
+}
+
+void Viewer::setARAPController(ARAPController* arap_ctrl) {
+	this->arap_controller = arap_ctrl;
 }
 
 void Viewer::alignARAP() {

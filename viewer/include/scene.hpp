@@ -334,7 +334,10 @@ public:
 	/// @brief Loads the curve data from the ARAP controller.
 	void arap_load_curve_data(Curve::Ptr& curve_to_upload);
 	/// @brief Loads the image data from the ARAP controller.
-	void arap_load_image_data(Image::Grid::Ptr grid_to_upload);
+	void arap_load_image_data(Image::Grid::Ptr& grid_to_upload);
+
+	DrawableMesh::Ptr& arap_get_mesh_drawable();
+	DrawableCurve::Ptr& arap_get_curve_drawable();
 
 	void arap_delete_grid_data();
 	void arap_delete_mesh_drawable();

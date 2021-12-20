@@ -9,6 +9,8 @@
 #include "../../meshes/operations/arap/PCATools.h"
 #include "../../meshes/operations/arap/mesh_manip_interface.h"
 
+#include "../../qt/include/arap_controller.hpp"
+
 #include "./scene.hpp"
 
 #include <QTimer>
@@ -47,6 +49,9 @@ public slots:
 	void arapManipulator_moved();
 	/// @brief Slot called when the manipulator is released.
 	void arapManipulator_released();
+
+	/// @brief Sets the ARAP controller for the viewer.
+	void setARAPController(ARAPController* arap_ctrl);
 
 protected:
 	/// @brief Initializes the scene, and the viewer's variables.
@@ -119,6 +124,8 @@ private:
 	std::size_t temp_img_idx;	 ///< The image index if found. WARNING : WE ASSUME IT IS ALWAYS 0, EVEN IF NO IMAGES ARE LOADED
 	glm::vec3 temp_img_pos;	   ///< The position of that image index
 
+	ARAPController* arap_controller;
+
 	bool deformation_enabled;
 
 public slots:
@@ -161,6 +168,9 @@ public slots:
 	void toggleManipulators(void);
 
 	void resetDeformation(void);
+
+	/// @brief Called by the ARAPController in order to initialize the signals from its object to this viewer.
+	void initializeARAPManipulationInterface();
 
 signals:
 	void enableDeformationPanel(bool should_enable);
