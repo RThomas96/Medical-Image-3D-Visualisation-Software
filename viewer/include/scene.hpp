@@ -327,6 +327,11 @@ public:
 	/// @brief Scales the mesh to fit the BB of the selected points
 	void dummy_scale_mesh_to_cp_bb();
 
+	/// @brief Loads the mesh data from the ARAP controller.
+	void arap_load_mesh_data();
+	void arap_load_curve_data();
+	void arap_load_image_data();
+
 	std::shared_ptr<MMInterface<glm::vec3>> getMeshInterface() const { return this->mesh_interface; }
 	std::shared_ptr<SimpleManipulator> getManipulator() const { return this->arapManipulator; }
 	std::shared_ptr<RectangleSelection> getRectangleSelection() const { return this->rectangleSelection; }

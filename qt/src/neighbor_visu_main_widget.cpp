@@ -2,14 +2,12 @@
 
 #include <QEvent>
 #include <QHBoxLayout>
-#include <QLabel>
 #include <QList>
 #include <QMenuBar>
 #include <QSizePolicy>
 #include <QSplitter>
 #include <QStatusBar>
 #include <QToolBar>
-#include <QVBoxLayout>
 
 MainWidget::MainWidget() {
 	this->strayObj.clear();
@@ -31,7 +29,7 @@ MainWidget::~MainWidget() {
 	if (this->boxController) {
 		this->boxController->close();
 	}
-#warning Might segfault on close
+	// TODO : this sometimes segfaults on close.
 	this->boxController = nullptr;
 
 	this->action_addGrid->disconnect();
@@ -69,10 +67,9 @@ MainWidget::~MainWidget() {
 	this->showGLLog->disconnect();
 	this->deform->disconnect();
 
-	for (std::size_t i = 0; i < this->strayObj.size(); ++i) {
-		if (this->strayObj[i] != nullptr) {
-			delete this->strayObj[i];
-			this->strayObj[i] = nullptr;
+	for (auto strayObject : this->strayObj) {
+		if (strayObject != nullptr) {
+			delete strayObject;
 		}
 	}
 	this->strayObj.clear();
@@ -156,7 +153,7 @@ void MainWidget::setupWidgets() {
 			// Connect the destruction of this widget with the closing of the box controller, if opened :
 			QObject::connect(this, &QWidget::destroyed, this->boxController, &VisuBoxController::close);
 			// Connect the destruction of the box controller with its removal from the scene and from this widget :
-			QObject::connect(this->boxController, &QWidget::destroyed, this, [this](void) -> void {
+			QObject::connect(this->boxController, &QWidget::destroyed, this, [this]() -> void {
 				this->scene->removeVisuBoxController();
 				this->boxController = nullptr;
 			});
@@ -218,30 +215,30 @@ void MainWidget::setupWidgets() {
 	this->headerZ = new ViewerHeader("Z Plane");
 	this->headerZ->connectToViewer(this->viewer_planeZ);
 
-	QAction* show_helper = new QAction("Show the helper panel");
+	auto* show_helper = new QAction("Show the helper panel");
 	this->menuBar()->addAction(show_helper);
 	QObject::connect(show_helper, &QAction::triggered, this, &MainWidget::showHelper);
 
 	// Splitters : one main (hor.) and two secondaries (vert.) :
-	QSplitter* mainSplit   = new QSplitter(Qt::Horizontal);
-	QSplitter* splitAbove  = new QSplitter(Qt::Vertical);
-	QSplitter* splitAbove1 = new QSplitter(Qt::Vertical);
+	auto* mainSplit   = new QSplitter(Qt::Horizontal);
+	auto* splitAbove  = new QSplitter(Qt::Vertical);
+	auto* splitAbove1 = new QSplitter(Qt::Vertical);
 
 	// Layouts to place a viewer and a header in the same place :
-	QVBoxLayout* vP3 = new QVBoxLayout();
+	auto* vP3 = new QVBoxLayout();
 	vP3->setSpacing(0);	   // header above 3D view
-	QVBoxLayout* vPX = new QVBoxLayout();
+	auto* vPX = new QVBoxLayout();
 	vPX->setSpacing(0);	   // header above plane X
-	QVBoxLayout* vPY = new QVBoxLayout();
+	auto* vPY = new QVBoxLayout();
 	vPY->setSpacing(0);	   // header above plane Y
-	QVBoxLayout* vPZ = new QVBoxLayout();
+	auto* vPZ = new QVBoxLayout();
 	vPZ->setSpacing(0);	   // header above plane Z
 
 	// Those will encapsulate the layouts above :
-	QWidget* _ViewerCapsule = new QWidget();
-	QWidget* xViewerCapsule = new QWidget();
-	QWidget* yViewerCapsule = new QWidget();
-	QWidget* zViewerCapsule = new QWidget();
+	auto* _ViewerCapsule = new QWidget();
+	auto* xViewerCapsule = new QWidget();
+	auto* yViewerCapsule = new QWidget();
+	auto* zViewerCapsule = new QWidget();
 
 	this->header3d->setFixedHeight(this->header3d->sizeHint().height());
 	this->headerX->setFixedHeight(this->headerX->sizeHint().height());
@@ -286,10 +283,10 @@ void MainWidget::setupWidgets() {
 	mainSplit->addWidget(splitAbove);
 	mainSplit->addWidget(splitAbove1);
 
-	QHBoxLayout* viewerLayout = new QHBoxLayout();
+	auto* viewerLayout = new QHBoxLayout();
 	viewerLayout->addWidget(mainSplit);
 
-	QVBoxLayout* mainLayout = new QVBoxLayout();
+	auto* mainLayout = new QVBoxLayout();
 	mainLayout->addLayout(viewerLayout);
 	mainLayout->addWidget(this->controlPanel, 0, Qt::AlignHCenter);
 
@@ -307,7 +304,7 @@ void MainWidget::setupWidgets() {
 	QSize v = viewerLayout->sizeHint();
 	this->controlPanel->setMinimumWidth(static_cast<int>(static_cast<float>(v.width()) * .7f));
 
-	QWidget* mainWidget = new QWidget();
+	auto* mainWidget = new QWidget();
 	mainWidget->setLayout(mainLayout);
 	this->setCentralWidget(mainWidget);
 
@@ -317,7 +314,7 @@ void MainWidget::setupWidgets() {
 void MainWidget::showHelper() {
 	if(this->viewerHelper == nullptr) {
 		this->viewerHelper			= new ViewerHelper(this->viewer);
-		QDockWidget* container_dock = new QDockWidget;
+		auto* container_dock = new QDockWidget;
 		container_dock->setWidget(this->viewerHelper);
 		this->addDockWidget(Qt::DockWidgetArea::RightDockWidgetArea, container_dock);
 	}
@@ -325,12 +322,12 @@ void MainWidget::showHelper() {
 
 bool MainWidget::eventFilter(QObject* obj, QEvent* e) {
 	// Set our code to run after the original "Show" event :
-	if (this->widgetSizeSet == false && obj == this && e->type() == QEvent::Show) {
+	if (not this->widgetSizeSet && obj == this && e->type() == QEvent::Show) {
 		this->widgetSizeSet = true;
 		this->resize(1600, 900);
 		this->setMinimumSize(1280, 720);
 		// lock control panel size to the current size it has :
-		QSize centerSize = this->size();
+		QSize centerSize = this->centralWidget()->size();
 		this->controlPanel->setMinimumWidth(static_cast<int>(static_cast<float>(centerSize.width()) * .99f));
 		this->controlPanel->setMaximumHeight(static_cast<int>(this->controlPanel->height()));
 	}
