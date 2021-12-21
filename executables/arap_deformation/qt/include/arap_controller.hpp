@@ -36,14 +36,31 @@ public:
 	/// @brief Default dtor. Declared as `default`.
 	virtual ~ARAPController() = default;
 
+	/// @brief Very simple state machine keeping track of which buttons should be activated
+	enum States {
+		Initialized					= 0,
+		MeshLoaded					= 1,
+		MeshLoadedWithConstraints	= 2,
+		CurveLoaded					= 3,
+		ImageLoaded					= 4,
+		Deformed					= 5
+	};
+
 public:
 	/// @brief Initializes the widget's various buttons, signals, and layouts.
 	void init();
+
+	/// @brief Set the state of the widget (dictates which buttons are activated)
+	/// @note Called this way in order to not collide with any of the QWidget's functions.
+	void setDeformationButtonsState(States state);
 protected:
 	/// @brief Creates the widget's layout.
 	void initLayout();
 	/// @brief Connects the widget's signals to other structures.
 	void initSignals();
+
+	/// @brief Called from setDeformationButtonsState(), this enables/disables the relevant buttons.
+	void updateButtonsActivated();
 
 	/**
 	 * Functions for :
@@ -67,6 +84,13 @@ protected:
 	 */
 
 public:
+	/// @brief Returns the currently loaded mesh.
+	const Mesh::Ptr& getMesh() const;
+	/// @brief Returns the currently loaded curve.
+	const Curve::Ptr& getCurve() const;
+	/// @brief Returns the currently loaded image.
+	const Image::Grid::Ptr& getImage() const;
+
 	/// @brief Accesses the internal ARAP manipulator.
 	const std::shared_ptr<SimpleManipulator>& getARAPManipulator() const;
 	/// @brief Accesses the internal mesh manipulation interface.
@@ -82,7 +106,13 @@ public:
 	/// @brief Get the currently loaded mesh constraints.
 	const std::vector<std::size_t>& getMeshConstraints() const;
 
+public slots:
+	/// @brief Sets the image pointer internally, whenever the loader widget has finished loading it.
+	void setImagePointer(Image::Grid::Ptr&);
+
 signals:
+	/// @brief Called whenever the user pressed 'Load images'.
+	void requestImageLoad();
 	/// @brief Signal raised whenever the patient image is loaded in.
 	void imageIsLoaded();
 	/// @brief Signal raised whenever the mesh data is loaded in.
@@ -179,6 +209,8 @@ protected:
 
 	std::vector<glm::vec3> image_constraints;	///< The image constraints (positions in 3D space).
 	std::vector<std::size_t> mesh_constraints;	///< The mesh constraints (vertex indices).
+
+	States state;	///< The current state of the application. Used to enable/disable buttons.
 
 	/**
 	 * 	------- LATER -------

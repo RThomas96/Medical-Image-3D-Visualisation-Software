@@ -9,7 +9,7 @@
 #include "../../meshes/operations/arap/PCATools.h"
 #include "../../meshes/operations/arap/mesh_manip_interface.h"
 
-#include "../../qt/include/arap_controller.hpp"
+#include "../../executables/arap_deformation/qt/include/arap_controller.hpp"
 
 #include "./scene.hpp"
 

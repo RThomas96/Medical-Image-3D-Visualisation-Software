@@ -1,18 +1,18 @@
 #ifndef VISUALISATION_QT_INCLUDE_ARAP_MAIN_WIDGET_HPP_
 #define VISUALISATION_QT_INCLUDE_ARAP_MAIN_WIDGET_HPP_
 
-#include "../../viewer/include/neighbor_visu_viewer.hpp"
-#include "../../viewer/include/planar_viewer.hpp"
-#include "../../viewer/include/scene.hpp"
-#include "./viewer_helper.hpp"
-#include "./grid_control.hpp"
-#include "./loader_widget.hpp"
-#include "./opengl_debug_log.hpp"
-#include "./scene_control.hpp"
-#include "./user_settings_widget.hpp"
-#include "./arap_controller.hpp"
+#include "viewer/include/neighbor_visu_viewer.hpp"
+#include "viewer/include/planar_viewer.hpp"
+#include "viewer/include/scene.hpp"
+#include "qt/include/viewer_helper.hpp"
+#include "qt/include/grid_control.hpp"
+#include "qt/include/loader_widget.hpp"
+#include "qt/include/opengl_debug_log.hpp"
+#include "qt/include/scene_control.hpp"
+#include "qt/include/user_settings_widget.hpp"
+#include "qt/include/arap_controller.hpp"
 
-#include <QGLViewer/qglviewer.h>
+#include "QGLViewer/qglviewer.h"
 #include <QMainWindow>
 #include <QWidget>
 
@@ -76,6 +76,7 @@ private:
 	QMenu* fileMenu;				///< The 'File' menu of the application
 	QMenu* viewMenu;				///< The 'View' menu of the application
 	QMenu* helpMenu;				///< The 'Help' menu of the application
+	QAction* action_addGrid;		///< Action to launch the grid loader.
 	QAction* action_exitProgram;	///< Action to exit the program.
 	QAction* action_showVisuBox;	///< Action to show the visualization box controller
 	QAction* action_drawModeS;		///< Action to set the scene's draw mode to 'Solid'

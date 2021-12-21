@@ -110,6 +110,7 @@ void Viewer::draw() {
 		this->scene->launchDeformation(this->meshManipulator.getActiveManipulatorAssignedIdx(), this->meshManipulator.getActiveManipulatorPos());
 	}
 
+	/*
 	std::vector<glm::vec3> spheres_to_draw(this->spheres);
 	std::size_t s;
 	auto mesh_ctx = this->scene->dummy_get_loaded_constraint_positions();
@@ -119,7 +120,18 @@ void Viewer::draw() {
 	}
 
 	this->scene->drawPointSpheres_quick(mvMat, pMat, camPos, spheres_to_draw, this->sphere_size);
+	*/
 
+	if (this->arap_controller) {
+		auto img_ctx_arap = this->arap_controller->getImageConstraints();
+		auto mesh_ctx_arap = this->arap_controller->getMeshConstraints();
+		for (auto mesh_ctx_id : mesh_ctx_arap) {
+			img_ctx_arap.push_back(this->arap_controller->getMesh()->getVertices()[mesh_ctx_id]);
+		}
+
+		this->scene->drawPointSpheres_quick(mvMat, pMat, camPos, img_ctx_arap, this->sphere_size);
+	}
+	/*
 	bool is_color_enabled = this->scene->glIsEnabled(GL_COLOR_MATERIAL);
 	bool is_light_enabled = this->scene->glIsEnabled(GL_LIGHTING);
 	if (is_color_enabled) { this->scene->glDisable(GL_COLOR_MATERIAL); }
@@ -137,6 +149,7 @@ void Viewer::draw() {
 	}
 	if (is_color_enabled) { this->scene->glEnable(GL_COLOR_MATERIAL); }
 	if (is_light_enabled) { this->scene->glEnable(GL_LIGHTING); }
+	*/
 }
 
 void Viewer::saveMesh() { this->scene->dummy_save_mesh_to_file(); }

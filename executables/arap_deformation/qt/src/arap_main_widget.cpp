@@ -1,4 +1,4 @@
-#include "../include/arap_main_widget.hpp"
+#include "qt/include/arap_main_widget.hpp"
 
 #include <QEvent>
 #include <QHBoxLayout>
@@ -92,6 +92,7 @@ void ARAPMainWidget::setupWidgets() {
 	});
 
 	// Actions creation :
+	this->action_addGrid       = new QAction("Load images");
 	this->action_showVisuBox   = new QAction("Show visu box controller");
 	this->action_exitProgram   = new QAction("Exit program");
 	this->action_drawModeS	   = new QAction("Set draw mode to Solid");
@@ -170,6 +171,19 @@ void ARAPMainWidget::setupWidgets() {
 	this->scene->setControlPanel(this->controlPanel);
 
 	this->arap_controller = new ARAPController(this->viewer, this->scene);
+
+	QObject::connect(this->arap_controller, &ARAPController::requestImageLoad, this->action_addGrid, &QAction::trigger);
+	QObject::connect(this->action_addGrid, &QAction::triggered, [this]() {
+	  if (this->loaderWidget == nullptr) {
+		  this->loaderWidget = new GridLoaderWidget(this->scene, this->viewer, this->controlPanel);
+		  QObject::connect(this->loaderWidget, &QWidget::destroyed, [this]() {
+			this->loaderWidget = nullptr;
+		  });
+	  }
+	  this->loaderWidget->show();
+	  this->loaderWidget->raise();
+	  QObject::connect(this->loaderWidget, &GridLoaderWidget::newAPIGridLoaded, this->arap_controller, &ARAPController::setImagePointer);
+	});
 
 	this->viewer->addStatusBar(this->statusBar);
 	this->viewer_planeX->addParentStatusBar(this->statusBar);

@@ -100,6 +100,7 @@ Scene::Scene() :
 	this->vaoHandle					  = 0;
 	this->vaoHandle_VolumetricBuffers = 0;
 	this->vaoHandle_boundingBox		  = 0;
+	this->vaoHandle_spheres 		  = 0;
 
 	this->vboHandle_VertPos				= 0;
 	this->vboHandle_VertNorm			= 0;
@@ -186,7 +187,6 @@ void Scene::initGl(QOpenGLContext* _context) {
 			std::cerr << "Warning : Initializing a scene without a valid OpenGL context !" << '\n';
 		}
 		this->context = _context;
-		std::cerr << "Initialized SCENE with " << this->context << '\n';
 
 		// Get OpenGL functions from the currently bound context :
 		if (this->initializeOpenGLFunctions() == false) {
@@ -2998,9 +2998,10 @@ void Scene::generateSphereData() {
 		indices.push_back(positions.size() - 1);	// actually the bottom point
 	}
 
-	// Create VAO/VBO and upload data :
-	glGenVertexArrays(1, &this->vaoHandle_spheres);
-	glBindVertexArray(this->vaoHandle_spheres);
+	if (this->debugLog) {
+		QString dbg_gl = "Creating VBOs for spheres ...";
+		this->debugLog->pushGroup("VAO Sphere");
+	}
 
 	glGenBuffers(1, &this->vboHandle_spherePositions);
 	glGenBuffers(1, &this->vboHandle_sphereNormals);
@@ -3013,12 +3014,28 @@ void Scene::generateSphereData() {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_sphereIndices);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * indices.size(), indices.data(), GL_STATIC_DRAW);
 
+	// Create VAO/VBO and upload data :
+	glGenVertexArrays(1, &this->vaoHandle_spheres);
+	glBindVertexArray(this->vaoHandle_spheres);
+
+	if (glIsVertexArray(this->vaoHandle_spheres) == GL_FALSE) {
+		std::cerr << "ERROR BUILDING VAO SPHERES =======================\n";
+		std::cerr << "== The Spheres VAO could not be built properly. ==\n";
+		std::cerr << "ERROR BUILDING VAO SPHERES =======================\n";
+		}
+
 	glEnableVertexAttribArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_spherePositions);
 	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, (void*) 0);
 	glEnableVertexAttribArray(1);
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_sphereNormals);
 	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*) 0);
+
+	if (this->debugLog) {
+		this->debugLog->popGroup();
+	}
+
+	std::cerr << "VAO for spheres generated with id " << this->vaoHandle_spheres << '\n';
 
 	if (this->shaderCompiler) {
 		this->shaderCompiler.reset();

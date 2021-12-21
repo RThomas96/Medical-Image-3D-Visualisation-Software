@@ -1,9 +1,9 @@
 #include "../include/arap_controller.hpp"
 
-#include "../../viewer/include/neighbor_visu_viewer.hpp"
-#include "../../viewer/include/scene.hpp"
+#include "viewer/include/neighbor_visu_viewer.hpp"
+#include "viewer/include/scene.hpp"
 
-#include <glm/gtx/io.hpp>
+#include "glm/gtx/io.hpp"
 
 #include <QFileDialog>
 #include <QVBoxLayout>
@@ -66,18 +66,10 @@ void ARAPController::init() {
 	this->button_scale_arap = new QPushButton("Scale constraints");
 	this->button_start_arap = new QPushButton("Perform deformation");
 
-	this->button_load_constraints->setEnabled(false);
-	this->button_load_curve->setEnabled(false);
-	this->button_load_image->setEnabled(false);
-
-	this->button_align_arap->setEnabled(false);
-	this->button_scale_arap->setEnabled(false);
-	this->button_start_arap->setEnabled(false);
-	this->button_save_mesh->setEnabled(false);
-	this->button_save_curve->setEnabled(false);
-
 	this->initLayout();
 	this->initSignals();
+
+	this->setDeformationButtonsState(States::Initialized);
 }
 
 void ARAPController::initLayout() {
@@ -104,23 +96,72 @@ void ARAPController::initLayout() {
 	widget_layout->addWidget(this->button_load_constraints);
 	widget_layout->addWidget(this->button_load_curve);
 	widget_layout->addWidget(this->button_load_image);
+	widget_layout->addStretch(2);
 	widget_layout->addWidget(separator_deformation);
 	widget_layout->addWidget(label_deformation);
 	widget_layout->addWidget(this->button_align_arap);
 	widget_layout->addWidget(this->button_scale_arap);
 	widget_layout->addWidget(this->button_start_arap);
+	widget_layout->addStretch(2);
 	widget_layout->addWidget(separator_save);
 	widget_layout->addWidget(label_save);
 	widget_layout->addWidget(this->button_save_mesh);
 	widget_layout->addWidget(this->button_save_curve);
 
-	widget_layout->setSpacing(0);
 	this->setLayout(widget_layout);
 }
 
-void ARAPController::initSignals() {
-	//
+void ARAPController::setDeformationButtonsState(States new_state) {
+	this->state = new_state;
+	this->updateButtonsActivated();
 }
+
+void ARAPController::updateButtonsActivated() {
+	this->button_load_mesh->setEnabled(false);
+	this->button_load_constraints->setEnabled(false);
+	this->button_load_curve->setEnabled(false);
+	this->button_load_image->setEnabled(false);
+	this->button_align_arap->setEnabled(false);
+	this->button_scale_arap->setEnabled(false);
+	this->button_start_arap->setEnabled(false);
+	this->button_save_mesh->setEnabled(true);
+	this->button_save_curve->setEnabled(true);
+
+	this->button_load_mesh->setEnabled(true);	// This one's always on
+	if (this->state >= States::MeshLoaded) {
+		this->button_load_constraints->setEnabled(true);
+		this->button_save_mesh->setEnabled(true);
+		this->button_load_curve->setEnabled(true);
+	}
+	if (this->state >= States::CurveLoaded) {
+		this->button_save_curve->setEnabled(true);
+		this->button_load_image->setEnabled(true);
+	}
+	if (this->state >= States::ImageLoaded) {
+		this->button_align_arap->setEnabled(true);
+		this->button_scale_arap->setEnabled(true);
+		this->button_start_arap->setEnabled(true);
+	}
+}
+
+void ARAPController::initSignals() {
+	// Buttons to load the data :
+	QObject::connect(this->button_load_mesh, &QPushButton::pressed, this, &ARAPController::loadMeshFromFile);
+	QObject::connect(this->button_load_constraints, &QPushButton::pressed, this, &ARAPController::loadConstraintsFromFile);
+	QObject::connect(this->button_load_curve, &QPushButton::pressed, this, &ARAPController::loadCurveFromFile);
+	QObject::connect(this->button_load_image, &QPushButton::pressed, this, &ARAPController::loadImageFromFile);
+	// Buttons to save the data :
+	QObject::connect(this->button_save_mesh, &QPushButton::pressed, this, &ARAPController::saveMesh);
+	QObject::connect(this->button_save_curve, &QPushButton::pressed, this, &ARAPController::saveCurve);
+	// Buttons to control the ARAP deformation :
+	QObject::connect(this->button_align_arap, &QPushButton::pressed, this, &ARAPController::arap_performAlignment);
+	QObject::connect(this->button_scale_arap, &QPushButton::pressed, this, &ARAPController::arap_performScaling);
+	QObject::connect(this->button_start_arap, &QPushButton::pressed, this, &ARAPController::arap_computeDeformation);
+}
+
+const Mesh::Ptr& ARAPController::getMesh() const { return this->mesh; }
+const Curve::Ptr& ARAPController::getCurve() const { return this->curve; }
+const Image::Grid::Ptr& ARAPController::getImage() const { return this->image; }
 
 const std::shared_ptr<SimpleManipulator>& ARAPController::getARAPManipulator() const { return this->arapManipulator; }
 const std::shared_ptr<MMInterface<glm::vec3>>& ARAPController::getMeshInterface() const { return this->mesh_interface; }
@@ -151,6 +192,7 @@ void ARAPController::loadMeshFromFile() {
 		this->deleteCurveData();
 		this->deleteGridData();
 		this->resetMeshInterface();
+		this->setDeformationButtonsState(States::Initialized);
 		std::cerr << "Done resetting the ARAP controller.\n";
 	}
 
@@ -162,7 +204,9 @@ void ARAPController::loadMeshFromFile() {
 	// Attempt to find a local constraint file next to it :
 	QDir mesh_root(mesh_file_info.absolutePath());
 	QDirIterator mesh_root_folder_iterator(mesh_root, QDirIterator::IteratorFlag::NoIteratorFlags);
-	QString target_file_name(file_name + ".constraints");
+	QString target_file_name(mesh_file_info.fileName() + ".constraints");
+
+	bool has_loaded_constraints = false;
 
 	while (mesh_root_folder_iterator.hasNext()) {
 		QString current_filename = mesh_root_folder_iterator.next();
@@ -172,6 +216,7 @@ void ARAPController::loadMeshFromFile() {
 			std::cerr << "Found mesh constraint file : " << current_file_info.fileName().toStdString() << "\n";
 			std::string file_name_std = current_file_info.absoluteFilePath().toStdString();
 			this->loadConstraintDataFromFile(file_name_std);
+			has_loaded_constraints = true;
 			break;
 		}
 	}
@@ -190,10 +235,31 @@ void ARAPController::loadMeshFromFile() {
 	this->viewer->updateInfoFromScene();
 
 	emit this->meshIsLoaded();
+
+	if (has_loaded_constraints) {
+		this->setDeformationButtonsState(States::MeshLoadedWithConstraints);
+	} else {
+		this->setDeformationButtonsState(States::MeshLoaded);
+	}
 }
 
 void ARAPController::loadImageFromFile() {
 	// TODO : import some of the LoaderWidget code, or make another importer widget
+	emit requestImageLoad();
+}
+
+void ARAPController::setImagePointer(Image::Grid::Ptr& grid) {
+	// Load image into the grid :
+	this->viewer->makeCurrent();
+	if (this->image != nullptr) {
+		this->deleteGridData();
+		this->image = nullptr;
+	}
+	this->image = grid;
+	this->scene->newAPI_addGrid(grid);
+	this->scene->updateBoundingBox();
+	this->viewer->doneCurrent();
+	this->setDeformationButtonsState(States::ImageLoaded);
 }
 
 void ARAPController::loadConstraintsFromFile() {
@@ -234,6 +300,10 @@ void ARAPController::loadConstraintsFromFile() {
 
 	// load constraints :
 	this->loadConstraintDataFromFile(file_name.toStdString());
+
+	if (this->state < States::MeshLoadedWithConstraints) {
+		this->setDeformationButtonsState(States::MeshLoadedWithConstraints);
+	}
 }
 
 void ARAPController::loadCurveFromFile() {
@@ -256,6 +326,7 @@ void ARAPController::loadCurveFromFile() {
 		auto fname= file_name.toStdString();
 		this->curve = openCurveFromOBJ(fname, this->mesh);
 		this->uploadCurveToScene();
+		this->setDeformationButtonsState(States::CurveLoaded);
 		emit curveIsLoaded();
 	} else {
 		QMessageBox* msg = new QMessageBox;
@@ -278,7 +349,6 @@ void ARAPController::loadConstraintDataFromFile(const std::string& file_name) {
 	while (constraints && not constraints.eof()) {
 		std::size_t constraint = 0;
 		constraints >> constraint;
-		std::cerr << "Adding constraint " << constraint << " to mesh ...";
 		this->mesh_constraints.emplace_back(constraint);
 	}
 
