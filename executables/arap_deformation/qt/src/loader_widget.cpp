@@ -637,19 +637,13 @@ void GridLoaderWidget::loadGrid_newAPI() {
 		}
 
 		repo.addGrid(downsampled_grid);
-
-		this->viewer->newAPI_loadGrid(downsampled_grid);
-		this->viewer->centerScene();
-		this->_cp->setSlidersToNumericalLimits();
+		//this->_cp->setSlidersToNumericalLimits();
 	} else {
 		// Load the grid data, and make a copy here
-		//this->scene->newAPI_addGrid(this->_testing_grid);
-		this->viewer->newAPI_loadGrid(this->_testing_grid);
-		this->viewer->centerScene();
 
 		// Update min and max of the control panel
 		// TODO: change this function in order to set slider according to min/max values in the image
-		this->_cp->setSlidersToNumericalLimits();
+		//this->_cp->setSlidersToNumericalLimits();
 	}
 
 	emit newAPIGridLoaded(this->_testing_grid);

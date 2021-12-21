@@ -38,6 +38,7 @@ void OpenGLDebugLog::addOpenGLMessage(QOpenGLDebugMessage message) {
 	QFlags severity = message.severity();
 	QFlags type		= message.type();
 	QFlags source	= message.source();
+	int group_depth = 0;
 
 	if (severity & QOpenGLDebugMessage::Severity::NotificationSeverity) {
 		sev += "{Notif}";
@@ -75,11 +76,11 @@ void OpenGLDebugLog::addOpenGLMessage(QOpenGLDebugMessage message) {
 	}
 	if (type & QOpenGLDebugMessage::Type::GroupPushType) {
 		typ += "[  PUSH   ]";
-		this->groupDepth++;
+		group_depth = 1;
 	}
 	if (type & QOpenGLDebugMessage::Type::GroupPopType) {
 		typ += "[   POP   ]";
-		this->groupDepth--;
+		group_depth = -1;
 	}
 
 	if (source & QOpenGLDebugMessage::Source::APISource) {
@@ -99,6 +100,7 @@ void OpenGLDebugLog::addOpenGLMessage(QOpenGLDebugMessage message) {
 	}
 
 	QString glMessage = QString(this->groupDepth, '\t') + sev + " " + typ + " " + src + " " + QString::number(message.id()) + " : " + message.message();
+	this->groupDepth += group_depth;
 
 	// Currently outputs any message on the GL stack, regardless of severity, type, or source :
 	this->messageOutput->appendPlainText(glMessage);

@@ -1,22 +1,20 @@
 #ifndef VISUALISATION_QT_INCLUDE_ARAP_MAIN_WIDGET_HPP_
 #define VISUALISATION_QT_INCLUDE_ARAP_MAIN_WIDGET_HPP_
 
-#include "viewer/include/neighbor_visu_viewer.hpp"
-#include "viewer/include/planar_viewer.hpp"
-#include "viewer/include/scene.hpp"
-#include "qt/include/viewer_helper.hpp"
-#include "qt/include/grid_control.hpp"
-#include "qt/include/loader_widget.hpp"
-#include "qt/include/opengl_debug_log.hpp"
-#include "qt/include/scene_control.hpp"
-#include "qt/include/user_settings_widget.hpp"
-#include "qt/include/arap_controller.hpp"
+#include "../../viewer/include/neighbor_visu_viewer.hpp"
+#include "../../viewer/include/planar_viewer.hpp"
+#include "../../viewer/include/scene.hpp"
+#include "../../qt/include/viewer_helper.hpp"
+#include "../../qt/include/grid_control.hpp"
+#include "./loader_widget.hpp"
+#include "../../qt/include/opengl_debug_log.hpp"
+#include "../../qt/include/scene_control.hpp"
+#include "../../qt/include/user_settings_widget.hpp"
+#include "../../qt/include/arap_controller.hpp"
 
-#include "QGLViewer/qglviewer.h"
+#include <QGLViewer/qglviewer.h>
 #include <QMainWindow>
 #include <QWidget>
-
-#define ENABLE_QUAD_VIEW
 
 class ColorBoundWidget;
 
@@ -36,12 +34,17 @@ public:
 protected:
 	/// @brief Setup all widgets, and connect their signals.
 	void setupWidgets();
+	/// @brief Setup the widget's signals.
+	void setupSignals();
 	/// @brief Allow to run code on any widget event
 	/// @details In this case, set the minimum width and height of widgets in order to
 	/// have them both square, and not too small.
 	bool eventFilter(QObject* obj, QEvent* e) override;
 
 	void showHelper();
+
+protected slots:
+	void showLoader();
 
 private:
 	Scene* scene;	 ///< The underlying scene, with the data to display

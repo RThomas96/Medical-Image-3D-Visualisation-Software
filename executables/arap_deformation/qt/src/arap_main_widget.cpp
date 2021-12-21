@@ -11,12 +11,12 @@
 
 ARAPMainWidget::ARAPMainWidget() {
 	this->strayObj.clear();
-	this->setupWidgets();
 	this->widgetSizeSet = false;
 	this->usettings		= nullptr;
 	this->loaderWidget	= nullptr;
 	this->boxController = nullptr;
 	this->arap_controller=nullptr;
+	this->setupWidgets();
 	// Query a user settings instance to initialize it :
 	UserSettings set = UserSettings::getInstance();
 }
@@ -85,11 +85,28 @@ void ARAPMainWidget::setupWidgets() {
 	this->setStatusBar(this->statusBar);
 	this->scene->addStatusBar(this->statusBar);
 
-	QObject::connect(this->showGLLog, &QPushButton::clicked, this->glDebug, &QWidget::show);
-	QObject::connect(this->deform, &QPushButton::clicked, [this]() {
-	  this->scene->toggleManipulatorDisplay();
-	  this->viewer->toggleManipulators();
-	});
+	// Viewer(s) creation along with control panel :
+	this->viewer		= new Viewer(this->scene, this->statusBar, nullptr);
+	this->viewer_planeX = new PlanarViewer(this->scene, planes::x, this->statusBar, planeHeading::North, nullptr);
+	this->viewer_planeY = new PlanarViewer(this->scene, planes::y, this->statusBar, planeHeading::North, nullptr);
+	this->viewer_planeZ = new PlanarViewer(this->scene, planes::z, this->statusBar, planeHeading::North, nullptr);
+	this->controlPanel	= new ControlPanel(this->scene, this->viewer, nullptr);
+	this->scene->setControlPanel(this->controlPanel);
+
+	this->arap_controller = new ARAPController(this->viewer, this->scene);
+
+	this->viewer->addStatusBar(this->statusBar);
+	this->viewer_planeX->addParentStatusBar(this->statusBar);
+	this->viewer_planeY->addParentStatusBar(this->statusBar);
+	this->viewer_planeZ->addParentStatusBar(this->statusBar);
+	// Sliders for each plane (also sets range and values) :
+	this->header3d = new ViewerHeader3D(this->viewer, this->scene, nullptr);
+	this->headerX  = new ViewerHeader("X Plane");
+	this->headerX->connectToViewer(this->viewer_planeX);
+	this->headerY = new ViewerHeader("Y Plane");
+	this->headerY->connectToViewer(this->viewer_planeY);
+	this->headerZ = new ViewerHeader("Z Plane");
+	this->headerZ->connectToViewer(this->viewer_planeZ);
 
 	// Actions creation :
 	this->action_addGrid       = new QAction("Load images");
@@ -117,90 +134,6 @@ void ARAPMainWidget::setupWidgets() {
 	this->helpMenu = this->menuBar()->addMenu("&Help");
 	this->helpMenu->addAction(this->action_showHelp3D);
 	this->helpMenu->addAction(this->action_showHelpPlane);
-
-	// Connect actions to the slots/functions in the program :
-	QObject::connect(this->action_showVisuBox, &QAction::triggered, [this]() {
-	  if (this->boxController == nullptr) {
-		  this->boxController = new VisuBoxController(this->scene, this->viewer);
-		  // Connect the destruction of this widget with the closing of the box controller, if opened :
-		  QObject::connect(this, &QWidget::destroyed, this->boxController, &VisuBoxController::close);
-		  // Connect the destruction of the box controller with its removal from the scene and from this widget :
-		  QObject::connect(this->boxController, &QWidget::destroyed, this, [this]() -> void {
-			this->scene->removeVisuBoxController();
-			this->boxController = nullptr;
-		  });
-	  }
-	  this->scene->showVisuBoxController(this->boxController);
-	});
-	QObject::connect(this->action_exitProgram, &QAction::triggered, this, &QMainWindow::close);
-	QObject::connect(this->action_drawModeS, &QAction::triggered, [this]() {
-	  this->scene->setDrawMode(DrawMode::Solid);
-	});
-	QObject::connect(this->action_drawModeV, &QAction::triggered, [this]() {
-	  this->scene->setDrawMode(DrawMode::Volumetric);
-	});
-	QObject::connect(this->action_drawModeVB, &QAction::triggered, [this]() {
-	  this->scene->setDrawMode(DrawMode::VolumetricBoxed);
-	});
-	QObject::connect(this->action_showHelp3D, &QAction::triggered, [this]() {
-	  this->viewer->help();
-	});
-	QObject::connect(this->action_showHelpPlane, &QAction::triggered, [this]() {
-	  this->viewer_planeX->help();
-	});
-	QObject::connect(this->action_showSettings, &QAction::triggered, [this]() {
-	  if (this->usettings != nullptr) {
-		  this->usettings->show();
-		  this->usettings->raise();
-	  } else {
-		  this->usettings = new UserSettingsWidget;
-		  this->usettings->show();
-		  this->usettings->raise();
-		  QObject::connect(this->usettings, &QWidget::destroyed, [this]() {
-			this->usettings = nullptr;
-		  });
-	  }
-	});
-
-	// Viewer(s) creation along with control panel :
-	this->viewer		= new Viewer(this->scene, this->statusBar, nullptr);
-	this->viewer_planeX = new PlanarViewer(this->scene, planes::x, this->statusBar, planeHeading::North, nullptr);
-	this->viewer_planeY = new PlanarViewer(this->scene, planes::y, this->statusBar, planeHeading::North, nullptr);
-	this->viewer_planeZ = new PlanarViewer(this->scene, planes::z, this->statusBar, planeHeading::North, nullptr);
-	this->controlPanel	= new ControlPanel(this->scene, this->viewer, nullptr);
-	this->scene->setControlPanel(this->controlPanel);
-
-	this->arap_controller = new ARAPController(this->viewer, this->scene);
-
-	QObject::connect(this->arap_controller, &ARAPController::requestImageLoad, this->action_addGrid, &QAction::trigger);
-	QObject::connect(this->action_addGrid, &QAction::triggered, [this]() {
-	  if (this->loaderWidget == nullptr) {
-		  this->loaderWidget = new GridLoaderWidget(this->scene, this->viewer, this->controlPanel);
-		  QObject::connect(this->loaderWidget, &QWidget::destroyed, [this]() {
-			this->loaderWidget = nullptr;
-		  });
-	  }
-	  this->loaderWidget->show();
-	  this->loaderWidget->raise();
-	  QObject::connect(this->loaderWidget, &GridLoaderWidget::newAPIGridLoaded, this->arap_controller, &ARAPController::setImagePointer);
-	});
-
-	this->viewer->addStatusBar(this->statusBar);
-	this->viewer_planeX->addParentStatusBar(this->statusBar);
-	this->viewer_planeY->addParentStatusBar(this->statusBar);
-	this->viewer_planeZ->addParentStatusBar(this->statusBar);
-	// Sliders for each plane (also sets range and values) :
-	this->header3d = new ViewerHeader3D(this->viewer, this->scene, nullptr);
-	this->headerX  = new ViewerHeader("X Plane");
-	this->headerX->connectToViewer(this->viewer_planeX);
-	this->headerY = new ViewerHeader("Y Plane");
-	this->headerY->connectToViewer(this->viewer_planeY);
-	this->headerZ = new ViewerHeader("Z Plane");
-	this->headerZ->connectToViewer(this->viewer_planeZ);
-
-	auto* show_helper = new QAction("Show the helper panel");
-	this->menuBar()->addAction(show_helper);
-	QObject::connect(show_helper, &QAction::triggered, this, &ARAPMainWidget::showHelper);
 
 	// Splitters : one main (hor.) and two secondaries (vert.) :
 	auto* mainSplit   = new QSplitter(Qt::Horizontal);
@@ -296,11 +229,81 @@ void ARAPMainWidget::setupWidgets() {
 	mainWidget->setLayout(mainLayout);
 	this->setCentralWidget(mainWidget);
 
+	this->setupSignals();
+
 	this->installEventFilter(this);
+}
+
+void ARAPMainWidget::setupSignals() {
+	QObject::connect(this->showGLLog, &QPushButton::clicked, this->glDebug, &QWidget::show);
+	QObject::connect(this->deform, &QPushButton::clicked, [this]() {
+	  this->scene->toggleManipulatorDisplay();
+	  this->viewer->toggleManipulators();
+	});
+
+	// Connect actions to the slots/functions in the program :
+	QObject::connect(this->action_showVisuBox, &QAction::triggered, [this]() {
+	  if (this->boxController == nullptr) {
+		  this->boxController = new VisuBoxController(this->scene, this->viewer);
+		  // Connect the destruction of this widget with the closing of the box controller, if opened :
+		  QObject::connect(this, &QWidget::destroyed, this->boxController, &VisuBoxController::close);
+		  // Connect the destruction of the box controller with its removal from the scene and from this widget :
+		  QObject::connect(this->boxController, &QWidget::destroyed, this, [this]() -> void {
+			this->scene->removeVisuBoxController();
+			this->boxController = nullptr;
+		  });
+	  }
+	  this->scene->showVisuBoxController(this->boxController);
+	});
+	QObject::connect(this->action_exitProgram, &QAction::triggered, this, &QMainWindow::close);
+	QObject::connect(this->action_drawModeS, &QAction::triggered, [this]() {
+	  this->scene->setDrawMode(DrawMode::Solid);
+	});
+	QObject::connect(this->action_drawModeV, &QAction::triggered, [this]() {
+	  this->scene->setDrawMode(DrawMode::Volumetric);
+	});
+	QObject::connect(this->action_drawModeVB, &QAction::triggered, [this]() {
+	  this->scene->setDrawMode(DrawMode::VolumetricBoxed);
+	});
+	QObject::connect(this->action_showHelp3D, &QAction::triggered, [this]() {
+	  this->viewer->help();
+	});
+	QObject::connect(this->action_showHelpPlane, &QAction::triggered, [this]() {
+	  this->viewer_planeX->help();
+	});
+	QObject::connect(this->action_showSettings, &QAction::triggered, [this]() {
+	  if (this->usettings != nullptr) {
+		  this->usettings->show();
+		  this->usettings->raise();
+	  } else {
+		  this->usettings = new UserSettingsWidget;
+		  this->usettings->show();
+		  this->usettings->raise();
+		  QObject::connect(this->usettings, &QWidget::destroyed, [this]() {
+			this->usettings = nullptr;
+		  });
+	  }
+	});
+
+	QObject::connect(this->arap_controller, &ARAPController::requestImageLoad, this->action_addGrid, &QAction::trigger);
+	QObject::connect(this->action_addGrid, &QAction::triggered, this, &ARAPMainWidget::showLoader);
 }
 
 void ARAPMainWidget::showHelper() {
 	return;
+}
+
+void ARAPMainWidget::showLoader() {
+	std::cerr << "ARAP controller on loader creation : " << this->arap_controller << '\n';
+	if (this->loaderWidget == nullptr) {
+		this->loaderWidget = new GridLoaderWidget(this->scene, this->viewer, this->controlPanel);
+		QObject::connect(this->loaderWidget, &QWidget::destroyed, [this]() {
+			this->loaderWidget = nullptr;
+		});
+		QObject::connect(this->loaderWidget, &GridLoaderWidget::newAPIGridLoaded, this->arap_controller, &ARAPController::setImagePointer);
+	}
+	this->loaderWidget->show();
+	this->loaderWidget->raise();
 }
 
 bool ARAPMainWidget::eventFilter(QObject* obj, QEvent* e) {

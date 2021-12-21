@@ -15,6 +15,7 @@ ARAPController::ARAPController(Viewer* _v, Scene* _s) {
 	// Initialize the fields to a null value :
 	this->mesh = nullptr;
 	this->curve = nullptr;
+	this->image = nullptr;
 	this->mesh_interface = nullptr;
 	this->arapManipulator = nullptr;
 	this->rectangleSelection = nullptr;
@@ -257,8 +258,42 @@ void ARAPController::setImagePointer(Image::Grid::Ptr& grid) {
 	}
 	this->image = grid;
 	this->scene->newAPI_addGrid(grid);
+	std::cerr << "Adding grid to scene from ARAPController !\n";
+	Image::bbox_t selected_grid_bb				 = this->image->getBoundingBox();
+	Image::bbox_t::vec selected_grid_bb_diagonal = selected_grid_bb.getDiagonal();	  // gets the scale factors on X, Y, Z
+	Image::bbox_t::vec selected_grid_bb_center	 = selected_grid_bb.getMin() + (selected_grid_bb_diagonal / 2.f);
+
+	// The scaling done here is _very_ approximate in order to get a rough estimate of the size of the image :
+	float scaling_factor	 = glm::length(selected_grid_bb_diagonal) / glm::length(this->mesh->getBB()[1] - this->mesh->getBB()[0]) * .7f;
+	glm::mat4 scaling_matrix = glm::scale(glm::mat4(1.f), glm::vec3(scaling_factor));
+	// We apply the transformation here in order to get an updated bounding box.
+
+	selected_grid_bb.printInfo("Image bounding box on loading : ", "[LOG]");
+	std::cerr << "\nTransformation before shifting the mesh to the side :\n" << scaling_matrix << "\n";
+
+	auto mesh_bb = this->mesh->getBB();
+	auto mesh_bb_real = BoundingBox_General<float>(mesh_bb[0], mesh_bb[1]);
+
+	// And base the computation of the translations from the scaled bounding box.
+	auto scaled_bb				   = mesh_bb_real.transformTo(scaling_matrix);
+	auto mesh_to_image_translation = (selected_grid_bb.getMin() - scaled_bb.getMin());
+	auto shift_image_translation   = glm::vec3(-scaled_bb.getDiagonal().x, .0f, .0f) + mesh_to_image_translation;
+	// Determine the best transformation to apply by shifting the mesh's BB to be aligned with the image's BB, and
+	// let the user put points later on the mesh in order to get a first alignment of the image/mesh.
+	// Then, translate that by the mesh's bounding box in order to place them one beside another :
+	scaling_matrix[3][0] += shift_image_translation.x;
+	scaling_matrix[3][1] += shift_image_translation.y;
+	scaling_matrix[3][2] += shift_image_translation.z;
+
+	scaled_bb.printInfo("Image bounding box after scaling : ", "[LOG]");
+	std::cerr << "Mesh to image : " << mesh_to_image_translation << " \n";
+	std::cerr << "Estimated scaling and rotation : " << shift_image_translation << " and transfo : " << scaling_matrix << '\n';
+
+	this->scene->getDrawableMesh()->setTransformation(scaling_matrix);
+	this->scene->getDrawableMesh()->updateOnNextDraw();
 	this->scene->updateBoundingBox();
 	this->viewer->doneCurrent();
+	this->viewer->updateInfoFromScene();
 	this->setDeformationButtonsState(States::ImageLoaded);
 }
 
