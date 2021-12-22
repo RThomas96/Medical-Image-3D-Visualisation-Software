@@ -106,6 +106,17 @@ public:
 	const std::vector<glm::vec3>& getImageConstraints() const;
 	/// @brief Get the currently loaded mesh constraints.
 	const std::vector<std::size_t>& getMeshConstraints() const;
+	/// @brief Get the compounded constraints.
+	const std::vector<glm::vec3>& getCompoundedConstraints() const;
+
+	/// @brief Updates the mesh data in the Scene.
+	/// @note Since the curve is always deformed by the mesh, its update function is protected.
+	void updateMeshDrawable();
+
+	/// @brief Add a mesh constraint.
+	void addMeshConstraint(std::size_t);
+	/// @brief Add an image constraint.
+	void addImageConstraint(glm::vec3);
 
 public slots:
 	/// @brief Sets the image pointer internally, whenever the loader widget has finished loading it.
@@ -133,15 +144,13 @@ protected:
 	void uploadMeshToScene();
 	/// @brief Uploads the curve data to the Scene.
 	void uploadCurveToScene();
-	/// @brief Updates the mesh data in the Scene.
-	void updateMeshDrawable();
-	/// @brief Updates the curve data in the Scene.
-	void updateCurveDrawable();
 
 	/// @brief Initializes the mesh interface, rectangle selection and ARAP manipulators.
 	void initializeMeshInterface();
 	/// @brief Resets the mesh interface, rectangle selection and ARAP manipulators.
 	void resetMeshInterface();
+	/// @brief Updates the curve data in the Scene.
+	void updateCurveDrawable();
 
 	/// @brief Updates the mesh info labels.
 	void updateMeshInfoLabel();
@@ -209,7 +218,8 @@ protected:
 	std::shared_ptr<RectangleSelection> rectangleSelection;	///< The rectangle user selection.
 
 	std::vector<glm::vec3> image_constraints;	///< The image constraints (positions in 3D space).
-	std::vector<std::size_t> mesh_constraints;	///< The mesh constraints (vertex indices).
+	std::vector<std::size_t> mesh_constraints;	///< The mesh constraints (vertex indices).a
+	std::vector<glm::vec3> compounded_constraints;	///< All of the constraints
 
 	States state;	///< The current state of the application. Used to enable/disable buttons.
 

@@ -163,6 +163,7 @@ void Viewer::saveMesh() { this->scene->dummy_save_mesh_to_file(); }
 void Viewer::saveCurve() { this->scene->dummy_save_curve_to_file(); }
 
 void Viewer::rectangleSelection_add(QRectF selection, bool moving) {
+	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	if (this->arap_controller->getMeshInterface() == nullptr) { return; }
 	if (this->arap_controller->getARAPManipulator() && this->arap_controller->getARAPManipulator()->getEtat()) {this->arap_controller->getARAPManipulator()->deactivate(); }
 
@@ -175,6 +176,7 @@ void Viewer::rectangleSelection_add(QRectF selection, bool moving) {
 }
 
 void Viewer::rectangleSelection_remove(QRectF selection) {
+	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	if (this->arap_controller->getMeshInterface() == nullptr) { return; }
 	if (this->arap_controller->getARAPManipulator() && this->arap_controller->getARAPManipulator()->getEtat()) {
 		this->arap_controller->getARAPManipulator()->deactivate();
@@ -189,6 +191,7 @@ void Viewer::rectangleSelection_remove(QRectF selection) {
 }
 
 void Viewer::rectangleSelection_apply() {
+	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	if (this->arap_controller->getMeshInterface() == nullptr) { std::cerr << "Applying rectangle to nothing.\n"; return; }
 	std::cerr << "Applying rectangle selection ...\n";
 	this->arap_controller->getMeshInterface()->computeManipulatorForSelection(this->arap_controller->getARAPManipulator().get());
@@ -222,6 +225,7 @@ void Viewer::scaleMeshARAP() {
 }
 
 void Viewer::arapManipulator_moved() {
+	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	// Change the data in the MMInterface :
 	this->arap_controller->getMeshInterface()->changed(this->arap_controller->getARAPManipulator().get());
 	// Update vertex positions :
@@ -232,12 +236,14 @@ void Viewer::arapManipulator_moved() {
 	}
 	// Recompute mesh normals and update :
 	this->arap_controller->getMesh()->updateQuick();
-	this->scene->updateMeshAndCurve_No_Image_Resizing();
+	this->arap_controller->updateMeshDrawable();
+	this->scene->updateBoundingBox();
 	this->update();
 }
 
 void Viewer::arapManipulator_released() {
 	//this->scene->getCurve()->deformFromMeshData();
+	std::cerr << __PRETTY_FUNCTION__ << '\n';
 }
 
 void Viewer::initializeARAPInterface() {
@@ -271,7 +277,6 @@ void Viewer::initializeARAPInterface() {
 
 void Viewer::initializeARAPManipulationInterface() {
 	// Called from ARAPController::initializeMeshInterface :
-
 }
 
 void Viewer::setARAPController(ARAPController* arap_ctrl) {
@@ -464,44 +469,6 @@ void Viewer::mousePressEvent(QMouseEvent* e) {
 		e->accept();	// stop the event from propagating upwards !
 		return;
 	}
-
-	/*
-	if ((e->modifiers() & Qt::KeyboardModifier::ShiftModifier) && this->arap_controller->getRectangleSelection()) {
-		auto rect = this->arap_controller->getRectangleSelection();
-		if (rect->isInactive()) {
-			rect->activate();
-		}
-		rect->mousePressEvent(e, this->camera());
-	} else if ((e->modifiers() & Qt::KeyboardModifier::ControlModifier) && this->arap_controller->getRectangleSelection()) {
-		auto rect = this->arap_controller->getRectangleSelection();
-		auto manip = this->arap_controller->getARAPManipulator();
-		auto inter = this->arap_controller->getMeshInterface();
-		if (e->button() == Qt::MouseButton::MiddleButton) {
-			std::cout << "CTRL+Mid" << std::endl;
-			manip->clear();
-			manip->setDisplayScale(camera()->sceneRadius()/5.f);
-			inter->make_selected_fixed_handles();
-		} else if (e->button() == Qt::MouseButton::LeftButton) {
-			bool found;
-			glm::vec4 point = this->readPositionFromFramebuffer();
-			if( point.w > 0.1f ){
-				std::cout << "Manip" << std::endl;
-				manip->clear();
-				manip->setDisplayScale(camera()->sceneRadius()/5.f);
-				inter->make_fixed_handles(glm::vec3(point[0], point[1], point[2]), this->sphere_size);
-			}
-		} else if (e->button() == Qt::MouseButton::RightButton) {
-			bool found;
-			glm::vec4 point = this->readPositionFromFramebuffer();
-			if( point.w > 0.1f ){
-				manip->clear();
-				manip->setDisplayScale(camera()->sceneRadius()/5.f);
-				inter->select(glm::vec3(point[0], point[1], point[2]), this->sphere_size );
-			}
-		}
-		this->update();
-	}
-	*/
 
 	// here we check for rectangleSelection but the rest of the mesh manip interface is also initialized (since they're all created together)
 	if (this->arap_controller->getRectangleSelection() && this->deformation_enabled) {
@@ -756,6 +723,7 @@ QString Viewer::mouseString() const {
 }
 
 void Viewer::updateCameraPosition() {
+	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	auto bb		= this->scene->getSceneBoundingBox();
 	auto center = bb.getMin() + (bb.getDiagonal() / 2.f);
 	auto radius = glm::length(bb.getDiagonal());
@@ -769,7 +737,6 @@ void Viewer::updateCameraPosition() {
 }
 
 void Viewer::updateInfoFromScene() {
-	this->update();
 	this->updateCameraPosition();
 }
 

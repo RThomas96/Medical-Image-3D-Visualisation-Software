@@ -22,6 +22,7 @@ ARAPController::ARAPController(Viewer* _v, Scene* _s) {
 
 	this->mesh_constraints.clear();
 	this->image_constraints.clear();
+	this->compounded_constraints.clear();
 
 	this->listview_image_constraints = nullptr;
 	this->listview_mesh_constraints = nullptr;
@@ -126,11 +127,13 @@ void ARAPController::initLayout() {
 }
 
 void ARAPController::setDeformationButtonsState(States new_state) {
+	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	this->state = new_state;
 	this->updateButtonsActivated();
 }
 
 void ARAPController::updateButtonsActivated() {
+	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	// Disable signals from the widgets we change the state of :
 	this->checkbox_enable_deformation->blockSignals(true);
 
@@ -282,6 +285,7 @@ void ARAPController::loadImageFromFile() {
 }
 
 void ARAPController::setImagePointer(Image::Grid::Ptr& grid) {
+	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	// Load image into the grid :
 	this->viewer->makeCurrent();
 	if (this->image != nullptr) {
@@ -430,6 +434,7 @@ void ARAPController::loadConstraintDataFromFile(const std::string& file_name) {
 }
 
 void ARAPController::deleteMeshData() {
+	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	this->viewer->makeCurrent();
 	this->scene->arap_delete_mesh_drawable();
 	this->viewer->doneCurrent();
@@ -437,6 +442,7 @@ void ARAPController::deleteMeshData() {
 }
 
 void ARAPController::deleteCurveData() {
+	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	this->viewer->makeCurrent();
 	this->scene->arap_delete_curve_drawable();
 	this->viewer->doneCurrent();
@@ -444,6 +450,7 @@ void ARAPController::deleteCurveData() {
 }
 
 void ARAPController::deleteGridData() {
+	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	this->viewer->makeCurrent();
 	this->scene->arap_delete_grid_data();
 	this->viewer->doneCurrent();
@@ -451,6 +458,7 @@ void ARAPController::deleteGridData() {
 }
 
 void ARAPController::uploadMeshToScene() {
+	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	this->viewer->makeCurrent();
 	this->scene->arap_load_mesh_data(this->mesh);
 	this->viewer->doneCurrent();
@@ -458,6 +466,7 @@ void ARAPController::uploadMeshToScene() {
 }
 
 void ARAPController::uploadCurveToScene() {
+	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	this->viewer->makeCurrent();
 	this->scene->arap_load_curve_data(this->curve);
 	this->viewer->doneCurrent();
@@ -465,20 +474,33 @@ void ARAPController::uploadCurveToScene() {
 }
 
 void ARAPController::updateMeshDrawable() {
+	std::cerr << __PRETTY_FUNCTION__ << '\n';
+	std::cerr << "Updating mesh drawable ...\n";
+	/**
+	 * Should :
+	 * update mesh/curve drawables
+	 * update curve positions
+	 * update scene BB
+	 */
 	this->viewer->makeCurrent();
-	// update mesh data
+	this->scene->getDrawableMesh()->updateOnNextDraw();
+	if (this->curve) {
+		this->curve->deformFromMeshData();
+		this->updateCurveDrawable();
+	}
 	this->viewer->doneCurrent();
 	this->scene->updateBoundingBox();
 }
 
 void ARAPController::updateCurveDrawable() {
-	this->viewer->makeCurrent();
-	// update curve data
-	this->viewer->doneCurrent();
-	this->scene->updateBoundingBox();
+	std::cerr << __PRETTY_FUNCTION__ << '\n';
+	if (this->curve) {
+		this->scene->getDrawableCurve()->updateOnNextDraw();
+	}
 }
 
 void ARAPController::initializeMeshInterface() {
+	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	if (this->mesh_interface == nullptr) {
 		this->arapManipulator = std::make_shared<SimpleManipulator>();
 		this->rectangleSelection = std::make_shared<RectangleSelection>();
@@ -511,6 +533,7 @@ void ARAPController::initializeMeshInterface() {
 }
 
 void ARAPController::resetMeshInterface() {
+	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	if (this->mesh_interface != nullptr) {
 		this->arapManipulator->disconnect();
 		this->rectangleSelection->disconnect();
@@ -526,6 +549,7 @@ void ARAPController::resetMeshInterface() {
 }
 
 void ARAPController::arap_performAlignment() {
+	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	if (this->mesh == nullptr) {
 		std::cerr << "Error : no meshes loaded.\n";
 		return;
@@ -584,6 +608,7 @@ void ARAPController::arap_performAlignment() {
 }
 
 void ARAPController::arap_performScaling() {
+	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	if (this->mesh == nullptr) {
 		std::cerr << "Error : no meshes loaded.\n";
 		return;
@@ -637,6 +662,7 @@ void ARAPController::arap_performScaling() {
 }
 
 void ARAPController::arap_computeDeformation() {
+	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	if (this->mesh == nullptr) {
 		std::cerr << "Error : no meshes loaded.\n";
 		return;
@@ -675,33 +701,38 @@ void ARAPController::arap_computeDeformation() {
 }
 
 void ARAPController::enableDeformation() {
+	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	if (this->mesh == nullptr) { return; }
 	std::cerr << "Enabled deformation !\n";
 	this->applyTransformation_Mesh();
+	this->updateMeshDrawable();
 	this->resetMeshInterface();
 	this->viewer->setDeformation(true);
 	this->updateCurveFromMesh();
 }
 
 void ARAPController::disableDeformation() {
+	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	if (this->mesh == nullptr) { return; }
 	std::cerr << "Disabled deformation !\n";
 }
 
 void ARAPController::applyTransformation_Mesh() {
+	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	auto draw = this->scene->getDrawableMesh();
 	auto transform = draw->getTransformation();
 
 	this->mesh->applyTransformation(transform);
 	draw->setTransformation(glm::mat4(1.f));
-	draw->updateOnNextDraw();
 }
 
 void ARAPController::updateCurveFromMesh() {
+	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	// TODO
 }
 
 void ARAPController::saveMesh() {
+	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	if (this->mesh == nullptr) { return; }
 	// Ask the user for the save file name & its path :
 	QString home_path = QDir::homePath();
@@ -741,6 +772,7 @@ void ARAPController::saveMesh() {
 }
 
 void ARAPController::saveCurve() {
+	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	if (this->curve == nullptr) { return; }
 	// Ask the user for the save file name & its path :
 	QString home_path = QDir::homePath();

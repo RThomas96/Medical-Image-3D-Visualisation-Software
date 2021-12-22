@@ -141,20 +141,21 @@ Scene::Scene() :
 
 	this->posFrame = nullptr;
 
+#ifdef ENABLE_SCENE_DEFORMATION
 	this->mesh		 = nullptr;
 	this->curve		 = nullptr;
-	this->mesh_draw	 = nullptr;
-	this->curve_draw = nullptr;
-
-	this->mesh_interface = nullptr;
-	this->arapManipulator = nullptr;
-	this->rectangleSelection = nullptr;
-
-	this->viewer = nullptr;
 
 	this->arap_mesh_file_name = "";
 	this->arap_mesh_file_path = "";
 	this->arap_mesh_file_constraints = "";
+	this->mesh_interface = nullptr;
+	this->arapManipulator = nullptr;
+	this->rectangleSelection = nullptr;
+#endif
+	this->mesh_draw	 = nullptr;
+	this->curve_draw = nullptr;
+
+	this->viewer = nullptr;
 
 	this->newGrids.clear();
 }
@@ -806,6 +807,8 @@ DrawableCurve::Ptr& Scene::arap_get_curve_drawable() { return this->curve_draw; 
 
 void Scene::dummy_apply_alignment_before_arap() {
 #ifdef NEED_ARAP
+
+#ifdef ENABLE_SCENE_DEFORMATION
 	if (this->mesh == nullptr) {
 		std::cerr << "Error : no meshes loaded.\n";
 		return;
@@ -864,12 +867,14 @@ void Scene::dummy_apply_alignment_before_arap() {
 		// not covered in updateMeshAndCurve() :
 		this->curve_draw->setTransformation(this->mesh_draw->getTransformation());
 	}
+#endif
 #else
 	std::cerr << "[ERROR]: ARAP cannot be compiled on Linux yet. Operation canceled" << std::endl;
 #endif
 }
 
 void Scene::dummy_perform_constrained_arap_on_image_mesh() {
+#ifdef ENABLE_SCENE_DEFORMATION
 	if (this->mesh == nullptr) {
 		std::cerr << "Error : no meshes loaded.\n";
 		return;
@@ -908,9 +913,11 @@ void Scene::dummy_perform_constrained_arap_on_image_mesh() {
 	std::cerr << "Finished.\n";
 
 	this->updateMeshAndCurve_No_Image_Resizing();
+#endif
 }
 
 std::vector<glm::vec3> Scene::dummy_get_loaded_constraint_positions() const {
+#ifdef ENABLE_SCENE_DEFORMATION
 	if (this->mesh == nullptr) { return {}; }
 
 	std::vector<glm::vec3> constraints;
@@ -919,19 +926,27 @@ std::vector<glm::vec3> Scene::dummy_get_loaded_constraint_positions() const {
 		constraints.push_back(vertices[constraint.second]);
 	}
 	return constraints;
+#endif
 }
 
 void Scene::dummy_add_image_constraint(std::size_t img_idx, glm::vec3 img_pos) {
+#ifdef ENABLE_SCENE_DEFORMATION
+
 	this->image_constraints.push_back(img_pos);
 	std::cerr << "[Scene] Added image constraint at position " << img_pos << '\n';
+#endif
 }
 
 void Scene::dummy_add_arap_constraint_mesh(std::size_t drawable, std::size_t vtx_idx) {
+#ifdef ENABLE_SCENE_DEFORMATION
 	this->mesh_idx_constraints.push_back((std::make_pair(drawable - 1, vtx_idx)));
 	std::cerr << "[Scene] Added constraint " << vtx_idx << " to mesh " << drawable << "\n";
+#endif
 }
 
 void Scene::dummy_print_arap_constraints() {
+
+#ifdef ENABLE_SCENE_DEFORMATION
 	std::cerr << "[LOG] ===============================================\n";
 	std::cerr << "[LOG] ARAP constraints at this point in the program :\n";
 	std::cerr << "[LOG] Mesh indices :\n";
@@ -944,6 +959,7 @@ void Scene::dummy_print_arap_constraints() {
 	}
 	std::cerr << "[LOG] ARAP constraints at this point in the program :\n";
 	std::cerr << "[LOG] ===============================================\n";
+#endif
 }
 
 bool Scene::dummy_check_point_in_mesh_bb(glm::vec3 query, std::size_t& mesh_index) {
@@ -959,6 +975,7 @@ bool Scene::dummy_check_point_in_mesh_bb(glm::vec3 query, std::size_t& mesh_inde
 }
 
 void Scene::dummy_loadConstraintsFromFile() {
+#ifdef ENABLE_SCENE_DEFORMATION
 	if (this->mesh == nullptr) { std::cerr << "Error : mesh not loaded !\n"; return; }
 	if (this->arap_mesh_file_constraints.empty()) { std::cerr << "Error : mesh file not valid !\n"; return; }
 
@@ -997,9 +1014,11 @@ void Scene::dummy_loadConstraintsFromFile() {
 	constraint_file.close();
 
 	// Maybe update the mesh interface now ?
+#endif
 }
 
 void Scene::dummy_save_mesh_to_file() {
+#ifdef ENABLE_SCENE_DEFORMATION
 	if (this->mesh == nullptr) { return; }
 	// Ask the user for the save file name & its path :
 	QString home_path = QDir::homePath();
@@ -1036,9 +1055,11 @@ void Scene::dummy_save_mesh_to_file() {
 
 	myfile.close();
 	return;
+#endif
 }
 
 void Scene::dummy_save_curve_to_file() {
+#ifdef ENABLE_SCENE_DEFORMATION
 	if (this->curve == nullptr) { return; }
 	// Ask the user for the save file name & its path :
 	QString home_path = QDir::homePath();
@@ -1066,9 +1087,11 @@ void Scene::dummy_save_curve_to_file() {
 
 	myfile.close();
 	return;
+#endif
 }
 
 void Scene::dummy_resize_curve_to_match_other_curve() {
+#ifdef ENABLE_SCENE_DEFORMATION
 	if (this->mesh == nullptr) { return; }
 	if (this->curve == nullptr) { return; }
 	std::cerr << "Loading another curve file ...\n";
@@ -1131,9 +1154,12 @@ void Scene::dummy_resize_curve_to_match_other_curve() {
 	this->curve_draw->updateOnNextDraw();
 	this->curve_draw->updateBoundingBox();
 	this->updateBoundingBox();
+#endif
 }
 
 void Scene::dummy_scale_mesh_to_cp_bb() {
+
+#ifdef ENABLE_SCENE_DEFORMATION
 	if (this->mesh == nullptr) {
 		std::cerr << "Error : no meshes loaded.\n";
 		return;
@@ -1186,9 +1212,11 @@ void Scene::dummy_scale_mesh_to_cp_bb() {
 		// not covered in updateMeshAndCurve() :
 		this->curve_draw->setTransformation(this->mesh_draw->getTransformation());
 	}
+#endif
 }
 
 void Scene::updateMeshAndCurve() {
+#ifdef ENABLE_SCENE_DEFORMATION
 	// If a mesh is already loaded, offer to scale it to the loaded image :
 	if (this->mesh != nullptr) {
 		this->resizeMeshForGrid();
@@ -1221,6 +1249,7 @@ void Scene::updateMeshAndCurve() {
 		std::cerr << "Attempted a mesh resize, but no mesh was available.\n";
 	}
 	this->updateBoundingBox();
+#endif
 }
 
 void Scene::arap_reset_scene_data() {
@@ -1341,6 +1370,7 @@ void Scene::arap_delete_curve_drawable() {
 }
 
 void Scene::updateMeshAndCurve_No_Image_Resizing() {
+#ifdef ENABLE_SCENE_DEFORMATION
 	// If a mesh is already loaded, offer to scale it to the loaded image :
 	if (this->mesh != nullptr) {
 		//this->resizeMeshForGrid();
@@ -1371,9 +1401,11 @@ void Scene::updateMeshAndCurve_No_Image_Resizing() {
 		}
 	}
 	this->updateBoundingBox();
+#endif
 }
 
 void Scene::updateMeshInterface() {
+#ifdef ENABLE_SCENE_DEFORMATION
 	if (this->mesh_interface == nullptr) {
 		std::cerr << "Attempted to refresh mesh interface, but none was available." << '\n';
 		return;
@@ -1381,6 +1413,7 @@ void Scene::updateMeshInterface() {
 	this->mesh_interface->clear();
 	// Re-initialize the mesh interface data with the new data !
 	this->mesh_interface->loadAndInitialize(this->mesh->getVertices(), this->mesh->getTriangles());
+#endif
 }
 
 void Scene::recompileShaders(bool verbose) {
@@ -1641,6 +1674,7 @@ GLuint Scene::newAPI_uploadTexture3D(const GLuint texHandle, const TextureUpload
 }
 
 void Scene::loadMesh() {
+#ifdef ENABLE_SCENE_DEFORMATION
 	// Launch a file picker to get the name of an OFF file :
 	QString file_name = QFileDialog::getOpenFileName(nullptr, "Open a Mesh file (OFF)", QString(), "OFF files (*.off)");
 	if (file_name.isEmpty() || not QFileInfo::exists(file_name)) {
@@ -1697,9 +1731,11 @@ void Scene::loadMesh() {
 	this->updateMeshAndCurve();
 	this->updateMeshInterface();
 	this->updateBoundingBox();
+#endif
 }
 
 void Scene::resizeMeshForGrid() {
+#ifdef ENABLE_SCENE_DEFORMATION
 	// If any images loaded, ask with which image to be paired with :
 	if (this->newGrids.size()) {
 		auto picker = new GridPickerFromScene();
@@ -1741,6 +1777,7 @@ void Scene::resizeMeshForGrid() {
 	} else {
 		std::cerr << "Error : no grids loaded\n";
 	}
+#endif
 }
 
 void Scene::getTetraMeshPoints(std::vector<glm::vec3>& points) {
@@ -1874,6 +1911,7 @@ glm::vec3 Scene::getVertexPosition(int index) {
 }
 
 void Scene::loadCurve() {
+#ifdef ENABLE_SCENE_DEFORMATION
 	// Launch a file picker to get the name of an OFF file :
 	QString file_name = QFileDialog::getOpenFileName(nullptr, "Open a Curve file (OBJ)", QString(), "OBJ files (*.obj)");
 	if (file_name.isEmpty() || not QFileInfo::exists(file_name)) {
@@ -1900,6 +1938,7 @@ void Scene::loadCurve() {
 		msg->critical(nullptr, "Cannot load curve by itself.",
 			"Error : no meshes were loaded previously.\nWe cannot open a curve all by its lonesome.");
 	}
+#endif
 }
 
 void Scene::arap_load_curve_data(Curve::Ptr& curve_to_upload) {

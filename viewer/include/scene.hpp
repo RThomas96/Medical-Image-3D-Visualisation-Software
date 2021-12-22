@@ -611,21 +611,25 @@ private:
 	//
 	// Stubs for ARAP manipulation :
 	//
+#ifdef ENABLE_SCENE_DEFORMATION
 	Mesh::Ptr mesh;	   ///< The loaded mesh, if any
 	Curve::Ptr curve;	 ///< The loaded curve, if any
+#endif
 	DrawableMesh::Ptr mesh_draw;
 	DrawableCurve::Ptr curve_draw;
+#ifdef ENABLE_SCENE_DEFORMATION
 	std::vector<std::pair<std::size_t, std::size_t>> mesh_idx_constraints;	  ///< The mesh vertices considered constraints. Pair = <mesh_idx , vertex_idx>
 	std::vector<glm::vec3> image_constraints;	 ///< The positions of those constraints explained above
 	std::shared_ptr<MMInterface<glm::vec3>> mesh_interface;
 	std::shared_ptr<SimpleManipulator> arapManipulator;
 	std::shared_ptr<RectangleSelection> rectangleSelection;
-	Viewer* viewer;
 
 	std::string arap_mesh_file_path;
 	std::string arap_mesh_file_name;
 	std::string arap_mesh_file_constraints;
+#endif
 
+	Viewer* viewer;
 	/// @brief A pointer to the 3D viewer's camera.
 	qglviewer::Camera* camera;
 
