@@ -158,9 +158,9 @@ void DrawableMesh::updateData(void) {
 	auto normals  = this->mesh->getVertexNormals();
 	// we assume that the triangles and texture data do not change ...
 	this->gl->glBindBuffer(GL_ARRAY_BUFFER, this->vbo_vertices);
-	this->gl->glBufferData(GL_ARRAY_BUFFER, vertices.size() * 3 * sizeof(GLfloat), vertices.data(), GL_STATIC_DRAW);
+	this->gl->glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * 3 * sizeof(GLfloat), vertices.data());
 	this->gl->glBindBuffer(GL_ARRAY_BUFFER, this->vbo_normals);
-	this->gl->glBufferData(GL_ARRAY_BUFFER, normals.size() * 3 * sizeof(GLfloat), normals.data(), GL_STATIC_DRAW);
+	this->gl->glBufferSubData(GL_ARRAY_BUFFER, 0, normals.size() * 3 * sizeof(GLfloat), normals.data());
 	// disable update for new draw call :
 	this->should_update_on_next_draw = false;
 }

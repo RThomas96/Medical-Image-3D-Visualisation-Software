@@ -343,12 +343,14 @@ public:
 	void arap_delete_mesh_drawable();
 	void arap_delete_curve_drawable();
 
+	/*
 	std::shared_ptr<MMInterface<glm::vec3>> getMeshInterface() const { return this->mesh_interface; }
 	std::shared_ptr<SimpleManipulator> getManipulator() const { return this->arapManipulator; }
 	std::shared_ptr<RectangleSelection> getRectangleSelection() const { return this->rectangleSelection; }
 
 	const Mesh::Ptr& getMesh() const { return this->mesh; }
 	const Curve::Ptr& getCurve() const { return this->curve; }
+	*/
 	const DrawableMesh::Ptr getDrawableMesh() const { return this->mesh_draw; }
 	const DrawableCurve::Ptr getDrawableCurve() const { return this->curve_draw; }
 

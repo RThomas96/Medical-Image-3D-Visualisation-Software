@@ -148,6 +148,7 @@ public slots:
 	void printVAOStateNext();
 	void setSphereSize(double);
 	void toggleDeformation();
+	void setDeformation(bool);
 	void resetARAPConstraints();
 	void mesh_select_all();
 	void mesh_unselect_all();
@@ -174,6 +175,7 @@ public slots:
 
 signals:
 	void enableDeformationPanel(bool should_enable);
+	void hasInitializedScene();
 };
 
 #endif	  // VIEWER_INCLUDE_NEIGHBOR_VISU_VIEWER_HPP_

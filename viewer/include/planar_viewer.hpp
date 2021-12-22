@@ -78,9 +78,13 @@ protected:
 	QPoint cursorPosition_last;	   ///< Last known position, relative to window coordinates
 	QPoint cursorPosition_current;	  ///< Current mouse position, relative to window coordinates
 	QStatusBar* status_bar;	   ///< The status bar in which to show the positions extracted from the mesh
+
+	bool scene_initialized;
 public slots:
 	/// @brief Update the view, as a slot without any arguments
 	void updateView(void);
+	/// @brief Signals this viewer that the scene has been initialized and can do so in return.
+	void canInitializeScene();
 	/// @brief Signal from a slider to update the value of the cutting plane.
 	void updatePlaneDepth(int newVal);
 	/// @brief Signal from a push button to flip the plane's cutting direction.

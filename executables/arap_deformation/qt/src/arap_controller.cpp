@@ -125,14 +125,16 @@ void ARAPController::updateButtonsActivated() {
 	this->button_align_arap->setEnabled(false);
 	this->button_scale_arap->setEnabled(false);
 	this->button_start_arap->setEnabled(false);
-	this->button_save_mesh->setEnabled(true);
-	this->button_save_curve->setEnabled(true);
+	this->button_save_mesh->setEnabled(false);
+	this->button_save_curve->setEnabled(false);
+	this->viewer->setDeformation(false);
 
 	this->button_load_mesh->setEnabled(true);	// This one's always on
 	if (this->state >= States::MeshLoaded) {
 		this->button_load_constraints->setEnabled(true);
 		this->button_save_mesh->setEnabled(true);
 		this->button_load_curve->setEnabled(true);
+		this->viewer->setDeformation(true);
 	}
 	if (this->state >= States::CurveLoaded) {
 		this->button_save_curve->setEnabled(true);
@@ -257,7 +259,7 @@ void ARAPController::setImagePointer(Image::Grid::Ptr& grid) {
 		this->image = nullptr;
 	}
 	this->image = grid;
-	this->scene->newAPI_addGrid(grid);
+	this->scene->arap_load_image_data(grid);
 	std::cerr << "Adding grid to scene from ARAPController !\n";
 	Image::bbox_t selected_grid_bb				 = this->image->getBoundingBox();
 	Image::bbox_t::vec selected_grid_bb_diagonal = selected_grid_bb.getDiagonal();	  // gets the scale factors on X, Y, Z

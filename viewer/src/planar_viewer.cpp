@@ -28,6 +28,8 @@ PlanarViewer::PlanarViewer(Scene* const _scene, planes _p, QStatusBar* _sb, plan
 	this->posRequest	  = glm::ivec2{-1, -1};
 	this->tempOffset	  = glm::vec2{.0f, .0f};
 
+	this->scene_initialized = false;
+
 	this->refreshTimer = new QTimer();
 	// ~7 ms for 144fps, ~16ms for 60fps and ~33ms for 30 FPS
 	this->refreshTimer->setInterval(std::chrono::milliseconds(500));	// 1/2 second when not updated by the viewer
@@ -54,14 +56,16 @@ void PlanarViewer::init(void) {
 	}
 	this->setUpdateBehavior(UpdateBehavior::NoPartialUpdate);
 
-	this->makeCurrent();
-
-	this->sceneToShow->initGl(this->context());
-
 	this->refreshTimer->start();
 }
 
+void PlanarViewer::canInitializeScene() {
+	this->scene_initialized = true;
+}
+
 void PlanarViewer::draw(void) {
+	if (not this->scene_initialized) { return; }
+
 	float white_shade = 245. / 255.;
 
 	glClearColor(white_shade, white_shade, white_shade, .0);

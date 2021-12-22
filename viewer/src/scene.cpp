@@ -1217,6 +1217,8 @@ void Scene::updateMeshAndCurve() {
 			this->mesh_interface = std::make_shared<MMInterface<glm::vec3>>();
 			this->mesh_interface->setMode(MeshModificationMode::REALTIME);
 		}
+	} else {
+		std::cerr << "Attempted a mesh resize, but no mesh was available.\n";
 	}
 	this->updateBoundingBox();
 }
@@ -1232,25 +1234,110 @@ void Scene::arap_load_mesh_data(Mesh::Ptr& mesh_to_upload) {
 		this->mesh_draw.reset();
 	}
 	this->mesh_draw = std::make_shared<DrawableMesh>(mesh_to_upload);
+	this->mesh_draw->initialize(this->context, this);
 	this->mesh_draw->setTransformation(glm::mat4(1.f));
-	this->mesh_draw->updateOnNextDraw();
 	this->updateBoundingBox();
 }
 
-void Scene::arap_load_image_data(Image::Grid::Ptr& image_to_load) {
-	//:w
+void Scene::arap_load_image_data(Image::Grid::Ptr& gridLoaded) {
+	glm::vec<4, std::size_t, glm::defaultp> dimensions{gridLoaded->getResolution(), gridLoaded->getVoxelDimensionality()};
+
+	NewAPI_GridGLView::Ptr gridView = std::make_shared<NewAPI_GridGLView>(gridLoaded);
+
+	TextureUpload _gridTex{};
+	_gridTex.minmag.x  = GL_NEAREST;
+	_gridTex.minmag.y  = GL_NEAREST;
+	_gridTex.lod.y	   = -1000.f;
+	_gridTex.wrap.x	   = GL_CLAMP_TO_EDGE;
+	_gridTex.wrap.y	   = GL_CLAMP_TO_EDGE;
+	_gridTex.wrap.z	   = GL_CLAMP_TO_EDGE;
+	_gridTex.swizzle.r = GL_RED;
+	if (dimensions.a > 1) {
+		_gridTex.swizzle.g = GL_GREEN;
+	} else {
+		_gridTex.swizzle.g = GL_ZERO;
+	}
+	if (dimensions.a > 2) {
+		_gridTex.swizzle.b = GL_BLUE;
+	} else {
+		_gridTex.swizzle.b = GL_ZERO;
+	}
+	if (dimensions.a > 3) {
+		_gridTex.swizzle.a = GL_ALPHA;
+	} else {
+		_gridTex.swizzle.a = GL_ONE;
+	}
+	_gridTex.alignment.x = 1;
+	_gridTex.alignment.y = 2;
+	switch (dimensions.a) {
+		case 1:
+			_gridTex.format			= GL_RED_INTEGER;
+			_gridTex.internalFormat = GL_R16UI;
+			break;
+		case 2:
+			_gridTex.format			= GL_RG_INTEGER;
+			_gridTex.internalFormat = GL_RG16UI;
+			break;
+		case 3:
+			_gridTex.format			= GL_RGB_INTEGER;
+			_gridTex.internalFormat = GL_RGB16UI;
+			break;
+		case 4:
+			_gridTex.format			= GL_RGBA_INTEGER;
+			_gridTex.internalFormat = GL_RGBA16UI;
+			break;
+	}
+	_gridTex.type = GL_UNSIGNED_SHORT;
+
+	_gridTex.size.x = dimensions.x;
+	_gridTex.size.y = dimensions.y;
+	_gridTex.size.z = dimensions.z;
+
+	std::vector<std::uint16_t> slices(dimensions.x * dimensions.y * dimensions.a);
+	gridView->gridTexture = this->newAPI_uploadTexture3D_allocateonly(_gridTex);
+
+	for (std::size_t s = 0; s < dimensions.z; ++s) {
+		if (gridLoaded->readSlice(s, slices)) {
+			this->newAPI_uploadTexture3D(gridView->gridTexture, _gridTex, s, slices);
+		} else {
+			std::cerr << "Scene texture upload : Could not read the data at index " << s << " !\n";
+		}
+	}
+
+	gridView->boundingBoxColor = glm::vec3(.4, .6, .3);	   // olive-colored by default
+	gridView->nbChannels	   = 2;	   // loaded 2 channels in the image
+
+	// Create the uniform buffer :
+	auto mainColorChannel				= gridView->mainColorChannelAttributes();
+	gridView->uboHandle_colorAttributes = this->createUniformBuffer(4 * sizeof(colorChannelAttributes_GL), GL_STATIC_DRAW);
+	this->setUniformBufferData(gridView->uboHandle_colorAttributes, 0, 32, &mainColorChannel);
+	this->setUniformBufferData(gridView->uboHandle_colorAttributes, 32, 32, &gridView->colorChannelAttributes[0]);
+	this->setUniformBufferData(gridView->uboHandle_colorAttributes, 64, 32, &gridView->colorChannelAttributes[1]);
+	this->setUniformBufferData(gridView->uboHandle_colorAttributes, 96, 32, &gridView->colorChannelAttributes[2]);
+
+	this->newAPI_tex3D_buildMesh(gridView, "");
+	this->tex3D_buildVisTexture(gridView->volumetricMesh);
+	this->tex3D_buildBuffers(gridView->volumetricMesh);
+
+	this->newGrids.push_back(gridView);
+
+	this->updateVis();
+	this->updateBoundingBox();
+	this->setVisuBoxMinCoord(glm::uvec3());
+	this->setVisuBoxMaxCoord(gridLoaded->getResolution());
+	this->resetVisuBox();
 }
 
 void Scene::arap_delete_grid_data() {
-	// TODO
+	this->newGrids.clear();
 }
 
 void Scene::arap_delete_mesh_drawable() {
-	// TODO
+	this->mesh_draw.reset();
 }
 
 void Scene::arap_delete_curve_drawable() {
-	// TODO
+	this->curve_draw.reset();
 }
 
 void Scene::updateMeshAndCurve_No_Image_Resizing() {
@@ -1287,7 +1374,10 @@ void Scene::updateMeshAndCurve_No_Image_Resizing() {
 }
 
 void Scene::updateMeshInterface() {
-	if (this->mesh_interface == nullptr) { return; }
+	if (this->mesh_interface == nullptr) {
+		std::cerr << "Attempted to refresh mesh interface, but none was available." << '\n';
+		return;
+	}
 	this->mesh_interface->clear();
 	// Re-initialize the mesh interface data with the new data !
 	this->mesh_interface->loadAndInitialize(this->mesh->getVertices(), this->mesh->getTriangles());
@@ -1818,8 +1908,8 @@ void Scene::arap_load_curve_data(Curve::Ptr& curve_to_upload) {
 	}
 	glm::mat4 transfo  = this->mesh_draw->getTransformation();
 	this->curve_draw = std::make_shared<DrawableCurve>(curve_to_upload);
+	this->curve_draw->initialize(this->context, this);
 	this->curve_draw->setTransformation(transfo);
-	this->curve_draw->updateOnNextDraw();
 	this->updateBoundingBox();
 }
 
@@ -2802,6 +2892,19 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 
+	if (this->mesh_draw) {
+		if (not this->mesh_draw->isInitialized()) {
+			this->mesh_draw->initialize(this->context, this);
+		}
+		this->mesh_draw->draw(pMat, mvMat, glm::vec4(camPos, 1.f));
+	}
+	if (this->curve_draw) {
+		if (not this->curve_draw->isInitialized()) {
+			this->curve_draw->initialize(this->context, this);
+		}
+		this->curve_draw->draw(pMat, mvMat, glm::vec4(camPos, 1.f));
+	}
+
 	glm::mat4 transfoMat = glm::mat4(1.f);
 
 	if (this->drawMode == DrawMode::Solid) {
@@ -2823,19 +2926,6 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 		if (this->drawMode == DrawMode::VolumetricBoxed) {
 			this->drawBoundingBox(this->visuBox, glm::vec3(1., .0, .0), mvMat, pMat);
 		}
-	}
-
-	if (this->mesh_draw) {
-		if (not this->mesh_draw->isInitialized()) {
-			this->mesh_draw->initialize(this->context, this);
-		}
-		this->mesh_draw->draw(pMat, mvMat, glm::vec4(camPos, 1.f));
-	}
-	if (this->curve_draw) {
-		if (not this->curve_draw->isInitialized()) {
-			this->curve_draw->initialize(this->context, this);
-		}
-		this->curve_draw->draw(pMat, mvMat, glm::vec4(camPos, 1.f));
 	}
 
 	if (not this->newGrids.empty()) {
@@ -3022,7 +3112,7 @@ void Scene::generateSphereData() {
 		std::cerr << "ERROR BUILDING VAO SPHERES =======================\n";
 		std::cerr << "== The Spheres VAO could not be built properly. ==\n";
 		std::cerr << "ERROR BUILDING VAO SPHERES =======================\n";
-		}
+	}
 
 	glEnableVertexAttribArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, this->vboHandle_spherePositions);
@@ -3034,8 +3124,6 @@ void Scene::generateSphereData() {
 	if (this->debugLog) {
 		this->debugLog->popGroup();
 	}
-
-	std::cerr << "VAO for spheres generated with id " << this->vaoHandle_spheres << '\n';
 
 	if (this->shaderCompiler) {
 		this->shaderCompiler.reset();
@@ -3379,6 +3467,13 @@ void Scene::createBoundingBoxBuffers() {
 }
 
 void Scene::setupVAOBoundingBox() {
+	if (this->vaoHandle_boundingBox == 0) {
+		std::cerr << "Nothing has been created for the BB VAO !!\n";
+		std::cerr << "Nothing has been created for the BB VAO !!\n";
+		std::cerr << "Nothing has been created for the BB VAO !!\n";
+		glGenVertexArrays(1, &this->vaoHandle_boundingBox);
+		std::cerr << "Regen with id " << this->vaoHandle_boundingBox << '\n';
+	}
 	glBindVertexArray(this->vaoHandle_boundingBox);
 
 	// Bind vertex buffer :

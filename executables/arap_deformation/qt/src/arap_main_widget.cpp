@@ -287,6 +287,10 @@ void ARAPMainWidget::setupSignals() {
 
 	QObject::connect(this->arap_controller, &ARAPController::requestImageLoad, this->action_addGrid, &QAction::trigger);
 	QObject::connect(this->action_addGrid, &QAction::triggered, this, &ARAPMainWidget::showLoader);
+
+	QObject::connect(this->viewer, &Viewer::hasInitializedScene, this->viewer_planeX, &PlanarViewer::canInitializeScene);
+	QObject::connect(this->viewer, &Viewer::hasInitializedScene, this->viewer_planeY, &PlanarViewer::canInitializeScene);
+	QObject::connect(this->viewer, &Viewer::hasInitializedScene, this->viewer_planeZ, &PlanarViewer::canInitializeScene);
 }
 
 void ARAPMainWidget::showHelper() {
