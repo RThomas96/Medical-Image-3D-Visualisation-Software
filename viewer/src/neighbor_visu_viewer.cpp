@@ -761,6 +761,7 @@ void Viewer::updateCameraPosition() {
 	auto radius = glm::length(bb.getDiagonal());
 	this->setSceneCenter(qglviewer::Vec(center.x, center.y, center.z));
 	this->setSceneRadius(radius * sceneRadiusMultiplier);
+	this->sphere_size = this->sceneRadius() * 2e-2f; // Good enough to see the spheres, while not taking too much space on screen.
 	if (this->arap_controller->getARAPManipulator()) {
 		this->arap_controller->getARAPManipulator()->setDisplayScale(this->camera()->sceneRadius()/9.f);
 	}
@@ -770,7 +771,6 @@ void Viewer::updateCameraPosition() {
 void Viewer::updateInfoFromScene() {
 	this->update();
 	this->updateCameraPosition();
-	this->update();
 }
 
 void Viewer::newAPI_loadGrid(Image::Grid::Ptr ptr) {

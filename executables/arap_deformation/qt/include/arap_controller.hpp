@@ -16,6 +16,7 @@
 #include <QLabel>
 #include <QWidget>
 #include <QSpinBox>
+#include <QCheckBox>
 #include <QPushButton>
 #include <QDoubleSpinBox>
 
@@ -232,6 +233,11 @@ protected:
 	QPushButton* button_align_arap;	///< Button to align the control points of the ARAP deformation.
 	QPushButton* button_scale_arap;	///< Button to scale roughly the two BB of the control points of the ARAP deformation.
 	QPushButton* button_start_arap;	///< Button to start the ARAP deformation using the currently available ARAP constraints.
+
+	QPushButton* button_manip_select_all;	///< Button to select all vertices of the mesh as handles.
+	QPushButton* button_manip_select_none;	///< Button to unselect all vertices of the mesh.
+
+	QCheckBox* checkbox_enable_deformation;	///< Checkbox which determines if the mesh can be deformed or not.
 
 	QLabel* label_mesh_name;	///< The mesh filename.
 	QLabel* label_mesh_info;	///< The mesh information (nb of vertices, constraints found or not and size on disk).

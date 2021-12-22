@@ -43,6 +43,10 @@ ARAPController::ARAPController(Viewer* _v, Scene* _s) {
 	this->label_grid_name = nullptr;
 	this->label_grid_info = nullptr;
 
+	this->button_manip_select_all = nullptr;
+	this->button_manip_select_none = nullptr;
+	this->checkbox_enable_deformation = nullptr;
+
 	this->dir_last_accessed = QDir::homePath();
 
 	this->init();
@@ -66,6 +70,12 @@ void ARAPController::init() {
 	this->button_align_arap = new QPushButton("Align constraints");
 	this->button_scale_arap = new QPushButton("Scale constraints");
 	this->button_start_arap = new QPushButton("Perform deformation");
+
+	this->button_manip_select_all = new QPushButton("Select all vertices");
+	this->button_manip_select_none = new QPushButton("Unselect all vertices");
+
+	this->checkbox_enable_deformation = new QCheckBox("Enable deformation");
+	this->checkbox_enable_deformation->setCheckState(Qt::CheckState::Unchecked);
 
 	this->initLayout();
 	this->initSignals();
@@ -100,9 +110,12 @@ void ARAPController::initLayout() {
 	widget_layout->addStretch(2);
 	widget_layout->addWidget(separator_deformation);
 	widget_layout->addWidget(label_deformation);
+	widget_layout->addWidget(this->checkbox_enable_deformation);
 	widget_layout->addWidget(this->button_align_arap);
 	widget_layout->addWidget(this->button_scale_arap);
 	widget_layout->addWidget(this->button_start_arap);
+	widget_layout->addWidget(this->button_manip_select_all);
+	widget_layout->addWidget(this->button_manip_select_none);
 	widget_layout->addStretch(2);
 	widget_layout->addWidget(separator_save);
 	widget_layout->addWidget(label_save);
@@ -118,6 +131,9 @@ void ARAPController::setDeformationButtonsState(States new_state) {
 }
 
 void ARAPController::updateButtonsActivated() {
+	// Disable signals from the widgets we change the state of :
+	this->checkbox_enable_deformation->blockSignals(true);
+
 	this->button_load_mesh->setEnabled(false);
 	this->button_load_constraints->setEnabled(false);
 	this->button_load_curve->setEnabled(false);
@@ -127,6 +143,9 @@ void ARAPController::updateButtonsActivated() {
 	this->button_start_arap->setEnabled(false);
 	this->button_save_mesh->setEnabled(false);
 	this->button_save_curve->setEnabled(false);
+	this->button_manip_select_all->setEnabled(false);
+	this->button_manip_select_none->setEnabled(false);
+	this->checkbox_enable_deformation->setCheckState(Qt::CheckState::Unchecked);
 	this->viewer->setDeformation(false);
 
 	this->button_load_mesh->setEnabled(true);	// This one's always on
@@ -134,6 +153,8 @@ void ARAPController::updateButtonsActivated() {
 		this->button_load_constraints->setEnabled(true);
 		this->button_save_mesh->setEnabled(true);
 		this->button_load_curve->setEnabled(true);
+		this->button_manip_select_all->setEnabled(true);
+		this->button_manip_select_none->setEnabled(true);
 		this->viewer->setDeformation(true);
 	}
 	if (this->state >= States::CurveLoaded) {
@@ -145,6 +166,8 @@ void ARAPController::updateButtonsActivated() {
 		this->button_scale_arap->setEnabled(true);
 		this->button_start_arap->setEnabled(true);
 	}
+	// Re-enable signals for widgets we possibly changed the state of :
+	this->checkbox_enable_deformation->blockSignals(false);
 }
 
 void ARAPController::initSignals() {
@@ -160,6 +183,14 @@ void ARAPController::initSignals() {
 	QObject::connect(this->button_align_arap, &QPushButton::pressed, this, &ARAPController::arap_performAlignment);
 	QObject::connect(this->button_scale_arap, &QPushButton::pressed, this, &ARAPController::arap_performScaling);
 	QObject::connect(this->button_start_arap, &QPushButton::pressed, this, &ARAPController::arap_computeDeformation);
+
+	QObject::connect(this->checkbox_enable_deformation, &QCheckBox::stateChanged, this, [this](int state) -> void {
+		if (state == Qt::CheckState::Unchecked) {
+			this->disableDeformation();
+		} else {
+			this->enableDeformation();
+		}
+	});
 }
 
 const Mesh::Ptr& ARAPController::getMesh() const { return this->mesh; }
@@ -226,7 +257,6 @@ void ARAPController::loadMeshFromFile() {
 
 	// Upload data to the scene and update the viewer's camera and data :
 	this->uploadMeshToScene();
-	this->initializeMeshInterface();
 
 	// Update Scene BB & sphere size for handles
 	this->scene->updateBoundingBox();
@@ -462,6 +492,13 @@ void ARAPController::initializeMeshInterface() {
 		QObject::connect(this->arapManipulator.get(), &SimpleManipulator::moved, this->viewer, &Viewer::arapManipulator_moved);
 		QObject::connect(this->arapManipulator.get(), &SimpleManipulator::mouseReleased, this->viewer, &Viewer::arapManipulator_released);
 
+		QObject::connect(this->button_manip_select_all, &QPushButton::pressed, this, [this]() -> void {
+			this->mesh_interface->select_all();
+		});
+		QObject::connect(this->button_manip_select_none, &QPushButton::pressed, this, [this]() -> void {
+			this->mesh_interface->unselect_all();
+		});
+
 		this->viewer->initializeARAPManipulationInterface();
 
 		this->mesh_interface->setMode(MeshModificationMode::REALTIME);
@@ -481,6 +518,9 @@ void ARAPController::resetMeshInterface() {
 		this->arapManipulator.reset();
 		this->rectangleSelection.reset();
 		this->mesh_interface.reset();
+
+		this->button_manip_select_all->disconnect();
+		this->button_manip_select_none->disconnect();
 	}
 	this->initializeMeshInterface();
 }
@@ -635,15 +675,26 @@ void ARAPController::arap_computeDeformation() {
 }
 
 void ARAPController::enableDeformation() {
-	// TODO
+	if (this->mesh == nullptr) { return; }
+	std::cerr << "Enabled deformation !\n";
+	this->applyTransformation_Mesh();
+	this->resetMeshInterface();
+	this->viewer->setDeformation(true);
+	this->updateCurveFromMesh();
 }
 
 void ARAPController::disableDeformation() {
-	// TODO
+	if (this->mesh == nullptr) { return; }
+	std::cerr << "Disabled deformation !\n";
 }
 
 void ARAPController::applyTransformation_Mesh() {
-	// TODO
+	auto draw = this->scene->getDrawableMesh();
+	auto transform = draw->getTransformation();
+
+	this->mesh->applyTransformation(transform);
+	draw->setTransformation(glm::mat4(1.f));
+	draw->updateOnNextDraw();
 }
 
 void ARAPController::updateCurveFromMesh() {
