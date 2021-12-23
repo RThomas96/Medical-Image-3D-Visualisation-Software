@@ -605,8 +605,9 @@ void Scene::updateProgressBar() {
 	return;
 }
 
-void Scene::addGrid(Image::Grid::Ptr gridLoaded) {
-	glm::vec<4, std::size_t, glm::defaultp> dimensions{gridLoaded->getResolution(), gridLoaded->getVoxelDimensionality()};
+void Scene::addGrid(const DeformableGrid * gridLoaded) {
+    // TODO: probably a bug here
+	glm::vec<4, std::size_t, glm::defaultp> dimensions{gridLoaded->getResolution(), 2};
 
 	GridGLView::Ptr gridView = std::make_shared<GridGLView>(gridLoaded);
 
@@ -660,16 +661,20 @@ void Scene::addGrid(Image::Grid::Ptr gridLoaded) {
 	_gridTex.size.y = dimensions.y;
 	_gridTex.size.z = dimensions.z;
 
-	std::vector<std::uint16_t> slices(dimensions.x * dimensions.y * dimensions.a);
-	gridView->gridTexture = this->newAPI_uploadTexture3D_allocateonly(_gridTex);
+	//std::vector<uint16_t> slices(dimensions.x * dimensions.y * dimensions.a);
+
+	std::vector<std::uint16_t> slices;
+    gridView->gridTexture = this->newAPI_uploadTexture3D_allocateonly(_gridTex);
 
 	for (std::size_t s = 0; s < dimensions.z; ++s) {
-		if (gridLoaded->readSlice(s, slices)) {
-			this->newAPI_uploadTexture3D(gridView->gridTexture, _gridTex, s, slices);
-		} else {
-			std::cerr << "Scene texture upload : Could not read the data at index " << s << " !\n";
-		}
+        gridView->grid->grid.getImage(s, slices, dimensions.a);
+		this->newAPI_uploadTexture3D(gridView->gridTexture, _gridTex, s, slices);
+        slices.clear();
 	}
+
+    //for (std::size_t s = 0; s < dimensions.z; ++s) {
+    //    this->newAPI_uploadTexture3D(gridView->gridTexture, _gridTex, s, slices);
+    //}
 
 	gridView->boundingBoxColor = glm::vec3(.4, .6, .3);	   // olive-colored by default
 	gridView->nbChannels	   = 2;	   // loaded 2 channels in the image
@@ -700,9 +705,9 @@ void Scene::updateBoundingBox(void) {
 	this->sceneDataBB = Image::bbox_t();
 
 	for (std::size_t i = 0; i < this->grids.size(); ++i) {
-		const Image::Grid::Ptr _g = this->grids[i]->grid;
-		Image::bbox_t box		  = _g->getBoundingBox();
-		Image::bbox_t dbox		  = _g->getBoundingBox();
+		const DeformableGrid * _g = this->grids[i]->grid;
+		Image::bbox_t box		  = Image::bbox_t(_g->tetmesh.bbMin, _g->tetmesh.bbMax);
+		Image::bbox_t dbox		  = Image::bbox_t(_g->tetmesh.bbMin, _g->tetmesh.bbMax);
 		this->sceneBB.addPoints(box.getAllCorners());
 		this->sceneDataBB.addPoints(dbox.getAllCorners());
 	}
@@ -1233,7 +1238,7 @@ void Scene::loadMesh() {
 				std::cerr << "Error : grid index was not valid ...\n";
 			}
 			auto selected_grid							 = this->grids[picker->choice_getGrid()];
-			Image::bbox_t selected_grid_bb				 = selected_grid->grid->getBoundingBox();
+			Image::bbox_t selected_grid_bb				 = Image::bbox_t(selected_grid->grid->tetmesh.bbMin, selected_grid->grid->tetmesh.bbMax);
 			Image::bbox_t::vec selected_grid_bb_diagonal = selected_grid_bb.getDiagonal();	  // gets the scale factors on X, Y, Z
 			Image::bbox_t::vec selected_grid_bb_center	 = selected_grid_bb.getMin() + (selected_grid_bb_diagonal / 2.f);
 
@@ -1524,7 +1529,7 @@ void Scene::drawGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camP
 	}
 
 	// draw grid BB :
-	this->drawBoundingBox(grid->grid->getBoundingBox(), grid->boundingBoxColor, mvMat, pMat);
+	this->drawBoundingBox(Image::bbox_t(grid->grid->tetmesh.bbMin, grid->grid->tetmesh.bbMax), grid->boundingBoxColor, mvMat, pMat);
 }
 
 void Scene::drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane) {
@@ -1586,8 +1591,7 @@ glm::vec3 Scene::computePlanePositions() {
 
 void Scene::prepareUniformsGridPlaneView(GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, const GridGLView::Ptr& gridView) {
 	// Get the world to grid transform :
-	MatrixTransform::Ptr grid_transform_pointer = std::dynamic_pointer_cast<MatrixTransform>(gridView->grid->getPrecomputedMatrix());
-	glm::mat4 transfoMat						= baseMatrix * grid_transform_pointer->matrix();
+	glm::mat4 transfoMat						= baseMatrix;
 #warning Transform API is still in-progress.
 
 	auto getUniform = [&](const char* name) -> GLint {
@@ -1628,9 +1632,9 @@ void Scene::prepareUniformsGridPlaneView(GLfloat* mvMat, GLfloat* pMat, glm::vec
 	GLint location_colorScales2 = getUniform("colorScales[2]");
 	GLint location_colorScales3 = getUniform("colorScales[3]");
 
-	Image::bbox_t::vec origin	= gridView->grid->getBoundingBox().getMin();
-	Image::bbox_t::vec originWS = gridView->grid->getBoundingBox().getMin();
-	Image::sizevec3 gridDims	= gridView->grid->getResolution();
+	Image::bbox_t::vec origin	= Image::bbox_t(gridView->grid->getBoundingBox()).getMin();
+	Image::bbox_t::vec originWS = Image::bbox_t(gridView->grid->getBoundingBox()).getMin();
+	Image::sizevec3 gridDims	= gridView->grid->grid.imgDimensions;
 	glm::vec3 dims				= glm::convert_to<float>(gridDims);
 
 	if (showVAOstate) {
@@ -1641,7 +1645,7 @@ void Scene::prepareUniformsGridPlaneView(GLfloat* mvMat, GLfloat* pMat, glm::vec
 
 	glUniform3fv(voxelGridOrigin_Loc, 1, glm::value_ptr(origin));
 	glUniform3fv(voxelGridSize_Loc, 1, glm::value_ptr(dims));
-	glUniform3fv(voxelSize_Loc, 1, glm::value_ptr(gridView->grid->getVoxelDimensions()));
+	glUniform3fv(voxelSize_Loc, 1, glm::value_ptr(gridView->voxelDimensions));
 	glUniform1ui(drawMode_Loc, this->drawMode);
 
 	glm::vec3 planePos = this->computePlanePositions();
@@ -1699,31 +1703,6 @@ void Scene::prepareUniformsGridPlaneView(GLfloat* mvMat, GLfloat* pMat, glm::vec
 	if (this->showVAOstate) {
 		this->printAllUniforms(this->program_projectedTex);
 	}
-}
-
-void Scene::draft_tryAndSaveFirstGrid() {
-	if (this->grids.size() == 0) {
-		std::cerr << "Error : no new grids loaded.\n";
-		return;
-	}
-
-	Image::ThreadedTask::Ptr task = std::make_shared<Image::ThreadedTask>();
-	// get the grid
-	Image::Grid::Ptr gridToSave = this->grids[0]->grid;
-	// Create a writer backend :
-	Image::GridWriter::Ptr gridWriter = nullptr;
-	std::cerr << "Creating grid writer ...\n";
-	try {
-		gridWriter = std::make_shared<Image::GridWriter>(
-		  Image::Tiff::TIFFWriterTemplated<std::uint32_t>::createBackend("tiff_grid", "/home/thibault/Pictures/tiff"));
-		if (not gridWriter->writeGrid(gridToSave, task)) {
-			std::cerr << "Error : cannot write grid.\n";
-		}
-	} catch (std::exception& _e) {
-		std::cerr << "Error : exception caught !\n";
-		std::cerr << "Error message : " << _e.what() << '\n';
-	}
-	std::cerr << "Grid writer finished writing.\n";
 }
 
 GLuint Scene::createUniformBuffer(std::size_t size_bytes, GLenum draw_mode) {
@@ -1842,12 +1821,9 @@ void Scene::prepareUniformsPlanes(GLfloat* mvMat, GLfloat* pMat, planes _plane, 
 	glUniform1ui(location_rgbMode, this->rgbMode);
 
 	// Generate the data we need :
-	MatrixTransform::Ptr grid_transform_pointer = std::dynamic_pointer_cast<MatrixTransform>(grid->grid->getPrecomputedMatrix());
-	glm::mat4 transform							= glm::mat4(1.f);
-	glm::mat4 gridTransfo						= grid_transform_pointer->matrix();	   //grid->grid->getTransform_GridToWorld();
 #warning Transform API is still in-progress.
-	Image::bbox_t bbws = grid->grid->getBoundingBox();
-	glm::vec3 dims	   = glm::convert_to<glm::vec3::value_type>(grid->grid->getResolution()) * grid->grid->getVoxelDimensions();
+	Image::bbox_t bbws = Image::bbox_t(grid->grid->getBoundingBox());
+	glm::vec3 dims	   = glm::convert_to<glm::vec3::value_type>(grid->grid->grid.imgDimensions) * grid->voxelDimensions;
 	glm::vec3 size	   = bbws.getDiagonal();
 	GLint plIdx		   = (_plane == planes::x) ? 1 : (_plane == planes::y) ? 2 :
 																			   3;
@@ -1856,10 +1832,11 @@ void Scene::prepareUniformsPlanes(GLfloat* mvMat, GLfloat* pMat, planes _plane, 
 	Image::bbox_t::vec diagonal = this->sceneBB.getDiagonal();
 	glm::vec3 planePos			= this->computePlanePositions();
 
+	glm::mat4 transform							= glm::mat4(1.f);
 	glUniformMatrix4fv(location_mMatrix, 1, GL_FALSE, glm::value_ptr(transform));
 	glUniformMatrix4fv(location_vMatrix, 1, GL_FALSE, mvMat);
 	glUniformMatrix4fv(location_pMatrix, 1, GL_FALSE, pMat);
-	glUniformMatrix4fv(location_gridTransform, 1, GL_FALSE, glm::value_ptr(gridTransfo));
+	glUniformMatrix4fv(location_gridTransform, 1, GL_FALSE, glm::value_ptr(transform));
 	glUniform3fv(location_sceneBBPosition, 1, glm::value_ptr(position));
 	glUniform3fv(location_sceneBBDiagonal, 1, glm::value_ptr(diagonal));
 	glUniform3fv(location_gridSize, 1, glm::value_ptr(size));
@@ -1944,12 +1921,9 @@ void Scene::prepareUniformsMonoPlaneView(planes _plane, planeHeading _heading, g
 
 	// Plane heading as a integer value (valid for shaders) :
 	uint plane_heading							= planeHeadingToIndex(_heading);
-	MatrixTransform::Ptr grid_transform_pointer = std::dynamic_pointer_cast<MatrixTransform>(_grid->grid->getPrecomputedMatrix());
-	// Grid transform :
-	glm::mat4 gridTransform = grid_transform_pointer->matrix();	   //_grid->grid->getTransform_WorldToGrid();
 #warning Transform API is still in-progress.
 	// Grid dimensions :
-	glm::vec3 gridDimensions = glm::convert_to<glm::vec3::value_type>(_grid->grid->getBoundingBox().getDiagonal());
+	glm::vec3 gridDimensions = glm::convert_to<glm::vec3::value_type>(Image::bbox_t(_grid->grid->getBoundingBox()).getDiagonal());
 	// Depth of the plane :
 	glm::vec3 planePos = this->computePlanePositions();
 
@@ -2026,7 +2000,7 @@ void Scene::prepareUniformsMonoPlaneView(planes _plane, planeHeading _heading, g
 	glUniform2fv(location_bbDims, 1, glm::value_ptr(gridBBDims));
 	glUniform1ui(location_planeIndex, (_plane == planes::x) ? 1 : (_plane == planes::y) ? 2 :
 																							3);
-	glUniformMatrix4fv(location_gridTransform, 1, GL_FALSE, glm::value_ptr(gridTransform));
+	glUniformMatrix4fv(location_gridTransform, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0f)));
 	glUniform4f(location_gridDimensions, gridDimensions.x, gridDimensions.y, gridDimensions.z, 1.f);
 	glUniform4f(location_gridBBDiagonal, bbox.x, bbox.y, bbox.z, 1.f);
 	glUniform4f(location_gridBBPosition, posBox.x, posBox.y, posBox.z, .0f);
@@ -2157,9 +2131,9 @@ void Scene::prepareUniformsGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm
 	GLint location_voxelSize = getUniform("voxelSize");
 	GLint location_gridSize	 = getUniform("gridSize");
 
-	glm::vec3 floatres = glm::convert_to<float>(_grid->grid->getResolution());
+	glm::vec3 floatres = glm::convert_to<float>(_grid->grid->grid.imgDimensions);
 
-	glUniform3fv(location_voxelSize, 1, glm::value_ptr(_grid->grid->getVoxelDimensions()));
+	glUniform3fv(location_voxelSize, 1, glm::value_ptr(_grid->voxelDimensions));
 	glUniform3fv(location_gridSize, 1, glm::value_ptr(floatres));
 
 	// Vectors/arrays :
@@ -2194,9 +2168,7 @@ void Scene::prepareUniformsGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm
 
 //const glm::mat4& gridTransfo = _grid->grid->getTransform_GridToWorld();
 #warning Transform API is still in-progress.
-	MatrixTransform::Ptr grid_transform_pointer = std::dynamic_pointer_cast<MatrixTransform>(_grid->grid->getPrecomputedMatrix());
-	const glm::mat4 gridTransfo					= grid_transform_pointer->matrix();
-	glUniformMatrix4fv(location_mMat, 1, GL_FALSE, glm::value_ptr(gridTransfo));
+	glUniformMatrix4fv(location_mMat, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0f)));
 	glUniformMatrix4fv(location_vMat, 1, GL_FALSE, mvMat);
 	glUniformMatrix4fv(location_pMat, 1, GL_FALSE, pMat);
 
@@ -3008,7 +2980,7 @@ void Scene::updateVisuBoxCoordinates() {
 	this->visuBox = Image::bbox_t();
 
 	if (this->grids.size()) {
-		Image::Grid::Ptr g	 = this->grids[0]->grid;
+		const DeformableGrid * g	 = this->grids[0]->grid;
 		auto min			 = glm::vec3(.0);
 		auto max			 = glm::convert_to<float>(g->getResolution());
 		Image::bbox_t imgBox = Image::bbox_t(min, max);
@@ -3678,7 +3650,7 @@ void Scene::tex3D_loadMESHFile(const std::string file, const GridGLView::Ptr& gr
 	// Current mesh size :
 	glm::vec3 size{maxX, maxY, maxZ};
 	// Grid size divided by mesh size gives a scalar to apply to the mesh to make it grid-sized :
-	glm::vec3 gridsize = glm::convert_to<float>(grid->grid->getResolution()) * grid->grid->getVoxelDimensions();
+	glm::vec3 gridsize = glm::convert_to<float>(grid->grid->getResolution()) * grid->voxelDimensions;
 	glm::vec4 scale	   = glm::vec4(gridsize / size, 1.);
 
 	std::cerr << "[LOG][" << __FILE__ << ':' << __LINE__ << "] Max dimensions of the mesh : [" << maxX << ',' << maxY << ',' << maxZ << "]\n";
@@ -3730,8 +3702,8 @@ void Scene::tex3D_generateMESH(GridGLView::Ptr& grid, VolMeshData& mesh) {
 	using vec_t = typename Image::bbox_t::vec;
 
 	//Min and diagonal of the bounding box (used for position computation) :
-	const vec_t min	 = grid->grid->getBoundingBox().getMin();
-	const vec_t diag = grid->grid->getBoundingBox().getDiagonal();
+	const vec_t min	 = Image::bbox_t(grid->grid->getBoundingBox()).getMin();
+	const vec_t diag = Image::bbox_t(grid->grid->getBoundingBox()).getDiagonal();
 	// Dimensions, subject to change :
 	std::size_t xv			 = 5;
 	glm::vec4::value_type xs = diag.x / static_cast<glm::vec4::value_type>(xv);
@@ -3748,8 +3720,7 @@ void Scene::tex3D_generateMESH(GridGLView::Ptr& grid, VolMeshData& mesh) {
 	glm::vec4 pos = glm::vec4();
 	glm::vec3 tex = glm::vec3();
 	// Transformation to apply to the mesh :
-	MatrixTransform::Ptr grid_transform_pointer = std::dynamic_pointer_cast<MatrixTransform>(grid->grid->getPrecomputedMatrix());
-	glm::mat4 transfo							= grid_transform_pointer->matrix();
+	glm::mat4 transfo							= glm::mat4(1.0f);
 #warning Transform API is still in-progress.
 
 	// Create vertices along with their texture coordinates. We
@@ -4119,19 +4090,20 @@ std::vector<pixel_t> Scene::read_subpixels_from_slice(std::vector<pixel_t>& src,
 }
 
 bool Scene::writeGrid(int gridIdx) {
-    Image::svec3 resolution = this->grids[gridIdx]->grid->getResolution();
-    std::size_t dimensionality = this->grids[gridIdx]->grid->getVoxelDimensionality();
-    TinyTIFFWriterFile * tif = TinyTIFFWriter_open("../../../data_debug/img.tif", 16, TinyTIFFWriter_UInt, 1, resolution.x, resolution.y, TinyTIFFWriter_Greyscale);
-    if (tif) {
-        for (uint16_t frame=0; frame<resolution.z; frame++) {
-            std::vector<uint16_t> slice_values;
-            this->grids[gridIdx]->grid->readSlice(frame, slice_values);
-            std::vector<uint16_t> current_data = this->read_subpixels_from_slice<uint16_t>(slice_values, dimensionality, 0);
-            TinyTIFFWriter_writeImage(tif, current_data.data());
-        }
-        TinyTIFFWriter_close(tif);
-    }
-    return true;
+
+    //Image::svec3 resolution = this->grids[gridIdx]->grid->getResolution();
+    //std::size_t dimensionality = this->grids[gridIdx]->nbChannels;
+    //TinyTIFFWriterFile * tif = TinyTIFFWriter_open("../../../data_debug/img.tif", 16, TinyTIFFWriter_UInt, 1, resolution.x, resolution.y, TinyTIFFWriter_Greyscale);
+    //if (tif) {
+    //    for (uint16_t frame=0; frame<resolution.z; frame++) {
+    //        std::vector<uint16_t> slice_values;
+    //        //this->grids[gridIdx]->grid->readSlice(frame, slice_values);
+    //        std::vector<uint16_t> current_data = this->read_subpixels_from_slice<uint16_t>(slice_values, dimensionality, 0);
+    //        TinyTIFFWriter_writeImage(tif, current_data.data());
+    //    }
+    //    TinyTIFFWriter_close(tif);
+    //}
+    //return true;
 }
 
 /*********************************/
@@ -4262,6 +4234,8 @@ void Scene::launchSaveDialog() {
     //this->writeGrid(0);
 
     //Simple version
+
+    //this->grids[0]->grid->checkReadSlice();
 
     glm::vec3 nb = glm::vec3(5., 5., 5.);
 

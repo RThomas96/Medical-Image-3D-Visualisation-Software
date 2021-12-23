@@ -36,6 +36,12 @@ public:
 		this->max	 = vec(min, min, min);
 	}
 
+	BoundingBox_General(std::pair<vec, vec> minMax) :
+		BoundingBox_General() {
+		this->setMin(minMax.first);
+		this->setMax(minMax.second);
+	}
+
 	/// @brief Creates a bounding box around the coordinates given in argument
 	BoundingBox_General(vec _min, vec _max) :
 		BoundingBox_General() {

@@ -232,14 +232,16 @@ bool VolMesh::isValid() {
 VolMesh::~VolMesh(void) { /* Nothing here for now. */
 }
 
-GridGLView::GridGLView(const Image::Grid::Ptr _grid) {
+GridGLView::GridGLView(const DeformableGrid * _grid) {
 	this->grid			   = _grid;
 	this->gridTexture	   = 0;
 	this->volumetricMesh   = {};
 	this->boundingBoxColor = glm::vec3(.257, .257, .257);
 	this->nbChannels	   = 1;
 	this->defaultEpsilon   = glm::vec3(1.5, 1.5, 1.5);
-	this->nbChannels	   = this->grid->getVoxelDimensionality();
+    // TODO: add multiChannel grid
+	//this->nbChannels	   = this->grid->getVoxelDimensionality();
+	this->nbChannels	   = 2;
 	data_2 min(0, std::numeric_limits<data_2::value_type>::max());
 	this->texBounds0				= min;
 	this->texBounds1				= min;
@@ -250,11 +252,13 @@ GridGLView::GridGLView(const Image::Grid::Ptr _grid) {
 	this->mainColorChannel			= 1;
 	this->uboHandle_colorAttributes = 0;
 
+    this->voxelDimensions = glm::vec3(1., 1., 1.);
+
 	// Fill with default attributes
 	this->colorChannelAttributes.fill(colorChannelAttributes_GL{});
 
 	// hide unused channels :
-	for (std::size_t c = this->grid->getVoxelDimensionality(); c < 3; ++c) {
+	for (std::size_t c = this->nbChannels; c < 3; ++c) {
 		this->colorChannelAttributes[c].setHidden();
 	}
 }

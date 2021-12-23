@@ -160,7 +160,6 @@ void Viewer::keyPressEvent(QKeyEvent* e) {
 			break;
 
 		case Qt::Key::Key_G:
-			this->scene->draft_tryAndSaveFirstGrid();
 			this->update();
 			break;
 			/*
@@ -307,6 +306,8 @@ void Viewer::resizeGL(int w, int h) {
 }
 
 void Viewer::guessMousePosition() {
+
+    std::cerr << "ERROR: guessMousePosition broken by new grid" << std::endl;
 	glm::ivec2 rawMousePos = this->cursorPos_current;
 	if (rawMousePos.x < 0 || rawMousePos.x > this->fbSize.x || rawMousePos.y < 0 || rawMousePos.y > this->fbSize.y) {
 		return;
@@ -328,23 +329,23 @@ void Viewer::guessMousePosition() {
 		//		this->statusBar->showMessage(msg, 10000);
 		//	}
 		//}
-		std::function<void(const GridGLView::Ptr&)> findSuitablePoint =
-		  [this, p](const GridGLView::Ptr& gridView) -> void {
-			const Image::Grid::Ptr grid		  = gridView->grid;
-			TransformStack::Ptr gridTransform = grid->getTransformStack();
-			BoundingBox_General<float> bb	  = grid->getBoundingBox();
-			glm::vec4 p_prime				  = gridTransform->to_image(p);
-			if (bb.contains(p_prime)) {
-				glm::vec3 voxdim			  = grid->getVoxelDimensions();
-				glm::tvec3<std::size_t> index = p_prime / glm::vec4(voxdim, 1.f);
-				QString msg					  = "Position in image space : " + QString::number(index.x) + ", " +
-							  QString::number(index.y) + ", " + QString::number(index.z) + ", in grid " +
-							  QString::fromStdString(grid->getImageName());
-				this->statusBar->showMessage(msg, 10000);
-				this->temp_img_pos = glm::vec3(p);
-			}
-		};
-		this->scene->lambdaOnGrids(findSuitablePoint);
+		//std::function<void(const GridGLView::Ptr&)> findSuitablePoint =
+		//  [this, p](const GridGLView::Ptr& gridView) -> void {
+		//	const Image::Grid::Ptr grid		  = gridView->grid;
+		//	TransformStack::Ptr gridTransform = grid->getTransformStack();
+		//	BoundingBox_General<float> bb	  = grid->getBoundingBox();
+		//	glm::vec4 p_prime				  = gridTransform->to_image(p);
+		//	if (bb.contains(p_prime)) {
+		//		glm::vec3 voxdim			  = grid->getVoxelDimensions();
+		//		glm::tvec3<std::size_t> index = p_prime / glm::vec4(voxdim, 1.f);
+		//		QString msg					  = "Position in image space : " + QString::number(index.x) + ", " +
+		//					  QString::number(index.y) + ", " + QString::number(index.z) + ", in grid " +
+		//					  QString::fromStdString(grid->getImageName());
+		//		this->statusBar->showMessage(msg, 10000);
+		//		this->temp_img_pos = glm::vec3(p);
+		//	}
+		//};
+		//this->scene->lambdaOnGrids(findSuitablePoint);
 
 		// Look for the point in the meshes loaded :
 		std::size_t mesh_idx = 0;
@@ -489,7 +490,7 @@ void Viewer::updateInfoFromScene() {
 	this->update();
 }
 
-void Viewer::newAPI_loadGrid(Image::Grid::Ptr ptr) {
+void Viewer::newAPI_loadGrid(const DeformableGrid * ptr) {
 	if (this->scene == nullptr) {
 		return;
 	}

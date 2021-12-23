@@ -5,6 +5,7 @@
 #include "../../macros.hpp"
 
 #include "../../new_grid/include/grid.hpp"
+#include "../../grid/include/grid.hpp"
 
 #include <glm/glm.hpp>
 
@@ -167,7 +168,7 @@ public:
 	using Ptr = std::shared_ptr<GridGLView>;
 
 public:
-	GridGLView(const Image::Grid::Ptr _g);
+	GridGLView(const DeformableGrid * _g);
 	GridGLView(const GridGLView&) = default;
 	GridGLView(GridGLView&&) = default;
 	GridGLView& operator=(const GridGLView&) = default;
@@ -184,11 +185,18 @@ public:
 	using color_3 = glm::vec3;
 
 	using int_pair = glm::vec<2, int, glm::defaultp>;
-	Image::Grid::Ptr grid;
+
+	//Image::Grid::Ptr grid;
+    const DeformableGrid * grid;
+	VolMeshData volumetricMeshData;
+
+    // WARNING
+    // TODO: to fill
+    glm::vec3 voxelDimensions;
+
 	GLuint gridTexture;
 	unsigned int nbChannels;
 	VolMesh volumetricMesh;
-	VolMeshData volumetricMeshData;
 	glm::vec3 defaultEpsilon;
 	color_3 boundingBoxColor;
 	/// @brief The 'base' color for the user-defined color scale

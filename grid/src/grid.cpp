@@ -127,6 +127,47 @@ uint8_t SimpleGrid::getValue(const glm::vec3& coord) const {
     return 0.;
 }
 
+// TODO: nbChannel is bugged for now
+void SimpleGrid::getSlice(int imgIdx, int lineIdx, std::vector<uint16_t>& result, int nbChannel) const {
+    if (this->tif) {
+        TIFFSetDirectory(tif, imgIdx);
+        tdata_t buf;
+        uint32 row = static_cast<uint32>(lineIdx); 
+        buf = _TIFFmalloc(TIFFScanlineSize(tif));
+        TIFFReadScanline(tif, buf, row);
+        uint8_t * res = static_cast<uint8_t*>(buf);
+        //uint16_t * res = static_cast<uint16_t*>(buf);
+        int sliceSize = static_cast<int>(this->imgDimensions[0]);
+        for(int i = 0; i < sliceSize; ++i) {
+           result.push_back(static_cast<uint16_t>(res[i])); 
+        }
+        _TIFFfree(buf);
+    }
+}
+
+void SimpleGrid::getImage(int imgIdx, std::vector<std::uint16_t>& result, int nbChannel) const {
+    if (this->tif) {
+        TIFFSetDirectory(tif, imgIdx);
+        uint32 imagelength;
+        tdata_t buf;
+        uint32 row;
+    
+        TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &imagelength);
+        buf = _TIFFmalloc(TIFFScanlineSize(tif));
+        for (row = 0; row < imagelength; row++) {
+            TIFFReadScanline(tif, buf, row);
+            //std::uint16_t * res = static_cast<std::uint16_t*>(buf);
+            std::uint8_t * res = static_cast<std::uint8_t*>(buf);
+            int imageSize = static_cast<int>(this->imgDimensions[0]);
+            for(int i = 0; i < imageSize; ++i) {
+                for(int j = 0; j < nbChannel; ++j)
+                    result.push_back(static_cast<std::uint16_t>(res[i])); 
+            }
+        }
+        _TIFFfree(buf);
+    }
+}
+
 DeformableGrid::DeformableGrid(const std::string& filename, const glm::vec3& nbCube): grid(SimpleGrid(filename)) {
     const glm::vec3 sizeCube = this->grid.imgDimensions / nbCube;
     this->tetmesh.buildGrid(nbCube, sizeCube, glm::vec3(0., 0., 0.));
@@ -219,9 +260,30 @@ void DeformableGrid::writeDeformedGrid(const DeformableGrid& initial) {
     TinyTIFFWriter_close(tif);
 }
 
+std::pair<glm::vec3, glm::vec3> DeformableGrid::getBoundingBox() const {
+    return std::pair(this->tetmesh.bbMin, this->tetmesh.bbMax);
+}
+
+glm::vec3 DeformableGrid::getResolution() const {
+    return this->grid.imgDimensions;
+}
+
+
+Image::ImageDataType DeformableGrid::getInternalDataType() const {
+    return this->grid.getInternalDataType();
+}
+
 /**************************/
 // UNIT TEST
 /**************************/
+
+void DeformableGrid::checkReadSlice() const {
+    std::vector<uint16_t> res;
+    this->grid.getImage(0, res, 1);
+    for(int i = 4213; i < 4500; ++i)
+        std::cout << "[" << i << "]" << unsigned(res[i]) << std::endl;
+    throw std::runtime_error("END OF UT");
+}
 
 void checkPointQuery() {
     glm::vec3 origin = glm::vec3(0., 0., 0.);

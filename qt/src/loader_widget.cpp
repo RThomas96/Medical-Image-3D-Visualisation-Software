@@ -1022,7 +1022,7 @@ void GridLoaderWidget::loadNewGridAPI() {
 	std::vector<std::vector<std::string>> fnames_grid{fnR, fnG};
 	// FIXME : The API has changed. Grid::createGrid should only return an empty TIFF implementation, and
 	// the parsing function is the one to take the files as an input.
-	this->_testing_grid = Image::Grid::createGrid(fnames_grid);
+	this->_testing_grid = new DeformableGrid(fnames_grid[0][0], glm::vec3(5., 5. ,5.));
 	if (this->_testing_grid == nullptr) {
 		std::cerr << "Error : createGrid() returned nullptr !\n";
 		return;
@@ -1030,57 +1030,57 @@ void GridLoaderWidget::loadNewGridAPI() {
 
 	// Start parsing the information :
 	std::cerr << "Grid created, updating info from disk ...\n";
-	auto task = this->_testing_grid->updateInfoFromDisk(fnames_grid);
+	//auto task = this->_testing_grid->updateInfoFromDisk(fnames_grid);
 
 	// may be already ended with errors, show them :
 	std::string before_error_message;
 	std::string full_msg;
-	if (task->popMessage(before_error_message)) {
-		do {
-			full_msg += before_error_message + '\n';
-		} while (task->popMessage(before_error_message));
-		msgBox->critical(this, "Error while parsing files !", QString(before_error_message.c_str()));
-		this->setWidgetsEnabled();
-		return;
-	}
+	//if (task->popMessage(before_error_message)) {
+	//	do {
+	//		full_msg += before_error_message + '\n';
+	//	} while (task->popMessage(before_error_message));
+	//	msgBox->critical(this, "Error while parsing files !", QString(before_error_message.c_str()));
+	//	this->setWidgetsEnabled();
+	//	return;
+	//}
 
 	// Set and show progress bar :
-	this->progressBar_init_defined(0, task->getMaxSteps(), 0, "Parsing image data ... (%p%)");
+	//this->progressBar_init_defined(0, task->getMaxSteps(), 0, "Parsing image data ... (%p%)");
 
 	// Parse the grid :
-	do {
-		std::this_thread::sleep_for(std::chrono::milliseconds(10));
-		std::size_t steps = task->getMaxSteps();
-		std::size_t adv	  = task->getAdvancement();
-		this->progress_load->setRange(0, steps);
-		this->progress_load->setValue(adv);
-		this->progress_load->setFormat("Parsing image data ... (%p%)");
-		// Needed to update the main window ...
-		QCoreApplication::processEvents();
-		this->update();
-	} while (not task->isComplete());
+	//do {
+	//	std::this_thread::sleep_for(std::chrono::milliseconds(10));
+	//	std::size_t steps = task->getMaxSteps();
+	//	std::size_t adv	  = task->getAdvancement();
+	//	this->progress_load->setRange(0, steps);
+	//	this->progress_load->setValue(adv);
+	//	this->progress_load->setFormat("Parsing image data ... (%p%)");
+	//	// Needed to update the main window ...
+	//	QCoreApplication::processEvents();
+	//	this->update();
+	//} while (not task->isComplete());
 
 	std::cerr << "\n[TASK] Done parsing the grid ... \n";
 	std::string errmsg = "";
 	std::string all_errors;
 	bool isComplete = true;
-	while (task->popMessage(errmsg)) {
-		std::cerr << "[Task error] Message : " << errmsg << '\n';
-		isComplete = false;
-		all_errors += errmsg + '\n';
-	}
+	//while (task->popMessage(errmsg)) {
+	//	std::cerr << "[Task error] Message : " << errmsg << '\n';
+	//	isComplete = false;
+	//	all_errors += errmsg + '\n';
+	//}
 	if (not all_errors.empty()) {
 		msgBox->critical(this, "Errors while parsing the files", QString(all_errors.c_str()));
 		this->setWidgetsEnabled();
 		return;
 	}
 	if (isComplete) {
-		this->_testing_grid->updateInfoFromGrid();
-		std::cerr << "Grid dimensionality : " << this->_testing_grid->getVoxelDimensionality() << '\n';
+		//this->_testing_grid->updateInfoFromGrid();
+		//std::cerr << "Grid dimensionality : " << this->_testing_grid->getVoxelDimensionality() << '\n';
 		Image::svec3 res = this->_testing_grid->getResolution();
-		glm::vec3 vx	 = this->_testing_grid->getVoxelDimensions();
+		//glm::vec3 vx	 = this->_testing_grid->getVoxelDimensions();
 		std::cerr << "Grid resolution : " << res.x << ", " << res.y << ", " << res.z << "\n";
-		std::cerr << "Voxel dimensions : " << vx.x << ", " << vx.y << ", " << vx.z << "\n";
+		//std::cerr << "Voxel dimensions : " << vx.x << ", " << vx.y << ", " << vx.z << "\n";
 		std::cerr << "Data internal representation : " << this->_testing_grid->getInternalDataType() << '\n';
 	}
 
@@ -1309,13 +1309,14 @@ void GridLoaderWidget::loadGrid_newAPI() {
 	  static_cast<float>(this->dsb_transformationDZ->value()));
 	//svec3 dims = this->inputGridR->getResolution();
 	float a				= this->dsb_transformationA->value();
-	auto transfo_matrix = computeTransfoShear_newAPI(a, this->_testing_grid, vxdims);
+	auto transfo_matrix = computeTransfoShear_newAPI(a, vxdims);
 
 	MatrixTransform::Ptr grid_transform = std::make_shared<MatrixTransform>(transfo_matrix);
-	this->_testing_grid->addTransform(grid_transform);
+    //TODO: add matrix
+	//this->_testing_grid->addTransform(grid_transform);
 
-	Image::GridRepo repo = Image::GridRepo::getInstance();
-	repo.addGrid(this->_testing_grid);
+	//Image::GridRepo repo = Image::GridRepo::getInstance();
+	//repo.addGrid(this->_testing_grid);
 
 	// Here, load the downsampled grid if necessary :
 	//if (this->dsLevel != IO::DownsamplingLevel::Original) {
@@ -1418,7 +1419,7 @@ void GridLoaderWidget::loadGrid_newAPI() {
 	this->close();
 }
 
-glm::mat4 computeTransfoShear_newAPI(double angleDeg, const Image::Grid::Ptr& grid, glm::vec3 vxdims) {
+glm::mat4 computeTransfoShear_newAPI(double angleDeg, glm::vec3 vxdims) {
 	glm::mat4 transfoMat = glm::mat4(1.0);
 
 	double angleRad = (angleDeg * M_PI) / 180.;

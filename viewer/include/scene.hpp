@@ -367,10 +367,8 @@ public:
 	void updateProgressBar();
 
 	void loadGridROI(void); // DEPRECATED
-	void addGrid(Image::Grid::Ptr gridLoaded);
+	void addGrid(const DeformableGrid * gridLoaded);
 	
-	void draft_tryAndSaveFirstGrid(void);// Will attempt to do a grid save, to test the new writer backend.
-
 	void launchSaveDialog();
 	void printVAOStateNext() { this->showVAOstate = true; }
 
@@ -378,8 +376,8 @@ public:
 	glm::vec3 getSceneBoundaries() const;
 	void getTetraMeshPoints(std::vector<glm::vec3>& points);
 
-	double getMinNumericLimit(size_t gridIndex) const { return Image::getMinNumericLimit(grids[gridIndex]->grid->getInternalDataType()); }
-	double getMaxNumericLimit(size_t gridIndex) const { return Image::getMaxNumericLimit(grids[gridIndex]->grid->getInternalDataType()); }
+	double getMinNumericLimit(size_t gridIndex) const { return Image::getMinNumericLimit(grids[gridIndex]->grid->grid.getInternalDataType()); }
+	double getMaxNumericLimit(size_t gridIndex) const { return Image::getMaxNumericLimit(grids[gridIndex]->grid->grid.getInternalDataType()); }
 
 	double getMinTexValue(void) const { return static_cast<double>(this->textureBounds0.x); }
 	double getMinTexValueAlternate(void) const { return static_cast<double>(this->textureBounds1.x); }
@@ -445,9 +443,9 @@ public:
 	void resetPositionResponse(void);// Reset the axis positions.
 
 	/// @brief Applies a user-defined function on grids, with the constraint it must be const.
-	void lambdaOnGrids(std::function<void(const GridGLView::Ptr&)>& callable) const {
-		std::for_each(this->grids.cbegin(), this->grids.cend(), callable);
-	}
+	//void lambdaOnGrids(std::function<void(const GridGLView::Ptr&)>& callable) const {
+	//	std::for_each(this->grids.cbegin(), this->grids.cend(), callable);
+	//}
 
 	void deleteGridNow();
 

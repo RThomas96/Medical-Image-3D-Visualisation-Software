@@ -41,6 +41,7 @@ void GridViewer::initializeGLData(Scene* _scene) {
 
 	// Get grid dimensions :
 	glm::tvec4<std::size_t> dimensions{this->source_grid->getResolution(), this->source_grid->getVoxelDimensionality()};
+    std::cout << "DIMENSIONS:" << dimensions << std::endl;
 
 	// Upload the texture to the GPU :
 	TextureUpload _gridTex{};

@@ -44,7 +44,7 @@ protected:
 public:
 	void chooseGrids(std::vector<GridGLView::Ptr>& grids) {
 		for (const auto& grid : grids) {
-			this->user_choice->addItem(QString(grid->grid->getImageName().c_str()));
+			//this->user_choice->addItem(QString(grid->filename.c_str()));
 		}
 		this->selected_grid = 0;
 		this->pressed_ok	= false;

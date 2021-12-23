@@ -83,7 +83,8 @@ protected:
 	int dsLevel;	  ///< Currently selected downsampling method
 	//std::shared_ptr<Interpolators::genericInterpolator<DiscreteGrid::data_t>> interpolator;	   ///< interpolator
 
-	Image::Grid::Ptr _testing_grid;
+	//Image::Grid::Ptr _testing_grid;
+	const DeformableGrid * _testing_grid;
 	bool useLegacyGrids;	///< should we use the new grid api or the new one ?
 
 	QLabel* label_headerLoader;	   ///< Label header for the entire widget
@@ -152,6 +153,6 @@ protected:
 /// @brief Computes a transformation matrix from an origin and an angle, for our use case.
 /// @details This computes a transformation matrix to fit our purpose, might not be adapted
 /// to any use case !
-glm::mat4 computeTransfoShear_newAPI(double angleDeg, const Image::Grid::Ptr&, glm::vec3 vxdims);
+glm::mat4 computeTransfoShear_newAPI(double angleDeg, glm::vec3 vxdims);
 
 #endif	  // QT_INCLUDE_LOADER_WIDGET_HPP_
