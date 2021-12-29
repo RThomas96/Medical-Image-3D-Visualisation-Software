@@ -49,6 +49,10 @@ class MMInterface
 	std::vector< bool > selected_vertices;
 	std::vector< bool > fixed_vertices;
 
+	// MESH MANIP DRAWING :
+	std::vector< glm::vec3 > precomputed_selected_vertices;
+	std::vector< glm::vec3 > precomputed_fixed_vertices;
+
 	// MESH VISU :
 	std::vector< std::vector< int > > visu_triangles;
 	std::vector< std::vector< int > > visu_quads;
@@ -92,6 +96,12 @@ public:
 	inline std::vector< bool > & get_fixed_vertices () { return fixed_vertices; }
 	inline const std::vector< bool > & get_fixed_vertices () const { return fixed_vertices; }
 
+	inline std::vector< glm::vec3 > & get_precomputed_selected_vertices () { return this->precomputed_selected_vertices; }
+	inline const std::vector< glm::vec3 > & get_precomputed_selected_vertices () const { return this->precomputed_selected_vertices; }
+
+	inline std::vector< glm::vec3 > & get_precomputed_fixed_vertices () { return this->precomputed_fixed_vertices; }
+	inline const std::vector< glm::vec3 > & get_precomputed_fixed_vertices () const { return this->precomputed_fixed_vertices; }
+
 	std::vector< bool > get_handles_vertices (  ) {
 		std::vector< bool > handles_vertices ( vertices.size(), false );
 		for( unsigned int i = 0 ; i < vertices.size() ; i++ ){
@@ -108,6 +118,7 @@ public:
 				selected_vertices[i] = false;
 			}
 		}
+		this->precompute_selection();
 	}
 
 	void setIterationNb( unsigned int itNb){
@@ -123,6 +134,8 @@ public:
 		deformationMode = REALTIME;
 		average_edge_halfsize = 1.;
 		sphere_scale = 1.;
+		precomputed_selected_vertices.clear();
+		precomputed_fixed_vertices.clear();
 		ARAP = AsRigidAsPossible();
 	}
 
@@ -464,6 +477,21 @@ public:
 		glEnd();
 	}
 
+	void precompute_selection() {
+		// precompute the selected and fixed vertex vectors :
+		this->precomputed_selected_vertices.clear();
+		this->precomputed_fixed_vertices.clear();
+
+		for (std::size_t v = 0; v < this->modified_vertices.size(); ++v) {
+			if (selected_vertices[v]) {
+				this->precomputed_selected_vertices.push_back(this->modified_vertices[v]);
+			}
+			if (fixed_vertices[v]) {
+				this->precomputed_fixed_vertices.push_back(this->modified_vertices[v]);
+			}
+		}
+	}
+
 	// You need to have the correct QOpenGLContext activated for that !!!!!!!!
 	// This function select the cage vertices drawn inside the QRect "zone"
 	void select( QRectF const & zone, float *modelview, float * projection, bool moving = true )
@@ -495,6 +523,7 @@ public:
 				fixed_vertices[ v ] = !moving;
 			}
 		}
+		this->precompute_selection();
 	}
 
 	int index_of_closest_point_in_sphere( const point_t & clicked, float radius ){
@@ -519,6 +548,7 @@ public:
 			selected_vertices[ v ] = !selected_vertices[ v ];
 			fixed_vertices[ v ] = false;
 		}
+		this->precompute_selection();
 	}
 
 	void make_fixed_handles( const point_t & clicked, float scale )
@@ -529,6 +559,7 @@ public:
 			fixed_vertices[ v ] = !fixed;
 			selected_vertices[ v ] = fixed;
 		}
+		this->precompute_selection();
 	}
 
 	// You need to have the correct QOpenGLContext activated for that !!!!!!!!
@@ -562,6 +593,7 @@ public:
 				fixed_vertices[ v ] = false;
 			}
 		}
+		this->precompute_selection();
 	}
 
 	void clear_selection(){
@@ -569,6 +601,7 @@ public:
 			selected_vertices[ v ] = false;
 			fixed_vertices[ v ] = false;
 		}
+		this->precompute_selection();
 	}
 
 	void select_all(){
@@ -577,12 +610,14 @@ public:
 				selected_vertices[ v ] = true;
 			}
 		}
+		this->precompute_selection();
 	}
 
 	void unselect_all(){
 		for(unsigned int v = 0 ; v < selected_vertices.size() ; v++ ){
 			selected_vertices[ v ] = false;
 		}
+		this->precompute_selection();
 	}
 
 	void fixe_all(){
@@ -591,12 +626,14 @@ public:
 				fixed_vertices[ v ] = true;
 			}
 		}
+		this->precompute_selection();
 	}
 
 	void unfixe_all(){
 		for(unsigned int v = 0 ; v < fixed_vertices.size() ; v++ ){
 			fixed_vertices[ v ] = false;
 		}
+		this->precompute_selection();
 	}
 
 	// Once you're OK with the selection you made , call this function to compute the manipulator , and it will activate it :
@@ -688,6 +725,7 @@ public:
 		if( deformationMode == REALTIME )
 		{
 			ARAP.compute_deformation(modified_vertices);
+			this->precompute_selection();
 		}
 	}
 
@@ -708,6 +746,7 @@ public:
 		{
 			ARAP.setHandles( handles );
 			ARAP.compute_deformation( modified_vertices );
+			this->precompute_selection();
 		}
 	}
 
@@ -718,6 +757,7 @@ public:
 		if( deformationMode == INTERACTIVE )
 		{
 			ARAP.compute_deformation(modified_vertices);
+			this->precompute_selection();
 		}
 	}
 
