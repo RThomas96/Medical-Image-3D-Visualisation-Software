@@ -97,13 +97,9 @@ public slots:
 	void updateValues(void);
 	void updateMinValue(double val);
 	void updateMaxValue(double val);
-	void updateMinValueAlternate(double val);
-	void updateMaxValueAlternate(double val);
 	void updateRGBMode(void);
 	void updateChannelRed(int value);
-	void updateChannelGreen(int value);
 	void launchRedColorBounds(void);
-	void launchGreenColorBounds(void);
 
 private:
 	/// @brief The scene to control !
@@ -111,56 +107,35 @@ private:
 
 	/// @brief Box regrouping the controls of the red channel
 	QGroupBox* groupbox_red;
-	/// @brief Box regrouping the controls of the green channel
-	QGroupBox* groupbox_green;
 
 	/// @brief Range controller for the red texture bounds
 	DoubleSlider* rangeslider_red;
-	/// @brief Range controller for the green texture bounds
-	DoubleSlider* rangeslider_green;
 
 	/// @brief The layout of the red groupbox
 	QHBoxLayout* layout_widgets_red;
-	/// @brief The layout of the green groupbox
-	QHBoxLayout* layout_widgets_green;
 
 	/// @brief Minimum color of the color segment for the red channel
 	ColorButton* colorbutton_red_min;
 	/// @brief Maximum color of the color segment for the red channel
 	ColorButton* colorbutton_red_max;
-	/// @brief Minimum color of the color segment for the green channel
-	ColorButton* colorbutton_green_min;
-	/// @brief Minimum color of the color segment for the green channel
-	ColorButton* colorbutton_green_max;
 
 	/// @brief Button to launch a dialog to change the color bounds or the red channel
 	QPushButton* button_red_colorbounds;
 	ColorBoundsControl* cb_red_bounds;
-	/// @brief Button to launch a dialog to change the color bounds or the green channel
-	QPushButton* button_green_colorbounds;
-	ColorBoundsControl* cb_green_bounds;
 
 	/// @brief Picker for the coloration method of the red channel
 	QComboBox* red_coloration;
-	/// @brief Picker for the coloration method of the green channel
-	QComboBox* green_coloration;
 
 	/// @brief The viewer to update on value changes
 	Viewer* const viewer;
 	/// @brief Texture bounds for red channel
 	double min, max;
-	/// @brief Texture bounds for green channel
-	double minAlternate, maxAlternate;
 
 public slots:
 	// @brief Set the min value to display of the first grid
 	void setMinTexVal(double val);
 	// @brief Set the max value to display of the first grid
 	void setMaxTexVal(double val);
-	// @brief Set the min value to display of the second grid
-	void setMinTexValAlternate(double val);
-	// @brief Set the max value to display of the second grid
-	void setMaxTexValAlternate(double val);
 };
 
 #endif	  // QT_INCLUDE_SCENE_CONTROL_HPP_

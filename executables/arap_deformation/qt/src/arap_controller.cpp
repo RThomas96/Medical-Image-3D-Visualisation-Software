@@ -20,6 +20,7 @@ ARAPController::ARAPController(Viewer* _v, Scene* _s) {
 	this->arapManipulator = nullptr;
 	this->rectangleSelection = nullptr;
 
+	this->currently_edited_constraint = 0; // for now, no constraints edited. set to 0 to mean that special case.
 	this->mesh_constraints.clear();
 	this->image_constraints.clear();
 	this->compounded_constraints.clear();
@@ -207,7 +208,7 @@ const std::shared_ptr<SimpleManipulator>& ARAPController::getARAPManipulator() c
 const std::shared_ptr<MMInterface<glm::vec3>>& ARAPController::getMeshInterface() const { return this->mesh_interface; }
 const std::shared_ptr<RectangleSelection>& ARAPController::getRectangleSelection() const { return this->rectangleSelection; }
 
-const std::size_t ARAPController::getCurrentlyEditedConstraint() const { return 0; }
+const std::size_t ARAPController::getCurrentlyEditedConstraint() const { return this->currently_edited_constraint > this->mesh_constraints.size() ? 0 : this->currently_edited_constraint; }
 const std::vector<glm::vec3>& ARAPController::getImageConstraints() const { return this->image_constraints; }
 const std::vector<std::size_t>& ARAPController::getMeshConstraints() const { return this->mesh_constraints; }
 const std::vector<glm::vec3>& ARAPController::getCompoundedConstraints() const { return this->compounded_constraints; }
@@ -445,29 +446,54 @@ void ARAPController::loadConstraintDataFromFile(const std::string& file_name) {
 
 	constraints.close();
 
+	if (not this->mesh_constraints.empty()) {
+		// enable the constraint editing if this is the first constraint added !
+		this->currently_edited_constraint = 1;
+	}
 	this->updateCompoundedConstraints();
 }
 
 void ARAPController::addImageConstraint(glm::vec3 img_ctx_pos) {
 	this->image_constraints.emplace_back(img_ctx_pos);
+	std::cerr << "Added constraint to the image at position " << img_ctx_pos << '\n';
+	// increment edited constraint if there were some :
+	if (currently_edited_constraint != 0) {
+		this->currently_edited_constraint++;
+		if (this->currently_edited_constraint > this->mesh_constraints.size()) {
+			// set it to past-the-end, but no further.
+			this->currently_edited_constraint = this->mesh_constraints.size()+1;
+		} else {
+			std::cerr << "Warning : adding more image constraints than there are mesh constraints.\n";
+		}
+	} else {
+		std::cerr << "Warning : added image constraint but no mesh constraints were present.\n";
+	}
 	this->updateCompoundedConstraints();
 }
 
 void ARAPController::addMeshConstraint(std::size_t mesh_ctx_idx) {
+	if (this->mesh_constraints.empty()) {
+		// enable the constraint editing if this is the first constraint added !
+		this->currently_edited_constraint = 1;
+	}
 	this->mesh_constraints.emplace_back(mesh_ctx_idx);
+	std::cerr << "Added constraint to the mesh for vertex " << mesh_ctx_idx << '\n';
 	this->updateCompoundedConstraints();
 }
 
 void ARAPController::updateCompoundedConstraints() {
 	this->compounded_constraints.resize(this->image_constraints.size() + this->mesh_constraints.size(), glm::vec3{.0f});
-	// Copy the image constraints :
-	std::copy(this->image_constraints.cbegin(), this->image_constraints.cend(), this->compounded_constraints.begin());
 	// Copy the mesh constraints :
 	const auto& vertices = this->mesh->getVertices();
 	for (std::size_t i = 0; i < this->mesh_constraints.size(); ++i) {
-		this->compounded_constraints[this->image_constraints.size() + i] = vertices[this->mesh_constraints[i]];
+		this->compounded_constraints[i] = vertices[this->mesh_constraints[i]];
 	}
-	// TODO : set the index of the 'special' constraint (currently edited) here.
+
+	/// Typedef to the difference type between two iterators for the vector type of 'compounded_constraints'
+	using diff_t = std::decay_t<decltype(this->compounded_constraints)>::iterator::difference_type;
+
+	// Copy the image constraints :
+	std::copy(this->image_constraints.cbegin(), this->image_constraints.cend(), this->compounded_constraints.begin() + static_cast<diff_t>(this->mesh_constraints.size()));
 }
 
 void ARAPController::deleteMeshData() {
@@ -559,6 +585,9 @@ void ARAPController::initializeMeshInterface() {
 		});
 		QObject::connect(this->button_manip_select_none, &QPushButton::pressed, this, [this]() -> void {
 			this->mesh_interface->unselect_all();
+			this->mesh_interface->unfixe_all();
+			this->arapManipulator->clear();
+			this->rectangleSelection->deactivate();
 		});
 
 		this->viewer->initializeARAPManipulationInterface();
@@ -641,6 +670,8 @@ void ARAPController::arap_performAlignment() {
 	this->updateMeshAndCurve_No_Image_Resizing();
 	this->updateMeshInterface();
 	 */
+	this->updateMeshDrawable();
+	this->updateCurveFromMesh();
 	if (this->curve) {
 		// not covered in updateMeshAndCurve() :
 		this->scene->getDrawableCurve()->setTransformation(this->scene->getDrawableMesh()->getTransformation());
@@ -690,15 +721,8 @@ void ARAPController::arap_performScaling() {
 	this->mesh->applyTransformation(translate_to_centroid);
 
 	// Update data :
-	/*
-	this->mesh_draw->setTransformation(glm::mat4(1.f));
-	this->updateMeshAndCurve_No_Image_Resizing();
-	this->updateMeshInterface();
-	if (this->curve) {
-		// not covered in updateMeshAndCurve() :
-		this->curve_draw->setTransformation(this->mesh_draw->getTransformation());
-	}
-	 */
+	this->updateMeshDrawable();
+	this->updateCurveFromMesh();
 }
 
 void ARAPController::arap_computeDeformation() {
@@ -733,11 +757,8 @@ void ARAPController::arap_computeDeformation() {
 
 	this->scene->updateBoundingBox();
 	std::cerr << "Finished.\n";
-
-	/*
-	 * TODO figure out how to port this here :
-	this->updateMeshAndCurve_No_Image_Resizing();
-	 */
+	this->updateMeshDrawable();
+	this->updateCurveFromMesh();
 }
 
 void ARAPController::enableDeformation() {
@@ -754,6 +775,8 @@ void ARAPController::enableDeformation() {
 void ARAPController::disableDeformation() {
 	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	if (this->mesh == nullptr) { return; }
+	this->resetMeshInterface();
+	this->viewer->setDeformation(false);
 	std::cerr << "Disabled deformation !\n";
 }
 

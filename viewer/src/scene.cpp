@@ -3215,6 +3215,39 @@ void Scene::drawColoredPointSpheres_quick(GLfloat* mvMat, GLfloat* pMat, glm::ve
 	this->glUseProgram(0);
 }
 
+void Scene::drawColoredPointSpheres_highlighted_quick(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const std::vector<glm::vec3>& positions, std::size_t highlighted_index, float radius, glm::vec4 sphere_color, glm::vec4 highlight_color) {
+	if (positions.empty()) { return; }
+	this->glUseProgram(this->programHandle_sphere);
+	this->glBindVertexArray(this->vaoHandle_spheres);
+
+	auto location_proj	= this->glGetUniformLocation(this->programHandle_sphere, "proj");
+	auto location_view	= this->glGetUniformLocation(this->programHandle_sphere, "view");
+	auto location_scale = this->glGetUniformLocation(this->programHandle_sphere, "scale");
+	auto location_pos	= this->glGetUniformLocation(this->programHandle_sphere, "position");
+	auto location_sphere_color = this->glGetUniformLocation(this->programHandle_sphere, "sphere_color");
+
+	this->glUniformMatrix4fv(location_proj, 1, GL_FALSE, pMat);
+	this->glUniformMatrix4fv(location_view, 1, GL_FALSE, mvMat);
+	this->glUniform1f(location_scale, radius);
+	this->glUniform4fv(location_sphere_color, 1, glm::value_ptr(sphere_color));
+
+	// For all spheres, draw them in a different position :
+	for (std::size_t sphere_idx = 0; sphere_idx < positions.size(); ++sphere_idx) {
+		if (sphere_idx == highlighted_index) {
+			this->glUniform4fv(location_sphere_color, 1, glm::value_ptr(highlight_color));
+		} else {
+			this->glUniform4fv(location_sphere_color, 1, glm::value_ptr(sphere_color));
+		}
+		this->glUniform3fv(location_pos, 1, glm::value_ptr(positions[sphere_idx]));
+
+		this->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboHandle_sphereIndices);
+		this->glDrawElements(GL_TRIANGLES, this->sphere_size_to_draw, GL_UNSIGNED_INT, (void*) 0);
+	}
+	this->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	this->glBindVertexArray(0);
+	this->glUseProgram(0);
+}
+
 void Scene::generatePlanesArray(SimpleVolMesh& _mesh) {
 	_mesh.cutting_planes.clear();
 	_mesh.planar_view.clear();
@@ -3228,29 +3261,22 @@ void Scene::generatePlanesArray(SimpleVolMesh& _mesh) {
 	// base index for the index array :
 	unsigned int base = _mesh.positions.size();
 
+	// clang-format off
 	glm::vec4 center = glm::vec4(.5f, .5f, .5f, 1.f);
 	// Create new vertices :
-	glm::vec4 apos	= glm::vec4(.0, .0, .0, 1.);
-	glm::vec4 anorm = apos - center;
-	glm::vec4 bpos	= glm::vec4(1., .0, .0, 1.);
-	glm::vec4 bnorm = bpos - center;
-	glm::vec4 cpos	= glm::vec4(.0, 1., .0, 1.);
-	glm::vec4 cnorm = cpos - center;
-	glm::vec4 dpos	= glm::vec4(1., 1., .0, 1.);
-	glm::vec4 dnorm = dpos - center;
-	glm::vec4 epos	= glm::vec4(.0, .0, 1., 1.);
-	glm::vec4 enorm = epos - center;
-	glm::vec4 fpos	= glm::vec4(1., .0, 1., 1.);
-	glm::vec4 fnorm = fpos - center;
-	glm::vec4 gpos	= glm::vec4(.0, 1., 1., 1.);
-	glm::vec4 gnorm = gpos - center;
+	glm::vec4 apos	= glm::vec4(.0, .0, .0, 1.); glm::vec4 anorm = apos - center;
+	glm::vec4 bpos	= glm::vec4(1., .0, .0, 1.); glm::vec4 bnorm = bpos - center;
+	glm::vec4 cpos	= glm::vec4(.0, 1., .0, 1.); glm::vec4 cnorm = cpos - center;
+	glm::vec4 dpos	= glm::vec4(1., 1., .0, 1.); glm::vec4 dnorm = dpos - center;
+	glm::vec4 epos	= glm::vec4(.0, .0, 1., 1.); glm::vec4 enorm = epos - center;
+	glm::vec4 fpos	= glm::vec4(1., .0, 1., 1.); glm::vec4 fnorm = fpos - center;
+	glm::vec4 gpos	= glm::vec4(.0, 1., 1., 1.); glm::vec4 gnorm = gpos - center;
 	// Create texture coordinates serving as framebuffer positions once all is done :
 	glm::vec3 ll = glm::vec3(-1., -1., .0);	   // lower-left
 	glm::vec3 lr = glm::vec3(-1., 1., .0);	  // lower-right
 	glm::vec3 hl = glm::vec3(1., -1., .0);	  // higher-left
 	glm::vec3 hr = glm::vec3(1., 1., .0);	 // higher-right
 
-	// clang-format off
 	// Push them into the vectors, so they can be drawn without indices :
 	// Plane X :
 	_mesh.positions.push_back(apos); _mesh.normals.push_back(anorm); _mesh.texture.push_back(ll);
@@ -3273,7 +3299,7 @@ void Scene::generatePlanesArray(SimpleVolMesh& _mesh) {
 	_mesh.positions.push_back(cpos); _mesh.normals.push_back(cnorm); _mesh.texture.push_back(hl);
 	_mesh.positions.push_back(bpos); _mesh.normals.push_back(bnorm); _mesh.texture.push_back(lr);
 	_mesh.positions.push_back(dpos); _mesh.normals.push_back(dnorm); _mesh.texture.push_back(hr);
-	//clang-format on
+	// clang-format on
 
 	// Push back enough indices to draw the planes all at once :
 	for (unsigned int i = 0; i < _mesh.positions.size() - base; ++i) {

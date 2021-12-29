@@ -16,8 +16,6 @@
 #include <QMainWindow>
 #include <QWidget>
 
-class ColorBoundWidget;
-
 /// @ingroup qtwidgets
 /// @brief The ARAPMainWidget class represents the top-level widget, created when the deformation program is run.
 /// @details It holds references to the top menu bar, the status bar of the program, the button to show the GL log and

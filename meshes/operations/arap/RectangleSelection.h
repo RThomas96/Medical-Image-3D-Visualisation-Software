@@ -135,7 +135,7 @@ public:
 		glPushMatrix();
 		glLoadIdentity();
 
-		if( this->selectionMode_ == ADD_FIXED || this->selectionMode_ == ADD_MOVING )
+		/*if( this->selectionMode_ == ADD_FIXED || this->selectionMode_ == ADD_MOVING )
 			glColor4f(0.2, 0.2, 0.8f , 0.3f);
 		if( this->selectionMode_ == REMOVE )
 			glColor4f(0.8, 0.2, 0.2f , 0.3f);
@@ -145,7 +145,7 @@ public:
 		glVertex2f( left , bottom );
 		glVertex2f( right , bottom );
 		glVertex2f( right , top );
-		glEnd();
+		glEnd();*/
 
 		glLineWidth(2.0);
 		if( this->selectionMode_ == ADD_FIXED || this->selectionMode_ == ADD_MOVING )

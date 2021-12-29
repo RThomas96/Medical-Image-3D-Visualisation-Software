@@ -112,8 +112,16 @@ void Viewer::draw() {
 	}
 
 	if (this->arap_controller) {
+		std::size_t edited_constraint = this->arap_controller->getCurrentlyEditedConstraint();
 		auto arap_constraints = this->arap_controller->getCompoundedConstraints();
-		this->scene->drawPointSpheres_quick(mvMat, pMat, camPos, arap_constraints, this->sphere_size);
+		if (edited_constraint) {
+			glm::vec4 default_color = glm::vec4{0.05f, 0.05f, 0.90f, 1.0f};
+			// gold-colored, per wikipedia guidelines (255/223/0 in RGB) :
+			glm::vec4 highlight_col = glm::vec4{255.f, 223.f, 0.0f, 1.0f} / glm::vec4{255.f, 255.f, 255.f, 1.0f};
+			this->scene->drawColoredPointSpheres_highlighted_quick(mvMat, pMat, camPos, arap_constraints, edited_constraint-1u, this->sphere_size, default_color, highlight_col);
+		} else {
+			this->scene->drawPointSpheres_quick(mvMat, pMat, camPos, arap_constraints, this->sphere_size);
+		}
 
 		auto inter = this->arap_controller->getMeshInterface();
 		auto manip = this->arap_controller->getARAPManipulator();
@@ -131,15 +139,15 @@ void Viewer::draw() {
 			this->scene->drawColoredPointSpheres_quick(mvMat, pMat, camPos, selected, inter->getAverage_edge_halfsize()/2., glm::vec4{0.9f, 0.05f, 0.05f, 1.0f});
 			this->scene->drawColoredPointSpheres_quick(mvMat, pMat, camPos, fixed, inter->getAverage_edge_halfsize()/2., glm::vec4{0.05f, 0.9f, 0.05f, 1.0f});
 		}
-		if (manip) {
-			manip->draw();
-		}
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glEnable(GL_BLEND);
 		if (rect) {
 			rect->draw();
 		}
 		glDisable(GL_BLEND);
+		if (manip) {
+			manip->draw();
+		}
 
 		if (is_color_enabled) { this->scene->glEnable(GL_COLOR_MATERIAL); }
 		if (is_light_enabled) { this->scene->glEnable(GL_LIGHTING); }
@@ -354,8 +362,7 @@ void Viewer::keyPressEvent(QKeyEvent* e) {
 				std::cerr << "Attempting to push constraint to mesh ..." << this->temp_mesh_idx << "\n";
 				std::size_t dumb;
 				if (this->scene->dummy_check_point_in_mesh_bb(this->temp_sphere_position, dumb)) {
-					this->scene->dummy_add_arap_constraint_mesh(this->temp_mesh_idx, this->temp_mesh_vtx_idx);
-					this->spheres.push_back(this->temp_sphere_position);
+					this->arap_controller->addMeshConstraint(this->temp_mesh_vtx_idx);
 				} else {
 					std::cerr << "Error : point was not in mesh BB :(\n";
 				}
@@ -364,8 +371,7 @@ void Viewer::keyPressEvent(QKeyEvent* e) {
 			else if ((e->modifiers() & Qt::KeyboardModifier::ControlModifier) != 0)
 			{
 				std::cerr << "Attempting to push constraint to image ..." << this->temp_img_idx << "\n";
-				this->scene->dummy_add_image_constraint(this->temp_img_idx, this->temp_img_pos);
-				this->spheres.push_back(this->temp_img_pos);
+				this->arap_controller->addImageConstraint(this->temp_img_pos);
 			}
 			break;
 		case Qt::Key::Key_Plus:
@@ -528,10 +534,10 @@ void Viewer::mouseReleaseEvent(QMouseEvent* e) {
 		if (! this->arap_controller->getRectangleSelection()->isInactive()) {
 			std::cerr << "Releasing rectangle selection !\n";
 			this->arap_controller->getRectangleSelection()->mouseReleaseEvent(e, this->camera());
-			this->arap_controller->getRectangleSelection()->deactivate();
-			this->update();
-			return;
 		}
+		this->arap_controller->getRectangleSelection()->deactivate();
+		this->update();
+		//return;
 	}
 	QGLViewer::mouseReleaseEvent(e);
 }

@@ -220,6 +220,7 @@ protected:
 	std::shared_ptr<SimpleManipulator> arapManipulator;		///< The manipulator for selected vertices.
 	std::shared_ptr<RectangleSelection> rectangleSelection;	///< The rectangle user selection.
 
+	std::size_t currently_edited_constraint;	///< The constraint being currently edited.
 	std::vector<glm::vec3> image_constraints;	///< The image constraints (positions in 3D space).
 	std::vector<std::size_t> mesh_constraints;	///< The mesh constraints (vertex indices).a
 	std::vector<glm::vec3> compounded_constraints;	///< All of the constraints
