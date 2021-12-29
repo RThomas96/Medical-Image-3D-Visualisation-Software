@@ -30,6 +30,7 @@ AsRigidAsPossible::~AsRigidAsPossible() {
 }
 
 void AsRigidAsPossible::clear() {
+	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	if (data_loaded) {
 		cholmod_free_triplet(&_triplet, &_c);
 		cholmod_free_sparse(&_At, &_c);
@@ -57,6 +58,7 @@ void AsRigidAsPossible::clear() {
 }
 
 void AsRigidAsPossible::init(const std::vector<glm::vec3>& _vertices, const std::vector<std::vector<int>>& _triangles) {
+	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	std::vector<Triangle> triangles(_triangles.size());
 	for (unsigned int i = 0; i < _triangles.size(); i++) {
 		triangles[i] = Triangle(_triangles[i][0], _triangles[i][1], _triangles[i][2]);
@@ -66,6 +68,7 @@ void AsRigidAsPossible::init(const std::vector<glm::vec3>& _vertices, const std:
 }
 
 void AsRigidAsPossible::init(const std::vector<glm::vec3>& _vertices, const std::vector<Triangle>& _triangles) {
+	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	vertices = _vertices;
 
 	edgesWeightMap.clear();
@@ -142,6 +145,7 @@ void AsRigidAsPossible::init(const std::vector<glm::vec3>& _vertices, const std:
 }
 
 void AsRigidAsPossible::setHandles(const std::vector<bool>& _handles) {
+	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	handles = _handles;
 
 	constrainedNb = 0;
@@ -198,6 +202,7 @@ std::vector<glm::vec3> AsRigidAsPossible::dummy_deformation(float threshold_on_b
 }
 
 void AsRigidAsPossible::setDefaultRotations() {
+	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	for (unsigned int i = 0; i < R.size(); i++)
 		gsl_matrix_free(R[i]);
 	R.clear();
@@ -211,6 +216,7 @@ void AsRigidAsPossible::setDefaultRotations() {
 }
 
 void AsRigidAsPossible::compute_deformation(std::vector<glm::vec3>& positions) {
+	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	if (constrainedNb == 0) {
 		return;
 	}
@@ -389,6 +395,7 @@ void AsRigidAsPossible::set_b_value(const int i, const glm::vec3& value) {
 }
 
 cholmod_dense* AsRigidAsPossible::solve_cholmod() {
+	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	cholmod_dense* x;
 	double alpha[] = {1, 1};
 	double beta[]  = {0, 0};
@@ -482,6 +489,7 @@ void AsRigidAsPossible::fill_cholmod_A() {
 }
 
 void AsRigidAsPossible::draw() {
+	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	for (unsigned int i = 0; i < vertices.size(); i++) {
 		glm::vec3& center = vertices[i];
 

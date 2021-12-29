@@ -187,6 +187,8 @@ public:
 
 	/// @brief Draws a set of spheres at the positions given in argument
 	void drawPointSpheres_quick(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, const std::vector<glm::vec3>& positions, float radius);
+	/// @brief Draws a set of colored spheres at the positions given in argument
+	void drawColoredPointSpheres_quick(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, const std::vector<glm::vec3>& positions, float radius, glm::vec4 color);
 
 	/// @brief Create a texture suited for framebuffer rendering, by passing the dimensions of it to the function.
 	GLuint updateFBOOutputs(glm::ivec2 dimensions, GLuint fb_handle, GLuint old_texture = 0);

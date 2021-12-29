@@ -207,6 +207,7 @@ const std::shared_ptr<RectangleSelection>& ARAPController::getRectangleSelection
 const std::size_t ARAPController::getCurrentlyEditedConstraint() const { return 0; }
 const std::vector<glm::vec3>& ARAPController::getImageConstraints() const { return this->image_constraints; }
 const std::vector<std::size_t>& ARAPController::getMeshConstraints() const { return this->mesh_constraints; }
+const std::vector<glm::vec3>& ARAPController::getCompoundedConstraints() const { return this->compounded_constraints; }
 
 void ARAPController::loadMeshFromFile() {
 	// Launch a file picker to get the name of an OFF file :
@@ -431,6 +432,30 @@ void ARAPController::loadConstraintDataFromFile(const std::string& file_name) {
 	std::cerr << "}\n";
 
 	constraints.close();
+
+	this->updateCompoundedConstraints();
+}
+
+void ARAPController::addImageConstraint(glm::vec3 img_ctx_pos) {
+	this->image_constraints.emplace_back(img_ctx_pos);
+	this->updateCompoundedConstraints();
+}
+
+void ARAPController::addMeshConstraint(std::size_t mesh_ctx_idx) {
+	this->mesh_constraints.emplace_back(mesh_ctx_idx);
+	this->updateCompoundedConstraints();
+}
+
+void ARAPController::updateCompoundedConstraints() {
+	this->compounded_constraints.resize(this->image_constraints.size() + this->mesh_constraints.size(), glm::vec3{.0f});
+	// Copy the image constraints :
+	std::copy(this->image_constraints.cbegin(), this->image_constraints.cend(), this->compounded_constraints.begin());
+	// Copy the mesh constraints :
+	const auto& vertices = this->mesh->getVertices();
+	for (std::size_t i = 0; i < this->mesh_constraints.size(); ++i) {
+		this->compounded_constraints[this->image_constraints.size() + i] = vertices[this->mesh_constraints[i]];
+	}
+	// TODO : set the index of the 'special' constraint (currently edited) here.
 }
 
 void ARAPController::deleteMeshData() {
@@ -484,6 +509,7 @@ void ARAPController::updateMeshDrawable() {
 	 */
 	this->viewer->makeCurrent();
 	this->scene->getDrawableMesh()->updateOnNextDraw();
+	this->updateCompoundedConstraints();
 	if (this->curve) {
 		this->curve->deformFromMeshData();
 		this->updateCurveDrawable();

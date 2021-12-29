@@ -4,9 +4,10 @@
 in vec4 out_position;
 in vec4 out_normal;
 
+uniform vec4 sphere_color;
+
 out vec4 color;
 
 void main() {
-	vec3 base_normal = abs(out_normal.xyz / 1.5f);
-	color = vec4(base_normal, 1.f);
+	color = sphere_color;
 }

@@ -35,7 +35,7 @@ public:
 	/// @brief Default ctor for the controller. Initializes the viewer and scene fields and creates the widget.
 	ARAPController(Viewer* main_viewer, Scene* _scene);
 	/// @brief Default dtor. Declared as `default`.
-	virtual ~ARAPController() = default;
+	~ARAPController() override = default;
 
 	/// @brief Very simple state machine keeping track of which buttons should be activated
 	enum States {
@@ -139,6 +139,9 @@ signals:
 protected:
 	/// @brief Slot called when the 'Load constraints' button is pressed.
 	void loadConstraintDataFromFile(const std::string& file_name);
+
+	/// @brief Updates the contents of the compounded constraints.
+	void updateCompoundedConstraints();
 
 	/// @brief Uploads the mesh data to the Scene.
 	void uploadMeshToScene();

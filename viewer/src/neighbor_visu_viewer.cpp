@@ -111,26 +111,9 @@ void Viewer::draw() {
 		this->scene->launchDeformation(this->meshManipulator.getActiveManipulatorAssignedIdx(), this->meshManipulator.getActiveManipulatorPos());
 	}
 
-	/*
-	std::vector<glm::vec3> spheres_to_draw(this->spheres);
-	std::size_t s;
-	auto mesh_ctx = this->scene->dummy_get_loaded_constraint_positions();
-	std::move(mesh_ctx.begin(), mesh_ctx.end(), std::back_inserter(spheres_to_draw));
-	if (this->scene->dummy_check_point_in_mesh_bb(this->temp_sphere_position, s)) {
-		spheres_to_draw.push_back(this->temp_sphere_position);
-	}
-
-	this->scene->drawPointSpheres_quick(mvMat, pMat, camPos, spheres_to_draw, this->sphere_size);
-	*/
-
 	if (this->arap_controller) {
-		auto img_ctx_arap = this->arap_controller->getImageConstraints();
-		auto mesh_ctx_arap = this->arap_controller->getMeshConstraints();
-		for (auto mesh_ctx_id : mesh_ctx_arap) {
-			img_ctx_arap.push_back(this->arap_controller->getMesh()->getVertices()[mesh_ctx_id]);
-		}
-
-		this->scene->drawPointSpheres_quick(mvMat, pMat, camPos, img_ctx_arap, this->sphere_size);
+		auto arap_constraints = this->arap_controller->getCompoundedConstraints();
+		this->scene->drawPointSpheres_quick(mvMat, pMat, camPos, arap_constraints, this->sphere_size);
 
 		auto inter = this->arap_controller->getMeshInterface();
 		auto manip = this->arap_controller->getARAPManipulator();
@@ -142,7 +125,11 @@ void Viewer::draw() {
 		if (is_light_enabled) { this->scene->glDisable(GL_LIGHTING); }
 
 		if (inter) {
-			inter->drawSelectedVertices();
+			//inter->drawSelectedVertices();
+			auto selected = inter->get_precomputed_selected_vertices();
+			auto fixed = inter->get_precomputed_fixed_vertices();
+			this->scene->drawColoredPointSpheres_quick(mvMat, pMat, camPos, selected, inter->getAverage_edge_halfsize()/2., glm::vec4{0.9f, 0.05f, 0.05f, 1.0f});
+			this->scene->drawColoredPointSpheres_quick(mvMat, pMat, camPos, fixed, inter->getAverage_edge_halfsize()/2., glm::vec4{0.05f, 0.9f, 0.05f, 1.0f});
 		}
 		if (manip) {
 			manip->draw();
@@ -321,7 +308,7 @@ void Viewer::keyPressEvent(QKeyEvent* e) {
 		VIEWER BEHAVIOUR
 		*/
 		case Qt::Key::Key_R:
-			this->scene->resetPositionResponse();
+			this->updateInfoFromScene();
 			break;
 		case Qt::Key::Key_T:
 			this->drawAxisOnTop = not this->drawAxisOnTop;
@@ -459,19 +446,19 @@ void Viewer::resetDeformation() {
 
 void Viewer::mousePressEvent(QMouseEvent* e) {
 	this->cursorPos_current = glm::ivec2{e->pos().x(), e->pos().y()};
-	// When the RMB causes the event, start the 'framesHeld' counter in select mode :
-	if (this->selectMode && e->button() == Qt::MouseButton::RightButton) {
+
+	// Ctrl+Shift+LClick is a selection in 3D mode, act accordingly :
+	auto ctrl_shift = Qt::KeyboardModifier::ShiftModifier | Qt::KeyboardModifier::ControlModifier;
+	if (not this->deformation_enabled && e->button() == Qt::MouseButton::LeftButton && (e->modifiers() & (ctrl_shift)) == (ctrl_shift)) {
 		this->framesHeld = 1;
 		this->cursorPos_last = this->cursorPos_current;
-		// update cursor position :
-		std::cerr << "Pressed RMB.\n";
 		this->guessMousePosition();
-		e->accept();	// stop the event from propagating upwards !
+		e->accept();	// stop the event from propagating further !
 		return;
 	}
 
 	// here we check for rectangleSelection but the rest of the mesh manip interface is also initialized (since they're all created together)
-	if (this->arap_controller->getRectangleSelection() && this->deformation_enabled) {
+	if (this->deformation_enabled && this->arap_controller->getRectangleSelection()) {
 		if (e->modifiers() & Qt::KeyboardModifier::ShiftModifier) {
 			if (this->arap_controller->getRectangleSelection()->isInactive()) {
 				this->arap_controller->getRectangleSelection()->activate();
@@ -507,22 +494,25 @@ void Viewer::mousePressEvent(QMouseEvent* e) {
 		}
 		this->update();
 	}
+
 	// If not in select mode, process the event normally :
 	QGLViewer::mousePressEvent(e);
 }
 
 void Viewer::mouseMoveEvent(QMouseEvent* e) {
 	// If tracking the mouse, update its position :
-	if (this->selectMode && this->framesHeld > 0) {
+	if (this->framesHeld > 0) {
 		this->cursorPos_last	= this->cursorPos_current;
 		this->cursorPos_current = glm::ivec2{e->pos().x(), e->pos().y()};
 		this->framesHeld += 1;
 		this->guessMousePosition();
+		e->accept();
+		return;
 	}
 	if (this->arap_controller->getRectangleSelection()) {
 		if (! this->arap_controller->getRectangleSelection()->isInactive()) {
 			this->arap_controller->getRectangleSelection()->mouseMoveEvent( e , camera() );
-			update();
+			e->accept();
 			return;
 		}
 	}
@@ -530,7 +520,7 @@ void Viewer::mouseMoveEvent(QMouseEvent* e) {
 }
 
 void Viewer::mouseReleaseEvent(QMouseEvent* e) {
-	if (e->buttons().testFlag(Qt::MouseButton::RightButton) == false) {
+	if (not e->buttons().testFlag(Qt::MouseButton::RightButton)) {
 		this->framesHeld = 0;
 	}
 
