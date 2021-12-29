@@ -213,6 +213,17 @@ const std::vector<glm::vec3>& ARAPController::getImageConstraints() const { retu
 const std::vector<std::size_t>& ARAPController::getMeshConstraints() const { return this->mesh_constraints; }
 const std::vector<glm::vec3>& ARAPController::getCompoundedConstraints() const { return this->compounded_constraints; }
 
+const std::vector<glm::vec3> ARAPController::getMeshConstraintsAsPositions() const {
+	// return default-initialized vectors if some pre-conditions aren't met :
+	if (this->mesh_constraints.empty()) { return {}; }
+	if (this->compounded_constraints.empty()) { return {}; }
+
+	using constraints_diff_t = std::decay_t<decltype(this->compounded_constraints)>::iterator::difference_type;
+	// return a vector spanning from the beginning of the compounded constraints to the end of the mesh ones, while keeping in
+	// mind the last element (the second _Iter) is NOT included in the vector created, it's treated as a past-the-end iterator :
+	return {this->compounded_constraints.cbegin(), this->compounded_constraints.cbegin()+static_cast<constraints_diff_t>(this->mesh_constraints.size())};
+}
+
 void ARAPController::updateMeshInfoLabel() {
 	//
 }
@@ -339,7 +350,13 @@ void ARAPController::setImagePointer(Image::Grid::Ptr& grid) {
 	std::cerr << "Estimated scaling and rotation : " << shift_image_translation << " and transfo : " << scaling_matrix << '\n';
 
 	this->scene->getDrawableMesh()->setTransformation(scaling_matrix);
+	this->scene->getDrawableMesh()->updateBoundingBox();
 	this->scene->getDrawableMesh()->updateOnNextDraw();
+	if (this->curve) {
+		this->scene->getDrawableCurve()->setTransformation(scaling_matrix);
+		this->scene->getDrawableCurve()->updateBoundingBox();
+		this->scene->getDrawableCurve()->updateOnNextDraw();
+	}
 	this->scene->updateBoundingBox();
 	this->viewer->doneCurrent();
 	this->viewer->updateInfoFromScene();
@@ -624,6 +641,13 @@ void ARAPController::arap_performAlignment() {
 		return;
 	}
 
+	// Check if mesh interface hasn't been created yet. If not, there might also be a transform
+	// not yet applied to the mesh : apply it and create the mesh interface & manipulators :
+	if (this->mesh_interface == nullptr) {
+		this->applyTransformation_Mesh();
+		this->initializeMeshInterface();
+	}
+
 	std::vector<glm::vec3> transforms;	  // estimated translations between current point position and ARAP handle on the image
 	auto current_transform = this->scene->getDrawableMesh()->getTransformation();
 
@@ -663,19 +687,15 @@ void ARAPController::arap_performAlignment() {
 	this->mesh->applyTransformation(current_transform);
 	// ... but the drawing of the mesh doesn't need to have it anymore :
 	this->scene->getDrawableMesh()->setTransformation(glm::mat4(1.f));
-	//
+
 	this->mesh_interface->loadAndInitialize(this->mesh->getVertices(), this->mesh->getTriangles());
-	/*
-	// TODO : see how to import these functions in the ARAPController !!!
-	this->updateMeshAndCurve_No_Image_Resizing();
-	this->updateMeshInterface();
-	 */
+
 	this->updateMeshDrawable();
-	this->updateCurveFromMesh();
 	if (this->curve) {
 		// not covered in updateMeshAndCurve() :
-		this->scene->getDrawableCurve()->setTransformation(this->scene->getDrawableMesh()->getTransformation());
+		this->scene->getDrawableCurve()->setTransformation(glm::mat4(1.f));
 	}
+	this->updateCurveFromMesh();
 }
 
 void ARAPController::arap_performScaling() {
@@ -688,6 +708,13 @@ void ARAPController::arap_performScaling() {
 	if (this->mesh_constraints.empty() || this->image_constraints.empty()) {
 		std::cerr << "Error : no constraints applied\n";
 		return;
+	}
+
+	// Check if mesh interface hasn't been created yet. If not, there might also be a transform
+	// not yet applied to the mesh : apply it and create the mesh interface & manipulators :
+	if (this->mesh_interface == nullptr) {
+		this->applyTransformation_Mesh();
+		this->initializeMeshInterface();
 	}
 
 	std::shared_ptr<Mesh> _mesh = this->mesh;
@@ -731,9 +758,12 @@ void ARAPController::arap_computeDeformation() {
 		std::cerr << "Error : no meshes loaded.\n";
 		return;
 	}
+
+	// Check if mesh interface hasn't been created yet. If not, there might also be a transform
+	// not yet applied to the mesh : apply it and create the mesh interface & manipulators :
 	if (this->mesh_interface == nullptr) {
-		std::cerr << "Error : no manip interface initialized !!!\n";
-		return;
+		this->applyTransformation_Mesh();
+		this->initializeMeshInterface();
 	}
 
 	std::cerr << "Generating vertex handles ..." << '\n';
@@ -787,15 +817,33 @@ void ARAPController::applyTransformation_Mesh() {
 
 	this->mesh->applyTransformation(transform);
 	draw->setTransformation(glm::mat4(1.f));
+	draw->updateBoundingBox();
+	draw->updateOnNextDraw();
+	if (this->curve) {
+		this->curve->deformFromMeshData();
+		this->curve->update();
+		auto curve_draw = this->scene->getDrawableCurve();
+		if (curve_draw) {
+			curve_draw->setTransformation(glm::mat4(1.f));
+			curve_draw->updateBoundingBox();
+			curve_draw->updateOnNextDraw();
+		}
+	}
 }
 
 void ARAPController::updateCurveFromMesh() {
-	std::cerr << __PRETTY_FUNCTION__ << '\n';
-	// TODO
+	if (this->curve == nullptr) { return; }
+	this->curve->deformFromMeshData();
+	this->curve->update();
+
+	auto curve_draw = this->scene->getDrawableCurve();
+	if (curve_draw) {
+		curve_draw->updateBoundingBox();
+		curve_draw->updateOnNextDraw();
+	}
 }
 
 void ARAPController::saveMesh() {
-	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	if (this->mesh == nullptr) { return; }
 	// Ask the user for the save file name & its path :
 	QString home_path = QDir::homePath();

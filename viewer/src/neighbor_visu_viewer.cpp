@@ -113,15 +113,25 @@ void Viewer::draw() {
 
 	if (this->arap_controller) {
 		std::size_t edited_constraint = this->arap_controller->getCurrentlyEditedConstraint();
-		auto arap_constraints = this->arap_controller->getCompoundedConstraints();
-		if (edited_constraint) {
+
+		// mesh might be transformed, get constraints positions and draw them quickly :
+		auto mesh_constraints = this->arap_controller->getMeshConstraintsAsPositions();
+		glm::mat4 transform = glm::mat4(1.f);
+		if (this->scene->getDrawableMesh()) {
+			transform = this->scene->getDrawableMesh()->getTransformation();
+		}
+		if (not mesh_constraints.empty() && edited_constraint) {
 			glm::vec4 default_color = glm::vec4{0.05f, 0.05f, 0.90f, 1.0f};
 			// gold-colored, per wikipedia guidelines (255/223/0 in RGB) :
 			glm::vec4 highlight_col = glm::vec4{255.f, 223.f, 0.0f, 1.0f} / glm::vec4{255.f, 255.f, 255.f, 1.0f};
-			this->scene->drawColoredPointSpheres_highlighted_quick(mvMat, pMat, camPos, arap_constraints, edited_constraint-1u, this->sphere_size, default_color, highlight_col);
+			this->scene->drawColoredPointSpheres_highlighted_quick(transform, mvMat, pMat, camPos, mesh_constraints, edited_constraint-1u, this->sphere_size, default_color, highlight_col);
 		} else {
-			this->scene->drawPointSpheres_quick(mvMat, pMat, camPos, arap_constraints, this->sphere_size);
+			this->scene->drawPointSpheres_quick(transform, mvMat, pMat, camPos, mesh_constraints, this->sphere_size);
 		}
+
+		// Draw image constraints, not subject to the potential mesh transform so get them and draw them with an identity matrix as a model transform:
+		auto img_ctx = this->arap_controller->getImageConstraints();
+		this->scene->drawPointSpheres_quick(glm::mat4(1.f), mvMat, pMat, camPos, img_ctx, this->sphere_size);
 
 		auto inter = this->arap_controller->getMeshInterface();
 		auto manip = this->arap_controller->getARAPManipulator();
@@ -136,8 +146,8 @@ void Viewer::draw() {
 			//inter->drawSelectedVertices();
 			auto selected = inter->get_precomputed_selected_vertices();
 			auto fixed = inter->get_precomputed_fixed_vertices();
-			this->scene->drawColoredPointSpheres_quick(mvMat, pMat, camPos, selected, inter->getAverage_edge_halfsize()/2., glm::vec4{0.9f, 0.05f, 0.05f, 1.0f});
-			this->scene->drawColoredPointSpheres_quick(mvMat, pMat, camPos, fixed, inter->getAverage_edge_halfsize()/2., glm::vec4{0.05f, 0.9f, 0.05f, 1.0f});
+			this->scene->drawColoredPointSpheres_quick(transform, mvMat, pMat, camPos, selected, inter->getAverage_edge_halfsize()/2., glm::vec4{0.9f, 0.05f, 0.05f, 1.0f});
+			this->scene->drawColoredPointSpheres_quick(transform, mvMat, pMat, camPos, fixed, inter->getAverage_edge_halfsize()/2., glm::vec4{0.05f, 0.9f, 0.05f, 1.0f});
 		}
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glEnable(GL_BLEND);
@@ -725,9 +735,15 @@ void Viewer::updateCameraPosition() {
 	auto radius = glm::length(bb.getDiagonal());
 	this->setSceneCenter(qglviewer::Vec(center.x, center.y, center.z));
 	this->setSceneRadius(radius * sceneRadiusMultiplier);
-	this->sphere_size = this->sceneRadius() * 2e-2f; // Good enough to see the spheres, while not taking too much space on screen.
-	if (this->arap_controller->getARAPManipulator()) {
-		this->arap_controller->getARAPManipulator()->setDisplayScale(this->camera()->sceneRadius()/9.f);
+	Mesh::Ptr mesh = nullptr;
+	if (this->arap_controller && (mesh = this->arap_controller->getMesh())) {
+		auto bb = mesh->getBB();
+		float mesh_rad = glm::length(bb[1] - bb[0]);
+		this->sphere_size = this->sceneRadius() * 2e-2f;
+		std::cerr << "Setting sphere size to " << std::setprecision(5) << this->sphere_size << '\n';
+		if (this->arap_controller->getARAPManipulator()) {
+			this->arap_controller->getARAPManipulator()->setDisplayScale(this->camera()->sceneRadius()/9.f);
+		}
 	}
 	this->showEntireScene();
 }

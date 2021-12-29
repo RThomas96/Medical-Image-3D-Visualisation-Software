@@ -106,6 +106,7 @@ public:
 	const std::vector<glm::vec3>& getImageConstraints() const;
 	/// @brief Get the currently loaded mesh constraints.
 	const std::vector<std::size_t>& getMeshConstraints() const;
+	const std::vector<glm::vec3> getMeshConstraintsAsPositions() const;
 	/// @brief Get the compounded constraints.
 	const std::vector<glm::vec3>& getCompoundedConstraints() const;
 

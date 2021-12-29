@@ -186,22 +186,22 @@ public:
 	void getTetraMeshPoints(std::vector<glm::vec3>& points);
 
 	/// @brief Draws a set of spheres at the positions given in argument
-	/// @param mvMat The view matrix from the camera
+	/// @param vMat The view matrix from the camera
 	/// @param pMat The projection matrix for the camera
 	/// @param camPos The camera position in world space
 	/// @param positions The sphere positions to draw
 	/// @param radius The sphere's radius when rendering it, in world-space units
-	void drawPointSpheres_quick(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, const std::vector<glm::vec3>& positions, float radius);
+	void drawPointSpheres_quick(glm::mat4 mMat, GLfloat vMat[], GLfloat pMat[], glm::vec3 camPos, const std::vector<glm::vec3>& positions, float radius);
 	/// @brief Draws a set of colored spheres at the positions given in argument
-	/// @param mvMat The view matrix from the camera
+	/// @param vMat The view matrix from the camera
 	/// @param pMat The projection matrix for the camera
 	/// @param camPos The camera position in world space
 	/// @param positions The sphere positions to draw
 	/// @param radius The sphere's radius when rendering it, in world-space units
 	/// @param color The color to set the spheres to
-	void drawColoredPointSpheres_quick(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, const std::vector<glm::vec3>& positions, float radius, glm::vec4 color);
+	void drawColoredPointSpheres_quick(glm::mat4 mMat, GLfloat vMat[], GLfloat pMat[], glm::vec3 camPos, const std::vector<glm::vec3>& positions, float radius, glm::vec4 color);
 	/// @brief Draws a set of colored spheres at the positions given in argument
-	/// @param mvMat The view matrix from the camera
+	/// @param vMat The view matrix from the camera
 	/// @param pMat The projection matrix for the camera
 	/// @param camPos The camera position in world space
 	/// @param positions The sphere positions to draw
@@ -209,7 +209,7 @@ public:
 	/// @param radius The sphere's radius when rendering it, in world-space units
 	/// @param color The color to set the spheres to
 	/// @param highlight_color The color to set the highlighted sphere to
-	void drawColoredPointSpheres_highlighted_quick(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, const std::vector<glm::vec3>& positions, std::size_t highlighted_sphere, float radius, glm::vec4 color, glm::vec4 highlight_color);
+	void drawColoredPointSpheres_highlighted_quick(glm::mat4 mMat, GLfloat vMat[], GLfloat pMat[], glm::vec3 camPos, const std::vector<glm::vec3>& positions, std::size_t highlighted_sphere, float radius, glm::vec4 color, glm::vec4 highlight_color);
 
 	/// @brief Create a texture suited for framebuffer rendering, by passing the dimensions of it to the function.
 	GLuint updateFBOOutputs(glm::ivec2 dimensions, GLuint fb_handle, GLuint old_texture = 0);

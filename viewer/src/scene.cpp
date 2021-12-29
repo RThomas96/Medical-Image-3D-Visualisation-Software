@@ -3182,24 +3182,26 @@ void Scene::generateSphereData() {
 	this->sphere_size_to_draw = indices.size();
 }
 
-void Scene::drawPointSpheres_quick(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const std::vector<glm::vec3>& positions, float radius) {
+void Scene::drawPointSpheres_quick(glm::mat4 mMat, GLfloat* vMat, GLfloat* pMat, glm::vec3 camPos, const std::vector<glm::vec3>& positions, float radius) {
 	glm::vec4 sphere_color = glm::vec4{0.05f, 0.05f, 0.90f, 1.0f};
-	this->drawColoredPointSpheres_quick(mvMat, pMat, camPos, positions, radius, sphere_color);
+	this->drawColoredPointSpheres_quick(mMat, vMat, pMat, camPos, positions, radius, sphere_color);
 }
 
-void Scene::drawColoredPointSpheres_quick(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const std::vector<glm::vec3>& positions, float radius, glm::vec4 sphere_color) {
+void Scene::drawColoredPointSpheres_quick(glm::mat4 mMat, GLfloat* vMat, GLfloat* pMat, glm::vec3 camPos, const std::vector<glm::vec3>& positions, float radius, glm::vec4 sphere_color) {
 	if (positions.empty()) { return; }
 	this->glUseProgram(this->programHandle_sphere);
 	this->glBindVertexArray(this->vaoHandle_spheres);
 
 	auto location_proj	= this->glGetUniformLocation(this->programHandle_sphere, "proj");
 	auto location_view	= this->glGetUniformLocation(this->programHandle_sphere, "view");
+	auto location_model = this->glGetUniformLocation(this->programHandle_sphere, "model");
 	auto location_scale = this->glGetUniformLocation(this->programHandle_sphere, "scale");
 	auto location_pos	= this->glGetUniformLocation(this->programHandle_sphere, "position");
 	auto location_sphere_color = this->glGetUniformLocation(this->programHandle_sphere, "sphere_color");
 
 	this->glUniformMatrix4fv(location_proj, 1, GL_FALSE, pMat);
-	this->glUniformMatrix4fv(location_view, 1, GL_FALSE, mvMat);
+	this->glUniformMatrix4fv(location_view, 1, GL_FALSE, vMat);
+	this->glUniformMatrix4fv(location_model, 1, GL_FALSE, glm::value_ptr(mMat));
 	this->glUniform1f(location_scale, radius);
 	this->glUniform4fv(location_sphere_color, 1, glm::value_ptr(sphere_color));
 
@@ -3215,19 +3217,21 @@ void Scene::drawColoredPointSpheres_quick(GLfloat* mvMat, GLfloat* pMat, glm::ve
 	this->glUseProgram(0);
 }
 
-void Scene::drawColoredPointSpheres_highlighted_quick(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const std::vector<glm::vec3>& positions, std::size_t highlighted_index, float radius, glm::vec4 sphere_color, glm::vec4 highlight_color) {
+void Scene::drawColoredPointSpheres_highlighted_quick(glm::mat4 mMat, GLfloat* vMat, GLfloat* pMat, glm::vec3 camPos, const std::vector<glm::vec3>& positions, std::size_t highlighted_index, float radius, glm::vec4 sphere_color, glm::vec4 highlight_color) {
 	if (positions.empty()) { return; }
 	this->glUseProgram(this->programHandle_sphere);
 	this->glBindVertexArray(this->vaoHandle_spheres);
 
 	auto location_proj	= this->glGetUniformLocation(this->programHandle_sphere, "proj");
 	auto location_view	= this->glGetUniformLocation(this->programHandle_sphere, "view");
+	auto location_model = this->glGetUniformLocation(this->programHandle_sphere, "model");
 	auto location_scale = this->glGetUniformLocation(this->programHandle_sphere, "scale");
 	auto location_pos	= this->glGetUniformLocation(this->programHandle_sphere, "position");
 	auto location_sphere_color = this->glGetUniformLocation(this->programHandle_sphere, "sphere_color");
 
 	this->glUniformMatrix4fv(location_proj, 1, GL_FALSE, pMat);
-	this->glUniformMatrix4fv(location_view, 1, GL_FALSE, mvMat);
+	this->glUniformMatrix4fv(location_view, 1, GL_FALSE, vMat);
+	this->glUniformMatrix4fv(location_model, 1, GL_FALSE, glm::value_ptr(mMat));
 	this->glUniform1f(location_scale, radius);
 	this->glUniform4fv(location_sphere_color, 1, glm::value_ptr(sphere_color));
 
