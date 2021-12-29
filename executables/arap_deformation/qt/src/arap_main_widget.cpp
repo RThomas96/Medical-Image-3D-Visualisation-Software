@@ -298,7 +298,6 @@ void ARAPMainWidget::showHelper() {
 }
 
 void ARAPMainWidget::showLoader() {
-	std::cerr << "ARAP controller on loader creation : " << this->arap_controller << '\n';
 	if (this->loaderWidget == nullptr) {
 		this->loaderWidget = new GridLoaderWidget(this->scene, this->viewer, this->controlPanel);
 		QObject::connect(this->loaderWidget, &QWidget::destroyed, [this]() {

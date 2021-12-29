@@ -98,26 +98,20 @@ ADD_LIBRARY(VisualisationWidgets STATIC
 	./qt/include/grid_detailed_view.hpp
 	./qt/include/grid_list_view.hpp
 	./qt/include/neighbor_visu_main_widget.hpp
-	./qt/include/scene_control.hpp
 	./qt/include/qt_proxies.hpp
 	./qt/include/viewer_header.hpp
 	./qt/include/visu_box_controller.hpp
 	./qt/include/opengl_debug_log.hpp
-	./qt/include/double_slider.hpp
-	./qt/include/range_slider.hpp
 	./qt/include/user_settings_widget.hpp
 
 	./qt/src/grid_control.cpp
 	./qt/src/grid_detailed_view.cpp
 	./qt/src/grid_list_view.cpp
 	./qt/src/neighbor_visu_main_widget.cpp
-	./qt/src/scene_control.cpp
 	./qt/src/qt_proxies.cpp
 	./qt/src/viewer_header.cpp
 	./qt/src/visu_box_controller.cpp
 	./qt/src/opengl_debug_log.cpp
-	./qt/src/double_slider.cpp
-	./qt/src/range_slider.cpp
 	./qt/src/user_settings_widget.cpp
 	./qt/src/viewer_helper.cpp
 	)
@@ -152,8 +146,11 @@ ADD_EXECUTABLE(neighbor_visu
 	./viewer/include/viewer_structs.hpp
 	./third_party/primitive/Sphere.h
 	./qt/include/GLmanipulator.hpp
+	./qt/include/scene_control.hpp
 	./qt/include/manipulator.hpp
 	./qt/include/loader_widget.hpp
+	./qt/include/double_slider.hpp
+	./qt/include/range_slider.hpp
 
 	# Main file :
 	./neighbor_visu_main.cpp
@@ -163,10 +160,13 @@ ADD_EXECUTABLE(neighbor_visu
 	./viewer/src/planar_viewer.cpp
 	./viewer/src/neighbor_visu_viewer.cpp
 	./viewer/src/viewer_structs.cpp
+	./qt/src/scene_control.cpp
 	./third_party/primitive/Sphere.cpp
 	./qt/src/GLmanipulator.cpp
 	./qt/src/manipulator.cpp
 	./qt/src/loader_widget.cpp
+	./qt/src/double_slider.cpp
+	./qt/src/range_slider.cpp
 	)
 TARGET_COMPILE_OPTIONS(neighbor_visu
 	# Set so CMake (more precisely clang/gcc) will not print 30-80 warnings about QGLViewer's

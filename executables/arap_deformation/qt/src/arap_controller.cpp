@@ -194,6 +194,9 @@ void ARAPController::initSignals() {
 			this->enableDeformation();
 		}
 	});
+
+	QObject::connect(this, &ARAPController::imageIsLoaded, this, &ARAPController::updateGridInfoLabel);
+	QObject::connect(this, &ARAPController::meshIsLoaded, this, &ARAPController::updateGridInfoLabel);
 }
 
 const Mesh::Ptr& ARAPController::getMesh() const { return this->mesh; }
@@ -208,6 +211,14 @@ const std::size_t ARAPController::getCurrentlyEditedConstraint() const { return 
 const std::vector<glm::vec3>& ARAPController::getImageConstraints() const { return this->image_constraints; }
 const std::vector<std::size_t>& ARAPController::getMeshConstraints() const { return this->mesh_constraints; }
 const std::vector<glm::vec3>& ARAPController::getCompoundedConstraints() const { return this->compounded_constraints; }
+
+void ARAPController::updateMeshInfoLabel() {
+	//
+}
+
+void ARAPController::updateGridInfoLabel() {
+	//
+}
 
 void ARAPController::loadMeshFromFile() {
 	// Launch a file picker to get the name of an OFF file :
@@ -332,6 +343,7 @@ void ARAPController::setImagePointer(Image::Grid::Ptr& grid) {
 	this->viewer->doneCurrent();
 	this->viewer->updateInfoFromScene();
 	this->setDeformationButtonsState(States::ImageLoaded);
+	emit this->imageIsLoaded();
 }
 
 void ARAPController::loadConstraintsFromFile() {
@@ -509,6 +521,7 @@ void ARAPController::updateMeshDrawable() {
 	 */
 	this->viewer->makeCurrent();
 	this->scene->getDrawableMesh()->updateOnNextDraw();
+	this->scene->getDrawableMesh()->updateBoundingBox();
 	this->updateCompoundedConstraints();
 	if (this->curve) {
 		this->curve->deformFromMeshData();
@@ -522,6 +535,7 @@ void ARAPController::updateCurveDrawable() {
 	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	if (this->curve) {
 		this->scene->getDrawableCurve()->updateOnNextDraw();
+		this->scene->getDrawableCurve()->updateBoundingBox();
 	}
 }
 

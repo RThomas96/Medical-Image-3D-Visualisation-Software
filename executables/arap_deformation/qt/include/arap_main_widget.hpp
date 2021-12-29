@@ -8,7 +8,7 @@
 #include "../../qt/include/grid_control.hpp"
 #include "./loader_widget.hpp"
 #include "../../qt/include/opengl_debug_log.hpp"
-#include "../../qt/include/scene_control.hpp"
+#include "./scene_control.hpp"
 #include "../../qt/include/user_settings_widget.hpp"
 #include "../../qt/include/arap_controller.hpp"
 

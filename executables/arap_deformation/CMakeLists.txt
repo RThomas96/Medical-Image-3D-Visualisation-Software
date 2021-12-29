@@ -13,6 +13,9 @@ ADD_EXECUTABLE(arap_deformation
 	qt/include/arap_controller.hpp
 	qt/include/arap_main_widget.hpp
 	qt/include/loader_widget.hpp
+	qt/include/scene_control.hpp
+	qt/include/double_slider.hpp
+	qt/include/range_slider.hpp
 
 	# Main file :
 	./arap_main.cpp
@@ -28,6 +31,9 @@ ADD_EXECUTABLE(arap_deformation
 	qt/src/arap_controller.cpp
 	qt/src/arap_main_widget.cpp
 	qt/src/loader_widget.cpp
+	qt/src/scene_control.cpp
+	qt/src/double_slider.cpp
+	qt/src/range_slider.cpp
 )
 TARGET_COMPILE_OPTIONS(arap_deformation
 	# Set so CMake (more precisely clang/gcc) will not print 30-80 warnings about QGLViewer's

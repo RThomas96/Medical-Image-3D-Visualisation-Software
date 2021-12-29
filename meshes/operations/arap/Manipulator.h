@@ -144,6 +144,9 @@ public:
 				float CZ[3] = {1.f , 1.f , 0.f};
 				float Selection[3] = {1.f , 0.f , 0.f};
 
+				float old_line_width = .0f;
+				glGetFloatv(GL_LINE_WIDTH, &old_line_width);
+
 				glDisable(GL_LIGHTING);
 				glLineWidth( 5.f );
 				glm::vec3 p;
@@ -245,6 +248,9 @@ public:
 				BasicGL::drawSphere(p[0],p[1],p[2],display_scale/15,5,5);
 				p = Origine - (1.5f * Zscale * display_scale) * RepZ;
 				BasicGL::drawSphere(p[0],p[1],p[2],display_scale/15,5,5);
+
+				// restore old line width !
+				glLineWidth(old_line_width);
 			}
 		}
 	}
