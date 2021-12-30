@@ -32,6 +32,18 @@ namespace Image {
 		return this->pImpl != nullptr;
 	}
 
+	void Grid::setImageName(std::string new_img_name) {
+		if (this->pImpl) {
+			this->pImpl->setImageName(new_img_name);
+		}
+	}
+
+	void Grid::setVoxelDimensions(glm::vec3 new_voxel_dims) {
+		if (this->pImpl) {
+			this->pImpl->setVoxelDimensions(new_voxel_dims);
+		}
+	}
+
 	ThreadedTask::Ptr Grid::updateInfoFromDisk(const std::vector<std::vector<std::string>>& filenames) {
 		ThreadedTask::Ptr task = std::make_shared<ThreadedTask>();
 		if (this->pImpl) {

@@ -27,6 +27,11 @@ namespace Image {
 			this->stack_base_name = _user_defined_name_;
 		}
 
+		void TIFFReader::setVoxelDimensions(glm::vec3 new_voxel_dimensions) {
+			this->voxel_dimensions = new_voxel_dimensions;
+			// TODO : recompute bounding box here ???
+		}
+
 		std::size_t TIFFReader::getVoxelDimensionality() const { return this->voxel_dimensionality; }
 
 		glm::vec3 TIFFReader::getVoxelDimensions() const { return this->voxel_dimensions; }

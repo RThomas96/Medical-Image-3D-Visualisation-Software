@@ -66,6 +66,9 @@ namespace Image {
 			/// @brief Allows to set a user-defined name for this acquisition.
 			virtual void setImageName(std::string& _user_defined_name_) override;
 
+			/// @brief Allows the user to set the voxel dimensions of the grid, if the ones auto-detected is not right.
+			virtual void setVoxelDimensions(glm::vec3 new_voxel_dimensions) override;
+
 			/// @brief Returns the bounding box surrounding the image in its own space.
 			virtual BoundingBox_General<float> getBoundingBox(void) const override;
 

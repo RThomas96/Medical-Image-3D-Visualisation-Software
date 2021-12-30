@@ -58,6 +58,11 @@ namespace Image {
 		}
 	}
 
+	void GenericImageReaderSubregion::setVoxelDimensions(glm::vec3 new_voxel_dimensions) {
+		throw std::logic_error("Error : cannot set voxel dimensions on a sub-region of a grid ! Change the voxel dimensions of the top-level parent instead.");
+	}
+
+
 	BoundingBox_General<float> GenericImageReaderSubregion::getBoundingBox() const {
 		// get origin and its opposite corner from voxel indices to image coords :
 		glm::vec3 origin_position	= glm::convert_to<float>(this->sampling_region_origin) * this->getVoxelDimensions();

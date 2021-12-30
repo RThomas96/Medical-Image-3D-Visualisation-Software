@@ -548,6 +548,8 @@ void GridLoaderWidget::loadGrid_newAPI() {
 	float a				= this->dsb_transformationA->value();
 	auto transfo_matrix = computeTransfoShear_newAPI(a, this->_testing_grid, vxdims);
 
+	this->_testing_grid->setVoxelDimensions(vxdims);
+
 	MatrixTransform::Ptr grid_transform = std::make_shared<MatrixTransform>(transfo_matrix);
 	this->_testing_grid->addTransform(grid_transform);
 

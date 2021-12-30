@@ -78,6 +78,18 @@ namespace Image {
 
 		//////////////////////////////////////////////////////
 		//													//
+		//            SETTERS FOR GRID PROPERTIES           //
+		//													//
+		//////////////////////////////////////////////////////
+
+		/// @brief Allows to set the name of the image by the user.
+		void setImageName(std::string new_img_name);
+
+		/// @brief Allows to override the value of the voxel dimensions if the auto-detected one was not valid.
+		void setVoxelDimensions(glm::vec3 new_voxel_dims);
+
+		//////////////////////////////////////////////////////
+		//													//
 		//            GETTERS FOR GRID PROPERTIES           //
 		//													//
 		//////////////////////////////////////////////////////

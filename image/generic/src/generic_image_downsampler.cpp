@@ -43,6 +43,10 @@ namespace Image {
 		}
 	}
 
+	void GenericImageDownsampler::setVoxelDimensions(glm::vec3 new_voxel_dimensions) {
+		throw std::logic_error("Error : cannot set voxel dimensions on a downsampled grid ! Change the voxel dimensions of the top-level parent instead.");
+	}
+
 	BoundingBox_General<float> GenericImageDownsampler::getBoundingBox() const {
 		// This class only downsamples, so the BB is the same as the parent :
 		return this->parent_grid->getBoundingBox();
