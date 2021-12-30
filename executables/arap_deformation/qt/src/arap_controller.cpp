@@ -32,9 +32,11 @@ ARAPController::ARAPController(Viewer* _v, Scene* _s) {
 	this->button_load_mesh = nullptr;
 	this->button_load_constraints = nullptr;
 	this->button_load_curve = nullptr;
+	this->button_load_second_curve = nullptr;
 
 	this->button_save_mesh = nullptr;
 	this->button_save_curve = nullptr;
+	this->button_save_json = nullptr;
 
 	this->button_align_arap = nullptr;
 	this->button_scale_arap = nullptr;
@@ -50,6 +52,12 @@ ARAPController::ARAPController(Viewer* _v, Scene* _s) {
 	this->checkbox_enable_deformation = nullptr;
 
 	this->dir_last_accessed = QDir::homePath();
+
+	this->mesh_file_name = "";
+	this->mesh_file_path = "";
+	this->curve_file_path = "";
+	this->curve_file_path = "";
+	this->generated_mesh_save_path = "";
 
 	this->init();
 }
@@ -69,6 +77,7 @@ void ARAPController::init() {
 
 	this->button_save_mesh = new QPushButton("Save mesh");
 	this->button_save_curve = new QPushButton("Save curve");
+	this->button_save_json = new QPushButton("Save curve as JSON");
 
 	this->button_align_arap = new QPushButton("Align constraints");
 	this->button_scale_arap = new QPushButton("Scale constraints");
@@ -138,6 +147,7 @@ void ARAPController::initLayout() {
 	widget_layout->addWidget(label_save);
 	widget_layout->addWidget(this->button_save_mesh);
 	widget_layout->addWidget(this->button_save_curve);
+	widget_layout->addWidget(this->button_save_json);
 
 	this->setLayout(widget_layout);
 }
@@ -161,6 +171,7 @@ void ARAPController::updateButtonsActivated() {
 	this->button_start_arap->setEnabled(false);
 	this->button_save_mesh->setEnabled(false);
 	this->button_save_curve->setEnabled(false);
+	this->button_save_json->setEnabled(false);
 	this->button_manip_select_all->setEnabled(false);
 	this->button_manip_select_none->setEnabled(false);
 	this->checkbox_enable_deformation->setEnabled(false);
@@ -186,6 +197,7 @@ void ARAPController::updateButtonsActivated() {
 	}
 	if (this->state >= States::Deformed) {
 		this->button_load_second_curve->setEnabled(true);
+		this->button_save_json->setEnabled(true);
 	}
 	// Re-enable signals for widgets we possibly changed the state of :
 	this->checkbox_enable_deformation->blockSignals(false);
@@ -201,6 +213,7 @@ void ARAPController::initSignals() {
 	// Buttons to save the data :
 	QObject::connect(this->button_save_mesh, &QPushButton::pressed, this, &ARAPController::saveMesh);
 	QObject::connect(this->button_save_curve, &QPushButton::pressed, this, &ARAPController::saveCurve);
+	QObject::connect(this->button_save_json, &QPushButton::pressed, this, &ARAPController::saveCurveAsJSON);
 	// Buttons to control the ARAP deformation :
 	QObject::connect(this->button_align_arap, &QPushButton::pressed, this, &ARAPController::arap_performAlignment);
 	QObject::connect(this->button_scale_arap, &QPushButton::pressed, this, &ARAPController::arap_performScaling);
@@ -1013,15 +1026,20 @@ void ARAPController::updateCurveFromMesh() {
 void ARAPController::saveMesh() {
 	if (this->mesh == nullptr) { return; }
 	// Ask the user for the save file name & its path :
-	QString home_path = QDir::homePath();
 	QString selected;
 	QString q_file_name = "";
-	q_file_name = QFileDialog::getSaveFileName(nullptr, "Save OFF file", home_path, "OFF files (*.off)", &selected, QFileDialog::DontUseNativeDialog);
+	q_file_name = QFileDialog::getSaveFileName(nullptr, "Save OFF file", this->dir_last_accessed, "OFF files (*.off)", &selected, QFileDialog::DontUseNativeDialog);
 	// Check if the user didn't cancel the dialog :
 	if (q_file_name.isEmpty()) {
 		std::cerr << "Error : no filename chosen.\n";
 		return;
 	}
+	if (not q_file_name.endsWith(".off", Qt::CaseSensitivity::CaseInsensitive)) {
+		q_file_name += ".off";
+	}
+	this->dir_last_accessed = QFileInfo(q_file_name).absolutePath();
+
+	this->generated_mesh_save_path = QFileInfo(q_file_name).absoluteFilePath();
 
 	std::ofstream myfile;
 	std::string filename = q_file_name.toStdString();
@@ -1052,15 +1070,18 @@ void ARAPController::saveMesh() {
 void ARAPController::saveCurve() {
 	if (this->curve == nullptr) { return; }
 	// Ask the user for the save file name & its path :
-	QString home_path = QDir::homePath();
 	QString selected;
 	QString q_file_name = "";
-	q_file_name = QFileDialog::getSaveFileName(nullptr, "Save OBJ file", home_path, "Wavefront OBJ files (*.obj)", &selected, QFileDialog::DontUseNativeDialog);
+	q_file_name = QFileDialog::getSaveFileName(nullptr, "Save OBJ file", this->dir_last_accessed, "Wavefront OBJ files (*.obj)", &selected, QFileDialog::DontUseNativeDialog);
 	// Check if the user didn't cancel the dialog :
 	if (q_file_name.isEmpty()) {
 		std::cerr << "Error : no filename chosen.\n";
 		return;
 	}
+	if (not q_file_name.endsWith(".obj", Qt::CaseSensitivity::CaseInsensitive)) {
+		q_file_name += ".obj";
+	}
+	this->dir_last_accessed = QFileInfo(q_file_name).absolutePath();
 
 	std::ofstream myfile;
 	std::string filename = q_file_name.toStdString();
@@ -1076,6 +1097,67 @@ void ARAPController::saveCurve() {
 	}
 
 	myfile.close();
+	return;
+}
+
+void ARAPController::saveCurveAsJSON() {
+	if (this->mesh == nullptr || this->curve == nullptr) {
+		return;
+	}
+
+	if (this->generated_mesh_save_path.isEmpty()) {
+		QMessageBox::information(this, "Warning", "Warning : you have not yet saved the mesh. In order to save this curve as a JSON file, you must first choose a save location for the mesh.");
+		this->saveMesh();
+		if (this->generated_mesh_save_path.isEmpty()) {
+			QMessageBox::information(this, "Operation aborted", "Saving of the curve as a JSON file was aborted.");
+			return;
+		}
+	}
+
+	// Ask for the file path to save it to :
+	QString selected;
+	QString q_file_name = "";
+	q_file_name = QFileDialog::getSaveFileName(nullptr, "Save JSON file", this->dir_last_accessed, "JSON files (*.json)", &selected, QFileDialog::DontUseNativeDialog);
+	// Check if the user didn't cancel the dialog :
+	if (q_file_name.isEmpty()) {
+		std::cerr << "Error : no filename chosen.\n";
+		return;
+	}
+	if (not q_file_name.endsWith(".json", Qt::CaseSensitivity::CaseInsensitive)) {
+		q_file_name += ".json";
+	}
+	this->dir_last_accessed = QFileInfo(q_file_name).absolutePath();
+
+	std::function<void(QJsonArray&, glm::vec3)> vec3ToJSON = [](QJsonArray& parent, glm::vec3 v) -> void {
+		QJsonArray vec_array;
+		vec_array.push_back(v.x);
+		vec_array.push_back(v.y);
+		vec_array.push_back(v.z);
+		parent.push_back(vec_array);
+	};
+
+	// Top level object :
+	QJsonObject curve_object;
+	// Object with "control points" id :
+	QJsonArray ctrl_pts_array;
+	// Add all points to the curve JSON array :
+	for (const auto& v : this->curve->getPositions()) {
+		vec3ToJSON(ctrl_pts_array, v);
+	}
+	// Add ctrl points :
+	curve_object.insert("control points", ctrl_pts_array);
+	curve_object.insert("mesh file", QDir(this->dir_last_accessed).relativeFilePath(this->generated_mesh_save_path));
+
+	QJsonDocument doc(curve_object);
+	std::ofstream out_file(q_file_name.toStdString());
+	if (not out_file.is_open()) {
+		std::cerr << "Error : cannot open out JSON file.\n";
+		return;
+	}
+	out_file << doc.toJson().toStdString();
+	out_file.close();
+
+	std::cerr << "Wrote JSON file at location \"" << q_file_name.toStdString() << "\" ...\n";
 	return;
 }
 

@@ -182,6 +182,8 @@ protected slots:
 	void saveMesh();
 	/// @brief Slot called whenever the 'Save curve' button is pressed.
 	void saveCurve();
+	/// @brief Save the curve generated in the program as a JSON file, to use with Bianca's program.
+	void saveCurveAsJSON();
 
 	/**
 	 * Additionnal stuff :
@@ -213,6 +215,8 @@ protected:
 	QString curve_file_name;	///< The curve file name
 	QString curve_file_path;	///< The curve file path
 
+	QString generated_mesh_save_path;	///< The path of the filename for the generated mesh !
+
 	/**
 	 * 	------- LATER -------
 	 * Buttons/sliders for :
@@ -230,6 +234,7 @@ protected:
 
 	QPushButton* button_save_mesh;	///< Button to save the mesh to a file.
 	QPushButton* button_save_curve;	///< Button to save the curve to a file.
+	QPushButton* button_save_json;	///< Button to save the curve as a JSON file, with information about the mesh.
 
 	QPushButton* button_align_arap;	///< Button to align the control points of the ARAP deformation.
 	QPushButton* button_scale_arap;	///< Button to scale roughly the two BB of the control points of the ARAP deformation.
