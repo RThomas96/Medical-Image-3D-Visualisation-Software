@@ -60,7 +60,6 @@ Scene::Scene() :
 	this->context			= nullptr;
 	this->debugLog			= nullptr;
 	this->glOutput			= nullptr;
-	this->controlPanel		= nullptr;
 	this->gridControl		= nullptr;
 	this->visuBoxController = nullptr;
 	this->programStatusBar	= nullptr;
@@ -1778,6 +1777,18 @@ void Scene::resizeMeshForGrid() {
 		std::cerr << "Error : no grids loaded\n";
 	}
 #endif
+}
+
+void Scene::updateTextureLimits_override(const Image::Grid::Ptr& grid) {
+	auto min = std::numeric_limits<double>::lowest();
+	auto max = std::numeric_limits<double>::max();
+	glm::dvec2 limits{.0,.0}, final_bounds{max, min};
+	for (std::size_t v = 0; v < grid->getVoxelDimensionality(); ++v) {
+		grid->getRangeValues(v, limits);
+		final_bounds.x = std::min(final_bounds.x, limits.x);
+		final_bounds.y = std::max(final_bounds.y, limits.y);
+	}
+	this->textureBounds0 = glm::convert_to<NewAPI_GridGLView::data_2::value_type>(final_bounds);
 }
 
 void Scene::getTetraMeshPoints(std::vector<glm::vec3>& points) {

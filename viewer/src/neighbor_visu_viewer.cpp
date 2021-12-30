@@ -29,13 +29,10 @@ Viewer::Viewer(Scene* const scene, QStatusBar* _program_bar, QWidget* parent) :
 	this->refreshTimer->setSingleShot(false);
 	connect(this->refreshTimer, &QTimer::timeout, this, &Viewer::updateView);
 
-	this->drawVolumetric	= true;
-	this->shouldCapture		= false;
 	this->renderTarget		= 0;
 	this->selectMode		= false;
 	this->fbSize			= glm::ivec2{0, 0};
 	this->cursorPos_current = glm::ivec2{0, 0};
-	this->cursorPos_last	= glm::ivec2{0, 0};
 	this->framesHeld		= 0;
 	this->posRequest		= glm::ivec2{-1, -1};
 	this->drawAxisOnTop		= false;
@@ -167,6 +164,15 @@ void Viewer::draw() {
 void Viewer::saveMesh() { this->scene->dummy_save_mesh_to_file(); }
 void Viewer::saveCurve() { this->scene->dummy_save_curve_to_file(); }
 
+void Viewer::enableControlPanel(bool should_enable) {
+	emit this->enableImageControl(should_enable);
+}
+
+void Viewer::updateSceneTextureLimits() {
+	this->scene->updateTextureLimits_override(this->arap_controller->getImage());
+	emit this->overrideTextureLimits(this->scene->getMinTexValue(), this->scene->getMaxTexValue());
+}
+
 void Viewer::rectangleSelection_add(QRectF selection, bool moving) {
 	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	if (this->arap_controller->getMeshInterface() == nullptr) { return; }
@@ -252,8 +258,8 @@ void Viewer::arapManipulator_released() {
 }
 
 void Viewer::initializeARAPInterface() {
-	this->makeCurrent();
 	/*
+	this->makeCurrent();
 	if (this->arap_controller->getARAPManipulator() == nullptr) {
 		this->arap_controller->getARAPManipulator() = std::make_shared<SimpleManipulator>();
 		QObject::connect(this->arap_controller->getARAPManipulator().get(), &SimpleManipulator::moved, this, &Viewer::arapManipulator_moved);
@@ -276,8 +282,8 @@ void Viewer::initializeARAPInterface() {
 		this->arap_controller->getMeshInterface()->loadAndInitialize(mesh->getVertices(), mesh->getTriangles());
 		std::cerr << "Initialized mesh interface.\n";
 	}
-	*/
 	this->doneCurrent();
+	*/
 }
 
 void Viewer::initializeARAPManipulationInterface() {
@@ -467,7 +473,6 @@ void Viewer::mousePressEvent(QMouseEvent* e) {
 	auto ctrl_shift = Qt::KeyboardModifier::ShiftModifier | Qt::KeyboardModifier::ControlModifier;
 	if (not this->deformation_enabled && e->button() == Qt::MouseButton::LeftButton && (e->modifiers() & (ctrl_shift)) == (ctrl_shift)) {
 		this->framesHeld = 1;
-		this->cursorPos_last = this->cursorPos_current;
 		this->guessMousePosition();
 		e->accept();	// stop the event from propagating further !
 		return;
@@ -518,7 +523,6 @@ void Viewer::mousePressEvent(QMouseEvent* e) {
 void Viewer::mouseMoveEvent(QMouseEvent* e) {
 	// If tracking the mouse, update its position :
 	if (this->framesHeld > 0) {
-		this->cursorPos_last	= this->cursorPos_current;
 		this->cursorPos_current = glm::ivec2{e->pos().x(), e->pos().y()};
 		this->framesHeld += 1;
 		this->guessMousePosition();

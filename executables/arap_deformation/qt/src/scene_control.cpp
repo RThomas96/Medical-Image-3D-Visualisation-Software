@@ -124,15 +124,10 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, QWidget* parent) :
 
 	QColor r					= Qt::GlobalColor::red;
 	QColor b					= Qt::GlobalColor::blue;
-	QColor d					= Qt::GlobalColor::darkCyan;
-	QColor y					= Qt::GlobalColor::yellow;
 	this->colorbutton_red_min	= new ColorButton(r);
 	this->colorbutton_red_max	= new ColorButton(b);
 	this->sceneToControl->setColor0(r.redF(), r.greenF(), r.blueF());
 	this->sceneToControl->setColor1(b.redF(), b.greenF(), b.blueF());
-	this->sceneToControl->setColor0Alternate(d.redF(), d.greenF(), d.blueF());
-	this->sceneToControl->setColor1Alternate(y.redF(), y.greenF(), y.blueF());
-
     this->sceneToControl->setRGBMode(RGBMode::RedOnly);
 
 	this->rangeslider_red->setRange(0, this->max - 1);
@@ -160,15 +155,17 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, QWidget* parent) :
 	grid->setRowStretch(1, 0);
 	this->setLayout(grid);
 
-	this->initSignals();
-
-	//	this->layout_widgets_red->setSizeConstraint(QLayout::SizeConstraint::SetFixedSize);
-	//	this->layout_widgets_green->setSizeConstraint(QLayout::SizeConstraint::SetFixedSize);
-	//	this->layout()->setSizeConstraint(QLayout::SizeConstraint::SetFixedSize);
-
+	// Just like ControlPanel::updateValues, but sets the min/max values of the slider as well :
 	if (this->sceneToControl != nullptr) {
-		this->updateValues();
+		this->min		   = this->sceneToControl->getMinTexValue();
+		this->max		   = this->sceneToControl->getMaxTexValue();
+		this->rangeslider_red->setRange(this->min, this->max);
+		this->rangeslider_red->setMinValue(this->min);
+		this->rangeslider_red->setMaxValue(this->max);
 	}
+	this->enableSliders(false);
+
+	this->initSignals();
 }
 
 ControlPanel::~ControlPanel() {
@@ -193,6 +190,9 @@ void ControlPanel::initSignals() {
 		this->sceneToControl->setColor1(c.redF(), c.greenF(), c.blueF());
 	});
 
+	// Enable/disable sliders at the same time the viewer requests it :
+	QObject::connect(this->viewer, &Viewer::enableImageControl, this, &ControlPanel::enableSliders);
+
 	// Connect the fact of selecting a groupbox to change the scene's information on how to display images
 	QObject::connect(this->groupbox_red, &QGroupBox::toggled, this, &ControlPanel::updateRGBMode);
 
@@ -200,6 +200,11 @@ void ControlPanel::initSignals() {
 	QObject::connect(this->red_coloration, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &ControlPanel::updateChannelRed);
 
 	QObject::connect(this->button_red_colorbounds, &QPushButton::clicked, this, &ControlPanel::launchRedColorBounds);
+
+	QObject::connect(this->viewer, &Viewer::overrideTextureLimits, this, [this](double new_min, double new_max) -> void {
+		this->updateMinValue(new_min);
+		this->updateMaxValue(new_max);
+	});
 }
 
 void ControlPanel::updateViewers() {
@@ -332,4 +337,9 @@ void ControlPanel::setSlidersToNumericalLimits(void) {
 
 	updateMinValue(minValue);
 	updateMaxValue(maxValue);
+}
+
+void ControlPanel::enableSliders(bool should_enable) {
+	this->groupbox_red->setEnabled(should_enable);
+	this->rangeslider_red->setEnabled(should_enable);
 }

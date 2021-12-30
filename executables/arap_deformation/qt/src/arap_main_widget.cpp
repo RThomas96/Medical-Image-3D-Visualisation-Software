@@ -91,7 +91,6 @@ void ARAPMainWidget::setupWidgets() {
 	this->viewer_planeY = new PlanarViewer(this->scene, planes::y, this->statusBar, planeHeading::North, nullptr);
 	this->viewer_planeZ = new PlanarViewer(this->scene, planes::z, this->statusBar, planeHeading::North, nullptr);
 	this->controlPanel	= new ControlPanel(this->scene, this->viewer, nullptr);
-	this->scene->setControlPanel(this->controlPanel);
 
 	this->arap_controller = new ARAPController(this->viewer, this->scene);
 
@@ -204,7 +203,7 @@ void ARAPMainWidget::setupWidgets() {
 
 	auto* mainLayout = new QVBoxLayout();
 	mainLayout->addLayout(viewerLayout);
-	mainLayout->addWidget(this->controlPanel, 0, Qt::AlignHCenter);
+	mainLayout->addWidget(this->controlPanel, 1);
 
 	// add pointers to Qobjects needed for this widget
 	// that we need to detroy at cleanup time :
@@ -291,6 +290,9 @@ void ARAPMainWidget::setupSignals() {
 	QObject::connect(this->viewer, &Viewer::hasInitializedScene, this->viewer_planeX, &PlanarViewer::canInitializeScene);
 	QObject::connect(this->viewer, &Viewer::hasInitializedScene, this->viewer_planeY, &PlanarViewer::canInitializeScene);
 	QObject::connect(this->viewer, &Viewer::hasInitializedScene, this->viewer_planeZ, &PlanarViewer::canInitializeScene);
+
+	// Update min/max bounds of the control panel whenever an image is loaded !
+	QObject::connect(this->arap_controller, &ARAPController::imageIsLoaded, this->viewer, &Viewer::updateSceneTextureLimits);
 }
 
 void ARAPMainWidget::showHelper() {
@@ -315,10 +317,9 @@ bool ARAPMainWidget::eventFilter(QObject* obj, QEvent* e) {
 		this->widgetSizeSet = true;
 		this->resize(1600, 900);
 		this->setMinimumSize(1280, 720);
-		// lock control panel size to the current size it has :
-		QSize centerSize = this->centralWidget()->size();
-		this->controlPanel->setMinimumWidth(static_cast<int>(static_cast<float>(centerSize.width()) * .99f));
+		// lock control panel size to the current height it has :
 		this->controlPanel->setMaximumHeight(static_cast<int>(this->controlPanel->height()));
+		this->arap_controller->setMaximumWidth(this->arap_controller->width());
 	}
 	// Return false, to handle the rest of the event normally
 	return false;

@@ -65,6 +65,7 @@ void ARAPController::init() {
 	this->button_load_mesh = new QPushButton("Load mesh");
 	this->button_load_constraints = new QPushButton("Load constraints");
 	this->button_load_curve = new QPushButton("Load curve");
+	this->button_load_second_curve = new QPushButton("Resize curve from other curve");
 
 	this->button_save_mesh = new QPushButton("Save mesh");
 	this->button_save_curve = new QPushButton("Save curve");
@@ -78,6 +79,13 @@ void ARAPController::init() {
 
 	this->checkbox_enable_deformation = new QCheckBox("Enable deformation");
 	this->checkbox_enable_deformation->setCheckState(Qt::CheckState::Unchecked);
+
+	this->label_mesh_name = new QLabel("<No mesh loaded>");
+	this->label_mesh_info = new QLabel("Mesh info : N/A");
+	this->label_curve_name = new QLabel("<No curve loaded>");
+	this->label_curve_info = new QLabel("Curve info : N/A");
+	this->label_grid_name = new QLabel("<No image loaded>");
+	this->label_grid_info = new QLabel("Image info : N/A");
 
 	this->initLayout();
 	this->initSignals();
@@ -106,18 +114,25 @@ void ARAPController::initLayout() {
 	widget_layout->addWidget(separator_header);
 	widget_layout->addWidget(label_loading);
 	widget_layout->addWidget(this->button_load_mesh);
+	widget_layout->addWidget(this->label_mesh_name);
+	widget_layout->addWidget(this->label_mesh_info);
 	widget_layout->addWidget(this->button_load_constraints);
 	widget_layout->addWidget(this->button_load_curve);
+	widget_layout->addWidget(this->label_curve_name);
+	widget_layout->addWidget(this->label_curve_info);
+	widget_layout->addWidget(this->button_load_second_curve);
 	widget_layout->addWidget(this->button_load_image);
+	widget_layout->addWidget(this->label_grid_name);
+	widget_layout->addWidget(this->label_grid_info);
 	widget_layout->addStretch(2);
 	widget_layout->addWidget(separator_deformation);
 	widget_layout->addWidget(label_deformation);
 	widget_layout->addWidget(this->checkbox_enable_deformation);
+	widget_layout->addWidget(this->button_manip_select_all);
+	widget_layout->addWidget(this->button_manip_select_none);
 	widget_layout->addWidget(this->button_align_arap);
 	widget_layout->addWidget(this->button_scale_arap);
 	widget_layout->addWidget(this->button_start_arap);
-	widget_layout->addWidget(this->button_manip_select_all);
-	widget_layout->addWidget(this->button_manip_select_none);
 	widget_layout->addStretch(2);
 	widget_layout->addWidget(separator_save);
 	widget_layout->addWidget(label_save);
@@ -128,13 +143,11 @@ void ARAPController::initLayout() {
 }
 
 void ARAPController::setDeformationButtonsState(States new_state) {
-	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	this->state = new_state;
 	this->updateButtonsActivated();
 }
 
 void ARAPController::updateButtonsActivated() {
-	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	// Disable signals from the widgets we change the state of :
 	this->checkbox_enable_deformation->blockSignals(true);
 
@@ -142,6 +155,7 @@ void ARAPController::updateButtonsActivated() {
 	this->button_load_constraints->setEnabled(false);
 	this->button_load_curve->setEnabled(false);
 	this->button_load_image->setEnabled(false);
+	this->button_load_second_curve->setEnabled(false);
 	this->button_align_arap->setEnabled(false);
 	this->button_scale_arap->setEnabled(false);
 	this->button_start_arap->setEnabled(false);
@@ -149,6 +163,7 @@ void ARAPController::updateButtonsActivated() {
 	this->button_save_curve->setEnabled(false);
 	this->button_manip_select_all->setEnabled(false);
 	this->button_manip_select_none->setEnabled(false);
+	this->checkbox_enable_deformation->setEnabled(false);
 	this->checkbox_enable_deformation->setCheckState(Qt::CheckState::Unchecked);
 	this->viewer->setDeformation(false);
 
@@ -157,8 +172,7 @@ void ARAPController::updateButtonsActivated() {
 		this->button_load_constraints->setEnabled(true);
 		this->button_save_mesh->setEnabled(true);
 		this->button_load_curve->setEnabled(true);
-		this->button_manip_select_all->setEnabled(true);
-		this->button_manip_select_none->setEnabled(true);
+		this->checkbox_enable_deformation->setEnabled(true);
 		this->viewer->setDeformation(true);
 	}
 	if (this->state >= States::CurveLoaded) {
@@ -170,6 +184,9 @@ void ARAPController::updateButtonsActivated() {
 		this->button_scale_arap->setEnabled(true);
 		this->button_start_arap->setEnabled(true);
 	}
+	if (this->state >= States::Deformed) {
+		this->button_load_second_curve->setEnabled(true);
+	}
 	// Re-enable signals for widgets we possibly changed the state of :
 	this->checkbox_enable_deformation->blockSignals(false);
 }
@@ -180,6 +197,7 @@ void ARAPController::initSignals() {
 	QObject::connect(this->button_load_constraints, &QPushButton::pressed, this, &ARAPController::loadConstraintsFromFile);
 	QObject::connect(this->button_load_curve, &QPushButton::pressed, this, &ARAPController::loadCurveFromFile);
 	QObject::connect(this->button_load_image, &QPushButton::pressed, this, &ARAPController::loadImageFromFile);
+	QObject::connect(this->button_load_second_curve, &QPushButton::pressed, this, &ARAPController::resizeCurveWithSecondCurve);
 	// Buttons to save the data :
 	QObject::connect(this->button_save_mesh, &QPushButton::pressed, this, &ARAPController::saveMesh);
 	QObject::connect(this->button_save_curve, &QPushButton::pressed, this, &ARAPController::saveCurve);
@@ -197,7 +215,18 @@ void ARAPController::initSignals() {
 	});
 
 	QObject::connect(this, &ARAPController::imageIsLoaded, this, &ARAPController::updateGridInfoLabel);
-	QObject::connect(this, &ARAPController::meshIsLoaded, this, &ARAPController::updateGridInfoLabel);
+	QObject::connect(this, &ARAPController::meshIsLoaded, this, &ARAPController::updateMeshInfoLabel);
+
+	// Enable or disable the control panel at will :
+	QObject::connect(this, &ARAPController::imageIsLoaded, this, [this]() -> void {
+		this->viewer->enableControlPanel(true);
+	});
+	QObject::connect(this, &ARAPController::meshIsLoaded, this, [this]() -> void {
+	  this->viewer->enableControlPanel(false);
+	});
+	QObject::connect(this, &ARAPController::curveIsLoaded, this, [this]() -> void {
+	  this->viewer->enableControlPanel(false);
+	});
 }
 
 const Mesh::Ptr& ARAPController::getMesh() const { return this->mesh; }
@@ -225,11 +254,71 @@ const std::vector<glm::vec3> ARAPController::getMeshConstraintsAsPositions() con
 }
 
 void ARAPController::updateMeshInfoLabel() {
-	//
+	if (this->mesh == nullptr) {
+		this->label_mesh_name->setText("<No mesh loaded>");
+		this->label_mesh_info->setText("Mesh info :\nN/A");
+		return;
+	}
+	QString default_name = "Mesh name : %1";
+	QString default_info = "%1 vertices, %2 MB on disk";
+
+	this->label_mesh_name->setText(default_name.arg(this->mesh_file_name));
+	this->label_mesh_name->setToolTip(this->label_mesh_name->text());
+	elideText(this->label_mesh_name, this->label_mesh_name->text());
+	QFileInfo mesh_file_info(this->mesh_file_path, this->mesh_file_name);
+	this->label_mesh_name->setWordWrap(true);
+	this->label_mesh_info->setWordWrap(true);
+	this->label_mesh_info->setText(default_info.arg(this->mesh->getVertices().size()).arg(static_cast<float>(mesh_file_info.size()) / 1024.f / 1024.f));
+}
+
+void ARAPController::updateCurveInfoLabel() {
+	if (this->curve == nullptr) {
+		this->label_curve_name->setText("<No curve loaded>");
+		this->label_curve_info->setText("Curve info :\nN/A");
+		return;
+	}
+	QString default_name = "Curve name : %1";
+	QString default_info = "%1 control points, %2 units of length";
+
+	this->label_curve_name->setText(default_name.arg(this->curve_file_name));
+	this->label_curve_name->setToolTip(this->label_curve_name->text());
+	elideText(this->label_curve_name, this->label_curve_name->text());
+
+	QFileInfo curve_file_info(this->curve_file_path, this->curve_file_name);
+	this->label_curve_name->setWordWrap(true);
+	this->label_curve_info->setWordWrap(true);
+	// TODO : compute curve length !!!
+	this->label_curve_info->setText(default_info.arg(this->curve->getPositions().size()).arg(static_cast<float>(curve_file_info.size()) / 1024.f / 1024.f));
 }
 
 void ARAPController::updateGridInfoLabel() {
-	//
+	if (this->image == nullptr) {
+		this->label_grid_name->setText("<No image loaded>");
+		this->label_grid_info->setText("Image info :\nN/A");
+		return;
+	}
+	QString default_name = "Grid name : %1";
+	this->label_grid_name->setText(default_name.arg(this->image->getImageName().c_str()));
+	this->label_grid_name->setWordWrap(true);
+	this->label_grid_info->setWordWrap(true);
+
+	auto dims = this->image->getResolution();
+	auto type = this->image->getInternalDataType();
+	std::size_t byte_size = dims.x * dims.y * dims.z * this->image->getVoxelDimensionality();
+
+	// attempt to read the size on disk from the internal type :
+	if (type & Image::ImageDataType::Bit_8) { byte_size *= 1u; }
+	else if (type & Image::ImageDataType::Bit_16) { byte_size *= 2u; }
+	else if (type & Image::ImageDataType::Bit_32) { byte_size *= 4u; }
+	else if (type & Image::ImageDataType::Bit_64) { byte_size *= 8u; }
+
+	// get it in float as MB :
+	float byte_size_f = static_cast<float>(byte_size) / 1024.f / 1024.f;
+
+	QString default_info = "%1x%2x%3 voxels, %4 MB on disk.";
+	this->label_grid_info->setText(default_info.arg(dims.x).arg(dims.y).arg(dims.z).arg(byte_size_f));
+	this->label_grid_name->setToolTip(this->label_grid_name->text());
+	elideText(this->label_grid_name, this->label_grid_name->text());
 }
 
 void ARAPController::loadMeshFromFile() {
@@ -253,6 +342,9 @@ void ARAPController::loadMeshFromFile() {
 		this->deleteCurveData();
 		this->deleteGridData();
 		this->resetMeshInterface();
+		this->updateMeshInfoLabel();
+		this->updateCurveInfoLabel();
+		this->updateGridInfoLabel();
 		this->setDeformationButtonsState(States::Initialized);
 		std::cerr << "Done resetting the ARAP controller.\n";
 	}
@@ -261,6 +353,9 @@ void ARAPController::loadMeshFromFile() {
 	this->mesh = std::make_shared<Mesh>();
 	FileIO::openOFF(file_name.toStdString(), this->mesh->getVertices(), this->mesh->getTriangles());
 	this->mesh->update();
+
+	this->mesh_file_name = mesh_file_info.fileName();
+	this->mesh_file_path = this->dir_last_accessed;
 
 	// Attempt to find a local constraint file next to it :
 	QDir mesh_root(mesh_file_info.absolutePath());
@@ -309,7 +404,6 @@ void ARAPController::loadImageFromFile() {
 }
 
 void ARAPController::setImagePointer(Image::Grid::Ptr& grid) {
-	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	// Load image into the grid :
 	this->viewer->makeCurrent();
 	if (this->image != nullptr) {
@@ -428,6 +522,11 @@ void ARAPController::loadCurveFromFile() {
 		auto fname= file_name.toStdString();
 		this->curve = openCurveFromOBJ(fname, this->mesh);
 		this->uploadCurveToScene();
+		this->updateCurveInfoLabel();
+
+		this->curve_file_name = fi.fileName();
+		this->curve_file_path = fi.filePath();
+
 		this->setDeformationButtonsState(States::CurveLoaded);
 		emit curveIsLoaded();
 	} else {
@@ -471,6 +570,11 @@ void ARAPController::loadConstraintDataFromFile(const std::string& file_name) {
 }
 
 void ARAPController::addImageConstraint(glm::vec3 img_ctx_pos) {
+	if (this->image == nullptr) {
+		std::cerr << "Error : no image was present.\n";
+		return;
+	}
+
 	this->image_constraints.emplace_back(img_ctx_pos);
 	std::cerr << "Added constraint to the image at position " << img_ctx_pos << '\n';
 	// increment edited constraint if there were some :
@@ -514,23 +618,22 @@ void ARAPController::updateCompoundedConstraints() {
 }
 
 void ARAPController::deleteMeshData() {
-	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	this->viewer->makeCurrent();
 	this->scene->arap_delete_mesh_drawable();
+	this->mesh_file_name = this->mesh_file_path = "";
 	this->viewer->doneCurrent();
 	this->mesh.reset();
 }
 
 void ARAPController::deleteCurveData() {
-	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	this->viewer->makeCurrent();
 	this->scene->arap_delete_curve_drawable();
+	this->curve_file_name = this->curve_file_path = "";
 	this->viewer->doneCurrent();
 	this->curve.reset();
 }
 
 void ARAPController::deleteGridData() {
-	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	this->viewer->makeCurrent();
 	this->scene->arap_delete_grid_data();
 	this->viewer->doneCurrent();
@@ -538,7 +641,6 @@ void ARAPController::deleteGridData() {
 }
 
 void ARAPController::uploadMeshToScene() {
-	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	this->viewer->makeCurrent();
 	this->scene->arap_load_mesh_data(this->mesh);
 	this->viewer->doneCurrent();
@@ -546,7 +648,6 @@ void ARAPController::uploadMeshToScene() {
 }
 
 void ARAPController::uploadCurveToScene() {
-	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	this->viewer->makeCurrent();
 	this->scene->arap_load_curve_data(this->curve);
 	this->viewer->doneCurrent();
@@ -554,7 +655,6 @@ void ARAPController::uploadCurveToScene() {
 }
 
 void ARAPController::updateMeshDrawable() {
-	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	std::cerr << "Updating mesh drawable ...\n";
 	/**
 	 * Should :
@@ -575,7 +675,6 @@ void ARAPController::updateMeshDrawable() {
 }
 
 void ARAPController::updateCurveDrawable() {
-	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	if (this->curve) {
 		this->scene->getDrawableCurve()->updateOnNextDraw();
 		this->scene->getDrawableCurve()->updateBoundingBox();
@@ -583,7 +682,6 @@ void ARAPController::updateCurveDrawable() {
 }
 
 void ARAPController::initializeMeshInterface() {
-	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	if (this->mesh_interface == nullptr) {
 		this->arapManipulator = std::make_shared<SimpleManipulator>();
 		this->rectangleSelection = std::make_shared<RectangleSelection>();
@@ -619,7 +717,6 @@ void ARAPController::initializeMeshInterface() {
 }
 
 void ARAPController::resetMeshInterface() {
-	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	if (this->mesh_interface != nullptr) {
 		this->arapManipulator->disconnect();
 		this->rectangleSelection->disconnect();
@@ -635,7 +732,6 @@ void ARAPController::resetMeshInterface() {
 }
 
 void ARAPController::arap_performAlignment() {
-	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	if (this->mesh == nullptr) {
 		std::cerr << "Error : no meshes loaded.\n";
 		return;
@@ -699,7 +795,6 @@ void ARAPController::arap_performAlignment() {
 }
 
 void ARAPController::arap_performScaling() {
-	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	if (this->mesh == nullptr) {
 		std::cerr << "Error : no meshes loaded.\n";
 		return;
@@ -753,7 +848,6 @@ void ARAPController::arap_performScaling() {
 }
 
 void ARAPController::arap_computeDeformation() {
-	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	if (this->mesh == nullptr) {
 		std::cerr << "Error : no meshes loaded.\n";
 		return;
@@ -789,29 +883,102 @@ void ARAPController::arap_computeDeformation() {
 	std::cerr << "Finished.\n";
 	this->updateMeshDrawable();
 	this->updateCurveFromMesh();
+	this->setDeformationButtonsState(States::Deformed);
+	this->updateButtonsActivated();
+}
+
+void ARAPController::resizeCurveWithSecondCurve() {
+	if (this->mesh == nullptr || this->curve == nullptr || this->image == nullptr) {
+		std::cerr << "Error : cannot resize a curve when none of a mesh, a curve or an image are loaded.\n";
+		return;
+	}
+	std::cerr << "Loading another curve file ...\n";
+
+	// load the other curve :
+	QString file_name = QFileDialog::getOpenFileName(nullptr, "Open a Curve file (OBJ)", this->dir_last_accessed, "OBJ files (*.obj)");
+	if (file_name.isEmpty() || not QFileInfo::exists(file_name)) {
+		std::cerr << "Error : nothing to open.\nFile path given : \"" << file_name.toStdString() << "\"\n";
+		return;
+	}
+
+	QFileInfo curve_file_info(file_name);
+	this->dir_last_accessed = curve_file_info.absolutePath();
+
+	// Read points :
+	std::vector<glm::vec3> other_curve_positions;
+	std::vector<Triangle> other_curve_triangles;
+	FileIO::objLoader(file_name.toStdString(), other_curve_positions, other_curve_triangles);
+
+	const auto positions = this->curve->getPositions();
+	if (positions.size() != other_curve_positions.size()) {
+		std::cerr << "Warning : both curves don't have the same number of points !\n";
+	}
+
+	// Get the curve lengths
+	std::vector<float> current_curve_lengths(positions.size() - 1, .0f);
+	std::vector<float> other_curve_lengths(other_curve_positions.size() - 1, .0f);
+	float total_length_current = .0f, total_length_other = .0f;
+	for (std::size_t i = 0; i < other_curve_lengths.size() - 1 || i < current_curve_lengths.size() - 1; ++i) {
+		if (i < current_curve_lengths.size() - 1) { current_curve_lengths[i] = glm::length(positions[i+1] - positions[i]); total_length_current += current_curve_lengths[i]; }
+		if (i < other_curve_lengths.size() - 1) { other_curve_lengths[i] = glm::length(other_curve_positions[i+1] - other_curve_positions[i]); total_length_other += other_curve_lengths[i]; }
+	}
+	float resize_factor = total_length_other / total_length_current;
+
+	std::cerr << "Got both curves' lengths. Building new curve CPs ...\n";
+	std::cerr << "Lengths : " << total_length_current << ", " << total_length_other << " // Diff : " << resize_factor << "\n";
+
+	std::vector<glm::vec3> new_positions(positions.size(), glm::vec3{});
+	new_positions[0] = positions[0];
+	std::cerr << "Resizing segments .\n";
+	std::cerr << "Old position : " << positions[0] << " // New position : " << new_positions[0] << '\n';
+	// Resize them according to their tangent :
+	for (std::size_t i = 1; i < positions.size(); ++i) {
+		glm::vec3 prev = positions[i-1], current = positions[i];
+		glm::vec3 current_tangent = current - prev;
+		/*
+		float factor = 1.f;
+		if (i <= other_curve_lengths.size()) {
+			factor = other_curve_lengths[i-1] / current_curve_lengths[i-1];
+		}
+		 */
+
+		new_positions[i] = new_positions[i-1] + current_tangent * resize_factor;
+		std::cerr << "Old position : " << positions[i] << " // New position : " << new_positions[i] << '\n';
+	}
+
+	this->curve->setPositions(new_positions);
+	this->curve->computeWeightsFromMeshData();
+
+	std::cerr << "Set new positions for the curve !\n";
+
+	this->curve->update();
+	this->scene->getDrawableCurve()->updateOnNextDraw();
+	this->scene->getDrawableCurve()->updateBoundingBox();
+	this->scene->updateBoundingBox();
 }
 
 void ARAPController::enableDeformation() {
-	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	if (this->mesh == nullptr) { return; }
 	std::cerr << "Enabled deformation !\n";
 	this->applyTransformation_Mesh();
 	this->updateMeshDrawable();
 	this->resetMeshInterface();
+	this->button_manip_select_all->setEnabled(true);
+	this->button_manip_select_none->setEnabled(true);
 	this->viewer->setDeformation(true);
 	this->updateCurveFromMesh();
 }
 
 void ARAPController::disableDeformation() {
-	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	if (this->mesh == nullptr) { return; }
 	this->resetMeshInterface();
+	this->button_manip_select_all->setEnabled(false);
+	this->button_manip_select_none->setEnabled(false);
 	this->viewer->setDeformation(false);
 	std::cerr << "Disabled deformation !\n";
 }
 
 void ARAPController::applyTransformation_Mesh() {
-	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	auto draw = this->scene->getDrawableMesh();
 	auto transform = draw->getTransformation();
 
@@ -883,7 +1050,6 @@ void ARAPController::saveMesh() {
 }
 
 void ARAPController::saveCurve() {
-	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	if (this->curve == nullptr) { return; }
 	// Ask the user for the save file name & its path :
 	QString home_path = QDir::homePath();
@@ -911,4 +1077,11 @@ void ARAPController::saveCurve() {
 
 	myfile.close();
 	return;
+}
+
+void elideText(QLabel* label_to_elide, QString text_to_elide) {
+	QFontMetrics font_metrics(label_to_elide->font());
+	int width = label_to_elide->width() - 2;
+	QString clipped_text = font_metrics.elidedText(text_to_elide, Qt::ElideRight, width);
+	label_to_elide->setText(clipped_text);
 }

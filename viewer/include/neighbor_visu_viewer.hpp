@@ -85,14 +85,8 @@ protected:
 private:
 	/// @brief The scene to control.
 	Scene* const scene;
-	/// @brief Should we draw it in volumetric mode ?
-	bool drawVolumetric;
 	/// @brief A refresh timer for the viewer, to update in real time.
 	QTimer* refreshTimer;
-	/// @brief Should we capture a frame ?
-	bool shouldCapture;
-	/// @brief Is the Ctrl key pressed down ?
-	bool keyboard_CtrlDown;
 	/// @brief The texture attached to the secondary framebuffer output.
 	GLuint renderTarget;
 	/// @brief Are we in "select mode" ? (for selecting coordinates in rasterized/volumetric view)
@@ -101,8 +95,6 @@ private:
 	glm::ivec2 fbSize;
 	/// @brief Current cursor position relative to the widget's geometry origin
 	glm::ivec2 cursorPos_current;
-	/// @brief Last known cursor position relative to the widget's geometry origin
-	glm::ivec2 cursorPos_last;
 	/// @brief The number of frames a modifier (RMB,LMB,Ctrl ...) has been held for.
 	std::size_t framesHeld;
 	/// @brief Request to read a fragment"s position
@@ -154,12 +146,16 @@ public slots:
 	void mesh_unselect_all();
 	void scaleMeshARAP();
 
+	void updateSceneTextureLimits();
+
 	void loadMeshToScene();
 	void loadCurveToScene();
 	void loadOtherCurveToScene();
 
 	void saveMesh();
 	void saveCurve();
+
+	void enableControlPanel(bool should_enable);
 
 	/// @brief Read the pixel at the screen position given.
 	glm::vec4 readPositionFromFramebuffer();
@@ -176,6 +172,8 @@ public slots:
 signals:
 	void enableDeformationPanel(bool should_enable);
 	void hasInitializedScene();
+	void enableImageControl(bool should_enable);
+	void overrideTextureLimits(double min, double max);	// Override the current texture limits in the control panel
 };
 
 #endif	  // VIEWER_INCLUDE_NEIGHBOR_VISU_VIEWER_HPP_

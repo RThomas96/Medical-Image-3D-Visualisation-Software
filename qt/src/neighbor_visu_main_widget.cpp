@@ -196,7 +196,6 @@ void MainWidget::setupWidgets() {
 	this->viewer_planeY = new PlanarViewer(this->scene, planes::y, this->statusBar, planeHeading::North, nullptr);
 	this->viewer_planeZ = new PlanarViewer(this->scene, planes::z, this->statusBar, planeHeading::North, nullptr);
 	this->controlPanel	= new ControlPanel(this->scene, this->viewer, nullptr);
-	this->scene->setControlPanel(this->controlPanel);
 
 	QObject::connect(this->action_loadMesh, &QAction::triggered, this->viewer, &Viewer::loadMeshToScene);
 	QObject::connect(this->action_loadCurve, &QAction::triggered, this->viewer, &Viewer::loadCurveToScene);

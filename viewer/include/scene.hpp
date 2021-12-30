@@ -4,8 +4,6 @@
 // Program-wide features and macros
 #include "../../features.hpp"
 #include "../../macros.hpp"
-// Scene control panel :
-#include "../../qt/include/scene_control.hpp"
 // Shader compiler :
 #include "../../meshes/drawable/shaders.hpp"
 // Meshes :
@@ -157,8 +155,6 @@ public:
 	/// @brief Add a status bar to the program
 	void addStatusBar(QStatusBar* _s);
 
-	/// @brief set the control panel responsible for controlling the scene
-	void setControlPanel(ControlPanel* cp) { this->controlPanel = cp; }
 	/// @brief Remove the grid controller pointer from the scene class.
 	void removeController();
 	/// @brief reload the default shader files
@@ -377,6 +373,9 @@ public:
 	const DrawableMesh::Ptr getDrawableMesh() const { return this->mesh_draw; }
 	const DrawableCurve::Ptr getDrawableCurve() const { return this->curve_draw; }
 
+	/// @brief Updates the texture limits to those of the current grid
+	void updateTextureLimits_override(const Image::Grid::Ptr& grid);
+
 	/// @brief Changes the texture coloration mode to the desired setting
 	void setColorFunction_r(ColorFunction _c);
 	void setColorFunction_g(ColorFunction _c);
@@ -574,7 +573,6 @@ private:
 
 	// Widgets that may interact with the scene :
 	GridControl* gridControl;	 ///< The controller for the grid 'save' feature (generation)
-	ControlPanel* controlPanel;	   ///< pointer to the control panel
 	QStatusBar* programStatusBar;	 ///< Status bar to show some info about the program.
 	VisuBoxController* visuBoxController;	 ///< The controller for the visualization box
 

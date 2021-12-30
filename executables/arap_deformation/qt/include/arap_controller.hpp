@@ -63,27 +63,6 @@ protected:
 	/// @brief Called from setDeformationButtonsState(), this enables/disables the relevant buttons.
 	void updateButtonsActivated();
 
-	/**
-	 * Functions for :
-	 * - loading the mesh
-	 * 		- loading the mesh itself from a file
-	 * 		- loading the constraints, if found
-	 * 		- re-loading the mesh from file
-	 * - Interacting with constraints
-	 * 		- Getting cursor position from Viewer
-	 * 		- Adding mesh constraints
-	 * 		- Adding image constraints
-	 * 		- Modifying a constraint
-	 * 		- Selecting a mesh constraint
-	 * 		- Deleting a mesh constraint
-	 * 		- Deleting an image constraint
-	 * - Loading the data into the scene
-	 * 		- Calls to the viewer to be made current
-	 * 		- Then call the Scene functions
-	 * 		- Update the Scene members
-	 * 			- N.B. : leave the drawables in the scene
-	 */
-
 public:
 	/// @brief Returns the currently loaded mesh.
 	const Mesh::Ptr& getMesh() const;
@@ -106,6 +85,7 @@ public:
 	const std::vector<glm::vec3>& getImageConstraints() const;
 	/// @brief Get the currently loaded mesh constraints.
 	const std::vector<std::size_t>& getMeshConstraints() const;
+	/// @brief Returns the mesh constraints as positions, not as vertex indices.
 	const std::vector<glm::vec3> getMeshConstraintsAsPositions() const;
 	/// @brief Get the compounded constraints.
 	const std::vector<glm::vec3>& getCompoundedConstraints() const;
@@ -132,10 +112,6 @@ signals:
 	void meshIsLoaded();
 	/// @brief Signal raised whenever the curve data is loaded in.
 	void curveIsLoaded();
-	/// @brief Signal raised whenever the mesh data changed.
-	void meshHasChanged();
-	/// @brief Signal raised whenever the data contained in the curve changes.
-	void curveHasChanged();
 
 protected:
 	/// @brief Slot called when the 'Load constraints' button is pressed.
@@ -158,6 +134,8 @@ protected:
 
 	/// @brief Updates the mesh info labels.
 	void updateMeshInfoLabel();
+	/// @brief Updates the curve info labels.
+	void updateCurveInfoLabel();
 	/// @brief Updates the grid info labels.
 	void updateGridInfoLabel();
 
@@ -197,6 +175,8 @@ protected slots:
 	void arap_performScaling();
 	/// @brief Slot called when the 'Compute deformation' button is pressed.
 	void arap_computeDeformation();
+	/// @brief Loads a second curve, and resizes the segments of this curve to match the length of the second curve.
+	void resizeCurveWithSecondCurve();
 
 	/// @brief Slot called whenever the 'Save mesh' button is pressed.
 	void saveMesh();
@@ -228,6 +208,11 @@ protected:
 
 	States state;	///< The current state of the application. Used to enable/disable buttons.
 
+	QString mesh_file_name;		///< The mesh file name
+	QString mesh_file_path;		///< The mesh file path
+	QString curve_file_name;	///< The curve file name
+	QString curve_file_path;	///< The curve file path
+
 	/**
 	 * 	------- LATER -------
 	 * Buttons/sliders for :
@@ -241,6 +226,7 @@ protected:
 	QPushButton* button_load_mesh;			///< Button to load a mesh from a file.
 	QPushButton* button_load_constraints;	///< Button to attempt loading the constraints file.
 	QPushButton* button_load_curve;			///< Button to load a curve from file.
+	QPushButton* button_load_second_curve;	///< Button to load a curve from file.
 
 	QPushButton* button_save_mesh;	///< Button to save the mesh to a file.
 	QPushButton* button_save_curve;	///< Button to save the curve to a file.
@@ -256,6 +242,8 @@ protected:
 
 	QLabel* label_mesh_name;	///< The mesh filename.
 	QLabel* label_mesh_info;	///< The mesh information (nb of vertices, constraints found or not and size on disk).
+	QLabel* label_curve_name;	///< The curve name.
+	QLabel* label_curve_info;	///< The curve info.
 	QLabel* label_grid_name;	///< The grid name.
 	QLabel* label_grid_info;	///< The grid info.
 
@@ -266,5 +254,7 @@ protected:
 	QListView* listview_image_constraints;	///< The list view of all image constraints.
 
 };
+
+static void elideText(QLabel* label_to_elide, QString text_to_elide);
 
 #endif	  // VISUALISATION_QT_INCLUDE_ARAP_CONTROLLER_HPP_

@@ -100,6 +100,7 @@ public slots:
 	void updateRGBMode(void);
 	void updateChannelRed(int value);
 	void launchRedColorBounds(void);
+	void enableSliders(bool should_enable);
 
 private:
 	/// @brief The scene to control !
