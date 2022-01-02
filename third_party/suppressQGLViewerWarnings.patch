@@ -1,0 +1,32 @@
+diff --git a/QGLViewer/qglviewer.h b/QGLViewer/qglviewer.h
+index a83d61a..65e77cb 100644
+--- a/QGLViewer/qglviewer.h
++++ b/QGLViewer/qglviewer.h
+@@ -50,13 +50,13 @@ public:
+   explicit QGLViewer(QWidget *parent = 0,
+                      Qt::WindowFlags flags = Qt::WindowFlags());
+   explicit QGLViewer(QWidget *parent, const QGLWidget *shareWidget,
+-                     Qt::WindowFlags flags = 0);
++                     Qt::WindowFlags flags = Qt::WindowFlags());
+   explicit QGLViewer(QGLContext *context, QWidget *parent = 0,
+                      const QGLWidget *shareWidget = 0,
+-                     Qt::WindowFlags flags = 0);
++                     Qt::WindowFlags flags = Qt::WindowFlags());
+   explicit QGLViewer(const QGLFormat &format, QWidget *parent = 0,
+                      const QGLWidget *shareWidget = 0,
+-                     Qt::WindowFlags flags = 0);
++                     Qt::WindowFlags flags = Qt::WindowFlags());
+ 
+   virtual ~QGLViewer();
+ 
+@@ -1198,8 +1198,8 @@ public Q_SLOTS:
+   void setStateFileName(const QString &name) { stateFileName_ = name; }
+ 
+ #ifndef DOXYGEN
+-  void saveToFile(const QString &fileName = QString::null);
+-  bool restoreFromFile(const QString &fileName = QString::null);
++  void saveToFile(const QString &fileName = QString());
++  bool restoreFromFile(const QString &fileName = QString());
+ #endif
+ 
+ private:
