@@ -16,7 +16,6 @@ MainWidget::MainWidget() {
 	this->usettings		= nullptr;
 	this->loaderWidget	= nullptr;
 	this->boxController = nullptr;
-	this->viewerHelper = nullptr;
 	// Query a user settings instance to initialize it :
 	UserSettings set = UserSettings::getInstance();
 }
@@ -106,9 +105,6 @@ void MainWidget::setupWidgets() {
 	this->action_showHelp3D	   = new QAction("3D Viewer Help Page");
 	this->action_showHelpPlane = new QAction("Planar Viewer Help Page");
 	this->action_showSettings  = new QAction("Settings");
-	this->action_loadMesh	   = new QAction("Load mesh (OFF)");
-	this->action_loadCurve	   = new QAction("Load curve (OBJ)");
-	this->action_loadOtherCurve= new QAction("Load resizing curve (OBJ)");
 
 	this->action_addGrid->setShortcut(QKeySequence::Open);
 
@@ -117,9 +113,6 @@ void MainWidget::setupWidgets() {
 	this->fileMenu = this->menuBar()->addMenu("&File");
 	this->fileMenu->addAction(this->action_addGrid);
 	this->fileMenu->addAction(this->action_saveGrid);
-	this->fileMenu->addAction(this->action_loadMesh);
-	this->fileMenu->addAction(this->action_loadCurve);
-	this->fileMenu->addAction(this->action_loadOtherCurve);
 	this->fileMenu->addAction(this->action_showSettings);
 	this->fileMenu->addAction(this->action_exitProgram);
 	// view menu :
@@ -197,10 +190,6 @@ void MainWidget::setupWidgets() {
 	this->viewer_planeZ = new PlanarViewer(this->scene, planes::z, this->statusBar, planeHeading::North, nullptr);
 	this->controlPanel	= new ControlPanel(this->scene, this->viewer, nullptr);
 
-	QObject::connect(this->action_loadMesh, &QAction::triggered, this->viewer, &Viewer::loadMeshToScene);
-	QObject::connect(this->action_loadCurve, &QAction::triggered, this->viewer, &Viewer::loadCurveToScene);
-	QObject::connect(this->action_loadOtherCurve, &QAction::triggered, this->viewer, &Viewer::loadOtherCurveToScene);
-
 	this->viewer->addStatusBar(this->statusBar);
 	this->viewer_planeX->addParentStatusBar(this->statusBar);
 	this->viewer_planeY->addParentStatusBar(this->statusBar);
@@ -213,10 +202,6 @@ void MainWidget::setupWidgets() {
 	this->headerY->connectToViewer(this->viewer_planeY);
 	this->headerZ = new ViewerHeader("Z Plane");
 	this->headerZ->connectToViewer(this->viewer_planeZ);
-
-	auto* show_helper = new QAction("Show the helper panel");
-	this->menuBar()->addAction(show_helper);
-	QObject::connect(show_helper, &QAction::triggered, this, &MainWidget::showHelper);
 
 	// Splitters : one main (hor.) and two secondaries (vert.) :
 	auto* mainSplit   = new QSplitter(Qt::Horizontal);
@@ -308,15 +293,6 @@ void MainWidget::setupWidgets() {
 	this->setCentralWidget(mainWidget);
 
 	this->installEventFilter(this);
-}
-
-void MainWidget::showHelper() {
-	if(this->viewerHelper == nullptr) {
-		this->viewerHelper			= new ViewerHelper(this->viewer);
-		auto* container_dock = new QDockWidget;
-		container_dock->setWidget(this->viewerHelper);
-		this->addDockWidget(Qt::DockWidgetArea::RightDockWidgetArea, container_dock);
-	}
 }
 
 bool MainWidget::eventFilter(QObject* obj, QEvent* e) {

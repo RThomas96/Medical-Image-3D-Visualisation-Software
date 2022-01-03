@@ -4,13 +4,6 @@
 #include "../../features.hpp"
 #include "../../qt/include/manipulator.hpp"
 
-#include "../../meshes/operations/arap/Manipulator.h"
-#include "../../meshes/operations/arap/RectangleSelection.h"
-#include "../../meshes/operations/arap/PCATools.h"
-#include "../../meshes/operations/arap/mesh_manip_interface.h"
-
-#include "../../executables/arap_deformation/qt/include/arap_controller.hpp"
-
 #include "./scene.hpp"
 
 #include <QTimer>
@@ -34,24 +27,6 @@ public:
 
 	/// @brief Add a pointer to the status bar, in order to show messages.
 	void addStatusBar(QStatusBar* _sb);
-
-public slots:
-	/// @brief Slot called when the rectangular selection is used to add vertices.
-	/// @param selection The rectangular area selected by the user, in screen coordinates.
-	/// @param moving Should the vertices be added as movable or fixed handles ?
-	void rectangleSelection_add(QRectF selection, bool moving);
-	/// @brief Slot called when the rectangular selection is used to remove vertices.
-	/// @param selection The selection made by the user.
-	void rectangleSelection_remove(QRectF selection);
-	/// @brief Slot called when the rectangle selection is applied
-	void rectangleSelection_apply();
-	/// @brief Slot called when the manipulator is moved.
-	void arapManipulator_moved();
-	/// @brief Slot called when the manipulator is released.
-	void arapManipulator_released();
-
-	/// @brief Sets the ARAP controller for the viewer.
-	void setARAPController(ARAPController* arap_ctrl);
 
 protected:
 	/// @brief Initializes the scene, and the viewer's variables.
@@ -79,9 +54,6 @@ protected:
 	/// @brief Resets and removes the local point query
 	void resetLocalPointQuery();
 
-	/// @brief Creates the mesh manip interface and the manipulator
-	void initializeARAPInterface();
-
 private:
 	/// @brief The scene to control.
 	Scene* const scene;
@@ -105,19 +77,6 @@ private:
 
 	UITool::MeshManipulator meshManipulator;
 
-	//
-	// Stubs for ARAP integration
-	//
-	std::vector<glm::vec3> spheres;	   ///< Spheres to draw
-	float sphere_size;	  ///< Sphere size in the renderer
-	glm::vec3 temp_sphere_position;	   ///< Last-requested sphere position
-	std::size_t temp_mesh_idx;	  ///< The mesh index selected
-	std::size_t temp_mesh_vtx_idx;	  ///< The mesh vertex idx of the selected vertex (temp_sphere_position)
-	std::size_t temp_img_idx;	 ///< The image index if found. WARNING : WE ASSUME IT IS ALWAYS 0, EVEN IF NO IMAGES ARE LOADED
-	glm::vec3 temp_img_pos;	   ///< The position of that image index
-
-	ARAPController* arap_controller;
-
 	bool deformation_enabled;
 
 public slots:
@@ -134,26 +93,10 @@ public slots:
 	void centerScene(void);
 	/// @brief Guess the position of the fragment under the mouse cursor
 	void guessMousePosition(void);
-	void alignARAP();
-	void launchARAP();
 	void toggleSelectionMode();
 	void printVAOStateNext();
-	void setSphereSize(double);
-	void toggleDeformation();
-	void setDeformation(bool);
-	void resetARAPConstraints();
-	void mesh_select_all();
-	void mesh_unselect_all();
-	void scaleMeshARAP();
 
 	void updateSceneTextureLimits();
-
-	void loadMeshToScene();
-	void loadCurveToScene();
-	void loadOtherCurveToScene();
-
-	void saveMesh();
-	void saveCurve();
 
 	void enableControlPanel(bool should_enable);
 
@@ -163,11 +106,6 @@ public slots:
 	void updateManipulatorsPositions(void);
 
 	void toggleManipulators(void);
-
-	void resetDeformation(void);
-
-	/// @brief Called by the ARAPController in order to initialize the signals from its object to this viewer.
-	void initializeARAPManipulationInterface();
 
 signals:
 	void enableDeformationPanel(bool should_enable);

@@ -21,8 +21,7 @@
 float Viewer::sceneRadiusMultiplier{.5f};
 
 Viewer::Viewer(Scene* const scene, QStatusBar* _program_bar, QWidget* parent) :
-	QGLViewer(parent), scene(scene), meshManipulator(UITool::MeshManipulator(36)), spheres(),
-	sphere_size(.1f), temp_mesh_idx(0), temp_img_idx(0), temp_sphere_position(std::numeric_limits<float>::lowest()) {
+	QGLViewer(parent), scene(scene), meshManipulator(UITool::MeshManipulator(36)) {
 	this->statusBar	   = _program_bar;
 	this->refreshTimer = new QTimer();
 	this->refreshTimer->setInterval(std::chrono::milliseconds(7));	  // ~7 ms for 144fps, ~16ms for 60fps and ~33ms for 30 FPS
@@ -38,8 +37,6 @@ Viewer::Viewer(Scene* const scene, QStatusBar* _program_bar, QWidget* parent) :
 	this->drawAxisOnTop		= false;
 
 	this->deformation_enabled = false;
-
-	this->arap_controller = nullptr;
 
 	// Setup the alt key binding to move an object
 	setMouseBinding(Qt::AltModifier, Qt::LeftButton, QGLViewer::FRAME, QGLViewer::ROTATE);
@@ -107,203 +104,14 @@ void Viewer::draw() {
 	if (this->meshManipulator.isActiveManipulatorManipuled()) {
 		this->scene->launchDeformation(this->meshManipulator.getActiveManipulatorAssignedIdx(), this->meshManipulator.getActiveManipulatorPos());
 	}
-
-	if (this->arap_controller) {
-		std::size_t edited_constraint = this->arap_controller->getCurrentlyEditedConstraint();
-
-		// mesh might be transformed, get constraints positions and draw them quickly :
-		auto mesh_constraints = this->arap_controller->getMeshConstraintsAsPositions();
-		glm::mat4 transform = glm::mat4(1.f);
-		if (this->scene->getDrawableMesh()) {
-			transform = this->scene->getDrawableMesh()->getTransformation();
-		}
-		if (not mesh_constraints.empty() && edited_constraint) {
-			glm::vec4 default_color = glm::vec4{0.05f, 0.05f, 0.90f, 1.0f};
-			// gold-colored, per wikipedia guidelines (255/223/0 in RGB) :
-			glm::vec4 highlight_col = glm::vec4{255.f, 223.f, 0.0f, 1.0f} / glm::vec4{255.f, 255.f, 255.f, 1.0f};
-			this->scene->drawColoredPointSpheres_highlighted_quick(transform, mvMat, pMat, camPos, mesh_constraints, edited_constraint-1u, this->sphere_size, default_color, highlight_col);
-		} else {
-			this->scene->drawPointSpheres_quick(transform, mvMat, pMat, camPos, mesh_constraints, this->sphere_size);
-		}
-
-		// Draw image constraints, not subject to the potential mesh transform so get them and draw them with an identity matrix as a model transform:
-		auto img_ctx = this->arap_controller->getImageConstraints();
-		this->scene->drawPointSpheres_quick(glm::mat4(1.f), mvMat, pMat, camPos, img_ctx, this->sphere_size);
-
-		auto inter = this->arap_controller->getMeshInterface();
-		auto manip = this->arap_controller->getARAPManipulator();
-		auto rect = this->arap_controller->getRectangleSelection();
-
-		bool is_color_enabled = this->scene->glIsEnabled(GL_COLOR_MATERIAL);
-		bool is_light_enabled = this->scene->glIsEnabled(GL_LIGHTING);
-		if (is_color_enabled) { this->scene->glDisable(GL_COLOR_MATERIAL); }
-		if (is_light_enabled) { this->scene->glDisable(GL_LIGHTING); }
-
-		if (inter) {
-			//inter->drawSelectedVertices();
-			auto selected = inter->get_precomputed_selected_vertices();
-			auto fixed = inter->get_precomputed_fixed_vertices();
-			this->scene->drawColoredPointSpheres_quick(transform, mvMat, pMat, camPos, selected, inter->getAverage_edge_halfsize()/2., glm::vec4{0.9f, 0.05f, 0.05f, 1.0f});
-			this->scene->drawColoredPointSpheres_quick(transform, mvMat, pMat, camPos, fixed, inter->getAverage_edge_halfsize()/2., glm::vec4{0.05f, 0.9f, 0.05f, 1.0f});
-		}
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glEnable(GL_BLEND);
-		if (rect) {
-			rect->draw();
-		}
-		glDisable(GL_BLEND);
-		if (manip) {
-			manip->draw();
-		}
-
-		if (is_color_enabled) { this->scene->glEnable(GL_COLOR_MATERIAL); }
-		if (is_light_enabled) { this->scene->glEnable(GL_LIGHTING); }
-	}
 }
-
-void Viewer::saveMesh() { this->scene->dummy_save_mesh_to_file(); }
-void Viewer::saveCurve() { this->scene->dummy_save_curve_to_file(); }
 
 void Viewer::enableControlPanel(bool should_enable) {
 	emit this->enableImageControl(should_enable);
 }
 
 void Viewer::updateSceneTextureLimits() {
-	this->scene->updateTextureLimits_override(this->arap_controller->getImage());
 	emit this->overrideTextureLimits(this->scene->getMinTexValue(), this->scene->getMaxTexValue());
-}
-
-void Viewer::rectangleSelection_add(QRectF selection, bool moving) {
-	std::cerr << __PRETTY_FUNCTION__ << '\n';
-	if (this->arap_controller->getMeshInterface() == nullptr) { return; }
-	if (this->arap_controller->getARAPManipulator() && this->arap_controller->getARAPManipulator()->getEtat()) {this->arap_controller->getARAPManipulator()->deactivate(); }
-
-	float modelview[16];
-	camera()->getModelViewMatrix(modelview);
-	float projection[16];
-	camera()->getProjectionMatrix(projection);
-
-	this->arap_controller->getMeshInterface()->select(selection , modelview, projection, moving);
-}
-
-void Viewer::rectangleSelection_remove(QRectF selection) {
-	std::cerr << __PRETTY_FUNCTION__ << '\n';
-	if (this->arap_controller->getMeshInterface() == nullptr) { return; }
-	if (this->arap_controller->getARAPManipulator() && this->arap_controller->getARAPManipulator()->getEtat()) {
-		this->arap_controller->getARAPManipulator()->deactivate();
-	}
-
-	float modelview[16];
-	camera()->getModelViewMatrix(modelview);
-	float projection[16];
-	camera()->getProjectionMatrix(projection);
-
-	this->arap_controller->getMeshInterface()->unselect(selection , modelview, projection);
-}
-
-void Viewer::rectangleSelection_apply() {
-	std::cerr << __PRETTY_FUNCTION__ << '\n';
-	if (this->arap_controller->getMeshInterface() == nullptr) { std::cerr << "Applying rectangle to nothing.\n"; return; }
-	std::cerr << "Applying rectangle selection ...\n";
-	this->arap_controller->getMeshInterface()->computeManipulatorForSelection(this->arap_controller->getARAPManipulator().get());
-}
-
-void Viewer::resetARAPConstraints() {
-	if (this->arap_controller->getARAPManipulator() == nullptr) { return; }
-	this->arap_controller->getMeshInterface()->clear_selection();
-	this->arap_controller->getARAPManipulator()->clear();
-}
-
-void Viewer::mesh_select_all() {
-	const auto mesh_interface = this->arap_controller->getMeshInterface();
-	if (mesh_interface) {
-		mesh_interface->select_all();
-	}
-}
-
-void Viewer::mesh_unselect_all() {
-	const auto mesh_interface = this->arap_controller->getMeshInterface();
-	if (mesh_interface) {
-		mesh_interface->unselect_all();
-	}
-}
-
-void Viewer::scaleMeshARAP() {
-	this->makeCurrent();
-	this->scene->dummy_scale_mesh_to_cp_bb();
-	this->doneCurrent();
-	this->updateInfoFromScene();
-}
-
-void Viewer::arapManipulator_moved() {
-	std::cerr << __PRETTY_FUNCTION__ << '\n';
-	// Change the data in the MMInterface :
-	this->arap_controller->getMeshInterface()->changed(this->arap_controller->getARAPManipulator().get());
-	// Update vertex positions :
-	std::vector<glm::vec3> & points = this->arap_controller->getMesh()->getVertices();
-	auto modified_vertices = this->arap_controller->getMeshInterface()->get_modified_vertices();
-	for( unsigned int i = 0 ; i < modified_vertices.size() ; i ++ ){
-		points[i] = modified_vertices[i];
-	}
-	// Recompute mesh normals and update :
-	this->arap_controller->getMesh()->updateQuick();
-	this->arap_controller->updateMeshDrawable();
-	this->scene->updateBoundingBox();
-	this->update();
-}
-
-void Viewer::arapManipulator_released() {
-	//this->scene->getCurve()->deformFromMeshData();
-	std::cerr << __PRETTY_FUNCTION__ << '\n';
-}
-
-void Viewer::initializeARAPInterface() {
-	/*
-	this->makeCurrent();
-	if (this->arap_controller->getARAPManipulator() == nullptr) {
-		this->arap_controller->getARAPManipulator() = std::make_shared<SimpleManipulator>();
-		QObject::connect(this->arap_controller->getARAPManipulator().get(), &SimpleManipulator::moved, this, &Viewer::arapManipulator_moved);
-		QObject::connect(this->arap_controller->getARAPManipulator().get(), &SimpleManipulator::mouseReleased, this, &Viewer::arapManipulator_released);
-		this->arap_controller->getARAPManipulator()->setDisplayScale(camera()->sceneRadius()/9.);
-		std::cerr << "Initialized arap manipulator.\n";
-	}
-	if (this->arap_controller->getRectangleSelection() == nullptr) {
-		this->arap_controller->getRectangleSelection() = std::make_shared<RectangleSelection>();
-		QObject::connect(this->arap_controller->getRectangleSelection().get(), &RectangleSelection::add, this, &Viewer::rectangleSelection_add);
-		QObject::connect(this->arap_controller->getRectangleSelection().get(), &RectangleSelection::apply, this, &Viewer::rectangleSelection_apply);
-		QObject::connect(this->arap_controller->getRectangleSelection().get(), &RectangleSelection::remove, this, &Viewer::rectangleSelection_remove);
-		std::cerr << "Initialized rectangle selection.\n";
-	}
-	if (this->arap_controller->getMeshInterface() == nullptr) {
-		this->arap_controller->getMeshInterface() = std::make_shared<MMInterface<glm::vec3>>();
-		auto mesh = this->scene->getMesh();
-		this->arap_controller->getMeshInterface()->clear();
-		this->arap_controller->getMeshInterface()->setMode(MeshModificationMode::INTERACTIVE);
-		this->arap_controller->getMeshInterface()->loadAndInitialize(mesh->getVertices(), mesh->getTriangles());
-		std::cerr << "Initialized mesh interface.\n";
-	}
-	this->doneCurrent();
-	*/
-}
-
-void Viewer::initializeARAPManipulationInterface() {
-	// Called from ARAPController::initializeMeshInterface :
-}
-
-void Viewer::setARAPController(ARAPController* arap_ctrl) {
-	this->arap_controller = arap_ctrl;
-}
-
-void Viewer::alignARAP() {
-	std::cerr << "Applying transformation to the mesh ...\n";
-	this->scene->dummy_apply_alignment_before_arap();
-	std::cerr << "Applied transformation to the mesh.\n";
-}
-
-void Viewer::launchARAP() {
-	std::cerr << "Applying constrained ARAP ...\n";
-	this->scene->dummy_perform_constrained_arap_on_image_mesh();
-	std::cerr << "Applied constrained ARAP.\n";
 }
 
 void Viewer::toggleSelectionMode() {
@@ -316,10 +124,6 @@ void Viewer::toggleSelectionMode() {
 
 void Viewer::printVAOStateNext() {
 	this->scene->printVAOStateNext();
-}
-
-void Viewer::setSphereSize(double s) {
-	this->sphere_size = static_cast<float>(s);
 }
 
 void Viewer::keyPressEvent(QKeyEvent* e) {
@@ -368,39 +172,6 @@ void Viewer::keyPressEvent(QKeyEvent* e) {
 			this->scene->draft_tryAndSaveFirstGrid();
 			this->update();
 			break;
-			/*
-			 * ARAP !
-			 */
-		case Qt::Key::Key_C:
-			// Shift-Enter adds the current vertex as a constraint for ARAP in the mesh.
-			if (e->modifiers() & Qt::KeyboardModifier::ShiftModifier) {
-				// add the vertex as an arap constraint to the concerned mesh
-				std::cerr << "Attempting to push constraint to mesh ..." << this->temp_mesh_idx << "\n";
-				std::size_t dumb;
-				if (this->scene->dummy_check_point_in_mesh_bb(this->temp_sphere_position, dumb)) {
-					this->arap_controller->addMeshConstraint(this->temp_mesh_vtx_idx);
-				} else {
-					std::cerr << "Error : point was not in mesh BB :(\n";
-				}
-			}
-			// Ctrl-Enter adds the current image position as the image constraint for ARAP
-			else if ((e->modifiers() & Qt::KeyboardModifier::ControlModifier) != 0)
-			{
-				std::cerr << "Attempting to push constraint to image ..." << this->temp_img_idx << "\n";
-				this->arap_controller->addImageConstraint(this->temp_img_pos);
-			}
-			break;
-		case Qt::Key::Key_Plus:
-			// don't cap the highest size
-			this->sphere_size *= 1.1f;
-			std::cerr << "Sphere size now at : " << std::setprecision(5) << this->sphere_size << '\n';
-			break;
-		case Qt::Key::Key_Minus:
-			this->sphere_size /= 1.1f;
-			// cap the smallest size at 1x10^-3
-			this->sphere_size = std::max(1e-3f, this->sphere_size);
-			std::cerr << "Sphere size now at : " << std::setprecision(5) << this->sphere_size << '\n';
-			break;
 		case Qt::Key::Key_Space:
 			// Done here in order to prevent a segfault.
 			std::cerr << "Segfault avoided.\n";
@@ -438,34 +209,6 @@ glm::vec4 Viewer::readPositionFromFramebuffer() {
 	return p;
 }
 
-void Viewer::toggleDeformation() {
-	if (this->arap_controller->getMeshInterface() == nullptr) { return; }
-	this->deformation_enabled = not this->deformation_enabled;
-	QString mesg = "Disabled ";
-	if (this-deformation_enabled) { mesg = "Enabled "; }
-	if (this->statusBar) { this->statusBar->showMessage(mesg+"deformation", 1000); }
-
-	emit this->enableDeformationPanel(this->deformation_enabled);
-}
-
-void Viewer::setDeformation(bool enabled) {
-	if (this->arap_controller->getMeshInterface() == nullptr) { return; }
-	this->deformation_enabled = enabled;
-	QString mesg = "Disabled ";
-	if (this-deformation_enabled) { mesg = "Enabled "; }
-	if (this->statusBar) { this->statusBar->showMessage(mesg+"deformation", 1000); }
-
-	emit this->enableDeformationPanel(this->deformation_enabled);
-}
-
-void Viewer::resetDeformation() {
-	if (this->arap_controller->getMeshInterface() == nullptr) {
-		return;
-	}
-	this->deformation_enabled = false;
-	emit this->enableDeformationPanel(this->deformation_enabled);
-}
-
 void Viewer::mousePressEvent(QMouseEvent* e) {
 	this->cursorPos_current = glm::ivec2{e->pos().x(), e->pos().y()};
 
@@ -476,44 +219,6 @@ void Viewer::mousePressEvent(QMouseEvent* e) {
 		this->guessMousePosition();
 		e->accept();	// stop the event from propagating further !
 		return;
-	}
-
-	// here we check for rectangleSelection but the rest of the mesh manip interface is also initialized (since they're all created together)
-	if (this->deformation_enabled && this->arap_controller->getRectangleSelection()) {
-		if (e->modifiers() & Qt::KeyboardModifier::ShiftModifier) {
-			if (this->arap_controller->getRectangleSelection()->isInactive()) {
-				this->arap_controller->getRectangleSelection()->activate();
-			}
-			this->arap_controller->getRectangleSelection()->mousePressEvent(e, this->camera());
-			this->update();
-			return;
-		}
-		else if (e->modifiers() & Qt::KeyboardModifier::ControlModifier) {
-			if (e->button() == Qt::MouseButton::MiddleButton) {
-				std::cout << "CTRL+Mid" << std::endl;
-				this->arap_controller->getARAPManipulator()->clear();
-				this->arap_controller->getARAPManipulator()->setDisplayScale(camera()->sceneRadius()/5.f);
-				this->arap_controller->getMeshInterface()->make_selected_fixed_handles();
-			} else if (e->button() == Qt::MouseButton::LeftButton) {
-				bool found;
-				glm::vec4 point = this->readPositionFromFramebuffer();
-				if( point.w > 0.1f ){
-					std::cout << "Manip" << std::endl;
-					this->arap_controller->getARAPManipulator()->clear();
-					this->arap_controller->getARAPManipulator()->setDisplayScale(camera()->sceneRadius()/5.f);
-					this->arap_controller->getMeshInterface()->make_fixed_handles(glm::vec3(point[0], point[1], point[2]), this->sphere_size);
-				}
-			} else if (e->button() == Qt::MouseButton::RightButton) {
-				bool found;
-				glm::vec4 point = this->readPositionFromFramebuffer();
-				if( point.w > 0.1f ){
-					this->arap_controller->getARAPManipulator()->clear();
-					this->arap_controller->getARAPManipulator()->setDisplayScale(camera()->sceneRadius()/5.f);
-					this->arap_controller->getMeshInterface()->select(glm::vec3(point[0], point[1], point[2]), this->sphere_size );
-				}
-			}
-		}
-		this->update();
 	}
 
 	// If not in select mode, process the event normally :
@@ -529,13 +234,6 @@ void Viewer::mouseMoveEvent(QMouseEvent* e) {
 		e->accept();
 		return;
 	}
-	if (this->arap_controller->getRectangleSelection()) {
-		if (! this->arap_controller->getRectangleSelection()->isInactive()) {
-			this->arap_controller->getRectangleSelection()->mouseMoveEvent( e , camera() );
-			e->accept();
-			return;
-		}
-	}
 	QGLViewer::mouseMoveEvent(e);
 }
 
@@ -544,15 +242,6 @@ void Viewer::mouseReleaseEvent(QMouseEvent* e) {
 		this->framesHeld = 0;
 	}
 
-	if (this->arap_controller->getRectangleSelection()) {
-		if (! this->arap_controller->getRectangleSelection()->isInactive()) {
-			std::cerr << "Releasing rectangle selection !\n";
-			this->arap_controller->getRectangleSelection()->mouseReleaseEvent(e, this->camera());
-		}
-		this->arap_controller->getRectangleSelection()->deactivate();
-		this->update();
-		//return;
-	}
 	QGLViewer::mouseReleaseEvent(e);
 }
 
@@ -612,31 +301,9 @@ void Viewer::guessMousePosition() {
 							  QString::number(index.y) + ", " + QString::number(index.z) + ", in grid " +
 							  QString::fromStdString(grid->getImageName());
 				this->statusBar->showMessage(msg, 10000);
-				this->temp_img_pos = glm::vec3(p);
 			}
 		};
 		this->scene->lambdaOnGrids(findSuitablePoint);
-
-		// Look for the point in the meshes loaded :
-		auto mesh_idx = std::size_t(0);
-		if (this->scene->dummy_check_point_in_mesh_bb(glm::vec3(p), mesh_idx)) {
-			DrawableMesh::Ptr drawable_mesh = this->scene->getDrawableMesh();
-			if (drawable_mesh != nullptr) {
-				auto mesh = drawable_mesh->getMesh();
-				if (mesh != nullptr) {
-					// Transform the point to mesh-local coordinates !
-					// get transfo and extract translation component
-					glm::mat4 mesh_transfo		  = drawable_mesh->getTransformation();
-					glm::vec4 mesh_translation	  = glm::vec4(mesh_transfo[3]);
-					mesh_translation.w			  = .0f;
-					mesh_transfo[3]				  = glm::vec4{.0f, .0f, .0f, 1.f};
-					glm::vec4 mesh_local_position = glm::inverse(mesh_transfo) * (p - mesh_translation);
-					this->temp_sphere_position	  = mesh->closestPointTo(glm::vec3(mesh_local_position), this->temp_mesh_vtx_idx);
-					this->temp_sphere_position	  = glm::vec3(mesh_transfo * glm::vec4(this->temp_sphere_position, 1.f) + mesh_translation);
-					this->scene->setPositionResponse(glm::vec4{this->temp_sphere_position, 1.f});
-				}
-			}
-		}
 	}
 }
 
@@ -733,22 +400,12 @@ QString Viewer::mouseString() const {
 }
 
 void Viewer::updateCameraPosition() {
-	std::cerr << __PRETTY_FUNCTION__ << '\n';
 	auto bb		= this->scene->getSceneBoundingBox();
 	auto center = bb.getMin() + (bb.getDiagonal() / 2.f);
 	auto radius = glm::length(bb.getDiagonal());
 	this->setSceneCenter(qglviewer::Vec(center.x, center.y, center.z));
 	this->setSceneRadius(radius * sceneRadiusMultiplier);
 	Mesh::Ptr mesh = nullptr;
-	if (this->arap_controller && (mesh = this->arap_controller->getMesh())) {
-		auto bb = mesh->getBB();
-		float mesh_rad = glm::length(bb[1] - bb[0]);
-		this->sphere_size = this->sceneRadius() * 2e-2f;
-		std::cerr << "Setting sphere size to " << std::setprecision(5) << this->sphere_size << '\n';
-		if (this->arap_controller->getARAPManipulator()) {
-			this->arap_controller->getARAPManipulator()->setDisplayScale(this->camera()->sceneRadius()/9.f);
-		}
-	}
 	this->showEntireScene();
 }
 
@@ -779,29 +436,4 @@ void Viewer::newAPI_loadGrid(Image::Grid::Ptr ptr) {
 
 void Viewer::toggleManipulators() {
 	this->meshManipulator.toggleActivation();
-}
-
-void Viewer::loadMeshToScene() {
-	this->makeCurrent();
-	this->scene->loadMesh();
-	this->doneCurrent();
-	this->resetDeformation();
-	this->updateInfoFromScene();
-
-	auto cam = this->camera()->position();
-	std::cerr << "Position of the camera : " << cam.x << ", " << cam.y << ", " << cam.z << ", and radius of " << this->camera()->sceneRadius() << '\n';
-}
-
-void Viewer::loadCurveToScene() {
-	this->makeCurrent();
-	this->scene->loadCurve();
-	this->doneCurrent();
-	this->updateInfoFromScene();
-}
-
-void Viewer::loadOtherCurveToScene() {
-	this->makeCurrent();
-	this->scene->dummy_resize_curve_to_match_other_curve();
-	this->doneCurrent();
-	this->updateInfoFromScene();
 }

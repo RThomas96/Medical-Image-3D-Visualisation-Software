@@ -94,7 +94,6 @@ SET_TARGET_PROPERTIES(DiscreteGrid PROPERTIES AUTOMOC OFF AUTORCC OFF AUTOUIC OF
 # All the needed widgets for this project, under one target {{{
 ADD_LIBRARY(VisualisationWidgets STATIC
 	./qt/include/grid_control.hpp
-	./qt/include/viewer_helper.hpp
 	./qt/include/grid_detailed_view.hpp
 	./qt/include/grid_list_view.hpp
 	./qt/include/neighbor_visu_main_widget.hpp
@@ -111,7 +110,6 @@ ADD_LIBRARY(VisualisationWidgets STATIC
 	./qt/src/visu_box_controller.cpp
 	./qt/src/opengl_debug_log.cpp
 	./qt/src/user_settings_widget.cpp
-	./qt/src/viewer_helper.cpp
 )
 TARGET_INCLUDE_DIRECTORIES(VisualisationWidgets
 	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/third_party/glm/

@@ -1,7 +1,7 @@
 #include "../include/viewer_header.hpp"
 
 #include "../../viewer/include/arap_viewer.hpp"
-#include "../../../../viewer/include/planar_viewer.hpp"
+#include "../../viewer/include/planar_viewer.hpp"
 
 ViewerHeader::ViewerHeader(QWidget* parent) :
 	QWidget(parent) {

@@ -4,7 +4,6 @@
 #include "../../viewer/include/neighbor_visu_viewer.hpp"
 #include "../../viewer/include/planar_viewer.hpp"
 #include "../../viewer/include/scene.hpp"
-#include "./viewer_helper.hpp"
 #include "./grid_control.hpp"
 #include "./loader_widget.hpp"
 #include "./opengl_debug_log.hpp"
@@ -51,8 +50,6 @@ protected:
 	/// have them both square, and not too small.
 	bool eventFilter(QObject* obj, QEvent* e) override;
 
-	void showHelper();
-
 private:
 	Scene* scene;	 ///< The underlying scene, with the data to display
 
@@ -61,8 +58,6 @@ private:
 
 	ViewerHeader* headerX;	  ///< Header for the X plane viewer
 	PlanarViewer* viewer_planeX;	///< The visualisation of the grid on plane X
-
-	ViewerHelper* viewerHelper;
 
 	ViewerHeader* headerY;	  ///< Header for the Y plane viewer
 	PlanarViewer* viewer_planeY;	///< The visualisation of the grid on plane Y
@@ -96,9 +91,6 @@ private:
 	QAction* action_showHelp3D;	   ///< Action to show the help dialog for the 3D viewer
 	QAction* action_showHelpPlane;	  ///< Action to show the help dialog for the planar viewers
 	QAction* action_showSettings;	 ///< Action to show user settings
-	QAction* action_loadMesh;	 ///< The action to load a mesh into the scene.
-	QAction* action_loadCurve;	  ///< The action to load a mesh into the scene.
-	QAction* action_loadOtherCurve; ///< The action to load another curve in order to resize the current one
 	QStatusBar* statusBar;	  ///< Status bar
 	QPushButton* showGLLog;	   ///< Button to open the QOpenGLDebugLog message box.
 	QPushButton* deform;	///< The 'Deform' button for debug purpose

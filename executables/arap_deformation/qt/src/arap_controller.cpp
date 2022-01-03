@@ -1,6 +1,6 @@
 #include "../include/arap_controller.hpp"
 
-#include "viewer/include/neighbor_visu_viewer.hpp"
+#include "executables/arap_deformation/viewer/include/arap_viewer.hpp"
 #include "viewer/include/scene.hpp"
 
 #include "glm/gtx/io.hpp"
