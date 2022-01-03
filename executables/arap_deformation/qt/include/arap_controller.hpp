@@ -10,18 +10,16 @@
 #include "../../meshes/operations/arap/mesh_manip_interface.h"
 // Image data :
 #include "../../new_grid/include/grid.hpp"
-
+// GLM :
 #include <glm/glm.hpp>
-
+// Qt :
 #include <QLabel>
 #include <QWidget>
 #include <QSpinBox>
 #include <QCheckBox>
 #include <QPushButton>
 #include <QDoubleSpinBox>
-
 #include <QListView>
-
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QVBoxLayout>

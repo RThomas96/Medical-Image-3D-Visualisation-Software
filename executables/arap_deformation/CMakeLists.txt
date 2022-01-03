@@ -4,8 +4,6 @@ ADD_EXECUTABLE(arap_deformation
 	../../qt/include/dialog_pick_grids_from_scene.hpp
 	# Header files, for Qt MOCS compilation :
 	../../viewer/include/scene.hpp
-	../../viewer/include/planar_viewer.hpp
-	../../viewer/include/neighbor_visu_viewer.hpp
 	../../viewer/include/viewer_structs.hpp
 	../../third_party/primitive/Sphere.h
 	../../qt/include/GLmanipulator.hpp
@@ -16,14 +14,15 @@ ADD_EXECUTABLE(arap_deformation
 	qt/include/scene_control.hpp
 	qt/include/double_slider.hpp
 	qt/include/range_slider.hpp
+	qt/include/viewer_header.hpp
+	viewer/include/arap_viewer.hpp
+	viewer/include/planar_viewer.hpp
 
 	# Main file :
 	./arap_main.cpp
 
 	# Source files :
 	../../viewer/src/scene.cpp
-	../../viewer/src/planar_viewer.cpp
-	../../viewer/src/neighbor_visu_viewer.cpp
 	../../viewer/src/viewer_structs.cpp
 	../../third_party/primitive/Sphere.cpp
 	../../qt/src/GLmanipulator.cpp
@@ -34,6 +33,9 @@ ADD_EXECUTABLE(arap_deformation
 	qt/src/scene_control.cpp
 	qt/src/double_slider.cpp
 	qt/src/range_slider.cpp
+	qt/src/viewer_header.cpp
+	viewer/src/arap_viewer.cpp
+	viewer/src/planar_viewer.cpp
 )
 TARGET_COMPILE_OPTIONS(arap_deformation
 	# Set so CMake (more precisely clang/gcc) will not print 30-80 warnings about QGLViewer's

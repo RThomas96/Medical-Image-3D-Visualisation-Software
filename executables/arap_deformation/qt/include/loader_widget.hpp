@@ -2,7 +2,7 @@
 #define QT_INCLUDE_LOADER_WIDGET_HPP_
 
 #include "../../macros.hpp"
-#include "../../viewer/include/neighbor_visu_viewer.hpp"
+#include "../../viewer/include/arap_viewer.hpp"
 #include "../../viewer/include/scene.hpp"
 #include "../../qt/include/scene_control.hpp"
 

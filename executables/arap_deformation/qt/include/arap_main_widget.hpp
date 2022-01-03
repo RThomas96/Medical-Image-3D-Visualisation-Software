@@ -1,10 +1,9 @@
 #ifndef VISUALISATION_QT_INCLUDE_ARAP_MAIN_WIDGET_HPP_
 #define VISUALISATION_QT_INCLUDE_ARAP_MAIN_WIDGET_HPP_
 
-#include "../../viewer/include/neighbor_visu_viewer.hpp"
+#include "../../viewer/include/arap_viewer.hpp"
 #include "../../viewer/include/planar_viewer.hpp"
 #include "../../viewer/include/scene.hpp"
-#include "../../qt/include/viewer_helper.hpp"
 #include "../../qt/include/grid_control.hpp"
 #include "./loader_widget.hpp"
 #include "../../qt/include/opengl_debug_log.hpp"

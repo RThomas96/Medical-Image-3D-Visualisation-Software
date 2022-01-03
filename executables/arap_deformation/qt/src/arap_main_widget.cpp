@@ -8,6 +8,7 @@
 #include <QSplitter>
 #include <QStatusBar>
 #include <QToolBar>
+#include <QDockWidget>
 
 ARAPMainWidget::ARAPMainWidget() {
 	this->strayObj.clear();

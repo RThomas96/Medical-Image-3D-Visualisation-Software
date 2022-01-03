@@ -1,6 +1,8 @@
 #ifndef VISUALISATION_QT_INCLUDE_VIEWER_HEADER_HPP_
 #define VISUALISATION_QT_INCLUDE_VIEWER_HEADER_HPP_
 
+#include "../../viewer/include/arap_viewer.hpp"
+
 #include <QHBoxLayout>
 #include <QIcon>
 #include <QLabel>
@@ -11,7 +13,6 @@
 
 // Fwd-declaration
 class PlanarViewer;
-class Viewer;
 
 /// @ingroup qtwidgets
 /// @brief Header of a planar viewer, with the name of the plane controlled as well as a slider to control it
