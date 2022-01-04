@@ -232,7 +232,7 @@ bool VolMesh::isValid() {
 VolMesh::~VolMesh(void) { /* Nothing here for now. */
 }
 
-GridGLView::GridGLView(const DeformableGrid * _grid) {
+GridGLView::GridGLView(const SimpleGrid * _grid) {
 	this->grid			   = _grid;
 	this->gridTexture	   = 0;
 	this->volumetricMesh   = {};

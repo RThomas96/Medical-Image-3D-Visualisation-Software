@@ -84,7 +84,7 @@ protected:
 	//std::shared_ptr<Interpolators::genericInterpolator<DiscreteGrid::data_t>> interpolator;	   ///< interpolator
 
 	//Image::Grid::Ptr _testing_grid;
-	const DeformableGrid * _testing_grid;
+	const SimpleGrid * _testing_grid;
 	bool useLegacyGrids;	///< should we use the new grid api or the new one ?
 
 	QLabel* label_headerLoader;	   ///< Label header for the entire widget

@@ -6,15 +6,15 @@
 #include <tinytiffreader.h>
 #include <tinytiffwriter.h>
 
-struct SimpleGrid {
+struct TIFFImage {
 
     TIFF* tif;
     glm::vec3 imgDimensions;
     Image::ImageDataType imgDataType;
 
-    SimpleGrid(const std::string& filename);
+    TIFFImage(const std::string& filename);
 
-    ~SimpleGrid() {
+    ~TIFFImage() {
         TIFFClose(this->tif);
     }
 
@@ -31,24 +31,24 @@ struct SimpleGrid {
 
 // Struct able to make the link between the image and its 3D representation
 // Associate 3D dimensions and origin to the image and thus allow to query values with a 3D point
-// TODO: rename SimpleGrid into image, and DeformableGrid into Grid
-struct DeformableGrid {
+// TODO: rename TIFFImage into image, and DeformableGrid into Grid
+struct SimpleGrid {
 
-    SimpleGrid grid;
+    TIFFImage grid;
     TetMesh tetmesh;
 
-    DeformableGrid(const std::string& filename, const glm::vec3& nbCube);
+    SimpleGrid(const std::string& filename, const glm::vec3& nbCube);
 
-    glm::vec3 getCoordInInitial(const DeformableGrid& initial, glm::vec3 p);
+    glm::vec3 getCoordInInitial(const SimpleGrid& initial, glm::vec3 p);
 
-    // Here p is a 3D point, not like coord from SimpleGrid's "getValue" function that is a set of 3 indices 
+    // Here p is a 3D point, not like coord from TIFFImage's "getValue" function that is a set of 3 indices 
     uint8_t getValueFromPoint(const glm::vec3& p) const;
 
     void movePoint(const glm::vec3& indices, const glm::vec3& position);
 
     void replaceAllPoints(const std::vector<glm::vec3>& pts);
 
-    void writeDeformedGrid(const DeformableGrid& initial);
+    void writeDeformedGrid(const SimpleGrid& initial);
 
     // TODO: to remove
     // Function added only for backward comptability with the old grid, used all along in the OpenGL interface

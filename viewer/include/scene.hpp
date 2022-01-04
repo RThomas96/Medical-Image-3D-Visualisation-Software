@@ -367,7 +367,7 @@ public:
 	void updateProgressBar();
 
 	void loadGridROI(void); // DEPRECATED
-	void addGrid(const DeformableGrid * gridLoaded);
+	void addGrid(const SimpleGrid * gridLoaded);
 	
 	void launchSaveDialog();
 	void printVAOStateNext() { this->showVAOstate = true; }

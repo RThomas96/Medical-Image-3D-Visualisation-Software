@@ -8,7 +8,7 @@ bool isPtInBB(const glm::vec3& p, const glm::vec3& bbmin, const glm::vec3& bbmax
     return true;
 }
 
-SimpleGrid::SimpleGrid(const std::string& filename) {
+TIFFImage::TIFFImage(const std::string& filename) {
     //this->tif = TIFFOpen("../../../../Data/v3_a5_100_150_8bit_normalized.tif", "r");
     //this->tif = TIFFOpen("../../../../Data/myTiff.tif", "r");
     //this->tif = TIFFOpen("../../../../../../../data/datasets/tulane/v3/registration_subset/v3_a5_100_150_8bit_normalized_25.tif", "r");
@@ -109,11 +109,11 @@ SimpleGrid::SimpleGrid(const std::string& filename) {
 
 }
 
-Image::ImageDataType SimpleGrid::getInternalDataType() const {
+Image::ImageDataType TIFFImage::getInternalDataType() const {
     return this->imgDataType;
 }
 
-uint8_t SimpleGrid::getValue(const glm::vec3& coord) const {
+uint8_t TIFFImage::getValue(const glm::vec3& coord) const {
     if (this->tif) {
         TIFFSetDirectory(tif, static_cast<int>(std::floor(coord[2])));
         tdata_t buf;
@@ -128,7 +128,7 @@ uint8_t SimpleGrid::getValue(const glm::vec3& coord) const {
 }
 
 // TODO: nbChannel is bugged for now
-void SimpleGrid::getSlice(int imgIdx, int lineIdx, std::vector<uint16_t>& result, int nbChannel) const {
+void TIFFImage::getSlice(int imgIdx, int lineIdx, std::vector<uint16_t>& result, int nbChannel) const {
     if (this->tif) {
         TIFFSetDirectory(tif, imgIdx);
         tdata_t buf;
@@ -145,7 +145,7 @@ void SimpleGrid::getSlice(int imgIdx, int lineIdx, std::vector<uint16_t>& result
     }
 }
 
-void SimpleGrid::getImage(int imgIdx, std::vector<std::uint16_t>& result, int nbChannel) const {
+void TIFFImage::getImage(int imgIdx, std::vector<std::uint16_t>& result, int nbChannel) const {
     if (this->tif) {
         TIFFSetDirectory(tif, imgIdx);
         uint32 imagelength;
@@ -168,12 +168,12 @@ void SimpleGrid::getImage(int imgIdx, std::vector<std::uint16_t>& result, int nb
     }
 }
 
-DeformableGrid::DeformableGrid(const std::string& filename, const glm::vec3& nbCube): grid(SimpleGrid(filename)) {
+SimpleGrid::SimpleGrid(const std::string& filename, const glm::vec3& nbCube): grid(TIFFImage(filename)) {
     const glm::vec3 sizeCube = this->grid.imgDimensions / nbCube;
     this->tetmesh.buildGrid(nbCube, sizeCube, glm::vec3(0., 0., 0.));
 }
 
-glm::vec3 DeformableGrid::getCoordInInitial(const DeformableGrid& initial, glm::vec3 p) {
+glm::vec3 SimpleGrid::getCoordInInitial(const SimpleGrid& initial, glm::vec3 p) {
     int tetraIdx = this->tetmesh.inTetraIdx(p);
     if(tetraIdx != -1) {
         glm::vec4 baryCoordInDeformed = this->tetmesh.getTetra(tetraIdx).computeBaryCoord(p);
@@ -184,7 +184,7 @@ glm::vec3 DeformableGrid::getCoordInInitial(const DeformableGrid& initial, glm::
     }
 }
 
-uint8_t DeformableGrid::getValueFromPoint(const glm::vec3& p) const {
+uint8_t SimpleGrid::getValueFromPoint(const glm::vec3& p) const {
     if(isPtInBB(p, this->tetmesh.bbMin, this->tetmesh.bbMax)) {
         const glm::vec3 coord = p;
         return this->grid.getValue(coord);
@@ -194,15 +194,15 @@ uint8_t DeformableGrid::getValueFromPoint(const glm::vec3& p) const {
     }
 }
 
-void DeformableGrid::movePoint(const glm::vec3& indices, const glm::vec3& position) {
+void SimpleGrid::movePoint(const glm::vec3& indices, const glm::vec3& position) {
     this->tetmesh.movePoint(indices, position);
 }
 
-void DeformableGrid::replaceAllPoints(const std::vector<glm::vec3>& pts) {
+void SimpleGrid::replaceAllPoints(const std::vector<glm::vec3>& pts) {
     this->tetmesh.replaceAllPoints(pts);
 }
 
-void DeformableGrid::writeDeformedGrid(const DeformableGrid& initial) {
+void SimpleGrid::writeDeformedGrid(const SimpleGrid& initial) {
     if(this->tetmesh.isEmpty())
         throw std::runtime_error("Error: cannot write a grid without deformed mesh.");
 
@@ -260,16 +260,16 @@ void DeformableGrid::writeDeformedGrid(const DeformableGrid& initial) {
     TinyTIFFWriter_close(tif);
 }
 
-std::pair<glm::vec3, glm::vec3> DeformableGrid::getBoundingBox() const {
+std::pair<glm::vec3, glm::vec3> SimpleGrid::getBoundingBox() const {
     return std::pair(this->tetmesh.bbMin, this->tetmesh.bbMax);
 }
 
-glm::vec3 DeformableGrid::getResolution() const {
+glm::vec3 SimpleGrid::getResolution() const {
     return this->grid.imgDimensions;
 }
 
 
-Image::ImageDataType DeformableGrid::getInternalDataType() const {
+Image::ImageDataType SimpleGrid::getInternalDataType() const {
     return this->grid.getInternalDataType();
 }
 
@@ -277,7 +277,7 @@ Image::ImageDataType DeformableGrid::getInternalDataType() const {
 // UNIT TEST
 /**************************/
 
-void DeformableGrid::checkReadSlice() const {
+void SimpleGrid::checkReadSlice() const {
     std::vector<uint16_t> res;
     this->grid.getImage(0, res, 1);
     for(int i = 4213; i < 4500; ++i)
@@ -289,7 +289,7 @@ void checkPointQuery() {
     glm::vec3 origin = glm::vec3(0., 0., 0.);
     glm::vec3 size = glm::vec3(4930., 512., 51.);
     glm::vec3 nb = glm::vec3(1., 1., 1.);
-    DeformableGrid grid("../../../../../../../data/datasets/tulane/v3/registration_subset/v3_a5_100_150_8bit_normalized_25.tif", nb);
+    SimpleGrid grid("../../../../../../../data/datasets/tulane/v3/registration_subset/v3_a5_100_150_8bit_normalized_25.tif", nb);
 
     glm::vec3 originalPosition = glm::vec3(1194., 20., 4.);
 
@@ -298,7 +298,7 @@ void checkPointQuery() {
     origin = glm::vec3(2., 0., 0.);
     size = glm::vec3(2465., 256., 25.);
     nb = glm::vec3(1., 1., 1.);
-    DeformableGrid grid2("../../../../../../../data/datasets/tulane/v3/registration_subset/v3_a5_100_150_8bit_normalized_25.tif", nb);
+    SimpleGrid grid2("../../../../../../../data/datasets/tulane/v3/registration_subset/v3_a5_100_150_8bit_normalized_25.tif", nb);
 
     //std::cout << "Grid voxel size: " << grid2.voxelDimensions << " == (0.5, 0.5, 0.5)" << std::endl;
     glm::vec3 newPosition = (originalPosition/glm::vec3(2., 2., 2.))+origin;
@@ -310,7 +310,7 @@ void checkMeshMove() {
     //glm::vec3 origin = glm::vec3(0., 0., 0.);
     //glm::vec3 size = glm::vec3(1., 1., 1.);
     //glm::vec3 nb = glm::vec3(10., 10., 1.);
-    //DeformableGrid grid(origin, size, nb);
+    //SimpleGrid grid(origin, size, nb);
     ////grid.tetmesh.ptGrid[5][5][0][2] = -1;
     //grid.tetmesh.ptGrid[1][0][1][2] = -1;
 
@@ -333,8 +333,8 @@ void checkDeformable() {
     glm::vec3 nb = glm::vec3(1., 1., 1.);
 
     std::string filename = "../../../../Data/myTiff.tif";
-    DeformableGrid deformableGrid(filename, nb);
-    DeformableGrid initialGrid(filename, nb);
+    SimpleGrid deformableGrid(filename, nb);
+    SimpleGrid initialGrid(filename, nb);
 
     deformableGrid.movePoint(glm::vec3(1, 1, 1), glm::vec3(600, 0., 0.));
     deformableGrid.writeDeformedGrid(initialGrid);
@@ -346,9 +346,9 @@ void checkReadSimpleImage () {
     //"../../../../../../../data/datasets/tulane/v3/registration_subset/v3_a5_100_150_8bit_normalized_25.tif"
     //"../../../../../../../data/datasets/tulane/v3/registration_subset/v3_a5_100_150_8bit_normalized.tif"
 
-    SimpleGrid gridTiff("../../../../Data/v3_a5_100_150_8bit_normalized_25.tif");
+    TIFFImage gridTiff("../../../../Data/v3_a5_100_150_8bit_normalized_25.tif");
     std::cout << "Get simple value: " << unsigned(gridTiff.getValue(glm::vec3(1182, 8, 0))) << " == 181" << std::endl;
 
-    SimpleGrid gridTiffFiji("../../../../Data/myTiff.tif");
+    TIFFImage gridTiffFiji("../../../../Data/myTiff.tif");
     std::cout << "Get simple value: " << unsigned(gridTiffFiji.getValue(glm::vec3(50, 29, 0))) << " == 162" << std::endl;
 }

@@ -1022,7 +1022,7 @@ void GridLoaderWidget::loadNewGridAPI() {
 	std::vector<std::vector<std::string>> fnames_grid{fnR, fnG};
 	// FIXME : The API has changed. Grid::createGrid should only return an empty TIFF implementation, and
 	// the parsing function is the one to take the files as an input.
-	this->_testing_grid = new DeformableGrid(fnames_grid[0][0], glm::vec3(5., 5. ,5.));
+	this->_testing_grid = new SimpleGrid(fnames_grid[0][0], glm::vec3(5., 5. ,5.));
 	if (this->_testing_grid == nullptr) {
 		std::cerr << "Error : createGrid() returned nullptr !\n";
 		return;
