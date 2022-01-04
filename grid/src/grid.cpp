@@ -314,8 +314,8 @@ void SimpleGrid::writeDeformedGrid(const SimpleGrid& initial) {
     for(float k = bboxMin[2]; k < bboxMax[2]; k+=voxelDimension[2]) {
         std::cout << std::endl;
         end = std::chrono::steady_clock::now();
-        std::cout << "Loading: " << (k/bboxMax[2]) * 100. << "%" << std::endl;
-        std::cout << "Remain: "  << ((bboxMax[2] - k) * (std::chrono::duration_cast<std::chrono::seconds> (end - begin).count() / k))/60. << "min" << std::endl << std::endl;
+        std::cout << "Loading: " << ((k-bboxMin[2])/(bboxMax[2]-bboxMin[2])) * 100. << "%" << std::endl;
+        std::cout << "Remain: "  << (((bboxMax[2]-bboxMin[2]) - (k-bboxMin[2])) * (std::chrono::duration_cast<std::chrono::seconds> (end - begin).count() / (k-bboxMin[2])))/60. << "min" << std::endl << std::endl;
         data.clear();
         for(float j = bboxMin[1]; j < bboxMax[1]; j+=voxelDimension[1]) {
             //std::cout << (j/bboxMax[1]) * 100. << "% " << std::flush;
