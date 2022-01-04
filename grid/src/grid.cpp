@@ -113,14 +113,91 @@ Image::ImageDataType TIFFImage::getInternalDataType() const {
     return this->imgDataType;
 }
 
-uint8_t TIFFImage::getValue(const glm::vec3& coord) const {
+template <typename data_t>
+void castToUintAndInsert(data_t * values, std::vector<uint16_t>& res, size_t size, int duplicate) {
+    for(int i = 0; i < size; ++i) {
+        for(int j = 0; j < duplicate; ++j)
+            res.push_back(static_cast<std::uint16_t>(values[i])); 
+    }
+}
+
+void castToLowPrecision(Image::ImageDataType imgDataType, const tdata_t& buf, std::vector<uint16_t>& res, size_t size, int duplicate) {
+    if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_8)) {
+        uint8_t * data = static_cast<std::uint8_t*>(buf);
+        castToUintAndInsert(data, res, size, duplicate);
+    } else if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_16)) {
+        uint16_t * data = static_cast<std::uint16_t*>(buf);
+        castToUintAndInsert(data, res, size, duplicate);
+    } else if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_32)) {
+        uint32_t * data = static_cast<std::uint32_t*>(buf);
+        castToUintAndInsert(data, res, size, duplicate);
+    } else if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_64)) {
+        uint64_t * data = static_cast<std::uint64_t*>(buf);
+        castToUintAndInsert(data, res, size, duplicate);
+    } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_8)) {
+        int8_t * data = static_cast<std::int8_t*>(buf);
+        castToUintAndInsert(data, res, size, duplicate);
+    } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_16)) {
+        int16_t * data = static_cast<std::int16_t*>(buf);
+        castToUintAndInsert(data, res, size, duplicate);
+    } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_32)) {
+        int32_t * data = static_cast<std::int32_t*>(buf);
+        castToUintAndInsert(data, res, size, duplicate);
+    } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_64)) {
+        int64_t * data = static_cast<std::int64_t*>(buf);
+        castToUintAndInsert(data, res, size, duplicate);
+    } else if(imgDataType == (Image::ImageDataType::Floating | Image::ImageDataType::Bit_32)) {
+        float * data = static_cast<float*>(buf);
+        castToUintAndInsert(data, res, size, duplicate);
+    } else if(imgDataType == (Image::ImageDataType::Floating | Image::ImageDataType::Bit_64)) {
+        double * data = static_cast<double*>(buf);
+        castToUintAndInsert(data, res, size, duplicate);
+    } 
+}
+
+uint16_t getToLowPrecision(Image::ImageDataType imgDataType, const tdata_t& buf, int idx) {
+    if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_8)) {
+        uint8_t * data = static_cast<std::uint8_t*>(buf);
+        return static_cast<std::uint16_t>(data[idx]);
+    } else if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_16)) {
+        uint16_t * data = static_cast<std::uint16_t*>(buf);
+        return static_cast<std::uint16_t>(data[idx]);
+    } else if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_32)) {
+        uint32_t * data = static_cast<std::uint32_t*>(buf);
+        return static_cast<std::uint16_t>(data[idx]);
+    } else if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_64)) {
+        uint64_t * data = static_cast<std::uint64_t*>(buf);
+        return static_cast<std::uint16_t>(data[idx]);
+    } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_8)) {
+        int8_t * data = static_cast<std::int8_t*>(buf);
+        return static_cast<std::uint16_t>(data[idx]);
+    } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_16)) {
+        int16_t * data = static_cast<std::int16_t*>(buf);
+        return static_cast<std::uint16_t>(data[idx]);
+    } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_32)) {
+        int32_t * data = static_cast<std::int32_t*>(buf);
+        return static_cast<std::uint16_t>(data[idx]);
+    } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_64)) {
+        int64_t * data = static_cast<std::int64_t*>(buf);
+        return static_cast<std::uint16_t>(data[idx]);
+    } else if(imgDataType == (Image::ImageDataType::Floating | Image::ImageDataType::Bit_32)) {
+        float * data = static_cast<float*>(buf);
+        return static_cast<std::uint16_t>(data[idx]);
+    } else if(imgDataType == (Image::ImageDataType::Floating | Image::ImageDataType::Bit_64)) {
+        double * data = static_cast<double*>(buf);
+        return static_cast<std::uint16_t>(data[idx]);
+    } 
+}
+
+uint16_t TIFFImage::getValue(const glm::vec3& coord) const {
     if (this->tif) {
         TIFFSetDirectory(tif, static_cast<int>(std::floor(coord[2])));
         tdata_t buf;
         uint32 row; 
         buf = _TIFFmalloc(TIFFScanlineSize(tif));
         TIFFReadScanline(tif, buf, static_cast<int>(std::floor(coord[1])));
-        uint8_t res = static_cast<uint8_t*>(buf)[static_cast<int>(std::floor(coord[0]))];
+        //uint8_t res = static_cast<uint8_t*>(buf)[static_cast<int>(std::floor(coord[0]))];
+        uint16_t res = getToLowPrecision(this->getInternalDataType(), buf, std::floor(coord[0])); 
         _TIFFfree(buf);
         return res;
     }
@@ -138,9 +215,7 @@ void TIFFImage::getSlice(int imgIdx, int lineIdx, std::vector<uint16_t>& result,
         uint8_t * res = static_cast<uint8_t*>(buf);
         //uint16_t * res = static_cast<uint16_t*>(buf);
         int sliceSize = static_cast<int>(this->imgDimensions[0]);
-        for(int i = 0; i < sliceSize; ++i) {
-           result.push_back(static_cast<uint16_t>(res[i])); 
-        }
+        castToLowPrecision(this->getInternalDataType(), buf, result, sliceSize, nbChannel);
         _TIFFfree(buf);
     }
 }
@@ -156,13 +231,8 @@ void TIFFImage::getImage(int imgIdx, std::vector<std::uint16_t>& result, int nbC
         buf = _TIFFmalloc(TIFFScanlineSize(tif));
         for (row = 0; row < imagelength; row++) {
             TIFFReadScanline(tif, buf, row);
-            //std::uint16_t * res = static_cast<std::uint16_t*>(buf);
-            std::uint8_t * res = static_cast<std::uint8_t*>(buf);
             int imageSize = static_cast<int>(this->imgDimensions[0]);
-            for(int i = 0; i < imageSize; ++i) {
-                for(int j = 0; j < nbChannel; ++j)
-                    result.push_back(static_cast<std::uint16_t>(res[i])); 
-            }
+            castToLowPrecision(this->getInternalDataType(), buf, result, imageSize, nbChannel);
         }
         _TIFFfree(buf);
     }
@@ -184,7 +254,7 @@ glm::vec3 SimpleGrid::getCoordInInitial(const SimpleGrid& initial, glm::vec3 p) 
     }
 }
 
-uint8_t SimpleGrid::getValueFromPoint(const glm::vec3& p) const {
+uint16_t SimpleGrid::getValueFromPoint(const glm::vec3& p) const {
     if(isPtInBB(p, this->tetmesh.bbMin, this->tetmesh.bbMax)) {
         const glm::vec3 coord = p;
         return this->grid.getValue(coord);

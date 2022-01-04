@@ -19,7 +19,7 @@ struct TIFFImage {
     }
 
     // In theory floor aren't necessary cause coord are already integer
-    uint8_t getValue(const glm::vec3& coord) const;
+    uint16_t getValue(const glm::vec3& coord) const;
 
     void getSlice(int imgIdx, int lineIdx, std::vector<uint16_t>& result, int nbChannel) const;
 
@@ -42,7 +42,7 @@ struct SimpleGrid {
     glm::vec3 getCoordInInitial(const SimpleGrid& initial, glm::vec3 p);
 
     // Here p is a 3D point, not like coord from TIFFImage's "getValue" function that is a set of 3 indices 
-    uint8_t getValueFromPoint(const glm::vec3& p) const;
+    uint16_t getValueFromPoint(const glm::vec3& p) const;
 
     void movePoint(const glm::vec3& indices, const glm::vec3& position);
 
