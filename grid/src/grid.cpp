@@ -114,45 +114,49 @@ Image::ImageDataType TIFFImage::getInternalDataType() const {
     return this->imgDataType;
 }
 
+Image::ImageDataType Grid::getInternalDataType() const {
+    return this->image.getInternalDataType();
+}
+
 template <typename data_t>
-void castToUintAndInsert(data_t * values, std::vector<uint16_t>& res, size_t size, int duplicate) {
-    for(int i = 0; i < size; ++i) {
+void castToUintAndInsert(data_t * values, std::vector<uint16_t>& res, size_t size, int duplicate, int offset) {
+    for(int i = 0; i < size; i+=offset) {
         for(int j = 0; j < duplicate; ++j)
             res.push_back(static_cast<std::uint16_t>(values[i])); 
     }
 }
 
-void castToLowPrecision(Image::ImageDataType imgDataType, const tdata_t& buf, std::vector<uint16_t>& res, size_t size, int duplicate) {
+void castToLowPrecision(Image::ImageDataType imgDataType, const tdata_t& buf, std::vector<uint16_t>& res, size_t size, int duplicate, int offset) {
     if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_8)) {
         uint8_t * data = static_cast<std::uint8_t*>(buf);
-        castToUintAndInsert(data, res, size, duplicate);
+        castToUintAndInsert(data, res, size, duplicate, offset);
     } else if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_16)) {
         uint16_t * data = static_cast<std::uint16_t*>(buf);
-        castToUintAndInsert(data, res, size, duplicate);
+        castToUintAndInsert(data, res, size, duplicate, offset);
     } else if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_32)) {
         uint32_t * data = static_cast<std::uint32_t*>(buf);
-        castToUintAndInsert(data, res, size, duplicate);
+        castToUintAndInsert(data, res, size, duplicate, offset);
     } else if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_64)) {
         uint64_t * data = static_cast<std::uint64_t*>(buf);
-        castToUintAndInsert(data, res, size, duplicate);
+        castToUintAndInsert(data, res, size, duplicate, offset);
     } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_8)) {
         int8_t * data = static_cast<std::int8_t*>(buf);
-        castToUintAndInsert(data, res, size, duplicate);
+        castToUintAndInsert(data, res, size, duplicate, offset);
     } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_16)) {
         int16_t * data = static_cast<std::int16_t*>(buf);
-        castToUintAndInsert(data, res, size, duplicate);
+        castToUintAndInsert(data, res, size, duplicate, offset);
     } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_32)) {
         int32_t * data = static_cast<std::int32_t*>(buf);
-        castToUintAndInsert(data, res, size, duplicate);
+        castToUintAndInsert(data, res, size, duplicate, offset);
     } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_64)) {
         int64_t * data = static_cast<std::int64_t*>(buf);
-        castToUintAndInsert(data, res, size, duplicate);
+        castToUintAndInsert(data, res, size, duplicate, offset);
     } else if(imgDataType == (Image::ImageDataType::Floating | Image::ImageDataType::Bit_32)) {
         float * data = static_cast<float*>(buf);
-        castToUintAndInsert(data, res, size, duplicate);
+        castToUintAndInsert(data, res, size, duplicate, offset);
     } else if(imgDataType == (Image::ImageDataType::Floating | Image::ImageDataType::Bit_64)) {
         double * data = static_cast<double*>(buf);
-        castToUintAndInsert(data, res, size, duplicate);
+        castToUintAndInsert(data, res, size, duplicate, offset);
     } 
 }
 
@@ -206,41 +210,41 @@ uint16_t TIFFImage::getValue(const glm::vec3& coord) const {
 }
 
 // TODO: nbChannel is bugged for now
-void TIFFImage::getSlice(int imgIdx, int lineIdx, std::vector<uint16_t>& result, int nbChannel) const {
-    if (this->tif) {
-        TIFFSetDirectory(tif, imgIdx);
-        tdata_t buf;
-        uint32 row = static_cast<uint32>(lineIdx); 
-        buf = _TIFFmalloc(TIFFScanlineSize(tif));
-        TIFFReadScanline(tif, buf, row);
-        uint8_t * res = static_cast<uint8_t*>(buf);
-        //uint16_t * res = static_cast<uint16_t*>(buf);
-        int sliceSize = static_cast<int>(this->imgDimensions[0]);
-        castToLowPrecision(this->getInternalDataType(), buf, result, sliceSize, nbChannel);
-        _TIFFfree(buf);
-    }
-}
+//void TIFFImage::getSlice(int imgIdx, int lineIdx, std::vector<uint16_t>& result, int nbChannel) const {
+//    if (this->tif) {
+//        TIFFSetDirectory(tif, imgIdx);
+//        tdata_t buf;
+//        uint32 row = static_cast<uint32>(lineIdx); 
+//        buf = _TIFFmalloc(TIFFScanlineSize(tif));
+//        TIFFReadScanline(tif, buf, row);
+//        uint8_t * res = static_cast<uint8_t*>(buf);
+//        //uint16_t * res = static_cast<uint16_t*>(buf);
+//        int sliceSize = static_cast<int>(this->imgDimensions[0]);
+//        castToLowPrecision(this->getInternalDataType(), buf, result, sliceSize, nbChannel);
+//        _TIFFfree(buf);
+//    }
+//}
 
-void TIFFImage::getImage(int imgIdx, std::vector<std::uint16_t>& result, int nbChannel) const {
-    if (this->tif) {
-        TIFFSetDirectory(tif, imgIdx);
-        uint32 imagelength;
-        tdata_t buf;
-        uint32 row;
-    
-        TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &imagelength);
-        buf = _TIFFmalloc(TIFFScanlineSize(tif));
-        for (row = 0; row < imagelength; row++) {
-            TIFFReadScanline(tif, buf, row);
-            int imageSize = static_cast<int>(this->imgDimensions[0]);
-            castToLowPrecision(this->getInternalDataType(), buf, result, imageSize, nbChannel);
-        }
-        _TIFFfree(buf);
-    }
-}
+//void TIFFImage::getImage(int imgIdx, std::vector<std::uint16_t>& result, int nbChannel) const {
+//    if (this->tif) {
+//        TIFFSetDirectory(tif, imgIdx);
+//        uint32 imagelength;
+//        tdata_t buf;
+//        uint32 row;
+//    
+//        TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &imagelength);
+//        buf = _TIFFmalloc(TIFFScanlineSize(tif));
+//        for (row = 0; row < imagelength; row++) {
+//            TIFFReadScanline(tif, buf, row);
+//            int imageSize = static_cast<int>(this->imgDimensions[0]);
+//            castToLowPrecision(this->getInternalDataType(), buf, result, imageSize, nbChannel);
+//        }
+//        _TIFFfree(buf);
+//    }
+//}
 
-SimpleGrid::SimpleGrid(const std::string& filename, const glm::vec3& nbCube): grid(TIFFImage(filename)) {
-    const glm::vec3 sizeCube = this->grid.imgDimensions / nbCube;
+SimpleGrid::SimpleGrid(const std::string& filename, const glm::vec3& nbCube): grid(filename) {
+    const glm::vec3 sizeCube = this->grid.gridDimensions / nbCube;
     this->tetmesh.buildGrid(nbCube, sizeCube, glm::vec3(0., 0., 0.));
 }
 
@@ -258,7 +262,7 @@ glm::vec3 SimpleGrid::getCoordInInitial(const SimpleGrid& initial, glm::vec3 p) 
 uint16_t SimpleGrid::getValueFromPoint(const glm::vec3& p) const {
     if(isPtInBB(p, this->tetmesh.bbMin, this->tetmesh.bbMax)) {
         const glm::vec3 coord = p;
-        return this->grid.getValue(coord);
+        return this->grid.image.getValue(coord);
     } else {
         // Background value
         return 0;
@@ -285,7 +289,7 @@ void SimpleGrid::writeDeformedGrid(const SimpleGrid& initial) {
     glm::vec3 bboxMax = this->tetmesh.bbMax;
 
     glm::vec3 worldDimension = bboxMax - bboxMin;
-    glm::vec3 imageDimension = this->grid.imgDimensions;
+    glm::vec3 imageDimension = this->grid.getImageDimensions();// Directly get image dimension because we use full resolution
 
     glm::vec3 voxelDimension = worldDimension / imageDimension;
 
@@ -336,7 +340,7 @@ std::pair<glm::vec3, glm::vec3> SimpleGrid::getBoundingBox() const {
 }
 
 glm::vec3 SimpleGrid::getResolution() const {
-    return this->grid.imgDimensions;
+    return this->grid.gridDimensions;
 }
 
 
@@ -346,9 +350,61 @@ Image::ImageDataType SimpleGrid::getInternalDataType() const {
 
 void SimpleGrid::checkReadSlice() const {
     std::vector<uint16_t> res;
-    this->grid.getImage(0, res, 1);
+    this->grid.getGridSlice(0, res, 1);
     for(int i = 4213; i < 4500; ++i)
         std::cout << "[" << i << "]" << unsigned(res[i]) << std::endl;
     throw std::runtime_error("END OF UT");
 }
 
+Grid::Grid(const std::string& filename, glm::vec3 gridDimensions): image(TIFFImage(filename)), gridDimensions(gridDimensions) {
+    this->voxelSizeRatio = this->image.imgDimensions / this->gridDimensions;
+}
+
+Grid::Grid(const std::string& filename): image(TIFFImage(filename)) {
+    this->gridDimensions = this->image.imgDimensions / 4.f;
+    this->voxelSizeRatio = this->image.imgDimensions / this->gridDimensions;
+    // If we naïvely divide the image dimensions for lowered its resolution we have problem is the case of a dimension is 1
+    // In that case the voxelSizeRatio is still 2.f for example, but the dimension is 0.5
+    // It is a problem as we will iterate until dimension with sizeRatio as an offset
+    for(int i = 0; i < 3; ++i) {
+        if(this->gridDimensions[i] < 1.) {
+            this->gridDimensions[i] = 1;
+            this->voxelSizeRatio[i] = 1;
+        }
+        this->gridDimensions[i] = std::ceil(this->gridDimensions[i]);
+    }
+}
+
+void Grid::getGridSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel) const {
+    int offsetOnZ = static_cast<int>(std::floor(this->voxelSizeRatio[2]));
+    if(sliceIdx % offsetOnZ != 0) {
+        std::cout << "Error: wrong sliceIdx [" << sliceIdx << "] for n offset of [" << offsetOnZ << "]" << std::endl;
+        throw std::runtime_error("Error: wrong slice Idx function getGridSlice");
+    }
+    if (this->image.tif) {
+        TIFFSetDirectory(this->image.tif, sliceIdx);
+        uint32 imagelength;
+        tdata_t buf;
+        uint32 row;
+    
+        TIFFGetField(this->image.tif, TIFFTAG_IMAGELENGTH, &imagelength);
+        buf = _TIFFmalloc(TIFFScanlineSize(this->image.tif));
+
+        int offset = static_cast<int>(std::floor(this->voxelSizeRatio[1]));
+        for (row = 0; row < imagelength; row+=offset) {
+            TIFFReadScanline(this->image.tif, buf, row);
+            int imageSize = static_cast<int>(this->image.imgDimensions[0]);
+            castToLowPrecision(this->getInternalDataType(), buf, result, imageSize, nbChannel, static_cast<int>(std::floor(this->voxelSizeRatio[0])));
+        }
+        _TIFFfree(buf);
+    }
+}
+
+uint16_t Grid::getValue(const glm::vec3& coord) const {
+    const glm::vec3 coordImage = coord * this->voxelSizeRatio;
+    return this->image.getValue(coordImage);
+}
+
+glm::vec3 Grid::getImageDimensions() const {
+    return this->image.imgDimensions;
+}
