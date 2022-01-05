@@ -666,7 +666,7 @@ void Scene::addGrid(const SimpleGrid * gridLoaded) {
 	std::vector<std::uint16_t> slices;
     gridView->gridTexture = this->newAPI_uploadTexture3D_allocateonly(_gridTex);
 
-    int offsetOnZ = static_cast<int>(std::floor(gridView->grid->grid.voxelSizeRatio[2]));
+    int offsetOnZ = gridView->grid->grid.resolutionRatio[2];
     int imgSizeZ = gridView->grid->grid.getImageDimensions()[2];
 
     int sliceI = 0;
@@ -1639,7 +1639,7 @@ void Scene::prepareUniformsGridPlaneView(GLfloat* mvMat, GLfloat* pMat, glm::vec
 
 	Image::bbox_t::vec origin	= Image::bbox_t(gridView->grid->getBoundingBox()).getMin();
 	Image::bbox_t::vec originWS = Image::bbox_t(gridView->grid->getBoundingBox()).getMin();
-	Image::sizevec3 gridDims	= gridView->grid->grid.gridDimensions;
+	Image::sizevec3 gridDims	= gridView->grid->grid.samplerResolution;
 	glm::vec3 dims				= glm::convert_to<float>(gridDims);
 
 	if (showVAOstate) {
@@ -1828,7 +1828,7 @@ void Scene::prepareUniformsPlanes(GLfloat* mvMat, GLfloat* pMat, planes _plane, 
 	// Generate the data we need :
 #warning Transform API is still in-progress.
 	Image::bbox_t bbws = Image::bbox_t(grid->grid->getBoundingBox());
-	glm::vec3 dims	   = glm::convert_to<glm::vec3::value_type>(grid->grid->grid.gridDimensions) * grid->voxelDimensions;
+	glm::vec3 dims	   = glm::convert_to<glm::vec3::value_type>(grid->grid->grid.samplerResolution) * grid->voxelDimensions;
 	glm::vec3 size	   = bbws.getDiagonal();
 	GLint plIdx		   = (_plane == planes::x) ? 1 : (_plane == planes::y) ? 2 :
 																			   3;
@@ -2136,7 +2136,7 @@ void Scene::prepareUniformsGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm
 	GLint location_voxelSize = getUniform("voxelSize");
 	GLint location_gridSize	 = getUniform("gridSize");
 
-	glm::vec3 floatres = glm::convert_to<float>(_grid->grid->grid.gridDimensions);
+	glm::vec3 floatres = glm::convert_to<float>(_grid->grid->grid.samplerResolution);
 
 	glUniform3fv(location_voxelSize, 1, glm::value_ptr(_grid->voxelDimensions));
 	glUniform3fv(location_gridSize, 1, glm::value_ptr(floatres));

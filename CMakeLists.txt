@@ -117,6 +117,7 @@ ADD_EXECUTABLE(neighbor_visu
     ./new_grid/include/grid.hpp
     ./grid/include/grid.hpp
     ./grid/include/tetrahedral_mesh.hpp
+    ./grid/include/tiff_image.hpp
 
 	# Main file :
 	./neighbor_visu_main.cpp
@@ -132,6 +133,7 @@ ADD_EXECUTABLE(neighbor_visu
     ./new_grid/src/grid.cpp
     ./grid/src/grid.cpp
     ./grid/src/tetrahedral_mesh.cpp
+    ./grid/src/tiff_image.cpp
 )
 TARGET_COMPILE_OPTIONS(neighbor_visu
 	# Set so CMake (more precisely clang/gcc) will not print 30-80 warnings about QGLViewer's
@@ -198,8 +200,11 @@ add_executable(tests tests/grid_tests.cpp
                      tests/tetmesh_tests.cpp
                      grid/include/grid.hpp
                      grid/include/tetrahedral_mesh.hpp
+                     grid/include/tiff_image.hpp
                      grid/src/grid.cpp
-                     grid/src/tetrahedral_mesh.cpp)
+                     grid/src/tetrahedral_mesh.cpp
+                     grid/src/tiff_image.cpp)
+
 TARGET_INCLUDE_DIRECTORIES(tests
 	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/third_party/glm/
 	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include
@@ -212,4 +217,3 @@ target_link_libraries(tests PRIVATE Catch2::Catch2WithMain
 	                        PUBLIC TinyTIFF
 	                        PUBLIC ${libTIFF}
                             )
-
