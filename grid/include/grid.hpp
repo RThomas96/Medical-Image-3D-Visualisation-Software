@@ -21,12 +21,32 @@ struct TIFFImage {
     // In theory floor aren't necessary cause coord are already integer
     uint16_t getValue(const glm::vec3& coord) const;
 
-    void getSlice(int imgIdx, int lineIdx, std::vector<uint16_t>& result, int nbChannel) const;
+    //void getSlice(int imgIdx, int lineIdx, std::vector<uint16_t>& result, int nbChannel) const;
 
     // Here "image" refer to all pixels at the same z dimension
-    void getImage(int imgIdx, std::vector<std::uint16_t>& result, int nbChannel) const;
+    //void getImage(int imgIdx, std::vector<std::uint16_t>& result, int nbChannel) const;
 
     Image::ImageDataType getInternalDataType() const;
+};
+
+struct Grid {
+    TIFFImage image;
+    glm::vec3 gridDimensions;
+
+    glm::vec3 voxelSizeRatio;
+
+    Grid(const std::string& filename, glm::vec3 gridDimensions);
+
+    Grid(const std::string& filename);
+
+    void getGridSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel) const;
+
+    // In theory floor aren't necessary cause coord are already integer
+    uint16_t getValue(const glm::vec3& coord) const;
+
+    Image::ImageDataType getInternalDataType() const;
+
+    glm::vec3 getImageDimensions() const;
 };
 
 // Struct able to make the link between the image and its 3D representation
@@ -34,7 +54,7 @@ struct TIFFImage {
 // TODO: rename TIFFImage into image, and DeformableGrid into Grid
 struct SimpleGrid {
 
-    TIFFImage grid;
+    Grid grid;
     TetMesh tetmesh;
 
     SimpleGrid(const std::string& filename, const glm::vec3& nbCube);

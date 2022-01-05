@@ -1,6 +1,30 @@
 #include <catch2/catch_test_macros.hpp>
 #include "../grid/include/grid.hpp"
 
+TEST_CASE("DivideResolution", "[grid]") {
+
+    glm::vec3 nb = glm::vec3(5., 5., 5.);
+    SimpleGrid grid("../../tests/data/img1.tif", nb);
+
+	std::vector<std::uint16_t> slices;
+
+    int offsetOnZ = static_cast<int>(std::floor(grid.grid.voxelSizeRatio[2]));
+    int imgSizeZ = grid.grid.getImageDimensions()[2];
+
+	//for (std::size_t s = 0; s < imgSizeZ; s+=offsetOnZ) {
+
+    // Get first slice
+    grid.grid.getGridSlice(0, slices, 1);
+    CHECK(slices[309] == 9440);//x = 1236/4 = 309
+    CHECK(slices[1233+309] == 6574);// x size = 1233
+
+    slices.clear();
+
+    grid.grid.getGridSlice(0+offsetOnZ, slices, 1);
+    CHECK(slices[309] == 5098);//x = 1236
+    CHECK(slices[1233+309] == 3965);
+}
+
 TEST_CASE("PointQuery", "[grid]") {
     //glm::vec3 origin = glm::vec3(0., 0., 0.);
     //glm::vec3 size = glm::vec3(4930., 512., 51.);
