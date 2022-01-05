@@ -181,3 +181,35 @@ if(RELEASE_WITH_ASSERT)
     message(STATUS "WARNING: Build in release using assertion")
     set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 endif(RELEASE_WITH_ASSERT)
+
+# Unit testing
+
+Include(FetchContent)
+
+FetchContent_Declare(
+  Catch2
+  GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+  GIT_TAG        v3.0.0-preview3
+)
+
+FetchContent_MakeAvailable(Catch2)
+
+add_executable(tests tests/grid_tests.cpp
+                     tests/tetmesh_tests.cpp
+                     grid/include/grid.hpp
+                     grid/include/tetrahedral_mesh.hpp
+                     grid/src/grid.cpp
+                     grid/src/tetrahedral_mesh.cpp)
+TARGET_INCLUDE_DIRECTORIES(tests
+	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/third_party/glm/
+	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include
+	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include/nifti
+	PRIVATE ${QGLViewer_HEADER_DIR}
+	PRIVATE ${libTIFF_HEADER_DIR}
+)
+
+target_link_libraries(tests PRIVATE Catch2::Catch2WithMain
+	                        PUBLIC TinyTIFF
+	                        PUBLIC ${libTIFF}
+                            )
+

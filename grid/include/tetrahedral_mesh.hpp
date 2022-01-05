@@ -7,6 +7,7 @@
 #include <tiffio.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/io.hpp>
+#include <vector>
 
 struct Tetrahedron {
     glm::vec3 * points[4];
