@@ -65,7 +65,7 @@ void SimpleGrid::writeDeformedGrid(const SimpleGrid& initial, ResolutionMode res
 
     glm::vec3 worldDimension = bboxMax - bboxMin;
     //glm::vec3 imageDimension = this->grid.getImageDimensions();// Directly get image dimension because we use full resolution
-    glm::vec3 imageDimension = this->grid.samplerResolution;// Directly get image dimension because we use full resolution
+    glm::vec3 imageDimension = this->grid.samplerResolution;
 
     glm::vec3 voxelDimension = worldDimension / imageDimension;
 
@@ -85,19 +85,19 @@ void SimpleGrid::writeDeformedGrid(const SimpleGrid& initial, ResolutionMode res
     imageDimension[2] += std::ceil(added[2]);
 
     voxelDimension = worldDimension / imageDimension;
-    std::cout << "For " << bboxMin << " to " << bboxMax << " per " << voxelDimension << std::endl;
 
-    TinyTIFFWriterFile * tif = TinyTIFFWriter_open("../../../../Data/data_debug/img2.tif", 16, TinyTIFFWriter_UInt, 1, imageDimension[0], imageDimension[1], TinyTIFFWriter_Greyscale);
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
     // Update resolution of output image
     // The point query is always at full resolution, so we update the offset
-    //if(resolutionMode == ResolutionMode::SAMPLER_RESOLUTION) {
-    //    imageDimension = this->grid.samplerResolution;
-    //    voxelDimension *= this->grid.resolutionRatio;
-    //}
+    if(resolutionMode == ResolutionMode::FULL_RESOLUTION) {
+        imageDimension = this->grid.samplerResolution * this->grid.resolutionRatio;// We do not use directly image resolution here cause we have a round
+        voxelDimension /= this->grid.resolutionRatio;
+    }
 
+    TinyTIFFWriterFile * tif = TinyTIFFWriter_open("../../../../Data/data_debug/img2.tif", 16, TinyTIFFWriter_UInt, 1, imageDimension[0], imageDimension[1], TinyTIFFWriter_Greyscale);
+    std::cout << "For " << bboxMin << " to " << bboxMax << " per " << voxelDimension << std::endl;
     std::vector<uint16_t> data;
     data.reserve(imageDimension[0] * imageDimension[1]);
     for(float k = bboxMin[2]; k < bboxMax[2]; k+=voxelDimension[2]) {
@@ -111,8 +111,7 @@ void SimpleGrid::writeDeformedGrid(const SimpleGrid& initial, ResolutionMode res
             for(float i = bboxMin[0]; i < bboxMax[0]; i+=voxelDimension[0]) {
                 const glm::vec3 pt(i+voxelDimension[0]/2., j+voxelDimension[1]/2., k+voxelDimension[2]/2.);
                 const glm::vec3 pt2 = this->getCoordInInitial(initial, pt);
-                //data.push_back(initial.getValueFromPoint(pt2, ResolutionMode::SAMPLER_RESOLUTION));
-                data.push_back(initial.getValueFromPoint(pt2, ResolutionMode::SAMPLER_RESOLUTION));
+                data.push_back(initial.getValueFromPoint(pt2, ResolutionMode::SAMPLER_RESOLUTION));// Here we stay at sampler resolution because bbox are aligned on the sampler
             }
         }
         TinyTIFFWriter_writeImage(tif, data.data());
