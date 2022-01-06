@@ -13,7 +13,7 @@ Image::ImageDataType Sampler::getInternalDataType() const {
     return this->image.getInternalDataType();
 }
 
-SimpleGrid::SimpleGrid(const std::string& filename, const glm::vec3& nbCube): grid(Sampler(filename, 4)) {
+SimpleGrid::SimpleGrid(const std::string& filename, const glm::vec3& nbCube): grid(Sampler(filename, 8)) {
     const glm::vec3 sizeCube = this->grid.samplerResolution / nbCube;
     this->tetmesh.buildGrid(nbCube, sizeCube, glm::vec3(0., 0., 0.));
 }
@@ -29,18 +29,15 @@ glm::vec3 SimpleGrid::getCoordInInitial(const SimpleGrid& initial, glm::vec3 p) 
     }
 }
 
-uint16_t SimpleGrid::getFullResolutionValueFromPoint(const glm::vec3& p) const {
-    if(isPtInBB(p, this->tetmesh.bbMin, this->tetmesh.bbMax)) {
-        return this->grid.getFullResolutionValue(p);
-    } else {
-        // Background value
-        return 0;
+uint16_t SimpleGrid::getValueFromPoint(const glm::vec3& p, ResolutionMode resolutionMode) const {
+    glm::vec3 pSamplerRes = p;
+    // Even if we want to query a point a full resolution res, the bbox is still based on the sampler
+    // So the bbox check need to be in sampler space
+    if(resolutionMode == ResolutionMode::FULL_RESOLUTION) {
+        pSamplerRes = p / this->grid.resolutionRatio;
     }
-}
-
-uint16_t SimpleGrid::getValueFromPoint(const glm::vec3& p) const {
-    if(isPtInBB(p, this->tetmesh.bbMin, this->tetmesh.bbMax)) {
-        return this->grid.getValue(p);
+    if(isPtInBB(pSamplerRes, this->tetmesh.bbMin, this->tetmesh.bbMax)) {
+        return this->grid.getValue(p, resolutionMode);
     } else {
         // Background value
         return 0;
@@ -55,7 +52,7 @@ void SimpleGrid::replaceAllPoints(const std::vector<glm::vec3>& pts) {
     this->tetmesh.replaceAllPoints(pts);
 }
 
-void SimpleGrid::writeDeformedGrid(const SimpleGrid& initial) {
+void SimpleGrid::writeDeformedGrid(const SimpleGrid& initial, ResolutionMode resolutionMode) {
     if(this->tetmesh.isEmpty())
         throw std::runtime_error("Error: cannot write a grid without deformed mesh.");
 
@@ -67,7 +64,8 @@ void SimpleGrid::writeDeformedGrid(const SimpleGrid& initial) {
     glm::vec3 bboxMax = this->tetmesh.bbMax;
 
     glm::vec3 worldDimension = bboxMax - bboxMin;
-    glm::vec3 imageDimension = this->grid.getImageDimensions();// Directly get image dimension because we use full resolution
+    //glm::vec3 imageDimension = this->grid.getImageDimensions();// Directly get image dimension because we use full resolution
+    glm::vec3 imageDimension = this->grid.samplerResolution;// Directly get image dimension because we use full resolution
 
     glm::vec3 voxelDimension = worldDimension / imageDimension;
 
@@ -89,10 +87,18 @@ void SimpleGrid::writeDeformedGrid(const SimpleGrid& initial) {
     voxelDimension = worldDimension / imageDimension;
     std::cout << "For " << bboxMin << " to " << bboxMax << " per " << voxelDimension << std::endl;
 
-    TinyTIFFWriterFile * tif = TinyTIFFWriter_open("../../../../Data/data_debug/img2.tif", 8, TinyTIFFWriter_UInt, 1, imageDimension[0], imageDimension[1], TinyTIFFWriter_Greyscale);
+    TinyTIFFWriterFile * tif = TinyTIFFWriter_open("../../../../Data/data_debug/img2.tif", 16, TinyTIFFWriter_UInt, 1, imageDimension[0], imageDimension[1], TinyTIFFWriter_Greyscale);
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-    std::vector<uint8_t> data;
+
+    // Update resolution of output image
+    // The point query is always at full resolution, so we update the offset
+    //if(resolutionMode == ResolutionMode::SAMPLER_RESOLUTION) {
+    //    imageDimension = this->grid.samplerResolution;
+    //    voxelDimension *= this->grid.resolutionRatio;
+    //}
+
+    std::vector<uint16_t> data;
     data.reserve(imageDimension[0] * imageDimension[1]);
     for(float k = bboxMin[2]; k < bboxMax[2]; k+=voxelDimension[2]) {
         std::cout << std::endl;
@@ -105,9 +111,8 @@ void SimpleGrid::writeDeformedGrid(const SimpleGrid& initial) {
             for(float i = bboxMin[0]; i < bboxMax[0]; i+=voxelDimension[0]) {
                 const glm::vec3 pt(i+voxelDimension[0]/2., j+voxelDimension[1]/2., k+voxelDimension[2]/2.);
                 const glm::vec3 pt2 = this->getCoordInInitial(initial, pt);
-                // It depend if we want full res or no
-                //data.push_back(initial.getValueFromPoint(pt2));
-                data.push_back(initial.getFullResolutionValueFromPoint(pt2));
+                //data.push_back(initial.getValueFromPoint(pt2, ResolutionMode::SAMPLER_RESOLUTION));
+                data.push_back(initial.getValueFromPoint(pt2, ResolutionMode::SAMPLER_RESOLUTION));
             }
         }
         TinyTIFFWriter_writeImage(tif, data.data());
@@ -175,15 +180,12 @@ void Sampler::getGridSlice(int sliceIdx, std::vector<std::uint16_t>& result, int
     this->image.getSlice(sliceIdx, result, nbChannel, XYoffsets);
 }
 
-uint16_t Sampler::getValue(const glm::vec3& coord) const {
+uint16_t Sampler::getValue(const glm::vec3& coord, ResolutionMode resolutionMode) const {
     // Convert from grid coord to image coord
-    const glm::vec3 coordImage = coord * this->resolutionRatio;
-    return this->image.getValue(coordImage);
-}
-
-uint16_t Sampler::getFullResolutionValue(const glm::vec3& coord) const {
-    // No conversion, we want directly values from the full resolution image
-    return this->image.getValue(coord);
+    if(resolutionMode == ResolutionMode::SAMPLER_RESOLUTION)
+        return this->image.getValue(coord * this->resolutionRatio);
+    else
+        return this->image.getValue(coord);
 }
 
 glm::vec3 Sampler::getImageDimensions() const {

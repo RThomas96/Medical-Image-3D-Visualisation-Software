@@ -25,6 +25,32 @@ TEST_CASE("DivideResolution", "[grid]") {
     CHECK(slices[1233+309] == 3965);
 }
 
+TEST_CASE("DivideResolutionGetPoint", "[grid]") {
+
+    glm::vec3 nb = glm::vec3(5., 5., 5.);
+    SimpleGrid grid("../../tests/data/img1.tif", nb);
+
+    int offsetOnZ = static_cast<int>(grid.grid.resolutionRatio[2]);
+    int imgSizeZ = grid.grid.getImageDimensions()[2];
+
+    uint16_t value = grid.getValueFromPoint(glm::vec3(309., 0., 0.), ResolutionMode::SAMPLER_RESOLUTION);
+    CHECK(value == 9440);//x = 1236/4 = 309
+
+    value = grid.getValueFromPoint(glm::vec3(1236., 0., 0.), ResolutionMode::FULL_RESOLUTION);
+    CHECK(value == 9440);//x = 1236/4 = 309
+
+    value = grid.getValueFromPoint(glm::vec3(309., 1., 0.), ResolutionMode::SAMPLER_RESOLUTION);
+    CHECK(value == 6574);//x = 1236/4 = 309
+
+    value = grid.getValueFromPoint(glm::vec3(1236., 4., 0.), ResolutionMode::FULL_RESOLUTION);
+    CHECK(value == 6574);//x = 1236/4 = 309
+
+    //CHECK(slices[1233+309] == 6574);// x size = 1233
+
+    //CHECK(slices[309] == 5098);//x = 1236
+    //CHECK(slices[1233+309] == 3965);
+}
+
 TEST_CASE("PointQuery", "[grid]") {
     //glm::vec3 origin = glm::vec3(0., 0., 0.);
     //glm::vec3 size = glm::vec3(4930., 512., 51.);
