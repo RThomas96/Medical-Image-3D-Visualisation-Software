@@ -156,6 +156,9 @@ Sampler::Sampler(const std::string& filename, int subsample): image(TIFFImage(fi
         this->samplerResolution[i] = std::ceil(this->samplerResolution[i]);
         this->resolutionRatio[i] = static_cast<int>(std::floor(this->resolutionRatio[i]));
     }
+
+    this->subregionMin = glm::vec3(0., 0., 0.);
+    this->subregionMax = this->samplerResolution;
 }
 
 Sampler::Sampler(const std::string& filename): image(TIFFImage(filename)) {

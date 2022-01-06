@@ -13,20 +13,24 @@ enum ResolutionMode {
 
 // Wrapper around an Image in order to access its data
 // This class allow to have a resolution different from the original image
-// It can be deactivate in order to operate on the original image, aka at full resolution
-// NOTE: the grid DO NOT have any 3D data like position, or size. It only provides functions 
+// This class also allow to access data as if we have a subregion of the original image
+// The subregion is defined as a pair of triplet of INDICES and or not 3D data, position are whatever
+// Moreover subregions indices are in Sampler space
+// NOTE: the grid DO NOT have any 3D data like position or 3D vectors, or size. It only provides functions 
 // to access to the image data.
 struct Sampler {
     TIFFImage image;
-    glm::vec3 samplerResolution;
 
+    glm::vec3 samplerResolution;
     glm::vec3 resolutionRatio;
+
+    glm::vec3 subregionMin;
+    glm::vec3 subregionMax;
 
     Sampler(const std::string& filename);
     Sampler(const std::string& filename, int subsample);
 
     void getGridSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel) const;
-
     // In theory floor aren't necessary cause coord are already integer
     uint16_t getValue(const glm::vec3& coord, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
 
