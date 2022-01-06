@@ -105,7 +105,9 @@ void SimpleGrid::writeDeformedGrid(const SimpleGrid& initial) {
             for(float i = bboxMin[0]; i < bboxMax[0]; i+=voxelDimension[0]) {
                 const glm::vec3 pt(i+voxelDimension[0]/2., j+voxelDimension[1]/2., k+voxelDimension[2]/2.);
                 const glm::vec3 pt2 = this->getCoordInInitial(initial, pt);
-                data.push_back(initial.getValueFromPoint(pt2));
+                // It depend if we want full res or no
+                //data.push_back(initial.getValueFromPoint(pt2));
+                data.push_back(initial.getFullResolutionValueFromPoint(pt2));
             }
         }
         TinyTIFFWriter_writeImage(tif, data.data());
@@ -136,48 +138,6 @@ void SimpleGrid::checkReadSlice() const {
 
 /**************************/
 
-template <typename data_t>
-void castToUintAndInsert(data_t * values, std::vector<uint16_t>& res, size_t size, int duplicate, int offset) {
-    for(int i = 0; i < size; i+=offset) {
-        for(int j = 0; j < duplicate; ++j)
-            res.push_back(static_cast<std::uint16_t>(values[i])); 
-    }
-}
-
-void castToLowPrecision(Image::ImageDataType imgDataType, const tdata_t& buf, std::vector<uint16_t>& res, size_t size, int duplicate, int offset) {
-    if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_8)) {
-        uint8_t * data = static_cast<std::uint8_t*>(buf);
-        castToUintAndInsert(data, res, size, duplicate, offset);
-    } else if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_16)) {
-        uint16_t * data = static_cast<std::uint16_t*>(buf);
-        castToUintAndInsert(data, res, size, duplicate, offset);
-    } else if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_32)) {
-        uint32_t * data = static_cast<std::uint32_t*>(buf);
-        castToUintAndInsert(data, res, size, duplicate, offset);
-    } else if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_64)) {
-        uint64_t * data = static_cast<std::uint64_t*>(buf);
-        castToUintAndInsert(data, res, size, duplicate, offset);
-    } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_8)) {
-        int8_t * data = static_cast<std::int8_t*>(buf);
-        castToUintAndInsert(data, res, size, duplicate, offset);
-    } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_16)) {
-        int16_t * data = static_cast<std::int16_t*>(buf);
-        castToUintAndInsert(data, res, size, duplicate, offset);
-    } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_32)) {
-        int32_t * data = static_cast<std::int32_t*>(buf);
-        castToUintAndInsert(data, res, size, duplicate, offset);
-    } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_64)) {
-        int64_t * data = static_cast<std::int64_t*>(buf);
-        castToUintAndInsert(data, res, size, duplicate, offset);
-    } else if(imgDataType == (Image::ImageDataType::Floating | Image::ImageDataType::Bit_32)) {
-        float * data = static_cast<float*>(buf);
-        castToUintAndInsert(data, res, size, duplicate, offset);
-    } else if(imgDataType == (Image::ImageDataType::Floating | Image::ImageDataType::Bit_64)) {
-        double * data = static_cast<double*>(buf);
-        castToUintAndInsert(data, res, size, duplicate, offset);
-    } 
-}
-
 Grid::Grid(const std::string& filename, glm::vec3 gridDimensions): image(TIFFImage(filename)), gridDimensions(gridDimensions) {
     this->voxelSizeRatio = this->image.imgDimensions / this->gridDimensions;
 }
@@ -198,30 +158,19 @@ Grid::Grid(const std::string& filename): image(TIFFImage(filename)) {
 }
 
 // This function do not use Grid::getValue as we do not want to open, copy and cast a whole image slice per value
-// Thus 
 void Grid::getGridSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel) const {
-    int offsetOnZ = static_cast<int>(std::floor(this->voxelSizeRatio[2]));
-    if(sliceIdx % offsetOnZ != 0) {
-        std::cout << "Error: wrong sliceIdx [" << sliceIdx << "] for n offset of [" << offsetOnZ << "]" << std::endl;
+
+    int Zoffset = static_cast<int>(std::floor(this->voxelSizeRatio[2]));
+    if(sliceIdx % Zoffset != 0) {
+        std::cout << "Error: wrong sliceIdx [" << sliceIdx << "] for n offset of [" << Zoffset << "]" << std::endl;
         throw std::runtime_error("Error: wrong slice Idx function getGridSlice");
     }
-    if (this->image.tif) {
-        TIFFSetDirectory(this->image.tif, sliceIdx);
-        uint32 imagelength;
-        tdata_t buf;
-        uint32 row;
-    
-        TIFFGetField(this->image.tif, TIFFTAG_IMAGELENGTH, &imagelength);
-        buf = _TIFFmalloc(TIFFScanlineSize(this->image.tif));
 
-        int offset = static_cast<int>(std::floor(this->voxelSizeRatio[1]));
-        for (row = 0; row < imagelength; row+=offset) {
-            TIFFReadScanline(this->image.tif, buf, row);
-            int imageSize = static_cast<int>(this->image.imgDimensions[0]);
-            castToLowPrecision(this->getInternalDataType(), buf, result, imageSize, nbChannel, static_cast<int>(std::floor(this->voxelSizeRatio[0])));
-        }
-        _TIFFfree(buf);
-    }
+    std::pair<int, int> XYoffsets;
+    XYoffsets.first = static_cast<int>(std::floor(this->voxelSizeRatio[0]));
+    XYoffsets.second = static_cast<int>(std::floor(this->voxelSizeRatio[1]));
+
+    this->image.getSlice(sliceIdx, result, nbChannel, XYoffsets);
 }
 
 uint16_t Grid::getValue(const glm::vec3& coord) const {

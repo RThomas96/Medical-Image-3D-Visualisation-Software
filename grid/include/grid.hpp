@@ -4,12 +4,11 @@
 #include "tetrahedral_mesh.hpp"
 #include "tiff_image.hpp"
 
-// Struct able to make the link between the grid and its 3D representation
 // Wrapper around an Image in order to access its data
 // This class allow to have a resolution different from the original image
 // It can be deactivate in order to operate on the original image, aka at full resolution
-//
-// Associate 3D dimensions and origin to the image and thus allow to query values with a 3D point
+// NOTE: the grid DO NOT have any 3D data like position, or size. It only provides functions 
+// to access to the image data.
 struct Grid {
     TIFFImage image;
     glm::vec3 gridDimensions;
@@ -30,6 +29,7 @@ struct Grid {
 };
 
 // Struct to make link between the grid and a 3D shape used to deform the space of its representation
+// Struct able to make the link between the grid and its 3D representation
 struct SimpleGrid {
 
     Grid grid;
