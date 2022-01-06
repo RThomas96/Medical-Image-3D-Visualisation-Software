@@ -4246,8 +4246,8 @@ void Scene::launchSaveDialog() {
 
     std::cout << "The filename is: " << this->filename << std::endl;
 
-    SimpleGrid deformableGrid(this->filename, nb);
-    SimpleGrid initialGrid(this->filename, nb);
+    SimpleGrid deformableGrid(this->filename, nb, 1);
+    SimpleGrid initialGrid(this->filename, nb, 1);
 
     //deformableGrid.movePoint(glm::vec3(1, 1, 1), glm::vec3(600, 0., 0.));
 

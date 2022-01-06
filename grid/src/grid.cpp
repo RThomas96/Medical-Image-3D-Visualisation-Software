@@ -13,7 +13,7 @@ Image::ImageDataType Sampler::getInternalDataType() const {
     return this->image.getInternalDataType();
 }
 
-SimpleGrid::SimpleGrid(const std::string& filename, const glm::vec3& nbCube): grid(Sampler(filename, 8)) {
+SimpleGrid::SimpleGrid(const std::string& filename, const glm::vec3& nbCube, int subsample): grid(Sampler(filename, subsample)) {
     const glm::vec3 sizeCube = this->grid.samplerResolution / nbCube;
     this->tetmesh.buildGrid(nbCube, sizeCube, glm::vec3(0., 0., 0.));
 }
