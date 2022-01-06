@@ -14,7 +14,7 @@
 struct TIFFImage {
 
     TIFF* tif;
-    glm::vec3 imgDimensions;
+    glm::vec3 imgResolution;
     Image::ImageDataType imgDataType;
 
     TIFFImage(const std::string& filename);

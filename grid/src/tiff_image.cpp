@@ -16,7 +16,7 @@ TIFFImage::TIFFImage(const std::string& filename) {
     do {
         dircount++;
     } while (TIFFReadDirectory(tif));
-    imgDimensions = glm::vec3(width, length, dircount);
+    imgResolution = glm::vec3(width, length, dircount);
 
     uint16_t sf = SAMPLEFORMAT_VOID;
     int result	= TIFFGetField(tif, TIFFTAG_SAMPLEFORMAT, &sf);
@@ -210,7 +210,7 @@ void TIFFImage::getSlice(int sliceIdx, std::vector<std::uint16_t>& result, int n
 
     for (row = 0; row < imagelength; row+=offsets.second) {
         TIFFReadScanline(this->tif, buf, row);
-        int imageSize = static_cast<int>(this->imgDimensions[0]);
+        int imageSize = static_cast<int>(this->imgResolution[0]);
         castToLowPrecision(this->getInternalDataType(), buf, result, imageSize, nbChannel, offsets.first);
     }
     _TIFFfree(buf);

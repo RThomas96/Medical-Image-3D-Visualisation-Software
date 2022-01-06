@@ -14,7 +14,7 @@ Image::ImageDataType Grid::getInternalDataType() const {
 }
 
 SimpleGrid::SimpleGrid(const std::string& filename, const glm::vec3& nbCube): grid(filename) {
-    const glm::vec3 sizeCube = this->grid.gridDimensions / nbCube;
+    const glm::vec3 sizeCube = this->grid.gridResolution / nbCube;
     this->tetmesh.buildGrid(nbCube, sizeCube, glm::vec3(0., 0., 0.));
 }
 
@@ -120,7 +120,7 @@ std::pair<glm::vec3, glm::vec3> SimpleGrid::getBoundingBox() const {
 }
 
 glm::vec3 SimpleGrid::getResolution() const {
-    return this->grid.gridDimensions;
+    return this->grid.gridResolution;
 }
 
 
@@ -138,22 +138,22 @@ void SimpleGrid::checkReadSlice() const {
 
 /**************************/
 
-Grid::Grid(const std::string& filename, glm::vec3 gridDimensions): image(TIFFImage(filename)), gridDimensions(gridDimensions) {
-    this->voxelSizeRatio = this->image.imgDimensions / this->gridDimensions;
+Grid::Grid(const std::string& filename, glm::vec3 gridResolution): image(TIFFImage(filename)), gridResolution(gridResolution) {
+    this->voxelSizeRatio = this->image.imgResolution / this->gridResolution;
 }
 
 Grid::Grid(const std::string& filename): image(TIFFImage(filename)) {
-    this->gridDimensions = this->image.imgDimensions / 4.f;
-    this->voxelSizeRatio = this->image.imgDimensions / this->gridDimensions;
+    this->gridResolution = this->image.imgResolution / 4.f;
+    this->voxelSizeRatio = this->image.imgResolution / this->gridResolution;
     // If we naïvely divide the image dimensions for lowered its resolution we have problem is the case of a dimension is 1
     // In that case the voxelSizeRatio is still 2.f for example, but the dimension is 0.5
     // It is a problem as we will iterate until dimension with sizeRatio as an offset
     for(int i = 0; i < 3; ++i) {
-        if(this->gridDimensions[i] < 1.) {
-            this->gridDimensions[i] = 1;
+        if(this->gridResolution[i] < 1.) {
+            this->gridResolution[i] = 1;
             this->voxelSizeRatio[i] = 1;
         }
-        this->gridDimensions[i] = std::ceil(this->gridDimensions[i]);
+        this->gridResolution[i] = std::ceil(this->gridResolution[i]);
     }
 }
 
@@ -185,5 +185,5 @@ uint16_t Grid::getFullResolutionValue(const glm::vec3& coord) const {
 }
 
 glm::vec3 Grid::getImageDimensions() const {
-    return this->image.imgDimensions;
+    return this->image.imgResolution;
 }

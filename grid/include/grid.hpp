@@ -11,11 +11,11 @@
 // to access to the image data.
 struct Grid {
     TIFFImage image;
-    glm::vec3 gridDimensions;
+    glm::vec3 gridResolution;
 
     glm::vec3 voxelSizeRatio;
 
-    Grid(const std::string& filename, glm::vec3 gridDimensions);
+    Grid(const std::string& filename, glm::vec3 gridResolution);
     Grid(const std::string& filename);
 
     void getGridSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel) const;
