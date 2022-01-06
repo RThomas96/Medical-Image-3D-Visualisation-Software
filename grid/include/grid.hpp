@@ -16,6 +16,7 @@ struct Sampler {
     glm::vec3 resolutionRatio;
 
     Sampler(const std::string& filename);
+    Sampler(const std::string& filename, int subsample);
 
     void getGridSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel) const;
 

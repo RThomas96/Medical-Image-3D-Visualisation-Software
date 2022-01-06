@@ -13,7 +13,7 @@ Image::ImageDataType Sampler::getInternalDataType() const {
     return this->image.getInternalDataType();
 }
 
-SimpleGrid::SimpleGrid(const std::string& filename, const glm::vec3& nbCube): grid(Sampler(filename)) {
+SimpleGrid::SimpleGrid(const std::string& filename, const glm::vec3& nbCube): grid(Sampler(filename, 4)) {
     const glm::vec3 sizeCube = this->grid.samplerResolution / nbCube;
     this->tetmesh.buildGrid(nbCube, sizeCube, glm::vec3(0., 0., 0.));
 }
@@ -138,8 +138,8 @@ void SimpleGrid::checkReadSlice() const {
 
 /**************************/
 
-Sampler::Sampler(const std::string& filename): image(TIFFImage(filename)) {
-    this->samplerResolution = this->image.imgResolution / 4.f;
+Sampler::Sampler(const std::string& filename, int subsample): image(TIFFImage(filename)) {
+    this->samplerResolution = this->image.imgResolution / static_cast<float>(subsample);
     this->resolutionRatio = this->image.imgResolution / this->samplerResolution;
     // If we naïvely divide the image dimensions for lowered its resolution we have problem is the case of a dimension is 1
     // In that case the voxelSizeRatio is still 2.f for example, but the dimension is 0.5
@@ -152,6 +152,11 @@ Sampler::Sampler(const std::string& filename): image(TIFFImage(filename)) {
         this->samplerResolution[i] = std::ceil(this->samplerResolution[i]);
         this->resolutionRatio[i] = static_cast<int>(std::floor(this->resolutionRatio[i]));
     }
+}
+
+Sampler::Sampler(const std::string& filename): image(TIFFImage(filename)) {
+    this->samplerResolution = this->image.imgResolution; 
+    this->resolutionRatio = glm::vec3(1., 1., 1.); 
 }
 
 // This function do not use Grid::getValue as we do not want to open, copy and cast a whole image slice per value
