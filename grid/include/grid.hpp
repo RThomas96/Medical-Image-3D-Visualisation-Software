@@ -9,13 +9,13 @@
 // It can be deactivate in order to operate on the original image, aka at full resolution
 // NOTE: the grid DO NOT have any 3D data like position, or size. It only provides functions 
 // to access to the image data.
-struct Grid {
+struct Sampler {
     TIFFImage image;
-    glm::vec3 gridResolution;
+    glm::vec3 samplerResolution;
 
     glm::vec3 resolutionRatio;
 
-    Grid(const std::string& filename);
+    Sampler(const std::string& filename);
 
     void getGridSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel) const;
 
@@ -31,7 +31,7 @@ struct Grid {
 // Struct able to make the link between the grid and its 3D representation
 struct SimpleGrid {
 
-    Grid grid;
+    Sampler grid;
     TetMesh tetmesh;
 
     SimpleGrid(const std::string& filename, const glm::vec3& nbCube);

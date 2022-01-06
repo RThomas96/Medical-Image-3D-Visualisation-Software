@@ -9,12 +9,12 @@ bool isPtInBB(const glm::vec3& p, const glm::vec3& bbmin, const glm::vec3& bbmax
     return true;
 }
 
-Image::ImageDataType Grid::getInternalDataType() const {
+Image::ImageDataType Sampler::getInternalDataType() const {
     return this->image.getInternalDataType();
 }
 
-SimpleGrid::SimpleGrid(const std::string& filename, const glm::vec3& nbCube): grid(filename) {
-    const glm::vec3 sizeCube = this->grid.gridResolution / nbCube;
+SimpleGrid::SimpleGrid(const std::string& filename, const glm::vec3& nbCube): grid(Sampler(filename)) {
+    const glm::vec3 sizeCube = this->grid.samplerResolution / nbCube;
     this->tetmesh.buildGrid(nbCube, sizeCube, glm::vec3(0., 0., 0.));
 }
 
@@ -120,7 +120,7 @@ std::pair<glm::vec3, glm::vec3> SimpleGrid::getBoundingBox() const {
 }
 
 glm::vec3 SimpleGrid::getResolution() const {
-    return this->grid.gridResolution;
+    return this->grid.samplerResolution;
 }
 
 
@@ -138,24 +138,24 @@ void SimpleGrid::checkReadSlice() const {
 
 /**************************/
 
-Grid::Grid(const std::string& filename): image(TIFFImage(filename)) {
-    this->gridResolution = this->image.imgResolution / 4.f;
-    this->resolutionRatio = this->image.imgResolution / this->gridResolution;
+Sampler::Sampler(const std::string& filename): image(TIFFImage(filename)) {
+    this->samplerResolution = this->image.imgResolution / 4.f;
+    this->resolutionRatio = this->image.imgResolution / this->samplerResolution;
     // If we naïvely divide the image dimensions for lowered its resolution we have problem is the case of a dimension is 1
     // In that case the voxelSizeRatio is still 2.f for example, but the dimension is 0.5
     // It is a problem as we will iterate until dimension with sizeRatio as an offset
     for(int i = 0; i < 3; ++i) {
-        if(this->gridResolution[i] < 1.) {
-            this->gridResolution[i] = 1;
+        if(this->samplerResolution[i] < 1.) {
+            this->samplerResolution[i] = 1;
             this->resolutionRatio[i] = 1;
         }
-        this->gridResolution[i] = std::ceil(this->gridResolution[i]);
+        this->samplerResolution[i] = std::ceil(this->samplerResolution[i]);
         this->resolutionRatio[i] = static_cast<int>(std::floor(this->resolutionRatio[i]));
     }
 }
 
 // This function do not use Grid::getValue as we do not want to open, copy and cast a whole image slice per value
-void Grid::getGridSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel) const {
+void Sampler::getGridSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel) const {
 
     int Zoffset = static_cast<int>(this->resolutionRatio[2]);
     if(sliceIdx % Zoffset != 0) {
@@ -170,17 +170,17 @@ void Grid::getGridSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nb
     this->image.getSlice(sliceIdx, result, nbChannel, XYoffsets);
 }
 
-uint16_t Grid::getValue(const glm::vec3& coord) const {
+uint16_t Sampler::getValue(const glm::vec3& coord) const {
     // Convert from grid coord to image coord
     const glm::vec3 coordImage = coord * this->resolutionRatio;
     return this->image.getValue(coordImage);
 }
 
-uint16_t Grid::getFullResolutionValue(const glm::vec3& coord) const {
+uint16_t Sampler::getFullResolutionValue(const glm::vec3& coord) const {
     // No conversion, we want directly values from the full resolution image
     return this->image.getValue(coord);
 }
 
-glm::vec3 Grid::getImageDimensions() const {
+glm::vec3 Sampler::getImageDimensions() const {
     return this->image.imgResolution;
 }
