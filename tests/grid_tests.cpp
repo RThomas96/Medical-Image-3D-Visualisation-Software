@@ -4,7 +4,7 @@
 TEST_CASE("DivideResolution", "[grid]") {
 
     glm::vec3 nb = glm::vec3(5., 5., 5.);
-    SimpleGrid grid("../../tests/data/img1.tif", nb);
+    SimpleGrid grid("../../tests/data/img1.tif", nb, 4);
 
 	std::vector<std::uint16_t> slices;
 
@@ -28,7 +28,7 @@ TEST_CASE("DivideResolution", "[grid]") {
 TEST_CASE("DivideResolutionGetPoint", "[grid]") {
 
     glm::vec3 nb = glm::vec3(5., 5., 5.);
-    SimpleGrid grid("../../tests/data/img1.tif", nb);
+    SimpleGrid grid("../../tests/data/img1.tif", nb, 4);
 
     int offsetOnZ = static_cast<int>(grid.grid.resolutionRatio[2]);
     int imgSizeZ = grid.grid.getImageDimensions()[2];
