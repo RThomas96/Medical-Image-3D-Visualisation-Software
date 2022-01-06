@@ -138,44 +138,41 @@ void SimpleGrid::checkReadSlice() const {
 
 /**************************/
 
-Grid::Grid(const std::string& filename, glm::vec3 gridResolution): image(TIFFImage(filename)), gridResolution(gridResolution) {
-    this->voxelSizeRatio = this->image.imgResolution / this->gridResolution;
-}
-
 Grid::Grid(const std::string& filename): image(TIFFImage(filename)) {
     this->gridResolution = this->image.imgResolution / 4.f;
-    this->voxelSizeRatio = this->image.imgResolution / this->gridResolution;
+    this->resolutionRatio = this->image.imgResolution / this->gridResolution;
     // If we naïvely divide the image dimensions for lowered its resolution we have problem is the case of a dimension is 1
     // In that case the voxelSizeRatio is still 2.f for example, but the dimension is 0.5
     // It is a problem as we will iterate until dimension with sizeRatio as an offset
     for(int i = 0; i < 3; ++i) {
         if(this->gridResolution[i] < 1.) {
             this->gridResolution[i] = 1;
-            this->voxelSizeRatio[i] = 1;
+            this->resolutionRatio[i] = 1;
         }
         this->gridResolution[i] = std::ceil(this->gridResolution[i]);
+        this->resolutionRatio[i] = static_cast<int>(std::floor(this->resolutionRatio[i]));
     }
 }
 
 // This function do not use Grid::getValue as we do not want to open, copy and cast a whole image slice per value
 void Grid::getGridSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel) const {
 
-    int Zoffset = static_cast<int>(std::floor(this->voxelSizeRatio[2]));
+    int Zoffset = static_cast<int>(this->resolutionRatio[2]);
     if(sliceIdx % Zoffset != 0) {
         std::cout << "Error: wrong sliceIdx [" << sliceIdx << "] for n offset of [" << Zoffset << "]" << std::endl;
         throw std::runtime_error("Error: wrong slice Idx function getGridSlice");
     }
 
     std::pair<int, int> XYoffsets;
-    XYoffsets.first = static_cast<int>(std::floor(this->voxelSizeRatio[0]));
-    XYoffsets.second = static_cast<int>(std::floor(this->voxelSizeRatio[1]));
+    XYoffsets.first = static_cast<int>(this->resolutionRatio[0]);
+    XYoffsets.second = static_cast<int>(this->resolutionRatio[1]);
 
     this->image.getSlice(sliceIdx, result, nbChannel, XYoffsets);
 }
 
 uint16_t Grid::getValue(const glm::vec3& coord) const {
     // Convert from grid coord to image coord
-    const glm::vec3 coordImage = coord * this->voxelSizeRatio;
+    const glm::vec3 coordImage = coord * this->resolutionRatio;
     return this->image.getValue(coordImage);
 }
 

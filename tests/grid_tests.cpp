@@ -8,7 +8,7 @@ TEST_CASE("DivideResolution", "[grid]") {
 
 	std::vector<std::uint16_t> slices;
 
-    int offsetOnZ = static_cast<int>(std::floor(grid.grid.voxelSizeRatio[2]));
+    int offsetOnZ = static_cast<int>(grid.grid.resolutionRatio[2]);
     int imgSizeZ = grid.grid.getImageDimensions()[2];
 
 	//for (std::size_t s = 0; s < imgSizeZ; s+=offsetOnZ) {
