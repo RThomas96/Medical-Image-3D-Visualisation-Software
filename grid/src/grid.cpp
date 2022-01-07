@@ -59,39 +59,29 @@ void SimpleGrid::writeDeformedGrid(const SimpleGrid& initial, ResolutionMode res
     if(initial.tetmesh.isEmpty())
         throw std::runtime_error("Error: cannot write a grid without initial mesh.");
 
-    glm::vec3 bboxMin = this->tetmesh.bbMin;
-    glm::vec3 bboxMax = this->tetmesh.bbMax;
-    glm::vec3 worldDimension = this->tetmesh.bbMax - this->tetmesh.bbMin;
-    //glm::vec3 imageDimension = this->grid.getImageDimensions();// Directly get image dimension because we use full resolution
-    glm::vec3 imageDimension = this->grid.getSamplerDimension();
-
-    glm::vec3 voxelDimension = worldDimension / imageDimension;
-
-    glm::vec3 initialWorldDimension = initial.tetmesh.bbMax - initial.tetmesh.bbMin;
-    glm::vec3 initialVoxelDimension = initialWorldDimension / imageDimension;
-
-    glm::vec3 added = worldDimension - initialWorldDimension;
-    added /= initialVoxelDimension;
-
-    std::cout << "InitDim: " << initialWorldDimension << std::endl;
-    std::cout << "DeformDim: " << worldDimension << std::endl;
-    std::cout << "Added: " << added << std::endl;
-
-    // TODO: CHECK WHEN ADDED HAVE POSITIV VALUES
-    imageDimension[0] += std::ceil(added[0]);
-    imageDimension[1] += std::ceil(added[1]);
-    imageDimension[2] += std::ceil(added[2]);
-
-    voxelDimension = worldDimension / imageDimension;
-
+    resolutionMode = ResolutionMode::SAMPLER_RESOLUTION;
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
-    // Update resolution of output image
-    // The point query is always at full resolution, so we update the offset
+    glm::vec3 bboxMin = this->tetmesh.bbMin;
+    glm::vec3 bboxMax = this->tetmesh.bbMax;
+
+    for(int i = 0; i < 3; ++i) {
+        bboxMin[i] = std::ceil(bboxMin[i]);
+        bboxMax[i] = std::ceil(bboxMax[i]);
+    }
+
+    //glm::vec3 voxelDimension = glm::vec3(1., 1., 1.);
+    //glm::vec3 imageDimension = this->grid.getSamplerDimension();
+    glm::vec3 imageDimension = bboxMax - bboxMin;
+    glm::vec3 voxelDimension = this->grid.getSamplerDimension() / imageDimension;
+
+    std::cout << "Image dimensions: " << imageDimension << std::endl;
+    std::cout << "For " << bboxMin << " to " << bboxMax << " per " << voxelDimension << std::endl;
     if(resolutionMode == ResolutionMode::FULL_RESOLUTION) {
-        imageDimension = this->grid.getSamplerDimension() * this->grid.resolutionRatio;// We do not use directly image resolution here cause we have a round
-        voxelDimension /= this->grid.resolutionRatio;
+        this->grid.fromSamplerToImage(bboxMin);
+        this->grid.fromSamplerToImage(bboxMax);
+        this->grid.fromSamplerToImage(imageDimension);
     }
 
     TinyTIFFWriterFile * tif = TinyTIFFWriter_open("../../../../Data/data_debug/img2.tif", 16, TinyTIFFWriter_UInt, 1, imageDimension[0], imageDimension[1], TinyTIFFWriter_Greyscale);
@@ -110,12 +100,15 @@ void SimpleGrid::writeDeformedGrid(const SimpleGrid& initial, ResolutionMode res
             for(float i = bboxMin[0]; i < bboxMax[0]; i+=voxelDimension[0]) {
                 const glm::vec3 pt(i+voxelDimension[0]/2., j+voxelDimension[1]/2., k+voxelDimension[2]/2.);
                 const glm::vec3 pt2 = this->getCoordInInitial(initial, pt);
-                data.push_back(initial.getValueFromPoint(pt2, ResolutionMode::SAMPLER_RESOLUTION));// Here we stay at sampler resolution because bbox are aligned on the sampler
+                //data.push_back(initial.getValueFromPoint(pt2, ResolutionMode::SAMPLER_RESOLUTION));// Here we stay at sampler resolution because bbox are aligned on the sampler
+                data.push_back(initial.getValueFromPoint(pt2, resolutionMode));// Here we stay at sampler resolution because bbox are aligned on the sampler
             }
         }
         TinyTIFFWriter_writeImage(tif, data.data());
     }
     TinyTIFFWriter_close(tif);
+
+    std::cout << "Save sucessfull" << std::endl;
 }
 
 std::pair<glm::vec3, glm::vec3> SimpleGrid::getBoundingBox() const {
@@ -158,11 +151,8 @@ Sampler::Sampler(const std::string& filename, int subsample): image(TIFFImage(fi
     this->bbMin = glm::vec3(0., 0., 0.);
     this->bbMax = samplerResolution;
 
-    this->subregionMin = glm::vec3(0., 0., 0.);
-    this->subregionMax = this->bbMax/2.f;
-
-    for(int i = 0; i < 3; ++i)
-        this->subregionMax[i] = std::ceil(this->subregionMax[i]);
+    this->subregionMin = this->bbMin;
+    this->subregionMax = this->bbMax;
 }
 
 Sampler::Sampler(const std::string& filename): image(TIFFImage(filename)) {

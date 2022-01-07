@@ -667,7 +667,7 @@ void Scene::addGrid(const SimpleGrid * gridLoaded) {
     gridView->gridTexture = this->newAPI_uploadTexture3D_allocateonly(_gridTex);
 
     int offsetOnZ = gridView->grid->grid.resolutionRatio[2];
-    int imgSizeZ = gridView->grid->grid.getSamplerDimension()[2];
+    int imgSizeZ = gridView->grid->grid.getImageDimensions()[2];
 
     int sliceI = 0;
 	for (std::size_t s = 0; s < imgSizeZ; s+=offsetOnZ) {
