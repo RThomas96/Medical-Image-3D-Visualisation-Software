@@ -34,7 +34,7 @@ struct TIFFImage {
     // NOTE: these offsets are managed by the grid class in "getGridClass" function. In theory this function
     // do not need to be used manually
     // NOTE: as the z axis is fixed (the sliceIdx parameter), you cannot change the z resolution
-    void getSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel, std::pair<int, int>  offsets) const;
+    void getSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel, std::pair<int, int>  offsets, std::pair<glm::vec3, glm::vec3> bboxes) const;
 
     Image::ImageDataType getInternalDataType() const;
 };

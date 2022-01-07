@@ -157,49 +157,50 @@ uint16_t TIFFImage::getValue(const glm::vec3& coord) const {
 
 //Function to cast and insert for the get slice
 template <typename data_t>
-void castToUintAndInsert(data_t * values, std::vector<uint16_t>& res, size_t size, int duplicate, int offset) {
-    for(int i = 0; i < size; i+=offset) {
+void castToUintAndInsert(data_t * values, std::vector<uint16_t>& res, int duplicate, int offset, std::pair<glm::vec3, glm::vec3> bboxes) {
+    for(int i = bboxes.first[0]; i < bboxes.second[0]; i+=offset) {
         for(int j = 0; j < duplicate; ++j)
             res.push_back(static_cast<std::uint16_t>(values[i])); 
     }
 }
 
 //Function to cast and insert for the get slice
-void castToLowPrecision(Image::ImageDataType imgDataType, const tdata_t& buf, std::vector<uint16_t>& res, size_t size, int duplicate, int offset) {
+void castToLowPrecision(Image::ImageDataType imgDataType, const tdata_t& buf, std::vector<uint16_t>& res, int duplicate, int offset, std::pair<glm::vec3, glm::vec3> bboxes) {
     if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_8)) {
         uint8_t * data = static_cast<std::uint8_t*>(buf);
-        castToUintAndInsert(data, res, size, duplicate, offset);
+        castToUintAndInsert(data, res, duplicate, offset, bboxes);
     } else if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_16)) {
         uint16_t * data = static_cast<std::uint16_t*>(buf);
-        castToUintAndInsert(data, res, size, duplicate, offset);
+        castToUintAndInsert(data, res, duplicate, offset, bboxes);
     } else if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_32)) {
         uint32_t * data = static_cast<std::uint32_t*>(buf);
-        castToUintAndInsert(data, res, size, duplicate, offset);
+        castToUintAndInsert(data, res, duplicate, offset, bboxes);
     } else if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_64)) {
         uint64_t * data = static_cast<std::uint64_t*>(buf);
-        castToUintAndInsert(data, res, size, duplicate, offset);
+        castToUintAndInsert(data, res, duplicate, offset, bboxes);
     } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_8)) {
         int8_t * data = static_cast<std::int8_t*>(buf);
-        castToUintAndInsert(data, res, size, duplicate, offset);
+        castToUintAndInsert(data, res, duplicate, offset, bboxes);
     } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_16)) {
         int16_t * data = static_cast<std::int16_t*>(buf);
-        castToUintAndInsert(data, res, size, duplicate, offset);
+        castToUintAndInsert(data, res, duplicate, offset, bboxes);
     } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_32)) {
         int32_t * data = static_cast<std::int32_t*>(buf);
-        castToUintAndInsert(data, res, size, duplicate, offset);
+        castToUintAndInsert(data, res, duplicate, offset, bboxes);
     } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_64)) {
         int64_t * data = static_cast<std::int64_t*>(buf);
-        castToUintAndInsert(data, res, size, duplicate, offset);
+        castToUintAndInsert(data, res, duplicate, offset, bboxes);
     } else if(imgDataType == (Image::ImageDataType::Floating | Image::ImageDataType::Bit_32)) {
         float * data = static_cast<float*>(buf);
-        castToUintAndInsert(data, res, size, duplicate, offset);
+        castToUintAndInsert(data, res, duplicate, offset, bboxes);
     } else if(imgDataType == (Image::ImageDataType::Floating | Image::ImageDataType::Bit_64)) {
         double * data = static_cast<double*>(buf);
-        castToUintAndInsert(data, res, size, duplicate, offset);
+        castToUintAndInsert(data, res, duplicate, offset, bboxes);
     } 
 }
 
-void TIFFImage::getSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel, std::pair<int, int>  offsets) const {
+//void TIFFImage::getSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel, std::pair<int, int>  offsets) const {
+void TIFFImage::getSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel, std::pair<int, int>  offsets, std::pair<glm::vec3, glm::vec3> bboxes) const {
     TIFFSetDirectory(this->tif, sliceIdx);
     uint32 imagelength;
     tdata_t buf;
@@ -208,10 +209,9 @@ void TIFFImage::getSlice(int sliceIdx, std::vector<std::uint16_t>& result, int n
     TIFFGetField(this->tif, TIFFTAG_IMAGELENGTH, &imagelength);
     buf = _TIFFmalloc(TIFFScanlineSize(this->tif));
 
-    for (row = 0; row < imagelength; row+=offsets.second) {
+    for (row = bboxes.first[1]; row < bboxes.second[1]; row+=offsets.second) {
         TIFFReadScanline(this->tif, buf, row);
-        int imageSize = static_cast<int>(this->imgResolution[0]);
-        castToLowPrecision(this->getInternalDataType(), buf, result, imageSize, nbChannel, offsets.first);
+        castToLowPrecision(this->getInternalDataType(), buf, result, nbChannel, offsets.first, bboxes);
     }
     _TIFFfree(buf);
 }

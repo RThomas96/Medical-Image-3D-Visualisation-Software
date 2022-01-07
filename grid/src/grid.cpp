@@ -158,8 +158,11 @@ Sampler::Sampler(const std::string& filename, int subsample): image(TIFFImage(fi
     this->bbMin = glm::vec3(0., 0., 0.);
     this->bbMax = samplerResolution;
 
-    this->subregionMin = this->bbMin;
-    this->subregionMax = this->bbMax;
+    this->subregionMin = glm::vec3(0., 0., 0.);
+    this->subregionMax = this->bbMax/2.f;
+
+    for(int i = 0; i < 3; ++i)
+        this->subregionMax[i] = std::ceil(this->subregionMax[i]);
 }
 
 Sampler::Sampler(const std::string& filename): image(TIFFImage(filename)) {
@@ -190,7 +193,19 @@ void Sampler::getGridSlice(int sliceIdx, std::vector<std::uint16_t>& result, int
     XYoffsets.first = static_cast<int>(this->resolutionRatio[0]);
     XYoffsets.second = static_cast<int>(this->resolutionRatio[1]);
 
-    this->image.getSlice(sliceIdx, result, nbChannel, XYoffsets);
+    std::pair<glm::vec3, glm::vec3> bboxes{this->subregionMin, this->subregionMax};
+    this->fromSamplerToImage(bboxes.first);
+    this->fromSamplerToImage(bboxes.second);
+
+    for(int i = 0; i < 3; ++i) {
+        if(static_cast<int>(bboxes.first[i]) % static_cast<int>(this->resolutionRatio[i]) != 0)
+            throw std::runtime_error("Error in getGridSlice: bboxes not aligned with resolution ratio !");
+
+        if(static_cast<int>(bboxes.second[i]) % static_cast<int>(this->resolutionRatio[i]) != 0)
+            throw std::runtime_error("Error in getGridSlice: bboxes not aligned with resolution ratio !");
+    }
+
+    this->image.getSlice(sliceIdx, result, nbChannel, XYoffsets, bboxes);
 }
 
 uint16_t Sampler::getValue(const glm::vec3& coord, ResolutionMode resolutionMode) const {
@@ -203,4 +218,8 @@ uint16_t Sampler::getValue(const glm::vec3& coord, ResolutionMode resolutionMode
 
 glm::vec3 Sampler::getImageDimensions() const {
     return this->image.imgResolution;
+}
+
+void Sampler::fromSamplerToImage(glm::vec3& p) const {
+    p = p * this->resolutionRatio;
 }

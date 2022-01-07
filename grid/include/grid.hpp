@@ -33,6 +33,7 @@ struct Sampler {
     Sampler(const std::string& filename, int subsample);
 
     void getGridSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel) const;
+
     // In theory floor aren't necessary cause coord are already integer
     uint16_t getValue(const glm::vec3& coord, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
 
@@ -40,6 +41,8 @@ struct Sampler {
     glm::vec3 getImageDimensions() const;
 
     glm::vec3 getSamplerDimension() const;
+
+    void fromSamplerToImage(glm::vec3& p) const;
 };
 
 // Struct to make link between the grid and a 3D shape used to deform the space of its representation
