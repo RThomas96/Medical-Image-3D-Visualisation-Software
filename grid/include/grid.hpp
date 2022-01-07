@@ -21,8 +21,10 @@ enum ResolutionMode {
 struct Sampler {
     TIFFImage image;
 
-    glm::vec3 samplerResolution;
     glm::vec3 resolutionRatio;
+
+    glm::vec3 bbMin;
+    glm::vec3 bbMax;
 
     glm::vec3 subregionMin;
     glm::vec3 subregionMax;
@@ -36,6 +38,8 @@ struct Sampler {
 
     Image::ImageDataType getInternalDataType() const;
     glm::vec3 getImageDimensions() const;
+
+    glm::vec3 getSamplerDimension() const;
 };
 
 // Struct to make link between the grid and a 3D shape used to deform the space of its representation

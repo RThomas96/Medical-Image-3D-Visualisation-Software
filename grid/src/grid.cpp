@@ -14,8 +14,8 @@ Image::ImageDataType Sampler::getInternalDataType() const {
 }
 
 SimpleGrid::SimpleGrid(const std::string& filename, const glm::vec3& nbCube, int subsample): grid(Sampler(filename, subsample)) {
-    const glm::vec3 sizeCube = this->grid.samplerResolution / nbCube;
-    this->tetmesh.buildGrid(nbCube, sizeCube, glm::vec3(0., 0., 0.));
+    const glm::vec3 sizeCube = this->grid.getSamplerDimension() / nbCube;
+    this->tetmesh.buildGrid(nbCube, sizeCube, this->grid.subregionMin);
 }
 
 glm::vec3 SimpleGrid::getCoordInInitial(const SimpleGrid& initial, glm::vec3 p) {
@@ -36,7 +36,7 @@ uint16_t SimpleGrid::getValueFromPoint(const glm::vec3& p, ResolutionMode resolu
     if(resolutionMode == ResolutionMode::FULL_RESOLUTION) {
         pSamplerRes = p / this->grid.resolutionRatio;
     }
-    if(isPtInBB(pSamplerRes, this->tetmesh.bbMin, this->tetmesh.bbMax)) {
+    if(isPtInBB(pSamplerRes, this->grid.bbMin, this->grid.bbMax)) {
         return this->grid.getValue(p, resolutionMode);
     } else {
         // Background value
@@ -59,13 +59,11 @@ void SimpleGrid::writeDeformedGrid(const SimpleGrid& initial, ResolutionMode res
     if(initial.tetmesh.isEmpty())
         throw std::runtime_error("Error: cannot write a grid without initial mesh.");
 
-    // First we update the image size by adding some pixels
     glm::vec3 bboxMin = this->tetmesh.bbMin;
     glm::vec3 bboxMax = this->tetmesh.bbMax;
-
-    glm::vec3 worldDimension = bboxMax - bboxMin;
+    glm::vec3 worldDimension = this->tetmesh.bbMax - this->tetmesh.bbMin;
     //glm::vec3 imageDimension = this->grid.getImageDimensions();// Directly get image dimension because we use full resolution
-    glm::vec3 imageDimension = this->grid.samplerResolution;
+    glm::vec3 imageDimension = this->grid.getSamplerDimension();
 
     glm::vec3 voxelDimension = worldDimension / imageDimension;
 
@@ -92,12 +90,13 @@ void SimpleGrid::writeDeformedGrid(const SimpleGrid& initial, ResolutionMode res
     // Update resolution of output image
     // The point query is always at full resolution, so we update the offset
     if(resolutionMode == ResolutionMode::FULL_RESOLUTION) {
-        imageDimension = this->grid.samplerResolution * this->grid.resolutionRatio;// We do not use directly image resolution here cause we have a round
+        imageDimension = this->grid.getSamplerDimension() * this->grid.resolutionRatio;// We do not use directly image resolution here cause we have a round
         voxelDimension /= this->grid.resolutionRatio;
     }
 
     TinyTIFFWriterFile * tif = TinyTIFFWriter_open("../../../../Data/data_debug/img2.tif", 16, TinyTIFFWriter_UInt, 1, imageDimension[0], imageDimension[1], TinyTIFFWriter_Greyscale);
     std::cout << "For " << bboxMin << " to " << bboxMax << " per " << voxelDimension << std::endl;
+
     std::vector<uint16_t> data;
     data.reserve(imageDimension[0] * imageDimension[1]);
     for(float k = bboxMin[2]; k < bboxMax[2]; k+=voxelDimension[2]) {
@@ -123,11 +122,6 @@ std::pair<glm::vec3, glm::vec3> SimpleGrid::getBoundingBox() const {
     return std::pair(this->tetmesh.bbMin, this->tetmesh.bbMax);
 }
 
-glm::vec3 SimpleGrid::getResolution() const {
-    return this->grid.samplerResolution;
-}
-
-
 Image::ImageDataType SimpleGrid::getInternalDataType() const {
     return this->grid.getInternalDataType();
 }
@@ -140,30 +134,47 @@ void SimpleGrid::checkReadSlice() const {
     throw std::runtime_error("END OF UT");
 }
 
+glm::vec3 SimpleGrid::getResolution() const {
+    return this->grid.getSamplerDimension();
+}
+
 /**************************/
 
 Sampler::Sampler(const std::string& filename, int subsample): image(TIFFImage(filename)) {
-    this->samplerResolution = this->image.imgResolution / static_cast<float>(subsample);
-    this->resolutionRatio = this->image.imgResolution / this->samplerResolution;
+    glm::vec3 samplerResolution = this->image.imgResolution / static_cast<float>(subsample);
+    this->resolutionRatio = this->image.imgResolution / samplerResolution;
     // If we naïvely divide the image dimensions for lowered its resolution we have problem is the case of a dimension is 1
     // In that case the voxelSizeRatio is still 2.f for example, but the dimension is 0.5
     // It is a problem as we will iterate until dimension with sizeRatio as an offset
     for(int i = 0; i < 3; ++i) {
-        if(this->samplerResolution[i] < 1.) {
-            this->samplerResolution[i] = 1;
+        if(samplerResolution[i] < 1.) {
+            samplerResolution[i] = 1;
             this->resolutionRatio[i] = 1;
         }
-        this->samplerResolution[i] = std::ceil(this->samplerResolution[i]);
+        samplerResolution[i] = std::ceil(samplerResolution[i]);
         this->resolutionRatio[i] = static_cast<int>(std::floor(this->resolutionRatio[i]));
     }
 
-    this->subregionMin = glm::vec3(0., 0., 0.);
-    this->subregionMax = this->samplerResolution;
+    this->bbMin = glm::vec3(0., 0., 0.);
+    this->bbMax = samplerResolution;
+
+    this->subregionMin = this->bbMin;
+    this->subregionMax = this->bbMax;
 }
 
 Sampler::Sampler(const std::string& filename): image(TIFFImage(filename)) {
-    this->samplerResolution = this->image.imgResolution; 
+    glm::vec3 samplerResolution = this->image.imgResolution; 
     this->resolutionRatio = glm::vec3(1., 1., 1.); 
+
+    this->bbMin = glm::vec3(0., 0., 0.);
+    this->bbMax = samplerResolution;
+
+    this->subregionMin = this->bbMin;
+    this->subregionMax = this->bbMax;
+}
+
+glm::vec3 Sampler::getSamplerDimension() const {
+   return this->subregionMax - this->subregionMin; 
 }
 
 // This function do not use Grid::getValue as we do not want to open, copy and cast a whole image slice per value
