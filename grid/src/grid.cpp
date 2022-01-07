@@ -18,6 +18,11 @@ SimpleGrid::SimpleGrid(const std::string& filename, const glm::vec3& nbCube, int
     this->tetmesh.buildGrid(nbCube, sizeCube, this->grid.subregionMin);
 }
 
+SimpleGrid::SimpleGrid(const std::string& filename, const glm::vec3& nbCube, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox): grid(Sampler(filename, subsample, bbox)) {
+    const glm::vec3 sizeCube = this->grid.getSamplerDimension() / nbCube;
+    this->tetmesh.buildGrid(nbCube, sizeCube, this->grid.subregionMin);
+}
+
 glm::vec3 SimpleGrid::getCoordInInitial(const SimpleGrid& initial, glm::vec3 p) {
     int tetraIdx = this->tetmesh.inTetraIdx(p);
     if(tetraIdx != -1) {
@@ -132,6 +137,28 @@ glm::vec3 SimpleGrid::getResolution() const {
 }
 
 /**************************/
+
+Sampler::Sampler(const std::string& filename, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox): image(TIFFImage(filename)) {
+    glm::vec3 samplerResolution = this->image.imgResolution / static_cast<float>(subsample);
+    this->resolutionRatio = this->image.imgResolution / samplerResolution;
+    // If we naïvely divide the image dimensions for lowered its resolution we have problem is the case of a dimension is 1
+    // In that case the voxelSizeRatio is still 2.f for example, but the dimension is 0.5
+    // It is a problem as we will iterate until dimension with sizeRatio as an offset
+    for(int i = 0; i < 3; ++i) {
+        if(samplerResolution[i] < 1.) {
+            samplerResolution[i] = 1;
+            this->resolutionRatio[i] = 1;
+        }
+        samplerResolution[i] = std::ceil(samplerResolution[i]);
+        this->resolutionRatio[i] = static_cast<int>(std::floor(this->resolutionRatio[i]));
+    }
+
+    this->bbMin = glm::vec3(0., 0., 0.);
+    this->bbMax = samplerResolution;
+
+    this->subregionMin = bbox.first;
+    this->subregionMax = bbox.second;
+}
 
 Sampler::Sampler(const std::string& filename, int subsample): image(TIFFImage(filename)) {
     glm::vec3 samplerResolution = this->image.imgResolution / static_cast<float>(subsample);

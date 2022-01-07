@@ -31,6 +31,7 @@ struct Sampler {
 
     Sampler(const std::string& filename);
     Sampler(const std::string& filename, int subsample);
+    Sampler(const std::string& filename, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox);
 
     void getGridSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel) const;
 
@@ -53,6 +54,7 @@ struct SimpleGrid {
     TetMesh tetmesh;
 
     SimpleGrid(const std::string& filename, const glm::vec3& nbCube, int subsample);
+    SimpleGrid(const std::string& filename, const glm::vec3& nbCube, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox);
 
     // Here p is a 3D point, not like coord from TIFFImage's "getValue" function that is a set of 3 indices 
     uint16_t getValueFromPoint(const glm::vec3& p, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
