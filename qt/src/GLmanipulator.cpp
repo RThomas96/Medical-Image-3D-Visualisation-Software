@@ -106,3 +106,8 @@ void UITool::GL::MeshManipulator::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* m
 	this->sceneGL->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	this->sceneGL->glUseProgram(0);
 }
+
+void UITool::GL::MeshManipulator::setRadius(float radius) { 
+    this->manipulatorRadius = radius; 
+    this->manipulatorMesh = Sphere(this->manipulatorRadius);
+}

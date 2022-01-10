@@ -3936,6 +3936,8 @@ void Scene::toggleWireframe() {
 }
 
 void Scene::prepareManipulators() {
+    glm::vec3 ratio = this->grids[0]->grid->grid.resolutionRatio;
+    this->glMeshManipulator->setRadius(30.f / ratio[0]);
 	this->glMeshManipulator->prepare();
 }
 

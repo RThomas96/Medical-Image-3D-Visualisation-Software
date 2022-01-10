@@ -44,7 +44,7 @@ struct TetMesh {
 
     int inTetraIdx(const glm::vec3& p);
 
-    glm::vec3 getDimensions();
+    glm::vec3 getDimensions() const;
 
     // Temporary function to map to current GL
     void replaceAllPoints(const std::vector<glm::vec3>& pts);

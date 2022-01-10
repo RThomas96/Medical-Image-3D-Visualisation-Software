@@ -66,6 +66,8 @@ struct SimpleGrid {
 
     void replaceAllPoints(const std::vector<glm::vec3>& pts);
 
+    glm::vec3 getDimension() const;
+
     // TODO: to remove
     // Function added only for backward comptability with the old grid, used all along in the OpenGL interface
     std::pair<glm::vec3, glm::vec3> getBoundingBox() const;

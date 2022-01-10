@@ -171,7 +171,7 @@ int TetMesh::inTetraIdx(const glm::vec3& p) {
     return -1;
 }
 
-glm::vec3 TetMesh::getDimensions() {
+glm::vec3 TetMesh::getDimensions() const {
     return this->bbMax - this->bbMin;
 }
 

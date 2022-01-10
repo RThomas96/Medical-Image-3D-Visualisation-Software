@@ -240,3 +240,4 @@ glm::vec3 Sampler::getImageDimensions() const {
 void Sampler::fromSamplerToImage(glm::vec3& p) const {
     p = p * this->resolutionRatio;
 }
+

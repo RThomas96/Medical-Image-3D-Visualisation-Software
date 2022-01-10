@@ -51,6 +51,8 @@ namespace UITool {
 			void setTex(GLuint tex) { this->tex = tex; };
 			GLuint getTex() { return this->tex; };
 
+            void setRadius(float radius);
+
 			void toggleDisplay() { this->displayed = ! this->displayed; }
 
 			bool isDisplayed() { return this->displayed; }
