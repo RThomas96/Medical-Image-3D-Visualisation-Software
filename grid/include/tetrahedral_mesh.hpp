@@ -3,8 +3,6 @@
 
 #include <glm/glm.hpp>
 #include <iostream>
-#include <tiff.h>
-#include <tiffio.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/io.hpp>
 #include <vector>

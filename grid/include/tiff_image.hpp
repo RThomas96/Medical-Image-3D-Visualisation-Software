@@ -8,6 +8,30 @@
 #include <tiffio.h>
 #include <vector>
 
+struct Cache {
+    TIFF* tif;
+
+    // Maximum number of slices to be stored
+    int capacity;
+    int nbInsertion;
+
+    glm::vec3 imageSize;
+    Image::ImageDataType imgDataType;
+
+    std::vector<int> indices;
+    std::vector<std::vector<uint16_t>> data;
+
+    Cache(TIFF * tiff, glm::vec3 imageSize, Image::ImageDataType imageDataType, int capacity);
+
+    void loadImage(int imageIdx);
+    uint16_t getValue(const glm::vec3& coord);
+
+    bool isCached(int imageIdx) const;
+    int getCachedIdx(int imageIdx) const;
+    int getNextCachedImageToReplace() const;
+
+};
+
 // Just a plain tiff image
 // Access to data is made with plain coordinates and not 3D point
 // No data are stored, this class is only a reader
@@ -16,6 +40,8 @@ struct TIFFImage {
     TIFF* tif;
     glm::vec3 imgResolution;
     Image::ImageDataType imgDataType;
+
+    Cache * cache;
 
     TIFFImage(const std::string& filename);
 
