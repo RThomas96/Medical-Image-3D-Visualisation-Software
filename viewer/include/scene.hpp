@@ -286,6 +286,8 @@ public:
 
     /* Attributes */
 
+    //TODO: to remove
+    int temp_ratio;
 private:
     /* Scene boolean */
 	bool isInitialized;

@@ -164,8 +164,10 @@ void GridLoaderWidget::loadNewGridAPI() {
         std::cout << bbox.first << std::endl;
         std::cout << bbox.second << std::endl;
 	    this->_testing_grid = new SimpleGrid(filenames[0].toStdString(), glm::vec3(5., 5. ,5.), subsample, bbox);
+        this->scene->temp_ratio = subsample;
     } else {
 	    this->_testing_grid = new SimpleGrid(filenames[0].toStdString(), glm::vec3(5., 5. ,5.), subsample);
+        this->scene->temp_ratio = subsample;
     }
     this->loadGrid_newAPI();
 }
