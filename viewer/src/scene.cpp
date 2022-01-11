@@ -669,13 +669,39 @@ void Scene::addGrid(const SimpleGrid * gridLoaded) {
     int offsetOnZ = gridView->grid->grid.resolutionRatio[2];
     int imgSizeZ = gridView->grid->grid.getImageDimensions()[2];
 
+    //TODO: this computation do not belong here
+    uint16_t max = std::numeric_limits<uint16_t>::min();
+
     int sliceI = 0;
 	for (std::size_t s = 0; s < imgSizeZ; s+=offsetOnZ) {
         gridView->grid->grid.getGridSlice(s, slices, dimensions.a);
 		this->newAPI_uploadTexture3D(gridView->gridTexture, _gridTex, sliceI, slices);
+
+        max = std::max(max, *std::max_element(slices.begin(), slices.end()));
         slices.clear();
         sliceI++;
 	}
+
+    std::cout << "Max value: " << max << std::endl;
+    gridView->colorChannelAttributes[0].setMaxVisible(max);
+    gridView->colorChannelAttributes[0].setMaxColorScale(max);
+    gridView->colorChannelAttributes[1].setMaxVisible(max);
+    gridView->colorChannelAttributes[1].setMaxColorScale(max);
+    gridView->colorChannelAttributes[2].setMaxVisible(max);
+    gridView->colorChannelAttributes[2].setMaxColorScale(max);
+
+    this->controlPanel->setMaxTexVal(max);
+    this->controlPanel->setMaxTexValAlternate(max);
+	this->slotSetMaxColorValue(max);
+    this->controlPanel->updateMaxValue(max);
+    this->controlPanel->updateMaxValueAlternate(max);
+	this->slotSetMaxColorValueAlternate(max);
+
+    //this->controlPanel->updateChannelRed(2);
+    //this->controlPanel->updateChannelGreen(2);
+	this->setRGBMode(RGBMode::RedOnly);
+	this->setColorFunction_r(ColorFunction::ColorMagnitude);
+	this->setColorFunction_g(ColorFunction::ColorMagnitude);
 
     //for (std::size_t s = 0; s < dimensions.z; ++s) {
     //    this->newAPI_uploadTexture3D(gridView->gridTexture, _gridTex, s, slices);

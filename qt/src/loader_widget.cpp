@@ -186,7 +186,7 @@ void GridLoaderWidget::loadGrid_newAPI() {
 
 	// Update min and max of the control panel
 	// TODO: change this function in order to set slider according to min/max values in the image
-	this->_cp->setSlidersToNumericalLimits();
+	//this->_cp->setSlidersToNumericalLimits();
 
 	this->close();
 }

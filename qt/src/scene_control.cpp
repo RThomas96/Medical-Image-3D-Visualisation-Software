@@ -130,11 +130,13 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, QWidget* parent) :
 	this->red_coloration->addItem("Greyscale", ColorFunction::SingleChannel);
 	this->red_coloration->addItem("HSV to RGB", ColorFunction::HSV2RGB);
 	this->red_coloration->addItem("User colors", ColorFunction::ColorMagnitude);
+    this->red_coloration->setCurrentIndex(2);
 
 	this->green_coloration = new QComboBox;
 	this->green_coloration->addItem("Greyscale", ColorFunction::SingleChannel);
 	this->green_coloration->addItem("HSV to RGB", ColorFunction::HSV2RGB);
 	this->green_coloration->addItem("User colors", ColorFunction::ColorMagnitude);
+    this->green_coloration->setCurrentIndex(2);
 
 	QColor r					= Qt::GlobalColor::red;
 	QColor b					= Qt::GlobalColor::blue;
