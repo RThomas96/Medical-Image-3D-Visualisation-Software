@@ -1,6 +1,72 @@
 #include <catch2/catch_test_macros.hpp>
 #include "../grid/include/grid.hpp"
 
+TEST_CASE("SaveDurationCacheComparison", "[grid][save][.long]") {
+
+    glm::vec3 nb = glm::vec3(5., 5., 5.);
+    SimpleGrid * initialGrid = new SimpleGrid("../../tests/data/img1.tif", nb, 4);
+    SimpleGrid * deformedGrid = new SimpleGrid("../../tests/data/img1.tif", nb, 4);
+    initialGrid->grid.image.useCache = true;
+    deformedGrid->grid.image.useCache = true;
+
+    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+    deformedGrid->writeDeformedGrid(*initialGrid);
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+
+    float durationWithCache3 = std::chrono::duration_cast<std::chrono::seconds> (end - begin).count();
+    std::cout << "With cache of 3: "  << durationWithCache3 << "second" << std::endl;
+    std::cout << "Number of insertion: " << initialGrid->grid.image.cache->nbInsertion << std::endl;
+
+    /***/
+
+    delete initialGrid;
+    delete deformedGrid;
+    initialGrid = new SimpleGrid("../../tests/data/img1.tif", nb, 4);
+    deformedGrid = new SimpleGrid("../../tests/data/img1.tif", nb, 4);
+    initialGrid->grid.image.useCache = true;
+    deformedGrid->grid.image.useCache = true;
+    initialGrid->grid.image.cache->setCapacity(10);
+
+    begin = std::chrono::steady_clock::now();
+    deformedGrid->writeDeformedGrid(*initialGrid);
+    end = std::chrono::steady_clock::now();
+
+    float durationWithCache10 = std::chrono::duration_cast<std::chrono::seconds> (end - begin).count();
+    std::cout << "With cache of 10: "  << durationWithCache10 << " second" << std::endl;
+    std::cout << "Number of insertion: " << initialGrid->grid.image.cache->nbInsertion << std::endl;
+
+    /***/
+
+    delete initialGrid;
+    delete deformedGrid;
+    initialGrid = new SimpleGrid("../../tests/data/img1.tif", nb, 4);
+    deformedGrid = new SimpleGrid("../../tests/data/img1.tif", nb, 4);
+    initialGrid->grid.image.useCache = false;
+    deformedGrid->grid.image.useCache = false;
+
+    begin = std::chrono::steady_clock::now();
+    deformedGrid->writeDeformedGrid(*initialGrid);
+    end = std::chrono::steady_clock::now();
+
+    std::cout << "Without cache: "  << std::chrono::duration_cast<std::chrono::seconds> (end - begin).count() << " second" << std::endl;
+    std::cout << "Number of insertion: " << initialGrid->grid.image.cache->nbInsertion << std::endl;
+    float durationWithoutCache = std::chrono::duration_cast<std::chrono::seconds> (end - begin).count();
+
+    /***/
+
+    std::cout << "*****************" << std::endl;
+    std::cout << "*****Results*****" << std::endl;
+    std::cout << "*****************" << std::endl;
+    std::cout << "With cache of 3: "  << durationWithCache3 << "second" << std::endl;
+    std::cout << "With cache of 10: "  << durationWithCache10 << " second" << std::endl;
+    std::cout << "Without cache: "  << durationWithoutCache << " second" << std::endl;
+    std::cout << "*****************" << std::endl;
+    std::cout << "Cache of 3 speed up the save process to: " << durationWithoutCache/durationWithCache3 << std::endl;
+    std::cout << "Cache of 10 speed up the save process to: " << durationWithoutCache/durationWithCache10 << std::endl;
+    std::cout << "For commit 3f998b2a79447c0c2f8e275999290a364923aac6 : values are 6, 6, 27, 4.5 and 4.5" << std::endl;
+    std::cout << "*****************" << std::endl;
+}
+
 TEST_CASE("CutAndDivideResolution", "[grid]") {
 
     glm::vec3 nb = glm::vec3(5., 5., 5.);

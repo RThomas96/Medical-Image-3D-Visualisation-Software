@@ -30,6 +30,7 @@ struct Cache {
     int getCachedIdx(int imageIdx) const;
     int getNextCachedImageToReplace() const;
 
+    void setCapacity(int capacity);
 };
 
 // Just a plain tiff image

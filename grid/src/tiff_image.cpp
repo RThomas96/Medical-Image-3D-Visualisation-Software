@@ -271,3 +271,9 @@ void Cache::loadImage(int imageIdx) {
 int Cache::getNextCachedImageToReplace() const {
     return this->nbInsertion % this->capacity;
 }
+
+void Cache::setCapacity(int capacity) {
+    this->capacity = capacity;
+    this->data = std::vector<std::vector<uint16_t>>(this->capacity, std::vector<uint16_t>());
+    this->indices = std::vector<int>(this->capacity, -1);
+}
