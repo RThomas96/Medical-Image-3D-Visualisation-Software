@@ -1,7 +1,7 @@
 #include "../include/tiff_image.hpp"
 #include <algorithm>
 
-TIFFImage::TIFFImage(const std::string& filename): cache(nullptr) {
+TIFFImage::TIFFImage(const std::string& filename): cache(nullptr), useCache(true) {
     //this->tif = TIFFOpen("../../../../Data/v3_a5_100_150_8bit_normalized.tif", "r");
     //this->tif = TIFFOpen("../../../../Data/myTiff.tif", "r");
     //this->tif = TIFFOpen("../../../../../../../data/datasets/tulane/v3/registration_subset/v3_a5_100_150_8bit_normalized_25.tif", "r");
@@ -143,20 +143,22 @@ uint16_t getToLowPrecision(Image::ImageDataType imgDataType, const tdata_t& buf,
 }
 
 uint16_t TIFFImage::getValue(const glm::vec3& coord) const {
-    const glm::vec3 newCoord{std::floor(coord[0]), std::floor(coord[1]), std::floor(coord[2])};
-    return cache->getValue(newCoord);
-    //if (this->tif) {
-    //    TIFFSetDirectory(tif, static_cast<int>(std::floor(coord[2])));
-    //    tdata_t buf;
-    //    uint32 row; 
-    //    buf = _TIFFmalloc(TIFFScanlineSize(tif));
-    //    TIFFReadScanline(tif, buf, static_cast<int>(std::floor(coord[1])));
-    //    //uint8_t res = static_cast<uint8_t*>(buf)[static_cast<int>(std::floor(coord[0]))];
-    //    uint16_t res = getToLowPrecision(this->getInternalDataType(), buf, std::floor(coord[0])); 
-    //    _TIFFfree(buf);
-    //    return res;
-    //}
-    return 0.;
+    if(this->useCache) {
+        const glm::vec3 newCoord{std::floor(coord[0]), std::floor(coord[1]), std::floor(coord[2])};
+        return cache->getValue(newCoord);
+    } else {
+        if (this->tif) {
+            TIFFSetDirectory(tif, static_cast<int>(std::floor(coord[2])));
+            tdata_t buf;
+            uint32 row; 
+            buf = _TIFFmalloc(TIFFScanlineSize(tif));
+            TIFFReadScanline(tif, buf, static_cast<int>(std::floor(coord[1])));
+            uint16_t res = getToLowPrecision(this->getInternalDataType(), buf, std::floor(coord[0])); 
+            _TIFFfree(buf);
+            return res;
+        }
+        return 0.;
+    }
 }
 
 //Function to cast and insert for the get slice

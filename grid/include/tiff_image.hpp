@@ -41,6 +41,7 @@ struct TIFFImage {
     glm::vec3 imgResolution;
     Image::ImageDataType imgDataType;
 
+    bool useCache;
     Cache * cache;
 
     TIFFImage(const std::string& filename);
