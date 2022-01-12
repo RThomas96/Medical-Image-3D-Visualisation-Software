@@ -21,7 +21,6 @@ ELSE()
 	INCLUDE(FindSuiteSparse_Linux)
 ENDIF()
 
-# Required libraries {{{
 FIND_PACKAGE(Qt5 REQUIRED COMPONENTS Core Gui Widgets Xml OpenGL)
 FIND_PACKAGE(OpenGL REQUIRED)
 FIND_PACKAGE(Threads REQUIRED)
@@ -30,38 +29,13 @@ FIND_PACKAGE(Threads REQUIRED)
 # If any of them aren't found, it stops CMake's generation process with an error message.
 FIND_PACKAGE(TinyTIFF REQUIRED PATHS ${CMAKE_CURRENT_LIST_DIR}/third_party/compiled_libraries/lib/cmake PATH_SUFFIXES TinyTIFF)
 FIND_PACKAGE(nanoflann REQUIRED PATHS ${CMAKE_CURRENT_LIST_DIR}/third_party/compiled_libraries/lib/cmake PATH_SUFFIXES nanoflann)
-# }}}
 
 ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/third_party/glm)
 SET(LOCAL_GLM_HEADER_DIR "${CMAKE_CURRENT_LIST_DIR}/third_party/glm/")
 SET(LIBS_COMPILED_HEADERS "${CMAKE_CURRENT_LIST_DIR}/third_party/compiled_libraries/include")
 
 ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/image)
-ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/new_grid)
-ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/colorscale)
 ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/meshes)
-
-# Library for image reading/writing {{{
-ADD_LIBRARY(ImageIO STATIC
-    ./image/utils/include/read_cache.hpp
-    ./image/utils/include/threaded_task.hpp
-    ./image/utils/include/threaded_task.cpp
-)
-TARGET_INCLUDE_DIRECTORIES(ImageIO
-	PRIVATE ${LOCAL_GLM_HEADER_DIR}
-	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include
-	# Nifti uses brace-include without the 'nifti/' prefix, leading
-	# to manually have to include the lib's include dir in targets:
-	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include/nifti
-	PRIVATE ${libTIFF_HEADER_DIR}
-)
-TARGET_LINK_LIBRARIES(ImageIO
-	PUBLIC TinyTIFF
-	PUBLIC grid_api
-	PUBLIC ${libTIFF}
-	PUBLIC Qt5::Xml
-)
-# }}}
 
 # All the needed widgets for this project, under one target {{{
 ADD_LIBRARY(VisualisationWidgets STATIC
@@ -101,9 +75,7 @@ TARGET_LINK_LIBRARIES(VisualisationWidgets
 	PUBLIC Qt5::OpenGL
 	PUBLIC Threads::Threads
 )
-# }}}
 
-# Neighbor visualisation {{{
 ADD_EXECUTABLE(neighbor_visu
 	./qt/include/dialog_pick_grids_from_scene.hpp
 	# Header files, for Qt MOCS compilation :
@@ -114,10 +86,22 @@ ADD_EXECUTABLE(neighbor_visu
     ./third_party/primitive/Sphere.h
     ./qt/include/GLmanipulator.hpp
     ./qt/include/manipulator.hpp
-    ./new_grid/include/grid.hpp
     ./grid/include/grid.hpp
     ./grid/include/tetrahedral_mesh.hpp
     ./grid/include/tiff_image.hpp
+
+    #Probably to remove
+    ./image/transforms/include/affine_transform.hpp
+    ./image/transforms/src/affine_transform.cpp
+    ./image/transforms/include/transform_interface.hpp
+    ./image/transforms/include/transform_stack.hpp
+    ./image/transforms/src/transform_stack.cpp
+    ./image/transforms/include/trs_transform.hpp
+    ./image/transforms/src/trs_transform.cpp
+    ./image/utils/include/image_api_common.hpp
+    ./image/utils/include/bounding_box.hpp
+    ./image/utils/include/threaded_task.hpp
+    ./image/utils/src/threaded_task.cpp
 
 	# Main file :
 	./neighbor_visu_main.cpp
@@ -130,7 +114,6 @@ ADD_EXECUTABLE(neighbor_visu
     ./third_party/primitive/Sphere.cpp
     ./qt/src/GLmanipulator.cpp
     ./qt/src/manipulator.cpp
-    ./new_grid/src/grid.cpp
     ./grid/src/grid.cpp
     ./grid/src/tetrahedral_mesh.cpp
     ./grid/src/tiff_image.cpp
@@ -164,19 +147,15 @@ TARGET_LINK_LIBRARIES(neighbor_visu
 	PUBLIC Qt5::OpenGL
 	PUBLIC ${OPENGL_LIBRARIES}
 	PUBLIC ${QGLViewer}
-    PUBLIC ImageIO
 	PUBLIC VisualisationWidgets
-	PUBLIC writergrid
-	PUBLIC writergrid_tiff
 	PUBLIC ${CMAKE_PROJECT_NAME}_shaders
 	PUBLIC ${CMAKE_PROJECT_NAME}_mesh
 	PUBLIC ${CMAKE_PROJECT_NAME}_deformable_curve
 	PUBLIC ${CMAKE_PROJECT_NAME}_meshop_arap
 	PUBLIC ${CMAKE_PROJECT_NAME}_drawable_meshes
+	PUBLIC TinyTIFF
+	PUBLIC ${libTIFF}
 )
-# }}}
-
-# vim: foldmethod=marker : foldmarker={{{,}}} : tabstop=8
 
 option(RELEASE_WITH_ASSERT "Build a release version with assert" OFF)
 if(RELEASE_WITH_ASSERT)
@@ -185,7 +164,6 @@ if(RELEASE_WITH_ASSERT)
 endif(RELEASE_WITH_ASSERT)
 
 # Unit testing
-
 Include(FetchContent)
 
 FetchContent_Declare(

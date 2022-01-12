@@ -3,8 +3,6 @@
 
 #include "../../macros.hpp"
 
-//#include "../../grid/include/bounding_box.hpp"
-
 #include <glm/glm.hpp>
 
 #include <memory>

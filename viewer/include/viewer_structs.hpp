@@ -4,8 +4,8 @@
 //#include "../../grid/include/discrete_grid.hpp"
 #include "../../macros.hpp"
 
-#include "../../new_grid/include/grid.hpp"
 #include "../../grid/include/grid.hpp"
+#include "../../image/utils/include/bounding_box.hpp"
 
 #include <glm/glm.hpp>
 
@@ -14,6 +14,12 @@
 #include <memory>
 
 class Scene;	// Fwd-declaration
+
+namespace Image {
+/// @brief Old bbox definition
+//  TODO: wtf are you doing here
+typedef BoundingBox_General<float> bbox_t;
+}
 
 /// @ingroup graphpipe
 /// @brief Simple struct to hold the values passed to glTexImage<n>D() functions.

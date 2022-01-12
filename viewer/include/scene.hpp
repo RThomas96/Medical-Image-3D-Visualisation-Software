@@ -15,11 +15,6 @@
 #include "../../meshes/drawable/mesh.hpp"
 // Curve :
 #include "../../meshes/deformable_curve/curve.hpp"
-// Discrete grid and grid generation :
-//#include "../../grid/include/discrete_grid.hpp"
-//#include "../../grid/include/input_discrete_grid.hpp"
-//#include "../../grid/include/output_discrete_grid.hpp"
-//#include "../../grid/include/tetmesh.hpp"
 // UI elements :
 //#include "../../qt/include/grid_control.hpp"
 #include "../../qt/include/opengl_debug_log.hpp"
@@ -27,9 +22,6 @@
 #include "../../qt/include/manipulator.hpp"
 // Helper structs and functions :
 #include "./viewer_structs.hpp"
-// New grid API :
-#include "../../image/tiff/include/tiff_reader.hpp"
-#include "../../new_grid/include/grid.hpp"
 // Qt headers :
 #include <QOpenGLDebugLogger>
 #include <QOpenGLFunctions_3_2_Core>

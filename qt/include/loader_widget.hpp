@@ -9,10 +9,6 @@
 #include "../../viewer/include/scene.hpp"
 #include "./scene_control.hpp"
 
-// New grid API :
-#include "../../image/tiff/include/tiff_reader.hpp"
-#include "../../new_grid/include/grid.hpp"
-
 #include <QComboBox>
 #include <QDir>
 #include <QDoubleSpinBox>

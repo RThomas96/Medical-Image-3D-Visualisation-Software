@@ -1,7 +1,4 @@
 #include "../include/scene.hpp"
-#include "../../image/tiff/include/tiff_writer.hpp"
-#include "../../image/tiff/include/tiff_writer_templated.hpp"
-#include "../../new_grid/include/grid_writer.hpp"
 #include "../include/planar_viewer.hpp"
 
 #include "../../meshes/operations/arap/AsRigidAsPossible.h"
@@ -1665,14 +1662,7 @@ void Scene::prepareUniformsGridPlaneView(GLfloat* mvMat, GLfloat* pMat, glm::vec
 
 	Image::bbox_t::vec origin	= Image::bbox_t(gridView->grid->getBoundingBox()).getMin();
 	Image::bbox_t::vec originWS = Image::bbox_t(gridView->grid->getBoundingBox()).getMin();
-	Image::sizevec3 gridDims	= gridView->grid->grid.getSamplerDimension();
-	glm::vec3 dims				= glm::convert_to<float>(gridDims);
-
-	if (showVAOstate) {
-		PRINTVAL(gridDims.x);
-		PRINTVAL(gridDims.y);
-		PRINTVAL(gridDims.z);
-	}
+	glm::vec3 dims				= gridView->grid->grid.getSamplerDimension();
 
 	glUniform3fv(voxelGridOrigin_Loc, 1, glm::value_ptr(origin));
 	glUniform3fv(voxelGridSize_Loc, 1, glm::value_ptr(dims));
