@@ -78,9 +78,26 @@ void SimpleGrid::writeDeformedGrid(const SimpleGrid& initial, ResolutionMode res
 
     //glm::vec3 voxelDimension = glm::vec3(1., 1., 1.);
     //glm::vec3 imageDimension = this->grid.getSamplerDimension();
-    glm::vec3 imageDimension = bboxMax - bboxMin;
-    glm::vec3 voxelDimension = this->grid.getSamplerDimension() / imageDimension;
 
+    glm::vec3 diffMax = bboxMax - initial.tetmesh.bbMax;
+    glm::vec3 diffMin = bboxMin - initial.tetmesh.bbMin;
+
+    diffMax /= this->grid.resolutionRatio;
+    diffMin /= this->grid.resolutionRatio;
+
+    glm::vec3 initialWorldDimension = initial.tetmesh.bbMax - initial.tetmesh.bbMin;
+    glm::vec3 initialVoxelDimension = initialWorldDimension / this->grid.getSamplerDimension();
+
+    glm::vec3 worldDimension = this->tetmesh.bbMax - this->tetmesh.bbMin;
+    glm::vec3 added = worldDimension - initialWorldDimension;
+    added /= initialVoxelDimension;
+
+    //glm::vec3 imageDimension = (initial.tetmesh.bbMax + diffMax) - (initial.tetmesh.bbMin + diffMin);
+    glm::vec3 imageDimension = bboxMax - bboxMin; 
+    glm::vec3 voxelDimension = (this->grid.getSamplerDimension()+added) / imageDimension;
+    //glm::vec3 voxelDimension = (this->grid.getSamplerDimension()) / imageDimension;
+
+    std::cout << "Original image dimensions: " << initial.tetmesh.bbMax - initial.tetmesh.bbMin << std::endl;
     std::cout << "Image dimensions: " << imageDimension << std::endl;
     std::cout << "For " << bboxMin << " to " << bboxMax << " per " << voxelDimension << std::endl;
     if(resolutionMode == ResolutionMode::FULL_RESOLUTION) {
