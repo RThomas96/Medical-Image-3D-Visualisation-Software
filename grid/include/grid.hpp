@@ -44,6 +44,7 @@ struct Sampler {
     glm::vec3 getSamplerDimension() const;
 
     void fromSamplerToImage(glm::vec3& p) const;
+    void fromImageToSampler(glm::vec3& p) const;
 };
 
 // Struct to make link between the grid and a 3D shape used to deform the space of its representation

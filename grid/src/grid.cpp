@@ -64,7 +64,6 @@ void SimpleGrid::writeDeformedGrid(const SimpleGrid& initial, ResolutionMode res
     if(initial.tetmesh.isEmpty())
         throw std::runtime_error("Error: cannot write a grid without initial mesh.");
 
-    resolutionMode = ResolutionMode::SAMPLER_RESOLUTION;
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
@@ -76,36 +75,26 @@ void SimpleGrid::writeDeformedGrid(const SimpleGrid& initial, ResolutionMode res
         bboxMax[i] = std::ceil(bboxMax[i]);
     }
 
-    //glm::vec3 voxelDimension = glm::vec3(1., 1., 1.);
-    //glm::vec3 imageDimension = this->grid.getSamplerDimension();
-
-    glm::vec3 diffMax = bboxMax - initial.tetmesh.bbMax;
-    glm::vec3 diffMin = bboxMin - initial.tetmesh.bbMin;
-
-    diffMax /= this->grid.resolutionRatio;
-    diffMin /= this->grid.resolutionRatio;
-
-    glm::vec3 initialWorldDimension = initial.tetmesh.bbMax - initial.tetmesh.bbMin;
-    glm::vec3 initialVoxelDimension = initialWorldDimension / this->grid.getSamplerDimension();
-
-    glm::vec3 worldDimension = this->tetmesh.bbMax - this->tetmesh.bbMin;
-    glm::vec3 added = worldDimension - initialWorldDimension;
-    added /= initialVoxelDimension;
-
-    //glm::vec3 imageDimension = (initial.tetmesh.bbMax + diffMax) - (initial.tetmesh.bbMin + diffMin);
+    glm::vec3 voxelDimension = glm::vec3(1., 1., 1.);
     glm::vec3 imageDimension = bboxMax - bboxMin; 
-    glm::vec3 voxelDimension = (this->grid.getSamplerDimension()+added) / imageDimension;
-    //glm::vec3 voxelDimension = (this->grid.getSamplerDimension()) / imageDimension;
+
+    if(resolutionMode == ResolutionMode::FULL_RESOLUTION) {
+        this->grid.fromSamplerToImage(imageDimension);
+
+        // The save algorithm will generate points between bbmax and bbmin and save each of them after a deformation
+        // Those generated points are in sampler space, as bboxMin and Max as well as the deformation computation provided by tetmesh are all in sampler space
+        // Thus the saving at sampler resolution is simple
+        // However, for saving at image resolution, we need to generate points in image space
+        // We could convert bboxMin and max as well as all tetmesh points to the image space
+        // Instead we keep our computation on sampler space but we change the offset between two points aka the voxelDimension
+        // By reducing the voxelDimension we keep the same offset between two points as if we were in image space
+        // At the end, we just have to convert the deformed point to the image space for the query
+        this->grid.fromImageToSampler(voxelDimension);
+    }
 
     std::cout << "Original image dimensions: " << initial.tetmesh.bbMax - initial.tetmesh.bbMin << std::endl;
     std::cout << "Image dimensions: " << imageDimension << std::endl;
     std::cout << "For " << bboxMin << " to " << bboxMax << " per " << voxelDimension << std::endl;
-    if(resolutionMode == ResolutionMode::FULL_RESOLUTION) {
-        this->grid.fromSamplerToImage(bboxMin);
-        this->grid.fromSamplerToImage(bboxMax);
-        this->grid.fromSamplerToImage(imageDimension);
-    }
-
     TinyTIFFWriterFile * tif = TinyTIFFWriter_open("../../../../Data/data_debug/img2.tif", 16, TinyTIFFWriter_UInt, 1, imageDimension[0], imageDimension[1], TinyTIFFWriter_Greyscale);
     std::cout << "For " << bboxMin << " to " << bboxMax << " per " << voxelDimension << std::endl;
 
@@ -121,8 +110,10 @@ void SimpleGrid::writeDeformedGrid(const SimpleGrid& initial, ResolutionMode res
             //std::cout << (j/bboxMax[1]) * 100. << "% " << std::flush;
             for(float i = bboxMin[0]; i < bboxMax[0]; i+=voxelDimension[0]) {
                 const glm::vec3 pt(i+voxelDimension[0]/2., j+voxelDimension[1]/2., k+voxelDimension[2]/2.);
-                const glm::vec3 pt2 = this->getCoordInInitial(initial, pt);
-                //data.push_back(initial.getValueFromPoint(pt2, ResolutionMode::SAMPLER_RESOLUTION));// Here we stay at sampler resolution because bbox are aligned on the sampler
+                glm::vec3 pt2 = this->getCoordInInitial(initial, pt);
+
+                if(resolutionMode == ResolutionMode::FULL_RESOLUTION)
+                    this->grid.fromSamplerToImage(pt2);// Here we do a convertion because the final point is on image space 
                 data.push_back(initial.getValueFromPoint(pt2, resolutionMode));// Here we stay at sampler resolution because bbox are aligned on the sampler
             }
         }
@@ -258,3 +249,6 @@ void Sampler::fromSamplerToImage(glm::vec3& p) const {
     p = p * this->resolutionRatio;
 }
 
+void Sampler::fromImageToSampler(glm::vec3& p) const {
+    p = p / this->resolutionRatio;
+}
