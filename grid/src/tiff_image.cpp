@@ -1,9 +1,9 @@
 #include "../include/tiff_image.hpp"
 #include <algorithm>
 
-TIFFImage::TIFFImage(const std::string& filename): cache(nullptr), useCache(true), tiffReader(TIFFReader(filename)) {
-    this->imgResolution = this->tiffReader.getImageResolution();
-    this->imgDataType = this->tiffReader.getImageInternalDataType(); 
+TIFFImage::TIFFImage(const std::vector<std::string>& filename): cache(nullptr), useCache(true), tiffReader(new TIFFReader(filename)) {
+    this->imgResolution = this->tiffReader->getImageResolution();
+    this->imgDataType = this->tiffReader->getImageInternalDataType(); 
     cache = new Cache(this->imgResolution, 3);
 }
 
@@ -56,9 +56,9 @@ uint16_t TIFFImage::getValue(const glm::vec3& coord) const {
         }
         return cache->getValue(newCoord);
     } else {
-        this->tiffReader.setImageToRead(imageIdx);
-        tdata_t buf = _TIFFmalloc(this->tiffReader.getScanLineSize());
-        this->tiffReader.readScanline(buf, newCoord[1]);
+        this->tiffReader->setImageToRead(imageIdx);
+        tdata_t buf = _TIFFmalloc(this->tiffReader->getScanLineSize());
+        this->tiffReader->readScanline(buf, newCoord[1]);
         uint16_t res = getToLowPrecision(this->getInternalDataType(), buf, newCoord[0]); 
         _TIFFfree(buf);
         return res;
@@ -110,14 +110,14 @@ void castToLowPrecision(Image::ImageDataType imgDataType, const tdata_t& buf, st
 }
 
 void TIFFImage::getSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel, std::pair<int, int>  offsets, std::pair<glm::vec3, glm::vec3> bboxes) const {
-    this->tiffReader.setImageToRead(sliceIdx);
+    this->tiffReader->setImageToRead(sliceIdx);
 
     tdata_t buf;
-    buf = _TIFFmalloc(this->tiffReader.getScanLineSize());
+    buf = _TIFFmalloc(this->tiffReader->getScanLineSize());
 
     uint32 row;
     for (row = bboxes.first[1]; row < bboxes.second[1]; row+=offsets.second) {
-        this->tiffReader.readScanline(buf, row);
+        this->tiffReader->readScanline(buf, row);
         castToLowPrecision(this->getInternalDataType(), buf, result, nbChannel, offsets.first, bboxes);
     }
     _TIFFfree(buf);
@@ -171,12 +171,18 @@ void Cache::setCapacity(int capacity) {
 
 /***/
 
-TIFFReader::TIFFReader(const std::string& filename) {
+TIFFReader::TIFFReader(const std::vector<std::string>& filename): filenames(filename) {
     TIFFSetWarningHandler(nullptr); // Prevent to display warning
-    this->tif = TIFFOpen(filename.c_str(), "r");
+    this->tif = TIFFOpen(this->filenames[0].c_str(), "r");
+    this->openedImage = 0;
 }
 
-void TIFFReader::close() {
+void TIFFReader::openImage(int imageIdx) {
+    TIFFClose(this->tif);
+    this->tif = TIFFOpen(this->filenames[imageIdx].c_str(), "r");
+}
+
+void TIFFReader::closeImage() {
     TIFFClose(this->tif);
 }
 
@@ -187,9 +193,13 @@ glm::vec3 TIFFReader::getImageResolution() const {
     TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &length);
     TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &width);
     int dircount = 0;
-    do {
-        dircount++;
-    } while (TIFFReadDirectory(tif));
+    if(this->filenames.size() == 1) {
+        do {
+            dircount++;
+        } while (TIFFReadDirectory(tif));
+    } else {
+        dircount = this->filenames.size(); 
+    }
     return glm::vec3(width, length, dircount);
 }
 
@@ -277,8 +287,12 @@ Image::ImageDataType TIFFReader::getImageInternalDataType() const {
 
 }
 
-void TIFFReader::setImageToRead(int sliceIdx) const {
-    TIFFSetDirectory(this->tif, sliceIdx);
+void TIFFReader::setImageToRead(int sliceIdx) {
+    if(this->filenames.size() > 1) {
+        this->openImage(sliceIdx);
+    } else {
+        TIFFSetDirectory(this->tif, sliceIdx);
+    }
 }
 
 tsize_t TIFFReader::getScanLineSize() const {

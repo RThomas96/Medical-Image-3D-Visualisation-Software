@@ -13,12 +13,17 @@ Image::ImageDataType Sampler::getInternalDataType() const {
     return this->image.getInternalDataType();
 }
 
-SimpleGrid::SimpleGrid(const std::string& filename, const glm::vec3& nbCube, int subsample): grid(Sampler(filename, subsample)) {
+SimpleGrid::SimpleGrid(const std::string& filename, const glm::vec3& nbCube, int subsample): grid(Sampler(std::vector<std::string>{filename}, subsample)) {
     const glm::vec3 sizeCube = this->grid.getSamplerDimension() / nbCube;
     this->tetmesh.buildGrid(nbCube, sizeCube, this->grid.subregionMin);
 }
 
-SimpleGrid::SimpleGrid(const std::string& filename, const glm::vec3& nbCube, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox): grid(Sampler(filename, subsample, bbox)) {
+SimpleGrid::SimpleGrid(const std::vector<std::string>& filename, const glm::vec3& nbCube, int subsample): grid(Sampler(filename, subsample)) {
+    const glm::vec3 sizeCube = this->grid.getSamplerDimension() / nbCube;
+    this->tetmesh.buildGrid(nbCube, sizeCube, this->grid.subregionMin);
+}
+
+SimpleGrid::SimpleGrid(const std::vector<std::string>& filename, const glm::vec3& nbCube, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox): grid(Sampler(filename, subsample, bbox)) {
     const glm::vec3 sizeCube = this->grid.getSamplerDimension() / nbCube;
     this->tetmesh.buildGrid(nbCube, sizeCube, this->grid.subregionMin);
 }
@@ -146,7 +151,7 @@ glm::vec3 SimpleGrid::getResolution() const {
 
 /**************************/
 
-Sampler::Sampler(const std::string& filename, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox): image(TIFFImage(filename)) {
+Sampler::Sampler(const std::vector<std::string>& filename, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox): image(TIFFImage(filename)) {
     glm::vec3 samplerResolution = this->image.imgResolution / static_cast<float>(subsample);
     this->resolutionRatio = this->image.imgResolution / samplerResolution;
     // If we naïvely divide the image dimensions for lowered its resolution we have problem is the case of a dimension is 1
@@ -168,7 +173,7 @@ Sampler::Sampler(const std::string& filename, int subsample, const std::pair<glm
     this->subregionMax = bbox.second;
 }
 
-Sampler::Sampler(const std::string& filename, int subsample): image(TIFFImage(filename)) {
+Sampler::Sampler(const std::vector<std::string>& filename, int subsample): image(TIFFImage(filename)) {
     glm::vec3 samplerResolution = this->image.imgResolution / static_cast<float>(subsample);
     this->resolutionRatio = this->image.imgResolution / samplerResolution;
     // If we naïvely divide the image dimensions for lowered its resolution we have problem is the case of a dimension is 1
@@ -190,7 +195,7 @@ Sampler::Sampler(const std::string& filename, int subsample): image(TIFFImage(fi
     this->subregionMax = this->bbMax;
 }
 
-Sampler::Sampler(const std::string& filename): image(TIFFImage(filename)) {
+Sampler::Sampler(const std::vector<std::string>& filename): image(TIFFImage(filename)) {
     glm::vec3 samplerResolution = this->image.imgResolution; 
     this->resolutionRatio = glm::vec3(1., 1., 1.); 
 

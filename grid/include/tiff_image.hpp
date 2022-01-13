@@ -39,18 +39,21 @@ struct Cache {
 struct TIFFReader {
 
     TIFF* tif;
+    int openedImage;
+    std::vector<std::string> filenames;
 
-    TIFFReader(const std::string& filename);
+    TIFFReader(const std::vector<std::string>& filename);
 
     glm::vec3 getImageResolution() const;
     Image::ImageDataType getImageInternalDataType() const;
 
-    void setImageToRead(int sliceIdx) const;
+    void setImageToRead(int sliceIdx);
 
     tsize_t getScanLineSize() const;
     int readScanline(tdata_t buf, uint32 row) const;
 
-    void close();
+    void openImage(int imageIdx);
+    void closeImage();
 };
 
 // TIFFImage query data from an image, by storing data in a cache (if toggled) using a TIFFReader to query the data 
@@ -64,14 +67,14 @@ struct TIFFImage {
     glm::vec3 imgResolution;
     Image::ImageDataType imgDataType;
 
-    TIFFReader tiffReader;
+    TIFFReader * tiffReader;
     bool useCache;
     Cache * cache;
 
-    TIFFImage(const std::string& filename);
+    TIFFImage(const std::vector<std::string>& filename);
 
     ~TIFFImage() {
-        this->tiffReader.close();
+        this->tiffReader->closeImage();
     }
 
     // In theory floor aren't necessary cause coord are already integer
