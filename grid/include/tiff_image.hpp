@@ -8,22 +8,21 @@
 #include <tiffio.h>
 #include <vector>
 
+// The cache just STORE data
+// Thus the only way to interact with it is to query the adress of a vector to store some data
+// The query and actual store process is manage by TIFFImage class
 struct Cache {
-    TIFF* tif;
-
     // Maximum number of slices to be stored
     int capacity;
     int nbInsertion;
-
     glm::vec3 imageSize;
-    Image::ImageDataType imgDataType;
 
     std::vector<int> indices;
     std::vector<std::vector<uint16_t>> data;
 
-    Cache(TIFF * tiff, glm::vec3 imageSize, Image::ImageDataType imageDataType, int capacity);
+    Cache(glm::vec3 imageSize, int capacity);
 
-    void loadImage(int imageIdx);
+    std::vector<uint16_t> * storeImage(int imageIdx);
     uint16_t getValue(const glm::vec3& coord);
 
     bool isCached(int imageIdx) const;
@@ -33,22 +32,46 @@ struct Cache {
     void setCapacity(int capacity);
 };
 
-// Just a plain tiff image
-// Access to data is made with plain coordinates and not 3D point
-// No data are stored, this class is only a reader
-struct TIFFImage {
+// TIFFReader read a tiff image using only and only the libtiff
+// When reading with libtiff there is no notion of point, slice or even datatype, it just read from
+// an image and copy the data into a buffer of indetermined datatype
+// This is why we haven't any function like get point or get slice, but only readScanLine
+struct TIFFReader {
 
     TIFF* tif;
+
+    TIFFReader(const std::string& filename);
+
+    glm::vec3 getImageResolution() const;
+    Image::ImageDataType getImageInternalDataType() const;
+
+    void setImageToRead(int sliceIdx) const;
+
+    tsize_t getScanLineSize() const;
+    int readScanline(tdata_t buf, uint32 row) const;
+
+    void close();
+};
+
+// TIFFImage query data from an image, by storing data in a cache (if toggled) using a TIFFReader to query the data 
+// As TIFFReader return void data, TIFFImage take in charge to cast the data to the right type
+// It also use the cache as a storage to speed up the query process
+// The getSlice function as numerous of options as nbChannel, offsets or bboxes to query respectively multiple channels, 
+// to skip voxels or to query only a subregion of the slice
+// These options are managed by the Sampler class, that is in charge to call TIFFImage the right way to query data
+struct TIFFImage {
+
     glm::vec3 imgResolution;
     Image::ImageDataType imgDataType;
 
+    TIFFReader tiffReader;
     bool useCache;
     Cache * cache;
 
     TIFFImage(const std::string& filename);
 
     ~TIFFImage() {
-        TIFFClose(this->tif);
+        this->tiffReader.close();
     }
 
     // In theory floor aren't necessary cause coord are already integer
@@ -63,6 +86,8 @@ struct TIFFImage {
     // do not need to be used manually
     // NOTE: as the z axis is fixed (the sliceIdx parameter), you cannot change the z resolution
     void getSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel, std::pair<int, int>  offsets, std::pair<glm::vec3, glm::vec3> bboxes) const;
+
+    void getFullSlice(int sliceIdx, std::vector<std::uint16_t>& result) const;
 
     Image::ImageDataType getInternalDataType() const;
 };

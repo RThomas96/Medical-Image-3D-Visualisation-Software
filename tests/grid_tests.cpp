@@ -10,7 +10,7 @@ TEST_CASE("SaveDurationCacheComparison", "[grid][save][.long]") {
     deformedGrid->grid.image.useCache = true;
 
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-    deformedGrid->writeDeformedGrid(*initialGrid);
+    deformedGrid->writeDeformedGrid(*initialGrid, ResolutionMode::SAMPLER_RESOLUTION);
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
     float durationWithCache3 = std::chrono::duration_cast<std::chrono::seconds> (end - begin).count();
@@ -28,7 +28,7 @@ TEST_CASE("SaveDurationCacheComparison", "[grid][save][.long]") {
     initialGrid->grid.image.cache->setCapacity(10);
 
     begin = std::chrono::steady_clock::now();
-    deformedGrid->writeDeformedGrid(*initialGrid);
+    deformedGrid->writeDeformedGrid(*initialGrid, ResolutionMode::SAMPLER_RESOLUTION);
     end = std::chrono::steady_clock::now();
 
     float durationWithCache10 = std::chrono::duration_cast<std::chrono::seconds> (end - begin).count();
@@ -45,7 +45,7 @@ TEST_CASE("SaveDurationCacheComparison", "[grid][save][.long]") {
     deformedGrid->grid.image.useCache = false;
 
     begin = std::chrono::steady_clock::now();
-    deformedGrid->writeDeformedGrid(*initialGrid);
+    deformedGrid->writeDeformedGrid(*initialGrid, ResolutionMode::SAMPLER_RESOLUTION);
     end = std::chrono::steady_clock::now();
 
     std::cout << "Without cache: "  << std::chrono::duration_cast<std::chrono::seconds> (end - begin).count() << " second" << std::endl;
@@ -64,6 +64,7 @@ TEST_CASE("SaveDurationCacheComparison", "[grid][save][.long]") {
     std::cout << "Cache of 3 speed up the save process to: " << durationWithoutCache/durationWithCache3 << std::endl;
     std::cout << "Cache of 10 speed up the save process to: " << durationWithoutCache/durationWithCache10 << std::endl;
     std::cout << "For commit 3f998b2a79447c0c2f8e275999290a364923aac6 : values are 6, 6, 27, 4.5 and 4.5" << std::endl;
+    std::cout << "For commit 3f998b2a79447c0c2f8e275999290a364923aac6 : values are 6, 6, 28, 4.667 and 4.667" << std::endl;
     std::cout << "*****************" << std::endl;
 }
 
