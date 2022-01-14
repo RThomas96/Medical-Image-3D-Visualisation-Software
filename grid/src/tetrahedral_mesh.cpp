@@ -1,4 +1,15 @@
 #include "../include/tetrahedral_mesh.hpp"
+#include <map>
+
+
+// This function make the link between a face of a tetrahedron and its points
+// This ensure a stable way to iterate throught faces of a tetrahedron
+// These are global variable as it is common to all tetrahedron
+// You can also see the faceIdx as the point index which in the opposite side of the face
+std::size_t faceOrder[4][3] = {{3, 1, 2}, {3, 2, 0}, {3, 0, 1}, {2, 1, 0}};
+int getIdxOfPtInFace(int faceIdx, int pointIdx) {
+    return faceOrder[faceIdx][pointIdx];
+}
 
 int TetMesh::from3DTo1D(const glm::vec3& p) const {
     return p[0] + (this->nbTetra[0] + 1)*p[1] + (this->nbTetra[0] + 1)*(this->nbTetra[1] + 1)*p[2];
@@ -15,10 +26,21 @@ bool SameSide(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, con
     return ((dotV4<0) == (dotP<0));
 }
 
-std::vector<glm::vec3*> TetMesh::insertCube(std::vector<glm::vec3> cubePts, glm::vec3 indices, std::vector<glm::vec3>& ptGrid) const {
+std::vector<glm::vec3*> TetMesh::insertCube(std::vector<glm::vec3> cubePts, glm::vec3 indices, std::vector<glm::vec3>& ptGrid, std::vector<int>& ptIndices) const {
     int x = indices[0];
     int y = indices[1];
     int z = indices[2];
+
+    ptIndices[0] = this->from3DTo1D(glm::vec3(x,y,z));
+    ptIndices[1] = this->from3DTo1D(glm::vec3(x,y+1,z));
+    ptIndices[2] = this->from3DTo1D(glm::vec3(x+1,y+1,z));
+    ptIndices[3] = this->from3DTo1D(glm::vec3(x+1,y,z));
+
+    ptIndices[4] = this->from3DTo1D(glm::vec3(x,y,z+1));
+    ptIndices[5] = this->from3DTo1D(glm::vec3(x,y+1,z+1));
+    ptIndices[6] = this->from3DTo1D(glm::vec3(x+1,y+1,z+1));
+    ptIndices[7] = this->from3DTo1D(glm::vec3(x+1,y,z+1));
+
     ptGrid[this->from3DTo1D(glm::vec3(x,y,z))] = cubePts[0];
     ptGrid[this->from3DTo1D(glm::vec3(x,y+1,z))] = cubePts[1];
     ptGrid[this->from3DTo1D(glm::vec3(x+1,y+1,z))] = cubePts[2];
@@ -62,12 +84,28 @@ glm::vec3 idxTo3D(int i, int h, int w) {
     return glm::vec3(i%h, static_cast<int>(std::floor(i/h))%w, std::floor(i/(h*w)));
 }
 
+void Tetrahedron::setIndices(int a, int b, int c, int d) {
+    this->pointsIdx[0] = a;
+    this->pointsIdx[1] = b;
+    this->pointsIdx[2] = c;
+    this->pointsIdx[3] = d;
+}
 
 Tetrahedron::Tetrahedron() {
     this->points[0] = nullptr;
     this->points[1] = nullptr;
     this->points[2] = nullptr;
     this->points[3] = nullptr;
+
+    this->pointsIdx[0] = -1;
+    this->pointsIdx[1] = -1;
+    this->pointsIdx[2] = -1;
+    this->pointsIdx[3] = -1;
+
+    this->neighbors[0] = -1;
+    this->neighbors[1] = -1;
+    this->neighbors[2] = -1;
+    this->neighbors[3] = -1;
 }
 
 Tetrahedron::Tetrahedron(glm::vec3* a, glm::vec3* b, glm::vec3* c, glm::vec3* d) {
@@ -75,6 +113,16 @@ Tetrahedron::Tetrahedron(glm::vec3* a, glm::vec3* b, glm::vec3* c, glm::vec3* d)
     this->points[1] = b;
     this->points[2] = c;
     this->points[3] = d;
+
+    this->pointsIdx[0] = -1;
+    this->pointsIdx[1] = -1;
+    this->pointsIdx[2] = -1;
+    this->pointsIdx[3] = -1;
+
+    this->neighbors[0] = -1;
+    this->neighbors[1] = -1;
+    this->neighbors[2] = -1;
+    this->neighbors[3] = -1;
 }
 
 glm::vec4 Tetrahedron::computeBaryCoord(const glm::vec3& p) {
@@ -132,16 +180,18 @@ void TetMesh::buildGrid(const glm::vec3& nbCube, const glm::vec3& sizeCube, cons
     // We add +1 here because we stock points, and there one more point than cube as it need a final point
     ptGrid = std::vector<glm::vec3>((this->nbTetra[0]+1)*(this->nbTetra[1]+1)*(this->nbTetra[2]+1), glm::vec3(0., 0., 0.));
 
+    std::vector<int> ptIndices(8, -1);
     for(int k = 0; k < nbCube[2]; ++k) {
         for(int j = 0; j < nbCube[1]; ++j) {
             for(int i = 0; i < nbCube[0]; ++i) {
                 glm::vec3 offset = glm::vec3(i*sizeCube[0], j*sizeCube[1], k*sizeCube[2]);
                 std::vector<glm::vec3> cubePts = buildCube(origin+offset, sizeCube);
-                std::vector<glm::vec3*> cubePtsAdress = insertCube(cubePts, glm::vec3(i, j, k), this->ptGrid);
-                this->addCube(cubePtsAdress);
+                std::vector<glm::vec3*> cubePtsAdress = insertCube(cubePts, glm::vec3(i, j, k), this->ptGrid, ptIndices);
+                this->addCube(cubePtsAdress, ptIndices);
             }
         }
     }
+    this->computeNeighborhood();
 }
 
 void TetMesh::movePoint(const glm::vec3& indices, const glm::vec3& position) {
@@ -205,16 +255,25 @@ void TetMesh::replaceAllPoints(const std::vector<glm::vec3>& pts) {
 
 // This function is private because it doesn't update fields nbTetra, bbMin and bbMax
 // Thus it can only be used in buildGrid function
-void TetMesh::addCube(std::vector<glm::vec3*> pts) {
+void TetMesh::addCube(std::vector<glm::vec3*> pts, const std::vector<int>& ptsIdx) {
     if(pts.size() > 8) {
         std::cerr << "Error: can't add a cube with more than 8 vertices" << std::endl;
         return;
     }
     mesh.push_back(Tetrahedron(pts[0], pts[5], pts[7], pts[4]));
+    mesh.back().setIndices(ptsIdx[0], ptsIdx[5], ptsIdx[7], ptsIdx[4]);
+
     mesh.push_back(Tetrahedron(pts[0], pts[7], pts[2], pts[3]));
+    mesh.back().setIndices(ptsIdx[0], ptsIdx[7], ptsIdx[2], ptsIdx[3]);
+
     mesh.push_back(Tetrahedron(pts[0], pts[2], pts[5], pts[1]));
+    mesh.back().setIndices(ptsIdx[0], ptsIdx[2], ptsIdx[5], ptsIdx[1]);
+
     mesh.push_back(Tetrahedron(pts[2], pts[7], pts[5], pts[6]));
+    mesh.back().setIndices(ptsIdx[2], ptsIdx[7], ptsIdx[5], ptsIdx[6]);
+
     mesh.push_back(Tetrahedron(pts[0], pts[7], pts[5], pts[2]));
+    mesh.back().setIndices(ptsIdx[0], ptsIdx[7], ptsIdx[5], ptsIdx[2]);
 }
 
 void check1DTo3D() {
@@ -225,5 +284,58 @@ void check1DTo3D() {
     }
 }
 
+/// @brief Helper struct to store the indices of vertices that make a face, and compare two faces to one another.
+struct Face
+{
+public:
+	inline Face(unsigned int v0, unsigned int v1, unsigned int v2) {
+		if (v1 < v0)
+			std::swap(v0, v1);
+		if (v2 < v1)
+			std::swap(v1, v2);
+		if (v1 < v0)
+			std::swap(v0, v1);
+		v[0] = v0;
+		v[1] = v1;
+		v[2] = v2;
+	}
+	inline Face(const Face& f) {
+		v[0] = f.v[0];
+		v[1] = f.v[1];
+		v[2] = f.v[2];
+	}
+	inline virtual ~Face() {}
+	inline Face& operator=(const Face& f) {
+		v[0] = f.v[0];
+		v[1] = f.v[1];
+		v[2] = f.v[2];
+		return (*this);
+	}
+	inline bool operator==(const Face& f) { return (v[0] == f.v[0] && v[1] == f.v[1] && v[2] == f.v[2]); }
+	inline bool operator<(const Face& f) const { return (v[0] < f.v[0] || (v[0] == f.v[0] && v[1] < f.v[1]) || (v[0] == f.v[0] && v[1] == f.v[1] && v[2] < f.v[2])); }
+	inline bool contains(unsigned int i) const { return (v[0] == i || v[1] == i || v[2] == i); }
+	inline unsigned int getVertex(unsigned int i) const { return v[i]; }
+	unsigned int v[3];
+};
+
+void TetMesh::computeNeighborhood() {
+	// generate the correspondance by looking at which faces are similar
+	std::map<Face, std::pair<int, int>> adjacent_faces;
+	for (std::size_t tetIdx = 0; tetIdx < this->mesh.size(); tetIdx++) {
+        Tetrahedron& tet = this->mesh[tetIdx];
+		for (int faceIdx = 0; faceIdx < 4; faceIdx++) {
+			Face face = Face(tet.pointsIdx[getIdxOfPtInFace(faceIdx,0)],
+                             tet.pointsIdx[getIdxOfPtInFace(faceIdx,1)],
+                             tet.pointsIdx[getIdxOfPtInFace(faceIdx,2)]);
+			std::map<Face, std::pair<int, int>>::iterator it = adjacent_faces.find(face);
+			if (it == adjacent_faces.end()) {
+				adjacent_faces[face] = std::make_pair(static_cast<int>(tetIdx), faceIdx);
+			} else {
+				tet.neighbors[faceIdx]						              = it->second.first;
+				this->mesh[it->second.first].neighbors[it->second.second] = tetIdx;
+			}
+		}
+	}
+}
 
 /* Unit test */

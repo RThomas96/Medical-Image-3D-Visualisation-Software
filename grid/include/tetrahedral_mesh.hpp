@@ -8,11 +8,16 @@
 #include <vector>
 
 struct Tetrahedron {
-    glm::vec3 * points[4];
+    glm::vec3 * points[4];// Optionnal, this data can be deleted and computeBary, isInTet and baryToWord function moved out in the TetMesh class
+
+    int pointsIdx[4];
+    int neighbors[4];
 
     Tetrahedron();
 
     Tetrahedron(glm::vec3* a, glm::vec3* b, glm::vec3* c, glm::vec3* d);
+
+    void setIndices(int a, int b, int c, int d);
 
     glm::vec4 computeBaryCoord(const glm::vec3& p);
 
@@ -49,11 +54,13 @@ struct TetMesh {
     // Temporary function to map to current GL
     void replaceAllPoints(const std::vector<glm::vec3>& pts);
 
+    void computeNeighborhood();
+
 private:
     // This function is private because it doesn't update fields nbTetra, bbMin and bbMax
     // Thus it can only be used in buildGrid function
-    void addCube(std::vector<glm::vec3*> pts);
-    std::vector<glm::vec3*> insertCube(std::vector<glm::vec3> cubePts, glm::vec3 indices, std::vector<glm::vec3>& ptGrid) const;
+    void addCube(std::vector<glm::vec3*> pts, const std::vector<int>& ptsIdx);
+    std::vector<glm::vec3*> insertCube(std::vector<glm::vec3> cubePts, glm::vec3 indices, std::vector<glm::vec3>& ptGrid, std::vector<int>& ptIndices) const;
 };
 
 #endif

@@ -37,7 +37,6 @@ SET(LIBS_COMPILED_HEADERS "${CMAKE_CURRENT_LIST_DIR}/third_party/compiled_librar
 ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/image)
 ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/meshes)
 
-# All the needed widgets for this project, under one target {{{
 ADD_LIBRARY(VisualisationWidgets STATIC
 	./qt/include/neighbor_visu_main_widget.hpp
 	./qt/include/scene_control.hpp

@@ -12,6 +12,21 @@ bool areEqual(glm::vec3 p1, glm::vec3 p2) {
     return glm::distance(p1, p2) < epsilon;
 }
 
+TEST_CASE("printTetNeighbors", "[tetmesh][.print]") {
+    TetMesh tetMesh; 
+
+    glm::vec3 origin = glm::vec3(0., 0., 0.);
+    glm::vec3 size = glm::vec3(1., 1., 1.);
+    glm::vec3 nb = glm::vec3(2., 2., 2.);
+    tetMesh.buildGrid(nb, size, origin);
+
+    for(int i = 0; i < tetMesh.mesh.size(); ++i) {
+        for(int j = 0; j < 4; ++j) {
+            std::cout << "On tet [" << i << "] neighbor [" << j << "] is [" << tetMesh.mesh[i].neighbors[j] << "]" << std::endl;
+        }
+    }
+}
+
 TEST_CASE("checkTetMeshBuildCube", "[tetmesh]") {
     TetMesh tetMesh; 
 
