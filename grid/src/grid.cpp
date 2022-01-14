@@ -129,6 +129,10 @@ void Grid::writeDeformedGrid(const Grid& initial, ResolutionMode resolutionMode)
     std::cout << "Save sucessfull" << std::endl;
 }
 
+std::pair<glm::vec3, glm::vec3> Grid::getBoundingBox() const {
+    return std::pair(this->tetmesh.bbMin, this->tetmesh.bbMax);
+}
+
 /**************************/
 
 Sampler::Sampler(const std::vector<std::string>& filename, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox): image(SimpleImage(filename)) {
@@ -251,7 +255,7 @@ GridGL::GridGL(const std::vector<std::string>& filename, const glm::vec3& nbCube
 }
 
 std::pair<glm::vec3, glm::vec3> GridGL::getBoundingBox() const {
-    return std::pair(this->grid->tetmesh.bbMin, this->grid->tetmesh.bbMax);
+    return this->grid->getBoundingBox();
 }
 
 Image::ImageDataType GridGL::getInternalDataType() const {

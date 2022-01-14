@@ -52,7 +52,6 @@ struct Sampler {
 struct Grid {
 
     Sampler sampler;
-    TetMesh tetmesh;
 
     Grid(const std::string& filename, const glm::vec3& nbCube, int subsample);
     Grid(const std::vector<std::string>& filename, const glm::vec3& nbCube, int subsample);
@@ -69,6 +68,10 @@ struct Grid {
     void replaceAllPoints(const std::vector<glm::vec3>& pts);
 
     glm::vec3 getDimension() const;
+    std::pair<glm::vec3, glm::vec3> getBoundingBox() const;
+
+private:
+    TetMesh tetmesh;
 
 };
 
