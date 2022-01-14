@@ -663,15 +663,15 @@ void Scene::addGrid(const SimpleGrid * gridLoaded) {
 	std::vector<std::uint16_t> slices;
     gridView->gridTexture = this->newAPI_uploadTexture3D_allocateonly(_gridTex);
 
-    int offsetOnZ = gridView->grid->grid.resolutionRatio[2];
-    int imgSizeZ = gridView->grid->grid.getImageDimensions()[2];
+    int offsetOnZ = gridView->grid->sampler.resolutionRatio[2];
+    int imgSizeZ = gridView->grid->sampler.getImageDimensions()[2];
 
     //TODO: this computation do not belong here
     uint16_t max = std::numeric_limits<uint16_t>::min();
 
     int sliceI = 0;
 	for (std::size_t s = 0; s < imgSizeZ; s+=offsetOnZ) {
-        gridView->grid->grid.getGridSlice(s, slices, dimensions.a);
+        gridView->grid->sampler.getGridSlice(s, slices, dimensions.a);
 		this->newAPI_uploadTexture3D(gridView->gridTexture, _gridTex, sliceI, slices);
 
         max = std::max(max, *std::max_element(slices.begin(), slices.end()));
@@ -1662,7 +1662,7 @@ void Scene::prepareUniformsGridPlaneView(GLfloat* mvMat, GLfloat* pMat, glm::vec
 
 	Image::bbox_t::vec origin	= Image::bbox_t(gridView->grid->getBoundingBox()).getMin();
 	Image::bbox_t::vec originWS = Image::bbox_t(gridView->grid->getBoundingBox()).getMin();
-	glm::vec3 dims				= gridView->grid->grid.getSamplerDimension();
+	glm::vec3 dims				= gridView->grid->sampler.getSamplerDimension();
 
 	glUniform3fv(voxelGridOrigin_Loc, 1, glm::value_ptr(origin));
 	glUniform3fv(voxelGridSize_Loc, 1, glm::value_ptr(dims));
@@ -1844,7 +1844,7 @@ void Scene::prepareUniformsPlanes(GLfloat* mvMat, GLfloat* pMat, planes _plane, 
 	// Generate the data we need :
 #warning Transform API is still in-progress.
 	Image::bbox_t bbws = Image::bbox_t(grid->grid->getBoundingBox());
-	glm::vec3 dims	   = glm::convert_to<glm::vec3::value_type>(grid->grid->grid.getSamplerDimension()) * grid->voxelDimensions;
+	glm::vec3 dims	   = glm::convert_to<glm::vec3::value_type>(grid->grid->sampler.getSamplerDimension()) * grid->voxelDimensions;
 	glm::vec3 size	   = bbws.getDiagonal();
 	GLint plIdx		   = (_plane == planes::x) ? 1 : (_plane == planes::y) ? 2 :
 																			   3;
@@ -2152,7 +2152,7 @@ void Scene::prepareUniformsGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm
 	GLint location_voxelSize = getUniform("voxelSize");
 	GLint location_gridSize	 = getUniform("gridSize");
 
-	glm::vec3 floatres = glm::convert_to<float>(_grid->grid->grid.getSamplerDimension());
+	glm::vec3 floatres = glm::convert_to<float>(_grid->grid->sampler.getSamplerDimension());
 
 	glUniform3fv(location_voxelSize, 1, glm::value_ptr(_grid->voxelDimensions));
 	glUniform3fv(location_gridSize, 1, glm::value_ptr(floatres));
@@ -3952,7 +3952,7 @@ void Scene::toggleWireframe() {
 }
 
 void Scene::prepareManipulators() {
-    glm::vec3 ratio = this->grids[0]->grid->grid.resolutionRatio;
+    glm::vec3 ratio = this->grids[0]->grid->sampler.resolutionRatio;
     this->glMeshManipulator->setRadius(10.f / ratio[0]);
 	this->glMeshManipulator->prepare();
 }

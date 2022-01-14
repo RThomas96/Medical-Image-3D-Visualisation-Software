@@ -370,8 +370,8 @@ public:
 	glm::vec3 getSceneBoundaries() const;
 	void getTetraMeshPoints(std::vector<glm::vec3>& points);
 
-	double getMinNumericLimit(size_t gridIndex) const { return Image::getMinNumericLimit(grids[gridIndex]->grid->grid.getInternalDataType()); }
-	double getMaxNumericLimit(size_t gridIndex) const { return Image::getMaxNumericLimit(grids[gridIndex]->grid->grid.getInternalDataType()); }
+	double getMinNumericLimit(size_t gridIndex) const { return Image::getMinNumericLimit(grids[gridIndex]->grid->sampler.getInternalDataType()); }
+	double getMaxNumericLimit(size_t gridIndex) const { return Image::getMaxNumericLimit(grids[gridIndex]->grid->sampler.getInternalDataType()); }
 
 	double getMinTexValue(void) const { return static_cast<double>(this->textureBounds0.x); }
 	double getMinTexValueAlternate(void) const { return static_cast<double>(this->textureBounds1.x); }

@@ -13,19 +13,19 @@ Image::ImageDataType Sampler::getInternalDataType() const {
     return this->image.getInternalDataType();
 }
 
-SimpleGrid::SimpleGrid(const std::string& filename, const glm::vec3& nbCube, int subsample): grid(Sampler(std::vector<std::string>{filename}, subsample)) {
-    const glm::vec3 sizeCube = this->grid.getSamplerDimension() / nbCube;
-    this->tetmesh.buildGrid(nbCube, sizeCube, this->grid.subregionMin);
+SimpleGrid::SimpleGrid(const std::string& filename, const glm::vec3& nbCube, int subsample): sampler(Sampler(std::vector<std::string>{filename}, subsample)) {
+    const glm::vec3 sizeCube = this->sampler.getSamplerDimension() / nbCube;
+    this->tetmesh.buildGrid(nbCube, sizeCube, this->sampler.subregionMin);
 }
 
-SimpleGrid::SimpleGrid(const std::vector<std::string>& filename, const glm::vec3& nbCube, int subsample): grid(Sampler(filename, subsample)) {
-    const glm::vec3 sizeCube = this->grid.getSamplerDimension() / nbCube;
-    this->tetmesh.buildGrid(nbCube, sizeCube, this->grid.subregionMin);
+SimpleGrid::SimpleGrid(const std::vector<std::string>& filename, const glm::vec3& nbCube, int subsample): sampler(Sampler(filename, subsample)) {
+    const glm::vec3 sizeCube = this->sampler.getSamplerDimension() / nbCube;
+    this->tetmesh.buildGrid(nbCube, sizeCube, this->sampler.subregionMin);
 }
 
-SimpleGrid::SimpleGrid(const std::vector<std::string>& filename, const glm::vec3& nbCube, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox): grid(Sampler(filename, subsample, bbox)) {
-    const glm::vec3 sizeCube = this->grid.getSamplerDimension() / nbCube;
-    this->tetmesh.buildGrid(nbCube, sizeCube, this->grid.subregionMin);
+SimpleGrid::SimpleGrid(const std::vector<std::string>& filename, const glm::vec3& nbCube, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox): sampler(Sampler(filename, subsample, bbox)) {
+    const glm::vec3 sizeCube = this->sampler.getSamplerDimension() / nbCube;
+    this->tetmesh.buildGrid(nbCube, sizeCube, this->sampler.subregionMin);
 }
 
 glm::vec3 SimpleGrid::getCoordInInitial(const SimpleGrid& initial, glm::vec3 p) {
@@ -44,10 +44,10 @@ uint16_t SimpleGrid::getValueFromPoint(const glm::vec3& p, ResolutionMode resolu
     // Even if we want to query a point a full resolution res, the bbox is still based on the sampler
     // So the bbox check need to be in sampler space
     if(resolutionMode == ResolutionMode::FULL_RESOLUTION) {
-        pSamplerRes = p / this->grid.resolutionRatio;
+        pSamplerRes = p / this->sampler.resolutionRatio;
     }
-    if(isPtInBB(pSamplerRes, this->grid.bbMin, this->grid.bbMax)) {
-        return this->grid.getValue(p, resolutionMode);
+    if(isPtInBB(pSamplerRes, this->sampler.bbMin, this->sampler.bbMax)) {
+        return this->sampler.getValue(p, resolutionMode);
     } else {
         // Background value
         return 0;
@@ -84,7 +84,7 @@ void SimpleGrid::writeDeformedGrid(const SimpleGrid& initial, ResolutionMode res
     glm::vec3 imageDimension = bboxMax - bboxMin; 
 
     if(resolutionMode == ResolutionMode::FULL_RESOLUTION) {
-        this->grid.fromSamplerToImage(imageDimension);
+        this->sampler.fromSamplerToImage(imageDimension);
 
         // The save algorithm will generate points between bbmax and bbmin and save each of them after a deformation
         // Those generated points are in sampler space, as bboxMin and Max as well as the deformation computation provided by tetmesh are all in sampler space
@@ -94,7 +94,7 @@ void SimpleGrid::writeDeformedGrid(const SimpleGrid& initial, ResolutionMode res
         // Instead we keep our computation on sampler space but we change the offset between two points aka the voxelDimension
         // By reducing the voxelDimension we keep the same offset between two points as if we were in image space
         // At the end, we just have to convert the deformed point to the image space for the query
-        this->grid.fromImageToSampler(voxelDimension);
+        this->sampler.fromImageToSampler(voxelDimension);
     }
 
     std::cout << "Original image dimensions: " << initial.tetmesh.bbMax - initial.tetmesh.bbMin << std::endl;
@@ -118,7 +118,7 @@ void SimpleGrid::writeDeformedGrid(const SimpleGrid& initial, ResolutionMode res
                 glm::vec3 pt2 = this->getCoordInInitial(initial, pt);
 
                 if(resolutionMode == ResolutionMode::FULL_RESOLUTION)
-                    this->grid.fromSamplerToImage(pt2);// Here we do a convertion because the final point is on image space 
+                    this->sampler.fromSamplerToImage(pt2);// Here we do a convertion because the final point is on image space 
                 data.push_back(initial.getValueFromPoint(pt2, resolutionMode));// Here we stay at sampler resolution because bbox are aligned on the sampler
             }
         }
@@ -134,19 +134,19 @@ std::pair<glm::vec3, glm::vec3> SimpleGrid::getBoundingBox() const {
 }
 
 Image::ImageDataType SimpleGrid::getInternalDataType() const {
-    return this->grid.getInternalDataType();
+    return this->sampler.getInternalDataType();
 }
 
 void SimpleGrid::checkReadSlice() const {
     std::vector<uint16_t> res;
-    this->grid.getGridSlice(0, res, 1);
+    this->sampler.getGridSlice(0, res, 1);
     for(int i = 4213; i < 4500; ++i)
         std::cout << "[" << i << "]" << unsigned(res[i]) << std::endl;
     throw std::runtime_error("END OF UT");
 }
 
 glm::vec3 SimpleGrid::getResolution() const {
-    return this->grid.getSamplerDimension();
+    return this->sampler.getSamplerDimension();
 }
 
 /**************************/

@@ -51,7 +51,7 @@ struct Sampler {
 // Struct able to make the link between the grid and its 3D representation
 struct SimpleGrid {
 
-    Sampler grid;
+    Sampler sampler;
     TetMesh tetmesh;
 
     SimpleGrid(const std::string& filename, const glm::vec3& nbCube, int subsample);
