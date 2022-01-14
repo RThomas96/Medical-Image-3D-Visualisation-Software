@@ -24,7 +24,7 @@ struct Tetrahedron {
 struct TetMesh {
 
     std::vector<Tetrahedron> mesh;
-    std::vector<std::vector<std::vector<glm::vec3>>> ptGrid;
+    std::vector<glm::vec3> ptGrid;
     glm::vec3 nbTetra;
 
     glm::vec3 bbMin;
@@ -44,6 +44,8 @@ struct TetMesh {
 
     glm::vec3 getDimensions() const;
 
+    int from3DTo1D(const glm::vec3& p) const;
+
     // Temporary function to map to current GL
     void replaceAllPoints(const std::vector<glm::vec3>& pts);
 
@@ -51,6 +53,7 @@ private:
     // This function is private because it doesn't update fields nbTetra, bbMin and bbMax
     // Thus it can only be used in buildGrid function
     void addCube(std::vector<glm::vec3*> pts);
+    std::vector<glm::vec3*> insertCube(std::vector<glm::vec3> cubePts, glm::vec3 indices, std::vector<glm::vec3>& ptGrid) const;
 };
 
 #endif

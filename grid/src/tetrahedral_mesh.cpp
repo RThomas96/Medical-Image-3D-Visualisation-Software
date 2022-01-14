@@ -1,5 +1,9 @@
 #include "../include/tetrahedral_mesh.hpp"
 
+int TetMesh::from3DTo1D(const glm::vec3& p) const {
+    return p[0] + (this->nbTetra[0] + 1)*p[1] + (this->nbTetra[0] + 1)*(this->nbTetra[1] + 1)*p[2];
+}
+
 float ScTP(const glm::vec3& a, const glm::vec3& b, const glm::vec3& c) {
     return glm::dot(a, glm::cross(b, c));
 }
@@ -11,31 +15,31 @@ bool SameSide(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, con
     return ((dotV4<0) == (dotP<0));
 }
 
-std::vector<glm::vec3*> insertCube(std::vector<glm::vec3> cubePts, glm::vec3 indices, std::vector<std::vector<std::vector<glm::vec3>>>& ptGrid) {
+std::vector<glm::vec3*> TetMesh::insertCube(std::vector<glm::vec3> cubePts, glm::vec3 indices, std::vector<glm::vec3>& ptGrid) const {
     int x = indices[0];
     int y = indices[1];
     int z = indices[2];
-    ptGrid[x][y][z] = cubePts[0];
-    ptGrid[x][y+1][z] = cubePts[1];
-    ptGrid[x+1][y+1][z] = cubePts[2];
-    ptGrid[x+1][y][z] = cubePts[3];
+    ptGrid[this->from3DTo1D(glm::vec3(x,y,z))] = cubePts[0];
+    ptGrid[this->from3DTo1D(glm::vec3(x,y+1,z))] = cubePts[1];
+    ptGrid[this->from3DTo1D(glm::vec3(x+1,y+1,z))] = cubePts[2];
+    ptGrid[this->from3DTo1D(glm::vec3(x+1,y,z))] = cubePts[3];
 
 
-    ptGrid[x][y][z+1] = cubePts[4];
-    ptGrid[x][y+1][z+1] = cubePts[5];
-    ptGrid[x+1][y+1][z+1] = cubePts[6];
-    ptGrid[x+1][y][z+1] = cubePts[7];
+    ptGrid[this->from3DTo1D(glm::vec3(x,y,z+1))] = cubePts[4];
+    ptGrid[this->from3DTo1D(glm::vec3(x,y+1,z+1))] = cubePts[5];
+    ptGrid[this->from3DTo1D(glm::vec3(x+1,y+1,z+1))] = cubePts[6];
+    ptGrid[this->from3DTo1D(glm::vec3(x+1,y,z+1))] = cubePts[7];
 
     std::vector<glm::vec3*> res;
-    res.push_back(&ptGrid[x][y][z]);
-    res.push_back(&ptGrid[x][y+1][z]);
-    res.push_back(&ptGrid[x+1][y+1][z]);
-    res.push_back(&ptGrid[x+1][y][z]);
+    res.push_back(&ptGrid[this->from3DTo1D(glm::vec3(x,y,z))]);
+    res.push_back(&ptGrid[this->from3DTo1D(glm::vec3(x,y+1,z))]);
+    res.push_back(&ptGrid[this->from3DTo1D(glm::vec3(x+1,y+1,z))]);
+    res.push_back(&ptGrid[this->from3DTo1D(glm::vec3(x+1,y,z))]);
 
-    res.push_back(&ptGrid[x][y][z+1]);
-    res.push_back(&ptGrid[x][y+1][z+1]);
-    res.push_back(&ptGrid[x+1][y+1][z+1]);
-    res.push_back(&ptGrid[x+1][y][z+1]);
+    res.push_back(&ptGrid[this->from3DTo1D(glm::vec3(x,y,z+1))]);
+    res.push_back(&ptGrid[this->from3DTo1D(glm::vec3(x,y+1,z+1))]);
+    res.push_back(&ptGrid[this->from3DTo1D(glm::vec3(x+1,y+1,z+1))]);
+    res.push_back(&ptGrid[this->from3DTo1D(glm::vec3(x+1,y,z+1))]);
     
     return res;
 }
@@ -126,7 +130,7 @@ void TetMesh::buildGrid(const glm::vec3& nbCube, const glm::vec3& sizeCube, cons
     this->bbMax = origin+nbCube * sizeCube;
 
     // We add +1 here because we stock points, and there one more point than cube as it need a final point
-    ptGrid = std::vector<std::vector<std::vector<glm::vec3>>>(nbCube[0]+1, std::vector<std::vector<glm::vec3>>(nbCube[1]+1, std::vector<glm::vec3>(nbCube[2]+1, glm::vec3(0., 0., 0.))));
+    ptGrid = std::vector<glm::vec3>((this->nbTetra[0]+1)*(this->nbTetra[1]+1)*(this->nbTetra[2]+1), glm::vec3(0., 0., 0.));
 
     for(int k = 0; k < nbCube[2]; ++k) {
         for(int j = 0; j < nbCube[1]; ++j) {
@@ -141,7 +145,7 @@ void TetMesh::buildGrid(const glm::vec3& nbCube, const glm::vec3& sizeCube, cons
 }
 
 void TetMesh::movePoint(const glm::vec3& indices, const glm::vec3& position) {
-    glm::vec3& p = this->ptGrid[indices[0]][indices[1]][indices[2]];
+    glm::vec3& p = this->ptGrid[this->from3DTo1D(indices)];
     std::cout << "Move point: " << p << " -> ";
     p += position;
     std::cout << p << std::endl;
@@ -183,7 +187,8 @@ void TetMesh::replaceAllPoints(const std::vector<glm::vec3>& pts) {
     for(int k = 0; k < this->nbTetra[2] + 1; ++k) {
         for(int j = 0; j < this->nbTetra[1] + 1; ++j) {
             for(int i = 0; i < this->nbTetra[0] + 1; ++i) {
-                this->ptGrid[i][j][k] = pts[l];
+                //this->ptGrid[i][j][k] = pts[l];
+                this->ptGrid[this->from3DTo1D(glm::vec3(i, j, k))] = pts[l];
                 const glm::vec3& p = pts[l];
                 for(int m = 0; m < 3; ++m) {
                     if(p[m] > this->bbMax[m])
@@ -219,5 +224,6 @@ void check1DTo3D() {
         std::cout << i << " : " << idxTo3D(i, h, w) << std::endl;
     }
 }
+
 
 /* Unit test */
