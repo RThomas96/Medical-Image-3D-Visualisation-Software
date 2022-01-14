@@ -602,7 +602,7 @@ void Scene::updateProgressBar() {
 	return;
 }
 
-void Scene::addGrid(const Grid * gridLoaded) {
+void Scene::addGrid(const GridGL * gridLoaded) {
     // TODO: probably a bug here
 	glm::vec<4, std::size_t, glm::defaultp> dimensions{gridLoaded->getResolution(), 2};
 
@@ -663,15 +663,14 @@ void Scene::addGrid(const Grid * gridLoaded) {
 	std::vector<std::uint16_t> slices;
     gridView->gridTexture = this->newAPI_uploadTexture3D_allocateonly(_gridTex);
 
-    int offsetOnZ = gridView->grid->sampler.resolutionRatio[2];
-    int imgSizeZ = gridView->grid->sampler.getImageDimensions()[2];
+    int nbSlice = gridView->grid->getNbSlice();
 
     //TODO: this computation do not belong here
     uint16_t max = std::numeric_limits<uint16_t>::min();
 
     int sliceI = 0;
-	for (std::size_t s = 0; s < imgSizeZ; s+=offsetOnZ) {
-        gridView->grid->sampler.getGridSlice(s, slices, dimensions.a);
+	for (std::size_t s = 0; s < nbSlice; ++s) {
+        gridView->grid->getGridSlice(s, slices, dimensions.a);
 		this->newAPI_uploadTexture3D(gridView->gridTexture, _gridTex, sliceI, slices);
 
         max = std::max(max, *std::max_element(slices.begin(), slices.end()));
@@ -733,9 +732,9 @@ void Scene::updateBoundingBox(void) {
 	this->sceneDataBB = Image::bbox_t();
 
 	for (std::size_t i = 0; i < this->grids.size(); ++i) {
-		const Grid * _g = this->grids[i]->grid;
-		Image::bbox_t box		  = Image::bbox_t(_g->tetmesh.bbMin, _g->tetmesh.bbMax);
-		Image::bbox_t dbox		  = Image::bbox_t(_g->tetmesh.bbMin, _g->tetmesh.bbMax);
+		const GridGL * _g = this->grids[i]->grid;
+		Image::bbox_t box		  = _g->getBoundingBox();
+		Image::bbox_t dbox		  = _g->getBoundingBox();
 		this->sceneBB.addPoints(box.getAllCorners());
 		this->sceneDataBB.addPoints(dbox.getAllCorners());
 	}
@@ -1266,7 +1265,8 @@ void Scene::loadMesh() {
 				std::cerr << "Error : grid index was not valid ...\n";
 			}
 			auto selected_grid							 = this->grids[picker->choice_getGrid()];
-			Image::bbox_t selected_grid_bb				 = Image::bbox_t(selected_grid->grid->tetmesh.bbMin, selected_grid->grid->tetmesh.bbMax);
+			//Image::bbox_t selected_grid_bb				 = Image::bbox_t(selected_grid->grid->tetmesh.bbMin, selected_grid->grid->tetmesh.bbMax);
+			Image::bbox_t selected_grid_bb				 = selected_grid->grid->getBoundingBox();
 			Image::bbox_t::vec selected_grid_bb_diagonal = selected_grid_bb.getDiagonal();	  // gets the scale factors on X, Y, Z
 			Image::bbox_t::vec selected_grid_bb_center	 = selected_grid_bb.getMin() + (selected_grid_bb_diagonal / 2.f);
 
@@ -1557,7 +1557,8 @@ void Scene::drawGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camP
 	}
 
 	// draw grid BB :
-	this->drawBoundingBox(Image::bbox_t(grid->grid->tetmesh.bbMin, grid->grid->tetmesh.bbMax), grid->boundingBoxColor, mvMat, pMat);
+	//this->drawBoundingBox(Image::bbox_t(grid->grid->tetmesh.bbMin, grid->grid->tetmesh.bbMax), grid->boundingBoxColor, mvMat, pMat);
+	this->drawBoundingBox(grid->grid->getBoundingBox(), grid->boundingBoxColor, mvMat, pMat);
 }
 
 void Scene::drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane) {
@@ -1662,7 +1663,7 @@ void Scene::prepareUniformsGridPlaneView(GLfloat* mvMat, GLfloat* pMat, glm::vec
 
 	Image::bbox_t::vec origin	= Image::bbox_t(gridView->grid->getBoundingBox()).getMin();
 	Image::bbox_t::vec originWS = Image::bbox_t(gridView->grid->getBoundingBox()).getMin();
-	glm::vec3 dims				= gridView->grid->sampler.getSamplerDimension();
+	glm::vec3 dims				= gridView->grid->getResolution();
 
 	glUniform3fv(voxelGridOrigin_Loc, 1, glm::value_ptr(origin));
 	glUniform3fv(voxelGridSize_Loc, 1, glm::value_ptr(dims));
@@ -1844,7 +1845,7 @@ void Scene::prepareUniformsPlanes(GLfloat* mvMat, GLfloat* pMat, planes _plane, 
 	// Generate the data we need :
 #warning Transform API is still in-progress.
 	Image::bbox_t bbws = Image::bbox_t(grid->grid->getBoundingBox());
-	glm::vec3 dims	   = glm::convert_to<glm::vec3::value_type>(grid->grid->sampler.getSamplerDimension()) * grid->voxelDimensions;
+	glm::vec3 dims	   = glm::convert_to<glm::vec3::value_type>(grid->grid->getResolution()) * grid->voxelDimensions;
 	glm::vec3 size	   = bbws.getDiagonal();
 	GLint plIdx		   = (_plane == planes::x) ? 1 : (_plane == planes::y) ? 2 :
 																			   3;
@@ -2152,7 +2153,7 @@ void Scene::prepareUniformsGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm
 	GLint location_voxelSize = getUniform("voxelSize");
 	GLint location_gridSize	 = getUniform("gridSize");
 
-	glm::vec3 floatres = glm::convert_to<float>(_grid->grid->sampler.getSamplerDimension());
+	glm::vec3 floatres = glm::convert_to<float>(_grid->grid->getResolution());
 
 	glUniform3fv(location_voxelSize, 1, glm::value_ptr(_grid->voxelDimensions));
 	glUniform3fv(location_gridSize, 1, glm::value_ptr(floatres));
@@ -3001,7 +3002,7 @@ void Scene::updateVisuBoxCoordinates() {
 	this->visuBox = Image::bbox_t();
 
 	if (this->grids.size()) {
-		const Grid * g	 = this->grids[0]->grid;
+		const GridGL * g	 = this->grids[0]->grid;
 		auto min			 = glm::vec3(.0);
 		auto max			 = glm::convert_to<float>(g->getResolution());
 		Image::bbox_t imgBox = Image::bbox_t(min, max);
@@ -3952,8 +3953,9 @@ void Scene::toggleWireframe() {
 }
 
 void Scene::prepareManipulators() {
-    glm::vec3 ratio = this->grids[0]->grid->sampler.resolutionRatio;
-    this->glMeshManipulator->setRadius(10.f / ratio[0]);
+    //glm::vec3 ratio = this->grids[0]->grid->resolutionRatio;
+    //this->glMeshManipulator->setRadius(10.f / ratio[0]);
+    this->glMeshManipulator->setRadius(10.f);
 	this->glMeshManipulator->prepare();
 }
 

@@ -129,29 +129,9 @@ void Grid::writeDeformedGrid(const Grid& initial, ResolutionMode resolutionMode)
     std::cout << "Save sucessfull" << std::endl;
 }
 
-std::pair<glm::vec3, glm::vec3> Grid::getBoundingBox() const {
-    return std::pair(this->tetmesh.bbMin, this->tetmesh.bbMax);
-}
-
-Image::ImageDataType Grid::getInternalDataType() const {
-    return this->sampler.getInternalDataType();
-}
-
-void Grid::checkReadSlice() const {
-    std::vector<uint16_t> res;
-    this->sampler.getGridSlice(0, res, 1);
-    for(int i = 4213; i < 4500; ++i)
-        std::cout << "[" << i << "]" << unsigned(res[i]) << std::endl;
-    throw std::runtime_error("END OF UT");
-}
-
-glm::vec3 Grid::getResolution() const {
-    return this->sampler.getSamplerDimension();
-}
-
 /**************************/
 
-Sampler::Sampler(const std::vector<std::string>& filename, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox): image(TIFFImage(filename)) {
+Sampler::Sampler(const std::vector<std::string>& filename, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox): image(SimpleImage(filename)) {
     glm::vec3 samplerResolution = this->image.imgResolution / static_cast<float>(subsample);
     this->resolutionRatio = this->image.imgResolution / samplerResolution;
     // If we naïvely divide the image dimensions for lowered its resolution we have problem is the case of a dimension is 1
@@ -173,7 +153,7 @@ Sampler::Sampler(const std::vector<std::string>& filename, int subsample, const 
     this->subregionMax = bbox.second;
 }
 
-Sampler::Sampler(const std::vector<std::string>& filename, int subsample): image(TIFFImage(filename)) {
+Sampler::Sampler(const std::vector<std::string>& filename, int subsample): image(SimpleImage(filename)) {
     glm::vec3 samplerResolution = this->image.imgResolution / static_cast<float>(subsample);
     this->resolutionRatio = this->image.imgResolution / samplerResolution;
     // If we naïvely divide the image dimensions for lowered its resolution we have problem is the case of a dimension is 1
@@ -195,7 +175,7 @@ Sampler::Sampler(const std::vector<std::string>& filename, int subsample): image
     this->subregionMax = this->bbMax;
 }
 
-Sampler::Sampler(const std::vector<std::string>& filename): image(TIFFImage(filename)) {
+Sampler::Sampler(const std::vector<std::string>& filename): image(SimpleImage(filename)) {
     glm::vec3 samplerResolution = this->image.imgResolution; 
     this->resolutionRatio = glm::vec3(1., 1., 1.); 
 
@@ -214,6 +194,7 @@ glm::vec3 Sampler::getSamplerDimension() const {
 void Sampler::getGridSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel) const {
 
     int Zoffset = static_cast<int>(this->resolutionRatio[2]);
+    sliceIdx *= Zoffset;// Because sliceIdx isn't in grid space
     if(sliceIdx % Zoffset != 0) {
         std::cout << "Error: wrong sliceIdx [" << sliceIdx << "] for n offset of [" << Zoffset << "]" << std::endl;
         throw std::runtime_error("Error: wrong slice Idx function getGridSlice");
@@ -256,4 +237,35 @@ void Sampler::fromSamplerToImage(glm::vec3& p) const {
 
 void Sampler::fromImageToSampler(glm::vec3& p) const {
     p = p / this->resolutionRatio;
+}
+
+/**************************/
+
+GridGL::GridGL(const std::string& filename, const glm::vec3& nbCube, int subsample): grid(new Grid(filename, nbCube, subsample)), transform(glm::mat4(1.0)) {
+}
+
+GridGL::GridGL(const std::vector<std::string>& filename, const glm::vec3& nbCube, int subsample): grid(new Grid(filename, nbCube, subsample)), transform(glm::mat4(1.0)) {
+}
+
+GridGL::GridGL(const std::vector<std::string>& filename, const glm::vec3& nbCube, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox): grid(new Grid(filename, nbCube, subsample, bbox)), transform(glm::mat4(1.0)) {
+}
+
+std::pair<glm::vec3, glm::vec3> GridGL::getBoundingBox() const {
+    return std::pair(this->grid->tetmesh.bbMin, this->grid->tetmesh.bbMax);
+}
+
+Image::ImageDataType GridGL::getInternalDataType() const {
+    return this->grid->sampler.getInternalDataType();
+}
+
+glm::vec3 GridGL::getResolution() const {
+    return this->grid->sampler.getSamplerDimension();
+}
+
+int GridGL::getNbSlice() const {
+    return this->grid->sampler.getImageDimensions()[2];
+}
+
+void GridGL::getGridSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel) const {
+    this->grid->sampler.getGridSlice(sliceIdx, result, nbChannel);
 }

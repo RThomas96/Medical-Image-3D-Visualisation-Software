@@ -174,7 +174,7 @@ public:
 	using Ptr = std::shared_ptr<GridGLView>;
 
 public:
-	GridGLView(const Grid * _g);
+	GridGLView(const GridGL * _g);
 	GridGLView(const GridGLView&) = default;
 	GridGLView(GridGLView&&) = default;
 	GridGLView& operator=(const GridGLView&) = default;
@@ -193,7 +193,8 @@ public:
 	using int_pair = glm::vec<2, int, glm::defaultp>;
 
 	//Image::Grid::Ptr grid;
-    const Grid * grid;
+    //const Grid * grid;
+    const GridGL * grid;
 	VolMeshData volumetricMeshData;
 
     // WARNING

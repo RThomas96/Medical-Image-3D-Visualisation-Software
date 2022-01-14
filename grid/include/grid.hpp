@@ -19,7 +19,7 @@ enum ResolutionMode {
 // NOTE: the grid DO NOT have any 3D data like position or 3D vectors, or size. It only provides functions 
 // to access to the image data.
 struct Sampler {
-    TIFFImage image;
+    SimpleImage image;
 
     glm::vec3 resolutionRatio;
 
@@ -70,14 +70,37 @@ struct Grid {
 
     glm::vec3 getDimension() const;
 
-    // TODO: to remove
-    // Function added only for backward comptability with the old grid, used all along in the OpenGL interface
-    std::pair<glm::vec3, glm::vec3> getBoundingBox() const;
-    glm::vec3 getResolution() const;
-    Image::ImageDataType getInternalDataType() const;
-    int getVoxelDimensionality() const { return 2;}
-    void checkReadSlice() const;
 };
 
+// This is the only class that interact with the openGL head
+// ALL data are transiting by these functions
+// This function serve as an interface between backend and openGl display
+// It also serve to make to ensure that all points from world space as been converted to grid space
+// It is mandatory as all computations are performed in grid space
+// It allow to move the grid arround without affecting the computation
+struct GridGL {
+
+    glm::mat4 transform;
+
+    GridGL(const std::string& filename, const glm::vec3& nbCube, int subsample);
+    GridGL(const std::vector<std::string>& filename, const glm::vec3& nbCube, int subsample);
+    GridGL(const std::vector<std::string>& filename, const glm::vec3& nbCube, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox);
+
+    Image::ImageDataType getInternalDataType() const;
+
+    //void fromGridToWorld(glm::vec3& p);
+    //void fromWorldToGrid(glm::vec3& p);
+
+    // Interface with the texture transfert to OpenGL
+    int getNbSlice() const;
+    void getGridSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel) const;
+
+    std::pair<glm::vec3, glm::vec3> getBoundingBox() const;
+    glm::vec3 getResolution() const;
+    int getVoxelDimensionality() const { return 2;}
+
+private:
+    Grid * grid;
+};
 
 #endif

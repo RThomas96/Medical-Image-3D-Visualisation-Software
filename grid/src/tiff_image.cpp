@@ -1,13 +1,13 @@
 #include "../include/tiff_image.hpp"
 #include <algorithm>
 
-TIFFImage::TIFFImage(const std::vector<std::string>& filename): cache(nullptr), useCache(true), tiffReader(new TIFFReader(filename)) {
+SimpleImage::SimpleImage(const std::vector<std::string>& filename): cache(nullptr), useCache(true), tiffReader(new TIFFReader(filename)) {
     this->imgResolution = this->tiffReader->getImageResolution();
     this->imgDataType = this->tiffReader->getImageInternalDataType(); 
     cache = new Cache(this->imgResolution, 3);
 }
 
-Image::ImageDataType TIFFImage::getInternalDataType() const {
+Image::ImageDataType SimpleImage::getInternalDataType() const {
     return this->imgDataType;
 }
 
@@ -46,7 +46,7 @@ uint16_t getToLowPrecision(Image::ImageDataType imgDataType, const tdata_t& buf,
     } 
 }
 
-uint16_t TIFFImage::getValue(const glm::vec3& coord) const {
+uint16_t SimpleImage::getValue(const glm::vec3& coord) const {
     const glm::vec3 newCoord{std::floor(coord[0]), std::floor(coord[1]), std::floor(coord[2])};
     int imageIdx = newCoord[2];
     if(this->useCache) {
@@ -109,7 +109,7 @@ void castToLowPrecision(Image::ImageDataType imgDataType, const tdata_t& buf, st
     } 
 }
 
-void TIFFImage::getSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel, std::pair<int, int>  offsets, std::pair<glm::vec3, glm::vec3> bboxes) const {
+void SimpleImage::getSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel, std::pair<int, int>  offsets, std::pair<glm::vec3, glm::vec3> bboxes) const {
     this->tiffReader->setImageToRead(sliceIdx);
 
     tdata_t buf;
@@ -123,7 +123,7 @@ void TIFFImage::getSlice(int sliceIdx, std::vector<std::uint16_t>& result, int n
     _TIFFfree(buf);
 }
 
-void TIFFImage::getFullSlice(int sliceIdx, std::vector<std::uint16_t>& result) const {
+void SimpleImage::getFullSlice(int sliceIdx, std::vector<std::uint16_t>& result) const {
     this->getSlice(sliceIdx, result, 1, std::pair<int, int>{1, 1}, std::pair<glm::vec3, glm::vec3>{glm::vec3(0., 0., 0.), this->imgResolution});
 }
 

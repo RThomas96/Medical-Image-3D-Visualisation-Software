@@ -62,7 +62,7 @@ struct TIFFReader {
 // The getSlice function as numerous of options as nbChannel, offsets or bboxes to query respectively multiple channels, 
 // to skip voxels or to query only a subregion of the slice
 // These options are managed by the Sampler class, that is in charge to call TIFFImage the right way to query data
-struct TIFFImage {
+struct SimpleImage {
 
     glm::vec3 imgResolution;
     Image::ImageDataType imgDataType;
@@ -71,9 +71,9 @@ struct TIFFImage {
     bool useCache;
     Cache * cache;
 
-    TIFFImage(const std::vector<std::string>& filename);
+    SimpleImage(const std::vector<std::string>& filename);
 
-    ~TIFFImage() {
+    ~SimpleImage() {
         this->tiffReader->closeImage();
     }
 
