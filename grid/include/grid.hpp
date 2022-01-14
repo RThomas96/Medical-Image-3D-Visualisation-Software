@@ -49,22 +49,22 @@ struct Sampler {
 
 // Struct to make link between the grid and a 3D shape used to deform the space of its representation
 // Struct able to make the link between the grid and its 3D representation
-struct SimpleGrid {
+struct Grid {
 
     Sampler sampler;
     TetMesh tetmesh;
 
-    SimpleGrid(const std::string& filename, const glm::vec3& nbCube, int subsample);
-    SimpleGrid(const std::vector<std::string>& filename, const glm::vec3& nbCube, int subsample);
-    SimpleGrid(const std::vector<std::string>& filename, const glm::vec3& nbCube, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox);
+    Grid(const std::string& filename, const glm::vec3& nbCube, int subsample);
+    Grid(const std::vector<std::string>& filename, const glm::vec3& nbCube, int subsample);
+    Grid(const std::vector<std::string>& filename, const glm::vec3& nbCube, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox);
 
     // Here p is a 3D point, not like coord from TIFFImage's "getValue" function that is a set of 3 indices 
     uint16_t getValueFromPoint(const glm::vec3& p, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
 
-    glm::vec3 getCoordInInitial(const SimpleGrid& initial, glm::vec3 p);
+    glm::vec3 getCoordInInitial(const Grid& initial, glm::vec3 p);
 
     void movePoint(const glm::vec3& indices, const glm::vec3& position);
-    void writeDeformedGrid(const SimpleGrid& initial, ResolutionMode resolutionMode = ResolutionMode::FULL_RESOLUTION);
+    void writeDeformedGrid(const Grid& initial, ResolutionMode resolutionMode = ResolutionMode::FULL_RESOLUTION);
 
     void replaceAllPoints(const std::vector<glm::vec3>& pts);
 

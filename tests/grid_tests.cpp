@@ -4,8 +4,8 @@
 TEST_CASE("SaveDurationCacheComparison", "[grid][save][.long]") {
 
     glm::vec3 nb = glm::vec3(5., 5., 5.);
-    SimpleGrid * initialGrid = new SimpleGrid("../../tests/data/img1.tif", nb, 4);
-    SimpleGrid * deformedGrid = new SimpleGrid("../../tests/data/img1.tif", nb, 4);
+    Grid * initialGrid = new Grid("../../tests/data/img1.tif", nb, 4);
+    Grid * deformedGrid = new Grid("../../tests/data/img1.tif", nb, 4);
     initialGrid->sampler.image.useCache = true;
     deformedGrid->sampler.image.useCache = true;
 
@@ -21,8 +21,8 @@ TEST_CASE("SaveDurationCacheComparison", "[grid][save][.long]") {
 
     delete initialGrid;
     delete deformedGrid;
-    initialGrid = new SimpleGrid("../../tests/data/img1.tif", nb, 4);
-    deformedGrid = new SimpleGrid("../../tests/data/img1.tif", nb, 4);
+    initialGrid = new Grid("../../tests/data/img1.tif", nb, 4);
+    deformedGrid = new Grid("../../tests/data/img1.tif", nb, 4);
     initialGrid->sampler.image.useCache = true;
     deformedGrid->sampler.image.useCache = true;
     initialGrid->sampler.image.cache->setCapacity(10);
@@ -39,8 +39,8 @@ TEST_CASE("SaveDurationCacheComparison", "[grid][save][.long]") {
 
     delete initialGrid;
     delete deformedGrid;
-    initialGrid = new SimpleGrid("../../tests/data/img1.tif", nb, 4);
-    deformedGrid = new SimpleGrid("../../tests/data/img1.tif", nb, 4);
+    initialGrid = new Grid("../../tests/data/img1.tif", nb, 4);
+    deformedGrid = new Grid("../../tests/data/img1.tif", nb, 4);
     initialGrid->sampler.image.useCache = false;
     deformedGrid->sampler.image.useCache = false;
 
@@ -71,7 +71,7 @@ TEST_CASE("SaveDurationCacheComparison", "[grid][save][.long]") {
 TEST_CASE("CutAndDivideResolution", "[grid]") {
 
     glm::vec3 nb = glm::vec3(5., 5., 5.);
-    SimpleGrid grid("../../tests/data/img1.tif", nb, 4);
+    Grid grid("../../tests/data/img1.tif", nb, 4);
 
 	std::vector<std::uint16_t> slices;
 
@@ -95,7 +95,7 @@ TEST_CASE("CutAndDivideResolution", "[grid]") {
 TEST_CASE("CutResolution", "[grid]") {
 
     glm::vec3 nb = glm::vec3(5., 5., 5.);
-    SimpleGrid grid("../../tests/data/img1.tif", nb, 1);
+    Grid grid("../../tests/data/img1.tif", nb, 1);
 
 	std::vector<std::uint16_t> slices;
 
@@ -118,7 +118,7 @@ TEST_CASE("CutResolution", "[grid]") {
 TEST_CASE("DivideResolution", "[grid]") {
 
     glm::vec3 nb = glm::vec3(5., 5., 5.);
-    SimpleGrid grid("../../tests/data/img1.tif", nb, 4);
+    Grid grid("../../tests/data/img1.tif", nb, 4);
 
 	std::vector<std::uint16_t> slices;
 
@@ -142,7 +142,7 @@ TEST_CASE("DivideResolution", "[grid]") {
 TEST_CASE("DivideResolutionGetPoint", "[grid]") {
 
     glm::vec3 nb = glm::vec3(5., 5., 5.);
-    SimpleGrid grid("../../tests/data/img1.tif", nb, 4);
+    Grid grid("../../tests/data/img1.tif", nb, 4);
 
     int offsetOnZ = static_cast<int>(grid.sampler.resolutionRatio[2]);
     int imgSizeZ = grid.sampler.getImageDimensions()[2];

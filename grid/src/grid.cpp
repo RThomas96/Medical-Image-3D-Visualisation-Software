@@ -13,22 +13,22 @@ Image::ImageDataType Sampler::getInternalDataType() const {
     return this->image.getInternalDataType();
 }
 
-SimpleGrid::SimpleGrid(const std::string& filename, const glm::vec3& nbCube, int subsample): sampler(Sampler(std::vector<std::string>{filename}, subsample)) {
+Grid::Grid(const std::string& filename, const glm::vec3& nbCube, int subsample): sampler(Sampler(std::vector<std::string>{filename}, subsample)) {
     const glm::vec3 sizeCube = this->sampler.getSamplerDimension() / nbCube;
     this->tetmesh.buildGrid(nbCube, sizeCube, this->sampler.subregionMin);
 }
 
-SimpleGrid::SimpleGrid(const std::vector<std::string>& filename, const glm::vec3& nbCube, int subsample): sampler(Sampler(filename, subsample)) {
+Grid::Grid(const std::vector<std::string>& filename, const glm::vec3& nbCube, int subsample): sampler(Sampler(filename, subsample)) {
     const glm::vec3 sizeCube = this->sampler.getSamplerDimension() / nbCube;
     this->tetmesh.buildGrid(nbCube, sizeCube, this->sampler.subregionMin);
 }
 
-SimpleGrid::SimpleGrid(const std::vector<std::string>& filename, const glm::vec3& nbCube, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox): sampler(Sampler(filename, subsample, bbox)) {
+Grid::Grid(const std::vector<std::string>& filename, const glm::vec3& nbCube, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox): sampler(Sampler(filename, subsample, bbox)) {
     const glm::vec3 sizeCube = this->sampler.getSamplerDimension() / nbCube;
     this->tetmesh.buildGrid(nbCube, sizeCube, this->sampler.subregionMin);
 }
 
-glm::vec3 SimpleGrid::getCoordInInitial(const SimpleGrid& initial, glm::vec3 p) {
+glm::vec3 Grid::getCoordInInitial(const Grid& initial, glm::vec3 p) {
     int tetraIdx = this->tetmesh.inTetraIdx(p);
     if(tetraIdx != -1) {
         glm::vec4 baryCoordInDeformed = this->tetmesh.getTetra(tetraIdx).computeBaryCoord(p);
@@ -39,7 +39,7 @@ glm::vec3 SimpleGrid::getCoordInInitial(const SimpleGrid& initial, glm::vec3 p) 
     }
 }
 
-uint16_t SimpleGrid::getValueFromPoint(const glm::vec3& p, ResolutionMode resolutionMode) const {
+uint16_t Grid::getValueFromPoint(const glm::vec3& p, ResolutionMode resolutionMode) const {
     glm::vec3 pSamplerRes = p;
     // Even if we want to query a point a full resolution res, the bbox is still based on the sampler
     // So the bbox check need to be in sampler space
@@ -54,15 +54,15 @@ uint16_t SimpleGrid::getValueFromPoint(const glm::vec3& p, ResolutionMode resolu
     }
 }
 
-void SimpleGrid::movePoint(const glm::vec3& indices, const glm::vec3& position) {
+void Grid::movePoint(const glm::vec3& indices, const glm::vec3& position) {
     this->tetmesh.movePoint(indices, position);
 }
 
-void SimpleGrid::replaceAllPoints(const std::vector<glm::vec3>& pts) {
+void Grid::replaceAllPoints(const std::vector<glm::vec3>& pts) {
     this->tetmesh.replaceAllPoints(pts);
 }
 
-void SimpleGrid::writeDeformedGrid(const SimpleGrid& initial, ResolutionMode resolutionMode) {
+void Grid::writeDeformedGrid(const Grid& initial, ResolutionMode resolutionMode) {
     if(this->tetmesh.isEmpty())
         throw std::runtime_error("Error: cannot write a grid without deformed mesh.");
 
@@ -129,15 +129,15 @@ void SimpleGrid::writeDeformedGrid(const SimpleGrid& initial, ResolutionMode res
     std::cout << "Save sucessfull" << std::endl;
 }
 
-std::pair<glm::vec3, glm::vec3> SimpleGrid::getBoundingBox() const {
+std::pair<glm::vec3, glm::vec3> Grid::getBoundingBox() const {
     return std::pair(this->tetmesh.bbMin, this->tetmesh.bbMax);
 }
 
-Image::ImageDataType SimpleGrid::getInternalDataType() const {
+Image::ImageDataType Grid::getInternalDataType() const {
     return this->sampler.getInternalDataType();
 }
 
-void SimpleGrid::checkReadSlice() const {
+void Grid::checkReadSlice() const {
     std::vector<uint16_t> res;
     this->sampler.getGridSlice(0, res, 1);
     for(int i = 4213; i < 4500; ++i)
@@ -145,7 +145,7 @@ void SimpleGrid::checkReadSlice() const {
     throw std::runtime_error("END OF UT");
 }
 
-glm::vec3 SimpleGrid::getResolution() const {
+glm::vec3 Grid::getResolution() const {
     return this->sampler.getSamplerDimension();
 }
 

@@ -602,7 +602,7 @@ void Scene::updateProgressBar() {
 	return;
 }
 
-void Scene::addGrid(const SimpleGrid * gridLoaded) {
+void Scene::addGrid(const Grid * gridLoaded) {
     // TODO: probably a bug here
 	glm::vec<4, std::size_t, glm::defaultp> dimensions{gridLoaded->getResolution(), 2};
 
@@ -733,7 +733,7 @@ void Scene::updateBoundingBox(void) {
 	this->sceneDataBB = Image::bbox_t();
 
 	for (std::size_t i = 0; i < this->grids.size(); ++i) {
-		const SimpleGrid * _g = this->grids[i]->grid;
+		const Grid * _g = this->grids[i]->grid;
 		Image::bbox_t box		  = Image::bbox_t(_g->tetmesh.bbMin, _g->tetmesh.bbMax);
 		Image::bbox_t dbox		  = Image::bbox_t(_g->tetmesh.bbMin, _g->tetmesh.bbMax);
 		this->sceneBB.addPoints(box.getAllCorners());
@@ -3001,7 +3001,7 @@ void Scene::updateVisuBoxCoordinates() {
 	this->visuBox = Image::bbox_t();
 
 	if (this->grids.size()) {
-		const SimpleGrid * g	 = this->grids[0]->grid;
+		const Grid * g	 = this->grids[0]->grid;
 		auto min			 = glm::vec3(.0);
 		auto max			 = glm::convert_to<float>(g->getResolution());
 		Image::bbox_t imgBox = Image::bbox_t(min, max);
@@ -4264,8 +4264,8 @@ void Scene::launchSaveDialog() {
 
     std::cout << "The filename is: " << this->filename << std::endl;
 
-    SimpleGrid deformableGrid(this->filename, nb, this->temp_ratio);
-    SimpleGrid initialGrid(this->filename, nb, this->temp_ratio);
+    Grid deformableGrid(this->filename, nb, this->temp_ratio);
+    Grid initialGrid(this->filename, nb, this->temp_ratio);
 
     //deformableGrid.movePoint(glm::vec3(1, 1, 1), glm::vec3(600, 0., 0.));
 

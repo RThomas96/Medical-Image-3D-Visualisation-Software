@@ -490,7 +490,7 @@ void Viewer::updateInfoFromScene() {
 	this->update();
 }
 
-void Viewer::newAPI_loadGrid(const SimpleGrid * ptr) {
+void Viewer::newAPI_loadGrid(const Grid * ptr) {
 	if (this->scene == nullptr) {
 		return;
 	}
