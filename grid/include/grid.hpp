@@ -76,8 +76,10 @@ struct Grid {
     glm::vec3 getDimension() const;
     std::pair<glm::vec3, glm::vec3> getBoundingBox() const;
 
-private:
+    // TODO: temproray
     TetMesh tetmesh;
+private:
+    //TetMesh tetmesh;
 
 };
 
@@ -108,8 +110,10 @@ struct GridGL {
     glm::vec3 getResolution() const;
     int getVoxelDimensionality() const { return 2;}
 
-private:
     Grid * grid;
+    //TODO: temporary
+private:
+    //Grid * grid;
 };
 
 #endif

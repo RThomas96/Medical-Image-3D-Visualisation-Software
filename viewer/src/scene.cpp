@@ -3444,24 +3444,31 @@ void Scene::tex3D_buildMesh(GridGLView::Ptr& gridGLView, const std::string path)
 		mesh.normals.push_back(std::array<glm::vec4, 4>{glm::vec4(.0f), glm::vec4(.0f), glm::vec4(.0f), glm::vec4(.0f)});
 	}
 
-	// Adjacency map :
-	std::map<Face, std::pair<int, int>> adjacent_faces;
-	// generate the correspondance by looking at which faces are similar : [MEDIUM/HEAVY COMPUTATION]
-	for (std::size_t i = 0; i < mesh.tetrahedra.size(); i++) {
-		for (int v = 0; v < 4; v++) {
-			// find similar face in other tetrahedrons :
-			Face face										 = Face(mesh.tetrahedra[i][indices[v][0]],
-				 mesh.tetrahedra[i][indices[v][1]],
-				 mesh.tetrahedra[i][indices[v][2]]);
-			std::map<Face, std::pair<int, int>>::iterator it = adjacent_faces.find(face);
-			if (it == adjacent_faces.end()) {
-				adjacent_faces[face] = std::make_pair(static_cast<int>(i), v);
-			} else {
-				mesh.neighbors[i][v]								= it->second.first;
-				mesh.neighbors[it->second.first][it->second.second] = i;
-			}
-		}
+	TetMesh& newMesh = gridGLView->grid->grid->tetmesh;
+	for (std::size_t i = 0; i < newMesh.mesh.size(); i++) {
+        for(int j = 0; j < 4; ++j) {
+            mesh.neighbors[i][j] = newMesh.mesh[i].neighbors[j];
+        }
 	}
+
+	//// Adjacency map :
+	//std::map<Face, std::pair<int, int>> adjacent_faces;
+	//// generate the correspondance by looking at which faces are similar : [MEDIUM/HEAVY COMPUTATION]
+	//for (std::size_t i = 0; i < mesh.tetrahedra.size(); i++) {
+	//	for (int v = 0; v < 4; v++) {
+	//		// find similar face in other tetrahedrons :
+	//		Face face										 = Face(mesh.tetrahedra[i][indices[v][0]],
+	//			 mesh.tetrahedra[i][indices[v][1]],
+	//			 mesh.tetrahedra[i][indices[v][2]]);
+	//		std::map<Face, std::pair<int, int>>::iterator it = adjacent_faces.find(face);
+	//		if (it == adjacent_faces.end()) {
+	//			adjacent_faces[face] = std::make_pair(static_cast<int>(i), v);
+	//		} else {
+	//			mesh.neighbors[i][v]								= it->second.first;
+	//			mesh.neighbors[it->second.first][it->second.second] = i;
+	//		}
+	//	}
+	//}
 
 	// determine the size of the texture, depending on the # of tetrahedron neighbors :
 	std::size_t vertWidth = 0, vertHeight = 0;
