@@ -127,6 +127,14 @@ void SimpleImage::getFullSlice(int sliceIdx, std::vector<std::uint16_t>& result)
     this->getSlice(sliceIdx, result, 1, std::pair<int, int>{1, 1}, std::pair<glm::vec3, glm::vec3>{glm::vec3(0., 0., 0.), this->imgResolution});
 }
 
+void SimpleImage::setUseCache(bool useCache) {
+    this->useCache = useCache;
+}
+
+void SimpleImage::setCacheCapacity(int capacity) {
+    this->cache->setCapacity(capacity);
+}
+
 /****/
 
 //Cache::Cache(TIFF * tiff, glm::vec3 imageSize, Image::ImageDataType imageDataType, int capacity = 3): tif(tiff), imageSize(imageSize), capacity(capacity), imgDataType(imageDataType), nbInsertion(0), data(std::vector<std::vector<std::vector<uint16_t>>>(this->capacity, std::vector<std::vector<uint16_t>>(this->imageSize[0], std::vector<uint16_t>(this->imageSize[1], 0)))), indices(std::vector<int>(this->capacity, -1)) {}

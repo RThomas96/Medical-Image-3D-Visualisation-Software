@@ -19,7 +19,6 @@ enum ResolutionMode {
 // NOTE: the grid DO NOT have any 3D data like position or 3D vectors, or size. It only provides functions 
 // to access to the image data.
 struct Sampler {
-    SimpleImage image;
 
     glm::vec3 resolutionRatio;
 
@@ -39,12 +38,19 @@ struct Sampler {
     uint16_t getValue(const glm::vec3& coord, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
 
     Image::ImageDataType getInternalDataType() const;
-    glm::vec3 getImageDimensions() const;
 
     glm::vec3 getSamplerDimension() const;
 
     void fromSamplerToImage(glm::vec3& p) const;
     void fromImageToSampler(glm::vec3& p) const;
+
+    void setUseCache(bool useCache);
+    void setCacheCapacity(int capacity);
+
+private:
+    //Nobody should access to the original image size everthing need to pass by the Sampler
+    glm::vec3 getImageDimensions() const;
+    SimpleImage image;
 };
 
 // Struct to make link between the grid and a 3D shape used to deform the space of its representation

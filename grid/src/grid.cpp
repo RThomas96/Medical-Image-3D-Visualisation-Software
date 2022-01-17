@@ -142,11 +142,11 @@ Sampler::Sampler(const std::vector<std::string>& filename, int subsample, const 
     // In that case the voxelSizeRatio is still 2.f for example, but the dimension is 0.5
     // It is a problem as we will iterate until dimension with sizeRatio as an offset
     for(int i = 0; i < 3; ++i) {
-        if(samplerResolution[i] < 1.) {
+        samplerResolution[i] = std::floor(samplerResolution[i]);
+        if(samplerResolution[i] <= 1.) {
             samplerResolution[i] = 1;
             this->resolutionRatio[i] = 1;
         }
-        samplerResolution[i] = std::ceil(samplerResolution[i]);
         this->resolutionRatio[i] = static_cast<int>(std::floor(this->resolutionRatio[i]));
     }
 
@@ -164,11 +164,11 @@ Sampler::Sampler(const std::vector<std::string>& filename, int subsample): image
     // In that case the voxelSizeRatio is still 2.f for example, but the dimension is 0.5
     // It is a problem as we will iterate until dimension with sizeRatio as an offset
     for(int i = 0; i < 3; ++i) {
-        if(samplerResolution[i] < 1.) {
+        samplerResolution[i] = std::floor(samplerResolution[i]);
+        if(samplerResolution[i] <= 1.) {
             samplerResolution[i] = 1;
             this->resolutionRatio[i] = 1;
         }
-        samplerResolution[i] = std::ceil(samplerResolution[i]);
         this->resolutionRatio[i] = static_cast<int>(std::floor(this->resolutionRatio[i]));
     }
 
@@ -243,6 +243,14 @@ void Sampler::fromImageToSampler(glm::vec3& p) const {
     p = p / this->resolutionRatio;
 }
 
+void Sampler::setUseCache(bool useCache) {
+    this->image.setUseCache(useCache);
+}
+
+void Sampler::setCacheCapacity(int capacity) {
+    this->image.setCacheCapacity(capacity);
+}
+
 /**************************/
 
 GridGL::GridGL(const std::string& filename, const glm::vec3& nbCube, int subsample): grid(new Grid(filename, nbCube, subsample)), transform(glm::mat4(1.0)) {
@@ -267,7 +275,7 @@ glm::vec3 GridGL::getResolution() const {
 }
 
 int GridGL::getNbSlice() const {
-    return this->grid->sampler.getImageDimensions()[2];
+    return this->grid->sampler.getSamplerDimension()[2];
 }
 
 void GridGL::getGridSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel) const {

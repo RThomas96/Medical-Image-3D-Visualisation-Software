@@ -93,6 +93,10 @@ struct SimpleImage {
     void getFullSlice(int sliceIdx, std::vector<std::uint16_t>& result) const;
 
     Image::ImageDataType getInternalDataType() const;
+
+    void setUseCache(bool useCache);
+
+    void setCacheCapacity(int capacity);
 };
 
 #endif

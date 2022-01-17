@@ -6,8 +6,8 @@ TEST_CASE("SaveDurationCacheComparison", "[grid][save][.long]") {
     glm::vec3 nb = glm::vec3(5., 5., 5.);
     Grid * initialGrid = new Grid("../../tests/data/img1.tif", nb, 4);
     Grid * deformedGrid = new Grid("../../tests/data/img1.tif", nb, 4);
-    initialGrid->sampler.image.useCache = true;
-    deformedGrid->sampler.image.useCache = true;
+    initialGrid->sampler.setUseCache(true);
+    deformedGrid->sampler.setUseCache(true);
 
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     deformedGrid->writeDeformedGrid(*initialGrid, ResolutionMode::SAMPLER_RESOLUTION);
@@ -15,7 +15,7 @@ TEST_CASE("SaveDurationCacheComparison", "[grid][save][.long]") {
 
     float durationWithCache3 = std::chrono::duration_cast<std::chrono::seconds> (end - begin).count();
     std::cout << "With cache of 3: "  << durationWithCache3 << "second" << std::endl;
-    std::cout << "Number of insertion: " << initialGrid->sampler.image.cache->nbInsertion << std::endl;
+    //std::cout << "Number of insertion: " << initialGrid->sampler.image.cache->nbInsertion << std::endl;
 
     /***/
 
@@ -23,9 +23,9 @@ TEST_CASE("SaveDurationCacheComparison", "[grid][save][.long]") {
     delete deformedGrid;
     initialGrid = new Grid("../../tests/data/img1.tif", nb, 4);
     deformedGrid = new Grid("../../tests/data/img1.tif", nb, 4);
-    initialGrid->sampler.image.useCache = true;
-    deformedGrid->sampler.image.useCache = true;
-    initialGrid->sampler.image.cache->setCapacity(10);
+    initialGrid->sampler.setUseCache(true);
+    deformedGrid->sampler.setUseCache(true);
+    initialGrid->sampler.setCacheCapacity(10);
 
     begin = std::chrono::steady_clock::now();
     deformedGrid->writeDeformedGrid(*initialGrid, ResolutionMode::SAMPLER_RESOLUTION);
@@ -33,7 +33,7 @@ TEST_CASE("SaveDurationCacheComparison", "[grid][save][.long]") {
 
     float durationWithCache10 = std::chrono::duration_cast<std::chrono::seconds> (end - begin).count();
     std::cout << "With cache of 10: "  << durationWithCache10 << " second" << std::endl;
-    std::cout << "Number of insertion: " << initialGrid->sampler.image.cache->nbInsertion << std::endl;
+    //std::cout << "Number of insertion: " << initialGrid->sampler.image.cache->nbInsertion << std::endl;
 
     /***/
 
@@ -41,15 +41,15 @@ TEST_CASE("SaveDurationCacheComparison", "[grid][save][.long]") {
     delete deformedGrid;
     initialGrid = new Grid("../../tests/data/img1.tif", nb, 4);
     deformedGrid = new Grid("../../tests/data/img1.tif", nb, 4);
-    initialGrid->sampler.image.useCache = false;
-    deformedGrid->sampler.image.useCache = false;
+    initialGrid->sampler.setUseCache(false);
+    deformedGrid->sampler.setUseCache(false);
 
     begin = std::chrono::steady_clock::now();
     deformedGrid->writeDeformedGrid(*initialGrid, ResolutionMode::SAMPLER_RESOLUTION);
     end = std::chrono::steady_clock::now();
 
     std::cout << "Without cache: "  << std::chrono::duration_cast<std::chrono::seconds> (end - begin).count() << " second" << std::endl;
-    std::cout << "Number of insertion: " << initialGrid->sampler.image.cache->nbInsertion << std::endl;
+    //std::cout << "Number of insertion: " << initialGrid->sampler.image.cache->nbInsertion << std::endl;
     float durationWithoutCache = std::chrono::duration_cast<std::chrono::seconds> (end - begin).count();
 
     /***/
@@ -76,9 +76,6 @@ TEST_CASE("CutAndDivideResolution", "[grid]") {
 	std::vector<std::uint16_t> slices;
 
     int offsetOnZ = static_cast<int>(grid.sampler.resolutionRatio[2]);
-    int imgSizeZ = grid.sampler.getImageDimensions()[2];
-
-	//for (std::size_t s = 0; s < imgSizeZ; s+=offsetOnZ) {
 
     // Get first slice
     grid.sampler.getGridSlice(0, slices, 1);
@@ -100,9 +97,6 @@ TEST_CASE("CutResolution", "[grid]") {
 	std::vector<std::uint16_t> slices;
 
     int offsetOnZ = static_cast<int>(grid.sampler.resolutionRatio[2]);
-    int imgSizeZ = grid.sampler.getImageDimensions()[2];
-
-	//for (std::size_t s = 0; s < imgSizeZ; s+=offsetOnZ) {
 
     // Get first slice
     grid.sampler.getGridSlice(0, slices, 1);
@@ -123,9 +117,6 @@ TEST_CASE("DivideResolution", "[grid]") {
 	std::vector<std::uint16_t> slices;
 
     int offsetOnZ = static_cast<int>(grid.sampler.resolutionRatio[2]);
-    int imgSizeZ = grid.sampler.getImageDimensions()[2];
-
-	//for (std::size_t s = 0; s < imgSizeZ; s+=offsetOnZ) {
 
     // Get first slice
     grid.sampler.getGridSlice(0, slices, 1);
@@ -145,7 +136,6 @@ TEST_CASE("DivideResolutionGetPoint", "[grid]") {
     Grid grid("../../tests/data/img1.tif", nb, 4);
 
     int offsetOnZ = static_cast<int>(grid.sampler.resolutionRatio[2]);
-    int imgSizeZ = grid.sampler.getImageDimensions()[2];
 
     uint16_t value = grid.getValueFromPoint(glm::vec3(309., 0., 0.), ResolutionMode::SAMPLER_RESOLUTION);
     CHECK(value == 9440);//x = 1236/4 = 309
