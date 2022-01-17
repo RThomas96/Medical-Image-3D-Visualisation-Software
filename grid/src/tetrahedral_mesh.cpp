@@ -26,7 +26,7 @@ bool SameSide(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, con
     return ((dotV4<0) == (dotP<0));
 }
 
-std::vector<glm::vec3*> TetMesh::insertCube(std::vector<glm::vec3> cubePts, glm::vec3 indices, std::vector<glm::vec3>& ptGrid, std::vector<int>& ptIndices) const {
+std::vector<glm::vec3*> TetMesh::insertCubeIntoPtGrid(std::vector<glm::vec3> cubePts, glm::vec3 indices, std::vector<glm::vec3>& ptGrid, std::vector<int>& ptIndices) const {
     int x = indices[0];
     int y = indices[1];
     int z = indices[2];
@@ -186,8 +186,8 @@ void TetMesh::buildGrid(const glm::vec3& nbCube, const glm::vec3& sizeCube, cons
             for(int i = 0; i < nbCube[0]; ++i) {
                 glm::vec3 offset = glm::vec3(i*sizeCube[0], j*sizeCube[1], k*sizeCube[2]);
                 std::vector<glm::vec3> cubePts = buildCube(origin+offset, sizeCube);
-                std::vector<glm::vec3*> cubePtsAdress = insertCube(cubePts, glm::vec3(i, j, k), this->ptGrid, ptIndices);
-                this->addCube(cubePtsAdress, ptIndices);
+                std::vector<glm::vec3*> cubePtsAdress = insertCubeIntoPtGrid(cubePts, glm::vec3(i, j, k), this->ptGrid, ptIndices);
+                this->decomposeAndAddCube(cubePtsAdress, ptIndices);
             }
         }
     }
@@ -255,25 +255,35 @@ void TetMesh::replaceAllPoints(const std::vector<glm::vec3>& pts) {
 
 // This function is private because it doesn't update fields nbTetra, bbMin and bbMax
 // Thus it can only be used in buildGrid function
-void TetMesh::addCube(std::vector<glm::vec3*> pts, const std::vector<int>& ptsIdx) {
+void TetMesh::decomposeAndAddCube(std::vector<glm::vec3*> pts, const std::vector<int>& ptsIdx) {
     if(pts.size() > 8) {
         std::cerr << "Error: can't add a cube with more than 8 vertices" << std::endl;
         return;
     }
-    mesh.push_back(Tetrahedron(pts[0], pts[5], pts[7], pts[4]));
-    mesh.back().setIndices(ptsIdx[0], ptsIdx[5], ptsIdx[7], ptsIdx[4]);
+    mesh.push_back(Tetrahedron(pts[3], pts[2], pts[1], pts[6]));
+    mesh.back().setIndices(ptsIdx[3], ptsIdx[2], ptsIdx[1], ptsIdx[6]);
 
-    mesh.push_back(Tetrahedron(pts[0], pts[7], pts[2], pts[3]));
-    mesh.back().setIndices(ptsIdx[0], ptsIdx[7], ptsIdx[2], ptsIdx[3]);
+    mesh.push_back(Tetrahedron(pts[4], pts[0], pts[5], pts[7]));
+    mesh.back().setIndices(ptsIdx[4], ptsIdx[0], ptsIdx[5], ptsIdx[7]);
 
-    mesh.push_back(Tetrahedron(pts[0], pts[2], pts[5], pts[1]));
-    mesh.back().setIndices(ptsIdx[0], ptsIdx[2], ptsIdx[5], ptsIdx[1]);
+    mesh.push_back(Tetrahedron(pts[5], pts[3], pts[6], pts[7]));
+    mesh.back().setIndices(ptsIdx[5], ptsIdx[3], ptsIdx[6], ptsIdx[7]);
 
-    mesh.push_back(Tetrahedron(pts[2], pts[7], pts[5], pts[6]));
-    mesh.back().setIndices(ptsIdx[2], ptsIdx[7], ptsIdx[5], ptsIdx[6]);
+    mesh.push_back(Tetrahedron(pts[0], pts[3], pts[5], pts[7]));
+    mesh.back().setIndices(ptsIdx[0], ptsIdx[3], ptsIdx[5], ptsIdx[7]);
 
-    mesh.push_back(Tetrahedron(pts[0], pts[7], pts[5], pts[2]));
-    mesh.back().setIndices(ptsIdx[0], ptsIdx[7], ptsIdx[5], ptsIdx[2]);
+    mesh.push_back(Tetrahedron(pts[0], pts[3], pts[1], pts[5]));
+    mesh.back().setIndices(ptsIdx[0], ptsIdx[3], ptsIdx[1], ptsIdx[5]);
+
+    mesh.push_back(Tetrahedron(pts[1], pts[3], pts[6], pts[5]));
+    mesh.back().setIndices(ptsIdx[1], ptsIdx[3], ptsIdx[6], ptsIdx[5]);
+
+    //3 . 2 . 1 . 6
+    //4 . 0 . 5 . 7
+    //5 . 3 . 6 . 7
+    //0 . 3 . 5 . 7
+    //0 . 3 . 1 . 5
+    //1 . 3 . 6 . 5
 }
 
 void check1DTo3D() {

@@ -59,8 +59,8 @@ struct TetMesh {
 private:
     // This function is private because it doesn't update fields nbTetra, bbMin and bbMax
     // Thus it can only be used in buildGrid function
-    void addCube(std::vector<glm::vec3*> pts, const std::vector<int>& ptsIdx);
-    std::vector<glm::vec3*> insertCube(std::vector<glm::vec3> cubePts, glm::vec3 indices, std::vector<glm::vec3>& ptGrid, std::vector<int>& ptIndices) const;
+    void decomposeAndAddCube(std::vector<glm::vec3*> pts, const std::vector<int>& ptsIdx);
+    std::vector<glm::vec3*> insertCubeIntoPtGrid(std::vector<glm::vec3> cubePts, glm::vec3 indices, std::vector<glm::vec3>& ptGrid, std::vector<int>& ptIndices) const;
 };
 
 #endif

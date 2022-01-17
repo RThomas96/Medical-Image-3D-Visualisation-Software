@@ -68,7 +68,7 @@ TEST_CASE("SaveDurationCacheComparison", "[grid][save][.long]") {
     std::cout << "*****************" << std::endl;
 }
 
-TEST_CASE("CutAndDivideResolution", "[grid]") {
+TEST_CASE("CutAndDivideResolution", "[grid][.file]") {
 
     glm::vec3 nb = glm::vec3(5., 5., 5.);
     Grid grid("../../tests/data/img1.tif", nb, 4);
@@ -89,7 +89,7 @@ TEST_CASE("CutAndDivideResolution", "[grid]") {
     CHECK(slices[617+309] == 3965);
 }
 
-TEST_CASE("CutResolution", "[grid]") {
+TEST_CASE("CutResolution", "[grid][.file]") {
 
     glm::vec3 nb = glm::vec3(5., 5., 5.);
     Grid grid("../../tests/data/img1.tif", nb, 1);
@@ -109,7 +109,7 @@ TEST_CASE("CutResolution", "[grid]") {
     CHECK(slices[1236] == 9005);//x = 1236
 }
 
-TEST_CASE("DivideResolution", "[grid]") {
+TEST_CASE("DivideResolution", "[grid][.file]") {
 
     glm::vec3 nb = glm::vec3(5., 5., 5.);
     Grid grid("../../tests/data/img1.tif", nb, 4);
@@ -130,7 +130,7 @@ TEST_CASE("DivideResolution", "[grid]") {
     CHECK(slices[1233+309] == 3965);
 }
 
-TEST_CASE("DivideResolutionGetPoint", "[grid]") {
+TEST_CASE("DivideResolutionGetPoint", "[grid][.file]") {
 
     glm::vec3 nb = glm::vec3(5., 5., 5.);
     Grid grid("../../tests/data/img1.tif", nb, 4);

@@ -12,6 +12,47 @@ bool areEqual(glm::vec3 p1, glm::vec3 p2) {
     return glm::distance(p1, p2) < epsilon;
 }
 
+TEST_CASE("checkTetNeighbors", "[tetmesh]") {
+    TetMesh tetMesh; 
+
+    glm::vec3 origin = glm::vec3(0., 0., 0.);
+    glm::vec3 size = glm::vec3(1., 1., 1.);
+    glm::vec3 nb = glm::vec3(1., 1., 1.);
+    tetMesh.buildGrid(nb, size, origin);
+
+    // Check for 1 cube 
+    CHECK(tetMesh.mesh[0].neighbors[0] == -1);
+    CHECK(tetMesh.mesh[0].neighbors[1] == 5);
+    CHECK(tetMesh.mesh[0].neighbors[2] == -1);
+    CHECK(tetMesh.mesh[0].neighbors[3] == -1);
+
+    CHECK(tetMesh.mesh[1].neighbors[0] == 3);
+    CHECK(tetMesh.mesh[1].neighbors[1] == -1);
+    CHECK(tetMesh.mesh[1].neighbors[2] == -1);
+    CHECK(tetMesh.mesh[1].neighbors[3] == -1);
+
+    CHECK(tetMesh.mesh[2].neighbors[0] == -1);
+    CHECK(tetMesh.mesh[2].neighbors[1] == -1);
+    CHECK(tetMesh.mesh[2].neighbors[2] == 3);
+    CHECK(tetMesh.mesh[2].neighbors[3] == 5);
+
+    CHECK(tetMesh.mesh[3].neighbors[0] == 2);
+    CHECK(tetMesh.mesh[3].neighbors[1] == 1);
+    CHECK(tetMesh.mesh[3].neighbors[2] == -1);
+    CHECK(tetMesh.mesh[3].neighbors[3] == 4);
+
+    CHECK(tetMesh.mesh[4].neighbors[0] == 5);
+    CHECK(tetMesh.mesh[4].neighbors[1] == -1);
+    CHECK(tetMesh.mesh[4].neighbors[2] == 3);
+    CHECK(tetMesh.mesh[4].neighbors[3] == -1);
+
+    CHECK(tetMesh.mesh[5].neighbors[0] == 2);
+    CHECK(tetMesh.mesh[5].neighbors[1] == -1);
+    CHECK(tetMesh.mesh[5].neighbors[2] == 4);
+    CHECK(tetMesh.mesh[5].neighbors[3] == 0);
+
+}
+
 TEST_CASE("printTetNeighbors", "[tetmesh][.print]") {
     TetMesh tetMesh; 
 
@@ -27,7 +68,7 @@ TEST_CASE("printTetNeighbors", "[tetmesh][.print]") {
     }
 }
 
-TEST_CASE("checkTetMeshBuildCube", "[tetmesh]") {
+TEST_CASE("checkTetMeshBuildCube", "[tetmesh][.notMaintained]") {
     TetMesh tetMesh; 
 
     glm::vec3 origin = glm::vec3(0., 0., 0.);
@@ -99,7 +140,7 @@ TEST_CASE("checkTetMeshBaryCoord", "[tetmesh]") {
     CHECK(areEqual(coord1, coord2));
 }
 
-TEST_CASE("checkTetMeshInTetFct", "[tetmesh]") {
+TEST_CASE("checkTetMeshInTetFct", "[tetmesh][.notMaintained]") {
     TetMesh tetMesh; 
     glm::vec3 origin = glm::vec3(0., 0., 0.);
     glm::vec3 size = glm::vec3(1., 1., 1.);
