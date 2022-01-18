@@ -3444,13 +3444,6 @@ void Scene::tex3D_buildMesh(GridGLView::Ptr& gridGLView, const std::string path)
 		mesh.normals.push_back(std::array<glm::vec4, 4>{glm::vec4(.0f), glm::vec4(.0f), glm::vec4(.0f), glm::vec4(.0f)});
 	}
 
-	TetMesh& newMesh = gridGLView->grid->grid->tetmesh;
-	for (std::size_t i = 0; i < newMesh.mesh.size(); i++) {
-        for(int j = 0; j < 4; ++j) {
-            mesh.neighbors[i][j] = newMesh.mesh[i].neighbors[j];
-        }
-	}
-
 	//// Adjacency map :
 	//std::map<Face, std::pair<int, int>> adjacent_faces;
 	//// generate the correspondance by looking at which faces are similar : [MEDIUM/HEAVY COMPUTATION]
@@ -3494,6 +3487,23 @@ void Scene::tex3D_buildMesh(GridGLView::Ptr& gridGLView, const std::string path)
 	GLfloat* tex		  = new GLfloat[coorWidth * coorHeight * 3];
 	GLfloat* rawNeighbors = new GLfloat[neighbWidth * neighbHeight * 3];
 #endif
+
+	TetMesh& newMesh = gridGLView->grid->grid->tetmesh;
+	for (std::size_t i = 0; i < newMesh.mesh.size(); i++) {
+        for(int j = 0; j < 4; ++j) {
+            mesh.neighbors[i][j] = newMesh.mesh[i].neighbors[j];
+        }
+	}
+
+    int ncount2 = 0;
+	for (std::size_t i = 0; i < newMesh.mesh.size(); i++) {
+        for(int j = 0; j < 4; ++j) {
+			for (std::size_t n = 0; n < 4; ++n) {
+				mesh.rawNormals[ncount2++] = newMesh.mesh[i].normals[j][n];
+			}
+        }
+	}
+
 
 	/*
 	Warning : the loop that follows is horribly bad : it duplicates every texture coordinate by the number of times
@@ -3549,17 +3559,17 @@ void Scene::tex3D_buildMesh(GridGLView::Ptr& gridGLView, const std::string path)
 			}
 
 			// Compute this face's normal :
-			glm::vec4 n1   = mesh.positions[tetrahedron[indices[i][1]]] - mesh.positions[tetrahedron[indices[i][0]]];
-			glm::vec4 n2   = mesh.positions[tetrahedron[indices[i][2]]] - mesh.positions[tetrahedron[indices[i][0]]];
-		    glm::vec4 norm = glm::vec4(glm::normalize(glm::cross(glm::vec3(n1), glm::vec3(n2))), 1.);
-			// Put inverse of dot with opposing vertex in norm.w :
-			glm::vec4 v1			  = mesh.positions[tetrahedron[i]] - mesh.positions[tetrahedron[(i + 1) % 4]];
-			glm::vec4::value_type val = 1. / glm::dot(v1, norm);
-			norm.w					  = val;
-			// Put it in the array :
-			for (std::size_t n = 0; n < 4; ++n) {
-				mesh.rawNormals[ncount++] = norm[n];
-			}
+			//glm::vec4 n1   = mesh.positions[tetrahedron[indices[i][1]]] - mesh.positions[tetrahedron[indices[i][0]]];
+			//glm::vec4 n2   = mesh.positions[tetrahedron[indices[i][2]]] - mesh.positions[tetrahedron[indices[i][0]]];
+		    //glm::vec4 norm = glm::vec4(glm::normalize(glm::cross(glm::vec3(n1), glm::vec3(n2))), 1.);
+			//// Put inverse of dot with opposing vertex in norm.w :
+			//glm::vec4 v1			  = mesh.positions[tetrahedron[i]] - mesh.positions[tetrahedron[(i + 1) % 4]];
+			//glm::vec4::value_type val = 1. / glm::dot(v1, norm);
+			//norm.w					  = val;
+			//// Put it in the array :
+			//for (std::size_t n = 0; n < 4; ++n) {
+			//	mesh.rawNormals[ncount++] = norm[n];
+			//}
 
 			rawNeighbors[iter] = static_cast<GLfloat>(mesh.neighbors[t][i]);
 			iter += 3;

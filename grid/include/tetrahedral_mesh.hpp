@@ -9,6 +9,7 @@
 
 struct Tetrahedron {
     glm::vec3 * points[4];// Optionnal, this data can be deleted and computeBary, isInTet and baryToWord function moved out in the TetMesh class
+    glm::vec4 normals[4];
 
     int pointsIdx[4];
     int neighbors[4];
@@ -24,6 +25,8 @@ struct Tetrahedron {
     bool isInTetrahedron(const glm::vec3& p);
 
     glm::vec3 baryToWorldCoord(const glm::vec4& coord);
+
+    void computeNormals();
 };
 
 struct TetMesh {
@@ -55,6 +58,8 @@ struct TetMesh {
     void replaceAllPoints(const std::vector<glm::vec3>& pts);
 
     void computeNeighborhood();
+
+    void computeNormals();
 
 private:
     // This function is private because it doesn't update fields nbTetra, bbMin and bbMax

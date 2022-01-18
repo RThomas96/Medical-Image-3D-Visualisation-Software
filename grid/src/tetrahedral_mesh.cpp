@@ -106,6 +106,11 @@ Tetrahedron::Tetrahedron() {
     this->neighbors[1] = -1;
     this->neighbors[2] = -1;
     this->neighbors[3] = -1;
+
+    this->normals[0] = glm::vec4(0., 0., 0., 0.);
+    this->normals[1] = glm::vec4(0., 0., 0., 0.);
+    this->normals[2] = glm::vec4(0., 0., 0., 0.);
+    this->normals[3] = glm::vec4(0., 0., 0., 0.);
 }
 
 Tetrahedron::Tetrahedron(glm::vec3* a, glm::vec3* b, glm::vec3* c, glm::vec3* d) {
@@ -123,6 +128,11 @@ Tetrahedron::Tetrahedron(glm::vec3* a, glm::vec3* b, glm::vec3* c, glm::vec3* d)
     this->neighbors[1] = -1;
     this->neighbors[2] = -1;
     this->neighbors[3] = -1;
+
+    this->normals[0] = glm::vec4(0., 0., 0., 0.);
+    this->normals[1] = glm::vec4(0., 0., 0., 0.);
+    this->normals[2] = glm::vec4(0., 0., 0., 0.);
+    this->normals[3] = glm::vec4(0., 0., 0., 0.);
 }
 
 glm::vec4 Tetrahedron::computeBaryCoord(const glm::vec3& p) {
@@ -169,6 +179,19 @@ glm::vec3 Tetrahedron::baryToWorldCoord(const glm::vec4& coord) {
     return glm::vec3(x, y, z);
 }
 
+void Tetrahedron::computeNormals() {
+    for(int faceIdx = 0; faceIdx < 4; ++faceIdx) {
+        glm::vec3 n1   = *this->points[getIdxOfPtInFace(faceIdx, 1)] - *this->points[getIdxOfPtInFace(faceIdx, 0)];
+        glm::vec3 n2   = *this->points[getIdxOfPtInFace(faceIdx, 2)] - *this->points[getIdxOfPtInFace(faceIdx, 0)];
+        glm::vec4 norm = glm::vec4(glm::normalize(glm::cross(glm::vec3(n1), glm::vec3(n2))), 1.);
+        // Put inverse of dot with opposing vertex in norm.w :
+        glm::vec4 v1			  = glm::vec4(*this->points[faceIdx] - *this->points[(faceIdx + 1) % 4], 1.);
+        glm::vec4::value_type val = 1. / glm::dot(v1, norm);
+        norm.w					  = val;
+        this->normals[faceIdx] = norm;
+    }
+}
+
 void TetMesh::buildGrid(const glm::vec3& nbCube, const glm::vec3& sizeCube, const glm::vec3& origin) {
     if(!this->isEmpty())
         throw std::runtime_error("Error: build grid cannot be used on already constructed mesh.");
@@ -192,6 +215,7 @@ void TetMesh::buildGrid(const glm::vec3& nbCube, const glm::vec3& sizeCube, cons
         }
     }
     this->computeNeighborhood();
+    this->computeNormals();
 }
 
 void TetMesh::movePoint(const glm::vec3& indices, const glm::vec3& position) {
@@ -346,6 +370,12 @@ void TetMesh::computeNeighborhood() {
 			}
 		}
 	}
+}
+
+void TetMesh::computeNormals() {
+    for(int tetIdx; tetIdx < this->mesh.size(); ++tetIdx) {
+        this->mesh[tetIdx].computeNormals();
+    }
 }
 
 /* Unit test */
