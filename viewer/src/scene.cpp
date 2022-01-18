@@ -3444,25 +3444,6 @@ void Scene::tex3D_buildMesh(GridGLView::Ptr& gridGLView, const std::string path)
 		mesh.normals.push_back(std::array<glm::vec4, 4>{glm::vec4(.0f), glm::vec4(.0f), glm::vec4(.0f), glm::vec4(.0f)});
 	}
 
-	//// Adjacency map :
-	//std::map<Face, std::pair<int, int>> adjacent_faces;
-	//// generate the correspondance by looking at which faces are similar : [MEDIUM/HEAVY COMPUTATION]
-	//for (std::size_t i = 0; i < mesh.tetrahedra.size(); i++) {
-	//	for (int v = 0; v < 4; v++) {
-	//		// find similar face in other tetrahedrons :
-	//		Face face										 = Face(mesh.tetrahedra[i][indices[v][0]],
-	//			 mesh.tetrahedra[i][indices[v][1]],
-	//			 mesh.tetrahedra[i][indices[v][2]]);
-	//		std::map<Face, std::pair<int, int>>::iterator it = adjacent_faces.find(face);
-	//		if (it == adjacent_faces.end()) {
-	//			adjacent_faces[face] = std::make_pair(static_cast<int>(i), v);
-	//		} else {
-	//			mesh.neighbors[i][v]								= it->second.first;
-	//			mesh.neighbors[it->second.first][it->second.second] = i;
-	//		}
-	//	}
-	//}
-
 	// determine the size of the texture, depending on the # of tetrahedron neighbors :
 	std::size_t vertWidth = 0, vertHeight = 0;
 	std::size_t normWidth = 0, normHeight = 0;
@@ -3500,6 +3481,23 @@ void Scene::tex3D_buildMesh(GridGLView::Ptr& gridGLView, const std::string path)
         for(int j = 0; j < 4; ++j) {
 			for (std::size_t n = 0; n < 4; ++n) {
 				mesh.rawNormals[ncount2++] = newMesh.mesh[i].normals[j][n];
+			}
+        }
+	}
+
+    int texcnt2 = 0;
+    // For each tet :
+	for (std::size_t i = 0; i < newMesh.mesh.size(); i++) {
+		// For each face :
+        for(int j = 0; j < 4; ++j) {
+		    // For each point :
+			for (std::size_t k = 0; k < 3; ++k) {
+                int ptIndex = newMesh.mesh[i].getPointIndex(j, k);
+				for (std::size_t l = 0; l < 3; ++l) {
+					tex[texcnt2] = newMesh.texCoordGrid[ptIndex][l];
+					mesh.rawVertices[texcnt2] = newMesh.ptGrid[ptIndex][l];
+					texcnt2++;
+				}
 			}
         }
 	}
@@ -3552,24 +3550,10 @@ void Scene::tex3D_buildMesh(GridGLView::Ptr& gridGLView, const std::string path)
 
 				// And put it in the array :
 				for (std::size_t k = 0; k < 3; ++k) {
-					mesh.rawVertices[texcnt] = position[k];
-					tex[texcnt]				 = tetCoord[k];
+					//mesh.rawVertices[texcnt] = position[k];
 					texcnt++;
 				}
 			}
-
-			// Compute this face's normal :
-			//glm::vec4 n1   = mesh.positions[tetrahedron[indices[i][1]]] - mesh.positions[tetrahedron[indices[i][0]]];
-			//glm::vec4 n2   = mesh.positions[tetrahedron[indices[i][2]]] - mesh.positions[tetrahedron[indices[i][0]]];
-		    //glm::vec4 norm = glm::vec4(glm::normalize(glm::cross(glm::vec3(n1), glm::vec3(n2))), 1.);
-			//// Put inverse of dot with opposing vertex in norm.w :
-			//glm::vec4 v1			  = mesh.positions[tetrahedron[i]] - mesh.positions[tetrahedron[(i + 1) % 4]];
-			//glm::vec4::value_type val = 1. / glm::dot(v1, norm);
-			//norm.w					  = val;
-			//// Put it in the array :
-			//for (std::size_t n = 0; n < 4; ++n) {
-			//	mesh.rawNormals[ncount++] = norm[n];
-			//}
 
 			rawNeighbors[iter] = static_cast<GLfloat>(mesh.neighbors[t][i]);
 			iter += 3;

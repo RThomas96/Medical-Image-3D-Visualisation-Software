@@ -26,7 +26,11 @@ bool SameSide(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, con
     return ((dotV4<0) == (dotP<0));
 }
 
-std::vector<glm::vec3*> TetMesh::insertCubeIntoPtGrid(std::vector<glm::vec3> cubePts, glm::vec3 indices, std::vector<glm::vec3>& ptGrid, std::vector<int>& ptIndices) const {
+int Tetrahedron::getPointIndex(int faceIdx, int ptIdxInFace) {
+    return this->pointsIdx[getIdxOfPtInFace(faceIdx, ptIdxInFace)];
+}
+
+std::vector<glm::vec3*> TetMesh::insertCubeIntoPtGrid(std::vector<glm::vec3> cubePts, glm::vec3 indices, std::vector<glm::vec3>& ptGrid, std::vector<int>& ptIndices) {
     int x = indices[0];
     int y = indices[1];
     int z = indices[2];
@@ -41,27 +45,37 @@ std::vector<glm::vec3*> TetMesh::insertCubeIntoPtGrid(std::vector<glm::vec3> cub
     ptIndices[6] = this->from3DTo1D(glm::vec3(x+1,y+1,z+1));
     ptIndices[7] = this->from3DTo1D(glm::vec3(x+1,y,z+1));
 
-    ptGrid[this->from3DTo1D(glm::vec3(x,y,z))] = cubePts[0];
-    ptGrid[this->from3DTo1D(glm::vec3(x,y+1,z))] = cubePts[1];
-    ptGrid[this->from3DTo1D(glm::vec3(x+1,y+1,z))] = cubePts[2];
-    ptGrid[this->from3DTo1D(glm::vec3(x+1,y,z))] = cubePts[3];
+    ptGrid[ptIndices[0]] = cubePts[0];
+    ptGrid[ptIndices[1]] = cubePts[1];
+    ptGrid[ptIndices[2]] = cubePts[2];
+    ptGrid[ptIndices[3]] = cubePts[3];
 
+    ptGrid[ptIndices[4]] = cubePts[4];
+    ptGrid[ptIndices[5]] = cubePts[5];
+    ptGrid[ptIndices[6]] = cubePts[6];
+    ptGrid[ptIndices[7]] = cubePts[7];
 
-    ptGrid[this->from3DTo1D(glm::vec3(x,y,z+1))] = cubePts[4];
-    ptGrid[this->from3DTo1D(glm::vec3(x,y+1,z+1))] = cubePts[5];
-    ptGrid[this->from3DTo1D(glm::vec3(x+1,y+1,z+1))] = cubePts[6];
-    ptGrid[this->from3DTo1D(glm::vec3(x+1,y,z+1))] = cubePts[7];
+    glm::vec3 tetMeshSize = bbMax - bbMin;
+    texCoordGrid[ptIndices[0]] = cubePts[0]/tetMeshSize;
+    texCoordGrid[ptIndices[1]] = cubePts[1]/tetMeshSize;
+    texCoordGrid[ptIndices[2]] = cubePts[2]/tetMeshSize;
+    texCoordGrid[ptIndices[3]] = cubePts[3]/tetMeshSize;
+
+    texCoordGrid[ptIndices[4]] = cubePts[4]/tetMeshSize;
+    texCoordGrid[ptIndices[5]] = cubePts[5]/tetMeshSize;
+    texCoordGrid[ptIndices[6]] = cubePts[6]/tetMeshSize;
+    texCoordGrid[ptIndices[7]] = cubePts[7]/tetMeshSize;
 
     std::vector<glm::vec3*> res;
-    res.push_back(&ptGrid[this->from3DTo1D(glm::vec3(x,y,z))]);
-    res.push_back(&ptGrid[this->from3DTo1D(glm::vec3(x,y+1,z))]);
-    res.push_back(&ptGrid[this->from3DTo1D(glm::vec3(x+1,y+1,z))]);
-    res.push_back(&ptGrid[this->from3DTo1D(glm::vec3(x+1,y,z))]);
+    res.push_back(&ptGrid[ptIndices[0]]);
+    res.push_back(&ptGrid[ptIndices[1]]);
+    res.push_back(&ptGrid[ptIndices[2]]);
+    res.push_back(&ptGrid[ptIndices[3]]);
 
-    res.push_back(&ptGrid[this->from3DTo1D(glm::vec3(x,y,z+1))]);
-    res.push_back(&ptGrid[this->from3DTo1D(glm::vec3(x,y+1,z+1))]);
-    res.push_back(&ptGrid[this->from3DTo1D(glm::vec3(x+1,y+1,z+1))]);
-    res.push_back(&ptGrid[this->from3DTo1D(glm::vec3(x+1,y,z+1))]);
+    res.push_back(&ptGrid[ptIndices[4]]);
+    res.push_back(&ptGrid[ptIndices[5]]);
+    res.push_back(&ptGrid[ptIndices[6]]);
+    res.push_back(&ptGrid[ptIndices[7]]);
     
     return res;
 }
@@ -202,6 +216,7 @@ void TetMesh::buildGrid(const glm::vec3& nbCube, const glm::vec3& sizeCube, cons
 
     // We add +1 here because we stock points, and there one more point than cube as it need a final point
     ptGrid = std::vector<glm::vec3>((this->nbTetra[0]+1)*(this->nbTetra[1]+1)*(this->nbTetra[2]+1), glm::vec3(0., 0., 0.));
+    texCoordGrid = std::vector<glm::vec3>((this->nbTetra[0]+1)*(this->nbTetra[1]+1)*(this->nbTetra[2]+1), glm::vec3(0., 0., 0.));
 
     std::vector<int> ptIndices(8, -1);
     for(int k = 0; k < nbCube[2]; ++k) {

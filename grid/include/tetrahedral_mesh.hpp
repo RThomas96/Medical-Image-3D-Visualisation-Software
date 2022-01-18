@@ -27,12 +27,16 @@ struct Tetrahedron {
     glm::vec3 baryToWorldCoord(const glm::vec4& coord);
 
     void computeNormals();
+
+    int getPointIndex(int faceIdx, int ptIdxInFace);
 };
 
 struct TetMesh {
 
     std::vector<Tetrahedron> mesh;
     std::vector<glm::vec3> ptGrid;
+    std::vector<glm::vec3> texCoordGrid;// These are normalised coordinates
+
     glm::vec3 nbTetra;
 
     glm::vec3 bbMin;
@@ -65,7 +69,7 @@ private:
     // This function is private because it doesn't update fields nbTetra, bbMin and bbMax
     // Thus it can only be used in buildGrid function
     void decomposeAndAddCube(std::vector<glm::vec3*> pts, const std::vector<int>& ptsIdx);
-    std::vector<glm::vec3*> insertCubeIntoPtGrid(std::vector<glm::vec3> cubePts, glm::vec3 indices, std::vector<glm::vec3>& ptGrid, std::vector<int>& ptIndices) const;
+    std::vector<glm::vec3*> insertCubeIntoPtGrid(std::vector<glm::vec3> cubePts, glm::vec3 indices, std::vector<glm::vec3>& ptGrid, std::vector<int>& ptIndices);
 };
 
 #endif
