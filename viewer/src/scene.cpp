@@ -3409,160 +3409,48 @@ bool compPt(std::pair<glm::vec4, std::vector<std::vector<int>>> i, std::pair<glm
 }
 
 void Scene::tex3D_buildMesh(GridGLView::Ptr& gridGLView, const std::string path) {
-	/* Here, we'll build the tetrahedral mesh used to visualize the 3D structure of the acquisition in real-time. */
-	/* Textures built : index of vertices, index of per-face normals for tetrahedra, index of per-face neighbors
-	 * for tetrehedra */
 
-	VolMeshData& mesh = gridGLView->volumetricMeshData;
-
-	if (path.empty()) {
-		this->tex3D_generateMESH(gridGLView, mesh);
-	} else {
-		this->tex3D_loadMESHFile(path, gridGLView, mesh);
-	}
-
-	// Hard-coded indices smh, got to move to a more portable (and readable) solution :
-	std::size_t indices[4][3];
-	indices[0][0] = 3;
-	indices[0][1] = 1;
-	indices[0][2] = 2;
-	indices[1][0] = 3;
-	indices[1][1] = 2;
-	indices[1][2] = 0;
-	indices[2][0] = 3;
-	indices[2][1] = 0;
-	indices[2][2] = 1;
-	indices[3][0] = 2;
-	indices[3][1] = 1;
-	indices[3][2] = 0;
-
-	// INIT NEIGHBORS :
-	mesh.neighbors.clear();
-	mesh.neighbors.resize(mesh.tetrahedra.size());
-	for (std::size_t i = 0; i < mesh.tetrahedra.size(); i++) {
-		mesh.neighbors[i].resize(4, -1);
-		mesh.normals.push_back(std::array<glm::vec4, 4>{glm::vec4(.0f), glm::vec4(.0f), glm::vec4(.0f), glm::vec4(.0f)});
-	}
-
-	// determine the size of the texture, depending on the # of tetrahedron neighbors :
 	std::size_t vertWidth = 0, vertHeight = 0;
 	std::size_t normWidth = 0, normHeight = 0;
 	std::size_t coorWidth = 0, coorHeight = 0;
 	std::size_t neighbWidth = 0, neighbHeight = 0;
 
-	__GetTexSize(mesh.tetrahedra.size() * 4 * 3, &vertWidth, &vertHeight);
-	__GetTexSize(mesh.tetrahedra.size() * 4, &normWidth, &normHeight);
-	__GetTexSize(mesh.tetrahedra.size() * 4 * 3, &coorWidth, &coorHeight);
-	__GetTexSize(mesh.tetrahedra.size() * 4, &neighbWidth, &neighbHeight);
+	TetMesh& newMesh = gridGLView->grid->grid->tetmesh;
+	__GetTexSize(newMesh.mesh.size() * 4 * 3, &vertWidth, &vertHeight);
+	__GetTexSize(newMesh.mesh.size() * 4, &normWidth, &normHeight);
+	__GetTexSize(newMesh.mesh.size() * 4 * 3, &coorWidth, &coorHeight);
+	__GetTexSize(newMesh.mesh.size() * 4, &neighbWidth, &neighbHeight);
 
-	gridGLView->volumetricMesh.tetrahedraCount = mesh.tetrahedra.size();
+	gridGLView->volumetricMesh.tetrahedraCount = newMesh.mesh.size();
 
-#ifdef DIRECT_FROM_VOLMESH_TO_ARRAY_SIZE
-	mesh.rawVertices	  = new GLfloat[gridGLView.volumetricMesh.tetrahedraCount * 4 * 3 * 3];
-	mesh.rawNormals		  = new GLfloat[gridGLView.volumetricMesh.tetrahedraCount * 4 * 4];
-	GLfloat* tex		  = new GLfloat[gridGLView.volumetricMesh.tetrahedraCount * 4 * 3 * 3];
-	GLfloat* rawNeighbors = new GLfloat[gridGLView.volumetricMesh.tetrahedraCount * 4 * 3];
-#else
-	mesh.rawVertices	  = new GLfloat[vertWidth * vertHeight * 3];
-	mesh.rawNormals		  = new GLfloat[normWidth * normHeight * 4];
+	GLfloat* rawVertices  = new GLfloat[vertWidth * vertHeight * 3];
+	GLfloat* rawNormals	  = new GLfloat[normWidth * normHeight * 4];
 	GLfloat* tex		  = new GLfloat[coorWidth * coorHeight * 3];
 	GLfloat* rawNeighbors = new GLfloat[neighbWidth * neighbHeight * 3];
-#endif
 
-	TetMesh& newMesh = gridGLView->grid->grid->tetmesh;
-	for (std::size_t i = 0; i < newMesh.mesh.size(); i++) {
-        for(int j = 0; j < 4; ++j) {
-            mesh.neighbors[i][j] = newMesh.mesh[i].neighbors[j];
-        }
-	}
+	int iNeigh = 0;
+    int iPt = 0;
+    int iNormal = 0;
+	for (int tetIdx = 0; tetIdx < newMesh.mesh.size(); tetIdx++) {
+        const Tetrahedron& tet = newMesh.mesh[tetIdx];
+        for(int faceIdx = 0; faceIdx < 4; ++faceIdx) {
+			rawNeighbors[iNeigh] = static_cast<GLfloat>(tet.neighbors[faceIdx]);
+			iNeigh += 3;
 
-    int ncount2 = 0;
-	for (std::size_t i = 0; i < newMesh.mesh.size(); i++) {
-        for(int j = 0; j < 4; ++j) {
-			for (std::size_t n = 0; n < 4; ++n) {
-				mesh.rawNormals[ncount2++] = newMesh.mesh[i].normals[j][n];
+			for (int i = 0; i < 4; ++i) {
+				rawNormals[iNormal++] = tet.normals[faceIdx][i];
 			}
-        }
-	}
 
-    int texcnt2 = 0;
-    // For each tet :
-	for (std::size_t i = 0; i < newMesh.mesh.size(); i++) {
-		// For each face :
-        for(int j = 0; j < 4; ++j) {
-		    // For each point :
-			for (std::size_t k = 0; k < 3; ++k) {
-                int ptIndex = newMesh.mesh[i].getPointIndex(j, k);
-				for (std::size_t l = 0; l < 3; ++l) {
-					tex[texcnt2] = newMesh.texCoordGrid[ptIndex][l];
-					mesh.rawVertices[texcnt2] = newMesh.ptGrid[ptIndex][l];
-					texcnt2++;
+			for (int k = 0; k < 3; ++k) {
+                int ptIndex = tet.getPointIndex(faceIdx, k);
+				for (int i = 0; i < 3; ++i) {
+					rawVertices[iPt] = newMesh.ptGrid[ptIndex][i];
+					tex[iPt] = newMesh.texCoordGrid[ptIndex][i];
+					iPt++;
 				}
 			}
         }
 	}
-
-
-	/*
-	Warning : the loop that follows is horribly bad : it duplicates every texture coordinate by the number of times
-	the vertex is used within the mesh. It MUST be improved once the method is working, to save up on video memory.
-	It does the same for the vertex positions.
-	*/
-
-	std::size_t iter   = 0;
-	std::size_t texcnt = 0;
-	std::size_t ncount = 0;
-	for (std::size_t t = 0; t < mesh.tetrahedra.size(); ++t) {
-		// For each tet :
-		const std::array<std::size_t, 4>& tetrahedron = mesh.tetrahedra[t];
-		// For each tet's face :
-		for (std::size_t i = 0; i < 4; ++i) {
-			// For all vertices within that face :
-			for (std::size_t j = 0; j < 3; ++j) {
-				// Get the vertex's position and tex coord :
-				const glm::vec4& position = mesh.positions[tetrahedron[indices[i][j]]];
-				const glm::vec3& tetCoord = mesh.texture[tetrahedron[indices[i][j]]];
-
-				// Update the map struct
-				bool insert = false;
-				for (int l = 0; l < mesh.idxMap.size(); ++l) {
-					if (position == mesh.idxMap[l].first) {
-						std::vector<int> value;
-						value.push_back(tetrahedron[indices[i][j]]);
-						value.push_back(texcnt);
-						value.push_back(ncount);
-						value.push_back(t);
-						mesh.idxMap[l].second.push_back(value);
-						insert = true;
-					}
-				}
-
-				if (! insert) {
-					std::vector<int> values;
-					values.push_back(tetrahedron[indices[i][j]]);
-					values.push_back(texcnt);
-					values.push_back(ncount);
-					values.push_back(t);
-					std::vector<std::vector<int>> val;
-					val.push_back(values);
-					mesh.idxMap.push_back(std::make_pair(position, val));
-				}
-
-				// And put it in the array :
-				for (std::size_t k = 0; k < 3; ++k) {
-					//mesh.rawVertices[texcnt] = position[k];
-					texcnt++;
-				}
-			}
-
-			rawNeighbors[iter] = static_cast<GLfloat>(mesh.neighbors[t][i]);
-			iter += 3;
-		}
-	}
-
-	// Create the posMap
-
-	std::sort(mesh.idxMap.begin(), mesh.idxMap.end(), compPt);
 
 	// Struct to upload the texture to OpenGL :
 	TextureUpload texParams = {};
@@ -3579,7 +3467,7 @@ void Scene::tex3D_buildMesh(GridGLView::Ptr& gridGLView, const std::string path)
 	texParams.size.y						   = vertHeight;
 	texParams.format						   = GL_RGB;
 	texParams.type							   = GL_FLOAT;
-	texParams.data							   = mesh.rawVertices;
+	texParams.data							   = rawVertices;
 	gridGLView->volumetricMesh.vertexPositions = this->uploadTexture2D(texParams);
 
 	// Face normals :
@@ -3587,7 +3475,7 @@ void Scene::tex3D_buildMesh(GridGLView::Ptr& gridGLView, const std::string path)
 	texParams.size.x					   = normWidth;
 	texParams.size.y					   = normHeight;
 	texParams.format					   = GL_RGBA;
-	texParams.data						   = mesh.rawNormals;
+	texParams.data						   = rawNormals;
 	gridGLView->volumetricMesh.faceNormals = this->uploadTexture2D(texParams);
 
 	// Texture coordinates :
@@ -3605,8 +3493,8 @@ void Scene::tex3D_buildMesh(GridGLView::Ptr& gridGLView, const std::string path)
 	gridGLView->volumetricMesh.neighborhood = this->uploadTexture2D(texParams);
 
 	delete[] tex;
-	//delete[] rawVertices;
-	//delete[] rawNormals;
+	delete[] rawVertices;
+	delete[] rawNormals;
 	delete[] rawNeighbors;
 	glBindTexture(GL_TEXTURE_2D, 0);
 }

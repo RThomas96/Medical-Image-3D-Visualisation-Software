@@ -28,7 +28,7 @@ struct Tetrahedron {
 
     void computeNormals();
 
-    int getPointIndex(int faceIdx, int ptIdxInFace);
+    int getPointIndex(int faceIdx, int ptIdxInFace) const;
 };
 
 struct TetMesh {

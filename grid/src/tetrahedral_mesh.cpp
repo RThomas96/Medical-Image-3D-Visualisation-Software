@@ -26,7 +26,7 @@ bool SameSide(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, con
     return ((dotV4<0) == (dotP<0));
 }
 
-int Tetrahedron::getPointIndex(int faceIdx, int ptIdxInFace) {
+int Tetrahedron::getPointIndex(int faceIdx, int ptIdxInFace) const{
     return this->pointsIdx[getIdxOfPtInFace(faceIdx, ptIdxInFace)];
 }
 
