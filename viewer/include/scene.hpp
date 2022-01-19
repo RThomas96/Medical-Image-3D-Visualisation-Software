@@ -251,7 +251,7 @@ public:
 	void createBoundingBoxBuffers();// Creates the VBO/VAO handles for bounding boxes
 	void setupVAOBoundingBox();// Orders the VAO pointers for the bounding box
 	void tex3D_bindVAO();// Bind the VAO created for the volumetric drawing method.
-	void tex3D_buildBuffers(VolMesh& volMesh);// Build the draw buffers for a grid.
+	void tex3D_buildBuffers(VolMesh& volMesh);// Build buffers to draw a single voxel (a cube)
     /*************************************************/
 
     /* Generate things */
@@ -261,7 +261,6 @@ public:
 	void generateSphereData();
 	void newSHADERS_generateColorScales(void);
     void sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend);
-	void tex3D_generateMESH(GridGLView::Ptr& grid, VolMeshData& _mesh);// Generate a surrounding tetrahedral mesh for the loaded grid
 	void generateColorScales();
     /*************************************************/
 
