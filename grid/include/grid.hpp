@@ -79,7 +79,7 @@ struct Grid {
 
     // Get the position of the intersection between a ray and the grid
     // The ray is intersecting the grid only if it hit a value between minValue and maxValue
-    glm::vec3 getPositionOfRayIntersection(const Grid& initial, const glm::vec3& origin, const glm::vec3& target, uint16_t minValue, uint16_t maxValue) const;
+    glm::vec3 getPositionOfRayIntersection(const Grid& initial, const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue) const;
 
     // TODO: temproray
     TetMesh tetmesh;

@@ -141,15 +141,15 @@ std::pair<glm::vec3, glm::vec3> Grid::getBoundingBox() const {
     return std::pair(this->tetmesh.bbMin, this->tetmesh.bbMax);
 }
 
-glm::vec3 Grid::getPositionOfRayIntersection(const Grid& initial, const glm::vec3& origin, const glm::vec3& target, uint16_t minValue, uint16_t maxValue) const {
-    glm::vec3 direction = glm::normalize(target - origin);
+glm::vec3 Grid::getPositionOfRayIntersection(const Grid& initial, const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue) const {
+    glm::vec3 nDirection = glm::normalize(direction);
 
     glm::vec3 dimension = this->sampler.getSamplerDimension();
     float maxDistance = glm::length(dimension);    
     float step = maxDistance/std::max({dimension[0], dimension[1], dimension[2]});
 
-    for(float i = 0; i < maxDistance; ++step) {
-        const glm::vec3 p = origin + i * direction;
+    for(float i = 0; i < maxDistance; i+=step) {
+        const glm::vec3 p = origin + i * nDirection;
         const uint16_t value = this->getDeformedValueFromPoint(initial, p);
         if(value > minValue && value < maxValue)
             return p;

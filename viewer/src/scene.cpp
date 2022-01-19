@@ -450,105 +450,6 @@ void Scene::loadGridROI() {
 	// The context will be made current at this stage, no need to worry :)
 
 	std::cerr << "Error: visu box controller is broken for now due to new API update" << std::endl;
-
-	// if (this->grids.size() == 0) {
-	// 	return;
-	// }
-	// if (this->grids[0]->grid.size() == 0) {
-	// 	return;
-	// }
-
-	// // Warn the user we will load the image in high resolution :
-	// QMessageBox* msgBox = new QMessageBox;
-	// msgBox->setWindowTitle("Warning : loading high-resolution grid");
-	// msgBox->setText("This grid will be loaded in high resolution, and no checks will be done to see if it can fit in memory. Do you want to continue ?");
-	// QPushButton* deny_button = msgBox->addButton("Cancel", QMessageBox::ButtonRole::RejectRole);
-	// msgBox->addButton("Ok", QMessageBox::ButtonRole::AcceptRole);
-	// msgBox->exec();
-	// if (msgBox->clickedButton() == deny_button) {
-	// 	return;
-	// }
-
-	// // Iterate over the grids loaded, and generate them with the coordinates given.
-	// // Copy the populate grid function to load the current grid
-	// // Have a vector of std::thread(s) each with the populate function running, and reporting their progress on this
-	// // thread.
-	// // At the end, insert the two grids with addGrid() or addTwoGrids() :)
-
-	// std::for_each(this->grids[0]->grid.cbegin(), this->grids[0]->grid.cend(), [this](const std::shared_ptr<DiscreteGrid>& grid) -> void {
-	// 	// Create a thread, in a shared ptr to add it to the list of running threads
-	// 	std::shared_ptr<std::thread> localThread = std::make_shared<std::thread>([this, &grid](void) -> void {
-	// 		{
-	// 			std::lock_guard(this->mutexout);
-	// 			std::cerr << "Launching thread " << std::this_thread::get_id() << '\n';
-	// 		}
-
-	// 		// Get the original voxel dimensions :
-	// 		glm::vec3 voxelDims = grid->getVoxelDimensions();
-	// 		if (grid->getGridReader() != nullptr) {
-	// 			voxelDims = grid->getGridReader()->getOriginalVoxelDimensions();
-	// 		}
-	// 		// Compute the positions for the bounding box from the given coordinates :
-	// 		Image::bbox_t renderBox = this->visuBox;
-	// 		// The resolution is going to be defined so the voxel dimensions are the original voxel dimensions :
-	// 		DiscreteGrid::sizevec3 dims = glm::convert_to<std::size_t>(this->visuBox.getDiagonal() / voxelDims);
-
-	// 		// Create a tetrahedral mesh :
-	// 		std::unique_ptr<InterpolationMesh> tetMesh = std::make_unique<InterpolationMesh>();
-	// 		// Add the unique "input" grid to it :
-	// 		tetMesh->addInputGrid(std::dynamic_pointer_cast<InputGrid>(grid));
-
-	// 		// Create a new output grid :
-	// 		std::shared_ptr<DiscreteGrid> outputGrid = std::make_shared<DiscreteGrid>(dims, renderBox);
-	// 		// Specifies the grid size, and bounding box of the grid
-	// 		outputGrid->setOffline(false);	  // we want to keep the grid in memory
-
-	// 		tetMesh->setOutputGrid_raw(outputGrid);
-
-	// 		{
-	// 			std::lock_guard(this->mutexout);
-	// 			std::cerr << "TetMesh info : " << '\n';
-	// 			tetMesh->printInfo();
-	// 		}
-
-	// 		// Create a new task to keep track of this thread's progress
-	// 		IO::ThreadedTask::Ptr task = std::make_shared<IO::ThreadedTask>();
-
-	// 		// Add the task to the scene
-	// 		{
-	// 			std::lock_guard<std::mutex> locking(this->mutexadd);
-	// 			this->tasks.push_back(task);
-	// 		}
-
-	// 		// Launch grid fill :
-	// 		tetMesh->populateOutputGrid_threaded(InterpolationMethods::NearestNeighbor, task);
-
-	// 		// Add the grid to the list of grids to be added later
-	// 		{
-	// 			std::lock_guard<std::mutex> locking(this->mutexadd);
-	//             // TODO: new API
-	// 			//this->gridsToAdd.push_back(outputGrid);
-	// 		}
-	// 	});
-
-	// 	// Add it to the list of running joinable threads :
-	// 	this->runningThreads.push_back(localThread);
-	// });
-
-	// if (this->programStatusBar != nullptr) {
-	// 	// Add a progress bar and update it :
-	// 	this->pb_loadProgress = new QProgressBar;
-	// 	this->programStatusBar->addWidget(this->pb_loadProgress);
-	// 	this->timer_refreshProgress = new QTimer;
-	// 	this->timer_refreshProgress->setSingleShot(false);
-	// 	this->timer_refreshProgress->setInterval(50);
-	// 	QObject::connect(this->timer_refreshProgress, &QTimer::timeout, [this](void) {
-	// 		this->updateProgressBar();
-	// 	});
-	// 	this->timer_refreshProgress->start();
-	// }
-
-	// LOG_LEAVE(Scene::loadGridROI)
 }
 
 void Scene::updateProgressBar() {
@@ -3670,3 +3571,7 @@ void Scene::launchSaveDialog() {
 	return;
 }
 
+void Scene::slotDisplayValueFromRay(const glm::vec3& origin, const glm::vec3& direction) {
+    glm::vec3 res = this->grids[0]->grid->grid->getPositionOfRayIntersection(*this->initial->grid, origin, direction, 0, 255);
+    std::cout << "The voxel ray position is: " << res << std::endl;
+}
