@@ -197,7 +197,7 @@ void Tetrahedron::computeNormals() {
     for(int faceIdx = 0; faceIdx < 4; ++faceIdx) {
         glm::vec3 n1   = *this->points[getIdxOfPtInFace(faceIdx, 1)] - *this->points[getIdxOfPtInFace(faceIdx, 0)];
         glm::vec3 n2   = *this->points[getIdxOfPtInFace(faceIdx, 2)] - *this->points[getIdxOfPtInFace(faceIdx, 0)];
-        glm::vec4 norm = glm::vec4(glm::normalize(glm::cross(glm::vec3(n1), glm::vec3(n2))), 1.);
+        glm::vec4 norm = glm::normalize(glm::vec4(glm::cross(glm::vec3(n1), glm::vec3(n2)), 1.));
         // Put inverse of dot with opposing vertex in norm.w :
         glm::vec4 v1			  = glm::vec4(*this->points[faceIdx] - *this->points[(faceIdx + 1) % 4], 1.);
         glm::vec4::value_type val = 1. / glm::dot(v1, norm);
