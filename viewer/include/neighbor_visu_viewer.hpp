@@ -82,8 +82,6 @@ private:
 	QStatusBar* statusBar;
 	bool drawAxisOnTop;
 
-	UITool::MeshManipulator meshManipulator;
-
 	//
 	// Stubs for ARAP integration
 	//
@@ -109,8 +107,6 @@ public slots:
 	/// @brief Re-centers the camera around the scene-defined center point
 	void centerScene(void);
 	void guessMousePosition(void);
-
-	void updateManipulatorsPositions(void);
 
 	void toggleManipulators(void);
 };

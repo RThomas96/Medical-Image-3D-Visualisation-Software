@@ -21,7 +21,7 @@
 float Viewer::sceneRadiusMultiplier{.5f};
 
 Viewer::Viewer(Scene* const scene, QStatusBar* _program_bar, QWidget* parent) :
-	QGLViewer(parent), scene(scene), meshManipulator(UITool::MeshManipulator(36)), spheres(), sphere_size(.1f), temp_mesh_idx(0), temp_img_idx(0), temp_sphere_position(std::numeric_limits<float>::lowest()) {
+	QGLViewer(parent), scene(scene), spheres(), sphere_size(.1f), temp_mesh_idx(0), temp_img_idx(0), temp_sphere_position(std::numeric_limits<float>::lowest()) {
 	this->statusBar	   = _program_bar;
 	this->refreshTimer = new QTimer();
 	this->refreshTimer->setInterval(std::chrono::milliseconds(7));	  // ~7 ms for 144fps, ~16ms for 60fps and ~33ms for 30 FPS
@@ -46,15 +46,9 @@ Viewer::Viewer(Scene* const scene, QStatusBar* _program_bar, QWidget* parent) :
 	//setWheelBinding(Qt::AltModifier, QGLViewer::FRAME, QGLViewer::ZOOM);
 
 	//setManipulatedFrame(&this->meshManipulator.getActiveManipulator().getManipulatedFrame());
-	updateManipulatorsPositions();
+	//updateManipulatorsPositions();
 	//this->scene->glMeshManipulator->bind(&this->meshManipulator);
-	this->scene->bindMeshManipulator(&this->meshManipulator);
-}
-
-void Viewer::updateManipulatorsPositions() {
-	std::vector<glm::vec3> vecpos;
-	scene->getTetraMeshPoints(vecpos);
-	this->meshManipulator.setAllPositions(vecpos);
+	//this->scene->bindMeshManipulator(&this->meshManipulator);
 }
 
 Viewer::~Viewer() {
@@ -99,10 +93,6 @@ void Viewer::draw() {
 
 	this->scene->draw3DView(mvMat, pMat, camPos, false);
 	this->scene->drawPositionResponse(this->sceneRadius() / 10., this->drawAxisOnTop);
-
-	if (this->meshManipulator.isActiveManipulatorManipuled()) {
-		this->scene->launchDeformation(this->meshManipulator.getActiveManipulatorAssignedIdx(), this->meshManipulator.getActiveManipulatorPos());
-	}
 
 	std::vector<glm::vec3> spheres_to_draw(this->spheres);
 	if (this->temp_mesh_idx) {
@@ -496,8 +486,6 @@ void Viewer::newAPI_loadGrid(const GridGL * ptr) {
 	}
 	this->makeCurrent();
 	this->scene->addGrid(ptr);
-	this->updateManipulatorsPositions();
-	this->scene->prepareManipulators();
 	this->doneCurrent();
 
 	glm::vec3 bbDiag = this->scene->getSceneBoundaries();
@@ -512,5 +500,5 @@ void Viewer::newAPI_loadGrid(const GridGL * ptr) {
 }
 
 void Viewer::toggleManipulators() {
-	this->meshManipulator.toggleActivation();
+	this->scene->glMeshManipulator->meshManipulator->toggleActivation();
 }

@@ -22,7 +22,7 @@ namespace UITool {
 		class MeshManipulator {
 		public:
 			MeshManipulator(SceneGL* scene, int nbManipulators, float manipulatorRadius = 50.f) :
-				manipulatorRadius(manipulatorRadius), manipulatorMesh(Sphere(manipulatorRadius)), sceneGL(scene), meshManipulator(nullptr) {
+				manipulatorRadius(manipulatorRadius), manipulatorMesh(Sphere(manipulatorRadius)), sceneGL(scene), meshManipulator(new UITool::MeshManipulator(nbManipulators)) {
 				this->program	  = 0;
 				this->vao		  = 0;
 				this->vboVertices = 0;
@@ -33,8 +33,6 @@ namespace UITool {
 
 			void prepare();
 			void draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* mMat);
-
-			void bind(UITool::MeshManipulator* meshManipulatorToBind) { this->meshManipulator = meshManipulatorToBind; };
 
 			void setProgram(GLuint program) { this->program = program; };
 			GLuint getProgram() { return this->program; };
@@ -57,13 +55,13 @@ namespace UITool {
 
 			bool isDisplayed() { return this->displayed; }
 
+			UITool::MeshManipulator * meshManipulator;	 // TODO: shared pointer
 		private:
-			UITool::MeshManipulator* meshManipulator;	 // TODO: shared pointer
 
 			float manipulatorRadius;
 			Sphere manipulatorMesh;
 
-			SceneGL* sceneGL;
+			SceneGL * sceneGL;
 
 			GLuint program;
 			GLuint vao;

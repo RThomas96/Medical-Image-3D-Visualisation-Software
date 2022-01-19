@@ -54,7 +54,7 @@ uint16_t Grid::getValueFromPoint(const glm::vec3& p, ResolutionMode resolutionMo
     }
 }
 
-void Grid::movePoint(const glm::vec3& indices, const glm::vec3& position) {
+void Grid::movePoint(int indices, const glm::vec3& position) {
     this->tetmesh.movePoint(indices, position);
 }
 

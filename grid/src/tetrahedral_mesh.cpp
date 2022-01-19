@@ -233,9 +233,26 @@ void TetMesh::buildGrid(const glm::vec3& nbCube, const glm::vec3& sizeCube, cons
     this->computeNormals();
 }
 
-void TetMesh::movePoint(const glm::vec3& indices, const glm::vec3& position) {
-    glm::vec3& p = this->ptGrid[this->from3DTo1D(indices)];
-    std::cout << "Move point: " << p << " -> ";
+void TetMesh::setPointPosition(int indices, const glm::vec3& position) {
+    glm::vec3& p = this->ptGrid[indices];
+    //std::cout << "Set point: " << p << " -> ";
+    p = position;
+    std::cout << p << std::endl;
+    // Update bbs
+    for(int i = 0; i < 3; ++i) {
+        if(p[i] > this->bbMax[i])
+            this->bbMax[i] = p[i];
+
+        if(p[i] < this->bbMin[i])
+            this->bbMin[i] = p[i];
+    }
+    // Recompute all normals, can be optimized
+    this->computeNormals();
+}
+
+void TetMesh::movePoint(int indices, const glm::vec3& position) {
+    glm::vec3& p = this->ptGrid[indices];
+    //std::cout << "Move point: " << p << " -> ";
     p += position;
     std::cout << p << std::endl;
     // Update bbs
@@ -246,6 +263,8 @@ void TetMesh::movePoint(const glm::vec3& indices, const glm::vec3& position) {
         if(p[i] < this->bbMin[i])
             this->bbMin[i] = p[i];
     }
+    // Recompute all normals, can be optimized
+    this->computeNormals();
 }
 
 bool TetMesh::isEmpty() const {

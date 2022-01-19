@@ -46,7 +46,9 @@ struct TetMesh {
 
     void buildGrid(const glm::vec3& nbCube, const glm::vec3& sizeCube, const glm::vec3& origin);
 
-    void movePoint(const glm::vec3& indices, const glm::vec3& position);
+    void movePoint(int indices, const glm::vec3& position);
+
+    void setPointPosition(int indices, const glm::vec3& position);
 
     bool isEmpty() const;
 

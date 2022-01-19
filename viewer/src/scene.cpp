@@ -714,11 +714,19 @@ void Scene::addGrid(const GridGL * gridLoaded) {
 	this->setUniformBufferData(gridView->uboHandle_colorAttributes, 64, 32, &gridView->colorChannelAttributes[1]);
 	this->setUniformBufferData(gridView->uboHandle_colorAttributes, 96, 32, &gridView->colorChannelAttributes[2]);
 
-	this->tex3D_buildMesh(gridView, "");
+	this->grids.push_back(gridView);
+
+    //Send grid texture
+	this->sendTetmeshToGPU(0, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS | InfoToSend::TEXCOORD | InfoToSend::NEIGHBORS));
 	this->tex3D_buildVisTexture(gridView->volumetricMesh);
 	this->tex3D_buildBuffers(gridView->volumetricMesh);
 
-	this->grids.push_back(gridView);
+    //Add manipulators
+    int nbPt = this->grids[0]->grid->grid->tetmesh.ptGrid.size();
+    delete this->glMeshManipulator->meshManipulator;
+    this->glMeshManipulator->meshManipulator = new UITool::MeshManipulator(nbPt);
+    this->updateManipulatorPositions();
+	this->prepareManipulators();
 
 	this->updateBoundingBox();
 	this->setVisuBoxMinCoord(glm::uvec3());
@@ -1310,115 +1318,9 @@ void Scene::getTetraMeshPoints(std::vector<glm::vec3>& points) {
 	}
 }
 
-void Scene::launchDeformation(int tetIdx, glm::vec3 point) {
-	// if no grids are loaded, do nothing !
-	// QMessageBox messageBox;
-	// messageBox.critical(nullptr, "Error", "Coucou je vais bientôt deformé la grille quand je serais branché !");
-	// messageBox.setFixedSize(500, 200);
-
-	// param:
-
-	VolMeshData& mesh = this->grids[0]->volumetricMeshData;
-	//this->newAPI_tex3D_generateMESH(this->grids[0], mesh);
-
-	std::size_t indices[4][3];
-	indices[0][0] = 3;
-	indices[0][1] = 1;
-	indices[0][2] = 2;
-	indices[1][0] = 3;
-	indices[1][1] = 2;
-	indices[1][2] = 0;
-	indices[2][0] = 3;
-	indices[2][1] = 0;
-	indices[2][2] = 1;
-	indices[3][0] = 2;
-	indices[3][1] = 1;
-	indices[3][2] = 0;
-
-	std::size_t vertWidth = 0, vertHeight = 0;
-	std::size_t normWidth = 0, normHeight = 0;
-
-	__GetTexSize(mesh.tetrahedra.size() * 4 * 3, &vertWidth, &vertHeight);
-	__GetTexSize(mesh.tetrahedra.size() * 4, &normWidth, &normHeight);
-
-	std::vector<std::vector<int>> indexesToModif = mesh.idxMap[tetIdx].second;
-	for (int i = 0; i < indexesToModif.size(); ++i) {
-		for (int k = 0; k < 3; ++k) {
-			//mesh.positions[indexesToModif[i][0]][k] = this->manipulated_pos[k+manipulatorIdx*3];
-			//mesh.rawVertices[indexesToModif[i][1]+k] = this->manipulated_pos[k+manipulatorIdx*3];
-			mesh.positions[indexesToModif[i][0]][k]	   = point[k];
-			mesh.rawVertices[indexesToModif[i][1] + k] = point[k];
-		}
-	}
-
-	std::vector<int> alreadyUpdatedTet;
-	for (int i = 0; i < indexesToModif.size(); ++i) {
-		int tetIndex = indexesToModif[i][3];
-		if (std::find(alreadyUpdatedTet.begin(), alreadyUpdatedTet.end(), tetIndex) == alreadyUpdatedTet.end()) {
-			// Because we pushed 3 times more in mapIdx
-			const std::array<std::size_t, 4>& tetrahedron = mesh.tetrahedra[tetIndex];
-			// For each tet's face :
-			for (std::size_t j = 0; j < 4; ++j) {
-				// Compute this face's normal :
-				glm::vec4 n1   = mesh.positions[tetrahedron[indices[j][1]]] - mesh.positions[tetrahedron[indices[j][0]]];
-				glm::vec4 n2   = mesh.positions[tetrahedron[indices[j][2]]] - mesh.positions[tetrahedron[indices[j][0]]];
-				glm::vec4 norm = glm::vec4(glm::normalize(glm::cross(glm::vec3(n1), glm::vec3(n2))), 1.);
-				// Put inverse of dot with opposing vertex in norm.w :
-				glm::vec4 v1			  = mesh.positions[tetrahedron[j]] - mesh.positions[tetrahedron[(j + 1) % 4]];
-				glm::vec4::value_type val = 1. / glm::dot(v1, norm);
-				norm.w					  = val;
-				// Put it in the array :
-				for (std::size_t n = 0; n < 4; ++n) {
-					mesh.rawNormals[tetIndex * 16 + j * 4 + n] = norm[n];
-				}
-			}
-			alreadyUpdatedTet.push_back(tetIndex);
-		}
-	}
-
-	TextureUpload texParams = {};
-	// Swizzle and alignment unchanged, not present in Texture3D
-	texParams.internalFormat = GL_RGB32F;
-	texParams.size.x		 = vertWidth;
-	texParams.size.y		 = vertHeight;
-	texParams.format		 = GL_RGB;
-	texParams.type			 = GL_FLOAT;
-	texParams.data			 = mesh.rawVertices;
-
-	glBindTexture(GL_TEXTURE_2D, this->grids[0]->volumetricMesh.vertexPositions);
-	glTexImage2D(GL_TEXTURE_2D,	   // GLenum : Target
-	  static_cast<GLint>(texParams.level),	  // GLint  : Level of detail of the current texParamsture (0 = original)
-	  texParams.internalFormat,	   // GLint  : Number of color components in the picture. Here grayscale so GL_RED
-	  texParams.size.x,	   // GLsizei: Image width
-	  texParams.size.y,	   // GLsizei: Image height
-	  static_cast<GLint>(0),	// GLint  : Border. This value MUST be 0.
-	  texParams.format,	   // GLenum : Format of the pixel data
-	  texParams.type,	 // GLenum : Type (the data type as in uchar, uint, float ...)
-	  texParams.data	// void*  : Data to load into the buffer
-	);
-
-	// Face normals :
-	texParams.internalFormat = GL_RGBA32F;
-	texParams.size.x		 = normWidth;
-	texParams.size.y		 = normHeight;
-	texParams.format		 = GL_RGBA;
-	texParams.data			 = mesh.rawNormals;
-
-	glBindTexture(GL_TEXTURE_2D, this->grids[0]->volumetricMesh.faceNormals);
-	glTexImage2D(GL_TEXTURE_2D,	   // GLenum : Target
-	  static_cast<GLint>(texParams.level),	  // GLint  : Level of detail of the current texParamsture (0 = original)
-	  texParams.internalFormat,	   // GLint  : Number of color components in the picture. Here grayscale so GL_RED
-	  texParams.size.x,	   // GLsizei: Image width
-	  texParams.size.y,	   // GLsizei: Image height
-	  static_cast<GLint>(0),	// GLint  : Border. This value MUST be 0.
-	  texParams.format,	   // GLenum : Format of the pixel data
-	  texParams.type,	 // GLenum : Type (the data type as in uchar, uint, float ...)
-	  texParams.data	// void*  : Data to load into the buffer
-	);
-
-	//delete[] rawNormals;
-
-	return;
+void Scene::applyDeformation() {
+    this->updateTetmeshOnManipulators();
+    this->sendTetmeshToGPU(0, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS));
 }
 
 glm::vec3 Scene::getVertexPosition(int index) {
@@ -2385,6 +2287,12 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 
 	this->drawBoundingBox(this->sceneBB, glm::vec4(.5, .5, .0, 1.), mvMat, pMat);
 	this->showVAOstate = false;
+
+    // Draw manipulators
+	if (this->glMeshManipulator->meshManipulator->isActiveManipulatorManipuled()) {
+		this->applyDeformation();
+	}
+
 }
 
 void Scene::newSHADERS_updateUBOData() {
@@ -3408,20 +3316,24 @@ bool compPt(std::pair<glm::vec4, std::vector<std::vector<int>>> i, std::pair<glm
 	return false;
 }
 
-void Scene::tex3D_buildMesh(GridGLView::Ptr& gridGLView, const std::string path) {
+bool contain(const InfoToSend& value, const InfoToSend& contain) {
+    return value & contain > 0;
+}
+
+void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend) {
 
 	std::size_t vertWidth = 0, vertHeight = 0;
 	std::size_t normWidth = 0, normHeight = 0;
 	std::size_t coorWidth = 0, coorHeight = 0;
 	std::size_t neighbWidth = 0, neighbHeight = 0;
 
-	TetMesh& newMesh = gridGLView->grid->grid->tetmesh;
+	TetMesh& newMesh = this->grids[gridIdx]->grid->grid->tetmesh;
 	__GetTexSize(newMesh.mesh.size() * 4 * 3, &vertWidth, &vertHeight);
 	__GetTexSize(newMesh.mesh.size() * 4, &normWidth, &normHeight);
 	__GetTexSize(newMesh.mesh.size() * 4 * 3, &coorWidth, &coorHeight);
 	__GetTexSize(newMesh.mesh.size() * 4, &neighbWidth, &neighbHeight);
 
-	gridGLView->volumetricMesh.tetrahedraCount = newMesh.mesh.size();
+	this->grids[gridIdx]->volumetricMesh.tetrahedraCount = newMesh.mesh.size();
 
 	GLfloat* rawVertices  = new GLfloat[vertWidth * vertHeight * 3];
 	GLfloat* rawNormals	  = new GLfloat[normWidth * normHeight * 4];
@@ -3434,18 +3346,25 @@ void Scene::tex3D_buildMesh(GridGLView::Ptr& gridGLView, const std::string path)
 	for (int tetIdx = 0; tetIdx < newMesh.mesh.size(); tetIdx++) {
         const Tetrahedron& tet = newMesh.mesh[tetIdx];
         for(int faceIdx = 0; faceIdx < 4; ++faceIdx) {
-			rawNeighbors[iNeigh] = static_cast<GLfloat>(tet.neighbors[faceIdx]);
-			iNeigh += 3;
 
-			for (int i = 0; i < 4; ++i) {
-				rawNormals[iNormal++] = tet.normals[faceIdx][i];
-			}
+            if(contain(infoToSend, InfoToSend::NEIGHBORS)) {
+			    rawNeighbors[iNeigh] = static_cast<GLfloat>(tet.neighbors[faceIdx]);
+			    iNeigh += 3;
+            }
+
+            if(contain(infoToSend, InfoToSend::NORMALS)) {
+			    for (int i = 0; i < 4; ++i) {
+			    	rawNormals[iNormal++] = tet.normals[faceIdx][i];
+			    }
+            }
 
 			for (int k = 0; k < 3; ++k) {
                 int ptIndex = tet.getPointIndex(faceIdx, k);
 				for (int i = 0; i < 3; ++i) {
-					rawVertices[iPt] = newMesh.ptGrid[ptIndex][i];
-					tex[iPt] = newMesh.texCoordGrid[ptIndex][i];
+                    if(contain(infoToSend, InfoToSend::VERTICES))
+					    rawVertices[iPt] = newMesh.ptGrid[ptIndex][i];
+                    if(contain(infoToSend, InfoToSend::TEXCOORD))
+					    tex[iPt] = newMesh.texCoordGrid[ptIndex][i];
 					iPt++;
 				}
 			}
@@ -3454,43 +3373,46 @@ void Scene::tex3D_buildMesh(GridGLView::Ptr& gridGLView, const std::string path)
 
 	// Struct to upload the texture to OpenGL :
 	TextureUpload texParams = {};
+    texParams.minmag.x = GL_NEAREST;
+    texParams.minmag.y = GL_NEAREST;
+    texParams.lod.y	   = -1000.f;
+    texParams.wrap.s   = GL_CLAMP;
+    texParams.wrap.t   = GL_CLAMP;
 
-	// Vertex positions :
-	texParams.minmag.x = GL_NEAREST;
-	texParams.minmag.y = GL_NEAREST;
-	texParams.lod.y	   = -1000.f;
-	texParams.wrap.s   = GL_CLAMP;
-	texParams.wrap.t   = GL_CLAMP;
-	// Swizzle and alignment unchanged, not present in Texture3D
-	texParams.internalFormat				   = GL_RGB32F;
-	texParams.size.x						   = vertWidth;
-	texParams.size.y						   = vertHeight;
-	texParams.format						   = GL_RGB;
-	texParams.type							   = GL_FLOAT;
-	texParams.data							   = rawVertices;
-	gridGLView->volumetricMesh.vertexPositions = this->uploadTexture2D(texParams);
+    if(contain(infoToSend, InfoToSend::VERTICES)) {
+        texParams.internalFormat				   = GL_RGB32F;
+        texParams.size.x						   = vertWidth;
+        texParams.size.y						   = vertHeight;
+        texParams.format						   = GL_RGB;
+        texParams.type							   = GL_FLOAT;
+        texParams.data							   = rawVertices;
+        this->grids[gridIdx]->volumetricMesh.vertexPositions = this->uploadTexture2D(texParams);
+    }
 
-	// Face normals :
-	texParams.internalFormat			   = GL_RGBA32F;
-	texParams.size.x					   = normWidth;
-	texParams.size.y					   = normHeight;
-	texParams.format					   = GL_RGBA;
-	texParams.data						   = rawNormals;
-	gridGLView->volumetricMesh.faceNormals = this->uploadTexture2D(texParams);
+    if(contain(infoToSend, InfoToSend::NORMALS)) {
+        texParams.internalFormat			   = GL_RGBA32F;
+        texParams.size.x					   = normWidth;
+        texParams.size.y					   = normHeight;
+        texParams.format					   = GL_RGBA;
+        texParams.data						   = rawNormals;
+        this->grids[gridIdx]->volumetricMesh.faceNormals = this->uploadTexture2D(texParams);
+    }
 
-	// Texture coordinates :
-	texParams.internalFormat					  = GL_RGB32F;
-	texParams.size.x							  = coorWidth;
-	texParams.size.y							  = coorHeight;
-	texParams.format							  = GL_RGB;
-	texParams.data								  = tex;
-	gridGLView->volumetricMesh.textureCoordinates = this->uploadTexture2D(texParams);
+    if(contain(infoToSend, InfoToSend::TEXCOORD)) {
+        texParams.internalFormat					  = GL_RGB32F;
+        texParams.size.x							  = coorWidth;
+        texParams.size.y							  = coorHeight;
+        texParams.format							  = GL_RGB;
+        texParams.data								  = tex;
+        this->grids[gridIdx]->volumetricMesh.textureCoordinates = this->uploadTexture2D(texParams);
+    }
 
-	// Neighborhood information :
-	texParams.size.x						= neighbWidth;
-	texParams.size.y						= neighbHeight;
-	texParams.data							= rawNeighbors;
-	gridGLView->volumetricMesh.neighborhood = this->uploadTexture2D(texParams);
+    if(contain(infoToSend, InfoToSend::NEIGHBORS)) {
+        texParams.size.x						= neighbWidth;
+        texParams.size.y						= neighbHeight;
+        texParams.data							= rawNeighbors;
+        this->grids[gridIdx]->volumetricMesh.neighborhood = this->uploadTexture2D(texParams);
+    }
 
 	delete[] tex;
 	delete[] rawVertices;
@@ -3818,9 +3740,6 @@ void Scene::resetPositionResponse() {
 	this->posFrame = nullptr;
 }
 
-void Scene::bindMeshManipulator(UITool::MeshManipulator* meshManipulator) {
-	this->glMeshManipulator->bind(meshManipulator);
-}
 void Scene::toggleManipulatorDisplay() {
 	this->glMeshManipulator->toggleDisplay();
 }
@@ -3846,6 +3765,17 @@ void Scene::prepareManipulators() {
     //this->glMeshManipulator->setRadius(10.f / ratio[0]);
     this->glMeshManipulator->setRadius(10.f);
 	this->glMeshManipulator->prepare();
+}
+
+void Scene::updateManipulatorPositions() {
+    this->glMeshManipulator->meshManipulator->setAllPositions(this->grids[0]->grid->grid->tetmesh.ptGrid);
+}
+
+void Scene::updateTetmeshOnManipulators() {
+    glm::vec3 newPosition;
+    newPosition = this->glMeshManipulator->meshManipulator->getActiveManipulatorPos();
+    this->grids[0]->grid->grid->tetmesh.setPointPosition(this->glMeshManipulator->meshManipulator->getActiveManipulatorAssignedIdx(), newPosition);
+
 }
 
 /**********************************************************************/

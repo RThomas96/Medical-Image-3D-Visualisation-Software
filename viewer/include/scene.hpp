@@ -95,6 +95,15 @@ enum planeHeading { North = 0,
 	Down				  = South,
 	Left				  = West };
 
+// Usefull struct to choose which data of the tetmesh to send to the GPU
+enum InfoToSend {
+    VERTICES  = 0b00000001,
+    NORMALS   = 0b00000010,
+    TEXCOORD  = 0b00000100,
+    NEIGHBORS = 0b00001000
+};
+
+
 /**********************************************************************/
 /**********************************************************************/
 
@@ -251,14 +260,13 @@ public:
 	void generatePlanesArray(SimpleVolMesh& _mesh);
 	void generateSphereData();
 	void newSHADERS_generateColorScales(void);
-    // TODO: wtf
-	void tex3D_buildMesh(GridGLView::Ptr& grid, const std::string path = "");// Build a tetrahedral mesh for a loaded grid
+    void sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend);
 	void tex3D_generateMESH(GridGLView::Ptr& grid, VolMeshData& _mesh);// Generate a surrounding tetrahedral mesh for the loaded grid
 	void generateColorScales();
     /*************************************************/
 
     /* Others */
-	void launchDeformation(int tetIdx, glm::vec3 point);
+	void applyDeformation();
 	void newSHADERS_updateUserColorScales();
 	void signal_updateUserColorScales();
 	void newSHADERS_updateUBOData();
@@ -289,9 +297,12 @@ private:
 	bool shouldUpdateUBOData;
 
     /* Containers */
+public:
 	UITool::GL::MeshManipulator* glMeshManipulator;
 	//std::vector<DeformableGrid*> grids;
+private:
 	std::vector<GridGLView::Ptr> grids;
+
 	std::vector<std::size_t> delGrid;	 ///< Grids to delete at next refresh
 	qglviewer::Frame* posFrame;
 	glm::vec4 posRequest;
@@ -309,6 +320,7 @@ private:
 	glm::uvec3 visuMax;
 	Image::bbox_t visuBox;	  ///< Used to restrict the view to a box with its coordinates
 	DrawMode drawMode;
+
 
     /* Color channel management */
 	RGBMode rgbMode;
@@ -347,10 +359,13 @@ public:
 	void showVisuBoxController(VisuBoxController* _controller);
 	void removeVisuBoxController();
 
-	void bindMeshManipulator(UITool::MeshManipulator* meshManipulator);
 	void toggleManipulatorDisplay();
 	void toggleWireframe();
 	void prepareManipulators();
+    // Set all manipulators positions to the points of the tetmesh
+    void updateManipulatorPositions();
+    // Set all tetmesh positions to the manipulators 
+    void updateTetmeshOnManipulators();
 
 	void addOpenGLOutput(OpenGLDebugLog* _gldl);
 	void addStatusBar(QStatusBar* _s);

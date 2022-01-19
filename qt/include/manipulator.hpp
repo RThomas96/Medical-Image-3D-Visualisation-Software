@@ -94,6 +94,7 @@ namespace UITool {
 
 		bool updateActiveManipulator();
 		int getActiveManipulatorAssignedIdx();
+        void getActiveManipulatorPosition(glm::vec3& res);
 
 		int getNbManipulators();
 

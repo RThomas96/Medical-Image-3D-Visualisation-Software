@@ -83,7 +83,7 @@ namespace UITool {
 	}
 
 	void MeshManipulator::setAllPositions(std::vector<glm::vec3>& positions) {
-		if (positions.size() > this->manipulators.size()) {
+		if (positions.size() == this->manipulators.size()) {
 			for (int i = 0; i < this->manipulators.size(); ++i) {
 				int assignedIdx = this->manipulators[i].getAssignedIdx();
 				this->manipulators[i].setPosition(positions[assignedIdx]);
@@ -112,7 +112,7 @@ namespace UITool {
 
 	bool MeshManipulator::isActiveManipulatorManipuled() {
 		assert(this->activeManipulator >= 0);
-		assert(this->activeManipulator < this->nbManipulators);
+		//assert(this->activeManipulator < this->nbManipulators); Because this function is used even when MeshManipulator hasn't any manipulator
 		this->updateActiveManipulator();
 		return this->isActive && this->manipulators[this->activeManipulator].getManipulatedFrame().isManipulated();
 	}
@@ -145,6 +145,10 @@ namespace UITool {
 	int MeshManipulator::getActiveManipulatorAssignedIdx() {
 		return this->manipulators[this->activeManipulator].getAssignedIdx();
 	}
+
+    void MeshManipulator::getActiveManipulatorPosition(glm::vec3& res) {
+        res = this->manipulators[this->activeManipulator].getPosition();
+    }
 
 	void MeshManipulator::toggleActivation() {
 		if (this->isActive) {
