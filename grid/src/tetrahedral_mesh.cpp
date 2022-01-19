@@ -1,5 +1,6 @@
 #include "../include/tetrahedral_mesh.hpp"
 #include <map>
+#include <algorithm>
 
 
 // This function make the link between a face of a tetrahedron and its points
@@ -235,36 +236,18 @@ void TetMesh::buildGrid(const glm::vec3& nbCube, const glm::vec3& sizeCube, cons
 
 void TetMesh::setPointPosition(int indices, const glm::vec3& position) {
     glm::vec3& p = this->ptGrid[indices];
-    //std::cout << "Set point: " << p << " -> ";
     p = position;
-    std::cout << p << std::endl;
-    // Update bbs
-    for(int i = 0; i < 3; ++i) {
-        if(p[i] > this->bbMax[i])
-            this->bbMax[i] = p[i];
-
-        if(p[i] < this->bbMin[i])
-            this->bbMin[i] = p[i];
-    }
     // Recompute all normals, can be optimized
     this->computeNormals();
+    this->updatebbox();
 }
 
 void TetMesh::movePoint(int indices, const glm::vec3& position) {
     glm::vec3& p = this->ptGrid[indices];
-    //std::cout << "Move point: " << p << " -> ";
     p += position;
-    std::cout << p << std::endl;
-    // Update bbs
-    for(int i = 0; i < 3; ++i) {
-        if(p[i] > this->bbMax[i])
-            this->bbMax[i] = p[i];
-
-        if(p[i] < this->bbMin[i])
-            this->bbMin[i] = p[i];
-    }
     // Recompute all normals, can be optimized
     this->computeNormals();
+    this->updatebbox();
 }
 
 bool TetMesh::isEmpty() const {
@@ -412,4 +395,22 @@ void TetMesh::computeNormals() {
     }
 }
 
-/* Unit test */
+void TetMesh::updatebbox() {
+    auto maxX = std::max_element(ptGrid.begin(), ptGrid.end(), [](const glm::vec3& lhs, const glm::vec3& rhs) { return lhs[0] < rhs[0]; });
+    auto minX = std::min_element(ptGrid.begin(), ptGrid.end(), [](const glm::vec3& lhs, const glm::vec3& rhs) { return lhs[0] < rhs[0]; });
+    auto maxY = std::max_element(ptGrid.begin(), ptGrid.end(), [](const glm::vec3& lhs, const glm::vec3& rhs) { return lhs[1] < rhs[1]; });
+    auto minY = std::min_element(ptGrid.begin(), ptGrid.end(), [](const glm::vec3& lhs, const glm::vec3& rhs) { return lhs[1] < rhs[1]; });
+    auto maxZ = std::max_element(ptGrid.begin(), ptGrid.end(), [](const glm::vec3& lhs, const glm::vec3& rhs) { return lhs[2] < rhs[2]; });
+    auto minZ = std::min_element(ptGrid.begin(), ptGrid.end(), [](const glm::vec3& lhs, const glm::vec3& rhs) { return lhs[2] < rhs[2]; });
+
+    int maxXIdx = std::distance(ptGrid.begin(), maxX);
+    int minXIdx = std::distance(ptGrid.begin(), minX);
+    int maxYIdx = std::distance(ptGrid.begin(), maxY);
+    int minYIdx = std::distance(ptGrid.begin(), minY);
+    int maxZIdx = std::distance(ptGrid.begin(), maxZ);
+    int minZIdx = std::distance(ptGrid.begin(), minZ);
+
+    this->bbMax = glm::vec3(this->ptGrid[maxXIdx][0], this->ptGrid[maxYIdx][1], this->ptGrid[maxZIdx][2]);
+    this->bbMin = glm::vec3(this->ptGrid[minXIdx][0], this->ptGrid[minYIdx][1], this->ptGrid[minZIdx][2]);
+}
+

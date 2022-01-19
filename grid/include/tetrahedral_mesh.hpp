@@ -67,6 +67,8 @@ struct TetMesh {
 
     void computeNormals();
 
+    void updatebbox();
+
 private:
     // This function is private because it doesn't update fields nbTetra, bbMin and bbMax
     // Thus it can only be used in buildGrid function
