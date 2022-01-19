@@ -1534,8 +1534,13 @@ void Scene::prepareUniformsGridPlaneView(GLfloat* mvMat, GLfloat* pMat, glm::vec
 	GLint location_colorScales2 = getUniform("colorScales[2]");
 	GLint location_colorScales3 = getUniform("colorScales[3]");
 
-	Image::bbox_t::vec origin	= Image::bbox_t(gridView->grid->getBoundingBox()).getMin();
-	Image::bbox_t::vec originWS = Image::bbox_t(gridView->grid->getBoundingBox()).getMin();
+	//Image::bbox_t::vec origin	= Image::bbox_t(gridView->grid->getBoundingBox()).getMin();
+	//Image::bbox_t::vec originWS = Image::bbox_t(gridView->grid->getBoundingBox()).getMin();
+	//glm::vec3 dims				= gridView->grid->getResolution();
+
+    // Do not use the bounding anymore as it can change due to deformation
+	Image::bbox_t::vec origin	= glm::vec3(0., 0., 0.);
+	Image::bbox_t::vec originWS = glm::vec3(0., 0., 0.);
 	glm::vec3 dims				= gridView->grid->getResolution();
 
 	glUniform3fv(voxelGridOrigin_Loc, 1, glm::value_ptr(origin));
@@ -1795,9 +1800,12 @@ void Scene::prepareUniformsPlanes(GLfloat* mvMat, GLfloat* pMat, planes _plane, 
 
 void Scene::prepareUniformsMonoPlaneView(planes _plane, planeHeading _heading, glm::vec2 fbDims, float zoomRatio, glm::vec2 offset, const GridGLView::Ptr& _grid) {
 	glUseProgram(this->program_PlaneViewer);
-	// The BB used is the scene's bounding box :
-	const Image::bbox_t::vec& bbox	 = this->sceneBB.getDiagonal();
-	const Image::bbox_t::vec& posBox = this->sceneBB.getMin();
+	// The BB used is the scene's bounding box :// NO not anymore, because the scene can be deformed
+	//const Image::bbox_t::vec& bbox	 = this->sceneBB.getDiagonal();
+	//const Image::bbox_t::vec& posBox = this->sceneBB.getMin();
+
+	const Image::bbox_t::vec& bbox	 = this->grids[0]->grid->getResolution();
+	const Image::bbox_t::vec& posBox = glm::vec3(0., 0., 0.);
 
 	// The correct bounding box coordinates :
 	glm::vec2 gridBBDims;
@@ -1818,7 +1826,7 @@ void Scene::prepareUniformsMonoPlaneView(planes _plane, planeHeading _heading, g
 	uint plane_heading							= planeHeadingToIndex(_heading);
 #warning Transform API is still in-progress.
 	// Grid dimensions :
-	glm::vec3 gridDimensions = glm::convert_to<glm::vec3::value_type>(Image::bbox_t(_grid->grid->getBoundingBox()).getDiagonal());
+	glm::vec3 gridDimensions = this->grids[0]->grid->getResolution();
 	// Depth of the plane :
 	glm::vec3 planePos = this->computePlanePositions();
 
