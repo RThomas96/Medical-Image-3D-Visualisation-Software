@@ -190,24 +190,6 @@ SimpleVolMesh::~SimpleVolMesh(void) {
 	this->planar_view.clear();
 }
 
-VolMeshData::VolMeshData() {
-	this->positions.clear();
-	this->texture.clear();
-	this->tetrahedra.clear();
-	this->neighbors.clear();
-	this->normals.clear();
-	this->rawVertices = nullptr;
-}
-
-VolMeshData::~VolMeshData() {
-	this->positions.clear();
-	this->texture.clear();
-	this->tetrahedra.clear();
-	this->neighbors.clear();
-	this->normals.clear();
-	delete[] this->rawVertices;
-}
-
 VolMesh::VolMesh(void) {
 	// All texture handles are at 0 by default (initial value
 	// of tex names according to GL spec version 4.5)

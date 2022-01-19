@@ -80,35 +80,6 @@ public:
 };
 
 /// @ingroup graphpipe
-/// @brief Helper class regrouping the data of a tetrahedral mesh.
-struct VolMeshData
-{
-public:
-	VolMeshData(void);
-	VolMeshData(const VolMeshData&) = delete;
-	VolMeshData(VolMeshData&&) = delete;
-	VolMeshData& operator=(const VolMeshData&) = delete;
-	VolMeshData& operator=(VolMeshData&&) = delete;
-	~VolMeshData(void);
-
-public:
-	std::vector<glm::vec4> positions;
-	std::vector<glm::vec3> texture;
-	std::vector<std::array<std::size_t, 4>> tetrahedra;
-	std::vector<std::vector<int>> neighbors;
-	std::vector<std::array<glm::vec4, 4>> normals;
-
-	GLfloat* rawVertices;
-	GLfloat* rawNormals;
-	/// @brief Temporary struct to map points to indices
-	// 0: to Positions
-	// 1: to raw Vertices
-	// 2: to raw Normals
-	// 3: to Tetrahedra index
-	std::vector<std::pair<glm::vec4, std::vector<std::vector<int>>>> idxMap;
-};
-
-/// @ingroup graphpipe
 /// @brief The VolMesh structure holds all of the texture handles necessary to make our volumetric visualization method
 /// work.
 /// @details It is used in conjonction with the VolMeshData struct in order to provide a simple and centralized
