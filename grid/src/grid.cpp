@@ -100,7 +100,7 @@ void Grid::writeDeformedGrid(const Grid& initial, ResolutionMode resolutionMode)
     std::cout << "Original image dimensions: " << initial.tetmesh.bbMax - initial.tetmesh.bbMin << std::endl;
     std::cout << "Image dimensions: " << imageDimension << std::endl;
     std::cout << "For " << bboxMin << " to " << bboxMax << " per " << voxelDimension << std::endl;
-    TinyTIFFWriterFile * tif = TinyTIFFWriter_open("../../../../Data/data_debug/img2.tif", 16, TinyTIFFWriter_UInt, 1, imageDimension[0], imageDimension[1], TinyTIFFWriter_Greyscale);
+    TinyTIFFWriterFile * tif = TinyTIFFWriter_open("../../../data_debug/img2.tif", 16, TinyTIFFWriter_UInt, 1, imageDimension[0], imageDimension[1], TinyTIFFWriter_Greyscale);
     std::cout << "For " << bboxMin << " to " << bboxMax << " per " << voxelDimension << std::endl;
 
     std::vector<uint16_t> data;
