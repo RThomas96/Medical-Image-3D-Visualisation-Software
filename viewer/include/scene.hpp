@@ -274,7 +274,6 @@ public:
 	void updateCVR();// Update colorChannelAttributes
 	void updateBoundingBox(void);
 	void updateVisuBoxCoordinates(void);
-	void tex3D_loadMESHFile(const std::string name, const GridGLView::Ptr& grid, VolMeshData& _mesh);// Load a .mesh file for the tetrahedral mesh
 	glm::vec3 computePlanePositions();
     /*************************************************/
 
