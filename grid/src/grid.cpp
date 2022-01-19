@@ -141,7 +141,7 @@ std::pair<glm::vec3, glm::vec3> Grid::getBoundingBox() const {
     return std::pair(this->tetmesh.bbMin, this->tetmesh.bbMax);
 }
 
-glm::vec3 Grid::getPositionOfRayIntersection(const Grid& initial, const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue) const {
+bool Grid::getPositionOfRayIntersection(const Grid& initial, const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, glm::vec3& res) const {
     glm::vec3 nDirection = glm::normalize(direction);
 
     glm::vec3 dimension = this->sampler.getSamplerDimension();
@@ -151,12 +151,15 @@ glm::vec3 Grid::getPositionOfRayIntersection(const Grid& initial, const glm::vec
     for(float i = 0; i < maxDistance; i+=step) {
         const glm::vec3 p = origin + i * nDirection;
         const uint16_t value = this->getDeformedValueFromPoint(initial, p);
-        if(value > minValue && value < maxValue)
-            return p;
+        if(value > minValue && value < maxValue) {
+            res = p;
+            return true;
+        }
     }
 
     std::cout << "Warning: no point found" << std::endl;
-    return origin;
+    res = origin;
+    return false;
 }
 
 /**************************/

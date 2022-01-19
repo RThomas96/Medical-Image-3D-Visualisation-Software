@@ -3572,6 +3572,10 @@ void Scene::launchSaveDialog() {
 }
 
 void Scene::slotDisplayValueFromRay(const glm::vec3& origin, const glm::vec3& direction) {
-    glm::vec3 res = this->grids[0]->grid->grid->getPositionOfRayIntersection(*this->initial->grid, origin, direction, 0, 255);
-    std::cout << "The voxel ray position is: " << res << std::endl;
+    glm::vec3 res = glm::vec3(0., 0., 0.);
+    if(this->grids[0]->grid->grid->getPositionOfRayIntersection(*this->initial->grid, origin, direction, this->getMinTexValue(), this->getMaxTexValue(), res)) {
+        std::cout << "The voxel ray position is: " << res << std::endl;
+    } else {
+        std::cout << "No point found" << std::endl;
+    }
 }
