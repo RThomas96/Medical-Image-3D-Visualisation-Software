@@ -513,13 +513,6 @@ public:
 /* Temporary */
 /*************/
 public:
-
-    template <typename pixel_t>
-    std::vector<pixel_t> read_subpixels_from_slice(std::vector<pixel_t>& src, std::size_t samples_in_src, std::size_t beg);
-    bool writeGrid(int gridIdx);
-
-    void checkTetMesh();
-
     std::string filename = "";
 };
 
