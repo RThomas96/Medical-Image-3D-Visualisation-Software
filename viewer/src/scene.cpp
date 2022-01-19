@@ -718,7 +718,6 @@ void Scene::addGrid(const GridGL * gridLoaded) {
 
     //Send grid texture
 	this->sendTetmeshToGPU(0, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS | InfoToSend::TEXCOORD | InfoToSend::NEIGHBORS));
-	this->tex3D_buildVisTexture(gridView->volumetricMesh);
 	this->tex3D_buildBuffers(gridView->volumetricMesh);
 
     //Add manipulators
@@ -3605,39 +3604,6 @@ void Scene::tex3D_generateMESH(GridGLView::Ptr& grid, VolMeshData& mesh) {
 	 * of the mesh's tetrahedra. */
 
 	return;
-}
-
-void Scene::tex3D_buildVisTexture(VolMesh& volMesh) {
-	std::size_t visWidth = 0, visHeight = 0;
-	__GetTexSize(256, &visWidth, &visHeight);
-
-	GLfloat* rawVisibility = new GLfloat[256 * 3];
-
-	for (std::size_t i = 0; i < 256; ++i) {
-		rawVisibility[i * 3 + 0] = 100.f;
-		rawVisibility[i * 3 + 1] = 100.f;
-		rawVisibility[i * 3 + 2] = 100.f;
-	}
-
-	// Struct to upload the texture to OpenGL :
-	TextureUpload texParams = {};
-
-	// Vertex positions :
-	texParams.minmag.x = GL_NEAREST;
-	texParams.minmag.y = GL_NEAREST;
-	texParams.lod.y	   = -1000.f;
-	texParams.wrap.s   = GL_CLAMP;
-	texParams.wrap.t   = GL_CLAMP;
-	// Swizzle and alignment unchanged, not present in Texture3D
-	texParams.internalFormat = GL_RGB32F;
-	texParams.size.x		 = visWidth;
-	texParams.size.y		 = visHeight;
-	texParams.format		 = GL_RGB;
-	texParams.type			 = GL_FLOAT;
-	texParams.data			 = rawVisibility;
-	volMesh.visibilityMap	 = this->uploadTexture2D(texParams);
-
-	delete[] rawVisibility;
 }
 
 void Scene::tex3D_buildBuffers(VolMesh& volMesh) {
