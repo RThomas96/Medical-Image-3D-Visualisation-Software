@@ -380,7 +380,6 @@ public:
 
     /* Getters & setters */
 	glm::vec3 getSceneBoundaries() const;
-	void getTetraMeshPoints(std::vector<glm::vec3>& points);
 
 	double getMinNumericLimit(size_t gridIndex) const { return Image::getMinNumericLimit(grids[gridIndex]->grid->getInternalDataType()); }
 	double getMaxNumericLimit(size_t gridIndex) const { return Image::getMaxNumericLimit(grids[gridIndex]->grid->getInternalDataType()); }
@@ -409,8 +408,6 @@ public:
 	void setVisuBoxMinCoord(glm::uvec3 coor_min);
 	void setVisuBoxMaxCoord(glm::uvec3 coor_max);
 	void resetVisuBox();
-
-	glm::vec3 getVertexPosition(int index);// Return the position of the tetrahedra point index
 
 	void setDrawMode(DrawMode _mode);
 

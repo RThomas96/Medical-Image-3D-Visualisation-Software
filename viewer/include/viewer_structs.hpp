@@ -195,7 +195,6 @@ public:
 	//Image::Grid::Ptr grid;
     //const Grid * grid;
     const GridGL * grid;
-	VolMeshData volumetricMeshData;
 
     // WARNING
     // TODO: to fill

@@ -658,8 +658,6 @@ void Scene::addGrid(const GridGL * gridLoaded) {
 	_gridTex.size.y = dimensions.y;
 	_gridTex.size.z = dimensions.z;
 
-	//std::vector<uint16_t> slices(dimensions.x * dimensions.y * dimensions.a);
-
 	std::vector<std::uint16_t> slices;
     gridView->gridTexture = this->newAPI_uploadTexture3D_allocateonly(_gridTex);
 
@@ -693,15 +691,9 @@ void Scene::addGrid(const GridGL * gridLoaded) {
     this->controlPanel->updateMaxValueAlternate(max);
 	this->slotSetMaxColorValueAlternate(max);
 
-    //this->controlPanel->updateChannelRed(2);
-    //this->controlPanel->updateChannelGreen(2);
 	this->setRGBMode(RGBMode::RedOnly);
 	this->setColorFunction_r(ColorFunction::ColorMagnitude);
 	this->setColorFunction_g(ColorFunction::ColorMagnitude);
-
-    //for (std::size_t s = 0; s < dimensions.z; ++s) {
-    //    this->newAPI_uploadTexture3D(gridView->gridTexture, _gridTex, s, slices);
-    //}
 
 	gridView->boundingBoxColor = glm::vec3(.4, .6, .3);	   // olive-colored by default
 	gridView->nbChannels	   = 2;	   // loaded 2 channels in the image
@@ -1303,28 +1295,9 @@ void Scene::loadMesh() {
 	this->to_init.emplace(mesh_drawable);
 }
 
-void Scene::getTetraMeshPoints(std::vector<glm::vec3>& points) {
-	if (this->grids.size() > 0) {
-		VolMeshData& mesh = this->grids[0]->volumetricMeshData;
-
-		for (int i = 0; i < mesh.idxMap.size(); ++i) {
-			glm::vec3 point = glm::vec3(0., 0., 0.);
-			for (int k = 0; k < 3; ++k) {
-				point[k] = mesh.positions[mesh.idxMap[i].second[0][0]][k];
-			}
-			points.push_back(point);
-		}
-	}
-}
-
 void Scene::applyDeformation() {
     this->updateTetmeshOnManipulators();
     this->sendTetmeshToGPU(0, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS));
-}
-
-glm::vec3 Scene::getVertexPosition(int index) {
-	VolMeshData& mesh = this->grids[0]->volumetricMeshData;
-	return mesh.idxMap[index].first;
 }
 
 void Scene::loadCurve() {
@@ -3836,30 +3809,15 @@ void Scene::checkTetMesh() {
     //checkReadSimpleImage();
     std::cout << "/********************/" << std::endl;
 
-    //throw std::runtime_error("Fin des TU");
 }
 
 void Scene::launchSaveDialog() {
-	// if no grids are loaded, do nothing !
-	//if (this->grids.size() == 0) {
-	//	QMessageBox messageBox;
-	//	messageBox.critical(nullptr, "Error", "Cannot save a grid when nothing is loaded !");
-	//	messageBox.setFixedSize(500, 200);
-	//	return;
-	//}
-
-	//if (this->gridControl != nullptr) {
-	//	std::cerr << "Controller was already added, showing it now ...\n";
-	//	this->gridControl->raise();
-	//	this->gridControl->show();
-	//	return;
-	//}
-
-    //this->writeGrid(0);
-
-    //Simple version
-
-    //this->grids[0]->grid->checkReadSlice();
+	if (this->grids.size() == 0) {
+		QMessageBox messageBox;
+		messageBox.critical(nullptr, "Error", "Cannot save a grid when nothing is loaded !");
+		messageBox.setFixedSize(500, 200);
+		return;
+	}
 
     glm::vec3 nb = glm::vec3(5., 5., 5.);
 
@@ -3868,46 +3826,10 @@ void Scene::launchSaveDialog() {
     Grid deformableGrid(this->filename, nb, this->temp_ratio);
     Grid initialGrid(this->filename, nb, this->temp_ratio);
 
-    //deformableGrid.movePoint(glm::vec3(1, 1, 1), glm::vec3(600, 0., 0.));
-
-	VolMeshData& mesh = this->grids[0]->volumetricMeshData;
-    std::vector<std::pair<glm::vec4, std::vector<std::vector<int>>>> idxMap = this->grids[0]->volumetricMeshData.idxMap;
-
     std::vector<glm::vec3> positions;
-    for(int i = 0; i < idxMap.size(); ++i) {
-        positions.push_back(glm::vec3(mesh.positions[idxMap[i].second[0][0]]));
-    }
-
     deformableGrid.replaceAllPoints(positions);
     deformableGrid.writeDeformedGrid(initialGrid);
 
-	// TODO
-	// Add calls to tetmesh and grid control when they will be compatible with new API
-
-	//// create an output grid AND a tetmesh to generate it :
-	//std::shared_ptr<OutputGrid> outputGrid = std::make_shared<OutputGrid>();
-	//outputGrid->setOffline();
-
-	//InterpolationMesh::Ptr tetmesh = std::make_shared<InterpolationMesh>();
-	//// add the grids to the tetmesh
-	//for (std::size_t i = 0; i < this->grids.size(); ++i) {
-	//	std::for_each(this->grids[i]->grid.cbegin(), this->grids[i]->grid.cend(),
-	//	  [&tetmesh](const std::shared_ptr<DiscreteGrid>& _g) {
-	//		  tetmesh->addInputGrid(std::dynamic_pointer_cast<InputGrid>(_g));
-	//	  });
-	//}
-	//// add the output grid
-	//tetmesh->setOutputGrid(outputGrid);
-
-	//// So we can draw it :
-	//GridGLView::Ptr outputGridView = std::make_shared<GridGLView>(std::initializer_list<std::shared_ptr<DiscreteGrid>>({outputGrid}));
-	//this->grids.push_back(outputGridView);
-
-	//// create a grid controller to generate a new outputgrid
-	//this->gridControl = new GridControl(outputGrid, tetmesh, this);
-	//// show it :
-	//gridControl->show();
-	//// done
 	return;
 }
 
