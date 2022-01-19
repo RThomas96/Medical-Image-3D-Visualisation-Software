@@ -1,5 +1,6 @@
 #include "../include/grid.hpp"
 #include <chrono>
+#include <algorithm>
 
 bool isPtInBB(const glm::vec3& p, const glm::vec3& bbmin, const glm::vec3& bbmax) {
     for(int i = 0; i < 3; ++i) {
@@ -28,7 +29,7 @@ Grid::Grid(const std::vector<std::string>& filename, const glm::vec3& nbCube, in
     this->tetmesh.buildGrid(nbCube, sizeCube, this->sampler.subregionMin);
 }
 
-glm::vec3 Grid::getCoordInInitial(const Grid& initial, glm::vec3 p) {
+glm::vec3 Grid::getCoordInInitial(const Grid& initial, glm::vec3 p) const{
     int tetraIdx = this->tetmesh.inTetraIdx(p);
     if(tetraIdx != -1) {
         glm::vec4 baryCoordInDeformed = this->tetmesh.getTetra(tetraIdx).computeBaryCoord(p);
@@ -52,6 +53,13 @@ uint16_t Grid::getValueFromPoint(const glm::vec3& p, ResolutionMode resolutionMo
         // Background value
         return 0;
     }
+}
+
+uint16_t Grid::getDeformedValueFromPoint(const Grid& initial, const glm::vec3& p, ResolutionMode resolutionMode) const {
+    glm::vec3 pt2 = this->getCoordInInitial(initial, p);
+    if(resolutionMode == ResolutionMode::FULL_RESOLUTION)
+        this->sampler.fromSamplerToImage(pt2);
+    return initial.getValueFromPoint(pt2, resolutionMode);
 }
 
 void Grid::movePoint(int indices, const glm::vec3& position) {
@@ -131,6 +139,27 @@ void Grid::writeDeformedGrid(const Grid& initial, ResolutionMode resolutionMode)
 
 std::pair<glm::vec3, glm::vec3> Grid::getBoundingBox() const {
     return std::pair(this->tetmesh.bbMin, this->tetmesh.bbMax);
+}
+
+bool Grid::getPositionOfRayIntersection(const Grid& initial, const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, glm::vec3& res) const {
+    glm::vec3 nDirection = glm::normalize(direction);
+
+    glm::vec3 dimension = this->sampler.getSamplerDimension();
+    float maxDistance = glm::length(dimension);    
+    float step = maxDistance/std::max({dimension[0], dimension[1], dimension[2]});
+
+    for(float i = 0; i < maxDistance; i+=step) {
+        const glm::vec3 p = origin + i * nDirection;
+        const uint16_t value = this->getDeformedValueFromPoint(initial, p);
+        if(value > minValue && value < maxValue) {
+            res = p;
+            return true;
+        }
+    }
+
+    std::cout << "Warning: no point found" << std::endl;
+    res = origin;
+    return false;
 }
 
 /**************************/

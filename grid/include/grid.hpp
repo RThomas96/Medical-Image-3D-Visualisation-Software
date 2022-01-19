@@ -65,8 +65,9 @@ struct Grid {
 
     // Here p is a 3D point, not like coord from TIFFImage's "getValue" function that is a set of 3 indices 
     uint16_t getValueFromPoint(const glm::vec3& p, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
+    glm::vec3 getCoordInInitial(const Grid& initial, glm::vec3 p) const;
 
-    glm::vec3 getCoordInInitial(const Grid& initial, glm::vec3 p);
+    uint16_t getDeformedValueFromPoint(const Grid& initial, const glm::vec3& p, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
 
     void movePoint(int indices, const glm::vec3& position);
     void writeDeformedGrid(const Grid& initial, ResolutionMode resolutionMode = ResolutionMode::FULL_RESOLUTION);
@@ -75,6 +76,10 @@ struct Grid {
 
     glm::vec3 getDimension() const;
     std::pair<glm::vec3, glm::vec3> getBoundingBox() const;
+
+    // Get the position of the intersection between a ray and the grid
+    // The ray is intersecting the grid only if it hit a value between minValue and maxValue
+    bool getPositionOfRayIntersection(const Grid& initial, const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, glm::vec3& res) const;
 
     // TODO: temproray
     TetMesh tetmesh;

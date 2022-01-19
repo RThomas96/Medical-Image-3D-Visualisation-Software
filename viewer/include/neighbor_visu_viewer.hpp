@@ -82,6 +82,8 @@ private:
 	QStatusBar* statusBar;
 	bool drawAxisOnTop;
 
+    QPoint mousePos;
+
 	//
 	// Stubs for ARAP integration
 	//
@@ -109,6 +111,8 @@ public slots:
 	void guessMousePosition(void);
 
 	void toggleManipulators(void);
+
+    void displayMousePosition(void);
 };
 
 #endif	  // VIEWER_INCLUDE_NEIGHBOR_VISU_VIEWER_HPP_

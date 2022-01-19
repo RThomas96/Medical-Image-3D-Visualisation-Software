@@ -175,7 +175,7 @@ glm::vec4 Tetrahedron::computeBaryCoord(const glm::vec3& p) {
     return glm::vec4(va6*v6, vb6*v6, vc6*v6, vd6*v6);
 }
 
-bool Tetrahedron::isInTetrahedron(const glm::vec3& p) {
+bool Tetrahedron::isInTetrahedron(const glm::vec3& p) const {
     const glm::vec3& v1 = *this->points[0];
     const glm::vec3& v2 = *this->points[1];
     const glm::vec3& v3 = *this->points[2];
@@ -258,7 +258,7 @@ Tetrahedron TetMesh::getTetra(int idx) const {
     return mesh[idx];
 } 
 
-int TetMesh::inTetraIdx(const glm::vec3& p) {
+int TetMesh::inTetraIdx(const glm::vec3& p) const {
     int i = 0;
     for(int i = 0; i < mesh.size(); ++i)
         if(mesh[i].isInTetrahedron(p))

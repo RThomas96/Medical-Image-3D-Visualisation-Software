@@ -111,6 +111,9 @@ void Viewer::keyPressEvent(QKeyEvent* e) {
 		/*
 		VIEWER BEHAVIOUR
 		*/
+		case Qt::Key::Key_Q:
+            this->displayMousePosition();
+			break;
 		case Qt::Key::Key_Space:
 			this->selectMode = not this->selectMode;
 			msg				 = "Turned selection mode " + (this->selectMode ? QString("on") : QString("off"));
@@ -259,6 +262,7 @@ void Viewer::mouseMoveEvent(QMouseEvent* e) {
 		this->guessMousePosition();
 	}
 	QGLViewer::mouseMoveEvent(e);
+    this->mousePos = e->pos();
 }
 
 void Viewer::mouseReleaseEvent(QMouseEvent* e) {
@@ -293,6 +297,13 @@ void Viewer::resizeGL(int w, int h) {
 		  this->defaultFramebufferObject(),
 		  this->renderTarget);
 	}
+}
+
+void Viewer::displayMousePosition() {
+    qglviewer::Vec origin;
+    qglviewer::Vec direction;
+    this->camera()->convertClickToLine(this->mousePos, origin, direction); 
+    this->scene->slotDisplayValueFromRay(glm::vec3(origin.x, origin.y, origin.z), glm::vec3(direction.x, direction.y, direction.z));
 }
 
 void Viewer::guessMousePosition() {

@@ -296,9 +296,11 @@ private:
     /* Containers */
 public:
 	UITool::GL::MeshManipulator* glMeshManipulator;
+    GridGL * initial;
 	//std::vector<DeformableGrid*> grids;
 private:
 	std::vector<GridGLView::Ptr> grids;
+    // TODO: remove this
 
 	std::vector<std::size_t> delGrid;	 ///< Grids to delete at next refresh
 	qglviewer::Frame* posFrame;
@@ -353,6 +355,9 @@ private:
     /* Functions */
 public:
     /* Widget interaction */
+
+    void slotDisplayValueFromRay(const glm::vec3& origin, const glm::vec3& direction);
+
 	void showVisuBoxController(VisuBoxController* _controller);
 	void removeVisuBoxController();
 

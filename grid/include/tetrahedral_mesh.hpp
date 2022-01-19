@@ -22,7 +22,7 @@ struct Tetrahedron {
 
     glm::vec4 computeBaryCoord(const glm::vec3& p);
 
-    bool isInTetrahedron(const glm::vec3& p);
+    bool isInTetrahedron(const glm::vec3& p) const;
 
     glm::vec3 baryToWorldCoord(const glm::vec4& coord);
 
@@ -54,7 +54,7 @@ struct TetMesh {
 
     Tetrahedron getTetra(int idx) const;
 
-    int inTetraIdx(const glm::vec3& p);
+    int inTetraIdx(const glm::vec3& p) const;
 
     glm::vec3 getDimensions() const;
 
