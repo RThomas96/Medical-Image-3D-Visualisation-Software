@@ -164,17 +164,19 @@ void GridLoaderWidget::loadNewGridAPI() {
 		filenamesAsString.push_back(filenames[i].toStdString());
 	}
 
+    glm::vec3 sizeTetmesh = glm::vec3(20., 5. ,5.);
+
 	if(this->group_bbox->isChecked()) {
         std::pair<glm::vec3, glm::vec3> bbox{glm::vec3(this->spinbox_bboxMin_x->value(), this->spinbox_bboxMin_y->value(), this->spinbox_bboxMin_z->value()), glm::vec3(this->spinbox_bboxMax_x->value(), this->spinbox_bboxMax_y->value(), this->spinbox_bboxMax_z->value())};
         std::cout << bbox.first << std::endl;
         std::cout << bbox.second << std::endl;
-	    this->_testing_grid = new GridGL(filenamesAsString, glm::vec3(5., 5. ,5.), subsample, bbox);
+	    this->_testing_grid = new GridGL(filenamesAsString, sizeTetmesh, subsample, bbox);
         //TODO: to remove
-        this->scene->initial = new GridGL(filenamesAsString, glm::vec3(5., 5. ,5.), subsample, bbox);
+        this->scene->initial = new GridGL(filenamesAsString, sizeTetmesh, subsample, bbox);
         this->scene->temp_ratio = subsample;
     } else {
-	    this->_testing_grid = new GridGL(filenamesAsString, glm::vec3(5., 5. ,5.), subsample);
-        this->scene->initial = new GridGL(filenamesAsString, glm::vec3(5., 5. ,5.), subsample);
+	    this->_testing_grid = new GridGL(filenamesAsString, sizeTetmesh, subsample);
+        this->scene->initial = new GridGL(filenamesAsString, sizeTetmesh, subsample);
         this->scene->temp_ratio = subsample;
     }
     this->loadGrid_newAPI();

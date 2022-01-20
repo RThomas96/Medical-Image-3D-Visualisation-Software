@@ -53,7 +53,7 @@ namespace UITool {
 		this->lockConstraint   = new LockConstraint();
 
 		for (int i = 0; i < nbManipulators; ++i) {
-			this->manipulators[i].setAssignedIdx(215-i);
+			this->manipulators[i].setAssignedIdx(nbManipulators-i);
 			this->lock(i);
 		}
 	}

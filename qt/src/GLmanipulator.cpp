@@ -21,7 +21,6 @@ void UITool::GL::MeshManipulator::prepare() {
 
 	this->texParams.data   = allPositions.data();
 	this->texParams.size.x = allPositions.size();
-	;
 
 	this->tex = this->sceneGL->uploadTexture1D(this->texParams);
 
@@ -72,7 +71,6 @@ void UITool::GL::MeshManipulator::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* m
 
 	this->texParams.data   = allPositions.data();
 	this->texParams.size.x = allPositions.size();
-	;
 
 	this->tex = this->sceneGL->uploadTexture1D(this->texParams);
 
