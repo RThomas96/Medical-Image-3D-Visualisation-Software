@@ -1196,6 +1196,15 @@ void Scene::loadMesh() {
 }
 
 void Scene::applyDeformation() {
+    // This is the direct manipulator version, on which you use directly the vertices
+    int ptIdx = this->glMeshManipulator->meshManipulator->getActiveManipulatorAssignedIdx();
+    glm::vec3 newPosition = this->glMeshManipulator->meshManipulator->getActiveManipulatorPos();
+
+    float radius = 100;
+    MoveMethod * method = new WeightedMethod(radius);
+    this->grids[0]->grid->grid->tetmesh.movePoint(ptIdx, newPosition, method);
+    delete method;
+
     this->updateTetmeshOnManipulators();
     this->sendTetmeshToGPU(0, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS));
 }
@@ -2168,7 +2177,7 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 	this->drawBoundingBox(this->sceneBB, glm::vec4(.5, .5, .0, 1.), mvMat, pMat);
 	this->showVAOstate = false;
 
-    // Draw manipulators
+    // Direct manipulation version
 	if (this->glMeshManipulator->meshManipulator->isActiveManipulatorManipuled()) {
 		this->applyDeformation();
 	}
@@ -3433,14 +3442,6 @@ void Scene::updateManipulatorPositions() {
 }
 
 void Scene::updateTetmeshOnManipulators() {
-    int ptIdx = this->glMeshManipulator->meshManipulator->getActiveManipulatorAssignedIdx();
-    glm::vec3 newPosition = this->glMeshManipulator->meshManipulator->getActiveManipulatorPos();
-
-    float radius = 100;
-    MovePointMethod * method = new WeightedMethod(radius);
-    this->grids[0]->grid->grid->tetmesh.movePoint(ptIdx, newPosition, method);
-    delete method;
-
     // This is usefull because some moveValues move multiple points
     this->updateManipulatorPositions();
 }

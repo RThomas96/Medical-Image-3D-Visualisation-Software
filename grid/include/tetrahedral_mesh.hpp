@@ -31,31 +31,37 @@ struct Tetrahedron {
     int getPointIndex(int faceIdx, int ptIdxInFace) const;
 };
 
-enum MovePointMethodType {
+/***/
+
+enum MoveMethodType {
     NORMAL,
     REPLACE,
     WEIGHTED
 };
 
-struct MovePointMethod {
-    MovePointMethodType movePointMethodType;
-    MovePointMethod(MovePointMethodType movePointMethodType) : movePointMethodType(movePointMethodType) {}
+struct MoveMethod {
+    MoveMethodType moveMethodType;
+    MoveMethod(MoveMethodType movePointMethodType) : moveMethodType(movePointMethodType) {}
 
-    virtual ~MovePointMethod() = default;// To make MovePointMethod virtual
+    virtual ~MoveMethod() = default;// To make MoveMethod virtual
 };
 
-struct WeightedMethod : MovePointMethod {
+/***/
+
+struct WeightedMethod : MoveMethod {
     float radius;
-    WeightedMethod(float radius) : MovePointMethod(MovePointMethodType::WEIGHTED), radius(radius) {}
+    WeightedMethod(float radius) : MoveMethod(MoveMethodType::WEIGHTED), radius(radius) {}
 };
 
-struct NormalMethod : MovePointMethod {
-    NormalMethod() : MovePointMethod(MovePointMethodType::NORMAL) {}
+struct NormalMethod : MoveMethod {
+    NormalMethod() : MoveMethod(MoveMethodType::NORMAL) {}
 };
 
-struct ReplaceMethod : MovePointMethod {
-    ReplaceMethod() : MovePointMethod(MovePointMethodType::REPLACE) {}
+struct ReplaceMethod : MoveMethod {
+    ReplaceMethod() : MoveMethod(MoveMethodType::REPLACE) {}
 };
+
+/***/
 
 struct TetMesh {
 
@@ -73,7 +79,7 @@ struct TetMesh {
     void buildGrid(const glm::vec3& nbCube, const glm::vec3& sizeCube, const glm::vec3& origin);
 
     // Functions to move points
-    void movePoint(int indices, const glm::vec3& position, const MovePointMethod * movePointMethod);
+    void movePoint(int indice, const glm::vec3& newPosition, const MoveMethod * moveMethod);
 
     bool isEmpty() const;
 
