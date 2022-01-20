@@ -265,6 +265,7 @@ public:
     /*************************************************/
 
     /* Others */
+    void removeLastManip();
 	void applyDeformation();
 	void newSHADERS_updateUserColorScales();
 	void signal_updateUserColorScales();

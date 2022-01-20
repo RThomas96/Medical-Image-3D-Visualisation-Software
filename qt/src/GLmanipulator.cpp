@@ -24,6 +24,32 @@ void UITool::GL::MeshManipulator::prepare() {
 
 	this->tex = this->sceneGL->uploadTexture1D(this->texParams);
 
+	// Initialize the texture paramters for upload
+	this->texParamsVisible.minmag.x = GL_NEAREST;
+	this->texParamsVisible.minmag.y = GL_NEAREST;
+	this->texParamsVisible.lod.y	 = -1000.f;
+	this->texParamsVisible.wrap.s	 = GL_CLAMP;
+	this->texParamsVisible.wrap.t	 = GL_CLAMP;
+
+	this->texParamsVisible.internalFormat = GL_RGB32F;
+	this->texParamsVisible.size.y		   = 1;
+	this->texParamsVisible.size.z		   = 1;
+	this->texParamsVisible.format		   = GL_RGB;
+	this->texParamsVisible.type		   = GL_FLOAT;
+
+	// TODO: copy here
+	std::vector<glm::vec3> toDisplay;
+    for(int i = 0; i < this->manipulatorToDisplay.size(); ++i)
+        if(this->manipulatorToDisplay[i])
+            toDisplay.push_back(glm::vec3(1., 1., 1.));
+        else
+            toDisplay.push_back(glm::vec3(0., 0., 0.));
+
+	this->texParamsVisible.data   = toDisplay.data();
+	this->texParamsVisible.size.x = toDisplay.size();
+
+	this->visible = this->sceneGL->uploadTexture1D(this->texParamsVisible);
+
 	// Store all these states in the VAO
 	this->sceneGL->glBindVertexArray(this->vao);
 
@@ -56,10 +82,11 @@ void UITool::GL::MeshManipulator::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* m
 
 	this->sceneGL->glUseProgram(this->program);
 
-	GLint location_mMat = getUniform("mMat");
-	GLint location_vMat = getUniform("vMat");
-	GLint location_pMat = getUniform("pMat");
-	GLint location_tex	= getUniform("positions");
+	GLint location_mMat     = getUniform("mMat");
+	GLint location_vMat     = getUniform("vMat");
+	GLint location_pMat     = getUniform("pMat");
+	GLint location_tex	    = getUniform("positions");
+	GLint location_visible	= getUniform("visible2");
 
 	this->sceneGL->glUniformMatrix4fv(location_mMat, 1, GL_FALSE, mMat);
 	this->sceneGL->glUniformMatrix4fv(location_vMat, 1, GL_FALSE, mvMat);
@@ -68,16 +95,32 @@ void UITool::GL::MeshManipulator::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* m
 	// Update the manipulators positions stored in the texture
 	std::vector<glm::vec3> allPositions;
 	this->meshManipulator->getAllPositions(allPositions);
-
 	this->texParams.data   = allPositions.data();
 	this->texParams.size.x = allPositions.size();
-
 	this->tex = this->sceneGL->uploadTexture1D(this->texParams);
+
+    /***/
+	std::vector<glm::vec3> toDisplay;
+    for(int i = 0; i < this->manipulatorToDisplay.size(); ++i)
+        if(this->manipulatorToDisplay[i])
+            toDisplay.push_back(glm::vec3(1., 1., 1.));
+        else
+            toDisplay.push_back(glm::vec3(0., 0., 0.));
+
+	this->texParamsVisible.data   = toDisplay.data();
+	this->texParamsVisible.size.x = toDisplay.size();
+	this->visible = this->sceneGL->uploadTexture1D(this->texParamsVisible);
+    /**/
 
 	std::size_t tex = 0;
 	this->sceneGL->glActiveTexture(GL_TEXTURE0 + tex);
 	this->sceneGL->glBindTexture(GL_TEXTURE_1D, this->tex);
 	this->sceneGL->glUniform1i(location_tex, tex);
+	tex++;
+
+	this->sceneGL->glActiveTexture(GL_TEXTURE0 + tex);
+	this->sceneGL->glBindTexture(GL_TEXTURE_1D, this->visible);
+	this->sceneGL->glUniform1i(location_visible, tex);
 	tex++;
 
 	this->sceneGL->glBindVertexArray(this->vao);
@@ -93,7 +136,7 @@ void UITool::GL::MeshManipulator::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* m
 	this->sceneGL->glDrawElementsInstanced(GL_TRIANGLES,
 	  this->manipulatorMesh.getIndexCount(),
 	  GL_UNSIGNED_INT,
-	  (void*) 0, this->meshManipulator->getNbManipulators());
+	  (void*) 0, allPositions.size());
 
 	this->sceneGL->glBindVertexArray(0);
 
@@ -108,4 +151,31 @@ void UITool::GL::MeshManipulator::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* m
 void UITool::GL::MeshManipulator::setRadius(float radius) { 
     this->manipulatorRadius = radius; 
     this->manipulatorMesh = Sphere(this->manipulatorRadius);
+}
+
+void UITool::GL::MeshManipulator::addManipulator(const glm::vec3& position, int associedIdx) 
+{ 
+    this->meshManipulator->addManipulator(position, associedIdx);
+    this->manipulatorToDisplay.push_back(true);
+    this->prepare(); 
+}
+
+void UITool::GL::MeshManipulator::removeManipulator() 
+{ 
+    this->meshManipulator->removeManipulator();
+    this->manipulatorToDisplay.pop_back();
+    this->prepare(); 
+}
+
+void UITool::GL::MeshManipulator::toggleActivation() {
+	this->meshManipulator->toggleActivation();
+}
+
+void UITool::GL::MeshManipulator::createNewMeshManipulator(int nbPt) {
+    delete this->meshManipulator;
+    this->meshManipulator = new UITool::MeshManipulator(nbPt);
+    this->manipulatorToDisplay.clear();
+    for(int i = 0; i < nbPt; ++i) {
+        this->manipulatorToDisplay.push_back(false);
+    }
 }

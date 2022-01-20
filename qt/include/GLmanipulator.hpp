@@ -53,13 +53,23 @@ namespace UITool {
 
 			void toggleDisplay() { this->displayed = ! this->displayed; }
 
-			bool isDisplayed() { return this->displayed; }
+			//bool isDisplayed() { return this->displayed; }
+			bool isDisplayed() { return false; }
+
+            void addManipulator(const glm::vec3& position, int associedIdx);
+
+            void toggleActivation();
+
+            void createNewMeshManipulator(int nbPt);
 
 			UITool::MeshManipulator * meshManipulator;	 // TODO: shared pointer
+
+            void removeManipulator() ;
 		private:
 
 			float manipulatorRadius;
 			Sphere manipulatorMesh;
+            std::vector<bool> manipulatorToDisplay;
 
 			SceneGL * sceneGL;
 
@@ -68,8 +78,10 @@ namespace UITool {
 			GLuint vboVertices;
 			GLuint vboIndices;
 			GLuint tex;
+			GLuint visible;
 
 			TextureUpload texParams;
+			TextureUpload texParamsVisible;
 
 			bool displayed;
 		};

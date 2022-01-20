@@ -47,6 +47,7 @@ namespace UITool {
 		}
 
 		qglviewer::ManipulatedFrame& getManipulatedFrame() { return this->manipulatedFrame; };
+        void disable() { this->manipulatedFrame.removeFromMouseGrabberPool(); }
 
 		void setPosition(glm::vec3 position);
 		glm::vec3 getPosition();
@@ -84,7 +85,7 @@ namespace UITool {
 		glm::vec3 getActiveManipulatorPos();
 		bool isActiveManipulatorManipuled();
 
-		int setAssignedIdx(int idx, int i);
+		void setAssignedIdx(int idx, int i);
 		int getAssignedIdx(int idx);
 
 		void setAllPositions(std::vector<glm::vec3>& positions);
@@ -102,12 +103,18 @@ namespace UITool {
 
 		void lock(int idx);
 
+        void addManipulator(const glm::vec3& position, int associedIdx);
+
+        int getClosestManipulatorToPoint(const glm::vec3& position);
+
+        void removeManipulator();
+
 	private:
+        int nbAdditionnalManipulators;
+
 		int nbManipulators;
 		int activeManipulator;
 		std::vector<VertexManipulator> manipulators;
-
-        VertexManipulator freeManipulator;
 
 		qglviewer::Constraint* commonConstraint;
 		qglviewer::Constraint* lockConstraint;

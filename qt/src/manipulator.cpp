@@ -1,4 +1,5 @@
 #include "../include/manipulator.hpp"
+#include <limits>
 
 namespace UITool {
 
@@ -46,6 +47,7 @@ namespace UITool {
 
 	MeshManipulator::MeshManipulator(int nbManipulators) :
 		nbManipulators(nbManipulators), manipulators(std::vector<VertexManipulator>(nbManipulators)) {
+		this->nbAdditionnalManipulators = 0;
 		this->activeManipulator = 0;
 		this->isActive			= false;
 
@@ -53,8 +55,9 @@ namespace UITool {
 		this->lockConstraint   = new LockConstraint();
 
 		for (int i = 0; i < nbManipulators; ++i) {
-			this->manipulators[i].setAssignedIdx(nbManipulators-i);
+			this->manipulators[i].setAssignedIdx((nbManipulators-1)-i);
 			this->lock(i);
+            this->manipulators[i].disable();
 		}
 	}
 
@@ -83,8 +86,9 @@ namespace UITool {
 	}
 
 	void MeshManipulator::setAllPositions(std::vector<glm::vec3>& positions) {
-		if (positions.size() == this->manipulators.size()) {
-			for (int i = 0; i < this->manipulators.size(); ++i) {
+        int nbInitialManipulators = this->nbManipulators - this->nbAdditionnalManipulators;
+		if (positions.size() == nbInitialManipulators) {
+			for (int i = 0; i < nbInitialManipulators; ++i) {
 				int assignedIdx = this->manipulators[i].getAssignedIdx();
 				this->manipulators[i].setPosition(positions[assignedIdx]);
 			}
@@ -93,7 +97,7 @@ namespace UITool {
 		}
 	}
 
-	int MeshManipulator::setAssignedIdx(int idx, int i) {
+	void MeshManipulator::setAssignedIdx(int idx, int i) {
 		assert(idx < this->manipulators.size());
 		assert(i < this->manipulators.size());
 		manipulators[idx].setAssignedIdx(i);
@@ -162,4 +166,43 @@ namespace UITool {
 		}
 		this->isActive = ! this->isActive;
 	}
+
+    void MeshManipulator::addManipulator(const glm::vec3& position, int associedIdx) {
+        this->manipulators.push_back(VertexManipulator());
+        this->manipulators.back().setAssignedIdx(associedIdx);
+        this->manipulators.back().setPosition(position);
+        this->nbAdditionnalManipulators += 1;
+        this->nbManipulators += 1;
+        int nbInitialManipulators = this->nbManipulators - this->nbAdditionnalManipulators;
+        this->updateActiveManipulator();
+        this->setActiveManipulator(this->manipulators.size()-1);
+        for (int i = 0; i < nbInitialManipulators; ++i) {
+            this->manipulators[i].disable();
+        }
+    }
+
+    void MeshManipulator::removeManipulator() {
+        this->manipulators.pop_back();
+        this->nbAdditionnalManipulators -= 1;
+        this->nbManipulators -= 1;
+        int nbInitialManipulators = this->nbManipulators - this->nbAdditionnalManipulators;
+        for (int i = 0; i < nbInitialManipulators; ++i) {
+            this->manipulators[i].disable();
+        }
+    }
+
+    int MeshManipulator::getClosestManipulatorToPoint(const glm::vec3& position) {
+        int nbInitialManipulators = this->nbManipulators - this->nbAdditionnalManipulators;
+        float distance = std::numeric_limits<float>::max();
+        int res = 0;
+        for(int i = 0; i < nbInitialManipulators; ++i) {
+            const glm::vec3& p = this->manipulators[i].getPosition();
+            float currentDistance = glm::distance(p, position);
+            if(currentDistance < distance) {
+                distance = currentDistance;
+                res = this->manipulators[i].getAssignedIdx();;
+            }
+        }
+        return res;
+    }
 }	 // namespace UITool

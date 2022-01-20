@@ -102,6 +102,15 @@ void Viewer::draw() {
 	this->scene->drawPointSpheres_quick(mvMat, pMat, camPos, spheres_to_draw, this->sphere_size);
 }
 
+void Viewer::keyReleaseEvent(QKeyEvent* e) {
+    switch (e->key()) {
+        case Qt::Key::Key_Q:
+            if(!e->isAutoRepeat())
+                this->removeManip();
+            break;
+    }
+}
+
 void Viewer::keyPressEvent(QKeyEvent* e) {
 	// 'msg' allocated here not to have curly braces in
 	// all case statements that need to show a message:
@@ -112,7 +121,8 @@ void Viewer::keyPressEvent(QKeyEvent* e) {
 		VIEWER BEHAVIOUR
 		*/
 		case Qt::Key::Key_Q:
-            this->displayMousePosition();
+            if(!e->isAutoRepeat())
+                this->displayMousePosition();
 			break;
 		case Qt::Key::Key_Space:
 			this->selectMode = not this->selectMode;
@@ -269,6 +279,7 @@ void Viewer::mouseReleaseEvent(QMouseEvent* e) {
 	if (e->buttons().testFlag(Qt::MouseButton::RightButton) == false) {
 		this->framesHeld = 0;
 	}
+
 	QGLViewer::mouseReleaseEvent(e);
 }
 
@@ -304,6 +315,10 @@ void Viewer::displayMousePosition() {
     qglviewer::Vec direction;
     this->camera()->convertClickToLine(this->mousePos, origin, direction); 
     this->scene->slotDisplayValueFromRay(glm::vec3(origin.x, origin.y, origin.z), glm::vec3(direction.x, direction.y, direction.z));
+}
+
+void Viewer::removeManip() {
+    this->scene->removeLastManip();
 }
 
 void Viewer::guessMousePosition() {
@@ -511,5 +526,5 @@ void Viewer::newAPI_loadGrid(const GridGL * ptr) {
 }
 
 void Viewer::toggleManipulators() {
-	this->scene->glMeshManipulator->meshManipulator->toggleActivation();
+	this->scene->glMeshManipulator->toggleActivation();
 }

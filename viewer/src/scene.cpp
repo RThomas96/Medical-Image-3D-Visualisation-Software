@@ -614,8 +614,7 @@ void Scene::addGrid(const GridGL * gridLoaded) {
 
     //Add manipulators
     int nbPt = this->grids[0]->grid->grid->tetmesh.ptGrid.size();
-    delete this->glMeshManipulator->meshManipulator;
-    this->glMeshManipulator->meshManipulator = new UITool::MeshManipulator(nbPt);
+    this->glMeshManipulator->createNewMeshManipulator(nbPt);
     this->updateManipulatorPositions();
 	this->prepareManipulators();
 
@@ -1200,12 +1199,11 @@ void Scene::applyDeformation() {
     int ptIdx = this->glMeshManipulator->meshManipulator->getActiveManipulatorAssignedIdx();
     glm::vec3 newPosition = this->glMeshManipulator->meshManipulator->getActiveManipulatorPos();
 
-    float radius = 100;
-    MoveMethod * method = new WeightedMethod(radius);
-    this->grids[0]->grid->grid->tetmesh.movePoint(ptIdx, newPosition, method);
-    delete method;
+    float radius = 50;
+    std::shared_ptr<MoveMethod> method = std::make_shared<WeightedMethod>(radius);
+    this->grids[0]->grid->grid->tetmesh.movePoint(ptIdx, newPosition, method.get());
 
-    this->updateTetmeshOnManipulators();
+    this->updateManipulatorPositions();
     this->sendTetmeshToGPU(0, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS));
 }
 
@@ -3582,7 +3580,13 @@ void Scene::slotDisplayValueFromRay(const glm::vec3& origin, const glm::vec3& di
     glm::vec3 res = glm::vec3(0., 0., 0.);
     if(this->grids[0]->grid->grid->getPositionOfRayIntersection(*this->initial->grid, origin, direction, this->getMinTexValue(), this->getMaxTexValue(), res)) {
         std::cout << "The voxel ray position is: " << res << std::endl;
+        int associatedIdx = this->glMeshManipulator->meshManipulator->getClosestManipulatorToPoint(res);
+        this->glMeshManipulator->addManipulator(res, associatedIdx);
     } else {
         std::cout << "No point found" << std::endl;
     }
+}
+
+void Scene::removeLastManip() {
+    this->glMeshManipulator->removeManipulator();
 }
