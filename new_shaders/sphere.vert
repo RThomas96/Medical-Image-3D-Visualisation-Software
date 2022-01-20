@@ -11,9 +11,14 @@ uniform mat4 vMat;
 uniform mat4 mMat;
 
 uniform sampler1D positions;
+uniform sampler1D visible2;
+
+out float isVisible;
 
 void main()
 {
+    isVisible = texelFetch(visible2, gl_InstanceID, 0).x;
+
     vec4 pos = vec4(texelFetch(positions, gl_InstanceID, 0).xyz, 1.);
     mat4 newM = mMat;
     newM[3][0] += pos.x;

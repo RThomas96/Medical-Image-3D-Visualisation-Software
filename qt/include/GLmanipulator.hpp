@@ -21,8 +21,8 @@ namespace UITool {
 
 		class MeshManipulator {
 		public:
-			MeshManipulator(SceneGL* scene, int nbManipulators, float manipulatorRadius = 50.f) :
-				manipulatorRadius(manipulatorRadius), manipulatorMesh(Sphere(manipulatorRadius)), sceneGL(scene), meshManipulator(new UITool::MeshManipulator(nbManipulators)) {
+			MeshManipulator(SceneGL* scene, const std::vector<glm::vec3>& positions, float manipulatorRadius = 50.f) :
+				manipulatorRadius(manipulatorRadius), manipulatorMesh(Sphere(manipulatorRadius)), sceneGL(scene), meshManipulator(new UITool::DirectManipulator(positions)) {
 				this->program	  = 0;
 				this->vao		  = 0;
 				this->vboVertices = 0;
@@ -53,9 +53,18 @@ namespace UITool {
 
 			void toggleDisplay() { this->displayed = ! this->displayed; }
 
-			bool isDisplayed() { return this->displayed; }
+			//bool isDisplayed() { return this->displayed; }
+			bool isDisplayed() { return false; }
+
+            void addManipulator(const glm::vec3& position);
+
+            void toggleActivation();
+
+            void createNewMeshManipulator(const std::vector<glm::vec3>& positions);
 
 			UITool::MeshManipulator * meshManipulator;	 // TODO: shared pointer
+
+            void removeLastManipulator() ;
 		private:
 
 			float manipulatorRadius;
@@ -68,8 +77,10 @@ namespace UITool {
 			GLuint vboVertices;
 			GLuint vboIndices;
 			GLuint tex;
+			GLuint visible;
 
 			TextureUpload texParams;
+			TextureUpload texParamsVisible;
 
 			bool displayed;
 		};

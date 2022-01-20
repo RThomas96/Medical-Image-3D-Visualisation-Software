@@ -51,7 +51,7 @@ inline void __GetTexSize(std::size_t numTexNeeded, std::size_t* opt_width, std::
  *  to be drawn, even if it is empty at the time of the first call to a draw function.
  */
 Scene::Scene() :
-	glMeshManipulator(new UITool::GL::MeshManipulator(&this->sceneGL, 0)) {
+	glMeshManipulator(new UITool::GL::MeshManipulator(&this->sceneGL, std::vector<glm::vec3>())) {
 	this->isInitialized	   = false;
 	this->showVAOstate	   = false;
 	this->shouldDeleteGrid = false;
@@ -613,9 +613,7 @@ void Scene::addGrid(const GridGL * gridLoaded) {
 	this->tex3D_buildBuffers(gridView->volumetricMesh);
 
     //Add manipulators
-    int nbPt = this->grids[0]->grid->grid->tetmesh.ptGrid.size();
-    delete this->glMeshManipulator->meshManipulator;
-    this->glMeshManipulator->meshManipulator = new UITool::MeshManipulator(nbPt);
+    this->glMeshManipulator->createNewMeshManipulator(this->grids[0]->grid->grid->tetmesh.ptGrid);
     this->updateManipulatorPositions();
 	this->prepareManipulators();
 
@@ -1197,15 +1195,16 @@ void Scene::loadMesh() {
 
 void Scene::applyDeformation() {
     // This is the direct manipulator version, on which you use directly the vertices
-    int ptIdx = this->glMeshManipulator->meshManipulator->getActiveManipulatorAssignedIdx();
-    glm::vec3 newPosition = this->glMeshManipulator->meshManipulator->getActiveManipulatorPos();
+    glm::vec3 oldPosition;
+    glm::vec3 newPosition;
 
-    float radius = 100;
-    MoveMethod * method = new WeightedMethod(radius);
-    this->grids[0]->grid->grid->tetmesh.movePoint(ptIdx, newPosition, method);
-    delete method;
+    this->glMeshManipulator->meshManipulator->getMovement(oldPosition, newPosition);
 
-    this->updateTetmeshOnManipulators();
+    float radius = 50;
+    std::shared_ptr<MoveMethod> method = std::make_shared<WeightedMethod>(radius);
+    this->grids[0]->grid->grid->tetmesh.movePoint(oldPosition, newPosition, method.get());
+
+    this->updateManipulatorPositions();
     this->sendTetmeshToGPU(0, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS));
 }
 
@@ -2178,7 +2177,7 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 	this->showVAOstate = false;
 
     // Direct manipulation version
-	if (this->glMeshManipulator->meshManipulator->isActiveManipulatorManipuled()) {
+	if (this->glMeshManipulator->meshManipulator->hasBeenMoved()) {
 		this->applyDeformation();
 	}
 
@@ -3582,7 +3581,12 @@ void Scene::slotDisplayValueFromRay(const glm::vec3& origin, const glm::vec3& di
     glm::vec3 res = glm::vec3(0., 0., 0.);
     if(this->grids[0]->grid->grid->getPositionOfRayIntersection(*this->initial->grid, origin, direction, this->getMinTexValue(), this->getMaxTexValue(), res)) {
         std::cout << "The voxel ray position is: " << res << std::endl;
+        this->glMeshManipulator->addManipulator(res);
     } else {
         std::cout << "No point found" << std::endl;
     }
+}
+
+void Scene::removeLastManip() {
+    this->glMeshManipulator->removeLastManipulator();
 }

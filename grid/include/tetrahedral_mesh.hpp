@@ -79,25 +79,23 @@ struct TetMesh {
     void buildGrid(const glm::vec3& nbCube, const glm::vec3& sizeCube, const glm::vec3& origin);
 
     // Functions to move points
-    void movePoint(int indice, const glm::vec3& newPosition, const MoveMethod * moveMethod);
+    void movePoint(const glm::vec3& origin, const glm::vec3& target, const MoveMethod * moveMethod);
 
     bool isEmpty() const;
 
     Tetrahedron getTetra(int idx) const;
-
     int inTetraIdx(const glm::vec3& p) const;
 
-    glm::vec3 getDimensions() const;
+    int getIdxOfClosestPoint(const glm::vec3& p) const;
 
+    glm::vec3 getDimensions() const;
     int from3DTo1D(const glm::vec3& p) const;
 
     // Temporary function to map to current GL
     void replaceAllPoints(const std::vector<glm::vec3>& pts);
 
     void computeNeighborhood();
-
     void computeNormals();
-
     void updatebbox();
 
 private:
