@@ -63,7 +63,11 @@ uint16_t Grid::getDeformedValueFromPoint(const Grid& initial, const glm::vec3& p
 }
 
 void Grid::movePoint(int indices, const glm::vec3& position) {
-    this->tetmesh.movePoint(indices, position);
+    //MovePointMethod * method = new NormalMethod();
+    float radius = 0.5;
+    MovePointMethod * method = new WeightedMethod(radius);
+    this->tetmesh.movePoint(indices, position, method);
+    delete method;
 }
 
 void Grid::replaceAllPoints(const std::vector<glm::vec3>& pts) {

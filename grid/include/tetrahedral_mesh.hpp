@@ -31,6 +31,32 @@ struct Tetrahedron {
     int getPointIndex(int faceIdx, int ptIdxInFace) const;
 };
 
+enum MovePointMethodType {
+    NORMAL,
+    REPLACE,
+    WEIGHTED
+};
+
+struct MovePointMethod {
+    MovePointMethodType movePointMethodType;
+    MovePointMethod(MovePointMethodType movePointMethodType) : movePointMethodType(movePointMethodType) {}
+
+    virtual ~MovePointMethod() = default;// To make MovePointMethod virtual
+};
+
+struct WeightedMethod : MovePointMethod {
+    float radius;
+    WeightedMethod(float radius) : MovePointMethod(MovePointMethodType::WEIGHTED), radius(radius) {}
+};
+
+struct NormalMethod : MovePointMethod {
+    NormalMethod() : MovePointMethod(MovePointMethodType::NORMAL) {}
+};
+
+struct ReplaceMethod : MovePointMethod {
+    ReplaceMethod() : MovePointMethod(MovePointMethodType::REPLACE) {}
+};
+
 struct TetMesh {
 
     std::vector<Tetrahedron> mesh;
@@ -46,9 +72,8 @@ struct TetMesh {
 
     void buildGrid(const glm::vec3& nbCube, const glm::vec3& sizeCube, const glm::vec3& origin);
 
-    void movePoint(int indices, const glm::vec3& position);
-
-    void setPointPosition(int indices, const glm::vec3& position);
+    // Functions to move points
+    void movePoint(int indices, const glm::vec3& position, const MovePointMethod * movePointMethod);
 
     bool isEmpty() const;
 

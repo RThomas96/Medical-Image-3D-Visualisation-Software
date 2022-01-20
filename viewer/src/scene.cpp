@@ -3433,10 +3433,16 @@ void Scene::updateManipulatorPositions() {
 }
 
 void Scene::updateTetmeshOnManipulators() {
-    glm::vec3 newPosition;
-    newPosition = this->glMeshManipulator->meshManipulator->getActiveManipulatorPos();
-    this->grids[0]->grid->grid->tetmesh.setPointPosition(this->glMeshManipulator->meshManipulator->getActiveManipulatorAssignedIdx(), newPosition);
+    int ptIdx = this->glMeshManipulator->meshManipulator->getActiveManipulatorAssignedIdx();
+    glm::vec3 newPosition = this->glMeshManipulator->meshManipulator->getActiveManipulatorPos();
 
+    float radius = 100;
+    MovePointMethod * method = new WeightedMethod(radius);
+    this->grids[0]->grid->grid->tetmesh.movePoint(ptIdx, newPosition, method);
+    delete method;
+
+    // This is usefull because some moveValues move multiple points
+    this->updateManipulatorPositions();
 }
 
 /**********************************************************************/
