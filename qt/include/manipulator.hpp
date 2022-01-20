@@ -107,6 +107,8 @@ namespace UITool {
 		int activeManipulator;
 		std::vector<VertexManipulator> manipulators;
 
+        VertexManipulator freeManipulator;
+
 		qglviewer::Constraint* commonConstraint;
 		qglviewer::Constraint* lockConstraint;
 

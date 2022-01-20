@@ -234,31 +234,31 @@ void TetMesh::buildGrid(const glm::vec3& nbCube, const glm::vec3& sizeCube, cons
     this->computeNormals();
 }
 
-void TetMesh::movePoint(int indices, const glm::vec3& position, const MovePointMethod * movePointMethod) {
-    glm::vec3& p = this->ptGrid[indices];
-    switch(movePointMethod->movePointMethodType) {
-        case MovePointMethodType::NORMAL: {
-            p += position;
+void TetMesh::movePoint(int indice, const glm::vec3& newPosition, const MoveMethod * moveMethod) {
+    glm::vec3& p = this->ptGrid[indice];
+    switch(moveMethod->moveMethodType) {
+        case MoveMethodType::NORMAL: {
+            p += newPosition;
         } break;
 
-        case MovePointMethodType::REPLACE: {
-            p = position;
+        case MoveMethodType::REPLACE: {
+            p = newPosition;
         } break;
 
-        case MovePointMethodType::WEIGHTED: {
+        case MoveMethodType::WEIGHTED: {
             // This method will move all points
-            const glm::vec3 deplacement = position - p;
-            const WeightedMethod * param = dynamic_cast<const WeightedMethod*>(movePointMethod);
+            const glm::vec3 deplacement = newPosition - p;
+            const WeightedMethod * param = dynamic_cast<const WeightedMethod*>(moveMethod);
             float radius = param->radius;
             for(int i = 0; i < this->ptGrid.size(); ++i) {
                 glm::vec3& p2 = this->ptGrid[i];
-                float distance = glm::distance(position, p2);
+                float distance = glm::distance(newPosition, p2);
                 if(distance > 0.000001 && distance < radius) {
                     float coeff = 1 - std::pow((distance / radius), 2);
                     p2 += (deplacement * coeff);
                 }
             }
-            p = position;
+            p = newPosition;
         } break;
     }
     // Recompute all normals, can be optimized
