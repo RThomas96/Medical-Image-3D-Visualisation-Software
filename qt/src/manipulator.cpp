@@ -37,7 +37,6 @@ namespace UITool {
     /***/
 
     Manipulator::Manipulator(const glm::vec3& position) { 
-        this->manipulatedFrame = new qglviewer::ManipulatedFrame();
         this->setPosition(position); 
         this->lastPosition = position;
         this->enable(); 
@@ -47,12 +46,12 @@ namespace UITool {
 		double x = 0;
 		double y = 0;
 		double z = 0;
-		this->manipulatedFrame->getPosition(x, y, z);
+		this->manipulatedFrame.getPosition(x, y, z);
 		return glm::vec3(x, y, z);
 	}
 
 	void Manipulator::setPosition(const glm::vec3& position) {
-		this->manipulatedFrame->setPosition(position[0], position[1], position[2]);
+		this->manipulatedFrame.setPosition(position[0], position[1], position[2]);
 	}
 
 	void Manipulator::setLastPosition(const glm::vec3& position) {
@@ -60,11 +59,11 @@ namespace UITool {
 	}
 
 	void Manipulator::lockPosition() {
-		this->manipulatedFrame->setConstraint(new LockConstraint());
+		this->manipulatedFrame.setConstraint(new LockConstraint());
     }
 
 	void Manipulator::setCustomConstraint() {
-		this->manipulatedFrame->setConstraint(new CustomConstraint());
+		this->manipulatedFrame.setConstraint(new CustomConstraint());
     }
 
     /***/
@@ -85,11 +84,13 @@ namespace UITool {
 			for (int i = 0; i < this->manipulators.size(); ++i) {
 				this->manipulators[i].setCustomConstraint();
                 this->manipulatorsToDisplay[i] = true;
+                this->manipulators[i].enable();
 			}
 		} else {
 			for (int i = 0; i < this->manipulators.size(); ++i) {
 				this->manipulators[i].lockPosition();
                 this->manipulatorsToDisplay[i] = false;
+                this->manipulators[i].disable();
 			}
 		}
 	}
@@ -186,28 +187,25 @@ namespace UITool {
 
     /***/
 
-	FreeManipulator::FreeManipulator(const std::vector<glm::vec3>& positions) {
+	FreeManipulator::FreeManipulator(const std::vector<glm::vec3>& positions): manipulator(Manipulator(glm::vec3(0., 0., 0.))) {
 		this->active = false;
-        this->manipulator = new Manipulator(glm::vec3(0., 0., 0.));
 	}
 
-	void FreeManipulator::setActivation(bool isActive) {
+    void FreeManipulator::setActivation(bool isActive) {
         this->active = isActive;
-        if(this->manipulator){
-            if (this->active) {
-                this->manipulator->setCustomConstraint();
-            } else {
-                this->manipulator->lockPosition();
-            }
+        if (this->active) {
+            this->manipulator.setCustomConstraint();
+        } else {
+            this->manipulator.lockPosition();
         }
-	}
+    }
 
     void FreeManipulator::getMovement(glm::vec3& origin, glm::vec3& target) {
         if(this->hasBeenMoved()) {
-            origin = this->manipulator->getLastPosition();
-            target = this->manipulator->getPosition();
+            origin = this->manipulator.getLastPosition();
+            target = this->manipulator.getPosition();
             //std::cout << glm::to_string(origin) << "->" << glm::to_string(target) << std::endl;
-            this->manipulator->updateLastPosition();
+            this->manipulator.updateLastPosition();
         } else {
             std::cout << "Warning: try to request a movement when manipulator->do not move" << std::endl;
             origin = glm::vec3(0., 0., 0.);
@@ -216,14 +214,14 @@ namespace UITool {
     }
 
 	bool FreeManipulator::hasBeenMoved() const {
-		if (this->manipulator && this->manipulator->isManipulated())
+		if (this->manipulator.isManipulated())
 			return true;
 		return false;
 	}
 
     void FreeManipulator::addManipulator(const glm::vec3& position) {
-        this->manipulator->setPosition(position);
-        this->manipulator->setLastPosition(position);
+        this->manipulator.setPosition(position);
+        this->manipulator.setLastPosition(position);
         this->setActivation(true);
     }
 
@@ -250,8 +248,7 @@ namespace UITool {
     }
 
     void FreeManipulator::getAllPositions(std::vector<glm::vec3>& positions) {
-        if(this->manipulator)
-            positions.push_back(this->manipulator->getPosition());
+        positions.push_back(this->manipulator.getPosition());
     }
 
     void FreeManipulator::getManipulatorsToDisplay(std::vector<bool>& toDisplay) const {

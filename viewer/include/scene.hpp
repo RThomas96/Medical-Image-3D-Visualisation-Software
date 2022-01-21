@@ -298,9 +298,9 @@ private:
 public:
 	UITool::GL::MeshManipulator* glMeshManipulator;
     GridGL * initial;
+	std::vector<GridGLView::Ptr> grids;
 	//std::vector<DeformableGrid*> grids;
 private:
-	std::vector<GridGLView::Ptr> grids;
     // TODO: remove this
 
 	std::vector<std::size_t> delGrid;	 ///< Grids to delete at next refresh
