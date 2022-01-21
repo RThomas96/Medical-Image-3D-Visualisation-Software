@@ -41,87 +41,121 @@ namespace UITool {
 	/// @note It's a simple wrapper around qglviewer::ManipulatedFrame to be used with glm::vec3.
 	class Manipulator {
 	public:
-		Manipulator() {
-			manipulatedFrame.setSpinningSensitivity(100.0);	   // Prevent the manipulator to spin
-			manipulatedFrame.setRotationSensitivity(0.0);	 // Prevent the manipulator to rotate
-		}
+		Manipulator(const glm::vec3& position);
+        ~Manipulator() { delete manipulatedFrame; };
 
-		qglviewer::ManipulatedFrame& getManipulatedFrame() { return this->manipulatedFrame; };
-        void disable() { this->manipulatedFrame.removeFromMouseGrabberPool(); }
+		void lockPosition();
+		void setCustomConstraint();
 
-		void setPosition(glm::vec3 position);
-		glm::vec3 getPosition();
+		void setPosition(const glm::vec3& position);
+		glm::vec3 getPosition() const;
+        glm::vec3 getLastPosition() const { return this->lastPosition; };
+    	void setLastPosition(const glm::vec3& position);
 
-	protected:
-		qglviewer::ManipulatedFrame manipulatedFrame;
-	};
+        void updateLastPosition() { this->lastPosition = this->getPosition(); };
 
-	/// @ingroup uitools
-	/// @brief The VertexManipulator class represents a manipulator associed with a mesh's vertex.
-	/// @details The associed mesh vertex is simply an index.
-	class VertexManipulator : public Manipulator {
-	public:
-		VertexManipulator() :
-			assignedIdx(-1) {}
+        void disable() { this->manipulatedFrame->removeFromMouseGrabberPool(); };
+        void enable() { this->manipulatedFrame->addInMouseGrabberPool(); };
 
-		int getAssignedIdx() { return assignedIdx; };
-		void setAssignedIdx(int i) { this->assignedIdx = i; };
+        void preventToSpin() { this->manipulatedFrame->setSpinningSensitivity(100.0); };
+        void preventToRotate() { this->manipulatedFrame->setRotationSensitivity(0.0); };
+
+        bool isManipulated() const { return this->manipulatedFrame->isManipulated(); }
 
 	protected:
-		int assignedIdx;
+		qglviewer::ManipulatedFrame * manipulatedFrame;
+        glm::vec3 lastPosition;
 	};
 
+    class MeshManipulator {
+    public:
+        virtual bool isActive() = 0;
+        virtual void setActivation(bool isActive) = 0;
+
+        virtual void getMovement(glm::vec3& origin, glm::vec3& target) = 0;
+        virtual bool hasBeenMoved() const = 0;
+
+        virtual void addManipulator(const glm::vec3& position) = 0;
+
+        virtual void removeManipulator(const glm::vec3& position) = 0;
+        virtual void removeManipulator(int idx) = 0;
+
+        virtual int getManipulatorIdx(const glm::vec3& position) const = 0;
+        virtual int getNbManipulator() const = 0;
+
+        virtual void setAllPositions(const std::vector<glm::vec3>& positions) = 0;
+        virtual void getAllPositions(std::vector<glm::vec3>& positions) = 0;
+
+        virtual void getManipulatorsToDisplay(std::vector<bool>& toDisplay) const = 0;
+
+        virtual ~MeshManipulator() {};
+    };
+
 	/// @ingroup uitools
-	/// @brief The MeshManipulator class represents a set of vertex manipulators used to manipulate each mesh's vertex.
+	/// @brief The DirectManipulator class represents a set of vertex manipulators used to manipulate each mesh's vertex.
 	/// @details The active manipulator indicates the manipulator at range for being grabbed by the mouse.
 	/// The commonConstraint is a custom translation constraint allowing to simplify vertex manipulation. See UITool::CustomConstraint.
 	/// The lockConstraint allow to prevent manipulator to move when the feature is inactive.
-	class MeshManipulator {
+	class DirectManipulator : public MeshManipulator {
 	public:
-		MeshManipulator(int nbManipulators);
+		DirectManipulator(const std::vector<glm::vec3>& positions);
 
-		Manipulator& getActiveManipulator();
-		void setActiveManipulator(int idx);
-		glm::vec3 getActiveManipulatorPos();
-		bool isActiveManipulatorManipuled();
+        bool isActive() override { return this->active; };
+        void setActivation(bool isActive) override;
 
-		void setAssignedIdx(int idx, int i);
-		int getAssignedIdx(int idx);
+        void getMovement(glm::vec3& origin, glm::vec3& target) override;
+        bool hasBeenMoved() const override;
 
-		void setAllPositions(std::vector<glm::vec3>& positions);
-		void getAllPositions(std::vector<glm::vec3>& vec);
+        void addManipulator(const glm::vec3& position) override;
 
-		void setConstraint(int idx);
+        void removeManipulator(const glm::vec3& position) override;
+        void removeManipulator(int idx) override;
 
-		bool updateActiveManipulator();
-		int getActiveManipulatorAssignedIdx();
-        void getActiveManipulatorPosition(glm::vec3& res);
+        int getManipulatorIdx(const glm::vec3& position) const override;
+        int getNbManipulator() const override;
 
-		int getNbManipulators();
+        void setAllPositions(const std::vector<glm::vec3>& positions) override;
+        void getAllPositions(std::vector<glm::vec3>& positions) override;
 
-		void toggleActivation();
+        int getMovedManipulatorIdx() const;
 
-		void lock(int idx);
-
-        void addManipulator(const glm::vec3& position, int associedIdx);
-
-        int getClosestManipulatorToPoint(const glm::vec3& position);
-
-        void removeManipulator();
+        void getManipulatorsToDisplay(std::vector<bool>& toDisplay) const override;
 
 	private:
-        int nbAdditionnalManipulators;
+		std::vector<Manipulator> manipulators;
+        std::vector<bool> manipulatorsToDisplay;
 
-		int nbManipulators;
-		int activeManipulator;
-		std::vector<VertexManipulator> manipulators;
+		bool active;
+	};
 
-		qglviewer::Constraint* commonConstraint;
-		qglviewer::Constraint* lockConstraint;
+	class FreeManipulator : public MeshManipulator {
+	public:
+		FreeManipulator(const std::vector<glm::vec3>& positions);
 
-		int getGrabbedManipulator();
+        bool isActive() override { return this->active; };
+        void setActivation(bool isActive) override;
 
-		bool isActive;
+        void getMovement(glm::vec3& origin, glm::vec3& target) override;
+        bool hasBeenMoved() const override;
+
+        void addManipulator(const glm::vec3& position) override;
+
+        void removeManipulator(const glm::vec3& position) override;
+        void removeManipulator(int idx) override;
+
+        int getManipulatorIdx(const glm::vec3& position) const override;
+        int getNbManipulator() const override;
+
+        void setAllPositions(const std::vector<glm::vec3>& positions) override;
+        void getAllPositions(std::vector<glm::vec3>& positions) override;
+
+        int getMovedManipulatorIdx() const;
+        void getManipulatorsToDisplay(std::vector<bool>& toDisplay) const override;
+
+	private:
+		Manipulator * manipulator;
+
+		bool active;
 	};
 
 }	 // namespace UITool

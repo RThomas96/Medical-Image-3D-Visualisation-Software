@@ -69,7 +69,7 @@ struct Grid {
 
     uint16_t getDeformedValueFromPoint(const Grid& initial, const glm::vec3& p, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
 
-    void movePoint(int indices, const glm::vec3& position);
+    void movePoint(const glm::vec3& origin, const glm::vec3& target);
     void writeDeformedGrid(const Grid& initial, ResolutionMode resolutionMode = ResolutionMode::FULL_RESOLUTION);
 
     void replaceAllPoints(const std::vector<glm::vec3>& pts);

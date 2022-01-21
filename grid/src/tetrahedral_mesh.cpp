@@ -234,31 +234,32 @@ void TetMesh::buildGrid(const glm::vec3& nbCube, const glm::vec3& sizeCube, cons
     this->computeNormals();
 }
 
-void TetMesh::movePoint(int indice, const glm::vec3& newPosition, const MoveMethod * moveMethod) {
-    glm::vec3& p = this->ptGrid[indice];
+void TetMesh::movePoint(const glm::vec3& origin, const glm::vec3& target, const MoveMethod * moveMethod) {
+    glm::vec3& p = this->ptGrid[this->getIdxOfClosestPoint(origin)];
     switch(moveMethod->moveMethodType) {
         case MoveMethodType::NORMAL: {
-            p += newPosition;
+            const glm::vec3 deplacement = target - origin;
+            p += deplacement;
         } break;
 
         case MoveMethodType::REPLACE: {
-            p = newPosition;
+            p = target;
         } break;
 
         case MoveMethodType::WEIGHTED: {
             // This method will move all points
-            const glm::vec3 deplacement = newPosition - p;
+            const glm::vec3 deplacement = target - origin;
             const WeightedMethod * param = dynamic_cast<const WeightedMethod*>(moveMethod);
             float radius = param->radius;
             for(int i = 0; i < this->ptGrid.size(); ++i) {
                 glm::vec3& p2 = this->ptGrid[i];
-                float distance = glm::distance(newPosition, p2);
+                float distance = glm::distance(target, p2);
                 if(distance > 0.000001 && distance < radius) {
                     float coeff = 1 - std::pow((distance / radius), 2);
                     p2 += (deplacement * coeff);
                 }
             }
-            p = newPosition;
+            p = target;
         } break;
     }
     // Recompute all normals, can be optimized
@@ -430,3 +431,16 @@ void TetMesh::updatebbox() {
     this->bbMin = glm::vec3(this->ptGrid[minXIdx][0], this->ptGrid[minYIdx][1], this->ptGrid[minZIdx][2]);
 }
 
+int TetMesh::getIdxOfClosestPoint(const glm::vec3& p) const{
+    float distance = std::numeric_limits<float>::max();
+    int res = 0;
+    for(int i = 0; i < this->ptGrid.size(); ++i) {
+        const glm::vec3& p2 = this->ptGrid[i];
+        float currentDistance = glm::distance(p, p2);
+        if(currentDistance < distance) {
+            distance = currentDistance;
+            res = i;
+        }
+    }
+    return res;
+}

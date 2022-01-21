@@ -38,9 +38,12 @@ void UITool::GL::MeshManipulator::prepare() {
 	this->texParamsVisible.type		   = GL_FLOAT;
 
 	// TODO: copy here
+	std::vector<bool> rawToDisplay;
+    this->meshManipulator->getManipulatorsToDisplay(rawToDisplay);
+
 	std::vector<glm::vec3> toDisplay;
-    for(int i = 0; i < this->manipulatorToDisplay.size(); ++i)
-        if(this->manipulatorToDisplay[i])
+    for(int i = 0; i < rawToDisplay.size(); ++i)
+        if(rawToDisplay[i])
             toDisplay.push_back(glm::vec3(1., 1., 1.));
         else
             toDisplay.push_back(glm::vec3(0., 0., 0.));
@@ -100,9 +103,12 @@ void UITool::GL::MeshManipulator::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* m
 	this->tex = this->sceneGL->uploadTexture1D(this->texParams);
 
     /***/
+	std::vector<bool> rawToDisplay;
+    this->meshManipulator->getManipulatorsToDisplay(rawToDisplay);
+
 	std::vector<glm::vec3> toDisplay;
-    for(int i = 0; i < this->manipulatorToDisplay.size(); ++i)
-        if(this->manipulatorToDisplay[i])
+    for(int i = 0; i < rawToDisplay.size(); ++i)
+        if(rawToDisplay[i])
             toDisplay.push_back(glm::vec3(1., 1., 1.));
         else
             toDisplay.push_back(glm::vec3(0., 0., 0.));
@@ -153,29 +159,23 @@ void UITool::GL::MeshManipulator::setRadius(float radius) {
     this->manipulatorMesh = Sphere(this->manipulatorRadius);
 }
 
-void UITool::GL::MeshManipulator::addManipulator(const glm::vec3& position, int associedIdx) 
+void UITool::GL::MeshManipulator::addManipulator(const glm::vec3& position) 
 { 
-    this->meshManipulator->addManipulator(position, associedIdx);
-    this->manipulatorToDisplay.push_back(true);
+    this->meshManipulator->addManipulator(position);
     this->prepare(); 
 }
 
-void UITool::GL::MeshManipulator::removeManipulator() 
+void UITool::GL::MeshManipulator::removeLastManipulator() 
 { 
-    this->meshManipulator->removeManipulator();
-    this->manipulatorToDisplay.pop_back();
+    this->meshManipulator->removeManipulator(this->meshManipulator->getNbManipulator()-1);
     this->prepare(); 
 }
 
 void UITool::GL::MeshManipulator::toggleActivation() {
-	this->meshManipulator->toggleActivation();
+	this->meshManipulator->setActivation(!this->meshManipulator->isActive());
 }
 
-void UITool::GL::MeshManipulator::createNewMeshManipulator(int nbPt) {
+void UITool::GL::MeshManipulator::createNewMeshManipulator(const std::vector<glm::vec3>& positions) {
     delete this->meshManipulator;
-    this->meshManipulator = new UITool::MeshManipulator(nbPt);
-    this->manipulatorToDisplay.clear();
-    for(int i = 0; i < nbPt; ++i) {
-        this->manipulatorToDisplay.push_back(false);
-    }
+    this->meshManipulator = new UITool::FreeManipulator(positions);
 }
