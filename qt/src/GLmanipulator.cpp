@@ -80,8 +80,8 @@ void UITool::GL::MeshManipulator::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* m
 		return g;
 	};
 
-	if (! this->displayed)
-		return;
+	//if (! this->displayed)
+	//	return;
 
 	this->sceneGL->glUseProgram(this->program);
 
@@ -173,9 +173,16 @@ void UITool::GL::MeshManipulator::removeLastManipulator()
 
 void UITool::GL::MeshManipulator::toggleActivation() {
 	this->meshManipulator->setActivation(!this->meshManipulator->isActive());
+    this->prepare();
 }
 
-void UITool::GL::MeshManipulator::createNewMeshManipulator(const std::vector<glm::vec3>& positions) {
+void UITool::GL::MeshManipulator::createNewMeshManipulator(const std::vector<glm::vec3>& positions, int type) {
     delete this->meshManipulator;
-    this->meshManipulator = new UITool::FreeManipulator(positions);
+    if(type == 0) {
+        this->meshManipulator = new UITool::DirectManipulator(positions);
+        this->prepare();
+    } else {
+        this->meshManipulator = new UITool::FreeManipulator(positions);
+        this->prepare();
+    }
 }

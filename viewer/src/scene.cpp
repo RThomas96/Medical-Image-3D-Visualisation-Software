@@ -613,7 +613,7 @@ void Scene::addGrid(const GridGL * gridLoaded) {
 	this->tex3D_buildBuffers(gridView->volumetricMesh);
 
     //Add manipulators
-    this->glMeshManipulator->createNewMeshManipulator(this->grids[0]->grid->grid->tetmesh.ptGrid);
+    this->glMeshManipulator->createNewMeshManipulator(this->grids[0]->grid->grid->tetmesh.ptGrid, 0);
     this->updateManipulatorPositions();
 	this->prepareManipulators();
 

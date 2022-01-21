@@ -120,6 +120,14 @@ void Viewer::keyPressEvent(QKeyEvent* e) {
 		/*
 		VIEWER BEHAVIOUR
 		*/
+		case Qt::Key::Key_L:
+            if(!e->isAutoRepeat())
+                this->scene->glMeshManipulator->createNewMeshManipulator(this->scene->grids[0]->grid->grid->tetmesh.ptGrid, 0);
+			break;
+		case Qt::Key::Key_M:
+            if(!e->isAutoRepeat())
+                this->scene->glMeshManipulator->createNewMeshManipulator(this->scene->grids[0]->grid->grid->tetmesh.ptGrid, 1);
+			break;
 		case Qt::Key::Key_Q:
             if(!e->isAutoRepeat())
                 this->displayMousePosition();

@@ -42,7 +42,7 @@ namespace UITool {
 	class Manipulator {
 	public:
 		Manipulator(const glm::vec3& position);
-        ~Manipulator() { delete manipulatedFrame; };
+        ~Manipulator() {};
 
 		void lockPosition();
 		void setCustomConstraint();
@@ -54,16 +54,16 @@ namespace UITool {
 
         void updateLastPosition() { this->lastPosition = this->getPosition(); };
 
-        void disable() { this->manipulatedFrame->removeFromMouseGrabberPool(); };
-        void enable() { this->manipulatedFrame->addInMouseGrabberPool(); };
+        void disable() { this->manipulatedFrame.removeFromMouseGrabberPool(); };
+        void enable() { this->manipulatedFrame.addInMouseGrabberPool(); };
 
-        void preventToSpin() { this->manipulatedFrame->setSpinningSensitivity(100.0); };
-        void preventToRotate() { this->manipulatedFrame->setRotationSensitivity(0.0); };
+        void preventToSpin() { this->manipulatedFrame.setSpinningSensitivity(100.0); };
+        void preventToRotate() { this->manipulatedFrame.setRotationSensitivity(0.0); };
 
-        bool isManipulated() const { return this->manipulatedFrame->isManipulated(); }
+        bool isManipulated() const { return this->manipulatedFrame.isManipulated(); }
 
 	protected:
-		qglviewer::ManipulatedFrame * manipulatedFrame;
+		qglviewer::ManipulatedFrame manipulatedFrame;
         glm::vec3 lastPosition;
 	};
 
@@ -153,7 +153,7 @@ namespace UITool {
         void getManipulatorsToDisplay(std::vector<bool>& toDisplay) const override;
 
 	private:
-		Manipulator * manipulator;
+		Manipulator manipulator;
 
 		bool active;
 	};

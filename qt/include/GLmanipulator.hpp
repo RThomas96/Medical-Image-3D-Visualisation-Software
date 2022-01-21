@@ -60,7 +60,7 @@ namespace UITool {
 
             void toggleActivation();
 
-            void createNewMeshManipulator(const std::vector<glm::vec3>& positions);
+            void createNewMeshManipulator(const std::vector<glm::vec3>& positions, int type);
 
 			UITool::MeshManipulator * meshManipulator;	 // TODO: shared pointer
 
