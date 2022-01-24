@@ -120,6 +120,14 @@ void Viewer::keyPressEvent(QKeyEvent* e) {
 		/*
 		VIEWER BEHAVIOUR
 		*/
+		case Qt::Key::Key_W:
+            if(!e->isAutoRepeat())
+                this->scene->grids[0]->grid->grid->tetmesh.setWeightedDeformationMethod(50.);
+			break;
+		case Qt::Key::Key_X:
+            if(!e->isAutoRepeat())
+                this->scene->grids[0]->grid->grid->tetmesh.setNormalDeformationMethod();
+			break;
 		case Qt::Key::Key_L:
             if(!e->isAutoRepeat())
                 this->scene->glMeshManipulator->createNewMeshManipulator(this->scene->grids[0]->grid->grid->tetmesh.ptGrid, 0);
@@ -188,19 +196,19 @@ void Viewer::keyPressEvent(QKeyEvent* e) {
 			}
 			this->update();
 			break;
-		case Qt::Key::Key_X:
-			if ((e->modifiers() & Qt::KeyboardModifier::ControlModifier) != 0) {
-				std::cerr << "Applying constrained ARAP ...\n";
-				this->scene->dummy_perform_constrained_arap_on_image_mesh();
-				std::cerr << "Applied constrained ARAP.\n";
-			} else if ((e->modifiers() & Qt::KeyboardModifier::ShiftModifier) != 0) {
-				// apply alignment before ARAP deformation
-				std::cerr << "Applying transformation to the mesh ...\n";
-				this->scene->dummy_apply_alignment_before_arap();
-				std::cerr << "Applied transformation to the mesh.\n";
-			}
-			this->update();
-			break;
+		//case Qt::Key::Key_X:
+		//	if ((e->modifiers() & Qt::KeyboardModifier::ControlModifier) != 0) {
+		//		std::cerr << "Applying constrained ARAP ...\n";
+		//		this->scene->dummy_perform_constrained_arap_on_image_mesh();
+		//		std::cerr << "Applied constrained ARAP.\n";
+		//	} else if ((e->modifiers() & Qt::KeyboardModifier::ShiftModifier) != 0) {
+		//		// apply alignment before ARAP deformation
+		//		std::cerr << "Applying transformation to the mesh ...\n";
+		//		this->scene->dummy_apply_alignment_before_arap();
+		//		std::cerr << "Applied transformation to the mesh.\n";
+		//	}
+		//	this->update();
+		//	break;
 		case Qt::Key::Key_C:
 			// Shift-Enter adds the current vertex as a constraint for ARAP in the mesh.
 			if (e->modifiers() & Qt::KeyboardModifier::ShiftModifier) {
@@ -255,39 +263,26 @@ void Viewer::centerScene(void) {
 }
 
 void Viewer::mousePressEvent(QMouseEvent* e) {
-	// When the RMB causes the event, start the 'framesHeld' counter in select mode :
-	if (e->button() == Qt::MouseButton::RightButton) {
-		if (this->selectMode) {
-			this->framesHeld = 1;
-			// update cursor position :
-			this->cursorPos_last = this->cursorPos_current = glm::ivec2{e->pos().x(), e->pos().y()};
-			std::cerr << "Pressed RMB.\n";
-			this->guessMousePosition();
-			e->accept();	// stop the event from propagating upwards !
-			return;
-		}
+	if (e->button() == Qt::RightButton) {
+        glm::vec3 ptMove;
+	    if(this->scene->glMeshManipulator->meshManipulator->getMouseOverManipulator(ptMove)) {
+            this->scene->grids[0]->grid->grid->tetmesh.meshDeformator->selectPts(ptMove);
+	    }
 	}
-	// If not in select mode, process the event normally :
 	QGLViewer::mousePressEvent(e);
 }
 
 void Viewer::mouseMoveEvent(QMouseEvent* e) {
-	// If tracking the mouse, update its position :
-	if (this->selectMode && this->framesHeld > 0) {
-		this->cursorPos_last	= this->cursorPos_current;
-		this->cursorPos_current = glm::ivec2{e->pos().x(), e->pos().y()};
-		this->framesHeld += 1;
-		this->guessMousePosition();
-	}
 	QGLViewer::mouseMoveEvent(e);
     this->mousePos = e->pos();
 }
 
 void Viewer::mouseReleaseEvent(QMouseEvent* e) {
-	if (e->buttons().testFlag(Qt::MouseButton::RightButton) == false) {
-		this->framesHeld = 0;
-	}
-
+	if (e->button() == Qt::RightButton) {
+        if (e->modifiers() != Qt::ControlModifier) {
+            this->scene->grids[0]->grid->grid->tetmesh.meshDeformator->deselectAllPts();
+        }
+    }
 	QGLViewer::mouseReleaseEvent(e);
 }
 

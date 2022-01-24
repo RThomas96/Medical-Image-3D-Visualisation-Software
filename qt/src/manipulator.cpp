@@ -159,6 +159,7 @@ namespace UITool {
 		if (positions.size() == this->manipulators.size()) {
 			for (int i = 0; i < this->manipulators.size(); ++i) {
 				this->manipulators[i].setPosition(positions[i]);
+				this->manipulators[i].setLastPosition(positions[i]);
 			}
 		} else {
 			std::cerr << "WARNING: try to set [" << this->manipulators.size() << "] manipulators positions with a position vector of size [" << positions.size() << "]" << std::endl;
@@ -183,6 +184,16 @@ namespace UITool {
 		for (int i = 0; i < this->manipulatorsToDisplay.size(); ++i) {
             toDisplay.push_back(this->manipulatorsToDisplay[i]);
         }
+    }
+
+    bool DirectManipulator::getMouseOverManipulator(glm::vec3& position) {
+        for (int i = 0; i < this->manipulatorsToDisplay.size(); ++i) {
+            if(this->manipulators[i].manipulatedFrame.grabsMouse()) {
+                position = this->manipulators[i].getPosition();
+                return true;
+            }
+        }
+        return false;
     }
 
     /***/
@@ -240,7 +251,7 @@ namespace UITool {
 	}
 
 	void FreeManipulator::setAllPositions(const std::vector<glm::vec3>& positions) {
-        //Do nothing, becaues we don't want to move these manipulator
+        //Do nothing, because we don't want to move these manipulator
 	}
 
     int FreeManipulator::getMovedManipulatorIdx() const {
@@ -253,5 +264,11 @@ namespace UITool {
 
     void FreeManipulator::getManipulatorsToDisplay(std::vector<bool>& toDisplay) const {
         toDisplay.push_back(this->active);
+    }
+
+    bool FreeManipulator::getMouseOverManipulator(glm::vec3& position) {
+        if(this->manipulator.manipulatedFrame.grabsMouse())
+            position = this->manipulator.getPosition();
+        return this->manipulator.manipulatedFrame.grabsMouse();
     }
 }	 // namespace UITool

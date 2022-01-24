@@ -1194,15 +1194,11 @@ void Scene::loadMesh() {
 }
 
 void Scene::applyDeformation() {
-    // This is the direct manipulator version, on which you use directly the vertices
     glm::vec3 oldPosition;
     glm::vec3 newPosition;
 
     this->glMeshManipulator->meshManipulator->getMovement(oldPosition, newPosition);
-
-    float radius = 50;
-    std::shared_ptr<MoveMethod> method = std::make_shared<WeightedMethod>(radius);
-    this->grids[0]->grid->grid->tetmesh.movePoint(oldPosition, newPosition, method.get());
+    this->grids[0]->grid->grid->movePoint(oldPosition, newPosition);
 
     this->updateManipulatorPositions();
     this->sendTetmeshToGPU(0, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS));
@@ -3438,11 +3434,6 @@ void Scene::prepareManipulators() {
 
 void Scene::updateManipulatorPositions() {
     this->glMeshManipulator->meshManipulator->setAllPositions(this->grids[0]->grid->grid->tetmesh.ptGrid);
-}
-
-void Scene::updateTetmeshOnManipulators() {
-    // This is usefull because some moveValues move multiple points
-    this->updateManipulatorPositions();
 }
 
 /**********************************************************************/

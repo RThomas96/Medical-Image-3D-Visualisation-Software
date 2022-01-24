@@ -96,6 +96,8 @@ private:
 	QStatusBar* statusBar;	  ///< Status bar
 	QPushButton* showGLLog;	   ///< Button to open the QOpenGLDebugLog message box.
 	QPushButton* deform;	///< The 'Deform' button for debug purpose
+
+    bool isShiftPressed = false;
 };
 
 #endif	  // QT_INCLUDE_NEIGHBOR_VISU_MAIN_WIDGET_HPP_

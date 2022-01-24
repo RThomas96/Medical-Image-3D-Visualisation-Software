@@ -62,8 +62,8 @@ namespace UITool {
 
         bool isManipulated() const { return this->manipulatedFrame.isManipulated(); }
 
-	protected:
 		qglviewer::ManipulatedFrame manipulatedFrame;
+	protected:
         glm::vec3 lastPosition;
 	};
 
@@ -72,21 +72,32 @@ namespace UITool {
         virtual bool isActive() = 0;
         virtual void setActivation(bool isActive) = 0;
 
-        virtual void getMovement(glm::vec3& origin, glm::vec3& target) = 0;
+        // These functions are used by the scene
+        // ****** //
+        // if
         virtual bool hasBeenMoved() const = 0;
+        // then
+        virtual void getMovement(glm::vec3& origin, glm::vec3& target) = 0;
+        // here we add the tetmesh.movePoint(origin, target);
+        // and setAllPositions with positions = tetmesh.getPositions() 
+        virtual void setAllPositions(const std::vector<glm::vec3>& positions) = 0;
 
+        // This function is called only when q key is pressed
         virtual void addManipulator(const glm::vec3& position) = 0;
-
+        // These functions are called only when q key is released
         virtual void removeManipulator(const glm::vec3& position) = 0;
         virtual void removeManipulator(int idx) = 0;
+        // ****** //
 
+        // This function is only used locally in the MeshManipulator class
         virtual int getManipulatorIdx(const glm::vec3& position) const = 0;
         virtual int getNbManipulator() const = 0;
 
-        virtual void setAllPositions(const std::vector<glm::vec3>& positions) = 0;
+        // These functions are used only in glMeshManipulator in the prepare function
         virtual void getAllPositions(std::vector<glm::vec3>& positions) = 0;
-
         virtual void getManipulatorsToDisplay(std::vector<bool>& toDisplay) const = 0;
+
+        virtual bool getMouseOverManipulator(glm::vec3& position) = 0;
 
         virtual ~MeshManipulator() {};
     };
@@ -121,6 +132,8 @@ namespace UITool {
 
         void getManipulatorsToDisplay(std::vector<bool>& toDisplay) const override;
 
+        bool getMouseOverManipulator(glm::vec3& position) override;
+
 	private:
 		std::vector<Manipulator> manipulators;
         std::vector<bool> manipulatorsToDisplay;
@@ -152,6 +165,7 @@ namespace UITool {
         int getMovedManipulatorIdx() const;
         void getManipulatorsToDisplay(std::vector<bool>& toDisplay) const override;
 
+        bool getMouseOverManipulator(glm::vec3& position) override;
 	private:
 		Manipulator manipulator;
 
