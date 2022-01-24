@@ -234,39 +234,6 @@ void TetMesh::buildGrid(const glm::vec3& nbCube, const glm::vec3& sizeCube, cons
     this->computeNormals();
 }
 
-void TetMesh::movePoint(const glm::vec3& origin, const glm::vec3& target, const MoveMethod * moveMethod) {
-    glm::vec3& p = this->ptGrid[this->getIdxOfClosestPoint(origin)];
-    switch(moveMethod->moveMethodType) {
-        case MoveMethodType::NORMAL: {
-            const glm::vec3 deplacement = target - origin;
-            p += deplacement;
-        } break;
-
-        case MoveMethodType::REPLACE: {
-            p = target;
-        } break;
-
-        case MoveMethodType::WEIGHTED: {
-            // This method will move all points
-            const glm::vec3 deplacement = target - origin;
-            const WeightedMethod * param = dynamic_cast<const WeightedMethod*>(moveMethod);
-            float radius = param->radius;
-            for(int i = 0; i < this->ptGrid.size(); ++i) {
-                glm::vec3& p2 = this->ptGrid[i];
-                float distance = glm::distance(target, p2);
-                if(distance > 0.000001 && distance < radius) {
-                    float coeff = 1 - std::pow((distance / radius), 2);
-                    p2 += (deplacement * coeff);
-                }
-            }
-            p = target;
-        } break;
-    }
-    // Recompute all normals, can be optimized
-    this->computeNormals();
-    this->updatebbox();
-}
-
 bool TetMesh::isEmpty() const {
     return this->mesh.empty();
 }
@@ -443,4 +410,94 @@ int TetMesh::getIdxOfClosestPoint(const glm::vec3& p) const{
         }
     }
     return res;
+}
+
+void TetMesh::movePoint(const glm::vec3& origin, const glm::vec3& target) {
+    if(this->meshDeformator->hasSelectedPts()) {
+        this->meshDeformator->movePoint(origin, target);
+        this->computeNormals();
+        this->updatebbox();
+    } else {
+        std::cout << "WARNING: try to move points when there is no point in the point to move queue" << std::endl;
+    }
+}
+
+void TetMesh::setNormalDeformationMethod() {
+    if(this->meshDeformator->deformMethod != DeformMethod::NORMAL) {
+        delete this->meshDeformator;
+        this->meshDeformator = new NormalMethod(this);
+    }
+}
+
+void TetMesh::setWeightedDeformationMethod(float radius) {
+    if(this->meshDeformator->deformMethod != DeformMethod::WEIGHTED) {
+        delete this->meshDeformator;
+        this->meshDeformator = new WeightedMethod(this, radius);
+    }
+}
+/***/
+bool WeightedMethod::hasSelectedPts() {
+    return !this->selectedPts.empty();
+}
+
+void WeightedMethod::selectPts(const glm::vec3& pt) {
+    for(int i = 0; i < this->tetmesh->ptGrid.size(); ++i) {
+        glm::vec3& pt2 = this->tetmesh->ptGrid[i];
+        float distance = glm::distance(pt, pt2);
+        if(distance < this->radius) {
+            this->selectedPts.push_back(i);
+        }
+    }
+    this->originalPoint = pt;
+}
+
+void WeightedMethod::deselectPts(const glm::vec3& pt) {
+    this->selectedPts.clear();// For now you cannot move multiple points with weighted move
+}
+
+void WeightedMethod::deselectAllPts() {
+    this->selectedPts.clear();
+}
+
+void WeightedMethod::movePoint(const glm::vec3& origin, const glm::vec3& target) {
+    const float maxDist = std::max(glm::distance(target, this->originalPoint), this->radius);
+    const glm::vec3 deplacement = target - origin;
+    std::vector<int> idxToRemove;
+    for(int i = 0; i < this->selectedPts.size(); ++i) {
+        glm::vec3& pt2 = this->tetmesh->ptGrid[this->selectedPts[i]];
+        float distance = glm::distance(target, pt2);
+        if(distance < this->radius) {
+            float coeff = 1 - std::pow((distance / this->radius), 2);
+            pt2 += (deplacement * coeff);
+        }
+    }
+}
+
+/***/
+
+bool NormalMethod::hasSelectedPts() {
+    return !this->selectedPts.empty();
+}
+
+void NormalMethod::selectPts(const glm::vec3& pt) {
+    this->selectedPts.push_back(this->tetmesh->getIdxOfClosestPoint(pt));
+}
+
+void NormalMethod::deselectPts(const glm::vec3& pt) {
+    int ptIdx = this->tetmesh->getIdxOfClosestPoint(pt);
+    auto ptIdxPos = std::find(this->selectedPts.begin(), this->selectedPts.end(), ptIdx);
+    if(ptIdxPos != this->selectedPts.end()) {
+        this->selectedPts.erase(ptIdxPos);
+    }
+}
+
+void NormalMethod::deselectAllPts() {
+    this->selectedPts.clear();
+}
+
+void NormalMethod::movePoint(const glm::vec3& origin, const glm::vec3& target) {
+    const glm::vec3 deplacement = target - origin;
+    for(int i = 0; i < this->selectedPts.size(); ++i) {
+        this->tetmesh->ptGrid[this->selectedPts[i]] += deplacement;
+    }
 }

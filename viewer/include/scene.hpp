@@ -362,13 +362,10 @@ public:
 	void showVisuBoxController(VisuBoxController* _controller);
 	void removeVisuBoxController();
 
-	void toggleManipulatorDisplay();
 	void toggleWireframe();
 	void prepareManipulators();
     // Set all manipulators positions to the points of the tetmesh
     void updateManipulatorPositions();
-    // Set all tetmesh positions to the manipulators 
-    void updateTetmeshOnManipulators();
 
 	void addOpenGLOutput(OpenGLDebugLog* _gldl);
 	void addStatusBar(QStatusBar* _s);

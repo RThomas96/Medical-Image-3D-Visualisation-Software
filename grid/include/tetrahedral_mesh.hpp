@@ -7,6 +7,59 @@
 #include <glm/gtx/io.hpp>
 #include <vector>
 
+enum DeformMethod {
+    NORMAL,
+    WEIGHTED
+};
+
+struct TetMesh;
+struct MeshDeformator {
+    DeformMethod deformMethod;
+    TetMesh * tetmesh;
+
+    MeshDeformator(TetMesh * tetmesh, DeformMethod deformMethod) : tetmesh(tetmesh), deformMethod(deformMethod) {}
+
+    // Here origin is basically the clicked point
+    virtual bool hasSelectedPts() = 0;
+    virtual void selectPts(const glm::vec3& pt) = 0;
+    virtual void deselectPts(const glm::vec3& pt) = 0;
+    virtual void deselectAllPts() = 0;
+
+    virtual void movePoint(const glm::vec3& origin, const glm::vec3& target) = 0;
+
+    virtual ~MeshDeformator() = default;// To make MeshDeformator virtual
+};
+
+struct WeightedMethod : MeshDeformator {
+    float radius;
+    glm::vec3 originalPoint;
+    std::vector<int> selectedPts;
+
+    WeightedMethod(TetMesh * tetmesh, float radius) : MeshDeformator(tetmesh, DeformMethod::WEIGHTED), radius(radius) {}
+
+    bool hasSelectedPts() override;
+    void selectPts(const glm::vec3& pt) override;
+    void deselectPts(const glm::vec3& pt) override;
+    void deselectAllPts() override;
+
+    void movePoint(const glm::vec3& origin, const glm::vec3& target) override;
+};
+
+struct NormalMethod : MeshDeformator {
+    std::vector<int> selectedPts;
+
+    NormalMethod(TetMesh * tetmesh) : MeshDeformator(tetmesh, DeformMethod::NORMAL) {}
+
+    bool hasSelectedPts() override;
+    void selectPts(const glm::vec3& pt) override;
+    void deselectPts(const glm::vec3& pt) override;
+    void deselectAllPts() override;
+
+    void movePoint(const glm::vec3& origin, const glm::vec3& target) override;
+};
+
+/***/
+
 struct Tetrahedron {
     glm::vec3 * points[4];// Optionnal, this data can be deleted and computeBary, isInTet and baryToWord function moved out in the TetMesh class
     glm::vec4 normals[4];
@@ -33,36 +86,6 @@ struct Tetrahedron {
 
 /***/
 
-enum MoveMethodType {
-    NORMAL,
-    REPLACE,
-    WEIGHTED
-};
-
-struct MoveMethod {
-    MoveMethodType moveMethodType;
-    MoveMethod(MoveMethodType movePointMethodType) : moveMethodType(movePointMethodType) {}
-
-    virtual ~MoveMethod() = default;// To make MoveMethod virtual
-};
-
-/***/
-
-struct WeightedMethod : MoveMethod {
-    float radius;
-    WeightedMethod(float radius) : MoveMethod(MoveMethodType::WEIGHTED), radius(radius) {}
-};
-
-struct NormalMethod : MoveMethod {
-    NormalMethod() : MoveMethod(MoveMethodType::NORMAL) {}
-};
-
-struct ReplaceMethod : MoveMethod {
-    ReplaceMethod() : MoveMethod(MoveMethodType::REPLACE) {}
-};
-
-/***/
-
 struct TetMesh {
 
     std::vector<Tetrahedron> mesh;
@@ -74,12 +97,11 @@ struct TetMesh {
     glm::vec3 bbMin;
     glm::vec3 bbMax;
 
-    TetMesh(): nbTetra(glm::vec3(0., 0., 0.)), bbMin(glm::vec3(0., 0., 0.)), bbMax(glm::vec3(0., 0., 0.)) {}
+    MeshDeformator * meshDeformator;
+
+    TetMesh(): nbTetra(glm::vec3(0., 0., 0.)), bbMin(glm::vec3(0., 0., 0.)), bbMax(glm::vec3(0., 0., 0.)), meshDeformator(new NormalMethod(this)) {}
 
     void buildGrid(const glm::vec3& nbCube, const glm::vec3& sizeCube, const glm::vec3& origin);
-
-    // Functions to move points
-    void movePoint(const glm::vec3& origin, const glm::vec3& target, const MoveMethod * moveMethod);
 
     bool isEmpty() const;
 
@@ -98,11 +120,19 @@ struct TetMesh {
     void computeNormals();
     void updatebbox();
 
+    void movePoint(const glm::vec3& origin, const glm::vec3& target);
+    void setNormalDeformationMethod();
+    void setWeightedDeformationMethod(float radius);
+
 private:
     // This function is private because it doesn't update fields nbTetra, bbMin and bbMax
     // Thus it can only be used in buildGrid function
     void decomposeAndAddCube(std::vector<glm::vec3*> pts, const std::vector<int>& ptsIdx);
     std::vector<glm::vec3*> insertCubeIntoPtGrid(std::vector<glm::vec3> cubePts, glm::vec3 indices, std::vector<glm::vec3>& ptGrid, std::vector<int>& ptIndices);
 };
+
+/***/
+
+/***/
 
 #endif

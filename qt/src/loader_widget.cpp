@@ -164,7 +164,7 @@ void GridLoaderWidget::loadNewGridAPI() {
 		filenamesAsString.push_back(filenames[i].toStdString());
 	}
 
-    glm::vec3 sizeTetmesh = glm::vec3(20., 5. ,5.);
+    glm::vec3 sizeTetmesh = glm::vec3(20., 20., 20.);
 
 	if(this->group_bbox->isChecked()) {
         std::pair<glm::vec3, glm::vec3> bbox{glm::vec3(this->spinbox_bboxMin_x->value(), this->spinbox_bboxMin_y->value(), this->spinbox_bboxMin_z->value()), glm::vec3(this->spinbox_bboxMax_x->value(), this->spinbox_bboxMax_y->value(), this->spinbox_bboxMax_z->value())};

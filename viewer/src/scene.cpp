@@ -1194,15 +1194,11 @@ void Scene::loadMesh() {
 }
 
 void Scene::applyDeformation() {
-    // This is the direct manipulator version, on which you use directly the vertices
     glm::vec3 oldPosition;
     glm::vec3 newPosition;
 
     this->glMeshManipulator->meshManipulator->getMovement(oldPosition, newPosition);
-
-    float radius = 50;
-    std::shared_ptr<MoveMethod> method = std::make_shared<WeightedMethod>(radius);
-    this->grids[0]->grid->grid->tetmesh.movePoint(oldPosition, newPosition, method.get());
+    this->grids[0]->grid->grid->movePoint(oldPosition, newPosition);
 
     this->updateManipulatorPositions();
     this->sendTetmeshToGPU(0, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS));
@@ -1970,7 +1966,7 @@ void Scene::prepareUniformsGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm
 	glUniform3fv(location_visuBBMin, 1, glm::value_ptr(min));
 	glUniform3fv(location_visuBBMax, 1, glm::value_ptr(max));
 	glUniform1ui(location_shouldUseBB, ((this->drawMode == DrawMode::VolumetricBoxed) ? 1 : 0));
-	glUniform1ui(location_displayWireframe, this->glMeshManipulator->isDisplayed());
+	glUniform1ui(location_displayWireframe, this->glMeshManipulator->isWireframeDisplayed());
 	glUniform3fv(location_volumeEpsilon, 1, glm::value_ptr(_grid->defaultEpsilon));
 
 	// Matrices :
@@ -2176,10 +2172,11 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 	this->drawBoundingBox(this->sceneBB, glm::vec4(.5, .5, .0, 1.), mvMat, pMat);
 	this->showVAOstate = false;
 
-    // Direct manipulation version
 	if (this->glMeshManipulator->meshManipulator->hasBeenMoved()) {
 		this->applyDeformation();
 	}
+
+    this->glMeshManipulator->meshManipulator->updateManipulatorsToDisplay();
 
 }
 
@@ -3409,10 +3406,6 @@ void Scene::resetPositionResponse() {
 	this->posFrame = nullptr;
 }
 
-void Scene::toggleManipulatorDisplay() {
-	this->glMeshManipulator->toggleDisplay();
-}
-
 void Scene::toggleWireframe() {
 	auto getUniform = [&](const char* name) -> GLint {
 		GLint g = glGetUniformLocation(this->program_VolumetricViewer, name);
@@ -3425,8 +3418,10 @@ void Scene::toggleWireframe() {
 		}
 		return g;
 	};
+
+	this->glMeshManipulator->toggleDisplayWireframe();
 	GLint location_displayWireframe = getUniform("displayWireframe");
-	glUniform1ui(location_displayWireframe, this->glMeshManipulator->isDisplayed());
+	glUniform1ui(location_displayWireframe, this->glMeshManipulator->isWireframeDisplayed());
 }
 
 void Scene::prepareManipulators() {
@@ -3438,11 +3433,6 @@ void Scene::prepareManipulators() {
 
 void Scene::updateManipulatorPositions() {
     this->glMeshManipulator->meshManipulator->setAllPositions(this->grids[0]->grid->grid->tetmesh.ptGrid);
-}
-
-void Scene::updateTetmeshOnManipulators() {
-    // This is usefull because some moveValues move multiple points
-    this->updateManipulatorPositions();
 }
 
 /**********************************************************************/
