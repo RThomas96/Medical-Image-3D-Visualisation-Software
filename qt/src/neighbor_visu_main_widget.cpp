@@ -93,7 +93,7 @@ void MainWidget::setupWidgets() {
 
 	QObject::connect(this->showGLLog, &QPushButton::clicked, this->glDebug, &QWidget::show);
 	QObject::connect(this->deform, &QPushButton::clicked, [this]() {
-		this->scene->toggleManipulatorDisplay();
+		//this->scene->toggleManipulatorDisplay();
 		this->viewer->toggleManipulators();
 	});
 

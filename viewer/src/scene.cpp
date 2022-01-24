@@ -1966,7 +1966,7 @@ void Scene::prepareUniformsGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm
 	glUniform3fv(location_visuBBMin, 1, glm::value_ptr(min));
 	glUniform3fv(location_visuBBMax, 1, glm::value_ptr(max));
 	glUniform1ui(location_shouldUseBB, ((this->drawMode == DrawMode::VolumetricBoxed) ? 1 : 0));
-	glUniform1ui(location_displayWireframe, this->glMeshManipulator->isDisplayed());
+	glUniform1ui(location_displayWireframe, this->glMeshManipulator->isWireframeDisplayed());
 	glUniform3fv(location_volumeEpsilon, 1, glm::value_ptr(_grid->defaultEpsilon));
 
 	// Matrices :
@@ -2172,7 +2172,6 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 	this->drawBoundingBox(this->sceneBB, glm::vec4(.5, .5, .0, 1.), mvMat, pMat);
 	this->showVAOstate = false;
 
-    // Direct manipulation version
 	if (this->glMeshManipulator->meshManipulator->hasBeenMoved()) {
 		this->applyDeformation();
 	}
@@ -3405,10 +3404,6 @@ void Scene::resetPositionResponse() {
 	this->posFrame = nullptr;
 }
 
-void Scene::toggleManipulatorDisplay() {
-	this->glMeshManipulator->toggleDisplay();
-}
-
 void Scene::toggleWireframe() {
 	auto getUniform = [&](const char* name) -> GLint {
 		GLint g = glGetUniformLocation(this->program_VolumetricViewer, name);
@@ -3421,8 +3416,10 @@ void Scene::toggleWireframe() {
 		}
 		return g;
 	};
+
+	this->glMeshManipulator->toggleDisplayWireframe();
 	GLint location_displayWireframe = getUniform("displayWireframe");
-	glUniform1ui(location_displayWireframe, this->glMeshManipulator->isDisplayed());
+	glUniform1ui(location_displayWireframe, this->glMeshManipulator->isWireframeDisplayed());
 }
 
 void Scene::prepareManipulators() {

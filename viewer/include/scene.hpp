@@ -362,7 +362,6 @@ public:
 	void showVisuBoxController(VisuBoxController* _controller);
 	void removeVisuBoxController();
 
-	void toggleManipulatorDisplay();
 	void toggleWireframe();
 	void prepareManipulators();
     // Set all manipulators positions to the points of the tetmesh

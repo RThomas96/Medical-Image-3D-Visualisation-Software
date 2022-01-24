@@ -23,12 +23,12 @@ namespace UITool {
 		public:
 			MeshManipulator(SceneGL* scene, const std::vector<glm::vec3>& positions, float manipulatorRadius = 50.f) :
 				manipulatorRadius(manipulatorRadius), manipulatorMesh(Sphere(manipulatorRadius)), sceneGL(scene), meshManipulator(new UITool::DirectManipulator(positions)) {
-				this->program	  = 0;
-				this->vao		  = 0;
-				this->vboVertices = 0;
-				this->vboIndices  = 0;
-				this->tex		  = 0;
-				this->displayed	  = false;
+				this->program	       = 0;
+				this->vao		       = 0;
+				this->vboVertices      = 0;
+				this->vboIndices       = 0;
+				this->tex		       = 0;
+				this->displayWireframe = false;
 			}
 
 			void prepare();
@@ -51,10 +51,9 @@ namespace UITool {
 
             void setRadius(float radius);
 
-			void toggleDisplay() { this->displayed = ! this->displayed; }
+			void toggleDisplayWireframe() { this->displayWireframe = ! this->displayWireframe; }
 
-			//bool isDisplayed() { return this->displayed; }
-			bool isDisplayed() { return false; }
+			bool isWireframeDisplayed() { return this->displayWireframe; }
 
             void addManipulator(const glm::vec3& position);
 
@@ -82,7 +81,7 @@ namespace UITool {
 			TextureUpload texParams;
 			TextureUpload texParamsVisible;
 
-			bool displayed;
+			bool displayWireframe;
 		};
 
 	}	 // namespace GL
