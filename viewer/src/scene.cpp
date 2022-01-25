@@ -2176,6 +2176,8 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 		this->applyDeformation();
 	}
 
+    this->glMeshManipulator->meshManipulator->updateManipulatorsToDisplay();
+
 }
 
 void Scene::newSHADERS_updateUBOData() {

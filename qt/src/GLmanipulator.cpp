@@ -173,10 +173,12 @@ void UITool::GL::MeshManipulator::removeLastManipulator()
 
 void UITool::GL::MeshManipulator::toggleActivation() {
 	this->meshManipulator->setActivation(!this->meshManipulator->isActive());
+    this->displayWireframe = this->meshManipulator->isWireframeDisplayed();
     this->prepare();
 }
 
 void UITool::GL::MeshManipulator::createNewMeshManipulator(const std::vector<glm::vec3>& positions, int type) {
+    this->displayWireframe = false;// Because wathever the manipulator created it is not activated at creation
     delete this->meshManipulator;
     if(type == 0) {
         this->meshManipulator = new UITool::DirectManipulator(positions);

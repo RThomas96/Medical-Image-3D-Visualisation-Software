@@ -187,6 +187,8 @@ namespace UITool {
     }
 
     bool DirectManipulator::getMouseOverManipulator(glm::vec3& position) {
+        if(!this->active)
+            return false;
         for (int i = 0; i < this->manipulatorsToDisplay.size(); ++i) {
             if(this->manipulators[i].manipulatedFrame.grabsMouse()) {
                 position = this->manipulators[i].getPosition();
@@ -194,6 +196,22 @@ namespace UITool {
             }
         }
         return false;
+    }
+
+    void DirectManipulator::updateManipulatorsToDisplay() {
+        if(!this->active)
+            return;
+        for (int i = 0; i < this->manipulatorsToDisplay.size(); ++i) {
+            if(this->manipulators[i].manipulatedFrame.grabsMouse()) {
+                this->manipulatorsToDisplay[i] = true;
+            } else {
+                this->manipulatorsToDisplay[i] = false;
+            }
+        }
+    }
+
+    bool DirectManipulator::isWireframeDisplayed() {
+        return this->active;
     }
 
     /***/
@@ -270,5 +288,14 @@ namespace UITool {
         if(this->manipulator.manipulatedFrame.grabsMouse())
             position = this->manipulator.getPosition();
         return this->manipulator.manipulatedFrame.grabsMouse();
+    }
+
+    void FreeManipulator::updateManipulatorsToDisplay() {
+        //Do nothin because display is directly link to active variable
+        return;
+    }
+
+    bool FreeManipulator::isWireframeDisplayed() {
+        return false;
     }
 }	 // namespace UITool

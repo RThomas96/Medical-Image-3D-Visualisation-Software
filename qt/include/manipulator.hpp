@@ -99,6 +99,10 @@ namespace UITool {
 
         virtual bool getMouseOverManipulator(glm::vec3& position) = 0;
 
+        virtual void updateManipulatorsToDisplay() = 0;
+
+        virtual bool isWireframeDisplayed() = 0;
+
         virtual ~MeshManipulator() {};
     };
 
@@ -134,6 +138,9 @@ namespace UITool {
 
         bool getMouseOverManipulator(glm::vec3& position) override;
 
+        void updateManipulatorsToDisplay() override;
+
+        bool isWireframeDisplayed() override;
 	private:
 		std::vector<Manipulator> manipulators;
         std::vector<bool> manipulatorsToDisplay;
@@ -166,6 +173,10 @@ namespace UITool {
         void getManipulatorsToDisplay(std::vector<bool>& toDisplay) const override;
 
         bool getMouseOverManipulator(glm::vec3& position) override;
+
+        void updateManipulatorsToDisplay() override;
+
+        bool isWireframeDisplayed() override;
 	private:
 		Manipulator manipulator;
 
