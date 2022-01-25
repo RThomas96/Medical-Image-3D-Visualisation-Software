@@ -1,6 +1,18 @@
 
 #include "../include/GLmanipulator.hpp"
 
+UITool::GL::MeshManipulator::MeshManipulator(SceneGL* sceneGL, Scene * scene, const std::vector<glm::vec3>& positions, float manipulatorRadius) :
+				manipulatorRadius(manipulatorRadius), manipulatorMesh(Sphere(manipulatorRadius)), sceneGL(sceneGL), meshManipulator(new UITool::DirectManipulator(scene, positions)) {
+                //QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), &UITool::MeshManipulator::needRedraw, this, &UITool::GL::MeshManipulator::prepare);
+                QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needRedraw()), this, SLOT(prepare()));// This syntax is needed to cast an interface
+				this->program	       = 0;
+				this->vao		       = 0;
+				this->vboVertices      = 0;
+				this->vboIndices       = 0;
+				this->tex		       = 0;
+				this->displayWireframe = false;
+			}
+
 void UITool::GL::MeshManipulator::prepare() {
 	// Initialize the texture paramters for upload
 	this->texParams.minmag.x = GL_NEAREST;
@@ -80,7 +92,7 @@ void UITool::GL::MeshManipulator::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* m
 		return g;
 	};
 
-	//if (! this->displayed)
+	//if (!this->displayed)
 	//	return;
 
 	this->sceneGL->glUseProgram(this->program);
@@ -160,32 +172,21 @@ void UITool::GL::MeshManipulator::setRadius(float radius) {
     this->prepare();
 }
 
-void UITool::GL::MeshManipulator::addManipulator(const glm::vec3& position) 
-{ 
-    this->meshManipulator->addManipulator(position);
-    this->prepare(); 
-}
-
-void UITool::GL::MeshManipulator::removeLastManipulator() 
-{ 
-    this->meshManipulator->removeManipulator(this->meshManipulator->getNbManipulator()-1);
-    this->prepare(); 
-}
-
 void UITool::GL::MeshManipulator::toggleActivation() {
 	this->meshManipulator->setActivation(!this->meshManipulator->isActive());
     this->displayWireframe = this->meshManipulator->isWireframeDisplayed();
-    this->prepare();
 }
 
-void UITool::GL::MeshManipulator::createNewMeshManipulator(const std::vector<glm::vec3>& positions, int type) {
+void UITool::GL::MeshManipulator::createNewMeshManipulator(Scene * scene, const std::vector<glm::vec3>& positions, int type) {
     this->displayWireframe = false;// Because wathever the manipulator created it is not activated at creation
     delete this->meshManipulator;
     if(type == 0) {
-        this->meshManipulator = new UITool::DirectManipulator(positions);
+        this->meshManipulator = new UITool::DirectManipulator(scene, positions);
+        QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needRedraw()), this, SLOT(prepare()));
         this->prepare();
     } else {
-        this->meshManipulator = new UITool::FreeManipulator(positions);
+        this->meshManipulator = new UITool::FreeManipulator(scene, positions);
+        QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needRedraw()), this, SLOT(prepare()));
         this->prepare();
     }
 }

@@ -3,7 +3,7 @@
 
 #include "../../third_party/primitive/Sphere.h"
 #include "../../viewer/include/viewer_structs.hpp"
-#include "../../viewer/include/scene.hpp"
+//#include "../../viewer/include/scene.hpp"
 #include "manipulator.hpp"
 
 #include <QOpenGLContext>
@@ -14,24 +14,17 @@
 class SceneGL;
 
 namespace UITool {
+    class MeshManipulator;
 
 	/// @defgroup gl GL
 	/// @brief All classes that interact with OpenGL. Allow a separation between backend and frontend.
 	namespace GL {
 
-		class MeshManipulator {
+		class MeshManipulator : QObject {
+            Q_OBJECT;
 		public:
-			MeshManipulator(SceneGL* scene, const std::vector<glm::vec3>& positions, float manipulatorRadius = 50.f) :
-				manipulatorRadius(manipulatorRadius), manipulatorMesh(Sphere(manipulatorRadius)), sceneGL(scene), meshManipulator(new UITool::DirectManipulator(positions)) {
-				this->program	       = 0;
-				this->vao		       = 0;
-				this->vboVertices      = 0;
-				this->vboIndices       = 0;
-				this->tex		       = 0;
-				this->displayWireframe = false;
-			}
+			MeshManipulator(SceneGL* sceneGL, Scene * scene, const std::vector<glm::vec3>& positions, float manipulatorRadius = 50.f);
 
-			void prepare();
 			void draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* mMat);
 
 			void setProgram(GLuint program) { this->program = program; };
@@ -49,21 +42,19 @@ namespace UITool {
 			void setTex(GLuint tex) { this->tex = tex; };
 			GLuint getTex() { return this->tex; };
 
-            void setRadius(float radius);
-
-			void toggleDisplayWireframe() { this->displayWireframe = ! this->displayWireframe; }
-
 			bool isWireframeDisplayed() { return this->displayWireframe; }
-
-            void addManipulator(const glm::vec3& position);
 
             void toggleActivation();
 
-            void createNewMeshManipulator(const std::vector<glm::vec3>& positions, int type);
-
 			UITool::MeshManipulator * meshManipulator;	 // TODO: shared pointer
 
-            void removeLastManipulator() ;
+        public slots:
+			void prepare();
+
+            void setRadius(float radius);
+            void createNewMeshManipulator(Scene * scene, const std::vector<glm::vec3>& positions, int type);
+			void toggleDisplayWireframe() { this->displayWireframe = ! this->displayWireframe; }
+
 		private:
 
 			float manipulatorRadius;
