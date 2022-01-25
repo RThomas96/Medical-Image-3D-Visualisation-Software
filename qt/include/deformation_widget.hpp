@@ -48,11 +48,14 @@ protected:
 	QRadioButton*       radio_move_normal; 
 	QRadioButton*     radio_move_weighted; 
 
-	QLabel*                  label_radius_selection;
-	QDoubleSpinBox*        spinbox_radius_selection;
+	QLabel*           label_radius_selection;
+	QDoubleSpinBox* spinbox_radius_selection;
 
-	QLabel*                  label_radius_sphere;
-	QDoubleSpinBox*        spinbox_radius_sphere;
+	QLabel*           label_radius_sphere;
+	QDoubleSpinBox* spinbox_radius_sphere;
+
+	QLabel*               label_wireframe;
+	QCheckBox*    checkbox_wireframe;
 };
 
 #endif	  // QT_INCLUDE_DEFORMATION_WIDGET_HPP_

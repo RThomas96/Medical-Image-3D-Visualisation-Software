@@ -45,6 +45,10 @@ GridDeformationWidget::GridDeformationWidget(Scene* _scene, QWidget* parent) :
 	this->spinbox_radius_sphere->setRange(0., 20000.);
 	this->spinbox_radius_sphere->setSingleStep(1.);
 
+	this->label_wireframe = new QLabel("Display wireframe");
+	this->checkbox_wireframe = new QCheckBox;
+    this->checkbox_wireframe->setChecked(true);
+
     this->setupLayouts();
 	this->setupSignals();
 }
@@ -73,6 +77,9 @@ void GridDeformationWidget::setupLayouts() {
 
     this->mainLayout->addWidget(this->label_radius_sphere);
     this->mainLayout->addWidget(this->spinbox_radius_sphere);
+
+    this->mainLayout->addWidget(this->label_wireframe);
+    this->mainLayout->addWidget(this->checkbox_wireframe);
 
     this->setLayout(this->mainLayout);
 }
@@ -106,4 +113,6 @@ void GridDeformationWidget::setupSignals() {
 
 	//QObject::connect(this->spinbox_radius_sphere, QOverload<int>::of(&QSpinBox::valueChanged), this, [this](){ this->scene->glMeshManipulator->setRadius(1.);}); 
 	QObject::connect(this->spinbox_radius_sphere, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, [=](double i){ this->scene->glMeshManipulator->setRadius(i);}); 
+
+	QObject::connect(this->checkbox_wireframe, &QPushButton::clicked, this, [this]() {this->scene->glMeshManipulator->toggleDisplayWireframe();});
 }
