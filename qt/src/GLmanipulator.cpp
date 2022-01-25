@@ -1,6 +1,16 @@
 
 #include "../include/GLmanipulator.hpp"
 
+UITool::GL::MeshManipulator::MeshManipulator(SceneGL* sceneGL, Scene * scene, const std::vector<glm::vec3>& positions, float manipulatorRadius) :
+				manipulatorRadius(manipulatorRadius), manipulatorMesh(Sphere(manipulatorRadius)), sceneGL(sceneGL), meshManipulator(new UITool::DirectManipulator(scene, positions)) {
+				this->program	       = 0;
+				this->vao		       = 0;
+				this->vboVertices      = 0;
+				this->vboIndices       = 0;
+				this->tex		       = 0;
+				this->displayWireframe = false;
+			}
+
 void UITool::GL::MeshManipulator::prepare() {
 	// Initialize the texture paramters for upload
 	this->texParams.minmag.x = GL_NEAREST;
@@ -168,7 +178,7 @@ void UITool::GL::MeshManipulator::addManipulator(const glm::vec3& position)
 
 void UITool::GL::MeshManipulator::removeLastManipulator() 
 { 
-    this->meshManipulator->removeManipulator(this->meshManipulator->getNbManipulator()-1);
+    //this->meshManipulator->removeManipulator(this->meshManipulator->getNbManipulator()-1);
     this->prepare(); 
 }
 
@@ -178,14 +188,14 @@ void UITool::GL::MeshManipulator::toggleActivation() {
     this->prepare();
 }
 
-void UITool::GL::MeshManipulator::createNewMeshManipulator(const std::vector<glm::vec3>& positions, int type) {
+void UITool::GL::MeshManipulator::createNewMeshManipulator(Scene * scene, const std::vector<glm::vec3>& positions, int type) {
     this->displayWireframe = false;// Because wathever the manipulator created it is not activated at creation
     delete this->meshManipulator;
     if(type == 0) {
-        this->meshManipulator = new UITool::DirectManipulator(positions);
+        this->meshManipulator = new UITool::DirectManipulator(scene, positions);
         this->prepare();
     } else {
-        this->meshManipulator = new UITool::FreeManipulator(positions);
+        this->meshManipulator = new UITool::FreeManipulator(scene, positions);
         this->prepare();
     }
 }

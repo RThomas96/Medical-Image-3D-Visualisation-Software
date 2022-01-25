@@ -51,7 +51,7 @@ inline void __GetTexSize(std::size_t numTexNeeded, std::size_t* opt_width, std::
  *  to be drawn, even if it is empty at the time of the first call to a draw function.
  */
 Scene::Scene() :
-	glMeshManipulator(new UITool::GL::MeshManipulator(&this->sceneGL, std::vector<glm::vec3>())) {
+	glMeshManipulator(new UITool::GL::MeshManipulator(&this->sceneGL, nullptr, std::vector<glm::vec3>())) {
 	this->isInitialized	   = false;
 	this->showVAOstate	   = false;
 	this->shouldDeleteGrid = false;
@@ -613,7 +613,7 @@ void Scene::addGrid(const GridGL * gridLoaded) {
 	this->tex3D_buildBuffers(gridView->volumetricMesh);
 
     //Add manipulators
-    this->glMeshManipulator->createNewMeshManipulator(this->grids[0]->grid->grid->tetmesh.ptGrid, 0);
+    this->glMeshManipulator->createNewMeshManipulator(this, this->grids[0]->grid->grid->tetmesh.ptGrid, 0);
     this->updateManipulatorPositions();
 	this->prepareManipulators();
 
@@ -1193,14 +1193,9 @@ void Scene::loadMesh() {
 	this->to_init.emplace(mesh_drawable);
 }
 
-void Scene::applyDeformation() {
-    glm::vec3 oldPosition;
-    glm::vec3 newPosition;
-
-    this->glMeshManipulator->meshManipulator->getMovement(oldPosition, newPosition);
+void Scene::slotApplyDeformation(glm::vec3 oldPosition, glm::vec3 newPosition) {
     this->grids[0]->grid->grid->movePoint(oldPosition, newPosition);
-
-    this->updateManipulatorPositions();
+    this->glMeshManipulator->meshManipulator->setAllManipulatorsPosition(this->grids[0]->grid->grid->tetmesh.ptGrid);
     this->sendTetmeshToGPU(0, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS));
 }
 
@@ -2171,12 +2166,6 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 
 	this->drawBoundingBox(this->sceneBB, glm::vec4(.5, .5, .0, 1.), mvMat, pMat);
 	this->showVAOstate = false;
-
-	if (this->glMeshManipulator->meshManipulator->hasBeenMoved()) {
-		this->applyDeformation();
-	}
-
-    this->glMeshManipulator->meshManipulator->updateManipulatorsToDisplay();
 
 }
 
@@ -3432,7 +3421,7 @@ void Scene::prepareManipulators() {
 }
 
 void Scene::updateManipulatorPositions() {
-    this->glMeshManipulator->meshManipulator->setAllPositions(this->grids[0]->grid->grid->tetmesh.ptGrid);
+    this->glMeshManipulator->meshManipulator->setAllManipulatorsPosition(this->grids[0]->grid->grid->tetmesh.ptGrid);
 }
 
 /**********************************************************************/
@@ -3567,14 +3556,13 @@ void Scene::launchSaveDialog() {
 	return;
 }
 
-void Scene::slotDisplayValueFromRay(const glm::vec3& origin, const glm::vec3& direction) {
-    glm::vec3 res = glm::vec3(0., 0., 0.);
-    if(this->grids[0]->grid->grid->getPositionOfRayIntersection(*this->initial->grid, origin, direction, this->getMinTexValue(), this->getMaxTexValue(), res)) {
-        std::cout << "The voxel ray position is: " << res << std::endl;
-        this->glMeshManipulator->addManipulator(res);
-    } else {
-        std::cout << "No point found" << std::endl;
-    }
+bool Scene::slotGetPositionFromRay(const glm::vec3& origin, const glm::vec3& direction, glm::vec3& res) {
+    res = glm::vec3(0., 0., 0.);
+    return (this->grids[0]->grid->grid->getPositionOfRayIntersection(*this->initial->grid, origin, direction, this->getMinTexValue(), this->getMaxTexValue(), res));
+}
+
+void Scene::slotAddManipulator(const glm::vec3& position) {
+    this->glMeshManipulator->addManipulator(position);
 }
 
 void Scene::removeLastManip() {

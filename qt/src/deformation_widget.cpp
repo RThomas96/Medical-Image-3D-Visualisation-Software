@@ -103,9 +103,9 @@ void GridDeformationWidget::setupSignals() {
 	//	return;
 	//}
 
-	QObject::connect(this->radio_selector_direct, &QPushButton::clicked, this, [this]() {this->scene->glMeshManipulator->createNewMeshManipulator(this->scene->grids[0]->grid->grid->tetmesh.ptGrid, 0);});
+	QObject::connect(this->radio_selector_direct, &QPushButton::clicked, this, [this]() {this->scene->glMeshManipulator->createNewMeshManipulator(this->scene, this->scene->grids[0]->grid->grid->tetmesh.ptGrid, 0);});
 
-	QObject::connect(this->radio_selector_free, &QPushButton::clicked, this, [this]() {this->scene->glMeshManipulator->createNewMeshManipulator(this->scene->grids[0]->grid->grid->tetmesh.ptGrid, 1);});
+	QObject::connect(this->radio_selector_free, &QPushButton::clicked, this, [this]() {this->scene->glMeshManipulator->createNewMeshManipulator(this->scene, this->scene->grids[0]->grid->grid->tetmesh.ptGrid, 1);});
 
 	QObject::connect(this->radio_move_normal, &QPushButton::clicked, this, [this]() {this->scene->grids[0]->grid->grid->tetmesh.setNormalDeformationMethod();});
 

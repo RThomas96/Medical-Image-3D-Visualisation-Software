@@ -1,9 +1,11 @@
 #ifndef MANIPULATOR_HPP_
 #define MANIPULATOR_HPP_
 
+#include "../../viewer/include/scene.hpp"
 #include <QGLViewer/manipulatedFrame.h>
 #include <QGLViewer/qglviewer.h>
 #include <glm/glm.hpp>
+#include <qobject.h>
 
 /// @defgroup uitools UITools
 /// @brief Group of tools used to interact with the application.
@@ -39,7 +41,8 @@ namespace UITool {
 	/// that can be move/rotate with the mouse.
 	/// @details This class contain a qglviewer::ManipulatedFrame that can detect when it is grabbed by the mouse.
 	/// @note It's a simple wrapper around qglviewer::ManipulatedFrame to be used with glm::vec3.
-	class Manipulator {
+	class Manipulator : public qglviewer::ManipulatedFrame {
+        Q_OBJECT
 	public:
 		Manipulator(const glm::vec3& position);
         ~Manipulator() {};
@@ -47,100 +50,122 @@ namespace UITool {
 		void lockPosition();
 		void setCustomConstraint();
 
-		void setPosition(const glm::vec3& position);
-		glm::vec3 getPosition() const;
+		void setManipPosition(const glm::vec3& position);
+		glm::vec3 getManipPosition() const;
         glm::vec3 getLastPosition() const { return this->lastPosition; };
     	void setLastPosition(const glm::vec3& position);
 
-        void updateLastPosition() { this->lastPosition = this->getPosition(); };
+        void updateLastPosition() { this->lastPosition = this->getManipPosition(); };
 
-        void disable() { this->manipulatedFrame.removeFromMouseGrabberPool(); };
-        void enable() { this->manipulatedFrame.addInMouseGrabberPool(); };
+        void disable() { this->removeFromMouseGrabberPool(); };
+        void enable() { this->addInMouseGrabberPool(); };
 
-        void preventToSpin() { this->manipulatedFrame.setSpinningSensitivity(100.0); };
-        void preventToRotate() { this->manipulatedFrame.setRotationSensitivity(0.0); };
+        void preventToSpin() { this->setSpinningSensitivity(100.0); };
+        void preventToRotate() { this->setRotationSensitivity(0.0); };
 
-        bool isManipulated() const { return this->manipulatedFrame.isManipulated(); }
+        void mouseReleaseEvent(QMouseEvent* const e, qglviewer::Camera* const camera);
 
-		qglviewer::ManipulatedFrame manipulatedFrame;
-	protected:
+        void mousePressEvent( QMouseEvent* const e, qglviewer::Camera* const camera);
+
+        void mouseMoveEvent(QMouseEvent *const event, qglviewer::Camera *const camera);
+
+        void checkIfGrabsMouse(int x, int y, const qglviewer::Camera *const camera);
+
+        void slotMovePoint();
+
         glm::vec3 lastPosition;
+
+    signals:
+        void enterAtRangeForGrab(Manipulator*);
+        void exitFromRangeForGrab(Manipulator*);
+
+        void mouseRightButtonPressed(Manipulator*);
+        void mouseRightButtonReleased(Manipulator*);
+        void mouseRightButtonReleasedAndCtrlIsNotPressed(Manipulator*);
+
+        // This signal is already present in the default ManipulatedFrame, but it doesn't not return its adress
+        void isManipulated(Manipulator*);// The mouse right button is pressed and the mouse is moved
+        
+	public:
+        bool isSelected;
+        bool isAtRangeForGrab;
 	};
 
     class MeshManipulator {
     public:
+        // This should not be here
+        // Unfortunatly, actually the scene inherite from QOpenGL_Core
+        // So the scene canno't use the Slot/Signal mecanisme
+        // Therefore, a pointer to the scene is mandatory to "connect" the functions
+        Scene * scene;
+
+        MeshManipulator(Scene * scene): scene(scene) {}
+
         virtual bool isActive() = 0;
+
+        // These functions are used from the exterior
         virtual void setActivation(bool isActive) = 0;
 
-        // These functions are used by the scene
-        // ****** //
-        // if
-        virtual bool hasBeenMoved() const = 0;
-        // then
-        virtual void getMovement(glm::vec3& origin, glm::vec3& target) = 0;
-        // here we add the tetmesh.movePoint(origin, target);
-        // and setAllPositions with positions = tetmesh.getPositions() 
-        virtual void setAllPositions(const std::vector<glm::vec3>& positions) = 0;
+        virtual void removeManipulator(Manipulator * manipulatorToDisplay) = 0;
 
-        // This function is called only when q key is pressed
-        virtual void addManipulator(const glm::vec3& position) = 0;
-        // These functions are called only when q key is released
-        virtual void removeManipulator(const glm::vec3& position) = 0;
-        virtual void removeManipulator(int idx) = 0;
-        // ****** //
-
-        // This function is only used locally in the MeshManipulator class
-        virtual int getManipulatorIdx(const glm::vec3& position) const = 0;
-        virtual int getNbManipulator() const = 0;
+        virtual bool isWireframeDisplayed() = 0;
 
         // These functions are used only in glMeshManipulator in the prepare function
         virtual void getAllPositions(std::vector<glm::vec3>& positions) = 0;
         virtual void getManipulatorsToDisplay(std::vector<bool>& toDisplay) const = 0;
-
-        virtual bool getMouseOverManipulator(glm::vec3& position) = 0;
-
-        virtual void updateManipulatorsToDisplay() = 0;
-
-        virtual bool isWireframeDisplayed() = 0;
+        virtual void setAllManipulatorsPosition(const std::vector<glm::vec3>& positions) = 0;
 
         virtual ~MeshManipulator() {};
-    };
+    //public slots:
+        // These are connected to the manipulators
+        virtual void displayManipulator(Manipulator * manipulatorToDisplay) = 0;
+        virtual void hideManipulator(Manipulator * manipulatorToDisplay) = 0;
 
+        virtual void moveManipulator(Manipulator * manipulator) = 0;
+        virtual void selectManipulator(Manipulator * manipulator) = 0;
+        virtual void deselectManipulator(Manipulator * manipulator) = 0;
+
+        // These are connected to the scene
+        virtual void addManipulator(const glm::vec3& position) = 0;
+
+    };
+}
+Q_DECLARE_INTERFACE(UITool::MeshManipulator, "MeshManipulator")
+namespace UITool {
 	/// @ingroup uitools
 	/// @brief The DirectManipulator class represents a set of vertex manipulators used to manipulate each mesh's vertex.
 	/// @details The active manipulator indicates the manipulator at range for being grabbed by the mouse.
 	/// The commonConstraint is a custom translation constraint allowing to simplify vertex manipulation. See UITool::CustomConstraint.
 	/// The lockConstraint allow to prevent manipulator to move when the feature is inactive.
-	class DirectManipulator : public MeshManipulator {
+	class DirectManipulator : public QObject, public MeshManipulator {
+        Q_OBJECT
+        Q_INTERFACES(UITool::MeshManipulator)
+
 	public:
-		DirectManipulator(const std::vector<glm::vec3>& positions);
+		DirectManipulator(Scene * scene, const std::vector<glm::vec3>& positions);
 
         bool isActive() override { return this->active; };
         void setActivation(bool isActive) override;
 
-        void getMovement(glm::vec3& origin, glm::vec3& target) override;
-        bool hasBeenMoved() const override;
-
         void addManipulator(const glm::vec3& position) override;
 
-        void removeManipulator(const glm::vec3& position) override;
-        void removeManipulator(int idx) override;
+        void removeManipulator(Manipulator * manipulatorToDisplay) override;
 
-        int getManipulatorIdx(const glm::vec3& position) const override;
-        int getNbManipulator() const override;
-
-        void setAllPositions(const std::vector<glm::vec3>& positions) override;
+        void setAllManipulatorsPosition(const std::vector<glm::vec3>& positions) override;
         void getAllPositions(std::vector<glm::vec3>& positions) override;
-
-        int getMovedManipulatorIdx() const;
 
         void getManipulatorsToDisplay(std::vector<bool>& toDisplay) const override;
 
-        bool getMouseOverManipulator(glm::vec3& position) override;
-
-        void updateManipulatorsToDisplay() override;
-
         bool isWireframeDisplayed() override;
+
+    public slots:
+        void displayManipulator(Manipulator * manipulatorToDisplay) override;
+        void hideManipulator(Manipulator * manipulatorToDisplay) override;
+
+        void moveManipulator(Manipulator * manipulator) override;
+        void selectManipulator(Manipulator * manipulator) override;
+        void deselectManipulator(Manipulator * manipulator) override;
+
 	private:
 		std::vector<Manipulator> manipulators;
         std::vector<bool> manipulatorsToDisplay;
@@ -148,35 +173,35 @@ namespace UITool {
 		bool active;
 	};
 
-	class FreeManipulator : public MeshManipulator {
+	class FreeManipulator : public QObject, public MeshManipulator {
+        Q_OBJECT
+        Q_INTERFACES(UITool::MeshManipulator)
+
 	public:
-		FreeManipulator(const std::vector<glm::vec3>& positions);
+		FreeManipulator(Scene * scene, const std::vector<glm::vec3>& positions);
 
         bool isActive() override { return this->active; };
         void setActivation(bool isActive) override;
 
-        void getMovement(glm::vec3& origin, glm::vec3& target) override;
-        bool hasBeenMoved() const override;
-
         void addManipulator(const glm::vec3& position) override;
 
-        void removeManipulator(const glm::vec3& position) override;
-        void removeManipulator(int idx) override;
+        void removeManipulator(Manipulator * manipulatorToDisplay) override;
 
-        int getManipulatorIdx(const glm::vec3& position) const override;
-        int getNbManipulator() const override;
+        void setAllManipulatorsPosition(const std::vector<glm::vec3>& positions) override;
 
-        void setAllPositions(const std::vector<glm::vec3>& positions) override;
         void getAllPositions(std::vector<glm::vec3>& positions) override;
-
-        int getMovedManipulatorIdx() const;
         void getManipulatorsToDisplay(std::vector<bool>& toDisplay) const override;
 
-        bool getMouseOverManipulator(glm::vec3& position) override;
-
-        void updateManipulatorsToDisplay() override;
-
         bool isWireframeDisplayed() override;
+
+    public slots:
+        void displayManipulator(Manipulator * manipulatorToDisplay) override;
+        void hideManipulator(Manipulator * manipulatorToDisplay) override;
+
+        void moveManipulator(Manipulator * manipulator) override;
+        void selectManipulator(Manipulator * manipulator) override;
+        void deselectManipulator(Manipulator * manipulator) override;
+
 	private:
 		Manipulator manipulator;
 

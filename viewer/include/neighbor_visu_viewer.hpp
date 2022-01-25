@@ -96,6 +96,8 @@ private:
 	std::size_t temp_img_idx;	 ///< The image index if found. WARNING : WE ASSUME IT IS ALWAYS 0, EVEN IF NO IMAGES ARE LOADED
 	glm::vec3 temp_img_pos;	   ///< The position of that image index
 
+    void castRayFromMouse(glm::vec3& origin, glm::vec3& direction);
+
 public slots:
 	/// @brief Update the view, as a slot without any arguments (currently only used by QTimer)
 	void updateView() { this->update(); }
@@ -114,7 +116,7 @@ public slots:
 	void toggleManipulators(void);
     void removeManip();
 
-    void displayMousePosition(void);
+    void addManipulator(void);
 };
 
 #endif	  // VIEWER_INCLUDE_NEIGHBOR_VISU_VIEWER_HPP_

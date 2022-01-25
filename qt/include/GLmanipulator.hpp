@@ -3,7 +3,7 @@
 
 #include "../../third_party/primitive/Sphere.h"
 #include "../../viewer/include/viewer_structs.hpp"
-#include "../../viewer/include/scene.hpp"
+//#include "../../viewer/include/scene.hpp"
 #include "manipulator.hpp"
 
 #include <QOpenGLContext>
@@ -14,6 +14,7 @@
 class SceneGL;
 
 namespace UITool {
+    class MeshManipulator;
 
 	/// @defgroup gl GL
 	/// @brief All classes that interact with OpenGL. Allow a separation between backend and frontend.
@@ -21,15 +22,7 @@ namespace UITool {
 
 		class MeshManipulator {
 		public:
-			MeshManipulator(SceneGL* scene, const std::vector<glm::vec3>& positions, float manipulatorRadius = 50.f) :
-				manipulatorRadius(manipulatorRadius), manipulatorMesh(Sphere(manipulatorRadius)), sceneGL(scene), meshManipulator(new UITool::DirectManipulator(positions)) {
-				this->program	       = 0;
-				this->vao		       = 0;
-				this->vboVertices      = 0;
-				this->vboIndices       = 0;
-				this->tex		       = 0;
-				this->displayWireframe = false;
-			}
+			MeshManipulator(SceneGL* sceneGL, Scene * scene, const std::vector<glm::vec3>& positions, float manipulatorRadius = 50.f);
 
 			void prepare();
 			void draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* mMat);
@@ -59,11 +52,11 @@ namespace UITool {
 
             void toggleActivation();
 
-            void createNewMeshManipulator(const std::vector<glm::vec3>& positions, int type);
-
-			UITool::MeshManipulator * meshManipulator;	 // TODO: shared pointer
+            void createNewMeshManipulator(Scene * scene, const std::vector<glm::vec3>& positions, int type);
 
             void removeLastManipulator() ;
+
+			UITool::MeshManipulator * meshManipulator;	 // TODO: shared pointer
 		private:
 
 			float manipulatorRadius;

@@ -266,7 +266,7 @@ public:
 
     /* Others */
     void removeLastManip();
-	void applyDeformation();
+    void slotApplyDeformation(glm::vec3 oldPosition, glm::vec3 newPosition);
 	void newSHADERS_updateUserColorScales();
 	void signal_updateUserColorScales();
 	void newSHADERS_updateUBOData();
@@ -357,7 +357,8 @@ private:
 public:
     /* Widget interaction */
 
-    void slotDisplayValueFromRay(const glm::vec3& origin, const glm::vec3& direction);
+    void slotAddManipulator(const glm::vec3& position);
+    bool slotGetPositionFromRay(const glm::vec3& origin, const glm::vec3& direction, glm::vec3& res);
 
 	void showVisuBoxController(VisuBoxController* _controller);
 	void removeVisuBoxController();

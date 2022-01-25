@@ -109,6 +109,7 @@ void Viewer::keyReleaseEvent(QKeyEvent* e) {
                 this->removeManip();
             break;
     }
+	QGLViewer::keyReleaseEvent(e);
 }
 
 void Viewer::keyPressEvent(QKeyEvent* e) {
@@ -128,17 +129,17 @@ void Viewer::keyPressEvent(QKeyEvent* e) {
             if(!e->isAutoRepeat())
                 this->scene->grids[0]->grid->grid->tetmesh.setNormalDeformationMethod();
 			break;
-		case Qt::Key::Key_L:
-            if(!e->isAutoRepeat())
-                this->scene->glMeshManipulator->createNewMeshManipulator(this->scene->grids[0]->grid->grid->tetmesh.ptGrid, 0);
-			break;
-		case Qt::Key::Key_M:
-            if(!e->isAutoRepeat())
-                this->scene->glMeshManipulator->createNewMeshManipulator(this->scene->grids[0]->grid->grid->tetmesh.ptGrid, 1);
-			break;
+		//case Qt::Key::Key_L:
+        //    if(!e->isAutoRepeat())
+        //        this->scene->glMeshManipulator->createNewMeshManipulator(this->scene->grids[0]->grid->grid->tetmesh.ptGrid, 0);
+		//	break;
+		//case Qt::Key::Key_M:
+        //    if(!e->isAutoRepeat())
+        //        this->scene->glMeshManipulator->createNewMeshManipulator(this->scene->grids[0]->grid->grid->tetmesh.ptGrid, 1);
+		//	break;
 		case Qt::Key::Key_Q:
             if(!e->isAutoRepeat())
-                this->displayMousePosition();
+                this->addManipulator();
 			break;
 		case Qt::Key::Key_Space:
 			this->selectMode = not this->selectMode;
@@ -263,12 +264,12 @@ void Viewer::centerScene(void) {
 }
 
 void Viewer::mousePressEvent(QMouseEvent* e) {
-	if (e->button() == Qt::RightButton) {
-        glm::vec3 ptMove;
-	    if(this->scene->glMeshManipulator->meshManipulator->getMouseOverManipulator(ptMove)) {
-            this->scene->grids[0]->grid->grid->tetmesh.meshDeformator->selectPts(ptMove);
-	    }
-	}
+	//if (e->button() == Qt::RightButton) {
+    //    glm::vec3 ptMove;
+	//    if(this->scene->glMeshManipulator->meshManipulator->getMouseOverManipulator(ptMove)) {
+    //        this->scene->grids[0]->grid->grid->tetmesh.meshDeformator->selectPts(ptMove);
+	//    }
+	//}
 	QGLViewer::mousePressEvent(e);
 }
 
@@ -278,11 +279,11 @@ void Viewer::mouseMoveEvent(QMouseEvent* e) {
 }
 
 void Viewer::mouseReleaseEvent(QMouseEvent* e) {
-	if (e->button() == Qt::RightButton) {
-        if (e->modifiers() != Qt::ControlModifier) {
-            this->scene->grids[0]->grid->grid->tetmesh.meshDeformator->deselectAllPts();
-        }
-    }
+	//if (e->button() == Qt::RightButton) {
+    //    if (e->modifiers() != Qt::ControlModifier) {
+    //        this->scene->grids[0]->grid->grid->tetmesh.meshDeformator->deselectAllPts();
+    //    }
+    //}
 	QGLViewer::mouseReleaseEvent(e);
 }
 
@@ -313,11 +314,21 @@ void Viewer::resizeGL(int w, int h) {
 	}
 }
 
-void Viewer::displayMousePosition() {
-    qglviewer::Vec origin;
-    qglviewer::Vec direction;
-    this->camera()->convertClickToLine(this->mousePos, origin, direction); 
-    this->scene->slotDisplayValueFromRay(glm::vec3(origin.x, origin.y, origin.z), glm::vec3(direction.x, direction.y, direction.z));
+void Viewer::addManipulator() {
+    glm::vec3 origin;
+    glm::vec3 direction;
+    this->castRayFromMouse(origin, direction);
+    glm::vec3 positionOnGrid;
+    this->scene->slotGetPositionFromRay(origin, direction, positionOnGrid);
+    this->scene->slotAddManipulator(positionOnGrid);
+}
+
+void Viewer::castRayFromMouse(glm::vec3& origin, glm::vec3& direction) {
+    qglviewer::Vec originVec;
+    qglviewer::Vec directionVec;
+    this->camera()->convertClickToLine(this->mousePos, originVec, directionVec); 
+    origin = glm::vec3(originVec.x, originVec.y, originVec.z);
+    direction = glm::vec3(directionVec.x, directionVec.y, directionVec.z);
 }
 
 void Viewer::removeManip() {
