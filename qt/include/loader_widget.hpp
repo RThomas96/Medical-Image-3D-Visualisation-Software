@@ -58,7 +58,7 @@ protected:
 	QHBoxLayout*     layout_subsample;
 	QGroupBox*        group_subsample;
 	QLabel*           label_subsample;
-	QSpinBox* spinbox_subsample;
+	QSpinBox*       spinbox_subsample;
 
 	QGridLayout*     layout_bbox;
 	QGroupBox*        group_bbox;
@@ -71,6 +71,13 @@ protected:
 	QDoubleSpinBox* spinbox_bboxMax_x;
 	QDoubleSpinBox* spinbox_bboxMax_y;
 	QDoubleSpinBox* spinbox_bboxMax_z;
+
+	QHBoxLayout*     layout_mesh;
+	QGroupBox*        group_mesh;
+	QLabel*           label_mesh;
+	QDoubleSpinBox* spinbox_mesh_x;
+	QDoubleSpinBox* spinbox_mesh_y;
+	QDoubleSpinBox* spinbox_mesh_z;
 
 	QProgressBar* progress_load;
 

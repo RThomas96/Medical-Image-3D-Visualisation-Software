@@ -17,6 +17,7 @@ MainWidget::MainWidget() {
 	this->widgetSizeSet = false;
 	this->usettings		= nullptr;
 	this->loaderWidget	= nullptr;
+	this->deformationWidget	= nullptr;
 	this->boxController = nullptr;
 	// Query a user settings instance to initialize it :
 	UserSettings set = UserSettings::getInstance();
@@ -67,6 +68,7 @@ MainWidget::~MainWidget() {
 
 	this->showGLLog->disconnect();
 	this->deform->disconnect();
+	this->deform_menu->disconnect();
 
 	for (std::size_t i = 0; i < this->strayObj.size(); ++i) {
 		if (this->strayObj[i] != nullptr) {
@@ -85,16 +87,28 @@ void MainWidget::setupWidgets() {
 	this->statusBar = new QStatusBar;
 	this->showGLLog = new QPushButton("Show GL log");
 	this->deform	= new QPushButton("Deform the grid");
+	this->deform_menu	= new QPushButton("Deform menu");
 	this->statusBar->addPermanentWidget(this->showGLLog);
 	this->statusBar->addPermanentWidget(this->deform);
+	this->statusBar->addPermanentWidget(this->deform_menu);
 
 	this->setStatusBar(this->statusBar);
 	this->scene->addStatusBar(this->statusBar);
 
 	QObject::connect(this->showGLLog, &QPushButton::clicked, this->glDebug, &QWidget::show);
 	QObject::connect(this->deform, &QPushButton::clicked, [this]() {
-		//this->scene->toggleManipulatorDisplay();
 		this->viewer->toggleManipulators();
+	});
+
+	QObject::connect(this->deform_menu, &QPushButton::clicked, [this]() {
+		if (this->deformationWidget == nullptr) {
+			this->deformationWidget = new GridDeformationWidget(this->scene);
+			QObject::connect(this->deformationWidget, &QWidget::destroyed, [this]() {
+				this->deformationWidget = nullptr;
+			});
+		}
+		this->deformationWidget->show();
+		this->deformationWidget->raise();
 	});
 
 	// Actions creation :

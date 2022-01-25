@@ -47,6 +47,7 @@ ADD_LIBRARY(VisualisationWidgets STATIC
 	./qt/include/range_slider.hpp
 	./qt/include/user_settings_widget.hpp
 	./qt/include/loader_widget.hpp
+	./qt/include/deformation_widget.hpp
 
 	./qt/src/neighbor_visu_main_widget.cpp
 	./qt/src/scene_control.cpp
@@ -57,6 +58,7 @@ ADD_LIBRARY(VisualisationWidgets STATIC
 	./qt/src/range_slider.cpp
 	./qt/src/user_settings_widget.cpp
 	./qt/src/loader_widget.cpp
+	./qt/src/deformation_widget.cpp
 )
 TARGET_INCLUDE_DIRECTORIES(VisualisationWidgets
 	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/third_party/glm/
