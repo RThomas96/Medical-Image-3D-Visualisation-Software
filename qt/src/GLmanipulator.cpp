@@ -157,6 +157,7 @@ void UITool::GL::MeshManipulator::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* m
 void UITool::GL::MeshManipulator::setRadius(float radius) { 
     this->manipulatorRadius = radius; 
     this->manipulatorMesh = Sphere(this->manipulatorRadius);
+    this->prepare();
 }
 
 void UITool::GL::MeshManipulator::addManipulator(const glm::vec3& position) 

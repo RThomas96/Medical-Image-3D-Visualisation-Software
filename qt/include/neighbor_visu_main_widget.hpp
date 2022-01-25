@@ -6,6 +6,7 @@
 #include "../../viewer/include/scene.hpp"
 //#include "./grid_control.hpp"
 #include "./loader_widget.hpp"
+#include "./deformation_widget.hpp"
 #include "./opengl_debug_log.hpp"
 #include "./scene_control.hpp"
 #include "./user_settings_widget.hpp"
@@ -70,6 +71,8 @@ private:
 	UserSettingsWidget* usettings;	  ///< User settings dialog.
 	GridLoaderWidget* loaderWidget;	   ///< Loader widget
 
+	GridDeformationWidget* deformationWidget;	   ///< Loader widget
+
 	VisuBoxController* boxController;	 ///< The visu box controller
 
 	ControlPanel* controlPanel;	   ///< The control panel at the bottom of the grid
@@ -96,6 +99,7 @@ private:
 	QStatusBar* statusBar;	  ///< Status bar
 	QPushButton* showGLLog;	   ///< Button to open the QOpenGLDebugLog message box.
 	QPushButton* deform;	///< The 'Deform' button for debug purpose
+	QPushButton* deform_menu;	///< The 'Deform' button for debug purpose
 
     bool isShiftPressed = false;
 };
