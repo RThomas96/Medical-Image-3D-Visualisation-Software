@@ -79,13 +79,14 @@ namespace UITool {
         void enterAtRangeForGrab(Manipulator*);
         void exitFromRangeForGrab(Manipulator*);
 
+        // Those signals are emitted when the mouse is at range for grab
         void mouseRightButtonPressed(Manipulator*);
         void mouseRightButtonReleased(Manipulator*);
         void mouseRightButtonReleasedAndCtrlIsNotPressed(Manipulator*);
 
         // This signal is already present in the default ManipulatedFrame, but it doesn't not return its adress
         void isManipulated(Manipulator*);// The mouse right button is pressed and the mouse is moved
-        
+
 	public:
         bool isSelected;
         bool isAtRangeForGrab;
@@ -128,6 +129,11 @@ namespace UITool {
         // These are connected to the scene
         virtual void addManipulator(const glm::vec3& position) = 0;
 
+    //signal:
+        virtual void needRedraw() = 0;
+
+        // This is signal is connected to 
+
     };
 }
 Q_DECLARE_INTERFACE(UITool::MeshManipulator, "MeshManipulator")
@@ -166,6 +172,9 @@ namespace UITool {
         void selectManipulator(Manipulator * manipulator) override;
         void deselectManipulator(Manipulator * manipulator) override;
 
+    signals:
+        void needRedraw() override;
+
 	private:
 		std::vector<Manipulator> manipulators;
         std::vector<bool> manipulatorsToDisplay;
@@ -201,6 +210,9 @@ namespace UITool {
         void moveManipulator(Manipulator * manipulator) override;
         void selectManipulator(Manipulator * manipulator) override;
         void deselectManipulator(Manipulator * manipulator) override;
+
+    signals:
+        void needRedraw() override;
 
 	private:
 		Manipulator manipulator;

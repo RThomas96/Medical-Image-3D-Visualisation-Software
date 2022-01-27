@@ -290,5 +290,6 @@ namespace UITool {
 
     void FreeManipulator::deselectManipulator(Manipulator * manipulator) {
         this->scene->grids[0]->grid->grid->tetmesh.meshDeformator->deselectAllPts();
+        this->removeManipulator(manipulator);
     }
 }	 // namespace UITool

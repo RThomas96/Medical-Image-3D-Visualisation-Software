@@ -265,7 +265,6 @@ public:
     /*************************************************/
 
     /* Others */
-    void removeLastManip();
     void slotApplyDeformation(glm::vec3 oldPosition, glm::vec3 newPosition);
 	void newSHADERS_updateUserColorScales();
 	void signal_updateUserColorScales();

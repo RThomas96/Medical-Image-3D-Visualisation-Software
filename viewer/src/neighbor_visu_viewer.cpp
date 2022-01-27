@@ -106,7 +106,8 @@ void Viewer::keyReleaseEvent(QKeyEvent* e) {
     switch (e->key()) {
         case Qt::Key::Key_Q:
             if(!e->isAutoRepeat())
-                this->removeManip();
+                // Todo: connect to signal
+                //this->removeManip();
             break;
     }
 	QGLViewer::keyReleaseEvent(e);
@@ -329,10 +330,6 @@ void Viewer::castRayFromMouse(glm::vec3& origin, glm::vec3& direction) {
     this->camera()->convertClickToLine(this->mousePos, originVec, directionVec); 
     origin = glm::vec3(originVec.x, originVec.y, originVec.z);
     direction = glm::vec3(directionVec.x, directionVec.y, directionVec.z);
-}
-
-void Viewer::removeManip() {
-    this->scene->removeLastManip();
 }
 
 void Viewer::guessMousePosition() {

@@ -3562,9 +3562,5 @@ bool Scene::slotGetPositionFromRay(const glm::vec3& origin, const glm::vec3& dir
 }
 
 void Scene::slotAddManipulator(const glm::vec3& position) {
-    this->glMeshManipulator->addManipulator(position);
-}
-
-void Scene::removeLastManip() {
-    this->glMeshManipulator->removeLastManipulator();
+    this->glMeshManipulator->meshManipulator->addManipulator(position);
 }

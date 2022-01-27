@@ -114,7 +114,6 @@ public slots:
 	void guessMousePosition(void);
 
 	void toggleManipulators(void);
-    void removeManip();
 
     void addManipulator(void);
 };
