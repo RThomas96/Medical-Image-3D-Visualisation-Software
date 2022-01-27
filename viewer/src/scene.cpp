@@ -91,7 +91,7 @@ Scene::Scene() :
 	this->sceneBB				 = Image::bbox_t(min, max);
 	this->clipDistanceFromCamera = 5.f;
 	this->drawMode				 = DrawMode::Solid;
-	this->rgbMode				 = RGBMode::HandEColouring;
+	this->rgbMode				 = ColorChannel::HandEColouring;
 	this->channels_r			 = ColorFunction::SingleChannel;
 	this->channels_g			 = ColorFunction::SingleChannel;
 
@@ -591,7 +591,7 @@ void Scene::addGrid(const GridGL * gridLoaded) {
     this->controlPanel->updateMaxValueAlternate(max);
 	this->slotSetMaxColorValueAlternate(max);
 
-	this->setRGBMode(RGBMode::RedOnly);
+	this->setColorChannel(ColorChannel::RedOnly);
 	this->setColorFunction_r(ColorFunction::ColorMagnitude);
 	this->setColorFunction_g(ColorFunction::ColorMagnitude);
 
@@ -2946,54 +2946,6 @@ void Scene::setColorFunction_g(ColorFunction _c) {
 	this->shouldUpdateUBOData = true;
 }
 
-void Scene::setRGBMode(RGBMode _mode) {
-	this->rgbMode = _mode;
-	std::for_each(this->grids.begin(), this->grids.end(), [this](GridGLView::Ptr& gridView) {
-		switch (this->rgbMode) {
-			case RGBMode::None:
-				gridView->colorChannelAttributes[0].setHidden();
-				gridView->colorChannelAttributes[1].setHidden();
-				break;
-			case RGBMode::RedOnly:
-				gridView->colorChannelAttributes[0].setHidden(false);
-				gridView->colorChannelAttributes[1].setHidden();
-				break;
-			case RGBMode::GreenOnly:
-				gridView->colorChannelAttributes[0].setHidden();
-				gridView->colorChannelAttributes[1].setHidden(false);
-				break;
-			case RGBMode::RedAndGreen:
-				gridView->colorChannelAttributes[0].setHidden(false);
-				gridView->colorChannelAttributes[1].setHidden(false);
-				break;
-			default:
-				// do nothing
-				break;
-		}
-	});
-	this->shouldUpdateUBOData = true;
-	switch (_mode) {
-		case RGBMode::None:
-			std::cerr << "Set mode to none" << '\n';
-			break;
-		case RGBMode::RedOnly:
-			std::cerr << "Set mode to red" << '\n';
-			break;
-		case RGBMode::GreenOnly:
-			std::cerr << "Set mode to green" << '\n';
-			break;
-		case RGBMode::RedAndGreen:
-			std::cerr << "Set mode to both channels" << '\n';
-			break;
-		case RGBMode::HandEColouring:
-			std::cerr << "Set mode to both channels" << '\n';
-			break;
-		default:
-			std::cerr << "Cannot set unknown mode\n";
-			break;
-	}
-}
-
 void Scene::slotSetPlaneDisplacementX(float scalar) {
 	this->planeDisplacement.x = scalar;
 }
@@ -3575,3 +3527,52 @@ void Scene::setManipulatorRadius(float radius) {
 void Scene::toggleManipulatorActivation() {
     this->glMeshManipulator->toggleActivation();
 }
+
+void Scene::setColorChannel(ColorChannel mode) {
+	this->rgbMode = mode;
+	std::for_each(this->grids.begin(), this->grids.end(), [this](GridGLView::Ptr& gridView) {
+		switch (this->rgbMode) {
+			case ColorChannel::None:
+				gridView->colorChannelAttributes[0].setHidden();
+				gridView->colorChannelAttributes[1].setHidden();
+				break;
+			case ColorChannel::RedOnly:
+				gridView->colorChannelAttributes[0].setHidden(false);
+				gridView->colorChannelAttributes[1].setHidden();
+				break;
+			case ColorChannel::GreenOnly:
+				gridView->colorChannelAttributes[0].setHidden();
+				gridView->colorChannelAttributes[1].setHidden(false);
+				break;
+			case ColorChannel::RedAndGreen:
+				gridView->colorChannelAttributes[0].setHidden(false);
+				gridView->colorChannelAttributes[1].setHidden(false);
+				break;
+			default:
+				// do nothing
+				break;
+		}
+	});
+	this->shouldUpdateUBOData = true;
+	switch (mode) {
+		case ColorChannel::None:
+			std::cerr << "Set mode to none" << '\n';
+			break;
+		case ColorChannel::RedOnly:
+			std::cerr << "Set mode to red" << '\n';
+			break;
+		case ColorChannel::GreenOnly:
+			std::cerr << "Set mode to green" << '\n';
+			break;
+		case ColorChannel::RedAndGreen:
+			std::cerr << "Set mode to both channels" << '\n';
+			break;
+		case ColorChannel::HandEColouring:
+			std::cerr << "Set mode to both channels" << '\n';
+			break;
+		default:
+			std::cerr << "Cannot set unknown mode\n";
+			break;
+	}
+}
+
