@@ -347,19 +347,19 @@ void ControlPanel::updateRGBMode() {
 	bool g = this->groupbox_green->isChecked();
 
 	if (! r && ! g) {
-		this->sceneToControl->setRGBMode(RGBMode::None);
+		this->sceneToControl->setColorChannel(ColorChannel::None);
 		return;
 	}
 	if (r && ! g) {
-		this->sceneToControl->setRGBMode(RGBMode::RedOnly);
+		this->sceneToControl->setColorChannel(ColorChannel::RedOnly);
 		return;
 	}
 	if (! r && g) {
-		this->sceneToControl->setRGBMode(RGBMode::GreenOnly);
+		this->sceneToControl->setColorChannel(ColorChannel::GreenOnly);
 		return;
 	}
 	if (r && g) {
-		this->sceneToControl->setRGBMode(RGBMode::RedAndGreen);
+		this->sceneToControl->setColorChannel(ColorChannel::RedAndGreen);
 		return;
 	}
 }

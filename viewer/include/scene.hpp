@@ -55,38 +55,46 @@
 /// made to move much of the code for displaying a grid over to the GridViewer class, altough that has not been tested.
 /// @warning Spaghetti code ahead.
 
-class ControlPanel;	   // Forward declaration
+// Forward declaration
+class ControlPanel;
 namespace UITool {
 	namespace GL {
-		class MeshManipulator;	  // Forward declaration
+		class MeshManipulator;
 	}
-}	 // namespace UITool
+}
 
 namespace UITool {
-		class MeshManipulator;	  // Forward declaration
-}	 // namespace UITool
+		class MeshManipulator;
+}
 
-/// @brief Simple enum to keep track of the different viewing primitives for the program.
-enum DrawMode { Solid,
+enum DrawMode { 
+    Solid,
 	Volumetric,
-	VolumetricBoxed };
-/// @brief The RGB mode chosen by the user
-enum RGBMode { None = 0,
+	VolumetricBoxed 
+};
+
+enum ColorChannel { 
+    None = 0,
 	RedOnly			= 1,
 	GreenOnly		= 2,
 	RedAndGreen		= 3,
-	HandEColouring	= 4 };
-/// @brief Simple enum to keep track of which color function to apply to the viewers.
-enum ColorFunction { SingleChannel,
+	HandEColouring	= 4 
+};
+
+enum ColorFunction { 
+    SingleChannel,
 	HistologyHandE,
 	HSV2RGB,
-	ColorMagnitude };
-/// @brief Simple enum to define which plane we are drawing
-enum planes { x = 1,
+	ColorMagnitude 
+};
+
+enum planes { 
+    x = 1,
 	y			= 2,
 	z			= 3 };
-/// @brief Simple enum to keep track of a plane's orientation.
-enum planeHeading { North = 0,
+
+enum planeHeading { 
+    North = 0,
 	East				  = 1,
 	South				  = 2,
 	West				  = 3,
@@ -95,14 +103,13 @@ enum planeHeading { North = 0,
 	Down				  = South,
 	Left				  = West };
 
-// Usefull struct to choose which data of the tetmesh to send to the GPU
+// Choose which data of the tetmesh to send to the GPU
 enum InfoToSend {
     VERTICES  = 0b00000001,
     NORMALS   = 0b00000010,
     TEXCOORD  = 0b00000100,
     NEIGHBORS = 0b00001000
 };
-
 
 /**********************************************************************/
 /**********************************************************************/
@@ -323,7 +330,7 @@ private:
 
 
     /* Color channel management */
-	RGBMode rgbMode;
+	ColorChannel rgbMode;
 	GridGLView::data_2 textureBounds0;
 	GridGLView::data_2 textureBounds1;
 	GridGLView::data_2 colorBounds0;
@@ -421,8 +428,6 @@ public:
 	void setColorFunction_r(ColorFunction _c);// Changes the texture coloration mode to the desired setting
 	void setColorFunction_g(ColorFunction _c);
 
-	void setRGBMode(RGBMode _mode);
-	
 	void setColor0(qreal r, qreal g, qreal b);// color of the beginning of the color segment for the segmented color scale
 	void setColor1(qreal r, qreal g, qreal b);
 	void setColor0Alternate(qreal r, qreal g, qreal b);
@@ -528,6 +533,9 @@ public slots:
     void setNormalDeformationMethod();
     void setWeightedDeformationMethod(float radius);
 
+    // Rendering slots
+	void setColorChannel(ColorChannel mode);
+
 /*************/
 /* Temporary */
 /*************/
@@ -538,40 +546,4 @@ public:
 /// @brief Type-safe conversion of enum values to unsigned ints.
 inline unsigned int planeHeadingToIndex(planeHeading _heading);
 
-/// @brief Helper struct to store the indices of vertices that make a face, and compare two faces to one another.
-struct Face
-{
-public:
-	inline Face(unsigned int v0, unsigned int v1, unsigned int v2) {
-		if (v1 < v0)
-			std::swap(v0, v1);
-		if (v2 < v1)
-			std::swap(v1, v2);
-		if (v1 < v0)
-			std::swap(v0, v1);
-		v[0] = v0;
-		v[1] = v1;
-		v[2] = v2;
-	}
-	inline Face(const Face& f) {
-		v[0] = f.v[0];
-		v[1] = f.v[1];
-		v[2] = f.v[2];
-	}
-	inline virtual ~Face() {}
-	inline Face& operator=(const Face& f) {
-		v[0] = f.v[0];
-		v[1] = f.v[1];
-		v[2] = f.v[2];
-		return (*this);
-	}
-	inline bool operator==(const Face& f) { return (v[0] == f.v[0] && v[1] == f.v[1] && v[2] == f.v[2]); }
-	inline bool operator<(const Face& f) const { return (v[0] < f.v[0] || (v[0] == f.v[0] && v[1] < f.v[1]) || (v[0] == f.v[0] && v[1] == f.v[1] && v[2] < f.v[2])); }
-	inline bool contains(unsigned int i) const { return (v[0] == i || v[1] == i || v[2] == i); }
-	inline unsigned int getVertex(unsigned int i) const { return v[i]; }
-	unsigned int v[3];
-};
-
 #endif	  // VIEWER_INCLUDE_SCENE_HPP_
-
-// vim : ts=8
