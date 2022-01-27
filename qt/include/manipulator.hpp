@@ -131,9 +131,8 @@ namespace UITool {
 
     //signal:
         virtual void needRedraw() = 0;
-
-        // This is signal is connected to 
-
+        // This signal is trigerred from the scene
+        virtual void keyQReleased() = 0;
     };
 }
 Q_DECLARE_INTERFACE(UITool::MeshManipulator, "MeshManipulator")
@@ -174,6 +173,7 @@ namespace UITool {
 
     signals:
         void needRedraw() override;
+        void keyQReleased() override;
 
 	private:
 		std::vector<Manipulator> manipulators;
@@ -213,6 +213,7 @@ namespace UITool {
 
     signals:
         void needRedraw() override;
+        void keyQReleased() override;
 
 	private:
 		Manipulator manipulator;

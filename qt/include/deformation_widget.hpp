@@ -26,16 +26,12 @@
 class GridDeformationWidget : public QWidget {
 	Q_OBJECT
 public:
-	GridDeformationWidget(Scene* _scene, QWidget* parent = nullptr);
+	GridDeformationWidget(Scene* scene, QWidget* parent = nullptr);
 	~GridDeformationWidget(void);
 	void setupLayouts();
-	void setupSignals();
-
-public slots:
+	void setupSignals(Scene* scene);
 
 protected:
-	Scene* scene;
-
     QVBoxLayout* mainLayout;
 
 	QHBoxLayout*          layout_selector;

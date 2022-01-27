@@ -15,10 +15,9 @@
 
 #include <iomanip>
 
-GridDeformationWidget::GridDeformationWidget(Scene* _scene, QWidget* parent) :
+GridDeformationWidget::GridDeformationWidget(Scene* scene, QWidget* parent) :
 	QWidget(parent) {
 
-	this->scene					= _scene;
     this->setWindowFlags(Qt::WindowStaysOnTopHint);
 
 	this->group_selector = new QGroupBox("Selector mode");
@@ -50,7 +49,7 @@ GridDeformationWidget::GridDeformationWidget(Scene* _scene, QWidget* parent) :
     this->checkbox_wireframe->setChecked(true);
 
     this->setupLayouts();
-	this->setupSignals();
+	this->setupSignals(scene);
 }
 
 void GridDeformationWidget::setupLayouts() {
@@ -85,34 +84,18 @@ void GridDeformationWidget::setupLayouts() {
 }
 
 GridDeformationWidget::~GridDeformationWidget() {
-	this->scene	 = nullptr;
 }
 
-void GridDeformationWidget::setupSignals() {
-	//if (this->scene == nullptr) {
-	//	QMessageBox* msgBox = new QMessageBox;
-	//	msgBox->setAttribute(Qt::WA_DeleteOnClose);
-	//	msgBox->critical(this, "Error : no scene associated", "An error has occured, and no scene was associated with this widget. Please retry again later.");
-	//	return;
-	//}
+void GridDeformationWidget::setupSignals(Scene* scene) {
+	QObject::connect(this->radio_selector_direct, &QPushButton::clicked, this, [this, scene]() {scene->createNewMeshManipulator(0);});
 
-	//if (this->viewer == nullptr) {
-	//	QMessageBox* msgBox = new QMessageBox;
-	//	msgBox->setAttribute(Qt::WA_DeleteOnClose);
-	//	msgBox->critical(this, "Error : no viewer associated", "An error has occured, and no viewer was associated with this widget. Please retry again later.");
-	//	return;
-	//}
+	QObject::connect(this->radio_selector_free, &QPushButton::clicked, this, [this, scene]() {scene->createNewMeshManipulator(1);});
 
-	QObject::connect(this->radio_selector_direct, &QPushButton::clicked, this, [this]() {this->scene->glMeshManipulator->createNewMeshManipulator(this->scene, this->scene->grids[0]->grid->grid->tetmesh.ptGrid, 0);});
+	QObject::connect(this->spinbox_radius_sphere, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, [=](double i){ scene->setManipulatorRadius(i);}); 
 
-	QObject::connect(this->radio_selector_free, &QPushButton::clicked, this, [this]() {this->scene->glMeshManipulator->createNewMeshManipulator(this->scene, this->scene->grids[0]->grid->grid->tetmesh.ptGrid, 1);});
+	QObject::connect(this->checkbox_wireframe, &QPushButton::clicked, this, [this, scene]() {scene->toggleWireframe();});
 
-	QObject::connect(this->radio_move_normal, &QPushButton::clicked, this, [this]() {this->scene->grids[0]->grid->grid->tetmesh.setNormalDeformationMethod();});
+	QObject::connect(this->radio_move_normal, &QPushButton::clicked, this, [this, scene]() {scene->setNormalDeformationMethod();});
 
-	QObject::connect(this->radio_move_weighted, &QPushButton::clicked, this, [this]() {this->scene->grids[0]->grid->grid->tetmesh.setWeightedDeformationMethod(this->spinbox_radius_selection->value());});
-
-	//QObject::connect(this->spinbox_radius_sphere, QOverload<int>::of(&QSpinBox::valueChanged), this, [this](){ this->scene->glMeshManipulator->setRadius(1.);}); 
-	QObject::connect(this->spinbox_radius_sphere, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, [=](double i){ this->scene->glMeshManipulator->setRadius(i);}); 
-
-	QObject::connect(this->checkbox_wireframe, &QPushButton::clicked, this, [this]() {this->scene->glMeshManipulator->toggleDisplayWireframe();});
+	QObject::connect(this->radio_move_weighted, &QPushButton::clicked, this, [this, scene]() {scene->setWeightedDeformationMethod(this->spinbox_radius_selection->value());});
 }

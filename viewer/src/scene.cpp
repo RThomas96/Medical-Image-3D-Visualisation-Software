@@ -613,7 +613,8 @@ void Scene::addGrid(const GridGL * gridLoaded) {
 	this->tex3D_buildBuffers(gridView->volumetricMesh);
 
     //Add manipulators
-    this->glMeshManipulator->createNewMeshManipulator(this, this->grids[0]->grid->grid->tetmesh.ptGrid, 0);
+    this->createNewMeshManipulator(0);
+
     this->updateManipulatorPositions();
 	this->prepareManipulators();
 
@@ -3395,24 +3396,6 @@ void Scene::resetPositionResponse() {
 	this->posFrame = nullptr;
 }
 
-void Scene::toggleWireframe() {
-	auto getUniform = [&](const char* name) -> GLint {
-		GLint g = glGetUniformLocation(this->program_VolumetricViewer, name);
-		if (this->showVAOstate) {
-			if (g >= 0) {
-				std::cerr << "[LOG]\tLocation [" << +g << "] for uniform " << name << '\n';
-			} else {
-				std::cerr << "[LOG]\tCannot find uniform " << name << "\n";
-			}
-		}
-		return g;
-	};
-
-	this->glMeshManipulator->toggleDisplayWireframe();
-	GLint location_displayWireframe = getUniform("displayWireframe");
-	glUniform1ui(location_displayWireframe, this->glMeshManipulator->isWireframeDisplayed());
-}
-
 void Scene::prepareManipulators() {
     //glm::vec3 ratio = this->grids[0]->grid->resolutionRatio;
     //this->glMeshManipulator->setRadius(10.f / ratio[0]);
@@ -3563,4 +3546,32 @@ bool Scene::slotGetPositionFromRay(const glm::vec3& origin, const glm::vec3& dir
 
 void Scene::slotAddManipulator(const glm::vec3& position) {
     this->glMeshManipulator->meshManipulator->addManipulator(position);
+}
+
+/*********************************/
+/* Slots */
+/*********************************/
+void Scene::toggleWireframe() {
+	this->glMeshManipulator->toggleDisplayWireframe();
+}
+
+void Scene::createNewMeshManipulator(int i) {
+    this->glMeshManipulator->createNewMeshManipulator(this, this->grids[0]->grid->grid->tetmesh.ptGrid, i);
+    QObject::connect(this, SIGNAL(keyQReleased()), dynamic_cast<QObject*>(this->glMeshManipulator->meshManipulator), SIGNAL(keyQReleased()));
+}
+
+void Scene::setNormalDeformationMethod() {
+    this->grids[0]->grid->grid->tetmesh.setNormalDeformationMethod();
+}
+
+void Scene::setWeightedDeformationMethod(float radius) {
+    this->grids[0]->grid->grid->tetmesh.setWeightedDeformationMethod(radius);
+}
+
+void Scene::setManipulatorRadius(float radius) {
+    this->glMeshManipulator->setRadius(radius);   
+}
+
+void Scene::toggleManipulatorActivation() {
+    this->glMeshManipulator->toggleActivation();
 }

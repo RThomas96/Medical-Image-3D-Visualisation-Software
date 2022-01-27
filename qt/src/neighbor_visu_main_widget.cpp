@@ -67,7 +67,6 @@ MainWidget::~MainWidget() {
 	delete this->header3d;
 
 	this->showGLLog->disconnect();
-	this->deform->disconnect();
 	this->deform_menu->disconnect();
 
 	for (std::size_t i = 0; i < this->strayObj.size(); ++i) {
@@ -86,29 +85,32 @@ void MainWidget::setupWidgets() {
 
 	this->statusBar = new QStatusBar;
 	this->showGLLog = new QPushButton("Show GL log");
-	this->deform	= new QPushButton("Deform the grid");
-	this->deform_menu	= new QPushButton("Deform menu");
+	this->deform_menu	= new QPushButton("Deform");
 	this->statusBar->addPermanentWidget(this->showGLLog);
-	this->statusBar->addPermanentWidget(this->deform);
 	this->statusBar->addPermanentWidget(this->deform_menu);
 
 	this->setStatusBar(this->statusBar);
 	this->scene->addStatusBar(this->statusBar);
 
 	QObject::connect(this->showGLLog, &QPushButton::clicked, this->glDebug, &QWidget::show);
-	QObject::connect(this->deform, &QPushButton::clicked, [this]() {
-		this->viewer->toggleManipulators();
-	});
 
 	QObject::connect(this->deform_menu, &QPushButton::clicked, [this]() {
+        this->scene->toggleManipulatorActivation();
 		if (this->deformationWidget == nullptr) {
 			this->deformationWidget = new GridDeformationWidget(this->scene);
 			QObject::connect(this->deformationWidget, &QWidget::destroyed, [this]() {
 				this->deformationWidget = nullptr;
 			});
-		}
-		this->deformationWidget->show();
-		this->deformationWidget->raise();
+		    this->deformationWidget->show();
+		    this->deformationWidget->raise();
+		} else {
+            if(this->deformationWidget->isVisible()) {
+		        this->deformationWidget->hide();
+            } else {
+		        this->deformationWidget->show();
+		        this->deformationWidget->raise();
+            }
+        }
 	});
 
 	// Actions creation :

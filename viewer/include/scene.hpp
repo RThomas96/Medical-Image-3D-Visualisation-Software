@@ -135,7 +135,8 @@ private:
 /// @details This class evolved from a simple scene representation at the start to a nearly all-encompassing OpenGL
 /// gateway for any and all operations. It should be <b><i>heavily</i></b> refactored.
 /// @warning Spaghetti code ahead.
-class Scene : public QOpenGLFunctions_3_2_Core {
+class Scene : public QObject, public QOpenGLFunctions_3_2_Core {
+    Q_OBJECT
 	/// @brief typedef to omit glm:: from a 'uvec3'
 	typedef glm::uvec3 uvec3;
 
@@ -294,8 +295,8 @@ private:
 	bool shouldUpdateUBOData;
 
     /* Containers */
-public:
 	UITool::GL::MeshManipulator* glMeshManipulator;
+public:
     GridGL * initial;
 	std::vector<GridGLView::Ptr> grids;
 	//std::vector<DeformableGrid*> grids;
@@ -362,7 +363,6 @@ public:
 	void showVisuBoxController(VisuBoxController* _controller);
 	void removeVisuBoxController();
 
-	void toggleWireframe();
 	void prepareManipulators();
     // Set all manipulators positions to the points of the tetmesh
     void updateManipulatorPositions();
@@ -511,6 +511,22 @@ private:
 
 public:
 	SceneGL sceneGL;
+
+signals:
+    void keyQReleased();
+
+// All these indirections are important because for most of them they interacts with various components of the scene
+// And it allow more flexibility as the scene control ALL the informations to transit from class to class
+public slots:
+    // MeshManipulator slots
+    void createNewMeshManipulator(int i);
+	void toggleWireframe();
+    void toggleManipulatorActivation();
+    void setManipulatorRadius(float radius);
+
+    // MeshDeformator slots
+    void setNormalDeformationMethod();
+    void setWeightedDeformationMethod(float radius);
 
 /*************/
 /* Temporary */

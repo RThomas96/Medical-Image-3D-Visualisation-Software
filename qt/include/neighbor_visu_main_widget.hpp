@@ -98,7 +98,6 @@ private:
 	QAction* action_loadCurve;	  ///< The action to load a mesh into the scene.
 	QStatusBar* statusBar;	  ///< Status bar
 	QPushButton* showGLLog;	   ///< Button to open the QOpenGLDebugLog message box.
-	QPushButton* deform;	///< The 'Deform' button for debug purpose
 	QPushButton* deform_menu;	///< The 'Deform' button for debug purpose
 
     bool isShiftPressed = false;

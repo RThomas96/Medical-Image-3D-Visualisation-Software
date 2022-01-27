@@ -42,20 +42,18 @@ namespace UITool {
 			void setTex(GLuint tex) { this->tex = tex; };
 			GLuint getTex() { return this->tex; };
 
-            void setRadius(float radius);
-
-			void toggleDisplayWireframe() { this->displayWireframe = ! this->displayWireframe; }
-
 			bool isWireframeDisplayed() { return this->displayWireframe; }
 
             void toggleActivation();
-
-            void createNewMeshManipulator(Scene * scene, const std::vector<glm::vec3>& positions, int type);
 
 			UITool::MeshManipulator * meshManipulator;	 // TODO: shared pointer
 
         public slots:
 			void prepare();
+
+            void setRadius(float radius);
+            void createNewMeshManipulator(Scene * scene, const std::vector<glm::vec3>& positions, int type);
+			void toggleDisplayWireframe() { this->displayWireframe = ! this->displayWireframe; }
 
 		private:
 

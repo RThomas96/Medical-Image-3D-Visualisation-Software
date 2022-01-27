@@ -233,6 +233,9 @@ namespace UITool {
         QObject::connect(&(this->manipulator), &Manipulator::mouseRightButtonPressed, this, &FreeManipulator::selectManipulator);
         QObject::connect(&(this->manipulator), &Manipulator::mouseRightButtonReleasedAndCtrlIsNotPressed, this, &FreeManipulator::deselectManipulator);
         QObject::connect(&(this->manipulator), &Manipulator::isManipulated, this, &FreeManipulator::moveManipulator);
+
+        QObject::connect(this, &FreeManipulator::keyQReleased, this, [this]{setActivation(false);});
+
 	}
 
     void FreeManipulator::setActivation(bool isActive) {

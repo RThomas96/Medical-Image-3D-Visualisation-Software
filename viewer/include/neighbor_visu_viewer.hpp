@@ -16,7 +16,7 @@ class Viewer : public QGLViewer {
 	Q_OBJECT
 public:
 	/// @brief Default constructor for the viewer.
-	Viewer(Scene* const scene, QStatusBar* program_bar, QWidget* parent = nullptr);
+	Viewer(Scene* scene, QStatusBar* program_bar, QWidget* parent = nullptr);
 	~Viewer();
 	/// @brief Multiplier to apply to scene radii for the scene's view.
 	static float sceneRadiusMultiplier;
@@ -56,7 +56,7 @@ protected:
 
 private:
 	/// @brief The scene to control.
-	Scene* const scene;
+	Scene* scene;
 	/// @brief Should we draw it in volumetric mode ?
 	bool drawVolumetric;
 	/// @brief A refresh timer for the viewer, to update in real time.
@@ -113,9 +113,10 @@ public slots:
 	void centerScene(void);
 	void guessMousePosition(void);
 
-	void toggleManipulators(void);
-
     void addManipulator(void);
+
+signals:
+    void keyQReleased();
 };
 
 #endif	  // VIEWER_INCLUDE_NEIGHBOR_VISU_VIEWER_HPP_

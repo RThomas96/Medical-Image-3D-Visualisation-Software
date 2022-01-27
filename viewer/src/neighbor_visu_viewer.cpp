@@ -62,6 +62,8 @@ void Viewer::init() {
 
 	this->scene->initGl(this->context());
 
+    QObject::connect(this, &Viewer::keyQReleased, this->scene, &Scene::keyQReleased);
+
 	glm::vec3 bbDiag = this->scene->getSceneBoundaries();
 	float sceneSize	 = glm::length(bbDiag);
 
@@ -106,8 +108,7 @@ void Viewer::keyReleaseEvent(QKeyEvent* e) {
     switch (e->key()) {
         case Qt::Key::Key_Q:
             if(!e->isAutoRepeat())
-                // Todo: connect to signal
-                //this->removeManip();
+                Q_EMIT keyQReleased();
             break;
     }
 	QGLViewer::keyReleaseEvent(e);
@@ -534,8 +535,4 @@ void Viewer::newAPI_loadGrid(const GridGL * ptr) {
 	this->showEntireScene();
 	this->updateCameraPosition();
 	this->centerScene();
-}
-
-void Viewer::toggleManipulators() {
-	this->scene->glMeshManipulator->toggleActivation();
 }
