@@ -566,9 +566,25 @@ void Scene::addGrid(const GridGL * gridLoaded) {
     //TODO: this computation do not belong here
     uint16_t max = std::numeric_limits<uint16_t>::min();
 
+    dimensions[0] = dimensions[0] * 2.;
+
     int sliceI = 0;
 	for (std::size_t s = 0; s < nbSlice; ++s) {
         gridView->grid->getGridSlice(s, slices, dimensions.a);
+        if(s == 0 || s == nbSlice-1){
+            std::fill(slices.begin(), slices.end(), 0);
+        } else {
+            for(int i = 0; i < dimensions.x; ++i) {
+                slices[i] = 0;
+                slices[i+(dimensions.x*(dimensions.y-1))] = 0;
+            }
+            for(int i = 0; i < dimensions.y; ++i) {
+                slices[i*dimensions.x] = 0;
+                slices[i*dimensions.x+1] = 0;
+                slices[i*dimensions.x+(dimensions.x-1)] = 0;
+                slices[i*dimensions.x+(dimensions.x-2)] = 0;
+            }
+        }
 		this->newAPI_uploadTexture3D(gridView->gridTexture, _gridTex, sliceI, slices);
 
         max = std::max(max, *std::max_element(slices.begin(), slices.end()));
