@@ -568,21 +568,25 @@ void Scene::addGrid(const GridGL * gridLoaded) {
 
     dimensions[0] = dimensions[0] * 2.;
 
+    bool addArticialBoundaries = true;
+
     int sliceI = 0;
 	for (std::size_t s = 0; s < nbSlice; ++s) {
         gridView->grid->getGridSlice(s, slices, dimensions.a);
-        if(s == 0 || s == nbSlice-1){
-            std::fill(slices.begin(), slices.end(), 0);
-        } else {
-            for(int i = 0; i < dimensions.x; ++i) {
-                slices[i] = 0;
-                slices[i+(dimensions.x*(dimensions.y-1))] = 0;
-            }
-            for(int i = 0; i < dimensions.y; ++i) {
-                slices[i*dimensions.x] = 0;
-                slices[i*dimensions.x+1] = 0;
-                slices[i*dimensions.x+(dimensions.x-1)] = 0;
-                slices[i*dimensions.x+(dimensions.x-2)] = 0;
+        if(addArticialBoundaries) {
+            if(s == 0 || s == nbSlice-1){
+                std::fill(slices.begin(), slices.end(), 0);
+            } else {
+                for(int i = 0; i < dimensions.x; ++i) {
+                    slices[i] = 0;
+                    slices[i+(dimensions.x*(dimensions.y-1))] = 0;
+                }
+                for(int i = 0; i < dimensions.y; ++i) {
+                    slices[i*dimensions.x] = 0;
+                    slices[i*dimensions.x+1] = 0;
+                    slices[i*dimensions.x+(dimensions.x-1)] = 0;
+                    slices[i*dimensions.x+(dimensions.x-2)] = 0;
+                }
             }
         }
 		this->newAPI_uploadTexture3D(gridView->gridTexture, _gridTex, sliceI, slices);
