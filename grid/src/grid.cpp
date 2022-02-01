@@ -70,10 +70,6 @@ void Grid::movePoint(const glm::vec3& origin, const glm::vec3& target) {
     //delete method;
 }
 
-void Grid::replaceAllPoints(const std::vector<glm::vec3>& pts) {
-    this->tetmesh.replaceAllPoints(pts);
-}
-
 void Grid::writeDeformedGrid(const Grid& initial, ResolutionMode resolutionMode) {
     if(this->tetmesh.isEmpty())
         throw std::runtime_error("Error: cannot write a grid without deformed mesh.");

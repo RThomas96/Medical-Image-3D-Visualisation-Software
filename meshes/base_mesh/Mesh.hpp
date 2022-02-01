@@ -114,10 +114,10 @@ protected:
 	void sortFaces(FacesQueue& facesQueue);
 
 	std::vector<glm::vec3> vertices;
-	std::vector<Triangle> triangles;
-
-	std::vector<glm::vec3> normals;
 	std::vector<glm::vec3> verticesNormals;
+
+	std::vector<Triangle> triangles;
+	std::vector<glm::vec3> normals;
 
 	glm::vec3 BBMin;
 	glm::vec3 BBMax;

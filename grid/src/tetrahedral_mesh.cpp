@@ -254,30 +254,6 @@ glm::vec3 TetMesh::getDimensions() const {
     return this->bbMax - this->bbMin;
 }
 
-// Temporary function to map to current GL
-void TetMesh::replaceAllPoints(const std::vector<glm::vec3>& pts) {
-    int l = 0;
-    if((nbTetra[0]+1) * (nbTetra[1]+1) * (nbTetra[2]+1) != pts.size())
-        std::cout << "Wrong pts number !!" << std::endl;
-    for(int k = 0; k < this->nbTetra[2] + 1; ++k) {
-        for(int j = 0; j < this->nbTetra[1] + 1; ++j) {
-            for(int i = 0; i < this->nbTetra[0] + 1; ++i) {
-                //this->ptGrid[i][j][k] = pts[l];
-                this->ptGrid[this->from3DTo1D(glm::vec3(i, j, k))] = pts[l];
-                const glm::vec3& p = pts[l];
-                for(int m = 0; m < 3; ++m) {
-                    if(p[m] > this->bbMax[m])
-                        this->bbMax[m] = p[m];
-
-                    if(p[m] < this->bbMin[m])
-                        this->bbMin[m] = p[m];
-                }
-                ++l;
-            }
-        }
-    }
-}
-
 // This function is private because it doesn't update fields nbTetra, bbMin and bbMax
 // Thus it can only be used in buildGrid function
 void TetMesh::decomposeAndAddCube(std::vector<glm::vec3*> pts, const std::vector<int>& ptsIdx) {

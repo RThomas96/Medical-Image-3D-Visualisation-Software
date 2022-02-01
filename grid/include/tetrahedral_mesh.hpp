@@ -19,12 +19,12 @@ struct MeshDeformator {
 
     MeshDeformator(TetMesh * tetmesh, DeformMethod deformMethod) : tetmesh(tetmesh), deformMethod(deformMethod) {}
 
-    // Here origin is basically the clicked point
     virtual bool hasSelectedPts() = 0;
     virtual void selectPts(const glm::vec3& pt) = 0;
     virtual void deselectPts(const glm::vec3& pt) = 0;
     virtual void deselectAllPts() = 0;
 
+    // Here origin is basically the clicked point
     virtual void movePoint(const glm::vec3& origin, const glm::vec3& target) = 0;
 
     virtual ~MeshDeformator() = default;// To make MeshDeformator virtual
@@ -112,9 +112,6 @@ struct TetMesh {
 
     glm::vec3 getDimensions() const;
     int from3DTo1D(const glm::vec3& p) const;
-
-    // Temporary function to map to current GL
-    void replaceAllPoints(const std::vector<glm::vec3>& pts);
 
     void computeNeighborhood();
     void computeNormals();
