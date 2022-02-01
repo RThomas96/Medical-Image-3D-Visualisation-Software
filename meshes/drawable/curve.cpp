@@ -21,7 +21,7 @@ void DrawableCurve::initialize(QOpenGLContext *_context, ShaderCompiler::GLFunct
 
 	// Create the right shader program :
 	auto compiler = std::make_unique<ShaderCompiler>(functions);
-	compiler->vertexShader_file("../new_shaders/base_curve.vert").fragmentShader_file("../new_shaders/base_curve.frag");
+	compiler->vertexShader_file("../shaders/base_curve.vert").fragmentShader_file("../shaders/base_curve.frag");
 	if (compiler->compileShaders()) {
 		this->program_handle_draw = compiler->programName();
 	} else {

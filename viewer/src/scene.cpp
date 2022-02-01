@@ -896,12 +896,12 @@ DrawableBase::Ptr Scene::dummy_getDrawable(std::size_t idx) {
 }
 
 void Scene::recompileShaders(bool verbose) {
-	GLuint newProgram			 = this->compileShaders("../new_shaders/voxelgrid.vert", "../new_shaders/voxelgrid.geom", "../new_shaders/voxelgrid.frag", verbose);
-	GLuint newPlaneProgram		 = this->compileShaders("../new_shaders/plane.vert", "", "../new_shaders/plane.frag", verbose);
-	GLuint newPlaneViewerProgram = this->compileShaders("../new_shaders/texture_explorer.vert", "", "../new_shaders/texture_explorer.frag", verbose);
-	GLuint newVolumetricProgram	 = this->compileShaders("../new_shaders/transfer_mesh.vert", "../new_shaders/transfer_mesh.geom", "../new_shaders/transfer_mesh.frag", verbose);
-	GLuint newBoundingBoxProgram = this->compileShaders("../new_shaders/bounding_box.vert", "", "../new_shaders/bounding_box.frag", verbose);
-	GLuint newSphereProgram		 = this->compileShaders("../new_shaders/sphere.vert", "", "../new_shaders/sphere.frag", true);
+	GLuint newProgram			 = this->compileShaders("../shaders/voxelgrid.vert", "../shaders/voxelgrid.geom", "../shaders/voxelgrid.frag", verbose);
+	GLuint newPlaneProgram		 = this->compileShaders("../shaders/plane.vert", "", "../shaders/plane.frag", verbose);
+	GLuint newPlaneViewerProgram = this->compileShaders("../shaders/texture_explorer.vert", "", "../shaders/texture_explorer.frag", verbose);
+	GLuint newVolumetricProgram	 = this->compileShaders("../shaders/transfer_mesh.vert", "../shaders/transfer_mesh.geom", "../shaders/transfer_mesh.frag", verbose);
+	GLuint newBoundingBoxProgram = this->compileShaders("../shaders/bounding_box.vert", "", "../shaders/bounding_box.frag", verbose);
+	GLuint newSphereProgram		 = this->compileShaders("../shaders/sphere.vert", "", "../shaders/sphere.frag", true);
 
 	if (newProgram) {
 		glDeleteProgram(this->program_projectedTex);

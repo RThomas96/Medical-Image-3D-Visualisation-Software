@@ -23,7 +23,7 @@ void DrawableMesh::initialize(QOpenGLContext *_context, ShaderCompiler::GLFuncti
 
 	// Create the right shader program :
 	auto compiler = std::make_unique<ShaderCompiler>(functions);
-	compiler->vertexShader_file("../new_shaders/base_mesh.vert").fragmentShader_file("../new_shaders/base_mesh.frag");
+	compiler->vertexShader_file("../shaders/base_mesh.vert").fragmentShader_file("../shaders/base_mesh.frag");
 	if (compiler->compileShaders()) {
 		this->program_handle_draw = compiler->programName();
 	} else {
