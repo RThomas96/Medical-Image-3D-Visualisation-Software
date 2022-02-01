@@ -48,7 +48,7 @@ class TetMesh : public SimpleMesh {
 
 public:
     std::vector<Tetrahedron> mesh;
-    std::vector<glm::vec3> ptGrid;
+    std::vector<glm::vec3> vertices;
     std::vector<glm::vec3> texCoordGrid;// These are normalised coordinates
 
     glm::vec3 nbTetra;

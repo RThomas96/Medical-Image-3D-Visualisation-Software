@@ -3211,7 +3211,7 @@ void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend) {
                 int ptIndex = tet.getPointIndex(faceIdx, k);
 				for (int i = 0; i < 3; ++i) {
                     if(contain(infoToSend, InfoToSend::VERTICES))
-					    rawVertices[iPt] = newMesh.ptGrid[ptIndex][i];
+					    rawVertices[iPt] = newMesh.vertices[ptIndex][i];
                     if(contain(infoToSend, InfoToSend::TEXCOORD))
 					    tex[iPt] = newMesh.texCoordGrid[ptIndex][i];
 					iPt++;

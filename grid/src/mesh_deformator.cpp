@@ -7,8 +7,8 @@ bool WeightedMethod::hasSelectedPts() {
 }
 
 void WeightedMethod::selectPts(const glm::vec3& pt) {
-    for(int i = 0; i < this->tetmesh->ptGrid.size(); ++i) {
-        glm::vec3& pt2 = this->tetmesh->ptGrid[i];
+    for(int i = 0; i < this->tetmesh->vertices.size(); ++i) {
+        glm::vec3& pt2 = this->tetmesh->vertices[i];
         float distance = glm::distance(pt, pt2);
         if(distance < this->radius) {
             this->selectedPts.push_back(i);
@@ -30,7 +30,7 @@ void WeightedMethod::movePoint(const glm::vec3& origin, const glm::vec3& target)
     const glm::vec3 deplacement = target - origin;
     std::vector<int> idxToRemove;
     for(int i = 0; i < this->selectedPts.size(); ++i) {
-        glm::vec3& pt2 = this->tetmesh->ptGrid[this->selectedPts[i]];
+        glm::vec3& pt2 = this->tetmesh->vertices[this->selectedPts[i]];
         float distance = glm::distance(target, pt2);
         if(distance < this->radius) {
             float coeff = 1 - std::pow((distance / this->radius), 2);
@@ -64,7 +64,7 @@ void NormalMethod::deselectAllPts() {
 void NormalMethod::movePoint(const glm::vec3& origin, const glm::vec3& target) {
     const glm::vec3 deplacement = target - origin;
     for(int i = 0; i < this->selectedPts.size(); ++i) {
-        this->tetmesh->ptGrid[this->selectedPts[i]] += deplacement;
+        this->tetmesh->vertices[this->selectedPts[i]] += deplacement;
     }
 }
 

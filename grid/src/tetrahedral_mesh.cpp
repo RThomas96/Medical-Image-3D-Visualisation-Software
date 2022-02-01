@@ -36,7 +36,7 @@ TetMesh::TetMesh(): nbTetra(glm::vec3(0., 0., 0.)), bbMin(glm::vec3(0., 0., 0.))
 
 TetMesh::~TetMesh(){delete this->meshDeformator;};
 
-std::vector<glm::vec3*> TetMesh::insertCubeIntoPtGrid(std::vector<glm::vec3> cubePts, glm::vec3 indices, std::vector<glm::vec3>& ptGrid, std::vector<int>& ptIndices) {
+std::vector<glm::vec3*> TetMesh::insertCubeIntoPtGrid(std::vector<glm::vec3> cubePts, glm::vec3 indices, std::vector<glm::vec3>& vertices, std::vector<int>& ptIndices) {
     int x = indices[0];
     int y = indices[1];
     int z = indices[2];
@@ -51,15 +51,15 @@ std::vector<glm::vec3*> TetMesh::insertCubeIntoPtGrid(std::vector<glm::vec3> cub
     ptIndices[6] = this->from3DTo1D(glm::vec3(x+1,y+1,z+1));
     ptIndices[7] = this->from3DTo1D(glm::vec3(x+1,y,z+1));
 
-    ptGrid[ptIndices[0]] = cubePts[0];
-    ptGrid[ptIndices[1]] = cubePts[1];
-    ptGrid[ptIndices[2]] = cubePts[2];
-    ptGrid[ptIndices[3]] = cubePts[3];
+    vertices[ptIndices[0]] = cubePts[0];
+    vertices[ptIndices[1]] = cubePts[1];
+    vertices[ptIndices[2]] = cubePts[2];
+    vertices[ptIndices[3]] = cubePts[3];
 
-    ptGrid[ptIndices[4]] = cubePts[4];
-    ptGrid[ptIndices[5]] = cubePts[5];
-    ptGrid[ptIndices[6]] = cubePts[6];
-    ptGrid[ptIndices[7]] = cubePts[7];
+    vertices[ptIndices[4]] = cubePts[4];
+    vertices[ptIndices[5]] = cubePts[5];
+    vertices[ptIndices[6]] = cubePts[6];
+    vertices[ptIndices[7]] = cubePts[7];
 
     glm::vec3 tetMeshSize = bbMax - bbMin;
     texCoordGrid[ptIndices[0]] = cubePts[0]/tetMeshSize;
@@ -73,15 +73,15 @@ std::vector<glm::vec3*> TetMesh::insertCubeIntoPtGrid(std::vector<glm::vec3> cub
     texCoordGrid[ptIndices[7]] = cubePts[7]/tetMeshSize;
 
     std::vector<glm::vec3*> res;
-    res.push_back(&ptGrid[ptIndices[0]]);
-    res.push_back(&ptGrid[ptIndices[1]]);
-    res.push_back(&ptGrid[ptIndices[2]]);
-    res.push_back(&ptGrid[ptIndices[3]]);
+    res.push_back(&vertices[ptIndices[0]]);
+    res.push_back(&vertices[ptIndices[1]]);
+    res.push_back(&vertices[ptIndices[2]]);
+    res.push_back(&vertices[ptIndices[3]]);
 
-    res.push_back(&ptGrid[ptIndices[4]]);
-    res.push_back(&ptGrid[ptIndices[5]]);
-    res.push_back(&ptGrid[ptIndices[6]]);
-    res.push_back(&ptGrid[ptIndices[7]]);
+    res.push_back(&vertices[ptIndices[4]]);
+    res.push_back(&vertices[ptIndices[5]]);
+    res.push_back(&vertices[ptIndices[6]]);
+    res.push_back(&vertices[ptIndices[7]]);
     
     return res;
 }
@@ -221,7 +221,7 @@ void TetMesh::buildGrid(const glm::vec3& nbCube, const glm::vec3& sizeCube, cons
     this->bbMax = origin+nbCube * sizeCube;
 
     // We add +1 here because we stock points, and there one more point than cube as it need a final point
-    ptGrid = std::vector<glm::vec3>((this->nbTetra[0]+1)*(this->nbTetra[1]+1)*(this->nbTetra[2]+1), glm::vec3(0., 0., 0.));
+    vertices = std::vector<glm::vec3>((this->nbTetra[0]+1)*(this->nbTetra[1]+1)*(this->nbTetra[2]+1), glm::vec3(0., 0., 0.));
     texCoordGrid = std::vector<glm::vec3>((this->nbTetra[0]+1)*(this->nbTetra[1]+1)*(this->nbTetra[2]+1), glm::vec3(0., 0., 0.));
 
     std::vector<int> ptIndices(8, -1);
@@ -230,7 +230,7 @@ void TetMesh::buildGrid(const glm::vec3& nbCube, const glm::vec3& sizeCube, cons
             for(int i = 0; i < nbCube[0]; ++i) {
                 glm::vec3 offset = glm::vec3(i*sizeCube[0], j*sizeCube[1], k*sizeCube[2]);
                 std::vector<glm::vec3> cubePts = buildCube(origin+offset, sizeCube);
-                std::vector<glm::vec3*> cubePtsAdress = insertCubeIntoPtGrid(cubePts, glm::vec3(i, j, k), this->ptGrid, ptIndices);
+                std::vector<glm::vec3*> cubePtsAdress = insertCubeIntoPtGrid(cubePts, glm::vec3(i, j, k), this->vertices, ptIndices);
                 this->decomposeAndAddCube(cubePtsAdress, ptIndices);
             }
         }
@@ -361,29 +361,29 @@ void TetMesh::computeNormals() {
 }
 
 void TetMesh::updatebbox() {
-    auto maxX = std::max_element(ptGrid.begin(), ptGrid.end(), [](const glm::vec3& lhs, const glm::vec3& rhs) { return lhs[0] < rhs[0]; });
-    auto minX = std::min_element(ptGrid.begin(), ptGrid.end(), [](const glm::vec3& lhs, const glm::vec3& rhs) { return lhs[0] < rhs[0]; });
-    auto maxY = std::max_element(ptGrid.begin(), ptGrid.end(), [](const glm::vec3& lhs, const glm::vec3& rhs) { return lhs[1] < rhs[1]; });
-    auto minY = std::min_element(ptGrid.begin(), ptGrid.end(), [](const glm::vec3& lhs, const glm::vec3& rhs) { return lhs[1] < rhs[1]; });
-    auto maxZ = std::max_element(ptGrid.begin(), ptGrid.end(), [](const glm::vec3& lhs, const glm::vec3& rhs) { return lhs[2] < rhs[2]; });
-    auto minZ = std::min_element(ptGrid.begin(), ptGrid.end(), [](const glm::vec3& lhs, const glm::vec3& rhs) { return lhs[2] < rhs[2]; });
+    auto maxX = std::max_element(vertices.begin(), vertices.end(), [](const glm::vec3& lhs, const glm::vec3& rhs) { return lhs[0] < rhs[0]; });
+    auto minX = std::min_element(vertices.begin(), vertices.end(), [](const glm::vec3& lhs, const glm::vec3& rhs) { return lhs[0] < rhs[0]; });
+    auto maxY = std::max_element(vertices.begin(), vertices.end(), [](const glm::vec3& lhs, const glm::vec3& rhs) { return lhs[1] < rhs[1]; });
+    auto minY = std::min_element(vertices.begin(), vertices.end(), [](const glm::vec3& lhs, const glm::vec3& rhs) { return lhs[1] < rhs[1]; });
+    auto maxZ = std::max_element(vertices.begin(), vertices.end(), [](const glm::vec3& lhs, const glm::vec3& rhs) { return lhs[2] < rhs[2]; });
+    auto minZ = std::min_element(vertices.begin(), vertices.end(), [](const glm::vec3& lhs, const glm::vec3& rhs) { return lhs[2] < rhs[2]; });
 
-    int maxXIdx = std::distance(ptGrid.begin(), maxX);
-    int minXIdx = std::distance(ptGrid.begin(), minX);
-    int maxYIdx = std::distance(ptGrid.begin(), maxY);
-    int minYIdx = std::distance(ptGrid.begin(), minY);
-    int maxZIdx = std::distance(ptGrid.begin(), maxZ);
-    int minZIdx = std::distance(ptGrid.begin(), minZ);
+    int maxXIdx = std::distance(vertices.begin(), maxX);
+    int minXIdx = std::distance(vertices.begin(), minX);
+    int maxYIdx = std::distance(vertices.begin(), maxY);
+    int minYIdx = std::distance(vertices.begin(), minY);
+    int maxZIdx = std::distance(vertices.begin(), maxZ);
+    int minZIdx = std::distance(vertices.begin(), minZ);
 
-    this->bbMax = glm::vec3(this->ptGrid[maxXIdx][0], this->ptGrid[maxYIdx][1], this->ptGrid[maxZIdx][2]);
-    this->bbMin = glm::vec3(this->ptGrid[minXIdx][0], this->ptGrid[minYIdx][1], this->ptGrid[minZIdx][2]);
+    this->bbMax = glm::vec3(this->vertices[maxXIdx][0], this->vertices[maxYIdx][1], this->vertices[maxZIdx][2]);
+    this->bbMin = glm::vec3(this->vertices[minXIdx][0], this->vertices[minYIdx][1], this->vertices[minZIdx][2]);
 }
 
 int TetMesh::getIdxOfClosestPoint(const glm::vec3& p) const{
     float distance = std::numeric_limits<float>::max();
     int res = 0;
-    for(int i = 0; i < this->ptGrid.size(); ++i) {
-        const glm::vec3& p2 = this->ptGrid[i];
+    for(int i = 0; i < this->vertices.size(); ++i) {
+        const glm::vec3& p2 = this->vertices[i];
         float currentDistance = glm::distance(p, p2);
         if(currentDistance < distance) {
             distance = currentDistance;
