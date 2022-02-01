@@ -79,8 +79,10 @@ public:
     void movePoint(const glm::vec3& origin, const glm::vec3& target);
 
     // TODO: move to the mesh class
+    glm::vec3 getCoordInInitial(const TetMesh& initial, glm::vec3 p) const;
     void setNormalDeformationMethod();
     void setWeightedDeformationMethod(float radius);
+
     void selectPts(const glm::vec3& pt);
     void deselectAllPts();
 

@@ -424,3 +424,15 @@ void TetMesh::selectPts(const glm::vec3& pt) {
 void TetMesh::deselectAllPts() {
     this->meshDeformator->deselectAllPts();
 }
+
+glm::vec3 TetMesh::getCoordInInitial(const TetMesh& initial, glm::vec3 p) const{
+    int tetraIdx = this->inTetraIdx(p);
+    if(tetraIdx != -1) {
+        glm::vec4 baryCoordInDeformed = this->getTetra(tetraIdx).computeBaryCoord(p);
+        glm::vec3 coordInInitial = initial.getTetra(tetraIdx).baryToWorldCoord(baryCoordInDeformed);
+        return coordInInitial;
+    } else {
+        return p;
+    }
+}
+

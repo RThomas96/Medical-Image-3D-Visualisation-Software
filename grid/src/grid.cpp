@@ -44,17 +44,6 @@ void Grid::buildTetmesh(const glm::vec3& nbCube, const glm::vec3& sizeCube, cons
     this->tetmesh->buildGrid(nbCube, sizeCube, origin);
 }
 
-glm::vec3 Grid::getCoordInInitial(const Grid& initial, glm::vec3 p) const{
-    int tetraIdx = this->tetmesh->inTetraIdx(p);
-    if(tetraIdx != -1) {
-        glm::vec4 baryCoordInDeformed = this->tetmesh->getTetra(tetraIdx).computeBaryCoord(p);
-        glm::vec3 coordInInitial = initial.tetmesh->getTetra(tetraIdx).baryToWorldCoord(baryCoordInDeformed);
-        return coordInInitial;
-    } else {
-        return p;
-    }
-}
-
 uint16_t Grid::getValueFromPoint(const glm::vec3& p, ResolutionMode resolutionMode) const {
     glm::vec3 pSamplerRes = p;
     // Even if we want to query a point a full resolution res, the bbox is still based on the sampler
@@ -71,7 +60,7 @@ uint16_t Grid::getValueFromPoint(const glm::vec3& p, ResolutionMode resolutionMo
 }
 
 uint16_t Grid::getDeformedValueFromPoint(const Grid& initial, const glm::vec3& p, ResolutionMode resolutionMode) const {
-    glm::vec3 pt2 = this->getCoordInInitial(initial, p);
+    glm::vec3 pt2 = this->tetmesh->getCoordInInitial(*initial.tetmesh, p);
     if(resolutionMode == ResolutionMode::FULL_RESOLUTION)
         this->sampler.fromSamplerToImage(pt2);
     return initial.getValueFromPoint(pt2, resolutionMode);
@@ -138,7 +127,7 @@ void Grid::writeDeformedGrid(const Grid& initial, ResolutionMode resolutionMode)
             //std::cout << (j/bboxMax[1]) * 100. << "% " << std::flush;
             for(float i = bboxMin[0]; i < bboxMax[0]; i+=voxelDimension[0]) {
                 const glm::vec3 pt(i+voxelDimension[0]/2., j+voxelDimension[1]/2., k+voxelDimension[2]/2.);
-                glm::vec3 pt2 = this->getCoordInInitial(initial, pt);
+                glm::vec3 pt2 = this->tetmesh->getCoordInInitial(*initial.tetmesh, pt);
 
                 if(resolutionMode == ResolutionMode::FULL_RESOLUTION)
                     this->sampler.fromSamplerToImage(pt2);// Here we do a convertion because the final point is on image space 

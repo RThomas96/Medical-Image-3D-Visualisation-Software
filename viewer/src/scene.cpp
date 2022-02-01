@@ -3531,7 +3531,6 @@ void Scene::toggleWireframe() {
 }
 
 void Scene::createNewMeshManipulator(int i) {
-    //this->glMeshManipulator->createNewMeshManipulator(this, this->grids[0]->grid->grid->tetmesh->ptGrid, i);
     this->glMeshManipulator->createNewMeshManipulator(this, this->grids[0]->grid->grid->getMeshPositions(), i);
     QObject::connect(this, SIGNAL(keyQReleased()), dynamic_cast<QObject*>(this->glMeshManipulator->meshManipulator), SIGNAL(keyQReleased()));
 }

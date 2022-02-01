@@ -67,8 +67,6 @@ struct Grid {
     void buildTetmesh(const glm::vec3& nbCube, const glm::vec3& origin);
     void buildTetmesh(const glm::vec3& nbCube, const glm::vec3& sizeCube, const glm::vec3& origin);
 
-    glm::vec3 getCoordInInitial(const Grid& initial, glm::vec3 p) const;
-
     // In mesh interface
     glm::vec3 getDimension() const;
     std::pair<glm::vec3, glm::vec3> getBoundingBox() const;
@@ -84,9 +82,10 @@ struct Grid {
     uint16_t getValueFromPoint(const glm::vec3& p, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
 
     std::vector<glm::vec3>& getMeshPositions() const;
+
     // Temporary indirection, do not use
     TetMesh * getMesh();
-    // Change the initial workflow
+    // Change the workflow of the "initial" mesh
     glm::vec3 getNbTetra() {return this->tetmesh->nbTetra;};
 
     // TODO: to remove
@@ -95,7 +94,6 @@ struct Grid {
 
 private:
     TetMesh * tetmesh;
-
 };
 
 // This is the only class that interact with the openGL head
