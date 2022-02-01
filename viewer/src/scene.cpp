@@ -3213,7 +3213,7 @@ void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend) {
                     if(contain(infoToSend, InfoToSend::VERTICES))
 					    rawVertices[iPt] = newMesh.vertices[ptIndex][i];
                     if(contain(infoToSend, InfoToSend::TEXCOORD))
-					    tex[iPt] = newMesh.texCoordGrid[ptIndex][i];
+					    tex[iPt] = newMesh.texCoord[ptIndex][i];
 					iPt++;
 				}
 			}

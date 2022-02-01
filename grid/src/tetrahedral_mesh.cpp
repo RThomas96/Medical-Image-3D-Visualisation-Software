@@ -62,15 +62,15 @@ std::vector<glm::vec3*> TetMesh::insertCubeIntoPtGrid(std::vector<glm::vec3> cub
     vertices[ptIndices[7]] = cubePts[7];
 
     glm::vec3 tetMeshSize = bbMax - bbMin;
-    texCoordGrid[ptIndices[0]] = cubePts[0]/tetMeshSize;
-    texCoordGrid[ptIndices[1]] = cubePts[1]/tetMeshSize;
-    texCoordGrid[ptIndices[2]] = cubePts[2]/tetMeshSize;
-    texCoordGrid[ptIndices[3]] = cubePts[3]/tetMeshSize;
+    texCoord[ptIndices[0]] = cubePts[0]/tetMeshSize;
+    texCoord[ptIndices[1]] = cubePts[1]/tetMeshSize;
+    texCoord[ptIndices[2]] = cubePts[2]/tetMeshSize;
+    texCoord[ptIndices[3]] = cubePts[3]/tetMeshSize;
 
-    texCoordGrid[ptIndices[4]] = cubePts[4]/tetMeshSize;
-    texCoordGrid[ptIndices[5]] = cubePts[5]/tetMeshSize;
-    texCoordGrid[ptIndices[6]] = cubePts[6]/tetMeshSize;
-    texCoordGrid[ptIndices[7]] = cubePts[7]/tetMeshSize;
+    texCoord[ptIndices[4]] = cubePts[4]/tetMeshSize;
+    texCoord[ptIndices[5]] = cubePts[5]/tetMeshSize;
+    texCoord[ptIndices[6]] = cubePts[6]/tetMeshSize;
+    texCoord[ptIndices[7]] = cubePts[7]/tetMeshSize;
 
     std::vector<glm::vec3*> res;
     res.push_back(&vertices[ptIndices[0]]);
@@ -222,7 +222,7 @@ void TetMesh::buildGrid(const glm::vec3& nbCube, const glm::vec3& sizeCube, cons
 
     // We add +1 here because we stock points, and there one more point than cube as it need a final point
     vertices = std::vector<glm::vec3>((this->nbTetra[0]+1)*(this->nbTetra[1]+1)*(this->nbTetra[2]+1), glm::vec3(0., 0., 0.));
-    texCoordGrid = std::vector<glm::vec3>((this->nbTetra[0]+1)*(this->nbTetra[1]+1)*(this->nbTetra[2]+1), glm::vec3(0., 0., 0.));
+    texCoord = std::vector<glm::vec3>((this->nbTetra[0]+1)*(this->nbTetra[1]+1)*(this->nbTetra[2]+1), glm::vec3(0., 0., 0.));
 
     std::vector<int> ptIndices(8, -1);
     for(int k = 0; k < nbCube[2]; ++k) {
