@@ -6,6 +6,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/io.hpp>
 #include <vector>
+#include "base_mesh.hpp"
 //#include "../include/mesh_deformator.hpp"
 
 struct MeshDeformator;
@@ -34,57 +35,24 @@ struct Tetrahedron {
     int getPointIndex(int faceIdx, int ptIdxInFace) const;
 };
 
-/***/
-
-class SimpleMesh {
-
-public:
-    virtual ~SimpleMesh(){};
-};
-
-/***/
-
-class TetMesh : public SimpleMesh {
+class TetMesh : public BaseMesh {
 
 public:
     std::vector<Tetrahedron> mesh;
-    std::vector<glm::vec3> vertices;
-    std::vector<glm::vec3> texCoord;// These are normalised coordinates
-
     glm::vec3 nbTetra;
-
-    glm::vec3 bbMin;
-    glm::vec3 bbMax;
-
-    MeshDeformator * meshDeformator;
 
     TetMesh();
 
+    bool isEmpty() const;
     void buildGrid(const glm::vec3& nbCube, const glm::vec3& sizeCube, const glm::vec3& origin);
 
-    bool isEmpty() const;
+    void computeNeighborhood() override;
+    void computeNormals() override;
 
+    // Specific to Tethrahedal mesh
     Tetrahedron getTetra(int idx) const;
     int inTetraIdx(const glm::vec3& p) const;
-
-    int getIdxOfClosestPoint(const glm::vec3& p) const;
-
-    glm::vec3 getDimensions() const;
-    int from3DTo1D(const glm::vec3& p) const;
-
-    void computeNeighborhood();
-    void computeNormals();
-    void updatebbox();
-
-    void movePoint(const glm::vec3& origin, const glm::vec3& target);
-
-    // TODO: move to the mesh class
     glm::vec3 getCoordInInitial(const TetMesh& initial, glm::vec3 p) const;
-    void setNormalDeformationMethod();
-    void setWeightedDeformationMethod(float radius);
-
-    void selectPts(const glm::vec3& pt);
-    void deselectAllPts();
 
     ~TetMesh();
 
@@ -93,6 +61,7 @@ private:
     // Thus it can only be used in buildGrid function
     void decomposeAndAddCube(std::vector<glm::vec3*> pts, const std::vector<int>& ptsIdx);
     std::vector<glm::vec3*> insertCubeIntoPtGrid(std::vector<glm::vec3> cubePts, glm::vec3 indices, std::vector<glm::vec3>& ptGrid, std::vector<int>& ptIndices);
+    int from3DTo1D(const glm::vec3& p) const;
 };
 
 #endif

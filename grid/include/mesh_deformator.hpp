@@ -4,7 +4,7 @@
 #include <glm/glm.hpp>
 #include <vector>
 
-struct TetMesh;
+struct BaseMesh;
 enum DeformMethod {
     NORMAL,
     WEIGHTED
@@ -12,9 +12,9 @@ enum DeformMethod {
 
 struct MeshDeformator {
     DeformMethod deformMethod;
-    TetMesh * tetmesh;
+    BaseMesh * baseMesh;
 
-    MeshDeformator(TetMesh * tetmesh, DeformMethod deformMethod) : tetmesh(tetmesh), deformMethod(deformMethod) {}
+    MeshDeformator(BaseMesh * baseMesh, DeformMethod deformMethod) : baseMesh(baseMesh), deformMethod(deformMethod) {}
 
     virtual bool hasSelectedPts() = 0;
     virtual void selectPts(const glm::vec3& pt) = 0;
@@ -32,7 +32,7 @@ struct WeightedMethod : MeshDeformator {
     glm::vec3 originalPoint;
     std::vector<int> selectedPts;
 
-    WeightedMethod(TetMesh * tetmesh, float radius) : MeshDeformator(tetmesh, DeformMethod::WEIGHTED), radius(radius) {}
+    WeightedMethod(BaseMesh * baseMesh, float radius) : MeshDeformator(baseMesh, DeformMethod::WEIGHTED), radius(radius) {}
 
     bool hasSelectedPts() override;
     void selectPts(const glm::vec3& pt) override;
@@ -45,7 +45,7 @@ struct WeightedMethod : MeshDeformator {
 struct NormalMethod : MeshDeformator {
     std::vector<int> selectedPts;
 
-    NormalMethod(TetMesh * tetmesh) : MeshDeformator(tetmesh, DeformMethod::NORMAL) {}
+    NormalMethod(BaseMesh * baseMesh) : MeshDeformator(baseMesh, DeformMethod::NORMAL) {}
 
     bool hasSelectedPts() override;
     void selectPts(const glm::vec3& pt) override;

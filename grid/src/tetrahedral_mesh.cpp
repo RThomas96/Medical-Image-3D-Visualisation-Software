@@ -32,7 +32,7 @@ int Tetrahedron::getPointIndex(int faceIdx, int ptIdxInFace) const{
     return this->pointsIdx[getIdxOfPtInFace(faceIdx, ptIdxInFace)];
 }
 
-TetMesh::TetMesh(): nbTetra(glm::vec3(0., 0., 0.)), bbMin(glm::vec3(0., 0., 0.)), bbMax(glm::vec3(0., 0., 0.)), meshDeformator(new NormalMethod(this)) {}
+TetMesh::TetMesh(): nbTetra(glm::vec3(0., 0., 0.)) {}
 
 TetMesh::~TetMesh(){delete this->meshDeformator;};
 
@@ -255,10 +255,6 @@ int TetMesh::inTetraIdx(const glm::vec3& p) const {
     return -1;
 }
 
-glm::vec3 TetMesh::getDimensions() const {
-    return this->bbMax - this->bbMin;
-}
-
 // This function is private because it doesn't update fields nbTetra, bbMin and bbMax
 // Thus it can only be used in buildGrid function
 void TetMesh::decomposeAndAddCube(std::vector<glm::vec3*> pts, const std::vector<int>& ptsIdx) {
@@ -358,71 +354,6 @@ void TetMesh::computeNormals() {
     for(int tetIdx; tetIdx < this->mesh.size(); ++tetIdx) {
         this->mesh[tetIdx].computeNormals();
     }
-}
-
-void TetMesh::updatebbox() {
-    auto maxX = std::max_element(vertices.begin(), vertices.end(), [](const glm::vec3& lhs, const glm::vec3& rhs) { return lhs[0] < rhs[0]; });
-    auto minX = std::min_element(vertices.begin(), vertices.end(), [](const glm::vec3& lhs, const glm::vec3& rhs) { return lhs[0] < rhs[0]; });
-    auto maxY = std::max_element(vertices.begin(), vertices.end(), [](const glm::vec3& lhs, const glm::vec3& rhs) { return lhs[1] < rhs[1]; });
-    auto minY = std::min_element(vertices.begin(), vertices.end(), [](const glm::vec3& lhs, const glm::vec3& rhs) { return lhs[1] < rhs[1]; });
-    auto maxZ = std::max_element(vertices.begin(), vertices.end(), [](const glm::vec3& lhs, const glm::vec3& rhs) { return lhs[2] < rhs[2]; });
-    auto minZ = std::min_element(vertices.begin(), vertices.end(), [](const glm::vec3& lhs, const glm::vec3& rhs) { return lhs[2] < rhs[2]; });
-
-    int maxXIdx = std::distance(vertices.begin(), maxX);
-    int minXIdx = std::distance(vertices.begin(), minX);
-    int maxYIdx = std::distance(vertices.begin(), maxY);
-    int minYIdx = std::distance(vertices.begin(), minY);
-    int maxZIdx = std::distance(vertices.begin(), maxZ);
-    int minZIdx = std::distance(vertices.begin(), minZ);
-
-    this->bbMax = glm::vec3(this->vertices[maxXIdx][0], this->vertices[maxYIdx][1], this->vertices[maxZIdx][2]);
-    this->bbMin = glm::vec3(this->vertices[minXIdx][0], this->vertices[minYIdx][1], this->vertices[minZIdx][2]);
-}
-
-int TetMesh::getIdxOfClosestPoint(const glm::vec3& p) const{
-    float distance = std::numeric_limits<float>::max();
-    int res = 0;
-    for(int i = 0; i < this->vertices.size(); ++i) {
-        const glm::vec3& p2 = this->vertices[i];
-        float currentDistance = glm::distance(p, p2);
-        if(currentDistance < distance) {
-            distance = currentDistance;
-            res = i;
-        }
-    }
-    return res;
-}
-
-void TetMesh::movePoint(const glm::vec3& origin, const glm::vec3& target) {
-    if(this->meshDeformator->hasSelectedPts()) {
-        this->meshDeformator->movePoint(origin, target);
-        this->computeNormals();
-        this->updatebbox();
-    } else {
-        std::cout << "WARNING: try to move points when there is no point in the point to move queue" << std::endl;
-    }
-}
-
-void TetMesh::setNormalDeformationMethod() {
-    if(this->meshDeformator->deformMethod != DeformMethod::NORMAL) {
-        delete this->meshDeformator;
-        this->meshDeformator = new NormalMethod(this);
-    }
-}
-
-void TetMesh::setWeightedDeformationMethod(float radius) {
-    if(this->meshDeformator->deformMethod != DeformMethod::WEIGHTED) {
-        delete this->meshDeformator;
-        this->meshDeformator = new WeightedMethod(this, radius);
-    }
-}
-
-void TetMesh::selectPts(const glm::vec3& pt) {
-    this->meshDeformator->selectPts(pt);
-}
-
-void TetMesh::deselectAllPts() {
-    this->meshDeformator->deselectAllPts();
 }
 
 glm::vec3 TetMesh::getCoordInInitial(const TetMesh& initial, glm::vec3 p) const{

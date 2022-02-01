@@ -1,0 +1,76 @@
+#include "../include/base_mesh.hpp"
+#include "../include/mesh_deformator.hpp"
+#include <map>
+#include <algorithm>
+
+BaseMesh::BaseMesh(): bbMin(glm::vec3(0., 0., 0.)), bbMax(glm::vec3(0., 0., 0.)), meshDeformator(new NormalMethod(this)) {}
+
+glm::vec3 BaseMesh::getDimensions() const {
+    return this->bbMax - this->bbMin;
+}
+
+void BaseMesh::updatebbox() {
+    auto maxX = std::max_element(vertices.begin(), vertices.end(), [](const glm::vec3& lhs, const glm::vec3& rhs) { return lhs[0] < rhs[0]; });
+    auto minX = std::min_element(vertices.begin(), vertices.end(), [](const glm::vec3& lhs, const glm::vec3& rhs) { return lhs[0] < rhs[0]; });
+    auto maxY = std::max_element(vertices.begin(), vertices.end(), [](const glm::vec3& lhs, const glm::vec3& rhs) { return lhs[1] < rhs[1]; });
+    auto minY = std::min_element(vertices.begin(), vertices.end(), [](const glm::vec3& lhs, const glm::vec3& rhs) { return lhs[1] < rhs[1]; });
+    auto maxZ = std::max_element(vertices.begin(), vertices.end(), [](const glm::vec3& lhs, const glm::vec3& rhs) { return lhs[2] < rhs[2]; });
+    auto minZ = std::min_element(vertices.begin(), vertices.end(), [](const glm::vec3& lhs, const glm::vec3& rhs) { return lhs[2] < rhs[2]; });
+
+    int maxXIdx = std::distance(vertices.begin(), maxX);
+    int minXIdx = std::distance(vertices.begin(), minX);
+    int maxYIdx = std::distance(vertices.begin(), maxY);
+    int minYIdx = std::distance(vertices.begin(), minY);
+    int maxZIdx = std::distance(vertices.begin(), maxZ);
+    int minZIdx = std::distance(vertices.begin(), minZ);
+
+    this->bbMax = glm::vec3(this->vertices[maxXIdx][0], this->vertices[maxYIdx][1], this->vertices[maxZIdx][2]);
+    this->bbMin = glm::vec3(this->vertices[minXIdx][0], this->vertices[minYIdx][1], this->vertices[minZIdx][2]);
+}
+
+int BaseMesh::getIdxOfClosestPoint(const glm::vec3& p) const{
+    float distance = std::numeric_limits<float>::max();
+    int res = 0;
+    for(int i = 0; i < this->vertices.size(); ++i) {
+        const glm::vec3& p2 = this->vertices[i];
+        float currentDistance = glm::distance(p, p2);
+        if(currentDistance < distance) {
+            distance = currentDistance;
+            res = i;
+        }
+    }
+    return res;
+}
+
+void BaseMesh::movePoint(const glm::vec3& origin, const glm::vec3& target) {
+    if(this->meshDeformator->hasSelectedPts()) {
+        this->meshDeformator->movePoint(origin, target);
+        this->computeNormals();
+        this->updatebbox();
+    } else {
+        std::cout << "WARNING: try to move points when there is no point in the point to move queue" << std::endl;
+    }
+}
+
+void BaseMesh::setNormalDeformationMethod() {
+    if(this->meshDeformator->deformMethod != DeformMethod::NORMAL) {
+        delete this->meshDeformator;
+        this->meshDeformator = new NormalMethod(this);
+    }
+}
+
+void BaseMesh::setWeightedDeformationMethod(float radius) {
+    if(this->meshDeformator->deformMethod != DeformMethod::WEIGHTED) {
+        delete this->meshDeformator;
+        this->meshDeformator = new WeightedMethod(this, radius);
+    }
+}
+
+void BaseMesh::selectPts(const glm::vec3& pt) {
+    this->meshDeformator->selectPts(pt);
+}
+
+void BaseMesh::deselectAllPts() {
+    this->meshDeformator->deselectAllPts();
+}
+
