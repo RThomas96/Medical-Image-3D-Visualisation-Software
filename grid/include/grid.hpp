@@ -59,32 +59,42 @@ struct Grid {
 
     Sampler sampler;
 
-    Grid(const std::string& filename, const glm::vec3& nbCube, int subsample);
-    Grid(const std::vector<std::string>& filename, const glm::vec3& nbCube, int subsample);
-    Grid(const std::vector<std::string>& filename, const glm::vec3& nbCube, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox);
+    Grid(const std::string& filename, int subsample);
+    Grid(const std::vector<std::string>& filename, int subsample);
+    Grid(const std::vector<std::string>& filename, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox);
 
-    // Here p is a 3D point, not like coord from TIFFImage's "getValue" function that is a set of 3 indices 
-    uint16_t getValueFromPoint(const glm::vec3& p, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
+    void buildTetmesh(const glm::vec3& nbCube);
+    void buildTetmesh(const glm::vec3& nbCube, const glm::vec3& origin);
+    void buildTetmesh(const glm::vec3& nbCube, const glm::vec3& sizeCube, const glm::vec3& origin);
+
     glm::vec3 getCoordInInitial(const Grid& initial, glm::vec3 p) const;
 
-    uint16_t getDeformedValueFromPoint(const Grid& initial, const glm::vec3& p, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
-
-    void movePoint(const glm::vec3& origin, const glm::vec3& target);
-    void writeDeformedGrid(const Grid& initial, ResolutionMode resolutionMode = ResolutionMode::FULL_RESOLUTION);
-
-    void replaceAllPoints(const std::vector<glm::vec3>& pts);
-
+    // In mesh interface
     glm::vec3 getDimension() const;
     std::pair<glm::vec3, glm::vec3> getBoundingBox() const;
-
-    // Get the position of the intersection between a ray and the grid
-    // The ray is intersecting the grid only if it hit a value between minValue and maxValue
+    void movePoint(const glm::vec3& origin, const glm::vec3& target);
     bool getPositionOfRayIntersection(const Grid& initial, const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, glm::vec3& res) const;
+    void writeDeformedGrid(const Grid& initial, ResolutionMode resolutionMode = ResolutionMode::FULL_RESOLUTION);
 
-    // TODO: temproray
-    TetMesh tetmesh;
+    // This workflow as been choosen instead of using an enum to handle different parameters
+    void setNormalDeformationMethod();
+    void setWeightedDeformationMethod(float radius);
+
+    uint16_t getDeformedValueFromPoint(const Grid& initial, const glm::vec3& p, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
+    uint16_t getValueFromPoint(const glm::vec3& p, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
+
+    std::vector<glm::vec3>& getMeshPositions() const;
+    // Temporary indirection, do not use
+    TetMesh * getMesh();
+    // Change the initial workflow
+    glm::vec3 getNbTetra() {return this->tetmesh->nbTetra;};
+
+    // TODO: to remove
+    void selectPts(const glm::vec3& pt) { this->tetmesh->selectPts(pt);};
+    void deselectAllPts() { this->tetmesh->deselectAllPts();};
+
 private:
-    //TetMesh tetmesh;
+    TetMesh * tetmesh;
 
 };
 

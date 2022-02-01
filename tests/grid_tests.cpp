@@ -4,8 +4,10 @@
 TEST_CASE("SaveDurationCacheComparison", "[grid][save][.long]") {
 
     glm::vec3 nb = glm::vec3(5., 5., 5.);
-    Grid * initialGrid = new Grid("../../tests/data/img1.tif", nb, 4);
-    Grid * deformedGrid = new Grid("../../tests/data/img1.tif", nb, 4);
+    Grid * initialGrid = new Grid("../../tests/data/img1.tif", 4);
+    initialGrid->buildTetmesh(nb);
+    Grid * deformedGrid = new Grid("../../tests/data/img1.tif", 4);
+    deformedGrid->buildTetmesh(nb);
     initialGrid->sampler.setUseCache(true);
     deformedGrid->sampler.setUseCache(true);
 
@@ -21,8 +23,10 @@ TEST_CASE("SaveDurationCacheComparison", "[grid][save][.long]") {
 
     delete initialGrid;
     delete deformedGrid;
-    initialGrid = new Grid("../../tests/data/img1.tif", nb, 4);
-    deformedGrid = new Grid("../../tests/data/img1.tif", nb, 4);
+    initialGrid = new Grid("../../tests/data/img1.tif", 4);
+    initialGrid->buildTetmesh(nb);
+    deformedGrid = new Grid("../../tests/data/img1.tif", 4);
+    deformedGrid->buildTetmesh(nb);
     initialGrid->sampler.setUseCache(true);
     deformedGrid->sampler.setUseCache(true);
     initialGrid->sampler.setCacheCapacity(10);
@@ -39,8 +43,10 @@ TEST_CASE("SaveDurationCacheComparison", "[grid][save][.long]") {
 
     delete initialGrid;
     delete deformedGrid;
-    initialGrid = new Grid("../../tests/data/img1.tif", nb, 4);
-    deformedGrid = new Grid("../../tests/data/img1.tif", nb, 4);
+    initialGrid = new Grid("../../tests/data/img1.tif", 4);
+    initialGrid->buildTetmesh(nb);
+    deformedGrid = new Grid("../../tests/data/img1.tif", 4);
+    deformedGrid->buildTetmesh(nb);
     initialGrid->sampler.setUseCache(false);
     deformedGrid->sampler.setUseCache(false);
 
@@ -71,7 +77,8 @@ TEST_CASE("SaveDurationCacheComparison", "[grid][save][.long]") {
 TEST_CASE("CutAndDivideResolution", "[grid][.file]") {
 
     glm::vec3 nb = glm::vec3(5., 5., 5.);
-    Grid grid("../../tests/data/img1.tif", nb, 4);
+    Grid grid("../../tests/data/img1.tif", 4);
+    grid.buildTetmesh(nb);
 
 	std::vector<std::uint16_t> slices;
 
@@ -92,7 +99,8 @@ TEST_CASE("CutAndDivideResolution", "[grid][.file]") {
 TEST_CASE("CutResolution", "[grid][.file]") {
 
     glm::vec3 nb = glm::vec3(5., 5., 5.);
-    Grid grid("../../tests/data/img1.tif", nb, 1);
+    Grid grid("../../tests/data/img1.tif", 1);
+    grid.buildTetmesh(nb);
 
 	std::vector<std::uint16_t> slices;
 
@@ -112,7 +120,8 @@ TEST_CASE("CutResolution", "[grid][.file]") {
 TEST_CASE("DivideResolution", "[grid][.file]") {
 
     glm::vec3 nb = glm::vec3(5., 5., 5.);
-    Grid grid("../../tests/data/img1.tif", nb, 4);
+    Grid grid("../../tests/data/img1.tif", 4);
+    grid.buildTetmesh(nb);
 
 	std::vector<std::uint16_t> slices;
 
@@ -133,7 +142,8 @@ TEST_CASE("DivideResolution", "[grid][.file]") {
 TEST_CASE("DivideResolutionGetPoint", "[grid][.file]") {
 
     glm::vec3 nb = glm::vec3(5., 5., 5.);
-    Grid grid("../../tests/data/img1.tif", nb, 4);
+    Grid grid("../../tests/data/img1.tif", 4);
+    grid.buildTetmesh(nb);
 
     int offsetOnZ = static_cast<int>(grid.sampler.resolutionRatio[2]);
 

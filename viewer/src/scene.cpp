@@ -635,7 +635,7 @@ void Scene::addGrid(const GridGL * gridLoaded) {
     //Add manipulators
     this->createNewMeshManipulator(0);
 
-    this->updateManipulatorPositions();
+    //this->updateManipulatorPositions();
 	this->prepareManipulators();
 
 	this->updateBoundingBox();
@@ -1216,7 +1216,8 @@ void Scene::loadMesh() {
 
 void Scene::slotApplyDeformation(glm::vec3 oldPosition, glm::vec3 newPosition) {
     this->grids[0]->grid->grid->movePoint(oldPosition, newPosition);
-    this->glMeshManipulator->meshManipulator->setAllManipulatorsPosition(this->grids[0]->grid->grid->tetmesh.ptGrid);
+    //this->glMeshManipulator->meshManipulator->setAllManipulatorsPosition(this->grids[0]->grid->grid->tetmesh->ptGrid);
+    this->glMeshManipulator->meshManipulator->setAllManipulatorsPosition(this->grids[0]->grid->grid->getMeshPositions());
     this->sendTetmeshToGPU(0, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS));
 }
 
@@ -3174,7 +3175,8 @@ void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend) {
 	std::size_t coorWidth = 0, coorHeight = 0;
 	std::size_t neighbWidth = 0, neighbHeight = 0;
 
-	TetMesh& newMesh = this->grids[gridIdx]->grid->grid->tetmesh;
+	//TetMesh& newMesh = *this->grids[gridIdx]->grid->grid->tetmesh;
+	TetMesh& newMesh = *this->grids[gridIdx]->grid->grid->getMesh();
 	__GetTexSize(newMesh.mesh.size() * 4 * 3, &vertWidth, &vertHeight);
 	__GetTexSize(newMesh.mesh.size() * 4, &normWidth, &normHeight);
 	__GetTexSize(newMesh.mesh.size() * 4 * 3, &coorWidth, &coorHeight);
@@ -3375,9 +3377,9 @@ void Scene::prepareManipulators() {
 	this->glMeshManipulator->prepare();
 }
 
-void Scene::updateManipulatorPositions() {
-    this->glMeshManipulator->meshManipulator->setAllManipulatorsPosition(this->grids[0]->grid->grid->tetmesh.ptGrid);
-}
+//void Scene::updateManipulatorPositions() {
+//    this->glMeshManipulator->meshManipulator->setAllManipulatorsPosition(this->grids[0]->grid->grid->);
+//}
 
 /**********************************************************************/
 /**********************************************************************/
@@ -3502,11 +3504,12 @@ void Scene::launchSaveDialog() {
 		return;
 	}
 
-    glm::vec3 nb = this->grids[0]->grid->grid->tetmesh.nbTetra; 
+    glm::vec3 nb = this->grids[0]->grid->grid->getNbTetra(); 
 
     std::cout << "The filename is: " << this->filename << std::endl;
 
-    Grid initialGrid(this->filename, nb, this->temp_ratio);
+    Grid initialGrid(this->filename, this->temp_ratio);
+    initialGrid.buildTetmesh(nb);
     this->grids[0]->grid->grid->writeDeformedGrid(initialGrid);
 	return;
 }
@@ -3528,16 +3531,17 @@ void Scene::toggleWireframe() {
 }
 
 void Scene::createNewMeshManipulator(int i) {
-    this->glMeshManipulator->createNewMeshManipulator(this, this->grids[0]->grid->grid->tetmesh.ptGrid, i);
+    //this->glMeshManipulator->createNewMeshManipulator(this, this->grids[0]->grid->grid->tetmesh->ptGrid, i);
+    this->glMeshManipulator->createNewMeshManipulator(this, this->grids[0]->grid->grid->getMeshPositions(), i);
     QObject::connect(this, SIGNAL(keyQReleased()), dynamic_cast<QObject*>(this->glMeshManipulator->meshManipulator), SIGNAL(keyQReleased()));
 }
 
 void Scene::setNormalDeformationMethod() {
-    this->grids[0]->grid->grid->tetmesh.setNormalDeformationMethod();
+    this->grids[0]->grid->grid->setNormalDeformationMethod();
 }
 
 void Scene::setWeightedDeformationMethod(float radius) {
-    this->grids[0]->grid->grid->tetmesh.setWeightedDeformationMethod(radius);
+    this->grids[0]->grid->grid->setWeightedDeformationMethod(radius);
 }
 
 void Scene::setManipulatorRadius(float radius) {

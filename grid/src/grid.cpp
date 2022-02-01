@@ -14,26 +14,41 @@ Image::ImageDataType Sampler::getInternalDataType() const {
     return this->image.getInternalDataType();
 }
 
-Grid::Grid(const std::string& filename, const glm::vec3& nbCube, int subsample): sampler(Sampler(std::vector<std::string>{filename}, subsample)) {
-    const glm::vec3 sizeCube = this->sampler.getSamplerDimension() / nbCube;
-    this->tetmesh.buildGrid(nbCube, sizeCube, this->sampler.subregionMin);
+Grid::Grid(const std::string& filename, int subsample): sampler(Sampler(std::vector<std::string>{filename}, subsample)) {
+    this->tetmesh = nullptr;
 }
 
-Grid::Grid(const std::vector<std::string>& filename, const glm::vec3& nbCube, int subsample): sampler(Sampler(filename, subsample)) {
-    const glm::vec3 sizeCube = this->sampler.getSamplerDimension() / nbCube;
-    this->tetmesh.buildGrid(nbCube, sizeCube, this->sampler.subregionMin);
+Grid::Grid(const std::vector<std::string>& filename, int subsample): sampler(Sampler(filename, subsample)) {
+    this->tetmesh = nullptr;
 }
 
-Grid::Grid(const std::vector<std::string>& filename, const glm::vec3& nbCube, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox): sampler(Sampler(filename, subsample, bbox)) {
+Grid::Grid(const std::vector<std::string>& filename, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox): sampler(Sampler(filename, subsample, bbox)) {
+    this->tetmesh = nullptr;
+}
+
+void Grid::buildTetmesh(const glm::vec3& nbCube) {
     const glm::vec3 sizeCube = this->sampler.getSamplerDimension() / nbCube;
-    this->tetmesh.buildGrid(nbCube, sizeCube, this->sampler.subregionMin);
+    const glm::vec3& origin = this->sampler.subregionMin;
+    this->buildTetmesh(nbCube, sizeCube, origin);
+}
+
+void Grid::buildTetmesh(const glm::vec3& nbCube, const glm::vec3& origin) {
+    const glm::vec3 sizeCube = this->sampler.getSamplerDimension() / nbCube;
+    this->buildTetmesh(nbCube, sizeCube, origin);
+}
+
+void Grid::buildTetmesh(const glm::vec3& nbCube, const glm::vec3& sizeCube, const glm::vec3& origin) {
+    if(this->tetmesh)
+        delete this->tetmesh;
+    this->tetmesh = new TetMesh();
+    this->tetmesh->buildGrid(nbCube, sizeCube, origin);
 }
 
 glm::vec3 Grid::getCoordInInitial(const Grid& initial, glm::vec3 p) const{
-    int tetraIdx = this->tetmesh.inTetraIdx(p);
+    int tetraIdx = this->tetmesh->inTetraIdx(p);
     if(tetraIdx != -1) {
-        glm::vec4 baryCoordInDeformed = this->tetmesh.getTetra(tetraIdx).computeBaryCoord(p);
-        glm::vec3 coordInInitial = initial.tetmesh.getTetra(tetraIdx).baryToWorldCoord(baryCoordInDeformed);
+        glm::vec4 baryCoordInDeformed = this->tetmesh->getTetra(tetraIdx).computeBaryCoord(p);
+        glm::vec3 coordInInitial = initial.tetmesh->getTetra(tetraIdx).baryToWorldCoord(baryCoordInDeformed);
         return coordInInitial;
     } else {
         return p;
@@ -66,22 +81,22 @@ void Grid::movePoint(const glm::vec3& origin, const glm::vec3& target) {
     //MovePointMethod * method = new NormalMethod();
     //float radius = 0.5;
     //MoveMethod * method = new WeightedMethod(radius);
-    this->tetmesh.movePoint(origin, target);
+    this->tetmesh->movePoint(origin, target);
     //delete method;
 }
 
 void Grid::writeDeformedGrid(const Grid& initial, ResolutionMode resolutionMode) {
-    if(this->tetmesh.isEmpty())
+    if(this->tetmesh->isEmpty())
         throw std::runtime_error("Error: cannot write a grid without deformed mesh.");
 
-    if(initial.tetmesh.isEmpty())
+    if(initial.tetmesh->isEmpty())
         throw std::runtime_error("Error: cannot write a grid without initial mesh.");
 
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
-    glm::vec3 bboxMin = this->tetmesh.bbMin;
-    glm::vec3 bboxMax = this->tetmesh.bbMax;
+    glm::vec3 bboxMin = this->tetmesh->bbMin;
+    glm::vec3 bboxMax = this->tetmesh->bbMax;
 
     for(int i = 0; i < 3; ++i) {
         bboxMin[i] = std::ceil(bboxMin[i]);
@@ -105,7 +120,7 @@ void Grid::writeDeformedGrid(const Grid& initial, ResolutionMode resolutionMode)
         this->sampler.fromImageToSampler(voxelDimension);
     }
 
-    std::cout << "Original image dimensions: " << initial.tetmesh.bbMax - initial.tetmesh.bbMin << std::endl;
+    std::cout << "Original image dimensions: " << initial.tetmesh->bbMax - initial.tetmesh->bbMin << std::endl;
     std::cout << "Image dimensions: " << imageDimension << std::endl;
     std::cout << "For " << bboxMin << " to " << bboxMax << " per " << voxelDimension << std::endl;
     TinyTIFFWriterFile * tif = TinyTIFFWriter_open("../../../data_debug/img2.tif", 16, TinyTIFFWriter_UInt, 1, imageDimension[0], imageDimension[1], TinyTIFFWriter_Greyscale);
@@ -138,7 +153,7 @@ void Grid::writeDeformedGrid(const Grid& initial, ResolutionMode resolutionMode)
 }
 
 std::pair<glm::vec3, glm::vec3> Grid::getBoundingBox() const {
-    return std::pair(this->tetmesh.bbMin, this->tetmesh.bbMax);
+    return std::pair(this->tetmesh->bbMin, this->tetmesh->bbMax);
 }
 
 bool Grid::getPositionOfRayIntersection(const Grid& initial, const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, glm::vec3& res) const {
@@ -160,6 +175,23 @@ bool Grid::getPositionOfRayIntersection(const Grid& initial, const glm::vec3& or
     std::cout << "Warning: no point found" << std::endl;
     res = origin;
     return false;
+}
+
+void Grid::setNormalDeformationMethod() {
+    this->tetmesh->setNormalDeformationMethod();
+}
+
+void Grid::setWeightedDeformationMethod(float radius) {
+    this->tetmesh->setWeightedDeformationMethod(radius);
+}
+
+
+std::vector<glm::vec3>& Grid::getMeshPositions() const {
+    return this->tetmesh->ptGrid;
+}
+
+TetMesh * Grid::getMesh() {
+    return this->tetmesh;
 }
 
 /**************************/
@@ -282,14 +314,17 @@ void Sampler::setCacheCapacity(int capacity) {
 
 /**************************/
 
-GridGL::GridGL(const std::string& filename, const glm::vec3& nbCube, int subsample): grid(new Grid(filename, nbCube, subsample)), transform(glm::mat4(1.0)) {
+GridGL::GridGL(const std::string& filename, const glm::vec3& nbCube, int subsample): grid(new Grid(filename, subsample)), transform(glm::mat4(1.0)) {
+    this->grid->buildTetmesh(nbCube);
 }
 
-GridGL::GridGL(const std::vector<std::string>& filename, const glm::vec3& nbCube, int subsample): grid(new Grid(filename, nbCube, subsample)), transform(glm::mat4(1.0)) {
+GridGL::GridGL(const std::vector<std::string>& filename, const glm::vec3& nbCube, int subsample): grid(new Grid(filename, subsample)), transform(glm::mat4(1.0)) {
+    this->grid->buildTetmesh(nbCube);
 }
 
-GridGL::GridGL(const std::vector<std::string>& filename, const glm::vec3& nbCube, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox): grid(new Grid(filename, nbCube, subsample, bbox)), transform(glm::mat4(1.0)) {
-}
+GridGL::GridGL(const std::vector<std::string>& filename, const glm::vec3& nbCube, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox): grid(new Grid(filename, subsample, bbox)), transform(glm::mat4(1.0)) {
+    this->grid->buildTetmesh(nbCube);
+} 
 
 std::pair<glm::vec3, glm::vec3> GridGL::getBoundingBox() const {
     return this->grid->getBoundingBox();

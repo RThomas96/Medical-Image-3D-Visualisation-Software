@@ -125,11 +125,11 @@ void Viewer::keyPressEvent(QKeyEvent* e) {
 		*/
 		case Qt::Key::Key_W:
             if(!e->isAutoRepeat())
-                this->scene->grids[0]->grid->grid->tetmesh.setWeightedDeformationMethod(30.);
+                this->scene->grids[0]->grid->grid->setWeightedDeformationMethod(30.);
 			break;
 		case Qt::Key::Key_X:
             if(!e->isAutoRepeat())
-                this->scene->grids[0]->grid->grid->tetmesh.setNormalDeformationMethod();
+                this->scene->grids[0]->grid->grid->setNormalDeformationMethod();
 			break;
 		//case Qt::Key::Key_L:
         //    if(!e->isAutoRepeat())

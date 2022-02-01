@@ -217,11 +217,11 @@ namespace UITool {
     }
 
     void DirectManipulator::selectManipulator(Manipulator * manipulator) {
-        this->scene->grids[0]->grid->grid->tetmesh.selectPts(manipulator->getManipPosition());
+        this->scene->grids[0]->grid->grid->selectPts(manipulator->getManipPosition());
     }
 
     void DirectManipulator::deselectManipulator(Manipulator * manipulator) {
-        this->scene->grids[0]->grid->grid->tetmesh.deselectAllPts();
+        this->scene->grids[0]->grid->grid->deselectAllPts();
         this->hideManipulator(manipulator);
     }
 
@@ -288,11 +288,11 @@ namespace UITool {
     }
 
     void FreeManipulator::selectManipulator(Manipulator * manipulator) {
-        this->scene->grids[0]->grid->grid->tetmesh.selectPts(manipulator->getManipPosition());
+        this->scene->grids[0]->grid->grid->selectPts(manipulator->getManipPosition());
     }
 
     void FreeManipulator::deselectManipulator(Manipulator * manipulator) {
-        this->scene->grids[0]->grid->grid->tetmesh.deselectAllPts();
+        this->scene->grids[0]->grid->grid->deselectAllPts();
         this->removeManipulator(manipulator);
     }
 }	 // namespace UITool

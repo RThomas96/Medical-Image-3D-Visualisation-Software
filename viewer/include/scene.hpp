@@ -372,7 +372,7 @@ public:
 
 	void prepareManipulators();
     // Set all manipulators positions to the points of the tetmesh
-    void updateManipulatorPositions();
+    //void updateManipulatorPositions();
 
 	void addOpenGLOutput(OpenGLDebugLog* _gldl);
 	void addStatusBar(QStatusBar* _s);

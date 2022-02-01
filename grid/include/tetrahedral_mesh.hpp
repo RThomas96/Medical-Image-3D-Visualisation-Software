@@ -9,6 +9,7 @@
 //#include "../include/mesh_deformator.hpp"
 
 struct MeshDeformator;
+
 struct Tetrahedron {
     glm::vec3 * points[4];// Optionnal, this data can be deleted and computeBary, isInTet and baryToWord function moved out in the TetMesh class
     glm::vec4 normals[4];
@@ -35,8 +36,17 @@ struct Tetrahedron {
 
 /***/
 
-struct TetMesh {
+class SimpleMesh {
 
+public:
+    virtual ~SimpleMesh(){};
+};
+
+/***/
+
+class TetMesh : public SimpleMesh {
+
+public:
     std::vector<Tetrahedron> mesh;
     std::vector<glm::vec3> ptGrid;
     std::vector<glm::vec3> texCoordGrid;// These are normalised coordinates
@@ -67,10 +77,10 @@ struct TetMesh {
     void updatebbox();
 
     void movePoint(const glm::vec3& origin, const glm::vec3& target);
-    void setNormalDeformationMethod();
-    void setWeightedDeformationMethod(float radius);
 
     // TODO: move to the mesh class
+    void setNormalDeformationMethod();
+    void setWeightedDeformationMethod(float radius);
     void selectPts(const glm::vec3& pt);
     void deselectAllPts();
 
@@ -82,9 +92,5 @@ private:
     void decomposeAndAddCube(std::vector<glm::vec3*> pts, const std::vector<int>& ptsIdx);
     std::vector<glm::vec3*> insertCubeIntoPtGrid(std::vector<glm::vec3> cubePts, glm::vec3 indices, std::vector<glm::vec3>& ptGrid, std::vector<int>& ptIndices);
 };
-
-/***/
-
-/***/
 
 #endif
