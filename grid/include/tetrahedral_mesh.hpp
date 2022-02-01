@@ -6,60 +6,9 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/io.hpp>
 #include <vector>
+//#include "../include/mesh_deformator.hpp"
 
-enum DeformMethod {
-    NORMAL,
-    WEIGHTED
-};
-
-struct TetMesh;
-struct MeshDeformator {
-    DeformMethod deformMethod;
-    TetMesh * tetmesh;
-
-    MeshDeformator(TetMesh * tetmesh, DeformMethod deformMethod) : tetmesh(tetmesh), deformMethod(deformMethod) {}
-
-    virtual bool hasSelectedPts() = 0;
-    virtual void selectPts(const glm::vec3& pt) = 0;
-    virtual void deselectPts(const glm::vec3& pt) = 0;
-    virtual void deselectAllPts() = 0;
-
-    // Here origin is basically the clicked point
-    virtual void movePoint(const glm::vec3& origin, const glm::vec3& target) = 0;
-
-    virtual ~MeshDeformator() = default;// To make MeshDeformator virtual
-};
-
-struct WeightedMethod : MeshDeformator {
-    float radius;
-    glm::vec3 originalPoint;
-    std::vector<int> selectedPts;
-
-    WeightedMethod(TetMesh * tetmesh, float radius) : MeshDeformator(tetmesh, DeformMethod::WEIGHTED), radius(radius) {}
-
-    bool hasSelectedPts() override;
-    void selectPts(const glm::vec3& pt) override;
-    void deselectPts(const glm::vec3& pt) override;
-    void deselectAllPts() override;
-
-    void movePoint(const glm::vec3& origin, const glm::vec3& target) override;
-};
-
-struct NormalMethod : MeshDeformator {
-    std::vector<int> selectedPts;
-
-    NormalMethod(TetMesh * tetmesh) : MeshDeformator(tetmesh, DeformMethod::NORMAL) {}
-
-    bool hasSelectedPts() override;
-    void selectPts(const glm::vec3& pt) override;
-    void deselectPts(const glm::vec3& pt) override;
-    void deselectAllPts() override;
-
-    void movePoint(const glm::vec3& origin, const glm::vec3& target) override;
-};
-
-/***/
-
+struct MeshDeformator;
 struct Tetrahedron {
     glm::vec3 * points[4];// Optionnal, this data can be deleted and computeBary, isInTet and baryToWord function moved out in the TetMesh class
     glm::vec4 normals[4];
@@ -99,7 +48,7 @@ struct TetMesh {
 
     MeshDeformator * meshDeformator;
 
-    TetMesh(): nbTetra(glm::vec3(0., 0., 0.)), bbMin(glm::vec3(0., 0., 0.)), bbMax(glm::vec3(0., 0., 0.)), meshDeformator(new NormalMethod(this)) {}
+    TetMesh();
 
     void buildGrid(const glm::vec3& nbCube, const glm::vec3& sizeCube, const glm::vec3& origin);
 
@@ -120,6 +69,12 @@ struct TetMesh {
     void movePoint(const glm::vec3& origin, const glm::vec3& target);
     void setNormalDeformationMethod();
     void setWeightedDeformationMethod(float radius);
+
+    // TODO: move to the mesh class
+    void selectPts(const glm::vec3& pt);
+    void deselectAllPts();
+
+    ~TetMesh();
 
 private:
     // This function is private because it doesn't update fields nbTetra, bbMin and bbMax

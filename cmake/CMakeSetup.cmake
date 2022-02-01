@@ -69,11 +69,11 @@ SET(LOCAL_COMPILED_LIBS_PATH ${CMAKE_SOURCE_DIR}/third_party/compiled_libraries)
 # Create some files necessary for the build process :
 FILE(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin)			# Output for the binary file
 FILE(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/lib)			# Output for the libraries (unused)
-FILE(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/new_shaders)	# Shaders in use by the program
+FILE(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/shaders)	# Shaders in use by the program
 FILE(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/resources)		# For misc resources (icons)
 
 # Set shortcuts to the folders in question :
-SET(SHADER_OUTPUT_DIR ${CMAKE_BINARY_DIR}/new_shaders)
+SET(SHADER_OUTPUT_DIR ${CMAKE_BINARY_DIR}/shaders)
 SET(RESOURCE_OUTPUT_DIR ${CMAKE_BINARY_DIR}/resources)
 SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)

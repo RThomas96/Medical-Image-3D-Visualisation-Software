@@ -932,7 +932,7 @@ void Scene::recompileShaders(bool verbose) {
 GLuint Scene::compileShaders(std::string _vPath, std::string _gPath, std::string _fPath, bool verbose) {
 	glUseProgram(0);
 	this->shaderCompiler->reset();
-	this->shaderCompiler->pragmaReplacement_file("include_color_shader", "../new_shaders/colorize_new_flow.glsl");
+	this->shaderCompiler->pragmaReplacement_file("include_color_shader", "../shaders/colorize_new_flow.glsl");
 	this->shaderCompiler->vertexShader_file(_vPath).geometryShader_file(_gPath).fragmentShader_file(_fPath);
 	if (this->shaderCompiler->compileShaders()) {
 		return this->shaderCompiler->programName();
@@ -2364,7 +2364,7 @@ void Scene::generateSphereData() {
 	}
 	this->shaderCompiler = std::make_unique<ShaderCompiler>(this);
 
-	this->shaderCompiler->vertexShader_file("../new_shaders/base_sphere.vert").fragmentShader_file("../new_shaders/base_sphere.frag");
+	this->shaderCompiler->vertexShader_file("../shaders/base_sphere.vert").fragmentShader_file("../shaders/base_sphere.frag");
 	bool program_valid = this->shaderCompiler->compileShaders();
 	if (program_valid) {
 		this->program_sphere = this->shaderCompiler->programName();

@@ -89,6 +89,7 @@ ADD_EXECUTABLE(neighbor_visu
     ./qt/include/manipulator.hpp
     ./grid/include/grid.hpp
     ./grid/include/tetrahedral_mesh.hpp
+    ./grid/include/mesh_deformator.hpp
     ./grid/include/tiff_image.hpp
 
     #Probably to remove
@@ -117,6 +118,7 @@ ADD_EXECUTABLE(neighbor_visu
     ./qt/src/manipulator.cpp
     ./grid/src/grid.cpp
     ./grid/src/tetrahedral_mesh.cpp
+    ./grid/src/mesh_deformator.cpp
     ./grid/src/tiff_image.cpp
 )
 TARGET_COMPILE_OPTIONS(neighbor_visu
@@ -179,9 +181,11 @@ add_executable(tests tests/grid_tests.cpp
                      tests/tetmesh_tests.cpp
                      grid/include/grid.hpp
                      grid/include/tetrahedral_mesh.hpp
+                     grid/include/mesh_deformator.hpp
                      grid/include/tiff_image.hpp
                      grid/src/grid.cpp
                      grid/src/tetrahedral_mesh.cpp
+                     grid/src/mesh_deformator.cpp
                      grid/src/tiff_image.cpp)
 
 TARGET_INCLUDE_DIRECTORIES(tests
