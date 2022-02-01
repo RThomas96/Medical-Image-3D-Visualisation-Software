@@ -90,6 +90,7 @@ ADD_EXECUTABLE(neighbor_visu
     ./grid/include/grid.hpp
     ./grid/include/base_mesh.hpp
     ./grid/include/tetrahedral_mesh.hpp
+    ./grid/include/surface_mesh.hpp
     ./grid/include/mesh_deformator.hpp
     ./grid/include/tiff_image.hpp
 
@@ -120,6 +121,7 @@ ADD_EXECUTABLE(neighbor_visu
     ./grid/src/grid.cpp
     ./grid/src/base_mesh.cpp
     ./grid/src/tetrahedral_mesh.cpp
+    ./grid/src/surface_mesh.cpp
     ./grid/src/mesh_deformator.cpp
     ./grid/src/tiff_image.cpp
 )
@@ -179,30 +181,50 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(Catch2)
 
-add_executable(tests tests/grid_tests.cpp
-                     tests/tetmesh_tests.cpp
+#add_executable(tests tests/grid_tests.cpp
+#                     tests/tetmesh_tests.cpp
+#
+#                     grid/include/grid.hpp
+#                     grid/include/base_mesh.hpp
+#                     grid/include/tetrahedral_mesh.hpp
+#                     grid/include/surface_mesh.hpp
+#                     grid/include/mesh_deformator.hpp
+#                     grid/include/tiff_image.hpp
+#
+#                     grid/src/grid.cpp
+#                     grid/src/base_mesh.cpp
+#                     grid/src/tetrahedral_mesh.cpp
+#                     grid/src/surface_mesh.cpp
+#                     grid/src/mesh_deformator.cpp
+#                     grid/src/tiff_image.cpp)
+#
+#TARGET_INCLUDE_DIRECTORIES(tests
+#	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/third_party/glm/
+#	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include
+#	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include/nifti
+#	PRIVATE ${QGLViewer_HEADER_DIR}
+#	PRIVATE ${libTIFF_HEADER_DIR}
+#	PRIVATE ${OPENGL_INCLUDE_DIRS}
+#)
+#
+#target_link_libraries(tests PRIVATE Catch2::Catch2WithMain
+#	                        PUBLIC TinyTIFF
+#	                        PUBLIC Qt5::OpenGL
+#	                        PUBLIC ${libTIFF}
+#                            )
 
-                     grid/include/grid.hpp
-                     grid/include/base_mesh.hpp
-                     grid/include/tetrahedral_mesh.hpp
-                     grid/include/mesh_deformator.hpp
-                     grid/include/tiff_image.hpp
+###
 
-                     grid/src/grid.cpp
-                     grid/src/base_mesh.cpp
-                     grid/src/tetrahedral_mesh.cpp
-                     grid/src/mesh_deformator.cpp
-                     grid/src/tiff_image.cpp)
-
-TARGET_INCLUDE_DIRECTORIES(tests
-	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/third_party/glm/
-	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include
-	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include/nifti
-	PRIVATE ${QGLViewer_HEADER_DIR}
-	PRIVATE ${libTIFF_HEADER_DIR}
-)
-
-target_link_libraries(tests PRIVATE Catch2::Catch2WithMain
-	                        PUBLIC TinyTIFF
-	                        PUBLIC ${libTIFF}
-                            )
+##TARGET_INCLUDE_DIRECTORIES(${CMAKE_PROJECT_NAME}_mesh
+##	PRIVATE ${LOCAL_GLM_HEADER_DIR}
+##	PRIVATE ${nanoflann_INCLUDE_DIRS}
+##)
+##TARGET_LINK_LIBRARIES(${CMAKE_PROJECT_NAME}_mesh
+##	PUBLIC glm::glm
+##	PUBLIC nanoflann::nanoflann
+##)
+##SET_TARGET_PROPERTIES(${CMAKE_PROJECT_NAME}_mesh PROPERTIES
+##	AUTORCC OFF
+##	AUTOUIC OFF
+##	AUTOMOC OFF
+##)

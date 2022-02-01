@@ -34,7 +34,7 @@ int Tetrahedron::getPointIndex(int faceIdx, int ptIdxInFace) const{
 
 TetMesh::TetMesh(): nbTetra(glm::vec3(0., 0., 0.)) {}
 
-TetMesh::~TetMesh(){delete this->meshDeformator;};
+TetMesh::~TetMesh(){delete this->meshDeformator;}
 
 std::vector<glm::vec3*> TetMesh::insertCubeIntoPtGrid(std::vector<glm::vec3> cubePts, glm::vec3 indices, std::vector<glm::vec3>& vertices, std::vector<int>& ptIndices) {
     int x = indices[0];
