@@ -55,7 +55,7 @@ private:
 
 // Struct to make link between the grid and a 3D shape used to deform the space of its representation
 // Struct able to make the link between the grid and its 3D representation
-struct Grid {
+struct Grid : public TetMesh {
 
     Sampler sampler;
 
@@ -70,28 +70,14 @@ struct Grid {
     // In mesh interface
     glm::vec3 getDimension() const;
     std::pair<glm::vec3, glm::vec3> getBoundingBox() const;
-    void movePoint(const glm::vec3& origin, const glm::vec3& target);
     bool getPositionOfRayIntersection(const Grid& initial, const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, glm::vec3& res) const;
     void writeDeformedGrid(const Grid& initial, ResolutionMode resolutionMode = ResolutionMode::FULL_RESOLUTION);
-
-    // This workflow as been choosen instead of using an enum to handle different parameters
-    void setNormalDeformationMethod();
-    void setWeightedDeformationMethod(float radius);
 
     uint16_t getDeformedValueFromPoint(const Grid& initial, const glm::vec3& p, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
     uint16_t getValueFromPoint(const glm::vec3& p, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
 
-    // Temporary indirection, do not use
-    TetMesh * getMesh();
     // Change the workflow of the "initial" mesh
-    glm::vec3 getNbTetra() {return this->tetmesh->nbTetra;};
-
-    // TODO: to remove
-    void selectPts(const glm::vec3& pt) { this->tetmesh->selectPts(pt);};
-    void deselectAllPts() { this->tetmesh->deselectAllPts();};
-
-private:
-    TetMesh * tetmesh;
+    glm::vec3 getNbTetra() {return this->nbTetra;};
 };
 
 // This is the only class that interact with the openGL head

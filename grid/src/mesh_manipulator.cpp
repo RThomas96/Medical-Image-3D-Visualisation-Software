@@ -3,7 +3,7 @@
 
 
 namespace UITool {
-	DirectManipulator::DirectManipulator(Scene * scene, const std::vector<glm::vec3>& positions): MeshManipulator(scene) {
+	DirectManipulator::DirectManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions): MeshManipulator(mesh) {
 		this->active = false;
         this->manipulators.reserve(positions.size());
 		for (int i = 0; i < positions.size(); ++i) {
@@ -101,21 +101,22 @@ namespace UITool {
     }
 
     void DirectManipulator::moveManipulator(Manipulator * manipulator) {
-        this->scene->slotApplyDeformation(manipulator->lastPosition, manipulator->getManipPosition());
+        this->mesh->movePoint(manipulator->lastPosition, manipulator->getManipPosition());
+        Q_EMIT needSendTetmeshToGPU();
     }
 
     void DirectManipulator::selectManipulator(Manipulator * manipulator) {
-        this->scene->grids[0]->grid->grid->selectPts(manipulator->getManipPosition());
+        this->mesh->selectPts(manipulator->getManipPosition());
     }
 
     void DirectManipulator::deselectManipulator(Manipulator * manipulator) {
-        this->scene->grids[0]->grid->grid->deselectAllPts();
+        this->mesh->deselectAllPts();
         this->hideManipulator(manipulator);
     }
 
     /***/
 
-	FreeManipulator::FreeManipulator(Scene * scene, const std::vector<glm::vec3>& positions): MeshManipulator(scene), manipulator(Manipulator(glm::vec3(0., 0., 0.))) {
+	FreeManipulator::FreeManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions): MeshManipulator(mesh), manipulator(Manipulator(glm::vec3(0., 0., 0.))) {
 		this->active = false;
         QObject::connect(&(this->manipulator), &Manipulator::mouseRightButtonPressed, this, &FreeManipulator::selectManipulator);
         QObject::connect(&(this->manipulator), &Manipulator::mouseRightButtonReleasedAndCtrlIsNotPressed, this, &FreeManipulator::deselectManipulator);
@@ -171,21 +172,23 @@ namespace UITool {
     }
 
     void FreeManipulator::moveManipulator(Manipulator * manipulator) {
-        this->scene->slotApplyDeformation(manipulator->lastPosition, manipulator->getManipPosition());
+        this->mesh->movePoint(manipulator->lastPosition, manipulator->getManipPosition());
+        //int this->mesh->getIdxOfClosestPoint(const glm::vec3& p);
+        Q_EMIT needSendTetmeshToGPU();
     }
 
     void FreeManipulator::selectManipulator(Manipulator * manipulator) {
-        this->scene->grids[0]->grid->grid->selectPts(manipulator->getManipPosition());
+        this->mesh->selectPts(manipulator->getManipPosition());
     }
 
     void FreeManipulator::deselectManipulator(Manipulator * manipulator) {
-        this->scene->grids[0]->grid->grid->deselectAllPts();
+        this->mesh->deselectAllPts();
         this->removeManipulator(manipulator);
     }
 
     /***/
 
-	PositionManipulator::PositionManipulator(Scene * scene, const std::vector<glm::vec3>& positions): MeshManipulator(scene), manipulator(Manipulator(glm::vec3(0., 0., 0.))) {
+	PositionManipulator::PositionManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions): MeshManipulator(mesh), manipulator(Manipulator(glm::vec3(0., 0., 0.))) {
 		this->active = false;
         QObject::connect(&(this->manipulator), &Manipulator::mouseRightButtonPressed, this, &PositionManipulator::selectManipulator);
         QObject::connect(&(this->manipulator), &Manipulator::mouseRightButtonReleasedAndCtrlIsNotPressed, this, &PositionManipulator::deselectManipulator);
@@ -237,8 +240,7 @@ namespace UITool {
     }
 
     void PositionManipulator::moveManipulator(Manipulator * manipulator) {
-        if(this->surface)
-            this->scene->surfaceMesh->setOrigin(manipulator->getManipPosition());
+        this->mesh->setOrigin(manipulator->getManipPosition());
         //else
         // TODO
     }

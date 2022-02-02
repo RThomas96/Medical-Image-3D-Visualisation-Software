@@ -1,8 +1,8 @@
 
 #include "../include/GLmanipulator.hpp"
 
-UITool::GL::MeshManipulator::MeshManipulator(SceneGL* sceneGL, Scene * scene, const std::vector<glm::vec3>& positions, float manipulatorRadius) :
-				manipulatorRadius(manipulatorRadius), manipulatorMesh(Sphere(manipulatorRadius)), sceneGL(sceneGL), meshManipulator(new UITool::DirectManipulator(scene, positions)) {
+UITool::GL::MeshManipulator::MeshManipulator(SceneGL* sceneGL, BaseMesh * mesh, const std::vector<glm::vec3>& positions, float manipulatorRadius) :
+				manipulatorRadius(manipulatorRadius), manipulatorMesh(Sphere(manipulatorRadius)), sceneGL(sceneGL), meshManipulator(new UITool::DirectManipulator(mesh, positions)) {
                 //QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), &UITool::MeshManipulator::needRedraw, this, &UITool::GL::MeshManipulator::prepare);
                 QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needRedraw()), this, SLOT(prepare()));// This syntax is needed to cast an interface
 				this->program	       = 0;
@@ -178,21 +178,21 @@ void UITool::GL::MeshManipulator::toggleActivation() {
     this->displayWireframe = this->meshManipulator->isWireframeDisplayed();
 }
 
-void UITool::GL::MeshManipulator::createNewMeshManipulator(Scene * scene, const std::vector<glm::vec3>& positions, int type) {
+void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scene * scene, int type) {
+    const std::vector<glm::vec3>& positions = mesh->getMeshPositions();
     this->displayWireframe = false;// Because wathever the manipulator created it is not activated at creation
     delete this->meshManipulator;
     if(type == 0) {
-        this->meshManipulator = new UITool::DirectManipulator(scene, positions);
-        QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needRedraw()), this, SLOT(prepare()));
+        this->meshManipulator = new UITool::DirectManipulator(mesh, positions);
         this->prepare();
     } else if(type == 1){
-        this->meshManipulator = new UITool::FreeManipulator(scene, positions);
-        QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needRedraw()), this, SLOT(prepare()));
+        this->meshManipulator = new UITool::FreeManipulator(mesh, positions);
         this->prepare();
     } else {
-        this->meshManipulator = new UITool::PositionManipulator(scene, positions);
-        QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needRedraw()), this, SLOT(prepare()));
+        this->meshManipulator = new UITool::PositionManipulator(mesh, positions);
         this->prepare();
     }
+    QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needRedraw()), this, SLOT(prepare()));
+    QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needSendTetmeshToGPU()), scene, SLOT(sendFirstTetmeshToGPU()));
     this->toggleActivation();
 }

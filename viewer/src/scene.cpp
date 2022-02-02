@@ -1229,8 +1229,8 @@ void Scene::loadMesh() {
 void Scene::slotApplyDeformation(glm::vec3 oldPosition, glm::vec3 newPosition) {
     this->grids[0]->grid->grid->movePoint(oldPosition, newPosition);
     //this->glMeshManipulator->meshManipulator->setAllManipulatorsPosition(this->grids[0]->grid->grid->tetmesh->ptGrid);
-    this->glMeshManipulator->meshManipulator->setAllManipulatorsPosition(this->grids[0]->grid->grid->getMesh()->getMeshPositions());
-    this->sendTetmeshToGPU(0, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS));
+    this->glMeshManipulator->meshManipulator->setAllManipulatorsPosition(this->grids[0]->grid->grid->getMeshPositions());
+    //this->sendTetmeshToGPU(0, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS));
 }
 
 void Scene::loadCurve() {
@@ -2005,7 +2005,7 @@ void Scene::prepareUniformsGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm
 
 //const glm::mat4& gridTransfo = _grid->grid->getTransform_GridToWorld();
 #warning Transform API is still in-progress.
-	glUniformMatrix4fv(location_mMat, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0f)));
+	glUniformMatrix4fv(location_mMat, 1, GL_FALSE, glm::value_ptr(this->grids[0]->grid->grid->getModelTransformation()));
 	glUniformMatrix4fv(location_vMat, 1, GL_FALSE, mvMat);
 	glUniformMatrix4fv(location_pMat, 1, GL_FALSE, pMat);
 
@@ -3183,6 +3183,10 @@ bool contain(const InfoToSend& value, const InfoToSend& contain) {
     return value & contain > 0;
 }
 
+void Scene::sendFirstTetmeshToGPU() {
+    this->sendTetmeshToGPU(0, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS));
+}
+
 void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend) {
 
 	std::size_t vertWidth = 0, vertHeight = 0;
@@ -3191,7 +3195,7 @@ void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend) {
 	std::size_t neighbWidth = 0, neighbHeight = 0;
 
 	//TetMesh& newMesh = *this->grids[gridIdx]->grid->grid->tetmesh;
-	TetMesh& newMesh = *this->grids[gridIdx]->grid->grid->getMesh();
+	TetMesh& newMesh = *this->grids[gridIdx]->grid->grid;
 	__GetTexSize(newMesh.mesh.size() * 4 * 3, &vertWidth, &vertHeight);
 	__GetTexSize(newMesh.mesh.size() * 4, &normWidth, &normHeight);
 	__GetTexSize(newMesh.mesh.size() * 4 * 3, &coorWidth, &coorHeight);
@@ -3543,13 +3547,11 @@ void Scene::toggleWireframe() {
 
 void Scene::createNewMeshManipulator(int i, bool onSurface) {
     if(onSurface) {
-        this->glMeshManipulator->createNewMeshManipulator(this, this->surfaceMesh->getMeshPositions(), i);
-
-        QObject::connect(this, SIGNAL(keyQReleased()), dynamic_cast<QObject*>(this->glMeshManipulator->meshManipulator), SIGNAL(keyQReleased()));
+        this->glMeshManipulator->createNewMeshManipulator(this->surfaceMesh, this, i);
     } else {
-        this->glMeshManipulator->createNewMeshManipulator(this, this->grids[0]->grid->grid->getMesh()->getMeshPositions(), i);
-        QObject::connect(this, SIGNAL(keyQReleased()), dynamic_cast<QObject*>(this->glMeshManipulator->meshManipulator), SIGNAL(keyQReleased()));
+        this->glMeshManipulator->createNewMeshManipulator(this->grids[0]->grid->grid, this, i);
     }
+    QObject::connect(this, SIGNAL(keyQReleased()), dynamic_cast<QObject*>(this->glMeshManipulator->meshManipulator), SIGNAL(keyQReleased()));
 }
 
 void Scene::setNormalDeformationMethod() {

@@ -15,15 +15,12 @@ Image::ImageDataType Sampler::getInternalDataType() const {
 }
 
 Grid::Grid(const std::string& filename, int subsample): sampler(Sampler(std::vector<std::string>{filename}, subsample)) {
-    this->tetmesh = nullptr;
 }
 
 Grid::Grid(const std::vector<std::string>& filename, int subsample): sampler(Sampler(filename, subsample)) {
-    this->tetmesh = nullptr;
 }
 
 Grid::Grid(const std::vector<std::string>& filename, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox): sampler(Sampler(filename, subsample, bbox)) {
-    this->tetmesh = nullptr;
 }
 
 void Grid::buildTetmesh(const glm::vec3& nbCube) {
@@ -38,10 +35,7 @@ void Grid::buildTetmesh(const glm::vec3& nbCube, const glm::vec3& origin) {
 }
 
 void Grid::buildTetmesh(const glm::vec3& nbCube, const glm::vec3& sizeCube, const glm::vec3& origin) {
-    if(this->tetmesh)
-        delete this->tetmesh;
-    this->tetmesh = new TetMesh();
-    this->tetmesh->buildGrid(nbCube, sizeCube, origin);
+    this->buildGrid(nbCube, sizeCube, origin);
 }
 
 uint16_t Grid::getValueFromPoint(const glm::vec3& p, ResolutionMode resolutionMode) const {
@@ -60,32 +54,24 @@ uint16_t Grid::getValueFromPoint(const glm::vec3& p, ResolutionMode resolutionMo
 }
 
 uint16_t Grid::getDeformedValueFromPoint(const Grid& initial, const glm::vec3& p, ResolutionMode resolutionMode) const {
-    glm::vec3 pt2 = this->tetmesh->getCoordInInitial(*initial.tetmesh, p);
+    glm::vec3 pt2 = this->getCoordInInitial(initial, p);
     if(resolutionMode == ResolutionMode::FULL_RESOLUTION)
         this->sampler.fromSamplerToImage(pt2);
     return initial.getValueFromPoint(pt2, resolutionMode);
 }
 
-void Grid::movePoint(const glm::vec3& origin, const glm::vec3& target) {
-    //MovePointMethod * method = new NormalMethod();
-    //float radius = 0.5;
-    //MoveMethod * method = new WeightedMethod(radius);
-    this->tetmesh->movePoint(origin, target);
-    //delete method;
-}
-
 void Grid::writeDeformedGrid(const Grid& initial, ResolutionMode resolutionMode) {
-    if(this->tetmesh->isEmpty())
+    if(this->isEmpty())
         throw std::runtime_error("Error: cannot write a grid without deformed mesh.");
 
-    if(initial.tetmesh->isEmpty())
+    if(initial.isEmpty())
         throw std::runtime_error("Error: cannot write a grid without initial mesh.");
 
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
-    glm::vec3 bboxMin = this->tetmesh->bbMin;
-    glm::vec3 bboxMax = this->tetmesh->bbMax;
+    glm::vec3 bboxMin = this->bbMin;
+    glm::vec3 bboxMax = this->bbMax;
 
     for(int i = 0; i < 3; ++i) {
         bboxMin[i] = std::ceil(bboxMin[i]);
@@ -109,7 +95,7 @@ void Grid::writeDeformedGrid(const Grid& initial, ResolutionMode resolutionMode)
         this->sampler.fromImageToSampler(voxelDimension);
     }
 
-    std::cout << "Original image dimensions: " << initial.tetmesh->bbMax - initial.tetmesh->bbMin << std::endl;
+    std::cout << "Original image dimensions: " << initial.bbMax - initial.bbMin << std::endl;
     std::cout << "Image dimensions: " << imageDimension << std::endl;
     std::cout << "For " << bboxMin << " to " << bboxMax << " per " << voxelDimension << std::endl;
     TinyTIFFWriterFile * tif = TinyTIFFWriter_open("../../../data_debug/img2.tif", 16, TinyTIFFWriter_UInt, 1, imageDimension[0], imageDimension[1], TinyTIFFWriter_Greyscale);
@@ -127,7 +113,7 @@ void Grid::writeDeformedGrid(const Grid& initial, ResolutionMode resolutionMode)
             //std::cout << (j/bboxMax[1]) * 100. << "% " << std::flush;
             for(float i = bboxMin[0]; i < bboxMax[0]; i+=voxelDimension[0]) {
                 const glm::vec3 pt(i+voxelDimension[0]/2., j+voxelDimension[1]/2., k+voxelDimension[2]/2.);
-                glm::vec3 pt2 = this->tetmesh->getCoordInInitial(*initial.tetmesh, pt);
+                glm::vec3 pt2 = this->getCoordInInitial(initial, pt);
 
                 if(resolutionMode == ResolutionMode::FULL_RESOLUTION)
                     this->sampler.fromSamplerToImage(pt2);// Here we do a convertion because the final point is on image space 
@@ -142,7 +128,7 @@ void Grid::writeDeformedGrid(const Grid& initial, ResolutionMode resolutionMode)
 }
 
 std::pair<glm::vec3, glm::vec3> Grid::getBoundingBox() const {
-    return std::pair(this->tetmesh->bbMin, this->tetmesh->bbMax);
+    return std::pair(this->bbMin, this->bbMax);
 }
 
 bool Grid::getPositionOfRayIntersection(const Grid& initial, const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, glm::vec3& res) const {
@@ -164,18 +150,6 @@ bool Grid::getPositionOfRayIntersection(const Grid& initial, const glm::vec3& or
     std::cout << "Warning: no point found" << std::endl;
     res = origin;
     return false;
-}
-
-void Grid::setNormalDeformationMethod() {
-    this->tetmesh->setNormalDeformationMethod();
-}
-
-void Grid::setWeightedDeformationMethod(float radius) {
-    this->tetmesh->setWeightedDeformationMethod(radius);
-}
-
-TetMesh * Grid::getMesh() {
-    return this->tetmesh;
 }
 
 /**************************/

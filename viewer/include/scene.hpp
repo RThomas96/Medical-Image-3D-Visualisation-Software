@@ -267,7 +267,6 @@ public:
 	void generatePlanesArray(SimpleVolMesh& _mesh);
 	void generateSphereData();
 	void newSHADERS_generateColorScales(void);
-    void sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend);
 	void generateColorScales();
     /*************************************************/
 
@@ -532,6 +531,8 @@ public slots:
 
     // Rendering slots
 	void setColorChannel(ColorChannel mode);
+    void sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend);
+    void sendFirstTetmeshToGPU();
 
 /*************/
 /* Temporary */

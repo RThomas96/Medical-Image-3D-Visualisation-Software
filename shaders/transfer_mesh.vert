@@ -131,5 +131,5 @@ void main()
 
 	visibility_VS += ComputeVisibility(P0_VS.xyz);
 
-	gl_Position = pMat*vMat*P_VS;
+	gl_Position = pMat*vMat*mMat*P_VS;
 }

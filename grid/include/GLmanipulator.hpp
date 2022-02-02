@@ -22,7 +22,7 @@ namespace UITool {
 		class MeshManipulator : QObject {
             Q_OBJECT;
 		public:
-			MeshManipulator(SceneGL* sceneGL, Scene * scene, const std::vector<glm::vec3>& positions, float manipulatorRadius = 50.f);
+			MeshManipulator(SceneGL* sceneGL, BaseMesh * base, const std::vector<glm::vec3>& positions, float manipulatorRadius = 50.f);
 
 			void draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* mMat);
 
@@ -51,7 +51,7 @@ namespace UITool {
 			void prepare();
 
             void setRadius(float radius);
-            void createNewMeshManipulator(Scene * scene, const std::vector<glm::vec3>& positions, int type);
+            void createNewMeshManipulator(BaseMesh * mesh, Scene * scene, int type);
 			void toggleDisplayWireframe() { this->displayWireframe = ! this->displayWireframe; }
 
 		private:

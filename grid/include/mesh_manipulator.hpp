@@ -10,21 +10,16 @@
 namespace UITool {
     class MeshManipulator {
     public:
-        // This should not be here
-        // Unfortunatly, actually the scene inherite from QOpenGL_Core
-        // So the scene canno't use the Slot/Signal mecanisme
-        // Therefore, a pointer to the scene is mandatory to "connect" the functions
-        Scene * scene;
-
         // TODO: remove this
         // To do so, inherit the grid from the BaseMesh class
         // Remove the ref to the scene
         // And call function from the BaseMesh
         // Optionnal: remove the function calls and use signals slots
         // Thus, the functions used will be directly overloaded
-        bool surface;
 
-        MeshManipulator(Scene * scene): scene(scene) {}
+        BaseMesh * mesh;
+
+        MeshManipulator(BaseMesh * mesh): mesh(mesh) {}
 
         virtual bool isActive() = 0;
 
@@ -57,6 +52,10 @@ namespace UITool {
         virtual void needRedraw() = 0;
         // This signal is trigerred from the scene
         virtual void keyQReleased() = 0;
+
+        //This signal is used to trigger a function in the scene
+        //This should be removed when the grid will have its own "Drawable" class
+        virtual void needSendTetmeshToGPU() = 0;
     };
 }
 Q_DECLARE_INTERFACE(UITool::MeshManipulator, "MeshManipulator")
@@ -71,7 +70,7 @@ namespace UITool {
         Q_INTERFACES(UITool::MeshManipulator)
 
 	public:
-		DirectManipulator(Scene * scene, const std::vector<glm::vec3>& positions);
+		DirectManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions);
 
         bool isActive() override { return this->active; };
         void setActivation(bool isActive) override;
@@ -98,6 +97,7 @@ namespace UITool {
     signals:
         void needRedraw() override;
         void keyQReleased() override;
+        void needSendTetmeshToGPU() override;
 
 	private:
 		std::vector<Manipulator> manipulators;
@@ -111,7 +111,7 @@ namespace UITool {
         Q_INTERFACES(UITool::MeshManipulator)
 
 	public:
-		FreeManipulator(Scene * scene, const std::vector<glm::vec3>& positions);
+		FreeManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions);
 
         bool isActive() override { return this->active; };
         void setActivation(bool isActive) override;
@@ -138,6 +138,7 @@ namespace UITool {
     signals:
         void needRedraw() override;
         void keyQReleased() override;
+        void needSendTetmeshToGPU() override;
 
 	private:
 		Manipulator manipulator;
@@ -150,7 +151,7 @@ namespace UITool {
         Q_INTERFACES(UITool::MeshManipulator)
 
 	public:
-		PositionManipulator(Scene * scene, const std::vector<glm::vec3>& positions);
+		PositionManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions);
 
         bool isActive() override { return this->active; };
         void setActivation(bool isActive) override;
@@ -177,6 +178,7 @@ namespace UITool {
     signals:
         void needRedraw() override;
         void keyQReleased() override;
+        void needSendTetmeshToGPU() override;
 
 	private:
 		Manipulator manipulator;
