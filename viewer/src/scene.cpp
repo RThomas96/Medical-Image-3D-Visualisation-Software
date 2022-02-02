@@ -227,6 +227,8 @@ void Scene::initGl(QOpenGLContext* _context) {
     this->drawableMesh = new DrawableMeshV2();
     this->drawableMesh->mesh = this->surfaceMesh;
     this->drawableMesh->initialize(this->context, this);
+    this->drawableMesh->mesh->setScale(.3);
+    this->drawableMesh->mesh->setOrigin(glm::vec3(0., 10., 0.));
 
 }
 

@@ -3,7 +3,9 @@
 #include <map>
 #include <algorithm>
 
-BaseMesh::BaseMesh(): bbMin(glm::vec3(0., 0., 0.)), bbMax(glm::vec3(0., 0., 0.)), meshDeformator(new NormalMethod(this)) {}
+BaseMesh::BaseMesh(): bbMin(glm::vec3(0., 0., 0.)), bbMax(glm::vec3(0., 0., 0.)), meshDeformator(new NormalMethod(this)), transformation(glm::mat4(1.f)), scale(1.f) {
+
+}
 
 glm::vec3 BaseMesh::getDimensions() const {
     return this->bbMax - this->bbMin;
@@ -78,3 +80,22 @@ std::vector<glm::vec3>& BaseMesh::getMeshPositions() {
     return this->vertices;
 }
 
+glm::vec3 BaseMesh::getOrigin() {
+    return glm::vec3(this->transformation[3][0], this->transformation[3][1], this->transformation[3][2]);
+}
+
+glm::mat4 BaseMesh::getModelTransformation() {
+    return this->transformation;
+}
+
+void BaseMesh::setOrigin(const glm::vec3& origin) {
+    this->transformation[3][0] = origin[0];
+    this->transformation[3][1] = origin[1];
+    this->transformation[3][2] = origin[2];
+}
+
+void BaseMesh::setScale(float scale) {
+    this->transformation[0][0] = scale;
+    this->transformation[1][1] = scale;
+    this->transformation[2][2] = scale;
+}

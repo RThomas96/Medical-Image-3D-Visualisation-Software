@@ -12,6 +12,10 @@ struct MeshDeformator;
 class BaseMesh {
 
 public:
+
+    float scale;
+    glm::mat4 transformation;
+
     std::vector<glm::vec3> vertices;
     std::vector<glm::vec3> texCoord;// These are normalised coordinates
 
@@ -26,14 +30,19 @@ public:
     BaseMesh();
 
     void updatebbox();
-
     std::vector<glm::vec3>& getMeshPositions();
+
     // Functions to interact with the mesh
     void movePoint(const glm::vec3& origin, const glm::vec3& target);
     void setNormalDeformationMethod();
     void setWeightedDeformationMethod(float radius);
     void selectPts(const glm::vec3& pt);
     void deselectAllPts();
+
+    glm::vec3 getOrigin();
+    glm::mat4 getModelTransformation();
+    void setOrigin(const glm::vec3& origin);
+    void setScale(float scale);
 
     virtual void computeNeighborhood() = 0;
     virtual void computeNormals() = 0;
