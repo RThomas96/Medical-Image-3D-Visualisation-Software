@@ -14,8 +14,14 @@ void DrawableMeshV2::initialize(QOpenGLContext *_context, ShaderCompiler::GLFunc
 	if (compiler->compileShaders()) {
 		this->program_handle_draw = compiler->programName();
 	} else {
-		std::cerr << "Error while building shaders for drawable mesh.\n"
-				  << compiler->errorString() << "\n";
+		std::cerr << "Error while building shaders for drawable mesh.\n" << compiler->errorString() << "\n";
+	}
+
+	compiler->vertexShader_file("../shaders/sphere.vert").fragmentShader_file("../shaders/sphere.frag");
+	if (compiler->compileShaders()) {
+		this->program_handle_manipulator_draw = compiler->programName();
+	} else {
+		std::cerr << "Error while building manipulator shaders for drawable mesh.\n" << compiler->errorString() << "\n";
 	}
 
 	this->makeVAO();

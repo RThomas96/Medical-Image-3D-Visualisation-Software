@@ -645,7 +645,7 @@ void Scene::addGrid(const GridGL * gridLoaded) {
 	this->tex3D_buildBuffers(gridView->volumetricMesh);
 
     //Add manipulators
-    this->createNewMeshManipulator(0);
+    this->createNewMeshManipulator(0, false);
 
     //this->updateManipulatorPositions();
 	this->prepareManipulators();
@@ -3541,14 +3541,15 @@ void Scene::toggleWireframe() {
 	this->glMeshManipulator->toggleDisplayWireframe();
 }
 
-void Scene::createNewMeshManipulator(int i) {
-    this->glMeshManipulator->createNewMeshManipulator(this, this->grids[0]->grid->grid->getMesh()->getMeshPositions(), i);
-    QObject::connect(this, SIGNAL(keyQReleased()), dynamic_cast<QObject*>(this->glMeshManipulator->meshManipulator), SIGNAL(keyQReleased()));
-}
+void Scene::createNewMeshManipulator(int i, bool onSurface) {
+    if(onSurface) {
+        this->glMeshManipulator->createNewMeshManipulator(this, this->surfaceMesh->getMeshPositions(), i);
 
-void Scene::createNewMeshManipulatorOnSurfaceMesh(int i) {
-    this->glMeshManipulator->createNewMeshManipulator(this, this->surfaceMesh->getMeshPositions(), i);
-    QObject::connect(this, SIGNAL(keyQReleased()), dynamic_cast<QObject*>(this->glMeshManipulator->meshManipulator), SIGNAL(keyQReleased()));
+        QObject::connect(this, SIGNAL(keyQReleased()), dynamic_cast<QObject*>(this->glMeshManipulator->meshManipulator), SIGNAL(keyQReleased()));
+    } else {
+        this->glMeshManipulator->createNewMeshManipulator(this, this->grids[0]->grid->grid->getMesh()->getMeshPositions(), i);
+        QObject::connect(this, SIGNAL(keyQReleased()), dynamic_cast<QObject*>(this->glMeshManipulator->meshManipulator), SIGNAL(keyQReleased()));
+    }
 }
 
 void Scene::setNormalDeformationMethod() {

@@ -16,6 +16,14 @@ namespace UITool {
         // Therefore, a pointer to the scene is mandatory to "connect" the functions
         Scene * scene;
 
+        // TODO: remove this
+        // To do so, inherit the grid from the BaseMesh class
+        // Remove the ref to the scene
+        // And call function from the BaseMesh
+        // Optionnal: remove the function calls and use signals slots
+        // Thus, the functions used will be directly overloaded
+        bool surface;
+
         MeshManipulator(Scene * scene): scene(scene) {}
 
         virtual bool isActive() = 0;
@@ -104,6 +112,45 @@ namespace UITool {
 
 	public:
 		FreeManipulator(Scene * scene, const std::vector<glm::vec3>& positions);
+
+        bool isActive() override { return this->active; };
+        void setActivation(bool isActive) override;
+
+        void addManipulator(const glm::vec3& position) override;
+
+        void removeManipulator(Manipulator * manipulatorToDisplay) override;
+
+        void setAllManipulatorsPosition(const std::vector<glm::vec3>& positions) override;
+
+        void getAllPositions(std::vector<glm::vec3>& positions) override;
+        void getManipulatorsToDisplay(std::vector<bool>& toDisplay) const override;
+
+        bool isWireframeDisplayed() override;
+
+    public slots:
+        void displayManipulator(Manipulator * manipulatorToDisplay) override;
+        void hideManipulator(Manipulator * manipulatorToDisplay) override;
+
+        void moveManipulator(Manipulator * manipulator) override;
+        void selectManipulator(Manipulator * manipulator) override;
+        void deselectManipulator(Manipulator * manipulator) override;
+
+    signals:
+        void needRedraw() override;
+        void keyQReleased() override;
+
+	private:
+		Manipulator manipulator;
+
+		bool active;
+	};
+
+	class PositionManipulator : public QObject, public MeshManipulator {
+        Q_OBJECT
+        Q_INTERFACES(UITool::MeshManipulator)
+
+	public:
+		PositionManipulator(Scene * scene, const std::vector<glm::vec3>& positions);
 
         bool isActive() override { return this->active; };
         void setActivation(bool isActive) override;

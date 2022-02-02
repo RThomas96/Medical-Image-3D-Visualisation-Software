@@ -182,4 +182,70 @@ namespace UITool {
         this->scene->grids[0]->grid->grid->deselectAllPts();
         this->removeManipulator(manipulator);
     }
+
+    /***/
+
+	PositionManipulator::PositionManipulator(Scene * scene, const std::vector<glm::vec3>& positions): MeshManipulator(scene), manipulator(Manipulator(glm::vec3(0., 0., 0.))) {
+		this->active = false;
+        QObject::connect(&(this->manipulator), &Manipulator::mouseRightButtonPressed, this, &PositionManipulator::selectManipulator);
+        QObject::connect(&(this->manipulator), &Manipulator::mouseRightButtonReleasedAndCtrlIsNotPressed, this, &PositionManipulator::deselectManipulator);
+        QObject::connect(&(this->manipulator), &Manipulator::isManipulated, this, &PositionManipulator::moveManipulator);
+
+        QObject::connect(this, &PositionManipulator::keyQReleased, this, [this]{setActivation(false);});
+        this->manipulator.setCustomConstraint();
+	}
+
+    void PositionManipulator::setActivation(bool isActive) {
+        this->active = isActive;
+        if (this->active) {
+            this->manipulator.setCustomConstraint();
+        } else {
+            this->manipulator.lockPosition();
+        }
+    }
+
+    void PositionManipulator::addManipulator(const glm::vec3& position) {
+    }
+
+    void PositionManipulator::removeManipulator(Manipulator * manipulatorToDisplay) {
+    }
+
+	void PositionManipulator::setAllManipulatorsPosition(const std::vector<glm::vec3>& positions) {
+        //Do nothing, because we don't want to move these manipulator
+	}
+
+    void PositionManipulator::getAllPositions(std::vector<glm::vec3>& positions) {
+        positions.push_back(this->manipulator.getManipPosition());
+    }
+
+    void PositionManipulator::getManipulatorsToDisplay(std::vector<bool>& toDisplay) const {
+        toDisplay.push_back(this->active);
+    }
+
+    void PositionManipulator::displayManipulator(Manipulator * manipulatorToDisplay) {
+        //Do nothin because display is directly link to active variable
+        return;
+    }
+
+    void PositionManipulator::hideManipulator(Manipulator * manipulatorToDisplay) {
+        //Do nothin because display is directly link to active variable
+        return;
+    }
+
+    bool PositionManipulator::isWireframeDisplayed() {
+        return false;
+    }
+
+    void PositionManipulator::moveManipulator(Manipulator * manipulator) {
+        if(this->surface)
+            this->scene->surfaceMesh->setOrigin(manipulator->getManipPosition());
+        //else
+        // TODO
+    }
+
+    void PositionManipulator::selectManipulator(Manipulator * manipulator) {
+    }
+
+    void PositionManipulator::deselectManipulator(Manipulator * manipulator) {
+    }
 }

@@ -31,13 +31,21 @@ public:
 	void setupLayouts();
 	void setupSignals(Scene* scene);
 
+    bool useSurface = false;;
+
 protected:
     QVBoxLayout* mainLayout;
+
+	QHBoxLayout*             layout_mesh;
+	QGroupBox*                group_mesh;
+	QRadioButton*        radio_mesh_grid; 
+	QRadioButton*     radio_mesh_surface; 
 
 	QHBoxLayout*          layout_selector;
 	QGroupBox*             group_selector;
 	QRadioButton*   radio_selector_direct; 
 	QRadioButton*     radio_selector_free; 
+	QRadioButton* radio_selector_position; 
 
 	QHBoxLayout*              layout_move;
 	QGroupBox*                 group_move;

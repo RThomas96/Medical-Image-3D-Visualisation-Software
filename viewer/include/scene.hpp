@@ -521,8 +521,7 @@ signals:
 // And it allow more flexibility as the scene control ALL the informations to transit from class to class
 public slots:
     // MeshManipulator slots
-    void createNewMeshManipulator(int i);
-    void createNewMeshManipulatorOnSurfaceMesh(int i);
+    void createNewMeshManipulator(int i, bool onSurface);
 	void toggleWireframe();
     void toggleManipulatorActivation();
     void setManipulatorRadius(float radius);

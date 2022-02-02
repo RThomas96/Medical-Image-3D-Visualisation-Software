@@ -6,10 +6,6 @@
 
 
 BaseMesh::BaseMesh(): bbMin(glm::vec3(0., 0., 0.)), bbMax(glm::vec3(0., 0., 0.)), meshDeformator(new NormalMethod(this)), transformation(glm::mat4(1.f)), scale(1.f) {
-    this->manipulator = new UITool::Manipulator(glm::vec3(0., 0., 0.));
-    bool connect = QObject::connect(this->manipulator, &UITool::Manipulator::isManipulated, this, &BaseMesh::moveMeshOnManipulator);
-    if(!connect)
-        std::cout << "Not connected !" << std::endl;
 }
 
 glm::vec3 BaseMesh::getDimensions() const {
@@ -103,8 +99,4 @@ void BaseMesh::setScale(float scale) {
     this->transformation[0][0] = scale;
     this->transformation[1][1] = scale;
     this->transformation[2][2] = scale;
-}
-
-void BaseMesh::moveMeshOnManipulator() {
-    this->setOrigin(this->manipulator->getManipPosition());
 }

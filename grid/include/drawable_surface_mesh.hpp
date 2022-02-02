@@ -38,6 +38,7 @@ public:
 protected:
 
 	GLuint program_handle_draw;
+	GLuint program_handle_manipulator_draw;
 	GLuint program_handle_fastdraw;
 
 	GLuint vao;
@@ -45,7 +46,6 @@ protected:
 	GLuint vbo_normals;
 	GLuint vbo_texture;
 	GLuint vbo_indices;
-
 
 	QOpenGLContext* bound_context;
 

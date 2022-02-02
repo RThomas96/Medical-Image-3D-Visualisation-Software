@@ -110,6 +110,7 @@ void UITool::GL::MeshManipulator::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* m
 	// Update the manipulators positions stored in the texture
 	std::vector<glm::vec3> allPositions;
 	this->meshManipulator->getAllPositions(allPositions);
+    //std::cout << allPositions[0] << std::endl;
 	this->texParams.data   = allPositions.data();
 	this->texParams.size.x = allPositions.size();
 	this->tex = this->sceneGL->uploadTexture1D(this->texParams);
@@ -184,8 +185,12 @@ void UITool::GL::MeshManipulator::createNewMeshManipulator(Scene * scene, const 
         this->meshManipulator = new UITool::DirectManipulator(scene, positions);
         QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needRedraw()), this, SLOT(prepare()));
         this->prepare();
-    } else {
+    } else if(type == 1){
         this->meshManipulator = new UITool::FreeManipulator(scene, positions);
+        QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needRedraw()), this, SLOT(prepare()));
+        this->prepare();
+    } else {
+        this->meshManipulator = new UITool::PositionManipulator(scene, positions);
         QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needRedraw()), this, SLOT(prepare()));
         this->prepare();
     }
