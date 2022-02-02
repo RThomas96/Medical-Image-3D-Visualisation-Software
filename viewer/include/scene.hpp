@@ -19,7 +19,8 @@
 //#include "../../qt/include/grid_control.hpp"
 #include "../../qt/include/opengl_debug_log.hpp"
 #include "../../qt/include/visu_box_controller.hpp"
-#include "../../qt/include/manipulator.hpp"
+//#include "../../grid/include/manipulator.hpp"
+//#include "../../grid/include/mesh_manipulator.hpp"
 // Helper structs and functions :
 #include "./viewer_structs.hpp"
 // Qt headers :
@@ -36,9 +37,6 @@
 // STD headers :
 #include <mutex>
 #include <vector>
-
-// New structure
-#include "../../qt/include/GLmanipulator.hpp"
 
 #include <thread>
 #include "../../image/utils/include/threaded_task.hpp"
@@ -372,8 +370,6 @@ public:
 	void removeVisuBoxController();
 
 	void prepareManipulators();
-    // Set all manipulators positions to the points of the tetmesh
-    //void updateManipulatorPositions();
 
 	void addOpenGLOutput(OpenGLDebugLog* _gldl);
 	void addStatusBar(QStatusBar* _s);

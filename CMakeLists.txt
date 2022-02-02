@@ -85,14 +85,15 @@ ADD_EXECUTABLE(neighbor_visu
 	./viewer/include/neighbor_visu_viewer.hpp
 	./viewer/include/viewer_structs.hpp
     ./third_party/primitive/Sphere.h
-    ./qt/include/GLmanipulator.hpp
-    ./qt/include/manipulator.hpp
     ./grid/include/grid.hpp
     ./grid/include/base_mesh.hpp
     ./grid/include/tetrahedral_mesh.hpp
     ./grid/include/drawable_surface_mesh.hpp
     ./grid/include/mesh_deformator.hpp
     ./grid/include/tiff_image.hpp
+    ./grid/include/GLmanipulator.hpp
+    ./grid/include/manipulator.hpp
+    ./grid/include/mesh_manipulator.hpp
 
     #Probably to remove
     ./image/transforms/include/affine_transform.hpp
@@ -116,8 +117,6 @@ ADD_EXECUTABLE(neighbor_visu
 	./viewer/src/neighbor_visu_viewer.cpp
 	./viewer/src/viewer_structs.cpp
     ./third_party/primitive/Sphere.cpp
-    ./qt/src/GLmanipulator.cpp
-    ./qt/src/manipulator.cpp
     ./grid/src/grid.cpp
     ./grid/src/base_mesh.cpp
     ./grid/src/tetrahedral_mesh.cpp
@@ -125,6 +124,9 @@ ADD_EXECUTABLE(neighbor_visu
     ./grid/src/drawable_surface_mesh.cpp
     ./grid/src/mesh_deformator.cpp
     ./grid/src/tiff_image.cpp
+    ./grid/src/GLmanipulator.cpp
+    ./grid/src/manipulator.cpp
+    ./grid/src/mesh_manipulator.cpp
 )
 TARGET_COMPILE_OPTIONS(neighbor_visu
 	# Set so CMake (more precisely clang/gcc) will not print 30-80 warnings about QGLViewer's

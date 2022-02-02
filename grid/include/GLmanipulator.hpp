@@ -3,8 +3,7 @@
 
 #include "../../third_party/primitive/Sphere.h"
 #include "../../viewer/include/viewer_structs.hpp"
-//#include "../../viewer/include/scene.hpp"
-#include "manipulator.hpp"
+#include "mesh_manipulator.hpp"
 
 #include <QOpenGLContext>
 #include <QOpenGLFunctions_3_2_Core>
@@ -14,7 +13,7 @@
 class SceneGL;
 
 namespace UITool {
-    class MeshManipulator;
+    //class MeshManipulator;
 
 	/// @defgroup gl GL
 	/// @brief All classes that interact with OpenGL. Allow a separation between backend and frontend.
