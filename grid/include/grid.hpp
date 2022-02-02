@@ -81,8 +81,6 @@ struct Grid {
     uint16_t getDeformedValueFromPoint(const Grid& initial, const glm::vec3& p, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
     uint16_t getValueFromPoint(const glm::vec3& p, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
 
-    std::vector<glm::vec3>& getMeshPositions() const;
-
     // Temporary indirection, do not use
     TetMesh * getMesh();
     // Change the workflow of the "initial" mesh

@@ -144,6 +144,9 @@ Scene::Scene() :
 	this->drawables.clear();
 	this->curve		 = nullptr;
 	this->curve_draw = nullptr;
+
+    // Test of the drawable
+
 }
 
 Scene::~Scene(void) {
@@ -219,6 +222,12 @@ void Scene::initGl(QOpenGLContext* _context) {
 	//this->glMeshManipulator->initGL(this->get_context());
 	this->sceneGL.initGl(this->get_context());
 	//this->glMeshManipulator->prepareSphere();
+
+    this->surfaceMesh = new SurfaceMesh("/home/thomas/data/Projets/visualisation/build/bin/femur.off");
+    this->drawableMesh = new DrawableMeshV2();
+    this->drawableMesh->mesh = this->surfaceMesh;
+    this->drawableMesh->initialize(this->context, this);
+
 }
 
 void Scene::generateColorScales() {
@@ -1217,7 +1226,7 @@ void Scene::loadMesh() {
 void Scene::slotApplyDeformation(glm::vec3 oldPosition, glm::vec3 newPosition) {
     this->grids[0]->grid->grid->movePoint(oldPosition, newPosition);
     //this->glMeshManipulator->meshManipulator->setAllManipulatorsPosition(this->grids[0]->grid->grid->tetmesh->ptGrid);
-    this->glMeshManipulator->meshManipulator->setAllManipulatorsPosition(this->grids[0]->grid->grid->getMeshPositions());
+    this->glMeshManipulator->meshManipulator->setAllManipulatorsPosition(this->grids[0]->grid->grid->getMesh()->getMeshPositions());
     this->sendTetmeshToGPU(0, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS));
 }
 
@@ -2181,6 +2190,9 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 	for (auto& drawable : this->drawables) {
 		drawable->draw(pMat, mvMat, glm::vec4{camPos, 1.f});
 	}
+
+    this->drawableMesh->makeVAO();
+	this->drawableMesh->draw(pMat, mvMat, glm::vec4{camPos, 1.f});
 
 	if (not this->grids.empty()) {
 		this->drawPlanes(mvMat, pMat, this->drawMode == DrawMode::Solid);
@@ -3377,10 +3389,6 @@ void Scene::prepareManipulators() {
 	this->glMeshManipulator->prepare();
 }
 
-//void Scene::updateManipulatorPositions() {
-//    this->glMeshManipulator->meshManipulator->setAllManipulatorsPosition(this->grids[0]->grid->grid->);
-//}
-
 /**********************************************************************/
 /**********************************************************************/
 
@@ -3531,7 +3539,12 @@ void Scene::toggleWireframe() {
 }
 
 void Scene::createNewMeshManipulator(int i) {
-    this->glMeshManipulator->createNewMeshManipulator(this, this->grids[0]->grid->grid->getMeshPositions(), i);
+    this->glMeshManipulator->createNewMeshManipulator(this, this->grids[0]->grid->grid->getMesh()->getMeshPositions(), i);
+    QObject::connect(this, SIGNAL(keyQReleased()), dynamic_cast<QObject*>(this->glMeshManipulator->meshManipulator), SIGNAL(keyQReleased()));
+}
+
+void Scene::createNewMeshManipulatorOnSurfaceMesh(int i) {
+    this->glMeshManipulator->createNewMeshManipulator(this, this->surfaceMesh->getMeshPositions(), i);
     QObject::connect(this, SIGNAL(keyQReleased()), dynamic_cast<QObject*>(this->glMeshManipulator->meshManipulator), SIGNAL(keyQReleased()));
 }
 

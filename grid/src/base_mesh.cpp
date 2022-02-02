@@ -74,3 +74,7 @@ void BaseMesh::deselectAllPts() {
     this->meshDeformator->deselectAllPts();
 }
 
+std::vector<glm::vec3>& BaseMesh::getMeshPositions() {
+    return this->vertices;
+}
+

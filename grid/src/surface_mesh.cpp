@@ -43,14 +43,14 @@ SurfaceMesh::SurfaceMesh(std::string const &filename) {
         {
             unsigned int v1, v2, v3;
             myfile >> v1 >> v2 >> v3;
-            triangles.push_back(Triangle(v1, v2, v3));
+            triangles.push_back(Triangle2(v1, v2, v3));
         } else if (n_vertices_on_face == 4)
         {
             unsigned int v1, v2, v3, v4;
 
             myfile >> v1 >> v2 >> v3 >> v4;
-            triangles.push_back(Triangle(v1, v2, v3));
-            triangles.push_back(Triangle(v1, v3, v4));
+            triangles.push_back(Triangle2(v1, v2, v3));
+            triangles.push_back(Triangle2(v1, v3, v4));
         } else
         {
             std::cout << "We handle ONLY *.off files with 3 or 4 vertices per face" << std::endl;
@@ -61,25 +61,25 @@ SurfaceMesh::SurfaceMesh(std::string const &filename) {
 
     this->updatebbox();
 
-    this->computeVerticesNormal();
     this->computeTriangleNormal();
+    this->computeVerticesNormal();
 }
 
-SurfaceMesh::SurfaceMesh(std::vector<glm::vec3>& vertices, std::vector<Triangle>& triangles) {
+SurfaceMesh::SurfaceMesh(std::vector<glm::vec3>& vertices, std::vector<Triangle2>& triangles) {
     for(int i = 0; i < vertices.size(); ++i) {
         this->vertices.push_back(vertices[i]);
     }
     this->updatebbox();
 
-    this->computeVerticesNormal();
     this->computeTriangleNormal();
+    this->computeVerticesNormal();
 }
 
 void SurfaceMesh::computeTriangleNormal() {
 	this->normals.clear();
 	this->normals.resize(this->triangles.size(), glm::vec3(0., 0., 0.));
 	for (unsigned int i = 0; i < triangles.size(); i++) {
-	    const Triangle& t = triangles[i];
+	    const Triangle2& t = triangles[i];
 	    glm::vec3 normal  = glm::cross(vertices[t.getVertex(1)] - vertices[t.getVertex(0)], vertices[t.getVertex(2)] - vertices[t.getVertex(0)]);
 	    this->normals[i] = glm::normalize(normal);
 	}
@@ -105,7 +105,7 @@ void SurfaceMesh::computeVerticesNormal() {
 }
 
 void SurfaceMesh::glTriangle(unsigned int i) {
-	const Triangle& t = this->triangles[i];
+	const Triangle2& t = this->triangles[i];
 	for (int j = 0; j < 3; j++) {
 		glm::vec3 n = this->verticesNormals[t.getVertex(j)];
 		glm::vec3 v = this->vertices[t.getVertex(j)];
@@ -133,8 +133,8 @@ void SurfaceMesh::draw() {
 }
 
 void SurfaceMesh::computeNormals() {
-    this->computeVerticesNormal();
     this->computeTriangleNormal();
+    this->computeVerticesNormal();
 }
 
 void SurfaceMesh::computeNeighborhood() {}

@@ -90,7 +90,7 @@ ADD_EXECUTABLE(neighbor_visu
     ./grid/include/grid.hpp
     ./grid/include/base_mesh.hpp
     ./grid/include/tetrahedral_mesh.hpp
-    ./grid/include/surface_mesh.hpp
+    ./grid/include/drawable_surface_mesh.hpp
     ./grid/include/mesh_deformator.hpp
     ./grid/include/tiff_image.hpp
 
@@ -122,6 +122,7 @@ ADD_EXECUTABLE(neighbor_visu
     ./grid/src/base_mesh.cpp
     ./grid/src/tetrahedral_mesh.cpp
     ./grid/src/surface_mesh.cpp
+    ./grid/src/drawable_surface_mesh.cpp
     ./grid/src/mesh_deformator.cpp
     ./grid/src/tiff_image.cpp
 )

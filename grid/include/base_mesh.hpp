@@ -27,6 +27,7 @@ public:
 
     void updatebbox();
 
+    std::vector<glm::vec3>& getMeshPositions();
     // Functions to interact with the mesh
     void movePoint(const glm::vec3& origin, const glm::vec3& target);
     void setNormalDeformationMethod();

@@ -48,6 +48,7 @@
 #include <tinytiffwriter.h>
 
 #include "../../grid/include/grid.hpp"
+#include "../../grid/include/drawable_surface_mesh.hpp"
 
 /// @defgroup graphpipe Graphics pipeline
 /// @brief This group contains all classes closely or loosely related to the graphics pipeline.
@@ -525,6 +526,7 @@ signals:
 public slots:
     // MeshManipulator slots
     void createNewMeshManipulator(int i);
+    void createNewMeshManipulatorOnSurfaceMesh(int i);
 	void toggleWireframe();
     void toggleManipulatorActivation();
     void setManipulatorRadius(float radius);
@@ -541,6 +543,9 @@ public slots:
 /*************/
 public:
     std::string filename = "";
+
+    SurfaceMesh * surfaceMesh;
+    DrawableMeshV2 * drawableMesh;
 };
 
 /// @brief Type-safe conversion of enum values to unsigned ints.

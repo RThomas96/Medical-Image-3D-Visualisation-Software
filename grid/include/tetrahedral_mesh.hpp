@@ -1,11 +1,6 @@
 #ifndef TETRAHEDRALMESH_HPP_
 #define TETRAHEDRALMESH_HPP_
 
-#include <glm/glm.hpp>
-#include <iostream>
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/gtx/io.hpp>
-#include <vector>
 #include "base_mesh.hpp"
 //#include "../include/mesh_deformator.hpp"
 

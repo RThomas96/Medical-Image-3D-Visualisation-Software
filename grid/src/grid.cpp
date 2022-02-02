@@ -174,11 +174,6 @@ void Grid::setWeightedDeformationMethod(float radius) {
     this->tetmesh->setWeightedDeformationMethod(radius);
 }
 
-
-std::vector<glm::vec3>& Grid::getMeshPositions() const {
-    return this->tetmesh->vertices;
-}
-
 TetMesh * Grid::getMesh() {
     return this->tetmesh;
 }
