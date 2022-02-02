@@ -8,14 +8,19 @@
 #include <vector>
 
 struct MeshDeformator;
+namespace UITool {
+    class Manipulator;
+}
 
-class BaseMesh {
-
+class BaseMesh : public QObject {
+    Q_OBJECT
 public:
 
     float scale;
     glm::mat4 transformation;
 
+    UITool::Manipulator * manipulator;
+    
     std::vector<glm::vec3> vertices;
     std::vector<glm::vec3> texCoord;// These are normalised coordinates
 
@@ -47,6 +52,9 @@ public:
     virtual void computeNeighborhood() = 0;
     virtual void computeNormals() = 0;
     virtual ~BaseMesh(){};
+
+public slots:
+    void moveMeshOnManipulator();
 };
 
 #endif
