@@ -179,7 +179,7 @@ void UITool::GL::MeshManipulator::toggleActivation() {
 }
 
 void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scene * scene, int type) {
-    const std::vector<glm::vec3>& positions = mesh->getMeshPositions();
+    const std::vector<glm::vec3>& positions = mesh->getWorldMeshPositions();
     this->displayWireframe = false;// Because wathever the manipulator created it is not activated at creation
     delete this->meshManipulator;
     if(type == 0) {

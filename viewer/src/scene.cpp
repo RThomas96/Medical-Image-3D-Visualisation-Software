@@ -221,6 +221,7 @@ void Scene::initGl(QOpenGLContext* _context) {
 
 	// Generate controller positions
 	//this->glMeshManipulator->initGL(this->get_context());
+	this->glMeshManipulator->toggleActivation();
 	this->sceneGL.initGl(this->get_context());
 	//this->glMeshManipulator->prepareSphere();
 
@@ -1224,13 +1225,6 @@ void Scene::loadMesh() {
 
 	// Insert it into the meshes to initialize :
 	this->to_init.emplace(mesh_drawable);
-}
-
-void Scene::slotApplyDeformation(glm::vec3 oldPosition, glm::vec3 newPosition) {
-    this->grids[0]->grid->grid->movePoint(oldPosition, newPosition);
-    //this->glMeshManipulator->meshManipulator->setAllManipulatorsPosition(this->grids[0]->grid->grid->tetmesh->ptGrid);
-    this->glMeshManipulator->meshManipulator->setAllManipulatorsPosition(this->grids[0]->grid->grid->getMeshPositions());
-    //this->sendTetmeshToGPU(0, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS));
 }
 
 void Scene::loadCurve() {

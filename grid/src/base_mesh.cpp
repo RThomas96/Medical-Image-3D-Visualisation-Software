@@ -95,8 +95,23 @@ void BaseMesh::setOrigin(const glm::vec3& origin) {
     this->transformation[3][2] = origin[2];
 }
 
+void BaseMesh::translate(const glm::vec3& vec) {
+    this->transformation[3][0] += vec[0];
+    this->transformation[3][1] += vec[1];
+    this->transformation[3][2] += vec[2];
+}
+
 void BaseMesh::setScale(float scale) {
     this->transformation[0][0] = scale;
     this->transformation[1][1] = scale;
     this->transformation[2][2] = scale;
+}
+
+std::vector<glm::vec3> BaseMesh::getWorldMeshPositions() {
+    std::vector<glm::vec3> worldPos;
+    for(int i = 0; i < this->vertices.size(); ++i) {
+        glm::vec4 pt = this->transformation * glm::vec4(this->vertices[i], 1.);
+        worldPos.push_back(glm::vec3(pt[0], pt[1], pt[2]));
+    }
+    return worldPos;
 }

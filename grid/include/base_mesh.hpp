@@ -34,6 +34,7 @@ public:
 
     void updatebbox();
     std::vector<glm::vec3>& getMeshPositions();
+    std::vector<glm::vec3> getWorldMeshPositions();
 
     // Functions to interact with the mesh
     void movePoint(const glm::vec3& origin, const glm::vec3& target);
@@ -43,6 +44,7 @@ public:
     void deselectAllPts();
 
     glm::vec3 getOrigin();
+    void translate(const glm::vec3& vec);
     glm::mat4 getModelTransformation();
     void setOrigin(const glm::vec3& origin);
     void setScale(float scale);

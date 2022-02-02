@@ -173,7 +173,6 @@ namespace UITool {
 
     void FreeManipulator::moveManipulator(Manipulator * manipulator) {
         this->mesh->movePoint(manipulator->lastPosition, manipulator->getManipPosition());
-        //int this->mesh->getIdxOfClosestPoint(const glm::vec3& p);
         Q_EMIT needSendTetmeshToGPU();
     }
 
@@ -196,6 +195,7 @@ namespace UITool {
 
         QObject::connect(this, &PositionManipulator::keyQReleased, this, [this]{setActivation(false);});
         this->manipulator.setCustomConstraint();
+        this->manipulator.setManipPosition(mesh->getOrigin());
 	}
 
     void PositionManipulator::setActivation(bool isActive) {
@@ -240,9 +240,8 @@ namespace UITool {
     }
 
     void PositionManipulator::moveManipulator(Manipulator * manipulator) {
+        //this->mesh->translate(manipulator->getManipPosition() - manipulator->lastPosition);
         this->mesh->setOrigin(manipulator->getManipPosition());
-        //else
-        // TODO
     }
 
     void PositionManipulator::selectManipulator(Manipulator * manipulator) {
