@@ -189,4 +189,5 @@ void UITool::GL::MeshManipulator::createNewMeshManipulator(Scene * scene, const 
         QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needRedraw()), this, SLOT(prepare()));
         this->prepare();
     }
+    this->toggleActivation();
 }
