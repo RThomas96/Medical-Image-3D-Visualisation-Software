@@ -36,6 +36,7 @@ void Grid::buildTetmesh(const glm::vec3& nbCube, const glm::vec3& origin) {
 
 void Grid::buildTetmesh(const glm::vec3& nbCube, const glm::vec3& sizeCube, const glm::vec3& origin) {
     this->buildGrid(nbCube, sizeCube, origin);
+    this->initialMesh.buildGrid(nbCube, sizeCube, origin);
 }
 
 uint16_t Grid::getValueFromPoint(const glm::vec3& p, ResolutionMode resolutionMode) const {
@@ -53,19 +54,19 @@ uint16_t Grid::getValueFromPoint(const glm::vec3& p, ResolutionMode resolutionMo
     }
 }
 
-uint16_t Grid::getDeformedValueFromPoint(const Grid& initial, const glm::vec3& p, ResolutionMode resolutionMode) const {
+uint16_t Grid::getDeformedValueFromPoint(const TetMesh& initial, const glm::vec3& p, ResolutionMode resolutionMode) const {
     glm::vec3 pt2 = this->getCoordInInitial(initial, p);
     if(resolutionMode == ResolutionMode::FULL_RESOLUTION)
         this->sampler.fromSamplerToImage(pt2);
-    return initial.getValueFromPoint(pt2, resolutionMode);
+    return this->getValueFromPoint(pt2, resolutionMode);
 }
 
-void Grid::writeDeformedGrid(const Grid& initial, ResolutionMode resolutionMode) {
+void Grid::writeDeformedGrid(ResolutionMode resolutionMode) {
     if(this->isEmpty())
         throw std::runtime_error("Error: cannot write a grid without deformed mesh.");
 
-    if(initial.isEmpty())
-        throw std::runtime_error("Error: cannot write a grid without initial mesh.");
+    if(this->initialMesh.isEmpty())
+        throw std::runtime_error("Error: cannot write a grid without initialMesh mesh.");
 
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
@@ -95,7 +96,7 @@ void Grid::writeDeformedGrid(const Grid& initial, ResolutionMode resolutionMode)
         this->sampler.fromImageToSampler(voxelDimension);
     }
 
-    std::cout << "Original image dimensions: " << initial.bbMax - initial.bbMin << std::endl;
+    std::cout << "Original image dimensions: " << this->initialMesh.bbMax - this->initialMesh.bbMin << std::endl;
     std::cout << "Image dimensions: " << imageDimension << std::endl;
     std::cout << "For " << bboxMin << " to " << bboxMax << " per " << voxelDimension << std::endl;
     TinyTIFFWriterFile * tif = TinyTIFFWriter_open("../../../data_debug/img2.tif", 16, TinyTIFFWriter_UInt, 1, imageDimension[0], imageDimension[1], TinyTIFFWriter_Greyscale);
@@ -113,11 +114,11 @@ void Grid::writeDeformedGrid(const Grid& initial, ResolutionMode resolutionMode)
             //std::cout << (j/bboxMax[1]) * 100. << "% " << std::flush;
             for(float i = bboxMin[0]; i < bboxMax[0]; i+=voxelDimension[0]) {
                 const glm::vec3 pt(i+voxelDimension[0]/2., j+voxelDimension[1]/2., k+voxelDimension[2]/2.);
-                glm::vec3 pt2 = this->getCoordInInitial(initial, pt);
+                glm::vec3 pt2 = this->getCoordInInitial(this->initialMesh, pt);
 
                 if(resolutionMode == ResolutionMode::FULL_RESOLUTION)
                     this->sampler.fromSamplerToImage(pt2);// Here we do a convertion because the final point is on image space 
-                data.push_back(initial.getValueFromPoint(pt2, resolutionMode));// Here we stay at sampler resolution because bbox are aligned on the sampler
+                data.push_back(this->getValueFromPoint(pt2, resolutionMode));// Here we stay at sampler resolution because bbox are aligned on the sampler
             }
         }
         TinyTIFFWriter_writeImage(tif, data.data());
@@ -131,7 +132,7 @@ std::pair<glm::vec3, glm::vec3> Grid::getBoundingBox() const {
     return std::pair(this->bbMin, this->bbMax);
 }
 
-bool Grid::getPositionOfRayIntersection(const Grid& initial, const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, glm::vec3& res) const {
+bool Grid::getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, glm::vec3& res) const {
     glm::vec3 nDirection = glm::normalize(direction);
 
     glm::vec3 dimension = this->sampler.getSamplerDimension();
@@ -140,7 +141,7 @@ bool Grid::getPositionOfRayIntersection(const Grid& initial, const glm::vec3& or
 
     for(float i = 0; i < maxDistance; i+=step) {
         const glm::vec3 p = origin + i * nDirection;
-        const uint16_t value = this->getDeformedValueFromPoint(initial, p);
+        const uint16_t value = this->getDeformedValueFromPoint(this->initialMesh, p);
         if(value > minValue && value < maxValue) {
             res = p;
             return true;

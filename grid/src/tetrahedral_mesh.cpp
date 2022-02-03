@@ -32,7 +32,7 @@ int Tetrahedron::getPointIndex(int faceIdx, int ptIdxInFace) const{
     return this->pointsIdx[getIdxOfPtInFace(faceIdx, ptIdxInFace)];
 }
 
-TetMesh::TetMesh(): nbTetra(glm::vec3(0., 0., 0.)) {}
+TetMesh::TetMesh(): nbTetra(glm::vec3(0., 0., 0.)), mesh(std::vector<Tetrahedron>()) {}
 
 TetMesh::~TetMesh(){delete this->meshDeformator;}
 
@@ -367,3 +367,7 @@ glm::vec3 TetMesh::getCoordInInitial(const TetMesh& initial, glm::vec3 p) const{
     }
 }
 
+bool TetMesh::getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, glm::vec3& res) const {
+    std::cout << "Cast ray not implemented yet for Tetmesh" << std::endl;
+    return false;
+}

@@ -57,6 +57,7 @@ private:
 // Struct able to make the link between the grid and its 3D representation
 struct Grid : public TetMesh {
 
+    TetMesh initialMesh;
     Sampler sampler;
 
     Grid(const std::string& filename, int subsample);
@@ -70,14 +71,12 @@ struct Grid : public TetMesh {
     // In mesh interface
     glm::vec3 getDimension() const;
     std::pair<glm::vec3, glm::vec3> getBoundingBox() const;
-    bool getPositionOfRayIntersection(const Grid& initial, const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, glm::vec3& res) const;
-    void writeDeformedGrid(const Grid& initial, ResolutionMode resolutionMode = ResolutionMode::FULL_RESOLUTION);
+    void writeDeformedGrid(ResolutionMode resolutionMode = ResolutionMode::FULL_RESOLUTION);
 
-    uint16_t getDeformedValueFromPoint(const Grid& initial, const glm::vec3& p, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
+    uint16_t getDeformedValueFromPoint(const TetMesh& initial, const glm::vec3& p, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
     uint16_t getValueFromPoint(const glm::vec3& p, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
 
-    // Change the workflow of the "initial" mesh
-    glm::vec3 getNbTetra() {return this->nbTetra;};
+    bool getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, glm::vec3& res) const override;
 };
 
 // This is the only class that interact with the openGL head

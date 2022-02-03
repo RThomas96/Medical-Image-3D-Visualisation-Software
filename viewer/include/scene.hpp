@@ -285,11 +285,6 @@ public:
     /***********************************************/
     /* Computation                                 */
     /***********************************************/
-
-    /* Attributes */
-
-    //TODO: to remove
-    int temp_ratio;
 private:
     /* Scene boolean */
 	bool isInitialized;
@@ -301,7 +296,6 @@ private:
     /* Containers */
 	UITool::GL::MeshManipulator* glMeshManipulator;
 public:
-    GridGL * initial;
 	std::vector<GridGLView::Ptr> grids;
 	//std::vector<DeformableGrid*> grids;
 private:

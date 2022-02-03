@@ -3512,20 +3512,14 @@ void Scene::launchSaveDialog() {
 		messageBox.setFixedSize(500, 200);
 		return;
 	}
-
-    glm::vec3 nb = this->grids[0]->grid->grid->getNbTetra(); 
-
     std::cout << "The filename is: " << this->filename << std::endl;
-
-    Grid initialGrid(this->filename, this->temp_ratio);
-    initialGrid.buildTetmesh(nb);
-    this->grids[0]->grid->grid->writeDeformedGrid(initialGrid);
+    this->grids[0]->grid->grid->writeDeformedGrid();
 	return;
 }
 
 bool Scene::slotGetPositionFromRay(const glm::vec3& origin, const glm::vec3& direction, glm::vec3& res) {
     res = glm::vec3(0., 0., 0.);
-    return (this->grids[0]->grid->grid->getPositionOfRayIntersection(*this->initial->grid, origin, direction, this->getMinTexValue(), this->getMaxTexValue(), res));
+    return (this->grids[0]->grid->grid->getPositionOfRayIntersection(origin, direction, this->getMinTexValue(), this->getMaxTexValue(), res));
 }
 
 void Scene::slotAddManipulator(const glm::vec3& position) {

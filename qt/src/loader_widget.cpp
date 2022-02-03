@@ -196,13 +196,8 @@ void GridLoaderWidget::loadNewGridAPI() {
         std::cout << bbox.first << std::endl;
         std::cout << bbox.second << std::endl;
 	    this->_testing_grid = new GridGL(filenamesAsString, sizeTetmesh, subsample, bbox);
-        //TODO: to remove
-        this->scene->initial = new GridGL(filenamesAsString, sizeTetmesh, subsample, bbox);
-        this->scene->temp_ratio = subsample;
     } else {
 	    this->_testing_grid = new GridGL(filenamesAsString, sizeTetmesh, subsample);
-        this->scene->initial = new GridGL(filenamesAsString, sizeTetmesh, subsample);
-        this->scene->temp_ratio = subsample;
     }
     this->loadGrid_newAPI();
 }

@@ -141,3 +141,8 @@ void SurfaceMesh::computeNeighborhood() {}
 
 SurfaceMesh::~SurfaceMesh() {delete this->meshDeformator;}
 
+bool SurfaceMesh::getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, glm::vec3& res) const {
+    // Not implemented yet
+    std::cout << "Cast ray not implemented yet for Surface mesh" << std::endl;
+    return false;
+}
