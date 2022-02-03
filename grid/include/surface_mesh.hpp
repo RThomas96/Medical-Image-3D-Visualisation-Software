@@ -51,8 +51,6 @@ public:
 
     //*********/
 
-	std::vector<glm::vec3> verticesNormals;
-
 	std::vector<Triangle2> triangles;
 	std::vector<glm::vec3> normals;
 

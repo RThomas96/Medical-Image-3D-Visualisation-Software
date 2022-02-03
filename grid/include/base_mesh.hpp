@@ -20,6 +20,7 @@ public:
     glm::mat4 transformation;
 
     std::vector<glm::vec3> vertices;
+    std::vector<glm::vec3> verticesNormals;
     std::vector<glm::vec3> texCoord;// These are normalised coordinates
 
     glm::vec3 bbMin;
@@ -51,7 +52,9 @@ public:
 
     glm::vec3 toWorld(const glm::vec3& pt) const;
 
+    int getNbVertices() const;
     const glm::vec3& getVertice(int i) const;
+    const glm::vec3& getVerticeNormal(int i) const;
     const glm::vec3 getWorldVertice(int i) const;
 
     virtual bool getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, glm::vec3& res) const = 0;

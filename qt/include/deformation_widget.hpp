@@ -59,7 +59,10 @@ protected:
 	QDoubleSpinBox* spinbox_radius_sphere;
 
 	QLabel*               label_wireframe;
-	QCheckBox*    checkbox_wireframe;
+	QCheckBox*         checkbox_wireframe;
+
+    QPushButton*             debug_button;
+    QPushButton*                 debug_it;
 };
 
 #endif	  // QT_INCLUDE_DEFORMATION_WIDGET_HPP_

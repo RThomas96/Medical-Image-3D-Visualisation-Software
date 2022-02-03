@@ -56,6 +56,9 @@ GridDeformationWidget::GridDeformationWidget(Scene* scene, QWidget* parent) :
 	this->checkbox_wireframe = new QCheckBox;
     this->checkbox_wireframe->setChecked(true);
 
+    this->debug_button = new QPushButton("&DEBUG", this);
+    this->debug_it = new QPushButton("&ITERATION", this);
+
     this->setupLayouts();
 	this->setupSignals(scene);
 }
@@ -95,6 +98,9 @@ void GridDeformationWidget::setupLayouts() {
     this->mainLayout->addWidget(this->label_wireframe);
     this->mainLayout->addWidget(this->checkbox_wireframe);
 
+    this->mainLayout->addWidget(this->debug_button);
+    this->mainLayout->addWidget(this->debug_it);
+
     this->setLayout(this->mainLayout);
 }
 
@@ -119,4 +125,8 @@ void GridDeformationWidget::setupSignals(Scene* scene) {
 	QObject::connect(this->radio_move_normal, &QPushButton::clicked, this, [this, scene]() {scene->setNormalDeformationMethod();});
 
 	QObject::connect(this->radio_move_weighted, &QPushButton::clicked, this, [this, scene]() {scene->setWeightedDeformationMethod(this->spinbox_radius_selection->value());});
+
+    QObject::connect(this->debug_button, &QPushButton::released, this, [this, scene]() {scene->createNewICP();});
+
+    QObject::connect(this->debug_it, &QPushButton::released, this, [this, scene]() {scene->ICPIteration();});
 }

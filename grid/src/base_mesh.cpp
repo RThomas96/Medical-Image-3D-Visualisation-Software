@@ -124,6 +124,14 @@ const glm::vec3& BaseMesh::getVertice(int i) const {
     return this->vertices[i];
 }
 
+const glm::vec3& BaseMesh::getVerticeNormal(int i) const {
+    return this->verticesNormals[i];
+}
+
 const glm::vec3 BaseMesh::getWorldVertice(int i) const {
     return glm::vec3(this->transformation * glm::vec4(this->vertices[i], 1.));
+}
+
+int BaseMesh::getNbVertices() const {
+    return this->vertices.size();
 }

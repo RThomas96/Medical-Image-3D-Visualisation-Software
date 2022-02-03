@@ -48,11 +48,15 @@
 #include "../../grid/include/grid.hpp"
 #include "../../grid/include/drawable_surface_mesh.hpp"
 
+#include "glm/gtx/string_cast.hpp"
+
 /// @defgroup graphpipe Graphics pipeline
 /// @brief This group contains all classes closely or loosely related to the graphics pipeline.
 /// @details There are very few classes in this group, but that's only because Scene is a god-object. Some attempt was
 /// made to move much of the code for displaying a grid over to the GridViewer class, altough that has not been tested.
 /// @warning Spaghetti code ahead.
+
+class ICP;
 
 // Forward declaration
 class ControlPanel;
@@ -537,9 +541,210 @@ public:
 
     SurfaceMesh * surfaceMesh;
     DrawableMeshV2 * drawableMesh;
+
+    ICP * icp;
+
+    void createNewICP();
+    void ICPIteration();
 };
 
 /// @brief Type-safe conversion of enum values to unsigned ints.
 inline unsigned int planeHeadingToIndex(planeHeading _heading);
+
+class ICPMesh : public SurfaceMesh {
+
+public:
+    std::vector<glm::vec3> v2;
+    std::vector<glm::vec3> correspondence;
+    std::vector<float> weights;
+
+    ICPMesh(std::string const &filename) : SurfaceMesh(filename) {
+        for(int i = 0; i < this->getNbVertices(); ++i) {
+            this->correspondence.push_back(glm::vec3(0., 0., 0.));
+            this->weights.push_back(0.f);
+            this->v2.push_back(glm::vec3(0., 0., 0.));
+        }
+    }
+
+    void setCorrespondence(glm::vec3 p, int i) {
+        this->correspondence[i] = p;
+    }
+
+    glm::vec3 getCorrespondence(int i) const {
+        return this->correspondence[i];
+    }
+
+    void setWeight(float p, int i) {
+        this->weights[i] = p;
+    }
+
+    float getWeight(int i) const {
+        return this->weights[i];
+    }
+
+};
+
+
+class ICP {
+
+public:
+    unsigned int Ni=10,No=5,S=10;
+    float l=0.02;
+
+    glm::mat3 rotation;
+    glm::vec3 origin;
+
+    ICPMesh * surface;
+
+    Grid * src;
+    Grid * target;
+
+    std::vector<std::vector<uint16_t>> sourceProf;
+
+    ICP(Grid * src, const std::string& filenameGrid, std::string const &filename): src(src), target(new Grid(filenameGrid, 1.)), surface(new ICPMesh(filename)) {
+
+        //this->surface->setOrigin(glm::vec3(130., 50., 130.));
+        this->surface->setOrigin(glm::vec3(90., 50., 130.));
+        this->surface->setScale(20.);
+
+        this->rotation = glm::mat3(1.f);
+        this->origin = glm::vec3(0., 0., 0.);
+        this->target->buildTetmesh(glm::vec3(5., 5., 5.));
+        this->sourceProf = computeProfiles(*this->surface, *this->src, Ni, No, l);
+    }
+
+    void computeCorrespondences(ICPMesh& mesh, const std::vector<std::vector<float>> &dist,const float l) {
+        unsigned int nbpoints=dist[0].size();
+        unsigned int S=dist.size()/2;
+
+        for(unsigned int i=0;i<nbpoints;i++)
+        {
+            glm::vec3 p = (this->rotation * mesh.getVertice(i)) + this->origin;
+
+            float min = 0;
+            int idxMin = -1;
+            for(int j = 0; j < 2*S; ++j) {
+                if(dist[j][i] > min) {
+                    min = dist[j][i];
+                    idxMin = j;
+                }
+            }
+
+            glm::vec3 normal = (this->rotation * mesh.getVerticeNormal(i)) + this->origin;
+
+            if(idxMin < S)
+                normal = -normal;
+            
+            p += l * idxMin * normal;
+
+            mesh.setCorrespondence(p, i);
+        }
+
+    }
+    
+    std::vector<std::vector<uint16_t>> computeProfiles(const ICPMesh& mesh, const Grid& img, const unsigned int Ni, const unsigned int No, const float l) {
+
+        std::vector<std::vector<uint16_t>> prof(Ni+No, std::vector<uint16_t>(mesh.getNbVertices(), 0.));
+    
+        for(int ptIdx = 0; ptIdx < mesh.getNbVertices(); ++ptIdx) {
+            glm::vec3 currentPoint = (this->rotation * mesh.getVertice(ptIdx)) + this->origin;
+            
+            glm::vec3 currentNormal = (this->rotation * mesh.getVerticeNormal(ptIdx)) + this->origin;
+    
+            for(float it = 0; it < No; ++it) {
+                float offset = it * l;
+                prof[Ni+it][ptIdx] = img.getValueFromPoint(currentPoint + offset * currentNormal);
+            }
+            currentNormal = -currentNormal;
+            for(float it = 0; it < Ni; ++it) {
+                float offset = it * l;
+                prof[Ni-1-it][ptIdx] = img.getValueFromPoint(currentPoint + offset * currentNormal);
+            }
+        }
+        return prof;
+    }
+
+    std::vector<std::vector<float>> computeDistance(const std::vector<std::vector<uint16_t>>& sourceProf, const std::vector<std::vector<uint16_t>>& targetProf) {
+
+        unsigned int nbpoints=sourceProf[0].size();
+        unsigned int N=sourceProf.size();
+        unsigned int S=(targetProf.size()-sourceProf.size())/2;
+
+        std::vector<std::vector<float>> dist(2*S, std::vector<float>(nbpoints, 0.));
+
+        int insertColumnIndex = 0;
+        for(int offset = 0; offset < S*2; ++offset) {
+            float cumul[nbpoints];
+            for(int i = 0; i < nbpoints; ++i)
+                cumul[i] = 0;
+
+            for(int ptIdx = 0; ptIdx < nbpoints; ++ptIdx) {
+                for(int srcIdx = 0; srcIdx < N; ++srcIdx) {
+                    float value = targetProf[srcIdx+offset][ptIdx] - sourceProf[srcIdx][ptIdx];
+                    cumul[ptIdx] +=  (value * value);
+                }
+            }
+            for(int i = 0; i < nbpoints; ++i)
+                dist[insertColumnIndex][i] = cumul[i];
+            insertColumnIndex += 1;
+        }
+
+        return dist;
+    }
+
+    void Registration(glm::mat3& A,  glm::vec3& t,const ICPMesh& mesh) {
+        glm::vec3 c0 = glm::vec3(0., 0., 0.);
+        glm::vec3 c = glm::vec3(0., 0., 0.);
+        float N = 0.;
+        for(unsigned int i=0;i<mesh.getNbVertices();i++)
+        {
+            c0 += mesh.getWeight(i)*mesh.getVertice(i);
+            c  += mesh.getWeight(i)*mesh.getCorrespondence(i);
+            N  += mesh.getWeight(i);
+        }
+        c0 /=N; 
+        c  /=N;
+
+        // Warning initialisation to 0 here !
+        glm::mat3 Q(0.f);
+        glm::mat3 K(0.f);
+        float sx = 0;
+        for(unsigned int i=0;i<mesh.getNbVertices();i++)
+        {
+            glm::vec3 p0 = mesh.getVertice(i);
+            p0 -= c0;
+
+            glm::vec3 p = mesh.getCorrespondence(i);
+            p -= c;
+
+            for(int j = 0; j < 3; ++j)
+                sx+=mesh.getWeight(i)*p0[j]*p0[j]; 
+            for(unsigned int k=0;k<3;k++) {
+                Q[k] += mesh.getWeight(i)*p0*p0[k];  
+                K[k] += mesh.getWeight(i)*p *p0[k];
+            } 
+        }
+
+        //Warning maybe order problem
+        A = K * glm::inverse(Q);
+
+        t = A * c0;
+        t = c - t;
+    }
+
+    void iteration() {
+        // compute source profiles
+        // mesh.updateNormals();
+        std::vector<std::vector<uint16_t>> targetProf = computeProfiles(*this->surface, *this->target, Ni+S, No+S, l);
+
+        std::vector<std::vector<float>> dist = computeDistance(this->sourceProf,targetProf);
+
+        computeCorrespondences(*this->surface,dist,l);
+
+        Registration(this->rotation,this->origin,*this->surface);
+
+        std::cout << glm::to_string(this->rotation) << std::endl;
+    }
+};
 
 #endif	  // VIEWER_INCLUDE_SCENE_HPP_

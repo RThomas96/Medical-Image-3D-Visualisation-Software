@@ -3530,7 +3530,9 @@ void Scene::toggleWireframe() {
 
 void Scene::createNewMeshManipulator(int i, bool onSurface) {
     if(onSurface) {
-        this->glMeshManipulator->createNewMeshManipulator(this->surfaceMesh, this, i);
+        // TODO: do not connect deform to the ICP mesh
+        //this->glMeshManipulator->createNewMeshManipulator(this->surfaceMesh, this, i);
+        this->glMeshManipulator->createNewMeshManipulator(this->icp->surface, this, i);
     } else {
         this->glMeshManipulator->createNewMeshManipulator(this->grids[0]->grid->grid, this, i);
     }
@@ -3604,8 +3606,11 @@ void Scene::setColorChannel(ColorChannel mode) {
 	}
 }
 
-//void Scene::addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction) {
-//    //glm::vec3 res = glm::vec3(0., 0., 0.);
-//    //this->glMeshManipulator->meshManipulator->mesh->getPositionOfRayIntersection(origin, direction, this->getMinTexValue(), this->getMaxTexValue(), res);
-//    this->glMeshManipulator->meshManipulator->addManipulator(origin, direction);
-//}
+void Scene::createNewICP() {
+    this->icp = new ICP(this->grids[0]->grid->grid, "/home/thomas/data/Projets/visualisation/build/bin/target.tiff", "/home/thomas/data/Projets/visualisation/build/bin/femur.off");
+    this->drawableMesh->mesh = this->icp->surface;
+}
+
+void Scene::ICPIteration() {
+    this->icp->iteration();
+}
