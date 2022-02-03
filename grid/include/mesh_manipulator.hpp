@@ -45,13 +45,13 @@ namespace UITool {
         virtual void selectManipulator(Manipulator * manipulator) = 0;
         virtual void deselectManipulator(Manipulator * manipulator) = 0;
 
-        // These are connected to the scene
         virtual void addManipulator(const glm::vec3& position) = 0;
 
     //signal:
         virtual void needRedraw() = 0;
         // This signal is trigerred from the scene
         virtual void keyQReleased() = 0;
+        virtual void rayIsCasted(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue) = 0;
 
         //This signal is used to trigger a function in the scene
         //This should be removed when the grid will have its own "Drawable" class
@@ -98,6 +98,7 @@ namespace UITool {
         void needRedraw() override;
         void keyQReleased() override;
         void needSendTetmeshToGPU() override;
+        void rayIsCasted(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue) override;
 
 	private:
 		std::vector<Manipulator> manipulators;
@@ -139,8 +140,11 @@ namespace UITool {
         void needRedraw() override;
         void keyQReleased() override;
         void needSendTetmeshToGPU() override;
+        void rayIsCasted(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue) override;
 
 	private:
+        void addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue);
+
 		Manipulator manipulator;
 
 		bool active;
@@ -179,6 +183,7 @@ namespace UITool {
         void needRedraw() override;
         void keyQReleased() override;
         void needSendTetmeshToGPU() override;
+        void rayIsCasted(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue) override;
 
 	private:
 		Manipulator manipulator;

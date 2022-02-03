@@ -356,7 +356,7 @@ public:
     /* Widget interaction */
 
     void slotAddManipulator(const glm::vec3& position);
-    bool slotGetPositionFromRay(const glm::vec3& origin, const glm::vec3& direction, glm::vec3& res);
+    //bool slotGetPositionFromRay(const glm::vec3& origin, const glm::vec3& direction, glm::vec3& res);
 
 	void showVisuBoxController(VisuBoxController* _controller);
 	void removeVisuBoxController();
@@ -508,6 +508,7 @@ public:
 
 signals:
     void keyQReleased();
+    void rayIsCasted(const glm::vec3& origin, const glm::vec3& direction);
 
 // All these indirections are important because for most of them they interacts with various components of the scene
 // And it allow more flexibility as the scene control ALL the informations to transit from class to class
@@ -527,6 +528,7 @@ public slots:
     void sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend);
     void sendFirstTetmeshToGPU();
 
+    //void addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction, bool onSurface);
 /*************/
 /* Temporary */
 /*************/

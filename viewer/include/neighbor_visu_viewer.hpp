@@ -117,6 +117,7 @@ public slots:
 
 signals:
     void keyQReleased();
+    void keyQPressed();
 };
 
 #endif	  // VIEWER_INCLUDE_NEIGHBOR_VISU_VIEWER_HPP_

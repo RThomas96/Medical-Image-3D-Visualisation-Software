@@ -123,7 +123,7 @@ namespace UITool {
         QObject::connect(&(this->manipulator), &Manipulator::isManipulated, this, &FreeManipulator::moveManipulator);
 
         QObject::connect(this, &FreeManipulator::keyQReleased, this, [this]{setActivation(false);});
-
+        QObject::connect(this, &FreeManipulator::rayIsCasted, this, &FreeManipulator::addManipulatorFromRay);
 	}
 
     void FreeManipulator::setActivation(bool isActive) {
@@ -185,6 +185,12 @@ namespace UITool {
         this->removeManipulator(manipulator);
     }
 
+    void FreeManipulator::addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue) {
+        glm::vec3 manipulatorPosition;
+        if(this->mesh->getPositionOfRayIntersection(origin, direction, minValue, maxValue, manipulatorPosition))
+            this->addManipulator(manipulatorPosition);
+    }
+
     /***/
 
 	PositionManipulator::PositionManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions): MeshManipulator(mesh), manipulator(Manipulator(glm::vec3(0., 0., 0.))) {
@@ -193,7 +199,6 @@ namespace UITool {
         QObject::connect(&(this->manipulator), &Manipulator::mouseRightButtonReleasedAndCtrlIsNotPressed, this, &PositionManipulator::deselectManipulator);
         QObject::connect(&(this->manipulator), &Manipulator::isManipulated, this, &PositionManipulator::moveManipulator);
 
-        QObject::connect(this, &PositionManipulator::keyQReleased, this, [this]{setActivation(false);});
         this->manipulator.setCustomConstraint();
         this->manipulator.setManipPosition(mesh->getOrigin());
 	}

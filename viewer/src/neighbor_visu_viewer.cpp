@@ -139,10 +139,14 @@ void Viewer::keyPressEvent(QKeyEvent* e) {
         //    if(!e->isAutoRepeat())
         //        this->scene->glMeshManipulator->createNewMeshManipulator(this->scene->grids[0]->grid->grid->tetmesh.ptGrid, 1);
 		//	break;
-		case Qt::Key::Key_Q:
+        case Qt::Key::Key_Q:
             if(!e->isAutoRepeat())
+                //Q_EMIT keyQPressed();
                 this->addManipulator();
-			break;
+            break;
+            //if(!e->isAutoRepeat())
+            //    this->addManipulator();
+			//break;
 		case Qt::Key::Key_Space:
 			this->selectMode = not this->selectMode;
 			msg				 = "Turned selection mode " + (this->selectMode ? QString("on") : QString("off"));
@@ -320,9 +324,7 @@ void Viewer::addManipulator() {
     glm::vec3 origin;
     glm::vec3 direction;
     this->castRayFromMouse(origin, direction);
-    glm::vec3 positionOnGrid;
-    this->scene->slotGetPositionFromRay(origin, direction, positionOnGrid);
-    this->scene->slotAddManipulator(positionOnGrid);
+    emit this->scene->rayIsCasted(origin, direction);
 }
 
 void Viewer::castRayFromMouse(glm::vec3& origin, glm::vec3& direction) {

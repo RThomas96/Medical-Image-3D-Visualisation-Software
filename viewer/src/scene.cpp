@@ -221,7 +221,6 @@ void Scene::initGl(QOpenGLContext* _context) {
 
 	// Generate controller positions
 	//this->glMeshManipulator->initGL(this->get_context());
-	this->glMeshManipulator->toggleActivation();
 	this->sceneGL.initGl(this->get_context());
 	//this->glMeshManipulator->prepareSphere();
 
@@ -647,6 +646,7 @@ void Scene::addGrid(const GridGL * gridLoaded) {
 
     //Add manipulators
     this->createNewMeshManipulator(0, false);
+	this->glMeshManipulator->toggleActivation();
 
     //this->updateManipulatorPositions();
 	this->prepareManipulators();
@@ -3517,11 +3517,6 @@ void Scene::launchSaveDialog() {
 	return;
 }
 
-bool Scene::slotGetPositionFromRay(const glm::vec3& origin, const glm::vec3& direction, glm::vec3& res) {
-    res = glm::vec3(0., 0., 0.);
-    return (this->grids[0]->grid->grid->getPositionOfRayIntersection(origin, direction, this->getMinTexValue(), this->getMaxTexValue(), res));
-}
-
 void Scene::slotAddManipulator(const glm::vec3& position) {
     this->glMeshManipulator->meshManipulator->addManipulator(position);
 }
@@ -3540,6 +3535,7 @@ void Scene::createNewMeshManipulator(int i, bool onSurface) {
         this->glMeshManipulator->createNewMeshManipulator(this->grids[0]->grid->grid, this, i);
     }
     QObject::connect(this, SIGNAL(keyQReleased()), dynamic_cast<QObject*>(this->glMeshManipulator->meshManipulator), SIGNAL(keyQReleased()));
+    QObject::connect(this, &Scene::rayIsCasted, this, [this](const glm::vec3& origin, const glm::vec3& direction) { emit this->glMeshManipulator->meshManipulator->rayIsCasted(origin, direction, this->getMinTexValue(), this->getMaxTexValue());});
 }
 
 void Scene::setNormalDeformationMethod() {
@@ -3608,3 +3604,8 @@ void Scene::setColorChannel(ColorChannel mode) {
 	}
 }
 
+//void Scene::addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction) {
+//    //glm::vec3 res = glm::vec3(0., 0., 0.);
+//    //this->glMeshManipulator->meshManipulator->mesh->getPositionOfRayIntersection(origin, direction, this->getMinTexValue(), this->getMaxTexValue(), res);
+//    this->glMeshManipulator->meshManipulator->addManipulator(origin, direction);
+//}
