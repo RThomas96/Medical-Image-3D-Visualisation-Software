@@ -49,6 +49,11 @@ public:
     void setOrigin(const glm::vec3& origin);
     void setScale(float scale);
 
+    glm::vec3 toWorld(const glm::vec3& pt) const;
+
+    const glm::vec3& getVertice(int i) const;
+    const glm::vec3 getWorldVertice(int i) const;
+
     virtual void computeNeighborhood() = 0;
     virtual void computeNormals() = 0;
     virtual ~BaseMesh(){};

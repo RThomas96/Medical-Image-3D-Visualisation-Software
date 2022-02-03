@@ -35,7 +35,7 @@ int BaseMesh::getIdxOfClosestPoint(const glm::vec3& p) const{
     float distance = std::numeric_limits<float>::max();
     int res = 0;
     for(int i = 0; i < this->vertices.size(); ++i) {
-        const glm::vec3& p2 = this->vertices[i];
+        const glm::vec3& p2 = this->toWorld(this->vertices[i]);
         float currentDistance = glm::distance(p, p2);
         if(currentDistance < distance) {
             distance = currentDistance;
@@ -114,4 +114,16 @@ std::vector<glm::vec3> BaseMesh::getWorldMeshPositions() {
         worldPos.push_back(glm::vec3(pt[0], pt[1], pt[2]));
     }
     return worldPos;
+}
+
+glm::vec3 BaseMesh::toWorld(const glm::vec3& pt) const {
+    return glm::vec3(this->transformation * glm::vec4(pt, 1.));
+}
+
+const glm::vec3& BaseMesh::getVertice(int i) const {
+    return this->vertices[i];
+}
+
+const glm::vec3 BaseMesh::getWorldVertice(int i) const {
+    return glm::vec3(this->transformation * glm::vec4(this->vertices[i], 1.));
 }

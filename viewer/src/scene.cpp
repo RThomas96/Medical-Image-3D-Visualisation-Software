@@ -3550,10 +3550,12 @@ void Scene::createNewMeshManipulator(int i, bool onSurface) {
 
 void Scene::setNormalDeformationMethod() {
     this->grids[0]->grid->grid->setNormalDeformationMethod();
+    this->surfaceMesh->setNormalDeformationMethod();
 }
 
 void Scene::setWeightedDeformationMethod(float radius) {
     this->grids[0]->grid->grid->setWeightedDeformationMethod(radius);
+    this->surfaceMesh->setWeightedDeformationMethod(radius);
 }
 
 void Scene::setManipulatorRadius(float radius) {
