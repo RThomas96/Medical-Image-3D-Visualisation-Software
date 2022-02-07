@@ -51,6 +51,7 @@ public:
     void setScale(float scale);
 
     glm::vec3 toWorld(const glm::vec3& pt) const;
+    glm::vec3 toModel(const glm::vec3& pt) const;
 
     int getNbVertices() const;
     const glm::vec3& getVertice(int i) const;

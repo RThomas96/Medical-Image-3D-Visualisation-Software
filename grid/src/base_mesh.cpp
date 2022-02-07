@@ -120,6 +120,10 @@ glm::vec3 BaseMesh::toWorld(const glm::vec3& pt) const {
     return glm::vec3(this->transformation * glm::vec4(pt, 1.));
 }
 
+glm::vec3 BaseMesh::toModel(const glm::vec3& pt) const {
+    return glm::vec3(glm::inverse(this->transformation) * glm::vec4(pt, 1.));
+}
+
 const glm::vec3& BaseMesh::getVertice(int i) const {
     return this->vertices[i];
 }

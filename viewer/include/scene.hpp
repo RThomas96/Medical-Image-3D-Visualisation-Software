@@ -1,6 +1,7 @@
 #ifndef VIEWER_INCLUDE_SCENE_HPP_
 #define VIEWER_INCLUDE_SCENE_HPP_
 
+ #include <numeric>
 // Program-wide features and macros
 #include "../../features.hpp"
 #include "../../macros.hpp"
@@ -589,7 +590,7 @@ class ICP {
 
 public:
     unsigned int Ni=10,No=5,S=10;
-    float l=0.02;
+    float l=1.;
 
     glm::mat3 rotation;
     glm::vec3 origin;
@@ -653,7 +654,7 @@ public:
     
             for(float it = 0; it < No; ++it) {
                 float offset = it * l;
-                prof[Ni+it][ptIdx] = img.getValueFromPoint(currentPoint + offset * currentNormal);
+                prof[Ni+it][ptIdx] = img.getValueFromWorldPoint(currentPoint + offset * currentNormal);
             }
             currentNormal = -currentNormal;
             for(float it = 0; it < Ni; ++it) {
@@ -661,6 +662,18 @@ public:
                 prof[Ni-1-it][ptIdx] = img.getValueFromPoint(currentPoint + offset * currentNormal);
             }
         }
+        /***/
+        std::cout << "Ni = " << Ni << std::endl;
+        std::cout << "No = " << No << std::endl;
+        std::cout << "l  = " << l << std::endl;
+        std::cout << "[";
+        for(int i = 0; i < prof.size(); ++i) {
+            int sum = std::accumulate(prof[i].begin(), prof[i].end(), 0);
+            std::cout << sum << ", ";
+        }
+        std::cout << "]";
+        std::cout << std::endl;
+        /***/
         return prof;
     }
 

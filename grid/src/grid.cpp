@@ -39,6 +39,10 @@ void Grid::buildTetmesh(const glm::vec3& nbCube, const glm::vec3& sizeCube, cons
     this->initialMesh.buildGrid(nbCube, sizeCube, origin);
 }
 
+uint16_t Grid::getValueFromWorldPoint(const glm::vec3& p, ResolutionMode resolutionMode) const {
+    return this->getValueFromPoint(this->toModel(p), resolutionMode);
+}
+
 uint16_t Grid::getValueFromPoint(const glm::vec3& p, ResolutionMode resolutionMode) const {
     glm::vec3 pSamplerRes = p;
     // Even if we want to query a point a full resolution res, the bbox is still based on the sampler
