@@ -4,7 +4,7 @@
 SimpleImage::SimpleImage(const std::vector<std::string>& filename): cache(nullptr), useCache(true), tiffReader(new TIFFReader(filename)) {
     this->imgResolution = this->tiffReader->getImageResolution();
     this->imgDataType = this->tiffReader->getImageInternalDataType(); 
-    cache = new Cache(this->imgResolution, 3);
+    cache = new Cache(this->imgResolution, 100);
 }
 
 Image::ImageDataType SimpleImage::getInternalDataType() const {

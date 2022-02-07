@@ -46,8 +46,10 @@ public:
 
     glm::vec3 getOrigin();
     void translate(const glm::vec3& vec);
+    void rotate(const glm::mat3& transf);
     glm::mat4 getModelTransformation();
     void setOrigin(const glm::vec3& origin);
+    void setTransformation(const glm::mat3& transf);
     void setScale(float scale);
 
     glm::vec3 toWorld(const glm::vec3& pt) const;
@@ -57,6 +59,7 @@ public:
     const glm::vec3& getVertice(int i) const;
     const glm::vec3& getVerticeNormal(int i) const;
     const glm::vec3 getWorldVertice(int i) const;
+    const glm::vec3 getWorldVerticeNormal(int i) const;
 
     virtual bool getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, glm::vec3& res) const = 0;
     virtual void computeNeighborhood() = 0;

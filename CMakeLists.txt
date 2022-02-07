@@ -184,39 +184,77 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(Catch2)
 
-#add_executable(tests tests/grid_tests.cpp
-#                     tests/tetmesh_tests.cpp
-#
-#                     grid/include/grid.hpp
-#                     grid/include/base_mesh.hpp
-#                     grid/include/tetrahedral_mesh.hpp
-#                     grid/include/surface_mesh.hpp
-#                     grid/include/mesh_deformator.hpp
-#                     grid/include/tiff_image.hpp
-#
-#                     grid/src/grid.cpp
-#                     grid/src/base_mesh.cpp
-#                     grid/src/tetrahedral_mesh.cpp
-#                     grid/src/surface_mesh.cpp
-#                     grid/src/mesh_deformator.cpp
-#                     grid/src/tiff_image.cpp)
-#
-#TARGET_INCLUDE_DIRECTORIES(tests
-#	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/third_party/glm/
-#	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include
-#	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include/nifti
-#	PRIVATE ${QGLViewer_HEADER_DIR}
-#	PRIVATE ${libTIFF_HEADER_DIR}
-#	PRIVATE ${OPENGL_INCLUDE_DIRS}
-#)
-#
-#target_link_libraries(tests PRIVATE Catch2::Catch2WithMain
-#	                        PUBLIC TinyTIFF
-#	                        PUBLIC Qt5::OpenGL
-#	                        PUBLIC ${libTIFF}
-#                            )
+ADD_EXECUTABLE(tests
 
-###
+    ./tests/ICP_tests.cpp
+
+    ./grid/include/grid.hpp
+    ./grid/include/base_mesh.hpp
+    ./grid/include/tetrahedral_mesh.hpp
+    ./grid/include/drawable_surface_mesh.hpp
+    ./grid/include/mesh_deformator.hpp
+    ./grid/include/tiff_image.hpp
+    #./grid/include/GLmanipulator.hpp
+    ./grid/include/manipulator.hpp
+    ./grid/include/mesh_manipulator.hpp
+
+    #Probably to remove
+    ./image/transforms/include/affine_transform.hpp
+    ./image/transforms/src/affine_transform.cpp
+    ./image/transforms/include/transform_interface.hpp
+    ./image/transforms/include/transform_stack.hpp
+    ./image/transforms/src/transform_stack.cpp
+    ./image/transforms/include/trs_transform.hpp
+    ./image/transforms/src/trs_transform.cpp
+    ./image/utils/include/image_api_common.hpp
+    ./image/utils/include/bounding_box.hpp
+    ./image/utils/include/threaded_task.hpp
+    ./image/utils/src/threaded_task.cpp
+
+    ./grid/src/grid.cpp
+    ./grid/src/base_mesh.cpp
+    ./grid/src/tetrahedral_mesh.cpp
+    ./grid/src/surface_mesh.cpp
+    ./grid/src/drawable_surface_mesh.cpp
+    ./grid/src/mesh_deformator.cpp
+    ./grid/src/tiff_image.cpp
+    #./grid/src/GLmanipulator.cpp
+    ./grid/src/manipulator.cpp
+    ./grid/src/mesh_manipulator.cpp
+)
+TARGET_COMPILE_OPTIONS(tests
+	PUBLIC "-Wno-deprecated-declarations"
+)
+TARGET_PRECOMPILE_HEADERS(tests
+	PRIVATE ${QGLViewer_HEADER_DIR}/QGLViewer/qglviewer.h
+)
+TARGET_INCLUDE_DIRECTORIES(tests
+	PRIVATE ${OPENGL_INCLUDE_DIRS}
+	PRIVATE ${QGLViewer_HEADER_DIR}
+	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/third_party/glm/
+	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include
+	# Nifti uses brace-include without the 'nifti/' prefix, leading
+	# to manually have to include the lib's include dir in targets:
+	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include/nifti
+)
+TARGET_LINK_LIBRARIES(tests
+    PRIVATE Catch2::Catch2WithMain
+	PUBLIC Qt5::Core
+	PUBLIC Qt5::Gui
+	PUBLIC Qt5::Xml
+	PUBLIC Qt5::Widgets
+	PUBLIC Qt5::OpenGL
+	PUBLIC ${OPENGL_LIBRARIES}
+	PUBLIC ${QGLViewer}
+	PUBLIC VisualisationWidgets
+	PUBLIC ${CMAKE_PROJECT_NAME}_shaders
+	PUBLIC ${CMAKE_PROJECT_NAME}_mesh
+	PUBLIC ${CMAKE_PROJECT_NAME}_deformable_curve
+	PUBLIC ${CMAKE_PROJECT_NAME}_meshop_arap
+	PUBLIC ${CMAKE_PROJECT_NAME}_drawable_meshes
+	PUBLIC TinyTIFF
+	PUBLIC ${libTIFF}
+)
 
 ##TARGET_INCLUDE_DIRECTORIES(${CMAKE_PROJECT_NAME}_mesh
 ##	PRIVATE ${LOCAL_GLM_HEADER_DIR}

@@ -136,6 +136,22 @@ const glm::vec3 BaseMesh::getWorldVertice(int i) const {
     return glm::vec3(this->transformation * glm::vec4(this->vertices[i], 1.));
 }
 
+const glm::vec3 BaseMesh::getWorldVerticeNormal(int i) const {
+    return glm::normalize(glm::vec3(this->transformation * glm::vec4(this->verticesNormals[i], 1.)));
+}
+
 int BaseMesh::getNbVertices() const {
     return this->vertices.size();
+}
+
+void BaseMesh::rotate(const glm::mat3& transf) {
+    for(int i = 0; i < 3; ++i)
+        for(int j = 0; j < 3; ++j)
+            this->transformation[i][j] += transf[i][j];
+}
+
+void BaseMesh::setTransformation(const glm::mat3& transf) {
+    for(int i = 0; i < 3; ++i)
+        for(int j = 0; j < 3; ++j)
+            this->transformation[i][j] = transf[i][j];
 }

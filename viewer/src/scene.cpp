@@ -224,7 +224,7 @@ void Scene::initGl(QOpenGLContext* _context) {
 	this->sceneGL.initGl(this->get_context());
 	//this->glMeshManipulator->prepareSphere();
 
-    this->surfaceMesh = new SurfaceMesh("/home/thomas/data/Projets/visualisation/build/bin/femur.off");
+    this->surfaceMesh = new SurfaceMesh("/home/thomas/data/Projets/visualisation/build/bin/femur_aligned.off");
     this->drawableMesh = new DrawableMeshV2();
     this->drawableMesh->mesh = this->surfaceMesh;
     this->drawableMesh->initialize(this->context, this);
@@ -3540,8 +3540,8 @@ void Scene::toggleWireframe() {
 void Scene::createNewMeshManipulator(int i, bool onSurface) {
     if(onSurface) {
         // TODO: do not connect deform to the ICP mesh
-        //this->glMeshManipulator->createNewMeshManipulator(this->surfaceMesh, this, i);
-        this->glMeshManipulator->createNewMeshManipulator(this->icp->surface, this, i);
+        this->glMeshManipulator->createNewMeshManipulator(this->surfaceMesh, this, i);
+        //this->glMeshManipulator->createNewMeshManipulator(this->icp->surface, this, i);
     } else {
         this->glMeshManipulator->createNewMeshManipulator(this->grids[this->gridToDraw]->grid->grid, this, i);
     }
@@ -3616,10 +3616,11 @@ void Scene::setColorChannel(ColorChannel mode) {
 }
 
 void Scene::createNewICP() {
-    this->icp = new ICP(this->grids[0]->grid->grid, this->grids[1]->grid->grid, "/home/thomas/data/Projets/visualisation/build/bin/femur.off");
-    this->drawableMesh->mesh = this->icp->surface;
+    //this->icp = new ICP(this->grids[0]->grid->grid, this->grids[1]->grid->grid, "/home/thomas/data/Projets/visualisation/build/bin/femur_aligned.off");
+    //this->drawableMesh->mesh = this->icp->surface;
 }
 
 void Scene::ICPIteration() {
-    this->icp->iteration();
+    //this->icp->iteration();
 }
+
