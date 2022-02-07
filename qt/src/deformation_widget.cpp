@@ -21,8 +21,10 @@ GridDeformationWidget::GridDeformationWidget(Scene* scene, QWidget* parent) :
     this->setWindowFlags(Qt::WindowStaysOnTopHint);
 
 	this->group_mesh = new QGroupBox("Mesh to select");
-	this->radio_mesh_grid = new QRadioButton("Grid");
-	this->radio_mesh_grid->setChecked(true);
+	this->radio_mesh_grid_1 = new QRadioButton("Grid 1");
+	this->radio_mesh_grid_1->setChecked(true);
+	this->radio_mesh_grid_2 = new QRadioButton("Grid 2");
+	this->radio_mesh_grid_2->setChecked(false);
 	this->radio_mesh_surface = new QRadioButton("Surface");
 	this->radio_mesh_surface->setChecked(false);
 
@@ -75,8 +77,9 @@ void GridDeformationWidget::setupLayouts() {
 	this->group_selector->setLayout(this->layout_selector);
 	this->group_move->setLayout(this->layout_move);
 
-	this->layout_mesh->addWidget(this->radio_mesh_grid, 1);
-	this->layout_mesh->addWidget(this->radio_mesh_surface, 2);
+	this->layout_mesh->addWidget(this->radio_mesh_grid_1, 1);
+	this->layout_mesh->addWidget(this->radio_mesh_grid_2, 2);
+	this->layout_mesh->addWidget(this->radio_mesh_surface, 3);
 
 	this->layout_selector->addWidget(this->radio_selector_direct, 1);
 	this->layout_selector->addWidget(this->radio_selector_free, 2);
@@ -108,7 +111,9 @@ GridDeformationWidget::~GridDeformationWidget() {
 }
 
 void GridDeformationWidget::setupSignals(Scene* scene) {
-	QObject::connect(this->radio_mesh_grid, &QPushButton::clicked, this, [this, scene]() {this->useSurface = false;});
+	QObject::connect(this->radio_mesh_grid_1, &QPushButton::clicked, this, [this, scene]() {this->useSurface = false; scene->sendTetmeshToGPU(0, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS | InfoToSend::TEXCOORD | InfoToSend::NEIGHBORS)); scene->gridToDraw = 0;});
+
+	QObject::connect(this->radio_mesh_grid_2, &QPushButton::clicked, this, [this, scene]() {this->useSurface = false; scene->sendTetmeshToGPU(1, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS | InfoToSend::TEXCOORD | InfoToSend::NEIGHBORS)); scene->gridToDraw = 1;});
 
 	QObject::connect(this->radio_mesh_surface, &QPushButton::clicked, this, [this, scene]() {this->useSurface = true;});
 

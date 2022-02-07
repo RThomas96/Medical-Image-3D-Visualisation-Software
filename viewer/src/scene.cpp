@@ -514,12 +514,9 @@ void Scene::updateProgressBar() {
 	return;
 }
 
-void Scene::addGrid(const GridGL * gridLoaded) {
-    // TODO: probably a bug here
-	glm::vec<4, std::size_t, glm::defaultp> dimensions{gridLoaded->getResolution(), 2};
+uint16_t Scene::sendGridValuesToGPU(int gridIdx) {
 
-	GridGLView::Ptr gridView = std::make_shared<GridGLView>(gridLoaded);
-
+	glm::vec<4, std::size_t, glm::defaultp> dimensions{this->grids[gridIdx]->grid->getResolution(), 2};
 	TextureUpload _gridTex{};
 	_gridTex.minmag.x  = GL_NEAREST;
 	_gridTex.minmag.y  = GL_NEAREST;
@@ -571,20 +568,20 @@ void Scene::addGrid(const GridGL * gridLoaded) {
 	_gridTex.size.z = dimensions.z;
 
 	std::vector<std::uint16_t> slices;
-    gridView->gridTexture = this->newAPI_uploadTexture3D_allocateonly(_gridTex);
+    this->grids[gridIdx]->gridTexture = this->newAPI_uploadTexture3D_allocateonly(_gridTex);
 
-    int nbSlice = gridView->grid->getNbSlice();
+    int nbSlice = this->grids[gridIdx]->grid->getNbSlice();
 
     //TODO: this computation do not belong here
     uint16_t max = std::numeric_limits<uint16_t>::min();
 
-    dimensions[0] = dimensions[0] * 2.;
+    dimensions[0] = dimensions[0] * dimensions[3];// Because we have "a" value
 
     bool addArticialBoundaries = true;
 
     int sliceI = 0;
 	for (std::size_t s = 0; s < nbSlice; ++s) {
-        gridView->grid->getGridSlice(s, slices, dimensions.a);
+        this->grids[gridIdx]->grid->getGridSlice(s, slices, dimensions.a);
         if(addArticialBoundaries) {
             if(s == 0 || s == nbSlice-1){
                 std::fill(slices.begin(), slices.end(), 0);
@@ -601,12 +598,25 @@ void Scene::addGrid(const GridGL * gridLoaded) {
                 }
             }
         }
-		this->newAPI_uploadTexture3D(gridView->gridTexture, _gridTex, sliceI, slices);
+		this->newAPI_uploadTexture3D(this->grids[gridIdx]->gridTexture, _gridTex, sliceI, slices);
 
         max = std::max(max, *std::max_element(slices.begin(), slices.end()));
         slices.clear();
         sliceI++;
 	}
+    this->shouldUpdateUBOData = true;
+
+    return max;
+}
+
+void Scene::addGrid(const GridGL * gridLoaded) {
+    // TODO: probably a bug here
+	glm::vec<4, std::size_t, glm::defaultp> dimensions{gridLoaded->getResolution(), 2};
+
+	GridGLView::Ptr gridView = std::make_shared<GridGLView>(gridLoaded);
+	this->grids.push_back(gridView);
+
+    uint16_t max = sendGridValuesToGPU(this->grids.size() -1);
 
     std::cout << "Max value: " << max << std::endl;
     gridView->colorChannelAttributes[0].setMaxVisible(max);
@@ -637,8 +647,6 @@ void Scene::addGrid(const GridGL * gridLoaded) {
 	this->setUniformBufferData(gridView->uboHandle_colorAttributes, 32, 32, &gridView->colorChannelAttributes[0]);
 	this->setUniformBufferData(gridView->uboHandle_colorAttributes, 64, 32, &gridView->colorChannelAttributes[1]);
 	this->setUniformBufferData(gridView->uboHandle_colorAttributes, 96, 32, &gridView->colorChannelAttributes[2]);
-
-	this->grids.push_back(gridView);
 
     //Send grid texture
 	this->sendTetmeshToGPU(0, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS | InfoToSend::TEXCOORD | InfoToSend::NEIGHBORS));
@@ -1325,7 +1333,7 @@ void Scene::drawGridMonoPlaneView(glm::vec2 fbDims, planes _plane, planeHeading 
 // Do for all grids :
 #warning drawPlaneView() : Only draws the first grid !
 	if (not this->grids.empty()) {
-		this->prepareUniformsMonoPlaneView(_plane, _heading, fbDims, zoomRatio, offset, this->grids[0]);
+		this->prepareUniformsMonoPlaneView(_plane, _heading, fbDims, zoomRatio, offset, this->grids[this->gridToDraw]);
 
 		this->setupVAOPointers();
 
@@ -1373,7 +1381,7 @@ void Scene::drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane) {
 	glBindVertexArray(this->vao);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vbo_PlaneElement);
 	if (not this->grids.empty()) {
-		this->prepareUniformsPlanes(mvMat, pMat, planes::x, this->grids[0], showTexOnPlane);
+		this->prepareUniformsPlanes(mvMat, pMat, planes::x, this->grids[this->gridToDraw], showTexOnPlane);
 		this->setupVAOPointers();
 		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(6), GL_UNSIGNED_INT, static_cast<GLvoid*>(0));
 	}
@@ -1386,7 +1394,7 @@ void Scene::drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane) {
 	glBindVertexArray(this->vao);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vbo_PlaneElement);
 	if (not this->grids.empty()) {
-		this->prepareUniformsPlanes(mvMat, pMat, planes::y, this->grids[0], showTexOnPlane);
+		this->prepareUniformsPlanes(mvMat, pMat, planes::y, this->grids[this->gridToDraw], showTexOnPlane);
 		this->setupVAOPointers();
 
 		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(6), GL_UNSIGNED_INT, (GLvoid*) (6 * sizeof(GLuint)));
@@ -1400,7 +1408,7 @@ void Scene::drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane) {
 	glBindVertexArray(this->vao);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vbo_PlaneElement);
 	if (not this->grids.empty()) {
-		this->prepareUniformsPlanes(mvMat, pMat, planes::z, this->grids[0], showTexOnPlane);
+		this->prepareUniformsPlanes(mvMat, pMat, planes::z, this->grids[this->gridToDraw], showTexOnPlane);
 		this->setupVAOPointers();
 
 		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(6), GL_UNSIGNED_INT, (GLvoid*) (12 * sizeof(GLuint)));
@@ -1732,7 +1740,7 @@ void Scene::prepareUniformsMonoPlaneView(planes _plane, planeHeading _heading, g
 	//const Image::bbox_t::vec& bbox	 = this->sceneBB.getDiagonal();
 	//const Image::bbox_t::vec& posBox = this->sceneBB.getMin();
 
-	const Image::bbox_t::vec& bbox	 = this->grids[0]->grid->getResolution();
+	const Image::bbox_t::vec& bbox	 = this->grids[this->gridToDraw]->grid->getResolution();
 	const Image::bbox_t::vec& posBox = glm::vec3(0., 0., 0.);
 
 	// The correct bounding box coordinates :
@@ -1754,7 +1762,7 @@ void Scene::prepareUniformsMonoPlaneView(planes _plane, planeHeading _heading, g
 	uint plane_heading							= planeHeadingToIndex(_heading);
 #warning Transform API is still in-progress.
 	// Grid dimensions :
-	glm::vec3 gridDimensions = this->grids[0]->grid->getResolution();
+	glm::vec3 gridDimensions = this->grids[this->gridToDraw]->grid->getResolution();
 	// Depth of the plane :
 	glm::vec3 planePos = this->computePlanePositions();
 
@@ -1999,7 +2007,7 @@ void Scene::prepareUniformsGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm
 
 //const glm::mat4& gridTransfo = _grid->grid->getTransform_GridToWorld();
 #warning Transform API is still in-progress.
-	glUniformMatrix4fv(location_mMat, 1, GL_FALSE, glm::value_ptr(this->grids[0]->grid->grid->getModelTransformation()));
+	glUniformMatrix4fv(location_mMat, 1, GL_FALSE, glm::value_ptr(this->grids[this->gridToDraw]->grid->grid->getModelTransformation()));
 	glUniformMatrix4fv(location_vMat, 1, GL_FALSE, mvMat);
 	glUniformMatrix4fv(location_pMat, 1, GL_FALSE, pMat);
 
@@ -2175,9 +2183,10 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 
 		/***********************/
 
-		for (std::size_t i = 0; i < this->grids.size(); ++i) {
-			this->drawGridVolumetricView(mvMat, pMat, camPos, this->grids[i]);
-		}
+		//for (std::size_t i = 0; i < this->grids.size(); ++i) {
+        if(this->grids.size() > 0)
+            this->drawGridVolumetricView(mvMat, pMat, camPos, this->grids[gridToDraw]);
+		//}
 
 		if (this->drawMode == DrawMode::VolumetricBoxed) {
 			this->drawBoundingBox(this->visuBox, glm::vec3(1., .0, .0), mvMat, pMat);
@@ -2779,14 +2788,14 @@ std::pair<glm::uvec3, glm::uvec3> Scene::getVisuBoxCoordinates() {
 	// if (this->grids.size() == 0) {
 	// 	return std::make_pair<glm::uvec3, glm::uvec3>(glm::uvec3(), glm::uvec3());
 	// }
-	// if (this->grids[0]->grid.size() == 0) {
+	// if (this->grids[this->gridToDraw]->grid.size() == 0) {
 	// 	return std::make_pair<glm::uvec3, glm::uvec3>(glm::uvec3(), glm::uvec3());
 	// }
 
 	// std::pair<glm::uvec3, glm::uvec3> result;
 
 	// auto mi		   = this->computePlanePositions();
-	// glm::uvec3 min = this->grids[0]->grid[0]->worldPositionToIndex(glm::vec4(mi, 1.));
+	// glm::uvec3 min = this->grids[this->gridToDraw]->grid[0]->worldPositionToIndex(glm::vec4(mi, 1.));
 	// result.first   = min;
 
 	// // The second coordinate can be directly taken from the current value (automatically max of scene)
@@ -2815,7 +2824,7 @@ void Scene::updateVisuBoxCoordinates() {
 	this->visuBox = Image::bbox_t();
 
 	if (this->grids.size()) {
-		const GridGL * g	 = this->grids[0]->grid;
+		const GridGL * g	 = this->grids[this->gridToDraw]->grid;
 		auto min			 = glm::vec3(.0);
 		auto max			 = glm::convert_to<float>(g->getResolution());
 		Image::bbox_t imgBox = Image::bbox_t(min, max);
@@ -2830,7 +2839,7 @@ void Scene::resetVisuBox() {
 
 	if (this->grids.size()) {
 		this->visuMin	 = glm::uvec3(0, 0, 0);
-		Image::svec3 max = this->grids[0]->grid->getResolution();
+		Image::svec3 max = this->grids[this->gridToDraw]->grid->getResolution();
 		this->visuMax	 = glm::uvec3(max.x, max.y, max.z);
 		this->updateVisuBoxCoordinates();
 	}
@@ -3384,7 +3393,7 @@ void Scene::resetPositionResponse() {
 }
 
 void Scene::prepareManipulators() {
-    //glm::vec3 ratio = this->grids[0]->grid->resolutionRatio;
+    //glm::vec3 ratio = this->grids[this->gridToDraw]->grid->resolutionRatio;
     //this->glMeshManipulator->setRadius(10.f / ratio[0]);
     this->glMeshManipulator->setRadius(10.f);
 	this->glMeshManipulator->prepare();
@@ -3513,7 +3522,7 @@ void Scene::launchSaveDialog() {
 		return;
 	}
     std::cout << "The filename is: " << this->filename << std::endl;
-    this->grids[0]->grid->grid->writeDeformedGrid();
+    this->grids[this->gridToDraw]->grid->grid->writeDeformedGrid();
 	return;
 }
 
@@ -3534,19 +3543,19 @@ void Scene::createNewMeshManipulator(int i, bool onSurface) {
         //this->glMeshManipulator->createNewMeshManipulator(this->surfaceMesh, this, i);
         this->glMeshManipulator->createNewMeshManipulator(this->icp->surface, this, i);
     } else {
-        this->glMeshManipulator->createNewMeshManipulator(this->grids[0]->grid->grid, this, i);
+        this->glMeshManipulator->createNewMeshManipulator(this->grids[this->gridToDraw]->grid->grid, this, i);
     }
     QObject::connect(this, SIGNAL(keyQReleased()), dynamic_cast<QObject*>(this->glMeshManipulator->meshManipulator), SIGNAL(keyQReleased()));
     QObject::connect(this, &Scene::rayIsCasted, this, [this](const glm::vec3& origin, const glm::vec3& direction) { emit this->glMeshManipulator->meshManipulator->rayIsCasted(origin, direction, this->getMinTexValue(), this->getMaxTexValue());});
 }
 
 void Scene::setNormalDeformationMethod() {
-    this->grids[0]->grid->grid->setNormalDeformationMethod();
+    this->grids[this->gridToDraw]->grid->grid->setNormalDeformationMethod();
     this->surfaceMesh->setNormalDeformationMethod();
 }
 
 void Scene::setWeightedDeformationMethod(float radius) {
-    this->grids[0]->grid->grid->setWeightedDeformationMethod(radius);
+    this->grids[this->gridToDraw]->grid->grid->setWeightedDeformationMethod(radius);
     this->surfaceMesh->setWeightedDeformationMethod(radius);
 }
 
@@ -3607,7 +3616,7 @@ void Scene::setColorChannel(ColorChannel mode) {
 }
 
 void Scene::createNewICP() {
-    this->icp = new ICP(this->grids[0]->grid->grid, "/home/thomas/data/Projets/visualisation/build/bin/target.tiff", "/home/thomas/data/Projets/visualisation/build/bin/femur.off");
+    this->icp = new ICP(this->grids[0]->grid->grid, this->grids[1]->grid->grid, "/home/thomas/data/Projets/visualisation/build/bin/femur.off");
     this->drawableMesh->mesh = this->icp->surface;
 }
 

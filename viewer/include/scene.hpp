@@ -532,6 +532,7 @@ public slots:
 	void setColorChannel(ColorChannel mode);
     void sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend);
     void sendFirstTetmeshToGPU();
+    uint16_t sendGridValuesToGPU(int gridIdx);
 
     //void addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction, bool onSurface);
 /*************/
@@ -539,6 +540,8 @@ public slots:
 /*************/
 public:
     std::string filename = "";
+
+    int gridToDraw = 0;
 
     SurfaceMesh * surfaceMesh;
     DrawableMeshV2 * drawableMesh;
@@ -602,7 +605,7 @@ public:
 
     std::vector<std::vector<uint16_t>> sourceProf;
 
-    ICP(Grid * src, const std::string& filenameGrid, std::string const &filename): src(src), target(new Grid(filenameGrid, 1.)), surface(new ICPMesh(filename)) {
+    ICP(Grid * src, Grid * target, std::string const &filename): src(src), target(target), surface(new ICPMesh(filename)) {
 
         //this->surface->setOrigin(glm::vec3(130., 50., 130.));
         this->surface->setOrigin(glm::vec3(90., 50., 130.));
@@ -610,7 +613,6 @@ public:
 
         this->rotation = glm::mat3(1.f);
         this->origin = glm::vec3(0., 0., 0.);
-        this->target->buildTetmesh(glm::vec3(5., 5., 5.));
         this->sourceProf = computeProfiles(*this->surface, *this->src, Ni, No, l);
     }
 
@@ -715,6 +717,7 @@ public:
             c  += mesh.getWeight(i)*mesh.getCorrespondence(i);
             N  += mesh.getWeight(i);
         }
+        std::cout << "N is " << n << std ::endl;
         c0 /=N; 
         c  /=N;
 

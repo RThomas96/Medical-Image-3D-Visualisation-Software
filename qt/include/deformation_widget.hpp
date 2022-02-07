@@ -38,7 +38,8 @@ protected:
 
 	QHBoxLayout*             layout_mesh;
 	QGroupBox*                group_mesh;
-	QRadioButton*        radio_mesh_grid; 
+	QRadioButton*      radio_mesh_grid_1; 
+	QRadioButton*      radio_mesh_grid_2; 
 	QRadioButton*     radio_mesh_surface; 
 
 	QHBoxLayout*          layout_selector;
