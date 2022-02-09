@@ -1,10 +1,9 @@
 #include "../include/tiff_image.hpp"
 #include <algorithm>
 
-SimpleImage::SimpleImage(const std::vector<std::string>& filename): cache(nullptr), useCache(true), tiffReader(new TIFFReader(filename)) {
+SimpleImage::SimpleImage(const std::vector<std::string>& filename): tiffReader(new TIFFReader(filename)) {
     this->imgResolution = this->tiffReader->getImageResolution();
     this->imgDataType = this->tiffReader->getImageInternalDataType(); 
-    cache = new Cache(this->imgResolution, 100);
 }
 
 Image::ImageDataType SimpleImage::getInternalDataType() const {
@@ -47,22 +46,15 @@ uint16_t getToLowPrecision(Image::ImageDataType imgDataType, const tdata_t& buf,
 }
 
 uint16_t SimpleImage::getValue(const glm::vec3& coord) const {
+    // If we read directly from the raw image we use Nearest Neighbor interpolation
     const glm::vec3 newCoord{std::floor(coord[0]), std::floor(coord[1]), std::floor(coord[2])};
     int imageIdx = newCoord[2];
-    if(this->useCache) {
-        if(!cache->isCached(imageIdx)) {
-            std::vector<uint16_t> * cacheToFill = cache->storeImage(imageIdx);
-            this->getFullSlice(imageIdx, *cacheToFill);
-        }
-        return cache->getValue(newCoord);
-    } else {
-        this->tiffReader->setImageToRead(imageIdx);
-        tdata_t buf = _TIFFmalloc(this->tiffReader->getScanLineSize());
-        this->tiffReader->readScanline(buf, newCoord[1]);
-        uint16_t res = getToLowPrecision(this->getInternalDataType(), buf, newCoord[0]); 
-        _TIFFfree(buf);
-        return res;
-    }
+    this->tiffReader->setImageToRead(imageIdx);
+    tdata_t buf = _TIFFmalloc(this->tiffReader->getScanLineSize());
+    this->tiffReader->readScanline(buf, newCoord[1]);
+    uint16_t res = getToLowPrecision(this->getInternalDataType(), buf, newCoord[0]);
+    _TIFFfree(buf);
+    return res;
 }
 
 //Function to cast and insert for the get slice
@@ -125,56 +117,6 @@ void SimpleImage::getSlice(int sliceIdx, std::vector<std::uint16_t>& result, int
 
 void SimpleImage::getFullSlice(int sliceIdx, std::vector<std::uint16_t>& result) const {
     this->getSlice(sliceIdx, result, 1, std::pair<int, int>{1, 1}, std::pair<glm::vec3, glm::vec3>{glm::vec3(0., 0., 0.), this->imgResolution});
-}
-
-void SimpleImage::setUseCache(bool useCache) {
-    this->useCache = useCache;
-}
-
-void SimpleImage::setCacheCapacity(int capacity) {
-    this->cache->setCapacity(capacity);
-}
-
-/****/
-
-//Cache::Cache(TIFF * tiff, glm::vec3 imageSize, Image::ImageDataType imageDataType, int capacity = 3): tif(tiff), imageSize(imageSize), capacity(capacity), imgDataType(imageDataType), nbInsertion(0), data(std::vector<std::vector<std::vector<uint16_t>>>(this->capacity, std::vector<std::vector<uint16_t>>(this->imageSize[0], std::vector<uint16_t>(this->imageSize[1], 0)))), indices(std::vector<int>(this->capacity, -1)) {}
-Cache::Cache(glm::vec3 imageSize, int capacity = 3): imageSize(imageSize), capacity(capacity), nbInsertion(0), data(std::vector<std::vector<uint16_t>>(this->capacity, std::vector<uint16_t>())), indices(std::vector<int>(this->capacity, -1)) {}
-
-uint16_t Cache::getValue(const glm::vec3& coord) {
-    return this->data[this->getCachedIdx(coord[2])][coord[1]*this->imageSize[0]+coord[0]];
-}
-
-int Cache::getCachedIdx(int imageIdx) const {
-    if(!this->isCached(imageIdx)) {
-        std::cout << "ERROR: try to load an imahe that is not in cache !" << std::endl;
-        return -1;
-    }
-    auto it = std::find(this->indices.begin(), this->indices.end(), imageIdx);
-    return std::distance(this->indices.begin(), it);
-}
-
-bool Cache::isCached(int imageIdx) const {
-    return (std::find(this->indices.begin(), this->indices.end(), imageIdx) != this->indices.end());
-}
-
-std::vector<uint16_t> * Cache::storeImage(int imageIdx) {
-    std::pair<glm::vec3, glm::vec3> bboxes{glm::vec3(0., 0., 0.), glm::vec3(this->imageSize)};
-
-    int nextImageToReplace = this->getNextCachedImageToReplace();
-    indices[nextImageToReplace] = imageIdx;
-    this->data[nextImageToReplace].clear();
-    this->nbInsertion += 1;
-    return &this->data[nextImageToReplace];
-}
-
-int Cache::getNextCachedImageToReplace() const {
-    return this->nbInsertion % this->capacity;
-}
-
-void Cache::setCapacity(int capacity) {
-    this->capacity = capacity;
-    this->data = std::vector<std::vector<uint16_t>>(this->capacity, std::vector<uint16_t>());
-    this->indices = std::vector<int>(this->capacity, -1);
 }
 
 /***/

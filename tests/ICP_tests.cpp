@@ -321,15 +321,15 @@ TEST_CASE("Check compute profile", "[ICP]") {
 
     //icp.computeCorrespondences(*icp.surface, dist, 1.);
 
-    for(int i = 0; i < 20; ++i) {
-        icp.iteration();
-        std::cout << "--------------" << std::endl;
-        std::cout << "STEP" << i << std::endl;
-        std::cout << "--------------" << std::endl;
-        for(int i = 0; i < icp.surface->getNbVertices(); ++i) {
-            std::cout << glm::to_string(icp.surface->originalPoints[i]) << std::endl;
-            std::cout << glm::to_string(icp.surface->getWorldVertice(i)) << std::endl;
-            std::cout << "---" << std::endl << std::endl;
-        }
-    }
+    //for(int i = 0; i < 20; ++i) {
+    //    icp.iteration();
+    //    std::cout << "--------------" << std::endl;
+    //    std::cout << "STEP" << i << std::endl;
+    //    std::cout << "--------------" << std::endl;
+    //    for(int i = 0; i < icp.surface->getNbVertices(); ++i) {
+    //        std::cout << glm::to_string(icp.surface->originalPoints[i]) << std::endl;
+    //        std::cout << glm::to_string(icp.surface->getWorldVertice(i)) << std::endl;
+    //        std::cout << "---" << std::endl << std::endl;
+    //    }
+    //}
 }

@@ -39,11 +39,11 @@ void Grid::buildTetmesh(const glm::vec3& nbCube, const glm::vec3& sizeCube, cons
     this->initialMesh.buildGrid(nbCube, sizeCube, origin);
 }
 
-uint16_t Grid::getValueFromWorldPoint(const glm::vec3& p, ResolutionMode resolutionMode) const {
-    return this->getValueFromPoint(this->toModel(p), resolutionMode);
+uint16_t Grid::getValueFromWorldPoint(const glm::vec3& p, InterpolationMethod interpolationMethod, ResolutionMode resolutionMode) const {
+    return this->getValueFromPoint(this->toModel(p), interpolationMethod, resolutionMode);
 }
 
-uint16_t Grid::getValueFromPoint(const glm::vec3& p, ResolutionMode resolutionMode) const {
+uint16_t Grid::getValueFromPoint(const glm::vec3& p, InterpolationMethod interpolationMethod, ResolutionMode resolutionMode) const {
     glm::vec3 pSamplerRes = p;
     // Even if we want to query a point a full resolution res, the bbox is still based on the sampler
     // So the bbox check need to be in sampler space
@@ -51,18 +51,18 @@ uint16_t Grid::getValueFromPoint(const glm::vec3& p, ResolutionMode resolutionMo
         pSamplerRes = p / this->sampler.resolutionRatio;
     }
     if(isPtInBB(pSamplerRes, this->sampler.bbMin, this->sampler.bbMax)) {
-        return this->sampler.getValue(p, resolutionMode);
+        return this->sampler.getValue(p, interpolationMethod, resolutionMode);
     } else {
         // Background value
         return 0;
     }
 }
 
-uint16_t Grid::getDeformedValueFromPoint(const TetMesh& initial, const glm::vec3& p, ResolutionMode resolutionMode) const {
+uint16_t Grid::getDeformedValueFromPoint(const TetMesh& initial, const glm::vec3& p, InterpolationMethod interpolationMethod, ResolutionMode resolutionMode) const {
     glm::vec3 pt2 = this->getCoordInInitial(initial, p);
     if(resolutionMode == ResolutionMode::FULL_RESOLUTION)
         this->sampler.fromSamplerToImage(pt2);
-    return this->getValueFromPoint(pt2, resolutionMode);
+    return this->getValueFromPoint(pt2, interpolationMethod, resolutionMode);
 }
 
 void Grid::writeDeformedGrid(ResolutionMode resolutionMode) {
@@ -122,7 +122,7 @@ void Grid::writeDeformedGrid(ResolutionMode resolutionMode) {
 
                 if(resolutionMode == ResolutionMode::FULL_RESOLUTION)
                     this->sampler.fromSamplerToImage(pt2);// Here we do a convertion because the final point is on image space 
-                data.push_back(this->getValueFromPoint(pt2, resolutionMode));// Here we stay at sampler resolution because bbox are aligned on the sampler
+                data.push_back(this->getValueFromPoint(pt2, InterpolationMethod::NearestNeighbor, resolutionMode));// Here we stay at sampler resolution because bbox are aligned on the sampler
             }
         }
         TinyTIFFWriter_writeImage(tif, data.data());
@@ -179,6 +179,11 @@ Sampler::Sampler(const std::vector<std::string>& filename, int subsample, const 
 
     this->subregionMin = bbox.first;
     this->subregionMax = bbox.second;
+
+    // Cache management
+    this->useCache = true;
+    this->cache = new Cache(this->getSamplerDimension());
+    this->fillCache();
 }
 
 Sampler::Sampler(const std::vector<std::string>& filename, int subsample): image(SimpleImage(filename)) {
@@ -201,6 +206,11 @@ Sampler::Sampler(const std::vector<std::string>& filename, int subsample): image
 
     this->subregionMin = this->bbMin;
     this->subregionMax = this->bbMax;
+
+    // Cache management
+    this->useCache = true;
+    this->cache = new Cache(this->getSamplerDimension());
+    this->fillCache();
 }
 
 Sampler::Sampler(const std::vector<std::string>& filename): image(SimpleImage(filename)) {
@@ -212,6 +222,11 @@ Sampler::Sampler(const std::vector<std::string>& filename): image(SimpleImage(fi
 
     this->subregionMin = this->bbMin;
     this->subregionMax = this->bbMax;
+
+    // Cache management
+    this->useCache = true;
+    this->cache = new Cache(this->getSamplerDimension());
+    this->fillCache();
 }
 
 glm::vec3 Sampler::getSamplerDimension() const {
@@ -247,12 +262,24 @@ void Sampler::getGridSlice(int sliceIdx, std::vector<std::uint16_t>& result, int
     this->image.getSlice(sliceIdx, result, nbChannel, XYoffsets, bboxes);
 }
 
-uint16_t Sampler::getValue(const glm::vec3& coord, ResolutionMode resolutionMode) const {
+void Sampler::fillCache() {
+    std::vector<uint16_t> slice;
+    std::cout << "Filling the cache" << std::endl;
+    for(int z = 0; z < this->getSamplerDimension()[2]; ++z) {
+        slice.clear();
+        this->getGridSlice(z, slice, 1);
+        this->cache->storeImage(z, slice);
+    }
+}
+
+uint16_t Sampler::getValue(const glm::vec3& coord, InterpolationMethod interpolationMethod, ResolutionMode resolutionMode) const {
     // Convert from grid coord to image coord
-    if(resolutionMode == ResolutionMode::SAMPLER_RESOLUTION)
-        return this->image.getValue(coord * this->resolutionRatio);
-    else
+    if(resolutionMode == ResolutionMode::SAMPLER_RESOLUTION) {
+        //return this->image.getValue(coord * this->resolutionRatio);
+        return this->cache->getValue(coord, interpolationMethod);
+    } else {
         return this->image.getValue(coord);
+    }
 }
 
 glm::vec3 Sampler::getImageDimensions() const {
@@ -265,14 +292,6 @@ void Sampler::fromSamplerToImage(glm::vec3& p) const {
 
 void Sampler::fromImageToSampler(glm::vec3& p) const {
     p = p / this->resolutionRatio;
-}
-
-void Sampler::setUseCache(bool useCache) {
-    this->image.setUseCache(useCache);
-}
-
-void Sampler::setCacheCapacity(int capacity) {
-    this->image.setCacheCapacity(capacity);
 }
 
 /**************************/

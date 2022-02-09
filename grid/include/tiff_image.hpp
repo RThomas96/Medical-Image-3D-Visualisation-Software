@@ -1,36 +1,11 @@
 #ifndef TIFFIMAGE_HPP_
 #define TIFFIMAGE_HPP_
 
-#include "../../image/utils/include/image_api_common.hpp"
 #include <tinytiffreader.h>
 #include <tinytiffwriter.h>
 #include <tiff.h>
 #include <tiffio.h>
-#include <vector>
-
-// The cache just STORE data
-// Thus the only way to interact with it is to query the adress of a vector to store some data
-// The query and actual store process is manage by TIFFImage class
-struct Cache {
-    // Maximum number of slices to be stored
-    int capacity;
-    int nbInsertion;
-    glm::vec3 imageSize;
-
-    std::vector<int> indices;
-    std::vector<std::vector<uint16_t>> data;
-
-    Cache(glm::vec3 imageSize, int capacity);
-
-    std::vector<uint16_t> * storeImage(int imageIdx);
-    uint16_t getValue(const glm::vec3& coord);
-
-    bool isCached(int imageIdx) const;
-    int getCachedIdx(int imageIdx) const;
-    int getNextCachedImageToReplace() const;
-
-    void setCapacity(int capacity);
-};
+#include "cache.hpp"
 
 // TIFFReader read a tiff image using only and only the libtiff
 // When reading with libtiff there is no notion of point, slice or even datatype, it just read from
@@ -68,8 +43,6 @@ struct SimpleImage {
     Image::ImageDataType imgDataType;
 
     TIFFReader * tiffReader;
-    bool useCache;
-    Cache * cache;
 
     SimpleImage(const std::vector<std::string>& filename);
 
@@ -77,7 +50,6 @@ struct SimpleImage {
         this->tiffReader->closeImage();
     }
 
-    // In theory floor aren't necessary cause coord are already integer
     uint16_t getValue(const glm::vec3& coord) const;
 
     // The getSlice function can be used to retrieve slices at various resolutions, to do so, it can skip pixels.
@@ -93,10 +65,6 @@ struct SimpleImage {
     void getFullSlice(int sliceIdx, std::vector<std::uint16_t>& result) const;
 
     Image::ImageDataType getInternalDataType() const;
-
-    void setUseCache(bool useCache);
-
-    void setCacheCapacity(int capacity);
 };
 
 #endif

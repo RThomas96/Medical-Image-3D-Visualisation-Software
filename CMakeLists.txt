@@ -94,6 +94,8 @@ ADD_EXECUTABLE(neighbor_visu
     ./grid/include/GLmanipulator.hpp
     ./grid/include/manipulator.hpp
     ./grid/include/mesh_manipulator.hpp
+    ./grid/include/cache.hpp
+    ./grid/include/CImg.h
 
     #Probably to remove
     ./image/transforms/include/affine_transform.hpp
@@ -127,6 +129,7 @@ ADD_EXECUTABLE(neighbor_visu
     ./grid/src/GLmanipulator.cpp
     ./grid/src/manipulator.cpp
     ./grid/src/mesh_manipulator.cpp
+    ./grid/src/cache.cpp
 )
 TARGET_COMPILE_OPTIONS(neighbor_visu
 	# Set so CMake (more precisely clang/gcc) will not print 30-80 warnings about QGLViewer's
@@ -197,6 +200,8 @@ ADD_EXECUTABLE(tests
     #./grid/include/GLmanipulator.hpp
     ./grid/include/manipulator.hpp
     ./grid/include/mesh_manipulator.hpp
+    ./grid/include/cache.hpp
+    ./grid/include/CImg.h
 
     #Probably to remove
     ./image/transforms/include/affine_transform.hpp
@@ -221,6 +226,7 @@ ADD_EXECUTABLE(tests
     #./grid/src/GLmanipulator.cpp
     ./grid/src/manipulator.cpp
     ./grid/src/mesh_manipulator.cpp
+    ./grid/src/cache.cpp
 )
 TARGET_COMPILE_OPTIONS(tests
 	PUBLIC "-Wno-deprecated-declarations"

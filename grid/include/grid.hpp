@@ -28,6 +28,9 @@ struct Sampler {
     glm::vec3 subregionMin;
     glm::vec3 subregionMax;
 
+    bool useCache;
+    Cache * cache;
+
     Sampler(const std::vector<std::string>& filename);
     Sampler(const std::vector<std::string>& filename, int subsample);
     Sampler(const std::vector<std::string>& filename, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox);
@@ -35,7 +38,7 @@ struct Sampler {
     void getGridSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel) const;
 
     // In theory floor aren't necessary cause coord are already integer
-    uint16_t getValue(const glm::vec3& coord, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
+    uint16_t getValue(const glm::vec3& coord, InterpolationMethod interpolationMethod = InterpolationMethod::NearestNeighbor, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
 
     Image::ImageDataType getInternalDataType() const;
 
@@ -44,10 +47,8 @@ struct Sampler {
     void fromSamplerToImage(glm::vec3& p) const;
     void fromImageToSampler(glm::vec3& p) const;
 
-    void setUseCache(bool useCache);
-    void setCacheCapacity(int capacity);
-
 private:
+    void fillCache();
     //Nobody should access to the original image size everthing need to pass by the Sampler
     glm::vec3 getImageDimensions() const;
     SimpleImage image;
@@ -73,9 +74,9 @@ struct Grid : public TetMesh {
     std::pair<glm::vec3, glm::vec3> getBoundingBox() const;
     void writeDeformedGrid(ResolutionMode resolutionMode = ResolutionMode::FULL_RESOLUTION);
 
-    uint16_t getDeformedValueFromPoint(const TetMesh& initial, const glm::vec3& p, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
-    uint16_t getValueFromPoint(const glm::vec3& p, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
-    uint16_t getValueFromWorldPoint(const glm::vec3& p, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
+    uint16_t getDeformedValueFromPoint(const TetMesh& initial, const glm::vec3& p, InterpolationMethod interpolationMethod = InterpolationMethod::NearestNeighbor, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
+    uint16_t getValueFromPoint(const glm::vec3& coord, InterpolationMethod interpolationMethod = InterpolationMethod::NearestNeighbor, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
+    uint16_t getValueFromWorldPoint(const glm::vec3& coord, InterpolationMethod interpolationMethod = InterpolationMethod::NearestNeighbor, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
 
     bool getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, glm::vec3& res) const override;
 };
