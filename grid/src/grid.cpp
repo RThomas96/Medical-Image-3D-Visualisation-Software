@@ -11,7 +11,10 @@ bool isPtInBB(const glm::vec3& p, const glm::vec3& bbmin, const glm::vec3& bbmax
 }
 
 Image::ImageDataType Sampler::getInternalDataType() const {
-    return this->image.getInternalDataType();
+    return this->image->getInternalDataType();
+}
+
+Grid::Grid(glm::vec3 gridSize): sampler(Sampler(gridSize)) {
 }
 
 Grid::Grid(const std::string& filename, int subsample): sampler(Sampler(std::vector<std::string>{filename}, subsample)) {
@@ -159,9 +162,9 @@ bool Grid::getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3
 
 /**************************/
 
-Sampler::Sampler(const std::vector<std::string>& filename, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox): image(SimpleImage(filename)) {
-    glm::vec3 samplerResolution = this->image.imgResolution / static_cast<float>(subsample);
-    this->resolutionRatio = this->image.imgResolution / samplerResolution;
+Sampler::Sampler(const std::vector<std::string>& filename, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox): image(new SimpleImage(filename)) {
+    glm::vec3 samplerResolution = this->image->imgResolution / static_cast<float>(subsample);
+    this->resolutionRatio = this->image->imgResolution / samplerResolution;
     // If we naïvely divide the image dimensions for lowered its resolution we have problem is the case of a dimension is 1
     // In that case the voxelSizeRatio is still 2.f for example, but the dimension is 0.5
     // It is a problem as we will iterate until dimension with sizeRatio as an offset
@@ -186,9 +189,9 @@ Sampler::Sampler(const std::vector<std::string>& filename, int subsample, const 
     this->fillCache();
 }
 
-Sampler::Sampler(const std::vector<std::string>& filename, int subsample): image(SimpleImage(filename)) {
-    glm::vec3 samplerResolution = this->image.imgResolution / static_cast<float>(subsample);
-    this->resolutionRatio = this->image.imgResolution / samplerResolution;
+Sampler::Sampler(const std::vector<std::string>& filename, int subsample): image(new SimpleImage(filename)) {
+    glm::vec3 samplerResolution = this->image->imgResolution / static_cast<float>(subsample);
+    this->resolutionRatio = this->image->imgResolution / samplerResolution;
     // If we naïvely divide the image dimensions for lowered its resolution we have problem is the case of a dimension is 1
     // In that case the voxelSizeRatio is still 2.f for example, but the dimension is 0.5
     // It is a problem as we will iterate until dimension with sizeRatio as an offset
@@ -213,8 +216,8 @@ Sampler::Sampler(const std::vector<std::string>& filename, int subsample): image
     this->fillCache();
 }
 
-Sampler::Sampler(const std::vector<std::string>& filename): image(SimpleImage(filename)) {
-    glm::vec3 samplerResolution = this->image.imgResolution; 
+Sampler::Sampler(const std::vector<std::string>& filename): image(new SimpleImage(filename)) {
+    glm::vec3 samplerResolution = this->image->imgResolution; 
     this->resolutionRatio = glm::vec3(1., 1., 1.); 
 
     this->bbMin = glm::vec3(0., 0., 0.);
@@ -229,12 +232,33 @@ Sampler::Sampler(const std::vector<std::string>& filename): image(SimpleImage(fi
     this->fillCache();
 }
 
+Sampler::Sampler(glm::vec3 size): image(nullptr) {
+    glm::vec3 samplerResolution = size; 
+    this->resolutionRatio = glm::vec3(1., 1., 1.); 
+
+    this->bbMin = glm::vec3(0., 0., 0.);
+    this->bbMax = samplerResolution;
+
+    this->subregionMin = this->bbMin;
+    this->subregionMax = this->bbMax;
+
+    // Cache management
+    this->useCache = true;
+    this->cache = new Cache(this->getSamplerDimension());
+    // We do not fill the cache as we do not have associated image
+    //this->fillCache();
+}
+
+
 glm::vec3 Sampler::getSamplerDimension() const {
    return this->subregionMax - this->subregionMin; 
 }
 
 // This function do not use Grid::getValue as we do not want to open, copy and cast a whole image slice per value
 void Sampler::getGridSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel) const {
+    if(!this->image) {
+        std::cerr << "[4001] ERROR: Try to [getGridSlice()] on a grid without attached image" << std::endl;
+    }
 
     int Zoffset = static_cast<int>(this->resolutionRatio[2]);
     sliceIdx *= Zoffset;// Because sliceIdx isn't in grid space
@@ -259,10 +283,13 @@ void Sampler::getGridSlice(int sliceIdx, std::vector<std::uint16_t>& result, int
             throw std::runtime_error("Error in getGridSlice: bboxes not aligned with resolution ratio !");
     }
 
-    this->image.getSlice(sliceIdx, result, nbChannel, XYoffsets, bboxes);
+    this->image->getSlice(sliceIdx, result, nbChannel, XYoffsets, bboxes);
 }
 
 void Sampler::fillCache() {
+    if(!this->image) {
+        std::cerr << "[4001] ERROR: Try to [fillCache()] on a grid without attached image" << std::endl;
+    }
     std::vector<uint16_t> slice;
     std::cout << "Filling the cache" << std::endl;
     for(int z = 0; z < this->getSamplerDimension()[2]; ++z) {
@@ -275,15 +302,23 @@ void Sampler::fillCache() {
 uint16_t Sampler::getValue(const glm::vec3& coord, InterpolationMethod interpolationMethod, ResolutionMode resolutionMode) const {
     // Convert from grid coord to image coord
     if(resolutionMode == ResolutionMode::SAMPLER_RESOLUTION) {
-        //return this->image.getValue(coord * this->resolutionRatio);
+        //return this->image->getValue(coord * this->resolutionRatio);
         return this->cache->getValue(coord, interpolationMethod);
     } else {
-        return this->image.getValue(coord);
+        if(!this->image) {
+            std::cerr << "[4001] ERROR: Try to [getValue()] at [ResolutionMode::FULL_RESOLUTION] on a grid without attached image" << std::endl;
+            return 0;
+        }
+        return this->image->getValue(coord);
     }
 }
 
 glm::vec3 Sampler::getImageDimensions() const {
-    return this->image.imgResolution;
+    if(!this->image) {
+        std::cerr << "[4001] ERROR: Try to [getImageDimensions()] on a grid without attached image" << std::endl;
+        return this->getSamplerDimension();
+    }
+    return this->image->imgResolution;
 }
 
 void Sampler::fromSamplerToImage(glm::vec3& p) const {

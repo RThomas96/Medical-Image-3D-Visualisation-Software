@@ -47,6 +47,7 @@ public:
     glm::vec3 getOrigin();
     void translate(const glm::vec3& vec);
     void rotate(const glm::mat3& transf);
+    void rotate(const float angle, const glm::vec3 axis); // In degree
     glm::mat4 getModelTransformation();
     void setOrigin(const glm::vec3& origin);
     void setTransformation(const glm::mat3& transf);

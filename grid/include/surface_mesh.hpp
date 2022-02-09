@@ -41,7 +41,7 @@ extern std::ostream& operator<<(std::ostream& output, const Triangle2& t);
 class SurfaceMesh : public BaseMesh {
 
 public:
-	SurfaceMesh(std::vector<glm::vec3>& vertices, std::vector<Triangle2>& triangles);
+	SurfaceMesh(const std::vector<glm::vec3>& vertices, const std::vector<Triangle2>& triangles);
     SurfaceMesh(std::string const &filename);
 
     void computeTriangleNormal();

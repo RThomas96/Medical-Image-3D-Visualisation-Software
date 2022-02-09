@@ -2,17 +2,20 @@
 
 Cache::Cache(glm::vec3 imageSize): img(CImg<uint16_t>(imageSize[0], imageSize[1], imageSize[2], 1, 0)) {}
 
+void Cache::reset() {
+    //this->img.assign(this->img.width(), this->img.height(), this->img.depth(), 0);
+    this->img = CImg<uint16_t>(this->img.width(), this->img.height(), this->img.depth(), 1, 0);
+}
+
 void Cache::storeImage(int imageIdx, const std::vector<uint16_t>& data) {
-    for(int i = 0; i < data.size(); ++i) {
-        this->img.atXYZ(i%this->img.width(), std::floor(float(i)/this->img.width()), imageIdx) = data[i];
-    }
+    this->img.get_shared_slice(imageIdx).assign(data.data(), this->img.width(), this->img.height(), 1.);
 }
 
 uint16_t Cache::getValue(const glm::vec3& coord, InterpolationMethod interpolationMethod) {
     if(interpolationMethod == InterpolationMethod::Linear) {
-        return this->img.linear_atXYZ(coord[0], coord[1], coord[2]);
+        return static_cast<uint16_t>(this->img.linear_atXYZ(coord[0], coord[1], coord[2], 0, static_cast<uint8_t>(0)));
     } else if (interpolationMethod == InterpolationMethod::Cubic) {
-        return this->img.cubic_atXYZ(coord[0], coord[1], coord[2]);
+        return static_cast<uint16_t>(this->img.cubic_atXYZ_c(coord[0], coord[1], coord[2], 0, static_cast<uint8_t>(0)));
     } else {
         return this->img.atXYZ(coord[0], coord[1], coord[2]);
     }

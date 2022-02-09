@@ -4,6 +4,7 @@
 #include <QOpenGLFunctions>
 #include <cfloat>
 #include <memory>
+#include <glm/gtx/string_cast.hpp> 
 
 SurfaceMesh::SurfaceMesh(std::string const &filename) {
     std::cout << "Opening " << filename << std::endl;
@@ -65,10 +66,13 @@ SurfaceMesh::SurfaceMesh(std::string const &filename) {
     this->computeVerticesNormal();
 }
 
-SurfaceMesh::SurfaceMesh(std::vector<glm::vec3>& vertices, std::vector<Triangle2>& triangles) {
-    for(int i = 0; i < vertices.size(); ++i) {
+SurfaceMesh::SurfaceMesh(const std::vector<glm::vec3>& vertices, const std::vector<Triangle2>& triangles) {
+    for(int i = 0; i < vertices.size(); ++i)
         this->vertices.push_back(vertices[i]);
-    }
+
+    for(int i = 0; i < triangles.size(); ++i)
+        this->triangles.push_back(triangles[i]);
+
     this->updatebbox();
 
     this->computeTriangleNormal();

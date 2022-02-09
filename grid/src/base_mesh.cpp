@@ -3,6 +3,8 @@
 #include "../include/manipulator.hpp"
 #include <map>
 #include <algorithm>
+#include <math.h>
+#include <glm/gtx/transform.hpp>
 
 
 BaseMesh::BaseMesh(): bbMin(glm::vec3(0., 0., 0.)), bbMax(glm::vec3(0., 0., 0.)), meshDeformator(new NormalMethod(this)), transformation(glm::mat4(1.f)), scale(1.f) {
@@ -138,6 +140,7 @@ const glm::vec3 BaseMesh::getWorldVertice(int i) const {
 
 const glm::vec3 BaseMesh::getWorldVerticeNormal(int i) const {
     return glm::normalize(glm::vec3(this->transformation * glm::vec4(this->verticesNormals[i], 1.)));
+    //return glm::normalize(this->transformation * glm::vec4(this->verticesNormals[i], 1.));
 }
 
 int BaseMesh::getNbVertices() const {
@@ -154,4 +157,8 @@ void BaseMesh::setTransformation(const glm::mat3& transf) {
     for(int i = 0; i < 3; ++i)
         for(int j = 0; j < 3; ++j)
             this->transformation[i][j] = transf[i][j];
+}
+
+void BaseMesh::rotate(const float angle, const glm::vec3 axis) {
+    this->transformation = glm::rotate(this->transformation, glm::radians(angle), axis);
 }

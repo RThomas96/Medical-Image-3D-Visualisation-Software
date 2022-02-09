@@ -20,6 +20,8 @@ struct Cache {
 
     void storeImage(int imageIdx, const std::vector<uint16_t>& data);
 
+    void reset();
+
     uint16_t getValue(const glm::vec3& coord, InterpolationMethod interpolationMethod);
 };
 

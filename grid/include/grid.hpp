@@ -31,6 +31,7 @@ struct Sampler {
     bool useCache;
     Cache * cache;
 
+    Sampler(glm::vec3 size);
     Sampler(const std::vector<std::string>& filename);
     Sampler(const std::vector<std::string>& filename, int subsample);
     Sampler(const std::vector<std::string>& filename, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox);
@@ -51,7 +52,7 @@ private:
     void fillCache();
     //Nobody should access to the original image size everthing need to pass by the Sampler
     glm::vec3 getImageDimensions() const;
-    SimpleImage image;
+    SimpleImage * image;
 };
 
 // Struct to make link between the grid and a 3D shape used to deform the space of its representation
@@ -61,6 +62,7 @@ struct Grid : public TetMesh {
     TetMesh initialMesh;
     Sampler sampler;
 
+    Grid(glm::vec3 gridSize);
     Grid(const std::string& filename, int subsample);
     Grid(const std::vector<std::string>& filename, int subsample);
     Grid(const std::vector<std::string>& filename, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox);
