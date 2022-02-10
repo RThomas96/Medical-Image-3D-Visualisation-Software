@@ -549,9 +549,223 @@ public:
 
     void createNewICP();
     void ICPIteration();
+    void ICPInitialize();
+
+    void setL(float i);
+
+    void setN(float i);
+
+    void setS(float i);
 };
 
 /// @brief Type-safe conversion of enum values to unsigned ints.
 inline unsigned int planeHeadingToIndex(planeHeading _heading);
+
+class ICPMesh : public SurfaceMesh {
+
+public:
+    glm::mat4 originalTransformation;
+    std::vector<glm::vec3> originalPoints;
+    std::vector<glm::vec3> correspondence;
+    std::vector<float> weights;
+
+    ICPMesh(const std::vector<glm::vec3>& vertices, const std::vector<Triangle2>& triangles): SurfaceMesh(vertices, triangles) {
+        this->originalTransformation = this->getModelTransformation();
+        for(int i = 0; i < this->getNbVertices(); ++i) {
+            this->correspondence.push_back(glm::vec3(0., 0., 0.));
+            this->weights.push_back(1.f);
+            this->originalPoints.push_back(this->getWorldVertice(i));
+        }
+    }
+
+    ICPMesh(std::string const &filename) : SurfaceMesh(filename) {
+        this->originalTransformation = this->getModelTransformation();
+        for(int i = 0; i < this->getNbVertices(); ++i) {
+            this->correspondence.push_back(glm::vec3(0., 0., 0.));
+            this->weights.push_back(1.f);
+            this->originalPoints.push_back(this->getWorldVertice(i));
+        }
+    }
+
+    void setCorrespondence(glm::vec3 p, int i) {
+        this->correspondence[i] = p;
+    }
+
+    glm::vec3 getCorrespondence(int i) const {
+        return this->correspondence[i];
+    }
+
+    void setWeight(float p, int i) {
+        this->weights[i] = p;
+    }
+
+    float getWeight(int i) const {
+        return this->weights[i];
+    }
+
+};
+
+
+class ICP {
+
+public:
+    unsigned int Ni=30,No=30,S=10;
+    //unsigned int Ni=25,No=25,S=10;
+    //float l=1.;
+    float l=0.2;
+
+    int nbIt = 0;
+
+    glm::mat3 rotation;
+    glm::vec3 origin;
+
+    ICPMesh * surface;
+
+    Grid * src;
+    Grid * target;
+
+    std::vector<std::vector<uint16_t>> sourceProf;
+
+    ICP(Grid * src, Grid * target, ICPMesh * surface): src(src), target(target), surface(surface) {
+        this->rotation = glm::mat3(1.f);
+        this->origin = glm::vec3(0., 0., 0.);
+    }
+
+    ICP(Grid * src, Grid * target, std::string const &filename): src(src), target(target), surface(new ICPMesh(filename)) {
+
+        //this->surface->setOrigin(glm::vec3(130., 50., 130.));
+        //this->surface->setOrigin(glm::vec3(90., 50., 130.));
+        this->surface->setScale(glm::vec3(30., 30., 30.));
+        this->surface->setOrigin(glm::vec3(79.73, 109.2647, 94.9453));
+        //this->surface->originalTransformation = this->surface->transformation;
+        //for(int i = 0; i < this->surface->getNbVertices(); ++i) {
+        //    this->surface->originalPoints[i] = this->surface->getWorldVertice(i);
+        //}
+
+        this->rotation = glm::mat3(1.f);
+        this->origin = glm::vec3(0., 0., 0.);
+    }
+
+    void initialize() {
+        this->surface->originalTransformation = this->surface->getModelTransformation();
+        for(int i = 0; i < this->surface->getNbVertices(); ++i) {
+            this->surface->correspondence.push_back(glm::vec3(0., 0., 0.));
+            this->surface->weights.push_back(1.f);
+            this->surface->originalPoints[i] = this->surface->getWorldVertice(i);
+            //std::cout << glm::to_string(this->surface->originalPoints[i]);
+        }
+        this->sourceProf = computeProfiles(*this->surface, *this->src, Ni, No, l);
+    }
+
+    void computeCorrespondences(ICPMesh& mesh, const std::vector<std::vector<long>> &dist, const float l) {
+        unsigned int nbpoints=dist[0].size();
+        unsigned int S=dist.size()/2;
+
+        float ratio = float(Ni) / float(Ni+No);
+        int NiIdxInS = std::floor(ratio*Ni);
+
+        std::vector<std::vector<long>> r_dist(dist[0].size(), std::vector<long>(dist.size(), long(0)));
+        for(int i = 0; i < dist.size(); ++i) {
+            for(int j = 0; j < dist[i].size(); ++j) {
+                r_dist[j][i] = dist[i][j];
+            }
+        }
+
+        for(unsigned int i=0;i<nbpoints;i++) {
+            glm::vec3 p = mesh.getWorldVertice(i);
+            glm::vec3 normal = mesh.getWorldVerticeNormal(i);
+
+            auto minptr = std::min_element(r_dist[i].begin(), r_dist[i].end());
+            int idxMin = std::distance(r_dist[i].begin(), minptr);
+            //std::cout << idxMin;
+
+            float distance  = l * (idxMin - int(S));
+            
+            p += distance * normal;
+
+            mesh.setCorrespondence(p, i);
+        }
+
+    }
+    
+    std::vector<std::vector<uint16_t>> computeProfiles(const ICPMesh& mesh, const Grid& img, const unsigned int Ni, const unsigned int No, const float l, bool print = false) {
+
+        std::vector<std::vector<uint16_t>> prof(Ni+No, std::vector<uint16_t>(mesh.getNbVertices(), 0.));
+    
+        for(int ptIdx = 0; ptIdx < mesh.getNbVertices(); ++ptIdx) {
+            glm::vec3 currentPoint = mesh.getWorldVertice(ptIdx);
+            glm::vec3 currentNormal = mesh.getWorldVerticeNormal(ptIdx);
+
+            for(int i = 0; i < 3; ++i) {
+                currentPoint[i] = std::roundf(currentPoint[i] * 1000) / 1000.0;
+                currentNormal[i] = std::roundf(currentNormal[i] * 1000) / 1000.0;
+            }
+    
+            for(int it = 0; it < No; ++it) {
+                float offset = (float(it) * l) + 0.0001;
+                prof[Ni+it][ptIdx] = img.getValueFromWorldPoint(currentPoint + offset * currentNormal, InterpolationMethod::Cubic);
+                if(print)
+                    std::cout << glm::to_string(currentPoint + offset * currentNormal) << std::endl;
+            }
+            for(int it = 0; it < Ni; ++it) {
+                float offset = (float(it) * l) + 0.0001;
+                prof[Ni-1-it][ptIdx] = img.getValueFromWorldPoint(currentPoint - offset * currentNormal, InterpolationMethod::Cubic);
+                if(print)
+                    std::cout << glm::to_string(currentPoint + offset * currentNormal) << std::endl;
+            }
+        }
+        return prof;
+    }
+
+    std::vector<std::vector<long>> computeDistance(const std::vector<std::vector<uint16_t>>& sourceProf, const std::vector<std::vector<uint16_t>>& targetProf) {
+
+        unsigned int nbpoints=sourceProf[0].size();
+        unsigned int N=sourceProf.size();
+        unsigned int S=(targetProf.size()-sourceProf.size())/2;
+
+        std::vector<std::vector<long>> dist(2*S, std::vector<long>(nbpoints, 0));
+
+        std::vector<long> cumul(nbpoints, 0);
+        int insertColumnIndex = 0;
+        for(int offset = 0; offset < S*2; ++offset) {
+            std::fill(cumul.begin(), cumul.end(), 0);
+            for(int ptIdx = 0; ptIdx < nbpoints; ++ptIdx) {
+                for(int srcIdx = 0; srcIdx < N; ++srcIdx) {
+                    long value = static_cast<long>(targetProf[srcIdx+offset][ptIdx]) - static_cast<long>(sourceProf[srcIdx][ptIdx]);
+                    cumul[ptIdx] += value * value;
+                }
+            }
+            for(int i = 0; i < nbpoints; ++i) {
+                dist[insertColumnIndex][i] = cumul[i];
+            }
+            insertColumnIndex += 1;
+        }
+
+        return dist;
+    }
+
+    void Registration(glm::mat3& A,  glm::vec3& t,const ICPMesh& mesh);
+
+    void iteration(bool print=false) {
+        std::vector<std::vector<uint16_t>> targetProf = computeProfiles(*this->surface, *this->target, Ni+S, No+S, l, print);
+        std::vector<std::vector<long>> dist = computeDistance(this->sourceProf,targetProf);
+        computeCorrespondences(*this->surface,dist,l);
+        Registration(this->rotation, this->origin, *this->surface);
+
+        glm::mat4 transformation(1.f);
+        for(int i = 0; i < 3; ++i) {
+            transformation[3][i] = this->origin[i];
+            for(int j = 0; j < 3; ++j)
+                transformation[i][j] = this->rotation[i][j];
+        }
+        //this->surface->transformation = transformation * this->surface->originalTransformation;
+        this->surface->setTransformation(transformation * this->surface->originalTransformation);
+
+        //if(print)
+            //saveProfile(targetProf, (std::string("targetProf") + std::to_string(nbIt) + std::string(".bmp")).c_str());
+
+        nbIt += 1;
+    }
+};
 
 #endif	  // VIEWER_INCLUDE_SCENE_HPP_

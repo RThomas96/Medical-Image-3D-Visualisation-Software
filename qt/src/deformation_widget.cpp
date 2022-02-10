@@ -60,6 +60,22 @@ GridDeformationWidget::GridDeformationWidget(Scene* scene, QWidget* parent) :
 
     this->debug_button = new QPushButton("&DEBUG", this);
     this->debug_it = new QPushButton("&ITERATION", this);
+    this->debug_init = new QPushButton("&INIT", this);
+
+	this->spinbox_l_selection = new QDoubleSpinBox;
+    this->spinbox_l_selection->setValue(0.);
+	this->spinbox_l_selection->setRange(0., 20000.);
+	this->spinbox_l_selection->setSingleStep(1.);
+
+	this->spinbox_N_selection = new QDoubleSpinBox;
+    this->spinbox_N_selection->setValue(0.);
+	this->spinbox_N_selection->setRange(0., 20000.);
+	this->spinbox_N_selection->setSingleStep(1.);
+
+	this->spinbox_S_selection = new QDoubleSpinBox;
+    this->spinbox_S_selection->setValue(0.);
+	this->spinbox_S_selection->setRange(0., 20000.);
+	this->spinbox_S_selection->setSingleStep(1.);
 
     this->setupLayouts();
 	this->setupSignals(scene);
@@ -102,7 +118,11 @@ void GridDeformationWidget::setupLayouts() {
     this->mainLayout->addWidget(this->checkbox_wireframe);
 
     this->mainLayout->addWidget(this->debug_button);
+    this->mainLayout->addWidget(this->debug_init);
     this->mainLayout->addWidget(this->debug_it);
+    this->mainLayout->addWidget(this->spinbox_l_selection);
+    this->mainLayout->addWidget(this->spinbox_N_selection);
+    this->mainLayout->addWidget(this->spinbox_S_selection);
 
     this->setLayout(this->mainLayout);
 }
@@ -125,6 +145,10 @@ void GridDeformationWidget::setupSignals(Scene* scene) {
 
 	QObject::connect(this->spinbox_radius_sphere, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, [=](double i){ scene->setManipulatorRadius(i);}); 
 
+	QObject::connect(this->spinbox_l_selection, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, [=](double i){ scene->setL(i);}); 
+	QObject::connect(this->spinbox_N_selection, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, [=](double i){ scene->setN(i);}); 
+	QObject::connect(this->spinbox_S_selection, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, [=](double i){ scene->setS(i);}); 
+
 	QObject::connect(this->checkbox_wireframe, &QPushButton::clicked, this, [this, scene]() {scene->toggleWireframe();});
 
 	QObject::connect(this->radio_move_normal, &QPushButton::clicked, this, [this, scene]() {scene->setNormalDeformationMethod();});
@@ -134,4 +158,6 @@ void GridDeformationWidget::setupSignals(Scene* scene) {
     QObject::connect(this->debug_button, &QPushButton::released, this, [this, scene]() {scene->createNewICP();});
 
     QObject::connect(this->debug_it, &QPushButton::released, this, [this, scene]() {scene->ICPIteration();});
+
+    QObject::connect(this->debug_init, &QPushButton::released, this, [this, scene]() {scene->ICPInitialize();});
 }

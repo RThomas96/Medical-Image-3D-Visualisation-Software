@@ -16,8 +16,7 @@ class BaseMesh : public QObject {
     Q_OBJECT
 public:
 
-    float scale;
-    glm::mat4 transformation;
+    glm::vec3 scale;
 
     std::vector<glm::vec3> vertices;
     std::vector<glm::vec3> verticesNormals;
@@ -45,13 +44,15 @@ public:
     void deselectAllPts();
 
     glm::vec3 getOrigin();
+    glm::mat4 getModelMatrix() const;
     void translate(const glm::vec3& vec);
     void rotate(const glm::mat3& transf);
     void rotate(const float angle, const glm::vec3 axis); // In degree
     glm::mat4 getModelTransformation();
     void setOrigin(const glm::vec3& origin);
     void setTransformation(const glm::mat3& transf);
-    void setScale(float scale);
+    void setTransformation(const glm::mat4& transf);
+    void setScale(glm::vec3 scale);
 
     glm::vec3 toWorld(const glm::vec3& pt) const;
     glm::vec3 toModel(const glm::vec3& pt) const;
@@ -66,6 +67,8 @@ public:
     virtual void computeNeighborhood() = 0;
     virtual void computeNormals() = 0;
     virtual ~BaseMesh(){};
+private:
+    glm::mat4 transformation;
 };
 
 #endif

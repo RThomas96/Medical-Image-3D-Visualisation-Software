@@ -5,9 +5,10 @@
 #include <algorithm>
 #include <math.h>
 #include <glm/gtx/transform.hpp>
+#include <glm/gtx/string_cast.hpp> 
 
 
-BaseMesh::BaseMesh(): bbMin(glm::vec3(0., 0., 0.)), bbMax(glm::vec3(0., 0., 0.)), meshDeformator(new NormalMethod(this)), transformation(glm::mat4(1.f)), scale(1.f) {
+BaseMesh::BaseMesh(): bbMin(glm::vec3(0., 0., 0.)), bbMax(glm::vec3(0., 0., 0.)), meshDeformator(new NormalMethod(this)), transformation(glm::mat4(1.f)), scale(glm::vec3(1., 1., 1.)) {
 }
 
 glm::vec3 BaseMesh::getDimensions() const {
@@ -95,35 +96,35 @@ void BaseMesh::setOrigin(const glm::vec3& origin) {
     this->transformation[3][0] = origin[0];
     this->transformation[3][1] = origin[1];
     this->transformation[3][2] = origin[2];
+    std::cout << "New origin: " << glm::to_string(this->transformation) << std::endl;
 }
 
 void BaseMesh::translate(const glm::vec3& vec) {
     this->transformation[3][0] += vec[0];
     this->transformation[3][1] += vec[1];
     this->transformation[3][2] += vec[2];
+    std::cout << "New origin: " << glm::to_string(this->transformation) << std::endl;
 }
 
-void BaseMesh::setScale(float scale) {
-    this->transformation[0][0] = scale;
-    this->transformation[1][1] = scale;
-    this->transformation[2][2] = scale;
+void BaseMesh::setScale(glm::vec3 scale) {
+    this->scale = scale;
 }
 
 std::vector<glm::vec3> BaseMesh::getWorldMeshPositions() {
     std::vector<glm::vec3> worldPos;
     for(int i = 0; i < this->vertices.size(); ++i) {
-        glm::vec4 pt = this->transformation * glm::vec4(this->vertices[i], 1.);
+        glm::vec4 pt = this->getModelMatrix() * glm::vec4(this->vertices[i], 1.);
         worldPos.push_back(glm::vec3(pt[0], pt[1], pt[2]));
     }
     return worldPos;
 }
 
 glm::vec3 BaseMesh::toWorld(const glm::vec3& pt) const {
-    return glm::vec3(this->transformation * glm::vec4(pt, 1.));
+    return glm::vec3(this->getModelMatrix() * glm::vec4(pt, 1.));
 }
 
 glm::vec3 BaseMesh::toModel(const glm::vec3& pt) const {
-    return glm::vec3(glm::inverse(this->transformation) * glm::vec4(pt, 1.));
+    return glm::vec3(glm::inverse(this->getModelMatrix()) * glm::vec4(pt, 1.));
 }
 
 const glm::vec3& BaseMesh::getVertice(int i) const {
@@ -135,11 +136,11 @@ const glm::vec3& BaseMesh::getVerticeNormal(int i) const {
 }
 
 const glm::vec3 BaseMesh::getWorldVertice(int i) const {
-    return glm::vec3(this->transformation * glm::vec4(this->vertices[i], 1.));
+    return glm::vec3(this->getModelMatrix() * glm::vec4(this->vertices[i], 1.));
 }
 
 const glm::vec3 BaseMesh::getWorldVerticeNormal(int i) const {
-    return glm::normalize(glm::vec3(this->transformation * glm::vec4(this->verticesNormals[i], 1.)));
+    return glm::normalize(glm::vec3(this->getModelMatrix() * glm::vec4(this->verticesNormals[i], 1.)));
     //return glm::normalize(this->transformation * glm::vec4(this->verticesNormals[i], 1.));
 }
 
@@ -161,4 +162,15 @@ void BaseMesh::setTransformation(const glm::mat3& transf) {
 
 void BaseMesh::rotate(const float angle, const glm::vec3 axis) {
     this->transformation = glm::rotate(this->transformation, glm::radians(angle), axis);
+}
+
+glm::mat4 BaseMesh::getModelMatrix() const {
+    glm::mat4 res = this->transformation;
+    for(int i = 0; i < 3; ++i)
+        res[i][i] *= this->scale[i];
+    return res;
+}
+
+void BaseMesh::setTransformation(const glm::mat4& transf) {
+    this->transformation = transf;
 }

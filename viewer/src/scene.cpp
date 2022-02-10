@@ -228,7 +228,7 @@ void Scene::initGl(QOpenGLContext* _context) {
     this->drawableMesh = new DrawableMeshV2();
     this->drawableMesh->mesh = this->surfaceMesh;
     this->drawableMesh->initialize(this->context, this);
-    this->drawableMesh->mesh->setScale(.3);
+    this->drawableMesh->mesh->setScale(glm::vec3(3., 3., 3.));
     this->drawableMesh->mesh->setOrigin(glm::vec3(0., 10., 0.));
 
 }
@@ -3540,8 +3540,8 @@ void Scene::toggleWireframe() {
 void Scene::createNewMeshManipulator(int i, bool onSurface) {
     if(onSurface) {
         // TODO: do not connect deform to the ICP mesh
-        this->glMeshManipulator->createNewMeshManipulator(this->surfaceMesh, this, i);
-        //this->glMeshManipulator->createNewMeshManipulator(this->icp->surface, this, i);
+        //this->glMeshManipulator->createNewMeshManipulator(this->surfaceMesh, this, i);
+        this->glMeshManipulator->createNewMeshManipulator(this->icp->surface, this, i);
     } else {
         this->glMeshManipulator->createNewMeshManipulator(this->grids[this->gridToDraw]->grid->grid, this, i);
     }
@@ -3616,11 +3616,77 @@ void Scene::setColorChannel(ColorChannel mode) {
 }
 
 void Scene::createNewICP() {
-    //this->icp = new ICP(this->grids[0]->grid->grid, this->grids[1]->grid->grid, "/home/thomas/data/Projets/visualisation/build/bin/femur_aligned.off");
-    //this->drawableMesh->mesh = this->icp->surface;
+    this->icp = new ICP(this->grids[0]->grid->grid, this->grids[1]->grid->grid, "/home/thomas/data/Projets/visualisation/build/bin/femur_aligned.off");
+    this->drawableMesh->mesh = this->icp->surface;
 }
 
 void Scene::ICPIteration() {
-    //this->icp->iteration();
+    this->icp->iteration();
 }
+
+void Scene::ICPInitialize() {
+    this->icp->initialize();
+}
+
+void Scene::setL(float i) {
+    this->icp->l = i;
+};
+
+void Scene::setN(float i) {
+    this->icp->Ni = i;
+    this->icp->No = i;
+};
+
+void Scene::setS(float i) {
+    this->icp->S = i;
+};
+
+
+#include "../../grid/include/mathematics.h"
+    void ICP::Registration(glm::mat3& A,  glm::vec3& t,const ICPMesh& mesh) {
+        glm::vec3 c0 = glm::vec3(0., 0., 0.);
+        glm::vec3 c = glm::vec3(0., 0., 0.);
+        float N = 0.;
+        for(unsigned int i=0;i<mesh.getNbVertices();i++)
+        {
+            c0 += mesh.getWeight(i)*mesh.originalPoints[i];
+            c  += mesh.getWeight(i)*mesh.getCorrespondence(i);
+            N  += mesh.getWeight(i);
+        }
+
+        c0 /= N; 
+        c  /= N;
+
+        glm::mat3 K(0.f);
+        float sx = 0;
+        for(unsigned int i=0;i<mesh.getNbVertices();i++)
+        {
+            glm::vec3 p0 = mesh.originalPoints[i];
+            p0 -= c0;
+
+            glm::vec3 p = mesh.getCorrespondence(i);
+            p -= c;
+
+            for(unsigned int j=0;j<3;j++) {
+                sx+=mesh.getWeight(i)*p0[j]*p0[j]; 
+                for(unsigned int k=0;k<3;k++) {
+                    K[j][k]+=mesh.getWeight(i)*p[j]*p0[k];
+                } 
+            }
+        }
+
+        float rawK[3][3];
+        float rawA[3][3];
+
+        fromGlmToRaw(K, rawK);
+        fromGlmToRaw(A, rawA);
+
+        ClosestRigid(rawK, rawA);
+
+        fromRawToGlm(rawK, K);
+        fromRawToGlm(rawA, A);
+
+        t = A * c0;
+        t = c - t;
+    }
 

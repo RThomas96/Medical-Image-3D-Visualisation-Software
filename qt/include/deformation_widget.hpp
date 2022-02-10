@@ -55,6 +55,9 @@ protected:
 
 	QLabel*           label_radius_selection;
 	QDoubleSpinBox* spinbox_radius_selection;
+	QDoubleSpinBox* spinbox_l_selection;
+	QDoubleSpinBox* spinbox_N_selection;
+	QDoubleSpinBox* spinbox_S_selection;
 
 	QLabel*           label_radius_sphere;
 	QDoubleSpinBox* spinbox_radius_sphere;
@@ -64,6 +67,7 @@ protected:
 
     QPushButton*             debug_button;
     QPushButton*                 debug_it;
+    QPushButton*                 debug_init;
 };
 
 #endif	  // QT_INCLUDE_DEFORMATION_WIDGET_HPP_
