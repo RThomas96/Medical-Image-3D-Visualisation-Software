@@ -3621,7 +3621,8 @@ void Scene::createNewICP() {
 }
 
 void Scene::ICPIteration() {
-    this->icp->iteration();
+    for(int i = 0; i < 10; ++i)
+        this->icp->iteration();
 }
 
 void Scene::ICPInitialize() {

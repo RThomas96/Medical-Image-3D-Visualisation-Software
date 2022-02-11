@@ -612,7 +612,7 @@ public:
     unsigned int Ni=30,No=30,S=10;
     //unsigned int Ni=25,No=25,S=10;
     //float l=1.;
-    float l=0.2;
+    float l=0.02;
 
     int nbIt = 0;
 
@@ -637,6 +637,7 @@ public:
         //this->surface->setOrigin(glm::vec3(90., 50., 130.));
         this->surface->setScale(glm::vec3(30., 30., 30.));
         this->surface->setOrigin(glm::vec3(79.73, 109.2647, 94.9453));
+        this->target->setOrigin(glm::vec3(-60.301449, -24.152321, 10.60724));
         //this->surface->originalTransformation = this->surface->transformation;
         //for(int i = 0; i < this->surface->getNbVertices(); ++i) {
         //    this->surface->originalPoints[i] = this->surface->getWorldVertice(i);
