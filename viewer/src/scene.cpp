@@ -1352,6 +1352,8 @@ void Scene::drawGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camP
 	if (grid->gridTexture > 0) {
 		glUseProgram(this->program_VolumetricViewer);
 
+        this->sendTetmeshToGPU(this->gridToDraw, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS));
+
 		this->prepareUniformsGridVolumetricView(mvMat, pMat, camPos, grid);
 
 		this->tex3D_bindVAO();
@@ -3199,6 +3201,10 @@ void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend) {
 
 	//TetMesh& newMesh = *this->grids[gridIdx]->grid->grid->tetmesh;
 	TetMesh& newMesh = *this->grids[gridIdx]->grid->grid;
+
+    if(contain(infoToSend, InfoToSend::NORMALS)) {
+        newMesh.computeNormals();
+    }
 	__GetTexSize(newMesh.mesh.size() * 4 * 3, &vertWidth, &vertHeight);
 	__GetTexSize(newMesh.mesh.size() * 4, &normWidth, &normHeight);
 	__GetTexSize(newMesh.mesh.size() * 4 * 3, &coorWidth, &coorHeight);
@@ -3226,6 +3232,8 @@ void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend) {
             if(contain(infoToSend, InfoToSend::NORMALS)) {
 			    for (int i = 0; i < 4; ++i) {
 			    	rawNormals[iNormal++] = tet.normals[faceIdx][i];
+			    	//rawNormals[iNormal++] = glm::normalize((newMesh.getModelMatrix() * tet.normals[faceIdx]))[i];
+			    	//rawNormals[iNormal++] = glm::vec4(1., 0., 0., 1.)[i];
 			    }
             }
 
@@ -3233,7 +3241,7 @@ void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend) {
                 int ptIndex = tet.getPointIndex(faceIdx, k);
 				for (int i = 0; i < 3; ++i) {
                     if(contain(infoToSend, InfoToSend::VERTICES))
-					    rawVertices[iPt] = newMesh.vertices[ptIndex][i];
+					    rawVertices[iPt] = newMesh.getWorldVertice(ptIndex)[i];
                     if(contain(infoToSend, InfoToSend::TEXCOORD))
 					    tex[iPt] = newMesh.texCoord[ptIndex][i];
 					iPt++;

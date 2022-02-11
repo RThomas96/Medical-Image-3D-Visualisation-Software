@@ -199,13 +199,20 @@ glm::vec3 Tetrahedron::baryToWorldCoord(const glm::vec4& coord) {
     return glm::vec3(x, y, z);
 }
 
-void Tetrahedron::computeNormals() {
+void Tetrahedron::computeNormals(glm::mat4 modelMatrix) {
     for(int faceIdx = 0; faceIdx < 4; ++faceIdx) {
-        glm::vec3 n1   = *this->points[getIdxOfPtInFace(faceIdx, 1)] - *this->points[getIdxOfPtInFace(faceIdx, 0)];
-        glm::vec3 n2   = *this->points[getIdxOfPtInFace(faceIdx, 2)] - *this->points[getIdxOfPtInFace(faceIdx, 0)];
+        glm::vec3 p0 = glm::vec3(modelMatrix * glm::vec4(*this->points[getIdxOfPtInFace(faceIdx, 0)], 1.));
+        glm::vec3 p1 = glm::vec3(modelMatrix * glm::vec4(*this->points[getIdxOfPtInFace(faceIdx, 1)], 1.));
+        glm::vec3 p2 = glm::vec3(modelMatrix * glm::vec4(*this->points[getIdxOfPtInFace(faceIdx, 2)], 1.));
+
+        glm::vec3 pF  = glm::vec3(modelMatrix * glm::vec4(*this->points[faceIdx], 1.));
+        glm::vec3 pFO = glm::vec3(modelMatrix * glm::vec4(*this->points[(faceIdx + 1) % 4], 1.));
+
+        glm::vec3 n1   = p1 - p0;
+        glm::vec3 n2   = p2 - p0;
         glm::vec4 norm = glm::normalize(glm::vec4(glm::cross(glm::vec3(n1), glm::vec3(n2)), 1.));
         // Put inverse of dot with opposing vertex in norm.w :
-        glm::vec4 v1			  = glm::vec4(*this->points[faceIdx] - *this->points[(faceIdx + 1) % 4], 1.);
+        glm::vec4 v1			  = glm::vec4(pF - pFO, 1.);
         glm::vec4::value_type val = 1. / glm::dot(v1, norm);
         norm.w					  = val;
         this->normals[faceIdx] = norm;
@@ -352,7 +359,7 @@ void TetMesh::computeNeighborhood() {
 
 void TetMesh::computeNormals() {
     for(int tetIdx; tetIdx < this->mesh.size(); ++tetIdx) {
-        this->mesh[tetIdx].computeNormals();
+        this->mesh[tetIdx].computeNormals(this->getModelMatrix());
     }
 }
 
