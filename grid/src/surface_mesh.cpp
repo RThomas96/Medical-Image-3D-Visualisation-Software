@@ -6,7 +6,41 @@
 #include <memory>
 #include <glm/gtx/string_cast.hpp> 
 
-SurfaceMesh::SurfaceMesh(std::string const &filename) {
+void SurfaceMesh::loadOBJ(std::string const &filename) {
+    std::cout << "Opening " << filename << std::endl;
+
+    std::ifstream file;
+    file.open(filename.c_str());
+    if (! file.is_open()) {
+        std::cout << filename << " cannot be opened" << std::endl;
+        return;
+    }
+
+    this->vertices.clear();
+    this->triangles.clear();
+    std::string id;
+    while (file >> id) {
+        if(id == "v") {
+            float x, y, z;
+            file >> x >> y >> z;
+            this->vertices.push_back(glm::vec3(x, y+1, z+2));
+            //std::cout << x << " " << y << " " << z << std::endl;
+        } else if (id == "f") {
+            unsigned int v1, v2, v3;
+            file >> v1 >> v2 >> v3;
+            this->triangles.push_back(Triangle2(v1-1, v2-1, v3-1));
+            //std::cout << v1 << " " << v2 << " " << v3 << std::endl;
+        } else {
+            std::cout << "G line" << std::endl;
+            std::string dummy;
+            std::getline(file, dummy);
+            std::cout << dummy << std::endl;
+        }
+    }
+    file.close();
+}
+
+void SurfaceMesh::loadOFF(std::string const &filename) {
     std::cout << "Opening " << filename << std::endl;
 
     std::ifstream myfile;
@@ -60,6 +94,17 @@ SurfaceMesh::SurfaceMesh(std::string const &filename) {
         }
     }
 
+}
+
+SurfaceMesh::SurfaceMesh(std::string const &filename) {
+    if(filename.substr(filename.find_last_of(".") + 1) == "obj") {
+        std::cout << "Loading OBJ" << std::endl;
+        this->loadOBJ(filename);
+    } else if (filename.substr(filename.find_last_of(".") + 1) == "off") {
+        std::cout << "Loading OFF" << std::endl;
+        this->loadOFF(filename);
+    }
+
     this->updatebbox();
 
     this->computeTriangleNormal();
@@ -84,7 +129,8 @@ void SurfaceMesh::computeTriangleNormal() {
 	this->normals.resize(this->triangles.size(), glm::vec3(0., 0., 0.));
 	for (unsigned int i = 0; i < triangles.size(); i++) {
 	    const Triangle2& t = triangles[i];
-	    glm::vec3 normal  = glm::cross(vertices[t.getVertex(1)] - vertices[t.getVertex(0)], vertices[t.getVertex(2)] - vertices[t.getVertex(0)]);
+	    //glm::vec3 normal  = glm::cross(vertices[t.getVertex(1)] - vertices[t.getVertex(0)], vertices[t.getVertex(2)] - vertices[t.getVertex(0)]);
+	    glm::vec3 normal  = glm::cross(this->getWorldVertice(t.getVertex(1)) - this->getWorldVertice(t.getVertex(0)), this->getWorldVertice(t.getVertex(2)) - this->getWorldVertice(t.getVertex(0)));
 	    this->normals[i] = glm::normalize(normal);
 	}
 }

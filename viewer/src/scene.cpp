@@ -146,6 +146,7 @@ Scene::Scene() :
 	this->curve		 = nullptr;
 	this->curve_draw = nullptr;
 
+    this->icp = nullptr;
     // Test of the drawable
 
 }
@@ -1368,8 +1369,8 @@ void Scene::drawGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camP
 	}
 
 	// draw grid BB :
-	//this->drawBoundingBox(Image::bbox_t(grid->grid->tetmesh.bbMin, grid->grid->tetmesh.bbMax), grid->boundingBoxColor, mvMat, pMat);
-	this->drawBoundingBox(grid->grid->getBoundingBox(), grid->boundingBoxColor, mvMat, pMat);
+    // Deactivate for now because useless and create a bug with the normal display
+	//this->drawBoundingBox(grid->grid->getBoundingBox(), grid->boundingBoxColor, mvMat, pMat);
 }
 
 void Scene::drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane) {
@@ -2185,10 +2186,8 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 
 		/***********************/
 
-		//for (std::size_t i = 0; i < this->grids.size(); ++i) {
         if(this->grids.size() > 0)
             this->drawGridVolumetricView(mvMat, pMat, camPos, this->grids[gridToDraw]);
-		//}
 
 		if (this->drawMode == DrawMode::VolumetricBoxed) {
 			this->drawBoundingBox(this->visuBox, glm::vec3(1., .0, .0), mvMat, pMat);
@@ -2201,6 +2200,9 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 
     this->drawableMesh->makeVAO();
 	this->drawableMesh->draw(pMat, mvMat, glm::vec4{camPos, 1.f});
+
+    if(this->icp)
+        this->icp->draw();
 
 	if (not this->grids.empty()) {
 		this->drawPlanes(mvMat, pMat, this->drawMode == DrawMode::Solid);
@@ -3624,7 +3626,8 @@ void Scene::setColorChannel(ColorChannel mode) {
 }
 
 void Scene::createNewICP() {
-    this->icp = new ICP(this->grids[0]->grid->grid, this->grids[1]->grid->grid, "/home/thomas/data/Projets/visualisation/build/bin/femur_aligned.off");
+    this->icp = new ICP(this->grids[0]->grid->grid, this->grids[1]->grid->grid, "/home/thomas/data/Projets/visualisation/build/bin/femur_m.obj");
+    //this->icp = new ICP(this->grids[0]->grid->grid, this->grids[1]->grid->grid, "/home/thomas/data/Projets/visualisation/build/bin/femur_aligned.off");
     this->drawableMesh->mesh = this->icp->surface;
 }
 
@@ -3652,50 +3655,89 @@ void Scene::setS(float i) {
 
 
 #include "../../grid/include/mathematics.h"
-    void ICP::Registration(glm::mat3& A,  glm::vec3& t,const ICPMesh& mesh) {
-        glm::vec3 c0 = glm::vec3(0., 0., 0.);
-        glm::vec3 c = glm::vec3(0., 0., 0.);
-        float N = 0.;
-        for(unsigned int i=0;i<mesh.getNbVertices();i++)
-        {
-            c0 += mesh.getWeight(i)*mesh.originalPoints[i];
-            c  += mesh.getWeight(i)*mesh.getCorrespondence(i);
-            N  += mesh.getWeight(i);
-        }
 
-        c0 /= N; 
-        c  /= N;
+void ICP::Registration(float A[3][3],  float t[3],const ICPMesh& mesh)
+{
+    // get centroids
+    float c0[]={0,0,0}, c[]={0,0,0}, N=0;
+    for(unsigned int i=0;i<mesh.getNbVertices();i++)
+    {
+        float p[3];
+        mesh.getPoint0(p,i); for(unsigned int j=0;j<3;j++) c0[j]+=mesh.getWeight(i)*p[j];
+        mesh.getCorrespondence(p,i); for(unsigned int j=0;j<3;j++) c[j]+=mesh.getWeight(i)*p[j];
+        N+=mesh.getWeight(i);
+    }
+    for(unsigned int j=0;j<3;j++) {c0[j]/=N; c[j]/=N;}
 
-        glm::mat3 K(0.f);
-        float sx = 0;
-        for(unsigned int i=0;i<mesh.getNbVertices();i++)
-        {
-            glm::vec3 p0 = mesh.originalPoints[i];
-            p0 -= c0;
-
-            glm::vec3 p = mesh.getCorrespondence(i);
-            p -= c;
-
-            for(unsigned int j=0;j<3;j++) {
-                sx+=mesh.getWeight(i)*p0[j]*p0[j]; 
-                for(unsigned int k=0;k<3;k++) {
-                    K[j][k]+=mesh.getWeight(i)*p[j]*p0[k];
-                } 
-            }
-        }
-
-        float rawK[3][3];
-        float rawA[3][3];
-
-        fromGlmToRaw(K, rawK);
-        fromGlmToRaw(A, rawA);
-
-        ClosestRigid(rawK, rawA);
-
-        fromRawToGlm(rawK, K);
-        fromRawToGlm(rawA, A);
-
-        t = A * c0;
-        t = c - t;
+    // fill matrices
+    float Q[][3]={{0,0,0},{0,0,0},{0,0,0}}, K[][3]={{0,0,0},{0,0,0},{0,0,0}},sx=0;
+    for(unsigned int i=0;i<mesh.getNbVertices();i++)
+    {
+        float p0[3]; mesh.getPoint0(p0,i); for(unsigned int j=0;j<3;j++) p0[j]-=c0[j];
+        float p[3]; mesh.getCorrespondence(p,i); for(unsigned int j=0;j<3;j++) p[j]-=c[j];
+        for(unsigned int j=0;j<3;j++) {sx+=mesh.getWeight(i)*p0[j]*p0[j]; for(unsigned int k=0;k<3;k++) {Q[j][k]+=mesh.getWeight(i)*p0[j]*p0[k];  K[j][k]+=mesh.getWeight(i)*p[j]*p0[k];} }
     }
 
+    // compute solution for affine part
+    ClosestRigid(K,A);
+    float s=0; for(unsigned int j=0;j<3;j++) s+=A[j][0]*K[j][0]+A[j][1]*K[j][1]+A[j][2]*K[j][2];
+    s/=sx;
+    for(unsigned int j=0;j<3;j++) for(unsigned int k=0;k<3;k++) A[j][k]*=s;
+
+    // compute solution for translation
+    Mult(t,A,c0); for(unsigned int j=0;j<3;j++) t[j]=c[j]-t[j];
+}
+
+//void ICP::Registration(glm::mat3& A,  glm::vec3& t,const ICPMesh& mesh) {
+//    glm::vec3 c0 = glm::vec3(0., 0., 0.);
+//    glm::vec3 c = glm::vec3(0., 0., 0.);
+//    float N = 0.;
+//    for(unsigned int i=0;i<mesh.getNbVertices();i++) {
+//        c0 += mesh.getWeight(i)*mesh.originalPoints[i];
+//        c  += mesh.getWeight(i)*mesh.getCorrespondence(i);
+//        N  += mesh.getWeight(i);
+//    }
+//
+//    c0 /= N; 
+//    c  /= N;
+//
+//    glm::mat3 K(0.f);
+//    float sx = 0;
+//    for(unsigned int i=0;i<mesh.getNbVertices();i++)
+//    {
+//        glm::vec3 p0 = mesh.originalPoints[i];
+//        p0 -= c0;
+//
+//        glm::vec3 p = mesh.getCorrespondence(i);
+//        p -= c;
+//
+//        for(unsigned int j=0;j<3;j++) {
+//            sx+=mesh.getWeight(i)*p0[j]*p0[j]; 
+//            for(unsigned int k=0;k<3;k++) {
+//                K[j][k]+=mesh.getWeight(i)*p[j]*p0[k];
+//            } 
+//        }
+//    }
+//
+//    float rawK[3][3];
+//    float rawA[3][3];
+//
+//    fromGlmToRaw(K, rawK);
+//    fromGlmToRaw(A, rawA);
+//
+//    ClosestRigid(rawK, rawA);
+//    float s=0; 
+//    for(unsigned int j=0;j<3;j++) 
+//        s+=rawA[j][0]*rawK[j][0]+rawA[j][1]*rawK[j][1]+rawA[j][2]*rawK[j][2];
+//    s/=sx;
+//    for(unsigned int j=0;j<3;j++) 
+//        for(unsigned int k=0;k<3;k++) 
+//            rawA[j][k]*=s;
+//
+//    fromRawToGlm(rawK, K);
+//    fromRawToGlm(rawA, A);
+//
+//    t = A * c0;
+//    t = c - t;
+//}
+//

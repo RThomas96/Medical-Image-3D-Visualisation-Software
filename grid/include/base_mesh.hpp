@@ -63,6 +63,8 @@ public:
     const glm::vec3 getWorldVertice(int i) const;
     const glm::vec3 getWorldVerticeNormal(int i) const;
 
+    void drawNormals() const;
+
     virtual bool getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, glm::vec3& res) const = 0;
     virtual void computeNeighborhood() = 0;
     virtual void computeNormals() = 0;

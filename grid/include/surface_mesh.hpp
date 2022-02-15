@@ -49,6 +49,9 @@ public:
     void glTriangle(unsigned int i);
     void draw();
 
+    void loadOBJ(std::string const &filename);
+    void loadOFF(std::string const &filename);
+
     //*********/
 
 	std::vector<Triangle2> triangles;
@@ -71,7 +74,6 @@ public:
 
 	std::vector<glm::vec3>& getNormals() { return normals; }
 	const std::vector<glm::vec3>& getNormals() const { return normals; }
-
 };
 
 #endif

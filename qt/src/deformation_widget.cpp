@@ -60,6 +60,7 @@ GridDeformationWidget::GridDeformationWidget(Scene* scene, QWidget* parent) :
 
     this->debug_button = new QPushButton("&DEBUG", this);
     this->debug_it = new QPushButton("&ITERATION", this);
+    this->debug_it->setAutoRepeat(true);
     this->debug_init = new QPushButton("&INIT", this);
 
 	this->spinbox_l_selection = new QDoubleSpinBox;

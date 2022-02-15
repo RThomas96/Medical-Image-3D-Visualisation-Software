@@ -12,10 +12,11 @@ void Cache::storeImage(int imageIdx, const std::vector<uint16_t>& data) {
 }
 
 uint16_t Cache::getValue(const glm::vec3& coord, InterpolationMethod interpolationMethod) {
+    if(coord[0]<0 || coord[1]<0 || coord[2]<0 || coord[0]>=this->img.width() || coord[1]>=this->img.height() || coord[2]>=this->img.depth()) return static_cast<uint16_t>(0);
     if(interpolationMethod == InterpolationMethod::Linear) {
-        return static_cast<uint16_t>(this->img.linear_atXYZ(coord[0], coord[1], coord[2], 0, static_cast<uint8_t>(0)));
+        return static_cast<uint16_t>(this->img.linear_atXYZ(coord[0], coord[1], coord[2], 0, static_cast<uint16_t>(0)));
     } else if (interpolationMethod == InterpolationMethod::Cubic) {
-        return static_cast<uint16_t>(this->img.cubic_atXYZ_c(coord[0], coord[1], coord[2], 0, static_cast<uint8_t>(0)));
+        return static_cast<uint16_t>(this->img.cubic_atXYZ_c(coord[0], coord[1], coord[2], 0, static_cast<uint16_t>(0)));
     } else {
         return this->img.atXYZ(coord[0], coord[1], coord[2]);
     }

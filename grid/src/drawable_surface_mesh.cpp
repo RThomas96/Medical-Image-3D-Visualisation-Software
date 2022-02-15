@@ -55,6 +55,8 @@ void DrawableMeshV2::draw(GLfloat *proj_mat, GLfloat *view_mat, glm::vec4 camera
 	this->gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	this->gl->glBindVertexArray(0);
 	this->gl->glUseProgram(0);
+
+    //this->mesh->drawNormals();
 }
 
 void DrawableMeshV2::fastDraw(GLfloat *proj_mat, GLfloat *view_mat, glm::vec4 camera) {

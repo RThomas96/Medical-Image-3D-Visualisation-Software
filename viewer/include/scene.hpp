@@ -603,18 +603,25 @@ public:
         return this->weights[i];
     }
 
+    void getPoint0(float p[3], const unsigned int index) const {  for(unsigned int i=0;i<3;i++) p[i]=this->originalPoints[index][i]; }
+    void getPoint(float p[3], const unsigned int index) const {  for(unsigned int i=0;i<3;i++) p[i]=this->getWorldVertice(index)[i]; }
+    void getCorrespondence(float p[3], const unsigned int index) const {  for(unsigned int i=0;i<3;i++) p[i]=this->correspondence[index][i]; }
+    float getWeight(const unsigned int index) const {  return this->weights[index]; }
+
 };
 
 
 class ICP {
 
 public:
-    unsigned int Ni=30,No=30,S=10;
-    //unsigned int Ni=25,No=25,S=10;
-    //float l=1.;
-    float l=0.02;
+    //unsigned int Ni=20,No=20,S=10;
+    //float l=0.4;
+
+    unsigned int Ni=10,No=5,S=10;
+    float l=0.02*100;
 
     int nbIt = 0;
+    int metric = 1;
 
     glm::mat3 rotation;
     glm::vec3 origin;
@@ -624,7 +631,10 @@ public:
     Grid * src;
     Grid * target;
 
-    std::vector<std::vector<uint16_t>> sourceProf;
+    CImg<uint16_t> sourceProf;
+
+    float A[3][3];
+    float t[3];
 
     ICP(Grid * src, Grid * target, ICPMesh * surface): src(src), target(target), surface(surface) {
         this->rotation = glm::mat3(1.f);
@@ -633,18 +643,60 @@ public:
 
     ICP(Grid * src, Grid * target, std::string const &filename): src(src), target(target), surface(new ICPMesh(filename)) {
 
-        //this->surface->setOrigin(glm::vec3(130., 50., 130.));
-        //this->surface->setOrigin(glm::vec3(90., 50., 130.));
-        this->surface->setScale(glm::vec3(30., 30., 30.));
-        this->surface->setOrigin(glm::vec3(79.73, 109.2647, 94.9453));
-        this->target->setOrigin(glm::vec3(-60.301449, -24.152321, 10.60724));
-        //this->surface->originalTransformation = this->surface->transformation;
-        //for(int i = 0; i < this->surface->getNbVertices(); ++i) {
-        //    this->surface->originalPoints[i] = this->surface->getWorldVertice(i);
-        //}
+        // Setup #1
+        //this->surface->setScale(glm::vec3(35., 35., 35.));
+        //this->surface->setOrigin(glm::vec3(137.871201, 115.300957, 142.449493));
 
-        this->rotation = glm::mat3(1.f);
-        this->origin = glm::vec3(0., 0., 0.);
+        //this->src->setOrigin(glm::vec3(-50.-1.88574, -100.-1.13047, -60.-3.44723) + glm::vec3(110., 110., 110.));
+ 
+        // Setup #2
+        this->surface->setScale(glm::vec3(100., 100., 100.));
+        //this->surface->setOrigin(glm::vec3(137.871201, 115.300957, 142.449493));
+        //this->surface->setOrigin(((this->surface->bbMax - this->surface->bbMax)/2.f) + glm::vec3(110., 110., 110.));
+        this->surface->setOrigin(glm::vec3(229.294800, -6.420403, 114.809021));
+
+        this->src->setOrigin(glm::vec3(-50.-1.88574, -100.-1.13047, -60.-3.44723) + glm::vec3(110., 110., 110.));
+        this->src->setScale(glm::vec3(1., 1., 3.));
+        this->target->setOrigin(glm::vec3(-106.-2.3, -114.5-1., -50.-2.5) + glm::vec3(110., 110., 110.));
+        this->target->setScale(glm::vec3(1.381, 1.29553, 3.90019));
+
+        //this->rotation = glm::mat3(1.f);
+        //this->origin = glm::vec3(0., 0., 0.);
+
+        for(int i = 0; i < 3; ++i)
+            for(int j = 0; j < 3; ++j)
+                this->A[i][j] = 0;
+
+        A[0][0] = 1;
+        A[1][1] = 1;
+        A[2][2] = 1;
+
+        t[0] = 0;
+        t[1] = 0;
+        t[2] = 0;
+    }
+
+    void draw() {
+        if(this->surface) {
+            glEnable(GL_DEPTH_TEST);
+            glEnable(GL_DEPTH);
+
+            float normalSize = 0.02*100. * 10;
+
+            for(int i = 0; i < this->surface->getNbVertices(); ++i) {
+                glm::vec3 p = this->surface->getWorldVertice(i);
+                glm::vec3 p2 = p + this->surface->getVerticeNormal(i) * normalSize;
+                glBegin(GL_LINES);
+                glColor3f(1., 0., 0.);
+                glVertex3f(p[0], p[1], p[2]);
+                glColor3f(1., 1., 0.);
+                glVertex3f(p2[0], p2[1], p2[2]);
+                glEnd();
+            }
+
+            glDisable(GL_DEPTH_TEST);
+            glDisable(GL_DEPTH);
+        }
     }
 
     void initialize() {
@@ -656,114 +708,134 @@ public:
             //std::cout << glm::to_string(this->surface->originalPoints[i]);
         }
         this->sourceProf = computeProfiles(*this->surface, *this->src, Ni, No, l);
+        this->sourceProf.print();
+        this->sourceProf.save_bmp("srcProfil.bmp");
     }
 
-    void computeCorrespondences(ICPMesh& mesh, const std::vector<std::vector<long>> &dist, const float l) {
-        unsigned int nbpoints=dist[0].size();
-        unsigned int S=dist.size()/2;
+    void computeCorrespondences(ICPMesh& mesh, const CImg<float> &dist, const float l, int metric) {
+        unsigned int nbpoints=dist.height();
+        unsigned int S=dist.width()/2;
 
-        float ratio = float(Ni) / float(Ni+No);
-        int NiIdxInS = std::floor(ratio*Ni);
+        for(unsigned int ptIdx=0;ptIdx<nbpoints;ptIdx++) {
+            glm::vec3 p = mesh.getWorldVertice(ptIdx);
 
-        std::vector<std::vector<long>> r_dist(dist[0].size(), std::vector<long>(dist.size(), long(0)));
-        for(int i = 0; i < dist.size(); ++i) {
-            for(int j = 0; j < dist[i].size(); ++j) {
-                r_dist[j][i] = dist[i][j];
+            bool valueFound = (dist.get_row(ptIdx).mean() != 0.);
+            if(valueFound) {
+                std::vector<float> row(dist.get_shared_row(ptIdx).data(), dist.get_shared_row(ptIdx).data()+dist.width());
+                int idx = 0;
+                if(metric == 0)
+                    idx = std::distance(row.begin(), std::min_element(row.begin(), row.end()));
+                else
+                    idx = std::distance(row.begin(), std::max_element(row.begin(), row.end()));
+
+                float direction = 1.;
+                if(idx < S)
+                    direction = -1.;
+
+                float distance = std::fabs(float(idx)-float(S)) * l;
+
+                glm::vec3 currentNormal = mesh.getVerticeNormal(ptIdx);
+                p += currentNormal * direction * distance;
             }
+
+            mesh.setCorrespondence(p,ptIdx);
         }
-
-        for(unsigned int i=0;i<nbpoints;i++) {
-            glm::vec3 p = mesh.getWorldVertice(i);
-            glm::vec3 normal = mesh.getWorldVerticeNormal(i);
-
-            auto minptr = std::min_element(r_dist[i].begin(), r_dist[i].end());
-            int idxMin = std::distance(r_dist[i].begin(), minptr);
-            //std::cout << idxMin;
-
-            float distance  = l * (idxMin - int(S));
-            
-            p += distance * normal;
-
-            mesh.setCorrespondence(p, i);
-        }
-
     }
     
-    std::vector<std::vector<uint16_t>> computeProfiles(const ICPMesh& mesh, const Grid& img, const unsigned int Ni, const unsigned int No, const float l, bool print = false) {
+    CImg<uint16_t> computeProfiles(const ICPMesh& mesh, const Grid& img, const unsigned int Ni, const unsigned int No, const float l, bool print = false) {
+        //for(int i = 0; i < 3; ++i) {
+        //    currentPoint[i] = std::roundf(currentPoint[i] * 1000) / 1000.0;
+        //    currentNormal[i] = std::roundf(currentNormal[i] * 1000) / 1000.0;
+        //}
+        CImg<uint16_t> prof(Ni+No,mesh.getNbVertices());
+        prof.fill(0);
 
-        std::vector<std::vector<uint16_t>> prof(Ni+No, std::vector<uint16_t>(mesh.getNbVertices(), 0.));
-    
         for(int ptIdx = 0; ptIdx < mesh.getNbVertices(); ++ptIdx) {
             glm::vec3 currentPoint = mesh.getWorldVertice(ptIdx);
-            glm::vec3 currentNormal = mesh.getWorldVerticeNormal(ptIdx);
+            glm::vec3 currentNormal = mesh.getVerticeNormal(ptIdx);
 
-            for(int i = 0; i < 3; ++i) {
-                currentPoint[i] = std::roundf(currentPoint[i] * 1000) / 1000.0;
-                currentNormal[i] = std::roundf(currentNormal[i] * 1000) / 1000.0;
+            float direction = -1.;
+            for(int step = 0; step < Ni; ++step) {
+                glm::vec3 newPoint = currentPoint + direction * float(step) * l * currentNormal;
+                prof(Ni-step-1, ptIdx) = img.getValueFromWorldPoint(newPoint, InterpolationMethod::Linear);
             }
-    
-            for(int it = 0; it < No; ++it) {
-                float offset = (float(it) * l) + 0.0001;
-                prof[Ni+it][ptIdx] = img.getValueFromWorldPoint(currentPoint + offset * currentNormal, InterpolationMethod::Cubic);
-                if(print)
-                    std::cout << glm::to_string(currentPoint + offset * currentNormal) << std::endl;
-            }
-            for(int it = 0; it < Ni; ++it) {
-                float offset = (float(it) * l) + 0.0001;
-                prof[Ni-1-it][ptIdx] = img.getValueFromWorldPoint(currentPoint - offset * currentNormal, InterpolationMethod::Cubic);
-                if(print)
-                    std::cout << glm::to_string(currentPoint + offset * currentNormal) << std::endl;
+
+            direction = 1.;
+            for(int step = 0; step < No; ++step) {
+                glm::vec3 newPoint = currentPoint + direction * float(step) * l * currentNormal;
+                prof(Ni+step, ptIdx) = img.getValueFromWorldPoint(newPoint, InterpolationMethod::Linear);
             }
         }
+
+        //prof.display();
+        prof.save_bmp("nextProfil.bmp");
         return prof;
     }
 
-    std::vector<std::vector<long>> computeDistance(const std::vector<std::vector<uint16_t>>& sourceProf, const std::vector<std::vector<uint16_t>>& targetProf) {
+    // 0 = SSD
+    CImg<float> computeDistance(const CImg<uint16_t>& sourceProf, const CImg<uint16_t>& targetProf, int metric) {
 
-        unsigned int nbpoints=sourceProf[0].size();
-        unsigned int N=sourceProf.size();
-        unsigned int S=(targetProf.size()-sourceProf.size())/2;
+        unsigned int nbpoints=sourceProf.height();
+        unsigned int N=sourceProf.width();
+        unsigned int S=(targetProf.width()-sourceProf.width())/2;
 
-        std::vector<std::vector<long>> dist(2*S, std::vector<long>(nbpoints, 0));
+        CImg<float> dist(2*S,nbpoints);
+        dist.fill(0);
 
-        std::vector<long> cumul(nbpoints, 0);
-        int insertColumnIndex = 0;
-        for(int offset = 0; offset < S*2; ++offset) {
-            std::fill(cumul.begin(), cumul.end(), 0);
+        if(metric==0) {
+            for(int ptIdx = 0; ptIdx < nbpoints; ++ptIdx)
+                for(int offset = 0; offset < 2*S; ++offset)
+                    for(int step = 0; step < N; ++step)
+                        dist(offset, ptIdx) += std::pow(float(sourceProf(step, ptIdx)) - float(targetProf(step+offset, ptIdx)), 2);
+        } else {
             for(int ptIdx = 0; ptIdx < nbpoints; ++ptIdx) {
-                for(int srcIdx = 0; srcIdx < N; ++srcIdx) {
-                    long value = static_cast<long>(targetProf[srcIdx+offset][ptIdx]) - static_cast<long>(sourceProf[srcIdx][ptIdx]);
-                    cumul[ptIdx] += value * value;
+                bool meanToZero = false;
+                double srcMean = sourceProf.get_row(ptIdx).mean();
+                if(srcMean == 0) meanToZero = true;
+
+                for(int offset = 0; offset < 2*S; ++offset) {
+                    double trgMean = targetProf.get_row(ptIdx).get_columns(offset, offset+N).mean();
+                    if(trgMean == 0) meanToZero = true;
+
+                    if(meanToZero) {
+                        dist(offset, ptIdx) = 0;
+                    } else {
+                        double subMult      = 0;
+                        double subSquareSrc = 0;
+                        double subSquareTrg = 0;
+                        for(int step = 0; step < N; ++step) {
+                            subMult += (double(sourceProf(step, ptIdx)) - srcMean) * (double(targetProf(offset+step, ptIdx)) - trgMean);
+                            subSquareSrc += std::pow(double(sourceProf(step, ptIdx)) - srcMean, 2);
+                            subSquareTrg += std::pow(double(targetProf(offset+step, ptIdx)) - trgMean, 2);
+                        }
+
+                        dist(offset, ptIdx) = subMult / std::sqrt(subSquareSrc * subSquareTrg);
+                    }
                 }
             }
-            for(int i = 0; i < nbpoints; ++i) {
-                dist[insertColumnIndex][i] = cumul[i];
-            }
-            insertColumnIndex += 1;
         }
-
+        //dist.display();
+        dist.save_bmp("dist.bmp");
         return dist;
     }
 
-    void Registration(glm::mat3& A,  glm::vec3& t,const ICPMesh& mesh);
+    //void Registration(glm::mat3& A,  glm::vec3& t,const ICPMesh& mesh);
+    void Registration(float A[3][3],  float t[3], const ICPMesh& mesh);
 
     void iteration(bool print=false) {
-        std::vector<std::vector<uint16_t>> targetProf = computeProfiles(*this->surface, *this->target, Ni+S, No+S, l, print);
-        std::vector<std::vector<long>> dist = computeDistance(this->sourceProf,targetProf);
-        computeCorrespondences(*this->surface,dist,l);
-        Registration(this->rotation, this->origin, *this->surface);
+        this->surface->computeNormals();
+        CImg<uint16_t> targetProf = computeProfiles(*this->surface, *this->target, Ni+S, No+S, l, print);
+        CImg<float> dist = computeDistance(this->sourceProf,targetProf,this->metric);
+        computeCorrespondences(*this->surface,dist,l,this->metric);
+        Registration(this->A, this->t, *this->surface);
 
         glm::mat4 transformation(1.f);
         for(int i = 0; i < 3; ++i) {
-            transformation[3][i] = this->origin[i];
+            transformation[3][i] = this->t[i];
             for(int j = 0; j < 3; ++j)
-                transformation[i][j] = this->rotation[i][j];
+                transformation[i][j] = this->A[i][j];
         }
-        //this->surface->transformation = transformation * this->surface->originalTransformation;
         this->surface->setTransformation(transformation * this->surface->originalTransformation);
-
-        //if(print)
-            //saveProfile(targetProf, (std::string("targetProf") + std::to_string(nbIt) + std::string(".bmp")).c_str());
 
         nbIt += 1;
     }
