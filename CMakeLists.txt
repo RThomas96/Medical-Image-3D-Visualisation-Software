@@ -189,7 +189,7 @@ FetchContent_MakeAvailable(Catch2)
 
 ADD_EXECUTABLE(tests
 
-    ./tests/ICP_tests.cpp
+    #./tests/ICP_tests.cpp
 
     ./grid/include/grid.hpp
     ./grid/include/base_mesh.hpp
@@ -197,7 +197,6 @@ ADD_EXECUTABLE(tests
     ./grid/include/drawable_surface_mesh.hpp
     ./grid/include/mesh_deformator.hpp
     ./grid/include/tiff_image.hpp
-    #./grid/include/GLmanipulator.hpp
     ./grid/include/manipulator.hpp
     ./grid/include/mesh_manipulator.hpp
     ./grid/include/cache.hpp
@@ -223,7 +222,6 @@ ADD_EXECUTABLE(tests
     ./grid/src/drawable_surface_mesh.cpp
     ./grid/src/mesh_deformator.cpp
     ./grid/src/tiff_image.cpp
-    #./grid/src/GLmanipulator.cpp
     ./grid/src/manipulator.cpp
     ./grid/src/mesh_manipulator.cpp
     ./grid/src/cache.cpp
@@ -261,17 +259,3 @@ TARGET_LINK_LIBRARIES(tests
 	PUBLIC TinyTIFF
 	PUBLIC ${libTIFF}
 )
-
-##TARGET_INCLUDE_DIRECTORIES(${CMAKE_PROJECT_NAME}_mesh
-##	PRIVATE ${LOCAL_GLM_HEADER_DIR}
-##	PRIVATE ${nanoflann_INCLUDE_DIRS}
-##)
-##TARGET_LINK_LIBRARIES(${CMAKE_PROJECT_NAME}_mesh
-##	PUBLIC glm::glm
-##	PUBLIC nanoflann::nanoflann
-##)
-##SET_TARGET_PROPERTIES(${CMAKE_PROJECT_NAME}_mesh PROPERTIES
-##	AUTORCC OFF
-##	AUTOUIC OFF
-##	AUTOMOC OFF
-##)

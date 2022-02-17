@@ -146,19 +146,18 @@ void GridDeformationWidget::setupSignals(Scene* scene) {
 
 	QObject::connect(this->spinbox_radius_sphere, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, [=](double i){ scene->setManipulatorRadius(i);}); 
 
-	QObject::connect(this->spinbox_l_selection, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, [=](double i){ scene->setL(i);}); 
-	QObject::connect(this->spinbox_N_selection, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, [=](double i){ scene->setN(i);}); 
-	QObject::connect(this->spinbox_S_selection, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, [=](double i){ scene->setS(i);}); 
-
 	QObject::connect(this->checkbox_wireframe, &QPushButton::clicked, this, [this, scene]() {scene->toggleWireframe();});
 
 	QObject::connect(this->radio_move_normal, &QPushButton::clicked, this, [this, scene]() {scene->setNormalDeformationMethod();});
 
 	QObject::connect(this->radio_move_weighted, &QPushButton::clicked, this, [this, scene]() {scene->setWeightedDeformationMethod(this->spinbox_radius_selection->value());});
 
-    QObject::connect(this->debug_button, &QPushButton::released, this, [this, scene]() {scene->createNewICP();});
+    // These button can be set
+	//QObject::connect(this->spinbox_l_selection, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, [=](double i){ scene->setL(i);}); 
+	//QObject::connect(this->spinbox_N_selection, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, [=](double i){ scene->setN(i);}); 
+	//QObject::connect(this->spinbox_S_selection, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, [=](double i){ scene->setS(i);}); 
 
-    QObject::connect(this->debug_it, &QPushButton::released, this, [this, scene]() {scene->ICPIteration();});
-
-    QObject::connect(this->debug_init, &QPushButton::released, this, [this, scene]() {scene->ICPInitialize();});
+    //QObject::connect(this->debug_button, &QPushButton::released, this, [this, scene]() {scene->createNewICP();});
+    //QObject::connect(this->debug_it, &QPushButton::released, this, [this, scene]() {scene->ICPIteration();});
+    //QObject::connect(this->debug_init, &QPushButton::released, this, [this, scene]() {scene->ICPInitialize();});
 }

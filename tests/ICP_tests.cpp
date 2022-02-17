@@ -1,7 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 #include "../grid/include/grid.hpp"
 #include "../grid/include/surface_mesh.hpp"
-#include "../grid/include/mathematics.h"
 #include "BitmapPlusPlus.hpp"
 #include <limits>
 
