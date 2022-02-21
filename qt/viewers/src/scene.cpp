@@ -17,7 +17,7 @@
 #include <chrono>
 
 #include "../../grid/geometry/grid.hpp"
-#include "../../grid/drawable/GLmanipulator.hpp"
+#include "../../grid/drawable/drawable_manipulator.hpp"
 
 inline unsigned int planeHeadingToIndex(planeHeading _heading) {
 	switch (_heading) {

@@ -94,7 +94,7 @@ ADD_EXECUTABLE(neighbor_visu
     ./grid/ui/manipulator.hpp
     ./grid/ui/mesh_manipulator.hpp
     ./grid/drawable/drawable_surface_mesh.hpp
-    ./grid/drawable/GLmanipulator.hpp
+    ./grid/drawable/drawable_manipulator.hpp
     ./grid/deformation/mesh_deformator.hpp
 
 	# Main file :
@@ -116,7 +116,7 @@ ADD_EXECUTABLE(neighbor_visu
     ./grid/ui/manipulator.cpp
     ./grid/ui/mesh_manipulator.cpp
     ./grid/drawable/drawable_surface_mesh.cpp
-    ./grid/drawable/GLmanipulator.cpp
+    ./grid/drawable/drawable_manipulator.cpp
     ./grid/deformation/mesh_deformator.cpp
 
     #To remove
