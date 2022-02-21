@@ -1,9 +1,9 @@
 #ifndef QT_INCLUDE_NEIGHBOR_VISU_MAIN_WIDGET_HPP_
 #define QT_INCLUDE_NEIGHBOR_VISU_MAIN_WIDGET_HPP_
 
-#include "../../viewer/include/neighbor_visu_viewer.hpp"
-#include "../../viewer/include/planar_viewer.hpp"
-#include "../../viewer/include/scene.hpp"
+#include "../../qt/viewers/include/neighbor_visu_viewer.hpp"
+#include "../../qt/viewers/include/planar_viewer.hpp"
+#include "../../qt/viewers/include/scene.hpp"
 //#include "./grid_control.hpp"
 #include "./loader_widget.hpp"
 #include "./deformation_widget.hpp"

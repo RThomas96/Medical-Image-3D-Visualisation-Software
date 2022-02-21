@@ -5,8 +5,8 @@
 //#include "../../grid/include/discrete_grid_reader.hpp"
 //#include "../../grid/include/input_discrete_grid.hpp"
 #include "../../macros.hpp"
-#include "../../viewer/include/neighbor_visu_viewer.hpp"
-#include "../../viewer/include/scene.hpp"
+#include "../../qt/viewers/include/neighbor_visu_viewer.hpp"
+#include "../../qt/viewers/include/scene.hpp"
 #include "./scene_control.hpp"
 
 #include <QComboBox>

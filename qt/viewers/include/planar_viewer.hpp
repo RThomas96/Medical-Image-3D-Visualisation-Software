@@ -2,7 +2,7 @@
 #define VISUALISATION_VIEWER_INCLUDE_PLANAR_VIEWER_HPP_
 
 #include "../../features.hpp"
-#include "../../qt/include/viewer_header.hpp"
+#include "../../qt/widgets/include/viewer_header.hpp"
 #include "./scene.hpp"
 
 #include <QGLViewer/qglviewer.h>

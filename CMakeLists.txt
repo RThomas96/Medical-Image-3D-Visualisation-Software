@@ -39,25 +39,25 @@ ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/legacy/image)
 ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/legacy/meshes)
 
 ADD_LIBRARY(VisualisationWidgets STATIC
-	./qt/include/neighbor_visu_main_widget.hpp
-	./qt/include/scene_control.hpp
-	./qt/include/viewer_header.hpp
-	./qt/include/opengl_debug_log.hpp
-	./qt/include/double_slider.hpp
-	./qt/include/range_slider.hpp
-	./qt/include/user_settings_widget.hpp
-	./qt/include/loader_widget.hpp
-	./qt/include/deformation_widget.hpp
+	./qt/widgets/include/neighbor_visu_main_widget.hpp
+	./qt/widgets/include/scene_control.hpp
+	./qt/widgets/include/viewer_header.hpp
+	./qt/widgets/include/opengl_debug_log.hpp
+	./qt/widgets/include/double_slider.hpp
+	./qt/widgets/include/range_slider.hpp
+	./qt/widgets/include/user_settings_widget.hpp
+	./qt/widgets/include/loader_widget.hpp
+	./qt/widgets/include/deformation_widget.hpp
 
-	./qt/src/neighbor_visu_main_widget.cpp
-	./qt/src/scene_control.cpp
-	./qt/src/viewer_header.cpp
-	./qt/src/opengl_debug_log.cpp
-	./qt/src/double_slider.cpp
-	./qt/src/range_slider.cpp
-	./qt/src/user_settings_widget.cpp
-	./qt/src/loader_widget.cpp
-	./qt/src/deformation_widget.cpp
+	./qt/widgets/src/neighbor_visu_main_widget.cpp
+	./qt/widgets/src/scene_control.cpp
+	./qt/widgets/src/viewer_header.cpp
+	./qt/widgets/src/opengl_debug_log.cpp
+	./qt/widgets/src/double_slider.cpp
+	./qt/widgets/src/range_slider.cpp
+	./qt/widgets/src/user_settings_widget.cpp
+	./qt/widgets/src/loader_widget.cpp
+	./qt/widgets/src/deformation_widget.cpp
 )
 TARGET_INCLUDE_DIRECTORIES(VisualisationWidgets
 	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/third_party/glm/
@@ -78,10 +78,10 @@ TARGET_LINK_LIBRARIES(VisualisationWidgets
 
 ADD_EXECUTABLE(neighbor_visu
 	# Header files, for Qt MOCS compilation :
-	./viewer/include/scene.hpp
-	./viewer/include/planar_viewer.hpp
-	./viewer/include/neighbor_visu_viewer.hpp
-	./viewer/include/viewer_structs.hpp
+	./qt/viewers/include/scene.hpp
+	./qt/viewers/include/planar_viewer.hpp
+	./qt/viewers/include/neighbor_visu_viewer.hpp
+	./qt/viewers/include/viewer_structs.hpp
     ./third_party/primitive/Sphere.h
     ./grid/include/grid.hpp
     ./grid/include/base_mesh.hpp
@@ -99,10 +99,10 @@ ADD_EXECUTABLE(neighbor_visu
 	./neighbor_visu_main.cpp
 
 	# Source files :
-	./viewer/src/scene.cpp
-	./viewer/src/planar_viewer.cpp
-	./viewer/src/neighbor_visu_viewer.cpp
-	./viewer/src/viewer_structs.cpp
+	./qt/viewers/src/scene.cpp
+	./qt/viewers/src/planar_viewer.cpp
+	./qt/viewers/src/neighbor_visu_viewer.cpp
+	./qt/viewers/src/viewer_structs.cpp
     ./third_party/primitive/Sphere.cpp
     ./grid/src/grid.cpp
     ./grid/src/base_mesh.cpp

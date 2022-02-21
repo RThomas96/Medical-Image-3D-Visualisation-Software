@@ -9,7 +9,7 @@
 #include <QSlider>
 #include <QWidget>
 
-#include "../../viewer/include/neighbor_visu_viewer.hpp"
+#include "../../qt/viewers/include/neighbor_visu_viewer.hpp"
 
 // Fwd-declaration
 class PlanarViewer;

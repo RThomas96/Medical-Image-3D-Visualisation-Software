@@ -1,6 +1,6 @@
 #include "../include/viewer_header.hpp"
 
-#include "../../viewer/include/planar_viewer.hpp"
+#include "../../qt/viewers/include/planar_viewer.hpp"
 
 ViewerHeader::ViewerHeader(QWidget* parent) :
 	QWidget(parent) {
