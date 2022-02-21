@@ -1,4 +1,4 @@
-#include "../include/tiff_image.hpp"
+#include "tiff_image.hpp"
 #include <algorithm>
 
 SimpleImage::SimpleImage(const std::vector<std::string>& filename): tiffReader(new TIFFReader(filename)) {

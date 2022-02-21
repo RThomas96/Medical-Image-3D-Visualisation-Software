@@ -1,5 +1,5 @@
-#include "../include/mesh_manipulator.hpp"
-#include "../include/manipulator.hpp"
+#include "mesh_manipulator.hpp"
+#include "manipulator.hpp"
 
 
 namespace UITool {

@@ -1,5 +1,5 @@
-#include "../include/surface_mesh.hpp"
-#include "../include/mesh_deformator.hpp"
+#include "surface_mesh.hpp"
+#include "../deformation/mesh_deformator.hpp"
 #include <fstream>
 #include <QOpenGLFunctions>
 #include <cfloat>

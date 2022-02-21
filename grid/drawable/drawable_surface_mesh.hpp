@@ -1,7 +1,7 @@
 #ifndef VISUALISATION_MESHES_DRAWABLE_SURFACE_MESH_HPP_
 #define VISUALISATION_MESHES_DRAWABLE_SURFACE_MESH_HPP_
 
-#include "surface_mesh.hpp"
+#include "../geometry/surface_mesh.hpp"
 
 #include "../../legacy/meshes/drawable/shaders.hpp"
 

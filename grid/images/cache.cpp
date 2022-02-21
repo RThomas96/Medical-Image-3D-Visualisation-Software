@@ -1,4 +1,4 @@
-#include "../include/cache.hpp"
+#include "cache.hpp"
 
 Cache::Cache(glm::vec3 imageSize): img(CImg<uint16_t>(imageSize[0], imageSize[1], imageSize[2], 1, 0)) {}
 

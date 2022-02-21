@@ -1,4 +1,4 @@
-#include "../include/drawable_surface_mesh.hpp"
+#include "drawable_surface_mesh.hpp"
 
 #include <glm/gtc/type_ptr.hpp>
 

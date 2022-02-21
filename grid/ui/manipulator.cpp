@@ -1,4 +1,4 @@
-#include "../include/manipulator.hpp"
+#include "manipulator.hpp"
 #include <limits>
 #include "glm/gtx/string_cast.hpp" 
 

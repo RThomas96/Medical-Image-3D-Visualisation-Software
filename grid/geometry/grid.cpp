@@ -1,4 +1,4 @@
-#include "../include/grid.hpp"
+#include "grid.hpp"
 #include <chrono>
 #include <algorithm>
 

@@ -2,7 +2,7 @@
 #define SIMPLEGRID_HPP_
 
 #include "tetrahedral_mesh.hpp"
-#include "tiff_image.hpp"
+#include "../images/tiff_image.hpp"
 
 // This enum allow to choose at which resolution we want to query points
 // FULL_RESOLUTION allow to bypass the Sampler class and query directly from the image

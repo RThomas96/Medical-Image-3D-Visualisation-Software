@@ -83,17 +83,19 @@ ADD_EXECUTABLE(neighbor_visu
 	./qt/viewers/include/neighbor_visu_viewer.hpp
 	./qt/viewers/include/viewer_structs.hpp
     ./third_party/primitive/Sphere.h
-    ./grid/include/grid.hpp
-    ./grid/include/base_mesh.hpp
-    ./grid/include/tetrahedral_mesh.hpp
-    ./grid/include/drawable_surface_mesh.hpp
-    ./grid/include/mesh_deformator.hpp
-    ./grid/include/tiff_image.hpp
-    ./grid/include/GLmanipulator.hpp
-    ./grid/include/manipulator.hpp
-    ./grid/include/mesh_manipulator.hpp
-    ./grid/include/cache.hpp
-    ./grid/include/CImg.h
+
+    ./grid/geometry/grid.hpp
+    ./grid/geometry/base_mesh.hpp
+    ./grid/geometry/tetrahedral_mesh.hpp
+    ./grid/geometry/surface_mesh.hpp
+    ./grid/images/CImg.h
+    ./grid/images/tiff_image.hpp
+    ./grid/images/cache.hpp
+    ./grid/ui/manipulator.hpp
+    ./grid/ui/mesh_manipulator.hpp
+    ./grid/drawable/drawable_surface_mesh.hpp
+    ./grid/drawable/GLmanipulator.hpp
+    ./grid/deformation/mesh_deformator.hpp
 
 	# Main file :
 	./neighbor_visu_main.cpp
@@ -104,17 +106,18 @@ ADD_EXECUTABLE(neighbor_visu
 	./qt/viewers/src/neighbor_visu_viewer.cpp
 	./qt/viewers/src/viewer_structs.cpp
     ./third_party/primitive/Sphere.cpp
-    ./grid/src/grid.cpp
-    ./grid/src/base_mesh.cpp
-    ./grid/src/tetrahedral_mesh.cpp
-    ./grid/src/surface_mesh.cpp
-    ./grid/src/drawable_surface_mesh.cpp
-    ./grid/src/mesh_deformator.cpp
-    ./grid/src/tiff_image.cpp
-    ./grid/src/GLmanipulator.cpp
-    ./grid/src/manipulator.cpp
-    ./grid/src/mesh_manipulator.cpp
-    ./grid/src/cache.cpp
+    ./grid/geometry/grid.cpp
+    ./grid/geometry/base_mesh.cpp
+    ./grid/geometry/tetrahedral_mesh.cpp
+    ./grid/geometry/surface_mesh.cpp
+    ./grid/images/CImg.h
+    ./grid/images/tiff_image.cpp
+    ./grid/images/cache.cpp
+    ./grid/ui/manipulator.cpp
+    ./grid/ui/mesh_manipulator.cpp
+    ./grid/drawable/drawable_surface_mesh.cpp
+    ./grid/drawable/GLmanipulator.cpp
+    ./grid/deformation/mesh_deformator.cpp
 
     #To remove
     ./legacy/image/utils/include/image_api_common.hpp
@@ -183,27 +186,26 @@ ADD_EXECUTABLE(tests
 
     #./tests/ICP_tests.cpp
 
-    ./grid/include/grid.hpp
-    ./grid/include/base_mesh.hpp
-    ./grid/include/tetrahedral_mesh.hpp
-    ./grid/include/drawable_surface_mesh.hpp
-    ./grid/include/mesh_deformator.hpp
-    ./grid/include/tiff_image.hpp
-    ./grid/include/manipulator.hpp
-    ./grid/include/mesh_manipulator.hpp
-    ./grid/include/cache.hpp
-    ./grid/include/CImg.h
+    ./grid/geometry/grid.hpp
+    ./grid/geometry/base_mesh.hpp
+    ./grid/geometry/tetrahedral_mesh.hpp
+    ./grid/images/CImg.h
+    ./grid/images/tiff_image.hpp
+    ./grid/images/cache.hpp
+    ./grid/ui/manipulator.hpp
+    ./grid/ui/mesh_manipulator.hpp
+    ./grid/drawable/drawable_surface_mesh.hpp
+    ./grid/deformation/mesh_deformator.hpp
 
-    ./grid/src/grid.cpp
-    ./grid/src/base_mesh.cpp
-    ./grid/src/tetrahedral_mesh.cpp
-    ./grid/src/surface_mesh.cpp
-    ./grid/src/drawable_surface_mesh.cpp
-    ./grid/src/mesh_deformator.cpp
-    ./grid/src/tiff_image.cpp
-    ./grid/src/manipulator.cpp
-    ./grid/src/mesh_manipulator.cpp
-    ./grid/src/cache.cpp
+    ./grid/geometry/grid.cpp
+    ./grid/geometry/base_mesh.cpp
+    ./grid/geometry/tetrahedral_mesh.cpp
+    ./grid/images/tiff_image.cpp
+    ./grid/images/cache.cpp
+    ./grid/ui/manipulator.cpp
+    ./grid/ui/mesh_manipulator.cpp
+    ./grid/drawable/drawable_surface_mesh.cpp
+    ./grid/deformation/mesh_deformator.cpp
 
     #To remove
     ./legacy/image/utils/include/image_api_common.hpp

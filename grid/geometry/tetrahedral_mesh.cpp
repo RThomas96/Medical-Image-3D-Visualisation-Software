@@ -1,5 +1,5 @@
-#include "../include/tetrahedral_mesh.hpp"
-#include "../include/mesh_deformator.hpp"
+#include "tetrahedral_mesh.hpp"
+#include "../deformation/mesh_deformator.hpp"
 #include <map>
 #include <algorithm>
 

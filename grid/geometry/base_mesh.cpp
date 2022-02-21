@@ -1,6 +1,6 @@
-#include "../include/base_mesh.hpp"
-#include "../include/mesh_deformator.hpp"
-#include "../include/manipulator.hpp"
+#include "base_mesh.hpp"
+#include "../deformation/mesh_deformator.hpp"
+#include "../ui/manipulator.hpp"
 #include <map>
 #include <algorithm>
 #include <math.h>

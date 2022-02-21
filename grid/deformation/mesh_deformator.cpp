@@ -1,5 +1,5 @@
-#include "../include/mesh_deformator.hpp"
-#include "../include/tetrahedral_mesh.hpp"
+#include "mesh_deformator.hpp"
+#include "../geometry/tetrahedral_mesh.hpp"
 #include <algorithm>
 
 bool WeightedMethod::hasSelectedPts() {

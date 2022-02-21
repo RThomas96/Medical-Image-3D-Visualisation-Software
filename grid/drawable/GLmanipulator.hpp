@@ -3,7 +3,7 @@
 
 #include "../../third_party/primitive/Sphere.h"
 #include "../../qt/viewers/include/viewer_structs.hpp"
-#include "mesh_manipulator.hpp"
+#include "../ui/mesh_manipulator.hpp"
 
 #include <QOpenGLContext>
 #include <QOpenGLFunctions_3_2_Core>

@@ -44,8 +44,8 @@
 #include <tinytiffreader.h>
 #include <tinytiffwriter.h>
 
-#include "../../grid/include/grid.hpp"
-#include "../../grid/include/drawable_surface_mesh.hpp"
+#include "../../grid/geometry/grid.hpp"
+#include "../../grid/drawable/drawable_surface_mesh.hpp"
 
 #include "glm/gtx/string_cast.hpp"
 
