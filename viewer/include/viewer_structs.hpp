@@ -5,7 +5,7 @@
 #include "../../macros.hpp"
 
 #include "../../grid/include/grid.hpp"
-#include "../../image/utils/include/bounding_box.hpp"
+#include "../../legacy/image/utils/include/bounding_box.hpp"
 
 #include <glm/glm.hpp>
 

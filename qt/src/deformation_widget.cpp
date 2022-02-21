@@ -1,11 +1,5 @@
 #include "../include/deformation_widget.hpp"
 
-#include "../../../image/transforms/include/affine_transform.hpp"
-#include "../../../image/transforms/include/transform_interface.hpp"
-#include "../../../image/transforms/include/transform_stack.hpp"
-#include "../../../image/transforms/include/trs_transform.hpp"
-#include "../include/user_settings_widget.hpp"
-
 #include <glm/gtx/io.hpp>
 
 #include <QCoreApplication>

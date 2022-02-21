@@ -1,7 +1,7 @@
 #include "../include/scene.hpp"
 #include "../include/planar_viewer.hpp"
 
-#include "../../meshes/operations/arap/AsRigidAsPossible.h"
+#include "../../legacy/meshes/operations/arap/AsRigidAsPossible.h"
 #include "../../qt/include/dialog_pick_grids_from_scene.hpp"
 
 #include <glm/gtc/type_ptr.hpp>

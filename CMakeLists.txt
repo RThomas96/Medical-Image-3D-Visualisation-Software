@@ -34,8 +34,8 @@ ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/third_party/glm)
 SET(LOCAL_GLM_HEADER_DIR "${CMAKE_CURRENT_LIST_DIR}/third_party/glm/")
 SET(LIBS_COMPILED_HEADERS "${CMAKE_CURRENT_LIST_DIR}/third_party/compiled_libraries/include")
 
-ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/image)
-ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/meshes)
+ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/legacy/image)
+ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/legacy/meshes)
 
 ADD_LIBRARY(VisualisationWidgets STATIC
 	./qt/include/neighbor_visu_main_widget.hpp
@@ -98,10 +98,10 @@ ADD_EXECUTABLE(neighbor_visu
     ./grid/include/CImg.h
 
     #Probably to remove
-    ./image/utils/include/image_api_common.hpp
-    ./image/utils/include/bounding_box.hpp
-    ./image/utils/include/threaded_task.hpp
-    ./image/utils/src/threaded_task.cpp
+    ./legacy/image/utils/include/image_api_common.hpp
+    ./legacy/image/utils/include/bounding_box.hpp
+    ./legacy/image/utils/include/threaded_task.hpp
+    ./legacy/image/utils/src/threaded_task.cpp
 
 	# Main file :
 	./neighbor_visu_main.cpp
@@ -196,10 +196,10 @@ ADD_EXECUTABLE(tests
     ./grid/include/CImg.h
 
     #Probably to remove
-    ./image/utils/include/image_api_common.hpp
-    ./image/utils/include/bounding_box.hpp
-    ./image/utils/include/threaded_task.hpp
-    ./image/utils/src/threaded_task.cpp
+    ./legacy/image/utils/include/image_api_common.hpp
+    ./legacy/image/utils/include/bounding_box.hpp
+    ./legacy/image/utils/include/threaded_task.hpp
+    ./legacy/image/utils/src/threaded_task.cpp
 
     ./grid/src/grid.cpp
     ./grid/src/base_mesh.cpp

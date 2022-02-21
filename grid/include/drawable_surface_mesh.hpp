@@ -3,7 +3,7 @@
 
 #include "surface_mesh.hpp"
 
-#include "../../meshes/drawable/shaders.hpp"
+#include "../../legacy/meshes/drawable/shaders.hpp"
 
 #include <QOpenGLContext>
 #include <QOpenGLExtraFunctions>

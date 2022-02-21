@@ -7,14 +7,14 @@
 // Scene control panel :
 #include "../../qt/include/scene_control.hpp"
 // Shader compiler :
-#include "../../meshes/drawable/shaders.hpp"
+#include "../../legacy/meshes/drawable/shaders.hpp"
 // Meshes :
-#include "../../meshes/base_mesh/Mesh.hpp"
-#include "../../meshes/base_mesh/mesh_io.hpp"
-#include "../../meshes/drawable/curve.hpp"
-#include "../../meshes/drawable/mesh.hpp"
+#include "../../legacy/meshes/base_mesh/Mesh.hpp"
+#include "../../legacy/meshes/base_mesh/mesh_io.hpp"
+#include "../../legacy/meshes/drawable/curve.hpp"
+#include "../../legacy/meshes/drawable/mesh.hpp"
 // Curve :
-#include "../../meshes/deformable_curve/curve.hpp"
+#include "../../legacy/meshes/deformable_curve/curve.hpp"
 // UI elements :
 //#include "../../qt/include/grid_control.hpp"
 #include "../../qt/include/opengl_debug_log.hpp"
@@ -39,7 +39,7 @@
 #include <vector>
 
 #include <thread>
-#include "../../image/utils/include/threaded_task.hpp"
+#include "../../legacy/image/utils/include/threaded_task.hpp"
 
 // Tinytiff
 #include <tinytiffreader.h>

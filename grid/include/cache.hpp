@@ -1,7 +1,7 @@
 #ifndef CACHE_HPP_
 #define CACHE_HPP_
 
-#include "../../image/utils/include/image_api_common.hpp"
+#include "../../legacy/image/utils/include/image_api_common.hpp"
 #define cimg_display 0
 #include "CImg.h"
 #include <vector>

@@ -1,7 +1,7 @@
 #ifndef VISUALISATION_DIALOG_PICK_GRIDS_FROM_SCENE_H
 #define VISUALISATION_DIALOG_PICK_GRIDS_FROM_SCENE_H
 
-#include "../../meshes/base_mesh/Mesh.hpp"
+#include "../../legacy/meshes/base_mesh/Mesh.hpp"
 //#include "../../new_grid/include/grid.hpp"
 #include "../../viewer/include/viewer_structs.hpp"
 
