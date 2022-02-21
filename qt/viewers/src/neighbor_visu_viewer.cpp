@@ -125,11 +125,11 @@ void Viewer::keyPressEvent(QKeyEvent* e) {
 		*/
 		case Qt::Key::Key_W:
             if(!e->isAutoRepeat())
-                this->scene->grids[0]->grid->grid->setWeightedDeformationMethod(30.);
+                this->scene->grids[0]->grid->setWeightedDeformationMethod(30.);
 			break;
 		case Qt::Key::Key_X:
             if(!e->isAutoRepeat())
-                this->scene->grids[0]->grid->grid->setNormalDeformationMethod();
+                this->scene->grids[0]->grid->setNormalDeformationMethod();
 			break;
 		//case Qt::Key::Key_L:
         //    if(!e->isAutoRepeat())
@@ -520,7 +520,7 @@ void Viewer::updateInfoFromScene() {
 	this->update();
 }
 
-void Viewer::newAPI_loadGrid(const GridGL * ptr) {
+void Viewer::newAPI_loadGrid(Grid * ptr) {
 	if (this->scene == nullptr) {
 		return;
 	}

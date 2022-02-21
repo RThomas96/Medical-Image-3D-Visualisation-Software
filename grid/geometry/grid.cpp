@@ -328,37 +328,3 @@ void Sampler::fromSamplerToImage(glm::vec3& p) const {
 void Sampler::fromImageToSampler(glm::vec3& p) const {
     p = p / this->resolutionRatio;
 }
-
-/**************************/
-
-GridGL::GridGL(const std::string& filename, const glm::vec3& nbCube, int subsample): grid(new Grid(filename, subsample)), transform(glm::mat4(1.0)) {
-    this->grid->buildTetmesh(nbCube);
-}
-
-GridGL::GridGL(const std::vector<std::string>& filename, const glm::vec3& nbCube, int subsample): grid(new Grid(filename, subsample)), transform(glm::mat4(1.0)) {
-    this->grid->buildTetmesh(nbCube);
-}
-
-GridGL::GridGL(const std::vector<std::string>& filename, const glm::vec3& nbCube, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox): grid(new Grid(filename, subsample, bbox)), transform(glm::mat4(1.0)) {
-    this->grid->buildTetmesh(nbCube);
-} 
-
-std::pair<glm::vec3, glm::vec3> GridGL::getBoundingBox() const {
-    return this->grid->getBoundingBox();
-}
-
-Image::ImageDataType GridGL::getInternalDataType() const {
-    return this->grid->sampler.getInternalDataType();
-}
-
-glm::vec3 GridGL::getResolution() const {
-    return this->grid->sampler.getSamplerDimension();
-}
-
-int GridGL::getNbSlice() const {
-    return this->grid->sampler.getSamplerDimension()[2];
-}
-
-void GridGL::getGridSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel) const {
-    this->grid->sampler.getGridSlice(sliceIdx, result, nbChannel);
-}

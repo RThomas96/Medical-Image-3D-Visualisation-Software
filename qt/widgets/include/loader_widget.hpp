@@ -47,7 +47,7 @@ protected:
 	Viewer* viewer;
 	ControlPanel* _cp;
 
-	const GridGL * _testing_grid;
+	Grid * _testing_grid;
 
 	QLabel* label_header;
 

@@ -191,10 +191,11 @@ void GridLoaderWidget::loadNewGridAPI() {
         std::pair<glm::vec3, glm::vec3> bbox{glm::vec3(this->spinbox_bboxMin_x->value(), this->spinbox_bboxMin_y->value(), this->spinbox_bboxMin_z->value()), glm::vec3(this->spinbox_bboxMax_x->value(), this->spinbox_bboxMax_y->value(), this->spinbox_bboxMax_z->value())};
         std::cout << bbox.first << std::endl;
         std::cout << bbox.second << std::endl;
-	    this->_testing_grid = new GridGL(filenamesAsString, sizeTetmesh, subsample, bbox);
+	    this->_testing_grid = new Grid(filenamesAsString, subsample, bbox);
     } else {
-	    this->_testing_grid = new GridGL(filenamesAsString, sizeTetmesh, subsample);
+	    this->_testing_grid = new Grid(filenamesAsString, subsample);
     }
+    this->_testing_grid->buildTetmesh(sizeTetmesh);
     this->loadGrid_newAPI();
 }
 

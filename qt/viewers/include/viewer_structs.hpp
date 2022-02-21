@@ -145,7 +145,7 @@ public:
 	using Ptr = std::shared_ptr<GridGLView>;
 
 public:
-	GridGLView(const GridGL * _g);
+	GridGLView(Grid * _g);
 	GridGLView(const GridGLView&) = default;
 	GridGLView(GridGLView&&) = default;
 	GridGLView& operator=(const GridGLView&) = default;
@@ -164,8 +164,7 @@ public:
 	using int_pair = glm::vec<2, int, glm::defaultp>;
 
 	//Image::Grid::Ptr grid;
-    //const Grid * grid;
-    const GridGL * grid;
+    Grid * grid;
 
     // WARNING
     // TODO: to fill

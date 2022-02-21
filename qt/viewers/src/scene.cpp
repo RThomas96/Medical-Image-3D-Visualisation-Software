@@ -567,7 +567,7 @@ uint16_t Scene::sendGridValuesToGPU(int gridIdx) {
 	std::vector<std::uint16_t> slices;
     this->grids[gridIdx]->gridTexture = this->newAPI_uploadTexture3D_allocateonly(_gridTex);
 
-    int nbSlice = this->grids[gridIdx]->grid->getNbSlice();
+    int nbSlice = this->grids[gridIdx]->grid->getResolution()[2];
 
     //TODO: this computation do not belong here
     uint16_t max = std::numeric_limits<uint16_t>::min();
@@ -606,7 +606,7 @@ uint16_t Scene::sendGridValuesToGPU(int gridIdx) {
     return max;
 }
 
-void Scene::addGrid(const GridGL * gridLoaded) {
+void Scene::addGrid(Grid * gridLoaded) {
     // TODO: probably a bug here
 	glm::vec<4, std::size_t, glm::defaultp> dimensions{gridLoaded->getResolution(), 2};
 
@@ -668,7 +668,7 @@ void Scene::updateBoundingBox(void) {
 	this->sceneDataBB = Image::bbox_t();
 
 	for (std::size_t i = 0; i < this->grids.size(); ++i) {
-		const GridGL * _g = this->grids[i]->grid;
+		const Grid * _g = this->grids[i]->grid;
 		Image::bbox_t box		  = _g->getBoundingBox();
 		Image::bbox_t dbox		  = _g->getBoundingBox();
 		this->sceneBB.addPoints(box.getAllCorners());
@@ -1907,7 +1907,7 @@ void Scene::prepareUniformsGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm
 
 //const glm::mat4& gridTransfo = _grid->grid->getTransform_GridToWorld();
 #warning Transform API is still in-progress.
-	glUniformMatrix4fv(location_mMat, 1, GL_FALSE, glm::value_ptr(this->grids[this->gridToDraw]->grid->grid->getModelTransformation()));
+	glUniformMatrix4fv(location_mMat, 1, GL_FALSE, glm::value_ptr(this->grids[this->gridToDraw]->grid->getModelTransformation()));
 	glUniformMatrix4fv(location_vMat, 1, GL_FALSE, mvMat);
 	glUniformMatrix4fv(location_pMat, 1, GL_FALSE, pMat);
 
@@ -2689,7 +2689,7 @@ void Scene::updateVisuBoxCoordinates() {
 	this->visuBox = Image::bbox_t();
 
 	if (this->grids.size()) {
-		const GridGL * g	 = this->grids[this->gridToDraw]->grid;
+		const Grid * g	 = this->grids[this->gridToDraw]->grid;
 		auto min			 = glm::vec3(.0);
 		auto max			 = glm::convert_to<float>(g->getResolution());
 		Image::bbox_t imgBox = Image::bbox_t(min, max);
@@ -3063,7 +3063,7 @@ void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend) {
 	std::size_t neighbWidth = 0, neighbHeight = 0;
 
 	//TetMesh& newMesh = *this->grids[gridIdx]->grid->grid->tetmesh;
-	TetMesh& newMesh = *this->grids[gridIdx]->grid->grid;
+	TetMesh& newMesh = *this->grids[gridIdx]->grid;
 
     if(contain(infoToSend, InfoToSend::NORMALS)) {
         newMesh.computeNormals();
@@ -3393,7 +3393,7 @@ void Scene::launchSaveDialog() {
 		return;
 	}
     std::cout << "The filename is: " << this->filename << std::endl;
-    this->grids[this->gridToDraw]->grid->grid->writeDeformedGrid();
+    this->grids[this->gridToDraw]->grid->writeDeformedGrid();
 	return;
 }
 
@@ -3412,19 +3412,19 @@ void Scene::createNewMeshManipulator(int i, bool onSurface) {
     if(onSurface) {
         this->glMeshManipulator->createNewMeshManipulator(this->surfaceMesh, this, i);
     } else {
-        this->glMeshManipulator->createNewMeshManipulator(this->grids[this->gridToDraw]->grid->grid, this, i);
+        this->glMeshManipulator->createNewMeshManipulator(this->grids[this->gridToDraw]->grid, this, i);
     }
     QObject::connect(this, SIGNAL(keyQReleased()), dynamic_cast<QObject*>(this->glMeshManipulator->meshManipulator), SIGNAL(keyQReleased()));
     QObject::connect(this, &Scene::rayIsCasted, this, [this](const glm::vec3& origin, const glm::vec3& direction) { emit this->glMeshManipulator->meshManipulator->rayIsCasted(origin, direction, this->getMinTexValue(), this->getMaxTexValue());});
 }
 
 void Scene::setNormalDeformationMethod() {
-    this->grids[this->gridToDraw]->grid->grid->setNormalDeformationMethod();
+    this->grids[this->gridToDraw]->grid->setNormalDeformationMethod();
     this->surfaceMesh->setNormalDeformationMethod();
 }
 
 void Scene::setWeightedDeformationMethod(float radius) {
-    this->grids[this->gridToDraw]->grid->grid->setWeightedDeformationMethod(radius);
+    this->grids[this->gridToDraw]->grid->setWeightedDeformationMethod(radius);
     this->surfaceMesh->setWeightedDeformationMethod(radius);
 }
 
