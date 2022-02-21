@@ -4,6 +4,9 @@
 #include "tetrahedral_mesh.hpp"
 #include "../images/tiff_image.hpp"
 
+//! \addtogroup img
+//! @{
+
 // This enum allow to choose at which resolution we want to query points
 // FULL_RESOLUTION allow to bypass the Sampler class and query directly from the image
 enum ResolutionMode {
@@ -114,5 +117,7 @@ struct GridGL {
 private:
     //Grid * grid;
 };
+
+//! @}
 
 #endif

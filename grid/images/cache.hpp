@@ -6,6 +6,9 @@
 #include "../../third_party/cimg/CImg.h"
 #include <vector>
 
+//! \addtogroup img
+//! @{
+
 enum InterpolationMethod {
     NearestNeighbor,
     Linear,
@@ -13,6 +16,8 @@ enum InterpolationMethod {
 };
 
 using namespace cimg_library;
+
+//! @brief The cache
 struct Cache {
     CImg<uint16_t> img;
 
@@ -25,11 +30,12 @@ struct Cache {
     uint16_t getValue(const glm::vec3& coord, InterpolationMethod interpolationMethod);
 };
 
-// The cache just STORE data
-// Thus the only way to interact with it is to query the adress of a vector to store some data
-// The query and actual store process is manage by TIFFImage class
-//
-// This class is unused for now
+//! @brief The cache just STORE data
+//!
+//! Thus the only way to interact with it is to query the adress of a vector to store some data
+//! The query and actual store process is manage by TIFFImage class
+//! 
+//! This class is unused for now
 struct UnsortedCache {
     // Maximum number of slices to be stored
     int capacity;
@@ -50,5 +56,7 @@ struct UnsortedCache {
 
     void setCapacity(int capacity);
 };
+
+//! @}
 
 #endif

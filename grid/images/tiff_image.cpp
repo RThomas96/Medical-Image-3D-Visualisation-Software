@@ -115,10 +115,6 @@ void SimpleImage::getSlice(int sliceIdx, std::vector<std::uint16_t>& result, int
     _TIFFfree(buf);
 }
 
-void SimpleImage::getFullSlice(int sliceIdx, std::vector<std::uint16_t>& result) const {
-    this->getSlice(sliceIdx, result, 1, std::pair<int, int>{1, 1}, std::pair<glm::vec3, glm::vec3>{glm::vec3(0., 0., 0.), this->imgResolution});
-}
-
 /***/
 
 TIFFReader::TIFFReader(const std::vector<std::string>& filename): filenames(filename) {
