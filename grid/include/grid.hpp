@@ -38,7 +38,6 @@ struct Sampler {
 
     void getGridSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel) const;
 
-    // In theory floor aren't necessary cause coord are already integer
     uint16_t getValue(const glm::vec3& coord, InterpolationMethod interpolationMethod = InterpolationMethod::NearestNeighbor, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
 
     Image::ImageDataType getInternalDataType() const;
