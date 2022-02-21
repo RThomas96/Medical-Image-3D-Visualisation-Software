@@ -98,13 +98,6 @@ ADD_EXECUTABLE(neighbor_visu
     ./grid/include/CImg.h
 
     #Probably to remove
-    ./image/transforms/include/affine_transform.hpp
-    ./image/transforms/src/affine_transform.cpp
-    ./image/transforms/include/transform_interface.hpp
-    ./image/transforms/include/transform_stack.hpp
-    ./image/transforms/src/transform_stack.cpp
-    ./image/transforms/include/trs_transform.hpp
-    ./image/transforms/src/trs_transform.cpp
     ./image/utils/include/image_api_common.hpp
     ./image/utils/include/bounding_box.hpp
     ./image/utils/include/threaded_task.hpp
@@ -203,13 +196,6 @@ ADD_EXECUTABLE(tests
     ./grid/include/CImg.h
 
     #Probably to remove
-    ./image/transforms/include/affine_transform.hpp
-    ./image/transforms/src/affine_transform.cpp
-    ./image/transforms/include/transform_interface.hpp
-    ./image/transforms/include/transform_stack.hpp
-    ./image/transforms/src/transform_stack.cpp
-    ./image/transforms/include/trs_transform.hpp
-    ./image/transforms/src/trs_transform.cpp
     ./image/utils/include/image_api_common.hpp
     ./image/utils/include/bounding_box.hpp
     ./image/utils/include/threaded_task.hpp
