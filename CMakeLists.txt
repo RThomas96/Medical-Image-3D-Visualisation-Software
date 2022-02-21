@@ -34,6 +34,7 @@ ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/third_party/glm)
 SET(LOCAL_GLM_HEADER_DIR "${CMAKE_CURRENT_LIST_DIR}/third_party/glm/")
 SET(LIBS_COMPILED_HEADERS "${CMAKE_CURRENT_LIST_DIR}/third_party/compiled_libraries/include")
 
+# To remove
 ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/legacy/image)
 ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/legacy/meshes)
 
@@ -41,7 +42,6 @@ ADD_LIBRARY(VisualisationWidgets STATIC
 	./qt/include/neighbor_visu_main_widget.hpp
 	./qt/include/scene_control.hpp
 	./qt/include/viewer_header.hpp
-	./qt/include/visu_box_controller.hpp
 	./qt/include/opengl_debug_log.hpp
 	./qt/include/double_slider.hpp
 	./qt/include/range_slider.hpp
@@ -52,7 +52,6 @@ ADD_LIBRARY(VisualisationWidgets STATIC
 	./qt/src/neighbor_visu_main_widget.cpp
 	./qt/src/scene_control.cpp
 	./qt/src/viewer_header.cpp
-	./qt/src/visu_box_controller.cpp
 	./qt/src/opengl_debug_log.cpp
 	./qt/src/double_slider.cpp
 	./qt/src/range_slider.cpp
@@ -97,12 +96,6 @@ ADD_EXECUTABLE(neighbor_visu
     ./grid/include/cache.hpp
     ./grid/include/CImg.h
 
-    #Probably to remove
-    ./legacy/image/utils/include/image_api_common.hpp
-    ./legacy/image/utils/include/bounding_box.hpp
-    ./legacy/image/utils/include/threaded_task.hpp
-    ./legacy/image/utils/src/threaded_task.cpp
-
 	# Main file :
 	./neighbor_visu_main.cpp
 
@@ -123,6 +116,13 @@ ADD_EXECUTABLE(neighbor_visu
     ./grid/src/manipulator.cpp
     ./grid/src/mesh_manipulator.cpp
     ./grid/src/cache.cpp
+
+    #To remove
+    ./legacy/image/utils/include/image_api_common.hpp
+    ./legacy/image/utils/include/bounding_box.hpp
+    ./legacy/image/utils/include/threaded_task.hpp
+    ./legacy/image/utils/src/threaded_task.cpp
+
 )
 TARGET_COMPILE_OPTIONS(neighbor_visu
 	# Set so CMake (more precisely clang/gcc) will not print 30-80 warnings about QGLViewer's
@@ -195,12 +195,6 @@ ADD_EXECUTABLE(tests
     ./grid/include/cache.hpp
     ./grid/include/CImg.h
 
-    #Probably to remove
-    ./legacy/image/utils/include/image_api_common.hpp
-    ./legacy/image/utils/include/bounding_box.hpp
-    ./legacy/image/utils/include/threaded_task.hpp
-    ./legacy/image/utils/src/threaded_task.cpp
-
     ./grid/src/grid.cpp
     ./grid/src/base_mesh.cpp
     ./grid/src/tetrahedral_mesh.cpp
@@ -211,6 +205,13 @@ ADD_EXECUTABLE(tests
     ./grid/src/manipulator.cpp
     ./grid/src/mesh_manipulator.cpp
     ./grid/src/cache.cpp
+
+    #To remove
+    ./legacy/image/utils/include/image_api_common.hpp
+    ./legacy/image/utils/include/bounding_box.hpp
+    ./legacy/image/utils/include/threaded_task.hpp
+    ./legacy/image/utils/src/threaded_task.cpp
+
 )
 TARGET_COMPILE_OPTIONS(tests
 	PUBLIC "-Wno-deprecated-declarations"

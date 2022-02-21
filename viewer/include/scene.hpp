@@ -18,7 +18,6 @@
 // UI elements :
 //#include "../../qt/include/grid_control.hpp"
 #include "../../qt/include/opengl_debug_log.hpp"
-#include "../../qt/include/visu_box_controller.hpp"
 //#include "../../grid/include/manipulator.hpp"
 //#include "../../grid/include/mesh_manipulator.hpp"
 // Helper structs and functions :
@@ -343,7 +342,6 @@ private:
 	//GridControl* gridControl;	 ///< The controller for the grid 'save' feature (generation)
 	ControlPanel* controlPanel;
 	QStatusBar* programStatusBar;
-	VisuBoxController* visuBoxController;
 
 	std::size_t renderSize;	   ///< Number of primitives to render for the solid view mode.
 
@@ -361,9 +359,6 @@ public:
 
     void slotAddManipulator(const glm::vec3& position);
     //bool slotGetPositionFromRay(const glm::vec3& origin, const glm::vec3& direction, glm::vec3& res);
-
-	void showVisuBoxController(VisuBoxController* _controller);
-	void removeVisuBoxController();
 
 	void prepareManipulators();
 

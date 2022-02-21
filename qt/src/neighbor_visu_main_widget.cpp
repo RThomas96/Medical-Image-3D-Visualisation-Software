@@ -18,7 +18,6 @@ MainWidget::MainWidget() {
 	this->usettings		= nullptr;
 	this->loaderWidget	= nullptr;
 	this->deformationWidget	= nullptr;
-	this->boxController = nullptr;
 	// Query a user settings instance to initialize it :
 	UserSettings set = UserSettings::getInstance();
 }
@@ -28,11 +27,6 @@ MainWidget::~MainWidget() {
 	this->headerZ->unregisterPlaneViewer();
 	this->headerY->unregisterPlaneViewer();
 	this->headerX->unregisterPlaneViewer();
-	if (this->boxController) {
-		this->boxController->close();
-	}
-#warning Might segfault on close
-	this->boxController = nullptr;
 
 	this->action_addGrid->disconnect();
 	this->action_saveGrid->disconnect();
@@ -164,17 +158,6 @@ void MainWidget::setupWidgets() {
 		this->scene->launchSaveDialog();
 	});
 	QObject::connect(this->action_showVisuBox, &QAction::triggered, [this]() {
-		if (this->boxController == nullptr) {
-			this->boxController = new VisuBoxController(this->scene, this);
-			// Connect the destruction of this widget with the closing of the box controller, if opened :
-			QObject::connect(this, &QWidget::destroyed, this->boxController, &VisuBoxController::close);
-			// Connect the destruction of the box controller with its removal from the scene and from this widget :
-			QObject::connect(this->boxController, &QWidget::destroyed, this, [this](void) -> void {
-				this->scene->removeVisuBoxController();
-				this->boxController = nullptr;
-			});
-		}
-		this->scene->showVisuBoxController(this->boxController);
 	});
 	QObject::connect(this->action_exitProgram, &QAction::triggered, this, &QMainWindow::close);
 	QObject::connect(this->action_drawModeS, &QAction::triggered, [this]() {

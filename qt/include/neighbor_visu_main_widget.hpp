@@ -73,8 +73,6 @@ private:
 
 	GridDeformationWidget* deformationWidget;	   ///< Loader widget
 
-	VisuBoxController* boxController;	 ///< The visu box controller
-
 	ControlPanel* controlPanel;	   ///< The control panel at the bottom of the grid
 	bool widgetSizeSet;	   ///< Checks if the widget size has been set before
 	std::vector<QObject*> strayObj;	   ///< Pointers to all temporary objects allocated in the setup process

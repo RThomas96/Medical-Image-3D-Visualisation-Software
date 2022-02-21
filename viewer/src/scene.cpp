@@ -64,7 +64,6 @@ Scene::Scene() :
 	this->glOutput			= nullptr;
 	this->controlPanel		= nullptr;
 	//this->gridControl		= nullptr;
-	this->visuBoxController = nullptr;
 	this->programStatusBar	= nullptr;
 
 	double minTexVal		= 1;
@@ -2764,41 +2763,6 @@ void Scene::drawBoundingBox(const Image::bbox_t& _box, glm::vec3 color, GLfloat*
 	glBindVertexArray(0);
 	glLineWidth(1.0f);
 	glUseProgram(0);
-}
-
-void Scene::showVisuBoxController(VisuBoxController* _controller) {
-	if (this->visuBoxController != nullptr) {
-		std::cerr << "Warning : rewriting visu box controller.\n";
-	}
-	this->visuBoxController = _controller;
-	this->visuBoxController->raise();
-	this->visuBoxController->show();
-}
-
-void Scene::removeVisuBoxController() {
-	this->visuBoxController = nullptr;
-}
-
-std::pair<glm::uvec3, glm::uvec3> Scene::getVisuBoxCoordinates() {
-	std::cerr << "WARNING: trying to call Scene::getVisuBoxCoordinates() on old grid API" << std::endl;
-	// TODO: port this function to new API
-	// if (this->grids.size() == 0) {
-	// 	return std::make_pair<glm::uvec3, glm::uvec3>(glm::uvec3(), glm::uvec3());
-	// }
-	// if (this->grids[this->gridToDraw]->grid.size() == 0) {
-	// 	return std::make_pair<glm::uvec3, glm::uvec3>(glm::uvec3(), glm::uvec3());
-	// }
-
-	// std::pair<glm::uvec3, glm::uvec3> result;
-
-	// auto mi		   = this->computePlanePositions();
-	// glm::uvec3 min = this->grids[this->gridToDraw]->grid[0]->worldPositionToIndex(glm::vec4(mi, 1.));
-	// result.first   = min;
-
-	// // The second coordinate can be directly taken from the current value (automatically max of scene)
-	// result.second = this->visuMax;
-	// return result;
-	return std::make_pair<glm::uvec3, glm::uvec3>(glm::uvec3(), glm::uvec3());
 }
 
 void Scene::setVisuBoxMinCoord(glm::uvec3 coor_min) {
