@@ -219,12 +219,14 @@ void Scene::initGl(QOpenGLContext* _context) {
 	this->sceneGL.initGl(this->get_context());
 	//this->glMeshManipulator->prepareSphere();
 
-    this->surfaceMesh = new SurfaceMesh("/home/thomas/data/Projets/visualisation/build/bin/femur_aligned.off");
-    this->drawableMesh = new DrawableMeshV2();
-    this->drawableMesh->mesh = this->surfaceMesh;
-    this->drawableMesh->initialize(this->context, this);
-    this->drawableMesh->mesh->setScale(glm::vec3(3., 3., 3.));
-    this->drawableMesh->mesh->setOrigin(glm::vec3(0., 10., 0.));
+    //this->surfaceMesh = new SurfaceMesh("/home/thomas/data/Projets/visualisation/build/bin/femur_aligned.off");
+    this->surfaceMesh = nullptr;
+    this->drawableMesh = nullptr; 
+    //this->drawableMesh = new DrawableMeshV2();
+    //this->drawableMesh->mesh = this->surfaceMesh;
+    //this->drawableMesh->initialize(this->context, this);
+    //this->drawableMesh->mesh->setScale(glm::vec3(3., 3., 3.));
+    //this->drawableMesh->mesh->setOrigin(glm::vec3(0., 10., 0.));
 
 }
 
@@ -2093,8 +2095,10 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 		drawable->draw(pMat, mvMat, glm::vec4{camPos, 1.f});
 	}
 
-    this->drawableMesh->makeVAO();
-	this->drawableMesh->draw(pMat, mvMat, glm::vec4{camPos, 1.f});
+    if(this->drawableMesh) {
+        this->drawableMesh->makeVAO();
+	    this->drawableMesh->draw(pMat, mvMat, glm::vec4{camPos, 1.f});
+    }
 
 	if (not this->grids.empty()) {
 		this->drawPlanes(mvMat, pMat, this->drawMode == DrawMode::Solid);

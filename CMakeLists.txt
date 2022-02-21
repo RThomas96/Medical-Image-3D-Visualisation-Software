@@ -82,13 +82,14 @@ ADD_EXECUTABLE(neighbor_visu
 	./qt/viewers/include/planar_viewer.hpp
 	./qt/viewers/include/neighbor_visu_viewer.hpp
 	./qt/viewers/include/viewer_structs.hpp
+
     ./third_party/primitive/Sphere.h
+    ./third_party/cimg/CImg.h
 
     ./grid/geometry/grid.hpp
     ./grid/geometry/base_mesh.hpp
     ./grid/geometry/tetrahedral_mesh.hpp
     ./grid/geometry/surface_mesh.hpp
-    ./grid/images/CImg.h
     ./grid/images/tiff_image.hpp
     ./grid/images/cache.hpp
     ./grid/ui/manipulator.hpp
@@ -96,6 +97,7 @@ ADD_EXECUTABLE(neighbor_visu
     ./grid/drawable/drawable_surface_mesh.hpp
     ./grid/drawable/drawable_manipulator.hpp
     ./grid/deformation/mesh_deformator.hpp
+
 
 	# Main file :
 	./neighbor_visu_main.cpp
@@ -110,7 +112,6 @@ ADD_EXECUTABLE(neighbor_visu
     ./grid/geometry/base_mesh.cpp
     ./grid/geometry/tetrahedral_mesh.cpp
     ./grid/geometry/surface_mesh.cpp
-    ./grid/images/CImg.h
     ./grid/images/tiff_image.cpp
     ./grid/images/cache.cpp
     ./grid/ui/manipulator.cpp
@@ -189,7 +190,6 @@ ADD_EXECUTABLE(tests
     ./grid/geometry/grid.hpp
     ./grid/geometry/base_mesh.hpp
     ./grid/geometry/tetrahedral_mesh.hpp
-    ./grid/images/CImg.h
     ./grid/images/tiff_image.hpp
     ./grid/images/cache.hpp
     ./grid/ui/manipulator.hpp
@@ -213,6 +213,7 @@ ADD_EXECUTABLE(tests
     ./legacy/image/utils/include/threaded_task.hpp
     ./legacy/image/utils/src/threaded_task.cpp
 
+    ./third_party/cimg/CImg.h
 )
 TARGET_COMPILE_OPTIONS(tests
 	PUBLIC "-Wno-deprecated-declarations"
