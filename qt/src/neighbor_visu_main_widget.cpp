@@ -189,11 +189,13 @@ void MainWidget::setupWidgets() {
 		}
 	});
 	QObject::connect(this->action_loadMesh, &QAction::triggered, [this]() {
-		this->scene->loadMesh();
+        // This function has been deleted 
+		//this->scene->loadMesh();
 		this->viewer->updateInfoFromScene();
 	});
 	QObject::connect(this->action_loadCurve, &QAction::triggered, [this]() {
-		this->scene->loadCurve();
+        // This function has been deleted 
+		//this->scene->loadCurve();
 		this->viewer->updateInfoFromScene();
 	});
 

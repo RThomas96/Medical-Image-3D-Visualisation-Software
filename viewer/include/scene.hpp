@@ -455,10 +455,6 @@ public:
     /* ARAP branch section */
     /***********************************************/
 
-	/// @brief Loads a mesh (OFF) and uploads it to the GL.
-	void loadMesh();
-	void loadCurve();
-
 	/// @brief This performs ARAP deformation on the first mesh found.
 	/// @note THIS IS A WIP/DRAFT FUNCTION, NOT DESIGNED FOR PRODUCTION RELEASE
 	void dummy_perform_arap_on_first_mesh();

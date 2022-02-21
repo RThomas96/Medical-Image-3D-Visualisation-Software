@@ -2,7 +2,6 @@
 #include "../include/planar_viewer.hpp"
 
 #include "../../legacy/meshes/operations/arap/AsRigidAsPossible.h"
-#include "../../qt/include/dialog_pick_grids_from_scene.hpp"
 
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/io.hpp>
@@ -1167,105 +1166,6 @@ GLuint Scene::newAPI_uploadTexture3D(const GLuint texHandle, const TextureUpload
 	glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, s, tex.size.x, tex.size.y, 1, tex.format, tex.type, data.data());
 
 	return texHandle;
-}
-
-void Scene::loadMesh() {
-	// Launch a file picker to get the name of an OFF file :
-	QString file_name = QFileDialog::getOpenFileName(nullptr, "Open a Mesh file (OFF)", QString(), "OFF files (*.off)");
-	if (file_name.isEmpty() || not QFileInfo::exists(file_name)) {
-		std::cerr << "Error : nothing to open.\nFile path given : \"" << file_name.toStdString() << "\"\n";
-		return;
-	}
-
-	std::shared_ptr<Mesh> mesh_to_load = nullptr;
-	// Create a mesh structure :
-	mesh_to_load   = std::make_shared<Mesh>();
-	auto& vertices = mesh_to_load->getVertices();
-	auto& normals  = mesh_to_load->getNormals();
-	// Load that OFF file and then update the mesh :
-	FileIO::openOFF(file_name.toStdString(), mesh_to_load->getVertices(), mesh_to_load->getTriangles());
-	mesh_to_load->update();
-
-	this->meshes.emplace_back(mesh_to_load);
-
-	auto mesh_drawable = std::make_shared<DrawableMesh>(mesh_to_load);
-
-	// If any images loaded, ask with which image to be paired with :
-	if (this->grids.size()) {
-		auto picker = new GridPickerFromScene();
-		picker->chooseGrids(this->grids);
-		if (picker->choice_Accepted()) {
-			// Get the user-requested image's bounding box details :
-			if (picker->choice_getGrid() >= this->grids.size()) {
-				std::cerr << "Error : grid index was not valid ...\n";
-			}
-			auto selected_grid							 = this->grids[picker->choice_getGrid()];
-			//Image::bbox_t selected_grid_bb				 = Image::bbox_t(selected_grid->grid->tetmesh.bbMin, selected_grid->grid->tetmesh.bbMax);
-			Image::bbox_t selected_grid_bb				 = selected_grid->grid->getBoundingBox();
-			Image::bbox_t::vec selected_grid_bb_diagonal = selected_grid_bb.getDiagonal();	  // gets the scale factors on X, Y, Z
-			Image::bbox_t::vec selected_grid_bb_center	 = selected_grid_bb.getMin() + (selected_grid_bb_diagonal / 2.f);
-
-			// The scaling done here is _very_ approximate in order to get a rough estimate of the size of the image :
-			float scaling_factor	 = glm::length(selected_grid_bb_diagonal) / glm::length(mesh_to_load->getBB()[1] - mesh_to_load->getBB()[0]) * .7f;
-			glm::mat4 scaling_matrix = glm::scale(glm::mat4(1.f), glm::vec3(scaling_factor));
-			mesh_drawable->setTransformation(scaling_matrix);
-			// We apply the transformation here in order to get an updated bounding box.
-
-			// And base the computation of the translations from the scaled bounding box.
-			auto scaled_bb				   = mesh_drawable->getBoundingBox();
-			auto mesh_to_image_translation = (selected_grid_bb.getMin() - scaled_bb.first);
-			auto shift_image_translation   = glm::vec3(-(scaled_bb.second - scaled_bb.first).x, .0f, .0f) + mesh_to_image_translation;
-			// Determine the best transformation to apply by shifting the mesh's BB to be aligned with the image's BB, and
-			// let the user put points later on the mesh in order to get a first alignment of the image/mesh.
-			// Then, translate that by the mesh's bounding box in order to place them one beside another :
-			scaling_matrix[3][0] += shift_image_translation.x;
-			scaling_matrix[3][1] += shift_image_translation.y;
-			scaling_matrix[3][2] += shift_image_translation.z;
-
-			mesh_drawable->setTransformation(scaling_matrix);
-		}
-		// the user didn't want to pair the image with a grid, do nothing else.
-	}
-
-	// Insert it into the meshes to initialize :
-	this->to_init.emplace(mesh_drawable);
-}
-
-void Scene::loadCurve() {
-	// Launch a file picker to get the name of an OFF file :
-	QString file_name = QFileDialog::getOpenFileName(nullptr, "Open a Mesh file (OFF)", QString(), "OBJ files (*.obj)");
-	if (file_name.isEmpty() || not QFileInfo::exists(file_name)) {
-		std::cerr << "Error : nothing to open.\nFile path given : \"" << file_name.toStdString() << "\"\n";
-		return;
-	}
-
-	auto picker = new MeshPickerFromScene();
-	picker->chooseMeshes(this->meshes);
-	if (picker->choice_Accepted()) {
-		this->curve.reset();
-		this->curve_draw.reset();
-		auto selected_mesh = this->meshes[picker->choice_getMesh()];
-		auto fname		   = file_name.toStdString();
-		this->curve		   = openCurveFromOBJ(fname, selected_mesh);
-		glm::mat4 transfo  = glm::mat4(1.f);
-		// try to find the right transformation to apply to the curve for it to 'follow' the mesh :
-		// !!! /!\ VERY HACKY, DO NOT ATTEMPT AT HOME /!\ !!!
-		for (const auto& drawable : this->drawables) {
-			std::shared_ptr<DrawableMesh> mesh_drawable = std::dynamic_pointer_cast<DrawableMesh>(drawable);
-			if (mesh_drawable != nullptr) {
-				if (mesh_drawable->getMesh() == selected_mesh) {
-					transfo = mesh_drawable->getTransformation();
-					std::cerr << "Found the right transformation.\n";
-				}
-			}
-		}
-		auto drawable_curve = std::make_shared<DrawableCurve>(this->curve);
-		drawable_curve->setTransformation(transfo);
-		this->to_init.emplace(drawable_curve);
-		this->curve_draw = drawable_curve;
-	} else {
-		std::cerr << "Tried to load curve, but no mesh associated.\n";
-	}
 }
 
 void Scene::removeController() {
