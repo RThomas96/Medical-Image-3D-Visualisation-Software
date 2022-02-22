@@ -9,14 +9,16 @@
 //! @{
 
 struct BaseMesh;
+struct SurfaceMesh;
 enum DeformMethod {
     NORMAL,
-    WEIGHTED
+    WEIGHTED,
+    GREEN
 };
 
 struct MeshDeformator {
     DeformMethod deformMethod;
-    BaseMesh * baseMesh;
+    BaseMesh * baseMesh;// TODO: weak pointer
 
     MeshDeformator(BaseMesh * baseMesh, DeformMethod deformMethod) : baseMesh(baseMesh), deformMethod(deformMethod) {}
 
@@ -57,6 +59,22 @@ struct NormalMethod : MeshDeformator {
     void deselectAllPts() override;
 
     void movePoint(const glm::vec3& origin, const glm::vec3& target) override;
+};
+
+struct GreenMethod : MeshDeformator {
+    SurfaceMesh * cage;
+    std::vector<int> selectedPts;
+
+    GreenMethod(BaseMesh * baseMesh, SurfaceMesh * cage) : MeshDeformator(baseMesh, DeformMethod::GREEN), cage(cage) {}
+
+    bool hasSelectedPts() override;
+    void selectPts(const glm::vec3& pt) override;
+    void deselectPts(const glm::vec3& pt) override;
+    void deselectAllPts() override;
+
+    void movePoint(const glm::vec3& origin, const glm::vec3& target) override;
+
+    glm::vec3 computePointFromCage(const glm::vec3 p);
 };
 
 //! @}

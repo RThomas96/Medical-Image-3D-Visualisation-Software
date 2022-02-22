@@ -1,5 +1,6 @@
 #include "mesh_deformator.hpp"
 #include "../geometry/tetrahedral_mesh.hpp"
+#include "../geometry/surface_mesh.hpp"
 #include <algorithm>
 
 bool WeightedMethod::hasSelectedPts() {
@@ -69,4 +70,36 @@ void NormalMethod::movePoint(const glm::vec3& origin, const glm::vec3& target) {
     }
 }
 
+/***/
 
+bool GreenMethod::hasSelectedPts() {
+    return !this->selectedPts.empty();
+}
+
+void GreenMethod::selectPts(const glm::vec3& pt) {
+    this->selectedPts.push_back(this->baseMesh->getIdxOfClosestPoint(pt));
+}
+
+void GreenMethod::deselectPts(const glm::vec3& pt) {
+    int ptIdx = this->baseMesh->getIdxOfClosestPoint(pt);
+    auto ptIdxPos = std::find(this->selectedPts.begin(), this->selectedPts.end(), ptIdx);
+    if(ptIdxPos != this->selectedPts.end()) {
+        this->selectedPts.erase(ptIdxPos);
+    }
+}
+
+void GreenMethod::deselectAllPts() {
+    this->selectedPts.clear();
+}
+
+void GreenMethod::movePoint(const glm::vec3& origin, const glm::vec3& target) {
+    // pCage = closest point of origin in the cage
+    // pCage = target
+    //for(int i = 0; i < this->selectedPts.size(); ++i) {
+    //     recompute position from cage coordinate;
+    //}
+}
+
+glm::vec3 GreenMethod::computePointFromCage(const glm::vec3 p) {
+    return p;
+}

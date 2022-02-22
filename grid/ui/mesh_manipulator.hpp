@@ -3,11 +3,13 @@
 
 #include "manipulator.hpp"
 
-/// @defgroup uitools UI
-/// @brief Group of tools used to interact with the application.
-/// @details It include static components like sliders or double sliders, as well as
-/// dynamic components used to directly interact with a 3D scene, like manipulators.
+//! @defgroup uitools UI
+//! @brief Group of tools used to interact with the application.
+//! @details It include static components like sliders or double sliders, as well as
+//! dynamic components used to directly interact with a 3D scene, like manipulators.
 namespace UITool {
+
+	//! @ingroup uitools
     class MeshManipulator {
     public:
         // TODO: remove this
@@ -107,6 +109,7 @@ namespace UITool {
 		bool active;
 	};
 
+    //! @ingroup uitools
 	class FreeManipulator : public QObject, public MeshManipulator {
         Q_OBJECT
         Q_INTERFACES(UITool::MeshManipulator)
@@ -150,6 +153,7 @@ namespace UITool {
 		bool active;
 	};
 
+    //! @ingroup uitools
 	class PositionManipulator : public QObject, public MeshManipulator {
         Q_OBJECT
         Q_INTERFACES(UITool::MeshManipulator)
