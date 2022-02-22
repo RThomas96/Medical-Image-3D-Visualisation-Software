@@ -90,6 +90,7 @@ ADD_EXECUTABLE(neighbor_visu
     ./grid/geometry/base_mesh.hpp
     ./grid/geometry/tetrahedral_mesh.hpp
     ./grid/geometry/surface_mesh.hpp
+    ./grid/geometry/plane_mesh.hpp
     ./grid/images/tiff_image.hpp
     ./grid/images/cache.hpp
     ./grid/ui/manipulator.hpp
@@ -112,6 +113,7 @@ ADD_EXECUTABLE(neighbor_visu
     ./grid/geometry/base_mesh.cpp
     ./grid/geometry/tetrahedral_mesh.cpp
     ./grid/geometry/surface_mesh.cpp
+    ./grid/geometry/plane_mesh.cpp
     ./grid/images/tiff_image.cpp
     ./grid/images/cache.cpp
     ./grid/ui/manipulator.cpp

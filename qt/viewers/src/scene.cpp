@@ -51,7 +51,9 @@ inline void __GetTexSize(std::size_t numTexNeeded, std::size_t* opt_width, std::
  *  to be drawn, even if it is empty at the time of the first call to a draw function.
  */
 Scene::Scene() :
-	glMeshManipulator(new UITool::GL::MeshManipulator(&this->sceneGL, nullptr, std::vector<glm::vec3>())) {
+	glMeshManipulator(new UITool::GL::MeshManipulator(&this->sceneGL, nullptr, std::vector<glm::vec3>())) ,
+    planeDebug(glm::vec3(0., 0., 0.), glm::vec3(10., 0., 0.), glm::vec3(0., 10., 0.)) 
+    {
 	this->isInitialized	   = false;
 	this->showVAOstate	   = false;
 	this->shouldDeleteGrid = false;
@@ -2100,9 +2102,10 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 	    this->drawableMesh->draw(pMat, mvMat, glm::vec4{camPos, 1.f});
     }
 
-	if (not this->grids.empty()) {
-		this->drawPlanes(mvMat, pMat, this->drawMode == DrawMode::Solid);
-	}
+    this->planeDebug.draw();
+	//if (not this->grids.empty()) {
+	//	this->drawPlanes(mvMat, pMat, this->drawMode == DrawMode::Solid);
+	//}
 
 	this->drawBoundingBox(this->sceneBB, glm::vec4(.5, .5, .0, 1.), mvMat, pMat);
 	this->showVAOstate = false;

@@ -1,27 +1,26 @@
 #ifndef VIEWER_INCLUDE_SCENE_HPP_
 #define VIEWER_INCLUDE_SCENE_HPP_
 
-// Program-wide features and macros
-#include "../../features.hpp"
-#include "../../macros.hpp"
 // Scene control panel :
 #include "../../qt/widgets/include/scene_control.hpp"
-// Shader compiler :
+
+// Legacy
+#include "../../features.hpp"
+#include "../../macros.hpp"
 #include "../../legacy/meshes/drawable/shaders.hpp"
-// Meshes :
 #include "../../legacy/meshes/base_mesh/Mesh.hpp"
 #include "../../legacy/meshes/base_mesh/mesh_io.hpp"
 #include "../../legacy/meshes/drawable/curve.hpp"
 #include "../../legacy/meshes/drawable/mesh.hpp"
-// Curve :
 #include "../../legacy/meshes/deformable_curve/curve.hpp"
-// UI elements :
-//#include "../../qt/include/grid_control.hpp"
-#include "../../qt/widgets/include/opengl_debug_log.hpp"
-//#include "../../grid/include/manipulator.hpp"
-//#include "../../grid/include/mesh_manipulator.hpp"
-// Helper structs and functions :
 #include "./viewer_structs.hpp"
+#include "../../qt/widgets/include/opengl_debug_log.hpp"
+#include <mutex>
+#include "../../legacy/image/utils/include/threaded_task.hpp"
+#include <tinytiffreader.h>
+#include <tinytiffwriter.h>
+#include <thread>
+
 // Qt headers :
 #include <QOpenGLDebugLogger>
 #include <QOpenGLFunctions_3_2_Core>
@@ -29,23 +28,16 @@
 #include <QOpenGLFunctions_4_0_Core>
 #include <QProgressBar>
 #include <QStatusBar>
-// libQGLViewer :
 #include <QGLViewer/qglviewer.h>
-// glm include :
+
+// Low level
 #include <glm/glm.hpp>
-// STD headers :
-#include <mutex>
 #include <vector>
 
-#include <thread>
-#include "../../legacy/image/utils/include/threaded_task.hpp"
-
-// Tinytiff
-#include <tinytiffreader.h>
-#include <tinytiffwriter.h>
-
+// Geometry
 #include "../../grid/geometry/grid.hpp"
 #include "../../grid/drawable/drawable_surface_mesh.hpp"
+#include "../../grid/geometry/plane_mesh.hpp"
 
 #include "glm/gtx/string_cast.hpp"
 
@@ -535,6 +527,8 @@ public:
 
     SurfaceMesh * surfaceMesh;
     DrawableMeshV2 * drawableMesh;
+
+    PlaneMesh planeDebug;
 };
 
 /// @brief Type-safe conversion of enum values to unsigned ints.
