@@ -6,6 +6,9 @@
 
 struct MeshDeformator;
 
+//! \addtogroup geometry
+//! @{
+
 struct Tetrahedron {
     glm::vec3 * points[4];// Optionnal, this data can be deleted and computeBary, isInTet and baryToWord function moved out in the TetMesh class
     glm::vec4 normals[4];
@@ -61,4 +64,5 @@ private:
     int from3DTo1D(const glm::vec3& p) const;
 };
 
+//! @}
 #endif

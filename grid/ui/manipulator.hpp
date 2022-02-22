@@ -7,10 +7,6 @@
 #include <glm/glm.hpp>
 #include <qobject.h>
 
-/// @defgroup uitools UITools
-/// @brief Group of tools used to interact with the application.
-/// @details It include static components like sliders or double sliders, as well as
-/// dynamic components used to directly interact with a 3D scene, like manipulators.
 namespace UITool {
 
 	/// @ingroup uitools

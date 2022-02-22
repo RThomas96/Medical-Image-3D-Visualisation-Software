@@ -4,6 +4,9 @@
 #include "base_mesh.hpp"
 #include <iostream>
 
+//! \addtogroup geometry
+//! @{
+
 class Triangle2 {
 public:
 	inline Triangle2() {}
@@ -76,4 +79,5 @@ public:
 	const std::vector<glm::vec3>& getNormals() const { return normals; }
 };
 
+//! @}
 #endif

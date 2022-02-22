@@ -4,6 +4,10 @@
 #include <glm/glm.hpp>
 #include <vector>
 
+//! \defgroup deformation Deformation
+//! \addtogroup deformation
+//! @{
+
 struct BaseMesh;
 enum DeformMethod {
     NORMAL,
@@ -55,4 +59,5 @@ struct NormalMethod : MeshDeformator {
     void movePoint(const glm::vec3& origin, const glm::vec3& target) override;
 };
 
+//! @}
 #endif

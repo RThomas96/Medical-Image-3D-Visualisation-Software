@@ -3,7 +3,7 @@
 
 #include "manipulator.hpp"
 
-/// @defgroup uitools UITools
+/// @defgroup uitools UI
 /// @brief Group of tools used to interact with the application.
 /// @details It include static components like sliders or double sliders, as well as
 /// dynamic components used to directly interact with a 3D scene, like manipulators.

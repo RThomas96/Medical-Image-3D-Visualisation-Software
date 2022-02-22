@@ -4,7 +4,8 @@
 #include "tetrahedral_mesh.hpp"
 #include "../images/tiff_image.hpp"
 
-//! \addtogroup img
+//! \defgroup grid Grid
+//! \addtogroup grid
 //! @{
 
 // This enum allow to choose at which resolution we want to query points
@@ -57,8 +58,7 @@ private:
     SimpleImage * image;
 };
 
-// Struct to make link between the grid and a 3D shape used to deform the space of its representation
-// Struct able to make the link between the grid and its 3D representation
+//! @brief Struct able to make the link between the grid and its 3D representation
 struct Grid : public TetMesh {
 
     TetMesh initialMesh;

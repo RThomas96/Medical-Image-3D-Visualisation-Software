@@ -12,6 +12,10 @@ namespace UITool {
     class Manipulator;
 }
 
+//! \defgroup geometry Geometry
+//! \addtogroup geometry
+//! @{
+
 class BaseMesh : public QObject {
     Q_OBJECT
 public:
@@ -72,5 +76,7 @@ public:
 private:
     glm::mat4 transformation;
 };
+
+//! @}
 
 #endif
