@@ -137,6 +137,7 @@ Scene::Scene() :
 	this->isFinishedLoading			  = false;
 	this->shouldUpdateUserColorScales = false;
 	this->shouldUpdateUBOData		  = false;
+	this->showBoundingBoxes = true;
 
 	this->posFrame = nullptr;
 
@@ -2112,7 +2113,9 @@ void Scene::newAPI_drawVolumetric(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPo
 	}
 
 	// draw grid BB :
-	this->drawBoundingBox(grid->grid->getBoundingBox(), grid->boundingBoxColor, mvMat, pMat);
+	if (this->showBoundingBoxes) {
+		this->drawBoundingBox(grid->grid->getBoundingBox(), grid->boundingBoxColor, mvMat, pMat);
+	}
 }
 
 void Scene::newAPI_drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane) {
@@ -2882,7 +2885,9 @@ void Scene::newAPI_drawGrid(GLfloat* mvMat, GLfloat* pMat, glm::mat4 baseMatrix,
 	}
 
 	// No matter the grid's state, print the bounding box :
-	this->drawBoundingBox(grid->grid->getBoundingBox(), grid->boundingBoxColor, mvMat, pMat);
+	if (this->showBoundingBoxes) {
+		this->drawBoundingBox(grid->grid->getBoundingBox(), grid->boundingBoxColor, mvMat, pMat);
+	}
 }
 
 void Scene::newSHADERS_print_all_uniforms(GLuint _shader_program) {
@@ -2974,7 +2979,9 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 		}
 
 		if (this->drawMode == DrawMode::VolumetricBoxed) {
-			this->drawBoundingBox(this->visuBox, glm::vec3(1., .0, .0), mvMat, pMat);
+			if (this->showBoundingBoxes) {
+				this->drawBoundingBox(this->visuBox, glm::vec3(1., .0, .0), mvMat, pMat);
+			}
 		}
 	}
 
@@ -2982,7 +2989,9 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 		this->newAPI_drawPlanes(mvMat, pMat, this->drawMode == DrawMode::Solid);
 	}
 
-	this->drawBoundingBox(this->sceneBB, glm::vec4(.5, .5, .0, 1.), mvMat, pMat);
+	if (this->showBoundingBoxes) {
+		this->drawBoundingBox(this->sceneBB, glm::vec4(.5, .5, .0, 1.), mvMat, pMat);
+	}
 	this->showVAOstate = false;
 
 	if (not blend_enabled) {

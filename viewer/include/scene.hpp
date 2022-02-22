@@ -435,6 +435,11 @@ public:
 		std::for_each(this->newGrids.cbegin(), this->newGrids.cend(), callable);
 	}
 
+	/// @brief Toggle the rendering of bounding boxes.
+	void toggleShowBoundingBoxes(void) {
+		this->showBoundingBoxes = not this->showBoundingBoxes;
+	}
+
 	/// @brief Returns the context, for external use.
 	QOpenGLContext* get_context() const { return this->context; }
 
@@ -557,6 +562,7 @@ private:
 	bool showVAOstate;	  ///< Do we need to print the VAO/program state on next draw ?
 	bool shouldUpdateVis;	 ///< Should we update visibility on next draw ?
 	bool shouldDeleteGrid;	  ///< Should we delete a grid on next draw ?
+	bool showBoundingBoxes;	///< Should we show bounding boxes ?
 	std::vector<std::size_t> delGrid;	 ///< Grids to delete at next refresh
 
 	// Grids :

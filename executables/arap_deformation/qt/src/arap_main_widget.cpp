@@ -292,6 +292,10 @@ void ARAPMainWidget::setupSignals() {
 	QObject::connect(this->viewer, &Viewer::hasInitializedScene, this->viewer_planeY, &PlanarViewer::canInitializeScene);
 	QObject::connect(this->viewer, &Viewer::hasInitializedScene, this->viewer_planeZ, &PlanarViewer::canInitializeScene);
 
+	QObject::connect(this->viewer_planeX, &PlanarViewer::clickedOnPosition, this->viewer, &Viewer::clickFromPlanarViewer);
+	QObject::connect(this->viewer_planeY, &PlanarViewer::clickedOnPosition, this->viewer, &Viewer::clickFromPlanarViewer);
+	QObject::connect(this->viewer_planeZ, &PlanarViewer::clickedOnPosition, this->viewer, &Viewer::clickFromPlanarViewer);
+
 	// Update min/max bounds of the control panel whenever an image is loaded !
 	QObject::connect(this->arap_controller, &ARAPController::imageIsLoaded, this->viewer, &Viewer::updateSceneTextureLimits);
 }

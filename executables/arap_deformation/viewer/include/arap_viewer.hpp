@@ -79,9 +79,6 @@ protected:
 	/// @brief Resets and removes the local point query
 	void resetLocalPointQuery();
 
-	/// @brief Creates the mesh manip interface and the manipulator
-	void initializeARAPInterface();
-
 private:
 	/// @brief The scene to control.
 	Scene* const scene;
@@ -133,24 +130,16 @@ public slots:
 	/// @brief Re-centers the camera around the scene-defined center point
 	void centerScene(void);
 	/// @brief Guess the position of the fragment under the mouse cursor
-	void guessMousePosition(void);
-	void alignARAP();
-	void launchARAP();
+	/// @param p The position read from the framebuffer.
+	void guessMousePosition(glm::vec4 p);
 	void toggleSelectionMode();
 	void printVAOStateNext();
-	void setSphereSize(double);
-	void toggleDeformation();
 	void setDeformation(bool);
-	void resetARAPConstraints();
-	void mesh_select_all();
-	void mesh_unselect_all();
-	void scaleMeshARAP();
+
+	/// @brief Receives a position from clicking on the framebuffer of one of the 2D viewers.
+	void clickFromPlanarViewer(glm::vec4 coordinates);
 
 	void updateSceneTextureLimits();
-
-	void loadMeshToScene();
-	void loadCurveToScene();
-	void loadOtherCurveToScene();
 
 	void saveMesh();
 	void saveCurve();

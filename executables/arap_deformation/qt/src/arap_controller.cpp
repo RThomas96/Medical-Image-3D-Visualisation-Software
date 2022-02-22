@@ -4,6 +4,9 @@
 #include "viewer/include/scene.hpp"
 
 #include "glm/gtx/io.hpp"
+#ifdef CIMG_WORKING_ON_MINGW
+#include "CImg.h"
+#endif
 
 #include <QFileDialog>
 #include <QVBoxLayout>
@@ -37,6 +40,7 @@ ARAPController::ARAPController(Viewer* _v, Scene* _s) {
 	this->button_save_mesh = nullptr;
 	this->button_save_curve = nullptr;
 	this->button_save_json = nullptr;
+	this->button_save_image = nullptr;
 
 	this->button_align_arap = nullptr;
 	this->button_scale_arap = nullptr;
@@ -57,6 +61,8 @@ ARAPController::ARAPController(Viewer* _v, Scene* _s) {
 	this->mesh_file_path = "";
 	this->curve_file_path = "";
 	this->curve_file_path = "";
+	this->output_image_file_name = "";
+	this->output_image_file_path = "";
 	this->generated_mesh_save_path = "";
 
 	this->init();
@@ -78,6 +84,7 @@ void ARAPController::init() {
 	this->button_save_mesh = new QPushButton("Save mesh");
 	this->button_save_curve = new QPushButton("Save curve");
 	this->button_save_json = new QPushButton("Save curve as JSON");
+	this->button_save_image = new QPushButton("Save image");
 
 	this->button_align_arap = new QPushButton("Align constraints");
 	this->button_scale_arap = new QPushButton("Scale constraints");
@@ -147,6 +154,7 @@ void ARAPController::initLayout() {
 	widget_layout->addWidget(label_save);
 	widget_layout->addWidget(this->button_save_mesh);
 	widget_layout->addWidget(this->button_save_curve);
+	widget_layout->addWidget(this->button_save_image);
 	widget_layout->addWidget(this->button_save_json);
 
 	this->setLayout(widget_layout);
@@ -171,6 +179,7 @@ void ARAPController::updateButtonsActivated() {
 	this->button_start_arap->setEnabled(false);
 	this->button_save_mesh->setEnabled(false);
 	this->button_save_curve->setEnabled(false);
+	this->button_save_image->setEnabled(false);
 	this->button_save_json->setEnabled(false);
 	this->button_manip_select_all->setEnabled(false);
 	this->button_manip_select_none->setEnabled(false);
@@ -194,6 +203,7 @@ void ARAPController::updateButtonsActivated() {
 		this->button_align_arap->setEnabled(true);
 		this->button_scale_arap->setEnabled(true);
 		this->button_start_arap->setEnabled(true);
+		this->button_save_image->setEnabled(true);
 	}
 	if (this->state >= States::Deformed) {
 		this->button_load_second_curve->setEnabled(true);
@@ -213,6 +223,7 @@ void ARAPController::initSignals() {
 	// Buttons to save the data :
 	QObject::connect(this->button_save_mesh, &QPushButton::pressed, this, &ARAPController::saveMesh);
 	QObject::connect(this->button_save_curve, &QPushButton::pressed, this, &ARAPController::saveCurve);
+	QObject::connect(this->button_save_image, &QPushButton::pressed, this, &ARAPController::saveImageToBinaryFile);
 	QObject::connect(this->button_save_json, &QPushButton::pressed, this, &ARAPController::saveCurveAsJSON);
 	// Buttons to control the ARAP deformation :
 	QObject::connect(this->button_align_arap, &QPushButton::pressed, this, &ARAPController::arap_performAlignment);
@@ -291,7 +302,7 @@ void ARAPController::updateCurveInfoLabel() {
 		return;
 	}
 	QString default_name = "Curve name : %1";
-	QString default_info = "%1 control points, %2 units of length";
+	QString default_info = "%1 control points";
 
 	this->label_curve_name->setText(default_name.arg(this->curve_file_name));
 	this->label_curve_name->setToolTip(this->label_curve_name->text());
@@ -300,8 +311,7 @@ void ARAPController::updateCurveInfoLabel() {
 	QFileInfo curve_file_info(this->curve_file_path, this->curve_file_name);
 	this->label_curve_name->setWordWrap(true);
 	this->label_curve_info->setWordWrap(true);
-	// TODO : compute curve length !!!
-	this->label_curve_info->setText(default_info.arg(this->curve->getPositions().size()).arg(static_cast<float>(curve_file_info.size()) / 1024.f / 1024.f));
+	this->label_curve_info->setText(default_info.arg(this->curve->getPositions().size()));
 }
 
 void ARAPController::updateGridInfoLabel() {
@@ -341,6 +351,9 @@ void ARAPController::loadMeshFromFile() {
 		std::cerr << "Error : nothing to open.\nFile path given : \"" << file_name.toStdString() << "\"\n";
 		return;
 	}
+
+	// TODO : Completely clear all other data loaded before this point !!!
+	//   On some runs, constraints were kept between mesh loads.
 
 	// Update directory last accessed :
 	QFileInfo mesh_file_info(file_name);
@@ -633,6 +646,7 @@ void ARAPController::updateCompoundedConstraints() {
 void ARAPController::deleteMeshData() {
 	this->viewer->makeCurrent();
 	this->scene->arap_delete_mesh_drawable();
+	// TODO : Remove constraints here and in the scene !
 	this->mesh_file_name = this->mesh_file_path = "";
 	this->viewer->doneCurrent();
 	this->mesh.reset();
@@ -1100,6 +1114,53 @@ void ARAPController::saveCurve() {
 	return;
 }
 
+void ARAPController::saveImageToBinaryFile() {
+#ifdef CIMG_WORKING_ON_MINGW
+	if (this->image == nullptr) { return; }
+	QString selected;
+	QString q_file_name = "";
+	q_file_name = QFileDialog::getSaveFileName(nullptr, "Save Image file", this->dir_last_accessed, "Raw image files (*.img)", &selected, QFileDialog::DontUseNativeDialog);
+	// Check if the user didn't cancel the dialog :
+	if (q_file_name.isEmpty()) {
+		std::cerr << "Error : no filename chosen.\n";
+		return;
+	}
+	if (not q_file_name.endsWith(".img", Qt::CaseSensitivity::CaseInsensitive)) {
+		q_file_name += ".img";
+	}
+	this->dir_last_accessed = QFileInfo(q_file_name).absolutePath();
+
+	this->output_image_file_path = QFileInfo(q_file_name).absolutePath();
+	this->output_image_file_name = QFileInfo(q_file_name).fileName();
+	// Create CImg handle, dump image to raw binary format and call it a day
+	auto img_dimensions = this->image->getResolution();
+	auto d = this->image->getVoxelDimensionality();
+	cimg_library::CImg<std::uint16_t> raw_file = cimg_library::CImg(img_dimensions.x, img_dimensions.y, img_dimensions.z, d);
+
+	std::cout << "Going through the image and setting pixel values ...\n";
+	std::vector<std::uint16_t> pixel_values;
+	for (std::size_t z = 0; z < img_dimensions.z; ++z) {
+		for (std::size_t y = 0; y < img_dimensions.y; ++y) {
+			for (std::size_t x = 0; x < img_dimensions.x; ++x) {
+				// read pixel for all color channels now :
+				this->image->readPixel(svec3(x,y,z), pixel_values);
+				// dump to CImg buffer :
+				for (std::size_t c = 0; c < d; ++c) {
+					raw_file(x, y, z, c) = pixel_values[c];
+				}
+			}
+		}
+		std::cout << "\tWrote slice " << z << " ...\n";
+	}
+
+	QDir output_dir(this->output_image_file_path);
+	raw_file.save_raw(output_dir.absoluteFilePath(this->output_image_file_name).toStdString().c_str());
+	std::cout << "Saved file to " << output_dir.absoluteFilePath(this->output_image_file_name).toStdString() << " !\n";
+
+	return;
+#endif
+}
+
 void ARAPController::saveCurveAsJSON() {
 	if (this->mesh == nullptr || this->curve == nullptr) {
 		return;
@@ -1108,6 +1169,14 @@ void ARAPController::saveCurveAsJSON() {
 	if (this->generated_mesh_save_path.isEmpty()) {
 		QMessageBox::information(this, "Warning", "Warning : you have not yet saved the mesh. In order to save this curve as a JSON file, you must first choose a save location for the mesh.");
 		this->saveMesh();
+		if (this->generated_mesh_save_path.isEmpty()) {
+			QMessageBox::information(this, "Operation aborted", "Saving of the curve as a JSON file was aborted.");
+			return;
+		}
+	}
+	if (this->output_image_file_path.isEmpty()) {
+		QMessageBox::information(this, "Warning", "Warning : you have not yet saved the image. In order to save this curve and mesh as a JSON file, you must first choose a save location for the image.");
+		this->saveImageToBinaryFile();
 		if (this->generated_mesh_save_path.isEmpty()) {
 			QMessageBox::information(this, "Operation aborted", "Saving of the curve as a JSON file was aborted.");
 			return;
@@ -1144,9 +1213,23 @@ void ARAPController::saveCurveAsJSON() {
 	for (const auto& v : this->curve->getPositions()) {
 		vec3ToJSON(ctrl_pts_array, v);
 	}
+	QJsonArray imgsize_array; // array of the image dimensions. ironically, this will be strings since integers are not supported in Qt's JSON headers.
+	auto dims = this->image->getResolution();
+	auto d = this->image->getVoxelDimensionality();
+	imgsize_array.push_back(QString::number(dims.x));
+	imgsize_array.push_back(QString::number(dims.y));
+	imgsize_array.push_back(QString::number(dims.z));
+	imgsize_array.push_back(QString::number(d));
 	// Add ctrl points :
 	curve_object.insert("control points", ctrl_pts_array);
 	curve_object.insert("mesh file", QDir(this->dir_last_accessed).relativeFilePath(this->generated_mesh_save_path));
+	// add image file and image size :
+	curve_object.insert("image_file",
+		QDir(this->dir_last_accessed).relativeFilePath(
+			QDir(this->output_image_file_path).absoluteFilePath(this->output_image_file_name)
+		)
+	);
+	curve_object.insert("image_size", imgsize_array);
 
 	QJsonDocument doc(curve_object);
 	std::ofstream out_file(q_file_name.toStdString());

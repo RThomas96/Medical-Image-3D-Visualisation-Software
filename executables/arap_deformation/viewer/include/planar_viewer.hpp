@@ -16,6 +16,7 @@
 /// @details While this is inheriting from QGLViewer, it does not use any of the camera settings. It uses a completely
 /// custom rendering pipeline.
 class PlanarViewer : public QGLViewer {
+	Q_OBJECT;
 protected:
 	friend class ViewerHeader;
 
@@ -95,6 +96,9 @@ public slots:
 	void rotatePlaneCounterClockwise(void);
 	/// @brief Toggles the corresponding plane's visibility in the scene
 	void togglePlaneVisibility(void);
+
+signals:
+	void clickedOnPosition(glm::vec4 coordinates);
 };
 
 #endif	  // VISUALISATION_VIEWER_INCLUDE_PLANAR_VIEWER_HPP_

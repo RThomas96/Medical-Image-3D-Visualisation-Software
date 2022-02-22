@@ -53,6 +53,7 @@ TARGET_INCLUDE_DIRECTORIES(arap_deformation
 	PRIVATE ${OPENGL_INCLUDE_DIRS}
 	PRIVATE ${QGLViewer_HEADER_DIR}
 	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../third_party/glm/
+	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../third_party/
 	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include
 	# Nifti uses brace-include without the 'nifti/' prefix, leading
 	# to manually have to include the lib's include dir in targets:

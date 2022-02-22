@@ -116,24 +116,12 @@ void PlanarViewer::guessScenePosition(void) {
 	this->posRequest = glm::convert_to<int>(glm::vec2(rawMousePos.x, fbDims.y - rawMousePos.y));
 	this->makeCurrent();
 	glm::vec4 pixelValue = this->sceneToShow->readFramebufferContents(this->defaultFramebufferObject(), this->posRequest);
-	if (pixelValue.w > .01f) {
-		glm::vec4 p = pixelValue;
-		std::cerr << "Value in fbo : {" << p.x << ", " << p.y << ", " << p.z << ", " << p.w << "}\n";
-		this->sceneToShow->setPositionResponse(pixelValue);
-		// TODO: new API
-		// auto inputs = this->sceneToShow->getInputGrids();
-		// for (const auto& grid : inputs) {
-		// 	if (grid->includesPointWorldSpace(pixelValue)) {
-		// 		IO::GenericGridReader::sizevec3 index = grid->worldPositionToIndex(p);
-		// 		QString msg							  = "Position in image space : " + QString::number(index.x) + ", " +
-		// 					  QString::number(index.y) + ", " + QString::number(index.z) + ", in grid " +
-		// 					  QString::fromStdString(grid->getGridName());
-		// 		std::cerr << "Message from plane viewer : " << msg.toStdString() << "\n";
-		// 		this->status_bar->showMessage(msg, 10000);
-		// 	}
-		// }
-	}
 	this->doneCurrent();
+
+	if (pixelValue.w > .01f) {
+		emit this->clickedOnPosition(pixelValue);
+	}
+
 }
 
 void PlanarViewer::keyPressEvent(QKeyEvent* _e) {
