@@ -729,7 +729,7 @@ public:
 						Vr = glm::normalize(Vr);
 
 						RepX = uTeta * Ur + vTeta * Vr;
-						RepZ = glm::normalize(RepX);
+						RepX = glm::normalize(RepX);
 						RepY = glm::cross(RepZ,RepX);
 						manipulatedCallback();
 						break;
