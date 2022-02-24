@@ -7,7 +7,7 @@
 
 #include <glm/glm.hpp>
 #include <gsl/gsl_linalg.h>
-#include <suitesparse/cholmod.h>
+#include <cholmod.h>
 
 #include <iostream>
 

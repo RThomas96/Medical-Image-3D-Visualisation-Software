@@ -4,9 +4,6 @@
 #include "viewer/include/scene.hpp"
 
 #include "glm/gtx/io.hpp"
-#ifdef CIMG_WORKING_ON_MINGW
-#include "CImg.h"
-#endif
 
 #include <QFileDialog>
 #include <QVBoxLayout>
@@ -1115,7 +1112,6 @@ void ARAPController::saveCurve() {
 }
 
 void ARAPController::saveImageToBinaryFile() {
-#ifdef CIMG_WORKING_ON_MINGW
 	if (this->image == nullptr) { return; }
 	QString selected;
 	QString q_file_name = "";
@@ -1158,7 +1154,6 @@ void ARAPController::saveImageToBinaryFile() {
 	std::cout << "Saved file to " << output_dir.absoluteFilePath(this->output_image_file_name).toStdString() << " !\n";
 
 	return;
-#endif
 }
 
 void ARAPController::saveCurveAsJSON() {
@@ -1177,7 +1172,7 @@ void ARAPController::saveCurveAsJSON() {
 	if (this->output_image_file_path.isEmpty()) {
 		QMessageBox::information(this, "Warning", "Warning : you have not yet saved the image. In order to save this curve and mesh as a JSON file, you must first choose a save location for the image.");
 		this->saveImageToBinaryFile();
-		if (this->generated_mesh_save_path.isEmpty()) {
+		if (this->output_image_file_path.isEmpty()) {
 			QMessageBox::information(this, "Operation aborted", "Saving of the curve as a JSON file was aborted.");
 			return;
 		}
@@ -1213,6 +1208,8 @@ void ARAPController::saveCurveAsJSON() {
 	for (const auto& v : this->curve->getPositions()) {
 		vec3ToJSON(ctrl_pts_array, v);
 	}
+	QJsonObject img_obj;
+	QJsonArray vox_dims;
 	QJsonArray imgsize_array; // array of the image dimensions. ironically, this will be strings since integers are not supported in Qt's JSON headers.
 	auto dims = this->image->getResolution();
 	auto d = this->image->getVoxelDimensionality();
@@ -1220,6 +1217,13 @@ void ARAPController::saveCurveAsJSON() {
 	imgsize_array.push_back(QString::number(dims.y));
 	imgsize_array.push_back(QString::number(dims.z));
 	imgsize_array.push_back(QString::number(d));
+	vox_dims.push_back(this->image->getVoxelDimensions().x);
+	vox_dims.push_back(this->image->getVoxelDimensions().y);
+	vox_dims.push_back(this->image->getVoxelDimensions().z);
+	img_obj.insert("image_dimensions", imgsize_array);
+	img_obj.insert("voxel_dimensionality", QString::number(this->image->getVoxelDimensionality()));
+	img_obj.insert("voxel_dimensions", vox_dims);
+	img_obj.insert("image_path", this->output_image_file_path+QDir::separator()+this->output_image_file_name);
 	// Add ctrl points :
 	curve_object.insert("control points", ctrl_pts_array);
 	curve_object.insert("mesh file", QDir(this->dir_last_accessed).relativeFilePath(this->generated_mesh_save_path));
@@ -1229,7 +1233,7 @@ void ARAPController::saveCurveAsJSON() {
 			QDir(this->output_image_file_path).absoluteFilePath(this->output_image_file_name)
 		)
 	);
-	curve_object.insert("image_size", imgsize_array);
+	curve_object.insert("image", img_obj);
 
 	QJsonDocument doc(curve_object);
 	std::ofstream out_file(q_file_name.toStdString());

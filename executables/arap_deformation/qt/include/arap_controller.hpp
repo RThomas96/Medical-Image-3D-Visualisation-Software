@@ -23,6 +23,8 @@
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
+#define cimg_display 0
+#include "CImg.h"
 
 class Viewer;
 class Scene;

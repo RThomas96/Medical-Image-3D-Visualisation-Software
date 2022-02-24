@@ -22,6 +22,7 @@ ENDIF()
 
 FIND_FILE(SUITESPARSE_CHOLMOD_LIBRARY
 	NAMES libcholmod.so
+	PATH_SUFFIXES lib
 	DOC "The SuiteSpase CHOLMOD shared library file, used to find the SuiteSparse library."
 	REQUIRED
 )
