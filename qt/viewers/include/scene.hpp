@@ -6,15 +6,6 @@
 #include "../../macros.hpp"
 // Scene control panel :
 #include "../../qt/widgets/include/scene_control.hpp"
-// Shader compiler :
-#include "../../legacy/meshes/drawable/shaders.hpp"
-// Meshes :
-#include "../../legacy/meshes/base_mesh/Mesh.hpp"
-#include "../../legacy/meshes/base_mesh/mesh_io.hpp"
-#include "../../legacy/meshes/drawable/curve.hpp"
-#include "../../legacy/meshes/drawable/mesh.hpp"
-// Curve :
-#include "../../legacy/meshes/deformable_curve/curve.hpp"
 // UI elements :
 //#include "../../qt/include/grid_control.hpp"
 #include "../../qt/widgets/include/opengl_debug_log.hpp"
@@ -450,53 +441,6 @@ public:
 
 	void setupGLOutput();
 	void printOpenGLMessage(const QOpenGLDebugMessage& message);
-
-    /***********************************************/
-    /* ARAP branch section */
-    /***********************************************/
-
-	/// @brief This performs ARAP deformation on the first mesh found.
-	/// @note THIS IS A WIP/DRAFT FUNCTION, NOT DESIGNED FOR PRODUCTION RELEASE
-	void dummy_perform_arap_on_first_mesh();
-	/// @brief This performs ARAP deformation on the mesh associated with the first loaded image.
-	/// @note THIS IS A WIP/DRAFT FUNCTION, NOT DESIGNED FOR PRODUCTION RELEASE
-	void dummy_perform_constrained_arap_on_image_mesh();
-	/// @brief This adds a constraint for image 'img_idx' at position 'img_pos'.
-	/// @note THIS IS A WIP/DRAFT FUNCTION, NOT DESIGNED FOR PRODUCTION RELEASE
-	void dummy_add_image_constraint(std::size_t img_idx, glm::vec3 img_pos);
-	/// @brief This checks if the given query point is contained in the bounding box
-	/// @param query The position to query
-	/// @param mesh_index The index of the first mesh that contains it, INDEXED AT 1. If 0, no meshes contain it.
-	/// @note THIS IS A WIP/DRAFT FUNCTION, NOT DESIGNED FOR PRODUCTION RELEASE
-	void dummy_check_point_in_mesh_bb(glm::vec3 query, std::size_t& mesh_index);
-	/// @brief Returns the i-th drawable loaded in the scene.
-	/// @note THIS IS A WIP/DRAFT FUNCTION, NOT DESIGNED FOR PRODUCTION RELEASE
-	DrawableBase::Ptr dummy_getDrawable(std::size_t idx);
-	/// @brief Adds to the 'i-th' mesh a constraint at vertex 'n'
-	/// @note THIS IS A WIP/DRAFT FUNCTION, NOT DESIGNED FOR PRODUCTION RELEASE
-	void dummy_add_arap_constraint_mesh(std::size_t drawable, std::size_t vtx_idx);
-	/// @brief Prints the ARAP constraints as they currently are set in the program.
-	/// @note THIS IS A WIP/DRAFT FUNCTION, NOT DESIGNED FOR PRODUCTION RELEASE
-	void dummy_print_arap_constraints();
-	/// @brief Applies the mesh alignment before the ARAP solver
-	void dummy_apply_alignment_before_arap();
-
-	void drawPointSpheres_quick(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, const std::vector<glm::vec3>& positions, float radius);
-    /***********************************************/
-
-private:
-
-	std::queue<std::shared_ptr<DrawableBase>> to_init;
-	std::vector<std::shared_ptr<DrawableBase>> drawables;	 ///< The drawables to display
-	std::vector<Mesh::Ptr> meshes;
-	Curve::Ptr curve;
-	std::shared_ptr<DrawableCurve> curve_draw;
-
-	///
-	/// Only for ARAP integration testing :
-	///
-	std::vector<std::pair<std::size_t, std::size_t>> mesh_idx_constraints;	  ///< The mesh vertices considered constraints. Pair = <mesh_idx , vertex_idx>
-	std::vector<glm::vec3> image_constraints;	 ///< The positions of those constraints explained abovepositions of those constraints explained above
 
 public:
 	SceneGL sceneGL;

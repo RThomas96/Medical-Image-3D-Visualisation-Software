@@ -36,7 +36,6 @@ SET(LIBS_COMPILED_HEADERS "${CMAKE_CURRENT_LIST_DIR}/third_party/compiled_librar
 
 # To remove
 ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/legacy/image)
-ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/legacy/meshes)
 
 ADD_LIBRARY(VisualisationWidgets STATIC
 	./qt/widgets/include/neighbor_visu_main_widget.hpp
@@ -125,6 +124,8 @@ ADD_EXECUTABLE(neighbor_visu
     ./legacy/image/utils/include/bounding_box.hpp
     ./legacy/image/utils/include/threaded_task.hpp
     ./legacy/image/utils/src/threaded_task.cpp
+    ./legacy/meshes/drawable/shaders.hpp
+    ./legacy/meshes/drawable/shaders.cpp
 
 )
 TARGET_COMPILE_OPTIONS(neighbor_visu
@@ -157,11 +158,6 @@ TARGET_LINK_LIBRARIES(neighbor_visu
 	PUBLIC ${OPENGL_LIBRARIES}
 	PUBLIC ${QGLViewer}
 	PUBLIC VisualisationWidgets
-	PUBLIC ${CMAKE_PROJECT_NAME}_shaders
-	PUBLIC ${CMAKE_PROJECT_NAME}_mesh
-	PUBLIC ${CMAKE_PROJECT_NAME}_deformable_curve
-	PUBLIC ${CMAKE_PROJECT_NAME}_meshop_arap
-	PUBLIC ${CMAKE_PROJECT_NAME}_drawable_meshes
 	PUBLIC TinyTIFF
 	PUBLIC ${libTIFF}
 )
@@ -212,6 +208,8 @@ ADD_EXECUTABLE(tests
     ./legacy/image/utils/include/bounding_box.hpp
     ./legacy/image/utils/include/threaded_task.hpp
     ./legacy/image/utils/src/threaded_task.cpp
+    ./legacy/meshes/drawable/shaders.hpp
+    ./legacy/meshes/drawable/shaders.cpp
 
     ./third_party/cimg/CImg.h
 )
@@ -240,11 +238,6 @@ TARGET_LINK_LIBRARIES(tests
 	PUBLIC ${OPENGL_LIBRARIES}
 	PUBLIC ${QGLViewer}
 	PUBLIC VisualisationWidgets
-	PUBLIC ${CMAKE_PROJECT_NAME}_shaders
-	PUBLIC ${CMAKE_PROJECT_NAME}_mesh
-	PUBLIC ${CMAKE_PROJECT_NAME}_deformable_curve
-	PUBLIC ${CMAKE_PROJECT_NAME}_meshop_arap
-	PUBLIC ${CMAKE_PROJECT_NAME}_drawable_meshes
 	PUBLIC TinyTIFF
 	PUBLIC ${libTIFF}
 )
