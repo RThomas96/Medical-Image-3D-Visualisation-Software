@@ -866,7 +866,7 @@ void ARAPController::arap_performScaling() {
 	bb_mesh.printInfo("Mesh constraints BB is : ");
 
 	// Compute centroid of the mesh for translation :
-	glm::vec3 mesh_centroid;
+	glm::vec3 mesh_centroid{.0f, .0f, .0f};
 	for (const auto& v : this->mesh->getVertices()) {
 		mesh_centroid += v / static_cast<float>(this->mesh->getVertices().size());
 	}
@@ -1144,14 +1144,14 @@ void ARAPController::saveImageToBinaryFile() {
 	if (this->image == nullptr) { return; }
 	QString selected;
 	QString q_file_name = "";
-	q_file_name = QFileDialog::getSaveFileName(nullptr, "Save Image file", this->dir_last_accessed, "TIFF files (*.tif)", &selected, QFileDialog::DontUseNativeDialog);
+	q_file_name = QFileDialog::getSaveFileName(nullptr, "Save Image file", this->dir_last_accessed, "ASCII files (*.bin)", &selected, QFileDialog::DontUseNativeDialog);
 	// Check if the user didn't cancel the dialog :
 	if (q_file_name.isEmpty()) {
 		std::cerr << "Error : no filename chosen.\n";
 		return;
 	}
-	if (not q_file_name.endsWith(".tif", Qt::CaseSensitivity::CaseInsensitive)) {
-		q_file_name += ".tif";
+	if (not q_file_name.endsWith(".bin", Qt::CaseSensitivity::CaseInsensitive)) {
+		q_file_name += ".bin";
 	}
 	this->dir_last_accessed = QFileInfo(q_file_name).absolutePath();
 
@@ -1180,7 +1180,7 @@ void ARAPController::saveImageToBinaryFile() {
 
 	QDir output_dir(this->output_image_file_path);
 	std::string path = std::string(output_dir.absoluteFilePath(this->output_image_file_name).toStdString());
-	raw_file.save_tiff(path.c_str());
+	raw_file.save_ascii(path.c_str());
 	std::cout << "Saved file to " << output_dir.absoluteFilePath(this->output_image_file_name).toStdString() << " !\n";
 
 	return;
