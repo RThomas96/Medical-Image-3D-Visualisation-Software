@@ -35,6 +35,15 @@ public:
 	/// @brief Add a pointer to the status bar, in order to show messages.
 	void addStatusBar(QStatusBar* _sb);
 
+	/// @brief Removes all mesh data from the viewer and the scene.
+	void clearMeshData();
+
+	/// @brief Removes all curve data from the viewer and the scene.
+	void clearCurveData();
+
+	/// @brief Removes all image data from the viewer and the scene.
+	void clearImageData();
+
 public slots:
 	/// @brief Slot called when the rectangular selection is used to add vertices.
 	/// @param selection The rectangular area selected by the user, in screen coordinates.

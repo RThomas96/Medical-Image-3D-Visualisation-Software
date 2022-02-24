@@ -24,6 +24,7 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #define cimg_display 0
+#define cimg_use_tiff
 #include "CImg.h"
 
 class Viewer;
@@ -93,6 +94,11 @@ public:
 	/// @brief Updates the mesh data in the Scene.
 	/// @note Since the curve is always deformed by the mesh, its update function is protected.
 	void updateMeshDrawable();
+	/// @brief Updates the curve data in the Scene.
+	void updateCurveDrawable();
+
+	/// @brief Updates the contents of the compounded constraints.
+	void updateCompoundedConstraints();
 
 	/// @brief Add a mesh constraint.
 	void addMeshConstraint(std::size_t);
@@ -117,9 +123,6 @@ protected:
 	/// @brief Slot called when the 'Load constraints' button is pressed.
 	void loadConstraintDataFromFile(const std::string& file_name);
 
-	/// @brief Updates the contents of the compounded constraints.
-	void updateCompoundedConstraints();
-
 	/// @brief Uploads the mesh data to the Scene.
 	void uploadMeshToScene();
 	/// @brief Uploads the curve data to the Scene.
@@ -129,8 +132,6 @@ protected:
 	void initializeMeshInterface();
 	/// @brief Resets the mesh interface, rectangle selection and ARAP manipulators.
 	void resetMeshInterface();
-	/// @brief Updates the curve data in the Scene.
-	void updateCurveDrawable();
 
 	/// @brief Updates the mesh info labels.
 	void updateMeshInfoLabel();

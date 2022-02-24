@@ -39,7 +39,9 @@ public:
 
 	/// @brief Checks if the object has been initialized
 	[[nodiscard]] virtual bool isInitialized() const {
-		return this->bound_context != nullptr && (glm::lessThan(this->bounding_box_min, this->bounding_box_max) == glm::vec3::bool_type{true, true, true});
+		bool cont = this->bound_context != nullptr;
+		bool valid_bb = glm::lessThan(this->bounding_box_min, this->bounding_box_max) == glm::vec3::bool_type{true, true, true};
+		return cont && valid_bb;
 	}
 
 	/// @brief Initializes the object.

@@ -203,6 +203,7 @@ void ARAPController::updateButtonsActivated() {
 		this->button_save_image->setEnabled(true);
 	}
 	if (this->state >= States::Deformed) {
+		// This is after the automatic ARAP deformation, not after a hand-made deformation.
 		this->button_load_second_curve->setEnabled(true);
 		this->button_save_json->setEnabled(true);
 	}
@@ -348,9 +349,6 @@ void ARAPController::loadMeshFromFile() {
 		std::cerr << "Error : nothing to open.\nFile path given : \"" << file_name.toStdString() << "\"\n";
 		return;
 	}
-
-	// TODO : Completely clear all other data loaded before this point !!!
-	//   On some runs, constraints were kept between mesh loads.
 
 	// Update directory last accessed :
 	QFileInfo mesh_file_info(file_name);
@@ -608,6 +606,8 @@ void ARAPController::addImageConstraint(glm::vec3 img_ctx_pos) {
 			this->currently_edited_constraint = this->mesh_constraints.size()+1;
 		} else {
 			std::cerr << "Warning : adding more image constraints than there are mesh constraints.\n";
+			std::cerr << "Constraints : " << this->mesh_constraints.size() << " and current one : " <<
+				this->currently_edited_constraint << '\n';
 		}
 	} else {
 		std::cerr << "Warning : added image constraint but no mesh constraints were present.\n";
@@ -642,8 +642,11 @@ void ARAPController::updateCompoundedConstraints() {
 
 void ARAPController::deleteMeshData() {
 	this->viewer->makeCurrent();
-	this->scene->arap_delete_mesh_drawable();
-	// TODO : Remove constraints here and in the scene !
+	this->viewer->clearMeshData();
+	this->compounded_constraints.clear();
+	this->mesh_constraints.clear();
+	this->image_constraints.clear();
+	this->currently_edited_constraint = 0;
 	this->mesh_file_name = this->mesh_file_path = "";
 	this->viewer->doneCurrent();
 	this->mesh.reset();
@@ -651,7 +654,7 @@ void ARAPController::deleteMeshData() {
 
 void ARAPController::deleteCurveData() {
 	this->viewer->makeCurrent();
-	this->scene->arap_delete_curve_drawable();
+	this->viewer->clearCurveData(); // also clears img
 	this->curve_file_name = this->curve_file_path = "";
 	this->viewer->doneCurrent();
 	this->curve.reset();
@@ -659,7 +662,7 @@ void ARAPController::deleteCurveData() {
 
 void ARAPController::deleteGridData() {
 	this->viewer->makeCurrent();
-	this->scene->arap_delete_grid_data();
+	this->viewer->clearImageData();
 	this->viewer->doneCurrent();
 	this->image.reset();
 }
@@ -687,13 +690,16 @@ void ARAPController::updateMeshDrawable() {
 	 * update scene BB
 	 */
 	this->viewer->makeCurrent();
-	this->scene->getDrawableMesh()->updateOnNextDraw();
 	this->scene->getDrawableMesh()->updateBoundingBox();
+	this->scene->getDrawableMesh()->updateOnNextDraw();
+	auto bb = this->scene->getDrawableMesh()->getBoundingBox();
+	std::cerr << "After mesh drawable update ------\n";
+	std::cerr << bb.first << " // " << bb.second << '\n';
 	this->updateCompoundedConstraints();
-	if (this->curve) {
-		this->curve->deformFromMeshData();
-		this->updateCurveDrawable();
-	}
+	//if (this->curve) {
+	//	this->curve->deformFromMeshData();
+	//	this->updateCurveDrawable();
+	//}
 	this->viewer->doneCurrent();
 	this->scene->updateBoundingBox();
 }
@@ -737,6 +743,14 @@ void ARAPController::initializeMeshInterface() {
 	if (this->mesh != nullptr) {
 		this->mesh_interface->clear();
 		this->mesh_interface->loadAndInitialize(this->mesh->getVertices(), this->mesh->getTriangles());
+		if (not this->mesh_constraints.empty()) {
+			// If constraints there are, constraints thar shall be :
+			std::vector<std::pair<int, glm::vec3>> arap_constraints{};
+			for (int i = 0; i < static_cast<int>(this->compounded_constraints.size()); ++i){
+				arap_constraints.emplace_back(this->mesh_constraints[i], this->compounded_constraints[i]);
+			}
+			this->mesh_interface->set_locked_vertices(arap_constraints);
+		}
 	}
 }
 
@@ -848,6 +862,8 @@ void ARAPController::arap_performScaling() {
 		bb_img.addPoint(constraint);
 	}
 	float size_diff = glm::length(bb_img.getDiagonal()) / glm::length(bb_mesh.getDiagonal());
+	bb_img.printInfo("Image BB is : ");
+	bb_mesh.printInfo("Mesh constraints BB is : ");
 
 	// Compute centroid of the mesh for translation :
 	glm::vec3 mesh_centroid;
@@ -860,6 +876,12 @@ void ARAPController::arap_performScaling() {
 	glm::mat4 translate_to_origin = glm::translate(base_transfo, -mesh_centroid);
 	glm::mat4 translate_to_centroid = glm::translate(base_transfo, mesh_centroid);
 	glm::mat4 scaling_matrix = glm::scale(base_transfo, glm::vec3{size_diff, size_diff, size_diff});
+	std::cerr << "scaling size diff : " << size_diff << "\n";
+
+	std::cerr << "=========== TRANSFORMATIONS =============\n";
+	std::cerr << translate_to_origin << '\n';
+	std::cerr << translate_to_centroid << '\n';
+	std::cerr << scaling_matrix << '\n';
 
 	// Apply transfos :
 	this->mesh->applyTransformation(translate_to_origin);
@@ -876,6 +898,11 @@ void ARAPController::arap_computeDeformation() {
 		std::cerr << "Error : no meshes loaded.\n";
 		return;
 	}
+	if (this->mesh_constraints.empty()) {
+		std::cerr << "Error : Cannot deform with no constraints.\n";
+		return;
+	}
+	this->updateCompoundedConstraints(); // We'll need them later, better make sure they're updated.
 
 	// Check if mesh interface hasn't been created yet. If not, there might also be a transform
 	// not yet applied to the mesh : apply it and create the mesh interface & manipulators :
@@ -896,6 +923,7 @@ void ARAPController::arap_computeDeformation() {
 	std::cerr << "Generated vertex handles." << '\n';
 
 	std::cerr << "Setting handles on ARAP ...\n";
+	this->mesh_interface->set_locked_vertices(arap_handles);
 	std::cerr << "Computing constrained ARAP ...\n";
 	this->mesh_interface->changedConstraints(arap_handles);
 	std::cerr << "Computed constrained ARAP. Propagating vertex positions ...\n";
@@ -907,6 +935,7 @@ void ARAPController::arap_computeDeformation() {
 	std::cerr << "Finished.\n";
 	this->updateMeshDrawable();
 	this->updateCurveFromMesh();
+	this->updateCompoundedConstraints();
 	this->setDeformationButtonsState(States::Deformed);
 	this->updateButtonsActivated();
 }
@@ -986,11 +1015,11 @@ void ARAPController::enableDeformation() {
 	std::cerr << "Enabled deformation !\n";
 	this->applyTransformation_Mesh();
 	this->updateMeshDrawable();
+	this->updateCurveFromMesh();
 	this->resetMeshInterface();
 	this->button_manip_select_all->setEnabled(true);
 	this->button_manip_select_none->setEnabled(true);
 	this->viewer->setDeformation(true);
-	this->updateCurveFromMesh();
 }
 
 void ARAPController::disableDeformation() {
@@ -1115,14 +1144,14 @@ void ARAPController::saveImageToBinaryFile() {
 	if (this->image == nullptr) { return; }
 	QString selected;
 	QString q_file_name = "";
-	q_file_name = QFileDialog::getSaveFileName(nullptr, "Save Image file", this->dir_last_accessed, "Raw image files (*.img)", &selected, QFileDialog::DontUseNativeDialog);
+	q_file_name = QFileDialog::getSaveFileName(nullptr, "Save Image file", this->dir_last_accessed, "TIFF files (*.tif)", &selected, QFileDialog::DontUseNativeDialog);
 	// Check if the user didn't cancel the dialog :
 	if (q_file_name.isEmpty()) {
 		std::cerr << "Error : no filename chosen.\n";
 		return;
 	}
-	if (not q_file_name.endsWith(".img", Qt::CaseSensitivity::CaseInsensitive)) {
-		q_file_name += ".img";
+	if (not q_file_name.endsWith(".tif", Qt::CaseSensitivity::CaseInsensitive)) {
+		q_file_name += ".tif";
 	}
 	this->dir_last_accessed = QFileInfo(q_file_name).absolutePath();
 
@@ -1142,7 +1171,7 @@ void ARAPController::saveImageToBinaryFile() {
 				this->image->readPixel(svec3(x,y,z), pixel_values);
 				// dump to CImg buffer :
 				for (std::size_t c = 0; c < d; ++c) {
-					raw_file(x, y, z, c) = pixel_values[c];
+					raw_file(x, y, z, c) = pixel_values[c]; // TODO Maybe filter values here ?
 				}
 			}
 		}
@@ -1150,7 +1179,8 @@ void ARAPController::saveImageToBinaryFile() {
 	}
 
 	QDir output_dir(this->output_image_file_path);
-	raw_file.save_raw(output_dir.absoluteFilePath(this->output_image_file_name).toStdString().c_str());
+	std::string path = std::string(output_dir.absoluteFilePath(this->output_image_file_name).toStdString());
+	raw_file.save_tiff(path.c_str());
 	std::cout << "Saved file to " << output_dir.absoluteFilePath(this->output_image_file_name).toStdString() << " !\n";
 
 	return;

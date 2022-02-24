@@ -87,6 +87,28 @@ void Viewer::addStatusBar(QStatusBar* bar) {
 	this->statusBar = bar;
 }
 
+void Viewer::clearMeshData() {
+	if (this->arap_controller->getMesh() == nullptr) { return; }
+	this->scene->arap_delete_mesh_drawable();
+	this->clearCurveData();
+	this->clearImageData();
+}
+
+void Viewer::clearCurveData() {
+	if (this->arap_controller->getCurve() == nullptr) { return; }
+	std::cerr << __PRETTY_FUNCTION__ << ":entering\n";
+	this->scene->arap_delete_curve_drawable();
+	this->clearImageData();
+	std::cerr << __PRETTY_FUNCTION__ << ":leaving\n";
+}
+
+void Viewer::clearImageData() {
+	if (this->arap_controller->getImage() == nullptr) { return; }
+	std::cerr << __PRETTY_FUNCTION__ << ":entering\n";
+	this->scene->arap_delete_grid_data();
+	std::cerr << __PRETTY_FUNCTION__ << ":leaving\n";
+}
+
 void Viewer::draw() {
 	GLfloat mvMat[16];
 	GLfloat pMat[16];
@@ -225,15 +247,25 @@ void Viewer::arapManipulator_moved() {
 		points[i] = modified_vertices[i];
 	}
 	// Recompute mesh normals and update :
-	this->arap_controller->getMesh()->updateQuick();
+	//this->arap_controller->getMesh()->updateQuick();
+	//this->arap_controller->updateMeshDrawable();
+	//this->scene->updateBoundingBox();
 	this->arap_controller->updateMeshDrawable();
-	this->scene->updateBoundingBox();
 	this->update();
 }
 
 void Viewer::arapManipulator_released() {
 	//this->scene->getCurve()->deformFromMeshData();
 	std::cerr << __PRETTY_FUNCTION__ << '\n';
+	// TODO : Only update mesh bb and curve here !!
+	this->arap_controller->getMesh()->update();
+	this->arap_controller->updateCompoundedConstraints();
+	if (this->arap_controller->getCurve()) {
+		this->arap_controller->getCurve()->deformFromMeshData();
+		this->arap_controller->updateCurveDrawable();
+	}
+	this->scene->updateBoundingBox();
+	this->update();
 }
 
 void Viewer::initializeARAPManipulationInterface() {
@@ -474,6 +506,7 @@ void Viewer::mouseReleaseEvent(QMouseEvent* e) {
 		this->framesHeld = 0;
 	}
 
+	// TODO : Add update to mesh BB here !
 	if (this->arap_controller->getRectangleSelection()) {
 		if (! this->arap_controller->getRectangleSelection()->isInactive()) {
 			std::cerr << "Releasing rectangle selection !\n";

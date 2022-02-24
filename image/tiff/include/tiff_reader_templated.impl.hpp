@@ -250,7 +250,7 @@ namespace Image {
 
 			// If the image is already loaded, return its index :
 			if (this->cachedSlices.hasData(slice_idx)) {
-				std::cerr << "Already cached previously\n";
+				//std::cerr << "Already cached previously\n";
 				return this->cachedSlices.findIndex(slice_idx);
 			}
 
@@ -354,8 +354,8 @@ namespace Image {
 
 			/// @brief Index of the last line we can read from the source buffer
 			std::size_t src_height_idx_end = (origin.y + size.y >= this->resolution.y) ?
-												 this->resolution.y - origin.y :
-												 size.y;
+												 this->resolution.y :
+												 origin.y + size.y;
 
 			/// @brief the number of lines that can be read from the source buffer :
 			std::size_t src_height_readable = src_height_idx_end - origin.y;

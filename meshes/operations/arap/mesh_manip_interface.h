@@ -49,6 +49,8 @@ class MMInterface
 	std::vector< bool > selected_vertices;
 	std::vector< bool > fixed_vertices;
 
+	std::vector< std::pair< int, point_t > > locked_vertices;	///< The vertices which will always stay locked, no matter what
+
 	// MESH MANIP DRAWING :
 	std::vector< glm::vec3 > precomputed_selected_vertices;
 	std::vector< glm::vec3 > precomputed_fixed_vertices;
@@ -488,6 +490,7 @@ public:
 			}
 			if (fixed_vertices[v]) {
 				this->precomputed_fixed_vertices.push_back(this->modified_vertices[v]);
+				// FIXME : We don't really need to have the locked vertices here since they'll be of another color ...
 			}
 		}
 	}
@@ -729,8 +732,16 @@ public:
 		}
 	}
 
-	// When you move your manipulator , it sends you a SIGNAL.
-	// When it happens, call that function with the manipulator as the parameter, it will update everything :
+	void set_locked_vertices( std::vector<std::pair<int, point_t> > & input_def )
+	{
+		this->locked_vertices = input_def;
+	}
+
+	void unset_locked_vertices(void)
+	{
+		this->locked_vertices.clear();
+	}
+
 	void changedConstraints( std::vector<std::pair<int, point_t> > & input_def )
 	{
 		glm::vec3 p;
@@ -740,6 +751,11 @@ public:
 		{
 			modified_vertices[ input_def[i].first ] = point_t( input_def[i].second[0] , input_def[i].second[1] , input_def[i].second[2] );
 			handles[ input_def[i].first ] = true;
+		}
+
+		for (const auto& locked : this->locked_vertices) {
+			modified_vertices[locked.first] = point_t(locked.second[0], locked.second[1], locked.second[2]);
+			handles[locked.first] = true;
 		}
 
 		if( deformationMode == REALTIME )
