@@ -212,13 +212,15 @@ void Scene::initGl(QOpenGLContext* _context) {
 	this->sceneGL.initGl(this->get_context());
 	//this->glMeshManipulator->prepareSphere();
 
-    //this->surfaceMesh = new SurfaceMesh("/home/thomas/data/Projets/visualisation/build/bin/femur_aligned.off");
-    this->surfaceMesh = nullptr;
-    this->drawableMesh = nullptr; 
-    //this->drawableMesh = new DrawableMeshV2();
-    //this->drawableMesh->mesh = this->surfaceMesh;
-    //this->drawableMesh->initialize(this->context, this);
-    //this->drawableMesh->mesh->setScale(glm::vec3(3., 3., 3.));
+    //this->surfaceMesh = nullptr;
+    //this->drawableMesh = nullptr; 
+
+    this->surfaceMesh = new SurfaceMesh("/home/thomas/data/Data/Mesh/bunny_lowres.off");
+    this->surfaceMesh->setScale(glm::vec3(1000., 1000., 1000.));
+
+    this->drawableMesh = new DrawableMeshV2();
+    this->drawableMesh->mesh = this->surfaceMesh;
+    this->drawableMesh->initialize(this->context, this);
     //this->drawableMesh->mesh->setOrigin(glm::vec3(0., 10., 0.));
 
 }
@@ -3145,12 +3147,20 @@ void Scene::createNewMeshManipulator(int i, bool onSurface) {
 
 void Scene::setNormalDeformationMethod() {
     this->grids[this->gridToDraw]->grid->setNormalDeformationMethod();
-    this->surfaceMesh->setNormalDeformationMethod();
+    if(this->surfaceMesh)
+        this->surfaceMesh->setNormalDeformationMethod();
 }
 
 void Scene::setWeightedDeformationMethod(float radius) {
     this->grids[this->gridToDraw]->grid->setWeightedDeformationMethod(radius);
-    this->surfaceMesh->setWeightedDeformationMethod(radius);
+    if(this->surfaceMesh)
+        this->surfaceMesh->setWeightedDeformationMethod(radius);
+}
+
+void Scene::setARAPDeformationMethod() {
+    this->grids[this->gridToDraw]->grid->setARAPDeformationMethod();
+    if(this->surfaceMesh)
+        this->surfaceMesh->setARAPDeformationMethod();
 }
 
 void Scene::setManipulatorRadius(float radius) {

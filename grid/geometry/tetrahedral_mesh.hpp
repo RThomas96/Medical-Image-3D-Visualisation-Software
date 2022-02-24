@@ -52,6 +52,7 @@ public:
     int inTetraIdx(const glm::vec3& p) const;
     glm::vec3 getCoordInInitial(const TetMesh& initial, glm::vec3 p) const;
 
+    void setARAPDeformationMethod() override;
     bool getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, glm::vec3& res) const override;
 
     ~TetMesh();

@@ -52,6 +52,7 @@ protected:
 	QGroupBox*                 group_move;
 	QRadioButton*       radio_move_normal; 
 	QRadioButton*     radio_move_weighted; 
+	QRadioButton*     radio_move_ARAP; 
 
 	QLabel*           label_radius_selection;
 	QDoubleSpinBox* spinbox_radius_selection;

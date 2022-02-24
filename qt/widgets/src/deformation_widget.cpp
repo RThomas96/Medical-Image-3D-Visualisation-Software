@@ -35,6 +35,8 @@ GridDeformationWidget::GridDeformationWidget(Scene* scene, QWidget* parent) :
 	this->radio_move_normal->setChecked(true);
 	this->radio_move_weighted = new QRadioButton("Weighted");
 	this->radio_move_weighted->setChecked(false);
+	this->radio_move_ARAP = new QRadioButton("ARAP");
+	this->radio_move_ARAP->setChecked(false);
 
 	this->label_radius_selection = new QLabel("Selection radius");
 	this->spinbox_radius_selection = new QDoubleSpinBox;
@@ -98,6 +100,7 @@ void GridDeformationWidget::setupLayouts() {
 
 	this->layout_move->addWidget(this->radio_move_normal, 1);
 	this->layout_move->addWidget(this->radio_move_weighted, 2);
+	this->layout_move->addWidget(this->radio_move_ARAP, 3);
 
     this->mainLayout->addWidget(this->group_mesh);
     this->mainLayout->addWidget(this->group_selector);
@@ -145,6 +148,8 @@ void GridDeformationWidget::setupSignals(Scene* scene) {
 	QObject::connect(this->radio_move_normal, &QPushButton::clicked, this, [this, scene]() {scene->setNormalDeformationMethod();});
 
 	QObject::connect(this->radio_move_weighted, &QPushButton::clicked, this, [this, scene]() {scene->setWeightedDeformationMethod(this->spinbox_radius_selection->value());});
+
+	QObject::connect(this->radio_move_ARAP, &QPushButton::clicked, this, [this, scene]() {scene->setARAPDeformationMethod();});
 
     // These button can be set
 	//QObject::connect(this->spinbox_l_selection, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, [=](double i){ scene->setL(i);}); 

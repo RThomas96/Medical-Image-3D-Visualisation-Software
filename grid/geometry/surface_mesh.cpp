@@ -196,3 +196,10 @@ bool SurfaceMesh::getPositionOfRayIntersection(const glm::vec3& origin, const gl
     std::cout << "Cast ray not implemented yet for Surface mesh" << std::endl;
     return false;
 }
+
+void SurfaceMesh::setARAPDeformationMethod() {
+    if(this->meshDeformator->deformMethod != DeformMethod::ARAP) {
+        delete this->meshDeformator;
+        this->meshDeformator = new ARAPMethod(this);
+    }
+}

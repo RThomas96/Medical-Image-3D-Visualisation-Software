@@ -96,6 +96,10 @@ ADD_EXECUTABLE(neighbor_visu
     ./grid/drawable/drawable_surface_mesh.hpp
     ./grid/drawable/drawable_manipulator.hpp
     ./grid/deformation/mesh_deformator.hpp
+    ./grid/deformation/AsRigidAsPossible.h
+    ./grid/utils/Edge.h
+    ./grid/utils/Vec3D.h
+    ./grid/utils/Triangle.h
 
 
 	# Main file :
@@ -118,6 +122,7 @@ ADD_EXECUTABLE(neighbor_visu
     ./grid/drawable/drawable_surface_mesh.cpp
     ./grid/drawable/drawable_manipulator.cpp
     ./grid/deformation/mesh_deformator.cpp
+    ./grid/deformation/AsRigidAsPossible.cpp
 
     #To remove
     ./legacy/image/utils/include/image_api_common.hpp
@@ -148,6 +153,8 @@ TARGET_INCLUDE_DIRECTORIES(neighbor_visu
 	# Nifti uses brace-include without the 'nifti/' prefix, leading
 	# to manually have to include the lib's include dir in targets:
 	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include/nifti
+    PRIVATE ${GSL_INCLUDE_DIRS}
+    PRIVATE ${LOCAL_GLM_HEADER_DIR}
 )
 TARGET_LINK_LIBRARIES(neighbor_visu
 	PUBLIC Qt5::Core
@@ -160,6 +167,10 @@ TARGET_LINK_LIBRARIES(neighbor_visu
 	PUBLIC VisualisationWidgets
 	PUBLIC TinyTIFF
 	PUBLIC ${libTIFF}
+    PUBLIC glm::glm
+    PUBLIC ${GSL_LIBRARIES}
+    PUBLIC ${SUITESPARSE_LIBRARIES}
+    PUBLIC SuiteSparse
 )
 
 option(RELEASE_WITH_ASSERT "Build a release version with assert" OFF)
@@ -169,75 +180,83 @@ if(RELEASE_WITH_ASSERT)
 endif(RELEASE_WITH_ASSERT)
 
 # Unit testing
-Include(FetchContent)
-
-FetchContent_Declare(
-  Catch2
-  GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-  GIT_TAG        v3.0.0-preview3
-)
-
-FetchContent_MakeAvailable(Catch2)
-
-ADD_EXECUTABLE(tests
-
-    #./tests/ICP_tests.cpp
-
-    ./grid/geometry/grid.hpp
-    ./grid/geometry/base_mesh.hpp
-    ./grid/geometry/tetrahedral_mesh.hpp
-    ./grid/images/tiff_image.hpp
-    ./grid/images/cache.hpp
-    ./grid/ui/manipulator.hpp
-    ./grid/ui/mesh_manipulator.hpp
-    ./grid/drawable/drawable_surface_mesh.hpp
-    ./grid/deformation/mesh_deformator.hpp
-
-    ./grid/geometry/grid.cpp
-    ./grid/geometry/base_mesh.cpp
-    ./grid/geometry/tetrahedral_mesh.cpp
-    ./grid/images/tiff_image.cpp
-    ./grid/images/cache.cpp
-    ./grid/ui/manipulator.cpp
-    ./grid/ui/mesh_manipulator.cpp
-    ./grid/drawable/drawable_surface_mesh.cpp
-    ./grid/deformation/mesh_deformator.cpp
-
-    #To remove
-    ./legacy/image/utils/include/image_api_common.hpp
-    ./legacy/image/utils/include/bounding_box.hpp
-    ./legacy/image/utils/include/threaded_task.hpp
-    ./legacy/image/utils/src/threaded_task.cpp
-    ./legacy/meshes/drawable/shaders.hpp
-    ./legacy/meshes/drawable/shaders.cpp
-
-    ./third_party/cimg/CImg.h
-)
-TARGET_COMPILE_OPTIONS(tests
-	PUBLIC "-Wno-deprecated-declarations"
-)
-TARGET_PRECOMPILE_HEADERS(tests
-	PRIVATE ${QGLViewer_HEADER_DIR}/QGLViewer/qglviewer.h
-)
-TARGET_INCLUDE_DIRECTORIES(tests
-	PRIVATE ${OPENGL_INCLUDE_DIRS}
-	PRIVATE ${QGLViewer_HEADER_DIR}
-	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/third_party/glm/
-	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include
-	# Nifti uses brace-include without the 'nifti/' prefix, leading
-	# to manually have to include the lib's include dir in targets:
-	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include/nifti
-)
-TARGET_LINK_LIBRARIES(tests
-    PRIVATE Catch2::Catch2WithMain
-	PUBLIC Qt5::Core
-	PUBLIC Qt5::Gui
-	PUBLIC Qt5::Xml
-	PUBLIC Qt5::Widgets
-	PUBLIC Qt5::OpenGL
-	PUBLIC ${OPENGL_LIBRARIES}
-	PUBLIC ${QGLViewer}
-	PUBLIC VisualisationWidgets
-	PUBLIC TinyTIFF
-	PUBLIC ${libTIFF}
-)
+#Include(FetchContent)
+#
+#FetchContent_Declare(
+#  Catch2
+#  GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+#  GIT_TAG        v3.0.0-preview3
+#)
+#
+#FetchContent_MakeAvailable(Catch2)
+#
+#ADD_EXECUTABLE(tests
+#
+#    #./tests/ICP_tests.cpp
+#
+#    ./grid/geometry/grid.hpp
+#    ./grid/geometry/base_mesh.hpp
+#    ./grid/geometry/tetrahedral_mesh.hpp
+#    ./grid/images/tiff_image.hpp
+#    ./grid/images/cache.hpp
+#    ./grid/ui/manipulator.hpp
+#    ./grid/ui/mesh_manipulator.hpp
+#    ./grid/drawable/drawable_surface_mesh.hpp
+#    ./grid/deformation/mesh_deformator.hpp
+#    ./grid/deformation/AsRigidAsPossible.h
+#    ./grid/utils/Edge.h
+#    ./grid/utils/Vec3D.h
+#    ./grid/utils/Triangle.h
+#
+#    ./grid/geometry/grid.cpp
+#    ./grid/geometry/base_mesh.cpp
+#    ./grid/geometry/tetrahedral_mesh.cpp
+#    ./grid/images/tiff_image.cpp
+#    ./grid/images/cache.cpp
+#    ./grid/ui/manipulator.cpp
+#    ./grid/ui/mesh_manipulator.cpp
+#    ./grid/drawable/drawable_surface_mesh.cpp
+#    ./grid/deformation/mesh_deformator.cpp
+#    ./grid/deformation/AsRigidAsPossible.cpp
+#
+#    #To remove
+#    ./legacy/image/utils/include/image_api_common.hpp
+#    ./legacy/image/utils/include/bounding_box.hpp
+#    ./legacy/image/utils/include/threaded_task.hpp
+#    ./legacy/image/utils/src/threaded_task.cpp
+#    ./legacy/meshes/drawable/shaders.hpp
+#    ./legacy/meshes/drawable/shaders.cpp
+#
+#    ./third_party/cimg/CImg.h
+#)
+#TARGET_COMPILE_OPTIONS(tests
+#	PUBLIC "-Wno-deprecated-declarations"
+#)
+#TARGET_PRECOMPILE_HEADERS(tests
+#	PRIVATE ${QGLViewer_HEADER_DIR}/QGLViewer/qglviewer.h
+#)
+#TARGET_INCLUDE_DIRECTORIES(tests
+#	PRIVATE ${OPENGL_INCLUDE_DIRS}
+#	PRIVATE ${QGLViewer_HEADER_DIR}
+#	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/third_party/glm/
+#	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include
+#	# Nifti uses brace-include without the 'nifti/' prefix, leading
+#	# to manually have to include the lib's include dir in targets:
+#	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include/nifti
+#)
+#TARGET_LINK_LIBRARIES(tests
+#    PRIVATE Catch2::Catch2WithMain
+#	PUBLIC Qt5::Core
+#	PUBLIC Qt5::Gui
+#	PUBLIC Qt5::Xml
+#	PUBLIC Qt5::Widgets
+#	PUBLIC Qt5::OpenGL
+#	PUBLIC ${OPENGL_LIBRARIES}
+#	PUBLIC ${QGLViewer}
+#	PUBLIC VisualisationWidgets
+#	PUBLIC TinyTIFF
+#	PUBLIC ${libTIFF}
+#    PUBLIC ${GSL_LIBRARIES}
+#    PUBLIC ${SUITESPARSE_LIBRARIES}
+#    PUBLIC SuiteSparse
+#)

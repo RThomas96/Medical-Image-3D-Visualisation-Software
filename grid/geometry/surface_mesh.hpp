@@ -27,6 +27,7 @@ public:
 	std::vector<Triangle> triangles;
 	std::vector<glm::vec3> normals;
 
+    void setARAPDeformationMethod() override;
     void computeNeighborhood() override;
     void computeNormals() override;
     bool getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, glm::vec3& res) const override;

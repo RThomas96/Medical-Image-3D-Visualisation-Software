@@ -378,3 +378,10 @@ bool TetMesh::getPositionOfRayIntersection(const glm::vec3& origin, const glm::v
     std::cout << "Cast ray not implemented yet for Tetmesh" << std::endl;
     return false;
 }
+
+void TetMesh::setARAPDeformationMethod() {
+    if(this->meshDeformator->deformMethod != DeformMethod::ARAP) {
+        delete this->meshDeformator;
+        this->meshDeformator = new ARAPMethod(this);
+    }
+}

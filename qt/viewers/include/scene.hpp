@@ -461,6 +461,7 @@ public slots:
     // MeshDeformator slots
     void setNormalDeformationMethod();
     void setWeightedDeformationMethod(float radius);
+    void setARAPDeformationMethod();
 
     // Rendering slots
 	void setColorChannel(ColorChannel mode);

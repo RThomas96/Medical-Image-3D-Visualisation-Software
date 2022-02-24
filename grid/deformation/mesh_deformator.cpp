@@ -2,6 +2,7 @@
 #include "../geometry/tetrahedral_mesh.hpp"
 #include "../geometry/surface_mesh.hpp"
 #include <algorithm>
+#include "glm/gtx/string_cast.hpp"
 
 bool WeightedMethod::hasSelectedPts() {
     return !this->selectedPts.empty();
@@ -64,7 +65,7 @@ void NormalMethod::deselectAllPts() {
 }
 
 void NormalMethod::movePoint(const glm::vec3& origin, const glm::vec3& target) {
-    const glm::vec3 deplacement = target - origin;
+    const glm::vec3 deplacement = this->baseMesh->toModel(target) - this->baseMesh->toModel(origin);
     for(int i = 0; i < this->selectedPts.size(); ++i) {
         this->baseMesh->vertices[this->selectedPts[i]] += deplacement;
     }
@@ -74,17 +75,21 @@ void NormalMethod::movePoint(const glm::vec3& origin, const glm::vec3& target) {
 
 ARAPMethod::ARAPMethod(SurfaceMesh * surfaceMesh) : MeshDeformator(dynamic_cast<BaseMesh*>(surfaceMesh), DeformMethod::ARAP){
     this->onSurfaceMesh = true;
-    for(int i = 0; i < this->baseMesh->getNbVertices(); ++i)
+    std::vector<Vec3D<float>> ptsAsVec3D;
+    for(int i = 0; i < this->baseMesh->getNbVertices(); ++i) {
+        glm::vec3 pt = surfaceMesh->getVertice(i);
+        ptsAsVec3D.push_back(Vec3D(pt[0], pt[1], pt[2]));
         this->handles.push_back(false);
+    }
 
-    //this->arap.clear();
-    //this->arap.init(surfaceMesh->getWorldMeshPositions(), surfaceMesh->getTriangles());
-    //this->arap.setHandles(this->handles);
+    this->arap.clear();
+    this->arap.init(ptsAsVec3D, surfaceMesh->getTriangles());
+    this->arap.setHandles(this->handles);
 }
 
 ARAPMethod::ARAPMethod(BaseMesh * baseMesh) : MeshDeformator(baseMesh, DeformMethod::ARAP) {
     this->onSurfaceMesh = false;
-    //this->arap.clear();
+    this->arap.clear();
     std::cout << "WARNING: trying to use ARAP deformation on GenericMesh, but arap only work on SurfaceMesh, thus the operation will be a [DIRECT] deformation" << std::endl;
 }
 
@@ -94,6 +99,7 @@ bool ARAPMethod::hasSelectedPts() {
 
 void ARAPMethod::selectPts(const glm::vec3& pt) {
     this->selectedPts.push_back(this->baseMesh->getIdxOfClosestPoint(pt));
+    this->handles[this->selectedPts.back()] = true;
 }
 
 void ARAPMethod::deselectPts(const glm::vec3& pt) {
@@ -102,6 +108,8 @@ void ARAPMethod::deselectPts(const glm::vec3& pt) {
     if(ptIdxPos != this->selectedPts.end()) {
         this->selectedPts.erase(ptIdxPos);
     }
+
+    this->handles[ptIdx] = false;
 }
 
 void ARAPMethod::deselectAllPts() {
@@ -109,11 +117,19 @@ void ARAPMethod::deselectAllPts() {
 }
 
 void ARAPMethod::movePoint(const glm::vec3& origin, const glm::vec3& target) {
-    const glm::vec3 deplacement = target - origin;
+    const glm::vec3 deplacement = this->baseMesh->toModel(target) - this->baseMesh->toModel(origin);
     for(int i = 0; i < this->selectedPts.size(); ++i)
         this->baseMesh->vertices[this->selectedPts[i]] += deplacement;
 
     if(this->onSurfaceMesh) {
-        //this->arap.compute_deformation(this->baseMesh->getWorldMeshPositions());
+        std::vector<Vec3D<float>> ptsAsVec3D;
+        for(int i = 0; i < this->baseMesh->getNbVertices(); ++i) {
+            glm::vec3 pt = this->baseMesh->getVertice(i);
+            ptsAsVec3D.push_back(Vec3D(pt[0], pt[1], pt[2]));
+        }
+        this->arap.setHandles(this->handles);
+        this->arap.compute_deformation(ptsAsVec3D);
+        for(int i = 0; i < this->baseMesh->getNbVertices(); ++i)
+            this->baseMesh->vertices[i] = glm::vec3(ptsAsVec3D[i][0], ptsAsVec3D[i][1],ptsAsVec3D[i][2]);
     }
 }

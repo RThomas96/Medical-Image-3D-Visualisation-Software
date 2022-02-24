@@ -1,7 +1,7 @@
 #ifndef MESHDEFORMATOR_HPP_
 #define MESHDEFORMATOR_HPP_
 
-//#include "AsRigidAsPossible.h"
+#include "AsRigidAsPossible.h"
 #include <glm/glm.hpp>
 #include <vector>
 
@@ -64,7 +64,7 @@ struct NormalMethod : MeshDeformator {
 
 struct ARAPMethod : MeshDeformator {
     bool onSurfaceMesh;
-    //AsRigidAsPossible arap;
+    AsRigidAsPossible arap;
     std::vector<int> selectedPts;
     std::vector<bool> handles;
 
