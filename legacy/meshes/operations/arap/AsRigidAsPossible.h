@@ -1,7 +1,7 @@
 #ifndef ASRIGIDASPOSSIBLE_H
 #define ASRIGIDASPOSSIBLE_H
 
-#include "../../base_mesh/Triangle.h"
+#include "../../grid/utils/Triangle.h"
 #include "Edge.h"
 
 #include <glm/glm.hpp>

@@ -10,7 +10,7 @@ public:
     std::vector<glm::vec3> correspondence;
     std::vector<float> weights;
 
-    ICPMesh(const std::vector<glm::vec3>& vertices, const std::vector<Triangle2>& triangles): SurfaceMesh(vertices, triangles) {
+    ICPMesh(const std::vector<glm::vec3>& vertices, const std::vector<Triangle>& triangles): SurfaceMesh(vertices, triangles) {
         this->originalTransformation = this->getModelTransformation();
         for(int i = 0; i < this->getNbVertices(); ++i) {
             this->correspondence.push_back(glm::vec3(0., 0., 0.));

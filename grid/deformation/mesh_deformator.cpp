@@ -72,15 +72,31 @@ void NormalMethod::movePoint(const glm::vec3& origin, const glm::vec3& target) {
 
 /***/
 
-bool GreenMethod::hasSelectedPts() {
+ARAPMethod::ARAPMethod(SurfaceMesh * surfaceMesh) : MeshDeformator(dynamic_cast<BaseMesh*>(surfaceMesh), DeformMethod::ARAP){
+    this->onSurfaceMesh = true;
+    for(int i = 0; i < this->baseMesh->getNbVertices(); ++i)
+        this->handles.push_back(false);
+
+    //this->arap.clear();
+    //this->arap.init(surfaceMesh->getWorldMeshPositions(), surfaceMesh->getTriangles());
+    //this->arap.setHandles(this->handles);
+}
+
+ARAPMethod::ARAPMethod(BaseMesh * baseMesh) : MeshDeformator(baseMesh, DeformMethod::ARAP) {
+    this->onSurfaceMesh = false;
+    //this->arap.clear();
+    std::cout << "WARNING: trying to use ARAP deformation on GenericMesh, but arap only work on SurfaceMesh, thus the operation will be a [DIRECT] deformation" << std::endl;
+}
+
+bool ARAPMethod::hasSelectedPts() {
     return !this->selectedPts.empty();
 }
 
-void GreenMethod::selectPts(const glm::vec3& pt) {
+void ARAPMethod::selectPts(const glm::vec3& pt) {
     this->selectedPts.push_back(this->baseMesh->getIdxOfClosestPoint(pt));
 }
 
-void GreenMethod::deselectPts(const glm::vec3& pt) {
+void ARAPMethod::deselectPts(const glm::vec3& pt) {
     int ptIdx = this->baseMesh->getIdxOfClosestPoint(pt);
     auto ptIdxPos = std::find(this->selectedPts.begin(), this->selectedPts.end(), ptIdx);
     if(ptIdxPos != this->selectedPts.end()) {
@@ -88,18 +104,16 @@ void GreenMethod::deselectPts(const glm::vec3& pt) {
     }
 }
 
-void GreenMethod::deselectAllPts() {
+void ARAPMethod::deselectAllPts() {
     this->selectedPts.clear();
 }
 
-void GreenMethod::movePoint(const glm::vec3& origin, const glm::vec3& target) {
-    // pCage = closest point of origin in the cage
-    // pCage = target
-    //for(int i = 0; i < this->selectedPts.size(); ++i) {
-    //     recompute position from cage coordinate;
-    //}
-}
+void ARAPMethod::movePoint(const glm::vec3& origin, const glm::vec3& target) {
+    const glm::vec3 deplacement = target - origin;
+    for(int i = 0; i < this->selectedPts.size(); ++i)
+        this->baseMesh->vertices[this->selectedPts[i]] += deplacement;
 
-glm::vec3 GreenMethod::computePointFromCage(const glm::vec3 p) {
-    return p;
+    if(this->onSurfaceMesh) {
+        //this->arap.compute_deformation(this->baseMesh->getWorldMeshPositions());
+    }
 }

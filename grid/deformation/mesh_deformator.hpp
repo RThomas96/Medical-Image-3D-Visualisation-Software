@@ -1,6 +1,7 @@
 #ifndef MESHDEFORMATOR_HPP_
 #define MESHDEFORMATOR_HPP_
 
+//#include "AsRigidAsPossible.h"
 #include <glm/glm.hpp>
 #include <vector>
 
@@ -13,7 +14,7 @@ struct SurfaceMesh;
 enum DeformMethod {
     NORMAL,
     WEIGHTED,
-    GREEN
+    ARAP
 };
 
 struct MeshDeformator {
@@ -61,11 +62,14 @@ struct NormalMethod : MeshDeformator {
     void movePoint(const glm::vec3& origin, const glm::vec3& target) override;
 };
 
-struct GreenMethod : MeshDeformator {
-    SurfaceMesh * cage;
+struct ARAPMethod : MeshDeformator {
+    bool onSurfaceMesh;
+    //AsRigidAsPossible arap;
     std::vector<int> selectedPts;
+    std::vector<bool> handles;
 
-    GreenMethod(BaseMesh * baseMesh, SurfaceMesh * cage) : MeshDeformator(baseMesh, DeformMethod::GREEN), cage(cage) {}
+    ARAPMethod(BaseMesh * baseMesh);
+    ARAPMethod(SurfaceMesh * surfaceMesh);
 
     bool hasSelectedPts() override;
     void selectPts(const glm::vec3& pt) override;
@@ -73,8 +77,6 @@ struct GreenMethod : MeshDeformator {
     void deselectAllPts() override;
 
     void movePoint(const glm::vec3& origin, const glm::vec3& target) override;
-
-    glm::vec3 computePointFromCage(const glm::vec3 p);
 };
 
 //! @}

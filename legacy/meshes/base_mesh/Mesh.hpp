@@ -1,7 +1,7 @@
 #ifndef MESH_H
 #define MESH_H
 
-#include "Triangle.h"
+#include "../../grid/utils/Triangle.h"
 #include <glm/glm.hpp>
 #include <memory>
 #include <nanoflann.hpp>

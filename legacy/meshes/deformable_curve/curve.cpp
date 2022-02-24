@@ -1,5 +1,5 @@
 #include "./curve.hpp"
-#include "../base_mesh/Triangle.h"
+#include "../../grid/utils/Triangle.h"
 
 #include <array>
 #include <glm/gtx/io.hpp>
