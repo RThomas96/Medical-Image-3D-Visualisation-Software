@@ -362,11 +362,12 @@ void ARAPController::loadMeshFromFile() {
 		this->deleteMeshData();
 		this->deleteCurveData();
 		this->deleteGridData();
-		this->resetMeshInterface();
+		this->deleteMeshInterface();
 		this->updateMeshInfoLabel();
 		this->updateCurveInfoLabel();
 		this->updateGridInfoLabel();
 		this->setDeformationButtonsState(States::Initialized);
+		this->viewer->setDeformation(false);
 		std::cerr << "Done resetting the ARAP controller.\n";
 	}
 
@@ -490,7 +491,7 @@ void ARAPController::loadConstraintsFromFile() {
 	}
 
 	// get file from user :
-	QString file_name = QFileDialog::getOpenFileName(this, "Load a constraint file", this->dir_last_accessed, "Constraint files (*.constraint)");
+	QString file_name = QFileDialog::getOpenFileName(this, "Load a constraint file", this->dir_last_accessed, "Constraint files (*.constraints)");
 	if (file_name.isEmpty()) {
 		std::cerr << "Error : file name for constraint loading was empty.\n";
 		return;
@@ -755,6 +756,11 @@ void ARAPController::initializeMeshInterface() {
 }
 
 void ARAPController::resetMeshInterface() {
+	this->deleteMeshInterface();
+	this->initializeMeshInterface();
+}
+
+void ARAPController::deleteMeshInterface() {
 	if (this->mesh_interface != nullptr) {
 		this->arapManipulator->disconnect();
 		this->rectangleSelection->disconnect();
@@ -766,7 +772,6 @@ void ARAPController::resetMeshInterface() {
 		this->button_manip_select_all->disconnect();
 		this->button_manip_select_none->disconnect();
 	}
-	this->initializeMeshInterface();
 }
 
 void ARAPController::arap_performAlignment() {
@@ -1200,12 +1205,12 @@ void ARAPController::saveCurveAsJSON() {
 		}
 	}
 	if (this->output_image_file_path.isEmpty()) {
-		QMessageBox::information(this, "Warning", "Warning : you have not yet saved the image. In order to save this curve and mesh as a JSON file, you must first choose a save location for the image.");
-		this->saveImageToBinaryFile();
-		if (this->output_image_file_path.isEmpty()) {
-			QMessageBox::information(this, "Operation aborted", "Saving of the curve as a JSON file was aborted.");
-			return;
-		}
+		QMessageBox::information(this, "Warning", "Warning : you have not yet saved the image. You will have to load it separately later.");
+		//this->saveImageToBinaryFile();
+		//if (this->output_image_file_path.isEmpty()) {
+		//	QMessageBox::information(this, "Operation aborted", "Saving of the curve as a JSON file was aborted.");
+		//	return;
+		//}
 	}
 
 	// Ask for the file path to save it to :
@@ -1238,32 +1243,30 @@ void ARAPController::saveCurveAsJSON() {
 	for (const auto& v : this->curve->getPositions()) {
 		vec3ToJSON(ctrl_pts_array, v);
 	}
-	QJsonObject img_obj;
-	QJsonArray vox_dims;
-	QJsonArray imgsize_array; // array of the image dimensions. ironically, this will be strings since integers are not supported in Qt's JSON headers.
-	auto dims = this->image->getResolution();
-	auto d = this->image->getVoxelDimensionality();
-	imgsize_array.push_back(QString::number(dims.x));
-	imgsize_array.push_back(QString::number(dims.y));
-	imgsize_array.push_back(QString::number(dims.z));
-	imgsize_array.push_back(QString::number(d));
-	vox_dims.push_back(this->image->getVoxelDimensions().x);
-	vox_dims.push_back(this->image->getVoxelDimensions().y);
-	vox_dims.push_back(this->image->getVoxelDimensions().z);
-	img_obj.insert("image_dimensions", imgsize_array);
-	img_obj.insert("voxel_dimensionality", QString::number(this->image->getVoxelDimensionality()));
-	img_obj.insert("voxel_dimensions", vox_dims);
-	img_obj.insert("image_path", this->output_image_file_path+QDir::separator()+this->output_image_file_name);
 	// Add ctrl points :
 	curve_object.insert("control points", ctrl_pts_array);
 	curve_object.insert("mesh file", QDir(this->dir_last_accessed).relativeFilePath(this->generated_mesh_save_path));
-	// add image file and image size :
-	curve_object.insert("image_file",
-		QDir(this->dir_last_accessed).relativeFilePath(
-			QDir(this->output_image_file_path).absoluteFilePath(this->output_image_file_name)
-		)
-	);
-	curve_object.insert("image", img_obj);
+
+	// IMG :
+	if (not this->output_image_file_path.isEmpty()) {
+		QJsonObject img_obj;
+		QJsonArray vox_dims;
+		QJsonArray imgsize_array; // array of the image dimensions. ironically, this will be strings since integers are not supported in Qt's JSON headers.
+		auto dims = this->image->getResolution();
+		auto d = this->image->getVoxelDimensionality();
+		imgsize_array.push_back(QString::number(dims.x));
+		imgsize_array.push_back(QString::number(dims.y));
+		imgsize_array.push_back(QString::number(dims.z));
+		imgsize_array.push_back(QString::number(d));
+		vox_dims.push_back(this->image->getVoxelDimensions().x);
+		vox_dims.push_back(this->image->getVoxelDimensions().y);
+		vox_dims.push_back(this->image->getVoxelDimensions().z);
+		img_obj.insert("image_dimensions", imgsize_array);
+		img_obj.insert("voxel_dimensionality", QString::number(this->image->getVoxelDimensionality()));
+		img_obj.insert("voxel_dimensions", vox_dims);
+		img_obj.insert("image_path", this->output_image_file_path + QDir::separator() + this->output_image_file_name);
+		curve_object.insert("image", img_obj);
+	}
 
 	QJsonDocument doc(curve_object);
 	std::ofstream out_file(q_file_name.toStdString());

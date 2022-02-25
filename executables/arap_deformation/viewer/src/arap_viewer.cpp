@@ -408,10 +408,10 @@ glm::vec4 Viewer::readPositionFromFramebuffer() {
 }
 
 void Viewer::setDeformation(bool enabled) {
-	if (this->arap_controller->getMeshInterface() == nullptr) { return; }
 	this->deformation_enabled = enabled;
 	QString mesg = "Disabled ";
-	if (this-deformation_enabled) { mesg = "Enabled "; }
+	if (this-deformation_enabled && this->arap_controller->getARAPManipulator() != nullptr) { mesg = "Enabled "; }
+	else { this->deformation_enabled = false; mesg="Disabled "; }
 	if (this->statusBar) { this->statusBar->showMessage(mesg+"deformation", 1000); }
 
 	emit this->enableDeformationPanel(this->deformation_enabled);

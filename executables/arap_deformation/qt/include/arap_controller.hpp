@@ -132,6 +132,8 @@ protected:
 	void initializeMeshInterface();
 	/// @brief Resets the mesh interface, rectangle selection and ARAP manipulators.
 	void resetMeshInterface();
+	/// @brief Deletes the mesh interface, rectangle selection and ARAP manipulators.
+	void deleteMeshInterface();
 
 	/// @brief Updates the mesh info labels.
 	void updateMeshInfoLabel();

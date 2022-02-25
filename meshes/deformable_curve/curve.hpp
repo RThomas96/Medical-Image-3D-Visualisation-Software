@@ -24,6 +24,19 @@ public:
 		mesh_cage(deformer_mesh),
 		positions(curve_positions),
 		phi(weights) {
+		this->is_green = false;
+		this->update();
+	}
+	Curve(
+	Mesh::Ptr& deformer_mesh,
+		std::vector<glm::vec3>& curve_positions,
+		std::vector<std::vector<float>>& weights_vertex,
+		std::vector<std::vector<float>>& weights_face) :
+		mesh_cage(deformer_mesh),
+		positions(curve_positions),
+		gc_phi(weights_vertex),
+		gc_psi(weights_face) {
+		this->is_green = true;
 		this->update();
 	}
 	~Curve() = default;
@@ -46,8 +59,12 @@ protected:
 	std::vector<glm::vec3> positions;
 	/// @brief Cage coordinates of the curve relative to its surrounding cage
 	std::vector<std::vector<std::pair<std::size_t, float>>> phi;
+	std::vector<std::vector<float>> gc_phi; ///< The vertex weights of Green coordinates.
+	std::vector<std::vector<float>> gc_psi; ///< The face weights of Green coordinates.
 	/// @brief The surrounding cage (triangular mesh)
 	Mesh::Ptr mesh_cage;
+
+	bool is_green;
 
 	glm::vec3 bb_min;
 	glm::vec3 bb_max;

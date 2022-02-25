@@ -5,6 +5,8 @@
 #include <cmath>
 #include <iostream>
 #include <vector>
+#include <glm/glm.hpp>
+#include <glm/gtx/norm.hpp>
 
 namespace URAGO {
 	template <class point_t>
@@ -249,24 +251,24 @@ namespace GreenCoords {
 
 	template <class point_t>
 	float GCTriInt(point_t const& p, point_t const& v1, point_t const& v2, point_t const& eta) {
-		float c_alpha = std::max(std::min(point_t::dotProduct(v2 - v1, p - v1) / ((v2 - v1).norm() * (p - v1).norm()), 1.f), -1.f);
+		float c_alpha = std::max(std::min(glm::dot(v2 - v1, p - v1) / (glm::length(v2 - v1) * glm::length(p - v1)), 1.f), -1.f);
 		float alpha	  = std::acos(c_alpha);
 		float s_alpha = std::sin(alpha);
 
-		float surfaceSqr = (point_t::crossProduct(v2 - v1, p - v1)).getSquaredLength();
+		float surfaceSqr = glm::length2(glm::cross(v2 - v1, p - v1));
 		if (surfaceSqr < 0.00000001f)
 		{
 			//  surface of the triangle is too low : return 0;
 			return 0.f;
 		}
 
-		float c_beta = std::max(std::min(point_t::dotProduct(v1 - p, v2 - p) / ((v1 - p).norm() * (v2 - p).norm()), 1.f), -1.f);
+		float c_beta = std::max(std::min(glm::dot(v1 - p, v2 - p) / (glm::length(v1 - p) * glm::length(v2 - p)), 1.f), -1.f);
 		float beta	 = std::acos(c_beta);
 
-		float lambda	  = (p - v1).getSquaredLength() * s_alpha * s_alpha;
+		float lambda	  = glm::length2(p - v1) * s_alpha * s_alpha;
 		float sqrt_lambda = std::sqrt(lambda);
 
-		float c		 = (p - eta).getSquaredLength();
+		float c		 = glm::length2(p - eta);
 		float sqrt_c = std::sqrt(c);
 
 		double theta[2] = {M_PI - alpha, M_PI - alpha - beta};
@@ -337,12 +339,12 @@ namespace GreenCoords {
 			point_t N[3];
 			for (int l = 0; l < 3; ++l)
 			{
-				s[l]  = (point_t::dotProduct(point_t::crossProduct(vj[l] - p, vj[(l + 1) % 3] - p), nj)) < 0.f ? -1.f : 1.f;
+				s[l]  = (glm::dot(glm::cross(vj[l] - p, vj[(l + 1) % 3] - p), nj)) < 0.f ? -1.f : 1.f;
 				I[l]  = GCTriInt(p, vj[l], vj[(l + 1) % 3], point_t(0.f, 0.f, 0.f));
 				II[l] = GCTriInt(point_t(0.f, 0.f, 0.f), vj[(l + 1) % 3], vj[l], point_t(0.f, 0.f, 0.f));
-				q[l]  = point_t::crossProduct(vj[(l + 1) % 3], vj[l]);
+				q[l]  = glm::cross(vj[(l + 1) % 3], vj[l]);
 				N[l]  = q[l];
-				N[l].normalize();
+				N[l]  = glm::normalize(N[l]);
 			}
 
 			float Itotal = -fabs(s[0] * I[0] + s[1] * I[1] + s[2] * I[2]);
@@ -351,10 +353,10 @@ namespace GreenCoords {
 
 			point_t w = Itotal * nj + (II[0] * N[0] + II[1] * N[1] + II[2] * N[2]);
 
-			if (w.getSquaredLength() >= epsilonSqr)
+			if (glm::length2(w) >= epsilonSqr)
 			{
 				for (int l = 0; l < 3; ++l)
-					_VC_phi[v[l]] += point_t::dotProduct(N[(l + 1) % 3], w) / point_t::dotProduct(N[(l + 1) % 3], vj[l]);
+					_VC_phi[v[l]] += glm::dot(N[(l + 1) % 3], w) / glm::dot(N[(l + 1) % 3], vj[l]);
 			}
 		}
 	}

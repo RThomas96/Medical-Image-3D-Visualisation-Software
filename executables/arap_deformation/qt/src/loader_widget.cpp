@@ -522,6 +522,7 @@ void GridLoaderWidget::loadGrid() {
 }
 
 void GridLoaderWidget::loadGrid_newAPI() {
+	if (this->_testing_grid  == nullptr) { return; }
 	// prevent changing the values of the inputs
 	this->disableWidgets();
 
