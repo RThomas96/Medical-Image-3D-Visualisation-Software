@@ -100,7 +100,9 @@ ADD_EXECUTABLE(neighbor_visu
     ./grid/utils/Edge.h
     ./grid/utils/Vec3D.h
     ./grid/utils/Triangle.h
-
+    ./grid/utils/BasicPoint.h
+    ./grid/deformation/CageCoordinates.h
+    ./grid/deformation/cage_surface_mesh.hpp
 
 	# Main file :
 	./neighbor_visu_main.cpp
@@ -123,6 +125,7 @@ ADD_EXECUTABLE(neighbor_visu
     ./grid/drawable/drawable_manipulator.cpp
     ./grid/deformation/mesh_deformator.cpp
     ./grid/deformation/AsRigidAsPossible.cpp
+    ./grid/deformation/cage_surface_mesh.cpp
 
     #To remove
     ./legacy/image/utils/include/image_api_common.hpp

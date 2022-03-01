@@ -41,7 +41,6 @@ public:
     std::vector<glm::vec3> getWorldMeshPositions();
 
     // Functions to interact with the mesh
-    void movePoint(const glm::vec3& origin, const glm::vec3& target);
     void setNormalDeformationMethod();
     void setWeightedDeformationMethod(float radius);
     void selectPts(const glm::vec3& pt);
@@ -69,6 +68,7 @@ public:
 
     void drawNormals() const;
 
+    virtual void movePoint(const glm::vec3& origin, const glm::vec3& target);
     virtual void setARAPDeformationMethod() = 0;
     virtual bool getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, glm::vec3& res) const = 0;
     virtual void computeNeighborhood() = 0;

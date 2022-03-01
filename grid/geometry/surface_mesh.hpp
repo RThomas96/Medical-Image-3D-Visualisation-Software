@@ -4,6 +4,7 @@
 #include "../utils/Triangle.h"
 #include "base_mesh.hpp"
 #include <iostream>
+#include "glm/gtx/string_cast.hpp"
 
 //! \addtogroup geometry
 //! @{

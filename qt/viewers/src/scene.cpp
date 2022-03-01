@@ -16,6 +16,7 @@
 
 #include "../../grid/geometry/grid.hpp"
 #include "../../grid/drawable/drawable_manipulator.hpp"
+#include "../../grid/deformation/cage_surface_mesh.hpp"
 
 inline unsigned int planeHeadingToIndex(planeHeading _heading) {
 	switch (_heading) {
@@ -218,10 +219,16 @@ void Scene::initGl(QOpenGLContext* _context) {
     this->surfaceMesh = new SurfaceMesh("/home/thomas/data/Data/Mesh/bunny_lowres.off");
     this->surfaceMesh->setScale(glm::vec3(1000., 1000., 1000.));
 
+    this->cage = new CageMVC("/home/thomas/data/Data/Mesh/bunny_cage.off", this->surfaceMesh);
+    this->cage->setScale(glm::vec3(1000., 1000., 1000.));
+
     this->drawableMesh = new DrawableMeshV2();
     this->drawableMesh->mesh = this->surfaceMesh;
     this->drawableMesh->initialize(this->context, this);
-    //this->drawableMesh->mesh->setOrigin(glm::vec3(0., 10., 0.));
+
+    this->drawableCage = new DrawableMeshV2();
+    this->drawableCage->mesh = this->cage;
+    this->drawableCage->initialize(this->context, this);
 
 }
 
@@ -1848,6 +1855,8 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 	}
 
     if(this->drawableMesh) {
+	    this->drawableCage->makeVAO();
+	    this->drawableCage->draw(pMat, mvMat, glm::vec4{camPos, 1.f});
         this->drawableMesh->makeVAO();
 	    this->drawableMesh->draw(pMat, mvMat, glm::vec4{camPos, 1.f});
     }
@@ -3137,7 +3146,7 @@ void Scene::toggleWireframe() {
 
 void Scene::createNewMeshManipulator(int i, bool onSurface) {
     if(onSurface) {
-        this->glMeshManipulator->createNewMeshManipulator(this->surfaceMesh, this, i);
+        this->glMeshManipulator->createNewMeshManipulator(this->cage, this, i);
     } else {
         this->glMeshManipulator->createNewMeshManipulator(this->grids[this->gridToDraw]->grid, this, i);
     }
@@ -3147,20 +3156,20 @@ void Scene::createNewMeshManipulator(int i, bool onSurface) {
 
 void Scene::setNormalDeformationMethod() {
     this->grids[this->gridToDraw]->grid->setNormalDeformationMethod();
-    if(this->surfaceMesh)
-        this->surfaceMesh->setNormalDeformationMethod();
+    if(this->cage)
+        this->cage->setNormalDeformationMethod();
 }
 
 void Scene::setWeightedDeformationMethod(float radius) {
     this->grids[this->gridToDraw]->grid->setWeightedDeformationMethod(radius);
-    if(this->surfaceMesh)
-        this->surfaceMesh->setWeightedDeformationMethod(radius);
+    if(this->cage)
+        this->cage->setWeightedDeformationMethod(radius);
 }
 
 void Scene::setARAPDeformationMethod() {
     this->grids[this->gridToDraw]->grid->setARAPDeformationMethod();
-    if(this->surfaceMesh)
-        this->surfaceMesh->setARAPDeformationMethod();
+    if(this->cage)
+        this->cage->setARAPDeformationMethod();
 }
 
 void Scene::setManipulatorRadius(float radius) {

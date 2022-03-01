@@ -90,7 +90,7 @@ ARAPMethod::ARAPMethod(SurfaceMesh * surfaceMesh) : MeshDeformator(dynamic_cast<
 ARAPMethod::ARAPMethod(BaseMesh * baseMesh) : MeshDeformator(baseMesh, DeformMethod::ARAP) {
     this->onSurfaceMesh = false;
     this->arap.clear();
-    std::cout << "WARNING: trying to use ARAP deformation on GenericMesh, but arap only work on SurfaceMesh, thus the operation will be a [DIRECT] deformation" << std::endl;
+    std::cout << "WARNING: trying to use ARAP deformation on GenericMesh, but ARAP only works on SurfaceMesh, thus the operation will be a [DIRECT] deformation" << std::endl;
 }
 
 bool ARAPMethod::hasSelectedPts() {
