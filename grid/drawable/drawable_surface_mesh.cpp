@@ -4,7 +4,7 @@
 
 #include <memory>
 
-void DrawableMeshV2::initialize(QOpenGLContext *_context, ShaderCompiler::GLFunctions *functions) {
+void DrawableMesh::initialize(QOpenGLContext *_context, ShaderCompiler::GLFunctions *functions) {
 	this->gl			= functions;
 	this->bound_context = _context;
 
@@ -27,7 +27,7 @@ void DrawableMeshV2::initialize(QOpenGLContext *_context, ShaderCompiler::GLFunc
 	this->makeVAO();
 }
 
-void DrawableMeshV2::draw(GLfloat *proj_mat, GLfloat *view_mat, glm::vec4 camera) {
+void DrawableMesh::draw(GLfloat *proj_mat, GLfloat *view_mat, glm::vec4 camera) {
 	if (this->should_update_on_next_draw) {
 		this->updateData();
 	}
@@ -59,11 +59,11 @@ void DrawableMeshV2::draw(GLfloat *proj_mat, GLfloat *view_mat, glm::vec4 camera
     //this->mesh->drawNormals();
 }
 
-void DrawableMeshV2::fastDraw(GLfloat *proj_mat, GLfloat *view_mat, glm::vec4 camera) {
+void DrawableMesh::fastDraw(GLfloat *proj_mat, GLfloat *view_mat, glm::vec4 camera) {
 	this->draw(proj_mat, view_mat, camera);
 }
 
-void DrawableMeshV2::makeVAO(void) {
+void DrawableMesh::makeVAO(void) {
 	// Fetch the mesh information :
 	auto vertices = this->mesh->getVertices();
 	auto normals  = this->mesh->getVertexNormals();
@@ -115,7 +115,7 @@ void DrawableMeshV2::makeVAO(void) {
 	this->gl->glBindVertexArray(0);
 }
 
-void DrawableMeshV2::updateData(void) {
+void DrawableMesh::updateData(void) {
 	auto vertices = this->mesh->getVertices();
 	auto normals  = this->mesh->getVertexNormals();
 	// we assume that the triangles and texture data do not change ...

@@ -480,8 +480,8 @@ public:
 
     SurfaceMesh * cage;
     SurfaceMesh * surfaceMesh;
-    DrawableMeshV2 * drawableMesh;
-    DrawableMeshV2 * drawableCage;
+    DrawableMesh * drawableMesh;
+    DrawableMesh * drawableCage;
 };
 
 /// @brief Type-safe conversion of enum values to unsigned ints.

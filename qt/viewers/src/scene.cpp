@@ -222,11 +222,11 @@ void Scene::initGl(QOpenGLContext* _context) {
     this->cage = new CageMVC("/home/thomas/data/Data/Mesh/bunny_cage.off", this->surfaceMesh);
     this->cage->setScale(glm::vec3(1000., 1000., 1000.));
 
-    this->drawableMesh = new DrawableMeshV2();
+    this->drawableMesh = new DrawableMesh();
     this->drawableMesh->mesh = this->surfaceMesh;
     this->drawableMesh->initialize(this->context, this);
 
-    this->drawableCage = new DrawableMeshV2();
+    this->drawableCage = new DrawableMesh();
     this->drawableCage->mesh = this->cage;
     this->drawableCage->initialize(this->context, this);
 

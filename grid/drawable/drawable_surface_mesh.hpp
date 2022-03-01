@@ -21,9 +21,9 @@
 #include <memory>
 #include <vector>
 
-class DrawableMeshV2 {
+class DrawableMesh {
 public:
-	~DrawableMeshV2() = default;
+	~DrawableMesh() = default;
 
 	void initialize(QOpenGLContext* _context, ShaderCompiler::GLFunctions* functions);
 
