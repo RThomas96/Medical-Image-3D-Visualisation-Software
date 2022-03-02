@@ -38,7 +38,7 @@ SET(LIBS_COMPILED_HEADERS "${CMAKE_CURRENT_LIST_DIR}/third_party/compiled_librar
 ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/legacy/image)
 
 ADD_LIBRARY(VisualisationWidgets STATIC
-	./qt/widgets/include/neighbor_visu_main_widget.hpp
+	./qt/widgets/include/main_widget.hpp
 	./qt/widgets/include/scene_control.hpp
 	./qt/widgets/include/viewer_header.hpp
 	./qt/widgets/include/opengl_debug_log.hpp
@@ -48,7 +48,7 @@ ADD_LIBRARY(VisualisationWidgets STATIC
 	./qt/widgets/include/loader_widget.hpp
 	./qt/widgets/include/deformation_widget.hpp
 
-	./qt/widgets/src/neighbor_visu_main_widget.cpp
+	./qt/widgets/src/main_widget.cpp
 	./qt/widgets/src/scene_control.cpp
 	./qt/widgets/src/viewer_header.cpp
 	./qt/widgets/src/opengl_debug_log.cpp

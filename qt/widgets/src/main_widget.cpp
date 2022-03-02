@@ -1,4 +1,4 @@
-#include "../include/neighbor_visu_main_widget.hpp"
+#include "../include/main_widget.hpp"
 
 #include <QEvent>
 #include <QHBoxLayout>
