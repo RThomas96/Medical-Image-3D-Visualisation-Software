@@ -47,6 +47,8 @@ namespace UITool {
 
 			UITool::MeshManipulator * meshManipulator;	 // TODO: shared pointer
 
+            glm::vec3 lightPosition;
+
         public slots:
 			void prepare();
 
@@ -64,6 +66,7 @@ namespace UITool {
 			GLuint program;
 			GLuint vao;
 			GLuint vboVertices;
+			GLuint vboNormals;
 			GLuint vboIndices;
 			GLuint tex;
 			GLuint visible;

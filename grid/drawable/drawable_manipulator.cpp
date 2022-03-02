@@ -49,6 +49,8 @@ UITool::GL::MeshManipulator::MeshManipulator(SceneGL* sceneGL, BaseMesh * mesh, 
     this->texParamsState.size.z		   = 1;
     this->texParamsState.format		   = GL_RGB;
     this->texParamsState.type		   = GL_FLOAT;
+
+    this->lightPosition = glm::vec3(500., 500., 500.);
 }
 
 void UITool::GL::MeshManipulator::prepare() {
@@ -130,10 +132,12 @@ void UITool::GL::MeshManipulator::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* m
 	GLint location_tex	    = getUniform("positions");
 	GLint location_visible	= getUniform("visible2");
 	GLint location_state	= getUniform("state");
+	GLint location_light	= getUniform("lightPosition");
 
 	this->sceneGL->glUniformMatrix4fv(location_mMat, 1, GL_FALSE, mMat);
 	this->sceneGL->glUniformMatrix4fv(location_vMat, 1, GL_FALSE, mvMat);
 	this->sceneGL->glUniformMatrix4fv(location_pMat, 1, GL_FALSE, pMat);
+	this->sceneGL->glUniform3fv(location_light, 1, glm::value_ptr(this->lightPosition));
 
 	// Update the manipulators positions stored in the texture
 	std::vector<glm::vec3> allPositions;
