@@ -32,6 +32,8 @@ public:
 	void fastDraw(GLfloat* proj_mat, GLfloat* view_mat, glm::vec4 camera);
 
 	SurfaceMesh * mesh;
+    glm::vec4 color;
+    glm::vec3 lightPosition;
 
 	void makeVAO(void);
 	void updateData(void);

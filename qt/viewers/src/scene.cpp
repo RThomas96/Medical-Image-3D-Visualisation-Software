@@ -225,10 +225,12 @@ void Scene::initGl(QOpenGLContext* _context) {
     this->drawableMesh = new DrawableMesh();
     this->drawableMesh->mesh = this->surfaceMesh;
     this->drawableMesh->initialize(this->context, this);
+    this->drawableMesh->color = glm::vec4(0., 1., 0., 1.);
 
     this->drawableCage = new DrawableMesh();
     this->drawableCage->mesh = this->cage;
     this->drawableCage->initialize(this->context, this);
+    this->drawableCage->color = glm::vec4(1., 0., 0., 0.3);
 
 }
 
@@ -1830,7 +1832,9 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 	glEnable(GL_DEPTH_TEST);
 	glEnablei(GL_BLEND, 0);
 	glEnable(GL_TEXTURE_3D);
-	glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+	//glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	glm::mat4 transfoMat = glm::mat4(1.f);
 
@@ -1855,10 +1859,10 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 	}
 
     if(this->drawableMesh) {
-	    this->drawableCage->makeVAO();
-	    this->drawableCage->draw(pMat, mvMat, glm::vec4{camPos, 1.f});
         this->drawableMesh->makeVAO();
 	    this->drawableMesh->draw(pMat, mvMat, glm::vec4{camPos, 1.f});
+	    this->drawableCage->makeVAO();
+	    this->drawableCage->draw(pMat, mvMat, glm::vec4{camPos, 1.f});
     }
 
 	if (not this->grids.empty()) {

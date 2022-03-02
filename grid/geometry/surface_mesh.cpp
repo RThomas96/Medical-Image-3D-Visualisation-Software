@@ -169,6 +169,14 @@ void SurfaceMesh::draw() {
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_DEPTH);
 
+    GLfloat model[16];
+    glGetFloatv(GL_MODELVIEW_MATRIX, model);
+
+    glPushMatrix();
+    glLoadMatrixf(glm::value_ptr(glm::make_mat4(model) * this->getModelMatrix()));
+
+    //glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+
 	glBegin(GL_TRIANGLES);
 
 	for (unsigned int i = 0; i < this->triangles.size(); i++) {
@@ -177,6 +185,8 @@ void SurfaceMesh::draw() {
 	}
 
 	glEnd();
+
+    glPopMatrix();
 
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_DEPTH);

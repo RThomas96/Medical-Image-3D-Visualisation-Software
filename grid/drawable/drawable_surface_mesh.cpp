@@ -24,6 +24,8 @@ void DrawableMesh::initialize(QOpenGLContext *_context, ShaderCompiler::GLFuncti
 		std::cerr << "Error while building manipulator shaders for drawable mesh.\n" << compiler->errorString() << "\n";
 	}
 
+    this->color = glm::vec4(1., 0., 0., 1.);
+    this->lightPosition = glm::vec3(500., 500., 500.);
 	this->makeVAO();
 }
 
@@ -32,24 +34,45 @@ void DrawableMesh::draw(GLfloat *proj_mat, GLfloat *view_mat, glm::vec4 camera) 
 		this->updateData();
 	}
 
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 	// Bind the VAO & program
 	this->gl->glUseProgram(this->program_handle_draw);
 	this->gl->glBindVertexArray(this->vao);
 	this->gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vbo_indices);
 
-	GLint location_proj		  = this->gl->glGetUniformLocation(this->program_handle_draw, "proj");
-	GLint location_view		  = this->gl->glGetUniformLocation(this->program_handle_draw, "view");
-	GLint location_model	  = this->gl->glGetUniformLocation(this->program_handle_draw, "model");
-	GLint location_camera_pos = this->gl->glGetUniformLocation(this->program_handle_draw, "camera_pos");
+	GLint location_proj		    = this->gl->glGetUniformLocation(this->program_handle_draw, "proj");
+	GLint location_view		    = this->gl->glGetUniformLocation(this->program_handle_draw, "view");
+	GLint location_model	    = this->gl->glGetUniformLocation(this->program_handle_draw, "model");
+	GLint location_camera_pos   = this->gl->glGetUniformLocation(this->program_handle_draw, "camera_pos");
+	GLint location_color        = this->gl->glGetUniformLocation(this->program_handle_draw, "objectColor");
+	GLint location_light        = this->gl->glGetUniformLocation(this->program_handle_draw, "lightPosition");
 
 	this->gl->glUniformMatrix4fv(location_proj, 1, GL_FALSE, proj_mat);
 	this->gl->glUniformMatrix4fv(location_view, 1, GL_FALSE, view_mat);
 	//this->gl->glUniformMatrix4fv(location_model, 1, GL_FALSE, glm::value_ptr(this->transformation_matrix));
 	this->gl->glUniformMatrix4fv(location_model, 1, GL_FALSE, glm::value_ptr(this->mesh->getModelMatrix()));
 	this->gl->glUniform4fv(location_camera_pos, 1, glm::value_ptr(camera));
+	this->gl->glUniform4fv(location_color, 1, glm::value_ptr(this->color));
+	this->gl->glUniform3fv(location_light, 1, glm::value_ptr(this->lightPosition));
 
 	// Launch a glDrawElements() command
+
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_FRONT);
+    glFrontFace(GL_CW);
+    glEnable(GL_FLAT);
+    glShadeModel(GL_FLAT);
 	this->gl->glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(this->mesh->getTriangles().size() * 3), GL_UNSIGNED_INT, 0);
+    glEnable(GL_SMOOTH);
+    glShadeModel(GL_SMOOTH);
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	this->gl->glUniform4fv(location_color, 1, glm::value_ptr(glm::vec4(0.5, 0.5, 0.5, 0.5)));
+	this->gl->glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(this->mesh->getTriangles().size() * 3), GL_UNSIGNED_INT, 0);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glDisable(GL_CULL_FACE);
 
 	// Unbind the VAO & program
 	this->gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);

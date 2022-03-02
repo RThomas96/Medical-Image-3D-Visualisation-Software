@@ -6,7 +6,7 @@ layout(location=1) in vec3 in_normal;
 layout(location=2) in vec2 in_texture;
 
 out vec4 position; // WARNING ! This will be the 'raw' 3D position !!!
-out vec4 normal;
+flat out vec4 normal;
 out vec2 texture;
 
 uniform mat4 proj;
