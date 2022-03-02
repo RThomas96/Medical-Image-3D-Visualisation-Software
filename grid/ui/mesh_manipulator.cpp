@@ -78,6 +78,18 @@ namespace UITool {
         }
     }
 
+    void DirectManipulator::getManipulatorsState(std::vector<State>& states) const {
+        states.clear();
+        for(int i = 0; i < this->manipulatorsToDisplay.size(); ++i) {
+            State currentState = State::NONE;
+            if(this->manipulators[i].isAtRangeForGrab)
+                currentState = State::AT_RANGE;
+            if(this->manipulators[i].isSelected)
+                currentState = State::MOVE;
+            states.push_back(currentState);
+        }
+    }
+
     void DirectManipulator::displayManipulator(Manipulator * manipulatorToDisplay) {
         if(!this->active)
             return;
@@ -157,6 +169,16 @@ namespace UITool {
         toDisplay.push_back(this->active);
     }
 
+    void FreeManipulator::getManipulatorsState(std::vector<State>& states) const {
+        states.clear();
+        State currentState = State::NONE;
+        if(this->manipulator.isAtRangeForGrab)
+            currentState = State::AT_RANGE;
+        if(this->manipulator.isSelected)
+            currentState = State::MOVE;
+        states.push_back(currentState);
+    }
+
     void FreeManipulator::displayManipulator(Manipulator * manipulatorToDisplay) {
         //Do nothin because display is directly link to active variable
         return;
@@ -228,6 +250,16 @@ namespace UITool {
 
     void PositionManipulator::getManipulatorsToDisplay(std::vector<bool>& toDisplay) const {
         toDisplay.push_back(this->active);
+    }
+
+    void PositionManipulator::getManipulatorsState(std::vector<State>& states) const {
+        states.clear();
+        State currentState = State::NONE;
+        if(this->manipulator.isAtRangeForGrab)
+            currentState = State::AT_RANGE;
+        if(this->manipulator.isSelected)
+            currentState = State::MOVE;
+        states.push_back(currentState);
     }
 
     void PositionManipulator::displayManipulator(Manipulator * manipulatorToDisplay) {

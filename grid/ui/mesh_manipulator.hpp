@@ -9,16 +9,17 @@
 //! dynamic components used to directly interact with a 3D scene, like manipulators.
 namespace UITool {
 
+    enum State {
+        NONE,
+        AT_RANGE,
+        SELECTED,
+        LOCK,
+        MOVE
+    };
+
 	//! @ingroup uitools
     class MeshManipulator {
     public:
-        // TODO: remove this
-        // To do so, inherit the grid from the BaseMesh class
-        // Remove the ref to the scene
-        // And call function from the BaseMesh
-        // Optionnal: remove the function calls and use signals slots
-        // Thus, the functions used will be directly overloaded
-
         BaseMesh * mesh;
 
         MeshManipulator(BaseMesh * mesh): mesh(mesh) {}
@@ -35,6 +36,7 @@ namespace UITool {
         // These functions are used only in glMeshManipulator in the prepare function
         virtual void getAllPositions(std::vector<glm::vec3>& positions) = 0;
         virtual void getManipulatorsToDisplay(std::vector<bool>& toDisplay) const = 0;
+        virtual void getManipulatorsState(std::vector<State>& states) const = 0;
         virtual void setAllManipulatorsPosition(const std::vector<glm::vec3>& positions) = 0;
 
         virtual ~MeshManipulator() {};
@@ -83,6 +85,7 @@ namespace UITool {
 
         void setAllManipulatorsPosition(const std::vector<glm::vec3>& positions) override;
         void getAllPositions(std::vector<glm::vec3>& positions) override;
+        void getManipulatorsState(std::vector<State>& states) const override;
 
         void getManipulatorsToDisplay(std::vector<bool>& toDisplay) const override;
 
@@ -105,6 +108,7 @@ namespace UITool {
 	private:
 		std::vector<Manipulator> manipulators;
         std::vector<bool> manipulatorsToDisplay;
+        std::vector<bool> selectedManipulators;
 
 		bool active;
 	};
@@ -127,6 +131,7 @@ namespace UITool {
         void setAllManipulatorsPosition(const std::vector<glm::vec3>& positions) override;
 
         void getAllPositions(std::vector<glm::vec3>& positions) override;
+        void getManipulatorsState(std::vector<State>& states) const override;
         void getManipulatorsToDisplay(std::vector<bool>& toDisplay) const override;
 
         bool isWireframeDisplayed() override;
@@ -172,6 +177,7 @@ namespace UITool {
 
         void getAllPositions(std::vector<glm::vec3>& positions) override;
         void getManipulatorsToDisplay(std::vector<bool>& toDisplay) const override;
+        void getManipulatorsState(std::vector<State>& states) const override;
 
         bool isWireframeDisplayed() override;
 

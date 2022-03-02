@@ -67,9 +67,11 @@ namespace UITool {
 			GLuint vboIndices;
 			GLuint tex;
 			GLuint visible;
+			GLuint state;
 
 			TextureUpload texParams;
 			TextureUpload texParamsVisible;
+			TextureUpload texParamsState;
 
 			bool displayWireframe;
 		};

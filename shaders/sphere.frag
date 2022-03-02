@@ -7,9 +7,11 @@
 in float isVisible;
 out vec4 FragColor;
   
+uniform vec4 color;
+
 void main()
 {
     if(isVisible == 0.)
         discard;
-    FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+    FragColor = color;
 } 
