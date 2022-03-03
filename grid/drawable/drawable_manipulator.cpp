@@ -162,15 +162,14 @@ void UITool::GL::MeshManipulator::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* m
 	this->texParamsVisible.size.x = toDisplay.size();
 	this->visible = this->sceneGL->uploadTexture1D(this->texParamsVisible);
     /***/
-	std::vector<bool> rawState;
-    this->meshManipulator->getManipulatorsToDisplay(rawState);
+	std::vector<State> rawState;
+    this->meshManipulator->getManipulatorsState(rawState);
 
 	std::vector<glm::vec3> state;
-    for(int i = 0; i < rawState.size(); ++i)
-        if(rawState[i])
-            state.push_back(glm::vec3(1, 1, 1));
-        else
-            state.push_back(glm::vec3(0, 0, 0));
+    for(int i = 0; i < rawState.size(); ++i) {
+        int value = rawState[i];
+        state.push_back(glm::vec3(value, value, value));
+    }
 
 	this->texParamsState.data   = state.data();
 	this->texParamsState.size.x = state.size();
@@ -241,8 +240,11 @@ void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scen
     } else if(type == 1){
         this->meshManipulator = new UITool::FreeManipulator(mesh, positions);
         this->prepare();
-    } else {
+    } else if(type == 2) {
         this->meshManipulator = new UITool::PositionManipulator(mesh, positions);
+        this->prepare();
+    } else {
+        this->meshManipulator = new UITool::CompManipulator(mesh, positions);
         this->prepare();
     }
     QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needRedraw()), this, SLOT(prepare()));

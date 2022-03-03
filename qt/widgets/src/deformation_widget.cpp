@@ -29,6 +29,8 @@ GridDeformationWidget::GridDeformationWidget(Scene* scene, QWidget* parent) :
 	this->radio_selector_free->setChecked(false);
 	this->radio_selector_position = new QRadioButton("Position");
 	this->radio_selector_position->setChecked(false);
+	this->radio_selector_comp = new QRadioButton("Comp");
+	this->radio_selector_comp->setChecked(false);
 
 	this->group_move = new QGroupBox("Move method");
 	this->radio_move_normal = new QRadioButton("Normal");
@@ -97,6 +99,7 @@ void GridDeformationWidget::setupLayouts() {
 	this->layout_selector->addWidget(this->radio_selector_direct, 1);
 	this->layout_selector->addWidget(this->radio_selector_free, 2);
 	this->layout_selector->addWidget(this->radio_selector_position, 3);
+	this->layout_selector->addWidget(this->radio_selector_comp, 4);
 
 	this->layout_move->addWidget(this->radio_move_normal, 1);
 	this->layout_move->addWidget(this->radio_move_weighted, 2);
@@ -140,6 +143,8 @@ void GridDeformationWidget::setupSignals(Scene* scene) {
 	QObject::connect(this->radio_selector_free, &QPushButton::clicked, this, [this, scene]() {scene->createNewMeshManipulator(1, this->useSurface);});
 
 	QObject::connect(this->radio_selector_position, &QPushButton::clicked, this, [this, scene]() {scene->createNewMeshManipulator(2, this->useSurface);});
+
+	QObject::connect(this->radio_selector_comp, &QPushButton::clicked, this, [this, scene]() {scene->createNewMeshManipulator(3, this->useSurface);});
 
 	QObject::connect(this->spinbox_radius_sphere, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, [=](double i){ scene->setManipulatorRadius(i);}); 
 

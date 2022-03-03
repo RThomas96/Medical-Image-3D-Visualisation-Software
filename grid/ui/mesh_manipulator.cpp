@@ -221,6 +221,8 @@ namespace UITool {
         QObject::connect(&(this->manipulator), &Manipulator::mouseRightButtonReleasedAndCtrlIsNotPressed, this, &PositionManipulator::deselectManipulator);
         QObject::connect(&(this->manipulator), &Manipulator::isManipulated, this, &PositionManipulator::moveManipulator);
 
+        QObject::connect(this, &PositionManipulator::pointIsClickedInPlanarViewer, this, [this](const glm::vec3& position) {std::cout << "Coucou je suis cliqué dans le position manipulateur !" << std::endl;});
+
         this->manipulator.setCustomConstraint();
         this->manipulator.setManipPosition(mesh->getOrigin());
 	}
@@ -285,5 +287,100 @@ namespace UITool {
     }
 
     void PositionManipulator::deselectManipulator(Manipulator * manipulator) {
+    }
+
+    /***/
+
+	CompManipulator::CompManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions): MeshManipulator(mesh) {
+		this->active = false;
+        QObject::connect(this, &CompManipulator::pointIsClickedInPlanarViewer, this, &CompManipulator::addManipulator);
+        QObject::connect(this, &CompManipulator::rayIsCasted, this, &CompManipulator::addManipulatorFromRay);
+	}
+
+	void CompManipulator::setActivation(bool isActive) {
+        this->active = isActive;
+		if (this->active) {
+			for (int i = 0; i < this->manipulators.size(); ++i) {
+				this->manipulators[i].setCustomConstraint();
+                this->manipulators[i].enable();
+			}
+		} else {
+			for (int i = 0; i < this->manipulators.size(); ++i) {
+				this->manipulators[i].lockPosition();
+                this->manipulators[i].disable();
+			}
+		}
+	}
+
+    void CompManipulator::addManipulator(const glm::vec3& position) {
+        if(!this->active)
+            return;
+        this->manipulators.push_back(Manipulator(position));
+        this->manipulators.back().setCustomConstraint();
+    }
+
+    void CompManipulator::addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue) {
+        if(!this->active)
+            return;
+        glm::vec3 manipulatorPosition;
+        if(this->mesh->getPositionOfRayIntersection(origin, direction, minValue, maxValue, manipulatorPosition)) {
+            this->manipulators.push_back(Manipulator(manipulatorPosition));
+            this->manipulators.back().setCustomConstraint();
+        }
+    }
+
+    void CompManipulator::removeManipulator(Manipulator * manipulatorToDisplay) {
+        if(!this->active)
+            return;
+        ptrdiff_t index = manipulatorToDisplay - &(this->manipulators[0]);
+        this->manipulators.erase(this->manipulators.begin()+index);
+    }
+
+	void CompManipulator::setAllManipulatorsPosition(const std::vector<glm::vec3>& positions) {
+	}
+
+    void CompManipulator::getAllPositions(std::vector<glm::vec3>& positions) {
+        positions.clear();
+		for (int i = 0; i < this->manipulators.size(); ++i) {
+            positions.push_back(this->manipulators[i].getManipPosition());
+		}
+    }
+
+    void CompManipulator::getManipulatorsToDisplay(std::vector<bool>& toDisplay) const {
+        toDisplay.clear();
+		for (int i = 0; i < this->manipulators.size(); ++i) {
+            toDisplay.push_back(true);
+        }
+    }
+
+    void CompManipulator::getManipulatorsState(std::vector<State>& states) const {
+        states.clear();
+        for(int i = 0; i < this->manipulators.size(); ++i) {
+            State currentState = State::LOCK;// Default state is different here because we place marker here
+            if(this->manipulators[i].isAtRangeForGrab)
+                currentState = State::AT_RANGE;
+            if(this->manipulators[i].isSelected)
+                currentState = State::MOVE;
+            states.push_back(currentState);
+        }
+    }
+
+    void CompManipulator::displayManipulator(Manipulator * manipulatorToDisplay) {
+    }
+
+    void CompManipulator::hideManipulator(Manipulator * manipulatorToDisplay) {
+    }
+
+    bool CompManipulator::isWireframeDisplayed() {
+        return this->active;
+    }
+
+    void CompManipulator::moveManipulator(Manipulator * manipulator) {
+    }
+
+    void CompManipulator::selectManipulator(Manipulator * manipulator) {
+    }
+
+    void CompManipulator::deselectManipulator(Manipulator * manipulator) {
     }
 }

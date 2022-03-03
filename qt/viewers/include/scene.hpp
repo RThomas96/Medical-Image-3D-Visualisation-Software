@@ -447,6 +447,7 @@ public:
 signals:
     void keyQReleased();
     void rayIsCasted(const glm::vec3& origin, const glm::vec3& direction);
+    void pointIsClickedInPlanarViewer(const glm::vec3& position);
 
 // All these indirections are important because for most of them they interacts with various components of the scene
 // And it allow more flexibility as the scene control ALL the informations to transit from class to class

@@ -33,6 +33,7 @@ PlanarViewer::PlanarViewer(Scene* const _scene, planes _p, QStatusBar* _sb, plan
 	this->refreshTimer->setInterval(std::chrono::milliseconds(500));	// 1/2 second when not updated by the viewer
 	this->refreshTimer->setSingleShot(false);
 	connect(this->refreshTimer, &QTimer::timeout, this, &PlanarViewer::updateView);
+    QObject::connect(this, &PlanarViewer::pointIsClickedInPlanarViewer, this->sceneToShow, &Scene::pointIsClickedInPlanarViewer);
 }
 
 void PlanarViewer::addParentStatusBar(QStatusBar* main) {
@@ -77,25 +78,28 @@ void PlanarViewer::draw(void) {
 		if (pixelValue.w > .01f) {
 			glm::vec4 p = pixelValue;
 			std::cerr << "Value in fbo : {" << p.x << ", " << p.y << ", " << p.z << ", " << p.w << "}\n";
-			// TODO : old API
-			//auto all_input = this->sceneToShow->getInputGrids();
-			//for (const auto& grid : all_input) {
-			//	using sizevec3 = glm::vec<3, std::size_t, glm::defaultp>;
-			//	sizevec3 index = sizevec3(0, 0, 0);
-			//	QString msg = "Message from plane ";
-			//	if (this->planeToShow == planes::x) { msg += "X "; }
-			//	else if (this->planeToShow == planes::y) { msg += "Y "; }
-			//	else if (this->planeToShow == planes::z) { msg += "Z "; }
-			//	else { msg += "<unknown> "; }
-			//	if (grid->indexFromWorldSpace(p, index)) {
-			//		msg += "Index in picture : " + QString::number(index.x) + ", " + QString::number(index.y) + ", " + QString::number(index.z);
-			//		this->statusbar->showMessage(msg, 5000);
-			//	}
-			//}
 		}
 		this->posRequest = glm::vec2{-1, -1};
 	}
 }
+
+glm::vec3 PlanarViewer::getPositionFromMouse() {
+	QSize wSize			   = this->size();
+	glm::ivec2 fbDims	   = glm::ivec2(wSize.width(), wSize.height());
+	glm::ivec2 rawMousePos = glm::ivec2(this->cursorPosition_current.x(), this->cursorPosition_current.y());
+
+	if (rawMousePos.x < 0 || rawMousePos.x > fbDims.x || rawMousePos.y < 0 || rawMousePos.y > fbDims.y) {
+        std::cout << "Mouse not in grid" << std::endl;
+	}
+
+	this->makeCurrent();
+    glm::vec4 p = this->sceneToShow->readFramebufferContents(this->defaultFramebufferObject(), glm::convert_to<int>(glm::vec2(rawMousePos.x, fbDims.y - rawMousePos.y)));
+    std::cout << "Value in fbo : {" << p.x << ", " << p.y << ", " << p.z << ", " << p.w << "}" << std::endl;
+	this->doneCurrent();
+
+    return glm::vec3(p);
+}
+
 
 void PlanarViewer::guessScenePosition(void) {
 	// Get framebuffer size, and (current) relative mouse position to the widget origin :
@@ -116,18 +120,6 @@ void PlanarViewer::guessScenePosition(void) {
 		glm::vec4 p = pixelValue;
 		std::cerr << "Value in fbo : {" << p.x << ", " << p.y << ", " << p.z << ", " << p.w << "}\n";
 		this->sceneToShow->setPositionResponse(pixelValue);
-		// TODO: new API
-		// auto inputs = this->sceneToShow->getInputGrids();
-		// for (const auto& grid : inputs) {
-		// 	if (grid->includesPointWorldSpace(pixelValue)) {
-		// 		IO::GenericGridReader::sizevec3 index = grid->worldPositionToIndex(p);
-		// 		QString msg							  = "Position in image space : " + QString::number(index.x) + ", " +
-		// 					  QString::number(index.y) + ", " + QString::number(index.z) + ", in grid " +
-		// 					  QString::fromStdString(grid->getGridName());
-		// 		std::cerr << "Message from plane viewer : " << msg.toStdString() << "\n";
-		// 		this->status_bar->showMessage(msg, 10000);
-		// 	}
-		// }
 	}
 	this->doneCurrent();
 }
@@ -172,7 +164,7 @@ void PlanarViewer::mousePressEvent(QMouseEvent* _e) {
 		this->mouse_isPressed = 1;
 	}
 	if (_e->buttons().testFlag(Qt::MouseButton::RightButton)) {
-		this->guessScenePosition();
+        Q_EMIT pointIsClickedInPlanarViewer(this->getPositionFromMouse());
 	}
 
 	QGLViewer::mousePressEvent(_e);
@@ -195,7 +187,9 @@ void PlanarViewer::mouseMoveEvent(QMouseEvent* _m) {
 	}
 	this->cursorPosition_current = _m->pos();
 	if (_m->buttons().testFlag(Qt::MouseButton::RightButton)) {
-		this->guessScenePosition();
+        // We don't want to emit some points during movement
+        // Drawing effect
+        //Q_EMIT pointIsClickedInPlanarViewer(this->getPositionFromMouse());
 	}
 	QGLViewer::mouseMoveEvent(_m);
 	return;

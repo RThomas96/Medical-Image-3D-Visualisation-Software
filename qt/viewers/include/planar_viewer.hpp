@@ -16,6 +16,7 @@
 /// @details While this is inheriting from QGLViewer, it does not use any of the camera settings. It uses a completely
 /// custom rendering pipeline.
 class PlanarViewer : public QGLViewer {
+	Q_OBJECT
 protected:
 	friend class ViewerHeader;
 
@@ -29,33 +30,20 @@ public:
 	virtual void addParentStatusBar(QStatusBar* _sb);
 
 protected:
-	/// @brief Initializes the scene, and the viewer's variables.
 	virtual void init(void) override;
-	/// @brief Draws the plane the viewer is supposed to show.
 	virtual void draw(void) override;
-	/// @brief Handles key events from the user.
 	virtual void keyPressEvent(QKeyEvent* _e) override;
-	/// @brief Handles mouse events from the user.
 	virtual void mousePressEvent(QMouseEvent* _m) override;
-	/// @brief Event raised when the mouse moves
 	virtual void mouseMoveEvent(QMouseEvent* _m) override;
-	/// @brief Event raised when the mouse is released
 	virtual void mouseReleaseEvent(QMouseEvent* _m) override;
-	/// @brief Overrides the mouse wheel events from the user.
 	virtual void wheelEvent(QWheelEvent* _w) override;
-	/// @brief Overrides the function to resize the widget.
 	virtual void resizeGL(int w, int h) override;
-	/// @brief Defines the 'Help'/'About' string defined for this viewer.
 	virtual QString helpString(void) const override;
-	/// @brief Defines the 'Help'/'About' string for the keyboard for this viewer.
 	virtual QString keyboardString(void) const override;
-	/// @brief Defines the 'Help'/'About' string for the mouse for this viewer.
 	virtual QString mouseString(void) const override;
-	/// @brief Guess the scene position from the fragment position after rendering
 	virtual void guessScenePosition(void);
 
 protected:
-	/// @brief Sets the widget in charge of controlling the viewer
 	void setController(ViewerHeader* _header);
 
 protected:
@@ -79,18 +67,18 @@ protected:
 	QPoint cursorPosition_current;	  ///< Current mouse position, relative to window coordinates
 	QStatusBar* status_bar;	   ///< The status bar in which to show the positions extracted from the mesh
 public slots:
-	/// @brief Update the view, as a slot without any arguments
 	void updateView(void);
-	/// @brief Signal from a slider to update the value of the cutting plane.
 	void updatePlaneDepth(int newVal);
-	/// @brief Signal from a push button to flip the plane's cutting direction.
 	void flipPlaneDirection(void);
-	/// @brief Rotates a plane in a clockwise fashion.
 	void rotatePlaneClockwise(void);
-	/// @brief Rotates a plane in a counter-clockwise fashion.
 	void rotatePlaneCounterClockwise(void);
-	/// @brief Toggles the corresponding plane's visibility in the scene
 	void togglePlaneVisibility(void);
+
+public:
+    glm::vec3 getPositionFromMouse();
+
+signals:
+    void pointIsClickedInPlanarViewer(const glm::vec3& position);
 };
 
 #endif	  // VISUALISATION_VIEWER_INCLUDE_PLANAR_VIEWER_HPP_

@@ -47,6 +47,7 @@ protected:
 	QRadioButton*   radio_selector_direct; 
 	QRadioButton*     radio_selector_free; 
 	QRadioButton* radio_selector_position; 
+	QRadioButton* radio_selector_comp; 
 
 	QHBoxLayout*              layout_move;
 	QGroupBox*                 group_move;
