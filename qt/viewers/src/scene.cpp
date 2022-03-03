@@ -216,11 +216,12 @@ void Scene::initGl(QOpenGLContext* _context) {
     //this->surfaceMesh = nullptr;
     //this->drawableMesh = nullptr; 
 
+    glm::vec3 scale(10., 10., 10.);
     this->surfaceMesh = new SurfaceMesh("/home/thomas/data/Data/Mesh/bunny_lowres.off");
-    this->surfaceMesh->setScale(glm::vec3(1000., 1000., 1000.));
+    this->surfaceMesh->setScale(scale);
 
     this->cage = new CageMVC("/home/thomas/data/Data/Mesh/bunny_cage.off", this->surfaceMesh);
-    this->cage->setScale(glm::vec3(1000., 1000., 1000.));
+    this->cage->setScale(scale);
 
     this->drawableMesh = new DrawableMesh();
     this->drawableMesh->mesh = this->surfaceMesh;
@@ -2869,7 +2870,8 @@ bool contain(const InfoToSend& value, const InfoToSend& contain) {
 }
 
 void Scene::sendFirstTetmeshToGPU() {
-    this->sendTetmeshToGPU(0, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS));
+    if(this->grids.size() > 0)
+        this->sendTetmeshToGPU(0, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS));
 }
 
 void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend) {
@@ -3237,19 +3239,22 @@ void Scene::createNewMeshManipulator(int i, bool onSurface) {
 }
 
 void Scene::setNormalDeformationMethod() {
-    this->grids[this->gridToDraw]->grid->setNormalDeformationMethod();
+    if(this->grids.size() > 0)
+        this->grids[this->gridToDraw]->grid->setNormalDeformationMethod();
     if(this->cage)
         this->cage->setNormalDeformationMethod();
 }
 
 void Scene::setWeightedDeformationMethod(float radius) {
-    this->grids[this->gridToDraw]->grid->setWeightedDeformationMethod(radius);
+    if(this->grids.size() > 0)
+        this->grids[this->gridToDraw]->grid->setWeightedDeformationMethod(radius);
     if(this->cage)
         this->cage->setWeightedDeformationMethod(radius);
 }
 
 void Scene::setARAPDeformationMethod() {
-    this->grids[this->gridToDraw]->grid->setARAPDeformationMethod();
+    if(this->grids.size() > 0)
+        this->grids[this->gridToDraw]->grid->setARAPDeformationMethod();
     if(this->cage)
         this->cage->setARAPDeformationMethod();
 }
