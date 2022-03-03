@@ -88,6 +88,11 @@ protected:
 	/// @brief Resets and removes the local point query
 	void resetLocalPointQuery();
 
+	/// @brief Load the camera details from an XML file
+	void loadCamera();
+	/// @brief Save the camera details to an XML file
+	void saveCamera();
+
 private:
 	/// @brief The scene to control.
 	Scene* const scene;
@@ -110,6 +115,9 @@ private:
 	bool drawAxisOnTop;
 
 	UITool::MeshManipulator meshManipulator;
+
+	bool show_constraints;
+	bool show_curve ;
 
 	//
 	// Stubs for ARAP integration

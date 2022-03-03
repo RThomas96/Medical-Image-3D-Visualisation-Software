@@ -2957,7 +2957,9 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 		if (not this->curve_draw->isInitialized()) {
 			this->curve_draw->initialize(this->context, this);
 		}
-		this->curve_draw->draw(pMat, mvMat, glm::vec4(camPos, 1.f));
+		if (showTexOnPlane) {
+			this->curve_draw->draw(pMat, mvMat, glm::vec4(camPos, 1.f));
+		}
 	}
 
 	glm::mat4 transfoMat = glm::mat4(1.f);

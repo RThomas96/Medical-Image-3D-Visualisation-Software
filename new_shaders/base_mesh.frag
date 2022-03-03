@@ -29,8 +29,8 @@ vec4 shadingParams = vec4(
 );
 
 /// @brief Base color of the bone (RGB : #e3dac9)
-vec3 bone_base_color = vec3(0.89f, 0.855f, 0.788f);
-vec3 ambient_color = vec3(0.95f, 0.95f, 0.95f);
+vec3 bone_base_color = vec3(183.f/255.f, 191.f/255.f, 153.f/255.f);
+vec3 ambient_color = vec3(183.f/255.f, 191.f/255.f, 153.f/255.f);
 vec3 specular_color = vec3(0.502f, 0.502f, 0.502f);
 
 void phongComputation(in vec4 normal, in vec4 position, out vec4 color);

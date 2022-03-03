@@ -37,6 +37,8 @@ Viewer::Viewer(Scene* const scene, QStatusBar* _program_bar, QWidget* parent) :
 	this->posRequest		= glm::ivec2{-1, -1};
 	this->drawAxisOnTop		= false;
 
+	this->show_constraints = true; this->show_curve = true;
+
 	this->deformation_enabled = false;
 
 	this->arap_controller = nullptr;
@@ -123,34 +125,38 @@ void Viewer::draw() {
 	qglviewer::Vec cam = this->camera()->worldCoordinatesOf(qglviewer::Vec(0., 0., 0.));
 	glm::vec3 camPos   = glm::vec3(static_cast<float>(cam.x), static_cast<float>(cam.y), static_cast<float>(cam.z));
 
-	this->scene->draw3DView(mvMat, pMat, camPos, false);
+	this->scene->draw3DView(mvMat, pMat, camPos, this->show_curve);
 	this->scene->drawPositionResponse(this->sceneRadius() / 10., false);
 
 	if (this->meshManipulator.isActiveManipulatorManipuled()) {
 		this->scene->launchDeformation(this->meshManipulator.getActiveManipulatorAssignedIdx(), this->meshManipulator.getActiveManipulatorPos());
 	}
 
+	glm::mat4 transform = glm::mat4(1.f);
 	if (this->arap_controller) {
-		std::size_t edited_constraint = this->arap_controller->getCurrentlyEditedConstraint();
+		if (this->show_constraints) {
+			std::size_t edited_constraint = this->arap_controller->getCurrentlyEditedConstraint();
+			// mesh might be transformed, get constraints positions and draw them quickly :
+			auto mesh_constraints = this->arap_controller->getMeshConstraintsAsPositions();
+			if (this->scene->getDrawableMesh()) {
+				transform = this->scene->getDrawableMesh()->getTransformation();
+			}
+			if (not mesh_constraints.empty() && edited_constraint) {
+				glm::vec4 default_color = glm::vec4{0.05f, 0.05f, 0.90f, 1.0f};
+				// gold-colored, per wikipedia guidelines (255/223/0 in RGB) :
+				glm::vec4 highlight_col = glm::vec4{255.f, 223.f, 0.0f, 1.0f} / glm::vec4{255.f, 255.f, 255.f, 1.0f};
+				this->scene->drawColoredPointSpheres_highlighted_quick(transform, mvMat, pMat, camPos, mesh_constraints,
+																	   edited_constraint - 1u, this->sphere_size,
+																	   default_color, highlight_col);
+			} else {
+				this->scene->drawPointSpheres_quick(transform, mvMat, pMat, camPos, mesh_constraints,
+													this->sphere_size);
+			}
 
-		// mesh might be transformed, get constraints positions and draw them quickly :
-		auto mesh_constraints = this->arap_controller->getMeshConstraintsAsPositions();
-		glm::mat4 transform = glm::mat4(1.f);
-		if (this->scene->getDrawableMesh()) {
-			transform = this->scene->getDrawableMesh()->getTransformation();
+			// Draw image constraints, not subject to the potential mesh transform so get them and draw them with an identity matrix as a model transform:
+			auto img_ctx = this->arap_controller->getImageConstraints();
+			this->scene->drawPointSpheres_quick(glm::mat4(1.f), mvMat, pMat, camPos, img_ctx, this->sphere_size);
 		}
-		if (not mesh_constraints.empty() && edited_constraint) {
-			glm::vec4 default_color = glm::vec4{0.05f, 0.05f, 0.90f, 1.0f};
-			// gold-colored, per wikipedia guidelines (255/223/0 in RGB) :
-			glm::vec4 highlight_col = glm::vec4{255.f, 223.f, 0.0f, 1.0f} / glm::vec4{255.f, 255.f, 255.f, 1.0f};
-			this->scene->drawColoredPointSpheres_highlighted_quick(transform, mvMat, pMat, camPos, mesh_constraints, edited_constraint-1u, this->sphere_size, default_color, highlight_col);
-		} else {
-			this->scene->drawPointSpheres_quick(transform, mvMat, pMat, camPos, mesh_constraints, this->sphere_size);
-		}
-
-		// Draw image constraints, not subject to the potential mesh transform so get them and draw them with an identity matrix as a model transform:
-		auto img_ctx = this->arap_controller->getImageConstraints();
-		this->scene->drawPointSpheres_quick(glm::mat4(1.f), mvMat, pMat, camPos, img_ctx, this->sphere_size);
 
 		auto inter = this->arap_controller->getMeshInterface();
 		auto manip = this->arap_controller->getARAPManipulator();
@@ -374,12 +380,57 @@ void Viewer::keyPressEvent(QKeyEvent* e) {
 		case Qt::Key::Key_B:
 			this->scene->toggleShowBoundingBoxes();
 			break;
+		case Qt::Key::Key_L:
+			this->show_constraints = not this->show_constraints;
+			this->update();
+			break;
+		case Qt::Key::Key_K:
+			this->show_curve = not this->show_curve;
+			this->update();
+			break;
+		case Qt::Key::Key_W:
+			this->saveCamera();
+			this->update();
+			break;
+		case Qt::Key::Key_X:
+			this->loadCamera();
+			this->update();
+			break;
 		/*
 		Default handler.
 		*/
 		default:
 			QGLViewer::keyPressEvent(e);
 			break;
+	}
+}
+
+void Viewer::loadCamera() {
+	QDomDocument document;
+	QString fname = QFileDialog::getOpenFileName(this, "Open camera ...", "", "XML files (*.xml)");
+	if (fname.isEmpty()) { return; }
+	QFile f(fname);
+	if (f.open(QIODevice::ReadOnly))
+	{
+		document.setContent(&f);
+		f.close();
+	}
+	// Parse the DOM tree
+	QDomElement main = document.documentElement();
+	this->camera()->initFromDOMElement(main);
+}
+
+void Viewer::saveCamera() {
+	QDomDocument document("myCamera");
+	document.appendChild( this->camera()->domElement("Camera", document) );
+	QString fname = QFileDialog::getSaveFileName(this, "Save camera ...", "", "XML files (*.xml)");
+	if (fname.isEmpty()) { return; }
+	if (not fname.endsWith(".xml", Qt::CaseSensitivity::CaseInsensitive)) { fname += ".xml"; }
+	QFile f(fname);
+	if (f.open(QIODevice::WriteOnly))
+	{
+		QTextStream out(&f);
+		document.save(out, 2);
 	}
 }
 
