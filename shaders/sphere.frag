@@ -31,11 +31,15 @@ void main()
     }
 
     if(isAT_RANGE) {
-        color = vec4(0., 1., 0., 1.);
+        color = vec4(0., 0.9, 0., 1.);
     }
 
     if(isMOVE) {
-        color = vec4(0., 0., 1., 1.);
+        color = vec4(0., 1., 0., 1.);
+    }
+
+    if(isLOCK) {
+        color = vec4(0.9, 0.9, 0.9, 1.);
     }
 
     vec3 norm = normalize(o_normal.xyz);
