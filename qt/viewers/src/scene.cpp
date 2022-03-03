@@ -1458,6 +1458,32 @@ void Scene::prepareUniformsMonoPlaneView(planes _plane, planeHeading _heading, g
 		std::cerr << "[LOG] Uniform locations for " << __FUNCTION__ << " : \n";
 	}
 
+	TextureUpload texParamsState;
+    texParamsState.minmag.x = GL_NEAREST;
+    texParamsState.minmag.y = GL_NEAREST;
+    texParamsState.lod.y	 = -1000.f;
+    texParamsState.wrap.s	 = GL_CLAMP;
+    texParamsState.wrap.t	 = GL_CLAMP;
+    
+    texParamsState.internalFormat = GL_RGB32F;
+    texParamsState.size.y		   = 1;
+    texParamsState.size.z		   = 1;
+    texParamsState.format		   = GL_RGB;
+    texParamsState.type		   = GL_FLOAT;
+
+	TextureUpload texParamsPos;
+    texParamsPos.minmag.x = GL_NEAREST;
+    texParamsPos.minmag.y = GL_NEAREST;
+    texParamsPos.lod.y	 = -1000.f;
+    texParamsPos.wrap.s	 = GL_CLAMP;
+    texParamsPos.wrap.t	 = GL_CLAMP;
+    
+    texParamsPos.internalFormat = GL_RGB32F;
+    texParamsPos.size.y		   = 1;
+    texParamsPos.size.z		   = 1;
+    texParamsPos.format		   = GL_RGB;
+    texParamsPos.type		   = GL_FLOAT;
+
 	// Uniform locations :
 	// VShader :
 	GLint location_fbDims		  = getUniform("fbDims");
@@ -1489,6 +1515,48 @@ void Scene::prepareUniformsMonoPlaneView(planes _plane, planeHeading _heading, g
 	GLint location_g_nbChannels			  = getUniform("g_nbChannels");
 	GLint location_rgbMode				  = getUniform("rgbMode");
 
+    // Manipulator display
+    //uniform uint displayManipulator;
+    //uniform float sphereRadius;
+    //uniform uint nbManipulator;
+    //uniform usampler1D manipulatorPositions;	
+    GLint location_manipulatorPositions = getUniform("manipulatorPositions");
+    //uniform usampler1D states
+
+    /***/
+
+    unsigned int shouldDisplay = 1;
+    float radius = 5.;
+    
+    std::vector<glm::vec3> manipulatorPositions;
+    this->glMeshManipulator->meshManipulator->getAllPositions(manipulatorPositions);
+
+	glUniform1ui(getUniform("displayManipulator"), shouldDisplay);
+	glUniform1f(getUniform("sphereRadius"), radius);
+	glUniform1ui(getUniform("nbManipulator"), manipulatorPositions.size());
+
+	std::vector<UITool::State> rawState;
+    this->glMeshManipulator->meshManipulator->getManipulatorsState(rawState);
+
+	std::vector<glm::vec3> state;
+    for(int i = 0; i < rawState.size(); ++i) {
+        int value = rawState[i];
+        state.push_back(glm::vec3(value, value, value));
+    }
+
+	texParamsState.data   = state.data();
+	texParamsState.size.x = state.size();
+
+	int state_idx = this->uploadTexture1D(texParamsState);
+
+	std::vector<glm::vec3> allPositions;
+	this->glMeshManipulator->meshManipulator->getAllPositions(allPositions);
+	texParamsPos.data   = allPositions.data();
+	texParamsPos.size.x = allPositions.size();
+	int pos_idx = this->uploadTexture1D(texParamsPos);
+
+    /***/
+
 	glUniform1ui(location_rgbMode, this->rgbMode);
 
 	glUniform1ui(location_r_channelView, this->colorFunctionToUniform(this->channels_r));
@@ -1512,8 +1580,7 @@ void Scene::prepareUniformsMonoPlaneView(planes _plane, planeHeading _heading, g
 	// Uniform variables :
 	glUniform2fv(location_fbDims, 1, glm::value_ptr(fbDims));
 	glUniform2fv(location_bbDims, 1, glm::value_ptr(gridBBDims));
-	glUniform1ui(location_planeIndex, (_plane == planes::x) ? 1 : (_plane == planes::y) ? 2 :
-																							3);
+	glUniform1ui(location_planeIndex, (_plane == planes::x) ? 1 : (_plane == planes::y) ? 2 : 3);
 	glUniformMatrix4fv(location_gridTransform, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0f)));
 	glUniform4f(location_gridDimensions, gridDimensions.x, gridDimensions.y, gridDimensions.z, 1.f);
 	glUniform4f(location_gridBBDiagonal, bbox.x, bbox.y, bbox.z, 1.f);
@@ -1561,6 +1628,16 @@ void Scene::prepareUniformsMonoPlaneView(planes _plane, planeHeading _heading, g
 	glActiveTexture(GL_TEXTURE0 + tex);
 	glBindTexture(GL_TEXTURE_1D, this->tex_colorScale_user1);
 	glUniform1i(location_colorScales3, tex);
+	tex++;
+
+	glActiveTexture(GL_TEXTURE0 + tex);
+	glBindTexture(GL_TEXTURE_1D, state_idx);
+	glUniform1i(getUniform("states"), tex);
+	tex++;
+
+	glActiveTexture(GL_TEXTURE0 + tex);
+	glBindTexture(GL_TEXTURE_1D, pos_idx);
+	glUniform1i(getUniform("manipulatorPositions"), tex);
 	tex++;
 
 	const GLchar uniform_block_name[] = "ColorBlock";

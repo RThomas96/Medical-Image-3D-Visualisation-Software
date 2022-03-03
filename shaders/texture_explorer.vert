@@ -94,7 +94,7 @@ void main(void) {
 	gl_Position.xyz *= zoom;
 	gl_Position.xy += offset;
 
-	vPos = vertexPosition;
+	vPos = vPos_WS;
 	vOriginalCoords = vertexTexCoord;
 	vTexCoord = vPos_TS.xyz;
 	planeMultiplier = multiplier.xy;

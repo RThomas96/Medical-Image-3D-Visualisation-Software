@@ -42,6 +42,13 @@ layout(std140) uniform ColorBlock {
 	colorChannelAttributes attributes[4];	// Color attributes laid out in this way : [ main, R, G, B ]
 } colorChannels;
 
+// Manipulator display
+uniform uint displayManipulator;
+uniform float sphereRadius;
+uniform uint nbManipulator;
+uniform sampler1D manipulatorPositions;	
+uniform sampler1D states;	
+
 /****************************************/
 /*********** Function headers ***********/
 /****************************************/
@@ -51,6 +58,7 @@ bool shouldDrawBorder();
 bool checkAndColorizeVoxel(in uvec3 voxel, out vec4 color);
 // New function to colorize voxels :
 vec4 fragmentEvaluationSingleChannel(in uvec3 color);
+vec4 stateToColor(in float current_state);
 
 #pragma include_color_shader;
 
@@ -82,6 +90,16 @@ void main() {
 		}
 	}
 
+    // Manipulator display
+    if(int(displayManipulator) == 1) {
+        for(int i = 0; i < int(nbManipulator); ++i) {
+            vec3 manipulatorPos = texelFetch(manipulatorPositions, i, 0).xyz;
+            float current_state = texelFetch(states, i, 0).x;
+            if(distance(vPos.xyz, manipulatorPos) < sphereRadius)
+                color = stateToColor(current_state);
+        }
+    }
+
 	// Alpha is set to a 2.f to signify we're in the texture (the rest will be set to
 	// the value specified udring the call to glClearColor, which is usually in [0, 1]).
 	finalGridCoordinates = sceneBBDiagonal * vec4(vTexCoords, 1.f); + sceneBBPosition;
@@ -95,6 +113,34 @@ vec4 planeIdxToColor(in uint idx) {
 	if (idx == 2u) { return vec4(.0, 1., .0, 1.); }
 	if (idx == 3u) { return vec4(.0, .0, 1., 1.); }
 	return vec4(.27, .27, .27, 1.);
+}
+
+vec4 stateToColor(in float current_state) {
+    bool isNONE     = abs(current_state - 0) < 0.001;
+    bool isAT_RANGE = abs(current_state - 1) < 0.001;
+    bool isSELECTED = abs(current_state - 2) < 0.001;
+    bool isLOCK     = abs(current_state - 3) < 0.001;
+    bool isMOVE     = abs(current_state - 4) < 0.001;
+
+    vec4 manipulatorColor = vec4(0., 0., 0., 1.);
+
+    if(isNONE) {
+        manipulatorColor = vec4(1., 0., 0., 1.);
+    }
+
+    if(isAT_RANGE) {
+        manipulatorColor = vec4(0., 0.9, 0., 1.);
+    }
+
+    if(isMOVE) {
+        manipulatorColor = vec4(0., 1., 0., 1.);
+    }
+
+    if(isLOCK) {
+        manipulatorColor = vec4(0.9, 0.9, 0.9, 1.);
+    }
+
+    return manipulatorColor;
 }
 
 bool shouldDiscard() {
