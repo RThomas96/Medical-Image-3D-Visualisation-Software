@@ -290,7 +290,6 @@ private:
     /* Containers */
 	UITool::GL::MeshManipulator* glMeshManipulator;
 public:
-	std::vector<GridGLView::Ptr> grids;
 	//std::vector<DeformableGrid*> grids;
 private:
     // TODO: remove this
@@ -477,6 +476,8 @@ public:
     std::string filename = "";
 
     int gridToDraw = 0;
+
+	std::vector<GridGLView::Ptr> grids;
 
     SurfaceMesh * cage;
     SurfaceMesh * surfaceMesh;

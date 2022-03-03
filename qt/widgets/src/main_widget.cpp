@@ -107,10 +107,12 @@ void MainWidget::setupWidgets() {
         }
 	});
 
+	this->deformationWidget = new GridDeformationWidget(this->scene);
 	// Actions creation :
 	this->action_addGrid	   = new QAction("Open images");
 	this->action_saveGrid	   = new QAction("Save acquisition");
 	this->action_showVisuBox   = new QAction("Show visu box controller");
+	this->action_showPlanarViewers   = new QAction("Show planar viewer");
 	this->action_exitProgram   = new QAction("Exit program");
 	this->action_drawModeS	   = new QAction("Set draw mode to Solid");
 	this->action_drawModeV	   = new QAction("Set draw mode to Volumetric");
@@ -138,6 +140,7 @@ void MainWidget::setupWidgets() {
 	this->viewMenu->addAction(this->action_drawModeV);
 	this->viewMenu->addAction(this->action_drawModeVB);
 	this->viewMenu->addAction(this->action_showVisuBox);
+	this->viewMenu->addAction(this->action_showPlanarViewers);
 	// help menu :
 	this->helpMenu = this->menuBar()->addMenu("&Help");
 	this->helpMenu->addAction(this->action_showHelp3D);
@@ -158,6 +161,17 @@ void MainWidget::setupWidgets() {
 		this->scene->launchSaveDialog();
 	});
 	QObject::connect(this->action_showVisuBox, &QAction::triggered, [this]() {
+	});
+	QObject::connect(this->action_showPlanarViewers, &QAction::triggered, [this]() {
+            if(this->xViewerCapsule->isHidden()) {
+                this->xViewerCapsule->show();
+                this->yViewerCapsule->show();
+                this->zViewerCapsule->show();
+            } else {
+                this->xViewerCapsule->hide();
+                this->yViewerCapsule->hide();
+                this->zViewerCapsule->hide();
+            }
 	});
 	QObject::connect(this->action_exitProgram, &QAction::triggered, this, &QMainWindow::close);
 	QObject::connect(this->action_drawModeS, &QAction::triggered, [this]() {
@@ -237,10 +251,10 @@ void MainWidget::setupWidgets() {
 	vPZ->setSpacing(0);	   // header above plane Z
 
 	// Those will encapsulate the layouts above :
-	QWidget* _ViewerCapsule = new QWidget();
-	QWidget* xViewerCapsule = new QWidget();
-	QWidget* yViewerCapsule = new QWidget();
-	QWidget* zViewerCapsule = new QWidget();
+	this->_ViewerCapsule = new QWidget();
+	this->xViewerCapsule = new QWidget();
+	this->yViewerCapsule = new QWidget();
+	this->zViewerCapsule = new QWidget();
 
 	this->header3d->setFixedHeight(this->header3d->sizeHint().height());
 	this->headerX->setFixedHeight(this->headerX->sizeHint().height());
@@ -286,11 +300,16 @@ void MainWidget::setupWidgets() {
 	mainSplit->addWidget(splitAbove1);
 
 	QHBoxLayout* viewerLayout = new QHBoxLayout();
-	viewerLayout->addWidget(mainSplit);
+	viewerLayout->addWidget(mainSplit, 4);
+	viewerLayout->addWidget(this->deformationWidget);
 
 	QVBoxLayout* mainLayout = new QVBoxLayout();
-	mainLayout->addLayout(viewerLayout);
-	mainLayout->addWidget(this->controlPanel, 0, Qt::AlignHCenter);
+	mainLayout->addLayout(viewerLayout, 3);
+    mainLayout->addWidget(this->controlPanel, 0, Qt::AlignHCenter);
+
+	xViewerCapsule->hide();
+	yViewerCapsule->hide();
+	zViewerCapsule->hide();
 
 	// add pointers to Qobjects needed for this widget
 	// that we need to detroy at cleanup time :

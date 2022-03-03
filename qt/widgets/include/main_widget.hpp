@@ -54,49 +54,53 @@ protected:
 private:
 	Scene* scene;	 ///< The underlying scene, with the data to display
 
-	ViewerHeader3D* header3d;	 ///< The header for the 3D widget
-	Viewer* viewer;	   ///< The visualisation panel, drawing elements from the scene
+    QWidget* _ViewerCapsule;
+    QWidget* xViewerCapsule;
+    QWidget* yViewerCapsule;
+    QWidget* zViewerCapsule;
 
-	ViewerHeader* headerX;	  ///< Header for the X plane viewer
-	PlanarViewer* viewer_planeX;	///< The visualisation of the grid on plane X
+	ViewerHeader3D* header3d;
+	Viewer* viewer;
 
-	ViewerHeader* headerY;	  ///< Header for the Y plane viewer
-	PlanarViewer* viewer_planeY;	///< The visualisation of the grid on plane Y
+	ViewerHeader* headerX;
+	PlanarViewer* viewer_planeX;
 
-	ViewerHeader* headerZ;	  ///< Header for the Z plane viewer
-	PlanarViewer* viewer_planeZ;	///< The visualisation of the grid on plane Z
+	ViewerHeader* headerY;
+	PlanarViewer* viewer_planeY;
 
-	OpenGLDebugLog* glDebug;	///< Output for the OpenGL debug messages.
+	ViewerHeader* headerZ;
+	PlanarViewer* viewer_planeZ;
 
-	UserSettingsWidget* usettings;	  ///< User settings dialog.
-	GridLoaderWidget* loaderWidget;	   ///< Loader widget
+	OpenGLDebugLog* glDebug;
 
-	GridDeformationWidget* deformationWidget;	   ///< Loader widget
+	UserSettingsWidget* usettings;
+	GridLoaderWidget* loaderWidget;
 
-	ControlPanel* controlPanel;	   ///< The control panel at the bottom of the grid
-	bool widgetSizeSet;	   ///< Checks if the widget size has been set before
-	std::vector<QObject*> strayObj;	   ///< Pointers to all temporary objects allocated in the setup process
+	GridDeformationWidget* deformationWidget;
 
-	// UI Stuff :
+	ControlPanel* controlPanel;
+	bool widgetSizeSet;
+	std::vector<QObject*> strayObj;
 
-	QMenu* fileMenu;	///< The 'File' menu of the application
-	QMenu* viewMenu;	///< The 'View' menu of the application
-	QMenu* helpMenu;	///< The 'Help' menu of the application
-	QAction* action_addGrid;	///< Action to add grid
-	QAction* action_saveGrid;	 ///< Action to save grid
-	QAction* action_exitProgram;	///< Action to exit the program.
-	QAction* action_showVisuBox;	///< Action to show the visualization box controller
-	QAction* action_drawModeS;	  ///< Action to set the scene's draw mode to 'Solid'
-	QAction* action_drawModeV;	  ///< Action to set the scene's draw mode to 'Volumetric'
-	QAction* action_drawModeVB;	   ///< Action to set the scene's draw mode to 'Volumetric boxed'
-	QAction* action_showHelp3D;	   ///< Action to show the help dialog for the 3D viewer
-	QAction* action_showHelpPlane;	  ///< Action to show the help dialog for the planar viewers
-	QAction* action_showSettings;	 ///< Action to show user settings
-	QAction* action_loadMesh;	 ///< The action to load a mesh into the scene.
-	QAction* action_loadCurve;	  ///< The action to load a mesh into the scene.
-	QStatusBar* statusBar;	  ///< Status bar
-	QPushButton* showGLLog;	   ///< Button to open the QOpenGLDebugLog message box.
-	QPushButton* deform_menu;	///< The 'Deform' button for debug purpose
+	QMenu* fileMenu;
+	QMenu* viewMenu;
+	QMenu* helpMenu;
+	QAction* action_addGrid;
+	QAction* action_saveGrid;
+	QAction* action_exitProgram;
+	QAction* action_showVisuBox;
+	QAction* action_showPlanarViewers;
+	QAction* action_drawModeS;
+	QAction* action_drawModeV;
+	QAction* action_drawModeVB;
+	QAction* action_showHelp3D;
+	QAction* action_showHelpPlane;
+	QAction* action_showSettings;
+	QAction* action_loadMesh;
+	QAction* action_loadCurve;
+	QStatusBar* statusBar;
+	QPushButton* showGLLog;
+	QPushButton* deform_menu;
 
     bool isShiftPressed = false;
 };
