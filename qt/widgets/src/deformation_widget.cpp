@@ -60,24 +60,24 @@ GridDeformationWidget::GridDeformationWidget(Scene* scene, QWidget* parent) :
 
     this->toggleMode = new QPushButton("Handle mode", this);
     this->toggleMode->setCheckable(true);
-    this->debug_it = new QPushButton("&ITERATION", this);
-    this->debug_it->setAutoRepeat(true);
-    this->debug_init = new QPushButton("&INIT", this);
+    //this->debug_it = new QPushButton("&ITERATION", this);
+    //this->debug_it->setAutoRepeat(true);
+    //this->debug_init = new QPushButton("&INIT", this);
 
-	this->spinbox_l_selection = new QDoubleSpinBox;
-    this->spinbox_l_selection->setValue(0.);
-	this->spinbox_l_selection->setRange(0., 20000.);
-	this->spinbox_l_selection->setSingleStep(1.);
+	//this->spinbox_l_selection = new QDoubleSpinBox;
+    //this->spinbox_l_selection->setValue(0.);
+	//this->spinbox_l_selection->setRange(0., 20000.);
+	//this->spinbox_l_selection->setSingleStep(1.);
 
-	this->spinbox_N_selection = new QDoubleSpinBox;
-    this->spinbox_N_selection->setValue(0.);
-	this->spinbox_N_selection->setRange(0., 20000.);
-	this->spinbox_N_selection->setSingleStep(1.);
+	//this->spinbox_N_selection = new QDoubleSpinBox;
+    //this->spinbox_N_selection->setValue(0.);
+	//this->spinbox_N_selection->setRange(0., 20000.);
+	//this->spinbox_N_selection->setSingleStep(1.);
 
-	this->spinbox_S_selection = new QDoubleSpinBox;
-    this->spinbox_S_selection->setValue(0.);
-	this->spinbox_S_selection->setRange(0., 20000.);
-	this->spinbox_S_selection->setSingleStep(1.);
+	//this->spinbox_S_selection = new QDoubleSpinBox;
+    //this->spinbox_S_selection->setValue(0.);
+	//this->spinbox_S_selection->setRange(0., 20000.);
+	//this->spinbox_S_selection->setSingleStep(1.);
 
     this->setupLayouts();
 	this->setupSignals(scene);
