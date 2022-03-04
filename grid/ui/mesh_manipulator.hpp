@@ -24,6 +24,8 @@ namespace UITool {
 
         MeshManipulator(BaseMesh * mesh): mesh(mesh) {}
 
+        float getManipulatorSize();
+
         virtual bool isActive() = 0;
 
         // These functions are used from the exterior
