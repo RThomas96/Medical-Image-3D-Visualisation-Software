@@ -1,5 +1,5 @@
 #include "tetrahedral_mesh.hpp"
-#include "../deformation/mesh_deformator.hpp"
+#include "../deformation/mesh_deformer.hpp"
 #include <map>
 #include <algorithm>
 
@@ -34,7 +34,7 @@ int Tetrahedron::getPointIndex(int faceIdx, int ptIdxInFace) const{
 
 TetMesh::TetMesh(): nbTetra(glm::vec3(0., 0., 0.)), mesh(std::vector<Tetrahedron>()) {}
 
-TetMesh::~TetMesh(){delete this->meshDeformator;}
+TetMesh::~TetMesh(){delete this->meshDeformer;}
 
 std::vector<glm::vec3*> TetMesh::insertCubeIntoPtGrid(std::vector<glm::vec3> cubePts, glm::vec3 indices, std::vector<glm::vec3>& vertices, std::vector<int>& ptIndices) {
     int x = indices[0];
@@ -380,8 +380,8 @@ bool TetMesh::getPositionOfRayIntersection(const glm::vec3& origin, const glm::v
 }
 
 void TetMesh::setARAPDeformationMethod() {
-    if(this->meshDeformator->deformMethod != DeformMethod::ARAP) {
-        delete this->meshDeformator;
-        this->meshDeformator = new ARAPMethod(this);
+    if(this->meshDeformer->deformMethod != DeformMethod::ARAP) {
+        delete this->meshDeformer;
+        this->meshDeformer = new ARAPMethod(this);
     }
 }

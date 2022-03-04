@@ -7,7 +7,7 @@
 #include <glm/gtx/io.hpp>
 #include <vector>
 
-struct MeshDeformator;
+struct MeshDeformer;
 namespace UITool {
     class Manipulator;
 }
@@ -29,7 +29,7 @@ public:
     glm::vec3 bbMin;
     glm::vec3 bbMax;
 
-    MeshDeformator * meshDeformator;// It will move the mesh points using certain strategies
+    MeshDeformer * meshDeformer;// It will move the mesh points using certain strategies
 
     glm::vec3 getDimensions() const;
     int getIdxOfClosestPoint(const glm::vec3& p) const;

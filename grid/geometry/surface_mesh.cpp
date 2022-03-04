@@ -1,5 +1,5 @@
 #include "surface_mesh.hpp"
-#include "../deformation/mesh_deformator.hpp"
+#include "../deformation/mesh_deformer.hpp"
 #include <fstream>
 #include <QOpenGLFunctions>
 #include <cfloat>
@@ -199,7 +199,7 @@ void SurfaceMesh::computeNormals() {
 
 void SurfaceMesh::computeNeighborhood() {}
 
-SurfaceMesh::~SurfaceMesh() {delete this->meshDeformator;}
+SurfaceMesh::~SurfaceMesh() {delete this->meshDeformer;}
 
 bool SurfaceMesh::getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, glm::vec3& res) const {
     // Not implemented yet
@@ -208,8 +208,8 @@ bool SurfaceMesh::getPositionOfRayIntersection(const glm::vec3& origin, const gl
 }
 
 void SurfaceMesh::setARAPDeformationMethod() {
-    if(this->meshDeformator->deformMethod != DeformMethod::ARAP) {
-        delete this->meshDeformator;
-        this->meshDeformator = new ARAPMethod(this);
+    if(this->meshDeformer->deformMethod != DeformMethod::ARAP) {
+        delete this->meshDeformer;
+        this->meshDeformer = new ARAPMethod(this);
     }
 }

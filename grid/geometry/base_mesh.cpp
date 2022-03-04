@@ -1,5 +1,5 @@
 #include "base_mesh.hpp"
-#include "../deformation/mesh_deformator.hpp"
+#include "../deformation/mesh_deformer.hpp"
 #include "../ui/manipulator.hpp"
 #include <map>
 #include <algorithm>
@@ -8,7 +8,7 @@
 #include <glm/gtx/string_cast.hpp> 
 
 
-BaseMesh::BaseMesh(): bbMin(glm::vec3(0., 0., 0.)), bbMax(glm::vec3(0., 0., 0.)), meshDeformator(new NormalMethod(this)), transformation(glm::mat4(1.f)), scale(glm::vec3(1., 1., 1.)) {
+BaseMesh::BaseMesh(): bbMin(glm::vec3(0., 0., 0.)), bbMax(glm::vec3(0., 0., 0.)), meshDeformer(new NormalMethod(this)), transformation(glm::mat4(1.f)), scale(glm::vec3(1., 1., 1.)) {
 }
 
 glm::vec3 BaseMesh::getDimensions() const {
@@ -49,8 +49,8 @@ int BaseMesh::getIdxOfClosestPoint(const glm::vec3& p) const{
 }
 
 void BaseMesh::movePoint(const glm::vec3& origin, const glm::vec3& target) {
-    if(this->meshDeformator->hasSelectedPts()) {
-        this->meshDeformator->movePoint(origin, target);
+    if(this->meshDeformer->hasSelectedPts()) {
+        this->meshDeformer->movePoint(origin, target);
         this->computeNormals();
         this->updatebbox();
     } else {
@@ -59,29 +59,29 @@ void BaseMesh::movePoint(const glm::vec3& origin, const glm::vec3& target) {
 }
 
 void BaseMesh::setNormalDeformationMethod() {
-    if(this->meshDeformator->deformMethod != DeformMethod::NORMAL) {
-        delete this->meshDeformator;
-        this->meshDeformator = new NormalMethod(this);
+    if(this->meshDeformer->deformMethod != DeformMethod::NORMAL) {
+        delete this->meshDeformer;
+        this->meshDeformer = new NormalMethod(this);
     }
 }
 
 void BaseMesh::setWeightedDeformationMethod(float radius) {
-    if(this->meshDeformator->deformMethod != DeformMethod::WEIGHTED) {
-        delete this->meshDeformator;
-        this->meshDeformator = new WeightedMethod(this, radius);
+    if(this->meshDeformer->deformMethod != DeformMethod::WEIGHTED) {
+        delete this->meshDeformer;
+        this->meshDeformer = new WeightedMethod(this, radius);
     }
 }
 
 void BaseMesh::selectPts(const glm::vec3& pt) {
-    this->meshDeformator->selectPts(pt);
+    this->meshDeformer->selectPts(pt);
 }
 
 void BaseMesh::deselectPts(const glm::vec3& pt) {
-    this->meshDeformator->deselectPts(pt);
+    this->meshDeformer->deselectPts(pt);
 }
 
 void BaseMesh::deselectAllPts() {
-    this->meshDeformator->deselectAllPts();
+    this->meshDeformer->deselectAllPts();
 }
 
 std::vector<glm::vec3>& BaseMesh::getMeshPositions() {

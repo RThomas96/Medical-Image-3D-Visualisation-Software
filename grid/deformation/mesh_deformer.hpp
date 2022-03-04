@@ -17,11 +17,11 @@ enum DeformMethod {
     ARAP
 };
 
-struct MeshDeformator {
+struct MeshDeformer {
     DeformMethod deformMethod;
     BaseMesh * baseMesh;// TODO: weak pointer
 
-    MeshDeformator(BaseMesh * baseMesh, DeformMethod deformMethod) : baseMesh(baseMesh), deformMethod(deformMethod) {}
+    MeshDeformer(BaseMesh * baseMesh, DeformMethod deformMethod) : baseMesh(baseMesh), deformMethod(deformMethod) {}
 
     virtual bool hasSelectedPts() = 0;
     virtual void selectPts(const glm::vec3& pt) = 0;
@@ -31,15 +31,15 @@ struct MeshDeformator {
     // Here origin is basically the clicked point
     virtual void movePoint(const glm::vec3& origin, const glm::vec3& target) = 0;
 
-    virtual ~MeshDeformator(){};
+    virtual ~MeshDeformer(){};
 };
 
-struct WeightedMethod : MeshDeformator {
+struct WeightedMethod : MeshDeformer {
     float radius;
     glm::vec3 originalPoint;
     std::vector<int> selectedPts;
 
-    WeightedMethod(BaseMesh * baseMesh, float radius) : MeshDeformator(baseMesh, DeformMethod::WEIGHTED), radius(radius) {}
+    WeightedMethod(BaseMesh * baseMesh, float radius) : MeshDeformer(baseMesh, DeformMethod::WEIGHTED), radius(radius) {}
 
     bool hasSelectedPts() override;
     void selectPts(const glm::vec3& pt) override;
@@ -49,10 +49,10 @@ struct WeightedMethod : MeshDeformator {
     void movePoint(const glm::vec3& origin, const glm::vec3& target) override;
 };
 
-struct NormalMethod : MeshDeformator {
+struct NormalMethod : MeshDeformer {
     std::vector<int> selectedPts;
 
-    NormalMethod(BaseMesh * baseMesh) : MeshDeformator(baseMesh, DeformMethod::NORMAL) {}
+    NormalMethod(BaseMesh * baseMesh) : MeshDeformer(baseMesh, DeformMethod::NORMAL) {}
 
     bool hasSelectedPts() override;
     void selectPts(const glm::vec3& pt) override;
@@ -62,7 +62,7 @@ struct NormalMethod : MeshDeformator {
     void movePoint(const glm::vec3& origin, const glm::vec3& target) override;
 };
 
-struct ARAPMethod : MeshDeformator {
+struct ARAPMethod : MeshDeformer {
     bool onSurfaceMesh;
     AsRigidAsPossible arap;
     std::vector<int> selectedPts;

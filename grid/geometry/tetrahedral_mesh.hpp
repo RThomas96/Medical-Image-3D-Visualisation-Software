@@ -2,9 +2,9 @@
 #define TETRAHEDRALMESH_HPP_
 
 #include "base_mesh.hpp"
-//#include "../include/mesh_deformator.hpp"
+//#include "../include/mesh_deformer.hpp"
 
-struct MeshDeformator;
+struct MeshDeformer;
 
 //! \addtogroup geometry
 //! @{

@@ -1,6 +1,6 @@
 #include "mesh_manipulator.hpp"
 #include "manipulator.hpp"
-#include "../deformation/mesh_deformator.hpp"
+#include "../deformation/mesh_deformer.hpp"
 
 
 namespace UITool {
@@ -41,7 +41,7 @@ namespace UITool {
 
     void DirectManipulator::addManipulator(const glm::vec3& position) {
         // Nothing to do here
-        // We deactivate the add manipulator functionnality because we need a MeshDeformator to create a manipulator
+        // We deactivate the add manipulator functionnality because we need a MeshDeformer to create a manipulator
         // And its hard to get from here
         //this->manipulators.push_back(Manipulator(position));
         //if(this->active) {
@@ -487,8 +487,8 @@ namespace UITool {
     void ARAPManipulator::moveManipulator(Manipulator * manipulator) {
         if(!moveMode)
             return;
-        ARAPMethod * deformator = dynamic_cast<ARAPMethod*>(this->mesh->meshDeformator);
-        if(!deformator) {
+        ARAPMethod * deformer = dynamic_cast<ARAPMethod*>(this->mesh->meshDeformer);
+        if(!deformer) {
             std::cout << "WARNING: ARAP manipulator can be used only with the ARAP deformer !" << std::endl;
             return;
         }
@@ -500,13 +500,13 @@ namespace UITool {
         if(this->moveMode) {
             this->mesh->selectPts(manipulator->getManipPosition());
         } else {
-            ARAPMethod * deformator = dynamic_cast<ARAPMethod*>(this->mesh->meshDeformator);
-            if(!deformator) {
+            ARAPMethod * deformer = dynamic_cast<ARAPMethod*>(this->mesh->meshDeformer);
+            if(!deformer) {
                 std::cout << "WARNING: ARAP manipulator can be used only with the ARAP deformer !" << std::endl;
                 return;
             }
             ptrdiff_t index = manipulator - &(this->manipulators[0]);
-            deformator->setHandle(index);
+            deformer->setHandle(index);
             this->handles[index] = true;
         }
 
@@ -516,13 +516,13 @@ namespace UITool {
         if(this->moveMode) {
             this->mesh->deselectPts(manipulator->getManipPosition());
         } else {
-            ARAPMethod * deformator = dynamic_cast<ARAPMethod*>(this->mesh->meshDeformator);
-            if(!deformator) {
+            ARAPMethod * deformer = dynamic_cast<ARAPMethod*>(this->mesh->meshDeformer);
+            if(!deformer) {
                 std::cout << "WARNING: ARAP manipulator can be used only with the ARAP deformer !" << std::endl;
                 return;
             }
             //ptrdiff_t index = manipulator - &(this->manipulators[0]);
-            //deformator->unsetHandle(index);
+            //deformer->unsetHandle(index);
             //this->handles[index] = false;
         }
     }

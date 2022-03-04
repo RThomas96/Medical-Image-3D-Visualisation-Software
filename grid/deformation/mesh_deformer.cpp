@@ -1,4 +1,4 @@
-#include "mesh_deformator.hpp"
+#include "mesh_deformer.hpp"
 #include "../geometry/tetrahedral_mesh.hpp"
 #include "../geometry/surface_mesh.hpp"
 #include <algorithm>
@@ -73,7 +73,7 @@ void NormalMethod::movePoint(const glm::vec3& origin, const glm::vec3& target) {
 
 /***/
 
-ARAPMethod::ARAPMethod(SurfaceMesh * surfaceMesh) : MeshDeformator(dynamic_cast<BaseMesh*>(surfaceMesh), DeformMethod::ARAP){
+ARAPMethod::ARAPMethod(SurfaceMesh * surfaceMesh) : MeshDeformer(dynamic_cast<BaseMesh*>(surfaceMesh), DeformMethod::ARAP){
     this->onSurfaceMesh = true;
     std::vector<Vec3D<float>> ptsAsVec3D;
     for(int i = 0; i < this->baseMesh->getNbVertices(); ++i) {
@@ -87,7 +87,7 @@ ARAPMethod::ARAPMethod(SurfaceMesh * surfaceMesh) : MeshDeformator(dynamic_cast<
     this->arap.setHandles(this->handles);
 }
 
-ARAPMethod::ARAPMethod(BaseMesh * baseMesh) : MeshDeformator(baseMesh, DeformMethod::ARAP) {
+ARAPMethod::ARAPMethod(BaseMesh * baseMesh) : MeshDeformer(baseMesh, DeformMethod::ARAP) {
     this->onSurfaceMesh = false;
     this->arap.clear();
     std::cout << "WARNING: trying to use ARAP deformation on GenericMesh, but ARAP only works on SurfaceMesh, thus the operation will be a [DIRECT] deformation" << std::endl;

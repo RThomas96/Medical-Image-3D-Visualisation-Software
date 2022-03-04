@@ -95,7 +95,7 @@ ADD_EXECUTABLE(neighbor_visu
     ./grid/ui/mesh_manipulator.hpp
     ./grid/drawable/drawable_surface_mesh.hpp
     ./grid/drawable/drawable_manipulator.hpp
-    ./grid/deformation/mesh_deformator.hpp
+    ./grid/deformation/mesh_deformer.hpp
     ./grid/deformation/AsRigidAsPossible.h
     ./grid/utils/Edge.h
     ./grid/utils/Vec3D.h
@@ -123,7 +123,7 @@ ADD_EXECUTABLE(neighbor_visu
     ./grid/ui/mesh_manipulator.cpp
     ./grid/drawable/drawable_surface_mesh.cpp
     ./grid/drawable/drawable_manipulator.cpp
-    ./grid/deformation/mesh_deformator.cpp
+    ./grid/deformation/mesh_deformer.cpp
     ./grid/deformation/AsRigidAsPossible.cpp
     ./grid/deformation/cage_surface_mesh.cpp
 
