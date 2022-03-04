@@ -87,9 +87,9 @@ void GridDeformationWidget::setupLayouts() {
 
     this->mainLayout = new QVBoxLayout;
 
-	layout_mesh     = new QHBoxLayout;
-	layout_selector = new QHBoxLayout;
-	layout_move     = new QHBoxLayout;
+	layout_mesh     = new QVBoxLayout;
+	layout_selector = new QVBoxLayout;
+	layout_move     = new QVBoxLayout;
 
 	this->group_mesh->setLayout(this->layout_mesh);
 	this->group_selector->setLayout(this->layout_selector);

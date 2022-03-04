@@ -40,13 +40,13 @@ public:
 protected:
     QVBoxLayout* mainLayout;
 
-	QHBoxLayout*             layout_mesh;
+	QVBoxLayout*             layout_mesh;
 	QGroupBox*                group_mesh;
 	QRadioButton*      radio_mesh_grid_1; 
 	QRadioButton*      radio_mesh_grid_2; 
 	QRadioButton*     radio_mesh_surface; 
 
-	QHBoxLayout*          layout_selector;
+	QVBoxLayout*          layout_selector;
 	QGroupBox*             group_selector;
 	QRadioButton*   radio_selector_direct; 
 	QRadioButton*     radio_selector_free; 
@@ -54,7 +54,7 @@ protected:
 	QRadioButton* radio_selector_comp; 
 	QRadioButton* radio_selector_ARAP; 
 
-	QHBoxLayout*              layout_move;
+	QVBoxLayout*              layout_move;
 	QGroupBox*                 group_move;
 	QRadioButton*       radio_move_normal; 
 	QRadioButton*     radio_move_weighted; 
