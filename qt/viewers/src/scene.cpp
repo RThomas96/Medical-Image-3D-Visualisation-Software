@@ -2869,9 +2869,12 @@ bool contain(const InfoToSend& value, const InfoToSend& contain) {
     return value & contain > 0;
 }
 
+// TODO: replace this function by a real update function
 void Scene::sendFirstTetmeshToGPU() {
     if(this->grids.size() > 0)
         this->sendTetmeshToGPU(0, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS));
+    std::vector<glm::vec3> meshPositions = this->cage->getWorldMeshPositions();
+    this->glMeshManipulator->meshManipulator->setAllManipulatorsPosition(meshPositions);
 }
 
 void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend) {
@@ -3313,4 +3316,14 @@ void Scene::setColorChannel(ColorChannel mode) {
 			std::cerr << "Cannot set unknown mode\n";
 			break;
 	}
+}
+
+bool Scene::toggleARAPManipulatorMode() {
+    UITool::ARAPManipulator * manipulator = dynamic_cast<UITool::ARAPManipulator*>(this->glMeshManipulator->meshManipulator);
+    if(!manipulator) {
+        std::cout << "WARNING: ARAP manipulator can be used only with the ARAP deformer ! Mode not toggled" << std::endl;
+        return false;
+    }
+    manipulator->toggleMode();
+    return true;
 }

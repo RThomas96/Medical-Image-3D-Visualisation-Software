@@ -44,6 +44,7 @@ public:
     void setNormalDeformationMethod();
     void setWeightedDeformationMethod(float radius);
     void selectPts(const glm::vec3& pt);
+    void deselectPts(const glm::vec3& pt);
     void deselectAllPts();
 
     glm::vec3 getOrigin();

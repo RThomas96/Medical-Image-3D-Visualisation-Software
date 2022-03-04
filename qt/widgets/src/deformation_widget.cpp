@@ -31,6 +31,8 @@ GridDeformationWidget::GridDeformationWidget(Scene* scene, QWidget* parent) :
 	this->radio_selector_position->setChecked(false);
 	this->radio_selector_comp = new QRadioButton("Comp");
 	this->radio_selector_comp->setChecked(false);
+	this->radio_selector_ARAP = new QRadioButton("ARAP");
+	this->radio_selector_ARAP->setChecked(false);
 
 	this->group_move = new QGroupBox("Move method");
 	this->radio_move_normal = new QRadioButton("Normal");
@@ -56,7 +58,8 @@ GridDeformationWidget::GridDeformationWidget(Scene* scene, QWidget* parent) :
 	this->checkbox_wireframe = new QCheckBox;
     this->checkbox_wireframe->setChecked(true);
 
-    this->debug_button = new QPushButton("&DEBUG", this);
+    this->toggleMode = new QPushButton("Handle mode", this);
+    this->toggleMode->setCheckable(true);
     this->debug_it = new QPushButton("&ITERATION", this);
     this->debug_it->setAutoRepeat(true);
     this->debug_init = new QPushButton("&INIT", this);
@@ -100,6 +103,7 @@ void GridDeformationWidget::setupLayouts() {
 	this->layout_selector->addWidget(this->radio_selector_free, 2);
 	this->layout_selector->addWidget(this->radio_selector_position, 3);
 	this->layout_selector->addWidget(this->radio_selector_comp, 4);
+	this->layout_selector->addWidget(this->radio_selector_ARAP, 5);
 
 	this->layout_move->addWidget(this->radio_move_normal, 1);
 	this->layout_move->addWidget(this->radio_move_weighted, 2);
@@ -118,12 +122,12 @@ void GridDeformationWidget::setupLayouts() {
     this->mainLayout->addWidget(this->label_wireframe);
     this->mainLayout->addWidget(this->checkbox_wireframe);
 
-    this->mainLayout->addWidget(this->debug_button);
-    this->mainLayout->addWidget(this->debug_init);
-    this->mainLayout->addWidget(this->debug_it);
-    this->mainLayout->addWidget(this->spinbox_l_selection);
-    this->mainLayout->addWidget(this->spinbox_N_selection);
-    this->mainLayout->addWidget(this->spinbox_S_selection);
+    this->mainLayout->addWidget(this->toggleMode);
+    //this->mainLayout->addWidget(this->debug_init);
+    //this->mainLayout->addWidget(this->debug_it);
+    //this->mainLayout->addWidget(this->spinbox_l_selection);
+    //this->mainLayout->addWidget(this->spinbox_N_selection);
+    //this->mainLayout->addWidget(this->spinbox_S_selection);
 
     this->setLayout(this->mainLayout);
 }
@@ -146,6 +150,8 @@ void GridDeformationWidget::setupSignals(Scene* scene) {
 
 	QObject::connect(this->radio_selector_comp, &QPushButton::clicked, this, [this, scene]() {scene->createNewMeshManipulator(3, this->useSurface);});
 
+	QObject::connect(this->radio_selector_ARAP, &QPushButton::clicked, this, [this, scene]() {scene->createNewMeshManipulator(4, this->useSurface);});
+
 	QObject::connect(this->spinbox_radius_sphere, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, [=](double i){ scene->setManipulatorRadius(i);}); 
 
 	QObject::connect(this->checkbox_wireframe, &QPushButton::clicked, this, [this, scene]() {scene->toggleWireframe();});
@@ -155,6 +161,8 @@ void GridDeformationWidget::setupSignals(Scene* scene) {
 	QObject::connect(this->radio_move_weighted, &QPushButton::clicked, this, [this, scene]() {scene->setWeightedDeformationMethod(this->spinbox_radius_selection->value());});
 
 	QObject::connect(this->radio_move_ARAP, &QPushButton::clicked, this, [this, scene]() {scene->setARAPDeformationMethod();});
+
+    QObject::connect(this->toggleMode, &QPushButton::released, this, [this, scene]() {scene->toggleARAPManipulatorMode();});
 
     // These button can be set
 	//QObject::connect(this->spinbox_l_selection, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, [=](double i){ scene->setL(i);}); 

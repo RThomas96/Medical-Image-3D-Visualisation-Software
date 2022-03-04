@@ -1,5 +1,6 @@
 #include "mesh_manipulator.hpp"
 #include "manipulator.hpp"
+#include "../deformation/mesh_deformator.hpp"
 
 
 namespace UITool {
@@ -382,5 +383,152 @@ namespace UITool {
     }
 
     void CompManipulator::deselectManipulator(Manipulator * manipulator) {
+    }
+
+    /***/
+
+	ARAPManipulator::ARAPManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions): MeshManipulator(mesh) {
+		this->active = false;
+        this->moveMode = true;
+        this->manipulators.reserve(positions.size());
+		for (int i = 0; i < positions.size(); ++i) {
+			this->manipulators.push_back(Manipulator(positions[i]));
+            QObject::connect(&(this->manipulators[i]), &Manipulator::enterAtRangeForGrab, this, &ARAPManipulator::displayManipulator);
+            QObject::connect(&(this->manipulators[i]), &Manipulator::exitFromRangeForGrab, this, &ARAPManipulator::hideManipulator);
+
+            QObject::connect(&(this->manipulators[i]), &Manipulator::mouseRightButtonPressed, this, &ARAPManipulator::selectManipulator);
+            QObject::connect(&(this->manipulators[i]), &Manipulator::mouseRightButtonReleasedAndCtrlIsNotPressed, this, &ARAPManipulator::deselectManipulator);
+            QObject::connect(&(this->manipulators[i]), &Manipulator::isManipulated, this, &ARAPManipulator::moveManipulator);
+
+            this->manipulatorsToDisplay.push_back(false);
+            this->handles.push_back(false);
+			this->manipulators[i].lockPosition();
+            this->manipulators[i].disable();
+		}
+	}
+
+	void ARAPManipulator::setActivation(bool isActive) {
+        this->active = isActive;
+		if (this->active) {
+			for (int i = 0; i < this->manipulators.size(); ++i) {
+				this->manipulators[i].setCustomConstraint();
+                this->manipulatorsToDisplay[i] = false;
+                this->manipulators[i].enable();
+			}
+		} else {
+			for (int i = 0; i < this->manipulators.size(); ++i) {
+				this->manipulators[i].lockPosition();
+                this->manipulatorsToDisplay[i] = false;
+                this->manipulators[i].disable();
+			}
+		}
+	}
+
+    void ARAPManipulator::addManipulator(const glm::vec3& position) {}
+
+    void ARAPManipulator::removeManipulator(Manipulator * manipulatorToDisplay) {}
+
+	void ARAPManipulator::setAllManipulatorsPosition(const std::vector<glm::vec3>& positions) {
+		if (positions.size() == this->manipulators.size()) {
+			for (int i = 0; i < this->manipulators.size(); ++i) {
+				this->manipulators[i].setManipPosition(positions[i]);
+				this->manipulators[i].setLastPosition(positions[i]);
+			}
+		} else {
+			std::cerr << "WARNING: try to set [" << this->manipulators.size() << "] manipulators positions with a position vector of size [" << positions.size() << "]" << std::endl;
+		}
+	}
+
+    void ARAPManipulator::getAllPositions(std::vector<glm::vec3>& positions) {
+		for (int i = 0; i < this->manipulators.size(); ++i) {
+            positions.push_back(this->manipulators[i].getManipPosition());
+		}
+    }
+
+    void ARAPManipulator::getManipulatorsToDisplay(std::vector<bool>& toDisplay) const {
+		for (int i = 0; i < this->manipulatorsToDisplay.size(); ++i) {
+            toDisplay.push_back(this->manipulatorsToDisplay[i]);
+        }
+    }
+
+    void ARAPManipulator::getManipulatorsState(std::vector<State>& states) const {
+        states.clear();
+        for(int i = 0; i < this->manipulatorsToDisplay.size(); ++i) {
+            State currentState = State::NONE;
+            if(this->handles[i])
+                currentState = State::LOCK;
+            if(this->manipulators[i].isAtRangeForGrab)
+                currentState = State::AT_RANGE;
+            if(this->manipulators[i].isSelected)
+                currentState = State::MOVE;
+            states.push_back(currentState);
+        }
+    }
+
+    void ARAPManipulator::displayManipulator(Manipulator * manipulatorToDisplay) {
+        if(!this->active)
+            return;
+        ptrdiff_t index = manipulatorToDisplay - &(this->manipulators[0]);
+        this->manipulatorsToDisplay[index] = true;
+    }
+
+    void ARAPManipulator::hideManipulator(Manipulator * manipulatorToDisplay) {
+        if(!this->active || manipulatorToDisplay->isSelected)
+            return;
+        ptrdiff_t index = manipulatorToDisplay - &(this->manipulators[0]);
+        if(!this->handles[index])
+            this->manipulatorsToDisplay[index] = false;
+    }
+
+    bool ARAPManipulator::isWireframeDisplayed() {
+        return this->active;
+    }
+
+    void ARAPManipulator::moveManipulator(Manipulator * manipulator) {
+        if(!moveMode)
+            return;
+        ARAPMethod * deformator = dynamic_cast<ARAPMethod*>(this->mesh->meshDeformator);
+        if(!deformator) {
+            std::cout << "WARNING: ARAP manipulator can be used only with the ARAP deformer !" << std::endl;
+            return;
+        }
+        this->mesh->movePoint(manipulator->lastPosition, manipulator->getManipPosition());
+        Q_EMIT needSendTetmeshToGPU();
+    }
+
+    void ARAPManipulator::selectManipulator(Manipulator * manipulator) {
+        if(this->moveMode) {
+            this->mesh->selectPts(manipulator->getManipPosition());
+        } else {
+            ARAPMethod * deformator = dynamic_cast<ARAPMethod*>(this->mesh->meshDeformator);
+            if(!deformator) {
+                std::cout << "WARNING: ARAP manipulator can be used only with the ARAP deformer !" << std::endl;
+                return;
+            }
+            ptrdiff_t index = manipulator - &(this->manipulators[0]);
+            deformator->setHandle(index);
+            this->handles[index] = true;
+        }
+
+    }
+
+    void ARAPManipulator::deselectManipulator(Manipulator * manipulator) {
+        if(this->moveMode) {
+            this->mesh->deselectPts(manipulator->getManipPosition());
+        } else {
+            ARAPMethod * deformator = dynamic_cast<ARAPMethod*>(this->mesh->meshDeformator);
+            if(!deformator) {
+                std::cout << "WARNING: ARAP manipulator can be used only with the ARAP deformer !" << std::endl;
+                return;
+            }
+            //ptrdiff_t index = manipulator - &(this->manipulators[0]);
+            //deformator->unsetHandle(index);
+            //this->handles[index] = false;
+        }
+    }
+
+    void ARAPManipulator::toggleMode() {
+        std::cout << "Move mode set to: " << this->moveMode << std::endl;
+        this->moveMode = !this->moveMode;
     }
 }

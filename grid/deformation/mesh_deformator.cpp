@@ -108,12 +108,19 @@ void ARAPMethod::deselectPts(const glm::vec3& pt) {
     if(ptIdxPos != this->selectedPts.end()) {
         this->selectedPts.erase(ptIdxPos);
     }
-
     this->handles[ptIdx] = false;
 }
 
 void ARAPMethod::deselectAllPts() {
     this->selectedPts.clear();
+}
+
+void ARAPMethod::setHandle(int idx) {
+    this->handles[idx] = true;
+}
+
+void ARAPMethod::unsetHandle(int idx) {
+    this->handles[idx] = false;
 }
 
 void ARAPMethod::movePoint(const glm::vec3& origin, const glm::vec3& target) {

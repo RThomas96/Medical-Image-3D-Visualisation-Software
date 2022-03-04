@@ -249,5 +249,54 @@ namespace UITool {
 		std::vector<Manipulator> manipulators;
 		bool active;
 	};
+
+    //! @ingroup uitools
+	class ARAPManipulator : public QObject, public MeshManipulator {
+        Q_OBJECT
+        Q_INTERFACES(UITool::MeshManipulator)
+
+	public:
+		ARAPManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions);
+
+        bool isActive() override { return this->active; };
+        void setActivation(bool isActive) override;
+
+        void addManipulator(const glm::vec3& position) override;
+
+        void removeManipulator(Manipulator * manipulatorToDisplay) override;
+
+        void setAllManipulatorsPosition(const std::vector<glm::vec3>& positions) override;
+        void getAllPositions(std::vector<glm::vec3>& positions) override;
+        void getManipulatorsState(std::vector<State>& states) const override;
+
+        void getManipulatorsToDisplay(std::vector<bool>& toDisplay) const override;
+
+        bool isWireframeDisplayed() override;
+
+    public slots:
+        void displayManipulator(Manipulator * manipulatorToDisplay) override;
+        void hideManipulator(Manipulator * manipulatorToDisplay) override;
+
+        void moveManipulator(Manipulator * manipulator) override;
+        void selectManipulator(Manipulator * manipulator) override;
+        void deselectManipulator(Manipulator * manipulator) override;
+        void toggleMode();
+
+    signals:
+        void needRedraw() override;
+        void keyQReleased() override;
+        void needSendTetmeshToGPU() override;
+        void rayIsCasted(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue) override;
+        void pointIsClickedInPlanarViewer(const glm::vec3& position) override;
+
+	private:
+		std::vector<Manipulator> manipulators;
+        std::vector<bool> manipulatorsToDisplay;
+        std::vector<bool> selectedManipulators;
+        std::vector<bool> handles;
+
+		bool active;
+        bool moveMode;
+	};
 }	 // namespace UITool
 #endif

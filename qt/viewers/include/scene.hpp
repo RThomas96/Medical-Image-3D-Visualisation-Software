@@ -457,6 +457,7 @@ public slots:
 	void toggleWireframe();
     void toggleManipulatorActivation();
     void setManipulatorRadius(float radius);
+    bool toggleARAPManipulatorMode();
 
     // MeshDeformator slots
     void setNormalDeformationMethod();

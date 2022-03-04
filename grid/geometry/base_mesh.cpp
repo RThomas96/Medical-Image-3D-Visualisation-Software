@@ -76,6 +76,10 @@ void BaseMesh::selectPts(const glm::vec3& pt) {
     this->meshDeformator->selectPts(pt);
 }
 
+void BaseMesh::deselectPts(const glm::vec3& pt) {
+    this->meshDeformator->deselectPts(pt);
+}
+
 void BaseMesh::deselectAllPts() {
     this->meshDeformator->deselectAllPts();
 }

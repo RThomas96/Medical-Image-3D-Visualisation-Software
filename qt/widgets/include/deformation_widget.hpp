@@ -48,6 +48,7 @@ protected:
 	QRadioButton*     radio_selector_free; 
 	QRadioButton* radio_selector_position; 
 	QRadioButton* radio_selector_comp; 
+	QRadioButton* radio_selector_ARAP; 
 
 	QHBoxLayout*              layout_move;
 	QGroupBox*                 group_move;
@@ -67,7 +68,7 @@ protected:
 	QLabel*               label_wireframe;
 	QCheckBox*         checkbox_wireframe;
 
-    QPushButton*             debug_button;
+    QPushButton*             toggleMode;
     QPushButton*                 debug_it;
     QPushButton*                 debug_init;
 };

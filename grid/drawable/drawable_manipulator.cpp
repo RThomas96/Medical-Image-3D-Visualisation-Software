@@ -236,17 +236,16 @@ void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scen
     delete this->meshManipulator;
     if(type == 0) {
         this->meshManipulator = new UITool::DirectManipulator(mesh, positions);
-        this->prepare();
-    } else if(type == 1){
+    } else if(type == 1) {
         this->meshManipulator = new UITool::FreeManipulator(mesh, positions);
-        this->prepare();
     } else if(type == 2) {
         this->meshManipulator = new UITool::PositionManipulator(mesh, positions);
-        this->prepare();
-    } else {
+    } else if(type == 3) {
         this->meshManipulator = new UITool::CompManipulator(mesh, positions);
-        this->prepare();
+    } else {
+        this->meshManipulator = new UITool::ARAPManipulator(mesh, positions);
     }
+    this->prepare();
     QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needRedraw()), this, SLOT(prepare()));
     QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needSendTetmeshToGPU()), scene, SLOT(sendFirstTetmeshToGPU()));
     this->toggleActivation();

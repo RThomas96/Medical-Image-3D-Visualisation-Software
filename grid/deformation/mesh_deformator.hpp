@@ -76,6 +76,9 @@ struct ARAPMethod : MeshDeformator {
     void deselectPts(const glm::vec3& pt) override;
     void deselectAllPts() override;
 
+    void setHandle(int idx);
+    void unsetHandle(int idx);
+
     void movePoint(const glm::vec3& origin, const glm::vec3& target) override;
 };
 
