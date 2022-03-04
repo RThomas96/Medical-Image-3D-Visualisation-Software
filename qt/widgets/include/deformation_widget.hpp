@@ -30,8 +30,12 @@ public:
 	~GridDeformationWidget(void);
 	void setupLayouts();
 	void setupSignals(Scene* scene);
+    void updateScene(Scene * scene);
 
-    bool useSurface = false;;
+    bool useSurface = false;
+    int meshManipulatorType = 0;
+    int moveMethod = 0;
+    int gridToDraw = 0;
 
 protected:
     QVBoxLayout* mainLayout;

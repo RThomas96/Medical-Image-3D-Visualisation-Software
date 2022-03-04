@@ -135,34 +135,55 @@ void GridDeformationWidget::setupLayouts() {
 GridDeformationWidget::~GridDeformationWidget() {
 }
 
-void GridDeformationWidget::setupSignals(Scene* scene) {
-	QObject::connect(this->radio_mesh_grid_1, &QPushButton::clicked, this, [this, scene]() {this->useSurface = false; scene->sendTetmeshToGPU(0, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS | InfoToSend::TEXCOORD | InfoToSend::NEIGHBORS)); scene->gridToDraw = 0;});
+void GridDeformationWidget::updateScene(Scene * scene) {
+    scene->gridToDraw = this->gridToDraw;
+    if(!this->useSurface)
+        scene->sendTetmeshToGPU(this->gridToDraw, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS | InfoToSend::TEXCOORD | InfoToSend::NEIGHBORS)); 
+    scene->createNewMeshManipulator(this->meshManipulatorType, this->useSurface);
+    if(this->moveMethod == 0) {
+        scene->setNormalDeformationMethod();
+    }
 
-	QObject::connect(this->radio_mesh_grid_2, &QPushButton::clicked, this, [this, scene]() {this->useSurface = false; scene->sendTetmeshToGPU(1, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS | InfoToSend::TEXCOORD | InfoToSend::NEIGHBORS)); scene->gridToDraw = 1;});
+    if(this->moveMethod == 1) {
+        scene->setWeightedDeformationMethod(this->spinbox_radius_selection->value());
+    }
 
-	QObject::connect(this->radio_mesh_surface, &QPushButton::clicked, this, [this, scene]() {this->useSurface = true;});
+    if(this->moveMethod == 2) {
+        scene->setARAPDeformationMethod();
+    }
+}
 
-	QObject::connect(this->radio_selector_direct, &QPushButton::clicked, this, [this, scene]() {scene->createNewMeshManipulator(0, this->useSurface);});
+void GridDeformationWidget::setupSignals(Scene * scene) {
+	QObject::connect(this->radio_mesh_grid_1, &QPushButton::clicked, this, [this, scene]() {this->useSurface = false; scene->gridToDraw = 0; this->updateScene(scene);});
 
-	QObject::connect(this->radio_selector_free, &QPushButton::clicked, this, [this, scene]() {scene->createNewMeshManipulator(1, this->useSurface);});
+	QObject::connect(this->radio_mesh_grid_2, &QPushButton::clicked, this, [this, scene]() {this->useSurface = false; scene->gridToDraw = 1; this->updateScene(scene);});
 
-	QObject::connect(this->radio_selector_position, &QPushButton::clicked, this, [this, scene]() {scene->createNewMeshManipulator(2, this->useSurface);});
+	QObject::connect(this->radio_mesh_surface, &QPushButton::clicked, this, [this, scene]() {this->useSurface = true; this->updateScene(scene);});
 
-	QObject::connect(this->radio_selector_comp, &QPushButton::clicked, this, [this, scene]() {scene->createNewMeshManipulator(3, this->useSurface);});
+	QObject::connect(this->radio_selector_direct, &QPushButton::clicked, this, [this, scene]() {this->meshManipulatorType = 0; this->updateScene(scene);});
 
-	QObject::connect(this->radio_selector_ARAP, &QPushButton::clicked, this, [this, scene]() {scene->createNewMeshManipulator(4, this->useSurface);});
+	QObject::connect(this->radio_selector_free, &QPushButton::clicked, this, [this, scene]() {this->meshManipulatorType = 1; this->updateScene(scene);});
+
+	QObject::connect(this->radio_selector_position, &QPushButton::clicked, this, [this, scene]() {this->meshManipulatorType = 2; this->updateScene(scene);});
+
+	QObject::connect(this->radio_selector_comp, &QPushButton::clicked, this, [this, scene]() {this->meshManipulatorType = 3; this->updateScene(scene);});
+
+	QObject::connect(this->radio_selector_ARAP, &QPushButton::clicked, this, [this, scene]() {this->meshManipulatorType = 4; this->updateScene(scene);});
+
+	QObject::connect(this->radio_move_normal, &QPushButton::clicked, this, [this, scene]() {this->moveMethod = 0; this->updateScene(scene);});
+
+	QObject::connect(this->radio_move_weighted, &QPushButton::clicked, this, [this, scene]() {this->moveMethod = 1; this->updateScene(scene);});
+
+	QObject::connect(this->radio_move_ARAP, &QPushButton::clicked, this, [this, scene]() {this->moveMethod = 2; this->updateScene(scene);});
+
+    /***/
+
+    QObject::connect(this->toggleMode, &QPushButton::released, this, [this, scene]() {scene->toggleARAPManipulatorMode();});
 
 	QObject::connect(this->spinbox_radius_sphere, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, [=](double i){ scene->setManipulatorRadius(i);}); 
 
 	QObject::connect(this->checkbox_wireframe, &QPushButton::clicked, this, [this, scene]() {scene->toggleWireframe();});
 
-	QObject::connect(this->radio_move_normal, &QPushButton::clicked, this, [this, scene]() {scene->setNormalDeformationMethod();});
-
-	QObject::connect(this->radio_move_weighted, &QPushButton::clicked, this, [this, scene]() {scene->setWeightedDeformationMethod(this->spinbox_radius_selection->value());});
-
-	QObject::connect(this->radio_move_ARAP, &QPushButton::clicked, this, [this, scene]() {scene->setARAPDeformationMethod();});
-
-    QObject::connect(this->toggleMode, &QPushButton::released, this, [this, scene]() {scene->toggleARAPManipulatorMode();});
 
     // These button can be set
 	//QObject::connect(this->spinbox_l_selection, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, [=](double i){ scene->setL(i);}); 
