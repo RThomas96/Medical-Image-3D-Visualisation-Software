@@ -71,7 +71,7 @@ void PlanarViewer::draw(void) {
 	glm::vec2 fbDims = glm::vec2(static_cast<float>(viewerSize.width()), static_cast<float>(viewerSize.height()));
 
 	glm::vec2 fullOffset = this->offset + this->tempOffset;
-	this->sceneToShow->drawGridMonoPlaneView(fbDims, this->planeToShow, this->planeOrientation, this->zoomRatio, fullOffset);
+	//this->sceneToShow->drawGridMonoPlaneView(fbDims, this->planeToShow, this->planeOrientation, this->zoomRatio, fullOffset);
 
 	if (this->posRequest.x > -1 && this->status_bar != nullptr) {
 		glm::vec4 pixelValue = this->sceneToShow->readFramebufferContents(this->defaultFramebufferObject(), this->posRequest);

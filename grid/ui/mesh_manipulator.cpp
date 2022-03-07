@@ -1,6 +1,7 @@
 #include "mesh_manipulator.hpp"
 #include "manipulator.hpp"
 #include "../deformation/mesh_deformer.hpp"
+#include "../deformation/cage_surface_mesh.hpp"
 
 
 namespace UITool {
@@ -285,8 +286,23 @@ namespace UITool {
     }
 
     void PositionManipulator::moveManipulator(Manipulator * manipulator) {
-        //this->mesh->translate(manipulator->getManipPosition() - manipulator->lastPosition);
-        this->mesh->setOrigin(manipulator->getManipPosition());
+        bool modifyPoint = true;
+        glm::vec3 move = manipulator->getManipPosition() - manipulator->getLastPosition();
+
+        if(modifyPoint) {
+            this->mesh->setOrigin(move, true);
+        } else {
+            this->mesh->setOrigin(manipulator->getManipPosition());
+        }
+
+        CageMVC * cage = dynamic_cast<CageMVC*>(this->mesh);
+        if(cage) {
+            if(modifyPoint) {
+                cage->meshToDeform->setOrigin(move, true);
+            } else {
+                cage->meshToDeform->setOrigin(manipulator->getManipPosition());
+            }
+        }
     }
 
     void PositionManipulator::selectManipulator(Manipulator * manipulator) {

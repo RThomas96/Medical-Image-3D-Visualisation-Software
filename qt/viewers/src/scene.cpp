@@ -612,7 +612,6 @@ uint16_t Scene::sendGridValuesToGPU(int gridIdx) {
 }
 
 void Scene::addGrid(Grid * gridLoaded) {
-    // TODO: probably a bug here
 	glm::vec<4, std::size_t, glm::defaultp> dimensions{gridLoaded->getResolution(), 2};
 
 	GridGLView::Ptr gridView = std::make_shared<GridGLView>(gridLoaded);
@@ -665,6 +664,25 @@ void Scene::addGrid(Grid * gridLoaded) {
 	this->setVisuBoxMinCoord(glm::uvec3());
 	this->setVisuBoxMaxCoord(gridLoaded->getResolution());
 	this->resetVisuBox();
+
+    // Update mesh scale
+    glm::vec3 gridDim = this->grids[0]->grid->bbMin - this->grids[0]->grid->bbMax;
+    glm::vec3 meshDim = this->surfaceMesh->bbMin - this->surfaceMesh->bbMax;
+    glm::vec3 diff = gridDim - meshDim;
+    float scaleFactor = std::abs(std::max(diff[0], std::max(diff[1], diff[2])));
+    glm::vec3 scale = glm::vec3(scaleFactor, scaleFactor, scaleFactor);
+    for(int i = 0; i < this->surfaceMesh->getNbVertices(); ++i)
+        this->surfaceMesh->vertices[i] *= scale;
+
+    for(int i = 0; i < this->cage->getNbVertices(); ++i)
+        this->cage->vertices[i] *= scale;
+
+    this->surfaceMesh->updatebbox();
+    this->surfaceMesh->computeNormals();
+    this->cage->updatebbox();
+    this->cage->computeNormals();
+    this->drawableMesh->makeVAO();
+    this->drawableCage->makeVAO();
 }
 
 void Scene::updateBoundingBox(void) {
@@ -1944,10 +1962,10 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
     }
 
 	if (not this->grids.empty()) {
-		this->drawPlanes(mvMat, pMat, this->drawMode == DrawMode::Solid);
+		//this->drawPlanes(mvMat, pMat, this->drawMode == DrawMode::Solid);
 	}
 
-	this->drawBoundingBox(this->sceneBB, glm::vec4(.5, .5, .0, 1.), mvMat, pMat);
+	//this->drawBoundingBox(this->sceneBB, glm::vec4(.5, .5, .0, 1.), mvMat, pMat);
 	this->showVAOstate = false;
 
 }

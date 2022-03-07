@@ -96,18 +96,25 @@ glm::mat4 BaseMesh::getModelTransformation() {
     return this->transformation;
 }
 
-void BaseMesh::setOrigin(const glm::vec3& origin) {
-    this->transformation[3][0] = origin[0];
-    this->transformation[3][1] = origin[1];
-    this->transformation[3][2] = origin[2];
-    std::cout << "New origin: " << glm::to_string(this->transformation) << std::endl;
+void BaseMesh::setOrigin(const glm::vec3& origin, bool modifyPoints) {
+    if(modifyPoints) {
+        glm::vec3 move = origin / this->scale;
+        for(int i = 0; i < this->getNbVertices(); ++i) {
+            this->vertices[i] += move;
+        }
+        this->computeNormals();
+        this->updatebbox();
+    } else {
+        this->transformation[3][0] = origin[0];
+        this->transformation[3][1] = origin[1];
+        this->transformation[3][2] = origin[2];
+    }
 }
 
 void BaseMesh::translate(const glm::vec3& vec) {
     this->transformation[3][0] += vec[0];
     this->transformation[3][1] += vec[1];
     this->transformation[3][2] += vec[2];
-    std::cout << "New origin: " << glm::to_string(this->transformation) << std::endl;
 }
 
 void BaseMesh::setScale(glm::vec3 scale) {
@@ -164,8 +171,16 @@ void BaseMesh::setTransformation(const glm::mat3& transf) {
             this->transformation[i][j] = transf[i][j];
 }
 
-void BaseMesh::rotate(const float angle, const glm::vec3 axis) {
-    this->transformation = glm::rotate(this->transformation, glm::radians(angle), axis);
+void BaseMesh::rotate(const float angle, const glm::vec3 axis, bool modifyPoints) {
+    if(modifyPoints) {
+        for(int i = 0; i < this->getNbVertices(); ++i) {
+            this->vertices[i] = glm::vec3(glm::rotate(glm::radians(angle), axis) * glm::vec4(this->vertices[i], 1.));
+        }
+        this->computeNormals();
+        this->updatebbox();
+    } else {
+        this->transformation = glm::rotate(this->transformation, glm::radians(angle), axis);
+    }
 }
 
 glm::mat4 BaseMesh::getModelMatrix() const {

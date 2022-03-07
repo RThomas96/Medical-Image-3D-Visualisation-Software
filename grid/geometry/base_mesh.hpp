@@ -51,9 +51,9 @@ public:
     glm::mat4 getModelMatrix() const;
     void translate(const glm::vec3& vec);
     void rotate(const glm::mat3& transf);
-    void rotate(const float angle, const glm::vec3 axis); // In degree
+    void rotate(const float angle, const glm::vec3 axis, bool modifyPoints = false); // In degree
     glm::mat4 getModelTransformation();
-    void setOrigin(const glm::vec3& origin);
+    void setOrigin(const glm::vec3& origin, bool modifyPoints = false);
     void setTransformation(const glm::mat3& transf);
     void setTransformation(const glm::mat4& transf);
     void setScale(glm::vec3 scale);
