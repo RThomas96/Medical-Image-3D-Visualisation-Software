@@ -30,7 +30,7 @@ public:
 	~GridDeformationWidget(void);
 	void setupLayouts();
 	void setupSignals(Scene* scene);
-    void updateScene(Scene * scene);
+    void updateScene(Scene * scene, int meshTool, int moveMethod);
 
     bool useSurface = false;
     int meshManipulatorType = 0;
@@ -66,13 +66,13 @@ protected:
 	QDoubleSpinBox* spinbox_N_selection;
 	QDoubleSpinBox* spinbox_S_selection;
 
+	QVBoxLayout*              layout_visu;
+	QGroupBox*                 group_visu;
 	QLabel*           label_radius_sphere;
 	QDoubleSpinBox* spinbox_radius_sphere;
-
-	QLabel*               label_wireframe;
 	QCheckBox*         checkbox_wireframe;
 
-    QPushButton*             toggleMode;
+    QPushButton*             handleMode;
     QPushButton*                 debug_it;
     QPushButton*                 debug_init;
 };

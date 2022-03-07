@@ -14,7 +14,7 @@ GridDeformationWidget::GridDeformationWidget(Scene* scene, QWidget* parent) :
 
     this->setWindowFlags(Qt::WindowStaysOnTopHint);
 
-	this->group_mesh = new QGroupBox("Mesh to select");
+	this->group_mesh = new QGroupBox("Objects");
 	this->radio_mesh_grid_1 = new QRadioButton("Grid 1");
 	this->radio_mesh_grid_1->setChecked(true);
 	this->radio_mesh_grid_2 = new QRadioButton("Grid 2");
@@ -22,19 +22,19 @@ GridDeformationWidget::GridDeformationWidget(Scene* scene, QWidget* parent) :
 	this->radio_mesh_surface = new QRadioButton("Surface");
 	this->radio_mesh_surface->setChecked(false);
 
-	this->group_selector = new QGroupBox("Selector mode");
+	this->group_selector = new QGroupBox("Tools");
 	this->radio_selector_direct = new QRadioButton("Direct");
 	this->radio_selector_direct->setChecked(true);
 	this->radio_selector_free = new QRadioButton("Free");
 	this->radio_selector_free->setChecked(false);
 	this->radio_selector_position = new QRadioButton("Position");
 	this->radio_selector_position->setChecked(false);
-	this->radio_selector_comp = new QRadioButton("Comp");
+	this->radio_selector_comp = new QRadioButton("Marker");
 	this->radio_selector_comp->setChecked(false);
 	this->radio_selector_ARAP = new QRadioButton("ARAP");
 	this->radio_selector_ARAP->setChecked(false);
 
-	this->group_move = new QGroupBox("Move method");
+	this->group_move = new QGroupBox("Deformation");
 	this->radio_move_normal = new QRadioButton("Normal");
 	this->radio_move_normal->setChecked(true);
 	this->radio_move_weighted = new QRadioButton("Weighted");
@@ -47,19 +47,22 @@ GridDeformationWidget::GridDeformationWidget(Scene* scene, QWidget* parent) :
     this->spinbox_radius_selection->setValue(30.);
 	this->spinbox_radius_selection->setRange(0., 20000.);
 	this->spinbox_radius_selection->setSingleStep(10.);
+	this->label_radius_selection->hide();
+	this->spinbox_radius_selection->hide();
 
-	this->label_radius_sphere = new QLabel("Sphere radius");
+	this->group_visu = new QGroupBox("Options");
+	this->label_radius_sphere = new QLabel("Radius");
 	this->spinbox_radius_sphere = new QDoubleSpinBox;
     this->spinbox_radius_sphere->setValue(5.);
-	this->spinbox_radius_sphere->setRange(0., 20000.);
+	this->spinbox_radius_sphere->setRange(0., 9999.);
 	this->spinbox_radius_sphere->setSingleStep(1.);
 
-	this->label_wireframe = new QLabel("Display wireframe");
 	this->checkbox_wireframe = new QCheckBox;
     this->checkbox_wireframe->setChecked(true);
+    this->checkbox_wireframe->setText("Wireframe");
 
-    this->toggleMode = new QPushButton("Handle mode", this);
-    this->toggleMode->setCheckable(true);
+    this->handleMode = new QPushButton("Handle mode", this);
+    this->handleMode->setCheckable(true);
     //this->debug_it = new QPushButton("&ITERATION", this);
     //this->debug_it->setAutoRepeat(true);
     //this->debug_init = new QPushButton("&INIT", this);
@@ -90,10 +93,12 @@ void GridDeformationWidget::setupLayouts() {
 	layout_mesh     = new QVBoxLayout;
 	layout_selector = new QVBoxLayout;
 	layout_move     = new QVBoxLayout;
+	layout_visu     = new QVBoxLayout;
 
 	this->group_mesh->setLayout(this->layout_mesh);
 	this->group_selector->setLayout(this->layout_selector);
 	this->group_move->setLayout(this->layout_move);
+	this->group_visu->setLayout(this->layout_visu);
 
 	this->layout_mesh->addWidget(this->radio_mesh_grid_1, 1);
 	this->layout_mesh->addWidget(this->radio_mesh_grid_2, 2);
@@ -104,25 +109,31 @@ void GridDeformationWidget::setupLayouts() {
 	this->layout_selector->addWidget(this->radio_selector_position, 3);
 	this->layout_selector->addWidget(this->radio_selector_comp, 4);
 	this->layout_selector->addWidget(this->radio_selector_ARAP, 5);
+    this->layout_selector->addWidget(this->handleMode, 6);
+    this->handleMode->hide();
 
 	this->layout_move->addWidget(this->radio_move_normal, 1);
 	this->layout_move->addWidget(this->radio_move_weighted, 2);
+    this->layout_move->addWidget(this->label_radius_selection);
+    this->layout_move->addWidget(this->spinbox_radius_selection);
 	this->layout_move->addWidget(this->radio_move_ARAP, 3);
+
+	//QHBoxLayout * minilayout = new QHBoxLayout;
+    //minilayout->addWidget(this->label_radius_sphere);
+    //minilayout->addWidget(this->spinbox_radius_sphere, 1);
+    //this->layout_visu->addLayout(minilayout);
+    //this->layout_visu->addWidget(this->checkbox_wireframe, 2);
+
+    this->layout_visu->addWidget(this->label_radius_sphere, 1);
+    this->layout_visu->addWidget(this->spinbox_radius_sphere, 2);
+    this->layout_visu->addWidget(this->checkbox_wireframe, 3);
 
     this->mainLayout->addWidget(this->group_mesh);
     this->mainLayout->addWidget(this->group_selector);
     this->mainLayout->addWidget(this->group_move);
+    this->mainLayout->addWidget(this->group_visu);
 
-    this->mainLayout->addWidget(this->label_radius_selection);
-    this->mainLayout->addWidget(this->spinbox_radius_selection);
 
-    this->mainLayout->addWidget(this->label_radius_sphere);
-    this->mainLayout->addWidget(this->spinbox_radius_sphere);
-
-    this->mainLayout->addWidget(this->label_wireframe);
-    this->mainLayout->addWidget(this->checkbox_wireframe);
-
-    this->mainLayout->addWidget(this->toggleMode);
     //this->mainLayout->addWidget(this->debug_init);
     //this->mainLayout->addWidget(this->debug_it);
     //this->mainLayout->addWidget(this->spinbox_l_selection);
@@ -135,7 +146,57 @@ void GridDeformationWidget::setupLayouts() {
 GridDeformationWidget::~GridDeformationWidget() {
 }
 
-void GridDeformationWidget::updateScene(Scene * scene) {
+void GridDeformationWidget::updateScene(Scene * scene, int meshTool, int moveMethod) {
+    // Lock/Unlock features
+    this->radio_mesh_grid_1->setEnabled(true);
+    this->radio_mesh_grid_2->setEnabled(true);
+    this->radio_mesh_surface->setEnabled(true);
+    this->radio_selector_direct->setEnabled(true);
+    this->radio_selector_free->setEnabled(true);
+    this->radio_selector_position->setEnabled(true);
+    this->radio_selector_comp->setEnabled(true);
+    this->radio_selector_ARAP->setEnabled(true);
+    this->radio_move_normal->setEnabled(true);
+    this->radio_move_weighted->setEnabled(true);
+    this->radio_move_ARAP->setEnabled(true);
+    this->handleMode->hide();
+	this->label_radius_selection->hide();
+	this->spinbox_radius_selection->hide();
+    if(this->useSurface) {
+        this->radio_selector_free->setEnabled(false);
+        this->radio_selector_comp->setEnabled(false);
+        if(moveMethod == 2 || (this->meshManipulatorType != 4 && meshTool == 4)) {
+            this->meshManipulatorType = 4;
+            this->moveMethod = 2;
+            this->radio_move_ARAP->setEnabled(true);
+            this->radio_selector_ARAP->setEnabled(true);
+            this->handleMode->show();
+
+            this->radio_move_ARAP->setChecked(true);
+            this->radio_selector_ARAP->setChecked(true);
+            this->radio_move_normal->setEnabled(false);
+            this->radio_move_weighted->setEnabled(false);
+            this->radio_move_ARAP->setEnabled(false);
+        }
+        if(this->meshManipulatorType == 4 && meshTool != 4 && moveMethod == -1) {
+            this->moveMethod = 0;
+            this->radio_move_normal->setEnabled(true);
+            this->radio_move_weighted->setEnabled(true);
+            this->radio_move_ARAP->setEnabled(true);
+            this->radio_move_normal->setChecked(true);
+            this->radio_move_weighted->setChecked(false);
+            this->radio_move_ARAP->setChecked(false);
+        }
+    } else {
+        this->radio_selector_ARAP->setEnabled(false);
+	    this->radio_selector_position->setEnabled(false);
+    }
+
+    if(meshTool >= 0)
+        this->meshManipulatorType = meshTool;
+    if(moveMethod >= 0)
+        this->moveMethod = moveMethod;
+
     scene->gridToDraw = this->gridToDraw;
     if(!this->useSurface)
         scene->sendTetmeshToGPU(this->gridToDraw, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS | InfoToSend::TEXCOORD | InfoToSend::NEIGHBORS)); 
@@ -145,6 +206,8 @@ void GridDeformationWidget::updateScene(Scene * scene) {
     }
 
     if(this->moveMethod == 1) {
+        this->label_radius_selection->show(); 
+        this->spinbox_radius_selection->show(); 
         scene->setWeightedDeformationMethod(this->spinbox_radius_selection->value());
     }
 
@@ -154,31 +217,31 @@ void GridDeformationWidget::updateScene(Scene * scene) {
 }
 
 void GridDeformationWidget::setupSignals(Scene * scene) {
-	QObject::connect(this->radio_mesh_grid_1, &QPushButton::clicked, this, [this, scene]() {this->useSurface = false; scene->gridToDraw = 0; this->updateScene(scene);});
+	QObject::connect(this->radio_mesh_grid_1, &QPushButton::clicked, this, [this, scene]() {this->useSurface = false; scene->gridToDraw = 0; this->updateScene(scene, -1, -1);});
 
-	QObject::connect(this->radio_mesh_grid_2, &QPushButton::clicked, this, [this, scene]() {this->useSurface = false; scene->gridToDraw = 1; this->updateScene(scene);});
+	QObject::connect(this->radio_mesh_grid_2, &QPushButton::clicked, this, [this, scene]() {this->useSurface = false; scene->gridToDraw = 1; this->updateScene(scene, -1, -1);});
 
-	QObject::connect(this->radio_mesh_surface, &QPushButton::clicked, this, [this, scene]() {this->useSurface = true; this->updateScene(scene);});
+	QObject::connect(this->radio_mesh_surface, &QPushButton::clicked, this, [this, scene]() {if(!this->useSurface) {this->useSurface = true; this->updateScene(scene, -1, -1);}});
 
-	QObject::connect(this->radio_selector_direct, &QPushButton::clicked, this, [this, scene]() {this->meshManipulatorType = 0; this->updateScene(scene);});
+	QObject::connect(this->radio_selector_direct, &QPushButton::clicked, this, [this, scene]() {this->updateScene(scene, 0, -1);});
 
-	QObject::connect(this->radio_selector_free, &QPushButton::clicked, this, [this, scene]() {this->meshManipulatorType = 1; this->updateScene(scene);});
+	QObject::connect(this->radio_selector_free, &QPushButton::clicked, this, [this, scene]() {this->updateScene(scene, 1, -1);});
 
-	QObject::connect(this->radio_selector_position, &QPushButton::clicked, this, [this, scene]() {this->meshManipulatorType = 2; this->updateScene(scene);});
+	QObject::connect(this->radio_selector_position, &QPushButton::clicked, this, [this, scene]() {this->updateScene(scene, 2, -1);});
 
-	QObject::connect(this->radio_selector_comp, &QPushButton::clicked, this, [this, scene]() {this->meshManipulatorType = 3; this->updateScene(scene);});
+	QObject::connect(this->radio_selector_comp, &QPushButton::clicked, this, [this, scene]() {this->updateScene(scene, 3, -1);});
 
-	QObject::connect(this->radio_selector_ARAP, &QPushButton::clicked, this, [this, scene]() {this->meshManipulatorType = 4; this->updateScene(scene);});
+	QObject::connect(this->radio_selector_ARAP, &QPushButton::clicked, this, [this, scene]() {this->updateScene(scene, 4, 2);});
 
-	QObject::connect(this->radio_move_normal, &QPushButton::clicked, this, [this, scene]() {this->moveMethod = 0; this->updateScene(scene);});
+	QObject::connect(this->radio_move_normal, &QPushButton::clicked, this, [this, scene]() {this->updateScene(scene, -1, 0);});
 
-	QObject::connect(this->radio_move_weighted, &QPushButton::clicked, this, [this, scene]() {this->moveMethod = 1; this->updateScene(scene);});
+	QObject::connect(this->radio_move_weighted, &QPushButton::clicked, this, [this, scene]() {this->updateScene(scene, -1, 1);});
 
-	QObject::connect(this->radio_move_ARAP, &QPushButton::clicked, this, [this, scene]() {this->moveMethod = 2; this->updateScene(scene);});
+	QObject::connect(this->radio_move_ARAP, &QPushButton::clicked, this, [this, scene]() {this->updateScene(scene, -1, 2);});
 
     /***/
 
-    QObject::connect(this->toggleMode, &QPushButton::released, this, [this, scene]() {scene->toggleARAPManipulatorMode();});
+    QObject::connect(this->handleMode, &QPushButton::released, this, [this, scene]() {scene->toggleARAPManipulatorMode();});
 
 	QObject::connect(this->spinbox_radius_sphere, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, [=](double i){ scene->setManipulatorRadius(i);}); 
 
