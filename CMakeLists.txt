@@ -93,10 +93,12 @@ ADD_EXECUTABLE(neighbor_visu
     ./grid/images/cache.hpp
     ./grid/ui/manipulator.hpp
     ./grid/ui/mesh_manipulator.hpp
+    ./grid/ui/kid_manipulator.h
     ./grid/drawable/drawable_surface_mesh.hpp
     ./grid/drawable/drawable_manipulator.hpp
     ./grid/deformation/mesh_deformer.hpp
     ./grid/deformation/AsRigidAsPossible.h
+    ./grid/utils/GLUtilityMethods.h
     ./grid/utils/Edge.h
     ./grid/utils/Vec3D.h
     ./grid/utils/Triangle.h
@@ -126,6 +128,7 @@ ADD_EXECUTABLE(neighbor_visu
     ./grid/deformation/mesh_deformer.cpp
     ./grid/deformation/AsRigidAsPossible.cpp
     ./grid/deformation/cage_surface_mesh.cpp
+    ./grid/utils/GLUtilityMethods.cpp
 
     #To remove
     ./legacy/image/utils/include/image_api_common.hpp

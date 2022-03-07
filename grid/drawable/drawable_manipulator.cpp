@@ -217,6 +217,12 @@ void UITool::GL::MeshManipulator::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* m
 	this->sceneGL->glBindBuffer(GL_ARRAY_BUFFER, 0);
 	this->sceneGL->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	this->sceneGL->glUseProgram(0);
+
+    if(this->isPositionManip) {
+        PositionManipulator* manip = dynamic_cast<PositionManipulator*>(this->meshManipulator);
+        manip->kid_manip.setDisplayScale(this->manipulatorRadius * 10.);
+        manip->kid_manip.draw();
+    }
 }
 
 void UITool::GL::MeshManipulator::setRadius(float radius) { 
@@ -234,12 +240,14 @@ void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scen
     const std::vector<glm::vec3>& positions = mesh->getWorldMeshPositions();
     this->displayWireframe = false;// Because wathever the manipulator created it is not activated at creation
     delete this->meshManipulator;
+    this->isPositionManip = false;
     if(type == 0) {
         this->meshManipulator = new UITool::DirectManipulator(mesh, positions);
     } else if(type == 1) {
         this->meshManipulator = new UITool::FreeManipulator(mesh, positions);
     } else if(type == 2) {
         this->meshManipulator = new UITool::PositionManipulator(mesh, positions);
+        this->isPositionManip = true;
     } else if(type == 3) {
         this->meshManipulator = new UITool::CompManipulator(mesh, positions);
     } else {

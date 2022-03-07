@@ -50,7 +50,7 @@ public:
     glm::vec3 getOrigin();
     glm::mat4 getModelMatrix() const;
     void translate(const glm::vec3& vec);
-    void rotate(const glm::mat3& transf);
+    void rotate(const glm::mat3& transf, bool modifyPoints = false);
     void rotate(const float angle, const glm::vec3 axis, bool modifyPoints = false); // In degree
     glm::mat4 getModelTransformation();
     void setOrigin(const glm::vec3& origin, bool modifyPoints = false);

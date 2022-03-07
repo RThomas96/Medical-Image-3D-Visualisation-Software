@@ -1933,19 +1933,19 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	glm::mat4 transfoMat = glm::mat4(1.f);
+	/* Manipulator drawing  */
+
+	glm::mat4 mMat(1.0f);
+	this->glMeshManipulator->draw(mvMat, pMat, glm::value_ptr(mMat));
+
+	/***********************/
+
 
 	if (this->drawMode == DrawMode::Solid) {
 		for (std::size_t i = 0; i < this->grids.size(); ++i) {
 			this->drawGridPlaneView(mvMat, pMat, transfoMat, this->grids[i]);
 		}
 	} else if (this->drawMode == DrawMode::Volumetric || this->drawMode == DrawMode::VolumetricBoxed) {
-		/* Manipulator drawing  */
-
-		glm::mat4 mMat(1.0f);
-		this->glMeshManipulator->draw(mvMat, pMat, glm::value_ptr(mMat));
-
-		/***********************/
-
         if(this->grids.size() > 0)
             this->drawGridVolumetricView(mvMat, pMat, camPos, this->grids[gridToDraw]);
 

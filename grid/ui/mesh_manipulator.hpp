@@ -2,6 +2,7 @@
 #define MESH_MANIPULATOR_HPP_
 
 #include "manipulator.hpp"
+#include "kid_manipulator.h"
 
 //! @defgroup uitools UI
 //! @brief Group of tools used to interact with the application.
@@ -159,7 +160,6 @@ namespace UITool {
         void addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue);
 
 		Manipulator manipulator;
-
 		bool active;
 	};
 
@@ -185,6 +185,8 @@ namespace UITool {
         void getManipulatorsState(std::vector<State>& states) const override;
 
         bool isWireframeDisplayed() override;
+
+		RotationManipulator kid_manip;
 
     public slots:
         void displayManipulator(Manipulator * manipulatorToDisplay) override;

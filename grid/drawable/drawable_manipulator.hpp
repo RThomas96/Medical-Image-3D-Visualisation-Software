@@ -49,6 +49,8 @@ namespace UITool {
 
             glm::vec3 lightPosition;
 
+            bool isPositionManip = false;
+
         public slots:
 			void prepare();
 
