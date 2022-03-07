@@ -39,8 +39,10 @@ ARAPController::ARAPController(Viewer* _v, Scene* _s) {
 	this->button_save_json = nullptr;
 	this->button_save_image = nullptr;
 
+#ifdef ENABLE_SEPARATE_ARAP_STAGES
 	this->button_align_arap = nullptr;
 	this->button_scale_arap = nullptr;
+#endif
 	this->button_start_arap = nullptr;
 
 	this->label_mesh_name = nullptr;
@@ -83,8 +85,10 @@ void ARAPController::init() {
 	this->button_save_json = new QPushButton("Save curve as JSON");
 	this->button_save_image = new QPushButton("Save image");
 
+#ifdef ENABLE_SEPARATE_ARAP_STAGES
 	this->button_align_arap = new QPushButton("Align constraints");
 	this->button_scale_arap = new QPushButton("Scale constraints");
+#endif
 	this->button_start_arap = new QPushButton("Perform deformation");
 
 	this->button_manip_select_all = new QPushButton("Select all vertices");
@@ -143,8 +147,12 @@ void ARAPController::initLayout() {
 	widget_layout->addWidget(this->checkbox_enable_deformation);
 	widget_layout->addWidget(this->button_manip_select_all);
 	widget_layout->addWidget(this->button_manip_select_none);
+
+#ifdef ENABLE_SEPARATE_ARAP_STAGES
 	widget_layout->addWidget(this->button_align_arap);
 	widget_layout->addWidget(this->button_scale_arap);
+#endif
+
 	widget_layout->addWidget(this->button_start_arap);
 	widget_layout->addStretch(2);
 	widget_layout->addWidget(separator_save);
@@ -171,8 +179,12 @@ void ARAPController::updateButtonsActivated() {
 	this->button_load_curve->setEnabled(false);
 	this->button_load_image->setEnabled(false);
 	this->button_load_second_curve->setEnabled(false);
+
+#ifdef ENABLE_SEPARATE_ARAP_STAGES
 	this->button_align_arap->setEnabled(false);
 	this->button_scale_arap->setEnabled(false);
+#endif
+
 	this->button_start_arap->setEnabled(false);
 	this->button_save_mesh->setEnabled(false);
 	this->button_save_curve->setEnabled(false);
@@ -197,8 +209,10 @@ void ARAPController::updateButtonsActivated() {
 		this->button_load_image->setEnabled(true);
 	}
 	if (this->state >= States::ImageLoaded) {
+#ifdef ENABLE_SEPARATE_ARAP_STAGES
 		this->button_align_arap->setEnabled(true);
 		this->button_scale_arap->setEnabled(true);
+#endif
 		this->button_start_arap->setEnabled(true);
 		this->button_save_image->setEnabled(true);
 	}
@@ -206,6 +220,7 @@ void ARAPController::updateButtonsActivated() {
 		// This is after the automatic ARAP deformation, not after a hand-made deformation.
 		this->button_load_second_curve->setEnabled(true);
 		this->button_save_json->setEnabled(true);
+		this->checkbox_enable_deformation->setCheckState(Qt::CheckState::Checked);
 	}
 	// Re-enable signals for widgets we possibly changed the state of :
 	this->checkbox_enable_deformation->blockSignals(false);
@@ -224,8 +239,10 @@ void ARAPController::initSignals() {
 	QObject::connect(this->button_save_image, &QPushButton::pressed, this, &ARAPController::saveImageToBinaryFile);
 	QObject::connect(this->button_save_json, &QPushButton::pressed, this, &ARAPController::saveCurveAsJSON);
 	// Buttons to control the ARAP deformation :
+#ifdef ENABLE_SEPARATE_ARAP_STAGES
 	QObject::connect(this->button_align_arap, &QPushButton::pressed, this, &ARAPController::arap_performAlignment);
 	QObject::connect(this->button_scale_arap, &QPushButton::pressed, this, &ARAPController::arap_performScaling);
+#endif
 	QObject::connect(this->button_start_arap, &QPushButton::pressed, this, &ARAPController::arap_computeDeformation);
 
 	QObject::connect(this->checkbox_enable_deformation, &QCheckBox::stateChanged, this, [this](int state) -> void {
@@ -359,6 +376,10 @@ void ARAPController::loadMeshFromFile() {
 		// Note : the mesh data is the first one to be loaded in, so loading in a new mesh
 		// effectively results in the whole process being reset. Delete everything here :
 		std::cerr << "Deleting all previous data from the ARAP controller ...\n";
+		this->mesh_file_path = this->mesh_file_name = "";
+		this->curve_file_path = this->curve_file_name = "";
+		this->output_image_file_path = this->output_image_file_name = "";
+		this->generated_mesh_save_path = "";
 		this->deleteMeshData();
 		this->deleteCurveData();
 		this->deleteGridData();
@@ -784,7 +805,7 @@ void ARAPController::arap_performAlignment() {
 	// not yet applied to the mesh : apply it and create the mesh interface & manipulators :
 	if (this->mesh_interface == nullptr) {
 		this->applyTransformation_Mesh();
-		this->initializeMeshInterface();
+		//this->initializeMeshInterface();
 	}
 
 	std::vector<glm::vec3> transforms;	  // estimated translations between current point position and ARAP handle on the image
@@ -827,7 +848,7 @@ void ARAPController::arap_performAlignment() {
 	// ... but the drawing of the mesh doesn't need to have it anymore :
 	this->scene->getDrawableMesh()->setTransformation(glm::mat4(1.f));
 
-	this->mesh_interface->loadAndInitialize(this->mesh->getVertices(), this->mesh->getTriangles());
+	//this->mesh_interface->loadAndInitialize(this->mesh->getVertices(), this->mesh->getTriangles());
 
 	this->updateMeshDrawable();
 	if (this->curve) {
@@ -852,7 +873,7 @@ void ARAPController::arap_performScaling() {
 	// not yet applied to the mesh : apply it and create the mesh interface & manipulators :
 	if (this->mesh_interface == nullptr) {
 		this->applyTransformation_Mesh();
-		this->initializeMeshInterface();
+		//this->initializeMeshInterface();
 	}
 
 	std::shared_ptr<Mesh> _mesh = this->mesh;
@@ -909,6 +930,13 @@ void ARAPController::arap_computeDeformation() {
 	}
 	this->updateCompoundedConstraints(); // We'll need them later, better make sure they're updated.
 
+#ifndef ENABLE_SEPARATE_ARAP_STAGES
+	// Those are performed by different buttons when the above macro is defined, need to call them here if not :
+	this->arap_performScaling();
+	this->arap_performAlignment();
+#endif
+
+
 	// Check if mesh interface hasn't been created yet. If not, there might also be a transform
 	// not yet applied to the mesh : apply it and create the mesh interface & manipulators :
 	if (this->mesh_interface == nullptr) {
@@ -928,11 +956,12 @@ void ARAPController::arap_computeDeformation() {
 	std::cerr << "Generated vertex handles." << '\n';
 
 	std::cerr << "Setting handles on ARAP ...\n";
-	this->mesh_interface->set_locked_vertices(arap_handles);
 	std::cerr << "Computing constrained ARAP ...\n";
+	this->mesh_interface->unset_locked_vertices();
 	this->mesh_interface->changedConstraints(arap_handles);
 	std::cerr << "Computed constrained ARAP. Propagating vertex positions ...\n";
 
+	this->mesh_interface->set_locked_vertices(arap_handles);
 	this->mesh->setNewVertexPositions(this->mesh_interface->get_modified_vertices());
 	this->mesh->update();
 

@@ -110,6 +110,10 @@ public:
 			if( fixed_vertices[i] || selected_vertices[i] )
 				handles_vertices[i] = true;
 		}
+		// Override some vertices with the locked ones :
+		for (const auto& locked : this->locked_vertices) {
+			handles_vertices [ locked.first ] = true;
+		}
 		return handles_vertices;
 	}
 
@@ -139,6 +143,7 @@ public:
 		precomputed_selected_vertices.clear();
 		precomputed_fixed_vertices.clear();
 		ARAP = AsRigidAsPossible();
+		this->locked_vertices.clear();
 	}
 
 	~MMInterface()
@@ -178,6 +183,7 @@ public:
 	void clear()
 	{
 		modified_vertices.clear();
+		locked_vertices.clear();
 
 		vertices.clear();
 		triangles.clear();
@@ -526,6 +532,11 @@ public:
 				fixed_vertices[ v ] = !moving;
 			}
 		}
+		// Override some vertices with the locked ones :
+		for (const auto& locked : this->locked_vertices) {
+			selected_vertices [ locked.first ] = false;
+			fixed_vertices [ locked.first ] = true;
+		}
 		this->precompute_selection();
 	}
 
@@ -595,6 +606,11 @@ public:
 				selected_vertices[ v ] = false;
 				fixed_vertices[ v ] = false;
 			}
+		}
+		// Override some vertices with the locked ones :
+		for (const auto& locked : this->locked_vertices) {
+			selected_vertices [ locked.first ] = false;
+			fixed_vertices [ locked.first ] = true;
 		}
 		this->precompute_selection();
 	}
@@ -725,6 +741,11 @@ public:
 			modified_vertices[ idx ] = point_t( p[0] , p[1] , p[2] );
 		}
 
+		for (const auto& locked : this->locked_vertices) {
+			modified_vertices[locked.first] = point_t(locked.second[0], locked.second[1], locked.second[2]);
+			//handles[locked.first] = true;
+		}
+
 		if( deformationMode == REALTIME )
 		{
 			ARAP.compute_deformation(modified_vertices);
@@ -746,15 +767,24 @@ public:
 	{
 		glm::vec3 p;
 		std::vector<bool> handles (vertices.size() , false);
+		this->precomputed_selected_vertices.clear();
+		this->precomputed_fixed_vertices.clear();
 
 		for( unsigned int i = 0 ; i < input_def.size() ; ++i )
 		{
 			modified_vertices[ input_def[i].first ] = point_t( input_def[i].second[0] , input_def[i].second[1] , input_def[i].second[2] );
 			handles[ input_def[i].first ] = true;
+			this->precomputed_fixed_vertices.push_back(this->modified_vertices[input_def[i].first]);
 		}
 
+		// Override locked constraints' positions with the one they're supposed to have :
+		std::cerr << "ARAP::changedConstraints() -> setting locked vertices ...\n";
 		for (const auto& locked : this->locked_vertices) {
+			std::cerr << "\tVertex " << locked.first << " / " << handles.size() << "... \n";
 			modified_vertices[locked.first] = point_t(locked.second[0], locked.second[1], locked.second[2]);
+			if (not handles[locked.first]) {
+				this->precomputed_fixed_vertices.push_back(this->modified_vertices[locked.first]);
+			}
 			handles[locked.first] = true;
 		}
 

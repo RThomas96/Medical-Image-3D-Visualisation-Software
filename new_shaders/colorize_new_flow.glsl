@@ -21,6 +21,12 @@ layout(std140) uniform ColorBlock {
 } colorChannels;
 #endif
 
+float sigmoid(in float f) {
+    float lambda = 3.f;
+    float center = .65f;
+    return 1.f / (1. + exp(-(lambda * (f - center))));
+}
+
 /// Determines if the color channel is visible or not, given a certain value for the channel.
 bool isColorChannelVisible(in uint index, in uint value) {
 	return (colorChannels.attributes[index].isVisible > 0u) &&
@@ -63,7 +69,9 @@ vec4 fragmentEvaluationSingleChannel(in uvec3 color) {
 	// First, check if main is visible :
 	if (visible_main) {
 		if (mainValue >= color.r && mainValue >= color.g && mainValue >= color.b) {
-			return colorizeFragmentSingleChannel(main, mainValue);
+			vec4 raw_color = colorizeFragmentSingleChannel(main, mainValue);
+			float adjusted = sigmoid(raw_color.x);
+			return vec4(adjusted, adjusted, adjusted, raw_color.w);
 		}
 	}
 	// Here, no 'else' condition since we don't want to end if the second condition

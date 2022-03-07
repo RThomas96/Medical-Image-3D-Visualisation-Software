@@ -224,15 +224,6 @@ protected:
 
 	QString generated_mesh_save_path;	///< The path of the filename for the generated mesh !
 
-	/**
-	 * 	------- LATER -------
-	 * Buttons/sliders for :
-	 * - Settings of the program
-	 * 		- ARAP Iterations
-	 * 		- Removing constraints
-	 * 		- Modifying constraints
-	 */
-
 	QPushButton* button_load_image;			///< Button to load an image from a file.
 	QPushButton* button_load_mesh;			///< Button to load a mesh from a file.
 	QPushButton* button_load_constraints;	///< Button to attempt loading the constraints file.
@@ -244,8 +235,10 @@ protected:
 	QPushButton* button_save_json;	///< Button to save the curve as a JSON file, with information about the mesh.
 	QPushButton* button_save_image;	///< Button to dump the image to a file.
 
+#ifdef ENABLE_SEPARATE_ARAP_STAGES
 	QPushButton* button_align_arap;	///< Button to align the control points of the ARAP deformation.
 	QPushButton* button_scale_arap;	///< Button to scale roughly the two BB of the control points of the ARAP deformation.
+#endif
 	QPushButton* button_start_arap;	///< Button to start the ARAP deformation using the currently available ARAP constraints.
 
 	QPushButton* button_manip_select_all;	///< Button to select all vertices of the mesh as handles.

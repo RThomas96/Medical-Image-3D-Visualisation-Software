@@ -28,10 +28,13 @@ vec4 shadingParams = vec4(
 	25.f	// \alpha - specular exponent
 );
 
+vec3 ivory_color = vec3(183.f/255.f, 191.f/255.f, 153.f/255.f); //ivory-kinda color
+vec3 turquoise_color = vec3(60./255., 165./255., 165./255.);
+
 /// @brief Base color of the bone (RGB : #e3dac9)
-vec3 bone_base_color = vec3(183.f/255.f, 191.f/255.f, 153.f/255.f);
-vec3 ambient_color = vec3(183.f/255.f, 191.f/255.f, 153.f/255.f);
-vec3 specular_color = vec3(0.502f, 0.502f, 0.502f);
+vec3 bone_base_color = turquoise_color;
+vec3 ambient_color = turquoise_color;
+vec3 specular_color = vec3(0.902f, 0.902f, 0.902f);
 
 void phongComputation(in vec4 normal, in vec4 position, out vec4 color);
 void phongComputation_diffuse_and_specular(in vec4 position, in vec4 normal, in vec4 lightPos, out vec4 diffuse, out vec4 specular);
