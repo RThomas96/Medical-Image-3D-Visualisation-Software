@@ -118,12 +118,6 @@ void GridDeformationWidget::setupLayouts() {
     this->layout_move->addWidget(this->spinbox_radius_selection);
 	this->layout_move->addWidget(this->radio_move_ARAP, 3);
 
-	//QHBoxLayout * minilayout = new QHBoxLayout;
-    //minilayout->addWidget(this->label_radius_sphere);
-    //minilayout->addWidget(this->spinbox_radius_sphere, 1);
-    //this->layout_visu->addLayout(minilayout);
-    //this->layout_visu->addWidget(this->checkbox_wireframe, 2);
-
     this->layout_visu->addWidget(this->label_radius_sphere, 1);
     this->layout_visu->addWidget(this->spinbox_radius_sphere, 2);
     this->layout_visu->addWidget(this->checkbox_wireframe, 3);
@@ -132,13 +126,6 @@ void GridDeformationWidget::setupLayouts() {
     this->mainLayout->addWidget(this->group_selector);
     this->mainLayout->addWidget(this->group_move);
     this->mainLayout->addWidget(this->group_visu);
-
-
-    //this->mainLayout->addWidget(this->debug_init);
-    //this->mainLayout->addWidget(this->debug_it);
-    //this->mainLayout->addWidget(this->spinbox_l_selection);
-    //this->mainLayout->addWidget(this->spinbox_N_selection);
-    //this->mainLayout->addWidget(this->spinbox_S_selection);
 
     this->setLayout(this->mainLayout);
 }
