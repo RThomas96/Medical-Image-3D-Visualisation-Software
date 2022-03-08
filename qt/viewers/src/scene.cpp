@@ -123,6 +123,9 @@ Scene::Scene() :
 	this->vbo_Texture3D_VertTex		= 0;
 	this->vbo_Texture3D_VertIdx		= 0;
 
+    this->state_idx = 0;
+    this->pos_idx = 0;
+
 	this->color0		= glm::vec3(1., .0, .0);
 	this->color1		= glm::vec3(.0, .0, 1.);
 	this->color0_second = glm::vec3(1., .0, .0);
@@ -292,9 +295,12 @@ void Scene::generateColorScales() {
 	colorScaleUploadParameters.format		  = GL_RGB;
 	colorScaleUploadParameters.type			  = GL_FLOAT;
 	colorScaleUploadParameters.data			  = colorScaleData_greyscale.data();
-	this->tex_colorScale_greyscale	  = this->uploadTexture1D(colorScaleUploadParameters);
+
+    glDeleteTextures(1, &this->tex_colorScale_greyscale);
+	this->tex_colorScale_greyscale = this->uploadTexture1D(colorScaleUploadParameters);
 
 	colorScaleUploadParameters.data	   = colorScaleData_hsv2rgb.data();
+    glDeleteTextures(1, &this->tex_colorScale_hsv2rgb);
 	this->tex_colorScale_hsv2rgb = this->uploadTexture1D(colorScaleUploadParameters);
 }
 
@@ -570,6 +576,7 @@ uint16_t Scene::sendGridValuesToGPU(int gridIdx) {
 	_gridTex.size.z = dimensions.z;
 
 	std::vector<std::uint16_t> slices;
+    glDeleteTextures(1, &this->grids[gridIdx]->gridTexture);
     this->grids[gridIdx]->gridTexture = this->newAPI_uploadTexture3D_allocateonly(_gridTex);
 
     int nbSlice = this->grids[gridIdx]->grid->getResolution()[2];
@@ -1566,13 +1573,15 @@ void Scene::prepareUniformsMonoPlaneView(planes _plane, planeHeading _heading, g
 	texParamsState.data   = state.data();
 	texParamsState.size.x = state.size();
 
-	int state_idx = this->uploadTexture1D(texParamsState);
+    glDeleteTextures(1, &this->state_idx);
+	this->state_idx = this->uploadTexture1D(texParamsState);
 
 	std::vector<glm::vec3> allPositions;
 	this->glMeshManipulator->meshManipulator->getAllPositions(allPositions);
 	texParamsPos.data   = allPositions.data();
 	texParamsPos.size.x = allPositions.size();
-	int pos_idx = this->uploadTexture1D(texParamsPos);
+    glDeleteTextures(1, &this->pos_idx);
+	this->pos_idx = this->uploadTexture1D(texParamsPos);
 
     /***/
 
@@ -2968,6 +2977,7 @@ void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend) {
         texParams.format						   = GL_RGB;
         texParams.type							   = GL_FLOAT;
         texParams.data							   = rawVertices;
+        glDeleteTextures(1, &this->grids[gridIdx]->volumetricMesh.vertexPositions);
         this->grids[gridIdx]->volumetricMesh.vertexPositions = this->uploadTexture2D(texParams);
     }
 
@@ -2977,6 +2987,7 @@ void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend) {
         texParams.size.y					   = normHeight;
         texParams.format					   = GL_RGBA;
         texParams.data						   = rawNormals;
+        glDeleteTextures(1, &this->grids[gridIdx]->volumetricMesh.faceNormals);
         this->grids[gridIdx]->volumetricMesh.faceNormals = this->uploadTexture2D(texParams);
     }
 
@@ -2986,6 +2997,7 @@ void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend) {
         texParams.size.y							  = coorHeight;
         texParams.format							  = GL_RGB;
         texParams.data								  = tex;
+        glDeleteTextures(1, &this->grids[gridIdx]->volumetricMesh.textureCoordinates);
         this->grids[gridIdx]->volumetricMesh.textureCoordinates = this->uploadTexture2D(texParams);
     }
 
@@ -2993,6 +3005,7 @@ void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend) {
         texParams.size.x						= neighbWidth;
         texParams.size.y						= neighbHeight;
         texParams.data							= rawNeighbors;
+        glDeleteTextures(1, &this->grids[gridIdx]->volumetricMesh.neighborhood);
         this->grids[gridIdx]->volumetricMesh.neighborhood = this->uploadTexture2D(texParams);
     }
 

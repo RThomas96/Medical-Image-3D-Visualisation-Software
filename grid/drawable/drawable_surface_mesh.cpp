@@ -99,24 +99,29 @@ void DrawableMesh::makeVAO(void) {
 	}
 
 	// Create the VAO :
+	this->gl->glDeleteVertexArrays(1, &this->vao);
 	this->gl->glGenVertexArrays(1, &this->vao);
 
 	// Create the VBOs :
 
 	// vertex buffer :
+	this->gl->glDeleteBuffers(1, &this->vbo_vertices);
 	this->gl->glGenBuffers(1, &this->vbo_vertices);
 	this->gl->glBindBuffer(GL_ARRAY_BUFFER, this->vbo_vertices);
 	this->gl->glBufferData(GL_ARRAY_BUFFER, vertices.size() * 3 * sizeof(GLfloat), vertices.data(), GL_STATIC_DRAW);
 	// normal buffer :
+    this->gl->glDeleteBuffers(1, &this->vbo_normals);
 	this->gl->glGenBuffers(1, &this->vbo_normals);
 	this->gl->glBindBuffer(GL_ARRAY_BUFFER, this->vbo_normals);
 	this->gl->glBufferData(GL_ARRAY_BUFFER, normals.size() * 3 * sizeof(GLfloat), normals.data(), GL_STATIC_DRAW);
 	// texture buffer :
+    this->gl->glDeleteBuffers(1, &this->vbo_texture);
 	this->gl->glGenBuffers(1, &this->vbo_texture);
 	this->gl->glBindBuffer(GL_ARRAY_BUFFER, this->vbo_texture);
 	this->gl->glBufferData(GL_ARRAY_BUFFER, texture_dummy.size() * 2 * sizeof(GLfloat), texture_dummy.data(), GL_STATIC_DRAW);
 
 	// index buffer :
+    this->gl->glDeleteBuffers(1, &this->vbo_indices);
 	this->gl->glGenBuffers(1, &this->vbo_indices);
 	this->gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vbo_indices);
 	this->gl->glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr>(final_order.size()) * sizeof(GLuint), final_order.data(), GL_STATIC_DRAW);

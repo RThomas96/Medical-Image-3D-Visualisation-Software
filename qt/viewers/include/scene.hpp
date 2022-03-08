@@ -197,6 +197,9 @@ private:
 	GLuint tex_colorScale_hsv2rgb;
 	GLuint tex_colorScale_user0;
 	GLuint tex_colorScale_user1;
+
+    GLuint state_idx;
+    GLuint pos_idx;
     /*************************************************/
 
 	GLuint sphere_size_to_draw;
