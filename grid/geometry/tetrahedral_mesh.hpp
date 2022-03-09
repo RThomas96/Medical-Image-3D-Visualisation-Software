@@ -28,7 +28,7 @@ struct Tetrahedron {
 
     glm::vec3 baryToWorldCoord(const glm::vec4& coord);
 
-    void computeNormals(glm::mat4 modelMatrix);
+    void computeNormals();
 
     int getPointIndex(int faceIdx, int ptIdxInFace) const;
 };

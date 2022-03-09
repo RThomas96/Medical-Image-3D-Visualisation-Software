@@ -8,7 +8,7 @@
 #include <glm/gtx/string_cast.hpp> 
 
 
-BaseMesh::BaseMesh(): bbMin(glm::vec3(0., 0., 0.)), bbMax(glm::vec3(0., 0., 0.)), meshDeformer(new NormalMethod(this)), transformation(glm::mat4(1.f)), scale(glm::vec3(1., 1., 1.)) {
+BaseMesh::BaseMesh(): bbMin(glm::vec3(0., 0., 0.)), bbMax(glm::vec3(0., 0., 0.)), meshDeformer(new NormalMethod(this)) {
 }
 
 glm::vec3 BaseMesh::getDimensions() const {
@@ -32,14 +32,14 @@ void BaseMesh::updatebbox() {
 
     this->bbMax = glm::vec3(this->vertices[maxXIdx][0], this->vertices[maxYIdx][1], this->vertices[maxZIdx][2]);
     this->bbMin = glm::vec3(this->vertices[minXIdx][0], this->vertices[minYIdx][1], this->vertices[minZIdx][2]);
+    //std::cout << "BBox updated to [" << glm::to_string(this->bbMin) << "] [" << glm::to_string(this->bbMax) << "]" << "[" << glm::to_string(this->getOrigin()) << "]" << std::endl;
 }
 
 int BaseMesh::getIdxOfClosestPoint(const glm::vec3& p) const{
     float distance = std::numeric_limits<float>::max();
     int res = 0;
     for(int i = 0; i < this->vertices.size(); ++i) {
-        const glm::vec3& p2 = this->toWorld(this->vertices[i]);
-        float currentDistance = glm::distance(p, p2);
+        float currentDistance = glm::distance(p, this->vertices[i]);
         if(currentDistance < distance) {
             distance = currentDistance;
             res = i;
@@ -89,53 +89,39 @@ std::vector<glm::vec3>& BaseMesh::getMeshPositions() {
 }
 
 glm::vec3 BaseMesh::getOrigin() {
-    return glm::vec3(this->transformation[3][0], this->transformation[3][1], this->transformation[3][2]);
-}
-
-glm::mat4 BaseMesh::getModelTransformation() {
-    return this->transformation;
-}
-
-void BaseMesh::setOrigin(const glm::vec3& origin, bool modifyPoints) {
-    if(modifyPoints) {
-        glm::vec3 move = origin / this->scale;
-        for(int i = 0; i < this->getNbVertices(); ++i) {
-            this->vertices[i] += move;
-        }
-        this->computeNormals();
-        this->updatebbox();
-    } else {
-        this->transformation[3][0] = origin[0];
-        this->transformation[3][1] = origin[1];
-        this->transformation[3][2] = origin[2];
-    }
+    return glm::vec3(this->bbMax + this->bbMin)/2.f;
 }
 
 void BaseMesh::translate(const glm::vec3& vec) {
-    this->transformation[3][0] += vec[0];
-    this->transformation[3][1] += vec[1];
-    this->transformation[3][2] += vec[2];
-}
-
-void BaseMesh::setScale(glm::vec3 scale) {
-    this->scale = scale;
-}
-
-std::vector<glm::vec3> BaseMesh::getWorldMeshPositions() {
-    std::vector<glm::vec3> worldPos;
-    for(int i = 0; i < this->vertices.size(); ++i) {
-        glm::vec4 pt = this->getModelMatrix() * glm::vec4(this->vertices[i], 1.);
-        worldPos.push_back(glm::vec3(pt[0], pt[1], pt[2]));
+    for(int i = 0; i < this->getNbVertices(); ++i) {
+        this->vertices[i] += vec;
     }
-    return worldPos;
+    this->computeNormals();
+    this->updatebbox();
 }
 
-glm::vec3 BaseMesh::toWorld(const glm::vec3& pt) const {
-    return glm::vec3(this->getModelMatrix() * glm::vec4(pt, 1.));
+void BaseMesh::rotate(const glm::mat3& transf) {
+    glm::vec3 origin = this->getOrigin();
+    this->translate(-origin);
+    for(int i = 0; i < this->getNbVertices(); ++i) {
+        this->vertices[i] = transf * this->vertices[i];
+    }
+    this->translate(origin);
+    this->computeNormals();
+    this->updatebbox();
 }
 
-glm::vec3 BaseMesh::toModel(const glm::vec3& pt) const {
-    return glm::vec3(glm::inverse(this->getModelMatrix()) * glm::vec4(pt, 1.));
+void BaseMesh::scale(const glm::vec3& scale) {
+    for(int i = 0; i < this->getNbVertices(); ++i) {
+        this->vertices[i] *= scale;
+    }
+    this->computeNormals();
+    this->updatebbox();
+}
+
+void BaseMesh::setOrigin(const glm::vec3& origin) {
+    glm::vec3 move = origin - this->getOrigin();
+    this->translate(move);
 }
 
 const glm::vec3& BaseMesh::getVertice(int i) const {
@@ -146,60 +132,8 @@ const glm::vec3& BaseMesh::getVerticeNormal(int i) const {
     return this->verticesNormals[i];
 }
 
-const glm::vec3 BaseMesh::getWorldVertice(int i) const {
-    return glm::vec3(this->getModelMatrix() * glm::vec4(this->vertices[i], 1.));
-}
-
-const glm::vec3 BaseMesh::getWorldVerticeNormal(int i) const {
-    return glm::normalize(glm::vec3(this->getModelMatrix() * glm::vec4(this->verticesNormals[i], 1.)));
-    //return glm::normalize(this->transformation * glm::vec4(this->verticesNormals[i], 1.));
-}
-
 int BaseMesh::getNbVertices() const {
     return this->vertices.size();
-}
-
-void BaseMesh::rotate(const glm::mat3& transf, bool modifyPoints) {
-    if(modifyPoints) {
-        for(int i = 0; i < this->getNbVertices(); ++i) {
-            this->vertices[i] = transf * this->vertices[i];
-        }
-        this->computeNormals();
-        this->updatebbox();
-    } else {
-        for(int i = 0; i < 3; ++i)
-            for(int j = 0; j < 3; ++j)
-                this->transformation[i][j] += transf[i][j];
-    }
-}
-
-void BaseMesh::setTransformation(const glm::mat3& transf) {
-    for(int i = 0; i < 3; ++i)
-        for(int j = 0; j < 3; ++j)
-            this->transformation[i][j] = transf[i][j];
-}
-
-void BaseMesh::rotate(const float angle, const glm::vec3 axis, bool modifyPoints) {
-    if(modifyPoints) {
-        for(int i = 0; i < this->getNbVertices(); ++i) {
-            this->vertices[i] = glm::vec3(glm::rotate(glm::radians(angle), axis) * glm::vec4(this->vertices[i], 1.));
-        }
-        this->computeNormals();
-        this->updatebbox();
-    } else {
-        this->transformation = glm::rotate(this->transformation, glm::radians(angle), axis);
-    }
-}
-
-glm::mat4 BaseMesh::getModelMatrix() const {
-    glm::mat4 res = this->transformation;
-    for(int i = 0; i < 3; ++i)
-        res[i][i] *= this->scale[i];
-    return res;
-}
-
-void BaseMesh::setTransformation(const glm::mat4& transf) {
-    this->transformation = transf;
 }
 
 void BaseMesh::drawNormals() const {
@@ -209,7 +143,7 @@ void BaseMesh::drawNormals() const {
     float normalSize = 0.02*100. * 10;
 
     for(int i = 0; i < this->vertices.size(); ++i) {
-        glm::vec3 p = this->getWorldVertice(i);
+        glm::vec3 p = this->getVertice(i);
         glm::vec3 p2 = p + this->getVerticeNormal(i) * normalSize;
         glBegin(GL_LINES);
         glVertex3f(p[0], p[1], p[2]);

@@ -221,10 +221,11 @@ void Scene::initGl(QOpenGLContext* _context) {
 
     glm::vec3 scale(10., 10., 10.);
     this->surfaceMesh = new SurfaceMesh("/home/thomas/data/Data/Mesh/bunny_lowres.off");
-    this->surfaceMesh->setScale(scale);
+    this->surfaceMesh->scale(scale);
 
     this->cage = new CageMVC("/home/thomas/data/Data/Mesh/bunny_cage.off", this->surfaceMesh);
-    this->cage->setScale(scale);
+    this->cage->scale(scale);
+    dynamic_cast<CageMVC*>(this->cage)->reInitialize();
 
     this->drawableMesh = new DrawableMesh();
     this->drawableMesh->mesh = this->surfaceMesh;
@@ -1787,7 +1788,7 @@ void Scene::prepareUniformsGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm
 
 //const glm::mat4& gridTransfo = _grid->grid->getTransform_GridToWorld();
 #warning Transform API is still in-progress.
-	glUniformMatrix4fv(location_mMat, 1, GL_FALSE, glm::value_ptr(this->grids[this->gridToDraw]->grid->getModelTransformation()));
+	glUniformMatrix4fv(location_mMat, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.f)));
 	glUniformMatrix4fv(location_vMat, 1, GL_FALSE, mvMat);
 	glUniformMatrix4fv(location_pMat, 1, GL_FALSE, pMat);
 
@@ -2900,8 +2901,7 @@ bool contain(const InfoToSend& value, const InfoToSend& contain) {
 void Scene::sendFirstTetmeshToGPU() {
     if(this->grids.size() > 0)
         this->sendTetmeshToGPU(0, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS));
-    std::vector<glm::vec3> meshPositions = this->cage->getWorldMeshPositions();
-    this->glMeshManipulator->meshManipulator->setAllManipulatorsPosition(meshPositions);
+    this->glMeshManipulator->meshManipulator->setAllManipulatorsPosition(this->cage->getMeshPositions());
 }
 
 void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend) {
@@ -2953,7 +2953,7 @@ void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend) {
                 int ptIndex = tet.getPointIndex(faceIdx, k);
 				for (int i = 0; i < 3; ++i) {
                     if(contain(infoToSend, InfoToSend::VERTICES))
-					    rawVertices[iPt] = newMesh.getWorldVertice(ptIndex)[i];
+					    rawVertices[iPt] = newMesh.getVertice(ptIndex)[i];
                     if(contain(infoToSend, InfoToSend::TEXCOORD))
 					    tex[iPt] = newMesh.texCoord[ptIndex][i];
 					iPt++;

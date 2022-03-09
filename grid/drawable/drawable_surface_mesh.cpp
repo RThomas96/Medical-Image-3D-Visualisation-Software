@@ -52,7 +52,8 @@ void DrawableMesh::draw(GLfloat *proj_mat, GLfloat *view_mat, glm::vec4 camera) 
 	this->gl->glUniformMatrix4fv(location_proj, 1, GL_FALSE, proj_mat);
 	this->gl->glUniformMatrix4fv(location_view, 1, GL_FALSE, view_mat);
 	//this->gl->glUniformMatrix4fv(location_model, 1, GL_FALSE, glm::value_ptr(this->transformation_matrix));
-	this->gl->glUniformMatrix4fv(location_model, 1, GL_FALSE, glm::value_ptr(this->mesh->getModelMatrix()));
+	//this->gl->glUniformMatrix4fv(location_model, 1, GL_FALSE, glm::value_ptr(this->mesh->getModelMatrix()));
+	this->gl->glUniformMatrix4fv(location_model, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.f)));
 	this->gl->glUniform4fv(location_camera_pos, 1, glm::value_ptr(camera));
 	this->gl->glUniform4fv(location_color, 1, glm::value_ptr(this->color));
 	this->gl->glUniform3fv(location_light, 1, glm::value_ptr(this->lightPosition));

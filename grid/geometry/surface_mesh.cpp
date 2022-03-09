@@ -130,7 +130,7 @@ void SurfaceMesh::computeTriangleNormal() {
 	for (unsigned int i = 0; i < triangles.size(); i++) {
 	    const Triangle& t = triangles[i];
 	    //glm::vec3 normal  = glm::cross(vertices[t.getVertex(1)] - vertices[t.getVertex(0)], vertices[t.getVertex(2)] - vertices[t.getVertex(0)]);
-	    glm::vec3 normal  = glm::cross(this->getWorldVertice(t.getVertex(1)) - this->getWorldVertice(t.getVertex(0)), this->getWorldVertice(t.getVertex(2)) - this->getWorldVertice(t.getVertex(0)));
+	    glm::vec3 normal  = glm::cross(this->getVertice(t.getVertex(1)) - this->getVertice(t.getVertex(0)), this->getVertice(t.getVertex(2)) - this->getVertice(t.getVertex(0)));
 	    this->normals[i] = glm::normalize(normal);
 	}
 }
@@ -169,11 +169,11 @@ void SurfaceMesh::draw() {
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_DEPTH);
 
-    GLfloat model[16];
-    glGetFloatv(GL_MODELVIEW_MATRIX, model);
+    //GLfloat model[16];
+    //glGetFloatv(GL_MODELVIEW_MATRIX, model);
 
-    glPushMatrix();
-    glLoadMatrixf(glm::value_ptr(glm::make_mat4(model) * this->getModelMatrix()));
+    //glPushMatrix();
+    //glLoadMatrixf(glm::value_ptr(glm::make_mat4(model) * this->getModelMatrix()));
 
     //glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
 

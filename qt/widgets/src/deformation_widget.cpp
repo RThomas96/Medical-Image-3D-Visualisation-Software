@@ -176,7 +176,7 @@ void GridDeformationWidget::updateScene(Scene * scene, int meshTool, int moveMet
         }
     } else {
         this->radio_selector_ARAP->setEnabled(false);
-	    this->radio_selector_position->setEnabled(false);
+	    //this->radio_selector_position->setEnabled(false);
     }
 
     if(meshTool >= 0)

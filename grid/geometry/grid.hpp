@@ -61,6 +61,10 @@ private:
 //! @brief Struct able to make the link between the grid and its 3D representation
 struct Grid : public TetMesh {
 
+    //This matrix keep track of modification of the TetMesh in order to get back to the sampler space which have 0 as origin
+    std::vector<glm::mat4> transformations;
+    glm::mat4 toSamplerMatrix;
+
     TetMesh initialMesh;
     Sampler sampler;
 
@@ -72,6 +76,9 @@ struct Grid : public TetMesh {
     void buildTetmesh(const glm::vec3& nbCube);
     void buildTetmesh(const glm::vec3& nbCube, const glm::vec3& origin);
     void buildTetmesh(const glm::vec3& nbCube, const glm::vec3& sizeCube, const glm::vec3& origin);
+
+    glm::mat4 getTransformationMatrix();
+    void toSampler(glm::vec3& p) const;
 
     // In mesh interface
     std::pair<glm::vec3, glm::vec3> getBoundingBox() const;
@@ -98,6 +105,11 @@ struct Grid : public TetMesh {
     void getGridSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel) const {
         this->sampler.getGridSlice(sliceIdx, result, nbChannel);
     }
+
+    void translate(const glm::vec3& vec) override;
+    void rotate(const glm::mat3& transf) override;
+    void scale(const glm::vec3& scale) override;
+    void setOrigin(const glm::vec3& origin) override;
 
 };
 

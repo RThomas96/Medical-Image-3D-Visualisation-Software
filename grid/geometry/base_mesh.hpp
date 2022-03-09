@@ -20,8 +20,6 @@ class BaseMesh : public QObject {
     Q_OBJECT
 public:
 
-    glm::vec3 scale;
-
     std::vector<glm::vec3> vertices;
     std::vector<glm::vec3> verticesNormals;
     std::vector<glm::vec3> texCoord;// These are normalised coordinates
@@ -38,7 +36,6 @@ public:
 
     void updatebbox();
     std::vector<glm::vec3>& getMeshPositions();
-    std::vector<glm::vec3> getWorldMeshPositions();
 
     // Functions to interact with the mesh
     void setNormalDeformationMethod();
@@ -48,24 +45,14 @@ public:
     void deselectAllPts();
 
     glm::vec3 getOrigin();
-    glm::mat4 getModelMatrix() const;
-    void translate(const glm::vec3& vec);
-    void rotate(const glm::mat3& transf, bool modifyPoints = false);
-    void rotate(const float angle, const glm::vec3 axis, bool modifyPoints = false); // In degree
-    glm::mat4 getModelTransformation();
-    void setOrigin(const glm::vec3& origin, bool modifyPoints = false);
-    void setTransformation(const glm::mat3& transf);
-    void setTransformation(const glm::mat4& transf);
-    void setScale(glm::vec3 scale);
-
-    glm::vec3 toWorld(const glm::vec3& pt) const;
-    glm::vec3 toModel(const glm::vec3& pt) const;
+    virtual void translate(const glm::vec3& vec);
+    virtual void rotate(const glm::mat3& transf);
+    virtual void scale(const glm::vec3& scale);
+    virtual void setOrigin(const glm::vec3& origin);
 
     int getNbVertices() const;
     const glm::vec3& getVertice(int i) const;
     const glm::vec3& getVerticeNormal(int i) const;
-    const glm::vec3 getWorldVertice(int i) const;
-    const glm::vec3 getWorldVerticeNormal(int i) const;
 
     void drawNormals() const;
 
@@ -75,8 +62,6 @@ public:
     virtual void computeNeighborhood() = 0;
     virtual void computeNormals() = 0;
     virtual ~BaseMesh(){};
-private:
-    glm::mat4 transformation;
 };
 
 //! @}

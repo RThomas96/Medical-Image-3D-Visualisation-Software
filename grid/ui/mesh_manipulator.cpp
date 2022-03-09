@@ -288,37 +288,22 @@ namespace UITool {
     }
 
     void PositionManipulator::moveManipulator(Manipulator * manipulator) {
-        bool modifyPoint = true;
         if(manipulator) {
-            glm::vec3 move = manipulator->getManipPosition() - manipulator->getLastPosition();
-
-            if(modifyPoint) {
-                this->mesh->setOrigin(move, true);
-            } else {
-                this->mesh->setOrigin(manipulator->getManipPosition());
-            }
+            this->mesh->setOrigin(manipulator->getManipPosition());
 
             CageMVC * cage = dynamic_cast<CageMVC*>(this->mesh);
             if(cage) {
-                if(modifyPoint) {
-                    cage->meshToDeform->setOrigin(move, true);
-                } else {
                     cage->meshToDeform->setOrigin(manipulator->getManipPosition());
-                }
             }
         } else {
             // For rotation
             CageMVC * cage = dynamic_cast<CageMVC*>(this->mesh);
             glm::vec3 ori = glm::vec3(this->kid_manip.Origine[0], this->kid_manip.Origine[1], this->kid_manip.Origine[2]);
-            this->mesh->setOrigin(-ori, true);
-            this->mesh->rotate(this->kid_manip.getRotationMatrix(), modifyPoint);
-            this->mesh->setOrigin(ori, true);
-            this->mesh->setOrigin(this->kid_manip.getMoveVector(), true);
+            this->mesh->rotate(this->kid_manip.getRotationMatrix());
+            this->mesh->setOrigin(ori);
             if(cage)  {
-                cage->meshToDeform->setOrigin(-ori, true);
-                cage->meshToDeform->rotate(this->kid_manip.getRotationMatrix(), modifyPoint);
-                cage->meshToDeform->setOrigin(ori, true);
-                cage->meshToDeform->setOrigin(this->kid_manip.getMoveVector(), true);
+                cage->meshToDeform->rotate(this->kid_manip.getRotationMatrix());
+                cage->meshToDeform->setOrigin(ori);
             }
         }
     }

@@ -199,14 +199,14 @@ glm::vec3 Tetrahedron::baryToWorldCoord(const glm::vec4& coord) {
     return glm::vec3(x, y, z);
 }
 
-void Tetrahedron::computeNormals(glm::mat4 modelMatrix) {
+void Tetrahedron::computeNormals() {
     for(int faceIdx = 0; faceIdx < 4; ++faceIdx) {
-        glm::vec3 p0 = glm::vec3(modelMatrix * glm::vec4(*this->points[getIdxOfPtInFace(faceIdx, 0)], 1.));
-        glm::vec3 p1 = glm::vec3(modelMatrix * glm::vec4(*this->points[getIdxOfPtInFace(faceIdx, 1)], 1.));
-        glm::vec3 p2 = glm::vec3(modelMatrix * glm::vec4(*this->points[getIdxOfPtInFace(faceIdx, 2)], 1.));
+        glm::vec3 p0 = glm::vec3(glm::vec4(*this->points[getIdxOfPtInFace(faceIdx, 0)], 1.));
+        glm::vec3 p1 = glm::vec3(glm::vec4(*this->points[getIdxOfPtInFace(faceIdx, 1)], 1.));
+        glm::vec3 p2 = glm::vec3(glm::vec4(*this->points[getIdxOfPtInFace(faceIdx, 2)], 1.));
 
-        glm::vec3 pF  = glm::vec3(modelMatrix * glm::vec4(*this->points[faceIdx], 1.));
-        glm::vec3 pFO = glm::vec3(modelMatrix * glm::vec4(*this->points[(faceIdx + 1) % 4], 1.));
+        glm::vec3 pF  = glm::vec3(glm::vec4(*this->points[faceIdx], 1.));
+        glm::vec3 pFO = glm::vec3(glm::vec4(*this->points[(faceIdx + 1) % 4], 1.));
 
         glm::vec3 n1   = p1 - p0;
         glm::vec3 n2   = p2 - p0;
@@ -359,7 +359,7 @@ void TetMesh::computeNeighborhood() {
 
 void TetMesh::computeNormals() {
     for(int tetIdx; tetIdx < this->mesh.size(); ++tetIdx) {
-        this->mesh[tetIdx].computeNormals(this->getModelMatrix());
+        this->mesh[tetIdx].computeNormals();
     }
 }
 

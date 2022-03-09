@@ -14,16 +14,16 @@ Image::ImageDataType Sampler::getInternalDataType() const {
     return this->image->getInternalDataType();
 }
 
-Grid::Grid(glm::vec3 gridSize): sampler(Sampler(gridSize)) {
+Grid::Grid(glm::vec3 gridSize): sampler(Sampler(gridSize)), toSamplerMatrix(glm::mat4(1.f)) {
 }
 
-Grid::Grid(const std::string& filename, int subsample): sampler(Sampler(std::vector<std::string>{filename}, subsample)) {
+Grid::Grid(const std::string& filename, int subsample): sampler(Sampler(std::vector<std::string>{filename}, subsample)), toSamplerMatrix(glm::mat4(1.f)) {
 }
 
-Grid::Grid(const std::vector<std::string>& filename, int subsample): sampler(Sampler(filename, subsample)) {
+Grid::Grid(const std::vector<std::string>& filename, int subsample): sampler(Sampler(filename, subsample)), toSamplerMatrix(glm::mat4(1.f)) {
 }
 
-Grid::Grid(const std::vector<std::string>& filename, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox): sampler(Sampler(filename, subsample, bbox)) {
+Grid::Grid(const std::vector<std::string>& filename, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox): sampler(Sampler(filename, subsample, bbox)), toSamplerMatrix(glm::mat4(1.f)) {
 }
 
 void Grid::buildTetmesh(const glm::vec3& nbCube) {
@@ -43,7 +43,9 @@ void Grid::buildTetmesh(const glm::vec3& nbCube, const glm::vec3& sizeCube, cons
 }
 
 uint16_t Grid::getValueFromWorldPoint(const glm::vec3& p, InterpolationMethod interpolationMethod, ResolutionMode resolutionMode) const {
-    return this->getValueFromPoint(this->toModel(p), interpolationMethod, resolutionMode);
+    glm::vec3 pSampler = p;
+    this->toSampler(pSampler);
+    return this->getValueFromPoint(pSampler, interpolationMethod, resolutionMode);
 }
 
 uint16_t Grid::getValueFromPoint(const glm::vec3& p, InterpolationMethod interpolationMethod, ResolutionMode resolutionMode) const {
@@ -158,6 +160,40 @@ bool Grid::getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3
     std::cout << "Warning: no point found" << std::endl;
     res = origin;
     return false;
+}
+
+glm::mat4 Grid::getTransformationMatrix() {
+    glm::mat4 transf(1.f);
+    for(int i = 0; i < this->transformations.size(); ++i)
+        transf *= this->transformations[i];
+    return transf;
+}
+
+void Grid::translate(const glm::vec3& vec) {
+    TetMesh::translate(vec);
+    this->transformations.push_back(glm::translate(glm::mat4(1.f), vec));
+    this->toSamplerMatrix = glm::inverse(this->getTransformationMatrix());
+}
+
+void Grid::rotate(const glm::mat3& transf) {
+    TetMesh::rotate(transf);
+    this->transformations.push_back(transf);
+    this->toSamplerMatrix = glm::inverse(this->getTransformationMatrix());
+}
+
+void Grid::scale(const glm::vec3& scale) {
+    TetMesh::scale(scale);
+    this->transformations.push_back(glm::scale(glm::mat4(1.f), scale));
+    this->toSamplerMatrix = glm::inverse(this->getTransformationMatrix());
+}
+
+void Grid::setOrigin(const glm::vec3& origin) {
+    TetMesh::setOrigin(origin);
+    this->toSamplerMatrix = glm::inverse(this->getTransformationMatrix());
+}
+
+void Grid::toSampler(glm::vec3& p) const {
+    p = glm::vec3(this->toSamplerMatrix * glm::vec4(p[0], p[1], p[2], 1.));
 }
 
 /**************************/
@@ -328,3 +364,4 @@ void Sampler::fromSamplerToImage(glm::vec3& p) const {
 void Sampler::fromImageToSampler(glm::vec3& p) const {
     p = p / this->resolutionRatio;
 }
+
