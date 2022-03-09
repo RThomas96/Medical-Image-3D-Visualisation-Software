@@ -77,8 +77,9 @@ struct Grid : public TetMesh {
     void buildTetmesh(const glm::vec3& nbCube, const glm::vec3& origin);
     void buildTetmesh(const glm::vec3& nbCube, const glm::vec3& sizeCube, const glm::vec3& origin);
 
-    glm::mat4 getTransformationMatrix();
+    glm::mat4 getTransformationMatrix() const;
     void toSampler(glm::vec3& p) const;
+    void toWorld(glm::vec3& p) const;
 
     // In mesh interface
     std::pair<glm::vec3, glm::vec3> getBoundingBox() const;

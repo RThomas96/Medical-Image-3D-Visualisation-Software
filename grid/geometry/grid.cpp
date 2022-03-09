@@ -145,12 +145,13 @@ bool Grid::getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3
     glm::vec3 nDirection = glm::normalize(direction);
 
     glm::vec3 dimension = this->sampler.getSamplerDimension();
-    float maxDistance = glm::length(dimension);    
+    float maxDistance = glm::length(dimension)*3.;    
     float step = maxDistance/std::max({dimension[0], dimension[1], dimension[2]});
 
     for(float i = 0; i < maxDistance; i+=step) {
         const glm::vec3 p = origin + i * nDirection;
         const uint16_t value = this->getDeformedValueFromPoint(this->initialMesh, p);
+        //const uint16_t value = this->getValueFromWorldPoint(p);
         if(value > minValue && value < maxValue) {
             res = p;
             return true;
@@ -162,7 +163,7 @@ bool Grid::getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3
     return false;
 }
 
-glm::mat4 Grid::getTransformationMatrix() {
+glm::mat4 Grid::getTransformationMatrix() const {
     glm::mat4 transf(1.f);
     for(int i = 0; i < this->transformations.size(); ++i)
         transf *= this->transformations[i];
