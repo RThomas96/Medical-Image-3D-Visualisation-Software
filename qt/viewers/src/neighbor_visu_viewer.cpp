@@ -64,6 +64,9 @@ void Viewer::init() {
 
     QObject::connect(this, &Viewer::keyQReleased, this->scene, &Scene::keyQReleased);
 
+    QObject::connect(this->scene, &Scene::sceneCenterChanged, this, &Viewer::setCenter);
+    QObject::connect(this->scene, &Scene::sceneRadiusChanged, this, &Viewer::setRadius);
+
 	glm::vec3 bbDiag = this->scene->getSceneBoundaries();
 	float sceneSize	 = glm::length(bbDiag);
 
@@ -73,6 +76,8 @@ void Viewer::init() {
 	this->showEntireScene();
 
 	this->refreshTimer->start();	// Update every 'n' milliseconds from here on out
+
+    this->scene->init();
 }
 
 void Viewer::addStatusBar(QStatusBar* bar) {
@@ -113,164 +118,22 @@ void Viewer::keyReleaseEvent(QKeyEvent* e) {
 }
 
 void Viewer::keyPressEvent(QKeyEvent* e) {
-	// 'msg' allocated here not to have curly braces in
-	// all case statements that need to show a message:
-	QString msg = "";
-
 	switch (e->key()) {
-		/*
-		VIEWER BEHAVIOUR
-		*/
-		case Qt::Key::Key_W:
-            if(!e->isAutoRepeat())
-                this->scene->grids[0]->grid->setWeightedDeformationMethod(30.);
-			break;
-		case Qt::Key::Key_X:
-            if(!e->isAutoRepeat())
-                this->scene->grids[0]->grid->setNormalDeformationMethod();
-			break;
-		//case Qt::Key::Key_L:
-        //    if(!e->isAutoRepeat())
-        //        this->scene->glMeshManipulator->createNewMeshManipulator(this->scene->grids[0]->grid->grid->tetmesh.ptGrid, 0);
-		//	break;
-		//case Qt::Key::Key_M:
-        //    if(!e->isAutoRepeat())
-        //        this->scene->glMeshManipulator->createNewMeshManipulator(this->scene->grids[0]->grid->grid->tetmesh.ptGrid, 1);
-		//	break;
         case Qt::Key::Key_Q:
             if(!e->isAutoRepeat())
-                //Q_EMIT keyQPressed();
                 this->addManipulator();
             break;
-            //if(!e->isAutoRepeat())
-            //    this->addManipulator();
-			//break;
-		case Qt::Key::Key_Space:
-			this->selectMode = not this->selectMode;
-			msg				 = "Turned selection mode " + (this->selectMode ? QString("on") : QString("off"));
-			this->statusBar->showMessage(msg, 5000);
-			break;
-		case Qt::Key::Key_R:
-			this->scene->resetPositionResponse();
-			break;
-		case Qt::Key::Key_T:
-			this->drawAxisOnTop = not this->drawAxisOnTop;
-			break;
-		/*
-		SHADER PROGRAMS
-		*/
 		case Qt::Key::Key_F5:
 			this->scene->recompileShaders();
 			this->update();
 			break;
-		case Qt::Key::Key_P:
-			this->scene->printVAOStateNext();
-			break;
-		case Qt::Key::Key_V:
-			if ((e->modifiers() & Qt::KeyboardModifier::ShiftModifier) != 0) {
-				this->scene->setDrawMode(DrawMode::VolumetricBoxed);
-			} else {
-				this->scene->setDrawMode(DrawMode::Volumetric);
-			}
-			this->update();
-			break;
-		case Qt::Key::Key_S:
-			if ((e->modifiers() & Qt::KeyboardModifier::ControlModifier) != 0) {
-				this->scene->launchSaveDialog();
-			} else {
-				this->scene->setDrawMode(DrawMode::Solid);
-				this->update();
-			}
-			break;
-
-		case Qt::Key::Key_G:
-			this->update();
-			break;
-			/*
-			 * ARAP !
-			 */
-		case Qt::Key::Key_A:
-			if ((e->modifiers() & Qt::KeyboardModifier::ControlModifier) != 0) {
-				this->updateCameraPosition();
-			} else if ((e->modifiers() & Qt::KeyboardModifier::ShiftModifier) != 0) {
-				// perform dummy ARAP deformation
-				this->update();
-			} else {
-				QGLViewer::keyPressEvent(e);
-			}
-			this->update();
-			break;
-		//case Qt::Key::Key_X:
-		//	if ((e->modifiers() & Qt::KeyboardModifier::ControlModifier) != 0) {
-		//		std::cerr << "Applying constrained ARAP ...\n";
-		//		this->scene->dummy_perform_constrained_arap_on_image_mesh();
-		//		std::cerr << "Applied constrained ARAP.\n";
-		//	} else if ((e->modifiers() & Qt::KeyboardModifier::ShiftModifier) != 0) {
-		//		// apply alignment before ARAP deformation
-		//		std::cerr << "Applying transformation to the mesh ...\n";
-		//		this->scene->dummy_apply_alignment_before_arap();
-		//		std::cerr << "Applied transformation to the mesh.\n";
-		//	}
-		//	this->update();
-		//	break;
-		case Qt::Key::Key_C:
-			// Shift-Enter adds the current vertex as a constraint for ARAP in the mesh.
-			if (e->modifiers() & Qt::KeyboardModifier::ShiftModifier) {
-				// add the vertex as an arap constraint to the concerned mesh
-				std::cerr << "Attempting to push constraint to mesh ..." << this->temp_mesh_idx << "\n";
-				if (this->temp_mesh_idx) {
-					std::cerr << "Added mesh constraint at position " << this->temp_mesh_vtx_idx << " for mesh " << this->temp_mesh_idx << '\n';
-					this->spheres.push_back(this->temp_sphere_position);
-					this->temp_mesh_idx = 0;
-				}
-			}
-			// Ctrl-Enter adds the current image position as the image constraint for ARAP
-			else if ((e->modifiers() & Qt::KeyboardModifier::ControlModifier) != 0)
-			{
-				std::cerr << "Attempting to push constraint to image ..." << this->temp_img_idx << "\n";
-				this->spheres.push_back(this->temp_img_pos);
-				std::cerr << "Added image constraint at position " << this->temp_img_pos << '\n';
-			}
-			break;
-		case Qt::Key::Key_Plus:
-			// don't cap the highest size
-			this->sphere_size *= 1.1f;
-			std::cerr << "Sphere size now at : " << std::setprecision(5) << this->sphere_size << '\n';
-			break;
-		case Qt::Key::Key_Minus:
-			this->sphere_size /= 1.1f;
-			// cap the smallest size at 1x10^-3
-			this->sphere_size = std::max(1e-3f, this->sphere_size);
-			std::cerr << "Sphere size now at : " << std::setprecision(5) << this->sphere_size << '\n';
-			break;
-		/*
-		Default handler.
-		*/
 		default:
 			QGLViewer::keyPressEvent(e);
 			break;
 	}
 }
 
-void Viewer::centerScene(void) {
-	// Don't update the scene radius, cuts off some drawn primitives (like bounding box for example) :
-	//float scene_radius = this->scene->getSceneRadius();
-	//this->setSceneRadius(qreal(scene_radius));
-
-	glm::vec3 scene_center = this->scene->getSceneCenter();
-	qglviewer::Vec cnt(scene_center.x, scene_center.y, scene_center.z);
-	this->setSceneCenter(cnt);
-	this->camera()->centerScene();
-	this->update();
-}
-
 void Viewer::mousePressEvent(QMouseEvent* e) {
-	//if (e->button() == Qt::RightButton) {
-    //    glm::vec3 ptMove;
-	//    if(this->scene->glMeshManipulator->meshManipulator->getMouseOverManipulator(ptMove)) {
-    //        this->scene->grids[0]->grid->grid->tetmesh.meshDeformator->selectPts(ptMove);
-	//    }
-	//}
 	QGLViewer::mousePressEvent(e);
 }
 
@@ -280,22 +143,10 @@ void Viewer::mouseMoveEvent(QMouseEvent* e) {
 }
 
 void Viewer::mouseReleaseEvent(QMouseEvent* e) {
-	//if (e->button() == Qt::RightButton) {
-    //    if (e->modifiers() != Qt::ControlModifier) {
-    //        this->scene->grids[0]->grid->grid->tetmesh.meshDeformator->deselectAllPts();
-    //    }
-    //}
 	QGLViewer::mouseReleaseEvent(e);
 }
 
 void Viewer::wheelEvent(QWheelEvent* _w) {
-	QFlags keyMods = QGuiApplication::queryKeyboardModifiers();
-	if (_w->pixelDelta().y() != 0) {
-		if (keyMods.testFlag(Qt::KeyboardModifier::ControlModifier)) {
-			std::cerr << "Would zoom instead !\n";
-			return;
-		}
-	}
 	QGLViewer::wheelEvent(_w);
 	this->update();
 }
@@ -328,57 +179,6 @@ void Viewer::castRayFromMouse(glm::vec3& origin, glm::vec3& direction) {
     this->camera()->convertClickToLine(this->mousePos, originVec, directionVec); 
     origin = glm::vec3(originVec.x, originVec.y, originVec.z);
     direction = glm::vec3(directionVec.x, directionVec.y, directionVec.z);
-}
-
-void Viewer::guessMousePosition() {
-
-    std::cerr << "ERROR: guessMousePosition broken by new grid" << std::endl;
-	glm::ivec2 rawMousePos = this->cursorPos_current;
-	if (rawMousePos.x < 0 || rawMousePos.x > this->fbSize.x || rawMousePos.y < 0 || rawMousePos.y > this->fbSize.y) {
-		return;
-	}
-
-	this->posRequest = glm::ivec2(rawMousePos.x, this->fbSize.y - rawMousePos.y);
-	this->makeCurrent();
-	glm::vec4 p = this->scene->readFramebufferContents(this->defaultFramebufferObject(), this->posRequest);
-	if (p.w > .01f) {
-		this->scene->setPositionResponse(p);
-		// TODO: new API
-		//auto inputs = this->scene->getInputGrids();
-		//for (const auto& grid : inputs) {
-		//	if (grid->includesPointWorldSpace(p)) {
-		//		IO::GenericGridReader::sizevec3 index = grid->worldPositionToIndex(p);
-		//		QString msg							  = "Position in image space : " + QString::number(index.x) + ", " +
-		//					  QString::number(index.y) + ", " + QString::number(index.z) + ", in grid " +
-		//					  QString::fromStdString(grid->getGridName());
-		//		this->statusBar->showMessage(msg, 10000);
-		//	}
-		//}
-		//std::function<void(const GridGLView::Ptr&)> findSuitablePoint =
-		//  [this, p](const GridGLView::Ptr& gridView) -> void {
-		//	const Image::Grid::Ptr grid		  = gridView->grid;
-		//	TransformStack::Ptr gridTransform = grid->getTransformStack();
-		//	BoundingBox_General<float> bb	  = grid->getBoundingBox();
-		//	glm::vec4 p_prime				  = gridTransform->to_image(p);
-		//	if (bb.contains(p_prime)) {
-		//		glm::vec3 voxdim			  = grid->getVoxelDimensions();
-		//		glm::tvec3<std::size_t> index = p_prime / glm::vec4(voxdim, 1.f);
-		//		QString msg					  = "Position in image space : " + QString::number(index.x) + ", " +
-		//					  QString::number(index.y) + ", " + QString::number(index.z) + ", in grid " +
-		//					  QString::fromStdString(grid->getImageName());
-		//		this->statusBar->showMessage(msg, 10000);
-		//		this->temp_img_pos = glm::vec3(p);
-		//	}
-		//};
-		//this->scene->lambdaOnGrids(findSuitablePoint);
-
-		// Look for the point in the meshes loaded :
-	}
-	this->doneCurrent();
-}
-
-void Viewer::resetLocalPointQuery() {
-	this->posRequest = glm::ivec2{-1, -1};
 }
 
 QString Viewer::helpString() const {
@@ -469,36 +269,24 @@ QString Viewer::mouseString() const {
 	return message;
 }
 
-void Viewer::updateCameraPosition() {
-	auto bb		= this->scene->getSceneBoundingBox();
-	auto center = bb.getMin() + (bb.getDiagonal() / 2.f);
-	auto radius = glm::length(bb.getDiagonal());
-	this->setSceneCenter(qglviewer::Vec(center.x, center.y, center.z));
-	this->setSceneRadius(radius * sceneRadiusMultiplier);
-	this->showEntireScene();
-}
-
-void Viewer::updateInfoFromScene() {
-	this->update();
-	this->updateCameraPosition();
-	this->update();
-}
-
 void Viewer::newAPI_loadGrid(Grid * ptr) {
 	if (this->scene == nullptr) {
 		return;
 	}
 	this->makeCurrent();
-	this->scene->addGrid(ptr);
+	//this->scene->addGrid(ptr);
+	this->scene->openGrid("grid", ptr);
 	this->doneCurrent();
+}
 
-	glm::vec3 bbDiag = this->scene->getSceneBoundaries();
-	float sceneSize	 = glm::length(bbDiag);
+void Viewer::setCenter(const glm::vec3& center) {
+	this->setSceneCenter(qglviewer::Vec(center[0], center[1], center[2]));
+    std::cout << "Set center" << std::endl;
+    this->showEntireScene();
+}
 
-	this->setSceneRadius(sceneSize * sceneRadiusMultiplier);
-	// center scene on center of grid
-	this->setSceneCenter(qglviewer::Vec(bbDiag.x / 2., bbDiag.y / 2., bbDiag.z / 2.));
-	this->showEntireScene();
-	this->updateCameraPosition();
-	this->centerScene();
+void Viewer::setRadius(const float radius) {
+	this->setSceneRadius(radius);
+    std::cout << "Set radius" << std::endl;
+    this->showEntireScene();
 }

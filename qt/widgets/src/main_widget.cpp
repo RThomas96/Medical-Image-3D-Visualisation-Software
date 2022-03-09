@@ -205,12 +205,10 @@ void MainWidget::setupWidgets() {
 	QObject::connect(this->action_loadMesh, &QAction::triggered, [this]() {
         // This function has been deleted 
 		//this->scene->loadMesh();
-		this->viewer->updateInfoFromScene();
 	});
 	QObject::connect(this->action_loadCurve, &QAction::triggered, [this]() {
         // This function has been deleted 
 		//this->scene->loadCurve();
-		this->viewer->updateInfoFromScene();
 	});
 
 	// Viewer(s) creation along with control panel :

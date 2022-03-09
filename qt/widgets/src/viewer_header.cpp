@@ -324,7 +324,7 @@ void ViewerHeader3D::setupSignals() {
 		if (this->viewerToUpdate == nullptr) {
 			return;
 		}
-		this->viewerToUpdate->centerScene();
+		//this->sceneToControl->centerScene();
 	});
 
 	return;

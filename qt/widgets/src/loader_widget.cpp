@@ -209,7 +209,6 @@ void GridLoaderWidget::loadGrid_newAPI() {
 	std::cerr << "Loading new grid API" << '\n';
 
 	this->viewer->newAPI_loadGrid(this->_testing_grid);
-	this->viewer->centerScene();
 
 	// Update min and max of the control panel
 	// TODO: change this function in order to set slider according to min/max values in the image

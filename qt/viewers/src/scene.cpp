@@ -142,8 +142,8 @@ Scene::Scene() :
 	this->posFrame = nullptr;
 
     /***/
-    this->sceneBBmin = glm::vec3(-5., -5., -5.);
-    this->sceneBBmax = glm::vec3(5., 5., 5.);
+    this->sceneBBMin = glm::vec3(-5., -5., -5.);
+    this->sceneBBMax = glm::vec3(5., 5., 5.);
 }
 
 Scene::~Scene(void) {
@@ -222,18 +222,6 @@ void Scene::initGl(QOpenGLContext* _context) {
 
     //this->surfaceMesh = nullptr;
     //this->drawableMesh = nullptr; 
-
-    this->openMesh("bunny", "/home/thomas/data/Data/Mesh/bunny_lowres.off");
-    this->openCage("bunny_cage", "/home/thomas/data/Data/Mesh/bunny_cage.off", this->getMesh("bunny"));
-    //this->cage = new CageMVC("/home/thomas/data/Data/Mesh/bunny_cage.off", this->surfaceMesh);
-    //this->surfaceMesh = new SurfaceMesh("/home/thomas/data/Data/Mesh/bunny_lowres.off");
-
-    glm::vec3 scale(10., 10., 10.);
-    this->getMesh("bunny")->scale(scale);
-
-    this->getMesh("bunny_cage")->scale(scale);
-    dynamic_cast<CageMVC*>(this->getMesh("bunny_cage"))->reInitialize();
-
 }
 
 void Scene::generateColorScales() {
@@ -671,23 +659,23 @@ void Scene::addGrid(Grid * gridLoaded) {
 	this->resetVisuBox();
 
     // Update mesh scale
-    glm::vec3 gridDim = this->grids[0]->grid->bbMin - this->grids[0]->grid->bbMax;
-    glm::vec3 meshDim = this->getMesh("bunny")->bbMin - this->getMesh("bunny")->bbMax;
-    glm::vec3 diff = gridDim - meshDim;
-    float scaleFactor = std::abs(std::max(diff[0], std::max(diff[1], diff[2])));
-    glm::vec3 scale = glm::vec3(scaleFactor, scaleFactor, scaleFactor);
-    for(int i = 0; i < this->getMesh("bunny")->getNbVertices(); ++i)
-        this->getMesh("bunny")->vertices[i] *= scale;
+    //glm::vec3 gridDim = this->grids[0]->grid->bbMin - this->grids[0]->grid->bbMax;
+    //glm::vec3 meshDim = this->getMesh("bunny")->bbMin - this->getMesh("bunny")->bbMax;
+    //glm::vec3 diff = gridDim - meshDim;
+    //float scaleFactor = std::abs(std::max(diff[0], std::max(diff[1], diff[2])));
+    //glm::vec3 scale = glm::vec3(scaleFactor, scaleFactor, scaleFactor);
+    //for(int i = 0; i < this->getMesh("bunny")->getNbVertices(); ++i)
+    //    this->getMesh("bunny")->vertices[i] *= scale;
 
-    for(int i = 0; i < this->getMesh("bunny_cage")->getNbVertices(); ++i)
-        this->getMesh("bunny_cage")->vertices[i] *= scale;
+    //for(int i = 0; i < this->getMesh("bunny_cage")->getNbVertices(); ++i)
+    //    this->getMesh("bunny_cage")->vertices[i] *= scale;
 
-    this->getMesh("bunny")->updatebbox();
-    this->getMesh("bunny")->computeNormals();
-    this->getMesh("bunny_cage")->updatebbox();
-    this->getMesh("bunny_cage")->computeNormals();
-    this->getDrawableMesh("bunny")->makeVAO();
-    this->getDrawableMesh("bunny_cage")->makeVAO();
+    //this->getMesh("bunny")->updatebbox();
+    //this->getMesh("bunny")->computeNormals();
+    //this->getMesh("bunny_cage")->updatebbox();
+    //this->getMesh("bunny_cage")->computeNormals();
+    //this->getDrawableMesh("bunny")->makeVAO();
+    //this->getDrawableMesh("bunny_cage")->makeVAO();
 }
 
 void Scene::updateBoundingBox(void) {
@@ -2553,91 +2541,91 @@ void Scene::resetVisuBox() {
 	}
 }
 
-float Scene::getSceneRadius() {
-	// in case of box visu, it's easy :
-	if (this->drawMode == VolumetricBoxed) {
-		return glm::length(this->visuBox.getDiagonal());
-	}
-	// if draw solid or volumetric, focus on the part of the scene's BB we want to see
-	// need to compute plane positions, and get the god min/max points according to it
-	if (this->drawMode == Solid || this->drawMode == Volumetric) {
-		// get plane positions :
-		glm::vec3 bbmin	   = this->sceneBB.getMin();
-		glm::vec3 bbmax	   = this->sceneBB.getMax();
-		glm::vec3 planePos = (this->sceneBB.getMin() + this->planeDisplacement * this->sceneBB.getDiagonal());
-		glm::vec3 min = glm::vec3(), max = glm::vec3();
+//float Scene::getSceneRadius() {
+//	// in case of box visu, it's easy :
+//	if (this->drawMode == VolumetricBoxed) {
+//		return glm::length(this->visuBox.getDiagonal());
+//	}
+//	// if draw solid or volumetric, focus on the part of the scene's BB we want to see
+//	// need to compute plane positions, and get the god min/max points according to it
+//	if (this->drawMode == Solid || this->drawMode == Volumetric) {
+//		// get plane positions :
+//		glm::vec3 bbmin	   = this->sceneBB.getMin();
+//		glm::vec3 bbmax	   = this->sceneBB.getMax();
+//		glm::vec3 planePos = (this->sceneBB.getMin() + this->planeDisplacement * this->sceneBB.getDiagonal());
+//		glm::vec3 min = glm::vec3(), max = glm::vec3();
+//
+//		if (this->planeDirection.x < 0) {
+//			min.x = bbmin.x;
+//			max.x = planePos.x;
+//		} else {
+//			min.x = planePos.x;
+//			max.x = bbmax.x;
+//		}
+//		if (this->planeDirection.y < 0) {
+//			min.y = bbmin.y;
+//			max.y = planePos.y;
+//		} else {
+//			min.y = planePos.y;
+//			max.y = bbmax.y;
+//		}
+//		if (this->planeDirection.z < 0) {
+//			min.z = bbmin.z;
+//			max.z = planePos.z;
+//		} else {
+//			min.z = planePos.z;
+//			max.z = bbmax.z;
+//		}
+//
+//		glm::vec3 diag = max - min;
+//		return glm::length(diag);
+//	}
+//	//default value when no things are loaded
+//	return 1.f;
+//}
 
-		if (this->planeDirection.x < 0) {
-			min.x = bbmin.x;
-			max.x = planePos.x;
-		} else {
-			min.x = planePos.x;
-			max.x = bbmax.x;
-		}
-		if (this->planeDirection.y < 0) {
-			min.y = bbmin.y;
-			max.y = planePos.y;
-		} else {
-			min.y = planePos.y;
-			max.y = bbmax.y;
-		}
-		if (this->planeDirection.z < 0) {
-			min.z = bbmin.z;
-			max.z = planePos.z;
-		} else {
-			min.z = planePos.z;
-			max.z = bbmax.z;
-		}
-
-		glm::vec3 diag = max - min;
-		return glm::length(diag);
-	}
-	//default value when no things are loaded
-	return 1.f;
-}
-
-glm::vec3 Scene::getSceneCenter() {
-	// in case of box visu, it's easy :
-	if (this->drawMode == VolumetricBoxed) {
-		return this->visuBox.getMin() + (this->visuBox.getDiagonal() / 2.f);
-	}
-	// if draw solid, or volumetric focus on the part of the scene's BB we want to see
-	// need to compute plane positions, and get the god min/max points according to it
-	if (this->drawMode == Solid || this->drawMode == Volumetric) {
-		// get plane positions :
-		glm::vec3 bbmin	   = this->sceneBB.getMin();
-		glm::vec3 bbmax	   = this->sceneBB.getMax();
-		glm::vec3 planePos = (this->sceneBB.getMin() + this->planeDisplacement * this->sceneBB.getDiagonal());
-		glm::vec3 min = glm::vec3(), max = glm::vec3();
-
-		if (this->planeDirection.x < 0) {
-			min.x = bbmin.x;
-			max.x = planePos.x;
-		} else {
-			min.x = planePos.x;
-			max.x = bbmax.x;
-		}
-		if (this->planeDirection.y < 0) {
-			min.y = bbmin.y;
-			max.y = planePos.y;
-		} else {
-			min.y = planePos.y;
-			max.y = bbmax.y;
-		}
-		if (this->planeDirection.z < 0) {
-			min.z = bbmin.z;
-			max.z = planePos.z;
-		} else {
-			min.z = planePos.z;
-			max.z = bbmax.z;
-		}
-
-		glm::vec3 diag = max - min;
-		return min + diag / 2.f;
-	}
-	// default value, for no
-	return glm::vec3(.5, .5, .5);
-}
+//glm::vec3 Scene::getSceneCenter() {
+//	// in case of box visu, it's easy :
+//	if (this->drawMode == VolumetricBoxed) {
+//		return this->visuBox.getMin() + (this->visuBox.getDiagonal() / 2.f);
+//	}
+//	// if draw solid, or volumetric focus on the part of the scene's BB we want to see
+//	// need to compute plane positions, and get the god min/max points according to it
+//	if (this->drawMode == Solid || this->drawMode == Volumetric) {
+//		// get plane positions :
+//		glm::vec3 bbmin	   = this->sceneBB.getMin();
+//		glm::vec3 bbmax	   = this->sceneBB.getMax();
+//		glm::vec3 planePos = (this->sceneBB.getMin() + this->planeDisplacement * this->sceneBB.getDiagonal());
+//		glm::vec3 min = glm::vec3(), max = glm::vec3();
+//
+//		if (this->planeDirection.x < 0) {
+//			min.x = bbmin.x;
+//			max.x = planePos.x;
+//		} else {
+//			min.x = planePos.x;
+//			max.x = bbmax.x;
+//		}
+//		if (this->planeDirection.y < 0) {
+//			min.y = bbmin.y;
+//			max.y = planePos.y;
+//		} else {
+//			min.y = planePos.y;
+//			max.y = bbmax.y;
+//		}
+//		if (this->planeDirection.z < 0) {
+//			min.z = bbmin.z;
+//			max.z = planePos.z;
+//		} else {
+//			min.z = planePos.z;
+//			max.z = bbmax.z;
+//		}
+//
+//		glm::vec3 diag = max - min;
+//		return min + diag / 2.f;
+//	}
+//	// default value, for no
+//	return glm::vec3(.5, .5, .5);
+//}
 
 uint Scene::colorFunctionToUniform(ColorFunction _c) {
 	switch (_c) {
@@ -3366,6 +3354,11 @@ bool Scene::openMesh(const std::string& name, const std::string& filename, const
     this->drawableMeshes.back().first->initialize(this->context, this);
     this->drawableMeshes.back().first->color = color;
 
+    this->activeMesh = name;
+
+    this->updateSceneBBox(this->meshes.back().first->bbMin, this->meshes.back().first->bbMax);
+    this->updateSceneCenter();
+
     return true;
 }
 
@@ -3383,13 +3376,27 @@ bool Scene::openCage(const std::string& name, const std::string& filename, Surfa
     this->drawableMeshes.back().first->mesh = this->meshes.back().first;
     this->drawableMeshes.back().first->initialize(this->context, this);
     this->drawableMeshes.back().first->color = color;
+
+    this->activeMesh = name;
+
+    this->updateSceneBBox(this->meshes.back().first->bbMin, this->meshes.back().first->bbMax);
+    this->updateSceneCenter();
+
     return true;
 }
 
 bool Scene::openGrid(const std::string& name, Grid * grid) {
+    this->gridToDraw += 1;
+
     this->addGrid(grid);
+
+    this->updateSceneBBox(this->grids.back()->grid->bbMin, this->grids.back()->grid->bbMax);
+    this->updateSceneCenter();
+    std::cout << "New grid added with BBox:" << this->grids.back()->grid->bbMax << std::endl;
     return true;
 }
+
+SurfaceMesh * Scene::getMesh(const char * name) { return this->getMesh(std::string(name)); }
 
 SurfaceMesh * Scene::getMesh(const std::string& name) {
     for(int i = 0; i < this->meshes.size(); ++i) {
@@ -3397,9 +3404,11 @@ SurfaceMesh * Scene::getMesh(const std::string& name) {
             return this->meshes[i].first;
         }
     }
-    std::cout << "Error: wrong mesh name" << std::endl;
+    std::cout << "Error: wrong mesh name: [" << name << "]" << std::endl;
     return nullptr;
 }
+
+DrawableMesh * Scene::getDrawableMesh(const char * name) {return this->getDrawableMesh(std::string(name));}
 
 DrawableMesh * Scene::getDrawableMesh(const std::string& name) {
     for(int i = 0; i < this->drawableMeshes.size(); ++i) {
@@ -3407,6 +3416,67 @@ DrawableMesh * Scene::getDrawableMesh(const std::string& name) {
             return this->drawableMeshes[i].first;
         }
     }
-    std::cout << "Error: wrong drawable name" << std::endl;
+    std::cout << "Error: wrong drawable name: [" << name << "]" << std::endl;
     return nullptr;
+}
+
+void Scene::updateSceneBBox(const glm::vec3& bbMin, const glm::vec3& bbMax) {
+    for(int i = 0; i < 3; ++i) {
+        if(bbMin[i] < this->sceneBBMin[i])
+            this->sceneBBMin[i] = bbMin[i];
+
+        if(bbMax[i] > this->sceneBBMax[i])
+            this->sceneBBMax[i] = bbMax[i];
+    }
+    Q_EMIT sceneRadiusChanged(this->getSceneRadius());
+}
+
+glm::vec3 Scene::getSceneCenter() {
+    if(this->gridToDraw >= 0)
+        return this->grids[this->gridToDraw]->grid->getOrigin();
+
+    SurfaceMesh * mesh = this->getMesh(this->activeMesh);
+    if(mesh) {
+        std::cout << "Update scene center to origin of [" << this->activeMesh << "] which is " << mesh->getOrigin() << std::endl;
+        return mesh->getOrigin();
+    } else {
+        return (this->sceneBBMax + this->sceneBBMin)/2.f;
+    }
+}
+
+float Scene::getSceneRadius() {
+    return glm::length(this->sceneBBMax - this->sceneBBMin);
+}
+
+void Scene::updateSceneBBox() {
+    this->sceneBBMin = glm::vec3(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
+    this->sceneBBMax = glm::vec3(std::numeric_limits<float>::min(), std::numeric_limits<float>::min(), std::numeric_limits<float>::min());
+
+    for(int i = 0; i < this->grids.size(); ++i) {
+        this->updateSceneBBox(this->grids[i]->grid->bbMin, this->grids[i]->grid->bbMax);
+    } 
+
+    for(int i = 0; i < this->meshes.size(); ++i) {
+        this->updateSceneBBox(this->meshes[i].first->bbMin, this->meshes[i].first->bbMax);
+    } 
+}
+
+void Scene::updateSceneCenter() {
+    Q_EMIT sceneCenterChanged(this->getSceneCenter());
+}
+
+void Scene::init() {
+    this->openMesh("bunny", "/home/thomas/data/Data/Mesh/bunny_lowres.off");
+    this->openCage("bunny_cage", "/home/thomas/data/Data/Mesh/bunny_cage.off", this->getMesh("bunny"));
+
+    glm::vec3 scale(10., 10., 10.);
+    this->getMesh("bunny")->scale(scale);
+
+    this->getMesh("bunny_cage")->scale(scale);
+    dynamic_cast<CageMVC*>(this->getMesh("bunny_cage"))->reInitialize();
+
+    this->updateSceneBBox();
+    this->updateSceneCenter();
+
+    std::cout << "New bunny added with BBox:" << this->getMesh("bunny")->bbMax << std::endl;
 }

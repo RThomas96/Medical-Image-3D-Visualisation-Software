@@ -21,9 +21,6 @@ public:
 	/// @brief Multiplier to apply to scene radii for the scene's view.
 	static float sceneRadiusMultiplier;
 
-	/// @brief Updates info from the scene, binding its context for rendering.
-	void updateInfoFromScene();
-
 	/// @brief Add a pointer to the status bar, in order to show messages.
 	void addStatusBar(QStatusBar* _sb);
 
@@ -51,8 +48,6 @@ protected:
 	virtual QString mouseString(void) const override;
 	/// @brief Overrides the function to resize the widget.
 	virtual void resizeGL(int w, int h) override;
-	/// @brief Resets and removes the local point query
-	void resetLocalPointQuery();
 
 private:
 	/// @brief The scene to control.
@@ -102,16 +97,10 @@ public slots:
 	/// @brief Update the view, as a slot without any arguments (currently only used by QTimer)
 	void updateView() { this->update(); }
 	/// @brief Updates the camera position once one or two grids are loaded in the scene.
-	void updateCameraPosition(void);
-	/// @brief Asks the scene to load a grid into itself.
-	// void loadGrid(const std::shared_ptr<InputGrid>& g);
-	/// @brief Asks the scene to load two grids into itself.
-	// void loadTwoGrids(const std::shared_ptr<InputGrid>& g1, const std::shared_ptr<InputGrid>& g2);
-	//void newAPI_loadGrid(Image::Grid::Ptr ptr);
     void newAPI_loadGrid(Grid * ptr);
-	/// @brief Re-centers the camera around the scene-defined center point
-	void centerScene(void);
-	void guessMousePosition(void);
+
+    void setCenter(const glm::vec3& center);
+    void setRadius(const float radius);
 
     void addManipulator(void);
 

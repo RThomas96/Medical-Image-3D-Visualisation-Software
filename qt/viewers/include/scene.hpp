@@ -400,8 +400,6 @@ public:
 
 	void setDrawMode(DrawMode _mode);
 
-	float getSceneRadius();
-	glm::vec3 getSceneCenter();
 	Image::bbox_t getSceneBoundingBox() const;
 	
 	void setColorFunction_r(ColorFunction _c);// Changes the texture coloration mode to the desired setting
@@ -446,13 +444,19 @@ public:
 	SceneGL sceneGL;
 
 signals:
+    // Signals to the meshManipulator tools
     void keyQReleased();
     void rayIsCasted(const glm::vec3& origin, const glm::vec3& direction);
     void pointIsClickedInPlanarViewer(const glm::vec3& position);
+    // Signals to the viewer
+    void sceneCenterChanged(const glm::vec3& center);
+    void sceneRadiusChanged(const float radius);
 
 // All these indirections are important because for most of them they interacts with various components of the scene
 // And it allow more flexibility as the scene control ALL the informations to transit from class to class
 public slots:
+    void init();
+
     // MeshManipulator slots
     void createNewMeshManipulator(int i, bool onSurface);
 	void toggleWireframe();
@@ -475,8 +479,15 @@ public slots:
     bool openMesh(const std::string& name, const std::string& filename, const glm::vec4& color = glm::vec4(0., 1., 0., 1.));
     bool openCage(const std::string& name, const std::string& filename, SurfaceMesh * surfaceMeshToDeform, const bool MVC = true, const glm::vec4& color = glm::vec4(1., 0., 0., 0.3));
     bool openGrid(const std::string& name, Grid * grid);
+    SurfaceMesh * getMesh(const char * name);
     SurfaceMesh * getMesh(const std::string& name);
+    DrawableMesh * getDrawableMesh(const char * name);
     DrawableMesh * getDrawableMesh(const std::string& name);
+    void updateSceneBBox(const glm::vec3& bbMin, const glm::vec3& bbMax);
+    void updateSceneBBox();
+    void updateSceneCenter();
+	glm::vec3 getSceneCenter();
+	float getSceneRadius();
 
     //void addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction, bool onSurface);
 /*************/
@@ -485,10 +496,12 @@ public slots:
 public:
     std::string filename = "";
 
-    int gridToDraw = 0;
+    int gridToDraw = -1;
 
-    glm::vec3 sceneBBmin;
-    glm::vec3 sceneBBmax;
+    glm::vec3 sceneBBMin;
+    glm::vec3 sceneBBMax;
+
+    std::string activeMesh;
 
 	std::vector<GridGLView::Ptr> grids;
     std::vector<std::pair<SurfaceMesh*, std::string>> meshes;
