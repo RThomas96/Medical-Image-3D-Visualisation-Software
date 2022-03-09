@@ -140,6 +140,10 @@ Scene::Scene() :
 	this->shouldUpdateUBOData		  = false;
 
 	this->posFrame = nullptr;
+
+    /***/
+    this->sceneBBmin = glm::vec3(-5., -5., -5.);
+    this->sceneBBmax = glm::vec3(5., 5., 5.);
 }
 
 Scene::~Scene(void) {
@@ -219,23 +223,16 @@ void Scene::initGl(QOpenGLContext* _context) {
     //this->surfaceMesh = nullptr;
     //this->drawableMesh = nullptr; 
 
+    this->openMesh("bunny", "/home/thomas/data/Data/Mesh/bunny_lowres.off");
+    this->openCage("bunny_cage", "/home/thomas/data/Data/Mesh/bunny_cage.off", this->getMesh("bunny"));
+    //this->cage = new CageMVC("/home/thomas/data/Data/Mesh/bunny_cage.off", this->surfaceMesh);
+    //this->surfaceMesh = new SurfaceMesh("/home/thomas/data/Data/Mesh/bunny_lowres.off");
+
     glm::vec3 scale(10., 10., 10.);
-    this->surfaceMesh = new SurfaceMesh("/home/thomas/data/Data/Mesh/bunny_lowres.off");
-    this->surfaceMesh->scale(scale);
+    this->getMesh("bunny")->scale(scale);
 
-    this->cage = new CageMVC("/home/thomas/data/Data/Mesh/bunny_cage.off", this->surfaceMesh);
-    this->cage->scale(scale);
-    dynamic_cast<CageMVC*>(this->cage)->reInitialize();
-
-    this->drawableMesh = new DrawableMesh();
-    this->drawableMesh->mesh = this->surfaceMesh;
-    this->drawableMesh->initialize(this->context, this);
-    this->drawableMesh->color = glm::vec4(0., 1., 0., 1.);
-
-    this->drawableCage = new DrawableMesh();
-    this->drawableCage->mesh = this->cage;
-    this->drawableCage->initialize(this->context, this);
-    this->drawableCage->color = glm::vec4(1., 0., 0., 0.3);
+    this->getMesh("bunny_cage")->scale(scale);
+    dynamic_cast<CageMVC*>(this->getMesh("bunny_cage"))->reInitialize();
 
 }
 
@@ -675,22 +672,22 @@ void Scene::addGrid(Grid * gridLoaded) {
 
     // Update mesh scale
     glm::vec3 gridDim = this->grids[0]->grid->bbMin - this->grids[0]->grid->bbMax;
-    glm::vec3 meshDim = this->surfaceMesh->bbMin - this->surfaceMesh->bbMax;
+    glm::vec3 meshDim = this->getMesh("bunny")->bbMin - this->getMesh("bunny")->bbMax;
     glm::vec3 diff = gridDim - meshDim;
     float scaleFactor = std::abs(std::max(diff[0], std::max(diff[1], diff[2])));
     glm::vec3 scale = glm::vec3(scaleFactor, scaleFactor, scaleFactor);
-    for(int i = 0; i < this->surfaceMesh->getNbVertices(); ++i)
-        this->surfaceMesh->vertices[i] *= scale;
+    for(int i = 0; i < this->getMesh("bunny")->getNbVertices(); ++i)
+        this->getMesh("bunny")->vertices[i] *= scale;
 
-    for(int i = 0; i < this->cage->getNbVertices(); ++i)
-        this->cage->vertices[i] *= scale;
+    for(int i = 0; i < this->getMesh("bunny_cage")->getNbVertices(); ++i)
+        this->getMesh("bunny_cage")->vertices[i] *= scale;
 
-    this->surfaceMesh->updatebbox();
-    this->surfaceMesh->computeNormals();
-    this->cage->updatebbox();
-    this->cage->computeNormals();
-    this->drawableMesh->makeVAO();
-    this->drawableCage->makeVAO();
+    this->getMesh("bunny")->updatebbox();
+    this->getMesh("bunny")->computeNormals();
+    this->getMesh("bunny_cage")->updatebbox();
+    this->getMesh("bunny_cage")->computeNormals();
+    this->getDrawableMesh("bunny")->makeVAO();
+    this->getDrawableMesh("bunny_cage")->makeVAO();
 }
 
 void Scene::updateBoundingBox(void) {
@@ -1964,11 +1961,11 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 		}
 	}
 
-    if(this->drawableMesh) {
-        this->drawableMesh->makeVAO();
-	    this->drawableMesh->draw(pMat, mvMat, glm::vec4{camPos, 1.f});
-	    this->drawableCage->makeVAO();
-	    this->drawableCage->draw(pMat, mvMat, glm::vec4{camPos, 1.f});
+    if(this->getDrawableMesh("bunny")) {
+        this->getDrawableMesh("bunny")->makeVAO();
+	    this->getDrawableMesh("bunny")->draw(pMat, mvMat, glm::vec4{camPos, 1.f});
+	    this->getDrawableMesh("bunny_cage")->makeVAO();
+	    this->getDrawableMesh("bunny_cage")->draw(pMat, mvMat, glm::vec4{camPos, 1.f});
     }
 
 	if (not this->grids.empty()) {
@@ -2901,7 +2898,7 @@ bool contain(const InfoToSend& value, const InfoToSend& contain) {
 void Scene::sendFirstTetmeshToGPU() {
     if(this->grids.size() > 0)
         this->sendTetmeshToGPU(0, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS));
-    this->glMeshManipulator->meshManipulator->setAllManipulatorsPosition(this->cage->getMeshPositions());
+    this->glMeshManipulator->meshManipulator->setAllManipulatorsPosition(this->getMesh("bunny_cage")->getMeshPositions());
 }
 
 void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend) {
@@ -3263,7 +3260,7 @@ void Scene::toggleWireframe() {
 
 void Scene::createNewMeshManipulator(int i, bool onSurface) {
     if(onSurface) {
-        this->glMeshManipulator->createNewMeshManipulator(this->cage, this, i);
+        this->glMeshManipulator->createNewMeshManipulator(this->getMesh("bunny_cage"), this, i);
     } else {
         this->glMeshManipulator->createNewMeshManipulator(this->grids[this->gridToDraw]->grid, this, i);
     }
@@ -3275,22 +3272,22 @@ void Scene::createNewMeshManipulator(int i, bool onSurface) {
 void Scene::setNormalDeformationMethod() {
     if(this->grids.size() > 0)
         this->grids[this->gridToDraw]->grid->setNormalDeformationMethod();
-    if(this->cage)
-        this->cage->setNormalDeformationMethod();
+    if(this->getMesh("bunny_cage"))
+        this->getMesh("bunny_cage")->setNormalDeformationMethod();
 }
 
 void Scene::setWeightedDeformationMethod(float radius) {
     if(this->grids.size() > 0)
         this->grids[this->gridToDraw]->grid->setWeightedDeformationMethod(radius);
-    if(this->cage)
-        this->cage->setWeightedDeformationMethod(radius);
+    if(this->getMesh("bunny_cage"))
+        this->getMesh("bunny_cage")->setWeightedDeformationMethod(radius);
 }
 
 void Scene::setARAPDeformationMethod() {
     if(this->grids.size() > 0)
         this->grids[this->gridToDraw]->grid->setARAPDeformationMethod();
-    if(this->cage)
-        this->cage->setARAPDeformationMethod();
+    if(this->getMesh("bunny_cage"))
+        this->getMesh("bunny_cage")->setARAPDeformationMethod();
 }
 
 void Scene::setManipulatorRadius(float radius) {
@@ -3357,4 +3354,59 @@ bool Scene::toggleARAPManipulatorMode() {
     }
     manipulator->toggleMode();
     return true;
+}
+
+bool Scene::openMesh(const std::string& name, const std::string& filename, const glm::vec4& color) {
+    //this->surfaceMesh = new SurfaceMesh("/home/thomas/data/Data/Mesh/bunny_lowres.off");
+    this->meshes.push_back(std::pair<SurfaceMesh*, std::string>(nullptr, name));
+    this->drawableMeshes.push_back(std::pair<DrawableMesh*, std::string>(nullptr, name));
+    this->meshes.back().first = new SurfaceMesh(filename);
+    this->drawableMeshes.back().first = new DrawableMesh();
+    this->drawableMeshes.back().first->mesh = this->meshes.back().first;
+    this->drawableMeshes.back().first->initialize(this->context, this);
+    this->drawableMeshes.back().first->color = color;
+
+    return true;
+}
+
+bool Scene::openCage(const std::string& name, const std::string& filename, SurfaceMesh * surfaceMeshToDeform, const bool MVC, const glm::vec4& color) {
+    //this->cage = new CageMVC("/home/thomas/data/Data/Mesh/bunny_cage.off", this->surfaceMesh);
+    this->meshes.push_back(std::pair<SurfaceMesh*, std::string>(nullptr, name));
+    this->drawableMeshes.push_back(std::pair<DrawableMesh*, std::string>(nullptr, name));
+
+    if(MVC)
+        this->meshes.back().first = new CageMVC(filename, surfaceMeshToDeform);
+    else 
+        this->meshes.back().first = new CageGreen(filename, surfaceMeshToDeform);
+
+    this->drawableMeshes.back().first = new DrawableMesh();
+    this->drawableMeshes.back().first->mesh = this->meshes.back().first;
+    this->drawableMeshes.back().first->initialize(this->context, this);
+    this->drawableMeshes.back().first->color = color;
+    return true;
+}
+
+bool Scene::openGrid(const std::string& name, Grid * grid) {
+    this->addGrid(grid);
+    return true;
+}
+
+SurfaceMesh * Scene::getMesh(const std::string& name) {
+    for(int i = 0; i < this->meshes.size(); ++i) {
+        if(this->meshes[i].second == name) {
+            return this->meshes[i].first;
+        }
+    }
+    std::cout << "Error: wrong mesh name" << std::endl;
+    return nullptr;
+}
+
+DrawableMesh * Scene::getDrawableMesh(const std::string& name) {
+    for(int i = 0; i < this->drawableMeshes.size(); ++i) {
+        if(this->drawableMeshes[i].second == name) {
+            return this->drawableMeshes[i].first;
+        }
+    }
+    std::cout << "Error: wrong drawable name" << std::endl;
+    return nullptr;
 }

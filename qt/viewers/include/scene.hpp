@@ -307,8 +307,6 @@ private:
 	glm::bvec3 planeVisibility;
 	glm::vec3 planeDirection;	 ///< Cutting plane directions (-1 or 1 on each axis)
 	glm::vec3 planeDisplacement;
-	Image::bbox_t sceneBB;
-	Image::bbox_t sceneDataBB;
 	float clipDistanceFromCamera;
 	glm::uvec3 visuMin;
 	glm::uvec3 visuMax;
@@ -473,6 +471,13 @@ public slots:
     void sendFirstTetmeshToGPU();
     uint16_t sendGridValuesToGPU(int gridIdx);
 
+    // Scene management
+    bool openMesh(const std::string& name, const std::string& filename, const glm::vec4& color = glm::vec4(0., 1., 0., 1.));
+    bool openCage(const std::string& name, const std::string& filename, SurfaceMesh * surfaceMeshToDeform, const bool MVC = true, const glm::vec4& color = glm::vec4(1., 0., 0., 0.3));
+    bool openGrid(const std::string& name, Grid * grid);
+    SurfaceMesh * getMesh(const std::string& name);
+    DrawableMesh * getDrawableMesh(const std::string& name);
+
     //void addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction, bool onSurface);
 /*************/
 /* Temporary */
@@ -482,12 +487,15 @@ public:
 
     int gridToDraw = 0;
 
-	std::vector<GridGLView::Ptr> grids;
+    glm::vec3 sceneBBmin;
+    glm::vec3 sceneBBmax;
 
-    SurfaceMesh * cage;
-    SurfaceMesh * surfaceMesh;
-    DrawableMesh * drawableMesh;
-    DrawableMesh * drawableCage;
+	std::vector<GridGLView::Ptr> grids;
+    std::vector<std::pair<SurfaceMesh*, std::string>> meshes;
+    std::vector<std::pair<DrawableMesh*, std::string>> drawableMeshes;
+
+	Image::bbox_t sceneBB;
+	Image::bbox_t sceneDataBB;
 };
 
 /// @brief Type-safe conversion of enum values to unsigned ints.
