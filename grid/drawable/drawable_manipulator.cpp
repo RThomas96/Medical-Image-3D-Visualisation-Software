@@ -259,8 +259,8 @@ void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scen
     } else {
         this->meshManipulator = new UITool::ARAPManipulator(mesh, positions);
     }
-    this->prepare();
     this->setRadius(this->meshManipulator->getManipulatorSize());
+    this->prepare();
     QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needRedraw()), this, SLOT(prepare()));
     QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needSendTetmeshToGPU()), scene, SLOT(sendFirstTetmeshToGPU()));
     this->toggleActivation();
