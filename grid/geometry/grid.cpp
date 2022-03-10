@@ -32,9 +32,10 @@ void Grid::buildTetmesh(const glm::vec3& nbCube) {
     this->buildTetmesh(nbCube, sizeCube, origin);
 }
 
-void Grid::buildTetmesh(const glm::vec3& nbCube, const glm::vec3& origin) {
-    const glm::vec3 sizeCube = this->sampler.getSamplerDimension() / nbCube;
-    this->buildTetmesh(nbCube, sizeCube, origin);
+void Grid::buildTetmesh(const glm::vec3& nbCube, const glm::vec3& sizeVoxel) {
+    //const glm::vec3 sizeCube = this->sampler.getSamplerDimension() / nbCube;
+    const glm::vec3 sizeCube = (this->sampler.getSamplerDimension() * sizeVoxel) / nbCube;
+    this->buildTetmesh(nbCube, sizeCube, glm::vec3(0., 0., 0.));
 }
 
 void Grid::buildTetmesh(const glm::vec3& nbCube, const glm::vec3& sizeCube, const glm::vec3& origin) {
@@ -195,6 +196,10 @@ void Grid::setOrigin(const glm::vec3& origin) {
 
 void Grid::toSampler(glm::vec3& p) const {
     p = glm::vec3(this->toSamplerMatrix * glm::vec4(p[0], p[1], p[2], 1.));
+}
+
+glm::vec3 Grid::getVoxelSize() const {
+    return this->getDimensions() / this->getResolution();
 }
 
 /**************************/

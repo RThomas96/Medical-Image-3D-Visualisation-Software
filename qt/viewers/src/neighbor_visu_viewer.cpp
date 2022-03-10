@@ -274,7 +274,6 @@ void Viewer::newAPI_loadGrid(Grid * ptr) {
 		return;
 	}
 	this->makeCurrent();
-	//this->scene->addGrid(ptr);
 	this->scene->openGrid("grid", ptr);
 	this->doneCurrent();
 }

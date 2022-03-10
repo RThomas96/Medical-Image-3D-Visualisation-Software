@@ -297,13 +297,34 @@ namespace UITool {
             }
         } else {
             // For rotation
-            CageMVC * cage = dynamic_cast<CageMVC*>(this->mesh);
-            glm::vec3 ori = glm::vec3(this->kid_manip.Origine[0], this->kid_manip.Origine[1], this->kid_manip.Origine[2]);
-            this->mesh->rotate(this->kid_manip.getRotationMatrix());
-            this->mesh->setOrigin(ori);
-            if(cage)  {
-                cage->meshToDeform->rotate(this->kid_manip.getRotationMatrix());
-                cage->meshToDeform->setOrigin(ori);
+            if(this->kid_manip.mode_modification >= 4 || this->kid_manip.mode_modification <= 6) {
+                glm::vec3 ori = glm::vec3(this->kid_manip.Origine[0], this->kid_manip.Origine[1], this->kid_manip.Origine[2]);
+                this->mesh->rotate(this->kid_manip.getRotationMatrix());
+                this->mesh->setOrigin(ori);
+                CageMVC * cage = dynamic_cast<CageMVC*>(this->mesh);
+                if(cage)  {
+                    cage->meshToDeform->rotate(this->kid_manip.getRotationMatrix());
+                    cage->meshToDeform->setOrigin(ori);
+                }
+            }
+            // For scale
+            if(this->kid_manip.mode_modification >= 7 || this->kid_manip.mode_modification <= 9) {
+                glm::vec3 scale = this->kid_manip.getScaleVector();
+                int maxIdx = 0;
+                float max = 0;
+                for(int i = 0; i < 3; ++i) {
+                    if(std::abs(1 - scale[i]) > max) {
+                        maxIdx = i;
+                        max = scale[i];
+                    }
+                }
+                std::cout << scale << std::endl;
+                scale = glm::vec3(scale[maxIdx], scale[maxIdx], scale[maxIdx]);
+                this->mesh->scale(scale);
+                CageMVC * cage = dynamic_cast<CageMVC*>(this->mesh);
+                if(cage)  {
+                    cage->meshToDeform->scale(scale);
+                }
             }
         }
     }

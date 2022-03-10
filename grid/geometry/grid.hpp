@@ -77,6 +77,7 @@ struct Grid : public TetMesh {
     void buildTetmesh(const glm::vec3& nbCube, const glm::vec3& origin);
     void buildTetmesh(const glm::vec3& nbCube, const glm::vec3& sizeCube, const glm::vec3& origin);
 
+    glm::vec3 getVoxelSize() const;
     glm::mat4 getTransformationMatrix() const;
     void toSampler(glm::vec3& p) const;
     void toWorld(glm::vec3& p) const;

@@ -79,6 +79,13 @@ protected:
 	QDoubleSpinBox* spinbox_mesh_y;
 	QDoubleSpinBox* spinbox_mesh_z;
 
+	QHBoxLayout*     layout_voxel;
+	QGroupBox*        group_voxel;
+	QLabel*           label_voxel;
+	QDoubleSpinBox* spinbox_voxel_x;
+	QDoubleSpinBox* spinbox_voxel_y;
+	QDoubleSpinBox* spinbox_voxel_z;
+
 	QProgressBar* progress_load;
 
 	QPushButton* button_loadNewGridAPI;

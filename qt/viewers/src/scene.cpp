@@ -609,6 +609,7 @@ void Scene::addGrid(Grid * gridLoaded) {
 
 	GridGLView::Ptr gridView = std::make_shared<GridGLView>(gridLoaded);
 	this->grids.push_back(gridView);
+    //this->grids[0]->grid->scale(glm::vec3(0.1, 0.1, 0.1));
 
     uint16_t max = sendGridValuesToGPU(this->grids.size() -1);
 
@@ -676,6 +677,7 @@ void Scene::addGrid(Grid * gridLoaded) {
     //this->getMesh("bunny_cage")->computeNormals();
     //this->getDrawableMesh("bunny")->makeVAO();
     //this->getDrawableMesh("bunny_cage")->makeVAO();
+
 }
 
 void Scene::updateBoundingBox(void) {
@@ -1738,7 +1740,7 @@ void Scene::prepareUniformsGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm
 
 	glm::vec3 floatres = glm::convert_to<float>(_grid->grid->getResolution());
 
-	glUniform3fv(location_voxelSize, 1, glm::value_ptr(_grid->voxelDimensions));
+	glUniform3fv(location_voxelSize, 1, glm::value_ptr(_grid->grid->getVoxelSize()));
 	glUniform3fv(location_gridSize, 1, glm::value_ptr(floatres));
 
 	// Vectors/arrays :

@@ -80,6 +80,22 @@ GridLoaderWidget::GridLoaderWidget(Scene* _scene, Viewer* _viewer, ControlPanel*
     this->spinbox_mesh_z->setValue(5.);
     this->spinbox_mesh_z->setRange(0., 1000.);
 
+	this->group_voxel = new QGroupBox("Size of the voxels");
+	this->group_voxel->setToolTip("Allow to specify the size of the voxels");
+	this->group_voxel->setCheckable(false);
+	this->label_voxel = new QLabel("Nb tetrahedra");
+	this->spinbox_voxel_x = new QDoubleSpinBox;
+    this->spinbox_voxel_x->setValue(1.);
+    this->spinbox_voxel_x->setRange(0., 1000.);
+
+	this->spinbox_voxel_y = new QDoubleSpinBox;
+    this->spinbox_voxel_y->setValue(1.);
+    this->spinbox_voxel_y->setRange(0., 1000.);
+
+	this->spinbox_voxel_z = new QDoubleSpinBox;
+    this->spinbox_voxel_z->setValue(1.);
+    this->spinbox_voxel_z->setRange(0., 1000.);
+
     this->button_loadNewGridAPI = new QPushButton("Load with new grid API");
 
 	this->progress_load			   = new QProgressBar;
@@ -98,10 +114,12 @@ void GridLoaderWidget::setupLayouts() {
 	this->layout_subsample = new QHBoxLayout;
 	this->layout_bbox = new QGridLayout;
 	this->layout_mesh = new QHBoxLayout;
+	this->layout_voxel = new QHBoxLayout;
 
 	this->group_bbox->setLayout(this->layout_bbox);
 	this->group_subsample->setLayout(this->layout_subsample);
     this->group_mesh->setLayout(this->layout_mesh);
+    this->group_voxel->setLayout(this->layout_voxel);
 
 	this->layout_bbox->addWidget(this->label_bboxMin, 0, 0);
 	this->layout_bbox->addWidget(this->spinbox_bboxMin_x, 0, 1);
@@ -121,11 +139,17 @@ void GridLoaderWidget::setupLayouts() {
 	this->layout_mesh->addWidget(this->spinbox_mesh_y);
 	this->layout_mesh->addWidget(this->spinbox_mesh_z);
 
+	//this->layout_voxel->addWidget(this->label_voxel);
+	this->layout_voxel->addWidget(this->spinbox_voxel_x);
+	this->layout_voxel->addWidget(this->spinbox_voxel_y);
+	this->layout_voxel->addWidget(this->spinbox_voxel_z);
+
 	this->progress_load->hide();
 
     this->mainLayout->addWidget(this->group_subsample);
     this->mainLayout->addWidget(this->group_bbox);
     this->mainLayout->addWidget(this->group_mesh);
+    this->mainLayout->addWidget(this->group_voxel);
     //this->mainLayout->addWidget(this->button_loadGrids);
     this->mainLayout->addWidget(this->button_loadNewGridAPI);
     this->setLayout(this->mainLayout);
@@ -186,6 +210,7 @@ void GridLoaderWidget::loadNewGridAPI() {
 
     //glm::vec3 sizeTetmesh = glm::vec3(20., 20., 20.);
     glm::vec3 sizeTetmesh = glm::vec3(this->spinbox_mesh_x->value(), this->spinbox_mesh_y->value(), this->spinbox_mesh_z->value());
+    glm::vec3 sizeVoxel = glm::vec3(this->spinbox_voxel_x->value(), this->spinbox_voxel_y->value(), this->spinbox_voxel_z->value());
 
 	if(this->group_bbox->isChecked()) {
         std::pair<glm::vec3, glm::vec3> bbox{glm::vec3(this->spinbox_bboxMin_x->value(), this->spinbox_bboxMin_y->value(), this->spinbox_bboxMin_z->value()), glm::vec3(this->spinbox_bboxMax_x->value(), this->spinbox_bboxMax_y->value(), this->spinbox_bboxMax_z->value())};
@@ -195,8 +220,8 @@ void GridLoaderWidget::loadNewGridAPI() {
     } else {
 	    this->_testing_grid = new Grid(filenamesAsString, subsample);
     }
-    this->_testing_grid->buildTetmesh(sizeTetmesh);
-    this->loadGrid_newAPI();
+    this->_testing_grid->buildTetmesh(sizeTetmesh, sizeVoxel);
+	this->viewer->newAPI_loadGrid(this->_testing_grid);
 }
 
 void GridLoaderWidget::loadGrid() {

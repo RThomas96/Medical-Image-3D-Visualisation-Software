@@ -61,6 +61,7 @@ class RotationManipulator : public QObject , public qglviewer::MouseGrabber
 
     float display_scale;
     float Xscale , Yscale , Zscale;     // (3)
+    float prevXscale , prevYscale , prevZscale;     // (3)
 
     vector< pair< int , qglviewer::Vec > > coordinates;
     vector< pair< int , qglviewer::Vec > > angular_coordinates;
@@ -96,11 +97,17 @@ public:
         display_scale = 1.f;
         mode_modification = 0.f;
         Xscale = Yscale = Zscale = 1.f;
+        prevXscale = prevYscale = prevZscale = 1.f;
 
         mode_grabbing = 1;
         etat = 1;
     }
     ~RotationManipulator(){}
+
+    glm::vec3 getScaleVector() {
+        glm::vec3 res = glm::vec3(Xscale, Yscale, Zscale) - glm::vec3(prevXscale, prevYscale, prevZscale);
+        return glm::vec3(1., 1., 1.) + res;
+    }
 
     glm::mat3 getRotationMatrix() { 
         glm::mat3 prevMat(PrevRepX[0], PrevRepX[1], PrevRepX[2], PrevRepY[0], PrevRepY[1], PrevRepY[2], PrevRepZ[0], PrevRepZ[1], PrevRepZ[2]); 
@@ -1040,6 +1047,7 @@ public:
                     d = cross( RepX , Dir );
                     e = cross( Dir , d );
                     lambda = ( ( Eye - Origine ) * e ) / ( RepX * e );
+                    prevXscale = Xscale;
                     Xscale = lambda / (1.5*display_scale);
                     manipulatedCallback();
                     break;
@@ -1047,6 +1055,7 @@ public:
                     d = cross( RepX , Dir );
                     e = cross( Dir , d );
                     lambda = ( ( Eye - Origine ) * e ) / ( RepX * e );
+                    prevXscale = Xscale;
                     Xscale = -lambda / (1.5*display_scale);
                     manipulatedCallback();
                     break;
@@ -1055,6 +1064,7 @@ public:
                     d = cross( RepY , Dir );
                     e = cross( Dir , d );
                     lambda = ( ( Eye - Origine ) * e ) / ( RepY * e );
+                    prevYscale = Yscale;
                     Yscale = lambda / (1.5*display_scale);
                     manipulatedCallback();
                     break;
@@ -1062,6 +1072,7 @@ public:
                     d = cross( RepY , Dir );
                     e = cross( Dir , d );
                     lambda = ( ( Eye - Origine ) * e ) / ( RepY * e );
+                    prevYscale = Yscale;
                     Yscale = -lambda / (1.5*display_scale);
                     manipulatedCallback();
                     break;
@@ -1070,6 +1081,7 @@ public:
                     d = cross( RepZ , Dir );
                     e = cross( Dir , d );
                     lambda = ( ( Eye - Origine ) * e ) / ( RepZ * e );
+                    prevZscale = Zscale;
                     Zscale = lambda / (1.5*display_scale);
                     manipulatedCallback();
                     break;
@@ -1077,6 +1089,7 @@ public:
                     d = cross( RepZ , Dir );
                     e = cross( Dir , d );
                     lambda = ( ( Eye - Origine ) * e ) / ( RepZ * e );
+                    prevZscale = Zscale;
                     Zscale = -lambda / (1.5*display_scale);
                     manipulatedCallback();
                     break;
