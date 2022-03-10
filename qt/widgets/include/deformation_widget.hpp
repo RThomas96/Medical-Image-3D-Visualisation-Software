@@ -44,9 +44,10 @@ public slots:
     void addNewMesh(const std::string& name, bool grid, bool cage) {
         this->meshNames.push_back(name);
         this->gridOrCage.push_back(std::pair<bool, bool>(grid, cage));
-        this->combo_mesh->clear();
-        for(int i = 0; i < this->meshNames.size(); ++i)
-            this->combo_mesh->addItem(QString(this->meshNames[i].c_str()));
+        //this->combo_mesh->clear();
+        //for(int i = 0; i < this->meshNames.size(); ++i)
+            if(!this->gridOrCage.back().first)
+                this->combo_mesh->insertItem(this->combo_mesh->count(), QString(this->meshNames.back().c_str()));
     }
 
 protected:

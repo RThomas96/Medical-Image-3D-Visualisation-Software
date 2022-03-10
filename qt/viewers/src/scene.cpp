@@ -217,6 +217,7 @@ void Scene::initGl(QOpenGLContext* _context) {
 	// Generate controller positions
 	//this->glMeshManipulator->initGL(this->get_context());
 	this->sceneGL.initGl(this->get_context());
+    this->gridToDraw = -1;
 	//this->glMeshManipulator->prepareSphere();
 
     //this->surfaceMesh = nullptr;
@@ -3401,6 +3402,11 @@ bool Scene::openGrid(const std::string& name, Grid * grid) {
     this->updateSceneCenter();
     std::cout << "New grid added with BBox:" << this->grids.back()->grid->bbMax << std::endl;
 
+    this->getCage("bunny_cage")->unbindMovementWithDeformedMesh();
+    this->getCage("bunny_cage")->scale(glm::vec3(300., 300., 300.));
+    this->getCage("bunny_cage")->setOrigin(this->grids.back()->grid->getOrigin());
+    this->getCage("bunny_cage")->changeMeshToDeform(this->grids[0]->grid);
+
     Q_EMIT meshAdded(name, true, false);
     return true;
 }
@@ -3441,14 +3447,14 @@ void Scene::updateSceneBBox(const glm::vec3& bbMin, const glm::vec3& bbMax) {
 }
 
 glm::vec3 Scene::getSceneCenter() {
-    if(this->gridToDraw >= 0)
-        return this->grids[this->gridToDraw]->grid->getOrigin();
 
     SurfaceMesh * mesh = this->getMesh(this->activeMesh);
     if(mesh) {
         std::cout << "Update scene center to origin of [" << this->activeMesh << "] which is " << mesh->getOrigin() << std::endl;
         return mesh->getOrigin();
     } else {
+        if(this->gridToDraw >= 0)
+            return this->grids[this->gridToDraw]->grid->getOrigin();
         return (this->sceneBBMax + this->sceneBBMin)/2.f;
     }
 }
@@ -3472,24 +3478,6 @@ void Scene::updateSceneBBox() {
 
 void Scene::updateSceneCenter() {
     Q_EMIT sceneCenterChanged(this->getSceneCenter());
-}
-
-void Scene::init() {
-    this->openMesh("bunny", "/home/thomas/data/Data/Mesh/bunny_lowres.off");
-    this->openCage("bunny_cage", "/home/thomas/data/Data/Mesh/bunny_cage.off", this->getMesh("bunny"), false);
-
-    glm::vec3 scale(10., 10., 10.);
-    this->getMesh("bunny")->scale(scale);
-
-    this->getCage("bunny_cage")->unbindMovementWithDeformedMesh();
-    this->getCage("bunny_cage")->scale(glm::vec3(15, 15, 15));
-    this->getCage("bunny_cage")->setOrigin(this->getMesh("bunny")->getOrigin());
-    this->getCage("bunny_cage")->bindMovementWithDeformedMesh();
-
-    this->updateSceneBBox();
-    this->updateSceneCenter();
-
-    std::cout << "New bunny added with BBox:" << this->getMesh("bunny")->bbMax << std::endl;
 }
 
 void Scene::toggleBindMeshToCageMove(const std::string& name) {
@@ -3522,3 +3510,22 @@ void Scene::changeActiveMesh(const std::string& name) {
     this->activeMesh = name;
     this->updateSceneCenter();
 }
+
+void Scene::init() {
+    this->openMesh("bunny", "/home/thomas/data/Data/Mesh/bunny_lowres.off");
+    this->openCage("bunny_cage", "/home/thomas/data/Data/Mesh/bunny_cage.off", this->getMesh("bunny"), false);
+
+    glm::vec3 scale(10., 10., 10.);
+    this->getMesh("bunny")->scale(scale);
+
+    this->getCage("bunny_cage")->unbindMovementWithDeformedMesh();
+    this->getCage("bunny_cage")->scale(glm::vec3(15, 15, 15));
+    this->getCage("bunny_cage")->setOrigin(this->getMesh("bunny")->getOrigin());
+    this->getCage("bunny_cage")->bindMovementWithDeformedMesh();
+
+    this->updateSceneBBox();
+    this->updateSceneCenter();
+
+    std::cout << "New bunny added with BBox:" << this->getMesh("bunny")->bbMax << std::endl;
+}
+

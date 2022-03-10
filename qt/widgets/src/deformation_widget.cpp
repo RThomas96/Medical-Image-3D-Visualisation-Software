@@ -201,9 +201,9 @@ void GridDeformationWidget::updateScene(Scene * scene, int meshTool, int moveMet
     if(moveMethod >= 0)
         this->moveMethod = moveMethod;
 
-    scene->gridToDraw = this->gridToDraw;
+    //scene->gridToDraw = this->gridToDraw;
     if(!this->useSurface)
-        scene->sendTetmeshToGPU(this->gridToDraw, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS | InfoToSend::TEXCOORD | InfoToSend::NEIGHBORS)); 
+        scene->sendTetmeshToGPU(scene->gridToDraw, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS | InfoToSend::TEXCOORD | InfoToSend::NEIGHBORS)); 
     
     if(this->moveMethod == 0) {
         scene->setNormalDeformationMethod(currentMeshName);
