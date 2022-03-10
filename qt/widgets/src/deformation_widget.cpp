@@ -19,8 +19,7 @@ GridDeformationWidget::GridDeformationWidget(Scene* scene, QWidget* parent) :
 	this->radio_mesh_grid_1->setChecked(true);
 	this->radio_mesh_grid_2 = new QRadioButton("Grid 2");
 	this->radio_mesh_grid_2->setChecked(false);
-	this->radio_mesh_surface = new QRadioButton("Surface");
-	this->radio_mesh_surface->setChecked(false);
+    this->combo_mesh = new QComboBox();
 
 	this->group_selector = new QGroupBox("Tools");
 	this->radio_selector_direct = new QRadioButton("Direct");
@@ -100,9 +99,9 @@ void GridDeformationWidget::setupLayouts() {
 	this->group_move->setLayout(this->layout_move);
 	this->group_visu->setLayout(this->layout_visu);
 
+	this->layout_mesh->addWidget(this->combo_mesh, 4);
 	this->layout_mesh->addWidget(this->radio_mesh_grid_1, 1);
 	this->layout_mesh->addWidget(this->radio_mesh_grid_2, 2);
-	this->layout_mesh->addWidget(this->radio_mesh_surface, 3);
 
 	this->layout_selector->addWidget(this->radio_selector_direct, 1);
 	this->layout_selector->addWidget(this->radio_selector_free, 2);
@@ -134,10 +133,11 @@ GridDeformationWidget::~GridDeformationWidget() {
 }
 
 void GridDeformationWidget::updateScene(Scene * scene, int meshTool, int moveMethod) {
+    if(this->combo_mesh->count() <= 0)
+        return;
     // Lock/Unlock features
     this->radio_mesh_grid_1->setEnabled(true);
     this->radio_mesh_grid_2->setEnabled(true);
-    this->radio_mesh_surface->setEnabled(true);
     this->radio_selector_direct->setEnabled(true);
     this->radio_selector_free->setEnabled(true);
     this->radio_selector_position->setEnabled(true);
@@ -187,7 +187,8 @@ void GridDeformationWidget::updateScene(Scene * scene, int meshTool, int moveMet
     scene->gridToDraw = this->gridToDraw;
     if(!this->useSurface)
         scene->sendTetmeshToGPU(this->gridToDraw, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS | InfoToSend::TEXCOORD | InfoToSend::NEIGHBORS)); 
-    scene->createNewMeshManipulator(this->meshManipulatorType, this->useSurface);
+    
+    scene->createNewMeshManipulator(std::string((this->combo_mesh->itemText(this->combo_mesh->currentIndex())).toStdString()), this->meshManipulatorType, this->useSurface);
     if(this->moveMethod == 0) {
         scene->setNormalDeformationMethod();
     }
@@ -208,7 +209,7 @@ void GridDeformationWidget::setupSignals(Scene * scene) {
 
 	QObject::connect(this->radio_mesh_grid_2, &QPushButton::clicked, this, [this, scene]() {this->useSurface = false; scene->gridToDraw = 1; this->updateScene(scene, -1, -1);});
 
-	QObject::connect(this->radio_mesh_surface, &QPushButton::clicked, this, [this, scene]() {if(!this->useSurface) {this->useSurface = true; this->updateScene(scene, -1, -1);}});
+    QObject::connect(this->combo_mesh, QOverload<int>::of(&QComboBox::currentIndexChanged), [=](int index){this->useSurface = true; this->updateScene(scene, -1, -1);});
 
 	QObject::connect(this->radio_selector_direct, &QPushButton::clicked, this, [this, scene]() {this->updateScene(scene, 0, -1);});
 
@@ -234,6 +235,9 @@ void GridDeformationWidget::setupSignals(Scene * scene) {
 
 	QObject::connect(this->checkbox_wireframe, &QPushButton::clicked, this, [this, scene]() {scene->toggleWireframe();});
 
+    /***/
+
+	QObject::connect(scene, &Scene::meshAdded, this, &GridDeformationWidget::addNewMesh);
 
     // These button can be set
 	//QObject::connect(this->spinbox_l_selection, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, [=](double i){ scene->setL(i);}); 

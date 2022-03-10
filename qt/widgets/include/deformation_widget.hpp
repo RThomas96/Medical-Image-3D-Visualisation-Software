@@ -32,10 +32,20 @@ public:
 	void setupSignals(Scene* scene);
     void updateScene(Scene * scene, int meshTool, int moveMethod);
 
-    bool useSurface = false;
+    bool useSurface = true;
     int meshManipulatorType = 0;
     int moveMethod = 0;
-    int gridToDraw = 0;
+    int gridToDraw = -1;
+
+    std::vector<std::string> meshNames;
+
+public slots:
+    void addNewMesh(const std::string& name) {
+        this->meshNames.push_back(name);
+        this->combo_mesh->clear();
+        for(int i = 0; i < this->meshNames.size(); ++i)
+            this->combo_mesh->addItem(QString(this->meshNames[i].c_str()));
+    }
 
 protected:
     QVBoxLayout* mainLayout;
@@ -44,7 +54,8 @@ protected:
 	QGroupBox*                group_mesh;
 	QRadioButton*      radio_mesh_grid_1; 
 	QRadioButton*      radio_mesh_grid_2; 
-	QRadioButton*     radio_mesh_surface; 
+
+    QComboBox* combo_mesh;
 
 	QVBoxLayout*          layout_selector;
 	QGroupBox*             group_selector;

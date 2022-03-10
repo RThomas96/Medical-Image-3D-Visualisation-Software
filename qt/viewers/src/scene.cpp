@@ -648,8 +648,8 @@ void Scene::addGrid(Grid * gridLoaded) {
 	this->tex3D_buildBuffers(gridView->volumetricMesh);
 
     //Add manipulators
-    this->createNewMeshManipulator(0, false);
-	this->glMeshManipulator->toggleActivation();
+    //this->createNewMeshManipulator(std::string("bunny"), 0, false);
+	//this->glMeshManipulator->toggleActivation();
 
     //this->updateManipulatorPositions();
 	this->prepareManipulators();
@@ -3248,9 +3248,9 @@ void Scene::toggleWireframe() {
 	this->glMeshManipulator->toggleDisplayWireframe();
 }
 
-void Scene::createNewMeshManipulator(int i, bool onSurface) {
+void Scene::createNewMeshManipulator(const std::string& meshName, int i, bool onSurface) {
     if(onSurface) {
-        this->glMeshManipulator->createNewMeshManipulator(this->getMesh("bunny_cage"), this, i);
+        this->glMeshManipulator->createNewMeshManipulator(this->getMesh(meshName), this, i);
     } else {
         this->glMeshManipulator->createNewMeshManipulator(this->grids[this->gridToDraw]->grid, this, i);
     }
@@ -3361,6 +3361,7 @@ bool Scene::openMesh(const std::string& name, const std::string& filename, const
     this->updateSceneBBox(this->meshes.back().first->bbMin, this->meshes.back().first->bbMax);
     this->updateSceneCenter();
 
+    Q_EMIT meshAdded(name);
     return true;
 }
 
@@ -3384,6 +3385,7 @@ bool Scene::openCage(const std::string& name, const std::string& filename, Surfa
     this->updateSceneBBox(this->meshes.back().first->bbMin, this->meshes.back().first->bbMax);
     this->updateSceneCenter();
 
+    Q_EMIT meshAdded(name);
     return true;
 }
 
@@ -3395,6 +3397,8 @@ bool Scene::openGrid(const std::string& name, Grid * grid) {
     this->updateSceneBBox(this->grids.back()->grid->bbMin, this->grids.back()->grid->bbMax);
     this->updateSceneCenter();
     std::cout << "New grid added with BBox:" << this->grids.back()->grid->bbMax << std::endl;
+
+    Q_EMIT meshAdded(name);
     return true;
 }
 
