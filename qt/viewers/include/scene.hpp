@@ -467,9 +467,9 @@ public slots:
     bool toggleARAPManipulatorMode();
 
     // MeshDeformator slots
-    void setNormalDeformationMethod();
-    void setWeightedDeformationMethod(float radius);
-    void setARAPDeformationMethod();
+    void setNormalDeformationMethod(const std::string& name);
+    void setWeightedDeformationMethod(const std::string& name, float radius);
+    void setARAPDeformationMethod(const std::string& name);
 
     // Rendering slots
 	void setColorChannel(ColorChannel mode);

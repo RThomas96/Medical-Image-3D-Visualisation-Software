@@ -205,20 +205,21 @@ void GridDeformationWidget::updateScene(Scene * scene, int meshTool, int moveMet
     if(!this->useSurface)
         scene->sendTetmeshToGPU(this->gridToDraw, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS | InfoToSend::TEXCOORD | InfoToSend::NEIGHBORS)); 
     
-    scene->createNewMeshManipulator(currentMeshName, this->meshManipulatorType, this->useSurface);
     if(this->moveMethod == 0) {
-        scene->setNormalDeformationMethod();
+        scene->setNormalDeformationMethod(currentMeshName);
     }
 
     if(this->moveMethod == 1) {
         this->label_radius_selection->show(); 
         this->spinbox_radius_selection->show(); 
-        scene->setWeightedDeformationMethod(this->spinbox_radius_selection->value());
+        scene->setWeightedDeformationMethod(currentMeshName, this->spinbox_radius_selection->value());
     }
 
     if(this->moveMethod == 2) {
-        scene->setARAPDeformationMethod();
+        scene->setARAPDeformationMethod(currentMeshName);
     }
+
+    scene->createNewMeshManipulator(currentMeshName, this->meshManipulatorType, this->useSurface);
 }
 
 void GridDeformationWidget::setupSignals(Scene * scene) {

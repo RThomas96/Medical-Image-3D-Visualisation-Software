@@ -2887,7 +2887,7 @@ bool contain(const InfoToSend& value, const InfoToSend& contain) {
 void Scene::sendFirstTetmeshToGPU() {
     if(this->grids.size() > 0)
         this->sendTetmeshToGPU(0, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS));
-    this->glMeshManipulator->meshManipulator->setAllManipulatorsPosition(this->getMesh("bunny_cage")->getMeshPositions());
+    this->glMeshManipulator->meshManipulator->setAllManipulatorsPosition(this->getMesh(this->activeMesh)->getMeshPositions());
 }
 
 void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend) {
@@ -3258,25 +3258,26 @@ void Scene::createNewMeshManipulator(const std::string& meshName, int i, bool on
     QObject::connect(this, SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)), dynamic_cast<QObject*>(this->glMeshManipulator->meshManipulator), SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)));
 }
 
-void Scene::setNormalDeformationMethod() {
+
+void Scene::setNormalDeformationMethod(const std::string& name) {
     if(this->grids.size() > 0)
         this->grids[this->gridToDraw]->grid->setNormalDeformationMethod();
-    if(this->getMesh("bunny_cage"))
-        this->getMesh("bunny_cage")->setNormalDeformationMethod();
+    if(this->getMesh(name))
+        this->getMesh(name)->setNormalDeformationMethod();
 }
 
-void Scene::setWeightedDeformationMethod(float radius) {
+void Scene::setWeightedDeformationMethod(const std::string& name, float radius) {
     if(this->grids.size() > 0)
         this->grids[this->gridToDraw]->grid->setWeightedDeformationMethod(radius);
-    if(this->getMesh("bunny_cage"))
-        this->getMesh("bunny_cage")->setWeightedDeformationMethod(radius);
+    if(this->getMesh(name))
+        this->getMesh(name)->setWeightedDeformationMethod(radius);
 }
 
-void Scene::setARAPDeformationMethod() {
+void Scene::setARAPDeformationMethod(const std::string& name) {
     if(this->grids.size() > 0)
         this->grids[this->gridToDraw]->grid->setARAPDeformationMethod();
-    if(this->getMesh("bunny_cage"))
-        this->getMesh("bunny_cage")->setARAPDeformationMethod();
+    if(this->getMesh(name))
+        this->getMesh(name)->setARAPDeformationMethod();
 }
 
 void Scene::setManipulatorRadius(float radius) {
