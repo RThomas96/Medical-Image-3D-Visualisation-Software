@@ -3367,6 +3367,10 @@ bool Scene::openMesh(const std::string& name, const std::string& filename, const
 
 bool Scene::openCage(const std::string& name, const std::string& filename, SurfaceMesh * surfaceMeshToDeform, const bool MVC, const glm::vec4& color) {
     //this->cage = new CageMVC("/home/thomas/data/Data/Mesh/bunny_cage.off", this->surfaceMesh);
+    if(!surfaceMeshToDeform) {
+        std::cout << "ERROR: no surface mesh provided" << std::endl;
+        return false;
+    }
     this->meshes.push_back(std::pair<SurfaceMesh*, std::string>(nullptr, name));
     this->drawableMeshes.push_back(std::pair<DrawableMesh*, std::string>(nullptr, name));
 
@@ -3473,12 +3477,13 @@ void Scene::updateSceneCenter() {
 
 void Scene::init() {
     this->openMesh("bunny", "/home/thomas/data/Data/Mesh/bunny_lowres.off");
-    this->openCage("bunny_cage", "/home/thomas/data/Data/Mesh/bunny_cage.off", this->getMesh("bunny"));
+    this->openCage("bunny_cage", "/home/thomas/data/Data/Mesh/bunny_cage.off", this->getMesh("bunny"), true);
 
     glm::vec3 scale(10., 10., 10.);
     this->getMesh("bunny")->scale(scale);
 
-    this->getMesh("bunny_cage")->scale(scale);
+    this->getMesh("bunny_cage")->scale(glm::vec3(15, 15, 15));
+    this->getMesh("bunny_cage")->setOrigin(this->getMesh("bunny")->getOrigin());
     dynamic_cast<CageMVC*>(this->getMesh("bunny_cage"))->reInitialize();
 
     this->updateSceneBBox();

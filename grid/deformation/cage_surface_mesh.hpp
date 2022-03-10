@@ -36,15 +36,13 @@ struct CageMVC : SurfaceMesh {
 };
 
 struct CageGreen : SurfaceMesh {
-    std::vector<glm::vec3> initial_cage_vertices;
-    std::vector<std::vector<int>> initial_cage_triangles;
-    std::vector<glm::vec3> initial_cage_triangle_normals;
+
+    BaseMesh * meshToDeform;
+    std::vector<glm::vec3> originalVertices;
 
     std::vector<std::vector<double>> phiCoordinates;
     std::vector<std::vector<double>> psiCoordinates;
     std::vector<GreenCoords::GreenScalingFactor<BasicPoint>> scalingFactors;
-
-    BaseMesh * meshToDeform;
 
     CageGreen(std::string const &filename, BaseMesh * meshToDeform) : SurfaceMesh(filename), meshToDeform(meshToDeform) {
         this->reInitialize();

@@ -65,12 +65,8 @@ void CageMVC::computeCoordinates() {
 }
 
 void CageGreen::reInitialize() {
+    this->originalVertices = this->meshToDeform->vertices;
     this->computeNormals();
-    this->initial_cage_vertices.clear();
-    this->initial_cage_vertices = this->vertices;
-    this->initial_cage_triangles.clear();
-    this->initial_cage_triangle_normals.clear();
-    this->initial_cage_vertices = this->normals;
 
     this->phiCoordinates.clear();
     this->psiCoordinates.clear();
@@ -81,7 +77,6 @@ void CageGreen::reInitialize() {
         const int v1 = triangle[0];
         const int v2 = triangle[1];
         const int v3 = triangle[2];
-        this->initial_cage_triangles.push_back(std::vector<int>{v1, v2, v3});
         scalingFactors.push_back(GreenCoords::GreenScalingFactor<BasicPoint>(toBasicPoint(this->vertices[v2] - this->vertices[v1]) ,toBasicPoint(this->vertices[v3] - this->vertices[v1])));
     }
     this->computeCoordinates();
@@ -90,13 +85,14 @@ void CageGreen::reInitialize() {
 void CageGreen::movePoint(const glm::vec3& origin, const glm::vec3& target) {
     BaseMesh::movePoint(origin, target);// Update the cage positions
     // Update positions of the mesh to deform
+    this->computeNormals();
     this->update_cage_triangle_scalingFactors();
     for(unsigned int v = 0; v < this->meshToDeform->getNbVertices(); ++v) {
         glm::vec3 pos(0,0,0);
         for(unsigned int vc = 0; vc < this->getNbVertices(); ++vc)
             pos += static_cast<float>(phiCoordinates[v][vc]) * this->vertices[vc];
-        for(unsigned int tc = 0; tc < this->getNbVertices(); ++tc)
-            pos += static_cast<float>(psiCoordinates[v][tc]) * static_cast<float>(scalingFactors[tc].scalingFactor()) * this->normals[tc];
+        for(unsigned int tc = 0; tc < this->triangles.size(); ++tc)
+            pos += static_cast<float>(psiCoordinates[v][tc]) * static_cast<float>(scalingFactors[tc].scalingFactor()) * glm::normalize(this->normals[tc]);
 
         this->meshToDeform->vertices[v] = pos;
     }
@@ -106,8 +102,8 @@ void CageGreen::movePoint(const glm::vec3& origin, const glm::vec3& target) {
 
 void CageGreen::update_cage_triangle_scalingFactors() {
     for(unsigned int t = 0; t < this->triangles.size(); ++t) {
-        this->scalingFactors[t].computeScalingFactor(toBasicPoint(this->vertices[this->triangles[t][1]] - this->vertices[this->triangles[t][0]]),
-                toBasicPoint(this->vertices[this->triangles[t][2]] - this->vertices[this->triangles[t][0]]));
+        this->scalingFactors[t].computeScalingFactor(toBasicPoint(this->vertices[this->triangles[t].getVertex(1)] - this->vertices[this->triangles[t].getVertex(0)]),
+                toBasicPoint(this->vertices[this->triangles[t].getVertex(2)] - this->vertices[this->triangles[t].getVertex(0)]));
     }
 }
 
@@ -137,7 +133,7 @@ void CageGreen::computeCoordinates() {
     for( unsigned int p_idx = 0 ; p_idx < this->meshToDeform->getNbVertices(); ++p_idx )
     {
         URAGO::computeCoordinatesOf3dPoint(
-                toBasicPoint(this->initial_cage_vertices[p_idx]),
+                toBasicPoint(this->originalVertices[p_idx]),
                 trianglesRawFormat,
                 verticesRawFormat,
                 normalsRawFormat,
