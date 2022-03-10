@@ -16,7 +16,6 @@
 
 #include "../../grid/geometry/grid.hpp"
 #include "../../grid/drawable/drawable_manipulator.hpp"
-#include "../../grid/deformation/cage_surface_mesh.hpp"
 
 inline unsigned int planeHeadingToIndex(planeHeading _heading) {
 	switch (_heading) {
@@ -3356,12 +3355,11 @@ bool Scene::openMesh(const std::string& name, const std::string& filename, const
     this->drawableMeshes.back().first->initialize(this->context, this);
     this->drawableMeshes.back().first->color = color;
 
-    this->activeMesh = name;
+    this->changeActiveMesh(name);
 
     this->updateSceneBBox(this->meshes.back().first->bbMin, this->meshes.back().first->bbMax);
-    this->updateSceneCenter();
 
-    Q_EMIT meshAdded(name);
+    Q_EMIT meshAdded(name, false, false);
     return true;
 }
 
@@ -3384,12 +3382,12 @@ bool Scene::openCage(const std::string& name, const std::string& filename, Surfa
     this->drawableMeshes.back().first->initialize(this->context, this);
     this->drawableMeshes.back().first->color = color;
 
-    this->activeMesh = name;
+    this->changeActiveMesh(name);
 
     this->updateSceneBBox(this->meshes.back().first->bbMin, this->meshes.back().first->bbMax);
     this->updateSceneCenter();
 
-    Q_EMIT meshAdded(name);
+    Q_EMIT meshAdded(name, false, true);
     return true;
 }
 
@@ -3402,11 +3400,9 @@ bool Scene::openGrid(const std::string& name, Grid * grid) {
     this->updateSceneCenter();
     std::cout << "New grid added with BBox:" << this->grids.back()->grid->bbMax << std::endl;
 
-    Q_EMIT meshAdded(name);
+    Q_EMIT meshAdded(name, true, false);
     return true;
 }
-
-SurfaceMesh * Scene::getMesh(const char * name) { return this->getMesh(std::string(name)); }
 
 SurfaceMesh * Scene::getMesh(const std::string& name) {
     for(int i = 0; i < this->meshes.size(); ++i) {
@@ -3418,7 +3414,9 @@ SurfaceMesh * Scene::getMesh(const std::string& name) {
     return nullptr;
 }
 
-DrawableMesh * Scene::getDrawableMesh(const char * name) {return this->getDrawableMesh(std::string(name));}
+Cage * Scene::getCage(const std::string& name) {
+    return dynamic_cast<Cage*>(this->getMesh(name));
+}
 
 DrawableMesh * Scene::getDrawableMesh(const std::string& name) {
     for(int i = 0; i < this->drawableMeshes.size(); ++i) {
@@ -3477,17 +3475,49 @@ void Scene::updateSceneCenter() {
 
 void Scene::init() {
     this->openMesh("bunny", "/home/thomas/data/Data/Mesh/bunny_lowres.off");
-    this->openCage("bunny_cage", "/home/thomas/data/Data/Mesh/bunny_cage.off", this->getMesh("bunny"), true);
+    this->openCage("bunny_cage", "/home/thomas/data/Data/Mesh/bunny_cage.off", this->getMesh("bunny"), false);
 
     glm::vec3 scale(10., 10., 10.);
     this->getMesh("bunny")->scale(scale);
 
-    this->getMesh("bunny_cage")->scale(glm::vec3(15, 15, 15));
-    this->getMesh("bunny_cage")->setOrigin(this->getMesh("bunny")->getOrigin());
-    dynamic_cast<CageMVC*>(this->getMesh("bunny_cage"))->reInitialize();
+    this->getCage("bunny_cage")->unbindMovementWithDeformedMesh();
+    this->getCage("bunny_cage")->scale(glm::vec3(15, 15, 15));
+    this->getCage("bunny_cage")->setOrigin(this->getMesh("bunny")->getOrigin());
+    this->getCage("bunny_cage")->bindMovementWithDeformedMesh();
 
     this->updateSceneBBox();
     this->updateSceneCenter();
 
     std::cout << "New bunny added with BBox:" << this->getMesh("bunny")->bbMax << std::endl;
+}
+
+void Scene::toggleBindMeshToCageMove(const std::string& name) {
+    Cage * cage = this->getCage(name);
+    if(cage) {
+        if(cage->moveMeshToDeform) {
+            cage->unbindMovementWithDeformedMesh();
+        } else {
+            cage->bindMovementWithDeformedMesh();
+        }
+    } else {
+        std::cout << "Error: the selected mesh isn't a cage or doesn't exist" << std::endl;
+    }
+}
+
+void Scene::setBindMeshToCageMove(const std::string& name, bool state) {
+    Cage * cage = this->getCage(name);
+    if(cage) {
+        if(state) {
+            cage->bindMovementWithDeformedMesh();
+        } else {
+            cage->unbindMovementWithDeformedMesh();
+        }
+    } else {
+        std::cout << "Error: the selected mesh isn't a cage or doesn't exist" << std::endl;
+    }
+}
+
+void Scene::changeActiveMesh(const std::string& name) {
+    this->activeMesh = name;
+    this->updateSceneCenter();
 }

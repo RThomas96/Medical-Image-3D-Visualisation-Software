@@ -28,6 +28,10 @@ GridDeformationWidget::GridDeformationWidget(Scene* scene, QWidget* parent) :
 	this->radio_selector_free->setChecked(false);
 	this->radio_selector_position = new QRadioButton("Position");
 	this->radio_selector_position->setChecked(false);
+    this->bindMove = new QPushButton("Link to mesh");
+    this->bindMove->setCheckable(true);
+    this->bindMove->setChecked(true);
+    this->bindMove->hide();
 	this->radio_selector_comp = new QRadioButton("Marker");
 	this->radio_selector_comp->setChecked(false);
 	this->radio_selector_ARAP = new QRadioButton("ARAP");
@@ -106,10 +110,12 @@ void GridDeformationWidget::setupLayouts() {
 	this->layout_selector->addWidget(this->radio_selector_direct, 1);
 	this->layout_selector->addWidget(this->radio_selector_free, 2);
 	this->layout_selector->addWidget(this->radio_selector_position, 3);
-	this->layout_selector->addWidget(this->radio_selector_comp, 4);
-	this->layout_selector->addWidget(this->radio_selector_ARAP, 5);
-    this->layout_selector->addWidget(this->handleMode, 6);
+	this->layout_selector->addWidget(this->bindMove, 4);
+	this->layout_selector->addWidget(this->radio_selector_comp, 5);
+	this->layout_selector->addWidget(this->radio_selector_ARAP, 6);
+    this->layout_selector->addWidget(this->handleMode, 7);
     this->handleMode->hide();
+    this->bindMove->hide();
 
 	this->layout_move->addWidget(this->radio_move_normal, 1);
 	this->layout_move->addWidget(this->radio_move_weighted, 2);
@@ -135,6 +141,11 @@ GridDeformationWidget::~GridDeformationWidget() {
 void GridDeformationWidget::updateScene(Scene * scene, int meshTool, int moveMethod) {
     if(this->combo_mesh->count() <= 0)
         return;
+    
+    this->useSurface = !this->gridOrCage[this->combo_mesh->currentIndex()].first;
+    bool isCage = this->gridOrCage[this->combo_mesh->currentIndex()].second;
+    std::string currentMeshName = std::string((this->combo_mesh->itemText(this->combo_mesh->currentIndex())).toStdString());
+
     // Lock/Unlock features
     this->radio_mesh_grid_1->setEnabled(true);
     this->radio_mesh_grid_2->setEnabled(true);
@@ -147,8 +158,14 @@ void GridDeformationWidget::updateScene(Scene * scene, int meshTool, int moveMet
     this->radio_move_weighted->setEnabled(true);
     this->radio_move_ARAP->setEnabled(true);
     this->handleMode->hide();
+    this->bindMove->hide();
 	this->label_radius_selection->hide();
 	this->spinbox_radius_selection->hide();
+    if(isCage) {
+        this->bindMove->show();
+        this->bindMove->setChecked(true);
+        scene->setBindMeshToCageMove(currentMeshName, true);
+    }
     if(this->useSurface) {
         this->radio_selector_free->setEnabled(false);
         this->radio_selector_comp->setEnabled(false);
@@ -188,7 +205,7 @@ void GridDeformationWidget::updateScene(Scene * scene, int meshTool, int moveMet
     if(!this->useSurface)
         scene->sendTetmeshToGPU(this->gridToDraw, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS | InfoToSend::TEXCOORD | InfoToSend::NEIGHBORS)); 
     
-    scene->createNewMeshManipulator(std::string((this->combo_mesh->itemText(this->combo_mesh->currentIndex())).toStdString()), this->meshManipulatorType, this->useSurface);
+    scene->createNewMeshManipulator(currentMeshName, this->meshManipulatorType, this->useSurface);
     if(this->moveMethod == 0) {
         scene->setNormalDeformationMethod();
     }
@@ -205,11 +222,11 @@ void GridDeformationWidget::updateScene(Scene * scene, int meshTool, int moveMet
 }
 
 void GridDeformationWidget::setupSignals(Scene * scene) {
-	QObject::connect(this->radio_mesh_grid_1, &QPushButton::clicked, this, [this, scene]() {this->useSurface = false; scene->gridToDraw = 0; this->updateScene(scene, -1, -1);});
+	QObject::connect(this->radio_mesh_grid_1, &QPushButton::clicked, this, [this, scene]() { scene->gridToDraw = 0; this->updateScene(scene, -1, -1);});
 
 	QObject::connect(this->radio_mesh_grid_2, &QPushButton::clicked, this, [this, scene]() {this->useSurface = false; scene->gridToDraw = 1; this->updateScene(scene, -1, -1);});
 
-    QObject::connect(this->combo_mesh, QOverload<int>::of(&QComboBox::currentIndexChanged), [=](int index){this->useSurface = true; this->updateScene(scene, -1, -1);});
+    QObject::connect(this->combo_mesh, QOverload<int>::of(&QComboBox::currentIndexChanged), [=](int index){this->useSurface = true; this->updateScene(scene, -1, -1); scene->changeActiveMesh(std::string((this->combo_mesh->itemText(this->combo_mesh->currentIndex())).toStdString()));});
 
 	QObject::connect(this->radio_selector_direct, &QPushButton::clicked, this, [this, scene]() {this->updateScene(scene, 0, -1);});
 
@@ -231,6 +248,8 @@ void GridDeformationWidget::setupSignals(Scene * scene) {
 
     QObject::connect(this->handleMode, &QPushButton::released, this, [this, scene]() {scene->toggleARAPManipulatorMode();});
 
+    QObject::connect(this->bindMove, &QPushButton::released, this, [this, scene]() {scene->toggleBindMeshToCageMove(std::string((this->combo_mesh->itemText(this->combo_mesh->currentIndex())).toStdString()));});
+
 	QObject::connect(this->spinbox_radius_sphere, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, [=](double i){ scene->setManipulatorRadius(i);}); 
 
 	QObject::connect(this->checkbox_wireframe, &QPushButton::clicked, this, [this, scene]() {scene->toggleWireframe();});
@@ -238,13 +257,4 @@ void GridDeformationWidget::setupSignals(Scene * scene) {
     /***/
 
 	QObject::connect(scene, &Scene::meshAdded, this, &GridDeformationWidget::addNewMesh);
-
-    // These button can be set
-	//QObject::connect(this->spinbox_l_selection, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, [=](double i){ scene->setL(i);}); 
-	//QObject::connect(this->spinbox_N_selection, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, [=](double i){ scene->setN(i);}); 
-	//QObject::connect(this->spinbox_S_selection, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, [=](double i){ scene->setS(i);}); 
-
-    //QObject::connect(this->debug_button, &QPushButton::released, this, [this, scene]() {scene->createNewICP();});
-    //QObject::connect(this->debug_it, &QPushButton::released, this, [this, scene]() {scene->ICPIteration();});
-    //QObject::connect(this->debug_init, &QPushButton::released, this, [this, scene]() {scene->ICPInitialize();});
 }

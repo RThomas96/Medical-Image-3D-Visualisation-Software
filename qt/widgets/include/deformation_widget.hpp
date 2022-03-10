@@ -38,10 +38,12 @@ public:
     int gridToDraw = -1;
 
     std::vector<std::string> meshNames;
+    std::vector<std::pair<bool, bool>> gridOrCage;
 
 public slots:
-    void addNewMesh(const std::string& name) {
+    void addNewMesh(const std::string& name, bool grid, bool cage) {
         this->meshNames.push_back(name);
+        this->gridOrCage.push_back(std::pair<bool, bool>(grid, cage));
         this->combo_mesh->clear();
         for(int i = 0; i < this->meshNames.size(); ++i)
             this->combo_mesh->addItem(QString(this->meshNames[i].c_str()));
@@ -62,6 +64,7 @@ protected:
 	QRadioButton*   radio_selector_direct; 
 	QRadioButton*     radio_selector_free; 
 	QRadioButton* radio_selector_position; 
+    QPushButton*             bindMove;
 	QRadioButton* radio_selector_comp; 
 	QRadioButton* radio_selector_ARAP; 
 

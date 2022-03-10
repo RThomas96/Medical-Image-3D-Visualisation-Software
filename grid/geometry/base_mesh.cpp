@@ -89,7 +89,13 @@ std::vector<glm::vec3>& BaseMesh::getMeshPositions() {
 }
 
 glm::vec3 BaseMesh::getOrigin() {
-    return glm::vec3(this->bbMax + this->bbMin)/2.f;
+    //return glm::vec3(this->bbMax + this->bbMin)/2.f;
+    glm::vec3 origin(0., 0., 0.);
+    for(int i = 0; i < this->getNbVertices(); ++i) {
+        origin += this->vertices[i];
+    }
+    origin /= this->getNbVertices();
+    return origin;
 }
 
 void BaseMesh::translate(const glm::vec3& vec) {

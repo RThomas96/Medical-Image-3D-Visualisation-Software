@@ -290,25 +290,18 @@ namespace UITool {
     void PositionManipulator::moveManipulator(Manipulator * manipulator) {
         if(manipulator) {
             this->mesh->setOrigin(manipulator->getManipPosition());
-
-            CageMVC * cage = dynamic_cast<CageMVC*>(this->mesh);
-            if(cage) {
-                    cage->meshToDeform->setOrigin(manipulator->getManipPosition());
-            }
         } else {
+            // For translation
+            if(this->kid_manip.mode_modification >= 1 && this->kid_manip.mode_modification <= 3) {
+                this->mesh->setOrigin(glm::vec3(this->kid_manip.Origine[0], this->kid_manip.Origine[1], this->kid_manip.Origine[2]));
+            }
             // For rotation
-            if(this->kid_manip.mode_modification >= 4 || this->kid_manip.mode_modification <= 6) {
-                glm::vec3 ori = glm::vec3(this->kid_manip.Origine[0], this->kid_manip.Origine[1], this->kid_manip.Origine[2]);
+            if(this->kid_manip.mode_modification >= 4 && this->kid_manip.mode_modification <= 6) {
                 this->mesh->rotate(this->kid_manip.getRotationMatrix());
-                this->mesh->setOrigin(ori);
-                CageMVC * cage = dynamic_cast<CageMVC*>(this->mesh);
-                if(cage)  {
-                    cage->meshToDeform->rotate(this->kid_manip.getRotationMatrix());
-                    cage->meshToDeform->setOrigin(ori);
-                }
+                this->mesh->setOrigin(glm::vec3(this->kid_manip.Origine[0], this->kid_manip.Origine[1], this->kid_manip.Origine[2]));
             }
             // For scale
-            if(this->kid_manip.mode_modification >= 7 || this->kid_manip.mode_modification <= 9) {
+            if(this->kid_manip.mode_modification >= 7 && this->kid_manip.mode_modification <= 9) {
                 glm::vec3 scale = this->kid_manip.getScaleVector();
                 int maxIdx = 0;
                 float max = 0;
@@ -318,13 +311,9 @@ namespace UITool {
                         max = scale[i];
                     }
                 }
-                std::cout << scale << std::endl;
                 scale = glm::vec3(scale[maxIdx], scale[maxIdx], scale[maxIdx]);
                 this->mesh->scale(scale);
-                CageMVC * cage = dynamic_cast<CageMVC*>(this->mesh);
-                if(cage)  {
-                    cage->meshToDeform->scale(scale);
-                }
+                this->mesh->setOrigin(glm::vec3(this->kid_manip.Origine[0], this->kid_manip.Origine[1], this->kid_manip.Origine[2]));
             }
         }
     }
