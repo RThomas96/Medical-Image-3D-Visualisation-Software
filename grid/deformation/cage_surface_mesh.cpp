@@ -65,8 +65,14 @@ void CageMVC::computeCoordinates() {
 }
 
 void CageGreen::reInitialize() {
+    this->originalVertices.clear();
     this->originalVertices = this->meshToDeform->vertices;
     this->computeNormals();
+
+    this->initial_cage_vertices.clear();
+    this->initial_cage_triangle_normals.clear();
+    this->initial_cage_vertices = this->vertices;
+    this->initial_cage_triangle_normals = this->normals;
 
     this->phiCoordinates.clear();
     this->psiCoordinates.clear();

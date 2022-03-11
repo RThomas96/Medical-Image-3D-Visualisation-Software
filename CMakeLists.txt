@@ -98,13 +98,15 @@ ADD_EXECUTABLE(neighbor_visu
     ./grid/drawable/drawable_manipulator.hpp
     ./grid/deformation/mesh_deformer.hpp
     ./grid/deformation/AsRigidAsPossible.h
+    ./grid/deformation/CageCoordinates.h
+    ./grid/deformation/cage_surface_mesh.hpp
+    ./grid/deformation/CellInfo.h
+    ./grid/deformation/CholmodLSStruct.h
     ./grid/utils/GLUtilityMethods.h
     ./grid/utils/Edge.h
     ./grid/utils/Vec3D.h
     ./grid/utils/Triangle.h
     ./grid/utils/BasicPoint.h
-    ./grid/deformation/CageCoordinates.h
-    ./grid/deformation/cage_surface_mesh.hpp
 
 	# Main file :
 	./neighbor_visu_main.cpp
