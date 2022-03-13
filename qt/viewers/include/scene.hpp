@@ -484,6 +484,7 @@ public slots:
 
     bool openGrid(const std::string& name, Grid * grid);
     SurfaceMesh * getMesh(const std::string& name);
+    BaseMesh * getBaseMesh(const std::string& name);
     int getMeshIdx(const std::string& name);
     Cage * getCage(const std::string& name);
     DrawableMesh * getDrawableMesh(const std::string& name);
@@ -510,6 +511,7 @@ public:
 
     std::string activeMesh;
 
+    std::vector<std::string> grids_name;
 	std::vector<GridGLView::Ptr> grids;
     std::vector<std::pair<SurfaceMesh*, std::string>> meshes;
     std::vector<std::pair<DrawableMesh*, std::string>> drawableMeshes;

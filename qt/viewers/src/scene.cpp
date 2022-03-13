@@ -3445,6 +3445,7 @@ bool Scene::openGrid(const std::string& name, Grid * grid) {
     this->gridToDraw += 1;
 
     this->addGrid(grid);
+    this->grids_name.push_back(name);
 
     this->updateSceneBBox(this->grids.back()->grid->bbMin, this->grids.back()->grid->bbMax);
     this->updateSceneCenter();
@@ -3572,6 +3573,9 @@ void Scene::setBindMeshToCageMove(const std::string& name, bool state) {
 void Scene::changeActiveMesh(const std::string& name) {
     this->activeMesh = name;
     this->updateSceneCenter();
+    BaseMesh * activeMesh = this->getBaseMesh(name);
+    if(activeMesh)
+        this->updateSceneBBox(activeMesh->bbMin, activeMesh->bbMax);
 }
 
 void Scene::init() {
@@ -3592,3 +3596,17 @@ void Scene::init() {
     std::cout << "New bunny added with BBox:" << this->getMesh("bunny")->bbMax << std::endl;
 }
 
+BaseMesh * Scene::getBaseMesh(const std::string& name) {
+    SurfaceMesh * surface = nullptr;
+    for(int i = 0; i < this->meshes.size(); ++i) {
+        if(this->meshes[i].second == name) {
+            return this->meshes[i].first;
+        }
+    }
+    for(int i = 0; i < this->grids_name.size(); ++i) {
+        if(this->grids_name[i] == name) {
+            return this->grids[i]->grid;
+        }
+    }
+    return nullptr;
+}

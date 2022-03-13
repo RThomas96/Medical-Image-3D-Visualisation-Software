@@ -247,19 +247,24 @@ void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scen
     this->displayWireframe = false;// Because wathever the manipulator created it is not activated at creation
     delete this->meshManipulator;
     this->isPositionManip = false;
+
     if(type == 0) {
         this->meshManipulator = new UITool::DirectManipulator(mesh, positions);
+        this->setRadius(this->meshManipulator->getManipulatorSize());
     } else if(type == 1) {
         this->meshManipulator = new UITool::FreeManipulator(mesh, positions);
+        this->setRadius(this->meshManipulator->getManipulatorSize());
     } else if(type == 2) {
         this->meshManipulator = new UITool::PositionManipulator(mesh, positions);
         this->isPositionManip = true;
+        this->setRadius(this->meshManipulator->getManipulatorSize() * 5.f);
     } else if(type == 3) {
         this->meshManipulator = new UITool::CompManipulator(mesh, positions);
+        this->setRadius(this->meshManipulator->getManipulatorSize());
     } else {
         this->meshManipulator = new UITool::ARAPManipulator(mesh, positions);
+        this->setRadius(this->meshManipulator->getManipulatorSize());
     }
-    this->setRadius(this->meshManipulator->getManipulatorSize());
     this->prepare();
     QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needRedraw()), this, SLOT(prepare()));
     QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needSendTetmeshToGPU()), scene, SLOT(sendFirstTetmeshToGPU()));

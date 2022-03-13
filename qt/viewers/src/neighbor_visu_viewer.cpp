@@ -285,7 +285,7 @@ void Viewer::setCenter(const glm::vec3& center) {
 }
 
 void Viewer::setRadius(const float radius) {
-	this->setSceneRadius(radius);
+	this->setSceneRadius(radius*sceneRadiusMultiplier);
     std::cout << "Set radius" << std::endl;
     this->showEntireScene();
 }
