@@ -16,8 +16,8 @@ namespace UITool {
 //! \addtogroup geometry
 //! @{
 
-class BaseMesh : public QObject {
-    Q_OBJECT
+class BaseMesh {
+    
 public:
 
     std::vector<glm::vec3> vertices;

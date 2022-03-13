@@ -1951,11 +1951,9 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 		}
 	}
 
-    if(this->getDrawableMesh("bunny")) {
-        this->getDrawableMesh("bunny")->makeVAO();
-	    this->getDrawableMesh("bunny")->draw(pMat, mvMat, glm::vec4{camPos, 1.f});
-	    this->getDrawableMesh("bunny_cage")->makeVAO();
-	    this->getDrawableMesh("bunny_cage")->draw(pMat, mvMat, glm::vec4{camPos, 1.f});
+    for(int i = 0; i < this->drawableMeshes.size(); ++i) {
+        this->drawableMeshes[i].first->makeVAO();
+	    this->drawableMeshes[i].first->draw(pMat, mvMat, glm::vec4{camPos, 1.f});
     }
 
 	if (not this->grids.empty()) {
@@ -3365,7 +3363,50 @@ bool Scene::openMesh(const std::string& name, const std::string& filename, const
     return true;
 }
 
-bool Scene::openCage(const std::string& name, const std::string& filename, SurfaceMesh * surfaceMeshToDeform, const bool MVC, const glm::vec4& color) {
+bool Scene::linkCage(const std::string& cageName, BaseMesh * meshToDeform, const bool MVC) {
+    SurfaceMesh * cage = this->getMesh(cageName);
+
+    if(!cage) {
+        std::cout << "ERROR: no cage mesh provided" << std::endl;
+        return false;
+    }
+
+    if(!meshToDeform) {
+        std::cout << "ERROR: no surface mesh provided" << std::endl;
+        return false;
+    }
+
+    int cageIdx = this->getMeshIdx(cageName);
+    //delete this->meshes[cageIdx].first;
+    glm::vec4 color = this->drawableMeshes[cageIdx].first->color;
+    delete this->drawableMeshes[cageIdx].first;
+
+    TetMesh * tetMesh = dynamic_cast<TetMesh*>(meshToDeform);
+    if(tetMesh) {
+        //this->meshes[cageIdx].first = new CageGreenLRI(this->meshes[cageIdx].first, tetMesh);
+    } else {
+        if(MVC)
+            this->meshes[cageIdx].first = new CageMVC(this->meshes[cageIdx].first, meshToDeform);
+        else 
+            this->meshes[cageIdx].first = new CageGreen(this->meshes[cageIdx].first, meshToDeform);
+    }
+
+    this->drawableMeshes[cageIdx].first = new DrawableMesh();
+    this->drawableMeshes[cageIdx].first->mesh = this->meshes[cageIdx].first;
+    this->drawableMeshes[cageIdx].first->initialize(this->context, this);
+    this->drawableMeshes[cageIdx].first->color = color;
+
+    //this->changeActiveMesh(name);
+
+    //this->updateSceneBBox(this->meshes.back().first->bbMin, this->meshes.back().first->bbMax);
+    //this->updateSceneCenter();
+
+    // TODO change this
+    //Q_EMIT meshAdded(name, false, true);
+    return true;
+}
+
+bool Scene::openCage(const std::string& name, const std::string& filename, BaseMesh * surfaceMeshToDeform, const bool MVC, const glm::vec4& color) {
     //this->cage = new CageMVC("/home/thomas/data/Data/Mesh/bunny_cage.off", this->surfaceMesh);
     if(!surfaceMeshToDeform) {
         std::cout << "ERROR: no surface mesh provided" << std::endl;
@@ -3374,10 +3415,17 @@ bool Scene::openCage(const std::string& name, const std::string& filename, Surfa
     this->meshes.push_back(std::pair<SurfaceMesh*, std::string>(nullptr, name));
     this->drawableMeshes.push_back(std::pair<DrawableMesh*, std::string>(nullptr, name));
 
-    if(MVC)
-        this->meshes.back().first = new CageMVC(filename, surfaceMeshToDeform);
-    else 
-        this->meshes.back().first = new CageGreen(filename, surfaceMeshToDeform);
+    TetMesh * tetMesh = dynamic_cast<TetMesh*>(surfaceMeshToDeform);
+    if(tetMesh) {
+        this->meshes.back().first = new CageGreenLRI(filename, tetMesh);
+        //this->meshes.back().first = new CageGreen(filename, tetMesh);
+    } else {
+        if(MVC)
+            this->meshes.back().first = new CageMVC(filename, surfaceMeshToDeform);
+        else 
+            this->meshes.back().first = new CageGreen(filename, surfaceMeshToDeform);
+    }
+
 
     this->drawableMeshes.back().first = new DrawableMesh();
     this->drawableMeshes.back().first->mesh = this->meshes.back().first;
@@ -3402,13 +3450,28 @@ bool Scene::openGrid(const std::string& name, Grid * grid) {
     this->updateSceneCenter();
     std::cout << "New grid added with BBox:" << this->grids.back()->grid->bbMax << std::endl;
 
-    this->getCage("bunny_cage")->unbindMovementWithDeformedMesh();
-    this->getCage("bunny_cage")->scale(glm::vec3(300., 300., 300.));
-    this->getCage("bunny_cage")->setOrigin(this->grids.back()->grid->getOrigin());
-    this->getCage("bunny_cage")->changeMeshToDeform(this->grids[0]->grid);
+    this->openCage("grid_cage", "/home/thomas/data/Data/Mesh/bunny_cage.off", this->grids[0]->grid);
+    this->getCage("grid_cage")->unbindMovementWithDeformedMesh();
+    this->getCage("grid_cage")->scale(glm::vec3(15., 15., 15.));
+    this->getCage("grid_cage")->scale(glm::vec3(299., 299., 299.));
+    //this->getCage("grid_cage")->scale(glm::vec3(2., 2., 2.));
+    this->getCage("grid_cage")->setOrigin(this->grids.back()->grid->getOrigin());
+    this->getCage("grid_cage")->bindMovementWithDeformedMesh();
+
+    //this->linkCage("bunny_cage", this->grids.back()->grid);
 
     Q_EMIT meshAdded(name, true, false);
     return true;
+}
+
+int Scene::getMeshIdx(const std::string& name) {
+    for(int i = 0; i < this->meshes.size(); ++i) {
+        if(this->meshes[i].second == name) {
+            return i;
+        }
+    }
+    std::cout << "Error: wrong mesh name to get idx: [" << name << "]" << std::endl;
+    return -1;
 }
 
 SurfaceMesh * Scene::getMesh(const std::string& name) {

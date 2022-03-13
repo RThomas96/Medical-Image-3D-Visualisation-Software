@@ -34,6 +34,10 @@ struct Cage : SurfaceMesh {
         this->originalVertices = this->meshToDeform->vertices;
     };
 
+    Cage(SurfaceMesh * cage, BaseMesh * meshToDeform) : SurfaceMesh(*cage), meshToDeform(meshToDeform), moveMeshToDeform(true) {
+        this->originalVertices = this->meshToDeform->vertices;
+    };
+    
     virtual void reInitialize() = 0;
     virtual void computeCoordinates() = 0;
 
@@ -75,6 +79,7 @@ struct Cage : SurfaceMesh {
     }
 
     void bindMovementWithDeformedMesh() {
+        std::cout << "Rebind movement" << std::endl;
         this->moveMeshToDeform = true;
         this->reInitialize();
     }
@@ -94,6 +99,10 @@ struct CageMVC : Cage {
         this->reInitialize();
     };
 
+    CageMVC(SurfaceMesh * cage, BaseMesh * meshToDeform) : Cage(cage, meshToDeform) {
+        this->reInitialize();
+    };
+
     void reInitialize() override;
     void movePoint(const glm::vec3& origin, const glm::vec3& target) override;
     void computeCoordinates() override;
@@ -109,6 +118,10 @@ struct CageGreen : Cage {
     std::vector<glm::vec3> initial_cage_triangle_normals;
 
     CageGreen(std::string const &filename, BaseMesh * meshToDeform) : Cage(filename, meshToDeform) {
+        this->reInitialize();
+    };
+
+    CageGreen(SurfaceMesh * cage, BaseMesh * meshToDeform) : Cage(cage, meshToDeform) {
         this->reInitialize();
     };
 
@@ -142,6 +155,7 @@ struct CageGreenLRI : CageGreen {
     /***/
     CholmodLSStruct BasisSolver , VerticesSolver;
     std::vector<Tetrahedron> tetrahedra;
+    std::vector<int> orig_tetrahedra_index;
     std::vector<int> handle_tetrahedra;// on connait les deformations, tous les vertex dans la cage
     std::vector<int> unknown_tetrahedra;// un des vertex pas dans la cage
     std::vector<std::pair<int, int>> edges;
@@ -218,12 +232,21 @@ struct CageGreenLRI : CageGreen {
             std::cout << "Solving tetraLRISolver" << std::endl;
             this->computeBasisTransforms();
             this->update_constraints();
+            this->meshToDeform->computeNormals();
+            this->meshToDeform->updatebbox();
         } else {
             std::cout << "Everything is fine :) No need LRI" << std::endl;
         }
     }
 
     CageGreenLRI(std::string const &filename, TetMesh * meshToDeform) : CageGreen(filename, meshToDeform) {
+        this->reInitialize();
+    };
+
+    void reInitialize() override {
+        this->clear();
+        CageGreen::reInitialize();
+        /** TetMeshCreator checkAndMarkOutliers  **/
         bool hasOutliers = this->checkAndMarkOutliers();
 
         if(!hasOutliers) {
@@ -238,24 +261,19 @@ struct CageGreenLRI : CageGreen {
                 for(int v = 0; v < 4; ++v) {
                     if(this->outlier_vertices[this->getMeshToDeform()->mesh[i].pointsIdx[v]]) {
                         this->tetInfos[i].cage_inlier = false;
+                        break;
                     }
                 }
             }
         }
+         /** **/
 
-        for(int tet = 0; tet < this->getMeshToDeform()->mesh.size(); ++tet) {
-            for(int i = 0; i < 4; ++i) {
-                for(int j = 0; j < 4; ++j) {
-                }
-            }
-        }
-
-        BasisSolver.start();
-        VerticesSolver.start();
-
+        /** TetMeshCreator initializeLRISolver  **/
         this->tetrahedra.clear();
+        this->tetrahedra.reserve(this->getMeshToDeform()->mesh.size());
         this->handle_tetrahedra.clear();
         this->unknown_tetrahedra.clear();
+        this->orig_tetrahedra_index.clear();
 
         for(int tet = 0; tet < this->getMeshToDeform()->mesh.size(); ++tet) {
             unsigned int index = tetrahedra.size();
@@ -263,27 +281,33 @@ struct CageGreenLRI : CageGreen {
                 for(int i = 0; i < 4; ++i) {
                     const int curNeighTet = this->getMeshToDeform()->mesh[tet].neighbors[i];
                     // Handle tetrahedra = tetra au bord mais avec tous les vertex dans la cage
-                    if(!this->tetInfos[curNeighTet].cage_inlier) {
-                        handle_tetrahedra.push_back(index);
-                        tetrahedra.push_back(this->getMeshToDeform()->mesh[tet]);
+                    if(curNeighTet != -1 && !this->tetInfos[curNeighTet].cage_inlier) {
+                        this->handle_tetrahedra.push_back(index);
+                        this->tetrahedra.push_back(this->getMeshToDeform()->mesh[tet]);
+                        this->orig_tetrahedra_index.push_back(tet);
                         break;
                     }
                 }
             } else {
                 // unknown tetrahedra = tetra avec un vertex hors de la cage
-                tetrahedra.push_back(this->getMeshToDeform()->mesh[tet]);
-                unknown_tetrahedra.push_back(index);
+                this->tetrahedra.push_back(this->getMeshToDeform()->mesh[tet]);
+                this->unknown_tetrahedra.push_back(index);
+                this->orig_tetrahedra_index.push_back(tet);
             }
         }
+        // this->outlierChecked = true;
+        /** **/
 
         /***/
-        /** Load tetrahedra **/
+        /** TetraLRISolver: Load tetrahedra **/
         /***/
+
+        //TODO: bad tricks for easy rename
+        this->unknown_vertices = this->outlier_vertices;
+
         // Triangulation = meshToDeform
         this->collect_edges();
         this->collect_vertices();
-        //TODO: bad tricks for easy rename
-        this->unknown_vertices = this->outlier_vertices;
         this->collect_constraints_vertices();
 
         unsigned int neighbor_count = 0 ;
@@ -295,6 +319,9 @@ struct CageGreenLRI : CageGreen {
                 }
             }
         }
+
+        BasisSolver.start();
+        VerticesSolver.start();
 
         // set dimensions:
         BasisSolver.setDimensions( unknown_tetrahedra.size() + handle_tetrahedra.size() , unknown_tetrahedra.size() + handle_tetrahedra.size() , 9 );
@@ -311,16 +338,16 @@ struct CageGreenLRI : CageGreen {
         std::cout << "Volume weights" << std::endl;
         std::vector<float> volumes (this->tetrahedra.size(), 0.);
         for(unsigned int i = 0 ; i < this->tetrahedra.size() ; i ++){
-            const Tetrahedron & ch = tetrahedra[i];
-            const glm::vec3& p0 = *ch.points[0];
-            const glm::vec3& p1 = *ch.points[1];
-            const glm::vec3& p2 = *ch.points[2];
-            const glm::vec3& p3 = *ch.points[3];
+            std::cout << "Tetra " << i << std::endl;
+            const Tetrahedron ch = tetrahedra[i];
+            const glm::vec3 p0 = this->getMeshToDeform()->vertices[ch.pointsIdx[0]];
+            const glm::vec3 p1 = this->getMeshToDeform()->vertices[ch.pointsIdx[1]];
+            const glm::vec3 p2 = this->getMeshToDeform()->vertices[ch.pointsIdx[2]];
+            const glm::vec3 p3 = this->getMeshToDeform()->vertices[ch.pointsIdx[3]];
 
             glm::vec3 e10 = p1 - p0;
             glm::vec3 e20 = p2 - p0;
 
-            // TODO: maybe a bug here, ch->info().index() may not be directly i
             glm::vec3 v1 = glm::cross(e10, e20);
             glm::vec3 v2 = (p3 - p0);
             float res = 0;
@@ -330,6 +357,11 @@ struct CageGreenLRI : CageGreen {
         }
 
         // set values in BasisSolver's A matrix:
+        std::cout << "Basis solver" << std::endl;
+        std::cout << "Unknown size: " << unknown_tetrahedra.size() << std::endl;
+        std::cout << "Handle size: " << handle_tetrahedra.size() << std::endl;
+        std::cout << "Edge size: " << edges.size() << std::endl;
+        std::cout << "Cons size: " << verts_constraints.size() << std::endl;
         for( unsigned int i = 0 ; i < unknown_tetrahedra.size() ; i ++ ){
             const Tetrahedron & ch = tetrahedra[unknown_tetrahedra[i]];
             std::vector<int> neighbors;
@@ -341,7 +373,7 @@ struct CageGreenLRI : CageGreen {
                     v_sum += volumes[n_index];
                 }
             }
-            unsigned int index = i;
+            unsigned int index = unknown_tetrahedra[i];
 
             BasisSolver.addValueInA( i , index , -1.*volumes[index] );
 
@@ -353,15 +385,17 @@ struct CageGreenLRI : CageGreen {
                 BasisSolver.setValueInB( i , coord , 0.0 );
         }
 
+        std::cout << "Clear volume" << std::endl;
         volumes.clear();
 
         for( unsigned int i = 0 ; i < handle_tetrahedra.size() ; i ++ ){
-            const Tetrahedron & ch = tetrahedra[ handle_tetrahedra[i] ];
+            //const Tetrahedron & ch = tetrahedra[handle_tetrahedra[i]];
 
-            unsigned int index = i;
+            unsigned int index = handle_tetrahedra[i];
             BasisSolver.addValueInA( unknown_tetrahedra.size() + i , index , 1.0 );
         }
 
+        std::cout << "Add value" << std::endl;
         // set values in VerticesSolver's A matrix:
         for( unsigned int i = 0 ; i < edges.size() ; i++ ){
             unsigned int id_v0 = verts_mapping_from_mesh_to_solver[edges[i].first];
@@ -373,26 +407,29 @@ struct CageGreenLRI : CageGreen {
             VerticesSolver.addValueInA( edges.size() + i , verts_constraints[i] , 1.0 );
         }
 
+        std::cout << "Factorize" << std::endl;
         // factorization:
         BasisSolver.factorize();
+        std::cout << "Vertice solver:" << std::endl;
         VerticesSolver.factorize();
 
         std::cout << "Solver initialized" << std::endl;
-    };
+    }
 
     void collect_edges() {
         edges.clear();
         for(unsigned int i = 0; i < this->tetrahedra.size(); ++i){
             const Tetrahedron& ch = this->tetrahedra[i];
             for( int v = 0 ; v < 4 ; v ++ ){
-                for( int vn = 0 ; vn < 3 ; vn ++ ){
-                    std::pair<int, int> edge = std::make_pair(ch.getPointIndex(v, vn), ch.getPointIndex(v, (vn+1)%3));
+                for( int vn = v + 1  ; vn < 4 ; vn ++ ){
+                    //std::pair<int, int> edge = std::make_pair(ch.getPointIndex(v, vn), ch.getPointIndex(v, (vn+1)%3));
+                    std::pair<int, int> edge = std::make_pair(ch.pointsIdx[v], ch.pointsIdx[vn]);
                     if( std::find( edges.begin(), edges.end(), edge ) == edges.end() ){
                         edges.push_back( edge );
                     }
 
-                    int idx1 = ch.getPointIndex(v, vn);
-                    int idx2 = ch.getPointIndex(v, (vn+1)%3);
+                    int idx1 = ch.pointsIdx[v];
+                    int idx2 = ch.pointsIdx[vn];
                     edge = std::make_pair(idx1, idx2);
                     if(this->edgeMap.find(edge) == this->edgeMap.end()) {
                         this->edgeMap[edge] = std::vector<int>{i};
@@ -414,8 +451,7 @@ struct CageGreenLRI : CageGreen {
 
     void collect_vertices() {
         verts_mapping_from_mesh_to_solver.clear();
-        // TODO: number_of_mesh_vertices maybe not this value
-        verts_mapping_from_mesh_to_solver.resize(this->meshToDeform->getNbVertices() , -1);
+        verts_mapping_from_mesh_to_solver.resize(this->unknown_vertices.size(), -1);
 
         verts_mapping_from_solver_to_mesh.clear();
         verts_initial_positions.clear();
@@ -455,6 +491,7 @@ struct CageGreenLRI : CageGreen {
 
     bool checkAndMarkOutliers(){
         std::cout << "Checking for ouliers..." << std::endl;
+        this->updatebbox();
         float error_max = glm::length(this->bbMax - this->bbMin)/1000.;
         this->outlier_vertices.clear();
         this->outlier_vertices.resize(this->meshToDeform->getNbVertices(), false);
@@ -465,14 +502,15 @@ struct CageGreenLRI : CageGreen {
             glm::vec3 up_position;
             this->getVertexInitialPosition(i, up_position);
             glm::vec3 diff = (position - up_position);
-            if (!(glm::length(diff) == 0.) && (glm::length(diff) > error_max) ){
+            float norm = diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2];
+            if (!(norm < 0.00001) && (glm::length(diff) > error_max) ){
                 this->outlier_vertices[i] = true;
                 outlierDetected = true;
                 outlierCount++;
             }
         }
 
-        std::cout << outlierCount << " ouliers marked" << std::endl;
+        std::cout << outlierCount << "/" << this->meshToDeform->getNbVertices() << " ouliers marked" << std::endl;
         return outlierDetected;
     }
 
@@ -550,6 +588,29 @@ struct CageGreenLRI : CageGreen {
         VerticesSolver.freeSolution();
     }
 
+    void clear() {
+        for(int i = 0; i < this->tetInfos.size(); ++i)
+            this->tetInfos[i].basis_def.clear();
+        this->tetInfos.clear();
+        this->edgeMap.clear();
+
+        this->BasisSolver.free();
+        this->VerticesSolver.free();
+
+        this->tetrahedra.clear();
+        this->orig_tetrahedra_index.clear();
+        this->handle_tetrahedra.clear();
+        this->unknown_tetrahedra.clear();
+        this->edges.clear();
+
+        this->verts_mapping_from_solver_to_mesh.clear();
+        this->verts_mapping_from_mesh_to_solver.clear();
+        this->verts_initial_positions.clear();
+
+        this->outlier_vertices.clear();
+        this->unknown_vertices.clear();
+        this->verts_constraints.clear();
+    }
 };
 
 //! @}

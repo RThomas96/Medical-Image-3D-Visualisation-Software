@@ -479,9 +479,12 @@ public slots:
 
     // Scene management
     bool openMesh(const std::string& name, const std::string& filename, const glm::vec4& color = glm::vec4(0., 1., 0., 1.));
-    bool openCage(const std::string& name, const std::string& filename, SurfaceMesh * surfaceMeshToDeform, const bool MVC = true, const glm::vec4& color = glm::vec4(1., 0., 0., 0.3));
+    bool openCage(const std::string& name, const std::string& filename, BaseMesh * surfaceMeshToDeform, const bool MVC = true, const glm::vec4& color = glm::vec4(1., 0., 0., 0.3));
+    bool linkCage(const std::string& cageName, BaseMesh * meshToDeform, const bool MVC);
+
     bool openGrid(const std::string& name, Grid * grid);
     SurfaceMesh * getMesh(const std::string& name);
+    int getMeshIdx(const std::string& name);
     Cage * getCage(const std::string& name);
     DrawableMesh * getDrawableMesh(const std::string& name);
     void updateSceneBBox(const glm::vec3& bbMin, const glm::vec3& bbMax);
