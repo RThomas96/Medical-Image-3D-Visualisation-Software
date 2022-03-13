@@ -295,6 +295,21 @@ struct CageGreenLRI : CageGreen {
                 this->orig_tetrahedra_index.push_back(tet);
             }
         }
+
+        // Remap neighbors indices
+        for(int i = 0; i < tetrahedra.size(); ++i) {
+            for(int j = 0; j < 4; ++j) {
+                int currentIndex = this->tetrahedra[i].neighbors[j];
+                if(currentIndex != -1) {
+                    auto it = find(this->orig_tetrahedra_index.begin(), this->orig_tetrahedra_index.end(), currentIndex);
+                    if(it != this->orig_tetrahedra_index.end()) {
+                        int id = it - this->orig_tetrahedra_index.begin();
+                        this->tetrahedra[i].neighbors[j] = id;
+                    }
+                }
+            }
+        }
+
         // this->outlierChecked = true;
         /** **/
 
@@ -335,10 +350,8 @@ struct CageGreenLRI : CageGreen {
         BasisSolver.allocate();
         VerticesSolver.allocate();
 
-        std::cout << "Volume weights" << std::endl;
         std::vector<float> volumes (this->tetrahedra.size(), 0.);
         for(unsigned int i = 0 ; i < this->tetrahedra.size() ; i ++){
-            std::cout << "Tetra " << i << std::endl;
             const Tetrahedron ch = tetrahedra[i];
             const glm::vec3 p0 = this->getMeshToDeform()->vertices[ch.pointsIdx[0]];
             const glm::vec3 p1 = this->getMeshToDeform()->vertices[ch.pointsIdx[1]];
@@ -357,17 +370,12 @@ struct CageGreenLRI : CageGreen {
         }
 
         // set values in BasisSolver's A matrix:
-        std::cout << "Basis solver" << std::endl;
-        std::cout << "Unknown size: " << unknown_tetrahedra.size() << std::endl;
-        std::cout << "Handle size: " << handle_tetrahedra.size() << std::endl;
-        std::cout << "Edge size: " << edges.size() << std::endl;
-        std::cout << "Cons size: " << verts_constraints.size() << std::endl;
         for( unsigned int i = 0 ; i < unknown_tetrahedra.size() ; i ++ ){
             const Tetrahedron & ch = tetrahedra[unknown_tetrahedra[i]];
             std::vector<int> neighbors;
             float v_sum = 0.;
             for( int j = 0 ; j < 4 ; j++ ){
-                unsigned int n_index = ch.neighbors[j];
+                unsigned int n_index = ch.neighbors[j];// These indices are remaped
                 if(n_index != -1){
                     neighbors.push_back(n_index);
                     v_sum += volumes[n_index];
@@ -385,7 +393,6 @@ struct CageGreenLRI : CageGreen {
                 BasisSolver.setValueInB( i , coord , 0.0 );
         }
 
-        std::cout << "Clear volume" << std::endl;
         volumes.clear();
 
         for( unsigned int i = 0 ; i < handle_tetrahedra.size() ; i ++ ){
@@ -395,7 +402,6 @@ struct CageGreenLRI : CageGreen {
             BasisSolver.addValueInA( unknown_tetrahedra.size() + i , index , 1.0 );
         }
 
-        std::cout << "Add value" << std::endl;
         // set values in VerticesSolver's A matrix:
         for( unsigned int i = 0 ; i < edges.size() ; i++ ){
             unsigned int id_v0 = verts_mapping_from_mesh_to_solver[edges[i].first];
@@ -407,10 +413,8 @@ struct CageGreenLRI : CageGreen {
             VerticesSolver.addValueInA( edges.size() + i , verts_constraints[i] , 1.0 );
         }
 
-        std::cout << "Factorize" << std::endl;
         // factorization:
         BasisSolver.factorize();
-        std::cout << "Vertice solver:" << std::endl;
         VerticesSolver.factorize();
 
         std::cout << "Solver initialized" << std::endl;

@@ -3453,7 +3453,7 @@ bool Scene::openGrid(const std::string& name, Grid * grid) {
     this->openCage("grid_cage", "/home/thomas/data/Data/Mesh/bunny_cage.off", this->grids[0]->grid);
     this->getCage("grid_cage")->unbindMovementWithDeformedMesh();
     this->getCage("grid_cage")->scale(glm::vec3(15., 15., 15.));
-    this->getCage("grid_cage")->scale(glm::vec3(299., 299., 299.));
+    this->getCage("grid_cage")->scale(glm::vec3(200., 200., 200.));
     //this->getCage("grid_cage")->scale(glm::vec3(2., 2., 2.));
     this->getCage("grid_cage")->setOrigin(this->grids.back()->grid->getOrigin());
     this->getCage("grid_cage")->bindMovementWithDeformedMesh();
