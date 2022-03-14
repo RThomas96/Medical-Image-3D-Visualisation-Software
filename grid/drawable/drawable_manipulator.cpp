@@ -257,7 +257,7 @@ void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scen
     } else if(type == 2) {
         this->meshManipulator = new UITool::PositionManipulator(mesh, positions);
         this->isPositionManip = true;
-        this->setRadius(this->meshManipulator->getManipulatorSize() * 5.f);
+        this->setRadius(this->meshManipulator->getManipulatorSize() * 10.f);
     } else if(type == 3) {
         this->meshManipulator = new UITool::CompManipulator(mesh, positions);
         this->setRadius(this->meshManipulator->getManipulatorSize());

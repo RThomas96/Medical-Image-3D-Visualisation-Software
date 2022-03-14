@@ -80,6 +80,8 @@ struct ARAPMethod : MeshDeformer {
     void unsetHandle(int idx);
 
     void movePoint(const glm::vec3& origin, const glm::vec3& target) override;
+
+    void fitToPointList(const std::vector<int>& vertices, const std::vector<glm::vec3>& newPositions);
 };
 
 //! @}

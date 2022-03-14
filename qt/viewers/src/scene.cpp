@@ -3486,6 +3486,7 @@ DrawableMesh * Scene::getDrawableMesh(const std::string& name) {
 }
 
 void Scene::updateSceneRadius() {
+    //this->glMeshManipulator->setRadius(this->getSceneRadius()*0.008);
     Q_EMIT sceneRadiusChanged(this->getSceneRadius());
 }
 
@@ -3636,4 +3637,38 @@ void Scene::updateTools(int tool) {
     QObject::connect(this, SIGNAL(keyQReleased()), dynamic_cast<QObject*>(this->glMeshManipulator->meshManipulator), SIGNAL(keyQReleased()));
     QObject::connect(this, &Scene::rayIsCasted, this, [this](const glm::vec3& origin, const glm::vec3& direction) { emit this->glMeshManipulator->meshManipulator->rayIsCasted(origin, direction, this->getMinTexValue(), this->getMaxTexValue());});
     QObject::connect(this, SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)), dynamic_cast<QObject*>(this->glMeshManipulator->meshManipulator), SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)));
+}
+
+void Scene::switchToSelectionModeRegistrationTool() {
+    UITool::CompManipulator * manipulator = dynamic_cast<UITool::CompManipulator*>(this->glMeshManipulator->meshManipulator);
+    if(!manipulator) {
+        std::cout << "WARNING: not the right tool" << std::endl;
+    }
+    manipulator->switchToSelectionMode();
+}
+
+void Scene::validateRegistrationTool() {
+    UITool::CompManipulator * manipulator = dynamic_cast<UITool::CompManipulator*>(this->glMeshManipulator->meshManipulator);
+    if(!manipulator) {
+        std::cout << "WARNING: not the right tool" << std::endl;
+    }
+    manipulator->validate();
+}
+
+void Scene::applyRegistrationTool() {
+    UITool::CompManipulator * manipulator = dynamic_cast<UITool::CompManipulator*>(this->glMeshManipulator->meshManipulator);
+    if(!manipulator) {
+        std::cout << "WARNING: not the right tool" << std::endl;
+    }
+    manipulator->apply();
+}
+
+void Scene::assignMeshToRegisterRegistrationTool(const std::string& name) {
+    UITool::CompManipulator * manipulator = dynamic_cast<UITool::CompManipulator*>(this->glMeshManipulator->meshManipulator);
+    if(!manipulator) {
+        std::cout << "WARNING: not the right tool" << std::endl;
+    }
+    BaseMesh * meshToRegister = this->getBaseMesh(name);
+    if(meshToRegister)
+        manipulator->assignMeshToRegister(meshToRegister);
 }

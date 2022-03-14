@@ -7,7 +7,7 @@
 namespace UITool {
     
     float MeshManipulator::getManipulatorSize() {
-        return std::max(std::max(this->mesh->getDimensions()[0], this->mesh->getDimensions()[1]), this->mesh->getDimensions()[2])/100.;     
+        return std::min(std::min(this->mesh->getDimensions()[0], this->mesh->getDimensions()[1]), this->mesh->getDimensions()[2])/130.;     
     }
 
 	DirectManipulator::DirectManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions): MeshManipulator(mesh) {
@@ -22,7 +22,7 @@ namespace UITool {
             QObject::connect(&(this->manipulators[i]), &Manipulator::mouseRightButtonReleasedAndCtrlIsNotPressed, this, &DirectManipulator::deselectManipulator);
             QObject::connect(&(this->manipulators[i]), &Manipulator::isManipulated, this, &DirectManipulator::moveManipulator);
 
-            this->manipulatorsToDisplay.push_back(false);
+            this->manipulatorsToDisplay.push_back(true);
 			this->manipulators[i].lockPosition();
             this->manipulators[i].disable();
 		}
@@ -33,7 +33,7 @@ namespace UITool {
 		if (this->active) {
 			for (int i = 0; i < this->manipulators.size(); ++i) {
 				this->manipulators[i].setCustomConstraint();
-                this->manipulatorsToDisplay[i] = false;
+                this->manipulatorsToDisplay[i] = true;
                 this->manipulators[i].enable();
 			}
 		} else {
@@ -130,7 +130,7 @@ namespace UITool {
 
     void DirectManipulator::deselectManipulator(Manipulator * manipulator) {
         this->mesh->deselectAllPts();
-        this->hideManipulator(manipulator);
+        //this->hideManipulator(manipulator);
     }
 
     /***/
@@ -229,8 +229,6 @@ namespace UITool {
         QObject::connect(&(this->manipulator), &Manipulator::isManipulated, this, &PositionManipulator::moveManipulator);
         QObject::connect(&(this->kid_manip), &RotationManipulator::moved, this, [this]() {this->moveManipulator(nullptr);});
 
-        QObject::connect(this, &PositionManipulator::pointIsClickedInPlanarViewer, this, [this](const glm::vec3& position) {std::cout << "Coucou je suis cliqué dans le position manipulateur !" << std::endl;});
-
         this->manipulator.setCustomConstraint();
         this->manipulator.setManipPosition(mesh->getOrigin());
         this->kid_manip.setOrigine(qglviewer::Vec(mesh->getOrigin()[0], mesh->getOrigin()[1], mesh->getOrigin()[2]));
@@ -328,15 +326,58 @@ namespace UITool {
 
 	CompManipulator::CompManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions): MeshManipulator(mesh) {
 		this->active = false;
+        this->hasAMeshToRegister = false;
+        this->isOnSelectionMode = false;
+        this->isSelectingFirstPoint = false;
+        this->isSelectingSecondPoint = false;
+        this->oneManipulatorWasAlreadyAdded = false;
+        this->oneManipulatorIsAtRangeForGrab = false;
+        this->currentPairToSelect = -1;
         QObject::connect(this, &CompManipulator::pointIsClickedInPlanarViewer, this, &CompManipulator::addManipulator);
         QObject::connect(this, &CompManipulator::rayIsCasted, this, &CompManipulator::addManipulatorFromRay);
 	}
+
+    void CompManipulator::switchToSelectionMode() {
+        this->isOnSelectionMode = true;
+        this->isSelectingFirstPoint = true;
+        this->currentPairToSelect = this->selectedPoints.size();
+        this->selectedPoints.push_back(std::make_pair(-1, -1));
+        for(int i = 0; i < this->manipulators.size(); ++i) {
+            if(this->manipulatorsIsOnMesh[i]) {
+                this->manipulatorsState[i] = 2;
+                this->manipulatorsToDisplay[i] = true;
+            } else {
+                this->manipulatorsToDisplay[i] = false;
+            }
+            this->manipulators[i].lockPosition();
+        }
+    }
+
+    void CompManipulator::assignMeshToRegister(BaseMesh * meshToRegister) {
+        this->meshToRegister = meshToRegister;
+        this->hasAMeshToRegister = true;
+
+        std::vector<glm::vec3> vertices = meshToRegister->vertices;
+        this->manipulators.reserve(vertices.size()*2.);
+		for (int i = 0; i < vertices.size(); ++i) {
+			this->manipulators.push_back(Manipulator(vertices[i]));
+            this->manipulatorsIsOnMesh.push_back(true);
+            QObject::connect(&(this->manipulators[i]), &Manipulator::enterAtRangeForGrab, this, [this](){this->oneManipulatorIsAtRangeForGrab = true;});
+            QObject::connect(&(this->manipulators[i]), &Manipulator::exitFromRangeForGrab, this, [this](){this->oneManipulatorIsAtRangeForGrab = false;});
+            QObject::connect(&(this->manipulators[i]), &Manipulator::mouseRightButtonPressed, this, &CompManipulator::selectManipulator);
+
+            this->manipulatorsToDisplay.push_back(false);
+            this->manipulatorsState.push_back(0.);
+			this->manipulators[i].lockPosition();
+            this->manipulators[i].enable();
+		}
+    }
 
 	void CompManipulator::setActivation(bool isActive) {
         this->active = isActive;
 		if (this->active) {
 			for (int i = 0; i < this->manipulators.size(); ++i) {
-				this->manipulators[i].setCustomConstraint();
+				this->manipulators[i].lockPosition();
                 this->manipulators[i].enable();
 			}
 		} else {
@@ -350,25 +391,94 @@ namespace UITool {
     void CompManipulator::addManipulator(const glm::vec3& position) {
         if(!this->active)
             return;
-        this->manipulators.push_back(Manipulator(position));
-        this->manipulators.back().setCustomConstraint();
+        if(!hasAMeshToRegister) {
+            this->displayErrorNoMeshAssigned();
+            return;
+        }
+        if(this->isSelectingFirstPoint) {
+            std::cout << "Please first select a point on the mesh to register" << std::endl;
+        } 
+
+        if(this->isSelectingSecondPoint) {
+            if(this->oneManipulatorWasAlreadyAdded && !this->oneManipulatorIsAtRangeForGrab) {
+                this->manipulators.back().setManipPosition(position);
+                this->manipulators.back().setCustomConstraint();
+            } else {
+                this->manipulators.push_back(Manipulator(position));
+                this->manipulators.back().setCustomConstraint();
+                this->manipulatorsIsOnMesh.push_back(false);
+                this->manipulatorsState.push_back(5);
+                this->manipulatorsToDisplay.push_back(true);
+                this->oneManipulatorWasAlreadyAdded = true;
+            }
+            this->selectedPoints[this->currentPairToSelect].second = this->manipulators.size() - 1;
+        }
+    }
+
+    void CompManipulator::validate() {
+        if(this->selectedPoints[this->currentPairToSelect].first == -1) {
+            std::cout << "No point selected on the mesh" << std::endl;
+        }
+
+        if(this->selectedPoints[this->currentPairToSelect].second == -1) {
+            std::cout << "No point selected on the grid" << std::endl;
+        }
+
+        this->isOnSelectionMode = false;
+        this->isSelectingFirstPoint = false;
+        this->isSelectingSecondPoint = false;
+        this->oneManipulatorWasAlreadyAdded = false;
+        this->currentPairToSelect = -1;
+
+        for(int i = 0; i < this->manipulators.size(); ++i) {
+            if(this->manipulatorsIsOnMesh[i]) {
+                this->manipulatorsState[i] = 0;
+            } else {
+                this->manipulatorsState[i] = 6;
+            }
+        }
+
+        for(int i = 0; i < this->selectedPoints.size(); ++i) {
+            this->manipulatorsState[this->selectedPoints[i].first] = 1;
+            this->manipulatorsState[this->selectedPoints[i].second] = 7;
+            this->manipulatorsToDisplay[this->selectedPoints[i].first] = true;
+            this->manipulatorsToDisplay[this->selectedPoints[i].second] = true;
+        }
+    }
+
+    void CompManipulator::apply() {
+        std::vector<int> verticesToFit;
+        std::vector<glm::vec3> newPositions;
+        std::cout << "Selected pairs are:" << std::endl;
+        for(int i = 0; i < this->selectedPoints.size(); ++i) {
+            std::cout << "Mesh: " << this->selectedPoints[i].first << std::endl;
+            std::cout << "Grid: " << this->selectedPoints[i].second << std::endl;
+            verticesToFit.push_back(this->selectedPoints[i].first);
+            newPositions.push_back(this->manipulators[this->selectedPoints[i].second].getManipPosition());
+        }
+        this->meshToRegister->setARAPDeformationMethod();
+        ARAPMethod * deformer = dynamic_cast<ARAPMethod*>(this->meshToRegister->meshDeformer);
+        if(deformer) {
+            deformer->fitToPointList(verticesToFit, newPositions);
+        }
     }
 
     void CompManipulator::addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue) {
-        if(!this->active)
-            return;
         glm::vec3 manipulatorPosition;
         if(this->mesh->getPositionOfRayIntersection(origin, direction, minValue, maxValue, manipulatorPosition)) {
-            this->manipulators.push_back(Manipulator(manipulatorPosition));
-            this->manipulators.back().setCustomConstraint();
+            this->addManipulator(manipulatorPosition);
         }
     }
 
     void CompManipulator::removeManipulator(Manipulator * manipulatorToDisplay) {
         if(!this->active)
             return;
-        ptrdiff_t index = manipulatorToDisplay - &(this->manipulators[0]);
-        this->manipulators.erase(this->manipulators.begin()+index);
+        if(!hasAMeshToRegister) {
+            this->displayErrorNoMeshAssigned();
+            return;
+        }
+        //ptrdiff_t index = manipulatorToDisplay - &(this->markerOnGrid[0]);
+        //this->markerOnGrid.erase(this->markerOnGrid.begin()+index);
     }
 
 	void CompManipulator::setAllManipulatorsPosition(const std::vector<glm::vec3>& positions) {
@@ -383,19 +493,43 @@ namespace UITool {
 
     void CompManipulator::getManipulatorsToDisplay(std::vector<bool>& toDisplay) const {
         toDisplay.clear();
-		for (int i = 0; i < this->manipulators.size(); ++i) {
-            toDisplay.push_back(true);
+		for (int i = 0; i < this->manipulatorsToDisplay.size(); ++i) {
+            toDisplay.push_back(this->manipulatorsToDisplay[i]);
         }
     }
 
     void CompManipulator::getManipulatorsState(std::vector<State>& states) const {
         states.clear();
-        for(int i = 0; i < this->manipulators.size(); ++i) {
-            State currentState = State::LOCK;// Default state is different here because we place marker here
+        for(int i = 0; i < this->manipulatorsState.size(); ++i) {
+            State currentState = State::NONE;
+            switch(this->manipulatorsState[i]) {
+                // 0: not assigned to a point (neutral)(on mesh)
+                // 1: assigned to a point (neutral)(on mesh)
+                // 2: waiting to be selected (on mesh)
+                // 3: selected, waiting for second point (on mesh)
+                // 5: waiting for validation (on grid)
+                // 7: assigned to a point (neutral)(on grid)
+                case 0:
+                    currentState = State::NONE;
+                    break;
+                case 1:
+                    currentState = State::SELECTED;
+                    break;
+                case 2:
+                    currentState = State::WAITING;
+                    break;
+                case 3:
+                    currentState = State::AT_RANGE;
+                    break;
+                case 5:
+                    currentState = State::MOVE;
+                    break;
+                case 7:
+                    currentState = State::LOCK;
+                    break;
+            }
             if(this->manipulators[i].isAtRangeForGrab)
                 currentState = State::AT_RANGE;
-            if(this->manipulators[i].isSelected)
-                currentState = State::MOVE;
             states.push_back(currentState);
         }
     }
@@ -414,9 +548,50 @@ namespace UITool {
     }
 
     void CompManipulator::selectManipulator(Manipulator * manipulator) {
+        if(!hasAMeshToRegister) {
+            this->displayErrorNoMeshAssigned();
+            return;
+        }
+        ptrdiff_t index = manipulator - &(this->manipulators[0]);
+        if(this->isSelectingFirstPoint) {
+            if(!this->manipulatorsIsOnMesh[index]) {
+                std::cout << "Select a point on the mesh please" << std::endl;
+                return;
+            }
+            for(int i = 0; i < this->manipulators.size(); ++i) {
+                if(this->manipulatorsIsOnMesh[i]) {
+                    this->manipulatorsState[i] = 4;// Not selected
+                    this->manipulatorsToDisplay[i] = false;
+                }
+            }
+
+            this->manipulatorsState[index] = 3;// Selected
+            this->manipulatorsToDisplay[index] = true;// Selected
+            this->selectedPoints[this->currentPairToSelect].first = index;
+            this->isSelectingFirstPoint = false;
+            this->isSelectingSecondPoint = true;
+            return;
+        } 
+
+        if(this->isSelectingSecondPoint) {
+            if(this->manipulatorsIsOnMesh[index]) {
+                std::cout << "A marker in the mesh has already been selected, please select a point on the grid now" << std::endl;
+                return;
+            }
+
+            if(index == this->manipulators.size() -1) {
+                this->selectedPoints[this->currentPairToSelect].second = index;
+            } else {
+                std::cout << "This marker has already been assigned" << std::endl;
+            }
+        }
     }
 
     void CompManipulator::deselectManipulator(Manipulator * manipulator) {
+    }
+
+    void CompManipulator::displayErrorNoMeshAssigned() {
+        std::cout << "Error: no mesh assigned" << std::endl;
     }
 
     /***/
@@ -564,5 +739,14 @@ namespace UITool {
     void ARAPManipulator::toggleMode() {
         std::cout << "Move mode set to: " << this->moveMode << std::endl;
         this->moveMode = !this->moveMode;
+        if(!this->moveMode) {
+            for(int i = 0; i < this->manipulators.size(); ++i) {
+                this->manipulators[i].lockPosition();
+            }
+        } else {
+            for(int i = 0; i < this->manipulators.size(); ++i) {
+                this->manipulators[i].setCustomConstraint();
+            }
+        }
     }
 }

@@ -464,6 +464,10 @@ public slots:
     void toggleManipulatorActivation();
     void setManipulatorRadius(float radius);
     bool toggleARAPManipulatorMode();
+    void switchToSelectionModeRegistrationTool();
+    void validateRegistrationTool();
+    void applyRegistrationTool();
+    void assignMeshToRegisterRegistrationTool(const std::string& name);
 
     // MeshDeformator slots
     void setNormalDeformationMethod(const std::string& name);

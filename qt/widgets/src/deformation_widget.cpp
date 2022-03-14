@@ -34,6 +34,11 @@ GridDeformationWidget::GridDeformationWidget(Scene* scene, QWidget* parent) :
     this->bindMove->hide();
 	this->radio_selector_comp = new QRadioButton("Marker");
 	this->radio_selector_comp->setChecked(false);
+    this->combo_mesh_register = new QComboBox();
+    this->selection_mode_register = new QPushButton("Start");
+    this->validate = new QPushButton("Validate");
+    this->apply = new QPushButton("Apply");
+
 	this->radio_selector_ARAP = new QRadioButton("ARAP");
 	this->radio_selector_ARAP->setChecked(false);
 
@@ -112,10 +117,19 @@ void GridDeformationWidget::setupLayouts() {
 	this->layout_selector->addWidget(this->radio_selector_position, 3);
 	this->layout_selector->addWidget(this->bindMove, 4);
 	this->layout_selector->addWidget(this->radio_selector_comp, 5);
-	this->layout_selector->addWidget(this->radio_selector_ARAP, 6);
-    this->layout_selector->addWidget(this->handleMode, 7);
+	this->layout_selector->addWidget(this->combo_mesh_register, 6);
+	this->layout_selector->addWidget(this->selection_mode_register, 7);
+	this->layout_selector->addWidget(this->validate, 8);
+	this->layout_selector->addWidget(this->apply, 9);
+	this->layout_selector->addWidget(this->radio_selector_ARAP, 10);
+    this->layout_selector->addWidget(this->handleMode, 11);
     this->handleMode->hide();
     this->bindMove->hide();
+
+    this->combo_mesh_register->hide();
+    this->selection_mode_register->hide();
+    this->validate->hide();
+    this->apply->hide();
 
 	this->layout_move->addWidget(this->radio_move_normal, 1);
 	this->layout_move->addWidget(this->radio_move_weighted, 2);
@@ -138,7 +152,7 @@ void GridDeformationWidget::setupLayouts() {
 GridDeformationWidget::~GridDeformationWidget() {
 }
 
-void GridDeformationWidget::updateScene(Scene * scene, int meshTool, int moveMethod) {
+void GridDeformationWidget::updateScene(Scene * scene, int meshTool, int moveMethod, bool activeMeshChanged) {
     if(this->combo_mesh->count() <= 0)
         return;
     
@@ -147,6 +161,21 @@ void GridDeformationWidget::updateScene(Scene * scene, int meshTool, int moveMet
     bool isGrid = this->gridOrCage[this->combo_mesh->currentIndex()].first;
     bool isMesh = !isGrid;
     bool isCage = this->gridOrCage[this->combo_mesh->currentIndex()].second;
+
+    if(activeMeshChanged) {
+        //Get back to reset position
+        this->radio_selector_direct->setChecked(true);
+        this->radio_selector_free->setChecked(false);
+        this->radio_selector_position->setChecked(false);
+        this->radio_selector_comp->setChecked(false);
+        this->radio_selector_ARAP->setChecked(false);
+        this->radio_move_normal->setChecked(true);
+        this->radio_move_weighted->setChecked(false);
+        this->radio_move_ARAP->setChecked(false);
+
+        meshTool = 0;
+        moveMethod = 0;
+    }
 
     // Lock/Unlock features
     this->radio_mesh_grid_1->setEnabled(true);
@@ -163,6 +192,11 @@ void GridDeformationWidget::updateScene(Scene * scene, int meshTool, int moveMet
     this->bindMove->hide();
 	this->label_radius_selection->hide();
 	this->spinbox_radius_selection->hide();
+    this->combo_mesh_register->hide();
+    this->selection_mode_register->hide();
+    this->validate->hide();
+    this->apply->hide();
+
     if(isCage) {
         this->bindMove->show();
         this->bindMove->setChecked(true);
@@ -196,6 +230,13 @@ void GridDeformationWidget::updateScene(Scene * scene, int meshTool, int moveMet
     } else {
         this->radio_selector_ARAP->setEnabled(false);
 	    //this->radio_selector_position->setEnabled(false);
+
+        if(meshTool == 3) {
+            this->combo_mesh_register->show();
+            this->selection_mode_register->show();
+            this->validate->show();
+            this->apply->show();
+        }
     }
 
     scene->changeActiveMesh(currentMeshName);
@@ -229,7 +270,7 @@ void GridDeformationWidget::updateScene(Scene * scene, int meshTool, int moveMet
 
 void GridDeformationWidget::setupSignals(Scene * scene) {
 
-    QObject::connect(this->combo_mesh, QOverload<int>::of(&QComboBox::currentIndexChanged), [=](int index){this->updateScene(scene, -1, -1);});
+    QObject::connect(this->combo_mesh, QOverload<int>::of(&QComboBox::currentIndexChanged), [=](int index){this->updateScene(scene, -1, -1, true);});
 
 	QObject::connect(this->radio_selector_direct, &QPushButton::clicked, this, [this, scene]() {this->updateScene(scene, 0, -1);});
 
@@ -260,4 +301,15 @@ void GridDeformationWidget::setupSignals(Scene * scene) {
     /***/
 
 	QObject::connect(scene, &Scene::meshAdded, this, &GridDeformationWidget::addNewMesh);
+
+    /***/
+
+    QObject::connect(this->combo_mesh_register, QOverload<int>::of(&QComboBox::highlighted), [=](int index){scene->assignMeshToRegisterRegistrationTool(std::string((this->combo_mesh_register->itemText(this->combo_mesh_register->currentIndex())).toStdString()));});
+    //QObject::connect(this->combo_mesh_register, &QComboBox::textActivated, [this, scene](const QString& text){scene->assignMeshToRegisterRegistrationTool(text.toStdString());});
+
+	QObject::connect(this->selection_mode_register, &QPushButton::clicked, this, [this, scene]() {scene->switchToSelectionModeRegistrationTool();});
+
+	QObject::connect(this->validate, &QPushButton::clicked, this, [this, scene]() {scene->validateRegistrationTool();});
+
+	QObject::connect(this->apply, &QPushButton::clicked, this, [this, scene]() {scene->applyRegistrationTool();});
 }

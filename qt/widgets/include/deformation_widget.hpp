@@ -30,11 +30,12 @@ public:
 	~GridDeformationWidget(void);
 	void setupLayouts();
 	void setupSignals(Scene* scene);
-    void updateScene(Scene * scene, int meshTool, int moveMethod);
+    void updateScene(Scene * scene, int meshTool, int moveMethod, bool activeMeshChanged = false);
 
     int currentMeshTool = 0;
     int currentMoveMethod = 0;
     int gridToDraw = -1;
+    bool registrationInitialize = false;
 
     std::vector<std::string> meshNames;
     std::vector<std::pair<bool, bool>> gridOrCage;
@@ -43,10 +44,9 @@ public slots:
     void addNewMesh(const std::string& name, bool grid, bool cage) {
         this->meshNames.push_back(name);
         this->gridOrCage.push_back(std::pair<bool, bool>(grid, cage));
-        //this->combo_mesh->clear();
-        //for(int i = 0; i < this->meshNames.size(); ++i)
-            //if(!this->gridOrCage.back().first)
-                this->combo_mesh->insertItem(this->combo_mesh->count(), QString(this->meshNames.back().c_str()));
+        this->combo_mesh->insertItem(this->combo_mesh->count(), QString(this->meshNames.back().c_str()));
+        if(!this->gridOrCage.back().first)
+            this->combo_mesh_register->insertItem(this->combo_mesh_register->count(), QString(this->meshNames.back().c_str()));
     }
 
 protected:
@@ -65,7 +65,11 @@ protected:
 	QRadioButton*     radio_selector_free; 
 	QRadioButton* radio_selector_position; 
     QPushButton*             bindMove;
-	QRadioButton* radio_selector_comp; 
+	QRadioButton*     radio_selector_comp; 
+    QComboBox*        combo_mesh_register;
+    QPushButton*  selection_mode_register;
+    QPushButton*                 validate;
+    QPushButton*                    apply;
 	QRadioButton* radio_selector_ARAP; 
 
 	QVBoxLayout*              layout_move;

@@ -15,7 +15,8 @@ namespace UITool {
         AT_RANGE,
         SELECTED,
         LOCK,
-        MOVE
+        MOVE,
+        WAITING
     };
 
 	//! @ingroup uitools
@@ -233,6 +234,11 @@ namespace UITool {
         bool isWireframeDisplayed() override;
 
         void addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue);
+        void displayErrorNoMeshAssigned();
+        void assignMeshToRegister(BaseMesh * meshToRegister);
+        void switchToSelectionMode();
+        void validate();
+        void apply();
 
     public slots:
         void displayManipulator(Manipulator * manipulatorToDisplay) override;
@@ -250,7 +256,35 @@ namespace UITool {
         void pointIsClickedInPlanarViewer(const glm::vec3& position) override;
 
 	private:
-		std::vector<Manipulator> manipulators;
+        BaseMesh * meshToRegister;
+        std::vector<std::pair<int, int>> selectedPoints;
+        int currentPairToSelect;
+
+        // states
+        // 0: not assigned to a point (neutral)(on mesh)
+        // 1: assigned to a point (neutral)(on mesh)
+        // 2: waiting to be selected (on mesh)
+        // 3: selected, waiting for second point (on mesh)
+                // 4: not selected :'( (on mesh)
+        // 4: not selected :'( (on mesh) (invisible)
+        // 5: waiting for validation (on grid)
+        // 6: not assigned to a point (neutral)(on grid)
+        // 7: assigned to a point (neutral)(on grid)
+
+        std::vector<Manipulator> manipulators;
+        std::vector<bool> manipulatorsIsOnMesh;
+        std::vector<bool> manipulatorsToDisplay;
+        std::vector<int> manipulatorsState;
+
+        bool hasAMeshToRegister;
+
+        bool isOnSelectionMode;
+        bool isSelectingFirstPoint;
+        bool isSelectingSecondPoint;
+
+        bool oneManipulatorWasAlreadyAdded;
+        bool oneManipulatorIsAtRangeForGrab;
+
 		bool active;
 	};
 
