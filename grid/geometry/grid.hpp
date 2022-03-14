@@ -84,7 +84,8 @@ struct Grid : public TetMesh {
 
     // In mesh interface
     std::pair<glm::vec3, glm::vec3> getBoundingBox() const;
-    void writeDeformedGrid(ResolutionMode resolutionMode = ResolutionMode::FULL_RESOLUTION);
+    //void writeDeformedGrid(ResolutionMode resolutionMode = ResolutionMode::FULL_RESOLUTION);
+    void writeDeformedGrid(ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION);
 
     uint16_t getDeformedValueFromPoint(const TetMesh& initial, const glm::vec3& p, InterpolationMethod interpolationMethod = InterpolationMethod::NearestNeighbor, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
     uint16_t getValueFromPoint(const glm::vec3& coord, InterpolationMethod interpolationMethod = InterpolationMethod::NearestNeighbor, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;

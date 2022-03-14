@@ -18,7 +18,7 @@ uint16_t Cache::getValue(const glm::vec3& coord, InterpolationMethod interpolati
     } else if (interpolationMethod == InterpolationMethod::Cubic) {
         return static_cast<uint16_t>(this->img.cubic_atXYZ_c(coord[0], coord[1], coord[2], 0, static_cast<uint16_t>(0)));
     } else {
-        return this->img.atXYZ(coord[0], coord[1], coord[2]);
+        return static_cast<uint16_t>(this->img.atXYZ(coord[0], coord[1], coord[2]));
     }
 }
 
