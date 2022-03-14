@@ -38,8 +38,6 @@ public:
 
 public slots:
 	void loadNewGridAPI();
-	void loadGrid();
-	void loadGrid_newAPI();
 
 protected:
 	QDir basePath;

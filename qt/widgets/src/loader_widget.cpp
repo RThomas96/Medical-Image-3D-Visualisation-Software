@@ -179,8 +179,6 @@ void GridLoaderWidget::setupSignals() {
 	}
 
 	QObject::connect(this->button_loadNewGridAPI, &QPushButton::clicked, this, &GridLoaderWidget::loadNewGridAPI);
-
-	QObject::connect(this->button_loadGrids, &QPushButton::clicked, this, &GridLoaderWidget::loadGrid);
 }
 
 void GridLoaderWidget::loadNewGridAPI() {
@@ -208,36 +206,14 @@ void GridLoaderWidget::loadNewGridAPI() {
 		filenamesAsString.push_back(filenames[i].toStdString());
 	}
 
-    //glm::vec3 sizeTetmesh = glm::vec3(20., 20., 20.);
     glm::vec3 sizeTetmesh = glm::vec3(this->spinbox_mesh_x->value(), this->spinbox_mesh_y->value(), this->spinbox_mesh_z->value());
     glm::vec3 sizeVoxel = glm::vec3(this->spinbox_voxel_x->value(), this->spinbox_voxel_y->value(), this->spinbox_voxel_z->value());
 
 	if(this->group_bbox->isChecked()) {
         std::pair<glm::vec3, glm::vec3> bbox{glm::vec3(this->spinbox_bboxMin_x->value(), this->spinbox_bboxMin_y->value(), this->spinbox_bboxMin_z->value()), glm::vec3(this->spinbox_bboxMax_x->value(), this->spinbox_bboxMax_y->value(), this->spinbox_bboxMax_z->value())};
-        std::cout << bbox.first << std::endl;
-        std::cout << bbox.second << std::endl;
-	    this->_testing_grid = new Grid(filenamesAsString, subsample, bbox);
+	    this->viewer->newAPI_loadGrid("grid", filenamesAsString, subsample, sizeTetmesh, sizeVoxel, bbox);
     } else {
-	    this->_testing_grid = new Grid(filenamesAsString, subsample);
+	    this->viewer->newAPI_loadGrid("grid", filenamesAsString, subsample, sizeTetmesh, sizeVoxel);
     }
-    this->_testing_grid->buildTetmesh(sizeTetmesh, sizeVoxel);
-	this->viewer->newAPI_loadGrid(this->_testing_grid);
-}
-
-void GridLoaderWidget::loadGrid() {
-	this->loadGrid_newAPI();
-}
-
-void GridLoaderWidget::loadGrid_newAPI() {
-	// prevent changing the values of the inputs
-
-	std::cerr << "Loading new grid API" << '\n';
-
-	this->viewer->newAPI_loadGrid(this->_testing_grid);
-
-	// Update min and max of the control panel
-	// TODO: change this function in order to set slider according to min/max values in the image
-	//this->_cp->setSlidersToNumericalLimits();
-
 	this->close();
 }

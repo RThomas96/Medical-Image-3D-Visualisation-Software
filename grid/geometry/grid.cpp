@@ -35,6 +35,12 @@ void Grid::buildTetmesh(const glm::vec3& nbCube) {
 void Grid::buildTetmesh(const glm::vec3& nbCube, const glm::vec3& sizeVoxel) {
     //const glm::vec3 sizeCube = this->sampler.getSamplerDimension() / nbCube;
     const glm::vec3 sizeCube = (this->sampler.getSamplerDimension() * sizeVoxel) / nbCube;
+    std::cout << "***" << std::endl;
+    std::cout << "Build tetrahedral mesh grid..." << std::endl;
+    std::cout << "Image dimension: " << this->sampler.getSamplerDimension() << std::endl;
+    std::cout << "Nb of cubes: " << nbCube << std::endl;
+    std::cout << "Cube size: " << sizeCube << std::endl;
+    std::cout << "***" << std::endl;
     this->buildTetmesh(nbCube, sizeCube, glm::vec3(0., 0., 0.));
 }
 
@@ -230,6 +236,10 @@ Sampler::Sampler(const std::vector<std::string>& filename, int subsample, const 
     this->useCache = true;
     this->cache = new Cache(this->getSamplerDimension());
     this->fillCache();
+
+    std::cout << "Sampler initialized..." << std::endl;
+    std::cout << "Sampler resolution: " << this->getSamplerDimension() << std::endl;
+    std::cout << "Subregion selected: " << this->subregionMin << " | " << this->subregionMax << std::endl;
 }
 
 Sampler::Sampler(const std::vector<std::string>& filename, int subsample): image(new SimpleImage(filename)) {
@@ -257,6 +267,10 @@ Sampler::Sampler(const std::vector<std::string>& filename, int subsample): image
     this->useCache = true;
     this->cache = new Cache(this->getSamplerDimension());
     this->fillCache();
+
+    std::cout << "Sampler initialized..." << std::endl;
+    std::cout << "Sampler resolution: " << this->getSamplerDimension() << std::endl;
+    std::cout << "No subregion selected" << std::endl;
 }
 
 Sampler::Sampler(const std::vector<std::string>& filename): image(new SimpleImage(filename)) {

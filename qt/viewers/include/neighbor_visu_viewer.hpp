@@ -97,7 +97,7 @@ public slots:
 	/// @brief Update the view, as a slot without any arguments (currently only used by QTimer)
 	void updateView() { this->update(); }
 	/// @brief Updates the camera position once one or two grids are loaded in the scene.
-    void newAPI_loadGrid(Grid * ptr);
+    void newAPI_loadGrid(const std::string& name, const std::vector<std::string>& filenames, const int subsample, const glm::vec3& sizeTetmesh, glm::vec3& sizeVoxel, const std::pair<glm::vec3, glm::vec3>& bbox = std::pair<glm::vec3, glm::vec3>{glm::vec3(0., 0., 0.), glm::vec3(0., 0., 0.)});
 
     void setCenter(const glm::vec3& center);
     void setRadius(const float radius);

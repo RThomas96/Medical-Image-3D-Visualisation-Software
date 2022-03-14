@@ -44,6 +44,8 @@ public:
     void deselectPts(const glm::vec3& pt);
     void deselectAllPts();
 
+    void scaleToBBox(const glm::vec3& bbMin, const glm::vec3& bbMax);
+
     glm::vec3 getOrigin();
     virtual void translate(const glm::vec3& vec);
     virtual void rotate(const glm::mat3& transf);

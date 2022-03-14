@@ -604,12 +604,11 @@ uint16_t Scene::sendGridValuesToGPU(int gridIdx) {
     return max;
 }
 
-void Scene::addGrid(Grid * gridLoaded) {
-	glm::vec<4, std::size_t, glm::defaultp> dimensions{gridLoaded->getResolution(), 2};
+void Scene::addGrid() {
 
-	GridGLView::Ptr gridView = std::make_shared<GridGLView>(gridLoaded);
-	this->grids.push_back(gridView);
-    //this->grids[0]->grid->scale(glm::vec3(0.1, 0.1, 0.1));
+    GridGLView::Ptr gridView = this->grids.back();
+
+	glm::vec<4, std::size_t, glm::defaultp> dimensions{gridView->grid->getResolution(), 2};
 
     uint16_t max = sendGridValuesToGPU(this->grids.size() -1);
 
@@ -655,8 +654,8 @@ void Scene::addGrid(Grid * gridLoaded) {
 	this->prepareManipulators();
 
 	this->updateBoundingBox();
-	this->setVisuBoxMinCoord(glm::uvec3());
-	this->setVisuBoxMaxCoord(gridLoaded->getResolution());
+	//this->setVisuBoxMinCoord(glm::uvec3());
+	//this->setVisuBoxMaxCoord(gridLoaded->getResolution());
 	this->resetVisuBox();
 
     // Update mesh scale
@@ -3426,7 +3425,6 @@ bool Scene::openCage(const std::string& name, const std::string& filename, BaseM
             this->meshes.back().first = new CageGreen(filename, surfaceMeshToDeform);
     }
 
-
     this->drawableMeshes.back().first = new DrawableMesh();
     this->drawableMeshes.back().first->mesh = this->meshes.back().first;
     this->drawableMeshes.back().first->initialize(this->context, this);
@@ -3441,27 +3439,40 @@ bool Scene::openCage(const std::string& name, const std::string& filename, BaseM
     return true;
 }
 
-bool Scene::openGrid(const std::string& name, Grid * grid) {
+bool Scene::openGrid(const std::string& name, const std::vector<std::string>& filenames, const int subsample, const glm::vec3& sizeTetmesh, const glm::vec3& sizeVoxel, const std::pair<glm::vec3, glm::vec3>& bbox) {
+
+    Grid * newGrid = nullptr;
+
+    bool bboxUsed = glm::distance(bbox.first, bbox.second) > 0.00001;
+    if(bboxUsed)
+	    newGrid = new Grid(filenames, subsample, bbox);
+    else
+	    newGrid = new Grid(filenames, subsample);
+
+    newGrid->buildTetmesh(sizeTetmesh, sizeVoxel);
+
+	GridGLView::Ptr gridView = std::make_shared<GridGLView>(newGrid);
+	this->grids.push_back(gridView);
+
     this->gridToDraw += 1;
 
-    this->addGrid(grid);
+    this->addGrid();
     this->grids_name.push_back(name);
 
     this->updateSceneBBox(this->grids.back()->grid->bbMin, this->grids.back()->grid->bbMax);
     this->updateSceneCenter();
     std::cout << "New grid added with BBox:" << this->grids.back()->grid->bbMax << std::endl;
 
-    this->openCage("grid_cage", "/home/thomas/data/Data/Mesh/bunny_cage.off", this->grids[0]->grid);
-    this->getCage("grid_cage")->unbindMovementWithDeformedMesh();
-    this->getCage("grid_cage")->scale(glm::vec3(15., 15., 15.));
-    this->getCage("grid_cage")->scale(glm::vec3(200., 200., 200.));
-    //this->getCage("grid_cage")->scale(glm::vec3(2., 2., 2.));
-    this->getCage("grid_cage")->setOrigin(this->grids.back()->grid->getOrigin());
-    this->getCage("grid_cage")->bindMovementWithDeformedMesh();
+    if(bunny_demo) {
+        this->openCage("grid_cage", "/home/thomas/data/Data/Mesh/bunny_cage.off", this->grids[0]->grid);
+        this->getCage("grid_cage")->unbindMovementWithDeformedMesh();
+        this->getCage("grid_cage")->scale(glm::vec3(15., 15., 15.));
+        this->getCage("grid_cage")->scale(glm::vec3(200., 200., 200.));
+        this->getCage("grid_cage")->setOrigin(this->grids.back()->grid->getOrigin());
+        this->getCage("grid_cage")->bindMovementWithDeformedMesh();
+    }
 
-    //this->linkCage("bunny_cage", this->grids.back()->grid);
-
-    Q_EMIT meshAdded(name, true, false);
+    //Q_EMIT meshAdded(name, true, false);
     return true;
 }
 
@@ -3579,21 +3590,31 @@ void Scene::changeActiveMesh(const std::string& name) {
 }
 
 void Scene::init() {
-    this->openMesh("bunny", "/home/thomas/data/Data/Mesh/bunny_lowres.off");
-    this->openCage("bunny_cage", "/home/thomas/data/Data/Mesh/bunny_cage.off", this->getMesh("bunny"), false);
+    if(bone_demo) {
+        this->openGrid("grid", std::vector<std::string>{std::string("/home/thomas/data/Data/Mesh/thigh_f_scaled.tif")}, 2, glm::vec3(5, 5, 5), glm::vec3(1, 1, 1));
+        this->openMesh("bone", "/home/thomas/data/Data/Mesh/femur_m.off");
 
-    glm::vec3 scale(10., 10., 10.);
-    this->getMesh("bunny")->scale(scale);
+        this->getMesh("bone")->scaleToBBox(this->getBaseMesh("grid")->bbMin, this->getBaseMesh("grid")->bbMax);
+        this->getMesh("bone")->setOrigin(this->getBaseMesh("grid")->getOrigin());
+        this->getMesh("bone")->translate(glm::vec3(this->getBaseMesh("grid")->getDimensions()[0], 0., 0.));
+    }
+    if(bunny_demo) {
+        this->openMesh("bunny", "/home/thomas/data/Data/Mesh/bunny_lowres.off");
+        this->openCage("bunny_cage", "/home/thomas/data/Data/Mesh/bunny_cage.off", this->getMesh("bunny"), false);
 
-    this->getCage("bunny_cage")->unbindMovementWithDeformedMesh();
-    this->getCage("bunny_cage")->scale(glm::vec3(15, 15, 15));
-    this->getCage("bunny_cage")->setOrigin(this->getMesh("bunny")->getOrigin());
-    this->getCage("bunny_cage")->bindMovementWithDeformedMesh();
+        glm::vec3 scale(10., 10., 10.);
+        this->getMesh("bunny")->scale(scale);
 
-    this->updateSceneBBox();
-    this->updateSceneCenter();
+        this->getCage("bunny_cage")->unbindMovementWithDeformedMesh();
+        this->getCage("bunny_cage")->scale(glm::vec3(15, 15, 15));
+        this->getCage("bunny_cage")->setOrigin(this->getMesh("bunny")->getOrigin());
+        this->getCage("bunny_cage")->bindMovementWithDeformedMesh();
 
-    std::cout << "New bunny added with BBox:" << this->getMesh("bunny")->bbMax << std::endl;
+        this->updateSceneBBox();
+        this->updateSceneCenter();
+
+        std::cout << "New bunny added with BBox:" << this->getMesh("bunny")->bbMax << std::endl;
+    }
 }
 
 BaseMesh * Scene::getBaseMesh(const std::string& name) {

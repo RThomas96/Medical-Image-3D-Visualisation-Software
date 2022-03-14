@@ -162,3 +162,10 @@ void BaseMesh::drawNormals() const {
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_DEPTH);
 }
+
+void BaseMesh::scaleToBBox(const glm::vec3& bbMin, const glm::vec3& bbMax) {
+    float targetLength = glm::length(bbMax - bbMin);
+    float currentLength = glm::length(this->bbMax - this->bbMin);
+    float scaleFactor = targetLength / currentLength;
+    this->scale(glm::vec3(scaleFactor, scaleFactor, scaleFactor));
+}
