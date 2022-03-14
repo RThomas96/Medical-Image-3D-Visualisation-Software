@@ -32,7 +32,7 @@ GridDeformationWidget::GridDeformationWidget(Scene* scene, QWidget* parent) :
     this->bindMove->setCheckable(true);
     this->bindMove->setChecked(true);
     this->bindMove->hide();
-	this->radio_selector_comp = new QRadioButton("Marker");
+	this->radio_selector_comp = new QRadioButton("Registration");
 	this->radio_selector_comp->setChecked(false);
     this->combo_mesh_register = new QComboBox();
     this->selection_mode_register = new QPushButton("Start");
@@ -161,6 +161,8 @@ void GridDeformationWidget::updateScene(Scene * scene, int meshTool, int moveMet
     bool isGrid = this->gridOrCage[this->combo_mesh->currentIndex()].first;
     bool isMesh = !isGrid;
     bool isCage = this->gridOrCage[this->combo_mesh->currentIndex()].second;
+
+    this->registrationInitialize = false;
 
     if(activeMeshChanged) {
         //Get back to reset position
@@ -307,9 +309,20 @@ void GridDeformationWidget::setupSignals(Scene * scene) {
     QObject::connect(this->combo_mesh_register, QOverload<int>::of(&QComboBox::highlighted), [=](int index){scene->assignMeshToRegisterRegistrationTool(std::string((this->combo_mesh_register->itemText(this->combo_mesh_register->currentIndex())).toStdString()));});
     //QObject::connect(this->combo_mesh_register, &QComboBox::textActivated, [this, scene](const QString& text){scene->assignMeshToRegisterRegistrationTool(text.toStdString());});
 
-	QObject::connect(this->selection_mode_register, &QPushButton::clicked, this, [this, scene]() {scene->switchToSelectionModeRegistrationTool();});
+	QObject::connect(this->selection_mode_register, &QPushButton::clicked, this, [this, scene]() {
+            if(!this->registrationInitialize) {
+                scene->assignMeshToRegisterRegistrationTool(std::string((this->combo_mesh_register->itemText(this->combo_mesh_register->currentIndex())).toStdString()));
+                this->registrationInitialize = true;
+            }
+                scene->switchToSelectionModeRegistrationTool();
+    });
 
 	QObject::connect(this->validate, &QPushButton::clicked, this, [this, scene]() {scene->validateRegistrationTool();});
 
-	QObject::connect(this->apply, &QPushButton::clicked, this, [this, scene]() {scene->applyRegistrationTool();});
+	QObject::connect(this->apply, &QPushButton::clicked, this, [this, scene]() {
+            scene->applyRegistrationTool();
+            this->updateScene(scene, 3, -1);
+            scene->assignMeshToRegisterRegistrationTool(std::string((this->combo_mesh_register->itemText(this->combo_mesh_register->currentIndex())).toStdString()));
+            this->registrationInitialize = true;
+    });
 }

@@ -338,6 +338,10 @@ namespace UITool {
 	}
 
     void CompManipulator::switchToSelectionMode() {
+        if(!hasAMeshToRegister) {
+            this->displayErrorNoMeshAssigned();
+            return;
+        }
         this->isOnSelectionMode = true;
         this->isSelectingFirstPoint = true;
         this->currentPairToSelect = this->selectedPoints.size();

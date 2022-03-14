@@ -1535,7 +1535,7 @@ void Scene::prepareUniformsMonoPlaneView(planes _plane, planeHeading _heading, g
     /***/
 
     unsigned int shouldDisplay = 1;
-    float radius = 5.;
+    float radius = this->glMeshManipulator->meshManipulator->getManipulatorSize();
     
     std::vector<glm::vec3> manipulatorPositions;
     this->glMeshManipulator->meshManipulator->getAllPositions(manipulatorPositions);
