@@ -32,9 +32,8 @@ public:
 	void setupSignals(Scene* scene);
     void updateScene(Scene * scene, int meshTool, int moveMethod);
 
-    bool useSurface = true;
-    int meshManipulatorType = 0;
-    int moveMethod = 0;
+    int currentMeshTool = 0;
+    int currentMoveMethod = 0;
     int gridToDraw = -1;
 
     std::vector<std::string> meshNames;
@@ -46,7 +45,7 @@ public slots:
         this->gridOrCage.push_back(std::pair<bool, bool>(grid, cage));
         //this->combo_mesh->clear();
         //for(int i = 0; i < this->meshNames.size(); ++i)
-            if(!this->gridOrCage.back().first)
+            //if(!this->gridOrCage.back().first)
                 this->combo_mesh->insertItem(this->combo_mesh->count(), QString(this->meshNames.back().c_str()));
     }
 

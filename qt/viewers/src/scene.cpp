@@ -139,10 +139,6 @@ Scene::Scene() :
 	this->shouldUpdateUBOData		  = false;
 
 	this->posFrame = nullptr;
-
-    /***/
-    this->sceneBBMin = glm::vec3(-5., -5., -5.);
-    this->sceneBBMax = glm::vec3(5., 5., 5.);
 }
 
 Scene::~Scene(void) {
@@ -2885,7 +2881,7 @@ bool contain(const InfoToSend& value, const InfoToSend& contain) {
 void Scene::sendFirstTetmeshToGPU() {
     if(this->grids.size() > 0)
         this->sendTetmeshToGPU(0, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS));
-    this->glMeshManipulator->meshManipulator->setAllManipulatorsPosition(this->getMesh(this->activeMesh)->getMeshPositions());
+    this->glMeshManipulator->meshManipulator->setAllManipulatorsPosition(this->getBaseMesh(this->activeMesh)->getMeshPositions());
 }
 
 void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend) {
@@ -3245,37 +3241,22 @@ void Scene::toggleWireframe() {
 	this->glMeshManipulator->toggleDisplayWireframe();
 }
 
-void Scene::createNewMeshManipulator(const std::string& meshName, int i, bool onSurface) {
-    if(onSurface) {
-        this->glMeshManipulator->createNewMeshManipulator(this->getMesh(meshName), this, i);
-    } else {
-        this->glMeshManipulator->createNewMeshManipulator(this->grids[this->gridToDraw]->grid, this, i);
-    }
-    QObject::connect(this, SIGNAL(keyQReleased()), dynamic_cast<QObject*>(this->glMeshManipulator->meshManipulator), SIGNAL(keyQReleased()));
-    QObject::connect(this, &Scene::rayIsCasted, this, [this](const glm::vec3& origin, const glm::vec3& direction) { emit this->glMeshManipulator->meshManipulator->rayIsCasted(origin, direction, this->getMinTexValue(), this->getMaxTexValue());});
-    QObject::connect(this, SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)), dynamic_cast<QObject*>(this->glMeshManipulator->meshManipulator), SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)));
-}
-
-
 void Scene::setNormalDeformationMethod(const std::string& name) {
-    if(this->grids.size() > 0)
-        this->grids[this->gridToDraw]->grid->setNormalDeformationMethod();
-    if(this->getMesh(name))
-        this->getMesh(name)->setNormalDeformationMethod();
+    BaseMesh * mesh = this->getBaseMesh(name);
+    if(mesh)
+        mesh->setNormalDeformationMethod();
 }
 
 void Scene::setWeightedDeformationMethod(const std::string& name, float radius) {
-    if(this->grids.size() > 0)
-        this->grids[this->gridToDraw]->grid->setWeightedDeformationMethod(radius);
-    if(this->getMesh(name))
-        this->getMesh(name)->setWeightedDeformationMethod(radius);
+    BaseMesh * mesh = this->getBaseMesh(name);
+    if(mesh)
+        mesh->setWeightedDeformationMethod(radius);
 }
 
 void Scene::setARAPDeformationMethod(const std::string& name) {
-    if(this->grids.size() > 0)
-        this->grids[this->gridToDraw]->grid->setARAPDeformationMethod();
-    if(this->getMesh(name))
-        this->getMesh(name)->setARAPDeformationMethod();
+    BaseMesh * mesh = this->getBaseMesh(name);
+    if(mesh)
+        mesh->setARAPDeformationMethod();
 }
 
 void Scene::setManipulatorRadius(float radius) {
@@ -3356,8 +3337,6 @@ bool Scene::openMesh(const std::string& name, const std::string& filename, const
 
     this->changeActiveMesh(name);
 
-    this->updateSceneBBox(this->meshes.back().first->bbMin, this->meshes.back().first->bbMax);
-
     Q_EMIT meshAdded(name, false, false);
     return true;
 }
@@ -3432,9 +3411,6 @@ bool Scene::openCage(const std::string& name, const std::string& filename, BaseM
 
     this->changeActiveMesh(name);
 
-    this->updateSceneBBox(this->meshes.back().first->bbMin, this->meshes.back().first->bbMax);
-    this->updateSceneCenter();
-
     Q_EMIT meshAdded(name, false, true);
     return true;
 }
@@ -3459,12 +3435,11 @@ bool Scene::openGrid(const std::string& name, const std::vector<std::string>& fi
     this->addGrid();
     this->grids_name.push_back(name);
 
-    this->updateSceneBBox(this->grids.back()->grid->bbMin, this->grids.back()->grid->bbMax);
     this->updateSceneCenter();
     std::cout << "New grid added with BBox:" << this->grids.back()->grid->bbMax << std::endl;
 
     if(bunny_demo) {
-        this->openCage("grid_cage", "/home/thomas/data/Data/Mesh/bunny_cage.off", this->grids[0]->grid);
+        //this->openCage("grid_cage", "/home/thomas/data/Data/Mesh/bunny_cage.off", this->grids[0]->grid);
         this->getCage("grid_cage")->unbindMovementWithDeformedMesh();
         this->getCage("grid_cage")->scale(glm::vec3(15., 15., 15.));
         this->getCage("grid_cage")->scale(glm::vec3(200., 200., 200.));
@@ -3472,7 +3447,7 @@ bool Scene::openGrid(const std::string& name, const std::vector<std::string>& fi
         this->getCage("grid_cage")->bindMovementWithDeformedMesh();
     }
 
-    //Q_EMIT meshAdded(name, true, false);
+    Q_EMIT meshAdded(name, true, false);
     return true;
 }
 
@@ -3510,46 +3485,45 @@ DrawableMesh * Scene::getDrawableMesh(const std::string& name) {
     return nullptr;
 }
 
-void Scene::updateSceneBBox(const glm::vec3& bbMin, const glm::vec3& bbMax) {
-    for(int i = 0; i < 3; ++i) {
-        if(bbMin[i] < this->sceneBBMin[i])
-            this->sceneBBMin[i] = bbMin[i];
-
-        if(bbMax[i] > this->sceneBBMax[i])
-            this->sceneBBMax[i] = bbMax[i];
-    }
+void Scene::updateSceneRadius() {
     Q_EMIT sceneRadiusChanged(this->getSceneRadius());
 }
 
 glm::vec3 Scene::getSceneCenter() {
 
-    SurfaceMesh * mesh = this->getMesh(this->activeMesh);
+    BaseMesh * mesh = this->getBaseMesh(this->activeMesh);
     if(mesh) {
         std::cout << "Update scene center to origin of [" << this->activeMesh << "] which is " << mesh->getOrigin() << std::endl;
         return mesh->getOrigin();
-    } else {
-        if(this->gridToDraw >= 0)
-            return this->grids[this->gridToDraw]->grid->getOrigin();
-        return (this->sceneBBMax + this->sceneBBMin)/2.f;
-    }
+    } //else {
+        //return (this->sceneBBMax + this->sceneBBMin)/2.f;
+    //}
+    return glm::vec3(0., 0., 0.);
 }
 
 float Scene::getSceneRadius() {
-    return glm::length(this->sceneBBMax - this->sceneBBMin);
+    BaseMesh * mesh = this->getBaseMesh(this->activeMesh);
+    if(mesh) {
+        std::cout << "Update scene radius to dimensions of [" << this->activeMesh << "] which is " << glm::length(mesh->getDimensions()) << std::endl;
+        return glm::length(mesh->getDimensions());
+    } //else {
+        //return glm::length(this->sceneBBMax - this->sceneBBMin);
+    //}
+    return 1.;
 }
 
-void Scene::updateSceneBBox() {
-    this->sceneBBMin = glm::vec3(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
-    this->sceneBBMax = glm::vec3(std::numeric_limits<float>::min(), std::numeric_limits<float>::min(), std::numeric_limits<float>::min());
-
-    for(int i = 0; i < this->grids.size(); ++i) {
-        this->updateSceneBBox(this->grids[i]->grid->bbMin, this->grids[i]->grid->bbMax);
-    } 
-
-    for(int i = 0; i < this->meshes.size(); ++i) {
-        this->updateSceneBBox(this->meshes[i].first->bbMin, this->meshes[i].first->bbMax);
-    } 
-}
+//void Scene::updateSceneBBox() {
+//    this->sceneBBMin = glm::vec3(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
+//    this->sceneBBMax = glm::vec3(std::numeric_limits<float>::min(), std::numeric_limits<float>::min(), std::numeric_limits<float>::min());
+//
+//    for(int i = 0; i < this->grids.size(); ++i) {
+//        this->updateSceneBBox(this->grids[i]->grid->bbMin, this->grids[i]->grid->bbMax);
+//    } 
+//
+//    for(int i = 0; i < this->meshes.size(); ++i) {
+//        this->updateSceneBBox(this->meshes[i].first->bbMin, this->meshes[i].first->bbMax);
+//    } 
+//}
 
 void Scene::updateSceneCenter() {
     Q_EMIT sceneCenterChanged(this->getSceneCenter());
@@ -3581,12 +3555,36 @@ void Scene::setBindMeshToCageMove(const std::string& name, bool state) {
     }
 }
 
+bool Scene::isGrid(const std::string& name) {
+    for(int i = 0; i < this->grids_name.size(); ++i) {
+        if(this->grids_name[i] == name) {
+            return true;
+        }
+    }
+    return false;
+}
+
+int Scene::getGridIdx(const std::string& name) {
+    for(int i = 0; i < this->grids_name.size(); ++i) {
+        if(this->grids_name[i] == name) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 void Scene::changeActiveMesh(const std::string& name) {
     this->activeMesh = name;
     this->updateSceneCenter();
-    BaseMesh * activeMesh = this->getBaseMesh(name);
-    if(activeMesh)
-        this->updateSceneBBox(activeMesh->bbMin, activeMesh->bbMax);
+    this->updateSceneRadius();
+    if(this->isGrid(activeMesh)) {
+        this->activeMeshIsAGrid = true;
+        int gridIdx = this->getGridIdx(activeMesh);
+        this->gridToDraw = gridIdx;
+        this->sendTetmeshToGPU(gridIdx, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS | InfoToSend::TEXCOORD | InfoToSend::NEIGHBORS)); 
+    } else {
+        this->activeMeshIsAGrid = false;
+    }
 }
 
 void Scene::init() {
@@ -3610,7 +3608,7 @@ void Scene::init() {
         this->getCage("bunny_cage")->setOrigin(this->getMesh("bunny")->getOrigin());
         this->getCage("bunny_cage")->bindMovementWithDeformedMesh();
 
-        this->updateSceneBBox();
+        //this->updateSceneBBox();
         this->updateSceneCenter();
 
         std::cout << "New bunny added with BBox:" << this->getMesh("bunny")->bbMax << std::endl;
@@ -3630,4 +3628,12 @@ BaseMesh * Scene::getBaseMesh(const std::string& name) {
         }
     }
     return nullptr;
+}
+
+void Scene::updateTools(int tool) {
+    this->glMeshManipulator->createNewMeshManipulator(this->getBaseMesh(this->activeMesh), this, tool);
+
+    QObject::connect(this, SIGNAL(keyQReleased()), dynamic_cast<QObject*>(this->glMeshManipulator->meshManipulator), SIGNAL(keyQReleased()));
+    QObject::connect(this, &Scene::rayIsCasted, this, [this](const glm::vec3& origin, const glm::vec3& direction) { emit this->glMeshManipulator->meshManipulator->rayIsCasted(origin, direction, this->getMinTexValue(), this->getMaxTexValue());});
+    QObject::connect(this, SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)), dynamic_cast<QObject*>(this->glMeshManipulator->meshManipulator), SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)));
 }

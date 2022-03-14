@@ -103,9 +103,9 @@ void GridDeformationWidget::setupLayouts() {
 	this->group_move->setLayout(this->layout_move);
 	this->group_visu->setLayout(this->layout_visu);
 
-	this->layout_mesh->addWidget(this->combo_mesh, 4);
-	this->layout_mesh->addWidget(this->radio_mesh_grid_1, 1);
-	this->layout_mesh->addWidget(this->radio_mesh_grid_2, 2);
+	this->layout_mesh->addWidget(this->combo_mesh, 1);
+	//this->layout_mesh->addWidget(this->radio_mesh_grid_1, 1);
+	//this->layout_mesh->addWidget(this->radio_mesh_grid_2, 2);
 
 	this->layout_selector->addWidget(this->radio_selector_direct, 1);
 	this->layout_selector->addWidget(this->radio_selector_free, 2);
@@ -142,9 +142,11 @@ void GridDeformationWidget::updateScene(Scene * scene, int meshTool, int moveMet
     if(this->combo_mesh->count() <= 0)
         return;
     
-    this->useSurface = !this->gridOrCage[this->combo_mesh->currentIndex()].first;
-    bool isCage = this->gridOrCage[this->combo_mesh->currentIndex()].second;
     std::string currentMeshName = std::string((this->combo_mesh->itemText(this->combo_mesh->currentIndex())).toStdString());
+
+    bool isGrid = this->gridOrCage[this->combo_mesh->currentIndex()].first;
+    bool isMesh = !isGrid;
+    bool isCage = this->gridOrCage[this->combo_mesh->currentIndex()].second;
 
     // Lock/Unlock features
     this->radio_mesh_grid_1->setEnabled(true);
@@ -166,12 +168,12 @@ void GridDeformationWidget::updateScene(Scene * scene, int meshTool, int moveMet
         this->bindMove->setChecked(true);
         scene->setBindMeshToCageMove(currentMeshName, true);
     }
-    if(this->useSurface) {
+    if(isMesh) {
         this->radio_selector_free->setEnabled(false);
         this->radio_selector_comp->setEnabled(false);
-        if(moveMethod == 2 || (this->meshManipulatorType != 4 && meshTool == 4)) {
-            this->meshManipulatorType = 4;
-            this->moveMethod = 2;
+        if(moveMethod == 2 || (this->currentMeshTool != 4 && meshTool == 4)) {
+            this->currentMeshTool = 4;
+            this->currentMoveMethod = 2;
             this->radio_move_ARAP->setEnabled(true);
             this->radio_selector_ARAP->setEnabled(true);
             this->handleMode->show();
@@ -182,8 +184,8 @@ void GridDeformationWidget::updateScene(Scene * scene, int meshTool, int moveMet
             this->radio_move_weighted->setEnabled(false);
             this->radio_move_ARAP->setEnabled(false);
         }
-        if(this->meshManipulatorType == 4 && meshTool != 4 && moveMethod == -1) {
-            this->moveMethod = 0;
+        if(this->currentMeshTool == 4 && meshTool != 4 && moveMethod == -1) {
+            this->currentMoveMethod = 0;
             this->radio_move_normal->setEnabled(true);
             this->radio_move_weighted->setEnabled(true);
             this->radio_move_ARAP->setEnabled(true);
@@ -196,38 +198,38 @@ void GridDeformationWidget::updateScene(Scene * scene, int meshTool, int moveMet
 	    //this->radio_selector_position->setEnabled(false);
     }
 
-    if(meshTool >= 0)
-        this->meshManipulatorType = meshTool;
-    if(moveMethod >= 0)
-        this->moveMethod = moveMethod;
+    scene->changeActiveMesh(currentMeshName);
 
-    //scene->gridToDraw = this->gridToDraw;
-    if(!this->useSurface)
-        scene->sendTetmeshToGPU(scene->gridToDraw, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS | InfoToSend::TEXCOORD | InfoToSend::NEIGHBORS)); 
-    
-    if(this->moveMethod == 0) {
-        scene->setNormalDeformationMethod(currentMeshName);
+    if(meshTool >= 0) {
+        scene->updateTools(meshTool);
+        this->currentMeshTool = meshTool;
     }
+    if(moveMethod >= 0) {
+        switch(moveMethod) {
+            case 0:
+                scene->setNormalDeformationMethod(currentMeshName);
+                break;
 
-    if(this->moveMethod == 1) {
-        this->label_radius_selection->show(); 
-        this->spinbox_radius_selection->show(); 
-        scene->setWeightedDeformationMethod(currentMeshName, this->spinbox_radius_selection->value());
+            case 1:
+                this->label_radius_selection->show(); 
+                this->spinbox_radius_selection->show(); 
+                scene->setWeightedDeformationMethod(currentMeshName, this->spinbox_radius_selection->value());
+                break;
+
+            case 2:
+                scene->setARAPDeformationMethod(currentMeshName);
+                break;
+
+            default:
+                std::cout << "Unkown move method" << std::endl;
+        }
+        this->currentMoveMethod = moveMethod;
     }
-
-    if(this->moveMethod == 2) {
-        scene->setARAPDeformationMethod(currentMeshName);
-    }
-
-    scene->createNewMeshManipulator(currentMeshName, this->meshManipulatorType, this->useSurface);
 }
 
 void GridDeformationWidget::setupSignals(Scene * scene) {
-	QObject::connect(this->radio_mesh_grid_1, &QPushButton::clicked, this, [this, scene]() { scene->gridToDraw = 0; this->updateScene(scene, -1, -1);});
 
-	QObject::connect(this->radio_mesh_grid_2, &QPushButton::clicked, this, [this, scene]() {this->useSurface = false; scene->gridToDraw = 1; this->updateScene(scene, -1, -1);});
-
-    QObject::connect(this->combo_mesh, QOverload<int>::of(&QComboBox::currentIndexChanged), [=](int index){this->useSurface = true; this->updateScene(scene, -1, -1); scene->changeActiveMesh(std::string((this->combo_mesh->itemText(this->combo_mesh->currentIndex())).toStdString()));});
+    QObject::connect(this->combo_mesh, QOverload<int>::of(&QComboBox::currentIndexChanged), [=](int index){this->updateScene(scene, -1, -1);});
 
 	QObject::connect(this->radio_selector_direct, &QPushButton::clicked, this, [this, scene]() {this->updateScene(scene, 0, -1);});
 

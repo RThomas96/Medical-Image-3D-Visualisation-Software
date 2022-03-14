@@ -460,7 +460,6 @@ public slots:
     void init();
 
     // MeshManipulator slots
-    void createNewMeshManipulator(const std::string& meshName, int i, bool onSurface);
 	void toggleWireframe();
     void toggleManipulatorActivation();
     void setManipulatorRadius(float radius);
@@ -488,14 +487,16 @@ public slots:
     int getMeshIdx(const std::string& name);
     Cage * getCage(const std::string& name);
     DrawableMesh * getDrawableMesh(const std::string& name);
-    void updateSceneBBox(const glm::vec3& bbMin, const glm::vec3& bbMax);
-    void updateSceneBBox();
+    bool isGrid(const std::string& name);
+    int getGridIdx(const std::string& name);
+    void updateSceneRadius();
     void updateSceneCenter();
 	glm::vec3 getSceneCenter();
 	float getSceneRadius();
     void toggleBindMeshToCageMove(const std::string& name);
     void setBindMeshToCageMove(const std::string& name, bool state);
     void changeActiveMesh(const std::string& name);
+    void updateTools(int tool);
 
     //void addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction, bool onSurface);
 /*************/
@@ -505,9 +506,7 @@ public:
     std::string filename = "";
 
     int gridToDraw = -1;
-
-    glm::vec3 sceneBBMin;
-    glm::vec3 sceneBBMax;
+    bool activeMeshIsAGrid = false;
 
     std::string activeMesh;
 
