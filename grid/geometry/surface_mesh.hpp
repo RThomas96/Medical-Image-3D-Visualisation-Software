@@ -31,7 +31,7 @@ public:
     void setARAPDeformationMethod() override;
     void computeNeighborhood() override;
     void computeNormals() override;
-    bool getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, glm::vec3& res) const override;
+    bool getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos, glm::vec3& res) const override;
 
     ~SurfaceMesh();
 

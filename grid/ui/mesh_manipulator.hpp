@@ -59,7 +59,7 @@ namespace UITool {
         virtual void needRedraw() = 0;
         // These signals are trigerred from the scene
         virtual void keyQReleased() = 0;
-        virtual void rayIsCasted(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue) = 0;
+        virtual void rayIsCasted(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos) = 0;
         virtual void pointIsClickedInPlanarViewer(const glm::vec3& position) = 0;
 
         //This signal is used to trigger a function in the scene
@@ -108,7 +108,7 @@ namespace UITool {
         void needRedraw() override;
         void keyQReleased() override;
         void needSendTetmeshToGPU() override;
-        void rayIsCasted(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue) override;
+        void rayIsCasted(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos) override;
         void pointIsClickedInPlanarViewer(const glm::vec3& position) override;
 
 	private:
@@ -154,11 +154,11 @@ namespace UITool {
         void needRedraw() override;
         void keyQReleased() override;
         void needSendTetmeshToGPU() override;
-        void rayIsCasted(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue) override;
+        void rayIsCasted(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos) override;
         void pointIsClickedInPlanarViewer(const glm::vec3& position) override;
 
 	private:
-        void addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue);
+        void addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos);
 
 		Manipulator manipulator;
 		bool active;
@@ -201,7 +201,7 @@ namespace UITool {
         void needRedraw() override;
         void keyQReleased() override;
         void needSendTetmeshToGPU() override;
-        void rayIsCasted(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue) override;
+        void rayIsCasted(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos) override;
         void pointIsClickedInPlanarViewer(const glm::vec3& position) override;
 
 	private:
@@ -233,7 +233,7 @@ namespace UITool {
 
         bool isWireframeDisplayed() override;
 
-        void addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue);
+        void addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos);
         void displayErrorNoMeshAssigned();
         void assignMeshToRegister(BaseMesh * meshToRegister);
         void switchToSelectionMode();
@@ -252,7 +252,7 @@ namespace UITool {
         void needRedraw() override;
         void keyQReleased() override;
         void needSendTetmeshToGPU() override;
-        void rayIsCasted(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue) override;
+        void rayIsCasted(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos) override;
         void pointIsClickedInPlanarViewer(const glm::vec3& position) override;
 
 	private:
@@ -324,7 +324,7 @@ namespace UITool {
         void needRedraw() override;
         void keyQReleased() override;
         void needSendTetmeshToGPU() override;
-        void rayIsCasted(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue) override;
+        void rayIsCasted(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos) override;
         void pointIsClickedInPlanarViewer(const glm::vec3& position) override;
 
 	private:

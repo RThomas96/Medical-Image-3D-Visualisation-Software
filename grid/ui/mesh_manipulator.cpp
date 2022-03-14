@@ -214,9 +214,9 @@ namespace UITool {
         this->removeManipulator(manipulator);
     }
 
-    void FreeManipulator::addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue) {
+    void FreeManipulator::addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos) {
         glm::vec3 manipulatorPosition;
-        if(this->mesh->getPositionOfRayIntersection(origin, direction, minValue, maxValue, manipulatorPosition))
+        if(this->mesh->getPositionOfRayIntersection(origin, direction, minValue, maxValue, planePos, manipulatorPosition))
             this->addManipulator(manipulatorPosition);
     }
 
@@ -467,9 +467,9 @@ namespace UITool {
         }
     }
 
-    void CompManipulator::addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue) {
+    void CompManipulator::addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos) {
         glm::vec3 manipulatorPosition;
-        if(this->mesh->getPositionOfRayIntersection(origin, direction, minValue, maxValue, manipulatorPosition)) {
+        if(this->mesh->getPositionOfRayIntersection(origin, direction, minValue, maxValue, planePos, manipulatorPosition)) {
             this->addManipulator(manipulatorPosition);
         }
     }

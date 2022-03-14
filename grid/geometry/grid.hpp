@@ -91,7 +91,7 @@ struct Grid : public TetMesh {
     uint16_t getValueFromPoint(const glm::vec3& coord, InterpolationMethod interpolationMethod = InterpolationMethod::NearestNeighbor, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
     uint16_t getValueFromWorldPoint(const glm::vec3& coord, InterpolationMethod interpolationMethod = InterpolationMethod::NearestNeighbor, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
 
-    bool getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, glm::vec3& res) const override;
+    bool getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos, glm::vec3& res) const override;
 
     Image::ImageDataType getInternalDataType() const {
         return this->sampler.getInternalDataType();

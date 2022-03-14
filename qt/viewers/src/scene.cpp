@@ -3635,7 +3635,7 @@ void Scene::updateTools(int tool) {
     this->glMeshManipulator->createNewMeshManipulator(this->getBaseMesh(this->activeMesh), this, tool);
 
     QObject::connect(this, SIGNAL(keyQReleased()), dynamic_cast<QObject*>(this->glMeshManipulator->meshManipulator), SIGNAL(keyQReleased()));
-    QObject::connect(this, &Scene::rayIsCasted, this, [this](const glm::vec3& origin, const glm::vec3& direction) { emit this->glMeshManipulator->meshManipulator->rayIsCasted(origin, direction, this->getMinTexValue(), this->getMaxTexValue());});
+    QObject::connect(this, &Scene::rayIsCasted, this, [this](const glm::vec3& origin, const glm::vec3& direction) { emit this->glMeshManipulator->meshManipulator->rayIsCasted(origin, direction, this->getMinTexValue(), this->getMaxTexValue(), this->computePlanePositions());});
     QObject::connect(this, SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)), dynamic_cast<QObject*>(this->glMeshManipulator->meshManipulator), SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)));
 }
 
