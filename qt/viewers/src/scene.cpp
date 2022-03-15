@@ -3,6 +3,7 @@
 
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/io.hpp>
+#include <glm/gtx/transform.hpp>
 
 #include <QFileDialog>
 #include <QMessageBox>
@@ -3589,6 +3590,23 @@ void Scene::changeActiveMesh(const std::string& name) {
 }
 
 void Scene::init() {
+    if(brain_demo) {
+        //this->openGrid("brain_image", "/home/thomas/data/Data/Mesh/cerveau.tiff");
+        //this->openGrid("brain_image_IRM", std::vector<std::string>{std::string("/home/thomas/data/Data/Mesh/cerveau.tiff")}, 2, glm::vec3(5, 5, 5), glm::vec3(39, 39, 500));
+        this->openGrid("brain_image_IRM", std::vector<std::string>{std::string("/home/thomas/data/Data/Mesh/cerveau.tiff")}, 2, glm::vec3(5, 5, 5), glm::vec3(1, 1, 1));
+        this->openMesh("brain_mesh_lightsheet", "/home/thomas/data/Data/Mesh/cerveau_cage.off");
+        this->getMesh("brain_mesh_lightsheet")->scale(glm::vec3(4.79, 4.79, 3.5));
+        this->getMesh("brain_mesh_lightsheet")->setOrigin(this->getBaseMesh("brain_image_IRM")->getOrigin());
+        //this->openCage("brain_cage", "/home/thomas/data/Data/Mesh/cerveau_cage.off", this->getBaseMesh("brain_image"));
+        //this->getCage("brain_cage")->unbindMovementWithDeformedMesh();
+        //this->getCage("brain_cage")->setOrigin(this->getBaseMesh("brain_image")->getOrigin());
+        //this->getCage("brain_cage")->scaleToBBox(this->getBaseMesh("brain_image")->bbMin, this->getBaseMesh("brain_image")->bbMax);
+        //this->getCage("brain_cage")->scale(glm::vec3(2., 2., 2.));
+        //this->getCage("brain_cage")->rotate(glm::mat3(glm::rotate(180.f, glm::vec3(0., 1., 0.))));
+        //this->getCage("brain_cage")->rotate(glm::mat3(glm::rotate(-90.f, glm::vec3(1., 0., 0.))));
+        //this->getCage("brain_cage")->setOrigin(this->getBaseMesh("brain_image")->getOrigin());
+        //this->getCage("brain_cage")->bindMovementWithDeformedMesh();
+    }
     if(bone_demo) {
         this->openGrid("grid", std::vector<std::string>{std::string("/home/thomas/data/Data/Mesh/thigh_f_scaled.tif")}, 2, glm::vec3(5, 5, 5), glm::vec3(1, 1, 1));
         this->openMesh("bone", "/home/thomas/data/Data/Mesh/femur_m.off");

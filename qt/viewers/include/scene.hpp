@@ -525,7 +525,8 @@ public:
 	Image::bbox_t sceneDataBB;
 
     bool bunny_demo = false;
-    bool bone_demo = true;
+    bool bone_demo = false;
+    bool brain_demo = true;
 };
 
 /// @brief Type-safe conversion of enum values to unsigned ints.
