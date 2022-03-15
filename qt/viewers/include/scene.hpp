@@ -467,6 +467,8 @@ public slots:
     void switchToSelectionModeRegistrationTool();
     void validateRegistrationTool();
     void applyRegistrationTool();
+    void undoRegistrationTool();
+    void clearRegistrationTool();
     void assignMeshToRegisterRegistrationTool(const std::string& name);
 
     // MeshDeformator slots

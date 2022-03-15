@@ -37,6 +37,8 @@ GridDeformationWidget::GridDeformationWidget(Scene* scene, QWidget* parent) :
     this->combo_mesh_register = new QComboBox();
     this->selection_mode_register = new QPushButton("Start");
     this->validate = new QPushButton("Validate");
+    this->undo = new QPushButton("Undo");
+    this->clear = new QPushButton("Clear");
     this->apply = new QPushButton("Apply");
 
 	this->radio_selector_ARAP = new QRadioButton("ARAP");
@@ -120,15 +122,19 @@ void GridDeformationWidget::setupLayouts() {
 	this->layout_selector->addWidget(this->combo_mesh_register, 6);
 	this->layout_selector->addWidget(this->selection_mode_register, 7);
 	this->layout_selector->addWidget(this->validate, 8);
-	this->layout_selector->addWidget(this->apply, 9);
-	this->layout_selector->addWidget(this->radio_selector_ARAP, 10);
-    this->layout_selector->addWidget(this->handleMode, 11);
+	this->layout_selector->addWidget(this->undo, 9);
+	this->layout_selector->addWidget(this->clear, 10);
+	this->layout_selector->addWidget(this->apply, 11);
+	this->layout_selector->addWidget(this->radio_selector_ARAP, 12);
+    this->layout_selector->addWidget(this->handleMode, 13);
     this->handleMode->hide();
     this->bindMove->hide();
 
     this->combo_mesh_register->hide();
     this->selection_mode_register->hide();
     this->validate->hide();
+    this->undo->hide();
+    this->clear->hide();
     this->apply->hide();
 
 	this->layout_move->addWidget(this->radio_move_normal, 1);
@@ -197,6 +203,8 @@ void GridDeformationWidget::updateScene(Scene * scene, int meshTool, int moveMet
     this->combo_mesh_register->hide();
     this->selection_mode_register->hide();
     this->validate->hide();
+    this->undo->hide();
+    this->clear->hide();
     this->apply->hide();
 
     if(isCage) {
@@ -237,6 +245,8 @@ void GridDeformationWidget::updateScene(Scene * scene, int meshTool, int moveMet
             this->combo_mesh_register->show();
             this->selection_mode_register->show();
             this->validate->show();
+            this->undo->show();
+            this->clear->show();
             this->apply->show();
         }
     }
@@ -318,6 +328,10 @@ void GridDeformationWidget::setupSignals(Scene * scene) {
     });
 
 	QObject::connect(this->validate, &QPushButton::clicked, this, [this, scene]() {scene->validateRegistrationTool();});
+
+	QObject::connect(this->undo, &QPushButton::clicked, this, [this, scene]() {scene->undoRegistrationTool();});
+
+	QObject::connect(this->clear, &QPushButton::clicked, this, [this, scene]() {scene->clearRegistrationTool();});
 
 	QObject::connect(this->apply, &QPushButton::clicked, this, [this, scene]() {
             scene->applyRegistrationTool();

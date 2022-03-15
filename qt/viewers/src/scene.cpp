@@ -3663,12 +3663,34 @@ void Scene::applyRegistrationTool() {
     manipulator->apply();
 }
 
+void Scene::undoRegistrationTool() {
+    UITool::CompManipulator * manipulator = dynamic_cast<UITool::CompManipulator*>(this->glMeshManipulator->meshManipulator);
+    if(!manipulator) {
+        std::cout << "WARNING: not the right tool" << std::endl;
+    }
+    manipulator->undo();
+    // TODO: beurk, improve these interactions
+    if(this->glMeshManipulator->persistantRegistrationToolSessions.size() > 0)
+        this->glMeshManipulator->persistantRegistrationToolSessions.pop_back();
+}
+
+void Scene::clearRegistrationTool() {
+    UITool::CompManipulator * manipulator = dynamic_cast<UITool::CompManipulator*>(this->glMeshManipulator->meshManipulator);
+    if(!manipulator) {
+        std::cout << "WARNING: not the right tool" << std::endl;
+    }
+    manipulator->clearSelectedPoints();
+}
+
 void Scene::assignMeshToRegisterRegistrationTool(const std::string& name) {
     UITool::CompManipulator * manipulator = dynamic_cast<UITool::CompManipulator*>(this->glMeshManipulator->meshManipulator);
     if(!manipulator) {
         std::cout << "WARNING: not the right tool" << std::endl;
     }
     BaseMesh * meshToRegister = this->getBaseMesh(name);
-    if(meshToRegister)
+    if(meshToRegister) {
         manipulator->assignMeshToRegister(meshToRegister);
+        // TODO: beurk, improve these interactions
+        manipulator->assignPreviousSelectedPoints(this->glMeshManipulator->persistantRegistrationToolSelectedPoints, this->glMeshManipulator->persistantRegistrationToolPreviousPoints, this->glMeshManipulator->persistantRegistrationToolSessions);
+    }
 }

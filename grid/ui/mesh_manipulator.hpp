@@ -239,6 +239,9 @@ namespace UITool {
         void switchToSelectionMode();
         void validate();
         void apply();
+        void clearSelectedPoints();
+        void assignPreviousSelectedPoints(const std::vector<std::pair<int, std::pair<int, glm::vec3>>>& previousSelectedPoints, const std::vector<std::vector<glm::vec3>>& previousPositions, std::vector<int> previousNumberOfSelectedPoints);
+        void undo();
 
     public slots:
         void displayManipulator(Manipulator * manipulatorToDisplay) override;
@@ -255,9 +258,12 @@ namespace UITool {
         void rayIsCasted(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos) override;
         void pointIsClickedInPlanarViewer(const glm::vec3& position) override;
 
+    public:
+        std::vector<std::pair<int, std::pair<int, glm::vec3>>> selectedPoints;
+        std::vector<std::vector<glm::vec3>> previousPositions;
+        std::vector<int> previousNumberOfSelectedPoints;
 	private:
         BaseMesh * meshToRegister;
-        std::vector<std::pair<int, int>> selectedPoints;
         int currentPairToSelect;
 
         // states

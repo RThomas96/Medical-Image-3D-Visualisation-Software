@@ -167,4 +167,6 @@ void ARAPMethod::fitToPointList(const std::vector<int>& vertices, const std::vec
 
     for(int i = 0; i < vertices.size(); ++i)
         this->handles[vertices[i]] = false;
+    this->baseMesh->computeNormals();
+    this->baseMesh->updatebbox();
 }

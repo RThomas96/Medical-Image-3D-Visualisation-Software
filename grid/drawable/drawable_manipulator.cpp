@@ -243,6 +243,19 @@ void UITool::GL::MeshManipulator::toggleActivation() {
 }
 
 void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scene * scene, int type) {
+    if(this->meshManipulator) {
+        UITool::CompManipulator * previousManipulator = dynamic_cast<UITool::CompManipulator*>(this->meshManipulator);
+        if(previousManipulator) {
+            // The previous manipulator was a comp manipulator
+            std::cout << "Save register manipulator selected points" << std::endl;
+            this->persistantRegistrationToolPreviousPoints = previousManipulator->previousPositions;
+            this->persistantRegistrationToolSelectedPoints = previousManipulator->selectedPoints;
+            this->persistantRegistrationToolSessions.push_back(previousManipulator->selectedPoints.size());
+            for(auto i : this->persistantRegistrationToolSessions)
+                std::cout << i << std::endl;
+        }
+    }
+
     const std::vector<glm::vec3>& positions = mesh->getMeshPositions();
     this->displayWireframe = false;// Because wathever the manipulator created it is not activated at creation
     delete this->meshManipulator;

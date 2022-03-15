@@ -337,6 +337,73 @@ namespace UITool {
         QObject::connect(this, &CompManipulator::rayIsCasted, this, &CompManipulator::addManipulatorFromRay);
 	}
 
+    void CompManipulator::clearSelectedPoints() {
+        int nbOfPointsToUndo = this->selectedPoints.size();
+        std::cout << nbOfPointsToUndo << " points deleted" << std::endl;
+        for(int nb = 0; nb < nbOfPointsToUndo; ++nb) {
+            this->manipulatorsState[this->selectedPoints.back().first] = 0;
+            this->manipulators.pop_back();
+            this->manipulatorsToDisplay.pop_back();
+            this->manipulatorsIsOnMesh.pop_back();
+            this->manipulatorsState.pop_back();
+            this->selectedPoints.pop_back();
+        }
+    }
+
+    void CompManipulator::undo() {
+
+        if(this->previousNumberOfSelectedPoints.size() == 0) {
+            std::cout << "Nothing to undo" << std::endl;
+            return;
+        }
+
+        int nbOfPointsToUndo = this->selectedPoints.size();
+        if(this->previousNumberOfSelectedPoints.size() > 1) {
+            int prevNumberOfSelectedPoint = this->previousNumberOfSelectedPoints[this->previousNumberOfSelectedPoints.size()-2];
+            int nbSelectedPoint = this->selectedPoints.size();
+            nbOfPointsToUndo = nbSelectedPoint - prevNumberOfSelectedPoint;
+        }
+
+        std::cout << nbOfPointsToUndo << " points deleted" << std::endl;
+        for(int nb = 0; nb < nbOfPointsToUndo; ++nb) {
+            this->manipulatorsState[this->selectedPoints.back().first] = 0;
+            this->manipulators.pop_back();
+            this->manipulatorsToDisplay.pop_back();
+            this->manipulatorsIsOnMesh.pop_back();
+            this->manipulatorsState.pop_back();
+            this->selectedPoints.pop_back();
+        }
+
+        for(int i = 0; i < this->meshToRegister->vertices.size(); ++i) {
+            this->meshToRegister->vertices[i] = this->previousPositions.back()[i];
+            this->manipulators[i].setManipPosition(this->meshToRegister->vertices[i]);
+        }
+        this->previousPositions.pop_back();
+        this->meshToRegister->computeNormals();
+        this->meshToRegister->updatebbox();
+    }
+
+    void CompManipulator::assignPreviousSelectedPoints(const std::vector<std::pair<int, std::pair<int, glm::vec3>>>& previousSelectedPoints, const std::vector<std::vector<glm::vec3>>& previousPositions, std::vector<int> previousNumberOfSelectedPoints) {
+        this->previousPositions = previousPositions;
+        this->previousNumberOfSelectedPoints = previousNumberOfSelectedPoints;
+        for(int i = 0; i < previousSelectedPoints.size(); ++i) {
+            this->selectedPoints.push_back(std::make_pair(previousSelectedPoints[i].first, std::make_pair(previousSelectedPoints[i].second.first, previousSelectedPoints[i].second.second)));
+            int addedIndex = this->selectedPoints.back().second.first;
+            if(addedIndex >= this->manipulators.size()) {
+                this->manipulators.push_back(Manipulator(this->selectedPoints.back().second.second));
+                this->manipulators.back().setCustomConstraint();
+                this->manipulatorsIsOnMesh.push_back(false);
+                this->manipulatorsState.push_back(7);
+                this->manipulatorsToDisplay.push_back(true);
+                if(addedIndex != this->manipulators.size() - 1) {
+                    std::cout << "Error in selected points, this will bug !!" << std::endl;
+                    std::cout << "Added index: " << addedIndex << std::endl;
+                    std::cout << "Size: " << this->manipulators.size() << std::endl;
+                }
+            }
+        }
+    }
+
     void CompManipulator::switchToSelectionMode() {
         if(!hasAMeshToRegister) {
             this->displayErrorNoMeshAssigned();
@@ -345,7 +412,7 @@ namespace UITool {
         this->isOnSelectionMode = true;
         this->isSelectingFirstPoint = true;
         this->currentPairToSelect = this->selectedPoints.size();
-        this->selectedPoints.push_back(std::make_pair(-1, -1));
+        this->selectedPoints.push_back(std::make_pair(-1, std::make_pair(-1, glm::vec3(0., 0., 0.))));
         for(int i = 0; i < this->manipulators.size(); ++i) {
             if(this->manipulatorsIsOnMesh[i]) {
                 this->manipulatorsState[i] = 2;
@@ -415,7 +482,8 @@ namespace UITool {
                 this->manipulatorsToDisplay.push_back(true);
                 this->oneManipulatorWasAlreadyAdded = true;
             }
-            this->selectedPoints[this->currentPairToSelect].second = this->manipulators.size() - 1;
+            this->selectedPoints[this->currentPairToSelect].second.first = this->manipulators.size() - 1;
+            this->selectedPoints[this->currentPairToSelect].second.second = this->manipulators.back().getManipPosition();
         }
     }
 
@@ -424,7 +492,7 @@ namespace UITool {
             std::cout << "No point selected on the mesh" << std::endl;
         }
 
-        if(this->selectedPoints[this->currentPairToSelect].second == -1) {
+        if(this->selectedPoints[this->currentPairToSelect].second.first == -1) {
             std::cout << "No point selected on the grid" << std::endl;
         }
 
@@ -444,25 +512,30 @@ namespace UITool {
 
         for(int i = 0; i < this->selectedPoints.size(); ++i) {
             this->manipulatorsState[this->selectedPoints[i].first] = 1;
-            this->manipulatorsState[this->selectedPoints[i].second] = 7;
+            this->manipulatorsState[this->selectedPoints[i].second.first] = 7;
             this->manipulatorsToDisplay[this->selectedPoints[i].first] = true;
-            this->manipulatorsToDisplay[this->selectedPoints[i].second] = true;
+            this->manipulatorsToDisplay[this->selectedPoints[i].second.first] = true;
         }
     }
 
     void CompManipulator::apply() {
+        if(this->isOnSelectionMode) {
+            std::cout << "You are currently selected some points.\n Please Validate your selection before apply the transformation." << std::endl;
+            return;
+        }
         std::vector<int> verticesToFit;
         std::vector<glm::vec3> newPositions;
         std::cout << "Selected pairs are:" << std::endl;
         for(int i = 0; i < this->selectedPoints.size(); ++i) {
             std::cout << "Mesh: " << this->selectedPoints[i].first << std::endl;
-            std::cout << "Grid: " << this->selectedPoints[i].second << std::endl;
+            std::cout << "Grid: " << this->selectedPoints[i].second.first << std::endl;
             verticesToFit.push_back(this->selectedPoints[i].first);
-            newPositions.push_back(this->manipulators[this->selectedPoints[i].second].getManipPosition());
+            newPositions.push_back(this->selectedPoints[i].second.second);
         }
         this->meshToRegister->setARAPDeformationMethod();
         ARAPMethod * deformer = dynamic_cast<ARAPMethod*>(this->meshToRegister->meshDeformer);
         if(deformer) {
+            this->previousPositions.push_back(this->meshToRegister->vertices);
             deformer->fitToPointList(verticesToFit, newPositions);
         }
     }
@@ -545,7 +618,7 @@ namespace UITool {
     }
 
     bool CompManipulator::isWireframeDisplayed() {
-        return this->active;
+        return false;
     }
 
     void CompManipulator::moveManipulator(Manipulator * manipulator) {
@@ -584,7 +657,8 @@ namespace UITool {
             }
 
             if(index == this->manipulators.size() -1) {
-                this->selectedPoints[this->currentPairToSelect].second = index;
+                this->selectedPoints[this->currentPairToSelect].second.first = index;
+                this->selectedPoints[this->currentPairToSelect].second.second = this->manipulators[index].getManipPosition();
             } else {
                 std::cout << "This marker has already been assigned" << std::endl;
             }

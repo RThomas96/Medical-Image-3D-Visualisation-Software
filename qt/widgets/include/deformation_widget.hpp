@@ -69,6 +69,8 @@ protected:
     QComboBox*        combo_mesh_register;
     QPushButton*  selection_mode_register;
     QPushButton*                 validate;
+    QPushButton*                 undo;
+    QPushButton*                 clear;
     QPushButton*                    apply;
 	QRadioButton* radio_selector_ARAP; 
 

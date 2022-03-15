@@ -58,6 +58,11 @@ namespace UITool {
             void createNewMeshManipulator(BaseMesh * mesh, Scene * scene, int type);
 			void toggleDisplayWireframe() { this->displayWireframe = ! this->displayWireframe; }
 
+        public:
+            // TODO: do not belong here
+            std::vector<std::vector<glm::vec3>> persistantRegistrationToolPreviousPoints;
+            std::vector<std::pair<int, std::pair<int, glm::vec3>>> persistantRegistrationToolSelectedPoints;
+            std::vector<int> persistantRegistrationToolSessions;
 		private:
 
 			float manipulatorRadius;
