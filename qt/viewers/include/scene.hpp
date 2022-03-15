@@ -526,7 +526,8 @@ public:
 
     bool bunny_demo = false;
     bool bone_demo = false;
-    bool brain_demo = true;
+    bool brain_demo = false;
+    bool cage_demo = true;
 };
 
 /// @brief Type-safe conversion of enum values to unsigned ints.

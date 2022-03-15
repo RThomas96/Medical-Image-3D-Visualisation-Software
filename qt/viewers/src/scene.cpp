@@ -1425,7 +1425,8 @@ void Scene::prepareUniformsMonoPlaneView(planes _plane, planeHeading _heading, g
 	//const Image::bbox_t::vec& bbox	 = this->sceneBB.getDiagonal();
 	//const Image::bbox_t::vec& posBox = this->sceneBB.getMin();
 
-	const Image::bbox_t::vec& bbox	 = this->grids[this->gridToDraw]->grid->getResolution();
+	//const Image::bbox_t::vec& bbox	 = this->grids[this->gridToDraw]->grid->getResolution();
+	const glm::vec3 bbox	 = this->grids[this->gridToDraw]->grid->getDimensions();
 	const Image::bbox_t::vec& posBox = glm::vec3(0., 0., 0.);
 
 	// The correct bounding box coordinates :
@@ -1447,7 +1448,7 @@ void Scene::prepareUniformsMonoPlaneView(planes _plane, planeHeading _heading, g
 	uint plane_heading							= planeHeadingToIndex(_heading);
 #warning Transform API is still in-progress.
 	// Grid dimensions :
-	glm::vec3 gridDimensions = this->grids[this->gridToDraw]->grid->getResolution();
+	glm::vec3 gridDimensions = this->grids[this->gridToDraw]->grid->getDimensions();
 	// Depth of the plane :
 	glm::vec3 planePos = this->computePlanePositions();
 
@@ -3590,22 +3591,24 @@ void Scene::changeActiveMesh(const std::string& name) {
 }
 
 void Scene::init() {
+    if(cage_demo) {
+        this->openGrid("brain_image_IRM", std::vector<std::string>{std::string("/home/thomas/data/Data/Mesh/thigh_f_scaled.tif")}, 2, glm::vec3(5, 5, 5), glm::vec3(1., 1., 1.));
+        this->openCage("cube_cage", "/home/thomas/data/Data/Mesh/cube.off", this->getBaseMesh("brain_image_IRM"), false);
+        this->getCage("cube_cage")->unbindMovementWithDeformedMesh();
+        this->getCage("cube_cage")->scaleToBBox(this->getBaseMesh("brain_image_IRM")->bbMin, this->getBaseMesh("brain_image_IRM")->bbMax);
+        this->getCage("cube_cage")->setOrigin(this->getBaseMesh("brain_image_IRM")->getOrigin());
+        this->getCage("cube_cage")->bindMovementWithDeformedMesh();
+    }
     if(brain_demo) {
-        //this->openGrid("brain_image", "/home/thomas/data/Data/Mesh/cerveau.tiff");
-        //this->openGrid("brain_image_IRM", std::vector<std::string>{std::string("/home/thomas/data/Data/Mesh/cerveau.tiff")}, 2, glm::vec3(5, 5, 5), glm::vec3(39, 39, 500));
-        this->openGrid("brain_image_IRM", std::vector<std::string>{std::string("/home/thomas/data/Data/Mesh/cerveau.tiff")}, 2, glm::vec3(5, 5, 5), glm::vec3(1, 1, 1));
+        this->openGrid("brain_image_IRM", std::vector<std::string>{std::string("/home/thomas/data/Data/Mesh/cerveau.tiff")}, 2, glm::vec3(5, 5, 5), glm::vec3(39.*2., 39.*2., 500.*2.));
         this->openMesh("brain_mesh_lightsheet", "/home/thomas/data/Data/Mesh/cerveau_cage.off");
         this->getMesh("brain_mesh_lightsheet")->scale(glm::vec3(4.79, 4.79, 3.5));
         this->getMesh("brain_mesh_lightsheet")->setOrigin(this->getBaseMesh("brain_image_IRM")->getOrigin());
-        //this->openCage("brain_cage", "/home/thomas/data/Data/Mesh/cerveau_cage.off", this->getBaseMesh("brain_image"));
-        //this->getCage("brain_cage")->unbindMovementWithDeformedMesh();
-        //this->getCage("brain_cage")->setOrigin(this->getBaseMesh("brain_image")->getOrigin());
-        //this->getCage("brain_cage")->scaleToBBox(this->getBaseMesh("brain_image")->bbMin, this->getBaseMesh("brain_image")->bbMax);
-        //this->getCage("brain_cage")->scale(glm::vec3(2., 2., 2.));
-        //this->getCage("brain_cage")->rotate(glm::mat3(glm::rotate(180.f, glm::vec3(0., 1., 0.))));
-        //this->getCage("brain_cage")->rotate(glm::mat3(glm::rotate(-90.f, glm::vec3(1., 0., 0.))));
-        //this->getCage("brain_cage")->setOrigin(this->getBaseMesh("brain_image")->getOrigin());
-        //this->getCage("brain_cage")->bindMovementWithDeformedMesh();
+        this->getMesh("brain_mesh_lightsheet")->rotate(glm::mat3(glm::rotate(glm::radians(90.f), glm::vec3(1., 0., 0.))));
+        this->getMesh("brain_mesh_lightsheet")->rotate(glm::mat3(glm::rotate(glm::radians(180.f), glm::vec3(0., 0., 1.))));
+
+        std::cout << "Max min brain IRM" << this->getBaseMesh("brain_image_IRM")->bbMax << std::endl;
+        std::cout << "Max min brain IRM" << this->getBaseMesh("brain_image_IRM")->bbMin << std::endl;
     }
     if(bone_demo) {
         this->openGrid("grid", std::vector<std::string>{std::string("/home/thomas/data/Data/Mesh/thigh_f_scaled.tif")}, 2, glm::vec3(5, 5, 5), glm::vec3(1, 1, 1));
