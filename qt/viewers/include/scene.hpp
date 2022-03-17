@@ -510,6 +510,7 @@ public slots:
     void changeActiveMesh(const std::string& name);
     void updateTools(int tool);
     std::vector<std::string> getAllNonTetrahedralMeshesName();
+    std::vector<std::string> getAllCagesName();
     void saveMesh(const std::string& name, const std::string& filename);
     void applyCage(const std::string& name, const std::string& filename);
 

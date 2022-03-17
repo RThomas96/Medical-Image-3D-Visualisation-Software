@@ -48,6 +48,7 @@ ADD_LIBRARY(VisualisationWidgets STATIC
 	./qt/widgets/include/loader_widget.hpp
 	./qt/widgets/deformation_widget.hpp
     ./qt/widgets/openMeshWidget.hpp
+    ./qt/widgets/applyCageWidget.hpp
     ./qt/widgets/saveMeshWidget.hpp
 
 	./qt/widgets/src/main_widget.cpp
@@ -60,6 +61,7 @@ ADD_LIBRARY(VisualisationWidgets STATIC
 	./qt/widgets/src/loader_widget.cpp
 	./qt/widgets/deformation_widget.cpp
 	./qt/widgets/openMeshWidget.cpp
+    ./qt/widgets/applyCageWidget.cpp
 	./qt/widgets/saveMeshWidget.cpp
 )
 TARGET_INCLUDE_DIRECTORIES(VisualisationWidgets

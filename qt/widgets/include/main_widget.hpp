@@ -9,6 +9,7 @@
 #include "../deformation_widget.hpp"
 #include "../openMeshWidget.hpp"
 #include "../saveMeshWidget.hpp"
+#include "../applyCageWidget.hpp"
 #include "./opengl_debug_log.hpp"
 #include "./scene_control.hpp"
 #include "./user_settings_widget.hpp"
@@ -100,12 +101,14 @@ private:
 	QAction* action_showSettings;
 	QAction* action_loadMesh;
 	QAction* action_saveMesh;
+	QAction* action_applyCage;
 	QStatusBar* statusBar;
 	QPushButton* showGLLog;
 	QPushButton* deform_menu;
 
     OpenMeshWidget * openMeshWidget;
     SaveMeshWidget * saveMeshWidget;
+    ApplyCageWidget * applyCageWidget;
 
     bool isShiftPressed = false;
 };

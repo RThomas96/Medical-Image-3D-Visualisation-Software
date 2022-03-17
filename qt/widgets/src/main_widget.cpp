@@ -88,6 +88,7 @@ void MainWidget::setupWidgets() {
 
     this->openMeshWidget = new OpenMeshWidget(this->scene, this);
     this->saveMeshWidget = new SaveMeshWidget(this->scene, this);
+    this->applyCageWidget = new ApplyCageWidget(this->scene, this);
 
 	QObject::connect(this->showGLLog, &QPushButton::clicked, this->glDebug, &QWidget::show);
 
@@ -125,6 +126,7 @@ void MainWidget::setupWidgets() {
 	this->action_showSettings  = new QAction("Settings");
 	this->action_loadMesh	   = new QAction("Load mesh (OFF)");
 	this->action_saveMesh	   = new QAction("Save mesh (OFF)");
+	this->action_applyCage	   = new QAction("Apply cage on another cage");
 
 	this->action_addGrid->setShortcut(QKeySequence::Open);
 
@@ -135,6 +137,7 @@ void MainWidget::setupWidgets() {
 	this->fileMenu->addAction(this->action_loadMesh);
 	this->fileMenu->addAction(this->action_saveGrid);
 	this->fileMenu->addAction(this->action_saveMesh);
+	this->fileMenu->addAction(this->action_applyCage);
 	this->fileMenu->addAction(this->action_showSettings);
 	this->fileMenu->addAction(this->action_exitProgram);
 	// view menu :
@@ -222,6 +225,15 @@ void MainWidget::setupWidgets() {
             potentialMeshes += QString(allNonTetrahedralMeshes[i].c_str());
         this->saveMeshWidget->setPotentialMeshToSave(potentialMeshes);
         this->saveMeshWidget->show();
+	});
+
+	QObject::connect(this->action_applyCage, &QAction::triggered, [this]() {
+        QStringList potentialCages;
+        std::vector<std::string> allCages = this->scene->getAllCagesName();
+        for(int i = 0; i < allCages.size(); ++i)
+            potentialCages += QString(allCages[i].c_str());
+        this->applyCageWidget->setPotentialCageToApply(potentialCages);
+        this->applyCageWidget->show();
 	});
 
 	// Viewer(s) creation along with control panel :

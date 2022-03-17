@@ -3738,6 +3738,16 @@ std::vector<std::string> Scene::getAllNonTetrahedralMeshesName() {
     return res;
 }
 
+std::vector<std::string> Scene::getAllCagesName() {
+    std::vector<std::string> res;
+    for(int i = 0; i < this->meshes.size(); ++i) {
+        std::string name = this->meshes[i].second;
+        if(this->isCage(name))
+            res.push_back(name);
+    }
+    return res;
+}
+
 bool Scene::openCage(const std::string& name, const std::string& filename, const std::string& surfaceMeshToDeformName, const bool MVC, const glm::vec4& color) {
     return this->openCage(name, filename, this->getBaseMesh(surfaceMeshToDeformName), MVC, color);
 }
