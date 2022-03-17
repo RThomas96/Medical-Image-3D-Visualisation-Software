@@ -253,9 +253,18 @@ public:
 
     void draw()
     {
+        if(mouse_released) {
+            this->Xscale = 1.;
+            this->Yscale = 1.;
+            this->Zscale = 1.;
+            this->prevXscale = 1.;
+            this->prevYscale = 1.;
+            this->prevZscale = 1.;
+        }
+
         //glClear(GL_DEPTH_BUFFER_BIT);
-	    glDisable(GL_DEPTH_TEST);
-        glDisable(GL_DEPTH);
+	    //glDisable(GL_DEPTH_TEST);
+        //glDisable(GL_DEPTH);
         glPolygonMode( GL_FRONT_AND_BACK , GL_FILL );
         if(etat == 1)
         {

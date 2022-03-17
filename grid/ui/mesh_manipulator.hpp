@@ -26,7 +26,7 @@ namespace UITool {
 
         MeshManipulator(BaseMesh * mesh): mesh(mesh) {}
 
-        float getManipulatorSize();
+        float getManipulatorSize(bool side = false);
 
         virtual bool isActive() = 0;
 
@@ -54,6 +54,8 @@ namespace UITool {
         virtual void deselectManipulator(Manipulator * manipulator) = 0;
 
         virtual void addManipulator(const glm::vec3& position) = 0;
+        virtual void keyPressed(QKeyEvent* e) = 0;
+        virtual void keyReleased(QKeyEvent* e) = 0;
 
     //signal:
         virtual void needRedraw() = 0;
@@ -103,6 +105,8 @@ namespace UITool {
         void moveManipulator(Manipulator * manipulator) override;
         void selectManipulator(Manipulator * manipulator) override;
         void deselectManipulator(Manipulator * manipulator) override;
+        void keyPressed(QKeyEvent* e) override;
+        void keyReleased(QKeyEvent* e) override;
 
     signals:
         void needRedraw() override;
@@ -110,7 +114,6 @@ namespace UITool {
         void needSendTetmeshToGPU() override;
         void rayIsCasted(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos) override;
         void pointIsClickedInPlanarViewer(const glm::vec3& position) override;
-
 	private:
 		std::vector<Manipulator> manipulators;
         std::vector<bool> manipulatorsToDisplay;
@@ -149,6 +152,8 @@ namespace UITool {
         void moveManipulator(Manipulator * manipulator) override;
         void selectManipulator(Manipulator * manipulator) override;
         void deselectManipulator(Manipulator * manipulator) override;
+        void keyPressed(QKeyEvent* e) override;
+        void keyReleased(QKeyEvent* e) override;
 
     signals:
         void needRedraw() override;
@@ -156,7 +161,6 @@ namespace UITool {
         void needSendTetmeshToGPU() override;
         void rayIsCasted(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos) override;
         void pointIsClickedInPlanarViewer(const glm::vec3& position) override;
-
 	private:
         void addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos);
 
@@ -189,6 +193,7 @@ namespace UITool {
 
 		RotationManipulator kid_manip;
 
+
     public slots:
         void displayManipulator(Manipulator * manipulatorToDisplay) override;
         void hideManipulator(Manipulator * manipulatorToDisplay) override;
@@ -196,6 +201,10 @@ namespace UITool {
         void moveManipulator(Manipulator * manipulator) override;
         void selectManipulator(Manipulator * manipulator) override;
         void deselectManipulator(Manipulator * manipulator) override;
+        void keyPressed(QKeyEvent* e) override;
+        void keyReleased(QKeyEvent* e) override;
+        void mousePressed(QMouseEvent* e);
+        void mouseReleased(QMouseEvent* e);
 
     signals:
         void needRedraw() override;
@@ -207,6 +216,7 @@ namespace UITool {
 	private:
 		Manipulator manipulator;
 
+        bool evenMode;
 		bool active;
 	};
 
@@ -250,6 +260,8 @@ namespace UITool {
         void moveManipulator(Manipulator * manipulator) override;
         void selectManipulator(Manipulator * manipulator) override;
         void deselectManipulator(Manipulator * manipulator) override;
+        void keyPressed(QKeyEvent* e) override;
+        void keyReleased(QKeyEvent* e) override;
 
     signals:
         void needRedraw() override;
@@ -325,6 +337,8 @@ namespace UITool {
         void selectManipulator(Manipulator * manipulator) override;
         void deselectManipulator(Manipulator * manipulator) override;
         void toggleMode();
+        void keyPressed(QKeyEvent* e) override;
+        void keyReleased(QKeyEvent* e) override;
 
     signals:
         void needRedraw() override;

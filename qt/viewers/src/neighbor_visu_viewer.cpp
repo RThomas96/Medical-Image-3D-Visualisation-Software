@@ -63,6 +63,10 @@ void Viewer::init() {
 	this->scene->initGl(this->context());
 
     QObject::connect(this, &Viewer::keyQReleased, this->scene, &Scene::keyQReleased);
+    QObject::connect(this, &Viewer::keyPressed, this->scene, &Scene::keyPressed);
+    QObject::connect(this, &Viewer::keyReleased, this->scene, &Scene::keyReleased);
+    QObject::connect(this, &Viewer::mousePressed, this->scene, &Scene::mousePressed);
+    QObject::connect(this, &Viewer::mouseReleased, this->scene, &Scene::mouseReleased);
 
     QObject::connect(this->scene, &Scene::sceneCenterChanged, this, &Viewer::setCenter);
     QObject::connect(this->scene, &Scene::sceneRadiusChanged, this, &Viewer::setRadius);
@@ -115,6 +119,7 @@ void Viewer::keyReleaseEvent(QKeyEvent* e) {
             break;
     }
 	QGLViewer::keyReleaseEvent(e);
+    Q_EMIT keyReleased(e);
 }
 
 void Viewer::keyPressEvent(QKeyEvent* e) {
@@ -127,14 +132,14 @@ void Viewer::keyPressEvent(QKeyEvent* e) {
 			this->scene->recompileShaders();
 			this->update();
 			break;
-		default:
-			QGLViewer::keyPressEvent(e);
-			break;
 	}
+	QGLViewer::keyPressEvent(e);
+    Q_EMIT keyPressed(e);
 }
 
 void Viewer::mousePressEvent(QMouseEvent* e) {
 	QGLViewer::mousePressEvent(e);
+    Q_EMIT mousePressed(e);
 }
 
 void Viewer::mouseMoveEvent(QMouseEvent* e) {
@@ -144,6 +149,7 @@ void Viewer::mouseMoveEvent(QMouseEvent* e) {
 
 void Viewer::mouseReleaseEvent(QMouseEvent* e) {
 	QGLViewer::mouseReleaseEvent(e);
+    Q_EMIT mouseReleased(e);
 }
 
 void Viewer::wheelEvent(QWheelEvent* _w) {

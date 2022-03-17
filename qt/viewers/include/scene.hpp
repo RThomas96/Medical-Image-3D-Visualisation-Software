@@ -447,6 +447,10 @@ public:
 signals:
     // Signals to the meshManipulator tools
     void keyQReleased();
+    void keyPressed(QKeyEvent* e);
+    void keyReleased(QKeyEvent* e);
+    void mousePressed(QMouseEvent* e);
+    void mouseReleased(QMouseEvent* e);
     void rayIsCasted(const glm::vec3& origin, const glm::vec3& direction);
     void pointIsClickedInPlanarViewer(const glm::vec3& position);
     // Signals to the viewer

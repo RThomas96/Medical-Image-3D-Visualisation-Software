@@ -107,6 +107,11 @@ public slots:
 signals:
     void keyQReleased();
     void keyQPressed();
+
+    void keyPressed(QKeyEvent* e);
+    void keyReleased(QKeyEvent* e);
+    void mousePressed(QMouseEvent* e);
+    void mouseReleased(QMouseEvent* e);
 };
 
 #endif	  // VIEWER_INCLUDE_NEIGHBOR_VISU_VIEWER_HPP_

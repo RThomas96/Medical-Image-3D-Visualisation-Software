@@ -3656,6 +3656,14 @@ void Scene::updateTools(int tool) {
     this->glMeshManipulator->createNewMeshManipulator(this->getBaseMesh(this->activeMesh), this, tool);
 
     QObject::connect(this, SIGNAL(keyQReleased()), dynamic_cast<QObject*>(this->glMeshManipulator->meshManipulator), SIGNAL(keyQReleased()));
+    QObject::connect(this, SIGNAL(keyPressed(QKeyEvent*)), dynamic_cast<QObject*>(this->glMeshManipulator->meshManipulator), SLOT(keyPressed(QKeyEvent*)));
+    QObject::connect(this, SIGNAL(keyReleased(QKeyEvent*)), dynamic_cast<QObject*>(this->glMeshManipulator->meshManipulator), SLOT(keyReleased(QKeyEvent*)));
+
+    if(tool == 2) {
+        QObject::connect(this, SIGNAL(mousePressed(QMouseEvent*)), dynamic_cast<QObject*>(dynamic_cast<UITool::PositionManipulator*>(this->glMeshManipulator->meshManipulator)), SLOT(mousePressed(QMouseEvent*)));
+        QObject::connect(this, SIGNAL(mouseReleased(QMouseEvent*)), dynamic_cast<QObject*>(dynamic_cast<UITool::PositionManipulator*>(this->glMeshManipulator->meshManipulator)), SLOT(mouseReleased(QMouseEvent*)));
+    }
+
     QObject::connect(this, &Scene::rayIsCasted, this, [this](const glm::vec3& origin, const glm::vec3& direction) { emit this->glMeshManipulator->meshManipulator->rayIsCasted(origin, direction, this->getMinTexValue(), this->getMaxTexValue(), this->computePlanePositions());});
     QObject::connect(this, SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)), dynamic_cast<QObject*>(this->glMeshManipulator->meshManipulator), SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)));
 }

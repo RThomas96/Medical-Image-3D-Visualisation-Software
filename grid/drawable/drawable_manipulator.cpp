@@ -54,6 +54,8 @@ UITool::GL::MeshManipulator::MeshManipulator(SceneGL* sceneGL, BaseMesh * mesh, 
 }
 
 void UITool::GL::MeshManipulator::prepare() {
+    this->manipulatorMesh = Sphere(this->meshManipulator->getManipulatorSize());
+    this->positionManipulatorRadius = this->meshManipulator->getManipulatorSize(true) * 100.;
 	// TODO: copy here
 	std::vector<glm::vec3> allPositions;
 	this->meshManipulator->getAllPositions(allPositions);
@@ -226,14 +228,13 @@ void UITool::GL::MeshManipulator::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* m
 
     if(this->isPositionManip) {
         PositionManipulator* manip = dynamic_cast<PositionManipulator*>(this->meshManipulator);
-        manip->kid_manip.setDisplayScale(this->manipulatorRadius * 10.);
+        manip->kid_manip.setDisplayScale(this->positionManipulatorRadius);
         manip->kid_manip.draw();
     }
 }
 
 void UITool::GL::MeshManipulator::setRadius(float radius) { 
     this->manipulatorRadius = radius; 
-    this->manipulatorMesh = Sphere(this->manipulatorRadius);
     this->prepare();
 }
 

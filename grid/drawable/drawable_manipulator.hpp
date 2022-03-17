@@ -66,6 +66,7 @@ namespace UITool {
 		private:
 
 			float manipulatorRadius;
+            float positionManipulatorRadius;
 			Sphere manipulatorMesh;
 
 			SceneGL * sceneGL;

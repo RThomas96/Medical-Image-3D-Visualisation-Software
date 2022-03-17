@@ -6,8 +6,14 @@
 
 namespace UITool {
     
-    float MeshManipulator::getManipulatorSize() {
-        return std::min(std::min(this->mesh->getDimensions()[0], this->mesh->getDimensions()[1]), this->mesh->getDimensions()[2])/130.;     
+    float MeshManipulator::getManipulatorSize(bool side) {
+        if(this->mesh)
+            if(side)
+                return std::max(std::max(this->mesh->getDimensions()[0], this->mesh->getDimensions()[1]), this->mesh->getDimensions()[2])/130.;     
+            else
+                return std::min(std::min(this->mesh->getDimensions()[0], this->mesh->getDimensions()[1]), this->mesh->getDimensions()[2])/130.;     
+        else
+            return 10.;
     }
 
 	DirectManipulator::DirectManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions): MeshManipulator(mesh) {
@@ -133,6 +139,14 @@ namespace UITool {
         //this->hideManipulator(manipulator);
     }
 
+    void DirectManipulator::keyPressed(QKeyEvent* e) {
+
+    }
+
+    void DirectManipulator::keyReleased(QKeyEvent* e) {
+
+    }
+
     /***/
 
 	FreeManipulator::FreeManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions): MeshManipulator(mesh), manipulator(Manipulator(glm::vec3(0., 0., 0.))) {
@@ -220,14 +234,25 @@ namespace UITool {
             this->addManipulator(manipulatorPosition);
     }
 
+    void FreeManipulator::keyPressed(QKeyEvent* e) {
+
+    }
+
+    void FreeManipulator::keyReleased(QKeyEvent* e) {
+
+    }
+
     /***/
 
 	PositionManipulator::PositionManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions): MeshManipulator(mesh), manipulator(Manipulator(glm::vec3(0., 0., 0.))) {
 		this->active = false;
+        this->evenMode = false;
         QObject::connect(&(this->manipulator), &Manipulator::mouseRightButtonPressed, this, &PositionManipulator::selectManipulator);
         QObject::connect(&(this->manipulator), &Manipulator::mouseRightButtonReleasedAndCtrlIsNotPressed, this, &PositionManipulator::deselectManipulator);
         QObject::connect(&(this->manipulator), &Manipulator::isManipulated, this, &PositionManipulator::moveManipulator);
         QObject::connect(&(this->kid_manip), &RotationManipulator::moved, this, [this]() {this->moveManipulator(nullptr);});
+
+        QObject::connect(this, &PositionManipulator::keyPressed, this, &PositionManipulator::keyPressed);
 
         this->manipulator.setCustomConstraint();
         this->manipulator.setManipPosition(mesh->getOrigin());
@@ -299,19 +324,40 @@ namespace UITool {
                 this->mesh->setOrigin(glm::vec3(this->kid_manip.Origine[0], this->kid_manip.Origine[1], this->kid_manip.Origine[2]));
             }
             // For scale
-            if(this->kid_manip.mode_modification >= 7 && this->kid_manip.mode_modification <= 9) {
+            if(this->kid_manip.mode_modification >= 7 && this->kid_manip.mode_modification <= 9 || this->kid_manip.mode_modification <= -7 && this->kid_manip.mode_modification >= -9) {
                 glm::vec3 scale = this->kid_manip.getScaleVector();
-                int maxIdx = 0;
-                float max = 0;
-                for(int i = 0; i < 3; ++i) {
-                    if(std::abs(1 - scale[i]) > max) {
-                        maxIdx = i;
-                        max = scale[i];
-                    }
+                int axeToScale = -1;
+                switch(this->kid_manip.mode_modification) {
+                    case 7:
+                        axeToScale = 0;
+                        break;
+                    case -7:
+                        axeToScale = 0;
+                        break;
+                    case 8:
+                        axeToScale = 1;
+                        break;
+                    case -8:
+                        axeToScale = 1;
+                        break;
+                    case 9:
+                        axeToScale = 2;
+                        break;
+                    case -9:
+                        axeToScale = 2;
+                        break;
                 }
-                scale = glm::vec3(scale[maxIdx], scale[maxIdx], scale[maxIdx]);
-                this->mesh->scale(scale);
+                if(this->evenMode) {
+                    this->mesh->scale(glm::vec3(scale[axeToScale], scale[axeToScale], scale[axeToScale]));
+                } else {
+                    glm::vec3 finalScale = glm::vec3(1., 1., 1.);
+                    finalScale[axeToScale] = scale[axeToScale];
+                    this->mesh->scale(finalScale);
+                }
+
                 this->mesh->setOrigin(glm::vec3(this->kid_manip.Origine[0], this->kid_manip.Origine[1], this->kid_manip.Origine[2]));
+                this->mesh->computeNormals();
+                this->mesh->updatebbox();
             }
         }
     }
@@ -320,6 +366,24 @@ namespace UITool {
     }
 
     void PositionManipulator::deselectManipulator(Manipulator * manipulator) {
+    }
+
+    void PositionManipulator::keyPressed(QKeyEvent* e) {
+        if(e->modifiers() == Qt::ControlModifier && !e->isAutoRepeat()) {
+            this->evenMode = true;
+        }
+    }
+
+    void PositionManipulator::keyReleased(QKeyEvent* e) {
+        this->evenMode = false;
+    }
+
+    void PositionManipulator::mousePressed(QMouseEvent* e) {
+
+    }
+
+    void PositionManipulator::mouseReleased(QMouseEvent* e) {
+        emit needRedraw();
     }
 
     /***/
@@ -672,6 +736,14 @@ namespace UITool {
         std::cout << "Error: no mesh assigned" << std::endl;
     }
 
+    void CompManipulator::keyPressed(QKeyEvent* e) {
+
+    }
+
+    void CompManipulator::keyReleased(QKeyEvent* e) {
+
+    }
+
     /***/
 
 	ARAPManipulator::ARAPManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions): MeshManipulator(mesh) {
@@ -826,5 +898,13 @@ namespace UITool {
                 this->manipulators[i].setCustomConstraint();
             }
         }
+    }
+
+    void ARAPManipulator::keyPressed(QKeyEvent* e) {
+
+    }
+
+    void ARAPManipulator::keyReleased(QKeyEvent* e) {
+
     }
 }
