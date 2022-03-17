@@ -48,6 +48,7 @@ ADD_LIBRARY(VisualisationWidgets STATIC
 	./qt/widgets/include/loader_widget.hpp
 	./qt/widgets/deformation_widget.hpp
     ./qt/widgets/openMeshWidget.hpp
+    ./qt/widgets/saveMeshWidget.hpp
 
 	./qt/widgets/src/main_widget.cpp
 	./qt/widgets/src/scene_control.cpp
@@ -59,6 +60,7 @@ ADD_LIBRARY(VisualisationWidgets STATIC
 	./qt/widgets/src/loader_widget.cpp
 	./qt/widgets/deformation_widget.cpp
 	./qt/widgets/openMeshWidget.cpp
+	./qt/widgets/saveMeshWidget.cpp
 )
 TARGET_INCLUDE_DIRECTORIES(VisualisationWidgets
 	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/third_party/glm/

@@ -3741,3 +3741,12 @@ std::vector<std::string> Scene::getAllNonTetrahedralMeshesName() {
 bool Scene::openCage(const std::string& name, const std::string& filename, const std::string& surfaceMeshToDeformName, const bool MVC, const glm::vec4& color) {
     return this->openCage(name, filename, this->getBaseMesh(surfaceMeshToDeformName), MVC, color);
 }
+
+void Scene::saveMesh(const std::string& name, const std::string& filename) {
+    this->getMesh(name)->saveOFF(filename.c_str());
+}
+
+void Scene::applyCage(const std::string& name, const std::string& filename) {
+    SurfaceMesh cageToApply(filename);
+    this->getCage(name)->applyCage(cageToApply.vertices);
+}

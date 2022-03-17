@@ -8,6 +8,7 @@
 #include "./loader_widget.hpp"
 #include "../deformation_widget.hpp"
 #include "../openMeshWidget.hpp"
+#include "../saveMeshWidget.hpp"
 #include "./opengl_debug_log.hpp"
 #include "./scene_control.hpp"
 #include "./user_settings_widget.hpp"
@@ -98,11 +99,13 @@ private:
 	QAction* action_showHelpPlane;
 	QAction* action_showSettings;
 	QAction* action_loadMesh;
+	QAction* action_saveMesh;
 	QStatusBar* statusBar;
 	QPushButton* showGLLog;
 	QPushButton* deform_menu;
 
     OpenMeshWidget * openMeshWidget;
+    SaveMeshWidget * saveMeshWidget;
 
     bool isShiftPressed = false;
 };

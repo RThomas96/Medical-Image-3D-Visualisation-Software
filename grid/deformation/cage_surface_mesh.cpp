@@ -21,6 +21,15 @@ void toRawTriangleFormat(const std::vector<Triangle>& triangles, std::vector<std
     }
 }
 
+void Cage::applyCage(const std::vector<glm::vec3>& cage) {
+    for(int i = 0; i < cage.size(); ++i) {
+        if(i < this->vertices.size())
+            this->vertices[i] = cage[i];
+    }
+    // Artificially move a point to update the vertices position of the mesh to deform
+    this->movePoint(this->vertices[0], this->vertices[0]);
+}
+
 void CageMVC::reInitialize() {
     this->originalVertices = this->meshToDeform->vertices;
     this->computeNormals();

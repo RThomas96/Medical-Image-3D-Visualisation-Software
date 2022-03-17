@@ -510,6 +510,8 @@ public slots:
     void changeActiveMesh(const std::string& name);
     void updateTools(int tool);
     std::vector<std::string> getAllNonTetrahedralMeshesName();
+    void saveMesh(const std::string& name, const std::string& filename);
+    void applyCage(const std::string& name, const std::string& filename);
 
     //void addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction, bool onSurface);
 /*************/

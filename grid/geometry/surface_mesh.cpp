@@ -213,3 +213,28 @@ void SurfaceMesh::setARAPDeformationMethod() {
         this->meshDeformer = new ARAPMethod(this);
     }
 }
+
+void SurfaceMesh::saveOFF(std::string const & filename) {
+    std::ofstream myfile;
+    myfile.open(filename.c_str());
+    if (!myfile.is_open())
+    {
+        std::cout << filename << " cannot be opened for saving" << std::endl;
+        return;
+    }
+
+    myfile << "OFF" << std::endl;
+    myfile << (this->vertices.size()) << " " << (this->triangles.size()) << " 0" << std::endl;
+
+    for( unsigned int v = 0 ; v < this->vertices.size() ; ++v )
+    {
+        myfile << (this->vertices[v][0]) << " " << (this->vertices[v][1]) << " " << (this->vertices[v][2]) << std::endl;
+    }
+
+    for( unsigned int t = 0 ; t < this->triangles.size() ; ++t )
+    {
+        myfile << "3 " << (this->triangles[t][0]) << " " << (this->triangles[t][1]) << " " << (this->triangles[t][2]) << std::endl;
+    }
+
+    myfile.close();
+}

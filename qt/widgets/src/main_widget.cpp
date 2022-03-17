@@ -87,6 +87,7 @@ void MainWidget::setupWidgets() {
 	this->scene->addStatusBar(this->statusBar);
 
     this->openMeshWidget = new OpenMeshWidget(this->scene, this);
+    this->saveMeshWidget = new SaveMeshWidget(this->scene, this);
 
 	QObject::connect(this->showGLLog, &QPushButton::clicked, this->glDebug, &QWidget::show);
 
@@ -123,6 +124,7 @@ void MainWidget::setupWidgets() {
 	this->action_showHelpPlane = new QAction("Planar Viewer Help Page");
 	this->action_showSettings  = new QAction("Settings");
 	this->action_loadMesh	   = new QAction("Load mesh (OFF)");
+	this->action_saveMesh	   = new QAction("Save mesh (OFF)");
 
 	this->action_addGrid->setShortcut(QKeySequence::Open);
 
@@ -130,8 +132,9 @@ void MainWidget::setupWidgets() {
 	// File menu :
 	this->fileMenu = this->menuBar()->addMenu("&File");
 	this->fileMenu->addAction(this->action_addGrid);
-	this->fileMenu->addAction(this->action_saveGrid);
 	this->fileMenu->addAction(this->action_loadMesh);
+	this->fileMenu->addAction(this->action_saveGrid);
+	this->fileMenu->addAction(this->action_saveMesh);
 	this->fileMenu->addAction(this->action_showSettings);
 	this->fileMenu->addAction(this->action_exitProgram);
 	// view menu :
@@ -210,6 +213,15 @@ void MainWidget::setupWidgets() {
             potentialCages += QString(allNonTetrahedralMeshes[i].c_str());
         this->openMeshWidget->setPotentialCages(potentialCages);
         this->openMeshWidget->show();
+	});
+
+	QObject::connect(this->action_saveMesh, &QAction::triggered, [this]() {
+        QStringList potentialMeshes;
+        std::vector<std::string> allNonTetrahedralMeshes = this->scene->getAllNonTetrahedralMeshesName();
+        for(int i = 0; i < allNonTetrahedralMeshes.size(); ++i)
+            potentialMeshes += QString(allNonTetrahedralMeshes[i].c_str());
+        this->saveMeshWidget->setPotentialMeshToSave(potentialMeshes);
+        this->saveMeshWidget->show();
 	});
 
 	// Viewer(s) creation along with control panel :

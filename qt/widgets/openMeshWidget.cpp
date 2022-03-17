@@ -15,7 +15,7 @@ OpenMeshWidget::OpenMeshWidget(Scene* scene, QWidget* parent) {
     //this->selectedFile->setReadOnly(true);
     //QObject::connect(this->chooseFileName, &QLineEdit::textChanged, this, [this]() {this->adjustSize();});
 
-    this->chooseFileName = new QPushButton("Open");
+    this->chooseFileName = new QPushButton("Choose");
     QObject::connect(this->chooseFileName, &QPushButton::released, this, [this, scene]() {this->selectFile();});
 
     this->cageGroup = new QGroupBox("Cage");

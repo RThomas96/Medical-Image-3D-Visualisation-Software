@@ -41,6 +41,8 @@ struct Cage : SurfaceMesh {
     virtual void reInitialize() = 0;
     virtual void computeCoordinates() = 0;
 
+    void applyCage(const std::vector<glm::vec3>& cage);
+
     void changeMeshToDeform(BaseMesh * meshToDeform) {
         this->meshToDeform = meshToDeform;
         this->reInitialize();
