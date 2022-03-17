@@ -7,7 +7,7 @@
 #include "../../macros.hpp"
 #include "../../qt/viewers/include/neighbor_visu_viewer.hpp"
 #include "../../qt/viewers/include/scene.hpp"
-#include "./scene_control.hpp"
+#include "./include/scene_control.hpp"
 
 #include <QComboBox>
 #include <QDir>

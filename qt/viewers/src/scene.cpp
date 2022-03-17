@@ -3649,6 +3649,7 @@ BaseMesh * Scene::getBaseMesh(const std::string& name) {
             return this->grids[i]->grid;
         }
     }
+    std::cout << "Wrong base mesh name: " << name << std::endl;
     return nullptr;
 }
 
@@ -3722,4 +3723,21 @@ void Scene::assignMeshToRegisterRegistrationTool(const std::string& name) {
         // TODO: beurk, improve these interactions
         manipulator->assignPreviousSelectedPoints(this->glMeshManipulator->persistantRegistrationToolSelectedPoints, this->glMeshManipulator->persistantRegistrationToolPreviousPoints, this->glMeshManipulator->persistantRegistrationToolSessions);
     }
+}
+
+bool Scene::isCage(const std::string& name) {
+    return this->getCage(name);
+}
+
+std::vector<std::string> Scene::getAllNonTetrahedralMeshesName() {
+    std::vector<std::string> res;
+    for(int i = 0; i < this->meshes.size(); ++i) {
+        std::string name = this->meshes[i].second;
+        res.push_back(name);
+    }
+    return res;
+}
+
+bool Scene::openCage(const std::string& name, const std::string& filename, const std::string& surfaceMeshToDeformName, const bool MVC, const glm::vec4& color) {
+    return this->openCage(name, filename, this->getBaseMesh(surfaceMeshToDeformName), MVC, color);
 }

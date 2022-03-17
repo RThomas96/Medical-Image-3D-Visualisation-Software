@@ -1,4 +1,4 @@
-#include "../include/deformation_widget.hpp"
+#include "deformation_widget.hpp"
 
 #include <glm/gtx/io.hpp>
 

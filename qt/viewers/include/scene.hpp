@@ -489,6 +489,7 @@ public slots:
     // Scene management
     bool openMesh(const std::string& name, const std::string& filename, const glm::vec4& color = glm::vec4(0., 1., 0., 1.));
     bool openCage(const std::string& name, const std::string& filename, BaseMesh * surfaceMeshToDeform, const bool MVC = true, const glm::vec4& color = glm::vec4(1., 0., 0., 0.3));
+    bool openCage(const std::string& name, const std::string& filename, const std::string& surfaceMeshToDeformName, const bool MVC = true, const glm::vec4& color = glm::vec4(1., 0., 0., 0.3));
     bool linkCage(const std::string& cageName, BaseMesh * meshToDeform, const bool MVC);
 
     bool openGrid(const std::string& name, const std::vector<std::string>& filenames, const int subsample, const glm::vec3& sizeTetmesh, const glm::vec3& sizeVoxel, const std::pair<glm::vec3, glm::vec3>& bbox = std::pair<glm::vec3, glm::vec3>{glm::vec3(0., 0., 0.), glm::vec3(0., 0., 0.)});
@@ -498,6 +499,7 @@ public slots:
     Cage * getCage(const std::string& name);
     DrawableMesh * getDrawableMesh(const std::string& name);
     bool isGrid(const std::string& name);
+    bool isCage(const std::string& name);
     int getGridIdx(const std::string& name);
     void updateSceneRadius();
     void updateSceneCenter();
@@ -507,6 +509,7 @@ public slots:
     void setBindMeshToCageMove(const std::string& name, bool state);
     void changeActiveMesh(const std::string& name);
     void updateTools(int tool);
+    std::vector<std::string> getAllNonTetrahedralMeshesName();
 
     //void addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction, bool onSurface);
 /*************/
