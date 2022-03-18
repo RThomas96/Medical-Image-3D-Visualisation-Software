@@ -140,6 +140,8 @@ Scene::Scene() :
 	this->shouldUpdateUBOData		  = false;
 
 	this->posFrame = nullptr;
+
+    this->glSelection = new UITool::GL::Selection(&this->sceneGL, glm::vec3(0., 0., 0.), glm::vec3(10., 10., 10.));
 }
 
 Scene::~Scene(void) {
@@ -219,6 +221,7 @@ void Scene::initGl(QOpenGLContext* _context) {
 
     //this->surfaceMesh = nullptr;
     //this->drawableMesh = nullptr; 
+    this->glSelection->prepare();
 }
 
 void Scene::generateColorScales() {
@@ -443,6 +446,10 @@ void Scene::createBuffers() {
 	this->glMeshManipulator->setVao(createVAO("vaoHandle_Sphere"));
 	this->glMeshManipulator->setVboVertices(createVBO(GL_ARRAY_BUFFER, "vboHandle_SphereVertices"));
 	this->glMeshManipulator->setVboIndices(createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_SphereIndices"));
+
+	this->glSelection->setVao(createVAO("vaoHandle_Selection"));
+	this->glSelection->setVboVertices(createVBO(GL_ARRAY_BUFFER, "vboHandle_SelectionVertices"));
+	this->glSelection->setVboIndices(createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_SelectionIndices"));
 
 	return;
 }
@@ -705,6 +712,7 @@ void Scene::recompileShaders(bool verbose) {
 	GLuint newVolumetricProgram	 = this->compileShaders("../shaders/transfer_mesh.vert", "../shaders/transfer_mesh.geom", "../shaders/transfer_mesh.frag", verbose);
 	GLuint newBoundingBoxProgram = this->compileShaders("../shaders/bounding_box.vert", "", "../shaders/bounding_box.frag", verbose);
 	GLuint newSphereProgram		 = this->compileShaders("../shaders/sphere.vert", "", "../shaders/sphere.frag", true);
+	GLuint newSelectionProgram	 = this->compileShaders("../shaders/selection.vert", "", "../shaders/selection.frag", true);
 
 	if (newProgram) {
 		glDeleteProgram(this->program_projectedTex);
@@ -729,6 +737,10 @@ void Scene::recompileShaders(bool verbose) {
 	if (newSphereProgram) {
 		glDeleteProgram(this->glMeshManipulator->getProgram());
 		this->glMeshManipulator->setProgram(newSphereProgram);
+	}
+	if (newSelectionProgram) {
+		glDeleteProgram(this->glSelection->getProgram());
+		this->glSelection->setProgram(newSelectionProgram);
 	}
 }
 
@@ -1931,6 +1943,7 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 
 	glm::mat4 mMat(1.0f);
 	this->glMeshManipulator->draw(mvMat, pMat, glm::value_ptr(mMat));
+	this->glSelection->draw(mvMat, pMat, glm::value_ptr(mMat));
 
 	/***********************/
 
@@ -3759,4 +3772,10 @@ void Scene::saveMesh(const std::string& name, const std::string& filename) {
 void Scene::applyCage(const std::string& name, const std::string& filename) {
     SurfaceMesh cageToApply(filename);
     this->getCage(name)->applyCage(cageToApply.vertices);
+}
+
+void Scene::redrawSelection(const glm::vec3& p1, const glm::vec3& p2) {
+    this->glSelection->setSelectionBB(p1, p2);
+    this->glSelection->prepare();
+    std::cout << "redraw" << std::endl;
 }

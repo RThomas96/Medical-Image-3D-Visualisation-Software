@@ -27,6 +27,8 @@ Viewer::Viewer(Scene* const scene, QStatusBar* _program_bar, QWidget* parent) :
 	this->refreshTimer->setInterval(std::chrono::milliseconds(7));	  // ~7 ms for 144fps, ~16ms for 60fps and ~33ms for 30 FPS
 	this->refreshTimer->setSingleShot(false);
 	connect(this->refreshTimer, &QTimer::timeout, this, &Viewer::updateView);
+    //connect(this, &QGLViewer::interpolated, this, [this](){std::cout << "I MOVE !" << std::endl;});
+
 
 	this->drawVolumetric	= true;
 	this->shouldCapture		= false;

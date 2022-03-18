@@ -265,6 +265,8 @@ void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scen
     if(type == 0) {
         this->meshManipulator = new UITool::DirectManipulator(mesh, positions);
         this->setRadius(this->meshManipulator->getManipulatorSize());
+        //QObject::connect(&dynamic_cast<DirectManipulator*>(this->meshManipulator)->selection, SIGNAL(needToRedrawSelection(const glm::vec3& p1, const glm::vec3& p2)), scene, SLOT(redrawSelection(const glm::vec3& p1, const glm::vec3& p2)));
+        QObject::connect(&dynamic_cast<DirectManipulator*>(this->meshManipulator)->selection, &UITool::Selection::needToRedrawSelection, scene, &Scene::redrawSelection);
     } else if(type == 1) {
         this->meshManipulator = new UITool::FreeManipulator(mesh, positions);
         this->setRadius(this->meshManipulator->getManipulatorSize());

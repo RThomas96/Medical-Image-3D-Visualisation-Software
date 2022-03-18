@@ -59,13 +59,13 @@ namespace UITool {
         void preventToSpin() { this->setSpinningSensitivity(100.0); };
         void preventToRotate() { this->setRotationSensitivity(0.0); };
 
-        void mouseReleaseEvent(QMouseEvent* const e, qglviewer::Camera* const camera);
+        virtual void mouseReleaseEvent(QMouseEvent* const e, qglviewer::Camera* const camera);
 
-        void mousePressEvent( QMouseEvent* const e, qglviewer::Camera* const camera);
+        virtual void mousePressEvent( QMouseEvent* const e, qglviewer::Camera* const camera);
 
-        void mouseMoveEvent(QMouseEvent *const event, qglviewer::Camera *const camera);
+        virtual void mouseMoveEvent(QMouseEvent *const event, qglviewer::Camera *const camera);
 
-        void checkIfGrabsMouse(int x, int y, const qglviewer::Camera *const camera);
+        virtual void checkIfGrabsMouse(int x, int y, const qglviewer::Camera *const camera);
 
         void slotMovePoint();
 

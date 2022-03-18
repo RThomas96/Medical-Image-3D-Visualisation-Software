@@ -37,6 +37,7 @@
 
 #include "../../grid/geometry/grid.hpp"
 #include "../../grid/drawable/drawable_surface_mesh.hpp"
+#include "../../grid/drawable/drawable_selection.hpp"
 #include "../../grid/deformation/cage_surface_mesh.hpp"
 
 #include "glm/gtx/string_cast.hpp"
@@ -293,6 +294,7 @@ private:
 
     /* Containers */
 	UITool::GL::MeshManipulator* glMeshManipulator;
+	UITool::GL::Selection * glSelection;
 public:
 	//std::vector<DeformableGrid*> grids;
 private:
@@ -513,6 +515,9 @@ public slots:
     std::vector<std::string> getAllCagesName();
     void saveMesh(const std::string& name, const std::string& filename);
     void applyCage(const std::string& name, const std::string& filename);
+    bool isSelecting() {return false;};
+    // This is connect directly to selection in meshManipulator
+    void redrawSelection(const glm::vec3& p1, const glm::vec3& p2);
 
     //void addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction, bool onSurface);
 /*************/

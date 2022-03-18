@@ -118,3 +118,12 @@ CONFIGURE_FILE(
 	${SHADER_OUTPUT_DIR}/base_curve.frag
 	COPYONLY)
 
+CONFIGURE_FILE(
+	${CMAKE_SOURCE_DIR}/shaders/selection.vert
+	${SHADER_OUTPUT_DIR}/selection.vert
+	COPYONLY)
+
+CONFIGURE_FILE(
+	${CMAKE_SOURCE_DIR}/shaders/selection.frag
+	${SHADER_OUTPUT_DIR}/selection.frag
+	COPYONLY)

@@ -19,6 +19,65 @@ namespace UITool {
         WAITING
     };
 
+    class Selection : public Manipulator {
+        Q_OBJECT
+    public:
+        glm::vec3 p1;
+        glm::vec3 p2;
+
+        bool isTouchPressed;
+
+        bool isInSelection(const glm::vec3& position);
+        std::vector<int> areInSelection(const std::vector<glm::vec3>& positions);
+
+        Selection() : Manipulator(glm::vec3(0., 0., 0.)), p1(glm::vec3(0., 0., 0.)), p2(glm::vec3(0., 0., 0.)), isTouchPressed(false) {};
+
+    signals:
+        void needToRedrawSelection(const glm::vec3& p1, const glm::vec3& p2);
+
+    public slots:
+        void keyPressed(QKeyEvent* e){
+            this->isTouchPressed = true;
+        };
+
+        void keyReleased(QKeyEvent* e){
+            this->isTouchPressed = false;
+        };
+
+        void mouseReleaseEvent(QMouseEvent* const e, qglviewer::Camera* const camera) override {
+            Manipulator::mouseReleaseEvent(e, camera);
+        };
+
+        void mousePressEvent( QMouseEvent* const e, qglviewer::Camera* const camera) override {
+            Manipulator::mousePressEvent(e, camera);
+            this->p1 = this->getManipPosition();
+            this->p2 = this->getManipPosition();
+            std::cout << "p1: " << p1 << " - p2: " << p2 << std::endl;
+            Q_EMIT needToRedrawSelection(p1, p2);
+        };
+
+        void mouseMoveEvent(QMouseEvent *const event, qglviewer::Camera *const camera) override {
+            Manipulator::mouseMoveEvent(event, camera);
+            if(this->isSelected && this->isTouchPressed) {
+                this->p2 = this->getManipPosition();
+                std::cout << "p1: " << p1 << " - p2: " << p2 << std::endl;
+                Q_EMIT needToRedrawSelection(p1, p2);
+            }
+        };
+
+        void checkIfGrabsMouse(int x, int y, const qglviewer::Camera *const camera) override {
+            qglviewer::Vec orig;
+            qglviewer::Vec dir;
+            camera->convertClickToLine(QPoint(x, y), orig, dir);
+            glm::vec3 p = glm::vec3(orig[0], orig[1], orig[2]) + float(camera->focusDistance()) * glm::vec3(dir[0], dir[1], dir[2]);
+            if(!this->isSelected) {
+                this->setManipPosition(p);
+                this->p1 = p;
+            }
+            setGrabsMouse(this->isSelected || this->isTouchPressed);
+        }
+    };
+
 	//! @ingroup uitools
     class MeshManipulator {
     public:
@@ -114,10 +173,13 @@ namespace UITool {
         void needSendTetmeshToGPU() override;
         void rayIsCasted(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos) override;
         void pointIsClickedInPlanarViewer(const glm::vec3& position) override;
+    public:
+        Selection selection;
 	private:
 		std::vector<Manipulator> manipulators;
         std::vector<bool> manipulatorsToDisplay;
         std::vector<bool> selectedManipulators;
+
 
 		bool active;
 	};

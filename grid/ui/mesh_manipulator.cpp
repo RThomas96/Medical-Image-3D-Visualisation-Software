@@ -140,11 +140,11 @@ namespace UITool {
     }
 
     void DirectManipulator::keyPressed(QKeyEvent* e) {
-
+        this->selection.keyPressed(e);
     }
 
     void DirectManipulator::keyReleased(QKeyEvent* e) {
-
+        this->selection.keyReleased(e);
     }
 
     /***/
