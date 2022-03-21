@@ -9,8 +9,10 @@ UITool::GL::Selection::Selection(SceneGL* sceneGL, const glm::vec3& p1, const gl
 	this->vboNormals       = 0;
     this->vboIndices       = 0;
 
+    this->p0 = glm::vec3(0., 0., 0.);
     this->p1 = glm::vec3(0., 0., 0.);
     this->p2 = glm::vec3(0., 0., 0.);
+    this->p3 = glm::vec3(0., 0., 0.);
 }
 
 void UITool::GL::Selection::prepare() {
@@ -27,19 +29,19 @@ void UITool::GL::Selection::prepare() {
     //    0.0f, 100.0f, 0.0f,
     //};
 
-    glm::vec3 min;
-    glm::vec3 max;
+    //glm::vec3 min;
+    //glm::vec3 max;
 
-    for(int i = 0; i < 3; ++i) {
-        min[i] = std::min(p1[i], p2[i]);
-        max[i] = std::max(p1[i], p2[i]);
-    }
+    //for(int i = 0; i < 3; ++i) {
+    //    min[i] = std::min(p1[i], p2[i]);
+    //    max[i] = std::max(p1[i], p2[i]);
+    //}
 
     float vertices[] = {
-        max[0], max[1], min[2],
-        max[0], min[1], min[2],
-        min[0], min[1], min[2],
-        min[0], max[1], min[2],
+        p0[0], p0[1], p0[2],
+        p1[0], p1[1], p1[2],
+        p2[0], p2[1], p2[2],
+        p3[0], p3[1], p3[2],
     };
 
 	this->sceneGL->glBindBuffer(GL_ARRAY_BUFFER, vboId);
@@ -101,7 +103,9 @@ void UITool::GL::Selection::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* mMat) {
 	this->sceneGL->glUseProgram(0);
 }
 
-void UITool::GL::Selection::setSelectionBB(const glm::vec3& p1, const glm::vec3& p2) {
+void UITool::GL::Selection::setSelectionBB(const glm::vec3& p0, const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3) {
+    this->p0 = p0;
     this->p1 = p1;
     this->p2 = p2;
+    this->p3 = p3;
 }

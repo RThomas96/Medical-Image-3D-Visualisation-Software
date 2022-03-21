@@ -1943,7 +1943,6 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 
 	glm::mat4 mMat(1.0f);
 	this->glMeshManipulator->draw(mvMat, pMat, glm::value_ptr(mMat));
-	this->glSelection->draw(mvMat, pMat, glm::value_ptr(mMat));
 
 	/***********************/
 
@@ -1973,6 +1972,7 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 	//this->drawBoundingBox(this->sceneBB, glm::vec4(.5, .5, .0, 1.), mvMat, pMat);
 	this->showVAOstate = false;
 
+	this->glSelection->draw(mvMat, pMat, glm::value_ptr(mMat));
 }
 
 void Scene::newSHADERS_updateUBOData() {
@@ -3774,8 +3774,7 @@ void Scene::applyCage(const std::string& name, const std::string& filename) {
     this->getCage(name)->applyCage(cageToApply.vertices);
 }
 
-void Scene::redrawSelection(const glm::vec3& p1, const glm::vec3& p2) {
-    this->glSelection->setSelectionBB(p1, p2);
+void Scene::redrawSelection(const glm::vec3& p0, const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3) {
+    this->glSelection->setSelectionBB(p0, p1, p2, p3);
     this->glSelection->prepare();
-    std::cout << "redraw" << std::endl;
 }

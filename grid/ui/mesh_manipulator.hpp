@@ -1,6 +1,7 @@
 #ifndef MESH_MANIPULATOR_HPP_
 #define MESH_MANIPULATOR_HPP_
 
+#include <QGLViewer/manipulatedCameraFrame.h>
 #include "manipulator.hpp"
 #include "kid_manipulator.h"
 
@@ -22,59 +23,116 @@ namespace UITool {
     class Selection : public Manipulator {
         Q_OBJECT
     public:
+        const qglviewer::Camera * camera;
+
+        glm::ivec2 screenP0;
+        glm::ivec2 screenP1;
+        glm::vec3 p0;
         glm::vec3 p1;
         glm::vec3 p2;
+        glm::vec3 p3;
 
         bool isTouchPressed;
 
-        bool isInSelection(const glm::vec3& position);
-        std::vector<int> areInSelection(const std::vector<glm::vec3>& positions);
+        bool isInScreenSelection(glm::ivec2 p) {
+            return (p[0] > screenP0[0] && p[1] > screenP0[1] && p[0] < screenP1[0] && p[1] < screenP1[1]);
+        }
 
-        Selection() : Manipulator(glm::vec3(0., 0., 0.)), p1(glm::vec3(0., 0., 0.)), p2(glm::vec3(0., 0., 0.)), isTouchPressed(false) {};
+        bool isInSelection(const glm::vec3& position) {
+            qglviewer::Vec pVec = camera->projectedCoordinatesOf(qglviewer::Vec(position[0], position[1], position[2]));
+            glm::ivec2 screenPosition(pVec[0], pVec[1]);
+            bool isVisible = true;
+            bool found = false;
+            qglviewer::Vec ptOnSurfaceVec = camera->pointUnderPixel(QPoint(screenPosition[0], screenPosition[1]), found);
+            glm::vec3 ptOnSurface = glm::vec3(ptOnSurfaceVec[0], ptOnSurfaceVec[1], ptOnSurfaceVec[2]);
+            if(found)
+                std::cout << "found" << std::endl;
+            if(found && glm::distance(ptOnSurface, position) > 0.01) {
+                isVisible = false;
+            }
+            return (isVisible && isInScreenSelection(screenPosition));
+        }
+
+        std::vector<bool> areInSelection(const std::vector<glm::vec3>& positions) {
+            std::vector<bool> res;
+            for(int i = 0; i < positions.size(); ++i) {
+                res.push_back(this->isInSelection(positions[i]));
+            }
+            return res;
+        }
+
+        Selection() : Manipulator(glm::vec3(0., 0., 0.)), p0(glm::vec3(0., 0., 0.)), p1(glm::vec3(0., 0., 0.)), p2(glm::vec3(0., 0., 0.)), p3(glm::vec3(0., 0., 0.)), screenP0(glm::ivec2(0., 0.)), screenP1(glm::ivec2(0, 0)), isTouchPressed(false) {};
 
     signals:
-        void needToRedrawSelection(const glm::vec3& p1, const glm::vec3& p2);
+        void needToRedrawSelection(const glm::vec3& p0, const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3);
+        void isSelecting();
+        void resetSelection();
+        void beginSelection();
 
     public slots:
         void keyPressed(QKeyEvent* e){
+            if(!this->isTouchPressed)
+                Q_EMIT beginSelection();
             this->isTouchPressed = true;
         };
 
         void keyReleased(QKeyEvent* e){
+            if(this->isTouchPressed)
+                Q_EMIT resetSelection();
             this->isTouchPressed = false;
         };
 
         void mouseReleaseEvent(QMouseEvent* const e, qglviewer::Camera* const camera) override {
-            Manipulator::mouseReleaseEvent(e, camera);
+            this->isSelected = false;
+            Q_EMIT needToRedrawSelection(glm::vec3(0., 0., 0.), glm::vec3(0., 0., 0.), glm::vec3(0., 0., 0.), glm::vec3(0., 0., 0.));
         };
 
         void mousePressEvent( QMouseEvent* const e, qglviewer::Camera* const camera) override {
-            Manipulator::mousePressEvent(e, camera);
-            this->p1 = this->getManipPosition();
-            this->p2 = this->getManipPosition();
-            std::cout << "p1: " << p1 << " - p2: " << p2 << std::endl;
-            Q_EMIT needToRedrawSelection(p1, p2);
+            this->isSelected = true;
         };
 
         void mouseMoveEvent(QMouseEvent *const event, qglviewer::Camera *const camera) override {
-            Manipulator::mouseMoveEvent(event, camera);
             if(this->isSelected && this->isTouchPressed) {
-                this->p2 = this->getManipPosition();
-                std::cout << "p1: " << p1 << " - p2: " << p2 << std::endl;
-                Q_EMIT needToRedrawSelection(p1, p2);
+                Q_EMIT isSelecting();
             }
         };
 
         void checkIfGrabsMouse(int x, int y, const qglviewer::Camera *const camera) override {
-            qglviewer::Vec orig;
-            qglviewer::Vec dir;
-            camera->convertClickToLine(QPoint(x, y), orig, dir);
-            glm::vec3 p = glm::vec3(orig[0], orig[1], orig[2]) + float(camera->focusDistance()) * glm::vec3(dir[0], dir[1], dir[2]);
+            qglviewer::Vec pVec = camera->unprojectedCoordinatesOf(qglviewer::Vec(x, y, 0));
+            //std::cout << "x: " << x << " - y: " << y << std::endl;
+            glm::vec3 p = glm::vec3(pVec[0], pVec[1], pVec[2]);
+            this->camera = camera;
             if(!this->isSelected) {
-                this->setManipPosition(p);
-                this->p1 = p;
+                this->screenP0 = glm::ivec2(x, y);
+                this->screenP1 = glm::ivec2(x, y);
             }
+            if(this->isSelected && this->isTouchPressed) {
+                this->screenP1 = glm::ivec2(x, y);
+                this->updateSelection(camera);
+            }
+            //std::cout << "P0: " << this->screenP0 << "P1: " << this->screenP1 << std::endl;
             setGrabsMouse(this->isSelected || this->isTouchPressed);
+        }
+
+        void updateSelection(const qglviewer::Camera *const camera) {
+            glm::ivec2 screenMin;
+            glm::ivec2 screenMax;
+            screenMin[0] = std::min(this->screenP0[0], this->screenP1[0]);
+            screenMin[1] = std::min(this->screenP0[1], this->screenP1[1]);
+            screenMax[0] = std::max(this->screenP0[0], this->screenP1[0]);
+            screenMax[1] = std::max(this->screenP0[1], this->screenP1[1]);
+            this->screenP0 = screenMin;
+            this->screenP1 = screenMax;
+
+            qglviewer::Vec pVec = camera->unprojectedCoordinatesOf(qglviewer::Vec(screenMax[0], screenMax[1], 0.1));
+            this->p0 = glm::vec3(pVec[0], pVec[1], pVec[2]);
+            pVec = camera->unprojectedCoordinatesOf(qglviewer::Vec(screenMax[0], screenMin[1], 0.1));
+            this->p1 = glm::vec3(pVec[0], pVec[1], pVec[2]);
+            pVec = camera->unprojectedCoordinatesOf(qglviewer::Vec(screenMin[0], screenMin[1], 0.1));
+            this->p2 = glm::vec3(pVec[0], pVec[1], pVec[2]);
+            pVec = camera->unprojectedCoordinatesOf(qglviewer::Vec(screenMin[0], screenMax[1], 0.1));
+            this->p3 = glm::vec3(pVec[0], pVec[1], pVec[2]);
+            Q_EMIT needToRedrawSelection(p0, p1, p2, p3);
         }
     };
 
@@ -156,6 +214,8 @@ namespace UITool {
         void getManipulatorsToDisplay(std::vector<bool>& toDisplay) const override;
 
         bool isWireframeDisplayed() override;
+
+        void checkSelectedManipulators();
 
     public slots:
         void displayManipulator(Manipulator * manipulatorToDisplay) override;
@@ -401,6 +461,7 @@ namespace UITool {
         void toggleMode();
         void keyPressed(QKeyEvent* e) override;
         void keyReleased(QKeyEvent* e) override;
+        void checkSelectedManipulators();
 
     signals:
         void needRedraw() override;
@@ -409,12 +470,16 @@ namespace UITool {
         void rayIsCasted(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos) override;
         void pointIsClickedInPlanarViewer(const glm::vec3& position) override;
 
+    public:
+        Selection selection;
 	private:
 		std::vector<Manipulator> manipulators;
         std::vector<bool> manipulatorsToDisplay;
         std::vector<bool> selectedManipulators;
         std::vector<bool> handles;
+        std::vector<bool> alreadySwitch;
 
+        bool isSelecting;
 		bool active;
         bool moveMode;
 	};

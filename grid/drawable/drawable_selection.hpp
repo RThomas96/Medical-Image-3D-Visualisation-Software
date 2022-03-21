@@ -37,10 +37,12 @@ namespace UITool {
 			void setVboIndices(GLuint vboIndices) { this->vboIndices = vboIndices; };
 			GLuint getVboIndices() { return this->vboIndices; };
 
+            glm::vec3 p0;
             glm::vec3 p1;
             glm::vec3 p2;
+            glm::vec3 p3;
 
-            void setSelectionBB(const glm::vec3& p1, const glm::vec3& p2);
+            void setSelectionBB(const glm::vec3& p0, const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3);
 
         public slots:
 			void prepare();
