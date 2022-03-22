@@ -24,7 +24,8 @@ namespace UITool {
 		public:
 			MeshManipulator(SceneGL* sceneGL, BaseMesh * base, const std::vector<glm::vec3>& positions, float manipulatorRadius = 50.f);
 
-			void draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* mMat);
+			//void draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* mMat);
+            void draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* mMat, const glm::vec3& planeDisplacement);
 
 			void setProgram(GLuint program) { this->program = program; };
 			GLuint getProgram() { return this->program; };

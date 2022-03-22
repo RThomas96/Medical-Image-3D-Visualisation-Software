@@ -17,7 +17,8 @@ namespace UITool {
         SELECTED,
         LOCK,
         MOVE,
-        WAITING
+        WAITING,
+        HIGHLIGHT
     };
 
     class Selection : public Manipulator {

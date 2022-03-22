@@ -120,12 +120,13 @@ void UITool::GL::MeshManipulator::prepare() {
 	this->sceneGL->glBindVertexArray(0);
 }
 
-void UITool::GL::MeshManipulator::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* mMat) {
+void UITool::GL::MeshManipulator::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* mMat, const glm::vec3& planeDisplacement) {
 	auto getUniform = [&](const char* name) -> GLint {
 		GLint g = this->sceneGL->glGetUniformLocation(this->program, name);
 		return g;
 	};
 
+    //std::cout << planeDisplacement << std::endl;
 	//if (!this->displayed)
 	//	return;
 
@@ -176,6 +177,15 @@ void UITool::GL::MeshManipulator::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* m
     for(int i = 0; i < rawState.size(); ++i) {
         int value = rawState[i];
         state.push_back(glm::vec3(value, value, value));
+    }
+
+    for(int i = 0; i < allPositions.size(); ++i) {
+        for(int j = 0; j < 3; ++j) {
+            if(std::fabs(allPositions[i][j] - planeDisplacement[j]) < this->manipulatorRadius) {
+                if(state[i][0] == State::NONE || state[i][0] == State::WAITING)
+                    state[i] = glm::vec3(State::HIGHLIGHT, State::HIGHLIGHT, State::HIGHLIGHT);// HIGHLIGHT state
+            }
+        }
     }
 
 	this->texParamsState.data   = state.data();

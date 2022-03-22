@@ -1942,7 +1942,7 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 	/* Manipulator drawing  */
 
 	glm::mat4 mMat(1.0f);
-	this->glMeshManipulator->draw(mvMat, pMat, glm::value_ptr(mMat));
+	this->glMeshManipulator->draw(mvMat, pMat, glm::value_ptr(mMat), this->computePlanePositions());
 
 	/***********************/
 
