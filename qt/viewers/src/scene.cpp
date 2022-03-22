@@ -3751,6 +3751,18 @@ std::vector<std::string> Scene::getAllNonTetrahedralMeshesName() {
     return res;
 }
 
+std::vector<std::string> Scene::getAllBaseMeshesName() {
+    std::vector<std::string> res;
+    for(int i = 0; i < this->meshes.size(); ++i) {
+        std::string name = this->meshes[i].second;
+        res.push_back(name);
+    }
+    for(int i = 0; i < this->grids_name.size(); ++i) {
+        res.push_back(this->grids_name[i]);
+    }
+    return res;
+}
+
 std::vector<std::string> Scene::getAllCagesName() {
     std::vector<std::string> res;
     for(int i = 0; i < this->meshes.size(); ++i) {

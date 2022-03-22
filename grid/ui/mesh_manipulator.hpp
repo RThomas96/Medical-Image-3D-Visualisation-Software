@@ -462,6 +462,8 @@ namespace UITool {
         void keyPressed(QKeyEvent* e) override;
         void keyReleased(QKeyEvent* e) override;
         void checkSelectedManipulators();
+        void moveKidManip();
+        glm::vec3 getMeanPositionSelectedManipulators();
 
     signals:
         void needRedraw() override;
@@ -472,12 +474,14 @@ namespace UITool {
 
     public:
         Selection selection;
+		RotationManipulator kid_manip;
 	private:
 		std::vector<Manipulator> manipulators;
         std::vector<bool> manipulatorsToDisplay;
         std::vector<bool> selectedManipulators;
         std::vector<bool> handles;
-        std::vector<bool> alreadySwitch;
+
+        std::vector<int> selectedManipulatorsIdx;
 
         bool isSelecting;
 		bool active;

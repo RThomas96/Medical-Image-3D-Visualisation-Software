@@ -107,6 +107,7 @@ struct CageMVC : Cage {
 
     void reInitialize() override;
     void movePoint(const glm::vec3& origin, const glm::vec3& target) override;
+    void movePoints(const std::vector<glm::vec3>& origins, const std::vector<glm::vec3>& targets) override;
     void computeCoordinates() override;
 };
 
@@ -129,6 +130,7 @@ struct CageGreen : Cage {
 
     void reInitialize() override;
     void movePoint(const glm::vec3& origin, const glm::vec3& target) override;
+    void movePoints(const std::vector<glm::vec3>& origins, const std::vector<glm::vec3>& targets) override;
     void computeCoordinates() override;
 
     void update_cage_triangle_scalingFactors();
@@ -239,6 +241,11 @@ struct CageGreenLRI : CageGreen {
         } else {
             std::cout << "Everything is fine :) No need LRI" << std::endl;
         }
+    }
+
+    void movePoints(const std::vector<glm::vec3>& origins, const std::vector<glm::vec3>& targets) override {
+        CageGreen::movePoints(origins, targets);
+        this->movePoint(this->vertices[0], this->vertices[0]);// Artificially move a point to move the deformed mesh
     }
 
     CageGreenLRI(std::string const &filename, TetMesh * meshToDeform) : CageGreen(filename, meshToDeform) {

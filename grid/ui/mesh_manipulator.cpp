@@ -790,9 +790,35 @@ namespace UITool {
             this->selectedManipulators.push_back(false);
 		}
         QObject::connect(&this->selection, &Selection::isSelecting, this, &ARAPManipulator::checkSelectedManipulators);
-        QObject::connect(&this->selection, &Selection::beginSelection, this, [this](){this->isSelecting = true; this->mesh->deselectAllPts(); std::fill(this->selectedManipulators.begin(), this->selectedManipulators.end(), false);});
+        QObject::connect(&this->selection, &Selection::beginSelection, this, [this](){this->kid_manip.reset(); this->isSelecting = true; this->mesh->deselectAllPts(); std::fill(this->selectedManipulators.begin(), this->selectedManipulators.end(), false);});
+        
         QObject::connect(&this->selection, &Selection::resetSelection, this, [this](){this->isSelecting = false;});
+
+        QObject::connect(&(this->kid_manip), &RotationManipulator::moved, this, [this]() {this->moveKidManip();});
+        this->kid_manip.setOrigine(qglviewer::Vec(0, 0, 0));
 	}
+
+    glm::vec3 ARAPManipulator::getMeanPositionSelectedManipulators() {
+        glm::vec mean = glm::vec3(0., 0., 0.);
+        for(int i = 0; i < this->selectedManipulatorsIdx.size(); ++i) {
+            mean += this->manipulators[this->selectedManipulatorsIdx[i]].getManipPosition();
+        }
+        return mean/float(this->selectedManipulatorsIdx.size());
+    }
+
+    void ARAPManipulator::moveKidManip() {
+        std::vector<glm::vec3> originalPoints;
+        std::vector<glm::vec3> targetPoints;
+        for(int i = 0; i < this->selectedManipulatorsIdx.size(); ++i) {
+            qglviewer::Vec deformedPoint;
+            int trueIndex;
+            this->kid_manip.getTransformedPoint(i, trueIndex, deformedPoint);
+            originalPoints.push_back(this->manipulators[this->selectedManipulatorsIdx[i]].getManipPosition());
+            targetPoints.push_back(glm::vec3(deformedPoint[0], deformedPoint[1], deformedPoint[2]));
+        }
+        this->mesh->movePoints(originalPoints, targetPoints);
+        Q_EMIT needSendTetmeshToGPU();
+    }
 
 	void ARAPManipulator::setActivation(bool isActive) {
         this->active = isActive;
@@ -818,8 +844,12 @@ namespace UITool {
         for(int i = 0; i < inSelection.size(); ++i) {
             if(inSelection[i]) {
                 this->selectManipulator(&this->manipulators[i]);
+                glm::vec3 glmManipPos = this->manipulators[i].getManipPosition();
+                this->kid_manip.addPoint(i, qglviewer::Vec(glmManipPos[0], glmManipPos[1], glmManipPos[2]));
             }
         }
+        glm::vec3 glmMean = this->getMeanPositionSelectedManipulators();
+        this->kid_manip.setOrigine(qglviewer::Vec(glmMean[0], glmMean[1], glmMean[2]));
     }
 
     void ARAPManipulator::addManipulator(const glm::vec3& position) {}
@@ -902,6 +932,7 @@ namespace UITool {
             if(!this->selectedManipulators[index]) {
                 this->mesh->selectPts(manipulator->getManipPosition());
                 this->selectedManipulators[index] = true;
+                selectedManipulatorsIdx.push_back(index);
             }
         } else {
             ARAPMethod * deformer = dynamic_cast<ARAPMethod*>(this->mesh->meshDeformer);
@@ -927,7 +958,9 @@ namespace UITool {
             this->mesh->deselectAllPts();
             for(int i = 0; i < this->selectedManipulators.size(); ++i) {
                 this->selectedManipulators[i] = false;
+                //this->selectedManipulatorsIdx.erase(std::remove(this->selectedManipulatorsIdx.begin(), this->selectedManipulatorsIdx.end(), i), this->selectedManipulatorsIdx.end());
             }
+            this->selectedManipulators.clear();
         }
     }
 

@@ -59,6 +59,7 @@ public:
     void drawNormals() const;
 
     virtual void movePoint(const glm::vec3& origin, const glm::vec3& target);
+    virtual void movePoints(const std::vector<glm::vec3>& origins, const std::vector<glm::vec3>& targets);
     virtual void setARAPDeformationMethod() = 0;
     virtual bool getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos, glm::vec3& res) const = 0;
     virtual void computeNeighborhood() = 0;

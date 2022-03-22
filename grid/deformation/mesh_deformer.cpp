@@ -42,6 +42,12 @@ void WeightedMethod::movePoint(const glm::vec3& origin, const glm::vec3& target)
     }
 }
 
+void WeightedMethod::movePoints(const std::vector<glm::vec3>& origins, const std::vector<glm::vec3>& targets) {
+    for(int i = 0; i < origins.size(); ++i) {
+        this->baseMesh->vertices[this->baseMesh->getIdxOfClosestPoint(origins[i])] = targets[i];
+    }
+}
+
 /***/
 
 bool NormalMethod::hasSelectedPts() {
@@ -68,6 +74,12 @@ void NormalMethod::movePoint(const glm::vec3& origin, const glm::vec3& target) {
     const glm::vec3 deplacement = target - origin;
     for(int i = 0; i < this->selectedPts.size(); ++i) {
         this->baseMesh->vertices[this->selectedPts[i]] += deplacement;
+    }
+}
+
+void NormalMethod::movePoints(const std::vector<glm::vec3>& origins, const std::vector<glm::vec3>& targets) {
+    for(int i = 0; i < origins.size(); ++i) {
+        this->baseMesh->vertices[this->baseMesh->getIdxOfClosestPoint(origins[i])] = targets[i];
     }
 }
 
@@ -133,6 +145,24 @@ void ARAPMethod::movePoint(const glm::vec3& origin, const glm::vec3& target) {
     const glm::vec3 deplacement = target - origin;
     for(int i = 0; i < this->selectedPts.size(); ++i)
         this->baseMesh->vertices[this->selectedPts[i]] += deplacement;
+
+    if(this->onSurfaceMesh) {
+        std::vector<Vec3D<float>> ptsAsVec3D;
+        for(int i = 0; i < this->baseMesh->getNbVertices(); ++i) {
+            glm::vec3 pt = this->baseMesh->getVertice(i);
+            ptsAsVec3D.push_back(Vec3D(pt[0], pt[1], pt[2]));
+        }
+        this->arap.setHandles(this->handles);
+        this->arap.compute_deformation(ptsAsVec3D);
+        for(int i = 0; i < this->baseMesh->getNbVertices(); ++i)
+            this->baseMesh->vertices[i] = glm::vec3(ptsAsVec3D[i][0], ptsAsVec3D[i][1],ptsAsVec3D[i][2]);
+    }
+}
+
+void ARAPMethod::movePoints(const std::vector<glm::vec3>& origins, const std::vector<glm::vec3>& targets) {
+    for(int i = 0; i < origins.size(); ++i) {
+        this->baseMesh->vertices[this->baseMesh->getIdxOfClosestPoint(origins[i])] = targets[i];
+    }
 
     if(this->onSurfaceMesh) {
         std::vector<Vec3D<float>> ptsAsVec3D;

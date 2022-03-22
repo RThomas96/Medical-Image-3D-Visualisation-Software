@@ -58,6 +58,12 @@ void BaseMesh::movePoint(const glm::vec3& origin, const glm::vec3& target) {
     }
 }
 
+void BaseMesh::movePoints(const std::vector<glm::vec3>& origins, const std::vector<glm::vec3>& targets) {
+    this->meshDeformer->movePoints(origins, targets);
+    this->computeNormals();
+    this->updatebbox();
+}
+
 void BaseMesh::setNormalDeformationMethod() {
     if(this->meshDeformer->deformMethod != DeformMethod::NORMAL) {
         delete this->meshDeformer;
@@ -169,3 +175,4 @@ void BaseMesh::scaleToBBox(const glm::vec3& bbMin, const glm::vec3& bbMax) {
     float scaleFactor = targetLength / currentLength;
     this->scale(glm::vec3(scaleFactor, scaleFactor, scaleFactor));
 }
+

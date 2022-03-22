@@ -101,7 +101,41 @@ public:
 
         mode_grabbing = 1;
         etat = 1;
+
+        coordinates.clear();
+        angular_coordinates.clear();
+        rep_angular_coordinates.clear();
+        rep_coordinates.clear();
+        idpoints.clear();
     }
+
+    void reset() {
+        mouse_released = true;
+
+        Origine = qglviewer::Vec(0,0,0);
+        PrevOrigine = qglviewer::Vec(0,0,0);
+
+        RepX = qglviewer::Vec(1,0,0);
+        RepY = qglviewer::Vec(0,1,0);
+        RepZ = qglviewer::Vec(0,0,1);
+
+        PrevRepX = qglviewer::Vec(1,0,0);
+        PrevRepY = qglviewer::Vec(0,1,0);
+        PrevRepZ = qglviewer::Vec(0,0,1);
+
+        AngularRepX = qglviewer::Vec(1,0,0);
+        AngularRepY = qglviewer::Vec(0,1,0);
+        AngularRepZ = qglviewer::Vec(0,0,1);
+
+        display_scale = 1.f;
+        mode_modification = 0.f;
+        Xscale = Yscale = Zscale = 1.f;
+        prevXscale = prevYscale = prevZscale = 1.f;
+
+        mode_grabbing = 1;
+        etat = 1;
+    }
+
     ~RotationManipulator(){}
 
     glm::vec3 getScaleVector() {

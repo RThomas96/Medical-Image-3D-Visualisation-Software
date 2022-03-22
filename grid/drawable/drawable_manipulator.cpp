@@ -231,6 +231,12 @@ void UITool::GL::MeshManipulator::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* m
         manip->kid_manip.setDisplayScale(this->positionManipulatorRadius);
         manip->kid_manip.draw();
     }
+
+    if(this->isARAPManip) {
+        ARAPManipulator* manip = dynamic_cast<ARAPManipulator*>(this->meshManipulator);
+        manip->kid_manip.setDisplayScale(this->positionManipulatorRadius);
+        manip->kid_manip.draw();
+    }
 }
 
 void UITool::GL::MeshManipulator::setRadius(float radius) { 
@@ -261,6 +267,7 @@ void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scen
     this->displayWireframe = false;// Because wathever the manipulator created it is not activated at creation
     delete this->meshManipulator;
     this->isPositionManip = false;
+    this->isARAPManip = false;
 
     if(type == 0) {
         this->meshManipulator = new UITool::DirectManipulator(mesh, positions);
@@ -280,6 +287,7 @@ void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scen
         this->meshManipulator = new UITool::ARAPManipulator(mesh, positions);
         this->setRadius(this->meshManipulator->getManipulatorSize());
         QObject::connect(&dynamic_cast<ARAPManipulator*>(this->meshManipulator)->selection, &UITool::Selection::needToRedrawSelection, scene, &Scene::redrawSelection);
+        this->isARAPManip = true;
     }
     this->prepare();
     QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needRedraw()), this, SLOT(prepare()));

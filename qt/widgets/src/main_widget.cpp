@@ -211,7 +211,7 @@ void MainWidget::setupWidgets() {
 	QObject::connect(this->action_loadMesh, &QAction::triggered, [this]() {
 		//this->scene->loadMesh();
         QStringList potentialCages;
-        std::vector<std::string> allNonTetrahedralMeshes = this->scene->getAllNonTetrahedralMeshesName();
+        std::vector<std::string> allNonTetrahedralMeshes = this->scene->getAllBaseMeshesName();
         for(int i = 0; i < allNonTetrahedralMeshes.size(); ++i)
             potentialCages += QString(allNonTetrahedralMeshes[i].c_str());
         this->openMeshWidget->setPotentialCages(potentialCages);

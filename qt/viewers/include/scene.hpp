@@ -512,6 +512,7 @@ public slots:
     void changeActiveMesh(const std::string& name);
     void updateTools(int tool);
     std::vector<std::string> getAllNonTetrahedralMeshesName();
+    std::vector<std::string> getAllBaseMeshesName();
     std::vector<std::string> getAllCagesName();
     void saveMesh(const std::string& name, const std::string& filename);
     void applyCage(const std::string& name, const std::string& filename);
@@ -542,7 +543,7 @@ public:
     bool bunny_demo = false;
     bool bone_demo = false;
     bool brain_demo = false;
-    bool cage_demo = true;
+    bool cage_demo = false;
 };
 
 /// @brief Type-safe conversion of enum values to unsigned ints.
