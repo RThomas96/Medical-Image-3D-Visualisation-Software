@@ -23,6 +23,7 @@ void main()
     bool isSELECTED = abs(current_state - 2) < 0.001;
     bool isLOCK     = abs(current_state - 3) < 0.001;
     bool isMOVE     = abs(current_state - 4) < 0.001;
+    bool isWAITING  = abs(current_state - 5) < 0.001;
 
     vec4 color = vec4(0., 0., 0., 1.);
 
@@ -40,6 +41,10 @@ void main()
 
     if(isLOCK) {
         color = vec4(0.9, 0.9, 0.9, 1.);
+    }
+
+    if(isWAITING) {
+        color = vec4(218./255., 112./255., 214./255., 1.);
     }
 
     vec3 norm = normalize(o_normal.xyz);

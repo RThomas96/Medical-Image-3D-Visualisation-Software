@@ -130,7 +130,15 @@ void ARAPMethod::deselectPts(const glm::vec3& pt) {
 }
 
 void ARAPMethod::deselectAllPts() {
+    for(int i = 0; i < this->selectedPts.size(); ++i)
+        this->handles[this->selectedPts[i]] = false;
     this->selectedPts.clear();
+    std::vector<Vec3D<float>> ptsAsVec3D;
+    for(int i = 0; i < this->baseMesh->getNbVertices(); ++i) {
+        glm::vec3 pt = this->baseMesh->getVertice(i);
+        ptsAsVec3D.push_back(Vec3D(pt[0], pt[1], pt[2]));
+    }
+    this->arap.init(ptsAsVec3D, dynamic_cast<SurfaceMesh*>(this->baseMesh)->getTriangles());
 }
 
 void ARAPMethod::setHandle(int idx) {

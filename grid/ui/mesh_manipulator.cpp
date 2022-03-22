@@ -960,7 +960,7 @@ namespace UITool {
                 this->selectedManipulators[i] = false;
                 //this->selectedManipulatorsIdx.erase(std::remove(this->selectedManipulatorsIdx.begin(), this->selectedManipulatorsIdx.end(), i), this->selectedManipulatorsIdx.end());
             }
-            this->selectedManipulators.clear();
+            this->selectedManipulatorsIdx.clear();
         }
     }
 

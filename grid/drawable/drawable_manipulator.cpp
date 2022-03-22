@@ -232,11 +232,11 @@ void UITool::GL::MeshManipulator::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* m
         manip->kid_manip.draw();
     }
 
-    if(this->isARAPManip) {
-        ARAPManipulator* manip = dynamic_cast<ARAPManipulator*>(this->meshManipulator);
-        manip->kid_manip.setDisplayScale(this->positionManipulatorRadius);
-        manip->kid_manip.draw();
-    }
+    //if(this->isARAPManip) {
+    //    ARAPManipulator* manip = dynamic_cast<ARAPManipulator*>(this->meshManipulator);
+    //    manip->kid_manip.setDisplayScale(this->positionManipulatorRadius);
+    //    manip->kid_manip.draw();
+    //}
 }
 
 void UITool::GL::MeshManipulator::setRadius(float radius) { 
