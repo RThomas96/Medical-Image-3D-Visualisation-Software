@@ -24,29 +24,11 @@ namespace UITool {
 		public:
 			MeshManipulator(SceneGL* sceneGL, BaseMesh * base, const std::vector<glm::vec3>& positions, float manipulatorRadius = 50.f);
 
-			//void draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* mMat);
             void draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* mMat, const glm::vec3& planeDisplacement);
-
-			void setProgram(GLuint program) { this->program = program; };
-			GLuint getProgram() { return this->program; };
-
-			void setVao(GLuint vao) { this->vao = vao; };
-			GLuint getVao() { return this->vao; };
-
-			void setVboVertices(GLuint vboVertices) { this->vboVertices = vboVertices; };
-			GLuint getVboVertices() { return this->vboVertices; };
-
-			void setVboIndices(GLuint vboIndices) { this->vboIndices = vboIndices; };
-			GLuint getVboIndices() { return this->vboIndices; };
-
-			void setTex(GLuint tex) { this->tex = tex; };
-			GLuint getTex() { return this->tex; };
 
 			bool isWireframeDisplayed() { return this->displayWireframe; }
 
             void toggleActivation();
-
-			UITool::MeshManipulator * meshManipulator;	 // TODO: shared pointer
 
             glm::vec3 lightPosition;
 
@@ -61,11 +43,12 @@ namespace UITool {
 			void toggleDisplayWireframe() { this->displayWireframe = ! this->displayWireframe; }
 
         public:
+			UITool::MeshManipulator * meshManipulator;	 // TODO: shared pointer
+
             // TODO: do not belong here
             std::vector<std::vector<glm::vec3>> persistantRegistrationToolPreviousPoints;
             std::vector<std::pair<int, std::pair<int, glm::vec3>>> persistantRegistrationToolSelectedPoints;
             std::vector<int> persistantRegistrationToolSessions;
-		private:
 
 			float manipulatorRadius;
             float positionManipulatorRadius;

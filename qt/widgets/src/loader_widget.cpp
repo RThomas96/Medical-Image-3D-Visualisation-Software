@@ -193,9 +193,6 @@ void GridLoaderWidget::loadNewGridAPI() {
 	}
 	this->basePath.setPath(QFileInfo(filenames[0]).path());
 
-    // TODO: bad tricks
-    this->scene->filename = filenames[0].toStdString();
-
     int subsample = 1;
 	if(this->group_subsample->isChecked()) {
         subsample = this->spinbox_subsample->value();

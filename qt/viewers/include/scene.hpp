@@ -521,14 +521,9 @@ public slots:
     void redrawSelection(const glm::vec3& p0, const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3);
 
     //void addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction, bool onSurface);
-/*************/
-/* Temporary */
-/*************/
 public:
-    std::string filename = "";
 
     int gridToDraw = -1;
-    bool activeMeshIsAGrid = false;
 
     std::string activeMesh;
 

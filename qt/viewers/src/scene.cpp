@@ -443,9 +443,9 @@ void Scene::createBuffers() {
 	this->vbo_boundingBoxVertices = createVBO(GL_ARRAY_BUFFER, "vboHandle_boundingBoxVertices");
 	this->vbo_boundingBoxIndices	= createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_boundingBoxIndices");
 
-	this->glMeshManipulator->setVao(createVAO("vaoHandle_Sphere"));
-	this->glMeshManipulator->setVboVertices(createVBO(GL_ARRAY_BUFFER, "vboHandle_SphereVertices"));
-	this->glMeshManipulator->setVboIndices(createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_SphereIndices"));
+	this->glMeshManipulator->vao = createVAO("vaoHandle_Sphere");
+	this->glMeshManipulator->vboVertices = createVBO(GL_ARRAY_BUFFER, "vboHandle_SphereVertices");
+	this->glMeshManipulator->vboIndices = createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_SphereIndices");
 
 	this->glSelection->setVao(createVAO("vaoHandle_Selection"));
 	this->glSelection->setVboVertices(createVBO(GL_ARRAY_BUFFER, "vboHandle_SelectionVertices"));
@@ -735,8 +735,8 @@ void Scene::recompileShaders(bool verbose) {
 		this->program_BoundingBox = newBoundingBoxProgram;
 	}
 	if (newSphereProgram) {
-		glDeleteProgram(this->glMeshManipulator->getProgram());
-		this->glMeshManipulator->setProgram(newSphereProgram);
+		glDeleteProgram(this->glMeshManipulator->program);
+		this->glMeshManipulator->program = newSphereProgram;
 	}
 	if (newSelectionProgram) {
 		glDeleteProgram(this->glSelection->getProgram());
@@ -3240,7 +3240,6 @@ void Scene::launchSaveDialog() {
 		messageBox.setFixedSize(500, 200);
 		return;
 	}
-    std::cout << "The filename is: " << this->filename << std::endl;
     this->grids[this->gridToDraw]->grid->writeDeformedGrid();
 	return;
 }
@@ -3594,12 +3593,9 @@ void Scene::changeActiveMesh(const std::string& name) {
     this->updateSceneCenter();
     this->updateSceneRadius();
     if(this->isGrid(activeMesh)) {
-        this->activeMeshIsAGrid = true;
         int gridIdx = this->getGridIdx(activeMesh);
         this->gridToDraw = gridIdx;
         this->sendTetmeshToGPU(gridIdx, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS | InfoToSend::TEXCOORD | InfoToSend::NEIGHBORS)); 
-    } else {
-        this->activeMeshIsAGrid = false;
     }
 }
 
