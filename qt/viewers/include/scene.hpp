@@ -351,9 +351,6 @@ private:
 public:
     /* Widget interaction */
 
-    void slotAddManipulator(const glm::vec3& position);
-    //bool slotGetPositionFromRay(const glm::vec3& origin, const glm::vec3& direction, glm::vec3& res);
-
 	void prepareManipulators();
 
 	void addOpenGLOutput(OpenGLDebugLog* _gldl);

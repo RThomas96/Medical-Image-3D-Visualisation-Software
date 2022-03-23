@@ -255,8 +255,9 @@ void UITool::GL::MeshManipulator::setRadius(float radius) {
 }
 
 void UITool::GL::MeshManipulator::toggleActivation() {
-	this->meshManipulator->setActivation(!this->meshManipulator->isActive());
-    this->displayWireframe = this->meshManipulator->isWireframeDisplayed();
+	//this->meshManipulator->setActivation(!this->meshManipulator->isActive());
+    //this->displayWireframe = this->meshManipulator->isWireframeDisplayed();
+    this->displayWireframe = false;
 }
 
 void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scene * scene, int type) {
@@ -300,7 +301,16 @@ void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scen
         this->isARAPManip = true;
     }
     this->prepare();
+    // Scene->MeshManipulator
+    QObject::connect(scene, SIGNAL(keyQReleased()), dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(keyQReleased()));
+    QObject::connect(scene, SIGNAL(keyPressed(QKeyEvent*)), dynamic_cast<QObject*>(this->meshManipulator), SLOT(keyPressed(QKeyEvent*)));
+    QObject::connect(scene, SIGNAL(keyReleased(QKeyEvent*)), dynamic_cast<QObject*>(this->meshManipulator), SLOT(keyReleased(QKeyEvent*)));
+    QObject::connect(scene, SIGNAL(mousePressed(QMouseEvent*)), dynamic_cast<QObject*>(this->meshManipulator), SLOT(mousePressed(QMouseEvent*)));
+    QObject::connect(scene, SIGNAL(mouseReleased(QMouseEvent*)), dynamic_cast<QObject*>(this->meshManipulator), SLOT(mouseReleased(QMouseEvent*)));
+
+    // MeshManipulator->DrawableMeshManipulator
     QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needRedraw()), this, SLOT(prepare()));
     QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needSendTetmeshToGPU()), scene, SLOT(sendFirstTetmeshToGPU()));
+
     this->toggleActivation();
 }

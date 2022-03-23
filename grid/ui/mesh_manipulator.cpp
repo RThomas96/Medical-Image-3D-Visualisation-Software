@@ -17,7 +17,6 @@ namespace UITool {
     }
 
 	DirectManipulator::DirectManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions): MeshManipulator(mesh) {
-		this->active = false;
         this->manipulators.reserve(positions.size());
 		for (int i = 0; i < positions.size(); ++i) {
 			this->manipulators.push_back(Manipulator(positions[i]));
@@ -30,8 +29,8 @@ namespace UITool {
 
             this->selectedManipulators.push_back(false);
             this->manipulatorsToDisplay.push_back(true);
-			this->manipulators[i].lockPosition();
-            this->manipulators[i].disable();
+			this->manipulators[i].setCustomConstraint();
+            this->manipulators[i].enable();
 		}
 
         QObject::connect(&this->selection, &Selection::isSelecting, this, &DirectManipulator::checkSelectedManipulators);
@@ -47,40 +46,6 @@ namespace UITool {
                 this->selectManipulator(&this->manipulators[i]);
             }
         }
-    }
-
-	void DirectManipulator::setActivation(bool isActive) {
-        this->active = isActive;
-		if (this->active) {
-			for (int i = 0; i < this->manipulators.size(); ++i) {
-				this->manipulators[i].setCustomConstraint();
-                this->manipulatorsToDisplay[i] = true;
-                this->manipulators[i].enable();
-			}
-		} else {
-			for (int i = 0; i < this->manipulators.size(); ++i) {
-				this->manipulators[i].lockPosition();
-                this->manipulatorsToDisplay[i] = false;
-                this->manipulators[i].disable();
-			}
-		}
-	}
-
-    void DirectManipulator::addManipulator(const glm::vec3& position) {
-        // Nothing to do here
-        // We deactivate the add manipulator functionnality because we need a MeshDeformer to create a manipulator
-        // And its hard to get from here
-        //this->manipulators.push_back(Manipulator(position));
-        //if(this->active) {
-        //    this->manipulatorsToDisplay.push_back(true);
-        //} else {
-        //    this->manipulatorsToDisplay.push_back(false);
-        //}
-    }
-
-    void DirectManipulator::removeManipulator(Manipulator * manipulatorToDisplay) {
-        //this->manipulators.erase(this->manipulators.begin()+idx);
-        //this->manipulatorsToDisplay.erase(this->manipulatorsToDisplay.begin()+idx);
     }
 
 	void DirectManipulator::setAllManipulatorsPosition(const std::vector<glm::vec3>& positions) {
@@ -121,8 +86,6 @@ namespace UITool {
     }
 
     void DirectManipulator::displayManipulator(Manipulator * manipulatorToDisplay) {
-        if(!this->active)
-            return;
         // Since vectors are organized sequentially, you can get an index by subtracting pointer to initial element 
         // from the pointer to the element you search
         ptrdiff_t index = manipulatorToDisplay - &(this->manipulators[0]);
@@ -130,16 +93,12 @@ namespace UITool {
     }
 
     void DirectManipulator::hideManipulator(Manipulator * manipulatorToDisplay) {
-        if(!this->active || manipulatorToDisplay->isSelected)
+        if(manipulatorToDisplay->isSelected)
             return;
         // Since vectors are organized sequentially, you can get an index by subtracting pointer to initial element 
         // from the pointer to the element you search
         ptrdiff_t index = manipulatorToDisplay - &(this->manipulators[0]);
         this->manipulatorsToDisplay[index] = false;
-    }
-
-    bool DirectManipulator::isWireframeDisplayed() {
-        return this->active;
     }
 
     void DirectManipulator::moveManipulator(Manipulator * manipulator) {
@@ -170,6 +129,10 @@ namespace UITool {
         this->selection.keyReleased(e);
     }
 
+    void DirectManipulator::mousePressed(QMouseEvent*) {};
+
+    void DirectManipulator::mouseReleased(QMouseEvent*) {};
+
     /***/
 
 	FreeManipulator::FreeManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions): MeshManipulator(mesh), manipulator(Manipulator(glm::vec3(0., 0., 0.))) {
@@ -197,10 +160,6 @@ namespace UITool {
         this->setActivation(true);
     }
 
-    void FreeManipulator::removeManipulator(Manipulator * manipulatorToDisplay) {
-        this->setActivation(false);
-    }
-
 	void FreeManipulator::setAllManipulatorsPosition(const std::vector<glm::vec3>& positions) {
         //Do nothing, because we don't want to move these manipulator
 	}
@@ -223,20 +182,6 @@ namespace UITool {
         states.push_back(currentState);
     }
 
-    void FreeManipulator::displayManipulator(Manipulator * manipulatorToDisplay) {
-        //Do nothin because display is directly link to active variable
-        return;
-    }
-
-    void FreeManipulator::hideManipulator(Manipulator * manipulatorToDisplay) {
-        //Do nothin because display is directly link to active variable
-        return;
-    }
-
-    bool FreeManipulator::isWireframeDisplayed() {
-        return false;
-    }
-
     void FreeManipulator::moveManipulator(Manipulator * manipulator) {
         this->mesh->movePoint(manipulator->lastPosition, manipulator->getManipPosition());
         Q_EMIT needSendTetmeshToGPU();
@@ -248,7 +193,7 @@ namespace UITool {
 
     void FreeManipulator::deselectManipulator(Manipulator * manipulator) {
         this->mesh->deselectAllPts();
-        this->removeManipulator(manipulator);
+        this->setActivation(false);
     }
 
     void FreeManipulator::addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos) {
@@ -257,21 +202,20 @@ namespace UITool {
             this->addManipulator(manipulatorPosition);
     }
 
-    void FreeManipulator::keyPressed(QKeyEvent* e) {
+    void FreeManipulator::keyPressed(QKeyEvent* e) {}
 
-    }
+    void FreeManipulator::keyReleased(QKeyEvent* e) {}
 
-    void FreeManipulator::keyReleased(QKeyEvent* e) {
+    void FreeManipulator::mousePressed(QMouseEvent*) {}
 
-    }
+    void FreeManipulator::mouseReleased(QMouseEvent*) {}
 
     /***/
 
 	PositionManipulator::PositionManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions): MeshManipulator(mesh), manipulator(Manipulator(glm::vec3(0., 0., 0.))) {
-		this->active = false;
         this->evenMode = false;
-        QObject::connect(&(this->manipulator), &Manipulator::mouseRightButtonPressed, this, &PositionManipulator::selectManipulator);
-        QObject::connect(&(this->manipulator), &Manipulator::mouseRightButtonReleasedAndCtrlIsNotPressed, this, &PositionManipulator::deselectManipulator);
+        //QObject::connect(&(this->manipulator), &Manipulator::mouseRightButtonPressed, this, &PositionManipulator::selectManipulator);
+        //QObject::connect(&(this->manipulator), &Manipulator::mouseRightButtonReleasedAndCtrlIsNotPressed, this, &PositionManipulator::deselectManipulator);
         QObject::connect(&(this->manipulator), &Manipulator::isManipulated, this, &PositionManipulator::moveManipulator);
         QObject::connect(&(this->kid_manip), &RotationManipulator::moved, this, [this]() {this->moveManipulator(nullptr);});
 
@@ -282,21 +226,6 @@ namespace UITool {
         this->kid_manip.setOrigine(qglviewer::Vec(mesh->getOrigin()[0], mesh->getOrigin()[1], mesh->getOrigin()[2]));
 	}
 
-    void PositionManipulator::setActivation(bool isActive) {
-        this->active = isActive;
-        if (this->active) {
-            this->manipulator.setCustomConstraint();
-        } else {
-            this->manipulator.lockPosition();
-        }
-    }
-
-    void PositionManipulator::addManipulator(const glm::vec3& position) {
-    }
-
-    void PositionManipulator::removeManipulator(Manipulator * manipulatorToDisplay) {
-    }
-
 	void PositionManipulator::setAllManipulatorsPosition(const std::vector<glm::vec3>& positions) {
         //Do nothing, because we don't want to move these manipulator
 	}
@@ -306,7 +235,7 @@ namespace UITool {
     }
 
     void PositionManipulator::getManipulatorsToDisplay(std::vector<bool>& toDisplay) const {
-        toDisplay.push_back(this->active);
+        toDisplay.push_back(false);
     }
 
     void PositionManipulator::getManipulatorsState(std::vector<State>& states) const {
@@ -317,20 +246,6 @@ namespace UITool {
         if(this->manipulator.isSelected)
             currentState = State::MOVE;
         states.push_back(currentState);
-    }
-
-    void PositionManipulator::displayManipulator(Manipulator * manipulatorToDisplay) {
-        //Do nothin because display is directly link to active variable
-        return;
-    }
-
-    void PositionManipulator::hideManipulator(Manipulator * manipulatorToDisplay) {
-        //Do nothin because display is directly link to active variable
-        return;
-    }
-
-    bool PositionManipulator::isWireframeDisplayed() {
-        return false;
     }
 
     void PositionManipulator::moveManipulator(Manipulator * manipulator) {
@@ -385,12 +300,6 @@ namespace UITool {
         }
     }
 
-    void PositionManipulator::selectManipulator(Manipulator * manipulator) {
-    }
-
-    void PositionManipulator::deselectManipulator(Manipulator * manipulator) {
-    }
-
     void PositionManipulator::keyPressed(QKeyEvent* e) {
         if(e->modifiers() == Qt::ControlModifier && !e->isAutoRepeat()) {
             this->evenMode = true;
@@ -401,9 +310,7 @@ namespace UITool {
         this->evenMode = false;
     }
 
-    void PositionManipulator::mousePressed(QMouseEvent* e) {
-
-    }
+    void PositionManipulator::mousePressed(QMouseEvent* e) {}
 
     void PositionManipulator::mouseReleased(QMouseEvent* e) {
         emit needRedraw();
@@ -412,7 +319,6 @@ namespace UITool {
     /***/
 
 	CompManipulator::CompManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions): MeshManipulator(mesh) {
-		this->active = false;
         this->hasAMeshToRegister = false;
         this->isOnSelectionMode = false;
         this->isSelectingFirstPoint = false;
@@ -531,24 +437,7 @@ namespace UITool {
 		}
     }
 
-	void CompManipulator::setActivation(bool isActive) {
-        this->active = isActive;
-		if (this->active) {
-			for (int i = 0; i < this->manipulators.size(); ++i) {
-				this->manipulators[i].lockPosition();
-                this->manipulators[i].enable();
-			}
-		} else {
-			for (int i = 0; i < this->manipulators.size(); ++i) {
-				this->manipulators[i].lockPosition();
-                this->manipulators[i].disable();
-			}
-		}
-	}
-
     void CompManipulator::addManipulator(const glm::vec3& position) {
-        if(!this->active)
-            return;
         if(!hasAMeshToRegister) {
             this->displayErrorNoMeshAssigned();
             return;
@@ -634,17 +523,6 @@ namespace UITool {
         }
     }
 
-    void CompManipulator::removeManipulator(Manipulator * manipulatorToDisplay) {
-        if(!this->active)
-            return;
-        if(!hasAMeshToRegister) {
-            this->displayErrorNoMeshAssigned();
-            return;
-        }
-        //ptrdiff_t index = manipulatorToDisplay - &(this->markerOnGrid[0]);
-        //this->markerOnGrid.erase(this->markerOnGrid.begin()+index);
-    }
-
 	void CompManipulator::setAllManipulatorsPosition(const std::vector<glm::vec3>& positions) {
 	}
 
@@ -698,19 +576,6 @@ namespace UITool {
         }
     }
 
-    void CompManipulator::displayManipulator(Manipulator * manipulatorToDisplay) {
-    }
-
-    void CompManipulator::hideManipulator(Manipulator * manipulatorToDisplay) {
-    }
-
-    bool CompManipulator::isWireframeDisplayed() {
-        return false;
-    }
-
-    void CompManipulator::moveManipulator(Manipulator * manipulator) {
-    }
-
     void CompManipulator::selectManipulator(Manipulator * manipulator) {
         if(!hasAMeshToRegister) {
             this->displayErrorNoMeshAssigned();
@@ -759,18 +624,17 @@ namespace UITool {
         std::cout << "Error: no mesh assigned" << std::endl;
     }
 
-    void CompManipulator::keyPressed(QKeyEvent* e) {
+    void CompManipulator::keyPressed(QKeyEvent* e) {}
 
-    }
+    void CompManipulator::keyReleased(QKeyEvent* e) {}
 
-    void CompManipulator::keyReleased(QKeyEvent* e) {
+    void CompManipulator::mousePressed(QMouseEvent* e) {}
 
-    }
+    void CompManipulator::mouseReleased(QMouseEvent* e) {}
 
     /***/
 
 	ARAPManipulator::ARAPManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions): MeshManipulator(mesh) {
-		this->active = false;
         this->moveMode = true;
         this->isSelecting = false;
         this->manipulators.reserve(positions.size());
@@ -785,8 +649,8 @@ namespace UITool {
 
             this->manipulatorsToDisplay.push_back(false);
             this->handles.push_back(false);
-			this->manipulators[i].lockPosition();
-            this->manipulators[i].disable();
+			this->manipulators[i].setCustomConstraint();
+            this->manipulators[i].enable();
             this->selectedManipulators.push_back(false);
 		}
         QObject::connect(&this->selection, &Selection::isSelecting, this, &ARAPManipulator::checkSelectedManipulators);
@@ -820,23 +684,6 @@ namespace UITool {
         Q_EMIT needSendTetmeshToGPU();
     }
 
-	void ARAPManipulator::setActivation(bool isActive) {
-        this->active = isActive;
-		if (this->active) {
-			for (int i = 0; i < this->manipulators.size(); ++i) {
-				this->manipulators[i].setCustomConstraint();
-                this->manipulatorsToDisplay[i] = false;
-                this->manipulators[i].enable();
-			}
-		} else {
-			for (int i = 0; i < this->manipulators.size(); ++i) {
-				this->manipulators[i].lockPosition();
-                this->manipulatorsToDisplay[i] = false;
-                this->manipulators[i].disable();
-			}
-		}
-	}
-
     void ARAPManipulator::checkSelectedManipulators() {
         std::vector<glm::vec3> positions;
         this->getAllPositions(positions);
@@ -851,10 +698,6 @@ namespace UITool {
         glm::vec3 glmMean = this->getMeanPositionSelectedManipulators();
         this->kid_manip.setOrigine(qglviewer::Vec(glmMean[0], glmMean[1], glmMean[2]));
     }
-
-    void ARAPManipulator::addManipulator(const glm::vec3& position) {}
-
-    void ARAPManipulator::removeManipulator(Manipulator * manipulatorToDisplay) {}
 
 	void ARAPManipulator::setAllManipulatorsPosition(const std::vector<glm::vec3>& positions) {
 		if (positions.size() == this->manipulators.size()) {
@@ -896,22 +739,16 @@ namespace UITool {
     }
 
     void ARAPManipulator::displayManipulator(Manipulator * manipulatorToDisplay) {
-        if(!this->active)
-            return;
         ptrdiff_t index = manipulatorToDisplay - &(this->manipulators[0]);
         this->manipulatorsToDisplay[index] = true;
     }
 
     void ARAPManipulator::hideManipulator(Manipulator * manipulatorToDisplay) {
-        if(!this->active || manipulatorToDisplay->isSelected)
+        if(manipulatorToDisplay->isSelected)
             return;
         ptrdiff_t index = manipulatorToDisplay - &(this->manipulators[0]);
         if(!this->handles[index])
             this->manipulatorsToDisplay[index] = false;
-    }
-
-    bool ARAPManipulator::isWireframeDisplayed() {
-        return this->active;
     }
 
     void ARAPManipulator::moveManipulator(Manipulator * manipulator) {
@@ -985,4 +822,8 @@ namespace UITool {
     void ARAPManipulator::keyReleased(QKeyEvent* e) {
         this->selection.keyReleased(e);
     }
+
+    void ARAPManipulator::mousePressed(QMouseEvent* e) {}
+
+    void ARAPManipulator::mouseReleased(QMouseEvent* e) {}
 }
