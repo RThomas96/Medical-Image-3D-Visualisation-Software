@@ -62,6 +62,17 @@ namespace UITool {
 		class MeshManipulator;
 }
 
+namespace UITool {
+    enum class MeshManipulatorType {
+        NONE,
+        DIRECT,
+        FREE,
+        POSITION,
+        REGISTRATION,
+        ARAP
+    };
+}
+
 enum DrawMode { 
     Solid,
 	Volumetric,
@@ -445,7 +456,6 @@ public:
 
 signals:
     // Signals to the meshManipulator tools
-    void keyQReleased();
     void keyPressed(QKeyEvent* e);
     void keyReleased(QKeyEvent* e);
     void mousePressed(QMouseEvent* e);
@@ -507,7 +517,7 @@ public slots:
     void toggleBindMeshToCageMove(const std::string& name);
     void setBindMeshToCageMove(const std::string& name, bool state);
     void changeActiveMesh(const std::string& name);
-    void updateTools(int tool);
+    void updateTools(UITool::MeshManipulatorType tool);
     std::vector<std::string> getAllNonTetrahedralMeshesName();
     std::vector<std::string> getAllBaseMeshesName();
     std::vector<std::string> getAllCagesName();

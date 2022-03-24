@@ -64,8 +64,6 @@ void Viewer::init() {
 
 	this->scene->initGl(this->context());
 
-    QObject::connect(this, &Viewer::keyQReleased, this->scene, &Scene::keyQReleased);
-    QObject::connect(this, &Viewer::keyPressed, this->scene, &Scene::keyPressed);
     QObject::connect(this, &Viewer::keyReleased, this->scene, &Scene::keyReleased);
     QObject::connect(this, &Viewer::mousePressed, this->scene, &Scene::mousePressed);
     QObject::connect(this, &Viewer::mouseReleased, this->scene, &Scene::mouseReleased);
@@ -114,12 +112,6 @@ void Viewer::draw() {
 }
 
 void Viewer::keyReleaseEvent(QKeyEvent* e) {
-    switch (e->key()) {
-        case Qt::Key::Key_Q:
-            if(!e->isAutoRepeat())
-                Q_EMIT keyQReleased();
-            break;
-    }
 	QGLViewer::keyReleaseEvent(e);
     Q_EMIT keyReleased(e);
 }

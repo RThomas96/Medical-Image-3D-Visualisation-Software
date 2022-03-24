@@ -158,7 +158,7 @@ void GridDeformationWidget::setupLayouts() {
 GridDeformationWidget::~GridDeformationWidget() {
 }
 
-void GridDeformationWidget::updateScene(Scene * scene, int meshTool, int moveMethod, bool activeMeshChanged) {
+void GridDeformationWidget::updateScene(Scene * scene, UITool::MeshManipulatorType meshTool, int moveMethod, bool activeMeshChanged) {
     if(this->combo_mesh->count() <= 0)
         return;
     
@@ -181,7 +181,7 @@ void GridDeformationWidget::updateScene(Scene * scene, int meshTool, int moveMet
         this->radio_move_weighted->setChecked(false);
         this->radio_move_ARAP->setChecked(false);
 
-        meshTool = 0;
+        meshTool = UITool::MeshManipulatorType::DIRECT;
         moveMethod = 0;
     }
 
@@ -215,8 +215,8 @@ void GridDeformationWidget::updateScene(Scene * scene, int meshTool, int moveMet
     if(isMesh) {
         this->radio_selector_free->setEnabled(false);
         this->radio_selector_comp->setEnabled(false);
-        if(moveMethod == 2 || (this->currentMeshTool != 4 && meshTool == 4)) {
-            this->currentMeshTool = 4;
+        if(moveMethod == 2 || (this->currentMeshTool != UITool::MeshManipulatorType::ARAP && meshTool == UITool::MeshManipulatorType::ARAP)) {
+            this->currentMeshTool = UITool::MeshManipulatorType::ARAP;
             this->currentMoveMethod = 2;
             this->radio_move_ARAP->setEnabled(true);
             this->radio_selector_ARAP->setEnabled(true);
@@ -228,7 +228,7 @@ void GridDeformationWidget::updateScene(Scene * scene, int meshTool, int moveMet
             this->radio_move_weighted->setEnabled(false);
             this->radio_move_ARAP->setEnabled(false);
         }
-        if(this->currentMeshTool == 4 && meshTool != 4 && moveMethod == -1) {
+        if(this->currentMeshTool == UITool::MeshManipulatorType::ARAP && meshTool != UITool::MeshManipulatorType::ARAP && moveMethod == -1) {
             this->currentMoveMethod = 0;
             this->radio_move_normal->setEnabled(true);
             this->radio_move_weighted->setEnabled(true);
@@ -241,7 +241,7 @@ void GridDeformationWidget::updateScene(Scene * scene, int meshTool, int moveMet
         this->radio_selector_ARAP->setEnabled(false);
 	    //this->radio_selector_position->setEnabled(false);
 
-        if(meshTool == 3) {
+        if(meshTool == UITool::MeshManipulatorType::REGISTRATION) {
             this->combo_mesh_register->show();
             this->selection_mode_register->show();
             this->validate->show();
@@ -253,7 +253,7 @@ void GridDeformationWidget::updateScene(Scene * scene, int meshTool, int moveMet
 
     scene->changeActiveMesh(currentMeshName);
 
-    if(meshTool >= 0) {
+    if(meshTool != UITool::MeshManipulatorType::NONE) {
         scene->updateTools(meshTool);
         this->currentMeshTool = meshTool;
     }
@@ -282,23 +282,23 @@ void GridDeformationWidget::updateScene(Scene * scene, int meshTool, int moveMet
 
 void GridDeformationWidget::setupSignals(Scene * scene) {
 
-    QObject::connect(this->combo_mesh, QOverload<int>::of(&QComboBox::currentIndexChanged), [=](int index){this->updateScene(scene, -1, -1, true);});
+    QObject::connect(this->combo_mesh, QOverload<int>::of(&QComboBox::currentIndexChanged), [=](int index){this->updateScene(scene, UITool::MeshManipulatorType::NONE, -1, true);});
 
-	QObject::connect(this->radio_selector_direct, &QPushButton::clicked, this, [this, scene]() {this->updateScene(scene, 0, -1);});
+	QObject::connect(this->radio_selector_direct, &QPushButton::clicked, this, [this, scene]() {this->updateScene(scene, UITool::MeshManipulatorType::DIRECT, -1);});
 
-	QObject::connect(this->radio_selector_free, &QPushButton::clicked, this, [this, scene]() {this->updateScene(scene, 1, -1);});
+	QObject::connect(this->radio_selector_free, &QPushButton::clicked, this, [this, scene]() {this->updateScene(scene, UITool::MeshManipulatorType::FREE, -1);});
 
-	QObject::connect(this->radio_selector_position, &QPushButton::clicked, this, [this, scene]() {this->updateScene(scene, 2, -1);});
+	QObject::connect(this->radio_selector_position, &QPushButton::clicked, this, [this, scene]() {this->updateScene(scene, UITool::MeshManipulatorType::POSITION, -1);});
 
-	QObject::connect(this->radio_selector_comp, &QPushButton::clicked, this, [this, scene]() {this->updateScene(scene, 3, -1);});
+	QObject::connect(this->radio_selector_comp, &QPushButton::clicked, this, [this, scene]() {this->updateScene(scene, UITool::MeshManipulatorType::REGISTRATION, -1);});
 
-	QObject::connect(this->radio_selector_ARAP, &QPushButton::clicked, this, [this, scene]() {this->updateScene(scene, 4, 2);});
+	QObject::connect(this->radio_selector_ARAP, &QPushButton::clicked, this, [this, scene]() {this->updateScene(scene, UITool::MeshManipulatorType::ARAP, 2);});
 
-	QObject::connect(this->radio_move_normal, &QPushButton::clicked, this, [this, scene]() {this->updateScene(scene, -1, 0);});
+	QObject::connect(this->radio_move_normal, &QPushButton::clicked, this, [this, scene]() {this->updateScene(scene, UITool::MeshManipulatorType::NONE, 0);});
 
-	QObject::connect(this->radio_move_weighted, &QPushButton::clicked, this, [this, scene]() {this->updateScene(scene, -1, 1);});
+	QObject::connect(this->radio_move_weighted, &QPushButton::clicked, this, [this, scene]() {this->updateScene(scene, UITool::MeshManipulatorType::NONE, 1);});
 
-	QObject::connect(this->radio_move_ARAP, &QPushButton::clicked, this, [this, scene]() {this->updateScene(scene, -1, 2);});
+	QObject::connect(this->radio_move_ARAP, &QPushButton::clicked, this, [this, scene]() {this->updateScene(scene, UITool::MeshManipulatorType::NONE, 2);});
 
     /***/
 
@@ -335,7 +335,7 @@ void GridDeformationWidget::setupSignals(Scene * scene) {
 
 	QObject::connect(this->apply, &QPushButton::clicked, this, [this, scene]() {
             scene->applyRegistrationTool();
-            this->updateScene(scene, 3, -1);
+            this->updateScene(scene, UITool::MeshManipulatorType::REGISTRATION, -1);
             scene->assignMeshToRegisterRegistrationTool(std::string((this->combo_mesh_register->itemText(this->combo_mesh_register->currentIndex())).toStdString()));
             this->registrationInitialize = true;
     });

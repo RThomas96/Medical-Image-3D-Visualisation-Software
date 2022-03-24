@@ -39,7 +39,7 @@ namespace UITool {
 			void prepare();
 
             void setRadius(float radius);
-            void createNewMeshManipulator(BaseMesh * mesh, Scene * scene, int type);
+            void createNewMeshManipulator(BaseMesh * mesh, Scene * scene, MeshManipulatorType type);
 			void toggleDisplayWireframe() { this->displayWireframe = ! this->displayWireframe; }
 
         public:

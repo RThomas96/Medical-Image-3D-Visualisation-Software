@@ -30,9 +30,9 @@ public:
 	~GridDeformationWidget(void);
 	void setupLayouts();
 	void setupSignals(Scene* scene);
-    void updateScene(Scene * scene, int meshTool, int moveMethod, bool activeMeshChanged = false);
+    void updateScene(Scene * scene, UITool::MeshManipulatorType meshTool, int moveMethod, bool activeMeshChanged = false);
 
-    int currentMeshTool = 0;
+    UITool::MeshManipulatorType currentMeshTool = UITool::MeshManipulatorType::DIRECT;
     int currentMoveMethod = 0;
     int gridToDraw = -1;
     bool registrationInitialize = false;

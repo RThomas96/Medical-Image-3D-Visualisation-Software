@@ -89,7 +89,7 @@ void UITool::GL::MeshManipulator::prepare() {
 
 	std::vector<glm::vec3> state;
     for(int i = 0; i < rawState.size(); ++i) {
-        int value = rawState[i];
+        int value = int(rawState[i]);
         state.push_back(glm::vec3(value, value, value));
     }
 
@@ -175,15 +175,15 @@ void UITool::GL::MeshManipulator::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* m
 
 	std::vector<glm::vec3> state;
     for(int i = 0; i < rawState.size(); ++i) {
-        int value = rawState[i];
+        int value = int(rawState[i]);
         state.push_back(glm::vec3(value, value, value));
     }
 
     for(int i = 0; i < allPositions.size(); ++i) {
         for(int j = 0; j < 3; ++j) {
             if(std::fabs(allPositions[i][j] - planeDisplacement[j]) < this->manipulatorRadius) {
-                if(state[i][0] == State::NONE || state[i][0] == State::WAITING)
-                    state[i] = glm::vec3(State::HIGHLIGHT, State::HIGHLIGHT, State::HIGHLIGHT);// HIGHLIGHT state
+                if(state[i][0] == int(State::NONE) || state[i][0] == int(State::WAITING))
+                    state[i] = glm::vec3(float(State::HIGHLIGHT), float(State::HIGHLIGHT), float(State::HIGHLIGHT));// HIGHLIGHT state
             }
         }
     }
@@ -260,7 +260,7 @@ void UITool::GL::MeshManipulator::toggleActivation() {
     this->displayWireframe = false;
 }
 
-void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scene * scene, int type) {
+void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scene * scene, MeshManipulatorType type) {
     if(this->meshManipulator) {
         UITool::CompManipulator * previousManipulator = dynamic_cast<UITool::CompManipulator*>(this->meshManipulator);
         if(previousManipulator) {
@@ -280,18 +280,18 @@ void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scen
     this->isPositionManip = false;
     this->isARAPManip = false;
 
-    if(type == 0) {
+    if(type == MeshManipulatorType::DIRECT) {
         this->meshManipulator = new UITool::DirectManipulator(mesh, positions);
         this->setRadius(this->meshManipulator->getManipulatorSize());
         QObject::connect(&dynamic_cast<DirectManipulator*>(this->meshManipulator)->selection, &UITool::Selection::needToRedrawSelection, scene, &Scene::redrawSelection);
-    } else if(type == 1) {
+    } else if(type == MeshManipulatorType::FREE) {
         this->meshManipulator = new UITool::FreeManipulator(mesh, positions);
         this->setRadius(this->meshManipulator->getManipulatorSize());
-    } else if(type == 2) {
+    } else if(type == MeshManipulatorType::POSITION) {
         this->meshManipulator = new UITool::PositionManipulator(mesh, positions);
         this->isPositionManip = true;
         this->setRadius(this->meshManipulator->getManipulatorSize() * 10.f);
-    } else if(type == 3) {
+    } else if(type == MeshManipulatorType::REGISTRATION) {
         this->meshManipulator = new UITool::CompManipulator(mesh, positions);
         this->setRadius(this->meshManipulator->getManipulatorSize());
     } else {
@@ -302,7 +302,6 @@ void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scen
     }
     this->prepare();
     // Scene->MeshManipulator
-    QObject::connect(scene, SIGNAL(keyQReleased()), dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(keyQReleased()));
     QObject::connect(scene, SIGNAL(keyPressed(QKeyEvent*)), dynamic_cast<QObject*>(this->meshManipulator), SLOT(keyPressed(QKeyEvent*)));
     QObject::connect(scene, SIGNAL(keyReleased(QKeyEvent*)), dynamic_cast<QObject*>(this->meshManipulator), SLOT(keyReleased(QKeyEvent*)));
     QObject::connect(scene, SIGNAL(mousePressed(QMouseEvent*)), dynamic_cast<QObject*>(this->meshManipulator), SLOT(mousePressed(QMouseEvent*)));

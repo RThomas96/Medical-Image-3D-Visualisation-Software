@@ -141,7 +141,6 @@ namespace UITool {
         QObject::connect(&(this->manipulator), &Manipulator::mouseRightButtonReleasedAndCtrlIsNotPressed, this, &FreeManipulator::deselectManipulator);
         QObject::connect(&(this->manipulator), &Manipulator::isManipulated, this, &FreeManipulator::moveManipulator);
 
-        QObject::connect(this, &FreeManipulator::keyQReleased, this, [this]{setActivation(false);});
         QObject::connect(this, &FreeManipulator::rayIsCasted, this, &FreeManipulator::addManipulatorFromRay);
 	}
 
@@ -204,7 +203,11 @@ namespace UITool {
 
     void FreeManipulator::keyPressed(QKeyEvent* e) {}
 
-    void FreeManipulator::keyReleased(QKeyEvent* e) {}
+    void FreeManipulator::keyReleased(QKeyEvent* e) {
+        if(e->key() == Qt::Key_Q && !e->isAutoRepeat()) {
+            setActivation(false);
+        }
+    }
 
     void FreeManipulator::mousePressed(QMouseEvent*) {}
 

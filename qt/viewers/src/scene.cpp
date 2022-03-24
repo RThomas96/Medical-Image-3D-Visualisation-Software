@@ -1563,7 +1563,7 @@ void Scene::prepareUniformsMonoPlaneView(planes _plane, planeHeading _heading, g
 
 	std::vector<glm::vec3> state;
     for(int i = 0; i < rawState.size(); ++i) {
-        int value = rawState[i];
+        int value = int(rawState[i]);
         state.push_back(glm::vec3(value, value, value));
     }
 
@@ -3658,19 +3658,20 @@ BaseMesh * Scene::getBaseMesh(const std::string& name) {
     return nullptr;
 }
 
-void Scene::updateTools(int tool) {
+void Scene::updateTools(UITool::MeshManipulatorType tool) {
     this->glMeshManipulator->createNewMeshManipulator(this->getBaseMesh(this->activeMesh), this, tool);
 
     // MeshManipulator->Scene
-    if(tool == 1) {
+    if(tool == UITool::MeshManipulatorType::FREE) {
         QObject::connect(this, &Scene::rayIsCasted, this, [this](const glm::vec3& origin, const glm::vec3& direction) { emit dynamic_cast<UITool::FreeManipulator*>(this->glMeshManipulator->meshManipulator)->rayIsCasted(origin, direction, this->getMinTexValue(), this->getMaxTexValue(), this->computePlanePositions());});
     }
 
-    if(tool == 3) {
+    if(tool == UITool::MeshManipulatorType::REGISTRATION) {
         QObject::connect(this, &Scene::rayIsCasted, this, [this](const glm::vec3& origin, const glm::vec3& direction) { emit dynamic_cast<UITool::CompManipulator*>(this->glMeshManipulator->meshManipulator)->rayIsCasted(origin, direction, this->getMinTexValue(), this->getMaxTexValue(), this->computePlanePositions());});
+
+    QObject::connect(this, SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)), dynamic_cast<UITool::CompManipulator*>(this->glMeshManipulator->meshManipulator), SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)));
     }
 
-    QObject::connect(this, SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)), dynamic_cast<QObject*>(this->glMeshManipulator->meshManipulator), SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)));
 }
 
 void Scene::switchToSelectionModeRegistrationTool() {

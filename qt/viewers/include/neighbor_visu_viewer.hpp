@@ -105,9 +105,6 @@ public slots:
     void addManipulator(void);
 
 signals:
-    void keyQReleased();
-    void keyQPressed();
-
     void keyPressed(QKeyEvent* e);
     void keyReleased(QKeyEvent* e);
     void mousePressed(QMouseEvent* e);

@@ -11,7 +11,7 @@
 //! dynamic components used to directly interact with a 3D scene, like manipulators.
 namespace UITool {
 
-    enum State {
+    enum class State {
         NONE,
         AT_RANGE,
         SELECTED,
@@ -164,8 +164,6 @@ namespace UITool {
     //signal:
         virtual void needRedraw() = 0;
         // These signals are trigerred from the scene
-        virtual void keyQReleased() = 0;
-        virtual void pointIsClickedInPlanarViewer(const glm::vec3& position) = 0;
 
         //This signal is used to trigger a function in the scene
         //This should be removed when the grid will have its own "Drawable" class
@@ -208,9 +206,7 @@ namespace UITool {
 
     signals:
         void needRedraw() override;
-        void keyQReleased() override;
         void needSendTetmeshToGPU() override;
-        void pointIsClickedInPlanarViewer(const glm::vec3& position) override;
     public:
         Selection selection;
 	private:
@@ -249,10 +245,8 @@ namespace UITool {
 
     signals:
         void needRedraw() override;
-        void keyQReleased() override;
         void needSendTetmeshToGPU() override;
         void rayIsCasted(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos);
-        void pointIsClickedInPlanarViewer(const glm::vec3& position) override;
 	private:
         void addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos);
 
@@ -286,9 +280,7 @@ namespace UITool {
 
     signals:
         void needRedraw() override;
-        void keyQReleased() override;
         void needSendTetmeshToGPU() override;
-        void pointIsClickedInPlanarViewer(const glm::vec3& position) override;
 
 	private:
 		Manipulator manipulator;
@@ -332,10 +324,9 @@ namespace UITool {
 
     signals:
         void needRedraw() override;
-        void keyQReleased() override;
         void needSendTetmeshToGPU() override;
         void rayIsCasted(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos);
-        void pointIsClickedInPlanarViewer(const glm::vec3& position) override;
+        void pointIsClickedInPlanarViewer(const glm::vec3& position);
 
     public:
         std::vector<std::pair<int, std::pair<int, glm::vec3>>> selectedPoints;
@@ -404,9 +395,7 @@ namespace UITool {
 
     signals:
         void needRedraw() override;
-        void keyQReleased() override;
         void needSendTetmeshToGPU() override;
-        void pointIsClickedInPlanarViewer(const glm::vec3& position) override;
 
     public:
         Selection selection;
