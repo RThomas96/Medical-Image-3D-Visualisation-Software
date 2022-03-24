@@ -91,10 +91,12 @@ namespace UITool {
     }
 
     void Manipulator::mouseMoveEvent(QMouseEvent *const event, qglviewer::Camera *const camera) {
-        ManipulatedFrame::mouseMoveEvent(event, camera);
-        if (action_ != QGLViewer::NO_MOUSE_ACTION) {
-            Q_EMIT isManipulated(this);
-            this->lastPosition = this->getManipPosition();
+        if(this->isSelected) {
+            ManipulatedFrame::mouseMoveEvent(event, camera);
+            if (action_ != QGLViewer::NO_MOUSE_ACTION) {
+                Q_EMIT isManipulated(this);
+                this->lastPosition = this->getManipPosition();
+            }
         }
     }
 

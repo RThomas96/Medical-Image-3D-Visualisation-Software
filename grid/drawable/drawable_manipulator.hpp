@@ -32,17 +32,16 @@ namespace UITool {
 
             glm::vec3 lightPosition;
 
-            bool isPositionManip = false;
-            bool isARAPManip = false;
-
         public slots:
 			void prepare();
 
             void setRadius(float radius);
+            void setKidRadius(float radius);
             void createNewMeshManipulator(BaseMesh * mesh, Scene * scene, MeshManipulatorType type);
 			void toggleDisplayWireframe() { this->displayWireframe = ! this->displayWireframe; }
 
         public:
+            UITool::MeshManipulatorType meshManipulatorType;
 			UITool::MeshManipulator * meshManipulator;	 // TODO: shared pointer
 
             // TODO: do not belong here
@@ -51,7 +50,7 @@ namespace UITool {
             std::vector<int> persistantRegistrationToolSessions;
 
 			float manipulatorRadius;
-            float positionManipulatorRadius;
+            float kidManipulatorRadius;
 			Sphere manipulatorMesh;
 
 			SceneGL * sceneGL;

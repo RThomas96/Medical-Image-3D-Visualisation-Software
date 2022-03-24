@@ -121,24 +121,12 @@ void ARAPMethod::deselectPts(const glm::vec3& pt) {
         this->selectedPts.erase(ptIdxPos);
     }
     this->handles[ptIdx] = false;
-    std::vector<Vec3D<float>> ptsAsVec3D;
-    for(int i = 0; i < this->baseMesh->getNbVertices(); ++i) {
-        glm::vec3 pt = this->baseMesh->getVertice(i);
-        ptsAsVec3D.push_back(Vec3D(pt[0], pt[1], pt[2]));
-    }
-    this->arap.init(ptsAsVec3D, dynamic_cast<SurfaceMesh*>(this->baseMesh)->getTriangles());
 }
 
 void ARAPMethod::deselectAllPts() {
     for(int i = 0; i < this->selectedPts.size(); ++i)
         this->handles[this->selectedPts[i]] = false;
     this->selectedPts.clear();
-    std::vector<Vec3D<float>> ptsAsVec3D;
-    for(int i = 0; i < this->baseMesh->getNbVertices(); ++i) {
-        glm::vec3 pt = this->baseMesh->getVertice(i);
-        ptsAsVec3D.push_back(Vec3D(pt[0], pt[1], pt[2]));
-    }
-    this->arap.init(ptsAsVec3D, dynamic_cast<SurfaceMesh*>(this->baseMesh)->getTriangles());
 }
 
 void ARAPMethod::setHandle(int idx) {
@@ -168,8 +156,15 @@ void ARAPMethod::movePoint(const glm::vec3& origin, const glm::vec3& target) {
 }
 
 void ARAPMethod::movePoints(const std::vector<glm::vec3>& origins, const std::vector<glm::vec3>& targets) {
+    std::vector<int> idxInMesh;
     for(int i = 0; i < origins.size(); ++i) {
-        this->baseMesh->vertices[this->baseMesh->getIdxOfClosestPoint(origins[i])] = targets[i];
+        idxInMesh.push_back(this->baseMesh->getIdxOfClosestPoint(origins[i]));
+    }
+    for(int i = 0; i < idxInMesh.size(); ++i) {
+        this->baseMesh->vertices[idxInMesh[i]] = targets[i];
+        if(!this->handles[idxInMesh[i]]) {
+            std::cout << "ERROR for index: " << idxInMesh[i] << std::endl;
+        }
     }
 
     if(this->onSurfaceMesh) {

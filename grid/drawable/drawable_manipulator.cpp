@@ -51,11 +51,12 @@ UITool::GL::MeshManipulator::MeshManipulator(SceneGL* sceneGL, BaseMesh * mesh, 
     this->texParamsState.type		   = GL_FLOAT;
 
     this->lightPosition = glm::vec3(500., 500., 500.);
+    this->meshManipulatorType = UITool::MeshManipulatorType::DIRECT;
 }
 
 void UITool::GL::MeshManipulator::prepare() {
     this->manipulatorMesh = Sphere(this->meshManipulator->getManipulatorSize());
-    this->positionManipulatorRadius = this->meshManipulator->getManipulatorSize(true) * 100.;
+    this->kidManipulatorRadius = this->meshManipulator->getManipulatorSize(true) * 100.;
 	// TODO: copy here
 	std::vector<glm::vec3> allPositions;
 	this->meshManipulator->getAllPositions(allPositions);
@@ -236,22 +237,22 @@ void UITool::GL::MeshManipulator::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* m
 	this->sceneGL->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	this->sceneGL->glUseProgram(0);
 
-    if(this->isPositionManip) {
-        PositionManipulator* manip = dynamic_cast<PositionManipulator*>(this->meshManipulator);
-        manip->kid_manip.setDisplayScale(this->positionManipulatorRadius);
-        manip->kid_manip.draw();
+    if(this->meshManipulator->kid_manip && this->meshManipulator->kid_manip->isVisible) {
+        //this->meshManipulator->kid_manip->setDisplayScale(this->manipulatorRadius);
+        //if(this->meshManipulatorType == UITool::MeshManipulatorType::POSITION)
+        //    this->meshManipulator->kid_manip->setDisplayScale(this->positionManipulatorRadius);
+        this->meshManipulator->kid_manip->draw();
     }
-
-    //if(this->isARAPManip) {
-    //    ARAPManipulator* manip = dynamic_cast<ARAPManipulator*>(this->meshManipulator);
-    //    manip->kid_manip.setDisplayScale(this->positionManipulatorRadius);
-    //    manip->kid_manip.draw();
-    //}
 }
 
 void UITool::GL::MeshManipulator::setRadius(float radius) { 
     this->manipulatorRadius = radius; 
     this->prepare();
+}
+
+void UITool::GL::MeshManipulator::setKidRadius(float radius) { 
+    this->kidManipulatorRadius = radius; 
+    this->meshManipulator->kid_manip->setDisplayScale(this->kidManipulatorRadius);
 }
 
 void UITool::GL::MeshManipulator::toggleActivation() {
@@ -277,9 +278,8 @@ void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scen
     const std::vector<glm::vec3>& positions = mesh->getMeshPositions();
     this->displayWireframe = false;// Because wathever the manipulator created it is not activated at creation
     delete this->meshManipulator;
-    this->isPositionManip = false;
-    this->isARAPManip = false;
 
+    this->meshManipulatorType = type;
     if(type == MeshManipulatorType::DIRECT) {
         this->meshManipulator = new UITool::DirectManipulator(mesh, positions);
         this->setRadius(this->meshManipulator->getManipulatorSize());
@@ -288,7 +288,6 @@ void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scen
         this->setRadius(this->meshManipulator->getManipulatorSize());
     } else if(type == MeshManipulatorType::POSITION) {
         this->meshManipulator = new UITool::PositionManipulator(mesh, positions);
-        this->isPositionManip = true;
         this->setRadius(this->meshManipulator->getManipulatorSize() * 10.f);
     } else if(type == MeshManipulatorType::REGISTRATION) {
         this->meshManipulator = new UITool::CompManipulator(mesh, positions);
@@ -296,7 +295,6 @@ void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scen
     } else {
         this->meshManipulator = new UITool::ARAPManipulator(mesh, positions);
         this->setRadius(this->meshManipulator->getManipulatorSize());
-        this->isARAPManip = true;
     }
     this->prepare();
     // Scene->MeshManipulator
@@ -311,6 +309,9 @@ void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scen
     // MeshManipulator->DrawableMeshManipulator
     QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needRedraw()), this, SLOT(prepare()));
     QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needSendTetmeshToGPU()), scene, SLOT(sendFirstTetmeshToGPU()));
+    if(type == MeshManipulatorType::ARAP) {
+        QObject::connect(dynamic_cast<QObject*>(dynamic_cast<ARAPManipulator*>(this->meshManipulator)), SIGNAL(needChangeKidManipulatorRadius(float)), this, SLOT(setKidRadius(float)));
+    }
 
     // MeshManipulator->DrawableSelection
     QObject::connect(&this->meshManipulator->selection, &UITool::Selection::needToRedrawSelection, scene, &Scene::redrawSelection);

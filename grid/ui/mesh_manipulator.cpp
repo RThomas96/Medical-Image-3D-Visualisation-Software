@@ -17,6 +17,7 @@ namespace UITool {
     }
 
 	DirectManipulator::DirectManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions): MeshManipulator(mesh) {
+        this->kid_manip = nullptr;
         this->manipulators.reserve(positions.size());
 		for (int i = 0; i < positions.size(); ++i) {
 			this->manipulators.push_back(Manipulator(positions[i]));
@@ -133,6 +134,7 @@ namespace UITool {
 
 	FreeManipulator::FreeManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions): MeshManipulator(mesh), manipulator(Manipulator(glm::vec3(0., 0., 0.))) {
 		this->active = false;
+        this->kid_manip = nullptr;
         QObject::connect(&(this->manipulator), &Manipulator::mouseRightButtonPressed, this, &FreeManipulator::selectManipulator);
         QObject::connect(&(this->manipulator), &Manipulator::mouseRightButtonReleasedAndCtrlIsNotPressed, this, &FreeManipulator::deselectManipulator);
         QObject::connect(&(this->manipulator), &Manipulator::isManipulated, this, &FreeManipulator::moveManipulator);
@@ -211,18 +213,11 @@ namespace UITool {
 
     /***/
 
-	PositionManipulator::PositionManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions): MeshManipulator(mesh), manipulator(Manipulator(glm::vec3(0., 0., 0.))) {
+	PositionManipulator::PositionManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions): MeshManipulator(mesh) {
         this->evenMode = false;
-        //QObject::connect(&(this->manipulator), &Manipulator::mouseRightButtonPressed, this, &PositionManipulator::selectManipulator);
-        //QObject::connect(&(this->manipulator), &Manipulator::mouseRightButtonReleasedAndCtrlIsNotPressed, this, &PositionManipulator::deselectManipulator);
-        QObject::connect(&(this->manipulator), &Manipulator::isManipulated, this, &PositionManipulator::moveManipulator);
-        QObject::connect(&(this->kid_manip), &RotationManipulator::moved, this, [this]() {this->moveManipulator(nullptr);});
-
-        QObject::connect(this, &PositionManipulator::keyPressed, this, &PositionManipulator::keyPressed);
-
-        this->manipulator.setCustomConstraint();
-        this->manipulator.setManipPosition(mesh->getOrigin());
-        this->kid_manip.setOrigine(qglviewer::Vec(mesh->getOrigin()[0], mesh->getOrigin()[1], mesh->getOrigin()[2]));
+        this->kid_manip = new RotationManipulator();
+        QObject::connect(this->kid_manip, &RotationManipulator::moved, this, [this]() {this->moveManipulator(nullptr);});
+        this->kid_manip->setOrigine(qglviewer::Vec(mesh->getOrigin()[0], mesh->getOrigin()[1], mesh->getOrigin()[2]));
 	}
 
 	void PositionManipulator::setAllManipulatorsPosition(const std::vector<glm::vec3>& positions) {
@@ -230,72 +225,59 @@ namespace UITool {
 	}
 
     void PositionManipulator::getAllPositions(std::vector<glm::vec3>& positions) {
-        positions.push_back(this->manipulator.getManipPosition());
     }
 
     void PositionManipulator::getManipulatorsToDisplay(std::vector<bool>& toDisplay) const {
-        toDisplay.push_back(false);
     }
 
     void PositionManipulator::getManipulatorsState(std::vector<State>& states) const {
-        states.clear();
-        State currentState = State::NONE;
-        if(this->manipulator.isAtRangeForGrab)
-            currentState = State::AT_RANGE;
-        if(this->manipulator.isSelected)
-            currentState = State::MOVE;
-        states.push_back(currentState);
     }
 
     void PositionManipulator::moveManipulator(Manipulator * manipulator) {
-        if(manipulator) {
-            this->mesh->setOrigin(manipulator->getManipPosition());
-        } else {
-            // For translation
-            if(this->kid_manip.mode_modification >= 1 && this->kid_manip.mode_modification <= 3) {
-                this->mesh->setOrigin(glm::vec3(this->kid_manip.Origine[0], this->kid_manip.Origine[1], this->kid_manip.Origine[2]));
+        // For translation
+        if(this->kid_manip->mode_modification >= 1 && this->kid_manip->mode_modification <= 3) {
+            this->mesh->setOrigin(glm::vec3(this->kid_manip->Origine[0], this->kid_manip->Origine[1], this->kid_manip->Origine[2]));
+        }
+        // For rotation
+        if(this->kid_manip->mode_modification >= 4 && this->kid_manip->mode_modification <= 6) {
+            this->mesh->rotate(this->kid_manip->getRotationMatrix());
+            this->mesh->setOrigin(glm::vec3(this->kid_manip->Origine[0], this->kid_manip->Origine[1], this->kid_manip->Origine[2]));
+        }
+        // For scale
+        if(this->kid_manip->mode_modification >= 7 && this->kid_manip->mode_modification <= 9 || this->kid_manip->mode_modification <= -7 && this->kid_manip->mode_modification >= -9) {
+            glm::vec3 scale = this->kid_manip->getScaleVector();
+            int axeToScale = -1;
+            switch(this->kid_manip->mode_modification) {
+                case 7:
+                    axeToScale = 0;
+                    break;
+                case -7:
+                    axeToScale = 0;
+                    break;
+                case 8:
+                    axeToScale = 1;
+                    break;
+                case -8:
+                    axeToScale = 1;
+                    break;
+                case 9:
+                    axeToScale = 2;
+                    break;
+                case -9:
+                    axeToScale = 2;
+                    break;
             }
-            // For rotation
-            if(this->kid_manip.mode_modification >= 4 && this->kid_manip.mode_modification <= 6) {
-                this->mesh->rotate(this->kid_manip.getRotationMatrix());
-                this->mesh->setOrigin(glm::vec3(this->kid_manip.Origine[0], this->kid_manip.Origine[1], this->kid_manip.Origine[2]));
+            if(this->evenMode) {
+                this->mesh->scale(glm::vec3(scale[axeToScale], scale[axeToScale], scale[axeToScale]));
+            } else {
+                glm::vec3 finalScale = glm::vec3(1., 1., 1.);
+                finalScale[axeToScale] = scale[axeToScale];
+                this->mesh->scale(finalScale);
             }
-            // For scale
-            if(this->kid_manip.mode_modification >= 7 && this->kid_manip.mode_modification <= 9 || this->kid_manip.mode_modification <= -7 && this->kid_manip.mode_modification >= -9) {
-                glm::vec3 scale = this->kid_manip.getScaleVector();
-                int axeToScale = -1;
-                switch(this->kid_manip.mode_modification) {
-                    case 7:
-                        axeToScale = 0;
-                        break;
-                    case -7:
-                        axeToScale = 0;
-                        break;
-                    case 8:
-                        axeToScale = 1;
-                        break;
-                    case -8:
-                        axeToScale = 1;
-                        break;
-                    case 9:
-                        axeToScale = 2;
-                        break;
-                    case -9:
-                        axeToScale = 2;
-                        break;
-                }
-                if(this->evenMode) {
-                    this->mesh->scale(glm::vec3(scale[axeToScale], scale[axeToScale], scale[axeToScale]));
-                } else {
-                    glm::vec3 finalScale = glm::vec3(1., 1., 1.);
-                    finalScale[axeToScale] = scale[axeToScale];
-                    this->mesh->scale(finalScale);
-                }
 
-                this->mesh->setOrigin(glm::vec3(this->kid_manip.Origine[0], this->kid_manip.Origine[1], this->kid_manip.Origine[2]));
-                this->mesh->computeNormals();
-                this->mesh->updatebbox();
-            }
+            this->mesh->setOrigin(glm::vec3(this->kid_manip->Origine[0], this->kid_manip->Origine[1], this->kid_manip->Origine[2]));
+            this->mesh->computeNormals();
+            this->mesh->updatebbox();
         }
     }
 
@@ -325,6 +307,7 @@ namespace UITool {
         this->oneManipulatorWasAlreadyAdded = false;
         this->oneManipulatorIsAtRangeForGrab = false;
         this->currentPairToSelect = -1;
+        this->kid_manip = nullptr;
         QObject::connect(this, &CompManipulator::pointIsClickedInPlanarViewer, this, &CompManipulator::addManipulator);
         QObject::connect(this, &CompManipulator::rayIsCasted, this, &CompManipulator::addManipulatorFromRay);
 	}
@@ -652,13 +635,22 @@ namespace UITool {
             this->manipulators[i].enable();
             this->selectedManipulators.push_back(false);
 		}
+        this->kid_manip = new RotationManipulator();
+        this->kid_manip->isVisible = false;
         QObject::connect(&this->selection, &Selection::isSelecting, this, &ARAPManipulator::checkSelectedManipulators);
-        QObject::connect(&this->selection, &Selection::beginSelection, this, [this](){this->kid_manip.reset(); this->isSelecting = true; this->mesh->deselectAllPts(); std::fill(this->selectedManipulators.begin(), this->selectedManipulators.end(), false);});
+        QObject::connect(&this->selection, &Selection::beginSelection, this, [this](){this->initializeSelection();});
         
-        QObject::connect(&this->selection, &Selection::resetSelection, this, [this](){this->isSelecting = false;});
+        QObject::connect(&this->selection, &Selection::resetSelection, this, [this](){
+                this->isSelecting = false; 
+                this->setLockAllManipulators(false);
+                for(int i = 0; i < this->selectedManipulatorsIdx.size(); ++i) {
+                    glm::vec3 glmManipPos = this->manipulators[this->selectedManipulatorsIdx[i]].getManipPosition();
+                    this->kid_manip->addPoint(i, qglviewer::Vec(glmManipPos[0], glmManipPos[1], glmManipPos[2]));
+                }
+         });
 
-        QObject::connect(&(this->kid_manip), &RotationManipulator::moved, this, [this]() {this->moveKidManip();});
-        this->kid_manip.setOrigine(qglviewer::Vec(0, 0, 0));
+        QObject::connect(this->kid_manip, &RotationManipulator::moved, this, [this]() {this->moveKidManip();});
+        this->kid_manip->setOrigine(qglviewer::Vec(0, 0, 0));
 	}
 
     glm::vec3 ARAPManipulator::getMeanPositionSelectedManipulators() {
@@ -669,15 +661,34 @@ namespace UITool {
         return mean/float(this->selectedManipulatorsIdx.size());
     }
 
+    void ARAPManipulator::initializeSelection() {
+        std::cout << "Reset the selection" << std::endl;
+        this->setLockAllManipulators(true);
+        delete this->kid_manip;
+        this->kid_manip = new RotationManipulator();
+        QObject::connect(this->kid_manip, &RotationManipulator::moved, this, [this]() {this->moveKidManip();});
+        this->kid_manip->setOrigine(qglviewer::Vec(0, 0, 0));
+        this->kid_manip->isVisible = false; 
+        this->resetMinAndMax(); 
+        this->isSelecting = true; 
+        this->mesh->deselectAllPts(); 
+        this->selectedManipulatorsIdx.clear();
+        std::fill(this->selectedManipulators.begin(), this->selectedManipulators.end(), false);
+    }
+
     void ARAPManipulator::moveKidManip() {
         std::vector<glm::vec3> originalPoints;
         std::vector<glm::vec3> targetPoints;
         for(int i = 0; i < this->selectedManipulatorsIdx.size(); ++i) {
             qglviewer::Vec deformedPoint;
             int trueIndex;
-            this->kid_manip.getTransformedPoint(i, trueIndex, deformedPoint);
-            originalPoints.push_back(this->manipulators[this->selectedManipulatorsIdx[i]].getManipPosition());
-            targetPoints.push_back(glm::vec3(deformedPoint[0], deformedPoint[1], deformedPoint[2]));
+            this->kid_manip->getTransformedPoint(i, trueIndex, deformedPoint);
+            if(!std::isnan(deformedPoint[0]) && !std::isnan(deformedPoint[1]) && !std::isnan(deformedPoint[2])) {
+                originalPoints.push_back(this->manipulators[this->selectedManipulatorsIdx[i]].getManipPosition());
+                //originalPoints.push_back(this->mesh->vertices[this->selectedManipulatorsIdx[i]]);
+                targetPoints.push_back(glm::vec3(deformedPoint[0], deformedPoint[1], deformedPoint[2]));
+            }
+            //this->mesh->vertices[this->selectedManipulatorsIdx[i]] = glm::vec3(deformedPoint[0], deformedPoint[1], deformedPoint[2]);
         }
         this->mesh->movePoints(originalPoints, targetPoints);
         Q_EMIT needSendTetmeshToGPU();
@@ -688,14 +699,24 @@ namespace UITool {
         this->getAllPositions(positions);
         std::vector<bool> inSelection = this->selection.areInSelection(positions);
         for(int i = 0; i < inSelection.size(); ++i) {
-            if(inSelection[i]) {
+            if(inSelection[i] && !this->selectedManipulators[i]) {
                 this->selectManipulator(&this->manipulators[i]);
                 glm::vec3 glmManipPos = this->manipulators[i].getManipPosition();
-                this->kid_manip.addPoint(i, qglviewer::Vec(glmManipPos[0], glmManipPos[1], glmManipPos[2]));
+                for(int j = 0; j < 3; ++j) {
+                    if(this->selectionMin[j] > glmManipPos[j])
+                        this->selectionMin[j] = glmManipPos[j];
+                    if(this->selectionMax[j] < glmManipPos[j])
+                        this->selectionMax[j] = glmManipPos[j];
+                }
             }
         }
         glm::vec3 glmMean = this->getMeanPositionSelectedManipulators();
-        this->kid_manip.setOrigine(qglviewer::Vec(glmMean[0], glmMean[1], glmMean[2]));
+        this->kid_manip->isVisible = true;
+        this->kid_manip->setOrigine(qglviewer::Vec(glmMean[0], glmMean[1], glmMean[2]));
+
+        //glm::vec3 sizeSelection = glm::length(this->selectionMax - this->selectionMin);
+        //Q_EMIT needChangeKidManipulatorRadius(std::max(sizeSelection[0], std::max(sizeSelection[1], sizeSelection[2])));
+        Q_EMIT needChangeKidManipulatorRadius(glm::length(this->selectionMax - this->selectionMin));
     }
 
 	void ARAPManipulator::setAllManipulatorsPosition(const std::vector<glm::vec3>& positions) {
@@ -804,6 +825,18 @@ namespace UITool {
         std::cout << "Move mode set to: " << this->moveMode << std::endl;
         this->moveMode = !this->moveMode;
         if(!this->moveMode) {
+            for(int i = 0; i < this->manipulators.size(); ++i) {
+                this->manipulators[i].lockPosition();
+            }
+        } else {
+            for(int i = 0; i < this->manipulators.size(); ++i) {
+                this->manipulators[i].setCustomConstraint();
+            }
+        }
+    }
+
+    void ARAPManipulator::setLockAllManipulators(bool lock) {
+        if(lock) {
             for(int i = 0; i < this->manipulators.size(); ++i) {
                 this->manipulators[i].lockPosition();
             }

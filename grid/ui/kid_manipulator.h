@@ -47,6 +47,8 @@ class RotationManipulator : public QObject , public qglviewer::MouseGrabber
 
     bool mouse_released;
 
+    bool isVisible;
+
 
     qglviewer::Vec Origine;              // (1)
     qglviewer::Vec PrevOrigine;              // (1)
@@ -78,6 +80,7 @@ public:
     RotationManipulator()
     {
         mouse_released = true;
+        isVisible = true;
 
         Origine = qglviewer::Vec(0,0,0);
         PrevOrigine = qglviewer::Vec(0,0,0);

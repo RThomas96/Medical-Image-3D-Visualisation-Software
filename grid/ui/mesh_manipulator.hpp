@@ -140,6 +140,8 @@ namespace UITool {
 	//! @ingroup uitools
     class MeshManipulator {
     public:
+        // These are needed here as there drawing functions are directly in the class
+        RotationManipulator * kid_manip;
         Selection selection;
         BaseMesh * mesh;
 
@@ -267,9 +269,6 @@ namespace UITool {
         void getManipulatorsToDisplay(std::vector<bool>& toDisplay) const override;
         void getManipulatorsState(std::vector<State>& states) const override;
 
-		RotationManipulator kid_manip;
-
-
     public slots:
         void moveManipulator(Manipulator * manipulator);
         void keyPressed(QKeyEvent* e) override;
@@ -282,8 +281,6 @@ namespace UITool {
         void needSendTetmeshToGPU() override;
 
 	private:
-		Manipulator manipulator;
-
         bool evenMode;
 	};
 
@@ -391,13 +388,18 @@ namespace UITool {
         void checkSelectedManipulators();
         void moveKidManip();
         glm::vec3 getMeanPositionSelectedManipulators();
+        void resetMinAndMax() {
+            this->selectionMax = glm::vec3(-1000000., -1000000., -1000000);
+            this->selectionMin = glm::vec3(1000000., 1000000., 1000000);
+        }
+        void initializeSelection();
+        void setLockAllManipulators(bool lock);
 
     signals:
         void needRedraw() override;
         void needSendTetmeshToGPU() override;
+        void needChangeKidManipulatorRadius(float radius);
 
-    public:
-		RotationManipulator kid_manip;
 	private:
 		std::vector<Manipulator> manipulators;
         std::vector<bool> manipulatorsToDisplay;
@@ -408,6 +410,9 @@ namespace UITool {
 
         bool isSelecting;
         bool moveMode;
+
+        glm::vec3 selectionMin;
+        glm::vec3 selectionMax;
 	};
 }	 // namespace UITool
 #endif
