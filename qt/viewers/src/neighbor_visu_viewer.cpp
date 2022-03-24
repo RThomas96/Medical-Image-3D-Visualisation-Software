@@ -64,6 +64,7 @@ void Viewer::init() {
 
 	this->scene->initGl(this->context());
 
+    QObject::connect(this, &Viewer::keyPressed, this->scene, &Scene::keyPressed);
     QObject::connect(this, &Viewer::keyReleased, this->scene, &Scene::keyReleased);
     QObject::connect(this, &Viewer::mousePressed, this->scene, &Scene::mousePressed);
     QObject::connect(this, &Viewer::mouseReleased, this->scene, &Scene::mouseReleased);

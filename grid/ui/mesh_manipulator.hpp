@@ -62,7 +62,7 @@ namespace UITool {
             return res;
         }
 
-        Selection() : Manipulator(glm::vec3(0., 0., 0.)), p0(glm::vec3(0., 0., 0.)), p1(glm::vec3(0., 0., 0.)), p2(glm::vec3(0., 0., 0.)), p3(glm::vec3(0., 0., 0.)), screenP0(glm::ivec2(0., 0.)), screenP1(glm::ivec2(0, 0)), isTouchPressed(false) {};
+        Selection() : Manipulator(glm::vec3(0., 0., 0.)), p0(glm::vec3(0., 0., 0.)), p1(glm::vec3(0., 0., 0.)), p2(glm::vec3(0., 0., 0.)), p3(glm::vec3(0., 0., 0.)), screenP0(glm::ivec2(0., 0.)), screenP1(glm::ivec2(0, 0)), isTouchPressed(false) {this->enable();};
 
     signals:
         void needToRedrawSelection(const glm::vec3& p0, const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3);
@@ -140,6 +140,7 @@ namespace UITool {
 	//! @ingroup uitools
     class MeshManipulator {
     public:
+        Selection selection;
         BaseMesh * mesh;
 
         MeshManipulator(BaseMesh * mesh): mesh(mesh) {}
@@ -207,8 +208,6 @@ namespace UITool {
     signals:
         void needRedraw() override;
         void needSendTetmeshToGPU() override;
-    public:
-        Selection selection;
 	private:
 		std::vector<Manipulator> manipulators;
         std::vector<bool> manipulatorsToDisplay;
@@ -398,7 +397,6 @@ namespace UITool {
         void needSendTetmeshToGPU() override;
 
     public:
-        Selection selection;
 		RotationManipulator kid_manip;
 	private:
 		std::vector<Manipulator> manipulators;

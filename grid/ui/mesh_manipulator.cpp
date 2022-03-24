@@ -121,13 +121,9 @@ namespace UITool {
         }
     }
 
-    void DirectManipulator::keyPressed(QKeyEvent* e) {
-        this->selection.keyPressed(e);
-    }
+    void DirectManipulator::keyPressed(QKeyEvent* e) {};
 
-    void DirectManipulator::keyReleased(QKeyEvent* e) {
-        this->selection.keyReleased(e);
-    }
+    void DirectManipulator::keyReleased(QKeyEvent* e) {};
 
     void DirectManipulator::mousePressed(QMouseEvent*) {};
 
@@ -818,13 +814,9 @@ namespace UITool {
         }
     }
 
-    void ARAPManipulator::keyPressed(QKeyEvent* e) {
-        this->selection.keyPressed(e);
-    }
+    void ARAPManipulator::keyPressed(QKeyEvent* e) {}
 
-    void ARAPManipulator::keyReleased(QKeyEvent* e) {
-        this->selection.keyReleased(e);
-    }
+    void ARAPManipulator::keyReleased(QKeyEvent* e) {}
 
     void ARAPManipulator::mousePressed(QMouseEvent* e) {}
 
