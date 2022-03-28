@@ -69,7 +69,8 @@ namespace UITool {
         FREE,
         POSITION,
         REGISTRATION,
-        ARAP
+        ARAP,
+        SLICE
     };
 }
 
@@ -466,6 +467,7 @@ signals:
     void sceneCenterChanged(const glm::vec3& center);
     void sceneRadiusChanged(const float radius);
     void meshAdded(const std::string& name, bool grid, bool cage);
+    void planesMoved(const glm::vec3& planesPosition);
 
 // All these indirections are important because for most of them they interacts with various components of the scene
 // And it allow more flexibility as the scene control ALL the informations to transit from class to class
@@ -543,7 +545,7 @@ public:
 	Image::bbox_t sceneDataBB;
 
     bool bunny_demo = false;
-    bool bone_demo = false;
+    bool bone_demo = true;
     bool brain_demo = false;
     bool cage_demo = false;
 };

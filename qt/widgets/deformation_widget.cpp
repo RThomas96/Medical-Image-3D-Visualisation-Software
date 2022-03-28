@@ -44,6 +44,13 @@ GridDeformationWidget::GridDeformationWidget(Scene* scene, QWidget* parent) :
 	this->radio_selector_ARAP = new QRadioButton("ARAP");
 	this->radio_selector_ARAP->setChecked(false);
 
+	this->radio_selector_slice = new QRadioButton("Slice");
+	this->radio_selector_slice->setChecked(false);
+    this->slice_X = new QPushButton("X");
+    this->slice_Y = new QPushButton("Y");
+    this->slice_Z = new QPushButton("Z");
+    this->slice_clear = new QPushButton("Clear");
+
 	this->group_move = new QGroupBox("Deformation");
 	this->radio_move_normal = new QRadioButton("Normal");
 	this->radio_move_normal->setChecked(true);
@@ -104,6 +111,7 @@ void GridDeformationWidget::setupLayouts() {
 	layout_selector = new QVBoxLayout;
 	layout_move     = new QVBoxLayout;
 	layout_visu     = new QVBoxLayout;
+	layout_slice    = new QHBoxLayout;
 
 	this->group_mesh->setLayout(this->layout_mesh);
 	this->group_selector->setLayout(this->layout_selector);
@@ -127,6 +135,13 @@ void GridDeformationWidget::setupLayouts() {
 	this->layout_selector->addWidget(this->apply, 11);
 	this->layout_selector->addWidget(this->radio_selector_ARAP, 12);
     this->layout_selector->addWidget(this->handleMode, 13);
+	this->layout_selector->addWidget(this->radio_selector_slice, 14);
+    this->layout_slice->addWidget(this->slice_X, 1);
+    this->layout_slice->addWidget(this->slice_Y, 2);
+    this->layout_slice->addWidget(this->slice_Z, 3);
+	this->layout_selector->addLayout(this->layout_slice, 15);
+	this->layout_selector->addWidget(this->slice_clear, 16);
+
     this->handleMode->hide();
     this->bindMove->hide();
 
@@ -136,6 +151,11 @@ void GridDeformationWidget::setupLayouts() {
     this->undo->hide();
     this->clear->hide();
     this->apply->hide();
+
+    this->slice_X->hide();
+    this->slice_Y->hide();
+    this->slice_Z->hide();
+    this->slice_clear->hide();
 
 	this->layout_move->addWidget(this->radio_move_normal, 1);
 	this->layout_move->addWidget(this->radio_move_weighted, 2);
@@ -207,6 +227,11 @@ void GridDeformationWidget::updateScene(Scene * scene, UITool::MeshManipulatorTy
     this->clear->hide();
     this->apply->hide();
 
+    this->slice_X->hide();
+    this->slice_Y->hide();
+    this->slice_Z->hide();
+    this->slice_clear->hide();
+
     if(isCage) {
         this->bindMove->show();
         this->bindMove->setChecked(true);
@@ -237,7 +262,21 @@ void GridDeformationWidget::updateScene(Scene * scene, UITool::MeshManipulatorTy
             this->radio_move_weighted->setChecked(false);
             this->radio_move_ARAP->setChecked(false);
         }
+
+        if(meshTool == UITool::MeshManipulatorType::SLICE) {
+            this->slice_X->show();
+            this->slice_Y->show();
+            this->slice_Z->show();
+            this->slice_clear->show();
+
+            this->currentMoveMethod = 2;
+            this->radio_move_ARAP->setChecked(true);
+            this->radio_move_normal->setChecked(false);
+            this->radio_move_weighted->setChecked(false);
+        }
+
     } else {
+        this->radio_selector_ARAP->setEnabled(false);
         this->radio_selector_ARAP->setEnabled(false);
 	    //this->radio_selector_position->setEnabled(false);
 
@@ -293,6 +332,8 @@ void GridDeformationWidget::setupSignals(Scene * scene) {
 	QObject::connect(this->radio_selector_comp, &QPushButton::clicked, this, [this, scene]() {this->updateScene(scene, UITool::MeshManipulatorType::REGISTRATION, -1);});
 
 	QObject::connect(this->radio_selector_ARAP, &QPushButton::clicked, this, [this, scene]() {this->updateScene(scene, UITool::MeshManipulatorType::ARAP, 2);});
+
+	QObject::connect(this->radio_selector_slice, &QPushButton::clicked, this, [this, scene]() {this->updateScene(scene, UITool::MeshManipulatorType::SLICE, -1);});
 
 	QObject::connect(this->radio_move_normal, &QPushButton::clicked, this, [this, scene]() {this->updateScene(scene, UITool::MeshManipulatorType::NONE, 0);});
 

@@ -414,5 +414,44 @@ namespace UITool {
         glm::vec3 selectionMin;
         glm::vec3 selectionMax;
 	};
+
+	class SliceManipulator : public QObject, public MeshManipulator {
+        Q_OBJECT
+        Q_INTERFACES(UITool::MeshManipulator)
+
+	public:
+		SliceManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions);
+
+        void setAllManipulatorsPosition(const std::vector<glm::vec3>& positions) override;
+        void getAllPositions(std::vector<glm::vec3>& positions) override;
+        void getManipulatorsState(std::vector<State>& states) const override;
+
+        void getManipulatorsToDisplay(std::vector<bool>& toDisplay) const override;
+
+        void checkSelectedManipulators();
+
+    public slots:
+        void displayManipulator(Manipulator * manipulatorToDisplay);
+        void hideManipulator(Manipulator * manipulatorToDisplay);
+        void movePlanes(const glm::vec3& planesPosition);
+
+        void moveManipulator(Manipulator * manipulator);
+        void selectManipulator(Manipulator * manipulator);
+        void deselectManipulator(Manipulator * manipulator);
+        void keyPressed(QKeyEvent* e) override;
+        void keyReleased(QKeyEvent* e) override;
+        void mousePressed(QMouseEvent* e) override;
+        void mouseReleased(QMouseEvent* e) override;
+
+    signals:
+        void needRedraw() override;
+        void needSendTetmeshToGPU() override;
+	private:
+		std::vector<Manipulator> manipulators;
+        std::vector<bool> manipulatorsToDisplay;
+        std::vector<bool> selectedManipulators;
+        
+
+	};
 }	 // namespace UITool
 #endif

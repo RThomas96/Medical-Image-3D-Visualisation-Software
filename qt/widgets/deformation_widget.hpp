@@ -73,6 +73,12 @@ protected:
     QPushButton*                 clear;
     QPushButton*                    apply;
 	QRadioButton* radio_selector_ARAP; 
+	QRadioButton* radio_selector_slice; 
+	QHBoxLayout*          layout_slice;
+    QPushButton*                    slice_X;
+    QPushButton*                    slice_Y;
+    QPushButton*                    slice_Z;
+    QPushButton*                    slice_clear;
 
 	QVBoxLayout*              layout_move;
 	QGroupBox*                 group_move;

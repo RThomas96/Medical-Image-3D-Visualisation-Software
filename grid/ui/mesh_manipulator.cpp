@@ -699,7 +699,7 @@ namespace UITool {
         this->getAllPositions(positions);
         std::vector<bool> inSelection = this->selection.areInSelection(positions);
         for(int i = 0; i < inSelection.size(); ++i) {
-            if(inSelection[i] && !this->selectedManipulators[i]) {
+            if(inSelection[i] && !this->selectedManipulators[i] && !this->handles[i]) {
                 this->selectManipulator(&this->manipulators[i]);
                 glm::vec3 glmManipPos = this->manipulators[i].getManipPosition();
                 for(int j = 0; j < 3; ++j) {
@@ -854,4 +854,125 @@ namespace UITool {
     void ARAPManipulator::mousePressed(QMouseEvent* e) {}
 
     void ARAPManipulator::mouseReleased(QMouseEvent* e) {}
+/***/
+
+SliceManipulator::SliceManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions): MeshManipulator(mesh) {
+    this->kid_manip = nullptr;
+    this->manipulators.reserve(positions.size());
+	for (int i = 0; i < positions.size(); ++i) {
+		this->manipulators.push_back(Manipulator(positions[i]));
+        QObject::connect(&(this->manipulators[i]), &Manipulator::enterAtRangeForGrab, this, &SliceManipulator::displayManipulator);
+        QObject::connect(&(this->manipulators[i]), &Manipulator::exitFromRangeForGrab, this, &SliceManipulator::hideManipulator);
+
+        QObject::connect(&(this->manipulators[i]), &Manipulator::mouseRightButtonPressed, this, &SliceManipulator::selectManipulator);
+        QObject::connect(&(this->manipulators[i]), &Manipulator::mouseRightButtonReleasedAndCtrlIsNotPressed, this, &SliceManipulator::deselectManipulator);
+        QObject::connect(&(this->manipulators[i]), &Manipulator::isManipulated, this, &SliceManipulator::moveManipulator);
+
+        this->selectedManipulators.push_back(false);
+        this->manipulatorsToDisplay.push_back(true);
+		this->manipulators[i].setCustomConstraint();
+        this->manipulators[i].enable();
+	}
+
+    QObject::connect(&this->selection, &Selection::isSelecting, this, &SliceManipulator::checkSelectedManipulators);
 }
+
+void SliceManipulator::checkSelectedManipulators() {
+    this->deselectManipulator(nullptr);
+    std::vector<glm::vec3> positions;
+    this->getAllPositions(positions);
+    std::vector<bool> inSelection = this->selection.areInSelection(positions);
+    for(int i = 0; i < inSelection.size(); ++i) {
+        if(inSelection[i]) {
+            this->selectManipulator(&this->manipulators[i]);
+        }
+    }
+}
+
+void SliceManipulator::setAllManipulatorsPosition(const std::vector<glm::vec3>& positions) {
+	if (positions.size() == this->manipulators.size()) {
+		for (int i = 0; i < this->manipulators.size(); ++i) {
+			this->manipulators[i].setManipPosition(positions[i]);
+			this->manipulators[i].setLastPosition(positions[i]);
+		}
+	} else {
+		std::cerr << "WARNING: try to set [" << this->manipulators.size() << "] manipulators positions with a position vector of size [" << positions.size() << "]" << std::endl;
+	}
+}
+
+void SliceManipulator::getAllPositions(std::vector<glm::vec3>& positions) {
+	for (int i = 0; i < this->manipulators.size(); ++i) {
+        positions.push_back(this->manipulators[i].getManipPosition());
+	}
+}
+
+void SliceManipulator::getManipulatorsToDisplay(std::vector<bool>& toDisplay) const {
+	for (int i = 0; i < this->manipulatorsToDisplay.size(); ++i) {
+        toDisplay.push_back(this->manipulatorsToDisplay[i]);
+    }
+}
+
+void SliceManipulator::getManipulatorsState(std::vector<State>& states) const {
+    states.clear();
+    for(int i = 0; i < this->manipulatorsToDisplay.size(); ++i) {
+        State currentState = State::NONE;
+        if(this->manipulators[i].isAtRangeForGrab)
+            currentState = State::AT_RANGE;
+        if(this->selectedManipulators[i])
+            currentState = State::AT_RANGE;
+        if(this->manipulators[i].isSelected)
+            currentState = State::MOVE;
+        states.push_back(currentState);
+    }
+}
+
+void SliceManipulator::displayManipulator(Manipulator * manipulatorToDisplay) {
+    // Since vectors are organized sequentially, you can get an index by subtracting pointer to initial element 
+    // from the pointer to the element you search
+    ptrdiff_t index = manipulatorToDisplay - &(this->manipulators[0]);
+    this->manipulatorsToDisplay[index] = true;
+}
+
+void SliceManipulator::hideManipulator(Manipulator * manipulatorToDisplay) {
+    if(manipulatorToDisplay->isSelected)
+        return;
+    // Since vectors are organized sequentially, you can get an index by subtracting pointer to initial element 
+    // from the pointer to the element you search
+    ptrdiff_t index = manipulatorToDisplay - &(this->manipulators[0]);
+    this->manipulatorsToDisplay[index] = false;
+}
+
+void SliceManipulator::moveManipulator(Manipulator * manipulator) {
+    this->mesh->movePoint(manipulator->lastPosition, manipulator->getManipPosition());
+    Q_EMIT needSendTetmeshToGPU();
+}
+
+void SliceManipulator::selectManipulator(Manipulator * manipulator) {
+    ptrdiff_t index = manipulator - &(this->manipulators[0]);
+    if(!this->selectedManipulators[index]) {
+        this->mesh->selectPts(manipulator->getManipPosition());
+        this->selectedManipulators[index] = true;
+    }
+}
+
+void SliceManipulator::deselectManipulator(Manipulator * manipulator) {
+    this->mesh->deselectAllPts();
+    for(int i = 0; i < this->selectedManipulators.size(); ++i) {
+        this->selectedManipulators[i] = false;
+    }
+}
+
+void SliceManipulator::keyPressed(QKeyEvent* e) {};
+
+void SliceManipulator::keyReleased(QKeyEvent* e) {};
+
+void SliceManipulator::mousePressed(QMouseEvent*) {};
+
+void SliceManipulator::mouseReleased(QMouseEvent*) {};
+
+void SliceManipulator::movePlanes(const glm::vec3& planesPosition) {
+    std::cout << "Plane pos is: " << planesPosition << std::endl;
+}
+
+}
+

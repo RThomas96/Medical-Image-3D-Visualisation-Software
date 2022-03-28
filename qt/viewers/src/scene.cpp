@@ -1549,7 +1549,8 @@ void Scene::prepareUniformsMonoPlaneView(planes _plane, planeHeading _heading, g
     /***/
 
     unsigned int shouldDisplay = 1;
-    float radius = this->glMeshManipulator->meshManipulator->getManipulatorSize();
+    //float radius = this->glMeshManipulator->meshManipulator->getManipulatorSize();
+    float radius = this->glMeshManipulator->planeViewRadius;
     
     std::vector<glm::vec3> manipulatorPositions;
     this->glMeshManipulator->meshManipulator->getAllPositions(manipulatorPositions);
@@ -2693,12 +2694,15 @@ void Scene::setColorFunction_g(ColorFunction _c) {
 
 void Scene::slotSetPlaneDisplacementX(float scalar) {
 	this->planeDisplacement.x = scalar;
+    Q_EMIT planesMoved(this->computePlanePositions());
 }
 void Scene::slotSetPlaneDisplacementY(float scalar) {
 	this->planeDisplacement.y = scalar;
+    Q_EMIT planesMoved(this->computePlanePositions());
 }
 void Scene::slotSetPlaneDisplacementZ(float scalar) {
 	this->planeDisplacement.z = scalar;
+    Q_EMIT planesMoved(this->computePlanePositions());
 }
 
 void Scene::slotTogglePlaneDirectionX() {
@@ -3617,11 +3621,12 @@ void Scene::init() {
     }
     if(bone_demo) {
         this->openGrid("grid", std::vector<std::string>{std::string("/home/thomas/data/Data/Mesh/thigh_f_scaled.tif")}, 2, glm::vec3(5, 5, 5), glm::vec3(1, 1, 1));
-        this->openMesh("bone", "/home/thomas/data/Data/Mesh/femur_m.off");
+        //this->openMesh("bone", "/home/thomas/data/Data/Mesh/femur_m.off");
+        this->openMesh("bone", "/home/thomas/data/Data/Mesh/femur_m_aligned_2.off");
 
-        this->getMesh("bone")->scaleToBBox(this->getBaseMesh("grid")->bbMin, this->getBaseMesh("grid")->bbMax);
-        this->getMesh("bone")->setOrigin(this->getBaseMesh("grid")->getOrigin());
-        this->getMesh("bone")->translate(glm::vec3(this->getBaseMesh("grid")->getDimensions()[0], 0., 0.));
+        //this->getMesh("bone")->scaleToBBox(this->getBaseMesh("grid")->bbMin, this->getBaseMesh("grid")->bbMax);
+        //this->getMesh("bone")->setOrigin(this->getBaseMesh("grid")->getOrigin());
+        //this->getMesh("bone")->translate(glm::vec3(this->getBaseMesh("grid")->getDimensions()[0], 0., 0.));
     }
     if(bunny_demo) {
         this->openMesh("bunny", "/home/thomas/data/Data/Mesh/bunny_lowres.off");
