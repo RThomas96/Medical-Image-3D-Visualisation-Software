@@ -857,7 +857,8 @@ namespace UITool {
 /***/
 
 SliceManipulator::SliceManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions): MeshManipulator(mesh) {
-    this->kid_manip = nullptr;
+    this->kid_manip = new RotationManipulator();
+    QObject::connect(this->kid_manip, &RotationManipulator::moved, this, [this]() {this->moveKidManip();});
     this->manipulators.reserve(positions.size());
 	for (int i = 0; i < positions.size(); ++i) {
 		this->manipulators.push_back(Manipulator(positions[i]));
@@ -865,16 +866,21 @@ SliceManipulator::SliceManipulator(BaseMesh * mesh, const std::vector<glm::vec3>
         QObject::connect(&(this->manipulators[i]), &Manipulator::exitFromRangeForGrab, this, &SliceManipulator::hideManipulator);
 
         QObject::connect(&(this->manipulators[i]), &Manipulator::mouseRightButtonPressed, this, &SliceManipulator::selectManipulator);
-        QObject::connect(&(this->manipulators[i]), &Manipulator::mouseRightButtonReleasedAndCtrlIsNotPressed, this, &SliceManipulator::deselectManipulator);
+        //QObject::connect(&(this->manipulators[i]), &Manipulator::mouseRightButtonReleasedAndCtrlIsNotPressed, this, &SliceManipulator::deselectManipulator);
         QObject::connect(&(this->manipulators[i]), &Manipulator::isManipulated, this, &SliceManipulator::moveManipulator);
 
         this->selectedManipulators.push_back(false);
         this->manipulatorsToDisplay.push_back(true);
+        this->handles.push_back(false);
 		this->manipulators[i].setCustomConstraint();
         this->manipulators[i].enable();
 	}
 
     QObject::connect(&this->selection, &Selection::isSelecting, this, &SliceManipulator::checkSelectedManipulators);
+
+    this->currentSelectedSlice = SliceOrientation::X;
+    this->slicesPositions = glm::vec3(0., 0., 0.);
+    this->selectSlice(this->currentSelectedSlice);
 }
 
 void SliceManipulator::checkSelectedManipulators() {
@@ -922,6 +928,8 @@ void SliceManipulator::getManipulatorsState(std::vector<State>& states) const {
             currentState = State::AT_RANGE;
         if(this->manipulators[i].isSelected)
             currentState = State::MOVE;
+        if(this->handles[i])
+            currentState = State::LOCK;
         states.push_back(currentState);
     }
 }
@@ -956,9 +964,21 @@ void SliceManipulator::selectManipulator(Manipulator * manipulator) {
 }
 
 void SliceManipulator::deselectManipulator(Manipulator * manipulator) {
-    this->mesh->deselectAllPts();
+    this->deselectAllManipulators(true);
+}
+
+void SliceManipulator::deselectAllManipulators(bool keepHandles) {
     for(int i = 0; i < this->selectedManipulators.size(); ++i) {
+        if(this->selectedManipulators[i]) {
+            this->mesh->deselectPts(this->manipulators[i].getManipPosition());
+        }
         this->selectedManipulators[i] = false;
+        if(keepHandles && this->handles[i]) {
+            ARAPMethod * deformer = dynamic_cast<ARAPMethod*>(this->mesh->meshDeformer);
+            if(deformer) {
+                deformer->setHandle(i);
+            }
+        }
     }
 }
 
@@ -971,7 +991,115 @@ void SliceManipulator::mousePressed(QMouseEvent*) {};
 void SliceManipulator::mouseReleased(QMouseEvent*) {};
 
 void SliceManipulator::movePlanes(const glm::vec3& planesPosition) {
-    std::cout << "Plane pos is: " << planesPosition << std::endl;
+    this->deselectAllManipulators(true);
+    this->slicesPositions = planesPosition;
+    this->selectSlice(this->currentSelectedSlice);
+}
+
+void SliceManipulator::selectSlice(SliceOrientation sliceOrientation) {
+    int valueIdxToCheck = 0;
+    switch(sliceOrientation) {
+        case SliceOrientation::X:
+            valueIdxToCheck = 0;
+            break;
+        case SliceOrientation::Y:
+            valueIdxToCheck = 1;
+            break;
+        case SliceOrientation::Z:
+            valueIdxToCheck = 2;
+            break;
+    };
+
+    glm::vec3 mean = glm::vec3(0., 0., 0.);
+    float nbSelectedPts = 0;
+    glm::vec3 selectionMin = glm::vec3(10000000, 10000000, 10000000);
+    glm::vec3 selectionMax = glm::vec3(-10000000, -10000000, -10000000);
+    for(int i = 0; i < this->manipulators.size(); ++i) {
+        if(std::abs(this->manipulators[i].getManipPosition()[valueIdxToCheck] - this->slicesPositions[valueIdxToCheck]) < this->selectionRadius) {
+            this->selectManipulator(&this->manipulators[i]);
+
+            glm::vec3 glmManipPos = this->manipulators[i].getManipPosition();
+            mean += glmManipPos;
+            nbSelectedPts += 1;
+            for(int j = 0; j < 3; ++j) {
+                if(selectionMin[j] > glmManipPos[j])
+                    selectionMin[j] = glmManipPos[j];
+                if(selectionMax[j] < glmManipPos[j])
+                    selectionMax[j] = glmManipPos[j];
+            }
+        }
+    }
+
+    if(nbSelectedPts > 0) {
+        mean /= nbSelectedPts;
+        this->kid_manip->reset();
+        this->kid_manip->isVisible = true;
+        this->kid_manip->setOrigine(qglviewer::Vec(mean[0], mean[1], mean[2]));
+        Q_EMIT needChangeKidManipulatorRadius(glm::length(selectionMax - selectionMin));
+        int idxInTransf = 0;
+        for(int i = 0; i < this->selectedManipulators.size(); ++i) {
+            if(this->selectedManipulators[i]) {
+                glm::vec3 glmManipPos = this->manipulators[i].getManipPosition();
+                this->kid_manip->addPoint(idxInTransf, qglviewer::Vec(glmManipPos[0], glmManipPos[1], glmManipPos[2]));
+                idxInTransf += 1;
+            }
+        }
+    } else {
+        this->kid_manip->setOrigine(qglviewer::Vec(-1000., -1000., -1000.));
+        this->kid_manip->isVisible = false;
+    }
+}
+
+void SliceManipulator::updateSliceToSelect(SliceOrientation sliceOrientation) {
+    this->deselectAllManipulators(true);
+    this->currentSelectedSlice = sliceOrientation;
+    this->selectSlice(this->currentSelectedSlice);
+}
+
+void SliceManipulator::assignAsHandle() {
+    ARAPMethod * deformer = dynamic_cast<ARAPMethod*>(this->mesh->meshDeformer);
+    if(!deformer) {
+        std::cout << "WARNING: can't assign handles if the deformer isn't ARAP." << std::endl;
+        return;
+    }
+    for(int i = 0; i < this->selectedManipulators.size(); ++i) {
+        if(this->selectedManipulators[i]) {
+            this->handles[i] = true;
+            deformer->setHandle(i);
+        }
+    }
+}
+
+void SliceManipulator::removeAllHandles() {
+    ARAPMethod * deformer = dynamic_cast<ARAPMethod*>(this->mesh->meshDeformer);
+    if(!deformer) {
+        std::cout << "WARNING: can't assign handles if the deformer isn't ARAP." << std::endl;
+        return;
+    }
+    for(int i = 0; i < this->handles.size(); ++i) {
+        this->handles[i] = false;
+        deformer->unsetHandle(i);
+    }
+}
+
+void SliceManipulator::moveKidManip() {
+    std::vector<glm::vec3> originalPoints;
+    std::vector<glm::vec3> targetPoints;
+    int idxInTransf = 0;
+    for(int i = 0; i < this->selectedManipulators.size(); ++i) {
+        if(this->selectedManipulators[i]) {
+            qglviewer::Vec deformedPoint;
+            int trueIndex;
+            this->kid_manip->getTransformedPoint(idxInTransf, trueIndex, deformedPoint);
+            idxInTransf += 1;
+            if(!std::isnan(deformedPoint[0]) && !std::isnan(deformedPoint[1]) && !std::isnan(deformedPoint[2])) {
+                originalPoints.push_back(this->manipulators[i].getManipPosition());
+                targetPoints.push_back(glm::vec3(deformedPoint[0], deformedPoint[1], deformedPoint[2]));
+            }
+        }
+    }
+    this->mesh->movePoints(originalPoints, targetPoints);
+    Q_EMIT needSendTetmeshToGPU();
 }
 
 }

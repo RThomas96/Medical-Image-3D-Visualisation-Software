@@ -308,6 +308,10 @@ void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scen
     QObject::connect(scene, SIGNAL(keyReleased(QKeyEvent*)), dynamic_cast<QObject*>(this->meshManipulator), SLOT(keyReleased(QKeyEvent*)));
     QObject::connect(scene, SIGNAL(mousePressed(QMouseEvent*)), dynamic_cast<QObject*>(this->meshManipulator), SLOT(mousePressed(QMouseEvent*)));
     QObject::connect(scene, SIGNAL(mouseReleased(QMouseEvent*)), dynamic_cast<QObject*>(this->meshManipulator), SLOT(mouseReleased(QMouseEvent*)));
+    if(type == MeshManipulatorType::SLICE) {
+        QObject::connect(scene, SIGNAL(planesMoved(const glm::vec3&)), dynamic_cast<SliceManipulator*>(this->meshManipulator), SLOT(movePlanes(const glm::vec3&)));
+        dynamic_cast<SliceManipulator*>(this->meshManipulator)->selectionRadius = this->planeViewRadius;
+    }
     // Scene->MeshManipulator->Selection
     QObject::connect(scene, SIGNAL(keyPressed(QKeyEvent*)), dynamic_cast<QObject*>(&this->meshManipulator->selection), SLOT(keyPressed(QKeyEvent*)));
     QObject::connect(scene, SIGNAL(keyReleased(QKeyEvent*)), dynamic_cast<QObject*>(&this->meshManipulator->selection), SLOT(keyReleased(QKeyEvent*)));
@@ -315,9 +319,7 @@ void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scen
     // MeshManipulator->DrawableMeshManipulator
     QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needRedraw()), this, SLOT(prepare()));
     QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needSendTetmeshToGPU()), scene, SLOT(sendFirstTetmeshToGPU()));
-    if(type == MeshManipulatorType::ARAP) {
-        QObject::connect(dynamic_cast<QObject*>(dynamic_cast<ARAPManipulator*>(this->meshManipulator)), SIGNAL(needChangeKidManipulatorRadius(float)), this, SLOT(setKidRadius(float)));
-    }
+    QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needChangeKidManipulatorRadius(float)), this, SLOT(setKidRadius(float)));
 
     // MeshManipulator->DrawableSelection
     QObject::connect(&this->meshManipulator->selection, &UITool::Selection::needToRedrawSelection, scene, &Scene::redrawSelection);

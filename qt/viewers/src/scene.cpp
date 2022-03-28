@@ -3674,15 +3674,15 @@ void Scene::updateTools(UITool::MeshManipulatorType tool) {
     if(tool == UITool::MeshManipulatorType::REGISTRATION) {
         QObject::connect(this, &Scene::rayIsCasted, this, [this](const glm::vec3& origin, const glm::vec3& direction) { emit dynamic_cast<UITool::CompManipulator*>(this->glMeshManipulator->meshManipulator)->rayIsCasted(origin, direction, this->getMinTexValue(), this->getMaxTexValue(), this->computePlanePositions());});
 
-    QObject::connect(this, SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)), dynamic_cast<UITool::CompManipulator*>(this->glMeshManipulator->meshManipulator), SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)));
+        QObject::connect(this, SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)), dynamic_cast<UITool::CompManipulator*>(this->glMeshManipulator->meshManipulator), SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)));
     }
-
 }
 
 void Scene::switchToSelectionModeRegistrationTool() {
     UITool::CompManipulator * manipulator = dynamic_cast<UITool::CompManipulator*>(this->glMeshManipulator->meshManipulator);
     if(!manipulator) {
         std::cout << "WARNING: not the right tool" << std::endl;
+        return;
     }
     manipulator->switchToSelectionMode();
 }
@@ -3691,6 +3691,7 @@ void Scene::validateRegistrationTool() {
     UITool::CompManipulator * manipulator = dynamic_cast<UITool::CompManipulator*>(this->glMeshManipulator->meshManipulator);
     if(!manipulator) {
         std::cout << "WARNING: not the right tool" << std::endl;
+        return;
     }
     manipulator->validate();
 }
@@ -3699,6 +3700,7 @@ void Scene::applyRegistrationTool() {
     UITool::CompManipulator * manipulator = dynamic_cast<UITool::CompManipulator*>(this->glMeshManipulator->meshManipulator);
     if(!manipulator) {
         std::cout << "WARNING: not the right tool" << std::endl;
+        return;
     }
     manipulator->apply();
 }
@@ -3718,6 +3720,7 @@ void Scene::clearRegistrationTool() {
     UITool::CompManipulator * manipulator = dynamic_cast<UITool::CompManipulator*>(this->glMeshManipulator->meshManipulator);
     if(!manipulator) {
         std::cout << "WARNING: not the right tool" << std::endl;
+        return;
     }
     manipulator->clearSelectedPoints();
 }
@@ -3726,6 +3729,7 @@ void Scene::assignMeshToRegisterRegistrationTool(const std::string& name) {
     UITool::CompManipulator * manipulator = dynamic_cast<UITool::CompManipulator*>(this->glMeshManipulator->meshManipulator);
     if(!manipulator) {
         std::cout << "WARNING: not the right tool" << std::endl;
+        return;
     }
     BaseMesh * meshToRegister = this->getBaseMesh(name);
     if(meshToRegister) {
@@ -3733,6 +3737,42 @@ void Scene::assignMeshToRegisterRegistrationTool(const std::string& name) {
         // TODO: beurk, improve these interactions
         manipulator->assignPreviousSelectedPoints(this->glMeshManipulator->persistantRegistrationToolSelectedPoints, this->glMeshManipulator->persistantRegistrationToolPreviousPoints, this->glMeshManipulator->persistantRegistrationToolSessions);
     }
+}
+
+void Scene::selectSlice(UITool::SliceOrientation sliceOrientation) {
+    UITool::SliceManipulator* manipulator = dynamic_cast<UITool::SliceManipulator*>(this->glMeshManipulator->meshManipulator);
+    if(!manipulator) {
+        std::cout << "WARNING: not the right tool" << std::endl;
+        return;
+    }
+    manipulator->selectSlice(sliceOrientation);
+}
+
+void Scene::changeSliceToSelect(UITool::SliceOrientation sliceOrientation) {
+    UITool::SliceManipulator* manipulator = dynamic_cast<UITool::SliceManipulator*>(this->glMeshManipulator->meshManipulator);
+    if(!manipulator) {
+        std::cout << "WARNING: not the right tool" << std::endl;
+        return;
+    }
+    manipulator->updateSliceToSelect(sliceOrientation);
+}
+
+void Scene::assignAsHandleSliceTool() {
+    UITool::SliceManipulator* manipulator = dynamic_cast<UITool::SliceManipulator*>(this->glMeshManipulator->meshManipulator);
+    if(!manipulator) {
+        std::cout << "WARNING: not the right tool" << std::endl;
+        return;
+    }
+    manipulator->assignAsHandle();
+}
+
+void Scene::removeAllHandlesSliceTool() {
+    UITool::SliceManipulator* manipulator = dynamic_cast<UITool::SliceManipulator*>(this->glMeshManipulator->meshManipulator);
+    if(!manipulator) {
+        std::cout << "WARNING: not the right tool" << std::endl;
+        return;
+    }
+    manipulator->removeAllHandles();
 }
 
 bool Scene::isCage(const std::string& name) {

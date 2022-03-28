@@ -78,6 +78,7 @@ protected:
     QPushButton*                    slice_X;
     QPushButton*                    slice_Y;
     QPushButton*                    slice_Z;
+    QPushButton*                    slice_handle;
     QPushButton*                    slice_clear;
 
 	QVBoxLayout*              layout_move;

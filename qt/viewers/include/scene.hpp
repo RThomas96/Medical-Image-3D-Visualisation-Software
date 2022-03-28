@@ -62,6 +62,7 @@ namespace UITool {
 		class MeshManipulator;
 }
 
+// TODO: do not belong here
 namespace UITool {
     enum class MeshManipulatorType {
         NONE,
@@ -71,6 +72,12 @@ namespace UITool {
         REGISTRATION,
         ARAP,
         SLICE
+    };
+
+    enum class SliceOrientation {
+        X,
+        Y,
+        Z
     };
 }
 
@@ -485,6 +492,10 @@ public slots:
     void undoRegistrationTool();
     void clearRegistrationTool();
     void assignMeshToRegisterRegistrationTool(const std::string& name);
+    void selectSlice(UITool::SliceOrientation sliceOrientation);
+    void changeSliceToSelect(UITool::SliceOrientation sliceOrientation);
+    void assignAsHandleSliceTool();
+    void removeAllHandlesSliceTool();
 
     // MeshDeformator slots
     void setNormalDeformationMethod(const std::string& name);

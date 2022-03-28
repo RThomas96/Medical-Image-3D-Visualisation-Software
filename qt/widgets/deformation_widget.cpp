@@ -49,6 +49,7 @@ GridDeformationWidget::GridDeformationWidget(Scene* scene, QWidget* parent) :
     this->slice_X = new QPushButton("X");
     this->slice_Y = new QPushButton("Y");
     this->slice_Z = new QPushButton("Z");
+    this->slice_handle = new QPushButton("Assign as handles");
     this->slice_clear = new QPushButton("Clear");
 
 	this->group_move = new QGroupBox("Deformation");
@@ -140,7 +141,8 @@ void GridDeformationWidget::setupLayouts() {
     this->layout_slice->addWidget(this->slice_Y, 2);
     this->layout_slice->addWidget(this->slice_Z, 3);
 	this->layout_selector->addLayout(this->layout_slice, 15);
-	this->layout_selector->addWidget(this->slice_clear, 16);
+	this->layout_selector->addWidget(this->slice_handle, 16);
+	this->layout_selector->addWidget(this->slice_clear, 17);
 
     this->handleMode->hide();
     this->bindMove->hide();
@@ -155,6 +157,7 @@ void GridDeformationWidget::setupLayouts() {
     this->slice_X->hide();
     this->slice_Y->hide();
     this->slice_Z->hide();
+    this->slice_handle->hide();
     this->slice_clear->hide();
 
 	this->layout_move->addWidget(this->radio_move_normal, 1);
@@ -230,6 +233,7 @@ void GridDeformationWidget::updateScene(Scene * scene, UITool::MeshManipulatorTy
     this->slice_X->hide();
     this->slice_Y->hide();
     this->slice_Z->hide();
+    this->slice_handle->hide();
     this->slice_clear->hide();
 
     if(isCage) {
@@ -267,6 +271,7 @@ void GridDeformationWidget::updateScene(Scene * scene, UITool::MeshManipulatorTy
             this->slice_X->show();
             this->slice_Y->show();
             this->slice_Z->show();
+            this->slice_handle->show();
             this->slice_clear->show();
 
             this->currentMoveMethod = 2;
@@ -379,5 +384,17 @@ void GridDeformationWidget::setupSignals(Scene * scene) {
             this->updateScene(scene, UITool::MeshManipulatorType::REGISTRATION, -1);
             scene->assignMeshToRegisterRegistrationTool(std::string((this->combo_mesh_register->itemText(this->combo_mesh_register->currentIndex())).toStdString()));
             this->registrationInitialize = true;
-    });
+    }); 
+
+    /***/
+
+	QObject::connect(this->slice_X, &QPushButton::clicked, this, [this, scene]() {scene->changeSliceToSelect(UITool::SliceOrientation::X);});
+
+	QObject::connect(this->slice_Y, &QPushButton::clicked, this, [this, scene]() {scene->changeSliceToSelect(UITool::SliceOrientation::Y);});
+
+	QObject::connect(this->slice_Z, &QPushButton::clicked, this, [this, scene]() {scene->changeSliceToSelect(UITool::SliceOrientation::Z);});
+
+	QObject::connect(this->slice_handle, &QPushButton::clicked, this, [this, scene]() {scene->assignAsHandleSliceTool();});
+
+	QObject::connect(this->slice_clear, &QPushButton::clicked, this, [this, scene]() {scene->removeAllHandlesSliceTool();});
 }

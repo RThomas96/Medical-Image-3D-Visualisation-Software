@@ -171,6 +171,7 @@ namespace UITool {
         //This signal is used to trigger a function in the scene
         //This should be removed when the grid will have its own "Drawable" class
         virtual void needSendTetmeshToGPU() = 0;
+        virtual void needChangeKidManipulatorRadius(float radius) = 0;
     };
 }
 Q_DECLARE_INTERFACE(UITool::MeshManipulator, "MeshManipulator")
@@ -210,6 +211,7 @@ namespace UITool {
     signals:
         void needRedraw() override;
         void needSendTetmeshToGPU() override;
+        void needChangeKidManipulatorRadius(float radius) override;
 	private:
 		std::vector<Manipulator> manipulators;
         std::vector<bool> manipulatorsToDisplay;
@@ -247,6 +249,7 @@ namespace UITool {
     signals:
         void needRedraw() override;
         void needSendTetmeshToGPU() override;
+        void needChangeKidManipulatorRadius(float radius) override;
         void rayIsCasted(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos);
 	private:
         void addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos);
@@ -279,6 +282,7 @@ namespace UITool {
     signals:
         void needRedraw() override;
         void needSendTetmeshToGPU() override;
+        void needChangeKidManipulatorRadius(float radius) override;
 
 	private:
         bool evenMode;
@@ -321,6 +325,7 @@ namespace UITool {
     signals:
         void needRedraw() override;
         void needSendTetmeshToGPU() override;
+        void needChangeKidManipulatorRadius(float radius) override;
         void rayIsCasted(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos);
         void pointIsClickedInPlanarViewer(const glm::vec3& position);
 
@@ -398,7 +403,7 @@ namespace UITool {
     signals:
         void needRedraw() override;
         void needSendTetmeshToGPU() override;
-        void needChangeKidManipulatorRadius(float radius);
+        void needChangeKidManipulatorRadius(float radius) override;
 
 	private:
 		std::vector<Manipulator> manipulators;
@@ -429,11 +434,19 @@ namespace UITool {
         void getManipulatorsToDisplay(std::vector<bool>& toDisplay) const override;
 
         void checkSelectedManipulators();
+        void deselectAllManipulators(bool keepHandles = false);
+
+        float selectionRadius;
 
     public slots:
         void displayManipulator(Manipulator * manipulatorToDisplay);
         void hideManipulator(Manipulator * manipulatorToDisplay);
         void movePlanes(const glm::vec3& planesPosition);
+        void selectSlice(SliceOrientation sliceOrientation);
+        void updateSliceToSelect(SliceOrientation sliceOrientation);
+        void assignAsHandle();
+        void removeAllHandles();
+        void moveKidManip();
 
         void moveManipulator(Manipulator * manipulator);
         void selectManipulator(Manipulator * manipulator);
@@ -446,12 +459,15 @@ namespace UITool {
     signals:
         void needRedraw() override;
         void needSendTetmeshToGPU() override;
+        void needChangeKidManipulatorRadius(float radius) override;
 	private:
 		std::vector<Manipulator> manipulators;
         std::vector<bool> manipulatorsToDisplay;
         std::vector<bool> selectedManipulators;
+        std::vector<bool> handles;
         
-
+        SliceOrientation currentSelectedSlice;
+        glm::vec3 slicesPositions;
 	};
 }	 // namespace UITool
 #endif
