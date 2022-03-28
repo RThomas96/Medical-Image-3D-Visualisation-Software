@@ -1,5 +1,7 @@
 #include "tiff_image.hpp"
 #include <algorithm>
+#include <limits.h>
+#include <bitset>
 
 SimpleTIFFImage::SimpleTIFFImage(const std::vector<std::string>& filename): tiffReader(new TIFFReader(filename)) {
     this->imgResolution = this->tiffReader->getImageResolution();
@@ -58,11 +60,15 @@ uint16_t SimpleTIFFImage::getValue(const glm::vec3& coord) const {
 }
 
 //Function to cast and insert for the get slice
+// Important: a cast do not change a value, so if we want to cast from an int we need to make a conversion, this is the usage of needInversion
 template <typename data_t>
-void castToUintAndInsert(data_t * values, std::vector<uint16_t>& res, int duplicate, int offset, std::pair<glm::vec3, glm::vec3> bboxes) {
+void castToUintAndInsert(data_t * values, std::vector<uint16_t>& res, int duplicate, int offset, std::pair<glm::vec3, glm::vec3> bboxes, bool needInversion = false) {
     for(int i = bboxes.first[0]; i < bboxes.second[0]; i+=offset) {
         for(int j = 0; j < duplicate; ++j)
-            res.push_back(static_cast<std::uint16_t>(values[i])); 
+            if(needInversion)
+                res.push_back(static_cast<uint16_t>((std::bitset<sizeof(data_t) * CHAR_BIT>(values[i]).flip(std::bitset<sizeof(data_t)*CHAR_BIT>().size()-1)).to_ulong())); 
+            else
+                res.push_back(static_cast<uint16_t>(values[i])); 
     }
 }
 
@@ -72,7 +78,7 @@ void castToLowPrecision(Image::ImageDataType imgDataType, const tdata_t& buf, st
         uint8_t * data = static_cast<std::uint8_t*>(buf);
         castToUintAndInsert(data, res, duplicate, offset, bboxes);
     } else if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_16)) {
-        uint16_t * data = static_cast<std::uint16_t*>(buf);
+        uint16_t * data = static_cast<uint16_t*>(buf);
         castToUintAndInsert(data, res, duplicate, offset, bboxes);
     } else if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_32)) {
         uint32_t * data = static_cast<std::uint32_t*>(buf);
@@ -153,12 +159,15 @@ Image::ImageDataType TIFFReader::getImageInternalDataType() const {
     uint16_t sf = SAMPLEFORMAT_VOID;
     int result	= TIFFGetField(tif, TIFFTAG_SAMPLEFORMAT, &sf);
     if (result != 1) {
+        std::cout << "WARNING: sample format no found in normal tiff tag" << std::endl;
     	// Try to get the defaulted version of the field :
     	result = TIFFGetFieldDefaulted(tif, TIFFTAG_SAMPLEFORMAT, &sf);
     	// Some files might still not get the default info, in that case interpret as UINT
     	if (result != 1) {
+            std::cout << "WARNING: sample format isn't contain in the tiff file, we assume that the data are unsigned" << std::endl;
     		sf = SAMPLEFORMAT_UINT;
     	}
+        std::cout << "WARNING: the tiff file reading may fail, try to manually change the sample format in the loading window to [signed] or [floating]" << std::endl;
     }
     
     uint16_t bps = 0;
