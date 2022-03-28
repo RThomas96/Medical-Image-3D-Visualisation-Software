@@ -1,12 +1,12 @@
 #include "tiff_image.hpp"
 #include <algorithm>
 
-SimpleImage::SimpleImage(const std::vector<std::string>& filename): tiffReader(new TIFFReader(filename)) {
+SimpleTIFFImage::SimpleTIFFImage(const std::vector<std::string>& filename): tiffReader(new TIFFReader(filename)) {
     this->imgResolution = this->tiffReader->getImageResolution();
     this->imgDataType = this->tiffReader->getImageInternalDataType(); 
 }
 
-Image::ImageDataType SimpleImage::getInternalDataType() const {
+Image::ImageDataType SimpleTIFFImage::getInternalDataType() const {
     return this->imgDataType;
 }
 
@@ -45,7 +45,7 @@ uint16_t getToLowPrecision(Image::ImageDataType imgDataType, const tdata_t& buf,
     } 
 }
 
-uint16_t SimpleImage::getValue(const glm::vec3& coord) const {
+uint16_t SimpleTIFFImage::getValue(const glm::vec3& coord) const {
     // If we read directly from the raw image we use Nearest Neighbor interpolation
     const glm::vec3 newCoord{std::floor(coord[0]), std::floor(coord[1]), std::floor(coord[2])};
     int imageIdx = newCoord[2];
@@ -101,7 +101,7 @@ void castToLowPrecision(Image::ImageDataType imgDataType, const tdata_t& buf, st
     } 
 }
 
-void SimpleImage::getSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel, std::pair<int, int>  offsets, std::pair<glm::vec3, glm::vec3> bboxes) const {
+void SimpleTIFFImage::getSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel, std::pair<int, int>  offsets, std::pair<glm::vec3, glm::vec3> bboxes) const {
     this->tiffReader->setImageToRead(sliceIdx);
 
     tdata_t buf;
