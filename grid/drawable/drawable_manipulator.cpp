@@ -1,7 +1,7 @@
 
 #include "drawable_manipulator.hpp"
 
-UITool::GL::MeshManipulator::MeshManipulator(SceneGL* sceneGL, BaseMesh * mesh, const std::vector<glm::vec3>& positions, float manipulatorRadius) : manipulatorRadius(manipulatorRadius), manipulatorMesh(Sphere(manipulatorRadius)), sceneGL(sceneGL), meshManipulator(new UITool::DirectManipulator(mesh, positions)) 
+UITool::GL::MeshManipulator::MeshManipulator(SceneGL* sceneGL, BaseMesh * mesh, const std::vector<glm::vec3>& positions, float manipulatorRadius) : manipulatorRadius(manipulatorRadius), planeViewRadius(manipulatorRadius), manipulatorMesh(Sphere(manipulatorRadius)), sceneGL(sceneGL), meshManipulator(new UITool::DirectManipulator(mesh, positions)) 
 {
     //QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), &UITool::MeshManipulator::needRedraw, this, &UITool::GL::MeshManipulator::prepare);
     QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needRedraw()), this, SLOT(prepare()));// This syntax is needed to cast an interface
@@ -182,7 +182,7 @@ void UITool::GL::MeshManipulator::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* m
 
     for(int i = 0; i < allPositions.size(); ++i) {
         for(int j = 0; j < 3; ++j) {
-            if(std::fabs(allPositions[i][j] - planeDisplacement[j]) < this->manipulatorRadius) {
+            if(std::fabs(allPositions[i][j] - planeDisplacement[j]) < this->planeViewRadius) {
                 if(state[i][0] == int(State::NONE) || state[i][0] == int(State::WAITING))
                     state[i] = glm::vec3(float(State::HIGHLIGHT), float(State::HIGHLIGHT), float(State::HIGHLIGHT));// HIGHLIGHT state
             }
@@ -247,6 +247,7 @@ void UITool::GL::MeshManipulator::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* m
 
 void UITool::GL::MeshManipulator::setRadius(float radius) { 
     this->manipulatorRadius = radius; 
+    this->planeViewRadius = radius; 
     this->prepare();
 }
 
@@ -292,9 +293,14 @@ void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scen
     } else if(type == MeshManipulatorType::REGISTRATION) {
         this->meshManipulator = new UITool::CompManipulator(mesh, positions);
         this->setRadius(this->meshManipulator->getManipulatorSize());
-    } else {
+    } else if(type == MeshManipulatorType::ARAP) {
         this->meshManipulator = new UITool::ARAPManipulator(mesh, positions);
         this->setRadius(this->meshManipulator->getManipulatorSize());
+        this->planeViewRadius = this->manipulatorRadius * 3.f;
+    } else if(type == MeshManipulatorType::SLICE) {
+        this->meshManipulator = new UITool::SliceManipulator(mesh, positions);
+        this->setRadius(this->meshManipulator->getManipulatorSize());
+        this->planeViewRadius = this->manipulatorRadius * 3.f;
     }
     this->prepare();
     // Scene->MeshManipulator

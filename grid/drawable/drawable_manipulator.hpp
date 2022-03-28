@@ -50,6 +50,7 @@ namespace UITool {
             std::vector<int> persistantRegistrationToolSessions;
 
 			float manipulatorRadius;
+			float planeViewRadius;
             float kidManipulatorRadius;
 			Sphere manipulatorMesh;
 
