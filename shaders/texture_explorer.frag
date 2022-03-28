@@ -121,6 +121,8 @@ vec4 stateToColor(in float current_state) {
     bool isSELECTED = abs(current_state - 2) < 0.001;
     bool isLOCK     = abs(current_state - 3) < 0.001;
     bool isMOVE     = abs(current_state - 4) < 0.001;
+    bool isWAITING   = abs(current_state - 5) < 0.001;
+    bool isHIGHLIGHT = abs(current_state - 6) < 0.001;
 
     vec4 manipulatorColor = vec4(0., 0., 0., 1.);
 
@@ -138,6 +140,14 @@ vec4 stateToColor(in float current_state) {
 
     if(isLOCK) {
         manipulatorColor = vec4(0.9, 0.9, 0.9, 1.);
+    }
+
+    if(isWAITING) {
+        manipulatorColor = vec4(218./255., 112./255., 214./255., 1.);
+    }
+
+    if(isHIGHLIGHT) {
+        manipulatorColor = vec4(255./255., 215./255., 0./255., 1.);
     }
 
     return manipulatorColor;
