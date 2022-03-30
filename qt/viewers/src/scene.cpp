@@ -3609,12 +3609,12 @@ void Scene::init() {
         this->getCage("cube_cage")->bindMovementWithDeformedMesh();
     }
     if(brain_demo) {
-        this->openGrid("brain_image_IRM", std::vector<std::string>{std::string("/home/thomas/data/Data/Mesh/cerveau.tiff")}, 2, glm::vec3(5, 5, 5), glm::vec3(39.*2., 39.*2., 500.*2.));
-        this->openMesh("brain_mesh_lightsheet", "/home/thomas/data/Data/Mesh/cerveau_cage.off");
-        this->getMesh("brain_mesh_lightsheet")->scale(glm::vec3(4.79, 4.79, 3.5));
-        this->getMesh("brain_mesh_lightsheet")->setOrigin(this->getBaseMesh("brain_image_IRM")->getOrigin());
-        this->getMesh("brain_mesh_lightsheet")->rotate(glm::mat3(glm::rotate(glm::radians(90.f), glm::vec3(1., 0., 0.))));
-        this->getMesh("brain_mesh_lightsheet")->rotate(glm::mat3(glm::rotate(glm::radians(180.f), glm::vec3(0., 0., 1.))));
+        this->openGrid("brain_image_IRM", std::vector<std::string>{std::string("/home/thomas/data/Data/Mesh/cerveau.tiff")}, 2, glm::vec3(5, 5, 5), glm::vec3(3.9*2., 3.9*2., 50.*2.));
+        this->openMesh("brain_mesh_lightsheet", "/home/thomas/data/Data/Mesh/cerveau_aligned.off");
+        //this->getMesh("brain_mesh_lightsheet")->scale(glm::vec3(4.79, 4.79, 3.5));
+        //this->getMesh("brain_mesh_lightsheet")->setOrigin(this->getBaseMesh("brain_image_IRM")->getOrigin());
+        //this->getMesh("brain_mesh_lightsheet")->rotate(glm::mat3(glm::rotate(glm::radians(90.f), glm::vec3(1., 0., 0.))));
+        //this->getMesh("brain_mesh_lightsheet")->rotate(glm::mat3(glm::rotate(glm::radians(180.f), glm::vec3(0., 0., 1.))));
 
         std::cout << "Max min brain IRM" << this->getBaseMesh("brain_image_IRM")->bbMax << std::endl;
         std::cout << "Max min brain IRM" << this->getBaseMesh("brain_image_IRM")->bbMin << std::endl;

@@ -290,6 +290,8 @@ void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scen
     } else if(type == MeshManipulatorType::POSITION) {
         this->meshManipulator = new UITool::PositionManipulator(mesh, positions);
         this->setRadius(this->meshManipulator->getManipulatorSize() * 10.f);
+        glm::vec3 dim = this->meshManipulator->mesh->getDimensions();
+        this->setKidRadius((std::max(dim[0], std::max(dim[1], dim[2])))*0.5);
     } else if(type == MeshManipulatorType::REGISTRATION) {
         this->meshManipulator = new UITool::CompManipulator(mesh, positions);
         this->setRadius(this->meshManipulator->getManipulatorSize());

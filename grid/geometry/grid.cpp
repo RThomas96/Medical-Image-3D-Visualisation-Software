@@ -271,6 +271,7 @@ Sampler::Sampler(const std::vector<std::string>& filename, int subsample): image
 
     std::cout << "Sampler initialized..." << std::endl;
     std::cout << "Sampler resolution: " << this->getSamplerDimension() << std::endl;
+    std::cout << "Resolution ratio: " << this->resolutionRatio << std::endl;
     std::cout << "No subregion selected" << std::endl;
 }
 
