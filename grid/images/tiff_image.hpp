@@ -7,8 +7,13 @@
 #include <tiffio.h>
 #include "cache.hpp"
 #include <fstream>
+#include <sys/stat.h>
 
 #include <QString>
+#include <QDir>
+#include <QFileInfo>
+#include <string>
+#include <QXmlStreamReader>
 
 //! \defgroup img Image
 //! \addtogroup img
@@ -47,6 +52,7 @@ struct TIFFReader {
 
 enum class ImageFormat {
     TIFF,
+    OME_TIFF,
     DIM_IMA
 };
 
@@ -78,6 +84,47 @@ struct SimpleTIFFImage {
     //! @note As the z axis is fixed (the sliceIdx parameter), you cannot change the z resolution
     void getSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel, std::pair<int, int>  offsets, std::pair<glm::vec3, glm::vec3> bboxes) const;
 };
+
+inline bool fileExist (const std::string& name) {
+  struct stat buffer;
+  struct stat lbuffer;// For symbolic link
+  return (stat (name.c_str(), &buffer) == 0) || (lstat (name.c_str(), &lbuffer) == 0);
+}
+
+struct SimpleOMETIFFImage : public SimpleTIFFImage {
+    SimpleOMETIFFImage(const std::vector<std::string>& filename) : SimpleTIFFImage(filename) {
+        std::cout << "Start of the OME-TIFF format parsing..." << std::endl;
+        QDir path = QDir(QFileInfo(filename[0].c_str()).absolutePath());
+        this->tiffReader->filenames.clear();
+        char * xmlData; 
+        TIFFGetField(this->tiffReader->tif, TIFFTAG_IMAGEDESCRIPTION, &xmlData);
+        std::string strData(xmlData);
+        if(!strData.empty()) {
+            QXmlStreamReader xmlReader(xmlData); 
+            while (!xmlReader.atEnd()) {
+                xmlReader.readNextStartElement();
+                if(xmlReader.name().toString() == QString("UUID")) {
+                    if(xmlReader.attributes().hasAttribute("FileName")) {
+                        QString finalFileName = path.filePath(xmlReader.attributes().value("FileName").toString());
+                        if(fileExist(finalFileName.toStdString())) {
+                            this->tiffReader->filenames.push_back(finalFileName.toStdString());
+                        } else {
+                            std::cout << "WARNING: [" << finalFileName.toStdString() << "] file doesn't exist but is present in the XML." << std::endl;
+                        }
+                    }
+                }
+            }
+            std::cout << "[" << this->tiffReader->filenames.size() << "] files found" << std::endl;
+            if (xmlReader.hasError()) {
+                std::cout << "WARNING: the XML file contained in the first ome tiff file's comment has errors." << std::endl;
+            }
+            this->imgResolution[2] = this->tiffReader->filenames.size();
+        } else {
+            std::cout << "WARNING: no XML data has been found in the first ome.tiff file. Those files will be parse as regular tiff files." << std::endl;
+        }
+    }
+};
+
 
 struct SimpleDIMImage {
 
@@ -222,6 +269,7 @@ struct SimpleImage {
     ImageFormat imageFormat;
 
     SimpleTIFFImage * tiffImageReader;
+    SimpleOMETIFFImage * omeTiffImageReader;
     SimpleDIMImage * dimImageReader;
 
     glm::vec3 imgResolution;
@@ -230,17 +278,29 @@ struct SimpleImage {
     SimpleImage(const std::vector<std::string>& filename) {
         std::string extension = filename[0].substr(filename[0].find_last_of(".") + 1);
         if(filename.size() > 0 || extension == "tif" || extension == "tiff") {
-            this->imageFormat = ImageFormat::TIFF;
-            this->tiffImageReader = new SimpleTIFFImage(filename);
-            this->dimImageReader = nullptr;
-            this->imgResolution = this->tiffImageReader->imgResolution;
-            this->imgDataType = this->tiffImageReader->imgDataType;
-            return;
+            if(filename[0].substr(filename[0].find_first_of(".") + 1).find("ome")!=std::string::npos) {
+                this->imageFormat = ImageFormat::OME_TIFF;
+                this->omeTiffImageReader = new SimpleOMETIFFImage(filename);
+                this->tiffImageReader = nullptr;
+                this->dimImageReader = nullptr;
+                this->imgResolution = this->omeTiffImageReader->imgResolution;
+                this->imgDataType = this->omeTiffImageReader->imgDataType;
+                return;
+            } else {
+                this->imageFormat = ImageFormat::TIFF;
+                this->tiffImageReader = new SimpleTIFFImage(filename);
+                this->omeTiffImageReader = nullptr;
+                this->dimImageReader = nullptr;
+                this->imgResolution = this->tiffImageReader->imgResolution;
+                this->imgDataType = this->tiffImageReader->imgDataType;
+                return;
+            }
         }
 
         if(extension == "dim" || extension == "ima") {
             this->imageFormat = ImageFormat::DIM_IMA;
             this->tiffImageReader = nullptr;
+            this->omeTiffImageReader = nullptr;
             this->dimImageReader = new SimpleDIMImage(filename);
             this->imgResolution = this->dimImageReader->imgResolution;
             this->imgDataType = this->dimImageReader->imgDataType;
@@ -261,6 +321,9 @@ struct SimpleImage {
             case ImageFormat::DIM_IMA :
                 return this->dimImageReader->getValue(coord);
                 break;
+            case ImageFormat::OME_TIFF :
+                return this->omeTiffImageReader->getValue(coord);
+                break;
         }
     }
 
@@ -275,6 +338,9 @@ struct SimpleImage {
                 break;
             case ImageFormat::DIM_IMA :
                 this->dimImageReader->getSlice(sliceIdx, result, nbChannel, offsets, bboxes);
+                break;
+            case ImageFormat::OME_TIFF :
+                this->omeTiffImageReader->getSlice(sliceIdx, result, nbChannel, offsets, bboxes);
                 break;
         }
     }
