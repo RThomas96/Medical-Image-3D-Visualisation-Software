@@ -3467,6 +3467,7 @@ bool Scene::openGrid(const std::string& name, const std::vector<std::string>& fi
         std::cout << "INFO: image too large to fit in the GPU, memory [" << dataMemory / 1073741824. << "] Go" << std::endl;
     }
 
+    autofitMemoryRequired = false;
     if(autofitMemoryRequired) {
         std::cout << "Auto-fit memory activated" << std::endl;
         finalSubsample = std::max(2., dataMemory / (gpuMemoryInBytes*double(percentageOfMemory)));// We want to fill 70% of the memory

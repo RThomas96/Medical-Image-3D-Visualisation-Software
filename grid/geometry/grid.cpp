@@ -234,9 +234,11 @@ Sampler::Sampler(const std::vector<std::string>& filename, int subsample, const 
     this->subregionMax = bbox.second;
 
     // Cache management
-    this->useCache = true;
-    this->cache = new Cache(this->getSamplerDimension());
-    this->fillCache();
+    this->useCache = false;
+    if(this->useCache) {
+        this->cache = new Cache(this->getSamplerDimension());
+        this->fillCache();
+    }
 
     std::cout << "Sampler initialized..." << std::endl;
     std::cout << "Sampler resolution: " << this->getSamplerDimension() << std::endl;
@@ -265,9 +267,11 @@ Sampler::Sampler(const std::vector<std::string>& filename, int subsample): image
     this->subregionMax = this->bbMax;
 
     // Cache management
-    this->useCache = true;
-    this->cache = new Cache(this->getSamplerDimension());
-    this->fillCache();
+    this->useCache = false;
+    if(this->useCache) {
+        this->cache = new Cache(this->getSamplerDimension());
+        this->fillCache();
+    }
 
     std::cout << "Sampler initialized..." << std::endl;
     std::cout << "Sampler resolution: " << this->getSamplerDimension() << std::endl;
@@ -286,9 +290,11 @@ Sampler::Sampler(const std::vector<std::string>& filename): image(new SimpleImag
     this->subregionMax = this->bbMax;
 
     // Cache management
-    this->useCache = true;
-    this->cache = new Cache(this->getSamplerDimension());
-    this->fillCache();
+    this->useCache = false;
+    if(this->useCache) {
+        this->cache = new Cache(this->getSamplerDimension());
+        this->fillCache();
+    }
 }
 
 Sampler::Sampler(glm::vec3 size): image(nullptr) {
@@ -302,8 +308,10 @@ Sampler::Sampler(glm::vec3 size): image(nullptr) {
     this->subregionMax = this->bbMax;
 
     // Cache management
-    this->useCache = true;
-    this->cache = new Cache(this->getSamplerDimension());
+    this->useCache = false;
+    if(this->useCache) {
+        this->cache = new Cache(this->getSamplerDimension());
+    }
     // We do not fill the cache as we do not have associated image
     //this->fillCache();
 }
@@ -361,8 +369,11 @@ void Sampler::fillCache() {
 uint16_t Sampler::getValue(const glm::vec3& coord, InterpolationMethod interpolationMethod, ResolutionMode resolutionMode) const {
     // Convert from grid coord to image coord
     if(resolutionMode == ResolutionMode::SAMPLER_RESOLUTION) {
-        //return this->image->getValue(coord * this->resolutionRatio);
-        return this->cache->getValue(coord, interpolationMethod);
+        if(this->useCache) {
+            return this->cache->getValue(coord, interpolationMethod);
+        } else {
+            return this->image->getValue(coord * this->resolutionRatio);
+        }
     } else {
         if(!this->image) {
             std::cerr << "[4001] ERROR: Try to [getValue()] at [ResolutionMode::FULL_RESOLUTION] on a grid without attached image" << std::endl;
