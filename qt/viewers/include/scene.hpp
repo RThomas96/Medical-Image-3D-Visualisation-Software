@@ -226,7 +226,6 @@ private:
 	GLuint sphere_size_to_draw;
 	std::unique_ptr<ShaderCompiler> shaderCompiler;
 	void printAllUniforms(GLuint _shader_program);
-	GLint gl_limit_max_texture_size;// Keeps track of the limits of the GL
 
     /* Functions */
 public:
@@ -543,6 +542,7 @@ public slots:
     //void addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction, bool onSurface);
 public:
 
+    int maximumTextureSize;// Set by the viewer
     int gridToDraw = -1;
 
     std::string activeMesh;
@@ -556,7 +556,7 @@ public:
 	Image::bbox_t sceneDataBB;
 
     bool bunny_demo = false;
-    bool bone_demo = true;
+    bool bone_demo = false;
     bool brain_demo = false;
     bool cage_demo = false;
 };

@@ -109,7 +109,7 @@ struct SimpleOMETIFFImage : public SimpleTIFFImage {
                         if(fileExist(finalFileName.toStdString())) {
                             this->tiffReader->filenames.push_back(finalFileName.toStdString());
                         } else {
-                            std::cout << "WARNING: [" << finalFileName.toStdString() << "] file doesn't exist but is present in the XML." << std::endl;
+                            //std::cout << "WARNING: [" << finalFileName.toStdString() << "] file doesn't exist but is present in the XML." << std::endl;
                         }
                     }
                 }

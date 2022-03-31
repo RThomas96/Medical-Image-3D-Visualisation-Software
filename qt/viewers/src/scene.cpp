@@ -194,10 +194,10 @@ void Scene::initGl(QOpenGLContext* _context) {
 	// need to initialize the OpenGL objects now. Shaders, VAOs, VBOs.
 
     // Initialize limits
-	this->gl_limit_max_texture_size = 0;
+	this->maximumTextureSize = 0;
 
-	glGetIntegerv(GL_MAX_3D_TEXTURE_SIZE, &gl_limit_max_texture_size);
-	std::cerr << "Info : max texture size was set to : " << this->gl_limit_max_texture_size << "\n";
+	glGetIntegerv(GL_MAX_3D_TEXTURE_SIZE, &maximumTextureSize);
+	std::cerr << "Info : max texture size was set to : " << this->maximumTextureSize << "\n";
 
 	this->newSHADERS_generateColorScales();
 
@@ -227,8 +227,8 @@ void Scene::initGl(QOpenGLContext* _context) {
 void Scene::generateColorScales() {
 	TextureUpload colorScaleUploadParameters;
 
-	std::size_t textureSize = this->gl_limit_max_texture_size / 2u;
-	float textureSize_f		= static_cast<float>(this->gl_limit_max_texture_size / 2u);
+	std::size_t textureSize = this->maximumTextureSize / 2u;
+	float textureSize_f		= static_cast<float>(this->maximumTextureSize / 2u);
 
 	std::vector<glm::vec3> colorScaleData_greyscale(textureSize);
 	std::vector<glm::vec3> colorScaleData_hsv2rgb(textureSize);
@@ -2791,8 +2791,8 @@ void Scene::signal_updateUserColorScales() {
 void Scene::newSHADERS_updateUserColorScales() {
 	this->shouldUpdateUserColorScales = false;
 	TextureUpload colorScaleUploadParameters;
-	std::size_t textureSize = this->gl_limit_max_texture_size / 2u;
-	float textureSize_f		= static_cast<float>(this->gl_limit_max_texture_size / 2u);
+	std::size_t textureSize = this->maximumTextureSize / 2u;
+	float textureSize_f		= static_cast<float>(this->maximumTextureSize / 2u);
 	std::vector<glm::vec3> colorScaleData_user0(textureSize);
 	std::vector<glm::vec3> colorScaleData_user1(textureSize);
 
@@ -3431,13 +3431,56 @@ bool Scene::openCage(const std::string& name, const std::string& filename, BaseM
 
 bool Scene::openGrid(const std::string& name, const std::vector<std::string>& filenames, const int subsample, const glm::vec3& sizeTetmesh, const glm::vec3& sizeVoxel, const std::pair<glm::vec3, glm::vec3>& bbox) {
 
+    float percentageOfMemory = 0.7;
+    int gpuMemoryInGB = 2;
+    double gpuMemoryInBytes = double(gpuMemoryInGB) * double(1073741824.);
+
     Grid * newGrid = nullptr;
+
+    int finalSubsample = subsample;
+    bool autofitSizeRequired = false;
+    bool autofitMemoryRequired = false;
+
+    TIFFReader tiffReader(filenames);
+    glm::vec3 imgResolution = tiffReader.getImageResolution(); 
+    float maxResolution = std::max(imgResolution[0], std::max(imgResolution[1], imgResolution[2]));
+    if(maxResolution > this->maximumTextureSize) {
+        autofitSizeRequired = true;
+        std::cout << "INFO: image too large to fit in the GPU, size " << imgResolution << std::endl;
+    }
+
+    if(autofitSizeRequired) {// Auto-fit size activated
+        std::cout << "Auto-fit size activated" << std::endl;
+        finalSubsample = std::max(2.f, std::ceil(maxResolution / (float(this->maximumTextureSize))));
+        std::cout << "Subsample set to [" << finalSubsample << "]" << std::endl;
+    }
+
+    double dataMemory = 1;
+    for(int dim = 0; dim < 3; ++dim) {
+        dataMemory *= imgResolution[dim];// Because data are cast as uint16_t internally
+    }
+    dataMemory *= 4;
+    std::cout << "GPU memory available: [" << gpuMemoryInBytes / 1073741824. << "] Go" << std::endl;
+    std::cout << "Data memory usage: [" << dataMemory / 1073741824. << "] Go" << std::endl;
+    if(gpuMemoryInBytes < dataMemory) {
+        autofitMemoryRequired = true;
+        std::cout << "INFO: image too large to fit in the GPU, memory [" << dataMemory / 1073741824. << "] Go" << std::endl;
+    }
+
+    if(autofitMemoryRequired) {
+        std::cout << "Auto-fit memory activated" << std::endl;
+        finalSubsample = std::max(2., dataMemory / (gpuMemoryInBytes*double(percentageOfMemory)));// We want to fill 70% of the memory
+        std::cout << "Subsample set to [" << finalSubsample << "]" << std::endl;
+        std::cout << "GPU memory used by the data: [" << percentageOfMemory * 100. << "%]" << std::endl;
+        std::cout << "GPU memory usage reduced to: [" << (dataMemory/double(finalSubsample))/1073741824. << "] Go" << std::endl;
+    }
+
 
     bool bboxUsed = glm::distance(bbox.first, bbox.second) > 0.00001;
     if(bboxUsed)
-	    newGrid = new Grid(filenames, subsample, bbox);
+	    newGrid = new Grid(filenames, finalSubsample, bbox);
     else
-	    newGrid = new Grid(filenames, subsample);
+	    newGrid = new Grid(filenames, finalSubsample);
 
     newGrid->buildTetmesh(sizeTetmesh, sizeVoxel);
 
