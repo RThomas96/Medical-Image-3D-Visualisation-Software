@@ -43,7 +43,7 @@ ApplyCageWidget::ApplyCageWidget(Scene* scene, QWidget* parent) {
 }
 
 void ApplyCageWidget::selectFile() {
-    QString file = QFileDialog::getOpenFileName(this, tr("Select the cage to apply"), QDir::currentPath(), tr("OFF Files (*.off)"));
+    QString file = QFileDialog::getOpenFileName(this, tr("Select the cage to apply"), QDir::currentPath(), tr("OFF Files (*.off)"), 0, QFileDialog::DontUseNativeDialog);
     this->selectedFile->setText(file);
 }
 

@@ -77,7 +77,7 @@ void OpenMeshWidget::setPotentialCages(const QStringList& namesOfPotentialCages)
 }
 
 void OpenMeshWidget::selectFile() {
-    QString file = QFileDialog::getOpenFileName(this, tr("Select the mesh to load"), QDir::currentPath(), tr("OFF Files (*.off)"));
+    QString file = QFileDialog::getOpenFileName(this, tr("Select the mesh to load"), QDir::currentPath(), tr("OFF Files (*.off)"), 0, QFileDialog::DontUseNativeDialog);
     this->selectedFile->setText(file);
 
     QFileInfo info(file);

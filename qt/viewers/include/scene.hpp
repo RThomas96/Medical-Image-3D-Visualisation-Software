@@ -513,7 +513,9 @@ public slots:
     bool openCage(const std::string& name, const std::string& filename, const std::string& surfaceMeshToDeformName, const bool MVC = true, const glm::vec4& color = glm::vec4(1., 0., 0., 0.3));
     bool linkCage(const std::string& cageName, BaseMesh * meshToDeform, const bool MVC);
 
-    bool openGrid(const std::string& name, const std::vector<std::string>& filenames, const int subsample, const glm::vec3& sizeTetmesh, const glm::vec3& sizeVoxel, const std::pair<glm::vec3, glm::vec3>& bbox = std::pair<glm::vec3, glm::vec3>{glm::vec3(0., 0., 0.), glm::vec3(0., 0., 0.)});
+    bool openGridWithGridTetmesh(const std::string& name, const std::vector<std::string>& filenames, const int subsample, const glm::vec3& sizeTetmesh, const glm::vec3& sizeVoxel, const std::pair<glm::vec3, glm::vec3>& bbox = std::pair<glm::vec3, glm::vec3>{glm::vec3(0., 0., 0.), glm::vec3(0., 0., 0.)});
+    bool openGrid(const std::string& name, const std::vector<std::string>& filenames, const std::string& tetMeshFileName, const int subsample, const glm::vec3& sizeTetmesh, const glm::vec3& sizeVoxel, const std::pair<glm::vec3, glm::vec3>& bbox = std::pair<glm::vec3, glm::vec3>{glm::vec3(0., 0., 0.), glm::vec3(0., 0., 0.)});
+
     SurfaceMesh * getMesh(const std::string& name);
     BaseMesh * getBaseMesh(const std::string& name);
     int getMeshIdx(const std::string& name);

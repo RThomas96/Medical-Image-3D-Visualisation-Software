@@ -191,6 +191,7 @@ void GridLoaderWidget::loadNewGridAPI() {
 		msgBox->critical(this, "Error !", "No filenames provided !");
 		return;
 	}
+	QString tetMeshFileName = QFileDialog::getOpenFileName(nullptr, "Open TIFF images (first channel)", this->basePath.path(), "MESH files (*.mesh)", 0, QFileDialog::DontUseNativeDialog);
 	this->basePath.setPath(QFileInfo(filenames[0]).path());
 
     int subsample = 1;
@@ -208,9 +209,9 @@ void GridLoaderWidget::loadNewGridAPI() {
 
 	if(this->group_bbox->isChecked()) {
         std::pair<glm::vec3, glm::vec3> bbox{glm::vec3(this->spinbox_bboxMin_x->value(), this->spinbox_bboxMin_y->value(), this->spinbox_bboxMin_z->value()), glm::vec3(this->spinbox_bboxMax_x->value(), this->spinbox_bboxMax_y->value(), this->spinbox_bboxMax_z->value())};
-	    this->viewer->newAPI_loadGrid("grid", filenamesAsString, subsample, sizeTetmesh, sizeVoxel, bbox);
+	    this->viewer->newAPI_loadGrid("grid", filenamesAsString, tetMeshFileName.toStdString(), subsample, sizeTetmesh, sizeVoxel, bbox);
     } else {
-	    this->viewer->newAPI_loadGrid("grid", filenamesAsString, subsample, sizeTetmesh, sizeVoxel);
+	    this->viewer->newAPI_loadGrid("grid", filenamesAsString, tetMeshFileName.toStdString(), subsample, sizeTetmesh, sizeVoxel);
     }
 	this->close();
 }

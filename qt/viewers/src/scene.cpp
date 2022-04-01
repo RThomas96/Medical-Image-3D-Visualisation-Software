@@ -576,7 +576,7 @@ uint16_t Scene::sendGridValuesToGPU(int gridIdx) {
 
     dimensions[0] = dimensions[0] * dimensions[3];// Because we have "a" value
 
-    bool addArticialBoundaries = true;
+    bool addArticialBoundaries = false;
 
     int sliceI = 0;
 	for (std::size_t s = 0; s < nbSlice; ++s) {
@@ -1047,7 +1047,7 @@ void Scene::drawGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camP
 	if (grid->gridTexture > 0) {
 		glUseProgram(this->program_VolumetricViewer);
 
-        this->sendTetmeshToGPU(this->gridToDraw, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS));
+        //this->sendTetmeshToGPU(this->gridToDraw, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS));
 
 		this->prepareUniformsGridVolumetricView(mvMat, pMat, camPos, grid);
 
@@ -3429,7 +3429,11 @@ bool Scene::openCage(const std::string& name, const std::string& filename, BaseM
     return true;
 }
 
-bool Scene::openGrid(const std::string& name, const std::vector<std::string>& filenames, const int subsample, const glm::vec3& sizeTetmesh, const glm::vec3& sizeVoxel, const std::pair<glm::vec3, glm::vec3>& bbox) {
+bool Scene::openGridWithGridTetmesh(const std::string& name, const std::vector<std::string>& filenames, const int subsample, const glm::vec3& sizeTetmesh, const glm::vec3& sizeVoxel, const std::pair<glm::vec3, glm::vec3>& bbox) {
+    return this->openGrid(name, filenames, std::string(""), subsample, sizeTetmesh, sizeVoxel, bbox);
+}
+
+bool Scene::openGrid(const std::string& name, const std::vector<std::string>& filenames, const std::string& tetMeshFileName, const int subsample, const glm::vec3& sizeTetmesh, const glm::vec3& sizeVoxel, const std::pair<glm::vec3, glm::vec3>& bbox) {
 
     float percentageOfMemory = 0.7;
     int gpuMemoryInGB = 2;
@@ -3483,7 +3487,11 @@ bool Scene::openGrid(const std::string& name, const std::vector<std::string>& fi
     else
 	    newGrid = new Grid(filenames, finalSubsample);
 
-    newGrid->buildTetmesh(sizeTetmesh, sizeVoxel);
+    if(tetMeshFileName.empty()) {
+        newGrid->buildTetmesh(sizeTetmesh, sizeVoxel);
+    } else {
+        newGrid->loadMESH(tetMeshFileName);
+    }
 
 	GridGLView::Ptr gridView = std::make_shared<GridGLView>(newGrid);
 	this->grids.push_back(gridView);
@@ -3645,7 +3653,7 @@ void Scene::changeActiveMesh(const std::string& name) {
 
 void Scene::init() {
     if(cage_demo) {
-        this->openGrid("brain_image_IRM", std::vector<std::string>{std::string("/home/thomas/data/Data/Mesh/thigh_f_scaled.tif")}, 2, glm::vec3(5, 5, 5), glm::vec3(1., 1., 1.));
+        this->openGridWithGridTetmesh("brain_image_IRM", std::vector<std::string>{std::string("/home/thomas/data/Data/Mesh/thigh_f_scaled.tif")}, 2, glm::vec3(5, 5, 5), glm::vec3(1., 1., 1.));
         this->openCage("cube_cage", "/home/thomas/data/Data/Mesh/cube.off", this->getBaseMesh("brain_image_IRM"), false);
         this->getCage("cube_cage")->unbindMovementWithDeformedMesh();
         this->getCage("cube_cage")->scaleToBBox(this->getBaseMesh("brain_image_IRM")->bbMin, this->getBaseMesh("brain_image_IRM")->bbMax);
@@ -3653,7 +3661,7 @@ void Scene::init() {
         this->getCage("cube_cage")->bindMovementWithDeformedMesh();
     }
     if(brain_demo) {
-        this->openGrid("brain_image_IRM", std::vector<std::string>{std::string("/home/thomas/data/Data/Mesh/cerveau.tiff")}, 2, glm::vec3(5, 5, 5), glm::vec3(3.9*2., 3.9*2., 50.*2.));
+        this->openGridWithGridTetmesh("brain_image_IRM", std::vector<std::string>{std::string("/home/thomas/data/Data/Mesh/cerveau.tiff")}, 2, glm::vec3(5, 5, 5), glm::vec3(3.9*2., 3.9*2., 50.*2.));
         this->openMesh("brain_mesh_lightsheet", "/home/thomas/data/Data/Mesh/cerveau_aligned.off");
         //this->getMesh("brain_mesh_lightsheet")->scale(glm::vec3(4.79, 4.79, 3.5));
         //this->getMesh("brain_mesh_lightsheet")->setOrigin(this->getBaseMesh("brain_image_IRM")->getOrigin());
@@ -3664,7 +3672,7 @@ void Scene::init() {
         std::cout << "Max min brain IRM" << this->getBaseMesh("brain_image_IRM")->bbMin << std::endl;
     }
     if(bone_demo) {
-        this->openGrid("grid", std::vector<std::string>{std::string("/home/thomas/data/Data/Mesh/thigh_f_scaled.tif")}, 2, glm::vec3(5, 5, 5), glm::vec3(1, 1, 1));
+        this->openGridWithGridTetmesh("grid", std::vector<std::string>{std::string("/home/thomas/data/Data/Mesh/thigh_f_scaled.tif")}, 2, glm::vec3(5, 5, 5), glm::vec3(1, 1, 1));
         //this->openMesh("bone", "/home/thomas/data/Data/Mesh/femur_m.off");
         this->openMesh("bone", "/home/thomas/data/Data/Mesh/femur_m_aligned_2.off");
 

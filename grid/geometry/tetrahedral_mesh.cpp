@@ -2,6 +2,7 @@
 #include "../deformation/mesh_deformer.hpp"
 #include <map>
 #include <algorithm>
+#include <fstream>
 
 
 // This function make the link between a face of a tetrahedron and its points
@@ -384,4 +385,83 @@ void TetMesh::setARAPDeformationMethod() {
         delete this->meshDeformer;
         this->meshDeformer = new ARAPMethod(this);
     }
+}
+
+void TetMesh::loadMESH(std::string const &filename) {
+
+    std::ifstream myfile(filename);
+
+    if (!myfile.is_open())
+        exit (EXIT_FAILURE);
+
+    std::string meshString;
+    unsigned int sizeV, sizeT, sizeTet, dimension;
+
+    myfile >> meshString;
+    while (meshString.find("Dimension")==std::string::npos)
+        myfile >> meshString;
+
+    myfile>> dimension;
+    std::cout << meshString << " " << dimension << std::endl;
+    while (meshString.find("Vertices")==std::string::npos)
+        myfile >> meshString;
+
+    myfile >> sizeV;
+    std::cout << meshString << " " << sizeV << std::endl;
+
+    int s;
+    for (unsigned int i = 0; i < sizeV; i++) {
+        double p[3];
+        for (unsigned int j = 0; j < 3; j++)
+            myfile >> p[j];
+
+        this->vertices.push_back(glm::vec3(p[0], p[1], p[2]));
+        myfile >> s;
+    }
+
+    while (meshString.find("Triangles")==std::string::npos)
+        myfile >> meshString;
+
+    myfile >> sizeT;
+    std::cout << meshString << " " << sizeT << std::endl;
+    for (unsigned int i = 0; i < sizeT; i++) {
+        unsigned int v[3];
+        for (unsigned int j = 0; j < 3; j++)
+            myfile >> v[j];
+
+        myfile >> s;
+
+        //triangles.push_back(Triangle(v[0]-1, v[1]-1, v[2]-1, s));
+    }
+
+    if( dimension == 3 ){
+        while (meshString.find("Tetrahedra")==std::string::npos)
+            myfile >> meshString;
+
+        myfile >> sizeTet;
+        std::cout << meshString << " " << sizeTet << std::endl;
+        for (unsigned int i = 0; i < sizeTet; i++) {
+            unsigned int v[4];
+            for (unsigned int j = 0; j < 4; j++)
+                myfile >> v[j];
+            myfile >> s;
+            mesh.push_back(Tetrahedron(&this->vertices[v[0]-1], &this->vertices[v[1]-1], &this->vertices[v[2]-1], &this->vertices[v[3]-1]));
+            this->mesh.back().pointsIdx[0] = v[0]-1;
+            this->mesh.back().pointsIdx[1] = v[1]-1;
+            this->mesh.back().pointsIdx[2] = v[2]-1;
+            this->mesh.back().pointsIdx[3] = v[3]-1;
+        }
+    }
+    myfile.close ();
+
+    std::cout << "Points: " << this->vertices.size() << std::endl;
+    std::cout << "Tetrahedron: " << this->mesh.size() << std::endl;
+
+    this->updatebbox();
+    this->computeNeighborhood();
+    this->computeNormals();
+
+    for(int i = 0; i < this->vertices.size(); ++i) {
+        this->texCoord.push_back(this->vertices[i]/this->getDimensions());
+    }    
 }

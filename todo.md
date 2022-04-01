@@ -7,12 +7,14 @@ Objectif: Tester l'outil intéractif de recalage sur les données de cerveau de 
 - [x] Réparer le lecteur TIFF pour ouvrir le lightsheet du cerveau [ici](#Lecteur-TIFF)
 - [x] Subsampler l'image pour l'ouvrir/convertir
 - [x] Segmenter l'image pour générer le maillage 
-- [ ] Générer un maillage de cage avec Kidpocket
-- [ ] Générer un maillage tétraédrique avec Kidpocket
+- [ ] Générer un maillage de cage avec Kidpocket (avec NOURA)
+- [ ] Générer un maillage tétraédrique avec Kidpocket (avec NOURA)
+    - [x] Ouvrir les maillages tétrahédrique ".mesh" pour tester les données de Roberta plutôt que le cerveau souris
+    - [x] Ouvrir une image avec un maillage tétraédrique qui n'est pas une grille
 - [ ] Réparer l'écriture de la grille déformée
-- [ ] Ouvrir une image avec un maillage tétraédrique qui n'est pas une grille
 - [ ] Tester le recalage manuel
-
+- [ ] Faire l'interface de l'ouverture de grille avec tetmesh
+- [ ] Propager l'ouverture ".mesh" aux surfaces mesh 
 ---
 
 Résultats:
@@ -52,13 +54,18 @@ Résultats:
 
 # TODO list
 
-- [ ] [FEATURE] Ajustement automatique de la taille de l'image pour correspondre a la limite de VRAM [ici](#Lecteur-TIFF)
-- [ ] [FEATURE][FORMAT] Prendre en compte le dx/dy/dz du TIFF et OME/TIFF
-- [ ] [FEATURE][FORMAT] Ajouter le format NIFTI
-- [ ] [FEATURE][FORMAT] Ajouter le format DIM/IMA
 - [ ] [INTERFACE] Ajouter un bouton pour choisir signed/unsigned [ici](#Lecteur-TIFF)
 - [ ] [INTERFACE] Ajouter un bouton pour choisir 8/16/32/64 bits [ici](#Lecteur-TIFF)
 - [ ] [INTERFACE] Activer/désactiver les plans
+- [ ] [INTERFACE][SMALL] Changer la fenêtre de choix de fichier
+
+- [ ] [FEATURE][TOOL][MAJEUR] Sélectionner les manipulateurs dans les plane viewers
+
+- [ ] [FEATURE][FORMAT] Ajustement automatique de la taille de l'image pour correspondre a la limite de VRAM [ici](#Lecteur-TIFF)
+- [ ] [FEATURE][FORMAT] Prendre en compte le dx/dy/dz du TIFF et OME/TIFF
+- [ ] [FEATURE][FORMAT] Ajouter le format NIFTI
+- [ ] [FEATURE][FORMAT] Ajouter le format DIM/IMA pour les mesh tetraedrique
+
 - [ ] [RENDU] Améliorer la lumière
 - [ ] [RENDU] Debugger le rendu négatif 
-- [ ] [FEATURE][TOOL][MAJEUR] Sélectionner les manipulateurs dans les plane viewers
+

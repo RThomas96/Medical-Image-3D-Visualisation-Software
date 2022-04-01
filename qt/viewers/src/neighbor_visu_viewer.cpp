@@ -270,12 +270,12 @@ QString Viewer::mouseString() const {
 	return message;
 }
 
-void Viewer::newAPI_loadGrid(const std::string& name, const std::vector<std::string>& filenames, const int subsample, const glm::vec3& sizeTetmesh, glm::vec3& sizeVoxel, const std::pair<glm::vec3, glm::vec3>& bbox) {
+void Viewer::newAPI_loadGrid(const std::string& name, const std::vector<std::string>& filenames, const std::string& tetMeshFileName, const int subsample, const glm::vec3& sizeTetmesh, glm::vec3& sizeVoxel, const std::pair<glm::vec3, glm::vec3>& bbox) {
 	if (this->scene == nullptr) {
 		return;
 	}
 	this->makeCurrent();
-	this->scene->openGrid(name, filenames, subsample, sizeTetmesh, sizeVoxel, bbox);
+	this->scene->openGrid(name, filenames, tetMeshFileName, subsample, sizeTetmesh, sizeVoxel, bbox);
 	this->doneCurrent();
 }
 
