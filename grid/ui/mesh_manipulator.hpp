@@ -74,6 +74,7 @@ namespace UITool {
         void keyPressed(QKeyEvent* e){
             if(!this->isTouchPressed)
                 Q_EMIT beginSelection();
+            if(e->key() == Qt::Key_Control && !e->isAutoRepeat())
             this->isTouchPressed = true;
         };
 

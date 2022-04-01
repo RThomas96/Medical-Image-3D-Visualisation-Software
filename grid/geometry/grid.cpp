@@ -161,7 +161,7 @@ bool Grid::getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3
         const glm::vec3 p = origin + i * nDirection;
         const uint16_t value = this->getDeformedValueFromPoint(this->initialMesh, p);
         //const uint16_t value = this->getValueFromWorldPoint(p);
-        if(value > minValue && value < maxValue && (p[0]>planePos[0]+0.01 && p[1]>planePos[1]+0.01 && p[2]>planePos[2]+0.01)) {
+        if(value > minValue && value < maxValue && (p[0]>planePos[0]-0.01 && p[1]>planePos[1]-0.01 && p[2]>planePos[2]-0.01)) {
             res = p;
             return true;
         }

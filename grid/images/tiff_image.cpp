@@ -88,16 +88,16 @@ void castToLowPrecision(Image::ImageDataType imgDataType, const tdata_t& buf, st
         castToUintAndInsert(data, res, duplicate, offset, bboxes);
     } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_8)) {
         int8_t * data = static_cast<std::int8_t*>(buf);
-        castToUintAndInsert(data, res, duplicate, offset, bboxes);
+        castToUintAndInsert(data, res, duplicate, offset, bboxes, true);
     } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_16)) {
         int16_t * data = static_cast<std::int16_t*>(buf);
-        castToUintAndInsert(data, res, duplicate, offset, bboxes);
+        castToUintAndInsert(data, res, duplicate, offset, bboxes, true);
     } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_32)) {
         int32_t * data = static_cast<std::int32_t*>(buf);
-        castToUintAndInsert(data, res, duplicate, offset, bboxes);
+        castToUintAndInsert(data, res, duplicate, offset, bboxes, true);
     } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_64)) {
         int64_t * data = static_cast<std::int64_t*>(buf);
-        castToUintAndInsert(data, res, duplicate, offset, bboxes);
+        castToUintAndInsert(data, res, duplicate, offset, bboxes, true);
     } else if(imgDataType == (Image::ImageDataType::Floating | Image::ImageDataType::Bit_32)) {
         float * data = static_cast<float*>(buf);
         castToUintAndInsert(data, res, duplicate, offset, bboxes);
