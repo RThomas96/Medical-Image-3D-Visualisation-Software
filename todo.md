@@ -14,7 +14,8 @@ Objectif: Tester l'outil intéractif de recalage sur les données de cerveau de 
 - [ ] Réparer l'écriture de la grille déformée
 - [ ] Tester le recalage manuel
 - [ ] Faire l'interface de l'ouverture de grille avec tetmesh
-- [ ] Propager l'ouverture ".mesh" aux surfaces mesh 
+- [ ] Propager l'ouverture ".mesh" aux cages
+- [ ] Ajouter sauvegarde ".mesh" aux cages (pour appliquer une cage)
 ---
 
 Résultats:
@@ -48,18 +49,26 @@ Résultats:
     Les fichiers OME/TIFF contiennent un fichier XML qui indique l'ordre dans lequel se trouve les images selon l'axe Z.
     Ce fichier est maintenant pris en compte.
 </details>
-
+<details>
+    - [ ] [FEATURE][FORMAT] Ajustement automatique de la taille de l'image pour correspondre a la limite de VRAM [ici](#Lecteur-TIFF)
+    - [ ] [FEATURE][FORMAT] Prendre en compte le dx/dy/dz du TIFF et OME/TIFF
+    - [ ] [FEATURE][FORMAT] Ajouter le format NIFTI
+    - [ ] [FEATURE][FORMAT] Ajouter le format DIM/IMA pour les mesh tetraedrique
+    - [ ] [INTERFACE] Ajouter un bouton pour choisir signed/unsigned [ici](#Lecteur-TIFF)
+    - [ ] [INTERFACE] Ajouter un bouton pour choisir 8/16/32/64 bits [ici](#Lecteur-TIFF)
+</details>
 
 ---
 
-# TODO list
+# Un jour 
 
 - [ ] [INTERFACE] Ajouter un bouton pour choisir signed/unsigned [ici](#Lecteur-TIFF)
 - [ ] [INTERFACE] Ajouter un bouton pour choisir 8/16/32/64 bits [ici](#Lecteur-TIFF)
 - [ ] [INTERFACE] Activer/désactiver les plans
-- [ ] [INTERFACE][SMALL] Changer la fenêtre de choix de fichier
+- [x] [INTERFACE][SMALL] Changer la fenêtre de choix de fichier
 
 - [ ] [FEATURE][TOOL][MAJEUR] Sélectionner les manipulateurs dans les plane viewers
+- [ ] [FEATURE][TOOL][MAJEUR] Ajouter un mode offline pour les performance en cas de gros maillage tetra
 
 - [ ] [FEATURE][FORMAT] Ajustement automatique de la taille de l'image pour correspondre a la limite de VRAM [ici](#Lecteur-TIFF)
 - [ ] [FEATURE][FORMAT] Prendre en compte le dx/dy/dz du TIFF et OME/TIFF
@@ -67,5 +76,12 @@ Résultats:
 - [ ] [FEATURE][FORMAT] Ajouter le format DIM/IMA pour les mesh tetraedrique
 
 - [ ] [RENDU] Améliorer la lumière
-- [ ] [RENDU] Debugger le rendu négatif 
+- [ ] [RENDU][MAJEUR] Debugger le rendu négatif 
+- [ ] [RENDU][MAJEUR] Debugger le décalage de la grille
 
+# Trier
+
+- [ ] [FEATURE][FORMAT] Prendre en compte le dx/dy/dz du TIFF et OME/TIFF
+- [ ] [FEATURE][FORMAT] Ajustement automatique de la taille de l'image pour correspondre a la limite de VRAM [ici](#Lecteur-TIFF)
+- [ ] [RENDU][MAJEUR] Debugger le rendu négatif 
+- [ ] [RENDU][MAJEUR] Debugger le décalage de la grille
