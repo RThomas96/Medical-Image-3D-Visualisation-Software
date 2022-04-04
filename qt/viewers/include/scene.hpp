@@ -506,6 +506,7 @@ public slots:
     void sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend);
     void sendFirstTetmeshToGPU();
     uint16_t sendGridValuesToGPU(int gridIdx);
+    void setLightPosition(const glm::vec3& lighPosition);
 
     // Scene management
     bool openMesh(const std::string& name, const std::string& filename, const glm::vec4& color = glm::vec4(0., 1., 0., 1.));

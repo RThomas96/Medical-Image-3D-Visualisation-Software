@@ -1932,6 +1932,8 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 		this->newSHADERS_updateUBOData();
 	}
 
+    this->setLightPosition(camPos);
+
 	glEnable(GL_DEPTH_TEST);
 	glEnablei(GL_BLEND, 0);
 	glEnable(GL_TEXTURE_3D);
@@ -3878,4 +3880,10 @@ void Scene::applyCage(const std::string& name, const std::string& filename) {
 void Scene::redrawSelection(const glm::vec3& p0, const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3) {
     this->glSelection->setSelectionBB(p0, p1, p2, p3);
     this->glSelection->prepare();
+}
+
+void Scene::setLightPosition(const glm::vec3& lighPosition) {
+    for(int i = 0; i < this->drawableMeshes.size(); ++i) {
+        this->drawableMeshes[i].first->lightPosition = lighPosition;
+    }
 }
