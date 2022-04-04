@@ -15,8 +15,8 @@ out vec4 FragColor;
 
 void main()
 {
-    //if(isVisible == 0.)
-    //    discard;
+    if(isVisible == 0.)
+        discard;
 
     bool isNONE      = abs(current_state - 0) < 0.001;
     bool isAT_RANGE  = abs(current_state - 1) < 0.001;

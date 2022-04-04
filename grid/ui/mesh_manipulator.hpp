@@ -217,7 +217,6 @@ namespace UITool {
 		std::vector<Manipulator> manipulators;
         std::vector<bool> manipulatorsToDisplay;
         std::vector<bool> selectedManipulators;
-
 	};
 
     //! @ingroup uitools
@@ -448,6 +447,7 @@ namespace UITool {
         void assignAsHandle();
         void removeAllHandles();
         void moveKidManip();
+        void assignAllHandlesBeforePlane();
 
         void moveManipulator(Manipulator * manipulator);
         void selectManipulator(Manipulator * manipulator);
@@ -470,5 +470,53 @@ namespace UITool {
         SliceOrientation currentSelectedSlice;
         glm::vec3 slicesPositions;
 	};
+
+    enum class FixedRegistrationManipulatorState {
+        NONE,
+        SELECTING_FIRST_POINT,
+        SELECTING_SECOND_POINT
+    };
+
+	class FixedRegistrationManipulator : public QObject, public MeshManipulator {
+        Q_OBJECT
+        Q_INTERFACES(UITool::MeshManipulator)
+
+	public:
+		FixedRegistrationManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions);
+
+        void setAllManipulatorsPosition(const std::vector<glm::vec3>& positions) override;
+        void getAllPositions(std::vector<glm::vec3>& positions) override;
+        void getManipulatorsState(std::vector<State>& states) const override;
+
+        void getManipulatorsToDisplay(std::vector<bool>& toDisplay) const override;
+
+    public slots:
+        void moveManipulator(Manipulator * manipulator);
+        void selectManipulator(Manipulator * manipulator);
+        void deselectManipulator(Manipulator * manipulator);
+        void keyPressed(QKeyEvent* e) override;
+        void keyReleased(QKeyEvent* e) override;
+        void mousePressed(QMouseEvent* e) override;
+        void mouseReleased(QMouseEvent* e) override;
+        void addManipulator(const glm::vec3& position);
+        void apply();
+
+    signals:
+        void needRedraw() override;
+        void needSendTetmeshToGPU() override;
+        void needChangeKidManipulatorRadius(float radius) override;
+        void pointIsClickedInPlanarViewer(const glm::vec3& position);
+	private:
+        FixedRegistrationManipulatorState toolState;
+        int selectedIndex;
+        int nbNotAssociatedPoints;
+		std::vector<Manipulator> manipulators;
+        std::vector<bool> manipulatorsToDisplay;
+        std::vector<bool> selectedManipulators;
+        std::vector<bool> isFixed;
+        std::vector<int> associatedManipulator;
+        std::vector<int> fixed;
+	};
+
 }	 // namespace UITool
 #endif

@@ -71,7 +71,8 @@ namespace UITool {
         POSITION,
         REGISTRATION,
         ARAP,
-        SLICE
+        SLICE,
+        FIXED_REGISTRATION
     };
 
     enum class SliceOrientation {
@@ -488,6 +489,7 @@ public slots:
     void switchToSelectionModeRegistrationTool();
     void validateRegistrationTool();
     void applyRegistrationTool();
+    void applyFixedRegistrationTool();
     void undoRegistrationTool();
     void clearRegistrationTool();
     void assignMeshToRegisterRegistrationTool(const std::string& name);
@@ -495,6 +497,7 @@ public slots:
     void changeSliceToSelect(UITool::SliceOrientation sliceOrientation);
     void assignAsHandleSliceTool();
     void removeAllHandlesSliceTool();
+    void assignAllHandlesBeforePlaneSliceTool();
 
     // MeshDeformator slots
     void setNormalDeformationMethod(const std::string& name);
@@ -560,7 +563,7 @@ public:
 
     bool bunny_demo = false;
     bool bone_demo = false;
-    bool brain_demo = false;
+    bool brain_demo = true;
     bool cage_demo = false;
 };
 

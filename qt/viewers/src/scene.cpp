@@ -3663,12 +3663,10 @@ void Scene::init() {
         this->getCage("cube_cage")->bindMovementWithDeformedMesh();
     }
     if(brain_demo) {
-        this->openGridWithGridTetmesh("brain_image_IRM", std::vector<std::string>{std::string("/home/thomas/data/Data/Mesh/cerveau.tiff")}, 2, glm::vec3(5, 5, 5), glm::vec3(3.9*2., 3.9*2., 50.*2.));
-        this->openMesh("brain_mesh_lightsheet", "/home/thomas/data/Data/Mesh/cerveau_aligned.off");
-        //this->getMesh("brain_mesh_lightsheet")->scale(glm::vec3(4.79, 4.79, 3.5));
-        //this->getMesh("brain_mesh_lightsheet")->setOrigin(this->getBaseMesh("brain_image_IRM")->getOrigin());
-        //this->getMesh("brain_mesh_lightsheet")->rotate(glm::mat3(glm::rotate(glm::radians(90.f), glm::vec3(1., 0., 0.))));
-        //this->getMesh("brain_mesh_lightsheet")->rotate(glm::mat3(glm::rotate(glm::radians(180.f), glm::vec3(0., 0., 1.))));
+        //this->openGridWithGridTetmesh("brain_image_IRM", std::vector<std::string>{std::string("/data/datasets/data/Thomas/Cerveau/IRM/HSA_210531_1_T2_mems_J1_TR_RAW_SOE_123400/cerveau_IRM.tif")}, 2, glm::vec3(5, 5, 5), glm::vec3(3.9*2., 3.9*2., 50.*2.));
+        this->openGridWithGridTetmesh("brain_image_IRM", std::vector<std::string>{std::string("/data/datasets/data/Thomas/Cerveau/IRM/HSA_210531_1_T2_mems_J1_TR_RAW_SOE_123400/cerveau_IRM.tif")}, 2, glm::vec3(5, 5, 5), glm::vec3(3.9, 3.9, 50.));
+        this->openMesh("brain_mesh_lightsheet", "/data/datasets/data/Thomas/Cerveau/cerveau_c1_sub8/worflow/scaleXYZ_1.off");
+        //this->getMesh("brain_mesh_lightsheet")->scale(glm::vec3(.5, .5, .5));
 
         std::cout << "Max min brain IRM" << this->getBaseMesh("brain_image_IRM")->bbMax << std::endl;
         std::cout << "Max min brain IRM" << this->getBaseMesh("brain_image_IRM")->bbMin << std::endl;
@@ -3730,6 +3728,12 @@ void Scene::updateTools(UITool::MeshManipulatorType tool) {
 
         QObject::connect(this, SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)), dynamic_cast<UITool::CompManipulator*>(this->glMeshManipulator->meshManipulator), SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)));
     }
+
+    if(tool == UITool::MeshManipulatorType::FIXED_REGISTRATION) {
+        //QObject::connect(this, &Scene::rayIsCasted, this, [this](const glm::vec3& origin, const glm::vec3& direction) { emit dynamic_cast<UITool::CompManipulator*>(this->glMeshManipulator->meshManipulator)->rayIsCasted(origin, direction, this->getMinTexValue(), this->getMaxTexValue(), this->computePlanePositions());});
+
+        QObject::connect(this, SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)), dynamic_cast<UITool::FixedRegistrationManipulator*>(this->glMeshManipulator->meshManipulator), SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)));
+    }
 }
 
 void Scene::switchToSelectionModeRegistrationTool() {
@@ -3752,6 +3756,15 @@ void Scene::validateRegistrationTool() {
 
 void Scene::applyRegistrationTool() {
     UITool::CompManipulator * manipulator = dynamic_cast<UITool::CompManipulator*>(this->glMeshManipulator->meshManipulator);
+    if(!manipulator) {
+        std::cout << "WARNING: not the right tool" << std::endl;
+        return;
+    }
+    manipulator->apply();
+}
+
+void Scene::applyFixedRegistrationTool() {
+    UITool::FixedRegistrationManipulator * manipulator = dynamic_cast<UITool::FixedRegistrationManipulator*>(this->glMeshManipulator->meshManipulator);
     if(!manipulator) {
         std::cout << "WARNING: not the right tool" << std::endl;
         return;
@@ -3827,6 +3840,15 @@ void Scene::removeAllHandlesSliceTool() {
         return;
     }
     manipulator->removeAllHandles();
+}
+
+void Scene::assignAllHandlesBeforePlaneSliceTool() {
+    UITool::SliceManipulator* manipulator = dynamic_cast<UITool::SliceManipulator*>(this->glMeshManipulator->meshManipulator);
+    if(!manipulator) {
+        std::cout << "WARNING: not the right tool" << std::endl;
+        return;
+    }
+    manipulator->assignAllHandlesBeforePlane();
 }
 
 bool Scene::isCage(const std::string& name) {

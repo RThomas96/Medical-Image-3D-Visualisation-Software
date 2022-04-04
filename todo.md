@@ -12,9 +12,12 @@ Objectif: Tester l'outil intéractif de recalage sur les données de cerveau de 
     - [x] Ouvrir les maillages tétrahédrique ".mesh" pour tester les données de Roberta plutôt que le cerveau souris
     - [x] Ouvrir une image avec un maillage tétraédrique qui n'est pas une grille
 - [x] Réparer le bug d'offset lors de l'ouverture d'un maillage tétraédrique
-- [ ] Placer correctement la lumière pour les meshs surfaciques
-- [ ] Changer le radius des manipulators dans le slice tool
-- [ ] Tester le recalage manuel
+- [x] Placer correctement la lumière pour les meshs surfaciques
+- [x] Voir pour configurer Qt Designer (c'est compliqué il faut tout basculer en QMake)
+- [x] Récupérer les indices des points caractéristiques 
+- [x] Coder un outil de recalage simplifié
+- [x] Tester le recalage manuel
+- [x] Ajouter une feature pour assigner comme handles tous les points avant le slice
 - [ ] Réparer l'écriture de la grille déformée
 - [ ] Faire l'interface de l'ouverture de grille avec tetmesh
 - [ ] Propager l'ouverture ".mesh" aux cages
@@ -52,29 +55,29 @@ Résultats:
     Les fichiers OME/TIFF contiennent un fichier XML qui indique l'ordre dans lequel se trouve les images selon l'axe Z.
     Ce fichier est maintenant pris en compte.
 </details>
-<details>
-    - [ ] [FEATURE][FORMAT] Ajustement automatique de la taille de l'image pour correspondre a la limite de VRAM [ici](#Lecteur-TIFF)
-    - [ ] [FEATURE][FORMAT] Prendre en compte le dx/dy/dz du TIFF et OME/TIFF
-    - [ ] [FEATURE][FORMAT] Ajouter le format NIFTI
-    - [ ] [FEATURE][FORMAT] Ajouter le format DIM/IMA pour les mesh tetraedrique
-    - [ ] [INTERFACE] Ajouter un bouton pour choisir signed/unsigned [ici](#Lecteur-TIFF)
-    - [ ] [INTERFACE] Ajouter un bouton pour choisir 8/16/32/64 bits [ici](#Lecteur-TIFF)
-</details>
 
 ---
+
+# Tilted
+- [ ] [FEATURE][FORMAT] Prendre en compte le dx/dy/dz du TIFF et OME/TIFF
+- [ ] [FEATURE] Debug le placement de points dans la vue 3D
+- [ ] [INTERFACE] Bloquage du manipulateur 
+- [ ] [INTERFACE] Taille du manipulateur 
+- [ ] [INTERFACE] Affichage du manipulateur durant la sélection (il ne devrait pas)
+- [ ] [INTERFACE] Améliorer l'interface d'apairage de points 
+- [ ] [INTERFACE] Activer/désactiver les plans
+- [ ] [RENDU] Le scale affecte les performances
 
 # Un jour 
 
 - [ ] [INTERFACE] Ajouter un bouton pour choisir signed/unsigned [ici](#Lecteur-TIFF)
 - [ ] [INTERFACE] Ajouter un bouton pour choisir 8/16/32/64 bits [ici](#Lecteur-TIFF)
-- [ ] [INTERFACE] Activer/désactiver les plans
 - [x] [INTERFACE][SMALL] Changer la fenêtre de choix de fichier
 
 - [ ] [FEATURE][TOOL][MAJEUR] Sélectionner les manipulateurs dans les plane viewers
 - [ ] [FEATURE][TOOL][MAJEUR] Ajouter un mode offline pour les performance en cas de gros maillage tetra
 
 - [ ] [FEATURE][FORMAT] Ajustement automatique de la taille de l'image pour correspondre a la limite de VRAM [ici](#Lecteur-TIFF)
-- [ ] [FEATURE][FORMAT] Prendre en compte le dx/dy/dz du TIFF et OME/TIFF
 - [ ] [FEATURE][FORMAT] Ajouter le format NIFTI
 - [ ] [FEATURE][FORMAT] Ajouter le format DIM/IMA pour les mesh tetraedrique
 

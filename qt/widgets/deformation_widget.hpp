@@ -80,6 +80,9 @@ protected:
     QPushButton*                    slice_Z;
     QPushButton*                    slice_handle;
     QPushButton*                    slice_clear;
+    QPushButton*                    slice_assign;
+	QRadioButton* radio_selector_fixed; 
+    QPushButton*                    apply_fixed;
 
 	QVBoxLayout*              layout_move;
 	QGroupBox*                 group_move;

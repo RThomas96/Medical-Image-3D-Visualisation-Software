@@ -113,6 +113,7 @@ namespace UITool {
             this->mesh->selectPts(manipulator->getManipPosition());
             this->selectedManipulators[index] = true;
         }
+        std::cout << "Selection vertex: [" << index << "]" << std::endl;
     }
 
     void DirectManipulator::deselectManipulator(Manipulator * manipulator) {
@@ -1070,6 +1071,34 @@ void SliceManipulator::assignAsHandle() {
     }
 }
 
+void SliceManipulator::assignAllHandlesBeforePlane() {
+    int valueIdxToCheck = 0;
+    switch(this->currentSelectedSlice) {
+        case SliceOrientation::X:
+            valueIdxToCheck = 0;
+            break;
+        case SliceOrientation::Y:
+            valueIdxToCheck = 1;
+            break;
+        case SliceOrientation::Z:
+            valueIdxToCheck = 2;
+            break;
+    };
+
+    ARAPMethod * deformer = dynamic_cast<ARAPMethod*>(this->mesh->meshDeformer);
+    if(!deformer) {
+        std::cout << "WARNING: can't assign handles if the deformer isn't ARAP." << std::endl;
+        return;
+    }
+
+    for(int i = 0; i < this->manipulators.size(); ++i) {
+        if(this->manipulators[i].getManipPosition()[valueIdxToCheck] > this->slicesPositions[valueIdxToCheck]) {
+            this->handles[i] = true;
+            deformer->setHandle(i);
+        }
+    }
+}
+
 void SliceManipulator::removeAllHandles() {
     ARAPMethod * deformer = dynamic_cast<ARAPMethod*>(this->mesh->meshDeformer);
     if(!deformer) {
@@ -1101,6 +1130,146 @@ void SliceManipulator::moveKidManip() {
     this->mesh->movePoints(originalPoints, targetPoints);
     Q_EMIT needSendTetmeshToGPU();
 }
+
+/***/
+
+FixedRegistrationManipulator::FixedRegistrationManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions): MeshManipulator(mesh) {
+    this->kid_manip = nullptr;
+    this->manipulators.reserve(positions.size());
+    this->toolState = FixedRegistrationManipulatorState::NONE;
+    this->selectedIndex = -1;
+    this->fixed = std::vector<int>{206, 36, 17, 97, 39, 68, 106, 58, 74};
+    this->nbNotAssociatedPoints = fixed.size();
+    for (int i = 0; i < fixed.size(); ++i) {
+        this->manipulators.push_back(Manipulator(positions[fixed[i]]));
+
+        QObject::connect(&(this->manipulators[i]), &Manipulator::mouseRightButtonPressed, this, &FixedRegistrationManipulator::selectManipulator);
+        QObject::connect(&(this->manipulators[i]), &Manipulator::mouseRightButtonReleasedAndCtrlIsNotPressed, this, &FixedRegistrationManipulator::deselectManipulator);
+        QObject::connect(&(this->manipulators[i]), &Manipulator::isManipulated, this, &FixedRegistrationManipulator::moveManipulator);
+        QObject::connect(this, &FixedRegistrationManipulator::pointIsClickedInPlanarViewer, this, &FixedRegistrationManipulator::addManipulator);
+
+        this->associatedManipulator.push_back(-1);
+        this->isFixed.push_back(true);
+        this->selectedManipulators.push_back(false);
+        this->manipulatorsToDisplay.push_back(true);
+        this->manipulators[i].lockPosition();
+        this->manipulators[i].enable();
+    }
+}
+
+void FixedRegistrationManipulator::addManipulator(const glm::vec3& position) {
+    if(this->toolState == FixedRegistrationManipulatorState::SELECTING_SECOND_POINT) {
+        this->toolState = FixedRegistrationManipulatorState::NONE;
+
+        this->manipulators.push_back(Manipulator(position));
+        this->isFixed.push_back(false);
+        this->manipulatorsToDisplay.push_back(true);
+        this->manipulators.back().lockPosition();
+        this->manipulators.back().disable();
+
+        if(this->associatedManipulator[this->selectedIndex] == -1)
+            this->nbNotAssociatedPoints -= 1;
+        this->associatedManipulator[this->selectedIndex] = this->manipulators.size()-1;
+        this->selectedManipulators[this->selectedIndex] = false;
+        std::cout << "Associate vertex [" << selectedIndex << "] with [" << this->manipulators.back().getManipPosition() << "]" << std::endl;
+    }
+}
+
+void FixedRegistrationManipulator::setAllManipulatorsPosition(const std::vector<glm::vec3>& positions) {
+    if (positions.size() == this->manipulators.size()) {
+        for (int i = 0; i < this->manipulators.size(); ++i) {
+            this->manipulators[i].setManipPosition(positions[i]);
+            this->manipulators[i].setLastPosition(positions[i]);
+        }
+    } else {
+        std::cerr << "WARNING: try to set [" << this->manipulators.size() << "] manipulators positions with a position vector of size [" << positions.size() << "]" << std::endl;
+    }
+}
+
+void FixedRegistrationManipulator::getAllPositions(std::vector<glm::vec3>& positions) {
+    for (int i = 0; i < this->manipulators.size(); ++i) {
+        positions.push_back(this->manipulators[i].getManipPosition());
+    }
+}
+
+void FixedRegistrationManipulator::getManipulatorsToDisplay(std::vector<bool>& toDisplay) const {
+    for (int i = 0; i < this->manipulatorsToDisplay.size(); ++i) {
+        toDisplay.push_back(this->manipulatorsToDisplay[i]);
+    }
+}
+
+void FixedRegistrationManipulator::getManipulatorsState(std::vector<State>& states) const {
+    states.clear();
+    for(int i = 0; i < this->manipulatorsToDisplay.size(); ++i) {
+        State currentState = State::NONE;
+        if(this->isFixed[i]) {
+            if(this->manipulators[i].isAtRangeForGrab)
+                currentState = State::AT_RANGE;
+            if(this->selectedManipulators[i])
+                currentState = State::AT_RANGE;
+            if(this->associatedManipulator[i] != -1)
+                currentState = State::HIGHLIGHT;
+        } else {
+            currentState = State::LOCK;
+        }
+        states.push_back(currentState);
+    }
+}
+
+void FixedRegistrationManipulator::moveManipulator(Manipulator * manipulator) {
+}
+
+void FixedRegistrationManipulator::selectManipulator(Manipulator * manipulator) {
+    ptrdiff_t index = manipulator - &(this->manipulators[0]);
+    if(this->toolState == FixedRegistrationManipulatorState::NONE && this->isFixed[index]) {
+        if(this->associatedManipulator[index] != -1) {
+            std::cout << "Replace associated point" << std::endl;
+            int previousIdx = this->associatedManipulator[index];
+            std::cout << "Previous: " << previousIdx << std::endl;
+            this->associatedManipulator[index] = -1;
+            this->manipulators[previousIdx].lockPosition();
+            this->manipulators[previousIdx].disable();
+            this->manipulatorsToDisplay[previousIdx] = false;
+            this->isFixed[previousIdx] = false;
+        }
+        this->selectedManipulators[index] = true;
+        this->toolState = FixedRegistrationManipulatorState::SELECTING_SECOND_POINT;
+        this->selectedIndex = index;
+        std::cout << "Select vertex: [" << index << "]" << std::endl;
+    }
+}
+
+void FixedRegistrationManipulator::apply() {
+    std::vector<int> verticesToFit;
+    std::vector<glm::vec3> newPositions;
+    std::cout << "Selected pairs are:" << std::endl;
+    for(int i = 0; i < this->associatedManipulator.size(); ++i) {
+        if(this->associatedManipulator[i] >= 0) {
+            verticesToFit.push_back(this->fixed[i]);
+            newPositions.push_back(this->manipulators[this->associatedManipulator[i]].getManipPosition());
+        }
+    }
+    this->mesh->setARAPDeformationMethod();
+    ARAPMethod * deformer = dynamic_cast<ARAPMethod*>(this->mesh->meshDeformer);
+    if(deformer) {
+        deformer->fitToPointList(verticesToFit, newPositions);
+    }
+
+    for(int i = 0; i < this->fixed.size(); ++i) {
+        this->manipulators[i].setManipPosition(this->mesh->vertices[this->fixed[i]]);
+    }
+}
+
+void FixedRegistrationManipulator::deselectManipulator(Manipulator * manipulator) {
+}
+
+void FixedRegistrationManipulator::keyPressed(QKeyEvent* e) {};
+
+void FixedRegistrationManipulator::keyReleased(QKeyEvent* e) {};
+
+void FixedRegistrationManipulator::mousePressed(QMouseEvent*) {};
+
+void FixedRegistrationManipulator::mouseReleased(QMouseEvent*) {};
 
 }
 

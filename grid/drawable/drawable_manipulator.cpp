@@ -55,7 +55,8 @@ UITool::GL::MeshManipulator::MeshManipulator(SceneGL* sceneGL, BaseMesh * mesh, 
 }
 
 void UITool::GL::MeshManipulator::prepare() {
-    this->manipulatorMesh = Sphere(this->meshManipulator->getManipulatorSize());
+    //this->manipulatorMesh = Sphere(this->meshManipulator->getManipulatorSize());
+    this->manipulatorMesh = Sphere(this->manipulatorRadius);
     this->kidManipulatorRadius = this->meshManipulator->getManipulatorSize(true) * 100.;
 	// TODO: copy here
 	std::vector<glm::vec3> allPositions;
@@ -303,6 +304,10 @@ void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scen
         this->meshManipulator = new UITool::SliceManipulator(mesh, positions);
         this->setRadius(this->meshManipulator->getManipulatorSize());
         this->planeViewRadius = this->manipulatorRadius * 3.f;
+    } else if(type == MeshManipulatorType::FIXED_REGISTRATION) {
+        this->meshManipulator = new UITool::FixedRegistrationManipulator(mesh, positions);
+        this->setRadius(this->meshManipulator->getManipulatorSize() * 10.f);
+        this->planeViewRadius = this->manipulatorRadius;
     }
     this->prepare();
     // Scene->MeshManipulator
