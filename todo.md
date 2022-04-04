@@ -7,12 +7,15 @@ Objectif: Tester l'outil intéractif de recalage sur les données de cerveau de 
 - [x] Réparer le lecteur TIFF pour ouvrir le lightsheet du cerveau [ici](#Lecteur-TIFF)
 - [x] Subsampler l'image pour l'ouvrir/convertir
 - [x] Segmenter l'image pour générer le maillage 
-- [ ] Générer un maillage de cage avec Kidpocket (avec NOURA)
-- [ ] Générer un maillage tétraédrique avec Kidpocket (avec NOURA)
+- [x] Générer un maillage de cage avec Kidpocket (avec NOURA)
+- [x] Générer un maillage tétraédrique avec Kidpocket (avec NOURA)
     - [x] Ouvrir les maillages tétrahédrique ".mesh" pour tester les données de Roberta plutôt que le cerveau souris
     - [x] Ouvrir une image avec un maillage tétraédrique qui n'est pas une grille
-- [ ] Réparer l'écriture de la grille déformée
+- [x] Réparer le bug d'offset lors de l'ouverture d'un maillage tétraédrique
+- [ ] Placer correctement la lumière pour les meshs surfaciques
+- [ ] Changer le radius des manipulators dans le slice tool
 - [ ] Tester le recalage manuel
+- [ ] Réparer l'écriture de la grille déformée
 - [ ] Faire l'interface de l'ouverture de grille avec tetmesh
 - [ ] Propager l'ouverture ".mesh" aux cages
 - [ ] Ajouter sauvegarde ".mesh" aux cages (pour appliquer une cage)
@@ -83,5 +86,6 @@ Résultats:
 
 - [ ] [FEATURE][FORMAT] Prendre en compte le dx/dy/dz du TIFF et OME/TIFF
 - [ ] [FEATURE][FORMAT] Ajustement automatique de la taille de l'image pour correspondre a la limite de VRAM [ici](#Lecteur-TIFF)
+- [ ] [INTERFACE] Debugger le lock random du manipulateur
 - [ ] [RENDU][MAJEUR] Debugger le rendu négatif 
 - [ ] [RENDU][MAJEUR] Debugger le décalage de la grille

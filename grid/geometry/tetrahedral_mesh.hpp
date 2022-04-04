@@ -41,7 +41,7 @@ public:
 
     TetMesh();
 
-    void loadMESH(std::string const &filename);
+    virtual void loadMESH(std::string const &filename);
 
     bool isEmpty() const;
     void buildGrid(const glm::vec3& nbCube, const glm::vec3& sizeCube, const glm::vec3& origin);

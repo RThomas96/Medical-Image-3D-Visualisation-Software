@@ -207,7 +207,15 @@ void Grid::toSampler(glm::vec3& p) const {
 }
 
 glm::vec3 Grid::getVoxelSize() const {
-    return this->getDimensions() / this->getResolution();
+    return this->sampler.getSamplerDimension() / this->getResolution();
+}
+
+void Grid::loadMESH(std::string const &filename) {
+    TetMesh::loadMESH(filename);
+    this->texCoord.clear();
+    for(int i = 0; i < this->vertices.size(); ++i) {
+        this->texCoord.push_back(this->vertices[i]/this->sampler.getSamplerDimension());
+    }    
 }
 
 /**************************/

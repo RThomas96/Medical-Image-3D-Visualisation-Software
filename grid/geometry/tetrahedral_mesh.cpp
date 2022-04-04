@@ -415,7 +415,8 @@ void TetMesh::loadMESH(std::string const &filename) {
         for (unsigned int j = 0; j < 3; j++)
             myfile >> p[j];
 
-        this->vertices.push_back(glm::vec3(p[0], p[1], p[2]));
+        this->vertices.push_back(glm::vec3(static_cast<float>(p[0]), static_cast<float>(p[1]), static_cast<float>(p[2])));
+        //std::cout << this->vertices.back() << std::endl;
         myfile >> s;
     }
 

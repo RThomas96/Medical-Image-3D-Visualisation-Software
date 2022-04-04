@@ -44,7 +44,7 @@ SaveMeshWidget::SaveMeshWidget(Scene* scene, QWidget* parent) {
 }
 
 void SaveMeshWidget::selectFile() {
-    QString file = QFileDialog::getSaveFileName(this, tr("Select the mesh to save"), QDir::currentPath(), tr("OFF Files (*.off)"));
+    QString file = QFileDialog::getSaveFileName(this, tr("Select the mesh to save"), QDir::currentPath(), tr("OFF Files (*.off)"), 0, QFileDialog::DontUseNativeDialog);
     this->selectedFile->setText(file);
 }
 
