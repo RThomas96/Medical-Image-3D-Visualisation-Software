@@ -475,6 +475,7 @@ signals:
     void sceneRadiusChanged(const float radius);
     void meshAdded(const std::string& name, bool grid, bool cage);
     void planesMoved(const glm::vec3& planesPosition);
+    void needPushHandleButton();
 
 // All these indirections are important because for most of them they interacts with various components of the scene
 // And it allow more flexibility as the scene control ALL the informations to transit from class to class

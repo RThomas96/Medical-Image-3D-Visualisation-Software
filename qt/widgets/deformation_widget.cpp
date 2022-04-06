@@ -381,6 +381,8 @@ void GridDeformationWidget::setupSignals(Scene * scene) {
 
 	QObject::connect(scene, &Scene::meshAdded, this, &GridDeformationWidget::addNewMesh);
 
+	QObject::connect(scene, &Scene::needPushHandleButton, this, [this, scene]() {this->handleMode->setChecked(!this->handleMode->isChecked());});
+
     /***/
 
     QObject::connect(this->combo_mesh_register, QOverload<int>::of(&QComboBox::highlighted), [=](int index){scene->assignMeshToRegisterRegistrationTool(std::string((this->combo_mesh_register->itemText(this->combo_mesh_register->currentIndex())).toStdString()));});

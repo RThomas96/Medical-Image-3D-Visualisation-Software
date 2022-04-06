@@ -3665,7 +3665,7 @@ void Scene::init() {
     if(brain_demo) {
         //this->openGridWithGridTetmesh("brain_image_IRM", std::vector<std::string>{std::string("/data/datasets/data/Thomas/Cerveau/IRM/HSA_210531_1_T2_mems_J1_TR_RAW_SOE_123400/cerveau_IRM.tif")}, 2, glm::vec3(5, 5, 5), glm::vec3(3.9*2., 3.9*2., 50.*2.));
         this->openGridWithGridTetmesh("brain_image_IRM", std::vector<std::string>{std::string("/data/datasets/data/Thomas/Cerveau/IRM/HSA_210531_1_T2_mems_J1_TR_RAW_SOE_123400/cerveau_IRM.tif")}, 2, glm::vec3(5, 5, 5), glm::vec3(3.9, 3.9, 50.));
-        //this->openMesh("brain_mesh_lightsheet", "/data/datasets/data/Thomas/Cerveau/cerveau_c1_sub8/worflow/scaleXYZ_1.off");
+        this->openMesh("brain_mesh_lightsheet", "/data/datasets/data/Thomas/Cerveau/cerveau_c1_sub8/worflow/scaleXYZ_1.off");
         //this->openMesh("brain_mesh_lightsheet", "/data/datasets/data/Thomas/Cerveau/cerveau_c1_sub8/test.off");
         //this->getMesh("brain_mesh_lightsheet")->scale(glm::vec3(.5, .5, .5));
 
@@ -3729,9 +3729,19 @@ BaseMesh * Scene::getBaseMesh(const std::string& name) {
 void Scene::updateTools(UITool::MeshManipulatorType tool) {
     this->glMeshManipulator->createNewMeshManipulator(this->getBaseMesh(this->activeMesh), this, tool);
 
+    if(tool == UITool::MeshManipulatorType::DIRECT) {
+        this->getBaseMesh(this->activeMesh)->setNormalDeformationMethod();
+    } else {
+        this->getBaseMesh(this->activeMesh)->setARAPDeformationMethod();
+    }
+
     // MeshManipulator->Scene
     if(tool == UITool::MeshManipulatorType::FREE) {
         QObject::connect(this, &Scene::rayIsCasted, this, [this](const glm::vec3& origin, const glm::vec3& direction) { emit dynamic_cast<UITool::FreeManipulator*>(this->glMeshManipulator->meshManipulator)->rayIsCasted(origin, direction, this->getMinTexValue(), this->getMaxTexValue(), this->computePlanePositions());});
+    }
+
+    if(tool == UITool::MeshManipulatorType::ARAP) {
+        QObject::connect(dynamic_cast<UITool::ARAPManipulator*>(this->glMeshManipulator->meshManipulator), SIGNAL(needPushHandleButton()), this, SIGNAL(needPushHandleButton()));
     }
 
     if(tool == UITool::MeshManipulatorType::REGISTRATION) {

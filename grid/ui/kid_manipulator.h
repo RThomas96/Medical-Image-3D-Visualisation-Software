@@ -47,7 +47,8 @@ class RotationManipulator : public QObject , public qglviewer::MouseGrabber
 
     bool mouse_released;
 
-    bool isVisible;
+    bool isVisible;// Actually sync with isEnable
+    bool isEnable;
 
 
     qglviewer::Vec Origine;              // (1)
@@ -80,7 +81,6 @@ public:
     RotationManipulator()
     {
         mouse_released = true;
-        isVisible = true;
 
         Origine = qglviewer::Vec(0,0,0);
         PrevOrigine = qglviewer::Vec(0,0,0);
@@ -110,6 +110,19 @@ public:
         rep_angular_coordinates.clear();
         rep_coordinates.clear();
         idpoints.clear();
+        this->enable();
+    }
+
+    void enable() {
+        this->isVisible = true;
+        this->isEnable = true;
+        this->addInMouseGrabberPool();
+    }
+
+    void disable() {
+        this->isVisible = false;
+        this->isEnable = false;
+        this->removeFromMouseGrabberPool();
     }
 
     void reset() {
@@ -139,7 +152,7 @@ public:
         etat = 1;
     }
 
-    ~RotationManipulator(){}
+    ~RotationManipulator(){this->removeFromMouseGrabberPool();}
 
     glm::vec3 getScaleVector() {
         glm::vec3 res = glm::vec3(Xscale, Yscale, Zscale) - glm::vec3(prevXscale, prevYscale, prevZscale);
@@ -236,7 +249,7 @@ public:
     }
 
 
-    void setDisplayScale(float ds){ display_scale = ds; }
+    void setDisplayScale(float ds){ display_scale = ds/2.; }
     int getModification(){ return this->mode_modification; }
 
     void resetScales()
@@ -486,10 +499,12 @@ public:
         glEnable(GL_LIGHTING);
         glEnable(GL_DEPTH);
     }
-    void wheelEvent(QWheelEvent* const , qglviewer::Camera* const )
-    {
-        //mode_grabbing = (mode_grabbing + 1)%2;
-    }
+
+    //void wheelEvent(QWheelEvent* const w, qglviewer::Camera* const )
+    //{
+	//    //QGLViewer::wheelEvent(w);
+    //    //mode_grabbing = (mode_grabbing + 1)%2;
+    //}
 
     void checkIfGrabsMouse(int x, int y,const qglviewer::Camera* const cam)
     {
@@ -801,12 +816,12 @@ public:
     {
         mouse_released = false;
 
-        if( event->buttons() & Qt::RightButton )
-        {
-            mouse_released = true;
-            this->clear();
-            this->setEtat( 0 );
-        }
+        //if( event->buttons() & Qt::RightButton )
+        //{
+        //    mouse_released = true;
+        //    this->clear();
+        //    this->setEtat( 0 );
+        //}
 
         if( mode_grabbing == 0 )
         {

@@ -60,9 +60,28 @@ Résultats:
 
 Objectif: Rendre l'interface parfaitement stable 
 
-- [ ] Réparer le bloquage du manipulateur
-- [ ] Réparer la taille du manipulateur
-- [ ] Ne pas afficher le manipulateur durant la sélection 
+ARAP
+- [x] Réparer le bloquage du manipulateur
+- [x] Réparer la taille du manipulateur
+- [x] Ne pas afficher le manipulateur durant la sélection 
+- [x] Clean up handles ARAP
+- [x] Réparer MAJ
+- [x] Inverse sélection 
+- [x] Réparer sélection trigger (faire en sorte que les shorcut passe dans le viewer même sans cliquer)
+- [x] Ajouter shortcut ARAP add/remove handles
+- [x] Remove shortcut S for stereo
+- [x] Ajouter shortcut ARAP switch handles
+- [x] Sync le boutton handles 
+
+POSITION
+- [ ] Réparer le rotate étrange du manipulateur en mode position
+- [ ] Réparer le scale du manipulateur
+- [ ] Ajouter shortcut clear handles ARAP
+
+INTERFACE
+- [ ] Faire un lien direct entre le update scene et la scene en fait 
+
+GENERAL
 - [ ] Réparer le ray casting
 - [ ] Retirer le pannel avec 2D/3D/Pannel/etc
 - [ ] Ajouter le pannel des plans de KidPocket

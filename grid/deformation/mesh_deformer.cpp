@@ -99,6 +99,18 @@ ARAPMethod::ARAPMethod(SurfaceMesh * surfaceMesh) : MeshDeformer(dynamic_cast<Ba
     this->arap.setHandles(this->handles);
 }
 
+void ARAPMethod::initARAP() {
+    if(this->onSurfaceMesh) {
+        std::vector<Vec3D<float>> ptsAsVec3D;
+        for(int i = 0; i < this->baseMesh->getNbVertices(); ++i) {
+            glm::vec3 pt = this->baseMesh->getVertice(i);
+            ptsAsVec3D.push_back(Vec3D(pt[0], pt[1], pt[2]));
+        }
+        this->arap.clear();
+        this->arap.init(ptsAsVec3D, dynamic_cast<SurfaceMesh*>(this->baseMesh)->getTriangles());
+    }
+}
+
 ARAPMethod::ARAPMethod(BaseMesh * baseMesh) : MeshDeformer(baseMesh, DeformMethod::ARAP) {
     this->onSurfaceMesh = false;
     this->arap.clear();

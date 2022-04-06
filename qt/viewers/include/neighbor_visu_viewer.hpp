@@ -24,6 +24,20 @@ public:
 	/// @brief Add a pointer to the status bar, in order to show messages.
 	void addStatusBar(QStatusBar* _sb);
 
+    void enterEvent(QEvent * event)
+    {
+        // Allow to automatically set the Viewer as active when mouse over, a click isn't needed anymore
+        this->activateWindow();
+        this->grabKeyboard();
+        QWidget::enterEvent(event);
+    }
+
+    void leaveEvent(QEvent * event)
+    {
+        QWidget::leaveEvent(event);
+    }
+
+
 protected:
 	/// @brief Initializes the scene, and the viewer's variables.
 	virtual void init() override;

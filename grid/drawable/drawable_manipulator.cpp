@@ -239,9 +239,6 @@ void UITool::GL::MeshManipulator::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* m
 	this->sceneGL->glUseProgram(0);
 
     if(this->meshManipulator->kid_manip && this->meshManipulator->kid_manip->isVisible) {
-        //this->meshManipulator->kid_manip->setDisplayScale(this->manipulatorRadius);
-        //if(this->meshManipulatorType == UITool::MeshManipulatorType::POSITION)
-        //    this->meshManipulator->kid_manip->setDisplayScale(this->positionManipulatorRadius);
         this->meshManipulator->kid_manip->draw();
     }
 }
