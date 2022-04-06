@@ -3665,11 +3665,22 @@ void Scene::init() {
     if(brain_demo) {
         //this->openGridWithGridTetmesh("brain_image_IRM", std::vector<std::string>{std::string("/data/datasets/data/Thomas/Cerveau/IRM/HSA_210531_1_T2_mems_J1_TR_RAW_SOE_123400/cerveau_IRM.tif")}, 2, glm::vec3(5, 5, 5), glm::vec3(3.9*2., 3.9*2., 50.*2.));
         this->openGridWithGridTetmesh("brain_image_IRM", std::vector<std::string>{std::string("/data/datasets/data/Thomas/Cerveau/IRM/HSA_210531_1_T2_mems_J1_TR_RAW_SOE_123400/cerveau_IRM.tif")}, 2, glm::vec3(5, 5, 5), glm::vec3(3.9, 3.9, 50.));
-        this->openMesh("brain_mesh_lightsheet", "/data/datasets/data/Thomas/Cerveau/cerveau_c1_sub8/worflow/scaleXYZ_1.off");
+        //this->openMesh("brain_mesh_lightsheet", "/data/datasets/data/Thomas/Cerveau/cerveau_c1_sub8/worflow/scaleXYZ_1.off");
+        //this->openMesh("brain_mesh_lightsheet", "/data/datasets/data/Thomas/Cerveau/cerveau_c1_sub8/test.off");
         //this->getMesh("brain_mesh_lightsheet")->scale(glm::vec3(.5, .5, .5));
+
+        //this->openMesh("brain_mesh_lightsheet", "/data/datasets/data/Thomas/Cerveau/araptool.off");
 
         std::cout << "Max min brain IRM" << this->getBaseMesh("brain_image_IRM")->bbMax << std::endl;
         std::cout << "Max min brain IRM" << this->getBaseMesh("brain_image_IRM")->bbMin << std::endl;
+    }
+    if(brain_aligned_demo) {
+        this->openGridWithGridTetmesh("brain_image_IRM", std::vector<std::string>{std::string("/data/datasets/data/Thomas/Cerveau/IRM/HSA_210531_1_T2_mems_J1_TR_RAW_SOE_123400/cerveau_IRM.tif")}, 2, glm::vec3(5, 5, 5), glm::vec3(3.9, 3.9, 50.));
+        //this->openCage("brain_mesh_lightsheet_deformed_cage", "/data/datasets/data/Thomas/Cerveau/final_backup.off", this->getBaseMesh("brain_image_IRM"), false);
+        this->openCage("brain_mesh_lightsheet_deformed_cage", "/data/datasets/data/Thomas/Cerveau/cerveau_c1_sub8/test.off", this->getBaseMesh("brain_image_IRM"), false);
+        this->getCage("brain_mesh_lightsheet_deformed_cage")->unbindMovementWithDeformedMesh();
+        this->getCage("brain_mesh_lightsheet_deformed_cage")->scale(glm::vec3(10., 10., 10.));
+        this->getCage("brain_mesh_lightsheet_deformed_cage")->bindMovementWithDeformedMesh();
     }
     if(bone_demo) {
         this->openGridWithGridTetmesh("grid", std::vector<std::string>{std::string("/home/thomas/data/Data/Mesh/thigh_f_scaled.tif")}, 2, glm::vec3(5, 5, 5), glm::vec3(1, 1, 1));

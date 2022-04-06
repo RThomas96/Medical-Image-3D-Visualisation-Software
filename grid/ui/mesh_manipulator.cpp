@@ -739,7 +739,8 @@ namespace UITool {
 
     void ARAPManipulator::getManipulatorsToDisplay(std::vector<bool>& toDisplay) const {
 		for (int i = 0; i < this->manipulatorsToDisplay.size(); ++i) {
-            toDisplay.push_back(this->manipulatorsToDisplay[i]);
+            //toDisplay.push_back(this->manipulatorsToDisplay[i]);
+            toDisplay.push_back(true);
         }
     }
 

@@ -18,10 +18,8 @@ Objectif: Tester l'outil intéractif de recalage sur les données de cerveau de 
 - [x] Coder un outil de recalage simplifié
 - [x] Tester le recalage manuel
 - [x] Ajouter une feature pour assigner comme handles tous les points avant le slice
+- [x] Préparer la réunion 
 - [ ] Réparer l'écriture de la grille déformée
-- [ ] Faire l'interface de l'ouverture de grille avec tetmesh
-- [ ] Propager l'ouverture ".mesh" aux cages
-- [ ] Ajouter sauvegarde ".mesh" aux cages (pour appliquer une cage)
 ---
 
 Résultats:
@@ -58,6 +56,23 @@ Résultats:
 
 ---
 
+## Semaine 28/04
+
+Objectif: Rendre l'interface parfaitement stable 
+
+- [ ] Réparer le bloquage du manipulateur
+- [ ] Réparer la taille du manipulateur
+- [ ] Ne pas afficher le manipulateur durant la sélection 
+- [ ] Réparer le ray casting
+- [ ] Retirer le pannel avec 2D/3D/Pannel/etc
+- [ ] Ajouter le pannel des plans de KidPocket
+- [ ] Ajouter un undo
+- [ ] Ajouter un mode offline pour les performances
+- [ ] Améliorer la lumière de la grille
+- [ ] Réparer la sauvegarde 
+
+---
+
 # Tilted
 - [ ] [FEATURE][FORMAT] Prendre en compte le dx/dy/dz du TIFF et OME/TIFF
 - [ ] [FEATURE] Debug le placement de points dans la vue 3D
@@ -66,7 +81,6 @@ Résultats:
 - [ ] [INTERFACE] Affichage du manipulateur durant la sélection (il ne devrait pas)
 - [ ] [INTERFACE] Améliorer l'interface d'apairage de points 
 - [ ] [INTERFACE] Activer/désactiver les plans
-- [ ] [RENDU] Le scale affecte les performances
 
 # Un jour 
 
@@ -83,12 +97,17 @@ Résultats:
 
 - [ ] [RENDU] Améliorer la lumière
 - [ ] [RENDU][MAJEUR] Debugger le rendu négatif 
-- [ ] [RENDU][MAJEUR] Debugger le décalage de la grille
+- [x] [RENDU][MAJEUR] Debugger le décalage de la grille
+
+- [ ] Faire l'interface de l'ouverture de grille avec tetmesh
+- [ ] Propager l'ouverture ".mesh" aux cages
+- [ ] Ajouter sauvegarde ".mesh" aux cages (pour appliquer une cage)
 
 # Trier
 
+- [ ] [RENDU] Le scale affecte les performances
 - [ ] [FEATURE][FORMAT] Prendre en compte le dx/dy/dz du TIFF et OME/TIFF
 - [ ] [FEATURE][FORMAT] Ajustement automatique de la taille de l'image pour correspondre a la limite de VRAM [ici](#Lecteur-TIFF)
 - [ ] [INTERFACE] Debugger le lock random du manipulateur
 - [ ] [RENDU][MAJEUR] Debugger le rendu négatif 
-- [ ] [RENDU][MAJEUR] Debugger le décalage de la grille
+- [x] [RENDU][MAJEUR] Debugger le décalage de la grille
