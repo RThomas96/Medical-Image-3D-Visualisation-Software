@@ -74,9 +74,12 @@ ARAP
 - [x] Sync le boutton handles 
 
 POSITION
-- [ ] Réparer le rotate étrange du manipulateur en mode position
-- [ ] Réparer le scale du manipulateur
-- [ ] Ajouter shortcut clear handles ARAP
+- [x] Réparer le rotate étrange du manipulateur en mode position
+- [x] Réparer taille 
+- [x] Réparer even mode
+- [x] Réparer le scale du manipulateur
+- [x] Réparer bloquage aléatoire
+- [ ] Persistent position 
 
 INTERFACE
 - [ ] Faire un lien direct entre le update scene et la scene en fait 
@@ -95,9 +98,9 @@ GENERAL
 # Tilted
 - [ ] [FEATURE][FORMAT] Prendre en compte le dx/dy/dz du TIFF et OME/TIFF
 - [ ] [FEATURE] Debug le placement de points dans la vue 3D
-- [ ] [INTERFACE] Bloquage du manipulateur 
-- [ ] [INTERFACE] Taille du manipulateur 
-- [ ] [INTERFACE] Affichage du manipulateur durant la sélection (il ne devrait pas)
+- [x] [INTERFACE] Bloquage du manipulateur 
+- [x] [INTERFACE] Taille du manipulateur 
+- [x] [INTERFACE] Affichage du manipulateur durant la sélection (il ne devrait pas)
 - [ ] [INTERFACE] Améliorer l'interface d'apairage de points 
 - [ ] [INTERFACE] Activer/désactiver les plans
 

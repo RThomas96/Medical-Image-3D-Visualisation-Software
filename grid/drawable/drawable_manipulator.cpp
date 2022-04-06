@@ -250,6 +250,7 @@ void UITool::GL::MeshManipulator::setRadius(float radius) {
 }
 
 void UITool::GL::MeshManipulator::setKidRadius(float radius) { 
+    std::cout << "Set kid radius: " << radius << std::endl;
     this->kidManipulatorRadius = radius; 
     this->meshManipulator->kid_manip->setDisplayScale(this->kidManipulatorRadius);
 }
@@ -287,9 +288,10 @@ void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scen
         this->setRadius(this->meshManipulator->getManipulatorSize());
     } else if(type == MeshManipulatorType::POSITION) {
         this->meshManipulator = new UITool::PositionManipulator(mesh, positions);
-        this->setRadius(this->meshManipulator->getManipulatorSize() * 10.f);
-        glm::vec3 dim = this->meshManipulator->mesh->getDimensions();
-        this->setKidRadius((std::max(dim[0], std::max(dim[1], dim[2])))*0.5);
+        this->setKidRadius(glm::length(mesh->getDimensions()));
+        //this->setRadius(this->meshManipulator->getManipulatorSize() * 10.f);
+        //glm::vec3 dim = this->meshManipulator->mesh->getDimensions();
+        //this->setKidRadius((std::max(dim[0], std::max(dim[1], dim[2])))*0.5);
     } else if(type == MeshManipulatorType::REGISTRATION) {
         this->meshManipulator = new UITool::CompManipulator(mesh, positions);
         this->setRadius(this->meshManipulator->getManipulatorSize());

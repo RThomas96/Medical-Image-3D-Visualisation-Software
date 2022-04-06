@@ -280,6 +280,7 @@ namespace UITool {
 
 	public:
 		PositionManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions);
+        ~PositionManipulator();
 
         void setAllManipulatorsPosition(const std::vector<glm::vec3>& positions) override;
 

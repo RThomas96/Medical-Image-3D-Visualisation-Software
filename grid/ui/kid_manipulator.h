@@ -50,6 +50,7 @@ class RotationManipulator : public QObject , public qglviewer::MouseGrabber
     bool isVisible;// Actually sync with isEnable
     bool isEnable;
 
+    bool evenMode;
 
     qglviewer::Vec Origine;              // (1)
     qglviewer::Vec PrevOrigine;              // (1)
@@ -80,6 +81,7 @@ class RotationManipulator : public QObject , public qglviewer::MouseGrabber
 public:
     RotationManipulator()
     {
+        evenMode = false;
         mouse_released = true;
 
         Origine = qglviewer::Vec(0,0,0);
@@ -304,12 +306,12 @@ public:
     void draw()
     {
         if(mouse_released) {
-            this->Xscale = 1.;
-            this->Yscale = 1.;
-            this->Zscale = 1.;
-            this->prevXscale = 1.;
-            this->prevYscale = 1.;
-            this->prevZscale = 1.;
+            //this->Xscale = 1.;
+            //this->Yscale = 1.;
+            //this->Zscale = 1.;
+            //this->prevXscale = 1.;
+            //this->prevYscale = 1.;
+            //this->prevZscale = 1.;
         }
 
         //glClear(GL_DEPTH_BUFFER_BIT);
@@ -1110,6 +1112,13 @@ public:
                     lambda = ( ( Eye - Origine ) * e ) / ( RepX * e );
                     prevXscale = Xscale;
                     Xscale = lambda / (1.5*display_scale);
+                    if(this->evenMode) {
+                        float delta = Xscale - prevXscale;
+                        prevYscale = Yscale;
+                        Yscale += delta;
+                        prevZscale = Zscale;
+                        Zscale += delta;
+                    }
                     manipulatedCallback();
                     break;
                 case -7:
@@ -1118,6 +1127,13 @@ public:
                     lambda = ( ( Eye - Origine ) * e ) / ( RepX * e );
                     prevXscale = Xscale;
                     Xscale = -lambda / (1.5*display_scale);
+                    if(this->evenMode) {
+                        float delta = Xscale - prevXscale;
+                        prevYscale = Yscale;
+                        Yscale += delta;
+                        prevZscale = Zscale;
+                        Zscale += delta;
+                    }
                     manipulatedCallback();
                     break;
 
@@ -1127,6 +1143,13 @@ public:
                     lambda = ( ( Eye - Origine ) * e ) / ( RepY * e );
                     prevYscale = Yscale;
                     Yscale = lambda / (1.5*display_scale);
+                    if(this->evenMode) {
+                        float delta = Yscale - prevYscale;
+                        prevXscale = Xscale;
+                        Xscale += delta;
+                        prevZscale = Zscale;
+                        Zscale += delta;
+                    }
                     manipulatedCallback();
                     break;
                 case -8:
@@ -1135,6 +1158,13 @@ public:
                     lambda = ( ( Eye - Origine ) * e ) / ( RepY * e );
                     prevYscale = Yscale;
                     Yscale = -lambda / (1.5*display_scale);
+                    if(this->evenMode) {
+                        float delta = Yscale - prevYscale;
+                        prevXscale = Xscale;
+                        Xscale += delta;
+                        prevZscale = Zscale;
+                        Zscale += delta;
+                    }
                     manipulatedCallback();
                     break;
 
@@ -1144,6 +1174,13 @@ public:
                     lambda = ( ( Eye - Origine ) * e ) / ( RepZ * e );
                     prevZscale = Zscale;
                     Zscale = lambda / (1.5*display_scale);
+                    if(this->evenMode) {
+                        float delta = Zscale - prevZscale;
+                        prevXscale = Xscale;
+                        Xscale += delta;
+                        prevYscale = Yscale;
+                        Yscale += delta;
+                    }
                     manipulatedCallback();
                     break;
                 case -9:
@@ -1152,6 +1189,13 @@ public:
                     lambda = ( ( Eye - Origine ) * e ) / ( RepZ * e );
                     prevZscale = Zscale;
                     Zscale = -lambda / (1.5*display_scale);
+                    if(this->evenMode) {
+                        float delta = Zscale - prevZscale;
+                        prevXscale = Xscale;
+                        Xscale += delta;
+                        prevYscale = Yscale;
+                        Yscale += delta;
+                    }
                     manipulatedCallback();
                     break;
                 }

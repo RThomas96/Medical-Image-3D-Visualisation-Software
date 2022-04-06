@@ -215,10 +215,14 @@ namespace UITool {
     /***/
 
 	PositionManipulator::PositionManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions): MeshManipulator(mesh) {
+        this->selection.disable();
         this->evenMode = false;
         this->kid_manip = new RotationManipulator();
-        QObject::connect(this->kid_manip, &RotationManipulator::moved, this, [this]() {this->moveManipulator(nullptr);});
         this->kid_manip->setOrigine(qglviewer::Vec(mesh->getOrigin()[0], mesh->getOrigin()[1], mesh->getOrigin()[2]));
+        for(int i = 0; i < this->mesh->vertices.size(); ++i) {
+            this->kid_manip->addPoint(i, qglviewer::Vec(this->mesh->vertices[i][0], this->mesh->vertices[i][1], this->mesh->vertices[i][2]));
+        }
+        QObject::connect(this->kid_manip, &RotationManipulator::moved, this, [this]() {this->moveManipulator(nullptr);});
 	}
 
 	void PositionManipulator::setAllManipulatorsPosition(const std::vector<glm::vec3>& positions) {
@@ -235,67 +239,39 @@ namespace UITool {
     }
 
     void PositionManipulator::moveManipulator(Manipulator * manipulator) {
-        // For translation
-        if(this->kid_manip->mode_modification >= 1 && this->kid_manip->mode_modification <= 3) {
-            this->mesh->setOrigin(glm::vec3(this->kid_manip->Origine[0], this->kid_manip->Origine[1], this->kid_manip->Origine[2]));
-        }
-        // For rotation
-        if(this->kid_manip->mode_modification >= 4 && this->kid_manip->mode_modification <= 6) {
-            this->mesh->rotate(this->kid_manip->getRotationMatrix());
-            this->mesh->setOrigin(glm::vec3(this->kid_manip->Origine[0], this->kid_manip->Origine[1], this->kid_manip->Origine[2]));
-        }
-        // For scale
-        if(this->kid_manip->mode_modification >= 7 && this->kid_manip->mode_modification <= 9 || this->kid_manip->mode_modification <= -7 && this->kid_manip->mode_modification >= -9) {
-            glm::vec3 scale = this->kid_manip->getScaleVector();
-            int axeToScale = -1;
-            switch(this->kid_manip->mode_modification) {
-                case 7:
-                    axeToScale = 0;
-                    break;
-                case -7:
-                    axeToScale = 0;
-                    break;
-                case 8:
-                    axeToScale = 1;
-                    break;
-                case -8:
-                    axeToScale = 1;
-                    break;
-                case 9:
-                    axeToScale = 2;
-                    break;
-                case -9:
-                    axeToScale = 2;
-                    break;
-            }
-            if(this->evenMode) {
-                this->mesh->scale(glm::vec3(scale[axeToScale], scale[axeToScale], scale[axeToScale]));
-            } else {
-                glm::vec3 finalScale = glm::vec3(1., 1., 1.);
-                finalScale[axeToScale] = scale[axeToScale];
-                this->mesh->scale(finalScale);
-            }
-
-            this->mesh->setOrigin(glm::vec3(this->kid_manip->Origine[0], this->kid_manip->Origine[1], this->kid_manip->Origine[2]));
+        for(int i = 0; i < this->mesh->vertices.size(); ++i) {
+            qglviewer::Vec deformedPoint;
+            int trueIndex;
+            this->kid_manip->getTransformedPoint(i, trueIndex, deformedPoint);
+            this->mesh->vertices[i] = glm::vec3(deformedPoint[0], deformedPoint[1], deformedPoint[2]);
             this->mesh->computeNormals();
             this->mesh->updatebbox();
         }
+        Q_EMIT needSendTetmeshToGPU();
     }
 
     void PositionManipulator::keyPressed(QKeyEvent* e) {
         if(e->modifiers() == Qt::ControlModifier && !e->isAutoRepeat()) {
             this->evenMode = true;
+            std::cout << "Enter even mode" << std::endl;
+            this->kid_manip->evenMode = true;
         }
     }
 
     void PositionManipulator::keyReleased(QKeyEvent* e) {
+        std::cout << "Exit even mode" << std::endl;
         this->evenMode = false;
+        this->kid_manip->evenMode = false;
     }
 
     void PositionManipulator::mousePressed(QMouseEvent* e) {}
 
     void PositionManipulator::mouseReleased(QMouseEvent* e) {
         emit needRedraw();
+    }
+
+    PositionManipulator::~PositionManipulator() {
+        delete this->kid_manip;
     }
 
     /***/
