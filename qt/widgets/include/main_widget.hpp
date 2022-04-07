@@ -31,9 +31,41 @@ public:
     ToolPannel(QWidget *parent = nullptr):QGroupBox(parent){init();}
     ToolPannel(const QString &title, QWidget *parent = nullptr): QGroupBox(title, parent){init();}
 
+    UITool::MeshManipulatorType currentTool;
+
+    QVBoxLayout * main_layout;
+
+    QWidget *     fixedRegistration_tools;
+    QVBoxLayout * fixedRegistration_layout;
+    QPushButton * fixedRegistration_apply;
+
 public slots:
     void init(){
         this->setCheckable(false);
+        this->main_layout = new QVBoxLayout(this);
+        this->main_layout->setAlignment(Qt::AlignTop);
+
+        this->fixedRegistration_tools = new QWidget(this);
+        this->fixedRegistration_layout = new QVBoxLayout(this->fixedRegistration_tools);
+        this->fixedRegistration_apply = new QPushButton("Register");
+        this->fixedRegistration_layout->addWidget(this->fixedRegistration_apply);
+
+        this->main_layout->addWidget(this->fixedRegistration_tools);
+
+        this->fixedRegistration_tools->hide();
+    }
+
+    void hideAllLayouts() {
+        this->fixedRegistration_tools->hide();
+    }
+
+    void changeCurrentTool(UITool::MeshManipulatorType newTool) {
+        this->hideAllLayouts();
+        switch(newTool) {
+            case UITool::MeshManipulatorType::FIXED_REGISTRATION:
+                this->fixedRegistration_tools->show();
+                break;
+        }
     }
 
 signals:

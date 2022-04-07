@@ -209,21 +209,26 @@ void MainWidget::setupWidgets() {
 	QObject::connect(this->tool_ARAP, &QAction::triggered, [this]() {
             this->scene->updateSceneCenter();
             this->scene->changeCurrentTool(UITool::MeshManipulatorType::ARAP);
+            this->tool_pannel->changeCurrentTool(UITool::MeshManipulatorType::ARAP);
 	});
 	QObject::connect(this->tool_direct, &QAction::triggered, [this]() {
             this->scene->updateSceneCenter();
             this->scene->changeCurrentTool(UITool::MeshManipulatorType::DIRECT);
+            this->tool_pannel->changeCurrentTool(UITool::MeshManipulatorType::DIRECT);
 	});
 	QObject::connect(this->tool_position, &QAction::triggered, [this]() {
             this->scene->updateSceneCenter();
             this->scene->changeCurrentTool(UITool::MeshManipulatorType::POSITION);
+            this->tool_pannel->changeCurrentTool(UITool::MeshManipulatorType::POSITION);
 	});
 	QObject::connect(this->tool_registration, &QAction::triggered, [this]() {
             this->scene->updateSceneCenter();
             this->scene->changeCurrentTool(UITool::MeshManipulatorType::FIXED_REGISTRATION);
+            this->tool_pannel->changeCurrentTool(UITool::MeshManipulatorType::FIXED_REGISTRATION);
 	});
     QObject::connect(this->combo_mesh, QOverload<int>::of(&QComboBox::currentIndexChanged), [=](int index){
             this->scene->changeActiveMesh(std::string((this->combo_mesh->itemText(this->combo_mesh->currentIndex())).toStdString()));
+            this->tool_pannel->changeCurrentTool(UITool::MeshManipulatorType::DIRECT);
     });
 
     /***/
@@ -242,7 +247,6 @@ void MainWidget::setupWidgets() {
     QObject::connect(this->cutPlane, &CutPlaneGroupBox::clickedDisplayXCut, this->scene, &Scene::slotTogglePlaneX);
     QObject::connect(this->cutPlane, &CutPlaneGroupBox::clickedDisplayYCut, this->scene, &Scene::slotTogglePlaneY);
     QObject::connect(this->cutPlane, &CutPlaneGroupBox::clickedDisplayZCut, this->scene, &Scene::slotTogglePlaneZ);
-
 
     /***/
 

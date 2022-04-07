@@ -98,6 +98,8 @@ INTERFACE
 - [x] Afficher le cut au bon endroit 
 - [x] Afficher le plan au bon endroit 
 - [ ] Ajouter le free manipulator 
+- [x] Ajouter hide/show side pannel tools
+- [ ] Connecter hide/show side pannel tools 
 
 GENERAL
 - [x] Réparer le ray casting
@@ -112,12 +114,12 @@ GENERAL
 
 # Tilted
 - [ ] [FEATURE][FORMAT] Prendre en compte le dx/dy/dz du TIFF et OME/TIFF
-- [ ] [FEATURE] Debug le placement de points dans la vue 3D
+- [x] [FEATURE] Debug le placement de points dans la vue 3D
 - [x] [INTERFACE] Bloquage du manipulateur 
 - [x] [INTERFACE] Taille du manipulateur 
 - [x] [INTERFACE] Affichage du manipulateur durant la sélection (il ne devrait pas)
 - [ ] [INTERFACE] Améliorer l'interface d'apairage de points 
-- [ ] [INTERFACE] Activer/désactiver les plans
+- [x] [INTERFACE] Activer/désactiver les plans
 
 # Un jour 
 
