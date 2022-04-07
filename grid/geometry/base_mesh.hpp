@@ -12,6 +12,12 @@ namespace UITool {
     class Manipulator;
 }
 
+enum class DeformMethod {
+    NORMAL,
+    WEIGHTED,
+    ARAP
+};
+
 //! \defgroup geometry Geometry
 //! \addtogroup geometry
 //! @{

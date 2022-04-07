@@ -181,7 +181,7 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, QWidget* parent) :
 	QGridLayout* grid = new QGridLayout();
 
 	// Add top labels :
-	grid->addWidget(label_Texture, 0, 0, 2, 1, Qt::AlignCenter);
+	//grid->addWidget(label_Texture, 0, 0, 2, 1, Qt::AlignCenter);
 	grid->addWidget(this->groupbox_red, 0, 1, 1, 20);
 	grid->addWidget(this->groupbox_green, 1, 1, 1, 20);
 	grid->setRowStretch(0, 0);

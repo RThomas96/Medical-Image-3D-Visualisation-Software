@@ -67,7 +67,7 @@ ARAP
 - [x] Clean up handles ARAP
 - [x] Réparer MAJ
 - [x] Inverse sélection 
-- [x] Réparer sélection trigger (faire en sorte que les shorcut passe dans le viewer même sans cliquer)
+- [ ] Réparer sélection trigger (faire en sorte que les shorcut passe dans le viewer même sans cliquer)
 - [x] Ajouter shortcut ARAP add/remove handles
 - [x] Remove shortcut S for stereo
 - [x] Ajouter shortcut ARAP switch handles
@@ -82,11 +82,20 @@ POSITION
 - [ ] Persistent position 
 
 INTERFACE
-- [ ] Faire un lien direct entre le update scene et la scene en fait 
+- [ ] Ajouter object pannel
+- [x] Refaire les slots de la scene 
+- [x] Retirer le pannel avec 2D/3D/Pannel/etc
+- [x] Retirer tous les boutons inutiles 
+- [x] Ajouter une toolbar
+- [x] Ajouter un frame autour du viewer
+- [x] Ajouter le selector
+- [ ] Placer correctement le selector
+- [x] Connecter le selector
+- [x] Connecter la toolbar 
+- [ ] Ajouter un side pannel pour les tools
 
 GENERAL
 - [ ] Réparer le ray casting
-- [ ] Retirer le pannel avec 2D/3D/Pannel/etc
 - [ ] Ajouter le pannel des plans de KidPocket
 - [ ] Ajouter un undo
 - [ ] Ajouter un mode offline pour les performances
@@ -130,6 +139,6 @@ GENERAL
 - [ ] [RENDU] Le scale affecte les performances
 - [ ] [FEATURE][FORMAT] Prendre en compte le dx/dy/dz du TIFF et OME/TIFF
 - [ ] [FEATURE][FORMAT] Ajustement automatique de la taille de l'image pour correspondre a la limite de VRAM [ici](#Lecteur-TIFF)
-- [ ] [INTERFACE] Debugger le lock random du manipulateur
+- [x] [INTERFACE] Debugger le lock random du manipulateur
 - [ ] [RENDU][MAJEUR] Debugger le rendu négatif 
 - [x] [RENDU][MAJEUR] Debugger le décalage de la grille

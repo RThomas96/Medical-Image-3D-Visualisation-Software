@@ -28,7 +28,7 @@ public:
     {
         // Allow to automatically set the Viewer as active when mouse over, a click isn't needed anymore
         this->activateWindow();
-        this->grabKeyboard();
+        //this->grabKeyboard();
         QWidget::enterEvent(event);
     }
 

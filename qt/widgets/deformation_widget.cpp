@@ -323,17 +323,19 @@ void GridDeformationWidget::updateScene(Scene * scene, UITool::MeshManipulatorTy
     if(moveMethod >= 0) {
         switch(moveMethod) {
             case 0:
-                scene->setNormalDeformationMethod(currentMeshName);
+                //scene->setNormalDeformationMethod(currentMeshName);
+                scene->changeCurrentDeformationMethod(DeformMethod::NORMAL);
                 break;
 
             case 1:
                 this->label_radius_selection->show(); 
                 this->spinbox_radius_selection->show(); 
-                scene->setWeightedDeformationMethod(currentMeshName, this->spinbox_radius_selection->value());
+                //scene->setWeightedDeformationMethod(currentMeshName, this->spinbox_radius_selection->value());
                 break;
 
             case 2:
-                scene->setARAPDeformationMethod(currentMeshName);
+                //scene->setARAPDeformationMethod(currentMeshName);
+                scene->changeCurrentDeformationMethod(DeformMethod::ARAP);
                 break;
 
             default:

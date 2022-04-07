@@ -4,6 +4,8 @@
 #include <algorithm>
 #include "glm/gtx/string_cast.hpp"
 
+WeightedMethod::WeightedMethod(BaseMesh * baseMesh, float radius) : MeshDeformer(baseMesh, DeformMethod::WEIGHTED), radius(radius) {}
+
 bool WeightedMethod::hasSelectedPts() {
     return !this->selectedPts.empty();
 }
@@ -49,6 +51,8 @@ void WeightedMethod::movePoints(const std::vector<glm::vec3>& origins, const std
 }
 
 /***/
+
+NormalMethod::NormalMethod(BaseMesh * baseMesh) : MeshDeformer(baseMesh, DeformMethod::NORMAL) {}
 
 bool NormalMethod::hasSelectedPts() {
     return !this->selectedPts.empty();

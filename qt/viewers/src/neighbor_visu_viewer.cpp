@@ -284,7 +284,7 @@ void Viewer::newAPI_loadGrid(const std::string& name, const std::vector<std::str
 void Viewer::setCenter(const glm::vec3& center) {
 	this->setSceneCenter(qglviewer::Vec(center[0], center[1], center[2]));
     std::cout << "Set center" << std::endl;
-    this->showEntireScene();
+    //this->showEntireScene();
 }
 
 void Viewer::setRadius(const float radius) {

@@ -142,6 +142,9 @@ Scene::Scene() :
 	this->posFrame = nullptr;
 
     this->glSelection = new UITool::GL::Selection(&this->sceneGL, glm::vec3(0., 0., 0.), glm::vec3(10., 10., 10.));
+
+    this->currentTool = UITool::MeshManipulatorType::POSITION;
+    this->currentDeformMethod = DeformMethod::NORMAL;
 }
 
 Scene::~Scene(void) {
@@ -3257,24 +3260,6 @@ void Scene::toggleWireframe() {
 	this->glMeshManipulator->toggleDisplayWireframe();
 }
 
-void Scene::setNormalDeformationMethod(const std::string& name) {
-    BaseMesh * mesh = this->getBaseMesh(name);
-    if(mesh)
-        mesh->setNormalDeformationMethod();
-}
-
-void Scene::setWeightedDeformationMethod(const std::string& name, float radius) {
-    BaseMesh * mesh = this->getBaseMesh(name);
-    if(mesh)
-        mesh->setWeightedDeformationMethod(radius);
-}
-
-void Scene::setARAPDeformationMethod(const std::string& name) {
-    BaseMesh * mesh = this->getBaseMesh(name);
-    if(mesh)
-        mesh->setARAPDeformationMethod();
-}
-
 void Scene::setManipulatorRadius(float radius) {
     this->glMeshManipulator->setRadius(radius);   
 }
@@ -3642,17 +3627,6 @@ int Scene::getGridIdx(const std::string& name) {
     return -1;
 }
 
-void Scene::changeActiveMesh(const std::string& name) {
-    this->activeMesh = name;
-    this->updateSceneCenter();
-    this->updateSceneRadius();
-    if(this->isGrid(activeMesh)) {
-        int gridIdx = this->getGridIdx(activeMesh);
-        this->gridToDraw = gridIdx;
-        this->sendTetmeshToGPU(gridIdx, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS | InfoToSend::TEXCOORD | InfoToSend::NEIGHBORS)); 
-    }
-}
-
 void Scene::init() {
     if(cage_demo) {
         this->openGridWithGridTetmesh("brain_image_IRM", std::vector<std::string>{std::string("/home/thomas/data/Data/Mesh/thigh_f_scaled.tif")}, 2, glm::vec3(5, 5, 5), glm::vec3(1., 1., 1.));
@@ -3928,5 +3902,44 @@ void Scene::redrawSelection(const glm::vec3& p0, const glm::vec3& p1, const glm:
 void Scene::setLightPosition(const glm::vec3& lighPosition) {
     for(int i = 0; i < this->drawableMeshes.size(); ++i) {
         this->drawableMeshes[i].first->lightPosition = lighPosition;
+    }
+}
+
+void Scene::changeActiveMesh(const std::string& name) {
+    this->activeMesh = name;
+    this->updateSceneCenter();
+    this->updateSceneRadius();
+    if(this->isGrid(activeMesh)) {
+        int gridIdx = this->getGridIdx(activeMesh);
+        this->gridToDraw = gridIdx;
+        this->sendTetmeshToGPU(gridIdx, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS | InfoToSend::TEXCOORD | InfoToSend::NEIGHBORS)); 
+    }
+    this->changeCurrentTool(this->currentTool);
+    this->changeCurrentDeformationMethod(this->currentDeformMethod);
+}
+
+void Scene::changeCurrentTool(UITool::MeshManipulatorType newTool) {
+    this->currentTool = newTool;
+    this->updateTools(newTool);
+    if(newTool == UITool::MeshManipulatorType::ARAP) {
+        this->changeCurrentDeformationMethod(DeformMethod::ARAP);
+    }
+    if(newTool == UITool::MeshManipulatorType::DIRECT) {
+        this->changeCurrentDeformationMethod(DeformMethod::NORMAL);
+    }
+}
+
+void Scene::changeCurrentDeformationMethod(DeformMethod newDeformMethod) {
+    this->currentDeformMethod = newDeformMethod;
+    BaseMesh * mesh = this->getBaseMesh(this->activeMesh);
+    if(mesh) {
+        switch(newDeformMethod) {
+            case DeformMethod::NORMAL:
+                mesh->setNormalDeformationMethod();
+                break;
+            case DeformMethod::ARAP:
+                mesh->setARAPDeformationMethod();
+                break;
+        }
     }
 }

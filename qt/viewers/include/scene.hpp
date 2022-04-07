@@ -482,6 +482,9 @@ signals:
 public slots:
     void init();
 
+    void changeCurrentTool(UITool::MeshManipulatorType newTool);
+    void changeCurrentDeformationMethod(DeformMethod newDeformMethod);
+
     // MeshManipulator slots
 	void toggleWireframe();
     void toggleManipulatorActivation();
@@ -499,11 +502,6 @@ public slots:
     void assignAsHandleSliceTool();
     void removeAllHandlesSliceTool();
     void assignAllHandlesBeforePlaneSliceTool();
-
-    // MeshDeformator slots
-    void setNormalDeformationMethod(const std::string& name);
-    void setWeightedDeformationMethod(const std::string& name, float radius);
-    void setARAPDeformationMethod(const std::string& name);
 
     // Rendering slots
 	void setColorChannel(ColorChannel mode);
@@ -553,6 +551,8 @@ public:
     int gridToDraw = -1;
 
     std::string activeMesh;
+    UITool::MeshManipulatorType currentTool;
+    DeformMethod currentDeformMethod;
 
     std::vector<std::string> grids_name;
 	std::vector<GridGLView::Ptr> grids;

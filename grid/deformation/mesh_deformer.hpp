@@ -11,11 +11,7 @@
 
 struct BaseMesh;
 struct SurfaceMesh;
-enum DeformMethod {
-    NORMAL,
-    WEIGHTED,
-    ARAP
-};
+enum class DeformMethod;
 
 struct MeshDeformer {
     DeformMethod deformMethod;
@@ -40,7 +36,7 @@ struct WeightedMethod : MeshDeformer {
     glm::vec3 originalPoint;
     std::vector<int> selectedPts;
 
-    WeightedMethod(BaseMesh * baseMesh, float radius) : MeshDeformer(baseMesh, DeformMethod::WEIGHTED), radius(radius) {}
+    WeightedMethod(BaseMesh * baseMesh, float radius);
 
     bool hasSelectedPts() override;
     void selectPts(const glm::vec3& pt) override;
@@ -54,7 +50,7 @@ struct WeightedMethod : MeshDeformer {
 struct NormalMethod : MeshDeformer {
     std::vector<int> selectedPts;
 
-    NormalMethod(BaseMesh * baseMesh) : MeshDeformer(baseMesh, DeformMethod::NORMAL) {}
+    NormalMethod(BaseMesh * baseMesh);
 
     bool hasSelectedPts() override;
     void selectPts(const glm::vec3& pt) override;
