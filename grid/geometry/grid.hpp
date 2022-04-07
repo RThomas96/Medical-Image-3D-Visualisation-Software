@@ -51,10 +51,11 @@ struct Sampler {
     void fromSamplerToImage(glm::vec3& p) const;
     void fromImageToSampler(glm::vec3& p) const;
 
+    //Nobody should access to the original image size everthing need to pass by the Sampler
+    // Used to compute voxel size
+    glm::vec3 getImageDimensions() const;
 private:
     void fillCache();
-    //Nobody should access to the original image size everthing need to pass by the Sampler
-    glm::vec3 getImageDimensions() const;
     SimpleImage * image;
 };
 

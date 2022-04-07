@@ -327,8 +327,6 @@ private:
     /* Visualisation */
 	std::array<glm::vec3, 8> lightPositions;	///< Scene lights (positionned at the corners of the scene BB)
 	glm::bvec3 planeVisibility;
-	glm::vec3 planeDirection;	 ///< Cutting plane directions (-1 or 1 on each axis)
-	glm::vec3 planeDisplacement;
 	float clipDistanceFromCamera;
 	glm::uvec3 visuMin;
 	glm::uvec3 visuMax;
@@ -429,21 +427,12 @@ public:
 	void setColor0Alternate(qreal r, qreal g, qreal b);
 	void setColor1Alternate(qreal r, qreal g, qreal b);
 
-	void slotSetPlaneDisplacementX(float scalar);
-	void slotSetPlaneDisplacementY(float scalar);
-	void slotSetPlaneDisplacementZ(float scalar);
-
 	void setPlaneHeading(planes _plane, planeHeading _heading);
 	bool isSceneInitialized(void) const { return this->isInitialized; }
 
     /* Toggle things */
 	void togglePlaneVisibility(planes _plane);
 	void toggleAllPlaneVisibilities(void);
-
-	void slotTogglePlaneDirectionX();
-	void slotTogglePlaneDirectionY();
-	void slotTogglePlaneDirectionZ();
-	void toggleAllPlaneDirections();
 
 	void setPositionResponse(glm::vec4 _resp);// Position a qglviewer::Frame at the given position, in 3D space.
 	void drawPositionResponse(float radius, bool drawOnTop = false);// Draw a set of arrows at the position designated by setPositionResponse()
@@ -484,6 +473,23 @@ public slots:
 
     void changeCurrentTool(UITool::MeshManipulatorType newTool);
     void changeCurrentDeformationMethod(DeformMethod newDeformMethod);
+
+    // Display management
+    void slotToggleDisplayGrid() { this->displayGrid = !this->displayGrid;};
+
+    // Plane management slots
+	void slotSetPlaneDisplacementX(float scalar);
+	void slotSetPlaneDisplacementY(float scalar);
+	void slotSetPlaneDisplacementZ(float scalar);
+
+	void slotTogglePlaneDirectionX();
+	void slotTogglePlaneDirectionY();
+	void slotTogglePlaneDirectionZ();
+	void toggleAllPlaneDirections();
+
+	void slotTogglePlaneX(bool display);
+	void slotTogglePlaneY(bool display);
+	void slotTogglePlaneZ(bool display);
 
     // MeshManipulator slots
 	void toggleWireframe();
@@ -549,6 +555,12 @@ public:
 
     int maximumTextureSize;// Set by the viewer
     int gridToDraw = -1;
+
+    bool displayGrid;
+
+	glm::vec3 planeDirection;// Cutting plane directions (-1 or 1 on each axis)
+	glm::vec3 planeDisplacement;
+	glm::vec3 planeActivation;// If planes are used (0 = false, 1 = true)
 
     std::string activeMesh;
     UITool::MeshManipulatorType currentTool;

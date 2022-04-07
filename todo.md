@@ -92,11 +92,15 @@ INTERFACE
 - [ ] Placer correctement le selector
 - [x] Connecter le selector
 - [x] Connecter la toolbar 
-- [ ] Ajouter un side pannel pour les tools
+- [x] Ajouter un side pannel pour les tools
+- [x] Connecter plane
+- [ ] Sync plane et header 
+- [x] Afficher le cut au bon endroit 
+- [x] Afficher le plan au bon endroit 
 
 GENERAL
 - [ ] Réparer le ray casting
-- [ ] Ajouter le pannel des plans de KidPocket
+- [x] Ajouter le pannel des plans de KidPocket
 - [ ] Ajouter un undo
 - [ ] Ajouter un mode offline pour les performances
 - [ ] Améliorer la lumière de la grille

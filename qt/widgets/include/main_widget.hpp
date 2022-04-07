@@ -10,6 +10,7 @@
 #include "../openMeshWidget.hpp"
 #include "../saveMeshWidget.hpp"
 #include "../applyCageWidget.hpp"
+#include "../CutPlaneGroupBox.h"
 #include "./opengl_debug_log.hpp"
 #include "./scene_control.hpp"
 #include "./user_settings_widget.hpp"
@@ -21,6 +22,24 @@
 #include <QFrame>
 
 class ColorBoundWidget;
+
+class ToolPannel : public QGroupBox {
+    Q_OBJECT
+
+public:
+    
+    ToolPannel(QWidget *parent = nullptr):QGroupBox(parent){init();}
+    ToolPannel(const QString &title, QWidget *parent = nullptr): QGroupBox(title, parent){init();}
+
+public slots:
+    void init(){
+        this->setCheckable(false);
+    }
+
+signals:
+
+};
+
 
 class MainWidget : public QMainWindow {
 	Q_OBJECT
@@ -61,6 +80,7 @@ private:
 	GridLoaderWidget* loaderWidget;
 	GridDeformationWidget* deformationWidget;
 
+    CutPlaneGroupBox* cutPlane;
 	ControlPanel* controlPanel;
 	bool widgetSizeSet;
 
@@ -79,6 +99,8 @@ private:
 	QAction* action_openDevPannel;
 
     QComboBox* combo_mesh;
+
+    ToolPannel* tool_pannel;
 
 	QAction* tool_open;
 	QAction* tool_save;

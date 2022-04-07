@@ -50,6 +50,7 @@ ADD_LIBRARY(VisualisationWidgets STATIC
     ./qt/widgets/openMeshWidget.hpp
     ./qt/widgets/applyCageWidget.hpp
     ./qt/widgets/saveMeshWidget.hpp
+    ./qt/widgets/CutPlaneGroupBox.h
 
 	./qt/widgets/src/main_widget.cpp
 	./qt/widgets/src/scene_control.cpp

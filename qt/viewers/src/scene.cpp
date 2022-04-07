@@ -145,6 +145,8 @@ Scene::Scene() :
 
     this->currentTool = UITool::MeshManipulatorType::POSITION;
     this->currentDeformMethod = DeformMethod::NORMAL;
+    this->planeActivation = glm::vec3(0., 0., 0.);
+    this->displayGrid = true;
 }
 
 Scene::~Scene(void) {
@@ -1121,10 +1123,22 @@ void Scene::drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane) {
 }
 
 glm::vec3 Scene::computePlanePositions() {
-	Image::bbox_t::vec position = this->sceneBB.getMin();
-	Image::bbox_t::vec diagonal = this->sceneBB.getDiagonal();
-	glm::vec3 planePos			= (position + this->planeDisplacement * diagonal);
-	return planePos;
+	//Image::bbox_t::vec position = this->sceneBB.getMin();
+    if(this->grids.size() > 0 && this->displayGrid) {
+	    Image::bbox_t::vec position = this->grids.back()->grid->bbMin;
+	    Image::bbox_t::vec diagonal = this->grids.back()->grid->getDimensions();
+	    //Image::bbox_t::vec position = this->sceneBB.getMin();
+	    //Image::bbox_t::vec diagonal = this->sceneBB.getDiagonal();
+	    glm::vec3 planePos			= (position + this->planeDisplacement * diagonal);
+        for(int i = 0; i < 3; ++i) {
+            if(this->planeActivation[i] == 0.) {
+                planePos[i] = -1000000.;
+            }
+        }
+	    return planePos;
+    } else {
+        return glm::vec3(0., 0., 0.);
+    }
 }
 
 void Scene::prepareUniformsGridPlaneView(GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, const GridGLView::Ptr& gridView) {
@@ -1175,8 +1189,8 @@ void Scene::prepareUniformsGridPlaneView(GLfloat* mvMat, GLfloat* pMat, glm::vec
 	//glm::vec3 dims				= gridView->grid->getResolution();
 
     // Do not use the bounding anymore as it can change due to deformation
-	Image::bbox_t::vec origin	= glm::vec3(0., 0., 0.);
-	Image::bbox_t::vec originWS = glm::vec3(0., 0., 0.);
+	Image::bbox_t::vec origin	= gridView->grid->bbMin;
+	Image::bbox_t::vec originWS = gridView->grid->bbMin;
 	glm::vec3 dims				= gridView->grid->getResolution();
 
 	glUniform3fv(voxelGridOrigin_Loc, 1, glm::value_ptr(origin));
@@ -1364,8 +1378,8 @@ void Scene::prepareUniformsPlanes(GLfloat* mvMat, GLfloat* pMat, planes _plane, 
 	GLint plIdx		   = (_plane == planes::x) ? 1 : (_plane == planes::y) ? 2 :
 																			   3;
 
-	Image::bbox_t::vec position = this->sceneBB.getMin();
-	Image::bbox_t::vec diagonal = this->sceneBB.getDiagonal();
+	Image::bbox_t::vec position = this->grids.back()->grid->bbMin;
+	Image::bbox_t::vec diagonal = this->grids.back()->grid->getDimensions();
 	glm::vec3 planePos			= this->computePlanePositions();
 
 	glm::mat4 transform							= glm::mat4(1.f);
@@ -1751,7 +1765,7 @@ void Scene::prepareUniformsGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm
 	GLint location_voxelSize = getUniform("voxelSize");
 	GLint location_gridSize	 = getUniform("gridSize");
 
-	glm::vec3 floatres = glm::convert_to<float>(_grid->grid->getResolution());
+	glm::vec3 floatres = glm::convert_to<float>(_grid->grid->getDimensions());
 
 	glUniform3fv(location_voxelSize, 1, glm::value_ptr(_grid->grid->getVoxelSize()));
 	glUniform3fv(location_gridSize, 1, glm::value_ptr(floatres));
@@ -1777,7 +1791,8 @@ void Scene::prepareUniformsGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm
 	glUniform1f(location_clipDistanceFromCamera, this->clipDistanceFromCamera);
 	glUniform3fv(location_visuBBMin, 1, glm::value_ptr(min));
 	glUniform3fv(location_visuBBMax, 1, glm::value_ptr(max));
-	glUniform1ui(location_shouldUseBB, ((this->drawMode == DrawMode::VolumetricBoxed) ? 1 : 0));
+	//glUniform1ui(location_shouldUseBB, ((this->drawMode == DrawMode::VolumetricBoxed) ? 1 : 0));
+	glUniform1ui(location_shouldUseBB, 0);
 	glUniform1ui(location_displayWireframe, this->glMeshManipulator->isWireframeDisplayed());
 	glUniform3fv(location_volumeEpsilon, 1, glm::value_ptr(_grid->defaultEpsilon));
 
@@ -1953,18 +1968,19 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 	/***********************/
 
 
-	if (this->drawMode == DrawMode::Solid) {
-		for (std::size_t i = 0; i < this->grids.size(); ++i) {
-			this->drawGridPlaneView(mvMat, pMat, transfoMat, this->grids[i]);
-		}
-	} else if (this->drawMode == DrawMode::Volumetric || this->drawMode == DrawMode::VolumetricBoxed) {
+	//if (this->drawMode == DrawMode::Solid) {
+	//	for (std::size_t i = 0; i < this->grids.size(); ++i) {
+	//		this->drawGridPlaneView(mvMat, pMat, transfoMat, this->grids[i]);
+	//	}
+	//} else if (this->drawMode == DrawMode::Volumetric || this->drawMode == DrawMode::VolumetricBoxed) {
+    if(this->displayGrid)
         if(this->grids.size() > 0)
             this->drawGridVolumetricView(mvMat, pMat, camPos, this->grids[gridToDraw]);
 
-		if (this->drawMode == DrawMode::VolumetricBoxed) {
-			this->drawBoundingBox(this->visuBox, glm::vec3(1., .0, .0), mvMat, pMat);
-		}
-	}
+//		if (this->drawMode == DrawMode::VolumetricBoxed) {
+//			this->drawBoundingBox(this->visuBox, glm::vec3(1., .0, .0), mvMat, pMat);
+//		}
+//	}
 
     for(int i = 0; i < this->drawableMeshes.size(); ++i) {
         this->drawableMeshes[i].first->makeVAO();
@@ -1972,7 +1988,7 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
     }
 
 	if (not this->grids.empty()) {
-		//this->drawPlanes(mvMat, pMat, this->drawMode == DrawMode::Solid);
+		this->drawPlanes(mvMat, pMat, this->drawMode == DrawMode::Solid);
 	}
 
 	//this->drawBoundingBox(this->sceneBB, glm::vec4(.5, .5, .0, 1.), mvMat, pMat);
@@ -2721,6 +2737,30 @@ void Scene::slotTogglePlaneDirectionZ() {
 }
 void Scene::toggleAllPlaneDirections() {
 	this->planeDirection = -this->planeDirection;
+}
+
+void Scene::slotTogglePlaneX(bool display) {
+    if(this->planeActivation[0] != 0.) {
+        this->planeActivation[0] = 0.;
+    } else {
+        this->planeActivation[0] = 1.;
+    }
+}
+
+void Scene::slotTogglePlaneY(bool display) {
+    if(this->planeActivation[1] != 0.) {
+        this->planeActivation[1] = 0.;
+    } else {
+        this->planeActivation[1] = 1.;
+    }
+}
+
+void Scene::slotTogglePlaneZ(bool display) {
+    if(this->planeActivation[2] != 0.) {
+        this->planeActivation[2] = 0.;
+    } else {
+        this->planeActivation[2] = 1.;
+    }
 }
 
 void Scene::slotSetMinTexValue(double val) {

@@ -61,6 +61,8 @@ void MainWidget::setupWidgets() {
     this->saveMeshWidget = new SaveMeshWidget(this->scene, this);
     this->applyCageWidget = new ApplyCageWidget(this->scene, this);
 
+    this->cutPlane = new CutPlaneGroupBox("Display grid");
+
 	QObject::connect(this->showGLLog, &QPushButton::clicked, this->glDebug, &QWidget::show);
 
 	this->deformationWidget = new GridDeformationWidget(this->scene);
@@ -224,6 +226,26 @@ void MainWidget::setupWidgets() {
             this->scene->changeActiveMesh(std::string((this->combo_mesh->itemText(this->combo_mesh->currentIndex())).toStdString()));
     });
 
+    /***/
+    // Plane control
+    /***/
+    QObject::connect(this->cutPlane, &CutPlaneGroupBox::clicked, this->scene, &Scene::slotToggleDisplayGrid);
+
+    QObject::connect(this->cutPlane, &CutPlaneGroupBox::xSliderValueChanged, this->scene, &Scene::slotSetPlaneDisplacementX);
+    QObject::connect(this->cutPlane, &CutPlaneGroupBox::ySliderValueChanged, this->scene, &Scene::slotSetPlaneDisplacementY);
+    QObject::connect(this->cutPlane, &CutPlaneGroupBox::zSliderValueChanged, this->scene, &Scene::slotSetPlaneDisplacementZ);
+
+    QObject::connect(this->cutPlane, &CutPlaneGroupBox::clickedInvertXPushButton, this->scene, &Scene::slotTogglePlaneDirectionX);
+    QObject::connect(this->cutPlane, &CutPlaneGroupBox::clickedInvertYPushButton, this->scene, &Scene::slotTogglePlaneDirectionY);
+    QObject::connect(this->cutPlane, &CutPlaneGroupBox::clickedInvertZPushButton, this->scene, &Scene::slotTogglePlaneDirectionZ);
+
+    QObject::connect(this->cutPlane, &CutPlaneGroupBox::clickedDisplayXCut, this->scene, &Scene::slotTogglePlaneX);
+    QObject::connect(this->cutPlane, &CutPlaneGroupBox::clickedDisplayYCut, this->scene, &Scene::slotTogglePlaneY);
+    QObject::connect(this->cutPlane, &CutPlaneGroupBox::clickedDisplayZCut, this->scene, &Scene::slotTogglePlaneZ);
+
+
+    /***/
+
 	// Viewer(s) creation along with control panel :
 	this->viewer		= new Viewer(this->scene, this->statusBar, nullptr);
 	this->viewer_planeX = new PlanarViewer(this->scene, planes::x, this->statusBar, planeHeading::North, nullptr);
@@ -231,6 +253,8 @@ void MainWidget::setupWidgets() {
 	this->viewer_planeZ = new PlanarViewer(this->scene, planes::z, this->statusBar, planeHeading::North, nullptr);
 	this->controlPanel	= new ControlPanel(this->scene, this->viewer, nullptr);
 	this->scene->setControlPanel(this->controlPanel);
+
+    this->tool_pannel = new ToolPannel("Tool pannel");
 
 	this->viewer->addStatusBar(this->statusBar);
 	this->viewer_planeX->addParentStatusBar(this->statusBar);
@@ -305,6 +329,7 @@ void MainWidget::setupWidgets() {
 	// Add the sub-splits to the main one :
 	mainSplit->addWidget(splitAbove);
 	mainSplit->addWidget(splitAbove1);
+    mainSplit->setContentsMargins(0, 0, 0, 0);
 
     this->viewerFrame = new QFrame();
     this->viewerFrame->setFrameRect(QRect(QRect(0, 0, 0, 0)));
@@ -312,6 +337,18 @@ void MainWidget::setupWidgets() {
     this->viewerFrame->setLineWidth(2);
 
 	QHBoxLayout* viewerLayout = new QHBoxLayout(this->viewerFrame);
+
+	QVBoxLayout* sidePannelLayout = new QVBoxLayout();
+    sidePannelLayout->setAlignment(Qt::AlignBottom);
+	QVBoxLayout* toolPannelLayout = new QVBoxLayout();
+    toolPannelLayout->setAlignment(Qt::AlignTop);
+    toolPannelLayout->addWidget(this->tool_pannel, Qt::AlignTop);
+
+    this->cutPlane->setFixedSize(200, 200);
+    sidePannelLayout->addLayout(toolPannelLayout);
+	sidePannelLayout->addWidget(this->cutPlane);
+
+    viewerLayout->addLayout(sidePannelLayout);
 	viewerLayout->addWidget(mainSplit, 4);
 	viewerLayout->addWidget(this->deformationWidget);
 

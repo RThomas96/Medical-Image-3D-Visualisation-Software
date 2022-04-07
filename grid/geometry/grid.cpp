@@ -207,7 +207,8 @@ void Grid::toSampler(glm::vec3& p) const {
 }
 
 glm::vec3 Grid::getVoxelSize() const {
-    return this->sampler.getSamplerDimension() / this->getResolution();
+    //return this->sampler.getSamplerDimension() / this->getResolution();
+    return this->getDimensions() / this->sampler.getSamplerDimension();
 }
 
 void Grid::loadMESH(std::string const &filename) {
