@@ -304,9 +304,15 @@ void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scen
         this->setRadius(this->meshManipulator->getManipulatorSize());
         this->planeViewRadius = this->manipulatorRadius * 3.f;
     } else if(type == MeshManipulatorType::FIXED_REGISTRATION) {
-        this->meshManipulator = new UITool::FixedRegistrationManipulator(mesh, positions);
-        this->setRadius(this->meshManipulator->getManipulatorSize() * 10.f);
-        this->planeViewRadius = this->manipulatorRadius;
+        if(scene->grids.size() > 0) {
+            this->meshManipulator = new UITool::FixedRegistrationManipulator(mesh, scene->grids[0]->grid, positions);
+            this->setRadius(this->meshManipulator->getManipulatorSize() * 10.f);
+            this->planeViewRadius = this->manipulatorRadius;
+        } else {
+            this->meshManipulator = new UITool::PositionManipulator(mesh, positions);
+            std::cout << "No grid available to use the register tool" << std::endl;
+            return;
+        }
     }
     this->prepare();
     // Scene->MeshManipulator

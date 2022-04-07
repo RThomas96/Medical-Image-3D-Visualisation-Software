@@ -97,14 +97,16 @@ INTERFACE
 - [ ] Sync plane et header 
 - [x] Afficher le cut au bon endroit 
 - [x] Afficher le plan au bon endroit 
+- [ ] Ajouter le free manipulator 
 
 GENERAL
-- [ ] Réparer le ray casting
+- [x] Réparer le ray casting
+- [x] Ajouter le ray casting au registration
 - [x] Ajouter le pannel des plans de KidPocket
 - [ ] Ajouter un undo
+- [ ] Réparer la sauvegarde 
 - [ ] Ajouter un mode offline pour les performances
 - [ ] Améliorer la lumière de la grille
-- [ ] Réparer la sauvegarde 
 
 ---
 

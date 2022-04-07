@@ -52,7 +52,7 @@ public:
 
     void scaleToBBox(const glm::vec3& bbMin, const glm::vec3& bbMax);
 
-    glm::vec3 getOrigin();
+    glm::vec3 getOrigin() const;
     virtual void translate(const glm::vec3& vec);
     virtual void rotate(const glm::mat3& transf);
     virtual void scale(const glm::vec3& scale);

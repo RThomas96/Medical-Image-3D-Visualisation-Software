@@ -94,7 +94,7 @@ std::vector<glm::vec3>& BaseMesh::getMeshPositions() {
     return this->vertices;
 }
 
-glm::vec3 BaseMesh::getOrigin() {
+glm::vec3 BaseMesh::getOrigin() const {
     //return glm::vec3(this->bbMax + this->bbMin)/2.f;
     glm::vec3 origin(0., 0., 0.);
     for(int i = 0; i < this->getNbVertices(); ++i) {

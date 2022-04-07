@@ -145,7 +145,7 @@ Scene::Scene() :
 
     this->currentTool = UITool::MeshManipulatorType::POSITION;
     this->currentDeformMethod = DeformMethod::NORMAL;
-    this->planeActivation = glm::vec3(0., 0., 0.);
+    this->planeActivation = glm::vec3(1., 1., 1.);
     this->displayGrid = true;
 }
 
@@ -1973,9 +1973,12 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 	//		this->drawGridPlaneView(mvMat, pMat, transfoMat, this->grids[i]);
 	//	}
 	//} else if (this->drawMode == DrawMode::Volumetric || this->drawMode == DrawMode::VolumetricBoxed) {
-    if(this->displayGrid)
-        if(this->grids.size() > 0)
+    if(this->displayGrid) {
+        if(this->grids.size() > 0) {
             this->drawGridVolumetricView(mvMat, pMat, camPos, this->grids[gridToDraw]);
+		    //this->drawPlanes(mvMat, pMat, this->drawMode == DrawMode::Solid);
+        }
+    }
 
 //		if (this->drawMode == DrawMode::VolumetricBoxed) {
 //			this->drawBoundingBox(this->visuBox, glm::vec3(1., .0, .0), mvMat, pMat);
@@ -1986,10 +1989,6 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
         this->drawableMeshes[i].first->makeVAO();
 	    this->drawableMeshes[i].first->draw(pMat, mvMat, glm::vec4{camPos, 1.f});
     }
-
-	if (not this->grids.empty()) {
-		this->drawPlanes(mvMat, pMat, this->drawMode == DrawMode::Solid);
-	}
 
 	//this->drawBoundingBox(this->sceneBB, glm::vec4(.5, .5, .0, 1.), mvMat, pMat);
 	this->showVAOstate = false;
@@ -3762,12 +3761,13 @@ void Scene::updateTools(UITool::MeshManipulatorType tool) {
         QObject::connect(this, &Scene::rayIsCasted, this, [this](const glm::vec3& origin, const glm::vec3& direction) { emit dynamic_cast<UITool::CompManipulator*>(this->glMeshManipulator->meshManipulator)->rayIsCasted(origin, direction, this->getMinTexValue(), this->getMaxTexValue(), this->computePlanePositions());});
 
         QObject::connect(this, SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)), dynamic_cast<UITool::CompManipulator*>(this->glMeshManipulator->meshManipulator), SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)));
+
     }
 
     if(tool == UITool::MeshManipulatorType::FIXED_REGISTRATION) {
-        //QObject::connect(this, &Scene::rayIsCasted, this, [this](const glm::vec3& origin, const glm::vec3& direction) { emit dynamic_cast<UITool::CompManipulator*>(this->glMeshManipulator->meshManipulator)->rayIsCasted(origin, direction, this->getMinTexValue(), this->getMaxTexValue(), this->computePlanePositions());});
-
         QObject::connect(this, SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)), dynamic_cast<UITool::FixedRegistrationManipulator*>(this->glMeshManipulator->meshManipulator), SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)));
+
+        QObject::connect(this, &Scene::rayIsCasted, this, [this](const glm::vec3& origin, const glm::vec3& direction) { emit dynamic_cast<UITool::FixedRegistrationManipulator*>(this->glMeshManipulator->meshManipulator)->rayIsCasted(origin, direction, this->getMinTexValue(), this->getMaxTexValue(), this->computePlanePositions());});
     }
 }
 
@@ -3961,7 +3961,8 @@ void Scene::changeActiveMesh(const std::string& name) {
 void Scene::changeCurrentTool(UITool::MeshManipulatorType newTool) {
     this->currentTool = newTool;
     this->updateTools(newTool);
-    if(newTool == UITool::MeshManipulatorType::ARAP) {
+    if(newTool == UITool::MeshManipulatorType::ARAP ||
+       newTool == UITool::MeshManipulatorType::FIXED_REGISTRATION) {
         this->changeCurrentDeformationMethod(DeformMethod::ARAP);
     }
     if(newTool == UITool::MeshManipulatorType::DIRECT) {

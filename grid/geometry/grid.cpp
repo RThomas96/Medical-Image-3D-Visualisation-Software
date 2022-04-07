@@ -32,6 +32,7 @@ void Grid::buildTetmesh(const glm::vec3& nbCube) {
     this->buildTetmesh(nbCube, sizeCube, origin);
 }
 
+// Only this one is used
 void Grid::buildTetmesh(const glm::vec3& nbCube, const glm::vec3& sizeVoxel) {
     //const glm::vec3 sizeCube = this->sampler.getSamplerDimension() / nbCube;
     const glm::vec3 sizeCube = (this->sampler.getSamplerDimension() * sizeVoxel) / nbCube;
@@ -42,11 +43,12 @@ void Grid::buildTetmesh(const glm::vec3& nbCube, const glm::vec3& sizeVoxel) {
     std::cout << "Cube size: " << sizeCube << std::endl;
     std::cout << "***" << std::endl;
     this->buildTetmesh(nbCube, sizeCube, glm::vec3(0., 0., 0.));
+    // Here this initial mesh is built directly using the sampler dimension because we want it to match the sampler
+    this->initialMesh.buildGrid(nbCube, this->sampler.getSamplerDimension() / nbCube, glm::vec3(0., 0., 0.));
 }
 
 void Grid::buildTetmesh(const glm::vec3& nbCube, const glm::vec3& sizeCube, const glm::vec3& origin) {
     this->buildGrid(nbCube, sizeCube, origin);
-    this->initialMesh.buildGrid(nbCube, sizeCube, origin);
 }
 
 uint16_t Grid::getValueFromWorldPoint(const glm::vec3& p, InterpolationMethod interpolationMethod, ResolutionMode resolutionMode) const {
@@ -152,15 +154,12 @@ std::pair<glm::vec3, glm::vec3> Grid::getBoundingBox() const {
 bool Grid::getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos, glm::vec3& res) const {
     glm::vec3 nDirection = glm::normalize(direction);
 
-    glm::vec3 dimension = this->sampler.getSamplerDimension();
-    float maxDistance = glm::length(dimension)*3.;    
-    float step = maxDistance/std::max({dimension[0], dimension[1], dimension[2]});
-    step = step * 0.5;
+    float maxDistance = glm::length(this->getOrigin() - origin)*2.;    
+    float step = std::min(this->getVoxelSize()[0], std::min(this->getVoxelSize()[1], this->getVoxelSize()[2]));
 
     for(float i = 0; i < maxDistance; i+=step) {
         const glm::vec3 p = origin + i * nDirection;
         const uint16_t value = this->getDeformedValueFromPoint(this->initialMesh, p);
-        //const uint16_t value = this->getValueFromWorldPoint(p);
         if(value > minValue && value < maxValue && (p[0]>planePos[0]-0.01 && p[1]>planePos[1]-0.01 && p[2]>planePos[2]-0.01)) {
             res = p;
             return true;

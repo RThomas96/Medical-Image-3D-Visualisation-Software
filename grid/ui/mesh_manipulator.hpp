@@ -500,7 +500,7 @@ namespace UITool {
         Q_INTERFACES(UITool::MeshManipulator)
 
 	public:
-		FixedRegistrationManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions);
+		FixedRegistrationManipulator(BaseMesh * mesh, Grid * gridToRegister, const std::vector<glm::vec3>& positions);
 
         void setAllManipulatorsPosition(const std::vector<glm::vec3>& positions) override;
         void getAllPositions(std::vector<glm::vec3>& positions) override;
@@ -517,6 +517,7 @@ namespace UITool {
         void mousePressed(QMouseEvent* e) override;
         void mouseReleased(QMouseEvent* e) override;
         void addManipulator(const glm::vec3& position);
+        void addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos);
         void apply();
 
     signals:
@@ -524,7 +525,9 @@ namespace UITool {
         void needSendTetmeshToGPU() override;
         void needChangeKidManipulatorRadius(float radius) override;
         void pointIsClickedInPlanarViewer(const glm::vec3& position);
+        void rayIsCasted(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos);
 	private:
+        Grid * gridToRegister;
         FixedRegistrationManipulatorState toolState;
         int selectedIndex;
         int nbNotAssociatedPoints;

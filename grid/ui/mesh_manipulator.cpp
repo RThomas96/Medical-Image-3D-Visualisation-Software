@@ -1155,7 +1155,7 @@ void SliceManipulator::moveKidManip() {
 
 /***/
 
-FixedRegistrationManipulator::FixedRegistrationManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions): MeshManipulator(mesh) {
+FixedRegistrationManipulator::FixedRegistrationManipulator(BaseMesh * mesh, Grid * gridToRegister, const std::vector<glm::vec3>& positions): MeshManipulator(mesh), gridToRegister(gridToRegister) {
     this->kid_manip = nullptr;
     this->manipulators.reserve(positions.size());
     this->toolState = FixedRegistrationManipulatorState::NONE;
@@ -1169,6 +1169,8 @@ FixedRegistrationManipulator::FixedRegistrationManipulator(BaseMesh * mesh, cons
         QObject::connect(&(this->manipulators[i]), &Manipulator::mouseRightButtonReleasedAndCtrlIsNotPressed, this, &FixedRegistrationManipulator::deselectManipulator);
         QObject::connect(&(this->manipulators[i]), &Manipulator::isManipulated, this, &FixedRegistrationManipulator::moveManipulator);
         QObject::connect(this, &FixedRegistrationManipulator::pointIsClickedInPlanarViewer, this, &FixedRegistrationManipulator::addManipulator);
+
+        QObject::connect(this, &FixedRegistrationManipulator::rayIsCasted, this, &FixedRegistrationManipulator::addManipulatorFromRay);
 
         this->associatedManipulator.push_back(-1);
         this->isFixed.push_back(true);
@@ -1195,6 +1197,12 @@ void FixedRegistrationManipulator::addManipulator(const glm::vec3& position) {
         this->selectedManipulators[this->selectedIndex] = false;
         std::cout << "Associate vertex [" << selectedIndex << "] with [" << this->manipulators.back().getManipPosition() << "]" << std::endl;
     }
+}
+
+void FixedRegistrationManipulator::addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos) {
+    glm::vec3 manipulatorPosition;
+    if(this->gridToRegister->getPositionOfRayIntersection(origin, direction, minValue, maxValue, planePos, manipulatorPosition))
+        this->addManipulator(manipulatorPosition);
 }
 
 void FixedRegistrationManipulator::setAllManipulatorsPosition(const std::vector<glm::vec3>& positions) {
@@ -1282,8 +1290,7 @@ void FixedRegistrationManipulator::apply() {
     }
 }
 
-void FixedRegistrationManipulator::deselectManipulator(Manipulator * manipulator) {
-}
+void FixedRegistrationManipulator::deselectManipulator(Manipulator * manipulator) {}
 
 void FixedRegistrationManipulator::keyPressed(QKeyEvent* e) {};
 
