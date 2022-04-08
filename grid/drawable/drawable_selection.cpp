@@ -13,6 +13,8 @@ UITool::GL::Selection::Selection(SceneGL* sceneGL, const glm::vec3& p1, const gl
     this->p1 = glm::vec3(0., 0., 0.);
     this->p2 = glm::vec3(0., 0., 0.);
     this->p3 = glm::vec3(0., 0., 0.);
+
+    this->color = glm::vec4(1., 0., 0., 0.5);
 }
 
 void UITool::GL::Selection::prepare() {
@@ -21,21 +23,6 @@ void UITool::GL::Selection::prepare() {
 
 	GLuint vboId = this->vboVertices;
 	GLuint iboId = this->vboIndices;
-
-    //float vertices[] = {
-    //    100.0f, 100.0f, 0.0f,
-    //    100.0f, 0.0f, 0.0f,
-    //    0.0f, 0.0f, 0.0f,
-    //    0.0f, 100.0f, 0.0f,
-    //};
-
-    //glm::vec3 min;
-    //glm::vec3 max;
-
-    //for(int i = 0; i < 3; ++i) {
-    //    min[i] = std::min(p1[i], p2[i]);
-    //    max[i] = std::max(p1[i], p2[i]);
-    //}
 
     float vertices[] = {
         p0[0], p0[1], p0[2],
@@ -72,10 +59,12 @@ void UITool::GL::Selection::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* mMat) {
 	GLint location_mMat = getUniform("mMat");
 	GLint location_vMat = getUniform("vMat");
 	GLint location_pMat = getUniform("pMat");
+	GLint location_color = getUniform("color");
 
 	this->sceneGL->glUniformMatrix4fv(location_mMat, 1, GL_FALSE, mMat);
 	this->sceneGL->glUniformMatrix4fv(location_vMat, 1, GL_FALSE, mvMat);
 	this->sceneGL->glUniformMatrix4fv(location_pMat, 1, GL_FALSE, pMat);
+	this->sceneGL->glUniform4fv(location_color, 1, glm::value_ptr(this->color));
 
 	// For wireframe
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);

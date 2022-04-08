@@ -42,7 +42,10 @@ namespace UITool {
             glm::vec3 p2;
             glm::vec3 p3;
 
+            glm::vec4 color;
+
             void setSelectionBB(const glm::vec3& p0, const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3);
+            void setColor(const glm::vec4& color) { this->color = color; };
 
         public slots:
 			void prepare();

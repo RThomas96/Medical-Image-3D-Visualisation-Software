@@ -548,7 +548,7 @@ public slots:
     void applyCage(const std::string& name, const std::string& filename);
     bool isSelecting() {return false;};
     // This is connect directly to selection in meshManipulator
-    void redrawSelection(const glm::vec3& p0, const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3);
+    void redrawSelection(const glm::vec3& p0, const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3, const glm::vec4& color = glm::vec4(1., 0., 0., 0.5));
 
     //void addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction, bool onSurface);
 public:

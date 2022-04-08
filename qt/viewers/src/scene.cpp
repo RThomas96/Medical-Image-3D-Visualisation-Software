@@ -3934,8 +3934,9 @@ void Scene::applyCage(const std::string& name, const std::string& filename) {
     this->getCage(name)->applyCage(cageToApply.vertices);
 }
 
-void Scene::redrawSelection(const glm::vec3& p0, const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3) {
+void Scene::redrawSelection(const glm::vec3& p0, const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3, const glm::vec4& color) {
     this->glSelection->setSelectionBB(p0, p1, p2, p3);
+    this->glSelection->setColor(color);
     this->glSelection->prepare();
 }
 

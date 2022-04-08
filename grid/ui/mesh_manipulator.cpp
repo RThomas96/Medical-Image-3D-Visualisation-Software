@@ -656,6 +656,11 @@ namespace UITool {
         if(this->kid_manip->isEnable) {
             this->kid_manip->disable();
         }
+        if(this->moveMode) {
+            this->selection.setColor(glm::vec4(1.,0., .0, 0.5));
+        } else {
+            this->selection.setColor(glm::vec4(0.5, 0.5, 0.5, 0.5));
+        }
         this->setLockAllManipulators(true);
         this->resetMinAndMax(); 
         this->mesh->deselectAllPts(); 

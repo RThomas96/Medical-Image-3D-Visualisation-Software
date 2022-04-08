@@ -26,6 +26,7 @@ namespace UITool {
     public:
         const qglviewer::Camera * camera;
 
+        glm::vec4 color;
         glm::ivec2 screenP0;
         glm::ivec2 screenP1;
         glm::vec3 p0;
@@ -68,10 +69,10 @@ namespace UITool {
             return res;
         }
 
-        Selection() : Manipulator(glm::vec3(0., 0., 0.)), p0(glm::vec3(0., 0., 0.)), p1(glm::vec3(0., 0., 0.)), p2(glm::vec3(0., 0., 0.)), p3(glm::vec3(0., 0., 0.)), screenP0(glm::ivec2(0., 0.)), screenP1(glm::ivec2(0, 0)), isInSelectionMode(false) {this->enable();};
+        Selection() : Manipulator(glm::vec3(0., 0., 0.)), p0(glm::vec3(0., 0., 0.)), p1(glm::vec3(0., 0., 0.)), p2(glm::vec3(0., 0., 0.)), p3(glm::vec3(0., 0., 0.)), screenP0(glm::ivec2(0., 0.)), screenP1(glm::ivec2(0, 0)), isInSelectionMode(false), color(glm::vec4(1., 0., 0., 0.5)) {this->enable();};
 
     signals:
-        void needToRedrawSelection(const glm::vec3& p0, const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3);
+        void needToRedrawSelection(const glm::vec3& p0, const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3, const glm::vec4& color);
         void enterSelectionMode();
         void exitSelectionMode();
         void beginSelection();
@@ -79,6 +80,10 @@ namespace UITool {
         void isSelecting();
 
     public slots:
+        void setColor(const glm::vec4& color) {
+            this->color = color;
+        };
+
         void keyPressed(QKeyEvent* e){
             if(!this->isInSelectionMode && e->key() == Qt::Key_Control && !e->isAutoRepeat()) {
                 std::cout << "Enter selection mode" << std::endl;
@@ -93,7 +98,7 @@ namespace UITool {
                 Q_EMIT exitSelectionMode();
                 this->isInSelectionMode = false;
                 this->isSelected = false;
-                Q_EMIT needToRedrawSelection(glm::vec3(0., 0., 0.), glm::vec3(0., 0., 0.), glm::vec3(0., 0., 0.), glm::vec3(0., 0., 0.));
+                Q_EMIT needToRedrawSelection(glm::vec3(0., 0., 0.), glm::vec3(0., 0., 0.), glm::vec3(0., 0., 0.), glm::vec3(0., 0., 0.), this->color);
                 Q_EMIT endSelection();
             }
         };
@@ -107,7 +112,7 @@ namespace UITool {
 
         void mouseReleaseEvent(QMouseEvent* const e, qglviewer::Camera* const camera) override {
             this->isSelected = false;
-            Q_EMIT needToRedrawSelection(glm::vec3(0., 0., 0.), glm::vec3(0., 0., 0.), glm::vec3(0., 0., 0.), glm::vec3(0., 0., 0.));
+            Q_EMIT needToRedrawSelection(glm::vec3(0., 0., 0.), glm::vec3(0., 0., 0.), glm::vec3(0., 0., 0.), glm::vec3(0., 0., 0.), this->color);
             Q_EMIT endSelection();
         };
 
@@ -148,7 +153,7 @@ namespace UITool {
             this->p2 = glm::vec3(pVec[0], pVec[1], pVec[2]);
             pVec = camera->unprojectedCoordinatesOf(qglviewer::Vec(screenMin[0], screenMax[1], 0.1));
             this->p3 = glm::vec3(pVec[0], pVec[1], pVec[2]);
-            Q_EMIT needToRedrawSelection(p0, p1, p2, p3);
+            Q_EMIT needToRedrawSelection(p0, p1, p2, p3, this->color);
         }
     };
 

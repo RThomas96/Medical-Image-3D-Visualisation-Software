@@ -82,33 +82,40 @@ POSITION
 - [ ] Persistent position 
 
 INTERFACE
-- [ ] Ajouter object pannel
 - [x] Refaire les slots de la scene 
 - [x] Retirer le pannel avec 2D/3D/Pannel/etc
 - [x] Retirer tous les boutons inutiles 
 - [x] Ajouter une toolbar
 - [x] Ajouter un frame autour du viewer
 - [x] Ajouter le selector
-- [ ] Placer correctement le selector
 - [x] Connecter le selector
 - [x] Connecter la toolbar 
 - [x] Ajouter un side pannel pour les tools
 - [x] Connecter plane
-- [ ] Sync plane et header 
 - [x] Afficher le cut au bon endroit 
 - [x] Afficher le plan au bon endroit 
-- [ ] Ajouter le free manipulator 
 - [x] Ajouter hide/show side pannel tools
+- [x] Changer de couleur la sélection si handles 
+- [ ] Changer couleur mesh surfacique (pas vert)
 - [ ] Connecter hide/show side pannel tools 
+- [ ] Sync plane et header 
+- [ ] Ajouter le free manipulator 
+- [ ] Couleurs du manipulateur 
+- [ ] Ajouter la lumière sur les manipulateurs 
+- [ ] Ajouter object pannel
+- [ ] Placer correctement le selector
+- [ ] Changer curseur 
 
 GENERAL
 - [x] Réparer le ray casting
 - [x] Ajouter le ray casting au registration
 - [x] Ajouter le pannel des plans de KidPocket
+- [ ] Réparer la sauvegarde
+- [ ] Voir le mesh dans planar view
 - [ ] Ajouter un undo
-- [ ] Réparer la sauvegarde 
-- [ ] Ajouter un mode offline pour les performances
+- [ ] Sélectionner dans planar view
 - [ ] Améliorer la lumière de la grille
+- [ ] Ajouter un mode offline pour les performances (en fait pas important)
 
 ---
 
@@ -150,3 +157,7 @@ GENERAL
 - [x] [INTERFACE] Debugger le lock random du manipulateur
 - [ ] [RENDU][MAJEUR] Debugger le rendu négatif 
 - [x] [RENDU][MAJEUR] Debugger le décalage de la grille
+
+# Idée
+
+- [ ] Interpolation pour dimensions asymetriques
