@@ -17,7 +17,7 @@ void main() {
 
     vec3 norm = normalize(normal.xyz);
     vec3 lightDir = normalize(lightPosition - position.xyz); 
-    float diffuse = max(dot(norm, lightDir), 0.0);
+    float diffuse = max(dot(norm, lightDir), 0.2);
 
     vec3 result = (ambient + diffuse) * objectColor.xyz;
     color = vec4(result, objectColor.w);

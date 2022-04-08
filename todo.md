@@ -96,15 +96,23 @@ INTERFACE
 - [x] Afficher le plan au bon endroit 
 - [x] Ajouter hide/show side pannel tools
 - [x] Changer de couleur la sélection si handles 
-- [ ] Changer couleur mesh surfacique (pas vert)
+- [x] Changer couleur mesh surfacique (pas vert)
+- [x] Trier les faces pour le rendu
 - [ ] Connecter hide/show side pannel tools 
 - [ ] Sync plane et header 
 - [ ] Ajouter le free manipulator 
-- [ ] Couleurs du manipulateur 
+- [ ] Couleurs du kid manipulateur 
 - [ ] Ajouter la lumière sur les manipulateurs 
 - [ ] Ajouter object pannel
 - [ ] Placer correctement le selector
-- [ ] Changer curseur 
+- [x] Changer curseur dans les planar viewers
+- [x] Changer le mode de déplacement des planar viewers à clique droit
+- [x] Cast un rayon dans planar viewer avec Q aussi
+- [x] Preview
+- [ ] Plusieurs radius de manipulateurs 
+- [ ] Rendre le radius du preview plus petit
+- [ ] Remplacer le ray casting par le read du framebuffer comme dans le PlaneViewer
+- [ ] Supprimer l'ancien registration et tout ce qui s'en rapporte (undo etc) 
 
 GENERAL
 - [x] Réparer le ray casting
@@ -116,6 +124,8 @@ GENERAL
 - [ ] Sélectionner dans planar view
 - [ ] Améliorer la lumière de la grille
 - [ ] Ajouter un mode offline pour les performances (en fait pas important)
+- [ ] glSubdata pour les perfs
+- [ ] Draw le wireframe avec les bary coord
 
 ---
 

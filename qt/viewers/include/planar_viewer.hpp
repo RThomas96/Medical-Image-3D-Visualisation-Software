@@ -7,6 +7,7 @@
 
 #include <QGLViewer/qglviewer.h>
 #include <QTimer>
+#include <QCursor>
 
 #include <memory>
 
@@ -53,6 +54,9 @@ protected:
 	planeHeading planeOrientation;	  ///< This plane's orientation
 	ViewerHeader* viewerController;	   ///< The widget that controls this widget
 
+    QPoint mousePos;
+    QCursor* cursor;
+
 	glm::ivec2 posRequest;	  ///< A texture position request for the render
 	GLuint renderTarget;	///< The texture to render to for additional info
 	float minZoomRatio;	   ///< minimum value of the zoom applied to the image
@@ -73,12 +77,15 @@ public slots:
 	void rotatePlaneClockwise(void);
 	void rotatePlaneCounterClockwise(void);
 	void togglePlaneVisibility(void);
+    void setCursorType(UITool::CursorType cursorType);
 
 public:
     glm::vec3 getPositionFromMouse();
+    bool usePreview = true;
 
 signals:
     void pointIsClickedInPlanarViewer(const glm::vec3& position);
+    void mouseMovedInPlanarViewer(const glm::vec3& positionOfMouse3D);// Used for preview
 };
 
 #endif	  // VISUALISATION_VIEWER_INCLUDE_PLANAR_VIEWER_HPP_

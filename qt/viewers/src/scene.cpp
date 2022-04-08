@@ -147,6 +147,7 @@ Scene::Scene() :
     this->currentDeformMethod = DeformMethod::NORMAL;
     this->planeActivation = glm::vec3(1., 1., 1.);
     this->displayGrid = true;
+    this->previewCursorInPlanarView = false;
 }
 
 Scene::~Scene(void) {
@@ -3768,6 +3769,8 @@ void Scene::updateTools(UITool::MeshManipulatorType tool) {
         QObject::connect(this, SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)), dynamic_cast<UITool::FixedRegistrationManipulator*>(this->glMeshManipulator->meshManipulator), SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)));
 
         QObject::connect(this, &Scene::rayIsCasted, this, [this](const glm::vec3& origin, const glm::vec3& direction) { emit dynamic_cast<UITool::FixedRegistrationManipulator*>(this->glMeshManipulator->meshManipulator)->rayIsCasted(origin, direction, this->getMinTexValue(), this->getMaxTexValue(), this->computePlanePositions());});
+
+        QObject::connect(dynamic_cast<UITool::FixedRegistrationManipulator*>(this->glMeshManipulator->meshManipulator), SIGNAL(needChangeActivatePreviewPoint(bool)), this, SLOT(setPreviewPointInPlanarView(bool)));
     }
 }
 
@@ -3983,5 +3986,14 @@ void Scene::changeCurrentDeformationMethod(DeformMethod newDeformMethod) {
                 mesh->setARAPDeformationMethod();
                 break;
         }
+    }
+}
+
+void Scene::previewPointInPlanarView(const glm::vec3& positionOfMouse3D) {
+    if(this->previewCursorInPlanarView) {
+        this->glMeshManipulator->needPreview = true;
+        this->glMeshManipulator->previewPosition = positionOfMouse3D;
+    } else {
+        this->glMeshManipulator->needPreview = false;
     }
 }

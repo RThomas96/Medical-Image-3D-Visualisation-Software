@@ -10,6 +10,6 @@ out vec4 FragColor;
 
 void main()
 {
-    FragColor = glm::vec4(1., 0., 0., 0.5);
-    //FragColor = color;
+    //FragColor = glm::vec4(1., 0., 0., 0.5);
+    FragColor = color;
 } 

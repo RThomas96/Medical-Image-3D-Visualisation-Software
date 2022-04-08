@@ -21,7 +21,7 @@
 float Viewer::sceneRadiusMultiplier{.5f};
 
 Viewer::Viewer(Scene* const scene, QStatusBar* _program_bar, QWidget* parent) :
-	QGLViewer(parent), scene(scene), spheres(), sphere_size(.1f), temp_mesh_idx(0), temp_img_idx(0), temp_sphere_position(std::numeric_limits<float>::lowest()) {
+	QGLViewer(parent), scene(scene) {
 	this->statusBar	   = _program_bar;
 	this->refreshTimer = new QTimer();
 	this->refreshTimer->setInterval(std::chrono::milliseconds(7));	  // ~7 ms for 144fps, ~16ms for 60fps and ~33ms for 30 FPS
@@ -53,6 +53,8 @@ Viewer::Viewer(Scene* const scene, QStatusBar* _program_bar, QWidget* parent) :
 	//updateManipulatorsPositions();
 	//this->scene->glMeshManipulator->bind(&this->meshManipulator);
 	//this->scene->bindMeshManipulator(&this->meshManipulator);
+    this->cursor = new QCursor();
+    this->setCursor(*this->cursor);
 }
 
 Viewer::~Viewer() {
@@ -73,6 +75,8 @@ void Viewer::init() {
 
     QObject::connect(this->scene, &Scene::sceneCenterChanged, this, &Viewer::setCenter);
     QObject::connect(this->scene, &Scene::sceneRadiusChanged, this, &Viewer::setRadius);
+
+    QObject::connect(this->scene, &Scene::cursorChanged, this, &Viewer::setCursorType);
 
 	glm::vec3 bbDiag = this->scene->getSceneBoundaries();
 	float sceneSize	 = glm::length(bbDiag);
@@ -107,11 +111,6 @@ void Viewer::draw() {
 
 	this->scene->draw3DView(mvMat, pMat, camPos, false);
 	this->scene->drawPositionResponse(this->sceneRadius() / 10., this->drawAxisOnTop);
-
-	std::vector<glm::vec3> spheres_to_draw(this->spheres);
-	if (this->temp_mesh_idx) {
-		spheres_to_draw.push_back(this->temp_sphere_position);
-	}
 }
 
 void Viewer::keyReleaseEvent(QKeyEvent* e) {
@@ -123,7 +122,7 @@ void Viewer::keyPressEvent(QKeyEvent* e) {
 	switch (e->key()) {
         case Qt::Key::Key_Q:
             if(!e->isAutoRepeat())
-                this->addManipulator();
+                this->castRay();
             break;
 		case Qt::Key::Key_F5:
 			this->scene->recompileShaders();
@@ -169,7 +168,7 @@ void Viewer::resizeGL(int w, int h) {
 	}
 }
 
-void Viewer::addManipulator() {
+void Viewer::castRay() {
     glm::vec3 origin;
     glm::vec3 direction;
     this->castRayFromMouse(origin, direction);
@@ -291,4 +290,18 @@ void Viewer::setRadius(const float radius) {
 	this->setSceneRadius(radius*sceneRadiusMultiplier);
     std::cout << "Set radius" << std::endl;
     this->showEntireScene();
+}
+
+void Viewer::setCursorType(UITool::CursorType cursorType) {
+    switch(cursorType) {
+        case UITool::CursorType::NORMAL:
+            this->cursor->setShape(Qt::ArrowCursor); 
+            this->setCursor(*this->cursor);
+            break;
+
+        case UITool::CursorType::CROSS:
+            this->cursor->setShape(Qt::CrossCursor); 
+            this->setCursor(*this->cursor);
+            break;
+    }
 }

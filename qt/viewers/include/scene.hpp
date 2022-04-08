@@ -64,6 +64,11 @@ namespace UITool {
 
 // TODO: do not belong here
 namespace UITool {
+    enum class CursorType {
+        NORMAL,
+        CROSS
+    };
+
     enum class MeshManipulatorType {
         NONE,
         DIRECT,
@@ -465,6 +470,8 @@ signals:
     void meshAdded(const std::string& name, bool grid, bool cage);
     void planesMoved(const glm::vec3& planesPosition);
     void needPushHandleButton();
+    void cursorChanged(UITool::CursorType cursorType);
+    void cursorChangedInPlanarView(UITool::CursorType cursorType);
 
 // All these indirections are important because for most of them they interacts with various components of the scene
 // And it allow more flexibility as the scene control ALL the informations to transit from class to class
@@ -515,9 +522,11 @@ public slots:
     void sendFirstTetmeshToGPU();
     uint16_t sendGridValuesToGPU(int gridIdx);
     void setLightPosition(const glm::vec3& lighPosition);
+    void previewPointInPlanarView(const glm::vec3& positionOfMouse3D);
+    void setPreviewPointInPlanarView(bool preview) { this->previewCursorInPlanarView = preview; };
 
     // Scene management
-    bool openMesh(const std::string& name, const std::string& filename, const glm::vec4& color = glm::vec4(0., 1., 0., 1.));
+    bool openMesh(const std::string& name, const std::string& filename, const glm::vec4& color = glm::vec4(244./255.,211./255.,94./255.,0.85));
     bool openCage(const std::string& name, const std::string& filename, BaseMesh * surfaceMeshToDeform, const bool MVC = true, const glm::vec4& color = glm::vec4(1., 0., 0., 0.3));
     bool openCage(const std::string& name, const std::string& filename, const std::string& surfaceMeshToDeformName, const bool MVC = true, const glm::vec4& color = glm::vec4(1., 0., 0., 0.3));
     bool linkCage(const std::string& cageName, BaseMesh * meshToDeform, const bool MVC);
@@ -549,6 +558,8 @@ public slots:
     bool isSelecting() {return false;};
     // This is connect directly to selection in meshManipulator
     void redrawSelection(const glm::vec3& p0, const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3, const glm::vec4& color = glm::vec4(1., 0., 0., 0.5));
+    void changeCursor(UITool::CursorType cursorType) { Q_EMIT cursorChanged(cursorType); };
+    void changeCursorInPlanarView(UITool::CursorType cursorType) { Q_EMIT cursorChangedInPlanarView(cursorType); };
 
     //void addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction, bool onSurface);
 public:
@@ -557,6 +568,7 @@ public:
     int gridToDraw = -1;
 
     bool displayGrid;
+    bool previewCursorInPlanarView;
 
 	glm::vec3 planeDirection;// Cutting plane directions (-1 or 1 on each axis)
 	glm::vec3 planeDisplacement;

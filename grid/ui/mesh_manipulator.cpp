@@ -1200,6 +1200,9 @@ void FixedRegistrationManipulator::addManipulator(const glm::vec3& position) {
             this->nbNotAssociatedPoints -= 1;
         this->associatedManipulator[this->selectedIndex] = this->manipulators.size()-1;
         this->selectedManipulators[this->selectedIndex] = false;
+        Q_EMIT needChangeCursor(CursorType::NORMAL);
+        Q_EMIT needChangeCursorInPlanarView(CursorType::NORMAL);
+        Q_EMIT needChangeActivatePreviewPoint(false);
         std::cout << "Associate vertex [" << selectedIndex << "] with [" << this->manipulators.back().getManipPosition() << "]" << std::endl;
     }
 }
@@ -1270,6 +1273,9 @@ void FixedRegistrationManipulator::selectManipulator(Manipulator * manipulator) 
         this->selectedManipulators[index] = true;
         this->toolState = FixedRegistrationManipulatorState::SELECTING_SECOND_POINT;
         this->selectedIndex = index;
+        Q_EMIT needChangeCursor(CursorType::CROSS);
+        Q_EMIT needChangeCursorInPlanarView(CursorType::CROSS);
+        Q_EMIT needChangeActivatePreviewPoint(true);
         std::cout << "Select vertex: [" << index << "]" << std::endl;
     }
 }

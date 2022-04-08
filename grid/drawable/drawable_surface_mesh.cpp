@@ -60,20 +60,59 @@ void DrawableMesh::draw(GLfloat *proj_mat, GLfloat *view_mat, glm::vec4 camera) 
 
 	// Launch a glDrawElements() command
 
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_FRONT);
-    glFrontFace(GL_CW);
+    // Sort triangles for transparency
+    /***/
+    glm::vec3 cam = glm::vec3(camera);
+    std::vector<std::pair<float, int>> dists;
+    dists.reserve(this->mesh->getTriangles().size());
+    for(int i = 0; i < this->mesh->getTriangles().size(); ++i) {
+        glm::vec3 center(0., 0., 0.);
+        for(int j = 0; j < 3; ++j)
+            center += this->mesh->vertices[this->mesh->getTriangles()[i][j]];
+        dists.push_back(std::make_pair(glm::distance(center/3.f, cam), i));
+    }
+
+    struct less_than_key {
+        inline bool operator() (const std::pair<float, int>& struct1, const std::pair<float, int>& struct2) {
+            return (struct1.first > struct2.first);
+        }
+    };
+
+    std::sort(dists.begin(), dists.end(), less_than_key());
+
+    std::vector<GLuint> final_order;
+    final_order.reserve(this->mesh->vertices.size());
+    for(int i = 0; i < dists.size(); ++i) {
+        for(int j = 0; j < 3; ++j)
+            final_order.push_back(this->mesh->triangles[dists[i].second][j]);
+    }
+
+    this->gl->glDeleteBuffers(1, &this->vbo_indices);
+	this->gl->glGenBuffers(1, &this->vbo_indices);
+	this->gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vbo_indices);
+	this->gl->glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr>(final_order.size()) * sizeof(GLuint), final_order.data(), GL_STATIC_DRAW);
+
+    /***/
+
+    glEnable(GL_BLEND);
+    glDisable(GL_CULL_FACE);
+    //glEnable(GL_CULL_FACE);
+    //glCullFace(GL_FRONT);
+    //glFrontFace(GL_CW);
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	this->gl->glUniform4fv(location_color, 1, glm::value_ptr(glm::vec4(0.6, 0.6, 0.6, 1)));
+	this->gl->glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(this->mesh->getTriangles().size() * 3), GL_UNSIGNED_INT, 0);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glDisable(GL_CULL_FACE);
+
     glEnable(GL_FLAT);
     glShadeModel(GL_FLAT);
+	this->gl->glUniform4fv(location_color, 1, glm::value_ptr(this->color));
 	this->gl->glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(this->mesh->getTriangles().size() * 3), GL_UNSIGNED_INT, 0);
     glEnable(GL_SMOOTH);
     glShadeModel(GL_SMOOTH);
 
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	this->gl->glUniform4fv(location_color, 1, glm::value_ptr(glm::vec4(0.5, 0.5, 0.5, 0.5)));
-	this->gl->glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(this->mesh->getTriangles().size() * 3), GL_UNSIGNED_INT, 0);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    glDisable(GL_CULL_FACE);
 
 	// Unbind the VAO & program
 	this->gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);

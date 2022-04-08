@@ -151,10 +151,6 @@ void UITool::GL::MeshManipulator::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* m
 	std::vector<glm::vec3> allPositions;
 	this->meshManipulator->getAllPositions(allPositions);
     //std::cout << allPositions[0] << std::endl;
-	this->texParams.data   = allPositions.data();
-	this->texParams.size.x = allPositions.size();
-    glDeleteTextures(1, &this->tex);
-	this->tex = this->sceneGL->uploadTexture1D(this->texParams);
 
     /***/
 	std::vector<bool> rawToDisplay;
@@ -167,10 +163,6 @@ void UITool::GL::MeshManipulator::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* m
         else
             toDisplay.push_back(glm::vec3(0., 0., 0.));
 
-	this->texParamsVisible.data   = toDisplay.data();
-	this->texParamsVisible.size.x = toDisplay.size();
-    glDeleteTextures(1, &this->visible);
-	this->visible = this->sceneGL->uploadTexture1D(this->texParamsVisible);
     /***/
 	std::vector<State> rawState;
     this->meshManipulator->getManipulatorsState(rawState);
@@ -181,18 +173,34 @@ void UITool::GL::MeshManipulator::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* m
         state.push_back(glm::vec3(value, value, value));
     }
 
-    for(int i = 0; i < allPositions.size(); ++i) {
-        for(int j = 0; j < 3; ++j) {
-            if(std::fabs(allPositions[i][j] - planeDisplacement[j]) < this->planeViewRadius) {
-                if(state[i][0] == int(State::NONE) || state[i][0] == int(State::WAITING))
-                    state[i] = glm::vec3(float(State::HIGHLIGHT), float(State::HIGHLIGHT), float(State::HIGHLIGHT));// HIGHLIGHT state
-            }
-        }
+    //for(int i = 0; i < allPositions.size(); ++i) {
+    //    for(int j = 0; j < 3; ++j) {
+    //        if(std::fabs(allPositions[i][j] - planeDisplacement[j]) < this->planeViewRadius) {
+    //            if(state[i][0] == int(State::NONE) || state[i][0] == int(State::WAITING))
+    //                state[i] = glm::vec3(float(State::HIGHLIGHT), float(State::HIGHLIGHT), float(State::HIGHLIGHT));// HIGHLIGHT state
+    //        }
+    //    }
+    //}
+
+    if(this->needPreview) {
+        allPositions.push_back(this->previewPosition);
+        toDisplay.push_back(glm::vec3(1., 1., 1.));
+        state.push_back(glm::vec3(float(State::HIGHLIGHT), float(State::HIGHLIGHT), float(State::HIGHLIGHT)));
     }
+
+	this->texParams.data   = allPositions.data();
+	this->texParams.size.x = allPositions.size();
+
+	this->texParamsVisible.data   = toDisplay.data();
+	this->texParamsVisible.size.x = toDisplay.size();
 
 	this->texParamsState.data   = state.data();
 	this->texParamsState.size.x = state.size();
 
+    glDeleteTextures(1, &this->tex);
+	this->tex = this->sceneGL->uploadTexture1D(this->texParams);
+    glDeleteTextures(1, &this->visible);
+	this->visible = this->sceneGL->uploadTexture1D(this->texParamsVisible);
     glDeleteTextures(1, &this->state);
 	this->state = this->sceneGL->uploadTexture1D(this->texParamsState);
     /***/
@@ -315,6 +323,9 @@ void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scen
         }
     }
     this->prepare();
+    // MeshManipulator->Scene
+    QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needChangeCursor(UITool::CursorType)), scene, SLOT(changeCursor(UITool::CursorType)));
+    QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needChangeCursorInPlanarView(UITool::CursorType)), scene, SLOT(changeCursorInPlanarView(UITool::CursorType)));
     // Scene->MeshManipulator
     QObject::connect(scene, SIGNAL(keyPressed(QKeyEvent*)), dynamic_cast<QObject*>(this->meshManipulator), SLOT(keyPressed(QKeyEvent*)));
     QObject::connect(scene, SIGNAL(keyReleased(QKeyEvent*)), dynamic_cast<QObject*>(this->meshManipulator), SLOT(keyReleased(QKeyEvent*)));

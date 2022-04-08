@@ -34,6 +34,12 @@ PlanarViewer::PlanarViewer(Scene* const _scene, planes _p, QStatusBar* _sb, plan
 	this->refreshTimer->setSingleShot(false);
 	connect(this->refreshTimer, &QTimer::timeout, this, &PlanarViewer::updateView);
     QObject::connect(this, &PlanarViewer::pointIsClickedInPlanarViewer, this->sceneToShow, &Scene::pointIsClickedInPlanarViewer);
+    QObject::connect(this, &PlanarViewer::mouseMovedInPlanarViewer, this->sceneToShow, &Scene::previewPointInPlanarView);
+    QObject::connect(this->sceneToShow, &Scene::cursorChangedInPlanarView, this, &PlanarViewer::setCursorType);
+
+    this->cursor = new QCursor();
+    this->setCursor(*this->cursor);
+    this->setMouseTracking(true);
 }
 
 void PlanarViewer::addParentStatusBar(QStatusBar* main) {
@@ -60,6 +66,8 @@ void PlanarViewer::init(void) {
 	this->sceneToShow->initGl(this->context());
 
 	this->refreshTimer->start();
+
+	setMouseBinding(Qt::NoModifier, Qt::RightButton, QGLViewer::CAMERA, QGLViewer::TRANSLATE);
 }
 
 void PlanarViewer::draw(void) {
@@ -77,7 +85,7 @@ void PlanarViewer::draw(void) {
 		glm::vec4 pixelValue = this->sceneToShow->readFramebufferContents(this->defaultFramebufferObject(), this->posRequest);
 		if (pixelValue.w > .01f) {
 			glm::vec4 p = pixelValue;
-			std::cerr << "Value in fbo : {" << p.x << ", " << p.y << ", " << p.z << ", " << p.w << "}\n";
+			//std::cerr << "Value in fbo : {" << p.x << ", " << p.y << ", " << p.z << ", " << p.w << "}\n";
 		}
 		this->posRequest = glm::vec2{-1, -1};
 	}
@@ -94,7 +102,7 @@ glm::vec3 PlanarViewer::getPositionFromMouse() {
 
 	this->makeCurrent();
     glm::vec4 p = this->sceneToShow->readFramebufferContents(this->defaultFramebufferObject(), glm::convert_to<int>(glm::vec2(rawMousePos.x, fbDims.y - rawMousePos.y)));
-    std::cout << "Value in fbo : {" << p.x << ", " << p.y << ", " << p.z << ", " << p.w << "}" << std::endl;
+    //std::cout << "Value in fbo : {" << p.x << ", " << p.y << ", " << p.z << ", " << p.w << "}" << std::endl;
 	this->doneCurrent();
 
     return glm::vec3(p);
@@ -118,7 +126,7 @@ void PlanarViewer::guessScenePosition(void) {
 	glm::vec4 pixelValue = this->sceneToShow->readFramebufferContents(this->defaultFramebufferObject(), this->posRequest);
 	if (pixelValue.w > .01f) {
 		glm::vec4 p = pixelValue;
-		std::cerr << "Value in fbo : {" << p.x << ", " << p.y << ", " << p.z << ", " << p.w << "}\n";
+		//std::cerr << "Value in fbo : {" << p.x << ", " << p.y << ", " << p.z << ", " << p.w << "}\n";
 		this->sceneToShow->setPositionResponse(pixelValue);
 	}
 	this->doneCurrent();
@@ -138,6 +146,10 @@ void PlanarViewer::keyPressEvent(QKeyEvent* _e) {
 			this->update();
 			break;
 
+        case::Qt::Key::Key_Q:
+            Q_EMIT pointIsClickedInPlanarViewer(this->getPositionFromMouse());
+            this->update();
+            break;
 		/*
 		MOUSE MOVEMENT
 		*/
@@ -159,19 +171,20 @@ void PlanarViewer::mousePressEvent(QMouseEvent* _e) {
 	// update both positions to the same position (interaction began) :
 	this->cursorPosition_last	 = _e->pos();
 	this->cursorPosition_current = this->cursorPosition_last;
-	if (_e->buttons().testFlag(Qt::MouseButton::LeftButton)) {
+	if (_e->buttons().testFlag(Qt::MouseButton::RightButton)) {
 		// Start "tracking" the mouse
 		this->mouse_isPressed = 1;
 	}
-	if (_e->buttons().testFlag(Qt::MouseButton::RightButton)) {
-        Q_EMIT pointIsClickedInPlanarViewer(this->getPositionFromMouse());
-	}
+	//if (_e->buttons().testFlag(Qt::MouseButton::RightButton)) {
+    //    Q_EMIT pointIsClickedInPlanarViewer(this->getPositionFromMouse());
+	//}
 
 	QGLViewer::mousePressEvent(_e);
 	this->update();
 }
 
 void PlanarViewer::mouseMoveEvent(QMouseEvent* _m) {
+    mousePos = _m->pos();
 	if (this->mouse_isPressed >= 1u) {
 		// Gather current viewport dimensions :
 		QSize viewerSize	   = this->size();
@@ -191,6 +204,9 @@ void PlanarViewer::mouseMoveEvent(QMouseEvent* _m) {
         // Drawing effect
         //Q_EMIT pointIsClickedInPlanarViewer(this->getPositionFromMouse());
 	}
+    if(this->usePreview) {
+        Q_EMIT(mouseMovedInPlanarViewer(this->getPositionFromMouse()));
+    }
 	QGLViewer::mouseMoveEvent(_m);
 	return;
 }
@@ -360,4 +376,18 @@ QString PlanarViewer::mouseString() const {
 	message += "</ul>";
 
 	return message;
+}
+
+void PlanarViewer::setCursorType(UITool::CursorType cursorType) {
+    switch(cursorType) {
+        case UITool::CursorType::NORMAL:
+            this->cursor->setShape(Qt::ArrowCursor); 
+            this->setCursor(*this->cursor);
+            break;
+
+        case UITool::CursorType::CROSS:
+            this->cursor->setShape(Qt::CrossCursor); 
+            this->setCursor(*this->cursor);
+            break;
+    }
 }
