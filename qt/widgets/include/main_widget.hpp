@@ -20,8 +20,74 @@
 #include <QWidget>
 #include <QToolBar>
 #include <QFrame>
+#include <QSizePolicy>
+#include <QTabWidget>
 
 class ColorBoundWidget;
+
+class InfoPannel : public QGroupBox {
+    Q_OBJECT
+
+public:
+    
+    InfoPannel(QWidget *parent = nullptr):QGroupBox(parent){init();}
+    InfoPannel(const QString &title, QWidget *parent = nullptr): QGroupBox(title, parent){init();}
+
+    QVBoxLayout * main_layout;
+    QHBoxLayout * id_layout;
+    QLabel      * info_id;
+    QLabel      * info_position;
+    QHBoxLayout * position_layout;
+    QLabel      * info_id_data;
+    QLabel      * info_position_data;
+
+public slots:
+
+    void init(){
+        this->setCheckable(false);
+        this->main_layout = new QVBoxLayout();
+        this->main_layout->setAlignment(Qt::AlignTop);
+        this->info_id = new QLabel("Id:");
+        this->info_position = new QLabel("Position:");
+
+        this->info_id_data = new QLabel("[]");
+        this->info_position_data = new QLabel("[]");
+
+        this->id_layout = new QHBoxLayout();
+        this->id_layout->addWidget(this->info_id);
+        this->id_layout->addWidget(this->info_id_data);
+        this->position_layout = new QHBoxLayout();
+        this->position_layout->addWidget(this->info_position);
+        this->position_layout->addWidget(this->info_position_data);
+
+        this->id_layout->setAlignment(this->info_id_data, Qt::AlignHCenter);
+        this->position_layout->setAlignment(this->info_position_data, Qt::AlignHCenter);
+
+        this->main_layout->addLayout(this->id_layout);
+        this->main_layout->addLayout(this->position_layout);
+        this->setLayout(this->main_layout);
+    }
+};
+
+class MultipleRadioButton : public QGridLayout {
+    Q_OBJECT
+public:
+    MultipleRadioButton(const std::vector<QString> title, QWidget *parent = nullptr): QGridLayout(parent){init(title);}
+
+    std::vector<QLabel*> label;
+    std::vector<QRadioButton*> button;
+
+    void init(const std::vector<QString> title) {
+        this->label.reserve(title.size());
+        this->button.reserve(title.size());
+        for(int i = 0; i < title.size(); ++i) {
+            this->label.push_back(new QLabel(title[i]));
+            this->button.push_back(new QRadioButton());
+            this->addWidget(this->label.back(), i, 0, Qt::AlignRight);
+            this->addWidget(this->button.back(), i, 1, Qt::AlignHCenter);
+        }
+    }
+};
 
 class ToolPannel : public QGroupBox {
     Q_OBJECT
@@ -33,35 +99,83 @@ public:
 
     UITool::MeshManipulatorType currentTool;
 
-    QVBoxLayout * main_layout;
+    QVBoxLayout * tools_layout;
 
-    QWidget *     fixedRegistration_tools;
-    QVBoxLayout * fixedRegistration_layout;
+    QWidget     * fixedRegistration_tools;
+    QGridLayout * fixedRegistration_layout;
+    QLabel      * fixedRegistration_mode_label;
     QPushButton * fixedRegistration_apply;
+    QPushButton * fixedRegistration_clear;
+    QPushButton * fixedRegistration_loadPoint;
+
+    QWidget     * move_tools;
+    QGridLayout * move_layout;
+    QLabel      * move_mode_label;
+    MultipleRadioButton* move_mode;
+
+    QWidget     * arap_tools;
+    QGridLayout * arap_layout;
+    QLabel      * arap_mode_label;
+    MultipleRadioButton* arap_mode;
 
 public slots:
     void init(){
         this->setCheckable(false);
-        this->main_layout = new QVBoxLayout(this);
-        this->main_layout->setAlignment(Qt::AlignTop);
+        this->tools_layout = new QVBoxLayout(this);
+        this->tools_layout->setAlignment(Qt::AlignTop | Qt::AlignHCenter);
 
+        // Fixed registration tool
         this->fixedRegistration_tools = new QWidget(this);
-        this->fixedRegistration_layout = new QVBoxLayout(this->fixedRegistration_tools);
+        this->fixedRegistration_layout = new QGridLayout(this->fixedRegistration_tools);
+        this->fixedRegistration_mode_label = new QLabel("Select first point");
+        this->fixedRegistration_layout->addWidget(this->fixedRegistration_mode_label);
+        this->fixedRegistration_loadPoint = new QPushButton("Load points");
+        this->fixedRegistration_layout->addWidget(this->fixedRegistration_loadPoint);
         this->fixedRegistration_apply = new QPushButton("Register");
         this->fixedRegistration_layout->addWidget(this->fixedRegistration_apply);
+        this->fixedRegistration_clear = new QPushButton("Clear");
+        this->fixedRegistration_layout->addWidget(this->fixedRegistration_clear);
 
-        this->main_layout->addWidget(this->fixedRegistration_tools);
+        this->tools_layout->addWidget(this->fixedRegistration_tools);
 
-        this->fixedRegistration_tools->hide();
+        // Move tool
+        this->move_tools = new QWidget(this);
+        this->move_layout = new QGridLayout(this->move_tools);
+        this->move_mode_label = new QLabel("Mode: ");
+        this->move_layout->addWidget(this->move_mode_label, 0, 0, Qt::AlignRight);
+        this->move_mode = new MultipleRadioButton({"Normal", "Even"}, this->move_tools);
+        this->move_layout->addLayout(this->move_mode, 0, 1, Qt::AlignHCenter);
+
+        this->tools_layout->addWidget(this->move_tools);
+
+        // ARAP tool
+        this->arap_tools = new QWidget(this);
+        this->arap_layout = new QGridLayout(this->arap_tools);
+        this->arap_mode_label = new QLabel("Mode: ");
+        this->arap_layout->addWidget(this->arap_mode_label, 0, 0, Qt::AlignRight);
+        this->arap_mode = new MultipleRadioButton({"Normal", "Handle"});
+        this->arap_layout->addLayout(this->arap_mode, 0, 1, Qt::AlignHCenter);
+
+        this->tools_layout->addWidget(this->arap_tools);
     }
 
     void hideAllLayouts() {
         this->fixedRegistration_tools->hide();
+        this->move_tools->hide();
+        this->arap_tools->hide();
     }
 
     void changeCurrentTool(UITool::MeshManipulatorType newTool) {
         this->hideAllLayouts();
         switch(newTool) {
+            case UITool::MeshManipulatorType::POSITION:
+                this->move_tools->show();
+                break;
+            case UITool::MeshManipulatorType::DIRECT:
+                break;
+            case UITool::MeshManipulatorType::ARAP:
+                this->arap_tools->show();
+                break;
             case UITool::MeshManipulatorType::FIXED_REGISTRATION:
                 this->fixedRegistration_tools->show();
                 break;
@@ -132,6 +246,7 @@ private:
 
     QComboBox* combo_mesh;
 
+    InfoPannel* info_pannel;
     ToolPannel* tool_pannel;
 
 	QAction* tool_open;

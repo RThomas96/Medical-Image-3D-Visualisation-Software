@@ -258,6 +258,7 @@ void MainWidget::setupWidgets() {
 	this->controlPanel	= new ControlPanel(this->scene, this->viewer, nullptr);
 	this->scene->setControlPanel(this->controlPanel);
 
+    this->info_pannel = new InfoPannel("Infos");
     this->tool_pannel = new ToolPannel("Tool pannel");
 
 	this->viewer->addStatusBar(this->statusBar);
@@ -346,6 +347,9 @@ void MainWidget::setupWidgets() {
     sidePannelLayout->setAlignment(Qt::AlignBottom);
 	QVBoxLayout* toolPannelLayout = new QVBoxLayout();
     toolPannelLayout->setAlignment(Qt::AlignTop);
+    this->info_pannel->setFixedSize(200, 85);
+    this->tool_pannel->setFixedWidth(200);
+    toolPannelLayout->addWidget(this->info_pannel, Qt::AlignTop);
     toolPannelLayout->addWidget(this->tool_pannel, Qt::AlignTop);
 
     this->cutPlane->setFixedSize(200, 200);

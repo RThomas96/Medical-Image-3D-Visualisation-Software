@@ -60,6 +60,33 @@ Résultats:
 
 Objectif: Rendre l'interface parfaitement stable 
 
+LUNDI:
+
+- [ ] Envoyer le mail pour réunion
+- [ ] Changer la taille des manips en fonction de la taille de la scène
+- [ ] Connecter hide/show side pannel tools 
+    - [x][ ] Display mesh 
+    - [x][ ] Size manipulators 
+    - [x][ ] Size kidmanipulator
+    - [x][ ] Info: [ index, position] 
+    MOVE
+    - [x][ ] Even mode
+    DIRECT
+    ARAP
+    - [x][ ] Mode Handle
+    REGISTER
+    - [x][ ] Load points
+    - [x][ ] Clear 
+    - [x][ ] Register
+- [ ] Ajouter le none tool 
+- [ ] Réparer la sauvegarde
+- [ ] Sync plane et header 
+- [ ] Ajouter des icônes
+- [ ] Ajouter shortcut pour hide/show mesh
+- [ ] Voir le mesh dans planar view
+- [ ] Ajouter un undo
+
+
 ARAP
 - [x] Réparer le bloquage du manipulateur
 - [x] Réparer la taille du manipulateur
@@ -98,8 +125,6 @@ INTERFACE
 - [x] Changer de couleur la sélection si handles 
 - [x] Changer couleur mesh surfacique (pas vert)
 - [x] Trier les faces pour le rendu
-- [ ] Connecter hide/show side pannel tools 
-- [ ] Sync plane et header 
 - [ ] Ajouter le free manipulator 
 - [ ] Couleurs du kid manipulateur 
 - [ ] Ajouter la lumière sur les manipulateurs 
@@ -118,9 +143,6 @@ GENERAL
 - [x] Réparer le ray casting
 - [x] Ajouter le ray casting au registration
 - [x] Ajouter le pannel des plans de KidPocket
-- [ ] Réparer la sauvegarde
-- [ ] Voir le mesh dans planar view
-- [ ] Ajouter un undo
 - [ ] Sélectionner dans planar view
 - [ ] Améliorer la lumière de la grille
 - [ ] Ajouter un mode offline pour les performances (en fait pas important)
