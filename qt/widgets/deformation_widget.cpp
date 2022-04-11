@@ -375,7 +375,7 @@ void GridDeformationWidget::setupSignals(Scene * scene) {
 
     QObject::connect(this->bindMove, &QPushButton::released, this, [this, scene]() {scene->toggleBindMeshToCageMove(std::string((this->combo_mesh->itemText(this->combo_mesh->currentIndex())).toStdString()));});
 
-	QObject::connect(this->spinbox_radius_sphere, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, [=](double i){ scene->setManipulatorRadius(i);}); 
+	//QObject::connect(this->spinbox_radius_sphere, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, [=](double i){ scene->setManipulatorRadius(i);}); 
 
 	QObject::connect(this->checkbox_wireframe, &QPushButton::clicked, this, [this, scene]() {scene->toggleWireframe();});
 

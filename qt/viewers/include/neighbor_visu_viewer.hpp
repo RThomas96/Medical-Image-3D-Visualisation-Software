@@ -81,6 +81,7 @@ signals:
     void keyReleased(QKeyEvent* e);
     void mousePressed(QMouseEvent* e);
     void mouseReleased(QMouseEvent* e);
+    void sceneRadiusChanged(float sceneRadius);
 };
 
 #endif	  // VIEWER_INCLUDE_NEIGHBOR_VISU_VIEWER_HPP_

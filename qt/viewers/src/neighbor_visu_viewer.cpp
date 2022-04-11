@@ -18,8 +18,6 @@
 
 #include <fstream>
 
-float Viewer::sceneRadiusMultiplier{.5f};
-
 Viewer::Viewer(Scene* const scene, QStatusBar* _program_bar, QWidget* parent) :
 	QGLViewer(parent), scene(scene) {
 	this->statusBar	   = _program_bar;
@@ -73,6 +71,8 @@ void Viewer::init() {
     QObject::connect(this, &Viewer::mousePressed, this->scene, &Scene::mousePressed);
     QObject::connect(this, &Viewer::mouseReleased, this->scene, &Scene::mouseReleased);
 
+    QObject::connect(this, &Viewer::sceneRadiusChanged, this->scene, &Scene::changeSceneRadius);
+
     QObject::connect(this->scene, &Scene::sceneCenterChanged, this, &Viewer::setCenter);
     QObject::connect(this->scene, &Scene::sceneRadiusChanged, this, &Viewer::setRadius);
 
@@ -81,7 +81,6 @@ void Viewer::init() {
 	glm::vec3 bbDiag = this->scene->getSceneBoundaries();
 	float sceneSize	 = glm::length(bbDiag);
 
-	this->setSceneRadius(sceneSize * sceneRadiusMultiplier);
 	// center scene on center of grid
 	this->setSceneCenter(qglviewer::Vec(bbDiag.x / 2., bbDiag.y / 2., bbDiag.z / 2.));
 	this->showEntireScene();
@@ -151,6 +150,7 @@ void Viewer::mouseReleaseEvent(QMouseEvent* e) {
 void Viewer::wheelEvent(QWheelEvent* _w) {
 	QGLViewer::wheelEvent(_w);
 	this->update();
+    Q_EMIT sceneRadiusChanged(this->camera()->distanceToSceneCenter());
 }
 
 void Viewer::resizeGL(int w, int h) {
@@ -287,8 +287,7 @@ void Viewer::setCenter(const glm::vec3& center) {
 }
 
 void Viewer::setRadius(const float radius) {
-	this->setSceneRadius(radius*sceneRadiusMultiplier);
-    std::cout << "Set radius" << std::endl;
+    this->setSceneRadius(radius);
     this->showEntireScene();
 }
 

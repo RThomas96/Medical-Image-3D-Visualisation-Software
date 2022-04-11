@@ -1,7 +1,7 @@
 
 #include "drawable_manipulator.hpp"
 
-UITool::GL::MeshManipulator::MeshManipulator(SceneGL* sceneGL, BaseMesh * mesh, const std::vector<glm::vec3>& positions, float manipulatorRadius) : manipulatorRadius(manipulatorRadius), planeViewRadius(manipulatorRadius), manipulatorMesh(Sphere(manipulatorRadius)), sceneGL(sceneGL), meshManipulator(new UITool::DirectManipulator(mesh, positions)) 
+UITool::GL::MeshManipulator::MeshManipulator(SceneGL* sceneGL, BaseMesh * mesh, const std::vector<glm::vec3>& positions) : planeViewRadius(1.), manipulatorMesh(Sphere(1.)), sceneGL(sceneGL), meshManipulator(new UITool::DirectManipulator(mesh, positions)) 
 {
     //QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), &UITool::MeshManipulator::needRedraw, this, &UITool::GL::MeshManipulator::prepare);
     QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needRedraw()), this, SLOT(prepare()));// This syntax is needed to cast an interface
@@ -55,9 +55,6 @@ UITool::GL::MeshManipulator::MeshManipulator(SceneGL* sceneGL, BaseMesh * mesh, 
 }
 
 void UITool::GL::MeshManipulator::prepare() {
-    //this->manipulatorMesh = Sphere(this->meshManipulator->getManipulatorSize());
-    this->manipulatorMesh = Sphere(this->manipulatorRadius);
-    this->kidManipulatorRadius = this->meshManipulator->getManipulatorSize(true) * 100.;
 	// TODO: copy here
 	std::vector<glm::vec3> allPositions;
 	this->meshManipulator->getAllPositions(allPositions);
@@ -173,15 +170,6 @@ void UITool::GL::MeshManipulator::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* m
         state.push_back(glm::vec3(value, value, value));
     }
 
-    //for(int i = 0; i < allPositions.size(); ++i) {
-    //    for(int j = 0; j < 3; ++j) {
-    //        if(std::fabs(allPositions[i][j] - planeDisplacement[j]) < this->planeViewRadius) {
-    //            if(state[i][0] == int(State::NONE) || state[i][0] == int(State::WAITING))
-    //                state[i] = glm::vec3(float(State::HIGHLIGHT), float(State::HIGHLIGHT), float(State::HIGHLIGHT));// HIGHLIGHT state
-    //        }
-    //    }
-    //}
-
     if(this->needPreview) {
         allPositions.push_back(this->previewPosition);
         toDisplay.push_back(glm::vec3(1., 1., 1.));
@@ -251,18 +239,6 @@ void UITool::GL::MeshManipulator::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* m
     }
 }
 
-void UITool::GL::MeshManipulator::setRadius(float radius) { 
-    this->manipulatorRadius = radius; 
-    this->planeViewRadius = radius; 
-    this->prepare();
-}
-
-void UITool::GL::MeshManipulator::setKidRadius(float radius) { 
-    std::cout << "Set kid radius: " << radius << std::endl;
-    this->kidManipulatorRadius = radius; 
-    this->meshManipulator->kid_manip->setDisplayScale(this->kidManipulatorRadius);
-}
-
 void UITool::GL::MeshManipulator::toggleActivation() {
 	//this->meshManipulator->setActivation(!this->meshManipulator->isActive());
     //this->displayWireframe = this->meshManipulator->isWireframeDisplayed();
@@ -290,32 +266,19 @@ void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scen
     this->meshManipulatorType = type;
     if(type == MeshManipulatorType::DIRECT) {
         this->meshManipulator = new UITool::DirectManipulator(mesh, positions);
-        this->setRadius(this->meshManipulator->getManipulatorSize());
     } else if(type == MeshManipulatorType::FREE) {
         this->meshManipulator = new UITool::FreeManipulator(mesh, positions);
-        this->setRadius(this->meshManipulator->getManipulatorSize());
     } else if(type == MeshManipulatorType::POSITION) {
         this->meshManipulator = new UITool::PositionManipulator(mesh, positions);
-        this->setKidRadius(glm::length(mesh->getDimensions()));
-        //this->setRadius(this->meshManipulator->getManipulatorSize() * 10.f);
-        //glm::vec3 dim = this->meshManipulator->mesh->getDimensions();
-        //this->setKidRadius((std::max(dim[0], std::max(dim[1], dim[2])))*0.5);
     } else if(type == MeshManipulatorType::REGISTRATION) {
         this->meshManipulator = new UITool::CompManipulator(mesh, positions);
-        this->setRadius(this->meshManipulator->getManipulatorSize());
     } else if(type == MeshManipulatorType::ARAP) {
         this->meshManipulator = new UITool::ARAPManipulator(mesh, positions);
-        this->setRadius(this->meshManipulator->getManipulatorSize());
-        this->planeViewRadius = this->manipulatorRadius * 3.f;
     } else if(type == MeshManipulatorType::SLICE) {
         this->meshManipulator = new UITool::SliceManipulator(mesh, positions);
-        this->setRadius(this->meshManipulator->getManipulatorSize());
-        this->planeViewRadius = this->manipulatorRadius * 3.f;
     } else if(type == MeshManipulatorType::FIXED_REGISTRATION) {
         if(scene->grids.size() > 0) {
             this->meshManipulator = new UITool::FixedRegistrationManipulator(mesh, scene->grids[0]->grid, positions);
-            this->setRadius(this->meshManipulator->getManipulatorSize() * 10.f);
-            this->planeViewRadius = this->manipulatorRadius;
         } else {
             this->meshManipulator = new UITool::PositionManipulator(mesh, positions);
             std::cout << "No grid available to use the register tool" << std::endl;
@@ -342,10 +305,21 @@ void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scen
     // MeshManipulator->DrawableMeshManipulator
     QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needRedraw()), this, SLOT(prepare()));
     QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needSendTetmeshToGPU()), scene, SLOT(sendFirstTetmeshToGPU()));
-    QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needChangeKidManipulatorRadius(float)), this, SLOT(setKidRadius(float)));
+    //QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needChangeKidManipulatorRadius(float)), this, SLOT(setKidRadius(float)));
 
     // MeshManipulator->DrawableSelection
     QObject::connect(&this->meshManipulator->selection, &UITool::Selection::needToRedrawSelection, scene, &Scene::redrawSelection);
 
     this->toggleActivation();
+}
+
+
+void UITool::GL::MeshManipulator::updateManipulatorRadius(float sceneRadius) {
+    this->manipulatorRadius = sceneRadius*0.002;
+    this->kidRadius = sceneRadius*0.25;
+    this->manipulatorMesh = Sphere(this->manipulatorRadius);
+    this->prepare();
+    if(this->meshManipulator && this->meshManipulator->kid_manip) {
+        this->meshManipulator->kid_manip->setDisplayScale(this->kidRadius);
+    }
 }

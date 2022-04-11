@@ -22,7 +22,7 @@ namespace UITool {
 		class MeshManipulator : QObject {
             Q_OBJECT;
 		public:
-			MeshManipulator(SceneGL* sceneGL, BaseMesh * base, const std::vector<glm::vec3>& positions, float manipulatorRadius = 50.f);
+			MeshManipulator(SceneGL* sceneGL, BaseMesh * base, const std::vector<glm::vec3>& positions);
 
             void draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* mMat, const glm::vec3& planeDisplacement);
 
@@ -38,10 +38,9 @@ namespace UITool {
         public slots:
 			void prepare();
 
-            void setRadius(float radius);
-            void setKidRadius(float radius);
             void createNewMeshManipulator(BaseMesh * mesh, Scene * scene, MeshManipulatorType type);
 			void toggleDisplayWireframe() { this->displayWireframe = ! this->displayWireframe; }
+            void updateManipulatorRadius(float sceneRadius);
 
         public:
             UITool::MeshManipulatorType meshManipulatorType;
@@ -52,9 +51,9 @@ namespace UITool {
             std::vector<std::pair<int, std::pair<int, glm::vec3>>> persistantRegistrationToolSelectedPoints;
             std::vector<int> persistantRegistrationToolSessions;
 
-			float manipulatorRadius;
 			float planeViewRadius;
-            float kidManipulatorRadius;
+			float manipulatorRadius;
+			float kidRadius;
 			Sphere manipulatorMesh;
 
 			SceneGL * sceneGL;

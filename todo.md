@@ -181,6 +181,8 @@ GENERAL
 - [ ] Propager l'ouverture ".mesh" aux cages
 - [ ] Ajouter sauvegarde ".mesh" aux cages (pour appliquer une cage)
 
+- [ ] Retirer tous les signaux de manipulation de radius 
+
 # Trier
 
 - [ ] [RENDU] Le scale affecte les performances

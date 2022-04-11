@@ -501,7 +501,6 @@ public slots:
     // MeshManipulator slots
 	void toggleWireframe();
     void toggleManipulatorActivation();
-    void setManipulatorRadius(float radius);
     bool toggleARAPManipulatorMode();
     void switchToSelectionModeRegistrationTool();
     void validateRegistrationTool();
@@ -542,10 +541,11 @@ public slots:
     bool isGrid(const std::string& name);
     bool isCage(const std::string& name);
     int getGridIdx(const std::string& name);
-    void updateSceneRadius();
+    void changeSceneRadius(float sceneRadius);
+    float getSceneRadius();
     void updateSceneCenter();
+    void updateSceneRadius();
 	glm::vec3 getSceneCenter();
-	float getSceneRadius();
     void toggleBindMeshToCageMove(const std::string& name);
     void setBindMeshToCageMove(const std::string& name, bool state);
     void changeActiveMesh(const std::string& name);

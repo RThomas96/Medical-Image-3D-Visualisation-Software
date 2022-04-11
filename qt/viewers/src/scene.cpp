@@ -3161,9 +3161,6 @@ void Scene::resetPositionResponse() {
 }
 
 void Scene::prepareManipulators() {
-    //glm::vec3 ratio = this->grids[this->gridToDraw]->grid->resolutionRatio;
-    //this->glMeshManipulator->setRadius(10.f / ratio[0]);
-    this->glMeshManipulator->setRadius(10.f);
 	this->glMeshManipulator->prepare();
 }
 
@@ -3298,10 +3295,6 @@ void Scene::launchSaveDialog() {
 /*********************************/
 void Scene::toggleWireframe() {
 	this->glMeshManipulator->toggleDisplayWireframe();
-}
-
-void Scene::setManipulatorRadius(float radius) {
-    this->glMeshManipulator->setRadius(radius);   
 }
 
 void Scene::toggleManipulatorActivation() {
@@ -3578,10 +3571,23 @@ DrawableMesh * Scene::getDrawableMesh(const std::string& name) {
     return nullptr;
 }
 
+void Scene::changeSceneRadius(float sceneRadius) {
+    this->glMeshManipulator->updateManipulatorRadius(sceneRadius);
+}
+
 void Scene::updateSceneRadius() {
-    //this->glMeshManipulator->setRadius(this->getSceneRadius()*0.008);
+    this->changeSceneRadius(this->getSceneRadius());
     Q_EMIT sceneRadiusChanged(this->getSceneRadius());
 }
+
+float Scene::getSceneRadius() {
+    BaseMesh * mesh = this->getBaseMesh(this->activeMesh);
+    if(mesh) {
+        return glm::length(mesh->getDimensions());
+    }
+    return 1.;
+}
+
 
 glm::vec3 Scene::getSceneCenter() {
 
@@ -3594,30 +3600,6 @@ glm::vec3 Scene::getSceneCenter() {
     //}
     return glm::vec3(0., 0., 0.);
 }
-
-float Scene::getSceneRadius() {
-    BaseMesh * mesh = this->getBaseMesh(this->activeMesh);
-    if(mesh) {
-        std::cout << "Update scene radius to dimensions of [" << this->activeMesh << "] which is " << glm::length(mesh->getDimensions()) << std::endl;
-        return glm::length(mesh->getDimensions());
-    } //else {
-        //return glm::length(this->sceneBBMax - this->sceneBBMin);
-    //}
-    return 1.;
-}
-
-//void Scene::updateSceneBBox() {
-//    this->sceneBBMin = glm::vec3(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
-//    this->sceneBBMax = glm::vec3(std::numeric_limits<float>::min(), std::numeric_limits<float>::min(), std::numeric_limits<float>::min());
-//
-//    for(int i = 0; i < this->grids.size(); ++i) {
-//        this->updateSceneBBox(this->grids[i]->grid->bbMin, this->grids[i]->grid->bbMax);
-//    } 
-//
-//    for(int i = 0; i < this->meshes.size(); ++i) {
-//        this->updateSceneBBox(this->meshes[i].first->bbMin, this->meshes[i].first->bbMax);
-//    } 
-//}
 
 void Scene::updateSceneCenter() {
     Q_EMIT sceneCenterChanged(this->getSceneCenter());
