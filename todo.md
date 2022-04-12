@@ -68,7 +68,7 @@ LUNDI:
     - [x][ ] Display mesh 
     - [x][x] Size manipulators 
     - [x][x] Size kidmanipulator
-    - [x][ ] Info: [ index, position] 
+    - [x][x] Info: [ index, position] 
     MOVE
     - [x][ ] Even mode
     DIRECT

@@ -258,7 +258,7 @@ void MainWidget::setupWidgets() {
 	this->controlPanel	= new ControlPanel(this->scene, this->viewer, nullptr);
 	this->scene->setControlPanel(this->controlPanel);
 
-    this->info_pannel = new InfoPannel("Infos");
+    this->info_pannel = new InfoPannel("Infos", this->scene);
     this->tool_pannel = new ToolPannel("Tool pannel", this->scene);
 
 	this->viewer->addStatusBar(this->statusBar);

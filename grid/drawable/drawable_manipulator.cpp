@@ -295,6 +295,7 @@ void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scen
     // MeshManipulator->Scene
     QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needChangeCursor(UITool::CursorType)), scene, SLOT(changeCursor(UITool::CursorType)));
     QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needChangeCursorInPlanarView(UITool::CursorType)), scene, SLOT(changeCursorInPlanarView(UITool::CursorType)));
+    QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needChangeSelectedPoints(std::pair<int,glm::vec3>)), scene, SLOT(changeSelectedPoint(std::pair<int,glm::vec3>)));
     // Scene->MeshManipulator
     QObject::connect(scene, SIGNAL(keyPressed(QKeyEvent*)), dynamic_cast<QObject*>(this->meshManipulator), SLOT(keyPressed(QKeyEvent*)));
     QObject::connect(scene, SIGNAL(keyReleased(QKeyEvent*)), dynamic_cast<QObject*>(this->meshManipulator), SLOT(keyReleased(QKeyEvent*)));

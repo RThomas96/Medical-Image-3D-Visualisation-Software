@@ -3989,3 +3989,7 @@ void Scene::previewPointInPlanarView(const glm::vec3& positionOfMouse3D) {
         this->glMeshManipulator->needPreview = false;
     }
 }
+
+void Scene::changeSelectedPoint(std::pair<int, glm::vec3> selectedPoint) {
+    Q_EMIT selectedPointChanged(selectedPoint);
+}

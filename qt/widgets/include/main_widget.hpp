@@ -1,6 +1,8 @@
 #ifndef QT_INCLUDE_NEIGHBOR_VISU_MAIN_WIDGET_HPP_
 #define QT_INCLUDE_NEIGHBOR_VISU_MAIN_WIDGET_HPP_
 
+#include <iomanip>
+#include <sstream>
 #include "../../qt/viewers/include/neighbor_visu_viewer.hpp"
 #include "../../qt/viewers/include/planar_viewer.hpp"
 #include "../../qt/viewers/include/scene.hpp"
@@ -31,8 +33,8 @@ class InfoPannel : public QGroupBox {
 
 public:
     
-    InfoPannel(QWidget *parent = nullptr):QGroupBox(parent){init();}
-    InfoPannel(const QString &title, QWidget *parent = nullptr): QGroupBox(title, parent){init();}
+    InfoPannel(Scene * scene, QWidget *parent = nullptr):QGroupBox(parent){init();connect(scene);}
+    InfoPannel(const QString &title, Scene * scene, QWidget *parent = nullptr): QGroupBox(title, parent){init();connect(scene);}
 
     QVBoxLayout * main_layout;
     QHBoxLayout * id_layout;
@@ -49,10 +51,11 @@ public slots:
         this->main_layout = new QVBoxLayout();
         this->main_layout->setAlignment(Qt::AlignTop);
         this->info_id = new QLabel("Id:");
-        this->info_position = new QLabel("Position:");
+        this->info_position = new QLabel("Pos:");
 
-        this->info_id_data = new QLabel("[]");
+        this->info_id_data = new QLabel("-");
         this->info_position_data = new QLabel("[]");
+        this->info_position_data->setStyleSheet("font: 9pt;");
 
         this->id_layout = new QHBoxLayout();
         this->id_layout->addWidget(this->info_id);
@@ -67,6 +70,32 @@ public slots:
         this->main_layout->addLayout(this->id_layout);
         this->main_layout->addLayout(this->position_layout);
         this->setLayout(this->main_layout);
+    }
+
+    void connect(Scene * scene) {
+        QObject::connect(scene, &Scene::selectedPointChanged, this, &InfoPannel::updatePointInfo);
+    }
+
+    void updatePointInfo(std::pair<int, glm::vec3> selectedPoint) {
+        std::string idx = std::to_string(selectedPoint.first);
+        //std::string pt = std::string("[") + 
+        //                 std::to_string(selectedPoint.second[0]) + 
+        //                 std::string(", ") +
+        //                 std::to_string(selectedPoint.second[1]) + 
+        //                 std::string(", ") +
+        //                 std::to_string(selectedPoint.second[2]) +
+        //                 std::string("]");
+        std::stringstream stream;
+        stream << std::fixed << std::setprecision(2) << "[" << selectedPoint.second[0] << ", " << selectedPoint.second[1] << ", " << selectedPoint.second[2] << "]";
+        std::string pt = stream.str();
+
+        if(selectedPoint.first >= 0) {
+            this->info_id_data->setText(QString(idx.c_str()));
+            this->info_position_data->setText(QString(pt.c_str()));
+        } else {
+            this->info_id_data->setText(QString("-"));
+            this->info_position_data->setText(QString("[]"));
+        }
     }
 };
 

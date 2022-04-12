@@ -472,6 +472,7 @@ signals:
     void needPushHandleButton();
     void cursorChanged(UITool::CursorType cursorType);
     void cursorChangedInPlanarView(UITool::CursorType cursorType);
+    void selectedPointChanged(std::pair<int, glm::vec3> selectedPoint);
 
 // All these indirections are important because for most of them they interacts with various components of the scene
 // And it allow more flexibility as the scene control ALL the informations to transit from class to class
@@ -480,6 +481,7 @@ public slots:
 
     void changeCurrentTool(UITool::MeshManipulatorType newTool);
     void changeCurrentDeformationMethod(DeformMethod newDeformMethod);
+    void changeSelectedPoint(std::pair<int, glm::vec3> selectedPoint);
 
     // Display management
     void slotToggleDisplayGrid() { this->displayGrid = !this->displayGrid;};

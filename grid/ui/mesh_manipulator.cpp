@@ -21,8 +21,9 @@ namespace UITool {
         this->manipulators.reserve(positions.size());
 		for (int i = 0; i < positions.size(); ++i) {
 			this->manipulators.push_back(Manipulator(positions[i]));
-            //QObject::connect(&(this->manipulators[i]), &Manipulator::enterAtRangeForGrab, this, &DirectManipulator::displayManipulator);
-            //QObject::connect(&(this->manipulators[i]), &Manipulator::exitFromRangeForGrab, this, &DirectManipulator::hideManipulator);
+            QObject::connect(&(this->manipulators[i]), &Manipulator::enterAtRangeForGrab, this, [this, i](){Q_EMIT needChangeSelectedPoints(std::make_pair(i, this->manipulators[i].getManipPosition()));});
+            QObject::connect(&(this->manipulators[i]), &Manipulator::exitFromRangeForGrab, this, [this, i](){Q_EMIT needChangeSelectedPoints(std::make_pair(-1, this->manipulators[i].getManipPosition()));});
+            QObject::connect(&(this->manipulators[i]), &Manipulator::isManipulated, this, [this, i](){Q_EMIT needChangeSelectedPoints(std::make_pair(i, this->manipulators[i].getManipPosition()));});
 
             QObject::connect(&(this->manipulators[i]), &Manipulator::mouseRightButtonPressed, this, &DirectManipulator::selectManipulator);
             QObject::connect(&(this->manipulators[i]), &Manipulator::mouseRightButtonReleasedAndCtrlIsNotPressed, this, &DirectManipulator::deselectManipulator);
@@ -602,8 +603,12 @@ namespace UITool {
         this->manipulators.reserve(positions.size());
 		for (int i = 0; i < positions.size(); ++i) {
 			this->manipulators.push_back(Manipulator(positions[i]));
-            QObject::connect(&(this->manipulators[i]), &Manipulator::enterAtRangeForGrab, this, &ARAPManipulator::displayManipulator);
-            QObject::connect(&(this->manipulators[i]), &Manipulator::exitFromRangeForGrab, this, &ARAPManipulator::hideManipulator);
+            //QObject::connect(&(this->manipulators[i]), &Manipulator::enterAtRangeForGrab, this, &ARAPManipulator::displayManipulator);
+            //QObject::connect(&(this->manipulators[i]), &Manipulator::exitFromRangeForGrab, this, &ARAPManipulator::hideManipulator);
+
+            QObject::connect(&(this->manipulators[i]), &Manipulator::enterAtRangeForGrab, this, [this, i](){Q_EMIT needChangeSelectedPoints(std::make_pair(i, this->manipulators[i].getManipPosition()));});
+            QObject::connect(&(this->manipulators[i]), &Manipulator::exitFromRangeForGrab, this, [this, i](){Q_EMIT needChangeSelectedPoints(std::make_pair(-1, this->manipulators[i].getManipPosition()));});
+            QObject::connect(&(this->manipulators[i]), &Manipulator::isManipulated, this, [this, i](){Q_EMIT needChangeSelectedPoints(std::make_pair(i, this->manipulators[i].getManipPosition()));});
 
             QObject::connect(&(this->manipulators[i]), &Manipulator::mouseRightButtonPressed, this, &ARAPManipulator::selectManipulator);
             QObject::connect(&(this->manipulators[i]), &Manipulator::mouseRightButtonReleased, this, &ARAPManipulator::deselectManipulator);
@@ -1169,6 +1174,10 @@ FixedRegistrationManipulator::FixedRegistrationManipulator(BaseMesh * mesh, Grid
     this->nbNotAssociatedPoints = fixed.size();
     for (int i = 0; i < fixed.size(); ++i) {
         this->manipulators.push_back(Manipulator(positions[fixed[i]]));
+
+        QObject::connect(&(this->manipulators[i]), &Manipulator::enterAtRangeForGrab, this, [this, i](){Q_EMIT needChangeSelectedPoints(std::make_pair(this->fixed[i], this->manipulators[i].getManipPosition()));});
+        QObject::connect(&(this->manipulators[i]), &Manipulator::exitFromRangeForGrab, this, [this, i](){Q_EMIT needChangeSelectedPoints(std::make_pair(-1, this->manipulators[i].getManipPosition()));});
+        QObject::connect(&(this->manipulators[i]), &Manipulator::isManipulated, this, [this, i](){Q_EMIT needChangeSelectedPoints(std::make_pair(this->fixed[i], this->manipulators[i].getManipPosition()));});
 
         QObject::connect(&(this->manipulators[i]), &Manipulator::mouseRightButtonPressed, this, &FixedRegistrationManipulator::selectManipulator);
         QObject::connect(&(this->manipulators[i]), &Manipulator::mouseRightButtonReleasedAndCtrlIsNotPressed, this, &FixedRegistrationManipulator::deselectManipulator);
