@@ -506,6 +506,7 @@ public slots:
     void validateRegistrationTool();
     void applyRegistrationTool();
     void applyFixedRegistrationTool();
+    void clearFixedRegistrationTool();
     void undoRegistrationTool();
     void clearRegistrationTool();
     void assignMeshToRegisterRegistrationTool(const std::string& name);
@@ -566,6 +567,8 @@ public:
 
     int maximumTextureSize;// Set by the viewer
     int gridToDraw = -1;
+
+    float distanceFromCamera;
 
     bool displayGrid;
     bool previewCursorInPlanarView;

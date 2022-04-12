@@ -259,7 +259,7 @@ void MainWidget::setupWidgets() {
 	this->scene->setControlPanel(this->controlPanel);
 
     this->info_pannel = new InfoPannel("Infos");
-    this->tool_pannel = new ToolPannel("Tool pannel");
+    this->tool_pannel = new ToolPannel("Tool pannel", this->scene);
 
 	this->viewer->addStatusBar(this->statusBar);
 	this->viewer_planeX->addParentStatusBar(this->statusBar);

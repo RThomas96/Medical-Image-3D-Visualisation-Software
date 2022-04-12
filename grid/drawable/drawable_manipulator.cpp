@@ -246,6 +246,8 @@ void UITool::GL::MeshManipulator::toggleActivation() {
 }
 
 void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scene * scene, MeshManipulatorType type) {
+    this->manipulatorRatio = 0.002;
+    this->kidRatio = 0.25;
     if(this->meshManipulator) {
         UITool::CompManipulator * previousManipulator = dynamic_cast<UITool::CompManipulator*>(this->meshManipulator);
         if(previousManipulator) {
@@ -270,6 +272,8 @@ void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scen
         this->meshManipulator = new UITool::FreeManipulator(mesh, positions);
     } else if(type == MeshManipulatorType::POSITION) {
         this->meshManipulator = new UITool::PositionManipulator(mesh, positions);
+        this->kidRatio = 0.45;
+        scene->updateSceneRadius();
     } else if(type == MeshManipulatorType::REGISTRATION) {
         this->meshManipulator = new UITool::CompManipulator(mesh, positions);
     } else if(type == MeshManipulatorType::ARAP) {
@@ -279,6 +283,8 @@ void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scen
     } else if(type == MeshManipulatorType::FIXED_REGISTRATION) {
         if(scene->grids.size() > 0) {
             this->meshManipulator = new UITool::FixedRegistrationManipulator(mesh, scene->grids[0]->grid, positions);
+            this->manipulatorRatio = 0.015;
+            scene->updateSceneRadius();
         } else {
             this->meshManipulator = new UITool::PositionManipulator(mesh, positions);
             std::cout << "No grid available to use the register tool" << std::endl;
@@ -315,8 +321,8 @@ void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scen
 
 
 void UITool::GL::MeshManipulator::updateManipulatorRadius(float sceneRadius) {
-    this->manipulatorRadius = sceneRadius*0.002;
-    this->kidRadius = sceneRadius*0.25;
+    this->manipulatorRadius = sceneRadius*this->manipulatorRatio;
+    this->kidRadius = sceneRadius*this->kidRatio;
     this->manipulatorMesh = Sphere(this->manipulatorRadius);
     this->prepare();
     if(this->meshManipulator && this->meshManipulator->kid_manip) {

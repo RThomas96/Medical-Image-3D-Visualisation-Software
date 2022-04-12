@@ -538,6 +538,7 @@ namespace UITool {
         void addManipulator(const glm::vec3& position);
         void addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos);
         void apply();
+        void clear();
 
     signals:
         void needRedraw() override;

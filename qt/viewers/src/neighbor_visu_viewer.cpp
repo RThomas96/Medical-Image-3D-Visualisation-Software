@@ -78,6 +78,8 @@ void Viewer::init() {
 
     QObject::connect(this->scene, &Scene::cursorChanged, this, &Viewer::setCursorType);
 
+    //QObject::connect(this->scene, &Scene::needRedraw3DScene, this, &Viewer::draw);
+
 	glm::vec3 bbDiag = this->scene->getSceneBoundaries();
 	float sceneSize	 = glm::length(bbDiag);
 
@@ -88,6 +90,7 @@ void Viewer::init() {
 	this->refreshTimer->start();	// Update every 'n' milliseconds from here on out
 
     this->scene->init();
+    Q_EMIT sceneRadiusChanged(this->camera()->distanceToSceneCenter());
 }
 
 void Viewer::addStatusBar(QStatusBar* bar) {
@@ -289,6 +292,7 @@ void Viewer::setCenter(const glm::vec3& center) {
 void Viewer::setRadius(const float radius) {
     this->setSceneRadius(radius);
     this->showEntireScene();
+    this->scene->distanceFromCamera = this->camera()->distanceToSceneCenter();
 }
 
 void Viewer::setCursorType(UITool::CursorType cursorType) {

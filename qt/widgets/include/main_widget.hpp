@@ -22,6 +22,7 @@
 #include <QFrame>
 #include <QSizePolicy>
 #include <QTabWidget>
+#include <QShortcut>
 
 class ColorBoundWidget;
 
@@ -86,6 +87,7 @@ public:
             this->addWidget(this->label.back(), i, 0, Qt::AlignRight);
             this->addWidget(this->button.back(), i, 1, Qt::AlignHCenter);
         }
+        this->button[0]->setChecked(true);
     }
 };
 
@@ -95,7 +97,7 @@ class ToolPannel : public QGroupBox {
 public:
     
     ToolPannel(QWidget *parent = nullptr):QGroupBox(parent){init();}
-    ToolPannel(const QString &title, QWidget *parent = nullptr): QGroupBox(title, parent){init();}
+    ToolPannel(const QString &title, Scene * scene, QWidget *parent = nullptr): QGroupBox(title, parent){init();connect(scene);}
 
     UITool::MeshManipulatorType currentTool;
 
@@ -111,11 +113,13 @@ public:
     QWidget     * move_tools;
     QGridLayout * move_layout;
     QLabel      * move_mode_label;
+    QShortcut   * move_mode_shortcut;
     MultipleRadioButton* move_mode;
 
     QWidget     * arap_tools;
     QGridLayout * arap_layout;
     QLabel      * arap_mode_label;
+    QShortcut   * arap_mode_shortcut;
     MultipleRadioButton* arap_mode;
 
 public slots:
@@ -180,6 +184,25 @@ public slots:
                 this->fixedRegistration_tools->show();
                 break;
         }
+    }
+
+    void connect(Scene * scene) {
+        QObject::connect(this->fixedRegistration_apply, &QPushButton::clicked, [this, scene](){scene->applyFixedRegistrationTool();});
+
+        QObject::connect(this->fixedRegistration_clear, &QPushButton::clicked, [this, scene](){scene->clearFixedRegistrationTool();});
+
+        QObject::connect(this->arap_mode->button[0], &QRadioButton::toggled, [this, scene](){scene->toggleARAPManipulatorMode();});
+        this->connectShortcut();
+    }
+
+    void connectShortcut() {
+        this->arap_mode_shortcut = new QShortcut(QKeySequence("S"), this->arap_mode->button[0]);
+        QObject::connect(arap_mode_shortcut, &QShortcut::activated, this, [this](){if(this->arap_mode->button[0]->isChecked()){this->arap_mode->button[1]->toggle();} else {this->arap_mode->button[0]->toggle();}});
+
+        this->move_mode_shortcut = new QShortcut(QKeySequence("S"), this->move_mode->button[0]);
+        //QObject::connect(move_mode_shortcut, &QShortcut::activated, this, [this](){this->move_mode->button[1]->toggle();});
+        //QObject::connect(move_mode_shortcut, &QShortcut::released, this, [this](){this->move_mode->button[0]->toggle();});
+
     }
 
 signals:

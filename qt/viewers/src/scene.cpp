@@ -54,6 +54,7 @@ Scene::Scene() :
 	this->isInitialized	   = false;
 	this->showVAOstate	   = false;
 	this->shouldDeleteGrid = false;
+    this->distanceFromCamera = 0.;
 
 	//this->grids.clear();
 
@@ -3576,8 +3577,8 @@ void Scene::changeSceneRadius(float sceneRadius) {
 }
 
 void Scene::updateSceneRadius() {
-    this->changeSceneRadius(this->getSceneRadius());
     Q_EMIT sceneRadiusChanged(this->getSceneRadius());
+    this->changeSceneRadius(this->distanceFromCamera);
 }
 
 float Scene::getSceneRadius() {
@@ -3790,6 +3791,15 @@ void Scene::applyFixedRegistrationTool() {
         return;
     }
     manipulator->apply();
+}
+
+void Scene::clearFixedRegistrationTool() {
+    UITool::FixedRegistrationManipulator * manipulator = dynamic_cast<UITool::FixedRegistrationManipulator*>(this->glMeshManipulator->meshManipulator);
+    if(!manipulator) {
+        std::cout << "WARNING: not the right tool" << std::endl;
+        return;
+    }
+    manipulator->clear();
 }
 
 void Scene::undoRegistrationTool() {

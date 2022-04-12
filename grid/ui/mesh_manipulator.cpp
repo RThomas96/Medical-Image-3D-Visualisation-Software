@@ -853,10 +853,10 @@ namespace UITool {
     }
 
     void ARAPManipulator::keyPressed(QKeyEvent* e) {
-        if(e->key() == Qt::Key_S && !e->isAutoRepeat()) {
-            this->toggleMode();
-            Q_EMIT needPushHandleButton();
-        }
+        //if(e->key() == Qt::Key_S && !e->isAutoRepeat()) {
+        //    this->toggleMode();
+        //    Q_EMIT needPushHandleButton();
+        //}
     }
 
     void ARAPManipulator::keyReleased(QKeyEvent* e) {}
@@ -1298,6 +1298,23 @@ void FixedRegistrationManipulator::apply() {
 
     for(int i = 0; i < this->fixed.size(); ++i) {
         this->manipulators[i].setManipPosition(this->mesh->vertices[this->fixed[i]]);
+    }
+}
+
+void FixedRegistrationManipulator::clear() {
+    int nbAddedManipulators = 0;
+    for(int i = 0; i < this->isFixed.size(); ++i) {
+        if(!this->isFixed[i]) {
+            nbAddedManipulators += 1;
+        }
+    }
+    for(int i = 0; i < nbAddedManipulators; ++i) {
+        this->isFixed.pop_back();
+        this->manipulators.pop_back();
+        this->manipulatorsToDisplay.pop_back();
+    }
+    if(this->toolState == FixedRegistrationManipulatorState::NONE) {
+        std::fill(this->associatedManipulator.begin(), this->associatedManipulator.end(), -1);
     }
 }
 

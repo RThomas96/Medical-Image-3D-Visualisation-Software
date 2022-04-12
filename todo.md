@@ -63,21 +63,21 @@ Objectif: Rendre l'interface parfaitement stable
 LUNDI:
 
 - [ ] Envoyer le mail pour réunion
-- [ ] Changer la taille des manips en fonction de la taille de la scène
+- [x] Changer la taille des manips en fonction de la taille de la scène
 - [ ] Connecter hide/show side pannel tools 
     - [x][ ] Display mesh 
-    - [x][ ] Size manipulators 
-    - [x][ ] Size kidmanipulator
+    - [x][x] Size manipulators 
+    - [x][x] Size kidmanipulator
     - [x][ ] Info: [ index, position] 
     MOVE
     - [x][ ] Even mode
     DIRECT
     ARAP
-    - [x][ ] Mode Handle
+    - [x][x] Mode Handle
     REGISTER
     - [x][ ] Load points
-    - [x][ ] Clear 
-    - [x][ ] Register
+    - [x][x] Clear 
+    - [x][x] Register
 - [ ] Ajouter le none tool 
 - [ ] Réparer la sauvegarde
 - [ ] Sync plane et header 
@@ -148,6 +148,7 @@ GENERAL
 - [ ] Ajouter un mode offline pour les performances (en fait pas important)
 - [ ] glSubdata pour les perfs
 - [ ] Draw le wireframe avec les bary coord
+- [ ] Supprimer l'ancien registration tool et renommer le "fixed"
 
 ---
 
@@ -157,7 +158,7 @@ GENERAL
 - [x] [INTERFACE] Bloquage du manipulateur 
 - [x] [INTERFACE] Taille du manipulateur 
 - [x] [INTERFACE] Affichage du manipulateur durant la sélection (il ne devrait pas)
-- [ ] [INTERFACE] Améliorer l'interface d'apairage de points 
+- [x] [INTERFACE] Améliorer l'interface d'apairage de points 
 - [x] [INTERFACE] Activer/désactiver les plans
 
 # Un jour 
