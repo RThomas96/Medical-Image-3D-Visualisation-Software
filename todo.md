@@ -64,7 +64,7 @@ LUNDI:
 
 - [ ] Envoyer le mail pour réunion
 - [x] Changer la taille des manips en fonction de la taille de la scène
-- [ ] Connecter hide/show side pannel tools 
+- [x] Connecter hide/show side pannel tools 
     - [x][ ] Display mesh 
     - [x][x] Size manipulators 
     - [x][x] Size kidmanipulator
@@ -78,13 +78,15 @@ LUNDI:
     - [x][ ] Load points
     - [x][x] Clear 
     - [x][x] Register
-- [ ] Ajouter le none tool 
+- [x] Ajouter le none tool 
 - [ ] Réparer la sauvegarde
 - [ ] Sync plane et header 
 - [ ] Ajouter des icônes
 - [ ] Ajouter shortcut pour hide/show mesh
 - [ ] Voir le mesh dans planar view
 - [ ] Ajouter un undo
+- [ ] Connecter display mesh
+- [ ] Connecter even mode 
 
 
 ARAP
@@ -138,6 +140,7 @@ INTERFACE
 - [ ] Rendre le radius du preview plus petit
 - [ ] Remplacer le ray casting par le read du framebuffer comme dans le PlaneViewer
 - [ ] Supprimer l'ancien registration et tout ce qui s'en rapporte (undo etc) 
+- [ ] Ajouter un bouton center camera et retirer le center auto
 
 GENERAL
 - [x] Réparer le ray casting

@@ -111,6 +111,11 @@ void MainWidget::setupWidgets() {
 
     this->toolbar->addSeparator();
 
+	this->tool_none = new QAction("None");
+    this->toolbar->addAction(this->tool_none);
+    this->tool_none->setIcon(QIcon("../resources/arap.svg"));
+    this->tool_none->setIconVisibleInMenu(true);
+
 	this->tool_position = new QAction("Move");
     this->toolbar->addAction(this->tool_position);
     this->tool_position->setIcon(QIcon("../resources/arap.svg"));
@@ -205,6 +210,11 @@ void MainWidget::setupWidgets() {
             } else {
                 this->deformationWidget->hide();
             }
+	});
+	QObject::connect(this->tool_none, &QAction::triggered, [this]() {
+            this->scene->updateSceneCenter();
+            this->scene->changeCurrentTool(UITool::MeshManipulatorType::NONE);
+            this->tool_pannel->changeCurrentTool(UITool::MeshManipulatorType::NONE);
 	});
 	QObject::connect(this->tool_ARAP, &QAction::triggered, [this]() {
             this->scene->updateSceneCenter();

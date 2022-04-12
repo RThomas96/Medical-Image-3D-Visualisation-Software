@@ -1572,14 +1572,18 @@ void Scene::prepareUniformsMonoPlaneView(planes _plane, planeHeading _heading, g
     float radius = this->glMeshManipulator->planeViewRadius;
     
     std::vector<glm::vec3> manipulatorPositions;
-    this->glMeshManipulator->meshManipulator->getAllPositions(manipulatorPositions);
+    if(this->glMeshManipulator->meshManipulator) {
+        this->glMeshManipulator->meshManipulator->getAllPositions(manipulatorPositions);
+    }
 
 	glUniform1ui(getUniform("displayManipulator"), shouldDisplay);
 	glUniform1f(getUniform("sphereRadius"), radius);
 	glUniform1ui(getUniform("nbManipulator"), manipulatorPositions.size());
 
 	std::vector<UITool::State> rawState;
-    this->glMeshManipulator->meshManipulator->getManipulatorsState(rawState);
+    if(this->glMeshManipulator->meshManipulator) {
+        this->glMeshManipulator->meshManipulator->getManipulatorsState(rawState);
+    }
 
 	std::vector<glm::vec3> state;
     for(int i = 0; i < rawState.size(); ++i) {
@@ -1594,7 +1598,9 @@ void Scene::prepareUniformsMonoPlaneView(planes _plane, planeHeading _heading, g
 	this->state_idx = this->uploadTexture1D(texParamsState);
 
 	std::vector<glm::vec3> allPositions;
-	this->glMeshManipulator->meshManipulator->getAllPositions(allPositions);
+    if(this->glMeshManipulator->meshManipulator) {
+	    this->glMeshManipulator->meshManipulator->getAllPositions(allPositions);
+    }
 	texParamsPos.data   = allPositions.data();
 	texParamsPos.size.x = allPositions.size();
     glDeleteTextures(1, &this->pos_idx);
@@ -2946,7 +2952,9 @@ bool contain(const InfoToSend& value, const InfoToSend& contain) {
 void Scene::sendFirstTetmeshToGPU() {
     if(this->grids.size() > 0)
         this->sendTetmeshToGPU(0, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS));
-    this->glMeshManipulator->meshManipulator->setAllManipulatorsPosition(this->getBaseMesh(this->activeMesh)->getMeshPositions());
+    if(this->glMeshManipulator->meshManipulator) {
+        this->glMeshManipulator->meshManipulator->setAllManipulatorsPosition(this->getBaseMesh(this->activeMesh)->getMeshPositions());
+    }
 }
 
 void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend) {

@@ -304,6 +304,7 @@ private:
 	QAction* tool_open;
 	QAction* tool_save;
 
+	QAction* tool_none;
 	QAction* tool_position;
 	QAction* tool_direct;
 	QAction* tool_ARAP;
