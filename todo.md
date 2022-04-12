@@ -75,16 +75,20 @@ LUNDI:
     ARAP
     - [x][x] Mode Handle
     REGISTER
-    - [x][ ] Load points
     - [x][x] Clear 
     - [x][x] Register
 - [x] Ajouter le none tool 
-- [ ] Réparer la sauvegarde
+- [x] Réparer la sauvegarde
+- [ ] Bug sync de la cage (move point avec le manip)
+- [ ] Ajouter un bouton center camera et retirer le center auto
+- [ ] Ajouter le link to mesh for cage
+- [ ] Ajouter un undo
+- [ ] Terminer les interfaces d'ouverture
+
 - [ ] Sync plane et header 
 - [ ] Ajouter des icônes
 - [ ] Ajouter shortcut pour hide/show mesh
 - [ ] Voir le mesh dans planar view
-- [ ] Ajouter un undo
 - [ ] Connecter display mesh
 - [ ] Connecter even mode 
 
@@ -140,7 +144,6 @@ INTERFACE
 - [ ] Rendre le radius du preview plus petit
 - [ ] Remplacer le ray casting par le read du framebuffer comme dans le PlaneViewer
 - [ ] Supprimer l'ancien registration et tout ce qui s'en rapporte (undo etc) 
-- [ ] Ajouter un bouton center camera et retirer le center auto
 
 GENERAL
 - [x] Réparer le ray casting
@@ -152,6 +155,7 @@ GENERAL
 - [ ] glSubdata pour les perfs
 - [ ] Draw le wireframe avec les bary coord
 - [ ] Supprimer l'ancien registration tool et renommer le "fixed"
+- [ ] Faire une dual sauvegarde pour faire des correspondance 
 
 ---
 

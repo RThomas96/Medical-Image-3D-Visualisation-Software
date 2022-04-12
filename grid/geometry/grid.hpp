@@ -69,6 +69,8 @@ struct Grid : public TetMesh {
     TetMesh initialMesh;
     Sampler sampler;
 
+    glm::vec3 voxelSize;
+
     Grid(glm::vec3 gridSize);
     Grid(const std::string& filename, int subsample);
     Grid(const std::vector<std::string>& filename, int subsample);

@@ -364,14 +364,15 @@ void TetMesh::computeNormals() {
     }
 }
 
-glm::vec3 TetMesh::getCoordInInitial(const TetMesh& initial, glm::vec3 p) const{
+bool TetMesh::getCoordInInitial(const TetMesh& initial, const glm::vec3& p, glm::vec3& out) const{
     int tetraIdx = this->inTetraIdx(p);
     if(tetraIdx != -1) {
         glm::vec4 baryCoordInDeformed = this->getTetra(tetraIdx).computeBaryCoord(p);
         glm::vec3 coordInInitial = initial.getTetra(tetraIdx).baryToWorldCoord(baryCoordInDeformed);
-        return coordInInitial;
+        out = coordInInitial;
+        return true;
     } else {
-        return p;
+        return false;
     }
 }
 

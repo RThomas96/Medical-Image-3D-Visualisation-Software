@@ -3659,6 +3659,18 @@ int Scene::getGridIdx(const std::string& name) {
 }
 
 void Scene::init() {
+    if(brain_image_demo) {
+        //this->openGrid("brain_lightsheet_segmented", std::vector<std::string>{std::string("/data/datasets/data/Thomas/Cerveau/cerveau_c1_sub8/cerveau_c1_sub16_contrast.tiff")}, std::string("/data/datasets/data/Thomas/Cerveau/cerveau_c1_sub8/test.off"), 2, glm::vec3(5, 5, 5), glm::vec3(1., 1., 1.));
+        this->openGrid("brain_lightsheet_segmented", std::vector<std::string>{std::string("/data/datasets/data/Thomas/Cerveau/cerveau_c1_sub8/cerveau_c1_sub16_contrast.tiff")}, std::string("/data/datasets/data/Thomas/Cerveau/cerveau_c1_sub8/test.mesh"), 1, glm::vec3(1., 1., 1.), glm::vec3(1., 1., 1.));
+        this->openCage("cube_cage", "/data/datasets/data/Thomas/Cerveau/cerveau_c1_sub8/test.off", this->getBaseMesh("brain_lightsheet_segmented"), true);
+        this->getCage("cube_cage")->unbindMovementWithDeformedMesh();
+        //this->getCage("cube_cage")->scaleToBBox(this->getBaseMesh("brain_image_IRM")->bbMin, this->getBaseMesh("brain_image_IRM")->bbMax);
+        //this->getCage("cube_cage")->setOrigin(this->getBaseMesh("brain_image_IRM")->getOrigin());
+        this->getCage("cube_cage")->scale(glm::vec3(2., 2., 2.));
+        this->getCage("cube_cage")->setOrigin(this->getBaseMesh("brain_lightsheet_segmented")->getOrigin());
+        this->getCage("cube_cage")->bindMovementWithDeformedMesh();
+    }
+
     if(cage_demo) {
         this->openGridWithGridTetmesh("brain_image_IRM", std::vector<std::string>{std::string("/home/thomas/data/Data/Mesh/thigh_f_scaled.tif")}, 2, glm::vec3(5, 5, 5), glm::vec3(1., 1., 1.));
         this->openCage("cube_cage", "/home/thomas/data/Data/Mesh/cube.off", this->getBaseMesh("brain_image_IRM"), false);

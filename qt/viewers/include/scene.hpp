@@ -591,9 +591,11 @@ public:
 	Image::bbox_t sceneBB;
 	Image::bbox_t sceneDataBB;
 
+    bool brain_demo = false;
+    bool brain_image_demo = false;
+
     bool bunny_demo = false;
     bool bone_demo = false;
-    bool brain_demo = true;
     bool brain_aligned_demo = false;
     bool cage_demo = false;
 };

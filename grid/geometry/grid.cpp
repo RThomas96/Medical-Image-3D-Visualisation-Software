@@ -27,6 +27,7 @@ Grid::Grid(const std::vector<std::string>& filename, int subsample, const std::p
 }
 
 void Grid::buildTetmesh(const glm::vec3& nbCube) {
+    this->voxelSize = glm::vec3(1., 1., 1.);
     const glm::vec3 sizeCube = this->sampler.getSamplerDimension() / nbCube;
     const glm::vec3& origin = this->sampler.subregionMin;
     this->buildTetmesh(nbCube, sizeCube, origin);
@@ -35,6 +36,7 @@ void Grid::buildTetmesh(const glm::vec3& nbCube) {
 // Only this one is used
 void Grid::buildTetmesh(const glm::vec3& nbCube, const glm::vec3& sizeVoxel) {
     //const glm::vec3 sizeCube = this->sampler.getSamplerDimension() / nbCube;
+    this->voxelSize = sizeVoxel;
     const glm::vec3 sizeCube = (this->sampler.getSamplerDimension() * sizeVoxel) / nbCube;
     std::cout << "***" << std::endl;
     std::cout << "Build tetrahedral mesh grid..." << std::endl;
@@ -73,7 +75,10 @@ uint16_t Grid::getValueFromPoint(const glm::vec3& p, InterpolationMethod interpo
 }
 
 uint16_t Grid::getDeformedValueFromPoint(const TetMesh& initial, const glm::vec3& p, InterpolationMethod interpolationMethod, ResolutionMode resolutionMode) const {
-    glm::vec3 pt2 = this->getCoordInInitial(initial, p);
+    glm::vec3 pt2(0., 0., 0.);
+    bool ptIsInInitial = this->getCoordInInitial(initial, p, pt2);
+    if(!ptIsInInitial)
+        return 0.;
     if(resolutionMode == ResolutionMode::FULL_RESOLUTION)
         this->sampler.fromSamplerToImage(pt2);
     return this->getValueFromPoint(pt2, interpolationMethod, resolutionMode);
@@ -90,16 +95,11 @@ void Grid::writeDeformedGrid(ResolutionMode resolutionMode) {
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
     this->updatebbox();
-    glm::vec3 bboxMin = this->bbMin;
-    glm::vec3 bboxMax = this->bbMax;
-
-    for(int i = 0; i < 3; ++i) {
-        bboxMin[i] = std::ceil(bboxMin[i]);
-        bboxMax[i] = std::ceil(bboxMax[i]);
-    }
-
-    glm::vec3 voxelDimension = glm::vec3(1., 1., 1.);
-    glm::vec3 imageDimension = bboxMax - bboxMin; 
+    glm::vec3 voxelDimension = this->voxelSize;
+    glm::vec3 imageDimension = this->getDimensions()/this->voxelSize; 
+    imageDimension[0] = std::ceil(imageDimension[0]);
+    imageDimension[1] = std::ceil(imageDimension[1]);
+    imageDimension[2] = std::ceil(imageDimension[2]);
 
     if(resolutionMode == ResolutionMode::FULL_RESOLUTION) {
         this->sampler.fromSamplerToImage(imageDimension);
@@ -117,27 +117,30 @@ void Grid::writeDeformedGrid(ResolutionMode resolutionMode) {
 
     std::cout << "Original image dimensions: " << this->initialMesh.bbMax - this->initialMesh.bbMin << std::endl;
     std::cout << "Image dimensions: " << imageDimension << std::endl;
-    std::cout << "For " << bboxMin << " to " << bboxMax << " per " << voxelDimension << std::endl;
     TinyTIFFWriterFile * tif = TinyTIFFWriter_open("save_deformed_image.tif", 16, TinyTIFFWriter_UInt, 1, imageDimension[0], imageDimension[1], TinyTIFFWriter_Greyscale);
-    std::cout << "For " << bboxMin << " to " << bboxMax << " per " << voxelDimension << std::endl;
+    std::cout << "For " << bbMin << " to " << bbMax << " per " << voxelDimension << std::endl;
 
     std::vector<uint16_t> data;
     data.reserve(imageDimension[0] * imageDimension[1]);
-    for(float k = bboxMin[2]; k < bboxMax[2]; k+=voxelDimension[2]) {
+    glm::vec3 pt2(0., 0., 0.);
+    for(float k = bbMin[2]; k < bbMax[2]; k+=voxelDimension[2]) {
         std::cout << std::endl;
         end = std::chrono::steady_clock::now();
-        std::cout << "Loading: " << ((k-bboxMin[2])/(bboxMax[2]-bboxMin[2])) * 100. << "%" << std::endl;
-        //std::cout << "Remain: "  << (((bboxMax[2]-bboxMin[2]) - (k-bboxMin[2])) * (std::chrono::duration_cast<std::chrono::seconds> (end - begin).count() / (k-bboxMin[2])))/60. << "min" << std::endl << std::endl;
+        std::cout << "Loading: " << ((k-bbMin[2])/(bbMax[2]-bbMin[2])) * 100. << "%" << std::endl;
+        //std::cout << "Remain: "  << (((bbMax[2]-bbMin[2]) - (k-bbMin[2])) * (std::chrono::duration_cast<std::chrono::seconds> (end - begin).count() / (k-bbMin[2])))/60. << "min" << std::endl << std::endl;
         data.clear();
-        for(float j = bboxMin[1]; j < bboxMax[1]; j+=voxelDimension[1]) {
-            //std::cout << (j/bboxMax[1]) * 100. << "% " << std::flush;
-            for(float i = bboxMin[0]; i < bboxMax[0]; i+=voxelDimension[0]) {
+        for(float j = bbMin[1]; j < bbMax[1]; j+=voxelDimension[1]) {
+            //std::cout << (j/bbMax[1]) * 100. << "% " << std::flush;
+            for(float i = bbMin[0]; i < bbMax[0]; i+=voxelDimension[0]) {
                 const glm::vec3 pt(i+voxelDimension[0]/2., j+voxelDimension[1]/2., k+voxelDimension[2]/2.);
-                glm::vec3 pt2 = this->getCoordInInitial(this->initialMesh, pt);
-
-                if(resolutionMode == ResolutionMode::FULL_RESOLUTION)
-                    this->sampler.fromSamplerToImage(pt2);// Here we do a convertion because the final point is on image space 
-                data.push_back(this->getValueFromPoint(pt2, InterpolationMethod::NearestNeighbor, resolutionMode));// Here we stay at sampler resolution because bbox are aligned on the sampler
+                bool isInInitial = this->getCoordInInitial(this->initialMesh, pt, pt2);
+                if(!isInInitial) {
+                    data.push_back(0.);
+                } else {
+                    if(resolutionMode == ResolutionMode::FULL_RESOLUTION)
+                        this->sampler.fromSamplerToImage(pt2);// Here we do a convertion because the final point is on image space 
+                    data.push_back(this->getValueFromPoint(pt2, InterpolationMethod::NearestNeighbor, resolutionMode));// Here we stay at sampler resolution because bb are aligned on the sampler
+                }
             }
         }
         TinyTIFFWriter_writeImage(tif, data.data());
@@ -207,15 +210,20 @@ void Grid::toSampler(glm::vec3& p) const {
 
 glm::vec3 Grid::getVoxelSize() const {
     //return this->sampler.getSamplerDimension() / this->getResolution();
-    return this->getDimensions() / this->sampler.getSamplerDimension();
+    //return this->getDimensions() / this->sampler.getSamplerDimension();
+    //std::cout <<  this->getDimensions() / this->sampler.getSamplerDimension() << std::endl;
+    //std::cout <<  this->voxelSize << std::endl;
+    return this->voxelSize;
 }
 
 void Grid::loadMESH(std::string const &filename) {
     TetMesh::loadMESH(filename);
+    this->initialMesh.loadMESH(filename);
     this->texCoord.clear();
     for(int i = 0; i < this->vertices.size(); ++i) {
         this->texCoord.push_back(this->vertices[i]/this->sampler.getSamplerDimension());
     }    
+    this->voxelSize = this->getDimensions() / this->sampler.getSamplerDimension();
 }
 
 /**************************/
