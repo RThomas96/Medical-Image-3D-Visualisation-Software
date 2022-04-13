@@ -3458,23 +3458,46 @@ bool Scene::openCage(const std::string& name, const std::string& filename, BaseM
     return true;
 }
 
-bool Scene::openGridWithGridTetmesh(const std::string& name, const std::vector<std::string>& filenames, const int subsample, const glm::vec3& sizeTetmesh, const glm::vec3& sizeVoxel, const std::pair<glm::vec3, glm::vec3>& bbox) {
-    return this->openGrid(name, filenames, std::string(""), subsample, sizeTetmesh, sizeVoxel, bbox);
+bool Scene::openGrid(const std::string& name, const std::vector<std::string>& imgFilenames, const int subsample, const glm::vec3& sizeVoxel, const glm::vec3& nbCubeGridTransferMesh) {
+    int autofitSubsample = this->autofitSubsample(subsample, imgFilenames);
+    Grid * newGrid = new Grid(imgFilenames, autofitSubsample, sizeVoxel, nbCubeGridTransferMesh);
+    this->addGridToScene(name, newGrid);
+    return true;
 }
 
-bool Scene::openGrid(const std::string& name, const std::vector<std::string>& filenames, const std::string& tetMeshFileName, const int subsample, const glm::vec3& sizeTetmesh, const glm::vec3& sizeVoxel, const std::pair<glm::vec3, glm::vec3>& bbox) {
+bool Scene::openGrid(const std::string& name, const std::vector<std::string>& imgFilenames, const int subsample, const std::string& transferMeshFileName) {
+    int autofitSubsample = this->autofitSubsample(subsample, imgFilenames);
+    //TODO: sizeVoxel isn't take into account with loading a custom transferMesh
+    Grid * newGrid = new Grid(imgFilenames, autofitSubsample, glm::vec3(0., 0., 0.), transferMeshFileName);
+    this->addGridToScene(name, newGrid);
+    return true;
+}
 
+void Scene::addGridToScene(const std::string& name, Grid * newGrid) {
+	GridGLView::Ptr gridView = std::make_shared<GridGLView>(newGrid);
+	this->grids.push_back(gridView);
+
+    this->gridToDraw += 1;
+
+    this->addGrid();
+    this->grids_name.push_back(name);
+
+    this->updateSceneCenter();
+    std::cout << "New grid added with BBox:" << this->grids.back()->grid->bbMax << std::endl;
+
+    Q_EMIT meshAdded(name, true, false);
+}
+
+int Scene::autofitSubsample(int initialSubsample, const std::vector<std::string>& imgFilenames) {
     float percentageOfMemory = 0.7;
     int gpuMemoryInGB = 2;
     double gpuMemoryInBytes = double(gpuMemoryInGB) * double(1073741824.);
 
-    Grid * newGrid = nullptr;
-
-    int finalSubsample = subsample;
+    int finalSubsample = initialSubsample;
     bool autofitSizeRequired = false;
     bool autofitMemoryRequired = false;
 
-    TIFFReader tiffReader(filenames);
+    TIFFReader tiffReader(imgFilenames);
     glm::vec3 imgResolution = tiffReader.getImageResolution(); 
     float maxResolution = std::max(imgResolution[0], std::max(imgResolution[1], imgResolution[2]));
     if(maxResolution > this->maximumTextureSize) {
@@ -3508,42 +3531,7 @@ bool Scene::openGrid(const std::string& name, const std::vector<std::string>& fi
         std::cout << "GPU memory used by the data: [" << percentageOfMemory * 100. << "%]" << std::endl;
         std::cout << "GPU memory usage reduced to: [" << (dataMemory/double(finalSubsample))/1073741824. << "] Go" << std::endl;
     }
-
-
-    bool bboxUsed = glm::distance(bbox.first, bbox.second) > 0.00001;
-    if(bboxUsed)
-	    newGrid = new Grid(filenames, finalSubsample, bbox);
-    else
-	    newGrid = new Grid(filenames, finalSubsample);
-
-    if(tetMeshFileName.empty()) {
-        newGrid->buildTetmesh(sizeTetmesh, sizeVoxel);
-    } else {
-        newGrid->loadMESH(tetMeshFileName);
-    }
-
-	GridGLView::Ptr gridView = std::make_shared<GridGLView>(newGrid);
-	this->grids.push_back(gridView);
-
-    this->gridToDraw += 1;
-
-    this->addGrid();
-    this->grids_name.push_back(name);
-
-    this->updateSceneCenter();
-    std::cout << "New grid added with BBox:" << this->grids.back()->grid->bbMax << std::endl;
-
-    if(bunny_demo) {
-        //this->openCage("grid_cage", "/home/thomas/data/Data/Mesh/bunny_cage.off", this->grids[0]->grid);
-        this->getCage("grid_cage")->unbindMovementWithDeformedMesh();
-        this->getCage("grid_cage")->scale(glm::vec3(15., 15., 15.));
-        this->getCage("grid_cage")->scale(glm::vec3(200., 200., 200.));
-        this->getCage("grid_cage")->setOrigin(this->grids.back()->grid->getOrigin());
-        this->getCage("grid_cage")->bindMovementWithDeformedMesh();
-    }
-
-    Q_EMIT meshAdded(name, true, false);
-    return true;
+    return finalSubsample;
 }
 
 int Scene::getMeshIdx(const std::string& name) {
@@ -3659,71 +3647,8 @@ int Scene::getGridIdx(const std::string& name) {
 }
 
 void Scene::init() {
-    if(brain_image_demo) {
-        //this->openGrid("brain_lightsheet_segmented", std::vector<std::string>{std::string("/data/datasets/data/Thomas/Cerveau/cerveau_c1_sub8/cerveau_c1_sub16_contrast.tiff")}, std::string("/data/datasets/data/Thomas/Cerveau/cerveau_c1_sub8/test.off"), 2, glm::vec3(5, 5, 5), glm::vec3(1., 1., 1.));
-        this->openGrid("brain_lightsheet_segmented", std::vector<std::string>{std::string("/data/datasets/data/Thomas/Cerveau/cerveau_c1_sub8/cerveau_c1_sub16_contrast.tiff")}, std::string("/data/datasets/data/Thomas/Cerveau/cerveau_c1_sub8/test.mesh"), 1, glm::vec3(1., 1., 1.), glm::vec3(1., 1., 1.));
-        this->openCage("cube_cage", "/data/datasets/data/Thomas/Cerveau/cerveau_c1_sub8/test.off", this->getBaseMesh("brain_lightsheet_segmented"), true);
-        this->getCage("cube_cage")->unbindMovementWithDeformedMesh();
-        //this->getCage("cube_cage")->scaleToBBox(this->getBaseMesh("brain_image_IRM")->bbMin, this->getBaseMesh("brain_image_IRM")->bbMax);
-        //this->getCage("cube_cage")->setOrigin(this->getBaseMesh("brain_image_IRM")->getOrigin());
-        this->getCage("cube_cage")->scale(glm::vec3(2., 2., 2.));
-        this->getCage("cube_cage")->setOrigin(this->getBaseMesh("brain_lightsheet_segmented")->getOrigin());
-        this->getCage("cube_cage")->bindMovementWithDeformedMesh();
-    }
-
-    if(cage_demo) {
-        this->openGridWithGridTetmesh("brain_image_IRM", std::vector<std::string>{std::string("/home/thomas/data/Data/Mesh/thigh_f_scaled.tif")}, 2, glm::vec3(5, 5, 5), glm::vec3(1., 1., 1.));
-        this->openCage("cube_cage", "/home/thomas/data/Data/Mesh/cube.off", this->getBaseMesh("brain_image_IRM"), false);
-        this->getCage("cube_cage")->unbindMovementWithDeformedMesh();
-        this->getCage("cube_cage")->scaleToBBox(this->getBaseMesh("brain_image_IRM")->bbMin, this->getBaseMesh("brain_image_IRM")->bbMax);
-        this->getCage("cube_cage")->setOrigin(this->getBaseMesh("brain_image_IRM")->getOrigin());
-        this->getCage("cube_cage")->bindMovementWithDeformedMesh();
-    }
-    if(brain_demo) {
-        //this->openGridWithGridTetmesh("brain_image_IRM", std::vector<std::string>{std::string("/data/datasets/data/Thomas/Cerveau/IRM/HSA_210531_1_T2_mems_J1_TR_RAW_SOE_123400/cerveau_IRM.tif")}, 2, glm::vec3(5, 5, 5), glm::vec3(3.9*2., 3.9*2., 50.*2.));
-        this->openGridWithGridTetmesh("brain_image_IRM", std::vector<std::string>{std::string("/data/datasets/data/Thomas/Cerveau/IRM/HSA_210531_1_T2_mems_J1_TR_RAW_SOE_123400/cerveau_IRM.tif")}, 2, glm::vec3(5, 5, 5), glm::vec3(3.9, 3.9, 50.));
-        this->openMesh("brain_mesh_lightsheet", "/data/datasets/data/Thomas/Cerveau/cerveau_c1_sub8/worflow/scaleXYZ_1.off");
-        //this->openMesh("brain_mesh_lightsheet", "/data/datasets/data/Thomas/Cerveau/cerveau_c1_sub8/test.off");
-        //this->getMesh("brain_mesh_lightsheet")->scale(glm::vec3(.5, .5, .5));
-
-        //this->openMesh("brain_mesh_lightsheet", "/data/datasets/data/Thomas/Cerveau/araptool.off");
-
-        std::cout << "Max min brain IRM" << this->getBaseMesh("brain_image_IRM")->bbMax << std::endl;
-        std::cout << "Max min brain IRM" << this->getBaseMesh("brain_image_IRM")->bbMin << std::endl;
-    }
-    if(brain_aligned_demo) {
-        this->openGridWithGridTetmesh("brain_image_IRM", std::vector<std::string>{std::string("/data/datasets/data/Thomas/Cerveau/IRM/HSA_210531_1_T2_mems_J1_TR_RAW_SOE_123400/cerveau_IRM.tif")}, 2, glm::vec3(5, 5, 5), glm::vec3(3.9, 3.9, 50.));
-        //this->openCage("brain_mesh_lightsheet_deformed_cage", "/data/datasets/data/Thomas/Cerveau/final_backup.off", this->getBaseMesh("brain_image_IRM"), false);
-        this->openCage("brain_mesh_lightsheet_deformed_cage", "/data/datasets/data/Thomas/Cerveau/cerveau_c1_sub8/test.off", this->getBaseMesh("brain_image_IRM"), false);
-        this->getCage("brain_mesh_lightsheet_deformed_cage")->unbindMovementWithDeformedMesh();
-        this->getCage("brain_mesh_lightsheet_deformed_cage")->scale(glm::vec3(10., 10., 10.));
-        this->getCage("brain_mesh_lightsheet_deformed_cage")->bindMovementWithDeformedMesh();
-    }
-    if(bone_demo) {
-        this->openGridWithGridTetmesh("grid", std::vector<std::string>{std::string("/home/thomas/data/Data/Mesh/thigh_f_scaled.tif")}, 2, glm::vec3(5, 5, 5), glm::vec3(1, 1, 1));
-        //this->openMesh("bone", "/home/thomas/data/Data/Mesh/femur_m.off");
-        this->openMesh("bone", "/home/thomas/data/Data/Mesh/femur_m_aligned_2.off");
-
-        //this->getMesh("bone")->scaleToBBox(this->getBaseMesh("grid")->bbMin, this->getBaseMesh("grid")->bbMax);
-        //this->getMesh("bone")->setOrigin(this->getBaseMesh("grid")->getOrigin());
-        //this->getMesh("bone")->translate(glm::vec3(this->getBaseMesh("grid")->getDimensions()[0], 0., 0.));
-    }
-    if(bunny_demo) {
-        this->openMesh("bunny", "/home/thomas/data/Data/Mesh/bunny_lowres.off");
-        this->openCage("bunny_cage", "/home/thomas/data/Data/Mesh/bunny_cage.off", this->getMesh("bunny"), false);
-
-        glm::vec3 scale(10., 10., 10.);
-        this->getMesh("bunny")->scale(scale);
-
-        this->getCage("bunny_cage")->unbindMovementWithDeformedMesh();
-        this->getCage("bunny_cage")->scale(glm::vec3(15, 15, 15));
-        this->getCage("bunny_cage")->setOrigin(this->getMesh("bunny")->getOrigin());
-        this->getCage("bunny_cage")->bindMovementWithDeformedMesh();
-
-        //this->updateSceneBBox();
-        this->updateSceneCenter();
-
-        std::cout << "New bunny added with BBox:" << this->getMesh("bunny")->bbMax << std::endl;
+    if(atlas_visu) {
+        this->openGrid(std::string("atlas"), {std::string("/data/datasets/data/Thomas/data/atlas/atlas.tiff")}, 1, std::string("/data/datasets/data/Thomas/data/atlas/atlas-transfert.mesh"));
     }
 }
 

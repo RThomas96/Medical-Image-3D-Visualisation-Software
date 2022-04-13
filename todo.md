@@ -56,42 +56,9 @@ Résultats:
 
 ---
 
-## Semaine 28/04
+## Semaine 28/03
 
 Objectif: Rendre l'interface parfaitement stable 
-
-LUNDI:
-
-- [ ] Envoyer le mail pour réunion
-- [x] Changer la taille des manips en fonction de la taille de la scène
-- [x] Connecter hide/show side pannel tools 
-    - [x][ ] Display mesh 
-    - [x][x] Size manipulators 
-    - [x][x] Size kidmanipulator
-    - [x][x] Info: [ index, position] 
-    MOVE
-    - [x][ ] Even mode
-    DIRECT
-    ARAP
-    - [x][x] Mode Handle
-    REGISTER
-    - [x][x] Clear 
-    - [x][x] Register
-- [x] Ajouter le none tool 
-- [x] Réparer la sauvegarde
-- [ ] Bug sync de la cage (move point avec le manip)
-- [ ] Ajouter un bouton center camera et retirer le center auto
-- [ ] Ajouter le link to mesh for cage
-- [ ] Ajouter un undo
-- [ ] Terminer les interfaces d'ouverture
-
-- [ ] Sync plane et header 
-- [ ] Ajouter des icônes
-- [ ] Ajouter shortcut pour hide/show mesh
-- [ ] Voir le mesh dans planar view
-- [ ] Connecter display mesh
-- [ ] Connecter even mode 
-
 
 ARAP
 - [x] Réparer le bloquage du manipulateur
@@ -100,7 +67,6 @@ ARAP
 - [x] Clean up handles ARAP
 - [x] Réparer MAJ
 - [x] Inverse sélection 
-- [ ] Réparer sélection trigger (faire en sorte que les shorcut passe dans le viewer même sans cliquer)
 - [x] Ajouter shortcut ARAP add/remove handles
 - [x] Remove shortcut S for stereo
 - [x] Ajouter shortcut ARAP switch handles
@@ -112,7 +78,6 @@ POSITION
 - [x] Réparer even mode
 - [x] Réparer le scale du manipulateur
 - [x] Réparer bloquage aléatoire
-- [ ] Persistent position 
 
 INTERFACE
 - [x] Refaire les slots de la scene 
@@ -131,75 +96,116 @@ INTERFACE
 - [x] Changer de couleur la sélection si handles 
 - [x] Changer couleur mesh surfacique (pas vert)
 - [x] Trier les faces pour le rendu
-- [ ] Ajouter le free manipulator 
-- [ ] Couleurs du kid manipulateur 
-- [ ] Ajouter la lumière sur les manipulateurs 
-- [ ] Ajouter object pannel
-- [ ] Placer correctement le selector
 - [x] Changer curseur dans les planar viewers
 - [x] Changer le mode de déplacement des planar viewers à clique droit
 - [x] Cast un rayon dans planar viewer avec Q aussi
 - [x] Preview
-- [ ] Plusieurs radius de manipulateurs 
-- [ ] Rendre le radius du preview plus petit
-- [ ] Remplacer le ray casting par le read du framebuffer comme dans le PlaneViewer
-- [ ] Supprimer l'ancien registration et tout ce qui s'en rapporte (undo etc) 
+- [x] Changer la taille des manips en fonction de la taille de la scène
+- [x] Connecter hide/show side pannel tools 
+    - [x][ ] Display mesh 
+    - [x][x] Size manipulators 
+    - [x][x] Size kidmanipulator
+    - [x][x] Info: [ index, position] 
+    MOVE
+    - [x][ ] Even mode
+    DIRECT
+    ARAP
+    - [x][x] Mode Handle
+    REGISTER
+    - [x][x] Clear 
+    - [x][x] Register
 
 GENERAL
 - [x] Réparer le ray casting
 - [x] Ajouter le ray casting au registration
 - [x] Ajouter le pannel des plans de KidPocket
-- [ ] Sélectionner dans planar view
-- [ ] Améliorer la lumière de la grille
-- [ ] Ajouter un mode offline pour les performances (en fait pas important)
-- [ ] glSubdata pour les perfs
-- [ ] Draw le wireframe avec les bary coord
-- [ ] Supprimer l'ancien registration tool et renommer le "fixed"
-- [ ] Faire une dual sauvegarde pour faire des correspondance 
+- [x] Debugger le lock random du manipulateur
+- [x] Debugger le décalage de la grille (texCoords)
+- [x] Changer la fenêtre de choix de fichier en non native
+- [x] Debug le placement de points dans la vue 3D
+- [x] Bloquage du manipulateur 
+- [x] Taille du manipulateur 
+- [x] Affichage du manipulateur durant la sélection (il ne devrait pas)
+- [x] Améliorer l'interface d'apairage de points 
+- [x] Activer/désactiver les plans
+
+FEATURES
+- [x] Ajouter le none tool 
+- [x] Réparer la sauvegarde
+
+---
+## Semaine 12/04
+
+Objectif: Terminer le workflow complet 
+
+MAIN
+- [ ] Envoyer le mail pour réunion
+- [ ] Générer un maillage depuis l'atlas
+        - [x] Générer une cage
+        - [x] Générer un transfert mesh
+        - [x] Nettoyer le répertoire de maillage
+- [ ] Tester et finir tous les outils pour faire le recalage
+    - [ ] Faire une demo atlas
+    - [ ] Clarifier l'API open grid
+    - [ ] Refaire l'interface et mettre que des shortcuts
+- [ ] Sauvegarder le maillage tétrahédrique déformé et la cage dans un format .deform
+        - [ ] Terminer les interfaces IO
+- [ ] Ouvrir un couple maillage tétrahédrique initial et déformé dans un format .deform
+- [ ] Faire une interface pour lire une liste de point et les sortir déformés 
+
+FIX
+- [ ] Bug sync de la cage (move point avec le manip)
+- [ ] Ajouter interface display maillage tetra 
 
 ---
 
-# Tilted
-- [ ] [FEATURE][FORMAT] Prendre en compte le dx/dy/dz du TIFF et OME/TIFF
-- [x] [FEATURE] Debug le placement de points dans la vue 3D
-- [x] [INTERFACE] Bloquage du manipulateur 
-- [x] [INTERFACE] Taille du manipulateur 
-- [x] [INTERFACE] Affichage du manipulateur durant la sélection (il ne devrait pas)
-- [x] [INTERFACE] Améliorer l'interface d'apairage de points 
-- [x] [INTERFACE] Activer/désactiver les plans
+# INBOX
 
-# Un jour 
-
-- [ ] [INTERFACE] Ajouter un bouton pour choisir signed/unsigned [ici](#Lecteur-TIFF)
-- [ ] [INTERFACE] Ajouter un bouton pour choisir 8/16/32/64 bits [ici](#Lecteur-TIFF)
-- [x] [INTERFACE][SMALL] Changer la fenêtre de choix de fichier
-
-- [ ] [FEATURE][TOOL][MAJEUR] Sélectionner les manipulateurs dans les plane viewers
-- [ ] [FEATURE][TOOL][MAJEUR] Ajouter un mode offline pour les performance en cas de gros maillage tetra
-
-- [ ] [FEATURE][FORMAT] Ajustement automatique de la taille de l'image pour correspondre a la limite de VRAM [ici](#Lecteur-TIFF)
-- [ ] [FEATURE][FORMAT] Ajouter le format NIFTI
-- [ ] [FEATURE][FORMAT] Ajouter le format DIM/IMA pour les mesh tetraedrique
-
-- [ ] [RENDU] Améliorer la lumière
-- [ ] [RENDU][MAJEUR] Debugger le rendu négatif 
-- [x] [RENDU][MAJEUR] Debugger le décalage de la grille
-
+MANDATORY
+- [ ] Le scale affecte les performances
+- [ ] Ajouter un undo
+- [ ] Ajouter des icônes
+- [ ] Sync plane et header 
+- [ ] Voir le mesh dans planar view
+- [ ] Ajustement automatique de la taille de l'image pour correspondre a la limite de VRAM
+- [ ] glSubdata pour les perfs
+- [ ] Prendre en compte le dx/dy/dz du TIFF et OME/TIFF
+- [ ] Ajouter le link to mesh for cage
+- [ ] Couleurs du kid manipulateur 
+- [ ] Ajouter un bouton center camera et retirer le center auto
 - [ ] Faire l'interface de l'ouverture de grille avec tetmesh
+- [ ] Connecter even mode 
+- [ ] Connecter display mesh
+- [ ] Ajouter shortcut pour hide/show mesh
+- [ ] Debugger le rendu négatif 
+- [ ] Ajouter le format NIFTI
+- [ ] Ajouter le format DIM/IMA pour les mesh tetraedrique
 - [ ] Propager l'ouverture ".mesh" aux cages
-- [ ] Ajouter sauvegarde ".mesh" aux cages (pour appliquer une cage)
+- [ ] Ajouter sauvegarde ".mesh" aux maillages tetra
 
-- [ ] Retirer tous les signaux de manipulation de radius 
-
-# Trier
-
-- [ ] [RENDU] Le scale affecte les performances
-- [ ] [FEATURE][FORMAT] Prendre en compte le dx/dy/dz du TIFF et OME/TIFF
-- [ ] [FEATURE][FORMAT] Ajustement automatique de la taille de l'image pour correspondre a la limite de VRAM [ici](#Lecteur-TIFF)
-- [x] [INTERFACE] Debugger le lock random du manipulateur
-- [ ] [RENDU][MAJEUR] Debugger le rendu négatif 
-- [x] [RENDU][MAJEUR] Debugger le décalage de la grille
-
-# Idée
-
+OPTIONNAL
+- [ ] Rendre le radius du preview plus petit
+- [ ] Remplacer le ray casting par le read du framebuffer comme dans le PlaneViewer
+- [ ] Réparer sélection trigger (faire en sorte que les shorcut passe dans le viewer même sans cliquer)
+- [ ] Persistent position 
+- [ ] Plusieurs radius de manipulateurs 
+- [ ] Placer correctement le selector
+- [ ] Ajouter object pannel
+- [ ] Ajouter la lumière sur les manipulateurs 
+- [ ] Ajouter le free manipulator 
+- [ ] Draw le wireframe avec les bary coord
 - [ ] Interpolation pour dimensions asymetriques
+- [ ] Améliorer la lumière pour la grille
+- [ ] Ajouter un mode offline pour les performance en cas de gros maillage tetra
+- [ ] Sélectionner les manipulateurs dans les plane viewers
+- [ ] Ajouter un bouton pour choisir signed/unsigned
+- [ ] Ajouter un bouton pour choisir 8/16/32/64 bits
+- [ ] Faire une dual sauvegarde pour faire des correspondance 
+
+CODE DEBT
+- [ ] Retirer tous les signaux de manipulation de radius 
+- [ ] Supprimer l'ancien registration tool et renommer le "fixed"
+- [ ] Supprimer l'ancien registration et tout ce qui s'en rapporte (undo etc) 
+
+BUG
+- [ ] You cannot change the voxel size when you load a custom transfert mesh

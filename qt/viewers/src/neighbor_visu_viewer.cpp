@@ -279,7 +279,11 @@ void Viewer::newAPI_loadGrid(const std::string& name, const std::vector<std::str
 		return;
 	}
 	this->makeCurrent();
-	this->scene->openGrid(name, filenames, tetMeshFileName, subsample, sizeTetmesh, sizeVoxel, bbox);
+    if(tetMeshFileName.empty()) {
+	    this->scene->openGrid(name, filenames, subsample, sizeVoxel, sizeTetmesh);
+    } else {
+	    this->scene->openGrid(name, filenames, subsample, tetMeshFileName);
+    }
 	this->doneCurrent();
 }
 

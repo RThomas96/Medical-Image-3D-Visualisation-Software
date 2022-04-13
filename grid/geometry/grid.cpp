@@ -14,28 +14,16 @@ Image::ImageDataType Sampler::getInternalDataType() const {
     return this->image->getInternalDataType();
 }
 
-Grid::Grid(glm::vec3 gridSize): sampler(Sampler(gridSize)), toSamplerMatrix(glm::mat4(1.f)) {
+Grid::Grid(const std::vector<std::string>& filename, int subsample, const glm::vec3& sizeVoxel, const glm::vec3& nbCubeGridTransferMesh): sampler(Sampler(filename, subsample)), toSamplerMatrix(glm::mat4(1.f)) {
+    this->buildTetmesh(nbCubeGridTransferMesh, sizeVoxel);
 }
 
-Grid::Grid(const std::string& filename, int subsample): sampler(Sampler(std::vector<std::string>{filename}, subsample)), toSamplerMatrix(glm::mat4(1.f)) {
-}
-
-Grid::Grid(const std::vector<std::string>& filename, int subsample): sampler(Sampler(filename, subsample)), toSamplerMatrix(glm::mat4(1.f)) {
-}
-
-Grid::Grid(const std::vector<std::string>& filename, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox): sampler(Sampler(filename, subsample, bbox)), toSamplerMatrix(glm::mat4(1.f)) {
-}
-
-void Grid::buildTetmesh(const glm::vec3& nbCube) {
-    this->voxelSize = glm::vec3(1., 1., 1.);
-    const glm::vec3 sizeCube = this->sampler.getSamplerDimension() / nbCube;
-    const glm::vec3& origin = this->sampler.subregionMin;
-    this->buildTetmesh(nbCube, sizeCube, origin);
+Grid::Grid(const std::vector<std::string>& filename, int subsample, const glm::vec3& sizeVoxel, const std::string& fileNameTransferMesh): sampler(Sampler(filename, subsample)), toSamplerMatrix(glm::mat4(1.f)) {
+    this->loadMESH(fileNameTransferMesh);
 }
 
 // Only this one is used
 void Grid::buildTetmesh(const glm::vec3& nbCube, const glm::vec3& sizeVoxel) {
-    //const glm::vec3 sizeCube = this->sampler.getSamplerDimension() / nbCube;
     this->voxelSize = sizeVoxel;
     const glm::vec3 sizeCube = (this->sampler.getSamplerDimension() * sizeVoxel) / nbCube;
     std::cout << "***" << std::endl;
@@ -44,13 +32,9 @@ void Grid::buildTetmesh(const glm::vec3& nbCube, const glm::vec3& sizeVoxel) {
     std::cout << "Nb of cubes: " << nbCube << std::endl;
     std::cout << "Cube size: " << sizeCube << std::endl;
     std::cout << "***" << std::endl;
-    this->buildTetmesh(nbCube, sizeCube, glm::vec3(0., 0., 0.));
+    this->buildGrid(nbCube, sizeCube, glm::vec3(0., 0., 0.));
     // Here this initial mesh is built directly using the sampler dimension because we want it to match the sampler
     this->initialMesh.buildGrid(nbCube, this->sampler.getSamplerDimension() / nbCube, glm::vec3(0., 0., 0.));
-}
-
-void Grid::buildTetmesh(const glm::vec3& nbCube, const glm::vec3& sizeCube, const glm::vec3& origin) {
-    this->buildGrid(nbCube, sizeCube, origin);
 }
 
 uint16_t Grid::getValueFromWorldPoint(const glm::vec3& p, InterpolationMethod interpolationMethod, ResolutionMode resolutionMode) const {

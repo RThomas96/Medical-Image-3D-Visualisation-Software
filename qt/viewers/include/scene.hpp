@@ -533,8 +533,10 @@ public slots:
     bool openCage(const std::string& name, const std::string& filename, const std::string& surfaceMeshToDeformName, const bool MVC = true, const glm::vec4& color = glm::vec4(1., 0., 0., 0.3));
     bool linkCage(const std::string& cageName, BaseMesh * meshToDeform, const bool MVC);
 
-    bool openGridWithGridTetmesh(const std::string& name, const std::vector<std::string>& filenames, const int subsample, const glm::vec3& sizeTetmesh, const glm::vec3& sizeVoxel, const std::pair<glm::vec3, glm::vec3>& bbox = std::pair<glm::vec3, glm::vec3>{glm::vec3(0., 0., 0.), glm::vec3(0., 0., 0.)});
-    bool openGrid(const std::string& name, const std::vector<std::string>& filenames, const std::string& tetMeshFileName, const int subsample, const glm::vec3& sizeTetmesh, const glm::vec3& sizeVoxel, const std::pair<glm::vec3, glm::vec3>& bbox = std::pair<glm::vec3, glm::vec3>{glm::vec3(0., 0., 0.), glm::vec3(0., 0., 0.)});
+    bool openGrid(const std::string& name, const std::vector<std::string>& imgFilenames, const int subsample, const glm::vec3& sizeVoxel, const glm::vec3& nbCubeGridTransferMesh);
+    bool openGrid(const std::string& name, const std::vector<std::string>& imgFilenames, const int subsample, const std::string& transferMeshFileName);
+    void addGridToScene(const std::string& name, Grid * newGrid);
+    int autofitSubsample(int initialSubsample, const std::vector<std::string>& imgFilenames);
 
     SurfaceMesh * getMesh(const std::string& name);
     BaseMesh * getBaseMesh(const std::string& name);
@@ -591,13 +593,7 @@ public:
 	Image::bbox_t sceneBB;
 	Image::bbox_t sceneDataBB;
 
-    bool brain_demo = false;
-    bool brain_image_demo = false;
-
-    bool bunny_demo = false;
-    bool bone_demo = false;
-    bool brain_aligned_demo = false;
-    bool cage_demo = false;
+    bool atlas_visu = true;
 };
 
 /// @brief Type-safe conversion of enum values to unsigned ints.

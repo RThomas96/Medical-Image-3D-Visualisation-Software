@@ -71,14 +71,13 @@ struct Grid : public TetMesh {
 
     glm::vec3 voxelSize;
 
-    Grid(glm::vec3 gridSize);
-    Grid(const std::string& filename, int subsample);
-    Grid(const std::vector<std::string>& filename, int subsample);
-    Grid(const std::vector<std::string>& filename, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox);
+    Grid(const std::vector<std::string>& filename, int subsample, const glm::vec3& sizeVoxel, const glm::vec3& nbCubeGridTransferMesh);
+    Grid(const std::vector<std::string>& filename, int subsample, const glm::vec3& sizeVoxel, const std::string& fileNameTransferMesh);
 
-    void buildTetmesh(const glm::vec3& nbCube);
-    void buildTetmesh(const glm::vec3& nbCube, const glm::vec3& origin);
-    void buildTetmesh(const glm::vec3& nbCube, const glm::vec3& sizeCube, const glm::vec3& origin);
+    //Removed because unused but still working
+    //Grid(const std::vector<std::string>& filename, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox);
+
+    void buildTetmesh(const glm::vec3& nbCube, const glm::vec3& sizeVoxel);
 
     void loadMESH(std::string const &filename) override;
 
