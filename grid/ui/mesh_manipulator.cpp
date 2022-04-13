@@ -240,14 +240,16 @@ namespace UITool {
     }
 
     void PositionManipulator::moveManipulator(Manipulator * manipulator) {
+        std::cout << "Begin move manip" << std::endl;
         for(int i = 0; i < this->mesh->vertices.size(); ++i) {
             qglviewer::Vec deformedPoint;
             int trueIndex;
             this->kid_manip->getTransformedPoint(i, trueIndex, deformedPoint);
             this->mesh->vertices[i] = glm::vec3(deformedPoint[0], deformedPoint[1], deformedPoint[2]);
-            this->mesh->computeNormals();
-            this->mesh->updatebbox();
         }
+        this->mesh->computeNormals();
+        this->mesh->updatebbox();
+        std::cout << "End move manip" << std::endl;
         Q_EMIT needSendTetmeshToGPU();
     }
 

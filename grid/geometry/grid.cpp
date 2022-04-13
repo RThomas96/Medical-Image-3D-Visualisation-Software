@@ -207,7 +207,8 @@ void Grid::loadMESH(std::string const &filename) {
     for(int i = 0; i < this->vertices.size(); ++i) {
         this->texCoord.push_back(this->vertices[i]/this->sampler.getSamplerDimension());
     }    
-    this->voxelSize = this->getDimensions() / this->sampler.getSamplerDimension();
+    //this->voxelSize = this->getDimensions() / this->sampler.getSamplerDimension();
+    this->voxelSize = glm::vec3(1., 1., 1.); 
 }
 
 /**************************/

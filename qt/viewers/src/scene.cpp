@@ -3648,7 +3648,8 @@ int Scene::getGridIdx(const std::string& name) {
 
 void Scene::init() {
     if(atlas_visu) {
-        this->openGrid(std::string("atlas"), {std::string("/data/datasets/data/Thomas/data/atlas/atlas.tiff")}, 1, std::string("/data/datasets/data/Thomas/data/atlas/atlas-transfert.mesh"));
+        this->openGrid(std::string("grid-atlas"), {std::string("/data/datasets/data/Thomas/data/atlas/atlas.tiff")}, 1, std::string("/data/datasets/data/Thomas/data/atlas/atlas-transfert.mesh"));
+        this->openCage(std::string("cage-atlas"), std::string("/data/datasets/data/Thomas/data/atlas/atlas-cage-dilated.off"), std::string("grid-atlas"), true);
     }
 }
 

@@ -145,17 +145,23 @@ MAIN
         - [x] Générer un transfert mesh
         - [x] Nettoyer le répertoire de maillage
 - [ ] Tester et finir tous les outils pour faire le recalage
-    - [ ] Faire une demo atlas
-    - [ ] Clarifier l'API open grid
+    - [x] Faire une demo visualisation atlas
+    - [ ] Faire une demo registration atlas
+    - [x] Clarifier l'API open grid
+    - [ ] Ré-implémenter normal et bbox update pour les perfs
     - [ ] Refaire l'interface et mettre que des shortcuts
 - [ ] Sauvegarder le maillage tétrahédrique déformé et la cage dans un format .deform
         - [ ] Terminer les interfaces IO
 - [ ] Ouvrir un couple maillage tétrahédrique initial et déformé dans un format .deform
 - [ ] Faire une interface pour lire une liste de point et les sortir déformés 
+- [ ] Réparer la déformation de l'atlas avec le LRI
+    - [ ] Vérifier que c'est bien la cage et le transfert qui cassent le LRI
+    - [ ] Générer une cage et un transfert compatible avec le LRI
 
 FIX
 - [ ] Bug sync de la cage (move point avec le manip)
 - [ ] Ajouter interface display maillage tetra 
+- [x] Perfs du move manip
 
 ---
 
