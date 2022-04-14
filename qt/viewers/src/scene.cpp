@@ -148,6 +148,7 @@ Scene::Scene() :
     this->currentDeformMethod = DeformMethod::NORMAL;
     this->planeActivation = glm::vec3(1., 1., 1.);
     this->displayGrid = true;
+    this->displayMesh = true;
     this->previewCursorInPlanarView = false;
 }
 
@@ -1126,7 +1127,7 @@ void Scene::drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane) {
 
 glm::vec3 Scene::computePlanePositions() {
 	//Image::bbox_t::vec position = this->sceneBB.getMin();
-    if(this->grids.size() > 0 && this->displayGrid) {
+    if(this->grids.size() > 0) {
 	    Image::bbox_t::vec position = this->grids.back()->grid->bbMin;
 	    Image::bbox_t::vec diagonal = this->grids.back()->grid->getDimensions();
 	    //Image::bbox_t::vec position = this->sceneBB.getMin();
@@ -1993,9 +1994,11 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 //		}
 //	}
 
-    for(int i = 0; i < this->drawableMeshes.size(); ++i) {
-        this->drawableMeshes[i].first->makeVAO();
-	    this->drawableMeshes[i].first->draw(pMat, mvMat, glm::vec4{camPos, 1.f});
+    if(this->displayMesh) {
+        for(int i = 0; i < this->drawableMeshes.size(); ++i) {
+            this->drawableMeshes[i].first->makeVAO();
+            this->drawableMeshes[i].first->draw(pMat, mvMat, glm::vec4{camPos, 1.f});
+        }
     }
 
 	//this->drawBoundingBox(this->sceneBB, glm::vec4(.5, .5, .0, 1.), mvMat, pMat);
@@ -3647,9 +3650,15 @@ int Scene::getGridIdx(const std::string& name) {
 }
 
 void Scene::init() {
-    if(atlas_visu) {
+    if(demo_atlas_visu) {
         this->openGrid(std::string("grid-atlas"), {std::string("/data/datasets/data/Thomas/data/atlas/atlas.tiff")}, 1, std::string("/data/datasets/data/Thomas/data/atlas/atlas-transfert.mesh"));
-        this->openCage(std::string("cage-atlas"), std::string("/data/datasets/data/Thomas/data/atlas/atlas-cage-dilated.off"), std::string("grid-atlas"), true);
+        this->openCage(std::string("cage-atlas"), std::string("/data/datasets/data/Thomas/data/atlas/atlas-cage-hyperdilated.off"), std::string("grid-atlas"), true);
+    }
+
+    if(demo_atlas_registration) {
+        //this->openGrid(std::string("grid-mouse"), {std::string("/data/datasets/data/Thomas/data/sourisIGF/lighsheet.tiff")}, 1, std::string("/data/datasets/data/Thomas/data/sourisIGF/transfert.mesh"));
+        this->openGrid(std::string("grid-mouse"), {std::string("/data/datasets/data/Thomas/data/sourisIGF/lighsheet.tiff")}, 1, glm::vec3(1., 1., 1.), glm::vec3(5., 5., 5.));
+        this->openMesh(std::string("cage-atlas"), std::string("/data/datasets/data/Thomas/data/sourisIGF/atlas-cage-hyperdilated-rigidRegister-lightsheet.off"));
     }
 }
 
@@ -3939,3 +3948,12 @@ void Scene::previewPointInPlanarView(const glm::vec3& positionOfMouse3D) {
 void Scene::changeSelectedPoint(std::pair<int, glm::vec3> selectedPoint) {
     Q_EMIT selectedPointChanged(selectedPoint);
 }
+
+bool Scene::isRightTool(const UITool::MeshManipulatorType& typeToCheck) {
+    bool isRightType = (this->glMeshManipulator->meshManipulatorType == typeToCheck);
+    if(!isRightType)
+        std::cout << "WARNING: not the right tool" << std::endl;
+    return isRightType;
+}
+
+void Scene::moveTool_toggleEvenMode() { auto toolPtr = this->getMeshTool<UITool::PositionManipulator>(); if(toolPtr) { toolPtr->toggleEvenMode(); } };

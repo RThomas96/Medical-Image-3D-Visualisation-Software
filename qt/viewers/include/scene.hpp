@@ -453,6 +453,9 @@ public:
 	void setupGLOutput();
 	void printOpenGLMessage(const QOpenGLDebugMessage& message);
 
+    template<typename MeshToolType>
+    MeshToolType * getMeshTool() { return dynamic_cast<MeshToolType*>(this->glMeshManipulator->meshManipulator); };
+
 public:
 	SceneGL sceneGL;
 
@@ -483,9 +486,6 @@ public slots:
     void changeCurrentDeformationMethod(DeformMethod newDeformMethod);
     void changeSelectedPoint(std::pair<int, glm::vec3> selectedPoint);
 
-    // Display management
-    void slotToggleDisplayGrid() { this->displayGrid = !this->displayGrid;};
-
     // Plane management slots
 	void slotSetPlaneDisplacementX(float scalar);
 	void slotSetPlaneDisplacementY(float scalar);
@@ -500,7 +500,24 @@ public slots:
 	void slotTogglePlaneY(bool display);
 	void slotTogglePlaneZ(bool display);
 
+    // *************** //
+    // Connected to UI //
+    // *************** //
+
+    // Tool management
+    void updateTools(UITool::MeshManipulatorType tool);
+
+    // Move tool
+    void moveTool_toggleEvenMode();
+
+    // Display management
+    void slotToggleDisplayGrid() { this->displayGrid = !this->displayGrid;};
+    void toggleDisplayMesh() { this->displayMesh = !this->displayMesh;};
+
+    // ************************ //
+
     // MeshManipulator slots
+    void changeActiveMesh(const std::string& name);
 	void toggleWireframe();
     void toggleManipulatorActivation();
     bool toggleARAPManipulatorMode();
@@ -517,6 +534,8 @@ public slots:
     void assignAsHandleSliceTool();
     void removeAllHandlesSliceTool();
     void assignAllHandlesBeforePlaneSliceTool();
+
+    bool isRightTool(const UITool::MeshManipulatorType& typeToCheck);
 
     // Rendering slots
 	void setColorChannel(ColorChannel mode);
@@ -553,8 +572,6 @@ public slots:
 	glm::vec3 getSceneCenter();
     void toggleBindMeshToCageMove(const std::string& name);
     void setBindMeshToCageMove(const std::string& name, bool state);
-    void changeActiveMesh(const std::string& name);
-    void updateTools(UITool::MeshManipulatorType tool);
     std::vector<std::string> getAllNonTetrahedralMeshesName();
     std::vector<std::string> getAllBaseMeshesName();
     std::vector<std::string> getAllCagesName();
@@ -575,6 +592,7 @@ public:
     float distanceFromCamera;
 
     bool displayGrid;
+    bool displayMesh;
     bool previewCursorInPlanarView;
 
 	glm::vec3 planeDirection;// Cutting plane directions (-1 or 1 on each axis)
@@ -593,7 +611,8 @@ public:
 	Image::bbox_t sceneBB;
 	Image::bbox_t sceneDataBB;
 
-    bool atlas_visu = true;
+    bool demo_atlas_visu = false;
+    bool demo_atlas_registration = true;
 };
 
 /// @brief Type-safe conversion of enum values to unsigned ints.

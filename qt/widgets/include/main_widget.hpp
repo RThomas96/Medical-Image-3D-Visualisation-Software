@@ -17,6 +17,8 @@
 #include "./scene_control.hpp"
 #include "./user_settings_widget.hpp"
 
+#include <map>
+
 #include <QGLViewer/qglviewer.h>
 #include <QMainWindow>
 #include <QWidget>
@@ -118,6 +120,110 @@ public:
         }
         this->button[0]->setChecked(true);
     }
+};
+
+class QActionManager : QWidget {
+    Q_OBJECT
+public:
+    std::map<std::string, QAction *> actions;
+    std::map<std::string, QActionGroup *> actionGroups;
+
+    QAction * getAction(const QString& name) {
+        return actions[name.toStdString()];
+    }
+
+    void createQExclusiveActionGroup(const QString& name, const QStringList& actionNames) {
+        this->actionGroups[name.toStdString()] = new QActionGroup(this);
+        for(int i = 0; i < actionNames.size(); ++i) {
+            this->actionGroups[name.toStdString()]->addAction(actions[actionNames.at(i).toStdString()]);
+        }
+        this->actionGroups[name.toStdString()]->setExclusive(true);
+    }
+
+    QAction * createQAction(const QString& name, const QString& text, const QString& keySequence, const QString& statusTip, const QString& defaultIcon, const QString& pressedIcon, bool checkable, bool checked) {
+        QIcon icon;
+        if(!defaultIcon.isEmpty())
+            icon.addPixmap(QPixmap(QString("../resources/") + defaultIcon + QString(".svg")), QIcon::Normal, QIcon::Off);
+        if(!pressedIcon.isEmpty())
+            icon.addPixmap(QPixmap(QString("../resources/") + pressedIcon + QString(".svg")), QIcon::Normal, QIcon::On);
+    
+        QAction * action = new QAction(icon, text);
+        if(checkable)
+            action->setCheckable(true);
+        action->setStatusTip(statusTip + QString(" - ") + keySequence);
+        action->setToolTip(statusTip + QString(" - ") + keySequence);
+    
+        action->setShortcut(QKeySequence(keySequence));
+        action->setIconVisibleInMenu(true);
+
+        actions[name.toStdString()] = action;
+
+        if(checked) {
+            action->setChecked(true);
+        }
+    
+        return action;
+    }
+    
+    QAction * createQActionButton(const QString& name, const QString& text, const QString& keySequence, const QString& statusTip) {
+        return createQAction(name, text, keySequence, statusTip, QString(), QString(), false, false);
+    }
+
+    QAction * createQActionButton(const QString& name, const QString& text, const QString& keySequence, const QString& statusTip, const QString& defaultIcon) {
+        return createQAction(name, text, keySequence, statusTip, defaultIcon, QString(), false, false);
+    }
+
+    QAction * createQActionToggleButton(const QString& name, const QString& text, const QString& keySequence, const QString& statusTip, const QString& defaultIcon, const QString& pressedIcon, bool checked) {
+        return createQAction(name, text, keySequence, statusTip, defaultIcon, pressedIcon, true, checked);
+    }
+    
+    QAction * createQActionToggleButton(const QString& name, const QString& text, const QString& keySequence, const QString& statusTip, const QString& defaultIcon, const QString& pressedIcon) {
+        return createQAction(name, text, keySequence, statusTip, defaultIcon, pressedIcon, true, false);
+    }
+
+    QAction * createQActionToggledButton(const QString& name, const QString& text, const QString& keySequence, const QString& statusTip, const QString& defaultIcon, const QString& pressedIcon) {
+        return createQAction(name, text, keySequence, statusTip, defaultIcon, pressedIcon, true, true);
+    }
+    
+    QAction * createQActionToggleButton(const QString& name, const QString& text, const QString& keySequence, const QString& statusTip, const QString& defaultIcon) {
+        return createQActionToggleButton(name, text, keySequence, statusTip, defaultIcon, QString());
+    }
+    
+    QAction * createQActionToggleButton(const QString& name, const QString& text, const QString& keySequence, const QString& statusTip) {
+        return createQActionToggleButton(name, text, keySequence, statusTip, QString(), QString());
+    }
+
+    QAction * createQActionToggledButton(const QString& name, const QString& text, const QString& keySequence, const QString& statusTip, const QString& defaultIcon) {
+        return createQActionToggledButton(name, text, keySequence, statusTip, defaultIcon, QString());
+    }
+    
+    QAction * createQActionToggledButton(const QString& name, const QString& text, const QString& keySequence, const QString& statusTip) {
+        return createQActionToggledButton(name, text, keySequence, statusTip, QString(), QString());
+    }
+};
+
+class Display : public QGroupBox {
+    Q_OBJECT
+public:
+    Display(const QString &title, QActionManager& actionManager, QWidget *parent = nullptr): QGroupBox(title, parent){init();connect(actionManager);}
+
+    QVBoxLayout * mainLayout;
+    QToolBar * toolBar;
+
+public slots:
+    void init() {
+        this->mainLayout = new QVBoxLayout(this);
+
+        this->toolBar = new QToolBar(this);
+        this->toolBar->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+        this->mainLayout->addWidget(this->toolBar);
+    };
+    void connect(QActionManager& actionManager) {
+        toolBar->addAction(actionManager.getAction("ToggleDisplayMesh"));
+        toolBar->addAction(actionManager.getAction("ToggleDisplayGrid"));
+        toolBar->addAction(actionManager.getAction("ToggleDisplayPlanarViewers"));
+        toolBar->addAction(actionManager.getAction("MoveTool_toggleEvenMode"));
+    };
 };
 
 class ToolPannel : public QGroupBox {
@@ -248,6 +354,7 @@ public:
 
 protected:
 	void setupWidgets();
+    void setupActions();
 	/// @brief Allow to run code on any widget event
 	/// @details In this case, set the minimum width and height of widgets in order to
 	/// have them both square, and not too small.
@@ -255,6 +362,8 @@ protected:
 
 private:
 	Scene* scene;
+
+    QActionManager* actionManager;
 
     QFrame* viewerFrame;
     QWidget* _ViewerCapsule;
@@ -278,7 +387,8 @@ private:
 	GridLoaderWidget* loaderWidget;
 	GridDeformationWidget* deformationWidget;
 
-    CutPlaneGroupBox* cutPlane;
+    CutPlaneGroupBox* cutPlaneDisplay;
+    Display* display;
 	ControlPanel* controlPanel;
 	bool widgetSizeSet;
 
@@ -326,6 +436,12 @@ public slots:
         //if(!this->gridOrCage.back().first)
         //    this->combo_mesh_register->insertItem(this->combo_mesh_register->count(), QString(this->meshNames.back().c_str()));
     }
+
+    // *************** //
+    // Connected to UI //
+    // *************** //
+
+    void toggleDisplayPlanarViewers();
 };
 
 #endif	  // QT_INCLUDE_NEIGHBOR_VISU_MAIN_WIDGET_HPP_

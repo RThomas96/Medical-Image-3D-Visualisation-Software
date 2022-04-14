@@ -142,14 +142,18 @@ MAIN
 - [ ] Envoyer le mail pour réunion
 - [ ] Générer un maillage depuis l'atlas
         - [x] Générer une cage
+        - [x] Générer une cage hyper dilated
         - [x] Générer un transfert mesh
         - [x] Nettoyer le répertoire de maillage
 - [ ] Tester et finir tous les outils pour faire le recalage
     - [x] Faire une demo visualisation atlas
-    - [ ] Faire une demo registration atlas
+    - [x] Faire une demo registration atlas
     - [x] Clarifier l'API open grid
-    - [ ] Ré-implémenter normal et bbox update pour les perfs
+    - [x] Ajouter shortcut pour display/hide mesh
+    - [x] Créer helper pour QAction, shortcuts, toolbar et icons
+    - [x] Créer helper pour exclusive groups
     - [ ] Refaire l'interface et mettre que des shortcuts
+    - [ ] Redimensionner les icons
 - [ ] Sauvegarder le maillage tétrahédrique déformé et la cage dans un format .deform
         - [ ] Terminer les interfaces IO
 - [ ] Ouvrir un couple maillage tétrahédrique initial et déformé dans un format .deform

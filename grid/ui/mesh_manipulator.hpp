@@ -303,6 +303,7 @@ namespace UITool {
         void getManipulatorsState(std::vector<State>& states) const override;
 
     public slots:
+        void toggleEvenMode();
         void moveManipulator(Manipulator * manipulator);
         void keyPressed(QKeyEvent* e) override;
         void keyReleased(QKeyEvent* e) override;

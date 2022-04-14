@@ -253,18 +253,26 @@ namespace UITool {
         Q_EMIT needSendTetmeshToGPU();
     }
 
-    void PositionManipulator::keyPressed(QKeyEvent* e) {
-        if(e->modifiers() == Qt::ControlModifier && !e->isAutoRepeat()) {
+    void PositionManipulator::toggleEvenMode() {
+        if(this->evenMode) {
+            this->evenMode = false;
+            this->kid_manip->evenMode = false;
+        } else {
             this->evenMode = true;
-            std::cout << "Enter even mode" << std::endl;
             this->kid_manip->evenMode = true;
         }
     }
 
+    void PositionManipulator::keyPressed(QKeyEvent* e) {
+        //if(e->modifiers() == Qt::ControlModifier && !e->isAutoRepeat()) {
+        //    this->evenMode = true;
+        //    this->kid_manip->evenMode = true;
+        //}
+    }
+
     void PositionManipulator::keyReleased(QKeyEvent* e) {
-        std::cout << "Exit even mode" << std::endl;
-        this->evenMode = false;
-        this->kid_manip->evenMode = false;
+        //this->evenMode = false;
+        //this->kid_manip->evenMode = false;
     }
 
     void PositionManipulator::mousePressed(QMouseEvent* e) {}

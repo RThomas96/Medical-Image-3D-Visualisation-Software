@@ -50,6 +50,7 @@ void MainWidget::setupWidgets() {
 	this->scene	  = new Scene();
 	this->scene->addOpenGLOutput(this->glDebug);
 
+    this->setupActions();
 	this->statusBar = new QStatusBar;
 	this->showGLLog = new QPushButton("Show GL log");
 	this->statusBar->addPermanentWidget(this->showGLLog);
@@ -61,7 +62,9 @@ void MainWidget::setupWidgets() {
     this->saveMeshWidget = new SaveMeshWidget(this->scene, this);
     this->applyCageWidget = new ApplyCageWidget(this->scene, this);
 
-    this->cutPlane = new CutPlaneGroupBox("Display grid");
+    this->display = new Display("Display", *this->actionManager);
+    this->cutPlaneDisplay = new CutPlaneGroupBox("Cutting planes");
+    this->cutPlaneDisplay->setCheckable(false);
 
 	QObject::connect(this->showGLLog, &QPushButton::clicked, this->glDebug, &QWidget::show);
 
@@ -99,42 +102,13 @@ void MainWidget::setupWidgets() {
     this->toolbar->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
     //this->toolbar->addWidget(tabBar);
 
-	this->tool_open = new QAction("Open");
-    this->toolbar->addAction(this->tool_open);
-    this->tool_open->setIcon(QIcon("../resources/arap.svg"));
-    this->tool_open->setIconVisibleInMenu(true);
-
-	this->tool_save = new QAction("Save");
-    this->toolbar->addAction(this->tool_save);
-    this->tool_save->setIcon(QIcon("../resources/arap.svg"));
-    this->tool_save->setIconVisibleInMenu(true);
-
     this->toolbar->addSeparator();
 
-	this->tool_none = new QAction("None");
-    this->toolbar->addAction(this->tool_none);
-    this->tool_none->setIcon(QIcon("../resources/arap.svg"));
-    this->tool_none->setIconVisibleInMenu(true);
-
-	this->tool_position = new QAction("Move");
-    this->toolbar->addAction(this->tool_position);
-    this->tool_position->setIcon(QIcon("../resources/arap.svg"));
-    this->tool_position->setIconVisibleInMenu(true);
-
-	this->tool_direct = new QAction("Direct");
-    this->toolbar->addAction(this->tool_direct);
-    this->tool_direct->setIcon(QIcon("../resources/arap.svg"));
-    this->tool_direct->setIconVisibleInMenu(true);
-
-	this->tool_ARAP = new QAction("ARAP");
-    this->toolbar->addAction(this->tool_ARAP);
-    this->tool_ARAP->setIcon(QIcon("../resources/arap.svg"));
-    this->tool_ARAP->setIconVisibleInMenu(true);
-
-	this->tool_registration = new QAction("Register");
-    this->toolbar->addAction(this->tool_registration);
-    this->tool_registration->setIcon(QIcon("../resources/arap.svg"));
-    this->tool_registration->setIconVisibleInMenu(true);
+    this->toolbar->addAction(this->actionManager->getAction("ToggleNoneTool"));
+    this->toolbar->addAction(this->actionManager->getAction("ToggleMoveTool"));
+    this->toolbar->addAction(this->actionManager->getAction("ToggleDirectTool"));
+    this->toolbar->addAction(this->actionManager->getAction("ToggleARAPTool"));
+    this->toolbar->addAction(this->actionManager->getAction("ToggleRegisterTool"));
 
     /***/
 
@@ -211,31 +185,11 @@ void MainWidget::setupWidgets() {
                 this->deformationWidget->hide();
             }
 	});
-	QObject::connect(this->tool_none, &QAction::triggered, [this]() {
-            this->scene->updateSceneCenter();
-            this->scene->changeCurrentTool(UITool::MeshManipulatorType::NONE);
-            this->tool_pannel->changeCurrentTool(UITool::MeshManipulatorType::NONE);
-	});
-	QObject::connect(this->tool_ARAP, &QAction::triggered, [this]() {
-            this->scene->updateSceneCenter();
-            this->scene->changeCurrentTool(UITool::MeshManipulatorType::ARAP);
-            this->tool_pannel->changeCurrentTool(UITool::MeshManipulatorType::ARAP);
-	});
-	QObject::connect(this->tool_direct, &QAction::triggered, [this]() {
-            this->scene->updateSceneCenter();
-            this->scene->changeCurrentTool(UITool::MeshManipulatorType::DIRECT);
-            this->tool_pannel->changeCurrentTool(UITool::MeshManipulatorType::DIRECT);
-	});
-	QObject::connect(this->tool_position, &QAction::triggered, [this]() {
-            this->scene->updateSceneCenter();
-            this->scene->changeCurrentTool(UITool::MeshManipulatorType::POSITION);
-            this->tool_pannel->changeCurrentTool(UITool::MeshManipulatorType::POSITION);
-	});
-	QObject::connect(this->tool_registration, &QAction::triggered, [this]() {
-            this->scene->updateSceneCenter();
-            this->scene->changeCurrentTool(UITool::MeshManipulatorType::FIXED_REGISTRATION);
-            this->tool_pannel->changeCurrentTool(UITool::MeshManipulatorType::FIXED_REGISTRATION);
-	});
+	//QObject::connect(this->tool_none, &QAction::triggered, [this]() {
+    //        this->scene->updateSceneCenter();
+    //        this->scene->changeCurrentTool(UITool::MeshManipulatorType::NONE);
+    //        this->tool_pannel->changeCurrentTool(UITool::MeshManipulatorType::NONE);
+	//});
     QObject::connect(this->combo_mesh, QOverload<int>::of(&QComboBox::currentIndexChanged), [=](int index){
             this->scene->changeActiveMesh(std::string((this->combo_mesh->itemText(this->combo_mesh->currentIndex())).toStdString()));
             this->tool_pannel->changeCurrentTool(UITool::MeshManipulatorType::DIRECT);
@@ -244,19 +198,19 @@ void MainWidget::setupWidgets() {
     /***/
     // Plane control
     /***/
-    QObject::connect(this->cutPlane, &CutPlaneGroupBox::clicked, this->scene, &Scene::slotToggleDisplayGrid);
+    //QObject::connect(this->cutPlaneDisplay, &CutPlaneGroupBox::clicked, this->scene, &Scene::slotToggleDisplayGrid);
 
-    QObject::connect(this->cutPlane, &CutPlaneGroupBox::xSliderValueChanged, this->scene, &Scene::slotSetPlaneDisplacementX);
-    QObject::connect(this->cutPlane, &CutPlaneGroupBox::ySliderValueChanged, this->scene, &Scene::slotSetPlaneDisplacementY);
-    QObject::connect(this->cutPlane, &CutPlaneGroupBox::zSliderValueChanged, this->scene, &Scene::slotSetPlaneDisplacementZ);
+    QObject::connect(this->cutPlaneDisplay, &CutPlaneGroupBox::xSliderValueChanged, this->scene, &Scene::slotSetPlaneDisplacementX);
+    QObject::connect(this->cutPlaneDisplay, &CutPlaneGroupBox::ySliderValueChanged, this->scene, &Scene::slotSetPlaneDisplacementY);
+    QObject::connect(this->cutPlaneDisplay, &CutPlaneGroupBox::zSliderValueChanged, this->scene, &Scene::slotSetPlaneDisplacementZ);
 
-    QObject::connect(this->cutPlane, &CutPlaneGroupBox::clickedInvertXPushButton, this->scene, &Scene::slotTogglePlaneDirectionX);
-    QObject::connect(this->cutPlane, &CutPlaneGroupBox::clickedInvertYPushButton, this->scene, &Scene::slotTogglePlaneDirectionY);
-    QObject::connect(this->cutPlane, &CutPlaneGroupBox::clickedInvertZPushButton, this->scene, &Scene::slotTogglePlaneDirectionZ);
+    QObject::connect(this->cutPlaneDisplay, &CutPlaneGroupBox::clickedInvertXPushButton, this->scene, &Scene::slotTogglePlaneDirectionX);
+    QObject::connect(this->cutPlaneDisplay, &CutPlaneGroupBox::clickedInvertYPushButton, this->scene, &Scene::slotTogglePlaneDirectionY);
+    QObject::connect(this->cutPlaneDisplay, &CutPlaneGroupBox::clickedInvertZPushButton, this->scene, &Scene::slotTogglePlaneDirectionZ);
 
-    QObject::connect(this->cutPlane, &CutPlaneGroupBox::clickedDisplayXCut, this->scene, &Scene::slotTogglePlaneX);
-    QObject::connect(this->cutPlane, &CutPlaneGroupBox::clickedDisplayYCut, this->scene, &Scene::slotTogglePlaneY);
-    QObject::connect(this->cutPlane, &CutPlaneGroupBox::clickedDisplayZCut, this->scene, &Scene::slotTogglePlaneZ);
+    QObject::connect(this->cutPlaneDisplay, &CutPlaneGroupBox::clickedDisplayXCut, this->scene, &Scene::slotTogglePlaneX);
+    QObject::connect(this->cutPlaneDisplay, &CutPlaneGroupBox::clickedDisplayYCut, this->scene, &Scene::slotTogglePlaneY);
+    QObject::connect(this->cutPlaneDisplay, &CutPlaneGroupBox::clickedDisplayZCut, this->scene, &Scene::slotTogglePlaneZ);
 
     /***/
 
@@ -362,9 +316,11 @@ void MainWidget::setupWidgets() {
     toolPannelLayout->addWidget(this->info_pannel, Qt::AlignTop);
     toolPannelLayout->addWidget(this->tool_pannel, Qt::AlignTop);
 
-    this->cutPlane->setFixedSize(200, 200);
     sidePannelLayout->addLayout(toolPannelLayout);
-	sidePannelLayout->addWidget(this->cutPlane);
+    //this->display->setFixedHeight(25);
+	sidePannelLayout->addWidget(this->display);
+    this->cutPlaneDisplay->setFixedSize(200, 200);
+	sidePannelLayout->addWidget(this->cutPlaneDisplay);
 
     viewerLayout->addLayout(sidePannelLayout);
 	viewerLayout->addWidget(mainSplit, 4);
@@ -405,4 +361,51 @@ bool MainWidget::eventFilter(QObject* obj, QEvent* e) {
 	}
 	// Return false, to handle the rest of the event normally
 	return false;
+}
+
+void MainWidget::setupActions() {
+    this->actionManager = new QActionManager();
+
+    // Display
+    this->actionManager->createQActionToggleButton("ToggleDisplayMesh", "Mesh", "M", "Display/Show mesh", "visible", "hidden");
+    QObject::connect(this->actionManager->getAction("ToggleDisplayMesh"), &QAction::triggered, [this](){this->scene->toggleDisplayMesh();});
+
+    this->actionManager->createQActionToggleButton("ToggleDisplayGrid", "Grid", "G", "Display/Show grid", "visible", "hidden");
+    QObject::connect(this->actionManager->getAction("ToggleDisplayGrid"), &QAction::triggered, [this](){this->scene->slotToggleDisplayGrid();});
+
+    this->actionManager->createQActionToggledButton("ToggleDisplayPlanarViewers", "PView", "P", "Display/Show planar viewer", "visible", "hidden");
+    QObject::connect(this->actionManager->getAction("ToggleDisplayPlanarViewers"), &QAction::triggered, [this](){this->toggleDisplayPlanarViewers();});
+
+    // Tools
+    this->actionManager->createQActionToggleButton("ToggleNoneTool", "None", "Ctrl+N", "Deactivate all tools", "none");
+    QObject::connect(this->actionManager->getAction("ToggleNoneTool"), &QAction::triggered, [this](){this->scene->updateTools(UITool::MeshManipulatorType::NONE);});
+
+    this->actionManager->createQActionToggleButton("ToggleMoveTool", "Move", "Ctrl+M", "Activate move tool", "move");
+    QObject::connect(this->actionManager->getAction("ToggleMoveTool"), &QAction::triggered, [this](){this->scene->updateTools(UITool::MeshManipulatorType::POSITION);});
+
+    this->actionManager->createQActionToggleButton("ToggleDirectTool", "Direct", "Ctrl+D", "Activate direct tool", "direct");
+    QObject::connect(this->actionManager->getAction("ToggleDirectTool"), &QAction::triggered, [this](){this->scene->updateTools(UITool::MeshManipulatorType::DIRECT);});
+
+    this->actionManager->createQActionToggleButton("ToggleARAPTool", "ARAP", "Ctrl+A", "Activate ARAP tool", "araps");
+    QObject::connect(this->actionManager->getAction("ToggleARAPTool"), &QAction::triggered, [this](){this->scene->updateTools(UITool::MeshManipulatorType::ARAP);});
+
+    this->actionManager->createQActionToggleButton("ToggleRegisterTool", "Register", "Ctrl+R", "Activate Register tool", "register");
+    QObject::connect(this->actionManager->getAction("ToggleRegisterTool"), &QAction::triggered, [this](){this->scene->updateTools(UITool::MeshManipulatorType::FIXED_REGISTRATION);});
+    this->actionManager->createQExclusiveActionGroup("ToogleTools", {"ToggleNoneTool", "ToggleMoveTool", "ToggleDirectTool"});
+
+    // Move
+    this->actionManager->createQActionToggleButton("MoveTool_toggleEvenMode", "Even mode", "E", "Toggle the even mode to scale evenly in 3 dimensions");
+    QObject::connect(this->actionManager->getAction("MoveTool_toggleEvenMode"), &QAction::triggered, [this](){this->scene->moveTool_toggleEvenMode();});
+}
+
+void MainWidget::toggleDisplayPlanarViewers() {
+    if(this->xViewerCapsule->isHidden()) {
+        this->xViewerCapsule->show();
+        this->yViewerCapsule->show();
+        this->zViewerCapsule->show();
+    } else {
+        this->xViewerCapsule->hide();
+        this->yViewerCapsule->hide();
+        this->zViewerCapsule->hide();
+    }
 }
