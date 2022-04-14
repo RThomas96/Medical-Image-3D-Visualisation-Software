@@ -27,6 +27,7 @@
 #include <QSizePolicy>
 #include <QTabWidget>
 #include <QShortcut>
+#include <QMenuBar>
 
 class ColorBoundWidget;
 
@@ -80,13 +81,6 @@ public slots:
 
     void updatePointInfo(std::pair<int, glm::vec3> selectedPoint) {
         std::string idx = std::to_string(selectedPoint.first);
-        //std::string pt = std::string("[") + 
-        //                 std::to_string(selectedPoint.second[0]) + 
-        //                 std::string(", ") +
-        //                 std::to_string(selectedPoint.second[1]) + 
-        //                 std::string(", ") +
-        //                 std::to_string(selectedPoint.second[2]) +
-        //                 std::string("]");
         std::stringstream stream;
         stream << std::fixed << std::setprecision(2) << "[" << selectedPoint.second[0] << ", " << selectedPoint.second[1] << ", " << selectedPoint.second[2] << "]";
         std::string pt = stream.str();
@@ -126,18 +120,67 @@ class QActionManager : QWidget {
     Q_OBJECT
 public:
     std::map<std::string, QAction *> actions;
-    std::map<std::string, QActionGroup *> actionGroups;
+    std::map<std::string, QActionGroup *> actionExclusiveGroups;
+
+    std::map<std::string, QStringList> actionGroups;
 
     QAction * getAction(const QString& name) {
         return actions[name.toStdString()];
     }
 
-    void createQExclusiveActionGroup(const QString& name, const QStringList& actionNames) {
-        this->actionGroups[name.toStdString()] = new QActionGroup(this);
-        for(int i = 0; i < actionNames.size(); ++i) {
-            this->actionGroups[name.toStdString()]->addAction(actions[actionNames.at(i).toStdString()]);
+    void activateGroup(const QString& name) {
+        this->showGroup(name);
+        this->enableGroup(name);
+    }
+
+    void deactivateGroup(const QString& name) {
+        this->hideGroup(name);
+        this->disableGroup(name);
+    }
+
+    void hideGroup(const QString& name) {
+        QStringList actionsOfGroup = this->actionGroups[name.toStdString()];
+        for(int i = 0; i < actionsOfGroup.size(); ++i) {
+            this->actions[actionsOfGroup.at(i).toStdString()]->setVisible(false);
         }
-        this->actionGroups[name.toStdString()]->setExclusive(true);
+    }
+
+    void showGroup(const QString& name) {
+        QStringList actionsOfGroup = this->actionGroups[name.toStdString()];
+        for(int i = 0; i < actionsOfGroup.size(); ++i) {
+            this->actions[actionsOfGroup.at(i).toStdString()]->setVisible(true);
+        }
+    }
+
+    void disableGroup(const QString& name) {
+        QStringList actionsOfGroup = this->actionGroups[name.toStdString()];
+        for(int i = 0; i < actionsOfGroup.size(); ++i) {
+            this->actions[actionsOfGroup.at(i).toStdString()]->setEnabled(false);
+        }
+    }
+
+    void enableGroup(const QString& name) {
+        QStringList actionsOfGroup = this->actionGroups[name.toStdString()];
+        for(int i = 0; i < actionsOfGroup.size(); ++i) {
+            this->actions[actionsOfGroup.at(i).toStdString()]->setEnabled(true);
+        }
+    }
+
+    void createQActionGroup(const QString& name, const QStringList& actionNames, bool exclusive = false) {
+        this->actionGroups[name.toStdString()] = actionNames;
+    }
+
+    void createQExclusiveActionGroup(const QString& name, const QStringList& actionNames) {
+        this->actionExclusiveGroups[name.toStdString()] = new QActionGroup(this);
+        this->actionExclusiveGroups[name.toStdString()]->setExclusive(true);
+        for(int i = 0; i < actionNames.size(); ++i) {
+            if(this->actions.count(actionNames.at(i).toStdString())) {
+                this->actionExclusiveGroups[name.toStdString()]->addAction(actions[actionNames.at(i).toStdString()]);
+            } else {
+                std::cout << "ERROR: the action [" << actionNames.at(i).toStdString() << "] doesn't exist !" << std::endl;
+                throw std::runtime_error("[ERROR] wrong action name in the function createQActionGroup.");
+            }
+        }
     }
 
     QAction * createQAction(const QString& name, const QString& text, const QString& keySequence, const QString& statusTip, const QString& defaultIcon, const QString& pressedIcon, bool checkable, bool checked) {
@@ -208,21 +251,30 @@ public:
     Display(const QString &title, QActionManager& actionManager, QWidget *parent = nullptr): QGroupBox(title, parent){init();connect(actionManager);}
 
     QVBoxLayout * mainLayout;
-    QToolBar * toolBar;
+    QToolBar * toolBarRow1;
+    QToolBar * toolBarRow2;
 
 public slots:
     void init() {
         this->mainLayout = new QVBoxLayout(this);
+        //QFont font = this->font();
+        //font.setPointSize(8);
+        //this->setFont(font);
 
-        this->toolBar = new QToolBar(this);
-        this->toolBar->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
-        this->mainLayout->addWidget(this->toolBar);
+        this->toolBarRow1 = new QToolBar(this);
+        this->toolBarRow1->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+
+        this->toolBarRow2 = new QToolBar(this);
+        this->toolBarRow2->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+
+        this->mainLayout->addWidget(this->toolBarRow1);
+        this->mainLayout->addWidget(this->toolBarRow2);
     };
     void connect(QActionManager& actionManager) {
-        toolBar->addAction(actionManager.getAction("ToggleDisplayMesh"));
-        toolBar->addAction(actionManager.getAction("ToggleDisplayGrid"));
-        toolBar->addAction(actionManager.getAction("ToggleDisplayPlanarViewers"));
-        toolBar->addAction(actionManager.getAction("MoveTool_toggleEvenMode"));
+        toolBarRow1->addAction(actionManager.getAction("ToggleDisplayMesh"));
+        toolBarRow1->addAction(actionManager.getAction("ToggleDisplayGrid"));
+        toolBarRow2->addAction(actionManager.getAction("ToggleDisplayPlanarViewers"));
+        toolBarRow2->addAction(actionManager.getAction("ToggleDisplayWireframe"));
     };
 };
 
@@ -232,118 +284,40 @@ class ToolPannel : public QGroupBox {
 public:
     
     ToolPannel(QWidget *parent = nullptr):QGroupBox(parent){init();}
-    ToolPannel(const QString &title, Scene * scene, QWidget *parent = nullptr): QGroupBox(title, parent){init();connect(scene);}
+    ToolPannel(const QString &title, QActionManager& actionManager, QWidget *parent = nullptr): QGroupBox(title, parent){init();connect(actionManager);}
 
-    UITool::MeshManipulatorType currentTool;
+    QVBoxLayout * main_layout;
 
-    QVBoxLayout * tools_layout;
+    QToolBar * toolbar;
 
-    QWidget     * fixedRegistration_tools;
-    QGridLayout * fixedRegistration_layout;
-    QLabel      * fixedRegistration_mode_label;
-    QPushButton * fixedRegistration_apply;
-    QPushButton * fixedRegistration_clear;
-    QPushButton * fixedRegistration_loadPoint;
-
-    QWidget     * move_tools;
-    QGridLayout * move_layout;
-    QLabel      * move_mode_label;
-    QShortcut   * move_mode_shortcut;
-    MultipleRadioButton* move_mode;
-
-    QWidget     * arap_tools;
-    QGridLayout * arap_layout;
-    QLabel      * arap_mode_label;
-    QShortcut   * arap_mode_shortcut;
-    MultipleRadioButton* arap_mode;
+    QToolBar * move_toolbar;
+    QToolBar * arap_toolbar;
+    QToolBar * fixedRegistration_toolbar;
 
 public slots:
     void init(){
-        this->setCheckable(false);
-        this->tools_layout = new QVBoxLayout(this);
-        this->tools_layout->setAlignment(Qt::AlignTop | Qt::AlignHCenter);
+        this->main_layout = new QVBoxLayout(this);
 
-        // Fixed registration tool
-        this->fixedRegistration_tools = new QWidget(this);
-        this->fixedRegistration_layout = new QGridLayout(this->fixedRegistration_tools);
-        this->fixedRegistration_mode_label = new QLabel("Select first point");
-        this->fixedRegistration_layout->addWidget(this->fixedRegistration_mode_label);
-        this->fixedRegistration_loadPoint = new QPushButton("Load points");
-        this->fixedRegistration_layout->addWidget(this->fixedRegistration_loadPoint);
-        this->fixedRegistration_apply = new QPushButton("Register");
-        this->fixedRegistration_layout->addWidget(this->fixedRegistration_apply);
-        this->fixedRegistration_clear = new QPushButton("Clear");
-        this->fixedRegistration_layout->addWidget(this->fixedRegistration_clear);
+        this->toolbar = new QToolBar(this);
+        this->toolbar->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
 
-        this->tools_layout->addWidget(this->fixedRegistration_tools);
+        this->main_layout->addWidget(this->toolbar, Qt::AlignTop);
+        this->main_layout->addStretch();
+    };
 
-        // Move tool
-        this->move_tools = new QWidget(this);
-        this->move_layout = new QGridLayout(this->move_tools);
-        this->move_mode_label = new QLabel("Mode: ");
-        this->move_layout->addWidget(this->move_mode_label, 0, 0, Qt::AlignRight);
-        this->move_mode = new MultipleRadioButton({"Normal", "Even"}, this->move_tools);
-        this->move_layout->addLayout(this->move_mode, 0, 1, Qt::AlignHCenter);
+    void connect(QActionManager& actionManager) {
+        this->toolbar->addAction(actionManager.getAction("MoveTool_toggleEvenMode"));
+        this->toolbar->addAction(actionManager.getAction("MoveTool_toggleMoveCage"));
+        this->toolbar->addAction(actionManager.getAction("MoveTool_reset"));
 
-        this->tools_layout->addWidget(this->move_tools);
-
-        // ARAP tool
-        this->arap_tools = new QWidget(this);
-        this->arap_layout = new QGridLayout(this->arap_tools);
-        this->arap_mode_label = new QLabel("Mode: ");
-        this->arap_layout->addWidget(this->arap_mode_label, 0, 0, Qt::AlignRight);
-        this->arap_mode = new MultipleRadioButton({"Normal", "Handle"});
-        this->arap_layout->addLayout(this->arap_mode, 0, 1, Qt::AlignHCenter);
-
-        this->tools_layout->addWidget(this->arap_tools);
-    }
-
-    void hideAllLayouts() {
-        this->fixedRegistration_tools->hide();
-        this->move_tools->hide();
-        this->arap_tools->hide();
-    }
-
-    void changeCurrentTool(UITool::MeshManipulatorType newTool) {
-        this->hideAllLayouts();
-        switch(newTool) {
-            case UITool::MeshManipulatorType::POSITION:
-                this->move_tools->show();
-                break;
-            case UITool::MeshManipulatorType::DIRECT:
-                break;
-            case UITool::MeshManipulatorType::ARAP:
-                this->arap_tools->show();
-                break;
-            case UITool::MeshManipulatorType::FIXED_REGISTRATION:
-                this->fixedRegistration_tools->show();
-                break;
-        }
-    }
-
-    void connect(Scene * scene) {
-        QObject::connect(this->fixedRegistration_apply, &QPushButton::clicked, [this, scene](){scene->applyFixedRegistrationTool();});
-
-        QObject::connect(this->fixedRegistration_clear, &QPushButton::clicked, [this, scene](){scene->clearFixedRegistrationTool();});
-
-        QObject::connect(this->arap_mode->button[0], &QRadioButton::toggled, [this, scene](){scene->toggleARAPManipulatorMode();});
-        this->connectShortcut();
-    }
-
-    void connectShortcut() {
-        this->arap_mode_shortcut = new QShortcut(QKeySequence("S"), this->arap_mode->button[0]);
-        QObject::connect(arap_mode_shortcut, &QShortcut::activated, this, [this](){if(this->arap_mode->button[0]->isChecked()){this->arap_mode->button[1]->toggle();} else {this->arap_mode->button[0]->toggle();}});
-
-        this->move_mode_shortcut = new QShortcut(QKeySequence("S"), this->move_mode->button[0]);
-        //QObject::connect(move_mode_shortcut, &QShortcut::activated, this, [this](){this->move_mode->button[1]->toggle();});
-        //QObject::connect(move_mode_shortcut, &QShortcut::released, this, [this](){this->move_mode->button[0]->toggle();});
-
-    }
-
-signals:
-
+        this->toolbar->addAction(actionManager.getAction("ARAPTool_moveMode"));
+        this->toolbar->addAction(actionManager.getAction("ARAPTool_handleMode"));
+        this->toolbar->addAction(actionManager.getAction("ARAPTool_toggleEvenMode"));
+        
+        this->toolbar->addAction(actionManager.getAction("FixedTool_apply"));
+        this->toolbar->addAction(actionManager.getAction("FixedTool_clear"));
+    };
 };
-
 
 class MainWidget : public QMainWindow {
 	Q_OBJECT
@@ -442,6 +416,25 @@ public slots:
     // *************** //
 
     void toggleDisplayPlanarViewers();
+
+    void changeCurrentTool(UITool::MeshManipulatorType newTool) {
+        this->actionManager->deactivateGroup("MoveTool");
+        this->actionManager->deactivateGroup("ARAPTool");
+        this->actionManager->deactivateGroup("FixedTool");
+        switch(newTool) {
+            case UITool::MeshManipulatorType::POSITION:
+                this->actionManager->activateGroup("MoveTool");
+                break;
+            case UITool::MeshManipulatorType::DIRECT:
+                break;
+            case UITool::MeshManipulatorType::ARAP:
+                this->actionManager->activateGroup("ARAPTool");
+                break;
+            case UITool::MeshManipulatorType::FIXED_REGISTRATION:
+                this->actionManager->activateGroup("FixedTool");
+                break;
+        }
+    }
 };
 
 #endif	  // QT_INCLUDE_NEIGHBOR_VISU_MAIN_WIDGET_HPP_

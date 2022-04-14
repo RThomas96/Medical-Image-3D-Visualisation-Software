@@ -437,6 +437,7 @@ namespace UITool {
         }
         void initializeSelection();
         void setLockAllManipulators(bool lock);
+        void toggleEvenMode();
 
     signals:
         void needRedraw() override;

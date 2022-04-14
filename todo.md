@@ -152,8 +152,10 @@ MAIN
     - [x] Ajouter shortcut pour display/hide mesh
     - [x] Créer helper pour QAction, shortcuts, toolbar et icons
     - [x] Créer helper pour exclusive groups
-    - [ ] Refaire l'interface et mettre que des shortcuts
+    - [x] Refaire l'interface et mettre que des shortcuts
+    - [ ] Refaire le layout avec des windows manipulables 
     - [ ] Redimensionner les icons
+    - [ ] Ajouter un undo
 - [ ] Sauvegarder le maillage tétrahédrique déformé et la cage dans un format .deform
         - [ ] Terminer les interfaces IO
 - [ ] Ouvrir un couple maillage tétrahédrique initial et déformé dans un format .deform
@@ -174,19 +176,19 @@ FIX
 MANDATORY
 - [ ] Le scale affecte les performances
 - [ ] Ajouter un undo
-- [ ] Ajouter des icônes
+- [x] Ajouter des icônes
 - [ ] Sync plane et header 
 - [ ] Voir le mesh dans planar view
 - [ ] Ajustement automatique de la taille de l'image pour correspondre a la limite de VRAM
 - [ ] glSubdata pour les perfs
 - [ ] Prendre en compte le dx/dy/dz du TIFF et OME/TIFF
-- [ ] Ajouter le link to mesh for cage
+- [x] Ajouter le link to mesh for cage
 - [ ] Couleurs du kid manipulateur 
 - [ ] Ajouter un bouton center camera et retirer le center auto
 - [ ] Faire l'interface de l'ouverture de grille avec tetmesh
-- [ ] Connecter even mode 
-- [ ] Connecter display mesh
-- [ ] Ajouter shortcut pour hide/show mesh
+- [x] Connecter even mode 
+- [x] Connecter display mesh
+- [x] Ajouter shortcut pour hide/show mesh
 - [ ] Debugger le rendu négatif 
 - [ ] Ajouter le format NIFTI
 - [ ] Ajouter le format DIM/IMA pour les mesh tetraedrique

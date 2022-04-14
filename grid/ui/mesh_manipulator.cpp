@@ -666,6 +666,16 @@ namespace UITool {
         return mean/float(this->selectedManipulatorsIdx.size());
     }
 
+    void ARAPManipulator::toggleEvenMode() {
+        if(this->kid_manip) {
+            if(this->kid_manip->evenMode) {
+                this->kid_manip->evenMode = false;
+            } else {
+                this->kid_manip->evenMode = true;
+            }
+        }
+    }
+
     void ARAPManipulator::initializeSelection() {
         std::cout << "Initialize the selection" << std::endl;
         if(this->kid_manip->isEnable) {

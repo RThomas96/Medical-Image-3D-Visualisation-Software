@@ -192,7 +192,6 @@ void MainWidget::setupWidgets() {
 	//});
     QObject::connect(this->combo_mesh, QOverload<int>::of(&QComboBox::currentIndexChanged), [=](int index){
             this->scene->changeActiveMesh(std::string((this->combo_mesh->itemText(this->combo_mesh->currentIndex())).toStdString()));
-            this->tool_pannel->changeCurrentTool(UITool::MeshManipulatorType::DIRECT);
     });
 
     /***/
@@ -223,7 +222,7 @@ void MainWidget::setupWidgets() {
 	this->scene->setControlPanel(this->controlPanel);
 
     this->info_pannel = new InfoPannel("Infos", this->scene);
-    this->tool_pannel = new ToolPannel("Tool pannel", this->scene);
+    this->tool_pannel = new ToolPannel("Tool", *this->actionManager);
 
 	this->viewer->addStatusBar(this->statusBar);
 	this->viewer_planeX->addParentStatusBar(this->statusBar);
@@ -311,15 +310,13 @@ void MainWidget::setupWidgets() {
     sidePannelLayout->setAlignment(Qt::AlignBottom);
 	QVBoxLayout* toolPannelLayout = new QVBoxLayout();
     toolPannelLayout->setAlignment(Qt::AlignTop);
-    this->info_pannel->setFixedSize(200, 85);
-    this->tool_pannel->setFixedWidth(200);
+    this->info_pannel->setFixedHeight(85);
     toolPannelLayout->addWidget(this->info_pannel, Qt::AlignTop);
     toolPannelLayout->addWidget(this->tool_pannel, Qt::AlignTop);
 
     sidePannelLayout->addLayout(toolPannelLayout);
-    //this->display->setFixedHeight(25);
 	sidePannelLayout->addWidget(this->display);
-    this->cutPlaneDisplay->setFixedSize(200, 200);
+    this->cutPlaneDisplay->setFixedHeight(150);
 	sidePannelLayout->addWidget(this->cutPlaneDisplay);
 
     viewerLayout->addLayout(sidePannelLayout);
@@ -376,26 +373,69 @@ void MainWidget::setupActions() {
     this->actionManager->createQActionToggledButton("ToggleDisplayPlanarViewers", "PView", "P", "Display/Show planar viewer", "visible", "hidden");
     QObject::connect(this->actionManager->getAction("ToggleDisplayPlanarViewers"), &QAction::triggered, [this](){this->toggleDisplayPlanarViewers();});
 
+    this->actionManager->createQActionToggledButton("ToggleDisplayWireframe", "TetM", "W", "Display/Show the tethraedral mesh wireframe", "visible", "hidden");
+    QObject::connect(this->actionManager->getAction("ToggleDisplayWireframe"), &QAction::triggered, [this](){this->scene->toggleWireframe();});
+
     // Tools
     this->actionManager->createQActionToggleButton("ToggleNoneTool", "None", "Ctrl+N", "Deactivate all tools", "none");
     QObject::connect(this->actionManager->getAction("ToggleNoneTool"), &QAction::triggered, [this](){this->scene->updateTools(UITool::MeshManipulatorType::NONE);});
+    QObject::connect(this->actionManager->getAction("ToggleNoneTool"), &QAction::triggered, [this](){this->changeCurrentTool(UITool::MeshManipulatorType::NONE);});
 
     this->actionManager->createQActionToggleButton("ToggleMoveTool", "Move", "Ctrl+M", "Activate move tool", "move");
     QObject::connect(this->actionManager->getAction("ToggleMoveTool"), &QAction::triggered, [this](){this->scene->updateTools(UITool::MeshManipulatorType::POSITION);});
+    QObject::connect(this->actionManager->getAction("ToggleMoveTool"), &QAction::triggered, [this](){this->changeCurrentTool(UITool::MeshManipulatorType::POSITION);});
 
     this->actionManager->createQActionToggleButton("ToggleDirectTool", "Direct", "Ctrl+D", "Activate direct tool", "direct");
     QObject::connect(this->actionManager->getAction("ToggleDirectTool"), &QAction::triggered, [this](){this->scene->updateTools(UITool::MeshManipulatorType::DIRECT);});
+    QObject::connect(this->actionManager->getAction("ToggleDirectTool"), &QAction::triggered, [this](){this->changeCurrentTool(UITool::MeshManipulatorType::DIRECT);});
 
     this->actionManager->createQActionToggleButton("ToggleARAPTool", "ARAP", "Ctrl+A", "Activate ARAP tool", "araps");
     QObject::connect(this->actionManager->getAction("ToggleARAPTool"), &QAction::triggered, [this](){this->scene->updateTools(UITool::MeshManipulatorType::ARAP);});
+    QObject::connect(this->actionManager->getAction("ToggleARAPTool"), &QAction::triggered, [this](){this->changeCurrentTool(UITool::MeshManipulatorType::ARAP);});
 
     this->actionManager->createQActionToggleButton("ToggleRegisterTool", "Register", "Ctrl+R", "Activate Register tool", "register");
     QObject::connect(this->actionManager->getAction("ToggleRegisterTool"), &QAction::triggered, [this](){this->scene->updateTools(UITool::MeshManipulatorType::FIXED_REGISTRATION);});
-    this->actionManager->createQExclusiveActionGroup("ToogleTools", {"ToggleNoneTool", "ToggleMoveTool", "ToggleDirectTool"});
+    QObject::connect(this->actionManager->getAction("ToggleRegisterTool"), &QAction::triggered, [this](){this->changeCurrentTool(UITool::MeshManipulatorType::FIXED_REGISTRATION);});
+
+    this->actionManager->createQExclusiveActionGroup("ToogleTools", {"ToggleNoneTool", "ToggleMoveTool", "ToggleDirectTool", "ToggleARAPTool", "ToggleRegisterTool"});
 
     // Move
-    this->actionManager->createQActionToggleButton("MoveTool_toggleEvenMode", "Even mode", "E", "Toggle the even mode to scale evenly in 3 dimensions");
+    this->actionManager->createQActionToggleButton("MoveTool_toggleEvenMode", "Even", "E", "Toggle the even mode to scale evenly in 3 dimensions", "even");
     QObject::connect(this->actionManager->getAction("MoveTool_toggleEvenMode"), &QAction::triggered, [this](){this->scene->moveTool_toggleEvenMode();});
+
+    this->actionManager->createQActionToggledButton("MoveTool_toggleMoveCage", "Link", "", "If this mode is active, and the manipulated mesh is a cage, the cage and the associated grid movements are linked", "link");
+    QObject::connect(this->actionManager->getAction("MoveTool_toggleMoveCage"), &QAction::triggered, [this](){this->scene->moveTool_toggleEvenMode();});
+
+    this->actionManager->createQActionButton("MoveTool_reset", "Reset", "R", "Reset the manipulator size", "reset");
+    QObject::connect(this->actionManager->getAction("MoveTool_reset"), &QAction::triggered, [this](){this->scene->changeActiveMesh(std::string((this->combo_mesh->itemText(this->combo_mesh->currentIndex())).toStdString()));});
+
+    this->actionManager->createQActionGroup("MoveTool", {"MoveTool_toggleEvenMode", "MoveTool_toggleMoveCage", "MoveTool_reset"});
+            
+    // ARAP
+    this->actionManager->createQActionToggledButton("ARAPTool_moveMode", "Move", "O", "Toggle move mode of ARAP tool, you can now move points with the selection", "move");
+    QObject::connect(this->actionManager->getAction("ARAPTool_moveMode"), &QAction::triggered, [this](){this->scene->toggleARAPManipulatorMode();});
+
+    this->actionManager->createQActionToggleButton("ARAPTool_handleMode", "Handle", "H", "Toggle handle mode of ARAP tool, you can now set points as fixed", "handle");
+    QObject::connect(this->actionManager->getAction("ARAPTool_handleMode"), &QAction::triggered, [this](){this->scene->toggleARAPManipulatorMode();});
+
+    this->actionManager->createQActionToggleButton("ARAPTool_toggleEvenMode", "Even", "E", "Toggle the even mode to scale evenly in 3 dimensions", "even");
+    QObject::connect(this->actionManager->getAction("ARAPTool_toggleEvenMode"), &QAction::triggered, [this](){this->scene->ARAPTool_toggleEvenMode();});
+
+    this->actionManager->createQExclusiveActionGroup("ARAPTool_toggleMode", {"ARAPTool_moveMode", "ARAPTool_handleMode"});
+
+    this->actionManager->createQActionGroup("ARAPTool", {"ARAPTool_moveMode", "ARAPTool_handleMode", "ARAPTool_toggleEvenMode"});
+
+    // Registration
+    this->actionManager->createQActionButton("FixedTool_apply", "Register", "A", "Apply the registration", "register");
+    QObject::connect(this->actionManager->getAction("FixedTool_apply"), &QAction::triggered, [this](){this->scene->applyFixedRegistrationTool();});
+
+    this->actionManager->createQActionButton("FixedTool_clear", "Clear", "C", "Clear the associated points in the registration tool", "clear");
+    QObject::connect(this->actionManager->getAction("FixedTool_clear"), &QAction::triggered, [this](){this->scene->clearFixedRegistrationTool();});
+
+    this->actionManager->createQActionGroup("FixedTool", {"FixedTool_apply", "FixedTool_clear"});
+
+    // Group filters
+    // Show/hide group of actions
 }
 
 void MainWidget::toggleDisplayPlanarViewers() {

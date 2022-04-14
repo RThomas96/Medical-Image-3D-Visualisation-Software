@@ -3957,3 +3957,5 @@ bool Scene::isRightTool(const UITool::MeshManipulatorType& typeToCheck) {
 }
 
 void Scene::moveTool_toggleEvenMode() { auto toolPtr = this->getMeshTool<UITool::PositionManipulator>(); if(toolPtr) { toolPtr->toggleEvenMode(); } };
+
+void Scene::ARAPTool_toggleEvenMode() { auto toolPtr = this->getMeshTool<UITool::ARAPManipulator>(); if(toolPtr) { toolPtr->toggleEvenMode(); } };

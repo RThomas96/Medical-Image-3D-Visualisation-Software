@@ -509,23 +509,31 @@ public slots:
 
     // Move tool
     void moveTool_toggleEvenMode();
+    void toggleBindMeshToCageMove(const std::string& name);
+
+    // ARAP
+    bool toggleARAPManipulatorMode();
+    void ARAPTool_toggleEvenMode();
+
+    // FixedRegistration
+    void applyFixedRegistrationTool();
+    void clearFixedRegistrationTool();
 
     // Display management
     void slotToggleDisplayGrid() { this->displayGrid = !this->displayGrid;};
     void toggleDisplayMesh() { this->displayMesh = !this->displayMesh;};
+	void toggleWireframe();
 
     // ************************ //
 
     // MeshManipulator slots
     void changeActiveMesh(const std::string& name);
-	void toggleWireframe();
     void toggleManipulatorActivation();
-    bool toggleARAPManipulatorMode();
+
+    // Not used for now
     void switchToSelectionModeRegistrationTool();
     void validateRegistrationTool();
     void applyRegistrationTool();
-    void applyFixedRegistrationTool();
-    void clearFixedRegistrationTool();
     void undoRegistrationTool();
     void clearRegistrationTool();
     void assignMeshToRegisterRegistrationTool(const std::string& name);
@@ -534,6 +542,9 @@ public slots:
     void assignAsHandleSliceTool();
     void removeAllHandlesSliceTool();
     void assignAllHandlesBeforePlaneSliceTool();
+
+    void setBindMeshToCageMove(const std::string& name, bool state);
+
 
     bool isRightTool(const UITool::MeshManipulatorType& typeToCheck);
 
@@ -570,8 +581,6 @@ public slots:
     void updateSceneCenter();
     void updateSceneRadius();
 	glm::vec3 getSceneCenter();
-    void toggleBindMeshToCageMove(const std::string& name);
-    void setBindMeshToCageMove(const std::string& name, bool state);
     std::vector<std::string> getAllNonTetrahedralMeshesName();
     std::vector<std::string> getAllBaseMeshesName();
     std::vector<std::string> getAllCagesName();
