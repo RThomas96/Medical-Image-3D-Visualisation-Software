@@ -58,7 +58,7 @@ public slots:
 
         this->info_id_data = new QLabel("-");
         this->info_position_data = new QLabel("[]");
-        this->info_position_data->setStyleSheet("font: 9pt;");
+        //this->info_position_data->setStyleSheet("font: 9pt;");
 
         this->id_layout = new QHBoxLayout();
         this->id_layout->addWidget(this->info_id);
@@ -82,7 +82,7 @@ public slots:
     void updatePointInfo(std::pair<int, glm::vec3> selectedPoint) {
         std::string idx = std::to_string(selectedPoint.first);
         std::stringstream stream;
-        stream << std::fixed << std::setprecision(2) << "[" << selectedPoint.second[0] << ", " << selectedPoint.second[1] << ", " << selectedPoint.second[2] << "]";
+        stream << std::fixed << std::setprecision(3) << "[" << selectedPoint.second[0] << ", " << selectedPoint.second[1] << ", " << selectedPoint.second[2] << "]";
         std::string pt = stream.str();
 
         if(selectedPoint.first >= 0) {
@@ -92,27 +92,6 @@ public slots:
             this->info_id_data->setText(QString("-"));
             this->info_position_data->setText(QString("[]"));
         }
-    }
-};
-
-class MultipleRadioButton : public QGridLayout {
-    Q_OBJECT
-public:
-    MultipleRadioButton(const std::vector<QString> title, QWidget *parent = nullptr): QGridLayout(parent){init(title);}
-
-    std::vector<QLabel*> label;
-    std::vector<QRadioButton*> button;
-
-    void init(const std::vector<QString> title) {
-        this->label.reserve(title.size());
-        this->button.reserve(title.size());
-        for(int i = 0; i < title.size(); ++i) {
-            this->label.push_back(new QLabel(title[i]));
-            this->button.push_back(new QRadioButton());
-            this->addWidget(this->label.back(), i, 0, Qt::AlignRight);
-            this->addWidget(this->button.back(), i, 1, Qt::AlignHCenter);
-        }
-        this->button[0]->setChecked(true);
     }
 };
 
@@ -245,10 +224,10 @@ public:
     }
 };
 
-class Display : public QGroupBox {
+class DisplayPannel : public QGroupBox {
     Q_OBJECT
 public:
-    Display(const QString &title, QActionManager& actionManager, QWidget *parent = nullptr): QGroupBox(title, parent){init();connect(actionManager);}
+    DisplayPannel(const QString &title, QActionManager& actionManager, QWidget *parent = nullptr): QGroupBox(title, parent){init();connect(actionManager);}
 
     QVBoxLayout * mainLayout;
     QToolBar * toolBarRow1;
@@ -257,6 +236,7 @@ public:
 public slots:
     void init() {
         this->mainLayout = new QVBoxLayout(this);
+        this->mainLayout->setAlignment(Qt::AlignHCenter);
         //QFont font = this->font();
         //font.setPointSize(8);
         //this->setFont(font);
@@ -264,17 +244,17 @@ public slots:
         this->toolBarRow1 = new QToolBar(this);
         this->toolBarRow1->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
 
-        this->toolBarRow2 = new QToolBar(this);
-        this->toolBarRow2->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+        this->toolBarRow1 = new QToolBar(this);
+        this->toolBarRow1->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
 
         this->mainLayout->addWidget(this->toolBarRow1);
-        this->mainLayout->addWidget(this->toolBarRow2);
+        //this->mainLayout->addWidget(this->toolBarRow2);
     };
     void connect(QActionManager& actionManager) {
         toolBarRow1->addAction(actionManager.getAction("ToggleDisplayMesh"));
         toolBarRow1->addAction(actionManager.getAction("ToggleDisplayGrid"));
-        toolBarRow2->addAction(actionManager.getAction("ToggleDisplayPlanarViewers"));
-        toolBarRow2->addAction(actionManager.getAction("ToggleDisplayWireframe"));
+        toolBarRow1->addAction(actionManager.getAction("ToggleDisplayPlanarViewers"));
+        toolBarRow1->addAction(actionManager.getAction("ToggleDisplayWireframe"));
     };
 };
 
@@ -297,15 +277,18 @@ public:
 public slots:
     void init(){
         this->main_layout = new QVBoxLayout(this);
+        //this->main_layout->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
 
         this->toolbar = new QToolBar(this);
         this->toolbar->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
 
-        this->main_layout->addWidget(this->toolbar, Qt::AlignTop);
+        this->main_layout->addWidget(this->toolbar);
+        this->main_layout->setAlignment(Qt::AlignHCenter);
         this->main_layout->addStretch();
     };
 
     void connect(QActionManager& actionManager) {
+        // Spacer
         this->toolbar->addAction(actionManager.getAction("MoveTool_toggleEvenMode"));
         this->toolbar->addAction(actionManager.getAction("MoveTool_toggleMoveCage"));
         this->toolbar->addAction(actionManager.getAction("MoveTool_reset"));
@@ -361,8 +344,6 @@ private:
 	GridLoaderWidget* loaderWidget;
 	GridDeformationWidget* deformationWidget;
 
-    CutPlaneGroupBox* cutPlaneDisplay;
-    Display* display;
 	ControlPanel* controlPanel;
 	bool widgetSizeSet;
 
@@ -382,6 +363,8 @@ private:
 
     QComboBox* combo_mesh;
 
+    CutPlaneGroupBox* cutPlane_pannel;
+    DisplayPannel* display_pannel;
     InfoPannel* info_pannel;
     ToolPannel* tool_pannel;
 

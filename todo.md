@@ -139,8 +139,8 @@ FEATURES
 Objectif: Terminer le workflow complet 
 
 MAIN
-- [ ] Envoyer le mail pour réunion
-- [ ] Générer un maillage depuis l'atlas
+- [x] Envoyer le mail pour réunion
+- [x] Générer un maillage depuis l'atlas
         - [x] Générer une cage
         - [x] Générer une cage hyper dilated
         - [x] Générer un transfert mesh
@@ -154,6 +154,7 @@ MAIN
     - [x] Créer helper pour exclusive groups
     - [x] Refaire l'interface et mettre que des shortcuts
     - [ ] Refaire le layout avec des windows manipulables 
+    - [ ] Revoir l'initialisation
     - [ ] Redimensionner les icons
     - [ ] Ajouter un undo
 - [ ] Sauvegarder le maillage tétrahédrique déformé et la cage dans un format .deform
