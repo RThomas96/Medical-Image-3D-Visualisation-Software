@@ -3605,6 +3605,10 @@ void Scene::updateSceneCenter() {
     Q_EMIT sceneCenterChanged(this->getSceneCenter());
 }
 
+void Scene::toggleBindMeshToCageMove() {
+    this->toggleBindMeshToCageMove(this->activeMesh);
+}
+
 void Scene::toggleBindMeshToCageMove(const std::string& name) {
     Cage * cage = this->getCage(name);
     if(cage) {
@@ -3650,15 +3654,17 @@ int Scene::getGridIdx(const std::string& name) {
 }
 
 void Scene::init() {
-    if(demo_atlas_visu) {
+    if(this->demos.demo_atlas_visu) {
         this->openGrid(std::string("grid-atlas"), {std::string("/data/datasets/data/Thomas/data/atlas/atlas.tiff")}, 1, std::string("/data/datasets/data/Thomas/data/atlas/atlas-transfert.mesh"));
         this->openCage(std::string("cage-atlas"), std::string("/data/datasets/data/Thomas/data/atlas/atlas-cage-hyperdilated.off"), std::string("grid-atlas"), true);
+        this->getCage(std::string("cage-atlas"))->unbindMovementWithDeformedMesh();
+        this->getCage(std::string("cage-atlas"))->setOrigin(this->getBaseMesh("grid-atlas")->getOrigin());
+        this->getCage(std::string("cage-atlas"))->bindMovementWithDeformedMesh();
     }
 
-    if(demo_atlas_registration) {
-        //this->openGrid(std::string("grid-mouse"), {std::string("/data/datasets/data/Thomas/data/sourisIGF/lighsheet.tiff")}, 1, std::string("/data/datasets/data/Thomas/data/sourisIGF/transfert.mesh"));
-        this->openGrid(std::string("grid-mouse"), {std::string("/data/datasets/data/Thomas/data/sourisIGF/lighsheet.tiff")}, 1, glm::vec3(1., 1., 1.), glm::vec3(5., 5., 5.));
+    if(this->demos.demo_atlas_registration) {
         this->openMesh(std::string("cage-atlas"), std::string("/data/datasets/data/Thomas/data/sourisIGF/atlas-cage-hyperdilated-rigidRegister-lightsheet.off"));
+        this->openGrid(std::string("grid-mouse"), {std::string("/data/datasets/data/Thomas/data/sourisIGF/lighsheet.tiff")}, 1, glm::vec3(1., 1., 1.), glm::vec3(5., 5., 5.));
     }
 }
 

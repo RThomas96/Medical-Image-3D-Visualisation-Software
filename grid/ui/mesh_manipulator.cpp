@@ -2,7 +2,7 @@
 #include "manipulator.hpp"
 #include "../deformation/mesh_deformer.hpp"
 #include "../deformation/cage_surface_mesh.hpp"
-
+#include <fstream>
 
 namespace UITool {
     
@@ -1190,7 +1190,21 @@ FixedRegistrationManipulator::FixedRegistrationManipulator(BaseMesh * mesh, Grid
     this->manipulators.reserve(positions.size());
     this->toolState = FixedRegistrationManipulatorState::NONE;
     this->selectedIndex = -1;
-    this->fixed = std::vector<int>{206, 36, 17, 97, 39, 68, 106, 58, 74};
+    //this->fixed = std::vector<int>{206, 36, 17, 97, 39, 68, 106, 58, 74};
+    this->fixed = std::vector<int>();
+    std::ifstream ptsFile ("RegistrationPoints.txt");
+    if (ptsFile.is_open()) {
+        std::string line;
+        while(std::getline(ptsFile, line)) {
+            int value = std::atoi(line.c_str());
+            if(value != 0) {
+                this->fixed.push_back(value);
+            }
+        }
+        ptsFile.close();
+    } else {
+        this->fixed = std::vector<int>{291, 416, 332, 206, 45, 46, 133, 700, 53};
+    }
     this->nbNotAssociatedPoints = fixed.size();
     for (int i = 0; i < fixed.size(); ++i) {
         this->manipulators.push_back(Manipulator(positions[fixed[i]]));

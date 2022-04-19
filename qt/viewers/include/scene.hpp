@@ -156,6 +156,13 @@ private:
 /**********************************************************************/
 /**********************************************************************/
 
+struct Demos {
+    bool isDemo = true;
+
+    bool demo_atlas_visu = false;
+    bool demo_atlas_registration = true;
+};
+
 /// @ingroup graphpipe
 /// @brief The Scene class is the gateway to the OpenGL functions attached to the GL context of the program.
 /// @note As you might see, this kind of turned into a god-object. Although dismantling it is not that hard !
@@ -509,6 +516,7 @@ public slots:
 
     // Move tool
     void moveTool_toggleEvenMode();
+    void toggleBindMeshToCageMove();
     void toggleBindMeshToCageMove(const std::string& name);
 
     // ARAP
@@ -558,7 +566,7 @@ public slots:
     void setPreviewPointInPlanarView(bool preview) { this->previewCursorInPlanarView = preview; };
 
     // Scene management
-    bool openMesh(const std::string& name, const std::string& filename, const glm::vec4& color = glm::vec4(244./255.,211./255.,94./255.,0.85));
+    bool openMesh(const std::string& name, const std::string& filename, const glm::vec4& color = glm::vec4(0.1, 0.5, 1.,0.85));
     bool openCage(const std::string& name, const std::string& filename, BaseMesh * surfaceMeshToDeform, const bool MVC = true, const glm::vec4& color = glm::vec4(1., 0., 0., 0.3));
     bool openCage(const std::string& name, const std::string& filename, const std::string& surfaceMeshToDeformName, const bool MVC = true, const glm::vec4& color = glm::vec4(1., 0., 0., 0.3));
     bool linkCage(const std::string& cageName, BaseMesh * meshToDeform, const bool MVC);
@@ -595,6 +603,8 @@ public slots:
     //void addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction, bool onSurface);
 public:
 
+    Demos demos;
+
     int maximumTextureSize;// Set by the viewer
     int gridToDraw = -1;
 
@@ -620,8 +630,6 @@ public:
 	Image::bbox_t sceneBB;
 	Image::bbox_t sceneDataBB;
 
-    bool demo_atlas_visu = false;
-    bool demo_atlas_registration = true;
 };
 
 /// @brief Type-safe conversion of enum values to unsigned ints.

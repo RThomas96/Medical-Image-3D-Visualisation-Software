@@ -35,6 +35,7 @@ int main(int argc, char* argv[]) {
 
 	MainWidget mainwidget;
 	mainwidget.show();
+    mainwidget.initialize();
 
 	return app.exec();
 }

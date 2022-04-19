@@ -192,6 +192,7 @@ void MainWidget::setupWidgets() {
 	//});
     QObject::connect(this->combo_mesh, QOverload<int>::of(&QComboBox::currentIndexChanged), [=](int index){
             this->scene->changeActiveMesh(std::string((this->combo_mesh->itemText(this->combo_mesh->currentIndex())).toStdString()));
+            this->changeActiveMesh();
     });
 
     /***/
@@ -402,7 +403,7 @@ void MainWidget::setupActions() {
     QObject::connect(this->actionManager->getAction("MoveTool_toggleEvenMode"), &QAction::triggered, [this](){this->scene->moveTool_toggleEvenMode();});
 
     this->actionManager->createQActionToggledButton("MoveTool_toggleMoveCage", "Link", "", "If this mode is active, and the manipulated mesh is a cage, the cage and the associated grid movements are linked", "link");
-    QObject::connect(this->actionManager->getAction("MoveTool_toggleMoveCage"), &QAction::triggered, [this](){this->scene->moveTool_toggleEvenMode();});
+    QObject::connect(this->actionManager->getAction("MoveTool_toggleMoveCage"), &QAction::triggered, [this](){this->scene->toggleBindMeshToCageMove();});
 
     this->actionManager->createQActionButton("MoveTool_reset", "Reset", "R", "Reset the manipulator size", "reset");
     QObject::connect(this->actionManager->getAction("MoveTool_reset"), &QAction::triggered, [this](){this->scene->changeActiveMesh(std::string((this->combo_mesh->itemText(this->combo_mesh->currentIndex())).toStdString()));});

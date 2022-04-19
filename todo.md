@@ -153,9 +153,9 @@ MAIN
     - [x] Créer helper pour QAction, shortcuts, toolbar et icons
     - [x] Créer helper pour exclusive groups
     - [x] Refaire l'interface et mettre que des shortcuts
-    - [ ] Refaire le layout avec des windows manipulables 
-    - [ ] Revoir l'initialisation
-    - [ ] Redimensionner les icons
+    - [x] Refaire le layout avec des windows manipulables 
+    - [x] Revoir l'initialisation
+    - [x] Redimensionner les icons
     - [ ] Ajouter un undo
 - [ ] Sauvegarder le maillage tétrahédrique déformé et la cage dans un format .deform
         - [ ] Terminer les interfaces IO
@@ -171,10 +171,47 @@ FIX
 - [x] Perfs du move manip
 
 ---
+## Semaine 19/04
+
+### Mardi
+
+Objectif: préparer la réunion
+
+- [x] Fichiers démo
+- [x] Modifier les points du registration tool
+- [ ] Mettre à jour l'ordinateur portable
+- [ ] Changer le bleu dégueulasse
+- [ ] Présentation du logiciel
+- [ ] Plusieurs builds
+- [ ] Ajouter clear de la scene
+- [ ] Undo
+
+Objectif: Terminer le workflow complet 
+
+MAIN
+- [ ] Tester et finir tous les outils pour faire le recalage
+    - [ ] Ajouter un undo
+- [ ] Préparer la réunion avec l'IGF
+- [ ] Sauvegarder le maillage tétrahédrique déformé et la cage dans un format .deform
+        - [ ] Terminer les interfaces IO
+- [ ] Ouvrir un couple maillage tétrahédrique initial et déformé dans un format .deform
+- [ ] Faire une interface pour lire une liste de point et les sortir déformés 
+- [ ] Réparer la déformation de l'atlas avec le LRI
+    - [ ] Vérifier que c'est bien la cage et le transfert qui cassent le LRI
+    - [ ] Générer une cage et un transfert compatible avec le LRI
+
+FIX
+- [ ] Bug sync de la cage (move point avec le manip)
+- [x] Ajouter interface display maillage tetra 
+
+---
 
 # INBOX
 
 MANDATORY
+    UNSORTED
+    - [ ] Debug LRI
+    - [ ] Change the move manip and use move points to debug the link features
 - [ ] Le scale affecte les performances
 - [ ] Ajouter un undo
 - [x] Ajouter des icônes

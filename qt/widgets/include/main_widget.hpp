@@ -28,6 +28,7 @@
 #include <QTabWidget>
 #include <QShortcut>
 #include <QMenuBar>
+#include <QToolButton>
 
 class ColorBoundWidget;
 
@@ -82,7 +83,7 @@ public slots:
     void updatePointInfo(std::pair<int, glm::vec3> selectedPoint) {
         std::string idx = std::to_string(selectedPoint.first);
         std::stringstream stream;
-        stream << std::fixed << std::setprecision(3) << "[" << selectedPoint.second[0] << ", " << selectedPoint.second[1] << ", " << selectedPoint.second[2] << "]";
+        stream << std::fixed << std::setprecision(2) << "[" << selectedPoint.second[0] << ", " << selectedPoint.second[1] << ", " << selectedPoint.second[2] << "]";
         std::string pt = stream.str();
 
         if(selectedPoint.first >= 0) {
@@ -164,10 +165,11 @@ public:
 
     QAction * createQAction(const QString& name, const QString& text, const QString& keySequence, const QString& statusTip, const QString& defaultIcon, const QString& pressedIcon, bool checkable, bool checked) {
         QIcon icon;
+        QSize size(80, 80);
         if(!defaultIcon.isEmpty())
-            icon.addPixmap(QPixmap(QString("../resources/") + defaultIcon + QString(".svg")), QIcon::Normal, QIcon::Off);
+            icon.addFile(QString("../resources/" + defaultIcon + QString(".svg")), size, QIcon::Normal, QIcon::Off);
         if(!pressedIcon.isEmpty())
-            icon.addPixmap(QPixmap(QString("../resources/") + pressedIcon + QString(".svg")), QIcon::Normal, QIcon::On);
+            icon.addFile(QString("../resources/" + pressedIcon + QString(".svg")), size, QIcon::Normal, QIcon::On);
     
         QAction * action = new QAction(icon, text);
         if(checkable)
@@ -230,8 +232,7 @@ public:
     DisplayPannel(const QString &title, QActionManager& actionManager, QWidget *parent = nullptr): QGroupBox(title, parent){init();connect(actionManager);}
 
     QVBoxLayout * mainLayout;
-    QToolBar * toolBarRow1;
-    QToolBar * toolBarRow2;
+    QToolBar * toolBar;
 
 public slots:
     void init() {
@@ -241,20 +242,19 @@ public slots:
         //font.setPointSize(8);
         //this->setFont(font);
 
-        this->toolBarRow1 = new QToolBar(this);
-        this->toolBarRow1->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+        this->toolBar = new QToolBar(this);
+        this->toolBar->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
 
-        this->toolBarRow1 = new QToolBar(this);
-        this->toolBarRow1->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+        //this->toolBar->setIconSize(QSize(150, 150));
 
-        this->mainLayout->addWidget(this->toolBarRow1);
+        this->mainLayout->addWidget(this->toolBar);
         //this->mainLayout->addWidget(this->toolBarRow2);
     };
     void connect(QActionManager& actionManager) {
-        toolBarRow1->addAction(actionManager.getAction("ToggleDisplayMesh"));
-        toolBarRow1->addAction(actionManager.getAction("ToggleDisplayGrid"));
-        toolBarRow1->addAction(actionManager.getAction("ToggleDisplayPlanarViewers"));
-        toolBarRow1->addAction(actionManager.getAction("ToggleDisplayWireframe"));
+        toolBar->addAction(actionManager.getAction("ToggleDisplayMesh"));
+        toolBar->addAction(actionManager.getAction("ToggleDisplayGrid"));
+        toolBar->addAction(actionManager.getAction("ToggleDisplayPlanarViewers"));
+        toolBar->addAction(actionManager.getAction("ToggleDisplayWireframe"));
     };
 };
 
@@ -416,6 +416,17 @@ public slots:
             case UITool::MeshManipulatorType::FIXED_REGISTRATION:
                 this->actionManager->activateGroup("FixedTool");
                 break;
+        }
+    }
+
+    void changeActiveMesh() {
+        this->actionManager->getAction("ToggleNoneTool")->activate(QAction::Trigger);
+    }
+
+    void initialize() {
+        if(this->scene->demos.isDemo) {
+            this->scene->changeActiveMesh(this->combo_mesh->itemText(this->combo_mesh->currentIndex()).toStdString());
+            this->changeActiveMesh();
         }
     }
 };
