@@ -4,13 +4,29 @@
 #include <algorithm>
 #include "glm/gtx/string_cast.hpp"
 
+void MeshDeformer::replacePoints(const std::vector<int>& verticesIdxToReplace, const std::vector<glm::vec3>& targets) {
+    for(int i = 0; i < verticesIdxToReplace.size(); ++i) {
+        this->baseMesh->vertices[verticesIdxToReplace[i]] = targets[i];
+    }
+}
+
+void MeshDeformer::replacePoints(const std::vector<glm::vec3>& targets) {
+    if(targets.size() != this->baseMesh->vertices.size()) {
+        std::cout << "ERROR: impossible to replace points, number of vertices not equal" << std::endl;
+    } else {
+        this->baseMesh->vertices = targets;
+    }
+}
+
+void MeshDeformer::replacePoint(int i, const glm::vec3& pt) { this->baseMesh->vertices[i] = pt; };
+
+/***/
+
 NormalMethod::NormalMethod(BaseMesh * baseMesh) : MeshDeformer(baseMesh, DeformMethod::NORMAL) {}
 
 void NormalMethod::movePoint(const glm::vec3& origin, const glm::vec3& target) {
     const glm::vec3 deplacement = target - origin;
-    for(int i = 0; i < this->selectedPts.size(); ++i) {
-        this->baseMesh->vertices[this->selectedPts[i]] += deplacement;
-    }
+    this->baseMesh->vertices[this->baseMesh->getIdxOfClosestPoint(origin)] += deplacement;
 }
 
 void NormalMethod::movePoints(const std::vector<glm::vec3>& origins, const std::vector<glm::vec3>& targets) {
@@ -67,8 +83,7 @@ void ARAPMethod::unsetHandle(int idx) {
 
 void ARAPMethod::movePoint(const glm::vec3& origin, const glm::vec3& target) {
     const glm::vec3 deplacement = target - origin;
-    for(int i = 0; i < this->selectedPts.size(); ++i)
-        this->baseMesh->vertices[this->selectedPts[i]] += deplacement;
+    this->baseMesh->vertices[this->baseMesh->getIdxOfClosestPoint(origin)] += deplacement;
 
     if(this->onSurfaceMesh) {
         std::vector<Vec3D<float>> ptsAsVec3D;

@@ -699,7 +699,7 @@ namespace UITool {
             this->kid_manip->getTransformedPoint(i, trueIndex, deformedPoint);
             if(!std::isnan(deformedPoint[0]) && !std::isnan(deformedPoint[1]) && !std::isnan(deformedPoint[2])) {
                 originalPoints.push_back(this->manipulators[this->selectedManipulatorsIdx[i]].getManipPosition());
-                //originalPoints.push_back(this->mesh->vertices[this->selectedManipulatorsIdx[i]]);
+                //originalPoints.push_back(this->mesh->getVertice(this->selectedManipulatorsIdx[i]));
                 targetPoints.push_back(glm::vec3(deformedPoint[0], deformedPoint[1], deformedPoint[2]));
             }
         }
@@ -788,6 +788,7 @@ namespace UITool {
         if(this->moveMode) {
             if(!this->selectedManipulators[index]) {
                 this->selectedManipulators[index] = true;
+                dynamic_cast<ARAPMethod*>(this->mesh->meshDeformer)->setHandle(index);
                 selectedManipulatorsIdx.push_back(index);
 
                 glm::vec3 glmManipPos = manipulator->getManipPosition();
@@ -831,6 +832,11 @@ namespace UITool {
 
     void ARAPManipulator::deselectManipulator(Manipulator * manipulator) {
         if(this->moveMode) {
+            for(int i = 0; i < this->selectedManipulators.size(); ++i) {
+                if(this->selectedManipulators[i]) {
+                    dynamic_cast<ARAPMethod*>(this->mesh->meshDeformer)->unsetHandle(i);
+                }
+            }
             std::fill(this->selectedManipulators.begin(), this->selectedManipulators.end(), false);
             this->selectedManipulatorsIdx.clear();
             ARAPMethod * deformer = dynamic_cast<ARAPMethod*>(this->mesh->meshDeformer);

@@ -19,6 +19,10 @@ struct MeshDeformer {
 
     MeshDeformer(BaseMesh * baseMesh, DeformMethod deformMethod) : baseMesh(baseMesh), deformMethod(deformMethod) {}
 
+    void replacePoint(int i, const glm::vec3& pt);
+    void replacePoints(const std::vector<int>& verticesIdxToReplace, const std::vector<glm::vec3>& targets);
+    void replacePoints(const std::vector<glm::vec3>& targets);
+
     // Here origin is basically the clicked point
     virtual void movePoint(const glm::vec3& origin, const glm::vec3& target) = 0;
     virtual void movePoints(const std::vector<glm::vec3>& origins, const std::vector<glm::vec3>& targets) = 0;
@@ -27,8 +31,6 @@ struct MeshDeformer {
 };
 
 struct NormalMethod : MeshDeformer {
-    std::vector<int> selectedPts;
-
     NormalMethod(BaseMesh * baseMesh);
 
     void movePoint(const glm::vec3& origin, const glm::vec3& target) override;
@@ -38,7 +40,6 @@ struct NormalMethod : MeshDeformer {
 struct ARAPMethod : MeshDeformer {
     bool onSurfaceMesh;
     AsRigidAsPossible arap;
-    std::vector<int> selectedPts;
     std::vector<bool> handles;
 
     ARAPMethod(BaseMesh * baseMesh);

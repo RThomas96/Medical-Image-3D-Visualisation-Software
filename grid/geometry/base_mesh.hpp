@@ -53,10 +53,6 @@ public:
     std::vector<glm::vec3>& getMeshPositions();
     const std::vector<glm::vec3>& getVertices() const { return this->vertices; };
 
-    void replacePoint(int i, const glm::vec3& pt) { this->vertices[i] = pt; };
-    void replacePoints(const std::vector<int>& verticesIdxToReplace, const std::vector<glm::vec3>& targets);
-    void replacePoints(const std::vector<glm::vec3>& targets);
-
     // Functions to interact with the mesh
     void setNormalDeformationMethod();
 

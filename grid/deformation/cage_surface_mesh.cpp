@@ -1,4 +1,5 @@
 #include "cage_surface_mesh.hpp"
+#include "mesh_deformer.hpp"
 
 void toBasicPoint(const std::vector<glm::vec3>& points, std::vector<BasicPoint>& res) {
     res.clear();
@@ -45,7 +46,7 @@ void CageMVC::movePoint(const glm::vec3& origin, const glm::vec3& target) {
         for( unsigned int v = 0 ; v < this->meshToDeform->getNbVertices() ; ++v )
             for( unsigned int vc = 0 ; vc < this->MVCCoordinates[v].size() ; ++vc )
                 newPositions[v] += this->MVCCoordinates[v][vc].second * this->getVertice(this->MVCCoordinates[v][vc].first);
-        this->meshToDeform->replacePoints(newPositions);
+        this->meshToDeform->meshDeformer->replacePoints(newPositions);
     }
 }
 
@@ -117,7 +118,7 @@ void CageGreen::movePoint(const glm::vec3& origin, const glm::vec3& target) {
                 newPositions[v] += static_cast<float>(psiCoordinates[v][tc]) * static_cast<float>(scalingFactors[tc].scalingFactor()) * glm::normalize(this->normals[tc]);
 
         }
-        this->meshToDeform->replacePoints(newPositions);
+        this->meshToDeform->meshDeformer->replacePoints(newPositions);
     }
 }
 
@@ -168,4 +169,83 @@ void CageGreen::computeCoordinates() {
                 this->phiCoordinates[p_idx],
                 this->psiCoordinates[p_idx]);
     }
+}
+
+void CageGreenLRI::update_constraints() {
+    // set values in B BasisSolver matrix:
+    for( unsigned int t = 0 ; t < this->handle_tetrahedra.size() ; t ++ ){
+        const std::vector<glm::vec3> & basis_def = tetInfos[handle_tetrahedra[t]].basis_def;
+        for( int i = 0 ; i < 3 ; i++  )
+        {
+            for( int j = 0 ; j < 3 ; j++  )
+            {
+                BasisSolver.setValueInB( unknown_tetrahedra.size() + t, 3*i + j, basis_def[i][j]);
+            }
+        }
+    }
+
+    // solve BasisSolver:
+    BasisSolver.solve();
+    // get values:
+    for( unsigned int t = 0 ; t < this->unknown_tetrahedra.size() ; t ++ ){
+        std::vector<glm::vec3> basis_def(3);
+        unsigned int tetra_index_in_solver = this->unknown_tetrahedra[t];
+        for( int i = 0 ; i < 3 ; i++  )
+        {
+            for( int j = 0 ; j < 3 ; j++  )
+            {
+                basis_def[i][j] = BasisSolver.getSolutionValue( tetra_index_in_solver, 3*i + j);
+            }
+        }
+        tetInfos[unknown_tetrahedra[t]].basis_def = basis_def;
+    }
+
+    // set values in B VerticesSolver matrix:
+    for( unsigned int e = 0 ; e < edges.size() ; ++e )
+    {
+        int nTetraOnEdge = 0;
+        glm::vec3 eTransform(0,0,0);
+        std::vector<int> allTetIdx = this->edgeMap.at(edges[e]);
+        for(int tetIdx = 0; tetIdx < allTetIdx.size(); ++tetIdx) {
+            const std::vector<glm::vec3> & def_basis = this->tetInfos[tetIdx].basis_def;
+            // find new orientation for edge e: eTransform = def_basis * (v1 - v0)
+            glm::vec3 v0v1 = verts_initial_positions[verts_mapping_from_mesh_to_solver[edges[e].second]] - verts_initial_positions[verts_mapping_from_mesh_to_solver[edges[e].first]];
+            for( int i = 0 ; i < 3 ; i ++)
+                for( int j = 0 ; j < 3 ; j ++)
+                    eTransform[i] += def_basis[j][i] * v0v1[j];
+        }
+        eTransform /= allTetIdx.size();
+
+        for( unsigned int coord = 0 ; coord < 3 ; ++coord )
+            VerticesSolver.setValueInB( e , coord , eTransform[coord] );
+    }
+
+    for( unsigned int i = 0 ; i < verts_constraints.size() ; i ++ ){
+        unsigned int vertexInSolver = verts_constraints[i];
+        // TODO: warning here
+        glm::vec3 pos = this->getMeshToDeform()->getVertice(verts_mapping_from_solver_to_mesh[vertexInSolver]);
+        for( unsigned int coord = 0 ; coord < 3 ; ++coord )
+            VerticesSolver.setValueInB( edges.size() + i , coord , pos[coord] );
+    }
+
+    std::vector<int> verticesIdxToReplace;
+    std::vector<glm::vec3> newVertices;
+
+    // solve:
+    VerticesSolver.solve();
+    // get values:verts_mapping_from_solver_to_mesh
+    double p [3];
+    for( unsigned int v = 0 ; v < verts_mapping_from_solver_to_mesh.size() ; ++v ){
+        for( unsigned int coord = 0 ; coord < 3 ; ++coord )
+            p[coord] = VerticesSolver.getSolutionValue( v,coord );
+        int vh = verts_mapping_from_solver_to_mesh[v];
+        if( this->outlier_vertices[vh] ) {
+            verticesIdxToReplace.push_back(vh);
+            newVertices.push_back(glm::vec3(p[0], p[1], p[2]));
+        }
+    }
+    this->meshToDeform->meshDeformer->replacePoints(verticesIdxToReplace, newVertices);
+    // free:
+    BasisSolver.freeSolution();
+    VerticesSolver.freeSolution();
 }

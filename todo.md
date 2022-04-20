@@ -191,9 +191,12 @@ Objectif: Terminer le workflow complet
 MAIN
 - [x] Préparer la réunion avec l'IGF
 - [ ] Tester et finir tous les outils pour faire le recalage
+    - [x] Utiliser le move point du move manip pour debuger le link mesh 
+    - [x] Retirer la sélection du mesh deformer
+    - [ ] Tout passer en index pour les perfs
     - [ ] Ajouter un undo
 - [ ] Sauvegarder le maillage tétrahédrique déformé et la cage dans un format .deform
-        - [ ] Terminer les interfaces IO
+    - [ ] Terminer les interfaces IO
 - [ ] Ouvrir un couple maillage tétrahédrique initial et déformé dans un format .deform
 - [ ] Faire une interface pour lire une liste de point et les sortir déformés 
 - [ ] Réparer la déformation de l'atlas avec le LRI
@@ -211,7 +214,6 @@ FIX
 MANDATORY
     UNSORTED
     - [ ] Debug LRI
-    - [ ] Change the move manip and use move points to debug the link features
     - [ ] Rendu des plans de coupes est bugé, avec tetmesh coupé
 - [ ] Le scale affecte les performances
 - [ ] Ajouter un undo

@@ -54,24 +54,6 @@ void BaseMesh::movePoint(const glm::vec3& origin, const glm::vec3& target) {
     this->updatebbox();
 }
 
-void BaseMesh::replacePoints(const std::vector<int>& verticesIdxToReplace, const std::vector<glm::vec3>& targets) {
-    for(int i = 0; i < verticesIdxToReplace.size(); ++i) {
-        this->vertices[verticesIdxToReplace[i]] = targets[i];
-    }
-    this->computeNormals();
-    this->updatebbox();
-}
-
-void BaseMesh::replacePoints(const std::vector<glm::vec3>& targets) {
-    if(targets.size() != this->vertices.size()) {
-        std::cout << "ERROR: impossible to replace points, number of vertices not equal" << std::endl;
-    } else {
-        this->vertices = targets;
-        this->computeNormals();
-        this->updatebbox();
-    }
-}
-
 void BaseMesh::movePoints(const std::vector<glm::vec3>& origins, const std::vector<glm::vec3>& targets) {
     this->meshDeformer->movePoints(origins, targets);
     this->computeNormals();
