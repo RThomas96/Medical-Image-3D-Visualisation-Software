@@ -85,25 +85,6 @@ void BaseMesh::setNormalDeformationMethod() {
     }
 }
 
-void BaseMesh::setWeightedDeformationMethod(float radius) {
-    if(this->meshDeformer->deformMethod != DeformMethod::WEIGHTED) {
-        delete this->meshDeformer;
-        this->meshDeformer = new WeightedMethod(this, radius);
-    }
-}
-
-void BaseMesh::selectPts(const glm::vec3& pt) {
-    this->meshDeformer->selectPts(pt);
-}
-
-void BaseMesh::deselectPts(const glm::vec3& pt) {
-    this->meshDeformer->deselectPts(pt);
-}
-
-void BaseMesh::deselectAllPts() {
-    this->meshDeformer->deselectAllPts();
-}
-
 std::vector<glm::vec3>& BaseMesh::getMeshPositions() {
     return this->vertices;
 }

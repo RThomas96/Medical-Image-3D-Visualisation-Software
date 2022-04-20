@@ -59,10 +59,6 @@ public:
 
     // Functions to interact with the mesh
     void setNormalDeformationMethod();
-    void setWeightedDeformationMethod(float radius);
-    void selectPts(const glm::vec3& pt);
-    void deselectPts(const glm::vec3& pt);
-    void deselectAllPts();
 
     void scaleToBBox(const glm::vec3& bbMin, const glm::vec3& bbMax);
 

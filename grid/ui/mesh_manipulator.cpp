@@ -111,14 +111,12 @@ namespace UITool {
     void DirectManipulator::selectManipulator(Manipulator * manipulator) {
         ptrdiff_t index = manipulator - &(this->manipulators[0]);
         if(!this->selectedManipulators[index]) {
-            this->mesh->selectPts(manipulator->getManipPosition());
             this->selectedManipulators[index] = true;
         }
         std::cout << "Selection vertex: [" << index << "]" << std::endl;
     }
 
     void DirectManipulator::deselectManipulator(Manipulator * manipulator) {
-        this->mesh->deselectAllPts();
         for(int i = 0; i < this->selectedManipulators.size(); ++i) {
             this->selectedManipulators[i] = false;
         }
@@ -187,11 +185,9 @@ namespace UITool {
     }
 
     void FreeManipulator::selectManipulator(Manipulator * manipulator) {
-        this->mesh->selectPts(manipulator->getManipPosition());
     }
 
     void FreeManipulator::deselectManipulator(Manipulator * manipulator) {
-        this->mesh->deselectAllPts();
         this->setActivation(false);
     }
 
@@ -686,7 +682,6 @@ namespace UITool {
         }
         this->setLockAllManipulators(true);
         this->resetMinAndMax(); 
-        this->mesh->deselectAllPts(); 
         this->selectedManipulatorsIdx.clear();
         std::fill(this->selectedManipulators.begin(), this->selectedManipulators.end(), false);
         ARAPMethod * deformer = dynamic_cast<ARAPMethod*>(this->mesh->meshDeformer);
@@ -792,7 +787,6 @@ namespace UITool {
         ptrdiff_t index = manipulator - &(this->manipulators[0]);
         if(this->moveMode) {
             if(!this->selectedManipulators[index]) {
-                this->mesh->selectPts(manipulator->getManipPosition());
                 this->selectedManipulators[index] = true;
                 selectedManipulatorsIdx.push_back(index);
 
@@ -837,7 +831,6 @@ namespace UITool {
 
     void ARAPManipulator::deselectManipulator(Manipulator * manipulator) {
         if(this->moveMode) {
-            this->mesh->deselectAllPts();
             std::fill(this->selectedManipulators.begin(), this->selectedManipulators.end(), false);
             this->selectedManipulatorsIdx.clear();
             ARAPMethod * deformer = dynamic_cast<ARAPMethod*>(this->mesh->meshDeformer);
@@ -898,7 +891,6 @@ namespace UITool {
     ARAPManipulator::~ARAPManipulator() {
         ARAPMethod * deformer = dynamic_cast<ARAPMethod*>(this->mesh->meshDeformer);
         if(deformer) {
-            deformer->deselectAllPts();
             for(int i = 0; i < this->manipulators.size(); ++i)
                 deformer->unsetHandle(i);
         }
@@ -1008,7 +1000,6 @@ void SliceManipulator::moveManipulator(Manipulator * manipulator) {
 void SliceManipulator::selectManipulator(Manipulator * manipulator) {
     ptrdiff_t index = manipulator - &(this->manipulators[0]);
     if(!this->selectedManipulators[index]) {
-        this->mesh->selectPts(manipulator->getManipPosition());
         this->selectedManipulators[index] = true;
     }
 }
@@ -1019,9 +1010,6 @@ void SliceManipulator::deselectManipulator(Manipulator * manipulator) {
 
 void SliceManipulator::deselectAllManipulators(bool keepHandles) {
     for(int i = 0; i < this->selectedManipulators.size(); ++i) {
-        if(this->selectedManipulators[i]) {
-            this->mesh->deselectPts(this->manipulators[i].getManipPosition());
-        }
         this->selectedManipulators[i] = false;
         if(keepHandles && this->handles[i]) {
             ARAPMethod * deformer = dynamic_cast<ARAPMethod*>(this->mesh->meshDeformer);

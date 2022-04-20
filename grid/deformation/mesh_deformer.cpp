@@ -4,75 +4,7 @@
 #include <algorithm>
 #include "glm/gtx/string_cast.hpp"
 
-WeightedMethod::WeightedMethod(BaseMesh * baseMesh, float radius) : MeshDeformer(baseMesh, DeformMethod::WEIGHTED), radius(radius) {}
-
-bool WeightedMethod::hasSelectedPts() {
-    return !this->selectedPts.empty();
-}
-
-void WeightedMethod::selectPts(const glm::vec3& pt) {
-    for(int i = 0; i < this->baseMesh->getNbVertices(); ++i) {
-        const glm::vec3& pt2 = this->baseMesh->getVertice(i);
-        float distance = glm::distance(pt, pt2);
-        if(distance < this->radius) {
-            this->selectedPts.push_back(i);
-        }
-    }
-    this->originalPoint = pt;
-}
-
-void WeightedMethod::deselectPts(const glm::vec3& pt) {
-    this->selectedPts.clear();// For now you cannot move multiple points with weighted move
-}
-
-void WeightedMethod::deselectAllPts() {
-    this->selectedPts.clear();
-}
-
-void WeightedMethod::movePoint(const glm::vec3& origin, const glm::vec3& target) {
-    const float maxDist = std::max(glm::distance(target, this->originalPoint), this->radius);
-    const glm::vec3 deplacement = target - origin;
-    std::vector<int> idxToRemove;
-    for(int i = 0; i < this->selectedPts.size(); ++i) {
-        const glm::vec3& pt2 = this->baseMesh->getVertice(this->selectedPts[i]);
-        float distance = glm::distance(target, pt2);
-        if(distance < this->radius) {
-            float coeff = 1 - std::pow((distance / this->radius), 2);
-            // Here we move the original point !
-            //this->baseMesh->vertices[this->selectedPts[i]] += (deplacement * coeff);
-        }
-    }
-}
-
-void WeightedMethod::movePoints(const std::vector<glm::vec3>& origins, const std::vector<glm::vec3>& targets) {
-    for(int i = 0; i < origins.size(); ++i) {
-        //this->baseMesh->vertices[this->baseMesh->getIdxOfClosestPoint(origins[i])] = targets[i];
-    }
-}
-
-/***/
-
 NormalMethod::NormalMethod(BaseMesh * baseMesh) : MeshDeformer(baseMesh, DeformMethod::NORMAL) {}
-
-bool NormalMethod::hasSelectedPts() {
-    return !this->selectedPts.empty();
-}
-
-void NormalMethod::selectPts(const glm::vec3& pt) {
-    this->selectedPts.push_back(this->baseMesh->getIdxOfClosestPoint(pt));
-}
-
-void NormalMethod::deselectPts(const glm::vec3& pt) {
-    int ptIdx = this->baseMesh->getIdxOfClosestPoint(pt);
-    auto ptIdxPos = std::find(this->selectedPts.begin(), this->selectedPts.end(), ptIdx);
-    if(ptIdxPos != this->selectedPts.end()) {
-        this->selectedPts.erase(ptIdxPos);
-    }
-}
-
-void NormalMethod::deselectAllPts() {
-    this->selectedPts.clear();
-}
 
 void NormalMethod::movePoint(const glm::vec3& origin, const glm::vec3& target) {
     const glm::vec3 deplacement = target - origin;
@@ -121,36 +53,16 @@ ARAPMethod::ARAPMethod(BaseMesh * baseMesh) : MeshDeformer(baseMesh, DeformMetho
     std::cout << "WARNING: trying to use ARAP deformation on GenericMesh, but ARAP only works on SurfaceMesh, thus the operation will be a [DIRECT] deformation" << std::endl;
 }
 
-bool ARAPMethod::hasSelectedPts() {
-    return !this->selectedPts.empty();
-}
-
-void ARAPMethod::selectPts(const glm::vec3& pt) {
-    this->selectedPts.push_back(this->baseMesh->getIdxOfClosestPoint(pt));
-    this->handles[this->selectedPts.back()] = true;
-}
-
-void ARAPMethod::deselectPts(const glm::vec3& pt) {
-    int ptIdx = this->baseMesh->getIdxOfClosestPoint(pt);
-    auto ptIdxPos = std::find(this->selectedPts.begin(), this->selectedPts.end(), ptIdx);
-    if(ptIdxPos != this->selectedPts.end()) {
-        this->selectedPts.erase(ptIdxPos);
-    }
-    this->handles[ptIdx] = false;
-}
-
-void ARAPMethod::deselectAllPts() {
-    for(int i = 0; i < this->selectedPts.size(); ++i)
-        this->handles[this->selectedPts[i]] = false;
-    this->selectedPts.clear();
-}
-
 void ARAPMethod::setHandle(int idx) {
-    this->handles[idx] = true;
+    if(this->onSurfaceMesh) {
+        this->handles[idx] = true;
+    }
 }
 
 void ARAPMethod::unsetHandle(int idx) {
-    this->handles[idx] = false;
+    if(this->onSurfaceMesh) {
+        this->handles[idx] = false;
+    }
 }
 
 void ARAPMethod::movePoint(const glm::vec3& origin, const glm::vec3& target) {
