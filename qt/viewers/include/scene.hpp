@@ -159,8 +159,8 @@ private:
 struct Demos {
     bool isDemo = true;
 
-    bool demo_atlas_visu = false;
-    bool demo_atlas_registration = true;
+    bool demo_atlas_visu = true;
+    bool demo_atlas_registration = false;
 };
 
 /// @ingroup graphpipe

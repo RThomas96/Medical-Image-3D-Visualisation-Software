@@ -179,19 +179,19 @@ Objectif: préparer la réunion
 
 - [x] Fichiers démo
 - [x] Modifier les points du registration tool
-- [ ] Mettre à jour l'ordinateur portable
-- [ ] Changer le bleu dégueulasse
-- [ ] Présentation du logiciel
-- [ ] Plusieurs builds
+- [x] Faire une archive avec les fichiers démos
+- [x] Présentation du logiciel
+- [x] Build sur l'ordi perso
+- [x] Plusieurs builds pour chaque demo
 - [ ] Ajouter clear de la scene
 - [ ] Undo
 
 Objectif: Terminer le workflow complet 
 
 MAIN
+- [x] Préparer la réunion avec l'IGF
 - [ ] Tester et finir tous les outils pour faire le recalage
     - [ ] Ajouter un undo
-- [ ] Préparer la réunion avec l'IGF
 - [ ] Sauvegarder le maillage tétrahédrique déformé et la cage dans un format .deform
         - [ ] Terminer les interfaces IO
 - [ ] Ouvrir un couple maillage tétrahédrique initial et déformé dans un format .deform
@@ -212,6 +212,7 @@ MANDATORY
     UNSORTED
     - [ ] Debug LRI
     - [ ] Change the move manip and use move points to debug the link features
+    - [ ] Rendu des plans de coupes est bugé, avec tetmesh coupé
 - [ ] Le scale affecte les performances
 - [ ] Ajouter un undo
 - [x] Ajouter des icônes
@@ -256,6 +257,8 @@ CODE DEBT
 - [ ] Retirer tous les signaux de manipulation de radius 
 - [ ] Supprimer l'ancien registration tool et renommer le "fixed"
 - [ ] Supprimer l'ancien registration et tout ce qui s'en rapporte (undo etc) 
+- [ ] Supprimer le weighted mesh deformer
+- [ ] Refont du deformer, retirer la sélection par exemple car suppression du weighted de toute façon
 
 BUG
 - [ ] You cannot change the voxel size when you load a custom transfert mesh

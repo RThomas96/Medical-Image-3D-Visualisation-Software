@@ -68,7 +68,7 @@ void DrawableMesh::draw(GLfloat *proj_mat, GLfloat *view_mat, glm::vec4 camera) 
     for(int i = 0; i < this->mesh->getTriangles().size(); ++i) {
         glm::vec3 center(0., 0., 0.);
         for(int j = 0; j < 3; ++j)
-            center += this->mesh->vertices[this->mesh->getTriangles()[i][j]];
+            center += this->mesh->getVertice(this->mesh->getTriangles()[i][j]);
         dists.push_back(std::make_pair(glm::distance(center/3.f, cam), i));
     }
 
@@ -81,7 +81,7 @@ void DrawableMesh::draw(GLfloat *proj_mat, GLfloat *view_mat, glm::vec4 camera) 
     std::sort(dists.begin(), dists.end(), less_than_key());
 
     std::vector<GLuint> final_order;
-    final_order.reserve(this->mesh->vertices.size());
+    final_order.reserve(this->mesh->getNbVertices());
     for(int i = 0; i < dists.size(); ++i) {
         for(int j = 0; j < 3; ++j)
             final_order.push_back(this->mesh->triangles[dists[i].second][j]);

@@ -8,6 +8,9 @@
 #include <vector>
 
 struct MeshDeformer;
+struct NormalMethod;
+struct ARAPMethod;
+
 namespace UITool {
     class Manipulator;
 }
@@ -23,10 +26,16 @@ enum class DeformMethod {
 //! @{
 
 class BaseMesh {
+
+public:
+    friend MeshDeformer;
+    friend NormalMethod;
+    friend ARAPMethod;
+protected:
+    std::vector<glm::vec3> vertices;
     
 public:
 
-    std::vector<glm::vec3> vertices;
     std::vector<glm::vec3> verticesNormals;
     std::vector<glm::vec3> texCoord;// These are normalised coordinates
 
@@ -42,6 +51,11 @@ public:
 
     void updatebbox();
     std::vector<glm::vec3>& getMeshPositions();
+    const std::vector<glm::vec3>& getVertices() const { return this->vertices; };
+
+    void replacePoint(int i, const glm::vec3& pt) { this->vertices[i] = pt; };
+    void replacePoints(const std::vector<int>& verticesIdxToReplace, const std::vector<glm::vec3>& targets);
+    void replacePoints(const std::vector<glm::vec3>& targets);
 
     // Functions to interact with the mesh
     void setNormalDeformationMethod();

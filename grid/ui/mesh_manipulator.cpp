@@ -220,8 +220,8 @@ namespace UITool {
         this->evenMode = false;
         this->kid_manip = new RotationManipulator();
         this->kid_manip->setOrigine(qglviewer::Vec(mesh->getOrigin()[0], mesh->getOrigin()[1], mesh->getOrigin()[2]));
-        for(int i = 0; i < this->mesh->vertices.size(); ++i) {
-            this->kid_manip->addPoint(i, qglviewer::Vec(this->mesh->vertices[i][0], this->mesh->vertices[i][1], this->mesh->vertices[i][2]));
+        for(int i = 0; i < this->mesh->getNbVertices(); ++i) {
+            this->kid_manip->addPoint(i, qglviewer::Vec(this->mesh->getVertice(i)[0], this->mesh->getVertice(i)[1], this->mesh->getVertice(i)[2]));
         }
         QObject::connect(this->kid_manip, &RotationManipulator::moved, this, [this]() {this->moveManipulator(nullptr);});
 	}
@@ -240,16 +240,14 @@ namespace UITool {
     }
 
     void PositionManipulator::moveManipulator(Manipulator * manipulator) {
-        std::cout << "Begin move manip" << std::endl;
-        for(int i = 0; i < this->mesh->vertices.size(); ++i) {
+        std::vector<glm::vec3> newPoints(this->mesh->getNbVertices());
+        for(int i = 0; i < this->mesh->getNbVertices(); ++i) {
             qglviewer::Vec deformedPoint;
             int trueIndex;
             this->kid_manip->getTransformedPoint(i, trueIndex, deformedPoint);
-            this->mesh->vertices[i] = glm::vec3(deformedPoint[0], deformedPoint[1], deformedPoint[2]);
+            newPoints[i] = glm::vec3(deformedPoint[0], deformedPoint[1], deformedPoint[2]);
         }
-        this->mesh->computeNormals();
-        this->mesh->updatebbox();
-        std::cout << "End move manip" << std::endl;
+        this->mesh->movePoints(this->mesh->getVertices(), newPoints);
         Q_EMIT needSendTetmeshToGPU();
     }
 
@@ -337,9 +335,9 @@ namespace UITool {
             this->selectedPoints.pop_back();
         }
 
-        for(int i = 0; i < this->meshToRegister->vertices.size(); ++i) {
-            this->meshToRegister->vertices[i] = this->previousPositions.back()[i];
-            this->manipulators[i].setManipPosition(this->meshToRegister->vertices[i]);
+        for(int i = 0; i < this->meshToRegister->getNbVertices(); ++i) {
+            //this->meshToRegister->vertices[i] = this->previousPositions.back()[i];
+            this->manipulators[i].setManipPosition(this->meshToRegister->getVertice(i));
         }
         this->previousPositions.pop_back();
         this->meshToRegister->computeNormals();
@@ -391,7 +389,7 @@ namespace UITool {
         this->meshToRegister = meshToRegister;
         this->hasAMeshToRegister = true;
 
-        std::vector<glm::vec3> vertices = meshToRegister->vertices;
+        std::vector<glm::vec3> vertices = meshToRegister->getVertices();
         this->manipulators.reserve(vertices.size()*2.);
 		for (int i = 0; i < vertices.size(); ++i) {
 			this->manipulators.push_back(Manipulator(vertices[i]));
@@ -481,7 +479,7 @@ namespace UITool {
         this->meshToRegister->setARAPDeformationMethod();
         ARAPMethod * deformer = dynamic_cast<ARAPMethod*>(this->meshToRegister->meshDeformer);
         if(deformer) {
-            this->previousPositions.push_back(this->meshToRegister->vertices);
+            this->previousPositions.push_back(this->meshToRegister->getVertices());
             deformer->fitToPointList(verticesToFit, newPositions);
         }
     }
@@ -709,7 +707,6 @@ namespace UITool {
                 //originalPoints.push_back(this->mesh->vertices[this->selectedManipulatorsIdx[i]]);
                 targetPoints.push_back(glm::vec3(deformedPoint[0], deformedPoint[1], deformedPoint[2]));
             }
-            //this->mesh->vertices[this->selectedManipulatorsIdx[i]] = glm::vec3(deformedPoint[0], deformedPoint[1], deformedPoint[2]);
         }
         this->mesh->movePoints(originalPoints, targetPoints);
         Q_EMIT needSendTetmeshToGPU();
@@ -1340,7 +1337,7 @@ void FixedRegistrationManipulator::apply() {
     }
 
     for(int i = 0; i < this->fixed.size(); ++i) {
-        this->manipulators[i].setManipPosition(this->mesh->vertices[this->fixed[i]]);
+        this->manipulators[i].setManipPosition(this->mesh->getVertice(this->fixed[i]));
     }
 }
 

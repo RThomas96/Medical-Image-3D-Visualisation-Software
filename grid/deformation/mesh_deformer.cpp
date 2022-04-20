@@ -11,7 +11,7 @@ bool WeightedMethod::hasSelectedPts() {
 }
 
 void WeightedMethod::selectPts(const glm::vec3& pt) {
-    for(int i = 0; i < this->baseMesh->vertices.size(); ++i) {
+    for(int i = 0; i < this->baseMesh->getNbVertices(); ++i) {
         const glm::vec3& pt2 = this->baseMesh->getVertice(i);
         float distance = glm::distance(pt, pt2);
         if(distance < this->radius) {
@@ -39,14 +39,14 @@ void WeightedMethod::movePoint(const glm::vec3& origin, const glm::vec3& target)
         if(distance < this->radius) {
             float coeff = 1 - std::pow((distance / this->radius), 2);
             // Here we move the original point !
-            this->baseMesh->vertices[this->selectedPts[i]] += (deplacement * coeff);
+            //this->baseMesh->vertices[this->selectedPts[i]] += (deplacement * coeff);
         }
     }
 }
 
 void WeightedMethod::movePoints(const std::vector<glm::vec3>& origins, const std::vector<glm::vec3>& targets) {
     for(int i = 0; i < origins.size(); ++i) {
-        this->baseMesh->vertices[this->baseMesh->getIdxOfClosestPoint(origins[i])] = targets[i];
+        //this->baseMesh->vertices[this->baseMesh->getIdxOfClosestPoint(origins[i])] = targets[i];
     }
 }
 

@@ -49,12 +49,26 @@ int BaseMesh::getIdxOfClosestPoint(const glm::vec3& p) const{
 }
 
 void BaseMesh::movePoint(const glm::vec3& origin, const glm::vec3& target) {
-    if(this->meshDeformer->hasSelectedPts()) {
-        this->meshDeformer->movePoint(origin, target);
+    this->meshDeformer->movePoint(origin, target);
+    this->computeNormals();
+    this->updatebbox();
+}
+
+void BaseMesh::replacePoints(const std::vector<int>& verticesIdxToReplace, const std::vector<glm::vec3>& targets) {
+    for(int i = 0; i < verticesIdxToReplace.size(); ++i) {
+        this->vertices[verticesIdxToReplace[i]] = targets[i];
+    }
+    this->computeNormals();
+    this->updatebbox();
+}
+
+void BaseMesh::replacePoints(const std::vector<glm::vec3>& targets) {
+    if(targets.size() != this->vertices.size()) {
+        std::cout << "ERROR: impossible to replace points, number of vertices not equal" << std::endl;
+    } else {
+        this->vertices = targets;
         this->computeNormals();
         this->updatebbox();
-    } else {
-        std::cout << "WARNING: try to move points when there is no point in the point to move queue" << std::endl;
     }
 }
 

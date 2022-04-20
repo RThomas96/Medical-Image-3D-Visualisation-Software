@@ -23,7 +23,7 @@
 //! \addtogroup deformation
 //! @{
 
-struct Cage : SurfaceMesh {
+struct Cage : public SurfaceMesh {
 
     bool moveMeshToDeform;// Indicate if translation, rotation, etc, move the mesh to deform too
 
@@ -31,11 +31,11 @@ struct Cage : SurfaceMesh {
     std::vector<glm::vec3> originalVertices;
 
     Cage(std::string const &filename, BaseMesh * meshToDeform) : SurfaceMesh(filename), meshToDeform(meshToDeform), moveMeshToDeform(true) {
-        this->originalVertices = this->meshToDeform->vertices;
+        this->originalVertices = this->meshToDeform->getVertices();
     };
 
     Cage(SurfaceMesh * cage, BaseMesh * meshToDeform) : SurfaceMesh(*cage), meshToDeform(meshToDeform), moveMeshToDeform(true) {
-        this->originalVertices = this->meshToDeform->vertices;
+        this->originalVertices = this->meshToDeform->getVertices();
     };
     
     virtual void reInitialize() = 0;
@@ -232,14 +232,16 @@ struct CageGreenLRI : CageGreen {
 
     void movePoint(const glm::vec3& origin, const glm::vec3& target) override {
         CageGreen::movePoint(origin, target);
-        if( this->outlier_vertices.size() > 0 ){
-            std::cout << "Solving tetraLRISolver" << std::endl;
-            this->computeBasisTransforms();
-            this->update_constraints();
-            this->meshToDeform->computeNormals();
-            this->meshToDeform->updatebbox();
-        } else {
-            std::cout << "Everything is fine :) No need LRI" << std::endl;
+        if(this->moveMeshToDeform) {
+            if( this->outlier_vertices.size() > 0 ){
+                std::cout << "Solving LRI..." << std::endl;
+                this->computeBasisTransforms();
+                this->update_constraints();
+                this->meshToDeform->computeNormals();
+                this->meshToDeform->updatebbox();
+            } else {
+                std::cout << "Everything is fine :) No need LRI" << std::endl;
+            }
         }
     }
 
@@ -362,10 +364,10 @@ struct CageGreenLRI : CageGreen {
         std::vector<float> volumes (this->tetrahedra.size(), 0.);
         for(unsigned int i = 0 ; i < this->tetrahedra.size() ; i ++){
             const Tetrahedron ch = tetrahedra[i];
-            const glm::vec3 p0 = this->getMeshToDeform()->vertices[ch.pointsIdx[0]];
-            const glm::vec3 p1 = this->getMeshToDeform()->vertices[ch.pointsIdx[1]];
-            const glm::vec3 p2 = this->getMeshToDeform()->vertices[ch.pointsIdx[2]];
-            const glm::vec3 p3 = this->getMeshToDeform()->vertices[ch.pointsIdx[3]];
+            const glm::vec3 p0 = this->getMeshToDeform()->getVertice(ch.pointsIdx[0]);
+            const glm::vec3 p1 = this->getMeshToDeform()->getVertice(ch.pointsIdx[1]);
+            const glm::vec3 p2 = this->getMeshToDeform()->getVertice(ch.pointsIdx[2]);
+            const glm::vec3 p3 = this->getMeshToDeform()->getVertice(ch.pointsIdx[3]);
 
             glm::vec3 e10 = p1 - p0;
             glm::vec3 e20 = p2 - p0;
@@ -579,10 +581,13 @@ struct CageGreenLRI : CageGreen {
         for( unsigned int i = 0 ; i < verts_constraints.size() ; i ++ ){
             unsigned int vertexInSolver = verts_constraints[i];
             // TODO: warning here
-            glm::vec3 pos = this->getMeshToDeform()->vertices[verts_mapping_from_solver_to_mesh[vertexInSolver]];
+            glm::vec3 pos = this->getMeshToDeform()->getVertice(verts_mapping_from_solver_to_mesh[vertexInSolver]);
             for( unsigned int coord = 0 ; coord < 3 ; ++coord )
                 VerticesSolver.setValueInB( edges.size() + i , coord , pos[coord] );
         }
+
+        std::vector<int> verticesIdxToReplace;
+        std::vector<glm::vec3> newVertices;
 
         // solve:
         VerticesSolver.solve();
@@ -592,10 +597,12 @@ struct CageGreenLRI : CageGreen {
             for( unsigned int coord = 0 ; coord < 3 ; ++coord )
                 p[coord] = VerticesSolver.getSolutionValue( v,coord );
             int vh = verts_mapping_from_solver_to_mesh[v];
-            if( this->outlier_vertices[vh] )
-                // TODO: warning here
-                this->meshToDeform->vertices[vh] = glm::vec3(p[0], p[1], p[2]);
+            if( this->outlier_vertices[vh] ) {
+                verticesIdxToReplace.push_back(vh);
+                newVertices.push_back(glm::vec3(p[0], p[1], p[2]));
+            }
         }
+        this->meshToDeform->replacePoints(verticesIdxToReplace, newVertices);
         // free:
         BasisSolver.freeSolution();
         VerticesSolver.freeSolution();
