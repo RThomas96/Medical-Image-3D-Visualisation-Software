@@ -17,6 +17,7 @@
 
 #include "../../grid/geometry/grid.hpp"
 #include "../../grid/drawable/drawable_manipulator.hpp"
+#include "../../grid/deformation/mesh_deformer.hpp"
 
 inline unsigned int planeHeadingToIndex(planeHeading _heading) {
 	switch (_heading) {
@@ -3966,3 +3967,17 @@ bool Scene::isRightTool(const UITool::MeshManipulatorType& typeToCheck) {
 void Scene::moveTool_toggleEvenMode() { auto toolPtr = this->getMeshTool<UITool::PositionManipulator>(); if(toolPtr) { toolPtr->toggleEvenMode(); } };
 
 void Scene::ARAPTool_toggleEvenMode() { auto toolPtr = this->getMeshTool<UITool::ARAPManipulator>(); if(toolPtr) { toolPtr->toggleEvenMode(); } };
+
+void Scene::undo() {
+    BaseMesh * mesh = this->getBaseMesh(this->activeMesh);
+    if(mesh && mesh->history) {
+        std::vector<glm::vec3> pointsBefore;
+        if(mesh->history->undo(pointsBefore)) {
+            mesh->replacePoints(pointsBefore);
+            this->sendFirstTetmeshToGPU();
+        }
+    } else {
+        std::cout << "WARNING: the active mesh do not contain any history" << std::endl;
+        return;
+    }
+}

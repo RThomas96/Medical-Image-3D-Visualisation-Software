@@ -19,10 +19,6 @@ struct MeshDeformer {
 
     MeshDeformer(BaseMesh * baseMesh, DeformMethod deformMethod) : baseMesh(baseMesh), deformMethod(deformMethod) {}
 
-    void replacePoint(int i, const glm::vec3& pt);
-    void replacePoints(const std::vector<int>& verticesIdxToReplace, const std::vector<glm::vec3>& targets);
-    void replacePoints(const std::vector<glm::vec3>& targets);
-
     // Here origin is basically the clicked point
     virtual void movePoint(int origin, const glm::vec3& target) = 0;
     virtual void movePoints(const std::vector<int>& origins, const std::vector<glm::vec3>& targets) = 0;

@@ -7,6 +7,52 @@
 #include <glm/gtx/io.hpp>
 #include <vector>
 
+struct History {
+    bool isActive;
+    int currentState;
+    std::vector<std::vector<glm::vec3>> history;
+
+    History(const std::vector<glm::vec3> initialPoints): history({initialPoints}), currentState(0), isActive(true) {}
+
+    void activate() { this->isActive = true; }
+    void deactivate() { this->isActive = false; }
+
+    bool undo(std::vector<glm::vec3>& res) {
+        if(currentState == 0) {
+            std::cout << "WARNING: can't undo, no more operations" << std::endl;
+            return false;
+        }
+        
+        this->currentState -= 1;
+        res = history[currentState];
+        return true;
+    }
+
+    bool redo(std::vector<glm::vec3>& res) {
+        if(currentState == history.size()-1) {
+            std::cout << "WARNING: can't redo, no more operations" << std::endl;
+            return false;
+        }
+        
+        this->currentState += 1;
+        res = history[currentState];
+        return true;
+    }
+
+    void addStep(const std::vector<glm::vec3>& points) {
+        if(!this->isActive)
+            return;
+        if(this->currentState < this->history.size()-1) {
+            int nbStateToDelete = (this->history.size()-1) - this->currentState;
+            for(int i = 0; i < nbStateToDelete; ++i)
+                this->history.pop_back();
+        }
+        std::cout << "Add operation in history [" << points.size() << "]" << std::endl;
+        this->currentState += 1;
+        this->history.push_back(points);
+    }
+};
+
 struct MeshDeformer;
 struct NormalMethod;
 struct ARAPMethod;
@@ -43,6 +89,8 @@ public:
     glm::vec3 bbMax;
 
     MeshDeformer * meshDeformer;// It will move the mesh points using certain strategies
+    MeshDeformer * normalDeformer;// Move the mesh points using the normal strategy
+    History * history;// Allow to undo/redo between BaseMesh vertices positions
 
     glm::vec3 getDimensions() const;
     //int getIdxOfClosestPoint(const glm::vec3& p) const;
@@ -73,6 +121,13 @@ public:
     virtual void movePoint(const int& origin, const glm::vec3& target);
     virtual void movePoints(const std::vector<int>& origins, const std::vector<glm::vec3>& targets);
     void movePoints(const std::vector<glm::vec3>& targets);
+
+    // Quick hack for mixing normal and arap method...
+    bool useNormal = false;
+    virtual void replacePoint(const int& origin, const glm::vec3& target) { this->history->deactivate(); this->useNormal=true; this->movePoint(origin, target); this->useNormal=false; this->history->activate();};
+    virtual void replacePoints(const std::vector<int>& origins, const std::vector<glm::vec3>& targets) { this->history->deactivate(); this->useNormal=true; this->movePoints(origins, targets); this->useNormal=false; this->history->activate();};
+    virtual void replacePoints(const std::vector<glm::vec3>& targets) { this->history->deactivate(); this->useNormal=true; this->movePoints(targets); this->useNormal=false; this->history->activate();};
+
     virtual void setARAPDeformationMethod() = 0;
     virtual bool getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos, glm::vec3& res) const = 0;
     virtual void computeNeighborhood() = 0;

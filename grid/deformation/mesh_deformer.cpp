@@ -4,24 +4,6 @@
 #include <algorithm>
 #include "glm/gtx/string_cast.hpp"
 
-void MeshDeformer::replacePoints(const std::vector<int>& verticesIdxToReplace, const std::vector<glm::vec3>& targets) {
-    for(int i = 0; i < verticesIdxToReplace.size(); ++i) {
-        this->baseMesh->vertices[verticesIdxToReplace[i]] = targets[i];
-    }
-}
-
-void MeshDeformer::replacePoints(const std::vector<glm::vec3>& targets) {
-    if(targets.size() != this->baseMesh->vertices.size()) {
-        std::cout << "ERROR: impossible to replace points, number of vertices not equal" << std::endl;
-    } else {
-        this->baseMesh->vertices = targets;
-    }
-}
-
-void MeshDeformer::replacePoint(int i, const glm::vec3& pt) { this->baseMesh->vertices[i] = pt; };
-
-/***/
-
 NormalMethod::NormalMethod(BaseMesh * baseMesh) : MeshDeformer(baseMesh, DeformMethod::NORMAL) {}
 
 void NormalMethod::movePoint(int origin, const glm::vec3& target) {

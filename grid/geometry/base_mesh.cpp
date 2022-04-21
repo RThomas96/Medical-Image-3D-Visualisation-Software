@@ -9,7 +9,7 @@
 #include <numeric>
 
 
-BaseMesh::BaseMesh(): bbMin(glm::vec3(0., 0., 0.)), bbMax(glm::vec3(0., 0., 0.)), meshDeformer(new NormalMethod(this)) {
+BaseMesh::BaseMesh(): bbMin(glm::vec3(0., 0., 0.)), bbMax(glm::vec3(0., 0., 0.)), meshDeformer(new NormalMethod(this)), normalDeformer(new NormalMethod(this)), history(nullptr) {
 }
 
 glm::vec3 BaseMesh::getDimensions() const {
@@ -50,15 +50,25 @@ void BaseMesh::updatebbox() {
 //}
 
 void BaseMesh::movePoint(const int& origin, const glm::vec3& target) {
-    this->meshDeformer->movePoint(origin, target);
+    if(this->useNormal) {
+        this->normalDeformer->movePoint(origin, target);
+    } else {
+        this->meshDeformer->movePoint(origin, target);
+    }
     this->computeNormals();
     this->updatebbox();
+    this->history->addStep(this->vertices);
 }
 
 void BaseMesh::movePoints(const std::vector<int>& origins, const std::vector<glm::vec3>& targets) {
-    this->meshDeformer->movePoints(origins, targets);
+    if(this->useNormal) {
+        this->normalDeformer->movePoints(origins, targets);
+    } else {
+        this->meshDeformer->movePoints(origins, targets);
+    }
     this->computeNormals();
     this->updatebbox();
+    this->history->addStep(this->vertices);
 }
 
 void BaseMesh::movePoints(const std::vector<glm::vec3>& targets) {

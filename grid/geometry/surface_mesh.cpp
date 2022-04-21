@@ -103,7 +103,11 @@ SurfaceMesh::SurfaceMesh(std::string const &filename) {
     } else if (filename.substr(filename.find_last_of(".") + 1) == "off") {
         std::cout << "Loading OFF" << std::endl;
         this->loadOFF(filename);
+    } else {
+        throw std::runtime_error("ERROR: surface mesh loading, format not supported");
     }
+
+    this->history = new History(this->vertices);
 
     this->updatebbox();
 

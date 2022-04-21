@@ -194,11 +194,12 @@ MAIN
     - [x] Utiliser le move point du move manip pour debuger le link mesh 
     - [x] Retirer la sélection du mesh deformer
     - [x] Tout passer en index pour les perfs
-    - [ ] Ajouter un undo
+    - [x] Ajouter un undo
+- [ ] Faire une interface pour lire une liste de point et les sortir déformés 
 - [ ] Sauvegarder le maillage tétrahédrique déformé et la cage dans un format .deform
     - [ ] Terminer les interfaces IO
 - [ ] Ouvrir un couple maillage tétrahédrique initial et déformé dans un format .deform
-- [ ] Faire une interface pour lire une liste de point et les sortir déformés 
+- [ ] Améliorer les perfs en checkant OMP
 - [ ] Réparer la déformation de l'atlas avec le LRI
     - [ ] Vérifier que c'est bien la cage et le transfert qui cassent le LRI
     - [ ] Générer une cage et un transfert compatible avec le LRI
@@ -256,12 +257,14 @@ OPTIONNAL
 - [ ] Faire une dual sauvegarde pour faire des correspondance 
 
 CODE DEBT
+- [ ] Changer la scene est mettre des maps 
 - [ ] Retirer tous les signaux de manipulation de radius 
 - [ ] Supprimer l'ancien registration tool et renommer le "fixed"
 - [ ] Supprimer l'ancien registration et tout ce qui s'en rapporte (undo etc) 
 - [x] Supprimer le weighted mesh deformer
 - [x] Refont du deformer, retirer la sélection par exemple car suppression du weighted de toute façon
 - [ ] Refaire une architecture de cmake correct pour accelérer le temps de compilation
+- [ ] Retirer NormalDeformer et revoir l'architecture des deformer en général en changeant par un enum pour pouvoir utiliser les deux simultanément
 
 BUG
 - [ ] You cannot change the voxel size when you load a custom transfert mesh

@@ -637,21 +637,22 @@ namespace UITool {
         //        this->initializeSelection();
         //});
         QObject::connect(&this->selection, &Selection::beginSelection, this, [this](){this->initializeSelection();});
-        QObject::connect(&this->selection, &Selection::endSelection, this, [this](){
-                if(!this->kid_manip->isEnable) {
-                    this->kid_manip->enable();
-                }
-                glm::vec3 glmMean = this->getMeanPositionSelectedManipulators();
-                this->kid_manip->setOrigine(qglviewer::Vec(glmMean[0], glmMean[1], glmMean[2]));
-                Q_EMIT needChangeKidManipulatorRadius(glm::length(this->selectionMax - this->selectionMin));
-
-                this->setLockAllManipulators(false);
-                for(int i = 0; i < this->selectedManipulatorsIdx.size(); ++i) {
-                    glm::vec3 glmManipPos = this->manipulators[this->selectedManipulatorsIdx[i]].getManipPosition();
-                    this->kid_manip->addPoint(i, qglviewer::Vec(glmManipPos[0], glmManipPos[1], glmManipPos[2]));
-                }
-         });
+        QObject::connect(&this->selection, &Selection::endSelection, this, [this](){this->initializeKidManipWithSelection();});
 	}
+
+    void ARAPManipulator::initializeKidManipWithSelection() {
+        this->kid_manip->clear();
+
+        glm::vec3 glmMean = this->getMeanPositionSelectedManipulators();
+        this->kid_manip->setOrigine(qglviewer::Vec(glmMean[0], glmMean[1], glmMean[2]));
+        Q_EMIT needChangeKidManipulatorRadius(glm::length(this->selectionMax - this->selectionMin));
+
+        this->setLockAllManipulators(false);
+        for(int i = 0; i < this->selectedManipulatorsIdx.size(); ++i) {
+            glm::vec3 glmManipPos = this->manipulators[this->selectedManipulatorsIdx[i]].getManipPosition();
+            this->kid_manip->addPoint(i, qglviewer::Vec(glmManipPos[0], glmManipPos[1], glmManipPos[2]));
+        }
+    }
 
     glm::vec3 ARAPManipulator::getMeanPositionSelectedManipulators() {
         glm::vec mean = glm::vec3(0., 0., 0.);
@@ -684,6 +685,11 @@ namespace UITool {
         this->setLockAllManipulators(true);
         this->resetMinAndMax(); 
         this->selectedManipulatorsIdx.clear();
+        for(int i = 0; i < this->selectedManipulators.size(); ++i) {
+            if(this->selectedManipulators[i]) {
+                dynamic_cast<ARAPMethod*>(this->mesh->meshDeformer)->unsetHandle(i);
+            }
+        }
         std::fill(this->selectedManipulators.begin(), this->selectedManipulators.end(), false);
         ARAPMethod * deformer = dynamic_cast<ARAPMethod*>(this->mesh->meshDeformer);
         if(deformer) {
@@ -725,6 +731,7 @@ namespace UITool {
 				this->manipulators[i].setManipPosition(positions[i]);
 				this->manipulators[i].setLastPosition(positions[i]);
 			}
+            this->initializeKidManipWithSelection();
 		} else {
 			std::cerr << "WARNING: try to set [" << this->manipulators.size() << "] manipulators positions with a position vector of size [" << positions.size() << "]" << std::endl;
 		}

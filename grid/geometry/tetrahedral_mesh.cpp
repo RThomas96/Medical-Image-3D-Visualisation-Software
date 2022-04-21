@@ -459,6 +459,8 @@ void TetMesh::loadMESH(std::string const &filename) {
     std::cout << "Points: " << this->vertices.size() << std::endl;
     std::cout << "Tetrahedron: " << this->mesh.size() << std::endl;
 
+    this->history = new History(this->vertices);
+
     this->updatebbox();
     this->computeNeighborhood();
     this->computeNormals();

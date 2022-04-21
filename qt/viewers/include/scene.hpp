@@ -514,6 +514,9 @@ public slots:
     // Tool management
     void updateTools(UITool::MeshManipulatorType tool);
 
+    // Mesh management
+    void undo();
+
     // Move tool
     void moveTool_toggleEvenMode();
     void toggleBindMeshToCageMove();

@@ -110,6 +110,10 @@ void MainWidget::setupWidgets() {
     this->toolbar->addAction(this->actionManager->getAction("ToggleARAPTool"));
     this->toolbar->addAction(this->actionManager->getAction("ToggleRegisterTool"));
 
+    this->toolbar->addSeparator();
+
+    this->toolbar->addAction(this->actionManager->getAction("Undo"));
+
     /***/
 
 	this->viewMenu = this->menuBar()->addMenu("&View");
@@ -433,8 +437,9 @@ void MainWidget::setupActions() {
 
     this->actionManager->createQActionGroup("FixedTool", {"FixedTool_apply", "FixedTool_clear"});
 
-    // Group filters
-    // Show/hide group of actions
+    // Undo
+    this->actionManager->createQActionButton("Undo", "Undo", "ctrl+z", "Undo", "undo");
+    QObject::connect(this->actionManager->getAction("Undo"), &QAction::triggered, [this](){this->scene->undo();});
 }
 
 void MainWidget::toggleDisplayPlanarViewers() {

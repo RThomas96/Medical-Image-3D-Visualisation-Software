@@ -40,6 +40,7 @@ struct Cage : public SurfaceMesh {
     
     virtual void reInitialize() = 0;
     virtual void computeCoordinates() = 0;
+    virtual void updateMeshToDeform() = 0;
 
     void applyCage(const std::vector<glm::vec3>& cage);
 
@@ -90,6 +91,42 @@ struct Cage : public SurfaceMesh {
         this->moveMeshToDeform = false;
     }
 
+    void replacePoint(const int& origin, const glm::vec3& target) override {
+        BaseMesh::replacePoint(origin, target);
+
+        this->history->deactivate(); 
+        this->useNormal=true;
+
+        this->movePoint(0, this->vertices[0]);// Update the mesh to deform
+
+        this->history->activate(); 
+        this->useNormal=false;
+    };
+
+    void replacePoints(const std::vector<int>& origins, const std::vector<glm::vec3>& targets) override {
+        BaseMesh::replacePoints(origins, targets);
+
+        this->history->deactivate(); 
+        this->useNormal=true;
+
+        this->movePoint(0, this->vertices[0]);// Update the mesh to deform
+
+        this->history->activate(); 
+        this->useNormal=false;
+    };
+
+    void replacePoints(const std::vector<glm::vec3>& targets) override {
+        BaseMesh::replacePoints(targets);
+
+        this->history->deactivate(); 
+        this->useNormal=true;
+
+        this->movePoint(0, this->vertices[0]);// Update the mesh to deform
+
+        this->history->activate(); 
+        this->useNormal=false;
+    };
+
     virtual ~Cage(){};
 };
 
@@ -109,6 +146,7 @@ struct CageMVC : Cage {
     void movePoint(const int& origin, const glm::vec3& target) override;
     void movePoints(const std::vector<int>& origins, const std::vector<glm::vec3>& targets) override;
     void computeCoordinates() override;
+    void updateMeshToDeform() override;
 };
 
 struct CageGreen : Cage {
@@ -132,6 +170,7 @@ struct CageGreen : Cage {
     void movePoint(const int& origin, const glm::vec3& target) override;
     void movePoints(const std::vector<int>& origins, const std::vector<glm::vec3>& targets) override;
     void computeCoordinates() override;
+    void updateMeshToDeform() override;
 
     void update_cage_triangle_scalingFactors();
 
@@ -230,24 +269,27 @@ struct CageGreenLRI : CageGreen {
         }
     }
 
-    void movePoint(const int& origin, const glm::vec3& target) override {
-        CageGreen::movePoint(origin, target);
+    void updateMeshToDeform() override {
+        CageGreen::updateMeshToDeform();
         if(this->moveMeshToDeform) {
             if( this->outlier_vertices.size() > 0 ){
                 std::cout << "Solving LRI..." << std::endl;
                 this->computeBasisTransforms();
                 this->update_constraints();
-                this->meshToDeform->computeNormals();
-                this->meshToDeform->updatebbox();
             } else {
                 std::cout << "Everything is fine :) No need LRI" << std::endl;
             }
         }
     }
 
+    void movePoint(const int& origin, const glm::vec3& target) override {
+        CageGreen::movePoint(origin, target);
+        this->updateMeshToDeform();
+    }
+
     void movePoints(const std::vector<int>& origins, const std::vector<glm::vec3>& targets) override {
         CageGreen::movePoints(origins, targets);
-        this->movePoint(0, this->vertices[0]);// Artificially move a point to move the deformed mesh
+        this->updateMeshToDeform();
     }
 
     CageGreenLRI(std::string const &filename, TetMesh * meshToDeform) : CageGreen(filename, meshToDeform) {

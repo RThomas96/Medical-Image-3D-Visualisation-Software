@@ -781,9 +781,18 @@ public:
 
     void clear()
     {
-        this->coordinates.clear();
-        this->setEtat( 0 );
-        this->idpoints.clear();
+        RepX = qglviewer::Vec(1,0,0);
+        RepY = qglviewer::Vec(0,1,0);
+        RepZ = qglviewer::Vec(0,0,1);
+        AngularRepX = qglviewer::Vec(1,0,0);
+        AngularRepY = qglviewer::Vec(0,1,0);
+        AngularRepZ = qglviewer::Vec(0,0,1);
+        coordinates.clear();
+        angular_coordinates.clear();
+        rep_angular_coordinates.clear();
+        rep_coordinates.clear();
+        idpoints.clear();
+        this->enable();
     }
 
     void manipulatedCallback()
