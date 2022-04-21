@@ -7,7 +7,8 @@
 #include <tiffio.h>
 #include "cache.hpp"
 #include <fstream>
-#include <sys/stat.h>
+//#include <sys/stat.h>
+#include <filesystem>
 
 #include <QString>
 #include <QDir>
@@ -86,9 +87,10 @@ struct SimpleTIFFImage {
 };
 
 inline bool fileExist (const std::string& name) {
-  struct stat buffer;
-  struct stat lbuffer;// For symbolic link
-  return (stat (name.c_str(), &buffer) == 0) || (lstat (name.c_str(), &lbuffer) == 0);
+  //struct stat buffer;
+  //struct stat lbuffer;// For symbolic link
+  //return (stat (name.c_str(), &buffer) == 0) || (lstat (name.c_str(), &lbuffer) == 0);
+  return std::filesystem::exists(name.c_str());
 }
 
 struct SimpleOMETIFFImage : public SimpleTIFFImage {
