@@ -8,7 +8,7 @@
 #include "cache.hpp"
 #include <fstream>
 //#include <sys/stat.h>
-#include <filesystem>
+//#include <filesystem>
 
 #include <QString>
 #include <QDir>
@@ -90,7 +90,13 @@ inline bool fileExist (const std::string& name) {
   //struct stat buffer;
   //struct stat lbuffer;// For symbolic link
   //return (stat (name.c_str(), &buffer) == 0) || (lstat (name.c_str(), &lbuffer) == 0);
-  return std::filesystem::exists(name.c_str());
+  //return std::filesystem::exists(name.c_str());
+  if (FILE *file = fopen(name.c_str(), "r")) {
+      fclose(file);
+      return true;
+  } else {
+      return false;
+  }
 }
 
 struct SimpleOMETIFFImage : public SimpleTIFFImage {
