@@ -28,7 +28,7 @@ void Cage::applyCage(const std::vector<glm::vec3>& cage) {
             this->vertices[i] = cage[i];
     }
     // Artificially move a point to update the vertices position of the mesh to deform
-    this->movePoint(this->vertices[0], this->vertices[0]);
+    this->movePoint(0, this->vertices[0]);
 }
 
 void CageMVC::reInitialize() {
@@ -38,7 +38,7 @@ void CageMVC::reInitialize() {
     this->computeCoordinates();
 }
 
-void CageMVC::movePoint(const glm::vec3& origin, const glm::vec3& target) {
+void CageMVC::movePoint(const int& origin, const glm::vec3& target) {
     BaseMesh::movePoint(origin, target);// Update the cage positions
     // Update positions of the mesh to deform
     if(this->moveMeshToDeform) {
@@ -50,10 +50,10 @@ void CageMVC::movePoint(const glm::vec3& origin, const glm::vec3& target) {
     }
 }
 
-void CageMVC::movePoints(const std::vector<glm::vec3>& origins, const std::vector<glm::vec3>& targets) {
+void CageMVC::movePoints(const std::vector<int>& origins, const std::vector<glm::vec3>& targets) {
     BaseMesh::movePoints(origins, targets);
     if(this->moveMeshToDeform) {
-        this->movePoint(this->vertices[0], this->vertices[0]);// Artificially move a point to move the deformed mesh
+        this->movePoint(0, this->vertices[0]);// Artificially move a point to move the deformed mesh
     }
 }
 
@@ -104,7 +104,7 @@ void CageGreen::reInitialize() {
     this->computeCoordinates();
 }
 
-void CageGreen::movePoint(const glm::vec3& origin, const glm::vec3& target) {
+void CageGreen::movePoint(const int& origin, const glm::vec3& target) {
     BaseMesh::movePoint(origin, target);// Update the cage positions
     if(this->moveMeshToDeform) {
         // Update positions of the mesh to deform
@@ -122,10 +122,10 @@ void CageGreen::movePoint(const glm::vec3& origin, const glm::vec3& target) {
     }
 }
 
-void CageGreen::movePoints(const std::vector<glm::vec3>& origins, const std::vector<glm::vec3>& targets) {
+void CageGreen::movePoints(const std::vector<int>& origins, const std::vector<glm::vec3>& targets) {
     BaseMesh::movePoints(origins, targets);
     if(this->moveMeshToDeform) {
-        this->movePoint(this->vertices[0], this->vertices[0]);// Artificially move a point to move the deformed mesh
+        this->movePoint(0, this->vertices[0]);// Artificially move a point to move the deformed mesh
     }
 }
 

@@ -45,7 +45,7 @@ public:
     MeshDeformer * meshDeformer;// It will move the mesh points using certain strategies
 
     glm::vec3 getDimensions() const;
-    int getIdxOfClosestPoint(const glm::vec3& p) const;
+    //int getIdxOfClosestPoint(const glm::vec3& p) const;
 
     BaseMesh();
 
@@ -70,8 +70,9 @@ public:
 
     void drawNormals() const;
 
-    virtual void movePoint(const glm::vec3& origin, const glm::vec3& target);
-    virtual void movePoints(const std::vector<glm::vec3>& origins, const std::vector<glm::vec3>& targets);
+    virtual void movePoint(const int& origin, const glm::vec3& target);
+    virtual void movePoints(const std::vector<int>& origins, const std::vector<glm::vec3>& targets);
+    void movePoints(const std::vector<glm::vec3>& targets);
     virtual void setARAPDeformationMethod() = 0;
     virtual bool getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos, glm::vec3& res) const = 0;
     virtual void computeNeighborhood() = 0;

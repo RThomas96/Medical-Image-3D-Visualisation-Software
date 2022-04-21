@@ -193,7 +193,7 @@ MAIN
 - [ ] Tester et finir tous les outils pour faire le recalage
     - [x] Utiliser le move point du move manip pour debuger le link mesh 
     - [x] Retirer la sélection du mesh deformer
-    - [ ] Tout passer en index pour les perfs
+    - [x] Tout passer en index pour les perfs
     - [ ] Ajouter un undo
 - [ ] Sauvegarder le maillage tétrahédrique déformé et la cage dans un format .deform
     - [ ] Terminer les interfaces IO
@@ -259,8 +259,9 @@ CODE DEBT
 - [ ] Retirer tous les signaux de manipulation de radius 
 - [ ] Supprimer l'ancien registration tool et renommer le "fixed"
 - [ ] Supprimer l'ancien registration et tout ce qui s'en rapporte (undo etc) 
-- [ ] Supprimer le weighted mesh deformer
-- [ ] Refont du deformer, retirer la sélection par exemple car suppression du weighted de toute façon
+- [x] Supprimer le weighted mesh deformer
+- [x] Refont du deformer, retirer la sélection par exemple car suppression du weighted de toute façon
+- [ ] Refaire une architecture de cmake correct pour accelérer le temps de compilation
 
 BUG
 - [ ] You cannot change the voxel size when you load a custom transfert mesh

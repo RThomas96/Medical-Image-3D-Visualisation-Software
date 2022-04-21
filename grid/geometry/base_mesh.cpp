@@ -6,6 +6,7 @@
 #include <math.h>
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/string_cast.hpp> 
+#include <numeric>
 
 
 BaseMesh::BaseMesh(): bbMin(glm::vec3(0., 0., 0.)), bbMax(glm::vec3(0., 0., 0.)), meshDeformer(new NormalMethod(this)) {
@@ -35,29 +36,35 @@ void BaseMesh::updatebbox() {
     //std::cout << "BBox updated to [" << glm::to_string(this->bbMin) << "] [" << glm::to_string(this->bbMax) << "]" << "[" << glm::to_string(this->getOrigin()) << "]" << std::endl;
 }
 
-int BaseMesh::getIdxOfClosestPoint(const glm::vec3& p) const{
-    float distance = std::numeric_limits<float>::max();
-    int res = 0;
-    for(int i = 0; i < this->vertices.size(); ++i) {
-        float currentDistance = glm::distance(p, this->vertices[i]);
-        if(currentDistance < distance) {
-            distance = currentDistance;
-            res = i;
-        }
-    }
-    return res;
-}
+//int BaseMesh::getIdxOfClosestPoint(const glm::vec3& p) const{
+//    float distance = std::numeric_limits<float>::max();
+//    int res = 0;
+//    for(int i = 0; i < this->vertices.size(); ++i) {
+//        float currentDistance = glm::distance(p, this->vertices[i]);
+//        if(currentDistance < distance) {
+//            distance = currentDistance;
+//            res = i;
+//        }
+//    }
+//    return res;
+//}
 
-void BaseMesh::movePoint(const glm::vec3& origin, const glm::vec3& target) {
+void BaseMesh::movePoint(const int& origin, const glm::vec3& target) {
     this->meshDeformer->movePoint(origin, target);
     this->computeNormals();
     this->updatebbox();
 }
 
-void BaseMesh::movePoints(const std::vector<glm::vec3>& origins, const std::vector<glm::vec3>& targets) {
+void BaseMesh::movePoints(const std::vector<int>& origins, const std::vector<glm::vec3>& targets) {
     this->meshDeformer->movePoints(origins, targets);
     this->computeNormals();
     this->updatebbox();
+}
+
+void BaseMesh::movePoints(const std::vector<glm::vec3>& targets) {
+    std::vector<int> indices(this->vertices.size());
+    std::iota(std::begin(indices), std::end(indices), 0); // Fill with 0, 1, ..., vertices.size
+    this->movePoints(indices, targets);
 }
 
 void BaseMesh::setNormalDeformationMethod() {

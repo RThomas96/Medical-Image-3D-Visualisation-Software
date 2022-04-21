@@ -104,7 +104,8 @@ namespace UITool {
     }
 
     void DirectManipulator::moveManipulator(Manipulator * manipulator) {
-        this->mesh->movePoint(manipulator->lastPosition, manipulator->getManipPosition());
+        ptrdiff_t index = manipulator - &(this->manipulators[0]);
+        this->mesh->movePoint(index, manipulator->getManipPosition());
         Q_EMIT needSendTetmeshToGPU();
     }
 
@@ -180,7 +181,7 @@ namespace UITool {
     }
 
     void FreeManipulator::moveManipulator(Manipulator * manipulator) {
-        this->mesh->movePoint(manipulator->lastPosition, manipulator->getManipPosition());
+        this->mesh->movePoint(0, manipulator->getManipPosition());
         Q_EMIT needSendTetmeshToGPU();
     }
 
@@ -243,7 +244,7 @@ namespace UITool {
             this->kid_manip->getTransformedPoint(i, trueIndex, deformedPoint);
             newPoints[i] = glm::vec3(deformedPoint[0], deformedPoint[1], deformedPoint[2]);
         }
-        this->mesh->movePoints(this->mesh->getVertices(), newPoints);
+        this->mesh->movePoints(newPoints);
         Q_EMIT needSendTetmeshToGPU();
     }
 
@@ -691,19 +692,19 @@ namespace UITool {
     }
 
     void ARAPManipulator::moveKidManip() {
-        std::vector<glm::vec3> originalPoints;
+        std::vector<int> indices;
         std::vector<glm::vec3> targetPoints;
         for(int i = 0; i < this->selectedManipulatorsIdx.size(); ++i) {
             qglviewer::Vec deformedPoint;
             int trueIndex;
             this->kid_manip->getTransformedPoint(i, trueIndex, deformedPoint);
             if(!std::isnan(deformedPoint[0]) && !std::isnan(deformedPoint[1]) && !std::isnan(deformedPoint[2])) {
-                originalPoints.push_back(this->manipulators[this->selectedManipulatorsIdx[i]].getManipPosition());
+                indices.push_back(this->selectedManipulatorsIdx[i]);
                 //originalPoints.push_back(this->mesh->getVertice(this->selectedManipulatorsIdx[i]));
                 targetPoints.push_back(glm::vec3(deformedPoint[0], deformedPoint[1], deformedPoint[2]));
             }
         }
-        this->mesh->movePoints(originalPoints, targetPoints);
+        this->mesh->movePoints(indices, targetPoints);
         Q_EMIT needSendTetmeshToGPU();
     }
 
@@ -779,7 +780,8 @@ namespace UITool {
             std::cout << "WARNING: ARAP manipulator can be used only with the ARAP deformer !" << std::endl;
             return;
         }
-        this->mesh->movePoint(manipulator->lastPosition, manipulator->getManipPosition());
+        ptrdiff_t index = manipulator - &(this->manipulators[0]);
+        this->mesh->movePoint(index, manipulator->getManipPosition());
         Q_EMIT needSendTetmeshToGPU();
     }
 
@@ -999,7 +1001,8 @@ void SliceManipulator::hideManipulator(Manipulator * manipulatorToDisplay) {
 }
 
 void SliceManipulator::moveManipulator(Manipulator * manipulator) {
-    this->mesh->movePoint(manipulator->lastPosition, manipulator->getManipPosition());
+    ptrdiff_t index = manipulator - &(this->manipulators[0]);
+    this->mesh->movePoint(index, manipulator->getManipPosition());
     Q_EMIT needSendTetmeshToGPU();
 }
 
@@ -1155,7 +1158,7 @@ void SliceManipulator::removeAllHandles() {
 }
 
 void SliceManipulator::moveKidManip() {
-    std::vector<glm::vec3> originalPoints;
+    std::vector<int> indices;
     std::vector<glm::vec3> targetPoints;
     int idxInTransf = 0;
     for(int i = 0; i < this->selectedManipulators.size(); ++i) {
@@ -1165,12 +1168,12 @@ void SliceManipulator::moveKidManip() {
             this->kid_manip->getTransformedPoint(idxInTransf, trueIndex, deformedPoint);
             idxInTransf += 1;
             if(!std::isnan(deformedPoint[0]) && !std::isnan(deformedPoint[1]) && !std::isnan(deformedPoint[2])) {
-                originalPoints.push_back(this->manipulators[i].getManipPosition());
+                indices.push_back(this->selectedManipulators[i]);
                 targetPoints.push_back(glm::vec3(deformedPoint[0], deformedPoint[1], deformedPoint[2]));
             }
         }
     }
-    this->mesh->movePoints(originalPoints, targetPoints);
+    this->mesh->movePoints(indices, targetPoints);
     Q_EMIT needSendTetmeshToGPU();
 }
 

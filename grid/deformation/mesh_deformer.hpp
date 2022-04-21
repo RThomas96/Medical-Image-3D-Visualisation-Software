@@ -24,8 +24,8 @@ struct MeshDeformer {
     void replacePoints(const std::vector<glm::vec3>& targets);
 
     // Here origin is basically the clicked point
-    virtual void movePoint(const glm::vec3& origin, const glm::vec3& target) = 0;
-    virtual void movePoints(const std::vector<glm::vec3>& origins, const std::vector<glm::vec3>& targets) = 0;
+    virtual void movePoint(int origin, const glm::vec3& target) = 0;
+    virtual void movePoints(const std::vector<int>& origins, const std::vector<glm::vec3>& targets) = 0;
 
     virtual ~MeshDeformer(){};
 };
@@ -33,8 +33,8 @@ struct MeshDeformer {
 struct NormalMethod : MeshDeformer {
     NormalMethod(BaseMesh * baseMesh);
 
-    void movePoint(const glm::vec3& origin, const glm::vec3& target) override;
-    void movePoints(const std::vector<glm::vec3>& origins, const std::vector<glm::vec3>& targets) override;
+    void movePoint(int origin, const glm::vec3& target) override;
+    void movePoints(const std::vector<int>& origins, const std::vector<glm::vec3>& targets) override;
 };
 
 struct ARAPMethod : MeshDeformer {
@@ -48,8 +48,8 @@ struct ARAPMethod : MeshDeformer {
     void setHandle(int idx);
     void unsetHandle(int idx);
 
-    void movePoint(const glm::vec3& origin, const glm::vec3& target) override;
-    void movePoints(const std::vector<glm::vec3>& origins, const std::vector<glm::vec3>& targets) override;
+    void movePoint(int origin, const glm::vec3& target) override;
+    void movePoints(const std::vector<int>& origins, const std::vector<glm::vec3>& targets) override;
 
     void fitToPointList(const std::vector<int>& vertices, const std::vector<glm::vec3>& newPositions);
     void initARAP();

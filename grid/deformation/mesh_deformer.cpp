@@ -24,14 +24,13 @@ void MeshDeformer::replacePoint(int i, const glm::vec3& pt) { this->baseMesh->ve
 
 NormalMethod::NormalMethod(BaseMesh * baseMesh) : MeshDeformer(baseMesh, DeformMethod::NORMAL) {}
 
-void NormalMethod::movePoint(const glm::vec3& origin, const glm::vec3& target) {
-    const glm::vec3 deplacement = target - origin;
-    this->baseMesh->vertices[this->baseMesh->getIdxOfClosestPoint(origin)] += deplacement;
+void NormalMethod::movePoint(int origin, const glm::vec3& target) {
+    this->baseMesh->vertices[origin] = target;
 }
 
-void NormalMethod::movePoints(const std::vector<glm::vec3>& origins, const std::vector<glm::vec3>& targets) {
+void NormalMethod::movePoints(const std::vector<int>& origins, const std::vector<glm::vec3>& targets) {
     for(int i = 0; i < origins.size(); ++i) {
-        this->baseMesh->vertices[this->baseMesh->getIdxOfClosestPoint(origins[i])] = targets[i];
+        this->baseMesh->vertices[origins[i]] = targets[i];
     }
 }
 
@@ -81,9 +80,8 @@ void ARAPMethod::unsetHandle(int idx) {
     }
 }
 
-void ARAPMethod::movePoint(const glm::vec3& origin, const glm::vec3& target) {
-    const glm::vec3 deplacement = target - origin;
-    this->baseMesh->vertices[this->baseMesh->getIdxOfClosestPoint(origin)] += deplacement;
+void ARAPMethod::movePoint(int origin, const glm::vec3& target) {
+    this->baseMesh->vertices[origin] = target;
 
     if(this->onSurfaceMesh) {
         std::vector<Vec3D<float>> ptsAsVec3D;
@@ -98,15 +96,11 @@ void ARAPMethod::movePoint(const glm::vec3& origin, const glm::vec3& target) {
     }
 }
 
-void ARAPMethod::movePoints(const std::vector<glm::vec3>& origins, const std::vector<glm::vec3>& targets) {
-    std::vector<int> idxInMesh;
+void ARAPMethod::movePoints(const std::vector<int>& origins, const std::vector<glm::vec3>& targets) {
     for(int i = 0; i < origins.size(); ++i) {
-        idxInMesh.push_back(this->baseMesh->getIdxOfClosestPoint(origins[i]));
-    }
-    for(int i = 0; i < idxInMesh.size(); ++i) {
-        this->baseMesh->vertices[idxInMesh[i]] = targets[i];
-        if(!this->handles[idxInMesh[i]]) {
-            std::cout << "ERROR for index: " << idxInMesh[i] << std::endl;
+        this->baseMesh->vertices[origins[i]] = targets[i];
+        if(!this->handles[origins[i]]) {
+            std::cout << "ERROR: index [" << origins[i] << "] is not handles" << std::endl;
         }
     }
 
