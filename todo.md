@@ -190,11 +190,16 @@ Objectif: Terminer le workflow complet
 
 MAIN
 - [x] Préparer la réunion avec l'IGF
-- [ ] Tester et finir tous les outils pour faire le recalage
+- [x] Tester et finir tous les outils pour faire le recalage
     - [x] Utiliser le move point du move manip pour debuger le link mesh 
     - [x] Retirer la sélection du mesh deformer
     - [x] Tout passer en index pour les perfs
     - [x] Ajouter un undo
+- [ ] Ecrire la déformation d'un point
+    - [x] Ecrire la fonction de transformation
+    - [ ] Rendre la transformation bi-directionnel
+    - [ ] Nettoyer le pipeline de transformation
+    - [ ] Faire l'interface de transformation de points
 - [ ] Faire une interface pour lire une liste de point et les sortir déformés 
 - [ ] Sauvegarder le maillage tétrahédrique déformé et la cage dans un format .deform
     - [ ] Terminer les interfaces IO

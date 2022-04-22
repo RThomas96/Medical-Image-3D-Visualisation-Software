@@ -114,6 +114,10 @@ void MainWidget::setupWidgets() {
 
     this->toolbar->addAction(this->actionManager->getAction("Undo"));
 
+    this->toolbar->addSeparator();
+
+    this->toolbar->addAction(this->actionManager->getAction("Transform"));
+
     /***/
 
 	this->viewMenu = this->menuBar()->addMenu("&View");
@@ -440,6 +444,16 @@ void MainWidget::setupActions() {
     // Undo
     this->actionManager->createQActionButton("Undo", "Undo", "ctrl+z", "Undo", "undo");
     QObject::connect(this->actionManager->getAction("Undo"), &QAction::triggered, [this](){this->scene->undo();});
+
+    // Pipeline
+    this->actionManager->createQActionButton("Transform", "Transform", "", "Get the point in the associated image", "deform");
+    //QObject::connect(this->actionManager->getAction("Transform"), &QAction::triggered, [this](){
+    //        glm::vec3 res = this->scene->getTransformedPoint(glm::vec3(205., 49., 266.), "atlas", "irm");
+    //        this->scene->getTransformedPoint(res, "irm", "atlas");
+    //});
+    QObject::connect(this->actionManager->getAction("Transform"), &QAction::triggered, [this](){
+            this->scene->writeDeformation("irm", "atlas");
+    });
 }
 
 void MainWidget::toggleDisplayPlanarViewers() {

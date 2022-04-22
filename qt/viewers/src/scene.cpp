@@ -3656,11 +3656,13 @@ int Scene::getGridIdx(const std::string& name) {
 
 void Scene::init() {
     if(this->demos.demo_atlas_visu) {
-        this->openGrid(std::string("grid-atlas"), {std::string("/data/datasets/data/Thomas/data/atlas/atlas.tiff")}, 1, std::string("/data/datasets/data/Thomas/data/atlas/atlas-transfert.mesh"));
-        this->openCage(std::string("cage-atlas"), std::string("/data/datasets/data/Thomas/data/atlas/atlas-cage-hyperdilated.off"), std::string("grid-atlas"), true);
-        this->getCage(std::string("cage-atlas"))->unbindMovementWithDeformedMesh();
-        this->getCage(std::string("cage-atlas"))->setOrigin(this->getBaseMesh("grid-atlas")->getOrigin());
-        this->getCage(std::string("cage-atlas"))->bindMovementWithDeformedMesh();
+        this->openGrid(std::string("atlas"), {std::string("/data/datasets/data/Thomas/data/atlas/atlas.tiff")}, 1, std::string("/data/datasets/data/Thomas/data/atlas/atlas-transfert.mesh"));
+        this->openCage(std::string("cage"), std::string("/data/datasets/data/Thomas/data/atlas/atlas-cage-hyperdilated.off"), std::string("atlas"), true);
+        this->getCage(std::string("cage"))->unbindMovementWithDeformedMesh();
+        this->getCage(std::string("cage"))->setOrigin(this->getBaseMesh("atlas")->getOrigin());
+        this->getCage(std::string("cage"))->bindMovementWithDeformedMesh();
+
+        this->openGrid(std::string("irm"), {std::string("/home/thomas/data/Data/Demo/IRM/irm.tif")}, 1, glm::vec3(3.9, 3.9, 50));
     }
 
     if(this->demos.demo_atlas_registration) {
@@ -3980,4 +3982,82 @@ void Scene::undo() {
         std::cout << "WARNING: the active mesh do not contain any history" << std::endl;
         return;
     }
+}
+
+glm::vec3 Scene::getTransformedPoint(const glm::vec3& inputPoint, const std::string& from, const std::string& to) {
+    glm::vec3 result = glm::vec3(0., 0., 0.);
+
+    Grid * fromGrid = this->grids[this->getGridIdx(from)]->grid;
+    Grid * toGrid = this->grids[this->getGridIdx(to)]->grid;
+
+    // From initial to deformed
+    glm::vec3 inputPointInFromGrid = inputPoint;
+    std::cout << "-------------" << std::endl;
+    std::cout << "Input point: " << inputPoint << std::endl;
+    std::cout << "From [" << from << "].image to [" << to << "].sampler: " << inputPointInFromGrid;
+    fromGrid->sampler.fromImageToSampler(inputPointInFromGrid);
+    std::cout << " -> " << inputPointInFromGrid << std::endl;
+
+    bool ptIsInInitial = fromGrid->initialMesh.getCoordInInitial(*fromGrid, inputPointInFromGrid, result);
+    std::cout << "From [" << from << "].initial to [" << from << "].deformed: " << inputPointInFromGrid << " -> " << result << std::endl;
+    if(!ptIsInInitial) {
+        std::cout << "Input point isn't in the original image" << std::endl;
+    }
+
+    std::cout << "From [" << from  << "].deformed to [" << to << "].deformed: manually done" << std::endl;
+
+    std::cout << "From [" << to  << "].deformed to [" << to << "].initial: " << result;
+    ptIsInInitial = toGrid->getCoordInInitial(toGrid->initialMesh, result, result);
+    if(!ptIsInInitial) {
+        std::cout << "Input point isn't in the original image" << std::endl;
+    }
+
+    std::cout << " -> " << result << std::endl;
+
+    std::cout << "From [" << to << "].sampler to [" << to << "].image: " << result;
+    toGrid->sampler.fromSamplerToImage(result);
+    std::cout << " -> " << result << std::endl;
+
+    std::cout << "-------------" << std::endl;
+    std::cout << "From [" << from  << "] to [" << to << "]grid: " << inputPoint << " -> " << result << std::endl;
+    std::cout << "-------------" << std::endl;
+
+    return result;
+}
+
+void Scene::writeDeformation(const std::string& from, const std::string& to) {
+
+    Grid * fromGrid = this->grids[this->getGridIdx(from)]->grid;
+    Grid * toGrid = this->grids[this->getGridIdx(to)]->grid;
+
+    glm::vec3 imgDimensions = fromGrid->sampler.getImageDimensions();
+
+    TinyTIFFWriterFile * tif = TinyTIFFWriter_open("deformed_image.tif", 16, TinyTIFFWriter_UInt, 1, imgDimensions[0], imgDimensions[1], TinyTIFFWriter_Greyscale);
+    std::vector<uint16_t> data;
+    data.resize(imgDimensions[0] * imgDimensions[1]);
+
+
+    int dataIdx = 0;
+    for(int k = 0; k < imgDimensions[2]; ++k) {
+        std::cout << "Loading: " << (k/imgDimensions[2]) * 100. << "%" << std::endl;
+        dataIdx = 0;
+        for(int j = 0; j < imgDimensions[1]; ++j) {
+            for(int i = 0; i < imgDimensions[0]; ++i) {
+                glm::vec3 p(i, j, k);
+                fromGrid->sampler.fromImageToSampler(p);
+                if(fromGrid->initialMesh.getCoordInInitial(*fromGrid, p, p) && 
+                   toGrid->getCoordInInitial(toGrid->initialMesh, p, p)) {
+                    toGrid->sampler.fromSamplerToImage(p);
+                    data[dataIdx] = toGrid->getValueFromPoint(p);
+                } else {
+                    data[dataIdx] = 0;
+                }
+                dataIdx += 1;
+            }
+        }
+        TinyTIFFWriter_writeImage(tif, data.data());
+    }
+    TinyTIFFWriter_close(tif);
+
+    std::cout << "Save sucessfull" << std::endl;
 }

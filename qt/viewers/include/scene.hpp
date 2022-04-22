@@ -516,6 +516,8 @@ public slots:
 
     // Mesh management
     void undo();
+    glm::vec3 getTransformedPoint(const glm::vec3& inputPoint, const std::string& from, const std::string& to);
+    void writeDeformation(const std::string& from, const std::string& to);
 
     // Move tool
     void moveTool_toggleEvenMode();
@@ -574,7 +576,7 @@ public slots:
     bool openCage(const std::string& name, const std::string& filename, const std::string& surfaceMeshToDeformName, const bool MVC = true, const glm::vec4& color = glm::vec4(1., 0., 0., 0.3));
     bool linkCage(const std::string& cageName, BaseMesh * meshToDeform, const bool MVC);
 
-    bool openGrid(const std::string& name, const std::vector<std::string>& imgFilenames, const int subsample, const glm::vec3& sizeVoxel, const glm::vec3& nbCubeGridTransferMesh);
+    bool openGrid(const std::string& name, const std::vector<std::string>& imgFilenames, const int subsample, const glm::vec3& sizeVoxel, const glm::vec3& nbCubeGridTransferMesh = glm::vec3(5., 5., 5.));
     bool openGrid(const std::string& name, const std::vector<std::string>& imgFilenames, const int subsample, const std::string& transferMeshFileName);
     void addGridToScene(const std::string& name, Grid * newGrid);
     int autofitSubsample(int initialSubsample, const std::vector<std::string>& imgFilenames);
