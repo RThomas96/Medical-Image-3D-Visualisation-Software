@@ -4032,32 +4032,34 @@ void Scene::writeDeformation(const std::string& from, const std::string& to) {
     Grid * fromGrid = this->grids[this->getGridIdx(from)]->grid;
     Grid * toGrid = this->grids[this->getGridIdx(to)]->grid;
 
-    glm::vec3 imgDimensions = fromGrid->sampler.getImageDimensions();
+    glm::ivec3 imgDimensions = fromGrid->sampler.getImageDimensions();
 
     TinyTIFFWriterFile * tif = TinyTIFFWriter_open("deformed_image.tif", 16, TinyTIFFWriter_UInt, 1, imgDimensions[0], imgDimensions[1], TinyTIFFWriter_Greyscale);
     std::vector<uint16_t> data;
     data.resize(imgDimensions[0] * imgDimensions[1]);
 
-
-    int dataIdx = 0;
+    auto start = std::chrono::steady_clock::now();
     for(int k = 0; k < imgDimensions[2]; ++k) {
-        std::cout << "Loading: " << (k/imgDimensions[2]) * 100. << "%" << std::endl;
-        dataIdx = 0;
+        std::cout << "Loading: " << (float(k)/float(imgDimensions[2])) * 100. << "%" << std::endl;
+        #pragma omp parallel for
         for(int j = 0; j < imgDimensions[1]; ++j) {
             for(int i = 0; i < imgDimensions[0]; ++i) {
                 glm::vec3 p(i, j, k);
+                int insertIdx = i + j*imgDimensions[0];
                 fromGrid->sampler.fromImageToSampler(p);
                 if(fromGrid->initialMesh.getCoordInInitial(*fromGrid, p, p) && 
                    toGrid->getCoordInInitial(toGrid->initialMesh, p, p)) {
                     toGrid->sampler.fromSamplerToImage(p);
-                    data[dataIdx] = toGrid->getValueFromPoint(p);
+                    data[insertIdx] = toGrid->getValueFromPoint(p);
                 } else {
-                    data[dataIdx] = 0;
+                    data[insertIdx] = 0;
                 }
-                dataIdx += 1;
             }
         }
         TinyTIFFWriter_writeImage(tif, data.data());
+        auto end = std::chrono::steady_clock::now();
+        std::chrono::duration<double> elapsed_seconds = end-start;
+        std::cout << "Duration time: " << elapsed_seconds.count() << "s / " << elapsed_seconds.count()/60. << "m" << std::endl;
     }
     TinyTIFFWriter_close(tif);
 
