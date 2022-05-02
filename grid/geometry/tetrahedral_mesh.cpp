@@ -181,12 +181,35 @@ glm::vec4 Tetrahedron::computeBaryCoord(const glm::vec3& p) {
     return glm::vec4(va6*v6, vb6*v6, vc6*v6, vd6*v6);
 }
 
+//bool Tetrahedron::isInTetrahedron(const glm::vec3& p) const {
+//    const glm::vec3& v1 = *this->points[0];
+//    const glm::vec3& v2 = *this->points[1];
+//    const glm::vec3& v3 = *this->points[2];
+//    const glm::vec3& v4 = *this->points[3];
+//    return SameSide(v1, v2, v3, v4, p) && SameSide(v2, v3, v4, v1, p) && SameSide(v3, v4, v1, v2, p) && SameSide(v4, v1, v2, v3, p);
+//}
+
+float det(const glm::vec3& b, const glm::vec3& c, const glm::vec3& d) {
+    return b[0]*c[1]*d[2] + c[0]*d[1]*b[2] + d[0]*b[1]*c[2] - d[0]*c[1]*b[2] - c[0]*b[1]*d[2] - b[0]*d[1]*c[2];
+}
+
 bool Tetrahedron::isInTetrahedron(const glm::vec3& p) const {
-    const glm::vec3& v1 = *this->points[0];
-    const glm::vec3& v2 = *this->points[1];
-    const glm::vec3& v3 = *this->points[2];
-    const glm::vec3& v4 = *this->points[3];
-    return SameSide(v1, v2, v3, v4, p) && SameSide(v2, v3, v4, v1, p) && SameSide(v3, v4, v1, v2, p) && SameSide(v4, v1, v2, v3, p);
+    const glm::vec3& v0 = *this->points[0];
+    const glm::vec3& v1 = *this->points[1];
+    const glm::vec3& v2 = *this->points[2];
+    const glm::vec3& v3 = *this->points[3];
+
+    const glm::vec3& a = v0 - p;
+    const glm::vec3& b = v1 - p;
+    const glm::vec3& c = v2 - p;
+    const glm::vec3& d = v3 - p;
+    const float detA = det(b,c,d);
+    const float detB = det(a,c,d);
+    const float detC = det(a,b,d);
+    const float detD = det(a,b,c);
+    bool ret0 = detA > 0.0 && detB < 0.0 && detC > 0.0 && detD < 0.0;
+    bool ret1 = detA < 0.0 && detB > 0.0 && detC < 0.0 && detD > 0.0;
+    return ret0 || ret1;
 }
 
 glm::vec3 Tetrahedron::baryToWorldCoord(const glm::vec4& coord) {

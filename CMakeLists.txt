@@ -24,6 +24,7 @@ ENDIF()
 FIND_PACKAGE(Qt5 REQUIRED COMPONENTS Core Gui Widgets Xml OpenGL)
 FIND_PACKAGE(OpenGL REQUIRED)
 FIND_PACKAGE(Threads REQUIRED)
+FIND_PACKAGE(OpenMP REQUIRED)
 
 # Find locally-compiled libraries :
 # If any of them aren't found, it stops CMake's generation process with an error message.
@@ -188,6 +189,7 @@ TARGET_LINK_LIBRARIES(neighbor_visu
     PUBLIC ${GSL_LIBRARIES}
     PUBLIC ${SUITESPARSE_LIBRARIES}
     PUBLIC SuiteSparse
+    PUBLIC OpenMP::OpenMP_CXX
 )
 
 option(RELEASE_WITH_ASSERT "Build a release version with assert" OFF)

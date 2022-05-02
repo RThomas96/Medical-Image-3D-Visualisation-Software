@@ -42,6 +42,8 @@
 
 #include "glm/gtx/string_cast.hpp"
 
+#include <omp.h>
+
 /// @defgroup graphpipe Graphics pipeline
 /// @brief This group contains all classes closely or loosely related to the graphics pipeline.
 /// @details There are very few classes in this group, but that's only because Scene is a god-object. Some attempt was

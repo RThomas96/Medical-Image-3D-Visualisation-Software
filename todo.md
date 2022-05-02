@@ -195,11 +195,15 @@ MAIN
     - [x] Retirer la sélection du mesh deformer
     - [x] Tout passer en index pour les perfs
     - [x] Ajouter un undo
-- [ ] Ecrire la déformation d'un point
+- [x] Ecrire la déformation d'un point
     - [x] Ecrire la fonction de transformation
-    - [ ] Rendre la transformation bi-directionnel
+    - [x] Rendre la transformation bi-directionnel
     - [ ] Nettoyer le pipeline de transformation
     - [ ] Faire l'interface de transformation de points
+- [ ] Accélérer l'écriture d'image
+    - [ ] Changer le check
+    - [ ] Ajouter un octree
+    - [ ] Ajouter OMP
 - [ ] Faire une interface pour lire une liste de point et les sortir déformés 
 - [ ] Sauvegarder le maillage tétrahédrique déformé et la cage dans un format .deform
     - [ ] Terminer les interfaces IO
