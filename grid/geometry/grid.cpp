@@ -2,6 +2,8 @@
 #include <chrono>
 #include <algorithm>
 
+#define USE_CACHE true
+
 bool isPtInBB(const glm::vec3& p, const glm::vec3& bbmin, const glm::vec3& bbmax) {
     for(int i = 0; i < 3; ++i) {
         if(p[i] < bbmin[i] || p[i] > bbmax[i])
@@ -235,7 +237,7 @@ Sampler::Sampler(const std::vector<std::string>& filename, int subsample, const 
     this->subregionMax = bbox.second;
 
     // Cache management
-    this->useCache = false;
+    this->useCache = USE_CACHE;
     if(this->useCache) {
         this->cache = new Cache(this->getSamplerDimension());
         this->fillCache();
@@ -268,7 +270,7 @@ Sampler::Sampler(const std::vector<std::string>& filename, int subsample): image
     this->subregionMax = this->bbMax;
 
     // Cache management
-    this->useCache = false;
+    this->useCache = USE_CACHE;
     if(this->useCache) {
         this->cache = new Cache(this->getSamplerDimension());
         this->fillCache();
@@ -291,7 +293,7 @@ Sampler::Sampler(const std::vector<std::string>& filename): image(new SimpleImag
     this->subregionMax = this->bbMax;
 
     // Cache management
-    this->useCache = false;
+    this->useCache = USE_CACHE;
     if(this->useCache) {
         this->cache = new Cache(this->getSamplerDimension());
         this->fillCache();
@@ -309,7 +311,7 @@ Sampler::Sampler(glm::vec3 size): image(nullptr) {
     this->subregionMax = this->bbMax;
 
     // Cache management
-    this->useCache = false;
+    this->useCache = USE_CACHE;
     if(this->useCache) {
         this->cache = new Cache(this->getSamplerDimension());
     }
