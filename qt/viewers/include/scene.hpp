@@ -159,9 +159,9 @@ private:
 /**********************************************************************/
 
 struct Demos {
-    bool isDemo = true;
+    bool isDemo = false;
 
-    bool demo_atlas_visu = true;
+    bool demo_atlas_visu = false;
     bool demo_atlas_registration = false;
 };
 
