@@ -6,11 +6,10 @@ IF(WIN32 OR MINGW OR MSVC)
 		SET(BUILDTYPE_PATH "debug")
 	ENDIF()
 
-    #SET(CODEBASES_SOURCE_DIR "$ENV{HOMEDRIVE}$ENV{HOMEPATH}\\Documents\\codebases\\library_sources")
+	#SET(CODEBASES_SOURCE_DIR "$ENV{HOMEDRIVE}$ENV{HOMEPATH}\\Documents\\codebases\\library_sources")
 	#SET(CODEBASES_INSTALL_DIR "$ENV{HOMEDRIVE}$ENV{HOMEPATH}\\Documents\\codebases\\library_install\\${BUILDTYPE_PATH}")
-
-    SET(CODEBASES_SOURCE_DIR "${CODEBASES_INSTALL_DIR}\\..")
-    SET(CODEBASES_INSTALL_DIR "${CODEBASES_INSTALL_DIR}\\${BUILDTYPE_PATH}")
+	SET(CODEBASES_SOURCE_DIR "E:\\Data\\Yan\\visualisation\\third_party")
+	SET(CODEBASES_INSTALL_DIR "E:\\Data\\Yan\\visualisation\\third_party\\compiled_libraries\\${BUILDTYPE_PATH}")
 
 	SET(GSL_ROOT ${CODEBASES_INSTALL_DIR})
 	SET(SuiteSparse_ROOT ${CODEBASES_INSTALL_DIR})
