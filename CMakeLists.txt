@@ -188,7 +188,8 @@ TARGET_LINK_LIBRARIES(neighbor_visu
     PUBLIC glm::glm
     PUBLIC ${GSL_LIBRARIES}
     PUBLIC ${SUITESPARSE_LIBRARIES}
-    PUBLIC SuiteSparse
+    #PUBLIC SuiteSparse
+    PUBLIC SuiteSparse:cholmod
     PUBLIC OpenMP::OpenMP_CXX
 )
 
