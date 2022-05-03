@@ -4035,32 +4035,42 @@ void Scene::writeDeformation(const std::string& from, const std::string& to) {
     glm::ivec3 imgDimensions = fromGrid->sampler.getImageDimensions();
 
     TinyTIFFWriterFile * tif = TinyTIFFWriter_open("deformed_image.tif", 16, TinyTIFFWriter_UInt, 1, imgDimensions[0], imgDimensions[1], TinyTIFFWriter_Greyscale);
-    std::vector<uint16_t> data;
-    data.resize(imgDimensions[0] * imgDimensions[1]);
+    std::vector<std::vector<uint16_t>> data;
+    data.resize(imgDimensions[2]);
+    for(int i = 0; i < imgDimensions[2]; ++i)
+        data[i].resize(imgDimensions[0] * imgDimensions[1]);
 
     auto start = std::chrono::steady_clock::now();
+    //#pragma omp parallel for collapse(3) private(imgDimensions,fromGrid,toGrid)
     for(int k = 0; k < imgDimensions[2]; ++k) {
-        std::cout << "Loading: " << (float(k)/float(imgDimensions[2])) * 100. << "%" << std::endl;
-        #pragma omp parallel for
         for(int j = 0; j < imgDimensions[1]; ++j) {
             for(int i = 0; i < imgDimensions[0]; ++i) {
                 glm::vec3 p(i, j, k);
+                p += glm::vec3(0.5, 0.5, 0.5);
                 int insertIdx = i + j*imgDimensions[0];
                 fromGrid->sampler.fromImageToSampler(p);
                 if(fromGrid->initialMesh.getCoordInInitial(*fromGrid, p, p) && 
                    toGrid->getCoordInInitial(toGrid->initialMesh, p, p)) {
                     toGrid->sampler.fromSamplerToImage(p);
-                    data[insertIdx] = toGrid->getValueFromPoint(p);
+                    data[k][insertIdx] = toGrid->getValueFromPoint(p);
                 } else {
-                    data[insertIdx] = 0;
+                    data[k][insertIdx] = 0;
                 }
             }
         }
-        TinyTIFFWriter_writeImage(tif, data.data());
-        auto end = std::chrono::steady_clock::now();
-        std::chrono::duration<double> elapsed_seconds = end-start;
-        std::cout << "Duration time: " << elapsed_seconds.count() << "s / " << elapsed_seconds.count()/60. << "m" << std::endl;
+        //std::cout << "Loading: " << (float(k)/float(imgDimensions[2])) * 100. << "%" << std::endl;
+        std::cout << "Image: " << k << "/" << imgDimensions[2] << std::endl;
+
+        //auto end = std::chrono::steady_clock::now();
+        //std::chrono::duration<double> elapsed_seconds = end-start;
+        //std::cout << "Duration time: " << elapsed_seconds.count() << "s / " << elapsed_seconds.count()/60. << "m" << std::endl;
     }
+    auto end = std::chrono::steady_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end-start;
+    std::cout << "Final duration time: " << elapsed_seconds.count() << "s / " << elapsed_seconds.count()/60. << "m" << std::endl;
+
+    for(int i = 0; i < imgDimensions[2]; ++i)
+        TinyTIFFWriter_writeImage(tif, data[i].data());
     TinyTIFFWriter_close(tif);
 
     std::cout << "Save sucessfull" << std::endl;

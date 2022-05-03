@@ -116,6 +116,8 @@ ADD_EXECUTABLE(neighbor_visu
     ./grid/utils/Vec3D.h
     ./grid/utils/Triangle.h
     ./grid/utils/BasicPoint.h
+    ./grid/utils/Octree.h
+    ./grid/utils/OctreePoint.h
 
 	# Main file :
 	./neighbor_visu_main.cpp

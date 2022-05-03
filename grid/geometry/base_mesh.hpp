@@ -98,6 +98,7 @@ public:
     BaseMesh();
 
     void updatebbox();
+    bool isInBbox(const glm::vec3& p) const;
     std::vector<glm::vec3>& getMeshPositions();
     const std::vector<glm::vec3>& getVertices() const { return this->vertices; };
 

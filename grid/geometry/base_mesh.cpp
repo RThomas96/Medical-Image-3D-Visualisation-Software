@@ -36,6 +36,10 @@ void BaseMesh::updatebbox() {
     //std::cout << "BBox updated to [" << glm::to_string(this->bbMin) << "] [" << glm::to_string(this->bbMax) << "]" << "[" << glm::to_string(this->getOrigin()) << "]" << std::endl;
 }
 
+bool BaseMesh::isInBbox(const glm::vec3& p) const {
+    return (p.x < this->bbMax.x && p.y < this->bbMax.y && p.z < this->bbMax.z && p.x > this->bbMin.x && p.y > this->bbMin.y && p.z > this->bbMin.z);
+}
+
 //int BaseMesh::getIdxOfClosestPoint(const glm::vec3& p) const{
 //    float distance = std::numeric_limits<float>::max();
 //    int res = 0;
