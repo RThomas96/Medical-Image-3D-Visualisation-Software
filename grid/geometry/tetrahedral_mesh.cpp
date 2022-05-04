@@ -243,6 +243,14 @@ void Tetrahedron::computeNormals() {
     }
 }
 
+void Tetrahedron::getCentroid(glm::vec3& centroid) const {
+    centroid = glm::vec3(0., 0., 0.);
+    for(int i = 0; i < 4; ++i) {
+        centroid += *this->points[i];
+    }
+    centroid /= 4.f;
+}
+
 void TetMesh::buildGrid(const glm::vec3& nbCube, const glm::vec3& sizeCube, const glm::vec3& origin) {
     if(!this->isEmpty())
         throw std::runtime_error("Error: build grid cannot be used on already constructed mesh.");
@@ -268,6 +276,7 @@ void TetMesh::buildGrid(const glm::vec3& nbCube, const glm::vec3& sizeCube, cons
     }
     this->computeNeighborhood();
     this->computeNormals();
+    this->quickTetSearcher = new QuickTetSearcher(this);
 }
 
 bool TetMesh::isEmpty() const {
@@ -279,10 +288,19 @@ Tetrahedron TetMesh::getTetra(int idx) const {
 } 
 
 int TetMesh::inTetraIdx(const glm::vec3& p) const {
+    int res = this->quickTetSearcher->getInTetraIdx(p);
+    //return res;
     int i = 0;
-    for(int i = 0; i < mesh.size(); ++i)
-        if(mesh[i].isInTetrahedron(p))
+    for(int i = 0; i < mesh.size(); ++i) {
+        if(mesh[i].isInTetrahedron(p)) {
+            if(i != res) {
+                std::cout << "DIFF: " << i << " - " << res << std::endl;
+            } else if (i == res && i != -1){
+                std::cout << "FOUND: " << i << " - " << res << std::endl;
+            }
             return i;
+        }
+    }
     return -1;
 }
 
@@ -487,6 +505,7 @@ void TetMesh::loadMESH(std::string const &filename) {
     this->updatebbox();
     this->computeNeighborhood();
     this->computeNormals();
+    this->quickTetSearcher = new QuickTetSearcher(this);
 
     for(int i = 0; i < this->vertices.size(); ++i) {
         this->texCoord.push_back(this->vertices[i]/this->getDimensions());
