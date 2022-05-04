@@ -4014,11 +4014,10 @@ glm::vec3 Scene::getTransformedPoint(const glm::vec3& inputPoint, const std::str
 
     std::cout << "From [" << to  << "].deformed to [" << to << "].initial: " << result;
     ptIsInInitial = toGrid->getCoordInInitial(toGrid->initialMesh, result, result);
+    std::cout << " -> " << result << std::endl;
     if(!ptIsInInitial) {
         std::cout << "Input point isn't in the original image" << std::endl;
     }
-
-    std::cout << " -> " << result << std::endl;
 
     std::cout << "From [" << to << "].sampler to [" << to << "].image: " << result;
     toGrid->sampler.fromSamplerToImage(result);

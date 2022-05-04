@@ -223,8 +223,9 @@ FIX
 
 Objectif: Terminer le workflow complet 
 
-- [ ] Faire l'interface de transformation de points
-- [ ] Tester le workflow complet avec le atlas to lightsheet
+- [x] Faire l'interface de transformation de points
+- [x] Tester le workflow complet avec le atlas to lightsheet
+- [ ] Debuger le from irm to atlas
 - [ ] Créer un binaire windows self content
 - [ ] Terminer les outils de manipulations
     - [ ] Taille des voxels automatique

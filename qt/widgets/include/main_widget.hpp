@@ -32,6 +32,7 @@
 #include <QLineEdit>
 #include <QFormLayout>
 #include <QTextEdit>
+#include <QTextBlock>
 
 class ColorBoundWidget;
 
@@ -92,6 +93,12 @@ public slots:
         this->setLayout(this->layout);
     }
 
+    void addLabel(const QString& name) {
+        names += name;
+        labels[name] = new QLabel(name);
+        layout->addRow(labels[name]);
+    }
+
     void addLineEdit(const QString& name) {
         names += name;
         labels[name] = new QLabel(name);
@@ -105,15 +112,16 @@ public slots:
         layout->addRow(buttons[name]);
     }
 
-    void addTextEdit(const QString& name, const QString& label) {
+    void addTextEdit(const QString& name, const QString& label, bool editable = true) {
         names += name;
         labels[name] = new QLabel(label);
         textEdits[name] = new QTextEdit();
+        textEdits[name]->setReadOnly(!editable);
         layout->addRow(labels[name], textEdits[name]);
     }
 
-    void addTextEdit(const QString& name) {
-        this->addTextEdit(name, name);
+    void addTextEdit(const QString& name, bool editable = true) {
+        this->addTextEdit(name, name, editable);
     }
 
     void addMeshChooser(const QString& name, const ObjectToChoose& objectToChoose = ObjectToChoose::ALL) {
@@ -124,10 +132,85 @@ public slots:
         layout->addRow(labels[name], objectChoosers[name]);
     }
 
-    void connect(Scene * scene) {
+    void update(Scene * scene) {
         for(auto& chooser : objectChoosers) {
             chooser.second->fillChoices(scene);
         }
+    }
+};
+
+class DeformationForm : Form {
+    Q_OBJECT
+
+public:
+
+    DeformationForm(Scene * scene, QWidget *parent = nullptr):Form(parent){init();connect(scene);}
+
+public slots:
+
+    void init() {
+        this->addMeshChooser("From", ObjectToChoose::GRID);
+        this->addMeshChooser("To", ObjectToChoose::GRID);
+        this->addTextEdit("PtToDeform", "Points to deform", true);
+        this->addTextEdit("Result", "Result", false);
+        this->addButton("Deform");
+    }
+
+    void update(Scene * scene) {
+        Form::update(scene);
+    }
+
+    void show() {
+        Form::show();
+    }
+
+    void extractPointsFromText(std::vector<glm::vec3>& points) {
+        QTextDocument * doc = this->textEdits["PtToDeform"]->document();
+        int nbLine = doc->lineCount();
+        for(int i = 0; i < nbLine; ++i) {
+            QString line = doc->findBlockByLineNumber(i).text();
+            line.replace(".", ",");
+            QStringList toRemove{"[", "]", "(", ")"};
+            for(const QString& stringToRemove : toRemove) {
+                line.remove(stringToRemove);
+            }
+            QStringList separators{";", " ", "; "};
+            for(const QString& separator : separators) {
+                QStringList parsed = line.split(separator);
+                if(parsed.length() == 3) {
+                    glm::vec3 point;
+                    point.x = std::atof(parsed[0].toStdString().c_str());
+                    point.y = std::atof(parsed[1].toStdString().c_str());
+                    point.z = std::atof(parsed[2].toStdString().c_str());
+                    points.push_back(point);
+                    break;
+                }
+            }
+        }
+    }
+
+    void convertPoints(Scene * scene) {
+        std::vector<glm::vec3> points;
+        this->extractPointsFromText(points);
+        QString result;
+        for(auto pt : points) {
+            glm::vec3 newPt = scene->getTransformedPoint(pt, this->objectChoosers["From"]->currentText().toStdString(), this->objectChoosers["To"]->currentText().toStdString());
+            QString line;
+            line += "[ ";
+            line += std::to_string(newPt.x).c_str();
+            line += ", ";
+            line += std::to_string(newPt.y).c_str();
+            line += ", ";
+            line += std::to_string(newPt.z).c_str();
+            line += " ]\n";
+            result += line;
+        }
+        this->textEdits["Result"]->clear();
+        this->textEdits["Result"]->setPlainText(result);
+    }
+
+    void connect(Scene * scene) {
+        QObject::connect(this->buttons["Deform"], &QPushButton::clicked, [this, scene](){this->convertPoints(scene);});
     }
 };
 
@@ -485,7 +568,7 @@ private:
     SaveMeshWidget * saveMeshWidget;
     ApplyCageWidget * applyCageWidget;
 
-    Form * deformationForm;
+    DeformationForm * deformationForm;
 
     bool isShiftPressed = false;
 

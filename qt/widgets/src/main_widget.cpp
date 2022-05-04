@@ -464,15 +464,11 @@ void MainWidget::setupActions() {
 }
 
 void MainWidget::setupForms() {
-    this->deformationForm = new Form();
-    this->deformationForm->addMeshChooser("From", ObjectToChoose::GRID);
-    this->deformationForm->addMeshChooser("To", ObjectToChoose::GRID);
-    this->deformationForm->addTextEdit("PtToDeform", "Points to deform");
-    this->deformationForm->addButton("Deform");
+    this->deformationForm = new DeformationForm(this->scene);
 }
 
 void MainWidget::updateForms() {
-    this->deformationForm->connect(this->scene);
+    this->deformationForm->update(this->scene);
 }
 
 void MainWidget::toggleDisplayPlanarViewers() {
