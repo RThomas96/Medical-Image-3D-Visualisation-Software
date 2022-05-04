@@ -170,3 +170,7 @@ void BaseMesh::scaleToBBox(const glm::vec3& bbMin, const glm::vec3& bbMax) {
     this->scale(glm::vec3(scaleFactor, scaleFactor, scaleFactor));
 }
 
+bool BaseMesh::isInBBox(const glm::vec3& p) const {
+    return (p.x > this->bbMin.x && p.y > this->bbMin.y && p.z > this->bbMin.z &&
+            p.x < this->bbMax.x && p.y < this->bbMax.y && p.z < this->bbMax.z);
+}

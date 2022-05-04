@@ -3655,7 +3655,7 @@ int Scene::getGridIdx(const std::string& name) {
 }
 
 void Scene::init() {
-    if(this->demos.demo_atlas_visu) {
+    if(this->demos.demo_atlas_to_irm) {
         this->openGrid(std::string("atlas"), {std::string("/data/datasets/data/Thomas/data/atlas/atlas.tiff")}, 1, std::string("/data/datasets/data/Thomas/data/atlas/atlas-transfert.mesh"));
         this->openCage(std::string("cage"), std::string("/data/datasets/data/Thomas/data/atlas/atlas-cage-hyperdilated.off"), std::string("atlas"), true);
         this->getCage(std::string("cage"))->setARAPDeformationMethod();
@@ -3665,6 +3665,18 @@ void Scene::init() {
         this->applyCage(std::string("cage"), std::string("/data/datasets/data/Thomas/data/sourisIGF/atlas-cage-hyperdilated-rigidRegister-lightsheet_2.off"));
 
         this->openGrid(std::string("irm"), {std::string("/home/thomas/data/Data/Demo/IRM/irm.tif")}, 1, glm::vec3(3.9, 3.9, 50));
+    }
+
+    if(this->demos.demo_atlas_to_lightsheet) {
+        this->openGrid(std::string("atlas"), {std::string("/data/datasets/data/Thomas/data/atlas/atlas.tiff")}, 1, std::string("/data/datasets/data/Thomas/data/atlas/atlas-transfert.mesh"));
+        this->openCage(std::string("cage"), std::string("/data/datasets/data/Thomas/data/atlas/atlas-cage-hyperdilated.off"), std::string("atlas"), true);
+        this->getCage(std::string("cage"))->setARAPDeformationMethod();
+        this->getCage(std::string("cage"))->unbindMovementWithDeformedMesh();
+        this->getCage(std::string("cage"))->setOrigin(this->getBaseMesh("atlas")->getOrigin());
+        this->getCage(std::string("cage"))->bindMovementWithDeformedMesh();
+        this->applyCage(std::string("cage"), std::string("/home/thomas/data/Data/Demo/lightsheet/atlas-cage-registered.off"));
+
+        this->openGrid(std::string("lightsheet"), {std::string("/home/thomas/data/Data/Demo/lightsheet/lighsheet.tiff")}, 1, glm::vec3(1, 1, 1));
     }
 
     if(this->demos.demo_atlas_registration) {
@@ -4048,9 +4060,11 @@ void Scene::writeDeformation(const std::string& from, const std::string& to) {
         for(int j = 0; j < imgDimensions[1]; ++j) {
             for(int i = 0; i < imgDimensions[0]; ++i) {
                 glm::vec3 p(i, j, k);
+                p += glm::vec3(.5, .5, .5);
                 int insertIdx = i + j*imgDimensions[0];
                 fromGrid->sampler.fromImageToSampler(p);
-                if(fromGrid->initialMesh.getCoordInInitial(*fromGrid, p, p) && 
+                if(fromGrid->initialMesh.isInBBox(p) &&
+                   fromGrid->initialMesh.getCoordInInitial(*fromGrid, p, p) && 
                    toGrid->getCoordInInitial(toGrid->initialMesh, p, p)) {
                     toGrid->sampler.fromSamplerToImage(p);
                     data[insertIdx] = toGrid->getValueFromPoint(p);
