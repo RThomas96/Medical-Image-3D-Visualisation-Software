@@ -159,9 +159,9 @@ private:
 /**********************************************************************/
 
 struct Demos {
-    bool isDemo = false;
+    bool isDemo = true;
 
-    bool demo_atlas_visu = false;
+    bool demo_atlas_visu = true;
     bool demo_atlas_registration = false;
 };
 
@@ -587,18 +587,20 @@ public slots:
     BaseMesh * getBaseMesh(const std::string& name);
     int getMeshIdx(const std::string& name);
     Cage * getCage(const std::string& name);
+    int getGridIdx(const std::string& name);
+    std::vector<std::string> getAllNonTetrahedralMeshesName();
+    std::vector<std::string> getAllBaseMeshesName();
+    std::vector<std::string> getAllCagesName();
+    std::vector<std::string> getAllGridsName();
+
     DrawableMesh * getDrawableMesh(const std::string& name);
     bool isGrid(const std::string& name);
     bool isCage(const std::string& name);
-    int getGridIdx(const std::string& name);
     void changeSceneRadius(float sceneRadius);
     float getSceneRadius();
     void updateSceneCenter();
     void updateSceneRadius();
 	glm::vec3 getSceneCenter();
-    std::vector<std::string> getAllNonTetrahedralMeshesName();
-    std::vector<std::string> getAllBaseMeshesName();
-    std::vector<std::string> getAllCagesName();
     void saveMesh(const std::string& name, const std::string& filename);
     void applyCage(const std::string& name, const std::string& filename);
     bool isSelecting() {return false;};

@@ -200,15 +200,16 @@ MAIN
     - [x] Rendre la transformation bi-directionnel
     - [ ] Nettoyer le pipeline de transformation
     - [ ] Faire l'interface de transformation de points
-- [ ] Accélérer l'écriture d'image
-    - [ ] Changer le check
+- [x] Accélérer l'écriture d'image
+    - [x] Changer le check
+    - [x] Ajouter OMP
+    - [x] Tester le rand  (ça marche pas)
     - [ ] Ajouter un octree
-    - [ ] Ajouter OMP
+- [ ] Améliorer les perfs en checkant OMP pour ARAP
 - [ ] Faire une interface pour lire une liste de point et les sortir déformés 
 - [ ] Sauvegarder le maillage tétrahédrique déformé et la cage dans un format .deform
     - [ ] Terminer les interfaces IO
 - [ ] Ouvrir un couple maillage tétrahédrique initial et déformé dans un format .deform
-- [ ] Améliorer les perfs en checkant OMP
 - [ ] Réparer la déformation de l'atlas avec le LRI
     - [ ] Vérifier que c'est bien la cage et le transfert qui cassent le LRI
     - [ ] Générer une cage et un transfert compatible avec le LRI
@@ -218,6 +219,23 @@ FIX
 - [x] Ajouter interface display maillage tetra 
 
 ---
+## Semaine 02/05
+
+Objectif: Terminer le workflow complet 
+
+- [ ] Faire l'interface de transformation de points
+- [ ] Tester le workflow complet avec le atlas to lightsheet
+- [ ] Créer un binaire windows self content
+- [ ] Terminer les outils de manipulations
+    - [ ] Taille des voxels automatique
+    - [ ] Debug ce putin de manipulator de mort, rotation et scale
+    - [ ] Terminer les interfaces d'ouvertures
+    - [ ] Ajouter un bouton reset
+    - [ ] Sauvegarder les valeurs de l'interface
+    - [ ] Subsample différent suivant l'axe
+    - [ ] Perf de la sauvegarde d'image 
+
+---
 
 # INBOX
 
@@ -225,6 +243,9 @@ MANDATORY
     UNSORTED
     - [ ] Debug LRI
     - [ ] Rendu des plans de coupes est bugé, avec tetmesh coupé
+    - [ ] Ajouter la feature de full résolution offline de très grosses images pour la sauvegarde
+    - [ ] Activer/désactiver le cache en fonction de la taille de l'image
+
 - [ ] Le scale affecte les performances
 - [ ] Ajouter un undo
 - [x] Ajouter des icônes
@@ -266,6 +287,7 @@ OPTIONNAL
 - [ ] Faire une dual sauvegarde pour faire des correspondance 
 
 CODE DEBT
+- [ ] Ranger les widgets dans des fichiers
 - [ ] Changer la scene est mettre des maps 
 - [ ] Retirer tous les signaux de manipulation de radius 
 - [ ] Supprimer l'ancien registration tool et renommer le "fixed"

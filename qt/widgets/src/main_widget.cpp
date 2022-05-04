@@ -51,6 +51,7 @@ void MainWidget::setupWidgets() {
 	this->scene->addOpenGLOutput(this->glDebug);
 
     this->setupActions();
+    this->setupForms();
 	this->statusBar = new QStatusBar;
 	this->showGLLog = new QPushButton("Show GL log");
 	this->statusBar->addPermanentWidget(this->showGLLog);
@@ -452,13 +453,26 @@ void MainWidget::setupActions() {
     // Pipeline
     this->actionManager->createQActionButton("Transform", "Transform", "", "Get the point in the associated image", "deform");
     QObject::connect(this->actionManager->getAction("Transform"), &QAction::triggered, [this](){
-            //this->scene->writeDeformation("irm", "atlas");
+            this->updateForms();
+            this->deformationForm->show();
     });
 
     this->actionManager->createQActionButton("SaveImage", "SaveImage", "", "Save the deformed image", "saveDeformedImage");
     QObject::connect(this->actionManager->getAction("SaveImage"), &QAction::triggered, [this](){
             this->scene->writeDeformation("irm", "atlas");
     });
+}
+
+void MainWidget::setupForms() {
+    this->deformationForm = new Form();
+    this->deformationForm->addMeshChooser("From", ObjectToChoose::GRID);
+    this->deformationForm->addMeshChooser("To", ObjectToChoose::GRID);
+    this->deformationForm->addTextEdit("PtToDeform", "Points to deform");
+    this->deformationForm->addButton("Deform");
+}
+
+void MainWidget::updateForms() {
+    this->deformationForm->connect(this->scene);
 }
 
 void MainWidget::toggleDisplayPlanarViewers() {

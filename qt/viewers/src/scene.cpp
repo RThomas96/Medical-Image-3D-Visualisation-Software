@@ -3883,6 +3883,10 @@ std::vector<std::string> Scene::getAllCagesName() {
     return res;
 }
 
+std::vector<std::string> Scene::getAllGridsName() {
+    return grids_name;
+}
+
 bool Scene::openCage(const std::string& name, const std::string& filename, const std::string& surfaceMeshToDeformName, const bool MVC, const glm::vec4& color) {
     return this->openCage(name, filename, this->getBaseMesh(surfaceMeshToDeformName), MVC, color);
 }

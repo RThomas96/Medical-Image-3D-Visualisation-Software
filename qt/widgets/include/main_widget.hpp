@@ -29,8 +29,107 @@
 #include <QShortcut>
 #include <QMenuBar>
 #include <QToolButton>
+#include <QLineEdit>
+#include <QFormLayout>
+#include <QTextEdit>
 
 class ColorBoundWidget;
+
+enum ObjectToChoose {
+    ALL,
+    GRID
+};
+
+class ObjectChooser : public QComboBox {
+    Q_OBJECT
+
+public:
+    ObjectToChoose objectToChoose;
+
+    ObjectChooser(QWidget *parent = nullptr):QComboBox(parent){}
+
+    void fillChoices(const ObjectToChoose& objectToChoose, Scene * scene) {
+        this->clear();
+        this->objectToChoose = objectToChoose;
+        std::vector<std::string> all;
+        if(objectToChoose == ObjectToChoose::ALL)
+            all = scene->getAllBaseMeshesName();
+
+        if(objectToChoose == ObjectToChoose::GRID)
+            all = scene->getAllGridsName();
+
+        for(std::string name : all) {
+            this->addItem(QString(name.c_str()));
+        }
+    }
+
+    void fillChoices(Scene * scene) {
+        this->fillChoices(this->objectToChoose, scene);
+    }
+};
+
+class Form : public QWidget {
+    Q_OBJECT
+
+public:
+    QFormLayout * layout;
+
+    QStringList names;
+
+    std::map<QString, QLabel*> labels;
+    std::map<QString, QLineEdit*> lineEdits;
+    std::map<QString, ObjectChooser*> objectChoosers;
+    std::map<QString, QTextEdit*> textEdits;
+    std::map<QString, QPushButton*> buttons;
+
+    Form(QWidget *parent = nullptr):QWidget(parent){init();}
+
+public slots:
+
+    void init() {
+        this->setWindowFlags(Qt::WindowStaysOnTopHint);
+        this->layout = new QFormLayout();
+        this->setLayout(this->layout);
+    }
+
+    void addLineEdit(const QString& name) {
+        names += name;
+        labels[name] = new QLabel(name);
+        lineEdits[name] = new QLineEdit();
+        layout->addRow(labels[name], lineEdits[name]);
+    }
+
+    void addButton(const QString& name) {
+        names += name;
+        buttons[name] = new QPushButton(name);
+        layout->addRow(buttons[name]);
+    }
+
+    void addTextEdit(const QString& name, const QString& label) {
+        names += name;
+        labels[name] = new QLabel(label);
+        textEdits[name] = new QTextEdit();
+        layout->addRow(labels[name], textEdits[name]);
+    }
+
+    void addTextEdit(const QString& name) {
+        this->addTextEdit(name, name);
+    }
+
+    void addMeshChooser(const QString& name, const ObjectToChoose& objectToChoose = ObjectToChoose::ALL) {
+        names += name;
+        labels[name] = new QLabel(name);
+        objectChoosers[name] = new ObjectChooser();
+        objectChoosers[name]->objectToChoose = objectToChoose;
+        layout->addRow(labels[name], objectChoosers[name]);
+    }
+
+    void connect(Scene * scene) {
+        for(auto& chooser : objectChoosers) {
+            chooser.second->fillChoices(scene);
+        }
+    }
+};
 
 class InfoPannel : public QGroupBox {
     Q_OBJECT
@@ -312,6 +411,8 @@ public:
 protected:
 	void setupWidgets();
     void setupActions();
+    void setupForms();
+    void updateForms();
 	/// @brief Allow to run code on any widget event
 	/// @details In this case, set the minimum width and height of widgets in order to
 	/// have them both square, and not too small.
@@ -383,6 +484,8 @@ private:
     OpenMeshWidget * openMeshWidget;
     SaveMeshWidget * saveMeshWidget;
     ApplyCageWidget * applyCageWidget;
+
+    Form * deformationForm;
 
     bool isShiftPressed = false;
 
