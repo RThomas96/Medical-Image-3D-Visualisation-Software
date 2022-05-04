@@ -144,6 +144,8 @@ class DeformationForm : Form {
 
 public:
 
+    std::vector<glm::vec3> origins;
+    std::vector<glm::vec3> results;
     DeformationForm(Scene * scene, QWidget *parent = nullptr):Form(parent){init();connect(scene);}
 
 public slots:
@@ -154,6 +156,7 @@ public slots:
         this->addTextEdit("PtToDeform", "Points to deform", true);
         this->addTextEdit("Result", "Result", false);
         this->addButton("Deform");
+        this->addButton("Preview");
     }
 
     void update(Scene * scene) {
@@ -190,20 +193,22 @@ public slots:
     }
 
     void convertPoints(Scene * scene) {
-        std::vector<glm::vec3> points;
-        this->extractPointsFromText(points);
+        this->results.clear();
+        this->origins.clear();
+        this->extractPointsFromText(origins);
         QString result;
-        for(auto pt : points) {
+        for(auto& pt : this->origins) {
             glm::vec3 newPt = scene->getTransformedPoint(pt, this->objectChoosers["From"]->currentText().toStdString(), this->objectChoosers["To"]->currentText().toStdString());
             QString line;
             line += "[ ";
             line += std::to_string(newPt.x).c_str();
-            line += ", ";
+            line += " ";
             line += std::to_string(newPt.y).c_str();
-            line += ", ";
+            line += " ";
             line += std::to_string(newPt.z).c_str();
             line += " ]\n";
             result += line;
+            this->results.push_back(newPt);
         }
         this->textEdits["Result"]->clear();
         this->textEdits["Result"]->setPlainText(result);
@@ -211,6 +216,10 @@ public slots:
 
     void connect(Scene * scene) {
         QObject::connect(this->buttons["Deform"], &QPushButton::clicked, [this, scene](){this->convertPoints(scene);});
+        QObject::connect(this->buttons["Preview"], &QPushButton::clicked, [this, scene](){
+                scene->writeImageWithPoints("previewFrom.tiff", this->objectChoosers["From"]->currentText().toStdString(), this->origins);
+                scene->writeImageWithPoints("previewTo.tiff", this->objectChoosers["To"]->currentText().toStdString(), this->results);
+        });
     }
 };
 

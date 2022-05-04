@@ -4000,7 +4000,7 @@ glm::vec3 Scene::getTransformedPoint(const glm::vec3& inputPoint, const std::str
     glm::vec3 inputPointInFromGrid = inputPoint;
     std::cout << "-------------" << std::endl;
     std::cout << "Input point: " << inputPoint << std::endl;
-    std::cout << "From [" << from << "].image to [" << to << "].sampler: " << inputPointInFromGrid;
+    std::cout << "From [" << from << "].image to [" << from << "].sampler: " << inputPointInFromGrid;
     fromGrid->sampler.fromImageToSampler(inputPointInFromGrid);
     std::cout << " -> " << inputPointInFromGrid << std::endl;
 
@@ -4056,6 +4056,47 @@ void Scene::writeDeformation(const std::string& from, const std::string& to) {
                     data[insertIdx] = toGrid->getValueFromPoint(p);
                 } else {
                     data[insertIdx] = 0;
+                }
+            }
+        }
+        TinyTIFFWriter_writeImage(tif, data.data());
+        auto end = std::chrono::steady_clock::now();
+        std::chrono::duration<double> elapsed_seconds = end-start;
+        std::cout << "Duration time: " << elapsed_seconds.count() << "s / " << elapsed_seconds.count()/60. << "m" << std::endl;
+    }
+    TinyTIFFWriter_close(tif);
+
+    std::cout << "Save sucessfull" << std::endl;
+}
+
+void Scene::writeImageWithPoints(const std::string& filename, const std::string& image, std::vector<glm::vec3>& points) {
+    Grid * grid = this->grids[this->getGridIdx(image)]->grid;
+
+    glm::ivec3 imgDimensions = grid->sampler.getImageDimensions();
+
+    TinyTIFFWriterFile * tif = TinyTIFFWriter_open(filename.c_str(), 16, TinyTIFFWriter_UInt, 1, imgDimensions[0], imgDimensions[1], TinyTIFFWriter_Greyscale);
+    std::vector<uint16_t> data;
+    data.resize(imgDimensions[0] * imgDimensions[1]);
+
+    auto start = std::chrono::steady_clock::now();
+    for(int k = 0; k < imgDimensions[2]; ++k) {
+        std::cout << "Loading: " << (float(k)/float(imgDimensions[2])) * 100. << "%" << std::endl;
+        #pragma omp parallel for
+        for(int j = 0; j < imgDimensions[1]; ++j) {
+            for(int i = 0; i < imgDimensions[0]; ++i) {
+                glm::vec3 p(i, j, k);
+                int insertIdx = i + j*imgDimensions[0];
+                bool toHighlight = false;
+                for(const glm::vec3& pt : points) {
+                    if(glm::distance(pt, p) < 5.) {
+                        toHighlight = true;
+                    }
+                }
+                if(toHighlight) {
+                    //data[insertIdx] = 35527;
+                    data[insertIdx] = 0;
+                } else {
+                    data[insertIdx] = grid->getValueFromPoint(p);
                 }
             }
         }
