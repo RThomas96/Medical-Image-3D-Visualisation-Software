@@ -116,6 +116,10 @@ void MainWidget::setupWidgets() {
 
     this->toolbar->addSeparator();
 
+    this->toolbar->addAction(this->actionManager->getAction("SaveImage"));
+
+    this->toolbar->addSeparator();
+
     this->toolbar->addAction(this->actionManager->getAction("Transform"));
 
     /***/
@@ -447,11 +451,12 @@ void MainWidget::setupActions() {
 
     // Pipeline
     this->actionManager->createQActionButton("Transform", "Transform", "", "Get the point in the associated image", "deform");
-    //QObject::connect(this->actionManager->getAction("Transform"), &QAction::triggered, [this](){
-    //        glm::vec3 res = this->scene->getTransformedPoint(glm::vec3(205., 49., 266.), "atlas", "irm");
-    //        this->scene->getTransformedPoint(res, "irm", "atlas");
-    //});
     QObject::connect(this->actionManager->getAction("Transform"), &QAction::triggered, [this](){
+            //this->scene->writeDeformation("irm", "atlas");
+    });
+
+    this->actionManager->createQActionButton("SaveImage", "SaveImage", "", "Save the deformed image", "saveDeformedImage");
+    QObject::connect(this->actionManager->getAction("SaveImage"), &QAction::triggered, [this](){
             this->scene->writeDeformation("irm", "atlas");
     });
 }
