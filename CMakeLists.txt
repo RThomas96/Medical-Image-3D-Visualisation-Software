@@ -174,6 +174,28 @@ TARGET_INCLUDE_DIRECTORIES(neighbor_visu
     PRIVATE ${GSL_INCLUDE_DIRS}
     PRIVATE ${LOCAL_GLM_HEADER_DIR}
 )
+
+if (UNIX)
+TARGET_LINK_LIBRARIES(neighbor_visu
+	PUBLIC Qt5::Core
+	PUBLIC Qt5::Gui
+	PUBLIC Qt5::Xml
+	PUBLIC Qt5::Widgets
+	PUBLIC Qt5::OpenGL
+	PUBLIC ${OPENGL_LIBRARIES}
+	PUBLIC ${QGLViewer}
+	PUBLIC VisualisationWidgets
+	PUBLIC TinyTIFF
+	PUBLIC ${libTIFF}
+    PUBLIC glm::glm
+    PUBLIC ${GSL_LIBRARIES}
+    PUBLIC ${SUITESPARSE_LIBRARIES}
+    PUBLIC SuiteSparse
+    PUBLIC OpenMP::OpenMP_CXX
+)
+endif (UNIX)
+
+if (WIN32)
 TARGET_LINK_LIBRARIES(neighbor_visu
 	PUBLIC Qt5::Core
 	PUBLIC Qt5::Gui
@@ -192,6 +214,7 @@ TARGET_LINK_LIBRARIES(neighbor_visu
     PUBLIC SuiteSparse::cholmod
     PUBLIC OpenMP::OpenMP_CXX
 )
+endif (WIN32)
 
 option(RELEASE_WITH_ASSERT "Build a release version with assert" OFF)
 if(RELEASE_WITH_ASSERT)
