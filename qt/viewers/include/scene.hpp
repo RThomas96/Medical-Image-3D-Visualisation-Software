@@ -161,8 +161,8 @@ private:
 struct Demos {
     bool isDemo = true;
 
-    bool demo_atlas_to_irm = false;
-    bool demo_atlas_to_lightsheet = true;
+    bool demo_atlas_to_irm = true;
+    bool demo_atlas_to_lightsheet = false;
     bool demo_atlas_registration = false;
 };
 

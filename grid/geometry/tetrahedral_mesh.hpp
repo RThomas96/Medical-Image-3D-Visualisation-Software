@@ -31,6 +31,17 @@ struct Tetrahedron {
     void computeNormals();
 
     int getPointIndex(int faceIdx, int ptIdxInFace) const;
+
+    glm::vec3 * getPoint(int faceIdx, int ptIdxInFace) const;
+
+    void getCentroid(glm::vec3& centroid) const;
+
+    //bool faceIntersect(const glm::vec3& p1, const glm::vec3& p2, int faceIdx) const;
+
+    bool faceIntersect(const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2) const;
+
+    glm::vec3 getBBMax() const;
+    glm::vec3 getBBMin() const;
 };
 
 class TetMesh : public BaseMesh {
@@ -53,7 +64,7 @@ public:
     Tetrahedron getTetra(int idx) const;
     int inTetraIdx(const glm::vec3& p) const;
     //glm::vec3 getCoordInInitial(const TetMesh& initial, glm::vec3 p) const;
-    bool getCoordInInitial(const TetMesh& initial, const glm::vec3& p, glm::vec3& out) const;
+    bool getCoordInInitial(const TetMesh& initial, const glm::vec3& p, glm::vec3& out, int tetraIdx = -1) const;
 
     void setARAPDeformationMethod() override;
     bool getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos, glm::vec3& res) const override;

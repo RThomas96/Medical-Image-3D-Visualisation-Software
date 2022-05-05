@@ -229,7 +229,10 @@ Objectif: Terminer le workflow complet
     - [x] Tester le workflow lightsheet to irm
     - [x] Debuger le from irm to atlas
     - [x] Coder écriture image avec points 
-- [ ] Réparer cet atlas 
+    - [x] Améliorer les perf pour voir la déformation vers atlas
+    - [ ] Coder un algorithme de walking pour accelerer l'écriture
+    - [ ] Checker les déformation dans les deux sens avec les images
+- [ ] Réparer cet atlas avec cage
 - [ ] Créer un binaire windows self content
 - [ ] Terminer les outils de manipulations
     - [ ] Taille des voxels automatique

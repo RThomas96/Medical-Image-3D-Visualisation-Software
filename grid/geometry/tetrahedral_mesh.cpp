@@ -3,12 +3,14 @@
 #include <map>
 #include <algorithm>
 #include <fstream>
+#include <random>
 
 
 // This function make the link between a face of a tetrahedron and its points
 // This ensure a stable way to iterate throught faces of a tetrahedron
 // These are global variable as it is common to all tetrahedron
 // You can also see the faceIdx as the point index which in the opposite side of the face
+//std::size_t faceOrder[4][3] = {{3, 1, 2}, {3, 2, 0}, {3, 0, 1}, {2, 1, 0}};
 std::size_t faceOrder[4][3] = {{3, 1, 2}, {3, 2, 0}, {3, 0, 1}, {2, 1, 0}};
 int getIdxOfPtInFace(int faceIdx, int pointIdx) {
     return faceOrder[faceIdx][pointIdx];
@@ -31,6 +33,10 @@ bool SameSide(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, con
 
 int Tetrahedron::getPointIndex(int faceIdx, int ptIdxInFace) const{
     return this->pointsIdx[getIdxOfPtInFace(faceIdx, ptIdxInFace)];
+}
+
+glm::vec3 * Tetrahedron::getPoint(int faceIdx, int ptIdxInFace) const {
+    return this->points[getIdxOfPtInFace(faceIdx, ptIdxInFace)];
 }
 
 TetMesh::TetMesh(): nbTetra(glm::vec3(0., 0., 0.)), mesh(std::vector<Tetrahedron>()) {}
@@ -243,6 +249,120 @@ void Tetrahedron::computeNormals() {
     }
 }
 
+void Tetrahedron::getCentroid(glm::vec3& centroid) const {
+    centroid = glm::vec3(0., 0., 0.);
+    for(int i = 0; i < 4; ++i) {
+        centroid += *this->points[i];
+    }
+    centroid /= 4.f;
+}
+
+glm::vec3 Tetrahedron::getBBMin() const {
+    glm::vec3 min = glm::vec3(FLT_MAX, FLT_MAX, FLT_MAX);
+    for(int i = 0; i < 4; ++i) {
+        if(min.x > this->points[i]->x)
+            min.x = this->points[i]->x;
+
+        if(min.y > this->points[i]->y)
+            min.y = this->points[i]->y;
+
+        if(min.z > this->points[i]->z)
+            min.z = this->points[i]->z;
+    }
+    return min;
+}
+
+glm::vec3 Tetrahedron::getBBMax() const {
+    glm::vec3 max = glm::vec3(FLT_MIN, FLT_MIN, FLT_MIN);
+    for(int i = 0; i < 4; ++i) {
+        if(max.x < this->points[i]->x)
+            max.x = this->points[i]->x;
+
+        if(max.y < this->points[i]->y)
+            max.y = this->points[i]->y;
+
+        if(max.z < this->points[i]->z)
+            max.z = this->points[i]->z;
+    }
+    return max;
+}
+
+//bool Tetrahedron::faceIntersect(const glm::vec3& p1, const glm::vec3& p2, int faceIdx) const {
+//    // Möller–Trumbore intersection algorithm
+//    glm::vec3 rayOrigin = p1;
+//    glm::vec3 rayDir = (p2 - p1);
+//
+//    glm::vec3 triEdge1 = (*this->getPoint(faceIdx, 1) - *this->getPoint(faceIdx, 0));
+//    glm::vec3 triEdge2 = (*this->getPoint(faceIdx, 2) - *this->getPoint(faceIdx, 0));
+//
+//    glm::vec3 h = glm::cross(rayDir, triEdge2);
+//    float dot = glm::dot(triEdge1, h);
+//    if (std::abs(dot) <  1.e-6)
+//        return false; // Ray parallel to the triangle
+//    float f = 1.f/dot;
+//    glm::vec3 s = (rayOrigin - *this->getPoint(faceIdx, 0));
+//    float u = f * glm::dot(s, h);
+//    if (u < 0.f || 1.f < u)
+//        return false; // Ray did not reach the triangle
+//    glm::vec3 q = glm::cross(s, triEdge1);
+//    float v = f * glm::dot(rayDir, q);
+//    if (v < 0.f || 1.f < (u + v))
+//        return false;
+//
+//    return true;
+//}
+//
+bool Tetrahedron::faceIntersect(const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2) const {
+    const glm::vec3& orig = p1;
+    const glm::vec3& dir = glm::normalize(p2 - p1);
+    //const glm::vec3& v0 = *this->getPoint(faceIdx, 0);
+    //const glm::vec3& v1 = *this->getPoint(faceIdx, 1);
+    //const glm::vec3& v2 = *this->getPoint(faceIdx, 2);
+    float t, u, v;
+
+    const glm::vec3 v0v1 = v1 - v0;
+    const glm::vec3 v0v2 = v2 - v0;
+    const glm::vec3 pvec = glm::cross(dir, v0v2);
+    float det = glm::dot(v0v1, pvec);
+    float invDet = 1.0f / det;
+
+    if (det < 0.000001) return false;
+
+    glm::vec3 tvec = orig - v0;
+    u = glm::dot(tvec, pvec) * invDet;
+    if (u < 0.f || u > 1.f) return false;
+
+    glm::vec3 qvec = glm::cross(tvec, v0v1);
+    v = glm::dot(dir, qvec) * invDet;
+    if (v < 0.f || u + v > 1.f) return false;
+
+    //t = glm::dot(v0v2, qvec) * invDet;
+
+    return true;
+}
+
+//bool Tetrahedron::faceIntersect(const glm::vec3& p1, const glm::vec3& p2, int faceIdx) const {
+//    //bool intersectPlane(const Vec3f &n, const Vec3f &p0, const Vec3f &l0, const Vec3f &l, float &t)
+//
+//    const glm::vec3 e1 = (*this->getPoint(faceIdx, 1) - *this->getPoint(faceIdx, 0));
+//    const glm::vec3 e2 = (*this->getPoint(faceIdx, 2) - *this->getPoint(faceIdx, 0));
+//    const glm::vec3 n = glm::normalize(glm::cross(e1, e2));
+//    const glm::vec3 p0 = (*this->getPoint(faceIdx, 2) + *this->getPoint(faceIdx, 1) + *this->getPoint(faceIdx, 0))/3.f;
+//    const glm::vec3 l0 = p1;
+//    const glm::vec3 l = glm::normalize(p2 - p1);
+//
+//    // assuming vectors are all normalized
+//    float denom = glm::dot(n, l);
+//    if (denom > 1e-6) {
+//        glm::vec3 p0l0 = p0 - l0;
+//        float t = glm::dot(p0l0, n) / denom;
+//        return (t >= 0);
+//    }
+//
+//    return false;
+//}
+
+
 void TetMesh::buildGrid(const glm::vec3& nbCube, const glm::vec3& sizeCube, const glm::vec3& origin) {
     if(!this->isEmpty())
         throw std::runtime_error("Error: build grid cannot be used on already constructed mesh.");
@@ -279,11 +399,61 @@ Tetrahedron TetMesh::getTetra(int idx) const {
 } 
 
 int TetMesh::inTetraIdx(const glm::vec3& p) const {
+    // Naive version
     int i = 0;
     for(int i = 0; i < mesh.size(); ++i)
         if(mesh[i].isInTetrahedron(p))
             return i;
     return -1;
+    //auto rng = std::default_random_engine {};
+
+    //std::uniform_int_distribution<std::mt19937::result_type> dist(0,this->mesh.size()-1);
+    //std::random_device dev;
+    //std::mt19937 rng2(dev());
+    //int seedIdx = dist(rng2);
+
+    //int idx = seedIdx;
+    //glm::vec3 centroid(0., 0., 0.);
+    //do {
+    //    std::vector<int> validNeigh;
+    //    validNeigh.clear();
+    //    const Tetrahedron& tet = this->mesh[idx];
+    //    tet.getCentroid(centroid);
+
+    //    for(int i = 0; i < 4; ++i) {
+    //        const glm::vec3& p1 = this->vertices[tet.getPointIndex(i, 0)];
+    //        const glm::vec3& p2 = this->vertices[tet.getPointIndex(i, 1)];
+    //        const glm::vec3& p3 = this->vertices[tet.getPointIndex(i, 2)];
+
+    //        if(tet.faceIntersect(p, centroid, p1, p2, p3)) {
+    //            if(tet.neighbors[i] != -1) {
+    //                validNeigh.push_back(tet.neighbors[i]);
+    //            }
+    //        }
+    //    }
+    //    if(!validNeigh.empty()) {
+    //        if(tet.isInTetrahedron(p)) {
+    //            //std::cout << "Found" << std::endl;
+    //            return idx;
+    //        }
+    //        //if(validNeigh.size() > 1)
+    //            //std::cout << "BUG" << std::endl;
+    //        // This slow the computation a lot, but this is mandatory to avoid infinite loop in degenerate cases
+    //        // https://hal.inria.fr/inria-00072509/document : at the end of page 11, fig.5
+    //        //std::shuffle(std::begin(validNeigh), std::end(validNeigh), rng);
+    //        idx = validNeigh[0];
+    //        //std::cout << idx << std::endl;
+    //    } else {
+    //        //std::cout << "Naïve" << std::endl;
+    //        idx = -1;
+    //        int i = 0;
+    //        for(int i = 0; i < mesh.size(); ++i)
+    //            if(mesh[i].isInTetrahedron(p))
+    //                return i;
+    //        return -1;
+    //    }
+    //} while(true);
+    //return idx;
 }
 
 // This function is private because it doesn't update fields nbTetra, bbMin and bbMax
@@ -387,8 +557,10 @@ void TetMesh::computeNormals() {
     }
 }
 
-bool TetMesh::getCoordInInitial(const TetMesh& initial, const glm::vec3& p, glm::vec3& out) const{
-    int tetraIdx = this->inTetraIdx(p);
+bool TetMesh::getCoordInInitial(const TetMesh& initial, const glm::vec3& p, glm::vec3& out, int tetraIdx) const {
+    if(tetraIdx == -1) {
+        tetraIdx = this->inTetraIdx(p);
+    }
     if(tetraIdx != -1) {
         glm::vec4 baryCoordInDeformed = this->getTetra(tetraIdx).computeBaryCoord(p);
         glm::vec3 coordInInitial = initial.getTetra(tetraIdx).baryToWorldCoord(baryCoordInDeformed);

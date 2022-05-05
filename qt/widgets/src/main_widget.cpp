@@ -459,8 +459,8 @@ void MainWidget::setupActions() {
 
     this->actionManager->createQActionButton("SaveImage", "SaveImage", "", "Save the deformed image", "saveDeformedImage");
     QObject::connect(this->actionManager->getAction("SaveImage"), &QAction::triggered, [this](){
-            this->scene->writeDeformation("atlas", "lightsheet");
-            //this->scene->writeDeformation("lightsheet", "atlas");
+            //this->scene->writeDeformation("atlas", "lightsheet");
+            this->scene->writeDeformation("atlas", "irm");
     });
 }
 

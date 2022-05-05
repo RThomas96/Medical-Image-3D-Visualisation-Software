@@ -56,7 +56,6 @@ uint16_t Grid::getValueFromPoint(const glm::vec3& p, InterpolationMethod interpo
         return this->sampler.getValue(p, interpolationMethod, resolutionMode);
     } else {
         // Background value
-        std::cout << "Not in BB | ";
         return 0;
     }
 }
