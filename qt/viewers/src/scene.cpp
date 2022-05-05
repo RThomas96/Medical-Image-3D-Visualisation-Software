@@ -4084,6 +4084,7 @@ glm::vec3 Scene::getTransformedPoint(const glm::vec3& inputPoint, const std::str
 //}
 
 void Scene::writeDeformation(const std::string& from, const std::string& to) {
+    omp_set_nested(true);
 
     auto start = std::chrono::steady_clock::now();
     Grid * fromGrid = this->grids[this->getGridIdx(from)]->grid;
@@ -4106,7 +4107,7 @@ void Scene::writeDeformation(const std::string& from, const std::string& to) {
     int printOcc = 10;
     printOcc = fromGrid->mesh.size()/printOcc;
 
-    #pragma omp parallel for schedule(dynamic)
+    #pragma omp parallel for schedule(dynamic) num_threads(fromGrid->mesh.size()/10)
     for(int tetIdx = 0; tetIdx < fromGrid->mesh.size(); ++tetIdx) {
         const Tetrahedron& tet = fromGrid->initialMesh.mesh[tetIdx];
         glm::vec3 bbMin = tet.getBBMin();
@@ -4120,7 +4121,7 @@ void Scene::writeDeformation(const std::string& from, const std::string& to) {
         if((tetIdx%printOcc) == 0) {
             std::cout << "Loading: " << (float(tetIdx)/float(fromGrid->mesh.size())) * 100. << "%" << std::endl;
         }
-        #pragma omp parallel for collapse(3) schedule(dynamic)
+        //#pragma omp parallel for collapse(3) schedule(dynamic) num_threads(fromGrid->mesh.size()/10)
         for(int k = bbMin.z; k < int(bbMax.z); ++k) {
             for(int j = bbMin.y; j < int(bbMax.y); ++j) {
                 for(int i = bbMin.x; i < int(bbMax.x); ++i) {

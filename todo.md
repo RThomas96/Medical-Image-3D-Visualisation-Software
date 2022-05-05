@@ -231,7 +231,7 @@ Objectif: Terminer le workflow complet
     - [x] Coder écriture image avec points 
     - [x] Améliorer les perf pour voir la déformation vers atlas
     - [ ] Coder un algorithme de walking pour accelerer l'écriture
-    - [ ] Checker les déformation dans les deux sens avec les images
+    - [x] Checker les déformation dans les deux sens avec les images
 - [ ] Réparer cet atlas avec cage
 - [ ] Créer un binaire windows self content
 - [ ] Terminer les outils de manipulations
@@ -241,7 +241,7 @@ Objectif: Terminer le workflow complet
     - [ ] Ajouter un bouton reset
     - [ ] Sauvegarder les valeurs de l'interface
     - [ ] Subsample différent suivant l'axe
-    - [ ] Perf de la sauvegarde d'image 
+    - [x] Perf de la sauvegarde d'image 
 
 ---
 

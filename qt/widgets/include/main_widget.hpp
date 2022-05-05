@@ -157,6 +157,7 @@ public slots:
         this->addTextEdit("Result", "Result", false);
         this->addButton("Deform");
         this->addButton("Preview");
+        this->addButton("Save images");
     }
 
     void update(Scene * scene) {
@@ -214,11 +215,22 @@ public slots:
         this->textEdits["Result"]->setPlainText(result);
     }
 
+    std::string getFromGridName() {
+        return this->objectChoosers["From"]->currentText().toStdString();
+    }
+
+    std::string getToGridName() {
+        return this->objectChoosers["To"]->currentText().toStdString();
+    }
+
     void connect(Scene * scene) {
         QObject::connect(this->buttons["Deform"], &QPushButton::clicked, [this, scene](){this->convertPoints(scene);});
         QObject::connect(this->buttons["Preview"], &QPushButton::clicked, [this, scene](){
-                scene->writeImageWithPoints("previewFrom.tiff", this->objectChoosers["From"]->currentText().toStdString(), this->origins);
-                scene->writeImageWithPoints("previewTo.tiff", this->objectChoosers["To"]->currentText().toStdString(), this->results);
+                scene->writeImageWithPoints("previewFrom.tiff", this->getFromGridName(), this->origins);
+                scene->writeImageWithPoints("previewTo.tiff", this->getToGridName(), this->results);
+        });
+        QObject::connect(this->buttons["Save images"], &QPushButton::clicked, [this, scene](){
+            scene->writeDeformation(this->getFromGridName(), this->getToGridName());
         });
     }
 };
