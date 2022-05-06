@@ -459,17 +459,19 @@ void MainWidget::setupActions() {
 
     this->actionManager->createQActionButton("SaveImage", "SaveImage", "", "Save the deformed image", "saveDeformedImage");
     QObject::connect(this->actionManager->getAction("SaveImage"), &QAction::triggered, [this](){
-            //this->scene->writeDeformation("atlas", "lightsheet");
-            this->scene->writeDeformation("atlas", "irm");
+            this->updateForms();
+            this->saveImageForm->show();
     });
 }
 
 void MainWidget::setupForms() {
     this->deformationForm = new DeformationForm(this->scene);
+    this->saveImageForm = new SaveImageForm(this->scene);
 }
 
 void MainWidget::updateForms() {
     this->deformationForm->update(this->scene);
+    this->saveImageForm->update(this->scene);
 }
 
 void MainWidget::toggleDisplayPlanarViewers() {

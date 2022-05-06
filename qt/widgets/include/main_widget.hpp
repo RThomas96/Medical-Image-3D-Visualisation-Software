@@ -69,6 +69,42 @@ public:
     }
 };
 
+enum FileChooserType {
+    SELECT,
+    SAVE
+};
+
+class FileChooser : public QPushButton {
+    Q_OBJECT
+
+public:
+    FileChooserType type;
+	QString filename;
+    FileChooser(QString name, FileChooserType type, QWidget *parent = nullptr):QPushButton(name, parent){init(type);}
+
+public slots:
+
+    void init(FileChooserType type) {
+        this->type = type;
+        QObject::connect(this, &QPushButton::clicked, [this, type](){this->click(type);});
+    }
+
+    void click(FileChooserType type) {
+        switch(type) {
+
+            case FileChooserType::SELECT:
+	            filename = QFileDialog::getOpenFileName(nullptr, "Open TIFF images (first channel)", QDir::currentPath(), "MESH files (*.mesh)", 0, QFileDialog::DontUseNativeDialog);
+
+            case FileChooserType::SAVE:
+	            filename = QFileDialog::getSaveFileName(nullptr, "Select the mesh to save", QDir::currentPath(), tr("OFF Files (*.off)"), 0, QFileDialog::DontUseNativeDialog);
+        }
+        Q_EMIT fileSelected();
+    }
+
+signals:
+    void fileSelected();
+};
+
 class Form : public QWidget {
     Q_OBJECT
 
@@ -82,6 +118,7 @@ public:
     std::map<QString, ObjectChooser*> objectChoosers;
     std::map<QString, QTextEdit*> textEdits;
     std::map<QString, QPushButton*> buttons;
+    std::map<QString, FileChooser*> fileChoosers;
 
     Form(QWidget *parent = nullptr):QWidget(parent){init();}
 
@@ -110,6 +147,12 @@ public slots:
         names += name;
         buttons[name] = new QPushButton(name);
         layout->addRow(buttons[name]);
+    }
+
+    void addFileChooser(const QString& name, const FileChooserType& type) {
+        names += name;
+        fileChoosers[name] = new FileChooser(name, type);
+        layout->addRow(fileChoosers[name]);
     }
 
     void addTextEdit(const QString& name, const QString& label, bool editable = true) {
@@ -157,7 +200,7 @@ public slots:
         this->addTextEdit("Result", "Result", false);
         this->addButton("Deform");
         this->addButton("Preview");
-        this->addButton("Save images");
+        this->addFileChooser("Save image", FileChooserType::SAVE);
     }
 
     void update(Scene * scene) {
@@ -229,8 +272,46 @@ public slots:
                 scene->writeImageWithPoints("previewFrom.tiff", this->getFromGridName(), this->origins);
                 scene->writeImageWithPoints("previewTo.tiff", this->getToGridName(), this->results);
         });
-        QObject::connect(this->buttons["Save images"], &QPushButton::clicked, [this, scene](){
-            scene->writeDeformation(this->getFromGridName(), this->getToGridName());
+        QObject::connect(this->fileChoosers["Save image"], &FileChooser::fileSelected, [this, scene](){
+            scene->writeDeformation(this->fileChoosers["Save image"]->filename.toStdString(), this->getFromGridName(), this->getToGridName());
+        });
+    }
+};
+
+class SaveImageForm : Form {
+    Q_OBJECT
+
+public:
+
+    SaveImageForm(Scene * scene, QWidget *parent = nullptr):Form(parent){init();connect(scene);}
+
+public slots:
+
+    void init() {
+        this->addMeshChooser("From", ObjectToChoose::GRID);
+        this->addMeshChooser("To", ObjectToChoose::GRID);
+        this->addFileChooser("Save image", FileChooserType::SAVE);
+    }
+
+    void update(Scene * scene) {
+        Form::update(scene);
+    }
+
+    void show() {
+        Form::show();
+    }
+
+    std::string getFromGridName() {
+        return this->objectChoosers["From"]->currentText().toStdString();
+    }
+
+    std::string getToGridName() {
+        return this->objectChoosers["To"]->currentText().toStdString();
+    }
+
+    void connect(Scene * scene) {
+        QObject::connect(this->fileChoosers["Save image"], &FileChooser::fileSelected, [this, scene](){
+            scene->writeDeformation(this->fileChoosers["Save image"]->filename.toStdString(), this->getFromGridName(), this->getToGridName());
         });
     }
 };
@@ -590,6 +671,7 @@ private:
     ApplyCageWidget * applyCageWidget;
 
     DeformationForm * deformationForm;
+    SaveImageForm * saveImageForm;
 
     bool isShiftPressed = false;
 

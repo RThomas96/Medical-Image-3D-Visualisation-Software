@@ -520,7 +520,7 @@ public slots:
     // Mesh management
     void undo();
     glm::vec3 getTransformedPoint(const glm::vec3& inputPoint, const std::string& from, const std::string& to);
-    void writeDeformation(const std::string& from, const std::string& to);
+    void writeDeformation(const std::string& filename, const std::string& from, const std::string& to);
     void writeImageWithPoints(const std::string& filename, const std::string& image, std::vector<glm::vec3>& points);
 
     // Move tool

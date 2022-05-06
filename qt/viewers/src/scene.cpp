@@ -4083,7 +4083,7 @@ glm::vec3 Scene::getTransformedPoint(const glm::vec3& inputPoint, const std::str
 //    std::cout << "Save sucessfull" << std::endl;
 //}
 
-void Scene::writeDeformation(const std::string& from, const std::string& to) {
+void Scene::writeDeformation(const std::string& filename, const std::string& from, const std::string& to) {
     omp_set_nested(true);
 
     auto start = std::chrono::steady_clock::now();
@@ -4092,7 +4092,7 @@ void Scene::writeDeformation(const std::string& from, const std::string& to) {
 
     glm::ivec3 imgDimensions = fromGrid->sampler.getImageDimensions();
 
-    TinyTIFFWriterFile * tif = TinyTIFFWriter_open("deformed_image.tif", 16, TinyTIFFWriter_UInt, 1, imgDimensions[0], imgDimensions[1], TinyTIFFWriter_Greyscale);
+    TinyTIFFWriterFile * tif = TinyTIFFWriter_open(filename.c_str(), 16, TinyTIFFWriter_UInt, 1, imgDimensions[0], imgDimensions[1], TinyTIFFWriter_Greyscale);
     std::vector<std::vector<uint16_t>> data;
     data.resize(imgDimensions[2]);
     for(int i = 0; i < data.size(); ++i) {

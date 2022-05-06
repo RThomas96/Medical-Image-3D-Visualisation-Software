@@ -235,11 +235,13 @@ Objectif: Terminer le workflow complet
 - [ ] Réparer cet atlas avec cage
 - [ ] Créer un binaire windows self content
 - [ ] Terminer les outils de manipulations
-    - [ ] Taille des voxels automatique
-    - [ ] Debug ce putin de manipulator de mort, rotation et scale
     - [ ] Terminer les interfaces d'ouvertures
+    - [ ] Taille des voxels automatique
     - [ ] Ajouter un bouton reset
+    - [ ] Debug ce putin de manipulator de mort, rotation et scale
     - [ ] Sauvegarder les valeurs de l'interface
+    - [ ] Sauvegarder les images avec les QImages
+
     - [ ] Subsample différent suivant l'axe
     - [x] Perf de la sauvegarde d'image 
 
