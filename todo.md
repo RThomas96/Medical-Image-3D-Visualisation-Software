@@ -235,10 +235,13 @@ Objectif: Terminer le workflow complet
 - [ ] Réparer cet atlas avec cage
 - [ ] Créer un binaire windows self content
 - [ ] Terminer les outils de manipulations
-    - [ ] Ajouter un redo
-    - [ ] Terminer les interfaces d'ouvertures
+    - [x] Ajouter un redo
+    - [x] Terminer l'interface d'ouverture
+    - [ ] Terminer les interfaces de sauvegarde
+    - [ ] Mettre les menus sur le côté
     - [ ] Taille des voxels automatique
     - [ ] Ajouter un bouton reset
+    - [ ] Supprimer tout le code mort des interfaces
     - [ ] Debug ce putin de manipulator de mort, rotation et scale
     - [ ] Sauvegarder les valeurs de l'interface
     - [ ] Sauvegarder les images avec les QImages
@@ -310,3 +313,7 @@ CODE DEBT
 
 BUG
 - [ ] You cannot change the voxel size when you load a custom transfert mesh
+
+IDEA
+- [ ] Parser du json pour faire une interface QT
+- [ ] Un Guizmo en open gl modern

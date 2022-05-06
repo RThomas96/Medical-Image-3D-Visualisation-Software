@@ -74,29 +74,46 @@ enum FileChooserType {
     SAVE
 };
 
+enum class FileChooserFormat {
+    TIFF,
+    MESH
+};
+
 class FileChooser : public QPushButton {
     Q_OBJECT
 
 public:
     FileChooserType type;
 	QString filename;
-    FileChooser(QString name, FileChooserType type, QWidget *parent = nullptr):QPushButton(name, parent){init(type);}
+    FileChooser(QString name, FileChooserType type = FileChooserType::SELECT, FileChooserFormat format = FileChooserFormat::TIFF, QWidget *parent = nullptr):QPushButton(name, parent){init(type, format);}
 
 public slots:
 
-    void init(FileChooserType type) {
+    void init(FileChooserType type, FileChooserFormat format = FileChooserFormat::TIFF) {
         this->type = type;
-        QObject::connect(this, &QPushButton::clicked, [this, type](){this->click(type);});
+        QObject::connect(this, &QPushButton::clicked, [this, type, format](){this->click(type, format);});
     }
 
-    void click(FileChooserType type) {
+    void setType(FileChooserType type) {
+        this->init(type);
+    }
+
+    void click(FileChooserType type, FileChooserFormat format) {
         switch(type) {
 
             case FileChooserType::SELECT:
-	            filename = QFileDialog::getOpenFileName(nullptr, "Open TIFF images (first channel)", QDir::currentPath(), "MESH files (*.mesh)", 0, QFileDialog::DontUseNativeDialog);
+                if(format == FileChooserFormat::TIFF)
+	                filename = QFileDialog::getOpenFileName(nullptr, "Open TIFF images", QDir::currentPath(), "TIFF files (*.tiff)", 0, QFileDialog::DontUseNativeDialog);
+                else
+	                filename = QFileDialog::getOpenFileName(nullptr, "Open mesh file", QDir::currentPath(), "MESH files (*.mesh)", 0, QFileDialog::DontUseNativeDialog);
+                break;
 
             case FileChooserType::SAVE:
-	            filename = QFileDialog::getSaveFileName(nullptr, "Select the mesh to save", QDir::currentPath(), tr("OFF Files (*.off)"), 0, QFileDialog::DontUseNativeDialog);
+                if(format == FileChooserFormat::TIFF)
+	                filename = QFileDialog::getSaveFileName(nullptr, "Select the image to save", QDir::currentPath(), tr("TIFF Files (*.tiff)"), 0, QFileDialog::DontUseNativeDialog);
+                else
+	                filename = QFileDialog::getSaveFileName(nullptr, "Select the mesh to save", QDir::currentPath(), tr("OFF Files (*.off)"), 0, QFileDialog::DontUseNativeDialog);
+                break;
         }
         Q_EMIT fileSelected();
     }
@@ -105,10 +122,65 @@ signals:
     void fileSelected();
 };
 
+//class FormSection : public QGroupBox {
+//    Q_OBJECT
+//
+//public:
+//
+//    Form * form;
+//
+//    FormSection(QWidget *parent = nullptr):QGroupBox(parent){init();}
+//
+//public slots:
+//
+//    void init() {
+//        this->form = new form();
+//    }
+//};
+
+class FileName : public QLabel {
+    Q_OBJECT
+
+public:
+    FileName(QWidget *parent = nullptr):QLabel(parent){init(nullptr);}
+
+public slots:
+
+    void init(FileChooser * fileChooser) {
+        this->setText("[Select a file]");
+        if(fileChooser)
+            QObject::connect(fileChooser, &FileChooser::fileSelected, [this, fileChooser](){this->setText(fileChooser->filename);});
+    }
+};
+
+enum WidgetType{
+    LABEL,
+    LINE_EDIT,
+    TEXT_EDIT,
+    BUTTON,
+    SPIN_BOX,
+    MESH_SAVE,
+    TIFF_SAVE,
+    MESH_CHOOSE,
+    TIFF_CHOOSE,
+    FILENAME,
+    GRID_CHOOSE,
+    SECTION,
+    SECTION_CHECKABLE,
+    H_GROUP,
+    V_GROUP
+};
+
 class Form : public QWidget {
     Q_OBJECT
 
 public:
+    bool insertNextWidgetInSection;
+    QString sectionToInsertIn;
+
+    bool insertNextWidgetInGroup;
+    QString groupToInsertIn;
+
     QFormLayout * layout;
 
     QStringList names;
@@ -118,7 +190,12 @@ public:
     std::map<QString, ObjectChooser*> objectChoosers;
     std::map<QString, QTextEdit*> textEdits;
     std::map<QString, QPushButton*> buttons;
+    std::map<QString, QSpinBox*> spinBoxes;
+    std::map<QString, FileName*> fileNames;
     std::map<QString, FileChooser*> fileChoosers;
+    std::map<QString, std::pair<QGroupBox*, QFormLayout*>> sections;
+
+    std::map<QString, QBoxLayout*> groups;
 
     Form(QWidget *parent = nullptr):QWidget(parent){init();}
 
@@ -128,57 +205,228 @@ public slots:
         this->setWindowFlags(Qt::WindowStaysOnTopHint);
         this->layout = new QFormLayout();
         this->setLayout(this->layout);
+
+        insertNextWidgetInSection = false;
+        sectionToInsertIn = QString("");
+
+        insertNextWidgetInGroup = false;
+        groupToInsertIn = QString("");
     }
 
-    void addLabel(const QString& name) {
-        names += name;
-        labels[name] = new QLabel(name);
-        layout->addRow(labels[name]);
+    void addGroup(QLayout * group) {
+        if(insertNextWidgetInSection) {
+            this->addGroupToSection(this->sectionToInsertIn, group);
+        } else if(insertNextWidgetInGroup) {
+            this->addGroupToGroup(this->groupToInsertIn, group);
+        } else {
+            this->layout->addRow(group);
+        }
     }
 
-    void addLineEdit(const QString& name) {
-        names += name;
-        labels[name] = new QLabel(name);
-        lineEdits[name] = new QLineEdit();
-        layout->addRow(labels[name], lineEdits[name]);
+    void addGroup(QWidget * label, QLayout * group) {
+        if(insertNextWidgetInSection) {
+            this->addGroupToSection(this->sectionToInsertIn, label, group);
+        } else if(insertNextWidgetInGroup) {
+            this->addGroupToGroup(this->groupToInsertIn, label, group);
+        } else {
+            this->layout->addRow(label, group);
+        }
     }
 
-    void addButton(const QString& name) {
-        names += name;
-        buttons[name] = new QPushButton(name);
-        layout->addRow(buttons[name]);
+    void addWidget(QWidget * widget1, QWidget * widget2 = nullptr) {
+        if(widget2) {
+            if(insertNextWidgetInSection) {
+                this->addWidgetToSection(this->sectionToInsertIn, widget1, widget2);
+            } else if(insertNextWidgetInGroup) {
+                this->addWidgetToGroup(this->groupToInsertIn, widget1, widget2);
+            } else {
+                this->layout->addRow(widget1, widget2);
+            }
+        } else {
+            if(insertNextWidgetInSection) {
+                this->addWidgetToSection(this->sectionToInsertIn, widget1);
+            } else if(insertNextWidgetInGroup) {
+                this->addWidgetToGroup(this->groupToInsertIn, widget1);
+            } else {
+                this->layout->addRow(widget1);
+            }
+        }
     }
 
-    void addFileChooser(const QString& name, const FileChooserType& type) {
-        names += name;
-        fileChoosers[name] = new FileChooser(name, type);
-        layout->addRow(fileChoosers[name]);
+    void addAllNextWidgetsToSection(const QString& name) {
+        this->insertNextWidgetInSection = true;
+        this->insertNextWidgetInGroup = false;
+        this->sectionToInsertIn = name;
     }
 
-    void addTextEdit(const QString& name, const QString& label, bool editable = true) {
-        names += name;
-        labels[name] = new QLabel(label);
-        textEdits[name] = new QTextEdit();
-        textEdits[name]->setReadOnly(!editable);
-        layout->addRow(labels[name], textEdits[name]);
+    void addAllNextWidgetsToDefaultSection() {
+        this->insertNextWidgetInSection = false;
     }
 
-    void addTextEdit(const QString& name, bool editable = true) {
-        this->addTextEdit(name, name, editable);
+    void addAllNextWidgetsToGroup(const QString& name) {
+        this->insertNextWidgetInGroup = true;
+        this->insertNextWidgetInSection = false;
+        this->groupToInsertIn = name;
     }
 
-    void addMeshChooser(const QString& name, const ObjectToChoose& objectToChoose = ObjectToChoose::ALL) {
-        names += name;
-        labels[name] = new QLabel(name);
-        objectChoosers[name] = new ObjectChooser();
-        objectChoosers[name]->objectToChoose = objectToChoose;
-        layout->addRow(labels[name], objectChoosers[name]);
+    void addAllNextWidgetsToDefaultGroup() {
+        this->insertNextWidgetInGroup = false;
+    }
+
+    void setSectionCheckable(const QString& name, bool checkable) {
+        this->sections[name].first->setCheckable(checkable);
+    }
+    
+    void setTextEditEditable(const QString& id, bool editable) {
+        textEdits[id]->setReadOnly(!editable);
+    }
+
+    void linkFileNameToFileChooser(const QString& filenameId, const QString& fileChooserId) {
+        this->fileNames[filenameId]->init(this->fileChoosers[fileChooserId]);
+    }
+
+    void setObjectTypeToChoose(const QString& id, ObjectToChoose objectToChoose) {
+        objectChoosers[id]->objectToChoose = objectToChoose;
+    }
+
+    void setFileChooserType(const QString& id, FileChooserType type) {
+        fileChoosers[id]->setType(type);
+    }
+
+    void addWithLabel(const WidgetType& type, const QString& id, const QString& label) {
+        this->add(type, id, id, label);
+    }
+
+    void add(const WidgetType& type, const QString& id) {
+        this->add(type, id, id, "");
+    }
+
+    void add(const WidgetType& type, const QString& id, const QString& name) {
+        this->add(type, id, name, "");
+    }
+
+    void add(const WidgetType& type, const QString& id, const QString& name, const QString& label) {
+        names += id;
+        QWidget * newWidget = nullptr;
+        QLayout * newGroup = nullptr;
+        switch(type) {
+            case WidgetType::LINE_EDIT:
+                lineEdits[id] = new QLineEdit();
+                newWidget = lineEdits[id]; 
+                break;
+            case WidgetType::TEXT_EDIT:
+                textEdits[id] = new QTextEdit();
+                newWidget = textEdits[id];
+                break;
+            case WidgetType::GRID_CHOOSE:
+                objectChoosers[id] = new ObjectChooser();
+                newWidget = objectChoosers[id];
+                objectChoosers[id]->objectToChoose = ObjectToChoose::GRID;
+                break;
+            case WidgetType::SPIN_BOX:
+                spinBoxes[id] = new QSpinBox();
+                newWidget = spinBoxes[id];
+                break;
+            case WidgetType::LABEL:
+                labels[id] = new QLabel(name);
+                newWidget = labels[id];
+                break;
+            case WidgetType::SECTION_CHECKABLE:
+                sections[id] = std::make_pair(new QGroupBox(name), new QFormLayout());
+                sections[id].first->setLayout(this->sections[id].second);
+                sections[id].first->setCheckable(true);
+                newWidget = sections[name].first;
+                break;
+            case WidgetType::SECTION:
+                sections[id] = std::make_pair(new QGroupBox(name), new QFormLayout());
+                sections[id].first->setLayout(this->sections[id].second);
+                sections[id].first->setCheckable(false);
+                newWidget = sections[name].first;
+                break;
+            case WidgetType::BUTTON:
+                buttons[id] = new QPushButton(name);
+                newWidget = buttons[id];
+                break;
+            case WidgetType::FILENAME:
+                fileNames[id] = new FileName();
+                newWidget = fileNames[id];
+                break;
+            case WidgetType::MESH_CHOOSE:
+                fileChoosers[id] = new FileChooser(name, FileChooserType::SELECT, FileChooserFormat::MESH);
+                newWidget = fileChoosers[id];
+                break;
+            case WidgetType::TIFF_CHOOSE:
+                fileChoosers[id] = new FileChooser(name, FileChooserType::SELECT, FileChooserFormat::TIFF);
+                newWidget = fileChoosers[id];
+                break;
+            case WidgetType::MESH_SAVE:
+                fileChoosers[id] = new FileChooser(name, FileChooserType::SAVE, FileChooserFormat::MESH);
+                newWidget = fileChoosers[id];
+                break;
+            case WidgetType::TIFF_SAVE:
+                fileChoosers[id] = new FileChooser(name, FileChooserType::SAVE, FileChooserFormat::TIFF);
+                newWidget = fileChoosers[id];
+                break;
+            case WidgetType::H_GROUP:
+                groups[id] = new QHBoxLayout();
+                newGroup = groups[id];
+                break;
+            case WidgetType::V_GROUP:
+                groups[id] = new QVBoxLayout();
+                newGroup = groups[id];
+                break;
+        };
+        if(newWidget) {
+            if(label != "") {
+                labels[id] = new QLabel(label);
+                this->addWidget(labels[id], newWidget);
+            } else {
+                this->addWidget(newWidget);
+            }
+        } else if(newGroup) {
+            if(label != "") {
+                labels[id] = new QLabel(label);
+                this->addGroup(labels[id], newGroup);
+            } else {
+                this->addGroup(newGroup);
+            }
+        }
     }
 
     void update(Scene * scene) {
         for(auto& chooser : objectChoosers) {
             chooser.second->fillChoices(scene);
         }
+    }
+
+private:
+    void addWidgetToSection(const QString& name, QWidget * widget1, QWidget * widget2 = nullptr) {
+        if(widget2)
+            this->sections[name].second->addRow(widget1, widget2);
+        else
+            this->sections[name].second->addRow(widget1);
+    }
+
+    void addWidgetToGroup(const QString& name, QWidget * widget1, QWidget * widget2 = nullptr) {
+            this->groups[name]->addWidget(widget1);
+            if(widget2)
+                this->groups[name]->addWidget(widget2);
+    }
+
+    void addGroupToSection(const QString& name, QWidget * label, QLayout * group) {
+            this->sections[name].second->addRow(label, group);
+    }
+
+    void addGroupToSection(const QString& name, QLayout * group) {
+            this->sections[name].second->addRow(group);
+    }
+
+    void addGroupToGroup(const QString& name, QWidget * label, QLayout * group) {
+            this->groups[name]->addLayout(group);
+    }
+
+    void addGroupToGroup(const QString& name, QLayout * group) {
+            this->groups[name]->addLayout(group);
     }
 };
 
@@ -194,13 +442,23 @@ public:
 public slots:
 
     void init() {
-        this->addMeshChooser("From", ObjectToChoose::GRID);
-        this->addMeshChooser("To", ObjectToChoose::GRID);
-        this->addTextEdit("PtToDeform", "Points to deform", true);
-        this->addTextEdit("Result", "Result", false);
-        this->addButton("Deform");
-        this->addButton("Preview");
-        this->addFileChooser("Save image", FileChooserType::SAVE);
+        this->add(WidgetType::GRID_CHOOSE, "From");
+        this->setObjectTypeToChoose("From", ObjectToChoose::GRID);
+
+        this->add(WidgetType::GRID_CHOOSE, "To");
+        this->setObjectTypeToChoose("To", ObjectToChoose::GRID);
+
+        this->add(WidgetType::TEXT_EDIT, "PtToDeform", "Points to deform");
+        this->setTextEditEditable("PtToDeform", true);
+
+        this->add(WidgetType::TEXT_EDIT, "Results", "Results");
+        this->setTextEditEditable("Results", true);
+
+        this->add(WidgetType::BUTTON, "Deform");
+        this->add(WidgetType::BUTTON, "Preview");
+
+        this->add(WidgetType::TIFF_CHOOSE, "Save image");
+        this->setFileChooserType("Save image", FileChooserType::SAVE);
     }
 
     void update(Scene * scene) {
@@ -254,8 +512,8 @@ public slots:
             result += line;
             this->results.push_back(newPt);
         }
-        this->textEdits["Result"]->clear();
-        this->textEdits["Result"]->setPlainText(result);
+        this->textEdits["Results"]->clear();
+        this->textEdits["Results"]->setPlainText(result);
     }
 
     std::string getFromGridName() {
@@ -288,9 +546,14 @@ public:
 public slots:
 
     void init() {
-        this->addMeshChooser("From", ObjectToChoose::GRID);
-        this->addMeshChooser("To", ObjectToChoose::GRID);
-        this->addFileChooser("Save image", FileChooserType::SAVE);
+        this->add(WidgetType::GRID_CHOOSE, "From");
+        this->setObjectTypeToChoose("From", ObjectToChoose::GRID);
+
+        this->add(WidgetType::GRID_CHOOSE, "To");
+        this->setObjectTypeToChoose("To", ObjectToChoose::GRID);
+
+        this->add(WidgetType::TIFF_SAVE, "Save image");
+        this->setFileChooserType("Save image", FileChooserType::SAVE);
     }
 
     void update(Scene * scene) {
@@ -312,6 +575,195 @@ public slots:
     void connect(Scene * scene) {
         QObject::connect(this->fileChoosers["Save image"], &FileChooser::fileSelected, [this, scene](){
             scene->writeDeformation(this->fileChoosers["Save image"]->filename.toStdString(), this->getFromGridName(), this->getToGridName());
+        });
+    }
+};
+
+class OpenImageForm : Form {
+    Q_OBJECT
+
+public:
+
+    bool useTetMesh;
+    OpenImageForm(Scene * scene, QWidget *parent = nullptr):Form(parent){init();connect(scene);}
+
+public slots:
+
+    void init() {
+        this->useTetMesh = false;
+        //this->addFileChooser("Save image", FileChooserType::SAVE);
+
+        this->add(WidgetType::SECTION, "Image");
+        this->addAllNextWidgetsToSection("Image");
+
+        /***/
+
+        this->add(WidgetType::SECTION_CHECKABLE, "Image subsample");
+        this->addAllNextWidgetsToSection("Image subsample");
+
+        this->addWithLabel(WidgetType::SPIN_BOX, "Subsample", "Subsample");
+
+        this->addAllNextWidgetsToSection("Image");
+
+        /***/
+
+        this->add(WidgetType::SECTION_CHECKABLE, "Image subregion");
+        this->addAllNextWidgetsToSection("Image subregion");
+
+        this->addWithLabel(WidgetType::H_GROUP, "GroupBBMin", "BBox min");
+        this->addAllNextWidgetsToGroup("GroupBBMin");
+
+        this->add(WidgetType::SPIN_BOX, "BBMinX");
+        this->add(WidgetType::SPIN_BOX, "BBMinY");
+        this->add(WidgetType::SPIN_BOX, "BBMinZ");
+
+        this->addAllNextWidgetsToDefaultGroup();
+        this->addAllNextWidgetsToSection("Image subregion");
+
+        this->addWithLabel(WidgetType::H_GROUP, "GroupBBMax", "BBox max");
+        this->addAllNextWidgetsToGroup("GroupBBMax");
+
+        this->add(WidgetType::SPIN_BOX, "BBMaxX");
+        this->add(WidgetType::SPIN_BOX, "BBMaxY");
+        this->add(WidgetType::SPIN_BOX, "BBMaxZ");
+
+        /***/
+
+        this->addAllNextWidgetsToSection("Image");
+
+        this->add(WidgetType::FILENAME, "Image filename");
+        this->add(WidgetType::TIFF_CHOOSE, "Image choose", "Select image file");
+        this->linkFileNameToFileChooser("Image filename", "Image choose");
+
+        /***/
+
+        this->addAllNextWidgetsToDefaultGroup();
+        this->addAllNextWidgetsToDefaultSection();
+
+        this->add(WidgetType::SECTION, "Mesh");
+        this->addAllNextWidgetsToSection("Mesh");
+
+        this->add(WidgetType::SECTION, "Tetrahedral mesh size");
+        this->addAllNextWidgetsToSection("Tetrahedral mesh size");
+
+        this->addWithLabel(WidgetType::H_GROUP, "GroupNbTet", "Nb tetrahedra");
+        this->addAllNextWidgetsToGroup("GroupNbTet");
+
+        this->add(WidgetType::SPIN_BOX, "NbTetX");
+        this->add(WidgetType::SPIN_BOX, "NbTetY");
+        this->add(WidgetType::SPIN_BOX, "NbTetZ");
+
+        this->addAllNextWidgetsToSection("Mesh");
+
+        this->add(WidgetType::SECTION, "Voxel size");
+        this->addAllNextWidgetsToSection("Voxel size");
+
+        this->addWithLabel(WidgetType::H_GROUP, "GroupVoxelSize", "Size");
+        this->addAllNextWidgetsToGroup("GroupVoxelSize");
+
+        this->add(WidgetType::SPIN_BOX, "SizeVoxelX");
+        this->add(WidgetType::SPIN_BOX, "SizeVoxelY");
+        this->add(WidgetType::SPIN_BOX, "SizeVoxelZ");
+
+        this->addAllNextWidgetsToSection("Mesh");
+
+        this->add(WidgetType::FILENAME, "Mesh filename");
+        this->add(WidgetType::MESH_CHOOSE, "Mesh choose", "Select mesh file");
+        this->linkFileNameToFileChooser("Mesh filename", "Mesh choose");
+
+        /***/
+
+        this->addAllNextWidgetsToDefaultGroup();
+        this->addAllNextWidgetsToDefaultSection();
+
+        this->add(WidgetType::BUTTON, "Load");
+
+        /***/
+
+        this->sections["Image subsample"].first->setChecked(false);
+        this->sections["Image subregion"].first->setChecked(false);
+
+        this->spinBoxes["Subsample"]->setValue(1);
+
+        this->spinBoxes["NbTetX"]->setValue(5);
+        this->spinBoxes["NbTetY"]->setValue(5);
+        this->spinBoxes["NbTetZ"]->setValue(5);
+
+        this->spinBoxes["SizeVoxelX"]->setValue(1);
+        this->spinBoxes["SizeVoxelY"]->setValue(1);
+        this->spinBoxes["SizeVoxelZ"]->setValue(1);
+
+        this->sections["Image subregion"].first->setEnabled(false);
+        this->sections["Image subsample"].first->setEnabled(false);
+
+        this->sections["Mesh"].first->setEnabled(false);
+
+        this->buttons["Load"]->setEnabled(false);
+    }
+
+    void update(Scene * scene) {
+        Form::update(scene);
+    }
+
+    void show() {
+        Form::show();
+    }
+
+    std::string getFromGridName() {
+        return this->objectChoosers["From"]->currentText().toStdString();
+    }
+
+    std::string getToGridName() {
+        return this->objectChoosers["To"]->currentText().toStdString();
+    }
+
+    std::string getName() {
+        return std::string("name");
+    }
+
+    std::vector<std::string> getImgFilenames() {
+        return std::vector<std::string>{this->fileChoosers["Image choose"]->filename.toStdString()};
+    }
+
+    std::string getTetmeshFilename() {
+        this->fileChoosers["Mesh choose"]->filename;
+    }
+
+    int getSubsample() {
+        return this->spinBoxes["Subsample"]->value();
+    }
+
+    glm::vec3 getSizeVoxel() {
+        return glm::vec3(this->spinBoxes["SizeVoxelX"]->value(),
+                         this->spinBoxes["SizeVoxelY"]->value(),
+                         this->spinBoxes["SizeVoxelZ"]->value());
+    }
+
+    glm::vec3 getSizeTetmesh() {
+        return glm::vec3(this->spinBoxes["NbTetX"]->value(),
+                         this->spinBoxes["NbTetY"]->value(),
+                         this->spinBoxes["NbTetZ"]->value());
+    }
+
+    void connect(Scene * scene) {
+        QObject::connect(this->fileChoosers["Image choose"], &FileChooser::fileSelected, [this](){
+                this->buttons["Load"]->setEnabled(true);
+                //this->sections["Image subregion"].first->setEnabled(true);// This functionnality isn't available yet
+                this->sections["Image subsample"].first->setEnabled(true);
+                this->sections["Mesh"].first->setEnabled(true);
+        });
+
+        QObject::connect(this->fileChoosers["Mesh choose"], &FileChooser::fileSelected, [this](){
+                this->sections["Tetrahedral mesh size"].first->setEnabled(false);
+                this->useTetMesh = true;
+        });
+
+        QObject::connect(this->buttons["Load"], &QPushButton::clicked, [this, scene](){
+                if(this->useTetMesh) {
+                    scene->openGrid(this->getName(), this->getImgFilenames(), this->getSubsample(), this->getTetmeshFilename());
+                } else {
+                    scene->openGrid(this->getName(), this->getImgFilenames(), this->getSubsample(), this->getSizeVoxel(), this->getSizeTetmesh());
+                }
         });
     }
 };
@@ -672,6 +1124,7 @@ private:
 
     DeformationForm * deformationForm;
     SaveImageForm * saveImageForm;
+    OpenImageForm * openImageForm;
 
     bool isShiftPressed = false;
 

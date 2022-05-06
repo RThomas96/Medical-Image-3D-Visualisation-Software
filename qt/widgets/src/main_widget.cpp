@@ -103,6 +103,8 @@ void MainWidget::setupWidgets() {
     this->toolbar->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
     //this->toolbar->addWidget(tabBar);
 
+    this->toolbar->addAction(this->actionManager->getAction("Open"));
+
     this->toolbar->addSeparator();
 
     this->toolbar->addAction(this->actionManager->getAction("ToggleNoneTool"));
@@ -466,16 +468,24 @@ void MainWidget::setupActions() {
             this->updateForms();
             this->saveImageForm->show();
     });
+
+    this->actionManager->createQActionButton("Open", "Open", "", "Open the deformed image", "open");
+    QObject::connect(this->actionManager->getAction("Open"), &QAction::triggered, [this](){
+            this->updateForms();
+            this->openImageForm->show();
+    });
 }
 
 void MainWidget::setupForms() {
     this->deformationForm = new DeformationForm(this->scene);
     this->saveImageForm = new SaveImageForm(this->scene);
+    this->openImageForm = new OpenImageForm(this->scene);
 }
 
 void MainWidget::updateForms() {
     this->deformationForm->update(this->scene);
     this->saveImageForm->update(this->scene);
+    this->openImageForm->update(this->scene);
 }
 
 void MainWidget::toggleDisplayPlanarViewers() {
