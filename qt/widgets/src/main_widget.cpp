@@ -114,6 +114,7 @@ void MainWidget::setupWidgets() {
     this->toolbar->addSeparator();
 
     this->toolbar->addAction(this->actionManager->getAction("Undo"));
+    this->toolbar->addAction(this->actionManager->getAction("Redo"));
 
     this->toolbar->addSeparator();
 
@@ -449,6 +450,9 @@ void MainWidget::setupActions() {
     // Undo
     this->actionManager->createQActionButton("Undo", "Undo", "ctrl+z", "Undo", "undo");
     QObject::connect(this->actionManager->getAction("Undo"), &QAction::triggered, [this](){this->scene->undo();});
+
+    this->actionManager->createQActionButton("Redo", "Redo", "ctrl+alt+z", "Redo", "redo");
+    QObject::connect(this->actionManager->getAction("Redo"), &QAction::triggered, [this](){this->scene->redo();});
 
     // Pipeline
     this->actionManager->createQActionButton("Transform", "Transform", "", "Get the point in the associated image", "deform");

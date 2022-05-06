@@ -3984,15 +3984,21 @@ bool Scene::isRightTool(const UITool::MeshManipulatorType& typeToCheck) {
     return isRightType;
 }
 
-void Scene::moveTool_toggleEvenMode() { auto toolPtr = this->getMeshTool<UITool::PositionManipulator>(); if(toolPtr) { toolPtr->toggleEvenMode(); } };
+void Scene::moveTool_toggleEvenMode() { auto * toolPtr = this->getMeshTool<UITool::PositionManipulator>(); if(toolPtr) { toolPtr->toggleEvenMode(); } };
 
-void Scene::ARAPTool_toggleEvenMode() { auto toolPtr = this->getMeshTool<UITool::ARAPManipulator>(); if(toolPtr) { toolPtr->toggleEvenMode(); } };
+void Scene::ARAPTool_toggleEvenMode() { auto * toolPtr = this->getMeshTool<UITool::ARAPManipulator>(); if(toolPtr) { toolPtr->toggleEvenMode(); } };
 
-void Scene::undo() {
+void Scene::moveInHistory(bool backward) {
     BaseMesh * mesh = this->getBaseMesh(this->activeMesh);
     if(mesh && mesh->history) {
         std::vector<glm::vec3> pointsBefore;
-        if(mesh->history->undo(pointsBefore)) {
+        bool success = false;
+        if(backward) {
+            success = mesh->history->undo(pointsBefore);
+        } else {
+            success = mesh->history->redo(pointsBefore);
+        }
+        if(success) {
             mesh->replacePoints(pointsBefore);
             this->sendFirstTetmeshToGPU();
         }
@@ -4000,6 +4006,14 @@ void Scene::undo() {
         std::cout << "WARNING: the active mesh do not contain any history" << std::endl;
         return;
     }
+}
+
+void Scene::undo() {
+    this->moveInHistory(true);
+}
+
+void Scene::redo() {
+    this->moveInHistory(false);
 }
 
 glm::vec3 Scene::getTransformedPoint(const glm::vec3& inputPoint, const std::string& from, const std::string& to) {

@@ -235,6 +235,7 @@ Objectif: Terminer le workflow complet
 - [ ] Réparer cet atlas avec cage
 - [ ] Créer un binaire windows self content
 - [ ] Terminer les outils de manipulations
+    - [ ] Ajouter un redo
     - [ ] Terminer les interfaces d'ouvertures
     - [ ] Taille des voxels automatique
     - [ ] Ajouter un bouton reset
@@ -257,7 +258,7 @@ MANDATORY
     - [ ] Activer/désactiver le cache en fonction de la taille de l'image
 
 - [ ] Le scale affecte les performances
-- [ ] Ajouter un undo
+- [x] Ajouter un undo
 - [x] Ajouter des icônes
 - [ ] Sync plane et header 
 - [ ] Voir le mesh dans planar view
