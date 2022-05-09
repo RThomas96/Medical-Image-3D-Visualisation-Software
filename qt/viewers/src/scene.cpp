@@ -3299,7 +3299,7 @@ void Scene::launchSaveDialog() {
 		messageBox.setFixedSize(500, 200);
 		return;
 	}
-    this->grids[this->gridToDraw]->grid->writeDeformedGrid();
+    //this->grids[this->gridToDraw]->grid->writeDeformedGrid();
 	return;
 }
 
@@ -3665,6 +3665,7 @@ void Scene::init() {
         this->applyCage(std::string("cage"), std::string("/data/datasets/data/Thomas/data/sourisIGF/atlas-cage-hyperdilated-rigidRegister-lightsheet_2.off"));
 
         this->openGrid(std::string("irm"), {std::string("/home/thomas/data/Data/Demo/IRM/irm.tif")}, 1, glm::vec3(3.9, 3.9, 50));
+        //this->openGrid(std::string("irm"), {std::string("/home/thomas/data/Data/Demo/IRM/irm.tif")}, 1, glm::vec3(0., 0., 0.));
     }
 
     if(this->demos.demo_atlas_to_lightsheet) {

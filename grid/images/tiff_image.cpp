@@ -1,4 +1,7 @@
 #include "tiff_image.hpp"
+#include <glm/gtx/string_cast.hpp> 
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/io.hpp>
 #include <algorithm>
 #include <limits.h>
 #include <bitset>
@@ -6,6 +9,7 @@
 SimpleTIFFImage::SimpleTIFFImage(const std::vector<std::string>& filename): tiffReader(new TIFFReader(filename)) {
     this->imgResolution = this->tiffReader->getImageResolution();
     this->imgDataType = this->tiffReader->getImageInternalDataType(); 
+    this->voxelSize = this->tiffReader->getVoxelSize();
 }
 
 Image::ImageDataType SimpleTIFFImage::getInternalDataType() const {
@@ -153,6 +157,30 @@ glm::vec3 TIFFReader::getImageResolution() const {
         dircount = this->filenames.size(); 
     }
     return glm::vec3(width, length, dircount);
+}
+
+glm::vec3 TIFFReader::getVoxelSize() const {
+    float Xres = 0;
+    float Yres = 0;
+    int foundX = TIFFGetField(tif, TIFFTAG_XRESOLUTION , &Xres);
+    int foundY = TIFFGetField(tif, TIFFTAG_YRESOLUTION, &Yres);
+
+    glm::vec3 voxelSize(1., 1., 1.);
+    if(foundX == 1) {
+        voxelSize.x = 1./float(Xres);
+        voxelSize.y = 1./float(Xres);
+        voxelSize.z = 1./float(Xres);
+        if(foundY == 1 && foundX != foundY) {
+            voxelSize.y = 1./float(Yres);
+            std::cout << "WARNING: nb of voxel per pixel is different in X[" << Xres << "] and Y[" << Yres << "]! Size of voxel for Z coordinates will be computed using the resolution on X." << std::endl;
+        } else {
+            std::cout << "Voxel size found: nb pixel per cm [" << Xres << "], voxel size: " << voxelSize << std::endl;
+        }
+    } else {
+        std::cout << "WARNING: voxel size not found" << std::endl;
+    }
+
+    return voxelSize;
 }
 
 Image::ImageDataType TIFFReader::getImageInternalDataType() const {

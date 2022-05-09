@@ -24,6 +24,7 @@ enum ResolutionMode {
 // to access to the image data.
 struct Sampler {
 
+    glm::vec3 voxelSize;
     glm::vec3 resolutionRatio;
 
     glm::vec3 bbMin;
@@ -39,6 +40,12 @@ struct Sampler {
     Sampler(const std::vector<std::string>& filename);
     Sampler(const std::vector<std::string>& filename, int subsample);
     Sampler(const std::vector<std::string>& filename, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox);
+    Sampler(const std::vector<std::string>& filename, int subsample, const glm::vec3& voxelSize);
+
+    void init(const std::vector<std::string>& filename, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox, const glm::vec3& voxelSize);
+
+    void setVoxelSize(const glm::vec3& voxelSize);
+    glm::vec3 getVoxelSize() const;
 
     void getGridSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel) const;
 
@@ -69,15 +76,13 @@ struct Grid : public TetMesh {
     TetMesh initialMesh;
     Sampler sampler;
 
-    glm::vec3 voxelSize;
-
     Grid(const std::vector<std::string>& filename, int subsample, const glm::vec3& sizeVoxel, const glm::vec3& nbCubeGridTransferMesh);
     Grid(const std::vector<std::string>& filename, int subsample, const glm::vec3& sizeVoxel, const std::string& fileNameTransferMesh);
 
     //Removed because unused but still working
     //Grid(const std::vector<std::string>& filename, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox);
 
-    void buildTetmesh(const glm::vec3& nbCube, const glm::vec3& sizeVoxel);
+    void buildTetmesh(const glm::vec3& nbCube);
 
     void loadMESH(std::string const &filename) override;
 

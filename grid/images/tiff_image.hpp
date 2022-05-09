@@ -35,6 +35,7 @@ struct TIFFReader {
     TIFFReader(const std::vector<std::string>& filename);
 
     glm::vec3 getImageResolution() const;
+    glm::vec3 getVoxelSize() const;
     Image::ImageDataType getImageInternalDataType() const;
 
     //! Get how many values are contained in a single row of the image
@@ -59,6 +60,7 @@ enum class ImageFormat {
 
 struct SimpleTIFFImage {
 
+    glm::vec3 voxelSize; // Read from the image, not necessarily the one used in the software
     glm::vec3 imgResolution;
     Image::ImageDataType imgDataType;
 
@@ -111,6 +113,7 @@ struct SimpleOMETIFFImage : public SimpleTIFFImage {
             QXmlStreamReader xmlReader(xmlData); 
             while (!xmlReader.atEnd()) {
                 xmlReader.readNextStartElement();
+                std::cout << xmlReader.name().toString().toStdString() << std::endl;
                 if(xmlReader.name().toString() == QString("UUID")) {
                     if(xmlReader.attributes().hasAttribute("FileName")) {
                         QString finalFileName = path.filePath(xmlReader.attributes().value("FileName").toString());
@@ -136,6 +139,7 @@ struct SimpleOMETIFFImage : public SimpleTIFFImage {
 
 struct SimpleDIMImage {
 
+    glm::vec3 voxelSize; // Read from the image, not necessarily the one used in the software
     glm::vec3 imgResolution;
     Image::ImageDataType imgDataType;
 
@@ -220,6 +224,9 @@ struct SimpleDIMImage {
         this->imgResolution[0] = n[0];
         this->imgResolution[1] = n[1];
         this->imgResolution[2] = n[2];
+        this->voxelSize[0] = d[0];
+        this->voxelSize[1] = d[1];
+        this->voxelSize[2] = d[2];
         this->imgDataType = (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_16);
 
         delete [] data;
@@ -280,6 +287,7 @@ struct SimpleImage {
     SimpleOMETIFFImage * omeTiffImageReader;
     SimpleDIMImage * dimImageReader;
 
+    glm::vec3 voxelSize; // Read from the image, not necessarily the one used in the software
     glm::vec3 imgResolution;
     Image::ImageDataType imgDataType;
 
@@ -291,6 +299,7 @@ struct SimpleImage {
                 this->omeTiffImageReader = new SimpleOMETIFFImage(filename);
                 this->tiffImageReader = nullptr;
                 this->dimImageReader = nullptr;
+                this->voxelSize = this->omeTiffImageReader->voxelSize;
                 this->imgResolution = this->omeTiffImageReader->imgResolution;
                 this->imgDataType = this->omeTiffImageReader->imgDataType;
                 return;
@@ -299,6 +308,7 @@ struct SimpleImage {
                 this->tiffImageReader = new SimpleTIFFImage(filename);
                 this->omeTiffImageReader = nullptr;
                 this->dimImageReader = nullptr;
+                this->voxelSize = this->tiffImageReader->voxelSize;
                 this->imgResolution = this->tiffImageReader->imgResolution;
                 this->imgDataType = this->tiffImageReader->imgDataType;
                 return;
@@ -310,6 +320,7 @@ struct SimpleImage {
             this->tiffImageReader = nullptr;
             this->omeTiffImageReader = nullptr;
             this->dimImageReader = new SimpleDIMImage(filename);
+            this->voxelSize = this->dimImageReader->voxelSize;
             this->imgResolution = this->dimImageReader->imgResolution;
             this->imgDataType = this->dimImageReader->imgDataType;
             return;

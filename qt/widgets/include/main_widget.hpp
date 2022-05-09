@@ -99,11 +99,12 @@ public slots:
     }
 
     void click(FileChooserType type, FileChooserFormat format) {
+        QString filename;
         switch(type) {
 
             case FileChooserType::SELECT:
                 if(format == FileChooserFormat::TIFF)
-	                filename = QFileDialog::getOpenFileName(nullptr, "Open TIFF images", QDir::currentPath(), "TIFF files (*.tiff)", 0, QFileDialog::DontUseNativeDialog);
+	                filename = QFileDialog::getOpenFileName(nullptr, "Open TIFF images", QDir::currentPath(), "TIFF files (*.tiff *.tif)", 0, QFileDialog::DontUseNativeDialog);
                 else
 	                filename = QFileDialog::getOpenFileName(nullptr, "Open mesh file", QDir::currentPath(), "MESH files (*.mesh)", 0, QFileDialog::DontUseNativeDialog);
                 break;
@@ -115,7 +116,10 @@ public slots:
 	                filename = QFileDialog::getSaveFileName(nullptr, "Select the mesh to save", QDir::currentPath(), tr("OFF Files (*.off)"), 0, QFileDialog::DontUseNativeDialog);
                 break;
         }
-        Q_EMIT fileSelected();
+        if(!filename.isEmpty()) {
+            this->filename = filename;
+            Q_EMIT fileSelected();
+        }
     }
 
 signals:
@@ -159,6 +163,7 @@ enum WidgetType{
     TEXT_EDIT,
     BUTTON,
     SPIN_BOX,
+    SPIN_BOX_DOUBLE,
     MESH_SAVE,
     TIFF_SAVE,
     MESH_CHOOSE,
@@ -191,6 +196,7 @@ public:
     std::map<QString, QTextEdit*> textEdits;
     std::map<QString, QPushButton*> buttons;
     std::map<QString, QSpinBox*> spinBoxes;
+    std::map<QString, QDoubleSpinBox*> doubleSpinBoxes;
     std::map<QString, FileName*> fileNames;
     std::map<QString, FileChooser*> fileChoosers;
     std::map<QString, std::pair<QGroupBox*, QFormLayout*>> sections;
@@ -325,7 +331,14 @@ public slots:
                 break;
             case WidgetType::SPIN_BOX:
                 spinBoxes[id] = new QSpinBox();
+                spinBoxes[id]->setRange(-10000000, 10000000);
                 newWidget = spinBoxes[id];
+                break;
+            case WidgetType::SPIN_BOX_DOUBLE:
+                doubleSpinBoxes[id] = new QDoubleSpinBox();
+                doubleSpinBoxes[id]->setRange(-10000000, 10000000);
+                doubleSpinBoxes[id]->setDecimals(6);
+                newWidget = doubleSpinBoxes[id];
                 break;
             case WidgetType::LABEL:
                 labels[id] = new QLabel(name);
@@ -661,9 +674,9 @@ public slots:
         this->addWithLabel(WidgetType::H_GROUP, "GroupVoxelSize", "Size");
         this->addAllNextWidgetsToGroup("GroupVoxelSize");
 
-        this->add(WidgetType::SPIN_BOX, "SizeVoxelX");
-        this->add(WidgetType::SPIN_BOX, "SizeVoxelY");
-        this->add(WidgetType::SPIN_BOX, "SizeVoxelZ");
+        this->add(WidgetType::SPIN_BOX_DOUBLE, "SizeVoxelX");
+        this->add(WidgetType::SPIN_BOX_DOUBLE, "SizeVoxelY");
+        this->add(WidgetType::SPIN_BOX_DOUBLE, "SizeVoxelZ");
 
         this->addAllNextWidgetsToSection("Mesh");
 
@@ -684,14 +697,21 @@ public slots:
         this->sections["Image subregion"].first->setChecked(false);
 
         this->spinBoxes["Subsample"]->setValue(1);
+        this->spinBoxes["Subsample"]->setMinimum(1);
 
         this->spinBoxes["NbTetX"]->setValue(5);
+        this->spinBoxes["NbTetX"]->setMinimum(1);
         this->spinBoxes["NbTetY"]->setValue(5);
+        this->spinBoxes["NbTetY"]->setMinimum(1);
         this->spinBoxes["NbTetZ"]->setValue(5);
+        this->spinBoxes["NbTetZ"]->setMinimum(1);
 
-        this->spinBoxes["SizeVoxelX"]->setValue(1);
-        this->spinBoxes["SizeVoxelY"]->setValue(1);
-        this->spinBoxes["SizeVoxelZ"]->setValue(1);
+        this->doubleSpinBoxes["SizeVoxelX"]->setValue(1);
+        this->doubleSpinBoxes["SizeVoxelX"]->setMinimum(0);
+        this->doubleSpinBoxes["SizeVoxelY"]->setValue(1);
+        this->doubleSpinBoxes["SizeVoxelY"]->setMinimum(0);
+        this->doubleSpinBoxes["SizeVoxelZ"]->setValue(1);
+        this->doubleSpinBoxes["SizeVoxelZ"]->setMinimum(0);
 
         this->sections["Image subregion"].first->setEnabled(false);
         this->sections["Image subsample"].first->setEnabled(false);
@@ -726,7 +746,7 @@ public slots:
     }
 
     std::string getTetmeshFilename() {
-        this->fileChoosers["Mesh choose"]->filename;
+        return this->fileChoosers["Mesh choose"]->filename.toStdString();
     }
 
     int getSubsample() {
@@ -734,9 +754,9 @@ public slots:
     }
 
     glm::vec3 getSizeVoxel() {
-        return glm::vec3(this->spinBoxes["SizeVoxelX"]->value(),
-                         this->spinBoxes["SizeVoxelY"]->value(),
-                         this->spinBoxes["SizeVoxelZ"]->value());
+        return glm::vec3(this->doubleSpinBoxes["SizeVoxelX"]->value(),
+                         this->doubleSpinBoxes["SizeVoxelY"]->value(),
+                         this->doubleSpinBoxes["SizeVoxelZ"]->value());
     }
 
     glm::vec3 getSizeTetmesh() {
@@ -745,12 +765,24 @@ public slots:
                          this->spinBoxes["NbTetZ"]->value());
     }
 
+    void prefillFields(const std::vector<std::string>& files) {
+        std::cout << "***" << std::endl;
+        std::cout << "Parse image to fill informations" << std::endl;
+        SimpleImage image(files);        
+        this->doubleSpinBoxes["SizeVoxelX"]->setValue(image.voxelSize.x);
+        this->doubleSpinBoxes["SizeVoxelY"]->setValue(image.voxelSize.y);
+        this->doubleSpinBoxes["SizeVoxelZ"]->setValue(image.voxelSize.z);
+        std::cout << "***" << std::endl;
+    }
+
     void connect(Scene * scene) {
         QObject::connect(this->fileChoosers["Image choose"], &FileChooser::fileSelected, [this](){
                 this->buttons["Load"]->setEnabled(true);
                 //this->sections["Image subregion"].first->setEnabled(true);// This functionnality isn't available yet
                 this->sections["Image subsample"].first->setEnabled(true);
                 this->sections["Mesh"].first->setEnabled(true);
+
+                this->prefillFields({this->fileChoosers["Image choose"]->filename.toStdString()});
         });
 
         QObject::connect(this->fileChoosers["Mesh choose"], &FileChooser::fileSelected, [this](){

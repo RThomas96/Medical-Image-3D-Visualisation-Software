@@ -16,18 +16,17 @@ Image::ImageDataType Sampler::getInternalDataType() const {
     return this->image->getInternalDataType();
 }
 
-Grid::Grid(const std::vector<std::string>& filename, int subsample, const glm::vec3& sizeVoxel, const glm::vec3& nbCubeGridTransferMesh): sampler(Sampler(filename, subsample)), toSamplerMatrix(glm::mat4(1.f)) {
-    this->buildTetmesh(nbCubeGridTransferMesh, sizeVoxel);
+Grid::Grid(const std::vector<std::string>& filename, int subsample, const glm::vec3& sizeVoxel, const glm::vec3& nbCubeGridTransferMesh): sampler(Sampler(filename, subsample, sizeVoxel)), toSamplerMatrix(glm::mat4(1.f)) {
+    this->buildTetmesh(nbCubeGridTransferMesh);
 }
 
-Grid::Grid(const std::vector<std::string>& filename, int subsample, const glm::vec3& sizeVoxel, const std::string& fileNameTransferMesh): sampler(Sampler(filename, subsample)), toSamplerMatrix(glm::mat4(1.f)) {
+Grid::Grid(const std::vector<std::string>& filename, int subsample, const glm::vec3& sizeVoxel, const std::string& fileNameTransferMesh): sampler(Sampler(filename, subsample, sizeVoxel)), toSamplerMatrix(glm::mat4(1.f)) {
     this->loadMESH(fileNameTransferMesh);
 }
 
 // Only this one is used
-void Grid::buildTetmesh(const glm::vec3& nbCube, const glm::vec3& sizeVoxel) {
-    this->voxelSize = sizeVoxel;
-    const glm::vec3 sizeCube = (this->sampler.getSamplerDimension() * sizeVoxel) / nbCube;
+void Grid::buildTetmesh(const glm::vec3& nbCube) {
+    const glm::vec3 sizeCube = (this->sampler.getSamplerDimension() * this->getVoxelSize()) / nbCube;
     std::cout << "***" << std::endl;
     std::cout << "Build tetrahedral mesh grid..." << std::endl;
     std::cout << "Image dimension: " << this->sampler.getSamplerDimension() << std::endl;
@@ -68,72 +67,6 @@ uint16_t Grid::getDeformedValueFromPoint(const TetMesh& initial, const glm::vec3
     if(resolutionMode == ResolutionMode::FULL_RESOLUTION)
         this->sampler.fromSamplerToImage(pt2);
     return this->getValueFromPoint(pt2, interpolationMethod, resolutionMode);
-}
-
-void Grid::writeDeformedGrid(ResolutionMode resolutionMode) {
-    if(this->isEmpty())
-        throw std::runtime_error("Error: cannot write a grid without deformed mesh.");
-
-    if(this->initialMesh.isEmpty())
-        throw std::runtime_error("Error: cannot write a grid without initialMesh mesh.");
-
-    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-
-    this->updatebbox();
-    glm::vec3 voxelDimension = this->voxelSize;
-    glm::vec3 imageDimension = this->getDimensions()/this->voxelSize; 
-    imageDimension[0] = std::ceil(imageDimension[0]);
-    imageDimension[1] = std::ceil(imageDimension[1]);
-    imageDimension[2] = std::ceil(imageDimension[2]);
-
-    if(resolutionMode == ResolutionMode::FULL_RESOLUTION) {
-        this->sampler.fromSamplerToImage(imageDimension);
-
-        // The save algorithm will generate points between bbmax and bbmin and save each of them after a deformation
-        // Those generated points are in sampler space, as bboxMin and Max as well as the deformation computation provided by tetmesh are all in sampler space
-        // Thus the saving at sampler resolution is simple
-        // However, for saving at image resolution, we need to generate points in image space
-        // We could convert bboxMin and max as well as all tetmesh points to the image space
-        // Instead we keep our computation on sampler space but we change the offset between two points aka the voxelDimension
-        // By reducing the voxelDimension we keep the same offset between two points as if we were in image space
-        // At the end, we just have to convert the deformed point to the image space for the query
-        this->sampler.fromImageToSampler(voxelDimension);
-    }
-
-    std::cout << "Original image dimensions: " << this->initialMesh.bbMax - this->initialMesh.bbMin << std::endl;
-    std::cout << "Image dimensions: " << imageDimension << std::endl;
-    TinyTIFFWriterFile * tif = TinyTIFFWriter_open("save_deformed_image.tif", 16, TinyTIFFWriter_UInt, 1, imageDimension[0], imageDimension[1], TinyTIFFWriter_Greyscale);
-    std::cout << "For " << bbMin << " to " << bbMax << " per " << voxelDimension << std::endl;
-
-    std::vector<uint16_t> data;
-    data.reserve(imageDimension[0] * imageDimension[1]);
-    glm::vec3 pt2(0., 0., 0.);
-    for(float k = bbMin[2]; k < bbMax[2]; k+=voxelDimension[2]) {
-        std::cout << std::endl;
-        end = std::chrono::steady_clock::now();
-        std::cout << "Loading: " << ((k-bbMin[2])/(bbMax[2]-bbMin[2])) * 100. << "%" << std::endl;
-        //std::cout << "Remain: "  << (((bbMax[2]-bbMin[2]) - (k-bbMin[2])) * (std::chrono::duration_cast<std::chrono::seconds> (end - begin).count() / (k-bbMin[2])))/60. << "min" << std::endl << std::endl;
-        data.clear();
-        for(float j = bbMin[1]; j < bbMax[1]; j+=voxelDimension[1]) {
-            //std::cout << (j/bbMax[1]) * 100. << "% " << std::flush;
-            for(float i = bbMin[0]; i < bbMax[0]; i+=voxelDimension[0]) {
-                const glm::vec3 pt(i+voxelDimension[0]/2., j+voxelDimension[1]/2., k+voxelDimension[2]/2.);
-                bool isInInitial = this->getCoordInInitial(this->initialMesh, pt, pt2);
-                if(!isInInitial) {
-                    data.push_back(0.);
-                } else {
-                    if(resolutionMode == ResolutionMode::FULL_RESOLUTION)
-                        this->sampler.fromSamplerToImage(pt2);// Here we do a convertion because the final point is on image space 
-                    data.push_back(this->getValueFromPoint(pt2, InterpolationMethod::NearestNeighbor, resolutionMode));// Here we stay at sampler resolution because bb are aligned on the sampler
-                }
-            }
-        }
-        TinyTIFFWriter_writeImage(tif, data.data());
-    }
-    TinyTIFFWriter_close(tif);
-
-    std::cout << "Save sucessfull" << std::endl;
 }
 
 std::pair<glm::vec3, glm::vec3> Grid::getBoundingBox() const {
@@ -195,11 +128,7 @@ void Grid::toSampler(glm::vec3& p) const {
 }
 
 glm::vec3 Grid::getVoxelSize() const {
-    //return this->sampler.getSamplerDimension() / this->getResolution();
-    //return this->getDimensions() / this->sampler.getSamplerDimension();
-    //std::cout <<  this->getDimensions() / this->sampler.getSamplerDimension() << std::endl;
-    //std::cout <<  this->voxelSize << std::endl;
-    return this->voxelSize;
+    return this->sampler.getVoxelSize();
 }
 
 void Grid::loadMESH(std::string const &filename) {
@@ -209,95 +138,24 @@ void Grid::loadMESH(std::string const &filename) {
     for(int i = 0; i < this->vertices.size(); ++i) {
         this->texCoord.push_back(this->vertices[i]/this->sampler.getSamplerDimension());
     }    
-    //this->voxelSize = this->getDimensions() / this->sampler.getSamplerDimension();
-    this->voxelSize = glm::vec3(1., 1., 1.); 
 }
 
 /**************************/
 
 Sampler::Sampler(const std::vector<std::string>& filename, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox): image(new SimpleImage(filename)) {
-    glm::vec3 samplerResolution = this->image->imgResolution / static_cast<float>(subsample);
-    this->resolutionRatio = this->image->imgResolution / samplerResolution;
-    // If we naïvely divide the image dimensions for lowered its resolution we have problem is the case of a dimension is 1
-    // In that case the voxelSizeRatio is still 2.f for example, but the dimension is 0.5
-    // It is a problem as we will iterate until dimension with sizeRatio as an offset
-    for(int i = 0; i < 3; ++i) {
-        samplerResolution[i] = std::floor(samplerResolution[i]);
-        if(samplerResolution[i] <= 1.) {
-            samplerResolution[i] = 1;
-            this->resolutionRatio[i] = 1;
-        }
-        this->resolutionRatio[i] = static_cast<int>(std::floor(this->resolutionRatio[i]));
-    }
-
-    this->bbMin = glm::vec3(0., 0., 0.);
-    this->bbMax = samplerResolution;
-
-    this->subregionMin = bbox.first;
-    this->subregionMax = bbox.second;
-
-    // Cache management
-    this->useCache = USE_CACHE;
-    if(this->useCache) {
-        this->cache = new Cache(this->getSamplerDimension());
-        this->fillCache();
-    }
-
-    std::cout << "Sampler initialized..." << std::endl;
-    std::cout << "Sampler resolution: " << this->getSamplerDimension() << std::endl;
-    std::cout << "Subregion selected: " << this->subregionMin << " | " << this->subregionMax << std::endl;
+    this->init(filename, subsample, bbox, glm::vec3(0., 0., 0.));
 }
 
 Sampler::Sampler(const std::vector<std::string>& filename, int subsample): image(new SimpleImage(filename)) {
-    glm::vec3 samplerResolution = this->image->imgResolution / static_cast<float>(subsample);
-    this->resolutionRatio = this->image->imgResolution / samplerResolution;
-    // If we naïvely divide the image dimensions for lowered its resolution we have problem is the case of a dimension is 1
-    // In that case the voxelSizeRatio is still 2.f for example, but the dimension is 0.5
-    // It is a problem as we will iterate until dimension with sizeRatio as an offset
-    for(int i = 0; i < 3; ++i) {
-        samplerResolution[i] = std::floor(samplerResolution[i]);
-        if(samplerResolution[i] <= 1.) {
-            samplerResolution[i] = 1;
-            this->resolutionRatio[i] = 1;
-        }
-        this->resolutionRatio[i] = static_cast<int>(std::floor(this->resolutionRatio[i]));
-    }
+    this->init(filename, subsample, std::pair<glm::vec3, glm::vec3>(glm::vec3(0., 0., 0.), glm::vec3(0., 0., 0.)), glm::vec3(0., 0., 0.));
+}
 
-    this->bbMin = glm::vec3(0., 0., 0.);
-    this->bbMax = samplerResolution;
-
-    this->subregionMin = this->bbMin;
-    this->subregionMax = this->bbMax;
-
-    // Cache management
-    this->useCache = USE_CACHE;
-    if(this->useCache) {
-        this->cache = new Cache(this->getSamplerDimension());
-        this->fillCache();
-    }
-
-    std::cout << "Sampler initialized..." << std::endl;
-    std::cout << "Sampler resolution: " << this->getSamplerDimension() << std::endl;
-    std::cout << "Resolution ratio: " << this->resolutionRatio << std::endl;
-    std::cout << "No subregion selected" << std::endl;
+Sampler::Sampler(const std::vector<std::string>& filename, int subsample, const glm::vec3& voxelSize): image(new SimpleImage(filename)) {
+    this->init(filename, subsample, std::pair<glm::vec3, glm::vec3>(glm::vec3(0., 0., 0.), glm::vec3(0., 0., 0.)), voxelSize);
 }
 
 Sampler::Sampler(const std::vector<std::string>& filename): image(new SimpleImage(filename)) {
-    glm::vec3 samplerResolution = this->image->imgResolution; 
-    this->resolutionRatio = glm::vec3(1., 1., 1.); 
-
-    this->bbMin = glm::vec3(0., 0., 0.);
-    this->bbMax = samplerResolution;
-
-    this->subregionMin = this->bbMin;
-    this->subregionMax = this->bbMax;
-
-    // Cache management
-    this->useCache = USE_CACHE;
-    if(this->useCache) {
-        this->cache = new Cache(this->getSamplerDimension());
-        this->fillCache();
-    }
+    this->init(filename, 1, std::pair<glm::vec3, glm::vec3>(glm::vec3(0., 0., 0.), glm::vec3(0., 0., 0.)), glm::vec3(0., 0., 0.));
 }
 
 Sampler::Sampler(glm::vec3 size): image(nullptr) {
@@ -319,6 +177,62 @@ Sampler::Sampler(glm::vec3 size): image(nullptr) {
     //this->fillCache();
 }
 
+void Sampler::init(const std::vector<std::string>& filename, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox, const glm::vec3& voxelSize) {
+    glm::vec3 samplerResolution = this->image->imgResolution / static_cast<float>(subsample);
+    this->resolutionRatio = this->image->imgResolution / samplerResolution;
+    // If we naïvely divide the image dimensions for lowered its resolution we have problem is the case of a dimension is 1
+    // In that case the voxelSizeRatio is still 2.f for example, but the dimension is 0.5
+    // It is a problem as we will iterate until dimension with sizeRatio as an offset
+    for(int i = 0; i < 3; ++i) {
+        samplerResolution[i] = std::floor(samplerResolution[i]);
+        if(samplerResolution[i] <= 1.) {
+            samplerResolution[i] = 1;
+            this->resolutionRatio[i] = 1;
+        }
+        this->resolutionRatio[i] = static_cast<int>(std::floor(this->resolutionRatio[i]));
+    }
+
+    this->bbMin = glm::vec3(0., 0., 0.);
+    this->bbMax = samplerResolution;
+
+    if(glm::distance(bbox.first, bbox.second) > 0.0000001) {
+        this->subregionMin = bbox.first;
+        this->subregionMax = bbox.second;
+    } else {
+        this->subregionMin = this->bbMin;
+        this->subregionMax = this->bbMax;
+    }
+
+    // Cache management
+    this->useCache = USE_CACHE;
+    if(this->useCache) {
+        this->cache = new Cache(this->getSamplerDimension());
+        this->fillCache();
+    }
+
+    bool useOriginalVoxelSize = true;
+    if(voxelSize != glm::vec3(0., 0., 0.)) {
+        this->voxelSize = voxelSize;
+        useOriginalVoxelSize = false;
+    } else {
+        this->voxelSize = this->image->voxelSize;
+    }
+
+    std::cout << "Sampler initialized..." << std::endl;
+    std::cout << "Sampler resolution: " << this->getSamplerDimension() << std::endl;
+    std::cout << "Resolution ratio: " << this->resolutionRatio << std::endl;
+    std::cout << "Voxel size: " << this->voxelSize;
+    if(useOriginalVoxelSize)
+        std::cout << " (original)" << std::endl; 
+    else
+        std::cout << " (manual)" << std::endl; 
+    std::cout << "Subregion selected: " << this->subregionMin << " | " << this->subregionMax << std::endl;
+}
+
+
+void Sampler::setVoxelSize(const glm::vec3& voxelSize) {
+    this->voxelSize = voxelSize;
+}
 
 glm::vec3 Sampler::getSamplerDimension() const {
    return this->subregionMax - this->subregionMin; 
@@ -402,3 +316,6 @@ void Sampler::fromImageToSampler(glm::vec3& p) const {
     p = p / this->resolutionRatio;
 }
 
+glm::vec3 Sampler::getVoxelSize() const {
+    return this->voxelSize;
+}
