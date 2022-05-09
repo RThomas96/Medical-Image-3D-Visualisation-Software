@@ -518,12 +518,14 @@ public slots:
     void updateTools(UITool::MeshManipulatorType tool);
 
     // Mesh management
-    void moveInHistory(bool backward = true);
+    void moveInHistory(bool backward = true, bool reset = false);
     void undo();
     void redo();
+    void reset();
     glm::vec3 getTransformedPoint(const glm::vec3& inputPoint, const std::string& from, const std::string& to);
     void writeDeformation(const std::string& filename, const std::string& from, const std::string& to);
     void writeImageWithPoints(const std::string& filename, const std::string& image, std::vector<glm::vec3>& points);
+    void clear();
 
     // Move tool
     void moveTool_toggleEvenMode();

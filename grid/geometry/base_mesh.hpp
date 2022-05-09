@@ -17,6 +17,17 @@ struct History {
     void activate() { this->isActive = true; }
     void deactivate() { this->isActive = false; }
 
+    bool reset(std::vector<glm::vec3>& res) {
+        if(currentState == 0) {
+            std::cout << "WARNING: no operations, nothing to do" << std::endl;
+            return false;
+        }
+
+        this->currentState = 0;
+        res = history.front();
+        return true;
+    }
+
     bool undo(std::vector<glm::vec3>& res) {
         if(currentState == 0) {
             std::cout << "WARNING: can't undo, no more operations" << std::endl;

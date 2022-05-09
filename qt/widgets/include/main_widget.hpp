@@ -33,6 +33,7 @@
 #include <QFormLayout>
 #include <QTextEdit>
 #include <QTextBlock>
+#include <QMessageBox>
 
 class ColorBoundWidget;
 

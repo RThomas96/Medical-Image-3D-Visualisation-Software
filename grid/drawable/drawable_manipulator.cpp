@@ -266,13 +266,16 @@ void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scen
         }
     }
 
-    const std::vector<glm::vec3>& positions = mesh->getMeshPositions();
     this->displayWireframe = false;// Because wathever the manipulator created it is not activated at creation
     if(this->meshManipulator) {
         delete this->meshManipulator;
         this->meshManipulator = nullptr;
     }
 
+    if(!mesh)
+        return;
+
+    const std::vector<glm::vec3>& positions = mesh->getMeshPositions();
 
     this->meshManipulatorType = type;
     if(type == MeshManipulatorType::DIRECT) {

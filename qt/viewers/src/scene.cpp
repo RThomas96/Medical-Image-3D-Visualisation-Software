@@ -3705,6 +3705,9 @@ BaseMesh * Scene::getBaseMesh(const std::string& name) {
 void Scene::updateTools(UITool::MeshManipulatorType tool) {
     this->glMeshManipulator->createNewMeshManipulator(this->getBaseMesh(this->activeMesh), this, tool);
 
+    if(tool == UITool::MeshManipulatorType::NONE || !this->getBaseMesh(this->activeMesh))
+        return;
+
     if(tool == UITool::MeshManipulatorType::DIRECT || 
        tool == UITool::MeshManipulatorType::POSITION ) {
         this->getBaseMesh(this->activeMesh)->setNormalDeformationMethod();
@@ -3990,15 +3993,19 @@ void Scene::moveTool_toggleEvenMode() { auto * toolPtr = this->getMeshTool<UIToo
 
 void Scene::ARAPTool_toggleEvenMode() { auto * toolPtr = this->getMeshTool<UITool::ARAPManipulator>(); if(toolPtr) { toolPtr->toggleEvenMode(); } };
 
-void Scene::moveInHistory(bool backward) {
+void Scene::moveInHistory(bool backward, bool reset) {
     BaseMesh * mesh = this->getBaseMesh(this->activeMesh);
     if(mesh && mesh->history) {
         std::vector<glm::vec3> pointsBefore;
         bool success = false;
-        if(backward) {
-            success = mesh->history->undo(pointsBefore);
+        if(reset) {
+            success = mesh->history->reset(pointsBefore);
         } else {
-            success = mesh->history->redo(pointsBefore);
+            if(backward) {
+                success = mesh->history->undo(pointsBefore);
+            } else {
+                success = mesh->history->redo(pointsBefore);
+            }
         }
         if(success) {
             mesh->replacePoints(pointsBefore);
@@ -4016,6 +4023,10 @@ void Scene::undo() {
 
 void Scene::redo() {
     this->moveInHistory(false);
+}
+
+void Scene::reset() {
+    this->moveInHistory(true, true);
 }
 
 glm::vec3 Scene::getTransformedPoint(const glm::vec3& inputPoint, const std::string& from, const std::string& to) {
@@ -4215,4 +4226,13 @@ void Scene::writeImageWithPoints(const std::string& filename, const std::string&
     TinyTIFFWriter_close(tif);
 
     std::cout << "Save sucessfull" << std::endl;
+}
+
+void Scene::clear() {
+    this->updateTools(UITool::MeshManipulatorType::NONE);
+    this->grids_name.clear();
+	this->grids.clear();
+    this->meshes.clear();
+    this->drawableMeshes.clear();
+    gridToDraw = -1;
 }

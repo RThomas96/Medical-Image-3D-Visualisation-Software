@@ -115,6 +115,7 @@ void MainWidget::setupWidgets() {
 
     this->toolbar->addSeparator();
 
+    this->toolbar->addAction(this->actionManager->getAction("Reset"));
     this->toolbar->addAction(this->actionManager->getAction("Undo"));
     this->toolbar->addAction(this->actionManager->getAction("Redo"));
 
@@ -125,6 +126,10 @@ void MainWidget::setupWidgets() {
     this->toolbar->addSeparator();
 
     this->toolbar->addAction(this->actionManager->getAction("Transform"));
+
+    this->toolbar->addSeparator();
+
+    this->toolbar->addAction(this->actionManager->getAction("Clear"));
 
     /***/
 
@@ -455,6 +460,21 @@ void MainWidget::setupActions() {
 
     this->actionManager->createQActionButton("Redo", "Redo", "ctrl+alt+z", "Redo", "redo");
     QObject::connect(this->actionManager->getAction("Redo"), &QAction::triggered, [this](){this->scene->redo();});
+
+    this->actionManager->createQActionButton("Reset", "Reset", "", "Put the mesh vertices at there original positions", "reset");
+    QObject::connect(this->actionManager->getAction("Reset"), &QAction::triggered, [this](){this->scene->reset();});
+
+    this->actionManager->createQActionButton("Clear", "Clear", "", "Clear the entire scene", "clearScene");
+    QObject::connect(this->actionManager->getAction("Clear"), &QAction::triggered, [this](){
+            QMessageBox msgBox;
+            msgBox.setText("The scene will be clear.");
+            msgBox.setInformativeText("Are you sure?");
+            msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+            msgBox.setDefaultButton(QMessageBox::Cancel);
+            int ret = msgBox.exec();
+            if(ret == QMessageBox::Ok)
+                this->scene->clear();
+    });
 
     // Pipeline
     this->actionManager->createQActionButton("Transform", "Transform", "", "Get the point in the associated image", "deform");
