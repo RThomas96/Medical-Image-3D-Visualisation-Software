@@ -731,7 +731,7 @@ namespace UITool {
 				this->manipulators[i].setManipPosition(positions[i]);
 				this->manipulators[i].setLastPosition(positions[i]);
 			}
-            this->initializeKidManipWithSelection();
+            //this->initializeKidManipWithSelection();
 		} else {
 			std::cerr << "WARNING: try to set [" << this->manipulators.size() << "] manipulators positions with a position vector of size [" << positions.size() << "]" << std::endl;
 		}
