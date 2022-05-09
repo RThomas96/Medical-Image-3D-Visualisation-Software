@@ -606,6 +606,8 @@ public slots:
         this->useTetMesh = false;
         //this->addFileChooser("Save image", FileChooserType::SAVE);
 
+        this->addWithLabel(WidgetType::LINE_EDIT, "Name", "Name");
+
         this->add(WidgetType::SECTION, "Image");
         this->addAllNextWidgetsToSection("Image");
 
@@ -738,7 +740,7 @@ public slots:
     }
 
     std::string getName() {
-        return std::string("name");
+        return this->lineEdits["Name"]->text().toStdString();
     }
 
     std::vector<std::string> getImgFilenames() {
@@ -772,6 +774,7 @@ public slots:
         this->doubleSpinBoxes["SizeVoxelX"]->setValue(image.voxelSize.x);
         this->doubleSpinBoxes["SizeVoxelY"]->setValue(image.voxelSize.y);
         this->doubleSpinBoxes["SizeVoxelZ"]->setValue(image.voxelSize.z);
+        this->lineEdits["Name"]->setText(QFileInfo(QString(files[0].c_str())).baseName());
         std::cout << "***" << std::endl;
     }
 

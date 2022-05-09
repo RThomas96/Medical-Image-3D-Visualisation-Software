@@ -3911,6 +3911,7 @@ void Scene::saveMesh(const std::string& name, const std::string& filename) {
 void Scene::applyCage(const std::string& name, const std::string& filename) {
     SurfaceMesh cageToApply(filename);
     this->getCage(name)->applyCage(cageToApply.getVertices());
+    this->sendFirstTetmeshToGPU();
 }
 
 void Scene::redrawSelection(const glm::vec3& p0, const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3, const glm::vec4& color) {

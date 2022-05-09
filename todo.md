@@ -224,7 +224,7 @@ FIX
 Objectif: Terminer le workflow complet 
 
 - [x] Faire l'interface de transformation de points
-- [ ] Tester le workflow complet avec le atlas to lightsheet
+- [x] Tester le workflow complet avec le atlas to lightsheet
     - [x] Tester le workflow irm to lightsheet 
     - [x] Tester le workflow lightsheet to irm
     - [x] Debuger le from irm to atlas
@@ -244,8 +244,7 @@ Objectif: Terminer le workflow complet
     - [ ] Supprimer tout le code mort des interfaces
     - [ ] Debug ce putin de manipulator de mort, rotation et scale
     - [ ] Sauvegarder les valeurs de l'interface
-    - [ ] Sauvegarder les images avec les QImages
-
+    - [ ] Sauvegarder les images avec les QImages pour la preview
     - [ ] Subsample différent suivant l'axe
     - [x] Perf de la sauvegarde d'image 
 
@@ -317,3 +316,6 @@ BUG
 IDEA
 - [ ] Parser du json pour faire une interface QT
 - [ ] Un Guizmo en open gl modern
+
+
+# Long terme
