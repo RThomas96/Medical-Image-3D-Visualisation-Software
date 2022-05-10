@@ -579,6 +579,8 @@ public slots:
     void setPreviewPointInPlanarView(bool preview) { this->previewCursorInPlanarView = preview; };
 
     // Scene management
+    void openAtlas();
+    void openIRM();
     bool openMesh(const std::string& name, const std::string& filename, const glm::vec4& color = glm::vec4(0.1, 0.5, 1.,0.85));
     bool openCage(const std::string& name, const std::string& filename, BaseMesh * surfaceMeshToDeform, const bool MVC = true, const glm::vec4& color = glm::vec4(1., 0., 0., 0.3));
     bool openCage(const std::string& name, const std::string& filename, const std::string& surfaceMeshToDeformName, const bool MVC = true, const glm::vec4& color = glm::vec4(1., 0., 0., 0.3));

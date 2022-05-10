@@ -3441,13 +3441,12 @@ bool Scene::openCage(const std::string& name, const std::string& filename, BaseM
     this->drawableMeshes.push_back(std::pair<DrawableMesh*, std::string>(nullptr, name));
 
     TetMesh * tetMesh = dynamic_cast<TetMesh*>(surfaceMeshToDeform);
-    if(tetMesh) {
-        this->meshes.back().first = new CageGreenLRI(filename, tetMesh);
-        //this->meshes.back().first = new CageGreen(filename, tetMesh);
+    if(MVC) {
+        this->meshes.back().first = new CageMVC(filename, surfaceMeshToDeform);
     } else {
-        if(MVC)
-            this->meshes.back().first = new CageMVC(filename, surfaceMeshToDeform);
-        else 
+        if(tetMesh)
+            this->meshes.back().first = new CageGreenLRI(filename, tetMesh);
+        else
             this->meshes.back().first = new CageGreen(filename, surfaceMeshToDeform);
     }
 
@@ -3652,6 +3651,15 @@ int Scene::getGridIdx(const std::string& name) {
         }
     }
     return -1;
+}
+
+void Scene::openAtlas() {
+    this->openGrid(std::string("atlas"), {std::string("/home/thomas/data/Data/IGF/Demo/atlas/atlas.tiff")}, 1, std::string("/home/thomas/data/Data/IGF/Demo/atlas/atlas-transfert.mesh"));
+    this->openCage(std::string("cage"), std::string("/home/thomas/data/Data/IGF/Demo/atlas/atlas-cage-original.off"), std::string("atlas"), true);
+}
+
+void Scene::openIRM() {
+    this->openGrid(std::string("irm"), {std::string("/home/thomas/data/Data/IGF/Demo/IRM/irm.tif")}, 1, glm::vec3(3.9, 3.9, 50));
 }
 
 void Scene::init() {

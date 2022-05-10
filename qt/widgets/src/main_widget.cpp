@@ -131,6 +131,11 @@ void MainWidget::setupWidgets() {
 
     this->toolbar->addAction(this->actionManager->getAction("Clear"));
 
+    this->toolbar->addSeparator();
+
+    this->toolbar->addAction(this->actionManager->getAction("OpenAtlas"));
+    this->toolbar->addAction(this->actionManager->getAction("OpenIRM"));
+
     /***/
 
 	this->viewMenu = this->menuBar()->addMenu("&View");
@@ -493,6 +498,18 @@ void MainWidget::setupActions() {
     QObject::connect(this->actionManager->getAction("Open"), &QAction::triggered, [this](){
             this->updateForms();
             this->openImageForm->show();
+    });
+
+    // Debug
+
+    this->actionManager->createQActionButton("OpenAtlas", "OpenAtlas", "", "Open the atlas", "open");
+    QObject::connect(this->actionManager->getAction("OpenAtlas"), &QAction::triggered, [this](){
+            this->scene->openAtlas();
+    });
+
+    this->actionManager->createQActionButton("OpenIRM", "OpenIRM", "", "Open the IRM", "open");
+    QObject::connect(this->actionManager->getAction("OpenIRM"), &QAction::triggered, [this](){
+            this->scene->openIRM();
     });
 }
 
