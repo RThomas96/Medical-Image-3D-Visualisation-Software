@@ -34,6 +34,8 @@
 #include <QTextEdit>
 #include <QTextBlock>
 #include <QMessageBox>
+#include <QImage>
+#include <QSlider>
 
 class ColorBoundWidget;
 
@@ -550,24 +552,120 @@ public slots:
     }
 };
 
+class ImageViewer : public Form {
+    Q_OBJECT
+
+public:
+    
+    bool hasImage;
+    QImage * image;
+    QLabel * display;
+    QSlider * slider;
+
+    glm::vec3 imgSize; // Same for front and back
+
+    std::vector<std::vector<uint16_t>> dataBack;
+    std::vector<std::vector<uint16_t>> dataFront;
+
+    ImageViewer(Scene * scene, QWidget *parent = nullptr):Form(parent){init();connect(scene);}
+
+public slots:
+
+    void init() {
+        this->hasImage = false;
+        this->image = nullptr;
+        this->display = new QLabel();
+        this->slider = new QSlider(Qt::Orientation::Horizontal);
+
+        this->layout->addRow(this->display);
+        this->layout->addRow(this->slider);
+        this->display->hide();
+    }
+
+    void setData(const glm::vec3& imgSize, const std::vector<std::vector<uint16_t>>& data, bool back) {
+
+        this->imgSize = imgSize; // Same for front and back
+        if(back) {
+            this->dataBack.clear();
+            this->dataBack = data;
+        } else {
+            this->dataFront.clear();
+            this->dataFront = data;
+        }
+
+        if(back) {
+            delete this->image;
+            this->image = new QImage(imgSize[0], imgSize[1], QImage::Format_RGB16);
+            this->hasImage = true;
+
+            this->slider->setMinimum(0);
+            this->slider->setMaximum(imgSize[2]-1);
+            if(this->slider->value() > imgSize[2]-1)
+                this->slider->setValue(0);
+        }
+        this->display->show();
+    }
+
+    void updateImages() {
+        this->updateImage(this->dataBack, true);
+        this->updateImage(this->dataFront, false);
+    }
+
+    void updateImage(const std::vector<std::vector<uint16_t>>& data, bool back) {
+        if(!hasImage)
+            return;
+
+        uint16_t max = *max_element(data[this->slider->value()].begin(), data[this->slider->value()].end());
+        for(int i = 0; i < imgSize[0]; ++i) {
+            for(int j = 0; j < imgSize[1]; ++j) {
+                uint16_t value = data[this->slider->value()][i + j * imgSize[0]];
+                int color = int((float(value) / float(max))*255.);
+                QColor qColor;
+                if(color <= 0 || color > 255) {
+                    if(back) {
+                        qColor = QColor(0, 0, 0);
+                        this->image->setPixelColor(i, j, qColor);
+                    }
+                } else {
+                    qColor = QColor(color, color, color);
+                    this->image->setPixelColor(i, j, qColor);
+                }
+            }
+        }
+        this->display->setPixmap(QPixmap::fromImage(*image));
+    }
+
+    void connect(Scene * scene) {
+        QObject::connect(this->slider, &QSlider::valueChanged, [this](){this->updateImages();});
+    }
+};
+
+
 class SaveImageForm : Form {
     Q_OBJECT
 
 public:
 
-    SaveImageForm(Scene * scene, QWidget *parent = nullptr):Form(parent){init();connect(scene);}
+    ImageViewer * imageViewer;
+
+    SaveImageForm(Scene * scene, QWidget *parent = nullptr):Form(parent){init(scene);connect(scene);}
 
 public slots:
 
-    void init() {
-        this->add(WidgetType::GRID_CHOOSE, "From");
+    void init(Scene * scene) {
+        this->addWithLabel(WidgetType::GRID_CHOOSE, "From", "Back");
         this->setObjectTypeToChoose("From", ObjectToChoose::GRID);
 
-        this->add(WidgetType::GRID_CHOOSE, "To");
+        this->addWithLabel(WidgetType::GRID_CHOOSE, "To", "Front");
         this->setObjectTypeToChoose("To", ObjectToChoose::GRID);
+
+        this->add(WidgetType::BUTTON, "Preview");
 
         this->add(WidgetType::TIFF_SAVE, "Save image");
         this->setFileChooserType("Save image", FileChooserType::SAVE);
+
+        this->imageViewer = new ImageViewer(scene);
+        //this->layout->addRow(imageViewer);
     }
 
     void update(Scene * scene) {
@@ -589,6 +687,21 @@ public slots:
     void connect(Scene * scene) {
         QObject::connect(this->fileChoosers["Save image"], &FileChooser::fileSelected, [this, scene](){
             scene->writeDeformation(this->fileChoosers["Save image"]->filename.toStdString(), this->getFromGridName(), this->getToGridName());
+        });
+
+        QObject::connect(this->buttons["Preview"], &QPushButton::clicked, [this, scene](){
+            std::vector<std::vector<uint16_t>> data;
+
+            scene->getDeformation(this->getFromGridName(), this->getFromGridName(), data);
+            glm::vec3 imgSize = scene->grids[scene->getGridIdx(this->getFromGridName())]->grid->getResolution();
+            this->imageViewer->setData(imgSize, data, true);
+
+            scene->getDeformation(this->getToGridName(), this->getFromGridName(), data);
+            imgSize = scene->grids[scene->getGridIdx(this->getFromGridName())]->grid->getResolution();
+            this->imageViewer->setData(imgSize, data, false);
+
+            this->imageViewer->updateImages();
+            this->imageViewer->show();
         });
     }
 };

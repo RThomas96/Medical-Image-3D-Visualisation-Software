@@ -524,7 +524,8 @@ public slots:
     void reset();
     glm::vec3 getTransformedPoint(const glm::vec3& inputPoint, const std::string& from, const std::string& to);
     void writeGreyscaleTIFFImage(const std::string& filename, const glm::vec3& imgDimensions, const std::vector<std::vector<uint16_t>>& data);
-    void writeDeformation(const std::string& filename, const std::string& from, const std::string& to);
+    void writeDeformation(const std::string& filename, const std::string& gridNameValues, const std::string& gridNameSample);
+    void getDeformation(const std::string& gridNameValues, const std::string& gridNameSample, std::vector<std::vector<uint16_t>>& data);
     void writeImageWithPoints(const std::string& filename, const std::string& image, std::vector<glm::vec3>& points);
     void clear();
 
@@ -596,6 +597,7 @@ public slots:
     BaseMesh * getBaseMesh(const std::string& name);
     int getMeshIdx(const std::string& name);
     Cage * getCage(const std::string& name);
+    glm::vec3 getGridImgSize(const std::string& name);
     int getGridIdx(const std::string& name);
     std::vector<std::string> getAllNonTetrahedralMeshesName();
     std::vector<std::string> getAllBaseMeshesName();

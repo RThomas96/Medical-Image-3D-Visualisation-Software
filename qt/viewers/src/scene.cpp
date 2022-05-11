@@ -4082,16 +4082,20 @@ glm::vec3 Scene::getTransformedPoint(const glm::vec3& inputPoint, const std::str
     return result;
 }
 
-void Scene::writeDeformation(const std::string& filename, const std::string& from, const std::string& to) {
-        Grid * grid = this->grids[this->getGridIdx(to)]->grid;
+void Scene::getDeformation(const std::string& gridNameValues, const std::string& gridNameSample, std::vector<std::vector<uint16_t>>& data) {
+    Grid * grid = this->grids[this->getGridIdx(gridNameSample)]->grid;
 
-        const glm::vec3 bbMin = grid->bbMin;
-        const glm::vec3 bbMax = grid->bbMax;
-        const glm::vec3 imgSize = grid->getResolution();
+    const glm::vec3 bbMin = grid->bbMin;
+    const glm::vec3 bbMax = grid->bbMax;
+    const glm::vec3 imgSize = grid->getResolution();
 
-        std::vector<std::vector<uint16_t>> data;
-        this->grids[this->getGridIdx(from)]->grid->sampleGridValues(std::make_pair(grid->bbMin, grid->bbMax), imgSize, data);
-        this->writeGreyscaleTIFFImage(filename, imgSize, data);
+    this->grids[this->getGridIdx(gridNameValues)]->grid->sampleGridValues(std::make_pair(grid->bbMin, grid->bbMax), imgSize, data);
+}
+
+void Scene::writeDeformation(const std::string& filename, const std::string& gridNameValues, const std::string& gridNameSample) {
+    std::vector<std::vector<uint16_t>> data;
+    this->getDeformation(gridNameValues, gridNameSample, data);
+    this->writeGreyscaleTIFFImage(filename, this->getGridImgSize(gridNameSample), data);
 }
 
 void Scene::writeGreyscaleTIFFImage(const std::string& filename, const glm::vec3& imgDimensions, const std::vector<std::vector<uint16_t>>& data) {
@@ -4150,4 +4154,8 @@ void Scene::clear() {
     this->meshes.clear();
     this->drawableMeshes.clear();
     gridToDraw = -1;
+}
+
+glm::vec3 Scene::getGridImgSize(const std::string& name) {
+    return this->grids[this->getGridIdx(name)]->grid->getResolution();
 }
