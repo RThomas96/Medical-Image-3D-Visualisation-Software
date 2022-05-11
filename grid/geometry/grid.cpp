@@ -140,6 +140,85 @@ void Grid::loadMESH(std::string const &filename) {
     }    
 }
 
+void Grid::sampleGridValues(const std::pair<glm::vec3, glm::vec3>& areaToSample, const glm::vec3& resolution, std::vector<std::vector<uint16_t>>& result, InterpolationMethod interpolationMethod) {
+    auto start = std::chrono::steady_clock::now();
+
+    omp_set_nested(true);
+
+    // Space to sample
+    glm::vec3 bbMinScene = areaToSample.first;
+    glm::vec3 bbMaxScene = areaToSample.second;
+    glm::vec3 fromSamplerToSceneRatio = (bbMaxScene - bbMinScene) / resolution;
+
+    auto isInScene = [&](glm::vec3& p) {
+        return (p.x > bbMinScene.x && p.y > bbMinScene.y && p.z > bbMinScene.z && p.x < bbMaxScene.x && p.y < bbMaxScene.y && p.z < bbMaxScene.z);
+    };
+
+    auto fromWorldToImage = [&](glm::vec3& p) {
+        p -= bbMinScene;
+        p /= fromSamplerToSceneRatio;
+    };
+
+    auto fromImageToWorld = [&](glm::vec3& p) {
+        p *= fromSamplerToSceneRatio;
+        p += bbMinScene;
+    };
+
+    result.clear();
+    result.resize(resolution[2]);
+    for(int i = 0; i < result.size(); ++i) {
+        result[i].resize(resolution[0] * resolution[1]);
+        std::fill(result[i].begin(), result[i].end(), 0);
+    }
+
+    int printOcc = 10;
+    printOcc = this->mesh.size()/printOcc;
+
+    //#pragma omp parallel for schedule(dynamic) num_threads(fromGrid->mesh.size()/10)
+#pragma omp parallel for schedule(dynamic)
+    for(int tetIdx = 0; tetIdx < this->mesh.size(); ++tetIdx) {
+        const Tetrahedron& tet = this->mesh[tetIdx];
+        glm::vec3 bbMin = tet.getBBMin();
+        fromWorldToImage(bbMin);
+        bbMin.x = std::ceil(bbMin.x) - 1;
+        bbMin.y = std::ceil(bbMin.y) - 1;
+        bbMin.z = std::ceil(bbMin.z) - 1;
+        glm::vec3 bbMax = tet.getBBMax();
+        fromWorldToImage(bbMax);
+        bbMax.x = std::floor(bbMax.x) + 1;
+        bbMax.y = std::floor(bbMax.y) + 1;
+        bbMax.z = std::floor(bbMax.z) + 1;
+        if((tetIdx%printOcc) == 0) {
+            std::cout << "Loading: " << (float(tetIdx)/float(this->mesh.size())) * 100. << "%" << std::endl;
+        }
+        for(int k = bbMin.z; k < int(bbMax.z); ++k) {
+            for(int j = bbMin.y; j < int(bbMax.y); ++j) {
+                for(int i = bbMin.x; i < int(bbMax.x); ++i) {
+                    glm::vec3 p(i, j, k);
+                    p += glm::vec3(.5, .5, .5);
+
+                    fromImageToWorld(p);
+
+                    if(isInScene(p) && tet.isInTetrahedron(p)) {
+                        if(this->getCoordInInitial(this->initialMesh, p, p, tetIdx)) {
+
+                            glm::vec3 pImg(i, j, k);
+                            int insertIdx = pImg.x + pImg.y*resolution[0];
+
+                            this->sampler.fromSamplerToImage(p);
+                            result[pImg.z][insertIdx] = this->getValueFromPoint(p, interpolationMethod);
+                        } 
+                    }
+                }
+            }
+        }
+    }
+
+    auto end = std::chrono::steady_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end-start;
+    std::cout << "Duration time: " << elapsed_seconds.count() << "s / " << elapsed_seconds.count()/60. << "m" << std::endl;
+}
+
 /**************************/
 
 Sampler::Sampler(const std::vector<std::string>& filename, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox): image(new SimpleImage(filename)) {

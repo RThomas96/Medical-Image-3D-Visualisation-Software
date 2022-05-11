@@ -4082,121 +4082,24 @@ glm::vec3 Scene::getTransformedPoint(const glm::vec3& inputPoint, const std::str
     return result;
 }
 
-//void Scene::writeDeformation(const std::string& from, const std::string& to) {
-//
-//    Grid * fromGrid = this->grids[this->getGridIdx(from)]->grid;
-//    Grid * toGrid = this->grids[this->getGridIdx(to)]->grid;
-//
-//    glm::ivec3 imgDimensions = fromGrid->sampler.getImageDimensions();
-//
-//    TinyTIFFWriterFile * tif = TinyTIFFWriter_open("deformed_image.tif", 16, TinyTIFFWriter_UInt, 1, imgDimensions[0], imgDimensions[1], TinyTIFFWriter_Greyscale);
-//    std::vector<uint16_t> data;
-//    data.resize(imgDimensions[0] * imgDimensions[1]);
-//
-//    auto start = std::chrono::steady_clock::now();
-//    for(int k = 0; k < imgDimensions[2]; ++k) {
-//        std::cout << "Loading: " << (float(k)/float(imgDimensions[2])) * 100. << "%" << std::endl;
-//        #pragma omp parallel for schedule(dynamic)
-//        for(int j = 0; j < imgDimensions[1]; ++j) {
-//            for(int i = 0; i < imgDimensions[0]; ++i) {
-//                glm::vec3 p(i, j, k);
-//                p += glm::vec3(.5, .5, .5);
-//                int insertIdx = i + j*imgDimensions[0];
-//                fromGrid->sampler.fromImageToSampler(p);
-//                if(fromGrid->initialMesh.isInBBox(p) &&
-//                   fromGrid->initialMesh.getCoordInInitial(*fromGrid, p, p) && 
-//                   toGrid->getCoordInInitial(toGrid->initialMesh, p, p)) {
-//                    toGrid->sampler.fromSamplerToImage(p);
-//                    data[insertIdx] = toGrid->getValueFromPoint(p);
-//                } else {
-//                    data[insertIdx] = 0;
-//                }
-//            }
-//        }
-//        TinyTIFFWriter_writeImage(tif, data.data());
-//        auto end = std::chrono::steady_clock::now();
-//        std::chrono::duration<double> elapsed_seconds = end-start;
-//        std::cout << "Duration time: " << elapsed_seconds.count() << "s / " << elapsed_seconds.count()/60. << "m" << std::endl;
-//    }
-//    TinyTIFFWriter_close(tif);
-//
-//    std::cout << "Save sucessfull" << std::endl;
-//}
-
 void Scene::writeDeformation(const std::string& filename, const std::string& from, const std::string& to) {
-    omp_set_nested(true);
+        Grid * grid = this->grids[this->getGridIdx(to)]->grid;
 
-    auto start = std::chrono::steady_clock::now();
-    Grid * fromGrid = this->grids[this->getGridIdx(from)]->grid;
-    Grid * toGrid = this->grids[this->getGridIdx(to)]->grid;
+        const glm::vec3 bbMin = grid->bbMin;
+        const glm::vec3 bbMax = grid->bbMax;
+        const glm::vec3 imgSize = grid->getResolution();
 
-    glm::ivec3 imgDimensions = fromGrid->sampler.getImageDimensions();
+        std::vector<std::vector<uint16_t>> data;
+        this->grids[this->getGridIdx(from)]->grid->sampleGridValues(std::make_pair(grid->bbMin, grid->bbMax), imgSize, data);
+        this->writeGreyscaleTIFFImage(filename, imgSize, data);
+}
 
+void Scene::writeGreyscaleTIFFImage(const std::string& filename, const glm::vec3& imgDimensions, const std::vector<std::vector<uint16_t>>& data) {
     TinyTIFFWriterFile * tif = TinyTIFFWriter_open(filename.c_str(), 16, TinyTIFFWriter_UInt, 1, imgDimensions[0], imgDimensions[1], TinyTIFFWriter_Greyscale);
-    std::vector<std::vector<uint16_t>> data;
-    data.resize(imgDimensions[2]);
-    for(int i = 0; i < data.size(); ++i) {
-        data[i].resize(imgDimensions[0] * imgDimensions[1]);
-        std::fill(data[i].begin(), data[i].end(), 0);
-    }
-
-    const glm::vec3& samplerBBMin = fromGrid->sampler.bbMin;
-    const glm::vec3& samplerBBMax = fromGrid->sampler.bbMax;
-    const glm::vec3& samplerDimension = fromGrid->sampler.getSamplerDimension();
-
-    int printOcc = 10;
-    printOcc = fromGrid->mesh.size()/printOcc;
-
-    #pragma omp parallel for schedule(dynamic) num_threads(fromGrid->mesh.size()/10)
-    for(int tetIdx = 0; tetIdx < fromGrid->mesh.size(); ++tetIdx) {
-        const Tetrahedron& tet = fromGrid->initialMesh.mesh[tetIdx];
-        glm::vec3 bbMin = tet.getBBMin();
-        bbMin.x = std::ceil(bbMin.x) - 1;
-        bbMin.y = std::ceil(bbMin.y) - 1;
-        bbMin.z = std::ceil(bbMin.z) - 1;
-        glm::vec3 bbMax = tet.getBBMax();
-        bbMax.x = std::floor(bbMax.x) + 1;
-        bbMax.y = std::floor(bbMax.y) + 1;
-        bbMax.z = std::floor(bbMax.z) + 1;
-        if((tetIdx%printOcc) == 0) {
-            std::cout << "Loading: " << (float(tetIdx)/float(fromGrid->mesh.size())) * 100. << "%" << std::endl;
-        }
-        //#pragma omp parallel for collapse(3) schedule(dynamic) num_threads(fromGrid->mesh.size()/10)
-        for(int k = bbMin.z; k < int(bbMax.z); ++k) {
-            for(int j = bbMin.y; j < int(bbMax.y); ++j) {
-                for(int i = bbMin.x; i < int(bbMax.x); ++i) {
-                    glm::vec3 p(i, j, k);
-
-                    glm::vec3 pImg = p;
-                    fromGrid->sampler.fromSamplerToImage(pImg);
-                    int insertIdx = pImg.x + pImg.y*imgDimensions[0];
-
-                    p += glm::vec3(.5, .5, .5);
-                    if(tet.isInTetrahedron(p)) {
-                        if(fromGrid->initialMesh.getCoordInInitial(*fromGrid, p, p, tetIdx)) {
-                           if(toGrid->getCoordInInitial(toGrid->initialMesh, p, p)) {
-                            toGrid->sampler.fromSamplerToImage(p);
-                            data[pImg.z][insertIdx] = toGrid->getValueFromPoint(p);
-                           }
-                        } else {
-                            std::cout << "WARNING" << std::endl;
-                            data[pImg.z][insertIdx] = 0;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     for(int img = 0; img < data.size(); ++img) {
         TinyTIFFWriter_writeImage(tif, data[img].data());
     }
-    auto end = std::chrono::steady_clock::now();
-    std::chrono::duration<double> elapsed_seconds = end-start;
-    std::cout << "Duration time: " << elapsed_seconds.count() << "s / " << elapsed_seconds.count()/60. << "m" << std::endl;
-
     TinyTIFFWriter_close(tif);
-
     std::cout << "Save sucessfull" << std::endl;
 }
 
@@ -4224,7 +4127,6 @@ void Scene::writeImageWithPoints(const std::string& filename, const std::string&
                     }
                 }
                 if(toHighlight) {
-                    //data[insertIdx] = 35527;
                     data[insertIdx] = 0;
                 } else {
                     data[insertIdx] = grid->getValueFromPoint(p);
