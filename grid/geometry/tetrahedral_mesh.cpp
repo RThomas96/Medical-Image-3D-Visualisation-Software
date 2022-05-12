@@ -312,6 +312,14 @@ glm::vec3 Tetrahedron::getBBMax() const {
 //    return true;
 //}
 //
+
+bool Tetrahedron::planeIntersect(const glm::vec3& origin, const glm::vec3& direction) const {
+    return !((glm::dot(*this->points[0] - origin, direction) > 0.0001) ==
+             (glm::dot(*this->points[1] - origin, direction) > 0.0001) ==
+             (glm::dot(*this->points[2] - origin, direction) > 0.0001) ==
+             (glm::dot(*this->points[3] - origin, direction) > 0.0001));
+}
+
 bool Tetrahedron::faceIntersect(const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2) const {
     const glm::vec3& orig = p1;
     const glm::vec3& dir = glm::normalize(p2 - p1);

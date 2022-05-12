@@ -4105,6 +4105,10 @@ void Scene::getValues(const std::string& gridName, const std::pair<glm::vec3, gl
     this->grids[this->getGridIdx(gridName)]->grid->sampleGridValues(area, resolution, data, interpolationMethod);
 }
 
+void Scene::getValues(const std::string& gridName, const glm::vec3& slice, const std::pair<glm::vec3, glm::vec3>& area, const glm::vec3& resolution, int& idx, std::vector<uint16_t>& data, Interpolation::Method interpolationMethod) {
+    this->grids[this->getGridIdx(gridName)]->grid->sampleSliceGridValues(slice, area, resolution, idx, data, interpolationMethod);
+}
+
 void Scene::writeDeformation(const std::string& filename, const std::string& gridNameValues, const std::string& gridNameSample) {
     std::vector<std::vector<uint16_t>> data;
     this->getDeformation(gridNameValues, gridNameSample, data);

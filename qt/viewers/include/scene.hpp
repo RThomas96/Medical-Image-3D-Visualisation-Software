@@ -527,6 +527,7 @@ public slots:
     void writeDeformation(const std::string& filename, const std::string& gridNameValues, const std::string& gridNameSample);
     void getDeformation(const std::string& gridNameValues, const std::string& gridNameSample, std::vector<std::vector<uint16_t>>& data);
     void getValues(const std::string& gridName, const std::pair<glm::vec3, glm::vec3>& area, const glm::vec3& resolution, std::vector<std::vector<uint16_t>>& data, Interpolation::Method interpolationMethod = Interpolation::Method::NearestNeighbor);
+    void getValues(const std::string& gridName, const glm::vec3& slice, const std::pair<glm::vec3, glm::vec3>& area, const glm::vec3& resolution, int& idx, std::vector<uint16_t>& data, Interpolation::Method interpolationMethod = Interpolation::Method::NearestNeighbor);
     void writeImageWithPoints(const std::string& filename, const std::string& image, std::vector<glm::vec3>& points);
     void clear();
 
@@ -599,7 +600,6 @@ public slots:
     Cage * getCage(const std::string& name);
     glm::vec3 getGridImgSize(const std::string& name);
     int getGridIdx(const std::string& name);
-
     std::pair<glm::vec3, glm::vec3> getBbox(const std::string& name);
 
     std::vector<std::string> getAllNonTetrahedralMeshesName();

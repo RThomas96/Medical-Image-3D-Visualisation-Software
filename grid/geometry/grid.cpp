@@ -141,6 +141,87 @@ void Grid::loadMESH(std::string const &filename) {
     }    
 }
 
+void Grid::sampleSliceGridValues(const glm::vec3& slice, const std::pair<glm::vec3, glm::vec3>& areaToSample, const glm::vec3& resolution, int& idx, std::vector<uint16_t>& result, Interpolation::Method interpolationMethod) {
+    auto start = std::chrono::steady_clock::now();
+
+    omp_set_nested(true);
+
+    // Space to sample
+    glm::vec3 bbMinScene = areaToSample.first;
+    glm::vec3 bbMaxScene = areaToSample.second;
+    glm::vec3 fromSamplerToSceneRatio = (bbMaxScene - bbMinScene) / resolution;
+
+    auto isInScene = [&](glm::vec3& p) {
+        return (p.x > bbMinScene.x && p.y > bbMinScene.y && p.z > bbMinScene.z && p.x < bbMaxScene.x && p.y < bbMaxScene.y && p.z < bbMaxScene.z);
+    };
+
+    auto fromWorldToImage = [&](glm::vec3& p) {
+        p -= bbMinScene;
+        p /= fromSamplerToSceneRatio;
+    };
+
+    auto fromImageToWorld = [&](glm::vec3& p) {
+        p *= fromSamplerToSceneRatio;
+        p += bbMinScene;
+    };
+
+    result.clear();
+    result.resize(resolution[0] * resolution[1]);
+    std::fill(result.begin(), result.end(), 0);
+
+    int printOcc = 10;
+    printOcc = this->mesh.size()/printOcc;
+
+    glm::vec3 imgSlice = slice;
+    fromWorldToImage(imgSlice);
+    idx = imgSlice.z;
+
+    //#pragma omp parallel for schedule(dynamic) num_threads(fromGrid->mesh.size()/10)
+    #pragma omp parallel for schedule(dynamic)
+    for(int tetIdx = 0; tetIdx < this->mesh.size(); ++tetIdx) {
+        const Tetrahedron& tet = this->mesh[tetIdx];
+        if(tet.planeIntersect(slice, glm::vec3(0., 0., 1.))) {
+            glm::vec3 bbMin = tet.getBBMin();
+            fromWorldToImage(bbMin);
+            bbMin.x = std::ceil(bbMin.x) - 1;
+            bbMin.y = std::ceil(bbMin.y) - 1;
+            bbMin.z = std::ceil(bbMin.z) - 1;
+            glm::vec3 bbMax = tet.getBBMax();
+            fromWorldToImage(bbMax);
+            bbMax.x = std::floor(bbMax.x) + 1;
+            bbMax.y = std::floor(bbMax.y) + 1;
+            bbMax.z = std::floor(bbMax.z) + 1;
+            const int k = idx;
+            for(int j = bbMin.y; j < int(bbMax.y); ++j) {
+                for(int i = bbMin.x; i < int(bbMax.x); ++i) {
+                    glm::vec3 p(i, j, k);
+                    p += glm::vec3(.5, .5, .5);
+
+                    fromImageToWorld(p);
+
+                    if(isInScene(p) && tet.isInTetrahedron(p)) {
+                        if(this->getCoordInInitial(this->initialMesh, p, p, tetIdx)) {
+
+                            glm::vec3 pImg(i, j, k);
+                            int insertIdx = pImg.x + pImg.y*resolution[0];
+
+                            this->sampler.fromSamplerToImage(p);
+                            result[insertIdx] = this->getValueFromPoint(p, interpolationMethod);
+                        } 
+                    }
+                }
+            }
+        }
+        if((tetIdx%printOcc) == 0) {
+            std::cout << "Loading: " << (float(tetIdx)/float(this->mesh.size())) * 100. << "%" << std::endl;
+        }
+    }
+
+    auto end = std::chrono::steady_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end-start;
+    std::cout << "Duration time: " << elapsed_seconds.count() << "s / " << elapsed_seconds.count()/60. << "m" << std::endl;
+}
+
 void Grid::sampleGridValues(const std::pair<glm::vec3, glm::vec3>& areaToSample, const glm::vec3& resolution, std::vector<std::vector<uint16_t>>& result, Interpolation::Method interpolationMethod) {
     auto start = std::chrono::steady_clock::now();
 
@@ -176,7 +257,7 @@ void Grid::sampleGridValues(const std::pair<glm::vec3, glm::vec3>& areaToSample,
     printOcc = this->mesh.size()/printOcc;
 
     //#pragma omp parallel for schedule(dynamic) num_threads(fromGrid->mesh.size()/10)
-#pragma omp parallel for schedule(dynamic)
+    #pragma omp parallel for schedule(dynamic)
     for(int tetIdx = 0; tetIdx < this->mesh.size(); ++tetIdx) {
         const Tetrahedron& tet = this->mesh[tetIdx];
         glm::vec3 bbMin = tet.getBBMin();

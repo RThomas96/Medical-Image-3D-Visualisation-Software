@@ -642,6 +642,17 @@ public slots:
         this->setImage(this->imgData.size(), imgSize, data);
     }
 
+    void setImageSlice(int idx, int imgSlice, const std::vector<uint16_t>& data) {
+        if(this->validIndex(idx)) {
+            this->imgData[idx][imgSlice] = data;
+        }
+    }
+
+    void addEmptyImage(const glm::vec3& imgSize) {
+        std::vector<std::vector<uint16_t>> data(imgSize.z, std::vector<uint16_t>(imgSize.x * imgSize.y, 0));
+        this->setImage(this->imgData.size(), imgSize, data);
+    }
+
     void setImage(int idx, const glm::vec3& imgSize, const std::vector<std::vector<uint16_t>>& data) {
         this->imgSize = imgSize; // Same for every images
         if(idx == this->imgData.size()) {
@@ -713,6 +724,153 @@ public slots:
     }
 };
 
+class PlanarViewForm : Form {
+    Q_OBJECT
+
+public:
+
+    ImageViewer * imageViewer;
+    PlanarViewForm(Scene * scene, QWidget *parent = nullptr):Form(parent){init(scene);connect(scene);}
+
+public slots:
+
+    void init(Scene * scene) {
+        this->imageViewer = new ImageViewer(scene);
+        this->layout->addRow(imageViewer);
+
+        this->addWithLabel(WidgetType::H_GROUP, "GroupBack", "Back");
+        this->addAllNextWidgetsToGroup("GroupBack");
+        this->groups["GroupBack"]->setAlignment(Qt::AlignHCenter);
+
+        this->add(WidgetType::GRID_CHOOSE, "From", "Back");
+        this->setObjectTypeToChoose("From", ObjectToChoose::GRID);
+        this->objectChoosers["From"]->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+        this->add(WidgetType::CHECK_BOX, "UseBack");
+
+        this->addAllNextWidgetsToDefaultGroup();
+
+        this->addWithLabel(WidgetType::H_GROUP, "GroupFront", "Front");
+        this->addAllNextWidgetsToGroup("GroupFront");
+        this->groups["GroupFront"]->setAlignment(Qt::AlignHCenter);
+
+        this->add(WidgetType::GRID_CHOOSE, "To", "Front");
+        this->setObjectTypeToChoose("To", ObjectToChoose::GRID);
+        this->objectChoosers["To"]->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+        this->add(WidgetType::CHECK_BOX, "UseFront");
+
+        this->addAllNextWidgetsToDefaultGroup();
+
+        this->add(WidgetType::COMBO_BOX, "Interpolation", "Interpolation");
+        this->setComboChoices("Interpolation", Interpolation::toStringList());
+
+        this->addWithLabel(WidgetType::H_GROUP, "GroupResolution", "Resolution");
+        this->addAllNextWidgetsToGroup("GroupResolution");
+
+        this->add(WidgetType::SPIN_BOX, "X");
+        this->add(WidgetType::SPIN_BOX, "Y");
+        this->add(WidgetType::SPIN_BOX, "Z");
+
+        this->addAllNextWidgetsToDefaultGroup();
+
+        this->add(WidgetType::BUTTON, "Preview");
+        /****/
+
+        this->checkBoxes["UseBack"]->setChecked(true);
+        this->checkBoxes["UseFront"]->setChecked(true);
+    }
+
+    void setDefaultValues(Scene * scene) {
+        glm::vec3 imgSize = this->getBackImgDimension(scene);
+        this->spinBoxes["X"]->setMinimum(1);
+        this->spinBoxes["Y"]->setMinimum(1);
+        this->spinBoxes["Z"]->setMinimum(1);
+        this->spinBoxes["X"]->setValue(imgSize.x);
+        this->spinBoxes["Y"]->setValue(imgSize.y);
+        this->spinBoxes["Z"]->setValue(imgSize.z);
+    }
+
+    void update(Scene * scene) {
+        Form::update(scene);
+        this->setDefaultValues(scene);
+    }
+
+    void show() {
+        Form::show();
+    }
+
+    glm::vec3 getImgDimension() {
+        return glm::vec3(this->spinBoxes["X"]->value(), this->spinBoxes["Y"]->value(), this->spinBoxes["Z"]->value());
+    }
+
+    glm::vec3 getBackImgDimension(Scene * scene) {
+        return scene->grids[scene->getGridIdx(this->getFromGridName())]->grid->getResolution();
+    }
+
+    glm::vec3 getFrontImgDimension(Scene * scene) {
+        return scene->grids[scene->getGridIdx(this->getToGridName())]->grid->getResolution();
+    }
+
+    std::string getFromGridName() {
+        return this->objectChoosers["From"]->currentText().toStdString();
+    }
+
+    std::string getToGridName() {
+        return this->objectChoosers["To"]->currentText().toStdString();
+    }
+
+    Interpolation::Method getInterpolationMethod() {
+        QString method(this->comboBoxes["Interpolation"]->currentText());
+        return Interpolation::fromString(method.toStdString());
+    }
+
+    bool isActive(bool back) {
+        if(back) {
+            return this->checkBoxes["UseBack"]->isChecked();
+        } else {
+            return this->checkBoxes["UseFront"]->isChecked();
+        }
+    }
+
+    void updateImage(Scene * scene, bool back) {
+        std::vector<uint16_t> data;
+        if(!this->isActive(back))
+            return;
+
+        this->imageViewer->addEmptyImage(this->getImgDimension());
+        
+        auto bbox = scene->getBbox(this->getFromGridName());
+        glm::vec3 slice = (bbox.second + bbox.first)/2.f;
+        int idx = 0;
+        if(back) {
+            scene->getValues(this->getFromGridName(), slice, bbox, this->getImgDimension(), idx, data, this->getInterpolationMethod());
+            this->imageViewer->setImageSlice(0, idx, data);
+        } else {
+            scene->getValues(this->getToGridName(), slice, bbox, this->getImgDimension(), idx, data, this->getInterpolationMethod());
+            this->imageViewer->setImageSlice(1, idx, data);
+        }
+        std::cout << "Compute image at idx" << idx << std::endl;
+    }
+
+    void updateAllImages(Scene * scene) {
+        this->imageViewer->clearImages();
+        this->updateImage(scene, true);
+        this->updateImage(scene, false);
+    }
+
+    void connect(Scene * scene) {
+        QObject::connect(this->buttons["Preview"], &QPushButton::clicked, [this, scene](){
+            this->updateAllImages(scene);
+            this->imageViewer->drawImages();
+            this->imageViewer->show();
+        });
+
+        QObject::connect(this->objectChoosers["From"], QOverload<int>::of(&QComboBox::currentIndexChanged), [this, scene](int index){
+            this->setDefaultValues(scene);
+        });
+    }
+};
 
 class SaveImageForm : Form {
     Q_OBJECT
@@ -1453,6 +1611,7 @@ private:
     DeformationForm * deformationForm;
     SaveImageForm * saveImageForm;
     OpenImageForm * openImageForm;
+    PlanarViewForm * planarViewForm;
 
     bool isShiftPressed = false;
 

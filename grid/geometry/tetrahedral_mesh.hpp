@@ -39,6 +39,7 @@ struct Tetrahedron {
     //bool faceIntersect(const glm::vec3& p1, const glm::vec3& p2, int faceIdx) const;
 
     bool faceIntersect(const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2) const;
+    bool planeIntersect(const glm::vec3& origin, const glm::vec3& direction) const;
 
     glm::vec3 getBBMax() const;
     glm::vec3 getBBMin() const;
