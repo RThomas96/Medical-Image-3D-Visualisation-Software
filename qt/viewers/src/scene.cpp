@@ -3653,6 +3653,15 @@ int Scene::getGridIdx(const std::string& name) {
     return -1;
 }
 
+std::pair<glm::vec3, glm::vec3> Scene::getBbox(const std::string& name) {
+    BaseMesh * mesh = this->getBaseMesh(name);
+    if(mesh) {
+        return std::make_pair(mesh->bbMin, mesh->bbMax);
+    } else {
+        return std::make_pair(glm::vec3(0., 0., 0.), glm::vec3(0., 0., 0.));
+    }
+}
+
 void Scene::openAtlas() {
         this->openGrid(std::string("atlas"), {std::string("/data/datasets/data/Thomas/data/atlas/atlas.tiff")}, 1, std::string("/data/datasets/data/Thomas/data/atlas/atlas-transfert.mesh"));
         this->openCage(std::string("cage"), std::string("/data/datasets/data/Thomas/data/atlas/atlas-cage-hyperdilated.off"), std::string("atlas"), true);
@@ -4090,6 +4099,10 @@ void Scene::getDeformation(const std::string& gridNameValues, const std::string&
     const glm::vec3 imgSize = grid->getResolution();
 
     this->grids[this->getGridIdx(gridNameValues)]->grid->sampleGridValues(std::make_pair(grid->bbMin, grid->bbMax), imgSize, data);
+}
+
+void Scene::getValues(const std::string& gridName, const std::pair<glm::vec3, glm::vec3>& area, const glm::vec3& resolution, std::vector<std::vector<uint16_t>>& data, Interpolation::Method interpolationMethod) {
+    this->grids[this->getGridIdx(gridName)]->grid->sampleGridValues(area, resolution, data, interpolationMethod);
 }
 
 void Scene::writeDeformation(const std::string& filename, const std::string& gridNameValues, const std::string& gridNameSample) {

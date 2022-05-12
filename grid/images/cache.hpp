@@ -9,11 +9,17 @@
 //! \addtogroup img
 //! @{
 
-enum InterpolationMethod {
-    NearestNeighbor,
-    Linear,
-    Cubic
-};
+namespace Interpolation {
+
+    enum class Method {
+        NearestNeighbor,
+        Linear,
+        Cubic
+    };
+
+    Method fromString(const std::string& method);
+    std::vector<std::string> toStringList();
+}
 
 using namespace cimg_library;
 
@@ -27,7 +33,7 @@ struct Cache {
 
     void reset();
 
-    uint16_t getValue(const glm::vec3& coord, InterpolationMethod interpolationMethod);
+    uint16_t getValue(const glm::vec3& coord, Interpolation::Method interpolationMethod);
 };
 
 //! @brief The cache just STORE data

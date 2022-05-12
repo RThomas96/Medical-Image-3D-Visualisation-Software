@@ -1,5 +1,19 @@
 #include "cache.hpp"
 
+Interpolation::Method Interpolation::fromString(const std::string& method) {
+    if(method == "Linear")
+        return Method::Linear;
+    if(method == "Cubic")
+        return Method::Cubic;
+    return Method::NearestNeighbor;
+}
+
+std::vector<std::string> Interpolation::toStringList() {
+    return {"NearestNeighbor", "Linear", "Cubic"};
+}
+
+/************************************/
+
 Cache::Cache(glm::vec3 imageSize): img(CImg<uint16_t>(imageSize[0], imageSize[1], imageSize[2], 1, 0)) {}
 
 void Cache::reset() {
@@ -11,11 +25,11 @@ void Cache::storeImage(int imageIdx, const std::vector<uint16_t>& data) {
     this->img.get_shared_slice(imageIdx).assign(data.data(), this->img.width(), this->img.height(), 1.);
 }
 
-uint16_t Cache::getValue(const glm::vec3& coord, InterpolationMethod interpolationMethod) {
+uint16_t Cache::getValue(const glm::vec3& coord, Interpolation::Method interpolationMethod) {
     if(coord[0]<0 || coord[1]<0 || coord[2]<0 || coord[0]>=this->img.width() || coord[1]>=this->img.height() || coord[2]>=this->img.depth()) return static_cast<uint16_t>(0);
-    if(interpolationMethod == InterpolationMethod::Linear) {
+    if(interpolationMethod == Interpolation::Method::Linear) {
         return static_cast<uint16_t>(this->img.linear_atXYZ(coord[0], coord[1], coord[2], 0, static_cast<uint16_t>(0)));
-    } else if (interpolationMethod == InterpolationMethod::Cubic) {
+    } else if (interpolationMethod == Interpolation::Method::Cubic) {
         return static_cast<uint16_t>(this->img.cubic_atXYZ_c(coord[0], coord[1], coord[2], 0, static_cast<uint16_t>(0)));
     } else {
         return static_cast<uint16_t>(this->img.atXYZ(coord[0], coord[1], coord[2]));

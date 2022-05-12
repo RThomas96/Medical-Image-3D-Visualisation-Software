@@ -39,13 +39,13 @@ void Grid::buildTetmesh(const glm::vec3& nbCube) {
     this->initialMesh.buildGrid(nbCube, this->sampler.getSamplerDimension() / nbCube, glm::vec3(0., 0., 0.));
 }
 
-uint16_t Grid::getValueFromWorldPoint(const glm::vec3& p, InterpolationMethod interpolationMethod, ResolutionMode resolutionMode) const {
+uint16_t Grid::getValueFromWorldPoint(const glm::vec3& p, Interpolation::Method interpolationMethod, ResolutionMode resolutionMode) const {
     glm::vec3 pSampler = p;
     this->toSampler(pSampler);
     return this->getValueFromPoint(pSampler, interpolationMethod, resolutionMode);
 }
 
-uint16_t Grid::getValueFromPoint(const glm::vec3& p, InterpolationMethod interpolationMethod, ResolutionMode resolutionMode) const {
+uint16_t Grid::getValueFromPoint(const glm::vec3& p, Interpolation::Method interpolationMethod, ResolutionMode resolutionMode) const {
     glm::vec3 pSamplerRes = p;
     // Even if we want to query a point a full resolution res, the bbox is still based on the sampler
     // So the bbox check need to be in sampler space
@@ -60,7 +60,7 @@ uint16_t Grid::getValueFromPoint(const glm::vec3& p, InterpolationMethod interpo
     }
 }
 
-uint16_t Grid::getDeformedValueFromPoint(const TetMesh& initial, const glm::vec3& p, InterpolationMethod interpolationMethod, ResolutionMode resolutionMode) const {
+uint16_t Grid::getDeformedValueFromPoint(const TetMesh& initial, const glm::vec3& p, Interpolation::Method interpolationMethod, ResolutionMode resolutionMode) const {
     glm::vec3 pt2(0., 0., 0.);
     bool ptIsInInitial = this->getCoordInInitial(initial, p, pt2);
     if(!ptIsInInitial)
@@ -141,7 +141,7 @@ void Grid::loadMESH(std::string const &filename) {
     }    
 }
 
-void Grid::sampleGridValues(const std::pair<glm::vec3, glm::vec3>& areaToSample, const glm::vec3& resolution, std::vector<std::vector<uint16_t>>& result, InterpolationMethod interpolationMethod) {
+void Grid::sampleGridValues(const std::pair<glm::vec3, glm::vec3>& areaToSample, const glm::vec3& resolution, std::vector<std::vector<uint16_t>>& result, Interpolation::Method interpolationMethod) {
     auto start = std::chrono::steady_clock::now();
 
     omp_set_nested(true);
@@ -363,7 +363,7 @@ void Sampler::fillCache() {
     }
 }
 
-uint16_t Sampler::getValue(const glm::vec3& coord, InterpolationMethod interpolationMethod, ResolutionMode resolutionMode) const {
+uint16_t Sampler::getValue(const glm::vec3& coord, Interpolation::Method interpolationMethod, ResolutionMode resolutionMode) const {
     // Convert from grid coord to image coord
     if(resolutionMode == ResolutionMode::SAMPLER_RESOLUTION) {
         if(this->useCache) {
