@@ -2959,6 +2959,7 @@ void Scene::sendFirstTetmeshToGPU() {
     if(this->glMeshManipulator->meshManipulator) {
         this->glMeshManipulator->meshManipulator->setAllManipulatorsPosition(this->getBaseMesh(this->activeMesh)->getMeshPositions());
     }
+    Q_EMIT meshMoved();
 }
 
 void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend) {

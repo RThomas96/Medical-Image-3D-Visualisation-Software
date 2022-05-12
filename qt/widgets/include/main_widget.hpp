@@ -854,12 +854,20 @@ public slots:
     }
 
     void updateAllImages(Scene * scene) {
-        this->imageViewer->clearImages();
-        this->updateImage(scene, true);
-        this->updateImage(scene, false);
+        if(this->isVisible()) {
+            this->imageViewer->clearImages();
+            this->updateImage(scene, true);
+            this->updateImage(scene, false);
+        }
     }
 
     void connect(Scene * scene) {
+
+        QObject::connect(scene, &Scene::meshMoved, [this, scene](){
+            this->updateAllImages(scene);
+            this->imageViewer->drawImages();
+        });
+
         QObject::connect(this->buttons["Preview"], &QPushButton::clicked, [this, scene](){
             this->updateAllImages(scene);
             this->imageViewer->drawImages();

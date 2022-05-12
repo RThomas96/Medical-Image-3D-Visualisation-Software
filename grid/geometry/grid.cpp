@@ -180,7 +180,7 @@ void Grid::sampleSliceGridValues(const glm::vec3& slice, const std::pair<glm::ve
     #pragma omp parallel for schedule(dynamic)
     for(int tetIdx = 0; tetIdx < this->mesh.size(); ++tetIdx) {
         const Tetrahedron& tet = this->mesh[tetIdx];
-        if(tet.planeIntersect(slice, glm::vec3(0., 0., 1.))) {
+        //if(tet.planeIntersect(slice, glm::vec3(0., 0., 1.))) {
             glm::vec3 bbMin = tet.getBBMin();
             fromWorldToImage(bbMin);
             bbMin.x = std::ceil(bbMin.x) - 1;
@@ -211,7 +211,7 @@ void Grid::sampleSliceGridValues(const glm::vec3& slice, const std::pair<glm::ve
                     }
                 }
             }
-        }
+        //}
         if((tetIdx%printOcc) == 0) {
             std::cout << "Loading: " << (float(tetIdx)/float(this->mesh.size())) * 100. << "%" << std::endl;
         }
