@@ -588,24 +588,56 @@ public slots:
     }
 };
 
+class Image2DRender : public QImage, public QWidget {
+
+public:
+    //Image2DRender(QWidget *parent = nullptr):QImage(parent){init();/*connect(scene);*/}
+    Image2DRender(int width, int height, QImage::Format format):QImage(width, height, format){init();}
+
+    void init() {
+        this->setMouseTracking(true);
+    }
+
+    void mouseMoveEvent(QMouseEvent* event) {
+        std::cout << event->pos().x() << std::endl;
+    }
+
+    void wheelEvent(QWheelEvent *event) {
+        std::cout << event->pos().x() << std::endl;
+    }
+};
+
 class ImageViewer : public Form {
     Q_OBJECT
 
 public:
     
     bool hasImage;
-    QImage * image;
+    Image2DRender * image;
     QLabel * display;
 
-    glm::vec3 imgSize; // Same for front and back
+    glm::vec3 imgSize;
+    int zoomSpeed;
+    float zoom;
+    glm::ivec3 center;
 
     std::vector<std::vector<std::vector<uint16_t>>> imgData;
 
     ImageViewer(Scene * scene, QWidget *parent = nullptr):Form(parent){init();connect(scene);}
 
+    void wheelEvent(QWheelEvent *event) {
+        if(event->angleDelta().y() > 0) {
+            zoom += 10;
+        } else if(event->angleDelta().y() < 0) {
+            zoom -= 10; 
+        }
+        this->drawImage();
+    }
+
 public slots:
 
     void init() {
+        this->setMouseTracking(true);
         this->hasImage = false;
         this->image = nullptr;
         this->display = new QLabel();
@@ -613,6 +645,9 @@ public slots:
         this->layout->addRow(this->display);
         this->addWithLabel(WidgetType::SLIDER, "Slider", "Z");
         this->display->hide();
+        this->zoomSpeed = 10;
+        this->zoom = 1;
+        this->center = glm::vec3(0., 0., 0.);
     }
 
     void clearImages() {
@@ -630,7 +665,7 @@ public slots:
 
     void updateDefaultValues() {
         delete this->image;
-        this->image = new QImage(imgSize[0], imgSize[1], QImage::Format_RGB16);
+        this->image = new Image2DRender(imgSize[0], imgSize[1], QImage::Format_RGB16);
 
         this->sliders["Slider"]->setMinimum(0);
         this->sliders["Slider"]->setMaximum(imgSize[2]-1);
@@ -673,9 +708,12 @@ public slots:
     }
 
     void drawImages() {
+        if(!hasImage)
+            return;
         for(int i = 0; i < this->getNbImages(); ++i) {
-            this->drawImage(i);
+            this->fillImage(i);
         }
+        this->drawImage();
     }
 
     int getNbImages() {
@@ -688,9 +726,11 @@ public slots:
         return true;
     }
 
-    void drawImage(int idx) {
-        if(!hasImage)
-            return;
+    void drawImage() {
+        this->display->setPixmap(QPixmap::fromImage(image->scaledToWidth(this->zoom+this->imgSize.x).copy(this->center.x+this->zoom/2, this->center.y+this->zoom/2, this->imgSize.x, this->imgSize.y)));
+    }
+
+    void fillImage(int idx) {
         if(!this->validIndex(idx))
             return;
 
@@ -713,7 +753,6 @@ public slots:
                 }
             }
         }
-        this->display->setPixmap(QPixmap::fromImage(*image));
     }
 
     void connect(Scene * scene) {
@@ -805,11 +844,19 @@ public slots:
     }
 
     glm::vec3 getBackImgDimension(Scene * scene) {
-        return scene->grids[scene->getGridIdx(this->getFromGridName())]->grid->getResolution();
+        glm::vec3 defaultValue = glm::vec3(1., 1., 1.);
+        std::string name = this->getToGridName();
+        if(name == "")
+            return defaultValue;
+        return scene->grids[scene->getGridIdx(name)]->grid->getResolution();
     }
 
     glm::vec3 getFrontImgDimension(Scene * scene) {
-        return scene->grids[scene->getGridIdx(this->getToGridName())]->grid->getResolution();
+        glm::vec3 defaultValue = glm::vec3(1., 1., 1.);
+        std::string name = this->getFromGridName();
+        if(name == "")
+            return defaultValue;
+        return scene->grids[scene->getGridIdx(name)]->grid->getResolution();
     }
 
     std::string getFromGridName() {
@@ -841,7 +888,7 @@ public slots:
         this->imageViewer->addEmptyImage(this->getImgDimension());
         
         auto bbox = scene->getBbox(this->getFromGridName());
-        glm::vec3 slice = (bbox.second + bbox.first)/2.f;
+        glm::vec3 slice = bbox.first + ((bbox.second - bbox.first)/this->getImgDimension()*float(this->imageViewer->sliders["Slider"]->value()));
         int idx = 0;
         if(back) {
             scene->getValues(this->getFromGridName(), slice, bbox, this->getImgDimension(), idx, data, this->getInterpolationMethod());
@@ -974,11 +1021,19 @@ public slots:
     }
 
     glm::vec3 getBackImgDimension(Scene * scene) {
-        return scene->grids[scene->getGridIdx(this->getFromGridName())]->grid->getResolution();
+        glm::vec3 defaultValue = glm::vec3(1., 1., 1.);
+        std::string name = this->getToGridName();
+        if(name == "")
+            return defaultValue;
+        return scene->grids[scene->getGridIdx(name)]->grid->getResolution();
     }
 
     glm::vec3 getFrontImgDimension(Scene * scene) {
-        return scene->grids[scene->getGridIdx(this->getToGridName())]->grid->getResolution();
+        glm::vec3 defaultValue = glm::vec3(1., 1., 1.);
+        std::string name = this->getToGridName();
+        if(name == "")
+            return defaultValue;
+        return scene->grids[scene->getGridIdx(name)]->grid->getResolution();
     }
 
     std::string getFromGridName() {
