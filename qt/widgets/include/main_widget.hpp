@@ -36,6 +36,7 @@
 #include <QMessageBox>
 #include <QImage>
 #include <QSlider>
+#include <QSignalMapper>
 
 class ColorBoundWidget;
 
@@ -62,9 +63,11 @@ public:
         if(objectToChoose == ObjectToChoose::GRID)
             all = scene->getAllGridsName();
 
+        this->blockSignals(true);
         for(std::string name : all) {
             this->addItem(QString(name.c_str()));
         }
+        this->blockSignals(false);
     }
 
     void fillChoices(Scene * scene) {
@@ -219,6 +222,9 @@ public:
 
     Form(QWidget *parent = nullptr):QWidget(parent){init();}
 
+signals:
+    void widgetModified(const QString &id);
+
 public slots:
 
     void init() {
@@ -314,15 +320,20 @@ public slots:
     }
 
     void setComboChoices(const QString& id, const std::vector<QString>& choices) {
+        this->comboBoxes[id]->blockSignals(true);
         for(auto choice : choices) {
             this->comboBoxes[id]->addItem(choice);
         }
+        this->comboBoxes[id]->blockSignals(false);
     }
 
     void setComboChoices(const QString& id, const std::vector<std::string>& choices) {
+
+        this->comboBoxes[id]->blockSignals(true);
         for(auto choice : choices) {
             this->comboBoxes[id]->addItem(QString(choice.c_str()));
         }
+        this->comboBoxes[id]->blockSignals(false);
     }
 
     void addWithLabel(const WidgetType& type, const QString& id, const QString& label) {
@@ -354,17 +365,20 @@ public slots:
                 objectChoosers[id] = new ObjectChooser();
                 newWidget = objectChoosers[id];
                 objectChoosers[id]->objectToChoose = ObjectToChoose::GRID;
+                connect(objectChoosers[id], QOverload<int>::of(&QComboBox::currentIndexChanged), [this, id] { widgetModified(id); });
                 break;
             case WidgetType::SPIN_BOX:
                 spinBoxes[id] = new QSpinBox();
                 spinBoxes[id]->setRange(-10000000, 10000000);
                 newWidget = spinBoxes[id];
+                connect(spinBoxes[id], QOverload<int>::of(&QSpinBox::valueChanged), [this, id] { widgetModified(id); });
                 break;
             case WidgetType::SPIN_BOX_DOUBLE:
                 doubleSpinBoxes[id] = new QDoubleSpinBox();
                 doubleSpinBoxes[id]->setRange(-10000000, 10000000);
                 doubleSpinBoxes[id]->setDecimals(6);
                 newWidget = doubleSpinBoxes[id];
+                connect(doubleSpinBoxes[id], QOverload<double>::of(&QDoubleSpinBox::valueChanged), [this, id] { widgetModified(id); });
                 break;
             case WidgetType::LABEL:
                 labels[id] = new QLabel(name);
@@ -385,6 +399,7 @@ public slots:
             case WidgetType::BUTTON:
                 buttons[id] = new QPushButton(name);
                 newWidget = buttons[id];
+                connect(buttons[id], &QPushButton::clicked, [this, id] { widgetModified(id); });
                 break;
             case WidgetType::FILENAME:
                 fileNames[id] = new FileName();
@@ -417,10 +432,12 @@ public slots:
             case WidgetType::COMBO_BOX:
                 comboBoxes[id] = new QComboBox();
                 newWidget = comboBoxes[id];
+                connect(comboBoxes[id], QOverload<int>::of(&QComboBox::currentIndexChanged), [this, id] { widgetModified(id); });
                 break;
             case WidgetType::CHECK_BOX:
                 checkBoxes[id] = new QCheckBox();
                 newWidget = checkBoxes[id];
+                connect(checkBoxes[id], &QCheckBox::clicked, [this, id] { widgetModified(id); });
                 break;
             case WidgetType::SLIDER:
                 sliders[id] = new QSlider();
@@ -588,177 +605,292 @@ public slots:
     }
 };
 
-class Image2DRender : public QImage, public QWidget {
+class Raw3DImage {
 
 public:
-    //Image2DRender(QWidget *parent = nullptr):QImage(parent){init();/*connect(scene);*/}
-    Image2DRender(int width, int height, QImage::Format format):QImage(width, height, format){init();}
+    int max;
+
+    glm::ivec3 imgSize;
+    std::vector<std::vector<uint16_t>> data;
+
+private:
+    std::vector<bool> upToDate;
+    std::vector<QImage> images;
+
+public:
+    Raw3DImage(const glm::ivec3 imgSize) {
+        this->imgSize = imgSize;
+        max = 0;
+        for(int k = 0; k < imgSize[2]; ++k) {
+            this->data.push_back(std::vector<uint16_t>(this->imgSize.x*this->imgSize.y, 0));
+            this->images.push_back(QImage(this->imgSize.x, this->imgSize.y, QImage::Format_RGB16));
+            this->images.back().fill(QColor(0, 0, 0));
+
+            this->upToDate.push_back(false);
+        }
+    }
+
+    void setSlice(const int& idx, const std::vector<uint16_t>& data) {
+        this->data[idx] = data;
+        this->updateMaxValue();
+        this->upToDate[idx] = false;
+    }
+
+    void setImage(const std::vector<std::vector<uint16_t>>& data) {
+        this->data = data;
+        this->updateMaxValue();
+        this->images.clear();
+        this->upToDate.clear();
+        for(int k = 0; k < imgSize[2]; ++k) {
+            this->images.push_back(QImage(this->imgSize.x, this->imgSize.y, QImage::Format_RGB16));
+            this->upToDate.push_back(false);
+        }
+    }
+
+    QImage& getImage(const int& imageIdx) {
+        if(!this->upToDate[imageIdx]) {
+            this->convertDataToImg(imageIdx);
+            this->upToDate[imageIdx] = true;
+        }
+        return images[imageIdx];
+    }
+
+private:
+    void updateMaxValue() {
+        max = 0;
+        for(int i = 0; i < this->data.size(); ++i) {
+            uint16_t currentMax = *max_element(data[i].begin(), data[i].end());
+            if(currentMax > max)
+                max = currentMax;
+        }
+    }
+
+    void convertDataToImg(const int& imageIdx) {
+        this->updateMaxValue();
+        for(int i = 0; i < imgSize[0]; ++i) {
+            for(int j = 0; j < imgSize[1]; ++j) {
+                uint16_t value = data[imageIdx][i + j * imgSize[0]];
+                int color = int((float(value) / float(max))*255.);
+                QColor qColor;
+                if(color < 0 || color > 255)
+                    qColor = QColor(0, 0, 0);
+                else
+                    qColor = QColor(color, color, color);
+                this->images[imageIdx].setPixelColor(i, j, qColor);
+            }
+        }
+    }
+};
+
+class Image2DViewer : public QWidget {
+    Q_OBJECT;
+
+public:
+
+    bool inMoveMode;
+    QPoint movementOrigin;
+    QPoint translation;
+
+    int zoomSpeed;
+    float zoom;
+    glm::ivec2 center;
+    glm::ivec2 imgSize;
+    QImage::Format format;
+
+    QHBoxLayout * layout;
+    QImage screen;
+    QLabel * display;
+
+    Image2DViewer(QImage::Format format, QWidget *parent = nullptr): QWidget(parent), format(format){init();}
 
     void init() {
-        this->setMouseTracking(true);
+        this->zoomSpeed = 30;
+        this->zoom = 1;
+        this->center = glm::ivec2(0, 0);
+        this->imgSize = glm::ivec2(0, 0);
+
+        this->layout = new QHBoxLayout(this);
+        this->display = new QLabel(this);
+        this->layout->addWidget(this->display);
+
+        this->layout->setContentsMargins(0, 0, 0, 0);
+    }
+
+    void clearColor() {
+        this->screen.fill(QColor(0, 0, 0));
+    }
+
+    void setImage(const QImage& image) {
+        this->screen = image;
+        this->imgSize.x = image.width();
+        this->imgSize.y = image.height();
+        this->zoomSpeed = std::max(this->imgSize.x, this->imgSize.y)/10;
+    }
+
+    void draw() {
+        std::cout << "Draw image with size" << this->screen.width() << " " << this->screen.height() << std::endl;
+        this->show();
+        this->display->setPixmap(QPixmap::fromImage(this->screen.scaledToWidth(this->zoom+this->imgSize.x).copy((this->center.x+this->zoom/2)-this->translation.x(), (this->center.y+this->zoom/2)-this->translation.y(), this->imgSize.x, this->imgSize.y)));
     }
 
     void mouseMoveEvent(QMouseEvent* event) {
         std::cout << event->pos().x() << std::endl;
+        if(this->inMoveMode) {
+            QPoint currentPosition = event->pos();
+            this->translation += (currentPosition - this->movementOrigin);
+            this->movementOrigin = currentPosition;
+            this->draw();
+            event->setAccepted(true);
+        }
     }
 
-    void wheelEvent(QWheelEvent *event) {
-        std::cout << event->pos().x() << std::endl;
+    void mousePressEvent(QMouseEvent* event) {
+        std::cout << "Move mode" << std::endl;
+        this->inMoveMode = true;
+        this->movementOrigin = event->pos();
     }
-};
 
-class ImageViewer : public Form {
-    Q_OBJECT
-
-public:
-    
-    bool hasImage;
-    Image2DRender * image;
-    QLabel * display;
-
-    glm::vec3 imgSize;
-    int zoomSpeed;
-    float zoom;
-    glm::ivec3 center;
-
-    std::vector<std::vector<std::vector<uint16_t>>> imgData;
-
-    ImageViewer(Scene * scene, QWidget *parent = nullptr):Form(parent){init();connect(scene);}
+    void mouseReleaseEvent(QMouseEvent* event) {
+        std::cout << "Release mode false" << std::endl;
+        this->inMoveMode = false;
+    }
 
     void wheelEvent(QWheelEvent *event) {
         if(event->angleDelta().y() > 0) {
-            zoom += 10;
+            zoom += this->zoomSpeed;
         } else if(event->angleDelta().y() < 0) {
-            zoom -= 10; 
+            zoom -= this->zoomSpeed;
         }
-        this->drawImage();
+        this->draw();
+        event->setAccepted(false);
     }
 
-public slots:
+};
 
-    void init() {
-        this->setMouseTracking(true);
-        this->hasImage = false;
-        this->image = nullptr;
-        this->display = new QLabel();
+class Image3DViewer : public Form {
+    Q_OBJECT
 
-        this->layout->addRow(this->display);
-        this->addWithLabel(WidgetType::SLIDER, "Slider", "Z");
-        this->display->hide();
-        this->zoomSpeed = 10;
-        this->zoom = 1;
-        this->center = glm::vec3(0., 0., 0.);
-    }
+public:
 
-    void clearImages() {
-        delete this->image;
-        this->image = nullptr;
-        hasImage = false;
-        this->imgData.clear();
-    }
+    bool isInitialized;
 
-    void removeImage(int idx) {
-        if(!this->validIndex(idx))
-            return;
-        this->imgData.erase(this->imgData.begin()+idx);
-    }
+    glm::ivec3 imgSize;
+    std::vector<std::string> gridNames;
+    std::vector<int> imagesToDraw;
+    Interpolation::Method interpolationMethod;
 
-    void updateDefaultValues() {
-        delete this->image;
-        this->image = new Image2DRender(imgSize[0], imgSize[1], QImage::Format_RGB16);
+    Image2DViewer * viewer2D;
+
+    std::vector<std::vector<bool>> upToDate;
+    std::vector<Raw3DImage> imgData;
+
+    Scene * scene;
+
+    Image3DViewer(Scene * scene, QWidget * parent = nullptr): scene(scene), isInitialized(false), Form(parent), viewer2D(nullptr) {initLayout(); connect(scene);}
+
+    void init(const glm::vec3& imageSize, std::vector<std::string> gridNames, std::vector<int> imgToDraw, Interpolation::Method interpolationMethod) {
+        this->imgSize = imageSize;
+        this->gridNames = gridNames;
+        this->imagesToDraw = imgToDraw;
+        this->interpolationMethod = interpolationMethod;
+
+        delete viewer2D;
+        this->viewer2D = new Image2DViewer(QImage::Format_RGB16);
+
+        this->upToDate.clear();
+        this->upToDate = std::vector<std::vector<bool>>(gridNames.size(), std::vector<bool>(imageSize.z, false));
+
+        imgData.clear();
+        imgData.reserve(gridNames.size());
+        for(auto name : gridNames)
+            imgData.push_back(Raw3DImage(imgSize));
 
         this->sliders["Slider"]->setMinimum(0);
         this->sliders["Slider"]->setMaximum(imgSize[2]-1);
         if(this->sliders["Slider"]->value() > imgSize[2]-1)
             this->sliders["Slider"]->setValue(0);
+
+        this->isInitialized = true;
+        this->drawImages();
     }
 
-    void addImage(const glm::vec3& imgSize, const std::vector<std::vector<uint16_t>>& data) {
-        this->setImage(this->imgData.size(), imgSize, data);
+private:
+
+    void reset() {
+        for(auto& line : this->upToDate)
+            std::fill(line.begin(), line.end(), false);
     }
 
-    void setImageSlice(int idx, int imgSlice, const std::vector<uint16_t>& data) {
-        if(this->validIndex(idx)) {
-            this->imgData[idx][imgSlice] = data;
-        }
+    void initLayout() {
+        this->viewer2D = new Image2DViewer(QImage::Format_RGB16);
+        this->layout->addRow(this->viewer2D);
+        this->addWithLabel(WidgetType::SLIDER, "Slider", "Z");
+        this->sliders["Slider"]->setMinimum(0);
+        this->sliders["Slider"]->setMaximum(0);
     }
 
-    void addEmptyImage(const glm::vec3& imgSize) {
-        std::vector<std::vector<uint16_t>> data(imgSize.z, std::vector<uint16_t>(imgSize.x * imgSize.y, 0));
-        this->setImage(this->imgData.size(), imgSize, data);
-    }
-
-    void setImage(int idx, const glm::vec3& imgSize, const std::vector<std::vector<uint16_t>>& data) {
-        this->imgSize = imgSize; // Same for every images
-        if(idx == this->imgData.size()) {
-            this->imgData.push_back(data);
-        } else if(this->validIndex(idx)) {
-            this->imgData[idx].clear();
-            this->imgData[idx] = data;
-        } else {
-            std::cout << "WARNING: try insert image in viewer with a wrong index" << std::endl;
-            return;
-        }
-
-        if(!hasImage) {
-            this->hasImage = true;
-            this->updateDefaultValues();
-        }
-        this->display->show();
-    }
-
-    void drawImages() {
-        if(!hasImage)
-            return;
-        for(int i = 0; i < this->getNbImages(); ++i) {
-            this->fillImage(i);
-        }
-        this->drawImage();
-    }
-
-    int getNbImages() {
-        return this->imgData.size();
-    }
-
-    bool validIndex(int idx) {
-        if(idx >= this->getNbImages())
-            return false;
-        return true;
-    }
-
-    void drawImage() {
-        this->display->setPixmap(QPixmap::fromImage(image->scaledToWidth(this->zoom+this->imgSize.x).copy(this->center.x+this->zoom/2, this->center.y+this->zoom/2, this->imgSize.x, this->imgSize.y)));
-    }
-
-    void fillImage(int idx) {
-        if(!this->validIndex(idx))
-            return;
-
-        const std::vector<std::vector<uint16_t>>& data = this->imgData[idx];
-
-        uint16_t max = *max_element(data[this->sliders["Slider"]->value()].begin(), data[this->sliders["Slider"]->value()].end());
-        for(int i = 0; i < imgSize[0]; ++i) {
-            for(int j = 0; j < imgSize[1]; ++j) {
-                uint16_t value = data[this->sliders["Slider"]->value()][i + j * imgSize[0]];
-                int color = int((float(value) / float(max))*255.);
-                QColor qColor;
-                if(color <= 0 || color > 255) {
-                    if(idx == 0) {
-                        qColor = QColor(0, 0, 0);
-                        this->image->setPixelColor(i, j, qColor);
-                    }
-                } else {
-                    qColor = QColor(color, color, color);
-                    this->image->setPixelColor(i, j, qColor);
-                }
+    void fillCurrentImages() {
+        for(int i = 0; i < this->imagesToDraw.size(); ++i) {
+            if(!this->upToDate[this->imagesToDraw[i]][this->sliders["Slider"]->value()]) {
+                this->fillImage(this->imagesToDraw[i], this->sliders["Slider"]->value());
+                this->upToDate[this->imagesToDraw[i]][this->sliders["Slider"]->value()] = true;
             }
         }
     }
 
+    void fillImage(int imageIdx, int sliceIdx) {
+        std::vector<uint16_t> data;
+        auto bbox = scene->getBbox(this->gridNames[0]);
+
+        int idx = 0;
+        glm::vec3 slice = bbox.first + ((bbox.second - bbox.first)/glm::vec3(this->imgSize)*float(this->sliders["Slider"]->value()));
+        scene->getValues(this->gridNames[imageIdx], slice, bbox, this->imgSize, idx, data, this->interpolationMethod);
+
+        this->imgData[imageIdx].setSlice(idx, data);
+    }
+
+    void getColor(int idx, glm::ivec3 position, QColor& color) {
+        color = this->imgData[idx].getImage(position.z).pixelColor(position.x, position.y);
+    }
+
+    QImage getCurrentMergedImage() {
+        return this->mergeImages(this->imagesToDraw, this->sliders["Slider"]->value());
+    }
+
+    QImage mergeImages(const std::vector<int>& indexes, const int& z) {
+        QImage result(this->imgSize.x, this->imgSize.y, QImage::Format_RGB16);
+        QColor color;
+        for(int idx = 0; idx < indexes.size(); ++idx) {
+            for(int i = 0; i < this->imgSize.x; ++i){
+                for(int j = 0; j < this->imgSize.y; ++j){
+                    this->getColor(indexes[idx], glm::ivec3(i, j, z), color);
+                    if(color.isValid()) {
+                        if(idx == 0 || (idx != 0 && color != QColor(0, 0, 0)))
+                            result.setPixelColor(i, j, color);
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    void drawImages() {
+        this->fillCurrentImages();
+        this->viewer2D->setImage(this->getCurrentMergedImage());
+        this->viewer2D->draw();
+    }
+
     void connect(Scene * scene) {
         QObject::connect(this->sliders["Slider"], &QSlider::valueChanged, [this](){
+            if(this->isInitialized) {
                 this->drawImages();
                 this->labels["Slider"]->setText(std::to_string(this->sliders["Slider"]->value()).c_str());
+            }
+        });
+
+        QObject::connect(scene, &Scene::meshMoved, [this, scene](){
+            this->reset();
+            this->drawImages();
         });
     }
 };
@@ -768,13 +900,13 @@ class PlanarViewForm : Form {
 
 public:
 
-    ImageViewer * imageViewer;
+    Image3DViewer * imageViewer;
     PlanarViewForm(Scene * scene, QWidget *parent = nullptr):Form(parent){init(scene);connect(scene);}
 
 public slots:
 
     void init(Scene * scene) {
-        this->imageViewer = new ImageViewer(scene);
+        this->imageViewer = new Image3DViewer(scene);
         this->layout->addRow(imageViewer);
 
         this->addWithLabel(WidgetType::H_GROUP, "GroupBack", "Back");
@@ -812,27 +944,43 @@ public slots:
         this->add(WidgetType::SPIN_BOX, "Z");
 
         this->addAllNextWidgetsToDefaultGroup();
-
-        this->add(WidgetType::BUTTON, "Preview");
         /****/
 
         this->checkBoxes["UseBack"]->setChecked(true);
         this->checkBoxes["UseFront"]->setChecked(true);
     }
 
-    void setDefaultValues(Scene * scene) {
+    glm::vec3 getBackImgDimension(Scene * scene) {
+        glm::vec3 defaultValue = glm::vec3(1., 1., 1.);
+        std::string name = this->getFromGridName();
+        if(name == "")
+            return defaultValue;
+        return scene->grids[scene->getGridIdx(name)]->grid->getResolution();
+    }
+
+    void updateDefaultValues(Scene * scene) {
         glm::vec3 imgSize = this->getBackImgDimension(scene);
+        this->spinBoxes["X"]->blockSignals(true);
+        this->spinBoxes["Y"]->blockSignals(true);
+        this->spinBoxes["Z"]->blockSignals(true);
         this->spinBoxes["X"]->setMinimum(1);
         this->spinBoxes["Y"]->setMinimum(1);
         this->spinBoxes["Z"]->setMinimum(1);
         this->spinBoxes["X"]->setValue(imgSize.x);
         this->spinBoxes["Y"]->setValue(imgSize.y);
         this->spinBoxes["Z"]->setValue(imgSize.z);
+        this->spinBoxes["X"]->blockSignals(false);
+        this->spinBoxes["Y"]->blockSignals(false);
+        this->spinBoxes["Z"]->blockSignals(false);
+    }
+
+    void updateImageViewer() {
+        this->imageViewer->init(this->getImgDimension(), {this->getFromGridName(), this->getToGridName()}, this->getImagesToDraw(), this->getInterpolationMethod());
+        this->imageViewer->show();
     }
 
     void update(Scene * scene) {
         Form::update(scene);
-        this->setDefaultValues(scene);
     }
 
     void show() {
@@ -843,20 +991,18 @@ public slots:
         return glm::vec3(this->spinBoxes["X"]->value(), this->spinBoxes["Y"]->value(), this->spinBoxes["Z"]->value());
     }
 
-    glm::vec3 getBackImgDimension(Scene * scene) {
-        glm::vec3 defaultValue = glm::vec3(1., 1., 1.);
-        std::string name = this->getToGridName();
-        if(name == "")
-            return defaultValue;
-        return scene->grids[scene->getGridIdx(name)]->grid->getResolution();
+    Interpolation::Method getInterpolationMethod() {
+        QString method(this->comboBoxes["Interpolation"]->currentText());
+        return Interpolation::fromString(method.toStdString());
     }
 
-    glm::vec3 getFrontImgDimension(Scene * scene) {
-        glm::vec3 defaultValue = glm::vec3(1., 1., 1.);
-        std::string name = this->getFromGridName();
-        if(name == "")
-            return defaultValue;
-        return scene->grids[scene->getGridIdx(name)]->grid->getResolution();
+    std::vector<int> getImagesToDraw() {
+        std::vector<int> imagesToDraw;
+        if(this->checkBoxes["UseBack"]->isChecked())
+            imagesToDraw.push_back(0);
+        if(this->checkBoxes["UseFront"]->isChecked())
+            imagesToDraw.push_back(1);
+        return imagesToDraw;
     }
 
     std::string getFromGridName() {
@@ -867,62 +1013,14 @@ public slots:
         return this->objectChoosers["To"]->currentText().toStdString();
     }
 
-    Interpolation::Method getInterpolationMethod() {
-        QString method(this->comboBoxes["Interpolation"]->currentText());
-        return Interpolation::fromString(method.toStdString());
-    }
-
-    bool isActive(bool back) {
-        if(back) {
-            return this->checkBoxes["UseBack"]->isChecked();
-        } else {
-            return this->checkBoxes["UseFront"]->isChecked();
-        }
-    }
-
-    void updateImage(Scene * scene, bool back) {
-        std::vector<uint16_t> data;
-        if(!this->isActive(back))
-            return;
-
-        this->imageViewer->addEmptyImage(this->getImgDimension());
-        
-        auto bbox = scene->getBbox(this->getFromGridName());
-        glm::vec3 slice = bbox.first + ((bbox.second - bbox.first)/this->getImgDimension()*float(this->imageViewer->sliders["Slider"]->value()));
-        int idx = 0;
-        if(back) {
-            scene->getValues(this->getFromGridName(), slice, bbox, this->getImgDimension(), idx, data, this->getInterpolationMethod());
-            this->imageViewer->setImageSlice(0, idx, data);
-        } else {
-            scene->getValues(this->getToGridName(), slice, bbox, this->getImgDimension(), idx, data, this->getInterpolationMethod());
-            this->imageViewer->setImageSlice(1, idx, data);
-        }
-        std::cout << "Compute image at idx" << idx << std::endl;
-    }
-
-    void updateAllImages(Scene * scene) {
-        if(this->isVisible()) {
-            this->imageViewer->clearImages();
-            this->updateImage(scene, true);
-            this->updateImage(scene, false);
-        }
-    }
-
     void connect(Scene * scene) {
 
-        QObject::connect(scene, &Scene::meshMoved, [this, scene](){
-            this->updateAllImages(scene);
-            this->imageViewer->drawImages();
-        });
+        QObject::connect(this, &Form::widgetModified, [this, scene](const QString &id){
+            if(id == "From")
+                this->updateDefaultValues(scene);
 
-        QObject::connect(this->buttons["Preview"], &QPushButton::clicked, [this, scene](){
-            this->updateAllImages(scene);
-            this->imageViewer->drawImages();
-            this->imageViewer->show();
-        });
-
-        QObject::connect(this->objectChoosers["From"], QOverload<int>::of(&QComboBox::currentIndexChanged), [this, scene](int index){
-            this->setDefaultValues(scene);
+            if(id == "X" || id == "Y" || id == "Z" || id == "Interpolation" || id == "UseBack" || id == "UseFront" || id == "From" || id == "To")
+                this->updateImageViewer();
         });
     }
 };
@@ -932,14 +1030,14 @@ class SaveImageForm : Form {
 
 public:
 
-    ImageViewer * imageViewer;
+    Image3DViewer * imageViewer;
 
     SaveImageForm(Scene * scene, QWidget *parent = nullptr):Form(parent){init(scene);connect(scene);}
 
 public slots:
 
     void init(Scene * scene) {
-        this->imageViewer = new ImageViewer(scene);
+        this->imageViewer = new Image3DViewer(scene);
         this->layout->addRow(imageViewer);
 
         this->addWithLabel(WidgetType::H_GROUP, "GroupBack", "Back");
@@ -997,111 +1095,31 @@ public slots:
         this->checkBoxes["UseFront"]->setChecked(true);
     }
 
-    void setDefaultValues(Scene * scene) {
-        glm::vec3 imgSize = this->getBackImgDimension(scene);
-        this->spinBoxes["X"]->setMinimum(1);
-        this->spinBoxes["Y"]->setMinimum(1);
-        this->spinBoxes["Z"]->setMinimum(1);
-        this->spinBoxes["X"]->setValue(imgSize.x);
-        this->spinBoxes["Y"]->setValue(imgSize.y);
-        this->spinBoxes["Z"]->setValue(imgSize.z);
-    }
-
-    void update(Scene * scene) {
-        Form::update(scene);
-        this->setDefaultValues(scene);
-    }
-
     void show() {
         Form::show();
     }
 
-    glm::vec3 getImgDimension() {
-        return glm::vec3(this->spinBoxes["X"]->value(), this->spinBoxes["Y"]->value(), this->spinBoxes["Z"]->value());
-    }
-
-    glm::vec3 getBackImgDimension(Scene * scene) {
-        glm::vec3 defaultValue = glm::vec3(1., 1., 1.);
-        std::string name = this->getToGridName();
-        if(name == "")
-            return defaultValue;
-        return scene->grids[scene->getGridIdx(name)]->grid->getResolution();
-    }
-
-    glm::vec3 getFrontImgDimension(Scene * scene) {
-        glm::vec3 defaultValue = glm::vec3(1., 1., 1.);
-        std::string name = this->getToGridName();
-        if(name == "")
-            return defaultValue;
-        return scene->grids[scene->getGridIdx(name)]->grid->getResolution();
-    }
-
-    std::string getFromGridName() {
-        return this->objectChoosers["From"]->currentText().toStdString();
-    }
-
-    std::string getToGridName() {
-        return this->objectChoosers["To"]->currentText().toStdString();
-    }
-
-    Interpolation::Method getInterpolationMethod() {
-        QString method(this->comboBoxes["Interpolation"]->currentText());
-        return Interpolation::fromString(method.toStdString());
-    }
-
-    bool isActive(bool back) {
-        if(back) {
-            return this->checkBoxes["UseBack"]->isChecked();
-        } else {
-            return this->checkBoxes["UseFront"]->isChecked();
-        }
-    }
-
-    void updateImage(Scene * scene, bool back) {
-        std::vector<std::vector<uint16_t>> data;
-        if(!this->isActive(back))
-            return;
-        if(back) {
-            scene->getValues(this->getFromGridName(), scene->getBbox(this->getFromGridName()), this->getImgDimension(), data, this->getInterpolationMethod());
-            this->imageViewer->addImage(this->getImgDimension(), data);
-        } else {
-            scene->getValues(this->getToGridName(), scene->getBbox(this->getFromGridName()), this->getImgDimension(), data, this->getInterpolationMethod());
-            this->imageViewer->addImage(this->getImgDimension(), data);
-        }
-    }
-
-    void updateAllImages(Scene * scene) {
-        this->imageViewer->clearImages();
-        this->updateImage(scene, true);
-        this->updateImage(scene, false);
+    void update(Scene * scene) {
+        Form::update(scene);
     }
 
     void connect(Scene * scene) {
         QObject::connect(this->fileChoosers["Save image"], &FileChooser::fileSelected, [this, scene](){
-            //scene->writeDeformation(this->fileChoosers["Save image"]->filename.toStdString(), this->getFromGridName(), this->getToGridName());
         });
 
         QObject::connect(this->fileChoosers["Save image back"], &FileChooser::fileSelected, [this, scene](){
-            this->updateAllImages(scene);
-            if(this->imageViewer->validIndex(0))
-                scene->writeGreyscaleTIFFImage(this->fileChoosers["Save image back"]->filename.toStdString(), this->imageViewer->imgSize, this->imageViewer->imgData[0]);
+            scene->writeGreyscaleTIFFImage(this->fileChoosers["Save image back"]->filename.toStdString(), this->imageViewer->imgSize, this->imageViewer->imgData[0].data);
         });
 
         QObject::connect(this->fileChoosers["Save image front"], &FileChooser::fileSelected, [this, scene](){
-            this->updateAllImages(scene);
-            if(this->imageViewer->validIndex(1))
-                scene->writeGreyscaleTIFFImage(this->fileChoosers["Save image front"]->filename.toStdString(), this->imageViewer->imgSize, this->imageViewer->imgData[1]);
+            scene->writeGreyscaleTIFFImage(this->fileChoosers["Save image front"]->filename.toStdString(), this->imageViewer->imgSize, this->imageViewer->imgData[1].data);
         });
 
         QObject::connect(this->buttons["Preview"], &QPushButton::clicked, [this, scene](){
-            this->updateAllImages(scene);
-            this->imageViewer->drawImages();
             this->imageViewer->show();
         });
 
         QObject::connect(this->objectChoosers["From"], QOverload<int>::of(&QComboBox::currentIndexChanged), [this, scene](int index){
-            this->setDefaultValues(scene);
-            //this->updateAllImages(scene);
         });
     }
 };
