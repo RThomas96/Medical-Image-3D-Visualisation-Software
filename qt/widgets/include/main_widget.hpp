@@ -712,10 +712,11 @@ public:
         this->screenSize = glm::ivec2(0, 0);
 
         this->layout = new QHBoxLayout(this);
-        this->display = new QLabel(this);
+        this->display = new QLabel();
         this->layout->addWidget(this->display);
 
         this->layout->setContentsMargins(0, 0, 0, 0);
+        this->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     }
 
     void clearColor() {
@@ -804,8 +805,9 @@ public:
         this->imagesToDraw = imgToDraw;
         this->interpolationMethod = interpolationMethod;
 
-        delete viewer2D;
-        this->viewer2D = new Image2DViewer(QImage::Format_RGB16);
+        //if(!viewer2D)
+        //this->viewer2D = new Image2DViewer(QImage::Format_RGB16);
+        //this->layout->addRow(this->viewer2D);
 
         this->upToDate.clear();
         this->upToDate = std::vector<std::vector<bool>>(gridNames.size(), std::vector<bool>(this->imgSize.z, false));
@@ -844,7 +846,7 @@ private:
 
     void initLayout() {
         this->viewer2D = new Image2DViewer(QImage::Format_RGB16);
-        this->layout->addRow(this->viewer2D);
+        this->layout->addRow(this->viewer2D->display);
         this->addWithLabel(WidgetType::SLIDER, "Slider", "Z");
         this->sliders["Slider"]->setMinimum(0);
         this->sliders["Slider"]->setMaximum(0);
@@ -935,7 +937,7 @@ public slots:
         this->side = glm::vec3(0., 0., 1.);
 
         this->imageViewer = new Image3DViewer(scene);
-        this->layout->addRow(imageViewer);
+        //this->layout->addRow(imageViewer);
 
         this->addWithLabel(WidgetType::H_GROUP, "GroupBack", "Back");
         this->addAllNextWidgetsToGroup("GroupBack");
