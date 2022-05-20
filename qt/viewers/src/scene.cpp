@@ -4178,5 +4178,9 @@ glm::vec3 Scene::getGridImgSize(const std::string& name) {
     return this->grids[this->getGridIdx(name)]->grid->getResolution();
 }
 
+glm::vec3 Scene::getGridVoxelSize(const std::string& name) {
+    return this->grids[this->getGridIdx(name)]->grid->getVoxelSize();
+}
+
 template<typename MeshToolType>
 MeshToolType* Scene::getMeshTool() { return dynamic_cast<MeshToolType*>(this->glMeshManipulator->meshManipulator); };

@@ -731,10 +731,9 @@ public:
     }
 
     void draw() {
-        std::cout << "Draw image with size" << this->screen.width() << " " << this->screen.height() << std::endl;
+        std::cout << "Draw image with size" << this->screenSize.x << " " << this->screenSize.y << std::endl;
         this->show();
-        //this->display->setPixmap(QPixmap::fromImage(this->screen.scaledToWidth(this->zoom+this->imgSize.x).copy((this->center.x+this->zoom/2)-this->translation.x(), (this->center.y+this->zoom/2)-this->translation.y(), this->imgSize.x, this->imgSize.y)).scaled(this->screenSize.x, this->screenSize.y));
-        this->display->setPixmap(QPixmap::fromImage(this->screen.scaledToWidth(this->zoom+this->imgSize.x).copy((this->center.x+this->zoom/2)-this->translation.x(), (this->center.y+this->zoom/2)-this->translation.y(), this->imgSize.x, this->imgSize.y)));
+        this->display->setPixmap(QPixmap::fromImage((this->screen.scaledToWidth(this->zoom+this->imgSize.x).copy((this->center.x+this->zoom/2)-this->translation.x(), (this->center.y+this->zoom/2)-this->translation.y(), this->imgSize.x, this->imgSize.y)).scaled(this->screenSize.x, this->screenSize.y)));
     }
 
     void mouseMoveEvent(QMouseEvent* event) {
@@ -781,6 +780,7 @@ public:
     glm::vec3 direction;
 
     glm::ivec3 imgSize;
+    glm::ivec3 imgNewSize;
     std::vector<std::string> gridNames;
     std::vector<int> imagesToDraw;
     Interpolation::Method interpolationMethod;
@@ -794,16 +794,12 @@ public:
 
     Image3DViewer(Scene * scene, QWidget * parent = nullptr): scene(scene), isInitialized(false), Form(parent), viewer2D(nullptr) {initLayout(); connect(scene);}
 
-    void init(const glm::ivec3& imageSize, std::vector<std::string> gridNames, std::vector<int> imgToDraw, Interpolation::Method interpolationMethod) {
-        //TODO: remove
+    void init(const glm::vec3& imageSize, const glm::vec3& side, std::vector<std::string> gridNames, std::vector<int> imgToDraw, Interpolation::Method interpolationMethod) {
 
-        std::cout << "---" << std::endl;
-        std::cout << "Init 3D image viewer" << std::endl;
-        std::cout << "Size: " << imageSize << std::endl;
-        std::cout << "---" << std::endl;
-        this->direction = glm::vec3(1., 0., 0.);
+        this->direction = side;
 
         this->imgSize = imageSize;
+
         this->gridNames = gridNames;
         this->imagesToDraw = imgToDraw;
         this->interpolationMethod = interpolationMethod;
@@ -812,7 +808,7 @@ public:
         this->viewer2D = new Image2DViewer(QImage::Format_RGB16);
 
         this->upToDate.clear();
-        this->upToDate = std::vector<std::vector<bool>>(gridNames.size(), std::vector<bool>(imageSize.z, false));
+        this->upToDate = std::vector<std::vector<bool>>(gridNames.size(), std::vector<bool>(this->imgSize.z, false));
 
         imgData.clear();
         imgData.reserve(gridNames.size());
@@ -825,8 +821,13 @@ public:
             this->sliders["Slider"]->setValue(0);
 
         this->isInitialized = true;
+
+        //glm::vec3 newSize = this->autoComputeBestSize(gridNames[imgToDraw[0]]);
+        //this->resize(newSize);
+
         this->drawImages();
     }
+
 
 private:
 
@@ -835,12 +836,19 @@ private:
             std::fill(line.begin(), line.end(), false);
     }
 
+    void resize(const glm::vec3& newSize) {
+        this->imgNewSize = newSize;
+        //this->viewer2D->setScreenSize(newSize);
+        this->drawImages();
+    }
+
     void initLayout() {
         this->viewer2D = new Image2DViewer(QImage::Format_RGB16);
         this->layout->addRow(this->viewer2D);
         this->addWithLabel(WidgetType::SLIDER, "Slider", "Z");
         this->sliders["Slider"]->setMinimum(0);
         this->sliders["Slider"]->setMaximum(0);
+        this->labels["Slider"]->setFixedWidth(50);
     }
 
     void fillCurrentImages() {
@@ -856,6 +864,12 @@ private:
         std::vector<uint16_t> data;
         auto bbox = scene->getBbox(this->gridNames[0]);
         glm::vec3 slices(-1, -1, sliceIdx);
+        if(this->direction == glm::vec3(1., 0., 0.))
+            std::swap(slices.x, slices.z);
+        if(this->direction == glm::vec3(0., 1., 0.))
+            std::swap(slices.y, slices.z);
+        if(this->direction == glm::vec3(0., 0., 1.))
+            std::swap(slices.z, slices.z);
         scene->getValues(this->gridNames[imageIdx], slices, bbox, this->imgSize, data, this->interpolationMethod);
         this->imgData[imageIdx].setSlice(sliceIdx, data);
     }
@@ -910,6 +924,7 @@ class PlanarViewForm : Form {
     Q_OBJECT
 
 public:
+    glm::vec3 side;
 
     Image3DViewer * imageViewer;
     PlanarViewForm(Scene * scene, QWidget *parent = nullptr):Form(parent){init(scene);connect(scene);}
@@ -917,6 +932,8 @@ public:
 public slots:
 
     void init(Scene * scene) {
+        this->side = glm::vec3(0., 0., 1.);
+
         this->imageViewer = new Image3DViewer(scene);
         this->layout->addRow(imageViewer);
 
@@ -953,6 +970,16 @@ public slots:
         this->add(WidgetType::SPIN_BOX, "X");
         this->add(WidgetType::SPIN_BOX, "Y");
         this->add(WidgetType::SPIN_BOX, "Z");
+        this->addWithLabel(WidgetType::CHECK_BOX, "Auto", "Auto");
+
+        this->addAllNextWidgetsToDefaultGroup();
+
+        this->addWithLabel(WidgetType::H_GROUP, "GroupSide", "Side");
+        this->addAllNextWidgetsToGroup("GroupSide");
+
+        this->add(WidgetType::BUTTON, "SideX", "X");
+        this->add(WidgetType::BUTTON, "SideY", "Y");
+        this->add(WidgetType::BUTTON, "SideZ", "Z");
 
         this->addAllNextWidgetsToDefaultGroup();
         /****/
@@ -971,23 +998,50 @@ public slots:
 
     void updateDefaultValues(Scene * scene) {
         glm::vec3 imgSize = this->getBackImgDimension(scene);
+        if(this->checkBoxes["Auto"]->isChecked())
+            imgSize = this->autoComputeBestSize(scene);
+        this->setSpinBoxesValues(imgSize);
+    }
+
+    glm::ivec3 autoComputeBestSize(Scene * scene) {
+        glm::vec3 gridResolution = scene->getGridImgSize(this->getFromGridName());
+        glm::vec3 voxelSize = scene->getGridVoxelSize(this->getFromGridName());
+        float maxSize = std::min(voxelSize.x, std::min(voxelSize.y, voxelSize.z));
+        glm::ivec3 finalSize(0., 0., 0.);
+        for(int i = 0; i < 3; ++i) {
+            float ratio = voxelSize[i]/maxSize;
+            finalSize[i] = std::floor(ratio*gridResolution[i]);
+        }
+        std::cout << "Auto compute size: " << finalSize << std::endl;
+        return finalSize;
+    }
+
+
+    void setSpinBoxesValues(const glm::vec3& values) {
+        glm::ivec3 newValues = values;
+        if(side.x == 1.)
+            std::swap(newValues.x, newValues.z);
+        if(side.y == 1.)
+            std::swap(newValues.y, newValues.z);
         this->spinBoxes["X"]->blockSignals(true);
         this->spinBoxes["Y"]->blockSignals(true);
         this->spinBoxes["Z"]->blockSignals(true);
         this->spinBoxes["X"]->setMinimum(1);
         this->spinBoxes["Y"]->setMinimum(1);
         this->spinBoxes["Z"]->setMinimum(1);
-        this->spinBoxes["X"]->setValue(imgSize.x);
-        this->spinBoxes["Y"]->setValue(imgSize.y);
-        this->spinBoxes["Z"]->setValue(imgSize.z);
+        this->spinBoxes["X"]->setValue(newValues.x);
+        this->spinBoxes["Y"]->setValue(newValues.y);
+        this->spinBoxes["Z"]->setValue(newValues.z);
         this->spinBoxes["X"]->blockSignals(false);
         this->spinBoxes["Y"]->blockSignals(false);
         this->spinBoxes["Z"]->blockSignals(false);
     }
 
     void updateImageViewer() {
-        this->imageViewer->init(this->getImgDimension(), {this->getFromGridName(), this->getToGridName()}, this->getImagesToDraw(), this->getInterpolationMethod());
+        std::cout << "Init image viewer with side: " << this->side << std::endl;
+        this->imageViewer->init(this->getImgDimension(), side, {this->getFromGridName(), this->getToGridName()}, this->getImagesToDraw(), this->getInterpolationMethod());
         this->imageViewer->show();
+
     }
 
     void update(Scene * scene) {
@@ -1024,14 +1078,32 @@ public slots:
         return this->objectChoosers["To"]->currentText().toStdString();
     }
 
+    void updateSide(const glm::vec3& side) {
+        this->side = side;
+    }
+
     void connect(Scene * scene) {
 
         QObject::connect(this, &Form::widgetModified, [this, scene](const QString &id){
-            if(id == "From")
+            if(id == "From" || id == "Auto")
                 this->updateDefaultValues(scene);
 
-            if(id == "X" || id == "Y" || id == "Z" || id == "Interpolation" || id == "UseBack" || id == "UseFront" || id == "From" || id == "To")
+            if(id == "X" || id == "Y" || id == "Z" || id == "Interpolation" || id == "UseBack" || id == "UseFront" || id == "From" || id == "To" || id == "Auto")
                 this->updateImageViewer();
+
+            if(id == "SideX")
+                this->updateSide(glm::vec3(1., 0., 0.));
+
+            if(id == "SideY")
+                this->updateSide(glm::vec3(0., 1., 0.));
+
+            if(id == "SideZ")
+                this->updateSide(glm::vec3(0., 0., 1.));
+
+            if(id == "SideX" || id == "SideY" || id == "SideZ") {
+                this->updateDefaultValues(scene);
+                this->updateImageViewer();
+            }
         });
     }
 };

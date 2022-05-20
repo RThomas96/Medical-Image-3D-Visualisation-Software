@@ -1,6 +1,7 @@
 #include "grid.hpp"
 #include <chrono>
 #include <algorithm>
+#include <type_traits>
 
 #define USE_CACHE true
 
@@ -144,12 +145,25 @@ void Grid::loadMESH(std::string const &filename) {
 void Grid::sampleSliceGridValues(const glm::vec3& slice, const std::pair<glm::vec3, glm::vec3>& areaToSample, const glm::vec3& resolution, std::vector<uint16_t>& result, Interpolation::Method interpolationMethod) {
     auto start = std::chrono::steady_clock::now();
 
+    auto convert = [&](glm::vec3& p) {
+        if(slice.y == -1 && slice.z == -1)
+            std::swap(p.x, p.z);
+        if(slice.x == -1 && slice.z == -1)
+            std::swap(p.y, p.z);
+        if(slice.x == -1 && slice.y == -1)
+            std::swap(p.z, p.z);
+    };
+
     omp_set_nested(true);
 
     // Space to sample
     glm::vec3 bbMinScene = areaToSample.first;
     glm::vec3 bbMaxScene = areaToSample.second;
-    glm::vec3 sizeVoxelInNewImage = (bbMaxScene - bbMinScene) / resolution;
+    glm::vec3 newResolution = resolution;
+    convert(newResolution);
+    glm::vec3 sizeVoxelInNewImage = (bbMaxScene - bbMinScene) / newResolution;
+
+    std::cout << "Size voxel new: " << sizeVoxelInNewImage << std::endl;
 
     auto isInScene = [&](glm::vec3& p) {
         return (p.x > bbMinScene.x && p.y > bbMinScene.y && p.z > bbMinScene.z && p.x < bbMaxScene.x && p.y < bbMaxScene.y && p.z < bbMaxScene.z);
@@ -188,25 +202,34 @@ void Grid::sampleSliceGridValues(const glm::vec3& slice, const std::pair<glm::ve
         if((tetIdx%printOcc) == 0) {
             std::cout << "Loading: " << (float(tetIdx)/float(this->mesh.size())) * 100. << "%" << std::endl;
         }
+        if(slice.y == -1 && slice.z == -1) {
+            bbMin.x = slice.x;
+            bbMax.x = slice.x+1;
+        }
+        if(slice.x == -1 && slice.y == -1) {
+            bbMin.z = slice.z;
+            bbMax.z = slice.z+1;
+        }
+        if(slice.x == -1 && slice.z == -1) {
+            bbMin.y = slice.y;
+            bbMax.y = slice.y+1;
+        }
         for(int k = bbMin.z; k < int(bbMax.z); ++k) {
             for(int j = bbMin.y; j < int(bbMax.y); ++j) {
                 for(int i = bbMin.x; i < int(bbMax.x); ++i) {
                     glm::vec3 p(i, j, k);
-                    if(p.x != slice.x && p.y != slice.y && p.z != slice.z)
-                        break;
-                    p += glm::vec3(.5, .5, .5);
 
+                    p += glm::vec3(.5, .5, .5);
                     fromNewImageToWorld(p);
 
                     if(isInScene(p) && tet.isInTetrahedron(p)) {
                         if(this->getCoordInInitial(this->initialMesh, p, p, tetIdx)) {
 
                             glm::vec3 pImg(i, j, k);
+                            convert(pImg);
                             int insertIdx = pImg.x + pImg.y*resolution[0];
 
                             this->sampler.fromSamplerToImage(p);
-                            if(insertIdx > result.size())
-                                break;
                             result[insertIdx] = this->getValueFromPoint(p, interpolationMethod);
                         }
                     }

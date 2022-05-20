@@ -600,6 +600,7 @@ public slots:
     int getMeshIdx(const std::string& name);
     Cage * getCage(const std::string& name);
     glm::vec3 getGridImgSize(const std::string& name);
+    glm::vec3 getGridVoxelSize(const std::string &name);
     int getGridIdx(const std::string& name);
     std::pair<glm::vec3, glm::vec3> getBbox(const std::string& name);
 
@@ -653,7 +654,6 @@ public:
 
 	Image::bbox_t sceneBB;
 	Image::bbox_t sceneDataBB;
-
 };
 
 /// @brief Type-safe conversion of enum values to unsigned ints.
