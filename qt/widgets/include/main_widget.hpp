@@ -695,6 +695,7 @@ public:
     float zoom;
     glm::ivec2 center;
     glm::ivec2 imgSize;
+    glm::ivec2 screenSize;
     QImage::Format format;
 
     QHBoxLayout * layout;
@@ -708,6 +709,7 @@ public:
         this->zoom = 1;
         this->center = glm::ivec2(0, 0);
         this->imgSize = glm::ivec2(0, 0);
+        this->screenSize = glm::ivec2(0, 0);
 
         this->layout = new QHBoxLayout(this);
         this->display = new QLabel(this);
@@ -724,12 +726,14 @@ public:
         this->screen = image;
         this->imgSize.x = image.width();
         this->imgSize.y = image.height();
-        this->zoomSpeed = std::max(this->imgSize.x, this->imgSize.y)/10;
+        this->screenSize = this->imgSize;
+        this->zoomSpeed = std::max(this->screenSize.x, this->screenSize.y)/10;
     }
 
     void draw() {
         std::cout << "Draw image with size" << this->screen.width() << " " << this->screen.height() << std::endl;
         this->show();
+        //this->display->setPixmap(QPixmap::fromImage(this->screen.scaledToWidth(this->zoom+this->imgSize.x).copy((this->center.x+this->zoom/2)-this->translation.x(), (this->center.y+this->zoom/2)-this->translation.y(), this->imgSize.x, this->imgSize.y)).scaled(this->screenSize.x, this->screenSize.y));
         this->display->setPixmap(QPixmap::fromImage(this->screen.scaledToWidth(this->zoom+this->imgSize.x).copy((this->center.x+this->zoom/2)-this->translation.x(), (this->center.y+this->zoom/2)-this->translation.y(), this->imgSize.x, this->imgSize.y)));
     }
 
@@ -774,6 +778,8 @@ public:
 
     bool isInitialized;
 
+    glm::vec3 direction;
+
     glm::ivec3 imgSize;
     std::vector<std::string> gridNames;
     std::vector<int> imagesToDraw;
@@ -788,7 +794,15 @@ public:
 
     Image3DViewer(Scene * scene, QWidget * parent = nullptr): scene(scene), isInitialized(false), Form(parent), viewer2D(nullptr) {initLayout(); connect(scene);}
 
-    void init(const glm::vec3& imageSize, std::vector<std::string> gridNames, std::vector<int> imgToDraw, Interpolation::Method interpolationMethod) {
+    void init(const glm::ivec3& imageSize, std::vector<std::string> gridNames, std::vector<int> imgToDraw, Interpolation::Method interpolationMethod) {
+        //TODO: remove
+
+        std::cout << "---" << std::endl;
+        std::cout << "Init 3D image viewer" << std::endl;
+        std::cout << "Size: " << imageSize << std::endl;
+        std::cout << "---" << std::endl;
+        this->direction = glm::vec3(1., 0., 0.);
+
         this->imgSize = imageSize;
         this->gridNames = gridNames;
         this->imagesToDraw = imgToDraw;
@@ -803,11 +817,11 @@ public:
         imgData.clear();
         imgData.reserve(gridNames.size());
         for(auto name : gridNames)
-            imgData.push_back(Raw3DImage(imgSize));
+            imgData.push_back(Raw3DImage(this->imgSize));
 
         this->sliders["Slider"]->setMinimum(0);
-        this->sliders["Slider"]->setMaximum(imgSize[2]-1);
-        if(this->sliders["Slider"]->value() > imgSize[2]-1)
+        this->sliders["Slider"]->setMaximum(this->imgSize[2]-1);
+        if(this->sliders["Slider"]->value() > this->imgSize[2]-1)
             this->sliders["Slider"]->setValue(0);
 
         this->isInitialized = true;
@@ -841,12 +855,9 @@ private:
     void fillImage(int imageIdx, int sliceIdx) {
         std::vector<uint16_t> data;
         auto bbox = scene->getBbox(this->gridNames[0]);
-
-        int idx = 0;
-        glm::vec3 slice = bbox.first + ((bbox.second - bbox.first)/glm::vec3(this->imgSize)*float(this->sliders["Slider"]->value()));
-        scene->getValues(this->gridNames[imageIdx], slice, bbox, this->imgSize, idx, data, this->interpolationMethod);
-
-        this->imgData[imageIdx].setSlice(idx, data);
+        glm::vec3 slices(-1, -1, sliceIdx);
+        scene->getValues(this->gridNames[imageIdx], slices, bbox, this->imgSize, data, this->interpolationMethod);
+        this->imgData[imageIdx].setSlice(sliceIdx, data);
     }
 
     void getColor(int idx, glm::ivec3 position, QColor& color) {
@@ -987,8 +998,8 @@ public slots:
         Form::show();
     }
 
-    glm::vec3 getImgDimension() {
-        return glm::vec3(this->spinBoxes["X"]->value(), this->spinBoxes["Y"]->value(), this->spinBoxes["Z"]->value());
+    glm::ivec3 getImgDimension() {
+        return glm::ivec3(this->spinBoxes["X"]->value(), this->spinBoxes["Y"]->value(), this->spinBoxes["Z"]->value());
     }
 
     Interpolation::Method getInterpolationMethod() {

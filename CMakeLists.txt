@@ -216,6 +216,8 @@ TARGET_LINK_LIBRARIES(neighbor_visu
 )
 endif (WIN32)
 
+#set(CMAKE_CXX_FLAGS " -isystem /home/thomas/includes")
+
 option(RELEASE_WITH_ASSERT "Build a release version with assert" OFF)
 if(RELEASE_WITH_ASSERT)
     message(STATUS "WARNING: Build in release using assertion")

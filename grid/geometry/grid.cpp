@@ -141,7 +141,7 @@ void Grid::loadMESH(std::string const &filename) {
     }    
 }
 
-void Grid::sampleSliceGridValues(const glm::vec3& slice, const std::pair<glm::vec3, glm::vec3>& areaToSample, const glm::vec3& resolution, int& idx, std::vector<uint16_t>& result, Interpolation::Method interpolationMethod) {
+void Grid::sampleSliceGridValues(const glm::vec3& slice, const std::pair<glm::vec3, glm::vec3>& areaToSample, const glm::vec3& resolution, std::vector<uint16_t>& result, Interpolation::Method interpolationMethod) {
     auto start = std::chrono::steady_clock::now();
 
     omp_set_nested(true);
@@ -149,55 +149,54 @@ void Grid::sampleSliceGridValues(const glm::vec3& slice, const std::pair<glm::ve
     // Space to sample
     glm::vec3 bbMinScene = areaToSample.first;
     glm::vec3 bbMaxScene = areaToSample.second;
-    glm::vec3 fromSamplerToSceneRatio = (bbMaxScene - bbMinScene) / resolution;
+    glm::vec3 sizeVoxelInNewImage = (bbMaxScene - bbMinScene) / resolution;
 
     auto isInScene = [&](glm::vec3& p) {
         return (p.x > bbMinScene.x && p.y > bbMinScene.y && p.z > bbMinScene.z && p.x < bbMaxScene.x && p.y < bbMaxScene.y && p.z < bbMaxScene.z);
     };
 
-    auto fromWorldToImage = [&](glm::vec3& p) {
+    auto fromWorldToNewImage = [&](glm::vec3& p) {
         p -= bbMinScene;
-        p /= fromSamplerToSceneRatio;
+        p /= sizeVoxelInNewImage;
     };
 
-    auto fromImageToWorld = [&](glm::vec3& p) {
-        p *= fromSamplerToSceneRatio;
+    auto fromNewImageToWorld = [&](glm::vec3& p) {
+        p *= sizeVoxelInNewImage;
         p += bbMinScene;
     };
 
     result.clear();
-    result.resize(resolution[0] * resolution[1]);
-    std::fill(result.begin(), result.end(), 0);
+    result.resize(resolution[0] * resolution[1], 0);
 
     int printOcc = 10;
     printOcc = this->mesh.size()/printOcc;
-
-    glm::vec3 imgSlice = slice;
-    fromWorldToImage(imgSlice);
-    idx = imgSlice.z;
 
     //#pragma omp parallel for schedule(dynamic) num_threads(fromGrid->mesh.size()/10)
     #pragma omp parallel for schedule(dynamic)
     for(int tetIdx = 0; tetIdx < this->mesh.size(); ++tetIdx) {
         const Tetrahedron& tet = this->mesh[tetIdx];
-        //if(tet.planeIntersect(slice, glm::vec3(0., 0., 1.))) {
-            glm::vec3 bbMin = tet.getBBMin();
-            fromWorldToImage(bbMin);
-            bbMin.x = std::ceil(bbMin.x) - 1;
-            bbMin.y = std::ceil(bbMin.y) - 1;
-            bbMin.z = std::ceil(bbMin.z) - 1;
-            glm::vec3 bbMax = tet.getBBMax();
-            fromWorldToImage(bbMax);
-            bbMax.x = std::floor(bbMax.x) + 1;
-            bbMax.y = std::floor(bbMax.y) + 1;
-            bbMax.z = std::floor(bbMax.z) + 1;
-            const int k = idx;
+        glm::vec3 bbMin = tet.getBBMin();
+        fromWorldToNewImage(bbMin);
+        bbMin.x = std::ceil(bbMin.x) - 1;
+        bbMin.y = std::ceil(bbMin.y) - 1;
+        bbMin.z = std::ceil(bbMin.z) - 1;
+        glm::vec3 bbMax = tet.getBBMax();
+        fromWorldToNewImage(bbMax);
+        bbMax.x = std::floor(bbMax.x) + 1;
+        bbMax.y = std::floor(bbMax.y) + 1;
+        bbMax.z = std::floor(bbMax.z) + 1;
+        if((tetIdx%printOcc) == 0) {
+            std::cout << "Loading: " << (float(tetIdx)/float(this->mesh.size())) * 100. << "%" << std::endl;
+        }
+        for(int k = bbMin.z; k < int(bbMax.z); ++k) {
             for(int j = bbMin.y; j < int(bbMax.y); ++j) {
                 for(int i = bbMin.x; i < int(bbMax.x); ++i) {
                     glm::vec3 p(i, j, k);
+                    if(p.x != slice.x && p.y != slice.y && p.z != slice.z)
+                        break;
                     p += glm::vec3(.5, .5, .5);
 
-                    fromImageToWorld(p);
+                    fromNewImageToWorld(p);
 
                     if(isInScene(p) && tet.isInTetrahedron(p)) {
                         if(this->getCoordInInitial(this->initialMesh, p, p, tetIdx)) {
@@ -206,14 +205,13 @@ void Grid::sampleSliceGridValues(const glm::vec3& slice, const std::pair<glm::ve
                             int insertIdx = pImg.x + pImg.y*resolution[0];
 
                             this->sampler.fromSamplerToImage(p);
+                            if(insertIdx > result.size())
+                                break;
                             result[insertIdx] = this->getValueFromPoint(p, interpolationMethod);
-                        } 
+                        }
                     }
                 }
             }
-        //}
-        if((tetIdx%printOcc) == 0) {
-            std::cout << "Loading: " << (float(tetIdx)/float(this->mesh.size())) * 100. << "%" << std::endl;
         }
     }
 
@@ -221,6 +219,177 @@ void Grid::sampleSliceGridValues(const glm::vec3& slice, const std::pair<glm::ve
     std::chrono::duration<double> elapsed_seconds = end-start;
     std::cout << "Duration time: " << elapsed_seconds.count() << "s / " << elapsed_seconds.count()/60. << "m" << std::endl;
 }
+
+
+//void Grid::sampleSliceGridValues(const glm::vec3& slice, const std::pair<glm::vec3, glm::vec3>& areaToSample, const glm::vec3& resolution, std::vector<uint16_t>& result, Interpolation::Method interpolationMethod) {
+//    auto start = std::chrono::steady_clock::now();
+//
+//    omp_set_nested(true);
+//
+//    // Space to sample
+//    glm::vec3 bbMinScene = areaToSample.first;
+//    glm::vec3 bbMaxScene = areaToSample.second;
+//    glm::vec3 sizeVoxelInNewImage = (bbMaxScene - bbMinScene) / resolution;
+//
+//    auto isInScene = [&](glm::vec3& p) {
+//        return (p.x > bbMinScene.x && p.y > bbMinScene.y && p.z > bbMinScene.z && p.x < bbMaxScene.x && p.y < bbMaxScene.y && p.z < bbMaxScene.z);
+//    };
+//
+//    auto fromWorldToNewImage = [&](glm::vec3& p) {
+//        p -= bbMinScene;
+//        p /= sizeVoxelInNewImage;
+//    };
+//
+//    auto fromNewImageToWorld = [&](glm::vec3& p) {
+//        p *= sizeVoxelInNewImage;
+//        p += bbMinScene;
+//    };
+//
+//    result.clear();
+//    result.resize(resolution[0] * resolution[1], 0);
+//
+//    int printOcc = 10;
+//    printOcc = this->mesh.size()/printOcc;
+//
+//    //#pragma omp parallel for schedule(dynamic) num_threads(fromGrid->mesh.size()/10)
+//    #pragma omp parallel for schedule(dynamic)
+//    for(int tetIdx = 0; tetIdx < this->mesh.size(); ++tetIdx) {
+//        const Tetrahedron& tet = this->mesh[tetIdx];
+//        glm::vec3 bbMin = tet.getBBMin();
+//        fromWorldToNewImage(bbMin);
+//        bbMin.x = std::ceil(bbMin.x) - 1;
+//        bbMin.y = std::ceil(bbMin.y) - 1;
+//        bbMin.z = std::ceil(bbMin.z) - 1;
+//        glm::vec3 bbMax = tet.getBBMax();
+//        fromWorldToNewImage(bbMax);
+//        bbMax.x = std::floor(bbMax.x) + 1;
+//        bbMax.y = std::floor(bbMax.y) + 1;
+//        bbMax.z = std::floor(bbMax.z) + 1;
+//        if((tetIdx%printOcc) == 0) {
+//            std::cout << "Loading: " << (float(tetIdx)/float(this->mesh.size())) * 100. << "%" << std::endl;
+//        }
+//        for(int k = bbMin.z; k < int(bbMax.z); ++k) {
+//            for(int j = bbMin.y; j < int(bbMax.y); ++j) {
+//                for(int i = bbMin.x; i < int(bbMax.x); ++i) {
+//                    glm::vec3 p(i, j, k);
+//                    if(p.x != slice.x && p.y != slice.y && p.z != slice.z)
+//                        break;
+//                    p += glm::vec3(.5, .5, .5);
+//
+//                    fromNewImageToWorld(p);
+//
+//                    if(isInScene(p) && tet.isInTetrahedron(p)) {
+//                        if(this->getCoordInInitial(this->initialMesh, p, p, tetIdx)) {
+//
+//                            glm::vec3 pImg(i, j, k);
+//                            int insertIdx = pImg.x + pImg.y*resolution[0];
+//
+//                            this->sampler.fromSamplerToImage(p);
+//                            if(insertIdx > result.size())
+//                                break;
+//                            result[insertIdx] = this->getValueFromPoint(p, interpolationMethod);
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
+//
+//    auto end = std::chrono::steady_clock::now();
+//    std::chrono::duration<double> elapsed_seconds = end-start;
+//    std::cout << "Duration time: " << elapsed_seconds.count() << "s / " << elapsed_seconds.count()/60. << "m" << std::endl;
+//}
+
+//void Grid::sampleSliceGridValues(const glm::vec3& slice, const std::pair<glm::vec3, glm::vec3>& areaToSample, const glm::vec3& resolution, std::vector<uint16_t>& result, Interpolation::Method interpolationMethod) {
+//    auto start = std::chrono::steady_clock::now();
+//
+//    omp_set_nested(true);
+//
+//    // Space to sample
+//    glm::vec3 bbMinScene = areaToSample.first;
+//    glm::vec3 bbMaxScene = areaToSample.second;
+//    glm::vec3 sizeVoxelInNewImage = (bbMaxScene - bbMinScene) / resolution;
+//    glm::vec3 sizeVoxelInOriginalImage = (bbMaxScene - bbMinScene) / this->getResolution();
+//
+//    auto isInScene = [&](glm::vec3& p) {
+//        return (p.x > bbMinScene.x && p.y > bbMinScene.y && p.z > bbMinScene.z && p.x < bbMaxScene.x && p.y < bbMaxScene.y && p.z < bbMaxScene.z);
+//    };
+//
+//    //auto closestDivisible = [&](const glm::vec3& p, const glm::vec3& div) {
+//    //    glm::vec3 res(0., 0., 0.);
+//    //    for(int i = 0; i < 3; ++i) {
+//    //       int divVal = std::ceil(div[i]);
+//    //       int value = std::ceil(p[i]);
+//
+//    //       int c1 = a - (a % b);
+//    //       int c2 = (a + b) - (a % b);
+//    //    }
+//    //}
+//
+//    auto fromWorldToNewImage = [&](glm::vec3& p) {
+//        p -= bbMinScene;
+//        p /= sizeVoxelInNewImage;
+//    };
+//
+//    auto fromNewImageToWorld = [&](glm::vec3& p) {
+//        p *= sizeVoxelInNewImage;
+//        p += bbMinScene;
+//    };
+//
+//    result.clear();
+//    result.resize(resolution[0] * resolution[1], 0);
+//
+//    int printOcc = 10;
+//    printOcc = this->mesh.size()/printOcc;
+//
+//    //#pragma omp parallel for schedule(dynamic) num_threads(fromGrid->mesh.size()/10)
+//    //#pragma omp parallel for schedule(dynamic)
+//    for(int tetIdx = 0; tetIdx < this->mesh.size(); ++tetIdx) {
+//        const Tetrahedron& tet = this->mesh[tetIdx];
+//        glm::vec3 bbMin = tet.getBBMin();
+//        bbMin.x = std::ceil(bbMin.x) - 1;
+//        bbMin.y = std::ceil(bbMin.y) - 1;
+//        bbMin.z = std::ceil(bbMin.z) - 1;
+//        glm::vec3 bbMax = tet.getBBMax();
+//        bbMax.x = std::floor(bbMax.x) + 1;
+//        bbMax.y = std::floor(bbMax.y) + 1;
+//        bbMax.z = std::floor(bbMax.z) + 1;
+//        if((tetIdx%printOcc) == 0) {
+//            std::cout << "Loading: " << (float(tetIdx)/float(this->mesh.size())) * 100. << "%" << std::endl;
+//        }
+//        for(float k = bbMin.z; k < bbMax.z; k+=sizeVoxelInOriginalImage.z) {
+//            for(float j = bbMin.y; j < bbMax.y; j+=sizeVoxelInOriginalImage.y) {
+//                for(float i = bbMin.x; i < bbMax.x; i+=sizeVoxelInOriginalImage.x) {
+//                    glm::vec3 pScene(i, j, k);
+//                    pScene += sizeVoxelInNewImage/2.f;
+//
+//                    glm::vec3 pNewImg = pScene;
+//                    fromWorldToNewImage(pNewImg);
+//
+//                    if(pNewImg.x != slice.x && pNewImg.y != slice.y && pNewImg.z != slice.z)
+//                        break;
+//
+//                    if(isInScene(pScene) && tet.isInTetrahedron(pScene)) {
+//                        glm::vec3 pValueSampler = pScene;
+//                        if(this->getCoordInInitial(this->initialMesh, pValueSampler, pValueSampler, tetIdx)) {
+//
+//                            glm::vec3 pValue = pValueSampler;
+//                            this->sampler.fromSamplerToImage(pValue);
+//                            int insertIdx = pNewImg.x + pNewImg.y * resolution[0];
+//                            if(insertIdx > result.size())
+//                                break;
+//                            result[insertIdx] = this->getValueFromPoint(pValue, interpolationMethod);
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
+//
+//    auto end = std::chrono::steady_clock::now();
+//    std::chrono::duration<double> elapsed_seconds = end-start;
+//    std::cout << "Duration time: " << elapsed_seconds.count() << "s / " << elapsed_seconds.count()/60. << "m" << std::endl;
+//}
 
 void Grid::sampleGridValues(const std::pair<glm::vec3, glm::vec3>& areaToSample, const glm::vec3& resolution, std::vector<std::vector<uint16_t>>& result, Interpolation::Method interpolationMethod) {
     auto start = std::chrono::steady_clock::now();
@@ -284,11 +453,10 @@ void Grid::sampleGridValues(const std::pair<glm::vec3, glm::vec3>& areaToSample,
                     if(isInScene(p) && tet.isInTetrahedron(p)) {
                         if(this->getCoordInInitial(this->initialMesh, p, p, tetIdx)) {
 
-                            glm::vec3 pImg(i, j, k);
-                            int insertIdx = pImg.x + pImg.y*resolution[0];
+                            int insertIdx = i + k*resolution[0];
 
                             this->sampler.fromSamplerToImage(p);
-                            result[pImg.z][insertIdx] = this->getValueFromPoint(p, interpolationMethod);
+                            result[j][insertIdx] = this->getValueFromPoint(p, interpolationMethod);
                         } 
                     }
                 }

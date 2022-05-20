@@ -464,7 +464,7 @@ public:
 	void printOpenGLMessage(const QOpenGLDebugMessage& message);
 
     template<typename MeshToolType>
-    MeshToolType * getMeshTool() { return dynamic_cast<MeshToolType*>(this->glMeshManipulator->meshManipulator); };
+    MeshToolType * getMeshTool();
 
 public:
 	SceneGL sceneGL;
@@ -527,8 +527,8 @@ public slots:
     void writeGreyscaleTIFFImage(const std::string& filename, const glm::vec3& imgDimensions, const std::vector<std::vector<uint16_t>>& data);
     void writeDeformation(const std::string& filename, const std::string& gridNameValues, const std::string& gridNameSample);
     void getDeformation(const std::string& gridNameValues, const std::string& gridNameSample, std::vector<std::vector<uint16_t>>& data);
-    void getValues(const std::string& gridName, const std::pair<glm::vec3, glm::vec3>& area, const glm::vec3& resolution, std::vector<std::vector<uint16_t>>& data, Interpolation::Method interpolationMethod = Interpolation::Method::NearestNeighbor);
-    void getValues(const std::string& gridName, const glm::vec3& slice, const std::pair<glm::vec3, glm::vec3>& area, const glm::vec3& resolution, int& idx, std::vector<uint16_t>& data, Interpolation::Method interpolationMethod = Interpolation::Method::NearestNeighbor);
+    void getValues(const std::string &gridName, const glm::vec3 &slice, const std::pair<glm::vec3, glm::vec3> &area, const glm::vec3 &resolution, std::vector<uint16_t> &data, Interpolation::Method interpolationMethod);
+    void getValues(const std::string &gridName, const std::pair<glm::vec3, glm::vec3> &area, const glm::vec3 &resolution, std::vector<std::vector<uint16_t> > &data, Interpolation::Method interpolationMethod);
     void writeImageWithPoints(const std::string& filename, const std::string& image, std::vector<glm::vec3>& points);
     void clear();
 

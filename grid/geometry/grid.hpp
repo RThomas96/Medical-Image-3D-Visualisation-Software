@@ -97,7 +97,7 @@ struct Grid : public TetMesh {
     void writeDeformedGrid(ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION);
 
     void sampleGridValues(const std::pair<glm::vec3, glm::vec3>& areaToSample, const glm::vec3& resolution, std::vector<std::vector<uint16_t>>& result, Interpolation::Method interpolationMethod = Interpolation::Method::NearestNeighbor);
-    void sampleSliceGridValues(const glm::vec3& slice, const std::pair<glm::vec3, glm::vec3>& areaToSample, const glm::vec3& resolution, int& idx, std::vector<uint16_t>& result, Interpolation::Method interpolationMethod = Interpolation::Method::NearestNeighbor);
+    void sampleSliceGridValues(const glm::vec3 &slice, const std::pair<glm::vec3, glm::vec3> &areaToSample, const glm::vec3 &resolution, std::vector<uint16_t> &result, Interpolation::Method interpolationMethod);
 
     uint16_t getDeformedValueFromPoint(const TetMesh& initial, const glm::vec3& p, Interpolation::Method interpolationMethod = Interpolation::Method::NearestNeighbor, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
     uint16_t getValueFromPoint(const glm::vec3& coord, Interpolation::Method interpolationMethod = Interpolation::Method::NearestNeighbor, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
@@ -125,7 +125,6 @@ struct Grid : public TetMesh {
     void rotate(const glm::mat3& transf) override;
     void scale(const glm::vec3& scale) override;
     void setOrigin(const glm::vec3& origin) override;
-
 };
 
 //! @}
