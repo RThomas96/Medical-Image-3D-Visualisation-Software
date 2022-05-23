@@ -18,6 +18,7 @@ namespace Interpolation {
     };
 
     Method fromString(const std::string& method);
+    std::string toString(const Interpolation::Method& method);
     std::vector<std::string> toStringList();
 }
 

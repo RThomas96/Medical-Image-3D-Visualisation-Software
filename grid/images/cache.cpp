@@ -8,6 +8,14 @@ Interpolation::Method Interpolation::fromString(const std::string& method) {
     return Method::NearestNeighbor;
 }
 
+std::string Interpolation::toString(const Interpolation::Method& method) {
+    if(method == Method::Linear)
+        return "Linear";
+    if(method == Method::Cubic)
+        return "Cubic";
+    return "NearestNeighbor";
+}
+
 std::vector<std::string> Interpolation::toStringList() {
     return {"NearestNeighbor", "Linear", "Cubic"};
 }

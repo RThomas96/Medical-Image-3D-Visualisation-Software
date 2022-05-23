@@ -272,12 +272,12 @@ void MainWidget::setupWidgets() {
 
 	// Layouts to place a viewer and a header in the same place :
 	QVBoxLayout* vP3 = new QVBoxLayout();
-	vP3->setSpacing(0);	   // header above 3D view
-	QVBoxLayout* vPX = new QVBoxLayout();
+    this->vPX = new QVBoxLayout();
+    this->vPY = new QVBoxLayout();
+    this->vPZ = new QVBoxLayout();
+    vP3->setSpacing(0);	   // header above 3D view
 	vPX->setSpacing(0);	   // header above plane X
-	QVBoxLayout* vPY = new QVBoxLayout();
 	vPY->setSpacing(0);	   // header above plane Y
-	QVBoxLayout* vPZ = new QVBoxLayout();
 	vPZ->setSpacing(0);	   // header above plane Z
 
 	// Those will encapsulate the layouts above :
@@ -291,12 +291,12 @@ void MainWidget::setupWidgets() {
 
 	// Add widgets in layouts to compose the plane viewers :
 	vP3->addWidget(this->viewer);
-	vPX->addWidget(this->headerX);
-	vPX->addWidget(this->viewer_planeX);
+    vPX->addWidget(this->headerX);
+    //vPX->addWidget(this->viewer_planeX);
 	vPY->addWidget(this->headerY);
-	vPY->addWidget(this->viewer_planeY);
+    //vPY->addWidget(this->viewer_planeY);
 	vPZ->addWidget(this->headerZ);
-	vPZ->addWidget(this->viewer_planeZ);
+    //vPZ->addWidget(this->viewer_planeZ);
 
 	// Get content margins by default :
 	int left = 0, right = 0, top = 0, bottom = 0;
@@ -342,7 +342,7 @@ void MainWidget::setupWidgets() {
     sidePannelLayout->addWidget(this->info_pannel);
     //this->tool_pannel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     sidePannelLayout->addWidget(this->tool_pannel);
-	sidePannelLayout->addWidget(this->display_pannel);
+    sidePannelLayout->addWidget(this->display_pannel);
 	sidePannelLayout->addWidget(this->cutPlane_pannel);
 
     viewerLayout->addLayout(sidePannelLayout);
@@ -351,11 +351,21 @@ void MainWidget::setupWidgets() {
 
     /***/
 
-	QVBoxLayout* mainLayout = new QVBoxLayout();
+    QFrame * lowFrame = new QFrame();
+    lowFrame->setFrameRect(QRect(QRect(0, 0, 0, 0)));
+    lowFrame->setFrameStyle(QFrame::StyledPanel | QFrame::Plain);
+    lowFrame->setLineWidth(2);
+
+    QVBoxLayout* mainLayout = new QVBoxLayout();
 	mainLayout->addWidget(this->combo_mesh, 2);
 	mainLayout->addWidget(this->viewerFrame, 3);
 	//mainLayout->addWidget(this->viewerFrame, 3);
-    mainLayout->addWidget(this->controlPanel, 0, Qt::AlignHCenter);
+
+    QHBoxLayout* lowLayout = new QHBoxLayout(lowFrame);
+    lowLayout->addWidget(this->planarViewer, 1, Qt::AlignHCenter);
+    lowLayout->addWidget(this->controlPanel, 4, Qt::AlignHCenter);
+
+    mainLayout->addWidget(lowFrame);
 
 	xViewerCapsule->hide();
 	yViewerCapsule->hide();
@@ -498,7 +508,12 @@ void MainWidget::setupActions() {
     this->actionManager->createQActionButton("2DView", "2DView", "", "Display a 2D view", "2Dview");
     QObject::connect(this->actionManager->getAction("2DView"), &QAction::triggered, [this](){
             this->updateForms();
-            this->planarViewForm->show();
+            this->planarViewer->show();
+            this->planarViewer->initialize(this->scene);
+            if(this->planarViewer->initialized) {
+                vPX->addWidget(this->planarViewer->viewers["View_X"]);
+                //this->planarViewer->viewers["View_X"]->setParent(vPX);
+            }
     });
 
     this->actionManager->createQActionButton("Open", "Open", "", "Open the deformed image", "open");
@@ -512,25 +527,27 @@ void MainWidget::setupActions() {
     this->actionManager->createQActionButton("OpenAtlas", "OpenAtlas", "", "Open the atlas", "open");
     QObject::connect(this->actionManager->getAction("OpenAtlas"), &QAction::triggered, [this](){
             this->scene->openAtlas();
+            this->updateForms();
     });
 
     this->actionManager->createQActionButton("OpenIRM", "OpenIRM", "", "Open the IRM", "open");
     QObject::connect(this->actionManager->getAction("OpenIRM"), &QAction::triggered, [this](){
             this->scene->openIRM();
+            this->updateForms();
     });
 }
 
 void MainWidget::setupForms() {
     this->deformationForm = new DeformationForm(this->scene);
     this->saveImageForm = new SaveImageForm(this->scene);
-    this->planarViewForm = new PlanarViewForm(this->scene);
+    this->planarViewer = new PlanarViewer2D(this->scene);
     this->openImageForm = new OpenImageForm(this->scene);
 }
 
 void MainWidget::updateForms() {
     this->deformationForm->update(this->scene);
     this->saveImageForm->update(this->scene);
-    this->planarViewForm->update(this->scene);
+    this->planarViewer->update(this->scene);
     this->openImageForm->update(this->scene);
 }
 
