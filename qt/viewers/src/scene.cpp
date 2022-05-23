@@ -60,8 +60,6 @@ Scene::Scene() :
 	//this->grids.clear();
 
 	this->context			= nullptr;
-	this->debugLog			= nullptr;
-	this->glOutput			= nullptr;
 	this->controlPanel		= nullptr;
 	//this->gridControl		= nullptr;
 	this->programStatusBar	= nullptr;
@@ -197,7 +195,7 @@ void Scene::initGl(QOpenGLContext* _context) {
 	std::cerr << "OpenGL renderer string : " << glGetString(GL_RENDERER) << '\n';
 
 	// Create the debug logger and connect its signals :
-	this->setupGLOutput();
+        //this->setupGLOutput();
 
 	// The default parameters have already been set in the constructor. We
 	// need to initialize the OpenGL objects now. Shaders, VAOs, VBOs.
@@ -299,76 +297,12 @@ void Scene::generateColorScales() {
 	this->tex_colorScale_hsv2rgb = this->uploadTexture1D(colorScaleUploadParameters);
 }
 
-void Scene::addOpenGLOutput(OpenGLDebugLog* glLog) {
-	// if an output is already enabled, stop there
-	if (this->glOutput != nullptr) {
-		return;
-	}
-	if (glLog == nullptr) {
-		return;
-	}
-
-	// add the glOutput to this class :
-	this->glOutput = glLog;
-
-	// if there __is__ a logger in the class (init didn't fail) :
-	if (this->debugLog != nullptr) {
-		// disconnect the messagelogged signal and re-connect it with glOutput :
-		this->debugLog->disconnect(SIGNAL(&QOpenGLDebugLogger::messageLogged));
-		QObject::connect(this->debugLog, &QOpenGLDebugLogger::messageLogged, this->glOutput, &OpenGLDebugLog::addOpenGLMessage);
-	}
-}
-
 void Scene::addStatusBar(QStatusBar* _s) {
 	if (this->programStatusBar != nullptr) {
 		return;
 	}
 
 	this->programStatusBar = _s;
-}
-
-void Scene::setupGLOutput() {
-	// if no context is available, end the func now.
-	if (this->context == nullptr) {
-		return;
-	}
-
-	// If the context supports the GL_KHR_debug extension, enable a logger :
-	if (this->context->hasExtension(QByteArrayLiteral("GL_KHR_debug"))) {
-		this->debugLog = new QOpenGLDebugLogger;
-		if (this->debugLog->initialize()) {
-			if (this->glOutput != nullptr) {
-				// Connect debug logger to gl output class :
-				QObject::connect(this->debugLog, &QOpenGLDebugLogger::messageLogged,
-				  this->glOutput, &OpenGLDebugLog::addOpenGLMessage);
-			} else {
-				// connect directly to std::cerr if no gl outputs are available
-				QObject::connect(this->debugLog, &QOpenGLDebugLogger::messageLogged, [this](QOpenGLDebugMessage _m) {
-					this->printOpenGLMessage(_m);
-				});
-			}
-			this->debugLog->startLogging(QOpenGLDebugLogger::LoggingMode::SynchronousLogging);
-		} else {
-			// Silently ignore the init error, and free the debugLog resource.
-			delete this->debugLog;
-			this->debugLog = nullptr;
-			if (this->glOutput != nullptr) {
-				this->glOutput->addErrorMessage("Cannot initialize QOpenGLDebugLogger. No messages will be logged.");
-			} else {
-				QMessageBox* msgBox = new QMessageBox;
-				msgBox->setAttribute(Qt::WA_DeleteOnClose);
-				msgBox->critical(nullptr, "QOpenGLDebugLogger Error", "Could not initialize logging for the QOpenGLDebugLogger. No messages will be logged.");
-			}
-		}
-	} else {
-		if (this->glOutput != nullptr) {
-			this->glOutput->addErrorMessage("Context does not support the <pre>GL_KHR_debug</pre> extension. No mesages <i>can</i> be logged.");
-		} else {
-			QMessageBox* msgBox = new QMessageBox;
-			msgBox->setAttribute(Qt::WA_DeleteOnClose);
-			msgBox->critical(nullptr, "QOpenGLDebugLogger Error", "Context does not support the <pre>GL_KHR_debug</pre> extension. No mesages <i>can</i> be logged.");
-		}
-	}
 }
 
 void Scene::printOpenGLMessage(const QOpenGLDebugMessage& message) {

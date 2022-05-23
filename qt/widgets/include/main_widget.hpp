@@ -1,4 +1,4 @@
-#ifndef QT_INCLUDE_NEIGHBOR_VISU_MAIN_WIDGET_HPP_
+﻿#ifndef QT_INCLUDE_NEIGHBOR_VISU_MAIN_WIDGET_HPP_
 #define QT_INCLUDE_NEIGHBOR_VISU_MAIN_WIDGET_HPP_
 
 #include <iomanip>
@@ -37,6 +37,7 @@
 #include <QImage>
 #include <QSlider>
 #include <QSignalMapper>
+#include <QSplitter>
 
 class ColorBoundWidget;
 
@@ -716,9 +717,13 @@ public:
         this->setLayout(this->layout);
         this->display = new QLabel();
         this->layout->addWidget(this->display);
-
+        this->layout->setAlignment(this->display, Qt::AlignHCenter);
         this->layout->setContentsMargins(0, 0, 0, 0);
-        //this->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+
+        //this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        //this->display->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+        this->display->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
     }
 
     void clearColor() {
@@ -735,8 +740,11 @@ public:
 
     void draw() {
         std::cout << "Draw image with size" << this->screenSize.x << " " << this->screenSize.y << std::endl;
-        this->show();
-        this->display->setPixmap(QPixmap::fromImage((this->screen.scaledToWidth(this->zoom+this->imgSize.x).copy((this->center.x+this->zoom/2)-this->translation.x(), (this->center.y+this->zoom/2)-this->translation.y(), this->imgSize.x, this->imgSize.y)).scaled(this->screenSize.x, this->screenSize.y)));
+        this->display->setPixmap(QPixmap::fromImage((this->screen.scaledToWidth(this->zoom+this->imgSize.x).copy((this->center.x+this->zoom/2)-this->translation.x(), (this->center.y+this->zoom/2)-this->translation.y(), this->imgSize.x, this->imgSize.y)).scaled(this->screenSize.x, this->screenSize.y).scaled(this->display->width(),this->display->height(),Qt::KeepAspectRatio)));
+    }
+
+    void resizeEvent(QResizeEvent *) {
+        this->draw();
     }
 
     void mouseMoveEvent(QMouseEvent* event) {
@@ -1120,8 +1128,6 @@ public slots:
         this->sliders["SliderX"]->setMinimum(0);
         this->sliders["SliderX"]->setMaximum(this->getImgDimension().z);
         this->viewers[this->selectedViewer]->init(this->getImgDimension(), this->sliders["SliderX"]->value(), this->getSide(), {this->getFromGridName(), this->getToGridName()}, this->getImagesToDraw(), this->getInterpolationMethod());
-        this->viewers[this->selectedViewer]->show();
-
     }
 
     void update(Scene * scene) {
@@ -1199,8 +1205,8 @@ public:
     void initialize(Scene * scene) {
         if(scene->grids.size() > 0) {
             this->addViewer("View_X", glm::vec3(1., 0., 0.));
-            //this->addViewer("View_Y", glm::vec3(0., 1., 0.));
-            //this->addViewer("View_Z", glm::vec3(0., 0., 1.));
+            this->addViewer("View_Y", glm::vec3(0., 1., 0.));
+            this->addViewer("View_Z", glm::vec3(0., 0., 1.));
             this->initialized = true;
         }
     }
@@ -1810,27 +1816,13 @@ private:
     QActionManager* actionManager;
 
     QFrame* viewerFrame;
-    QWidget* _ViewerCapsule;
-    QWidget* xViewerCapsule;
-    QWidget* yViewerCapsule;
-    QWidget* zViewerCapsule;
+    QWidget* viewerCapsule;
 
-    QVBoxLayout* vPX;
-    QVBoxLayout* vPY;
-    QVBoxLayout* vPZ;
+    QSplitter* hSplit;
+    QSplitter* vSplit1;
+    QSplitter* vSplit2;
 
 	Viewer* viewer;
-
-	ViewerHeader* headerX;
-	PlanarViewer* viewer_planeX;
-
-	ViewerHeader* headerY;
-	PlanarViewer* viewer_planeY;
-
-	ViewerHeader* headerZ;
-	PlanarViewer* viewer_planeZ;
-
-	OpenGLDebugLog* glDebug;
 
 	GridLoaderWidget* loaderWidget;
 	GridDeformationWidget* deformationWidget;
@@ -1869,7 +1861,6 @@ private:
 	QAction* tool_registration;
 
 	QStatusBar* statusBar;
-	QPushButton* showGLLog;
 
     OpenMeshWidget * openMeshWidget;
     SaveMeshWidget * saveMeshWidget;
@@ -1893,8 +1884,6 @@ public slots:
     // *************** //
     // Connected to UI //
     // *************** //
-
-    void toggleDisplayPlanarViewers();
 
     void changeCurrentTool(UITool::MeshManipulatorType newTool) {
         this->actionManager->deactivateGroup("MoveTool");

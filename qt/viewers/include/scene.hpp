@@ -188,8 +188,6 @@ public:
     /* Attributes */
 private:
 	QOpenGLContext* context;
-	OpenGLDebugLog* glOutput;
-	QOpenGLDebugLogger* debugLog;
 
 	/* Program */
 	GLuint program_projectedTex;
@@ -385,7 +383,6 @@ public:
 
 	void prepareManipulators();
 
-	void addOpenGLOutput(OpenGLDebugLog* _gldl);
 	void addStatusBar(QStatusBar* _s);
 
 	void setControlPanel(ControlPanel* cp) { this->controlPanel = cp; }
@@ -460,7 +457,6 @@ public:
 
 	void deleteGridNow();
 
-	void setupGLOutput();
 	void printOpenGLMessage(const QOpenGLDebugMessage& message);
 
     template<typename MeshToolType>

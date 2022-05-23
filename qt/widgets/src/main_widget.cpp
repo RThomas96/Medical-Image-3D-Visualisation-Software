@@ -21,9 +21,6 @@ MainWidget::MainWidget() {
 
 MainWidget::~MainWidget() {
 	this->removeEventFilter(this);
-	this->headerZ->unregisterPlaneViewer();
-	this->headerY->unregisterPlaneViewer();
-	this->headerX->unregisterPlaneViewer();
 
 	this->action_addGrid->disconnect();
 	this->action_saveGrid->disconnect();
@@ -33,28 +30,16 @@ MainWidget::~MainWidget() {
 	delete this->action_addGrid;
 	delete this->action_saveGrid;
 	delete this->action_exitProgram;
-	delete this->viewer_planeZ;
-	delete this->viewer_planeY;
-	delete this->viewer_planeX;
 	delete this->scene;
 	delete this->controlPanel;
-	delete this->headerZ;
-	delete this->headerY;
-	delete this->headerX;
-
-	this->showGLLog->disconnect();
 }
 
 void MainWidget::setupWidgets() {
-	this->glDebug = new OpenGLDebugLog;
 	this->scene	  = new Scene();
-	this->scene->addOpenGLOutput(this->glDebug);
 
     this->setupActions();
     this->setupForms();
 	this->statusBar = new QStatusBar;
-	this->showGLLog = new QPushButton("Show GL log");
-	this->statusBar->addPermanentWidget(this->showGLLog);
 
 	this->setStatusBar(this->statusBar);
 	this->scene->addStatusBar(this->statusBar);
@@ -66,8 +51,6 @@ void MainWidget::setupWidgets() {
     this->display_pannel = new DisplayPannel("Display", *this->actionManager);
     this->cutPlane_pannel = new CutPlaneGroupBox("Cutting planes");
     this->cutPlane_pannel->setCheckable(false);
-
-	QObject::connect(this->showGLLog, &QPushButton::clicked, this->glDebug, &QWidget::show);
 
 	this->deformationWidget = new GridDeformationWidget(this->scene);
     this->deformationWidget->hide();
@@ -158,17 +141,6 @@ void MainWidget::setupWidgets() {
 	QObject::connect(this->action_saveGrid, &QAction::triggered, [this]() {
 		this->scene->launchSaveDialog();
 	});
-	QObject::connect(this->action_showPlanarViewers, &QAction::triggered, [this]() {
-            if(this->xViewerCapsule->isHidden()) {
-                this->xViewerCapsule->show();
-                this->yViewerCapsule->show();
-                this->zViewerCapsule->show();
-            } else {
-                this->xViewerCapsule->hide();
-                this->yViewerCapsule->hide();
-                this->zViewerCapsule->hide();
-            }
-	});
 	QObject::connect(this->action_exitProgram, &QAction::triggered, this, &QMainWindow::close);
 	QObject::connect(this->action_loadMesh, &QAction::triggered, [this]() {
 		//this->scene->loadMesh();
@@ -243,9 +215,6 @@ void MainWidget::setupWidgets() {
 
 	// Viewer(s) creation along with control panel :
 	this->viewer		= new Viewer(this->scene, this->statusBar, nullptr);
-	this->viewer_planeX = new PlanarViewer(this->scene, planes::x, this->statusBar, planeHeading::North, nullptr);
-	this->viewer_planeY = new PlanarViewer(this->scene, planes::y, this->statusBar, planeHeading::North, nullptr);
-	this->viewer_planeZ = new PlanarViewer(this->scene, planes::z, this->statusBar, planeHeading::North, nullptr);
 	this->controlPanel	= new ControlPanel(this->scene, this->viewer, nullptr);
 	this->scene->setControlPanel(this->controlPanel);
 
@@ -253,79 +222,22 @@ void MainWidget::setupWidgets() {
     this->tool_pannel = new ToolPannel("Tool", *this->actionManager);
 
 	this->viewer->addStatusBar(this->statusBar);
-	this->viewer_planeX->addParentStatusBar(this->statusBar);
-	this->viewer_planeY->addParentStatusBar(this->statusBar);
-	this->viewer_planeZ->addParentStatusBar(this->statusBar);
 
-	// Sliders for each plane (also sets range and values) :
-	this->headerX  = new ViewerHeader("X Plane");
-	this->headerX->connectToViewer(this->viewer_planeX);
-	this->headerY = new ViewerHeader("Y Plane");
-	this->headerY->connectToViewer(this->viewer_planeY);
-	this->headerZ = new ViewerHeader("Z Plane");
-	this->headerZ->connectToViewer(this->viewer_planeZ);
+    /***/
 
-	// Splitters : one main (hor.) and two secondaries (vert.) :
-	QSplitter* mainSplit   = new QSplitter(Qt::Horizontal);
-	QSplitter* splitAbove  = new QSplitter(Qt::Vertical);
-	QSplitter* splitAbove1 = new QSplitter(Qt::Vertical);
+    hSplit = new QSplitter(Qt::Horizontal);
+    vSplit1 = new QSplitter(Qt::Vertical);
+    vSplit2 = new QSplitter(Qt::Vertical);
 
-	// Layouts to place a viewer and a header in the same place :
-	QVBoxLayout* vP3 = new QVBoxLayout();
-    this->vPX = new QVBoxLayout();
-    this->vPY = new QVBoxLayout();
-    this->vPZ = new QVBoxLayout();
-    vP3->setSpacing(0);	   // header above 3D view
-	vPX->setSpacing(0);	   // header above plane X
-	vPY->setSpacing(0);	   // header above plane Y
-	vPZ->setSpacing(0);	   // header above plane Z
+    hSplit->addWidget(vSplit1);
+    hSplit->addWidget(vSplit2);
 
-	// Those will encapsulate the layouts above :
-	this->_ViewerCapsule = new QWidget();
-	this->xViewerCapsule = new QWidget();
-	this->yViewerCapsule = new QWidget();
-	this->zViewerCapsule = new QWidget();
+    vSplit1->addWidget(this->viewer);
+    hSplit->setContentsMargins(0, 0, 0, 0);
+    vSplit1->setContentsMargins(0, 0, 0, 0);
+    vSplit2->setContentsMargins(0, 0, 0, 0);
 
-	this->headerY->setFixedHeight(this->headerY->sizeHint().height());
-	this->headerZ->setFixedHeight(this->headerZ->sizeHint().height());
-
-	// Add widgets in layouts to compose the plane viewers :
-	vP3->addWidget(this->viewer);
-    vPX->addWidget(this->headerX);
-    //vPX->addWidget(this->viewer_planeX);
-	vPY->addWidget(this->headerY);
-    //vPY->addWidget(this->viewer_planeY);
-	vPZ->addWidget(this->headerZ);
-    //vPZ->addWidget(this->viewer_planeZ);
-
-	// Get content margins by default :
-	int left = 0, right = 0, top = 0, bottom = 0;
-	// This is the same arrangement for the setCM() function :
-	vPX->getContentsMargins(&left, &top, &right, &bottom);
-	// Set the content margins, no side margins :
-	vP3->setContentsMargins(0, top * 2, 0, bottom);
-	vPX->setContentsMargins(0, top * 2, 0, bottom);
-	vPY->setContentsMargins(0, top * 2, 0, bottom);
-	vPZ->setContentsMargins(0, top * 2, 0, bottom);
-
-	// Encapsulate the layouts above :
-	_ViewerCapsule->setLayout(vP3);
-	xViewerCapsule->setLayout(vPX);
-	yViewerCapsule->setLayout(vPY);
-	zViewerCapsule->setLayout(vPZ);
-
-	int max = std::numeric_limits<int>::max();
-	// Add to splits in order to show them all :
-	splitAbove->addWidget(_ViewerCapsule);
-	splitAbove->addWidget(xViewerCapsule);
-	splitAbove->setSizes(QList<int>({max, max}));
-	splitAbove1->addWidget(yViewerCapsule);
-	splitAbove1->addWidget(zViewerCapsule);
-	splitAbove1->setSizes(QList<int>({max, max}));
-	// Add the sub-splits to the main one :
-	mainSplit->addWidget(splitAbove);
-	mainSplit->addWidget(splitAbove1);
-    mainSplit->setContentsMargins(0, 0, 0, 0);
+    /***/
 
     this->viewerFrame = new QFrame();
     this->viewerFrame->setFrameRect(QRect(QRect(0, 0, 0, 0)));
@@ -346,7 +258,7 @@ void MainWidget::setupWidgets() {
 	sidePannelLayout->addWidget(this->cutPlane_pannel);
 
     viewerLayout->addLayout(sidePannelLayout);
-	viewerLayout->addWidget(mainSplit, 4);
+    viewerLayout->addWidget(hSplit, 4);
 	viewerLayout->addWidget(this->deformationWidget);
 
     /***/
@@ -366,10 +278,6 @@ void MainWidget::setupWidgets() {
     lowLayout->addWidget(this->controlPanel, 4, Qt::AlignHCenter);
 
     mainLayout->addWidget(lowFrame);
-
-	xViewerCapsule->hide();
-	yViewerCapsule->hide();
-	zViewerCapsule->hide();
 
 	QSize v = viewerLayout->sizeHint();
 	this->controlPanel->setMinimumWidth(static_cast<int>(static_cast<float>(v.width()) * .7f));
@@ -407,7 +315,7 @@ void MainWidget::setupActions() {
     QObject::connect(this->actionManager->getAction("ToggleDisplayGrid"), &QAction::triggered, [this](){this->scene->slotToggleDisplayGrid();});
 
     this->actionManager->createQActionToggledButton("ToggleDisplayPlanarViewers", "PView", "P", "Display/Show planar viewer", "visible", "hidden");
-    QObject::connect(this->actionManager->getAction("ToggleDisplayPlanarViewers"), &QAction::triggered, [this](){this->toggleDisplayPlanarViewers();});
+    //QObject::connect(this->actionManager->getAction("ToggleDisplayPlanarViewers"), &QAction::triggered, [this](){this->toggleDisplayPlanarViewers();});
 
     this->actionManager->createQActionToggledButton("ToggleDisplayWireframe", "TetM", "W", "Display/Show the tethraedral mesh wireframe", "visible", "hidden");
     QObject::connect(this->actionManager->getAction("ToggleDisplayWireframe"), &QAction::triggered, [this](){this->scene->toggleWireframe();});
@@ -511,8 +419,9 @@ void MainWidget::setupActions() {
             this->planarViewer->show();
             this->planarViewer->initialize(this->scene);
             if(this->planarViewer->initialized) {
-                vPX->addWidget(this->planarViewer->viewers["View_X"]);
-                //this->planarViewer->viewers["View_X"]->setParent(vPX);
+                this->vSplit2->addWidget(this->planarViewer->viewers["View_X"]->viewer2D);
+                this->vSplit2->addWidget(this->planarViewer->viewers["View_Y"]->viewer2D);
+                this->vSplit1->addWidget(this->planarViewer->viewers["View_Z"]->viewer2D);
             }
     });
 
@@ -549,16 +458,4 @@ void MainWidget::updateForms() {
     this->saveImageForm->update(this->scene);
     this->planarViewer->update(this->scene);
     this->openImageForm->update(this->scene);
-}
-
-void MainWidget::toggleDisplayPlanarViewers() {
-    if(this->xViewerCapsule->isHidden()) {
-        this->xViewerCapsule->show();
-        this->yViewerCapsule->show();
-        this->zViewerCapsule->show();
-    } else {
-        this->xViewerCapsule->hide();
-        this->yViewerCapsule->hide();
-        this->zViewerCapsule->hide();
-    }
 }
