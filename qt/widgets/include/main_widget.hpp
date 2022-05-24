@@ -19,7 +19,7 @@
 
 #include <map>
 
-#include <QScrollArea>
+#include <QPainter>
 #include <QGLViewer/qglviewer.h>
 #include <QMainWindow>
 #include <QWidget>
@@ -693,17 +693,20 @@ public:
     bool inMoveMode;
     QPoint movementOrigin;
     QPoint translation;
+    QPoint currentMousePosition;
 
     int zoomSpeed;
     float zoom;
     glm::ivec2 center;
-    glm::ivec2 imgSize;
     glm::ivec2 screenSize;
     QImage::Format format;
 
-    QScrollArea * scrollArea;
     QHBoxLayout * layout;
-    QImage screen;
+    QImage originalImage;
+    glm::ivec2 originalImageSize;
+    QImage scaledImage;
+    glm::ivec2 scaledImageSize;
+    QImage * screen;
     QLabel * display;
 
     Image2DViewer(QImage::Format format, QWidget *parent = nullptr): QWidget(parent), format(format){init();}
@@ -712,44 +715,63 @@ public:
         this->zoomSpeed = 30;
         this->zoom = 1;
         this->center = glm::ivec2(0, 0);
-        this->imgSize = glm::ivec2(0, 0);
+        this->originalImageSize = glm::ivec2(0, 0);
         this->screenSize = glm::ivec2(0, 0);
 
         this->layout = new QHBoxLayout();
         this->setLayout(this->layout);
         this->display = new QLabel();
-        this->layout->addStretch(1);
+        //this->layout->addStretch(1);
         this->layout->addWidget(this->display, 1);
-        this->layout->addStretch(1);
+        //this->layout->addStretch(1);
         //this->layout->setAlignment(this->display, Qt::AlignHCenter);
         this->layout->setContentsMargins(0, 0, 0, 0);
         this->display->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
+        this->screen = new QImage(100., 100., format);
+        this->screen->fill(QColor(0., 0., 0.));
     }
 
     void clearColor() {
-        this->screen.fill(QColor(0, 0, 0));
+        this->originalImage.fill(QColor(0, 0, 0));
     }
 
     void setImage(const QImage& image) {
-        this->screen = image;
-        this->imgSize.x = image.width();
-        this->imgSize.y = image.height();
-        this->screenSize = this->imgSize;
+        this->originalImage = image;
+        this->originalImageSize.x = image.width();
+        this->originalImageSize.y = image.height();
+        this->screenSize = this->originalImageSize;
+        this->fitToWindow();
         this->zoomSpeed = std::max(this->screenSize.x, this->screenSize.y)/10;
     }
 
     void draw() {
-        this->display->setPixmap(QPixmap::fromImage((this->screen.scaledToWidth(this->zoom+this->imgSize.x).copy((this->center.x+this->zoom/2)-this->translation.x(), (this->center.y+this->zoom/2)-this->translation.y(), this->imgSize.x, this->imgSize.y)).scaled(this->display->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation)));
-        //this->display->setPixmap(QPixmap::fromImage(this->screen.scaledToWidth(this->zoom+this->imgSize.x).scaled(this->display->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation)));
-        //this->display->setPixmap(QPixmap::fromImage(this->screen.scaledToWidth(this->zoom+this->imgSize.x)));
+        if(this->originalImageSize.x > 0 && this->originalImageSize.y > 0) {
+            QPixmap finalScreen(this->size().width(), this->size().height());
+            finalScreen.fill(Qt::black);
+            QPainter painter(&finalScreen);
+            QRect target(translation.x(), translation.y(), this->scaledImageSize.x+this->zoom, this->scaledImageSize.y+this->zoom);
+            painter.drawPixmap(target, QPixmap::fromImage(this->scaledImage));
+            this->display->setPixmap(finalScreen);
+        }
     }
 
     void resizeEvent(QResizeEvent *) {
+        this->fitToWindow();
         this->draw();
+    }
+
+    void fitToWindow() {
+        float dx = float(this->size().width())/float(this->originalImageSize.x);
+        float dy = float(this->size().height())/float(this->originalImageSize.y);
+        float df = std::min(dx, dy);
+        std::cout << "Scale factor: " << df << std::endl;
+        this->scaledImageSize = glm::ivec2(std::floor(float(this->originalImageSize.x) * df), std::floor(float(this->originalImageSize.y) * df));
+        this->scaledImage = this->originalImage.scaled(this->scaledImageSize.x, this->scaledImageSize.y, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
     }
 
     void mouseMoveEvent(QMouseEvent* event) {
         std::cout << event->pos().x() << std::endl;
+        this->currentMousePosition = event->pos();
         if(this->inMoveMode) {
             QPoint currentPosition = event->pos();
             this->translation += (currentPosition - this->movementOrigin);
