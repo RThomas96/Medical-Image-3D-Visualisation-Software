@@ -19,6 +19,7 @@
 
 #include <map>
 
+#include <QScrollArea>
 #include <QGLViewer/qglviewer.h>
 #include <QMainWindow>
 #include <QWidget>
@@ -700,6 +701,7 @@ public:
     glm::ivec2 screenSize;
     QImage::Format format;
 
+    QScrollArea * scrollArea;
     QHBoxLayout * layout;
     QImage screen;
     QLabel * display;
@@ -716,13 +718,11 @@ public:
         this->layout = new QHBoxLayout();
         this->setLayout(this->layout);
         this->display = new QLabel();
-        this->layout->addWidget(this->display);
-        this->layout->setAlignment(this->display, Qt::AlignHCenter);
+        this->layout->addStretch(1);
+        this->layout->addWidget(this->display, 1);
+        this->layout->addStretch(1);
+        //this->layout->setAlignment(this->display, Qt::AlignHCenter);
         this->layout->setContentsMargins(0, 0, 0, 0);
-
-        //this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-        //this->display->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-
         this->display->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
     }
 
@@ -739,8 +739,9 @@ public:
     }
 
     void draw() {
-        std::cout << "Draw image with size" << this->screenSize.x << " " << this->screenSize.y << std::endl;
-        this->display->setPixmap(QPixmap::fromImage((this->screen.scaledToWidth(this->zoom+this->imgSize.x).copy((this->center.x+this->zoom/2)-this->translation.x(), (this->center.y+this->zoom/2)-this->translation.y(), this->imgSize.x, this->imgSize.y)).scaled(this->screenSize.x, this->screenSize.y).scaled(this->display->width(),this->display->height(),Qt::KeepAspectRatio)));
+        this->display->setPixmap(QPixmap::fromImage((this->screen.scaledToWidth(this->zoom+this->imgSize.x).copy((this->center.x+this->zoom/2)-this->translation.x(), (this->center.y+this->zoom/2)-this->translation.y(), this->imgSize.x, this->imgSize.y)).scaled(this->display->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation)));
+        //this->display->setPixmap(QPixmap::fromImage(this->screen.scaledToWidth(this->zoom+this->imgSize.x).scaled(this->display->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation)));
+        //this->display->setPixmap(QPixmap::fromImage(this->screen.scaledToWidth(this->zoom+this->imgSize.x)));
     }
 
     void resizeEvent(QResizeEvent *) {
@@ -1821,6 +1822,7 @@ private:
     QSplitter* hSplit;
     QSplitter* vSplit1;
     QSplitter* vSplit2;
+    QDockWidget * dockView_X;
 
 	Viewer* viewer;
 
