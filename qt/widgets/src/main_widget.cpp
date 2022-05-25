@@ -419,13 +419,13 @@ void MainWidget::setupActions() {
             this->planarViewer->show();
             this->planarViewer->initialize(this->scene);
             if(this->planarViewer->initialized) {
-                //this->dockView_X = new QDockWidget(QString("View_X"));
-                //this->dockView_X->setWidget(this->planarViewer->viewers["View_X"]->viewer2D);
-                //this->dockView_X->setFeatures(QDockWidget::DockWidgetClosable | QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);
-                //this->dockView_X->show();
                 this->vSplit2->addWidget(this->planarViewer->viewers["View_X"]->viewer2D);
                 this->vSplit2->addWidget(this->planarViewer->viewers["View_Y"]->viewer2D);
                 this->vSplit1->addWidget(this->planarViewer->viewers["View_Z"]->viewer2D);
+
+                hSplit->setSizes(QList<int>({INT_MAX, INT_MAX}));
+                vSplit1->setSizes(QList<int>({INT_MAX, INT_MAX}));
+                vSplit2->setSizes(QList<int>({INT_MAX, INT_MAX}));
             }
     });
 

@@ -690,67 +690,77 @@ class Image2DViewer : public QWidget {
 
 public:
 
+    // Interactions variables
     bool inMoveMode;
     QPoint movementOrigin;
-    QPoint translation;
-    QPoint currentMousePosition;
-
     int zoomSpeed;
     float zoom;
-    glm::ivec2 center;
-    glm::ivec2 screenSize;
-    QImage::Format format;
+    int minimumSize;
 
-    QHBoxLayout * layout;
-    QImage originalImage;
-    glm::ivec2 originalImageSize;
-    QImage scaledImage;
-    glm::ivec2 scaledImageSize;
-    QImage * screen;
+    // Data
+    QImage imageData;// Image data to be painted
+    QSize originalImageSize;// Original image size
+    QSize targetImageSize;// Optimal image size according to voxel size, etc
+
+    QPoint paintedImageOrigin;
+    QSize paintedImageSize;
+
+    //Display variables
     QLabel * display;
+    QHBoxLayout * layout;
+    QImage::Format format;
 
     Image2DViewer(QImage::Format format, QWidget *parent = nullptr): QWidget(parent), format(format){init();}
 
     void init() {
         this->zoomSpeed = 30;
         this->zoom = 1;
-        this->center = glm::ivec2(0, 0);
-        this->originalImageSize = glm::ivec2(0, 0);
-        this->screenSize = glm::ivec2(0, 0);
+        this->imageData = QImage(10., 10., format);
+        this->imageData.fill(QColor(0., 0., 0.));
+        this->targetImageSize = this->imageData.size();
+        this->paintedImageOrigin = QPoint(0, 0);
+        this->paintedImageSize = this->imageData.size();
 
         this->layout = new QHBoxLayout();
         this->setLayout(this->layout);
         this->display = new QLabel();
-        //this->layout->addStretch(1);
         this->layout->addWidget(this->display, 1);
-        //this->layout->addStretch(1);
-        //this->layout->setAlignment(this->display, Qt::AlignHCenter);
         this->layout->setContentsMargins(0, 0, 0, 0);
         this->display->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
-        this->screen = new QImage(100., 100., format);
-        this->screen->fill(QColor(0., 0., 0.));
+        this->minimumSize = 15;
     }
 
     void clearColor() {
-        this->originalImage.fill(QColor(0, 0, 0));
+        this->imageData.fill(QColor(0, 0, 0));
     }
 
-    void setImage(const QImage& image) {
-        this->originalImage = image;
-        this->originalImageSize.x = image.width();
-        this->originalImageSize.y = image.height();
-        this->screenSize = this->originalImageSize;
+    void setImageSize(const QSize& originalImageSize, const QSize& targetImageSize) {
+        this->originalImageSize = originalImageSize;
+        this->targetImageSize = targetImageSize;
+        this->zoomSpeed = std::max(this->targetImageSize.width(), this->targetImageSize.height())/10;
+
+        this->paintedImageOrigin = QPoint(0, 0);
+        this->paintedImageSize = targetImageSize;
         this->fitToWindow();
-        this->zoomSpeed = std::max(this->screenSize.x, this->screenSize.y)/10;
+    }
+
+    void updateImageData(const QImage& image) {
+        if(image.size() == this->originalImageSize) {
+            this->imageData = image;
+        } else {
+            //std::cout << "WARNING: trying to add an image in a 2D viewer with incorrect size ! Size expected: [" << this->originalImageSize <<"], size received: [" << image.size() << "]" << std::endl;
+            std::cout << "WARNING: trying to add an image in a 2D viewer with incorrect size !" << std::endl;
+        }
     }
 
     void draw() {
-        if(this->originalImageSize.x > 0 && this->originalImageSize.y > 0) {
+        if(this->size().width() > minimumSize && this->size().height() > minimumSize) {
             QPixmap finalScreen(this->size().width(), this->size().height());
             finalScreen.fill(Qt::black);
             QPainter painter(&finalScreen);
-            QRect target(translation.x(), translation.y(), this->scaledImageSize.x+this->zoom, this->scaledImageSize.y+this->zoom);
-            painter.drawPixmap(target, QPixmap::fromImage(this->scaledImage));
+            QRect target(paintedImageOrigin.x(), paintedImageOrigin.y(), this->paintedImageSize.width(), this->paintedImageSize.height());
+            //painter.drawPixmap(target, QPixmap::fromImage(this->imageData.scaled(this->paintedImageSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation)));
+            painter.drawPixmap(target, QPixmap::fromImage(this->imageData.scaled(this->paintedImageSize, Qt::IgnoreAspectRatio, Qt::FastTransformation)));
             this->display->setPixmap(finalScreen);
         }
     }
@@ -761,20 +771,19 @@ public:
     }
 
     void fitToWindow() {
-        float dx = float(this->size().width())/float(this->originalImageSize.x);
-        float dy = float(this->size().height())/float(this->originalImageSize.y);
+        float dx = std::max(float(minimumSize), float(this->size().width()))/float(this->targetImageSize.width());
+        float dy = std::max(float(minimumSize), float(this->size().height()))/float(this->targetImageSize.height());
         float df = std::min(dx, dy);
-        std::cout << "Scale factor: " << df << std::endl;
-        this->scaledImageSize = glm::ivec2(std::floor(float(this->originalImageSize.x) * df), std::floor(float(this->originalImageSize.y) * df));
-        this->scaledImage = this->originalImage.scaled(this->scaledImageSize.x, this->scaledImageSize.y, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+        this->paintedImageSize = QSize(std::floor(float(this->targetImageSize.width()) * df), std::floor(float(this->targetImageSize.height()) * df));
+        this->paintedImageOrigin.rx() = std::max(0., std::floor(float(this->size().width() - this->paintedImageSize.width())/2.));
+        this->paintedImageOrigin.ry() = std::max(0., std::floor(float(this->size().height() - this->paintedImageSize.height())/2.));
     }
 
     void mouseMoveEvent(QMouseEvent* event) {
         std::cout << event->pos().x() << std::endl;
-        this->currentMousePosition = event->pos();
         if(this->inMoveMode) {
             QPoint currentPosition = event->pos();
-            this->translation += (currentPosition - this->movementOrigin);
+            this->paintedImageOrigin += (currentPosition - this->movementOrigin);
             this->movementOrigin = currentPosition;
             this->draw();
             event->setAccepted(true);
@@ -795,9 +804,13 @@ public:
 
     void wheelEvent(QWheelEvent *event) {
         if(event->angleDelta().y() > 0) {
-            zoom += this->zoomSpeed;
+            //zoom += this->zoomSpeed;
+            this->paintedImageSize.rwidth() += this->zoomSpeed;
+            this->paintedImageSize.rheight() += this->zoomSpeed;
         } else if(event->angleDelta().y() < 0) {
-            zoom -= this->zoomSpeed;
+            //zoom -= this->zoomSpeed;
+            this->paintedImageSize.rwidth() -= this->zoomSpeed;
+            this->paintedImageSize.rheight() -= this->zoomSpeed;
         }
         this->draw();
         event->setAccepted(false);
@@ -835,7 +848,7 @@ public:
 
     Image3DViewer(const QString& name, const glm::vec3& side, Scene * scene, QWidget * parent = nullptr): QWidget(parent), name(name), direction(side), scene(scene), isInitialized(false), viewer2D(nullptr) {initLayout(); connect(scene);}
 
-    void init(const glm::vec3& imageSize, const int& sliceIdx, const glm::vec3& side, std::vector<std::string> gridNames, std::vector<int> imgToDraw, Interpolation::Method interpolationMethod) {
+    void init(const glm::vec3& imageSize, const glm::vec3& imageResolution, const int& sliceIdx, const glm::vec3& side, std::vector<std::string> gridNames, std::vector<int> imgToDraw, Interpolation::Method interpolationMethod) {
 
         for(auto name : gridNames)
             if(name.empty())
@@ -843,7 +856,7 @@ public:
 
         this->direction = side;
 
-        this->imgSize = imageSize;
+        this->imgSize = imageResolution;
 
         this->gridNames = gridNames;
         this->imagesToDraw = imgToDraw;
@@ -859,6 +872,7 @@ public:
 
         this->isInitialized = true;
 
+        this->viewer2D->setImageSize(QSize(imageResolution.x, imageResolution.y), QSize(imageSize.x, imageSize.y));
         this->setSliceIdx(sliceIdx);
     }
 
@@ -874,12 +888,6 @@ private:
     void reset() {
         for(auto& line : this->upToDate)
             std::fill(line.begin(), line.end(), false);
-    }
-
-    void resize(const glm::vec3& newSize) {
-        this->imgNewSize = newSize;
-        //this->viewer2D->setScreenSize(newSize);
-        this->drawImages();
     }
 
     void initLayout() {
@@ -936,7 +944,8 @@ private:
 
     void drawImages() {
         this->fillCurrentImages();
-        this->viewer2D->setImage(this->getCurrentMergedImage());
+        //this->viewer2D->setImage(this->getCurrentMergedImage());
+        this->viewer2D->updateImageData(this->getCurrentMergedImage());
         this->viewer2D->draw();
     }
 
@@ -1150,7 +1159,7 @@ public slots:
             return;
         this->sliders["SliderX"]->setMinimum(0);
         this->sliders["SliderX"]->setMaximum(this->getImgDimension().z);
-        this->viewers[this->selectedViewer]->init(this->getImgDimension(), this->sliders["SliderX"]->value(), this->getSide(), {this->getFromGridName(), this->getToGridName()}, this->getImagesToDraw(), this->getInterpolationMethod());
+        this->viewers[this->selectedViewer]->init(this->autoComputeBestSize(this->scene), this->getImgDimension(), this->sliders["SliderX"]->value(), this->getSide(), {this->getFromGridName(), this->getToGridName()}, this->getImagesToDraw(), this->getInterpolationMethod());
     }
 
     void update(Scene * scene) {
