@@ -1169,7 +1169,7 @@ public slots:
         if(this->noViewerSelected())
             return;
         this->sliders["SliderX"]->setMinimum(0);
-        this->sliders["SliderX"]->setMaximum(this->getImgDimension().z);
+        this->sliders["SliderX"]->setMaximum(this->getImgDimension().z-1);
         this->viewers[this->selectedViewer]->init(this->autoComputeBestSize(this->scene), this->getImgDimension(), this->sliders["SliderX"]->value(), this->getSide(), {this->getFromGridName(), this->getToGridName()}, this->getImagesToDraw(), this->getInterpolationMethod());
     }
 
