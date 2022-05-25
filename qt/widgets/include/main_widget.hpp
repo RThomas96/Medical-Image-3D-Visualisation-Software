@@ -689,6 +689,7 @@ class Image2DViewer : public QWidget {
     Q_OBJECT;
 
 public:
+    bool activated;
 
     // Interactions variables
     bool inMoveMode;
@@ -721,6 +722,7 @@ public:
         this->paintedImageOrigin = QPoint(0, 0);
         this->paintedImageSize = this->imageData.size();
 
+        this->activated = true;
         this->layout = new QHBoxLayout();
         this->setLayout(this->layout);
         this->display = new QLabel();
@@ -754,23 +756,30 @@ public:
     }
 
     void draw() {
-        if(this->size().width() > minimumSize && this->size().height() > minimumSize) {
-            QPixmap finalScreen(this->size().width(), this->size().height());
-            finalScreen.fill(Qt::black);
-            QPainter painter(&finalScreen);
-            QRect target(paintedImageOrigin.x(), paintedImageOrigin.y(), this->paintedImageSize.width(), this->paintedImageSize.height());
-            //painter.drawPixmap(target, QPixmap::fromImage(this->imageData.scaled(this->paintedImageSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation)));
-            painter.drawPixmap(target, QPixmap::fromImage(this->imageData.scaled(this->paintedImageSize, Qt::IgnoreAspectRatio, Qt::FastTransformation)));
-            this->display->setPixmap(finalScreen);
-        }
+        if(!activated)
+            return;
+        QPixmap finalScreen(this->size().width(), this->size().height());
+        finalScreen.fill(Qt::black);
+        QPainter painter(&finalScreen);
+        QRect target(paintedImageOrigin.x(), paintedImageOrigin.y(), this->paintedImageSize.width(), this->paintedImageSize.height());
+        //painter.drawPixmap(target, QPixmap::fromImage(this->imageData.scaled(this->paintedImageSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation)));
+        painter.drawPixmap(target, QPixmap::fromImage(this->imageData.scaled(this->paintedImageSize, Qt::IgnoreAspectRatio, Qt::FastTransformation)));
+        this->display->setPixmap(finalScreen);
     }
 
     void resizeEvent(QResizeEvent *) {
-        this->fitToWindow();
-        this->draw();
+        if(this->size().width() < minimumSize || this->size().height() < minimumSize) {
+            this->activated = false;
+        } else {
+            this->activated = true;
+            this->fitToWindow();
+            this->draw();
+        }
     }
 
     void fitToWindow() {
+        if(!activated)
+            return;
         float dx = std::max(float(minimumSize), float(this->size().width()))/float(this->targetImageSize.width());
         float dy = std::max(float(minimumSize), float(this->size().height()))/float(this->targetImageSize.height());
         float df = std::min(dx, dy);
@@ -818,7 +827,6 @@ public:
 
 signals:
     void isSelected();
-
 };
 
 class Image3DViewer : public QWidget {
@@ -943,10 +951,13 @@ private:
     }
 
     void drawImages() {
-        this->fillCurrentImages();
-        //this->viewer2D->setImage(this->getCurrentMergedImage());
-        this->viewer2D->updateImageData(this->getCurrentMergedImage());
-        this->viewer2D->draw();
+        if(this->viewer2D->activated) {
+            this->fillCurrentImages();
+            this->viewer2D->updateImageData(this->getCurrentMergedImage());
+            this->viewer2D->draw();
+        } else {
+            std::cout << "Viewer deactivated !!" << std::endl;
+        }
     }
 
     void connect(Scene * scene) {
