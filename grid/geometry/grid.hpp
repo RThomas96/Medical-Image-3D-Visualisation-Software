@@ -89,7 +89,7 @@ struct Grid : public TetMesh {
     glm::vec3 getVoxelSize() const;
     glm::mat4 getTransformationMatrix() const;
     void toSampler(glm::vec3& p) const;
-    void toWorld(glm::vec3& p) const;
+    void fromImageToWorld(glm::vec3& p) const;
 
     // In mesh interface
     std::pair<glm::vec3, glm::vec3> getBoundingBox() const;

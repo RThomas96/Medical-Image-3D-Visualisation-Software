@@ -274,13 +274,14 @@ void MainWidget::setupWidgets() {
 	//mainLayout->addWidget(this->viewerFrame, 3);
 
     QHBoxLayout* lowLayout = new QHBoxLayout(lowFrame);
-    lowLayout->addWidget(this->planarViewer, 1, Qt::AlignHCenter);
-    lowLayout->addWidget(this->controlPanel, 4, Qt::AlignHCenter);
+    lowLayout->addWidget(this->planarViewer, 1);
+    lowLayout->addWidget(this->controlPanel, 3);
+    this->controlPanel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     mainLayout->addWidget(lowFrame);
 
-	QSize v = viewerLayout->sizeHint();
-	this->controlPanel->setMinimumWidth(static_cast<int>(static_cast<float>(v.width()) * .7f));
+    //QSize v = viewerLayout->sizeHint();
+    //this->controlPanel->setMinimumWidth(static_cast<int>(static_cast<float>(v.width()) * .7f));
 
 	QWidget* mainWidget = new QWidget();
 	mainWidget->setLayout(mainLayout);
@@ -297,8 +298,8 @@ bool MainWidget::eventFilter(QObject* obj, QEvent* e) {
 		this->setMinimumSize(1280, 720);
 		// lock control panel size to the current size it has :
 		QSize centerSize = this->size();
-		this->controlPanel->setMinimumWidth(static_cast<int>(static_cast<float>(centerSize.width()) * .99f));
-		this->controlPanel->setMaximumHeight(static_cast<int>(this->controlPanel->height()));
+        //this->controlPanel->setMinimumWidth(static_cast<int>(static_cast<float>(centerSize.width()) * .66f));
+        //this->controlPanel->setMaximumHeight(static_cast<int>(this->controlPanel->height()));
 	}
 	// Return false, to handle the rest of the event normally
 	return false;

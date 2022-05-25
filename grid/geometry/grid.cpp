@@ -414,6 +414,12 @@ void Grid::sampleSliceGridValues(const glm::vec3& slice, const std::pair<glm::ve
 //    std::cout << "Duration time: " << elapsed_seconds.count() << "s / " << elapsed_seconds.count()/60. << "m" << std::endl;
 //}
 
+void Grid::fromImageToWorld(glm::vec3& p) const {
+    this->sampler.fromImageToSampler(p);
+    p *= this->getVoxelSize();
+    p += this->bbMin;
+}
+
 void Grid::sampleGridValues(const std::pair<glm::vec3, glm::vec3>& areaToSample, const glm::vec3& resolution, std::vector<std::vector<uint16_t>>& result, Interpolation::Method interpolationMethod) {
     auto start = std::chrono::steady_clock::now();
 

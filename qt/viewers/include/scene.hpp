@@ -357,6 +357,7 @@ private:
 	GLuint selectedChannel_r;	 ///< The currently selected channel for greyscale mode.
 	ColorFunction channels_g;
 	GLuint selectedChannel_g;	 ///< The currently selected channel for greyscale mode.
+public:
 	glm::vec3 color0;	 ///< The color segment when approaching 0
 	glm::vec3 color1;	 ///< The color segment when approaching 1
 	glm::vec3 color0_second;	///< The color segment when approaching 0
@@ -483,6 +484,7 @@ signals:
     void cursorChangedInPlanarView(UITool::CursorType cursorType);
     void selectedPointChanged(std::pair<int, glm::vec3> selectedPoint);
     void meshMoved();
+    void colorChanged();
 
 // All these indirections are important because for most of them they interacts with various components of the scene
 // And it allow more flexibility as the scene control ALL the informations to transit from class to class

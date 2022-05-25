@@ -2750,6 +2750,7 @@ void Scene::setColor0(qreal r, qreal g, qreal b) {
 	glm::vec<3, qreal, glm::highp> qtcolor(r, g, b);
 	this->color0 = glm::convert_to<float>(qtcolor);
 	this->signal_updateUserColorScales();
+    emit this->colorChanged();
 	return;
 }
 
@@ -2757,21 +2758,24 @@ void Scene::setColor1(qreal r, qreal g, qreal b) {
 	glm::vec<3, qreal, glm::highp> qtcolor(r, g, b);
 	this->color1 = glm::convert_to<float>(qtcolor);
 	this->signal_updateUserColorScales();
-	return;
+    emit this->colorChanged();
+    return;
 }
 
 void Scene::setColor0Alternate(qreal r, qreal g, qreal b) {
 	glm::vec<3, qreal, glm::highp> qtcolor(r, g, b);
 	this->color0_second = glm::convert_to<float>(qtcolor);
 	this->signal_updateUserColorScales();
-	return;
+    emit this->colorChanged();
+    return;
 }
 
 void Scene::setColor1Alternate(qreal r, qreal g, qreal b) {
 	glm::vec<3, qreal, glm::highp> qtcolor(r, g, b);
 	this->color1_second = glm::convert_to<float>(qtcolor);
 	this->signal_updateUserColorScales();
-	return;
+    emit this->colorChanged();
+    return;
 }
 
 void Scene::signal_updateUserColorScales() {
