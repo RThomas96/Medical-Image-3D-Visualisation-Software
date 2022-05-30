@@ -104,9 +104,10 @@ void MainWidget::setupWidgets() {
 
     this->toolbar->addSeparator();
 
-    this->toolbar->addAction(this->actionManager->getAction("SaveImage"));
-    this->toolbar->addAction(this->actionManager->getAction("2D2View"));
-    this->toolbar->addAction(this->actionManager->getAction("2D4View"));
+    //this->toolbar->addAction(this->actionManager->getAction("SaveImage"));
+    this->toolbar->addAction(this->actionManager->getAction("Layout1View"));
+    this->toolbar->addAction(this->actionManager->getAction("Layout2View"));
+    this->toolbar->addAction(this->actionManager->getAction("Layout4View"));
 
     this->toolbar->addSeparator();
 
@@ -288,6 +289,23 @@ void MainWidget::setupWidgets() {
 	mainWidget->setLayout(mainLayout);
 	this->setCentralWidget(mainWidget);
 
+    this->updateForms();
+    this->planarViewer->initialize(this->scene);
+
+    this->vSplit2->addWidget(this->planarViewer->viewers["View_1"]->viewer2D);
+    this->vSplit2->addWidget(this->planarViewer->viewers["View_2"]->viewer2D);
+    this->vSplit1->addWidget(this->planarViewer->viewers["View_3"]->viewer2D);
+
+    hSplit->setSizes(QList<int>({INT_MAX, INT_MAX}));
+    vSplit1->setSizes(QList<int>({INT_MAX, INT_MAX}));
+    vSplit2->setSizes(QList<int>({INT_MAX, INT_MAX}));
+
+    this->planarViewer->viewers["View_1"]->viewer2D->hide();
+    this->planarViewer->viewers["View_2"]->viewer2D->hide();
+    this->planarViewer->viewers["View_3"]->viewer2D->hide();
+
+    this->planarViewer->show();
+
 	this->installEventFilter(this);
 }
 
@@ -415,39 +433,25 @@ void MainWidget::setupActions() {
             this->saveImageForm->show();
     });
 
-    this->actionManager->createQActionButton("2D2View", "2DView 2", "", "Display a 2D view", "2Dview");
-    QObject::connect(this->actionManager->getAction("2D2View"), &QAction::triggered, [this](){
-            this->updateForms();
-            this->planarViewer->show();
-            this->planarViewer->initialize(this->scene);
-            if(this->planarViewer->initialized) {
-                this->vSplit2->addWidget(this->planarViewer->viewers["View_1"]->viewer2D);
-                this->vSplit2->addWidget(this->planarViewer->viewers["View_2"]->viewer2D);
-                this->vSplit1->addWidget(this->planarViewer->viewers["View_3"]->viewer2D);
-
-                hSplit->setSizes(QList<int>({INT_MAX, INT_MAX}));
-                vSplit1->setSizes(QList<int>({INT_MAX, INT_MAX}));
-                vSplit2->setSizes(QList<int>({INT_MAX, INT_MAX}));
-
-                this->planarViewer->viewers["View_2"]->viewer2D->hide();
-                this->planarViewer->viewers["View_3"]->viewer2D->hide();
-            }
+    this->actionManager->createQActionButton("Layout1View", "Solo view", "", "Display a 2D view", "soloScreen");
+    QObject::connect(this->actionManager->getAction("Layout1View"), &QAction::triggered, [this](){
+            this->planarViewer->viewers["View_1"]->viewer2D->hide();
+            this->planarViewer->viewers["View_2"]->viewer2D->hide();
+            this->planarViewer->viewers["View_3"]->viewer2D->hide();
     });
 
-    this->actionManager->createQActionButton("2D4View", "2DView 4", "", "Display a 2D view", "2Dview");
-    QObject::connect(this->actionManager->getAction("2D4View"), &QAction::triggered, [this](){
-            this->updateForms();
-            this->planarViewer->show();
-            this->planarViewer->initialize(this->scene);
-            if(this->planarViewer->initialized) {
-                this->vSplit2->addWidget(this->planarViewer->viewers["View_1"]->viewer2D);
-                this->vSplit2->addWidget(this->planarViewer->viewers["View_2"]->viewer2D);
-                this->vSplit1->addWidget(this->planarViewer->viewers["View_3"]->viewer2D);
+    this->actionManager->createQActionButton("Layout2View", "Dual view", "", "Display a 2D view", "dualScreen");
+    QObject::connect(this->actionManager->getAction("Layout2View"), &QAction::triggered, [this](){
+            this->planarViewer->viewers["View_1"]->viewer2D->show();
+            this->planarViewer->viewers["View_2"]->viewer2D->hide();
+            this->planarViewer->viewers["View_3"]->viewer2D->hide();
+    });
 
-                hSplit->setSizes(QList<int>({INT_MAX, INT_MAX}));
-                vSplit1->setSizes(QList<int>({INT_MAX, INT_MAX}));
-                vSplit2->setSizes(QList<int>({INT_MAX, INT_MAX}));
-            }
+    this->actionManager->createQActionButton("Layout4View", "Quad view", "", "Display a 2D view", "quadScreen");
+    QObject::connect(this->actionManager->getAction("Layout4View"), &QAction::triggered, [this](){
+            this->planarViewer->viewers["View_1"]->viewer2D->show();
+            this->planarViewer->viewers["View_2"]->viewer2D->show();
+            this->planarViewer->viewers["View_3"]->viewer2D->show();
     });
 
     this->actionManager->createQActionButton("Open", "Open", "", "Open the deformed image", "open");

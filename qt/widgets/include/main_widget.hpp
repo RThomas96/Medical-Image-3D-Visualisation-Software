@@ -16,6 +16,7 @@
 #include "./opengl_debug_log.hpp"
 #include "./scene_control.hpp"
 #include "./user_settings_widget.hpp"
+#include "glm/fwd.hpp"
 
 #include <map>
 
@@ -758,6 +759,14 @@ public:
         this->minimumSize = 15;
     }
 
+    void toggleShow() {
+       if(this->isVisible()) {
+           this->hide();
+       } else {
+           this->show();
+       }
+    }
+
     void show() {
         if(this->size().width() < minimumSize || this->size().height() < minimumSize) {
             this->activated = false;
@@ -1068,6 +1077,8 @@ public:
 public slots:
 
     void addViewer(const QString& name, const glm::vec3& side = glm::vec3(0., 0., 1.)) {
+        if(name.isEmpty())
+            return;
         this->viewers[name] = new Image3DViewer(name, side, this->scene);
         QObject::connect(this->viewers[name], &Image3DViewer::isSelected, [=](){this->selectViewer(name);});
 
@@ -1103,12 +1114,16 @@ public slots:
         this->comboBoxes["Interpolation"]->blockSignals(false);
 
         this->objectChoosers["From"]->blockSignals(true);
-        idx = this->objectChoosers["From"]->findText(viewer->gridNames[0].c_str());
+        idx = 0;
+        if(viewer->gridNames.size() > 0)
+            idx = this->objectChoosers["From"]->findText(viewer->gridNames[0].c_str());
         this->objectChoosers["From"]->setCurrentIndex(idx);
         this->objectChoosers["From"]->blockSignals(false);
 
         this->objectChoosers["To"]->blockSignals(true);
-        idx = this->objectChoosers["To"]->findText(viewer->gridNames[1].c_str());
+        idx = 0;
+        if(viewer->gridNames.size() > 1)
+            idx = this->objectChoosers["To"]->findText(viewer->gridNames[1].c_str());
         this->objectChoosers["To"]->setCurrentIndex(idx);
         this->objectChoosers["To"]->blockSignals(false);
 
@@ -1237,6 +1252,8 @@ public slots:
     }
 
     glm::ivec3 autoComputeBestSize(Scene * scene) {
+        if(this->getFromGridName().empty() || this->getToGridName().empty())
+            return glm::ivec3(1, 1, 1);
         glm::vec3 gridResolution = scene->getGridImgSize(this->getFromGridName());
         glm::vec3 voxelSize = scene->getGridVoxelSize(this->getFromGridName());
         float maxSize = std::min(voxelSize.x, std::min(voxelSize.y, voxelSize.z));
@@ -1359,12 +1376,10 @@ public:
     }
 
     void initialize(Scene * scene) {
-        if(scene->grids.size() > 0) {
-            this->addViewer("View_1", glm::vec3(1., 0., 0.));
-            this->addViewer("View_2", glm::vec3(0., 1., 0.));
-            this->addViewer("View_3", glm::vec3(0., 0., 1.));
-            this->initialized = true;
-        }
+        this->addViewer("View_1", glm::vec3(1., 0., 0.));
+        this->addViewer("View_2", glm::vec3(0., 1., 0.));
+        this->addViewer("View_3", glm::vec3(0., 0., 1.));
+        this->initialized = true;
     }
 };
 
