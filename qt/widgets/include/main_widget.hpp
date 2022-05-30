@@ -39,6 +39,7 @@
 #include <QSlider>
 #include <QSignalMapper>
 #include <QSplitter>
+#include <vector>
 
 class ColorBoundWidget;
 
@@ -175,6 +176,8 @@ enum WidgetType{
     LINE_EDIT,
     TEXT_EDIT,
     BUTTON,
+    BUTTON_CHECKABLE,
+    BUTTON_CHECKABLE_AUTOEXCLUSIVE,
     SPIN_BOX,
     SPIN_BOX_DOUBLE,
     MESH_SAVE,
@@ -239,6 +242,13 @@ public slots:
 
         insertNextWidgetInGroup = false;
         groupToInsertIn = QString("");
+    }
+
+    void blockSignalsInGroup(const QString& group, bool blockSignals) {
+        QLayout * layout = groups[group];
+        for (int i = 0; i < layout->count(); ++i) {
+            layout->itemAt(i)->widget()->blockSignals(blockSignals);
+        }
     }
 
     void addGroup(QLayout * group) {
@@ -400,6 +410,19 @@ public slots:
                 break;
             case WidgetType::BUTTON:
                 buttons[id] = new QPushButton(name);
+                newWidget = buttons[id];
+                connect(buttons[id], &QPushButton::clicked, [this, id] { widgetModified(id); });
+                break;
+            case WidgetType::BUTTON_CHECKABLE:
+                buttons[id] = new QPushButton(name);
+                buttons[id]->setCheckable(true);
+                newWidget = buttons[id];
+                connect(buttons[id], &QPushButton::clicked, [this, id] { widgetModified(id); });
+                break;
+            case WidgetType::BUTTON_CHECKABLE_AUTOEXCLUSIVE:
+                buttons[id] = new QPushButton(name);
+                buttons[id]->setCheckable(true);
+                buttons[id]->setAutoExclusive(true);
                 newWidget = buttons[id];
                 connect(buttons[id], &QPushButton::clicked, [this, id] { widgetModified(id); });
                 break;
@@ -725,7 +748,7 @@ public:
         this->paintedImageOrigin = QPoint(0, 0);
         this->paintedImageSize = this->imageData.size();
 
-        this->activated = true;
+        this->activated = false;
         this->layout = new QHBoxLayout();
         this->setLayout(this->layout);
         this->display = new QLabel();
@@ -733,6 +756,22 @@ public:
         this->layout->setContentsMargins(0, 0, 0, 0);
         this->display->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
         this->minimumSize = 15;
+    }
+
+    void show() {
+        if(this->size().width() < minimumSize || this->size().height() < minimumSize) {
+            this->activated = false;
+        } else {
+            this->activated = true;
+            this->fitToWindow();
+            this->draw();
+        }
+        QWidget::show();
+    }
+
+    void hide() {
+       QWidget::hide();
+       this->activated = false;
     }
 
     void clearColor() {
@@ -1054,27 +1093,29 @@ public slots:
     }
 
     void updateDefaultValues(const QString& name) {
-        this->setSpinBoxesValues(this->viewers[name]->imgSize);
+        const Image3DViewer * viewer = this->viewers[name];
+
+        this->setSpinBoxesValues(viewer->imgSize);
 
         this->comboBoxes["Interpolation"]->blockSignals(true);
-        int idx = this->comboBoxes["Interpolation"]->findText(Interpolation::toString(this->viewers[name]->interpolationMethod).c_str());
+        int idx = this->comboBoxes["Interpolation"]->findText(Interpolation::toString(viewer->interpolationMethod).c_str());
         this->comboBoxes["Interpolation"]->setCurrentIndex(idx);
         this->comboBoxes["Interpolation"]->blockSignals(false);
 
         this->objectChoosers["From"]->blockSignals(true);
-        idx = this->objectChoosers["From"]->findText(this->viewers[name]->gridNames[0].c_str());
+        idx = this->objectChoosers["From"]->findText(viewer->gridNames[0].c_str());
         this->objectChoosers["From"]->setCurrentIndex(idx);
         this->objectChoosers["From"]->blockSignals(false);
 
         this->objectChoosers["To"]->blockSignals(true);
-        idx = this->objectChoosers["To"]->findText(this->viewers[name]->gridNames[1].c_str());
+        idx = this->objectChoosers["To"]->findText(viewer->gridNames[1].c_str());
         this->objectChoosers["To"]->setCurrentIndex(idx);
         this->objectChoosers["To"]->blockSignals(false);
 
         this->checkBoxes["UseBack"]->blockSignals(true);
         this->checkBoxes["UseFront"]->blockSignals(true);
 
-        std::vector imgsToDraw = this->viewers[name]->imagesToDraw;
+        std::vector imgsToDraw = viewer->imagesToDraw;
         this->checkBoxes["UseBack"]->setChecked(std::find(imgsToDraw.begin(), imgsToDraw.end(), 0) != imgsToDraw.end());
         this->checkBoxes["UseFront"]->setChecked(std::find(imgsToDraw.begin(), imgsToDraw.end(), 1) != imgsToDraw.end());
 
@@ -1082,9 +1123,27 @@ public slots:
         this->checkBoxes["UseFront"]->blockSignals(false);
 
         this->sliders["SliderX"]->blockSignals(true);
-        this->sliders["SliderX"]->setValue(this->viewers[name]->sliceIdx);
-        this->sliders["SliderX"]->setMaximum(this->viewers[name]->imgSize.z-1);
+        this->sliders["SliderX"]->setValue(viewer->sliceIdx);
+        this->sliders["SliderX"]->setMaximum(viewer->imgSize.z-1);
         this->sliders["SliderX"]->blockSignals(false);
+
+        this->blockSignalsInGroup("GroupSide", true);
+        if(viewer->direction == glm::vec3(1., 0., 0.)) {
+            this->buttons["SideX"]->setChecked(true);
+            this->buttons["SideY"]->setChecked(false);
+            this->buttons["SideZ"]->setChecked(false);
+        }
+        if(viewer->direction == glm::vec3(0., 1., 0.)) {
+            this->buttons["SideX"]->setChecked(false);
+            this->buttons["SideY"]->setChecked(true);
+            this->buttons["SideZ"]->setChecked(false);
+        }
+        if(viewer->direction == glm::vec3(0., 0., 1.)) {
+            this->buttons["SideX"]->setChecked(false);
+            this->buttons["SideY"]->setChecked(false);
+            this->buttons["SideZ"]->setChecked(true);
+        }
+        this->blockSignalsInGroup("GroupSide", false);
     }
 
     void init(Scene * scene) {
@@ -1137,9 +1196,9 @@ public slots:
         this->addWithLabel(WidgetType::H_GROUP, "GroupSide", "Side");
         this->addAllNextWidgetsToGroup("GroupSide");
 
-        this->add(WidgetType::BUTTON, "SideX", "X");
-        this->add(WidgetType::BUTTON, "SideY", "Y");
-        this->add(WidgetType::BUTTON, "SideZ", "Z");
+        this->add(WidgetType::BUTTON_CHECKABLE_AUTOEXCLUSIVE, "SideX", "X");
+        this->add(WidgetType::BUTTON_CHECKABLE_AUTOEXCLUSIVE, "SideY", "Y");
+        this->add(WidgetType::BUTTON_CHECKABLE_AUTOEXCLUSIVE, "SideZ", "Z");
 
         this->addAllNextWidgetsToDefaultGroup();
 
@@ -1265,14 +1324,18 @@ public slots:
             if(id == "X" || id == "Y" || id == "Z" || id == "Interpolation" || id == "UseBack" || id == "UseFront" || id == "From" || id == "To" || id == "Auto")
                 this->updateImageViewer();
 
-            if(id == "SideX")
-                this->addViewer("ViewX", glm::vec3(1., 0., 0.));
-
-            if(id == "SideY")
-                this->addViewer("ViewY", glm::vec3(0., 1., 0.));
-
-            if(id == "SideZ")
-                this->addViewer("ViewZ", glm::vec3(0., 0., 1.));
+            if(id == "SideX" || id == "SideY" || id == "SideZ") {
+                if(!this->noViewerSelected()) {
+                    if(id == "SideX")
+                        this->viewers[this->selectedViewer]->direction = glm::vec3(1., 0., 0.);
+                    if(id == "SideY")
+                        this->viewers[this->selectedViewer]->direction = glm::vec3(0., 1., 0.);
+                    if(id == "SideZ")
+                        this->viewers[this->selectedViewer]->direction = glm::vec3(0., 0., 1.);
+                    this->backImageChanged(scene);
+                    this->updateImageViewer();
+                }
+            }
 
             if(id == "SliderX") {
                 this->viewers[this->selectedViewer]->setSliceIdx(this->sliders["SliderX"]->value());
@@ -1293,17 +1356,13 @@ public:
     bool initialized;
     PlanarViewer2D(Scene * scene, QWidget *parent = nullptr):PlanarViewForm(scene, parent){
         this->initialized = false;
-        this->labels["GroupSide"]->hide();
-        this->buttons["SideX"]->hide();
-        this->buttons["SideY"]->hide();
-        this->buttons["SideZ"]->hide();
     }
 
     void initialize(Scene * scene) {
         if(scene->grids.size() > 0) {
-            this->addViewer("View_X", glm::vec3(1., 0., 0.));
-            this->addViewer("View_Y", glm::vec3(0., 1., 0.));
-            this->addViewer("View_Z", glm::vec3(0., 0., 1.));
+            this->addViewer("View_1", glm::vec3(1., 0., 0.));
+            this->addViewer("View_2", glm::vec3(0., 1., 0.));
+            this->addViewer("View_3", glm::vec3(0., 0., 1.));
             this->initialized = true;
         }
     }
