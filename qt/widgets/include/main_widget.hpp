@@ -727,7 +727,7 @@ public:
 
     // Data
     QImage imageData;// Image data to be painted
-    QSize originalImageSize;// Original image size
+    QSize dataImageSize;// Original image size
     QSize targetImageSize;// Optimal image size according to voxel size, etc
 
     QPoint paintedImageOrigin;
@@ -787,8 +787,8 @@ public:
         this->imageData.fill(QColor(0, 0, 0));
     }
 
-    void setImageSize(const QSize& originalImageSize, const QSize& targetImageSize) {
-        this->originalImageSize = originalImageSize;
+    void setImageSize(const QSize& dataImageSize, const QSize& targetImageSize) {
+        this->dataImageSize = dataImageSize;
         this->targetImageSize = targetImageSize;
         this->zoomSpeed = std::max(this->targetImageSize.width(), this->targetImageSize.height())/10;
 
@@ -798,7 +798,7 @@ public:
     }
 
     void updateImageData(const QImage& image) {
-        if(image.size() == this->originalImageSize) {
+        if(image.size() == this->dataImageSize) {
             this->imageData = image;
         } else {
             //std::cout << "WARNING: trying to add an image in a 2D viewer with incorrect size ! Size expected: [" << this->originalImageSize <<"], size received: [" << image.size() << "]" << std::endl;
@@ -852,7 +852,7 @@ public:
         if(target.contains(event->pos())) {
             QPoint pointInPaintedImage = event->pos() - paintedImageOrigin;
             glm::vec2 ptInPaintedImage(pointInPaintedImage.x(), pointInPaintedImage.y());
-            glm::vec2 targetSize = glm::vec2(originalImageSize.width(), originalImageSize.height());
+            glm::vec2 targetSize = glm::vec2(dataImageSize.width(), dataImageSize.height());
             glm::vec2 srcSize = glm::vec2(paintedImageSize.width(), paintedImageSize.height());
             glm::ivec2 ptInImage = ptInPaintedImage * (targetSize / srcSize);
             Q_EMIT(mouseMovedIn2DPlanarViewer(ptInImage));
@@ -903,8 +903,8 @@ public:
 
     glm::vec3 direction;
 
-    glm::ivec3 imgSize;
-    glm::ivec3 imgNewSize;
+    glm::ivec3 originalImgSize;// Usefull for getting back 3D point
+    glm::ivec3 targetImgSize;
     std::vector<std::string> gridNames;
     std::vector<int> imagesToDraw;
     std::vector<int> alphaValues;
@@ -921,7 +921,7 @@ public:
 
     Image3DViewer(const QString& name, const glm::vec3& side, Scene * scene, QWidget * parent = nullptr): QWidget(parent), name(name), direction(side), scene(scene), isInitialized(false), viewer2D(nullptr) {initLayout(); connect(scene);}
 
-    void init(const glm::vec3& imageSize, const glm::vec3& imageResolution, const int& sliceIdx, const glm::vec3& side, std::vector<std::string> gridNames, std::vector<int> imgToDraw, std::vector<int> alphaValues, std::vector<QColor> colors, Interpolation::Method interpolationMethod) {
+    void init(const glm::vec3& originalImageSize, const glm::vec3& targetImageSize, const glm::vec3& optimalImageSize, const int& sliceIdx, const glm::vec3& side, std::vector<std::string> gridNames, std::vector<int> imgToDraw, std::vector<int> alphaValues, std::vector<QColor> colors, Interpolation::Method interpolationMethod) {
 
         for(auto name : gridNames)
             if(name.empty())
@@ -929,7 +929,8 @@ public:
 
         this->direction = side;
 
-        this->imgSize = imageResolution;
+        this->targetImgSize = targetImageSize;
+        this->originalImgSize = originalImageSize;
 
         this->gridNames = gridNames;
         this->imagesToDraw = imgToDraw;
@@ -938,16 +939,16 @@ public:
         this->interpolationMethod = interpolationMethod;
 
         this->upToDate.clear();
-        this->upToDate = std::vector<std::vector<bool>>(gridNames.size(), std::vector<bool>(this->imgSize.z, false));
+        this->upToDate = std::vector<std::vector<bool>>(gridNames.size(), std::vector<bool>(this->targetImgSize.z, false));
 
         imgData.clear();
         imgData.reserve(gridNames.size());
         for(auto name : gridNames)
-            imgData.push_back(Raw3DImage(this->imgSize, imgFormat));
+            imgData.push_back(Raw3DImage(this->targetImgSize, imgFormat));
 
         this->isInitialized = true;
 
-        this->viewer2D->setImageSize(QSize(imageResolution.x, imageResolution.y), QSize(imageSize.x, imageSize.y));
+        this->viewer2D->setImageSize(QSize(targetImageSize.x, targetImageSize.y), QSize(optimalImageSize.x, optimalImageSize.y));
         this->setSliceIdx(sliceIdx);
 
     }
@@ -991,7 +992,7 @@ private:
             std::swap(slices.y, slices.z);
         if(this->direction == glm::vec3(0., 0., 1.))
             std::swap(slices.z, slices.z);
-        scene->getValues(this->gridNames[imageIdx], slices, bbox, this->imgSize, data, this->interpolationMethod);
+        scene->getValues(this->gridNames[imageIdx], slices, bbox, this->targetImgSize, data, this->interpolationMethod);
         this->imgData[imageIdx].setSlice(sliceIdx, data);
     }
 
@@ -1005,7 +1006,7 @@ private:
 
     QImage mergeImages(const std::vector<int>& indexes, const int& z) {
         QColor color;
-        QPixmap result(this->imgSize.x, this->imgSize.y);
+        QPixmap result(this->targetImgSize.x, this->targetImgSize.y);
         result.fill(Qt::black);
         QPainter painter(&result);
 
@@ -1043,6 +1044,8 @@ private:
     void mouseMovedIn2DViewer(const glm::ivec2& positionOfMouse2D) {
         std::cout << positionOfMouse2D << std::endl;
         glm::vec3 positionOfMouse3D(positionOfMouse2D.x, positionOfMouse2D.y, sliceIdx);
+        glm::vec3 fromTargetToOriginal = glm::vec3(this->originalImgSize) / glm::vec3(this->targetImgSize);
+        positionOfMouse3D *= fromTargetToOriginal;
         this->scene->grids[this->scene->getGridIdx(this->gridNames[0])]->grid->fromImageToWorld(positionOfMouse3D);
         Q_EMIT(mouseMovedInPlanarViewer(positionOfMouse3D));
     }
@@ -1106,7 +1109,7 @@ public slots:
     void updateDefaultValues(const QString& name) {
         const Image3DViewer * viewer = this->viewers[name];
 
-        this->setSpinBoxesValues(viewer->imgSize);
+        this->setSpinBoxesValues(viewer->targetImgSize);
 
         this->comboBoxes["Interpolation"]->blockSignals(true);
         int idx = this->comboBoxes["Interpolation"]->findText(Interpolation::toString(viewer->interpolationMethod).c_str());
@@ -1149,7 +1152,7 @@ public slots:
 
         this->sliders["SliderX"]->blockSignals(true);
         this->sliders["SliderX"]->setValue(viewer->sliceIdx);
-        this->sliders["SliderX"]->setMaximum(viewer->imgSize.z-1);
+        this->sliders["SliderX"]->setMaximum(viewer->targetImgSize.z-1);
         this->sliders["SliderX"]->blockSignals(false);
 
         this->blockSignalsInGroup("GroupSide", true);
@@ -1321,7 +1324,7 @@ public slots:
             return;
         this->sliders["SliderX"]->setMinimum(0);
         this->sliders["SliderX"]->setMaximum(this->getImgDimension().z-1);
-        this->viewers[this->selectedViewer]->init(this->autoComputeBestSize(this->scene), this->getImgDimension(), this->sliders["SliderX"]->value(), this->getSide(), {this->getFromGridName(), this->getToGridName()}, this->getImagesToDraw(), {this->spinBoxes["AlphaBack"]->value(), this->spinBoxes["AlphaFront"]->value()}, {QColor(255.*this->scene->color0.x, 255.*this->scene->color0.y, 255.*this->scene->color0.z), QColor(255.*this->scene->color0_second.x, 255.*this->scene->color0_second.y, 255.*this->scene->color0_second.z)}, this->getInterpolationMethod());
+        this->viewers[this->selectedViewer]->init(this->getBackImgDimension(scene), this->getImgDimension(), this->autoComputeBestSize(this->scene), this->sliders["SliderX"]->value(), this->getSide(), {this->getFromGridName(), this->getToGridName()}, this->getImagesToDraw(), {this->spinBoxes["AlphaBack"]->value(), this->spinBoxes["AlphaFront"]->value()}, {QColor(255.*this->scene->color0.x, 255.*this->scene->color0.y, 255.*this->scene->color0.z), QColor(255.*this->scene->color0_second.x, 255.*this->scene->color0_second.y, 255.*this->scene->color0_second.z)}, this->getInterpolationMethod());
     }
 
     void update(Scene * scene) {
@@ -1492,11 +1495,11 @@ public slots:
         });
 
         QObject::connect(this->fileChoosers["Save image back"], &FileChooser::fileSelected, [this, scene](){
-            scene->writeGreyscaleTIFFImage(this->fileChoosers["Save image back"]->filename.toStdString(), this->imageViewer->imgSize, this->imageViewer->imgData[0].data);
+            scene->writeGreyscaleTIFFImage(this->fileChoosers["Save image back"]->filename.toStdString(), this->imageViewer->targetImgSize, this->imageViewer->imgData[0].data);
         });
 
         QObject::connect(this->fileChoosers["Save image front"], &FileChooser::fileSelected, [this, scene](){
-            scene->writeGreyscaleTIFFImage(this->fileChoosers["Save image front"]->filename.toStdString(), this->imageViewer->imgSize, this->imageViewer->imgData[1].data);
+            scene->writeGreyscaleTIFFImage(this->fileChoosers["Save image front"]->filename.toStdString(), this->imageViewer->targetImgSize, this->imageViewer->imgData[1].data);
         });
 
         QObject::connect(this->buttons["Preview"], &QPushButton::clicked, [this, scene](){
