@@ -908,7 +908,7 @@ public:
     std::vector<std::string> gridNames;
     std::vector<int> imagesToDraw;
     std::vector<int> alphaValues;
-    std::vector<QColor> colors;
+    std::vector<std::pair<QColor, QColor>> colors;
     Interpolation::Method interpolationMethod;
     int sliceIdx;
 
@@ -921,7 +921,7 @@ public:
 
     Image3DViewer(const QString& name, const glm::vec3& side, Scene * scene, QWidget * parent = nullptr): QWidget(parent), name(name), direction(side), scene(scene), isInitialized(false), viewer2D(nullptr) {initLayout(); connect(scene);}
 
-    void init(const glm::vec3& originalImageSize, const glm::vec3& targetImageSize, const glm::vec3& optimalImageSize, const int& sliceIdx, const glm::vec3& side, std::vector<std::string> gridNames, std::vector<int> imgToDraw, std::vector<int> alphaValues, std::vector<QColor> colors, Interpolation::Method interpolationMethod) {
+    void init(const glm::vec3& originalImageSize, const glm::vec3& targetImageSize, const glm::vec3& optimalImageSize, const int& sliceIdx, const glm::vec3& side, std::vector<std::string> gridNames, std::vector<int> imgToDraw, std::vector<int> alphaValues, std::vector<std::pair<QColor, QColor>> colors, Interpolation::Method interpolationMethod) {
 
         for(auto name : gridNames)
             if(name.empty())
@@ -1007,7 +1007,8 @@ private:
     QImage mergeImages(const std::vector<int>& indexes, const int& z) {
         QColor color;
         QPixmap result(this->targetImgSize.x, this->targetImgSize.y);
-        result.fill(Qt::black);
+        //result.fill(Qt::black);
+        result.fill(QPalette::Window);
         QPainter painter(&result);
 
         for(int idx = 0; idx < indexes.size(); ++idx) {
@@ -1015,11 +1016,13 @@ private:
             for(int i = 0; i < img.width(); ++i) {
                 for(int j = 0; j < img.height(); ++j) {
                     QColor color = img.pixelColor(i, j);
-                    if(color == Qt::black) {
+                    if(color == Qt::black && idx > 0) {
                         color.setAlpha(0);
                     } else {
                         float value = float(color.red())/255.;
-                        color = QColor(value*this->colors[idx].red(), value*this->colors[idx].green(), value*this->colors[idx].blue());
+                        color = QColor(this->colors[idx].first.red()*(1.-value)+this->colors[idx].second.red()*value,
+                                       this->colors[idx].first.green()*(1.-value)+this->colors[idx].second.green()*value,
+                                       this->colors[idx].first.blue()*(1.-value)+this->colors[idx].second.blue()*value);
                         color.setAlpha(alphaValues[idx]);
                     }
                     img.setPixelColor(i, j, color);
@@ -1353,12 +1356,25 @@ public slots:
         this->sliders["SliderX"]->setMinimum(0);
         this->sliders["SliderX"]->setMaximum(this->getImgDimension().z-1);
         glm::vec3 finalImageSize = autoComputeBestSize(scene);
-        //if(!this->getFromGridName().empty() && !this->getToGridName().empty())
-        //    finalImageSize = this->scene->getGridImgSize(this->getFromGridName());
         convertVector(finalImageSize);
         glm::vec3 originalImgDimension = this->getBackImgDimension(scene);
         convertVector(originalImgDimension);
-        this->viewers[this->selectedViewer]->init(originalImgDimension, this->getImgDimension(), finalImageSize, this->sliders["SliderX"]->value(), this->getSide(), {this->getFromGridName(), this->getToGridName()}, this->getImagesToDraw(), {this->spinBoxes["AlphaBack"]->value(), this->spinBoxes["AlphaFront"]->value()}, {QColor(255.*this->scene->color0.x, 255.*this->scene->color0.y, 255.*this->scene->color0.z), QColor(255.*this->scene->color0_second.x, 255.*this->scene->color0_second.y, 255.*this->scene->color0_second.z)}, this->getInterpolationMethod());
+        this->viewers[this->selectedViewer]->init(
+                    originalImgDimension,
+                    this->getImgDimension(),
+                    finalImageSize, this->sliders["SliderX"]->value(),
+                    this->getSide(),
+                    {this->getFromGridName(), this->getToGridName()},
+                    this->getImagesToDraw(),
+                    {this->spinBoxes["AlphaBack"]->value(), this->spinBoxes["AlphaFront"]->value()},
+                    {std::make_pair(
+                        QColor(255.*this->scene->color0.x, 255.*this->scene->color0.y, 255.*this->scene->color0.z),
+                        QColor(255.*this->scene->color1.x, 255.*this->scene->color1.y, 255.*this->scene->color1.z)),
+                     std::make_pair(
+                        QColor(255.*this->scene->color0_second.x, 255.*this->scene->color0_second.y, 255.*this->scene->color0_second.z),
+                        QColor(255.*this->scene->color1_second.x, 255.*this->scene->color1_second.y, 255.*this->scene->color1_second.z))
+                    },
+                    this->getInterpolationMethod());
     }
 
     void update(Scene * scene) {
