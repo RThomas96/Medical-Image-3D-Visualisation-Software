@@ -1115,15 +1115,25 @@ public slots:
 
         this->objectChoosers["From"]->blockSignals(true);
         idx = 0;
-        if(viewer->gridNames.size() > 0)
+        if(viewer->gridNames.size() > 0) {
+            this->spinBoxes["AlphaBack"]->blockSignals(true);
+            this->spinBoxes["AlphaBack"]->setValue(viewer->alphaValues[0]);
+            this->spinBoxes["AlphaBack"]->blockSignals(false);
+
             idx = this->objectChoosers["From"]->findText(viewer->gridNames[0].c_str());
+        }
         this->objectChoosers["From"]->setCurrentIndex(idx);
         this->objectChoosers["From"]->blockSignals(false);
 
         this->objectChoosers["To"]->blockSignals(true);
         idx = 0;
-        if(viewer->gridNames.size() > 1)
+        if(viewer->gridNames.size() > 1) {
+            this->spinBoxes["AlphaFront"]->blockSignals(true);
+            this->spinBoxes["AlphaFront"]->setValue(viewer->alphaValues[1]);
+            this->spinBoxes["AlphaFront"]->blockSignals(false);
+
             idx = this->objectChoosers["To"]->findText(viewer->gridNames[1].c_str());
+        }
         this->objectChoosers["To"]->setCurrentIndex(idx);
         this->objectChoosers["To"]->blockSignals(false);
 
@@ -1159,10 +1169,23 @@ public slots:
             this->buttons["SideZ"]->setChecked(true);
         }
         this->blockSignalsInGroup("GroupSide", false);
+
     }
 
     void init(Scene * scene) {
+
+        this->add(WidgetType::H_GROUP, "GroupHeader");
+        this->addAllNextWidgetsToGroup("GroupHeader");
+
         this->add(WidgetType::LABEL, "SelectedViewer", "NONE");
+        this->add(WidgetType::BUTTON, "Rotate");
+        QPixmap pixmap(QString("../resources/rotate.svg"));
+        QIcon ButtonIcon(pixmap);
+        this->buttons["Rotate"]->setIcon(ButtonIcon);
+        this->buttons["Rotate"]->setIconSize(pixmap.rect().size());
+        this->buttons["Rotate"]->setText("");
+
+        this->addAllNextWidgetsToDefaultGroup();
 
         this->addWithLabel(WidgetType::SLIDER, "SliderX", "X");
         this->sliders["SliderX"]->setMinimum(0);
@@ -1195,7 +1218,7 @@ public slots:
 
         this->addAllNextWidgetsToDefaultGroup();
 
-        this->add(WidgetType::COMBO_BOX, "Interpolation", "Interpolation");
+        this->addWithLabel(WidgetType::COMBO_BOX, "Interpolation", "Interpolation");
         this->setComboChoices("Interpolation", Interpolation::toStringList());
 
         this->addWithLabel(WidgetType::H_GROUP, "GroupResolution", "Resolution");
@@ -1224,8 +1247,10 @@ public slots:
 
         this->spinBoxes["AlphaBack"]->setMinimum(0);
         this->spinBoxes["AlphaBack"]->setMaximum(255);
+        this->spinBoxes["AlphaBack"]->setValue(255);
         this->spinBoxes["AlphaFront"]->setMinimum(0);
         this->spinBoxes["AlphaFront"]->setMaximum(255);
+        this->spinBoxes["AlphaFront"]->setValue(255);
 
         /****/
 
@@ -1338,7 +1363,7 @@ public slots:
             if(id == "From" || id == "Auto")
                 this->backImageChanged(scene);
 
-            if(id == "X" || id == "Y" || id == "Z" || id == "Interpolation" || id == "UseBack" || id == "UseFront" || id == "From" || id == "To" || id == "Auto")
+            if(id == "X" || id == "Y" || id == "Z" || id == "Interpolation" || id == "UseBack" || id == "UseFront" || id == "From" || id == "To" || id == "Auto" || id == "AlphaBack" || id == "AlphaFront")
                 this->updateImageViewer();
 
             if(id == "SideX" || id == "SideY" || id == "SideZ") {
