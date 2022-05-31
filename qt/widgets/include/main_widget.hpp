@@ -1193,12 +1193,19 @@ public slots:
         this->addAllNextWidgetsToGroup("GroupHeader");
 
         this->add(WidgetType::LABEL, "SelectedViewer", "NONE");
-        this->add(WidgetType::BUTTON, "Rotate");
-        QPixmap pixmap(QString("../resources/rotate.svg"));
-        QIcon ButtonIcon(pixmap);
-        this->buttons["Rotate"]->setIcon(ButtonIcon);
-        this->buttons["Rotate"]->setIconSize(pixmap.rect().size());
-        this->buttons["Rotate"]->setText("");
+        //this->add(WidgetType::BUTTON, "Rotate");
+        //QPixmap pixmap(QString("../resources/rotate.svg"));
+        //QIcon ButtonIcon(pixmap);
+        //this->buttons["Rotate"]->setIcon(ButtonIcon);
+        //this->buttons["Rotate"]->setText("");
+        //this->buttons["Rotate"]->setIconSize(pixmap.rect().size());
+
+        this->add(WidgetType::BUTTON_CHECKABLE, "Link");
+        QPixmap pixmap2(QString("../resources/link.svg"));
+        QIcon ButtonIcon2(pixmap2);
+        this->buttons["Link"]->setIcon(ButtonIcon2);
+        this->buttons["Link"]->setText("");
+        this->buttons["Link"]->setIconSize(pixmap2.rect().size());
 
         this->addAllNextWidgetsToDefaultGroup();
 
@@ -1331,12 +1338,27 @@ public slots:
         return !this->viewers[this->selectedViewer];
     }
 
+    void convertVector(glm::vec3& vec) {
+        if(this->getSide() == glm::vec3(1., 0., 0.))
+            std::swap(vec.x, vec.z);
+        if(this->getSide() == glm::vec3(0., 1., 0.))
+            std::swap(vec.y, vec.z);
+        if(this->getSide() == glm::vec3(0., 0., 1.))
+            std::swap(vec.z, vec.z);
+    }
+
     void updateImageViewer() {
         if(this->noViewerSelected())
             return;
         this->sliders["SliderX"]->setMinimum(0);
         this->sliders["SliderX"]->setMaximum(this->getImgDimension().z-1);
-        this->viewers[this->selectedViewer]->init(this->getBackImgDimension(scene), this->getImgDimension(), this->autoComputeBestSize(this->scene), this->sliders["SliderX"]->value(), this->getSide(), {this->getFromGridName(), this->getToGridName()}, this->getImagesToDraw(), {this->spinBoxes["AlphaBack"]->value(), this->spinBoxes["AlphaFront"]->value()}, {QColor(255.*this->scene->color0.x, 255.*this->scene->color0.y, 255.*this->scene->color0.z), QColor(255.*this->scene->color0_second.x, 255.*this->scene->color0_second.y, 255.*this->scene->color0_second.z)}, this->getInterpolationMethod());
+        glm::vec3 finalImageSize = autoComputeBestSize(scene);
+        //if(!this->getFromGridName().empty() && !this->getToGridName().empty())
+        //    finalImageSize = this->scene->getGridImgSize(this->getFromGridName());
+        convertVector(finalImageSize);
+        glm::vec3 originalImgDimension = this->getBackImgDimension(scene);
+        convertVector(originalImgDimension);
+        this->viewers[this->selectedViewer]->init(originalImgDimension, this->getImgDimension(), finalImageSize, this->sliders["SliderX"]->value(), this->getSide(), {this->getFromGridName(), this->getToGridName()}, this->getImagesToDraw(), {this->spinBoxes["AlphaBack"]->value(), this->spinBoxes["AlphaFront"]->value()}, {QColor(255.*this->scene->color0.x, 255.*this->scene->color0.y, 255.*this->scene->color0.z), QColor(255.*this->scene->color0_second.x, 255.*this->scene->color0_second.y, 255.*this->scene->color0_second.z)}, this->getInterpolationMethod());
     }
 
     void update(Scene * scene) {
@@ -1396,6 +1418,14 @@ public slots:
 
             if(id == "SliderX") {
                 this->viewers[this->selectedViewer]->setSliceIdx(this->sliders["SliderX"]->value());
+                if(this->buttons["Link"]->isChecked()) {
+                    if(this->viewers[this->selectedViewer]->direction == glm::vec3(1., 0., 0.))
+                        this->scene->slotSetPlaneDisplacementX(float(this->sliders["SliderX"]->value())/float(this->sliders["SliderX"]->maximum()));
+                    if(this->viewers[this->selectedViewer]->direction == glm::vec3(0., 1., 0.))
+                        this->scene->slotSetPlaneDisplacementY(float(this->sliders["SliderX"]->value())/float(this->sliders["SliderX"]->maximum()));
+                    if(this->viewers[this->selectedViewer]->direction == glm::vec3(0., 0., 1.))
+                        this->scene->slotSetPlaneDisplacementZ(float(this->sliders["SliderX"]->value())/float(this->sliders["SliderX"]->maximum()));
+                }
                 this->labels["SliderX"]->setText(std::to_string(this->sliders["SliderX"]->value()).c_str());
             }
         });
