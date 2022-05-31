@@ -1041,10 +1041,22 @@ private:
         }
     }
 
+    void convertVector(glm::vec3& vec) {
+        if(this->direction == glm::vec3(1., 0., 0.))
+            std::swap(vec.x, vec.z);
+        if(this->direction == glm::vec3(0., 1., 0.))
+            std::swap(vec.y, vec.z);
+        if(this->direction == glm::vec3(0., 0., 1.))
+            std::swap(vec.z, vec.z);
+    }
+
     void mouseMovedIn2DViewer(const glm::ivec2& positionOfMouse2D) {
         std::cout << positionOfMouse2D << std::endl;
         glm::vec3 positionOfMouse3D(positionOfMouse2D.x, positionOfMouse2D.y, sliceIdx);
-        glm::vec3 fromTargetToOriginal = glm::vec3(this->originalImgSize) / glm::vec3(this->targetImgSize);
+        glm::vec3 convertedTargetImgSize = this->targetImgSize;
+        convertVector(convertedTargetImgSize);
+        convertVector(positionOfMouse3D);
+        glm::vec3 fromTargetToOriginal = glm::vec3(this->originalImgSize) / glm::vec3(convertedTargetImgSize);
         positionOfMouse3D *= fromTargetToOriginal;
         this->scene->grids[this->scene->getGridIdx(this->gridNames[0])]->grid->fromImageToWorld(positionOfMouse3D);
         Q_EMIT(mouseMovedInPlanarViewer(positionOfMouse3D));
