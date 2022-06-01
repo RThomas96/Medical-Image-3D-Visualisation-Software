@@ -42,6 +42,7 @@ namespace UITool {
         this->enable(); 
         this->isSelected = false;
         this->isAtRangeForGrab = false;
+        this->setWheelSensitivity(0);
     }
 
 	glm::vec3 Manipulator::getManipPosition() const {
