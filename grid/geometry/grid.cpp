@@ -199,9 +199,9 @@ void Grid::sampleSliceGridValues(const glm::vec3& slice, const std::pair<glm::ve
         bbMax.x = std::floor(bbMax.x) + 1;
         bbMax.y = std::floor(bbMax.y) + 1;
         bbMax.z = std::floor(bbMax.z) + 1;
-        if((tetIdx%printOcc) == 0) {
-            std::cout << "Loading: " << (float(tetIdx)/float(this->mesh.size())) * 100. << "%" << std::endl;
-        }
+        //if((tetIdx%printOcc) == 0) {
+        //    std::cout << "Loading: " << (float(tetIdx)/float(this->mesh.size())) * 100. << "%" << std::endl;
+        //}
         if(slice.y == -1 && slice.z == -1) {
             bbMin.x = slice.x;
             bbMax.x = slice.x+1;
@@ -468,9 +468,9 @@ void Grid::sampleGridValues(const std::pair<glm::vec3, glm::vec3>& areaToSample,
         bbMax.x = std::floor(bbMax.x) + 1;
         bbMax.y = std::floor(bbMax.y) + 1;
         bbMax.z = std::floor(bbMax.z) + 1;
-        if((tetIdx%printOcc) == 0) {
-            std::cout << "Loading: " << (float(tetIdx)/float(this->mesh.size())) * 100. << "%" << std::endl;
-        }
+        //if((tetIdx%printOcc) == 0) {
+        //    std::cout << "Loading: " << (float(tetIdx)/float(this->mesh.size())) * 100. << "%" << std::endl;
+        //}
         for(int k = bbMin.z; k < int(bbMax.z); ++k) {
             for(int j = bbMin.y; j < int(bbMax.y); ++j) {
                 for(int i = bbMin.x; i < int(bbMax.x); ++i) {

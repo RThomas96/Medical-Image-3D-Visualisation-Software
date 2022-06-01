@@ -1134,7 +1134,7 @@ public slots:
         this->selectedViewer = name;
         this->labels["SelectedViewer"]->setText(name);
         this->updateDefaultValues(name);
-        this->getBackSlideValue();
+        this->recoverSlideValue();
         this->updateSlice();
     }
 
@@ -1441,9 +1441,10 @@ public slots:
 
         if(side.z > 0)
             this->viewersValues[this->selectedViewer].z = value;
+        std::cout << "Store value: " << value << std::endl;
     }
 
-    void getBackSlideValue() {
+    void recoverSlideValue() {
         if(this->noViewerSelected())
             return;
         glm::vec3 side = this->getSide();
@@ -1456,9 +1457,7 @@ public slots:
 
         if(side.z > 0)
             value = this->viewersValues[this->selectedViewer].z;
-        this->sliders["SliderX"]->blockSignals(true);
         this->sliders["SliderX"]->setValue(value);
-        this->sliders["SliderX"]->blockSignals(false);
     }
 
     void updateSlice() {
@@ -1495,6 +1494,7 @@ public slots:
                 this->updateImageViewer();
 
             if(id == "SideX" || id == "SideY" || id == "SideZ") {
+                this->storeCurrentSlideValue();
                 if(id == "SideX")
                     this->viewers[this->selectedViewer]->direction = glm::vec3(1., 0., 0.);
                 if(id == "SideY")
@@ -1503,6 +1503,7 @@ public slots:
                     this->viewers[this->selectedViewer]->direction = glm::vec3(0., 0., 1.);
                 this->backImageChanged(scene);
                 this->updateImageViewer();
+                this->recoverSlideValue();
             }
 
             if(id == "SliderX" || id == "SideX" || id == "SideY" || id == "SideZ" || id == "Link") {
