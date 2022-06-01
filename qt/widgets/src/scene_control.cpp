@@ -119,8 +119,8 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, QWidget* parent) :
 	this->layout_widgets_green = new QHBoxLayout;
 	this->groupbox_red->setCheckable(true);
 	this->groupbox_green->setCheckable(true);
-	this->groupbox_red->setTitle("Channel 1");
-	this->groupbox_green->setTitle("Channel 2");
+    this->groupbox_red->setTitle("Grid 1");
+    this->groupbox_green->setTitle("Grid 2");
 
 	// Texture bounds for red and green channels :
 	this->rangeslider_red	= new DoubleSlider;
@@ -348,19 +348,23 @@ void ControlPanel::updateRGBMode() {
 
 	if (! r && ! g) {
 		this->sceneToControl->setColorChannel(ColorChannel::None);
-		return;
+        this->sceneToControl->setGridsToDraw({});
+        return;
 	}
 	if (r && ! g) {
 		this->sceneToControl->setColorChannel(ColorChannel::RedOnly);
-		return;
+        this->sceneToControl->setGridsToDraw({0});
+        return;
 	}
 	if (! r && g) {
 		this->sceneToControl->setColorChannel(ColorChannel::GreenOnly);
-		return;
+        this->sceneToControl->setGridsToDraw({1});
+        return;
 	}
 	if (r && g) {
 		this->sceneToControl->setColorChannel(ColorChannel::RedAndGreen);
-		return;
+        this->sceneToControl->setGridsToDraw({0, 1});
+        return;
 	}
 }
 

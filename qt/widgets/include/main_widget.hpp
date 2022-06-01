@@ -2110,7 +2110,7 @@ public slots:
     void connect(QActionManager& actionManager) {
         toolBar->addAction(actionManager.getAction("ToggleDisplayMesh"));
         toolBar->addAction(actionManager.getAction("ToggleDisplayGrid"));
-        toolBar->addAction(actionManager.getAction("ToggleDisplayPlanarViewers"));
+        toolBar->addAction(actionManager.getAction("ToggleDisplayMultiView"));
         toolBar->addAction(actionManager.getAction("ToggleDisplayWireframe"));
     };
 };

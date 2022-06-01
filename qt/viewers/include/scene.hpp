@@ -553,6 +553,8 @@ public slots:
     void toggleDisplayMesh() { this->displayMesh = !this->displayMesh;};
     void toggleWireframe();
     void toggleWireframe(bool value);
+    void setGridsToDraw(std::vector<int> indices);
+    void setMultiGridRendering(bool value) {this->multiGridRendering = value;};
 
     // ************************ //
 
@@ -636,9 +638,11 @@ public:
 
     int maximumTextureSize;// Set by the viewer
     int gridToDraw = -1;
+    std::vector<int> gridsToDraw;
 
     float distanceFromCamera;
 
+    bool multiGridRendering;
     bool displayGrid;
     bool displayMesh;
     bool previewCursorInPlanarView;

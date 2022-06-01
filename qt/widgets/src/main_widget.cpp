@@ -335,11 +335,11 @@ void MainWidget::setupActions() {
     this->actionManager->createQActionToggleButton("ToggleDisplayMesh", "Mesh", "M", "Display/Show mesh", "visible", "hidden");
     QObject::connect(this->actionManager->getAction("ToggleDisplayMesh"), &QAction::triggered, [this](){this->scene->toggleDisplayMesh();});
 
-    this->actionManager->createQActionToggleButton("ToggleDisplayGrid", "Grid", "G", "Display/Show grid", "visible", "hidden");
+    this->actionManager->createQActionToggleButton("ToggleDisplayGrid", "Grids", "G", "Display/Show grid", "visible", "hidden");
     QObject::connect(this->actionManager->getAction("ToggleDisplayGrid"), &QAction::triggered, [this](){this->scene->slotToggleDisplayGrid();});
 
-    this->actionManager->createQActionToggledButton("ToggleDisplayPlanarViewers", "PView", "P", "Display/Show planar viewer", "visible", "hidden");
-    //QObject::connect(this->actionManager->getAction("ToggleDisplayPlanarViewers"), &QAction::triggered, [this](){this->toggleDisplayPlanarViewers();});
+    this->actionManager->createQActionToggledButton("ToggleDisplayMultiView", "MView", "M", "Display/Show multi grid display", "visible", "hidden");
+    QObject::connect(this->actionManager->getAction("ToggleDisplayMultiView"), &QAction::triggered, [this](){this->scene->setMultiGridRendering(!this->actionManager->getAction("ToggleDisplayMultiView")->isChecked()); this->controlPanel->updateRGBMode();});
 
     this->actionManager->createQActionToggledButton("ToggleDisplayWireframe", "TetM", "W", "Display/Show the tethraedral mesh wireframe", "visible", "hidden");
     QObject::connect(this->actionManager->getAction("ToggleDisplayWireframe"), &QAction::triggered, [this](){this->scene->toggleWireframe();});

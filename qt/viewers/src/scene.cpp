@@ -149,6 +149,7 @@ Scene::Scene() :
     this->displayGrid = true;
     this->displayMesh = true;
     this->previewCursorInPlanarView = false;
+    this->multiGridRendering = false;
 }
 
 Scene::~Scene(void) {
@@ -1916,16 +1917,21 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 	//	}
 	//} else if (this->drawMode == DrawMode::Volumetric || this->drawMode == DrawMode::VolumetricBoxed) {
     if(this->displayGrid) {
-        if(this->grids.size() > 0) {
-            this->drawGridVolumetricView(mvMat, pMat, camPos, this->grids[gridToDraw]);
-            //this->drawPlanes(mvMat, pMat, this->drawMode == DrawMode::Solid);
+        if(this->multiGridRendering) {
+            if(this->grids.size() > 0) {
+                for(auto i : this->gridsToDraw) {
+                    if(i >= 0 && i < this->grids.size()) {
+                        this->gridToDraw = i;
+                        this->drawGridVolumetricView(mvMat, pMat, camPos, this->grids[gridToDraw]);
+                        //this->drawPlanes(mvMat, pMat, this->drawMode == DrawMode::Solid);
+                    }
+                }
+            }
+        } else {
+            if(this->grids.size() > 0) {
+                this->drawGridVolumetricView(mvMat, pMat, camPos, this->grids[gridToDraw]);
+            }
         }
-
-        // Multi grid rendering version
-        //for (std::size_t i = 0; i < this->grids.size(); ++i) {
-        //    this->gridToDraw = i;
-        //    this->drawGridVolumetricView(mvMat, pMat, camPos, this->grids[i]);
-        //}
     }
 
 //		if (this->drawMode == DrawMode::VolumetricBoxed) {
@@ -2637,9 +2643,10 @@ void Scene::setColorFunction_r(ColorFunction _c) {
 	} else if (_c == ColorFunction::HSV2RGB) {
 		_c = ColorFunction::HistologyHandE;
 	}
-	for (auto& grid : grids) {
-		grid->colorChannelAttributes[0].setColorScale(static_cast<int>(_c));
-	}
+    if(grids.size() > 0) {
+        grids[0]->colorChannelAttributes[0].setColorScale(static_cast<int>(_c));
+        grids[0]->colorChannelAttributes[1].setColorScale(static_cast<int>(_c));
+    }
 	this->shouldUpdateUBOData = true;
 }
 
@@ -2656,10 +2663,11 @@ void Scene::setColorFunction_g(ColorFunction _c) {
 	if (_c == ColorFunction::HSV2RGB) {
 		_c = ColorFunction::HistologyHandE;
 	}
-	for (auto& grid : grids) {
-		grid->colorChannelAttributes[1].setColorScale(static_cast<int>(_c));
-	}
-	this->shouldUpdateUBOData = true;
+    if(grids.size() > 1) {
+        grids[1]->colorChannelAttributes[0].setColorScale(static_cast<int>(_c));
+        grids[1]->colorChannelAttributes[1].setColorScale(static_cast<int>(_c));
+    }
+    this->shouldUpdateUBOData = true;
 }
 
 void Scene::slotSetPlaneDisplacementX(float scalar) {
@@ -4146,3 +4154,7 @@ glm::vec3 Scene::getGridVoxelSize(const std::string& name) {
 
 template<typename MeshToolType>
 MeshToolType* Scene::getMeshTool() { return dynamic_cast<MeshToolType*>(this->glMeshManipulator->meshManipulator); };
+
+void Scene::setGridsToDraw(std::vector<int> indices) {
+    this->gridsToDraw = indices;
+}
