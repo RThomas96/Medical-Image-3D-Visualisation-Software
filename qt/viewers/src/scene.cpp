@@ -968,8 +968,6 @@ void Scene::drawGridMonoPlaneView(glm::vec2 fbDims, planes _plane, planeHeading 
 	glBindVertexArray(this->vao);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vbo_SinglePlaneElement);
 
-// Do for all grids :
-#warning drawPlaneView() : Only draws the first grid !
 	if (not this->grids.empty()) {
 		this->prepareUniformsMonoPlaneView(_plane, _heading, fbDims, zoomRatio, offset, this->grids[this->gridToDraw]);
 
@@ -1013,8 +1011,6 @@ void Scene::drawGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camP
 void Scene::drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane) {
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
-
-#warning drawPlanes() : Only draws the first grid for each plane !
 
 	// Plane X :
 	glUseProgram(this->program_Plane3D);
@@ -1310,7 +1306,7 @@ void Scene::prepareUniformsPlanes(GLfloat* mvMat, GLfloat* pMat, planes _plane, 
 
 	// Generate the data we need :
 #warning Transform API is still in-progress.
-	Image::bbox_t bbws = Image::bbox_t(grid->grid->getBoundingBox());
+    Image::bbox_t bbws = Image::bbox_t(grid->grid->getBoundingBox());
 	glm::vec3 dims	   = glm::convert_to<glm::vec3::value_type>(grid->grid->getResolution()) * grid->voxelDimensions;
 	glm::vec3 size	   = bbws.getDiagonal();
 	GLint plIdx		   = (_plane == planes::x) ? 1 : (_plane == planes::y) ? 2 :
@@ -1745,9 +1741,7 @@ void Scene::prepareUniformsGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm
 	GLint location_vMat = getUniform("vMat");
 	GLint location_pMat = getUniform("pMat");
 
-//const glm::mat4& gridTransfo = _grid->grid->getTransform_GridToWorld();
-#warning Transform API is still in-progress.
-	glUniformMatrix4fv(location_mMat, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.f)));
+    glUniformMatrix4fv(location_mMat, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.f)));
 	glUniformMatrix4fv(location_vMat, 1, GL_FALSE, mvMat);
 	glUniformMatrix4fv(location_pMat, 1, GL_FALSE, pMat);
 
@@ -1784,10 +1778,10 @@ void Scene::prepareUniformsGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm
 	GLint location_color0Alt = getUniform("color0Alternate");
 	GLint location_color1Alt = getUniform("color1Alternate");
 
-	glUniform3fv(location_color0, 1, glm::value_ptr(this->color0));
-	glUniform3fv(location_color1, 1, glm::value_ptr(this->color1));
-	glUniform3fv(location_color0Alt, 1, glm::value_ptr(this->color0_second));
-	glUniform3fv(location_color1Alt, 1, glm::value_ptr(this->color1_second));
+    glUniform3fv(location_color0, 1, glm::value_ptr(this->color0));
+    glUniform3fv(location_color1, 1, glm::value_ptr(this->color1));
+    glUniform3fv(location_color0Alt, 1, glm::value_ptr(this->color0_second));
+    glUniform3fv(location_color1Alt, 1, glm::value_ptr(this->color1_second));
 
 	GLint location_colorScales0 = getUniform("colorScales[0]");
 	GLint location_colorScales1 = getUniform("colorScales[1]");
@@ -1804,13 +1798,17 @@ void Scene::prepareUniformsGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm
 	glUniform1i(location_colorScales1, tex);
 	tex++;
 
+    GLuint colorScale = this->tex_colorScale_user0;
+    if(this->gridToDraw > 0)
+        colorScale = this->tex_colorScale_user1;
+
 	glActiveTexture(GL_TEXTURE0 + tex);
-	glBindTexture(GL_TEXTURE_1D, this->tex_colorScale_user0);
+    glBindTexture(GL_TEXTURE_1D, colorScale);
 	glUniform1i(location_colorScales2, tex);
 	tex++;
 
 	glActiveTexture(GL_TEXTURE0 + tex);
-	glBindTexture(GL_TEXTURE_1D, this->tex_colorScale_user1);
+    glBindTexture(GL_TEXTURE_1D, colorScale);
 	glUniform1i(location_colorScales3, tex);
 	tex++;
 
@@ -1922,6 +1920,12 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
             this->drawGridVolumetricView(mvMat, pMat, camPos, this->grids[gridToDraw]);
             //this->drawPlanes(mvMat, pMat, this->drawMode == DrawMode::Solid);
         }
+
+        // Multi grid rendering version
+        //for (std::size_t i = 0; i < this->grids.size(); ++i) {
+        //    this->gridToDraw = i;
+        //    this->drawGridVolumetricView(mvMat, pMat, camPos, this->grids[i]);
+        //}
     }
 
 //		if (this->drawMode == DrawMode::VolumetricBoxed) {
@@ -2792,8 +2796,8 @@ void Scene::newSHADERS_updateUserColorScales() {
 
 	// The color scale 0 first :
 	for (std::size_t i = 0; i < textureSize; ++i) {
-		colorScaleData_user0[i] = glm::mix(this->color0, this->color1, static_cast<float>(i) / textureSize_f);
-		colorScaleData_user1[i] = glm::mix(this->color0_second, this->color1_second, static_cast<float>(i) / textureSize_f);
+        colorScaleData_user0[i] = glm::mix(this->color0, this->color1, static_cast<float>(i) / textureSize_f);
+        colorScaleData_user1[i] = glm::mix(this->color0_second, this->color1_second, static_cast<float>(i) / textureSize_f);
 	}
 
 	colorScaleUploadParameters.minmag.x	 = GL_LINEAR;
@@ -2823,15 +2827,30 @@ void Scene::newSHADERS_updateUserColorScales() {
 
 void Scene::updateCVR() {
 	// For all grids, signal they need to be
+    int i = 0;
 	for (const auto& grid : this->grids) {
-		grid->colorChannelAttributes[0].setMinVisible(this->textureBounds0.x);
-		grid->colorChannelAttributes[0].setMaxVisible(this->textureBounds0.y);
-		grid->colorChannelAttributes[0].setMinColorScale(this->colorBounds0.x);
-		grid->colorChannelAttributes[0].setMaxColorScale(this->colorBounds0.y);
-		grid->colorChannelAttributes[1].setMinVisible(this->textureBounds1.x);
-		grid->colorChannelAttributes[1].setMaxVisible(this->textureBounds1.y);
-		grid->colorChannelAttributes[1].setMinColorScale(this->colorBounds1.x);
-		grid->colorChannelAttributes[1].setMaxColorScale(this->colorBounds1.y);
+
+        glm::vec2 textureBounds = this->textureBounds0;
+        glm::vec2 colorBounds = this->colorBounds0;
+        if(i > 0) {
+            textureBounds = this->textureBounds1;
+            colorBounds = this->colorBounds1;
+        }
+
+        grid->colorChannelAttributes[0].setMinVisible(textureBounds.x);
+        grid->colorChannelAttributes[0].setMaxVisible(textureBounds.y);
+        grid->colorChannelAttributes[0].setMinColorScale(colorBounds.x);
+        grid->colorChannelAttributes[0].setMaxColorScale(colorBounds.y);
+        grid->colorChannelAttributes[1].setMinVisible(textureBounds.x);
+        grid->colorChannelAttributes[1].setMaxVisible(textureBounds.y);
+        grid->colorChannelAttributes[1].setMinColorScale(colorBounds.x);
+        grid->colorChannelAttributes[1].setMaxColorScale(colorBounds.y);
+        i++;
+        // For now handle only one canal
+        //grid->colorChannelAttributes[1].setMinVisible(this->textureBounds1.x);
+        //grid->colorChannelAttributes[1].setMaxVisible(this->textureBounds1.y);
+        //grid->colorChannelAttributes[1].setMinColorScale(this->colorBounds1.x);
+        //grid->colorChannelAttributes[1].setMaxColorScale(this->colorBounds1.y);
 	}
 
 	this->shouldUpdateUBOData = true;
@@ -3905,6 +3924,7 @@ void Scene::changeActiveMesh(const std::string& name) {
     }
     this->changeCurrentTool(this->currentTool);
     this->changeCurrentDeformationMethod(this->currentDeformMethod);
+    this->shouldUpdateUserColorScales = true;
 }
 
 void Scene::changeCurrentTool(UITool::MeshManipulatorType newTool) {
