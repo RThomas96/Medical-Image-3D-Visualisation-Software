@@ -40,6 +40,7 @@ namespace UITool {
 
             void createNewMeshManipulator(BaseMesh * mesh, Scene * scene, MeshManipulatorType type);
 			void toggleDisplayWireframe() { this->displayWireframe = ! this->displayWireframe; }
+            void toggleDisplayWireframe(bool value) { this->displayWireframe = value; }
             void updateManipulatorRadius(float sceneRadius);
 
         public:

@@ -2066,18 +2066,13 @@ public slots:
     void init() {
         this->mainLayout = new QVBoxLayout(this);
         this->mainLayout->setAlignment(Qt::AlignHCenter);
-        //QFont font = this->font();
-        //font.setPointSize(8);
-        //this->setFont(font);
 
         this->toolBar = new QToolBar(this);
         this->toolBar->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
 
-        //this->toolBar->setIconSize(QSize(150, 150));
-
         this->mainLayout->addWidget(this->toolBar);
-        //this->mainLayout->addWidget(this->toolBarRow2);
     };
+
     void connect(QActionManager& actionManager) {
         toolBar->addAction(actionManager.getAction("ToggleDisplayMesh"));
         toolBar->addAction(actionManager.getAction("ToggleDisplayGrid"));
@@ -2244,6 +2239,10 @@ public slots:
 
     void changeActiveMesh() {
         this->actionManager->getAction("ToggleNoneTool")->activate(QAction::Trigger);
+        if(this->actionManager->getAction("ToggleDisplayWireframe")->isChecked())
+            this->scene->toggleWireframe(false);
+        else
+            this->scene->toggleWireframe(true);
         if(this->scene->isGrid(this->combo_mesh->itemText(this->combo_mesh->currentIndex()).toStdString())) {
             Q_EMIT(this->gridSelected());
         } else {

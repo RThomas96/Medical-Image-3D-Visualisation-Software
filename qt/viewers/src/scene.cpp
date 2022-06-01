@@ -3249,6 +3249,10 @@ void Scene::toggleWireframe() {
 	this->glMeshManipulator->toggleDisplayWireframe();
 }
 
+void Scene::toggleWireframe(bool value) {
+    this->glMeshManipulator->toggleDisplayWireframe(value);
+}
+
 void Scene::toggleManipulatorActivation() {
     this->glMeshManipulator->toggleActivation();
 }
