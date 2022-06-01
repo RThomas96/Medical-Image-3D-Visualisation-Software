@@ -485,6 +485,7 @@ signals:
     void selectedPointChanged(std::pair<int, glm::vec3> selectedPoint);
     void meshMoved();
     void colorChanged();
+    void planeControlWidgetNeedUpdate(const glm::vec3& values);
 
 // All these indirections are important because for most of them they interacts with various components of the scene
 // And it allow more flexibility as the scene control ALL the informations to transit from class to class
@@ -508,6 +509,10 @@ public slots:
 	void slotTogglePlaneX(bool display);
 	void slotTogglePlaneY(bool display);
 	void slotTogglePlaneZ(bool display);
+
+    void updatePlaneControlWidget() {
+        Q_EMIT planeControlWidgetNeedUpdate(this->planeDisplacement);
+    }
 
     // *************** //
     // Connected to UI //

@@ -51,6 +51,18 @@ public slots:
         zHSlider->setValue(0);
     }
 
+    void setValues(float x, float y, float z) {
+        xHSlider->blockSignals(true);
+        yHSlider->blockSignals(true);
+        zHSlider->blockSignals(true);
+        xHSlider->setValue(x*float(xHSlider->maximum()));
+        yHSlider->setValue(y*float(yHSlider->maximum()));
+        zHSlider->setValue(z*float(zHSlider->maximum()));
+        xHSlider->blockSignals(false);
+        yHSlider->blockSignals(false);
+        zHSlider->blockSignals(false);
+    }
+
 signals:
     void xSliderValueChanged(float x);
     void ySliderValueChanged(float y);

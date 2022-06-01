@@ -213,6 +213,10 @@ void MainWidget::setupWidgets() {
     QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::clickedDisplayYCut, this->scene, &Scene::slotTogglePlaneY);
     QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::clickedDisplayZCut, this->scene, &Scene::slotTogglePlaneZ);
 
+    QObject::connect(this->scene, &Scene::planeControlWidgetNeedUpdate, [=](const glm::vec3& values) {
+        this->cutPlane_pannel->setValues(values.x, values.y, values.z);
+    });
+
     /***/
 
 	// Viewer(s) creation along with control panel :
@@ -348,18 +352,26 @@ void MainWidget::setupActions() {
     this->actionManager->createQActionToggleButton("ToggleMoveTool", "Move", "Ctrl+M", "Activate move tool", "move");
     QObject::connect(this->actionManager->getAction("ToggleMoveTool"), &QAction::triggered, [this](){this->scene->updateTools(UITool::MeshManipulatorType::POSITION);});
     QObject::connect(this->actionManager->getAction("ToggleMoveTool"), &QAction::triggered, [this](){this->changeCurrentTool(UITool::MeshManipulatorType::POSITION);});
+    QObject::connect(this, &MainWidget::gridSelected, [this](){this->actionManager->getAction("ToggleMoveTool")->setDisabled(true);});
+    QObject::connect(this, &MainWidget::meshSelected, [this](){this->actionManager->getAction("ToggleMoveTool")->setDisabled(false);});
 
     this->actionManager->createQActionToggleButton("ToggleDirectTool", "Direct", "Ctrl+D", "Activate direct tool", "direct");
     QObject::connect(this->actionManager->getAction("ToggleDirectTool"), &QAction::triggered, [this](){this->scene->updateTools(UITool::MeshManipulatorType::DIRECT);});
     QObject::connect(this->actionManager->getAction("ToggleDirectTool"), &QAction::triggered, [this](){this->changeCurrentTool(UITool::MeshManipulatorType::DIRECT);});
+    QObject::connect(this, &MainWidget::gridSelected, [this](){this->actionManager->getAction("ToggleDirectTool")->setDisabled(true);});
+    QObject::connect(this, &MainWidget::meshSelected, [this](){this->actionManager->getAction("ToggleDirectTool")->setDisabled(false);});
 
     this->actionManager->createQActionToggleButton("ToggleARAPTool", "ARAP", "Ctrl+A", "Activate ARAP tool", "araps");
     QObject::connect(this->actionManager->getAction("ToggleARAPTool"), &QAction::triggered, [this](){this->scene->updateTools(UITool::MeshManipulatorType::ARAP);});
     QObject::connect(this->actionManager->getAction("ToggleARAPTool"), &QAction::triggered, [this](){this->changeCurrentTool(UITool::MeshManipulatorType::ARAP);});
+    QObject::connect(this, &MainWidget::gridSelected, [this](){this->actionManager->getAction("ToggleARAPTool")->setDisabled(true);});
+    QObject::connect(this, &MainWidget::meshSelected, [this](){this->actionManager->getAction("ToggleARAPTool")->setDisabled(false);});
 
     this->actionManager->createQActionToggleButton("ToggleRegisterTool", "Register", "Ctrl+R", "Activate Register tool", "register");
     QObject::connect(this->actionManager->getAction("ToggleRegisterTool"), &QAction::triggered, [this](){this->scene->updateTools(UITool::MeshManipulatorType::FIXED_REGISTRATION);});
     QObject::connect(this->actionManager->getAction("ToggleRegisterTool"), &QAction::triggered, [this](){this->changeCurrentTool(UITool::MeshManipulatorType::FIXED_REGISTRATION);});
+    QObject::connect(this, &MainWidget::gridSelected, [this](){this->actionManager->getAction("ToggleRegisterTool")->setDisabled(true);});
+    QObject::connect(this, &MainWidget::meshSelected, [this](){this->actionManager->getAction("ToggleRegisterTool")->setDisabled(false);});
 
     this->actionManager->createQExclusiveActionGroup("ToogleTools", {"ToggleNoneTool", "ToggleMoveTool", "ToggleDirectTool", "ToggleARAPTool", "ToggleRegisterTool"});
 

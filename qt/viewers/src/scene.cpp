@@ -1920,7 +1920,7 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
     if(this->displayGrid) {
         if(this->grids.size() > 0) {
             this->drawGridVolumetricView(mvMat, pMat, camPos, this->grids[gridToDraw]);
-		    //this->drawPlanes(mvMat, pMat, this->drawMode == DrawMode::Solid);
+            //this->drawPlanes(mvMat, pMat, this->drawMode == DrawMode::Solid);
         }
     }
 

@@ -17,6 +17,7 @@
 #include "./scene_control.hpp"
 #include "./user_settings_widget.hpp"
 #include "glm/fwd.hpp"
+#include "qobjectdefs.h"
 
 #include <map>
 
@@ -749,6 +750,7 @@ public:
         this->paintedImageOrigin = QPoint(0, 0);
         this->paintedImageSize = this->imageData.size();
 
+        this->setMouseTracking(true);
         this->activated = false;
         this->layout = new QHBoxLayout();
         this->setLayout(this->layout);
@@ -1088,6 +1090,7 @@ public:
 
     //Image3DViewer * imageViewer;
 
+    std::map<QString, glm::ivec3> viewersValues;// Store viewers values for each side for easier usage
     std::map<QString, Image3DViewer*> viewers;
     QString selectedViewer;
     PlanarViewForm(Scene * scene, QWidget *parent = nullptr):Form(parent), scene(scene){init(scene);connect(scene);}
@@ -1099,6 +1102,8 @@ public slots:
             return;
         this->viewers[name] = new Image3DViewer(name, side, this->scene);
         QObject::connect(this->viewers[name], &Image3DViewer::isSelected, [=](){this->selectViewer(name);});
+
+        this->viewersValues[name] = glm::ivec3(0, 0, 0);
 
         this->selectedViewer = name;
         this->labels["SelectedViewer"]->setText(name);
@@ -1116,9 +1121,12 @@ public slots:
     }
 
     void selectViewer(const QString& name) {
+        this->storeCurrentSlideValue();
         this->selectedViewer = name;
         this->labels["SelectedViewer"]->setText(name);
         this->updateDefaultValues(name);
+        this->getBackSlideValue();
+        this->updateSlice();
     }
 
     void updateDefaultValues(const QString& name) {
@@ -1411,8 +1419,66 @@ public slots:
         return this->objectChoosers["To"]->currentText().toStdString();
     }
 
+    void storeCurrentSlideValue() {
+        if(this->noViewerSelected())
+            return;
+        glm::vec3 side = this->getSide();
+        int value = this->sliders["SliderX"]->value();
+        if(side.x > 0)
+            this->viewersValues[this->selectedViewer].x = value;
+
+        if(side.y > 0)
+            this->viewersValues[this->selectedViewer].y = value;
+
+        if(side.z > 0)
+            this->viewersValues[this->selectedViewer].z = value;
+    }
+
+    void getBackSlideValue() {
+        if(this->noViewerSelected())
+            return;
+        glm::vec3 side = this->getSide();
+        int value = 0;
+        if(side.x > 0)
+            value = this->viewersValues[this->selectedViewer].x;
+
+        if(side.y > 0)
+            value = this->viewersValues[this->selectedViewer].y;
+
+        if(side.z > 0)
+            value = this->viewersValues[this->selectedViewer].z;
+        this->sliders["SliderX"]->blockSignals(true);
+        this->sliders["SliderX"]->setValue(value);
+        this->sliders["SliderX"]->blockSignals(false);
+    }
+
+    void updateSlice() {
+        this->viewers[this->selectedViewer]->setSliceIdx(this->sliders["SliderX"]->value());
+        if(this->buttons["Link"]->isChecked()) {
+            if(this->viewers[this->selectedViewer]->direction == glm::vec3(1., 0., 0.)) {
+                this->scene->slotSetPlaneDisplacementX(float(this->sliders["SliderX"]->value())/float(this->sliders["SliderX"]->maximum()));
+                this->scene->slotSetPlaneDisplacementY(0.);
+                this->scene->slotSetPlaneDisplacementZ(0.);
+            }
+            if(this->viewers[this->selectedViewer]->direction == glm::vec3(0., 1., 0.)) {
+                this->scene->slotSetPlaneDisplacementY(float(this->sliders["SliderX"]->value())/float(this->sliders["SliderX"]->maximum()));
+                this->scene->slotSetPlaneDisplacementZ(0.);
+                this->scene->slotSetPlaneDisplacementX(0.);
+            }
+            if(this->viewers[this->selectedViewer]->direction == glm::vec3(0., 0., 1.)) {
+                this->scene->slotSetPlaneDisplacementZ(float(this->sliders["SliderX"]->value())/float(this->sliders["SliderX"]->maximum()));
+                this->scene->slotSetPlaneDisplacementX(0.);
+                this->scene->slotSetPlaneDisplacementY(0.);
+            }
+            this->scene->updatePlaneControlWidget();
+        }
+        this->labels["SliderX"]->setText(std::to_string(this->sliders["SliderX"]->value()).c_str());
+    }
+
     void connect(Scene * scene) {
         QObject::connect(this, &Form::widgetModified, [this, scene](const QString &id){
+            if(this->noViewerSelected())
+                return;
             if(id == "From" || id == "Auto")
                 this->backImageChanged(scene);
 
@@ -1420,33 +1486,24 @@ public slots:
                 this->updateImageViewer();
 
             if(id == "SideX" || id == "SideY" || id == "SideZ") {
-                if(!this->noViewerSelected()) {
-                    if(id == "SideX")
-                        this->viewers[this->selectedViewer]->direction = glm::vec3(1., 0., 0.);
-                    if(id == "SideY")
-                        this->viewers[this->selectedViewer]->direction = glm::vec3(0., 1., 0.);
-                    if(id == "SideZ")
-                        this->viewers[this->selectedViewer]->direction = glm::vec3(0., 0., 1.);
-                    this->backImageChanged(scene);
-                    this->updateImageViewer();
-                }
+                if(id == "SideX")
+                    this->viewers[this->selectedViewer]->direction = glm::vec3(1., 0., 0.);
+                if(id == "SideY")
+                    this->viewers[this->selectedViewer]->direction = glm::vec3(0., 1., 0.);
+                if(id == "SideZ")
+                    this->viewers[this->selectedViewer]->direction = glm::vec3(0., 0., 1.);
+                this->backImageChanged(scene);
+                this->updateImageViewer();
             }
 
-            if(id == "SliderX") {
-                this->viewers[this->selectedViewer]->setSliceIdx(this->sliders["SliderX"]->value());
-                if(this->buttons["Link"]->isChecked()) {
-                    if(this->viewers[this->selectedViewer]->direction == glm::vec3(1., 0., 0.))
-                        this->scene->slotSetPlaneDisplacementX(float(this->sliders["SliderX"]->value())/float(this->sliders["SliderX"]->maximum()));
-                    if(this->viewers[this->selectedViewer]->direction == glm::vec3(0., 1., 0.))
-                        this->scene->slotSetPlaneDisplacementY(float(this->sliders["SliderX"]->value())/float(this->sliders["SliderX"]->maximum()));
-                    if(this->viewers[this->selectedViewer]->direction == glm::vec3(0., 0., 1.))
-                        this->scene->slotSetPlaneDisplacementZ(float(this->sliders["SliderX"]->value())/float(this->sliders["SliderX"]->maximum()));
-                }
-                this->labels["SliderX"]->setText(std::to_string(this->sliders["SliderX"]->value()).c_str());
+            if(id == "SliderX" || id == "SideX" || id == "SideY" || id == "SideZ" || id == "Link") {
+                this->updateSlice();
             }
         });
 
         QObject::connect(scene, &Scene::colorChanged, [this, scene](){
+            if(this->noViewerSelected())
+                return;
             updateImageViewer();
         });
     }
@@ -2164,6 +2221,11 @@ public slots:
 
     void changeActiveMesh() {
         this->actionManager->getAction("ToggleNoneTool")->activate(QAction::Trigger);
+        if(this->scene->isGrid(this->combo_mesh->itemText(this->combo_mesh->currentIndex()).toStdString())) {
+            Q_EMIT(this->gridSelected());
+        } else {
+            Q_EMIT(this->meshSelected());
+        }
     }
 
     void initialize() {
@@ -2172,6 +2234,9 @@ public slots:
             this->changeActiveMesh();
         }
     }
+signals:
+    void gridSelected();
+    void meshSelected();
 };
 
 #endif	  // QT_INCLUDE_NEIGHBOR_VISU_MAIN_WIDGET_HPP_
