@@ -1916,10 +1916,18 @@ public slots:
 
         if(selectedPoint.first >= 0) {
             this->info_id_data->setText(QString(idx.c_str()));
-            this->info_position_data->setText(QString(pt.c_str()));
+
+            this->info_position_data->setToolTip(QString(pt.c_str()));
+            this->info_position_data->setFixedWidth(175);
+            //this->info_position_data->setText(QString(pt.c_str()));
+
+            QFontMetrics metrics(this->info_position_data->font());
+            QString elidedText = metrics.elidedText(QString(pt.c_str()), Qt::ElideRight, this->info_position_data->width());
+            this->info_position_data->setText(elidedText);
+
         } else {
-            this->info_id_data->setText(QString("-"));
-            this->info_position_data->setText(QString("[]"));
+            //this->info_id_data->setText(QString("-"));
+            //this->info_position_data->setText(QString("[]"));
         }
     }
 };
