@@ -466,11 +466,13 @@ void MainWidget::setupActions() {
             this->planarViewer->viewers["View_1"]->viewer2D->hide();
             this->planarViewer->viewers["View_2"]->viewer2D->hide();
             this->planarViewer->viewers["View_3"]->viewer2D->hide();
+            this->planarViewer->setDisabled(true);
     });
 
     this->actionManager->createQActionButton("Layout2View", "Dual view", "", "Display a 2D view", "dualScreen");
     QObject::connect(this->actionManager->getAction("Layout2View"), &QAction::triggered, [this](){
             this->planarViewer->viewers["View_1"]->viewer2D->show();
+            this->planarViewer->initViewer("View_1");
             this->planarViewer->viewers["View_2"]->viewer2D->hide();
             this->planarViewer->viewers["View_3"]->viewer2D->hide();
     });
@@ -478,8 +480,11 @@ void MainWidget::setupActions() {
     this->actionManager->createQActionButton("Layout4View", "Quad view", "", "Display a 2D view", "quadScreen");
     QObject::connect(this->actionManager->getAction("Layout4View"), &QAction::triggered, [this](){
             this->planarViewer->viewers["View_1"]->viewer2D->show();
+            this->planarViewer->initViewer("View_1");
             this->planarViewer->viewers["View_2"]->viewer2D->show();
+            this->planarViewer->initViewer("View_2");
             this->planarViewer->viewers["View_3"]->viewer2D->show();
+            this->planarViewer->initViewer("View_3");
     });
 
     this->actionManager->createQActionButton("Open", "Open", "", "Open the deformed image", "open");

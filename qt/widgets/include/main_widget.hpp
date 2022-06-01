@@ -1294,9 +1294,34 @@ public slots:
         this->spinBoxes["AlphaFront"]->setMaximum(255);
         this->spinBoxes["AlphaFront"]->setValue(255);
 
+        this->setDisabled(true);
         /****/
 
         //this->addViewer("ViewZ");
+    }
+
+    void initViewer(const QString& name) {
+        this->setDisabled(false);
+        this->selectViewer(name);
+        this->checkBoxes["UseBack"]->blockSignals(true);
+        this->checkBoxes["UseFront"]->blockSignals(true);
+        this->checkBoxes["UseBack"]->setChecked(true);
+        this->checkBoxes["UseFront"]->setChecked(true);
+        this->checkBoxes["UseBack"]->blockSignals(false);
+        this->checkBoxes["UseFront"]->blockSignals(false);
+        this->viewers[name]->viewer2D->activated = true;
+        this->buttons["Link"]->setChecked(false);
+        this->buttons["SideX"]->setChecked(false);
+        this->buttons["SideY"]->setChecked(false);
+        this->buttons["SideZ"]->setChecked(false);
+
+        this->buttons["Link"]->click();
+        if(this->getSide().x == 1.)
+            this->buttons["SideX"]->click();
+        if(this->getSide().y == 1.)
+            this->buttons["SideY"]->click();
+        if(this->getSide().z == 1.)
+            this->buttons["SideZ"]->click();
     }
 
     glm::vec3 getBackImgDimension(Scene * scene) {
