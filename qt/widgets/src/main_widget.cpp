@@ -383,7 +383,23 @@ void MainWidget::setupActions() {
     QObject::connect(this->actionManager->getAction("MoveTool_toggleMoveCage"), &QAction::triggered, [this](){this->scene->toggleBindMeshToCageMove();});
 
     this->actionManager->createQActionButton("MoveTool_reset", "Reset", "R", "Reset the manipulator size", "reset");
-    QObject::connect(this->actionManager->getAction("MoveTool_reset"), &QAction::triggered, [this](){this->scene->changeActiveMesh(std::string((this->combo_mesh->itemText(this->combo_mesh->currentIndex())).toStdString()));});
+    QObject::connect(this->actionManager->getAction("MoveTool_reset"), &QAction::triggered, [this](){
+        QAction * evenAction = this->actionManager->getAction("MoveTool_toggleEvenMode");
+        QAction * linkAction = this->actionManager->getAction("MoveTool_toggleMoveCage");
+        bool evenModeWasActive = evenAction->isChecked();
+        bool linkModeWasActive = linkAction->isChecked();
+        this->scene->changeActiveMesh(std::string((this->combo_mesh->itemText(this->combo_mesh->currentIndex())).toStdString()));
+        evenAction->blockSignals(true);
+        evenAction->setChecked(false);
+        evenAction->blockSignals(false);
+        linkAction->blockSignals(true);
+        linkAction->setChecked(true);
+        linkAction->blockSignals(false);
+        if(evenModeWasActive)
+            evenAction->trigger();
+        if(!linkModeWasActive)
+            linkAction->trigger();
+    });
 
     this->actionManager->createQActionGroup("MoveTool", {"MoveTool_toggleEvenMode", "MoveTool_toggleMoveCage", "MoveTool_reset"});
             
