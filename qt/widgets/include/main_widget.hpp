@@ -1825,10 +1825,11 @@ public slots:
     void prefillFields(const std::vector<std::string>& files) {
         std::cout << "***" << std::endl;
         std::cout << "Parse image to fill informations" << std::endl;
-        SimpleImage image(files);        
-        this->doubleSpinBoxes["SizeVoxelX"]->setValue(image.voxelSize.x);
-        this->doubleSpinBoxes["SizeVoxelY"]->setValue(image.voxelSize.y);
-        this->doubleSpinBoxes["SizeVoxelZ"]->setValue(image.voxelSize.z);
+        std::cout << "Disabled for now" << std::endl;
+        //SimpleImage image(files);
+        //this->doubleSpinBoxes["SizeVoxelX"]->setValue(image.voxelSize.x);
+        //this->doubleSpinBoxes["SizeVoxelY"]->setValue(image.voxelSize.y);
+        //this->doubleSpinBoxes["SizeVoxelZ"]->setValue(image.voxelSize.z);
         this->lineEdits["Name"]->setText(QFileInfo(QString(files[0].c_str())).baseName());
         std::cout << "***" << std::endl;
     }

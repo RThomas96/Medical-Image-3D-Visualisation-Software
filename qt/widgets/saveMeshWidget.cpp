@@ -1,6 +1,7 @@
 
 #include "saveMeshWidget.hpp";
 #include "../viewers/include/scene.hpp"
+#include <QMessageBox>
 
 SaveMeshWidget::SaveMeshWidget(Scene* scene, QWidget* parent) {
 
@@ -49,7 +50,12 @@ void SaveMeshWidget::selectFile() {
 }
 
 void SaveMeshWidget::saveMesh(Scene * scene) {
+    if(this->selectedFile->text().toStdString() == "no file selected") {
+        QMessageBox::critical(this, "Warning", "No file selected.");
+        return;
+    }
     scene->saveMesh(this->comboSave->currentText().toStdString(), this->selectedFile->text().toStdString());
+    this->hide();
 }
 
 void SaveMeshWidget::setPotentialMeshToSave(const QStringList& namesOfPotentialMeshesToSave) {
