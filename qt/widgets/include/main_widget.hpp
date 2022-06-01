@@ -105,6 +105,11 @@ public slots:
         this->type = type;
         this->format = format;
         QObject::connect(this, &QPushButton::clicked, [this](){this->click();});
+        this->resetValues();
+    }
+
+    void resetValues() {
+        this->filename.clear();
     }
 
     void setType(FileChooserType type) {
@@ -167,9 +172,13 @@ public:
 public slots:
 
     void init(FileChooser * fileChooser) {
-        this->setText("[Select a file]");
+        this->resetValues();
         if(fileChooser)
             QObject::connect(fileChooser, &FileChooser::fileSelected, [this, fileChooser](){this->setText(fileChooser->filename);});
+    }
+
+    void resetValues() {
+        this->setText("[Select a file]");
     }
 };
 
@@ -1727,7 +1736,18 @@ public slots:
 
         this->add(WidgetType::BUTTON, "Load");
 
-        /***/
+        this->resetValues();
+    }
+
+    void resetValues() {
+        this->useTetMesh = false;
+        this->lineEdits["Name"]->clear();
+
+        this->fileNames["Image filename"]->resetValues();
+        this->fileChoosers["Image choose"]->resetValues();
+
+        this->fileNames["Mesh filename"]->resetValues();
+        this->fileChoosers["Mesh choose"]->resetValues();
 
         this->sections["Image subsample"].first->setChecked(false);
         this->sections["Image subregion"].first->setChecked(false);
@@ -1762,6 +1782,7 @@ public slots:
     }
 
     void show() {
+        this->resetValues();
         Form::show();
     }
 
@@ -1833,6 +1854,7 @@ public slots:
                 } else {
                     scene->openGrid(this->getName(), this->getImgFilenames(), this->getSubsample(), this->getSizeVoxel(), this->getSizeTetmesh());
                 }
+                this->hide();
         });
     }
 };
