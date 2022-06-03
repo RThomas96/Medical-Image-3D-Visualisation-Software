@@ -310,7 +310,7 @@ bool ComputeVisibility(vec3 point)
 		vec4 pos = point4 - clippingPoint;
 		float vis = dot( clippingNormal, pos );
 
-		if( xVis < 0.|| yVis < 0.|| zVis < 0. || vis < .0)
+        if( xVis <= 0. || yVis <= 0. || zVis <= 0. || vis <= 0.)
 			return false;
 		else return true;
 	} else {
