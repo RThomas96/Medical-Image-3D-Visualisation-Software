@@ -90,7 +90,6 @@ vec4 fragmentEvaluationSingleChannel(in uvec3 color);
 // General utility functions :
 vec3 crossProduct( vec3 a, vec3 b );
 vec3 getWorldCoordinates(in ivec3 _gridCoord);
-ivec3 getGridCoordinates( in vec4 _P );
 
 // Coordinate changes for textures :
 ivec2 Convert1DIndexTo2DIndex_Unnormed( in uint uiIndexToConvert, in int iWrapSize );
@@ -237,7 +236,7 @@ void main (void) {
 			vec3 voxel_center_P = getWorldCoordinates(next_voxel);
 			if( ComputeVisibility(voxel_center_P.xyz) ) {
 				// Traverse the texture, using barycentric coords to 'jump' to another tetrahedra if needed :
-				if(computeBarycentricCoordinatesRecursive(voxel_center_P, ld0, ld1, ld2, ld3, int(instanceId+0.5), id_tet, maxTetrIter, Current_text3DCoord)){
+                if(computeBarycentricCoordinatesRecursive(voxel_center_P, ld0, ld1, ld2, ld3, int(instanceId+0.5), id_tet, maxTetrIter, Current_text3DCoord)){
 					// Get this voxel's value :
 					uvec3 voxelIndex = texture(texData, Current_text3DCoord).xyz;
 					vec4 finalValue = fragmentEvaluationSingleChannel(voxelIndex);
@@ -327,18 +326,10 @@ bool ComputeVisibility(vec3 point)
 
 vec3 getWorldCoordinates( in ivec3 _gridCoord )
 {
-	vec4 p = vec4( (_gridCoord.x+0.5)*voxelSize.x,
-			(_gridCoord.y+0.5)*voxelSize.y,
-			(_gridCoord.z+0.5)*voxelSize.z, 1. );
+    vec4 p = vec4( (float(_gridCoord.x)+0.5)*voxelSize.x,
+            (float(_gridCoord.y)+0.5)*voxelSize.y,
+            (float(_gridCoord.z)+0.5)*voxelSize.z, 1. );
 	return p.xyz;
-}
-
-ivec3 getGridCoordinates( in vec4 _P )
-{
-	vec4 pw = _P;
-	return ivec3( int( pw.x/voxelSize.x ) ,
-                  int( pw.y/voxelSize.y ) ,
-                  int( pw.z/voxelSize.z ) );
 }
 
 ivec2 Convert1DIndexTo2DIndex_Unnormed( in uint uiIndexToConvert, in int iWrapSize )
@@ -360,23 +351,23 @@ bool computeBarycentricCoordinates( in vec3 point, out float ld0 , out float ld1
 	// normal texture width :
 	int nWidth = textureSize(normals_translations, 0).x;
 
-	ivec2 textF = Convert1DIndexTo2DIndex_Unnormed(uint(int(instanceId+0.5)*4 ), nWidth);
+    ivec2 textF = Convert1DIndexTo2DIndex_Unnormed(uint(int(instanceId+0.5)*4 ), nWidth);
 	vec4 texelVal = texelFetch(normals_translations, textF, 0);
 	vec3 Normal_F0 = texelVal.xyz;
 	float factor_0 = texelVal.w;
 
 
-	textF = Convert1DIndexTo2DIndex_Unnormed(uint(int(instanceId+0.5)*4 + 1), nWidth);
+    textF = Convert1DIndexTo2DIndex_Unnormed(uint(int(instanceId+0.5)*4 + 1), nWidth);
 	texelVal = texelFetch(normals_translations, textF, 0);
 	vec3 Normal_F1 = texelVal.xyz;
 	float factor_1 = texelVal.w;
 
-	textF = Convert1DIndexTo2DIndex_Unnormed(uint(int(instanceId+0.5)*4 + 2 ), nWidth);
+    textF = Convert1DIndexTo2DIndex_Unnormed(uint(int(instanceId+0.5)*4 + 2 ), nWidth);
 	texelVal = texelFetch(normals_translations, textF, 0);
 	vec3 Normal_F2 = texelVal.xyz;
 	float factor_2 = texelVal.w;
 
-	textF = Convert1DIndexTo2DIndex_Unnormed(uint(int(instanceId+0.5)*4 + 3), nWidth);
+    textF = Convert1DIndexTo2DIndex_Unnormed(uint(int(instanceId+0.5)*4 + 3), nWidth);
 	texelVal = texelFetch(normals_translations, textF, 0);
 	vec3 Normal_F3 = texelVal.xyz;
 	float factor_3 = texelVal.w;

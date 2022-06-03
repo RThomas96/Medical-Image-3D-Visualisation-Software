@@ -1713,7 +1713,7 @@ void Scene::prepareUniformsGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm
 
 	glm::vec3 floatres = glm::convert_to<float>(_grid->grid->getDimensions());
 
-	glUniform3fv(location_voxelSize, 1, glm::value_ptr(_grid->grid->getVoxelSize()));
+    glUniform3fv(location_voxelSize, 1, glm::value_ptr(_grid->grid->getWorldVoxelSize()));
 	glUniform3fv(location_gridSize, 1, glm::value_ptr(floatres));
 
 	// Vectors/arrays :
@@ -3664,6 +3664,7 @@ void Scene::openAtlas() {
         this->getCage(std::string("cage"))->setOrigin(this->getBaseMesh("atlas")->getOrigin());
         this->getCage(std::string("cage"))->bindMovementWithDeformedMesh();
         this->applyCage(std::string("cage"), std::string("/data/datasets/data/Thomas/data/sourisIGF/atlas-cage-hyperdilated-rigidRegister-lightsheet_2.off"));
+        //this->getCage(std::string("cage"))->scale(glm::vec3(10., 10., 10.));
 }
 
 void Scene::openIRM() {

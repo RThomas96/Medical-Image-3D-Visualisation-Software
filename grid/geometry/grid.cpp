@@ -129,6 +129,10 @@ void Grid::toSampler(glm::vec3& p) const {
     p = glm::vec3(this->toSamplerMatrix * glm::vec4(p[0], p[1], p[2], 1.));
 }
 
+glm::vec3 Grid::getWorldVoxelSize() const {
+    return this->getDimensions() / this->sampler.getSamplerDimension();
+}
+
 glm::vec3 Grid::getVoxelSize() const {
     return this->sampler.getVoxelSize();
 }

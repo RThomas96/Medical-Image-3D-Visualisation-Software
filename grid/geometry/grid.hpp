@@ -87,6 +87,7 @@ struct Grid : public TetMesh {
     void loadMESH(std::string const &filename) override;
 
     glm::vec3 getVoxelSize() const;
+    glm::vec3 getWorldVoxelSize() const;
     glm::mat4 getTransformationMatrix() const;
     void toSampler(glm::vec3& p) const;
     void fromImageToWorld(glm::vec3& p) const;
