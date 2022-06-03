@@ -285,7 +285,7 @@ void main (void) {
 
 	// Update fragment depth to prevent sorting issues !!!
 	vec4 compute_depth = pMat * vMat * sceneSpaceFragmentPos;
-	gl_FragDepth = 0.5f * ((compute_depth.z / compute_depth.w) + 1.f);
+    gl_FragDepth = 0.5f * ((compute_depth.z / compute_depth.w) + 1.f);
 
 	return;
 }
@@ -337,8 +337,8 @@ ivec3 getGridCoordinates( in vec4 _P )
 {
 	vec4 pw = _P;
 	return ivec3( int( pw.x/voxelSize.x ) ,
-			int( pw.y/voxelSize.y ) ,
-			int( pw.z/voxelSize.z ) );
+                  int( pw.y/voxelSize.y ) ,
+                  int( pw.z/voxelSize.z ) );
 }
 
 ivec2 Convert1DIndexTo2DIndex_Unnormed( in uint uiIndexToConvert, in int iWrapSize )
@@ -524,33 +524,23 @@ bool computeBarycentricCoordinatesRecursive(in vec3 point, out float ld0 , out f
 }
 
 
-void getFirstRayVoxelIntersection( in vec3 origin, in vec3 direction, out ivec3 v0, out vec3 t_n)
+void getFirstRayVoxelIntersection( in vec3 ray_origin, in vec3 ray_direction, out ivec3 v0, out vec3 t_n)
 {
-	// 	vec3 origin = o;
-	//
-	// 	vec3 t_cut = vec3( (cut.x - o.x)/direction.x, (cut.y - o.y)/direction.y, (cut.z - o.z)/direction.z );
-	//
-	// 	float lambda_max = t_cut.x;
-	//
-	// 	if( t_cut.y > lambda_max ) lambda_max = t_cut.y;
-	// 	if( t_cut.z > lambda_max ) lambda_max = t_cut.z;
-	//
-	// 	if( lambda_max > 0 ) origin = origin + lambda_max*direction;
+    vec4 pw = vec4(ray_origin.xyz, 1.);
+    v0 = ivec3(floor(pw.x/voxelSize.x), floor(pw.y/voxelSize.y), floor(pw.z/voxelSize.z));
+    //v0 = ivec3(int(pw.x/voxelSize.x), int(pw.y/voxelSize.y), int(pw.z/voxelSize.z));
 
-	v0 = getGridCoordinates(vec4(origin.xyz, 1.));
+    float xi = v0.x*voxelSize.x;
+    if( ray_direction.x > 0 ) xi += voxelSize.x;
+    float yi = v0.y*voxelSize.y;
+    if( ray_direction.y > 0 ) yi += voxelSize.y;
+    float zi = v0.z*voxelSize.z;
+    if( ray_direction.z > 0 ) zi += voxelSize.z;
+    t_n = vec3 ( ((xi - ray_origin.x)/ray_direction.x), ((yi - ray_origin.y)/ray_direction.y), ((zi - ray_origin.z)/ray_direction.z) );
 
-	float xi = v0.x*voxelSize.x;
-	if( direction.x > 0 ) xi = xi + voxelSize.x;
-	float yi = v0.y*voxelSize.y;
-	if( direction.y > 0 ) yi = yi + voxelSize.y;
-	float zi = v0.z*voxelSize.z;
-	if( direction.z > 0 ) zi = zi + voxelSize.z;
-	t_n = vec3 ( ((xi - origin.x)/direction.x), ((yi - origin.y)/direction.y), ((zi - origin.z)/direction.z) );
-
-	if( abs( direction.x ) < 0.00001 ) t_n.x = 100000000;
-	if( abs( direction.y ) < 0.00001 ) t_n.y = 100000000;
-	if( abs( direction.z ) < 0.00001 ) t_n.z = 100000000;
-
+    if( abs( ray_direction.x ) < 0.00001 ) t_n.x = 100000000;
+    if( abs( ray_direction.y ) < 0.00001 ) t_n.y = 100000000;
+    if( abs( ray_direction.z ) < 0.00001 ) t_n.z = 100000000;
 }
 
 vec3 phongComputation(vec4 position, vec3 normal, vec4 color, vec3 lightPos, vec3 phongDetails, mat3 lightDetails) {
