@@ -14,6 +14,7 @@
 #include <type_traits>
 
 #include <chrono>
+#include <utility>
 
 #include "../../grid/geometry/grid.hpp"
 #include "../../grid/drawable/drawable_manipulator.hpp"
@@ -56,6 +57,7 @@ Scene::Scene() :
 	this->showVAOstate	   = false;
 	this->shouldDeleteGrid = false;
     this->distanceFromCamera = 0.;
+    this->cameraPosition = glm::vec3(0., 0., 0.);
 
 	//this->grids.clear();
 
@@ -150,6 +152,7 @@ Scene::Scene() :
     this->displayMesh = true;
     this->previewCursorInPlanarView = false;
     this->multiGridRendering = false;
+    this->sortingRendering = false;
 }
 
 Scene::~Scene(void) {
@@ -989,9 +992,11 @@ void Scene::drawGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camP
 	if (grid->gridTexture > 0) {
 		glUseProgram(this->program_VolumetricViewer);
 
-        //this->sendTetmeshToGPU(this->gridToDraw, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS));
+        if(sortingRendering) {
+            this->sendTetmeshToGPU(this->gridToDraw, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS), sortingRendering);
+        }
 
-		this->prepareUniformsGridVolumetricView(mvMat, pMat, camPos, grid);
+        this->prepareUniformsGridVolumetricView(mvMat, pMat, camPos, grid);
 
 		this->tex3D_bindVAO();
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vbo_Texture3D_VertIdx);
@@ -1883,6 +1888,7 @@ void Scene::newSHADERS_generateColorScales() {
 }
 
 void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool showTexOnPlane) {
+    this->cameraPosition = camPos;
 	if (this->shouldDeleteGrid) {
 		this->deleteGridNow();
 	}
@@ -2920,14 +2926,17 @@ bool contain(const InfoToSend& value, const InfoToSend& contain) {
 // TODO: replace this function by a real update function
 void Scene::sendFirstTetmeshToGPU() {
     if(this->grids.size() > 0)
-        this->sendTetmeshToGPU(0, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS));
+        this->sendTetmeshToGPU(this->gridToDraw, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS));
     if(this->glMeshManipulator->meshManipulator) {
         this->glMeshManipulator->meshManipulator->setAllManipulatorsPosition(this->getBaseMesh(this->activeMesh)->getMeshPositions());
     }
     Q_EMIT meshMoved();
 }
 
-void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend) {
+void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend, bool sort) {
+    std::cout << "Send to GPU" << std::endl;
+    if(sort)
+        std::cout << "Sorting" << std::endl;
 
 	std::size_t vertWidth = 0, vertHeight = 0;
 	std::size_t normWidth = 0, normHeight = 0;
@@ -2955,18 +2964,33 @@ void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend) {
 	int iNeigh = 0;
     int iPt = 0;
     int iNormal = 0;
-	for (int tetIdx = 0; tetIdx < newMesh.mesh.size(); tetIdx++) {
+    std::vector<std::pair<int, float>> orderedTets;
+    if(sort) {
+        newMesh.sortTet(this->cameraPosition, orderedTets);
+    }
+
+    for (int idx = 0; idx < newMesh.mesh.size(); idx++) {
+        int tetIdx = idx;
+        if(sort)
+            tetIdx = orderedTets[idx].first;
         const Tetrahedron& tet = newMesh.mesh[tetIdx];
         for(int faceIdx = 0; faceIdx < 4; ++faceIdx) {
 
             if(contain(infoToSend, InfoToSend::NEIGHBORS)) {
-			    rawNeighbors[iNeigh] = static_cast<GLfloat>(tet.neighbors[faceIdx]);
-			    iNeigh += 3;
+                if(sort) {
+                    std::vector<std::pair<int, float>>::iterator i = std::find_if(
+                        orderedTets.begin(), orderedTets.end(),
+                        [&](const std::pair<int, float>& x) { return x.first == tet.neighbors[faceIdx];});
+                    rawNeighbors[iNeigh] = static_cast<GLfloat>(i - orderedTets.begin());
+                } else {
+                    rawNeighbors[iNeigh] = static_cast<GLfloat>(tet.neighbors[faceIdx]);
+                }
+                iNeigh += 3;
             }
 
             if(contain(infoToSend, InfoToSend::NORMALS)) {
 			    for (int i = 0; i < 4; ++i) {
-			    	rawNormals[iNormal++] = tet.normals[faceIdx][i];
+                    rawNormals[iNormal++] = tet.normals[faceIdx][i];
 			    	//rawNormals[iNormal++] = glm::normalize((newMesh.getModelMatrix() * tet.normals[faceIdx]))[i];
 			    	//rawNormals[iNormal++] = glm::vec4(1., 0., 0., 1.)[i];
 			    }
@@ -2976,9 +3000,9 @@ void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend) {
                 int ptIndex = tet.getPointIndex(faceIdx, k);
 				for (int i = 0; i < 3; ++i) {
                     if(contain(infoToSend, InfoToSend::VERTICES))
-					    rawVertices[iPt] = newMesh.getVertice(ptIndex)[i];
+                        rawVertices[iPt] = newMesh.getVertice(ptIndex)[i];
                     if(contain(infoToSend, InfoToSend::TEXCOORD))
-					    tex[iPt] = newMesh.texCoord[ptIndex][i];
+                        tex[iPt] = newMesh.texCoord[ptIndex][i];
 					iPt++;
 				}
 			}
@@ -4157,4 +4181,8 @@ MeshToolType* Scene::getMeshTool() { return dynamic_cast<MeshToolType*>(this->gl
 
 void Scene::setGridsToDraw(std::vector<int> indices) {
     this->gridsToDraw = indices;
+}
+
+void Scene::setSortingRendering(bool value) {
+    this->sortingRendering = value;
 }

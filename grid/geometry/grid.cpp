@@ -224,6 +224,7 @@ void Grid::sampleSliceGridValues(const glm::vec3& slice, const std::pair<glm::ve
 
                     if(isInScene(p) && tet.isInTetrahedron(p)) {
                         if(this->getCoordInInitial(this->initialMesh, p, p, tetIdx)) {
+                        //if(this->getCoordInImage(p, p, tetIdx)) {
 
                             glm::vec3 pImg(i, j, k);
                             convert(pImg);

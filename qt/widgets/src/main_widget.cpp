@@ -122,6 +122,10 @@ void MainWidget::setupWidgets() {
     this->toolbar->addAction(this->actionManager->getAction("OpenAtlas"));
     this->toolbar->addAction(this->actionManager->getAction("OpenIRM"));
 
+    this->toolbar->addSeparator();
+
+    this->toolbar->addAction(this->actionManager->getAction("Sorting"));
+
     /***/
 
 	this->viewMenu = this->menuBar()->addMenu("&View");
@@ -505,6 +509,11 @@ void MainWidget::setupActions() {
     QObject::connect(this->actionManager->getAction("OpenIRM"), &QAction::triggered, [this](){
             this->scene->openIRM();
             this->updateForms();
+    });
+
+    this->actionManager->createQActionToggleButton("Sorting", "Sorting", "", "Enable the sorting rendering feature", "arap");
+    QObject::connect(this->actionManager->getAction("Sorting"), &QAction::triggered, [this](){
+            this->scene->setSortingRendering(this->actionManager->getAction("Sorting")->isChecked());
     });
 }
 

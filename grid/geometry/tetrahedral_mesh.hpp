@@ -27,6 +27,7 @@ struct Tetrahedron {
     bool isInTetrahedron(const glm::vec3& p) const;
 
     glm::vec3 baryToWorldCoord(const glm::vec4& coord);
+    glm::vec3 baryToCoord(const glm::vec4& coord, const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, const glm::vec3& v4);
 
     void computeNormals();
 
@@ -66,9 +67,12 @@ public:
     int inTetraIdx(const glm::vec3& p) const;
     //glm::vec3 getCoordInInitial(const TetMesh& initial, glm::vec3 p) const;
     bool getCoordInInitial(const TetMesh& initial, const glm::vec3& p, glm::vec3& out, int tetraIdx = -1) const;
+    bool getCoordInImage(const glm::vec3& p, glm::vec3& out, int tetraIdx = -1) const;
 
     void setARAPDeformationMethod() override;
     bool getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos, glm::vec3& res) const override;
+
+    void sortTet(const glm::vec3& cameraOrigin, std::vector<std::pair<int, float>>& idxDepthMap);
 
     ~TetMesh();
 

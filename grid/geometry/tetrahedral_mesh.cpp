@@ -229,6 +229,13 @@ glm::vec3 Tetrahedron::baryToWorldCoord(const glm::vec4& coord) {
     return glm::vec3(x, y, z);
 }
 
+glm::vec3 Tetrahedron::baryToCoord(const glm::vec4& coord, const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, const glm::vec3& v4) {
+    float x = coord[0]*v1[0] + coord[1]*v2[0] + coord[2]*v3[0] + coord[3]*v4[0];
+    float y = coord[0]*v1[1] + coord[1]*v2[1] + coord[2]*v3[1] + coord[3]*v4[1];
+    float z = coord[0]*v1[2] + coord[1]*v2[2] + coord[2]*v3[2] + coord[3]*v4[2];
+    return glm::vec3(x, y, z);
+}
+
 void Tetrahedron::computeNormals() {
     for(int faceIdx = 0; faceIdx < 4; ++faceIdx) {
         glm::vec3 p0 = glm::vec3(glm::vec4(*this->points[getIdxOfPtInFace(faceIdx, 0)], 1.));
@@ -579,6 +586,24 @@ bool TetMesh::getCoordInInitial(const TetMesh& initial, const glm::vec3& p, glm:
     }
 }
 
+bool TetMesh::getCoordInImage(const glm::vec3& p, glm::vec3& out, int tetraIdx) const {
+    if(tetraIdx == -1) {
+        tetraIdx = this->inTetraIdx(p);
+    }
+    if(tetraIdx != -1) {
+        glm::vec4 baryCoordInDeformed = this->getTetra(tetraIdx).computeBaryCoord(p);
+        glm::vec3 texCoord1 = this->texCoord[this->getTetra(tetraIdx).pointsIdx[0]];
+        glm::vec3 texCoord2 = this->texCoord[this->getTetra(tetraIdx).pointsIdx[1]];
+        glm::vec3 texCoord3 = this->texCoord[this->getTetra(tetraIdx).pointsIdx[2]];
+        glm::vec3 texCoord4 = this->texCoord[this->getTetra(tetraIdx).pointsIdx[3]];
+        glm::vec3 coordInInitial = this->getTetra(tetraIdx).baryToCoord(baryCoordInDeformed, texCoord1, texCoord2, texCoord3, texCoord4);
+        out = coordInInitial;
+        return true;
+    } else {
+        return false;
+    }
+}
+
 bool TetMesh::getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos, glm::vec3& res) const {
     std::cout << "Cast ray not implemented yet for Tetmesh" << std::endl;
     return false;
@@ -671,4 +696,21 @@ void TetMesh::loadMESH(std::string const &filename) {
     for(int i = 0; i < this->vertices.size(); ++i) {
         this->texCoord.push_back(this->vertices[i]/this->getDimensions());
     }    
+}
+
+void TetMesh::sortTet(const glm::vec3& cameraOrigin, std::vector<std::pair<int, float>>& idxDepthMap) {
+    idxDepthMap.clear();
+    idxDepthMap = std::vector<std::pair<int, float>>(this->mesh.size());
+
+    glm::vec3 centroid;
+    for(int i = 0; i < this->mesh.size(); ++i) {
+        this->mesh[i].getCentroid(centroid);
+        idxDepthMap[i] = std::make_pair(i, glm::distance(centroid, cameraOrigin));
+    }
+
+    std::sort(idxDepthMap.begin(), idxDepthMap.end(),
+        [](const std::pair<int, float> & a, const std::pair<int, float> & b) -> bool {
+        return a.second < b.second;
+    });
+
 }

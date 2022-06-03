@@ -581,12 +581,13 @@ public slots:
 
     // Rendering slots
     void setColorChannel(ColorChannel mode);
-    void sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend);
+    void sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend, bool sort = true);
     void sendFirstTetmeshToGPU();
     uint16_t sendGridValuesToGPU(int gridIdx);
     void setLightPosition(const glm::vec3& lighPosition);
     void previewPointInPlanarView(const glm::vec3& positionOfMouse3D);
     void setPreviewPointInPlanarView(bool preview) { this->previewCursorInPlanarView = preview; };
+    void setSortingRendering(bool value);
 
     // Scene management
     void openAtlas();
@@ -640,8 +641,10 @@ public:
     int gridToDraw = -1;
     std::vector<int> gridsToDraw;
 
+    glm::vec3 cameraPosition;
     float distanceFromCamera;
 
+    bool sortingRendering;
     bool multiGridRendering;
     bool displayGrid;
     bool displayMesh;
