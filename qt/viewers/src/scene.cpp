@@ -571,13 +571,15 @@ void Scene::addGrid() {
     gridView->colorChannelAttributes[2].setMaxVisible(max);
     gridView->colorChannelAttributes[2].setMaxColorScale(max);
 
-    this->controlPanel->setMaxTexVal(max);
-    this->controlPanel->setMaxTexValAlternate(max);
-	this->slotSetMaxColorValue(max);
-    this->controlPanel->updateMaxValue(max);
-    this->controlPanel->updateMaxValueAlternate(max);
-	this->slotSetMaxColorValueAlternate(max);
-
+    if(this->gridToDraw == 1) {
+        this->controlPanel->setMaxTexValAlternate(max);
+        this->controlPanel->updateMaxValueAlternate(max);
+        this->slotSetMaxColorValueAlternate(max);
+    } else {
+        this->controlPanel->setMaxTexVal(max);
+        this->controlPanel->updateMaxValue(max);
+        this->slotSetMaxColorValue(max);
+    }
 	this->setColorChannel(ColorChannel::RedOnly);
 	this->setColorFunction_r(ColorFunction::ColorMagnitude);
 	this->setColorFunction_g(ColorFunction::ColorMagnitude);

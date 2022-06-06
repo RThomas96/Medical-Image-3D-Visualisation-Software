@@ -258,25 +258,29 @@ void ControlPanel::updateViewers() {
 void ControlPanel::updateMinValue(double val) {
 	this->min = val;
 	this->rangeslider_red->setMin(val);
-	return;
+    this->rangeslider_red->setMinValue(val);
+    return;
 }
 
 void ControlPanel::updateMaxValue(double val) {
 	this->max = val;
 	this->rangeslider_red->setMax(val);
-	return;
+    this->rangeslider_red->setMaxValue(val);
+    return;
 }
 
 void ControlPanel::updateMinValueAlternate(double val) {
 	this->minAlternate = val;
 	this->rangeslider_green->setMin(val);
-	return;
+    this->rangeslider_green->setMinValue(val);
+    return;
 }
 
 void ControlPanel::updateMaxValueAlternate(double val) {
 	this->maxAlternate = val;
 	this->rangeslider_green->setMax(val);
-	return;
+    this->rangeslider_green->setMaxValue(val);
+    return;
 }
 
 void ControlPanel::updateValues(void) {
@@ -448,7 +452,7 @@ void ControlPanel::setMaxTexValAlternate(double val) {
 	this->updateViewers();
 }
 
-void ControlPanel::setSlidersToNumericalLimits(void) {
+void ControlPanel::setSlidersToNumericalLimits(int gridIdx) {
 	// TODO: make the slider a ratio
 
 	double minValue = sceneToControl->getMinNumericLimit(0);
@@ -464,15 +468,18 @@ void ControlPanel::setSlidersToNumericalLimits(void) {
 		std::cerr << "Error: sliders cannot handle datatypes bigger than integer. Values are crop." << std::endl;
 	}
 
-	setMinTexVal(minValue);
-	setMaxTexVal(maxValue);
+    if(gridIdx == 0) {
+        setMinTexVal(minValue);
+        setMaxTexVal(maxValue);
 
-	updateMinValue(minValue);
-	updateMaxValue(maxValue);
+        updateMinValue(minValue);
+        updateMaxValue(maxValue);
+    } else {
+        setMinTexValAlternate(minValue);
+        setMaxTexValAlternate(maxValue);
 
-	setMinTexValAlternate(minValue);
-	setMaxTexValAlternate(maxValue);
+        updateMinValueAlternate(minValue);
+        updateMaxValueAlternate(maxValue);
+    }
 
-	updateMinValueAlternate(minValue);
-	updateMaxValueAlternate(maxValue);
 }

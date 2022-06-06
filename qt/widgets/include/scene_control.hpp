@@ -87,7 +87,7 @@ public:
 
 	/// @brief Set min and max values of sliders according to the grids datatype numerical limit
 	/// TODO: change this function to set sliders according to min/max values in image
-	void setSlidersToNumericalLimits(void);
+    void setSlidersToNumericalLimits(int gridIdx);
 
 protected:
 	void initSignals(void);
