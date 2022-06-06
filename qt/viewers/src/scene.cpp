@@ -3378,9 +3378,8 @@ bool Scene::openMesh(const std::string& name, const std::string& filename, const
     this->drawableMeshes.back().first->initialize(this->context, this);
     this->drawableMeshes.back().first->color = color;
 
-    this->changeActiveMesh(name);
-
     Q_EMIT meshAdded(name, false, false);
+    this->changeActiveMesh(name);
     return true;
 }
 
@@ -3451,9 +3450,8 @@ bool Scene::openCage(const std::string& name, const std::string& filename, BaseM
     this->drawableMeshes.back().first->initialize(this->context, this);
     this->drawableMeshes.back().first->color = color;
 
-    this->changeActiveMesh(name);
-
     Q_EMIT meshAdded(name, false, true);
+    this->changeActiveMesh(name);
     return true;
 }
 
@@ -3485,6 +3483,7 @@ void Scene::addGridToScene(const std::string& name, Grid * newGrid) {
     std::cout << "New grid added with BBox:" << this->grids.back()->grid->bbMax << std::endl;
 
     Q_EMIT meshAdded(name, true, false);
+    this->changeActiveMesh(name);
 }
 
 int Scene::autofitSubsample(int initialSubsample, const std::vector<std::string>& imgFilenames) {
@@ -3669,10 +3668,12 @@ void Scene::openAtlas() {
         //this->applyCage(std::string("cage"), std::string("/data/datasets/data/Thomas/data/sourisIGF/atlas-cage-hyperdilated-rigidRegister-lightsheet_2.off"));
         //this->getCage(std::string("cage"))->scale(glm::vec3(10., 10., 10.));
         this->applyCage(std::string("cage"), std::string("/home/thomas/data/Data/teletravail/atlas-cage-hyperdilated-rigidRegister-lightsheet_2.off"));
+        this->changeActiveMesh("cage");
 }
 
 void Scene::openIRM() {
         this->openGrid(std::string("irm"), {std::string("/home/thomas/data/Data/teletravail/irm.tif")}, 1, glm::vec3(3.9, 3.9, 50));
+        this->changeActiveMesh("irm");
 }
 
 void Scene::init() {
