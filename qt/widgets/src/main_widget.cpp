@@ -87,6 +87,8 @@ void MainWidget::setupWidgets() {
     //this->toolbar->addWidget(tabBar);
 
     this->toolbar->addAction(this->actionManager->getAction("Open"));
+    this->toolbar->addAction(this->actionManager->getAction("QuickSaveCage"));
+    this->toolbar->addAction(this->actionManager->getAction("QuickSaveAsCage"));
 
     this->toolbar->addSeparator();
 
@@ -230,6 +232,7 @@ void MainWidget::setupWidgets() {
 
     this->info_pannel = new InfoPannel("Infos", this->scene);
     this->tool_pannel = new ToolPannel("Tool", *this->actionManager);
+    this->quickSaveCage = new QuickSaveCage(this->scene);
 
 	this->viewer->addStatusBar(this->statusBar);
 
@@ -465,6 +468,16 @@ void MainWidget::setupActions() {
             this->saveImageForm->show();
     });
 
+    this->actionManager->createQActionButton("QuickSaveCage", "CageSave", "Ctrl+S", "Save the current cage", "saveDeformedImage");
+    QObject::connect(this->actionManager->getAction("QuickSaveCage"), &QAction::triggered, [this](){
+            this->quickSaveCage->save();
+    });
+
+    this->actionManager->createQActionButton("QuickSaveAsCage", "CageSaveAs", "", "Save as the current cage", "saveDeformedImage");
+    QObject::connect(this->actionManager->getAction("QuickSaveAsCage"), &QAction::triggered, [this](){
+            this->quickSaveCage->saveAs();
+    });
+
     this->actionManager->createQActionButton("Layout1View", "Solo view", "", "Display a 2D view", "soloScreen");
     QObject::connect(this->actionManager->getAction("Layout1View"), &QAction::triggered, [this](){
             this->planarViewer->viewers["View_1"]->viewer2D->hide();
@@ -522,6 +535,7 @@ void MainWidget::setupForms() {
     this->saveImageForm = new SaveImageForm(this->scene);
     this->planarViewer = new PlanarViewer2D(this->scene);
     this->openImageForm = new OpenImageForm(this->scene);
+    QObject::connect(this->openImageForm, &OpenImageForm::loaded, [this](){this->updateForms();});
 }
 
 void MainWidget::updateForms() {

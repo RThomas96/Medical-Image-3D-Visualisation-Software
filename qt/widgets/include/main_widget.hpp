@@ -21,6 +21,7 @@
 
 #include <map>
 
+#include <QMessageBox>
 #include <QPainter>
 #include <QGLViewer/qglviewer.h>
 #include <QMainWindow>
@@ -825,7 +826,7 @@ public:
         QPainter painter(&finalScreen);
         QRect target(paintedImageOrigin.x(), paintedImageOrigin.y(), this->paintedImageSize.width(), this->paintedImageSize.height());
         //painter.drawPixmap(target, QPixmap::fromImage(this->imageData.scaled(this->paintedImageSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation)));
-        painter.drawPixmap(target, QPixmap::fromImage(this->imageData.scaled(this->paintedImageSize, Qt::IgnoreAspectRatio, Qt::FastTransformation)));
+        painter.drawPixmap(target, QPixmap::fromImage(this->imageData.scaled(this->paintedImageSize, Qt::IgnoreAspectRatio, Qt::FastTransformation).mirrored(true, false)));
         this->display->setPixmap(finalScreen);
     }
 
@@ -1410,11 +1411,11 @@ public slots:
                     this->getImagesToDraw(),
                     {this->spinBoxes["AlphaBack"]->value(), this->spinBoxes["AlphaFront"]->value()},
                     {std::make_pair(
-                        QColor(255.*this->scene->color0.x, 255.*this->scene->color0.y, 255.*this->scene->color0.z),
-                        QColor(255.*this->scene->color1.x, 255.*this->scene->color1.y, 255.*this->scene->color1.z)),
-                     std::make_pair(
                         QColor(255.*this->scene->color0_second.x, 255.*this->scene->color0_second.y, 255.*this->scene->color0_second.z),
-                        QColor(255.*this->scene->color1_second.x, 255.*this->scene->color1_second.y, 255.*this->scene->color1_second.z))
+                        QColor(255.*this->scene->color1_second.x, 255.*this->scene->color1_second.y, 255.*this->scene->color1_second.z)),
+                     std::make_pair(
+                        QColor(255.*this->scene->color0.x, 255.*this->scene->color0.y, 255.*this->scene->color0.z),
+                        QColor(255.*this->scene->color1.x, 255.*this->scene->color1.y, 255.*this->scene->color1.z))
                     },
                     this->getInterpolationMethod());
     }
@@ -1661,7 +1662,7 @@ public slots:
     }
 };
 
-class OpenImageForm : Form {
+class OpenImageForm : public Form {
     Q_OBJECT
 
 public:
@@ -1882,8 +1883,12 @@ public slots:
                     scene->openGrid(this->getName(), this->getImgFilenames(), this->getSubsample(), this->getSizeVoxel(), this->getSizeTetmesh());
                 }
                 this->hide();
+                Q_EMIT loaded();
         });
     }
+public:
+signals:
+    void loaded();
 };
 
 class InfoPannel : public QGroupBox {
@@ -2159,6 +2164,32 @@ public slots:
     };
 };
 
+class QuickSaveCage {
+    FileChooser * fileChooser;
+    Scene * scene;
+    QString filePath;
+
+public:
+    QuickSaveCage(Scene * scene): scene(scene) {
+        fileChooser = new FileChooser("file", FileChooserType::SAVE, FileChooserFormat::MESH);
+    }
+
+    void save() {
+        if(filePath.isEmpty())
+            this->saveAs();
+
+        bool saved = scene->saveActiveCage(filePath.toStdString());
+        if(!saved)
+            QMessageBox::critical(fileChooser, "Warning", "Selected mesh is not a cage, can't save.");
+    }
+
+    void saveAs() {
+        this->fileChooser->click();
+        filePath = this->fileChooser->filename;
+        this->save();
+    }
+};
+
 class MainWidget : public QMainWindow {
 	Q_OBJECT
 public:
@@ -2235,6 +2266,7 @@ private:
 
     DeformationForm * deformationForm;
     SaveImageForm * saveImageForm;
+    QuickSaveCage * quickSaveCage;
     OpenImageForm * openImageForm;
     PlanarViewer2D * planarViewer;
 

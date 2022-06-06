@@ -1912,7 +1912,7 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 	/* Manipulator drawing  */
 
 	glm::mat4 mMat(1.0f);
-	this->glMeshManipulator->draw(mvMat, pMat, glm::value_ptr(mMat), this->computePlanePositions());
+    this->glMeshManipulator->draw(mvMat, pMat, glm::value_ptr(mMat), this->computePlanePositions());
 
 	/***********************/
 
@@ -1955,7 +1955,7 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 	//this->drawBoundingBox(this->sceneBB, glm::vec4(.5, .5, .0, 1.), mvMat, pMat);
 	this->showVAOstate = false;
 
-	this->glSelection->draw(mvMat, pMat, glm::value_ptr(mMat));
+    this->glSelection->draw(mvMat, pMat, glm::value_ptr(mMat));
 }
 
 void Scene::newSHADERS_updateUBOData() {
@@ -3657,18 +3657,20 @@ std::pair<glm::vec3, glm::vec3> Scene::getBbox(const std::string& name) {
 }
 
 void Scene::openAtlas() {
-        this->openGrid(std::string("atlas"), {std::string("/data/datasets/data/Thomas/data/atlas/atlas.tiff")}, 1, std::string("/data/datasets/data/Thomas/data/atlas/atlas-transfert.mesh"));
-        this->openCage(std::string("cage"), std::string("/data/datasets/data/Thomas/data/atlas/atlas-cage-hyperdilated.off"), std::string("atlas"), true);
+        ///home/thomas/data/Data/teletravail/
+        this->openGrid(std::string("atlas"), {std::string("/home/thomas/data/Data/teletravail/atlas.tiff")}, 1, std::string("/home/thomas/data/Data/teletravail/atlas-transfert.mesh"));
+        this->openCage(std::string("cage"), std::string("/home/thomas/data/Data/teletravail/atlas-cage-hyperdilated.off"), std::string("atlas"), true);
         this->getCage(std::string("cage"))->setARAPDeformationMethod();
         this->getCage(std::string("cage"))->unbindMovementWithDeformedMesh();
         this->getCage(std::string("cage"))->setOrigin(this->getBaseMesh("atlas")->getOrigin());
         this->getCage(std::string("cage"))->bindMovementWithDeformedMesh();
-        this->applyCage(std::string("cage"), std::string("/data/datasets/data/Thomas/data/sourisIGF/atlas-cage-hyperdilated-rigidRegister-lightsheet_2.off"));
+        //this->applyCage(std::string("cage"), std::string("/data/datasets/data/Thomas/data/sourisIGF/atlas-cage-hyperdilated-rigidRegister-lightsheet_2.off"));
         //this->getCage(std::string("cage"))->scale(glm::vec3(10., 10., 10.));
+        this->applyCage(std::string("cage"), std::string("/home/thomas/data/Data/teletravail/atlas-cage-hyperdilated-rigidRegister-lightsheet_2.off"));
 }
 
 void Scene::openIRM() {
-        this->openGrid(std::string("irm"), {std::string("/home/thomas/data/Data/Demo/IRM/irm.tif")}, 1, glm::vec3(3.9, 3.9, 50));
+        this->openGrid(std::string("irm"), {std::string("/home/thomas/data/Data/teletravail/irm.tif")}, 1, glm::vec3(3.9, 3.9, 50));
 }
 
 void Scene::init() {
@@ -3926,6 +3928,15 @@ bool Scene::openCage(const std::string& name, const std::string& filename, const
 
 void Scene::saveMesh(const std::string& name, const std::string& filename) {
     this->getMesh(name)->saveOFF(filename.c_str());
+}
+
+bool Scene::saveActiveCage(const std::string& filename) {
+    if(this->isCage(this->activeMesh)) {
+        this->getMesh(this->activeMesh)->saveOFF(filename.c_str());
+        return true;
+    } else {
+        return false;
+    }
 }
 
 void Scene::applyCage(const std::string& name, const std::string& filename) {
