@@ -931,7 +931,7 @@ public:
 
     Scene * scene;
 
-    Image3DViewer(const QString& name, const glm::vec3& side, Scene * scene, QWidget * parent = nullptr): QWidget(parent), name(name), direction(side), scene(scene), isInitialized(false), viewer2D(nullptr) {initLayout(); connect(scene);}
+    Image3DViewer(const QString& name, const glm::vec3& side, Scene * scene, QWidget * parent = nullptr): QWidget(parent), name(name), direction(side), scene(scene), isInitialized(false), viewer2D(nullptr), targetImgSize(glm::vec3(1., 1., 1.)) {initLayout(); connect(scene);}
 
     void init(const glm::vec3& originalImageSize, const glm::vec3& targetImageSize, const glm::vec3& optimalImageSize, const int& sliceIdx, const glm::vec3& side, std::vector<std::string> gridNames, std::vector<int> imgToDraw, std::vector<int> alphaValues, std::vector<std::pair<QColor, QColor>> colors, Interpolation::Method interpolationMethod) {
 
@@ -1436,7 +1436,10 @@ public slots:
     }
 
     glm::ivec3 getImgDimension() {
-        return glm::ivec3(this->spinBoxes["X"]->value(), this->spinBoxes["Y"]->value(), this->spinBoxes["Z"]->value());
+        glm::ivec3 value = glm::ivec3(this->spinBoxes["X"]->value(), this->spinBoxes["Y"]->value(), this->spinBoxes["Z"]->value());
+        if(value.x > 100000 || value.y > 100000 || value.z > 100000)
+            value = glm::ivec3(10, 10, 10);
+        return value;
     }
 
     Interpolation::Method getInterpolationMethod() {
