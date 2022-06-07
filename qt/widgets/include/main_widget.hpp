@@ -1121,8 +1121,6 @@ public slots:
         this->labels["SelectedViewer"]->setText(name);
 
         glm::vec3 imgSize = this->getBackImgDimension(scene);
-        if(this->checkBoxes["Auto"]->isChecked())
-            imgSize = this->autoComputeBestSize(scene);
         if(side.x == 1.)
             std::swap(imgSize.x, imgSize.z);
         if(side.y == 1.)
@@ -1274,7 +1272,7 @@ public slots:
         this->add(WidgetType::SPIN_BOX, "X");
         this->add(WidgetType::SPIN_BOX, "Y");
         this->add(WidgetType::SPIN_BOX, "Z");
-        this->addWithLabel(WidgetType::CHECK_BOX, "Auto", "Auto");
+        this->add(WidgetType::BUTTON, "Auto");
 
         this->addAllNextWidgetsToDefaultGroup();
 
@@ -1339,8 +1337,6 @@ public slots:
 
     void backImageChanged(Scene * scene) {
         glm::vec3 imgSize = this->getBackImgDimension(scene);
-        if(this->checkBoxes["Auto"]->isChecked())
-            imgSize = this->autoComputeBestSize(scene);
         if(this->getSide().x == 1.)
             std::swap(imgSize.x, imgSize.z);
         if(this->getSide().y == 1.)
@@ -1367,6 +1363,13 @@ public slots:
         if(this->noViewerSelected())
             return glm::vec3(0., 0., 1.);
         return this->viewers[this->selectedViewer]->direction;
+    }
+
+    void setAutoImageResolution() {
+        glm::vec3 dim = this->autoComputeBestSize(this->scene);
+        convertVector(dim);
+        this->setSpinBoxesValues(dim);
+        this->updateImageViewer();
     }
 
     void setSpinBoxesValues(const glm::vec3& values) {
@@ -1537,10 +1540,13 @@ public slots:
         QObject::connect(this, &Form::widgetModified, [this, scene](const QString &id){
             if(this->noViewerSelected())
                 return;
-            if(id == "From" || id == "Auto")
+            if(id == "From")
                 this->backImageChanged(scene);
 
-            if(id == "X" || id == "Y" || id == "Z" || id == "Interpolation" || id == "UseBack" || id == "UseFront" || id == "From" || id == "To" || id == "Auto" || id == "AlphaBack" || id == "AlphaFront")
+            if(id == "Auto")
+                this->setAutoImageResolution();
+
+            if(id == "X" || id == "Y" || id == "Z" || id == "Interpolation" || id == "UseBack" || id == "UseFront" || id == "From" || id == "To" || id == "AlphaBack" || id == "AlphaFront")
                 this->updateImageViewer();
 
             if(id == "SideX" || id == "SideY" || id == "SideZ") {
