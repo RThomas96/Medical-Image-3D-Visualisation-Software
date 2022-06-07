@@ -3658,23 +3658,21 @@ std::pair<glm::vec3, glm::vec3> Scene::getBbox(const std::string& name) {
 }
 
 void Scene::openAtlas() {
-        ///home/thomas/data/Data/teletravail/
-        this->openGrid(std::string("atlas"), {std::string("/home/thomas/data/Data/teletravail/atlas.tiff")}, 1, std::string("/home/thomas/data/Data/teletravail/atlas-transfert.mesh"));
-        this->openCage(std::string("cage"), std::string("/home/thomas/data/Data/teletravail/atlas-cage-hyperdilated.off"), std::string("atlas"), true);
-        this->getCage(std::string("cage"))->setARAPDeformationMethod();
-        this->getCage(std::string("cage"))->unbindMovementWithDeformedMesh();
-        this->getCage(std::string("cage"))->setOrigin(this->getBaseMesh("atlas")->getOrigin());
-        this->getCage(std::string("cage"))->bindMovementWithDeformedMesh();
-        //this->applyCage(std::string("cage"), std::string("/data/datasets/data/Thomas/data/sourisIGF/atlas-cage-hyperdilated-rigidRegister-lightsheet_2.off"));
-        //this->getCage(std::string("cage"))->scale(glm::vec3(10., 10., 10.));
-        this->applyCage(std::string("cage"), std::string("/home/thomas/data/Data/teletravail/atlas-cage-hyperdilated-rigidRegister-lightsheet_2.off"));
-        this->changeActiveMesh("cage");
-}
+         ///home/thomas/data/Data/teletravail/
+         this->openGrid(std::string("atlas"), {std::string("/data/datasets/data/Thomas/data/atlas/atlas.tiff")}, 1, std::string("/data/datasets/data/Thomas/data/atlas/atlas-transfert.mesh"));
+         this->openCage(std::string("cage"), std::string("/data/datasets/data/Thomas/data/atlas/atlas-cage-hyperdilated.off"), std::string("atlas"), true);
+         this->getCage(std::string("cage"))->setARAPDeformationMethod();
+         this->getCage(std::string("cage"))->unbindMovementWithDeformedMesh();
+         this->getCage(std::string("cage"))->setOrigin(this->getBaseMesh("atlas")->getOrigin());
+         this->getCage(std::string("cage"))->bindMovementWithDeformedMesh();
+         this->applyCage(std::string("cage"), std::string("/data/datasets/data/Thomas/data/sourisIGF/atlas-cage-hyperdilated-rigidRegister-lightsheet_2.off"));
+         this->changeActiveMesh("cage");
+ }
 
-void Scene::openIRM() {
-        this->openGrid(std::string("irm"), {std::string("/home/thomas/data/Data/teletravail/irm.tif")}, 1, glm::vec3(3.9, 3.9, 50));
-        this->changeActiveMesh("irm");
-}
+ void Scene::openIRM() {
+         this->openGrid(std::string("irm"), {std::string("/home/thomas/data/Data/Demo/IRM/irm.tif")}, 1, glm::vec3(3.9, 3.9, 50));
+         this->changeActiveMesh("irm");
+ }
 
 void Scene::init() {
     if(this->demos.demo_atlas_to_irm) {

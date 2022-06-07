@@ -1100,6 +1100,7 @@ public:
 
     //Image3DViewer * imageViewer;
 
+    std::map<QString, std::vector<glm::vec3>> viewersRes;   // Store viewers res    for each side for easier usage
     std::map<QString, glm::ivec3> viewersValues;// Store viewers values for each side for easier usage
     std::map<QString, Image3DViewer*> viewers;
     QString selectedViewer;
@@ -1114,6 +1115,7 @@ public slots:
         QObject::connect(this->viewers[name], &Image3DViewer::isSelected, [=](){this->selectViewer(name);});
 
         this->viewersValues[name] = glm::ivec3(0, 0, 0);
+        this->viewersRes[name] = {glm::vec3(1, 1, 1), glm::vec3(1, 1, 1), glm::vec3(1, 1, 1)};
 
         this->selectedViewer = name;
         this->labels["SelectedViewer"]->setText(name);
@@ -1131,11 +1133,11 @@ public slots:
     }
 
     void selectViewer(const QString& name) {
-        this->storeCurrentSlideValue();
+        this->storeCurrentValues();
         this->selectedViewer = name;
         this->labels["SelectedViewer"]->setText(name);
         this->updateDefaultValues(name);
-        this->recoverSlideValue();
+        this->recoverValues();
         this->updateSlice();
     }
 
@@ -1454,36 +1456,56 @@ public slots:
         return this->objectChoosers["To"]->currentText().toStdString();
     }
 
-    void storeCurrentSlideValue() {
+    void storeCurrentValues() {
         if(this->noViewerSelected())
             return;
         glm::vec3 side = this->getSide();
         int value = this->sliders["SliderX"]->value();
-        if(side.x > 0)
+        glm::vec3 res = this->getImgDimension();
+        if(side.x > 0) {
             this->viewersValues[this->selectedViewer].x = value;
+            this->viewersRes[this->selectedViewer][0] = res;
+        }
 
-        if(side.y > 0)
+        if(side.y > 0) {
             this->viewersValues[this->selectedViewer].y = value;
+            this->viewersRes[this->selectedViewer][1] = res;
+        }
 
-        if(side.z > 0)
+        if(side.z > 0) {
             this->viewersValues[this->selectedViewer].z = value;
+            this->viewersRes[this->selectedViewer][2] = res;
+        }
         std::cout << "Store value: " << value << std::endl;
     }
 
-    void recoverSlideValue() {
+    void recoverValues() {
         if(this->noViewerSelected())
             return;
         glm::vec3 side = this->getSide();
         int value = 0;
-        if(side.x > 0)
+        glm::vec3 res = glm::vec3(1, 1, 1);
+        if(side.x > 0) {
             value = this->viewersValues[this->selectedViewer].x;
+            res = this->viewersRes[this->selectedViewer][0];
+        }
 
-        if(side.y > 0)
+        if(side.y > 0) {
             value = this->viewersValues[this->selectedViewer].y;
+            res = this->viewersRes[this->selectedViewer][1];
+        }
 
-        if(side.z > 0)
+        if(side.z > 0) {
             value = this->viewersValues[this->selectedViewer].z;
+            res = this->viewersRes[this->selectedViewer][2];
+        }
+        if(res.x > 1 && res.y > 1 && res.z > 1)
+            this->setSpinBoxesValues(res);
+        this->sliders["SliderX"]->blockSignals(true);
+        this->sliders["SliderX"]->setMinimum(0);
+        this->sliders["SliderX"]->setMaximum(this->getImgDimension().z-1);
         this->sliders["SliderX"]->setValue(value);
+        this->sliders["SliderX"]->blockSignals(false);
     }
 
     void updateSlice() {
@@ -1520,7 +1542,7 @@ public slots:
                 this->updateImageViewer();
 
             if(id == "SideX" || id == "SideY" || id == "SideZ") {
-                this->storeCurrentSlideValue();
+                this->storeCurrentValues();
                 if(id == "SideX")
                     this->viewers[this->selectedViewer]->direction = glm::vec3(1., 0., 0.);
                 if(id == "SideY")
@@ -1528,8 +1550,8 @@ public slots:
                 if(id == "SideZ")
                     this->viewers[this->selectedViewer]->direction = glm::vec3(0., 0., 1.);
                 this->backImageChanged(scene);
+                this->recoverValues();
                 this->updateImageViewer();
-                this->recoverSlideValue();
             }
 
             if(id == "SliderX" || id == "SideX" || id == "SideY" || id == "SideZ" || id == "Link") {
