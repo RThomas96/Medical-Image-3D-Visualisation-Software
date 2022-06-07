@@ -113,8 +113,10 @@ void ARAPMethod::fitToPointList(const std::vector<int>& vertices, const std::vec
         }
         this->arap.setHandles(this->handles);
         this->arap.compute_deformation(ptsAsVec3D);
+        std::vector<glm::vec3> convertedRes(ptsAsVec3D.size());
         for(int i = 0; i < this->baseMesh->getNbVertices(); ++i)
-            this->baseMesh->vertices[i] = glm::vec3(ptsAsVec3D[i][0], ptsAsVec3D[i][1],ptsAsVec3D[i][2]);
+            convertedRes[i] = glm::vec3(ptsAsVec3D[i][0], ptsAsVec3D[i][1],ptsAsVec3D[i][2]);
+        this->baseMesh->movePoints(convertedRes);
     }
 
     for(int i = 0; i < vertices.size(); ++i)

@@ -735,6 +735,8 @@ public:
     int zoomSpeed;
     float zoom;
     int minimumSize;
+    bool mirrorX;
+    bool mirrorY;
 
     // Data
     QImage imageData;// Image data to be painted
@@ -752,6 +754,8 @@ public:
     Image2DViewer(QImage::Format format, QWidget *parent = nullptr): QWidget(parent), format(format){init();}
 
     void init() {
+        this->mirrorX = false;
+        this->mirrorY = false;
         this->zoomSpeed = 30;
         this->zoom = 1;
         this->imageData = QImage(10., 10., format);
@@ -799,7 +803,9 @@ public:
         this->imageData.fill(QColor(0, 0, 0));
     }
 
-    void setImageSize(const QSize& dataImageSize, const QSize& targetImageSize) {
+    void setImageSize(const QSize& dataImageSize, const QSize& targetImageSize, bool mirrorX, bool mirrorY) {
+        this->mirrorX = mirrorX;
+        this->mirrorY = mirrorY;
         this->dataImageSize = dataImageSize;
         this->targetImageSize = targetImageSize;
         this->zoomSpeed = std::max(this->targetImageSize.width(), this->targetImageSize.height())/10;
@@ -826,7 +832,7 @@ public:
         QPainter painter(&finalScreen);
         QRect target(paintedImageOrigin.x(), paintedImageOrigin.y(), this->paintedImageSize.width(), this->paintedImageSize.height());
         //painter.drawPixmap(target, QPixmap::fromImage(this->imageData.scaled(this->paintedImageSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation)));
-        painter.drawPixmap(target, QPixmap::fromImage(this->imageData.scaled(this->paintedImageSize, Qt::IgnoreAspectRatio, Qt::FastTransformation).mirrored(true, false)));
+        painter.drawPixmap(target, QPixmap::fromImage(this->imageData.scaled(this->paintedImageSize, Qt::IgnoreAspectRatio, Qt::FastTransformation).mirrored(mirrorX, mirrorY)));
         this->display->setPixmap(finalScreen);
     }
 
@@ -863,6 +869,10 @@ public:
         QRect target(paintedImageOrigin.x(), paintedImageOrigin.y(), this->paintedImageSize.width(), this->paintedImageSize.height());
         if(target.contains(event->pos())) {
             QPoint pointInPaintedImage = event->pos() - paintedImageOrigin;
+            if(this->mirrorX)
+                pointInPaintedImage.rx() = (paintedImageOrigin.x() + paintedImageSize.width()) - event->pos().x();
+            if(this->mirrorY)
+                pointInPaintedImage.ry() = (paintedImageOrigin.y() + paintedImageSize.height()) - event->pos().y();
             glm::vec2 ptInPaintedImage(pointInPaintedImage.x(), pointInPaintedImage.y());
             glm::vec2 targetSize = glm::vec2(dataImageSize.width(), dataImageSize.height());
             glm::vec2 srcSize = glm::vec2(paintedImageSize.width(), paintedImageSize.height());
@@ -933,7 +943,7 @@ public:
 
     Image3DViewer(const QString& name, const glm::vec3& side, Scene * scene, QWidget * parent = nullptr): QWidget(parent), name(name), direction(side), scene(scene), isInitialized(false), viewer2D(nullptr), targetImgSize(glm::vec3(1., 1., 1.)) {initLayout(); connect(scene);}
 
-    void init(const glm::vec3& originalImageSize, const glm::vec3& targetImageSize, const glm::vec3& optimalImageSize, const int& sliceIdx, const glm::vec3& side, std::vector<std::string> gridNames, std::vector<int> imgToDraw, std::vector<int> alphaValues, std::vector<std::pair<QColor, QColor>> colors, Interpolation::Method interpolationMethod) {
+    void init(const glm::vec3& originalImageSize, const glm::vec3& targetImageSize, const glm::vec3& optimalImageSize, const int& sliceIdx, const glm::vec3& side, std::vector<std::string> gridNames, std::vector<int> imgToDraw, std::vector<int> alphaValues, std::vector<std::pair<QColor, QColor>> colors, Interpolation::Method interpolationMethod, std::pair<bool, bool> mirror) {
 
         for(auto name : gridNames)
             if(name.empty())
@@ -960,7 +970,7 @@ public:
 
         this->isInitialized = true;
 
-        this->viewer2D->setImageSize(QSize(targetImageSize.x, targetImageSize.y), QSize(optimalImageSize.x, optimalImageSize.y));
+        this->viewer2D->setImageSize(QSize(targetImageSize.x, targetImageSize.y), QSize(optimalImageSize.x, optimalImageSize.y), mirror.first, mirror.second);
         this->setSliceIdx(sliceIdx);
 
     }
@@ -1069,9 +1079,11 @@ private:
         std::cout << positionOfMouse2D << std::endl;
         glm::vec3 positionOfMouse3D(positionOfMouse2D.x, positionOfMouse2D.y, sliceIdx);
         glm::vec3 convertedTargetImgSize = this->targetImgSize;
+        glm::vec3 convertedOriginalImgSize = this->originalImgSize;
+        convertVector(convertedOriginalImgSize);
         convertVector(convertedTargetImgSize);
         convertVector(positionOfMouse3D);
-        glm::vec3 fromTargetToOriginal = glm::vec3(this->originalImgSize) / glm::vec3(convertedTargetImgSize);
+        glm::vec3 fromTargetToOriginal = convertedOriginalImgSize / glm::vec3(convertedTargetImgSize);
         positionOfMouse3D *= fromTargetToOriginal;
         this->scene->grids[this->scene->getGridIdx(this->gridNames[0])]->grid->fromImageToWorld(positionOfMouse3D);
         Q_EMIT(mouseMovedInPlanarViewer(positionOfMouse3D));
@@ -1086,6 +1098,7 @@ private:
         QObject::connect(this->viewer2D, &Image2DViewer::isSelected, this, &Image3DViewer::isSelected);
         QObject::connect(this->viewer2D, &Image2DViewer::mouseMovedIn2DPlanarViewer, this, &Image3DViewer::mouseMovedIn2DViewer);
         QObject::connect(this, &Image3DViewer::mouseMovedInPlanarViewer, scene, &Scene::previewPointInPlanarView);
+        QObject::connect(this, &Image3DViewer::mouseMovedInPlanarViewer, scene, &Scene::pointIsClickedInPlanarViewer);
     }
 signals:
     void isSelected();
@@ -1100,6 +1113,7 @@ public:
 
     //Image3DViewer * imageViewer;
 
+    std::map<QString, std::vector<std::pair<bool, bool>>> viewersMirror;   // Store viewers res    for each side for easier usage
     std::map<QString, std::vector<glm::vec3>> viewersRes;   // Store viewers res    for each side for easier usage
     std::map<QString, glm::ivec3> viewersValues;// Store viewers values for each side for easier usage
     std::map<QString, Image3DViewer*> viewers;
@@ -1116,6 +1130,7 @@ public slots:
 
         this->viewersValues[name] = glm::ivec3(0, 0, 0);
         this->viewersRes[name] = {glm::vec3(1, 1, 1), glm::vec3(1, 1, 1), glm::vec3(1, 1, 1)};
+        this->viewersMirror[name] = {{false, false}, {false, false}, {false, false}};
 
         this->selectedViewer = name;
         this->labels["SelectedViewer"]->setText(name);
@@ -1285,6 +1300,14 @@ public slots:
 
         this->addAllNextWidgetsToDefaultGroup();
 
+        this->addWithLabel(WidgetType::H_GROUP, "GroupMirror", "Mirror");
+        this->addAllNextWidgetsToGroup("GroupMirror");
+
+        this->add(WidgetType::BUTTON_CHECKABLE, "MirrorX", "X");
+        this->add(WidgetType::BUTTON_CHECKABLE, "MirrorY", "Y");
+
+        this->addAllNextWidgetsToDefaultGroup();
+
         /****/
 
         this->checkBoxes["UseBack"]->setChecked(true);
@@ -1424,7 +1447,8 @@ public slots:
                         QColor(255.*this->scene->color0.x, 255.*this->scene->color0.y, 255.*this->scene->color0.z),
                         QColor(255.*this->scene->color1.x, 255.*this->scene->color1.y, 255.*this->scene->color1.z))
                     },
-                    this->getInterpolationMethod());
+                    this->getInterpolationMethod(),
+                    {this->buttons["MirrorX"]->isChecked(), this->buttons["MirrorY"]->isChecked()});
     }
 
     void update(Scene * scene) {
@@ -1470,19 +1494,23 @@ public slots:
         glm::vec3 side = this->getSide();
         int value = this->sliders["SliderX"]->value();
         glm::vec3 res = this->getImgDimension();
+        std::pair<bool, bool> mirror = {this->buttons["MirrorX"]->isChecked(), this->buttons["MirrorY"]->isChecked()};
         if(side.x > 0) {
             this->viewersValues[this->selectedViewer].x = value;
             this->viewersRes[this->selectedViewer][0] = res;
+            this->viewersMirror[this->selectedViewer][0] = mirror;
         }
 
         if(side.y > 0) {
             this->viewersValues[this->selectedViewer].y = value;
             this->viewersRes[this->selectedViewer][1] = res;
+            this->viewersMirror[this->selectedViewer][1] = mirror;
         }
 
         if(side.z > 0) {
             this->viewersValues[this->selectedViewer].z = value;
             this->viewersRes[this->selectedViewer][2] = res;
+            this->viewersMirror[this->selectedViewer][2] = mirror;
         }
         std::cout << "Store value: " << value << std::endl;
     }
@@ -1493,19 +1521,23 @@ public slots:
         glm::vec3 side = this->getSide();
         int value = 0;
         glm::vec3 res = glm::vec3(1, 1, 1);
+        std::pair<bool, bool> mirror = {false, false};
         if(side.x > 0) {
             value = this->viewersValues[this->selectedViewer].x;
             res = this->viewersRes[this->selectedViewer][0];
+            mirror = this->viewersMirror[this->selectedViewer][0];
         }
 
         if(side.y > 0) {
             value = this->viewersValues[this->selectedViewer].y;
             res = this->viewersRes[this->selectedViewer][1];
+            mirror = this->viewersMirror[this->selectedViewer][1];
         }
 
         if(side.z > 0) {
             value = this->viewersValues[this->selectedViewer].z;
             res = this->viewersRes[this->selectedViewer][2];
+            mirror = this->viewersMirror[this->selectedViewer][2];
         }
         if(res.x > 1 && res.y > 1 && res.z > 1)
             this->setSpinBoxesValues(res);
@@ -1514,6 +1546,12 @@ public slots:
         this->sliders["SliderX"]->setMaximum(this->getImgDimension().z-1);
         this->sliders["SliderX"]->setValue(value);
         this->sliders["SliderX"]->blockSignals(false);
+        this->buttons["MirrorX"]->blockSignals(true);
+        this->buttons["MirrorX"]->setChecked(mirror.first);
+        this->buttons["MirrorX"]->blockSignals(false);
+        this->buttons["MirrorY"]->blockSignals(true);
+        this->buttons["MirrorY"]->setChecked(mirror.second);
+        this->buttons["MirrorY"]->blockSignals(false);
     }
 
     void updateSlice() {
@@ -1549,7 +1587,7 @@ public slots:
             if(id == "Auto")
                 this->setAutoImageResolution();
 
-            if(id == "X" || id == "Y" || id == "Z" || id == "Interpolation" || id == "UseBack" || id == "UseFront" || id == "From" || id == "To" || id == "AlphaBack" || id == "AlphaFront")
+            if(id == "X" || id == "Y" || id == "Z" || id == "Interpolation" || id == "UseBack" || id == "UseFront" || id == "From" || id == "To" || id == "AlphaBack" || id == "AlphaFront" || "MirrorX" || "MirrorY")
                 this->updateImageViewer();
 
             if(id == "SideX" || id == "SideY" || id == "SideZ") {

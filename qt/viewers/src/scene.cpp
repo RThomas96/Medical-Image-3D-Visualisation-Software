@@ -3758,16 +3758,12 @@ void Scene::updateTools(UITool::MeshManipulatorType tool) {
 
     if(tool == UITool::MeshManipulatorType::REGISTRATION) {
         QObject::connect(this, &Scene::rayIsCasted, this, [this](const glm::vec3& origin, const glm::vec3& direction) { emit dynamic_cast<UITool::CompManipulator*>(this->glMeshManipulator->meshManipulator)->rayIsCasted(origin, direction, this->getMinTexValue(), this->getMaxTexValue(), this->computePlanePositions());});
-
         QObject::connect(this, SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)), dynamic_cast<UITool::CompManipulator*>(this->glMeshManipulator->meshManipulator), SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)));
-
     }
 
     if(tool == UITool::MeshManipulatorType::FIXED_REGISTRATION) {
         QObject::connect(this, SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)), dynamic_cast<UITool::FixedRegistrationManipulator*>(this->glMeshManipulator->meshManipulator), SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)));
-
         QObject::connect(this, &Scene::rayIsCasted, this, [this](const glm::vec3& origin, const glm::vec3& direction) { emit dynamic_cast<UITool::FixedRegistrationManipulator*>(this->glMeshManipulator->meshManipulator)->rayIsCasted(origin, direction, this->getMinTexValue(), this->getMaxTexValue(), this->computePlanePositions());});
-
         QObject::connect(dynamic_cast<UITool::FixedRegistrationManipulator*>(this->glMeshManipulator->meshManipulator), SIGNAL(needChangeActivatePreviewPoint(bool)), this, SLOT(setPreviewPointInPlanarView(bool)));
     }
 }
@@ -3797,6 +3793,7 @@ void Scene::applyRegistrationTool() {
         return;
     }
     manipulator->apply();
+    this->sendFirstTetmeshToGPU();
 }
 
 void Scene::applyFixedRegistrationTool() {
@@ -3806,6 +3803,7 @@ void Scene::applyFixedRegistrationTool() {
         return;
     }
     manipulator->apply();
+    this->sendFirstTetmeshToGPU();
 }
 
 void Scene::clearFixedRegistrationTool() {
