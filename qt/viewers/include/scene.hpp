@@ -554,7 +554,7 @@ public slots:
     void toggleWireframe();
     void toggleWireframe(bool value);
     void setGridsToDraw(std::vector<int> indices);
-    void setMultiGridRendering(bool value) {this->multiGridRendering = value;};
+    void setMultiGridRendering(bool value);
 
     // ************************ //
 
@@ -609,6 +609,7 @@ public slots:
     glm::vec3 getGridImgSize(const std::string& name);
     glm::vec3 getGridVoxelSize(const std::string &name);
     int getGridIdx(const std::string& name);
+    int getGridIdxLinkToCage(const std::string& name);
     std::pair<glm::vec3, glm::vec3> getBbox(const std::string& name);
 
     std::vector<std::string> getAllNonTetrahedralMeshesName();
@@ -659,6 +660,7 @@ public:
     UITool::MeshManipulatorType currentTool;
     DeformMethod currentDeformMethod;
 
+    std::vector<std::pair<std::string, std::string>> cageToGrid;
     std::vector<std::string> grids_name;
     std::vector<GridGLView::Ptr> grids;
     std::vector<std::pair<SurfaceMesh*, std::string>> meshes;

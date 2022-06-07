@@ -596,7 +596,7 @@ void Scene::addGrid() {
 	this->setUniformBufferData(gridView->uboHandle_colorAttributes, 96, 32, &gridView->colorChannelAttributes[2]);
 
     //Send grid texture
-	this->sendTetmeshToGPU(0, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS | InfoToSend::TEXCOORD | InfoToSend::NEIGHBORS));
+    this->sendTetmeshToGPU(this->gridToDraw, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS | InfoToSend::TEXCOORD | InfoToSend::NEIGHBORS));
 	this->tex3D_buildBuffers(gridView->volumetricMesh);
 
     //Add manipulators
@@ -1927,6 +1927,7 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
     if(this->displayGrid) {
         if(this->multiGridRendering) {
             if(this->grids.size() > 0) {
+                int originalGridToDraw = this->gridToDraw;
                 for(auto i : this->gridsToDraw) {
                     if(i >= 0 && i < this->grids.size()) {
                         this->gridToDraw = i;
@@ -1934,6 +1935,7 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
                         //this->drawPlanes(mvMat, pMat, this->drawMode == DrawMode::Solid);
                     }
                 }
+                this->gridToDraw = originalGridToDraw;
             }
         } else {
             if(this->grids.size() > 0) {
@@ -2927,6 +2929,7 @@ bool contain(const InfoToSend& value, const InfoToSend& contain) {
 
 // TODO: replace this function by a real update function
 void Scene::sendFirstTetmeshToGPU() {
+    std::cout << "Send tetmesh " << this->gridToDraw << std::endl;
     if(this->grids.size() > 0)
         this->sendTetmeshToGPU(this->gridToDraw, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS));
     if(this->glMeshManipulator->meshManipulator) {
@@ -3639,6 +3642,15 @@ bool Scene::isGrid(const std::string& name) {
     return false;
 }
 
+int Scene::getGridIdxLinkToCage(const std::string& name) {
+    for(int i = 0; i < this->cageToGrid.size(); ++i) {
+        if(this->cageToGrid[i].first == name) {
+            return this->getGridIdx(this->cageToGrid[i].second);
+        }
+    }
+    return -1;
+}
+
 int Scene::getGridIdx(const std::string& name) {
     for(int i = 0; i < this->grids_name.size(); ++i) {
         if(this->grids_name[i] == name) {
@@ -3924,6 +3936,7 @@ std::vector<std::string> Scene::getAllGridsName() {
 }
 
 bool Scene::openCage(const std::string& name, const std::string& filename, const std::string& surfaceMeshToDeformName, const bool MVC, const glm::vec4& color) {
+    this->cageToGrid.push_back(std::make_pair(name, surfaceMeshToDeformName));
     return this->openCage(name, filename, this->getBaseMesh(surfaceMeshToDeformName), MVC, color);
 }
 
@@ -3966,6 +3979,12 @@ void Scene::changeActiveMesh(const std::string& name) {
         int gridIdx = this->getGridIdx(activeMesh);
         this->gridToDraw = gridIdx;
         this->sendTetmeshToGPU(gridIdx, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS | InfoToSend::TEXCOORD | InfoToSend::NEIGHBORS)); 
+    } else if (this->multiGridRendering && this->isCage(activeMesh)) {
+        int gridIdx = this->getGridIdxLinkToCage(activeMesh);
+        if(gridIdx != -1) {
+            this->gridToDraw = gridIdx;
+            this->sendTetmeshToGPU(gridIdx, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS | InfoToSend::TEXCOORD | InfoToSend::NEIGHBORS));
+        }
     }
     this->changeCurrentTool(this->currentTool);
     this->changeCurrentDeformationMethod(this->currentDeformMethod);
@@ -4199,3 +4218,14 @@ void Scene::setGridsToDraw(std::vector<int> indices) {
 void Scene::setSortingRendering(bool value) {
     this->sortingRendering = value;
 }
+
+void Scene::setMultiGridRendering(bool value) {
+    this->multiGridRendering = value;
+    if(this->isCage(activeMesh)) {
+        int gridIdx = this->getGridIdxLinkToCage(activeMesh);
+        if(gridIdx != -1) {
+            this->gridToDraw = gridIdx;
+            this->sendTetmeshToGPU(gridIdx, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS | InfoToSend::TEXCOORD | InfoToSend::NEIGHBORS));
+        }
+    }
+};

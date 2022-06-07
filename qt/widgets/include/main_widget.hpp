@@ -1247,6 +1247,7 @@ public slots:
 
         this->add(WidgetType::CHECK_BOX, "UseBack");
         this->add(WidgetType::SPIN_BOX, "AlphaBack");
+        this->spinBoxes["AlphaBack"]->setSingleStep(20);
 
         this->addAllNextWidgetsToDefaultGroup();
 
@@ -1260,6 +1261,7 @@ public slots:
 
         this->add(WidgetType::CHECK_BOX, "UseFront");
         this->add(WidgetType::SPIN_BOX, "AlphaFront");
+        this->spinBoxes["AlphaFront"]->setSingleStep(20);
 
         this->addAllNextWidgetsToDefaultGroup();
 
