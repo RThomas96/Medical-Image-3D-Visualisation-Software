@@ -6,13 +6,16 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/io.hpp>
 #include <vector>
+#include <ctime>
+#include <chrono>
 
 struct History {
+    std::chrono::time_point<std::chrono::system_clock> timer;
     bool isActive;
     int currentState;
     std::vector<std::vector<glm::vec3>> history;
 
-    History(const std::vector<glm::vec3> initialPoints): history({initialPoints}), currentState(0), isActive(true) {}
+    History(const std::vector<glm::vec3> initialPoints): history({initialPoints}), currentState(0), isActive(true), timer(std::chrono::system_clock::now()) {}
 
     void activate() { this->isActive = true; }
     void deactivate() { this->isActive = false; }
@@ -50,9 +53,12 @@ struct History {
         return true;
     }
 
-    void addStep(const std::vector<glm::vec3>& points) {
+    void addStep(const std::vector<glm::vec3>& points, bool useTimer = true) {
         if(!this->isActive)
             return;
+        if(useTimer && std::chrono::duration<double>(std::chrono::system_clock::now() - this->timer).count() < 0.25)
+            return;
+        this->timer = std::chrono::system_clock::now();
         if(this->currentState < this->history.size()-1) {
             int nbStateToDelete = (this->history.size()-1) - this->currentState;
             for(int i = 0; i < nbStateToDelete; ++i)

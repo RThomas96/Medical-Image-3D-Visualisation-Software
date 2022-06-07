@@ -435,13 +435,13 @@ void MainWidget::setupActions() {
 
     // Undo
     this->actionManager->createQActionButton("Undo", "Undo", "ctrl+z", "Undo", "undo");
-    QObject::connect(this->actionManager->getAction("Undo"), &QAction::triggered, [this](){this->scene->undo();});
+    QObject::connect(this->actionManager->getAction("Undo"), &QAction::triggered, [this](){this->actionManager->getAction("ToggleNoneTool")->trigger(); this->scene->undo();});
 
     this->actionManager->createQActionButton("Redo", "Redo", "ctrl+alt+z", "Redo", "redo");
-    QObject::connect(this->actionManager->getAction("Redo"), &QAction::triggered, [this](){this->scene->redo();});
+    QObject::connect(this->actionManager->getAction("Redo"), &QAction::triggered, [this](){this->actionManager->getAction("ToggleNoneTool")->trigger(); this->scene->redo();});
 
     this->actionManager->createQActionButton("Reset", "Reset", "", "Put the mesh vertices at there original positions", "reset");
-    QObject::connect(this->actionManager->getAction("Reset"), &QAction::triggered, [this](){this->scene->reset();});
+    QObject::connect(this->actionManager->getAction("Reset"), &QAction::triggered, [this](){this->actionManager->getAction("ToggleNoneTool")->trigger(); this->scene->reset();});
 
     this->actionManager->createQActionButton("Clear", "Clear", "", "Clear the entire scene", "clearScene");
     QObject::connect(this->actionManager->getAction("Clear"), &QAction::triggered, [this](){
