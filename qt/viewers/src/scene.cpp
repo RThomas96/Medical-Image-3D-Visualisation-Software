@@ -2931,7 +2931,7 @@ bool contain(const InfoToSend& value, const InfoToSend& contain) {
 void Scene::sendFirstTetmeshToGPU() {
     std::cout << "Send tetmesh " << this->gridToDraw << std::endl;
     if(this->grids.size() > 0)
-        this->sendTetmeshToGPU(this->gridToDraw, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS));
+        this->sendTetmeshToGPU(this->gridToDraw, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS), this->sortingRendering);
     if(this->glMeshManipulator->meshManipulator) {
         this->glMeshManipulator->meshManipulator->setAllManipulatorsPosition(this->getBaseMesh(this->activeMesh)->getMeshPositions());
     }
