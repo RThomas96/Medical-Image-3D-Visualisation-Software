@@ -61,11 +61,9 @@ ivec2 Convert1DIndexTo2DIndex_Unnormed( in uint uiIndexToConvert, in int iWrapSi
 
 float ComputeVisibility(vec3 point)
 {
-	vec4 epsilon = vec4(volumeEpsilon, .0) ;
-	epsilon.xyz *= cutDirection;
-	if (shouldUseBB == false) {
+    //if (shouldUseBB == false) {
 		vec4 point4 = vec4(point, 1.);
-		vec4 cut4 = vec4(cut, 1.) - epsilon;
+        vec4 cut4 = vec4(cut - cut*0.1, 1.);
 		vec4 vis4 = point4 - cut4;
 		vis4.xyz *= cutDirection;
 		float xVis = vis4.x; // ((point.x - cut.x))*cutDirection.x;
@@ -81,15 +79,16 @@ float ComputeVisibility(vec3 point)
 		if( xVis < 0.|| yVis < 0.|| zVis < 0. || vis < .0)
 			return 1000.;
 		else return 0.;
-	} else {
-		if (point.x + epsilon.x < visuBBMin.x) { return 1000.; }
-		if (point.y + epsilon.y < visuBBMin.y) { return 1000.; }
-		if (point.z + epsilon.z < visuBBMin.z) { return 1000.; }
-		if (point.x - epsilon.x > visuBBMax.x) { return 1000.; }
-		if (point.y - epsilon.y > visuBBMax.y) { return 1000.; }
-		if (point.z - epsilon.z > visuBBMax.z) { return 1000.; }
-		return .0;
-	}
+    //}
+    //   else {
+    //	if (point.x + epsilon.x < visuBBMin.x) { return 1000.; }
+    //	if (point.y + epsilon.y < visuBBMin.y) { return 1000.; }
+    //	if (point.z + epsilon.z < visuBBMin.z) { return 1000.; }
+    //	if (point.x - epsilon.x > visuBBMax.x) { return 1000.; }
+    //	if (point.y - epsilon.y > visuBBMax.y) { return 1000.; }
+    //	if (point.z - epsilon.z > visuBBMax.z) { return 1000.; }
+    //	return .0;
+    //}
 }
 
 void main()

@@ -118,7 +118,6 @@ void main (void) {
 
     if( visibility > 3500. ) discard;
 
-
     // Shows the wireframe of the mesh :
     if(displayWireframe == true) {
         float epsilon = 0.008;
@@ -273,7 +272,7 @@ void main (void) {
 		5.	// Shininess
 	);
 	colorOut.a = 1.;
-	colorOut.xyz += phongAmbient * color.xyz;
+    colorOut.xyz += phongAmbient * color.xyz;
 	// Phong computation :
 	colorOut.xyz += phongComputation(Pos, n, color, lightPositions[0], phongDetails, lightDetails);
 	colorOut.xyz += phongComputation(Pos, n, color, lightPositions[4], phongDetails, lightDetails);
@@ -384,7 +383,7 @@ bool computeBarycentricCoordinates( in vec3 point, out float ld0 , out float ld1
 	ld2 = val2*factor_2;
 	ld3 = val3*factor_3;
 
-	if(ld0 < 0. || ld0 > 1. || ld1 < 0. || ld1 > 1. || ld2 < 0. || ld2 >1. || ld3 < 0. || ld3 > 1. ){
+    if(ld0 < 0. || ld0 > 1. || ld1 < 0. || ld1 > 1. || ld2 < 0. || ld2 >1. || ld3 < 0. || ld3 > 1. ){
 		return false;
 	}
 

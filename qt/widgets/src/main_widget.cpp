@@ -127,6 +127,7 @@ void MainWidget::setupWidgets() {
     this->toolbar->addSeparator();
 
     this->toolbar->addAction(this->actionManager->getAction("Sorting"));
+    this->toolbar->addAction(this->actionManager->getAction("Shader"));
 
     /***/
 
@@ -527,6 +528,11 @@ void MainWidget::setupActions() {
     this->actionManager->createQActionToggleButton("Sorting", "Sorting", "", "Enable the sorting rendering feature", "arap");
     QObject::connect(this->actionManager->getAction("Sorting"), &QAction::triggered, [this](){
             this->scene->setSortingRendering(this->actionManager->getAction("Sorting")->isChecked());
+    });
+
+    this->actionManager->createQActionToggleButton("Shader", "Shader", "", "Reload shaders", "arap");
+    QObject::connect(this->actionManager->getAction("Shader"), &QAction::triggered, [this](){
+            this->scene->recompileShaders(true);
     });
 }
 
