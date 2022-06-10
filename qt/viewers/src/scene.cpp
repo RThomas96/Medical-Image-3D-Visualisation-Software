@@ -1730,8 +1730,8 @@ void Scene::prepareUniformsGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm
 	GLint location_volumeEpsilon		  = getUniform("volumeEpsilon");
 
 	glm::vec3 planePos	   = this->computePlanePositions();
-	Image::bbox_t::vec min = this->visuBox.getMin();
-	Image::bbox_t::vec max = this->visuBox.getMax();
+    Image::bbox_t::vec min = _grid->grid->bbMin;
+    Image::bbox_t::vec max = _grid->grid->bbMax;
 
 	glUniform3fv(location_cam, 1, glm::value_ptr(camPos));
 	glUniform3fv(location_cut, 1, glm::value_ptr(planePos));

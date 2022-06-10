@@ -116,7 +116,7 @@ void main (void) {
 	sceneSpaceFragmentPos = vec4(.0,.0,.0,.0);
 	gl_FragDepth = gl_FragCoord.z;
 
-    if( visibility > 3500. ) discard;
+    if(visibility > 3999. && visibility < 4001.) discard;
 
     // Shows the wireframe of the mesh :
     if(displayWireframe == true) {
@@ -125,13 +125,13 @@ void main (void) {
 
         // Enables a 1-pass wireframe mode :
         if (distMin < epsilon) {// && visibility > 0.) {
-            float factor = (visibility/3500.);
-            colorOut = vec4(1.-factor, factor, 1.-factor, 1.);
+            float factor = (visibility/4000.);
+            //colorOut = vec4(1.-factor, factor, 1.-factor, 1.);
+            colorOut = vec4(0., factor, 0., 1.);
             sceneSpaceFragmentPos = vec4(P.xyz, 2.f);
             return;
         }
     }
-	
 
 	// Default color of the fragment
 	colorOut = vec4(.0, .0, .0, .0);
