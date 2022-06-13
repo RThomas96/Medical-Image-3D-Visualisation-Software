@@ -164,12 +164,12 @@ void Viewer::resizeGL(int w, int h) {
 	this->fbSize = glm::ivec2{w, h};
 
 	// Is the scene initialized ? (might not on first call to this function)
-	if (this->scene->isSceneInitialized()) {
-		// Update the texture accompanying the framebuffer to reflect its size change
-		this->renderTarget = this->scene->updateFBOOutputs(this->fbSize,
-		  this->defaultFramebufferObject(),
-		  this->renderTarget);
-	}
+    //if (this->scene->isSceneInitialized()) {
+    //	// Update the texture accompanying the framebuffer to reflect its size change
+    //	this->renderTarget = this->scene->updateFBOOutputs(this->fbSize,
+    //	  this->defaultFramebufferObject(),
+    //	  this->renderTarget);
+    //}
 }
 
 void Viewer::castRay() {

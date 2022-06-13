@@ -3,13 +3,12 @@
 
 #define MAIN_SHADER_UNIT
 
-in vec4 position;
-uniform vec4 color;
+//in vec4 position;
+//uniform vec4 color;
 
 out vec4 FragColor;
 
 void main()
 {
-    //FragColor = vec4(1., 0., 0., 0.5);
-    FragColor = color;
-} 
+    FragColor = vec4(1., 0., 0., 0.5);
+}

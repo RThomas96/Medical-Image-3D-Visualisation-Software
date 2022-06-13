@@ -398,6 +398,68 @@ void Scene::createBuffers() {
 	this->glSelection->setVboVertices(createVBO(GL_ARRAY_BUFFER, "vboHandle_SelectionVertices"));
 	this->glSelection->setVboIndices(createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_SelectionIndices"));
 
+    //glGenFramebuffers(1, &this->frameBuffer);
+    //glBindFramebuffer(GL_FRAMEBUFFER, this->frameBuffer);
+    //glGenTextures(1, &this->dualRenderingTexture);
+
+    //glBindTexture(GL_TEXTURE_2D, this->dualRenderingTexture);
+    //glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, 1024, 768, 0,GL_RGB, GL_UNSIGNED_BYTE, 0);
+
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+    //glGenRenderbuffers(1, &this->frameDepthBuffer);
+    //glBindRenderbuffer(GL_RENDERBUFFER, this->frameDepthBuffer);
+    //glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 1024, 768);
+    //glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, this->frameDepthBuffer);
+
+    //// Set "renderedTexture" as our colour attachement #0
+    //glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, this->dualRenderingTexture, 0);
+
+    //// Set the list of draw buffers.
+    //GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
+    //glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
+
+    //// Always check that our framebuffer is ok
+    //if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    //    std::cout << "WARNING: framebuffer doesn't work !!" << std::endl;
+    //else
+    //    std::cout << "Framebuffer works perfectly :) !!" << std::endl;
+
+    // The fullscreen quad's FBO
+    /***/
+
+    static const GLfloat vertices[] = {
+        -0.5f, -0.5f, 0.0f,
+         0.5f, -0.5f, 0.0f,
+         0.0f,  0.5f, 0.0f
+    };
+
+    //static const GLfloat g_quad_vertex_buffer_data[] = {
+    //    -1.0f, -1.0f, 0.0f,
+    //    1.0f, -1.0f, 0.0f,
+    //    -1.0f,  1.0f, 0.0f,
+    //    -1.0f,  1.0f, 0.0f,
+    //    1.0f, -1.0f, 0.0f,
+    //    1.0f,  1.0f, 0.0f,
+    //};
+
+    glGenVertexArrays(1, &quad_VertexArrayID);
+    glGenBuffers(1, &quad_vertexbuffer);
+
+    glBindVertexArray(quad_VertexArrayID);
+    glBindBuffer(GL_ARRAY_BUFFER, quad_vertexbuffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    /***/
+
+    // Create and compile our GLSL program from the shaders
+    //this->quad_programID = this->compileShaders("../shaders/plane.vert", "", "../shaders/plane.frag", verbose);
+    //GLuint texID = glGetUniformLocation(quad_programID, "renderedTexture");
+    //GLuint timeID = glGetUniformLocation(quad_programID, "time");
+
 	return;
 }
 
@@ -655,6 +717,7 @@ void Scene::updateBoundingBox(void) {
 }
 
 void Scene::recompileShaders(bool verbose) {
+
 	GLuint newProgram			 = this->compileShaders("../shaders/voxelgrid.vert", "../shaders/voxelgrid.geom", "../shaders/voxelgrid.frag", verbose);
 	GLuint newPlaneProgram		 = this->compileShaders("../shaders/plane.vert", "", "../shaders/plane.frag", verbose);
 	GLuint newPlaneViewerProgram = this->compileShaders("../shaders/texture_explorer.vert", "", "../shaders/texture_explorer.frag", verbose);
@@ -662,6 +725,7 @@ void Scene::recompileShaders(bool verbose) {
 	GLuint newBoundingBoxProgram = this->compileShaders("../shaders/bounding_box.vert", "", "../shaders/bounding_box.frag", verbose);
 	GLuint newSphereProgram		 = this->compileShaders("../shaders/sphere.vert", "", "../shaders/sphere.frag", true);
 	GLuint newSelectionProgram	 = this->compileShaders("../shaders/selection.vert", "", "../shaders/selection.frag", true);
+    GLuint newDoublePassProgram	 = this->compileShaders("../shaders/double_pass.vert", "", "../shaders/double_pass.frag", true);
 
 	if (newProgram) {
 		glDeleteProgram(this->program_projectedTex);
@@ -691,6 +755,10 @@ void Scene::recompileShaders(bool verbose) {
 		glDeleteProgram(this->glSelection->getProgram());
 		this->glSelection->setProgram(newSelectionProgram);
 	}
+    if (newDoublePassProgram) {
+        glDeleteProgram(this->program_doublePass);
+        this->program_doublePass = newDoublePassProgram;
+    }
 }
 
 GLuint Scene::compileShaders(std::string _vPath, std::string _gPath, std::string _fPath, bool verbose) {
@@ -1003,7 +1071,26 @@ void Scene::drawGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camP
 		this->tex3D_bindVAO();
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vbo_Texture3D_VertIdx);
 
-		glDrawElementsInstanced(GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, (void*) 0, grid->volumetricMesh.tetrahedraCount);
+        // Version to draw in each framebuffer
+        //
+        //std::cout << this->gridToDraw << std::endl;
+        //if(this->gridToDraw == 0) {
+        //    glGetIntegerv(GL_FRAMEBUFFER_BINDING, &this->defaultFBO);
+        //    glBindFramebuffer(GL_FRAMEBUFFER, this->frameBuffer);
+        //    glDrawElementsInstanced(GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, (void*) 0, grid->volumetricMesh.tetrahedraCount);
+        //    glBindFramebuffer(GL_FRAMEBUFFER, this->defaultFBO);
+        //    //glViewport(0,0,1024,768); // Render on the whole framebuffer, complete from the lower left corner to the upper right
+        //} else {
+        //    glDrawElementsInstanced(GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, (void*) 0, grid->volumetricMesh.tetrahedraCount);
+        //}
+
+        // Original version
+        //
+        glDrawElementsInstanced(GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, (void*) 0, grid->volumetricMesh.tetrahedraCount);
+
+        // Version to draw a simple texture
+        //
+
 
 		// Unbind program, buffers and VAO :
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -1910,6 +1997,9 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+    //return;
+
+
 	glm::mat4 transfoMat = glm::mat4(1.f);
 	/* Manipulator drawing  */
 
@@ -1960,12 +2050,19 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 	this->showVAOstate = false;
 
     this->glSelection->draw(mvMat, pMat, glm::value_ptr(mMat));
+
+    glUseProgram(this->program_doublePass);
+    glBindVertexArray(this->quad_VertexArrayID);
+    glEnableVertexAttribArray(0);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+    glBindVertexArray(0);
+
 }
 
 void Scene::newSHADERS_updateUBOData() {
 	this->shouldUpdateUBOData = false;
 	for (const auto& grid : this->grids) {
-		this->setUniformBufferData(grid->uboHandle_colorAttributes, 0, 32, &grid->mainColorChannelAttributes());
+        this->setUniformBufferData(grid->uboHandle_colorAttributes,  0, 32, &grid->mainColorChannelAttributes());
 		this->setUniformBufferData(grid->uboHandle_colorAttributes, 32, 32, &grid->colorChannelAttributes[0]);
 		this->setUniformBufferData(grid->uboHandle_colorAttributes, 64, 32, &grid->colorChannelAttributes[1]);
 		this->setUniformBufferData(grid->uboHandle_colorAttributes, 96, 32, &grid->colorChannelAttributes[2]);

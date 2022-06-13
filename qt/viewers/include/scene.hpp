@@ -196,6 +196,7 @@ private:
     GLuint program_VolumetricViewer;
     GLuint program_BoundingBox;
     GLuint program_sphere;
+    GLuint program_doublePass;
     /*************************************************/
 
     /* VAO */
@@ -237,6 +238,20 @@ private:
     GLuint pos_idx;
     /*************************************************/
 
+    /* Dual pass rendering */
+
+    /* Quad rendering */
+    GLuint quad_VertexArrayID;// for drawing a quad
+    GLuint quad_TexCoord;
+    GLuint quad_vertexbuffer;
+    GLint quad_programId;
+
+    GLint defaultFBO;
+    GLuint frameBuffer;
+    GLuint frameDepthBuffer;
+    GLuint dualRenderingTexture;
+
+    /*************************************************/
     GLuint sphere_size_to_draw;
     std::unique_ptr<ShaderCompiler> shaderCompiler;
     void printAllUniforms(GLuint _shader_program);
