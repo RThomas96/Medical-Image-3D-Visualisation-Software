@@ -152,6 +152,8 @@ Scene::Scene() :
     this->displayMesh = true;
     this->previewCursorInPlanarView = false;
     this->multiGridRendering = false;
+    this->drawOnlyBoundaries = true;
+    this->blendFirstPass = 1.;
     this->sortingRendering = false;
 }
 
@@ -398,7 +400,76 @@ void Scene::createBuffers() {
 	this->glSelection->setVboVertices(createVBO(GL_ARRAY_BUFFER, "vboHandle_SelectionVertices"));
 	this->glSelection->setVboIndices(createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_SelectionIndices"));
 
-	return;
+    glGenFramebuffers(1, &this->frameBuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, this->frameBuffer);
+    glGenTextures(1, &this->dualRenderingTexture);
+
+    glBindTexture(GL_TEXTURE_2D, this->dualRenderingTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, 1024, 768, 0,GL_RGB, GL_UNSIGNED_BYTE, 0);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+    //glGenRenderbuffers(1, &this->frameDepthBuffer);
+    //glBindRenderbuffer(GL_RENDERBUFFER, this->frameDepthBuffer);
+    //glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 1024, 768);
+    //glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, this->frameDepthBuffer);
+
+    glGenTextures(1, &this->frameDepthBuffer);
+    glBindTexture(GL_TEXTURE_2D, this->frameDepthBuffer);
+    glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT32, 1024, 768, 0,GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, this->frameDepthBuffer, 0);
+
+    // Set "renderedTexture" as our colour attachement #0
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, this->dualRenderingTexture, 0);
+
+    // Set the list of draw buffers.
+    GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
+    glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
+
+    // Always check that our framebuffer is ok
+    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        std::cout << "WARNING: framebuffer doesn't work !!" << std::endl;
+    else
+        std::cout << "Framebuffer works perfectly :) !!" << std::endl;
+
+    static const GLfloat vertices[] = {
+        -0.5f, -0.5f, 0.0f,
+        0.5f, -0.5f, 0.0f,
+        0.0f,  0.5f, 0.0f
+    };
+
+    //static const GLfloat g_quad_vertex_buffer_data[] = {
+    //    -1.0f, -1.0f, 0.0f,
+    //    1.0f, -1.0f, 0.0f,
+    //    -1.0f,  1.0f, 0.0f,
+    //    -1.0f,  1.0f, 0.0f,
+    //    1.0f, -1.0f, 0.0f,
+    //    1.0f,  1.0f, 0.0f,
+    //};
+
+    glGenVertexArrays(1, &quad_VertexArrayID);
+    glGenBuffers(1, &quad_vertexbuffer);
+
+    glBindVertexArray(quad_VertexArrayID);
+    glBindBuffer(GL_ARRAY_BUFFER, quad_vertexbuffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    /***/
+
+    // Create and compile our GLSL program from the shaders
+    //this->quad_programID = this->compileShaders("../shaders/plane.vert", "", "../shaders/plane.frag", verbose);
+    //GLuint texID = glGetUniformLocation(quad_programID, "renderedTexture");
+    //GLuint timeID = glGetUniformLocation(quad_programID, "time");
+
+    return;
 }
 
 void Scene::loadGridROI() {
@@ -662,6 +733,8 @@ void Scene::recompileShaders(bool verbose) {
 	GLuint newBoundingBoxProgram = this->compileShaders("../shaders/bounding_box.vert", "", "../shaders/bounding_box.frag", verbose);
 	GLuint newSphereProgram		 = this->compileShaders("../shaders/sphere.vert", "", "../shaders/sphere.frag", true);
 	GLuint newSelectionProgram	 = this->compileShaders("../shaders/selection.vert", "", "../shaders/selection.frag", true);
+    GLuint newDoublePassProgram  = this->compileShaders("../shaders/double_pass.vert", "", "../shaders/double_pass.frag", true);
+
 
 	if (newProgram) {
 		glDeleteProgram(this->program_projectedTex);
@@ -691,6 +764,10 @@ void Scene::recompileShaders(bool verbose) {
 		glDeleteProgram(this->glSelection->getProgram());
 		this->glSelection->setProgram(newSelectionProgram);
 	}
+    if (newDoublePassProgram) {
+        glDeleteProgram(this->program_doublePass);
+        this->program_doublePass = newDoublePassProgram;
+    }
 }
 
 GLuint Scene::compileShaders(std::string _vPath, std::string _gPath, std::string _fPath, bool verbose) {
@@ -990,7 +1067,9 @@ void Scene::drawGridMonoPlaneView(glm::vec2 fbDims, planes _plane, planeHeading 
 	return;
 }
 
-void Scene::drawGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const GridGLView::Ptr& grid) {
+//void Scene::drawGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const GridGLView::Ptr& grid) {
+void Scene::drawGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const GridGLView::Ptr& grid, bool inFrame) {
+
 	if (grid->gridTexture > 0) {
 		glUseProgram(this->program_VolumetricViewer);
 
@@ -998,12 +1077,57 @@ void Scene::drawGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camP
             this->sendTetmeshToGPU(this->gridToDraw, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS), sortingRendering);
         }
 
-        this->prepareUniformsGridVolumetricView(mvMat, pMat, camPos, grid);
+        this->prepareUniformsGridVolumetricView(mvMat, pMat, camPos, grid, !inFrame);
 
 		this->tex3D_bindVAO();
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vbo_Texture3D_VertIdx);
 
-		glDrawElementsInstanced(GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, (void*) 0, grid->volumetricMesh.tetrahedraCount);
+        //glDrawElementsInstanced(GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, (void*) 0, grid->volumetricMesh.tetrahedraCount);
+
+        if(inFrame && this->multiGridRendering) {
+            //glBindTexture(GL_TEXTURE_2D, this->dualRenderingTexture);
+            //glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, 1024, 768, 0,GL_RGB, GL_UNSIGNED_BYTE, 0);
+
+            //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+            glGetIntegerv(GL_FRAMEBUFFER_BINDING, &this->defaultFBO);
+            /***/
+            glDeleteFramebuffers(1, &this->frameBuffer);
+            glGenFramebuffers(1, &this->frameBuffer);
+            glBindFramebuffer(GL_FRAMEBUFFER, this->frameBuffer);
+
+            glDeleteTextures(1, &this->dualRenderingTexture);
+            glGenTextures(1, &this->dualRenderingTexture);
+
+            glBindTexture(GL_TEXTURE_2D, this->dualRenderingTexture);
+            glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, 1024, 768, 0,GL_RGB, GL_UNSIGNED_BYTE, 0);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+            glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, this->dualRenderingTexture, 0);
+
+            glDeleteTextures(1, &this->frameDepthBuffer);
+            glGenTextures(1, &this->frameDepthBuffer);
+            glBindTexture(GL_TEXTURE_2D, this->frameDepthBuffer);
+            glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT16, 1024, 768, 0,GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+            glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, this->frameDepthBuffer, 0);
+
+            // Set the list of draw buffers.
+            GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
+            glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
+            /***/
+            glDrawElementsInstanced(GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, (void*) 0, grid->volumetricMesh.tetrahedraCount);
+            glBindFramebuffer(GL_FRAMEBUFFER, this->defaultFBO);
+            //glDrawBuffer(0);
+        } else {
+            glDrawElementsInstanced(GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, (void*) 0, grid->volumetricMesh.tetrahedraCount);
+        }
 
 		// Unbind program, buffers and VAO :
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -1637,7 +1761,9 @@ void Scene::prepareUniformsMonoPlaneView(planes _plane, planeHeading _heading, g
 	glBindBufferBase(GL_UNIFORM_BUFFER, 0, _grid->uboHandle_colorAttributes);
 }
 
-void Scene::prepareUniformsGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const GridGLView::Ptr& _grid) {
+//void Scene::prepareUniformsGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const GridGLView::Ptr& _grid) {
+void Scene::prepareUniformsGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const GridGLView::Ptr& _grid, bool drawFront) {
+
 	// We assume the right program has been bound.
 
 	/// @brief Shortcut for glGetUniform, since this can result in long lines.
@@ -1667,6 +1793,9 @@ void Scene::prepareUniformsGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm
 	GLint location_Mask					  = getUniform("texData");
 	GLint location_visibilityMap		  = getUniform("visiblity_map");
 	GLint location_visibilityMapAlternate = getUniform("visiblity_map_alternate");
+    GLint location_firstPass_texture      = getUniform("firstPass_texture");
+    GLint location_firstPass_depthTexture = getUniform("firstPass_depthTexture");
+
 
 	std::size_t tex = 0;
 	glActiveTexture(GL_TEXTURE0 + tex);
@@ -1709,6 +1838,22 @@ void Scene::prepareUniformsGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm
 	glUniform1i(location_visibilityMapAlternate, tex);
 	tex++;
 
+    glActiveTexture(GL_TEXTURE0 + tex);
+    glBindTexture(GL_TEXTURE_2D, this->dualRenderingTexture);
+    glUniform1i(location_firstPass_texture, tex);
+    tex++;
+
+    glActiveTexture(GL_TEXTURE0 + tex);
+    glBindTexture(GL_TEXTURE_2D, this->frameDepthBuffer);
+    glUniform1i(location_firstPass_depthTexture, tex);
+    tex++;
+
+    GLint location_isFirstPass = getUniform("isFirstPass");
+    float val = 1.;
+    if(drawFront)
+        val = 0.;
+    glUniform1fv(location_isFirstPass, 1, &val);
+
 	// Scalars :
 	GLint location_voxelSize = getUniform("voxelSize");
 	GLint location_gridSize	 = getUniform("gridSize");
@@ -1728,6 +1873,8 @@ void Scene::prepareUniformsGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm
 	GLint location_shouldUseBB			  = getUniform("shouldUseBB");
 	GLint location_displayWireframe		  = getUniform("displayWireframe");
 	GLint location_volumeEpsilon		  = getUniform("volumeEpsilon");
+    GLint location_drawOnlyBoundaries    = getUniform("drawOnlyBoundaries");
+    GLint location_blendFirstPass            = getUniform("blendFirstPass");
 
 	glm::vec3 planePos	   = this->computePlanePositions();
     Image::bbox_t::vec min = _grid->grid->bbMin;
@@ -1743,6 +1890,12 @@ void Scene::prepareUniformsGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm
 	glUniform1ui(location_shouldUseBB, 0);
 	glUniform1ui(location_displayWireframe, this->glMeshManipulator->isWireframeDisplayed());
 	glUniform3fv(location_volumeEpsilon, 1, glm::value_ptr(_grid->defaultEpsilon));
+    glUniform1f(location_blendFirstPass, this->blendFirstPass);
+
+    int drawOnly = 1;
+    if(!this->drawOnlyBoundaries)
+        drawOnly = 0;
+    glUniform1i(location_drawOnlyBoundaries, drawOnly);
 
 	// Matrices :
 	GLint location_mMat = getUniform("mMat");
@@ -1931,7 +2084,8 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
                 for(auto i : this->gridsToDraw) {
                     if(i >= 0 && i < this->grids.size()) {
                         this->gridToDraw = i;
-                        this->drawGridVolumetricView(mvMat, pMat, camPos, this->grids[gridToDraw]);
+                        //this->drawGridVolumetricView(mvMat, pMat, camPos, this->grids[gridToDraw]);
+                        this->drawGridVolumetricView(mvMat, pMat, camPos, this->grids[gridToDraw], i == 0);
                         //this->drawPlanes(mvMat, pMat, this->drawMode == DrawMode::Solid);
                     }
                 }
@@ -4218,6 +4372,11 @@ void Scene::setSortingRendering(bool value) {
 }
 
 void Scene::setMultiGridRendering(bool value) {
+    if(this->multiGridRendering) {
+        glDeleteFramebuffers(1, &this->frameBuffer);
+        glDeleteTextures(1, &this->dualRenderingTexture);
+        glDeleteTextures(1, &this->frameDepthBuffer);
+    }
     this->multiGridRendering = value;
     if(this->isCage(activeMesh)) {
         int gridIdx = this->getGridIdxLinkToCage(activeMesh);
@@ -4227,3 +4386,12 @@ void Scene::setMultiGridRendering(bool value) {
         }
     }
 };
+
+void Scene::setDrawOnlyBoundaries(bool value) {
+    std::cout << "Set draw only boundaries: " << value << std::endl;
+    this->drawOnlyBoundaries = value;
+}
+
+void Scene::setBlendFirstPass(float value) {
+    this->blendFirstPass = value;
+}

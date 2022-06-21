@@ -128,6 +128,7 @@ void MainWidget::setupWidgets() {
 
     this->toolbar->addAction(this->actionManager->getAction("Sorting"));
     this->toolbar->addAction(this->actionManager->getAction("Shader"));
+    this->toolbar->addAction(this->actionManager->getAction("Boundaries"));
 
     /***/
 
@@ -211,6 +212,7 @@ void MainWidget::setupWidgets() {
     QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::xSliderValueChanged, this->scene, &Scene::slotSetPlaneDisplacementX);
     QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::ySliderValueChanged, this->scene, &Scene::slotSetPlaneDisplacementY);
     QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::zSliderValueChanged, this->scene, &Scene::slotSetPlaneDisplacementZ);
+    QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::aSliderValueChanged, this->scene, &Scene::setBlendFirstPass);
 
     QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::clickedInvertXPushButton, this->scene, &Scene::slotTogglePlaneDirectionX);
     QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::clickedInvertYPushButton, this->scene, &Scene::slotTogglePlaneDirectionY);
@@ -533,6 +535,11 @@ void MainWidget::setupActions() {
     this->actionManager->createQActionToggleButton("Shader", "Shader", "", "Reload shaders", "arap");
     QObject::connect(this->actionManager->getAction("Shader"), &QAction::triggered, [this](){
             this->scene->recompileShaders(true);
+    });
+
+    this->actionManager->createQActionToggleButton("Boundaries", "Boundaries", "", "", "arap");
+    QObject::connect(this->actionManager->getAction("Boundaries"), &QAction::triggered, [this](){
+        this->scene->setDrawOnlyBoundaries(this->actionManager->getAction("Boundaries")->isChecked());
     });
 }
 

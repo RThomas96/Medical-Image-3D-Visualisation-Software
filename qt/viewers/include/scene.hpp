@@ -196,6 +196,7 @@ private:
     GLuint program_VolumetricViewer;
     GLuint program_BoundingBox;
     GLuint program_sphere;
+    GLuint program_doublePass;
     /*************************************************/
 
     /* VAO */
@@ -237,6 +238,22 @@ private:
     GLuint pos_idx;
     /*************************************************/
 
+    /* Dual pass rendering */
+
+    /* Quad rendering */
+    GLuint quad_VertexArrayID;// for drawing a quad
+    GLuint quad_TexCoord;
+    GLuint quad_vertexbuffer;
+    GLint quad_programId;
+
+    GLint defaultFBO;
+    GLuint frameBuffer;
+    GLuint frameDepthBuffer;
+    GLuint dualRenderingTexture;
+    GLuint dualRenderingTextureDepth;
+
+    /*************************************************/
+
     GLuint sphere_size_to_draw;
     std::unique_ptr<ShaderCompiler> shaderCompiler;
     void printAllUniforms(GLuint _shader_program);
@@ -268,7 +285,7 @@ public:
     /* Draws */
     void draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool showTexOnPlane);
 
-    void drawGridVolumetricView(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, const GridGLView::Ptr& grid);
+    void drawGridVolumetricView(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, const GridGLView::Ptr& grid, bool inFrame = false);
     void drawGridPlaneView(GLfloat mvMat[], GLfloat pMat[], glm::mat4 baseMatrix, const GridGLView::Ptr& grid);
     void drawGridMonoPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading, float zoomRatio, glm::vec2 offset);
     void drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane = true);
@@ -276,7 +293,7 @@ public:
     /*************************************************/
 
     /* Uniform preparation */
-    void prepareUniformsGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const GridGLView::Ptr& _grid);
+    void prepareUniformsGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const GridGLView::Ptr& _grid, bool drawFront = false);
     void prepareUniformsGridPlaneView(GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, const GridGLView::Ptr& grid);// preps uniforms for a grid
     void prepareUniformsMonoPlaneView(planes _plane, planeHeading _heading, glm::vec2 fbDims, float zoomRatio, glm::vec2 offset, const GridGLView::Ptr& _grid);// prep the plane uniforms to draw in space
     void prepareUniformsPlanes(GLfloat* mvMat, GLfloat* pMat, planes _plane, const GridGLView::Ptr& grid, bool showTexOnPlane = true);// preps uniforms for a given plane
@@ -555,6 +572,8 @@ public slots:
     void toggleWireframe(bool value);
     void setGridsToDraw(std::vector<int> indices);
     void setMultiGridRendering(bool value);
+    void setDrawOnlyBoundaries(bool value);
+    void setBlendFirstPass(float value);
 
     // ************************ //
 
@@ -648,6 +667,8 @@ public:
 
     bool sortingRendering;
     bool multiGridRendering;
+    bool drawOnlyBoundaries;
+    float blendFirstPass;
     bool displayGrid;
     bool displayMesh;
     bool previewCursorInPlanarView;

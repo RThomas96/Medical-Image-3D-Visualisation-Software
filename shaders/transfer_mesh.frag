@@ -43,6 +43,12 @@ uniform sampler2D texture_coordinates;
 uniform sampler2D visibility_texture;
 uniform sampler2D neighbors;
 
+uniform sampler2D firstPass_texture;
+uniform sampler2D firstPass_depthTexture;
+uniform float isFirstPass;
+uniform float blendFirstPass;
+uniform bool drawOnlyBoundaries;
+
 // Phong :
 uniform float diffuseRef;
 uniform float specRef;
@@ -190,7 +196,8 @@ void main (void) {
 	next_voxel = origin_voxel;
 
 	int maxFragIter = 200;
-	int maxTetrIter =  50;
+    int maxTetrIter =  50;
+    //int maxTetrIter =  1;
 
 	vec3 n = vec3(0.,0.,0.);
 
@@ -284,6 +291,19 @@ void main (void) {
 	// Update fragment depth to prevent sorting issues !!!
 	vec4 compute_depth = pMat * vMat * sceneSpaceFragmentPos;
     gl_FragDepth = 0.5f * ((compute_depth.z / compute_depth.w) + 1.f);
+
+    if(isFirstPass < 0.9) {
+        vec4 firstPassColor = texelFetch(firstPass_texture, ivec2(gl_FragCoord.x, gl_FragCoord.y), 0);
+        float firstPassDepth = texelFetch(firstPass_depthTexture, ivec2(gl_FragCoord.x, gl_FragCoord.y), 0).z;
+        //bool needBlend = (gl_FragDepth >= firstPassDepth - firstPassDepth * 0.01 );
+        bool needBlend = (abs(gl_FragDepth - firstPassDepth) < 0.0001);
+        if(drawOnlyBoundaries)
+            needBlend = true;
+
+        if(needBlend && (firstPassColor.x > 0.1 || firstPassColor.y > 0.1 || firstPassColor.z > 0.1)) {
+            colorOut.xyz = ((1. - blendFirstPass) * colorOut.xyz) + blendFirstPass * firstPassColor.xyz;
+        }
+    }
 
 	return;
 }
@@ -448,37 +468,37 @@ bool computeBarycentricCoordinates(in vec3 point, out float ld0 , out float ld1 
 	ld3 = val3*factor_3;
 
 	// if we're out of the barycentric coordinates for this tetrahedron :
-	if(ld0 < 0. || ld0 > 1. || ld1 < 0. || ld1 > 1. || ld2 < 0. || ld2 >1. || ld3 < 0. || ld3 > 1. ){
-		int texture_id_next_tetra = id_tetra_start*4;
+    if(ld0 < 0. || ld0 > 1. || ld1 < 0. || ld1 > 1. || ld2 < 0. || ld2 >1. || ld3 < 0. || ld3 > 1. ){
+        int texture_id_next_tetra = id_tetra_start*4;
 
-		if( val1 >= val0 && val1 >= val2 && val1 >= val3 ){
-			texture_id_next_tetra = texture_id_next_tetra + 1;
-		} else if( val2 >= val0 && val2 >= val1 && val2 >= val3 ){
-			texture_id_next_tetra = texture_id_next_tetra + 2;
-		} else if( val3 >= val0 && val3 >= val1 && val3 >= val2 ){
-			texture_id_next_tetra = texture_id_next_tetra + 3;
-		}
+        if( val1 >= val0 && val1 >= val2 && val1 >= val3 ){
+            texture_id_next_tetra = texture_id_next_tetra + 1;
+        } else if( val2 >= val0 && val2 >= val1 && val2 >= val3 ){
+            texture_id_next_tetra = texture_id_next_tetra + 2;
+        } else if( val3 >= val0 && val3 >= val1 && val3 >= val2 ){
+            texture_id_next_tetra = texture_id_next_tetra + 3;
+        }
 
-		/*
-		if( ld1 <= ld0 && ld1 <= ld2 && ld1 <= ld3 ){
-			  texture_id_next_tetra = texture_id_next_tetra + 1;
-		} else if( ld2 <= ld0 && ld2 <= ld1 && ld2 <= ld3 ){
-			  texture_id_next_tetra = texture_id_next_tetra + 2;
-		} else if( ld3 <= ld0 && ld3 <= ld1 && ld3 <= ld2 ){
-			  texture_id_next_tetra = texture_id_next_tetra + 3;
-		}
-		*/
+        /*
+        if( ld1 <= ld0 && ld1 <= ld2 && ld1 <= ld3 ){
+              texture_id_next_tetra = texture_id_next_tetra + 1;
+        } else if( ld2 <= ld0 && ld2 <= ld1 && ld2 <= ld3 ){
+              texture_id_next_tetra = texture_id_next_tetra + 2;
+        } else if( ld3 <= ld0 && ld3 <= ld1 && ld3 <= ld2 ){
+              texture_id_next_tetra = texture_id_next_tetra + 3;
+        }
+        */
 
-		ivec2 textCoordNeighbor = Convert1DIndexTo2DIndex_Unnormed(uint(texture_id_next_tetra), neighborWidth);
-		vec4 texV = vec4( texelFetch(neighbors, textCoordNeighbor, 0).xyz, 1. );
+        ivec2 textCoordNeighbor = Convert1DIndexTo2DIndex_Unnormed(uint(texture_id_next_tetra), neighborWidth);
+        vec4 texV = vec4( texelFetch(neighbors, textCoordNeighbor, 0).xyz, 1. );
 
-		if( texV.x < 0 )
-			id_tetra_end = -1;
-		else
-			id_tetra_end = int ( texV.x );
+        if( texV.x < 0 )
+            id_tetra_end = -1;
+        else
+            id_tetra_end = int ( texV.x );
 
-		return false;
-	}
+        return false;
+    }
 
 
 	vec3 text3DCoordNP0 = texelFetch(texture_coordinates, textCoord0, 0).xyz;
