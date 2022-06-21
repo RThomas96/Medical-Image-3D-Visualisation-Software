@@ -162,7 +162,9 @@ Scene::~Scene(void) {
 
 void Scene::initGl(QOpenGLContext* _context) {
 	// Check if the scene has been initialized, share contexts if it has been :
-	if (this->isInitialized == true) {
+    this->h = 1024;
+    this->w = 768;
+    if (this->isInitialized == true) {
 		if (this->context != nullptr && (_context != 0 && _context != nullptr)) {
 			_context->setShareContext(this->context);
 			if (_context->create() == false) {
@@ -405,7 +407,7 @@ void Scene::createBuffers() {
     glGenTextures(1, &this->dualRenderingTexture);
 
     glBindTexture(GL_TEXTURE_2D, this->dualRenderingTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, 1024, 768, 0,GL_RGB, GL_UNSIGNED_BYTE, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, h, w, 0,GL_RGB, GL_UNSIGNED_BYTE, 0);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -417,7 +419,7 @@ void Scene::createBuffers() {
 
     glGenTextures(1, &this->frameDepthBuffer);
     glBindTexture(GL_TEXTURE_2D, this->frameDepthBuffer);
-    glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT32, 1024, 768, 0,GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT32, h, w, 0,GL_DEPTH_COMPONENT, GL_FLOAT, 0);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -1101,7 +1103,7 @@ void Scene::drawGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camP
             glGenTextures(1, &this->dualRenderingTexture);
 
             glBindTexture(GL_TEXTURE_2D, this->dualRenderingTexture);
-            glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, 1024, 768, 0,GL_RGB, GL_UNSIGNED_BYTE, 0);
+            glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, h, w, 0,GL_RGB, GL_UNSIGNED_BYTE, 0);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
@@ -1110,7 +1112,7 @@ void Scene::drawGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camP
             glDeleteTextures(1, &this->frameDepthBuffer);
             glGenTextures(1, &this->frameDepthBuffer);
             glBindTexture(GL_TEXTURE_2D, this->frameDepthBuffer);
-            glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT16, 1024, 768, 0,GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+            glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT16, h, w, 0,GL_DEPTH_COMPONENT, GL_FLOAT, 0);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -3215,7 +3217,7 @@ void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend, bool sort
         this->grids[gridIdx]->volumetricMesh.neighborhood = this->uploadTexture2D(texParams);
     }
 
-	delete[] tex;
+    delete[] tex;
 	delete[] rawVertices;
 	delete[] rawNormals;
 	delete[] rawNeighbors;
@@ -4394,4 +4396,9 @@ void Scene::setDrawOnlyBoundaries(bool value) {
 
 void Scene::setBlendFirstPass(float value) {
     this->blendFirstPass = value;
+}
+
+void Scene::setRenderSize(int h, int w) {
+    this->h = h;
+    this->w = w;
 }

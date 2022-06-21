@@ -249,6 +249,9 @@ private:
     GLint defaultFBO;
     GLuint frameBuffer;
     GLuint frameDepthBuffer;
+    // Size of the dual rendering texture
+    int h;
+    int w;
     GLuint dualRenderingTexture;
     GLuint dualRenderingTextureDepth;
 
@@ -274,6 +277,7 @@ public:
 
     GLuint createUniformBuffer(std::size_t size_bytes, GLenum draw_mode);
     void setUniformBufferData(GLuint uniform_buffer, std::size_t begin_bytes, std::size_t size_bytes, GLvoid* data);
+    void setRenderSize(int h, int w);
 
     GLuint updateFBOOutputs(glm::ivec2 dimensions, GLuint fb_handle, GLuint old_texture = 0);
     glm::vec4 readFramebufferContents(GLuint fb_handle, glm::ivec2 image_coordinates);
