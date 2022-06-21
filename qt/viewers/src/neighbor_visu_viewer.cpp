@@ -92,6 +92,8 @@ void Viewer::init() {
 
     this->scene->init();
     Q_EMIT sceneRadiusChanged(this->camera()->distanceToSceneCenter());
+
+    //this->setUpdateBehavior(QOpenGLWidget::PartialUpdate);
 }
 
 void Viewer::addStatusBar(QStatusBar* bar) {
@@ -104,7 +106,7 @@ void Viewer::draw() {
 
 	float white_shade = 245. / 255.;
 
-	glClearColor(white_shade, white_shade, white_shade, .0);
+    glClearColor(white_shade, white_shade, white_shade, .0);
 
 	this->camera()->getModelViewMatrix(mvMat);
 	this->camera()->getProjectionMatrix(pMat);

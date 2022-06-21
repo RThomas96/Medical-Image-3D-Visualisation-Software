@@ -128,6 +128,7 @@ void MainWidget::setupWidgets() {
 
     this->toolbar->addAction(this->actionManager->getAction("Sorting"));
     this->toolbar->addAction(this->actionManager->getAction("Shader"));
+    this->toolbar->addAction(this->actionManager->getAction("Boundaries"));
 
     /***/
 
@@ -211,6 +212,7 @@ void MainWidget::setupWidgets() {
     QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::xSliderValueChanged, this->scene, &Scene::slotSetPlaneDisplacementX);
     QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::ySliderValueChanged, this->scene, &Scene::slotSetPlaneDisplacementY);
     QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::zSliderValueChanged, this->scene, &Scene::slotSetPlaneDisplacementZ);
+    QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::aSliderValueChanged, this->scene, &Scene::setBlendFirstPass);
 
     QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::clickedInvertXPushButton, this->scene, &Scene::slotTogglePlaneDirectionX);
     QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::clickedInvertYPushButton, this->scene, &Scene::slotTogglePlaneDirectionY);
@@ -436,13 +438,15 @@ void MainWidget::setupActions() {
 
     // Undo
     this->actionManager->createQActionButton("Undo", "Undo", "ctrl+z", "Undo", "undo");
-    QObject::connect(this->actionManager->getAction("Undo"), &QAction::triggered, [this](){this->actionManager->getAction("ToggleNoneTool")->trigger(); this->scene->undo();});
+    this->actionManager->getAction("Undo")->setAutoRepeat(true);
+    QObject::connect(this->actionManager->getAction("Undo"), &QAction::triggered, [this](){if(!this->actionManager->getAction("ToggleNoneTool")->isChecked()){this->actionManager->getAction("ToggleNoneTool")->trigger();} this->scene->undo();});
 
     this->actionManager->createQActionButton("Redo", "Redo", "ctrl+alt+z", "Redo", "redo");
-    QObject::connect(this->actionManager->getAction("Redo"), &QAction::triggered, [this](){this->actionManager->getAction("ToggleNoneTool")->trigger(); this->scene->redo();});
+    this->actionManager->getAction("Redo")->setAutoRepeat(true);
+    QObject::connect(this->actionManager->getAction("Redo"), &QAction::triggered, [this](){if(!this->actionManager->getAction("ToggleNoneTool")->isChecked()){this->actionManager->getAction("ToggleNoneTool")->trigger();} this->scene->redo();});
 
     this->actionManager->createQActionButton("Reset", "Reset", "", "Put the mesh vertices at there original positions", "reset");
-    QObject::connect(this->actionManager->getAction("Reset"), &QAction::triggered, [this](){this->actionManager->getAction("ToggleNoneTool")->trigger(); this->scene->reset();});
+    QObject::connect(this->actionManager->getAction("Reset"), &QAction::triggered, [this](){if(!this->actionManager->getAction("ToggleNoneTool")->isChecked()){this->actionManager->getAction("ToggleNoneTool")->trigger();} this->scene->reset();});
 
     this->actionManager->createQActionButton("Clear", "Clear", "", "Clear the entire scene", "clearScene");
     QObject::connect(this->actionManager->getAction("Clear"), &QAction::triggered, [this](){
@@ -533,6 +537,11 @@ void MainWidget::setupActions() {
     this->actionManager->createQActionToggleButton("Shader", "Shader", "", "Reload shaders", "arap");
     QObject::connect(this->actionManager->getAction("Shader"), &QAction::triggered, [this](){
             this->scene->recompileShaders(true);
+    });
+
+    this->actionManager->createQActionToggleButton("Boundaries", "Boundaries", "", "", "arap");
+    QObject::connect(this->actionManager->getAction("Boundaries"), &QAction::triggered, [this](){
+            this->scene->setDrawOnlyBoundaries(this->actionManager->getAction("Boundaries")->isChecked());
     });
 }
 

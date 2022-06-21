@@ -59,7 +59,8 @@ void PlanarViewer::init(void) {
 	if (this->sceneToShow == nullptr) {
 		throw std::runtime_error("[ERROR] Scene was nullptr when initialized.");
 	}
-	this->setUpdateBehavior(UpdateBehavior::NoPartialUpdate);
+    this->setUpdateBehavior(UpdateBehavior::NoPartialUpdate);
+    //this->setUpdateBehavior(UpdateBehavior::PartialUpdate);
 
 	this->makeCurrent();
 

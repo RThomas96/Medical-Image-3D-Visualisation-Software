@@ -152,6 +152,8 @@ Scene::Scene() :
     this->displayMesh = true;
     this->previewCursorInPlanarView = false;
     this->multiGridRendering = false;
+    this->drawOnlyBoundaries = true;
+    this->blendFirstPass = 1.;
     this->sortingRendering = false;
 }
 
@@ -398,33 +400,43 @@ void Scene::createBuffers() {
 	this->glSelection->setVboVertices(createVBO(GL_ARRAY_BUFFER, "vboHandle_SelectionVertices"));
 	this->glSelection->setVboIndices(createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_SelectionIndices"));
 
-    //glGenFramebuffers(1, &this->frameBuffer);
-    //glBindFramebuffer(GL_FRAMEBUFFER, this->frameBuffer);
-    //glGenTextures(1, &this->dualRenderingTexture);
+    glGenFramebuffers(1, &this->frameBuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, this->frameBuffer);
+    glGenTextures(1, &this->dualRenderingTexture);
 
-    //glBindTexture(GL_TEXTURE_2D, this->dualRenderingTexture);
-    //glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, 1024, 768, 0,GL_RGB, GL_UNSIGNED_BYTE, 0);
+    glBindTexture(GL_TEXTURE_2D, this->dualRenderingTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, 1024, 768, 0,GL_RGB, GL_UNSIGNED_BYTE, 0);
 
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
     //glGenRenderbuffers(1, &this->frameDepthBuffer);
     //glBindRenderbuffer(GL_RENDERBUFFER, this->frameDepthBuffer);
     //glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 1024, 768);
     //glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, this->frameDepthBuffer);
 
-    //// Set "renderedTexture" as our colour attachement #0
-    //glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, this->dualRenderingTexture, 0);
+    glGenTextures(1, &this->frameDepthBuffer);
+    glBindTexture(GL_TEXTURE_2D, this->frameDepthBuffer);
+    glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT32, 1024, 768, 0,GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-    //// Set the list of draw buffers.
-    //GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
-    //glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, this->frameDepthBuffer, 0);
 
-    //// Always check that our framebuffer is ok
-    //if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-    //    std::cout << "WARNING: framebuffer doesn't work !!" << std::endl;
-    //else
-    //    std::cout << "Framebuffer works perfectly :) !!" << std::endl;
+    // Set "renderedTexture" as our colour attachement #0
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, this->dualRenderingTexture, 0);
+
+    // Set the list of draw buffers.
+    GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
+    glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
+
+    // Always check that our framebuffer is ok
+    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        std::cout << "WARNING: framebuffer doesn't work !!" << std::endl;
+    else
+        std::cout << "Framebuffer works perfectly :) !!" << std::endl;
 
     // The fullscreen quad's FBO
     /***/
@@ -521,6 +533,20 @@ void Scene::updateProgressBar() {
 	return;
 }
 
+const char * GetGLErrorStr(GLenum err) {
+    switch (err)
+    {
+    case GL_NO_ERROR:          return "No error";
+    case GL_INVALID_ENUM:      return "Invalid enum";
+    case GL_INVALID_VALUE:     return "Invalid value";
+    case GL_INVALID_OPERATION: return "Invalid operation";
+    case GL_STACK_OVERFLOW:    return "Stack overflow";
+    case GL_STACK_UNDERFLOW:   return "Stack underflow";
+    case GL_OUT_OF_MEMORY:     return "Out of memory";
+    default:                   return "Unknown error";
+    }
+}
+
 uint16_t Scene::sendGridValuesToGPU(int gridIdx) {
 
 	glm::vec<4, std::size_t, glm::defaultp> dimensions{this->grids[gridIdx]->grid->getResolution(), 2};
@@ -576,7 +602,9 @@ uint16_t Scene::sendGridValuesToGPU(int gridIdx) {
 
 	std::vector<std::uint16_t> slices;
     glDeleteTextures(1, &this->grids[gridIdx]->gridTexture);
+    std::cerr << "Start allocating the texture.\n";
     this->grids[gridIdx]->gridTexture = this->newAPI_uploadTexture3D_allocateonly(_gridTex);
+    std::cerr << "Allocating success !.\n";
 
     int nbSlice = this->grids[gridIdx]->grid->getResolution()[2];
 
@@ -606,7 +634,13 @@ uint16_t Scene::sendGridValuesToGPU(int gridIdx) {
                 }
             }
         }
-		this->newAPI_uploadTexture3D(this->grids[gridIdx]->gridTexture, _gridTex, sliceI, slices);
+        std::cerr << "Start upload slice " << s << "/" << nbSlice  << " with size: " << slices.size() << std::endl;
+        this->newAPI_uploadTexture3D(this->grids[gridIdx]->gridTexture, _gridTex, sliceI, slices);
+        const GLenum err = glGetError();
+        if (GL_NO_ERROR != err)
+            std::cout << "GL Error: " << GetGLErrorStr(err) << std::endl;
+
+        std::cerr << "Upload sucess !" << std::endl;
 
         max = std::max(max, *std::max_element(slices.begin(), slices.end()));
         slices.clear();
@@ -1058,7 +1092,7 @@ void Scene::drawGridMonoPlaneView(glm::vec2 fbDims, planes _plane, planeHeading 
 	return;
 }
 
-void Scene::drawGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const GridGLView::Ptr& grid) {
+void Scene::drawGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const GridGLView::Ptr& grid, bool inFrame) {
 	if (grid->gridTexture > 0) {
 		glUseProgram(this->program_VolumetricViewer);
 
@@ -1066,7 +1100,7 @@ void Scene::drawGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camP
             this->sendTetmeshToGPU(this->gridToDraw, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS), sortingRendering);
         }
 
-        this->prepareUniformsGridVolumetricView(mvMat, pMat, camPos, grid);
+        this->prepareUniformsGridVolumetricView(mvMat, pMat, camPos, grid, !inFrame);
 
 		this->tex3D_bindVAO();
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vbo_Texture3D_VertIdx);
@@ -1074,19 +1108,54 @@ void Scene::drawGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camP
         // Version to draw in each framebuffer
         //
         //std::cout << this->gridToDraw << std::endl;
-        //if(this->gridToDraw == 0) {
-        //    glGetIntegerv(GL_FRAMEBUFFER_BINDING, &this->defaultFBO);
-        //    glBindFramebuffer(GL_FRAMEBUFFER, this->frameBuffer);
-        //    glDrawElementsInstanced(GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, (void*) 0, grid->volumetricMesh.tetrahedraCount);
-        //    glBindFramebuffer(GL_FRAMEBUFFER, this->defaultFBO);
-        //    //glViewport(0,0,1024,768); // Render on the whole framebuffer, complete from the lower left corner to the upper right
-        //} else {
-        //    glDrawElementsInstanced(GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, (void*) 0, grid->volumetricMesh.tetrahedraCount);
-        //}
+        if(inFrame && this->multiGridRendering) {
+            //glBindTexture(GL_TEXTURE_2D, this->dualRenderingTexture);
+            //glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, 1024, 768, 0,GL_RGB, GL_UNSIGNED_BYTE, 0);
+
+            //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+            glGetIntegerv(GL_FRAMEBUFFER_BINDING, &this->defaultFBO);
+            /***/
+            glDeleteFramebuffers(1, &this->frameBuffer);
+            glGenFramebuffers(1, &this->frameBuffer);
+            glBindFramebuffer(GL_FRAMEBUFFER, this->frameBuffer);
+
+            glDeleteTextures(1, &this->dualRenderingTexture);
+            glGenTextures(1, &this->dualRenderingTexture);
+
+            glBindTexture(GL_TEXTURE_2D, this->dualRenderingTexture);
+            glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, 1024, 768, 0,GL_RGB, GL_UNSIGNED_BYTE, 0);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+            glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, this->dualRenderingTexture, 0);
+
+            glDeleteTextures(1, &this->frameDepthBuffer);
+            glGenTextures(1, &this->frameDepthBuffer);
+            glBindTexture(GL_TEXTURE_2D, this->frameDepthBuffer);
+            glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT16, 1024, 768, 0,GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+            glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, this->frameDepthBuffer, 0);
+
+            // Set the list of draw buffers.
+            GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
+            glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
+            /***/
+            glDrawElementsInstanced(GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, (void*) 0, grid->volumetricMesh.tetrahedraCount);
+            glBindFramebuffer(GL_FRAMEBUFFER, this->defaultFBO);
+            //glDrawBuffer(0);
+        } else {
+            glDrawElementsInstanced(GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, (void*) 0, grid->volumetricMesh.tetrahedraCount);
+        }
 
         // Original version
         //
-        glDrawElementsInstanced(GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, (void*) 0, grid->volumetricMesh.tetrahedraCount);
+        //glDrawElementsInstanced(GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, (void*) 0, grid->volumetricMesh.tetrahedraCount);
 
         // Version to draw a simple texture
         //
@@ -1724,7 +1793,7 @@ void Scene::prepareUniformsMonoPlaneView(planes _plane, planeHeading _heading, g
 	glBindBufferBase(GL_UNIFORM_BUFFER, 0, _grid->uboHandle_colorAttributes);
 }
 
-void Scene::prepareUniformsGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const GridGLView::Ptr& _grid) {
+void Scene::prepareUniformsGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const GridGLView::Ptr& _grid, bool drawFront) {
 	// We assume the right program has been bound.
 
 	/// @brief Shortcut for glGetUniform, since this can result in long lines.
@@ -1754,6 +1823,8 @@ void Scene::prepareUniformsGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm
 	GLint location_Mask					  = getUniform("texData");
 	GLint location_visibilityMap		  = getUniform("visiblity_map");
 	GLint location_visibilityMapAlternate = getUniform("visiblity_map_alternate");
+    GLint location_firstPass_texture      = getUniform("firstPass_texture");
+    GLint location_firstPass_depthTexture = getUniform("firstPass_depthTexture");
 
 	std::size_t tex = 0;
 	glActiveTexture(GL_TEXTURE0 + tex);
@@ -1796,7 +1867,23 @@ void Scene::prepareUniformsGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm
 	glUniform1i(location_visibilityMapAlternate, tex);
 	tex++;
 
-	// Scalars :
+    glActiveTexture(GL_TEXTURE0 + tex);
+    glBindTexture(GL_TEXTURE_2D, this->dualRenderingTexture);
+    glUniform1i(location_firstPass_texture, tex);
+    tex++;
+
+    glActiveTexture(GL_TEXTURE0 + tex);
+    glBindTexture(GL_TEXTURE_2D, this->frameDepthBuffer);
+    glUniform1i(location_firstPass_depthTexture, tex);
+    tex++;
+
+    GLint location_isFirstPass = getUniform("isFirstPass");
+    float val = 1.;
+    if(drawFront)
+        val = 0.;
+    glUniform1fv(location_isFirstPass, 1, &val);
+
+    // Scalars :
 	GLint location_voxelSize = getUniform("voxelSize");
 	GLint location_gridSize	 = getUniform("gridSize");
 
@@ -1814,7 +1901,10 @@ void Scene::prepareUniformsGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm
 	GLint location_visuBBMax			  = getUniform("visuBBMax");
 	GLint location_shouldUseBB			  = getUniform("shouldUseBB");
 	GLint location_displayWireframe		  = getUniform("displayWireframe");
-	GLint location_volumeEpsilon		  = getUniform("volumeEpsilon");
+    GLint location_drawOnlyBoundaries	  = getUniform("drawOnlyBoundaries");
+    GLint location_blendFirstPass	      = getUniform("blendFirstPass");
+    glUniform1f(location_blendFirstPass, this->blendFirstPass);
+    GLint location_volumeEpsilon		  = getUniform("volumeEpsilon");
 
 	glm::vec3 planePos	   = this->computePlanePositions();
     Image::bbox_t::vec min = _grid->grid->bbMin;
@@ -1824,12 +1914,17 @@ void Scene::prepareUniformsGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm
 	glUniform3fv(location_cut, 1, glm::value_ptr(planePos));
 	glUniform3fv(location_cutDirection, 1, glm::value_ptr(this->planeDirection));
 	glUniform1f(location_clipDistanceFromCamera, this->clipDistanceFromCamera);
-	glUniform3fv(location_visuBBMin, 1, glm::value_ptr(min));
+    glUniform3fv(location_visuBBMin, 1, glm::value_ptr(min));
 	glUniform3fv(location_visuBBMax, 1, glm::value_ptr(max));
 	//glUniform1ui(location_shouldUseBB, ((this->drawMode == DrawMode::VolumetricBoxed) ? 1 : 0));
 	glUniform1ui(location_shouldUseBB, 0);
 	glUniform1ui(location_displayWireframe, this->glMeshManipulator->isWireframeDisplayed());
 	glUniform3fv(location_volumeEpsilon, 1, glm::value_ptr(_grid->defaultEpsilon));
+
+    int drawOnly = 1;
+    if(!this->drawOnlyBoundaries)
+        drawOnly = 0;
+    glUniform1i(location_drawOnlyBoundaries, drawOnly);
 
 	// Matrices :
 	GLint location_mMat = getUniform("mMat");
@@ -1997,9 +2092,6 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    //return;
-
-
 	glm::mat4 transfoMat = glm::mat4(1.f);
 	/* Manipulator drawing  */
 
@@ -2014,6 +2106,7 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 	//		this->drawGridPlaneView(mvMat, pMat, transfoMat, this->grids[i]);
 	//	}
 	//} else if (this->drawMode == DrawMode::Volumetric || this->drawMode == DrawMode::VolumetricBoxed) {
+    //std::cout << "---" << std::endl;
     if(this->displayGrid) {
         if(this->multiGridRendering) {
             if(this->grids.size() > 0) {
@@ -2021,7 +2114,7 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
                 for(auto i : this->gridsToDraw) {
                     if(i >= 0 && i < this->grids.size()) {
                         this->gridToDraw = i;
-                        this->drawGridVolumetricView(mvMat, pMat, camPos, this->grids[gridToDraw]);
+                        this->drawGridVolumetricView(mvMat, pMat, camPos, this->grids[gridToDraw], i == 0);
                         //this->drawPlanes(mvMat, pMat, this->drawMode == DrawMode::Solid);
                     }
                 }
@@ -2033,6 +2126,7 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
             }
         }
     }
+    //std::cout << "---" << std::endl;
 
 //		if (this->drawMode == DrawMode::VolumetricBoxed) {
 //			this->drawBoundingBox(this->visuBox, glm::vec3(1., .0, .0), mvMat, pMat);
@@ -2046,17 +2140,16 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
         }
     }
 
-	//this->drawBoundingBox(this->sceneBB, glm::vec4(.5, .5, .0, 1.), mvMat, pMat);
-	this->showVAOstate = false;
+    //this->drawBoundingBox(this->sceneBB, glm::vec4(.5, .5, .0, 1.), mvMat, pMat);
+    this->showVAOstate = false;
 
     this->glSelection->draw(mvMat, pMat, glm::value_ptr(mMat));
 
-    glUseProgram(this->program_doublePass);
-    glBindVertexArray(this->quad_VertexArrayID);
-    glEnableVertexAttribArray(0);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
-    glBindVertexArray(0);
-
+    //glUseProgram(this->program_doublePass);
+    //glBindVertexArray(this->quad_VertexArrayID);
+    //glEnableVertexAttribArray(0);
+    //glDrawArrays(GL_TRIANGLES, 0, 3);
+    //glBindVertexArray(0);
 }
 
 void Scene::newSHADERS_updateUBOData() {
@@ -3037,8 +3130,8 @@ void Scene::sendFirstTetmeshToGPU() {
 
 void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend, bool sort) {
     std::cout << "Send to GPU" << std::endl;
-    if(sort)
-        std::cout << "Sorting" << std::endl;
+    //if(sort)
+    //    std::cout << "Sorting" << std::endl;
 
 	std::size_t vertWidth = 0, vertHeight = 0;
 	std::size_t normWidth = 0, normHeight = 0;
@@ -3067,14 +3160,14 @@ void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend, bool sort
     int iPt = 0;
     int iNormal = 0;
     std::vector<std::pair<int, float>> orderedTets;
-    if(sort) {
-        newMesh.sortTet(this->cameraPosition, orderedTets);
-    }
+    //if(sort) {
+    //    newMesh.sortTet(this->cameraPosition, orderedTets);
+    //}
 
     for (int idx = 0; idx < newMesh.mesh.size(); idx++) {
         int tetIdx = idx;
-        if(sort)
-            tetIdx = orderedTets[idx].first;
+        //if(sort)
+        //    tetIdx = orderedTets[idx].first;
         const Tetrahedron& tet = newMesh.mesh[tetIdx];
         for(int faceIdx = 0; faceIdx < 4; ++faceIdx) {
 
@@ -3130,6 +3223,10 @@ void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend, bool sort
         this->grids[gridIdx]->volumetricMesh.vertexPositions = this->uploadTexture2D(texParams);
     }
 
+    GLenum err = glGetError();
+    if (GL_NO_ERROR != err)
+        std::cout << "GL Error vertice: " << GetGLErrorStr(err) << std::endl;
+
     if(contain(infoToSend, InfoToSend::NORMALS)) {
         texParams.internalFormat			   = GL_RGBA32F;
         texParams.size.x					   = normWidth;
@@ -3139,6 +3236,10 @@ void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend, bool sort
         glDeleteTextures(1, &this->grids[gridIdx]->volumetricMesh.faceNormals);
         this->grids[gridIdx]->volumetricMesh.faceNormals = this->uploadTexture2D(texParams);
     }
+
+    err = glGetError();
+    if (GL_NO_ERROR != err)
+        std::cout << "GL Error normals: " << GetGLErrorStr(err) << std::endl;
 
     if(contain(infoToSend, InfoToSend::TEXCOORD)) {
         texParams.internalFormat					  = GL_RGB32F;
@@ -3150,6 +3251,10 @@ void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend, bool sort
         this->grids[gridIdx]->volumetricMesh.textureCoordinates = this->uploadTexture2D(texParams);
     }
 
+    err = glGetError();
+    if (GL_NO_ERROR != err)
+        std::cout << "GL Error tex: " << GetGLErrorStr(err) << std::endl;
+
     if(contain(infoToSend, InfoToSend::NEIGHBORS)) {
         texParams.size.x						= neighbWidth;
         texParams.size.y						= neighbHeight;
@@ -3157,6 +3262,10 @@ void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend, bool sort
         glDeleteTextures(1, &this->grids[gridIdx]->volumetricMesh.neighborhood);
         this->grids[gridIdx]->volumetricMesh.neighborhood = this->uploadTexture2D(texParams);
     }
+
+    err = glGetError();
+    if (GL_NO_ERROR != err)
+        std::cout << "GL Error neigh: " << GetGLErrorStr(err) << std::endl;
 
 	delete[] tex;
 	delete[] rawVertices;
@@ -4315,6 +4424,11 @@ void Scene::setSortingRendering(bool value) {
 }
 
 void Scene::setMultiGridRendering(bool value) {
+    if(this->multiGridRendering) {
+        glDeleteFramebuffers(1, &this->frameBuffer);
+        glDeleteTextures(1, &this->dualRenderingTexture);
+        glDeleteTextures(1, &this->frameDepthBuffer);
+    }
     this->multiGridRendering = value;
     if(this->isCage(activeMesh)) {
         int gridIdx = this->getGridIdxLinkToCage(activeMesh);
@@ -4324,3 +4438,12 @@ void Scene::setMultiGridRendering(bool value) {
         }
     }
 };
+
+void Scene::setDrawOnlyBoundaries(bool value) {
+    std::cout << "Set draw only boundaries: " << value << std::endl;
+    this->drawOnlyBoundaries = value;
+}
+
+void Scene::setBlendFirstPass(float value) {
+    this->blendFirstPass = value;
+}

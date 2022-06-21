@@ -43,6 +43,12 @@ uniform sampler2D texture_coordinates;
 uniform sampler2D visibility_texture;
 uniform sampler2D neighbors;
 
+uniform sampler2D firstPass_texture;
+uniform sampler2D firstPass_depthTexture;
+uniform float isFirstPass;
+uniform float blendFirstPass;
+uniform bool drawOnlyBoundaries;
+
 // Phong :
 uniform float diffuseRef;
 uniform float specRef;
@@ -170,6 +176,10 @@ void main (void) {
 	//Find the first intersection of the ray with the grid
 	getFirstRayVoxelIntersection(Current_P, V, origin_voxel, t_next );
 
+    //if(isFirstPass > 0.9) {
+    //    if(dot(V, vec3(1., 0., 0.)) < 0.)
+    //        discard;
+    //}
 
 	//vec3 dt = vec3( abs(voxelSize.xyz/V.xyz) );
 	vec3 dt = vec3( abs(voxelSize.x/V.x), abs(voxelSize.y/V.y), abs(voxelSize.z/V.z) );
@@ -285,6 +295,19 @@ void main (void) {
 	vec4 compute_depth = pMat * vMat * sceneSpaceFragmentPos;
     gl_FragDepth = 0.5f * ((compute_depth.z / compute_depth.w) + 1.f);
 
+    if(isFirstPass < 0.9) {
+        vec4 firstPassColor = texelFetch(firstPass_texture, ivec2(gl_FragCoord.x, gl_FragCoord.y), 0);
+        float firstPassDepth = texelFetch(firstPass_depthTexture, ivec2(gl_FragCoord.x, gl_FragCoord.y), 0).z;
+        //bool needBlend = (gl_FragDepth >= firstPassDepth - firstPassDepth * 0.01 );
+        bool needBlend = (abs(gl_FragDepth - firstPassDepth) < 0.0001);
+        if(drawOnlyBoundaries)
+            needBlend = true;
+
+        if(needBlend && (firstPassColor.x > 0.1 || firstPassColor.y > 0.1 || firstPassColor.z > 0.1)) {
+            colorOut.xyz = ((1. - blendFirstPass) * colorOut.xyz) + blendFirstPass * firstPassColor.xyz;
+        }
+    }
+
 	return;
 }
 
@@ -294,33 +317,28 @@ void main (void) {
 
 bool ComputeVisibility(vec3 point)
 {
-	if (shouldUseBB == false) {
-		vec4 point4 = vec4(point, 1.);
-		vec4 cut4 = vec4(cut, 1.);
-		vec4 vis4 = point4 - cut4;
-		vis4.xyz *= cutDirection;
-		float xVis = vis4.x; // (point.x - cut.x)*cutDirection.x;
-		float yVis = vis4.y; // (point.y - cut.y)*cutDirection.y;
-		float zVis = vis4.z; // (point.z - cut.z)*cutDirection.z;
+    vec4 point4 = vec4(point, 1.);
+    vec4 cut4 = vec4(cut, 1.);
+    vec4 vis4 = point4 - cut4;
+    vis4.xyz *= cutDirection;
+    float xVis = vis4.x; // (point.x - cut.x)*cutDirection.x;
+    float yVis = vis4.y; // (point.y - cut.y)*cutDirection.y;
+    float zVis = vis4.z; // (point.z - cut.z)*cutDirection.z;
 
-		vec4 clippingPoint = vec4(cam, 1.);
-		vec4 clippingNormal = normalize(inverse(vMat) * vec4(.0, .0, -1., .0));
-		clippingPoint += clippingNormal * clipDistanceFromCamera ;
-		vec4 pos = point4 - clippingPoint;
-		float vis = dot( clippingNormal, pos );
+    vec4 clippingPoint = vec4(cam, 1.);
+    vec4 clippingNormal = normalize(inverse(vMat) * vec4(.0, .0, -1., .0));
+    clippingPoint += clippingNormal * clipDistanceFromCamera ;
+    vec4 pos = point4 - clippingPoint;
+    float vis = dot( clippingNormal, pos );
 
-        if( xVis <= 0. || yVis <= 0. || zVis <= 0. || vis <= 0.)
-			return false;
-		else return true;
-	} else {
-		if (point.x < visuBBMin.x) { return false; }
-		if (point.y < visuBBMin.y) { return false; }
-		if (point.z < visuBBMin.z) { return false; }
-		if (point.x > visuBBMax.x) { return false; }
-		if (point.y > visuBBMax.y) { return false; }
-		if (point.z > visuBBMax.z) { return false; }
-		return true;
-	}
+    if((xVis <= 0. || yVis <= 0. || zVis <= 0. || vis <= 0.))
+        return false;
+    //if(!drawOnlyBoundaries && (xVis <= 0. || yVis <= 0. || zVis <= 0. || vis <= 0.))
+    //    return false;
+    //if(drawOnlyBoundaries && (xVis <= 0. || yVis <= 0. || zVis <= 0. || vis <= 0. || xVis >= (visuBBMax.x - visuBBMin.x)/40. && yVis >= (visuBBMax.y - visuBBMin.y)/40. && zVis >= (visuBBMax.z - visuBBMin.z)/40.))
+    //    return false;
+
+    return true;
 }
 
 vec3 getWorldCoordinates( in ivec3 _gridCoord )

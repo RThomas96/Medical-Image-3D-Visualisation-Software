@@ -45,10 +45,12 @@ public slots:
         xHSlider->setRange(0,x);
         yHSlider->setRange(0,y);
         zHSlider->setRange(0,z);
+        //aHSlider->setRange(0,100);
 
         xHSlider->setValue(0);
         yHSlider->setValue(0);
         zHSlider->setValue(0);
+        //aHSlider->setValue(0);
     }
 
     void setValues(float x, float y, float z) {
@@ -67,6 +69,7 @@ signals:
     void xSliderValueChanged(float x);
     void ySliderValueChanged(float y);
     void zSliderValueChanged(float z);
+    void aSliderValueChanged(float z);
 
     void clickedInvertXPushButton();
     void clickedInvertYPushButton();
@@ -90,6 +93,8 @@ protected:
         vBoxLayout->addLayout(yHBoxLayout);
         QHBoxLayout * zHBoxLayout = new QHBoxLayout();
         vBoxLayout->addLayout(zHBoxLayout);
+        QHBoxLayout * aHBoxLayout = new QHBoxLayout();
+        vBoxLayout->addLayout(aHBoxLayout);
 
         //Naming labels to identify each axis
         QLabel * labelCutX = new QLabel("x", this);
@@ -98,6 +103,8 @@ protected:
         yHBoxLayout->addWidget(labelCutY);
         QLabel * labelCutZ = new QLabel("z", this);
         zHBoxLayout->addWidget(labelCutZ);
+        QLabel * labelCutA = new QLabel("a", this);
+        aHBoxLayout->addWidget(labelCutA);
 
         //Sliders definitions
         xHSlider = new QSlider(this);
@@ -112,6 +119,11 @@ protected:
         //zHSlider->setMaximum(1);
         zHSlider->setOrientation(Qt::Horizontal);
         zHBoxLayout->addWidget(zHSlider);
+
+        aHSlider = new QSlider(this);
+        //aHSlider->setMaximum(1);
+        aHSlider->setOrientation(Qt::Horizontal);
+        aHBoxLayout->addWidget(aHSlider);
 
         //Push buttons to invert visibility direction
         QPushButton * invertXPushButton = new QPushButton("invert", this);
@@ -140,6 +152,7 @@ protected:
         connect(xHSlider, SIGNAL(valueChanged(int)), this, SLOT(xSValueChanged(int)));
         connect(yHSlider, SIGNAL(valueChanged(int)), this, SLOT(ySValueChanged(int)));
         connect(zHSlider, SIGNAL(valueChanged(int)), this, SLOT(zSValueChanged(int)));
+        connect(aHSlider, SIGNAL(valueChanged(int)), this, SLOT(aSValueChanged(int)));
 
         connect(invertXPushButton, SIGNAL(clicked()), this, SLOT(clickedIXPushButton()));
         connect(invertYPushButton, SIGNAL(clicked()), this, SLOT(clickedIYPushButton()));
@@ -154,6 +167,7 @@ protected:
     QSlider *xHSlider;
     QSlider *yHSlider;
     QSlider *zHSlider;
+    QSlider *aHSlider;
     QPushButton *invertXPushButton;
     QPushButton *invertYPushButton;
     QPushButton *invertZPushButton;
@@ -165,6 +179,7 @@ protected slots:
     void xSValueChanged(int x){ emit xSliderValueChanged(float(x)/99.);}
     void ySValueChanged(int y){ emit ySliderValueChanged(float(y)/99.);}
     void zSValueChanged(int z){ emit zSliderValueChanged(float(z)/99.);}
+    void aSValueChanged(int a){ emit aSliderValueChanged(float(a)/99.);}
 
     void clickedIXPushButton(){ emit clickedInvertXPushButton();}
     void clickedIYPushButton(){ emit clickedInvertYPushButton();}
