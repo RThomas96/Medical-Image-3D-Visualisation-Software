@@ -527,6 +527,8 @@ public slots:
     void redo();
     void reset();
     glm::vec3 getTransformedPoint(const glm::vec3& inputPoint, const std::string& from, const std::string& to);
+    void sampleGridMapping(const std::string& fileName, const std::string& from, const std::string& to, const glm::vec3& resolution, Interpolation::Method interpolationMethod);
+    void writeMapping(const std::string& fileName, const std::string& from, const std::string& to);
     void writeGreyscaleTIFFImage(const std::string& filename, const glm::vec3& imgDimensions, const std::vector<std::vector<uint16_t>>& data);
     void writeDeformation(const std::string& filename, const std::string& gridNameValues, const std::string& gridNameSample);
     void getDeformation(const std::string& gridNameValues, const std::string& gridNameSample, std::vector<std::vector<uint16_t>>& data);

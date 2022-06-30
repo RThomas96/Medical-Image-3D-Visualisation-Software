@@ -586,6 +586,18 @@ bool TetMesh::getCoordInInitial(const TetMesh& initial, const glm::vec3& p, glm:
     }
 }
 
+bool TetMesh::getCoordInInitialOut(const TetMesh& initial, const glm::vec3& p, glm::vec3& out, int& tetraIdx) const {
+    tetraIdx = this->inTetraIdx(p);
+    if(tetraIdx != -1) {
+        glm::vec4 baryCoordInDeformed = this->getTetra(tetraIdx).computeBaryCoord(p);
+        glm::vec3 coordInInitial = initial.getTetra(tetraIdx).baryToWorldCoord(baryCoordInDeformed);
+        out = coordInInitial;
+        return true;
+    } else {
+        return false;
+    }
+}
+
 bool TetMesh::getCoordInImage(const glm::vec3& p, glm::vec3& out, int tetraIdx) const {
     if(tetraIdx == -1) {
         tetraIdx = this->inTetraIdx(p);

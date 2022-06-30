@@ -67,6 +67,7 @@ public:
     int inTetraIdx(const glm::vec3& p) const;
     //glm::vec3 getCoordInInitial(const TetMesh& initial, glm::vec3 p) const;
     bool getCoordInInitial(const TetMesh& initial, const glm::vec3& p, glm::vec3& out, int tetraIdx = -1) const;
+    bool getCoordInInitialOut(const TetMesh& initial, const glm::vec3& p, glm::vec3& out, int& tetraIdx) const;
     bool getCoordInImage(const glm::vec3& p, glm::vec3& out, int tetraIdx = -1) const;
 
     void setARAPDeformationMethod() override;

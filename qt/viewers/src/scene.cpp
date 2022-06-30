@@ -3671,18 +3671,19 @@ std::pair<glm::vec3, glm::vec3> Scene::getBbox(const std::string& name) {
 
 void Scene::openAtlas() {
          ///home/thomas/data/Data/teletravail/
-         this->openGrid(std::string("atlas"), {std::string("/data/datasets/data/Thomas/data/atlas/atlas.tiff")}, 1, std::string("/data/datasets/data/Thomas/data/atlas/atlas-transfert.mesh"));
-         this->openCage(std::string("cage"), std::string("/data/datasets/data/Thomas/data/atlas/atlas-cage-hyperdilated.off"), std::string("atlas"), true);
+         //this->openGrid(std::string("atlas"), {std::string("/home/thomas/data/Data/teletravail/atlas.tiff")}, 1, std::string("/home/thomas/data/Data/teletravail/atlas-transfert.mesh"));
+         this->openGrid(std::string("atlas"), {std::string("/home/thomas/data/Projects/metrics/data/2-1D.tiff")}, 1, std::string("/home/thomas/data/Data/teletravail/atlas-transfert.mesh"));
+         this->openCage(std::string("cage"), std::string("/home/thomas/data/Data/teletravail/atlas-cage-hyperdilated.off"), std::string("atlas"), true);
          this->getCage(std::string("cage"))->setARAPDeformationMethod();
          this->getCage(std::string("cage"))->unbindMovementWithDeformedMesh();
          this->getCage(std::string("cage"))->setOrigin(this->getBaseMesh("atlas")->getOrigin());
          this->getCage(std::string("cage"))->bindMovementWithDeformedMesh();
-         this->applyCage(std::string("cage"), std::string("/data/datasets/data/Thomas/data/sourisIGF/atlas-cage-hyperdilated-rigidRegister-lightsheet_2.off"));
+         this->applyCage(std::string("cage"), std::string("/home/thomas/data/Data/teletravail/atlas-cage-hyperdilated-rigidRegister-lightsheet_2.off"));
          this->changeActiveMesh("cage");
  }
 
  void Scene::openIRM() {
-         this->openGrid(std::string("irm"), {std::string("/home/thomas/data/Data/Demo/IRM/irm.tif")}, 1, glm::vec3(3.9, 3.9, 50));
+         this->openGrid(std::string("irm"), {std::string("/home/thomas/data/Data/teletravail/irm.tif")}, 1, glm::vec3(3.9, 3.9, 50));
          this->changeActiveMesh("irm");
  }
 
@@ -4076,6 +4077,134 @@ void Scene::reset() {
     this->moveInHistory(true, true);
 }
 
+void Scene::sampleGridMapping(const std::string& fileName, const std::string& from, const std::string& to, const glm::vec3& resolution, Interpolation::Method interpolationMethod) {
+    auto start = std::chrono::steady_clock::now();
+
+    omp_set_nested(true);
+
+    Grid * fromGrid = this->grids[this->getGridIdx(from)]->grid;
+    Grid * toGrid = this->grids[this->getGridIdx(to)]->grid;
+
+    // Space to sample
+    glm::vec3 bbMinScene = fromGrid->initialMesh.bbMin;
+    glm::vec3 bbMaxScene = fromGrid->initialMesh.bbMax;
+    glm::vec3 fromSamplerToSceneRatio = (bbMaxScene - bbMinScene) / resolution;
+
+    auto isInScene = [&](glm::vec3& p) {
+        return (p.x > bbMinScene.x && p.y > bbMinScene.y && p.z > bbMinScene.z && p.x < bbMaxScene.x && p.y < bbMaxScene.y && p.z < bbMaxScene.z);
+    };
+
+    auto fromWorldToImage = [&](glm::vec3& p) {
+        p -= bbMinScene;
+        p /= fromSamplerToSceneRatio;
+    };
+
+    auto fromImageToWorld = [&](glm::vec3& p) {
+        p *= fromSamplerToSceneRatio;
+        p += bbMinScene;
+    };
+
+    std::vector<std::vector<uint16_t>> result;
+    result.clear();
+    result.resize(resolution[2]);
+    for(int i = 0; i < result.size(); ++i) {
+        result[i].resize(resolution[0] * resolution[1]);
+        std::fill(result[i].begin(), result[i].end(), 0);
+    }
+
+    //int printOcc = 10;
+    //printOcc = this->mesh.size()/printOcc;
+
+    //#pragma omp parallel for schedule(dynamic) num_threads(fromGrid->mesh.size()/10)
+    #pragma omp parallel for schedule(dynamic)
+    for(int tetIdx = 0; tetIdx < fromGrid->initialMesh.mesh.size(); ++tetIdx) {
+        const Tetrahedron& tet = fromGrid->initialMesh.mesh[tetIdx];
+        glm::vec3 bbMin = tet.getBBMin();
+        fromWorldToImage(bbMin);
+        bbMin.x = std::ceil(bbMin.x) - 1;
+        bbMin.y = std::ceil(bbMin.y) - 1;
+        bbMin.z = std::ceil(bbMin.z) - 1;
+        glm::vec3 bbMax = tet.getBBMax();
+        fromWorldToImage(bbMax);
+        bbMax.x = std::floor(bbMax.x) + 1;
+        bbMax.y = std::floor(bbMax.y) + 1;
+        bbMax.z = std::floor(bbMax.z) + 1;
+        for(int k = bbMin.z; k < int(bbMax.z); ++k) {
+            for(int j = bbMin.y; j < int(bbMax.y); ++j) {
+                for(int i = bbMin.x; i < int(bbMax.x); ++i) {
+                    glm::vec3 p(i, j, k);
+                    p += glm::vec3(.5, .5, .5);
+
+                    fromImageToWorld(p);
+
+                    if(isInScene(p) && tet.isInTetrahedron(p)) {
+                        if(fromGrid->initialMesh.getCoordInInitial(*fromGrid, p, p, tetIdx)) {
+
+                            int insertIdx = i + j*resolution[0];
+                            if(insertIdx >= result[0].size()) {
+                                std::cout << "ERROR:" << std::endl;
+                                std::cout << "i:" << i << std::endl;
+                                std::cout << "j:" << j << std::endl;
+                                std::cout << "k:" << k << std::endl;
+                                std::cout << "p:" << p << std::endl;
+                            }
+
+                            //fromGrid->sampler.fromImageToSampler(p);
+                            result[k][insertIdx] = toGrid->getValueFromPoint(p, Interpolation::Method::Linear);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    auto end = std::chrono::steady_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end-start;
+    std::cout << "Duration time: " << elapsed_seconds.count() << "s / " << elapsed_seconds.count()/60. << "m" << std::endl;
+
+    this->writeGreyscaleTIFFImage(fileName, resolution, result);
+}
+
+void Scene::writeMapping(const std::string& fileName, const std::string& from, const std::string& to) {
+    Grid * fromGrid = this->grids[this->getGridIdx(from)]->grid;
+    Grid * toGrid = this->grids[this->getGridIdx(to)]->grid;
+
+    glm::ivec3 fromDimensions = fromGrid->sampler.getSamplerDimension();
+    std::vector<std::vector<uint16_t>> img = std::vector<std::vector<uint16_t>>(fromDimensions.z, std::vector<uint16_t>(fromDimensions.x * fromDimensions.y, 0.));
+
+    auto start = std::chrono::steady_clock::now();
+    for(int k = 0; k < fromDimensions.z; ++k) {
+        std::cout << "Loading: " << (float(k)/float(fromDimensions.z)) * 100. << "%" << std::endl;
+        #pragma omp parallel for schedule(dynamic)
+        for(int i = 0; i < fromDimensions.x; ++i) {
+            for(int j = 0; j < fromDimensions.y; ++j) {
+                glm::vec3 inputPointInFromGrid(i, j, k);
+                glm::vec3 result;
+                fromGrid->sampler.fromImageToSampler(inputPointInFromGrid);
+
+                int tetIdx = -1;
+                bool ptIsInInitial = fromGrid->initialMesh.getCoordInInitialOut(*fromGrid, inputPointInFromGrid, result, tetIdx);
+                if(!ptIsInInitial) {
+                    img[k][i + j*fromDimensions.x] = 0;
+                } else {
+                    ptIsInInitial = toGrid->getCoordInInitial(toGrid->initialMesh, result, result, tetIdx);
+                    if(!ptIsInInitial) {
+                        img[k][i + j*fromDimensions.x] = 0;
+                    } else {
+                        toGrid->sampler.fromSamplerToImage(result);
+                        img[k][i + j*fromDimensions.x] = toGrid->getValueFromPoint(result);
+                    }
+                }
+            }
+        }
+        auto end = std::chrono::steady_clock::now();
+        std::chrono::duration<double> elapsed_seconds = end-start;
+        std::cout << "Duration time: " << elapsed_seconds.count() << "s / " << elapsed_seconds.count()/60. << "m" << std::endl;
+    }
+
+    this->writeGreyscaleTIFFImage(fileName, fromDimensions, img);
+}
+
 glm::vec3 Scene::getTransformedPoint(const glm::vec3& inputPoint, const std::string& from, const std::string& to) {
     glm::vec3 result = glm::vec3(0., 0., 0.);
 
@@ -4146,6 +4275,7 @@ void Scene::writeGreyscaleTIFFImage(const std::string& filename, const glm::vec3
         TinyTIFFWriter_writeImage(tif, data[img].data());
     }
     TinyTIFFWriter_close(tif);
+    std::cout << "Destination: " << filename << std::endl;
     std::cout << "Save sucessfull" << std::endl;
 }
 

@@ -88,7 +88,8 @@ enum FileChooserType {
 
 enum class FileChooserFormat {
     TIFF,
-    MESH
+    MESH,
+    PATH
 };
 
 class FileChooser : public QPushButton {
@@ -134,8 +135,10 @@ public slots:
             case FileChooserType::SAVE:
                 if(this->format == FileChooserFormat::TIFF)
 	                filename = QFileDialog::getSaveFileName(nullptr, "Select the image to save", QDir::currentPath(), tr("TIFF Files (*.tiff)"), 0, QFileDialog::DontUseNativeDialog);
+                else if(this->format == FileChooserFormat::MESH)
+                    filename = QFileDialog::getSaveFileName(nullptr, "Select the mesh to save", QDir::currentPath(), tr("OFF Files (*.off)"), 0, QFileDialog::DontUseNativeDialog);
                 else
-	                filename = QFileDialog::getSaveFileName(nullptr, "Select the mesh to save", QDir::currentPath(), tr("OFF Files (*.off)"), 0, QFileDialog::DontUseNativeDialog);
+                    filename = QFileDialog::getExistingDirectory(nullptr, "Select the directory to save", QDir::currentPath(), QFileDialog::DontUseNativeDialog);
                 break;
         }
         if(!filename.isEmpty()) {
@@ -194,6 +197,7 @@ enum WidgetType{
     SPIN_BOX_DOUBLE,
     MESH_SAVE,
     TIFF_SAVE,
+    PATH_SAVE,
     MESH_CHOOSE,
     TIFF_CHOOSE,
     FILENAME,
@@ -456,6 +460,10 @@ public slots:
                 break;
             case WidgetType::TIFF_SAVE:
                 fileChoosers[id] = new FileChooser(name, FileChooserType::SAVE, FileChooserFormat::TIFF);
+                newWidget = fileChoosers[id];
+                break;
+            case WidgetType::PATH_SAVE:
+                fileChoosers[id] = new FileChooser(name, FileChooserType::SAVE, FileChooserFormat::PATH);
                 newWidget = fileChoosers[id];
                 break;
             case WidgetType::H_GROUP:
@@ -982,6 +990,15 @@ public:
         }
     }
 
+    void saveImagesSlices(const QString& fileName) {
+        this->fillAllImagesSlices();
+        this->scene->writeGreyscaleTIFFImage(fileName.toStdString(), this->targetImgSize, this->imgData[this->imagesToDraw[0]].data);
+        //for(int sliceIdx = 0; sliceIdx < this->upToDate[0].size(); ++sliceIdx) {
+        //    QString fileName = path + QString("/slice") + QString(std::to_string(sliceIdx).c_str()) + QString(".png");
+        //    this->getMergedImage(sliceIdx).save(fileName);
+        //}
+    }
+
 private:
 
     void reset() {
@@ -1000,6 +1017,18 @@ private:
             if(!this->upToDate[this->imagesToDraw[i]][this->sliceIdx]) {
                 this->fillImage(this->imagesToDraw[i], this->sliceIdx);
                 this->upToDate[this->imagesToDraw[i]][this->sliceIdx] = true;
+            }
+        }
+    }
+
+    void fillAllImagesSlices() {
+        for(int sliceIdx = 0; sliceIdx < this->upToDate[0].size(); ++sliceIdx) {
+            std::cout << "Fill image " << sliceIdx << std::endl;
+            for(int i = 0; i < this->imagesToDraw.size(); ++i) {
+                if(!this->upToDate[this->imagesToDraw[i]][sliceIdx]) {
+                    this->fillImage(this->imagesToDraw[i], sliceIdx);
+                    this->upToDate[this->imagesToDraw[i]][sliceIdx] = true;
+                }
             }
         }
     }
@@ -1026,14 +1055,19 @@ private:
         return this->mergeImages(this->imagesToDraw, this->sliceIdx);
     }
 
+    QImage getMergedImage(int sliceIdx) {
+        return this->mergeImages(this->imagesToDraw, sliceIdx);
+    }
+
     QImage mergeImages(const std::vector<int>& indexes, const int& z) {
         QColor color;
         QPixmap result(this->targetImgSize.x, this->targetImgSize.y);
         //result.fill(Qt::black);
-        result.fill(QPalette::Window);
+        result.fill(this->colors[indexes[0]].first);
         QPainter painter(&result);
 
-        for(int idx = 0; idx < indexes.size(); ++idx) {
+        for(int k = 0; k < indexes.size(); ++k) {
+            int idx = indexes[k];
             QImage img = this->imgData[idx].getImage(z).convertToFormat(mergedImgFormat);
             for(int i = 0; i < img.width(); ++i) {
                 for(int j = 0; j < img.height(); ++j) {
@@ -1235,6 +1269,9 @@ public slots:
         //this->buttons["Rotate"]->setIcon(ButtonIcon);
         //this->buttons["Rotate"]->setText("");
         //this->buttons["Rotate"]->setIconSize(pixmap.rect().size());
+
+        this->add(WidgetType::TIFF_SAVE, "Save");
+        this->add(WidgetType::TIFF_SAVE, "SaveCur");
 
         this->add(WidgetType::BUTTON_CHECKABLE, "Link");
         QPixmap pixmap2(QString("../resources/link.svg"));
@@ -1606,6 +1643,17 @@ public slots:
             if(id == "SliderX" || id == "SideX" || id == "SideY" || id == "SideZ" || id == "Link") {
                 this->updateSlice();
             }
+        });
+
+        QObject::connect(this->fileChoosers["Save"], &FileChooser::fileSelected, [this](){
+            //this->viewers[this->selectedViewer]->saveImagesSlices(this->fileChoosers["Save"]->filename);
+            //this->scene->writeMapping(this->fileChoosers["Save"]->filename.toStdString(), this->getFromGridName(), this->getToGridName());
+            //this->scene->sampleGridMapping(this->fileChoosers["Save"]->filename.toStdString(), this->getFromGridName(), this->getToGridName(), this->getImgDimension(), this->getInterpolationMethod());
+            this->scene->sampleGridMapping(this->fileChoosers["Save"]->filename.toStdString(), this->getFromGridName(), this->getToGridName(), this->getImgDimension(), this->getInterpolationMethod());
+        });
+
+        QObject::connect(this->fileChoosers["SaveCur"], &FileChooser::fileSelected, [this](){
+            this->viewers[this->selectedViewer]->saveImagesSlices(this->fileChoosers["SaveCur"]->filename);
         });
 
         QObject::connect(scene, &Scene::colorChanged, [this, scene](){
