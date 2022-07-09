@@ -162,8 +162,10 @@ Scene::~Scene(void) {
 
 void Scene::initGl(QOpenGLContext* _context) {
 	// Check if the scene has been initialized, share contexts if it has been :
-    this->h = 1024;
-    this->w = 768;
+    // this->h = 1024;
+    // this->w = 768;
+    this->h = 2024;
+    this->w = 1468;
     if (this->isInitialized == true) {
 		if (this->context != nullptr && (_context != 0 && _context != nullptr)) {
 			_context->setShareContext(this->context);
@@ -2095,7 +2097,15 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
             }
         } else {
             if(this->grids.size() > 0) {
-                this->drawGridVolumetricView(mvMat, pMat, camPos, this->grids[gridToDraw]);
+                int originalGridToDraw = this->gridToDraw;
+                //this->drawGridVolumetricView(mvMat, pMat, camPos, this->grids[gridToDraw]);
+                for(auto i : this->gridsToDraw) {
+                    if(i < this->grids.size()) {
+                        this->gridToDraw = i;
+                        this->drawGridVolumetricView(mvMat, pMat, camPos, this->grids[i], false);
+                    }
+                }
+                this->gridToDraw = originalGridToDraw;
             }
         }
     }
@@ -3833,7 +3843,13 @@ void Scene::openAtlas() {
          this->getCage(std::string("cage"))->unbindMovementWithDeformedMesh();
          this->getCage(std::string("cage"))->setOrigin(this->getBaseMesh("atlas")->getOrigin());
          this->getCage(std::string("cage"))->bindMovementWithDeformedMesh();
+
          this->applyCage(std::string("cage"), std::string("/data/datasets/data/Thomas/data/sourisIGF/atlas-cage-hyperdilated-rigidRegister-lightsheet_2.off"));
+
+         //this->getCage(std::string("cage"))->unbindMovementWithDeformedMesh();
+         //this->applyCage(std::string("cage"), std::string("/home/thomas/data/Data/Data/good_cage.off"));
+         //this->getCage(std::string("cage"))->bindMovementWithDeformedMesh();
+
          this->changeActiveMesh("cage");
  }
 

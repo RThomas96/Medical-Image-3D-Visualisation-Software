@@ -747,8 +747,8 @@ namespace UITool {
 
     void ARAPManipulator::getManipulatorsToDisplay(std::vector<bool>& toDisplay) const {
 		for (int i = 0; i < this->manipulatorsToDisplay.size(); ++i) {
-            //toDisplay.push_back(this->manipulatorsToDisplay[i]);
-            toDisplay.push_back(true);
+            toDisplay.push_back(this->manipulatorsToDisplay[i]);
+            //toDisplay.push_back(true);
         }
     }
 
@@ -796,6 +796,7 @@ namespace UITool {
 
     void ARAPManipulator::selectManipulator(Manipulator * manipulator) {
         ptrdiff_t index = manipulator - &(this->manipulators[0]);
+        this->displayManipulator(manipulator);
         if(this->moveMode) {
             if(!this->selectedManipulators[index]) {
                 this->selectedManipulators[index] = true;
@@ -842,6 +843,7 @@ namespace UITool {
     }
 
     void ARAPManipulator::deselectManipulator(Manipulator * manipulator) {
+        this->hideManipulator(manipulator);
         if(this->moveMode) {
             for(int i = 0; i < this->selectedManipulators.size(); ++i) {
                 if(this->selectedManipulators[i]) {

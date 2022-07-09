@@ -129,7 +129,7 @@ void UITool::GL::MeshManipulator::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* m
 		return g;
 	};
 
-    //std::cout << planeDisplacement << std::endl;
+    std::cout << planeDisplacement << std::endl;
 	//if (!this->displayed)
 	//	return;
 
@@ -158,11 +158,19 @@ void UITool::GL::MeshManipulator::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* m
     this->meshManipulator->getManipulatorsToDisplay(rawToDisplay);
 
 	std::vector<glm::vec3> toDisplay;
-    for(int i = 0; i < rawToDisplay.size(); ++i)
-        if(rawToDisplay[i])
+    for(int i = 0; i < rawToDisplay.size(); ++i) {
+        if(rawToDisplay[i]) {
             toDisplay.push_back(glm::vec3(1., 1., 1.));
-        else
+            //if(planeDisplacement.x-15 < allPositions[i].x &&
+            //   planeDisplacement.y-15 < allPositions[i].y &&
+            //   planeDisplacement.z-15 < allPositions[i].z)
+            //    toDisplay.push_back(glm::vec3(1., 1., 1.));
+            //else
+            //    toDisplay.push_back(glm::vec3(0., 0., 0.));
+        } else {
             toDisplay.push_back(glm::vec3(0., 0., 0.));
+        }
+    }
 
     /***/
 	std::vector<State> rawState;
