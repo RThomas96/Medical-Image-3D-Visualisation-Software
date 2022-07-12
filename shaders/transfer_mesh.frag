@@ -85,6 +85,9 @@ struct colorChannelAttributes {
 };
 
 uniform uint mainChannelIndex;						// The index of the main channel in the voxel data
+uniform sampler1D valuesRangeToDisplay;
+uniform sampler1D colorRangeToDisplay;
+uniform float maxValue;
 uniform sampler1D colorScales[4];					// All the color scales available (all encoded as 1D textures)
 layout(std140) uniform ColorBlock {
     colorChannelAttributes attributes[4];	// Color attributes laid out in this way : [ main, R, G, B ]
@@ -119,6 +122,25 @@ vec3 phongComputation(vec4 position, vec3 normal, vec4 color, vec3 lightPos, vec
 #line 2111
 
 void main (void) {
+
+    //colorOut = vec4(texture(valuesRangeToDisplay, 0).x, 0., 0., 1.);
+    //return;
+
+    //if(float(texture(valuesRangeToDisplay, 0).x) == float(2.)) {
+    //    colorOut = vec4(0., 1., 0., 1.);
+    //    return;
+    //}
+
+    //if(float(texture(valuesRangeToDisplay, 0).x) == float(1.)) {
+    //    colorOut = vec4(1., 0., 0., 1.);
+    //    return;
+    //}
+
+    //if(float(texture(valuesRangeToDisplay, 0).x) == float(0.)) {
+    //    colorOut = vec4(0., 0., 1., 1.);
+    //    return;
+    //}
+
     sceneSpaceFragmentPos = vec4(.0,.0,.0,.0);
     gl_FragDepth = gl_FragCoord.z;
 

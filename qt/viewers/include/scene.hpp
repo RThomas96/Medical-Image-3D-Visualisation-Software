@@ -23,6 +23,7 @@
 // libQGLViewer :
 #include <QGLViewer/qglviewer.h>
 // glm include :
+#include <cstdint>
 #include <glm/glm.hpp>
 // STD headers :
 #include <mutex>
@@ -579,6 +580,13 @@ public slots:
     void setDrawOnlyBoundaries(bool value);
     void setBlendFirstPass(float value);
 
+    // Segmented display
+    //void addRange(const std::string &gridName, uint16_t min) { this->addRange(gridName, min, min); }
+    //void addRange(const std::string &gridName, uint16_t min, uint16_t max);
+    //void removeRange(const std::string &gridName, uint16_t min, uint16_t max);
+    void resetRanges();
+    void addRange(uint16_t min, uint16_t max, glm::vec3 color = glm::vec3(1., 0., 0.));
+
     // ************************ //
 
     // MeshManipulator slots
@@ -606,7 +614,7 @@ public slots:
     void setColorChannel(ColorChannel mode);
     void sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend, bool sort = true);
     void sendFirstTetmeshToGPU();
-    uint16_t sendGridValuesToGPU(int gridIdx);
+    std::pair<uint16_t, uint16_t> sendGridValuesToGPU(int gridIdx);
     void setLightPosition(const glm::vec3& lighPosition);
     void previewPointInPlanarView(const glm::vec3& positionOfMouse3D);
     void setPreviewPointInPlanarView(bool preview) { this->previewCursorInPlanarView = preview; };
@@ -631,6 +639,9 @@ public slots:
     Cage * getCage(const std::string& name);
     glm::vec3 getGridImgSize(const std::string& name);
     glm::vec3 getGridVoxelSize(const std::string &name);
+    std::pair<uint16_t, uint16_t> getGridMinMaxValues(const std::string &name);
+    std::pair<uint16_t, uint16_t> getGridMinMaxValues();
+    std::vector<bool> getGridUsageValues(int minValue = 1);
     int getGridIdx(const std::string& name);
     int getGridIdxLinkToCage(const std::string& name);
     std::pair<glm::vec3, glm::vec3> getBbox(const std::string& name);

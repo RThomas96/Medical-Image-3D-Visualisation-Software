@@ -231,7 +231,9 @@ void MainWidget::setupWidgets() {
 	// Viewer(s) creation along with control panel :
 	this->viewer		= new Viewer(this->scene, this->statusBar, nullptr);
 	this->controlPanel	= new ControlPanel(this->scene, this->viewer, nullptr);
-	this->scene->setControlPanel(this->controlPanel);
+    this->range = new RangeControl(this->scene);
+    this->controlPanel->tab->addTab(this->range, QString("Classes"));
+    this->scene->setControlPanel(this->controlPanel);
 
     this->info_pannel = new InfoPannel("Infos", this->scene);
     this->tool_pannel = new ToolPannel("Tool", *this->actionManager);
@@ -556,4 +558,6 @@ void MainWidget::updateForms() {
     this->saveImageForm->update(this->scene);
     this->planarViewer->update(this->scene);
     this->openImageForm->update(this->scene);
+
+    this->range->updateRanges();
 }

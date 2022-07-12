@@ -237,7 +237,7 @@ GridGLView::GridGLView(Grid * _grid) {
     this->voxelDimensions = glm::vec3(1., 1., 1.);
 
 	// Fill with default attributes
-	this->colorChannelAttributes.fill(colorChannelAttributes_GL{});
+    this->colorChannelAttributes.fill(ColorChannelAttributes_GL{});
 
 	// hide unused channels :
 	for (std::size_t c = this->nbChannels; c < 3; ++c) {
@@ -245,7 +245,7 @@ GridGLView::GridGLView(Grid * _grid) {
 	}
 }
 
-colorChannelAttributes_GL& GridGLView::mainColorChannelAttributes() {
+ColorChannelAttributes_GL& GridGLView::mainColorChannelAttributes() {
 	return this->colorChannelAttributes[this->mainColorChannel];
 }
 
@@ -255,7 +255,7 @@ void GridGLView::setMainColorChannel(std::size_t color_channel) {
 	this->mainColorChannel = color_channel;
 }
 
-colorChannelAttributes_GL::colorChannelAttributes_GL() {
+ColorChannelAttributes_GL::ColorChannelAttributes_GL() {
 	this->isVisible		   = true;
 	this->colorScaleIndex  = 0;
 	auto min			   = std::numeric_limits<std::uint16_t>::min();
@@ -264,7 +264,7 @@ colorChannelAttributes_GL::colorChannelAttributes_GL() {
 	this->colorScaleBounds = bound_t(min, max);
 }
 
-void colorChannelAttributes_GL::toggleVisible() {
+void ColorChannelAttributes_GL::toggleVisible() {
 	if (this->isVisible > 0) {
 		this->isVisible = 0;
 		return;
@@ -273,52 +273,52 @@ void colorChannelAttributes_GL::toggleVisible() {
 	}
 }
 
-void colorChannelAttributes_GL::setVisible(bool v) {
+void ColorChannelAttributes_GL::setVisible(bool v) {
 	this->isVisible = (v) ? 1 : 0;
 	return;
 }
 
-void colorChannelAttributes_GL::setHidden(bool v) {
+void ColorChannelAttributes_GL::setHidden(bool v) {
 	this->isVisible = (v) ? 0 : 1;
 	return;
 }
 
-std::uint32_t colorChannelAttributes_GL::getVisibility() const {
+std::uint32_t ColorChannelAttributes_GL::getVisibility() const {
 	return this->isVisible;
 }
 
-void colorChannelAttributes_GL::setColorScale(std::uint32_t new_color_scale_index) {
+void ColorChannelAttributes_GL::setColorScale(std::uint32_t new_color_scale_index) {
 	this->colorScaleIndex = new_color_scale_index;
 }
 
-std::uint32_t colorChannelAttributes_GL::getColorScale() const {
+std::uint32_t ColorChannelAttributes_GL::getColorScale() const {
 	return this->colorScaleIndex;
 }
 
-void colorChannelAttributes_GL::setMinVisible(bound_t::value_type _new_min) {
+void ColorChannelAttributes_GL::setMinVisible(bound_t::value_type _new_min) {
 	this->visibleBounds.x = _new_min;
 	return;
 }
 
-void colorChannelAttributes_GL::setMaxVisible(bound_t::value_type _new_max) {
+void ColorChannelAttributes_GL::setMaxVisible(bound_t::value_type _new_max) {
 	this->visibleBounds.y = _new_max;
 	return;
 }
 
-void colorChannelAttributes_GL::setMinColorScale(bound_t::value_type _new_min) {
+void ColorChannelAttributes_GL::setMinColorScale(bound_t::value_type _new_min) {
 	this->colorScaleBounds.x = _new_min;
 	return;
 }
 
-void colorChannelAttributes_GL::setMaxColorScale(bound_t::value_type _new_max) {
+void ColorChannelAttributes_GL::setMaxColorScale(bound_t::value_type _new_max) {
 	this->colorScaleBounds.y = _new_max;
 	return;
 }
 
-colorChannelAttributes_GL::bound_t colorChannelAttributes_GL::getVisibleRange() const {
+ColorChannelAttributes_GL::bound_t ColorChannelAttributes_GL::getVisibleRange() const {
 	return this->visibleBounds;
 }
 
-colorChannelAttributes_GL::bound_t colorChannelAttributes_GL::getColorRange() const {
+ColorChannelAttributes_GL::bound_t ColorChannelAttributes_GL::getColorRange() const {
 	return this->colorScaleBounds;
 }

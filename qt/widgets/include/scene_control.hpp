@@ -6,6 +6,7 @@
 #include "../../macros.hpp"
 
 #include "./double_slider.hpp"
+#include "qtabwidget.h"
 
 #include <QCheckBox>
 #include <QComboBox>
@@ -16,6 +17,7 @@
 #include <QPushButton>
 #include <QSlider>
 #include <QWidget>
+#include <QTabWidget>
 
 #include <iostream>
 
@@ -38,9 +40,9 @@ public slots:
 
 public:
 	QColor getColor(void) const;
+    QPushButton* button;
 
 protected:
-	QPushButton* button;
 	QPixmap* pixmap;
 	QIcon* icon;
 	QColor color;
@@ -82,7 +84,9 @@ protected:
 class ControlPanel : public QWidget {
 	Q_OBJECT
 public:
-	ControlPanel(Scene* const scene, Viewer* lv, QWidget* parent = nullptr);
+    QTabWidget* tab;
+
+    ControlPanel(Scene* const scene, Viewer* lv, QWidget* parent = nullptr);
 	virtual ~ControlPanel();
 
 	/// @brief Set min and max values of sliders according to the grids datatype numerical limit
@@ -107,6 +111,8 @@ public slots:
 
 private:
 	Scene* const sceneToControl;
+
+    // Double slider color control
 
 	QGroupBox* groupbox_red;
 	QGroupBox* groupbox_green;
@@ -134,6 +140,11 @@ private:
 	Viewer* const viewer;
 	double min, max;
 	double minAlternate, maxAlternate;
+
+    QWidget* slideColorControl;
+
+    // Segmented color control
+    QWidget* segmentedColorControl;
 
 public slots:
 	void setMinTexVal(double val);

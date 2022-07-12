@@ -129,7 +129,7 @@ void UITool::GL::MeshManipulator::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* m
 		return g;
 	};
 
-    std::cout << planeDisplacement << std::endl;
+    //std::cout << planeDisplacement << std::endl;
 	//if (!this->displayed)
 	//	return;
 
