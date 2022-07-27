@@ -1280,6 +1280,8 @@ public:
         QObject::connect(min, QOverload<double>::of(&QDoubleSpinBox::valueChanged), [this](double d){Q_EMIT rangeChanged(this->id);});
         QObject::connect(max, QOverload<double>::of(&QDoubleSpinBox::valueChanged), [this](double d){Q_EMIT rangeChanged(this->id);});
         QObject::connect(hideButton, &QPushButton::clicked, [this](){Q_EMIT rangeChanged(this->id);});
+        QObject::connect(hideButton, &QPushButton::toggled, [this](){this->hideColor->setDisabled(this->hideButton->isChecked());
+                                                                     this->colorButton->setDisabled(this->hideButton->isChecked());});
     }
 
     glm::vec3 getColor() {
@@ -1326,7 +1328,7 @@ public:
 
         this->unitLayout = new QHBoxLayout();
         this->rangeOptionUnit = new RangeOptionUnit();
-        this->unitLayout->addWidget(this->rangeOptionUnit);
+        //this->unitLayout->addWidget(this->rangeOptionUnit);
         this->addUnit();
         units.back()->blockSignals(true);
         units.back()->min->setValue(0);
@@ -1347,7 +1349,7 @@ public:
 
         QObject::connect(rangeOptionUnit->hideColor, &QPushButton::clicked, this, [this](){this->toggleAll(Option::COLOR, !rangeOptionUnit->hideColor->isChecked());});
         QObject::connect(rangeOptionUnit->hideButton, &QPushButton::clicked, this, [this](){this->toggleAll(Option::VISU, rangeOptionUnit->hideButton->isChecked());});
-        QObject::connect(rangeOptionUnit->deleteButton, &QPushButton::clicked, this, [this](){this->clearUnits(); this->updateRanges();});
+        QObject::connect(rangeOptionUnit->deleteButton, &QPushButton::clicked, this, [this](){this->clearUnits(true); this->updateRanges();});
         QObject::connect(rangeOptionUnit->open, &QPushButton::clicked, this, [this](){this->readFromFile(); this->updateRanges();});
         QObject::connect(rangeOptionUnit->save, &QPushButton::clicked, this, [this](){this->writeToFile(); this->updateRanges();});
         QObject::connect(rangeOptionUnit->autoButton, &QPushButton::clicked, this, [this](){this->addUnitsAuto();});
@@ -1356,10 +1358,12 @@ public:
     }
 
     void readFromFile() {
-        this->clearUnits();
-
         QFile file;
         QString filename = QFileDialog::getOpenFileName(nullptr, "Open color map", QDir::currentPath(), "Json files (*.json)", 0, QFileDialog::DontUseNativeDialog);
+        if(filename.isEmpty())
+            return;
+
+        this->clearUnits();
         file.setFileName(filename);
         file.open(QIODevice::ReadOnly | QIODevice::Text);
         QString values;
@@ -1369,7 +1373,8 @@ public:
         QJsonDocument document = QJsonDocument::fromJson(values.toUtf8());
         QJsonObject json = document.object();
 
-        foreach(const QString& rangeId, json.keys()) {
+        for(int i = 0; i < json.count(); ++i) {
+            const QString rangeId(std::to_string(i).c_str());
             QJsonObject values = json.value(rangeId).toObject();
             QJsonArray colorArray = values.value("color").toArray();
             glm::ivec3 color(0, 0, 0);
@@ -1386,7 +1391,7 @@ public:
     void writeToFile() {
         QJsonObject obj;
 
-        for(int i = 1; i < this->unitLayout->count(); ++i) {
+        for(int i = 0; i < this->unitLayout->count(); ++i) {
             RangeUnit * unit = dynamic_cast<RangeUnit*>(this->unitLayout->itemAt(i)->widget());
             QJsonObject unitJson;
 
@@ -1414,14 +1419,18 @@ public:
         file.close();
     }
 
-    void clearUnits() {
-        for(int i = this->unitLayout->count()-2; i >= 0; --i) {
+    void clearUnits(bool addDefault = false) {
+        for(int i = this->unitLayout->count()-1; i >= 0; --i) {
             this->deleteUnit(i);
+        }
+        if(addDefault) {
+            this->addUnit(0, 16000);
+            this->units.back()->hideColor->click();
         }
     }
 
     int findId(int id) {
-       for(int i = 1; i < this->unitLayout->count(); ++i) {
+       for(int i = 0; i < this->unitLayout->count(); ++i) {
            if(dynamic_cast<RangeUnit*>(this->unitLayout->itemAt(i)->widget())->id == id)
                return i;
        }
@@ -1444,7 +1453,7 @@ public:
 
     void moveUnit(int id, Direction direction) {
         int idx = this->findId(id);
-        if(idx == -1 || (idx == 1 && direction == Direction::Left) || (idx == this->unitLayout->count()-1 && direction == Direction::Right))
+        if(idx == -1 || (idx == 0 && direction == Direction::Left) || (idx == this->unitLayout->count()-1 && direction == Direction::Right))
             return;
         QWidget * widget = this->unitLayout->takeAt(idx)->widget();
         if(direction == Direction::Left)
@@ -1481,7 +1490,7 @@ public:
 
     void updateRanges() {
         scene->resetRanges();
-        for(int i = 1; i < this->unitLayout->count(); ++i) {
+        for(int i = 0; i < this->unitLayout->count(); ++i) {
             RangeUnit * unit = dynamic_cast<RangeUnit*>(this->unitLayout->itemAt(i)->widget());
             if(!unit->hideButton->isChecked()) {
                 if(unit->hideColor->isChecked()) {

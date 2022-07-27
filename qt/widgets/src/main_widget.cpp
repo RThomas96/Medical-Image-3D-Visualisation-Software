@@ -232,7 +232,13 @@ void MainWidget::setupWidgets() {
 	this->viewer		= new Viewer(this->scene, this->statusBar, nullptr);
 	this->controlPanel	= new ControlPanel(this->scene, this->viewer, nullptr);
     this->range = new RangeControl(this->scene);
-    this->controlPanel->tab->addTab(this->range, QString("Classes"));
+    QWidget * tabWidget = new QWidget();
+    QHBoxLayout * hlayout = new QHBoxLayout();
+    hlayout->addWidget(this->range->rangeOptionUnit);
+    hlayout->addWidget(this->range);
+    tabWidget->setLayout(hlayout);
+    //this->controlPanel->tab->addTab(this->range, QString("Classes"));
+    this->controlPanel->tab->addTab(tabWidget, QString("Classes"));
     this->scene->setControlPanel(this->controlPanel);
 
     this->info_pannel = new InfoPannel("Infos", this->scene);
