@@ -91,4 +91,5 @@ void OpenMeshWidget::loadMeshToScene(Scene * scene) {
     } else {
         scene->openMesh(this->name->text().toStdString(), this->selectedFile->text().toStdString());
     }
+    Q_EMIT loaded();
 }

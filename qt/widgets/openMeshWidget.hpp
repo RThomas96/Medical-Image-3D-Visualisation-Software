@@ -49,6 +49,9 @@ public:
     QFrame * line;
 
     void selectFile();
+
+signals:
+    void loaded();
 };
 
 #endif

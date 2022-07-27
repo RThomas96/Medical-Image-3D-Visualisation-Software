@@ -405,12 +405,12 @@ void Scene::createBuffers() {
     this->glSelection->setVboVertices(createVBO(GL_ARRAY_BUFFER, "vboHandle_SelectionVertices"));
     this->glSelection->setVboIndices(createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_SelectionIndices"));
 
-    glGenFramebuffers(1, &this->frameBuffer);
-    glBindFramebuffer(GL_FRAMEBUFFER, this->frameBuffer);
+    //glGenFramebuffers(1, &this->frameBuffer);
+    //glBindFramebuffer(GL_FRAMEBUFFER, this->frameBuffer);
     glGenTextures(1, &this->dualRenderingTexture);
 
     glBindTexture(GL_TEXTURE_2D, this->dualRenderingTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, h, w, 0,GL_RGB, GL_UNSIGNED_BYTE, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, h, w, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -3722,6 +3722,8 @@ void Scene::addGridToScene(const std::string& name, Grid * newGrid) {
 
     Q_EMIT meshAdded(name, true, false);
     this->changeActiveMesh(name);
+
+    this->gridsToDraw.push_back(this->gridToDraw);
 }
 
 int Scene::autofitSubsample(int initialSubsample, const std::vector<std::string>& imgFilenames) {

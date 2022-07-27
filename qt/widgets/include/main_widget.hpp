@@ -565,13 +565,13 @@ public slots:
         this->add(WidgetType::GRID_CHOOSE, "To");
         this->setObjectTypeToChoose("To", ObjectToChoose::GRID);
 
-        this->add(WidgetType::TEXT_EDIT, "PtToDeform", "Points to deform");
+        this->add(WidgetType::TEXT_EDIT, "PtToDeform", "Points to transform");
         this->setTextEditEditable("PtToDeform", true);
 
         this->add(WidgetType::TEXT_EDIT, "Results", "Results");
         this->setTextEditEditable("Results", true);
 
-        this->add(WidgetType::BUTTON, "Deform");
+        this->add(WidgetType::BUTTON, "Deform", "Transform");
         this->add(WidgetType::BUTTON, "Preview");
 
         this->add(WidgetType::TIFF_CHOOSE, "Save image");
@@ -2270,6 +2270,9 @@ public slots:
         this->add(WidgetType::BUTTON, "Load");
 
         this->resetValues();
+
+        this->sections["Image subsample"].first->hide();
+        this->sections["Image subregion"].first->hide();
     }
 
     void resetValues() {
@@ -2472,6 +2475,8 @@ public slots:
 class QActionManager : QWidget {
     Q_OBJECT
 public:
+    std::map<std::string, QToolButton *> menus;
+
     std::map<std::string, QAction *> actions;
     std::map<std::string, QActionGroup *> actionExclusiveGroups;
 
@@ -2479,6 +2484,10 @@ public:
 
     QAction * getAction(const QString& name) {
         return actions[name.toStdString()];
+    }
+
+    QToolButton * getMenu(const QString& name) {
+        return menus[name.toStdString()];
     }
 
     void activateGroup(const QString& name) {
@@ -2561,7 +2570,33 @@ public:
     
         return action;
     }
-    
+
+    void createMenuButton(const QString& name, const QString& text, const QString& statusTip, const QString& defaultIcon, const QStringList& actions) {
+        QIcon icon;
+        QSize size(80, 80);
+        if(!defaultIcon.isEmpty())
+            icon.addFile(QString("../resources/" + defaultIcon + QString(".svg")), size, QIcon::Normal, QIcon::Off);
+
+        QToolButton * button=new QToolButton(this);
+        button->setStatusTip(statusTip);
+        button->setToolTip(statusTip);
+        button->setIcon(icon);
+        this->menus[name.toStdString()] = button;
+        button->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+
+        button->setText(text);
+        button->setPopupMode(QToolButton::InstantPopup);
+
+        QMenu *menu=new QMenu(button);
+        for(auto& actionName : actions) {
+            if(actionName == QString("-"))
+                menu->addSeparator();
+            else
+                menu->addAction(this->actions[actionName.toStdString()]);
+        }
+        button->setMenu(menu);
+    }
+
     QAction * createQActionButton(const QString& name, const QString& text, const QString& keySequence, const QString& statusTip) {
         return createQAction(name, text, keySequence, statusTip, QString(), QString(), false, false);
     }
@@ -2736,7 +2771,7 @@ private:
 	bool widgetSizeSet;
 
 	QMenu* fileMenu;
-	QMenu* viewMenu;
+    QMenu* editMenu;
 	QMenu* otherMenu;
 
     QToolBar * toolbar;
