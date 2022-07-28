@@ -9,7 +9,7 @@
 #include <numeric>
 
 
-BaseMesh::BaseMesh(): bbMin(glm::vec3(0., 0., 0.)), bbMax(glm::vec3(0., 0., 0.)), meshDeformer(new NormalMethod(this)), normalDeformer(new NormalMethod(this)), history(nullptr) {
+BaseMesh::BaseMesh(): bbMin(glm::vec3(0., 0., 0.)), bbMax(glm::vec3(0., 0., 0.)), meshDeformer(new NormalMethod(this)), normalDeformer(new NormalMethod(this)), history(nullptr), coordinate_system({glm::vec3(1., 0., 0.), glm::vec3(0., 1., 0.), glm::vec3(0., 0., 1.)}) {
 }
 
 glm::vec3 BaseMesh::getDimensions() const {

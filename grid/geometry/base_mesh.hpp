@@ -108,6 +108,7 @@ public:
     MeshDeformer * meshDeformer;// It will move the mesh points using certain strategies
     MeshDeformer * normalDeformer;// Move the mesh points using the normal strategy
     History * history;// Allow to undo/redo between BaseMesh vertices positions
+    std::array<glm::vec3, 3> coordinate_system;
 
     glm::vec3 getDimensions() const;
     //int getIdxOfClosestPoint(const glm::vec3& p) const;

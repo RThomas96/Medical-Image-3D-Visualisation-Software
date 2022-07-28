@@ -63,6 +63,16 @@ public slots:
         zHSlider->blockSignals(false);
     }
 
+    void setDisabledAlpha(bool value) {
+        if(value) {
+            this->aHSlider->hide();
+            this->labelCutA->hide();
+        } else {
+            this->aHSlider->show();
+            this->labelCutA->show();
+        }
+    }
+
 signals:
     void xSliderValueChanged(float x);
     void ySliderValueChanged(float y);
@@ -101,7 +111,7 @@ protected:
         yHBoxLayout->addWidget(labelCutY);
         QLabel * labelCutZ = new QLabel("z", this);
         zHBoxLayout->addWidget(labelCutZ);
-        QLabel * labelCutA = new QLabel("a", this);
+        labelCutA = new QLabel("a", this);
         aHBoxLayout->addWidget(labelCutA);
 
         //Sliders definitions
@@ -162,6 +172,7 @@ protected:
 
 
     }
+    QLabel *labelCutA;
     QSlider *xHSlider;
     QSlider *yHSlider;
     QSlider *zHSlider;

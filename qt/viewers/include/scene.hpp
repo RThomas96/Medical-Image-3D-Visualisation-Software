@@ -624,8 +624,8 @@ public slots:
     void openAtlas();
     void openIRM();
     bool openMesh(const std::string& name, const std::string& filename, const glm::vec4& color = glm::vec4(0.1, 0.5, 1.,0.85));
-    bool openCage(const std::string& name, const std::string& filename, BaseMesh * surfaceMeshToDeform, const bool MVC = true, const glm::vec4& color = glm::vec4(1., 0., 0., 0.3));
-    bool openCage(const std::string& name, const std::string& filename, const std::string& surfaceMeshToDeformName, const bool MVC = true, const glm::vec4& color = glm::vec4(1., 0., 0., 0.3));
+    bool openCage(const std::string& name, const std::string& filename, BaseMesh * surfaceMeshToDeform, const bool MVC = true, const glm::vec4& color = glm::vec4(1., 0., 0., 0.1));
+    bool openCage(const std::string& name, const std::string& filename, const std::string& surfaceMeshToDeformName, const bool MVC = true, const glm::vec4& color = glm::vec4(1., 0., 0., 0.1));
     bool linkCage(const std::string& cageName, BaseMesh * meshToDeform, const bool MVC);
 
     bool openGrid(const std::string& name, const std::vector<std::string>& imgFilenames, const int subsample, const glm::vec3& sizeVoxel, const glm::vec3& nbCubeGridTransferMesh = glm::vec3(5., 5., 5.));
@@ -654,6 +654,7 @@ public slots:
     DrawableMesh * getDrawableMesh(const std::string& name);
     bool isGrid(const std::string& name);
     bool isCage(const std::string& name);
+    bool hasTwoOrMoreGrids();
     void changeSceneRadius(float sceneRadius);
     float getSceneRadius();
     void updateSceneCenter();

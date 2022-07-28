@@ -92,4 +92,5 @@ void OpenMeshWidget::loadMeshToScene(Scene * scene) {
         scene->openMesh(this->name->text().toStdString(), this->selectedFile->text().toStdString());
     }
     Q_EMIT loaded();
+    this->hide();
 }

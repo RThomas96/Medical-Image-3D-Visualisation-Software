@@ -196,6 +196,7 @@ namespace UITool {
         virtual void needChangeCursor(UITool::CursorType cursorType) = 0;
         virtual void needChangeCursorInPlanarView(UITool::CursorType cursorType) = 0;
         virtual void needChangeSelectedPoints(std::pair<int, glm::vec3> selectedPoint) = 0;
+        virtual void needUpdateSceneCenter() = 0;
     };
 }
 Q_DECLARE_INTERFACE(UITool::MeshManipulator, "MeshManipulator")
@@ -239,7 +240,8 @@ namespace UITool {
         void needChangeCursor(UITool::CursorType cursorType) override;
         void needChangeCursorInPlanarView(UITool::CursorType cursorType) override;
         void needChangeSelectedPoints(std::pair<int, glm::vec3> selectedPoint) override;
-	private:
+        void needUpdateSceneCenter() override;
+    private:
 		std::vector<Manipulator> manipulators;
         std::vector<bool> manipulatorsToDisplay;
         std::vector<bool> selectedManipulators;
@@ -279,6 +281,7 @@ namespace UITool {
         void needChangeCursor(UITool::CursorType cursorType) override;
         void needChangeCursorInPlanarView(UITool::CursorType cursorType) override;
         void needChangeSelectedPoints(std::pair<int, glm::vec3> selectedPoint) override;
+        void needUpdateSceneCenter() override;
         void rayIsCasted(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos);
 	private:
         void addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos);
@@ -317,6 +320,7 @@ namespace UITool {
         void needChangeCursor(UITool::CursorType cursorType) override;
         void needChangeCursorInPlanarView(UITool::CursorType cursorType) override;
         void needChangeSelectedPoints(std::pair<int, glm::vec3> selectedPoint) override;
+        void needUpdateSceneCenter() override;
 
 	private:
         bool evenMode;
@@ -363,6 +367,7 @@ namespace UITool {
         void needChangeCursor(UITool::CursorType cursorType) override;
         void needChangeCursorInPlanarView(UITool::CursorType cursorType) override;
         void needChangeSelectedPoints(std::pair<int, glm::vec3> selectedPoint) override;
+        void needUpdateSceneCenter() override;
         void rayIsCasted(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos);
         void pointIsClickedInPlanarViewer(const glm::vec3& position);
 
@@ -447,6 +452,7 @@ namespace UITool {
         void needChangeCursor(UITool::CursorType cursorType) override;
         void needChangeCursorInPlanarView(UITool::CursorType cursorType) override;
         void needChangeSelectedPoints(std::pair<int, glm::vec3> selectedPoint) override;
+        void needUpdateSceneCenter() override;
         void needPushHandleButton();
 
 	private:
@@ -508,7 +514,8 @@ namespace UITool {
         void needChangeCursor(UITool::CursorType cursorType) override;
         void needChangeCursorInPlanarView(UITool::CursorType cursorType) override;
         void needChangeSelectedPoints(std::pair<int, glm::vec3> selectedPoint) override;
-	private:
+        void needUpdateSceneCenter() override;
+    private:
 		std::vector<Manipulator> manipulators;
         std::vector<bool> manipulatorsToDisplay;
         std::vector<bool> selectedManipulators;
@@ -557,6 +564,7 @@ namespace UITool {
         void needChangeCursor(UITool::CursorType cursorType) override;
         void needChangeCursorInPlanarView(UITool::CursorType cursorType) override;
         void needChangeSelectedPoints(std::pair<int, glm::vec3> selectedPoint) override;
+        void needUpdateSceneCenter() override;
         void pointIsClickedInPlanarViewer(const glm::vec3& position);
         void rayIsCasted(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos);
         void needChangeActivatePreviewPoint(bool preview);

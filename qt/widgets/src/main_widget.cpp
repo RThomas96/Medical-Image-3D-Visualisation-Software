@@ -45,13 +45,17 @@ void MainWidget::setupWidgets() {
 	this->scene->addStatusBar(this->statusBar);
 
     this->openMeshWidget = new OpenMeshWidget(this->scene, this);
-    QObject::connect(this->openMeshWidget, &OpenMeshWidget::loaded, [this](){this->actionManager->getAction("ToggleNoneTool")->trigger();});
+    QObject::connect(this->openMeshWidget, &OpenMeshWidget::loaded, [this](){
+        this->actionManager->getAction("ToggleNoneTool")->trigger();
+        this->combo_mesh->setCurrentIndex(this->combo_mesh->count()-1);
+    });
     this->saveMeshWidget = new SaveMeshWidget(this->scene, this);
     this->applyCageWidget = new ApplyCageWidget(this->scene, this);
 
     this->display_pannel = new DisplayPannel("Display", *this->actionManager);
     this->cutPlane_pannel = new CutPlaneGroupBox("Cutting planes");
     this->cutPlane_pannel->setCheckable(false);
+    this->cutPlane_pannel->setDisabledAlpha(true);
 
 	this->deformationWidget = new GridDeformationWidget(this->scene);
     this->deformationWidget->hide();
@@ -130,6 +134,10 @@ void MainWidget::setupWidgets() {
 
     this->toolbar->addSeparator();
 
+    //this->toolbar->addAction(this->actionManager->getAction("CenterCamera"));
+
+    //this->toolbar->addSeparator();
+
     this->toolbar->addAction(this->actionManager->getAction("OpenAtlas"));
     this->toolbar->addAction(this->actionManager->getAction("OpenIRM"));
 
@@ -137,7 +145,7 @@ void MainWidget::setupWidgets() {
 
     //this->toolbar->addAction(this->actionManager->getAction("Sorting"));
     //this->toolbar->addAction(this->actionManager->getAction("Shader"));
-    //this->toolbar->addAction(this->actionManager->getAction("Boundaries"));
+    this->toolbar->addAction(this->actionManager->getAction("Boundaries"));
 
     /***/
 
@@ -309,6 +317,8 @@ void MainWidget::setupWidgets() {
     QHBoxLayout* lowLayout = new QHBoxLayout(lowFrame);
     lowLayout->addWidget(this->planarViewer, 1);
     lowLayout->addWidget(this->controlPanel, 3);
+
+    this->planarViewer->hide();
     this->controlPanel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     mainLayout->addWidget(lowFrame);
@@ -335,7 +345,7 @@ void MainWidget::setupWidgets() {
     this->planarViewer->viewers["View_2"]->viewer2D->hide();
     this->planarViewer->viewers["View_3"]->viewer2D->hide();
 
-    this->planarViewer->show();
+    this->planarViewer->hide();
 
 	this->installEventFilter(this);
 }
@@ -359,7 +369,7 @@ void MainWidget::setupActions() {
     this->actionManager = new QActionManager();
 
     // Display
-    this->actionManager->createQActionToggleButton("ToggleDisplayMesh", "Mesh", "M", "Display/Show mesh", "visible", "hidden");
+    this->actionManager->createQActionToggleButton("ToggleDisplayMesh", "Cage", "C", "Display/Show cage", "visible", "hidden");
     QObject::connect(this->actionManager->getAction("ToggleDisplayMesh"), &QAction::triggered, [this](){this->scene->toggleDisplayMesh();});
 
     this->actionManager->createQActionToggleButton("ToggleDisplayGrid", "Grids", "G", "Display/Show grid", "visible", "hidden");
@@ -367,6 +377,7 @@ void MainWidget::setupActions() {
 
     this->actionManager->createQActionToggledButton("ToggleDisplayMultiView", "MView", "M", "Display/Show multi grid display", "visible", "hidden");
     QObject::connect(this->actionManager->getAction("ToggleDisplayMultiView"), &QAction::triggered, [this](){this->scene->setMultiGridRendering(!this->actionManager->getAction("ToggleDisplayMultiView")->isChecked()); this->controlPanel->updateRGBMode();});
+    this->actionManager->getAction("ToggleDisplayMultiView")->setDisabled(true);
 
     this->actionManager->createQActionToggledButton("ToggleDisplayWireframe", "TetM", "W", "Display/Show the tethraedral mesh wireframe", "visible", "hidden");
     QObject::connect(this->actionManager->getAction("ToggleDisplayWireframe"), &QAction::triggered, [this](){this->scene->toggleWireframe();});
@@ -461,6 +472,9 @@ void MainWidget::setupActions() {
 
     this->actionManager->createQActionGroup("FixedTool", {"FixedTool_apply", "FixedTool_clear"});
 
+    this->actionManager->createQActionButton("CenterCamera", "Center", "", "Center the camera on the selected object", "camera");
+    QObject::connect(this->actionManager->getAction("CenterCamera"), &QAction::triggered, [this](){this->scene->updateSceneCenter();});
+
     // Undo
     this->actionManager->createQActionButton("Undo", "Undo", "ctrl+z", "Undo", "undo");
     QObject::connect(this->actionManager->getAction("Undo"), &QAction::triggered, [this](){this->actionManager->getAction("ToggleNoneTool")->trigger(); this->scene->undo();});
@@ -481,6 +495,13 @@ void MainWidget::setupActions() {
             int ret = msgBox.exec();
             if(ret == QMessageBox::Ok)
                 this->scene->clear();
+            this->updateForms();
+            this->combo_mesh->clear();
+
+            this->actionManager->getAction("ToggleDisplayMultiView")->setDisabled(true);
+            this->actionManager->getAction("Transform")->setDisabled(true);
+            this->actionManager->getAction("Boundaries")->setVisible(false);
+            this->cutPlane_pannel->setDisabledAlpha(true);
     });
 
     // Pipeline
@@ -489,6 +510,7 @@ void MainWidget::setupActions() {
             this->updateForms();
             this->deformationForm->show();
     });
+    this->actionManager->getAction("Transform")->setDisabled(true);
 
     this->actionManager->createQActionButton("SaveCage", "Save...", "Ctrl+S", "Save the current cage", "");
     QObject::connect(this->actionManager->getAction("SaveCage"), &QAction::triggered, [this](){
@@ -523,7 +545,8 @@ void MainWidget::setupActions() {
             this->planarViewer->viewers["View_1"]->viewer2D->hide();
             this->planarViewer->viewers["View_2"]->viewer2D->hide();
             this->planarViewer->viewers["View_3"]->viewer2D->hide();
-            this->planarViewer->setDisabled(true);
+            //this->planarViewer->setDisabled(true);
+            this->planarViewer->hide();
     });
 
     this->actionManager->createQActionButton("Layout2View", "Dual view", "", "Display a 2D view", "dualScreen");
@@ -594,14 +617,23 @@ void MainWidget::setupActions() {
     QObject::connect(this->actionManager->getAction("Boundaries"), &QAction::triggered, [this](){
         this->scene->setDrawOnlyBoundaries(this->actionManager->getAction("Boundaries")->isChecked());
     });
+    this->actionManager->getAction("Boundaries")->setVisible(false);
 }
 
 void MainWidget::setupForms() {
     this->deformationForm = new DeformationForm(this->scene);
     this->saveImageForm = new SaveImageForm(this->scene);
     this->planarViewer = new PlanarViewer2D(this->scene);
+    this->planarViewer->hide();
     this->openImageForm = new OpenImageForm(this->scene);
-    QObject::connect(this->openImageForm, &OpenImageForm::loaded, [this](){this->updateForms(); this->actionManager->getAction("ToggleNoneTool")->trigger();});
+    QObject::connect(this->openImageForm, &OpenImageForm::loaded, [this](){
+        this->updateForms();
+        this->actionManager->getAction("ToggleNoneTool")->trigger();
+        if(this->openImageForm->checkBoxes["Segmented"]->isChecked()) {
+            this->range->addUnitsAuto();
+            this->controlPanel->tab->setCurrentIndex(1);
+        }
+    });
 }
 
 void MainWidget::updateForms() {

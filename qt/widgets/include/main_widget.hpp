@@ -1763,6 +1763,7 @@ public slots:
 
     void initViewer(const QString& name) {
         this->setDisabled(false);
+        this->show();
         this->selectViewer(name);
         this->checkBoxes["UseBack"]->blockSignals(true);
         this->checkBoxes["UseFront"]->blockSignals(true);
@@ -2064,6 +2065,7 @@ public:
         this->addViewer("View_1", glm::vec3(1., 0., 0.));
         this->addViewer("View_2", glm::vec3(0., 1., 0.));
         this->addViewer("View_3", glm::vec3(0., 0., 1.));
+        this->hide();
         this->initialized = true;
     }
 };
@@ -2219,6 +2221,12 @@ public slots:
         this->add(WidgetType::SPIN_BOX, "BBMaxZ");
 
         /***/
+
+        this->addAllNextWidgetsToSection("Image");
+
+        this->add(WidgetType::SECTION, "Type");
+        this->addAllNextWidgetsToSection("Type");
+        this->addWithLabel(WidgetType::CHECK_BOX, "Segmented", "Segmented");
 
         this->addAllNextWidgetsToSection("Image");
 
@@ -2816,10 +2824,13 @@ private:
 
 public slots:
     void addNewMesh(const std::string& name, bool grid, bool cage) {
-        //this->combo_mesh->insertItem(this->combo_mesh->count(), QString(this->meshNames.back().c_str()));
         this->combo_mesh->insertItem(this->combo_mesh->count(), QString(name.c_str()));
-        //if(!this->gridOrCage.back().first)
-        //    this->combo_mesh_register->insertItem(this->combo_mesh_register->count(), QString(this->meshNames.back().c_str()));
+        if(this->scene->hasTwoOrMoreGrids()) {
+            this->actionManager->getAction("ToggleDisplayMultiView")->setDisabled(false);
+            this->actionManager->getAction("Transform")->setDisabled(false);
+            this->actionManager->getAction("Boundaries")->setVisible(true);
+            this->cutPlane_pannel->setDisabledAlpha(false);
+        }
     }
 
     // *************** //

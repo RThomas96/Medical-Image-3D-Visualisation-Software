@@ -218,6 +218,9 @@ namespace UITool {
         this->evenMode = false;
         this->kid_manip = new RotationManipulator();
         this->kid_manip->setOrigine(qglviewer::Vec(mesh->getOrigin()[0], mesh->getOrigin()[1], mesh->getOrigin()[2]));
+        this->kid_manip->setRepX(qglviewer::Vec(mesh->coordinate_system[0].x, mesh->coordinate_system[0].y, mesh->coordinate_system[0].z));
+        this->kid_manip->setRepY(qglviewer::Vec(mesh->coordinate_system[1].x, mesh->coordinate_system[1].y, mesh->coordinate_system[1].z));
+        this->kid_manip->setRepZ(qglviewer::Vec(mesh->coordinate_system[2].x, mesh->coordinate_system[2].y, mesh->coordinate_system[2].z));
         for(int i = 0; i < this->mesh->getNbVertices(); ++i) {
             this->kid_manip->addPoint(i, qglviewer::Vec(this->mesh->getVertice(i)[0], this->mesh->getVertice(i)[1], this->mesh->getVertice(i)[2]));
         }
@@ -275,6 +278,10 @@ namespace UITool {
 
     void PositionManipulator::mouseReleased(QMouseEvent* e) {
         emit needRedraw();
+        emit needUpdateSceneCenter();
+        this->mesh->coordinate_system[0] = glm::vec3(kid_manip->RepX.x, kid_manip->RepX.y, kid_manip->RepX.z);
+        this->mesh->coordinate_system[1] = glm::vec3(kid_manip->RepY.x, kid_manip->RepY.y, kid_manip->RepY.z);
+        this->mesh->coordinate_system[2] = glm::vec3(kid_manip->RepZ.x, kid_manip->RepZ.y, kid_manip->RepZ.z);
     }
 
     PositionManipulator::~PositionManipulator() {
@@ -647,6 +654,9 @@ namespace UITool {
 
         glm::vec3 glmMean = this->getMeanPositionSelectedManipulators();
         this->kid_manip->setOrigine(qglviewer::Vec(glmMean[0], glmMean[1], glmMean[2]));
+        this->kid_manip->setRepX(qglviewer::Vec(mesh->coordinate_system[0].x, mesh->coordinate_system[0].y, mesh->coordinate_system[0].z));
+        this->kid_manip->setRepY(qglviewer::Vec(mesh->coordinate_system[1].x, mesh->coordinate_system[1].y, mesh->coordinate_system[1].z));
+        this->kid_manip->setRepZ(qglviewer::Vec(mesh->coordinate_system[2].x, mesh->coordinate_system[2].y, mesh->coordinate_system[2].z));
         Q_EMIT needChangeKidManipulatorRadius(glm::length(this->selectionMax - this->selectionMin));
 
         this->setLockAllManipulators(false);

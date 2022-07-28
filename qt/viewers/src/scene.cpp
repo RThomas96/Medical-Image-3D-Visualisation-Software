@@ -4547,3 +4547,7 @@ void Scene::addRange(uint16_t min, uint16_t max, glm::vec3 color) {
 //   }
 //   this->newSHADERS_updateUBOData();
 //}
+
+bool Scene::hasTwoOrMoreGrids() {
+   return grids.size() >= 2;
+}
