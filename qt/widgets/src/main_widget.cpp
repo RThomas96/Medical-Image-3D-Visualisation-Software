@@ -78,6 +78,7 @@ void MainWidget::setupWidgets() {
     this->fileMenu->addAction(this->actionManager->getAction("SaveCage"));
     this->fileMenu->addAction(this->actionManager->getAction("SaveAsCage"));
     this->fileMenu->addAction(this->actionManager->getAction("SaveImage"));
+    this->actionManager->getAction("SaveImage")->setDisabled(true);
 
     this->editMenu = this->menuBar()->addMenu("&Edit");
     this->editMenu->addAction(this->actionManager->getAction("ApplyCage"));
@@ -524,7 +525,7 @@ void MainWidget::setupActions() {
             this->quickSaveCage->saveAs();
     });
 
-    this->actionManager->createQActionButton("SaveImage", "Export...", "", "Save the deformed image", "");
+    this->actionManager->createQActionButton("SaveImage", "Export image...", "", "Save the deformed image", "");
     QObject::connect(this->actionManager->getAction("SaveImage"), &QAction::triggered, [this](){
             this->updateForms();
             this->saveImageForm->show();
