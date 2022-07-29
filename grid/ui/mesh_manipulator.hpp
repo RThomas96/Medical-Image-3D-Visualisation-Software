@@ -245,7 +245,8 @@ namespace UITool {
 		std::vector<Manipulator> manipulators;
         std::vector<bool> manipulatorsToDisplay;
         std::vector<bool> selectedManipulators;
-	};
+        bool meshIsModified;
+    };
 
     //! @ingroup uitools
 	class FreeManipulator : public QObject, public MeshManipulator {
@@ -288,7 +289,7 @@ namespace UITool {
 
 		Manipulator manipulator;
         bool active;
-	};
+    };
 
     //! @ingroup uitools
 	class PositionManipulator : public QObject, public MeshManipulator {
@@ -324,6 +325,7 @@ namespace UITool {
 
 	private:
         bool evenMode;
+        bool meshIsModified;
 	};
 
 	/// @ingroup uitools
@@ -468,7 +470,9 @@ namespace UITool {
 
         glm::vec3 selectionMin;
         glm::vec3 selectionMax;
-	};
+
+        bool meshIsModified;
+    };
 
 	class SliceManipulator : public QObject, public MeshManipulator {
         Q_OBJECT

@@ -73,7 +73,7 @@ void MainWidget::setupWidgets() {
 
     this->fileMenu = this->menuBar()->addMenu("&File");
     this->fileMenu->addAction(this->actionManager->getAction("OpenImage"));
-    this->fileMenu->addAction(this->actionManager->getAction("OpenCage"));
+    //this->fileMenu->addAction(this->actionManager->getAction("OpenCage"));
     this->fileMenu->addSeparator();
     this->fileMenu->addAction(this->actionManager->getAction("SaveCage"));
     this->fileMenu->addAction(this->actionManager->getAction("SaveAsCage"));
@@ -120,9 +120,10 @@ void MainWidget::setupWidgets() {
     this->toolbar->addSeparator();
 
     //this->toolbar->addAction(this->actionManager->getAction("SaveImage"));
-    this->toolbar->addAction(this->actionManager->getAction("Layout1View"));
-    this->toolbar->addAction(this->actionManager->getAction("Layout2View"));
-    this->toolbar->addAction(this->actionManager->getAction("Layout4View"));
+
+    //this->toolbar->addAction(this->actionManager->getAction("Layout1View"));
+    //this->toolbar->addAction(this->actionManager->getAction("Layout2View"));
+    //this->toolbar->addAction(this->actionManager->getAction("Layout4View"));
 
     this->toolbar->addSeparator();
 
@@ -138,8 +139,8 @@ void MainWidget::setupWidgets() {
 
     //this->toolbar->addSeparator();
 
-    this->toolbar->addAction(this->actionManager->getAction("OpenAtlas"));
-    this->toolbar->addAction(this->actionManager->getAction("OpenIRM"));
+    //this->toolbar->addAction(this->actionManager->getAction("OpenAtlas"));
+    //this->toolbar->addAction(this->actionManager->getAction("OpenIRM"));
 
     //this->toolbar->addSeparator();
 
@@ -498,6 +499,7 @@ void MainWidget::setupActions() {
             this->updateForms();
             this->combo_mesh->clear();
 
+            this->actionManager->getAction("OpenImage")->setDisabled(false);
             this->actionManager->getAction("ToggleDisplayMultiView")->setDisabled(true);
             this->actionManager->getAction("Transform")->setDisabled(true);
             this->actionManager->getAction("Boundaries")->setVisible(false);
@@ -628,11 +630,14 @@ void MainWidget::setupForms() {
     this->openImageForm = new OpenImageForm(this->scene);
     QObject::connect(this->openImageForm, &OpenImageForm::loaded, [this](){
         this->updateForms();
+        this->combo_mesh->setCurrentIndex(this->combo_mesh->count()-1);
         this->actionManager->getAction("ToggleNoneTool")->trigger();
         if(this->openImageForm->checkBoxes["Segmented"]->isChecked()) {
             this->range->addUnitsAuto();
             this->controlPanel->tab->setCurrentIndex(1);
         }
+        this->actionManager->getAction("OpenImage")->setDisabled(true);
+        this->actionManager->getAction("OpenCage")->setDisabled(true);
     });
 }
 

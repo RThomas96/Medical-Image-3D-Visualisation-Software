@@ -18,9 +18,11 @@
 #include "./user_settings_widget.hpp"
 #include "glm/fwd.hpp"
 #include "qboxlayout.h"
+#include "qbuttongroup.h"
 #include "qjsonarray.h"
 #include "qnamespace.h"
 #include "qobjectdefs.h"
+#include "qt/viewers/include/viewer_structs.hpp"
 #include <random>
 
 #include <map>
@@ -98,7 +100,8 @@ enum FileChooserType {
 
 enum class FileChooserFormat {
     TIFF,
-    MESH
+    MESH,
+    OFF
 };
 
 class FileChooser : public QPushButton {
@@ -137,15 +140,19 @@ public slots:
             case FileChooserType::SELECT:
                 if(this->format == FileChooserFormat::TIFF)
 	                filename = QFileDialog::getOpenFileName(nullptr, "Open TIFF images", QDir::currentPath(), "TIFF files (*.tiff *.tif)", 0, QFileDialog::DontUseNativeDialog);
-                else
+                else if(this->format == FileChooserFormat::MESH)
 	                filename = QFileDialog::getOpenFileName(nullptr, "Open mesh file", QDir::currentPath(), "MESH files (*.mesh)", 0, QFileDialog::DontUseNativeDialog);
+                else
+                    filename = QFileDialog::getOpenFileName(nullptr, "Open mesh file", QDir::currentPath(), "MESH files (*.off)", 0, QFileDialog::DontUseNativeDialog);
                 break;
 
             case FileChooserType::SAVE:
                 if(this->format == FileChooserFormat::TIFF)
 	                filename = QFileDialog::getSaveFileName(nullptr, "Select the image to save", QDir::currentPath(), tr("TIFF Files (*.tiff)"), 0, QFileDialog::DontUseNativeDialog);
+                else if(this->format == FileChooserFormat::MESH)
+                    filename = QFileDialog::getSaveFileName(nullptr, "Select the mesh to save", QDir::currentPath(), tr("MESH Files (*.mesh)"), 0, QFileDialog::DontUseNativeDialog);
                 else
-	                filename = QFileDialog::getSaveFileName(nullptr, "Select the mesh to save", QDir::currentPath(), tr("OFF Files (*.off)"), 0, QFileDialog::DontUseNativeDialog);
+                    filename = QFileDialog::getSaveFileName(nullptr, "Select the mesh to save", QDir::currentPath(), tr("OFF Files (*.off)"), 0, QFileDialog::DontUseNativeDialog);
                 break;
         }
         if(!filename.isEmpty()) {
@@ -203,8 +210,10 @@ enum WidgetType{
     SPIN_BOX,
     SPIN_BOX_DOUBLE,
     MESH_SAVE,
+    OFF_SAVE,
     TIFF_SAVE,
     MESH_CHOOSE,
+    OFF_CHOOSE,
     TIFF_CHOOSE,
     FILENAME,
     GRID_CHOOSE,
@@ -456,12 +465,20 @@ public slots:
                 fileChoosers[id] = new FileChooser(name, FileChooserType::SELECT, FileChooserFormat::MESH);
                 newWidget = fileChoosers[id];
                 break;
+            case WidgetType::OFF_CHOOSE:
+                fileChoosers[id] = new FileChooser(name, FileChooserType::SELECT, FileChooserFormat::OFF);
+                newWidget = fileChoosers[id];
+                break;
             case WidgetType::TIFF_CHOOSE:
                 fileChoosers[id] = new FileChooser(name, FileChooserType::SELECT, FileChooserFormat::TIFF);
                 newWidget = fileChoosers[id];
                 break;
             case WidgetType::MESH_SAVE:
                 fileChoosers[id] = new FileChooser(name, FileChooserType::SAVE, FileChooserFormat::MESH);
+                newWidget = fileChoosers[id];
+                break;
+            case WidgetType::OFF_SAVE:
+                fileChoosers[id] = new FileChooser(name, FileChooserType::SAVE, FileChooserFormat::OFF);
                 newWidget = fileChoosers[id];
                 break;
             case WidgetType::TIFF_SAVE:
@@ -661,6 +678,7 @@ public:
     QImage::Format format;
     glm::ivec3 imgSize;
     std::vector<std::vector<uint16_t>> data;
+    GridGLView * grid;
 
 private:
     std::vector<bool> upToDate;
@@ -2275,6 +2293,53 @@ public slots:
         this->addAllNextWidgetsToDefaultGroup();
         this->addAllNextWidgetsToDefaultSection();
 
+        this->add(WidgetType::SECTION, "Cage");
+        this->addAllNextWidgetsToSection("Cage");
+
+        this->addWithLabel(WidgetType::H_GROUP, "GroupCageType", "Type:");
+        //this->addAllNextWidgetsToGroup("GroupCageType");
+
+        //this->addWithLabel(WidgetType::CHECK_BOX, "MVC", "MVC");
+        //this->addWithLabel(WidgetType::CHECK_BOX, "Green", "Green");
+
+        //this->addAllNextWidgetsToSection("Cage");
+
+        QLabel * mvcLabel = new QLabel("MVC");
+        QCheckBox * mvc = new QCheckBox();
+        mvc->setChecked(true);
+        QLabel * greenLabel = new QLabel("Green");
+        QCheckBox * green = new QCheckBox();
+
+        this->checkBoxes["mvc"] = mvc;
+        this->checkBoxes["green"] = green;
+
+        QHBoxLayout * mvcLayout = new QHBoxLayout();
+        mvcLayout->setAlignment(Qt::AlignHCenter);
+        QHBoxLayout * greenLayout = new QHBoxLayout();
+        greenLayout->setAlignment(Qt::AlignHCenter);
+
+        mvcLayout->addWidget(mvcLabel);
+        mvcLayout->addWidget(mvc);
+
+        greenLayout->addWidget(greenLabel);
+        greenLayout->addWidget(green);
+
+        QButtonGroup * group = new QButtonGroup();
+        group->addButton(mvc);
+        group->addButton(green);
+
+        this->groups["GroupCageType"]->addLayout(mvcLayout);
+        this->groups["GroupCageType"]->addLayout(greenLayout);
+
+        this->add(WidgetType::FILENAME, "Cage filename");
+        this->add(WidgetType::OFF_CHOOSE, "Cage choose", "Select cage file");
+        this->linkFileNameToFileChooser("Cage filename", "Cage choose");
+
+        /***/
+
+        this->addAllNextWidgetsToDefaultGroup();
+        this->addAllNextWidgetsToDefaultSection();
+
         this->add(WidgetType::BUTTON, "Load");
 
         this->resetValues();
@@ -2292,6 +2357,9 @@ public slots:
 
         this->fileNames["Mesh filename"]->resetValues();
         this->fileChoosers["Mesh choose"]->resetValues();
+
+        this->fileNames["Cage filename"]->resetValues();
+        this->fileChoosers["Cage choose"]->resetValues();
 
         this->sections["Image subsample"].first->setChecked(false);
         this->sections["Image subregion"].first->setChecked(false);
@@ -2317,6 +2385,7 @@ public slots:
         this->sections["Image subsample"].first->setEnabled(false);
 
         this->sections["Mesh"].first->setEnabled(false);
+        this->sections["Cage"].first->setEnabled(false);
 
         this->buttons["Load"]->setEnabled(false);
     }
@@ -2391,6 +2460,7 @@ public slots:
         QObject::connect(this->fileChoosers["Mesh choose"], &FileChooser::fileSelected, [this](){
                 this->sections["Tetrahedral mesh size"].first->setEnabled(false);
                 this->useTetMesh = true;
+                this->sections["Cage"].first->setEnabled(true);
         });
 
         QObject::connect(this->buttons["Load"], &QPushButton::clicked, [this, scene](){
@@ -2398,6 +2468,9 @@ public slots:
                     scene->openGrid(this->getName(), this->getImgFilenames(), this->getSubsample(), this->getTetmeshFilename());
                 } else {
                     scene->openGrid(this->getName(), this->getImgFilenames(), this->getSubsample(), this->getSizeVoxel(), this->getSizeTetmesh());
+                }
+                if(!this->fileChoosers["Cage choose"]->filename.isEmpty()) {
+                    scene->openCage(this->getName() + "_cage", this->fileChoosers["Cage choose"]->filename.toStdString(), this->getName(), this->checkBoxes["mvc"]->isChecked());
                 }
                 this->hide();
                 Q_EMIT loaded();
@@ -2720,12 +2793,16 @@ class QuickSaveCage {
 
 public:
     QuickSaveCage(Scene * scene): scene(scene) {
-        fileChooser = new FileChooser("file", FileChooserType::SAVE, FileChooserFormat::MESH);
+        fileChooser = new FileChooser("file", FileChooserType::SAVE, FileChooserFormat::OFF);
     }
 
     void save() {
-        if(filePath.isEmpty())
-            this->saveAs();
+        if(filePath.isEmpty()) {
+            this->fileChooser->click();
+            filePath = this->fileChooser->filename;
+            if(filePath.isEmpty())
+                return;
+        }
 
         bool saved = scene->saveActiveCage(filePath.toStdString());
         if(!saved)
@@ -2735,6 +2812,8 @@ public:
     void saveAs() {
         this->fileChooser->click();
         filePath = this->fileChooser->filename;
+        if(filePath.isEmpty())
+            return;
         this->save();
     }
 };

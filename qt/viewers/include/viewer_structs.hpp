@@ -176,6 +176,9 @@ public:
     std::vector<std::pair<uint16_t, uint16_t>> visu;
     std::vector<glm::vec3> visu_color;
 
+    std::vector<glm::vec3> visu_map;
+    std::vector<glm::vec3> color_map;
+
 	GLuint gridTexture;
 	unsigned int nbChannels;
 	VolMesh volumetricMesh;

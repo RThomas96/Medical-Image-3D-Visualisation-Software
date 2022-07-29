@@ -155,7 +155,8 @@ void main (void) {
         if (distMin < epsilon) {// && visibility > 0.) {
             float factor = (visibility/4000.);
             //colorOut = vec4(1.-factor, factor, 1.-factor, 1.);
-            colorOut = vec4(0., factor, 0., 1.);
+            //colorOut = vec4(0., factor, 0., 1.);
+            colorOut = vec4(135./255., 206./255., 250./255., 1.);
             sceneSpaceFragmentPos = vec4(P.xyz, 2.f);
             return;
         }

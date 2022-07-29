@@ -17,6 +17,7 @@ namespace UITool {
     }
 
 	DirectManipulator::DirectManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions): MeshManipulator(mesh) {
+        this->meshIsModified = false;
         this->kid_manip = nullptr;
         this->manipulators.reserve(positions.size());
 		for (int i = 0; i < positions.size(); ++i) {
@@ -108,6 +109,7 @@ namespace UITool {
         ptrdiff_t index = manipulator - &(this->manipulators[0]);
         this->mesh->movePoint(index, manipulator->getManipPosition());
         Q_EMIT needSendTetmeshToGPU();
+        this->meshIsModified = true;
     }
 
     void DirectManipulator::selectManipulator(Manipulator * manipulator) {
@@ -130,7 +132,12 @@ namespace UITool {
 
     void DirectManipulator::mousePressed(QMouseEvent*) {};
 
-    void DirectManipulator::mouseReleased(QMouseEvent*) {};
+    void DirectManipulator::mouseReleased(QMouseEvent*) {
+        if(this->meshIsModified) {
+            mesh->addStateToHistory();
+            this->meshIsModified = false;
+        }
+    };
 
     /***/
 
@@ -209,11 +216,14 @@ namespace UITool {
 
     void FreeManipulator::mousePressed(QMouseEvent*) {}
 
-    void FreeManipulator::mouseReleased(QMouseEvent*) {}
+    void FreeManipulator::mouseReleased(QMouseEvent*) {
+        mesh->addStateToHistory();
+    }
 
     /***/
 
 	PositionManipulator::PositionManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions): MeshManipulator(mesh) {
+        this->meshIsModified = false;
         this->selection.disable();
         this->evenMode = false;
         this->kid_manip = new RotationManipulator();
@@ -249,6 +259,7 @@ namespace UITool {
             newPoints[i] = glm::vec3(deformedPoint[0], deformedPoint[1], deformedPoint[2]);
         }
         this->mesh->movePoints(newPoints);
+        this->meshIsModified = true;
         Q_EMIT needSendTetmeshToGPU();
     }
 
@@ -277,11 +288,15 @@ namespace UITool {
     void PositionManipulator::mousePressed(QMouseEvent* e) {}
 
     void PositionManipulator::mouseReleased(QMouseEvent* e) {
-        emit needRedraw();
-        emit needUpdateSceneCenter();
-        this->mesh->coordinate_system[0] = glm::vec3(kid_manip->RepX.x, kid_manip->RepX.y, kid_manip->RepX.z);
-        this->mesh->coordinate_system[1] = glm::vec3(kid_manip->RepY.x, kid_manip->RepY.y, kid_manip->RepY.z);
-        this->mesh->coordinate_system[2] = glm::vec3(kid_manip->RepZ.x, kid_manip->RepZ.y, kid_manip->RepZ.z);
+        if(this->meshIsModified) {
+            emit needRedraw();
+            emit needUpdateSceneCenter();
+            this->mesh->coordinate_system[0] = glm::vec3(kid_manip->RepX.x, kid_manip->RepX.y, kid_manip->RepX.z);
+            this->mesh->coordinate_system[1] = glm::vec3(kid_manip->RepY.x, kid_manip->RepY.y, kid_manip->RepY.z);
+            this->mesh->coordinate_system[2] = glm::vec3(kid_manip->RepZ.x, kid_manip->RepZ.y, kid_manip->RepZ.z);
+            mesh->addStateToHistory();
+            this->meshIsModified = false;
+        }
     }
 
     PositionManipulator::~PositionManipulator() {
@@ -608,6 +623,7 @@ namespace UITool {
     /***/
 
 	ARAPManipulator::ARAPManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions): MeshManipulator(mesh) {
+        this->meshIsModified = false;
         this->kid_manip = new RotationManipulator();
         QObject::connect(this->kid_manip, &RotationManipulator::moved, this, [this]() {this->moveKidManip();});
         this->kid_manip->disable();
@@ -724,6 +740,7 @@ namespace UITool {
         }
         this->mesh->movePoints(indices, targetPoints);
         Q_EMIT needSendTetmeshToGPU();
+        this->meshIsModified = true;
     }
 
     void ARAPManipulator::checkSelectedManipulators() {
@@ -915,7 +932,12 @@ namespace UITool {
         }
     }
 
-    void ARAPManipulator::mouseReleased(QMouseEvent* e) {}
+    void ARAPManipulator::mouseReleased(QMouseEvent* e) {
+        if(this->meshIsModified) {
+            mesh->addStateToHistory();
+            this->meshIsModified = false;
+        }
+    }
 
     ARAPManipulator::~ARAPManipulator() {
         ARAPMethod * deformer = dynamic_cast<ARAPMethod*>(this->mesh->meshDeformer);

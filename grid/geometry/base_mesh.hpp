@@ -125,6 +125,8 @@ public:
     void scaleToBBox(const glm::vec3& bbMin, const glm::vec3& bbMax);
     bool isInBBox(const glm::vec3& p) const;
 
+    void addStateToHistory(bool useTimer = false);
+
     glm::vec3 getOrigin() const;
     virtual void translate(const glm::vec3& vec);
     virtual void rotate(const glm::mat3& transf);

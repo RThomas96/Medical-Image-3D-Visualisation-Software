@@ -2205,6 +2205,9 @@ void Scene::newSHADERS_updateUBOData() {
     texParams.data			   = data_color.data();
 
     grid->valuesRangeColorToDisplay = this->uploadTexture1D(texParams);
+
+    grid->visu_map = data;
+    grid->color_map = data_color;
 }
 
 GLuint Scene::updateFBOOutputs(glm::ivec2 dimensions, GLuint fb_handle, GLuint old_texture) {
@@ -4300,6 +4303,7 @@ void Scene::moveInHistory(bool backward, bool reset) {
         if(success) {
             mesh->replacePoints(pointsBefore);
             this->sendFirstTetmeshToGPU();
+            this->updateSceneCenter();
         }
     } else {
         std::cout << "WARNING: the active mesh do not contain any history" << std::endl;

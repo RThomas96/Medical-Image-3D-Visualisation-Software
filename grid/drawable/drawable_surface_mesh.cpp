@@ -101,6 +101,7 @@ void DrawableMesh::draw(GLfloat *proj_mat, GLfloat *view_mat, glm::vec4 camera) 
     //glFrontFace(GL_CW);
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glLineWidth(1.0f);
 	this->gl->glUniform4fv(location_color, 1, glm::value_ptr(glm::vec4(0.6, 0.6, 0.6, 1)));
 	this->gl->glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(this->mesh->getTriangles().size() * 3), GL_UNSIGNED_INT, 0);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
