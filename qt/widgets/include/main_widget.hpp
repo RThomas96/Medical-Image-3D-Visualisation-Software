@@ -1144,11 +1144,13 @@ public:
     QPushButton * open;
     QPushButton * save;
     QPushButton * autoButton;
+    QPushButton * hideOption;
     RangeOptionUnit(QWidget * parent = nullptr) : QFrame(parent)  {
         id = -1;
         this->setFrameShape(QFrame::Shape::StyledPanel);
         QVBoxLayout *unitLayout = new QVBoxLayout(this);
-        unitLayout->setAlignment(Qt::AlignTop);
+        //unitLayout->setAlignment(Qt::AlignTop);
+        unitLayout->setAlignment(Qt::AlignVCenter);
 
         deleteButton = new QPushButton();
         deleteButton->setIcon(QIcon(QPixmap("../resources/cross.svg")));
@@ -1190,12 +1192,21 @@ public:
         autoButton->setIconSize(QPixmap("../resources/histo.svg").rect().size());
         autoButton->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
+        hideOption = new QPushButton();
+        hideOption->setIcon(QIcon(QPixmap("../resources/arap.svg")));
+        hideOption->setIconSize(QPixmap("../resources/arap.svg").rect().size());
+        hideOption->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+        hideOption->setCheckable(true);
+
+        unitLayout->addStretch();
         unitLayout->addWidget(open);
         unitLayout->addWidget(save);
         unitLayout->addWidget(deleteButton);
         unitLayout->addWidget(hideButton);
         unitLayout->addWidget(hideColor);
         unitLayout->addWidget(autoButton);
+        unitLayout->addWidget(hideOption);
+        unitLayout->addStretch();
 
         QObject::connect(deleteButton, &QPushButton::clicked, [this](){Q_EMIT deleteCurrent(this->id);});
     }
@@ -1210,14 +1221,20 @@ class RangeUnit : public QFrame {
 public:
     int id;
     QDoubleSpinBox * min;
+
+    bool moreOptions;
     QDoubleSpinBox * max;
+    QPushButton * left;
+    QPushButton * right;
+    QPushButton * deleteButton;
+
     QPushButton * hideButton;
     QCheckBox * hideColor;
     ColorButton * colorButton;
     RangeUnit(int id, QWidget * parent = nullptr) : id(id), QFrame(parent)  {
         this->setFrameShape(QFrame::Shape::StyledPanel);
         QVBoxLayout *unitLayout = new QVBoxLayout(this);
-        unitLayout->setAlignment(Qt::AlignTop);
+        unitLayout->setAlignment(Qt::AlignVCenter);
 
         std::random_device dev;
         std::mt19937 rng(dev());
@@ -1254,8 +1271,8 @@ public:
         this->max->setValue(1);
 
         QHBoxLayout * moveLayout = new QHBoxLayout();
-        QPushButton * left = new QPushButton();
-        QPushButton * right = new QPushButton();
+        left = new QPushButton();
+        right = new QPushButton();
         left->setIcon(QIcon(QPixmap("../resources/left.svg")));
         left->setIconSize(QPixmap("../resources/left.svg").rect().size());
         left->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
@@ -1265,7 +1282,7 @@ public:
         moveLayout->addWidget(left);
         moveLayout->addWidget(right);
 
-        QPushButton * deleteButton = new QPushButton();
+        deleteButton = new QPushButton();
         deleteButton->setIcon(QIcon(QPixmap("../resources/cross.svg")));
         deleteButton->setIconSize(QPixmap("../resources/cross.svg").rect().size());
         deleteButton->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
@@ -1295,15 +1312,39 @@ public:
         QObject::connect(colorButton->button, &QPushButton::clicked, [this](){Q_EMIT colorChanged(this->id);});
         QObject::connect(hideColor, &QCheckBox::clicked, [this](){Q_EMIT colorChanged(this->id);});
         QObject::connect(hideColor, &QCheckBox::stateChanged, [this](){this->colorButton->setDisabled(!this->hideColor->isChecked());});
-        QObject::connect(min, QOverload<double>::of(&QDoubleSpinBox::valueChanged), [this](double d){Q_EMIT rangeChanged(this->id);});
+        QObject::connect(min, QOverload<double>::of(&QDoubleSpinBox::valueChanged), [this](double d){
+            if(!moreOptions || min->value() > max->value()) {
+                this->max->blockSignals(true);
+                this->max->setValue(min->value());
+                this->max->blockSignals(false);
+            }
+            Q_EMIT rangeChanged(this->id);
+        });
         QObject::connect(max, QOverload<double>::of(&QDoubleSpinBox::valueChanged), [this](double d){Q_EMIT rangeChanged(this->id);});
         QObject::connect(hideButton, &QPushButton::clicked, [this](){Q_EMIT rangeChanged(this->id);});
         QObject::connect(hideButton, &QPushButton::toggled, [this](){this->hideColor->setDisabled(this->hideButton->isChecked());
                                                                      this->colorButton->setDisabled(this->hideButton->isChecked());});
+        moreOptions = false;
+        this->setMoreOptions(this->moreOptions);
     }
 
     glm::vec3 getColor() {
         return glm::vec3(float(colorButton->getColor().red())/255., float(colorButton->getColor().green())/255., float(colorButton->getColor().blue())/255.);
+    }
+
+    void setMoreOptions(bool value) {
+        this->moreOptions = value;
+        if(value) {
+           max->show();
+           left->show();
+           right->show();
+           deleteButton->show();
+        } else {
+           max->hide();
+           left->hide();
+           right->hide();
+           deleteButton->hide();
+        }
     }
 
 signals:
@@ -1371,6 +1412,7 @@ public:
         QObject::connect(rangeOptionUnit->open, &QPushButton::clicked, this, [this](){this->readFromFile(); this->updateRanges();});
         QObject::connect(rangeOptionUnit->save, &QPushButton::clicked, this, [this](){this->writeToFile(); this->updateRanges();});
         QObject::connect(rangeOptionUnit->autoButton, &QPushButton::clicked, this, [this](){this->addUnitsAuto();});
+        QObject::connect(rangeOptionUnit->hideOption, &QPushButton::clicked, this, [this](){this->toggleAll(Option::MORE_OPTIONS, rangeOptionUnit->hideOption->isChecked());});
 
         this->initialized = true;
     }
@@ -1522,7 +1564,8 @@ public:
 
     enum class Option {
         COLOR,
-        VISU
+        VISU,
+        MORE_OPTIONS
     };
 
     void toggleAll(Option option, bool value) {
@@ -1533,6 +1576,9 @@ public:
                     break;
                 case Option::VISU:
                     unit->hideButton->setChecked(value);
+                    break;
+                case Option::MORE_OPTIONS:
+                    unit->setMoreOptions(value);
                     break;
             }
         }
