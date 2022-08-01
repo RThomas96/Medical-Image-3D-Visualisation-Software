@@ -83,6 +83,9 @@ void MainWidget::setupWidgets() {
     this->editMenu = this->menuBar()->addMenu("&Edit");
     this->editMenu->addAction(this->actionManager->getAction("ApplyCage"));
 
+    this->windowsMenu = this->menuBar()->addMenu("&Windows");
+    this->windowsMenu->addAction(this->actionManager->getAction("DisplayRangeControl"));
+
     /***/
     this->combo_mesh = new QComboBox();
 	QObject::connect(scene, &Scene::meshAdded, this, &MainWidget::addNewMesh);
@@ -589,6 +592,13 @@ void MainWidget::setupActions() {
     });
 
     this->actionManager->createMenuButton("OpenMenu", "Open", "Open", "open", {"OpenImage", "OpenCage"});
+
+    // Windows
+
+    this->actionManager->createQActionToggledButton("DisplayRangeControl", "Display/show color control window", "", "Display/show color control window", "");
+    QObject::connect(this->actionManager->getAction("DisplayRangeControl"), &QAction::triggered, [this](){
+        this->controlPanel->setVisible(this->actionManager->getAction("DisplayRangeControl")->isChecked());
+    });
 
     // Debug
 

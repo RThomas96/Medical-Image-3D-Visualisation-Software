@@ -2859,7 +2859,8 @@ private:
 
 	QMenu* fileMenu;
     QMenu* editMenu;
-	QMenu* otherMenu;
+    QMenu* windowsMenu;
+    QMenu* otherMenu;
 
     QToolBar * toolbar;
 	QAction* action_addGrid;
