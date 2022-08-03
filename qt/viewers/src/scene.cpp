@@ -3599,16 +3599,6 @@ void Scene::setColorChannel(ColorChannel mode) {
     }
 }
 
-bool Scene::toggleARAPManipulatorMode() {
-    UITool::ARAPManipulator * manipulator = dynamic_cast<UITool::ARAPManipulator*>(this->glMeshManipulator->meshManipulator);
-    if(!manipulator) {
-        std::cout << "WARNING: ARAP manipulator can be used only with the ARAP deformer ! Mode not toggled" << std::endl;
-        return false;
-    }
-    manipulator->toggleMode();
-    return true;
-}
-
 bool Scene::openMesh(const std::string& name, const std::string& filename, const glm::vec4& color) {
     //this->surfaceMesh = new SurfaceMesh("/home/thomas/data/Data/Mesh/bunny_lowres.off");
     this->meshes.push_back(std::pair<SurfaceMesh*, std::string>(nullptr, name));
@@ -4284,7 +4274,7 @@ bool Scene::isRightTool(const UITool::MeshManipulatorType& typeToCheck) {
 
 void Scene::moveTool_toggleEvenMode() { auto * toolPtr = this->getMeshTool<UITool::PositionManipulator>(); if(toolPtr) { toolPtr->toggleEvenMode(); } };
 
-void Scene::ARAPTool_toggleEvenMode() { auto * toolPtr = this->getMeshTool<UITool::ARAPManipulator>(); if(toolPtr) { toolPtr->toggleEvenMode(); } };
+void Scene::ARAPTool_toggleEvenMode(bool value) { auto * toolPtr = this->getMeshTool<UITool::ARAPManipulator>(); if(toolPtr) { toolPtr->toggleEvenMode(value); } };
 
 void Scene::moveInHistory(bool backward, bool reset) {
     BaseMesh * mesh = this->getBaseMesh(this->activeMesh);

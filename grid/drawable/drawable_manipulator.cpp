@@ -299,6 +299,7 @@ void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scen
         this->meshManipulator = new UITool::CompManipulator(mesh, positions);
     } else if(type == MeshManipulatorType::ARAP) {
         this->meshManipulator = new UITool::ARAPManipulator(mesh, positions);
+        this->manipulatorRatio = 0.006;
     } else if(type == MeshManipulatorType::SLICE) {
         this->meshManipulator = new UITool::SliceManipulator(mesh, positions);
     } else if(type == MeshManipulatorType::FIXED_REGISTRATION) {

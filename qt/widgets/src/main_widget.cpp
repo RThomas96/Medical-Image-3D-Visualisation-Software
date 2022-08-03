@@ -450,21 +450,22 @@ void MainWidget::setupActions() {
     this->actionManager->createQActionGroup("MoveTool", {"MoveTool_toggleEvenMode", "MoveTool_toggleMoveCage", "MoveTool_reset"});
             
     // ARAP
-    this->actionManager->createQActionToggledButton("ARAPTool_moveMode", "Move", "O", "Toggle move mode of ARAP tool, you can now move points with the selection", "move");
-    this->actionManager->getAction("ARAPTool_moveMode")->setVisible(false);
-    QObject::connect(this->actionManager->getAction("ARAPTool_moveMode"), &QAction::triggered, [this](){this->scene->toggleARAPManipulatorMode();});
+    //this->actionManager->createQActionToggledButton("ARAPTool_moveMode", "Move", "O", "Toggle move mode of ARAP tool, you can now move points with the selection", "move");
+    //this->actionManager->getAction("ARAPTool_moveMode")->setVisible(false);
+    //QObject::connect(this->actionManager->getAction("ARAPTool_moveMode"), &QAction::triggered, [this](){this->scene->toggleARAPManipulatorMode();});
 
-    this->actionManager->createQActionToggleButton("ARAPTool_handleMode", "Handle", "H", "Toggle handle mode of ARAP tool, you can now set points as fixed", "handle");
-    this->actionManager->getAction("ARAPTool_handleMode")->setVisible(false);
-    QObject::connect(this->actionManager->getAction("ARAPTool_handleMode"), &QAction::triggered, [this](){this->scene->toggleARAPManipulatorMode();});
+    //this->actionManager->createQActionToggleButton("ARAPTool_handleMode", "Handle", "H", "Toggle handle mode of ARAP tool, you can now set points as fixed", "handle");
+    //this->actionManager->getAction("ARAPTool_handleMode")->setVisible(false);
+    //QObject::connect(this->actionManager->getAction("ARAPTool_handleMode"), &QAction::triggered, [this](){this->scene->toggleARAPManipulatorMode();});
 
     this->actionManager->createQActionToggleButton("ARAPTool_toggleEvenMode", "Even", "E", "Toggle the even mode to scale evenly in 3 dimensions", "even");
     this->actionManager->getAction("ARAPTool_toggleEvenMode")->setVisible(false);
-    QObject::connect(this->actionManager->getAction("ARAPTool_toggleEvenMode"), &QAction::triggered, [this](){this->scene->ARAPTool_toggleEvenMode();});
+    QObject::connect(this->actionManager->getAction("ARAPTool_toggleEvenMode"), &QAction::triggered, [this](){this->scene->ARAPTool_toggleEvenMode(this->actionManager->getAction("ARAPTool_toggleEvenMode")->isChecked());});
 
-    this->actionManager->createQExclusiveActionGroup("ARAPTool_toggleMode", {"ARAPTool_moveMode", "ARAPTool_handleMode"});
+    //this->actionManager->createQExclusiveActionGroup("ARAPTool_toggleMode", {"ARAPTool_moveMode", "ARAPTool_handleMode"});
 
-    this->actionManager->createQActionGroup("ARAPTool", {"ARAPTool_moveMode", "ARAPTool_handleMode", "ARAPTool_toggleEvenMode"});
+    //this->actionManager->createQActionGroup("ARAPTool", {"ARAPTool_moveMode", "ARAPTool_handleMode", "ARAPTool_toggleEvenMode"});
+    this->actionManager->createQActionGroup("ARAPTool", {"ARAPTool_toggleEvenMode"});
 
     // Registration
     this->actionManager->createQActionButton("FixedTool_apply", "Register", "A", "Apply the registration", "register");

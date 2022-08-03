@@ -563,8 +563,7 @@ public slots:
     void toggleBindMeshToCageMove(const std::string& name);
 
     // ARAP
-    bool toggleARAPManipulatorMode();
-    void ARAPTool_toggleEvenMode();
+    void ARAPTool_toggleEvenMode(bool value);
 
     // FixedRegistration
     void applyFixedRegistrationTool();

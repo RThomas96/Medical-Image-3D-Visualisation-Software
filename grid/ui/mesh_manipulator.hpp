@@ -431,6 +431,7 @@ namespace UITool {
         void keyReleased(QKeyEvent* e) override;
         void mousePressed(QMouseEvent*e) override;
         void mouseReleased(QMouseEvent*e) override;
+        void toggleEvenMode(bool value);
 
     signals:
         void needRedraw() override;
@@ -449,51 +450,19 @@ namespace UITool {
         void computeManipulatorFromSelection();
         void setPositions(std::vector<glm::vec3>& positions);
         void moveGuizmo();
+        void makeSelecteFixedHandles();
+        void moveOneManipulator();
+
         std::vector<bool> getHandles();
 
         std::vector<bool> selectedVertices;
         std::vector<bool> fixedVertices;
 		std::vector<Manipulator> manipulators;
 
+        std::vector<bool> manipulatorsAtRangeForGrab;
+
     private:
         SelectionMode selectionMode;
-
-        /*****/
-        ///OLD
-        /*****/
-    public slots:
-        void displayManipulator(Manipulator * manipulatorToDisplay);
-        void hideManipulator(Manipulator * manipulatorToDisplay);
-
-        void moveManipulator(Manipulator * manipulator);
-        void selectManipulator(Manipulator * manipulator);
-        void deselectManipulator(Manipulator * manipulator);
-        void toggleMode();
-        void checkSelectedManipulators();
-        void moveKidManip();
-        glm::vec3 getMeanPositionSelectedManipulators();
-        void resetMinAndMax() {
-            this->selectionMax = glm::vec3(-1000000., -1000000., -1000000);
-            this->selectionMin = glm::vec3(1000000., 1000000., 1000000);
-        }
-        void initializeSelection();
-        void setLockAllManipulators(bool lock);
-        void toggleEvenMode();
-        void initializeKidManipWithSelection();
-
-	private:
-        std::vector<bool> manipulatorsToDisplay;
-        std::vector<bool> selectedManipulators;
-        std::vector<bool> handles;
-
-        std::vector<int> selectedManipulatorsIdx;
-
-        bool moveMode;
-        bool addMode;
-
-        glm::vec3 selectionMin;
-        glm::vec3 selectionMax;
-
         bool meshIsModified;
     };
 
