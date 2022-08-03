@@ -2,6 +2,7 @@
 #include "manipulator.hpp"
 #include "../deformation/mesh_deformer.hpp"
 #include "../deformation/cage_surface_mesh.hpp"
+#include "../utils/PCATools.h"
 #include <fstream>
 
 namespace UITool {
@@ -622,48 +623,288 @@ namespace UITool {
 
     /***/
 
+
 	ARAPManipulator::ARAPManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions): MeshManipulator(mesh) {
         this->meshIsModified = false;
         this->kid_manip = new RotationManipulator();
-        QObject::connect(this->kid_manip, &RotationManipulator::moved, this, [this]() {this->moveKidManip();});
+        QObject::connect(this->kid_manip, &RotationManipulator::moved, this, [this]() {this->moveGuizmo();});
         this->kid_manip->disable();
         this->moveMode = true;
         this->addMode = true;
         this->manipulators.reserve(positions.size());
+        /// NEW
 		for (int i = 0; i < positions.size(); ++i) {
 			this->manipulators.push_back(Manipulator(positions[i]));
-            //QObject::connect(&(this->manipulators[i]), &Manipulator::enterAtRangeForGrab, this, &ARAPManipulator::displayManipulator);
-            //QObject::connect(&(this->manipulators[i]), &Manipulator::exitFromRangeForGrab, this, &ARAPManipulator::hideManipulator);
-
-            //QObject::connect(&(this->manipulators[i]), &Manipulator::enterAtRangeForGrab, this, [this, i](){Q_EMIT needChangeSelectedPoints(std::make_pair(i, this->manipulators[i].getManipPosition()));});
-            //QObject::connect(&(this->manipulators[i]), &Manipulator::exitFromRangeForGrab, this, [this, i](){Q_EMIT needChangeSelectedPoints(std::make_pair(-1, this->manipulators[i].getManipPosition()));});
-            QObject::connect(&(this->manipulators[i]), &Manipulator::isManipulated, this, [this, i](){Q_EMIT needChangeSelectedPoints(std::make_pair(i, this->manipulators[i].getManipPosition()));});
-            QObject::connect(&(this->manipulators[i]), &Manipulator::mouseRightButtonPressed, this, [this, i](){Q_EMIT needChangeSelectedPoints(std::make_pair(i, this->manipulators[i].getManipPosition()));});
-
-            QObject::connect(&(this->manipulators[i]), &Manipulator::mouseRightButtonPressed, this, &ARAPManipulator::selectManipulator);
-            QObject::connect(&(this->manipulators[i]), &Manipulator::mouseRightButtonReleased, this, &ARAPManipulator::deselectManipulator);
-            QObject::connect(&(this->manipulators[i]), &Manipulator::isManipulated, this, &ARAPManipulator::moveManipulator);
-
-            this->manipulatorsToDisplay.push_back(false);
 			this->manipulators[i].setCustomConstraint();
-            this->manipulators[i].enable();
-            this->selectedManipulators.push_back(false);
+            this->manipulators[i].disable();
 
-            this->handles.push_back(false);
+            this->fixedVertices.push_back(false);
+            this->selectedVertices.push_back(false);
 		}
-        QObject::connect(&this->selection, &Selection::isSelecting, this, &ARAPManipulator::checkSelectedManipulators);
-        QObject::connect(&this->selection, &Selection::enterSelectionMode, this, [this](){
-                if(this->kid_manip->isEnable) {
-                    this->kid_manip->disable();
-                }
-                this->initializeSelection();
-        });
-        //QObject::connect(&this->selection, &Selection::exitSelectionMode, this, [this](){
-        //        this->initializeSelection();
-        //});
-        QObject::connect(&this->selection, &Selection::beginSelection, this, [this](){this->initializeSelection();});
-        QObject::connect(&this->selection, &Selection::endSelection, this, [this](){this->initializeKidManipWithSelection();});
+        this->selectionMode = INACTIVE;
+        QObject::connect(&this->selection, &Selection::isSelecting, [this](){this->updateSelection();});
 	}
+
+    void ARAPManipulator::moveGuizmo() {
+        RotationManipulator * manipulator = this->kid_manip;
+        unsigned int n_points = manipulator->n_points();
+        qglviewer::Vec p;
+        int idx;
+
+        std::vector<glm::vec3> positions;
+        this->getAllPositions(positions);
+
+        for(unsigned int i = 0; i < n_points; ++i)
+        {
+            manipulator->getTransformedPoint(i, idx, p);
+            positions[idx] = glm::vec3(p[0], p[1], p[2]);
+        }
+        ARAPMethod * deformer = dynamic_cast<ARAPMethod*>(this->mesh->meshDeformer);
+        if(!deformer) {
+            std::cout << "WARNING: ARAP manipulator can be used only with the ARAP deformer !" << std::endl;
+            return;
+        }
+        std::vector<Vec3D<float>> ptsAsVec3D;
+        for(int i = 0; i < positions.size(); ++i) {
+            glm::vec3 pt = positions[i];
+            ptsAsVec3D.push_back(Vec3D(pt[0], pt[1], pt[2]));
+        }
+
+        print_debug("Compute deformation");
+        deformer->arap.compute_deformation(ptsAsVec3D);
+
+        for(int i = 0; i < positions.size(); ++i)
+            positions[i] = glm::vec3(ptsAsVec3D[i][0], ptsAsVec3D[i][1], ptsAsVec3D[i][2]);
+
+        this->setPositions(positions);
+    }
+
+    void ARAPManipulator::setPositions(std::vector<glm::vec3>& positions) {
+        mesh->useNormal = true;
+        mesh->movePoints(positions);
+        mesh->useNormal = false;
+        for(int i = 0; i < this->mesh->getNbVertices(); ++i) {
+            this->manipulators[i].setManipPosition(this->mesh->getVertice(i));
+        }
+        print_debug("Set positions");
+        Q_EMIT needSendTetmeshToGPU();
+    }
+
+    void ARAPManipulator::updateSelection() {
+        print_debug("Update selection");
+        std::vector<glm::vec3> positions;
+        this->getAllPositions(positions);
+        std::vector<bool> inSelection = this->selection.areInSelection(positions);
+
+        for(int i = 0; i < inSelection.size(); ++i) {
+            if(inSelection[i]) {
+                if(this->selectionMode == ADD_MOVING) {
+                    this->selectedVertices[i] = true;
+                    this->fixedVertices[i] = false;
+                } else if(this->selectionMode == ADD_FIXED) {
+                    this->selectedVertices[i] = false;
+                    this->fixedVertices[i] = true;
+                } else if(this->selectionMode == REMOVE) {
+                    this->selectedVertices[i] = false;
+                    this->fixedVertices[i] = false;
+                }
+            }
+        }
+    }
+
+    void ARAPManipulator::computeManipulatorFromSelection() {
+        RotationManipulator * manipulator = this->kid_manip;
+        manipulator->resetScales();
+        manipulator->clear();
+
+        std::vector<glm::vec3> positions;
+        this->getAllPositions(positions);
+
+        int nb=0;
+        qglviewer::Vec oo( 0.f , 0.f , 0.f );
+        for( unsigned int v = 0 ; v < positions.size() ; ++v )
+        {
+            if( selectedVertices[v] )
+            {
+                glm::vec3 const & p = positions[v];
+                oo += qglviewer::Vec( p[0] , p[1] , p[2] );
+                ++nb;
+            }
+        }
+        oo /= nb;
+
+        PCATools::PCASolver3f< qglviewer::Vec , qglviewer::Vec > solver;
+        solver.setOrigine( oo );
+
+        for( unsigned int v = 0 ; v < positions.size() ; ++v )
+        {
+            if( selectedVertices[v] )
+            {
+                glm::vec3 const & p = positions[v];
+                solver.addPoint( qglviewer::Vec( p[0] , p[1] , p[2] ) );
+            }
+        }
+
+        solver.compute();
+
+        manipulator->setOrigine( oo );
+        manipulator->setRepX( solver.RepX() );
+        manipulator->setRepY( solver.RepY() );
+        manipulator->setRepZ( solver.RepZ() );
+
+        glm::vec3 center = glm::vec3(oo[0], oo[1], oo[2]);
+        glm::vec3 min = glm::vec3(1000000., 1000000., 1000000.);
+        glm::vec3 max = glm::vec3(0., 0., 0.);
+        for( unsigned int v = 0 ; v < positions.size() ; ++v )
+        {
+            if( selectedVertices[v] )
+            {
+                glm::vec3 const & p = positions[v];
+                manipulator->addPoint( v , qglviewer::Vec( p[0] , p[1] , p[2] ) );
+
+                if(glm::distance(min, p) > glm::distance(center, p))
+                    min = p;
+                if(glm::distance(max, p) < glm::distance(center, p))
+                    max = p;
+            }
+        }
+
+        //manipulator->activate();
+        manipulator->enable();
+        //Q_EMIT needChangeKidManipulatorRadius(glm::length(max - min));
+        print_debug("Show guizmo");
+
+
+        ARAPMethod * deformer = dynamic_cast<ARAPMethod*>(this->mesh->meshDeformer);
+        if(!deformer) {
+            std::cout << "WARNING: ARAP manipulator can be used only with the ARAP deformer !" << std::endl;
+            return;
+        }
+        deformer->arap.setHandles(this->getHandles());
+        print_debug("Update handles");
+    }
+
+    std::vector<bool> ARAPManipulator::getHandles() {
+        std::vector<bool> handles_vertices(manipulators.size(), false);
+        for( unsigned int i = 0; i < manipulators.size(); i++)
+            if(fixedVertices[i] || selectedVertices[i])
+                handles_vertices[i] = true;
+        return handles_vertices;
+    }
+
+    void ARAPManipulator::getAllPositions(std::vector<glm::vec3>& positions) {
+        positions.clear();
+        positions.reserve(this->manipulators.size());
+		for (int i = 0; i < this->manipulators.size(); ++i) {
+            positions.push_back(this->manipulators[i].getManipPosition());
+		}
+    }
+
+    void ARAPManipulator::keyPressed(QKeyEvent* e) {
+        print_debug("Key pressed: [");
+        if(e->modifiers() & Qt::ShiftModifier) {
+            print_debug("Switch to ACTIVE");
+            this->selection.activate();
+            this->selection.enterSelectionMode();
+            this->selectionMode = ACTIVE;
+        }
+        print_debug("]");
+    }
+
+    void ARAPManipulator::print_debug(const char * text) {
+        if(this->debug_mode)
+            std::cout << text << std::endl;
+    }
+
+    void ARAPManipulator::keyReleased(QKeyEvent* e) {
+        print_debug("Key released: [");
+        if(e->key() == Qt::Key_Shift) {
+            print_debug("Switch to INACTIVE");
+            this->selection.exitSelectionMode();
+            this->selection.deactivate();
+            this->selectionMode = INACTIVE;
+        }
+        print_debug("]");
+    }
+
+    void ARAPManipulator::mousePressed(QMouseEvent* e) {
+        print_debug("Mouse pressed: [");
+        if(this->selectionMode == INACTIVE) {
+            print_debug("Selection mode is: INACTIVE");
+            print_debug("Do nothing");
+            return;
+        }
+
+        if ((e->button() == Qt::LeftButton) && (e->modifiers() & Qt::ControlModifier))
+        {
+            print_debug("Switch to REMOVE");
+            this->selectionMode = REMOVE;
+        } else if ((e->button() == Qt::LeftButton) && (e->modifiers() & Qt::AltModifier))
+        {
+            print_debug("Switch to ADD_FIXED");
+            this->selectionMode = ADD_FIXED;
+        }
+        else if ((e->button() == Qt::LeftButton))
+        {
+            print_debug("Switch to ADD_MOVING");
+            this->selectionMode = ADD_MOVING;
+        }
+        else if ((e->button() == Qt::RightButton))
+        {
+            print_debug("Switch to INACTIVE");
+            this->selectionMode = INACTIVE;
+            this->computeManipulatorFromSelection();
+        }
+        print_debug("]");
+        this->selection.mousePressEvent(e, nullptr);
+    }
+
+    void ARAPManipulator::mouseReleased(QMouseEvent* e) {
+        print_debug("Mouse released: [");
+        if(this->selectionMode == INACTIVE) {
+            print_debug("Selection mode is: INACTIVE");
+            print_debug("Do nothing");
+            return;
+        }
+        print_debug("Switch to ACTIVE");
+        this->selectionMode = ACTIVE;
+        if(this->meshIsModified) {
+            mesh->addStateToHistory();
+            this->meshIsModified = false;
+        }
+        print_debug("]");
+        this->selection.mouseReleaseEvent(e, nullptr);
+    }
+
+    void ARAPManipulator::getManipulatorsToDisplay(std::vector<bool>& toDisplay) const {
+		for (int i = 0; i < this->selectedVertices.size(); ++i) {
+            toDisplay.push_back(this->selectedVertices[i] || this->fixedVertices[i]);
+        }
+    }
+
+    void ARAPManipulator::getManipulatorsState(std::vector<State>& states) const {
+        states.clear();
+        for(int i = 0; i < this->selectedVertices.size(); ++i) {
+            State currentState = State::NONE;
+            if(this->selectedVertices[i])
+                currentState = State::AT_RANGE;
+            if(this->fixedVertices[i])
+                currentState = State::LOCK;
+            states.push_back(currentState);
+        }
+    }
+
+
+    ARAPManipulator::~ARAPManipulator() {
+        ARAPMethod * deformer = dynamic_cast<ARAPMethod*>(this->mesh->meshDeformer);
+        if(deformer) {
+            for(int i = 0; i < this->manipulators.size(); ++i)
+                deformer->unsetHandle(i);
+        }
+        delete this->kid_manip;
+    }
+
+    /*******************************/
 
     void ARAPManipulator::initializeKidManipWithSelection() {
         this->kid_manip->clear();
@@ -765,35 +1006,6 @@ namespace UITool {
 			std::cerr << "WARNING: try to set [" << this->manipulators.size() << "] manipulators positions with a position vector of size [" << positions.size() << "]" << std::endl;
 		}
 	}
-
-    void ARAPManipulator::getAllPositions(std::vector<glm::vec3>& positions) {
-		for (int i = 0; i < this->manipulators.size(); ++i) {
-            positions.push_back(this->manipulators[i].getManipPosition());
-		}
-    }
-
-    void ARAPManipulator::getManipulatorsToDisplay(std::vector<bool>& toDisplay) const {
-		for (int i = 0; i < this->manipulatorsToDisplay.size(); ++i) {
-            toDisplay.push_back(this->manipulatorsToDisplay[i]);
-            //toDisplay.push_back(true);
-        }
-    }
-
-    void ARAPManipulator::getManipulatorsState(std::vector<State>& states) const {
-        states.clear();
-        for(int i = 0; i < this->manipulatorsToDisplay.size(); ++i) {
-            State currentState = State::NONE;
-            if(this->handles[i])
-                currentState = State::LOCK;
-            if(this->manipulators[i].isAtRangeForGrab)
-                currentState = State::AT_RANGE;
-            if(this->selectedManipulators[i])
-                currentState = State::AT_RANGE;
-            if(this->manipulators[i].isSelected)
-                currentState = State::MOVE;
-            states.push_back(currentState);
-        }
-    }
 
     void ARAPManipulator::displayManipulator(Manipulator * manipulatorToDisplay) {
         ptrdiff_t index = manipulatorToDisplay - &(this->manipulators[0]);
@@ -913,40 +1125,6 @@ namespace UITool {
         }
     }
 
-    void ARAPManipulator::keyPressed(QKeyEvent* e) {
-        //if(e->key() == Qt::Key_S && !e->isAutoRepeat()) {
-        //    this->toggleMode();
-        //    Q_EMIT needPushHandleButton();
-        //}
-    }
-
-    void ARAPManipulator::keyReleased(QKeyEvent* e) {}
-
-    void ARAPManipulator::mousePressed(QMouseEvent* e) {
-        if(e->buttons() == Qt::LeftButton) {
-            this->addMode = true;
-        }
-
-        if(e->buttons() == Qt::RightButton) {
-            this->addMode = false;
-        }
-    }
-
-    void ARAPManipulator::mouseReleased(QMouseEvent* e) {
-        if(this->meshIsModified) {
-            mesh->addStateToHistory();
-            this->meshIsModified = false;
-        }
-    }
-
-    ARAPManipulator::~ARAPManipulator() {
-        ARAPMethod * deformer = dynamic_cast<ARAPMethod*>(this->mesh->meshDeformer);
-        if(deformer) {
-            for(int i = 0; i < this->manipulators.size(); ++i)
-                deformer->unsetHandle(i);
-        }
-        delete this->kid_manip;
-    }
 /***/
 
 SliceManipulator::SliceManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions): MeshManipulator(mesh) {

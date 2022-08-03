@@ -143,7 +143,7 @@ void MainWidget::setupWidgets() {
 
     //this->toolbar->addSeparator();
 
-    //this->toolbar->addAction(this->actionManager->getAction("OpenAtlas"));
+    this->toolbar->addAction(this->actionManager->getAction("OpenAtlas"));
     //this->toolbar->addAction(this->actionManager->getAction("OpenIRM"));
 
     //this->toolbar->addSeparator();

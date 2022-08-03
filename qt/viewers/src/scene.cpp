@@ -3911,14 +3911,14 @@ std::pair<glm::vec3, glm::vec3> Scene::getBbox(const std::string& name) {
 
 void Scene::openAtlas() {
          ///home/thomas/data/Data/teletravail/
-         this->openGrid(std::string("atlas"), {std::string("/data/datasets/data/Thomas/data/atlas/atlas.tiff")}, 1, std::string("/data/datasets/data/Thomas/data/atlas/atlas-transfert.mesh"));
-         this->openCage(std::string("cage"), std::string("/data/datasets/data/Thomas/data/atlas/atlas-cage-hyperdilated.off"), std::string("atlas"), true);
+         this->openGrid(std::string("atlas"), {std::string("/home/thomas/data/Data/teletravail/atlas.tiff")}, 1, std::string("/home/thomas/data/Data/teletravail/atlas-transfert.mesh"));
+         this->openCage(std::string("cage"), std::string("/home/thomas/data/Data/teletravail/atlas-cage-hyperdilated.off"), std::string("atlas"), true);
          this->getCage(std::string("cage"))->setARAPDeformationMethod();
          this->getCage(std::string("cage"))->unbindMovementWithDeformedMesh();
          this->getCage(std::string("cage"))->setOrigin(this->getBaseMesh("atlas")->getOrigin());
          this->getCage(std::string("cage"))->bindMovementWithDeformedMesh();
 
-         this->applyCage(std::string("cage"), std::string("/data/datasets/data/Thomas/data/sourisIGF/atlas-cage-hyperdilated-rigidRegister-lightsheet_2.off"));
+         this->applyCage(std::string("cage"), std::string("/home/thomas/data/Data/teletravail/atlas-cage-hyperdilated-rigidRegister-lightsheet_2.off"));
 
          //this->getCage(std::string("cage"))->unbindMovementWithDeformedMesh();
          //this->applyCage(std::string("cage"), std::string("/home/thomas/data/Data/Data/good_cage.off"));
