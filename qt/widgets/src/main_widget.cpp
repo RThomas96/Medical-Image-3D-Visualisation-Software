@@ -45,12 +45,17 @@ void MainWidget::setupWidgets() {
 	this->scene->addStatusBar(this->statusBar);
 
     this->openMeshWidget = new OpenMeshWidget(this->scene, this);
+    QObject::connect(this->openMeshWidget, &OpenMeshWidget::loaded, [this](){
+        this->actionManager->getAction("ToggleNoneTool")->trigger();
+        this->combo_mesh->setCurrentIndex(this->combo_mesh->count()-1);
+    });
     this->saveMeshWidget = new SaveMeshWidget(this->scene, this);
     this->applyCageWidget = new ApplyCageWidget(this->scene, this);
 
     this->display_pannel = new DisplayPannel("Display", *this->actionManager);
     this->cutPlane_pannel = new CutPlaneGroupBox("Cutting planes");
     this->cutPlane_pannel->setCheckable(false);
+    this->cutPlane_pannel->setDisabledAlpha(true);
 
 	this->deformationWidget = new GridDeformationWidget(this->scene);
     this->deformationWidget->hide();
@@ -66,13 +71,20 @@ void MainWidget::setupWidgets() {
 
 	this->action_addGrid->setShortcut(QKeySequence::Open);
 
-	this->fileMenu = this->menuBar()->addMenu("&File");
-	this->fileMenu->addAction(this->action_addGrid);
-	this->fileMenu->addAction(this->action_loadMesh);
-	this->fileMenu->addAction(this->action_saveGrid);
-	this->fileMenu->addAction(this->action_saveMesh);
-	this->fileMenu->addAction(this->action_applyCage);
-	this->fileMenu->addAction(this->action_exitProgram);
+    this->fileMenu = this->menuBar()->addMenu("&File");
+    this->fileMenu->addAction(this->actionManager->getAction("OpenImage"));
+    //this->fileMenu->addAction(this->actionManager->getAction("OpenCage"));
+    this->fileMenu->addSeparator();
+    this->fileMenu->addAction(this->actionManager->getAction("SaveCage"));
+    this->fileMenu->addAction(this->actionManager->getAction("SaveAsCage"));
+    this->fileMenu->addAction(this->actionManager->getAction("SaveImage"));
+    this->actionManager->getAction("SaveImage")->setDisabled(true);
+
+    this->editMenu = this->menuBar()->addMenu("&Edit");
+    this->editMenu->addAction(this->actionManager->getAction("ApplyCage"));
+
+    this->windowsMenu = this->menuBar()->addMenu("&Windows");
+    this->windowsMenu->addAction(this->actionManager->getAction("DisplayRangeControl"));
 
     /***/
     this->combo_mesh = new QComboBox();
@@ -86,17 +98,22 @@ void MainWidget::setupWidgets() {
     this->toolbar->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
     //this->toolbar->addWidget(tabBar);
 
-    this->toolbar->addAction(this->actionManager->getAction("Open"));
-    this->toolbar->addAction(this->actionManager->getAction("QuickSaveCage"));
-    this->toolbar->addAction(this->actionManager->getAction("QuickSaveAsCage"));
+    //this->toolbar->addAction(this->actionManager->getAction("Open"));
+    //this->toolbar->addWidget(this->actionManager->getMenu("OpenMenu"));
 
-    this->toolbar->addSeparator();
+    //this->toolbar->addWidget(this->actionManager->getMenu("SaveMenu"));
+
+    //this->toolbar->addAction(this->actionManager->getAction("MenuSave"));
+    //this->toolbar->addAction(this->actionManager->getAction("SaveCage"));
+    //this->toolbar->addAction(this->actionManager->getAction("SaveAsCage"));
+
+    //this->toolbar->addSeparator();
 
     this->toolbar->addAction(this->actionManager->getAction("ToggleNoneTool"));
     this->toolbar->addAction(this->actionManager->getAction("ToggleMoveTool"));
     this->toolbar->addAction(this->actionManager->getAction("ToggleDirectTool"));
     this->toolbar->addAction(this->actionManager->getAction("ToggleARAPTool"));
-    this->toolbar->addAction(this->actionManager->getAction("ToggleRegisterTool"));
+    //this->toolbar->addAction(this->actionManager->getAction("ToggleRegisterTool"));
 
     this->toolbar->addSeparator();
 
@@ -107,9 +124,10 @@ void MainWidget::setupWidgets() {
     this->toolbar->addSeparator();
 
     //this->toolbar->addAction(this->actionManager->getAction("SaveImage"));
-    this->toolbar->addAction(this->actionManager->getAction("Layout1View"));
-    this->toolbar->addAction(this->actionManager->getAction("Layout2View"));
-    this->toolbar->addAction(this->actionManager->getAction("Layout4View"));
+
+    //this->toolbar->addAction(this->actionManager->getAction("Layout1View"));
+    //this->toolbar->addAction(this->actionManager->getAction("Layout2View"));
+    //this->toolbar->addAction(this->actionManager->getAction("Layout4View"));
 
     this->toolbar->addSeparator();
 
@@ -121,21 +139,26 @@ void MainWidget::setupWidgets() {
 
     this->toolbar->addSeparator();
 
+    //this->toolbar->addAction(this->actionManager->getAction("CenterCamera"));
+
+    //this->toolbar->addSeparator();
+
     this->toolbar->addAction(this->actionManager->getAction("OpenAtlas"));
-    this->toolbar->addAction(this->actionManager->getAction("OpenIRM"));
+    //this->toolbar->addAction(this->actionManager->getAction("OpenIRM"));
 
-    this->toolbar->addSeparator();
+    //this->toolbar->addSeparator();
 
-    this->toolbar->addAction(this->actionManager->getAction("Sorting"));
-    this->toolbar->addAction(this->actionManager->getAction("Shader"));
+    //this->toolbar->addAction(this->actionManager->getAction("Sorting"));
+    //this->toolbar->addAction(this->actionManager->getAction("Shader"));
+    this->toolbar->addAction(this->actionManager->getAction("Boundaries"));
 
     /***/
 
-	this->viewMenu = this->menuBar()->addMenu("&View");
-	this->viewMenu->addAction(this->action_showPlanarViewers);
+    //this->viewMenu = this->menuBar()->addMenu("&View");
+    //this->viewMenu->addAction(this->action_showPlanarViewers);
 
-	this->otherMenu = this->menuBar()->addMenu("&Other");
-	this->otherMenu->addAction(this->action_openDevPannel);
+    //this->otherMenu = this->menuBar()->addMenu("&Other");
+    //this->otherMenu->addAction(this->action_openDevPannel);
 
 	QObject::connect(this->action_addGrid, &QAction::triggered, [this]() {
 		if (this->loaderWidget == nullptr) {
@@ -211,6 +234,7 @@ void MainWidget::setupWidgets() {
     QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::xSliderValueChanged, this->scene, &Scene::slotSetPlaneDisplacementX);
     QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::ySliderValueChanged, this->scene, &Scene::slotSetPlaneDisplacementY);
     QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::zSliderValueChanged, this->scene, &Scene::slotSetPlaneDisplacementZ);
+    QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::aSliderValueChanged, this->scene, &Scene::setBlendFirstPass);
 
     QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::clickedInvertXPushButton, this->scene, &Scene::slotTogglePlaneDirectionX);
     QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::clickedInvertYPushButton, this->scene, &Scene::slotTogglePlaneDirectionY);
@@ -229,7 +253,15 @@ void MainWidget::setupWidgets() {
 	// Viewer(s) creation along with control panel :
 	this->viewer		= new Viewer(this->scene, this->statusBar, nullptr);
 	this->controlPanel	= new ControlPanel(this->scene, this->viewer, nullptr);
-	this->scene->setControlPanel(this->controlPanel);
+    this->range = new RangeControl(this->scene);
+    QWidget * tabWidget = new QWidget();
+    QHBoxLayout * hlayout = new QHBoxLayout();
+    hlayout->addWidget(this->range->rangeOptionUnit);
+    hlayout->addWidget(this->range);
+    tabWidget->setLayout(hlayout);
+    //this->controlPanel->tab->addTab(this->range, QString("Classes"));
+    this->controlPanel->tab->addTab(tabWidget, QString("Classes"));
+    this->scene->setControlPanel(this->controlPanel);
 
     this->info_pannel = new InfoPannel("Infos", this->scene);
     this->tool_pannel = new ToolPannel("Tool", *this->actionManager);
@@ -290,6 +322,8 @@ void MainWidget::setupWidgets() {
     QHBoxLayout* lowLayout = new QHBoxLayout(lowFrame);
     lowLayout->addWidget(this->planarViewer, 1);
     lowLayout->addWidget(this->controlPanel, 3);
+
+    this->planarViewer->hide();
     this->controlPanel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     mainLayout->addWidget(lowFrame);
@@ -316,7 +350,7 @@ void MainWidget::setupWidgets() {
     this->planarViewer->viewers["View_2"]->viewer2D->hide();
     this->planarViewer->viewers["View_3"]->viewer2D->hide();
 
-    this->planarViewer->show();
+    this->planarViewer->hide();
 
 	this->installEventFilter(this);
 }
@@ -340,7 +374,7 @@ void MainWidget::setupActions() {
     this->actionManager = new QActionManager();
 
     // Display
-    this->actionManager->createQActionToggleButton("ToggleDisplayMesh", "Mesh", "M", "Display/Show mesh", "visible", "hidden");
+    this->actionManager->createQActionToggleButton("ToggleDisplayMesh", "Cage", "C", "Display/Show cage", "visible", "hidden");
     QObject::connect(this->actionManager->getAction("ToggleDisplayMesh"), &QAction::triggered, [this](){this->scene->toggleDisplayMesh();});
 
     this->actionManager->createQActionToggleButton("ToggleDisplayGrid", "Grids", "G", "Display/Show grid", "visible", "hidden");
@@ -348,6 +382,7 @@ void MainWidget::setupActions() {
 
     this->actionManager->createQActionToggledButton("ToggleDisplayMultiView", "MView", "M", "Display/Show multi grid display", "visible", "hidden");
     QObject::connect(this->actionManager->getAction("ToggleDisplayMultiView"), &QAction::triggered, [this](){this->scene->setMultiGridRendering(!this->actionManager->getAction("ToggleDisplayMultiView")->isChecked()); this->controlPanel->updateRGBMode();});
+    this->actionManager->getAction("ToggleDisplayMultiView")->setDisabled(true);
 
     this->actionManager->createQActionToggledButton("ToggleDisplayWireframe", "TetM", "W", "Display/Show the tethraedral mesh wireframe", "visible", "hidden");
     QObject::connect(this->actionManager->getAction("ToggleDisplayWireframe"), &QAction::triggered, [this](){this->scene->toggleWireframe();});
@@ -366,7 +401,7 @@ void MainWidget::setupActions() {
     this->actionManager->createQActionToggleButton("ToggleDirectTool", "Direct", "Ctrl+D", "Activate direct tool", "direct");
     QObject::connect(this->actionManager->getAction("ToggleDirectTool"), &QAction::triggered, [this](){this->scene->updateTools(UITool::MeshManipulatorType::DIRECT);});
     QObject::connect(this->actionManager->getAction("ToggleDirectTool"), &QAction::triggered, [this](){this->changeCurrentTool(UITool::MeshManipulatorType::DIRECT);});
-    QObject::connect(this, &MainWidget::gridSelected, [this](){this->actionManager->getAction("ToggleDirectTool")->setDisabled(true);});
+    QObject::connect(this, &MainWidget::gridSelected, [this](){this->actionManager->getAction("ToggleDirectTool")->setDisabled(false);});
     QObject::connect(this, &MainWidget::meshSelected, [this](){this->actionManager->getAction("ToggleDirectTool")->setDisabled(false);});
 
     this->actionManager->createQActionToggleButton("ToggleARAPTool", "ARAP", "Ctrl+A", "Activate ARAP tool", "araps");
@@ -385,12 +420,15 @@ void MainWidget::setupActions() {
 
     // Move
     this->actionManager->createQActionToggleButton("MoveTool_toggleEvenMode", "Even", "E", "Toggle the even mode to scale evenly in 3 dimensions", "even");
+    this->actionManager->getAction("MoveTool_toggleEvenMode")->setVisible(false);
     QObject::connect(this->actionManager->getAction("MoveTool_toggleEvenMode"), &QAction::triggered, [this](){this->scene->moveTool_toggleEvenMode();});
 
     this->actionManager->createQActionToggledButton("MoveTool_toggleMoveCage", "Link", "", "If this mode is active, and the manipulated mesh is a cage, the cage and the associated grid movements are linked", "link");
+    this->actionManager->getAction("MoveTool_toggleMoveCage")->setVisible(false);
     QObject::connect(this->actionManager->getAction("MoveTool_toggleMoveCage"), &QAction::triggered, [this](){this->scene->toggleBindMeshToCageMove();});
 
     this->actionManager->createQActionButton("MoveTool_reset", "Reset", "R", "Reset the manipulator size", "reset");
+    this->actionManager->getAction("MoveTool_reset")->setVisible(false);
     QObject::connect(this->actionManager->getAction("MoveTool_reset"), &QAction::triggered, [this](){
         QAction * evenAction = this->actionManager->getAction("MoveTool_toggleEvenMode");
         QAction * linkAction = this->actionManager->getAction("MoveTool_toggleMoveCage");
@@ -412,27 +450,36 @@ void MainWidget::setupActions() {
     this->actionManager->createQActionGroup("MoveTool", {"MoveTool_toggleEvenMode", "MoveTool_toggleMoveCage", "MoveTool_reset"});
             
     // ARAP
-    this->actionManager->createQActionToggledButton("ARAPTool_moveMode", "Move", "O", "Toggle move mode of ARAP tool, you can now move points with the selection", "move");
-    QObject::connect(this->actionManager->getAction("ARAPTool_moveMode"), &QAction::triggered, [this](){this->scene->toggleARAPManipulatorMode();});
+    //this->actionManager->createQActionToggledButton("ARAPTool_moveMode", "Move", "O", "Toggle move mode of ARAP tool, you can now move points with the selection", "move");
+    //this->actionManager->getAction("ARAPTool_moveMode")->setVisible(false);
+    //QObject::connect(this->actionManager->getAction("ARAPTool_moveMode"), &QAction::triggered, [this](){this->scene->toggleARAPManipulatorMode();});
 
-    this->actionManager->createQActionToggleButton("ARAPTool_handleMode", "Handle", "H", "Toggle handle mode of ARAP tool, you can now set points as fixed", "handle");
-    QObject::connect(this->actionManager->getAction("ARAPTool_handleMode"), &QAction::triggered, [this](){this->scene->toggleARAPManipulatorMode();});
+    //this->actionManager->createQActionToggleButton("ARAPTool_handleMode", "Handle", "H", "Toggle handle mode of ARAP tool, you can now set points as fixed", "handle");
+    //this->actionManager->getAction("ARAPTool_handleMode")->setVisible(false);
+    //QObject::connect(this->actionManager->getAction("ARAPTool_handleMode"), &QAction::triggered, [this](){this->scene->toggleARAPManipulatorMode();});
 
     this->actionManager->createQActionToggleButton("ARAPTool_toggleEvenMode", "Even", "E", "Toggle the even mode to scale evenly in 3 dimensions", "even");
-    QObject::connect(this->actionManager->getAction("ARAPTool_toggleEvenMode"), &QAction::triggered, [this](){this->scene->ARAPTool_toggleEvenMode();});
+    this->actionManager->getAction("ARAPTool_toggleEvenMode")->setVisible(false);
+    QObject::connect(this->actionManager->getAction("ARAPTool_toggleEvenMode"), &QAction::triggered, [this](){this->scene->ARAPTool_toggleEvenMode(this->actionManager->getAction("ARAPTool_toggleEvenMode")->isChecked());});
 
-    this->actionManager->createQExclusiveActionGroup("ARAPTool_toggleMode", {"ARAPTool_moveMode", "ARAPTool_handleMode"});
+    //this->actionManager->createQExclusiveActionGroup("ARAPTool_toggleMode", {"ARAPTool_moveMode", "ARAPTool_handleMode"});
 
-    this->actionManager->createQActionGroup("ARAPTool", {"ARAPTool_moveMode", "ARAPTool_handleMode", "ARAPTool_toggleEvenMode"});
+    //this->actionManager->createQActionGroup("ARAPTool", {"ARAPTool_moveMode", "ARAPTool_handleMode", "ARAPTool_toggleEvenMode"});
+    this->actionManager->createQActionGroup("ARAPTool", {"ARAPTool_toggleEvenMode"});
 
     // Registration
     this->actionManager->createQActionButton("FixedTool_apply", "Register", "A", "Apply the registration", "register");
+    this->actionManager->getAction("FixedTool_apply")->setVisible(false);
     QObject::connect(this->actionManager->getAction("FixedTool_apply"), &QAction::triggered, [this](){this->scene->applyFixedRegistrationTool();});
 
     this->actionManager->createQActionButton("FixedTool_clear", "Clear", "C", "Clear the associated points in the registration tool", "clear");
+    this->actionManager->getAction("FixedTool_clear")->setVisible(false);
     QObject::connect(this->actionManager->getAction("FixedTool_clear"), &QAction::triggered, [this](){this->scene->clearFixedRegistrationTool();});
 
     this->actionManager->createQActionGroup("FixedTool", {"FixedTool_apply", "FixedTool_clear"});
+
+    this->actionManager->createQActionButton("CenterCamera", "Center", "", "Center the camera on the selected object", "camera");
+    QObject::connect(this->actionManager->getAction("CenterCamera"), &QAction::triggered, [this](){this->scene->updateSceneCenter();});
 
     // Undo
     this->actionManager->createQActionButton("Undo", "Undo", "ctrl+z", "Undo", "undo");
@@ -454,29 +501,50 @@ void MainWidget::setupActions() {
             int ret = msgBox.exec();
             if(ret == QMessageBox::Ok)
                 this->scene->clear();
+            this->updateForms();
+            this->combo_mesh->clear();
+
+            this->actionManager->getAction("OpenImage")->setDisabled(false);
+            this->actionManager->getAction("ToggleDisplayMultiView")->setDisabled(true);
+            this->actionManager->getAction("Transform")->setDisabled(true);
+            this->actionManager->getAction("Boundaries")->setVisible(false);
+            this->cutPlane_pannel->setDisabledAlpha(true);
     });
 
     // Pipeline
-    this->actionManager->createQActionButton("Transform", "Transform", "", "Get the point in the associated image", "deform");
+    this->actionManager->createQActionButton("Transform", "Transform points", "", "Get the point in the associated image", "deform");
     QObject::connect(this->actionManager->getAction("Transform"), &QAction::triggered, [this](){
             this->updateForms();
             this->deformationForm->show();
     });
+    this->actionManager->getAction("Transform")->setDisabled(true);
 
-    this->actionManager->createQActionButton("SaveImage", "SaveImage", "", "Save the deformed image", "saveDeformedImage");
+    this->actionManager->createQActionButton("SaveCage", "Save...", "Ctrl+S", "Save the current cage", "");
+    QObject::connect(this->actionManager->getAction("SaveCage"), &QAction::triggered, [this](){
+            this->quickSaveCage->save();
+    });
+
+    this->actionManager->createQActionButton("SaveAsCage", "Save as...", "Maj+Ctrl+S", "Save as the current cage", "");
+    QObject::connect(this->actionManager->getAction("SaveAsCage"), &QAction::triggered, [this](){
+            this->quickSaveCage->saveAs();
+    });
+
+    this->actionManager->createQActionButton("SaveImage", "Export image...", "", "Save the deformed image", "");
     QObject::connect(this->actionManager->getAction("SaveImage"), &QAction::triggered, [this](){
             this->updateForms();
             this->saveImageForm->show();
     });
 
-    this->actionManager->createQActionButton("QuickSaveCage", "CageSave", "Ctrl+S", "Save the current cage", "saveDeformedImage");
-    QObject::connect(this->actionManager->getAction("QuickSaveCage"), &QAction::triggered, [this](){
-            this->quickSaveCage->save();
-    });
+    this->actionManager->createMenuButton("SaveMenu", "Save", "Save the current cage", "saveDeformedImage", {"SaveImage", "SaveAsImage", "-", "SaveCage", "SaveAsCage"});
 
-    this->actionManager->createQActionButton("QuickSaveAsCage", "CageSaveAs", "", "Save as the current cage", "saveDeformedImage");
-    QObject::connect(this->actionManager->getAction("QuickSaveAsCage"), &QAction::triggered, [this](){
-            this->quickSaveCage->saveAs();
+    this->actionManager->createQActionButton("ApplyCage", "Apply cage...", "", "Apply a cage on a previously loaded cage", "");
+    QObject::connect(this->actionManager->getAction("ApplyCage"), &QAction::triggered, [this](){
+        QStringList potentialCages;
+        std::vector<std::string> allCages = this->scene->getAllCagesName();
+        for(int i = 0; i < allCages.size(); ++i)
+            potentialCages += QString(allCages[i].c_str());
+        this->applyCageWidget->setPotentialCageToApply(potentialCages);
+        this->applyCageWidget->show();
     });
 
     this->actionManager->createQActionButton("Layout1View", "Solo view", "", "Display a 2D view", "soloScreen");
@@ -484,7 +552,8 @@ void MainWidget::setupActions() {
             this->planarViewer->viewers["View_1"]->viewer2D->hide();
             this->planarViewer->viewers["View_2"]->viewer2D->hide();
             this->planarViewer->viewers["View_3"]->viewer2D->hide();
-            this->planarViewer->setDisabled(true);
+            //this->planarViewer->setDisabled(true);
+            this->planarViewer->hide();
     });
 
     this->actionManager->createQActionButton("Layout2View", "Dual view", "", "Display a 2D view", "dualScreen");
@@ -505,23 +574,46 @@ void MainWidget::setupActions() {
             this->planarViewer->initViewer("View_3");
     });
 
-    this->actionManager->createQActionButton("Open", "Open", "", "Open the deformed image", "open");
-    QObject::connect(this->actionManager->getAction("Open"), &QAction::triggered, [this](){
+    this->actionManager->createQActionButton("OpenImage", "Open image...", "Ctrl+O", "Open the image to deform", "");
+    QObject::connect(this->actionManager->getAction("OpenImage"), &QAction::triggered, [this](){
             this->updateForms();
             this->openImageForm->show();
+            this->actionManager->getAction("ToggleNoneTool")->trigger();
+    });
+
+    this->actionManager->createQActionButton("OpenCage", "Open cage...", "", "Open cage", "");
+    QObject::connect(this->actionManager->getAction("OpenCage"), &QAction::triggered, [this]() {
+        //this->scene->loadMesh();
+        QStringList potentialCages;
+        std::vector<std::string> allNonTetrahedralMeshes = this->scene->getAllBaseMeshesName();
+        for(int i = 0; i < allNonTetrahedralMeshes.size(); ++i)
+            potentialCages += QString(allNonTetrahedralMeshes[i].c_str());
+        this->openMeshWidget->setPotentialCages(potentialCages);
+        this->openMeshWidget->show();
+    });
+
+    this->actionManager->createMenuButton("OpenMenu", "Open", "Open", "open", {"OpenImage", "OpenCage"});
+
+    // Windows
+
+    this->actionManager->createQActionToggledButton("DisplayRangeControl", "Display/show color control window", "", "Display/show color control window", "");
+    QObject::connect(this->actionManager->getAction("DisplayRangeControl"), &QAction::triggered, [this](){
+        this->controlPanel->setVisible(this->actionManager->getAction("DisplayRangeControl")->isChecked());
     });
 
     // Debug
 
-    this->actionManager->createQActionButton("OpenAtlas", "OpenAtlas", "", "Open the atlas", "open");
+    this->actionManager->createQActionButton("OpenAtlas", "Open atlas", "", "Open the atlas", "open");
     QObject::connect(this->actionManager->getAction("OpenAtlas"), &QAction::triggered, [this](){
             this->scene->openAtlas();
+            this->actionManager->getAction("ToggleNoneTool")->trigger();
             this->updateForms();
     });
 
-    this->actionManager->createQActionButton("OpenIRM", "OpenIRM", "", "Open the IRM", "open");
+    this->actionManager->createQActionButton("OpenIRM", "Open IRM", "", "Open the IRM", "open");
     QObject::connect(this->actionManager->getAction("OpenIRM"), &QAction::triggered, [this](){
             this->scene->openIRM();
+            this->actionManager->getAction("ToggleNoneTool")->trigger();
             this->updateForms();
     });
 
@@ -534,14 +626,31 @@ void MainWidget::setupActions() {
     QObject::connect(this->actionManager->getAction("Shader"), &QAction::triggered, [this](){
             this->scene->recompileShaders(true);
     });
+
+    this->actionManager->createQActionToggleButton("Boundaries", "Boundaries", "", "", "arap");
+    QObject::connect(this->actionManager->getAction("Boundaries"), &QAction::triggered, [this](){
+        this->scene->setDrawOnlyBoundaries(this->actionManager->getAction("Boundaries")->isChecked());
+    });
+    this->actionManager->getAction("Boundaries")->setVisible(false);
 }
 
 void MainWidget::setupForms() {
     this->deformationForm = new DeformationForm(this->scene);
     this->saveImageForm = new SaveImageForm(this->scene);
     this->planarViewer = new PlanarViewer2D(this->scene);
+    this->planarViewer->hide();
     this->openImageForm = new OpenImageForm(this->scene);
-    QObject::connect(this->openImageForm, &OpenImageForm::loaded, [this](){this->updateForms();});
+    QObject::connect(this->openImageForm, &OpenImageForm::loaded, [this](){
+        this->updateForms();
+        this->combo_mesh->setCurrentIndex(this->combo_mesh->count()-1);
+        this->actionManager->getAction("ToggleNoneTool")->trigger();
+        if(this->openImageForm->checkBoxes["Segmented"]->isChecked()) {
+            this->range->addUnitsAuto();
+            this->controlPanel->tab->setCurrentIndex(1);
+        }
+        this->actionManager->getAction("OpenImage")->setDisabled(true);
+        this->actionManager->getAction("OpenCage")->setDisabled(true);
+    });
 }
 
 void MainWidget::updateForms() {
@@ -549,4 +658,6 @@ void MainWidget::updateForms() {
     this->saveImageForm->update(this->scene);
     this->planarViewer->update(this->scene);
     this->openImageForm->update(this->scene);
+
+    this->range->updateRanges();
 }

@@ -9,7 +9,7 @@
 #include <numeric>
 
 
-BaseMesh::BaseMesh(): bbMin(glm::vec3(0., 0., 0.)), bbMax(glm::vec3(0., 0., 0.)), meshDeformer(new NormalMethod(this)), normalDeformer(new NormalMethod(this)), history(nullptr) {
+BaseMesh::BaseMesh(): bbMin(glm::vec3(0., 0., 0.)), bbMax(glm::vec3(0., 0., 0.)), meshDeformer(new NormalMethod(this)), normalDeformer(new NormalMethod(this)), history(nullptr), coordinate_system({glm::vec3(1., 0., 0.), glm::vec3(0., 1., 0.), glm::vec3(0., 0., 1.)}) {
 }
 
 glm::vec3 BaseMesh::getDimensions() const {
@@ -57,7 +57,7 @@ void BaseMesh::movePoint(const int& origin, const glm::vec3& target) {
     }
     this->computeNormals();
     this->updatebbox();
-    this->history->addStep(this->vertices);
+    //this->history->addStep(this->vertices);
 }
 
 void BaseMesh::movePoints(const std::vector<int>& origins, const std::vector<glm::vec3>& targets) {
@@ -68,7 +68,7 @@ void BaseMesh::movePoints(const std::vector<int>& origins, const std::vector<glm
     }
     this->computeNormals();
     this->updatebbox();
-    this->history->addStep(this->vertices);
+    //this->history->addStep(this->vertices);
 }
 
 void BaseMesh::movePoints(const std::vector<glm::vec3>& targets) {
@@ -173,4 +173,8 @@ void BaseMesh::scaleToBBox(const glm::vec3& bbMin, const glm::vec3& bbMax) {
 bool BaseMesh::isInBBox(const glm::vec3& p) const {
     return (p.x > this->bbMin.x && p.y > this->bbMin.y && p.z > this->bbMin.z &&
             p.x < this->bbMax.x && p.y < this->bbMax.y && p.z < this->bbMax.z);
+}
+
+void BaseMesh::addStateToHistory(bool useTimer) {
+    this->history->addStep(this->vertices, useTimer);
 }

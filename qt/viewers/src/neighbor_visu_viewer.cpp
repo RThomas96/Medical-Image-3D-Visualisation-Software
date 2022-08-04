@@ -102,9 +102,10 @@ void Viewer::draw() {
 	GLfloat mvMat[16];
 	GLfloat pMat[16];
 
-	float white_shade = 245. / 255.;
+    //float white_shade = 245. / 255.;
 
-	glClearColor(white_shade, white_shade, white_shade, .0);
+    //glClearColor(white_shade, white_shade, white_shade, .0);
+    glClearColor(1., 1., 1., 0.);
 
 	this->camera()->getModelViewMatrix(mvMat);
 	this->camera()->getProjectionMatrix(pMat);
@@ -165,6 +166,7 @@ void Viewer::resizeGL(int w, int h) {
 
 	// Is the scene initialized ? (might not on first call to this function)
 	if (this->scene->isSceneInitialized()) {
+        this->scene->setRenderSize(w, h);
 		// Update the texture accompanying the framebuffer to reflect its size change
 		this->renderTarget = this->scene->updateFBOOutputs(this->fbSize,
 		  this->defaultFramebufferObject(),

@@ -1,6 +1,7 @@
 #include "../include/scene_control.hpp"
 #include "../../qt/viewers/include/neighbor_visu_viewer.hpp"
 #include "../../qt/viewers/include/scene.hpp"
+#include "qtabwidget.h"
 
 #include <QColorDialog>
 #include <QGridLayout>
@@ -186,7 +187,18 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, QWidget* parent) :
 	grid->addWidget(this->groupbox_green, 1, 1, 1, 20);
 	grid->setRowStretch(0, 0);
 	grid->setRowStretch(1, 0);
-	this->setLayout(grid);
+
+    this->slideColorControl = new QWidget();
+    this->slideColorControl->setLayout(grid);
+    this->segmentedColorControl = new QWidget();
+
+    this->tab = new QTabWidget();
+    this->tab->addTab(this->slideColorControl, QString("Slider"));
+    //this->tab->addTab(this->segmentedColorControl, QString("Classes"));
+
+    QGridLayout* finalGrid = new QGridLayout();
+    finalGrid->addWidget(this->tab);
+    this->setLayout(finalGrid);
 
 	this->initSignals();
 

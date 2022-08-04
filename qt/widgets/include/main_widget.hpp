@@ -17,7 +17,13 @@
 #include "./scene_control.hpp"
 #include "./user_settings_widget.hpp"
 #include "glm/fwd.hpp"
+#include "qboxlayout.h"
+#include "qbuttongroup.h"
+#include "qjsonarray.h"
+#include "qnamespace.h"
 #include "qobjectdefs.h"
+#include "qt/viewers/include/viewer_structs.hpp"
+#include <random>
 
 #include <map>
 
@@ -42,6 +48,12 @@
 #include <QSlider>
 #include <QSignalMapper>
 #include <QSplitter>
+#include <QScrollArea>
+#include <QJsonDocument>
+#include <QJsonArray>
+#include <QJsonObject>
+#include <QJsonValue>
+#include <string>
 #include <vector>
 
 class ColorBoundWidget;
@@ -89,7 +101,8 @@ enum FileChooserType {
 enum class FileChooserFormat {
     TIFF,
     MESH,
-    PATH
+    PATH,
+    OFF
 };
 
 class FileChooser : public QPushButton {
@@ -128,8 +141,10 @@ public slots:
             case FileChooserType::SELECT:
                 if(this->format == FileChooserFormat::TIFF)
 	                filename = QFileDialog::getOpenFileName(nullptr, "Open TIFF images", QDir::currentPath(), "TIFF files (*.tiff *.tif)", 0, QFileDialog::DontUseNativeDialog);
-                else
+                else if(this->format == FileChooserFormat::MESH)
 	                filename = QFileDialog::getOpenFileName(nullptr, "Open mesh file", QDir::currentPath(), "MESH files (*.mesh)", 0, QFileDialog::DontUseNativeDialog);
+                else
+                    filename = QFileDialog::getOpenFileName(nullptr, "Open mesh file", QDir::currentPath(), "MESH files (*.off)", 0, QFileDialog::DontUseNativeDialog);
                 break;
 
             case FileChooserType::SAVE:
@@ -137,8 +152,10 @@ public slots:
 	                filename = QFileDialog::getSaveFileName(nullptr, "Select the image to save", QDir::currentPath(), tr("TIFF Files (*.tiff)"), 0, QFileDialog::DontUseNativeDialog);
                 else if(this->format == FileChooserFormat::MESH)
                     filename = QFileDialog::getSaveFileName(nullptr, "Select the mesh to save", QDir::currentPath(), tr("OFF Files (*.off)"), 0, QFileDialog::DontUseNativeDialog);
-                else
+                else if(this->format == FileChooserFormat::PATH)
                     filename = QFileDialog::getExistingDirectory(nullptr, "Select the directory to save", QDir::currentPath(), QFileDialog::DontUseNativeDialog);
+                else
+                    filename = QFileDialog::getSaveFileName(nullptr, "Select the mesh to save", QDir::currentPath(), tr("MESH Files (*.mesh)"), 0, QFileDialog::DontUseNativeDialog);
                 break;
         }
         if(!filename.isEmpty()) {
@@ -196,9 +213,11 @@ enum WidgetType{
     SPIN_BOX,
     SPIN_BOX_DOUBLE,
     MESH_SAVE,
+    OFF_SAVE,
     TIFF_SAVE,
     PATH_SAVE,
     MESH_CHOOSE,
+    OFF_CHOOSE,
     TIFF_CHOOSE,
     FILENAME,
     GRID_CHOOSE,
@@ -450,12 +469,20 @@ public slots:
                 fileChoosers[id] = new FileChooser(name, FileChooserType::SELECT, FileChooserFormat::MESH);
                 newWidget = fileChoosers[id];
                 break;
+            case WidgetType::OFF_CHOOSE:
+                fileChoosers[id] = new FileChooser(name, FileChooserType::SELECT, FileChooserFormat::OFF);
+                newWidget = fileChoosers[id];
+                break;
             case WidgetType::TIFF_CHOOSE:
                 fileChoosers[id] = new FileChooser(name, FileChooserType::SELECT, FileChooserFormat::TIFF);
                 newWidget = fileChoosers[id];
                 break;
             case WidgetType::MESH_SAVE:
                 fileChoosers[id] = new FileChooser(name, FileChooserType::SAVE, FileChooserFormat::MESH);
+                newWidget = fileChoosers[id];
+                break;
+            case WidgetType::OFF_SAVE:
+                fileChoosers[id] = new FileChooser(name, FileChooserType::SAVE, FileChooserFormat::OFF);
                 newWidget = fileChoosers[id];
                 break;
             case WidgetType::TIFF_SAVE:
@@ -563,13 +590,13 @@ public slots:
         this->add(WidgetType::GRID_CHOOSE, "To");
         this->setObjectTypeToChoose("To", ObjectToChoose::GRID);
 
-        this->add(WidgetType::TEXT_EDIT, "PtToDeform", "Points to deform");
+        this->add(WidgetType::TEXT_EDIT, "PtToDeform", "Points to transform");
         this->setTextEditEditable("PtToDeform", true);
 
         this->add(WidgetType::TEXT_EDIT, "Results", "Results");
         this->setTextEditEditable("Results", true);
 
-        this->add(WidgetType::BUTTON, "Deform");
+        this->add(WidgetType::BUTTON, "Deform", "Transform");
         this->add(WidgetType::BUTTON, "Preview");
 
         this->add(WidgetType::TIFF_CHOOSE, "Save image");
@@ -659,6 +686,7 @@ public:
     QImage::Format format;
     glm::ivec3 imgSize;
     std::vector<std::vector<uint16_t>> data;
+    GridGLView * grid;
 
 private:
     std::vector<bool> upToDate;
@@ -866,7 +894,7 @@ public:
     }
 
     void mouseMoveEvent(QMouseEvent* event) {
-        std::cout << event->pos().x() << std::endl;
+        //std::cout << event->pos().x() << std::endl;
         if(this->inMoveMode) {
             QPoint currentPosition = event->pos();
             this->paintedImageOrigin += (currentPosition - this->movementOrigin);
@@ -1139,6 +1167,477 @@ signals:
     void mouseMovedInPlanarViewer(const glm::vec3& positionOfMouse3D);
 };
 
+class RangeOptionUnit : public QFrame {
+    Q_OBJECT
+
+public:
+    int id;
+    QPushButton * hideButton;
+    QPushButton * hideColor;
+    QPushButton * deleteButton;
+    QPushButton * open;
+    QPushButton * save;
+    QPushButton * autoButton;
+    QPushButton * hideOption;
+    RangeOptionUnit(QWidget * parent = nullptr) : QFrame(parent)  {
+        id = -1;
+        this->setFrameShape(QFrame::Shape::StyledPanel);
+        QVBoxLayout *unitLayout = new QVBoxLayout(this);
+        //unitLayout->setAlignment(Qt::AlignTop);
+        unitLayout->setAlignment(Qt::AlignVCenter);
+
+        deleteButton = new QPushButton();
+        deleteButton->setIcon(QIcon(QPixmap("../resources/cross.svg")));
+        deleteButton->setIconSize(QPixmap("../resources/cross.svg").rect().size());
+        deleteButton->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+
+        QIcon icon;
+        QSize size(80, 80);
+        icon.addFile(QString("../resources/visible.svg"), size, QIcon::Normal, QIcon::Off);
+        icon.addFile(QString("../resources/hidden.svg"), size, QIcon::Normal, QIcon::On);
+        hideButton = new QPushButton();
+        hideButton->setCheckable(true);
+        hideButton->setIcon(icon);
+        hideButton->setIconSize(QPixmap("../resources/visible.svg").rect().size());
+        hideButton->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+
+        hideColor = new QPushButton();
+        QIcon icon2;
+        icon2.addFile(QString("../resources/color.svg"), size, QIcon::Normal, QIcon::Off);
+        icon2.addFile(QString("../resources/color_hide.svg"), size, QIcon::Normal, QIcon::On);
+        hideColor = new QPushButton();
+        hideColor->setCheckable(true);
+        hideColor->setIcon(icon2);
+        hideColor->setIconSize(QPixmap("../resources/color.svg").rect().size());
+        hideColor->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+
+        open = new QPushButton();
+        open->setIcon(QIcon(QPixmap("../resources/open.svg")));
+        open->setIconSize(QPixmap("../resources/open.svg").rect().size());
+        open->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+
+        save = new QPushButton();
+        save->setIcon(QIcon(QPixmap("../resources/save.svg")));
+        save->setIconSize(QPixmap("../resources/save.svg").rect().size());
+        save->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+
+        autoButton = new QPushButton();
+        autoButton->setIcon(QIcon(QPixmap("../resources/histo.svg")));
+        autoButton->setIconSize(QPixmap("../resources/histo.svg").rect().size());
+        autoButton->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+
+        hideOption = new QPushButton();
+        hideOption->setIcon(QIcon(QPixmap("../resources/arap.svg")));
+        hideOption->setIconSize(QPixmap("../resources/arap.svg").rect().size());
+        hideOption->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+        hideOption->setCheckable(true);
+
+        unitLayout->addStretch();
+        unitLayout->addWidget(open);
+        unitLayout->addWidget(save);
+        unitLayout->addWidget(deleteButton);
+        unitLayout->addWidget(hideButton);
+        unitLayout->addWidget(hideColor);
+        unitLayout->addWidget(autoButton);
+        unitLayout->addWidget(hideOption);
+        unitLayout->addStretch();
+
+        QObject::connect(deleteButton, &QPushButton::clicked, [this](){Q_EMIT deleteCurrent(this->id);});
+    }
+
+signals:
+    void deleteCurrent(int id);
+};
+
+class RangeUnit : public QFrame {
+    Q_OBJECT
+
+public:
+    int id;
+    QDoubleSpinBox * min;
+
+    bool moreOptions;
+    QDoubleSpinBox * max;
+    QPushButton * left;
+    QPushButton * right;
+    QPushButton * deleteButton;
+
+    QPushButton * hideButton;
+    QCheckBox * hideColor;
+    ColorButton * colorButton;
+    RangeUnit(int id, QWidget * parent = nullptr) : id(id), QFrame(parent)  {
+        this->setFrameShape(QFrame::Shape::StyledPanel);
+        QVBoxLayout *unitLayout = new QVBoxLayout(this);
+        unitLayout->setAlignment(Qt::AlignVCenter);
+
+        std::random_device dev;
+        std::mt19937 rng(dev());
+        std::uniform_int_distribution<std::mt19937::result_type> dist(0, 255);
+        colorButton = new ColorButton(QColor(dist(rng), dist(rng), dist(rng)));
+
+        hideColor = new QCheckBox();
+        hideColor->setChecked(true);
+
+        QWidget * colorWidget = new QWidget();
+        QHBoxLayout * colorLayout = new QHBoxLayout(this);
+        colorWidget->setLayout(colorLayout);
+
+        colorLayout->addWidget(hideColor);
+        colorLayout->addWidget(colorButton);
+        colorLayout->setAlignment(colorButton, Qt::AlignHCenter);
+        colorLayout->setContentsMargins(0, 0, 0, 0);
+        colorLayout->setSpacing(0);
+        colorWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+        unitLayout->addWidget(colorWidget);
+
+        unitLayout->setAlignment(colorButton, Qt::AlignHCenter);
+
+        this->min = new QDoubleSpinBox();
+        this->min->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+        this->min->setMaximum(16000);
+        this->min->setDecimals(0);
+        this->min->setValue(0);
+
+        this->max = new QDoubleSpinBox();
+        this->max->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+        this->max->setMaximum(16000);
+        this->max->setDecimals(0);
+        this->max->setValue(1);
+
+        QHBoxLayout * moveLayout = new QHBoxLayout();
+        left = new QPushButton();
+        right = new QPushButton();
+        left->setIcon(QIcon(QPixmap("../resources/left.svg")));
+        left->setIconSize(QPixmap("../resources/left.svg").rect().size());
+        left->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+        right->setIcon(QIcon(QPixmap("../resources/right.svg")));
+        right->setIconSize(QPixmap("../resources/right.svg").rect().size());
+        right->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+        moveLayout->addWidget(left);
+        moveLayout->addWidget(right);
+
+        deleteButton = new QPushButton();
+        deleteButton->setIcon(QIcon(QPixmap("../resources/cross.svg")));
+        deleteButton->setIconSize(QPixmap("../resources/cross.svg").rect().size());
+        deleteButton->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+
+        QIcon icon;
+        QSize size(30, 30);
+        icon.addFile(QString("../resources/visible.svg"), size, QIcon::Normal, QIcon::Off);
+        icon.addFile(QString("../resources/hidden.svg"), size, QIcon::Normal, QIcon::On);
+        hideButton = new QPushButton();
+        hideButton->setCheckable(true);
+        hideButton->setIcon(icon);
+        hideButton->setIconSize(QPixmap("../resources/visible.svg").rect().size());
+        hideButton->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+        hideButton->setFixedSize(QSize(30, 25));
+
+        colorLayout->addWidget(hideButton);
+
+        unitLayout->addWidget(min);
+        unitLayout->addWidget(max);
+        unitLayout->addLayout(moveLayout);
+        unitLayout->addWidget(deleteButton);
+        //unitLayout->addWidget(hideButton);
+
+        QObject::connect(left, &QPushButton::clicked, [this](){Q_EMIT leftMove(this->id);});
+        QObject::connect(right, &QPushButton::clicked, [this](){Q_EMIT rightMove(this->id);});
+        QObject::connect(deleteButton, &QPushButton::clicked, [this](){Q_EMIT deleteCurrent(this->id);});
+        QObject::connect(colorButton->button, &QPushButton::clicked, [this](){Q_EMIT colorChanged(this->id);});
+        QObject::connect(hideColor, &QCheckBox::clicked, [this](){Q_EMIT colorChanged(this->id);});
+        QObject::connect(hideColor, &QCheckBox::stateChanged, [this](){this->colorButton->setDisabled(!this->hideColor->isChecked());});
+        QObject::connect(min, QOverload<double>::of(&QDoubleSpinBox::valueChanged), [this](double d){
+            if(!moreOptions || min->value() > max->value()) {
+                this->max->blockSignals(true);
+                this->max->setValue(min->value());
+                this->max->blockSignals(false);
+            }
+            Q_EMIT rangeChanged(this->id);
+        });
+        QObject::connect(max, QOverload<double>::of(&QDoubleSpinBox::valueChanged), [this](double d){Q_EMIT rangeChanged(this->id);});
+        QObject::connect(hideButton, &QPushButton::clicked, [this](){Q_EMIT rangeChanged(this->id);});
+        QObject::connect(hideButton, &QPushButton::toggled, [this](){this->hideColor->setDisabled(this->hideButton->isChecked());
+                                                                     this->colorButton->setDisabled(this->hideButton->isChecked());});
+        moreOptions = false;
+        this->setMoreOptions(this->moreOptions);
+    }
+
+    glm::vec3 getColor() {
+        return glm::vec3(float(colorButton->getColor().red())/255., float(colorButton->getColor().green())/255., float(colorButton->getColor().blue())/255.);
+    }
+
+    void setMoreOptions(bool value) {
+        this->moreOptions = value;
+        if(value) {
+           max->show();
+           left->show();
+           right->show();
+           deleteButton->show();
+        } else {
+           max->hide();
+           left->hide();
+           right->hide();
+           deleteButton->hide();
+        }
+    }
+
+signals:
+    void leftMove(int id);
+    void rightMove(int id);
+    void deleteCurrent(int id);
+    void colorChanged(int id);
+    void rangeChanged(int id);
+};
+
+class RangeControl : public QScrollArea {
+    Q_OBJECT
+
+public:
+    Scene * scene;
+
+    int maxNbUnits;
+
+    RangeOptionUnit * rangeOptionUnit;
+
+    QWidget * mainWidget;
+    QHBoxLayout * mainLayout;
+    QHBoxLayout * unitLayout;
+    QHBoxLayout * addButtonLayout;
+    QPushButton * buttonAdd;
+    std::vector<RangeUnit*> units;
+    bool initialized;
+
+    RangeControl(Scene * scene, QWidget *parent = nullptr) : QScrollArea(parent), scene(scene) {init(); connect();}
+
+    void init() {
+        maxNbUnits = 500;
+
+        this->units.reserve(maxNbUnits);
+        this->buttonAdd = new QPushButton(QString("+"));
+        this->buttonAdd->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+
+        this->addButtonLayout = new QHBoxLayout();
+        this->addButtonLayout->addWidget(this->buttonAdd);
+
+        this->unitLayout = new QHBoxLayout();
+        this->rangeOptionUnit = new RangeOptionUnit();
+        //this->unitLayout->addWidget(this->rangeOptionUnit);
+        this->addUnit();
+        units.back()->blockSignals(true);
+        units.back()->min->setValue(0);
+        units.back()->max->setValue(16000);
+        units.back()->colorButton->setColor(QColor(255., 255., 255.));
+        units.back()->blockSignals(false);
+
+        this->mainLayout = new QHBoxLayout();
+        this->mainLayout->setAlignment(Qt::AlignLeft);
+        this->mainLayout->addLayout(unitLayout);
+        this->mainLayout->addLayout(addButtonLayout);
+
+        this->mainWidget = new QWidget();
+        this->mainWidget->setLayout(this->mainLayout);
+
+        this->setWidget(this->mainWidget);
+        this->setWidgetResizable(true);
+
+        QObject::connect(rangeOptionUnit->hideColor, &QPushButton::clicked, this, [this](){this->toggleAll(Option::COLOR, !rangeOptionUnit->hideColor->isChecked());});
+        QObject::connect(rangeOptionUnit->hideButton, &QPushButton::clicked, this, [this](){this->toggleAll(Option::VISU, rangeOptionUnit->hideButton->isChecked());});
+        QObject::connect(rangeOptionUnit->deleteButton, &QPushButton::clicked, this, [this](){this->clearUnits(true); this->updateRanges();});
+        QObject::connect(rangeOptionUnit->open, &QPushButton::clicked, this, [this](){this->readFromFile(); this->updateRanges();});
+        QObject::connect(rangeOptionUnit->save, &QPushButton::clicked, this, [this](){this->writeToFile(); this->updateRanges();});
+        QObject::connect(rangeOptionUnit->autoButton, &QPushButton::clicked, this, [this](){this->addUnitsAuto();});
+        QObject::connect(rangeOptionUnit->hideOption, &QPushButton::clicked, this, [this](){this->toggleAll(Option::MORE_OPTIONS, rangeOptionUnit->hideOption->isChecked());});
+
+        this->initialized = true;
+    }
+
+    void readFromFile() {
+        QFile file;
+        QString filename = QFileDialog::getOpenFileName(nullptr, "Open color map", QDir::currentPath(), "Json files (*.json)", 0, QFileDialog::DontUseNativeDialog);
+        if(filename.isEmpty())
+            return;
+
+        this->clearUnits();
+        file.setFileName(filename);
+        file.open(QIODevice::ReadOnly | QIODevice::Text);
+        QString values;
+        values = file.readAll();
+        file.close();
+
+        QJsonDocument document = QJsonDocument::fromJson(values.toUtf8());
+        QJsonObject json = document.object();
+
+        for(int i = 0; i < json.count(); ++i) {
+            const QString rangeId(std::to_string(i).c_str());
+            QJsonObject values = json.value(rangeId).toObject();
+            QJsonArray colorArray = values.value("color").toArray();
+            glm::ivec3 color(0, 0, 0);
+            for(int i = 0; i < 3; ++i)
+                color[i] = std::stoi(colorArray.at(i).toString().toStdString());
+            int min = std::stoi(values.value("min").toString().toStdString());
+            int max = std::stoi(values.value("max").toString().toStdString());
+
+            bool isDisplayed = std::stoi(values.value("display").toString().toStdString());
+            this->addUnit(min, max, color, isDisplayed);
+        }
+    }
+
+    void writeToFile() {
+        QJsonObject obj;
+
+        for(int i = 0; i < this->unitLayout->count(); ++i) {
+            RangeUnit * unit = dynamic_cast<RangeUnit*>(this->unitLayout->itemAt(i)->widget());
+            QJsonObject unitJson;
+
+            QJsonArray color;
+            color.insert(0, std::to_string(unit->colorButton->getColor().red()).c_str());
+            color.insert(1, std::to_string(unit->colorButton->getColor().green()).c_str());
+            color.insert(2, std::to_string(unit->colorButton->getColor().blue()).c_str());
+
+            unitJson.insert("color", color);
+            unitJson.insert("min", std::to_string(std::floor(unit->min->value())).c_str());
+            unitJson.insert("max", std::to_string(std::floor(unit->max->value())).c_str());
+            int isDisplayed = 0;
+            if(!unit->hideButton->isChecked())
+                isDisplayed = 1;
+            unitJson.insert("display", std::to_string(isDisplayed).c_str());
+
+            obj.insert(std::to_string(i).c_str(), unitJson);
+        }
+
+        QString filename = QFileDialog::getSaveFileName(nullptr, "Open color map", QDir::currentPath(), "Json files (*.json)", 0, QFileDialog::DontUseNativeDialog);
+        QFile file;
+        file.setFileName(filename);
+        file.open(QFile::WriteOnly | QFile::Text | QFile::Truncate);
+        file.write(QJsonDocument(obj).toJson());
+        file.close();
+    }
+
+    void clearUnits(bool addDefault = false) {
+        for(int i = this->unitLayout->count()-1; i >= 0; --i) {
+            this->deleteUnit(i);
+        }
+        if(addDefault) {
+            this->addUnit(0, 16000);
+            this->units.back()->hideColor->click();
+        }
+    }
+
+    int findId(int id) {
+       for(int i = 0; i < this->unitLayout->count(); ++i) {
+           if(dynamic_cast<RangeUnit*>(this->unitLayout->itemAt(i)->widget())->id == id)
+               return i;
+       }
+       return -1;
+    }
+
+    enum Direction {
+        Left,
+        Right
+    };
+
+    void deleteUnit(int id) {
+        int idx = findId(id);
+        this->unitLayout->removeWidget(this->unitLayout->itemAt(idx)->widget());
+        delete this->units[id];
+        this->units.erase(this->units.begin()+id);
+        for(int i = id; i < this->units.size(); ++i)
+            this->units[i]->id -= 1;
+    }
+
+    void moveUnit(int id, Direction direction) {
+        int idx = this->findId(id);
+        if(idx == -1 || (idx == 0 && direction == Direction::Left) || (idx == this->unitLayout->count()-1 && direction == Direction::Right))
+            return;
+        QWidget * widget = this->unitLayout->takeAt(idx)->widget();
+        if(direction == Direction::Left)
+            this->unitLayout->insertWidget(idx-1, widget);
+        else
+            this->unitLayout->insertWidget(idx+1, widget);
+    }
+
+    void addUnit(int min, int max) {
+        this->addUnit();
+        this->units.back()->min->setValue(min);
+        this->units.back()->max->setValue(max);
+    }
+
+    void addUnit(int min, int max, glm::ivec3 color, bool display) {
+        this->addUnit();
+        this->units.back()->min->setValue(min);
+        this->units.back()->max->setValue(max);
+        this->units.back()->colorButton->setColor(QColor(color.r, color.g, color.b));
+        if(!display)
+            this->units.back()->hideButton->setChecked(true);
+    }
+
+    void addUnit() {
+        this->units.push_back(new RangeUnit(this->units.size()));
+        this->unitLayout->addWidget(units.back());
+        QObject::connect(units.back(), &RangeUnit::leftMove, this, [this](int id){this->moveUnit(id, Direction::Left); this->updateRanges();});
+        QObject::connect(units.back(), &RangeUnit::rightMove, this, [this](int id){this->moveUnit(id, Direction::Right); this->updateRanges();});
+        QObject::connect(units.back(), &RangeUnit::deleteCurrent, this, [this](int id){this->deleteUnit(id); this->updateRanges();});
+        QObject::connect(units.back(), &RangeUnit::rangeChanged, this, [this](int id){this->updateRanges();});
+        QObject::connect(units.back(), &RangeUnit::colorChanged, this, [this](int id){this->updateRanges();});
+        //QObject::connect(this->buttonAdd, &QPushButton::clicked, [this, scene](){this->updateRanges(scene);});
+    }
+
+    void updateRanges() {
+        scene->resetRanges();
+        for(int i = 0; i < this->unitLayout->count(); ++i) {
+            RangeUnit * unit = dynamic_cast<RangeUnit*>(this->unitLayout->itemAt(i)->widget());
+            if(!unit->hideButton->isChecked()) {
+                if(unit->hideColor->isChecked()) {
+                    scene->addRange(unit->min->value(), unit->max->value(), unit->getColor());
+                } else {
+                    scene->addRange(unit->min->value(), unit->max->value(), glm::vec3(1., 1., 1.));
+                }
+            }
+        }
+    }
+
+    enum class Option {
+        COLOR,
+        VISU,
+        MORE_OPTIONS
+    };
+
+    void toggleAll(Option option, bool value) {
+        for(auto& unit : this->units) {
+            switch(option) {
+                case Option::COLOR:
+                    unit->hideColor->setChecked(value);
+                    break;
+                case Option::VISU:
+                    unit->hideButton->setChecked(value);
+                    break;
+                case Option::MORE_OPTIONS:
+                    unit->setMoreOptions(value);
+                    break;
+            }
+        }
+        this->updateRanges();
+    }
+
+    void addUnitsAuto() {
+        this->clearUnits();
+        auto minMax = scene->getGridMinMaxValues();
+        std::vector<bool> usage = scene->getGridUsageValues();
+        int nbUnits = minMax.second - minMax.first;
+        if(nbUnits < maxNbUnits) {
+            for(int i = 1; i < usage.size(); ++i) {
+                if(usage[i])
+                    this->addUnit(i, i);
+            }
+        }
+        this->updateRanges();
+    }
+
+    void connect() {
+        QObject::connect(this->buttonAdd, &QPushButton::clicked, [this](){this->addUnit();});
+    }
+};
+
 class PlanarViewForm : public Form {
     Q_OBJECT
 
@@ -1365,6 +1864,7 @@ public slots:
 
     void initViewer(const QString& name) {
         this->setDisabled(false);
+        this->show();
         this->selectViewer(name);
         this->checkBoxes["UseBack"]->blockSignals(true);
         this->checkBoxes["UseFront"]->blockSignals(true);
@@ -1677,6 +2177,7 @@ public:
         this->addViewer("View_1", glm::vec3(1., 0., 0.));
         this->addViewer("View_2", glm::vec3(0., 1., 0.));
         this->addViewer("View_3", glm::vec3(0., 0., 1.));
+        this->hide();
         this->initialized = true;
     }
 };
@@ -1835,6 +2336,12 @@ public slots:
 
         this->addAllNextWidgetsToSection("Image");
 
+        this->add(WidgetType::SECTION, "Type");
+        this->addAllNextWidgetsToSection("Type");
+        this->addWithLabel(WidgetType::CHECK_BOX, "Segmented", "Segmented");
+
+        this->addAllNextWidgetsToSection("Image");
+
         this->add(WidgetType::FILENAME, "Image filename");
         this->add(WidgetType::TIFF_CHOOSE, "Image choose", "Select image file");
         this->linkFileNameToFileChooser("Image filename", "Image choose");
@@ -1880,9 +2387,59 @@ public slots:
         this->addAllNextWidgetsToDefaultGroup();
         this->addAllNextWidgetsToDefaultSection();
 
+        this->add(WidgetType::SECTION, "Cage");
+        this->addAllNextWidgetsToSection("Cage");
+
+        this->addWithLabel(WidgetType::H_GROUP, "GroupCageType", "Type:");
+        //this->addAllNextWidgetsToGroup("GroupCageType");
+
+        //this->addWithLabel(WidgetType::CHECK_BOX, "MVC", "MVC");
+        //this->addWithLabel(WidgetType::CHECK_BOX, "Green", "Green");
+
+        //this->addAllNextWidgetsToSection("Cage");
+
+        QLabel * mvcLabel = new QLabel("MVC");
+        QCheckBox * mvc = new QCheckBox();
+        mvc->setChecked(true);
+        QLabel * greenLabel = new QLabel("Green");
+        QCheckBox * green = new QCheckBox();
+
+        this->checkBoxes["mvc"] = mvc;
+        this->checkBoxes["green"] = green;
+
+        QHBoxLayout * mvcLayout = new QHBoxLayout();
+        mvcLayout->setAlignment(Qt::AlignHCenter);
+        QHBoxLayout * greenLayout = new QHBoxLayout();
+        greenLayout->setAlignment(Qt::AlignHCenter);
+
+        mvcLayout->addWidget(mvcLabel);
+        mvcLayout->addWidget(mvc);
+
+        greenLayout->addWidget(greenLabel);
+        greenLayout->addWidget(green);
+
+        QButtonGroup * group = new QButtonGroup();
+        group->addButton(mvc);
+        group->addButton(green);
+
+        this->groups["GroupCageType"]->addLayout(mvcLayout);
+        this->groups["GroupCageType"]->addLayout(greenLayout);
+
+        this->add(WidgetType::FILENAME, "Cage filename");
+        this->add(WidgetType::OFF_CHOOSE, "Cage choose", "Select cage file");
+        this->linkFileNameToFileChooser("Cage filename", "Cage choose");
+
+        /***/
+
+        this->addAllNextWidgetsToDefaultGroup();
+        this->addAllNextWidgetsToDefaultSection();
+
         this->add(WidgetType::BUTTON, "Load");
 
         this->resetValues();
+
+        this->sections["Image subsample"].first->hide();
+        this->sections["Image subregion"].first->hide();
     }
 
     void resetValues() {
@@ -1894,6 +2451,9 @@ public slots:
 
         this->fileNames["Mesh filename"]->resetValues();
         this->fileChoosers["Mesh choose"]->resetValues();
+
+        this->fileNames["Cage filename"]->resetValues();
+        this->fileChoosers["Cage choose"]->resetValues();
 
         this->sections["Image subsample"].first->setChecked(false);
         this->sections["Image subregion"].first->setChecked(false);
@@ -1919,6 +2479,7 @@ public slots:
         this->sections["Image subsample"].first->setEnabled(false);
 
         this->sections["Mesh"].first->setEnabled(false);
+        this->sections["Cage"].first->setEnabled(false);
 
         this->buttons["Load"]->setEnabled(false);
     }
@@ -1993,6 +2554,7 @@ public slots:
         QObject::connect(this->fileChoosers["Mesh choose"], &FileChooser::fileSelected, [this](){
                 this->sections["Tetrahedral mesh size"].first->setEnabled(false);
                 this->useTetMesh = true;
+                this->sections["Cage"].first->setEnabled(true);
         });
 
         QObject::connect(this->buttons["Load"], &QPushButton::clicked, [this, scene](){
@@ -2000,6 +2562,9 @@ public slots:
                     scene->openGrid(this->getName(), this->getImgFilenames(), this->getSubsample(), this->getTetmeshFilename());
                 } else {
                     scene->openGrid(this->getName(), this->getImgFilenames(), this->getSubsample(), this->getSizeVoxel(), this->getSizeTetmesh());
+                }
+                if(!this->fileChoosers["Cage choose"]->filename.isEmpty()) {
+                    scene->openCage(this->getName() + "_cage", this->fileChoosers["Cage choose"]->filename.toStdString(), this->getName(), this->checkBoxes["mvc"]->isChecked());
                 }
                 this->hide();
                 Q_EMIT loaded();
@@ -2085,6 +2650,8 @@ public slots:
 class QActionManager : QWidget {
     Q_OBJECT
 public:
+    std::map<std::string, QToolButton *> menus;
+
     std::map<std::string, QAction *> actions;
     std::map<std::string, QActionGroup *> actionExclusiveGroups;
 
@@ -2092,6 +2659,10 @@ public:
 
     QAction * getAction(const QString& name) {
         return actions[name.toStdString()];
+    }
+
+    QToolButton * getMenu(const QString& name) {
+        return menus[name.toStdString()];
     }
 
     void activateGroup(const QString& name) {
@@ -2174,7 +2745,33 @@ public:
     
         return action;
     }
-    
+
+    void createMenuButton(const QString& name, const QString& text, const QString& statusTip, const QString& defaultIcon, const QStringList& actions) {
+        QIcon icon;
+        QSize size(80, 80);
+        if(!defaultIcon.isEmpty())
+            icon.addFile(QString("../resources/" + defaultIcon + QString(".svg")), size, QIcon::Normal, QIcon::Off);
+
+        QToolButton * button=new QToolButton(this);
+        button->setStatusTip(statusTip);
+        button->setToolTip(statusTip);
+        button->setIcon(icon);
+        this->menus[name.toStdString()] = button;
+        button->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+
+        button->setText(text);
+        button->setPopupMode(QToolButton::InstantPopup);
+
+        QMenu *menu=new QMenu(button);
+        for(auto& actionName : actions) {
+            if(actionName == QString("-"))
+                menu->addSeparator();
+            else
+                menu->addAction(this->actions[actionName.toStdString()]);
+        }
+        button->setMenu(menu);
+    }
+
     QAction * createQActionButton(const QString& name, const QString& text, const QString& keySequence, const QString& statusTip) {
         return createQAction(name, text, keySequence, statusTip, QString(), QString(), false, false);
     }
@@ -2290,12 +2887,16 @@ class QuickSaveCage {
 
 public:
     QuickSaveCage(Scene * scene): scene(scene) {
-        fileChooser = new FileChooser("file", FileChooserType::SAVE, FileChooserFormat::MESH);
+        fileChooser = new FileChooser("file", FileChooserType::SAVE, FileChooserFormat::OFF);
     }
 
     void save() {
-        if(filePath.isEmpty())
-            this->saveAs();
+        if(filePath.isEmpty()) {
+            this->fileChooser->click();
+            filePath = this->fileChooser->filename;
+            if(filePath.isEmpty())
+                return;
+        }
 
         bool saved = scene->saveActiveCage(filePath.toStdString());
         if(!saved)
@@ -2305,6 +2906,8 @@ public:
     void saveAs() {
         this->fileChooser->click();
         filePath = this->fileChooser->filename;
+        if(filePath.isEmpty())
+            return;
         this->save();
     }
 };
@@ -2344,12 +2947,14 @@ private:
 	GridLoaderWidget* loaderWidget;
 	GridDeformationWidget* deformationWidget;
 
+    RangeControl * range;
 	ControlPanel* controlPanel;
 	bool widgetSizeSet;
 
 	QMenu* fileMenu;
-	QMenu* viewMenu;
-	QMenu* otherMenu;
+    QMenu* editMenu;
+    QMenu* windowsMenu;
+    QMenu* otherMenu;
 
     QToolBar * toolbar;
 	QAction* action_addGrid;
@@ -2393,10 +2998,13 @@ private:
 
 public slots:
     void addNewMesh(const std::string& name, bool grid, bool cage) {
-        //this->combo_mesh->insertItem(this->combo_mesh->count(), QString(this->meshNames.back().c_str()));
         this->combo_mesh->insertItem(this->combo_mesh->count(), QString(name.c_str()));
-        //if(!this->gridOrCage.back().first)
-        //    this->combo_mesh_register->insertItem(this->combo_mesh_register->count(), QString(this->meshNames.back().c_str()));
+        if(this->scene->hasTwoOrMoreGrids()) {
+            this->actionManager->getAction("ToggleDisplayMultiView")->setDisabled(false);
+            this->actionManager->getAction("Transform")->setDisabled(false);
+            this->actionManager->getAction("Boundaries")->setVisible(true);
+            this->cutPlane_pannel->setDisabledAlpha(false);
+        }
     }
 
     // *************** //

@@ -7,6 +7,7 @@
 #include "../../grid/geometry/grid.hpp"
 #include "../../legacy/image/utils/include/bounding_box.hpp"
 
+#include <cstdint>
 #include <glm/glm.hpp>
 
 #include <QOpenGLFunctions_4_0_Core>
@@ -103,7 +104,7 @@ public:
 /// @ingroup graphpipe
 /// @brief The colorChannelAttributes_GL struct is mirroring the contents of the similarly-named uniform in GLSL.
 /// @details It is defined this way to be simply `memcpy`'d over to the GPU, without any hassle.
-struct alignas(32) colorChannelAttributes_GL
+struct alignas(32) ColorChannelAttributes_GL
 {
 public:
 	typedef glm::tvec2<std::uint32_t> bound_t;
@@ -115,8 +116,8 @@ protected:
 	alignas(alignof(bound_t)) bound_t colorScaleBounds;
 
 public:
-	colorChannelAttributes_GL(void);
-	~colorChannelAttributes_GL(void) = default;
+    ColorChannelAttributes_GL(void);
+    ~ColorChannelAttributes_GL(void) = default;
 
 public:
 	void toggleVisible();
@@ -153,7 +154,7 @@ public:
 	~GridGLView(void) = default;
 
 	void setMainColorChannel(std::size_t index);
-	colorChannelAttributes_GL& mainColorChannelAttributes();
+    ColorChannelAttributes_GL& mainColorChannelAttributes();
 
 public:
 	using data_t  = double;
@@ -169,6 +170,14 @@ public:
     // WARNING
     // TODO: to fill
     glm::vec3 voxelDimensions;
+
+    uint16_t maxValue;
+    uint16_t minValue;
+    std::vector<std::pair<uint16_t, uint16_t>> visu;
+    std::vector<glm::vec3> visu_color;
+
+    std::vector<glm::vec3> visu_map;
+    std::vector<glm::vec3> color_map;
 
 	GLuint gridTexture;
 	unsigned int nbChannels;
@@ -187,8 +196,15 @@ public:
 	data_2 colorBounds1;
 	/// @brief Handle for the uniform buffer with the channel attributes
 	GLuint uboHandle_colorAttributes;
-	/// @brief The color channel attributes.
-	std::array<colorChannelAttributes_GL, 3> colorChannelAttributes;
+
+    /// @brief Handle for the uniform buffer with the channel attributes
+    GLuint colorRanges;
+    /// @brief The color channel attributes.
+    std::array<ColorChannelAttributes_GL, 3> colorChannelAttributes;
+
+    //std::vector<uint16_t> valuesRangeToDisplay;
+    GLuint valuesRangeToDisplay;
+    GLuint valuesRangeColorToDisplay;
 
 protected:
 	/// @brief The index of the main color channel.

@@ -682,3 +682,16 @@ void Sampler::fromImageToSampler(glm::vec3& p) const {
 glm::vec3 Sampler::getVoxelSize() const {
     return this->voxelSize;
 }
+
+std::vector<int> Sampler::getHistogram(int nbBins) const {
+   if(useCache)  {
+       const CImg img = this->cache->img.get_histogram(nbBins);
+       std::vector<int> result;
+       for(auto value : img) {
+           result.push_back(value);
+       }
+       return result;
+   } else {
+       return std::vector<int>{0};
+   }
+}

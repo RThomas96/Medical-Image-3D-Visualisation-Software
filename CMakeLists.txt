@@ -116,6 +116,7 @@ ADD_EXECUTABLE(neighbor_visu
     ./grid/utils/Vec3D.h
     ./grid/utils/Triangle.h
     ./grid/utils/BasicPoint.h
+    ./grid/utils/PCATools.h
 
 	# Main file :
 	./neighbor_visu_main.cpp

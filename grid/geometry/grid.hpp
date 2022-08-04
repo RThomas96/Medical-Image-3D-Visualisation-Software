@@ -61,6 +61,8 @@ struct Sampler {
     //Nobody should access to the original image size everthing need to pass by the Sampler
     // Used to compute voxel size
     glm::vec3 getImageDimensions() const;
+
+    std::vector<int> getHistogram(int nbBins) const;
 private:
     void fillCache();
     SimpleImage * image;

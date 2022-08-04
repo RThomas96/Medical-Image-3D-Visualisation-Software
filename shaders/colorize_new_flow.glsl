@@ -14,6 +14,9 @@ struct colorChannelAttributes {
 	uvec2 colorScaleBounds;	// /*align : vec4*/ The value bounds for the color scale
 };
 
+uniform float maxValue;
+uniform sampler1D valuesRangeToDisplay;
+uniform sampler1D colorRangeToDisplay;
 uniform uint mainChannelIndex;						// The index of the main channel in the voxel data
 uniform sampler1D colorScales[4];					// All the color scales available (all encoded as 1D textures)
 layout(std140) uniform ColorBlock {
@@ -25,20 +28,26 @@ layout(std140) uniform ColorBlock {
 bool isColorChannelVisible(in uint index, in uint value) {
 	return (colorChannels.attributes[index].isVisible > 0u) &&
 			(
-				value >= uint(colorChannels.attributes[index].visibleBounds.x)
-				&& value <= uint(colorChannels.attributes[index].visibleBounds.y)
-			);
+                //&& texture(valuesRangeToDisplay, 0.5).r > 0.f
+                value >= uint(colorChannels.attributes[index].visibleBounds.x)
+                && value <= uint(colorChannels.attributes[index].visibleBounds.y)
+                && texture(valuesRangeToDisplay, float(value)/maxValue).r > 0.f
+            );
 }
 
 vec4 colorizeFragmentSingleChannel(in uint color_channel_index, in uint value) {
 	// Since we first check if the channel is visible, we only need to colorize it.
 	// We're guaranteed to not only have the color channel activated, but also that
 	// the given value is _always_ within the visible bounds.
-
-	vec2 csB = colorChannels.attributes[color_channel_index].colorScaleBounds;
-	float normalized_value = (float(value) - float(csB.x)) / (float(csB.y) - float(csB.x));
-	uint colorScaleIndex = colorChannels.attributes[color_channel_index].colorScaleIndex;
-	return texture(colorScales[colorScaleIndex], normalized_value);
+    if(texture(valuesRangeToDisplay, float(value)/maxValue).r > 0.f) {
+        vec4 color = vec4(texture(colorRangeToDisplay, float(value)/maxValue).rgb, 1.);
+        if(!(color.r == 1. && color.g == 1. && color.b == 1.))
+            return color;
+    }
+    vec2 csB = colorChannels.attributes[color_channel_index].colorScaleBounds;
+    float normalized_value = (float(value) - float(csB.x)) / (float(csB.y) - float(csB.x));
+    uint colorScaleIndex = colorChannels.attributes[color_channel_index].colorScaleIndex;
+    return texture(colorScales[colorScaleIndex], normalized_value);
 }
 
 vec4 fragmentEvaluationSingleChannel(in uvec3 color) {

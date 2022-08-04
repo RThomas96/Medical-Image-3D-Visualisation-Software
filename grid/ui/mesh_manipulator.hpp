@@ -34,6 +34,7 @@ namespace UITool {
         glm::vec3 p2;
         glm::vec3 p3;
 
+        bool isActive;
         bool isInSelectionMode;
 
         bool isInScreenSelection(glm::ivec2 p) {
@@ -53,8 +54,6 @@ namespace UITool {
             bool found = false;
             qglviewer::Vec ptOnSurfaceVec = camera->pointUnderPixel(QPoint(screenPosition[0], screenPosition[1]), found);
             glm::vec3 ptOnSurface = glm::vec3(ptOnSurfaceVec[0], ptOnSurfaceVec[1], ptOnSurfaceVec[2]);
-            if(found)
-                std::cout << "found" << std::endl;
             if(found && glm::distance(ptOnSurface, position) > 0.01) {
                 isVisible = false;
             }
@@ -69,12 +68,13 @@ namespace UITool {
             return res;
         }
 
-        Selection() : Manipulator(glm::vec3(0., 0., 0.)), p0(glm::vec3(0., 0., 0.)), p1(glm::vec3(0., 0., 0.)), p2(glm::vec3(0., 0., 0.)), p3(glm::vec3(0., 0., 0.)), screenP0(glm::ivec2(0., 0.)), screenP1(glm::ivec2(0, 0)), isInSelectionMode(false), color(glm::vec4(1., 0., 0., 0.5)) {this->enable();};
+        Selection() : Manipulator(glm::vec3(0., 0., 0.)), p0(glm::vec3(0., 0., 0.)), p1(glm::vec3(0., 0., 0.)), p2(glm::vec3(0., 0., 0.)), p3(glm::vec3(0., 0., 0.)), screenP0(glm::ivec2(0., 0.)), screenP1(glm::ivec2(0, 0)), isInSelectionMode(false), color(glm::vec4(1., 0., 0., 0.5)), isActive(true) {this->enable();};
+
+        void activate() {this->isActive = true;}
+        void deactivate() {this->isActive = false;}
 
     signals:
         void needToRedrawSelection(const glm::vec3& p0, const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3, const glm::vec4& color);
-        void enterSelectionMode();
-        void exitSelectionMode();
         void beginSelection();
         void endSelection();
         void isSelecting();
@@ -84,28 +84,30 @@ namespace UITool {
             this->color = color;
         };
 
+        void enterSelectionMode() {
+            if(!this->isActive)
+                return;
+            this->isInSelectionMode = true;
+        }
+
+        void exitSelectionMode() {
+            this->isInSelectionMode = false;
+            this->isSelected = false;
+            Q_EMIT needToRedrawSelection(glm::vec3(0., 0., 0.), glm::vec3(0., 0., 0.), glm::vec3(0., 0., 0.), glm::vec3(0., 0., 0.), this->color);
+            Q_EMIT endSelection();
+        }
+
         void keyPressed(QKeyEvent* e){
-            if(!this->isInSelectionMode && e->key() == Qt::Key_Control && !e->isAutoRepeat()) {
-                std::cout << "Enter selection mode" << std::endl;
-                Q_EMIT enterSelectionMode();
-                this->isInSelectionMode = true;
-            }
         };
 
         void keyReleased(QKeyEvent* e){
-            if(this->isInSelectionMode && e->key() == Qt::Key_Control && !e->isAutoRepeat()) {
-                std::cout << "Exit selection mode" << std::endl;
-                Q_EMIT exitSelectionMode();
-                this->isInSelectionMode = false;
-                this->isSelected = false;
-                Q_EMIT needToRedrawSelection(glm::vec3(0., 0., 0.), glm::vec3(0., 0., 0.), glm::vec3(0., 0., 0.), glm::vec3(0., 0., 0.), this->color);
-                Q_EMIT endSelection();
-            }
         };
 
         void mousePressEvent( QMouseEvent* const e, qglviewer::Camera* const camera) override {
+            std::cout << "Mouse press event" << std::endl;
             if(this->isInSelectionMode) {
                 this->isSelected = true;
+                std::cout << "IsSelected is activated" << std::endl;
                 Q_EMIT beginSelection();
             }
         };
@@ -196,6 +198,7 @@ namespace UITool {
         virtual void needChangeCursor(UITool::CursorType cursorType) = 0;
         virtual void needChangeCursorInPlanarView(UITool::CursorType cursorType) = 0;
         virtual void needChangeSelectedPoints(std::pair<int, glm::vec3> selectedPoint) = 0;
+        virtual void needUpdateSceneCenter() = 0;
     };
 }
 Q_DECLARE_INTERFACE(UITool::MeshManipulator, "MeshManipulator")
@@ -239,11 +242,13 @@ namespace UITool {
         void needChangeCursor(UITool::CursorType cursorType) override;
         void needChangeCursorInPlanarView(UITool::CursorType cursorType) override;
         void needChangeSelectedPoints(std::pair<int, glm::vec3> selectedPoint) override;
-	private:
+        void needUpdateSceneCenter() override;
+    private:
 		std::vector<Manipulator> manipulators;
         std::vector<bool> manipulatorsToDisplay;
         std::vector<bool> selectedManipulators;
-	};
+        bool meshIsModified;
+    };
 
     //! @ingroup uitools
 	class FreeManipulator : public QObject, public MeshManipulator {
@@ -279,13 +284,14 @@ namespace UITool {
         void needChangeCursor(UITool::CursorType cursorType) override;
         void needChangeCursorInPlanarView(UITool::CursorType cursorType) override;
         void needChangeSelectedPoints(std::pair<int, glm::vec3> selectedPoint) override;
+        void needUpdateSceneCenter() override;
         void rayIsCasted(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos);
 	private:
         void addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos);
 
 		Manipulator manipulator;
         bool active;
-	};
+    };
 
     //! @ingroup uitools
 	class PositionManipulator : public QObject, public MeshManipulator {
@@ -317,9 +323,11 @@ namespace UITool {
         void needChangeCursor(UITool::CursorType cursorType) override;
         void needChangeCursorInPlanarView(UITool::CursorType cursorType) override;
         void needChangeSelectedPoints(std::pair<int, glm::vec3> selectedPoint) override;
+        void needUpdateSceneCenter() override;
 
 	private:
         bool evenMode;
+        bool meshIsModified;
 	};
 
 	/// @ingroup uitools
@@ -363,6 +371,7 @@ namespace UITool {
         void needChangeCursor(UITool::CursorType cursorType) override;
         void needChangeCursorInPlanarView(UITool::CursorType cursorType) override;
         void needChangeSelectedPoints(std::pair<int, glm::vec3> selectedPoint) override;
+        void needUpdateSceneCenter() override;
         void rayIsCasted(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos);
         void pointIsClickedInPlanarViewer(const glm::vec3& position);
 
@@ -405,10 +414,11 @@ namespace UITool {
 	class ARAPManipulator : public QObject, public MeshManipulator {
         Q_OBJECT
         Q_INTERFACES(UITool::MeshManipulator)
+        /// NEW
+    public:
 
-	public:
-		ARAPManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions);
-		~ARAPManipulator();
+        ARAPManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions);
+        ~ARAPManipulator();
 
         void setAllManipulatorsPosition(const std::vector<glm::vec3>& positions) override;
         void getAllPositions(std::vector<glm::vec3>& positions) override;
@@ -417,28 +427,11 @@ namespace UITool {
         void getManipulatorsToDisplay(std::vector<bool>& toDisplay) const override;
 
     public slots:
-        void displayManipulator(Manipulator * manipulatorToDisplay);
-        void hideManipulator(Manipulator * manipulatorToDisplay);
-
-        void moveManipulator(Manipulator * manipulator);
-        void selectManipulator(Manipulator * manipulator);
-        void deselectManipulator(Manipulator * manipulator);
-        void toggleMode();
         void keyPressed(QKeyEvent* e) override;
         void keyReleased(QKeyEvent* e) override;
         void mousePressed(QMouseEvent*e) override;
         void mouseReleased(QMouseEvent*e) override;
-        void checkSelectedManipulators();
-        void moveKidManip();
-        glm::vec3 getMeanPositionSelectedManipulators();
-        void resetMinAndMax() {
-            this->selectionMax = glm::vec3(-1000000., -1000000., -1000000);
-            this->selectionMin = glm::vec3(1000000., 1000000., 1000000);
-        }
-        void initializeSelection();
-        void setLockAllManipulators(bool lock);
-        void toggleEvenMode();
-        void initializeKidManipWithSelection();
+        void toggleEvenMode(bool value);
 
     signals:
         void needRedraw() override;
@@ -447,22 +440,31 @@ namespace UITool {
         void needChangeCursor(UITool::CursorType cursorType) override;
         void needChangeCursorInPlanarView(UITool::CursorType cursorType) override;
         void needChangeSelectedPoints(std::pair<int, glm::vec3> selectedPoint) override;
-        void needPushHandleButton();
+        void needUpdateSceneCenter() override;
 
-	private:
+    protected:
+        enum SelectionMode { INACTIVE , ACTIVE , ADD_FIXED , ADD_MOVING , REMOVE };
+        bool debug_mode = true;
+        void print_debug(const char * text);
+        void updateSelection();
+        void computeManipulatorFromSelection();
+        void setPositions(std::vector<glm::vec3>& positions);
+        void moveGuizmo();
+        void makeSelecteFixedHandles();
+        void moveOneManipulator();
+
+        std::vector<bool> getHandles();
+
+        std::vector<bool> selectedVertices;
+        std::vector<bool> fixedVertices;
 		std::vector<Manipulator> manipulators;
-        std::vector<bool> manipulatorsToDisplay;
-        std::vector<bool> selectedManipulators;
-        std::vector<bool> handles;
 
-        std::vector<int> selectedManipulatorsIdx;
+        std::vector<bool> manipulatorsAtRangeForGrab;
 
-        bool moveMode;
-        bool addMode;
-
-        glm::vec3 selectionMin;
-        glm::vec3 selectionMax;
-	};
+    private:
+        SelectionMode selectionMode;
+        bool meshIsModified;
+    };
 
 	class SliceManipulator : public QObject, public MeshManipulator {
         Q_OBJECT
@@ -508,7 +510,8 @@ namespace UITool {
         void needChangeCursor(UITool::CursorType cursorType) override;
         void needChangeCursorInPlanarView(UITool::CursorType cursorType) override;
         void needChangeSelectedPoints(std::pair<int, glm::vec3> selectedPoint) override;
-	private:
+        void needUpdateSceneCenter() override;
+    private:
 		std::vector<Manipulator> manipulators;
         std::vector<bool> manipulatorsToDisplay;
         std::vector<bool> selectedManipulators;
@@ -557,6 +560,7 @@ namespace UITool {
         void needChangeCursor(UITool::CursorType cursorType) override;
         void needChangeCursorInPlanarView(UITool::CursorType cursorType) override;
         void needChangeSelectedPoints(std::pair<int, glm::vec3> selectedPoint) override;
+        void needUpdateSceneCenter() override;
         void pointIsClickedInPlanarViewer(const glm::vec3& position);
         void rayIsCasted(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos);
         void needChangeActivatePreviewPoint(bool preview);

@@ -23,6 +23,7 @@
 // libQGLViewer :
 #include <QGLViewer/qglviewer.h>
 // glm include :
+#include <cstdint>
 #include <glm/glm.hpp>
 // STD headers :
 #include <mutex>
@@ -196,6 +197,7 @@ private:
     GLuint program_VolumetricViewer;
     GLuint program_BoundingBox;
     GLuint program_sphere;
+    GLuint program_doublePass;
     /*************************************************/
 
     /* VAO */
@@ -237,6 +239,25 @@ private:
     GLuint pos_idx;
     /*************************************************/
 
+    /* Dual pass rendering */
+
+    /* Quad rendering */
+    GLuint quad_VertexArrayID;// for drawing a quad
+    GLuint quad_TexCoord;
+    GLuint quad_vertexbuffer;
+    GLint quad_programId;
+
+    GLint defaultFBO;
+    GLuint frameBuffer;
+    GLuint frameDepthBuffer;
+    // Size of the dual rendering texture
+    int h;
+    int w;
+    GLuint dualRenderingTexture;
+    GLuint dualRenderingTextureDepth;
+
+    /*************************************************/
+
     GLuint sphere_size_to_draw;
     std::unique_ptr<ShaderCompiler> shaderCompiler;
     void printAllUniforms(GLuint _shader_program);
@@ -257,6 +278,7 @@ public:
 
     GLuint createUniformBuffer(std::size_t size_bytes, GLenum draw_mode);
     void setUniformBufferData(GLuint uniform_buffer, std::size_t begin_bytes, std::size_t size_bytes, GLvoid* data);
+    void setRenderSize(int h, int w);
 
     GLuint updateFBOOutputs(glm::ivec2 dimensions, GLuint fb_handle, GLuint old_texture = 0);
     glm::vec4 readFramebufferContents(GLuint fb_handle, glm::ivec2 image_coordinates);
@@ -268,7 +290,7 @@ public:
     /* Draws */
     void draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool showTexOnPlane);
 
-    void drawGridVolumetricView(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, const GridGLView::Ptr& grid);
+    void drawGridVolumetricView(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, const GridGLView::Ptr& grid, bool inFrame = false);
     void drawGridPlaneView(GLfloat mvMat[], GLfloat pMat[], glm::mat4 baseMatrix, const GridGLView::Ptr& grid);
     void drawGridMonoPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading, float zoomRatio, glm::vec2 offset);
     void drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane = true);
@@ -276,7 +298,7 @@ public:
     /*************************************************/
 
     /* Uniform preparation */
-    void prepareUniformsGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const GridGLView::Ptr& _grid);
+    void prepareUniformsGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const GridGLView::Ptr& _grid, bool drawFront = false);
     void prepareUniformsGridPlaneView(GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, const GridGLView::Ptr& grid);// preps uniforms for a grid
     void prepareUniformsMonoPlaneView(planes _plane, planeHeading _heading, glm::vec2 fbDims, float zoomRatio, glm::vec2 offset, const GridGLView::Ptr& _grid);// prep the plane uniforms to draw in space
     void prepareUniformsPlanes(GLfloat* mvMat, GLfloat* pMat, planes _plane, const GridGLView::Ptr& grid, bool showTexOnPlane = true);// preps uniforms for a given plane
@@ -543,8 +565,7 @@ public slots:
     void toggleBindMeshToCageMove(const std::string& name);
 
     // ARAP
-    bool toggleARAPManipulatorMode();
-    void ARAPTool_toggleEvenMode();
+    void ARAPTool_toggleEvenMode(bool value);
 
     // FixedRegistration
     void applyFixedRegistrationTool();
@@ -557,6 +578,15 @@ public slots:
     void toggleWireframe(bool value);
     void setGridsToDraw(std::vector<int> indices);
     void setMultiGridRendering(bool value);
+    void setDrawOnlyBoundaries(bool value);
+    void setBlendFirstPass(float value);
+
+    // Segmented display
+    //void addRange(const std::string &gridName, uint16_t min) { this->addRange(gridName, min, min); }
+    //void addRange(const std::string &gridName, uint16_t min, uint16_t max);
+    //void removeRange(const std::string &gridName, uint16_t min, uint16_t max);
+    void resetRanges();
+    void addRange(uint16_t min, uint16_t max, glm::vec3 color = glm::vec3(1., 0., 0.));
 
     // ************************ //
 
@@ -585,7 +615,7 @@ public slots:
     void setColorChannel(ColorChannel mode);
     void sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend, bool sort = true);
     void sendFirstTetmeshToGPU();
-    uint16_t sendGridValuesToGPU(int gridIdx);
+    std::pair<uint16_t, uint16_t> sendGridValuesToGPU(int gridIdx);
     void setLightPosition(const glm::vec3& lighPosition);
     void previewPointInPlanarView(const glm::vec3& positionOfMouse3D);
     void setPreviewPointInPlanarView(bool preview) { this->previewCursorInPlanarView = preview; };
@@ -595,8 +625,8 @@ public slots:
     void openAtlas();
     void openIRM();
     bool openMesh(const std::string& name, const std::string& filename, const glm::vec4& color = glm::vec4(0.1, 0.5, 1.,0.85));
-    bool openCage(const std::string& name, const std::string& filename, BaseMesh * surfaceMeshToDeform, const bool MVC = true, const glm::vec4& color = glm::vec4(1., 0., 0., 0.3));
-    bool openCage(const std::string& name, const std::string& filename, const std::string& surfaceMeshToDeformName, const bool MVC = true, const glm::vec4& color = glm::vec4(1., 0., 0., 0.3));
+    bool openCage(const std::string& name, const std::string& filename, BaseMesh * surfaceMeshToDeform, const bool MVC = true, const glm::vec4& color = glm::vec4(1., 0., 0., 0.1));
+    bool openCage(const std::string& name, const std::string& filename, const std::string& surfaceMeshToDeformName, const bool MVC = true, const glm::vec4& color = glm::vec4(1., 0., 0., 0.1));
     bool linkCage(const std::string& cageName, BaseMesh * meshToDeform, const bool MVC);
 
     bool openGrid(const std::string& name, const std::vector<std::string>& imgFilenames, const int subsample, const glm::vec3& sizeVoxel, const glm::vec3& nbCubeGridTransferMesh = glm::vec3(5., 5., 5.));
@@ -610,6 +640,9 @@ public slots:
     Cage * getCage(const std::string& name);
     glm::vec3 getGridImgSize(const std::string& name);
     glm::vec3 getGridVoxelSize(const std::string &name);
+    std::pair<uint16_t, uint16_t> getGridMinMaxValues(const std::string &name);
+    std::pair<uint16_t, uint16_t> getGridMinMaxValues();
+    std::vector<bool> getGridUsageValues(int minValue = 1);
     int getGridIdx(const std::string& name);
     int getGridIdxLinkToCage(const std::string& name);
     std::pair<glm::vec3, glm::vec3> getBbox(const std::string& name);
@@ -622,6 +655,7 @@ public slots:
     DrawableMesh * getDrawableMesh(const std::string& name);
     bool isGrid(const std::string& name);
     bool isCage(const std::string& name);
+    bool hasTwoOrMoreGrids();
     void changeSceneRadius(float sceneRadius);
     float getSceneRadius();
     void updateSceneCenter();
@@ -650,6 +684,8 @@ public:
 
     bool sortingRendering;
     bool multiGridRendering;
+    bool drawOnlyBoundaries;
+    float blendFirstPass;
     bool displayGrid;
     bool displayMesh;
     bool previewCursorInPlanarView;

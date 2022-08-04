@@ -53,6 +53,9 @@ uniform vec3 voxelGridSize;
 uniform vec3 voxelSize;
 
 uniform uint mainChannelIndex;						// The index of the main channel in the voxel data
+uniform sampler1D valuesRangeToDisplay;
+uniform sampler1D colorRangeToDisplay;
+uniform float maxValue;
 uniform sampler1D colorScales[4];					// All the color scales available (all encoded as 1D textures)
 layout(std140) uniform ColorBlock {
 	colorChannelAttributes attributes[4];	// Color attributes laid out in this way : [ main, R, G, B ]
