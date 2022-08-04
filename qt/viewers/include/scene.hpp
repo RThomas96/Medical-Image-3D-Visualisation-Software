@@ -540,6 +540,12 @@ public slots:
     // Connected to UI //
     // *************** //
 
+    void writeDeformedImage(const std::string& filename, const std::string& gridName);
+    void sampleGridMapping(const std::string& fileName, const std::string& from, const std::string& to, const glm::vec3& resolution, Interpolation::Method interpolationMethod);
+    void writeMapping(const std::string& fileName, const std::string& from, const std::string& to);
+    void writeGreyscaleTIFFImage(const std::string& filename, const glm::vec3& imgDimensions, const std::vector<std::vector<uint16_t>>& data);
+    void writeDeformation(const std::string& filename, const std::string& gridNameValues, const std::string& gridNameSample);
+
     // Tool management
     void updateTools(UITool::MeshManipulatorType tool);
 
@@ -549,10 +555,6 @@ public slots:
     void redo();
     void reset();
     glm::vec3 getTransformedPoint(const glm::vec3& inputPoint, const std::string& from, const std::string& to);
-    void sampleGridMapping(const std::string& fileName, const std::string& from, const std::string& to, const glm::vec3& resolution, Interpolation::Method interpolationMethod);
-    void writeMapping(const std::string& fileName, const std::string& from, const std::string& to);
-    void writeGreyscaleTIFFImage(const std::string& filename, const glm::vec3& imgDimensions, const std::vector<std::vector<uint16_t>>& data);
-    void writeDeformation(const std::string& filename, const std::string& gridNameValues, const std::string& gridNameSample);
     void getDeformation(const std::string& gridNameValues, const std::string& gridNameSample, std::vector<std::vector<uint16_t>>& data);
     void getValues(const std::string &gridName, const glm::vec3 &slice, const std::pair<glm::vec3, glm::vec3> &area, const glm::vec3 &resolution, std::vector<uint16_t> &data, Interpolation::Method interpolationMethod);
     void getValues(const std::string &gridName, const std::pair<glm::vec3, glm::vec3> &area, const glm::vec3 &resolution, std::vector<std::vector<uint16_t> > &data, Interpolation::Method interpolationMethod);

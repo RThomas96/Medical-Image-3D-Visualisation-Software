@@ -125,9 +125,9 @@ void MainWidget::setupWidgets() {
 
     //this->toolbar->addAction(this->actionManager->getAction("SaveImage"));
 
-    //this->toolbar->addAction(this->actionManager->getAction("Layout1View"));
-    //this->toolbar->addAction(this->actionManager->getAction("Layout2View"));
-    //this->toolbar->addAction(this->actionManager->getAction("Layout4View"));
+    this->toolbar->addAction(this->actionManager->getAction("Layout1View"));
+    this->toolbar->addAction(this->actionManager->getAction("Layout2View"));
+    this->toolbar->addAction(this->actionManager->getAction("Layout4View"));
 
     this->toolbar->addSeparator();
 
@@ -531,8 +531,12 @@ void MainWidget::setupActions() {
 
     this->actionManager->createQActionButton("SaveImage", "Export image...", "", "Save the deformed image", "");
     QObject::connect(this->actionManager->getAction("SaveImage"), &QAction::triggered, [this](){
-            this->updateForms();
-            this->saveImageForm->show();
+            FileChooser * fileChooser = new FileChooser("File", FileChooserType::SAVE, FileChooserFormat::TIFF);
+            fileChooser->click();
+            if(!fileChooser->filename.isEmpty()) {
+                this->scene->writeDeformedImage(fileChooser->filename.toStdString(), this->combo_mesh->itemText(this->combo_mesh->currentIndex()).toStdString());
+            }
+            delete fileChooser;
     });
 
     this->actionManager->createMenuButton("SaveMenu", "Save", "Save the current cage", "saveDeformedImage", {"SaveImage", "SaveAsImage", "-", "SaveCage", "SaveAsCage"});

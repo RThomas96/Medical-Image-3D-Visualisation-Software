@@ -4315,6 +4315,7 @@ void Scene::reset() {
 }
 
 void Scene::sampleGridMapping(const std::string& fileName, const std::string& from, const std::string& to, const glm::vec3& resolution, Interpolation::Method interpolationMethod) {
+
     auto start = std::chrono::steady_clock::now();
 
     omp_set_nested(true);
@@ -4440,6 +4441,84 @@ void Scene::writeMapping(const std::string& fileName, const std::string& from, c
     }
 
     this->writeGreyscaleTIFFImage(fileName, fromDimensions, img);
+}
+
+void Scene::writeDeformedImage(const std::string& filename, const std::string& gridName) {
+    auto start = std::chrono::steady_clock::now();
+    Grid * fromGrid = this->grids[this->getGridIdx(gridName)]->grid;
+
+    auto fromWorldToImage = [&](glm::vec3& p, bool ceil) {
+        p -= fromGrid->bbMin;
+        for(int i = 0; i < 3; ++i) {
+            if(ceil)
+                p[i] = std::ceil(p[i]/fromGrid->getVoxelSize()[i]); 
+            else
+                p[i] = std::floor(p[i]/fromGrid->getVoxelSize()[i]); 
+        }
+    };
+
+    auto getWorldCoordinates = [&](glm::vec3& p) {
+        for(int i = 0; i < 3; ++i) {
+            p[i] = (p[i]+0.5) * fromGrid->getVoxelSize()[i];
+        }
+        p += fromGrid->bbMin;
+    };
+
+    // STEP1: compute the deformed voxel grid size
+    glm::vec3 worldSize = fromGrid->getDimensions();
+    glm::vec3 voxelSize = fromGrid->getVoxelSize();
+
+    glm::ivec3 n(0, 0, 0);
+    for(int i = 0 ; i < 3 ; i++) {
+        n[i] = std::ceil(fabs(worldSize[i])/voxelSize[i])+1;
+    }
+
+    std::vector<std::vector<uint16_t>> img = std::vector<std::vector<uint16_t>>(n.z, std::vector<uint16_t>(n.x * n.y, 0.));
+
+    #pragma omp parallel for schedule(static)
+    for(int tetIdx = 0; tetIdx < fromGrid->mesh.size(); ++tetIdx) {
+        std::cout << "Tet: " << tetIdx << "/" << fromGrid->mesh.size() << std::endl;
+        const Tetrahedron& tet = fromGrid->mesh[tetIdx];
+        glm::vec3 bbMin = tet.getBBMin();
+        glm::vec3 bbMax = tet.getBBMax();
+        fromWorldToImage(bbMin, false);
+        fromWorldToImage(bbMax, true);
+        int X = bbMax.x;
+        int Y = bbMax.y;
+        int Z = bbMax.z;
+        for(int k = bbMin.z; k < Z; ++k) {
+            for(int j = bbMin.y; j < Y; ++j) {
+                for(int i = bbMin.x; i < X; ++i) {
+                    glm::vec3 p(i, j, k);
+                    getWorldCoordinates(p);
+                    //if(tet.isInTetrahedron(p)) {
+                        if(fromGrid->getCoordInInitial(fromGrid->initialMesh, p, p, tetIdx)) {
+                            int insertIdx = i + j*n[0];
+                            if(insertIdx >= img[0].size()) {
+                                std::cout << "ERROR:" << std::endl;
+                                std::cout << "i:" << i << std::endl;
+                                std::cout << "j:" << j << std::endl;
+                                std::cout << "k:" << k << std::endl;
+                                std::cout << "p:" << p << std::endl;
+                            }
+
+                            if(img[k][insertIdx] == 0) {
+                                //img[k][insertIdx] = fromGrid->getValueFromPoint(p, Interpolation::Method::Linear);
+                                img[k][insertIdx] = fromGrid->getValueFromPoint(p);
+                            }
+                        }
+                    //}
+                }
+            }
+        }
+    }
+
+    this->writeGreyscaleTIFFImage(filename, n, img);
+
+    auto end = std::chrono::steady_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end-start;
+    std::cout << "Duration time: " << elapsed_seconds.count() << "s / " << elapsed_seconds.count()/60. << "m" << std::endl;
+
 }
 
 glm::vec3 Scene::getTransformedPoint(const glm::vec3& inputPoint, const std::string& from, const std::string& to) {
@@ -4675,3 +4754,4 @@ void Scene::addRange(uint16_t min, uint16_t max, glm::vec3 color) {
 bool Scene::hasTwoOrMoreGrids() {
    return grids.size() >= 2;
 }
+
