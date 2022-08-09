@@ -51,6 +51,11 @@ struct Sampler {
 
     uint16_t getValue(const glm::vec3& coord, Interpolation::Method interpolationMethod = Interpolation::Method::NearestNeighbor, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
 
+    template<typename DataType>
+    DataType getValue(const glm::vec3& coord) const {
+        return this->image->getValue<DataType>(coord * this->resolutionRatio);
+    }
+
     Image::ImageDataType getInternalDataType() const;
 
     glm::vec3 getSamplerDimension() const;
@@ -63,9 +68,9 @@ struct Sampler {
     glm::vec3 getImageDimensions() const;
 
     std::vector<int> getHistogram(int nbBins) const;
+    SimpleImage * image;
 private:
     void fillCache();
-    SimpleImage * image;
 };
 
 //! @brief Struct able to make the link between the grid and its 3D representation
@@ -105,6 +110,21 @@ struct Grid : public TetMesh {
     uint16_t getDeformedValueFromPoint(const TetMesh& initial, const glm::vec3& p, Interpolation::Method interpolationMethod = Interpolation::Method::NearestNeighbor, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
     uint16_t getValueFromPoint(const glm::vec3& coord, Interpolation::Method interpolationMethod = Interpolation::Method::NearestNeighbor, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
     uint16_t getValueFromWorldPoint(const glm::vec3& coord, Interpolation::Method interpolationMethod = Interpolation::Method::NearestNeighbor, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
+
+    template<typename DataType>
+    DataType getValueFromPointGeneric(const glm::vec3& coord) const {
+        bool isInBBox = true;
+        for(int i = 0; i < 3; ++i) {
+            if(coord[i] < this->sampler.bbMin[i] || coord[i] > this->sampler.bbMax[i])
+                isInBBox = false;
+        }
+        if(isInBBox) {
+            return this->sampler.getValue<DataType>(coord);
+        } else {
+            // Background value
+            return static_cast<DataType>(0);
+        }
+    }
 
     bool getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos, glm::vec3& res) const override;
 

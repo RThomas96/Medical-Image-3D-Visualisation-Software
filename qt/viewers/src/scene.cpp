@@ -16,6 +16,7 @@
 
 #include <chrono>
 #include <utility>
+#include <map>
 
 #include "../../grid/geometry/grid.hpp"
 #include "../../grid/drawable/drawable_manipulator.hpp"
@@ -4444,6 +4445,157 @@ void Scene::writeMapping(const std::string& fileName, const std::string& from, c
 }
 
 void Scene::writeDeformedImage(const std::string& filename, const std::string& gridName) {
+    Grid * fromGrid = this->grids[this->getGridIdx(gridName)]->grid;
+    this->writeDeformedImageGeneric(filename, gridName, fromGrid->sampler.getInternalDataType());
+}
+
+void Scene::writeDeformedImageGeneric(const std::string& filename, const std::string& gridName, Image::ImageDataType imgDataType) {
+    if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_8)) {
+        this->writeDeformedImageTemplated<uint8_t>(filename, gridName, 8, imgDataType);
+    } else if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_16)) {
+        this->writeDeformedImageTemplated<uint16_t>(filename, gridName, 16, imgDataType);
+    } else if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_32)) {
+        this->writeDeformedImageTemplated<uint32_t>(filename, gridName, 32, imgDataType);
+    } else if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_64)) {
+        this->writeDeformedImageTemplated<uint64_t>(filename, gridName, 64, imgDataType);
+    } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_8)) {
+        this->writeDeformedImageTemplated<int8_t>(filename, gridName, 8, imgDataType);
+    } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_16)) {
+        this->writeDeformedImageTemplated<int16_t>(filename, gridName, 16, imgDataType);
+    } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_32)) {
+        this->writeDeformedImageTemplated<int32_t>(filename, gridName, 32, imgDataType);
+    } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_64)) {
+        this->writeDeformedImageTemplated<int64_t>(filename, gridName, 64, imgDataType);
+    } else if(imgDataType == (Image::ImageDataType::Floating | Image::ImageDataType::Bit_32)) {
+        this->writeDeformedImageTemplated<float>(filename, gridName, 32, imgDataType);
+    } else if(imgDataType == (Image::ImageDataType::Floating | Image::ImageDataType::Bit_64)) {
+        this->writeDeformedImageTemplated<double>(filename, gridName, 64, imgDataType);
+    } 
+}
+
+template<typename DataType>
+void Scene::writeDeformedImageTemplated(const std::string& filename, const std::string& gridName, int bit, Image::ImageDataType dataType) {
+    bool useParallel = true;
+
+    auto start = std::chrono::steady_clock::now();
+
+    Grid * fromGrid = this->grids[this->getGridIdx(gridName)]->grid;
+
+    auto fromWorldToImage = [&](glm::vec3& p, bool ceil) {
+        p -= fromGrid->bbMin;
+        for(int i = 0; i < 3; ++i) {
+            if(ceil)
+                p[i] = std::ceil(p[i]/fromGrid->getVoxelSize()[i]); 
+            else
+                p[i] = std::floor(p[i]/fromGrid->getVoxelSize()[i]); 
+        }
+    };
+
+    auto getWorldCoordinates = [&](glm::vec3& p) {
+        for(int i = 0; i < 3; ++i) {
+            p[i] = (p[i] + 0.5) * fromGrid->getVoxelSize()[i];
+        }
+        p += fromGrid->bbMin;
+    };
+
+    // STEP1: compute the deformed voxel grid size
+    glm::vec3 worldSize = fromGrid->getDimensions();
+    glm::vec3 voxelSize = fromGrid->getVoxelSize();
+
+    glm::ivec3 n(0, 0, 0);
+    for(int i = 0 ; i < 3 ; i++) {
+        n[i] = std::ceil(fabs(worldSize[i])/voxelSize[i]);
+    }
+
+    TinyTIFFWriterFile * tif = nullptr;
+    if(dataType & Image::ImageDataType::Unsigned)
+        tif = TinyTIFFWriter_open(filename.c_str(), bit, TinyTIFFWriter_UInt, 1, n[0], n[1], TinyTIFFWriter_Greyscale);
+    else if(dataType & Image::ImageDataType::Signed)
+        tif = TinyTIFFWriter_open(filename.c_str(), bit, TinyTIFFWriter_Int, 1, n[0], n[1], TinyTIFFWriter_Greyscale);
+    else if(dataType & Image::ImageDataType::Floating)
+        tif = TinyTIFFWriter_open(filename.c_str(), bit, TinyTIFFWriter_Float, 1, n[0], n[1], TinyTIFFWriter_Greyscale);
+    else
+        std::cout << "WARNING: image data type no take in charge to export" << std::endl;
+
+    if(tif == nullptr)
+        return;
+
+    std::vector<std::vector<DataType>> img = std::vector<std::vector<DataType>>(n.z, std::vector<DataType>(n.x * n.y, 0.));
+
+    //int cacheSize = std::floor(fromGrid->sampler.image->tiffImageReader->imgResolution.z / 2.);
+    int cacheSize = std::floor(fromGrid->sampler.image->tiffImageReader->imgResolution.z / 4.);
+    std::map<int, std::vector<DataType>> cache;
+
+    if(useParallel)
+        for(int i = 0; i < fromGrid->sampler.image->tiffImageReader->imgResolution.z; ++i)
+            fromGrid->sampler.image->tiffImageReader->getImage<DataType>(i, cache[i], {glm::vec3(0., 0., 0.), fromGrid->sampler.image->tiffImageReader->imgResolution});
+
+    #pragma omp parallel for schedule(static) if(useParallel)
+    for(int tetIdx = 0; tetIdx < fromGrid->mesh.size(); ++tetIdx) {
+        std::cout << "Tet: " << tetIdx << "/" << fromGrid->mesh.size() << std::endl;
+        const Tetrahedron& tet = fromGrid->mesh[tetIdx];
+        glm::vec3 bbMin = tet.getBBMin();
+        glm::vec3 bbMax = tet.getBBMax();
+        fromWorldToImage(bbMin, false);
+        fromWorldToImage(bbMax, true);
+        int X = bbMax.x;
+        int Y = bbMax.y;
+        int Z = bbMax.z;
+        for(int k = bbMin.z; k < Z; ++k) {
+            for(int j = bbMin.y; j < Y; ++j) {
+                for(int i = bbMin.x; i < X; ++i) {
+                    glm::vec3 p(i, j, k);
+                    getWorldCoordinates(p);
+                    if(tet.isInTetrahedron(p)) {
+                        if(fromGrid->getCoordInInitial(fromGrid->initialMesh, p, p, tetIdx)) {
+                            int insertIdx = i + j*n[0];
+
+                            int imgIdxLoad = std::floor(p.z);
+
+                            int idxLoad = std::floor(p.x) + std::floor(p.y) * fromGrid->sampler.image->tiffImageReader->imgResolution.x;
+
+                            if(img[k][insertIdx] == 0) {
+
+                                bool isInBBox = true;
+                                for(int l = 0; l < 3; ++l) {
+                                    if(p[l] < 0. || p[l] >= fromGrid->sampler.image->tiffImageReader->imgResolution[l])
+                                        isInBBox = false;
+                                }
+
+                                if(isInBBox) {
+                                    bool imgAlreadyLoaded = cache.find(imgIdxLoad) != cache.end();
+                                    if(!imgAlreadyLoaded) {
+                                        if(cache.size() > cacheSize) {
+                                            cache.erase(cache.begin());
+                                        }
+                                        std::cout << "Load image: " << imgIdxLoad << std::endl;
+                                        fromGrid->sampler.image->tiffImageReader->getImage<DataType>(imgIdxLoad, cache[imgIdxLoad], {glm::vec3(0., 0., 0.), fromGrid->sampler.image->tiffImageReader->imgResolution});
+                                    }
+                                    img[k][insertIdx] = cache[imgIdxLoad][idxLoad];
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    //this->writeGreyscaleTIFFImage(filename, n, img);
+
+    for(int i = 0; i < img.size(); ++i) {
+        TinyTIFFWriter_writeImage(tif, img[i].data());
+    }
+    TinyTIFFWriter_close(tif);
+    std::cout << "Destination: " << filename << std::endl;
+    std::cout << "Save sucessfull" << std::endl;
+
+    auto end = std::chrono::steady_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end-start;
+    std::cout << "Duration time: " << elapsed_seconds.count() << "s / " << elapsed_seconds.count()/60. << "m" << std::endl;
+}
+
+void Scene::writeDeformedImageLowRes(const std::string& filename, const std::string& gridName) {
     auto start = std::chrono::steady_clock::now();
     Grid * fromGrid = this->grids[this->getGridIdx(gridName)]->grid;
 
@@ -4473,7 +4625,7 @@ void Scene::writeDeformedImage(const std::string& filename, const std::string& g
         n[i] = std::ceil(fabs(worldSize[i])/voxelSize[i])+1;
     }
 
-    std::vector<std::vector<uint16_t>> img = std::vector<std::vector<uint16_t>>(n.z, std::vector<uint16_t>(n.x * n.y, 0.));
+    std::vector<std::vector<uint8_t>> img = std::vector<std::vector<uint8_t>>(n.z, std::vector<uint8_t>(n.x * n.y, 0.));
 
     #pragma omp parallel for schedule(static)
     for(int tetIdx = 0; tetIdx < fromGrid->mesh.size(); ++tetIdx) {
@@ -4504,7 +4656,7 @@ void Scene::writeDeformedImage(const std::string& filename, const std::string& g
 
                             if(img[k][insertIdx] == 0) {
                                 //img[k][insertIdx] = fromGrid->getValueFromPoint(p, Interpolation::Method::Linear);
-                                img[k][insertIdx] = fromGrid->getValueFromPoint(p);
+                                img[k][insertIdx] = static_cast<uint8_t>(fromGrid->getValueFromPoint(p));
                             }
                         }
                     //}
@@ -4513,7 +4665,15 @@ void Scene::writeDeformedImage(const std::string& filename, const std::string& g
         }
     }
 
-    this->writeGreyscaleTIFFImage(filename, n, img);
+    //this->writeGreyscaleTIFFImage(filename, n, img);
+
+    TinyTIFFWriterFile * tif = TinyTIFFWriter_open(filename.c_str(), 8, TinyTIFFWriter_UInt, 1, n[0], n[1], TinyTIFFWriter_Greyscale);
+    for(int i = 0; i < img.size(); ++i) {
+        TinyTIFFWriter_writeImage(tif, img[i].data());
+    }
+    TinyTIFFWriter_close(tif);
+    std::cout << "Destination: " << filename << std::endl;
+    std::cout << "Save sucessfull" << std::endl;
 
     auto end = std::chrono::steady_clock::now();
     std::chrono::duration<double> elapsed_seconds = end-start;

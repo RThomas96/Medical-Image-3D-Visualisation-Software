@@ -98,7 +98,9 @@ void MainWidget::setupWidgets() {
     this->toolbar->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
     //this->toolbar->addWidget(tabBar);
 
-    //this->toolbar->addAction(this->actionManager->getAction("Open"));
+    this->toolbar->addAction(this->actionManager->getAction("OpenImage"));
+    this->toolbar->addAction(this->actionManager->getAction("SaveImage"));
+
     //this->toolbar->addWidget(this->actionManager->getMenu("OpenMenu"));
 
     //this->toolbar->addWidget(this->actionManager->getMenu("SaveMenu"));
@@ -123,11 +125,9 @@ void MainWidget::setupWidgets() {
 
     this->toolbar->addSeparator();
 
-    //this->toolbar->addAction(this->actionManager->getAction("SaveImage"));
-
-    this->toolbar->addAction(this->actionManager->getAction("Layout1View"));
-    this->toolbar->addAction(this->actionManager->getAction("Layout2View"));
-    this->toolbar->addAction(this->actionManager->getAction("Layout4View"));
+    //this->toolbar->addAction(this->actionManager->getAction("Layout1View"));
+    //this->toolbar->addAction(this->actionManager->getAction("Layout2View"));
+    //this->toolbar->addAction(this->actionManager->getAction("Layout4View"));
 
     this->toolbar->addSeparator();
 
@@ -505,6 +505,7 @@ void MainWidget::setupActions() {
             this->combo_mesh->clear();
 
             this->actionManager->getAction("OpenImage")->setDisabled(false);
+            this->actionManager->getAction("SaveImage")->setDisabled(true);
             this->actionManager->getAction("ToggleDisplayMultiView")->setDisabled(true);
             this->actionManager->getAction("Transform")->setDisabled(true);
             this->actionManager->getAction("Boundaries")->setVisible(false);
@@ -529,12 +530,17 @@ void MainWidget::setupActions() {
             this->quickSaveCage->saveAs();
     });
 
-    this->actionManager->createQActionButton("SaveImage", "Export image...", "", "Save the deformed image", "");
+    this->actionManager->createQActionButton("SaveImage", "Export image...", "", "Save the deformed image", "save");
     QObject::connect(this->actionManager->getAction("SaveImage"), &QAction::triggered, [this](){
             FileChooser * fileChooser = new FileChooser("File", FileChooserType::SAVE, FileChooserFormat::TIFF);
             fileChooser->click();
+
+            std::string gridName = this->combo_mesh->itemText(this->combo_mesh->currentIndex()).toStdString();
             if(!fileChooser->filename.isEmpty()) {
-                this->scene->writeDeformedImage(fileChooser->filename.toStdString(), this->combo_mesh->itemText(this->combo_mesh->currentIndex()).toStdString());
+                if(scene->isCage(gridName)) {
+                    gridName = scene->grids_name[scene->getGridIdxLinkToCage(gridName)];
+                }
+                this->scene->writeDeformedImage(fileChooser->filename.toStdString(), gridName);
             }
             delete fileChooser;
     });
@@ -578,7 +584,7 @@ void MainWidget::setupActions() {
             this->planarViewer->initViewer("View_3");
     });
 
-    this->actionManager->createQActionButton("OpenImage", "Open image...", "Ctrl+O", "Open the image to deform", "");
+    this->actionManager->createQActionButton("OpenImage", "Open image...", "Ctrl+O", "Open the image to deform", "open");
     QObject::connect(this->actionManager->getAction("OpenImage"), &QAction::triggered, [this](){
             this->updateForms();
             this->openImageForm->show();

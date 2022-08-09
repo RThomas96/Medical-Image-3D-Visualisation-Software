@@ -488,6 +488,13 @@ public:
 public:
     SceneGL sceneGL;
 
+    void writeDeformedImageLowRes(const std::string& filename, const std::string& gridName);
+
+    void writeDeformedImage(const std::string& filename, const std::string& gridName);
+    void writeDeformedImageGeneric(const std::string& filename, const std::string& gridName, Image::ImageDataType imgDataType);
+    template<typename DataType>
+    void writeDeformedImageTemplated(const std::string& filename, const std::string& gridName, int bit, Image::ImageDataType dataType);
+
 signals:
     // Signals to the meshManipulator tools
     void keyPressed(QKeyEvent* e);
@@ -540,7 +547,6 @@ public slots:
     // Connected to UI //
     // *************** //
 
-    void writeDeformedImage(const std::string& filename, const std::string& gridName);
     void sampleGridMapping(const std::string& fileName, const std::string& from, const std::string& to, const glm::vec3& resolution, Interpolation::Method interpolationMethod);
     void writeMapping(const std::string& fileName, const std::string& from, const std::string& to);
     void writeGreyscaleTIFFImage(const std::string& filename, const glm::vec3& imgDimensions, const std::vector<std::vector<uint16_t>>& data);

@@ -144,18 +144,18 @@ public slots:
                 else if(this->format == FileChooserFormat::MESH)
 	                filename = QFileDialog::getOpenFileName(nullptr, "Open mesh file", QDir::currentPath(), "MESH files (*.mesh)", 0, QFileDialog::DontUseNativeDialog);
                 else
-                    filename = QFileDialog::getOpenFileName(nullptr, "Open mesh file", QDir::currentPath(), "MESH files (*.off)", 0, QFileDialog::DontUseNativeDialog);
+                    filename = QFileDialog::getOpenFileName(nullptr, "Open mesh file", QDir::currentPath(), "OFF files (*.off)", 0, QFileDialog::DontUseNativeDialog);
                 break;
 
             case FileChooserType::SAVE:
                 if(this->format == FileChooserFormat::TIFF)
 	                filename = QFileDialog::getSaveFileName(nullptr, "Select the image to save", QDir::currentPath(), tr("TIFF Files (*.tiff)"), 0, QFileDialog::DontUseNativeDialog);
                 else if(this->format == FileChooserFormat::MESH)
-                    filename = QFileDialog::getSaveFileName(nullptr, "Select the mesh to save", QDir::currentPath(), tr("OFF Files (*.off)"), 0, QFileDialog::DontUseNativeDialog);
+                    filename = QFileDialog::getSaveFileName(nullptr, "Select the mesh to save", QDir::currentPath(), tr("MESH Files (*.mesh)"), 0, QFileDialog::DontUseNativeDialog);
                 else if(this->format == FileChooserFormat::PATH)
                     filename = QFileDialog::getExistingDirectory(nullptr, "Select the directory to save", QDir::currentPath(), QFileDialog::DontUseNativeDialog);
                 else
-                    filename = QFileDialog::getSaveFileName(nullptr, "Select the mesh to save", QDir::currentPath(), tr("MESH Files (*.mesh)"), 0, QFileDialog::DontUseNativeDialog);
+                    filename = QFileDialog::getSaveFileName(nullptr, "Select the mesh to save", QDir::currentPath(), tr("OFF Files (*.off)"), 0, QFileDialog::DontUseNativeDialog);
                 break;
         }
         if(!filename.isEmpty()) {

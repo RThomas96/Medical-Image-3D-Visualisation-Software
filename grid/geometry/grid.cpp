@@ -592,7 +592,6 @@ void Sampler::init(const std::vector<std::string>& filename, int subsample, cons
     std::cout << "Subregion selected: " << this->subregionMin << " | " << this->subregionMax << std::endl;
 }
 
-
 void Sampler::setVoxelSize(const glm::vec3& voxelSize) {
     this->voxelSize = voxelSize;
 }

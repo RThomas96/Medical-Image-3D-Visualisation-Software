@@ -4,7 +4,6 @@
 #include <glm/gtx/io.hpp>
 #include <algorithm>
 #include <limits.h>
-#include <bitset>
 
 SimpleTIFFImage::SimpleTIFFImage(const std::vector<std::string>& filename): tiffReader(new TIFFReader(filename)) {
     this->imgResolution = this->tiffReader->getImageResolution();
