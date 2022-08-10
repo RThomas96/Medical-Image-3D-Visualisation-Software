@@ -4475,7 +4475,10 @@ void Scene::writeDeformedImageGeneric(const std::string& filename, const std::st
 
 template<typename DataType>
 void Scene::writeDeformedImageTemplated(const std::string& filename, const std::string& gridName, int bit, Image::ImageDataType dataType) {
-    bool useParallel = true;
+    // To expose as parameters
+    bool smallFile = true;
+    int cacheSize = 2;
+    bool useCustomColor = true;
 
     auto start = std::chrono::steady_clock::now();
 
@@ -4508,29 +4511,57 @@ void Scene::writeDeformedImageTemplated(const std::string& filename, const std::
     }
 
     TinyTIFFWriterFile * tif = nullptr;
-    if(dataType & Image::ImageDataType::Unsigned)
-        tif = TinyTIFFWriter_open(filename.c_str(), bit, TinyTIFFWriter_UInt, 1, n[0], n[1], TinyTIFFWriter_Greyscale);
-    else if(dataType & Image::ImageDataType::Signed)
-        tif = TinyTIFFWriter_open(filename.c_str(), bit, TinyTIFFWriter_Int, 1, n[0], n[1], TinyTIFFWriter_Greyscale);
-    else if(dataType & Image::ImageDataType::Floating)
-        tif = TinyTIFFWriter_open(filename.c_str(), bit, TinyTIFFWriter_Float, 1, n[0], n[1], TinyTIFFWriter_Greyscale);
-    else
-        std::cout << "WARNING: image data type no take in charge to export" << std::endl;
+    if(useCustomColor) {
+        tif = TinyTIFFWriter_open(filename.c_str(), 8, TinyTIFFWriter_UInt, 3, n[0], n[1], TinyTIFFWriter_RGB);
+    } else {
+        if(dataType & Image::ImageDataType::Unsigned)
+            tif = TinyTIFFWriter_open(filename.c_str(), bit, TinyTIFFWriter_UInt, 1, n[0], n[1], TinyTIFFWriter_Greyscale);
+        else if(dataType & Image::ImageDataType::Signed)
+            tif = TinyTIFFWriter_open(filename.c_str(), bit, TinyTIFFWriter_Int, 1, n[0], n[1], TinyTIFFWriter_Greyscale);
+        else if(dataType & Image::ImageDataType::Floating)
+            tif = TinyTIFFWriter_open(filename.c_str(), bit, TinyTIFFWriter_Float, 1, n[0], n[1], TinyTIFFWriter_Greyscale);
+        else
+            std::cout << "WARNING: image data type no take in charge to export" << std::endl;
+    }
 
     if(tif == nullptr)
         return;
 
     std::vector<std::vector<DataType>> img = std::vector<std::vector<DataType>>(n.z, std::vector<DataType>(n.x * n.y, 0.));
 
-    //int cacheSize = std::floor(fromGrid->sampler.image->tiffImageReader->imgResolution.z / 2.);
-    int cacheSize = std::floor(fromGrid->sampler.image->tiffImageReader->imgResolution.z / 4.);
+    std::vector<std::vector<uint8_t>> img_color;
+
+    std::vector<bool> data;
+    std::vector<glm::vec3> data_color;
+
+    if(useCustomColor) {
+        img_color = std::vector<std::vector<uint8_t>>(n.z, std::vector<uint8_t>(n.x * n.y * 3, 0));
+
+        auto upperGrid = this->grids[this->getGridIdx(gridName)];
+        float maxValue = upperGrid->maxValue;
+
+        for(int i = 0; i <= maxValue; ++i) {
+            data.push_back(false);
+            data_color.push_back(glm::vec3(0., 0., 0.));
+        }
+        for(int i = 0; i < upperGrid->visu.size(); ++i) {
+            for(int j = upperGrid->visu[i].first; j <= upperGrid->visu[i].second; ++j) {
+                if(j < data.size()) {
+                    data[j] = true;
+                    data_color[j] = upperGrid->visu_color[i];
+                }
+            }
+        }
+    }
+
+    int cacheMaxNb = std::floor(fromGrid->sampler.image->tiffImageReader->imgResolution.z / float(cacheSize));
     std::map<int, std::vector<DataType>> cache;
 
-    if(useParallel)
+    if(smallFile)
         for(int i = 0; i < fromGrid->sampler.image->tiffImageReader->imgResolution.z; ++i)
             fromGrid->sampler.image->tiffImageReader->getImage<DataType>(i, cache[i], {glm::vec3(0., 0., 0.), fromGrid->sampler.image->tiffImageReader->imgResolution});
 
-    #pragma omp parallel for schedule(static) if(useParallel)
+    #pragma omp parallel for schedule(static) if(smallFile)
     for(int tetIdx = 0; tetIdx < fromGrid->mesh.size(); ++tetIdx) {
         std::cout << "Tet: " << tetIdx << "/" << fromGrid->mesh.size() << std::endl;
         const Tetrahedron& tet = fromGrid->mesh[tetIdx];
@@ -4565,13 +4596,23 @@ void Scene::writeDeformedImageTemplated(const std::string& filename, const std::
                                 if(isInBBox) {
                                     bool imgAlreadyLoaded = cache.find(imgIdxLoad) != cache.end();
                                     if(!imgAlreadyLoaded) {
-                                        if(cache.size() > cacheSize) {
+                                        if(cache.size() > cacheMaxNb) {
                                             cache.erase(cache.begin());
                                         }
-                                        std::cout << "Load image: " << imgIdxLoad << std::endl;
                                         fromGrid->sampler.image->tiffImageReader->getImage<DataType>(imgIdxLoad, cache[imgIdxLoad], {glm::vec3(0., 0., 0.), fromGrid->sampler.image->tiffImageReader->imgResolution});
                                     }
-                                    img[k][insertIdx] = cache[imgIdxLoad][idxLoad];
+                                    if(useCustomColor) {
+                                        uint16_t value = fromGrid->getValueFromPoint(p);
+                                        if(data[value]) {
+                                            glm::vec3 color = data_color[value];
+                                            insertIdx *= 3;
+                                            img_color[k][insertIdx] = static_cast<uint8_t>(color.r * 255.);
+                                            img_color[k][insertIdx+1] = static_cast<uint8_t>(color.g * 255.);
+                                            img_color[k][insertIdx+2] = static_cast<uint8_t>(color.b * 255.);
+                                        }
+                                    } else {
+                                        img[k][insertIdx] = cache[imgIdxLoad][idxLoad];
+                                    }
                                 }
                             }
                         }
@@ -4583,8 +4624,14 @@ void Scene::writeDeformedImageTemplated(const std::string& filename, const std::
 
     //this->writeGreyscaleTIFFImage(filename, n, img);
 
-    for(int i = 0; i < img.size(); ++i) {
-        TinyTIFFWriter_writeImage(tif, img[i].data());
+    if(useCustomColor) {
+        for(int i = 0; i < img_color.size(); ++i) {
+            TinyTIFFWriter_writeImage(tif, img_color[i].data());
+        }
+    } else {
+        for(int i = 0; i < img.size(); ++i) {
+            TinyTIFFWriter_writeImage(tif, img[i].data());
+        }
     }
     TinyTIFFWriter_close(tif);
     std::cout << "Destination: " << filename << std::endl;
