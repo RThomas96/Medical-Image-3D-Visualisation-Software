@@ -490,10 +490,10 @@ public:
 
     void writeDeformedImageLowRes(const std::string& filename, const std::string& gridName);
 
-    void writeDeformedImage(const std::string& filename, const std::string& gridName);
-    void writeDeformedImageGeneric(const std::string& filename, const std::string& gridName, Image::ImageDataType imgDataType);
+    void writeDeformedImage(const std::string& filename, const std::string& gridName, bool useColorMap);
+    void writeDeformedImageGeneric(const std::string& filename, const std::string& gridName, Image::ImageDataType imgDataType, bool useColorMap);
     template<typename DataType>
-    void writeDeformedImageTemplated(const std::string& filename, const std::string& gridName, int bit, Image::ImageDataType dataType);
+    void writeDeformedImageTemplated(const std::string& filename, const std::string& gridName, int bit, Image::ImageDataType dataType, bool useColorMap);
 
 signals:
     // Signals to the meshManipulator tools

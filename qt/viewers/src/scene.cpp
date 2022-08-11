@@ -4444,45 +4444,48 @@ void Scene::writeMapping(const std::string& fileName, const std::string& from, c
     this->writeGreyscaleTIFFImage(fileName, fromDimensions, img);
 }
 
-void Scene::writeDeformedImage(const std::string& filename, const std::string& gridName) {
+void Scene::writeDeformedImage(const std::string& filename, const std::string& gridName, bool useColorMap) {
     Grid * fromGrid = this->grids[this->getGridIdx(gridName)]->grid;
-    this->writeDeformedImageGeneric(filename, gridName, fromGrid->sampler.getInternalDataType());
+    this->writeDeformedImageGeneric(filename, gridName, fromGrid->sampler.getInternalDataType(), useColorMap);
 }
 
-void Scene::writeDeformedImageGeneric(const std::string& filename, const std::string& gridName, Image::ImageDataType imgDataType) {
+void Scene::writeDeformedImageGeneric(const std::string& filename, const std::string& gridName, Image::ImageDataType imgDataType, bool useColorMap) {
     if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_8)) {
-        this->writeDeformedImageTemplated<uint8_t>(filename, gridName, 8, imgDataType);
+        this->writeDeformedImageTemplated<uint8_t>(filename, gridName, 8, imgDataType, useColorMap);
     } else if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_16)) {
-        this->writeDeformedImageTemplated<uint16_t>(filename, gridName, 16, imgDataType);
+        this->writeDeformedImageTemplated<uint16_t>(filename, gridName, 16, imgDataType, useColorMap);
     } else if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_32)) {
-        this->writeDeformedImageTemplated<uint32_t>(filename, gridName, 32, imgDataType);
+        this->writeDeformedImageTemplated<uint32_t>(filename, gridName, 32, imgDataType, useColorMap);
     } else if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_64)) {
-        this->writeDeformedImageTemplated<uint64_t>(filename, gridName, 64, imgDataType);
+        this->writeDeformedImageTemplated<uint64_t>(filename, gridName, 64, imgDataType, useColorMap);
     } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_8)) {
-        this->writeDeformedImageTemplated<int8_t>(filename, gridName, 8, imgDataType);
+        this->writeDeformedImageTemplated<int8_t>(filename, gridName, 8, imgDataType, useColorMap);
     } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_16)) {
-        this->writeDeformedImageTemplated<int16_t>(filename, gridName, 16, imgDataType);
+        this->writeDeformedImageTemplated<int16_t>(filename, gridName, 16, imgDataType, useColorMap);
     } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_32)) {
-        this->writeDeformedImageTemplated<int32_t>(filename, gridName, 32, imgDataType);
+        this->writeDeformedImageTemplated<int32_t>(filename, gridName, 32, imgDataType, useColorMap);
     } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_64)) {
-        this->writeDeformedImageTemplated<int64_t>(filename, gridName, 64, imgDataType);
+        this->writeDeformedImageTemplated<int64_t>(filename, gridName, 64, imgDataType, useColorMap);
     } else if(imgDataType == (Image::ImageDataType::Floating | Image::ImageDataType::Bit_32)) {
-        this->writeDeformedImageTemplated<float>(filename, gridName, 32, imgDataType);
+        this->writeDeformedImageTemplated<float>(filename, gridName, 32, imgDataType, useColorMap);
     } else if(imgDataType == (Image::ImageDataType::Floating | Image::ImageDataType::Bit_64)) {
-        this->writeDeformedImageTemplated<double>(filename, gridName, 64, imgDataType);
+        this->writeDeformedImageTemplated<double>(filename, gridName, 64, imgDataType, useColorMap);
     } 
 }
 
 template<typename DataType>
-void Scene::writeDeformedImageTemplated(const std::string& filename, const std::string& gridName, int bit, Image::ImageDataType dataType) {
+void Scene::writeDeformedImageTemplated(const std::string& filename, const std::string& gridName, int bit, Image::ImageDataType dataType, bool useColorMap) {
     // To expose as parameters
     bool smallFile = true;
     int cacheSize = 2;
-    bool useCustomColor = true;
+    bool useCustomColor = useColorMap;
+    //glm::ivec3 imageSize = glm::vec3(60, 264, 500);
+    glm::ivec3 imageSize = glm::vec3(0, 0, 0);
 
     auto start = std::chrono::steady_clock::now();
 
     Grid * fromGrid = this->grids[this->getGridIdx(gridName)]->grid;
+    glm::vec3 fromImageToCustomImage = glm::vec3(0., 0., 0.);
 
     auto fromWorldToImage = [&](glm::vec3& p, bool ceil) {
         p -= fromGrid->bbMin;
@@ -4492,16 +4495,16 @@ void Scene::writeDeformedImageTemplated(const std::string& filename, const std::
             else
                 p[i] = std::floor(p[i]/fromGrid->getVoxelSize()[i]); 
         }
+        p /= fromImageToCustomImage;
     };
 
     auto getWorldCoordinates = [&](glm::vec3& p) {
         for(int i = 0; i < 3; ++i) {
-            p[i] = (p[i] + 0.5) * fromGrid->getVoxelSize()[i];
+            p[i] = (float(std::ceil(p[i] * fromImageToCustomImage[i])) + 0.5) * fromGrid->getVoxelSize()[i];
         }
         p += fromGrid->bbMin;
     };
 
-    // STEP1: compute the deformed voxel grid size
     glm::vec3 worldSize = fromGrid->getDimensions();
     glm::vec3 voxelSize = fromGrid->getVoxelSize();
 
@@ -4510,16 +4513,21 @@ void Scene::writeDeformedImageTemplated(const std::string& filename, const std::
         n[i] = std::ceil(fabs(worldSize[i])/voxelSize[i]);
     }
 
+    if(imageSize == glm::ivec3(0., 0., 0.))
+        imageSize = n;
+
+    fromImageToCustomImage = glm::vec3(n) / glm::vec3(imageSize);
+
     TinyTIFFWriterFile * tif = nullptr;
     if(useCustomColor) {
-        tif = TinyTIFFWriter_open(filename.c_str(), 8, TinyTIFFWriter_UInt, 3, n[0], n[1], TinyTIFFWriter_RGB);
+        tif = TinyTIFFWriter_open(filename.c_str(), 8, TinyTIFFWriter_UInt, 3, imageSize[0], imageSize[1], TinyTIFFWriter_RGB);
     } else {
         if(dataType & Image::ImageDataType::Unsigned)
-            tif = TinyTIFFWriter_open(filename.c_str(), bit, TinyTIFFWriter_UInt, 1, n[0], n[1], TinyTIFFWriter_Greyscale);
+            tif = TinyTIFFWriter_open(filename.c_str(), bit, TinyTIFFWriter_UInt, 1, imageSize[0], imageSize[1], TinyTIFFWriter_Greyscale);
         else if(dataType & Image::ImageDataType::Signed)
-            tif = TinyTIFFWriter_open(filename.c_str(), bit, TinyTIFFWriter_Int, 1, n[0], n[1], TinyTIFFWriter_Greyscale);
+            tif = TinyTIFFWriter_open(filename.c_str(), bit, TinyTIFFWriter_Int, 1, imageSize[0], imageSize[1], TinyTIFFWriter_Greyscale);
         else if(dataType & Image::ImageDataType::Floating)
-            tif = TinyTIFFWriter_open(filename.c_str(), bit, TinyTIFFWriter_Float, 1, n[0], n[1], TinyTIFFWriter_Greyscale);
+            tif = TinyTIFFWriter_open(filename.c_str(), bit, TinyTIFFWriter_Float, 1, imageSize[0], imageSize[1], TinyTIFFWriter_Greyscale);
         else
             std::cout << "WARNING: image data type no take in charge to export" << std::endl;
     }
@@ -4527,7 +4535,7 @@ void Scene::writeDeformedImageTemplated(const std::string& filename, const std::
     if(tif == nullptr)
         return;
 
-    std::vector<std::vector<DataType>> img = std::vector<std::vector<DataType>>(n.z, std::vector<DataType>(n.x * n.y, 0.));
+    std::vector<std::vector<DataType>> img = std::vector<std::vector<DataType>>(imageSize.z, std::vector<DataType>(imageSize.x * imageSize.y, 0.));
 
     std::vector<std::vector<uint8_t>> img_color;
 
@@ -4535,7 +4543,7 @@ void Scene::writeDeformedImageTemplated(const std::string& filename, const std::
     std::vector<glm::vec3> data_color;
 
     if(useCustomColor) {
-        img_color = std::vector<std::vector<uint8_t>>(n.z, std::vector<uint8_t>(n.x * n.y * 3, 0));
+        img_color = std::vector<std::vector<uint8_t>>(imageSize.z, std::vector<uint8_t>(imageSize.x * imageSize.y * 3, 0));
 
         auto upperGrid = this->grids[this->getGridIdx(gridName)];
         float maxValue = upperGrid->maxValue;
@@ -4579,7 +4587,7 @@ void Scene::writeDeformedImageTemplated(const std::string& filename, const std::
                     getWorldCoordinates(p);
                     if(tet.isInTetrahedron(p)) {
                         if(fromGrid->getCoordInInitial(fromGrid->initialMesh, p, p, tetIdx)) {
-                            int insertIdx = i + j*n[0];
+                            int insertIdx = i + j*imageSize[0];
 
                             int imgIdxLoad = std::floor(p.z);
 

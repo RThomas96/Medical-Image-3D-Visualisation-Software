@@ -2150,7 +2150,7 @@ public slots:
             //this->scene->writeMapping(this->fileChoosers["Save"]->filename.toStdString(), this->getFromGridName(), this->getToGridName());
             //this->scene->sampleGridMapping(this->fileChoosers["Save"]->filename.toStdString(), this->getFromGridName(), this->getToGridName(), this->getImgDimension(), this->getInterpolationMethod());
             //this->scene->sampleGridMapping(this->fileChoosers["Save"]->filename.toStdString(), this->getFromGridName(), this->getToGridName(), this->getImgDimension(), this->getInterpolationMethod());
-            this->scene->writeDeformedImage(this->fileChoosers["Save"]->filename.toStdString(), this->getFromGridName());
+            this->scene->writeDeformedImage(this->fileChoosers["Save"]->filename.toStdString(), this->getFromGridName(), false);
         });
 
         QObject::connect(this->fileChoosers["SaveCur"], &FileChooser::fileSelected, [this](){
@@ -3001,6 +3001,7 @@ public slots:
     void addNewMesh(const std::string& name, bool grid, bool cage) {
         this->combo_mesh->insertItem(this->combo_mesh->count(), QString(name.c_str()));
         this->actionManager->getAction("SaveImage")->setDisabled(false);
+        this->actionManager->getAction("SaveImageColormap")->setDisabled(false);
         if(this->scene->hasTwoOrMoreGrids()) {
             this->actionManager->getAction("ToggleDisplayMultiView")->setDisabled(false);
             this->actionManager->getAction("Transform")->setDisabled(false);

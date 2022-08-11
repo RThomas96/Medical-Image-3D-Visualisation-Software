@@ -78,7 +78,9 @@ void MainWidget::setupWidgets() {
     this->fileMenu->addAction(this->actionManager->getAction("SaveCage"));
     this->fileMenu->addAction(this->actionManager->getAction("SaveAsCage"));
     this->fileMenu->addAction(this->actionManager->getAction("SaveImage"));
+    this->fileMenu->addAction(this->actionManager->getAction("SaveImageColormap"));
     this->actionManager->getAction("SaveImage")->setDisabled(true);
+    this->actionManager->getAction("SaveImageColormap")->setDisabled(true);
 
     this->editMenu = this->menuBar()->addMenu("&Edit");
     this->editMenu->addAction(this->actionManager->getAction("ApplyCage"));
@@ -506,6 +508,7 @@ void MainWidget::setupActions() {
 
             this->actionManager->getAction("OpenImage")->setDisabled(false);
             this->actionManager->getAction("SaveImage")->setDisabled(true);
+            this->actionManager->getAction("SaveImageColormap")->setDisabled(true);
             this->actionManager->getAction("ToggleDisplayMultiView")->setDisabled(true);
             this->actionManager->getAction("Transform")->setDisabled(true);
             this->actionManager->getAction("Boundaries")->setVisible(false);
@@ -540,7 +543,22 @@ void MainWidget::setupActions() {
                 if(scene->isCage(gridName)) {
                     gridName = scene->grids_name[scene->getGridIdxLinkToCage(gridName)];
                 }
-                this->scene->writeDeformedImage(fileChooser->filename.toStdString(), gridName);
+                this->scene->writeDeformedImage(fileChooser->filename.toStdString(), gridName, false);
+            }
+            delete fileChooser;
+    });
+
+    this->actionManager->createQActionButton("SaveImageColormap", "Export image with colormap...", "", "Save the deformed image with the current colormap applied", "save");
+    QObject::connect(this->actionManager->getAction("SaveImageColormap"), &QAction::triggered, [this](){
+            FileChooser * fileChooser = new FileChooser("File", FileChooserType::SAVE, FileChooserFormat::TIFF);
+            fileChooser->click();
+
+            std::string gridName = this->combo_mesh->itemText(this->combo_mesh->currentIndex()).toStdString();
+            if(!fileChooser->filename.isEmpty()) {
+                if(scene->isCage(gridName)) {
+                    gridName = scene->grids_name[scene->getGridIdxLinkToCage(gridName)];
+                }
+                this->scene->writeDeformedImage(fileChooser->filename.toStdString(), gridName, true);
             }
             delete fileChooser;
     });
