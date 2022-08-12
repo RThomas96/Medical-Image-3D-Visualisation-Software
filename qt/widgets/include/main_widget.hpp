@@ -474,6 +474,7 @@ public slots:
                 break;
             case WidgetType::FILENAME:
                 fileNames[id] = new FileName();
+                fileNames[id]->setAlignment(Qt::AlignHCenter);
                 newWidget = fileNames[id];
                 break;
             case WidgetType::MESH_CHOOSE:
@@ -1260,6 +1261,29 @@ signals:
     void deleteCurrent(int id);
 };
 
+class PreviewButton : public QPushButton {
+    Q_OBJECT
+
+public:
+    PreviewButton() : QPushButton() {
+        this->setMouseTracking(true);
+    }
+
+    void enterEvent(QEvent* e) {
+        Q_EMIT mouseEnter();
+        QWidget::enterEvent(e);
+    }
+
+    void leaveEvent(QEvent* e) {
+        Q_EMIT mouseLeave();
+        QWidget::leaveEvent(e);
+    }
+
+signals:
+    void mouseEnter();
+    void mouseLeave();
+};
+
 class RangeUnit : public QFrame {
     Q_OBJECT
 
@@ -1273,9 +1297,11 @@ public:
     QPushButton * right;
     QPushButton * deleteButton;
 
-    QPushButton * hideButton;
+    //QPushButton * hideButton;
+    PreviewButton * hideButton;
     QCheckBox * hideColor;
     ColorButton * colorButton;
+    QColor originalColor;
     RangeUnit(int id, QWidget * parent = nullptr) : id(id), QFrame(parent)  {
         this->setFrameShape(QFrame::Shape::StyledPanel);
         QVBoxLayout *unitLayout = new QVBoxLayout(this);
@@ -1336,7 +1362,7 @@ public:
         QSize size(30, 30);
         icon.addFile(QString("../resources/visible.svg"), size, QIcon::Normal, QIcon::Off);
         icon.addFile(QString("../resources/hidden.svg"), size, QIcon::Normal, QIcon::On);
-        hideButton = new QPushButton();
+        hideButton = new PreviewButton();
         hideButton->setCheckable(true);
         hideButton->setIcon(icon);
         hideButton->setIconSize(QPixmap("../resources/visible.svg").rect().size());
@@ -1356,7 +1382,7 @@ public:
         QObject::connect(deleteButton, &QPushButton::clicked, [this](){Q_EMIT deleteCurrent(this->id);});
         QObject::connect(colorButton->button, &QPushButton::clicked, [this](){Q_EMIT colorChanged(this->id);});
         QObject::connect(hideColor, &QCheckBox::clicked, [this](){Q_EMIT colorChanged(this->id);});
-        QObject::connect(hideColor, &QCheckBox::stateChanged, [this](){this->colorButton->setDisabled(!this->hideColor->isChecked());});
+        //QObject::connect(hideColor, &QCheckBox::stateChanged, [this](){this->colorButton->setDisabled(!this->hideColor->isChecked());});
         QObject::connect(min, QOverload<double>::of(&QDoubleSpinBox::valueChanged), [this](double d){
             if(!moreOptions || min->value() > max->value()) {
                 this->max->blockSignals(true);
@@ -1366,11 +1392,23 @@ public:
             Q_EMIT rangeChanged(this->id);
         });
         QObject::connect(max, QOverload<double>::of(&QDoubleSpinBox::valueChanged), [this](double d){Q_EMIT rangeChanged(this->id);});
-        QObject::connect(hideButton, &QPushButton::clicked, [this](){Q_EMIT rangeChanged(this->id);});
-        QObject::connect(hideButton, &QPushButton::toggled, [this](){this->hideColor->setDisabled(this->hideButton->isChecked());
-                                                                     this->colorButton->setDisabled(this->hideButton->isChecked());});
+        QObject::connect(hideButton, &PreviewButton::clicked, [this](){Q_EMIT rangeChanged(this->id);});
+        QObject::connect(hideButton, &PreviewButton::toggled, [this](){this->hideColor->setDisabled(this->hideButton->isChecked());
+                                                                     /*this->colorButton->setDisabled(this->hideButton->isChecked());*/});
+        QObject::connect(hideButton, &PreviewButton::mouseEnter, [this](){setHighlightColor(true);});
+        QObject::connect(hideButton, &PreviewButton::mouseLeave, [this](){setHighlightColor(false);});
         moreOptions = false;
         this->setMoreOptions(this->moreOptions);
+    }
+
+    void setHighlightColor(bool value) {
+        if(value) {
+            this->originalColor = colorButton->getColor();
+            this->colorButton->setColor(QColor(255., 255., 0.));
+        } else {
+            colorButton->setColor(this->originalColor);
+        }
+        Q_EMIT colorChanged(this->id);
     }
 
     glm::vec3 getColor() {
@@ -1591,6 +1629,10 @@ public:
         QObject::connect(units.back(), &RangeUnit::rangeChanged, this, [this](int id){this->updateRanges();});
         QObject::connect(units.back(), &RangeUnit::colorChanged, this, [this](int id){this->updateRanges();});
         //QObject::connect(this->buttonAdd, &QPushButton::clicked, [this, scene](){this->updateRanges(scene);});
+
+        units.back()->setMoreOptions(rangeOptionUnit->hideOption->isChecked());
+        units.back()->hideColor->setChecked(!rangeOptionUnit->hideColor->isChecked());
+        units.back()->hideButton->setChecked(rangeOptionUnit->hideButton->isChecked());
     }
 
     void updateRanges() {
@@ -2289,11 +2331,8 @@ public slots:
         this->addAllNextWidgetsToGroup("GroupVoxelSize");
 
         this->add(WidgetType::SPIN_BOX_DOUBLE, "SizeVoxelX");
-        this->doubleSpinBoxes["SizeVoxelX"]->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
         this->add(WidgetType::SPIN_BOX_DOUBLE, "SizeVoxelY");
-        this->doubleSpinBoxes["SizeVoxelY"]->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
         this->add(WidgetType::SPIN_BOX_DOUBLE, "SizeVoxelZ");
-        this->doubleSpinBoxes["SizeVoxelZ"]->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
         this->addAllNextWidgetsToSection("Image");
 
@@ -2385,6 +2424,10 @@ public slots:
 
         //this->sections["Image subsample"].first->hide();
         this->sections["Image subregion"].first->hide();
+        this->labels["GroupVoxelSize"]->hide();
+        this->doubleSpinBoxes["SizeVoxelX"]->hide();
+        this->doubleSpinBoxes["SizeVoxelY"]->hide();
+        this->doubleSpinBoxes["SizeVoxelZ"]->hide();
     }
 
     void resetValues() {
@@ -2417,16 +2460,13 @@ public slots:
         this->doubleSpinBoxes["SizeVoxelZ"]->setValue(1);
         this->doubleSpinBoxes["SizeVoxelZ"]->setMinimum(0);
 
-        this->sections["Mesh"].first->setEnabled(false);
-        this->sections["Cage"].first->setEnabled(false);
+        this->sections["Mesh"].first->hide();
+        this->sections["Cage"].first->hide();
 
         this->sections["Mesh"].first->setChecked(false);
         this->sections["Cage"].first->setChecked(false);
 
         this->sections["Image subregion"].first->setEnabled(false);
-
-        this->sections["Mesh"].first->setEnabled(false);
-        this->sections["Cage"].first->setEnabled(false);
 
         this->buttons["Load"]->setEnabled(false);
     }
@@ -2493,8 +2533,8 @@ public slots:
         QObject::connect(this->fileChoosers["Image choose"], &FileChooser::fileSelected, [this](){
                 this->buttons["Load"]->setEnabled(true);
                 //this->sections["Image subregion"].first->setEnabled(true);// This functionnality isn't available yet
-                this->sections["Mesh"].first->setEnabled(true);
-                this->sections["Cage"].first->setEnabled(true);
+                this->sections["Mesh"].first->show();
+                this->sections["Cage"].first->show();
 
                 this->sections["Mesh"].first->setChecked(false);
                 this->sections["Cage"].first->setChecked(false);
