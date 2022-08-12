@@ -78,7 +78,7 @@ void MainWidget::setupWidgets() {
     this->fileMenu->addAction(this->actionManager->getAction("SaveCage"));
     this->fileMenu->addAction(this->actionManager->getAction("SaveAsCage"));
     this->fileMenu->addAction(this->actionManager->getAction("SaveImage"));
-    this->fileMenu->addAction(this->actionManager->getAction("SaveImageColormap"));
+    //this->fileMenu->addAction(this->actionManager->getAction("SaveImageColormap"));
     this->actionManager->getAction("SaveImage")->setDisabled(true);
     this->actionManager->getAction("SaveImageColormap")->setDisabled(true);
 
@@ -533,19 +533,22 @@ void MainWidget::setupActions() {
             this->quickSaveCage->saveAs();
     });
 
-    this->actionManager->createQActionButton("SaveImage", "Export image...", "", "Save the deformed image", "save");
-    QObject::connect(this->actionManager->getAction("SaveImage"), &QAction::triggered, [this](){
-            FileChooser * fileChooser = new FileChooser("File", FileChooserType::SAVE, FileChooserFormat::TIFF);
-            fileChooser->click();
+    this->actionManager->createQActionButton("SaveImage", "Export...", "", "Save the deformed image", "save");
+    //QObject::connect(this->actionManager->getAction("SaveImage"), &QAction::triggered, [this](){
+    //        FileChooser * fileChooser = new FileChooser("File", FileChooserType::SAVE, FileChooserFormat::TIFF);
+    //        fileChooser->click();
 
-            std::string gridName = this->combo_mesh->itemText(this->combo_mesh->currentIndex()).toStdString();
-            if(!fileChooser->filename.isEmpty()) {
-                if(scene->isCage(gridName)) {
-                    gridName = scene->grids_name[scene->getGridIdxLinkToCage(gridName)];
-                }
-                this->scene->writeDeformedImage(fileChooser->filename.toStdString(), gridName, false);
-            }
-            delete fileChooser;
+    //        std::string gridName = this->combo_mesh->itemText(this->combo_mesh->currentIndex()).toStdString();
+    //        if(!fileChooser->filename.isEmpty()) {
+    //            if(scene->isCage(gridName)) {
+    //                gridName = scene->grids_name[scene->getGridIdxLinkToCage(gridName)];
+    //            }
+    //            this->scene->writeDeformedImage(fileChooser->filename.toStdString(), gridName, false);
+    //        }
+    //        delete fileChooser;
+    //});
+    QObject::connect(this->actionManager->getAction("SaveImage"), &QAction::triggered, [this](){
+        this->saveImageForm->show();
     });
 
     this->actionManager->createQActionButton("SaveImageColormap", "Export image with colormap...", "", "Save the deformed image with the current colormap applied", "save");
@@ -558,7 +561,7 @@ void MainWidget::setupActions() {
                 if(scene->isCage(gridName)) {
                     gridName = scene->grids_name[scene->getGridIdxLinkToCage(gridName)];
                 }
-                this->scene->writeDeformedImage(fileChooser->filename.toStdString(), gridName, true);
+                this->scene->writeDeformedImage(fileChooser->filename.toStdString(), gridName, true, ResolutionMode::SAMPLER_RESOLUTION);
             }
             delete fileChooser;
     });
@@ -602,7 +605,7 @@ void MainWidget::setupActions() {
             this->planarViewer->initViewer("View_3");
     });
 
-    this->actionManager->createQActionButton("OpenImage", "Open image...", "Ctrl+O", "Open the image to deform", "open");
+    this->actionManager->createQActionButton("OpenImage", "Open...", "Ctrl+O", "Open the image to deform", "open");
     QObject::connect(this->actionManager->getAction("OpenImage"), &QAction::triggered, [this](){
             this->updateForms();
             this->openImageForm->show();

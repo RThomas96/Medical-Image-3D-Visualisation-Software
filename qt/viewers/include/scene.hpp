@@ -490,10 +490,10 @@ public:
 
     void writeDeformedImageLowRes(const std::string& filename, const std::string& gridName);
 
-    void writeDeformedImage(const std::string& filename, const std::string& gridName, bool useColorMap);
-    void writeDeformedImageGeneric(const std::string& filename, const std::string& gridName, Image::ImageDataType imgDataType, bool useColorMap);
+    void writeDeformedImage(const std::string& filename, const std::string& gridName, bool useColorMap, ResolutionMode resolution);
+    void writeDeformedImageGeneric(const std::string& filename, const std::string& gridName, Image::ImageDataType imgDataType, bool useColorMap, ResolutionMode resolution);
     template<typename DataType>
-    void writeDeformedImageTemplated(const std::string& filename, const std::string& gridName, int bit, Image::ImageDataType dataType, bool useColorMap);
+    void writeDeformedImageTemplated(const std::string& filename, const std::string& gridName, int bit, Image::ImageDataType dataType, bool useColorMap, ResolutionMode resolution);
 
 signals:
     // Signals to the meshManipulator tools
@@ -641,19 +641,26 @@ public slots:
     bool openGrid(const std::string& name, const std::vector<std::string>& imgFilenames, const int subsample, const std::string& transferMeshFileName);
     void addGridToScene(const std::string& name, Grid * newGrid);
     int autofitSubsample(int initialSubsample, const std::vector<std::string>& imgFilenames);
-
     SurfaceMesh * getMesh(const std::string& name);
     BaseMesh * getBaseMesh(const std::string& name);
     int getMeshIdx(const std::string& name);
     Cage * getCage(const std::string& name);
     glm::vec3 getGridImgSize(const std::string& name);
-    glm::vec3 getGridVoxelSize(const std::string &name);
+    glm::vec3 getGridVoxelSize(const std::string &name, ResolutionMode resolution = ResolutionMode::SAMPLER_RESOLUTION);
     std::pair<uint16_t, uint16_t> getGridMinMaxValues(const std::string &name);
     std::pair<uint16_t, uint16_t> getGridMinMaxValues();
     std::vector<bool> getGridUsageValues(int minValue = 1);
     int getGridIdx(const std::string& name);
     int getGridIdxLinkToCage(const std::string& name);
     std::pair<glm::vec3, glm::vec3> getBbox(const std::string& name);
+    bool checkTransferMeshValidity(const std::string& name) {
+        return this->grids[this->getGridIdx(name)]->grid->checkTransferMeshValidity();
+    }
+    void updateTextureCoordinates(const std::string& name) {
+        return this->grids[this->getGridIdx(name)]->grid->updateTextureCoordinates();
+    }
+
+
 
     std::vector<std::string> getAllNonTetrahedralMeshesName();
     std::vector<std::string> getAllBaseMeshesName();

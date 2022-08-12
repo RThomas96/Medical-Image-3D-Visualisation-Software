@@ -349,6 +349,17 @@ public slots:
     void setSectionCheckable(const QString& name, bool checkable) {
         this->sections[name].first->setCheckable(checkable);
     }
+
+    void setAllWidgetsVisibilityInSection(const QString& name, bool value) {
+        QLayout *layout = this->sections[name].second;
+        if (layout) {
+            for (int i = 0; i < layout->count(); ++i) {
+                if(layout->itemAt(i)->widget()) {
+                    layout->itemAt(i)->widget()->setVisible(value);
+                }
+            }
+        }
+    }
     
     void setTextEditEditable(const QString& id, bool editable) {
         textEdits[id]->setReadOnly(!editable);
@@ -2150,7 +2161,7 @@ public slots:
             //this->scene->writeMapping(this->fileChoosers["Save"]->filename.toStdString(), this->getFromGridName(), this->getToGridName());
             //this->scene->sampleGridMapping(this->fileChoosers["Save"]->filename.toStdString(), this->getFromGridName(), this->getToGridName(), this->getImgDimension(), this->getInterpolationMethod());
             //this->scene->sampleGridMapping(this->fileChoosers["Save"]->filename.toStdString(), this->getFromGridName(), this->getToGridName(), this->getImgDimension(), this->getInterpolationMethod());
-            this->scene->writeDeformedImage(this->fileChoosers["Save"]->filename.toStdString(), this->getFromGridName(), false);
+            this->scene->writeDeformedImage(this->fileChoosers["Save"]->filename.toStdString(), this->getFromGridName(), false, ResolutionMode::SAMPLER_RESOLUTION);
         });
 
         QObject::connect(this->fileChoosers["SaveCur"], &FileChooser::fileSelected, [this](){
@@ -2189,69 +2200,18 @@ class SaveImageForm : Form {
 
 public:
 
-    Image3DViewer * imageViewer;
-
     SaveImageForm(Scene * scene, QWidget *parent = nullptr):Form(parent){init(scene);connect(scene);}
 
 public slots:
 
     void init(Scene * scene) {
-        this->imageViewer = new Image3DViewer("PreviewX", glm::vec3(0., 0., 1.), scene);
-        this->layout->addRow(imageViewer);
+        this->add(WidgetType::GRID_CHOOSE, "Grid", "Grid: ");
+        this->setObjectTypeToChoose("Grid", ObjectToChoose::GRID);
 
-        this->addWithLabel(WidgetType::H_GROUP, "GroupBack", "Back");
-        this->addAllNextWidgetsToGroup("GroupBack");
-        this->groups["GroupBack"]->setAlignment(Qt::AlignHCenter);
+        this->addWithLabel(WidgetType::CHECK_BOX, "Colormap", "Use colormap: ");
+        this->addWithLabel(WidgetType::CHECK_BOX, "Resolution", "Export at full resolution: ");
 
-        this->add(WidgetType::GRID_CHOOSE, "From", "Back");
-        this->setObjectTypeToChoose("From", ObjectToChoose::GRID);
-        this->objectChoosers["From"]->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-
-        this->add(WidgetType::CHECK_BOX, "UseBack");
-
-        this->add(WidgetType::TIFF_SAVE, "Save image back", "Save");
-        this->setFileChooserType("Save image back", FileChooserType::SAVE);
-        this->fileChoosers["Save image back"]->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-
-        this->addAllNextWidgetsToDefaultGroup();
-
-        this->addWithLabel(WidgetType::H_GROUP, "GroupFront", "Front");
-        this->addAllNextWidgetsToGroup("GroupFront");
-        this->groups["GroupFront"]->setAlignment(Qt::AlignHCenter);
-
-        this->add(WidgetType::GRID_CHOOSE, "To", "Front");
-        this->setObjectTypeToChoose("To", ObjectToChoose::GRID);
-        this->objectChoosers["To"]->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-
-        this->add(WidgetType::CHECK_BOX, "UseFront");
-
-        this->add(WidgetType::TIFF_SAVE, "Save image front", "Save");
-        this->setFileChooserType("Save image front", FileChooserType::SAVE);
-        this->fileChoosers["Save image front"]->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-
-        this->addAllNextWidgetsToDefaultGroup();
-
-        this->add(WidgetType::COMBO_BOX, "Interpolation", "Interpolation");
-        this->setComboChoices("Interpolation", Interpolation::toStringList());
-
-        this->addWithLabel(WidgetType::H_GROUP, "GroupResolution", "Resolution");
-        this->addAllNextWidgetsToGroup("GroupResolution");
-
-        this->add(WidgetType::SPIN_BOX, "X");
-        this->add(WidgetType::SPIN_BOX, "Y");
-        this->add(WidgetType::SPIN_BOX, "Z");
-
-        this->addAllNextWidgetsToDefaultGroup();
-
-        this->add(WidgetType::BUTTON, "Preview");
-
-        this->add(WidgetType::TIFF_SAVE, "Save image");
-        this->setFileChooserType("Save image", FileChooserType::SAVE);
-
-        /****/
-
-        this->checkBoxes["UseBack"]->setChecked(true);
-        this->checkBoxes["UseFront"]->setChecked(true);
+        this->add(WidgetType::TIFF_SAVE, "Export image", "Export");
     }
 
     void show() {
@@ -2263,22 +2223,13 @@ public slots:
     }
 
     void connect(Scene * scene) {
-        QObject::connect(this->fileChoosers["Save image"], &FileChooser::fileSelected, [this, scene](){
-        });
-
-        QObject::connect(this->fileChoosers["Save image back"], &FileChooser::fileSelected, [this, scene](){
-            scene->writeGreyscaleTIFFImage(this->fileChoosers["Save image back"]->filename.toStdString(), this->imageViewer->targetImgSize, this->imageViewer->imgData[0].data);
-        });
-
-        QObject::connect(this->fileChoosers["Save image front"], &FileChooser::fileSelected, [this, scene](){
-            scene->writeGreyscaleTIFFImage(this->fileChoosers["Save image front"]->filename.toStdString(), this->imageViewer->targetImgSize, this->imageViewer->imgData[1].data);
-        });
-
-        QObject::connect(this->buttons["Preview"], &QPushButton::clicked, [this, scene](){
-            this->imageViewer->show();
-        });
-
-        QObject::connect(this->objectChoosers["From"], QOverload<int>::of(&QComboBox::currentIndexChanged), [this, scene](int index){
+        QObject::connect(this->fileChoosers["Export image"], &FileChooser::fileSelected, [this, scene](){
+                ResolutionMode resolution = ResolutionMode::SAMPLER_RESOLUTION;
+                if(this->checkBoxes["Resolution"]->isChecked())
+                    resolution = ResolutionMode::FULL_RESOLUTION;
+                bool useColorMap = this->checkBoxes["Colormap"]->isChecked();
+                scene->writeDeformedImage(this->fileChoosers["Export image"]->filename.toStdString(), this->objectChoosers["Grid"]->currentText().toStdString(), useColorMap, resolution);
+                this->hide();
         });
     }
 };
@@ -2297,19 +2248,14 @@ public slots:
         this->useTetMesh = false;
         //this->addFileChooser("Save image", FileChooserType::SAVE);
 
-        this->addWithLabel(WidgetType::LINE_EDIT, "Name", "Name");
+        this->addWithLabel(WidgetType::LINE_EDIT, "Name", "Name: ");
 
         this->add(WidgetType::SECTION, "Image");
         this->addAllNextWidgetsToSection("Image");
 
         /***/
 
-        this->add(WidgetType::SECTION_CHECKABLE, "Image subsample");
-        this->addAllNextWidgetsToSection("Image subsample");
-
-        this->addWithLabel(WidgetType::SPIN_BOX, "Subsample", "Subsample");
-
-        this->addAllNextWidgetsToSection("Image");
+        this->addWithLabel(WidgetType::SPIN_BOX, "Subsample", "Subsample: ");
 
         /***/
 
@@ -2337,9 +2283,17 @@ public slots:
 
         this->addAllNextWidgetsToSection("Image");
 
-        this->add(WidgetType::SECTION, "Type");
-        this->addAllNextWidgetsToSection("Type");
-        this->addWithLabel(WidgetType::CHECK_BOX, "Segmented", "Segmented");
+        this->addWithLabel(WidgetType::CHECK_BOX, "Segmented", "Segmented: ");
+
+        this->addWithLabel(WidgetType::H_GROUP, "GroupVoxelSize", "Voxel size: ");
+        this->addAllNextWidgetsToGroup("GroupVoxelSize");
+
+        this->add(WidgetType::SPIN_BOX_DOUBLE, "SizeVoxelX");
+        this->doubleSpinBoxes["SizeVoxelX"]->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+        this->add(WidgetType::SPIN_BOX_DOUBLE, "SizeVoxelY");
+        this->doubleSpinBoxes["SizeVoxelY"]->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+        this->add(WidgetType::SPIN_BOX_DOUBLE, "SizeVoxelZ");
+        this->doubleSpinBoxes["SizeVoxelZ"]->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
         this->addAllNextWidgetsToSection("Image");
 
@@ -2352,30 +2306,20 @@ public slots:
         this->addAllNextWidgetsToDefaultGroup();
         this->addAllNextWidgetsToDefaultSection();
 
-        this->add(WidgetType::SECTION, "Mesh");
+        this->add(WidgetType::SECTION_CHECKABLE, "Mesh");
         this->addAllNextWidgetsToSection("Mesh");
 
-        this->add(WidgetType::SECTION, "Tetrahedral mesh size");
-        this->addAllNextWidgetsToSection("Tetrahedral mesh size");
+        //this->add(WidgetType::SECTION, "Tetrahedral mesh size");
+        //this->addAllNextWidgetsToSection("Tetrahedral mesh size");
 
-        this->addWithLabel(WidgetType::H_GROUP, "GroupNbTet", "Nb tetrahedra");
-        this->addAllNextWidgetsToGroup("GroupNbTet");
+        //this->addWithLabel(WidgetType::H_GROUP, "GroupNbTet", "Nb tetrahedra");
+        //this->addAllNextWidgetsToGroup("GroupNbTet");
 
-        this->add(WidgetType::SPIN_BOX, "NbTetX");
-        this->add(WidgetType::SPIN_BOX, "NbTetY");
-        this->add(WidgetType::SPIN_BOX, "NbTetZ");
+        //this->add(WidgetType::SPIN_BOX, "NbTetX");
+        //this->add(WidgetType::SPIN_BOX, "NbTetY");
+        //this->add(WidgetType::SPIN_BOX, "NbTetZ");
 
         this->addAllNextWidgetsToSection("Mesh");
-
-        this->add(WidgetType::SECTION, "Voxel size");
-        this->addAllNextWidgetsToSection("Voxel size");
-
-        this->addWithLabel(WidgetType::H_GROUP, "GroupVoxelSize", "Size");
-        this->addAllNextWidgetsToGroup("GroupVoxelSize");
-
-        this->add(WidgetType::SPIN_BOX_DOUBLE, "SizeVoxelX");
-        this->add(WidgetType::SPIN_BOX_DOUBLE, "SizeVoxelY");
-        this->add(WidgetType::SPIN_BOX_DOUBLE, "SizeVoxelZ");
 
         this->addAllNextWidgetsToSection("Mesh");
 
@@ -2388,7 +2332,7 @@ public slots:
         this->addAllNextWidgetsToDefaultGroup();
         this->addAllNextWidgetsToDefaultSection();
 
-        this->add(WidgetType::SECTION, "Cage");
+        this->add(WidgetType::SECTION_CHECKABLE, "Cage");
         this->addAllNextWidgetsToSection("Cage");
 
         this->addWithLabel(WidgetType::H_GROUP, "GroupCageType", "Type:");
@@ -2439,7 +2383,7 @@ public slots:
 
         this->resetValues();
 
-        this->sections["Image subsample"].first->hide();
+        //this->sections["Image subsample"].first->hide();
         this->sections["Image subregion"].first->hide();
     }
 
@@ -2456,18 +2400,15 @@ public slots:
         this->fileNames["Cage filename"]->resetValues();
         this->fileChoosers["Cage choose"]->resetValues();
 
-        this->sections["Image subsample"].first->setChecked(false);
-        this->sections["Image subregion"].first->setChecked(false);
-
         this->spinBoxes["Subsample"]->setValue(1);
         this->spinBoxes["Subsample"]->setMinimum(1);
 
-        this->spinBoxes["NbTetX"]->setValue(5);
-        this->spinBoxes["NbTetX"]->setMinimum(1);
-        this->spinBoxes["NbTetY"]->setValue(5);
-        this->spinBoxes["NbTetY"]->setMinimum(1);
-        this->spinBoxes["NbTetZ"]->setValue(5);
-        this->spinBoxes["NbTetZ"]->setMinimum(1);
+        //this->spinBoxes["NbTetX"]->setValue(5);
+        //this->spinBoxes["NbTetX"]->setMinimum(1);
+        //this->spinBoxes["NbTetY"]->setValue(5);
+        //this->spinBoxes["NbTetY"]->setMinimum(1);
+        //this->spinBoxes["NbTetZ"]->setValue(5);
+        //this->spinBoxes["NbTetZ"]->setMinimum(1);
 
         this->doubleSpinBoxes["SizeVoxelX"]->setValue(1);
         this->doubleSpinBoxes["SizeVoxelX"]->setMinimum(0);
@@ -2476,8 +2417,13 @@ public slots:
         this->doubleSpinBoxes["SizeVoxelZ"]->setValue(1);
         this->doubleSpinBoxes["SizeVoxelZ"]->setMinimum(0);
 
+        this->sections["Mesh"].first->setEnabled(false);
+        this->sections["Cage"].first->setEnabled(false);
+
+        this->sections["Mesh"].first->setChecked(false);
+        this->sections["Cage"].first->setChecked(false);
+
         this->sections["Image subregion"].first->setEnabled(false);
-        this->sections["Image subsample"].first->setEnabled(false);
 
         this->sections["Mesh"].first->setEnabled(false);
         this->sections["Cage"].first->setEnabled(false);
@@ -2525,9 +2471,10 @@ public slots:
     }
 
     glm::vec3 getSizeTetmesh() {
-        return glm::vec3(this->spinBoxes["NbTetX"]->value(),
-                         this->spinBoxes["NbTetY"]->value(),
-                         this->spinBoxes["NbTetZ"]->value());
+        return glm::vec3(5., 5., 5.);
+        //return glm::vec3(this->spinBoxes["NbTetX"]->value(),
+        //                 this->spinBoxes["NbTetY"]->value(),
+        //                 this->spinBoxes["NbTetZ"]->value());
     }
 
     void prefillFields(const std::vector<std::string>& files) {
@@ -2546,16 +2493,17 @@ public slots:
         QObject::connect(this->fileChoosers["Image choose"], &FileChooser::fileSelected, [this](){
                 this->buttons["Load"]->setEnabled(true);
                 //this->sections["Image subregion"].first->setEnabled(true);// This functionnality isn't available yet
-                this->sections["Image subsample"].first->setEnabled(true);
                 this->sections["Mesh"].first->setEnabled(true);
+                this->sections["Cage"].first->setEnabled(true);
+
+                this->sections["Mesh"].first->setChecked(false);
+                this->sections["Cage"].first->setChecked(false);
 
                 this->prefillFields({this->fileChoosers["Image choose"]->filename.toStdString()});
         });
 
         QObject::connect(this->fileChoosers["Mesh choose"], &FileChooser::fileSelected, [this](){
-                this->sections["Tetrahedral mesh size"].first->setEnabled(false);
                 this->useTetMesh = true;
-                this->sections["Cage"].first->setEnabled(true);
         });
 
         QObject::connect(this->buttons["Load"], &QPushButton::clicked, [this, scene](){
@@ -2564,8 +2512,40 @@ public slots:
                 } else {
                     scene->openGrid(this->getName(), this->getImgFilenames(), this->getSubsample(), this->getSizeVoxel(), this->getSizeTetmesh());
                 }
-                if(!this->fileChoosers["Cage choose"]->filename.isEmpty()) {
+                bool useCage = !this->fileChoosers["Cage choose"]->filename.isEmpty();
+                if(useCage) {
                     scene->openCage(this->getName() + "_cage", this->fileChoosers["Cage choose"]->filename.toStdString(), this->getName(), this->checkBoxes["mvc"]->isChecked());
+                }
+                if(!scene->checkTransferMeshValidity(this->getName())) {
+                    {
+                    QMessageBox msgBox;
+                    msgBox.setText("Warning: scale offset between the image and the tetrahedral mesh.");
+                    msgBox.setInformativeText(std::string(std::string("You choose a subsample of [") + std::to_string(this->getSubsample()) + std::string("]. However, the tetrahedral mesh you select seems to be at a different scale. Do you want the software to load the mesh at the correct scale ?")).c_str());
+                    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+                    msgBox.setDefaultButton(QMessageBox::Yes);
+                    int ret = msgBox.exec();
+                    if(ret == QMessageBox::Yes) {
+                        scene->getBaseMesh(this->getName())->scale(glm::vec3(1./float(this->getSubsample()), 1./float(this->getSubsample()), 1./float(this->getSubsample())));
+                        scene->updateTextureCoordinates(this->getName());
+                        scene->sendFirstTetmeshToGPU();
+                        scene->updateSceneCenter();
+                    }
+                    }
+                    {
+                    if(useCage) {
+                        QMessageBox msgBox;
+                        msgBox.setText("Warning: scale offset between the image and the cage.");
+                        msgBox.setInformativeText("Do you want the software to load the cage at the correct scale ?");
+                        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+                        msgBox.setDefaultButton(QMessageBox::Yes);
+                        int ret = msgBox.exec();
+                        if(ret == QMessageBox::Yes) {
+                            scene->setBindMeshToCageMove(this->getName() + "_cage", false);
+                            scene->getBaseMesh(this->getName() + "_cage")->scale(glm::vec3(1./float(this->getSubsample()), 1./float(this->getSubsample()), 1./float(this->getSubsample())));
+                            scene->setBindMeshToCageMove(this->getName() + "_cage", true);
+                        }
+                    }
+                    }
                 }
                 this->hide();
                 Q_EMIT loaded();

@@ -133,8 +133,14 @@ glm::vec3 Grid::getWorldVoxelSize() const {
     return this->getDimensions() / this->sampler.getSamplerDimension();
 }
 
-glm::vec3 Grid::getVoxelSize() const {
-    return this->sampler.getVoxelSize();
+glm::vec3 Grid::getVoxelSize(ResolutionMode resolutionMode) const {
+    if(resolutionMode == ResolutionMode::SAMPLER_RESOLUTION) {
+        return this->sampler.getVoxelSize();
+    } else {
+        glm::vec3 voxelSize = this->sampler.getVoxelSize();
+        this->sampler.fromImageToSampler(voxelSize);
+        return voxelSize;
+    }
 }
 
 void Grid::loadMESH(std::string const &filename) {
@@ -503,6 +509,20 @@ void Grid::sampleGridValues(const std::pair<glm::vec3, glm::vec3>& areaToSample,
     std::cout << "Duration time: " << elapsed_seconds.count() << "s / " << elapsed_seconds.count()/60. << "m" << std::endl;
 }
 
+bool Grid::checkTransferMeshValidity() {
+    for( auto pt : this->vertices) {
+        if(pt.x < this->sampler.subregionMin.x || 
+           pt.y < this->sampler.subregionMin.y || 
+           pt.z < this->sampler.subregionMin.z || 
+           pt.x > this->sampler.subregionMax.x || 
+           pt.y > this->sampler.subregionMax.y || 
+           pt.z > this->sampler.subregionMax.z) {
+            return false;
+        }
+    }
+    return true;
+}
+
 /**************************/
 
 Sampler::Sampler(const std::vector<std::string>& filename, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox): image(new SimpleImage(filename)) {
@@ -694,3 +714,4 @@ std::vector<int> Sampler::getHistogram(int nbBins) const {
        return std::vector<int>{0};
    }
 }
+

@@ -93,7 +93,7 @@ struct Grid : public TetMesh {
 
     void loadMESH(std::string const &filename) override;
 
-    glm::vec3 getVoxelSize() const;
+    glm::vec3 getVoxelSize(ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
     glm::vec3 getWorldVoxelSize() const;
     glm::mat4 getTransformationMatrix() const;
     void toSampler(glm::vec3& p) const;
@@ -127,6 +127,14 @@ struct Grid : public TetMesh {
     }
 
     bool getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos, glm::vec3& res) const override;
+
+    bool checkTransferMeshValidity();
+    void updateTextureCoordinates() {
+        this->texCoord.clear();
+        for(int i = 0; i < this->vertices.size(); ++i) {
+            this->texCoord.push_back(this->vertices[i]/this->sampler.getSamplerDimension());
+        }    
+    }
 
     Image::ImageDataType getInternalDataType() const {
         return this->sampler.getInternalDataType();

@@ -1886,9 +1886,11 @@ void Scene::prepareUniformsGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm
     GLint location_voxelSize = getUniform("voxelSize");
     GLint location_gridSize	 = getUniform("gridSize");
 
-    glm::vec3 floatres = glm::convert_to<float>(_grid->grid->getDimensions());
+    //glm::vec3 floatres = glm::convert_to<float>(_grid->grid->getDimensions());
+    glm::vec3 floatres = glm::convert_to<float>(_grid->grid->sampler.getSamplerDimension());
 
-    glUniform3fv(location_voxelSize, 1, glm::value_ptr(_grid->grid->getWorldVoxelSize()));
+    //glUniform3fv(location_voxelSize, 1, glm::value_ptr(_grid->grid->getWorldVoxelSize()));
+    glUniform3fv(location_voxelSize, 1, glm::value_ptr(_grid->grid->getVoxelSize()));
     glUniform3fv(location_gridSize, 1, glm::value_ptr(floatres));
 
     // Vectors/arrays :
@@ -4444,43 +4446,47 @@ void Scene::writeMapping(const std::string& fileName, const std::string& from, c
     this->writeGreyscaleTIFFImage(fileName, fromDimensions, img);
 }
 
-void Scene::writeDeformedImage(const std::string& filename, const std::string& gridName, bool useColorMap) {
+void Scene::writeDeformedImage(const std::string& filename, const std::string& gridName, bool useColorMap, ResolutionMode resolution) {
     Grid * fromGrid = this->grids[this->getGridIdx(gridName)]->grid;
-    this->writeDeformedImageGeneric(filename, gridName, fromGrid->sampler.getInternalDataType(), useColorMap);
+    if(useColorMap)
+        this->writeDeformedImageGeneric(filename, gridName, (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_16), useColorMap, resolution);
+    else
+        this->writeDeformedImageGeneric(filename, gridName, fromGrid->sampler.getInternalDataType(), useColorMap, resolution);
 }
 
-void Scene::writeDeformedImageGeneric(const std::string& filename, const std::string& gridName, Image::ImageDataType imgDataType, bool useColorMap) {
+void Scene::writeDeformedImageGeneric(const std::string& filename, const std::string& gridName, Image::ImageDataType imgDataType, bool useColorMap, ResolutionMode resolution) {
     if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_8)) {
-        this->writeDeformedImageTemplated<uint8_t>(filename, gridName, 8, imgDataType, useColorMap);
+        this->writeDeformedImageTemplated<uint8_t>(filename, gridName, 8, imgDataType, useColorMap, resolution);
     } else if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_16)) {
-        this->writeDeformedImageTemplated<uint16_t>(filename, gridName, 16, imgDataType, useColorMap);
+        this->writeDeformedImageTemplated<uint16_t>(filename, gridName, 16, imgDataType, useColorMap, resolution);
     } else if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_32)) {
-        this->writeDeformedImageTemplated<uint32_t>(filename, gridName, 32, imgDataType, useColorMap);
+        this->writeDeformedImageTemplated<uint32_t>(filename, gridName, 32, imgDataType, useColorMap, resolution);
     } else if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_64)) {
-        this->writeDeformedImageTemplated<uint64_t>(filename, gridName, 64, imgDataType, useColorMap);
+        this->writeDeformedImageTemplated<uint64_t>(filename, gridName, 64, imgDataType, useColorMap, resolution);
     } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_8)) {
-        this->writeDeformedImageTemplated<int8_t>(filename, gridName, 8, imgDataType, useColorMap);
+        this->writeDeformedImageTemplated<int8_t>(filename, gridName, 8, imgDataType, useColorMap, resolution);
     } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_16)) {
-        this->writeDeformedImageTemplated<int16_t>(filename, gridName, 16, imgDataType, useColorMap);
+        this->writeDeformedImageTemplated<int16_t>(filename, gridName, 16, imgDataType, useColorMap, resolution);
     } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_32)) {
-        this->writeDeformedImageTemplated<int32_t>(filename, gridName, 32, imgDataType, useColorMap);
+        this->writeDeformedImageTemplated<int32_t>(filename, gridName, 32, imgDataType, useColorMap, resolution);
     } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_64)) {
-        this->writeDeformedImageTemplated<int64_t>(filename, gridName, 64, imgDataType, useColorMap);
+        this->writeDeformedImageTemplated<int64_t>(filename, gridName, 64, imgDataType, useColorMap, resolution);
     } else if(imgDataType == (Image::ImageDataType::Floating | Image::ImageDataType::Bit_32)) {
-        this->writeDeformedImageTemplated<float>(filename, gridName, 32, imgDataType, useColorMap);
+        this->writeDeformedImageTemplated<float>(filename, gridName, 32, imgDataType, useColorMap, resolution);
     } else if(imgDataType == (Image::ImageDataType::Floating | Image::ImageDataType::Bit_64)) {
-        this->writeDeformedImageTemplated<double>(filename, gridName, 64, imgDataType, useColorMap);
+        this->writeDeformedImageTemplated<double>(filename, gridName, 64, imgDataType, useColorMap, resolution);
     } 
 }
 
 template<typename DataType>
-void Scene::writeDeformedImageTemplated(const std::string& filename, const std::string& gridName, int bit, Image::ImageDataType dataType, bool useColorMap) {
+void Scene::writeDeformedImageTemplated(const std::string& filename, const std::string& gridName, int bit, Image::ImageDataType dataType, bool useColorMap, ResolutionMode resolution) {
     // To expose as parameters
     bool smallFile = true;
     int cacheSize = 2;
     bool useCustomColor = useColorMap;
     //glm::ivec3 imageSize = glm::vec3(60, 264, 500);
     glm::ivec3 imageSize = glm::vec3(0, 0, 0);
+    //ResolutionMode resolution = ResolutionMode::FULL_RESOLUTION;
 
     auto start = std::chrono::steady_clock::now();
 
@@ -4491,22 +4497,22 @@ void Scene::writeDeformedImageTemplated(const std::string& filename, const std::
         p -= fromGrid->bbMin;
         for(int i = 0; i < 3; ++i) {
             if(ceil)
-                p[i] = std::ceil(p[i]/fromGrid->getVoxelSize()[i]); 
+                p[i] = std::ceil(p[i]/fromGrid->getVoxelSize(resolution)[i]); 
             else
-                p[i] = std::floor(p[i]/fromGrid->getVoxelSize()[i]); 
+                p[i] = std::floor(p[i]/fromGrid->getVoxelSize(resolution)[i]); 
         }
         p /= fromImageToCustomImage;
     };
 
     auto getWorldCoordinates = [&](glm::vec3& p) {
         for(int i = 0; i < 3; ++i) {
-            p[i] = (float(std::ceil(p[i] * fromImageToCustomImage[i])) + 0.5) * fromGrid->getVoxelSize()[i];
+            p[i] = (float(std::ceil(p[i] * fromImageToCustomImage[i])) + 0.5) * fromGrid->getVoxelSize(resolution)[i];
         }
         p += fromGrid->bbMin;
     };
 
     glm::vec3 worldSize = fromGrid->getDimensions();
-    glm::vec3 voxelSize = fromGrid->getVoxelSize();
+    glm::vec3 voxelSize = fromGrid->getVoxelSize(resolution);
 
     glm::ivec3 n(0, 0, 0);
     for(int i = 0 ; i < 3 ; i++) {
@@ -4590,7 +4596,6 @@ void Scene::writeDeformedImageTemplated(const std::string& filename, const std::
                             int insertIdx = i + j*imageSize[0];
 
                             int imgIdxLoad = std::floor(p.z);
-
                             int idxLoad = std::floor(p.x) + std::floor(p.y) * fromGrid->sampler.image->tiffImageReader->imgResolution.x;
 
                             if(img[k][insertIdx] == 0) {
@@ -4610,7 +4615,8 @@ void Scene::writeDeformedImageTemplated(const std::string& filename, const std::
                                         fromGrid->sampler.image->tiffImageReader->getImage<DataType>(imgIdxLoad, cache[imgIdxLoad], {glm::vec3(0., 0., 0.), fromGrid->sampler.image->tiffImageReader->imgResolution});
                                     }
                                     if(useCustomColor) {
-                                        uint16_t value = fromGrid->getValueFromPoint(p);
+                                        uint16_t value = 0; 
+                                        value = cache[imgIdxLoad][idxLoad];
                                         if(data[value]) {
                                             glm::vec3 color = data_color[value];
                                             insertIdx *= 3;
@@ -4651,6 +4657,7 @@ void Scene::writeDeformedImageTemplated(const std::string& filename, const std::
 }
 
 void Scene::writeDeformedImageLowRes(const std::string& filename, const std::string& gridName) {
+    ResolutionMode resolution = ResolutionMode::SAMPLER_RESOLUTION;
     auto start = std::chrono::steady_clock::now();
     Grid * fromGrid = this->grids[this->getGridIdx(gridName)]->grid;
 
@@ -4658,22 +4665,22 @@ void Scene::writeDeformedImageLowRes(const std::string& filename, const std::str
         p -= fromGrid->bbMin;
         for(int i = 0; i < 3; ++i) {
             if(ceil)
-                p[i] = std::ceil(p[i]/fromGrid->getVoxelSize()[i]); 
+                p[i] = std::ceil(p[i]/fromGrid->getVoxelSize(resolution)[i]); 
             else
-                p[i] = std::floor(p[i]/fromGrid->getVoxelSize()[i]); 
+                p[i] = std::floor(p[i]/fromGrid->getVoxelSize(resolution)[i]); 
         }
     };
 
     auto getWorldCoordinates = [&](glm::vec3& p) {
         for(int i = 0; i < 3; ++i) {
-            p[i] = (p[i]+0.5) * fromGrid->getVoxelSize()[i];
+            p[i] = (p[i]+0.5) * fromGrid->getVoxelSize(resolution)[i];
         }
         p += fromGrid->bbMin;
     };
 
     // STEP1: compute the deformed voxel grid size
     glm::vec3 worldSize = fromGrid->getDimensions();
-    glm::vec3 voxelSize = fromGrid->getVoxelSize();
+    glm::vec3 voxelSize = fromGrid->getVoxelSize(resolution);
 
     glm::ivec3 n(0, 0, 0);
     for(int i = 0 ; i < 3 ; i++) {
@@ -4863,8 +4870,8 @@ glm::vec3 Scene::getGridImgSize(const std::string& name) {
     return this->grids[this->getGridIdx(name)]->grid->getResolution();
 }
 
-glm::vec3 Scene::getGridVoxelSize(const std::string& name) {
-    return this->grids[this->getGridIdx(name)]->grid->getVoxelSize();
+glm::vec3 Scene::getGridVoxelSize(const std::string &name, ResolutionMode resolution) {
+    return this->grids[this->getGridIdx(name)]->grid->getVoxelSize(resolution);
 }
 
 std::pair<uint16_t, uint16_t> Scene::getGridMinMaxValues(const std::string& name) {
