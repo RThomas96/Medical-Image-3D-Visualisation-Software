@@ -64,6 +64,10 @@ namespace UITool {
 		}
 	}
 
+    void DirectManipulator::updateWithMeshVertices() {
+
+    }
+
     void DirectManipulator::getAllPositions(std::vector<glm::vec3>& positions) {
 		for (int i = 0; i < this->manipulators.size(); ++i) {
             positions.push_back(this->manipulators[i].getManipPosition());
@@ -171,6 +175,10 @@ namespace UITool {
         //Do nothing, because we don't want to move these manipulator
 	}
 
+    void FreeManipulator::updateWithMeshVertices() {
+
+    }
+
     void FreeManipulator::getAllPositions(std::vector<glm::vec3>& positions) {
         positions.push_back(this->manipulator.getManipPosition());
     }
@@ -240,7 +248,23 @@ namespace UITool {
 
 	void PositionManipulator::setAllManipulatorsPosition(const std::vector<glm::vec3>& positions) {
         //Do nothing, because we don't want to move these manipulator
-	}
+    }
+
+    void PositionManipulator::updateWithMeshVertices() {
+        delete this->kid_manip;
+        this->kid_manip = new RotationManipulator();
+        this->kid_manip->evenMode = this->evenMode;
+        this->kid_manip->setOrigine(qglviewer::Vec(mesh->getOrigin()[0], mesh->getOrigin()[1], mesh->getOrigin()[2]));
+        this->kid_manip->setRepX(qglviewer::Vec(mesh->coordinate_system[0].x, mesh->coordinate_system[0].y, mesh->coordinate_system[0].z));
+        this->kid_manip->setRepY(qglviewer::Vec(mesh->coordinate_system[1].x, mesh->coordinate_system[1].y, mesh->coordinate_system[1].z));
+        this->kid_manip->setRepZ(qglviewer::Vec(mesh->coordinate_system[2].x, mesh->coordinate_system[2].y, mesh->coordinate_system[2].z));
+        for(int i = 0; i < this->mesh->getNbVertices(); ++i) {
+            this->kid_manip->addPoint(i, qglviewer::Vec(this->mesh->getVertice(i)[0], this->mesh->getVertice(i)[1], this->mesh->getVertice(i)[2]));
+        }
+        QObject::connect(this->kid_manip, &RotationManipulator::moved, this, [this]() {this->moveManipulator(nullptr);});
+
+        this->meshIsModified = false;
+    }
 
     void PositionManipulator::getAllPositions(std::vector<glm::vec3>& positions) {
     }
@@ -515,6 +539,10 @@ namespace UITool {
 	void CompManipulator::setAllManipulatorsPosition(const std::vector<glm::vec3>& positions) {
 	}
 
+    void CompManipulator::updateWithMeshVertices() {
+
+    }
+
     void CompManipulator::getAllPositions(std::vector<glm::vec3>& positions) {
         positions.clear();
 		for (int i = 0; i < this->manipulators.size(); ++i) {
@@ -633,7 +661,8 @@ namespace UITool {
 		for (int i = 0; i < positions.size(); ++i) {
 			this->manipulators.push_back(Manipulator(positions[i]));
 			this->manipulators[i].lockPosition();
-            this->manipulators[i].enable();
+            //this->manipulators[i].enable();
+            this->manipulators[i].disable();
 
             this->fixedVertices.push_back(false);
             this->selectedVertices.push_back(false);
@@ -957,6 +986,10 @@ namespace UITool {
 		}
 	}
 
+    void ARAPManipulator::updateWithMeshVertices() {
+
+    }
+
     ARAPManipulator::~ARAPManipulator() {
         ARAPMethod * deformer = dynamic_cast<ARAPMethod*>(this->mesh->meshDeformer);
         if(deformer) {
@@ -1016,6 +1049,10 @@ void SliceManipulator::setAllManipulatorsPosition(const std::vector<glm::vec3>& 
 	} else {
 		std::cerr << "WARNING: try to set [" << this->manipulators.size() << "] manipulators positions with a position vector of size [" << positions.size() << "]" << std::endl;
 	}
+}
+
+void SliceManipulator::updateWithMeshVertices() {
+
 }
 
 void SliceManipulator::getAllPositions(std::vector<glm::vec3>& positions) {
@@ -1322,6 +1359,10 @@ void FixedRegistrationManipulator::setAllManipulatorsPosition(const std::vector<
     } else {
         std::cerr << "WARNING: try to set [" << this->manipulators.size() << "] manipulators positions with a position vector of size [" << positions.size() << "]" << std::endl;
     }
+}
+
+void FixedRegistrationManipulator::updateWithMeshVertices() {
+
 }
 
 void FixedRegistrationManipulator::getAllPositions(std::vector<glm::vec3>& positions) {

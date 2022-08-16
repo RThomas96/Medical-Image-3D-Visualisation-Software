@@ -4296,6 +4296,7 @@ void Scene::moveInHistory(bool backward, bool reset) {
         }
         if(success) {
             mesh->replacePoints(pointsBefore);
+            this->glMeshManipulator->meshManipulator->updateWithMeshVertices();
             this->sendFirstTetmeshToGPU();
             this->updateSceneCenter();
         }

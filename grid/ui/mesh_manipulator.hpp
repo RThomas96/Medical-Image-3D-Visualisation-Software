@@ -177,6 +177,7 @@ namespace UITool {
         virtual void getManipulatorsToDisplay(std::vector<bool>& toDisplay) const = 0;
         virtual void getManipulatorsState(std::vector<State>& states) const = 0;
         virtual void setAllManipulatorsPosition(const std::vector<glm::vec3>& positions) = 0;
+        virtual void updateWithMeshVertices() = 0;
 
         virtual ~MeshManipulator() {};
     //public slots:
@@ -216,6 +217,7 @@ namespace UITool {
 		DirectManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions);
 
         void setAllManipulatorsPosition(const std::vector<glm::vec3>& positions) override;
+        void updateWithMeshVertices() override;
         void getAllPositions(std::vector<glm::vec3>& positions) override;
         void getManipulatorsState(std::vector<State>& states) const override;
 
@@ -262,6 +264,7 @@ namespace UITool {
         void setActivation(bool isActive);
 
         void setAllManipulatorsPosition(const std::vector<glm::vec3>& positions) override;
+        void updateWithMeshVertices() override;
 
         void getAllPositions(std::vector<glm::vec3>& positions) override;
         void getManipulatorsState(std::vector<State>& states) const override;
@@ -303,6 +306,7 @@ namespace UITool {
         ~PositionManipulator();
 
         void setAllManipulatorsPosition(const std::vector<glm::vec3>& positions) override;
+        void updateWithMeshVertices() override;
 
         void getAllPositions(std::vector<glm::vec3>& positions) override;
         void getManipulatorsToDisplay(std::vector<bool>& toDisplay) const override;
@@ -341,6 +345,7 @@ namespace UITool {
         void addManipulator(const glm::vec3& position);
 
         void setAllManipulatorsPosition(const std::vector<glm::vec3>& positions) override;
+        void updateWithMeshVertices() override;
         void getAllPositions(std::vector<glm::vec3>& positions) override;
         void getManipulatorsState(std::vector<State>& states) const override;
 
@@ -421,6 +426,7 @@ namespace UITool {
         ~ARAPManipulator();
 
         void setAllManipulatorsPosition(const std::vector<glm::vec3>& positions) override;
+        void updateWithMeshVertices() override;
         void getAllPositions(std::vector<glm::vec3>& positions) override;
         void getManipulatorsState(std::vector<State>& states) const override;
 
@@ -474,6 +480,7 @@ namespace UITool {
 		SliceManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions);
 
         void setAllManipulatorsPosition(const std::vector<glm::vec3>& positions) override;
+        void updateWithMeshVertices() override;
         void getAllPositions(std::vector<glm::vec3>& positions) override;
         void getManipulatorsState(std::vector<State>& states) const override;
 
@@ -535,6 +542,7 @@ namespace UITool {
 		FixedRegistrationManipulator(BaseMesh * mesh, Grid * gridToRegister, const std::vector<glm::vec3>& positions);
 
         void setAllManipulatorsPosition(const std::vector<glm::vec3>& positions) override;
+        void updateWithMeshVertices() override;
         void getAllPositions(std::vector<glm::vec3>& positions) override;
         void getManipulatorsState(std::vector<State>& states) const override;
 
