@@ -288,6 +288,8 @@ void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scen
     this->meshManipulatorType = type;
     if(type == MeshManipulatorType::DIRECT) {
         this->meshManipulator = new UITool::DirectManipulator(mesh, positions);
+        this->manipulatorRatio = 0.005;
+        this->updateManipulatorRadius(scene->getSceneRadius());
     } else if(type == MeshManipulatorType::FREE) {
         this->meshManipulator = new UITool::FreeManipulator(mesh, positions);
     } else if(type == MeshManipulatorType::POSITION) {

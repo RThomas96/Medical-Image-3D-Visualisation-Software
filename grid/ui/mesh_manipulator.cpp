@@ -65,7 +65,10 @@ namespace UITool {
 	}
 
     void DirectManipulator::updateWithMeshVertices() {
-
+        for(int i = 0; i < this->mesh->getNbVertices(); ++i) {
+            this->manipulators[i].setLastPosition(this->mesh->getVertice(i));
+            this->manipulators[i].setManipPosition(this->mesh->getVertice(i));
+        }
     }
 
     void DirectManipulator::getAllPositions(std::vector<glm::vec3>& positions) {
@@ -936,6 +939,12 @@ namespace UITool {
 
     void ARAPManipulator::mouseReleased(QMouseEvent* e) {
         print_debug("Mouse released: [");
+
+        if(this->meshIsModified) {
+            print_debug("Add to history");
+            mesh->addStateToHistory();
+            this->meshIsModified = false;
+        }
         if(this->selectionMode == INACTIVE) {
             print_debug("Selection mode is: INACTIVE");
             print_debug("Do nothing");
@@ -943,10 +952,6 @@ namespace UITool {
         }
         print_debug("Switch to ACTIVE");
         this->selectionMode = ACTIVE;
-        if(this->meshIsModified) {
-            mesh->addStateToHistory();
-            this->meshIsModified = false;
-        }
         print_debug("]");
         this->selection.mouseReleaseEvent(e, nullptr);
     }
@@ -987,7 +992,11 @@ namespace UITool {
 	}
 
     void ARAPManipulator::updateWithMeshVertices() {
-
+        for(int i = 0; i < this->mesh->getNbVertices(); ++i) {
+            this->manipulators[i].setLastPosition(this->mesh->getVertice(i));
+            this->manipulators[i].setManipPosition(this->mesh->getVertice(i));
+        }
+        this->computeManipulatorFromSelection();
     }
 
     ARAPManipulator::~ARAPManipulator() {
