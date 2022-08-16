@@ -502,11 +502,10 @@ public:
         glEnable(GL_DEPTH);
     }
 
-    //void wheelEvent(QWheelEvent* const w, qglviewer::Camera* const )
-    //{
-	//    //QGLViewer::wheelEvent(w);
-    //    //mode_grabbing = (mode_grabbing + 1)%2;
-    //}
+    void wheelEvent(QWheelEvent* const w, qglviewer::Camera* const )
+    {
+        mode_grabbing = (mode_grabbing + 1)%2;
+    }
 
     void checkIfGrabsMouse(int x, int y,const qglviewer::Camera* const cam)
     {
