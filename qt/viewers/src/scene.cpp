@@ -3976,6 +3976,8 @@ BaseMesh * Scene::getBaseMesh(const std::string& name) {
 
 void Scene::updateTools(UITool::MeshManipulatorType tool) {
     this->glMeshManipulator->createNewMeshManipulator(this->getBaseMesh(this->activeMesh), this, tool);
+    std::cout << "Update manipulator radius" << std::endl;
+    this->updateManipulatorRadius();
 
     if(tool == UITool::MeshManipulatorType::NONE || !this->getBaseMesh(this->activeMesh))
         return;
@@ -4297,6 +4299,7 @@ void Scene::moveInHistory(bool backward, bool reset) {
         if(success) {
             mesh->replacePoints(pointsBefore);
             this->glMeshManipulator->meshManipulator->updateWithMeshVertices();
+            this->updateManipulatorRadius();
             this->sendFirstTetmeshToGPU();
             this->updateSceneCenter();
         }
@@ -4975,6 +4978,9 @@ void Scene::addRange(uint16_t min, uint16_t max, glm::vec3 color) {
 //}
 
 bool Scene::hasTwoOrMoreGrids() {
-   return grids.size() >= 2;
+    return grids.size() >= 2;
 }
 
+void Scene::updateManipulatorRadius() {
+    Q_EMIT sceneRadiusOutOfDate();
+}

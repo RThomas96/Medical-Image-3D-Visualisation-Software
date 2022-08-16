@@ -74,6 +74,8 @@ void Viewer::init() {
 
     QObject::connect(this, &Viewer::sceneRadiusChanged, this->scene, &Scene::changeSceneRadius);
 
+    QObject::connect(this->scene, &Scene::sceneRadiusOutOfDate, [&](){Q_EMIT sceneRadiusChanged(this->camera()->distanceToSceneCenter());});
+
     QObject::connect(this->scene, &Scene::sceneCenterChanged, this, &Viewer::setCenter);
     QObject::connect(this->scene, &Scene::sceneRadiusChanged, this, &Viewer::setRadius);
 

@@ -515,6 +515,7 @@ signals:
     void meshMoved();
     void colorChanged();
     void planeControlWidgetNeedUpdate(const glm::vec3& values);
+    void sceneRadiusOutOfDate();
 
 // All these indirections are important because for most of them they interacts with various components of the scene
 // And it allow more flexibility as the scene control ALL the informations to transit from class to class
@@ -675,6 +676,7 @@ public slots:
     float getSceneRadius();
     void updateSceneCenter();
     void updateSceneRadius();
+    void updateManipulatorRadius();
     glm::vec3 getSceneCenter();
     void saveMesh(const std::string& name, const std::string& filename);
     bool saveActiveCage(const std::string& filename);
