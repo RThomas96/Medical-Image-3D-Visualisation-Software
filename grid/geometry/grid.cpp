@@ -152,7 +152,7 @@ void Grid::loadMESH(std::string const &filename) {
     }    
 }
 
-void Grid::sampleSliceGridValues(const glm::vec3& slice, const std::pair<glm::vec3, glm::vec3>& areaToSample, const glm::vec3& resolution, std::vector<uint16_t>& result, Interpolation::Method interpolationMethod) {
+void Grid::sampleSliceGridValues(const glm::vec3& slice, const std::pair<glm::vec3, glm::vec3>& areaToSample, const glm::vec3& imgSize, std::vector<uint16_t>& result, Interpolation::Method interpolationMethod) {
     auto start = std::chrono::steady_clock::now();
 
     auto convert = [&](glm::vec3& p) {
@@ -169,9 +169,10 @@ void Grid::sampleSliceGridValues(const glm::vec3& slice, const std::pair<glm::ve
     // Space to sample
     glm::vec3 bbMinScene = areaToSample.first;
     glm::vec3 bbMaxScene = areaToSample.second;
-    glm::vec3 newResolution = resolution;
-    convert(newResolution);
-    glm::vec3 sizeVoxelInNewImage = (bbMaxScene - bbMinScene) / newResolution;
+    glm::vec3 newImgSize = imgSize;
+    convert(newImgSize);
+    glm::vec3 sizeVoxelInNewImage = (bbMaxScene - bbMinScene) / newImgSize;
+    //glm::vec3 sizeVoxelInNewImage = glm::vec3(1., 1., 1.);
 
     std::cout << "Size voxel new: " << sizeVoxelInNewImage << std::endl;
 
@@ -190,7 +191,7 @@ void Grid::sampleSliceGridValues(const glm::vec3& slice, const std::pair<glm::ve
     };
 
     result.clear();
-    result.resize(resolution[0] * resolution[1], 0);
+    result.resize(imgSize[0] * imgSize[1], 0);
 
     int printOcc = 10;
     printOcc = this->mesh.size()/printOcc;
@@ -238,7 +239,7 @@ void Grid::sampleSliceGridValues(const glm::vec3& slice, const std::pair<glm::ve
 
                             glm::vec3 pImg(i, j, k);
                             convert(pImg);
-                            int insertIdx = pImg.x + pImg.y*resolution[0];
+                            int insertIdx = pImg.x + pImg.y*imgSize[0];
 
                             this->sampler.fromSamplerToImage(p);
                             result[insertIdx] = this->getValueFromPoint(p, interpolationMethod);
@@ -439,7 +440,8 @@ void Grid::sampleGridValues(const std::pair<glm::vec3, glm::vec3>& areaToSample,
     // Space to sample
     glm::vec3 bbMinScene = areaToSample.first;
     glm::vec3 bbMaxScene = areaToSample.second;
-    glm::vec3 fromSamplerToSceneRatio = (bbMaxScene - bbMinScene) / resolution;
+    //glm::vec3 fromSamplerToSceneRatio = (bbMaxScene - bbMinScene) / resolution;
+    glm::vec3 fromSamplerToSceneRatio = glm::vec3(1., 1., 1.);
 
     auto isInScene = [&](glm::vec3& p) {
         return (p.x > bbMinScene.x && p.y > bbMinScene.y && p.z > bbMinScene.z && p.x < bbMaxScene.x && p.y < bbMaxScene.y && p.z < bbMaxScene.z);

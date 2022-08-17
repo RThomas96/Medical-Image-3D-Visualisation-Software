@@ -1164,10 +1164,10 @@ private:
     }
 
     void connect(Scene * scene) {
-        QObject::connect(scene, &Scene::meshMoved, [this, scene](){
-            this->reset();
-            this->drawImages();
-        });
+        //QObject::connect(scene, &Scene::meshMoved, [this, scene](){
+        //    this->reset();
+        //    this->drawImages();
+        //});
 
         QObject::connect(this->viewer2D, &Image2DViewer::isSelected, this, &Image3DViewer::isSelected);
         QObject::connect(this->viewer2D, &Image2DViewer::mouseMovedIn2DPlanarViewer, this, &Image3DViewer::mouseMovedIn2DViewer);
@@ -1945,7 +1945,8 @@ public slots:
         std::string name = this->getFromGridName();
         if(name == "")
             return defaultValue;
-        return scene->grids[scene->getGridIdx(name)]->grid->getResolution();
+        //return scene->grids[scene->getGridIdx(name)]->grid->getResolution();
+        return scene->grids[scene->getGridIdx(name)]->grid->getDimensions();
     }
 
     void backImageChanged(Scene * scene) {
@@ -2024,8 +2025,11 @@ public slots:
         convertVector(originalImgDimension);
         this->viewers[this->selectedViewer]->init(
                     originalImgDimension,
-                    this->getImgDimension(),
-                    finalImageSize, this->sliders["SliderX"]->value(),
+                    originalImgDimension,
+                    //this->getImgDimension(),
+                    //finalImageSize,
+                    originalImgDimension,
+                    this->sliders["SliderX"]->value(),
                     this->getSide(),
                     {this->getFromGridName(), this->getToGridName()},
                     this->getImagesToDraw(),
@@ -2196,6 +2200,12 @@ public slots:
             if(id == "SliderX" || id == "SideX" || id == "SideY" || id == "SideZ" || id == "Link") {
                 this->updateSlice();
             }
+        });
+
+        QObject::connect(scene, &Scene::meshMoved, [this, scene](){
+            this->updateImageViewer();
+            //this->reset();
+            //this->drawImages();
         });
 
         QObject::connect(this->fileChoosers["Save"], &FileChooser::fileSelected, [this](){

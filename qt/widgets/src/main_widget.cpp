@@ -127,9 +127,9 @@ void MainWidget::setupWidgets() {
 
     this->toolbar->addSeparator();
 
-    //this->toolbar->addAction(this->actionManager->getAction("Layout1View"));
-    //this->toolbar->addAction(this->actionManager->getAction("Layout2View"));
-    //this->toolbar->addAction(this->actionManager->getAction("Layout4View"));
+    this->toolbar->addAction(this->actionManager->getAction("Layout1View"));
+    this->toolbar->addAction(this->actionManager->getAction("Layout2View"));
+    this->toolbar->addAction(this->actionManager->getAction("Layout4View"));
 
     this->toolbar->addSeparator();
 
