@@ -650,7 +650,18 @@ void Scene::addGrid() {
     gridView->minValue = min;
     gridView->maxValue = max;
 
-    std::cout << "Max value: " << max << std::endl;
+    if(this->gridToDraw == 0) {
+        QColor r = Qt::GlobalColor::red;
+        QColor b = Qt::GlobalColor::blue;
+        gridView->color_0 = glm::vec3(r.redF(), r.greenF(), r.blueF());
+        gridView->color_1 = glm::vec3(b.redF(), b.greenF(), b.blueF());
+    } else {
+        QColor d = Qt::GlobalColor::darkCyan;
+        QColor y = Qt::GlobalColor::yellow;
+        gridView->color_0 = glm::vec3(d.redF(), d.greenF(), d.blueF());
+        gridView->color_1 = glm::vec3(y.redF(), y.greenF(), y.blueF());
+    }
+
     gridView->colorChannelAttributes[0].setMaxVisible(max);
     gridView->colorChannelAttributes[0].setMaxColorScale(max);
     gridView->colorChannelAttributes[1].setMaxVisible(max);
@@ -2156,6 +2167,8 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
 }
 
 void Scene::newSHADERS_updateUBOData() {
+    if(grids.size() == 0)
+        return;
 
     this->shouldUpdateUBOData = false;
     for (const auto& grid : this->grids) {
@@ -2211,6 +2224,9 @@ void Scene::newSHADERS_updateUBOData() {
 
     grid->visu_map = data;
     grid->color_map = data_color;
+
+    std::cout << "Update FBO" << std::endl;
+    Q_EMIT meshMoved();// To update the 2D viewer
 }
 
 GLuint Scene::updateFBOOutputs(glm::ivec2 dimensions, GLuint fb_handle, GLuint old_texture) {
@@ -3012,6 +3028,8 @@ Image::bbox_t Scene::getSceneBoundingBox() const {
 void Scene::setColor0(qreal r, qreal g, qreal b) {
     glm::vec<3, qreal, glm::highp> qtcolor(r, g, b);
     this->color0 = glm::convert_to<float>(qtcolor);
+    if(this->grids.size() > 0)
+        this->grids[0]->color_0 = this->color0;
     this->signal_updateUserColorScales();
     emit this->colorChanged();
     return;
@@ -3020,6 +3038,8 @@ void Scene::setColor0(qreal r, qreal g, qreal b) {
 void Scene::setColor1(qreal r, qreal g, qreal b) {
     glm::vec<3, qreal, glm::highp> qtcolor(r, g, b);
     this->color1 = glm::convert_to<float>(qtcolor);
+    if(this->grids.size() > 0)
+        this->grids[0]->color_1 = this->color1;
     this->signal_updateUserColorScales();
     emit this->colorChanged();
     return;
@@ -3028,6 +3048,8 @@ void Scene::setColor1(qreal r, qreal g, qreal b) {
 void Scene::setColor0Alternate(qreal r, qreal g, qreal b) {
     glm::vec<3, qreal, glm::highp> qtcolor(r, g, b);
     this->color0_second = glm::convert_to<float>(qtcolor);
+    if(this->grids.size() > 1)
+        this->grids[1]->color_0 = this->color0;
     this->signal_updateUserColorScales();
     emit this->colorChanged();
     return;
@@ -3036,6 +3058,8 @@ void Scene::setColor0Alternate(qreal r, qreal g, qreal b) {
 void Scene::setColor1Alternate(qreal r, qreal g, qreal b) {
     glm::vec<3, qreal, glm::highp> qtcolor(r, g, b);
     this->color1_second = glm::convert_to<float>(qtcolor);
+    if(this->grids.size() > 1)
+        this->grids[1]->color_1 = this->color1;
     this->signal_updateUserColorScales();
     emit this->colorChanged();
     return;
@@ -4957,13 +4981,14 @@ void Scene::resetRanges() {
    this->newSHADERS_updateUBOData();
 }
 
-void Scene::addRange(uint16_t min, uint16_t max, glm::vec3 color) {
+void Scene::addRange(uint16_t min, uint16_t max, glm::vec3 color, bool updateUBO) {
    if(this->gridToDraw == -1)
        return;
    auto& grid = this->grids[this->gridToDraw];
    grid->visu.push_back(std::make_pair(min, max));
    grid->visu_color.push_back(color);
-   this->newSHADERS_updateUBOData();
+   if(updateUBO)
+       this->newSHADERS_updateUBOData();
 }
 
 //void Scene::removeRange(const std::string &gridName, uint16_t min, uint16_t max) {

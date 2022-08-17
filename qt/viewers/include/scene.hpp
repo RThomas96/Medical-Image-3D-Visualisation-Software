@@ -595,7 +595,7 @@ public slots:
     //void addRange(const std::string &gridName, uint16_t min, uint16_t max);
     //void removeRange(const std::string &gridName, uint16_t min, uint16_t max);
     void resetRanges();
-    void addRange(uint16_t min, uint16_t max, glm::vec3 color = glm::vec3(1., 0., 0.));
+    void addRange(uint16_t min, uint16_t max, glm::vec3 color = glm::vec3(1., 0., 0.), bool updateUBO = true);
 
     // ************************ //
 

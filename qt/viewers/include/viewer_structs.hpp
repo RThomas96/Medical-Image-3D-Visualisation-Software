@@ -184,25 +184,23 @@ public:
 	VolMesh volumetricMesh;
 	glm::vec3 defaultEpsilon;
 	color_3 boundingBoxColor;
-	/// @brief The 'base' color for the user-defined color scale
+
+    // Used
 	color_3 color_0;
-	/// @brief The 'final' color for the user-defined color scale
 	color_3 color_1;
-	/// @brief The minimum and maximum texture values to display
+
+    // Not used
 	data_2 texBounds0;
 	data_2 texBounds1;
-	/// @brief The minimum and maximum values of the color scale
 	data_2 colorBounds0;
 	data_2 colorBounds1;
-	/// @brief Handle for the uniform buffer with the channel attributes
 	GLuint uboHandle_colorAttributes;
 
-    /// @brief Handle for the uniform buffer with the channel attributes
+    // Used
     GLuint colorRanges;
-    /// @brief The color channel attributes.
     std::array<ColorChannelAttributes_GL, 3> colorChannelAttributes;
 
-    //std::vector<uint16_t> valuesRangeToDisplay;
+    //Used
     GLuint valuesRangeToDisplay;
     GLuint valuesRangeColorToDisplay;
 
