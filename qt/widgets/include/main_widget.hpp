@@ -1508,7 +1508,7 @@ public slots:
     }
 
     void updateImageViewer() {
-        if(this->noViewerSelected())
+        if(this->noViewerSelected() || this->isHidden())
             return;
         this->sliders["SliderX"]->setMinimum(0);
         this->sliders["SliderX"]->setMaximum(this->getImgDimension().z-1);
@@ -1798,8 +1798,8 @@ public:
         autoButton->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
         hideOption = new QPushButton();
-        hideOption->setIcon(QIcon(QPixmap("../resources/arap.svg")));
-        hideOption->setIconSize(QPixmap("../resources/arap.svg").rect().size());
+        hideOption->setIcon(QIcon(QPixmap("../resources/more_option.svg")));
+        hideOption->setIconSize(QPixmap("../resources/more_option.svg").rect().size());
         hideOption->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
         hideOption->setCheckable(true);
 
@@ -2920,6 +2920,10 @@ public slots:
         
         this->toolbar->addAction(actionManager.getAction("FixedTool_apply"));
         this->toolbar->addAction(actionManager.getAction("FixedTool_clear"));
+
+        this->toolbar->addAction(actionManager.getAction("SliceTool_switchX"));
+        this->toolbar->addAction(actionManager.getAction("SliceTool_switchY"));
+        this->toolbar->addAction(actionManager.getAction("SliceTool_switchZ"));
     };
 };
 
@@ -3060,6 +3064,7 @@ public slots:
         this->actionManager->deactivateGroup("MoveTool");
         this->actionManager->deactivateGroup("ARAPTool");
         this->actionManager->deactivateGroup("FixedTool");
+        this->actionManager->deactivateGroup("SliceTool");
         switch(newTool) {
             case UITool::MeshManipulatorType::POSITION:
                 this->actionManager->activateGroup("MoveTool");
@@ -3071,6 +3076,9 @@ public slots:
                 break;
             case UITool::MeshManipulatorType::FIXED_REGISTRATION:
                 this->actionManager->activateGroup("FixedTool");
+                break;
+            case UITool::MeshManipulatorType::SLICE:
+                this->actionManager->activateGroup("SliceTool");
                 break;
         }
     }

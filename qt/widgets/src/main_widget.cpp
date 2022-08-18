@@ -1,4 +1,5 @@
 #include "../include/main_widget.hpp"
+#include "qt/viewers/include/scene.hpp"
 
 #include <QEvent>
 #include <QHBoxLayout>
@@ -73,7 +74,7 @@ void MainWidget::setupWidgets() {
 
     this->fileMenu = this->menuBar()->addMenu("&File");
     this->fileMenu->addAction(this->actionManager->getAction("OpenImage"));
-    //this->fileMenu->addAction(this->actionManager->getAction("OpenCage"));
+    this->fileMenu->addAction(this->actionManager->getAction("OpenMesh"));
     this->fileMenu->addSeparator();
     this->fileMenu->addAction(this->actionManager->getAction("SaveCage"));
     this->fileMenu->addAction(this->actionManager->getAction("SaveAsCage"));
@@ -117,6 +118,7 @@ void MainWidget::setupWidgets() {
     this->toolbar->addAction(this->actionManager->getAction("ToggleMoveTool"));
     this->toolbar->addAction(this->actionManager->getAction("ToggleDirectTool"));
     this->toolbar->addAction(this->actionManager->getAction("ToggleARAPTool"));
+    this->toolbar->addAction(this->actionManager->getAction("ToggleSliceTool"));
     //this->toolbar->addAction(this->actionManager->getAction("ToggleRegisterTool"));
 
     this->toolbar->addSeparator();
@@ -412,13 +414,19 @@ void MainWidget::setupActions() {
     QObject::connect(this, &MainWidget::gridSelected, [this](){this->actionManager->getAction("ToggleARAPTool")->setDisabled(true);});
     QObject::connect(this, &MainWidget::meshSelected, [this](){this->actionManager->getAction("ToggleARAPTool")->setDisabled(false);});
 
+    this->actionManager->createQActionToggleButton("ToggleSliceTool", "Slice", "Ctrl+A", "Activate Slice tool", "slice");
+    QObject::connect(this->actionManager->getAction("ToggleSliceTool"), &QAction::triggered, [this](){this->scene->updateTools(UITool::MeshManipulatorType::SLICE);});
+    QObject::connect(this->actionManager->getAction("ToggleSliceTool"), &QAction::triggered, [this](){this->changeCurrentTool(UITool::MeshManipulatorType::SLICE);});
+    QObject::connect(this, &MainWidget::gridSelected, [this](){this->actionManager->getAction("ToggleSliceTool")->setDisabled(true);});
+    QObject::connect(this, &MainWidget::meshSelected, [this](){this->actionManager->getAction("ToggleSliceTool")->setDisabled(false);});
+
     this->actionManager->createQActionToggleButton("ToggleRegisterTool", "Register", "Ctrl+R", "Activate Register tool", "register");
     QObject::connect(this->actionManager->getAction("ToggleRegisterTool"), &QAction::triggered, [this](){this->scene->updateTools(UITool::MeshManipulatorType::FIXED_REGISTRATION);});
     QObject::connect(this->actionManager->getAction("ToggleRegisterTool"), &QAction::triggered, [this](){this->changeCurrentTool(UITool::MeshManipulatorType::FIXED_REGISTRATION);});
     QObject::connect(this, &MainWidget::gridSelected, [this](){this->actionManager->getAction("ToggleRegisterTool")->setDisabled(true);});
     QObject::connect(this, &MainWidget::meshSelected, [this](){this->actionManager->getAction("ToggleRegisterTool")->setDisabled(false);});
 
-    this->actionManager->createQExclusiveActionGroup("ToogleTools", {"ToggleNoneTool", "ToggleMoveTool", "ToggleDirectTool", "ToggleARAPTool", "ToggleRegisterTool"});
+    this->actionManager->createQExclusiveActionGroup("ToogleTools", {"ToggleNoneTool", "ToggleMoveTool", "ToggleDirectTool", "ToggleARAPTool", "ToggleRegisterTool", "ToggleSliceTool"});
 
     // Move
     this->actionManager->createQActionToggleButton("MoveTool_toggleEvenMode", "Even", "E", "Toggle the even mode to scale evenly in 3 dimensions", "even");
@@ -482,6 +490,22 @@ void MainWidget::setupActions() {
 
     this->actionManager->createQActionButton("CenterCamera", "Center", "", "Center the camera on the selected object", "camera");
     QObject::connect(this->actionManager->getAction("CenterCamera"), &QAction::triggered, [this](){this->scene->updateSceneCenter();});
+
+    // Slice
+    this->actionManager->createQActionToggledButton("SliceTool_switchX", "X", "", "Toggle the even mode to scale evenly in 3 dimensions", "slice");
+    this->actionManager->getAction("SliceTool_switchX")->setVisible(false);
+    QObject::connect(this->actionManager->getAction("SliceTool_switchX"), &QAction::triggered, [this](){this->scene->changeSliceToSelect(UITool::SliceOrientation::X);});
+
+    this->actionManager->createQActionToggleButton("SliceTool_switchY", "Y", "", "Toggle the even mode to scale evenly in 3 dimensions", "slice");
+    this->actionManager->getAction("SliceTool_switchY")->setVisible(false);
+    QObject::connect(this->actionManager->getAction("SliceTool_switchY"), &QAction::triggered, [this](){this->scene->changeSliceToSelect(UITool::SliceOrientation::Y);});
+
+    this->actionManager->createQActionToggleButton("SliceTool_switchZ", "Z", "", "Toggle the even mode to scale evenly in 3 dimensions", "slice");
+    this->actionManager->getAction("SliceTool_switchZ")->setVisible(false);
+    QObject::connect(this->actionManager->getAction("SliceTool_switchZ"), &QAction::triggered, [this](){this->scene->changeSliceToSelect(UITool::SliceOrientation::Z);});
+
+    this->actionManager->createQExclusiveActionGroup("SliceTool", {"SliceTool_switchX", "SliceTool_switchY", "SliceTool_switchZ"});
+    this->actionManager->createQActionGroup("SliceTool", {"SliceTool_switchX", "SliceTool_switchY", "SliceTool_switchZ"});
 
     // Undo
     this->actionManager->createQActionButton("Undo", "Undo", "ctrl+z", "Undo", "undo");
@@ -612,8 +636,8 @@ void MainWidget::setupActions() {
             this->actionManager->getAction("ToggleNoneTool")->trigger();
     });
 
-    this->actionManager->createQActionButton("OpenCage", "Open cage...", "", "Open cage", "");
-    QObject::connect(this->actionManager->getAction("OpenCage"), &QAction::triggered, [this]() {
+    this->actionManager->createQActionButton("OpenMesh", "Open mesh...", "", "Open mesh", "");
+    QObject::connect(this->actionManager->getAction("OpenMesh"), &QAction::triggered, [this]() {
         //this->scene->loadMesh();
         QStringList potentialCages;
         std::vector<std::string> allNonTetrahedralMeshes = this->scene->getAllBaseMeshesName();
@@ -623,7 +647,7 @@ void MainWidget::setupActions() {
         this->openMeshWidget->show();
     });
 
-    this->actionManager->createMenuButton("OpenMenu", "Open", "Open", "open", {"OpenImage", "OpenCage"});
+    this->actionManager->createMenuButton("OpenMenu", "Open", "Open", "open", {"OpenImage", "OpenMesh"});
 
     // Windows
 
@@ -680,7 +704,7 @@ void MainWidget::setupForms() {
             this->controlPanel->tab->setCurrentIndex(1);
         }
         this->actionManager->getAction("OpenImage")->setDisabled(true);
-        this->actionManager->getAction("OpenCage")->setDisabled(true);
+        //this->actionManager->getAction("OpenMesh")->setDisabled(true);
     });
 }
 

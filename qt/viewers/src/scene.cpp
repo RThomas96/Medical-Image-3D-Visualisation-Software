@@ -4002,7 +4002,6 @@ BaseMesh * Scene::getBaseMesh(const std::string& name) {
 
 void Scene::updateTools(UITool::MeshManipulatorType tool) {
     this->glMeshManipulator->createNewMeshManipulator(this->getBaseMesh(this->activeMesh), this, tool);
-    std::cout << "Update manipulator radius" << std::endl;
     this->updateManipulatorRadius();
 
     if(tool == UITool::MeshManipulatorType::NONE || !this->getBaseMesh(this->activeMesh))
@@ -4141,7 +4140,7 @@ void Scene::assignAsHandleSliceTool() {
         std::cout << "WARNING: not the right tool" << std::endl;
         return;
     }
-    manipulator->assignAsHandle();
+    //manipulator->assignAsHandle();
 }
 
 void Scene::removeAllHandlesSliceTool() {
@@ -4150,7 +4149,7 @@ void Scene::removeAllHandlesSliceTool() {
         std::cout << "WARNING: not the right tool" << std::endl;
         return;
     }
-    manipulator->removeAllHandles();
+    //manipulator->removeAllHandles();
 }
 
 void Scene::assignAllHandlesBeforePlaneSliceTool() {
@@ -4159,7 +4158,7 @@ void Scene::assignAllHandlesBeforePlaneSliceTool() {
         std::cout << "WARNING: not the right tool" << std::endl;
         return;
     }
-    manipulator->assignAllHandlesBeforePlane();
+    //manipulator->assignAllHandlesBeforePlane();
 }
 
 bool Scene::isCage(const std::string& name) {

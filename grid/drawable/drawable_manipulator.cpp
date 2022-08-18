@@ -304,6 +304,8 @@ void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scen
         this->manipulatorRatio = 0.006;
     } else if(type == MeshManipulatorType::SLICE) {
         this->meshManipulator = new UITool::SliceManipulator(mesh, positions);
+        this->manipulatorRatio = 0.006;
+        this->kidRatio = 0.45;
     } else if(type == MeshManipulatorType::FIXED_REGISTRATION) {
         if(scene->grids.size() > 0) {
             this->meshManipulator = new UITool::FixedRegistrationManipulator(mesh, scene->grids[0]->grid, positions);
@@ -328,7 +330,7 @@ void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scen
         QObject::connect(scene, SIGNAL(mouseReleased(QMouseEvent*)), dynamic_cast<QObject*>(this->meshManipulator), SLOT(mouseReleased(QMouseEvent*)));
         if(type == MeshManipulatorType::SLICE) {
             QObject::connect(scene, SIGNAL(planesMoved(const glm::vec3&)), dynamic_cast<SliceManipulator*>(this->meshManipulator), SLOT(movePlanes(const glm::vec3&)));
-            dynamic_cast<SliceManipulator*>(this->meshManipulator)->selectionRadius = this->planeViewRadius;
+            //dynamic_cast<SliceManipulator*>(this->meshManipulator)->selectionRadius = this->planeViewRadius;
         }
         // Scene->MeshManipulator->Selection
         QObject::connect(scene, SIGNAL(keyPressed(QKeyEvent*)), dynamic_cast<QObject*>(&this->meshManipulator->selection), SLOT(keyPressed(QKeyEvent*)));

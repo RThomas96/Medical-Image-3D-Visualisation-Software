@@ -486,21 +486,18 @@ namespace UITool {
 
         void getManipulatorsToDisplay(std::vector<bool>& toDisplay) const override;
 
-        void checkSelectedManipulators();
-        void deselectAllManipulators(bool keepHandles = false);
-
-        float selectionRadius;
-
     public slots:
         void displayManipulator(Manipulator * manipulatorToDisplay);
         void hideManipulator(Manipulator * manipulatorToDisplay);
-        void movePlanes(const glm::vec3& planesPosition);
-        void selectSlice(SliceOrientation sliceOrientation);
+
         void updateSliceToSelect(SliceOrientation sliceOrientation);
-        void assignAsHandle();
-        void removeAllHandles();
-        void moveKidManip();
-        void assignAllHandlesBeforePlane();
+        void moveGuizmo();
+
+        void computeManipulatorFromSelection();
+        void selectSlice(SliceOrientation sliceOrientation);
+        void movePlanes(const glm::vec3& planesPosition);
+        std::vector<bool> getHandles();
+        void setPositions(std::vector<glm::vec3>& positions);
 
         void moveManipulator(Manipulator * manipulator);
         void selectManipulator(Manipulator * manipulator);
@@ -520,13 +517,19 @@ namespace UITool {
         void needUpdateSceneCenter() override;
     private:
 		std::vector<Manipulator> manipulators;
-        std::vector<bool> manipulatorsToDisplay;
-        std::vector<bool> selectedManipulators;
-        std::vector<bool> handles;
-        
+
+        std::vector<bool> selectedVertices;
+        std::vector<bool> fixedVertices;
+
         SliceOrientation currentSelectedSlice;
         glm::vec3 slicesPositions;
-	};
+
+        float selectionRadius;
+        float selectionRange;
+
+        bool guizmoUpToDate;
+        bool meshIsModified;
+    };
 
     enum class FixedRegistrationManipulatorState {
         NONE,
