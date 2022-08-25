@@ -10,9 +10,15 @@ layout(location = 1) out vec4 worldPosition;
 
 uniform vec4 objectColor;
 uniform vec3 lightPosition;
+uniform vec3 planePosition;
 
 void main() {
-    
+    if(position.x < planePosition.x || position.y < planePosition.y || position.z < planePosition.z)
+        discard;
+
+    //if(position.x > planePosition.x + 10.)
+    //    discard;
+
     float ambient = 0.2;
 
     vec3 norm = normalize(normal.xyz);

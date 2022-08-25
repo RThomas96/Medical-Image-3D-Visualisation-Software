@@ -41,7 +41,7 @@ void main()
     }
 
     if(isLOCK) {
-        color = vec4(0.9, 0.9, 0.9, 1.);
+        color = vec4(100./255., 100./255., 100./255., 1.);
     }
 
     if(isWAITING) {

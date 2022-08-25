@@ -27,9 +27,7 @@ public:
 
 	void initialize(QOpenGLContext* _context, ShaderCompiler::GLFunctions* functions);
 
-	void draw(GLfloat* proj_mat, GLfloat* view_mat, glm::vec4 camera);
-
-	void fastDraw(GLfloat* proj_mat, GLfloat* view_mat, glm::vec4 camera);
+    void draw(GLfloat *proj_mat, GLfloat *view_mat, const glm::vec4& camera, const glm::vec3& planePosition);
 
 	SurfaceMesh * mesh;
     glm::vec4 color;

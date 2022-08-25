@@ -1217,17 +1217,14 @@ void Scene::drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane) {
 
 glm::vec3 Scene::computePlanePositions() {
     //Image::bbox_t::vec position = this->sceneBB.getMin();
-    if(this->grids.size() > 0) {
-        Image::bbox_t::vec position = this->grids.back()->grid->bbMin;
-        Image::bbox_t::vec diagonal = this->grids.back()->grid->getDimensions();
-        //Image::bbox_t::vec position = this->sceneBB.getMin();
-        //Image::bbox_t::vec diagonal = this->sceneBB.getDiagonal();
+    if(this->getBaseMesh(this->activeMesh)) {
+        // Bad tricks
+        int idx = this->getGridIdx(this->activeMesh);
+        Image::bbox_t::vec position = this->getBaseMesh(this->activeMesh)->bbMin;
+        Image::bbox_t::vec diagonal = this->getBaseMesh(this->activeMesh)->getDimensions();
         glm::vec3 planePos			= (position + this->planeDisplacement * diagonal);
-        for(int i = 0; i < 3; ++i) {
-            if(this->planeActivation[i] == 0.) {
-                planePos[i] = -1000000.;
-            }
-        }
+        if(idx == 0)
+            planePos += glm::vec3(0.1, 0.1, 0.1);
         return planePos;
     } else {
         return glm::vec3(0., 0., 0.);
@@ -1917,7 +1914,22 @@ void Scene::prepareUniformsGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm
     GLint location_drawOnlyBoundaries    = getUniform("drawOnlyBoundaries");
     GLint location_blendFirstPass            = getUniform("blendFirstPass");
 
-    glm::vec3 planePos	   = this->computePlanePositions();
+    glm::vec3 planePos	   = glm::vec3(0., 0., 0.);
+    if(this->grids.size() > 0) {
+        // Bad tricks
+        Image::bbox_t::vec position = this->grids.back()->grid->bbMin;
+        Image::bbox_t::vec diagonal = this->grids.back()->grid->getDimensions();
+        planePos			= (position + this->planeDisplacement * diagonal);
+        if(this->gridToDraw == 0)
+            planePos += glm::vec3(0.1, 0.1, 0.1);
+    }
+
+    for(int i = 0; i < 3; ++i) {
+        if(this->planeActivation[i] == 0.) {
+            planePos[i] = -1000000.;
+        }
+    }
+
     Image::bbox_t::vec min = _grid->grid->bbMin;
     Image::bbox_t::vec max = _grid->grid->bbMax;
 
@@ -2156,7 +2168,13 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
     if(this->displayMesh) {
         for(int i = 0; i < this->drawableMeshes.size(); ++i) {
             this->drawableMeshes[i].first->makeVAO();
-            this->drawableMeshes[i].first->draw(pMat, mvMat, glm::vec4{camPos, 1.f});
+            glm::vec3 planePos	   = this->computePlanePositions();
+            for(int i = 0; i < 3; ++i) {
+                if(this->planeActivation[i] == 0.) {
+                    planePos[i] = -1000000.;
+                }
+            }
+            this->drawableMeshes[i].first->draw(pMat, mvMat, glm::vec4{camPos, 1.f}, planePos);
         }
     }
 
@@ -3996,7 +4014,7 @@ BaseMesh * Scene::getBaseMesh(const std::string& name) {
             return this->grids[i]->grid;
         }
     }
-    std::cout << "Wrong base mesh name: " << name << std::endl;
+    //std::cout << "Wrong base mesh name: " << name << std::endl;
     return nullptr;
 }
 

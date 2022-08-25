@@ -703,7 +703,7 @@ void MainWidget::setupForms() {
             this->range->addUnitsAuto();
             this->controlPanel->tab->setCurrentIndex(1);
         }
-        this->actionManager->getAction("OpenImage")->setDisabled(true);
+        //this->actionManager->getAction("OpenImage")->setDisabled(true);
         //this->actionManager->getAction("OpenMesh")->setDisabled(true);
     });
 }

@@ -784,9 +784,9 @@ namespace UITool {
         solver.compute();
 
         manipulator->setOrigine( oo );
-        manipulator->setRepX( solver.RepX() );
-        manipulator->setRepY( solver.RepY() );
-        manipulator->setRepZ( solver.RepZ() );
+        //manipulator->setRepX( solver.RepX() );
+        //manipulator->setRepY( solver.RepY() );
+        //manipulator->setRepZ( solver.RepZ() );
 
         glm::vec3 center = glm::vec3(oo[0], oo[1], oo[2]);
         glm::vec3 min = glm::vec3(1000000., 1000000., 1000000.);

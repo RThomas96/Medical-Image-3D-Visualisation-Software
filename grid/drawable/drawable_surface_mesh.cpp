@@ -29,7 +29,7 @@ void DrawableMesh::initialize(QOpenGLContext *_context, ShaderCompiler::GLFuncti
 	this->makeVAO();
 }
 
-void DrawableMesh::draw(GLfloat *proj_mat, GLfloat *view_mat, glm::vec4 camera) {
+void DrawableMesh::draw(GLfloat *proj_mat, GLfloat *view_mat, const glm::vec4& camera, const glm::vec3& planePosition) {
 	if (this->should_update_on_next_draw) {
 		this->updateData();
 	}
@@ -48,6 +48,7 @@ void DrawableMesh::draw(GLfloat *proj_mat, GLfloat *view_mat, glm::vec4 camera) 
 	GLint location_camera_pos   = this->gl->glGetUniformLocation(this->program_handle_draw, "camera_pos");
 	GLint location_color        = this->gl->glGetUniformLocation(this->program_handle_draw, "objectColor");
 	GLint location_light        = this->gl->glGetUniformLocation(this->program_handle_draw, "lightPosition");
+    GLint location_plane        = this->gl->glGetUniformLocation(this->program_handle_draw, "planePosition");
 
 	this->gl->glUniformMatrix4fv(location_proj, 1, GL_FALSE, proj_mat);
 	this->gl->glUniformMatrix4fv(location_view, 1, GL_FALSE, view_mat);
@@ -57,6 +58,7 @@ void DrawableMesh::draw(GLfloat *proj_mat, GLfloat *view_mat, glm::vec4 camera) 
 	this->gl->glUniform4fv(location_camera_pos, 1, glm::value_ptr(camera));
 	this->gl->glUniform4fv(location_color, 1, glm::value_ptr(this->color));
 	this->gl->glUniform3fv(location_light, 1, glm::value_ptr(this->lightPosition));
+    this->gl->glUniform3fv(location_plane, 1, glm::value_ptr(planePosition));
 
 	// Launch a glDrawElements() command
 
@@ -121,10 +123,6 @@ void DrawableMesh::draw(GLfloat *proj_mat, GLfloat *view_mat, glm::vec4 camera) 
 	this->gl->glUseProgram(0);
 
     //this->mesh->drawNormals();
-}
-
-void DrawableMesh::fastDraw(GLfloat *proj_mat, GLfloat *view_mat, glm::vec4 camera) {
-	this->draw(proj_mat, view_mat, camera);
 }
 
 void DrawableMesh::makeVAO(void) {
