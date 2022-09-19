@@ -117,6 +117,7 @@ ADD_EXECUTABLE(neighbor_visu
     ./grid/utils/Triangle.h
     ./grid/utils/BasicPoint.h
     ./grid/utils/PCATools.h
+    ./grid/utils/apss.hpp
 
 	# Main file :
 	./neighbor_visu_main.cpp
@@ -142,6 +143,7 @@ ADD_EXECUTABLE(neighbor_visu
     ./grid/deformation/AsRigidAsPossible.cpp
     ./grid/deformation/cage_surface_mesh.cpp
     ./grid/utils/GLUtilityMethods.cpp
+    ./grid/utils/apss.cpp
 
     #To remove
     ./legacy/image/utils/include/image_api_common.hpp
