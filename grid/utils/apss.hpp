@@ -22,5 +22,5 @@ struct ProjectedPoint {
 ProjectedPoint apss(const glm::vec3& inputPoint, 
                     const std::vector<glm::vec3>& positions, 
                     const std::vector<glm::vec3>& normals,
-                    const std::vector<float>& knn_indices,// nth closest points from inputPoint
+                    const std::vector<int>& knn_indices,// nth closest points from inputPoint
                     const std::vector<float>& knn_squared_distances);// same but distances

@@ -5,7 +5,7 @@
 ProjectedPoint apss(const glm::vec3& inputPoint, 
                     const std::vector<glm::vec3>& positions, 
                     const std::vector<glm::vec3>& normals,
-                    const std::vector<float>& knn_indices,// nth closest points from inputPoint
+                    const std::vector<int>& knn_indices,// nth closest points from inputPoint
                     const std::vector<float>& knn_squared_distances) {
 
 	ProjectedPoint output;
@@ -54,14 +54,14 @@ ProjectedPoint apss(const glm::vec3& inputPoint,
 		const glm::vec3 n = -u123;
         // WARNING
         //const float lambda = (u0 - glm::dot(output.position, n)) / n.squaredNorm();
-        const float lambda = (u0 - glm::dot(output.position, n)) / glm::l2Norm(n);
+        const float lambda = (u0 - glm::dot(output.position, n)) / (glm::l2Norm(n)*glm::l2Norm(n));
         output.position += lambda * n;
 		output.normal = s_wini;
         output.normal = glm::normalize(output.normal);
 	}
 	else {
 		const glm::vec3 sphere_center = u123 / (-2.0F * u4);
-        const float sphere_radius = std::sqrt(std::max<float>(0.0F, glm::l2Norm(sphere_center) - u0 / u4));
+        const float sphere_radius = std::sqrt(std::max<float>(0.0F, (glm::l2Norm(sphere_center) * glm::l2Norm(sphere_center)) - u0 / u4));
 		// projection of the inputpoint onto the sphere
 		// direction of the point from the sphere center
 		glm::vec3 pc = output.position - sphere_center;

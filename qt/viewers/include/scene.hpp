@@ -576,6 +576,9 @@ public slots:
     // ARAP
     void ARAPTool_toggleEvenMode(bool value);
 
+    // Slice
+    void computeProjection(const std::vector<int>& vertexIndices);
+
     // FixedRegistration
     void applyFixedRegistrationTool();
     void clearFixedRegistrationTool();

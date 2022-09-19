@@ -17,10 +17,15 @@
 #include <chrono>
 #include <utility>
 #include <map>
+#include <vector>
 
 #include "../../grid/geometry/grid.hpp"
 #include "../../grid/drawable/drawable_manipulator.hpp"
 #include "../../grid/deformation/mesh_deformer.hpp"
+
+#include "../../grid/utils/apss.hpp"
+#include "grid/geometry/base_mesh.hpp"
+#include "grid/ui/mesh_manipulator.hpp"
 
 inline unsigned int planeHeadingToIndex(planeHeading _heading) {
     switch (_heading) {
@@ -4051,6 +4056,11 @@ void Scene::updateTools(UITool::MeshManipulatorType tool) {
         QObject::connect(this, &Scene::rayIsCasted, this, [this](const glm::vec3& origin, const glm::vec3& direction) { emit dynamic_cast<UITool::FixedRegistrationManipulator*>(this->glMeshManipulator->meshManipulator)->rayIsCasted(origin, direction, this->getMinTexValue(), this->getMaxTexValue(), this->computePlanePositions());});
         QObject::connect(dynamic_cast<UITool::FixedRegistrationManipulator*>(this->glMeshManipulator->meshManipulator), SIGNAL(needChangeActivatePreviewPoint(bool)), this, SLOT(setPreviewPointInPlanarView(bool)));
     }
+
+    if(tool == UITool::MeshManipulatorType::SLICE) {
+        //QObject::connect(dynamic_cast<UITool::SliceManipulator*>(this->glMeshManipulator->meshManipulator), SIGNAL(needRedraw()), this, SLOT(computeProjection()));
+        QObject::connect(dynamic_cast<UITool::SliceManipulator*>(this->glMeshManipulator->meshManipulator), &UITool::SliceManipulator::needChangePointsToProject, [this](std::vector<int> selectedPoints){ this->computeProjection(selectedPoints); });
+    }
 }
 
 void Scene::switchToSelectionModeRegistrationTool() {
@@ -5027,4 +5037,86 @@ bool Scene::hasTwoOrMoreGrids() {
 
 void Scene::updateManipulatorRadius() {
     Q_EMIT sceneRadiusOutOfDate();
+}
+
+void Scene::computeProjection(const std::vector<int>& vertexIndices) {
+    int knn = 15;
+
+    std::vector<glm::vec3> newPositions;
+
+    BaseMesh * meshToProject = this->meshes[0].first;
+    BaseMesh * mesh = this->meshes[1].first;
+    std::vector<glm::vec3> positions = mesh->getVertices();
+    std::vector<glm::vec3> normals = mesh->verticesNormals;
+    for(int k = 0; k < vertexIndices.size(); ++k) {
+        int vertexIdx = vertexIndices[k];
+
+        glm::vec3 inputPoint = meshToProject->getVertice(vertexIdx);
+        std::vector<int> knn_indices;
+        std::vector<float> knn_distances;
+
+        for(int i = 0; i < positions.size(); ++i) {
+            if(i != vertexIdx) {
+                if(knn_indices.size() < knn) {
+                    knn_indices.push_back(i);
+                    knn_distances.push_back(glm::distance(inputPoint, positions[i]));
+                } else {
+                    for(int j = 0; j < knn_distances.size(); ++j) {
+                        if(glm::distance(inputPoint, positions[i]) < knn_distances[j]) {
+                            knn_indices[j] = i;
+                            knn_distances[j] = glm::distance(inputPoint, positions[i]);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        for(int i = 0; i < knn_distances.size(); ++i)
+            knn_distances[i] = knn_distances[i] * knn_distances[i];
+
+        ProjectedPoint res;
+        res = apss(inputPoint,
+                   positions,
+                   normals,
+                   knn_indices,// nth closest points from inputPoint
+                   knn_distances);// same but distances
+
+        newPositions.push_back(res.position);
+    }
+    meshToProject->replacePoints(vertexIndices, newPositions);
+
+    dynamic_cast<UITool::SliceManipulator*>(this->glMeshManipulator->meshManipulator)->updateWithMeshVertices();
+    dynamic_cast<UITool::SliceManipulator*>(this->glMeshManipulator->meshManipulator)->moveGuizmo();
+
+    //ARAPMethod * deformer = dynamic_cast<ARAPMethod*>(meshToProject->meshDeformer);
+    //if(!deformer) {
+    //    std::cout << "WARNING: ARAP manipulator can be used only with the ARAP deformer !" << std::endl;
+    //    return;
+    //}
+
+    //std::vector<glm::vec3> newFullPositions = meshToProject->getVertices();
+    //for(int i = 0; i < vertexIndices.size(); ++i) {
+    //    newFullPositions[vertexIndices[i]] = newPositions[i];
+    //}
+
+    //std::vector<Vec3D<float>> ptsAsVec3D;
+    //for(int i = 0; i < newFullPositions.size(); ++i) {
+    //    glm::vec3 pt = newFullPositions[i];
+    //    ptsAsVec3D.push_back(Vec3D(pt[0], pt[1], pt[2]));
+    //}
+    //deformer->arap.compute_deformation(ptsAsVec3D);
+
+    //for(int i = 0; i < newFullPositions.size(); ++i)
+    //    newFullPositions[i] = glm::vec3(ptsAsVec3D[i][0], ptsAsVec3D[i][1], ptsAsVec3D[i][2]);
+
+
+    //meshToProject->useNormal = true;
+    //meshToProject->movePoints(newFullPositions);
+    //meshToProject->useNormal = false;
+
+    //this->glMeshManipulator->meshManipulator->updateWithMeshVertices();
+    //this->updateManipulatorRadius();
+    //this->sendFirstTetmeshToGPU();
+    //this->updateSceneCenter();
 }

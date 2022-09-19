@@ -1034,8 +1034,14 @@ SliceManipulator::SliceManipulator(BaseMesh * mesh, const std::vector<glm::vec3>
 
     this->currentSelectedSlice = SliceOrientation::X;
     this->slicesPositions = glm::vec3(0., 0., 0.);
-    this->selectionRadius = 10;
-    this->selectionRange = 50;
+
+    this->selectionRadius = mesh->getDimensions().y / 10.;
+    this->selectionRange = this->selectionRadius*5.;
+
+    glm::vec3 dimensions = mesh->getDimensions();
+    float smallestDimension = std::min(dimensions.x, std::min(dimensions.y, dimensions.z));
+    this->incrementRadius = smallestDimension / 50.;
+    this->incrementRange = incrementRadius;
 
     this->selectSlice(this->currentSelectedSlice);
 
@@ -1105,9 +1111,9 @@ void SliceManipulator::deselectManipulator(Manipulator * manipulator) {
 void SliceManipulator::keyPressed(QKeyEvent* e) {
     if(e->key() == Qt::Key_Plus) {
         if(e->modifiers() & Qt::ControlModifier)
-            this->selectionRadius += 1;
+            this->selectionRadius += incrementRadius;
         else
-            this->selectionRange += 1;
+            this->selectionRange += incrementRange;
 
         this->selectSlice(this->currentSelectedSlice);
         this->computeManipulatorFromSelection();
@@ -1115,11 +1121,22 @@ void SliceManipulator::keyPressed(QKeyEvent* e) {
 
     if(e->key() == Qt::Key_Minus) {
         if(e->modifiers() & Qt::ControlModifier)
-            this->selectionRadius -= 1;
+            this->selectionRadius -= incrementRadius;
         else
-            this->selectionRange -= 1;
+            this->selectionRange -= incrementRange;
         this->selectSlice(this->currentSelectedSlice);
         this->computeManipulatorFromSelection();
+    }
+
+    if(e->key() == Qt::Key_M) {
+        std::cout << "Start apss projection" << std::endl;
+        std::vector<int> ptToProject;
+        for(int i = 0; i < this->selectedVertices.size(); ++i) {
+            if(this->selectedVertices[i]) {
+                ptToProject.push_back(i);
+            }
+        }
+        Q_EMIT needChangePointsToProject(ptToProject); // TODO
     }
 };
 

@@ -515,6 +515,7 @@ namespace UITool {
         void needChangeCursorInPlanarView(UITool::CursorType cursorType) override;
         void needChangeSelectedPoints(std::pair<int, glm::vec3> selectedPoint) override;
         void needUpdateSceneCenter() override;
+        void needChangePointsToProject(std::vector<int> selectedPoints);
     private:
 		std::vector<Manipulator> manipulators;
 
@@ -524,11 +525,13 @@ namespace UITool {
         SliceOrientation currentSelectedSlice;
         glm::vec3 slicesPositions;
 
-        float selectionRadius;
-        float selectionRange;
-
         bool guizmoUpToDate;
         bool meshIsModified;
+
+        float selectionRadius;
+        float selectionRange;
+        float incrementRadius;
+        float incrementRange;
     };
 
     enum class FixedRegistrationManipulatorState {
