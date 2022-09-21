@@ -1240,12 +1240,15 @@ void SliceManipulator::selectSlice(SliceOrientation sliceOrientation) {
     std::vector<glm::vec3> positions;
     this->getAllPositions(positions);
     for(int i = 0; i < positions.size(); ++i) {
-        if(std::abs(positions[i][valueIdxToCheck] - this->slicesPositions[valueIdxToCheck]) < this->selectionRadius) {
-            this->selectedVertices[i] = true;
-        }
+        for(int j = 0; j < 2; ++j) {
+            valueIdxToCheck = j;
+            if(std::abs(positions[i][valueIdxToCheck] - this->slicesPositions[valueIdxToCheck]) < this->selectionRadius) {
+                this->selectedVertices[i] = true;
+            }
 
-        if(std::abs(positions[i][valueIdxToCheck] - this->slicesPositions[valueIdxToCheck]) > this->selectionRange) {
-            this->fixedVertices[i] = true;
+            if(std::abs(positions[i][valueIdxToCheck] - this->slicesPositions[valueIdxToCheck]) > this->selectionRange) {
+                this->fixedVertices[i] = true;
+            }
         }
     }
 }

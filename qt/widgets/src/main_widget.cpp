@@ -654,6 +654,7 @@ void MainWidget::setupActions() {
     this->actionManager->createQActionToggledButton("DisplayRangeControl", "Display/show color control window", "", "Display/show color control window", "");
     QObject::connect(this->actionManager->getAction("DisplayRangeControl"), &QAction::triggered, [this](){
         this->controlPanel->setVisible(this->actionManager->getAction("DisplayRangeControl")->isChecked());
+        this->planarViewer->setVisible(this->actionManager->getAction("DisplayRangeControl")->isChecked());
     });
 
     // Debug
