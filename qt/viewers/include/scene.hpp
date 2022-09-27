@@ -683,6 +683,7 @@ public slots:
     glm::vec3 getSceneCenter();
     void saveMesh(const std::string& name, const std::string& filename);
     bool saveActiveCage(const std::string& filename);
+    bool saveActiveMesh(const std::string& filename);
     void applyCage(const std::string& name, const std::string& filename);
     bool isSelecting() {return false;};
     // This is connect directly to selection in meshManipulator

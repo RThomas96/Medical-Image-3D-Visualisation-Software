@@ -2927,13 +2927,13 @@ public slots:
     };
 };
 
-class QuickSaveCage {
+class QuickSaveMesh {
     FileChooser * fileChooser;
     Scene * scene;
     QString filePath;
 
 public:
-    QuickSaveCage(Scene * scene): scene(scene) {
+    QuickSaveMesh(Scene * scene): scene(scene) {
         fileChooser = new FileChooser("file", FileChooserType::SAVE, FileChooserFormat::OFF);
     }
 
@@ -2945,9 +2945,9 @@ public:
                 return;
         }
 
-        bool saved = scene->saveActiveCage(filePath.toStdString());
+        bool saved = scene->saveActiveMesh(filePath.toStdString());
         if(!saved)
-            QMessageBox::critical(fileChooser, "Warning", "Selected mesh is not a cage, can't save.");
+            QMessageBox::critical(fileChooser, "Warning", "Selected object is not a mesh, can't save.");
     }
 
     void saveAs() {
@@ -3037,7 +3037,7 @@ private:
 
     DeformationForm * deformationForm;
     SaveImageForm * saveImageForm;
-    QuickSaveCage * quickSaveCage;
+    QuickSaveMesh * quickSaveCage;
     OpenImageForm * openImageForm;
     PlanarViewer2D * planarViewer;
 

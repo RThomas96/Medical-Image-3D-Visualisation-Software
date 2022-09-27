@@ -4237,6 +4237,15 @@ void Scene::saveMesh(const std::string& name, const std::string& filename) {
     this->getMesh(name)->saveOFF(filename.c_str());
 }
 
+bool Scene::saveActiveMesh(const std::string& filename) {
+    if(!this->isGrid(this->activeMesh)) {
+        this->getMesh(this->activeMesh)->saveOFF(filename.c_str());
+        return true;
+    } else {
+        return false;
+    }
+}
+
 bool Scene::saveActiveCage(const std::string& filename) {
     if(this->isCage(this->activeMesh)) {
         this->getMesh(this->activeMesh)->saveOFF(filename.c_str());

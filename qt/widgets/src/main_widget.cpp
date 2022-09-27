@@ -269,7 +269,7 @@ void MainWidget::setupWidgets() {
 
     this->info_pannel = new InfoPannel("Infos", this->scene);
     this->tool_pannel = new ToolPannel("Tool", *this->actionManager);
-    this->quickSaveCage = new QuickSaveCage(this->scene);
+    this->quickSaveCage = new QuickSaveMesh(this->scene);
 
 	this->viewer->addStatusBar(this->statusBar);
 
