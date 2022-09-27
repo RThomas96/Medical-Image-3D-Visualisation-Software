@@ -1,10 +1,14 @@
 #include "mesh_manipulator.hpp"
+#include "glm/trigonometric.hpp"
 #include "manipulator.hpp"
 #include "../deformation/mesh_deformer.hpp"
 #include "../deformation/cage_surface_mesh.hpp"
 #include "../utils/PCATools.h"
 #include "qnamespace.h"
 #include <fstream>
+#include <glm/gtx/closest_point.hpp>
+#include <glm/gtx/rotate_vector.hpp>
+#include <iostream>
 
 namespace UITool {
     
@@ -1034,6 +1038,9 @@ SliceManipulator::SliceManipulator(BaseMesh * mesh, const std::vector<glm::vec3>
 
     this->currentSelectedSlice = SliceOrientation::X;
     this->slicesPositions = glm::vec3(0., 0., 0.);
+    this->slicesNormals[0] = glm::vec3(1., 0., 0.);
+    this->slicesNormals[1] = glm::vec3(0., 1., 0.);
+    this->slicesNormals[2] = glm::vec3(0., 0., 1.);
 
     this->selectionRadius = mesh->getDimensions().y / 10.;
     this->selectionRange = this->selectionRadius*5.;
@@ -1047,6 +1054,8 @@ SliceManipulator::SliceManipulator(BaseMesh * mesh, const std::vector<glm::vec3>
 
     this->guizmoUpToDate = false;
     this->meshIsModified = false;
+
+    this->lastModifiedSlice = 0;
 }
 
 void SliceManipulator::setAllManipulatorsPosition(const std::vector<glm::vec3>& positions) {
@@ -1128,6 +1137,15 @@ void SliceManipulator::keyPressed(QKeyEvent* e) {
         this->computeManipulatorFromSelection();
     }
 
+    if(e->key() == Qt::Key_R) {
+        if(e->modifiers() & Qt::ControlModifier)
+            this->rotateLastModifiedSlice(-1);
+        else
+            this->rotateLastModifiedSlice(1);
+        this->selectSlice(this->currentSelectedSlice);
+        this->computeManipulatorFromSelection();
+    }
+
     if(e->key() == Qt::Key_M) {
         std::cout << "Start apss projection" << std::endl;
         std::vector<int> ptToProject;
@@ -1153,6 +1171,10 @@ void SliceManipulator::mouseReleased(QMouseEvent*) {
 };
 
 void SliceManipulator::movePlanes(const glm::vec3& planesPosition) {
+    glm::vec3 diff = planesPosition - this->slicesPositions;
+    for(int i = 0; i < 3; ++i)
+        if(diff[i] != 0)
+            this->lastModifiedSlice = i;
     this->slicesPositions = planesPosition;
     this->selectSlice(this->currentSelectedSlice);
     this->computeManipulatorFromSelection();
@@ -1242,11 +1264,22 @@ void SliceManipulator::selectSlice(SliceOrientation sliceOrientation) {
     for(int i = 0; i < positions.size(); ++i) {
         for(int j = 0; j < 2; ++j) {
             valueIdxToCheck = j;
-            if(std::abs(positions[i][valueIdxToCheck] - this->slicesPositions[valueIdxToCheck]) < this->selectionRadius) {
+            //if(std::abs(positions[i][valueIdxToCheck] - this->slicesPositions[valueIdxToCheck]) < this->selectionRadius) {
+            //    this->selectedVertices[i] = true;
+            //}
+
+            glm::vec3 normal = this->slicesNormals[valueIdxToCheck];
+
+            glm::vec3 point = (this->mesh->bbMax + this->mesh->bbMin)/glm::vec3(2., 2., 2.);
+            point[valueIdxToCheck] = this->slicesPositions[valueIdxToCheck];
+
+            float dist = std::abs(glm::dot(normal, (positions[i] - point)));
+
+            if(dist < this->selectionRadius) {
                 this->selectedVertices[i] = true;
             }
 
-            if(std::abs(positions[i][valueIdxToCheck] - this->slicesPositions[valueIdxToCheck]) > this->selectionRange) {
+            if(dist >= this->selectionRange) {
                 this->fixedVertices[i] = true;
             }
         }
@@ -1310,6 +1343,13 @@ void SliceManipulator::setPositions(std::vector<glm::vec3>& positions) {
         this->manipulators[i].setManipPosition(this->mesh->getVertice(i));
     }
     Q_EMIT needSendTetmeshToGPU();
+}
+
+void SliceManipulator::rotateLastModifiedSlice(float angle) {
+    std::cout << "Rotate plane" << std::endl;
+    glm::vec3 axis = glm::vec3(0., 0., 0.);
+    axis[(this->lastModifiedSlice+1)%3] = 1;
+    this->slicesNormals[this->lastModifiedSlice] = glm::normalize(glm::rotate(this->slicesNormals[this->lastModifiedSlice], static_cast<float>(glm::radians(angle)), axis));
 }
 
 /***/

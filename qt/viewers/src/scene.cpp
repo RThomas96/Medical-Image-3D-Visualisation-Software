@@ -10,6 +10,7 @@
 #include <QMessageBox>
 #include <QOpenGLContext>
 #include <QSurface>
+#include <limits>
 
 #include <fstream>
 #include <type_traits>
@@ -5049,9 +5050,24 @@ void Scene::updateManipulatorRadius() {
 }
 
 void Scene::computeProjection(const std::vector<int>& vertexIndices) {
-    int knn = 15;
+    int knnMaxNode = 15;
 
     std::vector<glm::vec3> newPositions;
+
+    struct KnnNode {
+        int indice;
+        float distance;
+
+        KnnNode(): indice(-1), distance(std::numeric_limits<float>::max()) {}
+
+        bool operator<(const KnnNode& other) const {
+            return (distance < other.distance);
+        }
+
+        bool operator>(const KnnNode& other) const {
+            return (distance > other.distance);
+        }
+    };
 
     BaseMesh * meshToProject = this->meshes[0].first;
     BaseMesh * mesh = this->meshes[1].first;
@@ -5061,28 +5077,25 @@ void Scene::computeProjection(const std::vector<int>& vertexIndices) {
         int vertexIdx = vertexIndices[k];
 
         glm::vec3 inputPoint = meshToProject->getVertice(vertexIdx);
-        std::vector<int> knn_indices;
-        std::vector<float> knn_distances;
+        std::vector<KnnNode> knn(knnMaxNode);
 
         for(int i = 0; i < positions.size(); ++i) {
             if(i != vertexIdx) {
-                if(knn_indices.size() < knn) {
-                    knn_indices.push_back(i);
-                    knn_distances.push_back(glm::distance(inputPoint, positions[i]));
-                } else {
-                    for(int j = 0; j < knn_distances.size(); ++j) {
-                        if(glm::distance(inputPoint, positions[i]) < knn_distances[j]) {
-                            knn_indices[j] = i;
-                            knn_distances[j] = glm::distance(inputPoint, positions[i]);
-                            break;
-                        }
-                    }
+                float distance = glm::distance(inputPoint, positions[i]);
+                if(distance < knn.back().distance) {
+                    knn.back().indice = i;
+                    knn.back().distance = distance;
+                    std::sort(knn.begin(), knn.end());
                 }
             }
         }
 
-        for(int i = 0; i < knn_distances.size(); ++i)
-            knn_distances[i] = knn_distances[i] * knn_distances[i];
+        std::vector<int> knn_indices(knnMaxNode);
+        std::vector<float> knn_distances(knnMaxNode);
+        for(int i = 0; i < knn.size(); ++i) {
+            knn_indices[i] = knn[i].indice;
+            knn_distances[i] = knn[i].distance * knn[i].distance;
+        }
 
         ProjectedPoint res;
         res = apss(inputPoint,

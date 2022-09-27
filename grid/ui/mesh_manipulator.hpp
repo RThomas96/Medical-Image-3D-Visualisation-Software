@@ -498,6 +498,7 @@ namespace UITool {
         void movePlanes(const glm::vec3& planesPosition);
         std::vector<bool> getHandles();
         void setPositions(std::vector<glm::vec3>& positions);
+        void rotateLastModifiedSlice(float angle);
 
         void moveManipulator(Manipulator * manipulator);
         void selectManipulator(Manipulator * manipulator);
@@ -524,6 +525,7 @@ namespace UITool {
 
         SliceOrientation currentSelectedSlice;
         glm::vec3 slicesPositions;
+        glm::vec3 slicesNormals[3];
 
         bool guizmoUpToDate;
         bool meshIsModified;
@@ -532,6 +534,8 @@ namespace UITool {
         float selectionRange;
         float incrementRadius;
         float incrementRange;
+
+        int lastModifiedSlice;
     };
 
     enum class FixedRegistrationManipulatorState {
