@@ -21,33 +21,13 @@
 
 #include <iostream>
 
-#define COLOR_CONTROL
+#include "UI/color_button.hpp"
 
 class Scene;	// forward declaration
 class Viewer;	 // forward declaration
 
 /// @ingroup qtwidgets
 /// @brief Provides a simple button with a pixmap as a label, allowing to color the button.
-class ColorButton : public QWidget {
-	Q_OBJECT
-public:
-	ColorButton(QColor _color, QWidget* parent = nullptr);
-	virtual ~ColorButton(void);
-signals:
-	void colorChanged(QColor color);
-public slots:
-	void setColor(QColor _color);
-
-public:
-	QColor getColor(void) const;
-    QPushButton* button;
-
-protected:
-	QPixmap* pixmap;
-	QIcon* icon;
-	QColor color;
-	QVBoxLayout* layout;
-};
 
 /// @ingroup qtwidgets
 /// @brief Provides a small window where one can provide a minimum and maximum value to normalize a color scale over.

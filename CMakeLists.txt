@@ -42,6 +42,42 @@ ADD_LIBRARY(VisualisationWidgets STATIC
     ./qt/main_widget.hpp
     ./qt/main_widget.cpp
 
+    ./qt/image3D_viewer.hpp
+    ./qt/image3D_viewer.cpp
+
+    ./qt/UI/chooser.hpp
+    ./qt/UI/chooser.cpp
+
+    ./qt/UI/form.hpp
+    ./qt/UI/form.cpp
+
+    ./qt/UI/deformation_form.hpp
+    ./qt/UI/deformation_form.cpp
+
+    ./qt/UI/color_control.hpp
+    ./qt/UI/color_control.cpp
+
+    ./qt/UI/color_button.hpp
+    ./qt/UI/color_button.cpp
+
+    ./qt/UI/quicksave_mesh.hpp
+    ./qt/UI/quicksave_mesh.cpp
+
+    ./qt/UI/info_pannel.hpp
+    ./qt/UI/info_pannel.cpp
+
+    ./qt/UI/open_image_form.hpp
+    ./qt/UI/open_image_form.cpp
+
+    ./qt/UI/save_image_form.hpp
+    ./qt/UI/save_image_form.cpp
+
+    ./qt/helper/QActionManager.hpp
+
+    ./qt/UI/tool_pannel.hpp
+
+    ./qt/UI/display_pannel.hpp
+
     ./qt/scene_control.hpp
     ./qt/scene_control.cpp
 
@@ -59,6 +95,7 @@ ADD_LIBRARY(VisualisationWidgets STATIC
 
     ./qt/cutplane_groupbox.hpp
 )
+
 TARGET_INCLUDE_DIRECTORIES(VisualisationWidgets
 	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/third_party/glm/
 	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include
