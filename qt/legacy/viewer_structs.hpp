@@ -175,6 +175,7 @@ public:
     uint16_t minValue;
     std::vector<std::pair<uint16_t, uint16_t>> visu;
     std::vector<glm::vec3> visu_color;
+    std::vector<bool> visu_visi;
 
     std::vector<glm::vec3> visu_map;
     std::vector<glm::vec3> color_map;

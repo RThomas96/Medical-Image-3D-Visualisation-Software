@@ -74,6 +74,16 @@ RangeOptionUnit::RangeOptionUnit(QWidget * parent) : QFrame(parent)  {
     QObject::connect(deleteButton, &QPushButton::clicked, [this](){Q_EMIT deleteCurrent(this->id);});
 }
 
+void RangeOptionUnit::reset() {
+    this->hideButton->setChecked(false);
+    this->hideColor->setChecked(false);
+    this->deleteButton->setChecked(false);
+    this->open->setChecked(false);
+    this->save->setChecked(false);
+    this->autoButton->setChecked(false);
+    this->hideOption->setChecked(false);
+}
+
 ///////////////
 
 RangeUnit::RangeUnit(int id, QWidget * parent) : id(id), QFrame(parent)  {
@@ -311,6 +321,7 @@ void RangeControl::writeToFile() {
 }
 
 void RangeControl::clearUnits(bool addDefault) {
+    this->rangeOptionUnit->reset();
     for(int i = this->unitLayout->count()-1; i >= 0; --i) {
         this->deleteUnit(i);
     }
@@ -389,12 +400,10 @@ void RangeControl::updateRanges() {
     scene->resetRanges();
     for(int i = 0; i < this->unitLayout->count(); ++i) {
         RangeUnit * unit = dynamic_cast<RangeUnit*>(this->unitLayout->itemAt(i)->widget());
-        if(!unit->hideButton->isChecked()) {
-            if(unit->hideColor->isChecked()) {
-                scene->addRange(unit->min->value(), unit->max->value(), unit->getColor(), false);
-            } else {
-                scene->addRange(unit->min->value(), unit->max->value(), glm::vec3(1., 1., 1.), false);
-            }
+        if(unit->hideColor->isChecked()) {
+            scene->addRange(unit->min->value(), unit->max->value(), unit->getColor(), !unit->hideButton->isChecked(), false);
+        } else {
+            scene->addRange(unit->min->value(), unit->max->value(), glm::vec3(1., 1., 1.), !unit->hideButton->isChecked(), false);
         }
     }
     scene->newSHADERS_updateUBOData();
@@ -431,6 +440,27 @@ void RangeControl::addUnitsAuto() {
     this->updateRanges();
 }
 
+void RangeControl::fillRangesFromScene() {
+    std::vector<std::pair<uint16_t, uint16_t>> rangesMinMax;
+    scene->getRanges(rangesMinMax);
+    std::vector<glm::vec3> rangesColor;
+    scene->getRangesColor(rangesColor);
+    std::vector<bool> rangesVisi;
+    scene->getRangesVisu(rangesVisi);
+
+    this->clearUnits();
+    for(int i = 0; i < rangesMinMax.size(); ++i) {
+        this->addUnit(rangesMinMax[i].first, rangesMinMax[i].second, rangesColor[i]*glm::vec3(255., 255., 255.), rangesVisi[i]);
+    }
+
+    // If there is no ranges in the scene, it means that this is a newly created grid
+    if(rangesMinMax.empty()) {
+        this->clearUnits(true);
+        this->updateRanges();
+    }
+}
+
 void RangeControl::connect() {
     QObject::connect(this->buttonAdd, &QPushButton::clicked, [this](){this->addUnit(); this->updateRanges();});
+    QObject::connect(this->scene, &Scene::activeMeshChanged, [this](){this->fillRangesFromScene();});
 }

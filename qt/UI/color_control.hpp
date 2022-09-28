@@ -27,6 +27,7 @@ public:
     QPushButton * autoButton;
     QPushButton * hideOption;
     RangeOptionUnit(QWidget * parent = nullptr);
+    void reset();
 
 signals:
     void deleteCurrent(int id);
@@ -124,6 +125,7 @@ public:
     void addUnit(int min, int max, glm::ivec3 color, bool display);
     void addUnit();
     void updateRanges();
+    void fillRangesFromScene();
 
     enum class Option {
         COLOR,

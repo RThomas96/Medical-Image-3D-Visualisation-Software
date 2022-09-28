@@ -517,6 +517,7 @@ signals:
     void cursorChangedInPlanarView(UITool::CursorType cursorType);
     void selectedPointChanged(std::pair<int, glm::vec3> selectedPoint);
     void meshMoved();
+    void activeMeshChanged();
     void colorChanged();
     void planeControlWidgetNeedUpdate(const glm::vec3& values);
     void sceneRadiusOutOfDate();
@@ -602,7 +603,10 @@ public slots:
     //void addRange(const std::string &gridName, uint16_t min, uint16_t max);
     //void removeRange(const std::string &gridName, uint16_t min, uint16_t max);
     void resetRanges();
-    void addRange(uint16_t min, uint16_t max, glm::vec3 color = glm::vec3(1., 0., 0.), bool updateUBO = true);
+    void addRange(uint16_t min, uint16_t max, glm::vec3 color = glm::vec3(1., 0., 0.), bool visible = true, bool updateUBO = true);
+    void getRanges(std::vector<std::pair<uint16_t, uint16_t>>& ranges);
+    void getRangesColor(std::vector<glm::vec3>& colors);
+    void getRangesVisu(std::vector<bool>& visu);
 
     // ************************ //
 

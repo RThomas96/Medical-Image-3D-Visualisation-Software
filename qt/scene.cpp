@@ -2228,10 +2228,12 @@ void Scene::newSHADERS_updateUBOData() {
         data_color.push_back(glm::vec3(0., 0., 0.));
     }
     for(int i = 0; i < grid->visu.size(); ++i) {
-        for(int j = grid->visu[i].first; j <= grid->visu[i].second; ++j) {
-            if(j < data.size()) {
-                data[j] = glm::vec3(1., 1., 1.);
-                data_color[j] = grid->visu_color[i];
+        if(grid->visu_visi[i]) {
+            for(int j = grid->visu[i].first; j <= grid->visu[i].second; ++j) {
+                if(j < data.size()) {
+                    data[j] = glm::vec3(1., 1., 1.);
+                    data_color[j] = grid->visu_color[i];
+                }
             }
         }
     }
@@ -4289,6 +4291,7 @@ void Scene::changeActiveMesh(const std::string& name) {
             this->sendTetmeshToGPU(gridIdx, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS | InfoToSend::TEXCOORD | InfoToSend::NEIGHBORS));
         }
     }
+    Q_EMIT activeMeshChanged();
     this->changeCurrentTool(this->currentTool);
     this->changeCurrentDeformationMethod(this->currentDeformMethod);
     this->shouldUpdateUserColorScales = true;
@@ -5015,17 +5018,40 @@ void Scene::resetRanges() {
    auto& grid = this->grids[this->gridToDraw];
    grid->visu.clear();
    grid->visu_color.clear();
+   grid->visu_visi.clear();
    this->newSHADERS_updateUBOData();
 }
 
-void Scene::addRange(uint16_t min, uint16_t max, glm::vec3 color, bool updateUBO) {
+void Scene::addRange(uint16_t min, uint16_t max, glm::vec3 color, bool visible, bool updateUBO) {
    if(this->gridToDraw == -1)
        return;
    auto& grid = this->grids[this->gridToDraw];
    grid->visu.push_back(std::make_pair(min, max));
    grid->visu_color.push_back(color);
+   grid->visu_visi.push_back(visible);
    if(updateUBO)
        this->newSHADERS_updateUBOData();
+}
+
+void Scene::getRanges(std::vector<std::pair<uint16_t, uint16_t>>& ranges) {
+   if(this->gridToDraw == -1)
+       return;
+   auto& grid = this->grids[this->gridToDraw];
+   ranges = grid->visu;
+}
+
+void Scene::getRangesColor(std::vector<glm::vec3>& colors) {
+   if(this->gridToDraw == -1)
+       return;
+   auto& grid = this->grids[this->gridToDraw];
+   colors = grid->visu_color;
+}
+
+void Scene::getRangesVisu(std::vector<bool>& visu) {
+   if(this->gridToDraw == -1)
+       return;
+   auto& grid = this->grids[this->gridToDraw];
+   visu = grid->visu_visi;
 }
 
 //void Scene::removeRange(const std::string &gridName, uint16_t min, uint16_t max) {
