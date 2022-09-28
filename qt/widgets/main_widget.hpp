@@ -11,7 +11,7 @@
 //#include "../deformation_widget.hpp"
 #include "../../qt/legacy/openMeshWidget.hpp"
 #include "../../qt/legacy/applyCageWidget.hpp"
-#include "../CutPlaneGroupBox.h"
+#include "cutplane_groupbox.hpp"
 //#include "./opengl_debug_log.hpp"
 #include "./scene_control.hpp"
 //#include "./user_settings_widget.hpp"

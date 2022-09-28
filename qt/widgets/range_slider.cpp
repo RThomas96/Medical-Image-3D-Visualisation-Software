@@ -8,7 +8,7 @@
 #include <QStylePainter>
 #include <QToolTip>
 
-#include "../include/range_slider.hpp"
+#include "range_slider.hpp"
 
 class RangeSliderPrivate {
 	Q_DECLARE_PUBLIC(RangeSlider);

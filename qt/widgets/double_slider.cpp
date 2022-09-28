@@ -1,4 +1,4 @@
-#include "../include/double_slider.hpp"
+#include "double_slider.hpp"
 
 #include <iostream>
 

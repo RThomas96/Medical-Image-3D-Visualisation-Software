@@ -2,7 +2,7 @@
 #define VISUALISATION_VIEWER_INCLUDE_PLANAR_VIEWER_HPP_
 
 #include "../../features.hpp"
-#include "../../qt/widgets/include/viewer_header.hpp"
+//#include "../../qt/widgets/include/viewer_header.hpp"
 #include "./scene.hpp"
 
 #include <QGLViewer/qglviewer.h>
@@ -45,14 +45,10 @@ protected:
 	virtual void guessScenePosition(void);
 
 protected:
-	void setController(ViewerHeader* _header);
-
-protected:
 	Scene* sceneToShow;	   ///< The scene to draw.
 	planes planeToShow;	   ///< The plane to show.
 	QTimer* refreshTimer;	 ///< Triggers a scene reload
 	planeHeading planeOrientation;	  ///< This plane's orientation
-	ViewerHeader* viewerController;	   ///< The widget that controls this widget
 
     QPoint mousePos;
     QCursor* cursor;

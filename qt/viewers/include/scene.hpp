@@ -5,7 +5,7 @@
 #include "../../features.hpp"
 #include "../../macros.hpp"
 // Scene control panel :
-#include "../../qt/widgets/include/scene_control.hpp"
+#include "../../qt/widgets/scene_control.hpp"
 // UI elements :
 //#include "../../qt/include/grid_control.hpp"
 //#include "../../qt/widgets/include/opengl_debug_log.hpp"

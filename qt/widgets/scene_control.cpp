@@ -1,6 +1,6 @@
-#include "../include/scene_control.hpp"
-#include "../../qt/viewers/include/neighbor_visu_viewer.hpp"
-#include "../../qt/viewers/include/scene.hpp"
+#include "scene_control.hpp"
+#include "../viewers/include/neighbor_visu_viewer.hpp"
+#include "../viewers/include/scene.hpp"
 #include "qtabwidget.h"
 
 #include <QColorDialog>

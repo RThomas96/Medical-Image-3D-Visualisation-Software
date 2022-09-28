@@ -39,22 +39,25 @@ SET(LIBS_COMPILED_HEADERS "${CMAKE_CURRENT_LIST_DIR}/third_party/compiled_librar
 ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/legacy/image)
 
 ADD_LIBRARY(VisualisationWidgets STATIC
-	./qt/widgets/include/main_widget.hpp
-	./qt/widgets/include/scene_control.hpp
-	./qt/widgets/include/viewer_header.hpp
-    ./qt/widgets/include/double_slider.hpp
-	./qt/widgets/include/range_slider.hpp
-    ./qt/legacy/openMeshWidget.hpp
-    ./qt/legacy/applyCageWidget.hpp
-    ./qt/widgets/CutPlaneGroupBox.h
+    ./qt/widgets/main_widget.hpp
+    ./qt/widgets/main_widget.cpp
 
-	./qt/widgets/src/main_widget.cpp
-	./qt/widgets/src/scene_control.cpp
-	./qt/widgets/src/viewer_header.cpp
-    ./qt/widgets/src/double_slider.cpp
-	./qt/widgets/src/range_slider.cpp
-    ./qt/legacy/openMeshWidget.cpp
+    ./qt/widgets/scene_control.hpp
+    ./qt/widgets/scene_control.cpp
+
+    ./qt/widgets/double_slider.hpp
+    ./qt/widgets/double_slider.cpp
+
+    ./qt/widgets/range_slider.hpp
+    ./qt/widgets/range_slider.cpp
+
+    ./qt/legacy/applyCageWidget.hpp
     ./qt/legacy/applyCageWidget.cpp
+
+    ./qt/legacy/openMeshWidget.hpp
+    ./qt/legacy/openMeshWidget.cpp
+
+    ./qt/widgets/cutplane_groupbox.hpp
 )
 TARGET_INCLUDE_DIRECTORIES(VisualisationWidgets
 	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/third_party/glm/

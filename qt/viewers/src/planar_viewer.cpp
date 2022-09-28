@@ -1,6 +1,6 @@
 #include "../include/planar_viewer.hpp"
 
-#include "../../qt/widgets/include/main_widget.hpp"
+#include "../../qt/widgets/main_widget.hpp"
 
 #include <QCoreApplication>
 #include <QGuiApplication>
@@ -13,7 +13,6 @@ PlanarViewer::PlanarViewer(Scene* const _scene, planes _p, QStatusBar* _sb, plan
 	this->setAxisIsDrawn(false);
 	this->setCameraIsEdited(false);
 
-	this->viewerController = nullptr;
 	this->status_bar	   = _sb;
 
 	// Default render texture is not initialized :
@@ -48,9 +47,6 @@ void PlanarViewer::addParentStatusBar(QStatusBar* main) {
 
 PlanarViewer::~PlanarViewer(void) {
 	// Nothing here yet.
-	if (this->viewerController != nullptr) {
-		this->viewerController->unregisterPlaneViewer();
-	}
 	this->refreshTimer->disconnect();
 	delete this->refreshTimer;
 }
@@ -253,10 +249,6 @@ void PlanarViewer::resizeGL(int w, int h) {
 		  this->defaultFramebufferObject(),
 		  this->renderTarget);
 	}
-}
-
-void PlanarViewer::setController(ViewerHeader* _header) {
-	this->viewerController = _header;
 }
 
 void PlanarViewer::updateView() {
