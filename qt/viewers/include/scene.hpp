@@ -8,7 +8,11 @@
 #include "../../qt/widgets/include/scene_control.hpp"
 // UI elements :
 //#include "../../qt/include/grid_control.hpp"
-#include "../../qt/widgets/include/opengl_debug_log.hpp"
+//#include "../../qt/widgets/include/opengl_debug_log.hpp"
+#include <QPlainTextEdit>
+#include <QPushButton>
+#include <QWidget>
+
 //#include "../../grid/include/manipulator.hpp"
 //#include "../../grid/include/mesh_manipulator.hpp"
 // Helper structs and functions :

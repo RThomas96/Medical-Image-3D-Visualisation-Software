@@ -42,12 +42,9 @@ ADD_LIBRARY(VisualisationWidgets STATIC
 	./qt/widgets/include/main_widget.hpp
 	./qt/widgets/include/scene_control.hpp
 	./qt/widgets/include/viewer_header.hpp
-	./qt/widgets/include/opengl_debug_log.hpp
-	./qt/widgets/include/double_slider.hpp
+    ./qt/widgets/include/double_slider.hpp
 	./qt/widgets/include/range_slider.hpp
-	./qt/widgets/include/user_settings_widget.hpp
-	./qt/widgets/include/loader_widget.hpp
-	./qt/widgets/deformation_widget.hpp
+    ./qt/widgets/deformation_widget.hpp
     ./qt/widgets/openMeshWidget.hpp
     ./qt/widgets/applyCageWidget.hpp
     ./qt/widgets/saveMeshWidget.hpp
@@ -56,12 +53,9 @@ ADD_LIBRARY(VisualisationWidgets STATIC
 	./qt/widgets/src/main_widget.cpp
 	./qt/widgets/src/scene_control.cpp
 	./qt/widgets/src/viewer_header.cpp
-	./qt/widgets/src/opengl_debug_log.cpp
-	./qt/widgets/src/double_slider.cpp
+    ./qt/widgets/src/double_slider.cpp
 	./qt/widgets/src/range_slider.cpp
-	./qt/widgets/src/user_settings_widget.cpp
-	./qt/widgets/src/loader_widget.cpp
-	./qt/widgets/deformation_widget.cpp
+    ./qt/widgets/deformation_widget.cpp
 	./qt/widgets/openMeshWidget.cpp
     ./qt/widgets/applyCageWidget.cpp
 	./qt/widgets/saveMeshWidget.cpp
