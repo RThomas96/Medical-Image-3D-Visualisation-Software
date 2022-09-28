@@ -1,4 +1,4 @@
-#include "../include/viewer_structs.hpp"
+#include "viewer_structs.hpp"
 
 #define CASE_GL(x)       \
 	case x:              \

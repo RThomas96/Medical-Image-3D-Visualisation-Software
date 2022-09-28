@@ -16,7 +16,7 @@
 //#include "../../grid/include/manipulator.hpp"
 //#include "../../grid/include/mesh_manipulator.hpp"
 // Helper structs and functions :
-#include "./viewer_structs.hpp"
+#include "../../legacy/viewer_structs.hpp"
 // Qt headers :
 #include <QOpenGLDebugLogger>
 #include <QOpenGLFunctions_3_2_Core>

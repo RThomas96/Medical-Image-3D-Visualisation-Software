@@ -2,7 +2,7 @@
 #define GL_MANIPULATOR_HPP_
 
 #include "../../third_party/primitive/Sphere.h"
-#include "../../qt/viewers/include/viewer_structs.hpp"
+#include "../../qt/legacy/viewer_structs.hpp"
 #include "../ui/mesh_manipulator.hpp"
 
 #include <QOpenGLContext>

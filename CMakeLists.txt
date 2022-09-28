@@ -81,7 +81,9 @@ ADD_EXECUTABLE(neighbor_visu
 	./qt/viewers/include/scene.hpp
 	./qt/viewers/include/planar_viewer.hpp
 	./qt/viewers/include/neighbor_visu_viewer.hpp
-	./qt/viewers/include/viewer_structs.hpp
+
+    ./qt/legacy/viewer_structs.hpp
+    ./qt/legacy/viewer_structs.cpp
 
     ./third_party/primitive/Sphere.h
     ./third_party/cimg/CImg.h
@@ -119,7 +121,6 @@ ADD_EXECUTABLE(neighbor_visu
 	./qt/viewers/src/scene.cpp
 	./qt/viewers/src/planar_viewer.cpp
 	./qt/viewers/src/neighbor_visu_viewer.cpp
-	./qt/viewers/src/viewer_structs.cpp
     ./third_party/primitive/Sphere.cpp
     ./grid/geometry/grid.cpp
     ./grid/geometry/base_mesh.cpp

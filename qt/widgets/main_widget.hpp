@@ -21,7 +21,7 @@
 #include "qjsonarray.h"
 #include "qnamespace.h"
 #include "qobjectdefs.h"
-#include "qt/viewers/include/viewer_structs.hpp"
+#include "../legacy/viewer_structs.hpp"
 #include <random>
 
 #include <map>
