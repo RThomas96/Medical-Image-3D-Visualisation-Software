@@ -1,7 +1,7 @@
 #ifndef MANIPULATOR_HPP_
 #define MANIPULATOR_HPP_
 
-#include "../../qt/viewers/include/scene.hpp"
+#include "../../qt/scene.hpp"
 #include <QGLViewer/manipulatedFrame.h>
 #include <QGLViewer/qglviewer.h>
 #include <glm/glm.hpp>

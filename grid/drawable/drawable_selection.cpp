@@ -1,6 +1,6 @@
 
 #include "drawable_selection.hpp"
-#include "../../qt/viewers/include/scene.hpp"
+#include "../../qt/scene.hpp"
 
 UITool::GL::Selection::Selection(SceneGL* sceneGL, const glm::vec3& p1, const glm::vec3& p2) : sceneGL(sceneGL) {
     this->program	       = 0;

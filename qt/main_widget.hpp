@@ -3,17 +3,17 @@
 
 #include <iomanip>
 #include <sstream>
-#include "../../qt/viewers/include/neighbor_visu_viewer.hpp"
-#include "../../qt/viewers/include/planar_viewer.hpp"
-#include "../../qt/viewers/include/scene.hpp"
+#include "3D_viewer.hpp"
+#include "planar_viewer.hpp"
+#include "scene.hpp"
 //#include "./grid_control.hpp"
 //#include "./loader_widget.hpp"
 //#include "../deformation_widget.hpp"
-#include "../../qt/legacy/openMeshWidget.hpp"
-#include "../../qt/legacy/applyCageWidget.hpp"
+#include "legacy/openMeshWidget.hpp"
+#include "legacy/applyCageWidget.hpp"
 #include "cutplane_groupbox.hpp"
 //#include "./opengl_debug_log.hpp"
-#include "./scene_control.hpp"
+#include "scene_control.hpp"
 //#include "./user_settings_widget.hpp"
 #include "glm/fwd.hpp"
 #include "qboxlayout.h"
@@ -21,7 +21,7 @@
 #include "qjsonarray.h"
 #include "qnamespace.h"
 #include "qobjectdefs.h"
-#include "../legacy/viewer_structs.hpp"
+#include "legacy/viewer_structs.hpp"
 #include <random>
 
 #include <map>

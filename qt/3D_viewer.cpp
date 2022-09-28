@@ -1,4 +1,4 @@
-#include "../include/neighbor_visu_viewer.hpp"
+#include "3D_viewer.hpp"
 #include "../../features.hpp"
 //#include "../../grid/include/discrete_grid_writer.hpp"
 //#include "../../qt/widgets/include/user_settings_widget.hpp"

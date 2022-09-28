@@ -1,6 +1,6 @@
 
 #include "applyCageWidget.hpp";
-#include "../viewers/include/scene.hpp"
+#include "../scene.hpp"
 
 ApplyCageWidget::ApplyCageWidget(Scene* scene, QWidget* parent) {
 

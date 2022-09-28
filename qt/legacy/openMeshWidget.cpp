@@ -1,6 +1,6 @@
 
 #include "openMeshWidget.hpp";
-#include "../viewers/include/scene.hpp"
+#include "../scene.hpp"
 
 OpenMeshWidget::OpenMeshWidget(Scene* scene, QWidget* parent) {
 

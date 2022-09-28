@@ -1,5 +1,5 @@
-#include "../include/scene.hpp"
-#include "../include/planar_viewer.hpp"
+#include "scene.hpp"
+#include "planar_viewer.hpp"
 
 #include <GL/gl.h>
 #include <glm/gtc/type_ptr.hpp>

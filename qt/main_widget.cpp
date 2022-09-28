@@ -1,5 +1,5 @@
 #include "main_widget.hpp"
-#include "qt/viewers/include/scene.hpp"
+#include "scene.hpp"
 
 #include <QEvent>
 #include <QHBoxLayout>

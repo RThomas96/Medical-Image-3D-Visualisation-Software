@@ -39,17 +39,17 @@ SET(LIBS_COMPILED_HEADERS "${CMAKE_CURRENT_LIST_DIR}/third_party/compiled_librar
 ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/legacy/image)
 
 ADD_LIBRARY(VisualisationWidgets STATIC
-    ./qt/widgets/main_widget.hpp
-    ./qt/widgets/main_widget.cpp
+    ./qt/main_widget.hpp
+    ./qt/main_widget.cpp
 
-    ./qt/widgets/scene_control.hpp
-    ./qt/widgets/scene_control.cpp
+    ./qt/scene_control.hpp
+    ./qt/scene_control.cpp
 
-    ./qt/widgets/double_slider.hpp
-    ./qt/widgets/double_slider.cpp
+    ./qt/double_slider.hpp
+    ./qt/double_slider.cpp
 
-    ./qt/widgets/range_slider.hpp
-    ./qt/widgets/range_slider.cpp
+    ./qt/range_slider.hpp
+    ./qt/range_slider.cpp
 
     ./qt/legacy/applyCageWidget.hpp
     ./qt/legacy/applyCageWidget.cpp
@@ -57,7 +57,7 @@ ADD_LIBRARY(VisualisationWidgets STATIC
     ./qt/legacy/openMeshWidget.hpp
     ./qt/legacy/openMeshWidget.cpp
 
-    ./qt/widgets/cutplane_groupbox.hpp
+    ./qt/cutplane_groupbox.hpp
 )
 TARGET_INCLUDE_DIRECTORIES(VisualisationWidgets
 	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/third_party/glm/
@@ -78,9 +78,11 @@ TARGET_LINK_LIBRARIES(VisualisationWidgets
 
 ADD_EXECUTABLE(neighbor_visu
 	# Header files, for Qt MOCS compilation :
-	./qt/viewers/include/scene.hpp
-	./qt/viewers/include/planar_viewer.hpp
-	./qt/viewers/include/neighbor_visu_viewer.hpp
+    ./qt/scene.hpp
+    ./qt/planar_viewer.hpp
+
+    ./qt/3D_viewer.hpp
+    ./qt/3D_viewer.cpp
 
     ./qt/legacy/viewer_structs.hpp
     ./qt/legacy/viewer_structs.cpp
@@ -118,9 +120,8 @@ ADD_EXECUTABLE(neighbor_visu
 	./neighbor_visu_main.cpp
 
 	# Source files :
-	./qt/viewers/src/scene.cpp
-	./qt/viewers/src/planar_viewer.cpp
-	./qt/viewers/src/neighbor_visu_viewer.cpp
+    ./qt/scene.cpp
+    ./qt/planar_viewer.cpp
     ./third_party/primitive/Sphere.cpp
     ./grid/geometry/grid.cpp
     ./grid/geometry/base_mesh.cpp

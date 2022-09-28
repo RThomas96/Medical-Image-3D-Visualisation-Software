@@ -1,6 +1,6 @@
-#include "../include/planar_viewer.hpp"
+#include "planar_viewer.hpp"
 
-#include "../../qt/widgets/main_widget.hpp"
+#include "main_widget.hpp"
 
 #include <QCoreApplication>
 #include <QGuiApplication>

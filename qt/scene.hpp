@@ -5,7 +5,7 @@
 #include "../../features.hpp"
 #include "../../macros.hpp"
 // Scene control panel :
-#include "../../qt/widgets/scene_control.hpp"
+#include "scene_control.hpp"
 // UI elements :
 //#include "../../qt/include/grid_control.hpp"
 //#include "../../qt/widgets/include/opengl_debug_log.hpp"
@@ -16,7 +16,7 @@
 //#include "../../grid/include/manipulator.hpp"
 //#include "../../grid/include/mesh_manipulator.hpp"
 // Helper structs and functions :
-#include "../../legacy/viewer_structs.hpp"
+#include "legacy/viewer_structs.hpp"
 // Qt headers :
 #include <QOpenGLDebugLogger>
 #include <QOpenGLFunctions_3_2_Core>
