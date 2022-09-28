@@ -7,15 +7,15 @@
 #include "../../qt/viewers/include/planar_viewer.hpp"
 #include "../../qt/viewers/include/scene.hpp"
 //#include "./grid_control.hpp"
-#include "./loader_widget.hpp"
+//#include "./loader_widget.hpp"
 #include "../deformation_widget.hpp"
 #include "../openMeshWidget.hpp"
 #include "../saveMeshWidget.hpp"
 #include "../applyCageWidget.hpp"
 #include "../CutPlaneGroupBox.h"
-#include "./opengl_debug_log.hpp"
+//#include "./opengl_debug_log.hpp"
 #include "./scene_control.hpp"
-#include "./user_settings_widget.hpp"
+//#include "./user_settings_widget.hpp"
 #include "glm/fwd.hpp"
 #include "qboxlayout.h"
 #include "qbuttongroup.h"
@@ -167,22 +167,6 @@ public slots:
 signals:
     void fileSelected();
 };
-
-//class FormSection : public QGroupBox {
-//    Q_OBJECT
-//
-//public:
-//
-//    Form * form;
-//
-//    FormSection(QWidget *parent = nullptr):QGroupBox(parent){init();}
-//
-//public slots:
-//
-//    void init() {
-//        this->form = new form();
-//    }
-//};
 
 class FileName : public QLabel {
     Q_OBJECT
@@ -2982,20 +2966,16 @@ private:
     QActionManager* actionManager;
 
     QFrame* viewerFrame;
-    QWidget* viewerCapsule;
 
     QSplitter* hSplit;
     QSplitter* vSplit1;
     QSplitter* vSplit2;
-    QDockWidget * dockView_X;
 
 	Viewer* viewer;
 
-	GridLoaderWidget* loaderWidget;
-	GridDeformationWidget* deformationWidget;
-
     RangeControl * range;
 	ControlPanel* controlPanel;
+
 	bool widgetSizeSet;
 
 	QMenu* fileMenu;
@@ -3004,14 +2984,6 @@ private:
     QMenu* otherMenu;
 
     QToolBar * toolbar;
-	QAction* action_addGrid;
-	QAction* action_saveGrid;
-	QAction* action_exitProgram;
-	QAction* action_showPlanarViewers;
-	QAction* action_loadMesh;
-	QAction* action_saveMesh;
-	QAction* action_applyCage;
-	QAction* action_openDevPannel;
 
     QComboBox* combo_mesh;
 
@@ -3020,28 +2992,18 @@ private:
     InfoPannel* info_pannel;
     ToolPannel* tool_pannel;
 
-	QAction* tool_open;
-	QAction* tool_save;
-
-	QAction* tool_none;
-	QAction* tool_position;
-	QAction* tool_direct;
-	QAction* tool_ARAP;
-	QAction* tool_registration;
-
 	QStatusBar* statusBar;
 
+    // Legacy widget, that don't use the Form class
     OpenMeshWidget * openMeshWidget;
-    SaveMeshWidget * saveMeshWidget;
     ApplyCageWidget * applyCageWidget;
 
+    // New widget, that use the Form class
     DeformationForm * deformationForm;
     SaveImageForm * saveImageForm;
     QuickSaveMesh * quickSaveCage;
     OpenImageForm * openImageForm;
     PlanarViewer2D * planarViewer;
-
-    bool isShiftPressed = false;
 
 public slots:
     void addNewMesh(const std::string& name, bool grid, bool cage) {
@@ -3066,6 +3028,12 @@ public slots:
         this->actionManager->deactivateGroup("FixedTool");
         this->actionManager->deactivateGroup("SliceTool");
         switch(newTool) {
+            case UITool::MeshManipulatorType::NONE:
+                break;
+            case UITool::MeshManipulatorType::FREE:
+                break;
+            case UITool::MeshManipulatorType::REGISTRATION:
+                break;
             case UITool::MeshManipulatorType::POSITION:
                 this->actionManager->activateGroup("MoveTool");
                 break;

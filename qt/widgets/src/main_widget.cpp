@@ -15,22 +15,11 @@
 MainWidget::MainWidget() {
 	this->setupWidgets();
 	this->widgetSizeSet = false;
-	this->loaderWidget	= nullptr;
 	// Query a user settings instance to initialize it :
-	UserSettings set = UserSettings::getInstance();
 }
 
 MainWidget::~MainWidget() {
 	this->removeEventFilter(this);
-
-	this->action_addGrid->disconnect();
-	this->action_saveGrid->disconnect();
-	this->action_exitProgram->disconnect();
-
-
-	delete this->action_addGrid;
-	delete this->action_saveGrid;
-	delete this->action_exitProgram;
 	delete this->scene;
 	delete this->controlPanel;
 }
@@ -50,7 +39,6 @@ void MainWidget::setupWidgets() {
         this->actionManager->getAction("ToggleNoneTool")->trigger();
         this->combo_mesh->setCurrentIndex(this->combo_mesh->count()-1);
     });
-    this->saveMeshWidget = new SaveMeshWidget(this->scene, this);
     this->applyCageWidget = new ApplyCageWidget(this->scene, this);
 
     this->display_pannel = new DisplayPannel("Display", *this->actionManager);
@@ -58,20 +46,7 @@ void MainWidget::setupWidgets() {
     this->cutPlane_pannel->setCheckable(false);
     this->cutPlane_pannel->setDisabledAlpha(true);
 
-	this->deformationWidget = new GridDeformationWidget(this->scene);
-    this->deformationWidget->hide();
 	// Actions creation :
-	this->action_addGrid	   = new QAction("Open images");
-	this->action_saveGrid	   = new QAction("Save acquisition");
-	this->action_showPlanarViewers   = new QAction("Show planar viewer");
-	this->action_exitProgram   = new QAction("Exit program");
-	this->action_loadMesh	   = new QAction("Load mesh (OFF)");
-	this->action_saveMesh	   = new QAction("Save mesh (OFF)");
-	this->action_applyCage	   = new QAction("Apply cage on another cage");
-	this->action_openDevPannel = new QAction("Open dev pannel");
-
-	this->action_addGrid->setShortcut(QKeySequence::Open);
-
     this->fileMenu = this->menuBar()->addMenu("&File");
     this->fileMenu->addAction(this->actionManager->getAction("OpenImage"));
     this->fileMenu->addAction(this->actionManager->getAction("OpenMesh"));
@@ -104,22 +79,11 @@ void MainWidget::setupWidgets() {
     this->toolbar->addAction(this->actionManager->getAction("OpenImage"));
     this->toolbar->addAction(this->actionManager->getAction("SaveImage"));
 
-    //this->toolbar->addWidget(this->actionManager->getMenu("OpenMenu"));
-
-    //this->toolbar->addWidget(this->actionManager->getMenu("SaveMenu"));
-
-    //this->toolbar->addAction(this->actionManager->getAction("MenuSave"));
-    //this->toolbar->addAction(this->actionManager->getAction("SaveCage"));
-    //this->toolbar->addAction(this->actionManager->getAction("SaveAsCage"));
-
-    //this->toolbar->addSeparator();
-
     this->toolbar->addAction(this->actionManager->getAction("ToggleNoneTool"));
     this->toolbar->addAction(this->actionManager->getAction("ToggleMoveTool"));
     this->toolbar->addAction(this->actionManager->getAction("ToggleDirectTool"));
     this->toolbar->addAction(this->actionManager->getAction("ToggleARAPTool"));
     this->toolbar->addAction(this->actionManager->getAction("ToggleSliceTool"));
-    //this->toolbar->addAction(this->actionManager->getAction("ToggleRegisterTool"));
 
     this->toolbar->addSeparator();
 
@@ -143,88 +107,11 @@ void MainWidget::setupWidgets() {
 
     this->toolbar->addSeparator();
 
-    //this->toolbar->addAction(this->actionManager->getAction("CenterCamera"));
-
-    //this->toolbar->addSeparator();
-
     this->toolbar->addAction(this->actionManager->getAction("OpenAtlas"));
-    //this->toolbar->addAction(this->actionManager->getAction("OpenIRM"));
-
-    //this->toolbar->addSeparator();
-
-    //this->toolbar->addAction(this->actionManager->getAction("Sorting"));
-    //this->toolbar->addAction(this->actionManager->getAction("Shader"));
     this->toolbar->addAction(this->actionManager->getAction("Boundaries"));
 
     /***/
 
-    //this->viewMenu = this->menuBar()->addMenu("&View");
-    //this->viewMenu->addAction(this->action_showPlanarViewers);
-
-    //this->otherMenu = this->menuBar()->addMenu("&Other");
-    //this->otherMenu->addAction(this->action_openDevPannel);
-
-	QObject::connect(this->action_addGrid, &QAction::triggered, [this]() {
-		if (this->loaderWidget == nullptr) {
-			this->loaderWidget = new GridLoaderWidget(this->scene, this->viewer, this->controlPanel);
-			QObject::connect(this->loaderWidget, &QWidget::destroyed, [this]() {
-				this->loaderWidget = nullptr;
-			});
-		}
-		this->loaderWidget->show();
-		this->loaderWidget->raise();
-	});
-	QObject::connect(this->action_saveGrid, &QAction::triggered, [this]() {
-		this->scene->launchSaveDialog();
-	});
-	QObject::connect(this->action_exitProgram, &QAction::triggered, this, &QMainWindow::close);
-	QObject::connect(this->action_loadMesh, &QAction::triggered, [this]() {
-		//this->scene->loadMesh();
-        QStringList potentialCages;
-        std::vector<std::string> allNonTetrahedralMeshes = this->scene->getAllBaseMeshesName();
-        for(int i = 0; i < allNonTetrahedralMeshes.size(); ++i)
-            potentialCages += QString(allNonTetrahedralMeshes[i].c_str());
-        this->openMeshWidget->setPotentialCages(potentialCages);
-        this->openMeshWidget->show();
-	});
-	QObject::connect(this->action_saveMesh, &QAction::triggered, [this]() {
-        QStringList potentialMeshes;
-        std::vector<std::string> allNonTetrahedralMeshes = this->scene->getAllNonTetrahedralMeshesName();
-        for(int i = 0; i < allNonTetrahedralMeshes.size(); ++i)
-            potentialMeshes += QString(allNonTetrahedralMeshes[i].c_str());
-        this->saveMeshWidget->setPotentialMeshToSave(potentialMeshes);
-        this->saveMeshWidget->show();
-	});
-	QObject::connect(this->action_applyCage, &QAction::triggered, [this]() {
-        QStringList potentialCages;
-        std::vector<std::string> allCages = this->scene->getAllCagesName();
-        for(int i = 0; i < allCages.size(); ++i)
-            potentialCages += QString(allCages[i].c_str());
-        this->applyCageWidget->setPotentialCageToApply(potentialCages);
-        this->applyCageWidget->show();
-	});
-	QObject::connect(this->action_addGrid, &QAction::triggered, [this]() {
-		if (this->loaderWidget == nullptr) {
-			this->loaderWidget = new GridLoaderWidget(this->scene, this->viewer, this->controlPanel);
-			QObject::connect(this->loaderWidget, &QWidget::destroyed, [this]() {
-				this->loaderWidget = nullptr;
-			});
-		}
-		this->loaderWidget->show();
-		this->loaderWidget->raise();
-	});
-	QObject::connect(this->action_openDevPannel, &QAction::triggered, [this]() {
-            if(!this->deformationWidget->isVisible()) {
-                this->deformationWidget->show();
-            } else {
-                this->deformationWidget->hide();
-            }
-	});
-	//QObject::connect(this->tool_none, &QAction::triggered, [this]() {
-    //        this->scene->updateSceneCenter();
-    //        this->scene->changeCurrentTool(UITool::MeshManipulatorType::NONE);
-    //        this->tool_pannel->changeCurrentTool(UITool::MeshManipulatorType::NONE);
-	//});
     QObject::connect(this->combo_mesh, QOverload<int>::of(&QComboBox::currentIndexChanged), [=](int index){
             this->scene->changeActiveMesh(std::string((this->combo_mesh->itemText(this->combo_mesh->currentIndex())).toStdString()));
             this->changeActiveMesh();
@@ -233,8 +120,6 @@ void MainWidget::setupWidgets() {
     /***/
     // Plane control
     /***/
-    //QObject::connect(this->cutPlaneDisplay, &CutPlaneGroupBox::clicked, this->scene, &Scene::slotToggleDisplayGrid);
-
     QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::xSliderValueChanged, this->scene, &Scene::slotSetPlaneDisplacementX);
     QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::ySliderValueChanged, this->scene, &Scene::slotSetPlaneDisplacementY);
     QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::zSliderValueChanged, this->scene, &Scene::slotSetPlaneDisplacementZ);
@@ -302,14 +187,12 @@ void MainWidget::setupWidgets() {
     sidePannelLayout->setAlignment(Qt::AlignBottom);
 
     sidePannelLayout->addWidget(this->info_pannel);
-    //this->tool_pannel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     sidePannelLayout->addWidget(this->tool_pannel);
     sidePannelLayout->addWidget(this->display_pannel);
 	sidePannelLayout->addWidget(this->cutPlane_pannel);
 
     viewerLayout->addLayout(sidePannelLayout);
     viewerLayout->addWidget(hSplit, 4);
-	viewerLayout->addWidget(this->deformationWidget);
 
     /***/
 
@@ -321,7 +204,6 @@ void MainWidget::setupWidgets() {
     QVBoxLayout* mainLayout = new QVBoxLayout();
 	mainLayout->addWidget(this->combo_mesh, 2);
 	mainLayout->addWidget(this->viewerFrame, 3);
-	//mainLayout->addWidget(this->viewerFrame, 3);
 
     QHBoxLayout* lowLayout = new QHBoxLayout(lowFrame);
     lowLayout->addWidget(this->planarViewer, 1);
@@ -331,9 +213,6 @@ void MainWidget::setupWidgets() {
     this->controlPanel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     mainLayout->addWidget(lowFrame);
-
-    //QSize v = viewerLayout->sizeHint();
-    //this->controlPanel->setMinimumWidth(static_cast<int>(static_cast<float>(v.width()) * .7f));
 
 	QWidget* mainWidget = new QWidget();
 	mainWidget->setLayout(mainLayout);
@@ -472,9 +351,6 @@ void MainWidget::setupActions() {
     this->actionManager->getAction("ARAPTool_toggleEvenMode")->setVisible(false);
     QObject::connect(this->actionManager->getAction("ARAPTool_toggleEvenMode"), &QAction::triggered, [this](){this->scene->ARAPTool_toggleEvenMode(this->actionManager->getAction("ARAPTool_toggleEvenMode")->isChecked());});
 
-    //this->actionManager->createQExclusiveActionGroup("ARAPTool_toggleMode", {"ARAPTool_moveMode", "ARAPTool_handleMode"});
-
-    //this->actionManager->createQActionGroup("ARAPTool", {"ARAPTool_moveMode", "ARAPTool_handleMode", "ARAPTool_toggleEvenMode"});
     this->actionManager->createQActionGroup("ARAPTool", {"ARAPTool_toggleEvenMode"});
 
     // Registration
@@ -558,19 +434,6 @@ void MainWidget::setupActions() {
     });
 
     this->actionManager->createQActionButton("SaveImage", "Export...", "", "Save the deformed image", "save");
-    //QObject::connect(this->actionManager->getAction("SaveImage"), &QAction::triggered, [this](){
-    //        FileChooser * fileChooser = new FileChooser("File", FileChooserType::SAVE, FileChooserFormat::TIFF);
-    //        fileChooser->click();
-
-    //        std::string gridName = this->combo_mesh->itemText(this->combo_mesh->currentIndex()).toStdString();
-    //        if(!fileChooser->filename.isEmpty()) {
-    //            if(scene->isCage(gridName)) {
-    //                gridName = scene->grids_name[scene->getGridIdxLinkToCage(gridName)];
-    //            }
-    //            this->scene->writeDeformedImage(fileChooser->filename.toStdString(), gridName, false);
-    //        }
-    //        delete fileChooser;
-    //});
     QObject::connect(this->actionManager->getAction("SaveImage"), &QAction::triggered, [this](){
         this->saveImageForm->show();
     });
