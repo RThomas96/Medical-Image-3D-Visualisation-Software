@@ -44,10 +44,8 @@ ADD_LIBRARY(VisualisationWidgets STATIC
 	./qt/widgets/include/viewer_header.hpp
     ./qt/widgets/include/double_slider.hpp
 	./qt/widgets/include/range_slider.hpp
-    ./qt/widgets/deformation_widget.hpp
-    ./qt/widgets/openMeshWidget.hpp
-    ./qt/widgets/applyCageWidget.hpp
-    ./qt/widgets/saveMeshWidget.hpp
+    ./qt/legacy/openMeshWidget.hpp
+    ./qt/legacy/applyCageWidget.hpp
     ./qt/widgets/CutPlaneGroupBox.h
 
 	./qt/widgets/src/main_widget.cpp
@@ -55,10 +53,8 @@ ADD_LIBRARY(VisualisationWidgets STATIC
 	./qt/widgets/src/viewer_header.cpp
     ./qt/widgets/src/double_slider.cpp
 	./qt/widgets/src/range_slider.cpp
-    ./qt/widgets/deformation_widget.cpp
-	./qt/widgets/openMeshWidget.cpp
-    ./qt/widgets/applyCageWidget.cpp
-	./qt/widgets/saveMeshWidget.cpp
+    ./qt/legacy/openMeshWidget.cpp
+    ./qt/legacy/applyCageWidget.cpp
 )
 TARGET_INCLUDE_DIRECTORIES(VisualisationWidgets
 	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/third_party/glm/
