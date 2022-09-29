@@ -41,6 +41,7 @@
 #include <tinytiffwriter.h>
 
 #include "../../grid/geometry/grid.hpp"
+#include "../../grid/geometry/graph_mesh.hpp"
 #include "../../grid/drawable/drawable_surface_mesh.hpp"
 #include "../../grid/drawable/drawable_selection.hpp"
 #include "../../grid/deformation/cage_surface_mesh.hpp"
