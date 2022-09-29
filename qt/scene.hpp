@@ -673,8 +673,6 @@ public slots:
         return this->grids[this->getGridIdx(name)]->grid->updateTextureCoordinates();
     }
 
-
-
     std::vector<std::string> getAllNonTetrahedralMeshesName();
     std::vector<std::string> getAllBaseMeshesName();
     std::vector<std::string> getAllCagesName();

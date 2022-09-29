@@ -26,9 +26,14 @@ public:
         this->loadMESH(filename);
     }
 
+    void setARAPDeformationMethod() override {};
+    bool getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos, glm::vec3& res) const override { return false;};
+    void computeNeighborhood() override {};
+    void computeNormals() override {};
+
     void loadMESH(std::string const &filename);
 
-    ~GraphMesh();
+    ~GraphMesh(){};
 };
 
 //! @}
