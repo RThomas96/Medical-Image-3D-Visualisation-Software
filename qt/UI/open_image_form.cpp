@@ -68,4 +68,14 @@ void OpenImageForm::connect(Scene * scene) {
             this->hide();
             Q_EMIT loaded();
     });
+
+    QObject::connect(this->buttons["Mouse brain atlas"], &QPushButton::clicked, [this, scene](){
+        this->labels["Name"]->setText("Mouse brain atlas");
+        this->checkBoxes["Segmented"]->setChecked(true);
+        this->fileChoosers["Image choose"]->setManually(std::string("../data/atlas.tiff"));
+        this->sections["Mesh"].first->setChecked(true);
+        this->fileChoosers["Mesh choose"]->setManually(std::string("../data/atlas-transfert.mesh"));
+        this->sections["Cage"].first->setChecked(true);
+        this->fileChoosers["Cage choose"]->setManually(std::string("../data/atlas-cage.off"));
+    });
 }

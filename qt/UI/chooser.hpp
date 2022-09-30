@@ -53,6 +53,9 @@ public slots:
     void setFormat(FileChooserFormat format);
     void click();
 
+    void setManually(std::string filename);
+    void setManually(QString filename);
+
 signals:
     void fileSelected();
 };

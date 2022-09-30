@@ -23,6 +23,13 @@ public slots:
         this->useTetMesh = false;
         //this->addFileChooser("Save image", FileChooserType::SAVE);
 
+
+        this->addWithLabel(WidgetType::H_GROUP, "GroupPreset", "Presets");
+        this->addAllNextWidgetsToGroup("GroupPreset");
+        this->add(WidgetType::BUTTON, "Mouse brain atlas");
+        //this->add(WidgetType::BUTTON, "Mouse brain autofluo");
+        this->addAllNextWidgetsToDefaultGroup();
+
         this->addWithLabel(WidgetType::LINE_EDIT, "Name", "Name: ");
 
         this->add(WidgetType::SECTION, "Image");

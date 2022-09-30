@@ -75,6 +75,17 @@ void FileChooser::click() {
     }
 }
 
+void FileChooser::setManually(std::string filename) {
+    if(!filename.empty()) {
+        this->filename = QString(filename.c_str());
+        Q_EMIT fileSelected();
+    }
+}
+
+void FileChooser::setManually(QString filename) {
+    this->setManually(filename.toStdString());
+}
+
 ///////
 
 void FileName::init(FileChooser * fileChooser) {
