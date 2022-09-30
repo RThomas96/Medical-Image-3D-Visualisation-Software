@@ -50,6 +50,7 @@ void MainWidget::setupWidgets() {
     this->fileMenu = this->menuBar()->addMenu("&File");
     this->fileMenu->addAction(this->actionManager->getAction("OpenImage"));
     this->fileMenu->addAction(this->actionManager->getAction("OpenMesh"));
+    this->fileMenu->addAction(this->actionManager->getAction("OpenGraph"));
     this->fileMenu->addSeparator();
     this->fileMenu->addAction(this->actionManager->getAction("SaveCage"));
     this->fileMenu->addAction(this->actionManager->getAction("SaveAsCage"));
@@ -508,6 +509,13 @@ void MainWidget::setupActions() {
             potentialCages += QString(allNonTetrahedralMeshes[i].c_str());
         this->openMeshWidget->setPotentialCages(potentialCages);
         this->openMeshWidget->show();
+    });
+
+    this->actionManager->createQActionButton("OpenGraph", "Open graph...", "", "Open graph", "");
+    QObject::connect(this->actionManager->getAction("OpenGraph"), &QAction::triggered, [this]() {
+        FileChooser fileChooser(QString("dummy"), FileChooserType::SELECT, FileChooserFormat::OFF);
+        fileChooser.click();
+        this->scene->openGraph(std::string("graph"), fileChooser.filename.toStdString());
     });
 
     this->actionManager->createMenuButton("OpenMenu", "Open", "Open", "open", {"OpenImage", "OpenMesh"});

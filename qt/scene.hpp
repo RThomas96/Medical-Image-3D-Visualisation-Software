@@ -44,6 +44,7 @@
 #include "../../grid/geometry/graph_mesh.hpp"
 #include "../../grid/drawable/drawable_surface_mesh.hpp"
 #include "../../grid/drawable/drawable_selection.hpp"
+#include "../../grid/drawable/drawable_graph.hpp"
 #include "../../grid/deformation/cage_surface_mesh.hpp"
 
 #include "glm/gtx/string_cast.hpp"
@@ -646,6 +647,7 @@ public slots:
     void openAtlas();
     void openIRM();
     bool openMesh(const std::string& name, const std::string& filename, const glm::vec4& color = glm::vec4(0.1, 0.5, 1.,0.85));
+    bool openGraph(const std::string& name, const std::string& filename, const glm::vec4& color = glm::vec4(0.1, 0.5, 1.,0.85));
     bool openCage(const std::string& name, const std::string& filename, BaseMesh * surfaceMeshToDeform, const bool MVC = true, const glm::vec4& color = glm::vec4(1., 0., 0., 0.1));
     bool openCage(const std::string& name, const std::string& filename, const std::string& surfaceMeshToDeformName, const bool MVC = true, const glm::vec4& color = glm::vec4(1., 0., 0., 0.1));
     bool linkCage(const std::string& cageName, BaseMesh * meshToDeform, const bool MVC);
@@ -729,8 +731,10 @@ public:
     std::vector<std::pair<std::string, std::string>> cageToGrid;
     std::vector<std::string> grids_name;
     std::vector<GridGLView::Ptr> grids;
+    std::vector<std::pair<GraphMesh*, std::string>> graph_meshes;
     std::vector<std::pair<SurfaceMesh*, std::string>> meshes;
     std::vector<std::pair<DrawableMesh*, std::string>> drawableMeshes;
+    std::vector<std::pair<UITool::GL::Graph*, std::string>> drawableGraphs;
 
     Image::bbox_t sceneBB;
     Image::bbox_t sceneDataBB;

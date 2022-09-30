@@ -2182,6 +2182,17 @@ void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool sho
             }
             this->drawableMeshes[i].first->draw(pMat, mvMat, glm::vec4{camPos, 1.f}, planePos);
         }
+
+        for(int i = 0; i < this->drawableGraphs.size(); ++i) {
+            this->drawableGraphs[i].first->prepare();
+            glm::vec3 planePos	   = this->computePlanePositions();
+            for(int i = 0; i < 3; ++i) {
+                if(this->planeActivation[i] == 0.) {
+                    planePos[i] = -1000000.;
+                }
+            }
+            this->drawableGraphs[i].first->draw(pMat, mvMat, glm::value_ptr(mMat), planePos);
+        }
     }
 
     //this->drawBoundingBox(this->sceneBB, glm::vec4(.5, .5, .0, 1.), mvMat, pMat);
@@ -3652,6 +3663,18 @@ void Scene::setColorChannel(ColorChannel mode) {
     }
 }
 
+bool Scene::openGraph(const std::string& name, const std::string& filename, const glm::vec4& color) {
+    //this->surfaceMesh = new SurfaceMesh("/home/thomas/data/Data/Mesh/bunny_lowres.off");
+    this->graph_meshes.push_back(std::pair<GraphMesh*, std::string>(nullptr, name));
+    this->graph_meshes.back().first = new GraphMesh(filename);
+
+    this->drawableGraphs.push_back(std::pair<UITool::GL::Graph*, std::string>(new UITool::GL::Graph(&this->sceneGL, this->graph_meshes.back().first), name));
+
+    Q_EMIT meshAdded(name, false, false);
+    this->changeActiveMesh(name);
+    return true;
+}
+
 bool Scene::openMesh(const std::string& name, const std::string& filename, const glm::vec4& color) {
     //this->surfaceMesh = new SurfaceMesh("/home/thomas/data/Data/Mesh/bunny_lowres.off");
     this->meshes.push_back(std::pair<SurfaceMesh*, std::string>(nullptr, name));
@@ -4933,6 +4956,7 @@ void Scene::clear() {
     this->grids.clear();
     this->meshes.clear();
     this->drawableMeshes.clear();
+    this->drawableGraphs.clear();
     gridToDraw = -1;
 }
 
