@@ -93,8 +93,6 @@ Scene::Scene() :
     this->vbo_VertNorm			= 0;
     this->vbo_VertTex				= 0;
     this->vbo_Element				= 0;
-    this->vbo_PlaneElement		= 0;
-    this->vbo_SinglePlaneElement	= 0;
     this->vbo_boundingBoxVertices = 0;
     this->vbo_boundingBoxIndices	= 0;
 
@@ -210,7 +208,7 @@ void Scene::initGl(QOpenGLContext* _context) {
 
     // Generate controller positions
     //this->glMeshManipulator->initGL(this->get_context());
-    this->sceneGL.initGl(this->get_context());
+    this->sceneGL.initGl(this->context);
     this->gridToDraw = -1;
     //this->glMeshManipulator->prepareSphere();
 
@@ -319,11 +317,9 @@ void Scene::createBuffers() {
     // For the default VAO :
     this->vao					   = createVAO("vaoHandle");
     this->vbo_VertPos			   = createVBO(GL_ARRAY_BUFFER, "vboHandle_VertPos");
-    this->vbo_VertNorm		   = createVBO(GL_ARRAY_BUFFER, "vboHandle_VertNorm");
+    this->vbo_VertNorm		       = createVBO(GL_ARRAY_BUFFER, "vboHandle_VertNorm");
     this->vbo_VertTex			   = createVBO(GL_ARRAY_BUFFER, "vboHandle_VertTex");
     this->vbo_Element			   = createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_Element");
-    this->vbo_PlaneElement	   = createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_PlaneElement");
-    this->vbo_SinglePlaneElement = createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_SinglePlaneElement");
 
     // For the texture3D visualization method :
     this->vao_VolumetricBuffers  = createVAO("vaoHandle_VolumetricBuffers");
@@ -345,8 +341,6 @@ void Scene::createBuffers() {
     this->glSelection->setVboVertices(createVBO(GL_ARRAY_BUFFER, "vboHandle_SelectionVertices"));
     this->glSelection->setVboIndices(createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_SelectionIndices"));
 
-    //glGenFramebuffers(1, &this->frameBuffer);
-    //glBindFramebuffer(GL_FRAMEBUFFER, this->frameBuffer);
     glGenTextures(1, &this->dualRenderingTexture);
 
     glBindTexture(GL_TEXTURE_2D, this->dualRenderingTexture);
@@ -355,18 +349,11 @@ void Scene::createBuffers() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
-    //glGenRenderbuffers(1, &this->frameDepthBuffer);
-    //glBindRenderbuffer(GL_RENDERBUFFER, this->frameDepthBuffer);
-    //glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 1024, 768);
-    //glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, this->frameDepthBuffer);
-
     glGenTextures(1, &this->frameDepthBuffer);
     glBindTexture(GL_TEXTURE_2D, this->frameDepthBuffer);
     glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT32, h, w, 0,GL_DEPTH_COMPONENT, GL_FLOAT, 0);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
     glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, this->frameDepthBuffer, 0);
 
@@ -389,15 +376,6 @@ void Scene::createBuffers() {
         0.0f,  0.5f, 0.0f
     };
 
-    //static const GLfloat g_quad_vertex_buffer_data[] = {
-    //    -1.0f, -1.0f, 0.0f,
-    //    1.0f, -1.0f, 0.0f,
-    //    -1.0f,  1.0f, 0.0f,
-    //    -1.0f,  1.0f, 0.0f,
-    //    1.0f, -1.0f, 0.0f,
-    //    1.0f,  1.0f, 0.0f,
-    //};
-
     glGenVertexArrays(1, &quad_VertexArrayID);
     glGenBuffers(1, &quad_vertexbuffer);
 
@@ -407,22 +385,7 @@ void Scene::createBuffers() {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    /***/
-
-    // Create and compile our GLSL program from the shaders
-    //this->quad_programID = this->compileShaders("../shaders/plane.vert", "", "../shaders/plane.frag", verbose);
-    //GLuint texID = glGetUniformLocation(quad_programID, "renderedTexture");
-    //GLuint timeID = glGetUniformLocation(quad_programID, "time");
-
     return;
-}
-
-void Scene::loadGridROI() {
-    LOG_ENTER(Scene::loadGridROI)
-    // It will load the grid, based on the visu box coordinates !
-    // The context will be made current at this stage, no need to worry :)
-
-    std::cerr << "Error: visu box controller is broken for now due to new API update" << std::endl;
 }
 
 std::pair<uint16_t, uint16_t> Scene::sendGridValuesToGPU(int gridIdx) {
@@ -879,10 +842,6 @@ GLuint Scene::newAPI_uploadTexture3D(const GLuint texHandle, const TextureUpload
     glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, s, tex.size.x, tex.size.y, 1, tex.format, tex.type, data.data());
 
     return texHandle;
-}
-
-void Scene::removeController() {
-    //this->gridControl = nullptr;
 }
 
 //void Scene::drawGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const GridGLView::Ptr& grid) {
@@ -2120,19 +2079,6 @@ GLuint SceneGL::uploadTexture2D(const TextureUpload& tex) {
 }
 
 /*********************************/
-
-void Scene::launchSaveDialog() {
-    if (this->grids.size() == 0) {
-        QMessageBox messageBox;
-        messageBox.critical(nullptr, "Error", "Cannot save a grid when nothing is loaded !");
-        messageBox.setFixedSize(500, 200);
-        return;
-    }
-    //this->grids[this->gridToDraw]->grid->writeDeformedGrid();
-    return;
-}
-
-/*********************************/
 /* Slots */
 /*********************************/
 void Scene::toggleWireframe() {
@@ -2592,87 +2538,6 @@ void Scene::updateTools(UITool::MeshManipulatorType tool) {
     }
 }
 
-void Scene::switchToSelectionModeRegistrationTool() {
-    UITool::CompManipulator * manipulator = dynamic_cast<UITool::CompManipulator*>(this->glMeshManipulator->meshManipulator);
-    if(!manipulator) {
-        std::cout << "WARNING: not the right tool" << std::endl;
-        return;
-    }
-    manipulator->switchToSelectionMode();
-}
-
-void Scene::validateRegistrationTool() {
-    UITool::CompManipulator * manipulator = dynamic_cast<UITool::CompManipulator*>(this->glMeshManipulator->meshManipulator);
-    if(!manipulator) {
-        std::cout << "WARNING: not the right tool" << std::endl;
-        return;
-    }
-    manipulator->validate();
-}
-
-void Scene::applyRegistrationTool() {
-    UITool::CompManipulator * manipulator = dynamic_cast<UITool::CompManipulator*>(this->glMeshManipulator->meshManipulator);
-    if(!manipulator) {
-        std::cout << "WARNING: not the right tool" << std::endl;
-        return;
-    }
-    manipulator->apply();
-    this->sendFirstTetmeshToGPU();
-}
-
-void Scene::applyFixedRegistrationTool() {
-    UITool::FixedRegistrationManipulator * manipulator = dynamic_cast<UITool::FixedRegistrationManipulator*>(this->glMeshManipulator->meshManipulator);
-    if(!manipulator) {
-        std::cout << "WARNING: not the right tool" << std::endl;
-        return;
-    }
-    manipulator->apply();
-    this->sendFirstTetmeshToGPU();
-}
-
-void Scene::clearFixedRegistrationTool() {
-    UITool::FixedRegistrationManipulator * manipulator = dynamic_cast<UITool::FixedRegistrationManipulator*>(this->glMeshManipulator->meshManipulator);
-    if(!manipulator) {
-        std::cout << "WARNING: not the right tool" << std::endl;
-        return;
-    }
-    manipulator->clear();
-}
-
-void Scene::undoRegistrationTool() {
-    UITool::CompManipulator * manipulator = dynamic_cast<UITool::CompManipulator*>(this->glMeshManipulator->meshManipulator);
-    if(!manipulator) {
-        std::cout << "WARNING: not the right tool" << std::endl;
-    }
-    manipulator->undo();
-    // TODO: beurk, improve these interactions
-    if(this->glMeshManipulator->persistantRegistrationToolSessions.size() > 0)
-        this->glMeshManipulator->persistantRegistrationToolSessions.pop_back();
-}
-
-void Scene::clearRegistrationTool() {
-    UITool::CompManipulator * manipulator = dynamic_cast<UITool::CompManipulator*>(this->glMeshManipulator->meshManipulator);
-    if(!manipulator) {
-        std::cout << "WARNING: not the right tool" << std::endl;
-        return;
-    }
-    manipulator->clearSelectedPoints();
-}
-
-void Scene::assignMeshToRegisterRegistrationTool(const std::string& name) {
-    UITool::CompManipulator * manipulator = dynamic_cast<UITool::CompManipulator*>(this->glMeshManipulator->meshManipulator);
-    if(!manipulator) {
-        std::cout << "WARNING: not the right tool" << std::endl;
-        return;
-    }
-    BaseMesh * meshToRegister = this->getBaseMesh(name);
-    if(meshToRegister) {
-        manipulator->assignMeshToRegister(meshToRegister);
-        // TODO: beurk, improve these interactions
-        manipulator->assignPreviousSelectedPoints(this->glMeshManipulator->persistantRegistrationToolSelectedPoints, this->glMeshManipulator->persistantRegistrationToolPreviousPoints, this->glMeshManipulator->persistantRegistrationToolSessions);
-    }
-}
-
 void Scene::selectSlice(UITool::SliceOrientation sliceOrientation) {
     UITool::SliceManipulator* manipulator = dynamic_cast<UITool::SliceManipulator*>(this->glMeshManipulator->meshManipulator);
     if(!manipulator) {
@@ -2689,33 +2554,6 @@ void Scene::changeSliceToSelect(UITool::SliceOrientation sliceOrientation) {
         return;
     }
     manipulator->updateSliceToSelect(sliceOrientation);
-}
-
-void Scene::assignAsHandleSliceTool() {
-    UITool::SliceManipulator* manipulator = dynamic_cast<UITool::SliceManipulator*>(this->glMeshManipulator->meshManipulator);
-    if(!manipulator) {
-        std::cout << "WARNING: not the right tool" << std::endl;
-        return;
-    }
-    //manipulator->assignAsHandle();
-}
-
-void Scene::removeAllHandlesSliceTool() {
-    UITool::SliceManipulator* manipulator = dynamic_cast<UITool::SliceManipulator*>(this->glMeshManipulator->meshManipulator);
-    if(!manipulator) {
-        std::cout << "WARNING: not the right tool" << std::endl;
-        return;
-    }
-    //manipulator->removeAllHandles();
-}
-
-void Scene::assignAllHandlesBeforePlaneSliceTool() {
-    UITool::SliceManipulator* manipulator = dynamic_cast<UITool::SliceManipulator*>(this->glMeshManipulator->meshManipulator);
-    if(!manipulator) {
-        std::cout << "WARNING: not the right tool" << std::endl;
-        return;
-    }
-    //manipulator->assignAllHandlesBeforePlane();
 }
 
 bool Scene::isCage(const std::string& name) {

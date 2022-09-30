@@ -354,17 +354,6 @@ void MainWidget::setupActions() {
 
     this->actionManager->createQActionGroup("ARAPTool", {"ARAPTool_toggleEvenMode"});
 
-    // Registration
-    this->actionManager->createQActionButton("FixedTool_apply", "Register", "A", "Apply the registration", "register");
-    this->actionManager->getAction("FixedTool_apply")->setVisible(false);
-    QObject::connect(this->actionManager->getAction("FixedTool_apply"), &QAction::triggered, [this](){this->scene->applyFixedRegistrationTool();});
-
-    this->actionManager->createQActionButton("FixedTool_clear", "Clear", "C", "Clear the associated points in the registration tool", "clear");
-    this->actionManager->getAction("FixedTool_clear")->setVisible(false);
-    QObject::connect(this->actionManager->getAction("FixedTool_clear"), &QAction::triggered, [this](){this->scene->clearFixedRegistrationTool();});
-
-    this->actionManager->createQActionGroup("FixedTool", {"FixedTool_apply", "FixedTool_clear"});
-
     this->actionManager->createQActionButton("CenterCamera", "Center", "", "Center the camera on the selected object", "camera");
     QObject::connect(this->actionManager->getAction("CenterCamera"), &QAction::triggered, [this](){this->scene->updateSceneCenter();});
 

@@ -200,7 +200,6 @@ private:
 public:
     /* Open GL Utilities */
     void initGl(QOpenGLContext* context);
-    QOpenGLContext* get_context() const { return this->context; }
 
     GLuint uploadTexture1D(const TextureUpload& tex);
     GLuint uploadTexture2D(const TextureUpload& tex);
@@ -221,12 +220,9 @@ public:
 
     /* Draws */
     void drawScene(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool showTexOnPlane);
+    void prepareUniformsGrid(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const GridGLView::Ptr& _grid, bool drawFront = false);
     void drawGrid(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, const GridGLView::Ptr& grid, bool inFrame = false);
     void drawBoundingBox(const Image::bbox_t& _box, glm::vec3 color, GLfloat* vMat, GLfloat* pMat);
-    /*************************************************/
-
-    /* Uniform preparation */
-    void prepareUniformsGrid(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const GridGLView::Ptr& _grid, bool drawFront = false);
     /*************************************************/
 
     /* VAO/VBO management */
@@ -299,12 +295,8 @@ public:
     void addStatusBar(QStatusBar* _s);
 
     void setControlPanel(ControlPanel* cp) { this->controlPanel = cp; }
-    void removeController();
 
-    void loadGridROI(void); // DEPRECATED
     void addGrid();
-
-    void launchSaveDialog();
 
     /* Getters & setters */
     glm::vec3 getSceneBoundaries() const;
@@ -443,10 +435,6 @@ public slots:
     // Slice
     void computeProjection(const std::vector<int>& vertexIndices);
 
-    // FixedRegistration
-    void applyFixedRegistrationTool();
-    void clearFixedRegistrationTool();
-
     // Display management
     void slotToggleDisplayGrid() { this->displayGrid = !this->displayGrid;};
     void toggleDisplayMesh() { this->displayMesh = !this->displayMesh;};
@@ -458,9 +446,6 @@ public slots:
     void setBlendFirstPass(float value);
 
     // Segmented display
-    //void addRange(const std::string &gridName, uint16_t min) { this->addRange(gridName, min, min); }
-    //void addRange(const std::string &gridName, uint16_t min, uint16_t max);
-    //void removeRange(const std::string &gridName, uint16_t min, uint16_t max);
     void resetRanges();
     void addRange(uint16_t min, uint16_t max, glm::vec3 color = glm::vec3(1., 0., 0.), bool visible = true, bool updateUBO = true);
     void getRanges(std::vector<std::pair<uint16_t, uint16_t>>& ranges);
@@ -473,18 +458,8 @@ public slots:
     void changeActiveMesh(const std::string& name);
     void toggleManipulatorActivation();
 
-    // Not used for now
-    void switchToSelectionModeRegistrationTool();
-    void validateRegistrationTool();
-    void applyRegistrationTool();
-    void undoRegistrationTool();
-    void clearRegistrationTool();
-    void assignMeshToRegisterRegistrationTool(const std::string& name);
     void selectSlice(UITool::SliceOrientation sliceOrientation);
     void changeSliceToSelect(UITool::SliceOrientation sliceOrientation);
-    void assignAsHandleSliceTool();
-    void removeAllHandlesSliceTool();
-    void assignAllHandlesBeforePlaneSliceTool();
 
     void setBindMeshToCageMove(const std::string& name, bool state);
 
