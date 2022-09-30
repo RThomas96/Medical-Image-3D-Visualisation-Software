@@ -116,7 +116,7 @@ TARGET_LINK_LIBRARIES(VisualisationWidgets
 ADD_EXECUTABLE(neighbor_visu
 	# Header files, for Qt MOCS compilation :
     ./qt/scene.hpp
-    ./qt/planar_viewer.hpp
+    # ./qt/planar_viewer.hpp
 
     ./qt/3D_viewer.hpp
     ./qt/3D_viewer.cpp
@@ -160,7 +160,7 @@ ADD_EXECUTABLE(neighbor_visu
 
 	# Source files :
     ./qt/scene.cpp
-    ./qt/planar_viewer.cpp
+    # ./qt/planar_viewer.cpp
     ./third_party/primitive/Sphere.cpp
     ./grid/geometry/grid.cpp
     ./grid/geometry/base_mesh.cpp

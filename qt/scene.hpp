@@ -1,20 +1,13 @@
 #ifndef VIEWER_INCLUDE_SCENE_HPP_
 #define VIEWER_INCLUDE_SCENE_HPP_
 
-// Program-wide features and macros
 #include "../../features.hpp"
 #include "../../macros.hpp"
-// Scene control panel :
 #include "scene_control.hpp"
-// UI elements :
-//#include "../../qt/include/grid_control.hpp"
-//#include "../../qt/widgets/include/opengl_debug_log.hpp"
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QWidget>
 
-//#include "../../grid/include/manipulator.hpp"
-//#include "../../grid/include/mesh_manipulator.hpp"
 // Helper structs and functions :
 #include "legacy/viewer_structs.hpp"
 // Qt headers :
@@ -50,14 +43,6 @@
 #include "glm/gtx/string_cast.hpp"
 
 #include <omp.h>
-
-/// @defgroup graphpipe Graphics pipeline
-/// @brief This group contains all classes closely or loosely related to the graphics pipeline.
-/// @details There are very few classes in this group, but that's only because Scene is a god-object. Some attempt was
-/// made to move much of the code for displaying a grid over to the GridViewer class, altough that has not been tested.
-/// @warning Spaghetti code ahead.
-
-class ICP;
 
 // Forward declaration
 class ControlPanel;
@@ -96,12 +81,6 @@ namespace UITool {
     };
 }
 
-enum DrawMode {
-    Solid,
-    Volumetric,
-    VolumetricBoxed
-};
-
 enum ColorChannel {
     None = 0,
     RedOnly			= 1,
@@ -116,21 +95,6 @@ enum ColorFunction {
     HSV2RGB,
     ColorMagnitude
 };
-
-enum planes {
-    x = 1,
-    y			= 2,
-    z			= 3 };
-
-enum planeHeading {
-    North = 0,
-    East				  = 1,
-    South				  = 2,
-    West				  = 3,
-    Up					  = North,
-    Right				  = East,
-    Down				  = South,
-    Left				  = West };
 
 // Choose which data of the tetmesh to send to the GPU
 enum InfoToSend {
@@ -165,38 +129,16 @@ private:
 /**********************************************************************/
 /**********************************************************************/
 
-struct Demos {
-    bool isDemo = false;
-
-    bool demo_atlas_to_irm = false;
-    bool demo_atlas_to_lightsheet = false;
-    bool demo_atlas_registration = false;
-};
-
-/// @ingroup graphpipe
-/// @brief The Scene class is the gateway to the OpenGL functions attached to the GL context of the program.
-/// @note As you might see, this kind of turned into a god-object. Although dismantling it is not that hard !
-/// @details This class evolved from a simple scene representation at the start to a nearly all-encompassing OpenGL
-/// gateway for any and all operations. It should be <b><i>heavily</i></b> refactored.
-/// @warning Spaghetti code ahead.
 class Scene : public QObject, public QOpenGLFunctions_3_2_Core {
     Q_OBJECT
-    /// @brief typedef to omit glm:: from a 'uvec3'
-    typedef glm::uvec3 uvec3;
 
 public:
-    Scene();	///< default constructor
-    ~Scene(void);	 ///< default destructor
+    Scene();
+    ~Scene(void);
 
-    /**********/
-    /* OpenGL */
-    /**********/
-
-    /* Attributes */
 private:
     QOpenGLContext* context;
 
-    /* Program */
     GLuint program_projectedTex;
     GLuint program_Plane3D;
     GLuint program_PlaneViewer;
@@ -204,16 +146,12 @@ private:
     GLuint program_BoundingBox;
     GLuint program_sphere;
     GLuint program_doublePass;
-    /*************************************************/
 
-    /* VAO */
     GLuint vao;
     GLuint vao_VolumetricBuffers;
     GLuint vao_boundingBox;
     GLuint vao_spheres;
-    /*************************************************/
 
-    /* VBO */
     GLuint vbo_VertPos;
     GLuint vbo_VertNorm;
     GLuint vbo_VertTex;
@@ -230,10 +168,7 @@ private:
     GLuint vbo_Texture3D_VertNorm;
     GLuint vbo_Texture3D_VertTex;
     GLuint vbo_Texture3D_VertIdx;
-    /*************************************************/
 
-
-    /* Texture */
     GLuint tex_ColorScaleGrid;
     GLuint tex_ColorScaleGridAlternate;
     GLuint tex_colorScale_greyscale;
@@ -243,12 +178,8 @@ private:
 
     GLuint state_idx;
     GLuint pos_idx;
-    /*************************************************/
 
-    /* Dual pass rendering */
-
-    /* Quad rendering */
-    GLuint quad_VertexArrayID;// for drawing a quad
+    GLuint quad_VertexArrayID;
     GLuint quad_TexCoord;
     GLuint quad_vertexbuffer;
     GLint quad_programId;
@@ -256,19 +187,16 @@ private:
     GLint defaultFBO;
     GLuint frameBuffer;
     GLuint frameDepthBuffer;
-    // Size of the dual rendering texture
+
     int h;
     int w;
     GLuint dualRenderingTexture;
     GLuint dualRenderingTextureDepth;
 
-    /*************************************************/
-
     GLuint sphere_size_to_draw;
     std::unique_ptr<ShaderCompiler> shaderCompiler;
     void printAllUniforms(GLuint _shader_program);
 
-    /* Functions */
 public:
     /* Open GL Utilities */
     void initGl(QOpenGLContext* context);
@@ -289,43 +217,27 @@ public:
     GLuint updateFBOOutputs(glm::ivec2 dimensions, GLuint fb_handle, GLuint old_texture = 0);
     glm::vec4 readFramebufferContents(GLuint fb_handle, glm::ivec2 image_coordinates);
     GLuint compileShaders(std::string vPath, std::string gPath, std::string fPath, bool verbose = false);
-
-    void newSHADERS_print_all_uniforms(GLuint program);
     /*************************************************/
 
     /* Draws */
-    void draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool showTexOnPlane);
-
-    void drawGridVolumetricView(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, const GridGLView::Ptr& grid, bool inFrame = false);
-    void drawGridPlaneView(GLfloat mvMat[], GLfloat pMat[], glm::mat4 baseMatrix, const GridGLView::Ptr& grid);
-    void drawGridMonoPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading, float zoomRatio, glm::vec2 offset);
-    void drawPlanes(GLfloat mvMat[], GLfloat pMat[], bool showTexOnPlane = true);
+    void drawScene(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool showTexOnPlane);
+    void drawGrid(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, const GridGLView::Ptr& grid, bool inFrame = false);
     void drawBoundingBox(const Image::bbox_t& _box, glm::vec3 color, GLfloat* vMat, GLfloat* pMat);
     /*************************************************/
 
     /* Uniform preparation */
-    void prepareUniformsGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const GridGLView::Ptr& _grid, bool drawFront = false);
-    void prepareUniformsGridPlaneView(GLfloat* mvMat, GLfloat* pMat, glm::vec4 lightPos, glm::mat4 baseMatrix, const GridGLView::Ptr& grid);// preps uniforms for a grid
-    void prepareUniformsMonoPlaneView(planes _plane, planeHeading _heading, glm::vec2 fbDims, float zoomRatio, glm::vec2 offset, const GridGLView::Ptr& _grid);// prep the plane uniforms to draw in space
-    void prepareUniformsPlanes(GLfloat* mvMat, GLfloat* pMat, planes _plane, const GridGLView::Ptr& grid, bool showTexOnPlane = true);// preps uniforms for a given plane
+    void prepareUniformsGrid(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const GridGLView::Ptr& _grid, bool drawFront = false);
     /*************************************************/
 
     /* VAO/VBO management */
     void createBuffers();
-    void setupVBOData(const SimpleVolMesh& _mesh);// Generates the vertices, normals, and tex coordinates for a basic unit cube
     void setupVAOPointers();
-    void createBoundingBoxBuffers();// Creates the VBO/VAO handles for bounding boxes
     void setupVAOBoundingBox();// Orders the VAO pointers for the bounding box
     void tex3D_bindVAO();// Bind the VAO created for the volumetric drawing method.
     void tex3D_buildBuffers(VolMesh& volMesh);// Build buffers to draw a single voxel (a cube)
     /*************************************************/
 
     /* Generate things */
-    void generateSceneData();// Generate the unit cube used to draw the grid in non-volumetric mode, as well as the plane positions and bounding box buffers.
-    void generateTexCube(SimpleVolMesh& _mesh);
-    void generatePlanesArray(SimpleVolMesh& _mesh);
-    void generateSphereData();
-    void newSHADERS_generateColorScales(void);
     void generateColorScales();
     /*************************************************/
 
@@ -346,34 +258,17 @@ public:
     /***********************************************/
 private:
     /* Scene boolean */
-    bool isInitialized;
-    bool showVAOstate;
-    bool shouldDeleteGrid;
     bool shouldUpdateUserColorScales;
     bool shouldUpdateUBOData;
 
     /* Containers */
     UITool::GL::MeshManipulator* glMeshManipulator;
     UITool::GL::Selection * glSelection;
-public:
-    //std::vector<DeformableGrid*> grids;
 private:
-    // TODO: remove this
-
-    std::vector<std::size_t> delGrid;	 ///< Grids to delete at next refresh
-    qglviewer::Frame* posFrame;
-    glm::vec4 posRequest;
-    VolMesh volumetricMesh;
-
     /* Visualisation */
     std::array<glm::vec3, 8> lightPositions;	///< Scene lights (positionned at the corners of the scene BB)
     glm::bvec3 planeVisibility;
     float clipDistanceFromCamera;
-    glm::uvec3 visuMin;
-    glm::uvec3 visuMax;
-    Image::bbox_t visuBox;	  ///< Used to restrict the view to a box with its coordinates
-    DrawMode drawMode;
-
 
     /* Color channel management */
     ColorChannel rgbMode;
@@ -392,19 +287,8 @@ public:
     glm::vec3 color1_second;	///< The color segment when approaching 1
 
     /* Widgets */
-    //GridControl* gridControl;	 ///< The controller for the grid 'save' feature (generation)
     ControlPanel* controlPanel;
     QStatusBar* programStatusBar;
-
-    std::size_t renderSize;	   ///< Number of primitives to render for the solid view mode.
-
-    // Thread management
-    std::mutex mutexout;
-    std::vector<Image::ThreadedTask::Ptr> tasks;
-    std::vector<std::shared_ptr<std::thread>> runningThreads;
-    QTimer* timer_refreshProgress;
-    QProgressBar* pb_loadProgress;
-    bool isFinishedLoading;
 
     /* Functions */
 public:
@@ -417,13 +301,10 @@ public:
     void setControlPanel(ControlPanel* cp) { this->controlPanel = cp; }
     void removeController();
 
-    void updateProgressBar();
-
     void loadGridROI(void); // DEPRECATED
     void addGrid();
 
     void launchSaveDialog();
-    void printVAOStateNext() { this->showVAOstate = true; }
 
     /* Getters & setters */
     glm::vec3 getSceneBoundaries() const;
@@ -451,13 +332,6 @@ public:
     uint getMaxColorValue(void) const { return this->colorBounds0.y; }
     uint getMaxColorValueAlternate(void) const { return this->colorBounds1.y; }
 
-    std::pair<glm::uvec3, glm::uvec3> getVisuBoxCoordinates(void);
-    void setVisuBoxMinCoord(glm::uvec3 coor_min);
-    void setVisuBoxMaxCoord(glm::uvec3 coor_max);
-    void resetVisuBox();
-
-    void setDrawMode(DrawMode _mode);
-
     Image::bbox_t getSceneBoundingBox() const;
 
     void setColorFunction_r(ColorFunction _c);// Changes the texture coloration mode to the desired setting
@@ -468,25 +342,8 @@ public:
     void setColor0Alternate(qreal r, qreal g, qreal b);
     void setColor1Alternate(qreal r, qreal g, qreal b);
 
-    void setPlaneHeading(planes _plane, planeHeading _heading);
-    bool isSceneInitialized(void) const { return this->isInitialized; }
-
     /* Toggle things */
-    void togglePlaneVisibility(planes _plane);
     void toggleAllPlaneVisibilities(void);
-
-    void setPositionResponse(glm::vec4 _resp);// Position a qglviewer::Frame at the given position, in 3D space.
-    void drawPositionResponse(float radius, bool drawOnTop = false);// Draw a set of arrows at the position designated by setPositionResponse()
-    void resetPositionResponse(void);// Reset the axis positions.
-
-    /// @brief Applies a user-defined function on grids, with the constraint it must be const.
-    //void lambdaOnGrids(std::function<void(const GridGLView::Ptr&)>& callable) const {
-    //	std::for_each(this->grids.cbegin(), this->grids.cend(), callable);
-    //}
-
-    void deleteGridNow();
-
-    void printOpenGLMessage(const QOpenGLDebugMessage& message);
 
     template<typename MeshToolType>
     MeshToolType * getMeshTool();
@@ -703,8 +560,6 @@ public slots:
     //void addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction, bool onSurface);
 public:
 
-    Demos demos;
-
     int maximumTextureSize;// Set by the viewer
     int gridToDraw = -1;
     std::vector<int> gridsToDraw;
@@ -739,8 +594,5 @@ public:
     Image::bbox_t sceneBB;
     Image::bbox_t sceneDataBB;
 };
-
-/// @brief Type-safe conversion of enum values to unsigned ints.
-inline unsigned int planeHeadingToIndex(planeHeading _heading);
 
 #endif	  // VIEWER_INCLUDE_SCENE_HPP_

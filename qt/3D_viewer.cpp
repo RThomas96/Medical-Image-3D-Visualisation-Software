@@ -115,8 +115,7 @@ void Viewer::draw() {
 	qglviewer::Vec cam = this->camera()->worldCoordinatesOf(qglviewer::Vec(0., 0., 0.));
 	glm::vec3 camPos   = glm::vec3(static_cast<float>(cam.x), static_cast<float>(cam.y), static_cast<float>(cam.z));
 
-	this->scene->draw3DView(mvMat, pMat, camPos, false);
-	this->scene->drawPositionResponse(this->sceneRadius() / 10., this->drawAxisOnTop);
+    this->scene->drawScene(mvMat, pMat, camPos, false);
 }
 
 void Viewer::keyReleaseEvent(QKeyEvent* e) {
@@ -167,13 +166,13 @@ void Viewer::resizeGL(int w, int h) {
 	this->fbSize = glm::ivec2{w, h};
 
 	// Is the scene initialized ? (might not on first call to this function)
-	if (this->scene->isSceneInitialized()) {
+    //if (this->scene->isSceneInitialized()) {
         this->scene->setRenderSize(w, h);
 		// Update the texture accompanying the framebuffer to reflect its size change
 		this->renderTarget = this->scene->updateFBOOutputs(this->fbSize,
 		  this->defaultFramebufferObject(),
 		  this->renderTarget);
-	}
+    //}
 }
 
 void Viewer::castRay() {

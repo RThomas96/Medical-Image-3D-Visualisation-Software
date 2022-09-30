@@ -4,7 +4,7 @@
 #include <iomanip>
 #include <sstream>
 #include "3D_viewer.hpp"
-#include "planar_viewer.hpp"
+//#include "planar_viewer.hpp"
 #include "scene.hpp"
 //#include "./grid_control.hpp"
 //#include "./loader_widget.hpp"
@@ -192,12 +192,7 @@ public slots:
         }
     }
 
-    void initialize() {
-        if(this->scene->demos.isDemo) {
-            this->scene->changeActiveMesh(this->combo_mesh->itemText(this->combo_mesh->currentIndex()).toStdString());
-            this->changeActiveMesh();
-        }
-    }
+    void initialize() {}
 signals:
     void gridSelected();
     void meshSelected();
