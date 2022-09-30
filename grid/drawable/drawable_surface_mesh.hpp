@@ -25,7 +25,7 @@ class DrawableMesh {
 public:
 	~DrawableMesh() = default;
 
-	void initialize(QOpenGLContext* _context, ShaderCompiler::GLFunctions* functions);
+    void initialize(ShaderCompiler::GLFunctions* functions);
 
     void draw(GLfloat *proj_mat, GLfloat *view_mat, const glm::vec4& camera, const glm::vec3& planePosition);
 
@@ -33,21 +33,16 @@ public:
     glm::vec4 color;
     glm::vec3 lightPosition;
 
-	void makeVAO(void);
-	void updateData(void);
+    void makeVAO();
+    void updateData();
 protected:
 
 	GLuint program_handle_draw;
-	GLuint program_handle_manipulator_draw;
-	GLuint program_handle_fastdraw;
 
 	GLuint vao;
 	GLuint vbo_vertices;
 	GLuint vbo_normals;
-	GLuint vbo_texture;
 	GLuint vbo_indices;
-
-	QOpenGLContext* bound_context;
 
 	ShaderCompiler::GLFunctions* gl;
 

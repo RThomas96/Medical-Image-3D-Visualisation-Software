@@ -3682,7 +3682,7 @@ bool Scene::openMesh(const std::string& name, const std::string& filename, const
     this->meshes.back().first = new SurfaceMesh(filename);
     this->drawableMeshes.back().first = new DrawableMesh();
     this->drawableMeshes.back().first->mesh = this->meshes.back().first;
-    this->drawableMeshes.back().first->initialize(this->context, this);
+    this->drawableMeshes.back().first->initialize(this);
     this->drawableMeshes.back().first->color = color;
 
     Q_EMIT meshAdded(name, false, false);
@@ -3720,7 +3720,7 @@ bool Scene::linkCage(const std::string& cageName, BaseMesh * meshToDeform, const
 
     this->drawableMeshes[cageIdx].first = new DrawableMesh();
     this->drawableMeshes[cageIdx].first->mesh = this->meshes[cageIdx].first;
-    this->drawableMeshes[cageIdx].first->initialize(this->context, this);
+    this->drawableMeshes[cageIdx].first->initialize(this);
     this->drawableMeshes[cageIdx].first->color = color;
 
     //this->changeActiveMesh(name);
@@ -3754,7 +3754,7 @@ bool Scene::openCage(const std::string& name, const std::string& filename, BaseM
 
     this->drawableMeshes.back().first = new DrawableMesh();
     this->drawableMeshes.back().first->mesh = this->meshes.back().first;
-    this->drawableMeshes.back().first->initialize(this->context, this);
+    this->drawableMeshes.back().first->initialize(this);
     this->drawableMeshes.back().first->color = color;
 
     Q_EMIT meshAdded(name, false, true);
