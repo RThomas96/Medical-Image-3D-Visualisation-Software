@@ -24,6 +24,7 @@
 #include "../../grid/deformation/mesh_deformer.hpp"
 
 #include "../../grid/utils/apss.hpp"
+#include "grid/drawable/drawable.hpp"
 #include "grid/geometry/base_mesh.hpp"
 #include "grid/geometry/surface_mesh.hpp"
 #include "grid/ui/mesh_manipulator.hpp"
@@ -2458,6 +2459,11 @@ BaseMesh * Scene::getBaseMesh(const std::string& name) {
             return this->meshes[i].first;
         }
     }
+    for(int i = 0; i < this->graph_meshes.size(); ++i) {
+        if(this->graph_meshes[i].second == name) {
+            return this->graph_meshes[i].first;
+        }
+    }
     for(int i = 0; i < this->grids_name.size(); ++i) {
         if(this->grids_name[i] == name) {
             return this->grids[i]->grid;
@@ -2485,6 +2491,9 @@ void Scene::updateTools(UITool::MeshManipulatorType tool) {
     this->currentTool = tool;
     if(tool == UITool::MeshManipulatorType::DIRECT) {
         this->meshManipulator = new UITool::DirectManipulator(mesh, positions);
+        this->meshManipulator->setSize(UITool::GL::SPHERE, 0.017);
+        dynamic_cast<UITool::DirectManipulator*>(this->meshManipulator)->setDefaultManipulatorColor(glm::vec3(1., 1., 0.));
+
     } else if(tool == UITool::MeshManipulatorType::POSITION) {
         this->meshManipulator = new UITool::GlobalManipulator(mesh, positions);
         //scene->updateSceneRadius();

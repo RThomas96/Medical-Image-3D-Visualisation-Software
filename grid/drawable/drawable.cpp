@@ -2,7 +2,7 @@
 #include "../utils/GLUtilityMethods.h"
 #include "drawable.hpp"
 
-UITool::GL::Drawable::Drawable()
+UITool::GL::DrawableUI::DrawableUI()
 {
     this->guizmoRatio = 0.5;
     this->guizmoRadius = 2.;
@@ -39,7 +39,7 @@ UITool::GL::Drawable::Drawable()
 //    glDisable(GL_LIGHTING);
 //}
 
-void UITool::GL::Drawable::incrementSize(const DrawingPrimitive& object) {
+void UITool::GL::DrawableUI::incrementSize(const DrawingPrimitive& object) {
     switch(object) {
         case SPHERE:
             this->sphereRatio += 0.1;
@@ -55,7 +55,23 @@ void UITool::GL::Drawable::incrementSize(const DrawingPrimitive& object) {
     }
 }
 
-void UITool::GL::Drawable::decrementSize(const DrawingPrimitive& object) {
+void UITool::GL::DrawableUI::setSize(const UITool::GL::DrawingPrimitive& object, float size) {
+    switch(object) {
+        case SPHERE:
+            this->sphereRatio = size;
+            break;
+        case LINE:
+            this->linesRatio = size;
+            break;
+        case GUIZMO:
+            this->linesRatio = size;
+            break;
+        default:
+            break;
+    }
+}
+
+void UITool::GL::DrawableUI::decrementSize(const DrawingPrimitive& object) {
     switch(object) {
         case SPHERE:
             this->sphereRatio -= 0.1;
@@ -71,7 +87,7 @@ void UITool::GL::Drawable::decrementSize(const DrawingPrimitive& object) {
     }
 }
 
-void UITool::GL::Drawable::zoom(float sceneRadius) {
+void UITool::GL::DrawableUI::zoom(float sceneRadius) {
     this->sphereRadius = sceneRadius*this->sphereRatio;
     this->linesRadius = sceneRadius*this->linesRatio;
     this->guizmoRadius = sceneRadius*this->guizmoRatio;

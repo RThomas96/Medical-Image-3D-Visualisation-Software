@@ -162,7 +162,7 @@ namespace UITool {
     };
 
 	//! @ingroup uitools
-    class MeshManipulator : public GL::Drawable {
+    class MeshManipulator : public GL::DrawableUI {
     public:
         // These are needed here as there drawing functions are directly in the class
         RotationManipulator * guizmo;
@@ -214,6 +214,7 @@ namespace UITool {
         void getAllPositions(std::vector<glm::vec3>& positions) override;
 
         void checkSelectedManipulators();
+        void setDefaultManipulatorColor(glm::vec3 color) { this->defaultManipulatorColor = color; };
 
     public slots:
         void displayManipulator(Manipulator * manipulatorToDisplay);
@@ -237,6 +238,7 @@ namespace UITool {
         std::vector<bool> manipulatorsToDisplay;
         std::vector<bool> selectedManipulators;
         bool meshIsModified;
+        glm::vec3 defaultManipulatorColor;
     };
 
     //! @ingroup uitools

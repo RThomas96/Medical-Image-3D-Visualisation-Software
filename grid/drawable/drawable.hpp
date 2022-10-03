@@ -21,10 +21,10 @@ namespace UITool {
             GUIZMO
         };
 
-        class Drawable : public QObject {
+        class DrawableUI : public QObject {
             Q_OBJECT;
 		public:
-            Drawable();
+            DrawableUI();
             //void draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* mMat, const glm::vec3& planeDisplacement);
 
         public slots:
@@ -33,6 +33,8 @@ namespace UITool {
 
             void incrementSize(const UITool::GL::DrawingPrimitive& object);
             void decrementSize(const UITool::GL::DrawingPrimitive& object);
+
+            void setSize(const UITool::GL::DrawingPrimitive& object, float size);
 
             float getGuizmoRadius() { return guizmoRadius; };
 

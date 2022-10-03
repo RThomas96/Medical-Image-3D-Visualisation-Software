@@ -15,7 +15,7 @@
 namespace UITool {
 
     void MeshManipulator::zoom(float newSceneRadius) {
-        GL::Drawable::zoom(newSceneRadius);
+        GL::DrawableUI::zoom(newSceneRadius);
         if(this->guizmo)
             this->guizmo->setDisplayScale(this->getGuizmoRadius());
     };
@@ -53,6 +53,7 @@ namespace UITool {
         this->meshIsModified = false;
         this->guizmo = nullptr;
         this->manipulators.reserve(positions.size());
+        this->defaultManipulatorColor = stateToColor(State::NONE);
 		for (int i = 0; i < positions.size(); ++i) {
 			this->manipulators.push_back(Manipulator(positions[i]));
             QObject::connect(&(this->manipulators[i]), &Manipulator::enterAtRangeForGrab, this, [this, i](){Q_EMIT needDisplayVertexInfo(std::make_pair(i, this->manipulators[i].getManipPosition()));});
@@ -162,7 +163,11 @@ namespace UITool {
                 currentState = State::AT_RANGE;
             if(this->manipulators[i].isSelected)
                 currentState = State::MOVE;
-            glColor3fv(glm::value_ptr(stateToColor(currentState)));
+
+            if(currentState == State::NONE)
+                glColor3fv(glm::value_ptr(this->defaultManipulatorColor));
+            else
+                glColor3fv(glm::value_ptr(stateToColor(currentState)));
             BasicGL::drawSphere(this->manipulators[i].getManipPosition().x, this->manipulators[i].getManipPosition().y, this->manipulators[i].getManipPosition().z, this->sphereRadius, 15,15);
         }
     }

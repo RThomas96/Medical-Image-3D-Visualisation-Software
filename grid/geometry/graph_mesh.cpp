@@ -44,6 +44,9 @@ void GraphMesh::loadMESH(std::string const &filename) {
         myfile >> dummy >> a >> b;
         this->mesh.push_back(GraphEdge(a-1, b-1));
     }
+
+    this->updatebbox();
+    this->history = new History(this->vertices);
 }
 
 void GraphMesh::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* mMat, const glm::vec3& planeDisplacement) {

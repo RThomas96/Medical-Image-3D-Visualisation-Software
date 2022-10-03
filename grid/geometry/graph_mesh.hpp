@@ -18,7 +18,7 @@ struct GraphEdge {
     }
 };
 
-class GraphMesh : public BaseMesh, public UITool::GL::Drawable {
+class GraphMesh : public BaseMesh, public UITool::GL::DrawableUI {
 
 public:
     std::vector<GraphEdge> mesh;
