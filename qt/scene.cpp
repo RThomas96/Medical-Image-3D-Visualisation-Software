@@ -1231,6 +1231,16 @@ void Scene::drawScene(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool show
     glm::mat4 mMat(1.0f);
     this->glMeshManipulator->draw(mvMat, pMat, glm::value_ptr(mMat), this->computePlanePositions());
 
+        for(int i = 0; i < this->drawableGraphs.size(); ++i) {
+            glm::vec3 planePos	   = this->computePlanePositions();
+            for(int i = 0; i < 3; ++i) {
+                if(this->planeActivation[i] == 0.) {
+                    planePos[i] = -1000000.;
+                }
+            }
+            this->drawableGraphs[i].first->draw(pMat, mvMat, glm::value_ptr(mMat), planePos);
+        }
+
     /***********************/
 
 
@@ -1274,16 +1284,6 @@ void Scene::drawScene(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool show
             this->drawableMeshes[i].first->draw(pMat, mvMat, glm::vec4{camPos, 1.f}, planePos);
         }
 
-        for(int i = 0; i < this->drawableGraphs.size(); ++i) {
-            this->drawableGraphs[i].first->prepare();
-            glm::vec3 planePos	   = this->computePlanePositions();
-            for(int i = 0; i < 3; ++i) {
-                if(this->planeActivation[i] == 0.) {
-                    planePos[i] = -1000000.;
-                }
-            }
-            this->drawableGraphs[i].first->draw(pMat, mvMat, glm::value_ptr(mMat), planePos);
-        }
     }
 
     //this->drawBoundingBox(this->sceneBB, glm::vec4(.5, .5, .0, 1.), mvMat, pMat);
@@ -2355,6 +2355,8 @@ DrawableMesh * Scene::getDrawableMesh(const std::string& name) {
 
 void Scene::changeSceneRadius(float sceneRadius) {
     this->glMeshManipulator->updateManipulatorRadius(sceneRadius);
+    if(this->drawableGraphs.size() > 0)
+        this->drawableGraphs.front().first->updateManipulatorRadius(sceneRadius);
 }
 
 void Scene::updateSceneRadius() {

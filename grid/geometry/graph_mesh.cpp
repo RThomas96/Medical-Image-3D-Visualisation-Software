@@ -41,6 +41,6 @@ void GraphMesh::loadMESH(std::string const &filename) {
     {
         int dummy, a, b;
         myfile >> dummy >> a >> b;
-        this->mesh.push_back(GraphEdge(a, b));
+        this->mesh.push_back(GraphEdge(a-1, b-1));
     }
 }
