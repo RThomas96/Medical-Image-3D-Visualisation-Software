@@ -269,7 +269,7 @@ void MainWidget::setupActions() {
     this->actionManager->getAction("ToggleDisplayMultiView")->setDisabled(true);
 
     this->actionManager->createQActionToggledButton("ToggleDisplayWireframe", "TetM", "W", "Display/Show the tethraedral mesh wireframe", "visible", "hidden");
-    QObject::connect(this->actionManager->getAction("ToggleDisplayWireframe"), &QAction::triggered, [this](){this->scene->toggleWireframe();});
+    QObject::connect(this->actionManager->getAction("ToggleDisplayWireframe"), &QAction::triggered, [this](){this->scene->toggleDisplayTetmesh(!this->actionManager->getAction("ToggleDisplayWireframe")->isChecked());});
 
     // Tools
     this->actionManager->createQActionToggleButton("ToggleNoneTool", "None", "Ctrl+N", "Deactivate all tools", "none");

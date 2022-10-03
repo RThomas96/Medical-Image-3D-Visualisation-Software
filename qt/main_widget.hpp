@@ -181,10 +181,7 @@ public slots:
 
     void changeActiveMesh() {
         this->actionManager->getAction("ToggleNoneTool")->activate(QAction::Trigger);
-        if(this->actionManager->getAction("ToggleDisplayWireframe")->isChecked())
-            this->scene->toggleWireframe(false);
-        else
-            this->scene->toggleWireframe(true);
+        this->scene->toggleDisplayTetmesh(!this->actionManager->getAction("ToggleDisplayWireframe")->isChecked());
         if(this->scene->isGrid(this->combo_mesh->itemText(this->combo_mesh->currentIndex()).toStdString())) {
             Q_EMIT(this->gridSelected());
         } else {

@@ -258,9 +258,10 @@ private:
     /* Scene boolean */
     bool shouldUpdateUserColorScales;
     bool shouldUpdateUBOData;
+    bool displayTetmesh;
 
     /* Containers */
-    UITool::GL::MeshManipulator* glMeshManipulator;
+    UITool::MeshManipulator* meshManipulator;
     UITool::GL::Selection * glSelection;
 private:
     /* Visualisation */
@@ -291,8 +292,6 @@ public:
     /* Functions */
 public:
     /* Widget interaction */
-
-    void prepareManipulators();
 
     void addStatusBar(QStatusBar* _s);
 
@@ -440,8 +439,7 @@ public slots:
     // Display management
     void slotToggleDisplayGrid() { this->displayGrid = !this->displayGrid;};
     void toggleDisplayMesh() { this->displayMesh = !this->displayMesh;};
-    void toggleWireframe();
-    void toggleWireframe(bool value);
+    void toggleDisplayTetmesh(bool value);
     void setGridsToDraw(std::vector<int> indices);
     void setMultiGridRendering(bool value);
     void setDrawOnlyBoundaries(bool value);
@@ -458,7 +456,6 @@ public slots:
 
     // MeshManipulator slots
     void changeActiveMesh(const std::string& name);
-    void toggleManipulatorActivation();
 
     void selectSlice(UITool::SliceOrientation sliceOrientation);
     void changeSliceToSelect(UITool::SliceOrientation sliceOrientation);
@@ -473,8 +470,6 @@ public slots:
     void sendFirstTetmeshToGPU();
     std::pair<uint16_t, uint16_t> sendGridValuesToGPU(int gridIdx);
     void setLightPosition(const glm::vec3& lighPosition);
-    void previewPointInPlanarView(const glm::vec3& positionOfMouse3D);
-    void setPreviewPointInPlanarView(bool preview) { this->previewCursorInPlanarView = preview; };
     void setSortingRendering(bool value);
 
     // Scene management

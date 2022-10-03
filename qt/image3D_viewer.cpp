@@ -407,7 +407,7 @@ void Image3DViewer::connect(Scene * scene) {
 
     QObject::connect(this->viewer2D, &Image2DViewer::isSelected, this, &Image3DViewer::isSelected);
     QObject::connect(this->viewer2D, &Image2DViewer::mouseMovedIn2DPlanarViewer, this, &Image3DViewer::mouseMovedIn2DViewer);
-    QObject::connect(this, &Image3DViewer::mouseMovedInPlanarViewer, scene, &Scene::previewPointInPlanarView);
+    //QObject::connect(this, &Image3DViewer::mouseMovedInPlanarViewer, scene, &Scene::previewPointInPlanarView);
     QObject::connect(this, &Image3DViewer::mouseMovedInPlanarViewer, scene, &Scene::pointIsClickedInPlanarViewer);
 }
 

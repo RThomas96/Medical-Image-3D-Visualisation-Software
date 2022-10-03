@@ -44,8 +44,9 @@ inline void __GetTexSize(std::size_t numTexNeeded, std::size_t* opt_width, std::
 /** This constructor not only creates the object, but also sets the default values for the Scene in order
  *  to be drawn, even if it is empty at the time of the first call to a draw function.
  */
-Scene::Scene() :
-    glMeshManipulator(new UITool::GL::MeshManipulator(&this->sceneGL, nullptr, std::vector<glm::vec3>())) {
+Scene::Scene() {
+    this->displayTetmesh = false;
+    this->meshManipulator = nullptr;
     this->distanceFromCamera = 0.;
     this->cameraPosition = glm::vec3(0., 0., 0.);
 
@@ -207,10 +208,10 @@ void Scene::initGl(QOpenGLContext* _context) {
     this->tex_ColorScaleGrid = 0;
 
     // Generate controller positions
-    //this->glMeshManipulator->initGL(this->get_context());
+    //this->initGL(this->get_context());
     this->sceneGL.initGl(this->context);
     this->gridToDraw = -1;
-    //this->glMeshManipulator->prepareSphere();
+    //this->prepareSphere();
 
     //this->surfaceMesh = nullptr;
     //this->drawableMesh = nullptr;
@@ -332,10 +333,6 @@ void Scene::createBuffers() {
     this->vao_boundingBox			= createVAO("vaoHandle_boundingBox");
     this->vbo_boundingBoxVertices = createVBO(GL_ARRAY_BUFFER, "vboHandle_boundingBoxVertices");
     this->vbo_boundingBoxIndices	= createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_boundingBoxIndices");
-
-    this->glMeshManipulator->vao = createVAO("vaoHandle_Sphere");
-    this->glMeshManipulator->vboVertices = createVBO(GL_ARRAY_BUFFER, "vboHandle_SphereVertices");
-    this->glMeshManipulator->vboIndices = createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_SphereIndices");
 
     this->glSelection->setVao(createVAO("vaoHandle_Selection"));
     this->glSelection->setVboVertices(createVBO(GL_ARRAY_BUFFER, "vboHandle_SelectionVertices"));
@@ -549,8 +546,6 @@ void Scene::addGrid() {
     this->sendTetmeshToGPU(this->gridToDraw, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS | InfoToSend::TEXCOORD | InfoToSend::NEIGHBORS));
     this->tex3D_buildBuffers(gridView->volumetricMesh);
 
-    this->prepareManipulators();
-
     this->updateBoundingBox();
 }
 
@@ -606,10 +601,6 @@ void Scene::recompileShaders(bool verbose) {
     if (newBoundingBoxProgram) {
         glDeleteProgram(this->program_BoundingBox);
         this->program_BoundingBox = newBoundingBoxProgram;
-    }
-    if (newSphereProgram) {
-        glDeleteProgram(this->glMeshManipulator->program);
-        this->glMeshManipulator->program = newSphereProgram;
     }
     if (newSelectionProgram) {
         glDeleteProgram(this->glSelection->getProgram());
@@ -1115,7 +1106,7 @@ void Scene::prepareUniformsGrid(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos,
     glUniform3fv(location_visuBBMin, 1, glm::value_ptr(min));
     glUniform3fv(location_visuBBMax, 1, glm::value_ptr(max));
     glUniform1ui(location_shouldUseBB, 0);
-    glUniform1ui(location_displayWireframe, this->glMeshManipulator->isWireframeDisplayed());
+    glUniform1ui(location_displayWireframe, this->displayTetmesh);
     glUniform3fv(location_volumeEpsilon, 1, glm::value_ptr(_grid->defaultEpsilon));
     glUniform1f(location_blendFirstPass, this->blendFirstPass);
     glUniform1f(getUniform("maxValue"), _grid->maxValue);
@@ -1229,10 +1220,10 @@ void Scene::drawScene(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool show
     /* Manipulator drawing  */
 
     glm::mat4 mMat(1.0f);
-    //this->glMeshManipulator->draw(mvMat, pMat, glm::value_ptr(mMat), this->computePlanePositions());
-    //this->glMeshManipulator->draw(mvMat, pMat, glm::value_ptr(mMat), this->computePlanePositions());
-    if(this->glMeshManipulator->meshManipulator)
-        this->glMeshManipulator->meshManipulator->draw();
+    //this->draw(mvMat, pMat, glm::value_ptr(mMat), this->computePlanePositions());
+    //this->draw(mvMat, pMat, glm::value_ptr(mMat), this->computePlanePositions());
+    if(this->meshManipulator)
+        this->meshManipulator->draw();
 
     for(int i = 0; i < this->graph_meshes.size(); ++i) {
         glm::vec3 planePos	   = this->computePlanePositions();
@@ -1757,8 +1748,8 @@ void Scene::sendFirstTetmeshToGPU() {
     std::cout << "Send tetmesh " << this->gridToDraw << std::endl;
     if(this->grids.size() > 0)
         this->sendTetmeshToGPU(this->gridToDraw, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS), this->sortingRendering);
-    //if(this->glMeshManipulator->meshManipulator) {
-    //    this->glMeshManipulator->meshManipulator->setAllManipulatorsPosition(this->getBaseMesh(this->activeMesh)->getMeshPositions());
+    //if(this->meshManipulator) {
+    //    this->meshManipulator->setAllManipulatorsPosition(this->getBaseMesh(this->activeMesh)->getMeshPositions());
     //}
     Q_EMIT meshMoved();
 }
@@ -1965,10 +1956,6 @@ void Scene::tex3D_bindVAO() {
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*) 0);
 }
 
-void Scene::prepareManipulators() {
-    this->glMeshManipulator->prepare();
-}
-
 /**********************************************************************/
 /**********************************************************************/
 
@@ -2084,16 +2071,9 @@ GLuint SceneGL::uploadTexture2D(const TextureUpload& tex) {
 /*********************************/
 /* Slots */
 /*********************************/
-void Scene::toggleWireframe() {
-    this->glMeshManipulator->toggleDisplayWireframe();
-}
 
-void Scene::toggleWireframe(bool value) {
-    this->glMeshManipulator->toggleDisplayWireframe(value);
-}
-
-void Scene::toggleManipulatorActivation() {
-    this->glMeshManipulator->toggleActivation();
+void Scene::toggleDisplayTetmesh(bool value) {
+    this->displayTetmesh = value;
 }
 
 void Scene::setColorChannel(ColorChannel mode) {
@@ -2355,11 +2335,10 @@ DrawableMesh * Scene::getDrawableMesh(const std::string& name) {
 }
 
 void Scene::changeSceneRadius(float sceneRadius) {
-    this->glMeshManipulator->updateManipulatorRadius(sceneRadius);
     if(this->graph_meshes.size() > 0)
         this->graph_meshes.front().first->zoom(sceneRadius);
-    if(this->glMeshManipulator->meshManipulator) {
-        this->glMeshManipulator->meshManipulator->zoom(sceneRadius);
+    if(this->meshManipulator) {
+        this->meshManipulator->zoom(sceneRadius);
     }
 }
 
@@ -2505,7 +2484,58 @@ BaseMesh * Scene::getBaseMesh(const std::string& name) {
 }
 
 void Scene::updateTools(UITool::MeshManipulatorType tool) {
-    this->glMeshManipulator->createNewMeshManipulator(this->getBaseMesh(this->activeMesh), this, tool);
+    if(this->meshManipulator) {
+        delete this->meshManipulator;
+        this->meshManipulator = nullptr;
+    }
+
+    BaseMesh * mesh = this->getBaseMesh(this->activeMesh);
+
+    if(!mesh)
+        return;
+
+    if(tool == UITool::MeshManipulatorType::NONE)
+        return;
+
+    const std::vector<glm::vec3>& positions = mesh->getMeshPositions();
+    this->currentTool = tool;
+    if(tool == UITool::MeshManipulatorType::DIRECT) {
+        this->meshManipulator = new UITool::DirectManipulator(mesh, positions);
+    } else if(tool == UITool::MeshManipulatorType::POSITION) {
+        this->meshManipulator = new UITool::GlobalManipulator(mesh, positions);
+        //scene->updateSceneRadius();
+    } else if(tool == UITool::MeshManipulatorType::ARAP) {
+        this->meshManipulator = new UITool::ARAPManipulator(mesh, positions);
+    } else if(tool == UITool::MeshManipulatorType::SLICE) {
+        this->meshManipulator = new UITool::SliceManipulator(mesh, positions);
+    }
+
+    QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needChangeCursor(UITool::CursorType)), this, SLOT(changeCursor(UITool::CursorType)));
+    QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needChangeCursorInPlanarView(UITool::CursorType)), this, SLOT(changeCursorInPlanarView(UITool::CursorType)));
+    QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needDisplayVertexInfo(std::pair<int,glm::vec3>)), this, SLOT(changeSelectedPoint(std::pair<int,glm::vec3>)));
+
+    // To delete ?
+    QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needSendTetmeshToGPU()), this, SLOT(sendFirstTetmeshToGPU()));
+
+    QObject::connect(this, SIGNAL(keyPressed(QKeyEvent*)), dynamic_cast<QObject*>(this->meshManipulator), SLOT(keyPressed(QKeyEvent*)));
+    QObject::connect(this, SIGNAL(keyReleased(QKeyEvent*)), dynamic_cast<QObject*>(this->meshManipulator), SLOT(keyReleased(QKeyEvent*)));
+    QObject::connect(this, SIGNAL(mousePressed(QMouseEvent*)), dynamic_cast<QObject*>(this->meshManipulator), SLOT(mousePressed(QMouseEvent*)));
+    QObject::connect(this, SIGNAL(mouseReleased(QMouseEvent*)), dynamic_cast<QObject*>(this->meshManipulator), SLOT(mouseReleased(QMouseEvent*)));
+
+    if(tool == UITool::MeshManipulatorType::POSITION) {
+        QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needUpdateSceneCenter()), this, SLOT(updateSceneCenter()));
+    }
+
+    if(tool == UITool::MeshManipulatorType::SLICE) {
+        QObject::connect(this, SIGNAL(planesMoved(const glm::vec3&)), dynamic_cast<UITool::SliceManipulator*>(this->meshManipulator), SLOT(movePlanes(const glm::vec3&)));
+    }
+
+    // Scene->MeshManipulator->Selection
+    QObject::connect(this, SIGNAL(keyPressed(QKeyEvent*)), dynamic_cast<QObject*>(&this->meshManipulator->selection), SLOT(keyPressed(QKeyEvent*)));
+    QObject::connect(this, SIGNAL(keyReleased(QKeyEvent*)), dynamic_cast<QObject*>(&this->meshManipulator->selection), SLOT(keyReleased(QKeyEvent*)));
+    QObject::connect(&this->meshManipulator->selection, &UITool::Selection::needToRedrawSelection, this, &Scene::redrawSelection);
+    // MeshManipulator->Scene
+
     this->updateManipulatorRadius();
 
     if(tool == UITool::MeshManipulatorType::NONE || !this->getBaseMesh(this->activeMesh))
@@ -2520,26 +2550,26 @@ void Scene::updateTools(UITool::MeshManipulatorType tool) {
 
     // MeshManipulator->Scene
     //if(tool == UITool::MeshManipulatorType::FREE) {
-    //    QObject::connect(this, &Scene::rayIsCasted, this, [this](const glm::vec3& origin, const glm::vec3& direction) { emit dynamic_cast<UITool::FreeManipulator*>(this->glMeshManipulator->meshManipulator)->rayIsCasted(origin, direction, this->getMinTexValue(), this->getMaxTexValue(), this->computePlanePositions());});
+    //    QObject::connect(this, &Scene::rayIsCasted, this, [this](const glm::vec3& origin, const glm::vec3& direction) { emit dynamic_cast<UITool::FreeManipulator*>(this->meshManipulator)->rayIsCasted(origin, direction, this->getMinTexValue(), this->getMaxTexValue(), this->computePlanePositions());});
     //}
 
     if(tool == UITool::MeshManipulatorType::ARAP) {
-        QObject::connect(dynamic_cast<UITool::ARAPManipulator*>(this->glMeshManipulator->meshManipulator), SIGNAL(needPushHandleButton()), this, SIGNAL(needPushHandleButton()));
+        QObject::connect(dynamic_cast<UITool::ARAPManipulator*>(this->meshManipulator), SIGNAL(needPushHandleButton()), this, SIGNAL(needPushHandleButton()));
     }
 
     //if(tool == UITool::MeshManipulatorType::REGISTRATION) {
-    //    QObject::connect(this, &Scene::rayIsCasted, this, [this](const glm::vec3& origin, const glm::vec3& direction) { emit dynamic_cast<UITool::CompManipulator*>(this->glMeshManipulator->meshManipulator)->rayIsCasted(origin, direction, this->getMinTexValue(), this->getMaxTexValue(), this->computePlanePositions());});
-    //    QObject::connect(this, SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)), dynamic_cast<UITool::CompManipulator*>(this->glMeshManipulator->meshManipulator), SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)));
+    //    QObject::connect(this, &Scene::rayIsCasted, this, [this](const glm::vec3& origin, const glm::vec3& direction) { emit dynamic_cast<UITool::CompManipulator*>(this->meshManipulator)->rayIsCasted(origin, direction, this->getMinTexValue(), this->getMaxTexValue(), this->computePlanePositions());});
+    //    QObject::connect(this, SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)), dynamic_cast<UITool::CompManipulator*>(this->meshManipulator), SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)));
     //}
 
     if(tool == UITool::MeshManipulatorType::SLICE) {
-        //QObject::connect(dynamic_cast<UITool::SliceManipulator*>(this->glMeshManipulator->meshManipulator), SIGNAL(needRedraw()), this, SLOT(computeProjection()));
-        QObject::connect(dynamic_cast<UITool::SliceManipulator*>(this->glMeshManipulator->meshManipulator), &UITool::SliceManipulator::needChangePointsToProject, [this](std::vector<int> selectedPoints){ this->computeProjection(selectedPoints); });
+        //QObject::connect(dynamic_cast<UITool::SliceManipulator*>(this->meshManipulator), SIGNAL(needRedraw()), this, SLOT(computeProjection()));
+        QObject::connect(dynamic_cast<UITool::SliceManipulator*>(this->meshManipulator), &UITool::SliceManipulator::needChangePointsToProject, [this](std::vector<int> selectedPoints){ this->computeProjection(selectedPoints); });
     }
 }
 
 void Scene::selectSlice(UITool::SliceOrientation sliceOrientation) {
-    UITool::SliceManipulator* manipulator = dynamic_cast<UITool::SliceManipulator*>(this->glMeshManipulator->meshManipulator);
+    UITool::SliceManipulator* manipulator = dynamic_cast<UITool::SliceManipulator*>(this->meshManipulator);
     if(!manipulator) {
         std::cout << "WARNING: not the right tool" << std::endl;
         return;
@@ -2548,7 +2578,7 @@ void Scene::selectSlice(UITool::SliceOrientation sliceOrientation) {
 }
 
 void Scene::changeSliceToSelect(UITool::SliceOrientation sliceOrientation) {
-    UITool::SliceManipulator* manipulator = dynamic_cast<UITool::SliceManipulator*>(this->glMeshManipulator->meshManipulator);
+    UITool::SliceManipulator* manipulator = dynamic_cast<UITool::SliceManipulator*>(this->meshManipulator);
     if(!manipulator) {
         std::cout << "WARNING: not the right tool" << std::endl;
         return;
@@ -2688,21 +2718,12 @@ void Scene::changeCurrentDeformationMethod(DeformMethod newDeformMethod) {
     }
 }
 
-void Scene::previewPointInPlanarView(const glm::vec3& positionOfMouse3D) {
-    if(this->previewCursorInPlanarView) {
-        this->glMeshManipulator->needPreview = true;
-        this->glMeshManipulator->previewPosition = positionOfMouse3D;
-    } else {
-        this->glMeshManipulator->needPreview = false;
-    }
-}
-
 void Scene::changeSelectedPoint(std::pair<int, glm::vec3> selectedPoint) {
     Q_EMIT selectedPointChanged(selectedPoint);
 }
 
 bool Scene::isRightTool(const UITool::MeshManipulatorType& typeToCheck) {
-    bool isRightType = (this->glMeshManipulator->meshManipulatorType == typeToCheck);
+    bool isRightType = (this->currentTool == typeToCheck);
     if(!isRightType)
         std::cout << "WARNING: not the right tool" << std::endl;
     return isRightType;
@@ -2728,7 +2749,7 @@ void Scene::moveInHistory(bool backward, bool reset) {
         }
         if(success) {
             mesh->replacePoints(pointsBefore);
-            this->glMeshManipulator->meshManipulator->updateWithMeshVertices();
+            this->meshManipulator->updateWithMeshVertices();
             this->updateManipulatorRadius();
             this->sendFirstTetmeshToGPU();
             this->updateSceneCenter();
@@ -3337,7 +3358,7 @@ std::vector<bool> Scene::getGridUsageValues(int minValue) {
 }
 
 template<typename MeshToolType>
-MeshToolType* Scene::getMeshTool() { return dynamic_cast<MeshToolType*>(this->glMeshManipulator->meshManipulator); };
+MeshToolType* Scene::getMeshTool() { return dynamic_cast<MeshToolType*>(this->meshManipulator); };
 
 void Scene::setGridsToDraw(std::vector<int> indices) {
     this->gridsToDraw = indices;
@@ -3499,8 +3520,8 @@ void Scene::computeProjection(const std::vector<int>& vertexIndices) {
     }
     meshToProject->replacePoints(vertexIndices, newPositions);
 
-    dynamic_cast<UITool::SliceManipulator*>(this->glMeshManipulator->meshManipulator)->updateWithMeshVertices();
-    dynamic_cast<UITool::SliceManipulator*>(this->glMeshManipulator->meshManipulator)->moveGuizmo();
+    dynamic_cast<UITool::SliceManipulator*>(this->meshManipulator)->updateWithMeshVertices();
+    dynamic_cast<UITool::SliceManipulator*>(this->meshManipulator)->moveGuizmo();
 
     //ARAPMethod * deformer = dynamic_cast<ARAPMethod*>(meshToProject->meshDeformer);
     //if(!deformer) {
@@ -3528,7 +3549,7 @@ void Scene::computeProjection(const std::vector<int>& vertexIndices) {
     //meshToProject->movePoints(newFullPositions);
     //meshToProject->useNormal = false;
 
-    //this->glMeshManipulator->meshManipulator->updateWithMeshVertices();
+    //this->meshManipulator->updateWithMeshVertices();
     //this->updateManipulatorRadius();
     //this->sendFirstTetmeshToGPU();
     //this->updateSceneCenter();
