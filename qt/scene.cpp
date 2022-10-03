@@ -21,11 +21,11 @@
 #include <vector>
 
 #include "../../grid/geometry/grid.hpp"
-#include "../../grid/drawable/drawable_manipulator.hpp"
 #include "../../grid/deformation/mesh_deformer.hpp"
 
 #include "../../grid/utils/apss.hpp"
 #include "grid/geometry/base_mesh.hpp"
+#include "grid/geometry/surface_mesh.hpp"
 #include "grid/ui/mesh_manipulator.hpp"
 
 inline void __GetTexSize(std::size_t numTexNeeded, std::size_t* opt_width, std::size_t* opt_height) {
@@ -908,6 +908,16 @@ void Scene::drawGrid(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const Grid
     //this->drawBoundingBox(grid->grid->getBoundingBox(), grid->boundingBoxColor, mvMat, pMat);
 }
 
+glm::vec3 Scene::computePlanePositionsWithActivation() {
+    glm::vec3 planePos = this->computePlanePositions();
+    for(int i = 0; i < 3; ++i) {
+        if(this->planeActivation[i] == 0.) {
+            planePos[i] = -1000000.;
+        }
+    }
+    return planePos;
+}
+
 glm::vec3 Scene::computePlanePositions() {
     //Image::bbox_t::vec position = this->sceneBB.getMin();
     if(this->getBaseMesh(this->activeMesh)) {
@@ -1267,17 +1277,9 @@ void Scene::drawScene(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool show
     }
 
     if(this->displayMesh) {
-        for(int i = 0; i < this->drawableMeshes.size(); ++i) {
-            this->drawableMeshes[i].first->makeVAO();
-            glm::vec3 planePos	   = this->computePlanePositions();
-            for(int i = 0; i < 3; ++i) {
-                if(this->planeActivation[i] == 0.) {
-                    planePos[i] = -1000000.;
-                }
-            }
-            this->drawableMeshes[i].first->draw(pMat, mvMat, glm::vec4{camPos, 1.f}, planePos);
+        for(int i = 0; i < this->meshes.size(); ++i) {
+            this->meshes[i].first->draw(pMat, mvMat, glm::vec4{camPos, 1.f}, this->computePlanePositionsWithActivation());
         }
-
     }
 
     //this->drawBoundingBox(this->sceneBB, glm::vec4(.5, .5, .0, 1.), mvMat, pMat);
@@ -2137,12 +2139,9 @@ bool Scene::openGraph(const std::string& name, const std::string& filename, cons
 bool Scene::openMesh(const std::string& name, const std::string& filename, const glm::vec4& color) {
     //this->surfaceMesh = new SurfaceMesh("/home/thomas/data/Data/Mesh/bunny_lowres.off");
     this->meshes.push_back(std::pair<SurfaceMesh*, std::string>(nullptr, name));
-    this->drawableMeshes.push_back(std::pair<DrawableMesh*, std::string>(nullptr, name));
     this->meshes.back().first = new SurfaceMesh(filename);
-    this->drawableMeshes.back().first = new DrawableMesh();
-    this->drawableMeshes.back().first->mesh = this->meshes.back().first;
-    this->drawableMeshes.back().first->initialize(this);
-    this->drawableMeshes.back().first->color = color;
+    this->meshes.back().first->initializeGL(this);
+    this->meshes.back().first->color = color;
 
     Q_EMIT meshAdded(name, false, false);
     this->changeActiveMesh(name);
@@ -2164,8 +2163,8 @@ bool Scene::linkCage(const std::string& cageName, BaseMesh * meshToDeform, const
 
     int cageIdx = this->getMeshIdx(cageName);
     //delete this->meshes[cageIdx].first;
-    glm::vec4 color = this->drawableMeshes[cageIdx].first->color;
-    delete this->drawableMeshes[cageIdx].first;
+    glm::vec4 color = this->meshes[cageIdx].first->color;
+    delete this->meshes[cageIdx].first;
 
     TetMesh * tetMesh = dynamic_cast<TetMesh*>(meshToDeform);
     if(tetMesh) {
@@ -2177,10 +2176,8 @@ bool Scene::linkCage(const std::string& cageName, BaseMesh * meshToDeform, const
             this->meshes[cageIdx].first = new CageGreen(this->meshes[cageIdx].first, meshToDeform);
     }
 
-    this->drawableMeshes[cageIdx].first = new DrawableMesh();
-    this->drawableMeshes[cageIdx].first->mesh = this->meshes[cageIdx].first;
-    this->drawableMeshes[cageIdx].first->initialize(this);
-    this->drawableMeshes[cageIdx].first->color = color;
+    this->meshes[cageIdx].first->initializeGL(this);
+    this->meshes[cageIdx].first->color = color;
 
     //this->changeActiveMesh(name);
 
@@ -2199,7 +2196,6 @@ bool Scene::openCage(const std::string& name, const std::string& filename, BaseM
         return false;
     }
     this->meshes.push_back(std::pair<SurfaceMesh*, std::string>(nullptr, name));
-    this->drawableMeshes.push_back(std::pair<DrawableMesh*, std::string>(nullptr, name));
 
     TetMesh * tetMesh = dynamic_cast<TetMesh*>(surfaceMeshToDeform);
     if(MVC) {
@@ -2211,10 +2207,8 @@ bool Scene::openCage(const std::string& name, const std::string& filename, BaseM
             this->meshes.back().first = new CageGreen(filename, surfaceMeshToDeform);
     }
 
-    this->drawableMeshes.back().first = new DrawableMesh();
-    this->drawableMeshes.back().first->mesh = this->meshes.back().first;
-    this->drawableMeshes.back().first->initialize(this);
-    this->drawableMeshes.back().first->color = color;
+    this->meshes.back().first->initializeGL(this);
+    this->meshes.back().first->color = color;
 
     Q_EMIT meshAdded(name, false, true);
     this->changeActiveMesh(name);
@@ -2322,16 +2316,6 @@ SurfaceMesh * Scene::getMesh(const std::string& name) {
 
 Cage * Scene::getCage(const std::string& name) {
     return dynamic_cast<Cage*>(this->getMesh(name));
-}
-
-DrawableMesh * Scene::getDrawableMesh(const std::string& name) {
-    for(int i = 0; i < this->drawableMeshes.size(); ++i) {
-        if(this->drawableMeshes[i].second == name) {
-            return this->drawableMeshes[i].first;
-        }
-    }
-    std::cout << "Error: wrong drawable name: [" << name << "]" << std::endl;
-    return nullptr;
 }
 
 void Scene::changeSceneRadius(float sceneRadius) {
@@ -2665,8 +2649,8 @@ void Scene::redrawSelection(const glm::vec3& p0, const glm::vec3& p1, const glm:
 }
 
 void Scene::setLightPosition(const glm::vec3& lighPosition) {
-    for(int i = 0; i < this->drawableMeshes.size(); ++i) {
-        this->drawableMeshes[i].first->lightPosition = lighPosition;
+    for(int i = 0; i < this->meshes.size(); ++i) {
+        this->meshes[i].first->lightPosition = lighPosition;
     }
 }
 
@@ -3317,7 +3301,6 @@ void Scene::clear() {
     this->grids_name.clear();
     this->grids.clear();
     this->meshes.clear();
-    this->drawableMeshes.clear();
     this->graph_meshes.clear();
     gridToDraw = -1;
 }

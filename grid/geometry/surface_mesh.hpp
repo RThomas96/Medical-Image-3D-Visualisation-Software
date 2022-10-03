@@ -5,11 +5,12 @@
 #include "base_mesh.hpp"
 #include <iostream>
 #include "glm/gtx/string_cast.hpp"
+#include "grid/drawable/drawable_surface_mesh.hpp"
 
 //! \addtogroup geometry
 //! @{
 
-class SurfaceMesh : public BaseMesh {
+class SurfaceMesh : public BaseMesh, public DrawableMesh {
 
 public:
 	SurfaceMesh(const std::vector<glm::vec3>& vertices, const std::vector<Triangle>& triangles);
@@ -35,6 +36,7 @@ public:
     void computeNormals() override;
     bool getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos, glm::vec3& res) const override;
 
+    void draw(GLfloat *proj_mat, GLfloat *view_mat, const glm::vec4& camera, const glm::vec3& planePosition);
 
     ~SurfaceMesh();
 

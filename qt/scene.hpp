@@ -249,6 +249,7 @@ public:
     void updateBoundingBox(void);
     void updateVisuBoxCoordinates(void);
     glm::vec3 computePlanePositions();
+    glm::vec3 computePlanePositionsWithActivation();
     /*************************************************/
 
     /***********************************************/
@@ -509,7 +510,6 @@ public slots:
     std::vector<std::string> getAllCagesName();
     std::vector<std::string> getAllGridsName();
 
-    DrawableMesh * getDrawableMesh(const std::string& name);
     bool isGrid(const std::string& name);
     bool isCage(const std::string& name);
     bool hasTwoOrMoreGrids();
@@ -560,7 +560,6 @@ public:
     std::vector<GridGLView::Ptr> grids;
     std::vector<std::pair<GraphMesh*, std::string>> graph_meshes;
     std::vector<std::pair<SurfaceMesh*, std::string>> meshes;
-    std::vector<std::pair<DrawableMesh*, std::string>> drawableMeshes;
 
     Image::bbox_t sceneBB;
     Image::bbox_t sceneDataBB;

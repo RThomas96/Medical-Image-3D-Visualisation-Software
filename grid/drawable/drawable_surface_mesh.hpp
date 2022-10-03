@@ -1,9 +1,10 @@
 #ifndef VISUALISATION_MESHES_DRAWABLE_SURFACE_MESH_HPP_
 #define VISUALISATION_MESHES_DRAWABLE_SURFACE_MESH_HPP_
 
-#include "../geometry/surface_mesh.hpp"
+//#include "../geometry/surface_mesh.hpp"
 
 #include "../../legacy/meshes/drawable/shaders.hpp"
+#include "qobjectdefs.h"
 
 #include <QOpenGLContext>
 #include <QOpenGLExtraFunctions>
@@ -23,30 +24,27 @@
 
 class DrawableMesh {
 public:
-	~DrawableMesh() = default;
+    DrawableMesh(): gl(nullptr){};
+    virtual ~DrawableMesh() = default;
 
-    void initialize(ShaderCompiler::GLFunctions* functions);
+    void initializeGL(ShaderCompiler::GLFunctions* functions);
 
     void draw(GLfloat *proj_mat, GLfloat *view_mat, const glm::vec4& camera, const glm::vec3& planePosition);
 
-	SurfaceMesh * mesh;
     glm::vec4 color;
     glm::vec3 lightPosition;
 
-    void makeVAO();
-    void updateData();
+
 protected:
 
-	GLuint program_handle_draw;
+    ShaderCompiler::GLFunctions* gl;
+
+    GLuint program;
 
 	GLuint vao;
 	GLuint vbo_vertices;
 	GLuint vbo_normals;
 	GLuint vbo_indices;
-
-	ShaderCompiler::GLFunctions* gl;
-
-	bool should_update_on_next_draw;
 };
 
 #endif	  // VISUALISATION_MESHES_DRAWABLE_MESH_HPP_

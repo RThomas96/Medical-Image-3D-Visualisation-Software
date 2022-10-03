@@ -48,7 +48,6 @@ namespace UITool {
             float guizmoRatio;
             float guizmoRadius;
         };
-
 	}	 // namespace GL
 
 }	 // namespace UITool
