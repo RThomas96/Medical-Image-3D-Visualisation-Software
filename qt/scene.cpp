@@ -2146,7 +2146,7 @@ bool Scene::openGraph(const std::string& name, const std::string& filename, cons
     this->graph_meshes.push_back(std::pair<GraphMesh*, std::string>(nullptr, name));
     this->graph_meshes.back().first = new GraphMesh(filename);
 
-    this->drawableGraphs.push_back(std::pair<UITool::GL::Graph*, std::string>(new UITool::GL::Graph(&this->sceneGL, this->graph_meshes.back().first), name));
+    this->drawableGraphs.push_back(std::pair<UITool::GL::Graph*, std::string>(new UITool::GL::Graph(this->graph_meshes.back().first), name));
 
     Q_EMIT meshAdded(name, false, false);
     this->changeActiveMesh(name);
@@ -2356,7 +2356,7 @@ DrawableMesh * Scene::getDrawableMesh(const std::string& name) {
 void Scene::changeSceneRadius(float sceneRadius) {
     this->glMeshManipulator->updateManipulatorRadius(sceneRadius);
     if(this->drawableGraphs.size() > 0)
-        this->drawableGraphs.front().first->updateManipulatorRadius(sceneRadius);
+        this->drawableGraphs.front().first->zoom(sceneRadius);
 }
 
 void Scene::updateSceneRadius() {

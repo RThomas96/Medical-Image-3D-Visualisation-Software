@@ -1,7 +1,6 @@
 #ifndef GL_GRAPH_HPP_
 #define GL_GRAPH_HPP_
 
-#include "../../third_party/primitive/Sphere.h"
 #include "../../qt/legacy/viewer_structs.hpp"
 
 #include <QOpenGLContext>
@@ -13,49 +12,38 @@ class SceneGL;
 class GraphMesh;
 
 namespace UITool {
-    //class MeshManipulator;
-
-	/// @defgroup gl GL
-	/// @brief All classes that interact with OpenGL. Allow a separation between backend and frontend.
 	namespace GL {
+
+        // Used by increment/decrementSize function to easily designate which primitive to draw bigger or smaller
+        enum DrawingPrimitive {
+            SPHERE,
+            LINE
+        };
 
         class Graph : QObject {
             Q_OBJECT;
 		public:
-            Graph(SceneGL* sceneGL, GraphMesh * base);
-
+            Graph(GraphMesh * base);
             void draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* mMat, const glm::vec3& planeDisplacement);
-            glm::vec3 lightPosition;
 
         public slots:
-			void prepare();
-            void updateManipulatorRadius(float sceneRadius);
+            // Connected to zoom function in scene
+            void zoom(float newSceneRadius);
 
-        public:
+            void incrementSize(const UITool::GL::DrawingPrimitive& object);
+            void decrementSize(const UITool::GL::DrawingPrimitive& object);
 
+        protected:
             GraphMesh * graph;
-            float manipulatorRatio;
-            float manipulatorRadius;
 
-            Sphere manipulatorMesh;
+            // Define the sphere's radius as a ratio of the scene size
+            // Used to adapt the radius while zooming, and keep it at same size on the screen
+            float sphereRatio;
+            float sphereRadius;
 
-			SceneGL * sceneGL;
-
-			GLuint program;
-			GLuint vao;
-			GLuint vboVertices;
-			GLuint vboNormals;
-			GLuint vboIndices;
-			GLuint tex;
-			GLuint visible;
-			GLuint state;
-
-			TextureUpload texParams;
-			TextureUpload texParamsVisible;
-			TextureUpload texParamsState;
-
-			bool displayWireframe;
-		};
+            float linesRatio;
+            float linesRadius;
+        };
 
 	}	 // namespace GL
 
