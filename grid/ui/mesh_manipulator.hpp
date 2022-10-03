@@ -171,6 +171,8 @@ namespace UITool {
 
         MeshManipulator(BaseMesh * mesh): mesh(mesh) {this->sphereRatio = 0.004;}
 
+        void zoom(float newSceneRadius) override;
+
         virtual void draw() = 0;
 
         // These functions are used only in glMeshManipulator in the prepare function

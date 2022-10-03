@@ -4,6 +4,8 @@
 
 UITool::GL::Drawable::Drawable()
 {
+    this->guizmoRatio = 0.5;
+    this->guizmoRadius = 2.;
     this->sphereRatio = 0.012;
     this->sphereRadius = 2.;
     this->linesRatio = 0.006;
@@ -45,6 +47,9 @@ void UITool::GL::Drawable::incrementSize(const DrawingPrimitive& object) {
         case LINE:
             this->linesRatio += 0.1;
             break;
+        case GUIZMO:
+            this->linesRatio += 0.1;
+            break;
         default:
             break;
     }
@@ -58,6 +63,9 @@ void UITool::GL::Drawable::decrementSize(const DrawingPrimitive& object) {
         case LINE:
             this->linesRatio -= 0.1;
             break;
+        case GUIZMO:
+            this->linesRatio -= 0.1;
+            break;
         default:
             break;
     }
@@ -66,4 +74,5 @@ void UITool::GL::Drawable::decrementSize(const DrawingPrimitive& object) {
 void UITool::GL::Drawable::zoom(float sceneRadius) {
     this->sphereRadius = sceneRadius*this->sphereRatio;
     this->linesRadius = sceneRadius*this->linesRatio;
+    this->guizmoRadius = sceneRadius*this->guizmoRatio;
 }

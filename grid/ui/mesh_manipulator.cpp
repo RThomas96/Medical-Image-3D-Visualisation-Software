@@ -1,5 +1,6 @@
 #include "mesh_manipulator.hpp"
 #include "glm/trigonometric.hpp"
+#include "grid/drawable/drawable.hpp"
 #include "manipulator.hpp"
 #include "../deformation/mesh_deformer.hpp"
 #include "../deformation/cage_surface_mesh.hpp"
@@ -12,6 +13,13 @@
 #include <iostream>
 
 namespace UITool {
+
+    void MeshManipulator::zoom(float newSceneRadius) {
+        GL::Drawable::zoom(newSceneRadius);
+        if(this->guizmo)
+            this->guizmo->setDisplayScale(this->getGuizmoRadius());
+    };
+
 
     glm::vec3 stateToColor(State state) {
         switch(state) {

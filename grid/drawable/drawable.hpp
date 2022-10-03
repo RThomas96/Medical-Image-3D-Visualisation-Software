@@ -17,7 +17,8 @@ namespace UITool {
         // Used by increment/decrementSize function to easily designate which primitive to draw bigger or smaller
         enum DrawingPrimitive {
             SPHERE,
-            LINE
+            LINE,
+            GUIZMO
         };
 
         class Drawable : public QObject {
@@ -28,10 +29,12 @@ namespace UITool {
 
         public slots:
             // Connected to zoom function in scene
-            void zoom(float newSceneRadius);
+            virtual void zoom(float newSceneRadius);
 
             void incrementSize(const UITool::GL::DrawingPrimitive& object);
             void decrementSize(const UITool::GL::DrawingPrimitive& object);
+
+            float getGuizmoRadius() { return guizmoRadius; };
 
         protected:
             // Define the sphere's radius as a ratio of the scene size
@@ -41,6 +44,9 @@ namespace UITool {
 
             float linesRatio;
             float linesRadius;
+
+            float guizmoRatio;
+            float guizmoRadius;
         };
 
 	}	 // namespace GL
