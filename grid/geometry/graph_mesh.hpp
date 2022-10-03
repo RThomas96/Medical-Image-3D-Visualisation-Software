@@ -2,6 +2,7 @@
 #define GRAPHMESH_HPP_
 
 #include "base_mesh.hpp"
+#include "grid/drawable/drawable.hpp"
 
 struct MeshDeformer;
 
@@ -17,7 +18,7 @@ struct GraphEdge {
     }
 };
 
-class GraphMesh : public BaseMesh {
+class GraphMesh : public BaseMesh, public UITool::GL::Drawable {
 
 public:
     std::vector<GraphEdge> mesh;
@@ -32,6 +33,7 @@ public:
     void computeNormals() override {};
 
     void loadMESH(std::string const &filename);
+    void draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* mMat, const glm::vec3& planeDisplacement);
 
     ~GraphMesh(){};
 };

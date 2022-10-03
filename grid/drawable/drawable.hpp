@@ -20,11 +20,11 @@ namespace UITool {
             LINE
         };
 
-        class Graph : QObject {
+        class Drawable : QObject {
             Q_OBJECT;
 		public:
-            Graph(GraphMesh * base);
-            void draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* mMat, const glm::vec3& planeDisplacement);
+            Drawable();
+            //void draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* mMat, const glm::vec3& planeDisplacement);
 
         public slots:
             // Connected to zoom function in scene
@@ -34,8 +34,6 @@ namespace UITool {
             void decrementSize(const UITool::GL::DrawingPrimitive& object);
 
         protected:
-            GraphMesh * graph;
-
             // Define the sphere's radius as a ratio of the scene size
             // Used to adapt the radius while zooming, and keep it at same size on the screen
             float sphereRatio;

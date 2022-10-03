@@ -37,7 +37,7 @@
 #include "../../grid/geometry/graph_mesh.hpp"
 #include "../../grid/drawable/drawable_surface_mesh.hpp"
 #include "../../grid/drawable/drawable_selection.hpp"
-#include "../../grid/drawable/drawable_graph.hpp"
+#include "../../grid/geometry/graph_mesh.hpp"
 #include "../../grid/deformation/cage_surface_mesh.hpp"
 
 #include "glm/gtx/string_cast.hpp"
@@ -564,7 +564,6 @@ public:
     std::vector<std::pair<GraphMesh*, std::string>> graph_meshes;
     std::vector<std::pair<SurfaceMesh*, std::string>> meshes;
     std::vector<std::pair<DrawableMesh*, std::string>> drawableMeshes;
-    std::vector<std::pair<UITool::GL::Graph*, std::string>> drawableGraphs;
 
     Image::bbox_t sceneBB;
     Image::bbox_t sceneDataBB;

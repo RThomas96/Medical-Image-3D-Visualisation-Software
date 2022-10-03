@@ -1231,15 +1231,15 @@ void Scene::drawScene(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool show
     glm::mat4 mMat(1.0f);
     this->glMeshManipulator->draw(mvMat, pMat, glm::value_ptr(mMat), this->computePlanePositions());
 
-        for(int i = 0; i < this->drawableGraphs.size(); ++i) {
-            glm::vec3 planePos	   = this->computePlanePositions();
-            for(int i = 0; i < 3; ++i) {
-                if(this->planeActivation[i] == 0.) {
-                    planePos[i] = -1000000.;
-                }
+    for(int i = 0; i < this->graph_meshes.size(); ++i) {
+        glm::vec3 planePos	   = this->computePlanePositions();
+        for(int i = 0; i < 3; ++i) {
+            if(this->planeActivation[i] == 0.) {
+                planePos[i] = -1000000.;
             }
-            this->drawableGraphs[i].first->draw(pMat, mvMat, glm::value_ptr(mMat), planePos);
         }
+        this->graph_meshes[i].first->draw(pMat, mvMat, glm::value_ptr(mMat), planePos);
+    }
 
     /***********************/
 
@@ -2146,8 +2146,6 @@ bool Scene::openGraph(const std::string& name, const std::string& filename, cons
     this->graph_meshes.push_back(std::pair<GraphMesh*, std::string>(nullptr, name));
     this->graph_meshes.back().first = new GraphMesh(filename);
 
-    this->drawableGraphs.push_back(std::pair<UITool::GL::Graph*, std::string>(new UITool::GL::Graph(this->graph_meshes.back().first), name));
-
     Q_EMIT meshAdded(name, false, false);
     this->changeActiveMesh(name);
     return true;
@@ -2355,8 +2353,8 @@ DrawableMesh * Scene::getDrawableMesh(const std::string& name) {
 
 void Scene::changeSceneRadius(float sceneRadius) {
     this->glMeshManipulator->updateManipulatorRadius(sceneRadius);
-    if(this->drawableGraphs.size() > 0)
-        this->drawableGraphs.front().first->zoom(sceneRadius);
+    if(this->graph_meshes.size() > 0)
+        this->graph_meshes.front().first->zoom(sceneRadius);
 }
 
 void Scene::updateSceneRadius() {
@@ -3299,7 +3297,7 @@ void Scene::clear() {
     this->grids.clear();
     this->meshes.clear();
     this->drawableMeshes.clear();
-    this->drawableGraphs.clear();
+    this->graph_meshes.clear();
     gridToDraw = -1;
 }
 

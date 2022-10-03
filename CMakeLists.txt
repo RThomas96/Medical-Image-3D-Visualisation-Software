@@ -138,7 +138,7 @@ ADD_EXECUTABLE(neighbor_visu
     ./grid/ui/mesh_manipulator.hpp
     ./grid/ui/kid_manipulator.h
     ./grid/drawable/drawable_surface_mesh.hpp
-    ./grid/drawable/drawable_graph.hpp
+    ./grid/drawable/drawable.hpp
     ./grid/drawable/drawable_manipulator.hpp
     ./grid/drawable/drawable_selection.hpp
     ./grid/deformation/mesh_deformer.hpp
@@ -172,7 +172,7 @@ ADD_EXECUTABLE(neighbor_visu
     ./grid/ui/manipulator.cpp
     ./grid/ui/mesh_manipulator.cpp
     ./grid/drawable/drawable_surface_mesh.cpp
-    ./grid/drawable/drawable_graph.cpp
+    ./grid/drawable/drawable.cpp
     ./grid/drawable/drawable_manipulator.cpp
     ./grid/drawable/drawable_selection.cpp
     ./grid/deformation/mesh_deformer.cpp
