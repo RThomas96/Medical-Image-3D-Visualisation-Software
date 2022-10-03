@@ -20,7 +20,7 @@ namespace UITool {
             LINE
         };
 
-        class Drawable : QObject {
+        class Drawable : public QObject {
             Q_OBJECT;
 		public:
             Drawable();

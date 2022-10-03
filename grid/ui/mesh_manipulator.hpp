@@ -2,6 +2,7 @@
 #define MESH_MANIPULATOR_HPP_
 
 #include <QGLViewer/manipulatedCameraFrame.h>
+#include "grid/drawable/drawable.hpp"
 #include "manipulator.hpp"
 #include "kid_manipulator.h"
 
@@ -160,7 +161,7 @@ namespace UITool {
     };
 
 	//! @ingroup uitools
-    class MeshManipulator {
+    class MeshManipulator : public GL::Drawable {
     public:
         // These are needed here as there drawing functions are directly in the class
         RotationManipulator * kid_manip;
@@ -209,7 +210,7 @@ namespace UITool {
 	/// @details The active manipulator indicates the manipulator at range for being grabbed by the mouse.
 	/// The commonConstraint is a custom translation constraint allowing to simplify vertex manipulation. See UITool::CustomConstraint.
 	/// The lockConstraint allow to prevent manipulator to move when the feature is inactive.
-	class DirectManipulator : public QObject, public MeshManipulator {
+    class DirectManipulator : public MeshManipulator {
         Q_OBJECT
         Q_INTERFACES(UITool::MeshManipulator)
 
@@ -237,6 +238,18 @@ namespace UITool {
         void mousePressed(QMouseEvent* e) override;
         void mouseReleased(QMouseEvent* e) override;
 
+        void draw() {
+            glPolygonMode( GL_FRONT_AND_BACK , GL_FILL );
+            glColor3f(0.2,0.2,0.9);
+            glClear(GL_DEPTH_BUFFER_BIT);
+            glEnable(GL_LIGHTING);
+            glEnable(GL_DEPTH_TEST);
+            glEnable(GL_DEPTH);
+            for(int i = 0; i < this->manipulators.size(); ++i){
+                BasicGL::drawSphere(this->manipulators[i].getManipPosition().x, this->manipulators[i].getManipPosition().y, this->manipulators[i].getManipPosition().z, this->sphereRadius, 15,15);
+            }
+        }
+
     signals:
         void needRedraw() override;
         void needSendTetmeshToGPU() override;
@@ -253,7 +266,7 @@ namespace UITool {
     };
 
     //! @ingroup uitools
-	class FreeManipulator : public QObject, public MeshManipulator {
+    class FreeManipulator : public MeshManipulator {
         Q_OBJECT
         Q_INTERFACES(UITool::MeshManipulator)
 
@@ -297,7 +310,7 @@ namespace UITool {
     };
 
     //! @ingroup uitools
-	class PositionManipulator : public QObject, public MeshManipulator {
+    class PositionManipulator : public MeshManipulator {
         Q_OBJECT
         Q_INTERFACES(UITool::MeshManipulator)
 
@@ -335,7 +348,7 @@ namespace UITool {
 	};
 
 	/// @ingroup uitools
-	class CompManipulator : public QObject, public MeshManipulator {
+    class CompManipulator : public MeshManipulator {
         Q_OBJECT
         Q_INTERFACES(UITool::MeshManipulator)
 
@@ -416,7 +429,7 @@ namespace UITool {
 	};
 
     //! @ingroup uitools
-	class ARAPManipulator : public QObject, public MeshManipulator {
+    class ARAPManipulator : public MeshManipulator {
         Q_OBJECT
         Q_INTERFACES(UITool::MeshManipulator)
         /// NEW
@@ -472,7 +485,7 @@ namespace UITool {
         bool meshIsModified;
     };
 
-	class SliceManipulator : public QObject, public MeshManipulator {
+    class SliceManipulator : public MeshManipulator {
         Q_OBJECT
         Q_INTERFACES(UITool::MeshManipulator)
 
@@ -544,7 +557,7 @@ namespace UITool {
         SELECTING_SECOND_POINT
     };
 
-	class FixedRegistrationManipulator : public QObject, public MeshManipulator {
+    class FixedRegistrationManipulator : public MeshManipulator {
         Q_OBJECT
         Q_INTERFACES(UITool::MeshManipulator)
 

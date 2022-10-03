@@ -1229,7 +1229,7 @@ void Scene::drawScene(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool show
     /* Manipulator drawing  */
 
     glm::mat4 mMat(1.0f);
-    this->glMeshManipulator->draw(mvMat, pMat, glm::value_ptr(mMat), this->computePlanePositions());
+    //this->glMeshManipulator->draw(mvMat, pMat, glm::value_ptr(mMat), this->computePlanePositions());
 
     for(int i = 0; i < this->graph_meshes.size(); ++i) {
         glm::vec3 planePos	   = this->computePlanePositions();
