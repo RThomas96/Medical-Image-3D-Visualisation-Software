@@ -47,10 +47,9 @@ namespace UITool {
         this->manipulators.reserve(positions.size());
 		for (int i = 0; i < positions.size(); ++i) {
 			this->manipulators.push_back(Manipulator(positions[i]));
-            QObject::connect(&(this->manipulators[i]), &Manipulator::enterAtRangeForGrab, this, [this, i](){Q_EMIT needChangeSelectedPoints(std::make_pair(i, this->manipulators[i].getManipPosition()));});
-            //QObject::connect(&(this->manipulators[i]), &Manipulator::exitFromRangeForGrab, this, [this, i](){Q_EMIT needChangeSelectedPoints(std::make_pair(-1, this->manipulators[i].getManipPosition()));});
-            QObject::connect(&(this->manipulators[i]), &Manipulator::isManipulated, this, [this, i](){Q_EMIT needChangeSelectedPoints(std::make_pair(i, this->manipulators[i].getManipPosition()));});
-            QObject::connect(&(this->manipulators[i]), &Manipulator::mouseRightButtonPressed, this, [this, i](){Q_EMIT needChangeSelectedPoints(std::make_pair(i, this->manipulators[i].getManipPosition()));});
+            QObject::connect(&(this->manipulators[i]), &Manipulator::enterAtRangeForGrab, this, [this, i](){Q_EMIT needDisplayVertexInfo(std::make_pair(i, this->manipulators[i].getManipPosition()));});
+            QObject::connect(&(this->manipulators[i]), &Manipulator::isManipulated, this, [this, i](){Q_EMIT needDisplayVertexInfo(std::make_pair(i, this->manipulators[i].getManipPosition()));});
+            QObject::connect(&(this->manipulators[i]), &Manipulator::mouseRightButtonPressed, this, [this, i](){Q_EMIT needDisplayVertexInfo(std::make_pair(i, this->manipulators[i].getManipPosition()));});
 
             QObject::connect(&(this->manipulators[i]), &Manipulator::mouseRightButtonPressed, this, &DirectManipulator::selectManipulator);
             QObject::connect(&(this->manipulators[i]), &Manipulator::mouseRightButtonReleasedAndCtrlIsNotPressed, this, &DirectManipulator::deselectManipulator);

@@ -271,50 +271,39 @@ void UITool::GL::MeshManipulator::createNewMeshManipulator(BaseMesh * mesh, Scen
     this->meshManipulatorType = type;
     if(type == MeshManipulatorType::DIRECT) {
         this->meshManipulator = new UITool::DirectManipulator(mesh, positions);
-        this->manipulatorRatio = 0.005;
-        this->updateManipulatorRadius(scene->getSceneRadius());
     } else if(type == MeshManipulatorType::POSITION) {
         this->meshManipulator = new UITool::GlobalManipulator(mesh, positions);
-        this->kidRatio = 0.45;
-        this->updateManipulatorRadius(scene->getSceneRadius());
         //scene->updateSceneRadius();
     } else if(type == MeshManipulatorType::ARAP) {
         this->meshManipulator = new UITool::ARAPManipulator(mesh, positions);
-        this->manipulatorRatio = 0.006;
     } else if(type == MeshManipulatorType::SLICE) {
         this->meshManipulator = new UITool::SliceManipulator(mesh, positions);
-        this->manipulatorRatio = 0.006;
-        this->kidRatio = 0.45;
     }
     if(this->meshManipulator) {
-        this->prepare();
         QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needChangeCursor(UITool::CursorType)), scene, SLOT(changeCursor(UITool::CursorType)));
         QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needChangeCursorInPlanarView(UITool::CursorType)), scene, SLOT(changeCursorInPlanarView(UITool::CursorType)));
-        QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needChangeSelectedPoints(std::pair<int,glm::vec3>)), scene, SLOT(changeSelectedPoint(std::pair<int,glm::vec3>)));
-        // This line throw a warning because needUpdateSceneCenter exist only with Global Manipulator
-        QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needUpdateSceneCenter()), scene, SLOT(updateSceneCenter()));
-        // Scene->MeshManipulator
+        QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needDisplayVertexInfo(std::pair<int,glm::vec3>)), scene, SLOT(changeSelectedPoint(std::pair<int,glm::vec3>)));
+
+        // To delete ?
+        QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needSendTetmeshToGPU()), scene, SLOT(sendFirstTetmeshToGPU()));
+
         QObject::connect(scene, SIGNAL(keyPressed(QKeyEvent*)), dynamic_cast<QObject*>(this->meshManipulator), SLOT(keyPressed(QKeyEvent*)));
         QObject::connect(scene, SIGNAL(keyReleased(QKeyEvent*)), dynamic_cast<QObject*>(this->meshManipulator), SLOT(keyReleased(QKeyEvent*)));
         QObject::connect(scene, SIGNAL(mousePressed(QMouseEvent*)), dynamic_cast<QObject*>(this->meshManipulator), SLOT(mousePressed(QMouseEvent*)));
         QObject::connect(scene, SIGNAL(mouseReleased(QMouseEvent*)), dynamic_cast<QObject*>(this->meshManipulator), SLOT(mouseReleased(QMouseEvent*)));
+
+        if(type == MeshManipulatorType::POSITION) {
+            QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needUpdateSceneCenter()), scene, SLOT(updateSceneCenter()));
+        }
+
         if(type == MeshManipulatorType::SLICE) {
             QObject::connect(scene, SIGNAL(planesMoved(const glm::vec3&)), dynamic_cast<SliceManipulator*>(this->meshManipulator), SLOT(movePlanes(const glm::vec3&)));
-            //dynamic_cast<SliceManipulator*>(this->meshManipulator)->selectionRadius = this->planeViewRadius;
         }
+
         // Scene->MeshManipulator->Selection
         QObject::connect(scene, SIGNAL(keyPressed(QKeyEvent*)), dynamic_cast<QObject*>(&this->meshManipulator->selection), SLOT(keyPressed(QKeyEvent*)));
         QObject::connect(scene, SIGNAL(keyReleased(QKeyEvent*)), dynamic_cast<QObject*>(&this->meshManipulator->selection), SLOT(keyReleased(QKeyEvent*)));
-
-        // MeshManipulator->DrawableMeshManipulator
-        //QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needRedraw()), this, SLOT(prepare()));
-        QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needSendTetmeshToGPU()), scene, SLOT(sendFirstTetmeshToGPU()));
-        //QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needChangeKidManipulatorRadius(float)), this, SLOT(setKidRadius(float)));
-
-        // MeshManipulator->DrawableSelection
         QObject::connect(&this->meshManipulator->selection, &UITool::Selection::needToRedrawSelection, scene, &Scene::redrawSelection);
-
-        this->toggleActivation();
     }
     // MeshManipulator->Scene
 }

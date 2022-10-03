@@ -192,7 +192,6 @@ namespace UITool {
         //This signal is used to trigger a function in the scene
         //This should be removed when the grid will have its own "Drawable" class
         virtual void needSendTetmeshToGPU() = 0;
-        virtual void needChangeSelectedPoints(std::pair<int, glm::vec3> selectedPoint) = 0;
     };
 }
 Q_DECLARE_INTERFACE(UITool::MeshManipulator, "MeshManipulator")
@@ -230,7 +229,7 @@ namespace UITool {
 
     signals:
         void needSendTetmeshToGPU() override;
-        void needChangeSelectedPoints(std::pair<int, glm::vec3> selectedPoint) override;
+        void needDisplayVertexInfo(std::pair<int, glm::vec3> selectedPoint);
     private:
 		std::vector<Manipulator> manipulators;
         std::vector<bool> manipulatorsToDisplay;
@@ -265,7 +264,6 @@ namespace UITool {
 
     signals:
         void needSendTetmeshToGPU() override;
-        void needChangeSelectedPoints(std::pair<int, glm::vec3> selectedPoint) override;
         void needUpdateSceneCenter();
 
 	private:
@@ -300,7 +298,6 @@ namespace UITool {
         void needSendTetmeshToGPU() override;
         void needChangeCursor(UITool::CursorType cursorType);
         void needChangeCursorInPlanarView(UITool::CursorType cursorType);
-        void needChangeSelectedPoints(std::pair<int, glm::vec3> selectedPoint) override;
 
     protected:
         enum SelectionMode { INACTIVE , ACTIVE , ADD_FIXED , ADD_MOVING , REMOVE };
@@ -331,7 +328,7 @@ namespace UITool {
         Q_INTERFACES(UITool::MeshManipulator)
 
 	public:
-		SliceManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions);
+        SliceManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions);
 
         void updateWithMeshVertices() override;
         void getAllPositions(std::vector<glm::vec3>& positions) override;
@@ -362,7 +359,6 @@ namespace UITool {
 
     signals:
         void needSendTetmeshToGPU() override;
-        void needChangeSelectedPoints(std::pair<int, glm::vec3> selectedPoint) override;
         void needChangePointsToProject(std::vector<int> selectedPoints);
     private:
 		std::vector<Manipulator> manipulators;
