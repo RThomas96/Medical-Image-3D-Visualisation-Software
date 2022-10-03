@@ -60,7 +60,9 @@ namespace UITool {
 namespace UITool {
     enum class CursorType {
         NORMAL,
-        CROSS
+        CROSS,
+        OPEN_HAND,
+        CLOSE_HAND
     };
 
     enum class MeshManipulatorType {

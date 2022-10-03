@@ -1230,6 +1230,9 @@ void Scene::drawScene(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool show
 
     glm::mat4 mMat(1.0f);
     //this->glMeshManipulator->draw(mvMat, pMat, glm::value_ptr(mMat), this->computePlanePositions());
+    //this->glMeshManipulator->draw(mvMat, pMat, glm::value_ptr(mMat), this->computePlanePositions());
+    if(this->glMeshManipulator->meshManipulator)
+        this->glMeshManipulator->meshManipulator->draw();
 
     for(int i = 0; i < this->graph_meshes.size(); ++i) {
         glm::vec3 planePos	   = this->computePlanePositions();
@@ -1754,9 +1757,9 @@ void Scene::sendFirstTetmeshToGPU() {
     std::cout << "Send tetmesh " << this->gridToDraw << std::endl;
     if(this->grids.size() > 0)
         this->sendTetmeshToGPU(this->gridToDraw, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS), this->sortingRendering);
-    if(this->glMeshManipulator->meshManipulator) {
-        this->glMeshManipulator->meshManipulator->setAllManipulatorsPosition(this->getBaseMesh(this->activeMesh)->getMeshPositions());
-    }
+    //if(this->glMeshManipulator->meshManipulator) {
+    //    this->glMeshManipulator->meshManipulator->setAllManipulatorsPosition(this->getBaseMesh(this->activeMesh)->getMeshPositions());
+    //}
     Q_EMIT meshMoved();
 }
 
@@ -2355,6 +2358,9 @@ void Scene::changeSceneRadius(float sceneRadius) {
     this->glMeshManipulator->updateManipulatorRadius(sceneRadius);
     if(this->graph_meshes.size() > 0)
         this->graph_meshes.front().first->zoom(sceneRadius);
+    if(this->glMeshManipulator->meshManipulator) {
+        this->glMeshManipulator->meshManipulator->zoom(sceneRadius);
+    }
 }
 
 void Scene::updateSceneRadius() {
@@ -2513,24 +2519,18 @@ void Scene::updateTools(UITool::MeshManipulatorType tool) {
     }
 
     // MeshManipulator->Scene
-    if(tool == UITool::MeshManipulatorType::FREE) {
-        QObject::connect(this, &Scene::rayIsCasted, this, [this](const glm::vec3& origin, const glm::vec3& direction) { emit dynamic_cast<UITool::FreeManipulator*>(this->glMeshManipulator->meshManipulator)->rayIsCasted(origin, direction, this->getMinTexValue(), this->getMaxTexValue(), this->computePlanePositions());});
-    }
+    //if(tool == UITool::MeshManipulatorType::FREE) {
+    //    QObject::connect(this, &Scene::rayIsCasted, this, [this](const glm::vec3& origin, const glm::vec3& direction) { emit dynamic_cast<UITool::FreeManipulator*>(this->glMeshManipulator->meshManipulator)->rayIsCasted(origin, direction, this->getMinTexValue(), this->getMaxTexValue(), this->computePlanePositions());});
+    //}
 
     if(tool == UITool::MeshManipulatorType::ARAP) {
         QObject::connect(dynamic_cast<UITool::ARAPManipulator*>(this->glMeshManipulator->meshManipulator), SIGNAL(needPushHandleButton()), this, SIGNAL(needPushHandleButton()));
     }
 
-    if(tool == UITool::MeshManipulatorType::REGISTRATION) {
-        QObject::connect(this, &Scene::rayIsCasted, this, [this](const glm::vec3& origin, const glm::vec3& direction) { emit dynamic_cast<UITool::CompManipulator*>(this->glMeshManipulator->meshManipulator)->rayIsCasted(origin, direction, this->getMinTexValue(), this->getMaxTexValue(), this->computePlanePositions());});
-        QObject::connect(this, SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)), dynamic_cast<UITool::CompManipulator*>(this->glMeshManipulator->meshManipulator), SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)));
-    }
-
-    if(tool == UITool::MeshManipulatorType::FIXED_REGISTRATION) {
-        QObject::connect(this, SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)), dynamic_cast<UITool::FixedRegistrationManipulator*>(this->glMeshManipulator->meshManipulator), SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)));
-        QObject::connect(this, &Scene::rayIsCasted, this, [this](const glm::vec3& origin, const glm::vec3& direction) { emit dynamic_cast<UITool::FixedRegistrationManipulator*>(this->glMeshManipulator->meshManipulator)->rayIsCasted(origin, direction, this->getMinTexValue(), this->getMaxTexValue(), this->computePlanePositions());});
-        QObject::connect(dynamic_cast<UITool::FixedRegistrationManipulator*>(this->glMeshManipulator->meshManipulator), SIGNAL(needChangeActivatePreviewPoint(bool)), this, SLOT(setPreviewPointInPlanarView(bool)));
-    }
+    //if(tool == UITool::MeshManipulatorType::REGISTRATION) {
+    //    QObject::connect(this, &Scene::rayIsCasted, this, [this](const glm::vec3& origin, const glm::vec3& direction) { emit dynamic_cast<UITool::CompManipulator*>(this->glMeshManipulator->meshManipulator)->rayIsCasted(origin, direction, this->getMinTexValue(), this->getMaxTexValue(), this->computePlanePositions());});
+    //    QObject::connect(this, SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)), dynamic_cast<UITool::CompManipulator*>(this->glMeshManipulator->meshManipulator), SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)));
+    //}
 
     if(tool == UITool::MeshManipulatorType::SLICE) {
         //QObject::connect(dynamic_cast<UITool::SliceManipulator*>(this->glMeshManipulator->meshManipulator), SIGNAL(needRedraw()), this, SLOT(computeProjection()));
@@ -2708,7 +2708,7 @@ bool Scene::isRightTool(const UITool::MeshManipulatorType& typeToCheck) {
     return isRightType;
 }
 
-void Scene::moveTool_toggleEvenMode() { auto * toolPtr = this->getMeshTool<UITool::PositionManipulator>(); if(toolPtr) { toolPtr->toggleEvenMode(); } };
+void Scene::moveTool_toggleEvenMode() { auto * toolPtr = this->getMeshTool<UITool::GlobalManipulator>(); if(toolPtr) { toolPtr->toggleEvenMode(); } };
 
 void Scene::ARAPTool_toggleEvenMode(bool value) { auto * toolPtr = this->getMeshTool<UITool::ARAPManipulator>(); if(toolPtr) { toolPtr->toggleEvenMode(value); } };
 

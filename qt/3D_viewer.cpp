@@ -1,5 +1,6 @@
 #include "3D_viewer.hpp"
 #include "../../features.hpp"
+#include "qnamespace.h"
 //#include "../../grid/include/discrete_grid_writer.hpp"
 //#include "../../qt/widgets/include/user_settings_widget.hpp"
 
@@ -312,6 +313,16 @@ void Viewer::setCursorType(UITool::CursorType cursorType) {
 
         case UITool::CursorType::CROSS:
             this->cursor->setShape(Qt::CrossCursor); 
+            this->setCursor(*this->cursor);
+            break;
+
+        case UITool::CursorType::OPEN_HAND:
+            this->cursor->setShape(Qt::OpenHandCursor);
+            this->setCursor(*this->cursor);
+            break;
+
+        case UITool::CursorType::CLOSE_HAND:
+            this->cursor->setShape(Qt::ClosedHandCursor);
             this->setCursor(*this->cursor);
             break;
     }
