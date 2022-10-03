@@ -11,6 +11,7 @@ using std::pair;
 
 class GLVWidget;
 #include <QGLViewer/mouseGrabber.h>
+#include <QMouseEvent>
 
 
 
