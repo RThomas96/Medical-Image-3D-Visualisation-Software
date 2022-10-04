@@ -82,21 +82,6 @@ Scene::Scene() {
     this->vao					  = 0;
     //this->vao_VolumetricBuffers = 0;
 
-    this->vbo_VertPos				= 0;
-    this->vbo_VertNorm			= 0;
-    this->vbo_VertTex				= 0;
-    this->vbo_Element				= 0;
-    this->vbo_boundingBoxVertices = 0;
-    this->vbo_boundingBoxIndices	= 0;
-
-    this->vbo_Texture3D_VertPos		= 0;
-    this->vbo_Texture3D_VertNorm		= 0;
-    this->vbo_Texture3D_VertTex		= 0;
-    this->vbo_Texture3D_VertIdx		= 0;
-
-    this->state_idx = 0;
-    this->pos_idx = 0;
-
     std::cerr << "Allocating " << +std::numeric_limits<GridGLView::data_t>::max() << " elements for vis ...\n";
 
     this->shouldUpdateUserColorScales = false;
@@ -225,10 +210,6 @@ void Scene::createBuffers() {
 
     // For the default VAO :
     this->vao					   = createVAO("vaoHandle");
-    this->vbo_VertPos			   = createVBO(GL_ARRAY_BUFFER, "vboHandle_VertPos");
-    this->vbo_VertNorm		       = createVBO(GL_ARRAY_BUFFER, "vboHandle_VertNorm");
-    this->vbo_VertTex			   = createVBO(GL_ARRAY_BUFFER, "vboHandle_VertTex");
-    this->vbo_Element			   = createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_Element");
 
     this->glSelection->setVao(createVAO("vaoHandle_Selection"));
     this->glSelection->setVboVertices(createVBO(GL_ARRAY_BUFFER, "vboHandle_SelectionVertices"));
@@ -675,27 +656,6 @@ void Scene::setUniformBufferData(GLuint uniform_buffer, std::size_t begin_bytes,
     glBufferSubData(GL_UNIFORM_BUFFER, begin_bytes, size_bytes, data);
 }
 
-void Scene::printAllUniforms(GLuint _shader_program) {
-    GLint i;
-    GLint count;	// count of how many variables are there
-
-    GLint size;	   // size of the variable
-    GLenum type;	// type of the variable (float, vec3 or mat4, etc)
-
-    const GLsizei bufSize = 64;	   // maximum name length
-    GLchar name[bufSize];	 // variable name in GLSL
-    GLsizei length;	   // name length
-
-    glGetProgramiv(_shader_program, GL_ACTIVE_UNIFORMS, &count);
-    fprintf(stderr, "Active Uniforms: %d\n", count);
-
-    for (i = 0; i < count; i++)
-    {
-        glGetActiveUniform(_shader_program, (GLuint) i, bufSize, &length, &size, &type, name);
-        fprintf(stderr, "\t- Uniform #%d : \"%s\"\n", i, name);
-    }
-}
-
 void Scene::drawScene(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool showTexOnPlane) {
     this->cameraPosition = camPos;
     if (this->shouldUpdateUserColorScales) {
@@ -1138,26 +1098,9 @@ void Scene::updateCVR() {
         grid->colorChannelAttributes[1].setMinColorScale(colorBounds.x);
         grid->colorChannelAttributes[1].setMaxColorScale(colorBounds.y);
         i++;
-        // For now handle only one canal
-        //grid->colorChannelAttributes[1].setMinVisible(this->textureBounds1.x);
-        //grid->colorChannelAttributes[1].setMaxVisible(this->textureBounds1.y);
-        //grid->colorChannelAttributes[1].setMinColorScale(this->colorBounds1.x);
-        //grid->colorChannelAttributes[1].setMaxColorScale(this->colorBounds1.y);
     }
 
     this->shouldUpdateUBOData = true;
-}
-
-bool compPt(std::pair<glm::vec4, std::vector<std::vector<int>>> i, std::pair<glm::vec4, std::vector<std::vector<int>>> j) {
-    for (int x = 2; x >= 0; --x) {
-        if (i.first[x] < j.first[x])
-            return true;
-
-        if (i.first[x] > j.first[x])
-            return false;
-    }
-
-    return false;
 }
 
 bool contain(const InfoToSend& value, const InfoToSend& contain) {

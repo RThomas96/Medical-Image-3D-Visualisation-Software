@@ -143,36 +143,12 @@ private:
     QOpenGLContext* context;
 
     GLuint vao;
-
-    GLuint vbo_VertPos;
-    GLuint vbo_VertNorm;
-    GLuint vbo_VertTex;
-    GLuint vbo_Element;	 ///< The vertex indices necessary to draw the tetrahedral mesh.
-    GLuint vbo_PlaneElement;
-    GLuint vbo_SinglePlaneElement;
-    GLuint vbo_boundingBoxVertices;
-    GLuint vbo_boundingBoxIndices;
-
-    GLuint vbo_spherePositions;
-    GLuint vbo_sphereNormals;
-    GLuint vbo_sphereIndices;
-    GLuint vbo_Texture3D_VertPos;
-    GLuint vbo_Texture3D_VertNorm;
-    GLuint vbo_Texture3D_VertTex;
-    GLuint vbo_Texture3D_VertIdx;
-
-    GLuint state_idx;
-    GLuint pos_idx;
-
     GLuint frameBuffer;
 
     int h;
     int w;
-    GLuint dualRenderingTextureDepth;
 
-    GLuint sphere_size_to_draw;
     std::unique_ptr<ShaderCompiler> shaderCompiler;
-    void printAllUniforms(GLuint _shader_program);
 
 public:
     /* Open GL Utilities */
@@ -208,17 +184,12 @@ public:
     glm::vec3 computePlanePositionsWithActivation();
     /*************************************************/
 
-    /***********************************************/
-    /* Computation                                 */
-    /***********************************************/
 private:
     /* Scene boolean */
     bool shouldUpdateUserColorScales;
     bool shouldUpdateUBOData;
 
     /* Containers */
-    UITool::MeshManipulator* meshManipulator;
-    UITool::GL::Selection * glSelection;
 private:
 
     /* Color channel management */
@@ -239,9 +210,7 @@ public:
     /* Functions */
 public:
     /* Widget interaction */
-
     void addStatusBar(QStatusBar* _s);
-
     void setControlPanel(ControlPanel* cp) { this->controlPanel = cp; }
 
     void addGrid();
@@ -476,6 +445,9 @@ public slots:
 
     //void addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction, bool onSurface);
 public:
+
+    UITool::MeshManipulator* meshManipulator;
+    UITool::GL::Selection * glSelection;
 
     int maximumTextureSize;// Set by the viewer
     int gridToDraw = -1;
