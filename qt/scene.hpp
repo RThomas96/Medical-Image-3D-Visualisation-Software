@@ -3,6 +3,7 @@
 
 #include "../../features.hpp"
 #include "../../macros.hpp"
+#include "grid/drawable/drawable_grid.hpp"
 #include "scene_control.hpp"
 #include <QPlainTextEdit>
 #include <QPushButton>
@@ -231,7 +232,6 @@ public:
     void createBuffers();
     void setupVAOPointers();
     void setupVAOBoundingBox();// Orders the VAO pointers for the bounding box
-    void tex3D_bindVAO();// Bind the VAO created for the volumetric drawing method.
     void tex3D_buildBuffers(VolMesh& volMesh);// Build buffers to draw a single voxel (a cube)
     /*************************************************/
 
@@ -467,11 +467,10 @@ public slots:
 
     // Rendering slots
     void setColorChannel(ColorChannel mode);
-    void sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend, bool sort = true);
+    void sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend);
     void sendFirstTetmeshToGPU();
     std::pair<uint16_t, uint16_t> sendGridValuesToGPU(int gridIdx);
     void setLightPosition(const glm::vec3& lighPosition);
-    void setSortingRendering(bool value);
 
     // Scene management
     void openAtlas();
@@ -539,7 +538,6 @@ public:
     glm::vec3 cameraPosition;
     float distanceFromCamera;
 
-    bool sortingRendering;
     bool multiGridRendering;
     bool drawOnlyBoundaries;
     float blendFirstPass;
@@ -558,6 +556,7 @@ public:
     std::vector<std::pair<std::string, std::string>> cageToGrid;
     std::vector<std::string> grids_name;
     std::vector<GridGLView::Ptr> grids;
+    std::vector<DrawableGrid*> drawable_grids;
     std::vector<std::pair<GraphMesh*, std::string>> graph_meshes;
     std::vector<std::pair<SurfaceMesh*, std::string>> meshes;
 

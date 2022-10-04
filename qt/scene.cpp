@@ -25,6 +25,7 @@
 
 #include "../../grid/utils/apss.hpp"
 #include "grid/drawable/drawable.hpp"
+#include "grid/drawable/drawable_grid.hpp"
 #include "grid/geometry/base_mesh.hpp"
 #include "grid/geometry/surface_mesh.hpp"
 #include "grid/ui/mesh_manipulator.hpp"
@@ -135,7 +136,6 @@ Scene::Scene() {
     this->multiGridRendering = false;
     this->drawOnlyBoundaries = true;
     this->blendFirstPass = 1.;
-    this->sortingRendering = false;
 }
 
 Scene::~Scene(void) {
@@ -842,26 +842,27 @@ void Scene::drawGrid(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const Grid
     if (grid->gridTexture > 0) {
         glUseProgram(this->program_VolumetricViewer);
 
-        if(sortingRendering) {
-            this->sendTetmeshToGPU(this->gridToDraw, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS), sortingRendering);
-        }
-
         this->prepareUniformsGrid(mvMat, pMat, camPos, grid, !inFrame);
 
-        this->tex3D_bindVAO();
+        glBindVertexArray(this->vao_VolumetricBuffers);
+
+        glEnableVertexAttribArray(0);
+        glBindBuffer(GL_ARRAY_BUFFER, this->vbo_Texture3D_VertPos);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
+
+        glEnableVertexAttribArray(1);
+        glBindBuffer(GL_ARRAY_BUFFER, this->vbo_Texture3D_VertNorm);
+        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*) 0);
+
+        glEnableVertexAttribArray(2);
+        glBindBuffer(GL_ARRAY_BUFFER, this->vbo_Texture3D_VertTex);
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*) 0);
+
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vbo_Texture3D_VertIdx);
 
-        //glDrawElementsInstanced(GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, (void*) 0, grid->volumetricMesh.tetrahedraCount);
-
         if(inFrame && this->multiGridRendering) {
-            //glBindTexture(GL_TEXTURE_2D, this->dualRenderingTexture);
-            //glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, 1024, 768, 0,GL_RGB, GL_UNSIGNED_BYTE, 0);
-
-            //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
             glGetIntegerv(GL_FRAMEBUFFER_BINDING, &this->defaultFBO);
-            /***/
+
             glDeleteFramebuffers(1, &this->frameBuffer);
             glGenFramebuffers(1, &this->frameBuffer);
             glBindFramebuffer(GL_FRAMEBUFFER, this->frameBuffer);
@@ -903,10 +904,6 @@ void Scene::drawGrid(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const Grid
         glBindVertexArray(0);
         glUseProgram(0);
     }
-
-    // draw grid BB :
-    // Deactivate for now because useless and create a bug with the normal display
-    //this->drawBoundingBox(grid->grid->getBoundingBox(), grid->boundingBoxColor, mvMat, pMat);
 }
 
 glm::vec3 Scene::computePlanePositionsWithActivation() {
@@ -1750,17 +1747,15 @@ bool contain(const InfoToSend& value, const InfoToSend& contain) {
 void Scene::sendFirstTetmeshToGPU() {
     std::cout << "Send tetmesh " << this->gridToDraw << std::endl;
     if(this->grids.size() > 0)
-        this->sendTetmeshToGPU(this->gridToDraw, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS), this->sortingRendering);
+        this->sendTetmeshToGPU(this->gridToDraw, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS));
     //if(this->meshManipulator) {
     //    this->meshManipulator->setAllManipulatorsPosition(this->getBaseMesh(this->activeMesh)->getMeshPositions());
     //}
     Q_EMIT meshMoved();
 }
 
-void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend, bool sort) {
+void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend) {
     std::cout << "Send to GPU" << std::endl;
-    if(sort)
-        std::cout << "Sorting" << std::endl;
 
     std::size_t vertWidth = 0, vertHeight = 0;
     std::size_t normWidth = 0, normHeight = 0;
@@ -1788,27 +1783,13 @@ void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend, bool sort
     int iNeigh = 0;
     int iPt = 0;
     int iNormal = 0;
-    std::vector<std::pair<int, float>> orderedTets;
-    if(sort) {
-        newMesh.sortTet(this->cameraPosition, orderedTets);
-    }
-
     for (int idx = 0; idx < newMesh.mesh.size(); idx++) {
         int tetIdx = idx;
-        if(sort)
-            tetIdx = orderedTets[idx].first;
         const Tetrahedron& tet = newMesh.mesh[tetIdx];
         for(int faceIdx = 0; faceIdx < 4; ++faceIdx) {
 
             if(contain(infoToSend, InfoToSend::NEIGHBORS)) {
-                if(sort) {
-                    std::vector<std::pair<int, float>>::iterator i = std::find_if(
-                        orderedTets.begin(), orderedTets.end(),
-                        [&](const std::pair<int, float>& x) { return x.first == tet.neighbors[faceIdx];});
-                    rawNeighbors[iNeigh] = static_cast<GLfloat>(i - orderedTets.begin());
-                } else {
-                    rawNeighbors[iNeigh] = static_cast<GLfloat>(tet.neighbors[faceIdx]);
-                }
+                rawNeighbors[iNeigh] = static_cast<GLfloat>(tet.neighbors[faceIdx]);
                 iNeigh += 3;
             }
 
@@ -1940,23 +1921,6 @@ void Scene::tex3D_buildBuffers(VolMesh& volMesh) {
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, 12 * sizeof(GLushort), indices, GL_STATIC_DRAW);
 
     glBindVertexArray(this->vao_VolumetricBuffers);
-    this->tex3D_bindVAO();
-}
-
-void Scene::tex3D_bindVAO() {
-    glBindVertexArray(this->vao_VolumetricBuffers);
-
-    glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, this->vbo_Texture3D_VertPos);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
-
-    glEnableVertexAttribArray(1);
-    glBindBuffer(GL_ARRAY_BUFFER, this->vbo_Texture3D_VertNorm);
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*) 0);
-
-    glEnableVertexAttribArray(2);
-    glBindBuffer(GL_ARRAY_BUFFER, this->vbo_Texture3D_VertTex);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*) 0);
 }
 
 /**********************************************************************/
@@ -2234,6 +2198,8 @@ bool Scene::openGrid(const std::string& name, const std::vector<std::string>& im
 void Scene::addGridToScene(const std::string& name, Grid * newGrid) {
     GridGLView::Ptr gridView = std::make_shared<GridGLView>(newGrid);
     this->grids.push_back(gridView);
+    this->drawable_grids.push_back(new DrawableGrid());
+    this->drawable_grids.back()->initializeGL(this);
 
     this->gridToDraw += 1;
 
@@ -3357,10 +3323,6 @@ MeshToolType* Scene::getMeshTool() { return dynamic_cast<MeshToolType*>(this->me
 
 void Scene::setGridsToDraw(std::vector<int> indices) {
     this->gridsToDraw = indices;
-}
-
-void Scene::setSortingRendering(bool value) {
-    this->sortingRendering = value;
 }
 
 void Scene::setMultiGridRendering(bool value) {

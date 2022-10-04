@@ -1,5 +1,5 @@
-#ifndef VISUALISATION_MESHES_DRAWABLE_SURFACE_MESH_HPP_
-#define VISUALISATION_MESHES_DRAWABLE_SURFACE_MESH_HPP_
+#ifndef VISUALISATION_MESHES_DRAWABLE_GRID_HPP_
+#define VISUALISATION_MESHES_DRAWABLE_GRID_HPP_
 
 //#include "../geometry/surface_mesh.hpp"
 
@@ -29,22 +29,9 @@ public:
 
     void initializeGL(ShaderCompiler::GLFunctions* functions);
 
-    void draw(GLfloat *proj_mat, GLfloat *view_mat, const glm::vec4& camera, const glm::vec3& planePosition);
-
-    glm::vec4 color;
-    glm::vec3 lightPosition;
-
-
 protected:
-
     ShaderCompiler::GLFunctions* gl;
 
-    GLuint program;
-
-	GLuint vao;
-	GLuint vbo_vertices;
-	GLuint vbo_normals;
-	GLuint vbo_indices;
 };
 
 #endif	  // VISUALISATION_MESHES_DRAWABLE_MESH_HPP_
