@@ -3,7 +3,7 @@
 #include <fstream>
 #include "../utils/GLUtilityMethods.h"
 
-void GraphMesh::loadMESH(std::string const &filename) {
+void GraphMesh::loadOFF(std::string const &filename) {
     std::cout << "Opening " << filename << std::endl;
 
     std::ifstream myfile;
@@ -47,6 +47,31 @@ void GraphMesh::loadMESH(std::string const &filename) {
 
     this->updatebbox();
     this->history = new History(this->vertices);
+}
+
+void GraphMesh::saveOFF(std::string const & filename) {
+    std::ofstream myfile;
+    myfile.open(filename.c_str());
+    if (!myfile.is_open())
+    {
+        std::cout << filename << " cannot be opened for saving" << std::endl;
+        return;
+    }
+
+    myfile << "OFF" << std::endl;
+    myfile << (this->vertices.size()) << " 0 " << (this->mesh.size()) << std::endl;
+
+    for( unsigned int v = 0 ; v < this->vertices.size() ; ++v )
+    {
+        myfile << (this->vertices[v][0]) << " " << (this->vertices[v][1]) << " " << (this->vertices[v][2]) << std::endl;
+    }
+
+    for( unsigned int t = 0 ; t < this->mesh.size() ; ++t )
+    {
+        myfile << "2 " << (this->mesh[t].pointsIdx[0]) << " " << (this->mesh[t].pointsIdx[1]) << std::endl;
+    }
+
+    myfile.close();
 }
 
 void GraphMesh::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* mMat, const glm::vec3& planeDisplacement) {

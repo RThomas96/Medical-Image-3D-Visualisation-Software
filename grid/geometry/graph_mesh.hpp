@@ -24,7 +24,7 @@ public:
     std::vector<GraphEdge> mesh;
 
     GraphMesh(std::string const &filename) {
-        this->loadMESH(filename);
+        this->loadOFF(filename);
     }
 
     void setARAPDeformationMethod() override {};
@@ -32,7 +32,8 @@ public:
     void computeNeighborhood() override {};
     void computeNormals() override {};
 
-    void loadMESH(std::string const &filename);
+    void loadOFF(std::string const &filename);
+    void saveOFF(std::string const &filename);
     void draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* mMat, const glm::vec3& planeDisplacement);
 
     ~GraphMesh(){};

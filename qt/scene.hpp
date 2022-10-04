@@ -519,7 +519,7 @@ public slots:
     void updateSceneRadius();
     void updateManipulatorRadius();
     glm::vec3 getSceneCenter();
-    void saveMesh(const std::string& name, const std::string& filename);
+    bool saveMesh(const std::string& name, const std::string& filename);
     bool saveActiveCage(const std::string& filename);
     bool saveActiveMesh(const std::string& filename);
     void applyCage(const std::string& name, const std::string& filename);

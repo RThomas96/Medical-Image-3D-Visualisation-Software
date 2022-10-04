@@ -2623,17 +2623,20 @@ bool Scene::openCage(const std::string& name, const std::string& filename, const
     return this->openCage(name, filename, this->getBaseMesh(surfaceMeshToDeformName), MVC, color);
 }
 
-void Scene::saveMesh(const std::string& name, const std::string& filename) {
-    this->getMesh(name)->saveOFF(filename.c_str());
+bool Scene::saveMesh(const std::string& name, const std::string& filename) {
+    if(this->isGrid(this->activeMesh))
+        return false;
+    GraphMesh* graph = dynamic_cast<GraphMesh*>(this->getBaseMesh(name));
+    if(graph) {
+        graph->saveOFF(filename.c_str());
+    } else {
+        this->getMesh(name)->saveOFF(filename.c_str());
+    }
+    return true;
 }
 
 bool Scene::saveActiveMesh(const std::string& filename) {
-    if(!this->isGrid(this->activeMesh)) {
-        this->getMesh(this->activeMesh)->saveOFF(filename.c_str());
-        return true;
-    } else {
-        return false;
-    }
+    return this->saveMesh(this->activeMesh, filename);
 }
 
 bool Scene::saveActiveCage(const std::string& filename) {
