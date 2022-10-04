@@ -104,8 +104,6 @@ Scene::Scene() {
     this->program_PlaneViewer		 = 0;
     this->program_BoundingBox		 = 0;
 
-    this->tex_ColorScaleGrid			= 0;
-    this->tex_ColorScaleGridAlternate = 0;
     this->vbo_Texture3D_VertPos		= 0;
     this->vbo_Texture3D_VertNorm		= 0;
     this->vbo_Texture3D_VertTex		= 0;
@@ -205,7 +203,6 @@ void Scene::initGl(QOpenGLContext* _context) {
     this->createBuffers();
 
     // Generate visibility array :
-    this->tex_ColorScaleGrid = 0;
 
     // Generate controller positions
     //this->initGL(this->get_context());
@@ -338,34 +335,34 @@ void Scene::createBuffers() {
     this->glSelection->setVboVertices(createVBO(GL_ARRAY_BUFFER, "vboHandle_SelectionVertices"));
     this->glSelection->setVboIndices(createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_SelectionIndices"));
 
-    glGenTextures(1, &this->dualRenderingTexture);
+    //glGenTextures(1, &this->dualRenderingTexture);
 
-    glBindTexture(GL_TEXTURE_2D, this->dualRenderingTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, h, w, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+    //glBindTexture(GL_TEXTURE_2D, this->dualRenderingTexture);
+    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, h, w, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
-    glGenTextures(1, &this->frameDepthBuffer);
-    glBindTexture(GL_TEXTURE_2D, this->frameDepthBuffer);
-    glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT32, h, w, 0,GL_DEPTH_COMPONENT, GL_FLOAT, 0);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    //glGenTextures(1, &this->frameDepthBuffer);
+    //glBindTexture(GL_TEXTURE_2D, this->frameDepthBuffer);
+    //glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT32, h, w, 0,GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, this->frameDepthBuffer, 0);
+    //glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, this->frameDepthBuffer, 0);
 
-    // Set "renderedTexture" as our colour attachement #0
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, this->dualRenderingTexture, 0);
+    //// Set "renderedTexture" as our colour attachement #0
+    //glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, this->dualRenderingTexture, 0);
 
-    // Set the list of draw buffers.
-    GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
-    glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
+    //// Set the list of draw buffers.
+    //GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
+    //glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
 
-    // Always check that our framebuffer is ok
-    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-        std::cout << "WARNING: framebuffer doesn't work !!" << std::endl;
-    else
-        std::cout << "Framebuffer works perfectly :) !!" << std::endl;
+    //// Always check that our framebuffer is ok
+    //if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    //    std::cout << "WARNING: framebuffer doesn't work !!" << std::endl;
+    //else
+    //    std::cout << "Framebuffer works perfectly :) !!" << std::endl;
 
     static const GLfloat vertices[] = {
         -0.5f, -0.5f, 0.0f,
@@ -867,26 +864,26 @@ void Scene::drawGrid(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const Grid
             glGenFramebuffers(1, &this->frameBuffer);
             glBindFramebuffer(GL_FRAMEBUFFER, this->frameBuffer);
 
-            glDeleteTextures(1, &this->dualRenderingTexture);
-            glGenTextures(1, &this->dualRenderingTexture);
+            glDeleteTextures(1, &(drawable_grid->dualRenderingTexture));
+            glGenTextures(1, &(drawable_grid->dualRenderingTexture));
 
-            glBindTexture(GL_TEXTURE_2D, this->dualRenderingTexture);
+            glBindTexture(GL_TEXTURE_2D, (drawable_grid->dualRenderingTexture));
             glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, h, w, 0,GL_RGB, GL_UNSIGNED_BYTE, 0);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
-            glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, this->dualRenderingTexture, 0);
+            glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, (drawable_grid->dualRenderingTexture), 0);
 
-            glDeleteTextures(1, &this->frameDepthBuffer);
-            glGenTextures(1, &this->frameDepthBuffer);
-            glBindTexture(GL_TEXTURE_2D, this->frameDepthBuffer);
+            glDeleteTextures(1, &(drawable_grid->frameDepthBuffer));
+            glGenTextures(1, &(drawable_grid->frameDepthBuffer));
+            glBindTexture(GL_TEXTURE_2D, (drawable_grid->frameDepthBuffer));
             glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT16, h, w, 0,GL_DEPTH_COMPONENT, GL_FLOAT, 0);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-            glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, this->frameDepthBuffer, 0);
+            glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, (drawable_grid->frameDepthBuffer), 0);
 
             // Set the list of draw buffers.
             GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
@@ -976,89 +973,10 @@ void Scene::prepareUniformsGrid(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos,
     DrawableGrid * drawable_grid = this->drawable_grids[this->gridToDraw];
     drawable_grid->prepareUniforms();
 
-    // We assume the right program has been bound.
-
-    /// @brief Shortcut for glGetUniform, since this can result in long lines.
     auto getUniform = [&](const char* name) -> GLint {
         GLint g = glGetUniformLocation(drawable_grid->program_VolumetricViewer, name);
         return g;
     };
-
-    // Texture handles :
-    GLint location_vertices_translation	  = getUniform("vertices_translations");
-    GLint location_normals_translation	  = getUniform("normals_translations");
-    GLint location_visibility_texture	  = getUniform("visibility_texture");
-    GLint location_texture_coordinates	  = getUniform("texture_coordinates");
-    GLint location_neighbors			  = getUniform("neighbors");
-    GLint location_Mask					  = getUniform("texData");
-    GLint location_visibilityMap		  = getUniform("visiblity_map");
-    GLint location_visibilityMapAlternate = getUniform("visiblity_map_alternate");
-    GLint location_firstPass_texture      = getUniform("firstPass_texture");
-    GLint location_firstPass_depthTexture = getUniform("firstPass_depthTexture");
-    GLint location_valuesRangeToDisplay   = getUniform("valuesRangeToDisplay");
-    GLint location_valuesRangeColorToDisplay   = getUniform("colorRangeToDisplay");
-
-
-    std::size_t tex = 0;
-    glActiveTexture(GL_TEXTURE0 + tex);
-    glBindTexture(GL_TEXTURE_2D, _grid->volumetricMesh.vertexPositions);
-    glUniform1i(location_vertices_translation, tex);
-    tex++;
-
-    glActiveTexture(GL_TEXTURE0 + tex);
-    glBindTexture(GL_TEXTURE_2D, _grid->volumetricMesh.faceNormals);
-    glUniform1i(location_normals_translation, tex);
-    tex++;
-
-    glActiveTexture(GL_TEXTURE0 + tex);
-    glBindTexture(GL_TEXTURE_2D, _grid->volumetricMesh.visibilityMap);
-    glUniform1i(location_visibility_texture, tex);
-    tex++;
-
-    glActiveTexture(GL_TEXTURE0 + tex);
-    glBindTexture(GL_TEXTURE_2D, _grid->volumetricMesh.textureCoordinates);
-    glUniform1i(location_texture_coordinates, tex);
-    tex++;
-
-    glActiveTexture(GL_TEXTURE0 + tex);
-    glBindTexture(GL_TEXTURE_2D, _grid->volumetricMesh.neighborhood);
-    glUniform1i(location_neighbors, tex);
-    tex++;
-
-    glActiveTexture(GL_TEXTURE0 + tex);
-    glBindTexture(GL_TEXTURE_3D, _grid->gridTexture);
-    glUniform1i(location_Mask, tex);
-    tex++;
-
-    glActiveTexture(GL_TEXTURE0 + tex);
-    glBindTexture(GL_TEXTURE_2D, this->tex_ColorScaleGrid);
-    glUniform1i(location_visibilityMap, tex);
-    tex++;
-
-    glActiveTexture(GL_TEXTURE0 + tex);
-    glBindTexture(GL_TEXTURE_2D, this->tex_ColorScaleGridAlternate);
-    glUniform1i(location_visibilityMapAlternate, tex);
-    tex++;
-
-    glActiveTexture(GL_TEXTURE0 + tex);
-    glBindTexture(GL_TEXTURE_2D, this->dualRenderingTexture);
-    glUniform1i(location_firstPass_texture, tex);
-    tex++;
-
-    glActiveTexture(GL_TEXTURE0 + tex);
-    glBindTexture(GL_TEXTURE_2D, this->frameDepthBuffer);
-    glUniform1i(location_firstPass_depthTexture, tex);
-    tex++;
-
-    glActiveTexture(GL_TEXTURE0 + tex);
-    glBindTexture(GL_TEXTURE_1D, _grid->valuesRangeToDisplay);
-    glUniform1i(location_valuesRangeToDisplay, tex);
-    tex++;
-
-    glActiveTexture(GL_TEXTURE0 + tex);
-    glBindTexture(GL_TEXTURE_1D, _grid->valuesRangeColorToDisplay);
-    glUniform1i(location_valuesRangeColorToDisplay, tex);
-    tex++;
 
     GLint location_isFirstPass = getUniform("isFirstPass");
     float val = 1.;
@@ -1162,6 +1080,7 @@ void Scene::prepareUniformsGrid(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos,
     GLint location_colorScales2 = getUniform("colorScales[2]");
     GLint location_colorScales3 = getUniform("colorScales[3]");
 
+    std::size_t tex = 12;
     glActiveTexture(GL_TEXTURE0 + tex);
     glBindTexture(GL_TEXTURE_1D, this->tex_colorScale_greyscale);
     glUniform1i(location_colorScales0, tex);
@@ -2181,7 +2100,7 @@ bool Scene::openGrid(const std::string& name, const std::vector<std::string>& im
 void Scene::addGridToScene(const std::string& name, Grid * newGrid) {
     GridGLView::Ptr gridView = std::make_shared<GridGLView>(newGrid);
     this->grids.push_back(gridView);
-    this->drawable_grids.push_back(new DrawableGrid());
+    this->drawable_grids.push_back(new DrawableGrid(this->grids.back()));
     this->drawable_grids.back()->initializeGL(this);
 
     this->gridToDraw += 1;
@@ -3311,8 +3230,12 @@ void Scene::setGridsToDraw(std::vector<int> indices) {
 void Scene::setMultiGridRendering(bool value) {
     if(this->multiGridRendering) {
         glDeleteFramebuffers(1, &this->frameBuffer);
-        glDeleteTextures(1, &this->dualRenderingTexture);
-        glDeleteTextures(1, &this->frameDepthBuffer);
+
+        DrawableGrid * drawable_grid = this->drawable_grids[this->gridToDraw];
+        if(!drawable_grid)
+            return;
+        glDeleteTextures(1, &drawable_grid->dualRenderingTexture);
+        glDeleteTextures(1, &drawable_grid->frameDepthBuffer);
     }
     this->multiGridRendering = value;
     if(this->isCage(activeMesh)) {

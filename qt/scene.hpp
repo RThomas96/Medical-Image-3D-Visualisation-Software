@@ -171,8 +171,6 @@ private:
     GLuint vbo_Texture3D_VertTex;
     GLuint vbo_Texture3D_VertIdx;
 
-    GLuint tex_ColorScaleGrid;
-    GLuint tex_ColorScaleGridAlternate;
     GLuint tex_colorScale_greyscale;
     GLuint tex_colorScale_hsv2rgb;
     GLuint tex_colorScale_user0;
@@ -188,11 +186,9 @@ private:
 
     GLint defaultFBO;
     GLuint frameBuffer;
-    GLuint frameDepthBuffer;
 
     int h;
     int w;
-    GLuint dualRenderingTexture;
     GLuint dualRenderingTextureDepth;
 
     GLuint sphere_size_to_draw;

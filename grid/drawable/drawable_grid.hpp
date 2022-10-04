@@ -5,6 +5,7 @@
 
 #include "../../legacy/meshes/drawable/shaders.hpp"
 #include "qobjectdefs.h"
+#include "qt/legacy/viewer_structs.hpp"
 
 #include <QOpenGLContext>
 #include <QOpenGLExtraFunctions>
@@ -24,7 +25,7 @@
 
 class DrawableGrid {
 public:
-    DrawableGrid();
+    DrawableGrid(GridGLView::Ptr grid);
     virtual ~DrawableGrid() = default;
 
     void initializeGL(ShaderCompiler::GLFunctions *functions);
@@ -34,12 +35,20 @@ public:
 
     // TODO: move
     GLuint program_VolumetricViewer;
+    GLuint tex_ColorScaleGrid;
+    GLuint tex_ColorScaleGridAlternate;
+    GLuint dualRenderingTexture;
+    GLuint frameDepthBuffer;
 protected:
+
+    GridGLView::Ptr grid;
 
     ShaderCompiler::GLFunctions* gl;
     std::unique_ptr<ShaderCompiler> shaderCompiler;
     GLuint compileShaders(std::string _vPath, std::string _gPath, std::string _fPath);
 
+
+    void createBuffers();
 };
 
 #endif	  // VISUALISATION_MESHES_DRAWABLE_MESH_HPP_
