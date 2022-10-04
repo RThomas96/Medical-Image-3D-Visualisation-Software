@@ -406,7 +406,7 @@ void RangeControl::updateRanges() {
             scene->addRange(unit->min->value(), unit->max->value(), glm::vec3(1., 1., 1.), !unit->hideButton->isChecked(), false);
         }
     }
-    scene->newSHADERS_updateUBOData();
+    scene->updateMinMaxDisplayValues();
 }
 
 void RangeControl::toggleAll(Option option, bool value) {

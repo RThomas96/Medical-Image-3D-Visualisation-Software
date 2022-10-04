@@ -177,7 +177,7 @@ public:
     /* Others */
     void newSHADERS_updateUserColorScales();
     void signal_updateUserColorScales();
-    void newSHADERS_updateUBOData();
+    void updateMinMaxDisplayValues();
     // TODO: c koi ?
     void updateCVR();// Update colorChannelAttributes
     glm::vec3 computePlanePositions();
@@ -187,7 +187,7 @@ public:
 private:
     /* Scene boolean */
     bool shouldUpdateUserColorScales;
-    bool shouldUpdateUBOData;
+    bool needUpdateMinMaxDisplayValues;
 
     /* Containers */
 private:
@@ -221,27 +221,18 @@ public:
     double getMinNumericLimit(size_t gridIndex) const { return Image::getMinNumericLimit(grids[gridIndex]->grid->getInternalDataType()); }
     double getMaxNumericLimit(size_t gridIndex) const { return Image::getMaxNumericLimit(grids[gridIndex]->grid->getInternalDataType()); }
 
-    double getMinTexValue(void) const { return static_cast<double>(this->textureBounds0.x); }
-    double getMinTexValueAlternate(void) const { return static_cast<double>(this->textureBounds1.x); }
-    double getMaxTexValue(void) const { return static_cast<double>(this->textureBounds0.y); }
-    double getMaxTexValueAlternate(void) const { return static_cast<double>(this->textureBounds1.y); }
+    enum ValueType {
+        MIN,
+        MAX
+    };
 
-    /// These functions are used by the sliders to control what image values to display
-    void slotSetMinTexValue(double val);
-    void slotSetMinTexValueAlternate(double val);
-    void slotSetMinColorValue(double val);
-    void slotSetMinColorValueAlternate(double val);
-    void slotSetMaxTexValue(double val);
-    void slotSetMaxTexValueAlternate(double val);
-    void slotSetMaxColorValue(double val);
-    void slotSetMaxColorValueAlternate(double val);
+    // Set the min and max values to display on the grid
+    void setDisplayRange(int gridIdx, ValueType type, double value);
+    double getDisplayRange(int gridIdx, ValueType type);
 
-    uint getMinColorValue(void) const { return this->colorBounds0.x; }
-    uint getMinColorValueAlternate(void) const { return this->colorBounds1.x; }
-    uint getMaxColorValue(void) const { return this->colorBounds0.y; }
-    uint getMaxColorValueAlternate(void) const { return this->colorBounds1.y; }
-
-    Image::bbox_t getSceneBoundingBox() const;
+    // Set the min and max values for the display range (to change the color map)
+    void setMinMaxDisplayRange(int gridIdx, ValueType type, double value);
+    double getMinMaxDisplayRange(int gridIdx, ValueType type);
 
     void setColorFunction_r(ColorFunction _c);// Changes the texture coloration mode to the desired setting
     void setColorFunction_g(ColorFunction _c);

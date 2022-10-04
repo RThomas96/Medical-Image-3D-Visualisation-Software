@@ -85,7 +85,7 @@ Scene::Scene() {
     std::cerr << "Allocating " << +std::numeric_limits<GridGLView::data_t>::max() << " elements for vis ...\n";
 
     this->shouldUpdateUserColorScales = false;
-    this->shouldUpdateUBOData		  = false;
+    this->needUpdateMinMaxDisplayValues		  = false;
 
     this->glSelection = new UITool::GL::Selection(&this->sceneGL, glm::vec3(0., 0., 0.), glm::vec3(10., 10., 10.));
 
@@ -313,7 +313,7 @@ std::pair<uint16_t, uint16_t> Scene::sendGridValuesToGPU(int gridIdx) {
         slices.clear();
         sliceI++;
     }
-    this->shouldUpdateUBOData = true;
+    this->needUpdateMinMaxDisplayValues = true;
     return std::make_pair(min, max);
 }
 
@@ -342,21 +342,21 @@ void Scene::addGrid() {
         gridView->color_1 = glm::vec3(y.redF(), y.greenF(), y.blueF());
     }
 
+    gridView->colorChannelAttributes[0].setMinVisible(1.);
+    gridView->colorChannelAttributes[0].setMinColorScale(1.);
     gridView->colorChannelAttributes[0].setMaxVisible(max);
     gridView->colorChannelAttributes[0].setMaxColorScale(max);
-    gridView->colorChannelAttributes[1].setMaxVisible(max);
-    gridView->colorChannelAttributes[1].setMaxColorScale(max);
-    gridView->colorChannelAttributes[2].setMaxVisible(max);
-    gridView->colorChannelAttributes[2].setMaxColorScale(max);
 
     if(this->gridToDraw == 1) {
+        this->controlPanel->setMinTexValAlternate(1.);
+        this->controlPanel->updateMinValueAlternate(1.);
         this->controlPanel->setMaxTexValAlternate(max);
         this->controlPanel->updateMaxValueAlternate(max);
-        this->slotSetMaxColorValueAlternate(max);
     } else {
+        this->controlPanel->setMinTexVal(1.);
+        this->controlPanel->updateMinValue(1.);
         this->controlPanel->setMaxTexVal(max);
         this->controlPanel->updateMaxValue(max);
-        this->slotSetMaxColorValue(max);
     }
     this->setColorChannel(ColorChannel::RedOnly);
     this->setColorFunction_r(ColorFunction::ColorMagnitude);
@@ -661,8 +661,8 @@ void Scene::drawScene(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool show
     if (this->shouldUpdateUserColorScales) {
         this->newSHADERS_updateUserColorScales();
     }
-    if (this->shouldUpdateUBOData) {
-        this->newSHADERS_updateUBOData();
+    if (this->needUpdateMinMaxDisplayValues) {
+        this->updateMinMaxDisplayValues();
     }
 
     this->setLightPosition(camPos);
@@ -716,9 +716,7 @@ void Scene::drawScene(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool show
                 for(auto i : this->gridsToDraw) {
                     if(i < this->grids.size()) {
                         this->gridToDraw = i;
-                        DrawableGrid * drawable_grid = this->drawable_grids[this->gridToDraw];
-                        drawable_grid->prepareUniforms(mvMat, pMat, camPos, this->computePlanePositionsWithActivation(), this->planeDirection, !false);
-                        drawable_grid->drawGrid(mvMat, pMat, camPos, false);
+                        this->drawable_grids[this->gridToDraw]->drawGrid(mvMat, pMat, camPos, this->computePlanePositionsWithActivation(), this->planeDirection, false);
                     }
                 }
                 this->gridToDraw = originalGridToDraw;
@@ -736,68 +734,14 @@ void Scene::drawScene(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool show
     this->glSelection->draw(mvMat, pMat, glm::value_ptr(mMat));
 }
 
-void Scene::newSHADERS_updateUBOData() {
+void Scene::updateMinMaxDisplayValues() {
     if(grids.size() == 0)
         return;
 
-    this->shouldUpdateUBOData = false;
-    for (const auto& grid : this->grids) {
-        this->setUniformBufferData(grid->uboHandle_colorAttributes, 0, 32, &grid->mainColorChannelAttributes());
-        this->setUniformBufferData(grid->uboHandle_colorAttributes, 32, 32, &grid->colorChannelAttributes[0]);
-        this->setUniformBufferData(grid->uboHandle_colorAttributes, 64, 32, &grid->colorChannelAttributes[1]);
-        this->setUniformBufferData(grid->uboHandle_colorAttributes, 96, 32, &grid->colorChannelAttributes[2]);
-
+    this->needUpdateMinMaxDisplayValues = false;
+    for(auto& grid : this->drawable_grids) {
+        grid->updateMinMaxDisplayValues();
     }
-
-    auto& grid = this->grids[this->gridToDraw];
-    float maxValue = grid->maxValue;
-    glDeleteTextures(1, &grid->valuesRangeToDisplay);
-
-    TextureUpload texParams;
-
-    texParams.minmag.x         = GL_NEAREST;
-    texParams.minmag.y         = GL_NEAREST;
-    texParams.lod.y	           = -1000.f;
-    texParams.wrap.s	       = GL_CLAMP_TO_EDGE;
-    texParams.wrap.t	       = GL_CLAMP_TO_EDGE;
-
-    texParams.internalFormat   = GL_RGB32F;
-    texParams.size.y		   = 1;
-    texParams.size.z		   = 1;
-    texParams.format		   = GL_RGB;
-    texParams.type		       = GL_FLOAT;
-
-    std::vector<glm::vec3> data;
-    std::vector<glm::vec3> data_color;
-    for(int i = 0; i <= maxValue; ++i) {
-        data.push_back(glm::vec3(0., 0., 0.));
-        data_color.push_back(glm::vec3(0., 0., 0.));
-    }
-    for(int i = 0; i < grid->visu.size(); ++i) {
-        if(grid->visu_visi[i]) {
-            for(int j = grid->visu[i].first; j <= grid->visu[i].second; ++j) {
-                if(j < data.size()) {
-                    data[j] = glm::vec3(1., 1., 1.);
-                    data_color[j] = grid->visu_color[i];
-                }
-            }
-        }
-    }
-
-    texParams.size.x		   = data.size();
-    texParams.data			   = data.data();
-
-    grid->valuesRangeToDisplay = this->uploadTexture1D(texParams);
-
-    texParams.size.x		   = data_color.size();
-    texParams.data			   = data_color.data();
-
-    grid->valuesRangeColorToDisplay = this->uploadTexture1D(texParams);
-
-    grid->visu_map = data;
-    grid->color_map = data_color;
-
-    std::cout << "Update FBO" << std::endl;
     Q_EMIT meshMoved();// To update the 2D viewer
 }
 
@@ -867,7 +811,7 @@ void Scene::setColorFunction_r(ColorFunction _c) {
         grids[0]->colorChannelAttributes[0].setColorScale(static_cast<int>(_c));
         grids[0]->colorChannelAttributes[1].setColorScale(static_cast<int>(_c));
     }
-    this->shouldUpdateUBOData = true;
+    this->needUpdateMinMaxDisplayValues = true;
 }
 
 void Scene::setColorFunction_g(ColorFunction _c) {
@@ -887,7 +831,7 @@ void Scene::setColorFunction_g(ColorFunction _c) {
         grids[1]->colorChannelAttributes[0].setColorScale(static_cast<int>(_c));
         grids[1]->colorChannelAttributes[1].setColorScale(static_cast<int>(_c));
     }
-    this->shouldUpdateUBOData = true;
+    this->needUpdateMinMaxDisplayValues = true;
 }
 
 void Scene::slotSetPlaneDisplacementX(float scalar) {
@@ -940,42 +884,48 @@ void Scene::slotTogglePlaneZ(bool display) {
     }
 }
 
-void Scene::slotSetMinTexValue(double val) {
-    this->textureBounds0.x = val;
-    this->updateCVR();
-}
-void Scene::slotSetMaxTexValue(double val) {
-    this->textureBounds0.y = val;
-    this->updateCVR();
-}
-void Scene::slotSetMinTexValueAlternate(double val) {
-    this->textureBounds1.x = val;
-    this->updateCVR();
-}
-void Scene::slotSetMaxTexValueAlternate(double val) {
-    this->textureBounds1.y = val;
-    this->updateCVR();
+void Scene::setDisplayRange(int gridIdx, ValueType type, double value) {
+    if(this->grids.size() > 0 && gridIdx < this->grids.size()) {
+        // Always 0 here because this is the "main" channel
+        // In this version the software can't handle multiple channel images
+        if(type == ValueType::MIN)
+            this->grids[gridIdx]->colorChannelAttributes[0].setMinVisible(value);
+        else
+            this->grids[gridIdx]->colorChannelAttributes[0].setMaxVisible(value);
+    }
+    this->updateMinMaxDisplayValues();
 }
 
-void Scene::slotSetMinColorValue(double val) {
-    this->colorBounds0.x = val;
-    this->updateCVR();
-}
-void Scene::slotSetMaxColorValue(double val) {
-    this->colorBounds0.y = val;
-    this->updateCVR();
-}
-void Scene::slotSetMinColorValueAlternate(double val) {
-    this->colorBounds1.x = val;
-    this->updateCVR();
-}
-void Scene::slotSetMaxColorValueAlternate(double val) {
-    this->colorBounds1.y = val;
-    this->updateCVR();
+double Scene::getDisplayRange(int gridIdx, ValueType type) {
+    if(this->grids.size() > 0 && gridIdx < this->grids.size()) {
+        if(type == ValueType::MIN)
+            return this->grids[gridIdx]->colorChannelAttributes[0].getVisibleRange().x;
+        else
+            return this->grids[gridIdx]->colorChannelAttributes[0].getVisibleRange().y;
+    }
+    return 0.;
 }
 
-Image::bbox_t Scene::getSceneBoundingBox() const {
-    return this->sceneBB;
+void Scene::setMinMaxDisplayRange(int gridIdx, ValueType type, double value) {
+    if(this->grids.size() > 0 && gridIdx < this->grids.size()) {
+        // Always 0 here because this is the "main" channel
+        // In this version the software can't handle multiple channel images
+        if(type == ValueType::MIN)
+            this->grids[gridIdx]->colorChannelAttributes[0].setMinColorScale(value);
+        else
+            this->grids[gridIdx]->colorChannelAttributes[0].setMaxColorScale(value);
+    }
+    this->updateMinMaxDisplayValues();
+}
+
+double Scene::getMinMaxDisplayRange(int gridIdx, ValueType type) {
+    if(this->grids.size() > 0 && gridIdx < this->grids.size()) {
+        if(type == ValueType::MIN)
+            return this->grids[gridIdx]->colorChannelAttributes[0].getColorRange().x;
+        else
+            return this->grids[gridIdx]->colorChannelAttributes[0].getColorRange().y;
+    }
+    return 0.;
 }
 
 void Scene::setColor0(qreal r, qreal g, qreal b) {
@@ -1068,12 +1018,12 @@ void Scene::newSHADERS_updateUserColorScales() {
     colorScaleUploadParameters.type			  = GL_FLOAT;
     if(this->drawable_grids.size() > 0) {
         colorScaleUploadParameters.data			  = colorScaleData_user0.data();
-        this->drawable_grids[0]->tex_colorScale_user = this->uploadTexture1D(colorScaleUploadParameters);
+        this->drawable_grids[0]->colorScaleUser = this->uploadTexture1D(colorScaleUploadParameters);
     }
 
     if(this->drawable_grids.size() > 1) {
         colorScaleUploadParameters.data	 = colorScaleData_user1.data();
-        this->drawable_grids[1]->tex_colorScale_user = this->uploadTexture1D(colorScaleUploadParameters);
+        this->drawable_grids[1]->colorScaleUser = this->uploadTexture1D(colorScaleUploadParameters);
     }
 }
 
@@ -1100,7 +1050,7 @@ void Scene::updateCVR() {
         i++;
     }
 
-    this->shouldUpdateUBOData = true;
+    this->needUpdateMinMaxDisplayValues = true;
 }
 
 bool contain(const InfoToSend& value, const InfoToSend& contain) {
@@ -1378,7 +1328,7 @@ void Scene::setColorChannel(ColorChannel mode) {
                 break;
         }
     });
-    this->shouldUpdateUBOData = true;
+    this->needUpdateMinMaxDisplayValues = true;
     switch (mode) {
         case ColorChannel::None:
             std::cerr << "Set mode to none" << '\n';
@@ -2669,7 +2619,7 @@ void Scene::resetRanges() {
    grid->visu.clear();
    grid->visu_color.clear();
    grid->visu_visi.clear();
-   this->newSHADERS_updateUBOData();
+   this->updateMinMaxDisplayValues();
 }
 
 void Scene::addRange(uint16_t min, uint16_t max, glm::vec3 color, bool visible, bool updateUBO) {
@@ -2680,7 +2630,7 @@ void Scene::addRange(uint16_t min, uint16_t max, glm::vec3 color, bool visible, 
    grid->visu_color.push_back(color);
    grid->visu_visi.push_back(visible);
    if(updateUBO)
-       this->newSHADERS_updateUBOData();
+       this->updateMinMaxDisplayValues();
 }
 
 void Scene::getRanges(std::vector<std::pair<uint16_t, uint16_t>>& ranges) {

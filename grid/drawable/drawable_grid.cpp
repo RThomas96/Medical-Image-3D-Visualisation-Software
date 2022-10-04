@@ -7,11 +7,8 @@
 DrawableGrid::DrawableGrid(GridGLView::Ptr grid): gl(nullptr) {
     this->displayTetmesh = false;
 
-    this->program_VolumetricViewer = 0;
-    this->tex_ColorScaleGrid			= 0;
-    this->tex_ColorScaleGridAlternate = 0;
-    this->tex_ColorScaleGrid = 0;
-    this->vao_VolumetricBuffers = 0;
+    this->program = 0;
+    this->vaoVolumetricBuffers = 0;
     this->grid = grid;
     this->blendFirstPass = 1.;
     this->drawOnlyBoundaries = true;
@@ -24,8 +21,8 @@ void DrawableGrid::recompileShaders() {
     std::cout << "Compile shaders of drawable grid" << std::endl;
     GLuint newVolumetricProgram	 = this->compileShaders("../shaders/transfer_mesh.vert", "../shaders/transfer_mesh.geom", "../shaders/transfer_mesh.frag");
     if (newVolumetricProgram) {
-        gl->glDeleteProgram(this->program_VolumetricViewer);
-        this->program_VolumetricViewer = newVolumetricProgram;
+        gl->glDeleteProgram(this->program);
+        this->program = newVolumetricProgram;
     }
 }
 
@@ -99,12 +96,12 @@ void DrawableGrid::generateColorScales() {
     colorScaleUploadParameters.type			  = GL_FLOAT;
     colorScaleUploadParameters.data			  = colorScaleData_greyscale.data();
 
-    glDeleteTextures(1, &this->tex_colorScale_greyscale);
-    this->tex_colorScale_greyscale = this->uploadTexture1D(colorScaleUploadParameters);
+    glDeleteTextures(1, &this->colorScaleGreyscale);
+    this->colorScaleGreyscale = this->uploadTexture1D(colorScaleUploadParameters);
 
     colorScaleUploadParameters.data	   = colorScaleData_hsv2rgb.data();
-    glDeleteTextures(1, &this->tex_colorScale_hsv2rgb);
-    this->tex_colorScale_hsv2rgb = this->uploadTexture1D(colorScaleUploadParameters);
+    glDeleteTextures(1, &this->colorScaleHsv2rgb);
+    this->colorScaleHsv2rgb = this->uploadTexture1D(colorScaleUploadParameters);
 }
 
 void DrawableGrid::createBuffers() {
@@ -129,11 +126,11 @@ void DrawableGrid::createBuffers() {
         return buf;
     };
 
-    this->vao_VolumetricBuffers  = createVAO("vaoHandle_VolumetricBuffers");
-    this->vbo_Texture3D_VertPos  = createVBO(GL_ARRAY_BUFFER, "vboHandle_Texture3D_VertPos");
-    this->vbo_Texture3D_VertNorm = createVBO(GL_ARRAY_BUFFER, "vboHandle_Texture3D_VertNorm");
-    this->vbo_Texture3D_VertTex  = createVBO(GL_ARRAY_BUFFER, "vboHandle_Texture3D_VertTex");
-    this->vbo_Texture3D_VertIdx  = createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_Texture3D_VertIdx");
+    this->vaoVolumetricBuffers  = createVAO("vaoHandle_VolumetricBuffers");
+    this->vboTexture3DVertPos  = createVBO(GL_ARRAY_BUFFER, "vboHandle_Texture3D_VertPos");
+    this->vboTexture3DVertNorm = createVBO(GL_ARRAY_BUFFER, "vboHandle_Texture3D_VertNorm");
+    this->vboTexture3DVertTex  = createVBO(GL_ARRAY_BUFFER, "vboHandle_Texture3D_VertTex");
+    this->vboTexture3DVertIdx  = createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_Texture3D_VertIdx");
 
     glGenTextures(1, &this->dualRenderingTexture);
 
@@ -182,11 +179,11 @@ GLuint DrawableGrid::compileShaders(std::string _vPath, std::string _gPath, std:
 void DrawableGrid::prepareUniforms(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, glm::vec3 planePosition, glm::vec3 planeDirection, bool drawFront) {
     /// @brief Shortcut for glGetUniform, since this can result in long lines.
     auto getUniform = [&](const char* name) -> GLint {
-        GLint g = gl->glGetUniformLocation(program_VolumetricViewer, name);
+        GLint g = gl->glGetUniformLocation(program, name);
         return g;
     };
 
-    gl->glUseProgram(program_VolumetricViewer);
+    gl->glUseProgram(program);
 
     std::size_t tex = 0;
     glActiveTexture(GL_TEXTURE0 + tex);
@@ -220,16 +217,6 @@ void DrawableGrid::prepareUniforms(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camP
     tex++;
 
     glActiveTexture(GL_TEXTURE0 + tex);
-    glBindTexture(GL_TEXTURE_2D, this->tex_ColorScaleGrid);
-    gl->glUniform1i(getUniform("visiblity_map"), tex);
-    tex++;
-
-    glActiveTexture(GL_TEXTURE0 + tex);
-    glBindTexture(GL_TEXTURE_2D, this->tex_ColorScaleGridAlternate);
-    gl->glUniform1i(getUniform("visiblity_map_alternate"), tex);
-    tex++;
-
-    glActiveTexture(GL_TEXTURE0 + tex);
     glBindTexture(GL_TEXTURE_2D, this->dualRenderingTexture);
     gl->glUniform1i(getUniform("firstPass_texture"), tex);
     tex++;
@@ -239,11 +226,15 @@ void DrawableGrid::prepareUniforms(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camP
     gl->glUniform1i(getUniform("firstPass_depthTexture"), tex);
     tex++;
 
+    // For the segmented data visualisation
+    // 1D texture that contain the value ranges to display
     glActiveTexture(GL_TEXTURE0 + tex);
     glBindTexture(GL_TEXTURE_1D, grid->valuesRangeToDisplay);
     gl->glUniform1i(getUniform("valuesRangeToDisplay"), tex);
     tex++;
 
+    // For the segmented data visualisation
+    // 1D texture that contain the color associated for each range
     glActiveTexture(GL_TEXTURE0 + tex);
     glBindTexture(GL_TEXTURE_1D, grid->valuesRangeColorToDisplay);
     gl->glUniform1i(getUniform("colorRangeToDisplay"), tex);
@@ -287,29 +278,28 @@ void DrawableGrid::prepareUniforms(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camP
 
     gl->glUniform3fv(getUniform("color0"), 1, glm::value_ptr(grid->color_0));
     gl->glUniform3fv(getUniform("color1"), 1, glm::value_ptr(grid->color_1));
-    gl->glUniform3fv(getUniform("color0Alternate"), 1, glm::value_ptr(grid->color_0));
-    gl->glUniform3fv(getUniform("color1Alternate"), 1, glm::value_ptr(grid->color_1));
 
     glActiveTexture(GL_TEXTURE0 + tex);
-    glBindTexture(GL_TEXTURE_1D, this->tex_colorScale_greyscale);
+    glBindTexture(GL_TEXTURE_1D, this->colorScaleGreyscale);
     gl->glUniform1i(getUniform("colorScales[0]"), tex);
     tex++;
 
     glActiveTexture(GL_TEXTURE0 + tex);
-    glBindTexture(GL_TEXTURE_1D, this->tex_colorScale_hsv2rgb);
+    glBindTexture(GL_TEXTURE_1D, this->colorScaleHsv2rgb);
     gl->glUniform1i(getUniform("colorScales[1]"), tex);
     tex++;
 
     glActiveTexture(GL_TEXTURE0 + tex);
-    glBindTexture(GL_TEXTURE_1D, this->tex_colorScale_user);
+    glBindTexture(GL_TEXTURE_1D, this->colorScaleUser);
     gl->glUniform1i(getUniform("colorScales[2]"), tex);
     tex++;
 
     glActiveTexture(GL_TEXTURE0 + tex);
-    glBindTexture(GL_TEXTURE_1D, this->tex_colorScale_user);
+    glBindTexture(GL_TEXTURE_1D, this->colorScaleUser);
     gl->glUniform1i(getUniform("colorScales[3]"), tex);
     tex++;
 
+    // Directly copy the uboHandle_color class into the GPU
     gl->glBindBufferBase(GL_UNIFORM_BUFFER, 0, grid->uboHandle_colorAttributes);
 }
 
@@ -391,35 +381,37 @@ void DrawableGrid::tex3D_buildBuffers() {
       6., 6., 7., 7., 8., 8.,
       9., 9., 10., 10., 11., 11.};
 
-    gl->glBindBuffer(GL_ARRAY_BUFFER, this->vbo_Texture3D_VertPos);
+    gl->glBindBuffer(GL_ARRAY_BUFFER, this->vboTexture3DVertPos);
     gl->glBufferData(GL_ARRAY_BUFFER, 12 * 3 * sizeof(GLfloat), vertices, GL_STATIC_DRAW);
 
-    gl->glBindBuffer(GL_ARRAY_BUFFER, this->vbo_Texture3D_VertNorm);
+    gl->glBindBuffer(GL_ARRAY_BUFFER, this->vboTexture3DVertNorm);
     gl->glBufferData(GL_ARRAY_BUFFER, 12 * 3 * sizeof(GLfloat), normals, GL_STATIC_DRAW);
 
-    gl->glBindBuffer(GL_ARRAY_BUFFER, this->vbo_Texture3D_VertTex);
+    gl->glBindBuffer(GL_ARRAY_BUFFER, this->vboTexture3DVertTex);
     gl->glBufferData(GL_ARRAY_BUFFER, 12 * 2 * sizeof(GLfloat), textureCoords, GL_STATIC_DRAW);
 
-    gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vbo_Texture3D_VertIdx);
+    gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboTexture3DVertIdx);
     gl->glBufferData(GL_ELEMENT_ARRAY_BUFFER, 12 * sizeof(GLushort), indices, GL_STATIC_DRAW);
 }
 
-void DrawableGrid::drawGrid(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool inFrame) {
-    gl->glBindVertexArray(this->vao_VolumetricBuffers);
+void DrawableGrid::drawGrid(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, glm::vec3 planePosition, glm::vec3 planeDirection, bool inFrame) {
+    //this->updateMinMaxDisplayValues();
+    this->prepareUniforms(mvMat, pMat, camPos, planePosition, planeDirection, !inFrame);
+    gl->glBindVertexArray(this->vaoVolumetricBuffers);
 
     gl->glEnableVertexAttribArray(0);
-    gl->glBindBuffer(GL_ARRAY_BUFFER, this->vbo_Texture3D_VertPos);
+    gl->glBindBuffer(GL_ARRAY_BUFFER, this->vboTexture3DVertPos);
     gl->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
 
     gl->glEnableVertexAttribArray(1);
-    gl->glBindBuffer(GL_ARRAY_BUFFER, this->vbo_Texture3D_VertNorm);
+    gl->glBindBuffer(GL_ARRAY_BUFFER, this->vboTexture3DVertNorm);
     gl->glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*) 0);
 
     gl->glEnableVertexAttribArray(2);
-    gl->glBindBuffer(GL_ARRAY_BUFFER, this->vbo_Texture3D_VertTex);
+    gl->glBindBuffer(GL_ARRAY_BUFFER, this->vboTexture3DVertTex);
     gl->glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*) 0);
 
-    gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vbo_Texture3D_VertIdx);
+    gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboTexture3DVertIdx);
 
     if(inFrame && this->multiGridRendering) {
         GLint defaultFBO;
@@ -481,4 +473,63 @@ void DrawableGrid::setMultiGridRendering(bool value) {
     //        this->sendTetmeshToGPU(gridIdx, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS | InfoToSend::TEXCOORD | InfoToSend::NEIGHBORS));
     //    }
     //}
+}
+
+void DrawableGrid::setUniformBufferData(GLuint uniform_buffer, std::size_t begin_bytes, std::size_t size_bytes, GLvoid* data) {
+    gl->glBindBuffer(GL_UNIFORM_BUFFER, uniform_buffer);
+    gl->glBufferSubData(GL_UNIFORM_BUFFER, begin_bytes, size_bytes, data);
+}
+
+void DrawableGrid::updateMinMaxDisplayValues() {
+    this->setUniformBufferData(grid->uboHandle_colorAttributes, 0, 32, &grid->mainColorChannelAttributes());
+    this->setUniformBufferData(grid->uboHandle_colorAttributes, 32, 32, &grid->colorChannelAttributes[0]);
+    this->setUniformBufferData(grid->uboHandle_colorAttributes, 64, 32, &grid->colorChannelAttributes[1]);
+    this->setUniformBufferData(grid->uboHandle_colorAttributes, 96, 32, &grid->colorChannelAttributes[2]);
+
+    float maxValue = grid->maxValue;
+    glDeleteTextures(1, &grid->valuesRangeToDisplay);
+
+    TextureUpload texParams;
+
+    texParams.minmag.x         = GL_NEAREST;
+    texParams.minmag.y         = GL_NEAREST;
+    texParams.lod.y	           = -1000.f;
+    texParams.wrap.s	       = GL_CLAMP_TO_EDGE;
+    texParams.wrap.t	       = GL_CLAMP_TO_EDGE;
+
+    texParams.internalFormat   = GL_RGB32F;
+    texParams.size.y		   = 1;
+    texParams.size.z		   = 1;
+    texParams.format		   = GL_RGB;
+    texParams.type		       = GL_FLOAT;
+
+    std::vector<glm::vec3> data;
+    std::vector<glm::vec3> data_color;
+    for(int i = 0; i <= maxValue; ++i) {
+        data.push_back(glm::vec3(0., 0., 0.));
+        data_color.push_back(glm::vec3(0., 0., 0.));
+    }
+    for(int i = 0; i < grid->visu.size(); ++i) {
+        if(grid->visu_visi[i]) {
+            for(int j = grid->visu[i].first; j <= grid->visu[i].second; ++j) {
+                if(j < data.size()) {
+                    data[j] = glm::vec3(1., 1., 1.);
+                    data_color[j] = grid->visu_color[i];
+                }
+            }
+        }
+    }
+
+    texParams.size.x		   = data.size();
+    texParams.data			   = data.data();
+
+    grid->valuesRangeToDisplay = this->uploadTexture1D(texParams);
+
+    texParams.size.x		   = data_color.size();
+    texParams.data			   = data_color.data();
+
+    grid->valuesRangeColorToDisplay = this->uploadTexture1D(texParams);
+
+    grid->visu_map = data;
+    grid->color_map = data_color;
 }

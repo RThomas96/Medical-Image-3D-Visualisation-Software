@@ -25,50 +25,52 @@
 
 class DrawableGrid {
 public:
-    DrawableGrid(GridGLView::Ptr grid);
-    virtual ~DrawableGrid() = default;
-
-    void initializeGL(ShaderCompiler::GLFunctions *functions);
-    void drawGrid(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool inFrame);
-
-    void prepareUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, glm::vec3 planePosition, glm::vec3 planeDirection, bool drawFront);
-    void setMultiGridRendering(bool value);
-    void recompileShaders();
-    void generateColorScales();
-    void tex3D_buildBuffers();
-    GLuint uploadTexture1D(const TextureUpload& tex);
-
     bool multiGridRendering;
     bool displayTetmesh;
     bool drawOnlyBoundaries;
     float blendFirstPass;
 
-    GLuint frameBuffer;
+    DrawableGrid(GridGLView::Ptr grid);
+    virtual ~DrawableGrid() = default;
 
-    GLuint program_VolumetricViewer;
-    GLuint tex_ColorScaleGrid;
-    GLuint tex_colorScale_greyscale;
-    GLuint tex_colorScale_hsv2rgb;
-    GLuint tex_colorScale_user;
+    void initializeGL(ShaderCompiler::GLFunctions *functions);
+    void drawGrid(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, glm::vec3 planePosition, glm::vec3 planeDirection, bool drawFront);
 
-    GLuint tex_ColorScaleGridAlternate;
-    GLuint dualRenderingTexture;
-    GLuint frameDepthBuffer;
+    void setMultiGridRendering(bool value);
+    void recompileShaders();
+    void updateMinMaxDisplayValues();
 
-    GLuint vao_VolumetricBuffers;
-    GLuint vbo_Texture3D_VertPos;
-    GLuint vbo_Texture3D_VertNorm;
-    GLuint vbo_Texture3D_VertTex;
-    GLuint vbo_Texture3D_VertIdx;
+    GLuint colorScaleUser;
 protected:
+    GLuint program;
+
+    GLuint vaoVolumetricBuffers;
+    GLuint vboTexture3DVertPos;
+    GLuint vboTexture3DVertNorm;
+    GLuint vboTexture3DVertTex;
+    GLuint vboTexture3DVertIdx;
+
+    GLuint colorScaleGreyscale;
+    GLuint colorScaleHsv2rgb;
+
+    GLuint frameBuffer;
+    GLuint frameDepthBuffer;
+    GLuint dualRenderingTexture;
 
     GridGLView::Ptr grid;
 
-    ShaderCompiler::GLFunctions* gl;
+    // Shader compilation management
+    ShaderCompiler::GLFunctions * gl;
     std::unique_ptr<ShaderCompiler> shaderCompiler;
     GLuint compileShaders(std::string _vPath, std::string _gPath, std::string _fPath);
 
+    // Utils
+    void prepareUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, glm::vec3 planePosition, glm::vec3 planeDirection, bool drawFront);
     void createBuffers();
+    void generateColorScales();
+    void tex3D_buildBuffers();
+    GLuint uploadTexture1D(const TextureUpload& tex);
+    void setUniformBufferData(GLuint uniform_buffer, std::size_t begin_bytes, std::size_t size_bytes, GLvoid* data);
 };
 
 #endif	  // VISUALISATION_MESHES_DRAWABLE_MESH_HPP_

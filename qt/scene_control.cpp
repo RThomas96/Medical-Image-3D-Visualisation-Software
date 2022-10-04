@@ -41,11 +41,11 @@ ColorBoundsControl::~ColorBoundsControl() = default;
 void ColorBoundsControl::getCurrentValues() {
 	int mi, ma;
 	if (this->_primary) {
-		mi = static_cast<int>(this->scene->getMinColorValue());
-		ma = static_cast<int>(this->scene->getMaxColorValue());
+        mi = static_cast<int>(this->scene->getMinMaxDisplayRange(0, Scene::ValueType::MIN));
+        ma = static_cast<int>(this->scene->getMinMaxDisplayRange(0, Scene::ValueType::MAX));
 	} else {
-		mi = static_cast<int>(this->scene->getMinColorValueAlternate());
-		ma = static_cast<int>(this->scene->getMaxColorValueAlternate());
+        mi = static_cast<int>(this->scene->getMinMaxDisplayRange(1, Scene::ValueType::MIN));
+        ma = static_cast<int>(this->scene->getMinMaxDisplayRange(1, Scene::ValueType::MAX));
 	}
 	this->sb_min->setValue(mi);
 	this->sb_max->setValue(ma);
@@ -254,10 +254,10 @@ void ControlPanel::updateValues(void) {
 	this->rangeslider_red->blockSignals(true);
 	this->rangeslider_green->blockSignals(true);
 
-	this->min		   = this->sceneToControl->getMinTexValue();
-	this->max		   = this->sceneToControl->getMaxTexValue();
-	this->minAlternate = this->sceneToControl->getMinTexValueAlternate();
-	this->maxAlternate = this->sceneToControl->getMaxTexValueAlternate();
+    this->min          = this->sceneToControl->getMinMaxDisplayRange(0, Scene::ValueType::MIN);
+    this->max          = this->sceneToControl->getMinMaxDisplayRange(0, Scene::ValueType::MAX);
+    this->minAlternate = this->sceneToControl->getMinMaxDisplayRange(1, Scene::ValueType::MIN);
+    this->maxAlternate = this->sceneToControl->getMinMaxDisplayRange(1, Scene::ValueType::MAX);
 
 	this->rangeslider_red->setRange(this->min, this->max);
 	this->rangeslider_green->setRange(this->minAlternate, this->maxAlternate);
@@ -279,12 +279,12 @@ void ControlPanel::launchRedColorBounds() {
 		});
 		QObject::connect(this->cb_red_bounds, &ColorBoundsControl::minChanged, this, [this](int val) {
 			this->updateMinValue(val);
-			this->sceneToControl->slotSetMinColorValue(static_cast<double>(val));
+            this->sceneToControl->setMinMaxDisplayRange(0, Scene::ValueType::MIN, static_cast<double>(val));
 		});
 		QObject::connect(this->cb_red_bounds, &ColorBoundsControl::maxChanged, this, [this](int val) {
 			this->updateMaxValue(val);
-			this->sceneToControl->slotSetMaxColorValue(static_cast<double>(val));
-		});
+            this->sceneToControl->setMinMaxDisplayRange(0, Scene::ValueType::MAX, static_cast<double>(val));
+        });
 	}
 	this->cb_red_bounds->raise();
 	this->cb_red_bounds->show();
@@ -298,12 +298,12 @@ void ControlPanel::launchGreenColorBounds() {
 		});
 		QObject::connect(this->cb_green_bounds, &ColorBoundsControl::minChanged, this, [this](int val) {
 			this->updateMinValueAlternate(val);
-			this->sceneToControl->slotSetMinColorValueAlternate(static_cast<double>(val));
-		});
+            this->sceneToControl->setMinMaxDisplayRange(1, Scene::ValueType::MIN, static_cast<double>(val));
+        });
 		QObject::connect(this->cb_green_bounds, &ColorBoundsControl::maxChanged, this, [this](int val) {
 			this->updateMaxValueAlternate(val);
-			this->sceneToControl->slotSetMaxColorValueAlternate(static_cast<double>(val));
-		});
+            this->sceneToControl->setMinMaxDisplayRange(1, Scene::ValueType::MAX, static_cast<double>(val));
+        });
 	}
 	this->cb_green_bounds->raise();
 	this->cb_green_bounds->show();
@@ -385,16 +385,16 @@ void ControlPanel::setMinTexVal(double val) {
 	this->min = val;
 	// update scene data :
 	if (this->sceneToControl) {
-		this->sceneToControl->slotSetMinTexValue(val);
-	}
+        this->sceneToControl->setDisplayRange(0, Scene::ValueType::MIN, static_cast<double>(val));
+    }
 	this->updateViewers();
 }
 
 void ControlPanel::setMaxTexVal(double val) {
 	this->max = val;
 	if (this->sceneToControl) {
-		this->sceneToControl->slotSetMaxTexValue(val);
-	}
+        this->sceneToControl->setDisplayRange(0, Scene::ValueType::MAX, static_cast<double>(val));
+    }
 	this->updateViewers();
 }
 
@@ -402,16 +402,16 @@ void ControlPanel::setMinTexValAlternate(double val) {
 	this->minAlternate = val;
 	// update scene data :
 	if (this->sceneToControl) {
-		this->sceneToControl->slotSetMinTexValueAlternate(val);
-	}
+        this->sceneToControl->setDisplayRange(1, Scene::ValueType::MIN, static_cast<double>(val));
+    }
 	this->updateViewers();
 }
 
 void ControlPanel::setMaxTexValAlternate(double val) {
 	this->maxAlternate = val;
 	if (this->sceneToControl) {
-		this->sceneToControl->slotSetMaxTexValueAlternate(val);
-	}
+        this->sceneToControl->setDisplayRange(1, Scene::ValueType::MAX, static_cast<double>(val));
+    }
 	this->updateViewers();
 }
 
