@@ -102,7 +102,6 @@ Scene::Scene() {
     this->program_projectedTex	 = 0;
     this->program_Plane3D			 = 0;
     this->program_PlaneViewer		 = 0;
-    this->program_VolumetricViewer = 0;
     this->program_BoundingBox		 = 0;
 
     this->tex_ColorScaleGrid			= 0;
@@ -573,10 +572,12 @@ void Scene::updateBoundingBox(void) {
 }
 
 void Scene::recompileShaders(bool verbose) {
+    if(this->gridToDraw >= 0)
+        this->drawable_grids[this->gridToDraw]->recompileShaders();
+
     GLuint newProgram			 = this->compileShaders("../shaders/voxelgrid.vert", "../shaders/voxelgrid.geom", "../shaders/voxelgrid.frag", verbose);
     GLuint newPlaneProgram		 = this->compileShaders("../shaders/plane.vert", "", "../shaders/plane.frag", verbose);
     GLuint newPlaneViewerProgram = this->compileShaders("../shaders/texture_explorer.vert", "", "../shaders/texture_explorer.frag", verbose);
-    GLuint newVolumetricProgram	 = this->compileShaders("../shaders/transfer_mesh.vert", "../shaders/transfer_mesh.geom", "../shaders/transfer_mesh.frag", verbose);
     GLuint newBoundingBoxProgram = this->compileShaders("../shaders/bounding_box.vert", "", "../shaders/bounding_box.frag", verbose);
     GLuint newSphereProgram		 = this->compileShaders("../shaders/sphere.vert", "", "../shaders/sphere.frag", true);
     GLuint newSelectionProgram	 = this->compileShaders("../shaders/selection.vert", "", "../shaders/selection.frag", true);
@@ -594,10 +595,6 @@ void Scene::recompileShaders(bool verbose) {
     if (newPlaneViewerProgram) {
         glDeleteProgram(this->program_PlaneViewer);
         this->program_PlaneViewer = newPlaneViewerProgram;
-    }
-    if (newVolumetricProgram) {
-        glDeleteProgram(this->program_VolumetricViewer);
-        this->program_VolumetricViewer = newVolumetricProgram;
     }
     if (newBoundingBoxProgram) {
         glDeleteProgram(this->program_BoundingBox);
@@ -840,7 +837,10 @@ GLuint Scene::newAPI_uploadTexture3D(const GLuint texHandle, const TextureUpload
 void Scene::drawGrid(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const GridGLView::Ptr& grid, bool inFrame) {
 
     if (grid->gridTexture > 0) {
-        glUseProgram(this->program_VolumetricViewer);
+
+        DrawableGrid * drawable_grid = this->drawable_grids[this->gridToDraw];
+
+        glUseProgram(drawable_grid->program_VolumetricViewer);
 
         this->prepareUniformsGrid(mvMat, pMat, camPos, grid, !inFrame);
 
@@ -971,14 +971,16 @@ void Scene::printAllUniforms(GLuint _shader_program) {
     }
 }
 
-//void Scene::prepareUniformsGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const GridGLView::Ptr& _grid) {
 void Scene::prepareUniformsGrid(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const GridGLView::Ptr& _grid, bool drawFront) {
+
+    DrawableGrid * drawable_grid = this->drawable_grids[this->gridToDraw];
+    drawable_grid->prepareUniforms();
 
     // We assume the right program has been bound.
 
     /// @brief Shortcut for glGetUniform, since this can result in long lines.
     auto getUniform = [&](const char* name) -> GLint {
-        GLint g = glGetUniformLocation(this->program_VolumetricViewer, name);
+        GLint g = glGetUniformLocation(drawable_grid->program_VolumetricViewer, name);
         return g;
     };
 
@@ -1088,27 +1090,11 @@ void Scene::prepareUniformsGrid(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos,
     GLint location_drawOnlyBoundaries    = getUniform("drawOnlyBoundaries");
     GLint location_blendFirstPass            = getUniform("blendFirstPass");
 
-    glm::vec3 planePos	   = glm::vec3(0., 0., 0.);
-    if(this->grids.size() > 0) {
-        // Bad tricks
-        Image::bbox_t::vec position = this->grids.back()->grid->bbMin;
-        Image::bbox_t::vec diagonal = this->grids.back()->grid->getDimensions();
-        planePos			= (position + this->planeDisplacement * diagonal);
-        if(this->gridToDraw == 0)
-            planePos += glm::vec3(0.1, 0.1, 0.1);
-    }
-
-    for(int i = 0; i < 3; ++i) {
-        if(this->planeActivation[i] == 0.) {
-            planePos[i] = -1000000.;
-        }
-    }
-
     Image::bbox_t::vec min = _grid->grid->bbMin;
     Image::bbox_t::vec max = _grid->grid->bbMax;
 
     glUniform3fv(location_cam, 1, glm::value_ptr(camPos));
-    glUniform3fv(location_cut, 1, glm::value_ptr(planePos));
+    glUniform3fv(location_cut, 1, glm::value_ptr(this->computePlanePositionsWithActivation()));
     glUniform3fv(location_cutDirection, 1, glm::value_ptr(this->planeDirection));
     glUniform1f(location_clipDistanceFromCamera, this->clipDistanceFromCamera);
     glUniform3fv(location_visuBBMin, 1, glm::value_ptr(min));
@@ -1200,9 +1186,6 @@ void Scene::prepareUniformsGrid(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos,
     glUniform1i(location_colorScales3, tex);
     tex++;
 
-    const GLchar uniform_block_name[] = "ColorBlock";
-    GLuint colorBlock_index			  = glGetUniformBlockIndex(this->program_projectedTex, uniform_block_name);
-    glUniformBlockBinding(this->program_projectedTex, colorBlock_index, 0);
     glBindBufferBase(GL_UNIFORM_BUFFER, 0, _grid->uboHandle_colorAttributes);
 }
 

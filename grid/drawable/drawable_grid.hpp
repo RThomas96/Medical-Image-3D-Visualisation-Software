@@ -24,13 +24,21 @@
 
 class DrawableGrid {
 public:
-    DrawableGrid(): gl(nullptr){};
+    DrawableGrid();
     virtual ~DrawableGrid() = default;
 
-    void initializeGL(ShaderCompiler::GLFunctions* functions);
+    void initializeGL(ShaderCompiler::GLFunctions *functions);
 
+    void prepareUniforms();
+    void recompileShaders();
+
+    // TODO: move
+    GLuint program_VolumetricViewer;
 protected:
+
     ShaderCompiler::GLFunctions* gl;
+    std::unique_ptr<ShaderCompiler> shaderCompiler;
+    GLuint compileShaders(std::string _vPath, std::string _gPath, std::string _fPath);
 
 };
 

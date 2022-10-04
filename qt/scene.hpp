@@ -145,7 +145,6 @@ private:
     GLuint program_projectedTex;
     GLuint program_Plane3D;
     GLuint program_PlaneViewer;
-    GLuint program_VolumetricViewer;
     GLuint program_BoundingBox;
     GLuint program_sphere;
     GLuint program_doublePass;
