@@ -141,6 +141,7 @@ ADD_EXECUTABLE(neighbor_visu
     ./grid/drawable/drawable.hpp
     #./grid/drawable/drawable_manipulator.hpp
     ./grid/drawable/drawable_selection.hpp
+    ./grid/drawable/drawable_grid.hpp
     ./grid/deformation/mesh_deformer.hpp
     ./grid/deformation/AsRigidAsPossible.h
     ./grid/deformation/CageCoordinates.h
@@ -175,6 +176,7 @@ ADD_EXECUTABLE(neighbor_visu
     ./grid/drawable/drawable.cpp
     #./grid/drawable/drawable_manipulator.cpp
     ./grid/drawable/drawable_selection.cpp
+    ./grid/drawable/drawable_grid.cpp
     ./grid/deformation/mesh_deformer.cpp
     ./grid/deformation/AsRigidAsPossible.cpp
     ./grid/deformation/cage_surface_mesh.cpp
