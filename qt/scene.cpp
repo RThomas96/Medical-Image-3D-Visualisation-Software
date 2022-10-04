@@ -24,6 +24,7 @@
 #include "../../grid/deformation/mesh_deformer.hpp"
 
 #include "../../grid/utils/apss.hpp"
+#include "glm/fwd.hpp"
 #include "grid/drawable/drawable.hpp"
 #include "grid/drawable/drawable_grid.hpp"
 #include "grid/geometry/base_mesh.hpp"
@@ -47,7 +48,6 @@ inline void __GetTexSize(std::size_t numTexNeeded, std::size_t* opt_width, std::
  *  to be drawn, even if it is empty at the time of the first call to a draw function.
  */
 Scene::Scene() {
-    this->displayTetmesh = false;
     this->meshManipulator = nullptr;
     this->distanceFromCamera = 0.;
     this->cameraPosition = glm::vec3(0., 0., 0.);
@@ -112,11 +112,6 @@ Scene::Scene() {
     this->state_idx = 0;
     this->pos_idx = 0;
 
-    this->color0		= glm::vec3(1., .0, .0);
-    this->color1		= glm::vec3(.0, .0, 1.);
-    this->color0_second = glm::vec3(1., .0, .0);
-    this->color1_second = glm::vec3(.0, .0, 1.);
-
     std::cerr << "Allocating " << +std::numeric_limits<GridGLView::data_t>::max() << " elements for vis ...\n";
 
     this->shouldUpdateUserColorScales = false;
@@ -131,8 +126,6 @@ Scene::Scene() {
     this->displayMesh = true;
     this->previewCursorInPlanarView = false;
     this->multiGridRendering = false;
-    this->drawOnlyBoundaries = true;
-    this->blendFirstPass = 1.;
 }
 
 Scene::~Scene(void) {
@@ -193,7 +186,7 @@ void Scene::initGl(QOpenGLContext* _context) {
     glGetIntegerv(GL_MAX_3D_TEXTURE_SIZE, &maximumTextureSize);
     std::cerr << "Info : max texture size was set to : " << this->maximumTextureSize << "\n";
 
-    this->generateColorScales();
+    //this->generateColorScales();
 
     this->shaderCompiler = std::make_unique<ShaderCompiler>(this);
 
@@ -213,72 +206,6 @@ void Scene::initGl(QOpenGLContext* _context) {
     //this->surfaceMesh = nullptr;
     //this->drawableMesh = nullptr;
     this->glSelection->prepare();
-}
-
-void Scene::generateColorScales() {
-    TextureUpload colorScaleUploadParameters;
-
-    std::size_t textureSize = this->maximumTextureSize / 2u;
-    float textureSize_f		= static_cast<float>(this->maximumTextureSize / 2u);
-
-    std::vector<glm::vec3> colorScaleData_greyscale(textureSize);
-    std::vector<glm::vec3> colorScaleData_hsv2rgb(textureSize);
-
-    // Generate the greyscale :
-    for (std::size_t i = 0; i < textureSize; ++i) {
-        float intensity = static_cast<float>(i) / textureSize_f;
-        glm::vec3 currentGreyscale(intensity, intensity, intensity);
-        colorScaleData_greyscale[i] = currentGreyscale;
-    }
-
-    std::cerr << "Generated data for the greyscale color scale\n";
-
-    // Generate the HSV2RGB :
-    for (std::size_t i = 0; i < textureSize; ++i) {
-        glm::vec3 hsv						= glm::vec3(float(i) / textureSize_f, 1., 1.);
-        hsv.x								= glm::mod(100.0 + hsv.x, 1.0);	   // Ensure [0,1[
-        float HueSlice						= 6.0 * hsv.x;	  // In [0,6[
-        float HueSliceInteger				= floor(HueSlice);
-        float HueSliceInterpolant			= HueSlice - HueSliceInteger;	 // In [0,1[ for each hue slice
-        glm::vec3 TempRGB					= glm::vec3(hsv.z * (1.0 - hsv.y), hsv.z * (1.0 - hsv.y * HueSliceInterpolant), hsv.z * (1.0 - hsv.y * (1.0 - HueSliceInterpolant)));
-        float IsOddSlice					= glm::mod(HueSliceInteger, 2.0f);	  // 0 if even (slices 0, 2, 4), 1 if odd (slices 1, 3, 5)
-        float ThreeSliceSelector			= 0.5 * (HueSliceInteger - IsOddSlice);	   // (0, 1, 2) corresponding to slices (0, 2, 4) and (1, 3, 5)
-        glm::vec3 ScrollingRGBForEvenSlices = glm::vec3(hsv.z, TempRGB.z, TempRGB.x);	 // (V, Temp Blue, Temp Red) for even slices (0, 2, 4)
-        glm::vec3 ScrollingRGBForOddSlices	= glm::vec3(TempRGB.y, hsv.z, TempRGB.x);	 // (Temp Green, V, Temp Red) for odd slices (1, 3, 5)
-        glm::vec3 ScrollingRGB				= mix(ScrollingRGBForEvenSlices, ScrollingRGBForOddSlices, IsOddSlice);
-        float IsNotFirstSlice				= glm::clamp(ThreeSliceSelector, 0.0f, 1.0f);	 // 1 if NOT the first slice (true for slices 1 and 2)
-        float IsNotSecondSlice				= glm::clamp(ThreeSliceSelector - 1.0f, 0.0f, 1.f);	   // 1 if NOT the first or second slice (true only for slice 2)
-        colorScaleData_hsv2rgb[i]			= glm::vec4(glm::mix(glm::vec3(ScrollingRGB), glm::mix(glm::vec3(ScrollingRGB.z, ScrollingRGB.x, ScrollingRGB.y), glm::vec3(ScrollingRGB.y, ScrollingRGB.z, ScrollingRGB.x), IsNotSecondSlice), IsNotFirstSlice), 1.f);	   // Make the RGB rotate right depending on final slice index
-    }
-
-    std::cerr << "Generated data for the HSV2RGB color scale" << '\n';
-
-    colorScaleUploadParameters.minmag.x	 = GL_LINEAR;
-    colorScaleUploadParameters.minmag.y	 = GL_LINEAR;
-    colorScaleUploadParameters.lod.y	 = -1000.f;
-    colorScaleUploadParameters.wrap.x	 = GL_CLAMP_TO_EDGE;
-    colorScaleUploadParameters.wrap.y	 = GL_CLAMP_TO_EDGE;
-    colorScaleUploadParameters.wrap.z	 = GL_CLAMP_TO_EDGE;
-    colorScaleUploadParameters.swizzle.r = GL_RED;
-    colorScaleUploadParameters.swizzle.g = GL_GREEN;
-    colorScaleUploadParameters.swizzle.b = GL_BLUE;
-    colorScaleUploadParameters.swizzle.a = GL_ONE;
-
-    colorScaleUploadParameters.level		  = 0;
-    colorScaleUploadParameters.internalFormat = GL_RGB;
-    colorScaleUploadParameters.size.x		  = textureSize;
-    colorScaleUploadParameters.size.y		  = 1;
-    colorScaleUploadParameters.size.z		  = 1;
-    colorScaleUploadParameters.format		  = GL_RGB;
-    colorScaleUploadParameters.type			  = GL_FLOAT;
-    colorScaleUploadParameters.data			  = colorScaleData_greyscale.data();
-
-    glDeleteTextures(1, &this->tex_colorScale_greyscale);
-    this->tex_colorScale_greyscale = this->uploadTexture1D(colorScaleUploadParameters);
-
-    colorScaleUploadParameters.data	   = colorScaleData_hsv2rgb.data();
-    glDeleteTextures(1, &this->tex_colorScale_hsv2rgb);
-    this->tex_colorScale_hsv2rgb = this->uploadTexture1D(colorScaleUploadParameters);
 }
 
 void Scene::addStatusBar(QStatusBar* _s) {
@@ -969,143 +896,8 @@ void Scene::printAllUniforms(GLuint _shader_program) {
 }
 
 void Scene::prepareUniformsGrid(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const GridGLView::Ptr& _grid, bool drawFront) {
-
     DrawableGrid * drawable_grid = this->drawable_grids[this->gridToDraw];
-    drawable_grid->prepareUniforms();
-
-    auto getUniform = [&](const char* name) -> GLint {
-        GLint g = glGetUniformLocation(drawable_grid->program_VolumetricViewer, name);
-        return g;
-    };
-
-    GLint location_isFirstPass = getUniform("isFirstPass");
-    float val = 1.;
-    if(drawFront)
-        val = 0.;
-    glUniform1fv(location_isFirstPass, 1, &val);
-
-    // Scalars :
-    GLint location_voxelSize = getUniform("voxelSize");
-    GLint location_gridSize	 = getUniform("gridSize");
-
-    //glm::vec3 floatres = glm::convert_to<float>(_grid->grid->getDimensions());
-    glm::vec3 floatres = glm::convert_to<float>(_grid->grid->sampler.getSamplerDimension());
-
-    //glUniform3fv(location_voxelSize, 1, glm::value_ptr(_grid->grid->getWorldVoxelSize()));
-    glUniform3fv(location_voxelSize, 1, glm::value_ptr(_grid->grid->getVoxelSize()));
-    glUniform3fv(location_gridSize, 1, glm::value_ptr(floatres));
-
-    // Vectors/arrays :
-    GLint location_cam					  = getUniform("cam");
-    GLint location_cut					  = getUniform("cut");
-    GLint location_cutDirection			  = getUniform("cutDirection");
-    GLint location_clipDistanceFromCamera = getUniform("clipDistanceFromCamera");
-    GLint location_visuBBMin			  = getUniform("visuBBMin");
-    GLint location_visuBBMax			  = getUniform("visuBBMax");
-    GLint location_shouldUseBB			  = getUniform("shouldUseBB");
-    GLint location_displayWireframe		  = getUniform("displayWireframe");
-    GLint location_volumeEpsilon		  = getUniform("volumeEpsilon");
-    GLint location_drawOnlyBoundaries    = getUniform("drawOnlyBoundaries");
-    GLint location_blendFirstPass            = getUniform("blendFirstPass");
-
-    Image::bbox_t::vec min = _grid->grid->bbMin;
-    Image::bbox_t::vec max = _grid->grid->bbMax;
-
-    glUniform3fv(location_cam, 1, glm::value_ptr(camPos));
-    glUniform3fv(location_cut, 1, glm::value_ptr(this->computePlanePositionsWithActivation()));
-    glUniform3fv(location_cutDirection, 1, glm::value_ptr(this->planeDirection));
-    glUniform1f(location_clipDistanceFromCamera, this->clipDistanceFromCamera);
-    glUniform3fv(location_visuBBMin, 1, glm::value_ptr(min));
-    glUniform3fv(location_visuBBMax, 1, glm::value_ptr(max));
-    glUniform1ui(location_shouldUseBB, 0);
-    glUniform1ui(location_displayWireframe, this->displayTetmesh);
-    glUniform3fv(location_volumeEpsilon, 1, glm::value_ptr(_grid->defaultEpsilon));
-    glUniform1f(location_blendFirstPass, this->blendFirstPass);
-    glUniform1f(getUniform("maxValue"), _grid->maxValue);
-
-    int drawOnly = 1;
-    if(!this->drawOnlyBoundaries)
-        drawOnly = 0;
-    glUniform1i(location_drawOnlyBoundaries, drawOnly);
-
-    // Matrices :
-    GLint location_mMat = getUniform("mMat");
-    GLint location_vMat = getUniform("vMat");
-    GLint location_pMat = getUniform("pMat");
-
-    glUniformMatrix4fv(location_mMat, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.f)));
-    glUniformMatrix4fv(location_vMat, 1, GL_FALSE, mvMat);
-    glUniformMatrix4fv(location_pMat, 1, GL_FALSE, pMat);
-
-    // Light positions :
-    GLint location_light0 = getUniform("lightPositions[0]");
-    GLint location_light1 = getUniform("lightPositions[1]");
-    GLint location_light2 = getUniform("lightPositions[2]");
-    GLint location_light3 = getUniform("lightPositions[3]");
-    GLint location_light4 = getUniform("lightPositions[4]");
-    GLint location_light5 = getUniform("lightPositions[5]");
-    GLint location_light6 = getUniform("lightPositions[6]");
-    GLint location_light7 = getUniform("lightPositions[7]");
-
-    glUniform3fv(location_light0, 1, glm::value_ptr(this->lightPositions[0]));
-    glUniform3fv(location_light1, 1, glm::value_ptr(this->lightPositions[1]));
-    glUniform3fv(location_light2, 1, glm::value_ptr(this->lightPositions[2]));
-    glUniform3fv(location_light3, 1, glm::value_ptr(this->lightPositions[3]));
-    glUniform3fv(location_light4, 1, glm::value_ptr(this->lightPositions[4]));
-    glUniform3fv(location_light5, 1, glm::value_ptr(this->lightPositions[5]));
-    glUniform3fv(location_light6, 1, glm::value_ptr(this->lightPositions[6]));
-    glUniform3fv(location_light7, 1, glm::value_ptr(this->lightPositions[7]));
-
-    // Color and shading parameters :
-    GLint location_specRef	  = getUniform("specRef");
-    GLint location_shininess  = getUniform("shininess");
-    GLint location_diffuseRef = getUniform("diffuseRef");
-    glUniform1f(location_specRef, .8f);
-    glUniform1f(location_shininess, .8f);
-    glUniform1f(location_diffuseRef, .8f);
-
-    // User-defined colors :
-    GLint location_color0	 = getUniform("color0");
-    GLint location_color1	 = getUniform("color1");
-    GLint location_color0Alt = getUniform("color0Alternate");
-    GLint location_color1Alt = getUniform("color1Alternate");
-
-    glUniform3fv(location_color0, 1, glm::value_ptr(this->color0));
-    glUniform3fv(location_color1, 1, glm::value_ptr(this->color1));
-    glUniform3fv(location_color0Alt, 1, glm::value_ptr(this->color0_second));
-    glUniform3fv(location_color1Alt, 1, glm::value_ptr(this->color1_second));
-
-    GLint location_colorScales0 = getUniform("colorScales[0]");
-    GLint location_colorScales1 = getUniform("colorScales[1]");
-    GLint location_colorScales2 = getUniform("colorScales[2]");
-    GLint location_colorScales3 = getUniform("colorScales[3]");
-
-    std::size_t tex = 12;
-    glActiveTexture(GL_TEXTURE0 + tex);
-    glBindTexture(GL_TEXTURE_1D, this->tex_colorScale_greyscale);
-    glUniform1i(location_colorScales0, tex);
-    tex++;
-
-    glActiveTexture(GL_TEXTURE0 + tex);
-    glBindTexture(GL_TEXTURE_1D, this->tex_colorScale_hsv2rgb);
-    glUniform1i(location_colorScales1, tex);
-    tex++;
-
-    GLuint colorScale = this->tex_colorScale_user0;
-    if(this->gridToDraw > 0)
-        colorScale = this->tex_colorScale_user1;
-
-    glActiveTexture(GL_TEXTURE0 + tex);
-    glBindTexture(GL_TEXTURE_1D, colorScale);
-    glUniform1i(location_colorScales2, tex);
-    tex++;
-
-    glActiveTexture(GL_TEXTURE0 + tex);
-    glBindTexture(GL_TEXTURE_1D, colorScale);
-    glUniform1i(location_colorScales3, tex);
-    tex++;
-
-    glBindBufferBase(GL_UNIFORM_BUFFER, 0, _grid->uboHandle_colorAttributes);
+    drawable_grid->prepareUniforms(mvMat, pMat, camPos, this->computePlanePositionsWithActivation(), this->planeDirection, drawFront);
 }
 
 void Scene::drawScene(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool showTexOnPlane) {
@@ -1517,42 +1309,42 @@ Image::bbox_t Scene::getSceneBoundingBox() const {
 
 void Scene::setColor0(qreal r, qreal g, qreal b) {
     glm::vec<3, qreal, glm::highp> qtcolor(r, g, b);
-    this->color0 = glm::convert_to<float>(qtcolor);
-    if(this->grids.size() > 0)
-        this->grids[0]->color_0 = this->color0;
+    glm::vec3 color = glm::convert_to<float>(qtcolor);
+    if(this->grids.size() > 0) {
+        this->grids[0]->color_0 = color;
+    }
     this->signal_updateUserColorScales();
     emit this->colorChanged();
-    return;
 }
 
 void Scene::setColor1(qreal r, qreal g, qreal b) {
     glm::vec<3, qreal, glm::highp> qtcolor(r, g, b);
-    this->color1 = glm::convert_to<float>(qtcolor);
-    if(this->grids.size() > 0)
-        this->grids[0]->color_1 = this->color1;
+    glm::vec3 color = glm::convert_to<float>(qtcolor);
+    if(this->grids.size() > 0) {
+        this->grids[0]->color_1 = color;
+    }
     this->signal_updateUserColorScales();
     emit this->colorChanged();
-    return;
 }
 
 void Scene::setColor0Alternate(qreal r, qreal g, qreal b) {
     glm::vec<3, qreal, glm::highp> qtcolor(r, g, b);
-    this->color0_second = glm::convert_to<float>(qtcolor);
-    if(this->grids.size() > 1)
-        this->grids[1]->color_0 = this->color0;
+    glm::vec3 color = glm::convert_to<float>(qtcolor);
+    if(this->grids.size() > 1) {
+        this->grids[1]->color_0 = color;
+    }
     this->signal_updateUserColorScales();
     emit this->colorChanged();
-    return;
 }
 
 void Scene::setColor1Alternate(qreal r, qreal g, qreal b) {
     glm::vec<3, qreal, glm::highp> qtcolor(r, g, b);
-    this->color1_second = glm::convert_to<float>(qtcolor);
-    if(this->grids.size() > 1)
-        this->grids[1]->color_1 = this->color1;
+    glm::vec3 color = glm::convert_to<float>(qtcolor);
+    if(this->grids.size() > 1) {
+        this->grids[1]->color_1 = color;
+    }
     this->signal_updateUserColorScales();
     emit this->colorChanged();
-    return;
 }
 
 void Scene::signal_updateUserColorScales() {
@@ -1568,9 +1360,21 @@ void Scene::newSHADERS_updateUserColorScales() {
     std::vector<glm::vec3> colorScaleData_user1(textureSize);
 
     // The color scale 0 first :
+    glm::vec3 color0 = glm::vec3(1., 0., 0.);
+    glm::vec3 color1 = glm::vec3(0., 0., 1.);
+    if(this->drawable_grids.size() > 0) {
+        color0 = this->grids[0]->color_0;
+        color1 = this->grids[0]->color_1;
+    }
+    glm::vec3 color0_second = glm::vec3(1., 0., 0.);
+    glm::vec3 color1_second = glm::vec3(0., 0., 1.);
+    if(this->drawable_grids.size() > 1) {
+        color0_second = this->grids[1]->color_0;
+        color1_second = this->grids[1]->color_1;
+    }
     for (std::size_t i = 0; i < textureSize; ++i) {
-        colorScaleData_user0[i] = glm::mix(this->color0, this->color1, static_cast<float>(i) / textureSize_f);
-        colorScaleData_user1[i] = glm::mix(this->color0_second, this->color1_second, static_cast<float>(i) / textureSize_f);
+        colorScaleData_user0[i] = glm::mix(color0, color1, static_cast<float>(i) / textureSize_f);
+        colorScaleData_user1[i] = glm::mix(color0_second, color1_second, static_cast<float>(i) / textureSize_f);
     }
 
     colorScaleUploadParameters.minmag.x	 = GL_LINEAR;
@@ -1591,11 +1395,15 @@ void Scene::newSHADERS_updateUserColorScales() {
     colorScaleUploadParameters.size.z		  = 1;
     colorScaleUploadParameters.format		  = GL_RGB;
     colorScaleUploadParameters.type			  = GL_FLOAT;
-    colorScaleUploadParameters.data			  = colorScaleData_user0.data();
-    this->tex_colorScale_user0		  = this->uploadTexture1D(colorScaleUploadParameters);
+    if(this->drawable_grids.size() > 0) {
+        colorScaleUploadParameters.data			  = colorScaleData_user0.data();
+        this->drawable_grids[0]->tex_colorScale_user = this->uploadTexture1D(colorScaleUploadParameters);
+    }
 
-    colorScaleUploadParameters.data	 = colorScaleData_user1.data();
-    this->tex_colorScale_user1 = this->uploadTexture1D(colorScaleUploadParameters);
+    if(this->drawable_grids.size() > 1) {
+        colorScaleUploadParameters.data	 = colorScaleData_user1.data();
+        this->drawable_grids[1]->tex_colorScale_user = this->uploadTexture1D(colorScaleUploadParameters);
+    }
 }
 
 void Scene::updateCVR() {
@@ -1942,7 +1750,8 @@ GLuint SceneGL::uploadTexture2D(const TextureUpload& tex) {
 /*********************************/
 
 void Scene::toggleDisplayTetmesh(bool value) {
-    this->displayTetmesh = value;
+    if(this->gridToDraw >= 0)
+        this->drawable_grids[this->gridToDraw]->displayTetmesh = value;
 }
 
 void Scene::setColorChannel(ColorChannel mode) {
@@ -3248,12 +3057,13 @@ void Scene::setMultiGridRendering(bool value) {
 };
 
 void Scene::setDrawOnlyBoundaries(bool value) {
-    std::cout << "Set draw only boundaries: " << value << std::endl;
-    this->drawOnlyBoundaries = value;
+    if(this->gridToDraw >= 0)
+        this->drawable_grids[this->gridToDraw]->drawOnlyBoundaries = value;
 }
 
 void Scene::setBlendFirstPass(float value) {
-    this->blendFirstPass = value;
+    if(this->gridToDraw >= 0)
+        this->drawable_grids[this->gridToDraw]->blendFirstPass = value;
 }
 
 void Scene::setRenderSize(int h, int w) {

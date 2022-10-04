@@ -171,11 +171,6 @@ private:
     GLuint vbo_Texture3D_VertTex;
     GLuint vbo_Texture3D_VertIdx;
 
-    GLuint tex_colorScale_greyscale;
-    GLuint tex_colorScale_hsv2rgb;
-    GLuint tex_colorScale_user0;
-    GLuint tex_colorScale_user1;
-
     GLuint state_idx;
     GLuint pos_idx;
 
@@ -230,9 +225,6 @@ public:
     void tex3D_buildBuffers(VolMesh& volMesh);// Build buffers to draw a single voxel (a cube)
     /*************************************************/
 
-    /* Generate things */
-    void generateColorScales();
-    /*************************************************/
 
     /* Others */
     void newSHADERS_updateUserColorScales();
@@ -254,7 +246,6 @@ private:
     /* Scene boolean */
     bool shouldUpdateUserColorScales;
     bool shouldUpdateUBOData;
-    bool displayTetmesh;
 
     /* Containers */
     UITool::MeshManipulator* meshManipulator;
@@ -276,11 +267,6 @@ private:
     ColorFunction channels_g;
     GLuint selectedChannel_g;	 ///< The currently selected channel for greyscale mode.
 public:
-    glm::vec3 color0;	 ///< The color segment when approaching 0
-    glm::vec3 color1;	 ///< The color segment when approaching 1
-    glm::vec3 color0_second;	///< The color segment when approaching 0
-    glm::vec3 color1_second;	///< The color segment when approaching 1
-
     /* Widgets */
     ControlPanel* controlPanel;
     QStatusBar* programStatusBar;
@@ -534,8 +520,6 @@ public:
     float distanceFromCamera;
 
     bool multiGridRendering;
-    bool drawOnlyBoundaries;
-    float blendFirstPass;
     bool displayGrid;
     bool displayMesh;
     bool previewCursorInPlanarView;

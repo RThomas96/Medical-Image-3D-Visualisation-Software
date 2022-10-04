@@ -30,12 +30,21 @@ public:
 
     void initializeGL(ShaderCompiler::GLFunctions *functions);
 
-    void prepareUniforms();
+    void prepareUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, glm::vec3 planePosition, glm::vec3 planeDirection, bool drawFront);
     void recompileShaders();
+    void generateColorScales();
+    GLuint uploadTexture1D(const TextureUpload& tex);
 
-    // TODO: move
+    bool displayTetmesh;
+    bool drawOnlyBoundaries;
+    float blendFirstPass;
+
     GLuint program_VolumetricViewer;
     GLuint tex_ColorScaleGrid;
+    GLuint tex_colorScale_greyscale;
+    GLuint tex_colorScale_hsv2rgb;
+    GLuint tex_colorScale_user;
+
     GLuint tex_ColorScaleGridAlternate;
     GLuint dualRenderingTexture;
     GLuint frameDepthBuffer;

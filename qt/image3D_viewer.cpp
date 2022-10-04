@@ -728,6 +728,23 @@ void PlanarViewForm::updateImageViewer() {
     convertVector(finalImageSize);
     glm::vec3 originalImgDimension = this->getBackImgDimension(scene);
     convertVector(originalImgDimension);
+
+    glm::vec3 color0_0 = glm::vec3(1., .0, .0);
+    glm::vec3 color1_0 = glm::vec3(.0, .0, 1.);
+
+    if(this->scene->drawable_grids.size() > 0) {
+        color0_0 = this->scene->grids[0]->color_0;
+        color1_0 = this->scene->grids[0]->color_1;
+    }
+
+    glm::vec3 color0_1 = glm::vec3(1., .0, .0);
+    glm::vec3 color1_1 = glm::vec3(.0, .0, 1.);
+
+    if(this->scene->drawable_grids.size() > 1) {
+        color0_1 = this->scene->grids[1]->color_0;
+        color1_1 = this->scene->grids[1]->color_1;
+    }
+
     this->viewers[this->selectedViewer]->init(
             //this->getImgDimension(),
             //finalImageSize,
@@ -738,11 +755,11 @@ void PlanarViewForm::updateImageViewer() {
             this->getImagesToDraw(),
             {this->spinBoxes["AlphaBack"]->value(), this->spinBoxes["AlphaFront"]->value()},
             {std::make_pair(
-                    QColor(255.*this->scene->color0_second.x, 255.*this->scene->color0_second.y, 255.*this->scene->color0_second.z),
-                    QColor(255.*this->scene->color1_second.x, 255.*this->scene->color1_second.y, 255.*this->scene->color1_second.z)),
+                    QColor(255.*color0_1.x, 255.*color0_1.y, 255.*color0_1.z),
+                    QColor(255.*color1_1.x, 255.*color1_1.y, 255.*color1_1.z)),
             std::make_pair(
-                    QColor(255.*this->scene->color0.x, 255.*this->scene->color0.y, 255.*this->scene->color0.z),
-                    QColor(255.*this->scene->color1.x, 255.*this->scene->color1.y, 255.*this->scene->color1.z))
+                    QColor(255.*color0_0.x, 255.*color0_0.y, 255.*color0_0.z),
+                    QColor(255.*color1_0.x, 255.*color1_0.y, 255.*color1_0.z))
             },
             this->getInterpolationMethod(),
             {this->buttons["MirrorX"]->isChecked(), this->buttons["MirrorY"]->isChecked()});
