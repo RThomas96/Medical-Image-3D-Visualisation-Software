@@ -69,28 +69,18 @@ Scene::Scene() {
     this->selectedChannel_g = 0;	// by default, the R channel
 
     // Default light positions : at the vertices of a unit cube.
-    this->lightPositions = {
-      glm::vec3(.0, .0, .0), glm::vec3(1., .0, .0),
-      glm::vec3(.0, 1., .0), glm::vec3(1., 1., .0),
-      glm::vec3(.0, .0, 1.), glm::vec3(1., .0, 1.),
-      glm::vec3(.0, 1., 1.), glm::vec3(1., 1., 1.)};
 
     this->planeDirection	= glm::vec3(1., 1., 1.);
     this->planeDisplacement = glm::vec3(.0, .0, .0);
     Image::bbox_t::vec min(.0, .0, .0);
     Image::bbox_t::vec max(1., 1., 1.);
     this->sceneBB				 = Image::bbox_t(min, max);
-    this->clipDistanceFromCamera = 5.f;
     this->rgbMode				 = ColorChannel::HandEColouring;
     this->channels_r			 = ColorFunction::SingleChannel;
     this->channels_g			 = ColorFunction::SingleChannel;
 
-    // Show all planes as default :
-    this->planeVisibility = glm::vec<3, bool, glm::defaultp>(true, true, true);
-
     this->vao					  = 0;
     //this->vao_VolumetricBuffers = 0;
-    this->vao_boundingBox		  = 0;
 
     this->vbo_VertPos				= 0;
     this->vbo_VertNorm			= 0;
@@ -98,11 +88,6 @@ Scene::Scene() {
     this->vbo_Element				= 0;
     this->vbo_boundingBoxVertices = 0;
     this->vbo_boundingBoxIndices	= 0;
-
-    this->program_projectedTex	 = 0;
-    this->program_Plane3D			 = 0;
-    this->program_PlaneViewer		 = 0;
-    this->program_BoundingBox		 = 0;
 
     this->vbo_Texture3D_VertPos		= 0;
     this->vbo_Texture3D_VertNorm		= 0;
@@ -245,67 +230,9 @@ void Scene::createBuffers() {
     this->vbo_VertTex			   = createVBO(GL_ARRAY_BUFFER, "vboHandle_VertTex");
     this->vbo_Element			   = createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_Element");
 
-    // For the texture3D visualization method :
-    //this->vao_VolumetricBuffers  = createVAO("vaoHandle_VolumetricBuffers");
-    //this->vbo_Texture3D_VertPos  = createVBO(GL_ARRAY_BUFFER, "vboHandle_Texture3D_VertPos");
-    //this->vbo_Texture3D_VertNorm = createVBO(GL_ARRAY_BUFFER, "vboHandle_Texture3D_VertNorm");
-    //this->vbo_Texture3D_VertTex  = createVBO(GL_ARRAY_BUFFER, "vboHandle_Texture3D_VertTex");
-    //this->vbo_Texture3D_VertIdx  = createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_Texture3D_VertIdx");
-
-    // For the bounding boxes we have to create/show :
-    this->vao_boundingBox			= createVAO("vaoHandle_boundingBox");
-    this->vbo_boundingBoxVertices = createVBO(GL_ARRAY_BUFFER, "vboHandle_boundingBoxVertices");
-    this->vbo_boundingBoxIndices	= createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_boundingBoxIndices");
-
     this->glSelection->setVao(createVAO("vaoHandle_Selection"));
     this->glSelection->setVboVertices(createVBO(GL_ARRAY_BUFFER, "vboHandle_SelectionVertices"));
     this->glSelection->setVboIndices(createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_SelectionIndices"));
-
-    //glGenTextures(1, &this->dualRenderingTexture);
-
-    //glBindTexture(GL_TEXTURE_2D, this->dualRenderingTexture);
-    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, h, w, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
-
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-    //glGenTextures(1, &this->frameDepthBuffer);
-    //glBindTexture(GL_TEXTURE_2D, this->frameDepthBuffer);
-    //glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT32, h, w, 0,GL_DEPTH_COMPONENT, GL_FLOAT, 0);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-    //glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, this->frameDepthBuffer, 0);
-
-    //// Set "renderedTexture" as our colour attachement #0
-    //glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, this->dualRenderingTexture, 0);
-
-    //// Set the list of draw buffers.
-    //GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
-    //glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
-
-    //// Always check that our framebuffer is ok
-    //if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-    //    std::cout << "WARNING: framebuffer doesn't work !!" << std::endl;
-    //else
-    //    std::cout << "Framebuffer works perfectly :) !!" << std::endl;
-
-    static const GLfloat vertices[] = {
-        -0.5f, -0.5f, 0.0f,
-        0.5f, -0.5f, 0.0f,
-        0.0f,  0.5f, 0.0f
-    };
-
-    glGenVertexArrays(1, &quad_VertexArrayID);
-    glGenBuffers(1, &quad_vertexbuffer);
-
-    glBindVertexArray(quad_VertexArrayID);
-    glBindBuffer(GL_ARRAY_BUFFER, quad_vertexbuffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    return;
 }
 
 std::pair<uint16_t, uint16_t> Scene::sendGridValuesToGPU(int gridIdx) {
@@ -467,68 +394,17 @@ void Scene::addGrid() {
 
     //Send grid texture
     this->sendTetmeshToGPU(this->gridToDraw, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS | InfoToSend::TEXCOORD | InfoToSend::NEIGHBORS));
-
-    this->updateBoundingBox();
-}
-
-void Scene::updateBoundingBox(void) {
-    std::cerr << "Error: updateBoundingBox brocken due to new API update" << std::endl;
-    this->sceneBB	  = Image::bbox_t();
-    this->sceneDataBB = Image::bbox_t();
-
-    for (std::size_t i = 0; i < this->grids.size(); ++i) {
-        const Grid * _g = this->grids[i]->grid;
-        Image::bbox_t box		  = _g->getBoundingBox();
-        Image::bbox_t dbox		  = _g->getBoundingBox();
-        this->sceneBB.addPoints(box.getAllCorners());
-        this->sceneDataBB.addPoints(dbox.getAllCorners());
-    }
-
-    // Update light positions :
-    auto corners = this->sceneBB.getAllCorners();
-    for (std::size_t i = 0; i < corners.size(); ++i) {
-        this->lightPositions[i] = glm::convert_to<float>(corners[i]);
-    }
-
-    return;
 }
 
 void Scene::recompileShaders(bool verbose) {
     if(this->gridToDraw >= 0)
         this->drawable_grids[this->gridToDraw]->recompileShaders();
 
-    GLuint newProgram			 = this->compileShaders("../shaders/voxelgrid.vert", "../shaders/voxelgrid.geom", "../shaders/voxelgrid.frag", verbose);
-    GLuint newPlaneProgram		 = this->compileShaders("../shaders/plane.vert", "", "../shaders/plane.frag", verbose);
-    GLuint newPlaneViewerProgram = this->compileShaders("../shaders/texture_explorer.vert", "", "../shaders/texture_explorer.frag", verbose);
-    GLuint newBoundingBoxProgram = this->compileShaders("../shaders/bounding_box.vert", "", "../shaders/bounding_box.frag", verbose);
-    GLuint newSphereProgram		 = this->compileShaders("../shaders/sphere.vert", "", "../shaders/sphere.frag", true);
     GLuint newSelectionProgram	 = this->compileShaders("../shaders/selection.vert", "", "../shaders/selection.frag", true);
-    GLuint newDoublePassProgram  = this->compileShaders("../shaders/double_pass.vert", "", "../shaders/double_pass.frag", true);
 
-
-    if (newProgram) {
-        glDeleteProgram(this->program_projectedTex);
-        this->program_projectedTex = newProgram;
-    }
-    if (newPlaneProgram) {
-        glDeleteProgram(this->program_Plane3D);
-        this->program_Plane3D = newPlaneProgram;
-    }
-    if (newPlaneViewerProgram) {
-        glDeleteProgram(this->program_PlaneViewer);
-        this->program_PlaneViewer = newPlaneViewerProgram;
-    }
-    if (newBoundingBoxProgram) {
-        glDeleteProgram(this->program_BoundingBox);
-        this->program_BoundingBox = newBoundingBoxProgram;
-    }
     if (newSelectionProgram) {
         glDeleteProgram(this->glSelection->getProgram());
         this->glSelection->setProgram(newSelectionProgram);
-    }
-    if (newDoublePassProgram) {
-        glDeleteProgram(this->program_doublePass);
-        this->program_doublePass = newDoublePassProgram;
     }
 }
 
@@ -1008,95 +884,8 @@ GLuint Scene::updateFBOOutputs(glm::ivec2 dimensions, GLuint fb_handle, GLuint o
     return new_tex;
 }
 
-glm::vec4 Scene::readFramebufferContents(GLuint fb_handle, glm::ivec2 image_coordinates) {
-    // The container of pixel values :
-    glm::vec4 pixelValue = glm::vec4();
-
-    // Bind the framebuffer to read from :
-    glBindFramebuffer(GL_FRAMEBUFFER, fb_handle);
-    // Specify reading from color attachment 1:
-    glReadBuffer(GL_COLOR_ATTACHMENT1);
-    // Read pixels :
-    glReadPixels(image_coordinates.x, image_coordinates.y, 1, 1, GL_RGBA, GL_FLOAT, glm::value_ptr(pixelValue));
-
-    return pixelValue;
-}
-
-void Scene::setupVAOPointers() {
-    glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, this->vbo_VertPos);
-    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, (void*) 0);
-
-    glEnableVertexAttribArray(1);
-    glBindBuffer(GL_ARRAY_BUFFER, this->vbo_VertNorm);
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*) 0);
-
-    glEnableVertexAttribArray(2);
-    glBindBuffer(GL_ARRAY_BUFFER, this->vbo_VertTex);
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
-}
-
 glm::vec3 Scene::getSceneBoundaries() const {
     return this->sceneBB.getDiagonal();
-}
-
-void Scene::setupVAOBoundingBox() {
-    glBindVertexArray(this->vao_boundingBox);
-
-    // Bind vertex buffer :
-    glBindBuffer(GL_ARRAY_BUFFER, this->vbo_boundingBoxVertices);
-    // Enable VAO pointer 0 : vertices
-    glEnableVertexAttribArray(0);
-    // Enable VAO pointer for 3-component vectors, non-normalized starting at index 0 :
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
-}
-
-void Scene::drawBoundingBox(const Image::bbox_t& _box, glm::vec3 color, GLfloat* vMat, GLfloat* pMat) {
-    glUseProgram(this->program_BoundingBox);
-
-    glLineWidth(2.0f);
-
-    // Locate uniforms :
-    GLint location_pMat	   = glGetUniformLocation(this->program_BoundingBox, "pMat");
-    GLint location_vMat	   = glGetUniformLocation(this->program_BoundingBox, "vMat");
-    GLint location_bbColor = glGetUniformLocation(this->program_BoundingBox, "bbColor");
-    GLint location_bbSize  = glGetUniformLocation(this->program_BoundingBox, "bbSize");
-    GLint location_bbPos   = glGetUniformLocation(this->program_BoundingBox, "bbPos");
-
-    Image::bbox_t::vec min	= _box.getMin();
-    Image::bbox_t::vec diag = _box.getDiagonal();
-
-    // Set uniforms :
-    glUniformMatrix4fv(location_pMat, 1, GL_FALSE, pMat);
-    glUniformMatrix4fv(location_vMat, 1, GL_FALSE, vMat);
-    glUniform3fv(location_bbColor, 1, glm::value_ptr(color));
-    glUniform3fv(location_bbSize, 1, glm::value_ptr(diag));
-    glUniform3fv(location_bbPos, 1, glm::value_ptr(min));
-
-    glBindVertexArray(this->vao_boundingBox);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vbo_boundingBoxIndices);
-    this->setupVAOBoundingBox();
-
-    glDrawElements(GL_LINES, 24, GL_UNSIGNED_INT, (void*) 0);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-    glLineWidth(1.0f);
-    glUseProgram(0);
-}
-
-uint Scene::colorFunctionToUniform(ColorFunction _c) {
-    switch (_c) {
-        case ColorFunction::SingleChannel:
-            return 1;
-        case ColorFunction::HistologyHandE:
-            return 2;
-        case ColorFunction::HSV2RGB:
-            return 3;
-        case ColorFunction::ColorMagnitude:
-            return 4;
-    }
-    return 0;
 }
 
 void Scene::setColorFunction_r(ColorFunction _c) {

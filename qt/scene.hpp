@@ -142,17 +142,7 @@ public:
 private:
     QOpenGLContext* context;
 
-    GLuint program_projectedTex;
-    GLuint program_Plane3D;
-    GLuint program_PlaneViewer;
-    GLuint program_BoundingBox;
-    GLuint program_sphere;
-    GLuint program_doublePass;
-
     GLuint vao;
-    //GLuint vao_VolumetricBuffers;
-    GLuint vao_boundingBox;
-    GLuint vao_spheres;
 
     GLuint vbo_VertPos;
     GLuint vbo_VertNorm;
@@ -173,11 +163,6 @@ private:
 
     GLuint state_idx;
     GLuint pos_idx;
-
-    GLuint quad_VertexArrayID;
-    GLuint quad_TexCoord;
-    GLuint quad_vertexbuffer;
-    GLint quad_programId;
 
     GLuint frameBuffer;
 
@@ -206,31 +191,19 @@ public:
     void setRenderSize(int h, int w);
 
     GLuint updateFBOOutputs(glm::ivec2 dimensions, GLuint fb_handle, GLuint old_texture = 0);
-    glm::vec4 readFramebufferContents(GLuint fb_handle, glm::ivec2 image_coordinates);
     GLuint compileShaders(std::string vPath, std::string gPath, std::string fPath, bool verbose = false);
     /*************************************************/
 
     /* Draws */
     void drawScene(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool showTexOnPlane);
-    void drawBoundingBox(const Image::bbox_t& _box, glm::vec3 color, GLfloat* vMat, GLfloat* pMat);
-    /*************************************************/
-
-    /* VAO/VBO management */
-    void createBuffers();
-    void setupVAOPointers();
-    void setupVAOBoundingBox();// Orders the VAO pointers for the bounding box
-    /*************************************************/
-
+    void createBuffers();// Only for selection TODO: remove
 
     /* Others */
     void newSHADERS_updateUserColorScales();
     void signal_updateUserColorScales();
     void newSHADERS_updateUBOData();
     // TODO: c koi ?
-    uint colorFunctionToUniform(ColorFunction _c);// Returns an unsigned int (suitable for uniforms) from a color function
     void updateCVR();// Update colorChannelAttributes
-    void updateBoundingBox(void);
-    void updateVisuBoxCoordinates(void);
     glm::vec3 computePlanePositions();
     glm::vec3 computePlanePositionsWithActivation();
     /*************************************************/
@@ -247,10 +220,6 @@ private:
     UITool::MeshManipulator* meshManipulator;
     UITool::GL::Selection * glSelection;
 private:
-    /* Visualisation */
-    std::array<glm::vec3, 8> lightPositions;	///< Scene lights (positionned at the corners of the scene BB)
-    glm::bvec3 planeVisibility;
-    float clipDistanceFromCamera;
 
     /* Color channel management */
     ColorChannel rgbMode;
