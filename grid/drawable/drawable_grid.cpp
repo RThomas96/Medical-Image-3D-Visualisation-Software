@@ -11,9 +11,11 @@ DrawableGrid::DrawableGrid(GridGLView::Ptr grid): gl(nullptr) {
     this->tex_ColorScaleGrid			= 0;
     this->tex_ColorScaleGridAlternate = 0;
     this->tex_ColorScaleGrid = 0;
+    this->vao_VolumetricBuffers = 0;
     this->grid = grid;
     this->blendFirstPass = 1.;
     this->drawOnlyBoundaries = true;
+    this->multiGridRendering = false;
 
     std::cout << "Create drawable grid" << std::endl;
 };
@@ -34,6 +36,7 @@ void DrawableGrid::initializeGL(ShaderCompiler::GLFunctions *functions) {
     this->recompileShaders();
     this->createBuffers();
     this->generateColorScales();
+    this->tex3D_buildBuffers();
 }
 
 void DrawableGrid::generateColorScales() {
@@ -105,6 +108,33 @@ void DrawableGrid::generateColorScales() {
 }
 
 void DrawableGrid::createBuffers() {
+    auto createVAO = [&, this](std::string name) -> GLuint {
+        GLuint buf = 0;
+        this->gl->glGenVertexArrays(1, &buf);
+        this->gl->glBindVertexArray(buf);
+        if (this->gl->glIsVertexArray(buf) == GL_FALSE) {
+            std::cerr << "[ERROR][" << __FILE__ << ":" << __LINE__ << "] : Could not create VAO object " << name << '\n';
+        }
+        return buf;
+    };
+
+    /// @brief Create a buffer, bind it and see if it has been succesfully created server-side.
+    auto createVBO = [&, this](GLenum bufType, std::string name) -> GLuint {
+        GLuint buf = 0;
+        this->gl->glGenBuffers(1, &buf);
+        this->gl->glBindBuffer(bufType, buf);
+        if (this->gl->glIsBuffer(buf) == GL_FALSE) {
+            std::cerr << "[ERROR][" << __FILE__ << ":" << __LINE__ << "] : Could not create buffer object " << name << '\n';
+        }
+        return buf;
+    };
+
+    this->vao_VolumetricBuffers  = createVAO("vaoHandle_VolumetricBuffers");
+    this->vbo_Texture3D_VertPos  = createVBO(GL_ARRAY_BUFFER, "vboHandle_Texture3D_VertPos");
+    this->vbo_Texture3D_VertNorm = createVBO(GL_ARRAY_BUFFER, "vboHandle_Texture3D_VertNorm");
+    this->vbo_Texture3D_VertTex  = createVBO(GL_ARRAY_BUFFER, "vboHandle_Texture3D_VertTex");
+    this->vbo_Texture3D_VertIdx  = createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_Texture3D_VertIdx");
+
     glGenTextures(1, &this->dualRenderingTexture);
 
     glBindTexture(GL_TEXTURE_2D, this->dualRenderingTexture);
@@ -155,6 +185,8 @@ void DrawableGrid::prepareUniforms(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camP
         GLint g = gl->glGetUniformLocation(program_VolumetricViewer, name);
         return g;
     };
+
+    gl->glUseProgram(program_VolumetricViewer);
 
     std::size_t tex = 0;
     glActiveTexture(GL_TEXTURE0 + tex);
@@ -317,4 +349,136 @@ GLuint DrawableGrid::uploadTexture1D(const TextureUpload& tex) {
     );
 
     return texHandle;
+}
+
+void DrawableGrid::tex3D_buildBuffers() {
+    // Tetra ///////////////////////////////////////////////////////////////////////
+    //    v0----- v
+    //   /       /|
+    //  v ------v3|
+    //  | |     | |
+    //  | |v ---|-|v2
+    //  |/      |/
+    //  v1------v
+
+    float v0[3] = {-1, -1, 1};
+    float v1[3] = {-1, 1, -1};
+    float v2[3] = {1, -1, -1};
+    float v3[3] = {1, 1, 1};
+
+    // vertex coords array
+    GLfloat vertices[] = {v3[0], v3[1], v3[2], v1[0], v1[1], v1[2], v2[0], v2[1], v2[2],	// v3-v1-v2
+      v3[0], v3[1], v3[2], v2[0], v2[1], v2[2], v1[0], v1[1], v1[2],	// v3-v2-v1
+      v3[0], v3[1], v3[2], v0[0], v0[1], v0[2], v1[0], v1[1], v1[2],	// v3-v0-v1
+      v2[0], v2[1], v2[2], v1[0], v1[1], v1[2], v0[0], v0[1], v0[2]};	 // v2-v1-v0
+    // normal array
+    GLfloat normals[] = {v3[0], v3[1], v3[2], v1[0], v1[1], v1[2], v2[0], v2[1], v2[2],	   // v3-v1-v2
+      v3[0], v3[1], v3[2], v2[0], v2[1], v2[2], v1[0], v1[1], v1[2],	// v3-v2-v1
+      v3[0], v3[1], v3[2], v0[0], v0[1], v0[2], v1[0], v1[1], v1[2],	// v3-v0-v1
+      v2[0], v2[1], v2[2], v1[0], v1[1], v1[2], v0[0], v0[1], v0[2]};	 // v2-v1-v0
+    // index array of vertex array for glDrawElements()
+    // Notice the indices are listed straight from beginning to end as exactly
+    // same order of vertex array without hopping, because of different normals at
+    // a shared vertex. For this case, glDrawArrays() and glDrawElements() have no
+    // difference.
+    GLushort indices[] = {0, 1, 2,
+      3, 4, 5,
+      6, 7, 8,
+      9, 10, 11};
+    // texture coords :
+    GLfloat textureCoords[] = {0., 0., 1., 1., 2., 2.,
+      3., 3., 4., 4., 5., 5.,
+      6., 6., 7., 7., 8., 8.,
+      9., 9., 10., 10., 11., 11.};
+
+    gl->glBindBuffer(GL_ARRAY_BUFFER, this->vbo_Texture3D_VertPos);
+    gl->glBufferData(GL_ARRAY_BUFFER, 12 * 3 * sizeof(GLfloat), vertices, GL_STATIC_DRAW);
+
+    gl->glBindBuffer(GL_ARRAY_BUFFER, this->vbo_Texture3D_VertNorm);
+    gl->glBufferData(GL_ARRAY_BUFFER, 12 * 3 * sizeof(GLfloat), normals, GL_STATIC_DRAW);
+
+    gl->glBindBuffer(GL_ARRAY_BUFFER, this->vbo_Texture3D_VertTex);
+    gl->glBufferData(GL_ARRAY_BUFFER, 12 * 2 * sizeof(GLfloat), textureCoords, GL_STATIC_DRAW);
+
+    gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vbo_Texture3D_VertIdx);
+    gl->glBufferData(GL_ELEMENT_ARRAY_BUFFER, 12 * sizeof(GLushort), indices, GL_STATIC_DRAW);
+}
+
+void DrawableGrid::drawGrid(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool inFrame) {
+    gl->glBindVertexArray(this->vao_VolumetricBuffers);
+
+    gl->glEnableVertexAttribArray(0);
+    gl->glBindBuffer(GL_ARRAY_BUFFER, this->vbo_Texture3D_VertPos);
+    gl->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
+
+    gl->glEnableVertexAttribArray(1);
+    gl->glBindBuffer(GL_ARRAY_BUFFER, this->vbo_Texture3D_VertNorm);
+    gl->glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*) 0);
+
+    gl->glEnableVertexAttribArray(2);
+    gl->glBindBuffer(GL_ARRAY_BUFFER, this->vbo_Texture3D_VertTex);
+    gl->glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*) 0);
+
+    gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vbo_Texture3D_VertIdx);
+
+    if(inFrame && this->multiGridRendering) {
+        GLint defaultFBO;
+        gl->glGetIntegerv(GL_FRAMEBUFFER_BINDING, &defaultFBO);
+
+        gl->glDeleteFramebuffers(1, &this->frameBuffer);
+        gl->glGenFramebuffers(1, &this->frameBuffer);
+        gl->glBindFramebuffer(GL_FRAMEBUFFER, this->frameBuffer);
+
+        glDeleteTextures(1, &dualRenderingTexture);
+        glGenTextures(1, &dualRenderingTexture);
+
+        glBindTexture(GL_TEXTURE_2D, dualRenderingTexture);
+        glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, 2024, 1468, 0,GL_RGB, GL_UNSIGNED_BYTE, 0);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+        gl->glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, dualRenderingTexture, 0);
+
+        glDeleteTextures(1, &frameDepthBuffer);
+        glGenTextures(1, &frameDepthBuffer);
+        glBindTexture(GL_TEXTURE_2D, frameDepthBuffer);
+        glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT16, 2024, 1468, 0,GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+        gl->glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, frameDepthBuffer, 0);
+
+        // Set the list of draw buffers.
+        GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
+        gl->glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
+        /***/
+        gl->glDrawElementsInstanced(GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, (void*) 0, grid->volumetricMesh.tetrahedraCount);
+        gl->glBindFramebuffer(GL_FRAMEBUFFER, defaultFBO);
+        //glDrawBuffer(0);
+    } else {
+        gl->glDrawElementsInstanced(GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, (void*) 0, grid->volumetricMesh.tetrahedraCount);
+    }
+
+    // Unbind program, buffers and VAO :
+    gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    gl->glBindVertexArray(0);
+    gl->glUseProgram(0);
+}
+
+void DrawableGrid::setMultiGridRendering(bool value) {
+    if(!value && this->multiGridRendering) {
+        gl->glDeleteFramebuffers(1, &this->frameBuffer);
+        glDeleteTextures(1, &this->dualRenderingTexture);
+        glDeleteTextures(1, &this->frameDepthBuffer);
+    }
+    this->multiGridRendering = value;
+    //if(this->isCage(activeMesh)) {
+    //    int gridIdx = this->getGridIdxLinkToCage(activeMesh);
+    //    if(gridIdx != -1) {
+    //        this->gridToDraw = gridIdx;
+    //        this->sendTetmeshToGPU(gridIdx, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS | InfoToSend::TEXCOORD | InfoToSend::NEIGHBORS));
+    //    }
+    //}
 }

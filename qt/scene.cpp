@@ -89,7 +89,7 @@ Scene::Scene() {
     this->planeVisibility = glm::vec<3, bool, glm::defaultp>(true, true, true);
 
     this->vao					  = 0;
-    this->vao_VolumetricBuffers = 0;
+    //this->vao_VolumetricBuffers = 0;
     this->vao_boundingBox		  = 0;
 
     this->vbo_VertPos				= 0;
@@ -125,7 +125,6 @@ Scene::Scene() {
     this->displayGrid = true;
     this->displayMesh = true;
     this->previewCursorInPlanarView = false;
-    this->multiGridRendering = false;
 }
 
 Scene::~Scene(void) {
@@ -247,11 +246,11 @@ void Scene::createBuffers() {
     this->vbo_Element			   = createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_Element");
 
     // For the texture3D visualization method :
-    this->vao_VolumetricBuffers  = createVAO("vaoHandle_VolumetricBuffers");
-    this->vbo_Texture3D_VertPos  = createVBO(GL_ARRAY_BUFFER, "vboHandle_Texture3D_VertPos");
-    this->vbo_Texture3D_VertNorm = createVBO(GL_ARRAY_BUFFER, "vboHandle_Texture3D_VertNorm");
-    this->vbo_Texture3D_VertTex  = createVBO(GL_ARRAY_BUFFER, "vboHandle_Texture3D_VertTex");
-    this->vbo_Texture3D_VertIdx  = createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_Texture3D_VertIdx");
+    //this->vao_VolumetricBuffers  = createVAO("vaoHandle_VolumetricBuffers");
+    //this->vbo_Texture3D_VertPos  = createVBO(GL_ARRAY_BUFFER, "vboHandle_Texture3D_VertPos");
+    //this->vbo_Texture3D_VertNorm = createVBO(GL_ARRAY_BUFFER, "vboHandle_Texture3D_VertNorm");
+    //this->vbo_Texture3D_VertTex  = createVBO(GL_ARRAY_BUFFER, "vboHandle_Texture3D_VertTex");
+    //this->vbo_Texture3D_VertIdx  = createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle_Texture3D_VertIdx");
 
     // For the bounding boxes we have to create/show :
     this->vao_boundingBox			= createVAO("vaoHandle_boundingBox");
@@ -468,7 +467,6 @@ void Scene::addGrid() {
 
     //Send grid texture
     this->sendTetmeshToGPU(this->gridToDraw, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS | InfoToSend::TEXCOORD | InfoToSend::NEIGHBORS));
-    this->tex3D_buildBuffers(gridView->volumetricMesh);
 
     this->updateBoundingBox();
 }
@@ -757,79 +755,6 @@ GLuint Scene::newAPI_uploadTexture3D(const GLuint texHandle, const TextureUpload
     return texHandle;
 }
 
-//void Scene::drawGridVolumetricView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const GridGLView::Ptr& grid) {
-void Scene::drawGrid(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const GridGLView::Ptr& grid, bool inFrame) {
-
-    if (grid->gridTexture > 0) {
-
-        DrawableGrid * drawable_grid = this->drawable_grids[this->gridToDraw];
-
-        glUseProgram(drawable_grid->program_VolumetricViewer);
-
-        this->prepareUniformsGrid(mvMat, pMat, camPos, grid, !inFrame);
-
-        glBindVertexArray(this->vao_VolumetricBuffers);
-
-        glEnableVertexAttribArray(0);
-        glBindBuffer(GL_ARRAY_BUFFER, this->vbo_Texture3D_VertPos);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
-
-        glEnableVertexAttribArray(1);
-        glBindBuffer(GL_ARRAY_BUFFER, this->vbo_Texture3D_VertNorm);
-        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*) 0);
-
-        glEnableVertexAttribArray(2);
-        glBindBuffer(GL_ARRAY_BUFFER, this->vbo_Texture3D_VertTex);
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*) 0);
-
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vbo_Texture3D_VertIdx);
-
-        if(inFrame && this->multiGridRendering) {
-            glGetIntegerv(GL_FRAMEBUFFER_BINDING, &this->defaultFBO);
-
-            glDeleteFramebuffers(1, &this->frameBuffer);
-            glGenFramebuffers(1, &this->frameBuffer);
-            glBindFramebuffer(GL_FRAMEBUFFER, this->frameBuffer);
-
-            glDeleteTextures(1, &(drawable_grid->dualRenderingTexture));
-            glGenTextures(1, &(drawable_grid->dualRenderingTexture));
-
-            glBindTexture(GL_TEXTURE_2D, (drawable_grid->dualRenderingTexture));
-            glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, h, w, 0,GL_RGB, GL_UNSIGNED_BYTE, 0);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-            glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, (drawable_grid->dualRenderingTexture), 0);
-
-            glDeleteTextures(1, &(drawable_grid->frameDepthBuffer));
-            glGenTextures(1, &(drawable_grid->frameDepthBuffer));
-            glBindTexture(GL_TEXTURE_2D, (drawable_grid->frameDepthBuffer));
-            glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT16, h, w, 0,GL_DEPTH_COMPONENT, GL_FLOAT, 0);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-            glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, (drawable_grid->frameDepthBuffer), 0);
-
-            // Set the list of draw buffers.
-            GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
-            glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
-            /***/
-            glDrawElementsInstanced(GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, (void*) 0, grid->volumetricMesh.tetrahedraCount);
-            glBindFramebuffer(GL_FRAMEBUFFER, this->defaultFBO);
-            //glDrawBuffer(0);
-        } else {
-            glDrawElementsInstanced(GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, (void*) 0, grid->volumetricMesh.tetrahedraCount);
-        }
-
-        // Unbind program, buffers and VAO :
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-        glBindVertexArray(0);
-        glUseProgram(0);
-    }
-}
-
 glm::vec3 Scene::computePlanePositionsWithActivation() {
     glm::vec3 planePos = this->computePlanePositions();
     for(int i = 0; i < 3; ++i) {
@@ -895,11 +820,6 @@ void Scene::printAllUniforms(GLuint _shader_program) {
     }
 }
 
-void Scene::prepareUniformsGrid(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const GridGLView::Ptr& _grid, bool drawFront) {
-    DrawableGrid * drawable_grid = this->drawable_grids[this->gridToDraw];
-    drawable_grid->prepareUniforms(mvMat, pMat, camPos, this->computePlanePositionsWithActivation(), this->planeDirection, drawFront);
-}
-
 void Scene::drawScene(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool showTexOnPlane) {
     this->cameraPosition = camPos;
     if (this->shouldUpdateUserColorScales) {
@@ -941,31 +861,33 @@ void Scene::drawScene(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool show
 
 
     if(this->displayGrid) {
-        if(this->multiGridRendering) {
-            if(this->grids.size() > 0) {
-                int originalGridToDraw = this->gridToDraw;
-                for(auto i : this->gridsToDraw) {
-                    if(i >= 0 && i < this->grids.size()) {
-                        this->gridToDraw = i;
-                        //this->drawGridVolumetricView(mvMat, pMat, camPos, this->grids[gridToDraw]);
-                        this->drawGrid(mvMat, pMat, camPos, this->grids[gridToDraw], i == 0);
-                    }
-                }
-                this->gridToDraw = originalGridToDraw;
-            }
-        } else {
+        //if(this->multiGridRendering) {
+        //    if(this->grids.size() > 0) {
+        //        int originalGridToDraw = this->gridToDraw;
+        //        for(auto i : this->gridsToDraw) {
+        //            if(i >= 0 && i < this->grids.size()) {
+        //                this->gridToDraw = i;
+        //                //this->drawGridVolumetricView(mvMat, pMat, camPos, this->grids[gridToDraw]);
+        //                this->drawGrid(mvMat, pMat, camPos, this->grids[gridToDraw], i == 0);
+        //            }
+        //        }
+        //        this->gridToDraw = originalGridToDraw;
+        //    }
+        //} else {
             if(this->grids.size() > 0) {
                 int originalGridToDraw = this->gridToDraw;
                 //this->drawGridVolumetricView(mvMat, pMat, camPos, this->grids[gridToDraw]);
                 for(auto i : this->gridsToDraw) {
                     if(i < this->grids.size()) {
                         this->gridToDraw = i;
-                        this->drawGrid(mvMat, pMat, camPos, this->grids[i], false);
+                        DrawableGrid * drawable_grid = this->drawable_grids[this->gridToDraw];
+                        drawable_grid->prepareUniforms(mvMat, pMat, camPos, this->computePlanePositionsWithActivation(), this->planeDirection, !false);
+                        drawable_grid->drawGrid(mvMat, pMat, camPos, false);
                     }
                 }
                 this->gridToDraw = originalGridToDraw;
             }
-        }
+        //}
     }
 
     if(this->displayMesh) {
@@ -1576,61 +1498,6 @@ void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend) {
     delete[] rawNormals;
     delete[] rawNeighbors;
     glBindTexture(GL_TEXTURE_2D, 0);
-}
-
-void Scene::tex3D_buildBuffers(VolMesh& volMesh) {
-    // Tetra ///////////////////////////////////////////////////////////////////////
-    //    v0----- v
-    //   /       /|
-    //  v ------v3|
-    //  | |     | |
-    //  | |v ---|-|v2
-    //  |/      |/
-    //  v1------v
-
-    float v0[3] = {-1, -1, 1};
-    float v1[3] = {-1, 1, -1};
-    float v2[3] = {1, -1, -1};
-    float v3[3] = {1, 1, 1};
-
-    // vertex coords array
-    GLfloat vertices[] = {v3[0], v3[1], v3[2], v1[0], v1[1], v1[2], v2[0], v2[1], v2[2],	// v3-v1-v2
-      v3[0], v3[1], v3[2], v2[0], v2[1], v2[2], v1[0], v1[1], v1[2],	// v3-v2-v1
-      v3[0], v3[1], v3[2], v0[0], v0[1], v0[2], v1[0], v1[1], v1[2],	// v3-v0-v1
-      v2[0], v2[1], v2[2], v1[0], v1[1], v1[2], v0[0], v0[1], v0[2]};	 // v2-v1-v0
-    // normal array
-    GLfloat normals[] = {v3[0], v3[1], v3[2], v1[0], v1[1], v1[2], v2[0], v2[1], v2[2],	   // v3-v1-v2
-      v3[0], v3[1], v3[2], v2[0], v2[1], v2[2], v1[0], v1[1], v1[2],	// v3-v2-v1
-      v3[0], v3[1], v3[2], v0[0], v0[1], v0[2], v1[0], v1[1], v1[2],	// v3-v0-v1
-      v2[0], v2[1], v2[2], v1[0], v1[1], v1[2], v0[0], v0[1], v0[2]};	 // v2-v1-v0
-    // index array of vertex array for glDrawElements()
-    // Notice the indices are listed straight from beginning to end as exactly
-    // same order of vertex array without hopping, because of different normals at
-    // a shared vertex. For this case, glDrawArrays() and glDrawElements() have no
-    // difference.
-    GLushort indices[] = {0, 1, 2,
-      3, 4, 5,
-      6, 7, 8,
-      9, 10, 11};
-    // texture coords :
-    GLfloat textureCoords[] = {0., 0., 1., 1., 2., 2.,
-      3., 3., 4., 4., 5., 5.,
-      6., 6., 7., 7., 8., 8.,
-      9., 9., 10., 10., 11., 11.};
-
-    glBindBuffer(GL_ARRAY_BUFFER, this->vbo_Texture3D_VertPos);
-    glBufferData(GL_ARRAY_BUFFER, 12 * 3 * sizeof(GLfloat), vertices, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ARRAY_BUFFER, this->vbo_Texture3D_VertNorm);
-    glBufferData(GL_ARRAY_BUFFER, 12 * 3 * sizeof(GLfloat), normals, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ARRAY_BUFFER, this->vbo_Texture3D_VertTex);
-    glBufferData(GL_ARRAY_BUFFER, 12 * 2 * sizeof(GLfloat), textureCoords, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vbo_Texture3D_VertIdx);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 12 * sizeof(GLushort), indices, GL_STATIC_DRAW);
-
-    glBindVertexArray(this->vao_VolumetricBuffers);
 }
 
 /**********************************************************************/
@@ -2351,13 +2218,14 @@ void Scene::changeActiveMesh(const std::string& name) {
         int gridIdx = this->getGridIdx(activeMesh);
         this->gridToDraw = gridIdx;
         this->sendTetmeshToGPU(gridIdx, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS | InfoToSend::TEXCOORD | InfoToSend::NEIGHBORS));
-    } else if (this->multiGridRendering && this->isCage(activeMesh)) {
-        int gridIdx = this->getGridIdxLinkToCage(activeMesh);
-        if(gridIdx != -1) {
-            this->gridToDraw = gridIdx;
-            this->sendTetmeshToGPU(gridIdx, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS | InfoToSend::TEXCOORD | InfoToSend::NEIGHBORS));
-        }
     }
+    //else if (this->multiGridRendering && this->isCage(activeMesh)) {
+    //    int gridIdx = this->getGridIdxLinkToCage(activeMesh);
+    //    if(gridIdx != -1) {
+    //        this->gridToDraw = gridIdx;
+    //        this->sendTetmeshToGPU(gridIdx, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS | InfoToSend::TEXCOORD | InfoToSend::NEIGHBORS));
+    //    }
+    //}
     Q_EMIT activeMeshChanged();
     this->changeCurrentTool(this->currentTool);
     this->changeCurrentDeformationMethod(this->currentDeformMethod);
@@ -3037,16 +2905,7 @@ void Scene::setGridsToDraw(std::vector<int> indices) {
 }
 
 void Scene::setMultiGridRendering(bool value) {
-    if(this->multiGridRendering) {
-        glDeleteFramebuffers(1, &this->frameBuffer);
-
-        DrawableGrid * drawable_grid = this->drawable_grids[this->gridToDraw];
-        if(!drawable_grid)
-            return;
-        glDeleteTextures(1, &drawable_grid->dualRenderingTexture);
-        glDeleteTextures(1, &drawable_grid->frameDepthBuffer);
-    }
-    this->multiGridRendering = value;
+    this->drawable_grids[this->gridToDraw]->setMultiGridRendering(value);
     if(this->isCage(activeMesh)) {
         int gridIdx = this->getGridIdxLinkToCage(activeMesh);
         if(gridIdx != -1) {

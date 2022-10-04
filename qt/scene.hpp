@@ -150,7 +150,7 @@ private:
     GLuint program_doublePass;
 
     GLuint vao;
-    GLuint vao_VolumetricBuffers;
+    //GLuint vao_VolumetricBuffers;
     GLuint vao_boundingBox;
     GLuint vao_spheres;
 
@@ -179,7 +179,6 @@ private:
     GLuint quad_vertexbuffer;
     GLint quad_programId;
 
-    GLint defaultFBO;
     GLuint frameBuffer;
 
     int h;
@@ -213,8 +212,6 @@ public:
 
     /* Draws */
     void drawScene(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool showTexOnPlane);
-    void prepareUniformsGrid(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, const GridGLView::Ptr& _grid, bool drawFront = false);
-    void drawGrid(GLfloat mvMat[], GLfloat pMat[], glm::vec3 camPos, const GridGLView::Ptr& grid, bool inFrame = false);
     void drawBoundingBox(const Image::bbox_t& _box, glm::vec3 color, GLfloat* vMat, GLfloat* pMat);
     /*************************************************/
 
@@ -222,7 +219,6 @@ public:
     void createBuffers();
     void setupVAOPointers();
     void setupVAOBoundingBox();// Orders the VAO pointers for the bounding box
-    void tex3D_buildBuffers(VolMesh& volMesh);// Build buffers to draw a single voxel (a cube)
     /*************************************************/
 
 
@@ -519,7 +515,6 @@ public:
     glm::vec3 cameraPosition;
     float distanceFromCamera;
 
-    bool multiGridRendering;
     bool displayGrid;
     bool displayMesh;
     bool previewCursorInPlanarView;
