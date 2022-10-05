@@ -175,11 +175,9 @@ public:
     void createBuffers();// Only for selection TODO: remove
 
     /* Others */
-    void newSHADERS_updateUserColorScales();
-    void signal_updateUserColorScales();
+    void updateUserColorScale();
     void updateMinMaxDisplayValues();
-    // TODO: c koi ?
-    void updateCVR();// Update colorChannelAttributes
+
     glm::vec3 computePlanePositions();
     glm::vec3 computePlanePositionsWithActivation();
     /*************************************************/
@@ -194,10 +192,6 @@ private:
 
     /* Color channel management */
     ColorChannel rgbMode;
-    GridGLView::data_2 textureBounds0;
-    GridGLView::data_2 textureBounds1;
-    GridGLView::data_2 colorBounds0;
-    GridGLView::data_2 colorBounds1;
     ColorFunction channels_r;
     GLuint selectedChannel_r;	 ///< The currently selected channel for greyscale mode.
     ColorFunction channels_g;
@@ -215,9 +209,6 @@ public:
 
     void addGrid();
 
-    /* Getters & setters */
-    glm::vec3 getSceneBoundaries() const;
-
     double getMinNumericLimit(size_t gridIndex) const { return Image::getMinNumericLimit(grids[gridIndex]->grid->getInternalDataType()); }
     double getMaxNumericLimit(size_t gridIndex) const { return Image::getMaxNumericLimit(grids[gridIndex]->grid->getInternalDataType()); }
 
@@ -234,13 +225,11 @@ public:
     void setMinMaxDisplayRange(int gridIdx, ValueType type, double value);
     double getMinMaxDisplayRange(int gridIdx, ValueType type);
 
+    // Set colors for min and max values
+    void setUserColorScale(int gridIdx, ValueType type, glm::vec3 color);// color of the beginning of the color segment for the segmented color scale
+
     void setColorFunction_r(ColorFunction _c);// Changes the texture coloration mode to the desired setting
     void setColorFunction_g(ColorFunction _c);
-
-    void setColor0(qreal r, qreal g, qreal b);// color of the beginning of the color segment for the segmented color scale
-    void setColor1(qreal r, qreal g, qreal b);
-    void setColor0Alternate(qreal r, qreal g, qreal b);
-    void setColor1Alternate(qreal r, qreal g, qreal b);
 
     /* Toggle things */
     void toggleAllPlaneVisibilities(void);
@@ -465,9 +454,6 @@ public:
     std::vector<DrawableGrid*> drawable_grids;
     std::vector<std::pair<GraphMesh*, std::string>> graph_meshes;
     std::vector<std::pair<SurfaceMesh*, std::string>> meshes;
-
-    Image::bbox_t sceneBB;
-    Image::bbox_t sceneDataBB;
 };
 
 #endif	  // VIEWER_INCLUDE_SCENE_HPP_

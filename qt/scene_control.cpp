@@ -98,10 +98,11 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, QWidget* parent) :
 	this->colorbutton_red_max	= new ColorButton(b);
 	this->colorbutton_green_min = new ColorButton(d);
 	this->colorbutton_green_max = new ColorButton(y);
-	this->sceneToControl->setColor0(r.redF(), r.greenF(), r.blueF());
-	this->sceneToControl->setColor1(b.redF(), b.greenF(), b.blueF());
-	this->sceneToControl->setColor0Alternate(d.redF(), d.greenF(), d.blueF());
-	this->sceneToControl->setColor1Alternate(y.redF(), y.greenF(), y.blueF());
+
+    this->sceneToControl->setUserColorScale(0, Scene::ValueType::MIN, glm::vec3(r.redF(), r.greenF(), r.blueF()));
+    this->sceneToControl->setUserColorScale(0, Scene::ValueType::MAX, glm::vec3(b.redF(), b.greenF(), b.blueF()));
+    this->sceneToControl->setUserColorScale(1, Scene::ValueType::MIN, glm::vec3(d.redF(), d.greenF(), d.blueF()));
+    this->sceneToControl->setUserColorScale(1, Scene::ValueType::MAX, glm::vec3(y.redF(), y.greenF(), y.blueF()));
 
 	this->rangeslider_red->setRange(0, this->max - 1);
 	this->rangeslider_red->setMinValue(0);
@@ -187,17 +188,17 @@ void ControlPanel::initSignals() {
 
 	// Connect color changes to their respective slots :
 	QObject::connect(this->colorbutton_red_min, &ColorButton::colorChanged, this, [this](QColor c) -> void {
-		this->sceneToControl->setColor0(c.redF(), c.greenF(), c.blueF());
-	});
+        this->sceneToControl->setUserColorScale(0, Scene::ValueType::MIN, glm::vec3(c.redF(), c.greenF(), c.blueF()));
+    });
 	QObject::connect(this->colorbutton_red_max, &ColorButton::colorChanged, this, [this](QColor c) -> void {
-		this->sceneToControl->setColor1(c.redF(), c.greenF(), c.blueF());
-	});
+        this->sceneToControl->setUserColorScale(0, Scene::ValueType::MAX, glm::vec3(c.redF(), c.greenF(), c.blueF()));
+    });
 	QObject::connect(this->colorbutton_green_min, &ColorButton::colorChanged, this, [this](QColor c) -> void {
-		this->sceneToControl->setColor0Alternate(c.redF(), c.greenF(), c.blueF());
-	});
+        this->sceneToControl->setUserColorScale(1, Scene::ValueType::MIN, glm::vec3(c.redF(), c.greenF(), c.blueF()));
+    });
 	QObject::connect(this->colorbutton_green_max, &ColorButton::colorChanged, this, [this](QColor c) -> void {
-		this->sceneToControl->setColor1Alternate(c.redF(), c.greenF(), c.blueF());
-	});
+        this->sceneToControl->setUserColorScale(1, Scene::ValueType::MAX, glm::vec3(c.redF(), c.greenF(), c.blueF()));
+    });
 
 	// Connect the fact of selecting a groupbox to change the scene's information on how to display images
 	QObject::connect(this->groupbox_red, &QGroupBox::toggled, this, &ControlPanel::updateRGBMode);

@@ -84,11 +84,6 @@ void Viewer::init() {
 
     //QObject::connect(this->scene, &Scene::needRedraw3DScene, this, &Viewer::draw);
 
-	glm::vec3 bbDiag = this->scene->getSceneBoundaries();
-	float sceneSize	 = glm::length(bbDiag);
-
-	// center scene on center of grid
-	this->setSceneCenter(qglviewer::Vec(bbDiag.x / 2., bbDiag.y / 2., bbDiag.z / 2.));
 	this->showEntireScene();
 
 	this->refreshTimer->start();	// Update every 'n' milliseconds from here on out
