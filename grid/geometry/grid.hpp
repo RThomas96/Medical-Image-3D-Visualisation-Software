@@ -76,6 +76,9 @@ private:
 //! @brief Struct able to make the link between the grid and its 3D representation
 struct Grid : public TetMesh {
 
+    uint16_t maxValue;
+    uint16_t minValue;
+
     //This matrix keep track of modification of the TetMesh in order to get back to the sampler space which have 0 as origin
     std::vector<glm::mat4> transformations;
     glm::mat4 toSamplerMatrix;

@@ -216,33 +216,17 @@ VolMesh::~VolMesh(void) { /* Nothing here for now. */
 
 GridGLView::GridGLView(Grid * _grid) {
 	this->grid			   = _grid;
-	this->gridTexture	   = 0;
 	this->volumetricMesh   = {};
-	this->boundingBoxColor = glm::vec3(.257, .257, .257);
-	this->nbChannels	   = 1;
-	this->defaultEpsilon   = glm::vec3(1.5, 1.5, 1.5);
     // TODO: add multiChannel grid
 	//this->nbChannels	   = this->grid->getVoxelDimensionality();
-	this->nbChannels	   = 2;
-	data_2 min(0, std::numeric_limits<data_2::value_type>::max());
-	this->texBounds0				= min;
-	this->texBounds1				= min;
-	this->colorBounds0				= min;
-	this->colorBounds1				= min;
-	this->boundingBoxColor			= glm::vec3(.257, .257, .257);
-	this->defaultEpsilon			= glm::vec3(1.f, 1.f, 1.f);
 	this->mainColorChannel			= 1;
-	this->uboHandle_colorAttributes = 0;
-
-    this->voxelDimensions = glm::vec3(1., 1., 1.);
 
 	// Fill with default attributes
     this->colorChannelAttributes.fill(ColorChannelAttributes_GL{});
 
 	// hide unused channels :
-	for (std::size_t c = this->nbChannels; c < 3; ++c) {
-		this->colorChannelAttributes[c].setHidden();
-	}
+    this->colorChannelAttributes[2].setHidden();
+    this->colorChannelAttributes[3].setHidden();
 }
 
 ColorChannelAttributes_GL& GridGLView::mainColorChannelAttributes() {

@@ -157,53 +157,17 @@ public:
     ColorChannelAttributes_GL& mainColorChannelAttributes();
 
 public:
-	using data_t  = double;
-	using data_2  = glm::vec<2, data_t, glm::defaultp>;
-	using data_3  = glm::vec<3, data_t, glm::defaultp>;
-	using color_3 = glm::vec3;
-
-	using int_pair = glm::vec<2, int, glm::defaultp>;
-
 	//Image::Grid::Ptr grid;
     Grid * grid;
 
-    // WARNING
-    // TODO: to fill
-    glm::vec3 voxelDimensions;
-
-    uint16_t maxValue;
-    uint16_t minValue;
-    std::vector<std::pair<uint16_t, uint16_t>> visu;
-    std::vector<glm::vec3> visu_color;
-    std::vector<bool> visu_visi;
-
+    // Stay here
+    VolMesh volumetricMesh;
     std::vector<glm::vec3> visu_map;
     std::vector<glm::vec3> color_map;
+    glm::vec3 color_0;
+    glm::vec3 color_1;
 
-	GLuint gridTexture;
-	unsigned int nbChannels;
-	VolMesh volumetricMesh;
-	glm::vec3 defaultEpsilon;
-	color_3 boundingBoxColor;
-
-    // Used
-	color_3 color_0;
-	color_3 color_1;
-
-    // Not used
-	data_2 texBounds0;
-	data_2 texBounds1;
-	data_2 colorBounds0;
-	data_2 colorBounds1;
-	GLuint uboHandle_colorAttributes;
-
-    // Used
-    GLuint colorRanges;
     std::array<ColorChannelAttributes_GL, 3> colorChannelAttributes;
-
-    //Used
-    GLuint valuesRangeToDisplay;
-    GLuint valuesRangeColorToDisplay;
 
 protected:
 	/// @brief The index of the main color channel.

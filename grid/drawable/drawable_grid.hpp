@@ -30,6 +30,11 @@ public:
     bool drawOnlyBoundaries;
     float blendFirstPass;
 
+    // Segmented data display control
+    std::vector<std::pair<uint16_t, uint16_t>> displayRangeSegmentedData;
+    std::vector<glm::vec3> displayColorSegmentedData;
+    std::vector<bool> displaySegmentedData;
+
     DrawableGrid(GridGLView::Ptr grid);
     virtual ~DrawableGrid() = default;
 
@@ -41,9 +46,12 @@ public:
     void updateMinMaxDisplayValues();
 
     GLuint colorScaleUser;
+    GLuint uboHandle_colorAttributes;
+    GLuint gridTexture;
 protected:
     GLuint program;
 
+    // Grid rendering
     GLuint vaoVolumetricBuffers;
     GLuint vboTexture3DVertPos;
     GLuint vboTexture3DVertNorm;
@@ -58,6 +66,10 @@ protected:
     GLuint dualRenderingTexture;
 
     GridGLView::Ptr grid;
+
+    GLuint colorRanges;
+    GLuint valuesRangeToDisplay;
+    GLuint valuesRangeColorToDisplay;
 
     // Shader compilation management
     ShaderCompiler::GLFunctions * gl;

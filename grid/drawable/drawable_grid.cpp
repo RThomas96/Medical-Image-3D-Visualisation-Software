@@ -212,7 +212,7 @@ void DrawableGrid::prepareUniforms(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camP
     tex++;
 
     glActiveTexture(GL_TEXTURE0 + tex);
-    glBindTexture(GL_TEXTURE_3D, grid->gridTexture);
+    glBindTexture(GL_TEXTURE_3D, gridTexture);
     gl->glUniform1i(getUniform("texData"), tex);
     tex++;
 
@@ -229,14 +229,14 @@ void DrawableGrid::prepareUniforms(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camP
     // For the segmented data visualisation
     // 1D texture that contain the value ranges to display
     glActiveTexture(GL_TEXTURE0 + tex);
-    glBindTexture(GL_TEXTURE_1D, grid->valuesRangeToDisplay);
+    glBindTexture(GL_TEXTURE_1D, valuesRangeToDisplay);
     gl->glUniform1i(getUniform("valuesRangeToDisplay"), tex);
     tex++;
 
     // For the segmented data visualisation
     // 1D texture that contain the color associated for each range
     glActiveTexture(GL_TEXTURE0 + tex);
-    glBindTexture(GL_TEXTURE_1D, grid->valuesRangeColorToDisplay);
+    glBindTexture(GL_TEXTURE_1D, valuesRangeColorToDisplay);
     gl->glUniform1i(getUniform("colorRangeToDisplay"), tex);
     tex++;
 
@@ -251,8 +251,8 @@ void DrawableGrid::prepareUniforms(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camP
     gl->glUniform3fv(getUniform("visuBBMin"), 1, glm::value_ptr(grid->grid->bbMin));
     gl->glUniform3fv(getUniform("visuBBMax"), 1, glm::value_ptr(grid->grid->bbMax));
     gl->glUniform1ui(getUniform("shouldUseBB"), 0);
-    gl->glUniform1f(getUniform("maxValue"), grid->maxValue);
-    gl->glUniform3fv(getUniform("volumeEpsilon"), 1, glm::value_ptr(grid->defaultEpsilon));
+    gl->glUniform1f(getUniform("maxValue"), grid->grid->maxValue);
+    gl->glUniform3fv(getUniform("volumeEpsilon"), 1, glm::value_ptr(glm::vec3(1.5, 1.5, 1.5)));
 
     gl->glUniform3fv(getUniform("cam"), 1, glm::value_ptr(camPos));
     gl->glUniform3fv(getUniform("cut"), 1, glm::value_ptr(planePosition));
@@ -300,7 +300,7 @@ void DrawableGrid::prepareUniforms(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camP
     tex++;
 
     // Directly copy the uboHandle_color class into the GPU
-    gl->glBindBufferBase(GL_UNIFORM_BUFFER, 0, grid->uboHandle_colorAttributes);
+    gl->glBindBufferBase(GL_UNIFORM_BUFFER, 0, uboHandle_colorAttributes);
 }
 
 GLuint DrawableGrid::uploadTexture1D(const TextureUpload& tex) {
@@ -481,13 +481,13 @@ void DrawableGrid::setUniformBufferData(GLuint uniform_buffer, std::size_t begin
 }
 
 void DrawableGrid::updateMinMaxDisplayValues() {
-    this->setUniformBufferData(grid->uboHandle_colorAttributes, 0, 32, &grid->mainColorChannelAttributes());
-    this->setUniformBufferData(grid->uboHandle_colorAttributes, 32, 32, &grid->colorChannelAttributes[0]);
-    this->setUniformBufferData(grid->uboHandle_colorAttributes, 64, 32, &grid->colorChannelAttributes[1]);
-    this->setUniformBufferData(grid->uboHandle_colorAttributes, 96, 32, &grid->colorChannelAttributes[2]);
+    this->setUniformBufferData(uboHandle_colorAttributes, 0, 32, &grid->mainColorChannelAttributes());
+    this->setUniformBufferData(uboHandle_colorAttributes, 32, 32, &grid->colorChannelAttributes[0]);
+    this->setUniformBufferData(uboHandle_colorAttributes, 64, 32, &grid->colorChannelAttributes[1]);
+    this->setUniformBufferData(uboHandle_colorAttributes, 96, 32, &grid->colorChannelAttributes[2]);
 
-    float maxValue = grid->maxValue;
-    glDeleteTextures(1, &grid->valuesRangeToDisplay);
+    float maxValue = grid->grid->maxValue;
+    glDeleteTextures(1, &valuesRangeToDisplay);
 
     TextureUpload texParams;
 
@@ -509,12 +509,12 @@ void DrawableGrid::updateMinMaxDisplayValues() {
         data.push_back(glm::vec3(0., 0., 0.));
         data_color.push_back(glm::vec3(0., 0., 0.));
     }
-    for(int i = 0; i < grid->visu.size(); ++i) {
-        if(grid->visu_visi[i]) {
-            for(int j = grid->visu[i].first; j <= grid->visu[i].second; ++j) {
+    for(int i = 0; i < displayRangeSegmentedData.size(); ++i) {
+        if(displaySegmentedData[i]) {
+            for(int j = displayRangeSegmentedData[i].first; j <= displayRangeSegmentedData[i].second; ++j) {
                 if(j < data.size()) {
                     data[j] = glm::vec3(1., 1., 1.);
-                    data_color[j] = grid->visu_color[i];
+                    data_color[j] = displayColorSegmentedData[i];
                 }
             }
         }
@@ -523,12 +523,12 @@ void DrawableGrid::updateMinMaxDisplayValues() {
     texParams.size.x		   = data.size();
     texParams.data			   = data.data();
 
-    grid->valuesRangeToDisplay = this->uploadTexture1D(texParams);
+    valuesRangeToDisplay = this->uploadTexture1D(texParams);
 
     texParams.size.x		   = data_color.size();
     texParams.data			   = data_color.data();
 
-    grid->valuesRangeColorToDisplay = this->uploadTexture1D(texParams);
+    valuesRangeColorToDisplay = this->uploadTexture1D(texParams);
 
     grid->visu_map = data;
     grid->color_map = data_color;

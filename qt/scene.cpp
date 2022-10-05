@@ -77,7 +77,7 @@ Scene::Scene() {
     this->vao					  = 0;
     //this->vao_VolumetricBuffers = 0;
 
-    std::cerr << "Allocating " << +std::numeric_limits<GridGLView::data_t>::max() << " elements for vis ...\n";
+    //std::cerr << "Allocating " << +std::numeric_limits<GridGLView::data_t>::max() << " elements for vis ...\n";
 
     this->shouldUpdateUserColorScales = false;
     this->needUpdateMinMaxDisplayValues		  = false;
@@ -265,8 +265,8 @@ std::pair<uint16_t, uint16_t> Scene::sendGridValuesToGPU(int gridIdx) {
     _gridTex.size.z = dimensions.z;
 
     std::vector<std::uint16_t> slices;
-    glDeleteTextures(1, &this->grids[gridIdx]->gridTexture);
-    this->grids[gridIdx]->gridTexture = this->newAPI_uploadTexture3D_allocateonly(_gridTex);
+    glDeleteTextures(1, &this->drawable_grids[gridIdx]->gridTexture);
+    this->drawable_grids[gridIdx]->gridTexture = this->newAPI_uploadTexture3D_allocateonly(_gridTex);
 
     int nbSlice = this->grids[gridIdx]->grid->getResolution()[2];
 
@@ -297,7 +297,7 @@ std::pair<uint16_t, uint16_t> Scene::sendGridValuesToGPU(int gridIdx) {
                 }
             }
         }
-        this->newAPI_uploadTexture3D(this->grids[gridIdx]->gridTexture, _gridTex, sliceI, slices);
+        this->newAPI_uploadTexture3D(this->drawable_grids[gridIdx]->gridTexture, _gridTex, sliceI, slices);
 
         max = std::max(max, *std::max_element(slices.begin(), slices.end()));
         //min = std::min(min, *std::min_element(slices.begin(), slices.end()));
@@ -315,6 +315,7 @@ std::pair<uint16_t, uint16_t> Scene::sendGridValuesToGPU(int gridIdx) {
 void Scene::addGrid() {
 
     GridGLView::Ptr gridView = this->grids.back();
+    DrawableGrid * drawable_gridView = this->drawable_grids.back();
 
     glm::vec<4, std::size_t, glm::defaultp> dimensions{gridView->grid->getResolution(), 2};
 
@@ -322,8 +323,8 @@ void Scene::addGrid() {
 
     uint16_t min = min_max.first;
     uint16_t max = min_max.second;
-    gridView->minValue = min;
-    gridView->maxValue = max;
+    gridView->grid->minValue = min;
+    gridView->grid->maxValue = max;
 
     if(this->gridToDraw == 0) {
         QColor r = Qt::GlobalColor::red;
@@ -357,16 +358,13 @@ void Scene::addGrid() {
     this->setColorFunction_r(ColorFunction::ColorMagnitude);
     this->setColorFunction_g(ColorFunction::ColorMagnitude);
 
-    gridView->boundingBoxColor = glm::vec3(.4, .6, .3);	   // olive-colored by default
-    gridView->nbChannels	   = 2;	   // loaded 2 channels in the image
-
     // Create the uniform buffer :
     auto mainColorChannel				= gridView->mainColorChannelAttributes();
-    gridView->uboHandle_colorAttributes = this->createUniformBuffer(4 * sizeof(ColorChannelAttributes_GL), GL_STATIC_DRAW);
-    this->setUniformBufferData(gridView->uboHandle_colorAttributes, 0, 32, &mainColorChannel);
-    this->setUniformBufferData(gridView->uboHandle_colorAttributes, 32, 32, &gridView->colorChannelAttributes[0]);
-    this->setUniformBufferData(gridView->uboHandle_colorAttributes, 64, 32, &gridView->colorChannelAttributes[1]);
-    this->setUniformBufferData(gridView->uboHandle_colorAttributes, 96, 32, &gridView->colorChannelAttributes[2]);
+    drawable_gridView->uboHandle_colorAttributes = this->createUniformBuffer(4 * sizeof(ColorChannelAttributes_GL), GL_STATIC_DRAW);
+    this->setUniformBufferData(drawable_gridView->uboHandle_colorAttributes, 0, 32, &mainColorChannel);
+    this->setUniformBufferData(drawable_gridView->uboHandle_colorAttributes, 32, 32, &gridView->colorChannelAttributes[0]);
+    this->setUniformBufferData(drawable_gridView->uboHandle_colorAttributes, 64, 32, &gridView->colorChannelAttributes[1]);
+    this->setUniformBufferData(drawable_gridView->uboHandle_colorAttributes, 96, 32, &gridView->colorChannelAttributes[2]);
 
     //Send grid texture
     this->sendTetmeshToGPU(this->gridToDraw, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS | InfoToSend::TEXCOORD | InfoToSend::NEIGHBORS));
@@ -2170,17 +2168,18 @@ void Scene::writeDeformedImageTemplated(const std::string& filename, const std::
         img_color = std::vector<std::vector<uint8_t>>(imageSize.z, std::vector<uint8_t>(imageSize.x * imageSize.y * 3, 0));
 
         auto upperGrid = this->grids[this->getGridIdx(gridName)];
-        float maxValue = upperGrid->maxValue;
+        auto drawable_upperGrid = this->drawable_grids[this->getGridIdx(gridName)];
+        float maxValue = upperGrid->grid->maxValue;
 
         for(int i = 0; i <= maxValue; ++i) {
             data.push_back(false);
             data_color.push_back(glm::vec3(0., 0., 0.));
         }
-        for(int i = 0; i < upperGrid->visu.size(); ++i) {
-            for(int j = upperGrid->visu[i].first; j <= upperGrid->visu[i].second; ++j) {
+        for(int i = 0; i < drawable_upperGrid->displayRangeSegmentedData.size(); ++i) {
+            for(int j = drawable_upperGrid->displayRangeSegmentedData[i].first; j <= drawable_upperGrid->displayRangeSegmentedData[i].second; ++j) {
                 if(j < data.size()) {
                     data[j] = true;
-                    data_color[j] = upperGrid->visu_color[i];
+                    data_color[j] = drawable_upperGrid->displayColorSegmentedData[i];
                 }
             }
         }
@@ -2493,17 +2492,17 @@ glm::vec3 Scene::getGridVoxelSize(const std::string &name, ResolutionMode resolu
 }
 
 std::pair<uint16_t, uint16_t> Scene::getGridMinMaxValues(const std::string& name) {
-    return std::make_pair(this->grids[this->getGridIdx(name)]->minValue, this->grids[this->getGridIdx(name)]->maxValue);
+    return std::make_pair(this->grids[this->getGridIdx(name)]->grid->minValue, this->grids[this->getGridIdx(name)]->grid->maxValue);
 }
 
 std::pair<uint16_t, uint16_t> Scene::getGridMinMaxValues() {
     if(gridToDraw != -1)
-        return std::make_pair(this->grids[this->gridToDraw]->minValue, this->grids[this->gridToDraw]->maxValue);
+        return std::make_pair(this->grids[this->gridToDraw]->grid->minValue, this->grids[this->gridToDraw]->grid->maxValue);
     return std::make_pair(0, 0);
 }
 
 std::vector<bool> Scene::getGridUsageValues(int minValue) {
-    std::vector<int> histogram = this->grids[this->gridToDraw]->grid->sampler.getHistogram(this->grids[this->gridToDraw]->maxValue+1);
+    std::vector<int> histogram = this->grids[this->gridToDraw]->grid->sampler.getHistogram(this->grids[this->gridToDraw]->grid->maxValue+1);
     if(gridToDraw != -1) {
         std::vector<bool> usage;
         usage.reserve(histogram.size());
@@ -2555,20 +2554,20 @@ void Scene::setRenderSize(int h, int w) {
 void Scene::resetRanges() {
    if(this->gridToDraw == -1)
        return;
-   auto& grid = this->grids[this->gridToDraw];
-   grid->visu.clear();
-   grid->visu_color.clear();
-   grid->visu_visi.clear();
+   auto& grid = this->drawable_grids[this->gridToDraw];
+   grid->displayRangeSegmentedData.clear();
+   grid->displayColorSegmentedData.clear();
+   grid->displaySegmentedData.clear();
    this->updateMinMaxDisplayValues();
 }
 
 void Scene::addRange(uint16_t min, uint16_t max, glm::vec3 color, bool visible, bool updateUBO) {
    if(this->gridToDraw == -1)
        return;
-   auto& grid = this->grids[this->gridToDraw];
-   grid->visu.push_back(std::make_pair(min, max));
-   grid->visu_color.push_back(color);
-   grid->visu_visi.push_back(visible);
+   auto& grid = this->drawable_grids[this->gridToDraw];
+   grid->displayRangeSegmentedData.push_back(std::make_pair(min, max));
+   grid->displayColorSegmentedData.push_back(color);
+   grid->displaySegmentedData.push_back(visible);
    if(updateUBO)
        this->updateMinMaxDisplayValues();
 }
@@ -2576,36 +2575,23 @@ void Scene::addRange(uint16_t min, uint16_t max, glm::vec3 color, bool visible, 
 void Scene::getRanges(std::vector<std::pair<uint16_t, uint16_t>>& ranges) {
    if(this->gridToDraw == -1)
        return;
-   auto& grid = this->grids[this->gridToDraw];
-   ranges = grid->visu;
+   auto& grid = this->drawable_grids[this->gridToDraw];
+   ranges = grid->displayRangeSegmentedData;
 }
 
 void Scene::getRangesColor(std::vector<glm::vec3>& colors) {
    if(this->gridToDraw == -1)
        return;
-   auto& grid = this->grids[this->gridToDraw];
-   colors = grid->visu_color;
+   auto& grid = this->drawable_grids[this->gridToDraw];
+   colors = grid->displayColorSegmentedData;
 }
 
 void Scene::getRangesVisu(std::vector<bool>& visu) {
    if(this->gridToDraw == -1)
        return;
-   auto& grid = this->grids[this->gridToDraw];
-   visu = grid->visu_visi;
+   auto& grid = this->drawable_grids[this->gridToDraw];
+   visu = grid->displaySegmentedData;
 }
-
-//void Scene::removeRange(const std::string &gridName, uint16_t min, uint16_t max) {
-//   if(this->gridToDraw == -1)
-//       return;
-//   auto& grid = this->grids[this->getGridIdx(gridName)];
-//   for(int i = 0; i < grid->visu.size(); ++i) {
-//       if(grid->visu[i].first == min && grid->visu[i].first == max) {
-//           grid->visu.erase(grid->visu.begin()+i);
-//           break;
-//       }
-//   }
-//   this->newSHADERS_updateUBOData();
-//}
 
 bool Scene::hasTwoOrMoreGrids() {
     return grids.size() >= 2;
