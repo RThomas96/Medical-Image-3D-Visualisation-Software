@@ -45,6 +45,13 @@ public:
     void recompileShaders();
     void updateMinMaxDisplayValues();
 
+    // Tetrahedral mesh rendering
+    GLuint vertexPositions;
+    GLuint textureCoordinates;
+    GLuint neighborhood;
+    GLuint faceNormals;
+    GLsizei tetrahedraCount;
+
     GLuint colorScaleUser;
     GLuint uboHandle_colorAttributes;
     GLuint gridTexture;

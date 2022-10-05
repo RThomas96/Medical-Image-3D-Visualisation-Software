@@ -1025,7 +1025,10 @@ void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend) {
     __GetTexSize(newMesh.mesh.size() * 4 * 3, &coorWidth, &coorHeight);
     __GetTexSize(newMesh.mesh.size() * 4, &neighbWidth, &neighbHeight);
 
-    this->grids[gridIdx]->volumetricMesh.tetrahedraCount = newMesh.mesh.size();
+    DrawableGrid& grid = *this->drawable_grids[gridIdx];
+
+    //this->grids[gridIdx]->volumetricMesh.tetrahedraCount = newMesh.mesh.size();
+    this->drawable_grids[gridIdx]->tetrahedraCount = newMesh.mesh.size();
 
     GLfloat* rawVertices  = new GLfloat[vertWidth * vertHeight * 3];
     GLfloat* rawNormals	  = new GLfloat[normWidth * normHeight * 4];
@@ -1081,8 +1084,8 @@ void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend) {
         texParams.format						   = GL_RGB;
         texParams.type							   = GL_FLOAT;
         texParams.data							   = rawVertices;
-        glDeleteTextures(1, &this->grids[gridIdx]->volumetricMesh.vertexPositions);
-        this->grids[gridIdx]->volumetricMesh.vertexPositions = this->uploadTexture2D(texParams);
+        glDeleteTextures(1, &grid.vertexPositions);
+        grid.vertexPositions = this->uploadTexture2D(texParams);
     }
 
     if(contain(infoToSend, InfoToSend::NORMALS)) {
@@ -1091,8 +1094,8 @@ void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend) {
         texParams.size.y					   = normHeight;
         texParams.format					   = GL_RGBA;
         texParams.data						   = rawNormals;
-        glDeleteTextures(1, &this->grids[gridIdx]->volumetricMesh.faceNormals);
-        this->grids[gridIdx]->volumetricMesh.faceNormals = this->uploadTexture2D(texParams);
+        glDeleteTextures(1, &grid.faceNormals);
+        grid.faceNormals = this->uploadTexture2D(texParams);
     }
 
     if(contain(infoToSend, InfoToSend::TEXCOORD)) {
@@ -1101,16 +1104,16 @@ void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend) {
         texParams.size.y							  = coorHeight;
         texParams.format							  = GL_RGB;
         texParams.data								  = tex;
-        glDeleteTextures(1, &this->grids[gridIdx]->volumetricMesh.textureCoordinates);
-        this->grids[gridIdx]->volumetricMesh.textureCoordinates = this->uploadTexture2D(texParams);
+        glDeleteTextures(1, &grid.textureCoordinates);
+        grid.textureCoordinates = this->uploadTexture2D(texParams);
     }
 
     if(contain(infoToSend, InfoToSend::NEIGHBORS)) {
         texParams.size.x						= neighbWidth;
         texParams.size.y						= neighbHeight;
         texParams.data							= rawNeighbors;
-        glDeleteTextures(1, &this->grids[gridIdx]->volumetricMesh.neighborhood);
-        this->grids[gridIdx]->volumetricMesh.neighborhood = this->uploadTexture2D(texParams);
+        glDeleteTextures(1, &grid.neighborhood);
+        grid.neighborhood = this->uploadTexture2D(texParams);
     }
 
     delete[] tex;

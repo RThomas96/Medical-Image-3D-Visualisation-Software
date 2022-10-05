@@ -187,27 +187,27 @@ void DrawableGrid::prepareUniforms(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camP
 
     std::size_t tex = 0;
     glActiveTexture(GL_TEXTURE0 + tex);
-    glBindTexture(GL_TEXTURE_2D, grid->volumetricMesh.vertexPositions);
+    glBindTexture(GL_TEXTURE_2D, vertexPositions);
     gl->glUniform1i(getUniform("vertices_translations"), tex);
     tex++;
 
     glActiveTexture(GL_TEXTURE0 + tex);
-    glBindTexture(GL_TEXTURE_2D, grid->volumetricMesh.faceNormals);
+    glBindTexture(GL_TEXTURE_2D, faceNormals);
     gl->glUniform1i(getUniform("normals_translations"), tex);
     tex++;
 
     glActiveTexture(GL_TEXTURE0 + tex);
-    glBindTexture(GL_TEXTURE_2D, grid->volumetricMesh.visibilityMap);
-    gl->glUniform1i(getUniform("visibility_texture"), tex);
+    //glBindTexture(GL_TEXTURE_2D, grid->volumetricMesh.visibilityMap);
+    //gl->glUniform1i(getUniform("visibility_texture"), tex);
     tex++;
 
     glActiveTexture(GL_TEXTURE0 + tex);
-    glBindTexture(GL_TEXTURE_2D, grid->volumetricMesh.textureCoordinates);
+    glBindTexture(GL_TEXTURE_2D, textureCoordinates);
     gl->glUniform1i(getUniform("texture_coordinates"), tex);
     tex++;
 
     glActiveTexture(GL_TEXTURE0 + tex);
-    glBindTexture(GL_TEXTURE_2D, grid->volumetricMesh.neighborhood);
+    glBindTexture(GL_TEXTURE_2D, neighborhood);
     gl->glUniform1i(getUniform("neighbors"), tex);
     tex++;
 
@@ -446,11 +446,11 @@ void DrawableGrid::drawGrid(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, glm
         GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
         gl->glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
         /***/
-        gl->glDrawElementsInstanced(GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, (void*) 0, grid->volumetricMesh.tetrahedraCount);
+        gl->glDrawElementsInstanced(GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, (void*) 0, tetrahedraCount);
         gl->glBindFramebuffer(GL_FRAMEBUFFER, defaultFBO);
         //glDrawBuffer(0);
     } else {
-        gl->glDrawElementsInstanced(GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, (void*) 0, grid->volumetricMesh.tetrahedraCount);
+        gl->glDrawElementsInstanced(GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, (void*) 0, tetrahedraCount);
     }
 
     // Unbind program, buffers and VAO :

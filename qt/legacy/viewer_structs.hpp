@@ -161,7 +161,6 @@ public:
     Grid * grid;
 
     // Stay here
-    VolMesh volumetricMesh;
     std::vector<glm::vec3> visu_map;
     std::vector<glm::vec3> color_map;
     glm::vec3 color_0;

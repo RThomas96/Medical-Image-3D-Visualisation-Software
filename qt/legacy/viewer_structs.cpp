@@ -216,7 +216,6 @@ VolMesh::~VolMesh(void) { /* Nothing here for now. */
 
 GridGLView::GridGLView(Grid * _grid) {
 	this->grid			   = _grid;
-	this->volumetricMesh   = {};
     // TODO: add multiChannel grid
 	//this->nbChannels	   = this->grid->getVoxelDimensionality();
 	this->mainColorChannel			= 1;
