@@ -8,6 +8,7 @@
 
 #include "../qt/legacy/viewer_structs.hpp"
 #include "UI/form.hpp"
+#include "grid/drawable/drawable_grid.hpp"
 
 class Scene;
 
@@ -19,14 +20,14 @@ public:
     QImage::Format format;
     glm::ivec3 imgSize;
     std::vector<std::vector<uint16_t>> data;
-    GridGLView::Ptr grid;
+    DrawableGrid * grid;
 
 private:
     std::vector<bool> upToDate;
     std::vector<QImage> images;
 
 public:
-    Raw3DImage(const glm::ivec3 imgSize, GridGLView::Ptr grid, QImage::Format format);
+    Raw3DImage(const glm::ivec3 imgSize, DrawableGrid * grid, QImage::Format format);
     void setSlice(const int& idx, const std::vector<uint16_t>& data);
     void setImage(const std::vector<std::vector<uint16_t>>& data);
     QImage& getImage(const int& imageIdx);

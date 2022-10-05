@@ -154,19 +154,10 @@ public:
 	~GridGLView(void) = default;
 
 	void setMainColorChannel(std::size_t index);
-    ColorChannelAttributes_GL& mainColorChannelAttributes();
 
 public:
 	//Image::Grid::Ptr grid;
     Grid * grid;
-
-    // Stay here
-    std::vector<glm::vec3> visu_map;
-    std::vector<glm::vec3> color_map;
-    glm::vec3 color_0;
-    glm::vec3 color_1;
-
-    std::array<ColorChannelAttributes_GL, 3> colorChannelAttributes;
 
 protected:
 	/// @brief The index of the main color channel.

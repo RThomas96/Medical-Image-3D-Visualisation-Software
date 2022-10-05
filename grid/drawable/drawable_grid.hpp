@@ -34,6 +34,12 @@ public:
     std::vector<std::pair<uint16_t, uint16_t>> displayRangeSegmentedData;
     std::vector<glm::vec3> displayColorSegmentedData;
     std::vector<bool> displaySegmentedData;
+    std::vector<glm::vec3> visu_map;
+    std::vector<glm::vec3> color_map;
+    glm::vec3 color_0;
+    glm::vec3 color_1;
+
+    std::array<ColorChannelAttributes_GL, 3> colorChannelAttributes;
 
     DrawableGrid(GridGLView::Ptr grid);
     virtual ~DrawableGrid() = default;

@@ -1,7 +1,7 @@
 #include "image3D_viewer.hpp"
 #include "scene.hpp"
 
-Raw3DImage::Raw3DImage(const glm::ivec3 imgSize, GridGLView::Ptr grid, QImage::Format format) {
+Raw3DImage::Raw3DImage(const glm::ivec3 imgSize, DrawableGrid * grid, QImage::Format format) {
     this->grid = grid;
     this->imgSize = imgSize;
     max = 0;
@@ -251,7 +251,7 @@ void Image3DViewer::init(const glm::vec3& imageSize, const int& sliceIdx, const 
     imgData.clear();
     imgData.reserve(gridNames.size());
     for(auto name : gridNames)
-        imgData.push_back(Raw3DImage(this->imageSize, scene->grids[scene->getGridIdx(name)], imgFormat));
+        imgData.push_back(Raw3DImage(this->imageSize, scene->drawable_grids[scene->getGridIdx(name)], imgFormat));
 
     this->isInitialized = true;
 
@@ -733,16 +733,16 @@ void PlanarViewForm::updateImageViewer() {
     glm::vec3 color1_0 = glm::vec3(.0, .0, 1.);
 
     if(this->scene->drawable_grids.size() > 0) {
-        color0_0 = this->scene->grids[0]->color_0;
-        color1_0 = this->scene->grids[0]->color_1;
+        color0_0 = this->scene->drawable_grids[0]->color_0;
+        color1_0 = this->scene->drawable_grids[0]->color_1;
     }
 
     glm::vec3 color0_1 = glm::vec3(1., .0, .0);
     glm::vec3 color1_1 = glm::vec3(.0, .0, 1.);
 
     if(this->scene->drawable_grids.size() > 1) {
-        color0_1 = this->scene->grids[1]->color_0;
-        color1_1 = this->scene->grids[1]->color_1;
+        color0_1 = this->scene->drawable_grids[1]->color_0;
+        color1_1 = this->scene->drawable_grids[1]->color_1;
     }
 
     this->viewers[this->selectedViewer]->init(

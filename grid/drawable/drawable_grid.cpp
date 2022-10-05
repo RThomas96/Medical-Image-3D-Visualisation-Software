@@ -276,8 +276,8 @@ void DrawableGrid::prepareUniforms(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camP
     gl->glUniform1f(getUniform("shininess"), .8f);
     gl->glUniform1f(getUniform("diffuseRef"), .8f);
 
-    gl->glUniform3fv(getUniform("color0"), 1, glm::value_ptr(grid->color_0));
-    gl->glUniform3fv(getUniform("color1"), 1, glm::value_ptr(grid->color_1));
+    gl->glUniform3fv(getUniform("color0"), 1, glm::value_ptr(color_0));
+    gl->glUniform3fv(getUniform("color1"), 1, glm::value_ptr(color_1));
 
     glActiveTexture(GL_TEXTURE0 + tex);
     glBindTexture(GL_TEXTURE_1D, this->colorScaleGreyscale);
@@ -481,10 +481,10 @@ void DrawableGrid::setUniformBufferData(GLuint uniform_buffer, std::size_t begin
 }
 
 void DrawableGrid::updateMinMaxDisplayValues() {
-    this->setUniformBufferData(uboHandle_colorAttributes, 0, 32, &grid->mainColorChannelAttributes());
-    this->setUniformBufferData(uboHandle_colorAttributes, 32, 32, &grid->colorChannelAttributes[0]);
-    this->setUniformBufferData(uboHandle_colorAttributes, 64, 32, &grid->colorChannelAttributes[1]);
-    this->setUniformBufferData(uboHandle_colorAttributes, 96, 32, &grid->colorChannelAttributes[2]);
+    this->setUniformBufferData(uboHandle_colorAttributes, 0, 32, 0);
+    this->setUniformBufferData(uboHandle_colorAttributes, 32, 32, &colorChannelAttributes[0]);
+    this->setUniformBufferData(uboHandle_colorAttributes, 64, 32, &colorChannelAttributes[1]);
+    this->setUniformBufferData(uboHandle_colorAttributes, 96, 32, &colorChannelAttributes[2]);
 
     float maxValue = grid->grid->maxValue;
     glDeleteTextures(1, &valuesRangeToDisplay);
@@ -530,6 +530,6 @@ void DrawableGrid::updateMinMaxDisplayValues() {
 
     valuesRangeColorToDisplay = this->uploadTexture1D(texParams);
 
-    grid->visu_map = data;
-    grid->color_map = data_color;
+    visu_map = data;
+    color_map = data_color;
 }

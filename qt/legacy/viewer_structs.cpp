@@ -221,15 +221,11 @@ GridGLView::GridGLView(Grid * _grid) {
 	this->mainColorChannel			= 1;
 
 	// Fill with default attributes
-    this->colorChannelAttributes.fill(ColorChannelAttributes_GL{});
+    //this->colorChannelAttributes.fill(ColorChannelAttributes_GL{});
 
 	// hide unused channels :
-    this->colorChannelAttributes[2].setHidden();
-    this->colorChannelAttributes[3].setHidden();
-}
-
-ColorChannelAttributes_GL& GridGLView::mainColorChannelAttributes() {
-	return this->colorChannelAttributes[this->mainColorChannel];
+    //this->colorChannelAttributes[2].setHidden();
+    //this->colorChannelAttributes[3].setHidden();
 }
 
 void GridGLView::setMainColorChannel(std::size_t color_channel) {
