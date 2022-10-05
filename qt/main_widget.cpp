@@ -121,18 +121,21 @@ void MainWidget::setupWidgets() {
     /***/
     // Plane control
     /***/
-    QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::xSliderValueChanged, this->scene, &Scene::slotSetPlaneDisplacementX);
-    QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::ySliderValueChanged, this->scene, &Scene::slotSetPlaneDisplacementY);
-    QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::zSliderValueChanged, this->scene, &Scene::slotSetPlaneDisplacementZ);
+
+
+
+    QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::xSliderValueChanged, [this](float x){this->scene->slotSetPlaneDisplacement(Scene::CuttingPlaneDirection::X, x);});
+    QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::ySliderValueChanged, [this](float y){this->scene->slotSetPlaneDisplacement(Scene::CuttingPlaneDirection::Y, y);});
+    QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::zSliderValueChanged, [this](float z){this->scene->slotSetPlaneDisplacement(Scene::CuttingPlaneDirection::Z, z);});
     QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::aSliderValueChanged, this->scene, &Scene::setBlendFirstPass);
 
-    QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::clickedInvertXPushButton, this->scene, &Scene::slotTogglePlaneDirectionX);
-    QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::clickedInvertYPushButton, this->scene, &Scene::slotTogglePlaneDirectionY);
-    QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::clickedInvertZPushButton, this->scene, &Scene::slotTogglePlaneDirectionZ);
+    QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::clickedInvertXPushButton, [this](){this->scene->slotTogglePlaneDirection(Scene::CuttingPlaneDirection::X);});
+    QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::clickedInvertYPushButton, [this](){this->scene->slotTogglePlaneDirection(Scene::CuttingPlaneDirection::Y);});
+    QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::clickedInvertZPushButton, [this](){this->scene->slotTogglePlaneDirection(Scene::CuttingPlaneDirection::Z);});
 
-    QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::clickedDisplayXCut, this->scene, &Scene::slotTogglePlaneX);
-    QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::clickedDisplayYCut, this->scene, &Scene::slotTogglePlaneY);
-    QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::clickedDisplayZCut, this->scene, &Scene::slotTogglePlaneZ);
+    QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::clickedDisplayXCut, [this](bool display){this->scene->slotToggleDisplayPlane(Scene::CuttingPlaneDirection::X, display);});
+    QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::clickedDisplayYCut, [this](bool display){this->scene->slotToggleDisplayPlane(Scene::CuttingPlaneDirection::Y, display);});
+    QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::clickedDisplayZCut, [this](bool display){this->scene->slotToggleDisplayPlane(Scene::CuttingPlaneDirection::Z, display);});
 
     QObject::connect(this->scene, &Scene::planeControlWidgetNeedUpdate, [=](const glm::vec3& values) {
         this->cutPlane_pannel->setValues(values.x, values.y, values.z);

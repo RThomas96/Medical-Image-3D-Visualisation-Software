@@ -825,54 +825,61 @@ void Scene::setColorFunction_g(ColorFunction _c) {
     this->needUpdateMinMaxDisplayValues = true;
 }
 
-void Scene::slotSetPlaneDisplacementX(float scalar) {
-    this->planeDisplacement.x = scalar;
+void Scene::slotSetPlaneDisplacement(CuttingPlaneDirection direction, float scalar) {
+    switch(direction) {
+        case X:
+            this->planeDisplacement.x = scalar;
+            break;
+        case Y:
+            this->planeDisplacement.y = scalar;
+            break;
+        case Z:
+            this->planeDisplacement.z = scalar;
+            break;
+        case XYZ:
+            break;
+    }
     Q_EMIT planesMoved(this->computePlanePositions());
 }
-void Scene::slotSetPlaneDisplacementY(float scalar) {
-    this->planeDisplacement.y = scalar;
+
+void Scene::slotTogglePlaneDirection(CuttingPlaneDirection direction) {
+    switch(direction) {
+        case X:
+            this->planeDirection.x = -this->planeDirection.x;
+            break;
+        case Y:
+            this->planeDirection.y = -this->planeDirection.y;
+            break;
+        case Z:
+            this->planeDirection.z = -this->planeDirection.z;
+            break;
+        case XYZ:
+            this->planeDirection = -this->planeDirection;
+            break;
+    }
     Q_EMIT planesMoved(this->computePlanePositions());
 }
-void Scene::slotSetPlaneDisplacementZ(float scalar) {
-    this->planeDisplacement.z = scalar;
+
+
+void Scene::slotToggleDisplayPlane(CuttingPlaneDirection direction, bool display) {
+    float value = 0;
+    if(display)
+        value = 1;
+    switch(direction) {
+        case X:
+            this->planeActivation.x = value;
+            break;
+        case Y:
+            this->planeActivation.y = value;
+            break;
+        case Z:
+            this->planeActivation.z = value;
+            break;
+        case XYZ:
+            this->planeActivation = glm::vec3(value, value, value);
+            break;
+    }
     Q_EMIT planesMoved(this->computePlanePositions());
-}
-
-void Scene::slotTogglePlaneDirectionX() {
-    this->planeDirection.x = -this->planeDirection.x;
-}
-void Scene::slotTogglePlaneDirectionY() {
-    this->planeDirection.y = -this->planeDirection.y;
-}
-void Scene::slotTogglePlaneDirectionZ() {
-    this->planeDirection.z = -this->planeDirection.z;
-}
-void Scene::toggleAllPlaneDirections() {
-    this->planeDirection = -this->planeDirection;
-}
-
-void Scene::slotTogglePlaneX(bool display) {
-    if(this->planeActivation[0] != 0.) {
-        this->planeActivation[0] = 0.;
-    } else {
-        this->planeActivation[0] = 1.;
-    }
-}
-
-void Scene::slotTogglePlaneY(bool display) {
-    if(this->planeActivation[1] != 0.) {
-        this->planeActivation[1] = 0.;
-    } else {
-        this->planeActivation[1] = 1.;
-    }
-}
-
-void Scene::slotTogglePlaneZ(bool display) {
-    if(this->planeActivation[2] != 0.) {
-        this->planeActivation[2] = 0.;
-    } else {
-        this->planeActivation[2] = 1.;
-    }
 }
 
 void Scene::setDisplayRange(int gridIdx, ValueType type, double value) {
@@ -926,7 +933,8 @@ void Scene::setUserColorScale(int gridIdx, ValueType type, glm::vec3 color) {
         else
             this->grids[gridIdx]->color_1 = color;
     }
-    this->updateUserColorScale();
+    //this->updateUserColorScale();
+    this->shouldUpdateUserColorScales = true;
     emit this->colorChanged();
 }
 

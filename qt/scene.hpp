@@ -212,11 +212,7 @@ public:
     double getMinNumericLimit(size_t gridIndex) const { return Image::getMinNumericLimit(grids[gridIndex]->grid->getInternalDataType()); }
     double getMaxNumericLimit(size_t gridIndex) const { return Image::getMaxNumericLimit(grids[gridIndex]->grid->getInternalDataType()); }
 
-    enum ValueType {
-        MIN,
-        MAX
-    };
-
+    enum ValueType { MIN, MAX };
     // Set the min and max values to display on the grid
     void setDisplayRange(int gridIdx, ValueType type, double value);
     double getDisplayRange(int gridIdx, ValueType type);
@@ -279,23 +275,20 @@ public slots:
     void changeCurrentDeformationMethod(DeformMethod newDeformMethod);
     void changeSelectedPoint(std::pair<int, glm::vec3> selectedPoint);
 
-    // Plane management slots
-    void slotSetPlaneDisplacementX(float scalar);
-    void slotSetPlaneDisplacementY(float scalar);
-    void slotSetPlaneDisplacementZ(float scalar);
+public :
+    glm::vec3 planeDirection;// Cutting plane directions (-1 or 1 on each axis)
+    glm::vec3 planeDisplacement;
+    glm::vec3 planeActivation;// If planes are used (0 = false, 1 = true)
+    enum CuttingPlaneDirection {X, Y, Z, XYZ};
 
-    void slotTogglePlaneDirectionX();
-    void slotTogglePlaneDirectionY();
-    void slotTogglePlaneDirectionZ();
-    void toggleAllPlaneDirections();
+public slots:
+    void slotSetPlaneDisplacement(CuttingPlaneDirection direction, float scalar);
+    void slotTogglePlaneDirection(CuttingPlaneDirection direction);
+    void slotToggleDisplayPlane(CuttingPlaneDirection direction, bool display);
 
-    void slotTogglePlaneX(bool display);
-    void slotTogglePlaneY(bool display);
-    void slotTogglePlaneZ(bool display);
-
-    void updatePlaneControlWidget() {
-        Q_EMIT planeControlWidgetNeedUpdate(this->planeDisplacement);
-    }
+    //void updatePlaneControlWidget() {
+    //    Q_EMIT planeControlWidgetNeedUpdate(this->planeDisplacement);
+    //}
 
     // *************** //
     // Connected to UI //
@@ -439,10 +432,6 @@ public:
     bool displayGrid;
     bool displayMesh;
     bool previewCursorInPlanarView;
-
-    glm::vec3 planeDirection;// Cutting plane directions (-1 or 1 on each axis)
-    glm::vec3 planeDisplacement;
-    glm::vec3 planeActivation;// If planes are used (0 = false, 1 = true)
 
     std::string activeMesh;
     UITool::MeshManipulatorType currentTool;
