@@ -56,6 +56,7 @@ public:
     GLuint textureCoordinates;
     GLuint neighborhood;
     GLuint faceNormals;
+    GLuint visibilityMap;
     GLsizei tetrahedraCount;
 
     GLuint colorScaleUser;

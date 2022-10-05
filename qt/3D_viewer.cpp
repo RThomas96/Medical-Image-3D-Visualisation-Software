@@ -54,7 +54,7 @@ Viewer::Viewer(Scene* const scene, QStatusBar* _program_bar, QWidget* parent) :
 	//this->scene->bindMeshManipulator(&this->meshManipulator);
     this->cursor = new QCursor();
     this->setCursor(*this->cursor);
-    this->setFPSIsDisplayed(true);
+    //this->setFPSIsDisplayed(true);
 }
 
 Viewer::~Viewer() {

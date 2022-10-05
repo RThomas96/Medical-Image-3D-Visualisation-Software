@@ -53,7 +53,7 @@ uniform bool drawOnlyBoundaries;
 uniform float diffuseRef;
 uniform float specRef;
 // Light positions
-uniform vec3 lightPositions[8];
+//uniform vec3 lightPositions[8];
 
 // Grid voxel dimensions :
 uniform vec3 voxelSize;
@@ -304,8 +304,8 @@ void main (void) {
     colorOut.a = 1.;
     colorOut.xyz += phongAmbient * color.xyz;
     // Phong computation :
-    colorOut.xyz += phongComputation(Pos, n, color, lightPositions[0], phongDetails, lightDetails);
-    colorOut.xyz += phongComputation(Pos, n, color, lightPositions[4], phongDetails, lightDetails);
+    //colorOut.xyz += phongComputation(Pos, n, color, lightPositions[0], phongDetails, lightDetails);
+    //colorOut.xyz += phongComputation(Pos, n, color, lightPositions[4], phongDetails, lightDetails);
     // Phong for camera light :
     colorOut.xyz += phongComputation(Pos, n, color, cam, phongDetails, lightDetails);
 

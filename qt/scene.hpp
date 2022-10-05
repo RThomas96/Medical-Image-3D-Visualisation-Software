@@ -142,7 +142,10 @@ public:
 private:
     QOpenGLContext* context;
 
-    GLuint vao;
+    GLuint default_vao;
+    GLuint default_vbo_Vertice;
+    GLuint default_vbo_Normal;
+    GLuint default_vbo_Id;
     GLuint frameBuffer;
 
     int h;

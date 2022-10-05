@@ -14,6 +14,44 @@ DrawableGrid::DrawableGrid(GridGLView::Ptr grid): gl(nullptr) {
     this->drawOnlyBoundaries = true;
     this->multiGridRendering = false;
 
+    this->color_0 = glm::vec3(1., 0., 0.);
+    this->color_1 = glm::vec3(1., 0., 0.);
+
+    vertexPositions = 0;
+    textureCoordinates = 0;
+    neighborhood = 0;
+    faceNormals = 0;
+    visibilityMap = 0;
+    tetrahedraCount = 0;
+
+    colorScaleUser = 0;
+    uboHandle_colorAttributes = 0;
+    gridTexture = 0;
+    program = 0;
+
+    vaoVolumetricBuffers = 0;
+    vboTexture3DVertPos = 0;
+    vboTexture3DVertNorm = 0;
+    vboTexture3DVertTex = 0;
+    vboTexture3DVertIdx = 0;
+
+    colorScaleGreyscale = 0;
+    colorScaleHsv2rgb = 0;
+
+    frameBuffer = 0;
+    frameDepthBuffer = 0;
+    dualRenderingTexture = 0;
+
+    colorRanges = 0;
+    valuesRangeToDisplay = 0;
+    valuesRangeColorToDisplay = 0;
+
+    this->colorChannelAttributes.fill(ColorChannelAttributes_GL{});
+
+    // de unused channels :
+    this->colorChannelAttributes[1].setHidden();
+    this->colorChannelAttributes[2].setHidden();
+
     std::cout << "Create drawable grid" << std::endl;
 };
 
@@ -94,8 +132,8 @@ void DrawableGrid::generateColorScales() {
     colorScaleUploadParameters.size.z		  = 1;
     colorScaleUploadParameters.format		  = GL_RGB;
     colorScaleUploadParameters.type			  = GL_FLOAT;
-    colorScaleUploadParameters.data			  = colorScaleData_greyscale.data();
 
+    colorScaleUploadParameters.data			  = colorScaleData_greyscale.data();
     glDeleteTextures(1, &this->colorScaleGreyscale);
     this->colorScaleGreyscale = this->uploadTexture1D(colorScaleUploadParameters);
 
@@ -140,26 +178,26 @@ void DrawableGrid::createBuffers() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
-    glGenTextures(1, &this->frameDepthBuffer);
-    glBindTexture(GL_TEXTURE_2D, this->frameDepthBuffer);
-    glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT32, 2024, 1468, 0,GL_DEPTH_COMPONENT, GL_FLOAT, 0);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    //glGenTextures(1, &this->frameDepthBuffer);
+    //glBindTexture(GL_TEXTURE_2D, this->frameDepthBuffer);
+    //glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT32, 2024, 1468, 0,GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
-    gl->glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, this->frameDepthBuffer, 0);
+    //gl->glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, this->frameDepthBuffer, 0);
 
-    // Set "renderedTexture" as our colour attachement #0
-    gl->glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, this->dualRenderingTexture, 0);
+    //// Set "renderedTexture" as our colour attachement #0
+    //gl->glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, this->dualRenderingTexture, 0);
 
-    // Set the list of draw buffers.
-    GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
-    gl->glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
+    //// Set the list of draw buffers.
+    //GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
+    //gl->glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
 
-    // Always check that our framebuffer is ok
-    if(gl->glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-        std::cout << "WARNING: framebuffer doesn't work !!" << std::endl;
-    else
-        std::cout << "Framebuffer works perfectly :) !!" << std::endl;
+    //// Always check that our framebuffer is ok
+    //if(gl->glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    //    std::cout << "WARNING: framebuffer doesn't work !!" << std::endl;
+    //else
+    //    std::cout << "Framebuffer works perfectly :) !!" << std::endl;
 
 }
 
@@ -197,8 +235,8 @@ void DrawableGrid::prepareUniforms(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camP
     tex++;
 
     glActiveTexture(GL_TEXTURE0 + tex);
-    //glBindTexture(GL_TEXTURE_2D, grid->volumetricMesh.visibilityMap);
-    //gl->glUniform1i(getUniform("visibility_texture"), tex);
+    glBindTexture(GL_TEXTURE_2D, visibilityMap);
+    gl->glUniform1i(getUniform("visibility_texture"), tex);
     tex++;
 
     glActiveTexture(GL_TEXTURE0 + tex);
@@ -241,8 +279,8 @@ void DrawableGrid::prepareUniforms(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camP
     tex++;
 
     float val = 1.;
-    if(drawFront)
-        val = 0.;
+    //if(drawFront)
+    //    val = 0.;
     gl->glUniform1fv(getUniform("isFirstPass"), 1, &val);
 
     glm::vec3 floatres = glm::convert_to<float>(grid->grid->sampler.getSamplerDimension());
@@ -413,7 +451,8 @@ void DrawableGrid::drawGrid(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, glm
 
     gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboTexture3DVertIdx);
 
-    if(inFrame && this->multiGridRendering) {
+    //if(inFrame && this->multiGridRendering) {
+    if(false) {
         GLint defaultFBO;
         gl->glGetIntegerv(GL_FRAMEBUFFER_BINDING, &defaultFBO);
 
@@ -454,8 +493,9 @@ void DrawableGrid::drawGrid(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, glm
     }
 
     // Unbind program, buffers and VAO :
-    gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     gl->glBindVertexArray(0);
+    gl->glBindBuffer(GL_ARRAY_BUFFER, 0);
+    gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     gl->glUseProgram(0);
 }
 
@@ -481,13 +521,14 @@ void DrawableGrid::setUniformBufferData(GLuint uniform_buffer, std::size_t begin
 }
 
 void DrawableGrid::updateMinMaxDisplayValues() {
-    this->setUniformBufferData(uboHandle_colorAttributes, 0, 32, 0);
+    this->setUniformBufferData(uboHandle_colorAttributes, 0, 32, &colorChannelAttributes[0]);
     this->setUniformBufferData(uboHandle_colorAttributes, 32, 32, &colorChannelAttributes[0]);
     this->setUniformBufferData(uboHandle_colorAttributes, 64, 32, &colorChannelAttributes[1]);
     this->setUniformBufferData(uboHandle_colorAttributes, 96, 32, &colorChannelAttributes[2]);
 
     float maxValue = grid->grid->maxValue;
     glDeleteTextures(1, &valuesRangeToDisplay);
+    glDeleteTextures(1, &valuesRangeColorToDisplay);
 
     TextureUpload texParams;
 

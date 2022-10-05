@@ -74,7 +74,7 @@ Scene::Scene() {
     this->channels_r			 = ColorFunction::SingleChannel;
     this->channels_g			 = ColorFunction::SingleChannel;
 
-    this->vao					  = 0;
+    this->default_vao = 0;
     //this->vao_VolumetricBuffers = 0;
 
     //std::cerr << "Allocating " << +std::numeric_limits<GridGLView::data_t>::max() << " elements for vis ...\n";
@@ -204,7 +204,10 @@ void Scene::createBuffers() {
     };
 
     // For the default VAO :
-    this->vao					   = createVAO("vaoHandle");
+    this->default_vao = createVAO("vaoHandle");
+    this->default_vbo_Vertice = createVBO(GL_ARRAY_BUFFER, "vboHandle");
+    this->default_vbo_Normal = createVBO(GL_ARRAY_BUFFER, "vboHandle");
+    this->default_vbo_Id = createVBO(GL_ELEMENT_ARRAY_BUFFER, "vboHandle");
 
     this->glSelection->setVao(createVAO("vaoHandle_Selection"));
     this->glSelection->setVboVertices(createVBO(GL_ARRAY_BUFFER, "vboHandle_SelectionVertices"));
@@ -360,7 +363,7 @@ void Scene::addGrid() {
 
     // Create the uniform buffer :
     drawable_gridView->uboHandle_colorAttributes = this->createUniformBuffer(4 * sizeof(ColorChannelAttributes_GL), GL_STATIC_DRAW);
-    this->setUniformBufferData(drawable_gridView->uboHandle_colorAttributes, 0, 32, 0);
+    this->setUniformBufferData(drawable_gridView->uboHandle_colorAttributes, 0, 32, &drawable_gridView->colorChannelAttributes[0]);
     this->setUniformBufferData(drawable_gridView->uboHandle_colorAttributes, 32, 32, &drawable_gridView->colorChannelAttributes[0]);
     this->setUniformBufferData(drawable_gridView->uboHandle_colorAttributes, 64, 32, &drawable_gridView->colorChannelAttributes[1]);
     this->setUniformBufferData(drawable_gridView->uboHandle_colorAttributes, 96, 32, &drawable_gridView->colorChannelAttributes[2]);
@@ -1360,16 +1363,16 @@ bool Scene::openCage(const std::string& name, const std::string& filename, BaseM
         std::cout << "ERROR: no surface mesh provided" << std::endl;
         return false;
     }
-    this->meshes.push_back(std::pair<SurfaceMesh*, std::string>(nullptr, name));
 
     TetMesh * tetMesh = dynamic_cast<TetMesh*>(surfaceMeshToDeform);
     if(MVC) {
-        this->meshes.back().first = new CageMVC(filename, surfaceMeshToDeform);
+        this->meshes.push_back(std::pair<SurfaceMesh*, std::string>(new CageMVC(filename, surfaceMeshToDeform), name));
     } else {
-        if(tetMesh)
-            this->meshes.back().first = new CageGreenLRI(filename, tetMesh);
-        else
-            this->meshes.back().first = new CageGreen(filename, surfaceMeshToDeform);
+        if(tetMesh) {
+            this->meshes.push_back(std::pair<SurfaceMesh*, std::string>(new CageGreenLRI(filename, tetMesh), name));
+        } else {
+            this->meshes.push_back(std::pair<SurfaceMesh*, std::string>(new CageGreen(filename, surfaceMeshToDeform), name));
+        }
     }
 
     this->meshes.back().first->initializeGL(this);
@@ -2528,14 +2531,14 @@ void Scene::setGridsToDraw(std::vector<int> indices) {
 }
 
 void Scene::setMultiGridRendering(bool value) {
-    this->drawable_grids[this->gridToDraw]->setMultiGridRendering(value);
-    if(this->isCage(activeMesh)) {
-        int gridIdx = this->getGridIdxLinkToCage(activeMesh);
-        if(gridIdx != -1) {
-            this->gridToDraw = gridIdx;
-            this->sendTetmeshToGPU(gridIdx, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS | InfoToSend::TEXCOORD | InfoToSend::NEIGHBORS));
-        }
-    }
+    //this->drawable_grids[this->gridToDraw]->setMultiGridRendering(value);
+    //if(this->isCage(activeMesh)) {
+    //    int gridIdx = this->getGridIdxLinkToCage(activeMesh);
+    //    if(gridIdx != -1) {
+    //        this->gridToDraw = gridIdx;
+    //        this->sendTetmeshToGPU(gridIdx, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS | InfoToSend::TEXCOORD | InfoToSend::NEIGHBORS));
+    //    }
+    //}
 };
 
 void Scene::setDrawOnlyBoundaries(bool value) {
