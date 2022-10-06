@@ -75,7 +75,7 @@ std::pair<glm::vec3, glm::vec3> Grid::getBoundingBox() const {
     return std::pair(this->bbMin, this->bbMax);
 }
 
-bool Grid::getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos, glm::vec3& res) const {
+bool Grid::getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, const std::vector<bool>& visibilityMap, const glm::vec3& planePos, glm::vec3& res) const {
     glm::vec3 nDirection = glm::normalize(direction);
 
     float maxDistance = glm::length(this->getOrigin() - origin)*2.;    
@@ -84,7 +84,8 @@ bool Grid::getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3
     for(float i = 0; i < maxDistance; i+=step) {
         const glm::vec3 p = origin + i * nDirection;
         const uint16_t value = this->getDeformedValueFromPoint(this->initialMesh, p);
-        if(value > minValue && value < maxValue && (p[0]>planePos[0]-0.01 && p[1]>planePos[1]-0.01 && p[2]>planePos[2]-0.01)) {
+        //if(value > minValue && value < maxValue && (p[0]>planePos[0]-0.01 && p[1]>planePos[1]-0.01 && p[2]>planePos[2]-0.01)) {
+        if(visibilityMap[value] && (p[0]>planePos[0]-0.01 && p[1]>planePos[1]-0.01 && p[2]>planePos[2]-0.01)) {
             res = p;
             return true;
         }

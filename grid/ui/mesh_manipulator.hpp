@@ -338,9 +338,6 @@ namespace UITool {
         void getAllPositions(std::vector<glm::vec3>& positions) override;
 
     public slots:
-        void displayManipulator(Manipulator * manipulatorToDisplay);
-        void hideManipulator(Manipulator * manipulatorToDisplay);
-
         void updateSliceToSelect(SliceOrientation sliceOrientation);
         void moveGuizmo();
 
@@ -351,9 +348,6 @@ namespace UITool {
         void setPositions(std::vector<glm::vec3>& positions);
         void rotateLastModifiedSlice(float angle);
 
-        void moveManipulator(Manipulator * manipulator);
-        void selectManipulator(Manipulator * manipulator);
-        void deselectManipulator(Manipulator * manipulator);
         void keyPressed(QKeyEvent* e) override;
         void keyReleased(QKeyEvent* e) override;
         void mousePressed(QMouseEvent* e) override;
@@ -383,6 +377,54 @@ namespace UITool {
         float incrementRange;
 
         int lastModifiedSlice;
+    };
+
+    class MarkerManipulator : public MeshManipulator {
+        Q_OBJECT
+        Q_INTERFACES(UITool::MeshManipulator)
+
+    public:
+
+        enum Step {
+            SELECT_VERTICE_ON_MESH,
+            PLACE_MARKER
+        };
+
+        Step step;
+
+        MarkerManipulator(BaseMesh * mesh, Grid * grid, const std::vector<glm::vec3>& positions);
+
+        void updateWithMeshVertices() override;
+        void getAllPositions(std::vector<glm::vec3>& positions) override;
+
+    public slots:
+
+        void placeManipulator(const glm::vec3& origin, const glm::vec3& direction, const std::vector<bool>& visibilityMap, const glm::vec3& planePos);
+
+        void keyPressed(QKeyEvent* e) override;
+        void keyReleased(QKeyEvent* e) override;
+        void mousePressed(QMouseEvent* e) override;
+        void mouseReleased(QMouseEvent* e) override;
+
+        void selectManipulator(Manipulator * manipulator);
+        void switchToPlaceMarkerStep(int manipulatorId);
+        void switchToSelectManipulatorStep(glm::vec3 markerPlaced);
+        void applyDeformation();
+
+        void draw() override;
+
+    signals:
+        void needSendTetmeshToGPU() override;
+        void needCastRay();
+        void needChangeCursor(UITool::CursorType cursorType);
+        void needDisplayVertexInfo(std::pair<int, glm::vec3> selectedPoint);
+
+    private:
+        Grid * grid;
+        std::vector<Manipulator> marker_manipulators;
+        std::vector<Manipulator> mesh_manipulators;
+
+        std::vector<std::pair<int, int>> manipulator_association;
     };
 }	 // namespace UITool
 #endif

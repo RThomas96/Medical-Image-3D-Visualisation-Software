@@ -1,11 +1,13 @@
 #include "mesh_manipulator.hpp"
 #include "glm/trigonometric.hpp"
 #include "grid/drawable/drawable.hpp"
+#include "grid/utils/GLUtilityMethods.h"
 #include "manipulator.hpp"
 #include "../deformation/mesh_deformer.hpp"
 #include "../deformation/cage_surface_mesh.hpp"
 #include "../utils/PCATools.h"
 #include "qnamespace.h"
+#include "qobjectdefs.h"
 #include "qt/scene.hpp"
 #include <fstream>
 #include <glm/gtx/closest_point.hpp>
@@ -164,10 +166,7 @@ namespace UITool {
             if(this->manipulators[i].isSelected)
                 currentState = State::MOVE;
 
-            if(currentState == State::NONE)
-                glColor3fv(glm::value_ptr(this->defaultManipulatorColor));
-            else
-                glColor3fv(glm::value_ptr(stateToColor(currentState)));
+            glColor3fv(glm::value_ptr(stateToColor(currentState)));
             BasicGL::drawSphere(this->manipulators[i].getManipPosition().x, this->manipulators[i].getManipPosition().y, this->manipulators[i].getManipPosition().z, this->sphereRadius, 15,15);
         }
     }
@@ -667,21 +666,6 @@ void SliceManipulator::getAllPositions(std::vector<glm::vec3>& positions) {
 	}
 }
 
-void SliceManipulator::displayManipulator(Manipulator * manipulatorToDisplay) {
-}
-
-void SliceManipulator::hideManipulator(Manipulator * manipulatorToDisplay) {
-}
-
-void SliceManipulator::moveManipulator(Manipulator * manipulator) {
-}
-
-void SliceManipulator::selectManipulator(Manipulator * manipulator) {
-}
-
-void SliceManipulator::deselectManipulator(Manipulator * manipulator) {
-}
-
 void SliceManipulator::keyPressed(QKeyEvent* e) {
     if(e->key() == Qt::Key_Plus) {
         if(e->modifiers() & Qt::ControlModifier)
@@ -935,6 +919,164 @@ void SliceManipulator::draw() {
     }
     if(this->guizmo && this->guizmo->isVisible)
         this->guizmo->draw();
+}
+
+/***/
+
+MarkerManipulator::MarkerManipulator(BaseMesh * mesh, Grid * grid, const std::vector<glm::vec3>& positions): MeshManipulator(mesh) {
+    this->step = Step::SELECT_VERTICE_ON_MESH;
+    this->grid = grid;
+    this->guizmo = nullptr;
+
+    this->mesh_manipulators.reserve(positions.size());
+    for (int i = 0; i < positions.size(); ++i) {
+        this->mesh_manipulators.push_back(Manipulator(positions[i]));
+        this->mesh_manipulators[i].lockPosition();
+        QObject::connect(&(this->mesh_manipulators[i]), &Manipulator::mouseRightButtonPressed, this, &MarkerManipulator::selectManipulator);
+        QObject::connect(&(this->mesh_manipulators[i]), &Manipulator::enterAtRangeForGrab, this, [this, i](){Q_EMIT needDisplayVertexInfo(std::make_pair(i, this->mesh_manipulators[i].getManipPosition()));});
+        QObject::connect(&(this->mesh_manipulators[i]), &Manipulator::isManipulated, this, [this, i](){Q_EMIT needDisplayVertexInfo(std::make_pair(i, this->mesh_manipulators[i].getManipPosition()));});
+    }
+}
+
+void MarkerManipulator::selectManipulator(Manipulator * manipulator) {
+    std::cout << "SELECT" << std::endl;
+    if(this->step == Step::SELECT_VERTICE_ON_MESH) {
+        ptrdiff_t index = manipulator - &(this->mesh_manipulators[0]);
+        this->switchToPlaceMarkerStep(index);
+    }
+}
+
+void MarkerManipulator::switchToPlaceMarkerStep(int manipulatorId) {
+    this->manipulator_association.push_back(std::make_pair(manipulatorId, -1));
+    this->step = Step::PLACE_MARKER;
+    for(auto& manipulator : this->mesh_manipulators) {
+        manipulator.disable();
+    }
+}
+
+void MarkerManipulator::switchToSelectManipulatorStep(glm::vec3 markerPlaced) {
+    this->manipulator_association.back().second = this->marker_manipulators.size();
+    this->marker_manipulators.push_back(Manipulator(markerPlaced));
+    this->marker_manipulators.back().lockPosition();
+    this->marker_manipulators.back().disable();
+    this->step = Step::SELECT_VERTICE_ON_MESH;
+    for(auto& manipulator : this->mesh_manipulators) {
+        manipulator.enable();
+    }
+    this->applyDeformation();
+}
+
+void MarkerManipulator::updateWithMeshVertices() {}
+void MarkerManipulator::getAllPositions(std::vector<glm::vec3>& positions) {}
+
+void MarkerManipulator::keyPressed(QKeyEvent* e) {
+    if(e->key() == Qt::Key_Q && !e->isAutoRepeat()) {
+        if(this->step == Step::PLACE_MARKER) {
+            Q_EMIT needChangeCursor(UITool::CursorType::HOURGLASS);
+            // This signal will cast a ray in the scene
+            // The function that cast a ray in the scene is bind to the placeManipulator function in the marker manipulator
+            Q_EMIT needCastRay();
+        }
+    }
+}
+
+void MarkerManipulator::placeManipulator(const glm::vec3& origin, const glm::vec3& direction, const std::vector<bool>& visibilityMap, const glm::vec3& planePos) {
+    glm::vec3 position(0., 0., 0.);
+    bool found = grid->getPositionOfRayIntersection(origin, direction, visibilityMap, planePos, position);
+    if(found) {
+        this->marker_manipulators.push_back(position);
+        Q_EMIT needChangeCursor(UITool::CursorType::NORMAL);
+        this->switchToSelectManipulatorStep(position);
+    } else {
+        Q_EMIT needChangeCursor(UITool::CursorType::FAIL);
+        sleep(1);
+        Q_EMIT needChangeCursor(UITool::CursorType::NORMAL);
+    }
+}
+
+void MarkerManipulator::keyReleased(QKeyEvent* e) {}
+
+void MarkerManipulator::mousePressed(QMouseEvent* e) {}
+
+void MarkerManipulator::mouseReleased(QMouseEvent* e) {}
+
+void MarkerManipulator::draw() {
+    glPolygonMode( GL_FRONT_AND_BACK , GL_FILL );
+    glColor3f(0.2,0.2,0.9);
+    glClear(GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_LIGHTING);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_DEPTH);
+    for(int i = 0; i < this->marker_manipulators.size(); ++i){
+        State currentState = State::NONE;
+        glColor3fv(glm::value_ptr(stateToColor(currentState)));
+        BasicGL::drawSphere(this->marker_manipulators[i].getManipPosition().x, this->marker_manipulators[i].getManipPosition().y, this->marker_manipulators[i].getManipPosition().z, this->sphereRadius, 15,15);
+    }
+
+    if(this->step == Step::SELECT_VERTICE_ON_MESH) {
+        for(int i = 0; i < this->mesh_manipulators.size(); ++i){
+            State currentState = State::AT_RANGE;
+            if(this->mesh_manipulators[i].isAtRangeForGrab)
+                currentState = State::HIGHLIGHT;
+            glColor3fv(glm::value_ptr(stateToColor(currentState)));
+            BasicGL::drawSphere(this->mesh_manipulators[i].getManipPosition().x, this->mesh_manipulators[i].getManipPosition().y, this->mesh_manipulators[i].getManipPosition().z, this->sphereRadius, 15,15);
+        }
+    }
+
+    if(this->step == Step::PLACE_MARKER) {
+        glColor3fv(glm::value_ptr(stateToColor(State::HIGHLIGHT)));
+        int idx = this->manipulator_association.back().first;
+        BasicGL::drawSphere(this->mesh_manipulators[idx].getManipPosition().x, this->mesh_manipulators[idx].getManipPosition().y, this->mesh_manipulators[idx].getManipPosition().z, this->sphereRadius, 15,15);
+    }
+
+    glBegin(GL_LINES);
+    for(int i = 0; i < this->manipulator_association.size(); ++i) {
+        if(this->manipulator_association[i].second != -1) {
+            glColor3fv(glm::value_ptr(glm::vec3(0., 0., 1.)));
+            glVertex3fv(glm::value_ptr(this->mesh_manipulators[this->manipulator_association[i].first].getManipPosition()));
+            glColor3fv(glm::value_ptr(glm::vec3(0., 0., 1.)));
+            glVertex3fv(glm::value_ptr(this->marker_manipulators[this->manipulator_association[i].second].getManipPosition()));
+        }
+    }
+    glEnd();
+}
+
+void MarkerManipulator::applyDeformation() {
+    std::vector<bool> handles(this->mesh_manipulators.size(), false);
+    for(int i = 0; i < this->manipulator_association.size(); ++i) {
+        if(this->manipulator_association[i].second != -1) {
+            mesh->replacePoint(this->manipulator_association[i].first,
+                               this->marker_manipulators[this->manipulator_association[i].second].getManipPosition());
+            handles[this->manipulator_association[i].first] = true;
+        }
+    }
+
+    ARAPMethod * deformer = dynamic_cast<ARAPMethod*>(this->mesh->meshDeformer);
+    if(!deformer) {
+        std::cout << "WARNING: ARAP manipulator can be used only with the ARAP deformer !" << std::endl;
+        return;
+    }
+    std::vector<glm::vec3> positions;
+    positions = mesh->getVertices();
+
+    std::vector<Vec3D<float>> ptsAsVec3D;
+    for(int i = 0; i < positions.size(); ++i) {
+        glm::vec3 pt = positions[i];
+        ptsAsVec3D.push_back(Vec3D(pt[0], pt[1], pt[2]));
+    }
+    deformer->arap.setHandles(handles);
+    deformer->arap.compute_deformation(ptsAsVec3D);
+
+    for(int i = 0; i < positions.size(); ++i)
+        positions[i] = glm::vec3(ptsAsVec3D[i][0], ptsAsVec3D[i][1], ptsAsVec3D[i][2]);
+
+    mesh->useNormal = true;
+    mesh->movePoints(positions);
+    mesh->useNormal = false;
+    for(int i = 0; i < this->mesh->getNbVertices(); ++i) {
+        this->mesh_manipulators[i].setManipPosition(this->mesh->getVertice(i));
+    }
+    Q_EMIT needSendTetmeshToGPU();
 }
 
 }

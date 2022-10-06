@@ -80,11 +80,14 @@ void MainWidget::setupWidgets() {
     this->toolbar->addAction(this->actionManager->getAction("OpenImage"));
     this->toolbar->addAction(this->actionManager->getAction("SaveImage"));
 
+    this->toolbar->addSeparator();
+
     this->toolbar->addAction(this->actionManager->getAction("ToggleNoneTool"));
     this->toolbar->addAction(this->actionManager->getAction("ToggleMoveTool"));
     this->toolbar->addAction(this->actionManager->getAction("ToggleDirectTool"));
     this->toolbar->addAction(this->actionManager->getAction("ToggleARAPTool"));
     this->toolbar->addAction(this->actionManager->getAction("ToggleSliceTool"));
+    this->toolbar->addAction(this->actionManager->getAction("ToggleMarkerTool"));
 
     this->toolbar->addSeparator();
 
@@ -303,13 +306,19 @@ void MainWidget::setupActions() {
     QObject::connect(this, &MainWidget::gridSelected, [this](){this->actionManager->getAction("ToggleSliceTool")->setDisabled(true);});
     QObject::connect(this, &MainWidget::meshSelected, [this](){this->actionManager->getAction("ToggleSliceTool")->setDisabled(false);});
 
-    this->actionManager->createQActionToggleButton("ToggleRegisterTool", "Register", "Ctrl+R", "Activate Register tool", "register");
-    QObject::connect(this->actionManager->getAction("ToggleRegisterTool"), &QAction::triggered, [this](){this->scene->updateTools(UITool::MeshManipulatorType::FIXED_REGISTRATION);});
-    QObject::connect(this->actionManager->getAction("ToggleRegisterTool"), &QAction::triggered, [this](){this->changeCurrentTool(UITool::MeshManipulatorType::FIXED_REGISTRATION);});
-    QObject::connect(this, &MainWidget::gridSelected, [this](){this->actionManager->getAction("ToggleRegisterTool")->setDisabled(true);});
-    QObject::connect(this, &MainWidget::meshSelected, [this](){this->actionManager->getAction("ToggleRegisterTool")->setDisabled(false);});
+    this->actionManager->createQActionToggleButton("ToggleMarkerTool", "Marker", "Ctrl+A", "Activate Marker tool", "slice");
+    QObject::connect(this->actionManager->getAction("ToggleMarkerTool"), &QAction::triggered, [this](){this->scene->updateTools(UITool::MeshManipulatorType::MARKER);});
+    QObject::connect(this->actionManager->getAction("ToggleMarkerTool"), &QAction::triggered, [this](){this->changeCurrentTool(UITool::MeshManipulatorType::MARKER);});
+    QObject::connect(this, &MainWidget::gridSelected, [this](){this->actionManager->getAction("ToggleMarkerTool")->setDisabled(true);});
+    QObject::connect(this, &MainWidget::meshSelected, [this](){this->actionManager->getAction("ToggleMarkerTool")->setDisabled(false);});
 
-    this->actionManager->createQExclusiveActionGroup("ToogleTools", {"ToggleNoneTool", "ToggleMoveTool", "ToggleDirectTool", "ToggleARAPTool", "ToggleRegisterTool", "ToggleSliceTool"});
+    //this->actionManager->createQActionToggleButton("ToggleRegisterTool", "Register", "Ctrl+R", "Activate Register tool", "register");
+    //QObject::connect(this->actionManager->getAction("ToggleRegisterTool"), &QAction::triggered, [this](){this->scene->updateTools(UITool::MeshManipulatorType::FIXED_REGISTRATION);});
+    //QObject::connect(this->actionManager->getAction("ToggleRegisterTool"), &QAction::triggered, [this](){this->changeCurrentTool(UITool::MeshManipulatorType::FIXED_REGISTRATION);});
+    //QObject::connect(this, &MainWidget::gridSelected, [this](){this->actionManager->getAction("ToggleRegisterTool")->setDisabled(true);});
+    //QObject::connect(this, &MainWidget::meshSelected, [this](){this->actionManager->getAction("ToggleRegisterTool")->setDisabled(false);});
+
+    this->actionManager->createQExclusiveActionGroup("ToogleTools", {"ToggleNoneTool", "ToggleMoveTool", "ToggleDirectTool", "ToggleARAPTool", "ToggleSliceTool", "ToggleMarkerTool"});
 
     // Move
     this->actionManager->createQActionToggleButton("MoveTool_toggleEvenMode", "Even", "E", "Toggle the even mode to scale evenly in 3 dimensions", "even");

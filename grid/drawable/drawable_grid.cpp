@@ -520,6 +520,31 @@ void DrawableGrid::setUniformBufferData(GLuint uniform_buffer, std::size_t begin
     gl->glBufferSubData(GL_UNIFORM_BUFFER, begin_bytes, size_bytes, data);
 }
 
+void DrawableGrid::getVisibilityMap(std::vector<bool>& visMap) {
+    visMap.clear();
+
+    float maxValue = grid->grid->maxValue;
+    visMap.reserve(maxValue);
+    for(int i = 0; i <= maxValue; ++i)
+        visMap.push_back(false);
+
+    //for(int i = this->colorChannelAttributes[0].getVisibleRange().x; i < this->colorChannelAttributes[0].getVisibleRange().y; ++i) {
+    //    if(i < visMap.size()) {
+    //        visMap[i] = true;
+    //    }
+    //}
+
+    for(int i = 0; i < displayRangeSegmentedData.size(); ++i) {
+        if(displaySegmentedData[i]) {
+            for(int j = displayRangeSegmentedData[i].first; j <= displayRangeSegmentedData[i].second; ++j) {
+                if(j < visMap.size() && j >= this->colorChannelAttributes[0].getVisibleRange().x && j <= this->colorChannelAttributes[0].getVisibleRange().y) {
+                    visMap[j] = true;
+                }
+            }
+        }
+    }
+}
+
 void DrawableGrid::updateMinMaxDisplayValues() {
     this->setUniformBufferData(uboHandle_colorAttributes, 0, 32, &colorChannelAttributes[0]);
     this->setUniformBufferData(uboHandle_colorAttributes, 32, 32, &colorChannelAttributes[0]);

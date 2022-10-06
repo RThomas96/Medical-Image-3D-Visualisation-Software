@@ -158,10 +158,6 @@ public slots:
         switch(newTool) {
             case UITool::MeshManipulatorType::NONE:
                 break;
-            case UITool::MeshManipulatorType::FREE:
-                break;
-            case UITool::MeshManipulatorType::REGISTRATION:
-                break;
             case UITool::MeshManipulatorType::POSITION:
                 this->actionManager->activateGroup("MoveTool");
                 break;
@@ -170,11 +166,10 @@ public slots:
             case UITool::MeshManipulatorType::ARAP:
                 this->actionManager->activateGroup("ARAPTool");
                 break;
-            case UITool::MeshManipulatorType::FIXED_REGISTRATION:
-                this->actionManager->activateGroup("FixedTool");
-                break;
             case UITool::MeshManipulatorType::SLICE:
                 this->actionManager->activateGroup("SliceTool");
+                break;
+            case UITool::MeshManipulatorType::MARKER:
                 break;
         }
     }

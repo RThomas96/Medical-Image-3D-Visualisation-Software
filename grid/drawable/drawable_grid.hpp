@@ -50,6 +50,7 @@ public:
     void setMultiGridRendering(bool value);
     void recompileShaders();
     void updateMinMaxDisplayValues();
+    void getVisibilityMap(std::vector<bool>& visMap);
 
     // Tetrahedral mesh rendering
     GLuint vertexPositions;

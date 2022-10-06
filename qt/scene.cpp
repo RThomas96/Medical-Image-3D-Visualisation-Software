@@ -1660,16 +1660,19 @@ void Scene::updateTools(UITool::MeshManipulatorType tool) {
     this->currentTool = tool;
     if(tool == UITool::MeshManipulatorType::DIRECT) {
         this->meshManipulator = new UITool::DirectManipulator(mesh, positions);
-        this->meshManipulator->setSize(UITool::GL::SPHERE, 0.017);
         dynamic_cast<UITool::DirectManipulator*>(this->meshManipulator)->setDefaultManipulatorColor(glm::vec3(1., 1., 0.));
 
     } else if(tool == UITool::MeshManipulatorType::POSITION) {
         this->meshManipulator = new UITool::GlobalManipulator(mesh, positions);
-        //scene->updateSceneRadius();
     } else if(tool == UITool::MeshManipulatorType::ARAP) {
         this->meshManipulator = new UITool::ARAPManipulator(mesh, positions);
     } else if(tool == UITool::MeshManipulatorType::SLICE) {
         this->meshManipulator = new UITool::SliceManipulator(mesh, positions);
+    } else if(tool == UITool::MeshManipulatorType::MARKER) {
+        if(this->grids.size() > 0) {
+            this->meshManipulator = new UITool::MarkerManipulator(mesh, this->grids[0]->grid, positions);
+            this->meshManipulator->setSize(UITool::GL::SPHERE, 0.007);
+        }
     }
 
     QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needChangeCursor(UITool::CursorType)), this, SLOT(changeCursor(UITool::CursorType)));
@@ -1711,22 +1714,22 @@ void Scene::updateTools(UITool::MeshManipulatorType tool) {
     }
 
     // MeshManipulator->Scene
-    //if(tool == UITool::MeshManipulatorType::FREE) {
-    //    QObject::connect(this, &Scene::rayIsCasted, this, [this](const glm::vec3& origin, const glm::vec3& direction) { emit dynamic_cast<UITool::FreeManipulator*>(this->meshManipulator)->rayIsCasted(origin, direction, this->getMinTexValue(), this->getMaxTexValue(), this->computePlanePositions());});
-    //}
 
     if(tool == UITool::MeshManipulatorType::ARAP) {
         QObject::connect(dynamic_cast<UITool::ARAPManipulator*>(this->meshManipulator), SIGNAL(needPushHandleButton()), this, SIGNAL(needPushHandleButton()));
     }
 
-    //if(tool == UITool::MeshManipulatorType::REGISTRATION) {
-    //    QObject::connect(this, &Scene::rayIsCasted, this, [this](const glm::vec3& origin, const glm::vec3& direction) { emit dynamic_cast<UITool::CompManipulator*>(this->meshManipulator)->rayIsCasted(origin, direction, this->getMinTexValue(), this->getMaxTexValue(), this->computePlanePositions());});
-    //    QObject::connect(this, SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)), dynamic_cast<UITool::CompManipulator*>(this->meshManipulator), SIGNAL(pointIsClickedInPlanarViewer(const glm::vec3&)));
-    //}
-
     if(tool == UITool::MeshManipulatorType::SLICE) {
-        //QObject::connect(dynamic_cast<UITool::SliceManipulator*>(this->meshManipulator), SIGNAL(needRedraw()), this, SLOT(computeProjection()));
         QObject::connect(dynamic_cast<UITool::SliceManipulator*>(this->meshManipulator), &UITool::SliceManipulator::needChangePointsToProject, [this](std::vector<int> selectedPoints){ this->computeProjection(selectedPoints); });
+    }
+
+    if(tool == UITool::MeshManipulatorType::MARKER) {
+        QObject::connect(dynamic_cast<UITool::MarkerManipulator*>(this->meshManipulator), SIGNAL(needCastRay()), this, SIGNAL(needCastRay()));
+        QObject::connect(this, &Scene::rayIsCasted, this, [this](const glm::vec3& origin, const glm::vec3& direction) {
+            std::vector<bool> visuMap;
+            this->drawable_grids[this->gridToDraw]->getVisibilityMap(visuMap);
+            dynamic_cast<UITool::MarkerManipulator*>(this->meshManipulator)->placeManipulator(origin, direction, visuMap, this->computePlanePositions());
+        });
     }
 }
 
@@ -1861,7 +1864,7 @@ void Scene::changeCurrentTool(UITool::MeshManipulatorType newTool) {
     this->currentTool = newTool;
     this->updateTools(newTool);
     if(newTool == UITool::MeshManipulatorType::ARAP ||
-       newTool == UITool::MeshManipulatorType::FIXED_REGISTRATION) {
+       newTool == UITool::MeshManipulatorType::MARKER) {
         this->changeCurrentDeformationMethod(DeformMethod::ARAP);
     }
     if(newTool == UITool::MeshManipulatorType::DIRECT) {

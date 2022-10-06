@@ -71,7 +71,7 @@ public:
     bool getCoordInImage(const glm::vec3& p, glm::vec3& out, int tetraIdx = -1) const;
 
     void setARAPDeformationMethod() override;
-    bool getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos, glm::vec3& res) const override;
+    bool getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, const std::vector<bool>& visibilityMap, const glm::vec3& planePos, glm::vec3& res) const override;
 
     void sortTet(const glm::vec3& cameraOrigin, std::vector<std::pair<int, float>>& idxDepthMap);
 

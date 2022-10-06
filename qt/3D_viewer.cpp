@@ -82,6 +82,8 @@ void Viewer::init() {
 
     QObject::connect(this->scene, &Scene::cursorChanged, this, &Viewer::setCursorType);
 
+    QObject::connect(this->scene, &Scene::needCastRay, [&](){this->castRay();});
+
     //QObject::connect(this->scene, &Scene::needRedraw3DScene, this, &Viewer::draw);
 
 	this->showEntireScene();
@@ -121,10 +123,6 @@ void Viewer::keyReleaseEvent(QKeyEvent* e) {
 
 void Viewer::keyPressEvent(QKeyEvent* e) {
 	switch (e->key()) {
-        case Qt::Key::Key_Q:
-            if(!e->isAutoRepeat())
-                this->castRay();
-            break;
 		case Qt::Key::Key_F5:
 			this->scene->recompileShaders();
 			this->update();
@@ -318,6 +316,14 @@ void Viewer::setCursorType(UITool::CursorType cursorType) {
 
         case UITool::CursorType::CLOSE_HAND:
             this->cursor->setShape(Qt::ClosedHandCursor);
+            this->setCursor(*this->cursor);
+            break;
+        case UITool::CursorType::HOURGLASS:
+            this->cursor->setShape(Qt::WaitCursor);
+            this->setCursor(*this->cursor);
+            break;
+        case UITool::CursorType::FAIL:
+            this->cursor->setShape(Qt::ForbiddenCursor);
             this->setCursor(*this->cursor);
             break;
     }

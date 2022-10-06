@@ -63,18 +63,18 @@ namespace UITool {
         NORMAL,
         CROSS,
         OPEN_HAND,
-        CLOSE_HAND
+        CLOSE_HAND,
+        HOURGLASS,
+        FAIL
     };
 
     enum class MeshManipulatorType {
         NONE,
         DIRECT,
-        FREE,
         POSITION,
-        REGISTRATION,
         ARAP,
         SLICE,
-        FIXED_REGISTRATION
+        MARKER
     };
 
     enum class SliceOrientation {
@@ -253,6 +253,7 @@ signals:
     void mousePressed(QMouseEvent* e);
     void mouseReleased(QMouseEvent* e);
     void rayIsCasted(const glm::vec3& origin, const glm::vec3& direction);
+    void needCastRay();
     void pointIsClickedInPlanarViewer(const glm::vec3& position);
     // Signals to the viewer
     void sceneCenterChanged(const glm::vec3& center);

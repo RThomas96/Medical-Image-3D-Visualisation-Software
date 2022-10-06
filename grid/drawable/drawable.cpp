@@ -56,6 +56,7 @@ void UITool::GL::DrawableUI::incrementSize(const DrawingPrimitive& object) {
 }
 
 void UITool::GL::DrawableUI::setSize(const UITool::GL::DrawingPrimitive& object, float size) {
+    std::cout << this->sphereRatio << std::endl;
     switch(object) {
         case SPHERE:
             this->sphereRatio = size;

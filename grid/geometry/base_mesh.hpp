@@ -150,7 +150,7 @@ public:
     virtual void replacePoints(const std::vector<glm::vec3>& targets) { this->history->deactivate(); this->useNormal=true; this->movePoints(targets); this->useNormal=false; this->history->activate();};
 
     virtual void setARAPDeformationMethod() = 0;
-    virtual bool getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, uint16_t minValue, uint16_t maxValue, const glm::vec3& planePos, glm::vec3& res) const = 0;
+    virtual bool getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, const std::vector<bool>& visibilityMap, const glm::vec3& planePos, glm::vec3& res) const = 0;
     virtual void computeNeighborhood() = 0;
     virtual void computeNormals() = 0;
     virtual ~BaseMesh(){};
