@@ -28,7 +28,6 @@ public:
     }
 
     bool getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, const std::vector<bool>& visibilityMap, const glm::vec3& planePos, glm::vec3& res) const override { return false;};
-    void computeNeighborhood() override {};
     void computeNormals() override {};
 
     void loadOFF(std::string const &filename);

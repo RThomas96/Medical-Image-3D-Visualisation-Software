@@ -59,7 +59,7 @@ public:
     bool isEmpty() const;
     void buildGrid(const glm::vec3& nbCube, const glm::vec3& sizeCube, const glm::vec3& origin);
 
-    void computeNeighborhood() override;
+    void computeNeighborhood();
     void computeNormals() override;
 
     // Specific to Tethrahedal mesh

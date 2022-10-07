@@ -125,39 +125,6 @@ int BaseMesh::getNbVertices() const {
     return this->vertices.size();
 }
 
-void BaseMesh::drawNormals() const {
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_DEPTH);
-
-    float normalSize = 0.02*100. * 10;
-
-    for(int i = 0; i < this->vertices.size(); ++i) {
-        glm::vec3 p = this->getVertice(i);
-        glm::vec3 p2 = p + this->getVerticeNormal(i) * normalSize;
-        glBegin(GL_LINES);
-        glVertex3f(p[0], p[1], p[2]);
-        glColor3f(1., 0., 0.);
-        glVertex3f(p2[0], p2[1], p2[2]);
-        glColor3f(1., 1., 0.);
-        glEnd();
-    }
-
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_DEPTH);
-}
-
-void BaseMesh::scaleToBBox(const glm::vec3& bbMin, const glm::vec3& bbMax) {
-    float targetLength = glm::length(bbMax - bbMin);
-    float currentLength = glm::length(this->bbMax - this->bbMin);
-    float scaleFactor = targetLength / currentLength;
-    this->scale(glm::vec3(scaleFactor, scaleFactor, scaleFactor));
-}
-
-bool BaseMesh::isInBBox(const glm::vec3& p) const {
-    return (p.x > this->bbMin.x && p.y > this->bbMin.y && p.z > this->bbMin.z &&
-            p.x < this->bbMax.x && p.y < this->bbMax.y && p.z < this->bbMax.z);
-}
-
 void BaseMesh::addStateToHistory(bool useTimer) {
     this->history->addStep(this->vertices, useTimer);
 }

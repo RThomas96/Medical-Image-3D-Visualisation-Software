@@ -114,34 +114,31 @@ public:
     void updatebbox();
     const std::vector<glm::vec3>& getVertices() const { return this->vertices; };
 
-    void scaleToBBox(const glm::vec3& bbMin, const glm::vec3& bbMax);
-    bool isInBBox(const glm::vec3& p) const;
-
     void addStateToHistory(bool useTimer = false);
 
+    int getNbVertices() const;
+    const glm::vec3& getVertice(int i) const;
+    const glm::vec3& getVerticeNormal(int i) const;
     glm::vec3 getOrigin() const;
+
     virtual void translate(const glm::vec3& vec);
     virtual void rotate(const glm::mat3& transf);
     virtual void scale(const glm::vec3& scale);
     virtual void setOrigin(const glm::vec3& origin);
 
-    int getNbVertices() const;
-    const glm::vec3& getVertice(int i) const;
-    const glm::vec3& getVerticeNormal(int i) const;
-
-    void drawNormals() const;
+    virtual bool getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, const std::vector<bool>& visibilityMap, const glm::vec3& planePos, glm::vec3& res) const = 0;
 
     virtual void movePoint(const int& origin, const glm::vec3& target);
     virtual void movePoints(const std::vector<int>& origins, const std::vector<glm::vec3>& targets);
     void movePoints(const std::vector<glm::vec3>& targets);
+
+    /***/
 
     // Quick hack for mixing normal and arap method...
     virtual void replacePoint(const int& origin, const glm::vec3& target) { this->history->deactivate(); this->movePoint(origin, target); this->history->activate();};
     virtual void replacePoints(const std::vector<int>& origins, const std::vector<glm::vec3>& targets) { this->history->deactivate(); this->movePoints(origins, targets); this->history->activate();};
     virtual void replacePoints(const std::vector<glm::vec3>& targets) { this->history->deactivate(); this->movePoints(targets); this->history->activate();};
 
-    virtual bool getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, const std::vector<bool>& visibilityMap, const glm::vec3& planePos, glm::vec3& res) const = 0;
-    virtual void computeNeighborhood() = 0;
     virtual void computeNormals() = 0;
     virtual ~BaseMesh(){};
 };

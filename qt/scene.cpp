@@ -2525,35 +2525,4 @@ void Scene::computeProjection(const std::vector<int>& vertexIndices) {
 
     dynamic_cast<UITool::SliceManipulator*>(this->meshManipulator)->updateWithMeshVertices();
     dynamic_cast<UITool::SliceManipulator*>(this->meshManipulator)->moveGuizmo();
-
-    //ARAPMethod * deformer = dynamic_cast<ARAPMethod*>(meshToProject->meshDeformer);
-    //if(!deformer) {
-    //    std::cout << "WARNING: ARAP manipulator can be used only with the ARAP deformer !" << std::endl;
-    //    return;
-    //}
-
-    //std::vector<glm::vec3> newFullPositions = meshToProject->getVertices();
-    //for(int i = 0; i < vertexIndices.size(); ++i) {
-    //    newFullPositions[vertexIndices[i]] = newPositions[i];
-    //}
-
-    //std::vector<Vec3D<float>> ptsAsVec3D;
-    //for(int i = 0; i < newFullPositions.size(); ++i) {
-    //    glm::vec3 pt = newFullPositions[i];
-    //    ptsAsVec3D.push_back(Vec3D(pt[0], pt[1], pt[2]));
-    //}
-    //deformer->arap.compute_deformation(ptsAsVec3D);
-
-    //for(int i = 0; i < newFullPositions.size(); ++i)
-    //    newFullPositions[i] = glm::vec3(ptsAsVec3D[i][0], ptsAsVec3D[i][1], ptsAsVec3D[i][2]);
-
-
-    //meshToProject->useNormal = true;
-    //meshToProject->movePoints(newFullPositions);
-    //meshToProject->useNormal = false;
-
-    //this->meshManipulator->updateWithMeshVertices();
-    //this->updateManipulatorRadius();
-    //this->sendFirstTetmeshToGPU();
-    //this->updateSceneCenter();
 }

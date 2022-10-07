@@ -190,8 +190,6 @@ void SurfaceMesh::computeNormals() {
     this->computeVerticesNormal();
 }
 
-void SurfaceMesh::computeNeighborhood() {}
-
 SurfaceMesh::~SurfaceMesh() {}
 
 bool SurfaceMesh::getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, const std::vector<bool>& visibilityMap, const glm::vec3& planePos, glm::vec3& res) const {
