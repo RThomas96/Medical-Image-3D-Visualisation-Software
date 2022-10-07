@@ -1,5 +1,5 @@
 #include "surface_mesh.hpp"
-#include "../deformation/mesh_deformer.hpp"
+//#include "../deformation/mesh_deformer.hpp"
 #include "grid/drawable/drawable_surface_mesh.hpp"
 #include <fstream>
 #include <QOpenGLFunctions>

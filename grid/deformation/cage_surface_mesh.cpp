@@ -1,5 +1,5 @@
 #include "cage_surface_mesh.hpp"
-#include "mesh_deformer.hpp"
+//#include "mesh_deformer.hpp"
 
 void toBasicPoint(const std::vector<glm::vec3>& points, std::vector<BasicPoint>& res) {
     res.clear();

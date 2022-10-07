@@ -1,5 +1,5 @@
 #include "base_mesh.hpp"
-#include "../deformation/mesh_deformer.hpp"
+//#include "../deformation/mesh_deformer.hpp"
 #include "../ui/manipulator.hpp"
 #include <map>
 #include <algorithm>

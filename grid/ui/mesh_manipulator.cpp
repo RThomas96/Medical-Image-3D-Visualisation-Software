@@ -4,7 +4,7 @@
 #include "grid/geometry/surface_mesh.hpp"
 #include "grid/utils/GLUtilityMethods.h"
 #include "manipulator.hpp"
-#include "../deformation/mesh_deformer.hpp"
+//#include "../deformation/mesh_deformer.hpp"
 #include "../deformation/cage_surface_mesh.hpp"
 #include "../utils/PCATools.h"
 #include "qnamespace.h"
