@@ -120,7 +120,7 @@ namespace UITool {
 
     void DirectManipulator::moveManipulator(Manipulator * manipulator) {
         ptrdiff_t index = manipulator - &(this->manipulators[0]);
-        this->mesh->movePoint(index, manipulator->getManipPosition());
+        this->mesh->movePoints({int(index)}, {manipulator->getManipPosition()});
         Q_EMIT needSendTetmeshToGPU();
         this->meshIsModified = true;
     }
@@ -1059,8 +1059,8 @@ void MarkerManipulator::applyDeformation() {
     std::vector<bool> handles(this->mesh_manipulators.size(), false);
     for(int i = 0; i < this->manipulator_association.size(); ++i) {
         if(this->manipulator_association[i].second != -1) {
-            mesh->movePoint(this->manipulator_association[i].first,
-                            this->marker_manipulators[this->manipulator_association[i].second].getManipPosition());
+            mesh->movePoints({this->manipulator_association[i].first},
+                             {this->marker_manipulators[this->manipulator_association[i].second].getManipPosition()});
             handles[this->manipulator_association[i].first] = true;
         }
     }

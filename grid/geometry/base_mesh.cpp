@@ -49,12 +49,6 @@ void BaseMesh::updatebbox() {
 //    return res;
 //}
 
-void BaseMesh::movePoint(const int& origin, const glm::vec3& target) {
-    this->vertices[origin] = target;
-    this->computeNormals();
-    this->updatebbox();
-}
-
 void BaseMesh::movePoints(const std::vector<int>& origins, const std::vector<glm::vec3>& targets) {
     int i = 0;
     for(int id : origins) {

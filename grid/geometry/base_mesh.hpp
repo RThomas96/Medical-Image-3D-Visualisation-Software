@@ -128,7 +128,6 @@ public:
 
     virtual bool getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, const std::vector<bool>& visibilityMap, const glm::vec3& planePos, glm::vec3& res) const = 0;
 
-    virtual void movePoint(const int& origin, const glm::vec3& target);
     virtual void movePoints(const std::vector<int>& origins, const std::vector<glm::vec3>& targets);
     void movePoints(const std::vector<glm::vec3>& targets);
 

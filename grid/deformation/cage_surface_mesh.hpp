@@ -107,7 +107,6 @@ struct CageMVC : Cage {
     };
 
     void reInitialize() override;
-    void movePoint(const int& origin, const glm::vec3& target) override;
     void movePoints(const std::vector<int>& origins, const std::vector<glm::vec3>& targets) override;
     void computeCoordinates() override;
     void updateMeshToDeform() override;
@@ -131,7 +130,6 @@ struct CageGreen : Cage {
     };
 
     void reInitialize() override;
-    void movePoint(const int& origin, const glm::vec3& target) override;
     void movePoints(const std::vector<int>& origins, const std::vector<glm::vec3>& targets) override;
     void computeCoordinates() override;
     void updateMeshToDeform() override;
@@ -244,11 +242,6 @@ struct CageGreenLRI : CageGreen {
                 std::cout << "Everything is fine :) No need LRI" << std::endl;
             }
         }
-    }
-
-    void movePoint(const int& origin, const glm::vec3& target) override {
-        CageGreen::movePoint(origin, target);
-        this->updateMeshToDeform();
     }
 
     void movePoints(const std::vector<int>& origins, const std::vector<glm::vec3>& targets) override {

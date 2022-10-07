@@ -28,7 +28,7 @@ void Cage::applyCage(const std::vector<glm::vec3>& cage) {
             this->vertices[i] = cage[i];
     }
     // Artificially move a point to update the vertices position of the mesh to deform
-    this->movePoint(0, this->vertices[0]);
+    this->movePoints({0}, {this->vertices[0]});
 }
 
 void CageMVC::reInitialize() {
@@ -36,11 +36,6 @@ void CageMVC::reInitialize() {
     this->computeNormals();
     this->MVCCoordinates.clear();
     this->computeCoordinates();
-}
-
-void CageMVC::movePoint(const int& origin, const glm::vec3& target) {
-    BaseMesh::movePoint(origin, target);// Update the cage positions
-    this->updateMeshToDeform();
 }
 
 void CageMVC::movePoints(const std::vector<int>& origins, const std::vector<glm::vec3>& targets) {
@@ -104,11 +99,6 @@ void CageGreen::reInitialize() {
         scalingFactors.push_back(GreenCoords::GreenScalingFactor<BasicPoint>(toBasicPoint(this->vertices[v2] - this->vertices[v1]) ,toBasicPoint(this->vertices[v3] - this->vertices[v1])));
     }
     this->computeCoordinates();
-}
-
-void CageGreen::movePoint(const int& origin, const glm::vec3& target) {
-    BaseMesh::movePoint(origin, target);// Update the cage positions
-    this->updateMeshToDeform();
 }
 
 void CageGreen::movePoints(const std::vector<int>& origins, const std::vector<glm::vec3>& targets) {
