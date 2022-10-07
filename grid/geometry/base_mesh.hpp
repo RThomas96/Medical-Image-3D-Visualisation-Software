@@ -134,11 +134,6 @@ public:
 
     /***/
 
-    // Quick hack for mixing normal and arap method...
-    virtual void replacePoint(const int& origin, const glm::vec3& target) { this->history->deactivate(); this->movePoint(origin, target); this->history->activate();};
-    virtual void replacePoints(const std::vector<int>& origins, const std::vector<glm::vec3>& targets) { this->history->deactivate(); this->movePoints(origins, targets); this->history->activate();};
-    virtual void replacePoints(const std::vector<glm::vec3>& targets) { this->history->deactivate(); this->movePoints(targets); this->history->activate();};
-
     virtual void computeNormals() = 0;
     virtual ~BaseMesh(){};
 };

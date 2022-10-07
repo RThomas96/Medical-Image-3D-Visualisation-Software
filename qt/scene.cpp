@@ -1772,7 +1772,7 @@ void Scene::moveInHistory(bool backward, bool reset) {
             }
         }
         if(success) {
-            mesh->replacePoints(pointsBefore);
+            mesh->movePoints(pointsBefore);
             this->meshManipulator->updateWithMeshVertices();
             this->updateManipulatorRadius();
             this->sendFirstTetmeshToGPU();
@@ -2521,7 +2521,7 @@ void Scene::computeProjection(const std::vector<int>& vertexIndices) {
 
         newPositions.push_back(res.position);
     }
-    meshToProject->replacePoints(vertexIndices, newPositions);
+    meshToProject->movePoints(vertexIndices, newPositions);
 
     dynamic_cast<UITool::SliceManipulator*>(this->meshManipulator)->updateWithMeshVertices();
     dynamic_cast<UITool::SliceManipulator*>(this->meshManipulator)->moveGuizmo();

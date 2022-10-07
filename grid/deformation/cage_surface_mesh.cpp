@@ -55,7 +55,7 @@ void CageMVC::updateMeshToDeform() {
         for( unsigned int v = 0 ; v < this->meshToDeform->getNbVertices() ; ++v )
             for( unsigned int vc = 0 ; vc < this->MVCCoordinates[v].size() ; ++vc )
                 newPositions[v] += this->MVCCoordinates[v][vc].second * this->getVertice(this->MVCCoordinates[v][vc].first);
-        this->meshToDeform->replacePoints(newPositions);
+        this->meshToDeform->movePoints(newPositions);
     }
 }
 
@@ -129,7 +129,7 @@ void CageGreen::updateMeshToDeform() {
                 newPositions[v] += static_cast<float>(psiCoordinates[v][tc]) * static_cast<float>(scalingFactors[tc].scalingFactor()) * glm::normalize(this->normals[tc]);
 
         }
-        this->meshToDeform->replacePoints(newPositions);
+        this->meshToDeform->movePoints(newPositions);
     }
 }
 
@@ -249,7 +249,7 @@ void CageGreenLRI::update_constraints() {
             newVertices.push_back(glm::vec3(p[0], p[1], p[2]));
         }
     }
-    this->meshToDeform->replacePoints(verticesIdxToReplace, newVertices);
+    this->meshToDeform->movePoints(verticesIdxToReplace, newVertices);
     // free:
     BasisSolver.freeSolution();
     VerticesSolver.freeSolution();
