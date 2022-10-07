@@ -625,8 +625,6 @@ glm::vec3 Scene::computePlanePositions() {
         Image::bbox_t::vec position = this->getBaseMesh(this->activeMesh)->bbMin;
         Image::bbox_t::vec diagonal = this->getBaseMesh(this->activeMesh)->getDimensions();
         glm::vec3 planePos			= (position + this->planeDisplacement * diagonal);
-        if(idx == 0)
-            planePos += glm::vec3(0.1, 0.1, 0.1);
         return planePos;
     } else {
         return glm::vec3(0., 0., 0.);
@@ -711,7 +709,10 @@ void Scene::drawScene(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool show
                 for(auto i : this->gridsToDraw) {
                     if(i < this->grids.size()) {
                         this->gridToDraw = i;
-                        this->drawable_grids[this->gridToDraw]->drawGrid(mvMat, pMat, camPos, this->computePlanePositionsWithActivation(), this->planeDirection, false);
+                        glm::vec3 planePosition = this->computePlanePositionsWithActivation();
+                        if(i == 0)
+                            planePosition += glm::vec3(10., 10., 10.);
+                        this->drawable_grids[this->gridToDraw]->drawGrid(mvMat, pMat, camPos, planePosition, this->planeDirection, false);
                     }
                 }
                 this->gridToDraw = originalGridToDraw;

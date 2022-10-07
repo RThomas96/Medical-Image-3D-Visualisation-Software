@@ -22,9 +22,11 @@
 #include <memory>
 #include <vector>
 
+class SurfaceMesh;
+
 class DrawableMesh {
 public:
-    DrawableMesh(): gl(nullptr){};
+    DrawableMesh(SurfaceMesh * mesh): gl(nullptr), mesh(mesh){};
     virtual ~DrawableMesh() = default;
 
     void initializeGL(ShaderCompiler::GLFunctions* functions);
@@ -36,6 +38,8 @@ public:
 
 
 protected:
+
+    SurfaceMesh * mesh;
 
     ShaderCompiler::GLFunctions* gl;
 

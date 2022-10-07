@@ -19,7 +19,6 @@ public:
     void computeTriangleNormal();
     void computeVerticesNormal();
     void glTriangle(unsigned int i);
-    void draw();
 
     void loadOBJ(std::string const &filename);
     void loadOFF(std::string const &filename);
@@ -35,8 +34,6 @@ public:
     void computeNeighborhood() override;
     void computeNormals() override;
     bool getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, const std::vector<bool>& visibilityMap, const glm::vec3& planePos, glm::vec3& res) const override;
-
-    void draw(GLfloat *proj_mat, GLfloat *view_mat, const glm::vec4& camera, const glm::vec3& planePosition);
 
     ~SurfaceMesh();
 
