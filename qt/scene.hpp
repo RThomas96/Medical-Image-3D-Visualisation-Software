@@ -110,25 +110,6 @@ enum InfoToSend {
 /**********************************************************************/
 /**********************************************************************/
 
-class SceneGL : public QOpenGLFunctions_3_2_Core {
-public:
-    SceneGL();
-    ~SceneGL(void);
-
-    void initGl(QOpenGLContext* context);
-
-    GLuint uploadTexture1D(const TextureUpload& tex);
-    GLuint uploadTexture2D(const TextureUpload& tex);
-
-    QOpenGLContext* get_context() const { return this->context; }
-
-    bool isSceneInitialized(void) const { return this->isInitialized; }
-
-private:
-    bool isInitialized;
-    QOpenGLContext* context;
-};
-
 /**********************************************************************/
 /**********************************************************************/
 
@@ -237,8 +218,6 @@ public:
     MeshToolType * getMeshTool();
 
 public:
-    SceneGL sceneGL;
-
     void writeDeformedImageLowRes(const std::string& filename, const std::string& gridName);
 
     void writeDeformedImage(const std::string& filename, const std::string& gridName, bool useColorMap, ResolutionMode resolution);

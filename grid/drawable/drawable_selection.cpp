@@ -2,7 +2,7 @@
 #include "drawable_selection.hpp"
 #include "../../qt/scene.hpp"
 
-UITool::GL::Selection::Selection(SceneGL* sceneGL, const glm::vec3& p1, const glm::vec3& p2) : sceneGL(sceneGL) {
+UITool::GL::Selection::Selection(ShaderCompiler::GLFunctions* gl, const glm::vec3& p1, const glm::vec3& p2) : sceneGL(gl) {
     this->program	       = 0;
     this->vao		       = 0;
     this->vboVertices      = 0;

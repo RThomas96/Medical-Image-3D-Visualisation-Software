@@ -82,7 +82,7 @@ Scene::Scene() {
     this->shouldUpdateUserColorScales = false;
     this->needUpdateMinMaxDisplayValues		  = false;
 
-    this->glSelection = new UITool::GL::Selection(&this->sceneGL, glm::vec3(0., 0., 0.), glm::vec3(10., 10., 10.));
+    this->glSelection = new UITool::GL::Selection(this, glm::vec3(0., 0., 0.), glm::vec3(10., 10., 10.));
 
     this->currentTool = UITool::MeshManipulatorType::POSITION;
     this->currentDeformMethod = DeformMethod::NORMAL;
@@ -129,8 +129,6 @@ void Scene::initGl(QOpenGLContext* _context) {
             throw std::runtime_error("Could not initialize OpenGL functions.");
         }
     //}
-    this->sceneGL.initGl(_context);
-
     auto maj = this->context->format().majorVersion();
     auto min = this->context->format().minorVersion();
     std::cerr << "OpenGL version " << maj << '.' << min << '\n';
@@ -163,7 +161,6 @@ void Scene::initGl(QOpenGLContext* _context) {
 
     // Generate controller positions
     //this->initGL(this->get_context());
-    this->sceneGL.initGl(this->context);
     this->gridToDraw = -1;
     //this->prepareSphere();
 
@@ -1127,116 +1124,6 @@ void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend) {
 }
 
 /**********************************************************************/
-/**********************************************************************/
-
-SceneGL::SceneGL() {
-    this->context		= nullptr;
-}
-
-SceneGL::~SceneGL(void) {
-}
-
-void SceneGL::initGl(QOpenGLContext* _context) {
-    // Check if the scene has been initialized, share contexts if it has been :
-    this->context = _context;
-    if (this->initializeOpenGLFunctions() == false) {
-        throw std::runtime_error("Could not initialize OpenGL functions for Scene GL.");
-    }
-}
-
-GLuint SceneGL::uploadTexture1D(const TextureUpload& tex) {
-    if (this->context != nullptr) {
-        if (this->context->isValid() == false) {
-            throw std::runtime_error("No associated valid context");
-        }
-    } else {
-        throw std::runtime_error("nullptr as context");
-    }
-
-    glEnable(GL_TEXTURE_1D);
-
-    GLuint texHandle = 0;
-    glGenTextures(1, &texHandle);
-    glBindTexture(GL_TEXTURE_1D, texHandle);
-
-    // Min and mag filters :
-    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, tex.minmag.x);
-    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, tex.minmag.y);
-
-    // Set the min and max LOD values :
-    glTexParameterf(GL_TEXTURE_1D, GL_TEXTURE_MIN_LOD, tex.lod.x);
-    glTexParameterf(GL_TEXTURE_1D, GL_TEXTURE_MAX_LOD, tex.lod.y);
-
-    // Set the wrap parameters :
-    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, tex.wrap.x);
-
-    // Set the swizzle the user wants :
-    glTexParameteriv(GL_TEXTURE_1D, GL_TEXTURE_SWIZZLE_RGBA, glm::value_ptr(tex.swizzle));
-
-    // Set the pixel alignment :
-    glPixelStorei(GL_PACK_ALIGNMENT, tex.alignment.x);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, tex.alignment.y);
-
-    glTexImage1D(GL_TEXTURE_1D,	   // GLenum : Target
-      static_cast<GLint>(tex.level),	// GLint  : Level of detail of the current texture (0 = original)
-      tex.internalFormat,	 // GLint  : Number of color components in the picture.
-      tex.size.x,	 // GLsizei: Image width
-      static_cast<GLint>(0),	// GLint  : Border. This value MUST be 0.
-      tex.format,	 // GLenum : Format of the pixel data
-      tex.type,	   // GLenum : Type (the data type as in uchar, uint, float ...)
-      tex.data	  // void*  : Data to load into the buffer
-    );
-
-    return texHandle;
-}
-
-GLuint SceneGL::uploadTexture2D(const TextureUpload& tex) {
-    if (this->context != nullptr) {
-        if (this->context->isValid() == false) {
-            throw std::runtime_error("No associated valid context");
-        }
-    } else {
-        throw std::runtime_error("nullptr as context");
-    }
-
-    glEnable(GL_TEXTURE_2D);
-
-    GLuint texHandle = 0;
-    glGenTextures(1, &texHandle);
-    glBindTexture(GL_TEXTURE_2D, texHandle);
-
-    // Min and mag filters :
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, tex.minmag.x);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, tex.minmag.y);
-
-    // Set the min and max LOD values :
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_LOD, tex.lod.x);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_LOD, tex.lod.y);
-
-    // Set the wrap parameters :
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, tex.wrap.x);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, tex.wrap.y);
-
-    // Set the swizzle the user wants :
-    glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, glm::value_ptr(tex.swizzle));
-
-    // Set the pixel alignment :
-    glPixelStorei(GL_PACK_ALIGNMENT, tex.alignment.x);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, tex.alignment.y);
-
-    glTexImage2D(GL_TEXTURE_2D,	   // GLenum : Target
-      static_cast<GLint>(tex.level),	// GLint  : Level of detail of the current texture (0 = original)
-      tex.internalFormat,	 // GLint  : Number of color components in the picture. Here grayscale so GL_RED
-      tex.size.x,	 // GLsizei: Image width
-      tex.size.y,	 // GLsizei: Image height
-      static_cast<GLint>(0),	// GLint  : Border. This value MUST be 0.
-      tex.format,	 // GLenum : Format of the pixel data
-      tex.type,	   // GLenum : Type (the data type as in uchar, uint, float ...)
-      tex.data	  // void*  : Data to load into the buffer
-    );
-
-    return texHandle;
-}
 
 /*********************************/
 /* Slots */

@@ -3,11 +3,13 @@
 
 #include <glm/glm.hpp>
 #include "glm/gtx/string_cast.hpp"
+#include "../../legacy/meshes/drawable/shaders.hpp"
 
 #include <QOpenGLContext>
+#include <QOpenGLExtraFunctions>
+#include <QOpenGLFunctions>
+#include <QOpenGLFunctions_3_2_Compatibility>
 #include <QOpenGLFunctions_3_2_Core>
-#include <QOpenGLFunctions_4_0_Compatibility>
-#include <QOpenGLFunctions_4_0_Core>
 
 class SceneGL;
 
@@ -21,7 +23,7 @@ namespace UITool {
 		class Selection : QObject {
             Q_OBJECT;
 		public:
-			Selection(SceneGL* sceneGL, const glm::vec3& p1, const glm::vec3& p2);
+            Selection(ShaderCompiler::GLFunctions* gl, const glm::vec3& p1, const glm::vec3& p2);
 
 			void draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* mMat);
 
@@ -52,7 +54,7 @@ namespace UITool {
 
 		private:
 
-			SceneGL * sceneGL;
+            ShaderCompiler::GLFunctions* sceneGL;
 
 			GLuint program;
 			GLuint vao;
