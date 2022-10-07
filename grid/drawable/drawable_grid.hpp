@@ -41,7 +41,7 @@ public:
 
     std::array<ColorChannelAttributes_GL, 3> colorChannelAttributes;
 
-    DrawableGrid(GridGLView::Ptr grid);
+    DrawableGrid(Grid * grid);
     virtual ~DrawableGrid() = default;
 
     void initializeGL(ShaderCompiler::GLFunctions *functions);
@@ -80,7 +80,7 @@ protected:
     GLuint frameDepthBuffer;
     GLuint dualRenderingTexture;
 
-    GridGLView::Ptr grid;
+    Grid * grid;
 
     GLuint colorRanges;
     GLuint valuesRangeToDisplay;

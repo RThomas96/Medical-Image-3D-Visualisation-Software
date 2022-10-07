@@ -214,20 +214,20 @@ bool VolMesh::isValid() {
 VolMesh::~VolMesh(void) { /* Nothing here for now. */
 }
 
-GridGLView::GridGLView(Grid * _grid) {
-	this->grid			   = _grid;
-    // TODO: add multiChannel grid
-	//this->nbChannels	   = this->grid->getVoxelDimensionality();
-	this->mainColorChannel			= 1;
-
-	// Fill with default attributes
-}
-
-void GridGLView::setMainColorChannel(std::size_t color_channel) {
-	assert((color_channel < 3) && "color channel was not under 3");
-
-	this->mainColorChannel = color_channel;
-}
+//GridGLView::GridGLView(Grid * _grid) {
+//	this->grid			   = _grid;
+//    // TODO: add multiChannel grid
+//	//this->nbChannels	   = this->grid->getVoxelDimensionality();
+//	this->mainColorChannel			= 1;
+//
+//	// Fill with default attributes
+//}
+//
+//void GridGLView::setMainColorChannel(std::size_t color_channel) {
+//	assert((color_channel < 3) && "color channel was not under 3");
+//
+//	this->mainColorChannel = color_channel;
+//}
 
 ColorChannelAttributes_GL::ColorChannelAttributes_GL() {
 	this->isVisible		   = true;

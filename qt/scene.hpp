@@ -212,8 +212,8 @@ public:
 
     void addGrid();
 
-    double getMinNumericLimit(size_t gridIndex) const { return Image::getMinNumericLimit(grids[gridIndex]->grid->getInternalDataType()); }
-    double getMaxNumericLimit(size_t gridIndex) const { return Image::getMaxNumericLimit(grids[gridIndex]->grid->getInternalDataType()); }
+    double getMinNumericLimit(size_t gridIndex) const { return Image::getMinNumericLimit(grids[gridIndex]->getInternalDataType()); }
+    double getMaxNumericLimit(size_t gridIndex) const { return Image::getMaxNumericLimit(grids[gridIndex]->getInternalDataType()); }
 
     enum ValueType { MIN, MAX };
     // Set the min and max values to display on the grid
@@ -390,10 +390,10 @@ public slots:
     int getGridIdxLinkToCage(const std::string& name);
     std::pair<glm::vec3, glm::vec3> getBbox(const std::string& name);
     bool checkTransferMeshValidity(const std::string& name) {
-        return this->grids[this->getGridIdx(name)]->grid->checkTransferMeshValidity();
+        return this->grids[this->getGridIdx(name)]->checkTransferMeshValidity();
     }
     void updateTextureCoordinates(const std::string& name) {
-        return this->grids[this->getGridIdx(name)]->grid->updateTextureCoordinates();
+        return this->grids[this->getGridIdx(name)]->updateTextureCoordinates();
     }
 
     std::vector<std::string> getAllNonTetrahedralMeshesName();
@@ -443,7 +443,7 @@ public:
 
     std::vector<std::pair<std::string, std::string>> cageToGrid;
     std::vector<std::string> grids_name;
-    std::vector<GridGLView::Ptr> grids;
+    std::vector<Grid *> grids;
     std::vector<DrawableGrid*> drawable_grids;
     std::vector<std::pair<GraphMesh*, std::string>> graph_meshes;
     std::vector<std::pair<SurfaceMesh*, std::string>> meshes;

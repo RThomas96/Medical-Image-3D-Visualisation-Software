@@ -4,7 +4,7 @@
 
 #include <memory>
 
-DrawableGrid::DrawableGrid(GridGLView::Ptr grid): gl(nullptr) {
+DrawableGrid::DrawableGrid(Grid * grid): gl(nullptr) {
     this->displayTetmesh = false;
 
     this->program = 0;
@@ -283,13 +283,13 @@ void DrawableGrid::prepareUniforms(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camP
     //    val = 0.;
     gl->glUniform1fv(getUniform("isFirstPass"), 1, &val);
 
-    glm::vec3 floatres = glm::convert_to<float>(grid->grid->sampler.getSamplerDimension());
-    gl->glUniform3fv(getUniform("voxelSize"), 1, glm::value_ptr(grid->grid->getVoxelSize()));
+    glm::vec3 floatres = glm::convert_to<float>(grid->sampler.getSamplerDimension());
+    gl->glUniform3fv(getUniform("voxelSize"), 1, glm::value_ptr(grid->getVoxelSize()));
     gl->glUniform3fv(getUniform("gridSize"), 1, glm::value_ptr(floatres));
-    gl->glUniform3fv(getUniform("visuBBMin"), 1, glm::value_ptr(grid->grid->bbMin));
-    gl->glUniform3fv(getUniform("visuBBMax"), 1, glm::value_ptr(grid->grid->bbMax));
+    gl->glUniform3fv(getUniform("visuBBMin"), 1, glm::value_ptr(grid->bbMin));
+    gl->glUniform3fv(getUniform("visuBBMax"), 1, glm::value_ptr(grid->bbMax));
     gl->glUniform1ui(getUniform("shouldUseBB"), 0);
-    gl->glUniform1f(getUniform("maxValue"), grid->grid->maxValue);
+    gl->glUniform1f(getUniform("maxValue"), grid->maxValue);
     gl->glUniform3fv(getUniform("volumeEpsilon"), 1, glm::value_ptr(glm::vec3(1.5, 1.5, 1.5)));
 
     gl->glUniform3fv(getUniform("cam"), 1, glm::value_ptr(camPos));
@@ -523,7 +523,7 @@ void DrawableGrid::setUniformBufferData(GLuint uniform_buffer, std::size_t begin
 void DrawableGrid::getVisibilityMap(std::vector<bool>& visMap) {
     visMap.clear();
 
-    float maxValue = grid->grid->maxValue;
+    float maxValue = grid->maxValue;
     visMap.reserve(maxValue);
     for(int i = 0; i <= maxValue; ++i)
         visMap.push_back(false);
@@ -551,7 +551,7 @@ void DrawableGrid::updateMinMaxDisplayValues() {
     this->setUniformBufferData(uboHandle_colorAttributes, 64, 32, &colorChannelAttributes[1]);
     this->setUniformBufferData(uboHandle_colorAttributes, 96, 32, &colorChannelAttributes[2]);
 
-    float maxValue = grid->grid->maxValue;
+    float maxValue = grid->maxValue;
     glDeleteTextures(1, &valuesRangeToDisplay);
     glDeleteTextures(1, &valuesRangeColorToDisplay);
 

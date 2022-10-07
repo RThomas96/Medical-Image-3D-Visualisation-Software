@@ -136,33 +136,4 @@ public:
 	bound_t getColorRange() const;
 };
 
-/// @ingroup graphpipe
-/// @brief Simple structure merging all resources necessary to view a grid in 3D.
-/// @details This structure must be associated to one grid, and one grid only. Thus, the pointer to the grid is defined
-/// as `const std::shared_ptr<>` since we want the reference to be held during the lifetime of the object.
-struct GridGLView
-{
-public:
-	using Ptr = std::shared_ptr<GridGLView>;
-
-public:
-	GridGLView(Grid * _g);
-	GridGLView(const GridGLView&) = default;
-	GridGLView(GridGLView&&) = default;
-	GridGLView& operator=(const GridGLView&) = default;
-	GridGLView& operator=(GridGLView&&) = default;
-	~GridGLView(void) = default;
-
-	void setMainColorChannel(std::size_t index);
-
-public:
-	//Image::Grid::Ptr grid;
-    Grid * grid;
-
-protected:
-	/// @brief The index of the main color channel.
-	/// @details Protected so as not to accidentally set it to something invalid during runtime.
-	std::size_t mainColorChannel;
-};
-
 #endif	  // VISUALIZATION_VIEWER_INCLUDE_VIEWER_STRUCTS_HPP_

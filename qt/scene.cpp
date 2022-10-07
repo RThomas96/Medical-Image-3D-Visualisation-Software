@@ -216,7 +216,7 @@ void Scene::createBuffers() {
 
 std::pair<uint16_t, uint16_t> Scene::sendGridValuesToGPU(int gridIdx) {
 
-    glm::vec<4, std::size_t, glm::defaultp> dimensions{this->grids[gridIdx]->grid->getResolution(), 2};
+    glm::vec<4, std::size_t, glm::defaultp> dimensions{this->grids[gridIdx]->getResolution(), 2};
     TextureUpload _gridTex{};
     _gridTex.minmag.x  = GL_NEAREST;
     _gridTex.minmag.y  = GL_NEAREST;
@@ -271,7 +271,7 @@ std::pair<uint16_t, uint16_t> Scene::sendGridValuesToGPU(int gridIdx) {
     glDeleteTextures(1, &this->drawable_grids[gridIdx]->gridTexture);
     this->drawable_grids[gridIdx]->gridTexture = this->newAPI_uploadTexture3D_allocateonly(_gridTex);
 
-    int nbSlice = this->grids[gridIdx]->grid->getResolution()[2];
+    int nbSlice = this->grids[gridIdx]->getResolution()[2];
 
     //TODO: this computation do not belong here
     uint16_t max = std::numeric_limits<uint16_t>::min();
@@ -283,7 +283,7 @@ std::pair<uint16_t, uint16_t> Scene::sendGridValuesToGPU(int gridIdx) {
 
     int sliceI = 0;
     for (std::size_t s = 0; s < nbSlice; ++s) {
-        this->grids[gridIdx]->grid->getGridSlice(s, slices, dimensions.a);
+        this->grids[gridIdx]->getGridSlice(s, slices, dimensions.a);
         if(addArticialBoundaries) {
             if(s == 0 || s == nbSlice-1){
                 std::fill(slices.begin(), slices.end(), 0);
@@ -317,17 +317,17 @@ std::pair<uint16_t, uint16_t> Scene::sendGridValuesToGPU(int gridIdx) {
 
 void Scene::addGrid() {
 
-    GridGLView::Ptr gridView = this->grids.back();
+    Grid * gridView = this->grids.back();
     DrawableGrid * drawable_gridView = this->drawable_grids.back();
 
-    glm::vec<4, std::size_t, glm::defaultp> dimensions{gridView->grid->getResolution(), 2};
+    glm::vec<4, std::size_t, glm::defaultp> dimensions{gridView->getResolution(), 2};
 
     std::pair<uint16_t, uint16_t> min_max = sendGridValuesToGPU(this->grids.size() -1);
 
     uint16_t min = min_max.first;
     uint16_t max = min_max.second;
-    gridView->grid->minValue = min;
-    gridView->grid->maxValue = max;
+    gridView->minValue = min;
+    gridView->maxValue = max;
 
     if(this->gridToDraw == 0) {
         QColor r = Qt::GlobalColor::red;
@@ -1017,8 +1017,8 @@ void Scene::sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend) {
     std::size_t coorWidth = 0, coorHeight = 0;
     std::size_t neighbWidth = 0, neighbHeight = 0;
 
-    //TetMesh& newMesh = *this->grids[gridIdx]->grid->grid->tetmesh;
-    TetMesh& newMesh = *this->grids[gridIdx]->grid;
+    //TetMesh& newMesh = *this->grids[gridIdx]->grid->tetmesh;
+    TetMesh& newMesh = *this->grids[gridIdx];
 
     if(contain(infoToSend, InfoToSend::NORMALS)) {
         newMesh.computeNormals();
@@ -1400,7 +1400,7 @@ bool Scene::openGrid(const std::string& name, const std::vector<std::string>& im
 }
 
 void Scene::addGridToScene(const std::string& name, Grid * newGrid) {
-    GridGLView::Ptr gridView = std::make_shared<GridGLView>(newGrid);
+    Grid * gridView = newGrid;
     this->grids.push_back(gridView);
     this->drawable_grids.push_back(new DrawableGrid(this->grids.back()));
     this->drawable_grids.back()->initializeGL(this);
@@ -1411,7 +1411,7 @@ void Scene::addGridToScene(const std::string& name, Grid * newGrid) {
     this->grids_name.push_back(name);
 
     this->updateSceneCenter();
-    std::cout << "New grid added with BBox:" << this->grids.back()->grid->bbMax << std::endl;
+    std::cout << "New grid added with BBox:" << this->grids.back()->bbMax << std::endl;
 
     Q_EMIT meshAdded(name, true, false);
     this->changeActiveMesh(name);
@@ -1636,7 +1636,7 @@ BaseMesh * Scene::getBaseMesh(const std::string& name) {
     }
     for(int i = 0; i < this->grids_name.size(); ++i) {
         if(this->grids_name[i] == name) {
-            return this->grids[i]->grid;
+            return this->grids[i];
         }
     }
     //std::cout << "Wrong base mesh name: " << name << std::endl;
@@ -1671,7 +1671,7 @@ void Scene::updateTools(UITool::MeshManipulatorType tool) {
         this->meshManipulator = new UITool::SliceManipulator(mesh, positions);
     } else if(tool == UITool::MeshManipulatorType::MARKER) {
         if(this->grids.size() > 0) {
-            this->meshManipulator = new UITool::MarkerManipulator(mesh, this->grids[0]->grid, positions);
+            this->meshManipulator = new UITool::MarkerManipulator(mesh, this->grids[0], positions);
             this->meshManipulator->setSize(UITool::GL::SPHERE, 0.007);
         }
     }
@@ -1948,8 +1948,8 @@ void Scene::sampleGridMapping(const std::string& fileName, const std::string& fr
 
     omp_set_nested(true);
 
-    Grid * fromGrid = this->grids[this->getGridIdx(from)]->grid;
-    Grid * toGrid = this->grids[this->getGridIdx(to)]->grid;
+    Grid * fromGrid = this->grids[this->getGridIdx(from)];
+    Grid * toGrid = this->grids[this->getGridIdx(to)];
 
     // Space to sample
     glm::vec3 bbMinScene = fromGrid->initialMesh.bbMin;
@@ -2032,8 +2032,8 @@ void Scene::sampleGridMapping(const std::string& fileName, const std::string& fr
 }
 
 void Scene::writeMapping(const std::string& fileName, const std::string& from, const std::string& to) {
-    Grid * fromGrid = this->grids[this->getGridIdx(from)]->grid;
-    Grid * toGrid = this->grids[this->getGridIdx(to)]->grid;
+    Grid * fromGrid = this->grids[this->getGridIdx(from)];
+    Grid * toGrid = this->grids[this->getGridIdx(to)];
 
     glm::ivec3 fromDimensions = fromGrid->sampler.getSamplerDimension();
     std::vector<std::vector<uint16_t>> img = std::vector<std::vector<uint16_t>>(fromDimensions.z, std::vector<uint16_t>(fromDimensions.x * fromDimensions.y, 0.));
@@ -2072,7 +2072,7 @@ void Scene::writeMapping(const std::string& fileName, const std::string& from, c
 }
 
 void Scene::writeDeformedImage(const std::string& filename, const std::string& gridName, bool useColorMap, ResolutionMode resolution) {
-    Grid * fromGrid = this->grids[this->getGridIdx(gridName)]->grid;
+    Grid * fromGrid = this->grids[this->getGridIdx(gridName)];
     if(useColorMap)
         this->writeDeformedImageGeneric(filename, gridName, (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_16), useColorMap, resolution);
     else
@@ -2115,7 +2115,7 @@ void Scene::writeDeformedImageTemplated(const std::string& filename, const std::
 
     auto start = std::chrono::steady_clock::now();
 
-    Grid * fromGrid = this->grids[this->getGridIdx(gridName)]->grid;
+    Grid * fromGrid = this->grids[this->getGridIdx(gridName)];
     glm::vec3 fromImageToCustomImage = glm::vec3(0., 0., 0.);
 
     auto fromWorldToImage = [&](glm::vec3& p, bool ceil) {
@@ -2178,7 +2178,7 @@ void Scene::writeDeformedImageTemplated(const std::string& filename, const std::
 
         auto upperGrid = this->grids[this->getGridIdx(gridName)];
         auto drawable_upperGrid = this->drawable_grids[this->getGridIdx(gridName)];
-        float maxValue = upperGrid->grid->maxValue;
+        float maxValue = upperGrid->maxValue;
 
         for(int i = 0; i <= maxValue; ++i) {
             data.push_back(false);
@@ -2285,7 +2285,7 @@ void Scene::writeDeformedImageTemplated(const std::string& filename, const std::
 void Scene::writeDeformedImageLowRes(const std::string& filename, const std::string& gridName) {
     ResolutionMode resolution = ResolutionMode::SAMPLER_RESOLUTION;
     auto start = std::chrono::steady_clock::now();
-    Grid * fromGrid = this->grids[this->getGridIdx(gridName)]->grid;
+    Grid * fromGrid = this->grids[this->getGridIdx(gridName)];
 
     auto fromWorldToImage = [&](glm::vec3& p, bool ceil) {
         p -= fromGrid->bbMin;
@@ -2372,8 +2372,8 @@ void Scene::writeDeformedImageLowRes(const std::string& filename, const std::str
 glm::vec3 Scene::getTransformedPoint(const glm::vec3& inputPoint, const std::string& from, const std::string& to) {
     glm::vec3 result = glm::vec3(0., 0., 0.);
 
-    Grid * fromGrid = this->grids[this->getGridIdx(from)]->grid;
-    Grid * toGrid = this->grids[this->getGridIdx(to)]->grid;
+    Grid * fromGrid = this->grids[this->getGridIdx(from)];
+    Grid * toGrid = this->grids[this->getGridIdx(to)];
 
     // From initial to deformed
     glm::vec3 inputPointInFromGrid = inputPoint;
@@ -2410,21 +2410,21 @@ glm::vec3 Scene::getTransformedPoint(const glm::vec3& inputPoint, const std::str
 }
 
 void Scene::getDeformation(const std::string& gridNameValues, const std::string& gridNameSample, std::vector<std::vector<uint16_t>>& data) {
-    Grid * grid = this->grids[this->getGridIdx(gridNameSample)]->grid;
+    Grid * grid = this->grids[this->getGridIdx(gridNameSample)];
 
     const glm::vec3 bbMin = grid->bbMin;
     const glm::vec3 bbMax = grid->bbMax;
     const glm::vec3 imgSize = grid->getResolution();
 
-    this->grids[this->getGridIdx(gridNameValues)]->grid->sampleGridValues(std::make_pair(grid->bbMin, grid->bbMax), imgSize, data);
+    this->grids[this->getGridIdx(gridNameValues)]->sampleGridValues(std::make_pair(grid->bbMin, grid->bbMax), imgSize, data);
 }
 
 void Scene::getValues(const std::string& gridName, const std::pair<glm::vec3, glm::vec3>& area, const glm::vec3& resolution, std::vector<std::vector<uint16_t>>& data, Interpolation::Method interpolationMethod) {
-    this->grids[this->getGridIdx(gridName)]->grid->sampleGridValues(area, resolution, data, interpolationMethod);
+    this->grids[this->getGridIdx(gridName)]->sampleGridValues(area, resolution, data, interpolationMethod);
 }
 
 void Scene::getValues(const std::string& gridName, const glm::vec3& slice, const std::pair<glm::vec3, glm::vec3>& area, const glm::vec3& resolution, std::vector<uint16_t>& data, Interpolation::Method interpolationMethod) {
-    this->grids[this->getGridIdx(gridName)]->grid->sampleSliceGridValues(slice, area, resolution, data, interpolationMethod);
+    this->grids[this->getGridIdx(gridName)]->sampleSliceGridValues(slice, area, resolution, data, interpolationMethod);
 }
 
 void Scene::writeDeformation(const std::string& filename, const std::string& gridNameValues, const std::string& gridNameSample) {
@@ -2444,7 +2444,7 @@ void Scene::writeGreyscaleTIFFImage(const std::string& filename, const glm::vec3
 }
 
 void Scene::writeImageWithPoints(const std::string& filename, const std::string& image, std::vector<glm::vec3>& points) {
-    Grid * grid = this->grids[this->getGridIdx(image)]->grid;
+    Grid * grid = this->grids[this->getGridIdx(image)];
 
     glm::ivec3 imgDimensions = grid->sampler.getImageDimensions();
 
@@ -2493,25 +2493,25 @@ void Scene::clear() {
 }
 
 glm::vec3 Scene::getGridImgSize(const std::string& name) {
-    return this->grids[this->getGridIdx(name)]->grid->getResolution();
+    return this->grids[this->getGridIdx(name)]->getResolution();
 }
 
 glm::vec3 Scene::getGridVoxelSize(const std::string &name, ResolutionMode resolution) {
-    return this->grids[this->getGridIdx(name)]->grid->getVoxelSize(resolution);
+    return this->grids[this->getGridIdx(name)]->getVoxelSize(resolution);
 }
 
 std::pair<uint16_t, uint16_t> Scene::getGridMinMaxValues(const std::string& name) {
-    return std::make_pair(this->grids[this->getGridIdx(name)]->grid->minValue, this->grids[this->getGridIdx(name)]->grid->maxValue);
+    return std::make_pair(this->grids[this->getGridIdx(name)]->minValue, this->grids[this->getGridIdx(name)]->maxValue);
 }
 
 std::pair<uint16_t, uint16_t> Scene::getGridMinMaxValues() {
     if(gridToDraw != -1)
-        return std::make_pair(this->grids[this->gridToDraw]->grid->minValue, this->grids[this->gridToDraw]->grid->maxValue);
+        return std::make_pair(this->grids[this->gridToDraw]->minValue, this->grids[this->gridToDraw]->maxValue);
     return std::make_pair(0, 0);
 }
 
 std::vector<bool> Scene::getGridUsageValues(int minValue) {
-    std::vector<int> histogram = this->grids[this->gridToDraw]->grid->sampler.getHistogram(this->grids[this->gridToDraw]->grid->maxValue+1);
+    std::vector<int> histogram = this->grids[this->gridToDraw]->sampler.getHistogram(this->grids[this->gridToDraw]->maxValue+1);
     if(gridToDraw != -1) {
         std::vector<bool> usage;
         usage.reserve(histogram.size());
