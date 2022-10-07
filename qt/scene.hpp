@@ -443,8 +443,7 @@ public:
 
     std::vector<std::pair<std::string, std::string>> cageToGrid;
     std::vector<std::string> grids_name;
-    std::vector<Grid *> grids;
-    std::vector<DrawableGrid*> drawable_grids;
+    std::vector<Grid*> grids;
     std::vector<std::pair<GraphMesh*, std::string>> graph_meshes;
     std::vector<std::pair<SurfaceMesh*, std::string>> meshes;
 };
