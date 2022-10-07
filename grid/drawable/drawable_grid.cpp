@@ -1,4 +1,5 @@
 #include "drawable_grid.hpp"
+#include "../geometry/grid.hpp"
 
 #include <glm/gtc/type_ptr.hpp>
 

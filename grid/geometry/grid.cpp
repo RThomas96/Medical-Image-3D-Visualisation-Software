@@ -17,12 +17,12 @@ Image::ImageDataType Sampler::getInternalDataType() const {
     return this->image->getInternalDataType();
 }
 
-Grid::Grid(const std::vector<std::string>& filename, int subsample, const glm::vec3& sizeVoxel, const glm::vec3& nbCubeGridTransferMesh): sampler(Sampler(filename, subsample, sizeVoxel)), toSamplerMatrix(glm::mat4(1.f)) {
+Grid::Grid(const std::vector<std::string>& filename, int subsample, const glm::vec3& sizeVoxel, const glm::vec3& nbCubeGridTransferMesh): sampler(Sampler(filename, subsample, sizeVoxel)), toSamplerMatrix(glm::mat4(1.f)), DrawableGrid(this) {
     this->buildTetmesh(nbCubeGridTransferMesh);
     this->history = new History(this->vertices);
 }
 
-Grid::Grid(const std::vector<std::string>& filename, int subsample, const glm::vec3& sizeVoxel, const std::string& fileNameTransferMesh): sampler(Sampler(filename, subsample, sizeVoxel)), toSamplerMatrix(glm::mat4(1.f)) {
+Grid::Grid(const std::vector<std::string>& filename, int subsample, const glm::vec3& sizeVoxel, const std::string& fileNameTransferMesh): sampler(Sampler(filename, subsample, sizeVoxel)), toSamplerMatrix(glm::mat4(1.f)), DrawableGrid(this) {
     this->loadMESH(fileNameTransferMesh);
 }
 

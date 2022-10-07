@@ -23,6 +23,8 @@
 #include <memory>
 #include <vector>
 
+class Grid;
+
 class DrawableGrid {
 public:
     bool multiGridRendering;

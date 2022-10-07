@@ -4,7 +4,6 @@
 //#include "../../grid/include/discrete_grid.hpp"
 #include "../../macros.hpp"
 
-#include "../../grid/geometry/grid.hpp"
 #include "../../legacy/image/utils/include/bounding_box.hpp"
 
 #include <cstdint>

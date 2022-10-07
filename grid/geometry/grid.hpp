@@ -1,6 +1,7 @@
 #ifndef SIMPLEGRID_HPP_
 #define SIMPLEGRID_HPP_
 
+#include "grid/drawable/drawable_grid.hpp"
 #include "tetrahedral_mesh.hpp"
 #include "../images/tiff_image.hpp"
 
@@ -74,7 +75,7 @@ private:
 };
 
 //! @brief Struct able to make the link between the grid and its 3D representation
-struct Grid : public TetMesh {
+struct Grid : public TetMesh, public DrawableGrid {
 
     uint16_t maxValue;
     uint16_t minValue;
