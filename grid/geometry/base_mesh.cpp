@@ -9,7 +9,7 @@
 #include <numeric>
 
 
-BaseMesh::BaseMesh(): bbMin(glm::vec3(0., 0., 0.)), bbMax(glm::vec3(0., 0., 0.)), meshDeformer(new NormalMethod(this)), normalDeformer(new NormalMethod(this)), history(nullptr), coordinate_system({glm::vec3(1., 0., 0.), glm::vec3(0., 1., 0.), glm::vec3(0., 0., 1.)}) {
+BaseMesh::BaseMesh(): bbMin(glm::vec3(0., 0., 0.)), bbMax(glm::vec3(0., 0., 0.)), history(nullptr), coordinate_system({glm::vec3(1., 0., 0.), glm::vec3(0., 1., 0.), glm::vec3(0., 0., 1.)}) {
 }
 
 glm::vec3 BaseMesh::getDimensions() const {
@@ -50,42 +50,25 @@ void BaseMesh::updatebbox() {
 //}
 
 void BaseMesh::movePoint(const int& origin, const glm::vec3& target) {
-    if(this->useNormal) {
-        this->normalDeformer->movePoint(origin, target);
-    } else {
-        this->meshDeformer->movePoint(origin, target);
-    }
+    this->vertices[origin] = target;
     this->computeNormals();
     this->updatebbox();
-    //this->history->addStep(this->vertices);
 }
 
 void BaseMesh::movePoints(const std::vector<int>& origins, const std::vector<glm::vec3>& targets) {
-    if(this->useNormal) {
-        this->normalDeformer->movePoints(origins, targets);
-    } else {
-        this->meshDeformer->movePoints(origins, targets);
+    int i = 0;
+    for(int id : origins) {
+        this->vertices[id] = targets[i];
+        ++i;
     }
     this->computeNormals();
     this->updatebbox();
-    //this->history->addStep(this->vertices);
 }
 
 void BaseMesh::movePoints(const std::vector<glm::vec3>& targets) {
     std::vector<int> indices(this->vertices.size());
     std::iota(std::begin(indices), std::end(indices), 0); // Fill with 0, 1, ..., vertices.size
     this->movePoints(indices, targets);
-}
-
-void BaseMesh::setNormalDeformationMethod() {
-    if(this->meshDeformer->deformMethod != DeformMethod::NORMAL) {
-        delete this->meshDeformer;
-        this->meshDeformer = new NormalMethod(this);
-    }
-}
-
-std::vector<glm::vec3>& BaseMesh::getMeshPositions() {
-    return this->vertices;
 }
 
 glm::vec3 BaseMesh::getOrigin() const {

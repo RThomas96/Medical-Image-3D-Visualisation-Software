@@ -208,7 +208,7 @@ namespace UITool {
         Q_INTERFACES(UITool::MeshManipulator)
 
 	public:
-		DirectManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions);
+        DirectManipulator(BaseMesh * mesh);
 
         void updateWithMeshVertices() override;
         void getAllPositions(std::vector<glm::vec3>& positions) override;
@@ -247,7 +247,7 @@ namespace UITool {
         Q_INTERFACES(UITool::MeshManipulator)
 
 	public:
-        GlobalManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions);
+        GlobalManipulator(BaseMesh * mesh);
         ~GlobalManipulator();
 
         void updateWithMeshVertices() override;
@@ -282,7 +282,7 @@ namespace UITool {
         /// NEW
     public:
 
-        ARAPManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions);
+        ARAPManipulator(BaseMesh * mesh);
         ~ARAPManipulator();
 
         void updateWithMeshVertices() override;
@@ -332,7 +332,7 @@ namespace UITool {
         Q_INTERFACES(UITool::MeshManipulator)
 
 	public:
-        SliceManipulator(BaseMesh * mesh, const std::vector<glm::vec3>& positions);
+        SliceManipulator(BaseMesh * mesh);
 
         void updateWithMeshVertices() override;
         void getAllPositions(std::vector<glm::vec3>& positions) override;
@@ -392,7 +392,7 @@ namespace UITool {
 
         Step step;
 
-        MarkerManipulator(BaseMesh * mesh, Grid * grid, const std::vector<glm::vec3>& positions);
+        MarkerManipulator(BaseMesh * mesh, Grid * grid);
 
         void updateWithMeshVertices() override;
         void getAllPositions(std::vector<glm::vec3>& positions) override;

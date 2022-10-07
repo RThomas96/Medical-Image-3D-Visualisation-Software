@@ -5,15 +5,20 @@
 #include "base_mesh.hpp"
 #include <iostream>
 #include "glm/gtx/string_cast.hpp"
+#include "grid/deformation/AsRigidAsPossible.h"
 #include "grid/drawable/drawable_surface_mesh.hpp"
 
 //! \addtogroup geometry
 //! @{
+//!
+
+class AsRigidAsPossible;
 
 class SurfaceMesh : public BaseMesh, public DrawableMesh {
 
 public:
-	SurfaceMesh(const std::vector<glm::vec3>& vertices, const std::vector<Triangle>& triangles);
+    AsRigidAsPossible * arapDeformer;
+
     SurfaceMesh(std::string const &filename);
 
     void computeTriangleNormal();
@@ -30,7 +35,6 @@ public:
 	std::vector<Triangle> triangles;
 	std::vector<glm::vec3> normals;
 
-    void setARAPDeformationMethod() override;
     void computeNeighborhood() override;
     void computeNormals() override;
     bool getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, const std::vector<bool>& visibilityMap, const glm::vec3& planePos, glm::vec3& res) const override;

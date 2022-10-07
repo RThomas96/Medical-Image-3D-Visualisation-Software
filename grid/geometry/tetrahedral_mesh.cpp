@@ -41,7 +41,7 @@ glm::vec3 * Tetrahedron::getPoint(int faceIdx, int ptIdxInFace) const {
 
 TetMesh::TetMesh(): nbTetra(glm::vec3(0., 0., 0.)), mesh(std::vector<Tetrahedron>()) {}
 
-TetMesh::~TetMesh(){delete this->meshDeformer;}
+TetMesh::~TetMesh(){}
 
 std::vector<glm::vec3*> TetMesh::insertCubeIntoPtGrid(std::vector<glm::vec3> cubePts, glm::vec3 indices, std::vector<glm::vec3>& vertices, std::vector<int>& ptIndices) {
     int x = indices[0];
@@ -619,13 +619,6 @@ bool TetMesh::getCoordInImage(const glm::vec3& p, glm::vec3& out, int tetraIdx) 
 bool TetMesh::getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, const std::vector<bool>& visibilityMap, const glm::vec3& planePos, glm::vec3& res) const {
     std::cout << "Cast ray not implemented yet for Tetmesh" << std::endl;
     return false;
-}
-
-void TetMesh::setARAPDeformationMethod() {
-    if(this->meshDeformer->deformMethod != DeformMethod::ARAP) {
-        delete this->meshDeformer;
-        this->meshDeformer = new ARAPMethod(this);
-    }
 }
 
 void TetMesh::loadMESH(std::string const &filename) {

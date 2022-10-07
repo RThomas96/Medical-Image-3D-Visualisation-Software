@@ -98,6 +98,7 @@ protected:
     std::vector<glm::vec3> vertices;
     
 public:
+    BaseMesh();
 
     std::vector<glm::vec3> verticesNormals;
     std::vector<glm::vec3> texCoord;// These are normalised coordinates
@@ -105,22 +106,13 @@ public:
     glm::vec3 bbMin;
     glm::vec3 bbMax;
 
-    MeshDeformer * meshDeformer;// It will move the mesh points using certain strategies
-    MeshDeformer * normalDeformer;// Move the mesh points using the normal strategy
     History * history;// Allow to undo/redo between BaseMesh vertices positions
     std::array<glm::vec3, 3> coordinate_system;
 
     glm::vec3 getDimensions() const;
-    //int getIdxOfClosestPoint(const glm::vec3& p) const;
-
-    BaseMesh();
 
     void updatebbox();
-    std::vector<glm::vec3>& getMeshPositions();
     const std::vector<glm::vec3>& getVertices() const { return this->vertices; };
-
-    // Functions to interact with the mesh
-    void setNormalDeformationMethod();
 
     void scaleToBBox(const glm::vec3& bbMin, const glm::vec3& bbMax);
     bool isInBBox(const glm::vec3& p) const;
@@ -144,12 +136,10 @@ public:
     void movePoints(const std::vector<glm::vec3>& targets);
 
     // Quick hack for mixing normal and arap method...
-    bool useNormal = false;
-    virtual void replacePoint(const int& origin, const glm::vec3& target) { this->history->deactivate(); this->useNormal=true; this->movePoint(origin, target); this->useNormal=false; this->history->activate();};
-    virtual void replacePoints(const std::vector<int>& origins, const std::vector<glm::vec3>& targets) { this->history->deactivate(); this->useNormal=true; this->movePoints(origins, targets); this->useNormal=false; this->history->activate();};
-    virtual void replacePoints(const std::vector<glm::vec3>& targets) { this->history->deactivate(); this->useNormal=true; this->movePoints(targets); this->useNormal=false; this->history->activate();};
+    virtual void replacePoint(const int& origin, const glm::vec3& target) { this->history->deactivate(); this->movePoint(origin, target); this->history->activate();};
+    virtual void replacePoints(const std::vector<int>& origins, const std::vector<glm::vec3>& targets) { this->history->deactivate(); this->movePoints(origins, targets); this->history->activate();};
+    virtual void replacePoints(const std::vector<glm::vec3>& targets) { this->history->deactivate(); this->movePoints(targets); this->history->activate();};
 
-    virtual void setARAPDeformationMethod() = 0;
     virtual bool getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, const std::vector<bool>& visibilityMap, const glm::vec3& planePos, glm::vec3& res) const = 0;
     virtual void computeNeighborhood() = 0;
     virtual void computeNormals() = 0;

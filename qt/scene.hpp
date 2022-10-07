@@ -255,7 +255,6 @@ public slots:
     void init();
 
     void changeCurrentTool(UITool::MeshManipulatorType newTool);
-    void changeCurrentDeformationMethod(DeformMethod newDeformMethod);
     void changeSelectedPoint(std::pair<int, glm::vec3> selectedPoint);
 
 public :

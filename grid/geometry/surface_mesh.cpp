@@ -107,21 +107,9 @@ SurfaceMesh::SurfaceMesh(std::string const &filename): DrawableMesh(this) {
     } else {
         throw std::runtime_error("ERROR: surface mesh loading, format not supported");
     }
+    this->arapDeformer = new AsRigidAsPossible();
 
     this->history = new History(this->vertices);
-
-    this->updatebbox();
-
-    this->computeTriangleNormal();
-    this->computeVerticesNormal();
-}
-
-SurfaceMesh::SurfaceMesh(const std::vector<glm::vec3>& vertices, const std::vector<Triangle>& triangles): DrawableMesh(this) {
-    for(int i = 0; i < vertices.size(); ++i)
-        this->vertices.push_back(vertices[i]);
-
-    for(int i = 0; i < triangles.size(); ++i)
-        this->triangles.push_back(triangles[i]);
 
     this->updatebbox();
 
@@ -204,19 +192,12 @@ void SurfaceMesh::computeNormals() {
 
 void SurfaceMesh::computeNeighborhood() {}
 
-SurfaceMesh::~SurfaceMesh() {delete this->meshDeformer;}
+SurfaceMesh::~SurfaceMesh() {}
 
 bool SurfaceMesh::getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, const std::vector<bool>& visibilityMap, const glm::vec3& planePos, glm::vec3& res) const {
     // Not implemented yet
     std::cout << "Cast ray not implemented yet for Surface mesh" << std::endl;
     return false;
-}
-
-void SurfaceMesh::setARAPDeformationMethod() {
-    if(this->meshDeformer->deformMethod != DeformMethod::ARAP) {
-        delete this->meshDeformer;
-        this->meshDeformer = new ARAPMethod(this);
-    }
 }
 
 void SurfaceMesh::saveOFF(std::string const & filename) {

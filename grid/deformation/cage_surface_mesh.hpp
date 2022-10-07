@@ -93,38 +93,23 @@ struct Cage : public SurfaceMesh {
 
     void replacePoint(const int& origin, const glm::vec3& target) override {
         BaseMesh::replacePoint(origin, target);
-
         this->history->deactivate(); 
-        this->useNormal=true;
-
         this->movePoint(0, this->vertices[0]);// Update the mesh to deform
-
         this->history->activate(); 
-        this->useNormal=false;
     };
 
     void replacePoints(const std::vector<int>& origins, const std::vector<glm::vec3>& targets) override {
         BaseMesh::replacePoints(origins, targets);
-
         this->history->deactivate(); 
-        this->useNormal=true;
-
         this->movePoint(0, this->vertices[0]);// Update the mesh to deform
-
         this->history->activate(); 
-        this->useNormal=false;
     };
 
     void replacePoints(const std::vector<glm::vec3>& targets) override {
         BaseMesh::replacePoints(targets);
-
         this->history->deactivate(); 
-        this->useNormal=true;
-
         this->movePoint(0, this->vertices[0]);// Update the mesh to deform
-
         this->history->activate(); 
-        this->useNormal=false;
     };
 
     virtual ~Cage(){};

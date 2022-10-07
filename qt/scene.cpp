@@ -1486,7 +1486,7 @@ void Scene::openAtlas() {
          this->openGrid(std::string("atlas"), {std::string("/home/thomas/data/Data/Demo/atlas/atlas.tiff")}, 1, std::string("/home/thomas/data/Data/Demo/atlas/atlas-transfert.mesh"));
          //this->openCage(std::string("cage"), std::string("/home/thomas/data/Data/teletravail/atlas-cage-hyperdilated.off"), std::string("atlas"), true);
          this->openCage(std::string("cage"), std::string("/home/thomas/data/Data/Demo/atlas/atlas-cage_fixed.off"), std::string("atlas"), true);
-         this->getCage(std::string("cage"))->setARAPDeformationMethod();
+         //this->getCage(std::string("cage"))->setARAPDeformationMethod();
          this->getCage(std::string("cage"))->unbindMovementWithDeformedMesh();
          this->getCage(std::string("cage"))->setOrigin(this->getBaseMesh("atlas")->getOrigin());
          this->getCage(std::string("cage"))->bindMovementWithDeformedMesh();
@@ -1543,21 +1543,19 @@ void Scene::updateTools(UITool::MeshManipulatorType tool) {
     if(tool == UITool::MeshManipulatorType::NONE)
         return;
 
-    const std::vector<glm::vec3>& positions = mesh->getMeshPositions();
     this->currentTool = tool;
     if(tool == UITool::MeshManipulatorType::DIRECT) {
-        this->meshManipulator = new UITool::DirectManipulator(mesh, positions);
+        this->meshManipulator = new UITool::DirectManipulator(mesh);
         dynamic_cast<UITool::DirectManipulator*>(this->meshManipulator)->setDefaultManipulatorColor(glm::vec3(1., 1., 0.));
-
     } else if(tool == UITool::MeshManipulatorType::POSITION) {
-        this->meshManipulator = new UITool::GlobalManipulator(mesh, positions);
+        this->meshManipulator = new UITool::GlobalManipulator(mesh);
     } else if(tool == UITool::MeshManipulatorType::ARAP) {
-        this->meshManipulator = new UITool::ARAPManipulator(mesh, positions);
+        this->meshManipulator = new UITool::ARAPManipulator(mesh);
     } else if(tool == UITool::MeshManipulatorType::SLICE) {
-        this->meshManipulator = new UITool::SliceManipulator(mesh, positions);
+        this->meshManipulator = new UITool::SliceManipulator(mesh);
     } else if(tool == UITool::MeshManipulatorType::MARKER) {
         if(this->grids.size() > 0) {
-            this->meshManipulator = new UITool::MarkerManipulator(mesh, this->grids[0], positions);
+            this->meshManipulator = new UITool::MarkerManipulator(mesh, this->grids[0]);
             this->meshManipulator->setSize(UITool::GL::SPHERE, 0.007);
         }
     }
@@ -1592,13 +1590,6 @@ void Scene::updateTools(UITool::MeshManipulatorType tool) {
 
     if(tool == UITool::MeshManipulatorType::NONE || !this->getBaseMesh(this->activeMesh))
         return;
-
-    if(tool == UITool::MeshManipulatorType::DIRECT ||
-       tool == UITool::MeshManipulatorType::POSITION ) {
-        this->getBaseMesh(this->activeMesh)->setNormalDeformationMethod();
-    } else {
-        this->getBaseMesh(this->activeMesh)->setARAPDeformationMethod();
-    }
 
     // MeshManipulator->Scene
 
@@ -1743,35 +1734,12 @@ void Scene::changeActiveMesh(const std::string& name) {
     //}
     Q_EMIT activeMeshChanged();
     this->changeCurrentTool(this->currentTool);
-    this->changeCurrentDeformationMethod(this->currentDeformMethod);
     this->shouldUpdateUserColorScales = true;
 }
 
 void Scene::changeCurrentTool(UITool::MeshManipulatorType newTool) {
     this->currentTool = newTool;
     this->updateTools(newTool);
-    if(newTool == UITool::MeshManipulatorType::ARAP ||
-       newTool == UITool::MeshManipulatorType::MARKER) {
-        this->changeCurrentDeformationMethod(DeformMethod::ARAP);
-    }
-    if(newTool == UITool::MeshManipulatorType::DIRECT) {
-        this->changeCurrentDeformationMethod(DeformMethod::NORMAL);
-    }
-}
-
-void Scene::changeCurrentDeformationMethod(DeformMethod newDeformMethod) {
-    this->currentDeformMethod = newDeformMethod;
-    BaseMesh * mesh = this->getBaseMesh(this->activeMesh);
-    if(mesh) {
-        switch(newDeformMethod) {
-            case DeformMethod::NORMAL:
-                mesh->setNormalDeformationMethod();
-                break;
-            case DeformMethod::ARAP:
-                mesh->setARAPDeformationMethod();
-                break;
-        }
-    }
 }
 
 void Scene::changeSelectedPoint(std::pair<int, glm::vec3> selectedPoint) {
