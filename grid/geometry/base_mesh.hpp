@@ -70,19 +70,9 @@ struct History {
     }
 };
 
-struct MeshDeformer;
-struct NormalMethod;
-struct ARAPMethod;
-
 namespace UITool {
     class Manipulator;
 }
-
-enum class DeformMethod {
-    NORMAL,
-    WEIGHTED,
-    ARAP
-};
 
 //! \defgroup geometry Geometry
 //! \addtogroup geometry
@@ -90,10 +80,6 @@ enum class DeformMethod {
 
 class BaseMesh {
 
-public:
-    friend MeshDeformer;
-    friend NormalMethod;
-    friend ARAPMethod;
 protected:
     std::vector<glm::vec3> vertices;
     

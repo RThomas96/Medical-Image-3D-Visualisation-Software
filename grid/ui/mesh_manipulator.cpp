@@ -310,29 +310,13 @@ namespace UITool {
             manipulator->getTransformedPoint(i, idx, p);
             positions[idx] = glm::vec3(p[0], p[1], p[2]);
         }
-        AsRigidAsPossible * deformer = dynamic_cast<SurfaceMesh*>(this->mesh)->arapDeformer;
-        if(!deformer) {
-            std::cout << "WARNING: ARAP manipulator can be used only on surfacique mesh!" << std::endl;
-            return;
-        }
-        std::vector<Vec3D<float>> ptsAsVec3D;
-        for(int i = 0; i < positions.size(); ++i) {
-            glm::vec3 pt = positions[i];
-            ptsAsVec3D.push_back(Vec3D(pt[0], pt[1], pt[2]));
-        }
 
-        print_debug("Compute deformation");
-        deformer->compute_deformation(ptsAsVec3D);
-
-        for(int i = 0; i < positions.size(); ++i)
-            positions[i] = glm::vec3(ptsAsVec3D[i][0], ptsAsVec3D[i][1], ptsAsVec3D[i][2]);
-
+        dynamic_cast<SurfaceMesh*>(this->mesh)->deformARAP(positions);
         this->setPositions(positions);
         this->meshIsModified = true;
     }
 
     void ARAPManipulator::setPositions(std::vector<glm::vec3>& positions) {
-        mesh->movePoints(positions);
         for(int i = 0; i < this->mesh->getNbVertices(); ++i) {
             this->manipulators[i].setManipPosition(this->mesh->getVertice(i));
         }
@@ -424,13 +408,7 @@ namespace UITool {
         manipulator->enable();
         print_debug("Show guizmo");
 
-
-        AsRigidAsPossible * deformer = dynamic_cast<SurfaceMesh*>(this->mesh)->arapDeformer;
-        if(!deformer) {
-            std::cout << "WARNING: ARAP manipulator can be used only with the ARAP deformer !" << std::endl;
-            return;
-        }
-        deformer->setHandles(this->getHandles());
+        dynamic_cast<SurfaceMesh*>(this->mesh)->setHandlesARAP(this->getHandles());
         print_debug("Update handles");
     }
 
@@ -656,14 +634,7 @@ SliceManipulator::SliceManipulator(BaseMesh * mesh): MeshManipulator(mesh) {
 
     this->lastModifiedSlice = 0;
 
-    std::vector<Vec3D<float>> ptsAsVec3D;
-    for(int i = 0; i < this->mesh->getNbVertices(); ++i) {
-        glm::vec3 pt = this->mesh->getVertice(i);
-        ptsAsVec3D.push_back(Vec3D(pt[0], pt[1], pt[2]));
-    }
-    AsRigidAsPossible * deformer = dynamic_cast<SurfaceMesh*>(this->mesh)->arapDeformer;
-    deformer->clear();
-    deformer->init(ptsAsVec3D, dynamic_cast<SurfaceMesh*>(this->mesh)->getTriangles());
+    dynamic_cast<SurfaceMesh*>(this->mesh)->initARAPDeformer();
 }
 
 void SliceManipulator::updateWithMeshVertices() {
@@ -858,12 +829,7 @@ void SliceManipulator::updateSliceToSelect(SliceOrientation sliceOrientation) {
 
 void SliceManipulator::moveGuizmo() {
     if(!guizmoUpToDate) {
-        AsRigidAsPossible * deformer = dynamic_cast<SurfaceMesh*>(this->mesh)->arapDeformer;
-        if(!deformer) {
-            std::cout << "WARNING: ARAP manipulator can be used only with the ARAP deformer !" << std::endl;
-            return;
-        }
-        deformer->setHandles(this->getHandles());
+        dynamic_cast<SurfaceMesh*>(this->mesh)->setHandlesARAP(this->getHandles());
         this->guizmoUpToDate = true;
     }
 
@@ -880,27 +846,12 @@ void SliceManipulator::moveGuizmo() {
         manipulator->getTransformedPoint(i, idx, p);
         positions[idx] = glm::vec3(p[0], p[1], p[2]);
     }
-    AsRigidAsPossible * deformer = dynamic_cast<SurfaceMesh*>(this->mesh)->arapDeformer;
-    if(!deformer) {
-        std::cout << "WARNING: ARAP manipulator can be used only with the ARAP deformer !" << std::endl;
-        return;
-    }
-    std::vector<Vec3D<float>> ptsAsVec3D;
-    for(int i = 0; i < positions.size(); ++i) {
-        glm::vec3 pt = positions[i];
-        ptsAsVec3D.push_back(Vec3D(pt[0], pt[1], pt[2]));
-    }
-    deformer->compute_deformation(ptsAsVec3D);
-
-    for(int i = 0; i < positions.size(); ++i)
-        positions[i] = glm::vec3(ptsAsVec3D[i][0], ptsAsVec3D[i][1], ptsAsVec3D[i][2]);
-
+    dynamic_cast<SurfaceMesh*>(this->mesh)->deformARAP(positions);
     this->setPositions(positions);
     this->meshIsModified = true;
 }
 
 void SliceManipulator::setPositions(std::vector<glm::vec3>& positions) {
-    mesh->movePoints(positions);
     for(int i = 0; i < this->mesh->getNbVertices(); ++i) {
         this->manipulators[i].setManipPosition(this->mesh->getVertice(i));
     }
@@ -950,6 +901,7 @@ MarkerManipulator::MarkerManipulator(BaseMesh * mesh, Grid * grid): MeshManipula
         QObject::connect(&(this->mesh_manipulators[i]), &Manipulator::enterAtRangeForGrab, this, [this, i](){Q_EMIT needDisplayVertexInfo(std::make_pair(i, this->mesh_manipulators[i].getManipPosition()));});
         QObject::connect(&(this->mesh_manipulators[i]), &Manipulator::isManipulated, this, [this, i](){Q_EMIT needDisplayVertexInfo(std::make_pair(i, this->mesh_manipulators[i].getManipPosition()));});
     }
+    dynamic_cast<SurfaceMesh*>(this->mesh)->initARAPDeformer();
 }
 
 void MarkerManipulator::selectManipulator(Manipulator * manipulator) {
@@ -968,7 +920,21 @@ void MarkerManipulator::switchToPlaceMarkerStep(int manipulatorId) {
     }
 }
 
+void MarkerManipulator::undoSwitchToPlaceMarkerStep() {
+    this->manipulator_association.pop_back();
+    this->step = Step::SELECT_VERTICE_ON_MESH;
+    for(auto& manipulator : this->mesh_manipulators) {
+        manipulator.enable();
+    }
+}
+
 void MarkerManipulator::switchToSelectManipulatorStep(glm::vec3 markerPlaced) {
+    for(int i = 0; i < this->manipulator_association.size()-1; ++i) {
+        if(this->manipulator_association[i].first == this->manipulator_association.back().first) {
+            this->marker_manipulators.pop_back();
+            this->manipulator_association.erase(this->manipulator_association.begin()+i);
+        }
+    }
     this->manipulator_association.back().second = this->marker_manipulators.size();
     this->marker_manipulators.push_back(Manipulator(markerPlaced));
     this->marker_manipulators.back().lockPosition();
@@ -980,7 +946,13 @@ void MarkerManipulator::switchToSelectManipulatorStep(glm::vec3 markerPlaced) {
     this->applyDeformation();
 }
 
-void MarkerManipulator::updateWithMeshVertices() {}
+void MarkerManipulator::updateWithMeshVertices() {
+    for(int i = 0; i < this->mesh->getNbVertices(); ++i) {
+        this->mesh_manipulators[i].setLastPosition(this->mesh->getVertice(i));
+        this->mesh_manipulators[i].setManipPosition(this->mesh->getVertice(i));
+    }
+}
+
 void MarkerManipulator::getAllPositions(std::vector<glm::vec3>& positions) {}
 
 void MarkerManipulator::keyPressed(QKeyEvent* e) {
@@ -992,13 +964,15 @@ void MarkerManipulator::keyPressed(QKeyEvent* e) {
             Q_EMIT needCastRay();
         }
     }
+    if(e->key() == Qt::Key_Escape && this->step == PLACE_MARKER) {
+        this->undoSwitchToPlaceMarkerStep();
+    }
 }
 
 void MarkerManipulator::placeManipulator(const glm::vec3& origin, const glm::vec3& direction, const std::vector<bool>& visibilityMap, const glm::vec3& planePos) {
     glm::vec3 position(0., 0., 0.);
     bool found = grid->getPositionOfRayIntersection(origin, direction, visibilityMap, planePos, position);
     if(found) {
-        this->marker_manipulators.push_back(position);
         Q_EMIT needChangeCursor(UITool::CursorType::NORMAL);
         this->switchToSelectManipulatorStep(position);
     } else {
@@ -1078,7 +1052,7 @@ void MarkerManipulator::applyDeformation() {
         glm::vec3 pt = positions[i];
         ptsAsVec3D.push_back(Vec3D(pt[0], pt[1], pt[2]));
     }
-    deformer->setHandles(handles);
+    dynamic_cast<SurfaceMesh*>(this->mesh)->setHandlesARAP(handles);
     deformer->compute_deformation(ptsAsVec3D);
 
     for(int i = 0; i < positions.size(); ++i)
@@ -1089,6 +1063,7 @@ void MarkerManipulator::applyDeformation() {
         this->mesh_manipulators[i].setManipPosition(this->mesh->getVertice(i));
     }
     Q_EMIT needSendTetmeshToGPU();
+    mesh->addStateToHistory();
 }
 
 }

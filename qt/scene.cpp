@@ -85,7 +85,6 @@ Scene::Scene() {
     this->glSelection = new UITool::GL::Selection(this, glm::vec3(0., 0., 0.), glm::vec3(10., 10., 10.));
 
     this->currentTool = UITool::MeshManipulatorType::POSITION;
-    this->currentDeformMethod = DeformMethod::NORMAL;
     this->planeActivation = glm::vec3(1., 1., 1.);
     this->displayGrid = true;
     this->displayMesh = true;

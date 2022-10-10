@@ -30,6 +30,10 @@ public:
 
     void saveOFF(std::string const & filename);
 
+    void initARAPDeformer();
+    void deformARAP(std::vector<glm::vec3>& positions);
+    void setHandlesARAP(const std::vector<bool>& handles);
+
     //*********/
 
 	std::vector<Triangle> triangles;

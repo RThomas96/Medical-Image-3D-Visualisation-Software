@@ -222,3 +222,31 @@ void SurfaceMesh::saveOFF(std::string const & filename) {
 
     myfile.close();
 }
+
+void SurfaceMesh::initARAPDeformer() {
+    std::vector<Vec3D<float>> ptsAsVec3D;
+    for(int i = 0; i < this->mesh->getNbVertices(); ++i) {
+        glm::vec3 pt = this->mesh->getVertice(i);
+        ptsAsVec3D.push_back(Vec3D(pt[0], pt[1], pt[2]));
+    }
+    this->arapDeformer->clear();
+    this->arapDeformer->init(ptsAsVec3D, dynamic_cast<SurfaceMesh*>(this->mesh)->getTriangles());
+}
+
+void SurfaceMesh::deformARAP(std::vector<glm::vec3>& positions) {
+        std::vector<Vec3D<float>> ptsAsVec3D;
+        for(int i = 0; i < positions.size(); ++i) {
+            glm::vec3 pt = positions[i];
+            ptsAsVec3D.push_back(Vec3D(pt[0], pt[1], pt[2]));
+        }
+
+        this->arapDeformer->compute_deformation(ptsAsVec3D);
+
+        for(int i = 0; i < positions.size(); ++i)
+            positions[i] = glm::vec3(ptsAsVec3D[i][0], ptsAsVec3D[i][1], ptsAsVec3D[i][2]);
+        this->movePoints(positions);
+}
+
+void SurfaceMesh::setHandlesARAP(const std::vector<bool>& handles) {
+    this->arapDeformer->setHandles(handles);
+}

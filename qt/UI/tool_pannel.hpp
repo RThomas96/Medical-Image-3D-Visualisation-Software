@@ -4,6 +4,10 @@
 #include "../helper/QActionManager.hpp"
 
 #include <QToolBar>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QGroupBox>
+#include <QLabel>
 
 class ToolPannel : public QGroupBox {
     Q_OBJECT
