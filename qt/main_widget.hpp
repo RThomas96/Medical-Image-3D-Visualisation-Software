@@ -146,6 +146,10 @@ public slots:
         }
     }
 
+    void dipslayInfo(const std::string& infos) {
+        this->tool_pannel->setInfos(infos);
+    }
+
     // *************** //
     // Connected to UI //
     // *************** //

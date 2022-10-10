@@ -169,7 +169,12 @@ namespace UITool {
         Selection selection;
         BaseMesh * mesh;
 
-        MeshManipulator(BaseMesh * mesh): mesh(mesh) {this->sphereRatio = 0.004;}
+        std::string instructions;
+
+        MeshManipulator(BaseMesh * mesh): mesh(mesh) {
+            this->sphereRatio = 0.004;
+            instructions = std::string("");
+        }
 
         void zoom(float newSceneRadius) override;
 
@@ -194,6 +199,7 @@ namespace UITool {
         //This signal is used to trigger a function in the scene
         //This should be removed when the grid will have its own "Drawable" class
         virtual void needSendTetmeshToGPU() = 0;
+        virtual void needDisplayInfos(const std::string& infos) = 0;
     };
 }
 Q_DECLARE_INTERFACE(UITool::MeshManipulator, "MeshManipulator")
@@ -233,6 +239,7 @@ namespace UITool {
     signals:
         void needSendTetmeshToGPU() override;
         void needDisplayVertexInfo(std::pair<int, glm::vec3> selectedPoint);
+        void needDisplayInfos(const std::string& infos) override;
     private:
 		std::vector<Manipulator> manipulators;
         std::vector<bool> manipulatorsToDisplay;
@@ -269,6 +276,7 @@ namespace UITool {
     signals:
         void needSendTetmeshToGPU() override;
         void needUpdateSceneCenter();
+        void needDisplayInfos(const std::string& infos) override;
 
 	private:
         bool evenMode;
@@ -302,6 +310,7 @@ namespace UITool {
         void needSendTetmeshToGPU() override;
         void needChangeCursor(UITool::CursorType cursorType);
         void needChangeCursorInPlanarView(UITool::CursorType cursorType);
+        void needDisplayInfos(const std::string& infos) override;
 
     protected:
         enum SelectionMode { INACTIVE , ACTIVE , ADD_FIXED , ADD_MOVING , REMOVE };
@@ -358,6 +367,7 @@ namespace UITool {
     signals:
         void needSendTetmeshToGPU() override;
         void needChangePointsToProject(std::vector<int> selectedPoints);
+        void needDisplayInfos(const std::string& infos) override;
     private:
 		std::vector<Manipulator> manipulators;
 
@@ -408,6 +418,7 @@ namespace UITool {
 
         void selectManipulator(Manipulator * manipulator);
         void switchToPlaceMarkerStep(int manipulatorId);
+        void undoSwitchToPlaceMarkerStep();
         void switchToSelectManipulatorStep(glm::vec3 markerPlaced);
         void applyDeformation();
 
@@ -418,6 +429,7 @@ namespace UITool {
         void needCastRay();
         void needChangeCursor(UITool::CursorType cursorType);
         void needDisplayVertexInfo(std::pair<int, glm::vec3> selectedPoint);
+        void needDisplayInfos(const std::string& infos) override;
 
     private:
         Grid * grid;

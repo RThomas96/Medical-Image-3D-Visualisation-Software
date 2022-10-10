@@ -25,6 +25,8 @@ public:
     QToolBar * arap_toolbar;
     QToolBar * fixedRegistration_toolbar;
 
+    QLabel * toolInfo;
+
 public slots:
     void init(){
         this->main_layout = new QVBoxLayout(this);
@@ -33,10 +35,26 @@ public slots:
         this->toolbar = new QToolBar(this);
         this->toolbar->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
 
-        this->main_layout->addWidget(this->toolbar);
+        QWidget *spacer = new QWidget();
+        spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+
+        QHBoxLayout * center = new QHBoxLayout();
+        center->addWidget(spacer);
+        center->addWidget(this->toolbar);
+        center->addWidget(spacer);
+
+        this->main_layout->addLayout(center);
         this->main_layout->setAlignment(Qt::AlignHCenter);
+        this->toolInfo = new QLabel("");
+        this->toolInfo->setAlignment(Qt::AlignHCenter);
+        this->main_layout->addWidget(this->toolInfo);
+
         this->main_layout->addStretch();
     };
+
+    void setInfos(const std::string& infos) {
+        this->toolInfo->setText(infos.c_str());
+    }
 
     void connect(QActionManager& actionManager) {
         // Spacer

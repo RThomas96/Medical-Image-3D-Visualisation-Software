@@ -1539,8 +1539,11 @@ void Scene::updateTools(UITool::MeshManipulatorType tool) {
     if(!mesh)
         return;
 
-    if(tool == UITool::MeshManipulatorType::NONE)
+    if(tool == UITool::MeshManipulatorType::NONE || !this->getBaseMesh(this->activeMesh)) {
+        Q_EMIT this->needDisplayInfos("");
         return;
+    }
+
 
     this->currentTool = tool;
     if(tool == UITool::MeshManipulatorType::DIRECT) {
@@ -1562,6 +1565,7 @@ void Scene::updateTools(UITool::MeshManipulatorType tool) {
     QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needChangeCursor(UITool::CursorType)), this, SLOT(changeCursor(UITool::CursorType)));
     QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needChangeCursorInPlanarView(UITool::CursorType)), this, SLOT(changeCursorInPlanarView(UITool::CursorType)));
     QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needDisplayVertexInfo(std::pair<int,glm::vec3>)), this, SLOT(changeSelectedPoint(std::pair<int,glm::vec3>)));
+    QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needDisplayInfos(const std::string&)), this, SIGNAL(needDisplayInfos(const std::string&)));
 
     // To delete ?
     QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needSendTetmeshToGPU()), this, SLOT(sendFirstTetmeshToGPU()));
@@ -1587,9 +1591,6 @@ void Scene::updateTools(UITool::MeshManipulatorType tool) {
 
     this->updateManipulatorRadius();
 
-    if(tool == UITool::MeshManipulatorType::NONE || !this->getBaseMesh(this->activeMesh))
-        return;
-
     // MeshManipulator->Scene
 
     if(tool == UITool::MeshManipulatorType::ARAP) {
@@ -1608,6 +1609,8 @@ void Scene::updateTools(UITool::MeshManipulatorType tool) {
             dynamic_cast<UITool::MarkerManipulator*>(this->meshManipulator)->placeManipulator(origin, direction, visuMap, this->computePlanePositions());
         });
     }
+
+    Q_EMIT this->needDisplayInfos(this->meshManipulator->instructions);
 }
 
 void Scene::selectSlice(UITool::SliceOrientation sliceOrientation) {

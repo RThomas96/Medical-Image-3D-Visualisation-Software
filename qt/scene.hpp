@@ -248,6 +248,7 @@ signals:
     void colorChanged();
     void planeControlWidgetNeedUpdate(const glm::vec3& values);
     void sceneRadiusOutOfDate();
+    void needDisplayInfos(const std::string& infos);
 
 // All these indirections are important because for most of them they interacts with various components of the scene
 // And it allow more flexibility as the scene control ALL the informations to transit from class to class
@@ -417,7 +418,6 @@ public:
 
     std::string activeMesh;
     UITool::MeshManipulatorType currentTool;
-    DeformMethod currentDeformMethod;
 
     std::vector<std::pair<std::string, std::string>> cageToGrid;
     std::vector<std::string> grids_name;

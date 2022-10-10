@@ -1,4 +1,5 @@
 #include "main_widget.hpp"
+#include "qt/UI/tool_pannel.hpp"
 #include "scene.hpp"
 
 #include <QEvent>
@@ -161,6 +162,7 @@ void MainWidget::setupWidgets() {
 
     this->info_pannel = new InfoPannel("Infos", this->scene);
     this->tool_pannel = new ToolPannel("Tool", *this->actionManager);
+    QObject::connect(this->scene, &Scene::needDisplayInfos, this->tool_pannel, &ToolPannel::setInfos);
     this->quickSaveCage = new QuickSaveMesh(this->scene);
 
 	this->viewer->addStatusBar(this->statusBar);

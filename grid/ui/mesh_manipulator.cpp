@@ -75,7 +75,9 @@ namespace UITool {
 		}
 
         QObject::connect(&this->selection, &Selection::isSelecting, this, &DirectManipulator::checkSelectedManipulators);
-	}
+
+        this->instructions = std::string("Right-click : Move vertex.");
+    }
 
     void DirectManipulator::checkSelectedManipulators() {
         this->deselectManipulator(nullptr);
@@ -130,7 +132,6 @@ namespace UITool {
         if(!this->selectedManipulators[index]) {
             this->selectedManipulators[index] = true;
         }
-        std::cout << "Selection vertex: [" << index << "]" << std::endl;
     }
 
     void DirectManipulator::deselectManipulator(Manipulator * manipulator) {
@@ -188,7 +189,9 @@ namespace UITool {
             this->guizmo->addPoint(i, qglviewer::Vec(this->mesh->getVertice(i)[0], this->mesh->getVertice(i)[1], this->mesh->getVertice(i)[2]));
         }
         QObject::connect(this->guizmo, &RotationManipulator::moved, this, [this]() {this->moveManipulator(nullptr);});
-	}
+
+        this->instructions = std::string("Wheel : Change guizmo mode.");
+    }
 
     void GlobalManipulator::updateWithMeshVertices() {
         delete this->guizmo;
@@ -286,14 +289,14 @@ namespace UITool {
         this->selectionMode = INACTIVE;
         QObject::connect(&this->selection, &Selection::isSelecting, [this](){this->updateSelection();});
 
-        std::vector<Vec3D<float>> ptsAsVec3D;
-        for(int i = 0; i < this->mesh->getNbVertices(); ++i) {
-            glm::vec3 pt = this->mesh->getVertice(i);
-            ptsAsVec3D.push_back(Vec3D(pt[0], pt[1], pt[2]));
-        }
-        AsRigidAsPossible * deformer = dynamic_cast<SurfaceMesh*>(this->mesh)->arapDeformer;
-        deformer->clear();
-        deformer->init(ptsAsVec3D, dynamic_cast<SurfaceMesh*>(this->mesh)->getTriangles());
+        dynamic_cast<SurfaceMesh*>(this->mesh)->initARAPDeformer();
+
+        this->instructions = std::string("Maj+Left-click : Select MOVING vertices. \n"
+                                         "Maj+Alt+Left-click : Select FIXED vertices. \n"
+                                         "Maj+Right-click : Show guizmo \n"
+                                         "Guizmo"
+                                         "Wheel : Change guizmo mode. \n"
+                                         "");
     }
 
     void ARAPManipulator::moveGuizmo() {
