@@ -89,6 +89,7 @@ Scene::Scene() {
     this->displayGrid = true;
     this->displayMesh = true;
     this->previewCursorInPlanarView = false;
+    this->displayBBox = false;
 }
 
 Scene::~Scene(void) {
@@ -724,6 +725,14 @@ void Scene::drawScene(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool show
 
     //this->drawBoundingBox(this->sceneBB, glm::vec4(.5, .5, .0, 1.), mvMat, pMat);
     this->glSelection->draw(mvMat, pMat, glm::value_ptr(mMat));
+
+    if(displayBBox) {
+        for(auto grid : grids)
+            grid->drawBBox(this->computePlanePositions());
+    }
+
+    for(auto box : boxes)
+        this->drawBox(box);
 }
 
 void Scene::updateMinMaxDisplayValues() {
@@ -822,7 +831,7 @@ void Scene::setColorFunction_g(ColorFunction _c) {
     this->needUpdateMinMaxDisplayValues = true;
 }
 
-void Scene::slotSetPlaneDisplacement(CuttingPlaneDirection direction, float scalar) {
+void Scene::slotSetNormalizedPlaneDisplacement(CuttingPlaneDirection direction, float scalar) {
     switch(direction) {
         case X:
             this->planeDisplacement.x = scalar;
@@ -832,6 +841,24 @@ void Scene::slotSetPlaneDisplacement(CuttingPlaneDirection direction, float scal
             break;
         case Z:
             this->planeDisplacement.z = scalar;
+            break;
+        case XYZ:
+            break;
+    }
+    Q_EMIT planesMoved(this->computePlanePositions());
+}
+
+void Scene::slotSetPlaneDisplacement(std::string gridName, CuttingPlaneDirection direction, float scalar) {
+    glm::vec3 dimension = this->grids[this->getGridIdx(gridName)]->getDimensions();
+    switch(direction) {
+        case X:
+            this->planeDisplacement.x = scalar/dimension.x;
+            break;
+        case Y:
+            this->planeDisplacement.y = scalar/dimension.y;
+            break;
+        case Z:
+            this->planeDisplacement.z = scalar/dimension.z;
             break;
         case XYZ:
             break;
@@ -2527,4 +2554,24 @@ void Scene::computeProjection(const std::vector<int>& vertexIndices) {
 
     dynamic_cast<UITool::SliceManipulator*>(this->meshManipulator)->updateWithMeshVertices();
     dynamic_cast<UITool::SliceManipulator*>(this->meshManipulator)->moveGuizmo();
+}
+
+void Scene::drawBox(const Box& box) {
+   glDisable(GL_LIGHTING);
+   glPolygonMode(GL_FRONT_AND_BACK , GL_LINE);
+   glColor4f(0.2,0.2,0.9, 1);
+   glLineWidth(2.f);
+
+   BasicGL::drawBBox<glm::vec3>(box.first, box.second);
+
+   glEnable(GL_LIGHTING);
+   glPolygonMode(GL_FRONT_AND_BACK , GL_FILL);
+}
+
+void Scene::addBox(const Box& box) {
+    this->boxes.push_back(box);
+}
+
+void Scene::clearBoxes() {
+    this->boxes.clear();
 }

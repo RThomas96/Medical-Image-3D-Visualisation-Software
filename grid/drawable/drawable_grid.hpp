@@ -48,6 +48,7 @@ public:
 
     void initializeGL(ShaderCompiler::GLFunctions *functions);
     void drawGrid(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, glm::vec3 planePosition, glm::vec3 planeDirection, bool drawFront);
+    void drawBBox(const glm::vec3& planePos);
 
     void setMultiGridRendering(bool value);
     void recompileShaders();

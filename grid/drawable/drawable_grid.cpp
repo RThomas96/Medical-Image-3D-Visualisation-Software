@@ -1,6 +1,9 @@
 #include "drawable_grid.hpp"
 #include "../geometry/grid.hpp"
+#include "glm/ext/quaternion_geometric.hpp"
+#include "grid/utils/GLUtilityMethods.h"
 
+#include <GL/gl.h>
 #include <glm/gtc/type_ptr.hpp>
 
 #include <memory>
@@ -599,4 +602,21 @@ void DrawableGrid::updateMinMaxDisplayValues() {
 
     visu_map = data;
     color_map = data_color;
+}
+
+void DrawableGrid::drawBBox(const glm::vec3& planePos) {
+   auto bbox = this->grid->getBoundingBox();
+   glm::vec3 bbmin = bbox.first;
+   bbmin += planePos;
+   glm::vec3 bbmax = bbox.second;
+
+   glDisable(GL_LIGHTING);
+   glPolygonMode(GL_FRONT_AND_BACK , GL_LINE);
+   glColor4f(0.2,0.2,0.9, 1);
+   glLineWidth(2.f);
+
+   BasicGL::drawBBox<glm::vec3>(bbmin, bbmax);
+
+   glEnable(GL_LIGHTING);
+   glPolygonMode(GL_FRONT_AND_BACK , GL_FILL);
 }

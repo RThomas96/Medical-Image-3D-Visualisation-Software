@@ -72,6 +72,7 @@ uint16_t Grid::getDeformedValueFromPoint(const TetMesh& initial, const glm::vec3
 }
 
 std::pair<glm::vec3, glm::vec3> Grid::getBoundingBox() const {
+    //return std::pair(this->sampler.bbMin, this->sampler.bbMax);
     return std::pair(this->bbMin, this->bbMax);
 }
 

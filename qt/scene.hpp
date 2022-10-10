@@ -265,7 +265,8 @@ public :
     enum CuttingPlaneDirection {X, Y, Z, XYZ};
 
 public slots:
-    void slotSetPlaneDisplacement(CuttingPlaneDirection direction, float scalar);
+    void slotSetNormalizedPlaneDisplacement(CuttingPlaneDirection direction, float scalar);
+    void slotSetPlaneDisplacement(std::string gridName, CuttingPlaneDirection direction, float scalar);
     void slotTogglePlaneDirection(CuttingPlaneDirection direction);
     void slotToggleDisplayPlane(CuttingPlaneDirection direction, bool display);
 
@@ -414,16 +415,27 @@ public:
 
     bool displayGrid;
     bool displayMesh;
+    bool displayBBox;
     bool previewCursorInPlanarView;
 
     std::string activeMesh;
     UITool::MeshManipulatorType currentTool;
 
     std::vector<std::pair<std::string, std::string>> cageToGrid;
+
     std::vector<std::string> grids_name;
     std::vector<Grid*> grids;
+
     std::vector<std::pair<GraphMesh*, std::string>> graph_meshes;
     std::vector<std::pair<SurfaceMesh*, std::string>> meshes;
+
+    // Usefull to draw boxes in the scene
+    // Used to preview the zone to save in the export image widget
+    using Box = std::pair<glm::vec3, glm::vec3>;
+    std::vector<Box> boxes;
+    void drawBox(const Box& box);
+    void addBox(const Box& box);
+    void clearBoxes();
 };
 
 #endif	  // VIEWER_INCLUDE_SCENE_HPP_

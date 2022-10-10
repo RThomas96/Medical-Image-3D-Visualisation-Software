@@ -872,19 +872,19 @@ void PlanarViewForm::updateSlice() {
     this->viewers[this->selectedViewer]->setSliceIdx(this->sliders["SliderX"]->value());
     if(this->buttons["Link"]->isChecked()) {
         if(this->viewers[this->selectedViewer]->direction == glm::vec3(1., 0., 0.)) {
-            this->scene->slotSetPlaneDisplacement(Scene::CuttingPlaneDirection::X, float(this->sliders["SliderX"]->value())/float(this->sliders["SliderX"]->maximum()));
-            this->scene->slotSetPlaneDisplacement(Scene::CuttingPlaneDirection::Y, 0.);
-            this->scene->slotSetPlaneDisplacement(Scene::CuttingPlaneDirection::Z, 0.);
+            this->scene->slotSetNormalizedPlaneDisplacement(Scene::CuttingPlaneDirection::X, float(this->sliders["SliderX"]->value())/float(this->sliders["SliderX"]->maximum()));
+            this->scene->slotSetNormalizedPlaneDisplacement(Scene::CuttingPlaneDirection::Y, 0.);
+            this->scene->slotSetNormalizedPlaneDisplacement(Scene::CuttingPlaneDirection::Z, 0.);
         }
         if(this->viewers[this->selectedViewer]->direction == glm::vec3(0., 1., 0.)) {
-            this->scene->slotSetPlaneDisplacement(Scene::CuttingPlaneDirection::Y, float(this->sliders["SliderX"]->value())/float(this->sliders["SliderX"]->maximum()));
-            this->scene->slotSetPlaneDisplacement(Scene::CuttingPlaneDirection::Z, 0.);
-            this->scene->slotSetPlaneDisplacement(Scene::CuttingPlaneDirection::X, 0.);
+            this->scene->slotSetNormalizedPlaneDisplacement(Scene::CuttingPlaneDirection::Y, float(this->sliders["SliderX"]->value())/float(this->sliders["SliderX"]->maximum()));
+            this->scene->slotSetNormalizedPlaneDisplacement(Scene::CuttingPlaneDirection::Z, 0.);
+            this->scene->slotSetNormalizedPlaneDisplacement(Scene::CuttingPlaneDirection::X, 0.);
         }
         if(this->viewers[this->selectedViewer]->direction == glm::vec3(0., 0., 1.)) {
-            this->scene->slotSetPlaneDisplacement(Scene::CuttingPlaneDirection::Z, float(this->sliders["SliderX"]->value())/float(this->sliders["SliderX"]->maximum()));
-            this->scene->slotSetPlaneDisplacement(Scene::CuttingPlaneDirection::X, 0.);
-            this->scene->slotSetPlaneDisplacement(Scene::CuttingPlaneDirection::Y, 0.);
+            this->scene->slotSetNormalizedPlaneDisplacement(Scene::CuttingPlaneDirection::Z, float(this->sliders["SliderX"]->value())/float(this->sliders["SliderX"]->maximum()));
+            this->scene->slotSetNormalizedPlaneDisplacement(Scene::CuttingPlaneDirection::X, 0.);
+            this->scene->slotSetNormalizedPlaneDisplacement(Scene::CuttingPlaneDirection::Y, 0.);
         }
         //this->scene->updatePlaneControlWidget();
     }

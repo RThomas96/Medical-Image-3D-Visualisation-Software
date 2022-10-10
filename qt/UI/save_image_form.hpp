@@ -2,6 +2,7 @@
 #define SAVE_IMAGE_FORM
 
 #include "form.hpp"
+#include "glm/glm.hpp"
 
 class SaveImageForm : Form {
     Q_OBJECT
@@ -19,15 +20,40 @@ public slots:
         this->addWithLabel(WidgetType::CHECK_BOX, "Colormap", "Use colormap: ");
         this->addWithLabel(WidgetType::CHECK_BOX, "Resolution", "Export at full resolution: ");
 
+        this->addWithLabel(WidgetType::H_GROUP, "GroupBBMin", "BBox min");
+        this->addAllNextWidgetsToGroup("GroupBBMin");
+
+        this->add(WidgetType::SPIN_BOX_DOUBLE, "BBMinX");
+        this->add(WidgetType::SPIN_BOX_DOUBLE, "BBMinY");
+        this->add(WidgetType::SPIN_BOX_DOUBLE, "BBMinZ");
+
+        this->addAllNextWidgetsToDefaultGroup();
+
+        this->addWithLabel(WidgetType::H_GROUP, "GroupBBMax", "BBox max");
+        this->addAllNextWidgetsToGroup("GroupBBMax");
+
+        this->add(WidgetType::SPIN_BOX_DOUBLE, "BBMaxX");
+        this->add(WidgetType::SPIN_BOX_DOUBLE, "BBMaxY");
+        this->add(WidgetType::SPIN_BOX_DOUBLE, "BBMaxZ");
+
+        this->addAllNextWidgetsToDefaultGroup();
+
         this->add(WidgetType::TIFF_SAVE, "Export image", "Export");
+        this->scene = scene;
     }
 
-    void show() {
-        Form::show();
-    }
+    void show();
+    void hide();
 
     void update(Scene * scene);
     void connect(Scene * scene);
+
+protected:
+    Scene * scene;
+
+    void updateSpinBoxes(Scene * scene);
+
+    void updateBoxToDisplay(Scene * scene);
 };
 
 

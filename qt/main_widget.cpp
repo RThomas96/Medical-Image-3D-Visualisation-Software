@@ -128,9 +128,9 @@ void MainWidget::setupWidgets() {
 
 
 
-    QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::xSliderValueChanged, [this](float x){this->scene->slotSetPlaneDisplacement(Scene::CuttingPlaneDirection::X, x);});
-    QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::ySliderValueChanged, [this](float y){this->scene->slotSetPlaneDisplacement(Scene::CuttingPlaneDirection::Y, y);});
-    QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::zSliderValueChanged, [this](float z){this->scene->slotSetPlaneDisplacement(Scene::CuttingPlaneDirection::Z, z);});
+    QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::xSliderValueChanged, [this](float x){this->scene->slotSetNormalizedPlaneDisplacement(Scene::CuttingPlaneDirection::X, x);});
+    QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::ySliderValueChanged, [this](float y){this->scene->slotSetNormalizedPlaneDisplacement(Scene::CuttingPlaneDirection::Y, y);});
+    QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::zSliderValueChanged, [this](float z){this->scene->slotSetNormalizedPlaneDisplacement(Scene::CuttingPlaneDirection::Z, z);});
     QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::aSliderValueChanged, this->scene, &Scene::setBlendFirstPass);
 
     QObject::connect(this->cutPlane_pannel, &CutPlaneGroupBox::clickedInvertXPushButton, [this](){this->scene->slotTogglePlaneDirection(Scene::CuttingPlaneDirection::X);});

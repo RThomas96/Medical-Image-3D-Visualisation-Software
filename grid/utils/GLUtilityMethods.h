@@ -73,19 +73,16 @@ namespace BasicGL
     }
     template< class point_t >
     void drawCube( point_t const & _Min, point_t const & _Max ){
-
         point_t points[8] = {
             _Min,
-            BasicPoint (_Max[0], _Min[1], _Min[2]),
-            BasicPoint (_Max[0], _Max[1], _Min[2]),
-            BasicPoint (_Min[0], _Max[1], _Min[2]),
+            point_t (_Max[0], _Min[1], _Min[2]),
+            point_t (_Max[0], _Max[1], _Min[2]),
+            point_t (_Min[0], _Max[1], _Min[2]),
 
-            BasicPoint (_Min[0], _Min[1], _Max[2]),
-            BasicPoint (_Max[0], _Min[1], _Max[2]),
+            point_t (_Min[0], _Min[1], _Max[2]),
+            point_t (_Max[0], _Min[1], _Max[2]),
             _Max,
-            BasicPoint (_Min[0], _Max[1], _Max[2])  };
-
-        //float s = 1.0f;
+            point_t (_Min[0], _Max[1], _Max[2])  };
 
         glBegin(GL_QUADS);
 
@@ -103,6 +100,61 @@ namespace BasicGL
         glVertex(points[5]); glVertex(points[6]); glVertex(points[7]); glVertex(points[4]);
 
         glEnd();
+    }
+
+    template< class point_t >
+    void drawBBox( point_t const & _Min, point_t const & _Max){
+
+        point_t points[8] = {
+            _Min,
+            point_t (_Max[0], _Min[1], _Min[2]),
+            point_t (_Max[0], _Max[1], _Min[2]),
+            point_t (_Min[0], _Max[1], _Min[2]),
+
+            point_t (_Min[0], _Min[1], _Max[2]),
+            point_t (_Max[0], _Min[1], _Max[2]),
+            _Max,
+            point_t (_Min[0], _Max[1], _Max[2])  };
+
+        glBegin(GL_QUADS);
+
+        glColor3f(1., 0., 0.);
+        glNormal3f(1.f,0.f,0.f);
+        glVertex(points[1]); glVertex(points[2]); glVertex(points[6]); glVertex(points[5]);
+        glColor3f(0., 1., 0.);
+        glNormal3f(0.f,1.f,0.f);
+        glVertex(points[2]); glVertex(points[3]); glVertex(points[7]); glVertex(points[6]);
+        glColor3f(0., 0., 1.);
+        glNormal3f(0.f,0.f,1.f);
+        glVertex(points[5]); glVertex(points[6]); glVertex(points[7]); glVertex(points[4]);
+        glColor3f(1., 0., 0.);
+        glNormal3f(-1.f,0.f,0.f);
+        glVertex(points[3]); glVertex(points[0]); glVertex(points[4]); glVertex(points[7]);
+        glColor3f(0., 1., 0.);
+        glNormal3f(0.f,-1.f,0.f);
+        glVertex(points[0]); glVertex(points[1]); glVertex(points[5]); glVertex(points[4]);
+        glColor3f(0., 0., 1.);
+        glNormal3f(0.f,0.f,-1.f);
+        glVertex(points[3]); glVertex(points[2]); glVertex(points[1]); glVertex(points[0]);
+
+        glEnd();
+
+        //glBegin(GL_QUADS);
+
+        //glNormal3f(0.f,0.f,-1.f);
+        //glVertex(points[3]); glVertex(points[2]); glVertex(points[1]); glVertex(points[0]);
+        //glNormal3f(1.f,0.f,0.f);
+        //glVertex(points[1]); glVertex(points[2]); glVertex(points[6]); glVertex(points[5]);
+        //glNormal3f(0.f,1.f,0.f);
+        //glVertex(points[2]); glVertex(points[3]); glVertex(points[7]); glVertex(points[6]);
+        //glNormal3f(-1.f,0.f,0.f);
+        //glVertex(points[3]); glVertex(points[0]); glVertex(points[4]); glVertex(points[7]);
+        //glNormal3f(0.f,-1.f,0.f);
+        //glVertex(points[0]); glVertex(points[1]); glVertex(points[5]); glVertex(points[4]);
+        //glNormal3f(0.f,0.f,1.f);
+        //glVertex(points[5]); glVertex(points[6]); glVertex(points[7]); glVertex(points[4]);
+
+        //glEnd();
     }
 
 }
