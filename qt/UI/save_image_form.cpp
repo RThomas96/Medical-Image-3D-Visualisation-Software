@@ -63,9 +63,15 @@ void SaveImageForm::connect(Scene * scene) {
 void SaveImageForm::show() {
     Form::show();
     this->updateBoxToDisplay(scene);
+    //this->scene->setOrthographicCamera();
 }
 
 void SaveImageForm::hide() {
-    Form::hide();
     scene->clearBoxes();
+    //this->scene->setPerspectiveCamera();
+    Form::hide();
+}
+
+void SaveImageForm::closeEvent(QCloseEvent *bar) {
+    this->hide();
 }

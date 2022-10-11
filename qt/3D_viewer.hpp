@@ -75,6 +75,7 @@ public slots:
     void setRadius(const float radius);
     void castRay(void);
     void setCursorType(UITool::CursorType cursorType);
+    void setCameraType(qglviewer::Camera::Type cameraType);
 
 signals:
     void keyPressed(QKeyEvent* e);

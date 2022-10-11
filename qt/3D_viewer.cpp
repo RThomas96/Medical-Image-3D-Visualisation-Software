@@ -1,5 +1,6 @@
 #include "3D_viewer.hpp"
 #include "../../features.hpp"
+#include "QGLViewer/camera.h"
 #include "qnamespace.h"
 //#include "../../grid/include/discrete_grid_writer.hpp"
 //#include "../../qt/widgets/include/user_settings_widget.hpp"
@@ -56,6 +57,11 @@ Viewer::Viewer(Scene* const scene, QStatusBar* _program_bar, QWidget* parent) :
     this->cursor = new QCursor();
     this->setCursor(*this->cursor);
     //this->setFPSIsDisplayed(true);
+    this->setCameraType(qglviewer::Camera::ORTHOGRAPHIC);
+}
+
+void Viewer::setCameraType(qglviewer::Camera::Type cameraType) {
+    this->camera()->setType(cameraType);
 }
 
 Viewer::~Viewer() {
@@ -84,6 +90,8 @@ void Viewer::init() {
     QObject::connect(this->scene, &Scene::cursorChanged, this, &Viewer::setCursorType);
 
     QObject::connect(this->scene, &Scene::needCastRay, [&](){this->castRay();});
+
+    QObject::connect(this->scene, &Scene::needChangeCameraType, this, &Viewer::setCameraType);
 
     //QObject::connect(this->scene, &Scene::needRedraw3DScene, this, &Viewer::draw);
 

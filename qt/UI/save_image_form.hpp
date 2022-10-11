@@ -45,6 +45,8 @@ public slots:
     void show();
     void hide();
 
+    void closeEvent(QCloseEvent *bar);
+
     void update(Scene * scene);
     void connect(Scene * scene);
 

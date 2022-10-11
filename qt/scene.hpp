@@ -3,6 +3,7 @@
 
 #include "../../features.hpp"
 #include "../../macros.hpp"
+#include "QGLViewer/camera.h"
 #include "grid/drawable/drawable_grid.hpp"
 #include "scene_control.hpp"
 #include <QPlainTextEdit>
@@ -250,6 +251,7 @@ signals:
     void planeControlWidgetNeedUpdate(const glm::vec3& values);
     void sceneRadiusOutOfDate();
     void needDisplayInfos(const std::string& infos);
+    void needChangeCameraType(qglviewer::Camera::Type cameraType);
 
 // All these indirections are important because for most of them they interacts with various components of the scene
 // And it allow more flexibility as the scene control ALL the informations to transit from class to class
@@ -318,6 +320,8 @@ public slots:
     void setMultiGridRendering(bool value);
     void setDrawOnlyBoundaries(bool value);
     void setBlendFirstPass(float value);
+    void setOrthographicCamera() { Q_EMIT needChangeCameraType(qglviewer::Camera::ORTHOGRAPHIC); };
+    void setPerspectiveCamera() { Q_EMIT needChangeCameraType(qglviewer::Camera::PERSPECTIVE); };
 
     // Segmented display
     void resetRanges();
