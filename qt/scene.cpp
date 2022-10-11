@@ -2,6 +2,7 @@
 //#include "planar_viewer.hpp"
 
 #include <GL/gl.h>
+#include <algorithm>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/io.hpp>
 #include <glm/gtx/transform.hpp>
@@ -2032,16 +2033,24 @@ void Scene::writeDeformedImageTemplated(const std::string& filename, const std::
 
     fromImageToCustomImage = glm::vec3(n) / glm::vec3(imageSize);
 
+    glm::ivec3 imageSize2 = imageSize/2;
+
+    glm::ivec3 bbMinWrite(100, 100, 100);
+    if(resolution == ResolutionMode::SAMPLER_RESOLUTION) {
+        // Apply resolution
+        bbMinWrite = bbMinWrite/2;
+    }
+
     TinyTIFFWriterFile * tif = nullptr;
     if(useCustomColor) {
-        tif = TinyTIFFWriter_open(filename.c_str(), 8, TinyTIFFWriter_UInt, 3, imageSize[0], imageSize[1], TinyTIFFWriter_RGB);
+        tif = TinyTIFFWriter_open(filename.c_str(), 8, TinyTIFFWriter_UInt, 3, imageSize2[0], imageSize2[1], TinyTIFFWriter_RGB);
     } else {
         if(dataType & Image::ImageDataType::Unsigned)
-            tif = TinyTIFFWriter_open(filename.c_str(), bit, TinyTIFFWriter_UInt, 1, imageSize[0], imageSize[1], TinyTIFFWriter_Greyscale);
+            tif = TinyTIFFWriter_open(filename.c_str(), bit, TinyTIFFWriter_UInt, 1, imageSize2[0], imageSize2[1], TinyTIFFWriter_Greyscale);
         else if(dataType & Image::ImageDataType::Signed)
-            tif = TinyTIFFWriter_open(filename.c_str(), bit, TinyTIFFWriter_Int, 1, imageSize[0], imageSize[1], TinyTIFFWriter_Greyscale);
+            tif = TinyTIFFWriter_open(filename.c_str(), bit, TinyTIFFWriter_Int, 1, imageSize2[0], imageSize2[1], TinyTIFFWriter_Greyscale);
         else if(dataType & Image::ImageDataType::Floating)
-            tif = TinyTIFFWriter_open(filename.c_str(), bit, TinyTIFFWriter_Float, 1, imageSize[0], imageSize[1], TinyTIFFWriter_Greyscale);
+            tif = TinyTIFFWriter_open(filename.c_str(), bit, TinyTIFFWriter_Float, 1, imageSize2[0], imageSize2[1], TinyTIFFWriter_Greyscale);
         else
             std::cout << "WARNING: image data type no take in charge to export" << std::endl;
     }
@@ -2134,7 +2143,9 @@ void Scene::writeDeformedImageTemplated(const std::string& filename, const std::
                                             img_color[k][insertIdx+2] = static_cast<uint8_t>(color.b * 255.);
                                         }
                                     } else {
-                                        img[k][insertIdx] = cache[imgIdxLoad][idxLoad];
+                                        if(k >= 0 && k < img.size() && insertIdx < img[0].size() && insertIdx >= 0)
+                                            if(imgIdxLoad >= 0 && imgIdxLoad < cache.size() && idxLoad < cache[0].size() && idxLoad >= 0)
+                                                img[k][insertIdx] = cache[imgIdxLoad][idxLoad];
                                     }
                                 }
                             }
@@ -2147,13 +2158,22 @@ void Scene::writeDeformedImageTemplated(const std::string& filename, const std::
 
     //this->writeGreyscaleTIFFImage(filename, n, img);
 
+    std::cout << "saving" << std::endl;
     if(useCustomColor) {
         for(int i = 0; i < img_color.size(); ++i) {
             TinyTIFFWriter_writeImage(tif, img_color[i].data());
         }
     } else {
-        for(int i = 0; i < img.size(); ++i) {
-            TinyTIFFWriter_writeImage(tif, img[i].data());
+        std::vector<std::vector<DataType>> finalImg = std::vector<std::vector<DataType>>(imageSize2.z, std::vector<DataType>(imageSize2.x * imageSize2.y, 0.));
+        for(int k = 0; k < imageSize2.z; ++k) {
+            for(int j = 0; j < imageSize2.y; ++j) {
+                for(int i = 0; i < imageSize2.x; ++i) {
+                    finalImg[k][i+j*imageSize2.x] = img[k+bbMinWrite.z][(i+bbMinWrite.x)+(j+bbMinWrite.y)*imageSize.x];
+                }
+            }
+        }
+        for(int i = 0; i < finalImg.size(); ++i) {
+            TinyTIFFWriter_writeImage(tif, finalImg[i].data());
         }
     }
     TinyTIFFWriter_close(tif);
