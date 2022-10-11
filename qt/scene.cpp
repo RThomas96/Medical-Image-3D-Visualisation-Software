@@ -2148,14 +2148,18 @@ void Scene::writeDeformedImageTemplated(const std::string& filename, const std::
                                         fromGrid->sampler.image->tiffImageReader->getImage<DataType>(imgIdxLoad, cache[imgIdxLoad], {glm::vec3(0., 0., 0.), fromGrid->sampler.image->tiffImageReader->imgResolution});
                                     }
                                     if(useCustomColor) {
-                                        uint16_t value = 0; 
-                                        value = cache[imgIdxLoad][idxLoad];
-                                        if(data[value]) {
-                                            glm::vec3 color = data_color[value];
-                                            insertIdx *= 3;
-                                            img_color[k][insertIdx] = static_cast<uint8_t>(color.r * 255.);
-                                            img_color[k][insertIdx+1] = static_cast<uint8_t>(color.g * 255.);
-                                            img_color[k][insertIdx+2] = static_cast<uint8_t>(color.b * 255.);
+                                        if(k >= 0 && k < img_color.size() && insertIdx*3 < img_color[0].size() && insertIdx >= 0) {
+                                            if(imgIdxLoad >= 0 && imgIdxLoad < cache.size() && idxLoad < cache[0].size() && idxLoad >= 0) {
+                                                uint16_t value = 0;
+                                                value = cache[imgIdxLoad][idxLoad];
+                                                if(data[value]) {
+                                                    glm::vec3 color = data_color[value];
+                                                    insertIdx *= 3;
+                                                    img_color[k][insertIdx] = static_cast<uint8_t>(color.r * 255.);
+                                                    img_color[k][insertIdx+1] = static_cast<uint8_t>(color.g * 255.);
+                                                    img_color[k][insertIdx+2] = static_cast<uint8_t>(color.b * 255.);
+                                                }
+                                            }
                                         }
                                     } else {
                                         if(k >= 0 && k < img.size() && insertIdx < img[0].size() && insertIdx >= 0)
@@ -2175,8 +2179,20 @@ void Scene::writeDeformedImageTemplated(const std::string& filename, const std::
 
     std::cout << "saving" << std::endl;
     if(useCustomColor) {
-        for(int i = 0; i < img_color.size(); ++i) {
-            TinyTIFFWriter_writeImage(tif, img_color[i].data());
+        std::vector<std::vector<uint8_t>> finalImg = std::vector<std::vector<uint8_t>>(imageSize.z, std::vector<uint8_t>(imageSize.x * imageSize.y * 3, 0.));
+        for(int k = 0; k < imageSize.z; ++k) {
+            for(int j = 0; j < imageSize.y; ++j) {
+                for(int i = 0; i < imageSize.x; ++i) {
+                    int idx = i+j*imageSize.x;
+                    int idx2 = (i+bbMinWrite.x)+(j+bbMinWrite.y)*sceneImageSize.x;
+                    finalImg[k][idx*3] = img_color[k+bbMinWrite.z][idx2*3];
+                    finalImg[k][idx*3+1] = img_color[k+bbMinWrite.z][idx2*3+1];
+                    finalImg[k][idx*3+2] = img_color[k+bbMinWrite.z][idx2*3+2];
+                }
+            }
+        }
+        for(int i = 0; i < finalImg.size(); ++i) {
+            TinyTIFFWriter_writeImage(tif, finalImg[i].data());
         }
     } else {
         std::vector<std::vector<DataType>> finalImg = std::vector<std::vector<DataType>>(imageSize.z, std::vector<DataType>(imageSize.x * imageSize.y, 0.));
