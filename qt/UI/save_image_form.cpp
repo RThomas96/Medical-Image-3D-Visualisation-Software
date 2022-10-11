@@ -47,7 +47,9 @@ void SaveImageForm::connect(Scene * scene) {
         if(this->checkBoxes["Resolution"]->isChecked())
             resolution = ResolutionMode::FULL_RESOLUTION;
         bool useColorMap = this->checkBoxes["Colormap"]->isChecked();
-        scene->writeDeformedImage(this->fileChoosers["Export image"]->filename.toStdString(), this->objectChoosers["Grid"]->currentText().toStdString(), useColorMap, resolution);
+        glm::vec3 bbMin(this->doubleSpinBoxes["BBMinX"]->value(), this->doubleSpinBoxes["BBMinY"]->value(), this->doubleSpinBoxes["BBMinZ"]->value());
+        glm::vec3 bbMax(this->doubleSpinBoxes["BBMaxX"]->value(), this->doubleSpinBoxes["BBMaxY"]->value(), this->doubleSpinBoxes["BBMaxZ"]->value());
+        scene->writeDeformedImage(this->fileChoosers["Export image"]->filename.toStdString(), this->objectChoosers["Grid"]->currentText().toStdString(), bbMin, bbMax, useColorMap, resolution);
         this->hide();
     });
     QObject::connect(this->objectChoosers["Grid"], &ObjectChooser::currentTextChanged, [this, scene](){this->updateSpinBoxes(scene);});

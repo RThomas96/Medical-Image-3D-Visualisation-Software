@@ -933,7 +933,7 @@ void PlanarViewForm::connect(Scene * scene) {
             //this->scene->writeMapping(this->fileChoosers["Save"]->filename.toStdString(), this->getFromGridName(), this->getToGridName());
             //this->scene->sampleGridMapping(this->fileChoosers["Save"]->filename.toStdString(), this->getFromGridName(), this->getToGridName(), this->getImgDimension(), this->getInterpolationMethod());
             //this->scene->sampleGridMapping(this->fileChoosers["Save"]->filename.toStdString(), this->getFromGridName(), this->getToGridName(), this->getImgDimension(), this->getInterpolationMethod());
-            this->scene->writeDeformedImage(this->fileChoosers["Save"]->filename.toStdString(), this->getFromGridName(), false, ResolutionMode::SAMPLER_RESOLUTION);
+            //this->scene->writeDeformedImage(this->fileChoosers["Save"]->filename.toStdString(), this->getFromGridName(), false, ResolutionMode::SAMPLER_RESOLUTION);
             });
 
     QObject::connect(this->fileChoosers["SaveCur"], &FileChooser::fileSelected, [this](){

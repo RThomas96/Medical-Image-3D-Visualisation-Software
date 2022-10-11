@@ -1956,45 +1956,50 @@ void Scene::writeMapping(const std::string& fileName, const std::string& from, c
 }
 
 void Scene::writeDeformedImage(const std::string& filename, const std::string& gridName, bool useColorMap, ResolutionMode resolution) {
-    Grid * fromGrid = this->grids[this->getGridIdx(gridName)];
-    if(useColorMap)
-        this->writeDeformedImageGeneric(filename, gridName, (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_16), useColorMap, resolution);
-    else
-        this->writeDeformedImageGeneric(filename, gridName, fromGrid->sampler.getInternalDataType(), useColorMap, resolution);
+    Grid * grid = this->grids[this->getGridIdx(gridName)];
+    this->writeDeformedImage(filename, gridName, grid->bbMin, grid->bbMax, useColorMap, resolution);
 }
 
-void Scene::writeDeformedImageGeneric(const std::string& filename, const std::string& gridName, Image::ImageDataType imgDataType, bool useColorMap, ResolutionMode resolution) {
+void Scene::writeDeformedImage(const std::string& filename, const std::string& gridName, const glm::vec3& bbMin, const glm::vec3& bbMax, bool useColorMap, ResolutionMode resolution) {
+    Grid * fromGrid = this->grids[this->getGridIdx(gridName)];
+    if(useColorMap)
+        this->writeDeformedImageGeneric(filename, gridName, bbMin, bbMax, (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_16), useColorMap, resolution);
+    else
+        this->writeDeformedImageGeneric(filename, gridName, bbMin, bbMax, fromGrid->sampler.getInternalDataType(), useColorMap, resolution);
+}
+
+void Scene::writeDeformedImageGeneric(const std::string& filename, const std::string& gridName, const glm::vec3& bbMin, const glm::vec3& bbMax, Image::ImageDataType imgDataType, bool useColorMap, ResolutionMode resolution) {
     if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_8)) {
-        this->writeDeformedImageTemplated<uint8_t>(filename, gridName, 8, imgDataType, useColorMap, resolution);
+        this->writeDeformedImageTemplated<uint8_t>(filename, gridName, bbMin, bbMax, 8, imgDataType, useColorMap, resolution);
     } else if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_16)) {
-        this->writeDeformedImageTemplated<uint16_t>(filename, gridName, 16, imgDataType, useColorMap, resolution);
+        this->writeDeformedImageTemplated<uint16_t>(filename, gridName, bbMin, bbMax, 16, imgDataType, useColorMap, resolution);
     } else if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_32)) {
-        this->writeDeformedImageTemplated<uint32_t>(filename, gridName, 32, imgDataType, useColorMap, resolution);
+        this->writeDeformedImageTemplated<uint32_t>(filename, gridName, bbMin, bbMax, 32, imgDataType, useColorMap, resolution);
     } else if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_64)) {
-        this->writeDeformedImageTemplated<uint64_t>(filename, gridName, 64, imgDataType, useColorMap, resolution);
+        this->writeDeformedImageTemplated<uint64_t>(filename, gridName, bbMin, bbMax, 64, imgDataType, useColorMap, resolution);
     } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_8)) {
-        this->writeDeformedImageTemplated<int8_t>(filename, gridName, 8, imgDataType, useColorMap, resolution);
+        this->writeDeformedImageTemplated<int8_t>(filename, gridName, bbMin, bbMax, 8, imgDataType, useColorMap, resolution);
     } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_16)) {
-        this->writeDeformedImageTemplated<int16_t>(filename, gridName, 16, imgDataType, useColorMap, resolution);
+        this->writeDeformedImageTemplated<int16_t>(filename, gridName, bbMin, bbMax, 16, imgDataType, useColorMap, resolution);
     } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_32)) {
-        this->writeDeformedImageTemplated<int32_t>(filename, gridName, 32, imgDataType, useColorMap, resolution);
+        this->writeDeformedImageTemplated<int32_t>(filename, gridName, bbMin, bbMax, 32, imgDataType, useColorMap, resolution);
     } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_64)) {
-        this->writeDeformedImageTemplated<int64_t>(filename, gridName, 64, imgDataType, useColorMap, resolution);
+        this->writeDeformedImageTemplated<int64_t>(filename, gridName, bbMin, bbMax, 64, imgDataType, useColorMap, resolution);
     } else if(imgDataType == (Image::ImageDataType::Floating | Image::ImageDataType::Bit_32)) {
-        this->writeDeformedImageTemplated<float>(filename, gridName, 32, imgDataType, useColorMap, resolution);
+        this->writeDeformedImageTemplated<float>(filename, gridName, bbMin, bbMax, 32, imgDataType, useColorMap, resolution);
     } else if(imgDataType == (Image::ImageDataType::Floating | Image::ImageDataType::Bit_64)) {
-        this->writeDeformedImageTemplated<double>(filename, gridName, 64, imgDataType, useColorMap, resolution);
+        this->writeDeformedImageTemplated<double>(filename, gridName, bbMin, bbMax, 64, imgDataType, useColorMap, resolution);
     } 
 }
 
 template<typename DataType>
-void Scene::writeDeformedImageTemplated(const std::string& filename, const std::string& gridName, int bit, Image::ImageDataType dataType, bool useColorMap, ResolutionMode resolution) {
+void Scene::writeDeformedImageTemplated(const std::string& filename, const std::string& gridName, const glm::vec3& bbMin, const glm::vec3& bbMax, int bit, Image::ImageDataType dataType, bool useColorMap, ResolutionMode resolution) {
     // To expose as parameters
     bool smallFile = true;
     int cacheSize = 2;
     bool useCustomColor = useColorMap;
     //glm::ivec3 imageSize = glm::vec3(60, 264, 500);
-    glm::ivec3 imageSize = glm::vec3(0, 0, 0);
+    glm::ivec3 sceneImageSize = glm::vec3(0, 0, 0);
     //ResolutionMode resolution = ResolutionMode::FULL_RESOLUTION;
 
     auto start = std::chrono::steady_clock::now();
@@ -2028,29 +2033,39 @@ void Scene::writeDeformedImageTemplated(const std::string& filename, const std::
         n[i] = std::ceil(fabs(worldSize[i])/voxelSize[i]);
     }
 
-    if(imageSize == glm::ivec3(0., 0., 0.))
-        imageSize = n;
+    if(sceneImageSize == glm::ivec3(0., 0., 0.))
+        sceneImageSize = n;
 
-    fromImageToCustomImage = glm::vec3(n) / glm::vec3(imageSize);
+    fromImageToCustomImage = glm::vec3(n) / glm::vec3(sceneImageSize);
 
-    glm::ivec3 imageSize2 = imageSize/2;
+    glm::ivec3 bbMinWrite = (bbMin - fromGrid->bbMin)/voxelSize;
+    glm::ivec3 bbMaxWrite = (bbMax - fromGrid->bbMin)/voxelSize;
+    glm::ivec3 imageSize = bbMaxWrite - bbMinWrite;
 
-    glm::ivec3 bbMinWrite(100, 100, 100);
-    if(resolution == ResolutionMode::SAMPLER_RESOLUTION) {
+    std::cout << "BBmin: " << bbMinWrite << std::endl;
+    std::cout << "BBmax: " << bbMaxWrite << std::endl;
+    std::cout << "ImageSize: " << imageSize << std::endl;
+    std::cout << "Original size: " << sceneImageSize << std::endl;
+
+    //glm::ivec3 bbMinWrite(100, 100, 100);
+    //std::cout << "BBMin:" << fromGrid->bbMin+glm::vec3(bbMinWrite)*voxelSize << std::endl;
+    //std::cout << "BBMax:" << fromGrid->bbMin+glm::vec3(bbMinWrite)*voxelSize + glm::vec3(imageSize)*voxelSize << std::endl;
+
+    if(resolution == ResolutionMode::FULL_RESOLUTION) {
         // Apply resolution
-        bbMinWrite = bbMinWrite/2;
+        bbMinWrite = glm::vec3(bbMinWrite) * fromGrid->sampler.resolutionRatio;
     }
 
     TinyTIFFWriterFile * tif = nullptr;
     if(useCustomColor) {
-        tif = TinyTIFFWriter_open(filename.c_str(), 8, TinyTIFFWriter_UInt, 3, imageSize2[0], imageSize2[1], TinyTIFFWriter_RGB);
+        tif = TinyTIFFWriter_open(filename.c_str(), 8, TinyTIFFWriter_UInt, 3, imageSize[0], imageSize[1], TinyTIFFWriter_RGB);
     } else {
         if(dataType & Image::ImageDataType::Unsigned)
-            tif = TinyTIFFWriter_open(filename.c_str(), bit, TinyTIFFWriter_UInt, 1, imageSize2[0], imageSize2[1], TinyTIFFWriter_Greyscale);
+            tif = TinyTIFFWriter_open(filename.c_str(), bit, TinyTIFFWriter_UInt, 1, imageSize[0], imageSize[1], TinyTIFFWriter_Greyscale);
         else if(dataType & Image::ImageDataType::Signed)
-            tif = TinyTIFFWriter_open(filename.c_str(), bit, TinyTIFFWriter_Int, 1, imageSize2[0], imageSize2[1], TinyTIFFWriter_Greyscale);
+            tif = TinyTIFFWriter_open(filename.c_str(), bit, TinyTIFFWriter_Int, 1, imageSize[0], imageSize[1], TinyTIFFWriter_Greyscale);
         else if(dataType & Image::ImageDataType::Floating)
-            tif = TinyTIFFWriter_open(filename.c_str(), bit, TinyTIFFWriter_Float, 1, imageSize2[0], imageSize2[1], TinyTIFFWriter_Greyscale);
+            tif = TinyTIFFWriter_open(filename.c_str(), bit, TinyTIFFWriter_Float, 1, imageSize[0], imageSize[1], TinyTIFFWriter_Greyscale);
         else
             std::cout << "WARNING: image data type no take in charge to export" << std::endl;
     }
@@ -2058,7 +2073,7 @@ void Scene::writeDeformedImageTemplated(const std::string& filename, const std::
     if(tif == nullptr)
         return;
 
-    std::vector<std::vector<DataType>> img = std::vector<std::vector<DataType>>(imageSize.z, std::vector<DataType>(imageSize.x * imageSize.y, 0.));
+    std::vector<std::vector<DataType>> img = std::vector<std::vector<DataType>>(sceneImageSize.z, std::vector<DataType>(sceneImageSize.x * sceneImageSize.y, 0.));
 
     std::vector<std::vector<uint8_t>> img_color;
 
@@ -2066,7 +2081,7 @@ void Scene::writeDeformedImageTemplated(const std::string& filename, const std::
     std::vector<glm::vec3> data_color;
 
     if(useCustomColor) {
-        img_color = std::vector<std::vector<uint8_t>>(imageSize.z, std::vector<uint8_t>(imageSize.x * imageSize.y * 3, 0));
+        img_color = std::vector<std::vector<uint8_t>>(sceneImageSize.z, std::vector<uint8_t>(sceneImageSize.x * sceneImageSize.y * 3, 0));
 
         auto upperGrid = this->grids[this->getGridIdx(gridName)];
         auto drawable_upperGrid = this->grids[this->getGridIdx(gridName)];
@@ -2095,23 +2110,23 @@ void Scene::writeDeformedImageTemplated(const std::string& filename, const std::
 
     #pragma omp parallel for schedule(static) if(smallFile)
     for(int tetIdx = 0; tetIdx < fromGrid->mesh.size(); ++tetIdx) {
-        std::cout << "Tet: " << tetIdx << "/" << fromGrid->mesh.size() << std::endl;
+        //std::cout << "Tet: " << tetIdx << "/" << fromGrid->mesh.size() << std::endl;
         const Tetrahedron& tet = fromGrid->mesh[tetIdx];
-        glm::vec3 bbMin = tet.getBBMin();
-        glm::vec3 bbMax = tet.getBBMax();
-        fromWorldToImage(bbMin, false);
-        fromWorldToImage(bbMax, true);
-        int X = bbMax.x;
-        int Y = bbMax.y;
-        int Z = bbMax.z;
-        for(int k = bbMin.z; k < Z; ++k) {
-            for(int j = bbMin.y; j < Y; ++j) {
-                for(int i = bbMin.x; i < X; ++i) {
+        glm::vec3 bbMinTet = tet.getBBMin();
+        glm::vec3 bbMaxTet = tet.getBBMax();
+        fromWorldToImage(bbMinTet, false);
+        fromWorldToImage(bbMaxTet, true);
+        int X = bbMaxTet.x;
+        int Y = bbMaxTet.y;
+        int Z = bbMaxTet.z;
+        for(int k = bbMinTet.z; k < Z; ++k) {
+            for(int j = bbMinTet.y; j < Y; ++j) {
+                for(int i = bbMinTet.x; i < X; ++i) {
                     glm::vec3 p(i, j, k);
                     getWorldCoordinates(p);
                     if(tet.isInTetrahedron(p)) {
                         if(fromGrid->getCoordInInitial(fromGrid->initialMesh, p, p, tetIdx)) {
-                            int insertIdx = i + j*imageSize[0];
+                            int insertIdx = i + j*sceneImageSize[0];
 
                             int imgIdxLoad = std::floor(p.z);
                             int idxLoad = std::floor(p.x) + std::floor(p.y) * fromGrid->sampler.image->tiffImageReader->imgResolution.x;
@@ -2164,11 +2179,11 @@ void Scene::writeDeformedImageTemplated(const std::string& filename, const std::
             TinyTIFFWriter_writeImage(tif, img_color[i].data());
         }
     } else {
-        std::vector<std::vector<DataType>> finalImg = std::vector<std::vector<DataType>>(imageSize2.z, std::vector<DataType>(imageSize2.x * imageSize2.y, 0.));
-        for(int k = 0; k < imageSize2.z; ++k) {
-            for(int j = 0; j < imageSize2.y; ++j) {
-                for(int i = 0; i < imageSize2.x; ++i) {
-                    finalImg[k][i+j*imageSize2.x] = img[k+bbMinWrite.z][(i+bbMinWrite.x)+(j+bbMinWrite.y)*imageSize.x];
+        std::vector<std::vector<DataType>> finalImg = std::vector<std::vector<DataType>>(imageSize.z, std::vector<DataType>(imageSize.x * imageSize.y, 0.));
+        for(int k = 0; k < imageSize.z; ++k) {
+            for(int j = 0; j < imageSize.y; ++j) {
+                for(int i = 0; i < imageSize.x; ++i) {
+                    finalImg[k][i+j*imageSize.x] = img[k+bbMinWrite.z][(i+bbMinWrite.x)+(j+bbMinWrite.y)*sceneImageSize.x];
                 }
             }
         }
