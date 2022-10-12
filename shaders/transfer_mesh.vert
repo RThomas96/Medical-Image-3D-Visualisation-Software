@@ -76,10 +76,20 @@ float ComputeVisibility(vec3 point, vec3 p1, vec3 p2, vec3 p3) {
     vec4 pos = point4 - clippingPoint;
     float vis = dot( clippingNormal, pos );
 
+    vec3 minScene = cut;
+    vec3 maxScene = visuBBMax;
+
+    for(int i = 0; i < 3; ++i) {
+        if(cutDirection[i] < 0) {
+            maxScene[i] = minScene[i];
+            minScene[i] = visuBBMin[i];
+        }
+    }
+
     if( xVis < 0.|| yVis < 0.|| zVis < 0. || vis < .0) {
-        if(intersectionTriangleBox(point, p1, p2, cut, visuBBMax) ||
-           intersectionTriangleBox(point, p2, p3, cut, visuBBMax) ||
-           intersectionTriangleBox(point, p1, p3, cut, visuBBMax)) {
+        if(intersectionTriangleBox(point, p1, p2, minScene, maxScene) ||
+           intersectionTriangleBox(point, p2, p3, minScene, maxScene) ||
+           intersectionTriangleBox(point, p1, p3, minScene, maxScene)) {
             return 0.;
         } else {
             return 1000.;
