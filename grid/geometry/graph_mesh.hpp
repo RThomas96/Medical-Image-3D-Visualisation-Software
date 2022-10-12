@@ -32,7 +32,7 @@ public:
 
     void loadOFF(std::string const &filename);
     void saveOFF(std::string const &filename);
-    void draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* mMat, const glm::vec3& planeDisplacement);
+    void draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* mMat);
 
     ~GraphMesh(){};
 };

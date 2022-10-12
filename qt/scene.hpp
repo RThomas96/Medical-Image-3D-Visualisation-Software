@@ -157,6 +157,8 @@ public:
 
     /* Draws */
     void drawScene(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool showTexOnPlane);
+    void activateCuttingPlaneLegacyOpenGL();
+    void deactivateCuttingPlaneLegacyOpenGL();
     void createBuffers();// Only for selection TODO: remove
 
     /* Others */
@@ -421,7 +423,8 @@ public:
 
     bool displayGrid;
     bool displayMesh;
-    bool displayBBox;
+    bool displayGridBBox;
+    bool displayXRayManipulators;
     bool previewCursorInPlanarView;
 
     std::string activeMesh;

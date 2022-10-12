@@ -42,20 +42,21 @@ void getSortedTriangles(SurfaceMesh * mesh, const glm::vec3& cam, std::vector<GL
     }
 }
 
-void DrawableMesh::draw(GLfloat *proj_mat, GLfloat *view_mat, const glm::vec4& camera, const glm::vec3& planePosition) {
+void DrawableMesh::draw(GLfloat *proj_mat, GLfloat *view_mat, const glm::vec4& camera, const glm::vec3& planePosition, const glm::vec3& planeDirection) {
     if(!this->gl) {
         std::cout << "WARNING: OpenGL functions not initialized" << std::endl;
         return;
     }
     this->gl->glUseProgram(this->program);
 
-    GLint location_proj		    = this->gl->glGetUniformLocation(this->program, "proj");
-    GLint location_view		    = this->gl->glGetUniformLocation(this->program, "view");
-    GLint location_model	    = this->gl->glGetUniformLocation(this->program, "model");
-    GLint location_camera_pos   = this->gl->glGetUniformLocation(this->program, "camera_pos");
-    GLint location_color        = this->gl->glGetUniformLocation(this->program, "objectColor");
-    GLint location_light        = this->gl->glGetUniformLocation(this->program, "lightPosition");
-    GLint location_plane        = this->gl->glGetUniformLocation(this->program, "planePosition");
+    GLint location_proj		       = this->gl->glGetUniformLocation(this->program, "proj");
+    GLint location_view		       = this->gl->glGetUniformLocation(this->program, "view");
+    GLint location_model	       = this->gl->glGetUniformLocation(this->program, "model");
+    GLint location_camera_pos      = this->gl->glGetUniformLocation(this->program, "camera_pos");
+    GLint location_color           = this->gl->glGetUniformLocation(this->program, "objectColor");
+    GLint location_light           = this->gl->glGetUniformLocation(this->program, "lightPosition");
+    GLint location_plane           = this->gl->glGetUniformLocation(this->program, "planePosition");
+    GLint location_plane_direction = this->gl->glGetUniformLocation(this->program, "planeDirection");
 
     this->gl->glUniformMatrix4fv(location_proj, 1, GL_FALSE, proj_mat);
     this->gl->glUniformMatrix4fv(location_view, 1, GL_FALSE, view_mat);
@@ -64,6 +65,7 @@ void DrawableMesh::draw(GLfloat *proj_mat, GLfloat *view_mat, const glm::vec4& c
     this->gl->glUniform4fv(location_color, 1, glm::value_ptr(this->color));
     this->gl->glUniform3fv(location_light, 1, glm::value_ptr(this->lightPosition));
     this->gl->glUniform3fv(location_plane, 1, glm::value_ptr(planePosition));
+    this->gl->glUniform3fv(location_plane_direction, 1, glm::value_ptr(planeDirection));
 
     // vertex buffer :
     auto vertices = mesh->getVertices();

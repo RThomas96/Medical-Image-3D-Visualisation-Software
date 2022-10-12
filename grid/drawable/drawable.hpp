@@ -5,6 +5,7 @@
 
 #include <QOpenGLContext>
 #include <QOpenGLFunctions_3_2_Core>
+#include <QOpenGLFunctions_3_2_Compatibility>
 #include <QOpenGLFunctions_4_0_Compatibility>
 #include <QOpenGLFunctions_4_0_Core>
 

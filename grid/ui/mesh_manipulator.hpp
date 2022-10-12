@@ -179,6 +179,7 @@ namespace UITool {
         void zoom(float newSceneRadius) override;
 
         virtual void draw() = 0;
+        void drawGuizmo();
 
         // These functions are used only in glMeshManipulator in the prepare function
         virtual void getAllPositions(std::vector<glm::vec3>& positions) = 0;

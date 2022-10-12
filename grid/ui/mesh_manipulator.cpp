@@ -23,6 +23,11 @@ namespace UITool {
             this->guizmo->setDisplayScale(this->getGuizmoRadius());
     };
 
+    void MeshManipulator::drawGuizmo() {
+        if(this->guizmo && this->guizmo->isVisible)
+            this->guizmo->draw();
+    }
+
 
     glm::vec3 stateToColor(State state) {
         switch(state) {
@@ -156,7 +161,6 @@ namespace UITool {
     void DirectManipulator::draw() {
         glPolygonMode( GL_FRONT_AND_BACK , GL_FILL );
         glColor3f(0.2,0.2,0.9);
-        glClear(GL_DEPTH_BUFFER_BIT);
         glEnable(GL_LIGHTING);
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_DEPTH);
@@ -571,11 +575,8 @@ namespace UITool {
     }
 
     void ARAPManipulator::draw() {
-        if(this->guizmo && this->guizmo->isVisible)
-            this->guizmo->draw();
         glPolygonMode( GL_FRONT_AND_BACK , GL_FILL );
         glColor3f(0.2,0.2,0.9);
-        glClear(GL_DEPTH_BUFFER_BIT);
         glEnable(GL_LIGHTING);
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_DEPTH);
@@ -871,7 +872,6 @@ void SliceManipulator::rotateLastModifiedSlice(float angle) {
 void SliceManipulator::draw() {
     glPolygonMode( GL_FRONT_AND_BACK , GL_FILL );
     glColor3f(0.2,0.2,0.9);
-    glClear(GL_DEPTH_BUFFER_BIT);
     glEnable(GL_LIGHTING);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_DEPTH);
@@ -884,8 +884,6 @@ void SliceManipulator::draw() {
         glColor3fv(glm::value_ptr(stateToColor(currentState)));
         BasicGL::drawSphere(this->manipulators[i].getManipPosition().x, this->manipulators[i].getManipPosition().y, this->manipulators[i].getManipPosition().z, this->sphereRadius, 15,15);
     }
-    if(this->guizmo && this->guizmo->isVisible)
-        this->guizmo->draw();
 }
 
 /***/
@@ -994,7 +992,6 @@ void MarkerManipulator::mouseReleased(QMouseEvent* e) {}
 void MarkerManipulator::draw() {
     glPolygonMode( GL_FRONT_AND_BACK , GL_FILL );
     glColor3f(0.2,0.2,0.9);
-    glClear(GL_DEPTH_BUFFER_BIT);
     glEnable(GL_LIGHTING);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_DEPTH);

@@ -315,9 +315,9 @@ public:
             //this->prevZscale = 1.;
         }
 
-        //glClear(GL_DEPTH_BUFFER_BIT);
-	    //glDisable(GL_DEPTH_TEST);
-        //glDisable(GL_DEPTH);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_DEPTH);
         glPolygonMode( GL_FRONT_AND_BACK , GL_FILL );
         if(etat == 1)
         {

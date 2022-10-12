@@ -74,10 +74,11 @@ void GraphMesh::saveOFF(std::string const & filename) {
     myfile.close();
 }
 
-void GraphMesh::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* mMat, const glm::vec3& planeDisplacement) {
+void GraphMesh::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* mMat) {
     glPolygonMode( GL_FRONT_AND_BACK , GL_FILL );
+
     glColor3f(0.2,0.2,0.9);
-    glClear(GL_DEPTH_BUFFER_BIT);
+    //glClear(GL_DEPTH_BUFFER_BIT);
     glEnable(GL_LIGHTING);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_DEPTH);

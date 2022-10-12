@@ -135,10 +135,13 @@ protected:
 
         //Push buttons to invert visibility direction
         QPushButton * invertXPushButton = new QPushButton("invert", this);
+        invertXPushButton->setCheckable(true);
         xHBoxLayout->addWidget(invertXPushButton);
         QPushButton * invertYPushButton = new QPushButton("invert", this);
+        invertYPushButton->setCheckable(true);
         yHBoxLayout->addWidget(invertYPushButton);
         QPushButton * invertZPushButton = new QPushButton("invert", this);
+        invertZPushButton->setCheckable(true);
         zHBoxLayout->addWidget(invertZPushButton);
 
         //Checkbox to toggle plane display

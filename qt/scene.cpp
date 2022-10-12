@@ -90,7 +90,8 @@ Scene::Scene() {
     this->displayGrid = true;
     this->displayMesh = true;
     this->previewCursorInPlanarView = false;
-    this->displayBBox = false;
+    this->displayGridBBox = false;
+    this->displayXRayManipulators = false;
 }
 
 Scene::~Scene(void) {
@@ -656,7 +657,6 @@ std::pair<glm::vec3, glm::vec3> Scene::getSceneBBox() {
         updateBBox(grid->bbMin);
         updateBBox(grid->bbMax);
     }
-
     return {bbMin, bbMax};
 }
 
@@ -692,7 +692,6 @@ void Scene::drawScene(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool show
     glEnable(GL_DEPTH_TEST);
     glEnablei(GL_BLEND, 0);
     glEnable(GL_TEXTURE_3D);
-    //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -700,71 +699,81 @@ void Scene::drawScene(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool show
     /* Manipulator drawing  */
 
     glm::mat4 mMat(1.0f);
-    //this->draw(mvMat, pMat, glm::value_ptr(mMat), this->computePlanePositions());
-    //this->draw(mvMat, pMat, glm::value_ptr(mMat), this->computePlanePositions());
-    if(this->meshManipulator)
-        this->meshManipulator->draw();
-
-    for(int i = 0; i < this->graph_meshes.size(); ++i) {
-        glm::vec3 planePos	   = this->computePlanePositions();
-        for(int i = 0; i < 3; ++i) {
-            if(this->planeActivation[i] == 0.) {
-                planePos[i] = -1000000.;
-            }
-        }
-        this->graph_meshes[i].first->draw(pMat, mvMat, glm::value_ptr(mMat), planePos);
-    }
-
     /***********************/
 
-
     if(this->displayGrid) {
-        //if(this->multiGridRendering) {
-        //    if(this->grids.size() > 0) {
-        //        int originalGridToDraw = this->gridToDraw;
-        //        for(auto i : this->gridsToDraw) {
-        //            if(i >= 0 && i < this->grids.size()) {
-        //                this->gridToDraw = i;
-        //                //this->drawGridVolumetricView(mvMat, pMat, camPos, this->grids[gridToDraw]);
-        //                this->drawGrid(mvMat, pMat, camPos, this->grids[gridToDraw], i == 0);
-        //            }
-        //        }
-        //        this->gridToDraw = originalGridToDraw;
-        //    }
-        //} else {
-            if(this->grids.size() > 0) {
-                int originalGridToDraw = this->gridToDraw;
-                //this->drawGridVolumetricView(mvMat, pMat, camPos, this->grids[gridToDraw]);
-                for(auto i : this->gridsToDraw) {
-                    if(i < this->grids.size()) {
-                        this->gridToDraw = i;
-                        glm::vec3 planePosition = this->computePlanePositionsWithActivation();
-                        if(i == 0)
-                            planePosition += glm::vec3(10., 10., 10.);
-                        this->grids[this->gridToDraw]->drawGrid(mvMat, pMat, camPos, planePosition, this->planeDirection, false);
-                    }
+        if(this->grids.size() > 0) {
+            int originalGridToDraw = this->gridToDraw;
+            for(auto i : this->gridsToDraw) {
+                if(i < this->grids.size()) {
+                    this->gridToDraw = i;
+                    glm::vec3 planePosition = this->computePlanePositionsWithActivation();
+                    if(i == 0)
+                        planePosition += glm::vec3(10., 10., 10.);
+                    this->grids[this->gridToDraw]->drawGrid(mvMat, pMat, camPos, planePosition, this->planeDirection, false);
                 }
-                this->gridToDraw = originalGridToDraw;
             }
-        //}
+            this->gridToDraw = originalGridToDraw;
+        }
     }
 
     if(this->displayMesh) {
         for(int i = 0; i < this->meshes.size(); ++i) {
-            this->meshes[i].first->draw(pMat, mvMat, glm::vec4{camPos, 1.f}, this->computePlanePositionsWithActivation());
+            std::cout << planeDirection << std::endl;
+            this->meshes[i].first->draw(pMat, mvMat, glm::vec4{camPos, 1.f}, this->computePlanePositionsWithActivation(), this->planeDirection);
         }
     }
 
-    //this->drawBoundingBox(this->sceneBB, glm::vec4(.5, .5, .0, 1.), mvMat, pMat);
     this->glSelection->draw(mvMat, pMat, glm::value_ptr(mMat));
 
-    if(displayBBox) {
-        for(auto grid : grids)
-            grid->drawBBox(this->computePlanePositions());
+    //Legacy openGL draw //
+
+    this->activateCuttingPlaneLegacyOpenGL();
+
+    for(int i = 0; i < this->graph_meshes.size(); ++i) {
+        this->graph_meshes[i].first->draw(pMat, mvMat, glm::value_ptr(mMat));
     }
 
-    for(auto box : boxes)
+    if(displayGridBBox) {
+        for(auto grid : grids) {
+            grid->drawBBox(this->computePlanePositions());
+        }
+    }
+
+    for(auto box : boxes) {
         this->drawBox(box);
+    }
+
+    if(this->meshManipulator) {
+        if(this->displayXRayManipulators)
+            glClear(GL_DEPTH_BUFFER_BIT);
+        this->meshManipulator->draw();
+    }
+
+    this->deactivateCuttingPlaneLegacyOpenGL();
+
+    // We dont want the guizmo to be affected by cutting planes
+    if(this->meshManipulator)
+        this->meshManipulator->drawGuizmo();
+}
+
+void Scene::activateCuttingPlaneLegacyOpenGL() {
+    glm::vec3 planePos = this->computePlanePositionsWithActivation();
+    glm::tvec4<double>planeX(planeDirection.x, 0, 0, planeDirection.x*-planePos.x);
+    glm::tvec4<double>planeY(0, planeDirection.y, 0, planeDirection.y*-planePos.y);
+    glm::tvec4<double>planeZ(0, 0, planeDirection.z, planeDirection.z*-planePos.z);
+    glClipPlane(GL_CLIP_PLANE0, glm::value_ptr(planeX));
+    glClipPlane(GL_CLIP_PLANE1, glm::value_ptr(planeY));
+    glClipPlane(GL_CLIP_PLANE2, glm::value_ptr(planeZ));
+    glEnable(GL_CLIP_PLANE0);
+    glEnable(GL_CLIP_PLANE1);
+    glEnable(GL_CLIP_PLANE2);
+}
+
+void Scene::deactivateCuttingPlaneLegacyOpenGL() {
+    glDisable(GL_CLIP_PLANE0);
+    glDisable(GL_CLIP_PLANE1);
+    glDisable(GL_CLIP_PLANE2);
 }
 
 void Scene::updateMinMaxDisplayValues() {

@@ -31,7 +31,7 @@ public:
 
     void initializeGL(ShaderCompiler::GLFunctions* functions);
 
-    void draw(GLfloat *proj_mat, GLfloat *view_mat, const glm::vec4& camera, const glm::vec3& planePosition);
+    void draw(GLfloat *proj_mat, GLfloat *view_mat, const glm::vec4& camera, const glm::vec3& planePosition, const glm::vec3& planeDirection);
 
     glm::vec4 color;
     glm::vec3 lightPosition;
