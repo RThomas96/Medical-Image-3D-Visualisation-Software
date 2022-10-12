@@ -436,6 +436,8 @@ void RangeControl::addUnitsAuto() {
             if(usage[i])
                 this->addUnit(i, i);
         }
+    } else {
+        this->clearUnits(true);
     }
     this->updateRanges();
 }

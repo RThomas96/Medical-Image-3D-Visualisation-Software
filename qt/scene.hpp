@@ -391,6 +391,7 @@ public slots:
     bool hasTwoOrMoreGrids();
     void changeSceneRadius(float sceneRadius);
     float getSceneRadius();
+    std::pair<glm::vec3, glm::vec3> getSceneBBox();
     void updateSceneCenter();
     void updateSceneRadius();
     void updateManipulatorRadius();
@@ -429,8 +430,8 @@ public:
     std::vector<std::pair<std::string, std::string>> cageToGrid;
 
     std::vector<std::string> grids_name;
-    std::vector<Grid*> grids;
 
+    std::vector<Grid*> grids;
     std::vector<std::pair<GraphMesh*, std::string>> graph_meshes;
     std::vector<std::pair<SurfaceMesh*, std::string>> meshes;
 

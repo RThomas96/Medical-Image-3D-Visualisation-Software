@@ -57,7 +57,7 @@ Viewer::Viewer(Scene* const scene, QStatusBar* _program_bar, QWidget* parent) :
     this->cursor = new QCursor();
     this->setCursor(*this->cursor);
     //this->setFPSIsDisplayed(true);
-    this->setCameraType(qglviewer::Camera::ORTHOGRAPHIC);
+    //this->setCameraType(qglviewer::Camera::ORTHOGRAPHIC);
 }
 
 void Viewer::setCameraType(qglviewer::Camera::Type cameraType) {

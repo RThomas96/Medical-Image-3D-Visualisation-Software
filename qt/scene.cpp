@@ -616,17 +616,48 @@ glm::vec3 Scene::computePlanePositionsWithActivation() {
 }
 
 glm::vec3 Scene::computePlanePositions() {
-    //Image::bbox_t::vec position = this->sceneBB.getMin();
+    int nbObject = this->grids.size() + this->meshes.size() + this->graph_meshes.size();
+    bool sceneContainMultipleObjects = nbObject > 1;
     if(this->getBaseMesh(this->activeMesh)) {
-        // Bad tricks
-        int idx = this->getGridIdx(this->activeMesh);
-        Image::bbox_t::vec position = this->getBaseMesh(this->activeMesh)->bbMin;
-        Image::bbox_t::vec diagonal = this->getBaseMesh(this->activeMesh)->getDimensions();
+        std::pair<glm::vec3, glm::vec3> bbox = this->getSceneBBox();
+        glm::vec3 position = bbox.first;
+        glm::vec3 diagonal = bbox.second - bbox.first;
         glm::vec3 planePos			= (position + this->planeDisplacement * diagonal);
         return planePos;
     } else {
         return glm::vec3(0., 0., 0.);
     }
+}
+
+std::pair<glm::vec3, glm::vec3> Scene::getSceneBBox() {
+    glm::vec3 bbMin(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
+    glm::vec3 bbMax(std::numeric_limits<float>::min(), std::numeric_limits<float>::min(), std::numeric_limits<float>::min());
+
+    auto updateBBox = [&](glm::vec3& p) {
+        for(int i = 0; i < 3; ++i) {
+            if(p[i] < bbMin[i])
+                bbMin[i] = p[i];
+            if(p[i] > bbMax[i])
+                bbMax[i] = p[i];
+        }
+    };
+
+    for(const auto& mesh : this->meshes) {
+        updateBBox(mesh.first->bbMin);
+        updateBBox(mesh.first->bbMax);
+    }
+
+    for(const auto& mesh : this->graph_meshes) {
+        updateBBox(mesh.first->bbMin);
+        updateBBox(mesh.first->bbMax);
+    }
+
+    for(const auto& grid : this->grids) {
+        updateBBox(grid->bbMin);
+        updateBBox(grid->bbMax);
+    }
+
+    return {bbMin, bbMax};
 }
 
 GLuint Scene::createUniformBuffer(std::size_t size_bytes, GLenum draw_mode) {
