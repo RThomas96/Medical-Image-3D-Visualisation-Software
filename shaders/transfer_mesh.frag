@@ -308,7 +308,7 @@ void main (void) {
     //colorOut.xyz += phongComputation(Pos, n, color, lightPositions[4], phongDetails, lightDetails);
     // Phong for camera light :
 
-    //colorOut.xyz += phongComputation(Pos, n, color, cam, phongDetails, lightDetails);
+    colorOut.xyz += phongComputation(Pos, n, color, cam, phongDetails, lightDetails);
 
     sceneSpaceFragmentPos = Pos;
 

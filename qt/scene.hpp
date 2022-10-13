@@ -322,7 +322,7 @@ public slots:
     void setGridsToDraw(std::vector<int> indices);
     void setMultiGridRendering(bool value);
     void setDrawOnlyBoundaries(bool value);
-    void setBlendFirstPass(float value);
+    void setBlend(float value);
     void setOrthographicCamera() { Q_EMIT needChangeCameraType(qglviewer::Camera::ORTHOGRAPHIC); };
     void setPerspectiveCamera() { Q_EMIT needChangeCameraType(qglviewer::Camera::PERSPECTIVE); };
 
@@ -421,6 +421,7 @@ public:
 
     glm::vec3 cameraPosition;
     float distanceFromCamera;
+    float alphaBlend;
 
     bool displayGrid;
     bool displayMesh;

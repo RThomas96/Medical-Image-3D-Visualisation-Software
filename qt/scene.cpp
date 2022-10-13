@@ -763,6 +763,23 @@ void Scene::drawScene(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool show
             glUniform1i(getUniform("depthTexture"), tex);
             tex++;
 
+            int alphaRendering = 0;
+            if(this->grids.size() == 2) {
+                glActiveTexture(GL_TEXTURE0 + tex);
+                glBindTexture(GL_TEXTURE_2D, this->grids[1]->dualRenderingTexture);
+                glUniform1i(getUniform("screenTexture2"), tex);
+                tex++;
+
+                glActiveTexture(GL_TEXTURE0 + tex);
+                glBindTexture(GL_TEXTURE_2D, this->grids[1]->depthTexture);
+                glUniform1i(getUniform("depthTexture2"), tex);
+                tex++;
+
+                alphaRendering = 1;
+            }
+            glUniform1ui(getUniform("alphaRendering"), alphaRendering);
+            glUniform1f(getUniform("alphaBlend"), this->alphaBlend);
+
             glDrawArrays(GL_TRIANGLES, 0, 6);
             glEnable(GL_DEPTH_TEST);
         }
@@ -770,7 +787,6 @@ void Scene::drawScene(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool show
 
     if(this->displayMesh) {
         for(int i = 0; i < this->meshes.size(); ++i) {
-            std::cout << planeDirection << std::endl;
             this->meshes[i].first->draw(pMat, mvMat, glm::vec4{camPos, 1.f}, this->computePlanePositionsWithActivation(), this->planeDirection);
         }
     }
@@ -2575,9 +2591,9 @@ void Scene::setDrawOnlyBoundaries(bool value) {
         this->grids[this->gridToDraw]->drawOnlyBoundaries = value;
 }
 
-void Scene::setBlendFirstPass(float value) {
-    if(this->gridToDraw >= 0)
-        this->grids[this->gridToDraw]->blendFirstPass = value;
+void Scene::setBlend(float value) {
+    std::cout << this->alphaBlend << std::endl;
+    this->alphaBlend = value;
 }
 
 void Scene::setRenderSize(int h, int w) {
