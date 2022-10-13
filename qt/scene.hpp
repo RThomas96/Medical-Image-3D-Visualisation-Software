@@ -121,6 +121,9 @@ public:
     Scene();
     ~Scene(void);
 
+    int h;
+    int w;
+
 private:
     QOpenGLContext* context;
 
@@ -129,9 +132,7 @@ private:
     GLuint default_vbo_Normal;
     GLuint default_vbo_Id;
     GLuint frameBuffer;
-
-    int h;
-    int w;
+    GLuint dualPass_program;
 
     std::unique_ptr<ShaderCompiler> shaderCompiler;
 

@@ -122,6 +122,9 @@ void Viewer::draw() {
 	qglviewer::Vec cam = this->camera()->worldCoordinatesOf(qglviewer::Vec(0., 0., 0.));
 	glm::vec3 camPos   = glm::vec3(static_cast<float>(cam.x), static_cast<float>(cam.y), static_cast<float>(cam.z));
 
+    this->scene->h = height();
+    this->scene->w = width();
+
     this->scene->drawScene(mvMat, pMat, camPos, false);
 }
 

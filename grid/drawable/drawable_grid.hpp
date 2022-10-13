@@ -47,7 +47,7 @@ public:
     virtual ~DrawableGrid() = default;
 
     void initializeGL(ShaderCompiler::GLFunctions *functions);
-    void drawGrid(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, glm::vec3 planePosition, glm::vec3 planeDirection, bool drawFront);
+    void drawGrid(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, glm::vec3 planePosition, glm::vec3 planeDirection, bool drawFront, int w, int h);
     void drawBBox(const glm::vec3& planePos);
 
     void setMultiGridRendering(bool value);
@@ -66,6 +66,13 @@ public:
     GLuint colorScaleUser;
     GLuint uboHandle_colorAttributes;
     GLuint gridTexture;
+
+    GLuint frameBuffer;
+    GLuint rbo;
+    GLuint frameDepthBuffer;
+    GLuint depthTexture;
+    GLuint dualRenderingTexture;
+
 protected:
     GLuint program;
 
@@ -78,10 +85,6 @@ protected:
 
     GLuint colorScaleGreyscale;
     GLuint colorScaleHsv2rgb;
-
-    GLuint frameBuffer;
-    GLuint frameDepthBuffer;
-    GLuint dualRenderingTexture;
 
     Grid * grid;
 

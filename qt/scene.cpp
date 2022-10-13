@@ -381,6 +381,9 @@ void Scene::recompileShaders(bool verbose) {
         glDeleteProgram(this->glSelection->getProgram());
         this->glSelection->setProgram(newSelectionProgram);
     }
+    GLuint prog	 = this->compileShaders("../shaders/dualPass.vert", "", "../shaders/dualPass.frag", true);
+    glDeleteProgram(this->dualPass_program);
+    this->dualPass_program = prog;
 }
 
 GLuint Scene::compileShaders(std::string _vPath, std::string _gPath, std::string _fPath, bool verbose) {
@@ -710,10 +713,58 @@ void Scene::drawScene(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool show
                     glm::vec3 planePosition = this->computePlanePositionsWithActivation();
                     if(i == 0)
                         planePosition += glm::vec3(10., 10., 10.);
-                    this->grids[this->gridToDraw]->drawGrid(mvMat, pMat, camPos, planePosition, this->planeDirection, false);
+                    glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
+                    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                    this->grids[this->gridToDraw]->drawGrid(mvMat, pMat, camPos, planePosition, this->planeDirection, false, w, h);
                 }
             }
             this->gridToDraw = originalGridToDraw;
+
+            float quadVertices[] = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
+                                     // positions   // texCoords
+                                     -1.0f,  1.0f,  0.0f, 1.0f,
+                                     -1.0f, -1.0f,  0.0f, 0.0f,
+                                     1.0f, -1.0f,  1.0f, 0.0f,
+
+                                     -1.0f,  1.0f,  0.0f, 1.0f,
+                                     1.0f, -1.0f,  1.0f, 0.0f,
+                                     1.0f,  1.0f,  1.0f, 1.0f
+                                   };
+
+            //glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
+            // clear all relevant buffers
+            glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            glUseProgram(this->dualPass_program);
+            unsigned int quadVBO;
+            glDeleteBuffers(1, &quadVBO);
+            glGenBuffers(1, &quadVBO);
+            glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+            glEnableVertexAttribArray(0);
+            glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+            glEnableVertexAttribArray(1);
+            glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+
+            auto getUniform = [&](const char* name) -> GLint {
+                GLint g = glGetUniformLocation(this->dualPass_program, name);
+                return g;
+            };
+
+            std::size_t tex = 0;
+            glActiveTexture(GL_TEXTURE0 + tex);
+            glBindTexture(GL_TEXTURE_2D, this->grids[0]->dualRenderingTexture);
+            glUniform1i(getUniform("screenTexture"), tex);
+            tex++;
+
+            glActiveTexture(GL_TEXTURE0 + tex);
+            glBindTexture(GL_TEXTURE_2D, this->grids[0]->depthTexture);
+            glUniform1i(getUniform("depthTexture"), tex);
+            tex++;
+
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+            glEnable(GL_DEPTH_TEST);
         }
     }
 

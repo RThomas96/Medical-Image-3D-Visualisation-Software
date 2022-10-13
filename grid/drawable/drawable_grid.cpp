@@ -436,7 +436,7 @@ void DrawableGrid::tex3D_buildBuffers() {
     gl->glBufferData(GL_ELEMENT_ARRAY_BUFFER, 12 * sizeof(GLushort), indices, GL_STATIC_DRAW);
 }
 
-void DrawableGrid::drawGrid(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, glm::vec3 planePosition, glm::vec3 planeDirection, bool inFrame) {
+void DrawableGrid::drawGrid(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, glm::vec3 planePosition, glm::vec3 planeDirection, bool inFrame, int w, int h) {
     //this->updateMinMaxDisplayValues();
     this->prepareUniforms(mvMat, pMat, camPos, planePosition, planeDirection, !inFrame);
     gl->glBindVertexArray(this->vaoVolumetricBuffers);
@@ -456,7 +456,7 @@ void DrawableGrid::drawGrid(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, glm
     gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboTexture3DVertIdx);
 
     //if(inFrame && this->multiGridRendering) {
-    if(false) {
+    //if(false) {
         GLint defaultFBO;
         gl->glGetIntegerv(GL_FRAMEBUFFER_BINDING, &defaultFBO);
 
@@ -468,22 +468,28 @@ void DrawableGrid::drawGrid(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, glm
         glGenTextures(1, &dualRenderingTexture);
 
         glBindTexture(GL_TEXTURE_2D, dualRenderingTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, 2024, 1468, 0,GL_RGB, GL_UNSIGNED_BYTE, 0);
+        glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, w, h, 0,GL_RGB, GL_UNSIGNED_BYTE, 0);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
-        gl->glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, dualRenderingTexture, 0);
+        //gl->glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, dualRenderingTexture, 0);
+        gl->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, dualRenderingTexture, 0);
 
-        glDeleteTextures(1, &frameDepthBuffer);
-        glGenTextures(1, &frameDepthBuffer);
-        glBindTexture(GL_TEXTURE_2D, frameDepthBuffer);
-        glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT16, 2024, 1468, 0,GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+        glDeleteTextures(1, &depthTexture);
+        glGenTextures(1, &depthTexture);
+        glBindTexture(GL_TEXTURE_2D, depthTexture);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, w, h, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-        gl->glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, frameDepthBuffer, 0);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+        glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+
+        gl->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
 
         // Set the list of draw buffers.
         GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
@@ -492,9 +498,9 @@ void DrawableGrid::drawGrid(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, glm
         gl->glDrawElementsInstanced(GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, (void*) 0, tetrahedraCount);
         gl->glBindFramebuffer(GL_FRAMEBUFFER, defaultFBO);
         //glDrawBuffer(0);
-    } else {
-        gl->glDrawElementsInstanced(GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, (void*) 0, tetrahedraCount);
-    }
+    //} else {
+    //    gl->glDrawElementsInstanced(GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, (void*) 0, tetrahedraCount);
+    //}
 
     // Unbind program, buffers and VAO :
     gl->glBindVertexArray(0);
