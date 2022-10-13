@@ -1,4 +1,5 @@
 #include "grid.hpp"
+#include "glm/ext/quaternion_geometric.hpp"
 #include <chrono>
 #include <algorithm>
 #include <type_traits>
@@ -514,17 +515,11 @@ void Grid::sampleGridValues(const std::pair<glm::vec3, glm::vec3>& areaToSample,
 }
 
 bool Grid::checkTransferMeshValidity() {
-    for( auto pt : this->vertices) {
-        if(pt.x < this->sampler.subregionMin.x || 
-           pt.y < this->sampler.subregionMin.y || 
-           pt.z < this->sampler.subregionMin.z || 
-           pt.x > this->sampler.subregionMax.x || 
-           pt.y > this->sampler.subregionMax.y || 
-           pt.z > this->sampler.subregionMax.z) {
-            return false;
-        }
-    }
-    return true;
+    glm::vec3 meshDimension = this->getDimensions();
+    glm::vec3 imageDimension = this->sampler.getSamplerDimension();
+    if(glm::abs(glm::length(meshDimension) - glm::length(imageDimension)) < glm::length(meshDimension)/10.)
+        return true;
+    return false;
 }
 
 /**************************/
