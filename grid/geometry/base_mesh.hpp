@@ -13,60 +13,67 @@ struct History {
     std::chrono::time_point<std::chrono::system_clock> timer;
     bool isActive;
     int currentState;
-    std::vector<std::vector<glm::vec3>> history;
+    std::vector<std::vector<glm::vec3>> vertexHistory;
+    std::vector<std::array<glm::vec3, 3>> coordinateHistory;
 
-    History(const std::vector<glm::vec3> initialPoints): history({initialPoints}), currentState(0), isActive(true), timer(std::chrono::system_clock::now()) {}
+    History(const std::vector<glm::vec3> initialPoints, std::array<glm::vec3, 3>& coordinate): vertexHistory({initialPoints}), coordinateHistory({coordinate}), currentState(0), isActive(true), timer(std::chrono::system_clock::now()) {}
 
     void activate() { this->isActive = true; }
     void deactivate() { this->isActive = false; }
 
-    bool reset(std::vector<glm::vec3>& res) {
+    bool reset(std::vector<glm::vec3>& res, std::array<glm::vec3, 3>& coordinate) {
         if(currentState == 0) {
             std::cout << "WARNING: no operations, nothing to do" << std::endl;
             return false;
         }
 
         this->currentState = 0;
-        res = history.front();
+        res = vertexHistory.front();
+        coordinate = coordinateHistory.front();
         return true;
     }
 
-    bool undo(std::vector<glm::vec3>& res) {
+    bool undo(std::vector<glm::vec3>& res, std::array<glm::vec3, 3>& coordinate) {
         if(currentState == 0) {
             std::cout << "WARNING: can't undo, no more operations" << std::endl;
             return false;
         }
         
         this->currentState -= 1;
-        res = history[currentState];
+        res = vertexHistory[currentState];
+        coordinate = coordinateHistory[currentState];
         return true;
     }
 
-    bool redo(std::vector<glm::vec3>& res) {
-        if(currentState == history.size()-1) {
+    bool redo(std::vector<glm::vec3>& res, std::array<glm::vec3, 3>& coordinate) {
+        if(currentState == vertexHistory.size()-1) {
             std::cout << "WARNING: can't redo, no more operations" << std::endl;
             return false;
         }
         
         this->currentState += 1;
-        res = history[currentState];
+        res = vertexHistory[currentState];
+        coordinate = coordinateHistory[currentState];
         return true;
     }
 
-    void addStep(const std::vector<glm::vec3>& points, bool useTimer = true) {
+    void addStep(const std::vector<glm::vec3>& points, const std::array<glm::vec3, 3>& coordinate, bool useTimer = true) {
         if(!this->isActive)
             return;
         if(useTimer && std::chrono::duration<double>(std::chrono::system_clock::now() - this->timer).count() < 0.25)
             return;
         this->timer = std::chrono::system_clock::now();
-        if(this->currentState < this->history.size()-1) {
-            int nbStateToDelete = (this->history.size()-1) - this->currentState;
-            for(int i = 0; i < nbStateToDelete; ++i)
-                this->history.pop_back();
+        if(this->currentState < this->vertexHistory.size()-1) {
+            int nbStateToDelete = (this->vertexHistory.size()-1) - this->currentState;
+            for(int i = 0; i < nbStateToDelete; ++i) {
+                this->vertexHistory.pop_back();
+                this->coordinateHistory.pop_back();
+            }
         }
         std::cout << "Add operation in history [" << points.size() << "]" << std::endl;
         this->currentState += 1;
-        this->history.push_back(points);
+        this->vertexHistory.push_back(points);
+        this->coordinateHistory.push_back(coordinate);
     }
 };
 

@@ -109,7 +109,7 @@ SurfaceMesh::SurfaceMesh(std::string const &filename): DrawableMesh(this) {
     }
     this->arapDeformer = new AsRigidAsPossible();
 
-    this->history = new History(this->vertices);
+    this->history = new History(this->vertices, this->coordinate_system);
 
     this->updatebbox();
 

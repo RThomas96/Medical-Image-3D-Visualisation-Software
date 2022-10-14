@@ -46,7 +46,7 @@ void GraphMesh::loadOFF(std::string const &filename) {
     }
 
     this->updatebbox();
-    this->history = new History(this->vertices);
+    this->history = new History(this->vertices, this->coordinate_system);
 }
 
 void GraphMesh::saveOFF(std::string const & filename) {

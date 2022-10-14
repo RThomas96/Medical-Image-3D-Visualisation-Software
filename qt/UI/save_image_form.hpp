@@ -14,8 +14,15 @@ public:
 public slots:
 
     void init(Scene * scene) {
+        this->add(WidgetType::H_GROUP, "GroupHeader");
+        this->addAllNextWidgetsToGroup("GroupHeader");
+
         this->add(WidgetType::GRID_CHOOSE, "Grid", "Grid: ");
         this->setObjectTypeToChoose("Grid", ObjectToChoose::GRID);
+
+        this->add(WidgetType::BUTTON, "Reset");
+
+        this->addAllNextWidgetsToDefaultGroup();
 
         this->addWithLabel(WidgetType::CHECK_BOX, "Colormap", "Use colormap: ");
         this->addWithLabel(WidgetType::CHECK_BOX, "Resolution", "Export at full resolution: ");
@@ -38,6 +45,15 @@ public slots:
 
         this->addAllNextWidgetsToDefaultGroup();
 
+        this->addWithLabel(WidgetType::H_GROUP, "GroupVoxelSize", "Voxel size");
+        this->addAllNextWidgetsToGroup("GroupVoxelSize");
+
+        this->add(WidgetType::SPIN_BOX_DOUBLE, "VoxelSizeX");
+        this->add(WidgetType::SPIN_BOX_DOUBLE, "VoxelSizeY");
+        this->add(WidgetType::SPIN_BOX_DOUBLE, "VoxelSizeZ");
+
+        this->addAllNextWidgetsToDefaultGroup();
+
         this->add(WidgetType::TIFF_SAVE, "Export image", "Export");
         this->scene = scene;
     }
@@ -53,6 +69,7 @@ public slots:
 protected:
     Scene * scene;
 
+    void initSpinBoxes(Scene * scene);
     void updateSpinBoxes(Scene * scene);
 
     void updateBoxToDisplay(Scene * scene);

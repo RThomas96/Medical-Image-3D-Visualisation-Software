@@ -1744,18 +1744,20 @@ void Scene::moveInHistory(bool backward, bool reset) {
     BaseMesh * mesh = this->getBaseMesh(this->activeMesh);
     if(mesh && mesh->history) {
         std::vector<glm::vec3> pointsBefore;
+        std::array<glm::vec3, 3> coordinates;
         bool success = false;
         if(reset) {
-            success = mesh->history->reset(pointsBefore);
+            success = mesh->history->reset(pointsBefore, coordinates);
         } else {
             if(backward) {
-                success = mesh->history->undo(pointsBefore);
+                success = mesh->history->undo(pointsBefore, coordinates);
             } else {
-                success = mesh->history->redo(pointsBefore);
+                success = mesh->history->redo(pointsBefore, coordinates);
             }
         }
         if(success) {
             mesh->movePoints(pointsBefore);
+            mesh->coordinate_system = coordinates;
             this->meshManipulator->updateWithMeshVertices();
             this->updateManipulatorRadius();
             this->updateTetmeshAllGrids();
@@ -1910,43 +1912,48 @@ void Scene::writeMapping(const std::string& fileName, const std::string& from, c
 
 void Scene::writeDeformedImage(const std::string& filename, const std::string& gridName, bool useColorMap, ResolutionMode resolution) {
     Grid * grid = this->grids[this->getGridIdx(gridName)];
-    this->writeDeformedImage(filename, gridName, grid->bbMin, grid->bbMax, useColorMap, resolution);
+    this->writeDeformedImage(filename, gridName, grid->bbMin, grid->bbMax, useColorMap, grid->getVoxelSize(resolution));
 }
 
-void Scene::writeDeformedImage(const std::string& filename, const std::string& gridName, const glm::vec3& bbMin, const glm::vec3& bbMax, bool useColorMap, ResolutionMode resolution) {
+void Scene::writeDeformedImage(const std::string& filename, const std::string& gridName, bool useColorMap, const glm::vec3& voxelSize) {
+    Grid * grid = this->grids[this->getGridIdx(gridName)];
+    this->writeDeformedImage(filename, gridName, grid->bbMin, grid->bbMax, useColorMap, voxelSize);
+}
+
+void Scene::writeDeformedImage(const std::string& filename, const std::string& gridName, const glm::vec3& bbMin, const glm::vec3& bbMax, bool useColorMap, const glm::vec3 &voxelSize) {
     Grid * fromGrid = this->grids[this->getGridIdx(gridName)];
     if(useColorMap)
-        this->writeDeformedImageGeneric(filename, gridName, bbMin, bbMax, (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_16), useColorMap, resolution);
+        this->writeDeformedImageGeneric(filename, gridName, bbMin, bbMax, (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_16), useColorMap, voxelSize);
     else
-        this->writeDeformedImageGeneric(filename, gridName, bbMin, bbMax, fromGrid->sampler.getInternalDataType(), useColorMap, resolution);
+        this->writeDeformedImageGeneric(filename, gridName, bbMin, bbMax, fromGrid->sampler.getInternalDataType(), useColorMap, voxelSize);
 }
 
-void Scene::writeDeformedImageGeneric(const std::string& filename, const std::string& gridName, const glm::vec3& bbMin, const glm::vec3& bbMax, Image::ImageDataType imgDataType, bool useColorMap, ResolutionMode resolution) {
+void Scene::writeDeformedImageGeneric(const std::string& filename, const std::string& gridName, const glm::vec3& bbMin, const glm::vec3& bbMax, Image::ImageDataType imgDataType, bool useColorMap, const glm::vec3& voxelSize) {
     if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_8)) {
-        this->writeDeformedImageTemplated<uint8_t>(filename, gridName, bbMin, bbMax, 8, imgDataType, useColorMap, resolution);
+        this->writeDeformedImageTemplated<uint8_t>(filename, gridName, bbMin, bbMax, 8, imgDataType, useColorMap, voxelSize);
     } else if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_16)) {
-        this->writeDeformedImageTemplated<uint16_t>(filename, gridName, bbMin, bbMax, 16, imgDataType, useColorMap, resolution);
+        this->writeDeformedImageTemplated<uint16_t>(filename, gridName, bbMin, bbMax, 16, imgDataType, useColorMap, voxelSize);
     } else if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_32)) {
-        this->writeDeformedImageTemplated<uint32_t>(filename, gridName, bbMin, bbMax, 32, imgDataType, useColorMap, resolution);
+        this->writeDeformedImageTemplated<uint32_t>(filename, gridName, bbMin, bbMax, 32, imgDataType, useColorMap, voxelSize);
     } else if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_64)) {
-        this->writeDeformedImageTemplated<uint64_t>(filename, gridName, bbMin, bbMax, 64, imgDataType, useColorMap, resolution);
+        this->writeDeformedImageTemplated<uint64_t>(filename, gridName, bbMin, bbMax, 64, imgDataType, useColorMap, voxelSize);
     } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_8)) {
-        this->writeDeformedImageTemplated<int8_t>(filename, gridName, bbMin, bbMax, 8, imgDataType, useColorMap, resolution);
+        this->writeDeformedImageTemplated<int8_t>(filename, gridName, bbMin, bbMax, 8, imgDataType, useColorMap, voxelSize);
     } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_16)) {
-        this->writeDeformedImageTemplated<int16_t>(filename, gridName, bbMin, bbMax, 16, imgDataType, useColorMap, resolution);
+        this->writeDeformedImageTemplated<int16_t>(filename, gridName, bbMin, bbMax, 16, imgDataType, useColorMap, voxelSize);
     } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_32)) {
-        this->writeDeformedImageTemplated<int32_t>(filename, gridName, bbMin, bbMax, 32, imgDataType, useColorMap, resolution);
+        this->writeDeformedImageTemplated<int32_t>(filename, gridName, bbMin, bbMax, 32, imgDataType, useColorMap, voxelSize);
     } else if(imgDataType == (Image::ImageDataType::Signed | Image::ImageDataType::Bit_64)) {
-        this->writeDeformedImageTemplated<int64_t>(filename, gridName, bbMin, bbMax, 64, imgDataType, useColorMap, resolution);
+        this->writeDeformedImageTemplated<int64_t>(filename, gridName, bbMin, bbMax, 64, imgDataType, useColorMap, voxelSize);
     } else if(imgDataType == (Image::ImageDataType::Floating | Image::ImageDataType::Bit_32)) {
-        this->writeDeformedImageTemplated<float>(filename, gridName, bbMin, bbMax, 32, imgDataType, useColorMap, resolution);
+        this->writeDeformedImageTemplated<float>(filename, gridName, bbMin, bbMax, 32, imgDataType, useColorMap, voxelSize);
     } else if(imgDataType == (Image::ImageDataType::Floating | Image::ImageDataType::Bit_64)) {
-        this->writeDeformedImageTemplated<double>(filename, gridName, bbMin, bbMax, 64, imgDataType, useColorMap, resolution);
+        this->writeDeformedImageTemplated<double>(filename, gridName, bbMin, bbMax, 64, imgDataType, useColorMap, voxelSize);
     } 
 }
 
 template<typename DataType>
-void Scene::writeDeformedImageTemplated(const std::string& filename, const std::string& gridName, const glm::vec3& bbMin, const glm::vec3& bbMax, int bit, Image::ImageDataType dataType, bool useColorMap, ResolutionMode resolution) {
+void Scene::writeDeformedImageTemplated(const std::string& filename, const std::string& gridName, const glm::vec3& bbMin, const glm::vec3& bbMax, int bit, Image::ImageDataType dataType, bool useColorMap, const glm::vec3& voxelSize) {
     // To expose as parameters
     bool smallFile = true;
     int cacheSize = 2;
@@ -1957,7 +1964,7 @@ void Scene::writeDeformedImageTemplated(const std::string& filename, const std::
 
     Grid * fromGrid = this->grids[this->getGridIdx(gridName)];
     glm::vec3 worldSize = fromGrid->getDimensions();
-    glm::vec3 voxelSize = fromGrid->getVoxelSize(resolution);
+    //glm::vec3 voxelSize = fromGrid->getVoxelSize(resolution);
 
     auto start = std::chrono::steady_clock::now();
 

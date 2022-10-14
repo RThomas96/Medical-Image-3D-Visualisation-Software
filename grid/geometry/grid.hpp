@@ -21,7 +21,7 @@ enum ResolutionMode {
 // This class also allow to access data as if we have a subregion of the original image
 // The subregion is defined as a pair of triplet of INDICES and or not 3D data, position are whatever
 // Moreover subregions indices are in Sampler space
-// NOTE: the grid DO NOT have any 3D data like position or 3D vectors, or size. It only provides functions 
+// NOTE: the sampler DO NOT have any 3D data like position or 3D vectors, or size. It only provides functions
 // to access to the image data.
 struct Sampler {
 

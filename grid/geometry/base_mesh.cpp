@@ -120,5 +120,5 @@ int BaseMesh::getNbVertices() const {
 }
 
 void BaseMesh::addStateToHistory(bool useTimer) {
-    this->history->addStep(this->vertices, useTimer);
+    this->history->addStep(this->vertices, this->coordinate_system, useTimer);
 }

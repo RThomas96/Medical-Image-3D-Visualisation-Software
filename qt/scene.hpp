@@ -217,10 +217,11 @@ public:
     void writeDeformedImageLowRes(const std::string& filename, const std::string& gridName);
 
     void writeDeformedImage(const std::string& filename, const std::string& gridName, bool useColorMap, ResolutionMode resolution);
-    void writeDeformedImage(const std::string& filename, const std::string& gridName, const glm::vec3& bbMin, const glm::vec3& bbMax, bool useColorMap, ResolutionMode resolution);
-    void writeDeformedImageGeneric(const std::string& filename, const std::string& gridName, const glm::vec3& bbMin, const glm::vec3& bbMax, Image::ImageDataType imgDataType, bool useColorMap, ResolutionMode resolution);
+    void writeDeformedImage(const std::string& filename, const std::string& gridName, bool useColorMap, const glm::vec3& voxelSize);
+    void writeDeformedImage(const std::string& filename, const std::string& gridName, const glm::vec3& bbMin, const glm::vec3& bbMax, bool useColorMap, const glm::vec3& voxelSize);
+    void writeDeformedImageGeneric(const std::string& filename, const std::string& gridName, const glm::vec3& bbMin, const glm::vec3& bbMax, Image::ImageDataType imgDataType, bool useColorMap, const glm::vec3& voxelSize);
     template<typename DataType>
-    void writeDeformedImageTemplated(const std::string& filename, const std::string& gridName, const glm::vec3& bbMin, const glm::vec3& bbMax, int bit, Image::ImageDataType dataType, bool useColorMap, ResolutionMode resolution);
+    void writeDeformedImageTemplated(const std::string& filename, const std::string& gridName, const glm::vec3& bbMin, const glm::vec3& bbMax, int bit, Image::ImageDataType dataType, bool useColorMap, const glm::vec3& voxelSize);
 
 signals:
     // Signals to the meshManipulator tools
