@@ -25,29 +25,29 @@ void OpenImageForm::connect(Scene * scene) {
             });
 
     QObject::connect(this->buttons["Load"], &QPushButton::clicked, [this, scene](){
-            if(this->useTetMesh) {
+        if(this->useTetMesh) {
             scene->openGrid(this->getName(), this->getImgFilenames(), this->getSubsample(), this->getTetmeshFilename());
-            } else {
+        } else {
             scene->openGrid(this->getName(), this->getImgFilenames(), this->getSubsample(), this->getSizeVoxel(), this->getSizeTetmesh());
-            }
-            bool useCage = !this->fileChoosers["Cage choose"]->filename.isEmpty();
-            if(useCage) {
+        }
+        bool useCage = !this->fileChoosers["Cage choose"]->filename.isEmpty();
+        if(useCage) {
             scene->openCage(this->getName() + "_cage", this->fileChoosers["Cage choose"]->filename.toStdString(), this->getName(), this->checkBoxes["mvc"]->isChecked());
-            }
-            if(!scene->checkTransferMeshValidity(this->getName())) {
+        }
+        if(!scene->checkTransferMeshValidity(this->getName())) {
             {
-            QMessageBox msgBox;
-            msgBox.setText("Warning: scale offset between the image and the tetrahedral mesh.");
-            msgBox.setInformativeText(std::string(std::string("You choose a subsample of [") + std::to_string(this->getSubsample()) + std::string("]. However, the tetrahedral mesh you select seems to be at a different scale. Do you want the software to load the mesh at the correct scale ?")).c_str());
-            msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-            msgBox.setDefaultButton(QMessageBox::Yes);
-            int ret = msgBox.exec();
-            if(ret == QMessageBox::Yes) {
-            scene->getBaseMesh(this->getName())->scale(glm::vec3(1./float(this->getSubsample()), 1./float(this->getSubsample()), 1./float(this->getSubsample())));
-            scene->updateTextureCoordinates(this->getName());
-            scene->updateTetmeshAllGrids();
-            scene->updateSceneCenter();
-            }
+                QMessageBox msgBox;
+                msgBox.setText("Warning: scale offset between the image and the tetrahedral mesh.");
+                msgBox.setInformativeText(std::string(std::string("You choose a subsample of [") + std::to_string(this->getSubsample()) + std::string("]. However, the tetrahedral mesh you select seems to be at a different scale. Do you want the software to load the mesh at the correct scale ?")).c_str());
+                msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+                msgBox.setDefaultButton(QMessageBox::Yes);
+                int ret = msgBox.exec();
+                if(ret == QMessageBox::Yes) {
+                    scene->getBaseMesh(this->getName())->scale(glm::vec3(1./float(this->getSubsample()), 1./float(this->getSubsample()), 1./float(this->getSubsample())));
+                    scene->updateTextureCoordinates(this->getName());
+                    scene->updateTetmeshAllGrids(true);// Update all informations, in particular texture coordinates because the Tetmesh is smaller
+                    scene->updateSceneCenter();
+                }
             }
             {
                 if(useCage) {
@@ -64,9 +64,9 @@ void OpenImageForm::connect(Scene * scene) {
                     }
                 }
             }
-            }
-            this->hide();
-            Q_EMIT loaded();
+        }
+        this->hide();
+        Q_EMIT loaded();
     });
 
     QObject::connect(this->buttons["Mouse brain atlas"], &QPushButton::clicked, [this, scene](){

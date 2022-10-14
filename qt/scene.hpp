@@ -339,7 +339,7 @@ public slots:
 
     // Rendering slots
     void setColorChannel(ColorChannel mode);
-    void updateTetmeshAllGrids();
+    void updateTetmeshAllGrids(bool updateAllInfos = false);
     std::pair<uint16_t, uint16_t> sendGridValuesToGPU(int gridIdx);
     void setLightPosition(const glm::vec3& lighPosition);
 

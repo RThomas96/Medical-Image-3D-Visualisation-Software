@@ -888,7 +888,7 @@ void PlanarViewForm::updateSlice() {
             this->scene->slotSetNormalizedPlaneDisplacement(Scene::CuttingPlaneDirection::X, 0.);
             this->scene->slotSetNormalizedPlaneDisplacement(Scene::CuttingPlaneDirection::Y, 0.);
         }
-        //this->scene->updatePlaneControlWidget();
+        Q_EMIT this->scene->planeControlWidgetNeedUpdate(this->scene->planeDisplacement);
     }
     this->labels["SliderX"]->setText(std::to_string(this->sliders["SliderX"]->value()).c_str());
 }

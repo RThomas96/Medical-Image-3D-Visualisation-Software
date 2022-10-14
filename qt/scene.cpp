@@ -948,7 +948,6 @@ void Scene::slotSetPlaneDisplacement(std::string gridName, CuttingPlaneDirection
             break;
     }
     Q_EMIT planesMoved(this->computePlanePositions());
-    Q_EMIT planeControlWidgetNeedUpdate(this->planeDisplacement);
 }
 
 void Scene::slotTogglePlaneDirection(CuttingPlaneDirection direction) {
@@ -1103,9 +1102,13 @@ void Scene::updateUserColorScale() {
 }
 
 // TODO: replace this function by a real update function
-void Scene::updateTetmeshAllGrids() {
-    for(auto grid : grids)
-        grid->sendTetmeshToGPU(Grid::InfoToSend(Grid::InfoToSend::VERTICES | Grid::InfoToSend::NORMALS));
+void Scene::updateTetmeshAllGrids(bool updateAllInfos) {
+    for(auto grid : grids) {
+        if(updateAllInfos)
+            grid->sendTetmeshToGPU(Grid::InfoToSend(Grid::InfoToSend::VERTICES | Grid::InfoToSend::NORMALS | Grid::InfoToSend::NEIGHBORS | Grid::InfoToSend::TEXCOORD));
+        else
+            grid->sendTetmeshToGPU(Grid::InfoToSend(Grid::InfoToSend::VERTICES | Grid::InfoToSend::NORMALS));
+    }
     Q_EMIT meshMoved();
 }
 
@@ -1952,31 +1955,31 @@ void Scene::writeDeformedImageTemplated(const std::string& filename, const std::
     glm::ivec3 sceneImageSize = glm::vec3(0, 0, 0);
     //ResolutionMode resolution = ResolutionMode::FULL_RESOLUTION;
 
+    Grid * fromGrid = this->grids[this->getGridIdx(gridName)];
+    glm::vec3 worldSize = fromGrid->getDimensions();
+    glm::vec3 voxelSize = fromGrid->getVoxelSize(resolution);
+
     auto start = std::chrono::steady_clock::now();
 
-    Grid * fromGrid = this->grids[this->getGridIdx(gridName)];
     glm::vec3 fromImageToCustomImage = glm::vec3(0., 0., 0.);
 
     auto fromWorldToImage = [&](glm::vec3& p, bool ceil) {
         p -= fromGrid->bbMin;
         for(int i = 0; i < 3; ++i) {
             if(ceil)
-                p[i] = std::ceil(p[i]/fromGrid->getVoxelSize(resolution)[i]); 
+                p[i] = std::ceil(p[i]/voxelSize[i]);
             else
-                p[i] = std::floor(p[i]/fromGrid->getVoxelSize(resolution)[i]); 
+                p[i] = std::floor(p[i]/voxelSize[i]);
         }
         p /= fromImageToCustomImage;
     };
 
     auto getWorldCoordinates = [&](glm::vec3& p) {
         for(int i = 0; i < 3; ++i) {
-            p[i] = (float(std::ceil(p[i] * fromImageToCustomImage[i])) + 0.5) * fromGrid->getVoxelSize(resolution)[i];
+            p[i] = (float(std::ceil(p[i] * fromImageToCustomImage[i])) + 0.5) * voxelSize[i];
         }
         p += fromGrid->bbMin;
     };
-
-    glm::vec3 worldSize = fromGrid->getDimensions();
-    glm::vec3 voxelSize = fromGrid->getVoxelSize(resolution);
 
     glm::ivec3 n(0, 0, 0);
     for(int i = 0 ; i < 3 ; i++) {
@@ -2001,10 +2004,10 @@ void Scene::writeDeformedImageTemplated(const std::string& filename, const std::
     //std::cout << "BBMin:" << fromGrid->bbMin+glm::vec3(bbMinWrite)*voxelSize << std::endl;
     //std::cout << "BBMax:" << fromGrid->bbMin+glm::vec3(bbMinWrite)*voxelSize + glm::vec3(imageSize)*voxelSize << std::endl;
 
-    if(resolution == ResolutionMode::FULL_RESOLUTION) {
+    //if(resolution == ResolutionMode::FULL_RESOLUTION) {
         // Apply resolution
-        bbMinWrite = glm::vec3(bbMinWrite) * fromGrid->sampler.resolutionRatio;
-    }
+        //bbMinWrite = glm::vec3(bbMinWrite) * fromGrid->sampler.resolutionRatio;
+    //}
 
     TinyTIFFWriterFile * tif = nullptr;
     if(useCustomColor) {
