@@ -31,6 +31,7 @@
 #include "grid/geometry/base_mesh.hpp"
 #include "grid/geometry/surface_mesh.hpp"
 #include "grid/ui/mesh_manipulator.hpp"
+#include "qobjectdefs.h"
 
 /** This constructor not only creates the object, but also sets the default values for the Scene in order
  *  to be drawn, even if it is empty at the time of the first call to a draw function.
@@ -150,7 +151,7 @@ void Scene::initGl(QOpenGLContext* _context) {
 
     // Generate controller positions
     //this->initGL(this->get_context());
-    this->gridToDraw = -1;
+    this->activeGrid = -1;
     //this->prepareSphere();
 
     //this->surfaceMesh = nullptr;
@@ -315,7 +316,7 @@ void Scene::addGrid() {
     gridView->minValue = min;
     gridView->maxValue = max;
 
-    if(this->gridToDraw == 0) {
+    if(this->activeGrid == 0) {
         QColor r = Qt::GlobalColor::red;
         QColor b = Qt::GlobalColor::blue;
         drawable_gridView->color_0 = glm::vec3(r.redF(), r.greenF(), r.blueF());
@@ -332,7 +333,7 @@ void Scene::addGrid() {
     drawable_gridView->colorChannelAttributes[0].setMaxVisible(max);
     drawable_gridView->colorChannelAttributes[0].setMaxColorScale(max);
 
-    if(this->gridToDraw == 1) {
+    if(this->activeGrid == 1) {
         this->controlPanel->setMinTexValAlternate(1.);
         this->controlPanel->updateMinValueAlternate(1.);
         this->controlPanel->setMaxTexValAlternate(max);
@@ -359,8 +360,8 @@ void Scene::addGrid() {
 }
 
 void Scene::recompileShaders(bool verbose) {
-    if(this->gridToDraw >= 0)
-        this->grids[this->gridToDraw]->recompileShaders();
+    if(this->activeGrid >= 0)
+        this->grids[this->activeGrid]->recompileShaders();
 
     GLuint newSelectionProgram	 = this->compileShaders("../shaders/selection.vert", "", "../shaders/selection.frag", true);
 
@@ -645,19 +646,14 @@ void Scene::drawScene(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool show
 
     if(this->displayGrid) {
         if(this->grids.size() > 0) {
-            int originalGridToDraw = this->gridToDraw;
             for(auto i : this->gridsToDraw) {
-                if(i < this->grids.size()) {
-                    this->gridToDraw = i;
-                    glm::vec3 planePosition = this->computePlanePositionsWithActivation();
-                    if(i == 0)
-                        planePosition += glm::vec3(10., 10., 10.);
-                    glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
-                    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-                    this->grids[this->gridToDraw]->drawGrid(mvMat, pMat, camPos, planePosition, this->planeDirection, false, w, h);
-                }
+                glm::vec3 planePosition = this->computePlanePositionsWithActivation();
+                if(i == 0)
+                    planePosition += glm::vec3(10., 10., 10.);
+                glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                this->grids[i]->drawGrid(mvMat, pMat, camPos, planePosition, this->planeDirection, false, w, h);
             }
-            this->gridToDraw = originalGridToDraw;
 
             float quadVertices[] = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
                                      // positions   // texCoords
@@ -933,6 +929,7 @@ void Scene::slotSetNormalizedPlaneDisplacement(CuttingPlaneDirection direction, 
             break;
     }
     Q_EMIT planesMoved(this->computePlanePositions());
+    Q_EMIT planeControlWidgetNeedUpdate(this->planeDisplacement);
 }
 
 void Scene::slotSetPlaneDisplacement(std::string gridName, CuttingPlaneDirection direction, float scalar) {
@@ -951,6 +948,7 @@ void Scene::slotSetPlaneDisplacement(std::string gridName, CuttingPlaneDirection
             break;
     }
     Q_EMIT planesMoved(this->computePlanePositions());
+    Q_EMIT planeControlWidgetNeedUpdate(this->planeDisplacement);
 }
 
 void Scene::slotTogglePlaneDirection(CuttingPlaneDirection direction) {
@@ -1118,8 +1116,8 @@ void Scene::updateTetmeshAllGrids() {
 /*********************************/
 
 void Scene::toggleDisplayTetmesh(bool value) {
-    if(this->gridToDraw >= 0)
-        this->grids[this->gridToDraw]->displayTetmesh = value;
+    if(this->activeGrid >= 0)
+        this->grids[this->activeGrid]->displayTetmesh = value;
 }
 
 void Scene::setColorChannel(ColorChannel mode) {
@@ -1279,7 +1277,7 @@ void Scene::addGridToScene(const std::string& name, Grid * newGrid) {
     this->grids.push_back(gridView);
     this->grids.back()->initializeGL(this);
 
-    this->gridToDraw += 1;
+    this->activeGrid += 1;
 
     this->addGrid();
     this->grids_name.push_back(name);
@@ -1290,7 +1288,7 @@ void Scene::addGridToScene(const std::string& name, Grid * newGrid) {
     Q_EMIT meshAdded(name, true, false);
     this->changeActiveMesh(name);
 
-    this->gridsToDraw.push_back(this->gridToDraw);
+    this->gridsToDraw.push_back(this->activeGrid);
 }
 
 int Scene::autofitSubsample(int initialSubsample, const std::vector<std::string>& imgFilenames) {
@@ -1555,6 +1553,7 @@ void Scene::updateTools(UITool::MeshManipulatorType tool) {
     QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needChangeCursorInPlanarView(UITool::CursorType)), this, SLOT(changeCursorInPlanarView(UITool::CursorType)));
     QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needDisplayVertexInfo(std::pair<int,glm::vec3>)), this, SLOT(changeSelectedPoint(std::pair<int,glm::vec3>)));
     QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needDisplayInfos(const std::string&)), this, SIGNAL(needDisplayInfos(const std::string&)));
+    QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(meshIsModified()), this, SIGNAL(meshMoved()));
 
     QObject::connect(this, SIGNAL(keyPressed(QKeyEvent*)), dynamic_cast<QObject*>(this->meshManipulator), SLOT(keyPressed(QKeyEvent*)));
     QObject::connect(this, SIGNAL(keyReleased(QKeyEvent*)), dynamic_cast<QObject*>(this->meshManipulator), SLOT(keyReleased(QKeyEvent*)));
@@ -1591,7 +1590,7 @@ void Scene::updateTools(UITool::MeshManipulatorType tool) {
         QObject::connect(dynamic_cast<UITool::MarkerManipulator*>(this->meshManipulator), SIGNAL(needCastRay()), this, SIGNAL(needCastRay()));
         QObject::connect(this, &Scene::rayIsCasted, this, [this](const glm::vec3& origin, const glm::vec3& direction) {
             std::vector<bool> visuMap;
-            this->grids[this->gridToDraw]->getVisibilityMap(visuMap);
+            this->grids[this->activeGrid]->getVisibilityMap(visuMap);
             dynamic_cast<UITool::MarkerManipulator*>(this->meshManipulator)->placeManipulator(origin, direction, visuMap, this->computePlanePositions());
         });
     }
@@ -1709,17 +1708,10 @@ void Scene::changeActiveMesh(const std::string& name) {
     this->updateSceneCenter();
     this->updateSceneRadius();
     if(this->isGrid(activeMesh)) {
-        int gridIdx = this->getGridIdx(activeMesh);
-        this->gridToDraw = gridIdx;
-        this->grids[gridIdx]->sendTetmeshToGPU(Grid::InfoToSend(Grid::InfoToSend::VERTICES | Grid::InfoToSend::NORMALS | Grid::InfoToSend::TEXCOORD | Grid::InfoToSend::NEIGHBORS));
+        this->activeGrid = this->getGridIdx(activeMesh);;
+    } else if (this->isCage(activeMesh)) {
+        this->activeGrid = this->getGridIdxLinkToCage(activeMesh);
     }
-    //else if (this->multiGridRendering && this->isCage(activeMesh)) {
-    //    int gridIdx = this->getGridIdxLinkToCage(activeMesh);
-    //    if(gridIdx != -1) {
-    //        this->gridToDraw = gridIdx;
-    //        this->sendTetmeshToGPU(gridIdx, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS | InfoToSend::TEXCOORD | InfoToSend::NEIGHBORS));
-    //    }
-    //}
     Q_EMIT activeMeshChanged();
     this->changeCurrentTool(this->currentTool);
     this->shouldUpdateUserColorScales = true;
@@ -2381,7 +2373,8 @@ void Scene::clear() {
     this->grids.clear();
     this->meshes.clear();
     this->graph_meshes.clear();
-    gridToDraw = -1;
+    this->gridsToDraw.clear();
+    activeGrid = -1;
 }
 
 glm::vec3 Scene::getGridImgSize(const std::string& name) {
@@ -2397,14 +2390,14 @@ std::pair<uint16_t, uint16_t> Scene::getGridMinMaxValues(const std::string& name
 }
 
 std::pair<uint16_t, uint16_t> Scene::getGridMinMaxValues() {
-    if(gridToDraw != -1)
-        return std::make_pair(this->grids[this->gridToDraw]->minValue, this->grids[this->gridToDraw]->maxValue);
+    if(activeGrid != -1)
+        return std::make_pair(this->grids[this->activeGrid]->minValue, this->grids[this->activeGrid]->maxValue);
     return std::make_pair(0, 0);
 }
 
 std::vector<bool> Scene::getGridUsageValues(int minValue) {
-    std::vector<int> histogram = this->grids[this->gridToDraw]->sampler.getHistogram(this->grids[this->gridToDraw]->maxValue+1);
-    if(gridToDraw != -1) {
+    std::vector<int> histogram = this->grids[this->activeGrid]->sampler.getHistogram(this->grids[this->activeGrid]->maxValue+1);
+    if(activeGrid != -1) {
         std::vector<bool> usage;
         usage.reserve(histogram.size());
         for(auto& value : histogram) {
@@ -2438,8 +2431,8 @@ void Scene::setMultiGridRendering(bool value) {
 };
 
 void Scene::setDrawOnlyBoundaries(bool value) {
-    if(this->gridToDraw >= 0)
-        this->grids[this->gridToDraw]->drawOnlyBoundaries = value;
+    if(this->activeGrid >= 0)
+        this->grids[this->activeGrid]->drawOnlyBoundaries = value;
 }
 
 void Scene::setBlend(float value) {
@@ -2453,9 +2446,9 @@ void Scene::setRenderSize(int h, int w) {
 }
 
 void Scene::resetRanges() {
-   if(this->gridToDraw == -1)
+   if(this->activeGrid == -1)
        return;
-   auto& grid = this->grids[this->gridToDraw];
+   auto& grid = this->grids[this->activeGrid];
    grid->displayRangeSegmentedData.clear();
    grid->displayColorSegmentedData.clear();
    grid->displaySegmentedData.clear();
@@ -2463,9 +2456,9 @@ void Scene::resetRanges() {
 }
 
 void Scene::addRange(uint16_t min, uint16_t max, glm::vec3 color, bool visible, bool updateUBO) {
-   if(this->gridToDraw == -1)
+   if(this->activeGrid == -1)
        return;
-   auto& grid = this->grids[this->gridToDraw];
+   auto& grid = this->grids[this->activeGrid];
    grid->displayRangeSegmentedData.push_back(std::make_pair(min, max));
    grid->displayColorSegmentedData.push_back(color);
    grid->displaySegmentedData.push_back(visible);
@@ -2474,23 +2467,23 @@ void Scene::addRange(uint16_t min, uint16_t max, glm::vec3 color, bool visible, 
 }
 
 void Scene::getRanges(std::vector<std::pair<uint16_t, uint16_t>>& ranges) {
-   if(this->gridToDraw == -1)
+   if(this->activeGrid == -1)
        return;
-   auto& grid = this->grids[this->gridToDraw];
+   auto& grid = this->grids[this->activeGrid];
    ranges = grid->displayRangeSegmentedData;
 }
 
 void Scene::getRangesColor(std::vector<glm::vec3>& colors) {
-   if(this->gridToDraw == -1)
+   if(this->activeGrid == -1)
        return;
-   auto& grid = this->grids[this->gridToDraw];
+   auto& grid = this->grids[this->activeGrid];
    colors = grid->displayColorSegmentedData;
 }
 
 void Scene::getRangesVisu(std::vector<bool>& visu) {
-   if(this->gridToDraw == -1)
+   if(this->activeGrid == -1)
        return;
-   auto& grid = this->grids[this->gridToDraw];
+   auto& grid = this->grids[this->activeGrid];
    visu = grid->displaySegmentedData;
 }
 

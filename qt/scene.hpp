@@ -407,7 +407,7 @@ public:
     UITool::GL::Selection * glSelection;
 
     int maximumTextureSize;// Set by the viewer
-    int gridToDraw = -1;
+    int activeGrid = -1;
     std::vector<int> gridsToDraw;
 
     glm::vec3 cameraPosition;

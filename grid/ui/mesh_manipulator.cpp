@@ -58,7 +58,7 @@ namespace UITool {
     }
 
     DirectManipulator::DirectManipulator(BaseMesh * mesh): MeshManipulator(mesh) {
-        this->meshIsModified = false;
+        this->meshHasBeenModified = false;
         this->guizmo = nullptr;
         std::vector<glm::vec3> positions = mesh->getVertices();
         this->manipulators.reserve(positions.size());
@@ -128,7 +128,7 @@ namespace UITool {
     void DirectManipulator::moveManipulator(Manipulator * manipulator) {
         ptrdiff_t index = manipulator - &(this->manipulators[0]);
         this->mesh->movePoints({int(index)}, {manipulator->getManipPosition()});
-        this->meshIsModified = true;
+        this->meshHasBeenModified = true;
     }
 
     void DirectManipulator::selectManipulator(Manipulator * manipulator) {
@@ -151,9 +151,10 @@ namespace UITool {
     void DirectManipulator::mousePressed(QMouseEvent*) {};
 
     void DirectManipulator::mouseReleased(QMouseEvent*) {
-        if(this->meshIsModified) {
+        if(this->meshHasBeenModified) {
             mesh->addStateToHistory();
-            this->meshIsModified = false;
+            Q_EMIT meshIsModified();
+            this->meshHasBeenModified = false;
         }
     };
 
@@ -180,7 +181,7 @@ namespace UITool {
     /***/
 
     GlobalManipulator::GlobalManipulator(BaseMesh * mesh): MeshManipulator(mesh) {
-        this->meshIsModified = false;
+        this->meshHasBeenModified = false;
         this->selection.disable();
         this->evenMode = false;
         this->guizmo = new RotationManipulator();
@@ -209,7 +210,7 @@ namespace UITool {
         }
         QObject::connect(this->guizmo, &RotationManipulator::moved, this, [this]() {this->moveManipulator(nullptr);});
 
-        this->meshIsModified = false;
+        this->meshHasBeenModified = false;
     }
 
     void GlobalManipulator::getAllPositions(std::vector<glm::vec3>& positions) {
@@ -224,7 +225,7 @@ namespace UITool {
             newPoints[i] = glm::vec3(deformedPoint[0], deformedPoint[1], deformedPoint[2]);
         }
         this->mesh->movePoints(newPoints);
-        this->meshIsModified = true;
+        this->meshHasBeenModified = true;
     }
 
     void GlobalManipulator::toggleEvenMode() {
@@ -252,13 +253,14 @@ namespace UITool {
     void GlobalManipulator::mousePressed(QMouseEvent* e) {}
 
     void GlobalManipulator::mouseReleased(QMouseEvent* e) {
-        if(this->meshIsModified) {
+        if(this->meshHasBeenModified) {
             emit needUpdateSceneCenter();
             this->mesh->coordinate_system[0] = glm::vec3(guizmo->RepX.x, guizmo->RepX.y, guizmo->RepX.z);
             this->mesh->coordinate_system[1] = glm::vec3(guizmo->RepY.x, guizmo->RepY.y, guizmo->RepY.z);
             this->mesh->coordinate_system[2] = glm::vec3(guizmo->RepZ.x, guizmo->RepZ.y, guizmo->RepZ.z);
             mesh->addStateToHistory();
-            this->meshIsModified = false;
+            Q_EMIT meshIsModified();
+            this->meshHasBeenModified = false;
         }
     }
 
@@ -318,7 +320,7 @@ namespace UITool {
 
         dynamic_cast<SurfaceMesh*>(this->mesh)->deformARAP(positions);
         this->setPositions(positions);
-        this->meshIsModified = true;
+        this->meshHasBeenModified = true;
     }
 
     void ARAPManipulator::setPositions(std::vector<glm::vec3>& positions) {
@@ -539,10 +541,11 @@ namespace UITool {
     void ARAPManipulator::mouseReleased(QMouseEvent* e) {
         print_debug("Mouse released: [");
 
-        if(this->meshIsModified) {
+        if(this->meshHasBeenModified) {
             print_debug("Add to history");
             mesh->addStateToHistory();
-            this->meshIsModified = false;
+            Q_EMIT meshIsModified();
+            this->meshHasBeenModified = false;
         }
         if(this->selectionMode == INACTIVE) {
             print_debug("Selection mode is: INACTIVE");
@@ -631,7 +634,7 @@ SliceManipulator::SliceManipulator(BaseMesh * mesh): MeshManipulator(mesh) {
     this->selectSlice(this->currentSelectedSlice);
 
     this->guizmoUpToDate = false;
-    this->meshIsModified = false;
+    this->meshHasBeenModified = false;
 
     this->lastModifiedSlice = 0;
 
@@ -700,9 +703,10 @@ void SliceManipulator::mousePressed(QMouseEvent* e) {
 };
 
 void SliceManipulator::mouseReleased(QMouseEvent*) {
-    if(this->meshIsModified) {
+    if(this->meshHasBeenModified) {
         mesh->addStateToHistory();
-        this->meshIsModified = false;
+        Q_EMIT meshIsModified();
+        this->meshHasBeenModified = false;
     }
 };
 
@@ -849,7 +853,7 @@ void SliceManipulator::moveGuizmo() {
     }
     dynamic_cast<SurfaceMesh*>(this->mesh)->deformARAP(positions);
     this->setPositions(positions);
-    this->meshIsModified = true;
+    this->meshHasBeenModified = true;
 }
 
 void SliceManipulator::setPositions(std::vector<glm::vec3>& positions) {

@@ -437,6 +437,8 @@ void PlanarViewForm::addViewer(const QString& name, const glm::vec3& side) {
 }
 
 void PlanarViewForm::selectViewer(const QString& name) {
+    if(!this->viewers[name])
+        return;
     this->storeCurrentValues();
     this->selectedViewer = name;
     this->labels["SelectedViewer"]->setText(name);
@@ -893,39 +895,46 @@ void PlanarViewForm::updateSlice() {
 
 void PlanarViewForm::connect(Scene * scene) {
     QObject::connect(this, &Form::widgetModified, [this, scene](const QString &id){
-            if(this->noViewerSelected())
+        if(this->noViewerSelected())
             return;
-            if(id == "From")
+        if(id == "From")
             this->backImageChanged(scene);
 
-            if(id == "Auto")
+        if(id == "Auto")
             this->setAutoImageResolution();
 
-            if(id == "X" || id == "Y" || id == "Z" || id == "Interpolation" || id == "UseBack" || id == "UseFront" || id == "From" || id == "To" || id == "AlphaBack" || id == "AlphaFront" || "MirrorX" || "MirrorY")
+        if(id == "X" || id == "Y" || id == "Z" || id == "Interpolation" || id == "UseBack" || id == "UseFront" || id == "From" || id == "To" || id == "AlphaBack" || id == "AlphaFront" || "MirrorX" || "MirrorY")
             this->updateImageViewer();
 
-            if(id == "SideX" || id == "SideY" || id == "SideZ") {
+        if(id == "SideX" || id == "SideY" || id == "SideZ") {
             this->storeCurrentValues();
             if(id == "SideX")
-            this->viewers[this->selectedViewer]->direction = glm::vec3(1., 0., 0.);
+                this->viewers[this->selectedViewer]->direction = glm::vec3(1., 0., 0.);
             if(id == "SideY")
-            this->viewers[this->selectedViewer]->direction = glm::vec3(0., 1., 0.);
+                this->viewers[this->selectedViewer]->direction = glm::vec3(0., 1., 0.);
             if(id == "SideZ")
-            this->viewers[this->selectedViewer]->direction = glm::vec3(0., 0., 1.);
+                this->viewers[this->selectedViewer]->direction = glm::vec3(0., 0., 1.);
             this->backImageChanged(scene);
             this->recoverValues();
             this->updateImageViewer();
-            }
+        }
 
-            if(id == "SliderX" || id == "SideX" || id == "SideY" || id == "SideZ" || id == "Link") {
-                this->updateSlice();
-            }
+        if(id == "SliderX" || id == "SideX" || id == "SideY" || id == "SideZ" || id == "Link") {
+            this->updateSlice();
+        }
     });
 
     QObject::connect(scene, &Scene::meshMoved, [this, scene](){
-            this->updateImageViewer();
-            //this->reset();
-            //this->drawImages();
+            //this->updateSlice();
+            Q_EMIT scene->cursorChanged(UITool::CursorType::HOURGLASS);
+            QString originalViewer = this->selectedViewer;
+            for(auto viewer : this->viewers) {
+                QString name = viewer.first;
+                this->selectViewer(name);
+                this->updateImageViewer();
+            }
+            this->selectViewer(originalViewer);
+            Q_EMIT scene->cursorChanged(UITool::CursorType::NORMAL);
             });
 
     QObject::connect(this->fileChoosers["Save"], &FileChooser::fileSelected, [this](){

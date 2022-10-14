@@ -200,6 +200,7 @@ namespace UITool {
         //This signal is used to trigger a function in the scene
         //This should be removed when the grid will have its own "Drawable" class
         virtual void needDisplayInfos(const std::string& infos) = 0;
+        virtual void meshIsModified() = 0;
     };
 }
 Q_DECLARE_INTERFACE(UITool::MeshManipulator, "MeshManipulator")
@@ -239,11 +240,12 @@ namespace UITool {
     signals:
         void needDisplayVertexInfo(std::pair<int, glm::vec3> selectedPoint);
         void needDisplayInfos(const std::string& infos) override;
+        void meshIsModified() override;
     private:
 		std::vector<Manipulator> manipulators;
         std::vector<bool> manipulatorsToDisplay;
         std::vector<bool> selectedManipulators;
-        bool meshIsModified;
+        bool meshHasBeenModified;
         glm::vec3 defaultManipulatorColor;
     };
 
@@ -275,11 +277,12 @@ namespace UITool {
     signals:
         void needUpdateSceneCenter();
         void needDisplayInfos(const std::string& infos) override;
+        void meshIsModified() override;
 
 	private:
         bool evenMode;
-        bool meshIsModified;
-	};
+        bool meshHasBeenModified;
+    };
 
     //! @ingroup uitools
     class ARAPManipulator : public MeshManipulator {
@@ -308,6 +311,7 @@ namespace UITool {
         void needChangeCursor(UITool::CursorType cursorType);
         void needChangeCursorInPlanarView(UITool::CursorType cursorType);
         void needDisplayInfos(const std::string& infos) override;
+        void meshIsModified() override;
 
     protected:
         enum SelectionMode { INACTIVE , ACTIVE , ADD_FIXED , ADD_MOVING , REMOVE };
@@ -330,7 +334,7 @@ namespace UITool {
 
     private:
         SelectionMode selectionMode;
-        bool meshIsModified;
+        bool meshHasBeenModified;
     };
 
     class SliceManipulator : public MeshManipulator {
@@ -364,6 +368,7 @@ namespace UITool {
     signals:
         void needChangePointsToProject(std::vector<int> selectedPoints);
         void needDisplayInfos(const std::string& infos) override;
+        void meshIsModified() override;
     private:
 		std::vector<Manipulator> manipulators;
 
@@ -375,7 +380,7 @@ namespace UITool {
         glm::vec3 slicesNormals[3];
 
         bool guizmoUpToDate;
-        bool meshIsModified;
+        bool meshHasBeenModified;
 
         float selectionRadius;
         float selectionRange;
@@ -425,6 +430,7 @@ namespace UITool {
         void needChangeCursor(UITool::CursorType cursorType);
         void needDisplayVertexInfo(std::pair<int, glm::vec3> selectedPoint);
         void needDisplayInfos(const std::string& infos) override;
+        void meshIsModified() override;
 
     private:
         Grid * grid;
