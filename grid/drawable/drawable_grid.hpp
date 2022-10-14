@@ -55,6 +55,15 @@ public:
     void updateMinMaxDisplayValues();
     void getVisibilityMap(std::vector<bool>& visMap);
 
+    // Choose which data of the tetmesh to send to the GPU
+    enum InfoToSend {
+        VERTICES  = 0b00000001,
+        NORMALS   = 0b00000010,
+        TEXCOORD  = 0b00000100,
+        NEIGHBORS = 0b00001000
+    };
+    void sendTetmeshToGPU(const InfoToSend infoToSend);
+
     // Tetrahedral mesh rendering
     GLuint vertexPositions;
     GLuint textureCoordinates;
@@ -103,6 +112,7 @@ protected:
     void generateColorScales();
     void tex3D_buildBuffers();
     GLuint uploadTexture1D(const TextureUpload& tex);
+    GLuint uploadTexture2D(const TextureUpload& tex);
     void setUniformBufferData(GLuint uniform_buffer, std::size_t begin_bytes, std::size_t size_bytes, GLvoid* data);
 };
 

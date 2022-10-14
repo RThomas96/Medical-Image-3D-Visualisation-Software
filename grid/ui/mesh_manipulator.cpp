@@ -128,7 +128,6 @@ namespace UITool {
     void DirectManipulator::moveManipulator(Manipulator * manipulator) {
         ptrdiff_t index = manipulator - &(this->manipulators[0]);
         this->mesh->movePoints({int(index)}, {manipulator->getManipPosition()});
-        Q_EMIT needSendTetmeshToGPU();
         this->meshIsModified = true;
     }
 
@@ -226,7 +225,6 @@ namespace UITool {
         }
         this->mesh->movePoints(newPoints);
         this->meshIsModified = true;
-        Q_EMIT needSendTetmeshToGPU();
     }
 
     void GlobalManipulator::toggleEvenMode() {
@@ -328,7 +326,6 @@ namespace UITool {
             this->manipulators[i].setManipPosition(this->mesh->getVertice(i));
         }
         print_debug("Set positions");
-        Q_EMIT needSendTetmeshToGPU();
     }
 
     void ARAPManipulator::updateSelection() {
@@ -859,7 +856,6 @@ void SliceManipulator::setPositions(std::vector<glm::vec3>& positions) {
     for(int i = 0; i < this->mesh->getNbVertices(); ++i) {
         this->manipulators[i].setManipPosition(this->mesh->getVertice(i));
     }
-    Q_EMIT needSendTetmeshToGPU();
 }
 
 void SliceManipulator::rotateLastModifiedSlice(float angle) {
@@ -1062,7 +1058,6 @@ void MarkerManipulator::applyDeformation() {
     for(int i = 0; i < this->mesh->getNbVertices(); ++i) {
         this->mesh_manipulators[i].setManipPosition(this->mesh->getVertice(i));
     }
-    Q_EMIT needSendTetmeshToGPU();
     mesh->addStateToHistory();
 }
 

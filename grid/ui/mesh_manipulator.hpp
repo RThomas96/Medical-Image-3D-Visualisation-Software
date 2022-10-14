@@ -199,7 +199,6 @@ namespace UITool {
 
         //This signal is used to trigger a function in the scene
         //This should be removed when the grid will have its own "Drawable" class
-        virtual void needSendTetmeshToGPU() = 0;
         virtual void needDisplayInfos(const std::string& infos) = 0;
     };
 }
@@ -238,7 +237,6 @@ namespace UITool {
         void draw() override;
 
     signals:
-        void needSendTetmeshToGPU() override;
         void needDisplayVertexInfo(std::pair<int, glm::vec3> selectedPoint);
         void needDisplayInfos(const std::string& infos) override;
     private:
@@ -275,7 +273,6 @@ namespace UITool {
         }
 
     signals:
-        void needSendTetmeshToGPU() override;
         void needUpdateSceneCenter();
         void needDisplayInfos(const std::string& infos) override;
 
@@ -308,7 +305,6 @@ namespace UITool {
         void toggleEvenMode(bool value);
 
     signals:
-        void needSendTetmeshToGPU() override;
         void needChangeCursor(UITool::CursorType cursorType);
         void needChangeCursorInPlanarView(UITool::CursorType cursorType);
         void needDisplayInfos(const std::string& infos) override;
@@ -366,7 +362,6 @@ namespace UITool {
         void draw() override;
 
     signals:
-        void needSendTetmeshToGPU() override;
         void needChangePointsToProject(std::vector<int> selectedPoints);
         void needDisplayInfos(const std::string& infos) override;
     private:
@@ -426,7 +421,6 @@ namespace UITool {
         void draw() override;
 
     signals:
-        void needSendTetmeshToGPU() override;
         void needCastRay();
         void needChangeCursor(UITool::CursorType cursorType);
         void needDisplayVertexInfo(std::pair<int, glm::vec3> selectedPoint);

@@ -45,7 +45,7 @@ void OpenImageForm::connect(Scene * scene) {
             if(ret == QMessageBox::Yes) {
             scene->getBaseMesh(this->getName())->scale(glm::vec3(1./float(this->getSubsample()), 1./float(this->getSubsample()), 1./float(this->getSubsample())));
             scene->updateTextureCoordinates(this->getName());
-            scene->sendFirstTetmeshToGPU();
+            scene->updateTetmeshAllGrids();
             scene->updateSceneCenter();
             }
             }

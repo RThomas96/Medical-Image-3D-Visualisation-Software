@@ -160,6 +160,11 @@ struct Grid : public TetMesh, public DrawableGrid {
     void rotate(const glm::mat3& transf) override;
     void scale(const glm::vec3& scale) override;
     void setOrigin(const glm::vec3& origin) override;
+
+    void movePoints(const std::vector<int>& origins, const std::vector<glm::vec3>& targets) override {
+        BaseMesh::movePoints(origins, targets);
+        DrawableGrid::sendTetmeshToGPU(Grid::InfoToSend(Grid::InfoToSend::VERTICES | Grid::InfoToSend::NORMALS));
+    }
 };
 
 //! @}

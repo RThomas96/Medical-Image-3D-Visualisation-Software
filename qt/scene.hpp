@@ -100,14 +100,6 @@ enum ColorFunction {
     ColorMagnitude
 };
 
-// Choose which data of the tetmesh to send to the GPU
-enum InfoToSend {
-    VERTICES  = 0b00000001,
-    NORMALS   = 0b00000010,
-    TEXCOORD  = 0b00000100,
-    NEIGHBORS = 0b00001000
-};
-
 /**********************************************************************/
 /**********************************************************************/
 
@@ -347,8 +339,7 @@ public slots:
 
     // Rendering slots
     void setColorChannel(ColorChannel mode);
-    void sendTetmeshToGPU(int gridIdx, const InfoToSend infoToSend);
-    void sendFirstTetmeshToGPU();
+    void updateTetmeshAllGrids();
     std::pair<uint16_t, uint16_t> sendGridValuesToGPU(int gridIdx);
     void setLightPosition(const glm::vec3& lighPosition);
 

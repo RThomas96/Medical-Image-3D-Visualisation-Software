@@ -626,3 +626,177 @@ void DrawableGrid::drawBBox(const glm::vec3& planePos) {
    glEnable(GL_LIGHTING);
    glPolygonMode(GL_FRONT_AND_BACK , GL_FILL);
 }
+
+bool contain(const Grid::InfoToSend& value, const Grid::InfoToSend& contain) {
+    return (value & contain) > 0;
+}
+
+inline void __GetTexSize(std::size_t numTexNeeded, std::size_t* opt_width, std::size_t* opt_height) {
+    std::size_t iRoot = (std::size_t) sqrtf(static_cast<float>(numTexNeeded));
+
+    *opt_width	= iRoot + 1;
+    *opt_height = iRoot;
+    if (((*opt_width) * (*opt_height)) < numTexNeeded) {
+        (*opt_height)++;
+    }
+    if (((*opt_width) * (*opt_height)) < numTexNeeded) {
+        (*opt_width)++;
+    }
+}
+
+void DrawableGrid::sendTetmeshToGPU(const InfoToSend infoToSend) {
+    std::cout << "Send to GPU" << std::endl;
+
+    std::size_t vertWidth = 0, vertHeight = 0;
+    std::size_t normWidth = 0, normHeight = 0;
+    std::size_t coorWidth = 0, coorHeight = 0;
+    std::size_t neighbWidth = 0, neighbHeight = 0;
+
+    //TetMesh& newMesh = *this->grids[gridIdx]->grid->tetmesh;
+    TetMesh& newMesh = *this->grid;
+
+    if(contain(infoToSend, InfoToSend::NORMALS)) {
+        newMesh.computeNormals();
+    }
+    __GetTexSize(newMesh.mesh.size() * 4 * 3, &vertWidth, &vertHeight);
+    __GetTexSize(newMesh.mesh.size() * 4, &normWidth, &normHeight);
+    __GetTexSize(newMesh.mesh.size() * 4 * 3, &coorWidth, &coorHeight);
+    __GetTexSize(newMesh.mesh.size() * 4, &neighbWidth, &neighbHeight);
+
+    DrawableGrid& grid = *this;
+
+    //this->grids[gridIdx]->volumetricMesh.tetrahedraCount = newMesh.mesh.size();
+    grid.tetrahedraCount = newMesh.mesh.size();
+
+    GLfloat* rawVertices  = new GLfloat[vertWidth * vertHeight * 3];
+    GLfloat* rawNormals	  = new GLfloat[normWidth * normHeight * 4];
+    GLfloat* tex		  = new GLfloat[coorWidth * coorHeight * 3];
+    GLfloat* rawNeighbors = new GLfloat[neighbWidth * neighbHeight * 3];
+
+    int iNeigh = 0;
+    int iPt = 0;
+    int iNormal = 0;
+    for (int idx = 0; idx < newMesh.mesh.size(); idx++) {
+        int tetIdx = idx;
+        const Tetrahedron& tet = newMesh.mesh[tetIdx];
+        for(int faceIdx = 0; faceIdx < 4; ++faceIdx) {
+
+            if(contain(infoToSend, InfoToSend::NEIGHBORS)) {
+                rawNeighbors[iNeigh] = static_cast<GLfloat>(tet.neighbors[faceIdx]);
+                iNeigh += 3;
+            }
+
+            if(contain(infoToSend, InfoToSend::NORMALS)) {
+                for (int i = 0; i < 4; ++i) {
+                    rawNormals[iNormal++] = tet.normals[faceIdx][i];
+                    //rawNormals[iNormal++] = glm::normalize((newMesh.getModelMatrix() * tet.normals[faceIdx]))[i];
+                    //rawNormals[iNormal++] = glm::vec4(1., 0., 0., 1.)[i];
+                }
+            }
+
+            for (int k = 0; k < 3; ++k) {
+                int ptIndex = tet.getPointIndex(faceIdx, k);
+                for (int i = 0; i < 3; ++i) {
+                    if(contain(infoToSend, InfoToSend::VERTICES))
+                        rawVertices[iPt] = newMesh.getVertice(ptIndex)[i];
+                    if(contain(infoToSend, InfoToSend::TEXCOORD))
+                        tex[iPt] = newMesh.texCoord[ptIndex][i];
+                    iPt++;
+                }
+            }
+        }
+    }
+
+    // Struct to upload the texture to OpenGL :
+    TextureUpload texParams = {};
+    texParams.minmag.x = GL_NEAREST;
+    texParams.minmag.y = GL_NEAREST;
+    texParams.lod.y	   = -1000.f;
+    texParams.wrap.s   = GL_CLAMP;
+    texParams.wrap.t   = GL_CLAMP;
+
+    if(contain(infoToSend, InfoToSend::VERTICES)) {
+        texParams.internalFormat				   = GL_RGB32F;
+        texParams.size.x						   = vertWidth;
+        texParams.size.y						   = vertHeight;
+        texParams.format						   = GL_RGB;
+        texParams.type							   = GL_FLOAT;
+        texParams.data							   = rawVertices;
+        glDeleteTextures(1, &grid.vertexPositions);
+        grid.vertexPositions = this->uploadTexture2D(texParams);
+    }
+
+    if(contain(infoToSend, InfoToSend::NORMALS)) {
+        texParams.internalFormat			   = GL_RGBA32F;
+        texParams.size.x					   = normWidth;
+        texParams.size.y					   = normHeight;
+        texParams.format					   = GL_RGBA;
+        texParams.data						   = rawNormals;
+        glDeleteTextures(1, &grid.faceNormals);
+        grid.faceNormals = this->uploadTexture2D(texParams);
+    }
+
+    if(contain(infoToSend, InfoToSend::TEXCOORD)) {
+        texParams.internalFormat					  = GL_RGB32F;
+        texParams.size.x							  = coorWidth;
+        texParams.size.y							  = coorHeight;
+        texParams.format							  = GL_RGB;
+        texParams.data								  = tex;
+        glDeleteTextures(1, &grid.textureCoordinates);
+        grid.textureCoordinates = this->uploadTexture2D(texParams);
+    }
+
+    if(contain(infoToSend, InfoToSend::NEIGHBORS)) {
+        texParams.size.x						= neighbWidth;
+        texParams.size.y						= neighbHeight;
+        texParams.data							= rawNeighbors;
+        glDeleteTextures(1, &grid.neighborhood);
+        grid.neighborhood = this->uploadTexture2D(texParams);
+    }
+
+    delete[] tex;
+    delete[] rawVertices;
+    delete[] rawNormals;
+    delete[] rawNeighbors;
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+GLuint DrawableGrid::uploadTexture2D(const TextureUpload& tex) {
+    glEnable(GL_TEXTURE_2D);
+
+    GLuint texHandle = 0;
+    glGenTextures(1, &texHandle);
+    glBindTexture(GL_TEXTURE_2D, texHandle);
+
+    // Min and mag filters :
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, tex.minmag.x);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, tex.minmag.y);
+
+    // Set the min and max LOD values :
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_LOD, tex.lod.x);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_LOD, tex.lod.y);
+
+    // Set the wrap parameters :
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, tex.wrap.x);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, tex.wrap.y);
+
+    // Set the swizzle the user wants :
+    glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, glm::value_ptr(tex.swizzle));
+
+    // Set the pixel alignment :
+    glPixelStorei(GL_PACK_ALIGNMENT, tex.alignment.x);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, tex.alignment.y);
+
+    glTexImage2D(GL_TEXTURE_2D,	   // GLenum : Target
+      static_cast<GLint>(tex.level),	// GLint  : Level of detail of the current texture (0 = original)
+      tex.internalFormat,	 // GLint  : Number of color components in the picture. Here grayscale so GL_RED
+      tex.size.x,	 // GLsizei: Image width
+      tex.size.y,	 // GLsizei: Image height
+      static_cast<GLint>(0),	// GLint  : Border. This value MUST be 0.
+      tex.format,	 // GLenum : Format of the pixel data
+      tex.type,	   // GLenum : Type (the data type as in uchar, uint, float ...)
+      tex.data	  // void*  : Data to load into the buffer
+    );
+
+    return texHandle;
+}
