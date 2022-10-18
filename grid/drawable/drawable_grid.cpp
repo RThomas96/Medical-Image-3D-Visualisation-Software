@@ -293,7 +293,7 @@ void DrawableGrid::prepareUniforms(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camP
     gl->glUniform3fv(getUniform("visuBBMin"), 1, glm::value_ptr(grid->bbMin));
     gl->glUniform3fv(getUniform("visuBBMax"), 1, glm::value_ptr(grid->bbMax));
     gl->glUniform1ui(getUniform("shouldUseBB"), 0);
-    gl->glUniform1f(getUniform("maxValue"), grid->maxValue);
+    gl->glUniform1f(getUniform("maxValue"), grid->getMaxValue());
     gl->glUniform3fv(getUniform("volumeEpsilon"), 1, glm::value_ptr(glm::vec3(1.5, 1.5, 1.5)));
 
     gl->glUniform3fv(getUniform("cam"), 1, glm::value_ptr(camPos));
@@ -533,7 +533,7 @@ void DrawableGrid::setUniformBufferData(GLuint uniform_buffer, std::size_t begin
 void DrawableGrid::getVisibilityMap(std::vector<bool>& visMap) {
     visMap.clear();
 
-    float maxValue = grid->maxValue;
+    float maxValue = grid->getMaxValue();
     visMap.reserve(maxValue);
     for(int i = 0; i <= maxValue; ++i)
         visMap.push_back(false);
@@ -561,7 +561,7 @@ void DrawableGrid::updateMinMaxDisplayValues() {
     this->setUniformBufferData(uboHandle_colorAttributes, 64, 32, &colorChannelAttributes[1]);
     this->setUniformBufferData(uboHandle_colorAttributes, 96, 32, &colorChannelAttributes[2]);
 
-    float maxValue = grid->maxValue;
+    float maxValue = grid->getMaxValue();
     glDeleteTextures(1, &valuesRangeToDisplay);
     glDeleteTextures(1, &valuesRangeColorToDisplay);
 

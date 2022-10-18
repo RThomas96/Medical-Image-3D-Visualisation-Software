@@ -329,7 +329,7 @@ public:
                 glEnable(GL_LIGHTING);
                 glEnable(GL_DEPTH_TEST);
                 glEnable(GL_DEPTH);
-                BasicGL::drawSphere(Origine[0],Origine[1],Origine[2], display_scale*0.5, 15,15);
+                BasicGL::drawSphere(Origine[0],Origine[1],Origine[2], display_scale*0.05, 15,15);
                 glDisable(GL_LIGHTING);
 
 

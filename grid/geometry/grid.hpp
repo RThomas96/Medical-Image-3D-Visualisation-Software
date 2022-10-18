@@ -68,7 +68,7 @@ struct Sampler {
     // Used to compute voxel size
     glm::vec3 getImageDimensions() const;
 
-    std::vector<int> getHistogram(int nbBins) const;
+    std::vector<int> getHistogram() const;
     SimpleImage * image;
 private:
     void fillCache();
@@ -76,9 +76,6 @@ private:
 
 //! @brief Struct able to make the link between the grid and its 3D representation
 struct Grid : public TetMesh, public DrawableGrid {
-
-    uint16_t maxValue;
-    uint16_t minValue;
 
     //This matrix keep track of modification of the TetMesh in order to get back to the sampler space which have 0 as origin
     std::vector<glm::mat4> transformations;
@@ -114,6 +111,9 @@ struct Grid : public TetMesh, public DrawableGrid {
     uint16_t getDeformedValueFromPoint(const TetMesh& initial, const glm::vec3& p, Interpolation::Method interpolationMethod = Interpolation::Method::NearestNeighbor, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
     uint16_t getValueFromPoint(const glm::vec3& coord, Interpolation::Method interpolationMethod = Interpolation::Method::NearestNeighbor, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
     uint16_t getValueFromWorldPoint(const glm::vec3& coord, Interpolation::Method interpolationMethod = Interpolation::Method::NearestNeighbor, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
+
+    uint16_t getMaxValue() {return this->sampler.image->maxValue;}
+    uint16_t getMinValue() {return this->sampler.image->minValue;}
 
     template<typename DataType>
     DataType getValueFromPointGeneric(const glm::vec3& coord) const {

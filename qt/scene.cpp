@@ -313,8 +313,8 @@ void Scene::addGrid() {
 
     uint16_t min = min_max.first;
     uint16_t max = min_max.second;
-    gridView->minValue = min;
-    gridView->maxValue = max;
+    gridView->sampler.image->minValue = min;
+    gridView->sampler.image->maxValue = max;
 
     if(this->activeGrid == 0) {
         QColor r = Qt::GlobalColor::red;
@@ -2045,7 +2045,7 @@ void Scene::writeDeformedImageTemplated(const std::string& filename, const std::
 
         auto upperGrid = this->grids[this->getGridIdx(gridName)];
         auto drawable_upperGrid = this->grids[this->getGridIdx(gridName)];
-        float maxValue = upperGrid->maxValue;
+        float maxValue = upperGrid->getMaxValue();
 
         for(int i = 0; i <= maxValue; ++i) {
             data.push_back(false);
@@ -2396,17 +2396,27 @@ glm::vec3 Scene::getGridVoxelSize(const std::string &name, ResolutionMode resolu
 }
 
 std::pair<uint16_t, uint16_t> Scene::getGridMinMaxValues(const std::string& name) {
-    return std::make_pair(this->grids[this->getGridIdx(name)]->minValue, this->grids[this->getGridIdx(name)]->maxValue);
+    return std::make_pair(this->grids[this->getGridIdx(name)]->getMinValue(), this->grids[this->getGridIdx(name)]->getMaxValue());
 }
 
 std::pair<uint16_t, uint16_t> Scene::getGridMinMaxValues() {
     if(activeGrid != -1)
-        return std::make_pair(this->grids[this->activeGrid]->minValue, this->grids[this->activeGrid]->maxValue);
+        return std::make_pair(this->grids[this->activeGrid]->getMinValue(), this->grids[this->activeGrid]->getMaxValue());
     return std::make_pair(0, 0);
 }
 
 std::vector<bool> Scene::getGridUsageValues(int minValue) {
-    std::vector<int> histogram = this->grids[this->activeGrid]->sampler.getHistogram(this->grids[this->activeGrid]->maxValue+1);
+    std::vector<int> histogram = this->grids[this->activeGrid]->sampler.getHistogram();
+    std::cout << "Histo[0]: " << histogram[0] << std::endl;
+    std::cout << "Histo[1]: " << histogram[1] << std::endl;
+    std::cout << "Histo[2]: " << histogram[2] << std::endl;
+    std::cout << "Histo[3]: " << histogram[3] << std::endl;
+    std::cout << "Histo[4]: " << histogram[4] << std::endl;
+    std::cout << "Histo[5]: " << histogram[5] << std::endl;
+    std::cout << "Histo[6]: " << histogram[6] << std::endl;
+    std::cout << "Histo[7]: " << histogram[7] << std::endl;
+    std::cout << "Histo[8]: " << histogram[8] << std::endl;
+    std::cout << "Histo[9]: " << histogram[9] << std::endl;
     if(activeGrid != -1) {
         std::vector<bool> usage;
         usage.reserve(histogram.size());

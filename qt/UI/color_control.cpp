@@ -432,7 +432,7 @@ void RangeControl::addUnitsAuto() {
     std::vector<bool> usage = scene->getGridUsageValues();
     int nbUnits = minMax.second - minMax.first;
     if(nbUnits < maxNbUnits) {
-        for(int i = 1; i < usage.size(); ++i) {
+        for(int i = minMax.first+1; i < usage.size(); ++i) {
             if(usage[i])
                 this->addUnit(i, i);
         }

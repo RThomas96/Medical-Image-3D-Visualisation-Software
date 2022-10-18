@@ -468,6 +468,9 @@ struct SimpleImage {
     glm::vec3 imgResolution;
     Image::ImageDataType imgDataType;
 
+    uint16_t maxValue;
+    uint16_t minValue;
+
     SimpleImage(const std::vector<std::string>& filename) {
         std::string extension = filename[0].substr(filename[0].find_last_of(".") + 1);
         if(filename.size() > 0 || extension == "tif" || extension == "tiff") {

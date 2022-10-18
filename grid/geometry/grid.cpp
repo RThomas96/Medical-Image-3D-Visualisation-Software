@@ -530,10 +530,15 @@ glm::vec3 Sampler::getVoxelSize() const {
     return this->voxelSize;
 }
 
-std::vector<int> Sampler::getHistogram(int nbBins) const {
+std::vector<int> Sampler::getHistogram() const {
    if(useCache)  {
-       const CImg img = this->cache->img.get_histogram(nbBins);
+       uint16_t minValue = this->image->minValue;
+       uint16_t maxValue = this->image->maxValue;
+       const CImg img = this->cache->img.get_histogram((maxValue - minValue)+1, minValue, maxValue);
        std::vector<int> result;
+       for(int i = 0; i < minValue; ++i) {
+           result.push_back(0);
+       }
        for(auto value : img) {
            result.push_back(value);
        }
