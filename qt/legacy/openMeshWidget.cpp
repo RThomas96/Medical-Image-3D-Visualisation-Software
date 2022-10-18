@@ -81,8 +81,8 @@ void OpenMeshWidget::selectFile() {
     this->selectedFile->setText(file);
 
     QFileInfo info(file);
-    if(QString::compare(this->name->text(), QString("MyMesh"), Qt::CaseInsensitive) == 0)
-        this->name->setText(info.baseName());
+    //if(QString::compare(this->name->text(), QString("MyMesh"), Qt::CaseInsensitive) == 0)
+    this->name->setText(info.baseName());
 }
 
 void OpenMeshWidget::loadMeshToScene(Scene * scene) {
