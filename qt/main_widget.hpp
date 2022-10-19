@@ -181,11 +181,18 @@ public slots:
     void changeActiveMesh() {
         this->actionManager->getAction("ToggleNoneTool")->activate(QAction::Trigger);
         this->scene->toggleDisplayTetmesh(!this->actionManager->getAction("ToggleDisplayWireframe")->isChecked());
-        if(this->scene->isGrid(this->combo_mesh->itemText(this->combo_mesh->currentIndex()).toStdString())) {
+        std::string meshName = this->combo_mesh->itemText(this->combo_mesh->currentIndex()).toStdString();
+        if(this->scene->isGrid(meshName)) {
             Q_EMIT(this->gridSelected());
         } else {
             Q_EMIT(this->meshSelected());
         }
+        // This update the size of the active object in the cut plane pannel in order to display the right image slice
+        BaseMesh * mesh = this->scene->getBaseMesh(meshName);
+        if(mesh)
+            this->cutPlane_pannel->setImageSize(mesh->getDimensions());
+        else
+            this->cutPlane_pannel->setImageSize(glm::vec3(100., 100., 100.));
     }
 
     void initialize() {}

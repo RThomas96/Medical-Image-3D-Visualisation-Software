@@ -1,6 +1,7 @@
 #ifndef CUTPLANEGROUPBOX_H
 #define CUTPLANEGROUPBOX_H
 
+#include <glm/glm.hpp>
 #include <QGroupBox>
 #include <QSlider>
 #include <QPushButton>
@@ -58,9 +59,18 @@ public slots:
         xHSlider->setValue(x*float(xHSlider->maximum()));
         yHSlider->setValue(y*float(yHSlider->maximum()));
         zHSlider->setValue(z*float(zHSlider->maximum()));
+        this->labelValueX->setText(std::to_string(int(std::floor(float(x)*float(imageSize.x)))).c_str());
+        this->labelValueY->setText(std::to_string(int(std::floor(float(y)*float(imageSize.y)))).c_str());
+        this->labelValueZ->setText(std::to_string(int(std::floor(float(z)*float(imageSize.z)))).c_str());
         xHSlider->blockSignals(false);
         yHSlider->blockSignals(false);
         zHSlider->blockSignals(false);
+    }
+
+    void setImageSize(const glm::ivec3& imageSize) {
+        this->imageSize = imageSize;
+        // To update the slice indicator
+        this->setValues(xHSlider->value()/float(xHSlider->maximum()), yHSlider->value()/float(yHSlider->maximum()), zHSlider->value()/float(zHSlider->maximum()));
     }
 
     void setDisabledAlpha(bool value) {
@@ -113,6 +123,16 @@ protected:
         zHBoxLayout->addWidget(labelCutZ);
         labelCutA = new QLabel("a", this);
         aHBoxLayout->addWidget(labelCutA);
+
+        labelValueX = new QLabel("000", this);
+        labelValueX->setMinimumWidth(26);
+        xHBoxLayout->addWidget(labelValueX);
+        labelValueY = new QLabel("0", this);
+        labelValueY->setMinimumWidth(26);
+        yHBoxLayout->addWidget(labelValueY);
+        labelValueZ = new QLabel("0", this);
+        labelValueZ->setMinimumWidth(26);
+        zHBoxLayout->addWidget(labelValueZ);
 
         //Sliders definitions
         xHSlider = new QSlider(this);
@@ -173,9 +193,18 @@ protected:
         connect(displayYCut, SIGNAL(clicked(bool)), this, SLOT(clickedDYCut(bool)));
         connect(displayZCut, SIGNAL(clicked(bool)), this, SLOT(clickedDZCut(bool)));
 
-
+        this->imageSize = glm::ivec3(100, 100, 100);
     }
+
+    // The value stored in the slider are normalized between [0., 99.]
+    // To display the image slice instead of the normalized value, we use this image size
+    glm::ivec3 imageSize;
+
     QLabel *labelCutA;
+    QLabel *labelValueX;
+    QLabel *labelValueY;
+    QLabel *labelValueZ;
+    QLabel *labelValueA;
     QSlider *xHSlider;
     QSlider *yHSlider;
     QSlider *zHSlider;
@@ -188,9 +217,9 @@ protected:
     QCheckBox *displayZCut;
 
 protected slots:
-    void xSValueChanged(int x){ emit xSliderValueChanged(float(x)/99.);}
-    void ySValueChanged(int y){ emit ySliderValueChanged(float(y)/99.);}
-    void zSValueChanged(int z){ emit zSliderValueChanged(float(z)/99.);}
+    void xSValueChanged(int x){ this->labelValueX->setText(std::to_string(int(std::floor((float(x)/99.)*float(imageSize.x)))).c_str()); emit xSliderValueChanged(float(x)/99.);}
+    void ySValueChanged(int y){ this->labelValueY->setText(std::to_string(int(std::floor((float(y)/99.)*float(imageSize.y)))).c_str()); emit ySliderValueChanged(float(y)/99.);}
+    void zSValueChanged(int z){ this->labelValueZ->setText(std::to_string(int(std::floor((float(z)/99.)*float(imageSize.z)))).c_str()); emit zSliderValueChanged(float(z)/99.);}
     void aSValueChanged(int a){ emit aSliderValueChanged(float(a)/99.);}
 
     void clickedIXPushButton(){ emit clickedInvertXPushButton();}
