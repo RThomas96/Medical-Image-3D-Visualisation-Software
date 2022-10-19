@@ -54,6 +54,7 @@ uniform float diffuseRef;
 uniform float specRef;
 // Light positions
 //uniform vec3 lightPositions[8];
+uniform vec3 lightPosition;
 
 // Grid voxel dimensions :
 uniform vec3 voxelSize;
@@ -297,18 +298,19 @@ void main (void) {
         vec3(.0, .0, .0)	// nothing
     );
     vec3 phongDetails = vec3(
-        factor*.9,	// kd = diffuse coefficient
-        factor*.1,	// ks = specular coefficient
-        5.	// Shininess
+        factor,	// kd = diffuse coefficient
+        0.,	// ks = specular coefficient
+        0.	// Shininess
     );
     colorOut.a = 1.;
     colorOut.xyz += phongAmbient * color.xyz;
     // Phong computation :
-    //colorOut.xyz += phongComputation(Pos, n, color, lightPositions[0], phongDetails, lightDetails);
-    //colorOut.xyz += phongComputation(Pos, n, color, lightPositions[4], phongDetails, lightDetails);
+    //colorOut.xyz += phongComputation(Pos, n, color, lightPosition, phongDetails, lightDetails);
+
+    colorOut.xyz += phongComputation(Pos, n, color, vec3(0., 0., 1.), phongDetails, lightDetails);
     // Phong for camera light :
 
-    colorOut.xyz += phongComputation(Pos, n, color, cam, phongDetails, lightDetails);
+    //colorOut.xyz += phongComputation(Pos, n, color, cam, phongDetails, lightDetails);
 
     sceneSpaceFragmentPos = Pos;
 

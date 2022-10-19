@@ -113,6 +113,7 @@ void MainWidget::setupWidgets() {
     this->toolbar->addSeparator();
 
     this->toolbar->addAction(this->actionManager->getAction("OpenAtlas"));
+    this->toolbar->addAction(this->actionManager->getAction("Shader"));
     this->toolbar->addAction(this->actionManager->getAction("Boundaries"));
 
     /***/

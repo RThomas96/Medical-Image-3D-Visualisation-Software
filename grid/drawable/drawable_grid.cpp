@@ -341,6 +341,8 @@ void DrawableGrid::prepareUniforms(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camP
     gl->glUniform1i(getUniform("colorScales[3]"), tex);
     tex++;
 
+    gl->glUniformMatrix3fv(getUniform("lightPosition"), 1, GL_FALSE, glm::value_ptr(camPos));
+
     // Directly copy the uboHandle_color class into the GPU
     gl->glBindBufferBase(GL_UNIFORM_BUFFER, 0, uboHandle_colorAttributes);
 }
