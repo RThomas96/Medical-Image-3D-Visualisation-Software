@@ -29,7 +29,7 @@ class DrawableGrid {
 public:
     bool multiGridRendering;
     bool displayTetmesh;
-    bool drawOnlyBoundaries;
+    bool drawSliceOnly;
     float blendFirstPass;
 
     // Segmented data display control

@@ -1292,6 +1292,9 @@ void Scene::addGridToScene(const std::string& name, Grid * newGrid) {
     this->changeActiveMesh(name);
 
     this->gridsToDraw.push_back(this->activeGrid);
+    if(this->grids.size() == 2) {
+        this->grids[0]->drawSliceOnly = true;
+    }
 }
 
 int Scene::autofitSubsample(int initialSubsample, const std::vector<std::string>& imgFilenames) {
@@ -2450,9 +2453,9 @@ void Scene::setMultiGridRendering(bool value) {
     //}
 };
 
-void Scene::setDrawOnlyBoundaries(bool value) {
+void Scene::setDrawSliceOnly(bool value) {
     if(this->activeGrid >= 0)
-        this->grids[this->activeGrid]->drawOnlyBoundaries = value;
+        this->grids[this->activeGrid]->drawSliceOnly = value;
 }
 
 void Scene::setBlend(float value) {

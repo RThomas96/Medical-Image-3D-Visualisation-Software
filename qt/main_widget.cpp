@@ -555,7 +555,7 @@ this->actionManager->createQActionToggleButton("Shader", "Shader", "", "Reload s
 
     this->actionManager->createQActionToggleButton("Boundaries", "Boundaries", "", "", "arap");
     QObject::connect(this->actionManager->getAction("Boundaries"), &QAction::triggered, [this](){
-        this->scene->setDrawOnlyBoundaries(this->actionManager->getAction("Boundaries")->isChecked());
+        this->scene->setDrawSliceOnly(this->actionManager->getAction("Boundaries")->isChecked());
     });
     this->actionManager->getAction("Boundaries")->setVisible(false);
 }

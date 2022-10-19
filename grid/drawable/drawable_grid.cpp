@@ -15,7 +15,7 @@ DrawableGrid::DrawableGrid(Grid * grid): gl(nullptr) {
     this->vaoVolumetricBuffers = 0;
     this->grid = grid;
     this->blendFirstPass = 1.;
-    this->drawOnlyBoundaries = true;
+    this->drawSliceOnly = false;
     this->multiGridRendering = false;
 
     this->color_0 = glm::vec3(1., 0., 0.);
@@ -258,16 +258,6 @@ void DrawableGrid::prepareUniforms(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camP
     gl->glUniform1i(getUniform("texData"), tex);
     tex++;
 
-    glActiveTexture(GL_TEXTURE0 + tex);
-    glBindTexture(GL_TEXTURE_2D, this->dualRenderingTexture);
-    gl->glUniform1i(getUniform("firstPass_texture"), tex);
-    tex++;
-
-    glActiveTexture(GL_TEXTURE0 + tex);
-    glBindTexture(GL_TEXTURE_2D, this->frameDepthBuffer);
-    gl->glUniform1i(getUniform("firstPass_depthTexture"), tex);
-    tex++;
-
     // For the segmented data visualisation
     // 1D texture that contain the value ranges to display
     glActiveTexture(GL_TEXTURE0 + tex);
@@ -281,11 +271,6 @@ void DrawableGrid::prepareUniforms(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camP
     glBindTexture(GL_TEXTURE_1D, valuesRangeColorToDisplay);
     gl->glUniform1i(getUniform("colorRangeToDisplay"), tex);
     tex++;
-
-    float val = 1.;
-    //if(drawFront)
-    //    val = 0.;
-    gl->glUniform1fv(getUniform("isFirstPass"), 1, &val);
 
     glm::vec3 floatres = glm::convert_to<float>(grid->sampler.getSamplerDimension());
     gl->glUniform3fv(getUniform("voxelSize"), 1, glm::value_ptr(grid->getVoxelSize()));
@@ -303,12 +288,11 @@ void DrawableGrid::prepareUniforms(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camP
     gl->glUniform1f(getUniform("clipDistanceFromCamera"), 5.f);
 
     gl->glUniform1ui(getUniform("displayWireframe"), this->displayTetmesh);
-    gl->glUniform1f(getUniform("blendFirstPass"), this->blendFirstPass);
 
     int drawOnly = 1;
-    if(!this->drawOnlyBoundaries)
+    if(!this->drawSliceOnly)
         drawOnly = 0;
-    gl->glUniform1i(getUniform("drawOnlyBoundaries"), drawOnly);
+    gl->glUniform1i(getUniform("drawSliceOnly"), drawOnly);
 
     gl->glUniformMatrix4fv(getUniform("mMat"), 1, GL_FALSE, glm::value_ptr(glm::mat4(1.f)));
     gl->glUniformMatrix4fv(getUniform("vMat"), 1, GL_FALSE, mvMat);

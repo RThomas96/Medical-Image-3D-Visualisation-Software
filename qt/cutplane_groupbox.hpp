@@ -124,7 +124,7 @@ protected:
         labelCutA = new QLabel("a", this);
         aHBoxLayout->addWidget(labelCutA);
 
-        labelValueX = new QLabel("000", this);
+        labelValueX = new QLabel("0", this);
         labelValueX->setMinimumWidth(26);
         xHBoxLayout->addWidget(labelValueX);
         labelValueY = new QLabel("0", this);

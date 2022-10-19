@@ -314,7 +314,7 @@ public slots:
     void toggleDisplayTetmesh(bool value);
     void setGridsToDraw(std::vector<int> indices);
     void setMultiGridRendering(bool value);
-    void setDrawOnlyBoundaries(bool value);
+    void setDrawSliceOnly(bool value);
     void setBlend(float value);
     void setOrthographicCamera() { Q_EMIT needChangeCameraType(qglviewer::Camera::ORTHOGRAPHIC); };
     void setPerspectiveCamera() { Q_EMIT needChangeCameraType(qglviewer::Camera::PERSPECTIVE); };
