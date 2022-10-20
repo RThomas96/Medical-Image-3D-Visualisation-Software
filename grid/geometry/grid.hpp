@@ -25,7 +25,9 @@ enum ResolutionMode {
 // to access to the image data.
 struct Sampler {
 
+private:
     glm::vec3 voxelSize;
+public:
     glm::vec3 resolutionRatio;
 
     glm::vec3 bbMin;
@@ -95,6 +97,7 @@ struct Grid : public TetMesh, public DrawableGrid {
     void loadMESH(std::string const &filename) override;
 
     glm::vec3 getVoxelSize(ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
+    glm::vec3 getOriginalVoxelSize() const;
     glm::vec3 getWorldVoxelSize() const;
     glm::mat4 getTransformationMatrix() const;
     void toSampler(glm::vec3& p) const;

@@ -221,7 +221,7 @@ public:
     void writeDeformedImage(const std::string& filename, const std::string& gridName, const glm::vec3& bbMin, const glm::vec3& bbMax, bool useColorMap, const glm::vec3& voxelSize);
     void writeDeformedImageGeneric(const std::string& filename, const std::string& gridName, const glm::vec3& bbMin, const glm::vec3& bbMax, Image::ImageDataType imgDataType, bool useColorMap, const glm::vec3& voxelSize);
     template<typename DataType>
-    void writeDeformedImageTemplated(const std::string& filename, const std::string& gridName, const glm::vec3& bbMin, const glm::vec3& bbMax, int bit, Image::ImageDataType dataType, bool useColorMap, const glm::vec3& voxelSize);
+    void writeDeformedImageTemplated(const std::string& filename, const std::string& gridName, const glm::vec3& bbMin, const glm::vec3& bbMax, int bit, Image::ImageDataType dataType, bool useColorMap, const glm::vec3& imageVoxelSize);
 
 signals:
     // Signals to the meshManipulator tools
@@ -277,8 +277,6 @@ public slots:
     // Connected to UI //
     // *************** //
 
-    void sampleGridMapping(const std::string& fileName, const std::string& from, const std::string& to, const glm::vec3& resolution, Interpolation::Method interpolationMethod);
-    void writeMapping(const std::string& fileName, const std::string& from, const std::string& to);
     void writeGreyscaleTIFFImage(const std::string& filename, const glm::vec3& imgDimensions, const std::vector<std::vector<uint16_t>>& data);
     void writeDeformation(const std::string& filename, const std::string& gridNameValues, const std::string& gridNameSample);
 
@@ -354,7 +352,7 @@ public slots:
     bool linkCage(const std::string& cageName, BaseMesh * meshToDeform, const bool MVC);
 
     bool openGrid(const std::string& name, const std::vector<std::string>& imgFilenames, const int subsample, const glm::vec3& sizeVoxel, const glm::vec3& nbCubeGridTransferMesh = glm::vec3(5., 5., 5.));
-    bool openGrid(const std::string& name, const std::vector<std::string>& imgFilenames, const int subsample, const std::string& transferMeshFileName);
+    bool openGrid(const std::string& name, const std::vector<std::string>& imgFilenames, const int subsample, const glm::vec3& sizeVoxel, const std::string& transferMeshFileName);
     void addGridToScene(const std::string& name, Grid * newGrid);
     int autofitSubsample(int initialSubsample, const std::vector<std::string>& imgFilenames);
     SurfaceMesh * getMesh(const std::string& name);

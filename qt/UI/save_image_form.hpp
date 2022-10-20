@@ -25,7 +25,7 @@ public slots:
         this->addAllNextWidgetsToDefaultGroup();
 
         this->addWithLabel(WidgetType::CHECK_BOX, "Colormap", "Use colormap: ");
-        this->addWithLabel(WidgetType::CHECK_BOX, "Resolution", "Export at full resolution: ");
+        this->addWithLabel(WidgetType::CHECK_BOX, "Resolution", "Export at original resolution: ");
 
         this->addWithLabel(WidgetType::H_GROUP, "GroupBBMin", "BBox min");
         this->addAllNextWidgetsToGroup("GroupBBMin");

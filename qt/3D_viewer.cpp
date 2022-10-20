@@ -284,19 +284,6 @@ QString Viewer::mouseString() const {
 	return message;
 }
 
-void Viewer::newAPI_loadGrid(const std::string& name, const std::vector<std::string>& filenames, const std::string& tetMeshFileName, const int subsample, const glm::vec3& sizeTetmesh, glm::vec3& sizeVoxel, const std::pair<glm::vec3, glm::vec3>& bbox) {
-	if (this->scene == nullptr) {
-		return;
-	}
-	this->makeCurrent();
-    if(tetMeshFileName.empty()) {
-	    this->scene->openGrid(name, filenames, subsample, sizeVoxel, sizeTetmesh);
-    } else {
-	    this->scene->openGrid(name, filenames, subsample, tetMeshFileName);
-    }
-	this->doneCurrent();
-}
-
 void Viewer::setCenter(const glm::vec3& center) {
 	this->setSceneCenter(qglviewer::Vec(center[0], center[1], center[2]));
     std::cout << "Set center" << std::endl;

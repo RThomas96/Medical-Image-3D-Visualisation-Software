@@ -164,10 +164,10 @@ public slots:
 
         //this->sections["Image subsample"].first->hide();
         this->sections["Image subregion"].first->hide();
-        this->labels["GroupVoxelSize"]->hide();
-        this->doubleSpinBoxes["SizeVoxelX"]->hide();
-        this->doubleSpinBoxes["SizeVoxelY"]->hide();
-        this->doubleSpinBoxes["SizeVoxelZ"]->hide();
+        //this->labels["GroupVoxelSize"]->hide();
+        //this->doubleSpinBoxes["SizeVoxelX"]->hide();
+        //this->doubleSpinBoxes["SizeVoxelY"]->hide();
+        //this->doubleSpinBoxes["SizeVoxelZ"]->hide();
     }
 
     void resetValues() {
@@ -226,7 +226,7 @@ public slots:
         return this->objectChoosers["To"]->currentText().toStdString();
     }
 
-    std::string getName() {
+    std::string getGridName() {
         return this->lineEdits["Name"]->text().toStdString();
     }
 
@@ -242,7 +242,7 @@ public slots:
         return this->spinBoxes["Subsample"]->value();
     }
 
-    glm::vec3 getSizeVoxel() {
+    glm::vec3 getVoxelSize() {
         return glm::vec3(this->doubleSpinBoxes["SizeVoxelX"]->value(),
                          this->doubleSpinBoxes["SizeVoxelY"]->value(),
                          this->doubleSpinBoxes["SizeVoxelZ"]->value());

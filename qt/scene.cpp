@@ -649,7 +649,7 @@ void Scene::drawScene(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool show
             for(auto i : this->gridsToDraw) {
                 glm::vec3 planePosition = this->computePlanePositionsWithActivation();
                 if(i == 0)
-                    planePosition += this->grids[i]->getDimensions()/200.f;
+                    planePosition += this->grids[i]->getWorldVoxelSize()/2.f;
                 glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
                 //this->grids[i]->drawGridFirstPass(mvMat, pMat, glm::vec3(0., 0., 0.), planePosition, this->planeDirection, false, w, h);
@@ -1274,10 +1274,10 @@ bool Scene::openGrid(const std::string& name, const std::vector<std::string>& im
     return true;
 }
 
-bool Scene::openGrid(const std::string& name, const std::vector<std::string>& imgFilenames, const int subsample, const std::string& transferMeshFileName) {
+bool Scene::openGrid(const std::string& name, const std::vector<std::string>& imgFilenames, const int subsample, const glm::vec3& sizeVoxel, const std::string& transferMeshFileName) {
     int autofitSubsample = this->autofitSubsample(subsample, imgFilenames);
     //TODO: sizeVoxel isn't take into account with loading a custom transferMesh
-    Grid * newGrid = new Grid(imgFilenames, autofitSubsample, glm::vec3(0., 0., 0.), transferMeshFileName);
+    Grid * newGrid = new Grid(imgFilenames, autofitSubsample, sizeVoxel, transferMeshFileName);
     this->addGridToScene(name, newGrid);
     return true;
 }
@@ -1305,6 +1305,7 @@ void Scene::addGridToScene(const std::string& name, Grid * newGrid) {
 }
 
 int Scene::autofitSubsample(int initialSubsample, const std::vector<std::string>& imgFilenames) {
+    return initialSubsample;
     float percentageOfMemory = 0.7;
     int gpuMemoryInGB = 2;
     double gpuMemoryInBytes = double(gpuMemoryInGB) * double(1073741824.);
@@ -1482,7 +1483,7 @@ void Scene::openAtlas() {
          ///home/thomas/data/Data/teletravail/
          ///home/thomas/data/Data/Demo
          //this->openGrid(std::string("atlas"), {std::string("/home/thomas/data/Data/teletravail/atlas.tiff")}, 1, std::string("/home/thomas/data/Data/teletravail/atlas-transfert.mesh"));
-         this->openGrid(std::string("atlas"), {std::string("/home/thomas/data/Data/Demo/atlas/atlas.tiff")}, 1, std::string("/home/thomas/data/Data/Demo/atlas/atlas-transfert.mesh"));
+         this->openGrid(std::string("atlas"), {std::string("/home/thomas/data/Data/Demo/atlas/atlas.tiff")}, 1, glm::vec3(1., 1., 1.), std::string("/home/thomas/data/Data/Demo/atlas/atlas-transfert.mesh"));
          //this->openCage(std::string("cage"), std::string("/home/thomas/data/Data/teletravail/atlas-cage-hyperdilated.off"), std::string("atlas"), true);
          this->openCage(std::string("cage"), std::string("/home/thomas/data/Data/Demo/atlas/atlas-cage_fixed.off"), std::string("atlas"), true);
          //this->getCage(std::string("cage"))->setARAPDeformationMethod();
@@ -1791,135 +1792,6 @@ void Scene::reset() {
     this->moveInHistory(true, true);
 }
 
-void Scene::sampleGridMapping(const std::string& fileName, const std::string& from, const std::string& to, const glm::vec3& resolution, Interpolation::Method interpolationMethod) {
-
-    auto start = std::chrono::steady_clock::now();
-
-    omp_set_nested(true);
-
-    Grid * fromGrid = this->grids[this->getGridIdx(from)];
-    Grid * toGrid = this->grids[this->getGridIdx(to)];
-
-    // Space to sample
-    glm::vec3 bbMinScene = fromGrid->initialMesh.bbMin;
-    glm::vec3 bbMaxScene = fromGrid->initialMesh.bbMax;
-    glm::vec3 fromSamplerToSceneRatio = (bbMaxScene - bbMinScene) / resolution;
-
-    auto isInScene = [&](glm::vec3& p) {
-        return (p.x > bbMinScene.x && p.y > bbMinScene.y && p.z > bbMinScene.z && p.x < bbMaxScene.x && p.y < bbMaxScene.y && p.z < bbMaxScene.z);
-    };
-
-    auto fromWorldToImage = [&](glm::vec3& p) {
-        p -= bbMinScene;
-        p /= fromSamplerToSceneRatio;
-    };
-
-    auto fromImageToWorld = [&](glm::vec3& p) {
-        p *= fromSamplerToSceneRatio;
-        p += bbMinScene;
-    };
-
-    std::vector<std::vector<uint16_t>> result;
-    result.clear();
-    result.resize(resolution[2]);
-    for(int i = 0; i < result.size(); ++i) {
-        result[i].resize(resolution[0] * resolution[1]);
-        std::fill(result[i].begin(), result[i].end(), 0);
-    }
-
-    //int printOcc = 10;
-    //printOcc = this->mesh.size()/printOcc;
-
-    //#pragma omp parallel for schedule(dynamic) num_threads(fromGrid->mesh.size()/10)
-    #pragma omp parallel for schedule(dynamic)
-    for(int tetIdx = 0; tetIdx < fromGrid->initialMesh.mesh.size(); ++tetIdx) {
-        const Tetrahedron& tet = fromGrid->initialMesh.mesh[tetIdx];
-        glm::vec3 bbMin = tet.getBBMin();
-        fromWorldToImage(bbMin);
-        bbMin.x = std::ceil(bbMin.x) - 1;
-        bbMin.y = std::ceil(bbMin.y) - 1;
-        bbMin.z = std::ceil(bbMin.z) - 1;
-        glm::vec3 bbMax = tet.getBBMax();
-        fromWorldToImage(bbMax);
-        bbMax.x = std::floor(bbMax.x) + 1;
-        bbMax.y = std::floor(bbMax.y) + 1;
-        bbMax.z = std::floor(bbMax.z) + 1;
-        for(int k = bbMin.z; k < int(bbMax.z); ++k) {
-            for(int j = bbMin.y; j < int(bbMax.y); ++j) {
-                for(int i = bbMin.x; i < int(bbMax.x); ++i) {
-                    glm::vec3 p(i, j, k);
-                    p += glm::vec3(.5, .5, .5);
-
-                    fromImageToWorld(p);
-
-                    if(isInScene(p) && tet.isInTetrahedron(p)) {
-                        if(fromGrid->initialMesh.getCoordInInitial(*fromGrid, p, p, tetIdx)) {
-
-                            int insertIdx = i + j*resolution[0];
-                            if(insertIdx >= result[0].size()) {
-                                std::cout << "ERROR:" << std::endl;
-                                std::cout << "i:" << i << std::endl;
-                                std::cout << "j:" << j << std::endl;
-                                std::cout << "k:" << k << std::endl;
-                                std::cout << "p:" << p << std::endl;
-                            }
-
-                            //fromGrid->sampler.fromImageToSampler(p);
-                            result[k][insertIdx] = toGrid->getValueFromPoint(p, Interpolation::Method::Linear);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    auto end = std::chrono::steady_clock::now();
-    std::chrono::duration<double> elapsed_seconds = end-start;
-    std::cout << "Duration time: " << elapsed_seconds.count() << "s / " << elapsed_seconds.count()/60. << "m" << std::endl;
-
-    this->writeGreyscaleTIFFImage(fileName, resolution, result);
-}
-
-void Scene::writeMapping(const std::string& fileName, const std::string& from, const std::string& to) {
-    Grid * fromGrid = this->grids[this->getGridIdx(from)];
-    Grid * toGrid = this->grids[this->getGridIdx(to)];
-
-    glm::ivec3 fromDimensions = fromGrid->sampler.getSamplerDimension();
-    std::vector<std::vector<uint16_t>> img = std::vector<std::vector<uint16_t>>(fromDimensions.z, std::vector<uint16_t>(fromDimensions.x * fromDimensions.y, 0.));
-
-    auto start = std::chrono::steady_clock::now();
-    for(int k = 0; k < fromDimensions.z; ++k) {
-        std::cout << "Loading: " << (float(k)/float(fromDimensions.z)) * 100. << "%" << std::endl;
-        #pragma omp parallel for schedule(dynamic)
-        for(int i = 0; i < fromDimensions.x; ++i) {
-            for(int j = 0; j < fromDimensions.y; ++j) {
-                glm::vec3 inputPointInFromGrid(i, j, k);
-                glm::vec3 result;
-                fromGrid->sampler.fromImageToSampler(inputPointInFromGrid);
-
-                int tetIdx = -1;
-                bool ptIsInInitial = fromGrid->initialMesh.getCoordInInitialOut(*fromGrid, inputPointInFromGrid, result, tetIdx);
-                if(!ptIsInInitial) {
-                    img[k][i + j*fromDimensions.x] = 0;
-                } else {
-                    ptIsInInitial = toGrid->getCoordInInitial(toGrid->initialMesh, result, result, tetIdx);
-                    if(!ptIsInInitial) {
-                        img[k][i + j*fromDimensions.x] = 0;
-                    } else {
-                        toGrid->sampler.fromSamplerToImage(result);
-                        img[k][i + j*fromDimensions.x] = toGrid->getValueFromPoint(result);
-                    }
-                }
-            }
-        }
-        auto end = std::chrono::steady_clock::now();
-        std::chrono::duration<double> elapsed_seconds = end-start;
-        std::cout << "Duration time: " << elapsed_seconds.count() << "s / " << elapsed_seconds.count()/60. << "m" << std::endl;
-    }
-
-    this->writeGreyscaleTIFFImage(fileName, fromDimensions, img);
-}
-
 void Scene::writeDeformedImage(const std::string& filename, const std::string& gridName, bool useColorMap, ResolutionMode resolution) {
     Grid * grid = this->grids[this->getGridIdx(gridName)];
     this->writeDeformedImage(filename, gridName, grid->bbMin, grid->bbMax, useColorMap, grid->getVoxelSize(resolution));
@@ -1963,7 +1835,7 @@ void Scene::writeDeformedImageGeneric(const std::string& filename, const std::st
 }
 
 template<typename DataType>
-void Scene::writeDeformedImageTemplated(const std::string& filename, const std::string& gridName, const glm::vec3& bbMin, const glm::vec3& bbMax, int bit, Image::ImageDataType dataType, bool useColorMap, const glm::vec3& voxelSize) {
+void Scene::writeDeformedImageTemplated(const std::string& filename, const std::string& gridName, const glm::vec3& bbMin, const glm::vec3& bbMax, int bit, Image::ImageDataType dataType, bool useColorMap, const glm::vec3& imageVoxelSize) {
     // To expose as parameters
     bool smallFile = true;
     int cacheSize = 2;
@@ -1974,6 +1846,7 @@ void Scene::writeDeformedImageTemplated(const std::string& filename, const std::
 
     Grid * fromGrid = this->grids[this->getGridIdx(gridName)];
     glm::vec3 worldSize = fromGrid->getDimensions();
+    glm::vec3 gridVoxelSize = fromGrid->getWorldVoxelSize();
     //glm::vec3 voxelSize = fromGrid->getVoxelSize(resolution);
 
     auto start = std::chrono::steady_clock::now();
@@ -1984,23 +1857,23 @@ void Scene::writeDeformedImageTemplated(const std::string& filename, const std::
         p -= fromGrid->bbMin;
         for(int i = 0; i < 3; ++i) {
             if(ceil)
-                p[i] = std::ceil(p[i]/voxelSize[i]);
+                p[i] = std::ceil((p[i]/gridVoxelSize[i])/imageVoxelSize[i]);
             else
-                p[i] = std::floor(p[i]/voxelSize[i]);
+                p[i] = std::floor((p[i]/gridVoxelSize[i])/imageVoxelSize[i]);
         }
         p /= fromImageToCustomImage;
     };
 
     auto getWorldCoordinates = [&](glm::vec3& p) {
         for(int i = 0; i < 3; ++i) {
-            p[i] = (float(std::ceil(p[i] * fromImageToCustomImage[i])) + 0.5) * voxelSize[i];
+            p[i] = (float(std::ceil((p[i] * fromImageToCustomImage[i])) + 0.5) * gridVoxelSize[i])*imageVoxelSize[i];
         }
         p += fromGrid->bbMin;
     };
 
     glm::ivec3 n(0, 0, 0);
     for(int i = 0 ; i < 3 ; i++) {
-        n[i] = std::ceil(fabs(worldSize[i])/voxelSize[i]);
+        n[i] = std::ceil(fabs((worldSize[i])/gridVoxelSize[i])/imageVoxelSize[i]);
     }
 
     if(sceneImageSize == glm::ivec3(0., 0., 0.))
@@ -2008,23 +1881,14 @@ void Scene::writeDeformedImageTemplated(const std::string& filename, const std::
 
     fromImageToCustomImage = glm::vec3(n) / glm::vec3(sceneImageSize);
 
-    glm::ivec3 bbMinWrite = (bbMin - fromGrid->bbMin)/voxelSize;
-    glm::ivec3 bbMaxWrite = (bbMax - fromGrid->bbMin)/voxelSize;
+    glm::ivec3 bbMinWrite = ((bbMin - fromGrid->bbMin)/gridVoxelSize)/imageVoxelSize;
+    glm::ivec3 bbMaxWrite = ((bbMax - fromGrid->bbMin)/gridVoxelSize)/imageVoxelSize;
     glm::ivec3 imageSize = bbMaxWrite - bbMinWrite;
 
     std::cout << "BBmin: " << bbMinWrite << std::endl;
     std::cout << "BBmax: " << bbMaxWrite << std::endl;
     std::cout << "ImageSize: " << imageSize << std::endl;
     std::cout << "Original size: " << sceneImageSize << std::endl;
-
-    //glm::ivec3 bbMinWrite(100, 100, 100);
-    //std::cout << "BBMin:" << fromGrid->bbMin+glm::vec3(bbMinWrite)*voxelSize << std::endl;
-    //std::cout << "BBMax:" << fromGrid->bbMin+glm::vec3(bbMinWrite)*voxelSize + glm::vec3(imageSize)*voxelSize << std::endl;
-
-    //if(resolution == ResolutionMode::FULL_RESOLUTION) {
-        // Apply resolution
-        //bbMinWrite = glm::vec3(bbMinWrite) * fromGrid->sampler.resolutionRatio;
-    //}
 
     TinyTIFFWriterFile * tif = nullptr;
     if(useCustomColor) {
@@ -2098,6 +1962,8 @@ void Scene::writeDeformedImageTemplated(const std::string& filename, const std::
                         if(fromGrid->getCoordInInitial(fromGrid->initialMesh, p, p, tetIdx)) {
                             int insertIdx = i + j*sceneImageSize[0];
 
+                            //p *= fromGrid->sampler.resolutionRatio;
+                            //p += glm::vec3(.5, .5, .5);
                             int imgIdxLoad = std::floor(p.z);
                             int idxLoad = std::floor(p.x) + std::floor(p.y) * fromGrid->sampler.image->tiffImageReader->imgResolution.x;
 

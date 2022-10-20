@@ -133,7 +133,15 @@ void Grid::toSampler(glm::vec3& p) const {
 }
 
 glm::vec3 Grid::getWorldVoxelSize() const {
-    return this->getDimensions() / this->sampler.getSamplerDimension();
+    //return this->getDimensions() / this->sampler.getSamplerDimension();
+    return this->sampler.getVoxelSize();
+}
+
+glm::vec3 Grid::getOriginalVoxelSize() const {
+    glm::vec3 originalVoxelSize(1., 1., 1.);
+    originalVoxelSize *= glm::vec3(1., 1., 1.)/this->sampler.resolutionRatio;
+    originalVoxelSize *= glm::vec3(1., 1., 1.)/this->sampler.getVoxelSize();
+    return originalVoxelSize;
 }
 
 glm::vec3 Grid::getVoxelSize(ResolutionMode resolutionMode) const {
@@ -445,7 +453,7 @@ void Sampler::setVoxelSize(const glm::vec3& voxelSize) {
 }
 
 glm::vec3 Sampler::getSamplerDimension() const {
-   return this->subregionMax - this->subregionMin; 
+   return this->subregionMax - this->subregionMin;
 }
 
 // This function do not use Grid::getValue as we do not want to open, copy and cast a whole image slice per value

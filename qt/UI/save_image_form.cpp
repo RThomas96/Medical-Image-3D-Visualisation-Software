@@ -36,7 +36,7 @@ void SaveImageForm::initSpinBoxes(Scene * scene) {
 
 void SaveImageForm::updateSpinBoxes(Scene * scene) {
         if(this->checkBoxes["Resolution"]->isChecked()) {
-            glm::vec3 voxelSize = scene->grids[scene->getGridIdx(this->objectChoosers["Grid"]->currentText().toStdString())]->getVoxelSize(ResolutionMode::FULL_RESOLUTION);
+            glm::vec3 voxelSize = scene->grids[scene->getGridIdx(this->objectChoosers["Grid"]->currentText().toStdString())]->getOriginalVoxelSize();
             this->doubleSpinBoxes["VoxelSizeX"]->setValue(voxelSize.x);
             this->doubleSpinBoxes["VoxelSizeY"]->setValue(voxelSize.y);
             this->doubleSpinBoxes["VoxelSizeZ"]->setValue(voxelSize.z);
@@ -69,11 +69,10 @@ void SaveImageForm::connect(Scene * scene) {
     QObject::connect(this->fileChoosers["Export image"], &FileChooser::fileSelected, [this, scene](){
         Grid * grid = scene->grids[scene->getGridIdx(this->objectChoosers["Grid"]->currentText().toStdString())];
         glm::vec3 voxelSize(this->doubleSpinBoxes["VoxelSizeX"]->value(), this->doubleSpinBoxes["VoxelSizeY"]->value(), this->doubleSpinBoxes["VoxelSizeZ"]->value());
-        if(this->checkBoxes["Resolution"]->isChecked())
-            voxelSize = grid->getVoxelSize(ResolutionMode::FULL_RESOLUTION);
         bool useColorMap = this->checkBoxes["Colormap"]->isChecked();
         glm::vec3 bbMin(this->doubleSpinBoxes["BBMinX"]->value(), this->doubleSpinBoxes["BBMinY"]->value(), this->doubleSpinBoxes["BBMinZ"]->value());
         glm::vec3 bbMax(this->doubleSpinBoxes["BBMaxX"]->value(), this->doubleSpinBoxes["BBMaxY"]->value(), this->doubleSpinBoxes["BBMaxZ"]->value());
+
         scene->writeDeformedImage(this->fileChoosers["Export image"]->filename.toStdString(), this->objectChoosers["Grid"]->currentText().toStdString(), bbMin, bbMax, useColorMap, voxelSize);
         this->hide();
     });

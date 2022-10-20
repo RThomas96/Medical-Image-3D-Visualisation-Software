@@ -70,7 +70,6 @@ private:
 
 public slots:
 	void updateView() { this->update(); }
-    void newAPI_loadGrid(const std::string& name, const std::vector<std::string>& filenames, const std::string& tetmeshFileName, const int subsample, const glm::vec3& sizeTetmesh, glm::vec3& sizeVoxel, const std::pair<glm::vec3, glm::vec3>& bbox = std::pair<glm::vec3, glm::vec3>{glm::vec3(0., 0., 0.), glm::vec3(0., 0., 0.)});
     void setCenter(const glm::vec3& center);
     void setRadius(const float radius);
     void castRay(void);

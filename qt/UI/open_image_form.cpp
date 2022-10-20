@@ -26,15 +26,17 @@ void OpenImageForm::connect(Scene * scene) {
 
     QObject::connect(this->buttons["Load"], &QPushButton::clicked, [this, scene](){
         if(this->useTetMesh) {
-            scene->openGrid(this->getName(), this->getImgFilenames(), this->getSubsample(), this->getTetmeshFilename());
+            scene->openGrid(this->getGridName(), this->getImgFilenames(), this->getSubsample(), this->getVoxelSize(), this->getTetmeshFilename());
         } else {
-            scene->openGrid(this->getName(), this->getImgFilenames(), this->getSubsample(), this->getSizeVoxel(), this->getSizeTetmesh());
+            scene->openGrid(this->getGridName(), this->getImgFilenames(), this->getSubsample(), this->getVoxelSize(), this->getSizeTetmesh());
         }
         bool useCage = !this->fileChoosers["Cage choose"]->filename.isEmpty();
         if(useCage) {
-            scene->openCage(this->getName() + "_cage", this->fileChoosers["Cage choose"]->filename.toStdString(), this->getName(), this->checkBoxes["mvc"]->isChecked());
+            scene->openCage(this->getGridName() + "_cage", this->fileChoosers["Cage choose"]->filename.toStdString(), this->getGridName(), this->checkBoxes["mvc"]->isChecked());
         }
-        if(!scene->checkTransferMeshValidity(this->getName())) {
+        bool useVoxelSize = this->getVoxelSize() != glm::vec3(1., 1., 1.);
+        bool useSubsample = this->getSubsample() != 1.;
+        if(this->useTetMesh && useSubsample && !scene->checkTransferMeshValidity(this->getGridName())) {
             {
                 QMessageBox msgBox;
                 msgBox.setText("Warning: scale offset between the image and the tetrahedral mesh.");
@@ -43,8 +45,8 @@ void OpenImageForm::connect(Scene * scene) {
                 msgBox.setDefaultButton(QMessageBox::Yes);
                 int ret = msgBox.exec();
                 if(ret == QMessageBox::Yes) {
-                    scene->getBaseMesh(this->getName())->scale(glm::vec3(1./float(this->getSubsample()), 1./float(this->getSubsample()), 1./float(this->getSubsample())));
-                    scene->updateTextureCoordinates(this->getName());
+                    scene->getBaseMesh(this->getGridName())->scale(glm::vec3(1./float(this->getSubsample()), 1./float(this->getSubsample()), 1./float(this->getSubsample())));
+                    scene->updateTextureCoordinates(this->getGridName());
                     scene->updateTetmeshAllGrids(true);// Update all informations, in particular texture coordinates because the Tetmesh is smaller
                     scene->updateSceneCenter();
                 }
@@ -58,13 +60,45 @@ void OpenImageForm::connect(Scene * scene) {
                     msgBox.setDefaultButton(QMessageBox::Yes);
                     int ret = msgBox.exec();
                     if(ret == QMessageBox::Yes) {
-                        scene->setBindMeshToCageMove(this->getName() + "_cage", false);
-                        scene->getBaseMesh(this->getName() + "_cage")->scale(glm::vec3(1./float(this->getSubsample()), 1./float(this->getSubsample()), 1./float(this->getSubsample())));
-                        scene->setBindMeshToCageMove(this->getName() + "_cage", true);
+                        scene->setBindMeshToCageMove(this->getGridName() + "_cage", false);
+                        scene->getBaseMesh(this->getGridName() + "_cage")->scale(glm::vec3(1./float(this->getSubsample()), 1./float(this->getSubsample()), 1./float(this->getSubsample())));
+                        scene->setBindMeshToCageMove(this->getGridName() + "_cage", true);
                     }
                 }
             }
         }
+        // WARNING this section is if you want to still load the grid with voxel at 1x1x1
+        //if(this->useTetMesh && useVoxelSize) {
+        //    {
+        //        QMessageBox msgBox;
+        //        msgBox.setText("Warning: different voxel size.");
+        //        msgBox.setInformativeText(std::string(std::string("You choose a voxel size of [") + std::to_string(this->getVoxelSize().x) + ", " + std::to_string(this->getVoxelSize().y) + ", " + std::to_string(this->getVoxelSize().z) + std::string("]. Do you want the software to load the mesh with a corresponding scale ?")).c_str());
+        //        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+        //        msgBox.setDefaultButton(QMessageBox::Yes);
+        //        int ret = msgBox.exec();
+        //        if(ret == QMessageBox::Yes) {
+        //            scene->getBaseMesh(this->getGridName())->scale(glm::vec3(float(this->getVoxelSize().x), float(this->getVoxelSize().y), float(this->getVoxelSize().z)));
+        //            //scene->updateTextureCoordinates(this->getGridName());
+        //            scene->updateTetmeshAllGrids(true);// Update all informations, in particular texture coordinates because the Tetmesh is smaller
+        //            scene->updateSceneCenter();
+        //        }
+        //    }
+        //    {
+        //        if(useCage) {
+        //            QMessageBox msgBox;
+        //            msgBox.setText("Warning: different voxel size.");
+        //            msgBox.setInformativeText("Do you want the software to load the cage with the voxel size scale ?");
+        //            msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+        //            msgBox.setDefaultButton(QMessageBox::Yes);
+        //            int ret = msgBox.exec();
+        //            if(ret == QMessageBox::Yes) {
+        //                scene->setBindMeshToCageMove(this->getGridName() + "_cage", false);
+        //                scene->getBaseMesh(this->getGridName() + "_cage")->scale(glm::vec3(float(this->getVoxelSize().x), float(this->getVoxelSize().y), float(this->getVoxelSize().z)));
+        //                scene->setBindMeshToCageMove(this->getGridName() + "_cage", true);
+        //            }
+        //        }
+        //    }
+        //}
         this->hide();
         Q_EMIT loaded();
     });
