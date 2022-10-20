@@ -30,6 +30,7 @@ public:
     bool multiGridRendering;
     bool displayTetmesh;
     bool drawSliceOnly;
+    bool drawTetIdx;
     float blendFirstPass;
 
     // Segmented data display control
@@ -48,6 +49,7 @@ public:
 
     void initializeGL(ShaderCompiler::GLFunctions *functions);
     void drawGrid(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, glm::vec3 planePosition, glm::vec3 planeDirection, bool drawFront, int w, int h);
+    void drawGridFirstPass(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, glm::vec3 planePosition, glm::vec3 planeDirection, bool drawFront, int w, int h);
     void drawBBox(const glm::vec3& planePos);
 
     void setMultiGridRendering(bool value);
@@ -77,10 +79,13 @@ public:
     GLuint gridTexture;
 
     GLuint frameBuffer;
+    GLuint frameBuffer2;
     GLuint rbo;
     GLuint frameDepthBuffer;
     GLuint depthTexture;
+    GLuint depthTexture2;
     GLuint dualRenderingTexture;
+    GLuint firstPassTexture;
 
 protected:
     GLuint program;
@@ -107,7 +112,7 @@ protected:
     GLuint compileShaders(std::string _vPath, std::string _gPath, std::string _fPath);
 
     // Utils
-    void prepareUniforms(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, glm::vec3 planePosition, glm::vec3 planeDirection, bool drawFront);
+    void prepareUniforms(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, glm::vec3 planePosition, glm::vec3 planeDirection, bool drawFront, float w, float h);
     void createBuffers();
     void generateColorScales();
     void tex3D_buildBuffers();

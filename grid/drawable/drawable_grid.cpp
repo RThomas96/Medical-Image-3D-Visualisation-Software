@@ -218,7 +218,7 @@ GLuint DrawableGrid::compileShaders(std::string _vPath, std::string _gPath, std:
 }
 
 
-void DrawableGrid::prepareUniforms(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, glm::vec3 planePosition, glm::vec3 planeDirection, bool drawFront) {
+void DrawableGrid::prepareUniforms(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, glm::vec3 planePosition, glm::vec3 planeDirection, bool drawFront, float w, float h) {
     /// @brief Shortcut for glGetUniform, since this can result in long lines.
     auto getUniform = [&](const char* name) -> GLint {
         GLint g = gl->glGetUniformLocation(program, name);
@@ -254,6 +254,11 @@ void DrawableGrid::prepareUniforms(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camP
     tex++;
 
     glActiveTexture(GL_TEXTURE0 + tex);
+    glBindTexture(GL_TEXTURE_2D, firstPassTexture);
+    gl->glUniform1i(getUniform("firstPass"), tex);
+    tex++;
+
+    glActiveTexture(GL_TEXTURE0 + tex);
     glBindTexture(GL_TEXTURE_3D, gridTexture);
     gl->glUniform1i(getUniform("texData"), tex);
     tex++;
@@ -281,6 +286,9 @@ void DrawableGrid::prepareUniforms(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camP
     gl->glUniform1f(getUniform("maxValue"), grid->getMaxValue());
     gl->glUniform3fv(getUniform("volumeEpsilon"), 1, glm::value_ptr(glm::vec3(1.5, 1.5, 1.5)));
 
+    gl->glUniform1f(getUniform("screen_width"), w);
+    gl->glUniform1f(getUniform("screen_height"), h);
+
     gl->glUniform3fv(getUniform("cam"), 1, glm::value_ptr(camPos));
     gl->glUniform3fv(getUniform("cut"), 1, glm::value_ptr(planePosition));
     gl->glUniform3fv(getUniform("cutDirection"), 1, glm::value_ptr(planeDirection));
@@ -293,6 +301,11 @@ void DrawableGrid::prepareUniforms(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camP
     if(!this->drawSliceOnly)
         drawOnly = 0;
     gl->glUniform1i(getUniform("drawSliceOnly"), drawOnly);
+
+    int drawTetIdx = 0;
+    if(this->drawTetIdx)
+        drawTetIdx = 1;
+    gl->glUniform1i(getUniform("drawTetIdx"), drawTetIdx);
 
     gl->glUniformMatrix4fv(getUniform("mMat"), 1, GL_FALSE, glm::value_ptr(glm::mat4(1.f)));
     gl->glUniformMatrix4fv(getUniform("vMat"), 1, GL_FALSE, mvMat);
@@ -422,9 +435,77 @@ void DrawableGrid::tex3D_buildBuffers() {
     gl->glBufferData(GL_ELEMENT_ARRAY_BUFFER, 12 * sizeof(GLushort), indices, GL_STATIC_DRAW);
 }
 
+void DrawableGrid::drawGridFirstPass(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, glm::vec3 planePosition, glm::vec3 planeDirection, bool inFrame, int w, int h) {
+    this->drawTetIdx = true;
+
+    this->prepareUniforms(mvMat, pMat, camPos, planePosition, planeDirection, true, w, h);
+    gl->glBindVertexArray(this->vaoVolumetricBuffers);
+
+    gl->glEnableVertexAttribArray(0);
+    gl->glBindBuffer(GL_ARRAY_BUFFER, this->vboTexture3DVertPos);
+    gl->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
+
+    gl->glEnableVertexAttribArray(1);
+    gl->glBindBuffer(GL_ARRAY_BUFFER, this->vboTexture3DVertNorm);
+    gl->glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*) 0);
+
+    gl->glEnableVertexAttribArray(2);
+    gl->glBindBuffer(GL_ARRAY_BUFFER, this->vboTexture3DVertTex);
+    gl->glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*) 0);
+
+    gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vboTexture3DVertIdx);
+
+        GLint defaultFBO;
+        gl->glGetIntegerv(GL_FRAMEBUFFER_BINDING, &defaultFBO);
+
+        gl->glDeleteFramebuffers(1, &this->frameBuffer2);
+        gl->glGenFramebuffers(1, &this->frameBuffer2);
+        gl->glBindFramebuffer(GL_FRAMEBUFFER, this->frameBuffer2);
+
+        glDeleteTextures(1, &firstPassTexture);
+        glGenTextures(1, &firstPassTexture);
+
+        glBindTexture(GL_TEXTURE_2D, firstPassTexture);
+        glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, w, h, 0,GL_RGB, GL_UNSIGNED_BYTE, 0);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        gl->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, firstPassTexture, 0);
+
+        glDeleteTextures(1, &depthTexture2);
+        glGenTextures(1, &depthTexture2);
+        glBindTexture(GL_TEXTURE_2D, depthTexture2);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, w, h, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+        glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+
+        gl->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTexture2, 0);
+
+        // Set the list of draw buffers.
+        GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
+        gl->glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
+        /***/
+        gl->glDrawElementsInstanced(GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, (void*) 0, tetrahedraCount);
+        gl->glBindFramebuffer(GL_FRAMEBUFFER, defaultFBO);
+
+    // Unbind program, buffers and VAO :
+    gl->glBindVertexArray(0);
+    gl->glBindBuffer(GL_ARRAY_BUFFER, 0);
+    gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    gl->glUseProgram(0);
+
+    this->drawTetIdx = false;
+}
+
 void DrawableGrid::drawGrid(GLfloat *mvMat, GLfloat *pMat, glm::vec3 camPos, glm::vec3 planePosition, glm::vec3 planeDirection, bool inFrame, int w, int h) {
     //this->updateMinMaxDisplayValues();
-    this->prepareUniforms(mvMat, pMat, camPos, planePosition, planeDirection, !inFrame);
+    this->prepareUniforms(mvMat, pMat, camPos, planePosition, planeDirection, false, w, h);
     gl->glBindVertexArray(this->vaoVolumetricBuffers);
 
     gl->glEnableVertexAttribArray(0);

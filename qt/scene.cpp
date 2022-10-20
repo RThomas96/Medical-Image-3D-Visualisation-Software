@@ -652,6 +652,13 @@ void Scene::drawScene(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool show
                     planePosition += this->grids[i]->getDimensions()/200.f;
                 glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                //this->grids[i]->drawGridFirstPass(mvMat, pMat, glm::vec3(0., 0., 0.), planePosition, this->planeDirection, false, w, h);
+                //this->grids[i]->drawGridFirstPass(mvMat, pMat, glm::vec3(0., 0., 0.), planePosition, this->planeDirection, false, w, h);
+                this->grids[i]->drawGridFirstPass(mvMat, pMat, camPos, planePosition, this->planeDirection, false, w, h);
+
+                glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                //this->grids[i]->drawGrid(mvMat, pMat, camPos, planePosition, this->planeDirection, false, w, h);
                 this->grids[i]->drawGrid(mvMat, pMat, camPos, planePosition, this->planeDirection, false, w, h);
             }
 
