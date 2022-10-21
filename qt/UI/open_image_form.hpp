@@ -67,6 +67,15 @@ public slots:
 
         this->addWithLabel(WidgetType::CHECK_BOX, "Segmented", "Segmented: ");
 
+        this->addWithLabel(WidgetType::H_GROUP, "GroupPosition", "Position: ");
+        this->addAllNextWidgetsToGroup("GroupPosition");
+
+        this->add(WidgetType::SPIN_BOX_DOUBLE, "PositionX");
+        this->add(WidgetType::SPIN_BOX_DOUBLE, "PositionY");
+        this->add(WidgetType::SPIN_BOX_DOUBLE, "PositionZ");
+
+        this->addAllNextWidgetsToSection("Image");
+
         this->addWithLabel(WidgetType::H_GROUP, "GroupVoxelSize", "Voxel size: ");
         this->addAllNextWidgetsToGroup("GroupVoxelSize");
 
