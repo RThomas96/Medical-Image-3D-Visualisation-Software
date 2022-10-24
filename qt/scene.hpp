@@ -214,8 +214,6 @@ public:
     MeshToolType * getMeshTool();
 
 public:
-    void writeDeformedImageLowRes(const std::string& filename, const std::string& gridName);
-
     void writeDeformedImage(const std::string& filename, const std::string& gridName, bool useColorMap, ResolutionMode resolution);
     void writeDeformedImage(const std::string& filename, const std::string& gridName, bool useColorMap, const glm::vec3& voxelSize);
     void writeDeformedImage(const std::string& filename, const std::string& gridName, const glm::vec3& bbMin, const glm::vec3& bbMax, bool useColorMap, const glm::vec3& voxelSize);

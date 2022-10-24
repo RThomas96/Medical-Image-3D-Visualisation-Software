@@ -164,6 +164,159 @@ void Grid::loadMESH(std::string const &filename) {
     }    
 }
 
+//void Grid::sampleSliceGridValues(const glm::ivec3& slice, const std::pair<glm::vec3, glm::vec3>& areaToSample, const glm::vec3& imgSize, std::vector<uint16_t>& result, Interpolation::Method interpolationMethod) {
+//    // To expose as parameters
+//    bool smallFile = true;
+//    int cacheSize = 2;
+//    bool useCustomColor = false;
+//    glm::ivec3 sceneImageSize = glm::vec3(0, 0, 0);
+//    //ResolutionMode resolution = ResolutionMode::FULL_RESOLUTION;
+//
+//    Grid * fromGrid = this;
+//    glm::vec3 worldSize = fromGrid->getDimensions();
+//    glm::vec3 gridVoxelSize = fromGrid->getWorldVoxelSize();
+//    glm::vec3 imageVoxelSize = this->getOriginalVoxelSize();
+//    //glm::vec3 voxelSize = fromGrid->getVoxelSize(resolution);
+//
+//    auto start = std::chrono::steady_clock::now();
+//
+//    glm::vec3 fromImageToCustomImage = glm::vec3(0., 0., 0.);
+//
+//    auto fromWorldToImage = [&](glm::vec3& p, bool ceil) {
+//        p -= fromGrid->bbMin;
+//        for(int i = 0; i < 3; ++i) {
+//            if(ceil)
+//                p[i] = std::ceil((p[i]/gridVoxelSize[i])/imageVoxelSize[i]);
+//            else
+//                p[i] = std::floor((p[i]/gridVoxelSize[i])/imageVoxelSize[i]);
+//        }
+//        p /= fromImageToCustomImage;
+//    };
+//
+//    auto getWorldCoordinates = [&](glm::vec3& p) {
+//        for(int i = 0; i < 3; ++i) {
+//            p[i] = (float(std::ceil((p[i] * fromImageToCustomImage[i])) + 0.5) * gridVoxelSize[i])*imageVoxelSize[i];
+//        }
+//        p += fromGrid->bbMin;
+//    };
+//
+//    glm::ivec3 n(0, 0, 0);
+//    for(int i = 0 ; i < 3 ; i++) {
+//        n[i] = std::ceil(fabs((worldSize[i])/gridVoxelSize[i])/imageVoxelSize[i]);
+//    }
+//
+//    if(sceneImageSize == glm::ivec3(0., 0., 0.))
+//        sceneImageSize = n;
+//
+//    fromImageToCustomImage = glm::vec3(n) / glm::vec3(sceneImageSize);
+//
+//    auto convert = [&](glm::vec3& p) {
+//        if(slice.y == -1 && slice.z == -1)
+//            std::swap(p.x, p.z);
+//        if(slice.x == -1 && slice.z == -1)
+//            std::swap(p.y, p.z);
+//        if(slice.x == -1 && slice.y == -1)
+//            std::swap(p.z, p.z);
+//    };
+//
+//    //glm::ivec3 bbMinWrite = ((areaToSample.first - fromGrid->bbMin)/gridVoxelSize)/imageVoxelSize;
+//    //glm::ivec3 bbMaxWrite = ((areaToSample.second - fromGrid->bbMin)/gridVoxelSize)/imageVoxelSize;
+//    glm::ivec3 convSlice = slice;
+//    for(int i = 0; i < 3; ++i)
+//        if(convSlice[i] < 0)
+//            convSlice[i] = 0.;
+//
+//    glm::ivec3 bbMinWrite = convSlice;
+//    glm::ivec3 bbMaxWrite = convSlice+glm::ivec3(1., 1, 1);
+//    glm::ivec3 imageSize = bbMaxWrite - bbMinWrite;
+//
+//    std::cout << "BBmin: " << bbMinWrite << std::endl;
+//    std::cout << "BBmax: " << bbMaxWrite << std::endl;
+//    std::cout << "ImageSize: " << imageSize << std::endl;
+//    std::cout << "Original size: " << sceneImageSize << std::endl;
+//
+//    std::vector<std::vector<uint16_t>> img = std::vector<std::vector<uint16_t>>(sceneImageSize.z, std::vector<uint16_t>(sceneImageSize.x * sceneImageSize.y, 0.));
+//
+//    int cacheMaxNb = std::floor(fromGrid->sampler.image->tiffImageReader->imgResolution.z / float(cacheSize));
+//    std::map<int, std::vector<uint16_t>> cache;
+//
+//    if(smallFile)
+//        for(int i = 0; i < fromGrid->sampler.image->tiffImageReader->imgResolution.z; ++i)
+//            fromGrid->sampler.image->tiffImageReader->getImage<uint16_t>(i, cache[i], {glm::vec3(0., 0., 0.), fromGrid->sampler.image->tiffImageReader->imgResolution});
+//
+//    #pragma omp parallel for schedule(static) if(smallFile)
+//    for(int tetIdx = 0; tetIdx < fromGrid->mesh.size(); ++tetIdx) {
+//        const Tetrahedron& tet = fromGrid->mesh[tetIdx];
+//        glm::vec3 bbMinTet = tet.getBBMin();
+//        glm::vec3 bbMaxTet = tet.getBBMax();
+//        fromWorldToImage(bbMinTet, false);
+//        fromWorldToImage(bbMaxTet, true);
+//        int X = bbMaxTet.x;
+//        int Y = bbMaxTet.y;
+//        int Z = bbMaxTet.z;
+//        for(int k = bbMinTet.z; k < Z; ++k) {
+//            for(int j = bbMinTet.y; j < Y; ++j) {
+//                for(int i = bbMinTet.x; i < X; ++i) {
+//                    glm::vec3 p(i, j, k);
+//                    if(p.x < bbMinWrite.x ||
+//                       p.y < bbMinWrite.y ||
+//                       p.z < bbMinWrite.z ||
+//                       p.x > bbMaxWrite.x ||
+//                       p.y > bbMaxWrite.y ||
+//                       p.z > bbMaxWrite.z)
+//                        continue;
+//                    getWorldCoordinates(p);
+//                    if(tet.isInTetrahedron(p)) {
+//                        if(fromGrid->getCoordInInitial(fromGrid->initialMesh, p, p, tetIdx)) {
+//                            int insertIdx = i + j*sceneImageSize[0];
+//
+//                            //p *= fromGrid->sampler.resolutionRatio;
+//                            //p += glm::vec3(.5, .5, .5);
+//                            int imgIdxLoad = std::floor(p.z);
+//                            int idxLoad = std::floor(p.x) + std::floor(p.y) * fromGrid->sampler.image->tiffImageReader->imgResolution.x;
+//
+//                            if(img[k][insertIdx] == 0) {
+//
+//                                bool isInBBox = true;
+//                                for(int l = 0; l < 3; ++l) {
+//                                    if(p[l] < 0. || p[l] >= fromGrid->sampler.image->tiffImageReader->imgResolution[l])
+//                                        isInBBox = false;
+//                                }
+//
+//                                if(isInBBox) {
+//                                    bool imgAlreadyLoaded = cache.find(imgIdxLoad) != cache.end();
+//                                    if(!imgAlreadyLoaded) {
+//                                        if(cache.size() > cacheMaxNb) {
+//                                            cache.erase(cache.begin());
+//                                        }
+//                                        fromGrid->sampler.image->tiffImageReader->getImage<uint16_t>(imgIdxLoad, cache[imgIdxLoad], {glm::vec3(0., 0., 0.), fromGrid->sampler.image->tiffImageReader->imgResolution});
+//                                    }
+//                                    if(k >= 0 && k < img.size() && insertIdx < img[0].size() && insertIdx >= 0)
+//                                        if(imgIdxLoad >= 0 && imgIdxLoad < cache.size() && idxLoad < cache[0].size() && idxLoad >= 0)
+//                                            img[k][insertIdx] = cache[imgIdxLoad][idxLoad];
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
+//
+//    //this->writeGreyscaleTIFFImage(filename, n, img);
+//
+//    result = std::vector<uint16_t>(std::vector<uint16_t>(imageSize.x * imageSize.y, 0.));
+//    for(int j = 0; j < imageSize.y; ++j) {
+//        for(int i = 0; i < imageSize.x; ++i) {
+//            result[i+j*imageSize.x] = img[bbMinWrite.z][(i+bbMinWrite.x)+(j+bbMinWrite.y)*sceneImageSize.x];
+//        }
+//    }
+//
+//    auto end = std::chrono::steady_clock::now();
+//    std::chrono::duration<double> elapsed_seconds = end-start;
+//    std::cout << "Duration time: " << elapsed_seconds.count() << "s / " << elapsed_seconds.count()/60. << "m" << std::endl;
+//}
+
 void Grid::sampleSliceGridValues(const glm::vec3& slice, const std::pair<glm::vec3, glm::vec3>& areaToSample, const glm::vec3& imgSize, std::vector<uint16_t>& result, Interpolation::Method interpolationMethod) {
     auto start = std::chrono::steady_clock::now();
 
@@ -184,9 +337,12 @@ void Grid::sampleSliceGridValues(const glm::vec3& slice, const std::pair<glm::ve
     glm::vec3 newImgSize = imgSize;
     convert(newImgSize);
     glm::vec3 sizeVoxelInNewImage = (bbMaxScene - bbMinScene) / newImgSize;
+
+    glm::vec3 gridVoxelSize = this->getOriginalVoxelSize();
     //glm::vec3 sizeVoxelInNewImage = glm::vec3(1., 1., 1.);
 
     std::cout << "Size voxel new: " << sizeVoxelInNewImage << std::endl;
+    std::cout << "Size voxel : " << this->getOriginalVoxelSize() << std::endl;
 
     auto isInScene = [&](glm::vec3& p) {
         return (p.x > bbMinScene.x && p.y > bbMinScene.y && p.z > bbMinScene.z && p.x < bbMaxScene.x && p.y < bbMaxScene.y && p.z < bbMaxScene.z);
@@ -194,11 +350,11 @@ void Grid::sampleSliceGridValues(const glm::vec3& slice, const std::pair<glm::ve
 
     auto fromWorldToNewImage = [&](glm::vec3& p) {
         p -= bbMinScene;
-        p /= sizeVoxelInNewImage;
+        p /= gridVoxelSize;
     };
 
     auto fromNewImageToWorld = [&](glm::vec3& p) {
-        p *= sizeVoxelInNewImage;
+        p *= gridVoxelSize;
         p += bbMinScene;
     };
 
@@ -222,9 +378,6 @@ void Grid::sampleSliceGridValues(const glm::vec3& slice, const std::pair<glm::ve
         bbMax.x = std::floor(bbMax.x) + 1;
         bbMax.y = std::floor(bbMax.y) + 1;
         bbMax.z = std::floor(bbMax.z) + 1;
-        //if((tetIdx%printOcc) == 0) {
-        //    std::cout << "Loading: " << (float(tetIdx)/float(this->mesh.size())) * 100. << "%" << std::endl;
-        //}
         if(slice.y == -1 && slice.z == -1) {
             bbMin.x = slice.x;
             bbMax.x = slice.x+1;
@@ -245,7 +398,7 @@ void Grid::sampleSliceGridValues(const glm::vec3& slice, const std::pair<glm::ve
                     p += glm::vec3(.5, .5, .5);
                     fromNewImageToWorld(p);
 
-                    if(isInScene(p) && tet.isInTetrahedron(p)) {
+                    if(/*isInScene(p) &&*/ tet.isInTetrahedron(p)) {
                         if(this->getCoordInInitial(this->initialMesh, p, p, tetIdx)) {
                         //if(this->getCoordInImage(p, p, tetIdx)) {
 
@@ -253,8 +406,13 @@ void Grid::sampleSliceGridValues(const glm::vec3& slice, const std::pair<glm::ve
                             convert(pImg);
                             int insertIdx = pImg.x + pImg.y*imgSize[0];
 
-                            this->sampler.fromSamplerToImage(p);
-                            result[insertIdx] = this->getValueFromPoint(p, interpolationMethod);
+                            //this->sampler.fromSamplerToImage(p);
+
+                            //if(this->sampler.useSubsample)
+                            //    p /= this->sampler.getVoxelSize();
+
+                            //result[insertIdx] = this->getValueFromPoint(p, interpolationMethod, ResolutionMode::SAMPLER_RESOLUTION);
+                            result[insertIdx] = this->sampler.getValue(p, interpolationMethod, ResolutionMode::SAMPLER_RESOLUTION);
                         }
                     }
                 }
@@ -401,6 +559,9 @@ void Sampler::init(const std::vector<std::string>& filename, int subsample, cons
     int intSubsample = 1.;
     float smallestVoxelDim = std::min(voxelSize.x, std::min(voxelSize.y, voxelSize.z));
     intSubsample = static_cast<int>(std::floor(smallestVoxelDim));
+
+    if(intSubsample > 1)
+        this->useSubsample = true;
 
     glm::vec3 samplerResolution = this->image->imgResolution / static_cast<float>(intSubsample);
     this->resolutionRatio = this->image->imgResolution / samplerResolution;

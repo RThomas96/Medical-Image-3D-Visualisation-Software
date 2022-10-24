@@ -653,7 +653,7 @@ glm::vec3 PlanarViewForm::getBackImgDimension(Scene * scene) {
     if(name == "")
         return defaultValue;
     //return scene->grids[scene->getGridIdx(name)]->grid->getResolution();
-    return scene->grids[scene->getGridIdx(name)]->getDimensions();
+    return scene->grids[scene->getGridIdx(name)]->getDimensions()*scene->grids[scene->getGridIdx(name)]->getOriginalVoxelSize();
 }
 
 void PlanarViewForm::backImageChanged(Scene * scene) {

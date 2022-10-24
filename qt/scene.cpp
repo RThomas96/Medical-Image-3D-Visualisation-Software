@@ -1840,7 +1840,6 @@ void Scene::writeDeformedImageTemplated(const std::string& filename, const std::
     bool smallFile = true;
     int cacheSize = 2;
     bool useCustomColor = useColorMap;
-    //glm::ivec3 imageSize = glm::vec3(60, 264, 500);
     glm::ivec3 sceneImageSize = glm::vec3(0, 0, 0);
     //ResolutionMode resolution = ResolutionMode::FULL_RESOLUTION;
 
@@ -2059,93 +2058,6 @@ void Scene::writeDeformedImageTemplated(const std::string& filename, const std::
     std::cout << "Duration time: " << elapsed_seconds.count() << "s / " << elapsed_seconds.count()/60. << "m" << std::endl;
 }
 
-void Scene::writeDeformedImageLowRes(const std::string& filename, const std::string& gridName) {
-    ResolutionMode resolution = ResolutionMode::SAMPLER_RESOLUTION;
-    auto start = std::chrono::steady_clock::now();
-    Grid * fromGrid = this->grids[this->getGridIdx(gridName)];
-
-    auto fromWorldToImage = [&](glm::vec3& p, bool ceil) {
-        p -= fromGrid->bbMin;
-        for(int i = 0; i < 3; ++i) {
-            if(ceil)
-                p[i] = std::ceil(p[i]/fromGrid->getVoxelSize(resolution)[i]); 
-            else
-                p[i] = std::floor(p[i]/fromGrid->getVoxelSize(resolution)[i]); 
-        }
-    };
-
-    auto getWorldCoordinates = [&](glm::vec3& p) {
-        for(int i = 0; i < 3; ++i) {
-            p[i] = (p[i]+0.5) * fromGrid->getVoxelSize(resolution)[i];
-        }
-        p += fromGrid->bbMin;
-    };
-
-    // STEP1: compute the deformed voxel grid size
-    glm::vec3 worldSize = fromGrid->getDimensions();
-    glm::vec3 voxelSize = fromGrid->getVoxelSize(resolution);
-
-    glm::ivec3 n(0, 0, 0);
-    for(int i = 0 ; i < 3 ; i++) {
-        n[i] = std::ceil(fabs(worldSize[i])/voxelSize[i])+1;
-    }
-
-    std::vector<std::vector<uint8_t>> img = std::vector<std::vector<uint8_t>>(n.z, std::vector<uint8_t>(n.x * n.y, 0.));
-
-    #pragma omp parallel for schedule(static)
-    for(int tetIdx = 0; tetIdx < fromGrid->mesh.size(); ++tetIdx) {
-        std::cout << "Tet: " << tetIdx << "/" << fromGrid->mesh.size() << std::endl;
-        const Tetrahedron& tet = fromGrid->mesh[tetIdx];
-        glm::vec3 bbMin = tet.getBBMin();
-        glm::vec3 bbMax = tet.getBBMax();
-        fromWorldToImage(bbMin, false);
-        fromWorldToImage(bbMax, true);
-        int X = bbMax.x;
-        int Y = bbMax.y;
-        int Z = bbMax.z;
-        for(int k = bbMin.z; k < Z; ++k) {
-            for(int j = bbMin.y; j < Y; ++j) {
-                for(int i = bbMin.x; i < X; ++i) {
-                    glm::vec3 p(i, j, k);
-                    getWorldCoordinates(p);
-                    //if(tet.isInTetrahedron(p)) {
-                        if(fromGrid->getCoordInInitial(fromGrid->initialMesh, p, p, tetIdx)) {
-                            int insertIdx = i + j*n[0];
-                            if(insertIdx >= img[0].size()) {
-                                std::cout << "ERROR:" << std::endl;
-                                std::cout << "i:" << i << std::endl;
-                                std::cout << "j:" << j << std::endl;
-                                std::cout << "k:" << k << std::endl;
-                                std::cout << "p:" << p << std::endl;
-                            }
-
-                            if(img[k][insertIdx] == 0) {
-                                //img[k][insertIdx] = fromGrid->getValueFromPoint(p, Interpolation::Method::Linear);
-                                img[k][insertIdx] = static_cast<uint8_t>(fromGrid->getValueFromPoint(p));
-                            }
-                        }
-                    //}
-                }
-            }
-        }
-    }
-
-    //this->writeGreyscaleTIFFImage(filename, n, img);
-
-    TinyTIFFWriterFile * tif = TinyTIFFWriter_open(filename.c_str(), 8, TinyTIFFWriter_UInt, 1, n[0], n[1], TinyTIFFWriter_Greyscale);
-    for(int i = 0; i < img.size(); ++i) {
-        TinyTIFFWriter_writeImage(tif, img[i].data());
-    }
-    TinyTIFFWriter_close(tif);
-    std::cout << "Destination: " << filename << std::endl;
-    std::cout << "Save sucessfull" << std::endl;
-
-    auto end = std::chrono::steady_clock::now();
-    std::chrono::duration<double> elapsed_seconds = end-start;
-    std::cout << "Duration time: " << elapsed_seconds.count() << "s / " << elapsed_seconds.count()/60. << "m" << std::endl;
-
-}
-
 glm::vec3 Scene::getTransformedPoint(const glm::vec3& inputPoint, const std::string& from, const std::string& to) {
     glm::vec3 result = glm::vec3(0., 0., 0.);
 
@@ -2290,16 +2202,6 @@ std::pair<uint16_t, uint16_t> Scene::getGridMinMaxValues() {
 
 std::vector<bool> Scene::getGridUsageValues(int minValue) {
     std::vector<int> histogram = this->grids[this->activeGrid]->sampler.getHistogram();
-    std::cout << "Histo[0]: " << histogram[0] << std::endl;
-    std::cout << "Histo[1]: " << histogram[1] << std::endl;
-    std::cout << "Histo[2]: " << histogram[2] << std::endl;
-    std::cout << "Histo[3]: " << histogram[3] << std::endl;
-    std::cout << "Histo[4]: " << histogram[4] << std::endl;
-    std::cout << "Histo[5]: " << histogram[5] << std::endl;
-    std::cout << "Histo[6]: " << histogram[6] << std::endl;
-    std::cout << "Histo[7]: " << histogram[7] << std::endl;
-    std::cout << "Histo[8]: " << histogram[8] << std::endl;
-    std::cout << "Histo[9]: " << histogram[9] << std::endl;
     if(activeGrid != -1) {
         std::vector<bool> usage;
         usage.reserve(histogram.size());

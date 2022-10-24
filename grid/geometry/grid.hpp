@@ -37,6 +37,7 @@ public:
     glm::vec3 subregionMax;
 
     bool useCache;
+    bool useSubsample;
     Cache * cache;
 
     Sampler(glm::vec3 size);
