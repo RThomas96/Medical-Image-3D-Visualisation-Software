@@ -35,38 +35,41 @@ void OpenImageForm::connect(Scene * scene) {
             scene->openCage(this->getGridName() + "_cage", this->fileChoosers["Cage choose"]->filename.toStdString(), this->getGridName(), this->checkBoxes["mvc"]->isChecked());
         }
         bool useVoxelSize = this->getVoxelSize() != glm::vec3(1., 1., 1.);
-        bool useSubsample = this->getSubsample() != 1.;
-        if(this->useTetMesh && useSubsample && !scene->checkTransferMeshValidity(this->getGridName())) {
-            {
-                QMessageBox msgBox;
-                msgBox.setText("Warning: scale offset between the image and the tetrahedral mesh.");
-                msgBox.setInformativeText(std::string(std::string("You choose a subsample of [") + std::to_string(this->getSubsample()) + std::string("]. However, the tetrahedral mesh you select seems to be at a different scale. Do you want the software to load the mesh at the correct scale ?")).c_str());
-                msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-                msgBox.setDefaultButton(QMessageBox::Yes);
-                int ret = msgBox.exec();
-                if(ret == QMessageBox::Yes) {
-                    scene->getBaseMesh(this->getGridName())->scale(glm::vec3(1./float(this->getSubsample()), 1./float(this->getSubsample()), 1./float(this->getSubsample())));
-                    scene->updateTextureCoordinates(this->getGridName());
-                    scene->updateTetmeshAllGrids(true);// Update all informations, in particular texture coordinates because the Tetmesh is smaller
-                    scene->updateSceneCenter();
-                }
-            }
-            {
-                if(useCage) {
-                    QMessageBox msgBox;
-                    msgBox.setText("Warning: scale offset between the image and the cage.");
-                    msgBox.setInformativeText("Do you want the software to load the cage at the correct scale ?");
-                    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-                    msgBox.setDefaultButton(QMessageBox::Yes);
-                    int ret = msgBox.exec();
-                    if(ret == QMessageBox::Yes) {
-                        scene->setBindMeshToCageMove(this->getGridName() + "_cage", false);
-                        scene->getBaseMesh(this->getGridName() + "_cage")->scale(glm::vec3(1./float(this->getSubsample()), 1./float(this->getSubsample()), 1./float(this->getSubsample())));
-                        scene->setBindMeshToCageMove(this->getGridName() + "_cage", true);
-                    }
-                }
-            }
-        }
+        int minVoxeSize = std::floor(std::min(this->getVoxelSize().x, std::min(this->getVoxelSize().y, this->getVoxelSize().z)));
+        bool useSubsample = minVoxeSize >= 2.;
+        //bool useSubsample = this->getSubsample() != 1.;
+        //if(useVoxelSize) {
+        //    {
+        //        QMessageBox msgBox;
+        //        msgBox.setText("Warning: scale offset between the image and the tetrahedral mesh.");
+        //        msgBox.setInformativeText(std::string(std::string("You choose a subsample of [") + std::to_string(this->getSubsample()) + std::string("]. However, the tetrahedral mesh you select seems to be at a different scale. Do you want the software to load the mesh at the correct scale ?")).c_str());
+        //        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+        //        msgBox.setDefaultButton(QMessageBox::Yes);
+        //        int ret = msgBox.exec();
+        //        if(ret == QMessageBox::Yes) {
+        //            scene->getBaseMesh(this->getGridName())->scale(this->getVoxelSize());
+        //            //if(useSubsample)
+        //            //    scene->updateTextureCoordinates(this->getGridName());
+        //            scene->updateTetmeshAllGrids(true);// Update all informations, in particular texture coordinates because the Tetmesh is smaller
+        //            scene->updateSceneCenter();
+        //        }
+        //    }
+        //    {
+        //        if(useCage) {
+        //            QMessageBox msgBox;
+        //            msgBox.setText("Warning: scale offset between the image and the cage.");
+        //            msgBox.setInformativeText("Do you want the software to load the cage at the correct scale ?");
+        //            msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+        //            msgBox.setDefaultButton(QMessageBox::Yes);
+        //            int ret = msgBox.exec();
+        //            if(ret == QMessageBox::Yes) {
+        //                scene->setBindMeshToCageMove(this->getGridName() + "_cage", false);
+        //                scene->getBaseMesh(this->getGridName() + "_cage")->scale(this->getVoxelSize());
+        //                scene->setBindMeshToCageMove(this->getGridName() + "_cage", true);
+        //            }
+        //        }
+        //    }
+        //}
         // WARNING this section is if you want to still load the grid with voxel at 1x1x1
         //if(this->useTetMesh && useVoxelSize) {
         //    {

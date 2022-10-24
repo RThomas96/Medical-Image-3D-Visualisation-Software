@@ -2,6 +2,7 @@
 #include "glm/ext/quaternion_geometric.hpp"
 #include <chrono>
 #include <algorithm>
+#include <cmath>
 #include <type_traits>
 
 #define USE_CACHE true
@@ -139,7 +140,7 @@ glm::vec3 Grid::getWorldVoxelSize() const {
 
 glm::vec3 Grid::getOriginalVoxelSize() const {
     glm::vec3 originalVoxelSize(1., 1., 1.);
-    originalVoxelSize *= glm::vec3(1., 1., 1.)/this->sampler.resolutionRatio;
+    //originalVoxelSize *= glm::vec3(1., 1., 1.)/this->sampler.resolutionRatio;
     originalVoxelSize *= glm::vec3(1., 1., 1.)/this->sampler.getVoxelSize();
     return originalVoxelSize;
 }
@@ -159,7 +160,7 @@ void Grid::loadMESH(std::string const &filename) {
     this->initialMesh.loadMESH(filename);
     this->texCoord.clear();
     for(int i = 0; i < this->vertices.size(); ++i) {
-        this->texCoord.push_back(this->vertices[i]/this->sampler.getSamplerDimension());
+        this->texCoord.push_back((this->vertices[i]/this->sampler.resolutionRatio)/this->sampler.getSamplerDimension());
     }    
 }
 
@@ -397,7 +398,11 @@ Sampler::Sampler(glm::vec3 size): image(nullptr) {
 }
 
 void Sampler::init(const std::vector<std::string>& filename, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox, const glm::vec3& voxelSize) {
-    glm::vec3 samplerResolution = this->image->imgResolution / static_cast<float>(subsample);
+    int intSubsample = 1.;
+    float smallestVoxelDim = std::min(voxelSize.x, std::min(voxelSize.y, voxelSize.z));
+    intSubsample = static_cast<int>(std::floor(smallestVoxelDim));
+
+    glm::vec3 samplerResolution = this->image->imgResolution / static_cast<float>(intSubsample);
     this->resolutionRatio = this->image->imgResolution / samplerResolution;
     // If we naïvely divide the image dimensions for lowered its resolution we have problem is the case of a dimension is 1
     // In that case the voxelSizeRatio is still 2.f for example, but the dimension is 0.5

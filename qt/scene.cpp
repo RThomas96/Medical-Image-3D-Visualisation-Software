@@ -1957,6 +1957,13 @@ void Scene::writeDeformedImageTemplated(const std::string& filename, const std::
             for(int j = bbMinTet.y; j < Y; ++j) {
                 for(int i = bbMinTet.x; i < X; ++i) {
                     glm::vec3 p(i, j, k);
+                    if(p.x < bbMinWrite.x ||
+                       p.y < bbMinWrite.y ||
+                       p.z < bbMinWrite.z ||
+                       p.x > bbMaxWrite.x ||
+                       p.y > bbMaxWrite.y ||
+                       p.z > bbMaxWrite.z)
+                        continue;
                     getWorldCoordinates(p);
                     if(tet.isInTetrahedron(p)) {
                         if(fromGrid->getCoordInInitial(fromGrid->initialMesh, p, p, tetIdx)) {

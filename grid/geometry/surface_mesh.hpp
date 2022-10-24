@@ -23,7 +23,6 @@ public:
 
     void computeTriangleNormal();
     void computeVerticesNormal();
-    void glTriangle(unsigned int i);
 
     void loadOBJ(std::string const &filename);
     void loadOFF(std::string const &filename);

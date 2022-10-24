@@ -147,44 +147,6 @@ void SurfaceMesh::computeVerticesNormal() {
 	}
 }
 
-void SurfaceMesh::glTriangle(unsigned int i) {
-	const Triangle& t = this->triangles[i];
-	for (int j = 0; j < 3; j++) {
-		glm::vec3 n = this->verticesNormals[t.getVertex(j)];
-		glm::vec3 v = this->vertices[t.getVertex(j)];
-
-		glNormal3f(n.x, n.y, n.z);
-		glVertex3f(v.x, v.y, v.z);
-	}
-}
-
-//void SurfaceMesh::draw() {
-//	glEnable(GL_DEPTH_TEST);
-//	glEnable(GL_DEPTH);
-//
-//    //GLfloat model[16];
-//    //glGetFloatv(GL_MODELVIEW_MATRIX, model);
-//
-//    //glPushMatrix();
-//    //glLoadMatrixf(glm::value_ptr(glm::make_mat4(model) * this->getModelMatrix()));
-//
-//    //glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
-//
-//	glBegin(GL_TRIANGLES);
-//
-//	for (unsigned int i = 0; i < this->triangles.size(); i++) {
-//	    glColor3f(1., 0., 0.);
-//		glTriangle(i);
-//	}
-//
-//	glEnd();
-//
-//    glPopMatrix();
-//
-//	glDisable(GL_DEPTH_TEST);
-//	glDisable(GL_DEPTH);
-//}
-
 void SurfaceMesh::computeNormals() {
     this->computeTriangleNormal();
     this->computeVerticesNormal();

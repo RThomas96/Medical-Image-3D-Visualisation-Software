@@ -567,7 +567,7 @@ void TetMesh::computeNeighborhood() {
 }
 
 void TetMesh::computeNormals() {
-    for(int tetIdx; tetIdx < this->mesh.size(); ++tetIdx) {
+    for(int tetIdx = 0; tetIdx < this->mesh.size(); ++tetIdx) {
         this->mesh[tetIdx].computeNormals();
     }
 }
