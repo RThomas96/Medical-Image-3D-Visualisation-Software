@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cmath>
 #include <type_traits>
+#include <vector>
 
 #define USE_CACHE true
 
@@ -334,15 +335,11 @@ void Grid::sampleSliceGridValues(const glm::vec3& slice, const std::pair<glm::ve
     // Space to sample
     glm::vec3 bbMinScene = areaToSample.first;
     glm::vec3 bbMaxScene = areaToSample.second;
-    glm::vec3 newImgSize = imgSize;
-    convert(newImgSize);
-    glm::vec3 sizeVoxelInNewImage = (bbMaxScene - bbMinScene) / newImgSize;
-
-    glm::vec3 gridVoxelSize = this->getOriginalVoxelSize();
-    //glm::vec3 sizeVoxelInNewImage = glm::vec3(1., 1., 1.);
-
-    std::cout << "Size voxel new: " << sizeVoxelInNewImage << std::endl;
-    std::cout << "Size voxel : " << this->getOriginalVoxelSize() << std::endl;
+    glm::vec3 originalImageSize = imgSize * this->getOriginalVoxelSize();
+    convert(originalImageSize);
+    //glm::vec3 voxelSizeConvert = (bbMaxScene - bbMinScene) / originalImageSize;
+    glm::vec3 voxelSizeConvert = 1.f/this->getOriginalVoxelSize();
+    convert(voxelSizeConvert);
 
     auto isInScene = [&](glm::vec3& p) {
         return (p.x > bbMinScene.x && p.y > bbMinScene.y && p.z > bbMinScene.z && p.x < bbMaxScene.x && p.y < bbMaxScene.y && p.z < bbMaxScene.z);
@@ -350,21 +347,22 @@ void Grid::sampleSliceGridValues(const glm::vec3& slice, const std::pair<glm::ve
 
     auto fromWorldToNewImage = [&](glm::vec3& p) {
         p -= bbMinScene;
-        p /= gridVoxelSize;
+        convert(p);
+        p /= voxelSizeConvert;
     };
 
     auto fromNewImageToWorld = [&](glm::vec3& p) {
-        p *= gridVoxelSize;
+        p *= voxelSizeConvert;
+        convert(p);
         p += bbMinScene;
     };
 
-    result.clear();
-    result.resize(imgSize[0] * imgSize[1], 0);
+    std::vector<uint16_t> downscale_image;
+    downscale_image.resize(imgSize[0] * imgSize[1], 0);
 
     int printOcc = 10;
     printOcc = this->mesh.size()/printOcc;
 
-    //#pragma omp parallel for schedule(dynamic) num_threads(fromGrid->mesh.size()/10)
     #pragma omp parallel for schedule(dynamic)
     for(int tetIdx = 0; tetIdx < this->mesh.size(); ++tetIdx) {
         const Tetrahedron& tet = this->mesh[tetIdx];
@@ -379,42 +377,54 @@ void Grid::sampleSliceGridValues(const glm::vec3& slice, const std::pair<glm::ve
         bbMax.y = std::floor(bbMax.y) + 1;
         bbMax.z = std::floor(bbMax.z) + 1;
         if(slice.y == -1 && slice.z == -1) {
-            bbMin.x = slice.x;
-            bbMax.x = slice.x+1;
+            bbMin.z = slice.x;
+            bbMax.z = slice.x+1;
         }
         if(slice.x == -1 && slice.y == -1) {
             bbMin.z = slice.z;
             bbMax.z = slice.z+1;
         }
         if(slice.x == -1 && slice.z == -1) {
-            bbMin.y = slice.y;
-            bbMax.y = slice.y+1;
+            bbMin.z = slice.y;
+            bbMax.z = slice.y+1;
         }
         for(int k = bbMin.z; k < int(bbMax.z); ++k) {
             for(int j = bbMin.y; j < int(bbMax.y); ++j) {
                 for(int i = bbMin.x; i < int(bbMax.x); ++i) {
-                    glm::vec3 p(i, j, k);
+                    int insertIdx = i + j*imgSize[0];
 
+                    glm::vec3 p(i, j, k);
                     p += glm::vec3(.5, .5, .5);
                     fromNewImageToWorld(p);
 
-                    if(/*isInScene(p) &&*/ tet.isInTetrahedron(p)) {
+                    if(isInScene(p) && tet.isInTetrahedron(p)) {
                         if(this->getCoordInInitial(this->initialMesh, p, p, tetIdx)) {
-                        //if(this->getCoordInImage(p, p, tetIdx)) {
-
-                            glm::vec3 pImg(i, j, k);
-                            convert(pImg);
-                            int insertIdx = pImg.x + pImg.y*imgSize[0];
-
-                            //this->sampler.fromSamplerToImage(p);
-
                             //if(this->sampler.useSubsample)
-                            //    p /= this->sampler.getVoxelSize();
-
-                            //result[insertIdx] = this->getValueFromPoint(p, interpolationMethod, ResolutionMode::SAMPLER_RESOLUTION);
-                            result[insertIdx] = this->sampler.getValue(p, interpolationMethod, ResolutionMode::SAMPLER_RESOLUTION);
+                            //    p /= this->sampler.subsample;
+                            downscale_image[insertIdx] = this->sampler.getValue(p, interpolationMethod, ResolutionMode::SAMPLER_RESOLUTION);
                         }
                     }
+                }
+            }
+        }
+    }
+
+    result.clear();
+    //result = std::vector<uint16_t>(imgSize[0] * imgSize[1], 0);
+    result.resize(imgSize[0] * imgSize[1], 0);
+
+    glm::vec3 voxelSize = this->getWorldVoxelSize();
+    convert(voxelSize);
+    voxelSize.x = std::floor(voxelSize.x);
+    voxelSize.y = std::floor(voxelSize.y);
+
+    // Artificial scale
+    for(int j = 0; j < imgSize.y; ++j) {
+        for(int i = 0; i < imgSize.x; ++i) {
+            for(int x = 0; x < voxelSize.x; ++x) {
+                for(int y = 0; y < voxelSize.y; ++y) {
+                    if(((i*voxelSize.x)+x)+(((j*voxelSize.y)+y)*imgSize.x) < result.size())
+                        result[((i*voxelSize.x)+x)+(((j*voxelSize.y)+y)*imgSize.x)] = downscale_image[i+j*imgSize.x];
                 }
             }
         }

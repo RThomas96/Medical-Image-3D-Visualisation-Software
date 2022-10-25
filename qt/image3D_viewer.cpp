@@ -257,7 +257,6 @@ void Image3DViewer::init(const glm::vec3& imageSize, const int& sliceIdx, const 
 
     this->viewer2D->setImageSize(QSize(imageSize.x, imageSize.y), mirror.first, mirror.second);
     this->setSliceIdx(sliceIdx);
-
 }
 
 void Image3DViewer::setSliceIdx(int newSliceIdx) {
@@ -653,7 +652,8 @@ glm::vec3 PlanarViewForm::getBackImgDimension(Scene * scene) {
     if(name == "")
         return defaultValue;
     //return scene->grids[scene->getGridIdx(name)]->grid->getResolution();
-    return scene->grids[scene->getGridIdx(name)]->getDimensions()*scene->grids[scene->getGridIdx(name)]->getOriginalVoxelSize();
+    //return scene->grids[scene->getGridIdx(name)]->getDimensions()*scene->grids[scene->getGridIdx(name)]->getOriginalVoxelSize();
+    return scene->grids[scene->getGridIdx(name)]->getDimensions();
 }
 
 void PlanarViewForm::backImageChanged(Scene * scene) {
@@ -791,7 +791,7 @@ std::vector<int> PlanarViewForm::getImagesToDraw() {
     std::vector<int> imagesToDraw;
     if(this->checkBoxes["UseBack"]->isChecked())
         imagesToDraw.push_back(0);
-    if(this->checkBoxes["UseFront"]->isChecked())
+    if(this->checkBoxes["UseFront"]->isChecked() && this->getFromGridName() != this->getToGridName())
         imagesToDraw.push_back(1);
     return imagesToDraw;
 }
@@ -930,10 +930,14 @@ void PlanarViewForm::connect(Scene * scene) {
             QString originalViewer = this->selectedViewer;
             for(auto viewer : this->viewers) {
                 QString name = viewer.first;
-                this->selectViewer(name);
-                this->updateImageViewer();
+                if(name != originalViewer && viewer.second && viewer.second->isVisible()) {
+                    std::cout << "COMPUTE" << std::endl;
+                    this->selectViewer(name);
+                    this->updateImageViewer();
+                }
             }
             this->selectViewer(originalViewer);
+            this->updateImageViewer();
             Q_EMIT scene->cursorChanged(UITool::CursorType::NORMAL);
             });
 
