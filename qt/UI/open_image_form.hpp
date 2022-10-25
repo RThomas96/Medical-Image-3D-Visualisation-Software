@@ -7,6 +7,7 @@
 
 #include "glm/glm.hpp"
 #include "form.hpp"
+#include "../../grid/images/tiff_image.hpp"
 
 
 class OpenImageForm : public Form {
@@ -27,6 +28,7 @@ public slots:
         this->addWithLabel(WidgetType::H_GROUP, "GroupPreset", "Presets");
         this->addAllNextWidgetsToGroup("GroupPreset");
         this->add(WidgetType::BUTTON, "Mouse brain atlas");
+        this->add(WidgetType::BUTTON, "IRM");
         //this->add(WidgetType::BUTTON, "Mouse brain autofluo");
         this->addAllNextWidgetsToDefaultGroup();
 
@@ -252,9 +254,9 @@ public slots:
     }
 
     glm::vec3 getVoxelSize() {
-        return glm::vec3(this->doubleSpinBoxes["SizeVoxelX"]->value(),
-                         this->doubleSpinBoxes["SizeVoxelY"]->value(),
-                         this->doubleSpinBoxes["SizeVoxelZ"]->value());
+        return glm::vec3(float(this->doubleSpinBoxes["SizeVoxelX"]->value())*float(this->getSubsample()),
+                         float(this->doubleSpinBoxes["SizeVoxelY"]->value())*float(this->getSubsample()),
+                         float(this->doubleSpinBoxes["SizeVoxelZ"]->value())*float(this->getSubsample()));
     }
 
     glm::vec3 getSizeTetmesh() {

@@ -57,6 +57,7 @@ public:
     // Data
     QImage imageData;// Image data to be painted
     QSize targetImageSize;// Optimal image size according to voxel size, etc
+    glm::vec2 voxelSize;
 
     QPoint paintedImageOrigin;
     QSize paintedImageSize;
@@ -73,7 +74,7 @@ public:
     void show();
     void hide();
     void clearColor();
-    void setImageSize(const QSize& targetImageSize, bool mirrorX, bool mirrorY);
+    void setImageSize(const QSize& targetImageSize, const glm::vec2& voxelSize, bool mirrorX, bool mirrorY);
     void updateImageData(const QImage& image);
     void draw();
     void resizeEvent(QResizeEvent *);
@@ -118,7 +119,7 @@ public:
 
     Image3DViewer(const QString& name, const glm::vec3& side, Scene * scene, QWidget * parent = nullptr): QWidget(parent), name(name), direction(side), scene(scene), isInitialized(false), viewer2D(nullptr), imageSize(glm::vec3(1., 1., 1.)) {initLayout(); connect(scene);}
 
-    void init(const glm::vec3& imageSize, const int& sliceIdx, const glm::vec3& side, std::vector<std::string> gridNames, std::vector<int> imgToDraw, std::vector<int> alphaValues, std::vector<std::pair<QColor, QColor>> colors, Interpolation::Method interpolationMethod, std::pair<bool, bool> mirror);
+    void init(const glm::vec3& imageSize, const glm::vec3& voxelSize, const int& sliceIdx, const glm::vec3& side, std::vector<std::string> gridNames, std::vector<int> imgToDraw, std::vector<int> alphaValues, std::vector<std::pair<QColor, QColor>> colors, Interpolation::Method interpolationMethod, std::pair<bool, bool> mirror);
     void setSliceIdx(int newSliceIdx);
     void saveImagesSlices(const QString& fileName);
 
@@ -151,7 +152,7 @@ public:
     //Image3DViewer * imageViewer;
 
     std::map<QString, std::vector<std::pair<bool, bool>>> viewersMirror;   // Store viewers res    for each side for easier usage
-    std::map<QString, std::vector<glm::vec3>> viewersRes;   // Store viewers res    for each side for easier usage
+    std::map<QString, int> viewersRes;   // Store viewers res    for each side for easier usage
     std::map<QString, glm::ivec3> viewersValues;// Store viewers values for each side for easier usage
     std::map<QString, Image3DViewer*> viewers;
     QString selectedViewer;
@@ -168,14 +169,13 @@ public slots:
     void backImageChanged(Scene * scene);
     glm::ivec3 autoComputeBestSize(Scene * scene);
     glm::vec3 getSide();
+    glm::vec3 getVoxelDivisor();
     void setAutoImageResolution();
-    void setSpinBoxesValues(const glm::vec3& values);
     bool noViewerSelected();
     void convertVector(glm::vec3& vec);
     void updateImageViewer();
     void update(Scene * scene);
     void show();
-    glm::ivec3 getImgDimension();
     Interpolation::Method getInterpolationMethod();
     std::vector<int> getImagesToDraw();
     std::string getFromGridName();

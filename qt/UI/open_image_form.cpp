@@ -34,88 +34,32 @@ void OpenImageForm::connect(Scene * scene) {
         if(useCage) {
             scene->openCage(this->getGridName() + "_cage", this->fileChoosers["Cage choose"]->filename.toStdString(), this->getGridName(), this->checkBoxes["mvc"]->isChecked());
         }
-        bool useVoxelSize = this->getVoxelSize() != glm::vec3(1., 1., 1.);
-        int minVoxeSize = std::floor(std::min(this->getVoxelSize().x, std::min(this->getVoxelSize().y, this->getVoxelSize().z)));
-        bool useSubsample = minVoxeSize >= 2.;
-        //bool useSubsample = this->getSubsample() != 1.;
-        if(useVoxelSize) {
-            //if(!useTetMesh) {
-            //    scene->updateTextureCoordinates(this->getGridName());
-            //    scene->updateTetmeshAllGrids(true);// Update all informations, in particular texture coordinates because the Tetmesh is smaller
-            //}
-            if(useTetMesh)
-            {
-                QMessageBox msgBox;
-                msgBox.setText("Warning: scale offset between the image and the tetrahedral mesh.");
-                msgBox.setInformativeText(std::string(std::string("You choose a subsample of [") + std::to_string(this->getSubsample()) + std::string("]. However, the tetrahedral mesh you select seems to be at a different scale. Do you want the software to load the mesh at the correct scale ?")).c_str());
-                msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-                msgBox.setDefaultButton(QMessageBox::Yes);
-                int ret = msgBox.exec();
-                if(ret == QMessageBox::Yes) {
-                    scene->getBaseMesh(this->getGridName())->scale(this->getVoxelSize());
-                    //if(useSubsample)
-                    //    scene->updateTextureCoordinates(this->getGridName());
-                    scene->updateTetmeshAllGrids(true);// Update all informations, in particular texture coordinates because the Tetmesh is smaller
-                    scene->updateSceneCenter();
-                }
-                if(useCage) {
-                    QMessageBox msgBox;
-                    msgBox.setText("Warning: scale offset between the image and the cage.");
-                    msgBox.setInformativeText("Do you want the software to load the cage at the correct scale ?");
-                    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-                    msgBox.setDefaultButton(QMessageBox::Yes);
-                    int ret = msgBox.exec();
-                    if(ret == QMessageBox::Yes) {
-                        scene->setBindMeshToCageMove(this->getGridName() + "_cage", false);
-                        scene->getBaseMesh(this->getGridName() + "_cage")->scale(this->getVoxelSize());
-                        scene->setBindMeshToCageMove(this->getGridName() + "_cage", true);
-                    }
-                }
-            }
-        }
-        // WARNING this section is if you want to still load the grid with voxel at 1x1x1
-        //if(this->useTetMesh && useVoxelSize) {
-        //    {
-        //        QMessageBox msgBox;
-        //        msgBox.setText("Warning: different voxel size.");
-        //        msgBox.setInformativeText(std::string(std::string("You choose a voxel size of [") + std::to_string(this->getVoxelSize().x) + ", " + std::to_string(this->getVoxelSize().y) + ", " + std::to_string(this->getVoxelSize().z) + std::string("]. Do you want the software to load the mesh with a corresponding scale ?")).c_str());
-        //        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-        //        msgBox.setDefaultButton(QMessageBox::Yes);
-        //        int ret = msgBox.exec();
-        //        if(ret == QMessageBox::Yes) {
-        //            scene->getBaseMesh(this->getGridName())->scale(glm::vec3(float(this->getVoxelSize().x), float(this->getVoxelSize().y), float(this->getVoxelSize().z)));
-        //            //scene->updateTextureCoordinates(this->getGridName());
-        //            scene->updateTetmeshAllGrids(true);// Update all informations, in particular texture coordinates because the Tetmesh is smaller
-        //            scene->updateSceneCenter();
-        //        }
-        //    }
-        //    {
-        //        if(useCage) {
-        //            QMessageBox msgBox;
-        //            msgBox.setText("Warning: different voxel size.");
-        //            msgBox.setInformativeText("Do you want the software to load the cage with the voxel size scale ?");
-        //            msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-        //            msgBox.setDefaultButton(QMessageBox::Yes);
-        //            int ret = msgBox.exec();
-        //            if(ret == QMessageBox::Yes) {
-        //                scene->setBindMeshToCageMove(this->getGridName() + "_cage", false);
-        //                scene->getBaseMesh(this->getGridName() + "_cage")->scale(glm::vec3(float(this->getVoxelSize().x), float(this->getVoxelSize().y), float(this->getVoxelSize().z)));
-        //                scene->setBindMeshToCageMove(this->getGridName() + "_cage", true);
-        //            }
-        //        }
-        //    }
-        //}
         this->hide();
         Q_EMIT loaded();
     });
 
     QObject::connect(this->buttons["Mouse brain atlas"], &QPushButton::clicked, [this, scene](){
-        this->labels["Name"]->setText("Mouse brain atlas");
         this->checkBoxes["Segmented"]->setChecked(true);
         this->fileChoosers["Image choose"]->setManually(std::string("../data/atlas.tiff"));
         this->sections["Mesh"].first->setChecked(true);
         this->fileChoosers["Mesh choose"]->setManually(std::string("../data/atlas-transfert.mesh"));
         this->sections["Cage"].first->setChecked(true);
         this->fileChoosers["Cage choose"]->setManually(std::string("../data/atlas-cage.off"));
+        this->lineEdits["Name"]->setText("Mouse brain atlas");
+        if(scene->isGrid("Mouse brain atlas"))
+            this->lineEdits["Name"]->setText("Mouse brain atlas2");
+    });
+
+    QObject::connect(this->buttons["IRM"], &QPushButton::clicked, [this, scene](){
+        this->checkBoxes["Segmented"]->setChecked(false);
+        this->fileChoosers["Image choose"]->setManually(std::string("../data/irm.tif"));
+        this->sections["Mesh"].first->setChecked(false);
+        this->sections["Cage"].first->setChecked(false);
+        this->doubleSpinBoxes["SizeVoxelX"]->setValue(3.9);
+        this->doubleSpinBoxes["SizeVoxelY"]->setValue(3.9);
+        this->doubleSpinBoxes["SizeVoxelZ"]->setValue(50);
+        this->lineEdits["Name"]->setText("irm");
+        if(scene->isGrid("irm"))
+            this->lineEdits["Name"]->setText("irm2");
     });
 }

@@ -142,7 +142,7 @@ glm::vec3 Grid::getWorldVoxelSize() const {
 glm::vec3 Grid::getOriginalVoxelSize() const {
     glm::vec3 originalVoxelSize(1., 1., 1.);
     //originalVoxelSize *= glm::vec3(1., 1., 1.)/this->sampler.resolutionRatio;
-    originalVoxelSize *= glm::vec3(1., 1., 1.)/this->sampler.getVoxelSize();
+    originalVoxelSize *= this->sampler.getVoxelSize();
     return originalVoxelSize;
 }
 
@@ -334,45 +334,44 @@ void Grid::sampleSliceGridValues(const glm::vec3& slice, const std::pair<glm::ve
 
     // Space to sample
     glm::vec3 bbMinScene = areaToSample.first;
+    bbMinScene += glm::vec3(0.0001, 0.0001, 0.0001);
     glm::vec3 bbMaxScene = areaToSample.second;
-    glm::vec3 originalImageSize = imgSize * this->getOriginalVoxelSize();
-    convert(originalImageSize);
-    //glm::vec3 voxelSizeConvert = (bbMaxScene - bbMinScene) / originalImageSize;
-    glm::vec3 voxelSizeConvert = 1.f/this->getOriginalVoxelSize();
-    convert(voxelSizeConvert);
+    glm::vec3 sceneSize = (areaToSample.second - areaToSample.first);
+    convert(sceneSize);
+    glm::vec3 voxelSizeConvert = sceneSize / glm::vec3(imgSize);
+    std::cout << "Img size: " << imgSize << std::endl;
+    std::cout << "Scene size: " << sceneSize << std::endl;
+    std::cout << "Voxel size: " << voxelSizeConvert << std::endl;
 
     auto isInScene = [&](glm::vec3& p) {
         return (p.x > bbMinScene.x && p.y > bbMinScene.y && p.z > bbMinScene.z && p.x < bbMaxScene.x && p.y < bbMaxScene.y && p.z < bbMaxScene.z);
     };
 
-    auto fromWorldToNewImage = [&](glm::vec3& p) {
+    auto fromWorldToImage = [&](glm::vec3& p) {
         p -= bbMinScene;
         convert(p);
         p /= voxelSizeConvert;
     };
 
-    auto fromNewImageToWorld = [&](glm::vec3& p) {
+    auto fromImageToWorld = [&](glm::vec3& p) {
         p *= voxelSizeConvert;
         convert(p);
         p += bbMinScene;
     };
 
-    std::vector<uint16_t> downscale_image;
-    downscale_image.resize(imgSize[0] * imgSize[1], 0);
-
-    int printOcc = 10;
-    printOcc = this->mesh.size()/printOcc;
+    result.clear();
+    result.resize(imgSize[0] * imgSize[1], 0);
 
     #pragma omp parallel for schedule(dynamic)
     for(int tetIdx = 0; tetIdx < this->mesh.size(); ++tetIdx) {
         const Tetrahedron& tet = this->mesh[tetIdx];
         glm::vec3 bbMin = tet.getBBMin();
-        fromWorldToNewImage(bbMin);
+        fromWorldToImage(bbMin);
         bbMin.x = std::ceil(bbMin.x) - 1;
         bbMin.y = std::ceil(bbMin.y) - 1;
         bbMin.z = std::ceil(bbMin.z) - 1;
         glm::vec3 bbMax = tet.getBBMax();
-        fromWorldToNewImage(bbMax);
+        fromWorldToImage(bbMax);
         bbMax.x = std::floor(bbMax.x) + 1;
         bbMax.y = std::floor(bbMax.y) + 1;
         bbMax.z = std::floor(bbMax.z) + 1;
@@ -395,13 +394,13 @@ void Grid::sampleSliceGridValues(const glm::vec3& slice, const std::pair<glm::ve
 
                     glm::vec3 p(i, j, k);
                     p += glm::vec3(.5, .5, .5);
-                    fromNewImageToWorld(p);
+                    fromImageToWorld(p);
 
                     if(isInScene(p) && tet.isInTetrahedron(p)) {
                         if(this->getCoordInInitial(this->initialMesh, p, p, tetIdx)) {
                             //if(this->sampler.useSubsample)
                             //    p /= this->sampler.subsample;
-                            downscale_image[insertIdx] = this->sampler.getValue(p, interpolationMethod, ResolutionMode::SAMPLER_RESOLUTION);
+                            result[insertIdx] = this->sampler.getValue(p, interpolationMethod, ResolutionMode::SAMPLER_RESOLUTION);
                         }
                     }
                 }
@@ -409,26 +408,26 @@ void Grid::sampleSliceGridValues(const glm::vec3& slice, const std::pair<glm::ve
         }
     }
 
-    result.clear();
-    //result = std::vector<uint16_t>(imgSize[0] * imgSize[1], 0);
-    result.resize(imgSize[0] * imgSize[1], 0);
+    //result.clear();
+    ////result = std::vector<uint16_t>(imgSize[0] * imgSize[1], 0);
+    //result.resize(imgSize[0] * imgSize[1], 0);
 
-    glm::vec3 voxelSize = this->getWorldVoxelSize();
-    convert(voxelSize);
-    voxelSize.x = std::floor(voxelSize.x);
-    voxelSize.y = std::floor(voxelSize.y);
+    //glm::vec3 voxelSize = this->getWorldVoxelSize();
+    //convert(voxelSize);
+    //voxelSize.x = std::floor(voxelSize.x);
+    //voxelSize.y = std::floor(voxelSize.y);
 
     // Artificial scale
-    for(int j = 0; j < imgSize.y; ++j) {
-        for(int i = 0; i < imgSize.x; ++i) {
-            for(int x = 0; x < voxelSize.x; ++x) {
-                for(int y = 0; y < voxelSize.y; ++y) {
-                    if(((i*voxelSize.x)+x)+(((j*voxelSize.y)+y)*imgSize.x) < result.size())
-                        result[((i*voxelSize.x)+x)+(((j*voxelSize.y)+y)*imgSize.x)] = downscale_image[i+j*imgSize.x];
-                }
-            }
-        }
-    }
+    //for(int j = 0; j < imgSize.y; ++j) {
+    //    for(int i = 0; i < imgSize.x; ++i) {
+    //        for(int x = 0; x < voxelSize.x; ++x) {
+    //            for(int y = 0; y < voxelSize.y; ++y) {
+    //                if(((i*voxelSize.x)+x)+(((j*voxelSize.y)+y)*imgSize.x) < result.size())
+    //                    result[((i*voxelSize.x)+x)+(((j*voxelSize.y)+y)*imgSize.x)] = downscale_image[i+j*imgSize.x];
+    //            }
+    //        }
+    //    }
+    //}
 
     auto end = std::chrono::steady_clock::now();
     std::chrono::duration<double> elapsed_seconds = end-start;
@@ -566,14 +565,14 @@ Sampler::Sampler(glm::vec3 size): image(nullptr) {
 }
 
 void Sampler::init(const std::vector<std::string>& filename, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox, const glm::vec3& voxelSize) {
-    int intSubsample = 1.;
-    float smallestVoxelDim = std::min(voxelSize.x, std::min(voxelSize.y, voxelSize.z));
-    intSubsample = static_cast<int>(std::floor(smallestVoxelDim));
+    //int intSubsample = 1.;
+    //float smallestVoxelDim = std::min(voxelSize.x, std::min(voxelSize.y, voxelSize.z));
+    //intSubsample = static_cast<int>(std::floor(smallestVoxelDim));
 
-    if(intSubsample > 1)
-        this->useSubsample = true;
+    //if(intSubsample > 1)
+    //    this->useSubsample = true;
 
-    glm::vec3 samplerResolution = this->image->imgResolution / static_cast<float>(intSubsample);
+    glm::vec3 samplerResolution = this->image->imgResolution / static_cast<float>(subsample);
     this->resolutionRatio = this->image->imgResolution / samplerResolution;
     // If we naïvely divide the image dimensions for lowered its resolution we have problem is the case of a dimension is 1
     // In that case the voxelSizeRatio is still 2.f for example, but the dimension is 0.5

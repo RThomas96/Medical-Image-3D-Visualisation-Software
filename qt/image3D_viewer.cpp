@@ -1,5 +1,8 @@
 #include "image3D_viewer.hpp"
+#include "glm/fwd.hpp"
+#include "qnamespace.h"
 #include "scene.hpp"
+#include <ostream>
 
 Raw3DImage::Raw3DImage(const glm::ivec3 imgSize, DrawableGrid * grid, QImage::Format format) {
     this->grid = grid;
@@ -130,10 +133,11 @@ void Image2DViewer::clearColor() {
     this->imageData.fill(QColor(0, 0, 0));
 }
 
-void Image2DViewer::setImageSize(const QSize& targetImageSize, bool mirrorX, bool mirrorY) {
+void Image2DViewer::setImageSize(const QSize& targetImageSize, const glm::vec2& voxelSize, bool mirrorX, bool mirrorY) {
     this->mirrorX = mirrorX;
     this->mirrorY = mirrorY;
     this->targetImageSize = targetImageSize;
+    this->voxelSize = voxelSize;
     this->zoomSpeed = std::max(this->targetImageSize.width(), this->targetImageSize.height())/10;
 
     this->paintedImageOrigin = QPoint(0, 0);
@@ -169,10 +173,10 @@ void Image2DViewer::resizeEvent(QResizeEvent *) {
 void Image2DViewer::fitToWindow() {
     if(!activated)
         return;
-    float dx = std::max(float(minimumSize), float(this->size().width()))/float(this->targetImageSize.width());
-    float dy = std::max(float(minimumSize), float(this->size().height()))/float(this->targetImageSize.height());
+    float dx = std::max(float(minimumSize), float(this->size().width()))/float(this->targetImageSize.width()*voxelSize.x);
+    float dy = std::max(float(minimumSize), float(this->size().height()))/float(this->targetImageSize.height()*voxelSize.y);
     float df = std::min(dx, dy);
-    this->paintedImageSize = QSize(std::floor(float(this->targetImageSize.width()) * df), std::floor(float(this->targetImageSize.height()) * df));
+    this->paintedImageSize = QSize(std::floor(float(this->targetImageSize.width()*voxelSize.x) * df), std::floor(float(this->targetImageSize.height()*voxelSize.y) * df));
     this->paintedImageOrigin.rx() = std::max(0., std::floor(float(this->size().width() - this->paintedImageSize.width())/2.));
     this->paintedImageOrigin.ry() = std::max(0., std::floor(float(this->size().height() - this->paintedImageSize.height())/2.));
 }
@@ -229,7 +233,7 @@ void Image2DViewer::wheelEvent(QWheelEvent *event) {
 
 /////////////////
 
-void Image3DViewer::init(const glm::vec3& imageSize, const int& sliceIdx, const glm::vec3& side, std::vector<std::string> gridNames, std::vector<int> imgToDraw, std::vector<int> alphaValues, std::vector<std::pair<QColor, QColor>> colors, Interpolation::Method interpolationMethod, std::pair<bool, bool> mirror) {
+void Image3DViewer::init(const glm::vec3& imageSize, const glm::vec3& voxelSize, const int& sliceIdx, const glm::vec3& side, std::vector<std::string> gridNames, std::vector<int> imgToDraw, std::vector<int> alphaValues, std::vector<std::pair<QColor, QColor>> colors, Interpolation::Method interpolationMethod, std::pair<bool, bool> mirror) {
 
     for(auto name : gridNames)
         if(name.empty())
@@ -255,7 +259,7 @@ void Image3DViewer::init(const glm::vec3& imageSize, const int& sliceIdx, const 
 
     this->isInitialized = true;
 
-    this->viewer2D->setImageSize(QSize(imageSize.x, imageSize.y), mirror.first, mirror.second);
+    this->viewer2D->setImageSize(QSize(imageSize.x, imageSize.y), glm::vec2(voxelSize.x, voxelSize.y), mirror.first, mirror.second);
     this->setSliceIdx(sliceIdx);
 }
 
@@ -419,18 +423,15 @@ void PlanarViewForm::addViewer(const QString& name, const glm::vec3& side) {
     QObject::connect(this->viewers[name], &Image3DViewer::isSelected, [=](){this->selectViewer(name);});
 
     this->viewersValues[name] = glm::ivec3(0, 0, 0);
-    this->viewersRes[name] = {glm::vec3(1, 1, 1), glm::vec3(1, 1, 1), glm::vec3(1, 1, 1)};
+    this->viewersRes[name] = 1;
     this->viewersMirror[name] = {{false, false}, {false, false}, {false, false}};
 
     this->selectedViewer = name;
     this->labels["SelectedViewer"]->setText(name);
 
-    glm::vec3 imgSize = this->getBackImgDimension(scene);
-    if(side.x == 1.)
-        std::swap(imgSize.x, imgSize.z);
-    if(side.y == 1.)
-        std::swap(imgSize.y, imgSize.z);
-    this->setSpinBoxesValues(imgSize);
+    this->spinBoxes["X"]->blockSignals(true);
+    this->spinBoxes["X"]->setValue(1);
+    this->spinBoxes["X"]->blockSignals(false);
 
     this->updateImageViewer();
 }
@@ -449,7 +450,9 @@ void PlanarViewForm::selectViewer(const QString& name) {
 void PlanarViewForm::updateDefaultValues(const QString& name) {
     const Image3DViewer * viewer = this->viewers[name];
 
-    this->setSpinBoxesValues(viewer->imageSize);
+    this->spinBoxes["X"]->blockSignals(true);
+    this->spinBoxes["X"]->setValue(1);
+    this->spinBoxes["X"]->blockSignals(false);
 
     this->comboBoxes["Interpolation"]->blockSignals(true);
     int idx = this->comboBoxes["Interpolation"]->findText(Interpolation::toString(viewer->interpolationMethod).c_str());
@@ -573,16 +576,13 @@ void PlanarViewForm::init(Scene * scene) {
 
     this->addAllNextWidgetsToDefaultGroup();
 
+    this->addWithLabel(WidgetType::H_GROUP, "GroupSubsample", "Subsample");
+    this->addAllNextWidgetsToGroup("GroupSubsample");
+
     this->addWithLabel(WidgetType::COMBO_BOX, "Interpolation", "Interpolation");
     this->setComboChoices("Interpolation", Interpolation::toStringList());
 
-    this->addWithLabel(WidgetType::H_GROUP, "GroupResolution", "Resolution");
-    this->addAllNextWidgetsToGroup("GroupResolution");
-
     this->add(WidgetType::SPIN_BOX, "X");
-    this->add(WidgetType::SPIN_BOX, "Y");
-    this->add(WidgetType::SPIN_BOX, "Z");
-    this->add(WidgetType::BUTTON, "Auto");
 
     this->addAllNextWidgetsToDefaultGroup();
 
@@ -651,18 +651,12 @@ glm::vec3 PlanarViewForm::getBackImgDimension(Scene * scene) {
     std::string name = this->getFromGridName();
     if(name == "")
         return defaultValue;
-    //return scene->grids[scene->getGridIdx(name)]->grid->getResolution();
-    //return scene->grids[scene->getGridIdx(name)]->getDimensions()*scene->grids[scene->getGridIdx(name)]->getOriginalVoxelSize();
-    return scene->grids[scene->getGridIdx(name)]->getDimensions();
+    //return scene->grids[scene->getGridIdx(name)]->getDimensions()*(scene->grids[scene->getGridIdx(name)]->getWorldVoxelSize()*2.f);
+    return scene->grids[scene->getGridIdx(name)]->getDimensions()*((1.f/scene->grids[scene->getGridIdx(name)]->getOriginalVoxelSize())/this->getVoxelDivisor());
 }
 
 void PlanarViewForm::backImageChanged(Scene * scene) {
-    glm::vec3 imgSize = this->getBackImgDimension(scene);
-    if(this->getSide().x == 1.)
-        std::swap(imgSize.x, imgSize.z);
-    if(this->getSide().y == 1.)
-        std::swap(imgSize.y, imgSize.z);
-    this->setSpinBoxesValues(imgSize);
+    //this->setSpinBoxesValues(glm::vec3(1., 1., 1.));
 }
 
 glm::ivec3 PlanarViewForm::autoComputeBestSize(Scene * scene) {
@@ -680,6 +674,10 @@ glm::ivec3 PlanarViewForm::autoComputeBestSize(Scene * scene) {
     return finalSize;
 }
 
+glm::vec3 PlanarViewForm::getVoxelDivisor() {
+    return glm::vec3(this->spinBoxes["X"]->value(), this->spinBoxes["X"]->value(), this->spinBoxes["X"]->value());
+}
+
 glm::vec3 PlanarViewForm::getSide() {
     if(this->noViewerSelected())
         return glm::vec3(0., 0., 1.);
@@ -687,25 +685,10 @@ glm::vec3 PlanarViewForm::getSide() {
 }
 
 void PlanarViewForm::setAutoImageResolution() {
-    glm::vec3 dim = this->autoComputeBestSize(this->scene);
-    convertVector(dim);
-    this->setSpinBoxesValues(dim);
-    this->updateImageViewer();
-}
-
-void PlanarViewForm::setSpinBoxesValues(const glm::vec3& values) {
-    this->spinBoxes["X"]->blockSignals(true);
-    this->spinBoxes["Y"]->blockSignals(true);
-    this->spinBoxes["Z"]->blockSignals(true);
-    this->spinBoxes["X"]->setMinimum(1);
-    this->spinBoxes["Y"]->setMinimum(1);
-    this->spinBoxes["Z"]->setMinimum(1);
-    this->spinBoxes["X"]->setValue(values.x);
-    this->spinBoxes["Y"]->setValue(values.y);
-    this->spinBoxes["Z"]->setValue(values.z);
-    this->spinBoxes["X"]->blockSignals(false);
-    this->spinBoxes["Y"]->blockSignals(false);
-    this->spinBoxes["Z"]->blockSignals(false);
+    //glm::vec3 dim = this->autoComputeBestSize(this->scene);
+    //convertVector(dim);
+    //this->setSpinBoxesValues(dim);
+    //this->updateImageViewer();
 }
 
 bool PlanarViewForm::noViewerSelected() {
@@ -724,12 +707,26 @@ void PlanarViewForm::convertVector(glm::vec3& vec) {
 void PlanarViewForm::updateImageViewer() {
     if(this->noViewerSelected() || this->isHidden())
         return;
-    this->sliders["SliderX"]->setMinimum(0);
-    this->sliders["SliderX"]->setMaximum(this->getImgDimension().z-1);
     glm::vec3 finalImageSize = autoComputeBestSize(scene);
     convertVector(finalImageSize);
     glm::vec3 originalImgDimension = this->getBackImgDimension(scene);
     convertVector(originalImgDimension);
+
+    this->sliders["SliderX"]->setMinimum(0);
+    this->sliders["SliderX"]->setMaximum(originalImgDimension.z-1);
+
+    std::cout << originalImgDimension << std::endl;
+
+    glm::vec3 voxelSize = glm::vec3(1., 1., 1.);
+    std::string name = this->getFromGridName();
+    if(name != "")
+        voxelSize = scene->grids[scene->getGridIdx(name)]->getWorldVoxelSize();
+    convertVector(voxelSize);
+
+    voxelSize /= this->getVoxelDivisor();
+
+    float min = std::min(voxelSize.x, voxelSize.y);
+    voxelSize /= min;
 
     glm::vec3 color0_0 = glm::vec3(1., .0, .0);
     glm::vec3 color1_0 = glm::vec3(.0, .0, 1.);
@@ -751,6 +748,7 @@ void PlanarViewForm::updateImageViewer() {
             //this->getImgDimension(),
             //finalImageSize,
             originalImgDimension,
+            voxelSize,
             this->sliders["SliderX"]->value(),
             this->getSide(),
             {this->getFromGridName(), this->getToGridName()},
@@ -773,13 +771,6 @@ void PlanarViewForm::update(Scene * scene) {
 
 void PlanarViewForm::show() {
     Form::show();
-}
-
-glm::ivec3 PlanarViewForm::getImgDimension() {
-    glm::ivec3 value = glm::ivec3(this->spinBoxes["X"]->value(), this->spinBoxes["Y"]->value(), this->spinBoxes["Z"]->value());
-    if(value.x > 100000 || value.y > 100000 || value.z > 100000)
-        value = glm::ivec3(10, 10, 10);
-    return value;
 }
 
 Interpolation::Method PlanarViewForm::getInterpolationMethod() {
@@ -809,23 +800,25 @@ void PlanarViewForm::storeCurrentValues() {
         return;
     glm::vec3 side = this->getSide();
     int value = this->sliders["SliderX"]->value();
-    glm::vec3 res = this->getImgDimension();
+    glm::vec3 res = this->getVoxelDivisor();
+    std::cout << "Stored" << std::endl;
+    std::cout << res.x << std::endl;
     std::pair<bool, bool> mirror = {this->buttons["MirrorX"]->isChecked(), this->buttons["MirrorY"]->isChecked()};
     if(side.x > 0) {
         this->viewersValues[this->selectedViewer].x = value;
-        this->viewersRes[this->selectedViewer][0] = res;
+        this->viewersRes[this->selectedViewer] = res.x;
         this->viewersMirror[this->selectedViewer][0] = mirror;
     }
 
     if(side.y > 0) {
         this->viewersValues[this->selectedViewer].y = value;
-        this->viewersRes[this->selectedViewer][1] = res;
+        this->viewersRes[this->selectedViewer] = res.x;
         this->viewersMirror[this->selectedViewer][1] = mirror;
     }
 
     if(side.z > 0) {
         this->viewersValues[this->selectedViewer].z = value;
-        this->viewersRes[this->selectedViewer][2] = res;
+        this->viewersRes[this->selectedViewer] = res.x;
         this->viewersMirror[this->selectedViewer][2] = mirror;
     }
     std::cout << "Store value: " << value << std::endl;
@@ -836,30 +829,34 @@ void PlanarViewForm::recoverValues() {
         return;
     glm::vec3 side = this->getSide();
     int value = 0;
-    glm::vec3 res = glm::vec3(1, 1, 1);
+    int res = 1;
     std::pair<bool, bool> mirror = {false, false};
     if(side.x > 0) {
         value = this->viewersValues[this->selectedViewer].x;
-        res = this->viewersRes[this->selectedViewer][0];
+        res = this->viewersRes[this->selectedViewer];
         mirror = this->viewersMirror[this->selectedViewer][0];
     }
 
     if(side.y > 0) {
         value = this->viewersValues[this->selectedViewer].y;
-        res = this->viewersRes[this->selectedViewer][1];
+        res = this->viewersRes[this->selectedViewer];
         mirror = this->viewersMirror[this->selectedViewer][1];
     }
 
     if(side.z > 0) {
         value = this->viewersValues[this->selectedViewer].z;
-        res = this->viewersRes[this->selectedViewer][2];
+        res = this->viewersRes[this->selectedViewer];
         mirror = this->viewersMirror[this->selectedViewer][2];
     }
-    if(res.x > 1 && res.y > 1 && res.z > 1)
-        this->setSpinBoxesValues(res);
+    std::cout << "Recover" << std::endl;
+    std::cout << res << std::endl;
+    this->spinBoxes["X"]->blockSignals(true);
+    this->spinBoxes["X"]->setValue(res);
+    this->spinBoxes["X"]->blockSignals(false);
+
     this->sliders["SliderX"]->blockSignals(true);
     this->sliders["SliderX"]->setMinimum(0);
-    this->sliders["SliderX"]->setMaximum(this->getImgDimension().z-1);
+    this->sliders["SliderX"]->setMaximum(1000.);
     this->sliders["SliderX"]->setValue(value);
     this->sliders["SliderX"]->blockSignals(false);
     this->buttons["MirrorX"]->blockSignals(true);
@@ -900,8 +897,8 @@ void PlanarViewForm::connect(Scene * scene) {
         if(id == "From")
             this->backImageChanged(scene);
 
-        if(id == "Auto")
-            this->setAutoImageResolution();
+        //if(id == "Auto")
+        //    this->setAutoImageResolution();
 
         if(id == "X" || id == "Y" || id == "Z" || id == "Interpolation" || id == "UseBack" || id == "UseFront" || id == "From" || id == "To" || id == "AlphaBack" || id == "AlphaFront" || "MirrorX" || "MirrorY")
             this->updateImageViewer();

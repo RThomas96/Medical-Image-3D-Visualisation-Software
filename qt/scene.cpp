@@ -41,6 +41,9 @@ Scene::Scene() {
     this->distanceFromCamera = 0.;
     this->cameraPosition = glm::vec3(0., 0., 0.);
 
+    this->registrationRendering = false;
+    this->funnyRender = false;
+
     //this->grids.clear();
 
     this->context			= nullptr;
@@ -648,17 +651,14 @@ void Scene::drawScene(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool show
         if(this->grids.size() > 0) {
             for(auto i : this->gridsToDraw) {
                 glm::vec3 planePosition = this->computePlanePositionsWithActivation();
-                if(i == 0)
-                    planePosition += this->grids[i]->getWorldVoxelSize()/2.f;
-                glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-                //this->grids[i]->drawGridFirstPass(mvMat, pMat, glm::vec3(0., 0., 0.), planePosition, this->planeDirection, false, w, h);
-                //this->grids[i]->drawGridFirstPass(mvMat, pMat, glm::vec3(0., 0., 0.), planePosition, this->planeDirection, false, w, h);
-                this->grids[i]->drawGridFirstPass(mvMat, pMat, camPos, planePosition, this->planeDirection, false, w, h);
+                //if(i == 0)
+                //    planePosition += this->grids[i]->getWorldVoxelSize()/2.f;
+                //glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
+                //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                //this->grids[i]->drawGridFirstPass(mvMat, pMat, camPos, planePosition, this->planeDirection, false, w, h);
 
                 glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-                //this->grids[i]->drawGrid(mvMat, pMat, camPos, planePosition, this->planeDirection, false, w, h);
                 this->grids[i]->drawGrid(mvMat, pMat, camPos, planePosition, this->planeDirection, false, w, h);
             }
 
@@ -706,6 +706,7 @@ void Scene::drawScene(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool show
             tex++;
 
             int alphaRendering = 0;
+            int dualRendering = 0;
             if(this->grids.size() == 2) {
                 glActiveTexture(GL_TEXTURE0 + tex);
                 glBindTexture(GL_TEXTURE_2D, this->grids[1]->dualRenderingTexture);
@@ -717,9 +718,13 @@ void Scene::drawScene(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool show
                 glUniform1i(getUniform("depthTexture2"), tex);
                 tex++;
 
-                alphaRendering = 1;
+                dualRendering = 1;
+                if(this->registrationRendering)
+                    alphaRendering = 1;
             }
+            glUniform1ui(getUniform("dualRendering"), dualRendering);
             glUniform1ui(getUniform("alphaRendering"), alphaRendering);
+            glUniform1ui(getUniform("funnyRender"), funnyRender);
             glUniform1f(getUniform("alphaBlend"), this->alphaBlend);
 
             glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -1845,7 +1850,6 @@ void Scene::writeDeformedImageTemplated(const std::string& filename, const std::
 
     Grid * fromGrid = this->grids[this->getGridIdx(gridName)];
     glm::vec3 worldSize = fromGrid->getDimensions();
-    glm::vec3 gridVoxelSize = fromGrid->getWorldVoxelSize();
     //glm::vec3 voxelSize = fromGrid->getVoxelSize(resolution);
 
     auto start = std::chrono::steady_clock::now();
@@ -1856,23 +1860,23 @@ void Scene::writeDeformedImageTemplated(const std::string& filename, const std::
         p -= fromGrid->bbMin;
         for(int i = 0; i < 3; ++i) {
             if(ceil)
-                p[i] = std::ceil((p[i]/gridVoxelSize[i])/imageVoxelSize[i]);
+                p[i] = std::ceil((p[i]/imageVoxelSize[i]));
             else
-                p[i] = std::floor((p[i]/gridVoxelSize[i])/imageVoxelSize[i]);
+                p[i] = std::floor((p[i]/imageVoxelSize[i]));
         }
         p /= fromImageToCustomImage;
     };
 
     auto getWorldCoordinates = [&](glm::vec3& p) {
         for(int i = 0; i < 3; ++i) {
-            p[i] = (float(std::ceil((p[i] * fromImageToCustomImage[i])) + 0.5) * gridVoxelSize[i])*imageVoxelSize[i];
+            p[i] = (float(std::ceil((p[i] * fromImageToCustomImage[i])) + 0.5) * imageVoxelSize[i]);
         }
         p += fromGrid->bbMin;
     };
 
     glm::ivec3 n(0, 0, 0);
     for(int i = 0 ; i < 3 ; i++) {
-        n[i] = std::ceil(fabs((worldSize[i])/gridVoxelSize[i])/imageVoxelSize[i]);
+        n[i] = std::ceil(fabs((worldSize[i])/imageVoxelSize[i]));
     }
 
     if(sceneImageSize == glm::ivec3(0., 0., 0.))
@@ -1880,8 +1884,8 @@ void Scene::writeDeformedImageTemplated(const std::string& filename, const std::
 
     fromImageToCustomImage = glm::vec3(n) / glm::vec3(sceneImageSize);
 
-    glm::ivec3 bbMinWrite = ((bbMin - fromGrid->bbMin)/gridVoxelSize)/imageVoxelSize;
-    glm::ivec3 bbMaxWrite = ((bbMax - fromGrid->bbMin)/gridVoxelSize)/imageVoxelSize;
+    glm::ivec3 bbMinWrite = ((bbMin - fromGrid->bbMin)/imageVoxelSize);
+    glm::ivec3 bbMaxWrite = ((bbMax - fromGrid->bbMin)/imageVoxelSize);
     glm::ivec3 imageSize = bbMaxWrite - bbMinWrite;
 
     std::cout << "BBmin: " << bbMinWrite << std::endl;
@@ -2225,14 +2229,7 @@ void Scene::setGridsToDraw(std::vector<int> indices) {
 }
 
 void Scene::setMultiGridRendering(bool value) {
-    //this->drawable_grids[this->gridToDraw]->setMultiGridRendering(value);
-    //if(this->isCage(activeMesh)) {
-    //    int gridIdx = this->getGridIdxLinkToCage(activeMesh);
-    //    if(gridIdx != -1) {
-    //        this->gridToDraw = gridIdx;
-    //        this->sendTetmeshToGPU(gridIdx, InfoToSend(InfoToSend::VERTICES | InfoToSend::NORMALS | InfoToSend::TEXCOORD | InfoToSend::NEIGHBORS));
-    //    }
-    //}
+    this->registrationRendering = value;
 };
 
 void Scene::setDrawSliceOnly(bool value) {
@@ -2376,7 +2373,9 @@ void Scene::drawBox(const Box& box) {
 }
 
 void Scene::addBox(const Box& box) {
-    this->boxes.push_back(box);
+    Box boxWithNoise = box;
+    boxWithNoise.first += glm::vec3(0.001, 0.001, 0.001);
+    this->boxes.push_back(boxWithNoise);
 }
 
 void Scene::clearBoxes() {

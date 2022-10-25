@@ -411,6 +411,9 @@ public:
     float distanceFromCamera;
     float alphaBlend;
 
+    bool funnyRender;
+
+    bool registrationRendering;
     bool displayGrid;
     bool displayMesh;
     bool displayGridBBox;

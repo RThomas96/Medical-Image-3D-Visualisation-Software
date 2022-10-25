@@ -54,6 +54,15 @@ public slots:
 
         this->addAllNextWidgetsToDefaultGroup();
 
+        this->addWithLabel(WidgetType::H_GROUP, "GroupImageSize", "Image size");
+        this->addAllNextWidgetsToGroup("GroupImageSize");
+
+        this->add(WidgetType::SPIN_BOX_DOUBLE, "ImageSizeX");
+        this->add(WidgetType::SPIN_BOX_DOUBLE, "ImageSizeY");
+        this->add(WidgetType::SPIN_BOX_DOUBLE, "ImageSizeZ");
+
+        this->addAllNextWidgetsToDefaultGroup();
+
         this->add(WidgetType::TIFF_SAVE, "Export image", "Export");
         this->scene = scene;
     }
@@ -71,6 +80,9 @@ protected:
 
     void initSpinBoxes(Scene * scene);
     void updateSpinBoxes(Scene * scene);
+    void updateImageSize();
+    void updateVoxelSize();
+    glm::vec3 getDimension();
 
     void updateBoxToDisplay(Scene * scene);
 };
