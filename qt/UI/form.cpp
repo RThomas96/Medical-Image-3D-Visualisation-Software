@@ -199,7 +199,10 @@ void Form::add(const WidgetType& type, const QString& id, const QString& name, c
             connect(buttons[id], &QPushButton::clicked, [this, id] { widgetModified(id); });
             break;
         case WidgetType::BUTTON_CHECKABLE_AUTOEXCLUSIVE:
-            buttons[id] = new QPushButton(name);
+            if(!this->insertNextWidgetInGroup)
+                buttons[id] = new QPushButton(name);
+            else
+                buttons[id] = new QPushButton(name, this->groups[this->groupToInsertIn]->widget());
             buttons[id]->setCheckable(true);
             buttons[id]->setAutoExclusive(true);
             newWidget = buttons[id];

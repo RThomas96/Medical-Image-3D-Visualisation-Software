@@ -156,6 +156,7 @@ public:
     std::map<QString, glm::ivec3> viewersValues;// Store viewers values for each side for easier usage
     std::map<QString, Image3DViewer*> viewers;
     QString selectedViewer;
+    bool useFrontImageResolution;
     PlanarViewForm(Scene * scene, QWidget *parent = nullptr):Form(parent), scene(scene){init(scene);connect(scene);}
 
 public slots:

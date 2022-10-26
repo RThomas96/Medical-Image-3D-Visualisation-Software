@@ -604,6 +604,20 @@ void PlanarViewForm::init(Scene * scene) {
 
     this->addAllNextWidgetsToDefaultGroup();
 
+    this->addWithLabel(WidgetType::H_GROUP, "GroupResolution", "Resolution");
+    this->addAllNextWidgetsToGroup("GroupResolution");
+
+    this->add(WidgetType::BUTTON, "ResolutionFront", "Front");
+    this->add(WidgetType::BUTTON, "ResolutionBack", "Back");
+
+    //this->groups["GroupResolution"]->setParent(this);
+    //this->buttons["ResolutionFront"]->setParent(this->groups["GroupResolution"]->widget());
+    //this->buttons["ResolutionBack"]->setParent(this->groups["GroupResolution"]->widget());
+    //this->buttons["ResolutionFront"]->setAutoExclusive(true);
+    //this->buttons["ResolutionBack"]->setAutoExclusive(true);
+
+    this->addAllNextWidgetsToDefaultGroup();
+
     /****/
 
     this->checkBoxes["UseBack"]->setChecked(true);
@@ -615,6 +629,8 @@ void PlanarViewForm::init(Scene * scene) {
     this->spinBoxes["AlphaFront"]->setMinimum(0);
     this->spinBoxes["AlphaFront"]->setMaximum(255);
     this->spinBoxes["AlphaFront"]->setValue(255);
+
+    this->buttons["ResolutionFront"]->setChecked(true);
 
     this->setDisabled(true);
     /****/
@@ -645,17 +661,21 @@ void PlanarViewForm::initViewer(const QString& name) {
         this->buttons["SideY"]->click();
     if(this->getSide().z == 1.)
         this->buttons["SideZ"]->click();
+    this->useFrontImageResolution = true;
 }
 
 glm::vec3 PlanarViewForm::getBackImgDimension(Scene * scene) {
     glm::vec3 defaultValue = glm::vec3(1., 1., 1.);
-    std::string frontGrid = this->getToGridName();
+    std::string frontGrid = this->getFromGridName();
+    if(this->useFrontImageResolution)
+        frontGrid = this->getToGridName();
     if(scene->getGridIdx(frontGrid) == -1)
         return defaultValue;
     std::string backGrid = this->getFromGridName();
+    if(this->useFrontImageResolution)
+        backGrid = this->getFromGridName();
     if(scene->getGridIdx(backGrid) == -1)
         return defaultValue;
-    //return scene->grids[scene->getGridIdx(name)]->getDimensions()*(scene->grids[scene->getGridIdx(name)]->getWorldVoxelSize()*2.f);
     glm::vec3 divisor = this->getVoxelDivisor();
     convertVector(divisor);
     return (scene->grids[scene->getGridIdx(backGrid)]->getDimensions()*(1.f/scene->grids[scene->getGridIdx(frontGrid)]->getOriginalVoxelSize()))/divisor;
@@ -663,6 +683,9 @@ glm::vec3 PlanarViewForm::getBackImgDimension(Scene * scene) {
 
 void PlanarViewForm::frontImageChanged(Scene * scene) {
     //this->setSpinBoxesValues(glm::vec3(1., 1., 1.));
+    this->spinBoxes["X"]->blockSignals(true);
+    this->spinBoxes["X"]->setValue(1);
+    this->spinBoxes["X"]->blockSignals(false);
     glm::vec3 imgDimension = this->getBackImgDimension(scene);
     convertVector(imgDimension);
     bool imgTooLarge = false;
@@ -739,6 +762,8 @@ void PlanarViewForm::updateImageViewer() {
 
     glm::vec3 voxelSize = glm::vec3(1., 1., 1.);
     std::string name = this->getToGridName();
+    if(!this->useFrontImageResolution)
+        name = this->getFromGridName();
     if(name != "")
         voxelSize = scene->grids[scene->getGridIdx(name)]->getWorldVoxelSize();
     convertVector(voxelSize);
@@ -918,8 +943,19 @@ void PlanarViewForm::connect(Scene * scene) {
         //if(id == "Auto")
         //    this->setAutoImageResolution();
 
-        if(id == "X" || id == "Y" || id == "Z" || id == "Interpolation" || id == "UseBack" || id == "UseFront" || id == "From" || id == "To" || id == "AlphaBack" || id == "AlphaFront" || "MirrorX" || "MirrorY")
+        if(id == "X" || id == "Y" || id == "Z" || id == "Interpolation" || id == "UseBack" || id == "UseFront" || id == "From" || id == "To" || id == "AlphaBack" || id == "AlphaFront" || id == "MirrorX" || id == "MirrorY")
             this->updateImageViewer();
+
+        if(id == "ResolutionBack")
+            this->useFrontImageResolution = false;
+
+        if(id == "ResolutionFront")
+            this->useFrontImageResolution = true;
+
+        if(id == "ResolutionBack" || id == "ResolutionFront") {
+            this->frontImageChanged(scene);
+            this->updateImageViewer();
+        }
 
         if(id == "SideX" || id == "SideY" || id == "SideZ") {
             this->storeCurrentValues();
