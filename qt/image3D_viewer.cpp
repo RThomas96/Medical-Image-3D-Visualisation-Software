@@ -652,7 +652,9 @@ glm::vec3 PlanarViewForm::getBackImgDimension(Scene * scene) {
     if(name == "")
         return defaultValue;
     //return scene->grids[scene->getGridIdx(name)]->getDimensions()*(scene->grids[scene->getGridIdx(name)]->getWorldVoxelSize()*2.f);
-    return scene->grids[scene->getGridIdx(name)]->getDimensions()*((1.f/scene->grids[scene->getGridIdx(name)]->getOriginalVoxelSize())/this->getVoxelDivisor());
+    glm::vec3 divisor = this->getVoxelDivisor();
+    convertVector(divisor);
+    return (scene->grids[scene->getGridIdx(name)]->getDimensions()*(1.f/scene->grids[scene->getGridIdx(name)]->getOriginalVoxelSize()))/divisor;
 }
 
 void PlanarViewForm::backImageChanged(Scene * scene) {
@@ -675,7 +677,7 @@ glm::ivec3 PlanarViewForm::autoComputeBestSize(Scene * scene) {
 }
 
 glm::vec3 PlanarViewForm::getVoxelDivisor() {
-    return glm::vec3(this->spinBoxes["X"]->value(), this->spinBoxes["X"]->value(), this->spinBoxes["X"]->value());
+    return glm::vec3(this->spinBoxes["X"]->value(), this->spinBoxes["X"]->value(), 1.);
 }
 
 glm::vec3 PlanarViewForm::getSide() {
