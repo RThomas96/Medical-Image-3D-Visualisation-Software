@@ -166,7 +166,7 @@ public slots:
     void init(Scene * scene);
     void initViewer(const QString& name);
     glm::vec3 getBackImgDimension(Scene * scene);
-    void backImageChanged(Scene * scene);
+    void frontImageChanged(Scene * scene);
     glm::ivec3 autoComputeBestSize(Scene * scene);
     glm::vec3 getSide();
     glm::vec3 getVoxelDivisor();

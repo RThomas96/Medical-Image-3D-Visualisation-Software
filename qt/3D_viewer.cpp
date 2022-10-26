@@ -125,7 +125,7 @@ void Viewer::draw() {
     this->scene->h = height();
     this->scene->w = width();
 
-    this->scene->drawScene(mvMat, pMat, camPos, false);
+    this->scene->drawScene(mvMat, pMat, camPos, camera()->zNear(), camera()->zFar());
 }
 
 void Viewer::keyReleaseEvent(QKeyEvent* e) {

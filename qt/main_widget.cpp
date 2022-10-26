@@ -146,6 +146,10 @@ void MainWidget::setupWidgets() {
         this->cutPlane_pannel->setValues(values.x, values.y, values.z);
     });
 
+    QObject::connect(this->scene, &Scene::planeControlWidgetNeedUpdateImageSize, [=](const glm::vec3& values) {
+        this->cutPlane_pannel->setImageSize(values);
+    });
+
     /***/
 
 	// Viewer(s) creation along with control panel :
@@ -274,7 +278,7 @@ void MainWidget::setupActions() {
     QObject::connect(this->actionManager->getAction("ToggleDisplayGrid"), &QAction::triggered, [this](){this->scene->slotToggleDisplayGrid();});
 
     this->actionManager->createQActionToggledButton("ToggleDisplayMultiView", "MView", "M", "Display/Show multi grid display", "visible", "hidden");
-    QObject::connect(this->actionManager->getAction("ToggleDisplayMultiView"), &QAction::triggered, [this](){this->scene->setMultiGridRendering(!this->actionManager->getAction("ToggleDisplayMultiView")->isChecked()); this->controlPanel->updateRGBMode();});
+    QObject::connect(this->actionManager->getAction("ToggleDisplayMultiView"), &QAction::triggered, [this](){this->scene->setMultiGridRendering(!this->actionManager->getAction("ToggleDisplayMultiView")->isChecked());});
     this->actionManager->getAction("ToggleDisplayMultiView")->setDisabled(true);
 
     this->actionManager->createQActionToggledButton("ToggleDisplayWireframe", "TetM", "W", "Display/Show the tethraedral mesh wireframe", "visible", "hidden");

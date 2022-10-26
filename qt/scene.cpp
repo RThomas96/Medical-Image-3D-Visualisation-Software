@@ -563,8 +563,6 @@ glm::vec3 Scene::computePlanePositionsWithActivation() {
 }
 
 glm::vec3 Scene::computePlanePositions() {
-    int nbObject = this->grids.size() + this->meshes.size() + this->graph_meshes.size();
-    bool sceneContainMultipleObjects = nbObject > 1;
     if(this->getBaseMesh(this->activeMesh)) {
         std::pair<glm::vec3, glm::vec3> bbox = this->getSceneBBox();
         glm::vec3 position = bbox.first;
@@ -624,7 +622,7 @@ void Scene::setUniformBufferData(GLuint uniform_buffer, std::size_t begin_bytes,
     glBufferSubData(GL_UNIFORM_BUFFER, begin_bytes, size_bytes, data);
 }
 
-void Scene::drawScene(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool showTexOnPlane) {
+void Scene::drawScene(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, float near, float far) {
     this->cameraPosition = camPos;
     if (this->shouldUpdateUserColorScales) {
         this->updateUserColorScale();
@@ -726,6 +724,8 @@ void Scene::drawScene(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool show
             glUniform1ui(getUniform("alphaRendering"), alphaRendering);
             glUniform1ui(getUniform("funnyRender"), funnyRender);
             glUniform1f(getUniform("alphaBlend"), this->alphaBlend);
+            glUniform1f(getUniform("near"), near);
+            glUniform1f(getUniform("far"), far);
 
             glDrawArrays(GL_TRIANGLES, 0, 6);
             glEnable(GL_DEPTH_TEST);

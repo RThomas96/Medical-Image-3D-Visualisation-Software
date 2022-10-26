@@ -149,7 +149,7 @@ public:
     /*************************************************/
 
     /* Draws */
-    void drawScene(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool showTexOnPlane);
+    void drawScene(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, float near, float far);
     void activateCuttingPlaneLegacyOpenGL();
     void deactivateCuttingPlaneLegacyOpenGL();
     void createBuffers();// Only for selection TODO: remove
@@ -243,6 +243,7 @@ signals:
     void activeMeshChanged();
     void colorChanged();
     void planeControlWidgetNeedUpdate(const glm::vec3& values);
+    void planeControlWidgetNeedUpdateImageSize(const glm::vec3& values);
     void sceneRadiusOutOfDate();
     void needDisplayInfos(const std::string& infos);
     void needChangeCameraType(qglviewer::Camera::Type cameraType);

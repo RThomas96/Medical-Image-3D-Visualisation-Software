@@ -133,6 +133,9 @@ protected:
         labelValueZ = new QLabel("0", this);
         labelValueZ->setMinimumWidth(26);
         zHBoxLayout->addWidget(labelValueZ);
+        labelValueX->setHidden(true);
+        labelValueY->setHidden(true);
+        labelValueZ->setHidden(true);
 
         //Sliders definitions
         xHSlider = new QSlider(this);

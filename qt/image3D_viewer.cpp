@@ -429,9 +429,9 @@ void PlanarViewForm::addViewer(const QString& name, const glm::vec3& side) {
     this->selectedViewer = name;
     this->labels["SelectedViewer"]->setText(name);
 
-    this->spinBoxes["X"]->blockSignals(true);
-    this->spinBoxes["X"]->setValue(1);
-    this->spinBoxes["X"]->blockSignals(false);
+    //this->spinBoxes["X"]->blockSignals(true);
+    //this->spinBoxes["X"]->setValue(1);
+    //this->spinBoxes["X"]->blockSignals(false);
 
     this->updateImageViewer();
 }
@@ -439,12 +439,13 @@ void PlanarViewForm::addViewer(const QString& name, const glm::vec3& side) {
 void PlanarViewForm::selectViewer(const QString& name) {
     if(!this->viewers[name])
         return;
+
     this->storeCurrentValues();
     this->selectedViewer = name;
     this->labels["SelectedViewer"]->setText(name);
     this->updateDefaultValues(name);
     this->recoverValues();
-    this->updateSlice();
+    //this->updateSlice();
 }
 
 void PlanarViewForm::updateDefaultValues(const QString& name) {
@@ -648,17 +649,33 @@ void PlanarViewForm::initViewer(const QString& name) {
 
 glm::vec3 PlanarViewForm::getBackImgDimension(Scene * scene) {
     glm::vec3 defaultValue = glm::vec3(1., 1., 1.);
-    std::string name = this->getFromGridName();
-    if(name == "")
+    std::string frontGrid = this->getToGridName();
+    if(scene->getGridIdx(frontGrid) == -1)
+        return defaultValue;
+    std::string backGrid = this->getFromGridName();
+    if(scene->getGridIdx(backGrid) == -1)
         return defaultValue;
     //return scene->grids[scene->getGridIdx(name)]->getDimensions()*(scene->grids[scene->getGridIdx(name)]->getWorldVoxelSize()*2.f);
     glm::vec3 divisor = this->getVoxelDivisor();
     convertVector(divisor);
-    return (scene->grids[scene->getGridIdx(name)]->getDimensions()*(1.f/scene->grids[scene->getGridIdx(name)]->getOriginalVoxelSize()))/divisor;
+    return (scene->grids[scene->getGridIdx(backGrid)]->getDimensions()*(1.f/scene->grids[scene->getGridIdx(frontGrid)]->getOriginalVoxelSize()))/divisor;
 }
 
-void PlanarViewForm::backImageChanged(Scene * scene) {
+void PlanarViewForm::frontImageChanged(Scene * scene) {
     //this->setSpinBoxesValues(glm::vec3(1., 1., 1.));
+    glm::vec3 imgDimension = this->getBackImgDimension(scene);
+    convertVector(imgDimension);
+    bool imgTooLarge = false;
+    long double nbPixel = imgDimension.x * imgDimension.y;
+    long double maxNbPixel = 50000;
+    std::cout << "Nb pixel: " << nbPixel << std::endl;
+    if(nbPixel > maxNbPixel) {
+        int subsample = std::ceil(std::sqrt(nbPixel/maxNbPixel));
+        std::cout << "Image too large, auto adjust subsample to " << subsample << std::endl;
+        this->spinBoxes["X"]->blockSignals(true);
+        this->spinBoxes["X"]->setValue(subsample);
+        this->spinBoxes["X"]->blockSignals(false);
+    }
 }
 
 glm::ivec3 PlanarViewForm::autoComputeBestSize(Scene * scene) {
@@ -709,22 +726,22 @@ void PlanarViewForm::convertVector(glm::vec3& vec) {
 void PlanarViewForm::updateImageViewer() {
     if(this->noViewerSelected() || this->isHidden())
         return;
-    glm::vec3 finalImageSize = autoComputeBestSize(scene);
-    convertVector(finalImageSize);
+    // Check the image size and set a subsample if the image is to big
+
     glm::vec3 originalImgDimension = this->getBackImgDimension(scene);
+
     convertVector(originalImgDimension);
 
+    this->sliders["SliderX"]->blockSignals(true);
     this->sliders["SliderX"]->setMinimum(0);
     this->sliders["SliderX"]->setMaximum(originalImgDimension.z-1);
-
-    std::cout << originalImgDimension << std::endl;
+    this->sliders["SliderX"]->blockSignals(false);
 
     glm::vec3 voxelSize = glm::vec3(1., 1., 1.);
-    std::string name = this->getFromGridName();
+    std::string name = this->getToGridName();
     if(name != "")
         voxelSize = scene->grids[scene->getGridIdx(name)]->getWorldVoxelSize();
     convertVector(voxelSize);
-
     voxelSize /= this->getVoxelDivisor();
 
     float min = std::min(voxelSize.x, voxelSize.y);
@@ -887,7 +904,6 @@ void PlanarViewForm::updateSlice() {
             this->scene->slotSetNormalizedPlaneDisplacement(Scene::CuttingPlaneDirection::X, 0.);
             this->scene->slotSetNormalizedPlaneDisplacement(Scene::CuttingPlaneDirection::Y, 0.);
         }
-        Q_EMIT this->scene->planeControlWidgetNeedUpdate(this->scene->planeDisplacement);
     }
     this->labels["SliderX"]->setText(std::to_string(this->sliders["SliderX"]->value()).c_str());
 }
@@ -896,8 +912,8 @@ void PlanarViewForm::connect(Scene * scene) {
     QObject::connect(this, &Form::widgetModified, [this, scene](const QString &id){
         if(this->noViewerSelected())
             return;
-        if(id == "From")
-            this->backImageChanged(scene);
+        if(id == "To" || id == "From")
+            this->frontImageChanged(scene);
 
         //if(id == "Auto")
         //    this->setAutoImageResolution();
@@ -913,7 +929,7 @@ void PlanarViewForm::connect(Scene * scene) {
                 this->viewers[this->selectedViewer]->direction = glm::vec3(0., 1., 0.);
             if(id == "SideZ")
                 this->viewers[this->selectedViewer]->direction = glm::vec3(0., 0., 1.);
-            this->backImageChanged(scene);
+            this->frontImageChanged(scene);
             this->recoverValues();
             this->updateImageViewer();
         }
@@ -930,7 +946,6 @@ void PlanarViewForm::connect(Scene * scene) {
             for(auto viewer : this->viewers) {
                 QString name = viewer.first;
                 if(name != originalViewer && viewer.second && viewer.second->isVisible()) {
-                    std::cout << "COMPUTE" << std::endl;
                     this->selectViewer(name);
                     this->updateImageViewer();
                 }
