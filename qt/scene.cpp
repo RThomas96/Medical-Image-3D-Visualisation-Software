@@ -83,6 +83,7 @@ Scene::Scene() {
     this->previewCursorInPlanarView = false;
     this->displayGridBBox = false;
     this->displayXRayManipulators = false;
+    this->displayTetSizeUnit = false;
 }
 
 Scene::~Scene(void) {

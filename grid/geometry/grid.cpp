@@ -83,7 +83,7 @@ bool Grid::getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3
     glm::vec3 nDirection = glm::normalize(direction);
 
     float maxDistance = glm::length(this->getOrigin() - origin)*2.;    
-    float step = std::min(this->getVoxelSize()[0], std::min(this->getVoxelSize()[1], this->getVoxelSize()[2]));
+    float step = std::min(this->getWorldVoxelSize()[0], std::min(this->getWorldVoxelSize()[1], this->getWorldVoxelSize()[2]));
 
     for(float i = 0; i < maxDistance; i+=step) {
         const glm::vec3 p = origin + i * nDirection;

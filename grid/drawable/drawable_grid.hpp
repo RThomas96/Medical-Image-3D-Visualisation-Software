@@ -31,6 +31,7 @@ public:
     bool displayTetmesh;
     bool drawSliceOnly;
     bool drawTetIdx;
+    bool drawSizeTetUnit;
     float blendFirstPass;
 
     // Segmented data display control

@@ -639,6 +639,12 @@ SliceManipulator::SliceManipulator(BaseMesh * mesh): MeshManipulator(mesh) {
     this->lastModifiedSlice = 0;
 
     dynamic_cast<SurfaceMesh*>(this->mesh)->initARAPDeformer();
+
+    this->instructions = std::string("+/- : Increase/decrease MOVING slice\n"
+                                     "Ctrl+ +/- : Increase/decrease FIXED slice\n"
+                                     "P : Project MOVING points on the SECOND mesh\n"
+                                     "WARNING: crash if only one mesh is opened."
+                                     "");
 }
 
 void SliceManipulator::updateWithMeshVertices() {
@@ -685,7 +691,7 @@ void SliceManipulator::keyPressed(QKeyEvent* e) {
         this->computeManipulatorFromSelection();
     }
 
-    if(e->key() == Qt::Key_M) {
+    if(e->key() == Qt::Key_P) {
         std::cout << "Start apss projection" << std::endl;
         std::vector<int> ptToProject;
         for(int i = 0; i < this->selectedVertices.size(); ++i) {
@@ -802,8 +808,9 @@ void SliceManipulator::selectSlice(SliceOrientation sliceOrientation) {
     std::vector<glm::vec3> positions;
     this->getAllPositions(positions);
     for(int i = 0; i < positions.size(); ++i) {
-        for(int j = 0; j < 2; ++j) {
-            valueIdxToCheck = j;
+        //for(int j = 0; j < 2; ++j) {
+            //valueIdxToCheck = j;
+
             //if(std::abs(positions[i][valueIdxToCheck] - this->slicesPositions[valueIdxToCheck]) < this->selectionRadius) {
             //    this->selectedVertices[i] = true;
             //}
@@ -822,7 +829,7 @@ void SliceManipulator::selectSlice(SliceOrientation sliceOrientation) {
             if(dist >= this->selectionRange) {
                 this->fixedVertices[i] = true;
             }
-        }
+        //}
     }
 }
 

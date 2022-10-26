@@ -315,6 +315,11 @@ public slots:
     void setBlend(float value);
     void setOrthographicCamera() { Q_EMIT needChangeCameraType(qglviewer::Camera::ORTHOGRAPHIC); };
     void setPerspectiveCamera() { Q_EMIT needChangeCameraType(qglviewer::Camera::PERSPECTIVE); };
+    void setDipslayTetSizeUnit(bool value) {
+        this->displayTetSizeUnit = value;
+        for(auto& grid : grids)
+            grid->drawSizeTetUnit = value;
+    };
 
     // Segmented display
     void resetRanges();
@@ -419,6 +424,7 @@ public:
     bool displayMesh;
     bool displayGridBBox;
     bool displayXRayManipulators;
+    bool displayTetSizeUnit;
     bool previewCursorInPlanarView;
 
     std::string activeMesh;

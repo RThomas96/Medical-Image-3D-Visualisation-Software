@@ -16,6 +16,7 @@ DrawableGrid::DrawableGrid(Grid * grid): gl(nullptr) {
     this->grid = grid;
     this->blendFirstPass = 1.;
     this->drawSliceOnly = false;
+    this->drawSizeTetUnit = false;
     this->multiGridRendering = false;
 
     this->color_0 = glm::vec3(1., 0., 0.);
@@ -278,7 +279,17 @@ void DrawableGrid::prepareUniforms(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camP
     tex++;
 
     glm::vec3 floatres = glm::convert_to<float>(grid->sampler.getSamplerDimension());
-    gl->glUniform3fv(getUniform("voxelSize"), 1, glm::value_ptr(grid->getVoxelSize()));
+    if(drawSizeTetUnit) {
+        //glm::vec3 vSize = grid->getWorldVoxelSize();
+        //std::cout << "Voxelsize Before: " << vSize << std::endl;
+        //float min = std::min(vSize.x, std::min(vSize.y,vSize.z));
+        //vSize = glm::vec3(min, min, min);
+        //gl->glUniform3fv(getUniform("voxelSize"), 1, glm::value_ptr(vSize));
+        //std::cout << "Voxelsize: " << vSize << std::endl;
+        glm::vec3 vSize = glm::vec3(1., 1., 1.);
+    } else {
+        gl->glUniform3fv(getUniform("voxelSize"), 1, glm::value_ptr(grid->getWorldVoxelSize()));
+    }
     gl->glUniform3fv(getUniform("gridSize"), 1, glm::value_ptr(floatres));
     gl->glUniform3fv(getUniform("visuBBMin"), 1, glm::value_ptr(grid->bbMin));
     gl->glUniform3fv(getUniform("visuBBMax"), 1, glm::value_ptr(grid->bbMax));

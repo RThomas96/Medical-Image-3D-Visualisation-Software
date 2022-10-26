@@ -100,7 +100,7 @@ void MainWidget::setupWidgets() {
 
     this->toolbar->addAction(this->actionManager->getAction("Layout1View"));
     this->toolbar->addAction(this->actionManager->getAction("Layout2View"));
-    this->toolbar->addAction(this->actionManager->getAction("Layout4View"));
+    //this->toolbar->addAction(this->actionManager->getAction("Layout4View"));
 
     this->toolbar->addSeparator();
 
@@ -112,9 +112,10 @@ void MainWidget::setupWidgets() {
 
     this->toolbar->addSeparator();
 
-    this->toolbar->addAction(this->actionManager->getAction("OpenAtlas"));
+    //this->toolbar->addAction(this->actionManager->getAction("OpenAtlas"));
     this->toolbar->addAction(this->actionManager->getAction("Shader"));
-    this->toolbar->addAction(this->actionManager->getAction("Boundaries"));
+    this->toolbar->addAction(this->actionManager->getAction("Debug"));
+    //this->toolbar->addAction(this->actionManager->getAction("Boundaries"));
 
     /***/
 
@@ -552,9 +553,14 @@ void MainWidget::setupActions() {
             this->updateForms();
     });
 
-this->actionManager->createQActionToggleButton("Shader", "Shader", "", "Reload shaders", "arap");
+    this->actionManager->createQActionToggleButton("Shader", "Reload shaders", "", "Reload shaders", "arap");
     QObject::connect(this->actionManager->getAction("Shader"), &QAction::triggered, [this](){
             this->scene->recompileShaders(true);
+    });
+
+    this->actionManager->createQActionToggleButton("Debug", "Even voxels", "", "Display grids with even voxel size", "arap");
+    QObject::connect(this->actionManager->getAction("Debug"), &QAction::triggered, [this](){
+            this->scene->setDipslayTetSizeUnit(this->actionManager->getAction("Debug")->isChecked());
     });
 
     this->actionManager->createQActionToggleButton("Boundaries", "Boundaries", "", "", "arap");
