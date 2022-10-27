@@ -40,11 +40,11 @@ void OpenImageForm::connect(Scene * scene) {
 
     QObject::connect(this->buttons["Mouse brain atlas"], &QPushButton::clicked, [this, scene](){
         this->checkBoxes["Segmented"]->setChecked(true);
-        this->fileChoosers["Image choose"]->setManually(std::string("../data/atlas.tiff"));
+        this->fileChoosers["Image choose"]->setManually(std::string("../resources/data/atlas.tiff"));
         this->sections["Mesh"].first->setChecked(true);
-        this->fileChoosers["Mesh choose"]->setManually(std::string("../data/atlas-transfert.mesh"));
+        this->fileChoosers["Mesh choose"]->setManually(std::string("../resources/data/atlas-transfert.mesh"));
         this->sections["Cage"].first->setChecked(true);
-        this->fileChoosers["Cage choose"]->setManually(std::string("../data/atlas-cage.off"));
+        this->fileChoosers["Cage choose"]->setManually(std::string("../resources/data/atlas-cage.off"));
         this->lineEdits["Name"]->setText("Mouse brain atlas");
         if(scene->isGrid("Mouse brain atlas"))
             this->lineEdits["Name"]->setText("Mouse brain atlas2");
@@ -52,7 +52,7 @@ void OpenImageForm::connect(Scene * scene) {
 
     QObject::connect(this->buttons["IRM"], &QPushButton::clicked, [this, scene](){
         this->checkBoxes["Segmented"]->setChecked(false);
-        this->fileChoosers["Image choose"]->setManually(std::string("../data/irm.tif"));
+        this->fileChoosers["Image choose"]->setManually(std::string("../resources/data/irm.tif"));
         this->sections["Mesh"].first->setChecked(false);
         this->sections["Cage"].first->setChecked(false);
         this->doubleSpinBoxes["SizeVoxelX"]->setValue(3.9);
