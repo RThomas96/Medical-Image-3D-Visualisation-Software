@@ -10,6 +10,7 @@ uniform sampler2D screenTexture2;
 uniform sampler2D depthTexture2;
 
 uniform bool alphaRendering;
+uniform bool dualRendering;
 uniform float alphaBlend;
 
 //void main()
@@ -51,7 +52,7 @@ void main()
     //    col += sampleTex[i] * kernel[i];
     //FragColor = vec4(col, 1.0);
 
-    if(alphaRendering) {
+    if(dualRendering) {
         float depth1 = texture(depthTexture, TexCoords).x;
         float depth2 = texture(depthTexture2, TexCoords).x;
         if(depth1 < depth2) {
@@ -66,9 +67,8 @@ void main()
         bool color1White = color1.r < 0.01 && color1.g < 0.01 && color1.b < 0.01;
         bool color2White = color2.r < 0.01 && color2.g < 0.01 && color2.b < 0.01;
 
-
         if(!color1White && !color2White) {
-            if(abs(depth1 - depth2) < 0.0001) {
+            if(alphaRendering && abs(depth1 - depth2) < 0.0001) {
                 FragColor = vec4(mix(color1.rgb, color2.rgb, alphaBlend), 1.);
             } else {
                 if(depth1 < depth2) {
