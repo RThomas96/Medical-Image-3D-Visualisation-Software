@@ -86,9 +86,9 @@ public:
         QIcon icon;
         QSize size(80, 80);
         if(!defaultIcon.isEmpty())
-            icon.addFile(QString("../resources/" + defaultIcon + QString(".svg")), size, QIcon::Normal, QIcon::Off);
+            icon.addFile(QString("../resources/icons/" + defaultIcon + QString(".svg")), size, QIcon::Normal, QIcon::Off);
         if(!pressedIcon.isEmpty())
-            icon.addFile(QString("../resources/" + pressedIcon + QString(".svg")), size, QIcon::Normal, QIcon::On);
+            icon.addFile(QString("../resources/icons/" + pressedIcon + QString(".svg")), size, QIcon::Normal, QIcon::On);
     
         QAction * action = new QAction(icon, text);
         if(checkable)
@@ -112,7 +112,7 @@ public:
         QIcon icon;
         QSize size(80, 80);
         if(!defaultIcon.isEmpty())
-            icon.addFile(QString("../resources/" + defaultIcon + QString(".svg")), size, QIcon::Normal, QIcon::Off);
+            icon.addFile(QString("../resources/icons/" + defaultIcon + QString(".svg")), size, QIcon::Normal, QIcon::Off);
 
         QToolButton * button=new QToolButton(this);
         button->setStatusTip(statusTip);

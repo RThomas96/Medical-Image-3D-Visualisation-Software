@@ -16,48 +16,48 @@ RangeOptionUnit::RangeOptionUnit(QWidget * parent) : QFrame(parent)  {
     unitLayout->setAlignment(Qt::AlignVCenter);
 
     deleteButton = new QPushButton();
-    deleteButton->setIcon(QIcon(QPixmap("../resources/cross.svg")));
-    deleteButton->setIconSize(QPixmap("../resources/cross.svg").rect().size());
+    deleteButton->setIcon(QIcon(QPixmap("../resources/icons/cross.svg")));
+    deleteButton->setIconSize(QPixmap("../resources/icons/cross.svg").rect().size());
     deleteButton->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
     QIcon icon;
     QSize size(80, 80);
-    icon.addFile(QString("../resources/visible.svg"), size, QIcon::Normal, QIcon::Off);
-    icon.addFile(QString("../resources/hidden.svg"), size, QIcon::Normal, QIcon::On);
+    icon.addFile(QString("../resources/icons/visible.svg"), size, QIcon::Normal, QIcon::Off);
+    icon.addFile(QString("../resources/icons/hidden.svg"), size, QIcon::Normal, QIcon::On);
     hideButton = new QPushButton();
     hideButton->setCheckable(true);
     hideButton->setIcon(icon);
-    hideButton->setIconSize(QPixmap("../resources/visible.svg").rect().size());
+    hideButton->setIconSize(QPixmap("../resources/icons/visible.svg").rect().size());
     hideButton->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
     hideColor = new QPushButton();
     QIcon icon2;
-    icon2.addFile(QString("../resources/color.svg"), size, QIcon::Normal, QIcon::Off);
-    icon2.addFile(QString("../resources/color_hide.svg"), size, QIcon::Normal, QIcon::On);
+    icon2.addFile(QString("../resources/icons/color.svg"), size, QIcon::Normal, QIcon::Off);
+    icon2.addFile(QString("../resources/icons/color_hide.svg"), size, QIcon::Normal, QIcon::On);
     hideColor = new QPushButton();
     hideColor->setCheckable(true);
     hideColor->setIcon(icon2);
-    hideColor->setIconSize(QPixmap("../resources/color.svg").rect().size());
+    hideColor->setIconSize(QPixmap("../resources/icons/color.svg").rect().size());
     hideColor->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
     open = new QPushButton();
-    open->setIcon(QIcon(QPixmap("../resources/open.svg")));
-    open->setIconSize(QPixmap("../resources/open.svg").rect().size());
+    open->setIcon(QIcon(QPixmap("../resources/icons/open.svg")));
+    open->setIconSize(QPixmap("../resources/icons/open.svg").rect().size());
     open->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
     save = new QPushButton();
-    save->setIcon(QIcon(QPixmap("../resources/save.svg")));
-    save->setIconSize(QPixmap("../resources/save.svg").rect().size());
+    save->setIcon(QIcon(QPixmap("../resources/icons/save.svg")));
+    save->setIconSize(QPixmap("../resources/icons/save.svg").rect().size());
     save->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
     autoButton = new QPushButton();
-    autoButton->setIcon(QIcon(QPixmap("../resources/histo.svg")));
-    autoButton->setIconSize(QPixmap("../resources/histo.svg").rect().size());
+    autoButton->setIcon(QIcon(QPixmap("../resources/icons/histo.svg")));
+    autoButton->setIconSize(QPixmap("../resources/icons/histo.svg").rect().size());
     autoButton->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
     hideOption = new QPushButton();
-    hideOption->setIcon(QIcon(QPixmap("../resources/more_option.svg")));
-    hideOption->setIconSize(QPixmap("../resources/more_option.svg").rect().size());
+    hideOption->setIcon(QIcon(QPixmap("../resources/icons/more_option.svg")));
+    hideOption->setIconSize(QPixmap("../resources/icons/more_option.svg").rect().size());
     hideOption->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     hideOption->setCheckable(true);
 
@@ -128,28 +128,28 @@ RangeUnit::RangeUnit(int id, QWidget * parent) : id(id), QFrame(parent)  {
     QHBoxLayout * moveLayout = new QHBoxLayout();
     left = new QPushButton();
     right = new QPushButton();
-    left->setIcon(QIcon(QPixmap("../resources/left.svg")));
-    left->setIconSize(QPixmap("../resources/left.svg").rect().size());
+    left->setIcon(QIcon(QPixmap("../resources/icons/left.svg")));
+    left->setIconSize(QPixmap("../resources/icons/left.svg").rect().size());
     left->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
-    right->setIcon(QIcon(QPixmap("../resources/right.svg")));
-    right->setIconSize(QPixmap("../resources/right.svg").rect().size());
+    right->setIcon(QIcon(QPixmap("../resources/icons/right.svg")));
+    right->setIconSize(QPixmap("../resources/icons/right.svg").rect().size());
     right->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     moveLayout->addWidget(left);
     moveLayout->addWidget(right);
 
     deleteButton = new QPushButton();
-    deleteButton->setIcon(QIcon(QPixmap("../resources/cross.svg")));
-    deleteButton->setIconSize(QPixmap("../resources/cross.svg").rect().size());
+    deleteButton->setIcon(QIcon(QPixmap("../resources/icons/cross.svg")));
+    deleteButton->setIconSize(QPixmap("../resources/icons/cross.svg").rect().size());
     deleteButton->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
     QIcon icon;
     QSize size(30, 30);
-    icon.addFile(QString("../resources/visible.svg"), size, QIcon::Normal, QIcon::Off);
-    icon.addFile(QString("../resources/hidden.svg"), size, QIcon::Normal, QIcon::On);
+    icon.addFile(QString("../resources/icons/visible.svg"), size, QIcon::Normal, QIcon::Off);
+    icon.addFile(QString("../resources/icons/hidden.svg"), size, QIcon::Normal, QIcon::On);
     hideButton = new PreviewButton();
     hideButton->setCheckable(true);
     hideButton->setIcon(icon);
-    hideButton->setIconSize(QPixmap("../resources/visible.svg").rect().size());
+    hideButton->setIconSize(QPixmap("../resources/icons/visible.svg").rect().size());
     hideButton->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     hideButton->setFixedSize(QSize(30, 25));
 

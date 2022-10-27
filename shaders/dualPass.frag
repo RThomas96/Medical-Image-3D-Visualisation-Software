@@ -68,7 +68,7 @@ void main()
 
 
         if(!color1White && !color2White) {
-            if(abs(depth1 - depth2) < 0.001) {
+            if(abs(depth1 - depth2) < 0.0001) {
                 FragColor = vec4(mix(color1.rgb, color2.rgb, alphaBlend), 1.);
             } else {
                 if(depth1 < depth2) {

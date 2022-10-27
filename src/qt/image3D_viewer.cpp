@@ -526,7 +526,7 @@ void PlanarViewForm::init(Scene * scene) {
 
     this->add(WidgetType::LABEL, "SelectedViewer", "NONE");
     //this->add(WidgetType::BUTTON, "Rotate");
-    //QPixmap pixmap(QString("../resources/rotate.svg"));
+    //QPixmap pixmap(QString("../resources/icons/rotate.svg"));
     //QIcon ButtonIcon(pixmap);
     //this->buttons["Rotate"]->setIcon(ButtonIcon);
     //this->buttons["Rotate"]->setText("");
@@ -536,7 +536,7 @@ void PlanarViewForm::init(Scene * scene) {
     this->add(WidgetType::TIFF_SAVE, "SaveCur");
 
     this->add(WidgetType::BUTTON_CHECKABLE, "Link");
-    QPixmap pixmap2(QString("../resources/link.svg"));
+    QPixmap pixmap2(QString("../resources/icons/link.svg"));
     QIcon ButtonIcon2(pixmap2);
     this->buttons["Link"]->setIcon(ButtonIcon2);
     this->buttons["Link"]->setText("");

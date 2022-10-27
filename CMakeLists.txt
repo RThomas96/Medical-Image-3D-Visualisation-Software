@@ -12,7 +12,7 @@ INCLUDE(FindQGLViewer)
 # Find the local libTIFF version :
 INCLUDE(FindLocalTIFF)
 # Add the GLSL and icons dependencies :
-INCLUDE(ShaderDependency)
+#INCLUDE(ShaderDependency)
 INCLUDE(ResourceDependency)
 # Find the local SuiteSparse and GSL libraries : (windows-only for now)
 IF (WIN32 OR MINGW OR MSVC)
