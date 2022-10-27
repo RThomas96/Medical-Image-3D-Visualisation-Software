@@ -3,7 +3,7 @@
 
 #include "../drawable/drawable_grid.hpp"
 #include "tetrahedral_mesh.hpp"
-#include "../images/tiff_image.hpp"
+#include "../images/image.hpp"
 
 //! \defgroup grid Grid
 //! \addtogroup grid
@@ -72,7 +72,7 @@ public:
     glm::vec3 getImageDimensions() const;
 
     std::vector<int> getHistogram() const;
-    SimpleImage * image;
+    tiff_image * image;
 private:
     void fillCache();
 };

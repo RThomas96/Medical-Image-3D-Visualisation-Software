@@ -7,7 +7,7 @@
 
 #include "glm/glm.hpp"
 #include "form.hpp"
-#include "../../core/images/tiff_image.hpp"
+#include "../../core/images/image.hpp"
 
 
 class OpenImageForm : public Form {

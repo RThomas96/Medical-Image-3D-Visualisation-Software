@@ -529,19 +529,19 @@ bool Grid::checkTransferMeshValidity() {
 
 /**************************/
 
-Sampler::Sampler(const std::vector<std::string>& filename, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox): image(new SimpleImage(filename)) {
+Sampler::Sampler(const std::vector<std::string>& filename, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox): image(new tiff_image(filename)) {
     this->init(filename, subsample, bbox, glm::vec3(0., 0., 0.));
 }
 
-Sampler::Sampler(const std::vector<std::string>& filename, int subsample): image(new SimpleImage(filename)) {
+Sampler::Sampler(const std::vector<std::string>& filename, int subsample): image(new tiff_image(filename)) {
     this->init(filename, subsample, std::pair<glm::vec3, glm::vec3>(glm::vec3(0., 0., 0.), glm::vec3(0., 0., 0.)), glm::vec3(0., 0., 0.));
 }
 
-Sampler::Sampler(const std::vector<std::string>& filename, int subsample, const glm::vec3& voxelSize): image(new SimpleImage(filename)) {
+Sampler::Sampler(const std::vector<std::string>& filename, int subsample, const glm::vec3& voxelSize): image(new tiff_image(filename)) {
     this->init(filename, subsample, std::pair<glm::vec3, glm::vec3>(glm::vec3(0., 0., 0.), glm::vec3(0., 0., 0.)), voxelSize);
 }
 
-Sampler::Sampler(const std::vector<std::string>& filename): image(new SimpleImage(filename)) {
+Sampler::Sampler(const std::vector<std::string>& filename): image(new tiff_image(filename)) {
     this->init(filename, 1, std::pair<glm::vec3, glm::vec3>(glm::vec3(0., 0., 0.), glm::vec3(0., 0., 0.)), glm::vec3(0., 0., 0.));
 }
 

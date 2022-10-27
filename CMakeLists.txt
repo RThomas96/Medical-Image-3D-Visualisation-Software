@@ -132,7 +132,7 @@ ADD_EXECUTABLE(neighbor_visu
     ./src/core/geometry/tetrahedral_mesh.hpp
     ./src/core/geometry/surface_mesh.hpp
     ./src/core/geometry/graph_mesh.hpp
-    ./src/core/images/tiff_image.hpp
+    ./src/core/images/image.hpp
     ./src/core/images/cache.hpp
     ./src/core/interaction/manipulator.hpp
     ./src/core/interaction/mesh_manipulator.hpp
@@ -168,7 +168,7 @@ ADD_EXECUTABLE(neighbor_visu
     ./src/core/geometry/tetrahedral_mesh.cpp
     ./src/core/geometry/surface_mesh.cpp
     ./src/core/geometry/graph_mesh.cpp
-    ./src/core/images/tiff_image.cpp
+    ./src/core/images/image.cpp
     ./src/core/images/cache.cpp
     ./src/core/interaction/manipulator.cpp
     ./src/core/interaction/mesh_manipulator.cpp
