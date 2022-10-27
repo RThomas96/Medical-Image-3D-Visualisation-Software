@@ -4,7 +4,7 @@
 #include "../../features.hpp"
 #include "../../macros.hpp"
 #include "QGLViewer/camera.h"
-#include "grid/drawable/drawable_grid.hpp"
+#include "../core/drawable/drawable_grid.hpp"
 #include "scene_control.hpp"
 #include <QPlainTextEdit>
 #include <QPushButton>
@@ -29,18 +29,18 @@
 #include <vector>
 
 #include <thread>
-#include "../../legacy/image/utils/include/threaded_task.hpp"
+#include "../legacy/image/utils/include/threaded_task.hpp"
 
 // Tinytiff
 #include <tinytiffreader.h>
 #include <tinytiffwriter.h>
 
-#include "../../grid/geometry/grid.hpp"
-#include "../../grid/geometry/graph_mesh.hpp"
-#include "../../grid/drawable/drawable_surface_mesh.hpp"
-#include "../../grid/drawable/drawable_selection.hpp"
-#include "../../grid/geometry/graph_mesh.hpp"
-#include "../../grid/deformation/cage_surface_mesh.hpp"
+#include "../core/geometry/grid.hpp"
+#include "../core/geometry/graph_mesh.hpp"
+#include "../core/drawable/drawable_surface_mesh.hpp"
+#include "../core/drawable/drawable_selection.hpp"
+#include "../core/geometry/graph_mesh.hpp"
+#include "../core/deformation/cage_surface_mesh.hpp"
 
 #include "glm/gtx/string_cast.hpp"
 

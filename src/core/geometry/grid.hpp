@@ -1,7 +1,7 @@
 #ifndef SIMPLEGRID_HPP_
 #define SIMPLEGRID_HPP_
 
-#include "grid/drawable/drawable_grid.hpp"
+#include "../drawable/drawable_grid.hpp"
 #include "tetrahedral_mesh.hpp"
 #include "../images/tiff_image.hpp"
 

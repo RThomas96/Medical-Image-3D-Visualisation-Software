@@ -3,7 +3,7 @@
 
 #include <QGLViewer/manipulatedCameraFrame.h>
 #include <map>
-#include "grid/drawable/drawable.hpp"
+#include "src/core/drawable/drawable.hpp"
 #include "manipulator.hpp"
 #include "kid_manipulator.h"
 

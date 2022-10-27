@@ -1,5 +1,5 @@
 #include "main_widget.hpp"
-#include "qt/UI/tool_pannel.hpp"
+#include "src/qt/UI/tool_pannel.hpp"
 #include "scene.hpp"
 
 #include <QEvent>

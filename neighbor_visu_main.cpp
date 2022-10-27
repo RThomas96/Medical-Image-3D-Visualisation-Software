@@ -9,7 +9,7 @@
 #include <iostream>
 
 #include "./features.hpp"
-#include "./qt/main_widget.hpp"
+#include "src/qt/main_widget.hpp"
 
 #if (defined(_WIN32) || defined(_WIN64))
 extern "C"

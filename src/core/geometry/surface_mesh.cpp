@@ -1,6 +1,6 @@
 #include "surface_mesh.hpp"
 //#include "../deformation/mesh_deformer.hpp"
-#include "grid/drawable/drawable_surface_mesh.hpp"
+#include "src/core/drawable/drawable_surface_mesh.hpp"
 #include <fstream>
 #include <QOpenGLFunctions>
 #include <cfloat>

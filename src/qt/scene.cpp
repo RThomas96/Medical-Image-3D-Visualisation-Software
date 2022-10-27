@@ -21,16 +21,16 @@
 #include <map>
 #include <vector>
 
-#include "../../grid/geometry/grid.hpp"
-//#include "../../grid/deformation/mesh_deformer.hpp"
+#include "../core/geometry/grid.hpp"
+//#include "../../core/deformation/mesh_deformer.hpp"
 
-#include "../../grid/utils/apss.hpp"
+#include "../core/utils/apss.hpp"
 #include "glm/fwd.hpp"
-#include "grid/drawable/drawable.hpp"
-#include "grid/drawable/drawable_grid.hpp"
-#include "grid/geometry/base_mesh.hpp"
-#include "grid/geometry/surface_mesh.hpp"
-#include "grid/ui/mesh_manipulator.hpp"
+#include "src/core/drawable/drawable.hpp"
+#include "src/core/drawable/drawable_grid.hpp"
+#include "src/core/geometry/base_mesh.hpp"
+#include "src/core/geometry/surface_mesh.hpp"
+#include "src/core/interaction/mesh_manipulator.hpp"
 #include "qobjectdefs.h"
 
 /** This constructor not only creates the object, but also sets the default values for the Scene in order

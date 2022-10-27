@@ -1,7 +1,7 @@
 #include "drawable_grid.hpp"
 #include "../geometry/grid.hpp"
 #include "glm/ext/quaternion_geometric.hpp"
-#include "grid/utils/GLUtilityMethods.h"
+#include "src/core/utils/GLUtilityMethods.h"
 
 #include <GL/gl.h>
 #include <glm/gtc/type_ptr.hpp>

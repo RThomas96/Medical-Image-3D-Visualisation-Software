@@ -5,8 +5,8 @@
 #include "base_mesh.hpp"
 #include <iostream>
 #include "glm/gtx/string_cast.hpp"
-#include "grid/deformation/AsRigidAsPossible.h"
-#include "grid/drawable/drawable_surface_mesh.hpp"
+#include "../deformation/AsRigidAsPossible.h"
+#include "../drawable/drawable_surface_mesh.hpp"
 
 //! \addtogroup geometry
 //! @{

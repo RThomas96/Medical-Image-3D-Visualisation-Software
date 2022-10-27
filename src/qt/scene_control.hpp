@@ -2,7 +2,7 @@
 #define QT_INCLUDE_SCENE_CONTROL_HPP_
 
 #include "../../features.hpp"
-//#include "../../grid/include/discrete_grid.hpp"
+//#include "../../core/include/discrete_grid.hpp"
 #include "../../macros.hpp"
 
 #include "./double_slider.hpp"

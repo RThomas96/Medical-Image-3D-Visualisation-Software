@@ -8,8 +8,8 @@
 
 #include "../qt/legacy/viewer_structs.hpp"
 #include "UI/form.hpp"
-//#include "grid/drawable/drawable_grid.hpp"
-#include "grid/geometry/grid.hpp"
+//#include "src/core/drawable/drawable_grid.hpp"
+#include "../core/geometry/grid.hpp"
 
 class Scene;
 

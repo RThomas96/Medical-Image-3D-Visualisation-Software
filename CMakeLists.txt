@@ -36,64 +36,64 @@ SET(LOCAL_GLM_HEADER_DIR "${CMAKE_CURRENT_LIST_DIR}/third_party/glm/")
 SET(LIBS_COMPILED_HEADERS "${CMAKE_CURRENT_LIST_DIR}/third_party/compiled_libraries/include")
 
 # To remove
-ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/legacy/image)
+ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/src/legacy/image)
 
 ADD_LIBRARY(VisualisationWidgets STATIC
-    ./qt/main_widget.hpp
-    ./qt/main_widget.cpp
+    ./src/qt/main_widget.hpp
+    ./src/qt/main_widget.cpp
 
-    ./qt/image3D_viewer.hpp
-    ./qt/image3D_viewer.cpp
+    ./src/qt/image3D_viewer.hpp
+    ./src/qt/image3D_viewer.cpp
 
-    ./qt/UI/chooser.hpp
-    ./qt/UI/chooser.cpp
+    ./src/qt/UI/chooser.hpp
+    ./src/qt/UI/chooser.cpp
 
-    ./qt/UI/form.hpp
-    ./qt/UI/form.cpp
+    ./src/qt/UI/form.hpp
+    ./src/qt/UI/form.cpp
 
-    ./qt/UI/deformation_form.hpp
-    ./qt/UI/deformation_form.cpp
+    ./src/qt/UI/deformation_form.hpp
+    ./src/qt/UI/deformation_form.cpp
 
-    ./qt/UI/color_control.hpp
-    ./qt/UI/color_control.cpp
+    ./src/qt/UI/color_control.hpp
+    ./src/qt/UI/color_control.cpp
 
-    ./qt/UI/color_button.hpp
-    ./qt/UI/color_button.cpp
+    ./src/qt/UI/color_button.hpp
+    ./src/qt/UI/color_button.cpp
 
-    ./qt/UI/quicksave_mesh.hpp
-    ./qt/UI/quicksave_mesh.cpp
+    ./src/qt/UI/quicksave_mesh.hpp
+    ./src/qt/UI/quicksave_mesh.cpp
 
-    ./qt/UI/info_pannel.hpp
-    ./qt/UI/info_pannel.cpp
+    ./src/qt/UI/info_pannel.hpp
+    ./src/qt/UI/info_pannel.cpp
 
-    ./qt/UI/open_image_form.hpp
-    ./qt/UI/open_image_form.cpp
+    ./src/qt/UI/open_image_form.hpp
+    ./src/qt/UI/open_image_form.cpp
 
-    ./qt/UI/save_image_form.hpp
-    ./qt/UI/save_image_form.cpp
+    ./src/qt/UI/save_image_form.hpp
+    ./src/qt/UI/save_image_form.cpp
 
-    ./qt/helper/QActionManager.hpp
+    ./src/qt/helper/QActionManager.hpp
 
-    ./qt/UI/tool_pannel.hpp
+    ./src/qt/UI/tool_pannel.hpp
 
-    ./qt/UI/display_pannel.hpp
+    ./src/qt/UI/display_pannel.hpp
 
-    ./qt/scene_control.hpp
-    ./qt/scene_control.cpp
+    ./src/qt/scene_control.hpp
+    ./src/qt/scene_control.cpp
 
-    ./qt/double_slider.hpp
-    ./qt/double_slider.cpp
+    ./src/qt/double_slider.hpp
+    ./src/qt/double_slider.cpp
 
-    ./qt/range_slider.hpp
-    ./qt/range_slider.cpp
+    ./src/qt/range_slider.hpp
+    ./src/qt/range_slider.cpp
 
-    ./qt/legacy/applyCageWidget.hpp
-    ./qt/legacy/applyCageWidget.cpp
+    ./src/qt/legacy/applyCageWidget.hpp
+    ./src/qt/legacy/applyCageWidget.cpp
 
-    ./qt/legacy/openMeshWidget.hpp
-    ./qt/legacy/openMeshWidget.cpp
+    ./src/qt/legacy/openMeshWidget.hpp
+    ./src/qt/legacy/openMeshWidget.cpp
 
-    ./qt/cutplane_groupbox.hpp
+    ./src/qt/cutplane_groupbox.hpp
 )
 
 TARGET_INCLUDE_DIRECTORIES(VisualisationWidgets
@@ -115,81 +115,81 @@ TARGET_LINK_LIBRARIES(VisualisationWidgets
 
 ADD_EXECUTABLE(neighbor_visu
 	# Header files, for Qt MOCS compilation :
-    ./qt/scene.hpp
-    # ./qt/planar_viewer.hpp
+    ./src/qt/scene.hpp
+    # src/./qt/planar_viewer.hpp
 
-    ./qt/3D_viewer.hpp
-    ./qt/3D_viewer.cpp
+    ./src/qt/3D_viewer.hpp
+    ./src/qt/3D_viewer.cpp
 
-    ./qt/legacy/viewer_structs.hpp
-    ./qt/legacy/viewer_structs.cpp
+    ./src/qt/legacy/viewer_structs.hpp
+    ./src/qt/legacy/viewer_structs.cpp
 
     ./third_party/primitive/Sphere.h
     ./third_party/cimg/CImg.h
 
-    ./grid/geometry/grid.hpp
-    ./grid/geometry/base_mesh.hpp
-    ./grid/geometry/tetrahedral_mesh.hpp
-    ./grid/geometry/surface_mesh.hpp
-    ./grid/geometry/graph_mesh.hpp
-    ./grid/images/tiff_image.hpp
-    ./grid/images/cache.hpp
-    ./grid/ui/manipulator.hpp
-    ./grid/ui/mesh_manipulator.hpp
-    ./grid/ui/kid_manipulator.h
-    ./grid/drawable/drawable_surface_mesh.hpp
-    ./grid/drawable/drawable.hpp
-    #./grid/drawable/drawable_manipulator.hpp
-    ./grid/drawable/drawable_selection.hpp
-    ./grid/drawable/drawable_grid.hpp
-    #./grid/deformation/mesh_deformer.hpp
-    ./grid/deformation/AsRigidAsPossible.h
-    ./grid/deformation/CageCoordinates.h
-    ./grid/deformation/cage_surface_mesh.hpp
-    ./grid/deformation/CellInfo.h
-    ./grid/deformation/CholmodLSStruct.h
-    ./grid/utils/GLUtilityMethods.h
-    ./grid/utils/Edge.h
-    ./grid/utils/Vec3D.h
-    ./grid/utils/Triangle.h
-    ./grid/utils/BasicPoint.h
-    ./grid/utils/PCATools.h
-    ./grid/utils/apss.hpp
+    ./src/core/geometry/grid.hpp
+    ./src/core/geometry/base_mesh.hpp
+    ./src/core/geometry/tetrahedral_mesh.hpp
+    ./src/core/geometry/surface_mesh.hpp
+    ./src/core/geometry/graph_mesh.hpp
+    ./src/core/images/tiff_image.hpp
+    ./src/core/images/cache.hpp
+    ./src/core/interaction/manipulator.hpp
+    ./src/core/interaction/mesh_manipulator.hpp
+    ./src/core/interaction/kid_manipulator.h
+    ./src/core/drawable/drawable_surface_mesh.hpp
+    ./src/core/drawable/drawable.hpp
+    #.src//core/drawable/drawable_manipulator.hpp
+    ./src/core/drawable/drawable_selection.hpp
+    ./src/core/drawable/drawable_grid.hpp
+    #.src//core/deformation/mesh_deformer.hpp
+    ./src/core/deformation/AsRigidAsPossible.h
+    ./src/core/deformation/CageCoordinates.h
+    ./src/core/deformation/cage_surface_mesh.hpp
+    ./src/core/deformation/CellInfo.h
+    ./src/core/deformation/CholmodLSStruct.h
+    ./src/core/utils/GLUtilityMethods.h
+    ./src/core/utils/Edge.h
+    ./src/core/utils/Vec3D.h
+    ./src/core/utils/Triangle.h
+    ./src/core/utils/BasicPoint.h
+    ./src/core/utils/PCATools.h
+    ./src/core/utils/apss.hpp
 
-	# Main file :
-	./neighbor_visu_main.cpp
+    # Maisrc/n file :
+    ./neighbor_visu_main.cpp
 
-	# Source files :
-    ./qt/scene.cpp
-    # ./qt/planar_viewer.cpp
+    # Sousrc/rce files :
+    ./src/qt/scene.cpp
+    # src/./qt/planar_viewer.cpp
     ./third_party/primitive/Sphere.cpp
-    ./grid/geometry/grid.cpp
-    ./grid/geometry/base_mesh.cpp
-    ./grid/geometry/tetrahedral_mesh.cpp
-    ./grid/geometry/surface_mesh.cpp
-    ./grid/geometry/graph_mesh.cpp
-    ./grid/images/tiff_image.cpp
-    ./grid/images/cache.cpp
-    ./grid/ui/manipulator.cpp
-    ./grid/ui/mesh_manipulator.cpp
-    ./grid/drawable/drawable_surface_mesh.cpp
-    ./grid/drawable/drawable.cpp
-    #./grid/drawable/drawable_manipulator.cpp
-    ./grid/drawable/drawable_selection.cpp
-    ./grid/drawable/drawable_grid.cpp
-    #./grid/deformation/mesh_deformer.cpp
-    ./grid/deformation/AsRigidAsPossible.cpp
-    ./grid/deformation/cage_surface_mesh.cpp
-    ./grid/utils/GLUtilityMethods.cpp
-    ./grid/utils/apss.cpp
+    ./src/core/geometry/grid.cpp
+    ./src/core/geometry/base_mesh.cpp
+    ./src/core/geometry/tetrahedral_mesh.cpp
+    ./src/core/geometry/surface_mesh.cpp
+    ./src/core/geometry/graph_mesh.cpp
+    ./src/core/images/tiff_image.cpp
+    ./src/core/images/cache.cpp
+    ./src/core/interaction/manipulator.cpp
+    ./src/core/interaction/mesh_manipulator.cpp
+    ./src/core/drawable/drawable_surface_mesh.cpp
+    ./src/core/drawable/drawable.cpp
+    #.src//core/drawable/drawable_manipulator.cpp
+    ./src/core/drawable/drawable_selection.cpp
+    ./src/core/drawable/drawable_grid.cpp
+    #.src//core/deformation/mesh_deformer.cpp
+    ./src/core/deformation/AsRigidAsPossible.cpp
+    ./src/core/deformation/cage_surface_mesh.cpp
+    ./src/core/utils/GLUtilityMethods.cpp
+    ./src/core/utils/apss.cpp
 
     #To remove
-    ./legacy/image/utils/include/image_api_common.hpp
-    ./legacy/image/utils/include/bounding_box.hpp
-    ./legacy/image/utils/include/threaded_task.hpp
-    ./legacy/image/utils/src/threaded_task.cpp
-    ./legacy/meshes/drawable/shaders.hpp
-    ./legacy/meshes/drawable/shaders.cpp
+    ./src/legacy/image/utils/include/image_api_common.hpp
+    ./src/legacy/image/utils/include/bounding_box.hpp
+    ./src/legacy/image/utils/include/threaded_task.hpp
+    ./src/legacy/image/utils/src/threaded_task.cpp
+    ./src/legacy/meshes/drawable/shaders.hpp
+    ./src/legacy/meshes/drawable/shaders.cpp
 
 )
 TARGET_COMPILE_OPTIONS(neighbor_visu
@@ -264,85 +264,3 @@ if(RELEASE_WITH_ASSERT)
     message(STATUS "WARNING: Build in release using assertion")
     set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 endif(RELEASE_WITH_ASSERT)
-
-# Unit testing
-#Include(FetchContent)
-#
-#FetchContent_Declare(
-#  Catch2
-#  GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-#  GIT_TAG        v3.0.0-preview3
-#)
-#
-#FetchContent_MakeAvailable(Catch2)
-#
-#ADD_EXECUTABLE(tests
-#
-#    #./tests/ICP_tests.cpp
-#
-#    ./grid/geometry/grid.hpp
-#    ./grid/geometry/base_mesh.hpp
-#    ./grid/geometry/tetrahedral_mesh.hpp
-#    ./grid/images/tiff_image.hpp
-#    ./grid/images/cache.hpp
-#    ./grid/ui/manipulator.hpp
-#    ./grid/ui/mesh_manipulator.hpp
-#    ./grid/drawable/drawable_surface_mesh.hpp
-#    ./grid/deformation/mesh_deformator.hpp
-#    ./grid/deformation/AsRigidAsPossible.h
-#    ./grid/utils/Edge.h
-#    ./grid/utils/Vec3D.h
-#    ./grid/utils/Triangle.h
-#
-#    ./grid/geometry/grid.cpp
-#    ./grid/geometry/base_mesh.cpp
-#    ./grid/geometry/tetrahedral_mesh.cpp
-#    ./grid/images/tiff_image.cpp
-#    ./grid/images/cache.cpp
-#    ./grid/ui/manipulator.cpp
-#    ./grid/ui/mesh_manipulator.cpp
-#    ./grid/drawable/drawable_surface_mesh.cpp
-#    ./grid/deformation/mesh_deformator.cpp
-#    ./grid/deformation/AsRigidAsPossible.cpp
-#
-#    #To remove
-#    ./legacy/image/utils/include/image_api_common.hpp
-#    ./legacy/image/utils/include/bounding_box.hpp
-#    ./legacy/image/utils/include/threaded_task.hpp
-#    ./legacy/image/utils/src/threaded_task.cpp
-#    ./legacy/meshes/drawable/shaders.hpp
-#    ./legacy/meshes/drawable/shaders.cpp
-#
-#    ./third_party/cimg/CImg.h
-#)
-#TARGET_COMPILE_OPTIONS(tests
-#	PUBLIC "-Wno-deprecated-declarations"
-#)
-#TARGET_PRECOMPILE_HEADERS(tests
-#	PRIVATE ${QGLViewer_HEADER_DIR}/QGLViewer/qglviewer.h
-#)
-#TARGET_INCLUDE_DIRECTORIES(tests
-#	PRIVATE ${OPENGL_INCLUDE_DIRS}
-#	PRIVATE ${QGLViewer_HEADER_DIR}
-#	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/third_party/glm/
-#	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include
-#	# Nifti uses brace-include without the 'nifti/' prefix, leading
-#	# to manually have to include the lib's include dir in targets:
-#	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include/nifti
-#)
-#TARGET_LINK_LIBRARIES(tests
-#    PRIVATE Catch2::Catch2WithMain
-#	PUBLIC Qt5::Core
-#	PUBLIC Qt5::Gui
-#	PUBLIC Qt5::Xml
-#	PUBLIC Qt5::Widgets
-#	PUBLIC Qt5::OpenGL
-#	PUBLIC ${OPENGL_LIBRARIES}
-#	PUBLIC ${QGLViewer}
-#	PUBLIC VisualisationWidgets
-#	PUBLIC TinyTIFF
-#	PUBLIC ${libTIFF}
-#    PUBLIC ${GSL_LIBRARIES}
-#    PUBLIC ${SUITESPARSE_LIBRARIES}
-#    PUBLIC SuiteSparse
-#)

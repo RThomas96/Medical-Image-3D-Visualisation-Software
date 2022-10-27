@@ -2,7 +2,7 @@
 #include "../../features.hpp"
 #include "QGLViewer/camera.h"
 #include "qnamespace.h"
-//#include "../../grid/include/discrete_grid_writer.hpp"
+//#include "../../core/include/discrete_grid_writer.hpp"
 //#include "../../qt/widgets/include/user_settings_widget.hpp"
 
 #include <glm/gtc/type_ptr.hpp>

@@ -2,7 +2,7 @@
 #define VIEWER_INCLUDE_NEIGHBOR_VISU_VIEWER_HPP_
 
 #include "../../features.hpp"
-#include "../../grid/ui/manipulator.hpp"
+#include "../core/interaction/manipulator.hpp"
 
 #include "./scene.hpp"
 

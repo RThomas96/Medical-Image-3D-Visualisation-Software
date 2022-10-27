@@ -2,7 +2,7 @@
 #define GRAPHMESH_HPP_
 
 #include "base_mesh.hpp"
-#include "grid/drawable/drawable.hpp"
+#include "../drawable/drawable.hpp"
 
 struct MeshDeformer;
 

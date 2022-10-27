@@ -5,7 +5,7 @@
 
 #include "../../legacy/meshes/drawable/shaders.hpp"
 #include "qobjectdefs.h"
-#include "qt/legacy/viewer_structs.hpp"
+#include "../../qt/legacy/viewer_structs.hpp"
 
 #include <QOpenGLContext>
 #include <QOpenGLExtraFunctions>
