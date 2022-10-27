@@ -14,6 +14,8 @@
 #include <glm/gtx/closest_point.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 #include <iostream>
+#include <chrono>
+#include <thread>
 
 namespace UITool {
 
@@ -985,7 +987,7 @@ void MarkerManipulator::placeManipulator(const glm::vec3& origin, const glm::vec
         this->switchToSelectManipulatorStep(position);
     } else {
         Q_EMIT needChangeCursor(UITool::CursorType::FAIL);
-        sleep(1);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         Q_EMIT needChangeCursor(UITool::CursorType::NORMAL);
     }
 }
