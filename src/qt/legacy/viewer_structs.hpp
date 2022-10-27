@@ -2,9 +2,6 @@
 #define VISUALIZATION_VIEWER_INCLUDE_VIEWER_STRUCTS_HPP_
 
 //#include "../../core/include/discrete_grid.hpp"
-#include "../../macros.hpp"
-
-#include "../../legacy/image/utils/include/bounding_box.hpp"
 
 #include <cstdint>
 #include <glm/glm.hpp>
@@ -18,7 +15,7 @@ class Scene;	// Fwd-declaration
 namespace Image {
 /// @brief Old bbox definition
 //  TODO: wtf are you doing here
-typedef BoundingBox_General<float> bbox_t;
+typedef std::pair<glm::vec3, glm::vec3> bbox_t;
 }
 
 /// @ingroup graphpipe

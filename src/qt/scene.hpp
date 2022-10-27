@@ -1,8 +1,6 @@
 #ifndef VIEWER_INCLUDE_SCENE_HPP_
 #define VIEWER_INCLUDE_SCENE_HPP_
 
-#include "../../features.hpp"
-#include "../../macros.hpp"
 #include "QGLViewer/camera.h"
 #include "../core/drawable/drawable_grid.hpp"
 #include "scene_control.hpp"

@@ -278,7 +278,7 @@ void DrawableGrid::prepareUniforms(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camP
     gl->glUniform1i(getUniform("colorRangeToDisplay"), tex);
     tex++;
 
-    glm::vec3 floatres = glm::convert_to<float>(grid->sampler.getSamplerDimension());
+    glm::vec3 floatres = grid->sampler.getSamplerDimension();
     if(drawSizeTetUnit) {
         //glm::vec3 vSize = grid->getWorldVoxelSize();
         //std::cout << "Voxelsize Before: " << vSize << std::endl;

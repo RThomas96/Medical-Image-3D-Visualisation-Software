@@ -8,7 +8,6 @@
 #include <QApplication>
 #include <iostream>
 
-#include "./features.hpp"
 #include "src/qt/main_widget.hpp"
 
 #if (defined(_WIN32) || defined(_WIN64))

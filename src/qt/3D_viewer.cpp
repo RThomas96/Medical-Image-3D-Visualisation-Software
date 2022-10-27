@@ -1,5 +1,4 @@
 #include "3D_viewer.hpp"
-#include "../../features.hpp"
 #include "QGLViewer/camera.h"
 #include "qnamespace.h"
 //#include "../../core/include/discrete_grid_writer.hpp"

@@ -1,8 +1,6 @@
 #ifndef VISUALIZATION_IMAGE_API_IMAGE_API_INCLUDE_COMMON_HPP_
 #define VISUALIZATION_IMAGE_API_IMAGE_API_INCLUDE_COMMON_HPP_
 
-#include "../../macros.hpp"
-
 #include <glm/glm.hpp>
 
 #include <memory>

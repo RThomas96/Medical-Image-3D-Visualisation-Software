@@ -61,8 +61,8 @@ Scene::Scene() {
 
     this->planeDirection	= glm::vec3(1., 1., 1.);
     this->planeDisplacement = glm::vec3(.0, .0, .0);
-    Image::bbox_t::vec min(.0, .0, .0);
-    Image::bbox_t::vec max(1., 1., 1.);
+    glm::vec3 min(.0, .0, .0);
+    glm::vec3 max(1., 1., 1.);
     this->rgbMode				 = ColorChannel::HandEColouring;
     this->channels_r			 = ColorFunction::SingleChannel;
     this->channels_g			 = ColorFunction::SingleChannel;
