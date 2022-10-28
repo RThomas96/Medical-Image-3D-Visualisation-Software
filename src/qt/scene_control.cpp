@@ -145,7 +145,7 @@ ControlPanel::ControlPanel(Scene* const scene, Viewer* lv, QWidget* parent) :
     this->segmentedColorControl = new QWidget();
 
     this->tab = new QTabWidget();
-    this->tab->addTab(this->slideColorControl, QString("Slider"));
+    this->tab->addTab(this->slideColorControl, QString("Non-segmented"));
     //this->tab->addTab(this->segmentedColorControl, QString("Classes"));
 
     QGridLayout* finalGrid = new QGridLayout();

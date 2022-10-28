@@ -1552,7 +1552,6 @@ void Scene::updateTools(UITool::MeshManipulatorType tool) {
         return;
     }
 
-
     this->currentTool = tool;
     if(tool == UITool::MeshManipulatorType::DIRECT) {
         this->meshManipulator = new UITool::DirectManipulator(mesh);

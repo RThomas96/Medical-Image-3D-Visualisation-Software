@@ -46,6 +46,9 @@ void OpenImageForm::connect(Scene * scene) {
         this->sections["Cage"].first->setChecked(true);
         this->fileChoosers["Cage choose"]->setManually(std::string("../resources/data/atlas-cage.off"));
         this->lineEdits["Name"]->setText("Mouse brain atlas");
+        this->doubleSpinBoxes["SizeVoxelX"]->setValue(1);
+        this->doubleSpinBoxes["SizeVoxelY"]->setValue(1);
+        this->doubleSpinBoxes["SizeVoxelZ"]->setValue(1);
         if(scene->isGrid("Mouse brain atlas"))
             this->lineEdits["Name"]->setText("Mouse brain atlas2");
     });

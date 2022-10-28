@@ -4,7 +4,7 @@
 
 UITool::GL::DrawableUI::DrawableUI()
 {
-    this->guizmoRatio = 0.5;
+    this->guizmoRatio = 0.3;
     this->guizmoRadius = 2.;
     this->sphereRatio = 0.012;
     this->sphereRadius = 2.;

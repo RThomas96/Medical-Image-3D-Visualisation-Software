@@ -163,7 +163,7 @@ void MainWidget::setupWidgets() {
     hlayout->addWidget(this->range);
     tabWidget->setLayout(hlayout);
     //this->controlPanel->tab->addTab(this->range, QString("Classes"));
-    this->controlPanel->tab->addTab(tabWidget, QString("Classes"));
+    this->controlPanel->tab->insertTab(0, tabWidget, QString("Segmented"));
     this->scene->setControlPanel(this->controlPanel);
 
     this->info_pannel = new InfoPannel("Infos", this->scene);
@@ -582,6 +582,8 @@ void MainWidget::setupForms() {
         this->actionManager->getAction("ToggleNoneTool")->trigger();
         if(this->openImageForm->checkBoxes["Segmented"]->isChecked()) {
             this->range->addUnitsAuto();
+            this->controlPanel->tab->setCurrentIndex(0);
+        } else {
             this->controlPanel->tab->setCurrentIndex(1);
         }
         //this->actionManager->getAction("OpenImage")->setDisabled(true);
