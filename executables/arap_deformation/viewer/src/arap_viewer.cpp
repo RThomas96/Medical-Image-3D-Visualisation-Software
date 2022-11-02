@@ -407,7 +407,7 @@ void Viewer::keyPressEvent(QKeyEvent* e) {
 
 void Viewer::loadCamera() {
 	QDomDocument document;
-	QString fname = QFileDialog::getOpenFileName(this, "Open camera ...", "", "XML files (*.xml)");
+	QString fname = QFileDialog::getOpenFileName(this, "Open camera ...", "", "XML files (*.xml)", nullptr, QFileDialog::DontUseNativeDialog);
 	if (fname.isEmpty()) { return; }
 	QFile f(fname);
 	if (f.open(QIODevice::ReadOnly))
@@ -423,7 +423,7 @@ void Viewer::loadCamera() {
 void Viewer::saveCamera() {
 	QDomDocument document("myCamera");
 	document.appendChild( this->camera()->domElement("Camera", document) );
-	QString fname = QFileDialog::getSaveFileName(this, "Save camera ...", "", "XML files (*.xml)");
+	QString fname = QFileDialog::getSaveFileName(this, "Save camera ...", "", "XML files (*.xml)", nullptr, QFileDialog::DontUseNativeDialog);
 	if (fname.isEmpty()) { return; }
 	if (not fname.endsWith(".xml", Qt::CaseSensitivity::CaseInsensitive)) { fname += ".xml"; }
 	QFile f(fname);

@@ -33,6 +33,8 @@ public:
 
 	virtual void updateBoundingBox() override;
 
+	void setIvoryColor(bool _sbI);
+
 protected:
 	/// @brief Create the VAO, the VBOs and upload data
 	void makeVAO(void);
@@ -49,6 +51,8 @@ protected:
 	GLuint vbo_normals;		///< The VBO name for the normal data.
 	GLuint vbo_texture;		///< The VBO name for the texture data.
 	GLuint vbo_indices;		///< The VBO for the draw order.
+
+	bool color_Ivory; ///< Should the mesh be drawn in an ivory color (patient-specific) or a blue color (reference) ?
 
 	Mesh::Ptr mesh;	   ///< The mesh to render.
 };

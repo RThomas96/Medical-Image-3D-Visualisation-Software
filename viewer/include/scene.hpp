@@ -174,7 +174,7 @@ public:
 	void draft_tryAndSaveFirstGrid(void);
 
 	/// @brief Draw the 3D view of the scene.
-	void draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool showTexOnPlane);
+	void draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool showTexOnPlane, bool showMeshBoneColor = false);
 
 	/// @brief Draw a given plane 'view' (single plane on the framebuffer).
 	void drawPlaneView(glm::vec2 fbDims, planes _plane, planeHeading _heading, float zoomRatio, glm::vec2 offset);

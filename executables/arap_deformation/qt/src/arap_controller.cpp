@@ -194,6 +194,9 @@ void ARAPController::updateButtonsActivated() {
 	this->button_manip_select_none->setEnabled(false);
 	this->checkbox_enable_deformation->setEnabled(false);
 	this->checkbox_enable_deformation->setCheckState(Qt::CheckState::Unchecked);
+	if (DrawableMesh::Ptr draw_mesh = this->scene->getDrawableMesh()) {
+		draw_mesh->setIvoryColor(false);
+	}
 	this->viewer->setDeformation(false);
 
 	this->button_load_mesh->setEnabled(true);	// This one's always on
@@ -221,6 +224,10 @@ void ARAPController::updateButtonsActivated() {
 		this->button_load_second_curve->setEnabled(true);
 		this->button_save_json->setEnabled(true);
 		this->checkbox_enable_deformation->setCheckState(Qt::CheckState::Checked);
+		this->viewer->setDeformation(true);
+		if (DrawableMesh::Ptr draw_mesh = this->scene->getDrawableMesh()) {
+			draw_mesh->setIvoryColor(true);
+		}
 	}
 	// Re-enable signals for widgets we possibly changed the state of :
 	this->checkbox_enable_deformation->blockSignals(false);
@@ -361,7 +368,7 @@ void ARAPController::updateGridInfoLabel() {
 
 void ARAPController::loadMeshFromFile() {
 	// Launch a file picker to get the name of an OFF file :
-	QString file_name = QFileDialog::getOpenFileName(nullptr, "Open a Mesh file (OFF)", this->dir_last_accessed, "OFF files (*.off)");
+	QString file_name = QFileDialog::getOpenFileName(nullptr, "Open a Mesh file (OFF)", this->dir_last_accessed, "OFF files (*.off)", nullptr, QFileDialog::DontUseNativeDialog);
 	if (file_name.isEmpty() || not QFileInfo::exists(file_name)) {
 		std::cerr << "Error : nothing to open.\nFile path given : \"" << file_name.toStdString() << "\"\n";
 		return;
@@ -461,7 +468,7 @@ void ARAPController::setImagePointer(Image::Grid::Ptr& grid) {
 	Image::bbox_t::vec selected_grid_bb_center	 = selected_grid_bb.getMin() + (selected_grid_bb_diagonal / 2.f);
 
 	// The scaling done here is _very_ approximate in order to get a rough estimate of the size of the image :
-	float scaling_factor	 = glm::length(selected_grid_bb_diagonal) / glm::length(this->mesh->getBB()[1] - this->mesh->getBB()[0]) * .7f;
+	float scaling_factor	 = glm::length(selected_grid_bb_diagonal) / glm::length(this->mesh->getBB()[1] - this->mesh->getBB()[0]) * .4f;
 	glm::mat4 scaling_matrix = glm::scale(glm::mat4(1.f), glm::vec3(scaling_factor));
 	// We apply the transformation here in order to get an updated bounding box.
 
@@ -512,7 +519,7 @@ void ARAPController::loadConstraintsFromFile() {
 	}
 
 	// get file from user :
-	QString file_name = QFileDialog::getOpenFileName(this, "Load a constraint file", this->dir_last_accessed, "Constraint files (*.constraints)");
+	QString file_name = QFileDialog::getOpenFileName(this, "Load a constraint file", this->dir_last_accessed, "Constraint files (*.constraints)", nullptr, QFileDialog::DontUseNativeDialog);
 	if (file_name.isEmpty()) {
 		std::cerr << "Error : file name for constraint loading was empty.\n";
 		return;
@@ -547,7 +554,7 @@ void ARAPController::loadConstraintsFromFile() {
 
 void ARAPController::loadCurveFromFile() {
 	// Launch a file picker to get the name of an OFF file :
-	QString file_name = QFileDialog::getOpenFileName(nullptr, "Open a Curve file (OBJ)", this->dir_last_accessed, "OBJ files (*.obj)");
+	QString file_name = QFileDialog::getOpenFileName(nullptr, "Open a Curve file (OBJ)", this->dir_last_accessed, "OBJ files (*.obj)", nullptr, QFileDialog::DontUseNativeDialog);
 	if (file_name.isEmpty() || not QFileInfo::exists(file_name)) {
 		std::cerr << "Error : nothing to open.\nFile path given : \"" << file_name.toStdString() << "\"\n";
 		return;
@@ -982,7 +989,7 @@ void ARAPController::resizeCurveWithSecondCurve() {
 	std::cerr << "Loading another curve file ...\n";
 
 	// load the other curve :
-	QString file_name = QFileDialog::getOpenFileName(nullptr, "Open a Curve file (OBJ)", this->dir_last_accessed, "OBJ files (*.obj)");
+	QString file_name = QFileDialog::getOpenFileName(nullptr, "Open a Curve file (OBJ)", this->dir_last_accessed, "OBJ files (*.obj)", nullptr, QFileDialog::DontUseNativeDialog);
 	if (file_name.isEmpty() || not QFileInfo::exists(file_name)) {
 		std::cerr << "Error : nothing to open.\nFile path given : \"" << file_name.toStdString() << "\"\n";
 		return;

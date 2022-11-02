@@ -2925,7 +2925,7 @@ void Scene::newSHADERS_generateColorScales() {
 	this->generateColorScales();
 }
 
-void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool showTexOnPlane) {
+void Scene::draw3DView(GLfloat* mvMat, GLfloat* pMat, glm::vec3 camPos, bool showTexOnPlane, bool showMeshBoneColor) {
 	if (this->shouldUpdateVis) {
 		this->shouldUpdateVis = false;
 	}
