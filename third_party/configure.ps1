@@ -88,9 +88,10 @@ function Clear-GitAll {
 function Start-GitCompile {
 	# Checks the right programs are available, then creates the compiled_libraries folder :
 	$Global:GitPath = (Get-Command -Name git.exe).Source
-	$Global:CMakeCmdPath = "C:\Qt\Tools\CMake_64\bin\cmake.exe"
-	$Global:QMakeCmdPath = "C:\Qt\5.15.2\mingw81_64\bin\qmake.exe"
-	$Global:GNUMakeCmdPath = "C:\Qt\Tools\mingw810_64\bin\mingw32-make.exe"
+	$Global:CMakeCmdPath = "C:\Program Files\CMake\bin\cmake.exe"
+	$Global:QMakeCmdPath = "D:\Programme\Qt\5.15.2\mingw81_64\bin\qmake.exe"
+	$Global:GNUMakeCmdPath = "C:\MinGW\bin\mingw32-make"
+	#$Global:GNUMakeCmdPath = "D:\Programme\Qt\Tools\mingw810_64\bin\mingw32-make.exe"
 
 	if (Test-Path -Path $Global:CMakeCmdPath -PathType Leaf) {
 		Write-Host "CMake was found at : "${Global:CMakeCmdPath}
