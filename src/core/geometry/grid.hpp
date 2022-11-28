@@ -26,22 +26,11 @@ public:
     glm::vec3 bbMin;
     glm::vec3 bbMax;
 
-    glm::vec3 subregionMin;
-    glm::vec3 subregionMax;
-
     bool useCache;
-    bool useSubsample;
     Cache * cache;
 
-    Sampler(glm::vec3 size);
-    Sampler(const std::vector<std::string>& filename);
-    Sampler(const std::vector<std::string>& filename, int subsample);
-    Sampler(const std::vector<std::string>& filename, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox);
     Sampler(const std::vector<std::string>& filename, int subsample, const glm::vec3& voxelSize);
 
-    void init(const std::vector<std::string>& filename, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox, const glm::vec3& voxelSize);
-
-    void setVoxelSize(const glm::vec3& voxelSize);
     glm::vec3 getVoxelSize() const;
 
     void getGridSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel) const;
@@ -55,7 +44,7 @@ public:
 
     Image::ImageDataType getInternalDataType() const;
 
-    glm::vec3 getSamplerDimension() const;
+    glm::vec3 getDimension() const;
 
     void fromSamplerToImage(glm::vec3& p) const;
     void fromImageToSampler(glm::vec3& p) const;
@@ -73,9 +62,6 @@ private:
 //! @brief Struct able to make the link between the grid and its 3D representation
 struct Grid : public TetMesh, public DrawableGrid {
 
-    std::vector<glm::mat4> transformations;
-    glm::mat4 toSamplerMatrix;
-
     TetMesh initialMesh;
     Sampler sampler;
 
@@ -87,15 +73,9 @@ struct Grid : public TetMesh, public DrawableGrid {
     void loadMESH(std::string const &filename) override;
 
     glm::vec3 getVoxelSize() const;
-    glm::vec3 getOriginalVoxelSize() const;
-    glm::vec3 getWorldVoxelSize() const;
-    glm::mat4 getTransformationMatrix() const;
-    void toSampler(glm::vec3& p) const;
-    void fromImageToWorld(glm::vec3& p) const;
 
     // In mesh interface
     std::pair<glm::vec3, glm::vec3> getBoundingBox() const;
-    //void writeDeformedGrid(ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION);
 
     void sampleGridValues(const std::pair<glm::vec3, glm::vec3>& areaToSample, const glm::vec3& resolution, std::vector<std::vector<uint16_t>>& result, Interpolation::Method interpolationMethod = Interpolation::Method::NearestNeighbor);
     void sampleSliceGridValues(const glm::vec3 &slice, const std::pair<glm::vec3, glm::vec3> &areaToSample, const glm::vec3 &resolution, std::vector<uint16_t> &result, Interpolation::Method interpolationMethod);
@@ -127,7 +107,7 @@ struct Grid : public TetMesh, public DrawableGrid {
     void updateTextureCoordinates() {
         this->texCoord.clear();
         for(int i = 0; i < this->vertices.size(); ++i) {
-            this->texCoord.push_back(this->vertices[i]/this->sampler.getSamplerDimension());
+            this->texCoord.push_back(this->vertices[i]/this->sampler.getDimension());
         }    
     }
 
@@ -136,21 +116,16 @@ struct Grid : public TetMesh, public DrawableGrid {
     }
     
     glm::vec3 getResolution() const {
-        return this->sampler.getSamplerDimension();
+        return this->sampler.getDimension();
     }
     
     int getNbSlice() const {
-        return this->sampler.getSamplerDimension()[2];
+        return this->sampler.getDimension()[2];
     }
     
     void getGridSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel) const {
         this->sampler.getGridSlice(sliceIdx, result, nbChannel);
     }
-
-    void translate(const glm::vec3& vec) override;
-    void rotate(const glm::mat3& transf) override;
-    void scale(const glm::vec3& scale) override;
-    void setOrigin(const glm::vec3& origin) override;
 
     void movePoints(const std::vector<int>& origins, const std::vector<glm::vec3>& targets) override {
         BaseMesh::movePoints(origins, targets);

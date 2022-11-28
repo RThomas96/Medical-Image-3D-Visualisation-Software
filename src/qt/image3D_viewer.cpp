@@ -398,7 +398,7 @@ void Image3DViewer::mouseMovedIn2DViewer(const glm::ivec2& positionOfMouse2D) {
     convertVector(positionOfMouse3D);
     glm::vec3 fromTargetToOriginal = convertedOriginalImgSize / glm::vec3(convertedTargetImgSize);
     positionOfMouse3D *= fromTargetToOriginal;
-    this->scene->grids[this->scene->getGridIdx(this->gridNames[0])]->fromImageToWorld(positionOfMouse3D);
+    //this->scene->grids[this->scene->getGridIdx(this->gridNames[0])]->fromImageToWorld(positionOfMouse3D);
     Q_EMIT(mouseMovedInPlanarViewer(positionOfMouse3D));
 }
 
@@ -678,7 +678,7 @@ glm::vec3 PlanarViewForm::getBackImgDimension(Scene * scene) {
         return defaultValue;
     glm::vec3 divisor = this->getVoxelDivisor();
     convertVector(divisor);
-    return (scene->grids[scene->getGridIdx(backGrid)]->getDimensions()*(1.f/scene->grids[scene->getGridIdx(frontGrid)]->getOriginalVoxelSize()))/divisor;
+    return (scene->grids[scene->getGridIdx(backGrid)]->getDimensions()*(1.f/scene->grids[scene->getGridIdx(frontGrid)]->getVoxelSize()))/divisor;
 }
 
 void PlanarViewForm::frontImageChanged(Scene * scene) {
@@ -765,7 +765,7 @@ void PlanarViewForm::updateImageViewer() {
     if(!this->useFrontImageResolution)
         name = this->getFromGridName();
     if(name != "")
-        voxelSize = scene->grids[scene->getGridIdx(name)]->getWorldVoxelSize();
+        voxelSize = scene->grids[scene->getGridIdx(name)]->getVoxelSize();
     convertVector(voxelSize);
     voxelSize /= this->getVoxelDivisor();
 
