@@ -212,7 +212,7 @@ public:
     MeshToolType * getMeshTool();
 
 public:
-    void writeDeformedImage(const std::string& filename, const std::string& gridName, bool useColorMap, ResolutionMode resolution);
+    void writeDeformedImage(const std::string& filename, const std::string& gridName, bool useColorMap);
     void writeDeformedImage(const std::string& filename, const std::string& gridName, bool useColorMap, const glm::vec3& voxelSize);
     void writeDeformedImage(const std::string& filename, const std::string& gridName, const glm::vec3& bbMin, const glm::vec3& bbMax, bool useColorMap, const glm::vec3& voxelSize);
     void writeDeformedImageGeneric(const std::string& filename, const std::string& gridName, const glm::vec3& bbMin, const glm::vec3& bbMax, Image::ImageDataType imgDataType, bool useColorMap, const glm::vec3& voxelSize);
@@ -362,7 +362,7 @@ public slots:
     int getMeshIdx(const std::string& name);
     Cage * getCage(const std::string& name);
     glm::vec3 getGridImgSize(const std::string& name);
-    glm::vec3 getGridVoxelSize(const std::string &name, ResolutionMode resolution = ResolutionMode::SAMPLER_RESOLUTION);
+    glm::vec3 getGridVoxelSize(const std::string &name);
     std::pair<uint16_t, uint16_t> getGridMinMaxValues(const std::string &name);
     std::pair<uint16_t, uint16_t> getGridMinMaxValues();
     std::vector<bool> getGridUsageValues(int minValue = 1);

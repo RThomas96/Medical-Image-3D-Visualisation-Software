@@ -9,13 +9,6 @@
 //! \addtogroup grid
 //! @{
 
-// This enum allow to choose at which resolution we want to query points
-// FULL_RESOLUTION allow to bypass the Sampler class and query directly from the image
-enum ResolutionMode {
-    SAMPLER_RESOLUTION,
-    FULL_RESOLUTION
-};
-
 // Wrapper around an Image in order to access its data
 // This class allow to have a resolution different from the original image
 // This class also allow to access data as if we have a subregion of the original image
@@ -53,7 +46,7 @@ public:
 
     void getGridSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel) const;
 
-    uint16_t getValue(const glm::vec3& coord, Interpolation::Method interpolationMethod = Interpolation::Method::NearestNeighbor, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
+    uint16_t getValue(const glm::vec3& coord, Interpolation::Method interpolationMethod = Interpolation::Method::NearestNeighbor) const;
 
     template<typename DataType>
     DataType getValue(const glm::vec3& coord) const {
@@ -89,14 +82,11 @@ struct Grid : public TetMesh, public DrawableGrid {
     Grid(const std::vector<std::string>& filename, int subsample, const glm::vec3& sizeVoxel, const glm::vec3& nbCubeGridTransferMesh);
     Grid(const std::vector<std::string>& filename, int subsample, const glm::vec3& sizeVoxel, const std::string& fileNameTransferMesh);
 
-    //Removed because unused but still working
-    //Grid(const std::vector<std::string>& filename, int subsample, const std::pair<glm::vec3, glm::vec3>& bbox);
-
     void buildTetmesh(const glm::vec3& nbCube);
 
     void loadMESH(std::string const &filename) override;
 
-    glm::vec3 getVoxelSize(ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
+    glm::vec3 getVoxelSize() const;
     glm::vec3 getOriginalVoxelSize() const;
     glm::vec3 getWorldVoxelSize() const;
     glm::mat4 getTransformationMatrix() const;
@@ -105,15 +95,13 @@ struct Grid : public TetMesh, public DrawableGrid {
 
     // In mesh interface
     std::pair<glm::vec3, glm::vec3> getBoundingBox() const;
-    //void writeDeformedGrid(ResolutionMode resolutionMode = ResolutionMode::FULL_RESOLUTION);
-    void writeDeformedGrid(ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION);
+    //void writeDeformedGrid(ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION);
 
     void sampleGridValues(const std::pair<glm::vec3, glm::vec3>& areaToSample, const glm::vec3& resolution, std::vector<std::vector<uint16_t>>& result, Interpolation::Method interpolationMethod = Interpolation::Method::NearestNeighbor);
     void sampleSliceGridValues(const glm::vec3 &slice, const std::pair<glm::vec3, glm::vec3> &areaToSample, const glm::vec3 &resolution, std::vector<uint16_t> &result, Interpolation::Method interpolationMethod);
 
-    uint16_t getDeformedValueFromPoint(const TetMesh& initial, const glm::vec3& p, Interpolation::Method interpolationMethod = Interpolation::Method::NearestNeighbor, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
-    uint16_t getValueFromPoint(const glm::vec3& coord, Interpolation::Method interpolationMethod = Interpolation::Method::NearestNeighbor, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
-    uint16_t getValueFromWorldPoint(const glm::vec3& coord, Interpolation::Method interpolationMethod = Interpolation::Method::NearestNeighbor, ResolutionMode resolutionMode = ResolutionMode::SAMPLER_RESOLUTION) const;
+    uint16_t getDeformedValueFromPoint(const TetMesh& initial, const glm::vec3& p, Interpolation::Method interpolationMethod = Interpolation::Method::NearestNeighbor) const;
+    uint16_t getValueFromPoint(const glm::vec3& coord, Interpolation::Method interpolationMethod = Interpolation::Method::NearestNeighbor) const;
 
     uint16_t getMaxValue() {return this->sampler.image->maxValue;}
     uint16_t getMinValue() {return this->sampler.image->minValue;}

@@ -43,35 +43,30 @@ void Grid::buildTetmesh(const glm::vec3& nbCube) {
     this->initialMesh.buildGrid(nbCube, this->sampler.getSamplerDimension() / nbCube, glm::vec3(0., 0., 0.));
 }
 
-uint16_t Grid::getValueFromWorldPoint(const glm::vec3& p, Interpolation::Method interpolationMethod, ResolutionMode resolutionMode) const {
-    glm::vec3 pSampler = p;
-    this->toSampler(pSampler);
-    return this->getValueFromPoint(pSampler, interpolationMethod, resolutionMode);
-}
+//uint16_t Grid::getValueFromWorldPoint(const glm::vec3& p, Interpolation::Method interpolationMethod, ResolutionMode resolutionMode) const {
+//    glm::vec3 pSampler = p;
+//    this->toSampler(pSampler);
+//    return this->getValueFromPoint(pSampler, interpolationMethod, resolutionMode);
+//}
 
-uint16_t Grid::getValueFromPoint(const glm::vec3& p, Interpolation::Method interpolationMethod, ResolutionMode resolutionMode) const {
+uint16_t Grid::getValueFromPoint(const glm::vec3& p, Interpolation::Method interpolationMethod) const {
     glm::vec3 pSamplerRes = p;
     // Even if we want to query a point a full resolution res, the bbox is still based on the sampler
     // So the bbox check need to be in sampler space
-    if(resolutionMode == ResolutionMode::FULL_RESOLUTION) {
-        pSamplerRes = p / this->sampler.resolutionRatio;
-    }
     if(isPtInBB(pSamplerRes, this->sampler.bbMin, this->sampler.bbMax)) {
-        return this->sampler.getValue(p, interpolationMethod, resolutionMode);
+        return this->sampler.getValue(p, interpolationMethod);
     } else {
         // Background value
         return 0;
     }
 }
 
-uint16_t Grid::getDeformedValueFromPoint(const TetMesh& initial, const glm::vec3& p, Interpolation::Method interpolationMethod, ResolutionMode resolutionMode) const {
+uint16_t Grid::getDeformedValueFromPoint(const TetMesh& initial, const glm::vec3& p, Interpolation::Method interpolationMethod) const {
     glm::vec3 pt2(0., 0., 0.);
     bool ptIsInInitial = this->getCoordInInitial(initial, p, pt2);
     if(!ptIsInInitial)
         return 0.;
-    if(resolutionMode == ResolutionMode::FULL_RESOLUTION)
-        this->sampler.fromSamplerToImage(pt2);
-    return this->getValueFromPoint(pt2, interpolationMethod, resolutionMode);
+    return this->getValueFromPoint(pt2, interpolationMethod);
 }
 
 std::pair<glm::vec3, glm::vec3> Grid::getBoundingBox() const {
@@ -146,14 +141,8 @@ glm::vec3 Grid::getOriginalVoxelSize() const {
     return originalVoxelSize;
 }
 
-glm::vec3 Grid::getVoxelSize(ResolutionMode resolutionMode) const {
-    if(resolutionMode == ResolutionMode::SAMPLER_RESOLUTION) {
-        return this->sampler.getVoxelSize();
-    } else {
-        glm::vec3 voxelSize = this->sampler.getVoxelSize();
-        this->sampler.fromImageToSampler(voxelSize);
-        return voxelSize;
-    }
+glm::vec3 Grid::getVoxelSize() const {
+    return this->sampler.getVoxelSize();
 }
 
 void Grid::loadMESH(std::string const &filename) {
@@ -400,7 +389,7 @@ void Grid::sampleSliceGridValues(const glm::vec3& slice, const std::pair<glm::ve
                         if(this->getCoordInInitial(this->initialMesh, p, p, tetIdx)) {
                             //if(this->sampler.useSubsample)
                             //    p /= this->sampler.subsample;
-                            result[insertIdx] = this->sampler.getValue(p, interpolationMethod, ResolutionMode::SAMPLER_RESOLUTION);
+                            result[insertIdx] = this->sampler.getValue(p, interpolationMethod);
                         }
                     }
                 }
@@ -676,20 +665,11 @@ void Sampler::fillCache() {
     }
 }
 
-uint16_t Sampler::getValue(const glm::vec3& coord, Interpolation::Method interpolationMethod, ResolutionMode resolutionMode) const {
-    // Convert from grid coord to image coord
-    if(resolutionMode == ResolutionMode::SAMPLER_RESOLUTION) {
-        if(this->useCache) {
-            return this->cache->getValue(coord, interpolationMethod);
-        } else {
-            return this->image->getValue(coord * this->resolutionRatio);
-        }
+uint16_t Sampler::getValue(const glm::vec3& coord, Interpolation::Method interpolationMethod) const {
+    if(this->useCache) {
+        return this->cache->getValue(coord, interpolationMethod);
     } else {
-        if(!this->image) {
-            std::cerr << "[4001] ERROR: Try to [getValue()] at [ResolutionMode::FULL_RESOLUTION] on a grid without attached image" << std::endl;
-            return 0;
-        }
-        return this->image->getValue(coord);
+        return this->image->getValue(coord * this->resolutionRatio);
     }
 }
 

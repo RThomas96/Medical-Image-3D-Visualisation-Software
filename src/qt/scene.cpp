@@ -1798,9 +1798,9 @@ void Scene::reset() {
     this->moveInHistory(true, true);
 }
 
-void Scene::writeDeformedImage(const std::string& filename, const std::string& gridName, bool useColorMap, ResolutionMode resolution) {
+void Scene::writeDeformedImage(const std::string& filename, const std::string& gridName, bool useColorMap) {
     Grid * grid = this->grids[this->getGridIdx(gridName)];
-    this->writeDeformedImage(filename, gridName, grid->bbMin, grid->bbMax, useColorMap, grid->getVoxelSize(resolution));
+    this->writeDeformedImage(filename, gridName, grid->bbMin, grid->bbMax, useColorMap, grid->getVoxelSize());
 }
 
 void Scene::writeDeformedImage(const std::string& filename, const std::string& gridName, bool useColorMap, const glm::vec3& voxelSize) {
@@ -2191,8 +2191,8 @@ glm::vec3 Scene::getGridImgSize(const std::string& name) {
     return this->grids[this->getGridIdx(name)]->getResolution();
 }
 
-glm::vec3 Scene::getGridVoxelSize(const std::string &name, ResolutionMode resolution) {
-    return this->grids[this->getGridIdx(name)]->getVoxelSize(resolution);
+glm::vec3 Scene::getGridVoxelSize(const std::string &name) {
+    return this->grids[this->getGridIdx(name)]->getVoxelSize();
 }
 
 std::pair<uint16_t, uint16_t> Scene::getGridMinMaxValues(const std::string& name) {

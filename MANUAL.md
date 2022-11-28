@@ -200,6 +200,10 @@ Available options are from top to bottom:
 
 ## Cleaned
 
+
+
+./core/geometry/grid.hpp
+./core/geometry/grid.cpp
 ./core/algorithm/ICP.hpp
 ./core/deformation/AsRigidAsPossible.cpp
 ./core/deformation/cage_surface_mesh.cpp
@@ -216,8 +220,6 @@ Available options are from top to bottom:
 ./core/geometry/base_mesh.hpp
 ./core/geometry/graph_mesh.cpp
 ./core/geometry/graph_mesh.hpp
-./core/geometry/grid.cpp
-./core/geometry/grid.hpp
 ./core/geometry/surface_mesh.cpp
 ./core/geometry/surface_mesh.hpp
 ./core/geometry/tetrahedral_mesh.cpp
@@ -233,7 +235,6 @@ Available options are from top to bottom:
 ./core/utils/GLUtilityMethods.cpp
 ./core/utils/apss.cpp
 ./core/utils/apss.hpp
-
 ./legacy/image/utils/include/bounding_box.hpp
 ./legacy/image/utils/include/image_api_common.hpp
 ./legacy/image/utils/include/local_cache.hpp
@@ -242,7 +243,6 @@ Available options are from top to bottom:
 ./legacy/image/utils/src/threaded_task.cpp
 ./legacy/meshes/drawable/shaders.cpp
 ./legacy/meshes/drawable/shaders.hpp
-
 ./qt/3D_viewer.cpp
 ./qt/3D_viewer.hpp
 ./qt/UI/chooser.cpp

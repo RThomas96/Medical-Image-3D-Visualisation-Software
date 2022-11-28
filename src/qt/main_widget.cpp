@@ -458,7 +458,7 @@ void MainWidget::setupActions() {
                 if(scene->isCage(gridName)) {
                     gridName = scene->grids_name[scene->getGridIdxLinkToCage(gridName)];
                 }
-                this->scene->writeDeformedImage(fileChooser->filename.toStdString(), gridName, true, ResolutionMode::SAMPLER_RESOLUTION);
+                this->scene->writeDeformedImage(fileChooser->filename.toStdString(), gridName, true);
             }
             delete fileChooser;
     });
