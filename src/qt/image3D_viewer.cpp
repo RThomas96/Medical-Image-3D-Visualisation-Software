@@ -533,7 +533,9 @@ void PlanarViewForm::init(Scene * scene) {
     //this->buttons["Rotate"]->setIconSize(pixmap.rect().size());
 
     this->add(WidgetType::TIFF_SAVE, "Save");
+    this->fileChoosers["Save"]->hide();// This feature was used to save images for the paper, not usefull for the user
     this->add(WidgetType::TIFF_SAVE, "SaveCur");
+    this->fileChoosers["SaveCur"]->hide();// This feature was used to save images for the paper, not usefull for the user
 
     this->add(WidgetType::BUTTON_CHECKABLE, "Link");
     QPixmap pixmap2(QString("../resources/icons/link.svg"));
@@ -582,6 +584,8 @@ void PlanarViewForm::init(Scene * scene) {
 
     this->addWithLabel(WidgetType::COMBO_BOX, "Interpolation", "Interpolation");
     this->setComboChoices("Interpolation", Interpolation::toStringList());
+    this->labels["Interpolation"]->hide();// Hidden because this feature doesn't work
+    this->comboBoxes["Interpolation"]->hide();// Hidden because this feature doesn't work
 
     this->add(WidgetType::SPIN_BOX, "X");
 
@@ -900,7 +904,7 @@ void PlanarViewForm::recoverValues() {
 
     this->sliders["SliderX"]->blockSignals(true);
     this->sliders["SliderX"]->setMinimum(0);
-    this->sliders["SliderX"]->setMaximum(1000.);
+    //this->sliders["SliderX"]->setMaximum(1000.);
     this->sliders["SliderX"]->setValue(value);
     this->sliders["SliderX"]->blockSignals(false);
     this->buttons["MirrorX"]->blockSignals(true);

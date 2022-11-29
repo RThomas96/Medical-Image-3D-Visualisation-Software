@@ -388,14 +388,6 @@ uint16_t Sampler::getValue(const glm::vec3& coord, Interpolation::Method interpo
     }
 }
 
-glm::vec3 Sampler::getImageDimensions() const {
-    if(!this->image) {
-        std::cerr << "[4001] ERROR: Try to [getImageDimensions()] on a grid without attached image" << std::endl;
-        return this->getDimension();
-    }
-    return this->image->imgResolution;
-}
-
 void Sampler::fromSamplerToImage(glm::vec3& p) const {
     p = p * this->resolutionRatio;
 }

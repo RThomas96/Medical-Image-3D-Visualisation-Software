@@ -289,7 +289,6 @@ public slots:
     void getDeformation(const std::string& gridNameValues, const std::string& gridNameSample, std::vector<std::vector<uint16_t>>& data);
     void getValues(const std::string &gridName, const glm::vec3 &slice, const std::pair<glm::vec3, glm::vec3> &area, const glm::vec3 &resolution, std::vector<uint16_t> &data, Interpolation::Method interpolationMethod);
     void getValues(const std::string &gridName, const std::pair<glm::vec3, glm::vec3> &area, const glm::vec3 &resolution, std::vector<std::vector<uint16_t> > &data, Interpolation::Method interpolationMethod);
-    void writeImageWithPoints(const std::string& filename, const std::string& image, std::vector<glm::vec3>& points);
     void clear();
 
     // Move tool
@@ -304,15 +303,15 @@ public slots:
     void computeProjection(const std::vector<int>& vertexIndices);
 
     // Display management
-    void slotToggleDisplayGrid() { this->displayGrid = !this->displayGrid;};
-    void toggleDisplayMesh() { this->displayMesh = !this->displayMesh;};
+    void slotToggleDisplayGrid() { this->displayGrid = !this->displayGrid;}
+    void toggleDisplayMesh() { this->displayMesh = !this->displayMesh;}
     void toggleDisplayTetmesh(bool value);
     void setGridsToDraw(std::vector<int> indices);
     void setMultiGridRendering(bool value);
     void setDrawSliceOnly(bool value);
     void setBlend(float value);
-    void setOrthographicCamera() { Q_EMIT needChangeCameraType(qglviewer::Camera::ORTHOGRAPHIC); };
-    void setPerspectiveCamera() { Q_EMIT needChangeCameraType(qglviewer::Camera::PERSPECTIVE); };
+    void setOrthographicCamera() { Q_EMIT needChangeCameraType(qglviewer::Camera::ORTHOGRAPHIC); }
+    void setPerspectiveCamera() { Q_EMIT needChangeCameraType(qglviewer::Camera::PERSPECTIVE); }
     void setDipslayTetSizeUnit(bool value) {
         this->displayTetSizeUnit = value;
         for(auto& grid : grids)
