@@ -14,7 +14,7 @@ void SaveImageForm::initSpinBoxes(Scene * scene) {
     int gridIdx = scene->getGridIdx(this->objectChoosers["Grid"]->currentText().toStdString());
     if(gridIdx == -1)
         return;
-    auto bbox = scene->grids[gridIdx]->getBoundingBox();
+    std::pair<glm::vec3, glm::vec3> bbox{scene->grids[gridIdx]->bbMin, scene->grids[gridIdx]->bbMax};
     this->blockSignalsInGroup("GroupBBMin", true);
     this->blockSignalsInGroup("GroupBBMax", true);
     this->doubleSpinBoxes["BBMinX"]->setValue(bbox.first.x);

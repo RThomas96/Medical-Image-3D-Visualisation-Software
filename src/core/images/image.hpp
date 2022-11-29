@@ -456,7 +456,7 @@ struct SimpleDIMImage {
 //! The getSlice function as numerous of options as nbChannel, offsets or bboxes to query respectively multiple channels, 
 //! to skip voxels or to query only a subregion of the image.
 //! These options are managed by the Sampler class, that is in charge to call TIFFImage the right way to query data.
-struct tiff_image {
+struct Tiff_image {
 
     ImageFormat imageFormat;
 
@@ -471,7 +471,7 @@ struct tiff_image {
     uint16_t maxValue;
     uint16_t minValue;
 
-    tiff_image(const std::vector<std::string>& filename) {
+    Tiff_image(const std::vector<std::string>& filename) {
         std::string extension = filename[0].substr(filename[0].find_last_of(".") + 1);
         if(filename.size() > 0 || extension == "tif" || extension == "tiff") {
             if(filename[0].substr(filename[0].find_first_of(".") + 1).find("ome")!=std::string::npos) {
@@ -507,7 +507,7 @@ struct tiff_image {
         }
     }
 
-    ~tiff_image() {
+    ~Tiff_image() {
         delete this->dimImageReader;
         delete this->tiffImageReader;
     }

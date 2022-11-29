@@ -17,9 +17,6 @@ void DeformationForm::init() {
     this->setTextEditEditable("Results", true);
 
     this->add(WidgetType::BUTTON, "Deform", "Transform");
-
-    this->add(WidgetType::TIFF_CHOOSE, "Save image");
-    this->setFileChooserType("Save image", FileChooserType::SAVE);
 }
 
 void DeformationForm::update(Scene * scene) {
@@ -87,7 +84,4 @@ std::string DeformationForm::getToGridName() {
 
 void DeformationForm::connect(Scene * scene) {
     QObject::connect(this->buttons["Deform"], &QPushButton::clicked, [this, scene](){this->convertPoints(scene);});
-    QObject::connect(this->fileChoosers["Save image"], &FileChooser::fileSelected, [this, scene](){
-            scene->writeDeformation(this->fileChoosers["Save image"]->filename.toStdString(), this->getFromGridName(), this->getToGridName());
-            });
 }

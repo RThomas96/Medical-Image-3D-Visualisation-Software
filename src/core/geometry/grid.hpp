@@ -31,26 +31,24 @@ public:
 
     Sampler(const std::vector<std::string>& filename, int subsample, const glm::vec3& voxelSize);
 
-    glm::vec3 getVoxelSize() const;
-
-    void getGridSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel) const;
-
     uint16_t getValue(const glm::vec3& coord, Interpolation::Method interpolationMethod = Interpolation::Method::NearestNeighbor) const;
-
     template<typename DataType>
     DataType getValue(const glm::vec3& coord) const {
         return this->image->getValue<DataType>(coord * this->resolutionRatio);
     }
-
-    Image::ImageDataType getInternalDataType() const;
 
     glm::vec3 getDimension() const;
 
     void fromSamplerToImage(glm::vec3& p) const;
     void fromImageToSampler(glm::vec3& p) const;
 
+    Tiff_image * image;
+
+    // Fraude
+    void getGridSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel) const;
+    glm::vec3 getVoxelSize() const;
+    Image::ImageDataType getInternalDataType() const;
     std::vector<int> getHistogram() const;
-    tiff_image * image;
 private:
     void fillCache();
 };
@@ -70,10 +68,6 @@ struct Grid : public TetMesh, public DrawableGrid {
 
     glm::vec3 getVoxelSize() const;
 
-    // In mesh interface
-    std::pair<glm::vec3, glm::vec3> getBoundingBox() const;
-
-    void sampleGridValues(const std::pair<glm::vec3, glm::vec3>& areaToSample, const glm::vec3& resolution, std::vector<std::vector<uint16_t>>& result, Interpolation::Method interpolationMethod = Interpolation::Method::NearestNeighbor);
     void sampleSliceGridValues(const glm::vec3 &slice, const std::pair<glm::vec3, glm::vec3> &areaToSample, const glm::vec3 &resolution, std::vector<uint16_t> &result, Interpolation::Method interpolationMethod);
 
     uint16_t getDeformedValueFromPoint(const TetMesh& initial, const glm::vec3& p, Interpolation::Method interpolationMethod = Interpolation::Method::NearestNeighbor) const;
@@ -99,7 +93,6 @@ struct Grid : public TetMesh, public DrawableGrid {
 
     bool getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, const std::vector<bool>& visibilityMap, const glm::vec3& planePos, glm::vec3& res) const override;
 
-    bool checkTransferMeshValidity();
     void updateTextureCoordinates() {
         this->texCoord.clear();
         for(int i = 0; i < this->vertices.size(); ++i) {

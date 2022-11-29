@@ -63,11 +63,6 @@ uint16_t Grid::getDeformedValueFromPoint(const TetMesh& initial, const glm::vec3
     return this->getValueFromPoint(pt2, interpolationMethod);
 }
 
-std::pair<glm::vec3, glm::vec3> Grid::getBoundingBox() const {
-    //return std::pair(this->sampler.bbMin, this->sampler.bbMax);
-    return std::pair(this->bbMin, this->bbMax);
-}
-
 bool Grid::getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, const std::vector<bool>& visibilityMap, const glm::vec3& planePos, glm::vec3& res) const {
     glm::vec3 nDirection = glm::normalize(direction);
 
@@ -195,96 +190,9 @@ void Grid::sampleSliceGridValues(const glm::vec3& slice, const std::pair<glm::ve
     std::cout << "Duration time: " << elapsed_seconds.count() << "s / " << elapsed_seconds.count()/60. << "m" << std::endl;
 }
 
-void Grid::sampleGridValues(const std::pair<glm::vec3, glm::vec3>& areaToSample, const glm::vec3& resolution, std::vector<std::vector<uint16_t>>& result, Interpolation::Method interpolationMethod) {
-    auto start = std::chrono::steady_clock::now();
-
-    omp_set_nested(true);
-
-    // Space to sample
-    glm::vec3 bbMinScene = areaToSample.first;
-    glm::vec3 bbMaxScene = areaToSample.second;
-    //glm::vec3 fromSamplerToSceneRatio = (bbMaxScene - bbMinScene) / resolution;
-    glm::vec3 fromSamplerToSceneRatio = glm::vec3(1., 1., 1.);
-
-    auto isInScene = [&](glm::vec3& p) {
-        return (p.x > bbMinScene.x && p.y > bbMinScene.y && p.z > bbMinScene.z && p.x < bbMaxScene.x && p.y < bbMaxScene.y && p.z < bbMaxScene.z);
-    };
-
-    auto fromWorldToImage = [&](glm::vec3& p) {
-        p -= bbMinScene;
-        p /= fromSamplerToSceneRatio;
-    };
-
-    auto fromImageToWorld = [&](glm::vec3& p) {
-        p *= fromSamplerToSceneRatio;
-        p += bbMinScene;
-    };
-
-    result.clear();
-    result.resize(resolution[2]);
-    for(int i = 0; i < result.size(); ++i) {
-        result[i].resize(resolution[0] * resolution[1]);
-        std::fill(result[i].begin(), result[i].end(), 0);
-    }
-
-    int printOcc = 10;
-    printOcc = this->mesh.size()/printOcc;
-
-    //#pragma omp parallel for schedule(dynamic) num_threads(fromGrid->mesh.size()/10)
-    #pragma omp parallel for schedule(dynamic)
-    for(int tetIdx = 0; tetIdx < this->mesh.size(); ++tetIdx) {
-        const Tetrahedron& tet = this->mesh[tetIdx];
-        glm::vec3 bbMin = tet.getBBMin();
-        fromWorldToImage(bbMin);
-        bbMin.x = std::ceil(bbMin.x) - 1;
-        bbMin.y = std::ceil(bbMin.y) - 1;
-        bbMin.z = std::ceil(bbMin.z) - 1;
-        glm::vec3 bbMax = tet.getBBMax();
-        fromWorldToImage(bbMax);
-        bbMax.x = std::floor(bbMax.x) + 1;
-        bbMax.y = std::floor(bbMax.y) + 1;
-        bbMax.z = std::floor(bbMax.z) + 1;
-        //if((tetIdx%printOcc) == 0) {
-        //    std::cout << "Loading: " << (float(tetIdx)/float(this->mesh.size())) * 100. << "%" << std::endl;
-        //}
-        for(int k = bbMin.z; k < int(bbMax.z); ++k) {
-            for(int j = bbMin.y; j < int(bbMax.y); ++j) {
-                for(int i = bbMin.x; i < int(bbMax.x); ++i) {
-                    glm::vec3 p(i, j, k);
-                    p += glm::vec3(.5, .5, .5);
-
-                    fromImageToWorld(p);
-
-                    if(isInScene(p) && tet.isInTetrahedron(p)) {
-                        if(this->getCoordInInitial(this->initialMesh, p, p, tetIdx)) {
-
-                            int insertIdx = i + k*resolution[0];
-
-                            this->sampler.fromSamplerToImage(p);
-                            result[j][insertIdx] = this->getValueFromPoint(p, interpolationMethod);
-                        } 
-                    }
-                }
-            }
-        }
-    }
-
-    auto end = std::chrono::steady_clock::now();
-    std::chrono::duration<double> elapsed_seconds = end-start;
-    std::cout << "Duration time: " << elapsed_seconds.count() << "s / " << elapsed_seconds.count()/60. << "m" << std::endl;
-}
-
-bool Grid::checkTransferMeshValidity() {
-    glm::vec3 meshDimension = this->getDimensions();
-    glm::vec3 imageDimension = this->sampler.getDimension();
-    if(glm::abs(glm::length(meshDimension) - glm::length(imageDimension)) < glm::length(meshDimension)/10.)
-        return true;
-    return false;
-}
-
 /**************************/
 
-Sampler::Sampler(const std::vector<std::string>& filename, int subsample, const glm::vec3& voxelSize): image(new tiff_image(filename)) {
+Sampler::Sampler(const std::vector<std::string>& filename, int subsample, const glm::vec3& voxelSize): image(new Tiff_image(filename)) {
     glm::vec3 samplerResolution = this->image->imgResolution / static_cast<float>(subsample);
     this->resolutionRatio = this->image->imgResolution / samplerResolution;
     // If we naïvely divide the image dimensions for lowered its resolution we have problem is the case of a dimension is 1

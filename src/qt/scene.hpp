@@ -275,7 +275,6 @@ public slots:
     // *************** //
 
     void writeGreyscaleTIFFImage(const std::string& filename, const glm::vec3& imgDimensions, const std::vector<std::vector<uint16_t>>& data);
-    void writeDeformation(const std::string& filename, const std::string& gridNameValues, const std::string& gridNameSample);
 
     // Tool management
     void updateTools(UITool::MeshManipulatorType tool);
@@ -286,9 +285,7 @@ public slots:
     void redo();
     void reset();
     glm::vec3 getTransformedPoint(const glm::vec3& inputPoint, const std::string& from, const std::string& to);
-    void getDeformation(const std::string& gridNameValues, const std::string& gridNameSample, std::vector<std::vector<uint16_t>>& data);
     void getValues(const std::string &gridName, const glm::vec3 &slice, const std::pair<glm::vec3, glm::vec3> &area, const glm::vec3 &resolution, std::vector<uint16_t> &data, Interpolation::Method interpolationMethod);
-    void getValues(const std::string &gridName, const std::pair<glm::vec3, glm::vec3> &area, const glm::vec3 &resolution, std::vector<std::vector<uint16_t> > &data, Interpolation::Method interpolationMethod);
     void clear();
 
     // Move tool
@@ -368,9 +365,6 @@ public slots:
     int getGridIdx(const std::string& name);
     int getGridIdxLinkToCage(const std::string& name);
     std::pair<glm::vec3, glm::vec3> getBbox(const std::string& name);
-    bool checkTransferMeshValidity(const std::string& name) {
-        return this->grids[this->getGridIdx(name)]->checkTransferMeshValidity();
-    }
     void updateTextureCoordinates(const std::string& name) {
         return this->grids[this->getGridIdx(name)]->updateTextureCoordinates();
     }

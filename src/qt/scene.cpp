@@ -2103,28 +2103,8 @@ glm::vec3 Scene::getTransformedPoint(const glm::vec3& inputPoint, const std::str
     return result;
 }
 
-void Scene::getDeformation(const std::string& gridNameValues, const std::string& gridNameSample, std::vector<std::vector<uint16_t>>& data) {
-    Grid * grid = this->grids[this->getGridIdx(gridNameSample)];
-
-    const glm::vec3 bbMin = grid->bbMin;
-    const glm::vec3 bbMax = grid->bbMax;
-    const glm::vec3 imgSize = grid->getResolution();
-
-    this->grids[this->getGridIdx(gridNameValues)]->sampleGridValues(std::make_pair(grid->bbMin, grid->bbMax), imgSize, data);
-}
-
-void Scene::getValues(const std::string& gridName, const std::pair<glm::vec3, glm::vec3>& area, const glm::vec3& resolution, std::vector<std::vector<uint16_t>>& data, Interpolation::Method interpolationMethod) {
-    this->grids[this->getGridIdx(gridName)]->sampleGridValues(area, resolution, data, interpolationMethod);
-}
-
 void Scene::getValues(const std::string& gridName, const glm::vec3& slice, const std::pair<glm::vec3, glm::vec3>& area, const glm::vec3& resolution, std::vector<uint16_t>& data, Interpolation::Method interpolationMethod) {
     this->grids[this->getGridIdx(gridName)]->sampleSliceGridValues(slice, area, resolution, data, interpolationMethod);
-}
-
-void Scene::writeDeformation(const std::string& filename, const std::string& gridNameValues, const std::string& gridNameSample) {
-    std::vector<std::vector<uint16_t>> data;
-    this->getDeformation(gridNameValues, gridNameSample, data);
-    this->writeGreyscaleTIFFImage(filename, this->getGridImgSize(gridNameSample), data);
 }
 
 void Scene::writeGreyscaleTIFFImage(const std::string& filename, const glm::vec3& imgDimensions, const std::vector<std::vector<uint16_t>>& data) {

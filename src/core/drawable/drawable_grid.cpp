@@ -689,7 +689,8 @@ void DrawableGrid::updateMinMaxDisplayValues() {
 }
 
 void DrawableGrid::drawBBox(const glm::vec3& planePos) {
-   auto bbox = this->grid->getBoundingBox();
+   //auto bbox = this->grid->getBoundingBox();
+   std::pair<glm::vec3, glm::vec3> bbox{this->grid->bbMin, this->grid->bbMax};
    glm::vec3 bbmin = bbox.first;
    bbmin += planePos;
    glm::vec3 bbmax = bbox.second;
