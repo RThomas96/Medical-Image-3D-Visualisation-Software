@@ -7,7 +7,11 @@ For the FAQ see [TODO].
 
 ## General
 
+Explain why this is important to select the CAGE.
+
 ## Glossary
+
+image slice:
 
 ### User interface
 
@@ -134,16 +138,66 @@ Available options are from top to bottom:
 [BUG?] Selecting one or the other mode do not change from one mode to the other which is not intuitive. Instead we always the Segmented mode, and we apply the Unsegmented mode for all units that are unchecked. However the display range of the unsegmented is still applied. This strange interaction is due to the legacy feature, originaly only the unsegmented mode was available, but this mode is not enought to precisely handle segmented data. The segmented mode alone is not enought either.
 
 ### 2D view
+The software allows to visualise the deformed image in a 2D view.
+It can be activated using the "Dual View" button in the tool bar.
+The 2D view will be automatically updated each time an object is edited and the mouse is released.
+The 2D view parameters can be changed using the pannel at the right of the bottom section.
+Available options are from top to bottom:
+- Button with link icon: choose to link the image slice visible in the 2D view with the cutting plane.
+- Slider: select which image slice to display.
+- Combobox back: choose which object to display on back.
+- Combobox front: choose which object to display on front.
+- Checkbox: choose to display or hide front/hide image.
+- Spinbox: choose the transparency of the front/back image. The value range is [0, 255].
+- Subsample: choose a subsample to apply to the final image. It is very important to limit the computation time of each image.
+- Side: chaneg which axis to visualise. If the link button is toggled, it also indicate which cutting plane is linked.
+- Mirror: allow to mirror the image on X or Y.
+- Resolution: Set the image resolution to fit the front or the back object. For example if we have a brain atlas on top of a MRI acquisition, the brain atlas has a much larger precision. To ensure a real time visualisation we can set the resolution to back to keep a low resolution. To inspect the result at full resolution we can set the resolution to Front.
+
+[IMPROVEMENT] The real time 2D view update and not only when the mouse is released has been deactivated to avoid slowing down the software. The option is not exposed to the user.
+[LIMITATION] Problem with the mixed mode, images has been cached in order to quickly naviguate from slide to slide, therefore they are stored into a 3D array. Changing the resolution change the size of the 3D array and discard all the previous data and this is not how the viewer is designed.
 
 ## Edition
+The software allow to deform the image using various tools.
+It is important to note that these works on cage only.
+Due to the generic nature of the code they can also be used directly on the TM, however this option has been deactivate to the user to avoid editing the TM by error.
+
+### 3D manipulation
+
+Each tool that will be presented often present a 3D manipulation to apply deformation.
+It can be manipulated using the right or left click while overring the axis to apply.
+It is also possible to change the manipulation primitive with the wheel.
+Then instead of a 3D guizmo, the operation can be applied using a 3D ball that move on the plane of the current view.
 
 ### Tools
 
+Each tool is applied on the currently selected object.
+It has a help on the tool section on the left.
+Some tools has also some options in the form of buttons.
+
+[IMPROVEMENT] Actually the tools are independant objects that are deleted and re-created, therefore when a tool is exited, all its states are deleted. To "remember" the state of a closed tool it can be usefull to keep the previous tools. This is easy to do in the code.
+
 #### None tool
+
+This tool is used no edion is needed and when the goal is visualisation only.
 
 #### Move tool
 
+This tool is a classic 3D manipulator used to translate, rotate and scale the selected object.
+Available options are:
+- Even: to apply an even scale on both X, Y and Z axis. If this option is toggled and a scaled is applied on the X axis, the same scale will be applied on the 2 other axis.
+- Link: allow to link or unlink the cage to its TM. If this option is toggled the cage will move the TM which is the default behavior. However if the user untoggle this option he is able to move the cage without moving the TM. This is usefull to adjust the placement of the cage according to the TM.
+- Reset: reset the view and the size of the 3D manipulator, this is usefull when applying large scaling operation and the object get off the screen.
+
+[IMPROVEMENT] This tool cannot be used directly on the TM while this could be logical.
+[BUG] The even, link or reset button can be desynchronized
+
 #### Direct tool
+
+This tool allow to move each vertew independantly.
+While activated, all vertices become red, indicating that they can be grabbed.
+Each vertice can then be grabbed and moved arround freely.
+This is the only tool than can be used on the TM directly.
 
 #### ARAP tool
 
