@@ -287,42 +287,42 @@ void MainWidget::setupActions() {
 
     // Tools
     this->actionManager->createQActionToggleButton("ToggleNoneTool", "None", "Ctrl+N", "Deactivate all tools", "none");
-    QObject::connect(this->actionManager->getAction("ToggleNoneTool"), &QAction::triggered, [this](){this->scene->updateTools(UITool::MeshManipulatorType::NONE);});
-    QObject::connect(this->actionManager->getAction("ToggleNoneTool"), &QAction::triggered, [this](){this->changeCurrentTool(UITool::MeshManipulatorType::NONE);});
+    QObject::connect(this->actionManager->getAction("ToggleNoneTool"), &QAction::triggered, [this](){this->scene->updateTools(MeshManipulatorType::NONE);});
+    QObject::connect(this->actionManager->getAction("ToggleNoneTool"), &QAction::triggered, [this](){this->changeCurrentTool(MeshManipulatorType::NONE);});
 
     this->actionManager->createQActionToggleButton("ToggleMoveTool", "Move", "Ctrl+M", "Activate move tool", "move");
-    QObject::connect(this->actionManager->getAction("ToggleMoveTool"), &QAction::triggered, [this](){this->scene->updateTools(UITool::MeshManipulatorType::POSITION);});
-    QObject::connect(this->actionManager->getAction("ToggleMoveTool"), &QAction::triggered, [this](){this->changeCurrentTool(UITool::MeshManipulatorType::POSITION);});
+    QObject::connect(this->actionManager->getAction("ToggleMoveTool"), &QAction::triggered, [this](){this->scene->updateTools(MeshManipulatorType::POSITION);});
+    QObject::connect(this->actionManager->getAction("ToggleMoveTool"), &QAction::triggered, [this](){this->changeCurrentTool(MeshManipulatorType::POSITION);});
     QObject::connect(this, &MainWidget::gridSelected, [this](){this->actionManager->getAction("ToggleMoveTool")->setDisabled(true);});
     QObject::connect(this, &MainWidget::meshSelected, [this](){this->actionManager->getAction("ToggleMoveTool")->setDisabled(false);});
 
     this->actionManager->createQActionToggleButton("ToggleDirectTool", "Direct", "Ctrl+D", "Activate direct tool", "direct");
-    QObject::connect(this->actionManager->getAction("ToggleDirectTool"), &QAction::triggered, [this](){this->scene->updateTools(UITool::MeshManipulatorType::DIRECT);});
-    QObject::connect(this->actionManager->getAction("ToggleDirectTool"), &QAction::triggered, [this](){this->changeCurrentTool(UITool::MeshManipulatorType::DIRECT);});
+    QObject::connect(this->actionManager->getAction("ToggleDirectTool"), &QAction::triggered, [this](){this->scene->updateTools(MeshManipulatorType::DIRECT);});
+    QObject::connect(this->actionManager->getAction("ToggleDirectTool"), &QAction::triggered, [this](){this->changeCurrentTool(MeshManipulatorType::DIRECT);});
     QObject::connect(this, &MainWidget::gridSelected, [this](){this->actionManager->getAction("ToggleDirectTool")->setDisabled(false);});
     QObject::connect(this, &MainWidget::meshSelected, [this](){this->actionManager->getAction("ToggleDirectTool")->setDisabled(false);});
 
     this->actionManager->createQActionToggleButton("ToggleARAPTool", "ARAP", "Ctrl+A", "Activate ARAP tool", "araps");
-    QObject::connect(this->actionManager->getAction("ToggleARAPTool"), &QAction::triggered, [this](){this->scene->updateTools(UITool::MeshManipulatorType::ARAP);});
-    QObject::connect(this->actionManager->getAction("ToggleARAPTool"), &QAction::triggered, [this](){this->changeCurrentTool(UITool::MeshManipulatorType::ARAP);});
+    QObject::connect(this->actionManager->getAction("ToggleARAPTool"), &QAction::triggered, [this](){this->scene->updateTools(MeshManipulatorType::ARAP);});
+    QObject::connect(this->actionManager->getAction("ToggleARAPTool"), &QAction::triggered, [this](){this->changeCurrentTool(MeshManipulatorType::ARAP);});
     QObject::connect(this, &MainWidget::gridSelected, [this](){this->actionManager->getAction("ToggleARAPTool")->setDisabled(true);});
     QObject::connect(this, &MainWidget::meshSelected, [this](){this->actionManager->getAction("ToggleARAPTool")->setDisabled(false);});
 
     this->actionManager->createQActionToggleButton("ToggleSliceTool", "Slice", "Ctrl+A", "Activate Slice tool", "slice");
-    QObject::connect(this->actionManager->getAction("ToggleSliceTool"), &QAction::triggered, [this](){this->scene->updateTools(UITool::MeshManipulatorType::SLICE);});
-    QObject::connect(this->actionManager->getAction("ToggleSliceTool"), &QAction::triggered, [this](){this->changeCurrentTool(UITool::MeshManipulatorType::SLICE);});
+    QObject::connect(this->actionManager->getAction("ToggleSliceTool"), &QAction::triggered, [this](){this->scene->updateTools(MeshManipulatorType::SLICE);});
+    QObject::connect(this->actionManager->getAction("ToggleSliceTool"), &QAction::triggered, [this](){this->changeCurrentTool(MeshManipulatorType::SLICE);});
     QObject::connect(this, &MainWidget::gridSelected, [this](){this->actionManager->getAction("ToggleSliceTool")->setDisabled(true);});
     QObject::connect(this, &MainWidget::meshSelected, [this](){this->actionManager->getAction("ToggleSliceTool")->setDisabled(false);});
 
     this->actionManager->createQActionToggleButton("ToggleMarkerTool", "Marker", "Ctrl+A", "Activate Marker tool", "slice");
-    QObject::connect(this->actionManager->getAction("ToggleMarkerTool"), &QAction::triggered, [this](){this->scene->updateTools(UITool::MeshManipulatorType::MARKER);});
-    QObject::connect(this->actionManager->getAction("ToggleMarkerTool"), &QAction::triggered, [this](){this->changeCurrentTool(UITool::MeshManipulatorType::MARKER);});
+    QObject::connect(this->actionManager->getAction("ToggleMarkerTool"), &QAction::triggered, [this](){this->scene->updateTools(MeshManipulatorType::MARKER);});
+    QObject::connect(this->actionManager->getAction("ToggleMarkerTool"), &QAction::triggered, [this](){this->changeCurrentTool(MeshManipulatorType::MARKER);});
     QObject::connect(this, &MainWidget::gridSelected, [this](){this->actionManager->getAction("ToggleMarkerTool")->setDisabled(true);});
     QObject::connect(this, &MainWidget::meshSelected, [this](){this->actionManager->getAction("ToggleMarkerTool")->setDisabled(false);});
 
     //this->actionManager->createQActionToggleButton("ToggleRegisterTool", "Register", "Ctrl+R", "Activate Register tool", "register");
-    //QObject::connect(this->actionManager->getAction("ToggleRegisterTool"), &QAction::triggered, [this](){this->scene->updateTools(UITool::MeshManipulatorType::FIXED_REGISTRATION);});
-    //QObject::connect(this->actionManager->getAction("ToggleRegisterTool"), &QAction::triggered, [this](){this->changeCurrentTool(UITool::MeshManipulatorType::FIXED_REGISTRATION);});
+    //QObject::connect(this->actionManager->getAction("ToggleRegisterTool"), &QAction::triggered, [this](){this->scene->updateTools(MeshManipulatorType::FIXED_REGISTRATION);});
+    //QObject::connect(this->actionManager->getAction("ToggleRegisterTool"), &QAction::triggered, [this](){this->changeCurrentTool(MeshManipulatorType::FIXED_REGISTRATION);});
     //QObject::connect(this, &MainWidget::gridSelected, [this](){this->actionManager->getAction("ToggleRegisterTool")->setDisabled(true);});
     //QObject::connect(this, &MainWidget::meshSelected, [this](){this->actionManager->getAction("ToggleRegisterTool")->setDisabled(false);});
 
@@ -380,15 +380,15 @@ void MainWidget::setupActions() {
     // Slice
     this->actionManager->createQActionToggledButton("SliceTool_switchX", "X", "", "Toggle the even mode to scale evenly in 3 dimensions", "slice");
     this->actionManager->getAction("SliceTool_switchX")->setVisible(false);
-    QObject::connect(this->actionManager->getAction("SliceTool_switchX"), &QAction::triggered, [this](){this->scene->changeSliceToSelect(UITool::SliceOrientation::X);});
+    QObject::connect(this->actionManager->getAction("SliceTool_switchX"), &QAction::triggered, [this](){this->scene->changeSliceToSelect(SliceOrientation::X);});
 
     this->actionManager->createQActionToggleButton("SliceTool_switchY", "Y", "", "Toggle the even mode to scale evenly in 3 dimensions", "slice");
     this->actionManager->getAction("SliceTool_switchY")->setVisible(false);
-    QObject::connect(this->actionManager->getAction("SliceTool_switchY"), &QAction::triggered, [this](){this->scene->changeSliceToSelect(UITool::SliceOrientation::Y);});
+    QObject::connect(this->actionManager->getAction("SliceTool_switchY"), &QAction::triggered, [this](){this->scene->changeSliceToSelect(SliceOrientation::Y);});
 
     this->actionManager->createQActionToggleButton("SliceTool_switchZ", "Z", "", "Toggle the even mode to scale evenly in 3 dimensions", "slice");
     this->actionManager->getAction("SliceTool_switchZ")->setVisible(false);
-    QObject::connect(this->actionManager->getAction("SliceTool_switchZ"), &QAction::triggered, [this](){this->scene->changeSliceToSelect(UITool::SliceOrientation::Z);});
+    QObject::connect(this->actionManager->getAction("SliceTool_switchZ"), &QAction::triggered, [this](){this->scene->changeSliceToSelect(SliceOrientation::Z);});
 
     this->actionManager->createQExclusiveActionGroup("SliceTool", {"SliceTool_switchX", "SliceTool_switchY", "SliceTool_switchZ"});
     this->actionManager->createQActionGroup("SliceTool", {"SliceTool_switchX", "SliceTool_switchY", "SliceTool_switchZ"});

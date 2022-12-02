@@ -72,7 +72,7 @@ public slots:
     void setCenter(const glm::vec3& center);
     void setRadius(const float radius);
     void castRay(void);
-    void setCursorType(UITool::CursorType cursorType);
+    void setCursorType(CursorType cursorType);
     void setCameraType(qglviewer::Camera::Type cameraType);
 
 signals:

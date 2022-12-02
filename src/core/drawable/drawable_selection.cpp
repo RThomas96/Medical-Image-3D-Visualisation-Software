@@ -2,7 +2,7 @@
 #include "drawable_selection.hpp"
 #include "../../qt/scene.hpp"
 
-UITool::GL::Selection::Selection(ShaderCompiler::GLFunctions* gl, const glm::vec3& p1, const glm::vec3& p2) : sceneGL(gl) {
+GL::Selection::Selection(ShaderCompiler::GLFunctions* gl, const glm::vec3& p1, const glm::vec3& p2) : sceneGL(gl) {
     this->program	       = 0;
     this->vao		       = 0;
     this->vboVertices      = 0;
@@ -17,7 +17,7 @@ UITool::GL::Selection::Selection(ShaderCompiler::GLFunctions* gl, const glm::vec
     this->color = glm::vec4(1., 0., 0., 0.5);
 }
 
-void UITool::GL::Selection::prepare() {
+void GL::Selection::prepare() {
 	// Store all these states in the VAO
 	this->sceneGL->glBindVertexArray(this->vao);
 
@@ -48,7 +48,7 @@ void UITool::GL::Selection::prepare() {
 	this->sceneGL->glBindVertexArray(0);
 }
 
-void UITool::GL::Selection::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* mMat) {
+void GL::Selection::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* mMat) {
 	auto getUniform = [&](const char* name) -> GLint {
 		GLint g = this->sceneGL->glGetUniformLocation(this->program, name);
 		return g;
@@ -92,7 +92,7 @@ void UITool::GL::Selection::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* mMat) {
 	this->sceneGL->glUseProgram(0);
 }
 
-void UITool::GL::Selection::setSelectionBB(const glm::vec3& p0, const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3) {
+void GL::Selection::setSelectionBB(const glm::vec3& p0, const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3) {
     this->p0 = p0;
     this->p1 = p1;
     this->p2 = p2;

@@ -75,9 +75,9 @@ Scene::Scene() {
     this->shouldUpdateUserColorScales = false;
     this->needUpdateMinMaxDisplayValues		  = false;
 
-    this->glSelection = new UITool::GL::Selection(this, glm::vec3(0., 0., 0.), glm::vec3(10., 10., 10.));
+    this->glSelection = new GL::Selection(this, glm::vec3(0., 0., 0.), glm::vec3(10., 10., 10.));
 
-    this->currentTool = UITool::MeshManipulatorType::POSITION;
+    this->currentTool = MeshManipulatorType::POSITION;
     this->planeActivation = glm::vec3(1., 1., 1.);
     this->displayGrid = true;
     this->displayMesh = true;
@@ -1536,7 +1536,7 @@ BaseMesh * Scene::getBaseMesh(const std::string& name) {
     return nullptr;
 }
 
-void Scene::updateTools(UITool::MeshManipulatorType tool) {
+void Scene::updateTools(MeshManipulatorType tool) {
     if(this->meshManipulator) {
         delete this->meshManipulator;
         this->meshManipulator = nullptr;
@@ -1547,30 +1547,30 @@ void Scene::updateTools(UITool::MeshManipulatorType tool) {
     if(!mesh)
         return;
 
-    if(tool == UITool::MeshManipulatorType::NONE || !this->getBaseMesh(this->activeMesh)) {
+    if(tool == MeshManipulatorType::NONE || !this->getBaseMesh(this->activeMesh)) {
         Q_EMIT this->needDisplayInfos("");
         return;
     }
 
     this->currentTool = tool;
-    if(tool == UITool::MeshManipulatorType::DIRECT) {
-        this->meshManipulator = new UITool::DirectManipulator(mesh);
-        dynamic_cast<UITool::DirectManipulator*>(this->meshManipulator)->setDefaultManipulatorColor(glm::vec3(1., 1., 0.));
-    } else if(tool == UITool::MeshManipulatorType::POSITION) {
-        this->meshManipulator = new UITool::GlobalManipulator(mesh);
-    } else if(tool == UITool::MeshManipulatorType::ARAP) {
-        this->meshManipulator = new UITool::ARAPManipulator(mesh);
-    } else if(tool == UITool::MeshManipulatorType::SLICE) {
-        this->meshManipulator = new UITool::SliceManipulator(mesh);
-    } else if(tool == UITool::MeshManipulatorType::MARKER) {
+    if(tool == MeshManipulatorType::DIRECT) {
+        this->meshManipulator = new DirectManipulator(mesh);
+        dynamic_cast<DirectManipulator*>(this->meshManipulator)->setDefaultManipulatorColor(glm::vec3(1., 1., 0.));
+    } else if(tool == MeshManipulatorType::POSITION) {
+        this->meshManipulator = new GlobalManipulator(mesh);
+    } else if(tool == MeshManipulatorType::ARAP) {
+        this->meshManipulator = new ARAPManipulator(mesh);
+    } else if(tool == MeshManipulatorType::SLICE) {
+        this->meshManipulator = new SliceManipulator(mesh);
+    } else if(tool == MeshManipulatorType::MARKER) {
         if(this->grids.size() > 0) {
-            this->meshManipulator = new UITool::MarkerManipulator(mesh, this->grids[0]);
-            this->meshManipulator->setSize(UITool::GL::SPHERE, 0.007);
+            this->meshManipulator = new MarkerManipulator(mesh, this->grids[0]);
+            this->meshManipulator->setSize(GL::SPHERE, 0.007);
         }
     }
 
-    QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needChangeCursor(UITool::CursorType)), this, SLOT(changeCursor(UITool::CursorType)));
-    QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needChangeCursorInPlanarView(UITool::CursorType)), this, SLOT(changeCursorInPlanarView(UITool::CursorType)));
+    QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needChangeCursor(CursorType)), this, SLOT(changeCursor(CursorType)));
+    QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needChangeCursorInPlanarView(CursorType)), this, SLOT(changeCursorInPlanarView(CursorType)));
     QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needDisplayVertexInfo(std::pair<int,glm::vec3>)), this, SLOT(changeSelectedPoint(std::pair<int,glm::vec3>)));
     QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needDisplayInfos(const std::string&)), this, SIGNAL(needDisplayInfos(const std::string&)));
     QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(meshIsModified()), this, SIGNAL(meshMoved()));
@@ -1580,46 +1580,46 @@ void Scene::updateTools(UITool::MeshManipulatorType tool) {
     QObject::connect(this, SIGNAL(mousePressed(QMouseEvent*)), dynamic_cast<QObject*>(this->meshManipulator), SLOT(mousePressed(QMouseEvent*)));
     QObject::connect(this, SIGNAL(mouseReleased(QMouseEvent*)), dynamic_cast<QObject*>(this->meshManipulator), SLOT(mouseReleased(QMouseEvent*)));
 
-    if(tool == UITool::MeshManipulatorType::POSITION) {
+    if(tool == MeshManipulatorType::POSITION) {
         QObject::connect(dynamic_cast<QObject*>(this->meshManipulator), SIGNAL(needUpdateSceneCenter()), this, SLOT(updateSceneCenter()));
     }
 
-    if(tool == UITool::MeshManipulatorType::SLICE) {
-        QObject::connect(this, SIGNAL(planesMoved(const glm::vec3&)), dynamic_cast<UITool::SliceManipulator*>(this->meshManipulator), SLOT(movePlanes(const glm::vec3&)));
+    if(tool == MeshManipulatorType::SLICE) {
+        QObject::connect(this, SIGNAL(planesMoved(const glm::vec3&)), dynamic_cast<SliceManipulator*>(this->meshManipulator), SLOT(movePlanes(const glm::vec3&)));
     }
 
     // Scene->MeshManipulator->Selection
     QObject::connect(this, SIGNAL(keyPressed(QKeyEvent*)), dynamic_cast<QObject*>(&this->meshManipulator->selection), SLOT(keyPressed(QKeyEvent*)));
     QObject::connect(this, SIGNAL(keyReleased(QKeyEvent*)), dynamic_cast<QObject*>(&this->meshManipulator->selection), SLOT(keyReleased(QKeyEvent*)));
-    QObject::connect(&this->meshManipulator->selection, &UITool::Selection::needToRedrawSelection, this, &Scene::redrawSelection);
+    QObject::connect(&this->meshManipulator->selection, &Selection::needToRedrawSelection, this, &Scene::redrawSelection);
     // MeshManipulator->Scene
 
     this->updateManipulatorRadius();
 
     // MeshManipulator->Scene
 
-    if(tool == UITool::MeshManipulatorType::ARAP) {
-        QObject::connect(dynamic_cast<UITool::ARAPManipulator*>(this->meshManipulator), SIGNAL(needPushHandleButton()), this, SIGNAL(needPushHandleButton()));
+    if(tool == MeshManipulatorType::ARAP) {
+        QObject::connect(dynamic_cast<ARAPManipulator*>(this->meshManipulator), SIGNAL(needPushHandleButton()), this, SIGNAL(needPushHandleButton()));
     }
 
-    if(tool == UITool::MeshManipulatorType::SLICE) {
-        QObject::connect(dynamic_cast<UITool::SliceManipulator*>(this->meshManipulator), &UITool::SliceManipulator::needChangePointsToProject, [this](std::vector<int> selectedPoints){ this->computeProjection(selectedPoints); });
+    if(tool == MeshManipulatorType::SLICE) {
+        QObject::connect(dynamic_cast<SliceManipulator*>(this->meshManipulator), &SliceManipulator::needChangePointsToProject, [this](std::vector<int> selectedPoints){ this->computeProjection(selectedPoints); });
     }
 
-    if(tool == UITool::MeshManipulatorType::MARKER) {
-        QObject::connect(dynamic_cast<UITool::MarkerManipulator*>(this->meshManipulator), SIGNAL(needCastRay()), this, SIGNAL(needCastRay()));
+    if(tool == MeshManipulatorType::MARKER) {
+        QObject::connect(dynamic_cast<MarkerManipulator*>(this->meshManipulator), SIGNAL(needCastRay()), this, SIGNAL(needCastRay()));
         QObject::connect(this, &Scene::rayIsCasted, this, [this](const glm::vec3& origin, const glm::vec3& direction) {
             std::vector<bool> visuMap;
             this->grids[this->activeGrid]->getVisibilityMap(visuMap);
-            dynamic_cast<UITool::MarkerManipulator*>(this->meshManipulator)->placeManipulator(origin, direction, visuMap, this->computePlanePositions());
+            dynamic_cast<MarkerManipulator*>(this->meshManipulator)->placeManipulator(origin, direction, visuMap, this->computePlanePositions());
         });
     }
 
     Q_EMIT this->needDisplayInfos(this->meshManipulator->instructions);
 }
 
-void Scene::selectSlice(UITool::SliceOrientation sliceOrientation) {
-    UITool::SliceManipulator* manipulator = dynamic_cast<UITool::SliceManipulator*>(this->meshManipulator);
+void Scene::selectSlice(SliceOrientation sliceOrientation) {
+    SliceManipulator* manipulator = dynamic_cast<SliceManipulator*>(this->meshManipulator);
     if(!manipulator) {
         std::cout << "WARNING: not the right tool" << std::endl;
         return;
@@ -1627,8 +1627,8 @@ void Scene::selectSlice(UITool::SliceOrientation sliceOrientation) {
     manipulator->selectSlice(sliceOrientation);
 }
 
-void Scene::changeSliceToSelect(UITool::SliceOrientation sliceOrientation) {
-    UITool::SliceManipulator* manipulator = dynamic_cast<UITool::SliceManipulator*>(this->meshManipulator);
+void Scene::changeSliceToSelect(SliceOrientation sliceOrientation) {
+    SliceManipulator* manipulator = dynamic_cast<SliceManipulator*>(this->meshManipulator);
     if(!manipulator) {
         std::cout << "WARNING: not the right tool" << std::endl;
         return;
@@ -1737,7 +1737,7 @@ void Scene::changeActiveMesh(const std::string& name) {
     this->shouldUpdateUserColorScales = true;
 }
 
-void Scene::changeCurrentTool(UITool::MeshManipulatorType newTool) {
+void Scene::changeCurrentTool(MeshManipulatorType newTool) {
     this->currentTool = newTool;
     this->updateTools(newTool);
 }
@@ -1746,16 +1746,16 @@ void Scene::changeSelectedPoint(std::pair<int, glm::vec3> selectedPoint) {
     Q_EMIT selectedPointChanged(selectedPoint);
 }
 
-bool Scene::isRightTool(const UITool::MeshManipulatorType& typeToCheck) {
+bool Scene::isRightTool(const MeshManipulatorType& typeToCheck) {
     bool isRightType = (this->currentTool == typeToCheck);
     if(!isRightType)
         std::cout << "WARNING: not the right tool" << std::endl;
     return isRightType;
 }
 
-void Scene::moveTool_toggleEvenMode() { auto * toolPtr = this->getMeshTool<UITool::GlobalManipulator>(); if(toolPtr) { toolPtr->toggleEvenMode(); } };
+void Scene::moveTool_toggleEvenMode() { auto * toolPtr = this->getMeshTool<GlobalManipulator>(); if(toolPtr) { toolPtr->toggleEvenMode(); } };
 
-void Scene::ARAPTool_toggleEvenMode(bool value) { auto * toolPtr = this->getMeshTool<UITool::ARAPManipulator>(); if(toolPtr) { toolPtr->toggleEvenMode(value); } };
+void Scene::ARAPTool_toggleEvenMode(bool value) { auto * toolPtr = this->getMeshTool<ARAPManipulator>(); if(toolPtr) { toolPtr->toggleEvenMode(value); } };
 
 void Scene::moveInHistory(bool backward, bool reset) {
     BaseMesh * mesh = this->getBaseMesh(this->activeMesh);
@@ -2118,7 +2118,7 @@ void Scene::writeGreyscaleTIFFImage(const std::string& filename, const glm::vec3
 }
 
 void Scene::clear() {
-    this->updateTools(UITool::MeshManipulatorType::NONE);
+    this->updateTools(MeshManipulatorType::NONE);
     this->grids_name.clear();
     this->grids.clear();
     this->meshes.clear();
@@ -2297,8 +2297,8 @@ void Scene::computeProjection(const std::vector<int>& vertexIndices) {
     }
     meshToProject->movePoints(vertexIndices, newPositions);
 
-    dynamic_cast<UITool::SliceManipulator*>(this->meshManipulator)->updateWithMeshVertices();
-    dynamic_cast<UITool::SliceManipulator*>(this->meshManipulator)->moveGuizmo();
+    dynamic_cast<SliceManipulator*>(this->meshManipulator)->updateWithMeshVertices();
+    dynamic_cast<SliceManipulator*>(this->meshManipulator)->moveGuizmo();
 }
 
 void Scene::drawBox(const Box& box) {

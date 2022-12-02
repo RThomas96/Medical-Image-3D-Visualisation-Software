@@ -159,26 +159,26 @@ public slots:
     // Connected to UI //
     // *************** //
 
-    void changeCurrentTool(UITool::MeshManipulatorType newTool) {
+    void changeCurrentTool(MeshManipulatorType newTool) {
         this->actionManager->deactivateGroup("MoveTool");
         this->actionManager->deactivateGroup("ARAPTool");
         this->actionManager->deactivateGroup("FixedTool");
         this->actionManager->deactivateGroup("SliceTool");
         switch(newTool) {
-            case UITool::MeshManipulatorType::NONE:
+            case MeshManipulatorType::NONE:
                 break;
-            case UITool::MeshManipulatorType::POSITION:
+            case MeshManipulatorType::POSITION:
                 this->actionManager->activateGroup("MoveTool");
                 break;
-            case UITool::MeshManipulatorType::DIRECT:
+            case MeshManipulatorType::DIRECT:
                 break;
-            case UITool::MeshManipulatorType::ARAP:
+            case MeshManipulatorType::ARAP:
                 this->actionManager->activateGroup("ARAPTool");
                 break;
-            case UITool::MeshManipulatorType::SLICE:
+            case MeshManipulatorType::SLICE:
                 this->actionManager->activateGroup("SliceTool");
                 break;
-            case UITool::MeshManipulatorType::MARKER:
+            case MeshManipulatorType::MARKER:
                 break;
         }
     }

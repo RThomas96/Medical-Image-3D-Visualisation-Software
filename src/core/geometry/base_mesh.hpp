@@ -92,9 +92,7 @@ struct History {
     }
 };
 
-namespace UITool {
     class Manipulator;
-}
 
 //! @brief A point cloud with normals, a bounding box and an history.
 //! This is an interface that contains all data and functions common to all meshes, this way the scene can apply function to all meshes indifferently.

@@ -46,42 +46,36 @@
 
 // Forward declaration
 class ControlPanel;
-namespace UITool {
-    namespace GL {
-        class MeshManipulator;
-    }
+namespace GL {
+    class MeshManipulator;
 }
 
-namespace UITool {
-        class MeshManipulator;
-}
+class MeshManipulator;
 
 // TODO: do not belong here
-namespace UITool {
-    enum class CursorType {
-        NORMAL,
-        CROSS,
-        OPEN_HAND,
-        CLOSE_HAND,
-        HOURGLASS,
-        FAIL
-    };
+enum class CursorType {
+    NORMAL,
+    CROSS,
+    OPEN_HAND,
+    CLOSE_HAND,
+    HOURGLASS,
+    FAIL
+};
 
-    enum class MeshManipulatorType {
-        NONE,
-        DIRECT,
-        POSITION,
-        ARAP,
-        SLICE,
-        MARKER
-    };
+enum class MeshManipulatorType {
+    NONE,
+    DIRECT,
+    POSITION,
+    ARAP,
+    SLICE,
+    MARKER
+};
 
-    enum class SliceOrientation {
-        X,
-        Y,
-        Z
-    };
-}
+enum class SliceOrientation {
+    X,
+    Y,
+    Z
+};
 
 enum ColorChannel {
     None = 0,
@@ -243,8 +237,8 @@ signals:
     void meshAdded(const std::string& name, bool grid, bool cage);
     void planesMoved(const glm::vec3& planesPosition);
     void needPushHandleButton();
-    void cursorChanged(UITool::CursorType cursorType);
-    void cursorChangedInPlanarView(UITool::CursorType cursorType);
+    void cursorChanged(CursorType cursorType);
+    void cursorChangedInPlanarView(CursorType cursorType);
     void selectedPointChanged(std::pair<int, glm::vec3> selectedPoint);
     void meshMoved();
     void activeMeshChanged();
@@ -260,7 +254,7 @@ signals:
 public slots:
     void init();
 
-    void changeCurrentTool(UITool::MeshManipulatorType newTool);
+    void changeCurrentTool(MeshManipulatorType newTool);
     void changeSelectedPoint(std::pair<int, glm::vec3> selectedPoint);
 
 public :
@@ -284,7 +278,7 @@ public slots:
     // *************** //
 
     // Tool management
-    void updateTools(UITool::MeshManipulatorType tool);
+    void updateTools(MeshManipulatorType tool);
 
     // Mesh management
     void moveInHistory(bool backward = true, bool reset = false);
@@ -334,12 +328,12 @@ public slots:
     // MeshManipulator slots
     void changeActiveMesh(const std::string& name);
 
-    void selectSlice(UITool::SliceOrientation sliceOrientation);
-    void changeSliceToSelect(UITool::SliceOrientation sliceOrientation);
+    void selectSlice(SliceOrientation sliceOrientation);
+    void changeSliceToSelect(SliceOrientation sliceOrientation);
 
     void setBindMeshToCageMove(const std::string& name, bool state);
 
-    bool isRightTool(const UITool::MeshManipulatorType& typeToCheck);
+    bool isRightTool(const MeshManipulatorType& typeToCheck);
 
     // Rendering slots
     void setColorChannel(ColorChannel mode);
@@ -398,14 +392,14 @@ public slots:
     bool isSelecting() {return false;};
     // This is connect directly to selection in meshManipulator
     void redrawSelection(const glm::vec3& p0, const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3, const glm::vec4& color = glm::vec4(1., 0., 0., 0.5));
-    void changeCursor(UITool::CursorType cursorType) { Q_EMIT cursorChanged(cursorType); };
-    void changeCursorInPlanarView(UITool::CursorType cursorType) { Q_EMIT cursorChangedInPlanarView(cursorType); };
+    void changeCursor(CursorType cursorType) { Q_EMIT cursorChanged(cursorType); };
+    void changeCursorInPlanarView(CursorType cursorType) { Q_EMIT cursorChangedInPlanarView(cursorType); };
 
     //void addManipulatorFromRay(const glm::vec3& origin, const glm::vec3& direction, bool onSurface);
 public:
 
-    UITool::MeshManipulator* meshManipulator;
-    UITool::GL::Selection * glSelection;
+    MeshManipulator* meshManipulator;
+    GL::Selection * glSelection;
 
     int maximumTextureSize;// Set by the viewer
     int activeGrid = -1;
@@ -426,7 +420,7 @@ public:
     bool previewCursorInPlanarView;
 
     std::string activeMesh;
-    UITool::MeshManipulatorType currentTool;
+    MeshManipulatorType currentTool;
 
     std::vector<std::pair<std::string, std::string>> cageToGrid;
 

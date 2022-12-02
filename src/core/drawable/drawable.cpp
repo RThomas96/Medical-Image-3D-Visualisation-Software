@@ -2,7 +2,7 @@
 #include "../utils/GLUtilityMethods.h"
 #include "drawable.hpp"
 
-UITool::GL::DrawableUI::DrawableUI()
+GL::DrawableUI::DrawableUI()
 {
     this->guizmoRatio = 0.3;
     this->guizmoRadius = 2.;
@@ -12,7 +12,7 @@ UITool::GL::DrawableUI::DrawableUI()
     this->linesRadius = 1.;
 }
 
-//void UITool::GL::Drawable::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* mMat, const glm::vec3& planeDisplacement) {
+//void GL::Drawable::draw(GLfloat* mvMat, GLfloat* pMat, GLfloat* mMat, const glm::vec3& planeDisplacement) {
 //    if(!this->graph)
 //        return;
 //    glPolygonMode( GL_FRONT_AND_BACK , GL_FILL );
@@ -39,7 +39,7 @@ UITool::GL::DrawableUI::DrawableUI()
 //    glDisable(GL_LIGHTING);
 //}
 
-void UITool::GL::DrawableUI::incrementSize(const DrawingPrimitive& object) {
+void GL::DrawableUI::incrementSize(const DrawingPrimitive& object) {
     switch(object) {
         case SPHERE:
             this->sphereRatio += 0.1;
@@ -55,7 +55,7 @@ void UITool::GL::DrawableUI::incrementSize(const DrawingPrimitive& object) {
     }
 }
 
-void UITool::GL::DrawableUI::setSize(const UITool::GL::DrawingPrimitive& object, float size) {
+void GL::DrawableUI::setSize(const GL::DrawingPrimitive& object, float size) {
     std::cout << this->sphereRatio << std::endl;
     switch(object) {
         case SPHERE:
@@ -72,7 +72,7 @@ void UITool::GL::DrawableUI::setSize(const UITool::GL::DrawingPrimitive& object,
     }
 }
 
-void UITool::GL::DrawableUI::decrementSize(const DrawingPrimitive& object) {
+void GL::DrawableUI::decrementSize(const DrawingPrimitive& object) {
     switch(object) {
         case SPHERE:
             this->sphereRatio -= 0.1;
@@ -88,7 +88,7 @@ void UITool::GL::DrawableUI::decrementSize(const DrawingPrimitive& object) {
     }
 }
 
-void UITool::GL::DrawableUI::zoom(float sceneRadius) {
+void GL::DrawableUI::zoom(float sceneRadius) {
     this->sphereRadius = sceneRadius*this->sphereRatio;
     this->linesRadius = sceneRadius*this->linesRatio;
     this->guizmoRadius = sceneRadius*this->guizmoRatio;

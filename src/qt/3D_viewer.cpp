@@ -295,32 +295,32 @@ void Viewer::setRadius(const float radius) {
     this->scene->distanceFromCamera = this->camera()->distanceToSceneCenter();
 }
 
-void Viewer::setCursorType(UITool::CursorType cursorType) {
+void Viewer::setCursorType(CursorType cursorType) {
     switch(cursorType) {
-        case UITool::CursorType::NORMAL:
+        case CursorType::NORMAL:
             this->cursor->setShape(Qt::ArrowCursor); 
             this->setCursor(*this->cursor);
             break;
 
-        case UITool::CursorType::CROSS:
+        case CursorType::CROSS:
             this->cursor->setShape(Qt::CrossCursor); 
             this->setCursor(*this->cursor);
             break;
 
-        case UITool::CursorType::OPEN_HAND:
+        case CursorType::OPEN_HAND:
             this->cursor->setShape(Qt::OpenHandCursor);
             this->setCursor(*this->cursor);
             break;
 
-        case UITool::CursorType::CLOSE_HAND:
+        case CursorType::CLOSE_HAND:
             this->cursor->setShape(Qt::ClosedHandCursor);
             this->setCursor(*this->cursor);
             break;
-        case UITool::CursorType::HOURGLASS:
+        case CursorType::HOURGLASS:
             this->cursor->setShape(Qt::WaitCursor);
             this->setCursor(*this->cursor);
             break;
-        case UITool::CursorType::FAIL:
+        case CursorType::FAIL:
             this->cursor->setShape(Qt::ForbiddenCursor);
             this->setCursor(*this->cursor);
             break;

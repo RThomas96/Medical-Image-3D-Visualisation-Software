@@ -981,7 +981,7 @@ void PlanarViewForm::connect(Scene * scene) {
 
     QObject::connect(scene, &Scene::meshMoved, [this, scene](){
             //this->updateSlice();
-            Q_EMIT scene->cursorChanged(UITool::CursorType::HOURGLASS);
+            Q_EMIT scene->cursorChanged(CursorType::HOURGLASS);
             QString originalViewer = this->selectedViewer;
             for(auto viewer : this->viewers) {
                 QString name = viewer.first;
@@ -992,7 +992,7 @@ void PlanarViewForm::connect(Scene * scene) {
             }
             this->selectViewer(originalViewer);
             this->updateImageViewer();
-            Q_EMIT scene->cursorChanged(UITool::CursorType::NORMAL);
+            Q_EMIT scene->cursorChanged(CursorType::NORMAL);
             });
 
     QObject::connect(this->fileChoosers["Save"], &FileChooser::fileSelected, [this](){
