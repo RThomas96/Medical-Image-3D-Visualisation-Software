@@ -7,10 +7,16 @@
 #include "manipulator.hpp"
 #include "kid_manipulator.h"
 
-//! @defgroup uitools UI
-//! @brief Group of tools used to interact with the application.
-//! @details It include static components like sliders or double sliders, as well as
-//! dynamic components used to directly interact with a 3D scene, like manipulators.
+//! \defgroup tools Edition tools
+//! @brief 
+//! All classes that manage edition tool and interaction widget.
+//! Main classes are:
+//! - Grid
+//! - BaseMesh
+//! - SurfaceMesh
+//! - TetMesh
+//! - GraphMesh
+
 namespace UITool {
 
     enum class State {
@@ -23,6 +29,7 @@ namespace UITool {
         HIGHLIGHT
     };
 
+    //! \ingroup tools
     class Selection : public Manipulator {
         Q_OBJECT
     public:
@@ -161,7 +168,7 @@ namespace UITool {
         }
     };
 
-	//! @ingroup uitools
+    //! \ingroup tools
     class MeshManipulator : public GL::DrawableUI {
     public:
         // These are needed here as there drawing functions are directly in the class
@@ -205,11 +212,11 @@ namespace UITool {
 }
 Q_DECLARE_INTERFACE(UITool::MeshManipulator, "MeshManipulator")
 namespace UITool {
-	/// @ingroup uitools
-	/// @brief The DirectManipulator class represents a set of vertex manipulators used to manipulate each mesh's vertex.
-	/// @details The active manipulator indicates the manipulator at range for being grabbed by the mouse.
-	/// The commonConstraint is a custom translation constraint allowing to simplify vertex manipulation. See UITool::CustomConstraint.
-	/// The lockConstraint allow to prevent manipulator to move when the feature is inactive.
+    //! @brief The DirectManipulator class represents a set of vertex manipulators used to manipulate each mesh's vertex.
+    //! @details The active manipulator indicates the manipulator at range for being grabbed by the mouse.
+    //! The commonConstraint is a custom translation constraint allowing to simplify vertex manipulation. See UITool::CustomConstraint.
+    //! The lockConstraint allow to prevent manipulator to move when the feature is inactive.
+    //! \ingroup tools
     class DirectManipulator : public MeshManipulator {
         Q_OBJECT
         Q_INTERFACES(UITool::MeshManipulator)
@@ -249,7 +256,7 @@ namespace UITool {
         glm::vec3 defaultManipulatorColor;
     };
 
-    //! @ingroup uitools
+    //! \ingroup tools
     class GlobalManipulator : public MeshManipulator {
         Q_OBJECT
         Q_INTERFACES(UITool::MeshManipulator)
@@ -284,7 +291,7 @@ namespace UITool {
         bool meshHasBeenModified;
     };
 
-    //! @ingroup uitools
+    //! \ingroup tools
     class ARAPManipulator : public MeshManipulator {
         Q_OBJECT
         Q_INTERFACES(UITool::MeshManipulator)
@@ -337,6 +344,7 @@ namespace UITool {
         bool meshHasBeenModified;
     };
 
+    //! \ingroup tools
     class SliceManipulator : public MeshManipulator {
         Q_OBJECT
         Q_INTERFACES(UITool::MeshManipulator)
@@ -390,6 +398,7 @@ namespace UITool {
         int lastModifiedSlice;
     };
 
+    //! \ingroup tools
     class MarkerManipulator : public MeshManipulator {
         Q_OBJECT
         Q_INTERFACES(UITool::MeshManipulator)
@@ -440,4 +449,5 @@ namespace UITool {
         std::vector<std::pair<int, int>> manipulator_association;
     };
 }	 // namespace UITool
+
 #endif

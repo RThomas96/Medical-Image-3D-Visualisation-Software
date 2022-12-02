@@ -14,6 +14,8 @@ class GLVWidget;
 #include <QMouseEvent>
 
 
+//! \addtogroup tools
+//! @{
 
 // #include "../../shared/PCATools/PCATools.h"
 
@@ -1276,12 +1278,6 @@ signals:
     void moved();
 };
 
-
-
-
-
-
-
-
+//! @}
 
 #endif // RotationManipulator_H

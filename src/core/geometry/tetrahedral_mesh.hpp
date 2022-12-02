@@ -8,9 +8,9 @@ struct MeshDeformer;
 
 //! \addtogroup geometry
 //! @{
-
 struct Tetrahedron {
-    glm::vec3 * points[4];// Optionnal, this data can be deleted and computeBary, isInTet and baryToWord function moved out in the TetMesh class
+    //! @brief This attribute is optionnal, this data can be deleted and the functions computeBary, isInTet and baryToWord can be moved out in TetMesh.
+    glm::vec3 * points[4];
     glm::vec4 normals[4];
 
     int pointsIdx[4];
@@ -65,7 +65,6 @@ public:
     // Specific to Tethrahedal mesh
     Tetrahedron getTetra(int idx) const;
     int inTetraIdx(const glm::vec3& p) const;
-    //glm::vec3 getCoordInInitial(const TetMesh& initial, glm::vec3 p) const;
     bool getCoordInInitial(const TetMesh& initial, const glm::vec3& p, glm::vec3& out, int tetraIdx = -1) const;
     bool getCoordInInitialOut(const TetMesh& initial, const glm::vec3& p, glm::vec3& out, int& tetraIdx) const;
     bool getCoordInImage(const glm::vec3& p, glm::vec3& out, int tetraIdx = -1) const;
@@ -83,6 +82,6 @@ private:
     std::vector<glm::vec3*> insertCubeIntoPtGrid(std::vector<glm::vec3> cubePts, glm::vec3 indices, std::vector<glm::vec3>& ptGrid, std::vector<int>& ptIndices);
     int from3DTo1D(const glm::vec3& p) const;
 };
-
 //! @}
+
 #endif

@@ -5,17 +5,11 @@
 #include "tetrahedral_mesh.hpp"
 #include "../images/image.hpp"
 
-//! \defgroup grid Grid
-//! \addtogroup grid
+//! \addtogroup geometry
 //! @{
 
-// Wrapper around an Image in order to access its data
-// This class allow to have a resolution different from the original image
-// This class also allow to access data as if we have a subregion of the original image
-// The subregion is defined as a pair of triplet of INDICES and or not 3D data, position are whatever
-// Moreover subregions indices are in Sampler space
-// NOTE: the sampler DO NOT have any 3D data like position or 3D vectors, or size. It only provides functions
-// to access to the image data.
+//! @brief Store an image from ImageReader into a Cache and allow to access its data using various resolutions using resolutionRaio.
+//! \todo This class was used in previous versions, but currently it doesn't make much sense since the Grid has a voxelSize. To remove.
 struct Sampler {
 
 private:
@@ -28,6 +22,7 @@ public:
 
     bool useCache;
     Cache * cache;
+    ImageReader * image;
 
     Sampler(const std::vector<std::string>& filename, int subsample, const glm::vec3& voxelSize);
 
@@ -42,9 +37,6 @@ public:
     void fromSamplerToImage(glm::vec3& p) const;
     void fromImageToSampler(glm::vec3& p) const;
 
-    Tiff_image * image;
-
-    // Fraude
     void getGridSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel) const;
     glm::vec3 getVoxelSize() const;
     Image::ImageDataType getInternalDataType() const;
@@ -53,7 +45,7 @@ private:
     void fillCache();
 };
 
-//! @brief Struct able to make the link between the grid and its 3D representation
+//! @brief A 3D image deformed by a TetMesh and displayed by a DrawableGrid.
 struct Grid : public TetMesh, public DrawableGrid {
 
     TetMesh initialMesh;

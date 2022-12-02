@@ -24,7 +24,7 @@ namespace Interpolation {
 
 using namespace cimg_library;
 
-//! @brief The cache
+//! @brief Store an image into a CImg structure. Storing the image in a CImg allows access to many features, like interpolation.
 struct Cache {
     CImg<uint16_t> img;
 
@@ -37,12 +37,7 @@ struct Cache {
     uint16_t getValue(const glm::vec3& coord, Interpolation::Method interpolationMethod);
 };
 
-//! @brief The cache just STORE data
-//!
-//! Thus the only way to interact with it is to query the adress of a vector to store some data
-//! The query and actual store process is manage by TIFFImage class
-//! 
-//! This class is unused for now
+//! @brief Unlike Cache, this %cache implementation allows to store parts of the image only, saving memory. However it do no allow interpolation this is it is currently unused.
 struct UnsortedCache {
     // Maximum number of slices to be stored
     int capacity;

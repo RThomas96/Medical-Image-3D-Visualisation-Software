@@ -24,6 +24,7 @@
 
 class SurfaceMesh;
 
+//! @ingroup gl
 class DrawableMesh {
 public:
     DrawableMesh(SurfaceMesh * mesh): gl(nullptr), mesh(mesh){};

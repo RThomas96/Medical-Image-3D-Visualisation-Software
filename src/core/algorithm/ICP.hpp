@@ -1,7 +1,3 @@
-//! \defgroup algo Algorithm
-//! \addtogroup algo
-//! @{
-
 class ICPMesh : public SurfaceMesh {
 
 public:
@@ -257,5 +253,3 @@ public:
         nbIt += 1;
     }
 };
-
-//! @}

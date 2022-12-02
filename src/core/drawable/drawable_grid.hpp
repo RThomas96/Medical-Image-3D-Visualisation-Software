@@ -25,6 +25,8 @@
 
 class Grid;
 
+
+//! @ingroup gl
 class DrawableGrid {
 public:
     bool multiGridRendering;

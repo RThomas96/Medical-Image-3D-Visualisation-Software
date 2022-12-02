@@ -192,7 +192,7 @@ void Grid::sampleSliceGridValues(const glm::vec3& slice, const std::pair<glm::ve
 
 /**************************/
 
-Sampler::Sampler(const std::vector<std::string>& filename, int subsample, const glm::vec3& voxelSize): image(new Tiff_image(filename)) {
+Sampler::Sampler(const std::vector<std::string>& filename, int subsample, const glm::vec3& voxelSize): image(new ImageReader(filename)) {
     glm::vec3 samplerResolution = this->image->imgResolution / static_cast<float>(subsample);
     this->resolutionRatio = this->image->imgResolution / samplerResolution;
     // If we naïvely divide the image dimensions for lowered its resolution we have problem is the case of a dimension is 1

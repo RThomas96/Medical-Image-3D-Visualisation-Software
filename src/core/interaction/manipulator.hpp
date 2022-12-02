@@ -7,9 +7,11 @@
 #include <glm/glm.hpp>
 #include <qobject.h>
 
+//! \addtogroup tools
+//! @{
+
 namespace UITool {
 
-	/// @ingroup uitools
 	/// @brief The CustomConstraint class can be applied to a manipulator to constrain its movements.
 	/// @details This constraint ensure that the manipulator's translation always follow x, y and z axis.
 	/// It enhances the user interactions.
@@ -25,14 +27,12 @@ namespace UITool {
 		qglviewer::AxisPlaneConstraint* constraintz;
 	};
 
-	/// @ingroup uitools
 	/// @brief The LockConstraint class prevent a manipulator to move.
 	class LockConstraint : public qglviewer::Constraint {
 	public:
 		virtual void constrainTranslation(qglviewer::Vec& t, qglviewer::Frame* const fr);
 	};
 
-	/// @ingroup uitools
 	/// @brief The Manipulator class represents a coordinate system, defined by a position and an orientation,
 	/// that can be move/rotate with the mouse.
 	/// @details This class contain a qglviewer::ManipulatedFrame that can detect when it is grabbed by the mouse.
@@ -88,4 +88,6 @@ namespace UITool {
         bool isAtRangeForGrab;
 	};
 }	 // namespace UITool
+
+//! @}
 #endif

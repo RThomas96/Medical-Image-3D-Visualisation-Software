@@ -10,7 +10,6 @@
 
 //! \addtogroup geometry
 //! @{
-//!
 
 class AsRigidAsPossible;
 

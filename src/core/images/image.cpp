@@ -5,13 +5,13 @@
 #include <algorithm>
 #include <limits.h>
 
-SimpleTIFFImage::SimpleTIFFImage(const std::vector<std::string>& filename): tiffReader(new TIFFReader(filename)) {
+TIFFReader::TIFFReader(const std::vector<std::string>& filename): tiffReader(new TIFFReaderLibtiff(filename)) {
     this->imgResolution = this->tiffReader->getImageResolution();
     this->imgDataType = this->tiffReader->getImageInternalDataType(); 
     this->voxelSize = this->tiffReader->getVoxelSize();
 }
 
-Image::ImageDataType SimpleTIFFImage::getInternalDataType() const {
+Image::ImageDataType TIFFReader::getInternalDataType() const {
     return this->imgDataType;
 }
 
@@ -50,7 +50,7 @@ uint16_t getToLowPrecision(Image::ImageDataType imgDataType, const tdata_t& buf,
     } 
 }
 
-uint16_t SimpleTIFFImage::getValue(const glm::vec3& coord) const {
+uint16_t TIFFReader::getValue(const glm::vec3& coord) const {
     // If we read directly from the raw image we use Nearest Neighbor interpolation
     const glm::vec3 newCoord{std::floor(coord[0]), std::floor(coord[1]), std::floor(coord[2])};
     int imageIdx = newCoord[2];
@@ -110,7 +110,7 @@ void castToLowPrecision(Image::ImageDataType imgDataType, const tdata_t& buf, st
     } 
 }
 
-void SimpleTIFFImage::getSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel, std::pair<int, int>  offsets, std::pair<glm::vec3, glm::vec3> bboxes) const {
+void TIFFReader::getSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel, std::pair<int, int>  offsets, std::pair<glm::vec3, glm::vec3> bboxes) const {
     this->tiffReader->setImageToRead(sliceIdx);
 
     tdata_t buf;
@@ -126,22 +126,22 @@ void SimpleTIFFImage::getSlice(int sliceIdx, std::vector<std::uint16_t>& result,
 
 /***/
 
-TIFFReader::TIFFReader(const std::vector<std::string>& filename): filenames(filename) {
+TIFFReaderLibtiff::TIFFReaderLibtiff(const std::vector<std::string>& filename): filenames(filename) {
     TIFFSetWarningHandler(nullptr); // Prevent to display warning
     this->tif = TIFFOpen(this->filenames[0].c_str(), "r");
     this->openedImage = 0;
 }
 
-void TIFFReader::openImage(int imageIdx) {
+void TIFFReaderLibtiff::openImage(int imageIdx) {
     TIFFClose(this->tif);
     this->tif = TIFFOpen(this->filenames[imageIdx].c_str(), "r");
 }
 
-void TIFFReader::closeImage() {
+void TIFFReaderLibtiff::closeImage() {
     TIFFClose(this->tif);
 }
 
-glm::vec3 TIFFReader::getImageResolution() const {
+glm::vec3 TIFFReaderLibtiff::getImageResolution() const {
     uint32_t width = 0;
     uint32_t depth = 0;
     uint32_t length = 0;
@@ -158,7 +158,7 @@ glm::vec3 TIFFReader::getImageResolution() const {
     return glm::vec3(width, length, dircount);
 }
 
-glm::vec3 TIFFReader::getVoxelSize() const {
+glm::vec3 TIFFReaderLibtiff::getVoxelSize() const {
     float Xres = 0;
     float Yres = 0;
     int foundX = TIFFGetField(tif, TIFFTAG_XRESOLUTION , &Xres);
@@ -182,7 +182,7 @@ glm::vec3 TIFFReader::getVoxelSize() const {
     return voxelSize;
 }
 
-Image::ImageDataType TIFFReader::getImageInternalDataType() const {
+Image::ImageDataType TIFFReaderLibtiff::getImageInternalDataType() const {
     uint16_t sf = SAMPLEFORMAT_VOID;
     int result	= TIFFGetField(tif, TIFFTAG_SAMPLEFORMAT, &sf);
     if (result != 1) {
@@ -269,7 +269,7 @@ Image::ImageDataType TIFFReader::getImageInternalDataType() const {
 
 }
 
-void TIFFReader::setImageToRead(int sliceIdx) {
+void TIFFReaderLibtiff::setImageToRead(int sliceIdx) {
     if(this->filenames.size() > 1) {
         this->openImage(sliceIdx);
     } else {
@@ -277,10 +277,10 @@ void TIFFReader::setImageToRead(int sliceIdx) {
     }
 }
 
-tsize_t TIFFReader::getScanLineSize() const {
+tsize_t TIFFReaderLibtiff::getScanLineSize() const {
     return TIFFScanlineSize(this->tif);
 }
 
-int TIFFReader::readScanline(tdata_t buf, uint32 row) const {
+int TIFFReaderLibtiff::readScanline(tdata_t buf, uint32 row) const {
     return TIFFReadScanline(this->tif, buf, row);
 }

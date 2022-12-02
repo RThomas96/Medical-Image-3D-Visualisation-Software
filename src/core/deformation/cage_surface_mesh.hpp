@@ -20,12 +20,24 @@
 
 #include "CholmodLSStruct.h"
 
+//! \defgroup deformation Cage system
+//! @brief 
+//! All classes that manage cages.
+//! Main classes are:
+//! - Cage
+//! - CageMVC
+//! - CageGreen
+//! - CageGreenLRI
+
 //! \addtogroup deformation
 //! @{
 
+//! @brief Interface class for a Cage. A cage is a surface mesh which propagates its deformation to another mesh using cage coordinates.
+//! The functions reInitialize(), computeCoordinates() and updateMeshToDeform() are all implemented in each child classes CageMVC, CageGreen and CageGreenLRI, this way the class Cage can call any of these functions whatever the cage type. Cage inherite from SurfaceMesh allowing the Scene to manipulate it exactly like a regular mesh. However, internally CageMVC, CageGreen and CageGreenLRI reimplement the movePoint function to deform the linked mesh.
 struct Cage : public SurfaceMesh {
 
-    bool moveMeshToDeform;// Indicate if translation, rotation, etc, move the mesh to deform too
+    //! @brief If set to False the cage do not deform the linked mesh.
+    bool moveMeshToDeform;
 
     BaseMesh * meshToDeform;
     std::vector<glm::vec3> originalVertices;
@@ -38,10 +50,15 @@ struct Cage : public SurfaceMesh {
         this->originalVertices = this->meshToDeform->getVertices();
     };
     
+    //! @brief Compute cage coordinates, normals and reset the resting position of the cage (assign originalVertices to meshToDeform vertices).
     virtual void reInitialize() = 0;
+    //! @brief Compute cage coordinates
     virtual void computeCoordinates() = 0;
+    //! @brief Update the vertices position of the linked mesh. 
     virtual void updateMeshToDeform() = 0;
 
+    //! @brief Move all the cage vertices to new positions.
+    //! @param cage New positions of the cage vertices.
     void applyCage(const std::vector<glm::vec3>& cage);
 
     void changeMeshToDeform(BaseMesh * meshToDeform) {
@@ -94,6 +111,7 @@ struct Cage : public SurfaceMesh {
     virtual ~Cage(){};
 };
 
+//! @brief Cage that deform its linked mesh using MVC coordinates.
 struct CageMVC : Cage {
 
     std::vector<std::vector<std::pair<unsigned int , float>>> MVCCoordinates;
@@ -112,6 +130,10 @@ struct CageMVC : Cage {
     void updateMeshToDeform() override;
 };
 
+//! @brief Cage that deform its linked mesh using Green coordinates.
+//! This cage type cannot work is some vertices of the linked mesh are outside the cage, because Green coordinates are not defined outside the cage, in such scenario a CageGreenLRO should be used.
+//! If a CageGreenLRI is created while no vertices are outside the cage, it is automatically detected and the CageGreenLRI become a CageGreen.
+//! Therefore a CageGreenLRI should always be used to leverage this automatic detection, as it is done in Scene::openCage() .
 struct CageGreen : Cage {
 
     std::vector<std::vector<double>> phiCoordinates;
@@ -147,7 +169,10 @@ struct CageGreen : Cage {
     }
 };
 
-// Only for green, with tetrahedral mesh
+//! @brief Cage that deform its linked mesh using Green coordinates, and that propagates its deformations even for vertices outside the cage using Laplacian.
+//! If a CageGreenLRI is created while no vertices are outside the cage, it is automatically detected and the CageGreenLRI become a CageGreen.
+//! Therefore a CageGreenLRI should always be used to leverage this automatic detection, as it is done in Scene::openCage() .
+//! \todo This cage is not able to deform tetrahedrons with no vertex inside the cage. Only tetrahedrons with one or more vertices inside the cage are correctly deformed.
 struct CageGreenLRI : CageGreen {
 
     // TODO: to fill even before initialization !!!!

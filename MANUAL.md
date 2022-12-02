@@ -1,5 +1,6 @@
 # Manual 
-This document is a manual aim for for both developpers and users.
+
+This document is a guide aim for for both developpers and users.
 For the user this manual explain how to use the software.
 For developper it explain where the code is located for each feature, the in depth explanations of the code are directly in it, in the Doxygen documentation.
 To compile the code see [TODO].
@@ -7,10 +8,24 @@ For the FAQ see [TODO].
 
 ## General
 
-Explain why this is important to select the CAGE.
+This software interactively visualise 3D images and allow to apply non-rigid deformations.
+The visualisation is based on a raycasting process on the GPU, so it require a graphic card.
+To guide the rays we use a Tetrahedral Mesh extracted from the image, called a TM.
+However this TM can be deformed to deform the image, and its visualisation capabilities allow to visualise the deformations in real time.
+It is very costly to deform a Tetrahedral Mesh, therefore we use another deformation structure which is a cage.
+The cage is a 3D surface mesh that can propagate its deformations to the TM using cage coordinates.
+Now that we can work on surface mesh we can apply non rigid deformations like ARAP deformations.
+
+To summary we have three main concepts that the software interact with, the 3D image itself, the TM used for deformation and visualisation of the image, and the cage used to deform the later.
+All of the editions will be applied on the cage.
+
+More details on the paper from this software.
+
+IMPORTANT: for now the software do not embed a way to generate cages or tetrahedral meshes, we recommend the CGAL library.
 
 ## Glossary
 
+TM
 image slice:
 
 ### User interface
@@ -18,6 +33,7 @@ image slice:
 ## Opening
 
 ### Open image
+
 To open a 3D image use the [Open] button in the tool bar.
 Some presets are available to automatically fill this form and open a Mouse Brain Atlas or a mouse head MRI.
 As these files as been tested this is a good way to check if the software behave correctly on your machine.
@@ -96,6 +112,12 @@ To activate/deactivate the display of either the Grids, Meshes or the Tetrahedra
 
 [LIMITATION] The display toggle affect all the opened objects, there is no interface for per object display management. It is important to note that this is an interface issue only, all the code is ready to welcome this feature.
 
+#### Alpha blending
+
+If you have multiple images opened, it is possible to enable the MultiView option in the [Display] section, this enable the use of the alpha slider.
+By changing the slider value the user can change the transparency allowing the visualisation of two images simulaneously.
+
+
 ####Color control: unsegmented mode
 For visualisation the software map each pixel value of the image with a color.
 This color map can be controlled using two different modes, the segmented and unsegmented mode, that can be acceded throught the bottom pannel.
@@ -156,6 +178,7 @@ Available options are from top to bottom:
 
 [IMPROVEMENT] The real time 2D view update and not only when the mouse is released has been deactivated to avoid slowing down the software. The option is not exposed to the user.
 [LIMITATION] Problem with the mixed mode, images has been cached in order to quickly naviguate from slide to slide, therefore they are stored into a 3D array. Changing the resolution change the size of the 3D array and discard all the previous data and this is not how the viewer is designed.
+[BUG] The 2D view do not work with a subsampled image.
 
 ## Edition
 The software allow to deform the image using various tools.
@@ -194,34 +217,88 @@ Available options are:
 
 #### Direct tool
 
-This tool allow to move each vertew independantly.
+This tool allows to move each vertew independantly.
 While activated, all vertices become red, indicating that they can be grabbed.
 Each vertice can then be grabbed and moved arround freely.
 This is the only tool than can be used on the TM directly.
 
 #### ARAP tool
 
+This tool allows to apply complexe deformations to the image by applying As Rigid As Possible deformations to the cage.
+The tool allows to mark some vertices as fixed, and then move any vertices subset while keeping the fixed vertices on place.
+This is very usefull is a registration context when some parts of the images are already correctly aligned, but some other parts need adjustements for a better alignement.
+Available shortcuts are:
+- Maj+alt / left click: mark vertices as fixed.
+- Maj / left click: mark vertices as moving.
+- Maj+ctrl / left click: unmark vertices.
+- Maj+right click: show 3D manipulator to move the vertices marked as moving.
+
 #### Slice tool
+
+This tool has been created to solve a precise problem.
+It allow to apply ARAP deformation but on slices of the mesh.
+Use the X, Y and Y buttons to choose which axis to move.
+To move an axis, use the cutting plane section.
+A 3D manipulator is automatically displayed to move the slice.
+All the green vertices will be moved, all the grey vertices will remain fixed and all the red vertices will move automatically.
+To adjust the moving portion (green points) use Ctrl+"+".
+To adjust the automatically moving part (grey vertices) use the "+" and "-" keys.
+WARNING: use P to use APSS projection. Only work if two meshes are opened.
+
+[IMPROVEMENT] no really usable for now because fixed points arent keeped
 
 #### Marker tool
 
+This tool allows to match vertices of two different meshes.
+First select a vertice, and then select a point in the 3D viewport by pointing it with the mouse and press the key Q.
+The tool will apply a deformation to move the selected vertex to match the placed 3D point.
+
 ### History
 
-## Registration
+The software has an history to undo/redo editions, these options are available on the tool bar.
+The reset button allow to go back to the initial state of the mesh.
 
 ## Export
 
-## How to add a tool
+To export the resulting image use the Export button in the toolbar.
+Available options from top to bottom are:
+- Combobox: choose whith image to export.
+- Reset button: reset all paramameters of this Window.
+- "Use colormap" checkbox : use the currently loaded colormap, otherwise the resulting image will be a shade of grey.
+- "Export at original resolution" checkbox:  prefill voxel and image size to export with the same voxel as the original image. This is particularly usefull when an image has been loaded with a subsample.
+- "BBox min" triple spinbox: set the image portion you want to export. A visualisation is available on the viewport.
+- "Voxel size": set the voxel size of the image to be exported. If this value is changed the image size will be automatically updated.
+- "Image size": set the image size of the image to be exported. If this value is changed the voxel size will be automatically updated.
 
-## Formats
+
+## File formats
+
+Here is a list of the file fomats interacting with the software.
 
 ### TIFF
 
+This is the main format handled by the software.
+All images to be loaded should be with this format.
+
 ### Mesh
+
+This format is used for Tetrahedral Meshes.
 
 ### Off
 
+This format is used for Surfacic Meshes.
+IMPORTANT: it only handle simple file with vertices then faces.
+Other cases like faces with 4 vertices or materials are not handled.
+For example off format directl from Blender are not readed correctly you need to edit the file manually.
+
+[IMPROVEMENT] Handle files from Blender.
+
 ### Colormap
+
+This is a custom format to save and load color map.
+You have an example in: resources/data/colorMapPaper.json.
+
+### Graph
 
 ## TODO
 
@@ -252,9 +329,7 @@ This is the only tool than can be used on the TM directly.
 - The 2D view do not implement HSV to RGB and GrayScale
 - The 2D view do not implement slide mode value selection
 
-## Cleaned
-
-
+## Documented files
 
 ./core/geometry/grid.hpp
 ./core/geometry/grid.cpp
@@ -341,3 +416,8 @@ This is the only tool than can be used on the TM directly.
 ./qt/scene.hpp
 ./qt/scene_control.cpp
 ./qt/scene_control.hpp
+
+## FAQ
+
+### How to add a tool ?
+

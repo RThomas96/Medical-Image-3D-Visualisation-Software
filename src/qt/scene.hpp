@@ -217,7 +217,16 @@ public:
     void writeDeformedImage(const std::string& filename, const std::string& gridName, const glm::vec3& bbMin, const glm::vec3& bbMax, bool useColorMap, const glm::vec3& voxelSize);
     void writeDeformedImageGeneric(const std::string& filename, const std::string& gridName, const glm::vec3& bbMin, const glm::vec3& bbMax, Image::ImageDataType imgDataType, bool useColorMap, const glm::vec3& voxelSize);
     template<typename DataType>
+
+    //! @brief Write a deformed image into a TIFF image file.
+    //! This function uses the TinyTIFF library, and TIFF is the only format supported.
+    //! The TinyTIFF library has been choosen after several failed attempts to implement a writer using the tedious C library libtiff.
     void writeDeformedImageTemplated(const std::string& filename, const std::string& gridName, const glm::vec3& bbMin, const glm::vec3& bbMax, int bit, Image::ImageDataType dataType, bool useColorMap, const glm::vec3& imageVoxelSize);
+
+    //! @brief Write an image into a TIFF file.
+    //! This function is currently unused but still usefull for further developement.
+    void writeGreyscaleTIFFImage(const std::string& filename, const glm::vec3& imgDimensions, const std::vector<std::vector<uint16_t>>& data);
+
 
 signals:
     // Signals to the meshManipulator tools
@@ -273,8 +282,6 @@ public slots:
     // *************** //
     // Connected to UI //
     // *************** //
-
-    void writeGreyscaleTIFFImage(const std::string& filename, const glm::vec3& imgDimensions, const std::vector<std::vector<uint16_t>>& data);
 
     // Tool management
     void updateTools(UITool::MeshManipulatorType tool);

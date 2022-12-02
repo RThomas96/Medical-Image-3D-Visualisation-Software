@@ -15,13 +15,15 @@ class GraphMesh;
 namespace UITool {
 	namespace GL {
 
-        // Used by increment/decrementSize function to easily designate which primitive to draw bigger or smaller
+        //! @ingroup gl
+        //! @brief Used by increment/decrementSize function to easily designate which primitive to draw bigger or smaller
         enum DrawingPrimitive {
             SPHERE,
             LINE,
             GUIZMO
         };
 
+        //! @ingroup gl
         class DrawableUI : public QObject {
             Q_OBJECT;
 		public:

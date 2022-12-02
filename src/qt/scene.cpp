@@ -1321,7 +1321,7 @@ int Scene::autofitSubsample(int initialSubsample, const std::vector<std::string>
     bool autofitSizeRequired = false;
     bool autofitMemoryRequired = false;
 
-    TIFFReader tiffReader(imgFilenames);
+    TIFFReaderLibtiff tiffReader(imgFilenames);
     glm::vec3 imgResolution = tiffReader.getImageResolution();
     float maxResolution = std::max(imgResolution[0], std::max(imgResolution[1], imgResolution[2]));
     if(maxResolution > this->maximumTextureSize) {

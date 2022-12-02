@@ -16,7 +16,7 @@ class SceneGL;
 namespace UITool {
     //class MeshManipulator;
 
-	/// @defgroup gl GL
+    /// @defgroup gl GL
 	/// @brief All classes that interact with OpenGL. Allow a separation between backend and frontend.
 	namespace GL {
 

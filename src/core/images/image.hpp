@@ -18,36 +18,40 @@
 #include <QXmlStreamReader>
 
 //! \defgroup img Image
+//! @brief Modules to read images from multiple formats. 
+//! The main class is ImageReader .
+//! These classes do not implement any writing functions.
+//! The only functions to write images are Scene::writeDeformedImageTemplated() and Scene::writeGreyscaleTIFFImage() .
+//
 //! \addtogroup img
 //! @{
 
-//! @brief The TIFFReader class is a simple libtiff overlay to read a full tiff image row with an easier API than the raw libtiff.
+//! @brief A set of functions to simplify the libtiff API.
 //!
-//! This class can handle multiple tiff images.
 //! When reading a tiff image with the libtiff there is no notion of pixel, slice or datatype, it just read from
 //! an image and copy the data into a buffer of undetermined datatype.
-//! Thus this class can only read a full image row and get its raw data.
-struct TIFFReader {
+//! This class can handle multiple tiff images.
+struct TIFFReaderLibtiff {
 
     TIFF* tif;
     int openedImage;
     std::vector<std::string> filenames;
 
-    TIFFReader(const std::vector<std::string>& filename);
+    TIFFReaderLibtiff(const std::vector<std::string>& filename);
 
     glm::vec3 getImageResolution() const;
     glm::vec3 getVoxelSize() const;
     Image::ImageDataType getImageInternalDataType() const;
 
-    //! Get how many values are contained in a single row of the image
+    //! @brief Get how many values are contained in a single row of the image
     tsize_t getScanLineSize() const;
 
     int readScanline(tdata_t buf, uint32 row) const;
 
-    //! The TIFFReader class can handle multiple tiff images, this function set which image has to be read.
+    //! @brief The TIFFReader class can handle multiple tiff images, this function set which image has to be read.
     void openImage(int imageIdx);
 
-    //! A single tiff image file can contain an entire stack of images, this function set which image has to be read in the current tiff image.
+    //! @brief A single tiff image file can contain an entire stack of images, this function set which image has to be read in the current tiff image.
     void setImageToRead(int sliceIdx);
 
     void closeImage();
@@ -59,6 +63,7 @@ enum class ImageFormat {
     DIM_IMA
 };
 
+//! @brief Get a single value from a buffer casted from imgDataType type to DataType type
 template<typename DataType>
 DataType getToLowPrecision(Image::ImageDataType imgDataType, const tdata_t& buf, int idx) {
     if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_8)) {
@@ -94,6 +99,7 @@ DataType getToLowPrecision(Image::ImageDataType imgDataType, const tdata_t& buf,
     }
 }
 
+//! @brief Get an entire buffer casted from imgDataType type to DataType type
 template<typename DataType>
 DataType getImageToLowPrecision(Image::ImageDataType imgDataType, const tdata_t& buf) {
     if(imgDataType == (Image::ImageDataType::Unsigned | Image::ImageDataType::Bit_8)) {
@@ -189,17 +195,17 @@ void castToLowPrecision2(Image::ImageDataType imgDataType, const tdata_t& buf, s
 }
 
 
-struct SimpleTIFFImage {
+struct TIFFReader {
 
     glm::vec3 voxelSize; // Read from the image, not necessarily the one used in the software
     glm::vec3 imgResolution;
     Image::ImageDataType imgDataType;
 
-    TIFFReader * tiffReader;
+    TIFFReaderLibtiff * tiffReader;
 
-    SimpleTIFFImage(const std::vector<std::string>& filename);
+    TIFFReader(const std::vector<std::string>& filename);
 
-    ~SimpleTIFFImage() {
+    ~TIFFReader() {
         this->tiffReader->closeImage();
     }
 
@@ -218,58 +224,28 @@ struct SimpleTIFFImage {
         return res;
     }
 
-    //template<typename DataType>
-    //void getImage(int imgIdx, std::vector<DataType>& res) const {
-    //    res.clear();
-    //    res.reserve(imgResolution.x * imgResolution.y);
+    template <typename data_t>
+    void getImage(int sliceIdx, std::vector<data_t>& result, std::pair<glm::vec3, glm::vec3> bboxes) const {
+        this->tiffReader->setImageToRead(sliceIdx);
 
-    //    this->tiffReader->setImageToRead(imgIdx);
+        tdata_t buf;
+        buf = _TIFFmalloc(this->tiffReader->getScanLineSize());
 
-    //    tdata_t buf = _TIFFmalloc(this->tiffReader->getScanLineSize());
-    //    for(uint32_t i = 0; i < imgResolution.y; ++i) {
-    //        this->tiffReader->readScanline(buf, i);
-    //        //DataType* img = getImageToLowPrecision<DataType*>(this->getInternalDataType(), buf);
-    //        for(int j = 0; j < imgResolution.x; ++j) {
-    //            res.push_back(getToLowPrecision<DataType>(this->getInternalDataType(), buf, j));
-    //        }
-    //    }
-    //    _TIFFfree(buf);
-    //}
-
-template <typename data_t>
-void getImage(int sliceIdx, std::vector<data_t>& result, std::pair<glm::vec3, glm::vec3> bboxes) const {
-    this->tiffReader->setImageToRead(sliceIdx);
-
-    tdata_t buf;
-    buf = _TIFFmalloc(this->tiffReader->getScanLineSize());
-
-    uint32 row;
-    for (row = bboxes.first[1]; row < bboxes.second[1]; row+=1) {
-        this->tiffReader->readScanline(buf, row);
-        castToLowPrecision2(this->getInternalDataType(), buf, result, 1, 1, bboxes);
+        uint32 row;
+        for (row = bboxes.first[1]; row < bboxes.second[1]; row+=1) {
+            this->tiffReader->readScanline(buf, row);
+            castToLowPrecision2(this->getInternalDataType(), buf, result, 1, 1, bboxes);
+        }
+        _TIFFfree(buf);
     }
-    _TIFFfree(buf);
-}
 
     Image::ImageDataType getInternalDataType() const;
 
-    //! @brief The getSlice function retrieve images at various resolutions, to do so, it can skip pixels.
-    //! These function parameters are managed by the grid class. This function do not need to be used manually.
-    //! @param offsets With offsets = {1, 1}, no pixel are skipped and a slice at the original image resolution is returned.
-    //! With offsets = {2, 1}, all pixels with odd x coordinates will be skipped, which result with a slice with
-    //! half the resolution on the x axis.
-    //! With offsets = {3, 3}, the result image resolution will be divided per 3 on x and y axis.
-    //! @param bboxes Allow to query only a subregion of the image using this bbox.
-    //! @param nbChannel WARNING: this parameter isn't fully supported yet, for now it just duplicate the data to simulate multiple channels.
-    //! @note As the z axis is fixed (the sliceIdx parameter), you cannot change the z resolution
+    //! @brief See ImageReader::getSlice() .
     void getSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel, std::pair<int, int>  offsets, std::pair<glm::vec3, glm::vec3> bboxes) const;
 };
 
 inline bool fileExist (const std::string& name) {
-  //struct stat buffer;
-  //struct stat lbuffer;// For symbolic link
-  //return (stat (name.c_str(), &buffer) == 0) || (lstat (name.c_str(), &lbuffer) == 0);
-  //return std::filesystem::exists(name.c_str());
   if (FILE *file = fopen(name.c_str(), "r")) {
       fclose(file);
       return true;
@@ -278,8 +254,8 @@ inline bool fileExist (const std::string& name) {
   }
 }
 
-struct SimpleOMETIFFImage : public SimpleTIFFImage {
-    SimpleOMETIFFImage(const std::vector<std::string>& filename) : SimpleTIFFImage(filename) {
+struct OMETIFFReader : public TIFFReader {
+    OMETIFFReader(const std::vector<std::string>& filename) : TIFFReader(filename) {
         std::cout << "Start of the OME-TIFF format parsing..." << std::endl;
         QDir path = QDir(QFileInfo(filename[0].c_str()).absolutePath());
         this->tiffReader->filenames.clear();
@@ -314,7 +290,7 @@ struct SimpleOMETIFFImage : public SimpleTIFFImage {
 };
 
 
-struct SimpleDIMImage {
+struct DIMReader {
 
     glm::vec3 voxelSize; // Read from the image, not necessarily the one used in the software
     glm::vec3 imgResolution;
@@ -322,7 +298,7 @@ struct SimpleDIMImage {
 
     std::vector<uint16_t> data;
 
-    SimpleDIMImage(const std::vector<std::string>& filename) {
+    DIMReader(const std::vector<std::string>& filename) {
         QString imaName = QString(filename[0].c_str());
 
         imaName.replace(".dim", ".ima" );
@@ -410,7 +386,7 @@ struct SimpleDIMImage {
         this->data = _data;
     }
 
-    ~SimpleDIMImage() {
+    ~DIMReader() {
     }
 
     int from3DTo1D(const glm::vec3& p) const {
@@ -425,15 +401,7 @@ struct SimpleDIMImage {
         return this->imgDataType;
     }
 
-    //! @brief The getSlice function retrieve images at various resolutions, to do so, it can skip pixels.
-    //! These function parameters are managed by the grid class. This function do not need to be used manually.
-    //! @param offsets With offsets = {1, 1}, no pixel are skipped and a slice at the original image resolution is returned.
-    //! With offsets = {2, 1}, all pixels with odd x coordinates will be skipped, which result with a slice with
-    //! half the resolution on the x axis.
-    //! With offsets = {3, 3}, the result image resolution will be divided per 3 on x and y axis.
-    //! @param bboxes Allow to query only a subregion of the image using this bbox.
-    //! @param nbChannel WARNING: this parameter isn't fully supported yet, for now it just duplicate the data to simulate multiple channels.
-    //! @note As the z axis is fixed (the sliceIdx parameter), you cannot change the z resolution
+    //! @brief See ImageReader::getSlice() .
     void getSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel, std::pair<int, int>  offsets, std::pair<glm::vec3, glm::vec3> bboxes) const {
         float k = sliceIdx;
         result.clear();
@@ -447,22 +415,18 @@ struct SimpleDIMImage {
     }
 };
 
-//! @brief SimpleImage read data from an image using a TIFFReader, and store them in a cache.
-//!
-//! TIFFReader is a very low level class that can only read a full image row, SimpleImage is a class that provide a more convenient access to the data.
-//! For example, as TIFFReader return data of type (void*), TIFFImage take in charge to cast the data to the right type.
-//! It also use the cache as a storage to speed up the query process.
-//! The cache is also used to benefit from the features of the CImg class, like the interpolation.
-//! The getSlice function as numerous of options as nbChannel, offsets or bboxes to query respectively multiple channels, 
-//! to skip voxels or to query only a subregion of the image.
-//! These options are managed by the Sampler class, that is in charge to call TIFFImage the right way to query data.
-struct Tiff_image {
+//! @brief Provides functions to read values from a TIFF, OME-TIFF or DIM-IMA image.
+//! \warning DIM-IMA reader has not been maintained from a long time and is not available for the user.
+//! \note
+//! This class do not implement any writing functions.
+//! The only functions to write images are Scene::writeDeformedImageTemplated() and Scene::writeGreyscaleTIFFImage() .
+struct ImageReader {
 
     ImageFormat imageFormat;
 
-    SimpleTIFFImage * tiffImageReader;
-    SimpleOMETIFFImage * omeTiffImageReader;
-    SimpleDIMImage * dimImageReader;
+    TIFFReader * tiffImageReader;
+    OMETIFFReader * omeTiffImageReader;
+    DIMReader * dimImageReader;
 
     glm::vec3 voxelSize; // Read from the image, not necessarily the one used in the software
     glm::vec3 imgResolution;
@@ -471,12 +435,12 @@ struct Tiff_image {
     uint16_t maxValue;
     uint16_t minValue;
 
-    Tiff_image(const std::vector<std::string>& filename) {
+    ImageReader(const std::vector<std::string>& filename) {
         std::string extension = filename[0].substr(filename[0].find_last_of(".") + 1);
         if(filename.size() > 0 || extension == "tif" || extension == "tiff") {
             if(filename[0].substr(filename[0].find_first_of(".") + 1).find("ome")!=std::string::npos) {
                 this->imageFormat = ImageFormat::OME_TIFF;
-                this->omeTiffImageReader = new SimpleOMETIFFImage(filename);
+                this->omeTiffImageReader = new OMETIFFReader(filename);
                 this->tiffImageReader = nullptr;
                 this->dimImageReader = nullptr;
                 this->voxelSize = this->omeTiffImageReader->voxelSize;
@@ -485,7 +449,7 @@ struct Tiff_image {
                 return;
             } else {
                 this->imageFormat = ImageFormat::TIFF;
-                this->tiffImageReader = new SimpleTIFFImage(filename);
+                this->tiffImageReader = new TIFFReader(filename);
                 this->omeTiffImageReader = nullptr;
                 this->dimImageReader = nullptr;
                 this->voxelSize = this->tiffImageReader->voxelSize;
@@ -499,7 +463,7 @@ struct Tiff_image {
             this->imageFormat = ImageFormat::DIM_IMA;
             this->tiffImageReader = nullptr;
             this->omeTiffImageReader = nullptr;
-            this->dimImageReader = new SimpleDIMImage(filename);
+            this->dimImageReader = new DIMReader(filename);
             this->voxelSize = this->dimImageReader->voxelSize;
             this->imgResolution = this->dimImageReader->imgResolution;
             this->imgDataType = this->dimImageReader->imgDataType;
@@ -507,7 +471,7 @@ struct Tiff_image {
         }
     }
 
-    ~Tiff_image() {
+    ~ImageReader() {
         delete this->dimImageReader;
         delete this->tiffImageReader;
     }
@@ -545,6 +509,15 @@ struct Tiff_image {
         return this->imgDataType;
     }
 
+    //! @brief Get one image of an image stack.
+    //! @param sliceIdx Image index to get.
+    //! @param nbChannel WARNING: this parameter isn't fully supported yet, for now it just duplicate the data to simulate multiple channels.
+    //! @param offsets With offsets = {1, 1}, no pixel are skipped and a slice at the original image resolution is returned.
+    //! With offsets = {2, 1}, all pixels with odd x coordinates will be skipped, which result with a slice with
+    //! half the resolution on the x axis.
+    //! With offsets = {3, 3}, the result image resolution will be divided per 3 on x and y axis.
+    //! @param bboxes Allow to query only a subregion of the image using this bbox.
+    //! @note As the z axis is fixed (the sliceIdx parameter), you cannot change the z resolution
     void getSlice(int sliceIdx, std::vector<std::uint16_t>& result, int nbChannel, std::pair<int, int>  offsets, std::pair<glm::vec3, glm::vec3> bboxes) const {
         switch(this->imageFormat) {
             case ImageFormat::TIFF :

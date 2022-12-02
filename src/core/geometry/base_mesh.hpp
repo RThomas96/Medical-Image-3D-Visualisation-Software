@@ -9,11 +9,26 @@
 #include <ctime>
 #include <chrono>
 
+//! \defgroup geometry Geometry
+//! @brief 
+//! All classes that manage meshes.
+//! Main classes are:
+//! - Grid
+//! - BaseMesh
+//! - SurfaceMesh
+//! - TetMesh
+//! - GraphMesh
+
+//! \addtogroup geometry
+//! @{
+
+//! @brief Store a stack of vertices positions to undo/redo operations.
 struct History {
     std::chrono::time_point<std::chrono::system_clock> timer;
     bool isActive;
     int currentState;
     std::vector<std::vector<glm::vec3>> vertexHistory;
+    //! @brief Store the 3D guizmo orientations
     std::vector<std::array<glm::vec3, 3>> coordinateHistory;
 
     History(const std::vector<glm::vec3> initialPoints, std::array<glm::vec3, 3>& coordinate): vertexHistory({initialPoints}), coordinateHistory({coordinate}), currentState(0), isActive(true), timer(std::chrono::system_clock::now()) {}
@@ -81,10 +96,8 @@ namespace UITool {
     class Manipulator;
 }
 
-//! \defgroup geometry Geometry
-//! \addtogroup geometry
-//! @{
-
+//! @brief A point cloud with normals, a bounding box and an history.
+//! This is an interface that contains all data and functions common to all meshes, this way the scene can apply function to all meshes indifferently.
 class BaseMesh {
 
 protected:
@@ -99,18 +112,26 @@ public:
     glm::vec3 bbMin;
     glm::vec3 bbMax;
 
-    History * history;// Allow to undo/redo between BaseMesh vertices positions
+    //! @brief Store a stack of vertices positions to undo/redo operations.
+    History * history;
+    //! @brief Add the current vertices positions to the history. It also store coordinate_system as the 3D Guizmo orientation.
+    //! @param useTimer If this option is True, the state is added only if 0.25sec is elapsed from the last state insertion. This option is no longer used as the insertion of a state is directly managed by MeshManipulator .
+    void addStateToHistory(bool useTimer = false);
+
+    //! @brief Model matrix of the mesh. WARNING: this attribute is currently used by the History only to store the 3D guizmo orientation. 
+    //! When the user undo or redo an operation he expect the 3D guizmo to restore its orientation.
+    //! So to store the 3D guizmo orientation coordinate_system attribute should be filled with the current 3D guizmo orientation before calling addStateToHistory() .
+    //! \todo This attribute is incorrectly named, this is not the coordinates_system but the current 3D guizmo orientation. Moreover it do not belong to this class.
     std::array<glm::vec3, 3> coordinate_system;
 
     glm::vec3 getDimensions() const;
 
     void updatebbox();
-    const std::vector<glm::vec3>& getVertices() const { return this->vertices; };
 
-    void addStateToHistory(bool useTimer = false);
 
     int getNbVertices() const;
     const glm::vec3& getVertice(int i) const;
+    const std::vector<glm::vec3>& getVertices() const { return this->vertices; };
     const glm::vec3& getVerticeNormal(int i) const;
     glm::vec3 getOrigin() const;
 
@@ -119,6 +140,7 @@ public:
     virtual void scale(const glm::vec3& scale);
     virtual void setOrigin(const glm::vec3& origin);
 
+    //! @brief Get the position of the intersection between a ray and the mesh. See Grid::getPositionOfRayIntersection().
     virtual bool getPositionOfRayIntersection(const glm::vec3& origin, const glm::vec3& direction, const std::vector<bool>& visibilityMap, const glm::vec3& planePos, glm::vec3& res) const = 0;
 
     virtual void movePoints(const std::vector<int>& origins, const std::vector<glm::vec3>& targets);
@@ -129,7 +151,6 @@ public:
     virtual void computeNormals() = 0;
     virtual ~BaseMesh(){};
 };
-
 //! @}
 
 #endif

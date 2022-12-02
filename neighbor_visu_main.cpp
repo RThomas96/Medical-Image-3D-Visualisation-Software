@@ -10,13 +10,23 @@
 
 #include "src/qt/main_widget.hpp"
 
-#if (defined(_WIN32) || defined(_WIN64))
-extern "C"
-{
-	//	__declspec(dllexport) unsigned long NvOptimusEnablement		   = 0x00000001;
-	//	__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
-}
-#endif
+/*! \mainpage Developper guide
+ *
+ * \section sec_intro Introduction
+ *
+ * Welcome to the developper guide.
+ * This guide is aim to provide quick overview of where the code for each feature is located.
+ * Some of the classe's code is not documented, this guide allows to summarize which files are involved for each feature.
+ *
+ * The documentation is organised into categories:
+ * - %Image reading and cache management: \ref img
+ * - %Mesh structure, reading, writing, generation, grid: \ref geometry
+ * - %Cage system: \ref deformation
+ * - %Move tool, Direct tool, ARAP tool, selection etc: \ref tools
+ * - 3D rendering: \ref gl
+ * - %User interface: \ref ui
+ *
+ */
 
 int main(int argc, char* argv[]) {
 	QSurfaceFormat fmt;

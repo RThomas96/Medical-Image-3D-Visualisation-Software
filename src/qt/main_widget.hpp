@@ -71,6 +71,11 @@
 
 class ColorBoundWidget;
 
+//! @defgroup ui UI
+//! @brief All classes used for user interface.
+//! @details It include static components like sliders or double sliders, as well as complex components like forms.
+
+//! @ingroup ui
 class MainWidget : public QMainWindow {
 	Q_OBJECT
 public:
