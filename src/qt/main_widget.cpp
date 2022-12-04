@@ -314,7 +314,7 @@ void MainWidget::setupActions() {
     QObject::connect(this, &MainWidget::gridSelected, [this](){this->actionManager->getAction("ToggleSliceTool")->setDisabled(true);});
     QObject::connect(this, &MainWidget::meshSelected, [this](){this->actionManager->getAction("ToggleSliceTool")->setDisabled(false);});
 
-    this->actionManager->createQActionToggleButton("ToggleMarkerTool", "Marker", "Ctrl+A", "Activate Marker tool", "slice");
+    this->actionManager->createQActionToggleButton("ToggleMarkerTool", "Marker", "Ctrl+A", "Activate Marker tool", "register");
     QObject::connect(this->actionManager->getAction("ToggleMarkerTool"), &QAction::triggered, [this](){this->scene->updateTools(MeshManipulatorType::MARKER);});
     QObject::connect(this->actionManager->getAction("ToggleMarkerTool"), &QAction::triggered, [this](){this->changeCurrentTool(MeshManipulatorType::MARKER);});
     QObject::connect(this, &MainWidget::gridSelected, [this](){this->actionManager->getAction("ToggleMarkerTool")->setDisabled(true);});

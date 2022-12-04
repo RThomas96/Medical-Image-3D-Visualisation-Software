@@ -1,275 +1,404 @@
 # Manual 
 
-This document is a guide aim for for both developpers and users.
-For the user this manual explain how to use the software.
-For developper it explain where the code is located for each feature, the in depth explanations of the code are directly in it, in the Doxygen documentation.
-To compile the code see [TODO].
-For the FAQ see [TODO].
+[fig_general]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/general.svg "general" 
+[fig_open_image]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/openImage.png "Open image UI" 
+[fig_open_image_mesh]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/openImageMesh.png "Open image, mesh opening part UI" 
+[fig_open_image_cage]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/openImageCage.png "Open image, cage opening part UI" 
+[fig_open_mesh]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/openMesh.png "Open mesh UI" 
+[fig_cutting_planes]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/cuttingPlanes.png "Cutting planes UI" 
+[fig_display]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/display.png "Display pannel UI" 
+[fig_multi_view]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/multiView.png "MultiView button" 
+[fig_alpha_low]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/alphaLow.png "general" 
+[fig_alpha_high]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/alphaHigh.png "general" 
+[fig_unsegmented_mode]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/unsegmentedMode.png "Unsegmented mode" 
+[fig_segmented_mode]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/segmentedMode.png "Segmented mode" 
+[fig_color_unit]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/colorUnit.png "Color unit" 
+[fig_color_unit_advanced]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/colorUnitAdvanced.png "Color unit advanced" 
+[fig_color_unit_menu]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/colorUnitMenu.png "Color unit menu" 
+[fig_2D_view]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/2Dview.png "2D view menu" 
+[fig_all_tools]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/allTools.png "All tools" 
+[fig_3D_manipulator]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/3Dmanipulator.png "3D manipulator" 
+[fig_none_tool]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/noneTool.png "None tool" 
+[fig_move_tool]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/moveTool.png "Move tool" 
+[fig_direct_tool]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/directTool.png "Direct tool" 
+[fig_ARAP_tool]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/ARAPTool.png "ARAP tool" 
+[fig_slice_tool]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/sliceTool.png "Sice tool" 
+[fig_marker_tool]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/markerTool.png "Marker tool" 
+[fig_export_image]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/exportImage.png "Export image UI" 
+[fig_combobox]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/combobox.png "Object selection combobox" 
 
-## General
+This document explain how to use the software.
+In depth explanation of the code is located in the Doxygen documentation, see [README.md](./README.md).
+To build the project see [BUILD.md](./BUILD.md).
 
-This software interactively visualise 3D images and allow to apply non-rigid deformations.
-The visualisation is based on a raycasting process on the GPU, so it require a graphic card.
-To guide the rays we use a Tetrahedral Mesh extracted from the image, called a TM.
-However this TM can be deformed to deform the image, and its visualisation capabilities allow to visualise the deformations in real time.
-It is very costly to deform a Tetrahedral Mesh, therefore we use another deformation structure which is a cage.
-The cage is a 3D surface mesh that can propagate its deformations to the TM using cage coordinates.
-Now that we can work on surface mesh we can apply non rigid deformations like ARAP deformations.
+## General concept
 
-To summary we have three main concepts that the software interact with, the 3D image itself, the TM used for deformation and visualisation of the image, and the cage used to deform the later.
-All of the editions will be applied on the cage.
+Before diving into the manual itself, it is important to understand the core concepts behind this application to better grasp some design choices.
+This section is a quick summary of the __scientific publication__ resulting from this work, that can be found [here](https://diglib.eg.org/bitstream/handle/10.2312/vcbm20221191/093-097.pdf?sequence=1&isAllowed=y).
 
-More details on the paper from this software.
+This software interactively visualise and deform 3D images.
+The visualisation is based on a GPU raycasting process guided by a *Tetrahedral Mesh* extracted from the image, called *TM* for the rest of this document.
+By deforming the *TM* it is possible to deform the image visualisation in real-time.
+However, applying complex deformation methods to a *Tetrahedral Mesh* is very costly, so we use another deformation structure: a *cage*.
+A *cage* is a 3D surface mesh that can propagate its deformations to the *TM* using *cage coordinates*.
+By manipulating this surface mesh instead of the original *TM*, it is now possible to apply more complexe but very intuitive deformations in real-time, like As Rigid As Possible (*ARAP*) deformations.
 
-IMPORTANT: for now the software do not embed a way to generate cages or tetrahedral meshes, we recommend the CGAL library.
+To summaryze this software interacts with three main concepts, the 3D image itself that contain the data, the *TM* used for visualisation, and the *cage* used to deform the later.
+All __editions__ performed by the user are applied __on the *cage*__.
 
-## Glossary
+> __IMPORTANT:__ The software do not curently embed a way to generate *cages* or *TM*, we recommend the package `3D Mesh generation` from the `CGAL library`, available [here](https://doc.cgal.org/latest/Mesh_3/index.html).
 
-TM
-image slice:
+> __Note__: A *Cage* can deform any mesh, a regular *Surface Mesh*, a *Tetrahedral Mesh*, or even another *Cage*.
+
+#### Definitions
+
+- *TM*: Tetrahedral mesh used for the image visualisation.
+- *Cage*: Surface mesh used to deform the *TM*. This is the only structure the user can interact with.
+- *Slice*: A 3D image is a stack of multiple 2D images. We call *slice* one of these 2D images.
+- *Grid*: We call *Voxel Grid* or *Grid* the object composed of a 3D image with its attached *TM* and *Cage*. 
 
 ### User interface
+
+<img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/general.svg " width="768">
+
+Here is the name of each global sections of the UI:
+- ![#FF6347](https://placehold.co/15x15/B3B3B3/B3B3B3.png) `Menu`
+- ![#1589F0](https://placehold.co/15x15/FFFF4C/FFFF4C.png) `Toolbar`
+- ![#f03c15](https://placehold.co/15x15/007880/007880.png) `Left section`
+- ![#1589F0](https://placehold.co/15x15/CD9B5F/CD9B5F.png) `Viewport`
+- ![#c5f015](https://placehold.co/15x15/54FF00/54FF00.png) `Bottom section`
 
 ## Opening
 
 ### Open image
 
-To open a 3D image use the [Open] button in the tool bar.
-Some presets are available to automatically fill this form and open a Mouse Brain Atlas or a mouse head MRI.
-As these files as been tested this is a good way to check if the software behave correctly on your machine.
-You can also set a name for the image that will be used throughout the software.
+To open a 3D image use the <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/resources/icons/open.svg" width="16"> button in the [tool bar](#user-interface) .
+Use the `Presets` buttons to automatically fill this form to open either a Mouse Brain Atlas or a mouse head MRI acquisition, this is a good way to check if the software works correctly on your machine.
+Use the `Name` line edit to change the image's name that will be used throughout the software.
+
+> __IMPROVEMENT:__ If an image is loaded with a name that aleady exist the software will not work properly. Their is no verification.
 
 #### Select the image file
-To select the image file to load, click on [Select image file].
+
+<img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/openImage.png " width="512">
+
+Use the `Select image file` button to select the image file to load.
 Supported format are .tif and .ome.tiff.
 Available options are:
-- Subsample: allow to load a subsampled version of the image. The only subsample option is nearest neighbors. For a subsample value of 2, only one pixel out of two are loaded.
-- Segmented: check if the image is segmented. In this case a random color map is automatically computed, see section [Segmented mode](#Segmented mode)
-- Position: place the minimum point of the loading images's bounding box at the given position in the scene. The position do not take into account the voxel size or the subsample. If you want to place the image at the position of the [2, 2, 2] pixel, you need to manually multiply this value per the voxel size.
-- Voxel size: the real size of an image voxel. Can be in any unit (mm, cm,...) as long as it is the same for all opened images. The voxel size is internally multiplied by the subsample to keep a consistant image size.
+- `Subsample`: load a subsampled version of the image. The only interpolation algorithm available is nearest neighbors. For a subsample value of 2, only one pixel out of two are loaded.
+- `Segmented`: set to `True` if the image is segmented. In this case a random color map is automatically computed, see section [Segmented mode](#color-control-segmented-mode)
+- `Position`: set the location of the minimum point of the loading images's bounding box at. __WARNING__: The position do not take into account the voxel size. If you want to place the image at the position of the [2, 2, 2] pixel, you need to manually multiply this value per the (voxel_size * subsample).
+- `Voxel size`: set the real size of a voxel. Can be in any unit (mm, cm,...) as long as it is the same for all opened images. The voxel size is internally multiplied by the subsample to keep a consistant image size.
 
-Once an image has been selected you can optionnally load a Tetrahedral Mesh for the visualisation, and/or a cage for the deformation, see [concept](#General).
+Once an image has been selected you can optionnally load a *Tetrahedral Mesh* for the visualisation, and/or a *cage* for the deformation, see [concept](#general-concept).
 
 #### Select the Tetrahedral Mesh
-To load a Tetrahedral Mesh, also called TM, check the [Mesh] checkbox section, and click on [Select mesh file].
-The Tetrahedral is used for better visualisation and efficient deformation, see [concept](#General), 
-The supported format is [.mesh](#Mesh).
 
-If no TM is selected, a generic regular Tetrahedral Mesh grid is generated to allow data visualisation, see [concept](#General).
+<img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/openImageMesh.png" width="512">
+
+To load a *Tetrahedral Mesh*, also called *TM*, tick the `Mesh` checkbox section, and click on `Select mesh file` button.
+The *Tetrahedral Mesh* is used for better visualisation and efficient deformation, see [concept](#general-concept), 
+The supported format is [.mesh](#mesh).
+
+> __Note__: If their is no *TM* selected, a generic regular *Tetrahedral Mesh* grid is generated to allow data visualisation, see [concept](#general-concept). However, if there is no *cage* available the __edition is not possible__.
 
 #### Select the Cage
-To load a Cage directly linked to the previously loaded TM, check the [Cage] checkbox section, and click on [Select cage file].
-A cage is a closed surfacique mesh that can transfer its deformation to the TM using cage coordinates allowing As Rigid As Possible deformations, see [concept](#General).
-The supported format is [.off](### Off).
-Available options are:
-- Cage type: the cage can use different types of cage coordinates to deform the Tetrahedral Mesh. The MVC<sup>1</sup> allow to deform the TM whatever the cage. The Green<sup>2</sup> coordinates can deform the TM only if the cage englobe the TM.
 
-Note that this cage opening operation can also be performed afterward through the [Open Mesh](### Open Mesh) menu.
+<img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/openImageCage.png" width="512">
+
+To load a *Cage* directly linked to the previously loaded *TM*, check the `Cage` checkbox section, and click on `Select cage file`.
+A *cage* is a closed surfacique mesh that can transfer its deformation to the *TM* using *cage coordinates*, see [concept](#general-concept).
+The supported format is [.off](#off).
+Available options are:
+- `Cage type` radio buttons: the *cage* can use different types of *cage coordinates* to deform the *Tetrahedral Mesh*. The MVC<sup>1</sup> deform the *TM* whatever the *cage*. The Green<sup>2</sup> coordinates can deform the *TM* only if the *cage* entirely englobes the *TM*, but yields better deformations.
+
+> __Note__: It is also possible to open a *cage* after the image loading process through the [Menu](#user-interface) and `File>Open Mesh`.
+
+> __IMPROVEMENT__: Automatically generate a regular *cage* grid if no mesh is seleted to allow edition.
 
 <sup>1</sup>FLOATER M. S.: Mean value coordinates. Computer aided geometric design 20, 1 (2003), 19-27.
 
 <sup>2</sup>U T., SCHAEFER S., WARREN J.: Mean value coordinates for closed triangular meshes. In ACM Siggraph 2005 Papers. 2005, pp. 561-566.
 
-### Open Mesh
-To open a mesh go to the [File] menu, and click on [Open Mesh].
-To select the mesh file to load, click on [Choose].
-The supported format is [.off](### Off).
+### Open Mesh/Cage
 
-It is also possible to load a Mesh as a cage, a Cage can deform any type of Mesh, a regular Surfacique Mesh, a Tetrahedral Mesh, or even another Cage.
-To load a Mesh a a cage, check the [Cage] checkbox section, choose the cage type, and choose in the combo box which mesh the cage will deform.
+![alt text][fig_open_mesh]
+
+To open a mesh go to the [Menu](#user-interface) and `File>Open Mesh`.
+Click on `Choose` button to select the mesh file to load.
+The supported format is [.off](#off).
+
+It is also possible to load a mesh as a *Cage*, a *Cage* can deform any Mesh, a regular *Surfacique Mesh*, a *Tetrahedral Mesh*, or even another *Cage*.
+To load a mesh as a *Cage*, tick the `Cage` checkbox section, choose the *Cage* type *MVC* or *Green*, see [Select the Cage](#select-the-cage), and choose in the combo box which mesh the *Cage* will deform.
 
 ### Open graph
-To open a graph go to the [File] menu, and click on [Open Graph].
-The supported format is [.graph](### Graph), which is a custom format.
+
+To open a graph go to the [Menu](#user-interface) `File>Open Graph`.
+The supported format is [.graph](#graph), which is a custom format very similar to off format.
 
 ## Visualisation
 
 ### 3D view
-The software provide real-time visualisation of the deformed image.
+
+The software provides real-time 3D visualisation of the deformed image.
 
 #### Naviguation
-The 3D view naviguation shortkeys are:
-- Left click + move: rotate the camera
-- Right click + move: translate the camera
-- Wheel: zoom in/out
-- A: display the x/y/z axis 
 
-To center the Camera on an Object, select it on the large combo box under the Tool Bar.
+The 3D view naviguation shortkeys are:
+- <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/left-click.png" width="16"> + move: rotate the camera
+- <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/right-click.png" width="16"> + move: translate the camera
+- Wheel: zoom in/out
+- A: display the x/y/z world axis 
+
+<img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/combobox.png " width="512">
+
+To center the Camera on an Object, select it on the large combo box under the [tool bar](#user-interface).
 
 #### Cutting planes
-Cutting planes are three axis aligned planes that allows to hide the scene part that reside on one side of the plane, very usefull to explore inner parts of the data.
-To change the cutting planes position, go to the [Cutting planes] section on the left pannel.
-Available options from left to right are:
-- x, y and z sliders: to adjust the position of each plane
-- Invert button: to invert the cutting plane orientation.
-- Checkbox: to activate/deactivate the cutting plane
 
+![alt text][fig_cutting_planes]
+
+<img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/cutting_planes.gif" width="256">
+
+Cutting planes are three axis aligned planes that hide the scene part that reside on one side of the plane, very usefull to explore inner parts of the data.
 Cutting planes are computed from the scene bounding box.
-[BUG?] An object edition that change the scene bounding box, like a translation, will change the cutting planes positions without changing the actual sliders values.
+To change the cutting planes position, go to the `Cutting planes` section on the [left pannel](#user-interface).
+Available options from left to right are:
+- `x, y and z` sliders: to adjust the position of each plane
+- `Invert` button: to invert the cutting plane orientation
+- `Checkbox`: to activate/deactivate the cutting plane
 
-#### Display toggle
-To activate/deactivate the display of either the Grids, Meshes or the Tetrahedral Meshes, go to the [Display] section on the left pannel.
+> __Bug?__: An object edition that change the scene bounding box, like a translation, will change the cutting planes positions without changing the actual sliders value.
 
-[LIMITATION] The display toggle affect all the opened objects, there is no interface for per object display management. It is important to note that this is an interface issue only, all the code is ready to welcome this feature.
+#### Display management
+
+![alt text][fig_display]
+
+To activate/deactivate the display of either the *Grids*, *Cages* or *Tetrahedral Meshes*, go to the `Display` section on the [left pannel](#user-interface).
+
+> __LIMITATION__: The display toggle affects all the opened objects, there is no interface for *per object* display management. This is an interface issue only, the code is ready for this feature.
 
 #### Alpha blending
 
-If you have multiple images opened, it is possible to enable the MultiView option in the [Display] section, this enable the use of the alpha slider.
-By changing the slider value the user can change the transparency allowing the visualisation of two images simulaneously.
+![alt text][fig_multi_view]
 
+If you have multiple images opened, you can enable the *MultiView* (MView on the button) option in the `Display` section on the [left pannel](#user-interface), this enable the use of the alpha slider.
+By changing the slider value the user can change the transparency, allowing the visualisation of two images simulaneously.
 
-####Color control: unsegmented mode
-For visualisation the software map each pixel value of the image with a color.
-This color map can be controlled using two different modes, the segmented and unsegmented mode, that can be acceded throught the bottom pannel.
-The bottom pannel can be show/hide from the Windows menu on the top of the software.
+<img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/alphaComp.png " width="512">
 
-Unsegmented mode is designed to customize the colormap for images that are unsegmented, like MRI or lightsheet acquisitions.
+> __LIMITATION__: There is a big issue with this feature, see ISSUES.
+
+#### Color control: unsegmented mode
+
+![alt text][fig_unsegmented_mode]
+
+The software internally map each pixel value of the image with a color for visualisation.
+To control this color map there is two modes available, the *segmented* and *unsegmented* modes, that can be acceded throught the [bottom pannel](#user-interface).
+To show/hide the bottom pannel go to the [Menu](#user-interface) and tick `Windows>Show/hide color control window`.
+
+To customize the colormap of unsegmented images, like MRI or lightsheet acquisitions, use the *unsegmented mode*.
 Available options are:
-- Double slider: change the values to display.
+- Double slider: change the value range to display.
 - Color buttons at each side of the slider: change the color for the min and max values of the image.
-- Button "Change min/max": set the min and max values for the colormap. As an example, if an image has a 0 min value with a red color and a 10 000 max value with a blue color, all values between 0 and 10 will have a color very close to red. However if you set the colormap min and max to 0 and 10, all values in this range will have well spread colors.
-- Combobox right to the slider: predefined colormap. The "User colors" apply the color map defined by the two color buttons, "GreyScale" apply a shade of grey and HSV to RGB change the color representation.
+- `Change min/max` button : set the min and max values for the colormap. As an example, if an image has a 0 min value with a red color and a 10 000 max value with a blue color, all values between 0 and 10 will have a color very close to red. However if you set the colormap min and max to 0 and 10, all values in this range will have well spread colors.
+- Combobox at right of the slider: predefined colormap. The "User colors" apply the color map defined by the two color buttons, "GreyScale" apply a shade of grey and HSV to RGB change the color representation.
 
-####Color control: segmented mode
-Segmented mode is designed to customize the colormap for images that are segmented, like atlases.
-This mode allow to control the display of each value.
-The main section contain what we call a color unit, each of them allow to control the display of the associated value.
+#### Color control: segmented mode
+
+![alt text][fig_segmented_mode]
+
+To customize colormap of segmented images like atlases, use the *segmented mode*.
+This mode allows to control display of each image value.
+
+![alt text][fig_color_unit]
+
+The bottom section contains *color units*, illustrated above, each of them allows to control display of its associated value.
 Available options are:
-- Spinbox at the bottom: the value associated with the unit
-- Central color button: assign a color for the value
-- Checkbox left to the color button: choose to apply this color or not. If it is unchecked, the color from the Unsegmented mode is applied.
+- Spinbox at the bottom: the value associated with the unit.
+- Central color button: assign a color for the value.
+- Checkbox left to the color button: choose to apply this color or not. If it is unchecked, the color from *unsegmented* mode is applied.
 - Eye button right to the color button: choose to hide/show this value.
-It is possible to add a unit using the "+" button at the most right of the main section.
-Note, if you pressed "Segmented" during the [.image loading screen](### Open image), this mode is selected by default and ranges are already filled.
-By default all units are associated with an unique value, however, for greater flexibility it is also possible to assign a range with the advanced mode.
+To add a unit use the "+" button at the most right of the color units.
+Note, if you pressed "Segmented" during the [image loading screen](#open-image), this mode is selected by default and ranges are automaticaly computed.
+
+![alt text][fig_color_unit_advanced]
+
+By default all units are associated with an unique value, however, for greater flexibility it is also possible to assign a range with the advanced mode, illustrated above.
 The advanced mode display new options:
 - A second spinbox: set the maximum value of the range.
-- Cross button: delete the unit
-- Left and right arrow button: move the unit to the left and right. Indeed the ranges are applied from left to right, this allow complexe interactions. For example it is possible to assign all values from 1-100 with a color to the very left, and then easily add multiple ranges from 10-20, 30-40 and 70-80 for example. Without this feature the user must add ranges like 1-10 10-20 20-30 30-40 40-70 70-80 80-100. WARNING: if the 1-100 unit is to the very right, all values will be blue.
+- Cross button: delete the unit.
+- Left and right arrow button: move the unit to the left and right. Ranges are applied from left to right, allowing complexe interactions. For example it is possible to assign all values from 1-100 with a color to the very left, and then easily add multiple ranges from 10-20, 30-40 and 70-80 for example. Without this feature the user must add ranges 1-10 10-20 20-30 30-40 40-70 70-80 80-100 to achieve the same result. However if the 1-100 unit is located to the very __right__, all values will have the same color because this will be the last range applied.
 
-The menu section at the left contain various options.
+![alt text][fig_color_unit_menu]
+
+The menu section at the left, illustrated above, contains various options.
 Available options are from top to bottom:
-- Load a colormap file, which is a json file, see [.colormap format](### Colormap).
+- Load a colormap file, which is a json file, see [colormap format](#colormap).
 - Save the current colormap.
-- Delete all color units and add the default unit. The default unit associate all image values with a random color, but it is unchecked, which means that the segmented mode is deactivate because the unsegmented colormap is applied to all values.
+- Delete all color units and add the default unit. The default unit associates all values with a color, but it is unchecked, which means that the segmented mode is deactivate because the unsegmented colormap is applied to all values.
 - Show/hide all the units.
 - Check/uncheck all the units.
-- Automatically generates a color map which associate a random color for each value of the image. IMPORTANT: the maximum number of units if fixed to 500. If the loaded image has more than 500 values, this feature will not work.
+- Automatically generates a color map which associate a random color for each value of the image. IMPORTANT: the maximum number of units if fixed to 500. If the loaded image has more than 500 values, if the image is not segmented for example, this feature will simply add the default unit.
 - Show/hide advanced mode.
 
-[BUG?] Selecting one or the other mode do not change from one mode to the other which is not intuitive. Instead we always the Segmented mode, and we apply the Unsegmented mode for all units that are unchecked. However the display range of the unsegmented is still applied. This strange interaction is due to the legacy feature, originaly only the unsegmented mode was available, but this mode is not enought to precisely handle segmented data. The segmented mode alone is not enought either.
+> __BUG?__: The *segmented* mode is always used, and the *unsegmented* mode color is applied for all units with the color mode unticked. However the display range of the *unsegmented* mode is still applied. Originaly, the unsegmented mode only was available which cause this strange interaction. However this mode is not enought to precisely handle segmented data, and the segmented mode alone is not enought either to handle unsegmented data.
 
 ### 2D view
-The software allows to visualise the deformed image in a 2D view.
-It can be activated using the "Dual View" button in the tool bar.
-The 2D view will be automatically updated each time an object is edited and the mouse is released.
-The 2D view parameters can be changed using the pannel at the right of the bottom section.
+
+To visualise the deformed image in a 2D view click on the "Dual View" <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/resources/icons/dualScreen.svg" width="16"> button in the [tool bar](#user-interface).
+Is it possible to visualise two objects on top of each other, which is very usefull for registration problems.
+The 2D view will be automatically updated each time the mouse is released during an image edition.
+
+![alt text][fig_2D_view]
+
+Visualisation parameters can be customized using the pannel at the left of the [bottom section](#user-interface).
 Available options are from top to bottom:
-- Button with link icon: choose to link the image slice visible in the 2D view with the cutting plane.
+- Button <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/resources/icons/link.svg" width="16">: link the visible image in the 2D view with the cutting plane. This way the 2D and 3D views are synchronized.
 - Slider: select which image slice to display.
-- Combobox back: choose which object to display on back.
-- Combobox front: choose which object to display on front.
+- Combobox `Back`: choose which image to display on back.
+- Combobox `Front`: choose which image to display on front.
 - Checkbox: choose to display or hide front/hide image.
 - Spinbox: choose the transparency of the front/back image. The value range is [0, 255].
-- Subsample: choose a subsample to apply to the final image. It is very important to limit the computation time of each image.
-- Side: chaneg which axis to visualise. If the link button is toggled, it also indicate which cutting plane is linked.
-- Mirror: allow to mirror the image on X or Y.
-- Resolution: Set the image resolution to fit the front or the back object. For example if we have a brain atlas on top of a MRI acquisition, the brain atlas has a much larger precision. To ensure a real time visualisation we can set the resolution to back to keep a low resolution. To inspect the result at full resolution we can set the resolution to Front.
+- `Subsample` spinbox: choose a subsample to apply to the final image. It is very important to limit the computation time of each image.
+- `Side` buttons: change which axis to visualise. If the link button is toggled, it also indicate which cutting plane is linked.
+- `Mirror` buttons: mirror the image on X or Y.
+- `Resolution` spinbox: Set the image resolution to fit the front or back object. For example if we have a brain atlas on top of an MRI acquisition, the brain atlas has a much larger precision. To ensure a real time visualisation we can set the resolution to back to keep a low resolution. To inspect the result at full resolution we can set the resolution to Front.
 
-[IMPROVEMENT] The real time 2D view update and not only when the mouse is released has been deactivated to avoid slowing down the software. The option is not exposed to the user.
-[LIMITATION] Problem with the mixed mode, images has been cached in order to quickly naviguate from slide to slide, therefore they are stored into a 3D array. Changing the resolution change the size of the 3D array and discard all the previous data and this is not how the viewer is designed.
-[BUG] The 2D view do not work with a subsampled image.
+> __IMPROVEMENT__: Currently the 2D view update is triggered by the mouse right button release during edition only. A "real time" mode could be usefull, where the 2D view is updated when the mouse is moving. The latter is not available because the image computation algorithm is currently too long to be real time.
+> __BUG__: The 2D view do not works with a subsampled image.
 
 ## Edition
-The software allow to deform the image using various tools.
-It is important to note that these works on cage only.
-Due to the generic nature of the code they can also be used directly on the TM, however this option has been deactivate to the user to avoid editing the TM by error.
 
-### 3D manipulation
+The software allows to deform images using various tools.
+These tools works __on *cages* only__, while they could be directly used on the *TM* thanks to the code genericity, this option is deactivated to avoid editing the *TM* by mistake.
 
-Each tool that will be presented often present a 3D manipulation to apply deformation.
-It can be manipulated using the right or left click while overring the axis to apply.
-It is also possible to change the manipulation primitive with the wheel.
-Then instead of a 3D guizmo, the operation can be applied using a 3D ball that move on the plane of the current view.
+### 3D manipulator
+
+<img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/3Dmanipulator.png " width="256">
+
+Tools often use a 3D manipulator to apply deformation.
+Available shortcuts are from top to bottom:
+- <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/left-click.png" width="16"> or <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/right-click.png" width="16"> + move on axis: translate
+- <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/left-click.png" width="16"> or <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/right-click.png" width="16"> + move on circles: rotate
+- <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/left-click.png" width="16"> or <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/right-click.png" width="16"> + move on small spheres: scale
+- Wheel: changes the manipulator to a 3D sphere that moves along the plane of the current view.
 
 ### Tools
 
-Each tool is applied on the currently selected object.
-It has a help on the tool section on the left.
-Some tools has also some options in the form of buttons.
+![alt text][fig_all_tools]
 
-[IMPROVEMENT] Actually the tools are independant objects that are deleted and re-created, therefore when a tool is exited, all its states are deleted. To "remember" the state of a closed tool it can be usefull to keep the previous tools. This is easy to do in the code.
+Each tool edit the currently selected object using the combobox behind the [tool bar](#user-interface).
+Each tool has a short help that describes all the shortcuts on the [left section](#user-interface).
+In the same section, some tools also comes with options available via buttons.
+
+__IMPROVEMENT__: Tools are independant objects in the code that are deleted and re-created when exited, so their states are deleted. To "remember" the state of a closed tool it can be usefull to keep the previous tools. This is easy to do in the code.
 
 #### None tool
 
-This tool is used no edion is needed and when the goal is visualisation only.
+![alt text][fig_none_tool]
+
+Use this tool for visualisation only, when no edition is needed.
 
 #### Move tool
 
-This tool is a classic 3D manipulator used to translate, rotate and scale the selected object.
-Available options are:
-- Even: to apply an even scale on both X, Y and Z axis. If this option is toggled and a scaled is applied on the X axis, the same scale will be applied on the 2 other axis.
-- Link: allow to link or unlink the cage to its TM. If this option is toggled the cage will move the TM which is the default behavior. However if the user untoggle this option he is able to move the cage without moving the TM. This is usefull to adjust the placement of the cage according to the TM.
-- Reset: reset the view and the size of the 3D manipulator, this is usefull when applying large scaling operation and the object get off the screen.
+![alt text][fig_move_tool]
 
-[IMPROVEMENT] This tool cannot be used directly on the TM while this could be logical.
-[BUG] The even, link or reset button can be desynchronized
+To translate, rotate or scale an image use the `move tool`.
+Once activated, this tool shows a standard 3D manipulator to deform the image.
+Available options are:
+- Even <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/resources/icons/even.svg" width="16">: to apply an even scale on both X, Y and Z axis. If this option is toggled and a scaled is applied on one axis, the same scale will be applied on the 2 other axis.
+- Link <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/resources/icons/link.svg" width="16">: allow to link or unlink the *cage* to its *TM*. If this option is toggled the *cage* will deform the *TM* which is the default behavior. However if the user untoggle this option he is able to move the *cage* without moving the *TM*. This is usefull to adjust the placement of the *cage* according to the *TM*.
+- Reset <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/resources/icons/reset.svg" width="16">: reset the view and the size of the 3D manipulator, this is usefull when applying large scaling operation and the 3D manipulator get off the screen.
+
+__IMPROVEMENT__: This tool cannot be used directly on the *TM*, therefore it is impossible de translate, rotate or scale an image if no *cage* is loaded.
+__BUG__: The even, link or reset button are desynchronized sometime.
 
 #### Direct tool
 
-This tool allows to move each vertew independantly.
-While activated, all vertices become red, indicating that they can be grabbed.
-Each vertice can then be grabbed and moved arround freely.
-This is the only tool than can be used on the TM directly.
+![alt text][fig_direct_tool]
+
+To move independantly each vertex of a mesh, use the `direct tool`.
+Once activated, each vertex can be grabbed and moved arround freely.
+
+This is the only tool than can be used on the *TM* directly.
 
 #### ARAP tool
 
-This tool allows to apply complexe deformations to the image by applying As Rigid As Possible deformations to the cage.
-The tool allows to mark some vertices as fixed, and then move any vertices subset while keeping the fixed vertices on place.
-This is very usefull is a registration context when some parts of the images are already correctly aligned, but some other parts need adjustements for a better alignement.
+![alt text][fig_ARAP_tool]
+
+To deform entire portion of a mesh surface, use the `ARAP tool`.
+Once activated, vertices can be marked as fixed, and any vertices subset can be moved while keeping the fixed vertices unchanged.
+All vertices that are not marked move automatically to achieve a very smooth and intuitive deformation.
+This tool is extensively used in a registration context when some parts of the images are already correctly aligned, but some other parts need adjustements for a better alignement.
 Available shortcuts are:
-- Maj+alt / left click: mark vertices as fixed.
-- Maj / left click: mark vertices as moving.
-- Maj+ctrl / left click: unmark vertices.
-- Maj+right click: show 3D manipulator to move the vertices marked as moving.
+- Maj+alt + <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/left-click.png" width="16"> + move: mark vertices as fixed.
+- Maj + <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/left-click.png" width="16"> + move: mark vertices as moving.
+- Maj+ctrl + <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/left-click.png" width="16"> + move: unmark vertices.
+- Maj + <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/right-click.png" width="16">: show 3D manipulator to move the vertices marked as moving.
 
 #### Slice tool
 
-This tool has been created to solve a precise problem.
-It allow to apply ARAP deformation but on slices of the mesh.
+![alt text][fig_slice_tool]
+
+This tool allows to apply *ARAP* deformation on mesh slices only.
 Use the X, Y and Y buttons to choose which axis to move.
 To move an axis, use the cutting plane section.
 A 3D manipulator is automatically displayed to move the slice.
 All the green vertices will be moved, all the grey vertices will remain fixed and all the red vertices will move automatically.
-To adjust the moving portion (green points) use Ctrl+"+".
-To adjust the automatically moving part (grey vertices) use the "+" and "-" keys.
-WARNING: use P to use APSS projection. Only work if two meshes are opened.
+Available shortcuts are:
+- "+ or -": adjust the automatically moving part (grey vertices).
+- Ctrl+"+ or -": adjust the moving portion (green points).
+- P: project the green points on another mesh using APSS projection.__WARNING__: green points are projected on the second mesh opened. For this feature to works, the edited mesh should be the first mesh opened, and a second mesh should be opened too.
 
-[IMPROVEMENT] no really usable for now because fixed points arent keeped
+__IMPROVEMENT__: not really usable for now because fixed points arent keeped when changing axis. This is an experimental tool.
 
 #### Marker tool
 
-This tool allows to match vertices of two different meshes.
+![alt text][fig_marker_tool]
+
+This tool move a selected vertex to match the placed 3D point, and deform the mesh accordingly.
+Multiple vertices can be matched, and the tool will compute the deformation to best match these constraints.
 First select a vertice, and then select a point in the 3D viewport by pointing it with the mouse and press the key Q.
-The tool will apply a deformation to move the selected vertex to match the placed 3D point.
+The point will be placed at the surface of the pointed grid.
 
 ### History
 
-The software has an history to undo/redo editions, these options are available on the tool bar.
-The reset button allow to go back to the initial state of the mesh.
+The software include an history to undo <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/resources/icons/undo.svg" width="16">/redo<img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/resources/icons/redo.svg" width="16"> editions, these options are available on [tool bar](#user-interface).
+To go back to the initial state of the mesh use the `reset`<img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/resources/icons/reset.svg" width="16"> button.
 
-## Export
+## Save
 
-To export the resulting image use the Export button in the toolbar.
+### Save cage
+
+To save the selected cage, go to the [Menu](#user-interface) and `File>Save...`, then choose a location.
+
+### Re-open cage
+
+Once a *cage* has been edited and saved, it can be reopened again.
+__First the original *cage* should be opened__, because the edited *cage* do not contain its resting position which is required to compute defomations. 
+So open the original *cage* using the <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/resources/icons/open.svg" width="16"> button in the [tool bar](#user-interface) or the open mesh function on the [Menu](#user-interface) and `File>Open Mesh`.
+Then go to the [Menu](#user-interface) `Edit>Apply cage`.
+Click on the `Choose` button and select the edited *cage* file.
+Use the combobox to select the original *cage*.
+
+__IMPROVEMENT__: the cage saving process could includes the resting cage position.
+
+### Export image
+
+![alt text][fig_export_image]
+
+To export the resulting image use the `Export` <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/resources/icons/save.svg" width="16"> button in the [tool bar](#user-interface).
 Available options from top to bottom are:
 - Combobox: choose whith image to export.
-- Reset button: reset all paramameters of this Window.
-- "Use colormap" checkbox : use the currently loaded colormap, otherwise the resulting image will be a shade of grey.
-- "Export at original resolution" checkbox:  prefill voxel and image size to export with the same voxel as the original image. This is particularly usefull when an image has been loaded with a subsample.
-- "BBox min" triple spinbox: set the image portion you want to export. A visualisation is available on the viewport.
-- "Voxel size": set the voxel size of the image to be exported. If this value is changed the image size will be automatically updated.
-- "Image size": set the image size of the image to be exported. If this value is changed the voxel size will be automatically updated.
+- `Reset` button: reset all paramameters of this window.
+- `Use colormap` checkbox : use the currently loaded colormap, otherwise the resulting image will be a shade of grey.
+- `Export at original resolution` checkbox:  prefill voxel and image size to export with the same voxel size as the original image. This is particularly usefull when an image has been loaded with a subsample.
+- `BBox min` triple spinbox: set the image portion you want to export. A visualisation is available on the viewport.
+- `Voxel size`: set the voxel size of the image to be exported. If this value is changed the image size will be automatically updated.
+- `Image size`: set the image size of the image to be exported. If this value is changed the voxel size will be automatically updated.
 
+__IMPROVEMENT__: The voxel size and the position are not writed into the TIFF file.
 
 ## File formats
 
@@ -278,146 +407,22 @@ Here is a list of the file fomats interacting with the software.
 ### TIFF
 
 This is the main format handled by the software.
-All images to be loaded should be with this format.
+All images to be loaded should be in this format.
 
 ### Mesh
 
-This format is used for Tetrahedral Meshes.
+This format is used for *Tetrahedral Meshes*.
 
 ### Off
 
-This format is used for Surfacic Meshes.
-IMPORTANT: it only handle simple file with vertices then faces.
+This format is used for Surface Meshes.
+> __IMPORTANT__: it only handles simple format with vertices then faces.
 Other cases like faces with 4 vertices or materials are not handled.
-For example off format directl from Blender are not readed correctly you need to edit the file manually.
+For example off format directly from Blender need to be edited manually for a proper opening.
 
-[IMPROVEMENT] Handle files from Blender.
+> __IMPROVEMENT__: Handle off files from Blender.
 
 ### Colormap
 
 This is a custom format to save and load color map.
 You have an example in: resources/data/colorMapPaper.json.
-
-### Graph
-
-## TODO
-
-# Quick fix
-- Lock all buttons except the select file button
-- Automatic load of dx/dy/dz
-- Automatic load of position
-- WARNING: add a warning for voxel size
-- Allow to delete a single object instead of clear the whole scene
-- Add name checks
-- Interface to change cage, and TetMesh
-- Add option to save at specific format like uint16 or whatever
-- Ajouter compilation Windows Yan
-- Add manual to convert to NIFTI with FIJI
-- Generate cage at openning
-- Allow to apply global manipulator to TetMesh
-- Toggle dual rendering
-
-# Bug
-- Can't deactivate rendering of a Grid because of the dual pass
-- An object edition that change the scene bounding box, like a translation, will change the cutting planes positions without changing the actual sliders values.
-
-# Idea
-- Better display toggle capabilities
-- Tool states are not kept
-- Better subsample for high resolution images
-- NIFTI reader
-- The 2D view do not implement HSV to RGB and GrayScale
-- The 2D view do not implement slide mode value selection
-
-## Documented files
-
-./core/geometry/grid.hpp
-./core/geometry/grid.cpp
-./core/algorithm/ICP.hpp
-./core/deformation/AsRigidAsPossible.cpp
-./core/deformation/cage_surface_mesh.cpp
-./core/deformation/cage_surface_mesh.hpp
-./core/drawable/drawable.cpp
-./core/drawable/drawable.hpp
-./core/drawable/drawable_grid.cpp
-./core/drawable/drawable_grid.hpp
-./core/drawable/drawable_selection.cpp
-./core/drawable/drawable_selection.hpp
-./core/drawable/drawable_surface_mesh.cpp
-./core/drawable/drawable_surface_mesh.hpp
-./core/geometry/base_mesh.cpp
-./core/geometry/base_mesh.hpp
-./core/geometry/graph_mesh.cpp
-./core/geometry/graph_mesh.hpp
-./core/geometry/surface_mesh.cpp
-./core/geometry/surface_mesh.hpp
-./core/geometry/tetrahedral_mesh.cpp
-./core/geometry/tetrahedral_mesh.hpp
-./core/images/cache.cpp
-./core/images/cache.hpp
-./core/images/image.cpp
-./core/images/image.hpp
-./core/interaction/manipulator.cpp
-./core/interaction/manipulator.hpp
-./core/interaction/mesh_manipulator.cpp
-./core/interaction/mesh_manipulator.hpp
-./core/utils/GLUtilityMethods.cpp
-./core/utils/apss.cpp
-./core/utils/apss.hpp
-./legacy/image/utils/include/bounding_box.hpp
-./legacy/image/utils/include/image_api_common.hpp
-./legacy/image/utils/include/local_cache.hpp
-./legacy/image/utils/include/read_cache.hpp
-./legacy/image/utils/include/threaded_task.hpp
-./legacy/image/utils/src/threaded_task.cpp
-./legacy/meshes/drawable/shaders.cpp
-./legacy/meshes/drawable/shaders.hpp
-./qt/3D_viewer.cpp
-./qt/3D_viewer.hpp
-./qt/UI/chooser.cpp
-./qt/UI/chooser.hpp
-./qt/UI/color_button.cpp
-./qt/UI/color_button.hpp
-./qt/UI/color_control.cpp
-./qt/UI/color_control.hpp
-./qt/UI/deformation_form.cpp
-./qt/UI/deformation_form.hpp
-./qt/UI/display_pannel.hpp
-./qt/UI/form.cpp
-./qt/UI/form.hpp
-./qt/UI/info_pannel.cpp
-./qt/UI/info_pannel.hpp
-./qt/UI/open_image_form.cpp
-./qt/UI/open_image_form.hpp
-./qt/UI/quicksave_mesh.cpp
-./qt/UI/quicksave_mesh.hpp
-./qt/UI/save_image_form.cpp
-./qt/UI/save_image_form.hpp
-./qt/UI/tool_pannel.hpp
-./qt/cutplane_groupbox.hpp
-./qt/double_slider.cpp
-./qt/double_slider.hpp
-./qt/helper/QActionManager.hpp
-./qt/image3D_viewer.cpp
-./qt/image3D_viewer.hpp
-./qt/legacy/applyCageWidget.cpp
-./qt/legacy/applyCageWidget.hpp
-./qt/legacy/openMeshWidget.cpp
-./qt/legacy/openMeshWidget.hpp
-./qt/legacy/viewer_structs.cpp
-./qt/legacy/viewer_structs.hpp
-./qt/main_widget.cpp
-./qt/main_widget.hpp
-./qt/planar_viewer.cpp
-./qt/planar_viewer.hpp
-./qt/range_slider.cpp
-./qt/range_slider.hpp
-./qt/scene.cpp
-./qt/scene.hpp
-./qt/scene_control.cpp
-./qt/scene_control.hpp
-
-## FAQ
-
-### How to add a tool ?
-

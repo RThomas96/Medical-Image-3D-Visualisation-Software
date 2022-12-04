@@ -1,24 +1,47 @@
 # Medical Image Visualizer
 
-*N.B.* : This project is the result of the work done for the end of my Masters degree for the year 2019/2020. You can find the original project proposal [here](http://www.lirmm.fr/~nfaraj/files/positions/sujet_stage-prostate3D.pdf).
+*N.B.* : This project has two contributors, @RThomas96 for the year 2022 and @thibaulltt for the year 2021. For more information about you can find the resulting scientific publication [here](https://diglib.eg.org/bitstream/handle/10.2312/vcbm20221191/093-097.pdf?sequence=1&isAllowed=y).
 
 ----
 
-This project aims to provide an easy way to visualize high-resolution medical images.
+This project aims to provide an easy way to visualize and deform high-resolution 3D images.
 
-You can load and visualize TIFF, OME-TIFF and DIM/IMA images in real-time. You can choose from a variety of color scales to apply to all or a part of the displayed values on screen.
+You can load, visualize and deform TIFF and OME-TIFF images in real-time. 
+You can choose from a variety of color scales to apply to all or a part of the displayed values on screen.
 
-Some screen captures will be coming soon.
+This is a C++ project using modern OpenGL and Qt.
+
+|      3D rendering         |    Cutting planes                   |    Alpha blending                 |
+|:-------------------------:|:-----------------------------------:|:---------------------------------:|
+| <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/rendering.gif" width="270"> |<img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/cutting_planes.gif" width="230"> |<img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/alpha_blending.gif" width="270"> |
+
+|      ARAP deformation     |    Global deformation               |    2D view                        |
+|:-------------------------:|:-----------------------------------:|:---------------------------------:|
+| <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/arap_deformation.gif" width="270"> |<img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/global.gif" width="230"> |<img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/2Dview.gif" width="270"> |
 
 ----
 
 #### Building the project
 
-Want to build the project ? See [BUILD.md](./BUILD.md)
+Want to build the project ? See [BUILD.md](./BUILD.md).
 
-#### Documentation and manual
+#### User manual
 
-If you want some technical documentation, make sure you have `doxygen` installed and run it from the `doc` folder with the provided configuration file.
+To learn how to use the software, see [MANUAL.md](./MANUAL.md).
 
-If you want more info on the project itself, get to the `tex/manual` folder and build the LaTeX file with the given makefile (warning, you'll need XeTeX and the font 'Linux Libertine' installed)
+#### Code documentation
 
+To generate the technical documentation install `doxygen` and `graphviz` packages, and run `doxygen` with the "doc/doxygen_config" file, and open "doc/html/index.html" with your favorite web browser.
+Commands to run on Linux:
+```sh
+$ sudo apt-get install doxygen graphviz
+$ cd doc/
+$ doxygen doxygen_config
+$ # The documentation is generated in html and latex
+$ # For a complete documentation website
+$ firefox html/index.html
+```
+
+#### Issues
+
+To check what are the remaining bugs, see [TODO.md](./TODO.md).
