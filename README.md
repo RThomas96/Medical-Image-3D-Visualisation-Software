@@ -44,7 +44,7 @@ $ firefox html/index.html
 
 To check what are the remaining bugs, see [TODO.md](./TODO.md).
 
-# Manual 
+# User Manual 
 
 [fig_general]: https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/general.svg "general" 
 [fig_open_image]: https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/openImage.png "Open image UI" 
