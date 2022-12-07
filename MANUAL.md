@@ -1,31 +1,31 @@
 # Manual 
 
-[fig_general]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/general.svg "general" 
-[fig_open_image]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/openImage.png "Open image UI" 
-[fig_open_image_mesh]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/openImageMesh.png "Open image, mesh opening part UI" 
-[fig_open_image_cage]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/openImageCage.png "Open image, cage opening part UI" 
-[fig_open_mesh]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/openMesh.png "Open mesh UI" 
-[fig_cutting_planes]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/cuttingPlanes.png "Cutting planes UI" 
-[fig_display]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/display.png "Display pannel UI" 
-[fig_multi_view]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/multiView.png "MultiView button" 
-[fig_alpha_low]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/alphaLow.png "general" 
-[fig_alpha_high]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/alphaHigh.png "general" 
-[fig_unsegmented_mode]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/unsegmentedMode.png "Unsegmented mode" 
-[fig_segmented_mode]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/segmentedMode.png "Segmented mode" 
-[fig_color_unit]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/colorUnit.png "Color unit" 
-[fig_color_unit_advanced]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/colorUnitAdvanced.png "Color unit advanced" 
-[fig_color_unit_menu]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/colorUnitMenu.png "Color unit menu" 
-[fig_2D_view]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/2Dview.png "2D view menu" 
-[fig_all_tools]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/allTools.png "All tools" 
-[fig_3D_manipulator]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/3Dmanipulator.png "3D manipulator" 
-[fig_none_tool]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/noneTool.png "None tool" 
-[fig_move_tool]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/moveTool.png "Move tool" 
-[fig_direct_tool]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/directTool.png "Direct tool" 
-[fig_ARAP_tool]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/ARAPTool.png "ARAP tool" 
-[fig_slice_tool]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/sliceTool.png "Sice tool" 
-[fig_marker_tool]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/markerTool.png "Marker tool" 
-[fig_export_image]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/exportImage.png "Export image UI" 
-[fig_combobox]: https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/combobox.png "Object selection combobox" 
+[fig_general]: https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/general.svg "general" 
+[fig_open_image]: https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/openImage.png "Open image UI" 
+[fig_open_image_mesh]: https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/openImageMesh.png "Open image, mesh opening part UI" 
+[fig_open_image_cage]: https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/openImageCage.png "Open image, cage opening part UI" 
+[fig_open_mesh]: https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/openMesh.png "Open mesh UI" 
+[fig_cutting_planes]: https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/cuttingPlanes.png "Cutting planes UI" 
+[fig_display]: https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/display.png "Display pannel UI" 
+[fig_multi_view]: https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/multiView.png "MultiView button" 
+[fig_alpha_low]: https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/alphaLow.png "general" 
+[fig_alpha_high]: https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/alphaHigh.png "general" 
+[fig_unsegmented_mode]: https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/unsegmentedMode.png "Unsegmented mode" 
+[fig_segmented_mode]: https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/segmentedMode.png "Segmented mode" 
+[fig_color_unit]: https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/colorUnit.png "Color unit" 
+[fig_color_unit_advanced]: https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/colorUnitAdvanced.png "Color unit advanced" 
+[fig_color_unit_menu]: https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/colorUnitMenu.png "Color unit menu" 
+[fig_2D_view]: https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/2Dview.png "2D view menu" 
+[fig_all_tools]: https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/allTools.png "All tools" 
+[fig_3D_manipulator]: https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/3Dmanipulator.png "3D manipulator" 
+[fig_none_tool]: https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/noneTool.png "None tool" 
+[fig_move_tool]: https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/moveTool.png "Move tool" 
+[fig_direct_tool]: https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/directTool.png "Direct tool" 
+[fig_ARAP_tool]: https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/ARAPTool.png "ARAP tool" 
+[fig_slice_tool]: https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/sliceTool.png "Sice tool" 
+[fig_marker_tool]: https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/markerTool.png "Marker tool" 
+[fig_export_image]: https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/exportImage.png "Export image UI" 
+[fig_combobox]: https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/combobox.png "Object selection combobox" 
 
 This document explain how to use the software.
 In depth explanation of the code is located in the Doxygen documentation, see [README.md](./README.md).
@@ -59,7 +59,7 @@ All __editions__ performed by the user are applied __on the *cage*__.
 
 ### User interface
 
-<img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/general.svg " width="768">
+<img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/general.svg " width="768">
 
 Here is the name of each global sections of the UI:
 - ![#FF6347](https://placehold.co/15x15/B3B3B3/B3B3B3.png) `Menu`
@@ -72,7 +72,7 @@ Here is the name of each global sections of the UI:
 
 ### Open image
 
-To open a 3D image use the <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/resources/icons/open.svg" width="16"> button in the [tool bar](#user-interface) .
+To open a 3D image use the <img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/resources/icons/open.svg" width="16"> button in the [tool bar](#user-interface) .
 Use the `Presets` buttons to automatically fill this form to open either a Mouse Brain Atlas or a mouse head MRI acquisition, this is a good way to check if the software works correctly on your machine.
 Use the `Name` line edit to change the image's name that will be used throughout the software.
 
@@ -80,7 +80,7 @@ Use the `Name` line edit to change the image's name that will be used throughout
 
 #### Select the image file
 
-<img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/openImage.png " width="512">
+<img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/openImage.png " width="512">
 
 Use the `Select image file` button to select the image file to load.
 Supported format are .tif and .ome.tiff.
@@ -94,7 +94,7 @@ Once an image has been selected you can optionnally load a *Tetrahedral Mesh* fo
 
 #### Select the Tetrahedral Mesh
 
-<img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/openImageMesh.png" width="512">
+<img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/openImageMesh.png" width="512">
 
 To load a *Tetrahedral Mesh*, also called *TM*, tick the `Mesh` checkbox section, and click on `Select mesh file` button.
 The *Tetrahedral Mesh* is used for better visualisation and efficient deformation, see [concept](#general-concept), 
@@ -104,7 +104,7 @@ The supported format is [.mesh](#mesh).
 
 #### Select the Cage
 
-<img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/openImageCage.png" width="512">
+<img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/openImageCage.png" width="512">
 
 To load a *Cage* directly linked to the previously loaded *TM*, check the `Cage` checkbox section, and click on `Select cage file`.
 A *cage* is a closed surfacique mesh that can transfer its deformation to the *TM* using *cage coordinates*, see [concept](#general-concept).
@@ -145,12 +145,12 @@ The software provides real-time 3D visualisation of the deformed image.
 #### Naviguation
 
 The 3D view naviguation shortkeys are:
-- <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/left-click.png" width="16"> + move: rotate the camera
-- <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/right-click.png" width="16"> + move: translate the camera
+- <img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/left-click.png" width="16"> + move: rotate the camera
+- <img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/right-click.png" width="16"> + move: translate the camera
 - Wheel: zoom in/out
 - A: display the x/y/z world axis 
 
-<img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/combobox.png " width="512">
+<img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/combobox.png " width="512">
 
 To center the Camera on an Object, select it on the large combo box under the [tool bar](#user-interface).
 
@@ -158,7 +158,7 @@ To center the Camera on an Object, select it on the large combo box under the [t
 
 ![alt text][fig_cutting_planes]
 
-<img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/cutting_planes.gif" width="256">
+<img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/cutting_planes.gif" width="256">
 
 Cutting planes are three axis aligned planes that hide the scene part that reside on one side of the plane, very usefull to explore inner parts of the data.
 Cutting planes are computed from the scene bounding box.
@@ -185,7 +185,7 @@ To activate/deactivate the display of either the *Grids*, *Cages* or *Tetrahedra
 If you have multiple images opened, you can enable the *MultiView* (MView on the button) option in the `Display` section on the [left pannel](#user-interface), this enable the use of the alpha slider.
 By changing the slider value the user can change the transparency, allowing the visualisation of two images simulaneously.
 
-<img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/alphaComp.png " width="512">
+<img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/alphaComp.png " width="512">
 
 > __LIMITATION__: There is a big issue with this feature, see ISSUES.
 
@@ -246,7 +246,7 @@ Available options are from top to bottom:
 
 ### 2D view
 
-To visualise the deformed image in a 2D view click on the "Dual View" <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/resources/icons/dualScreen.svg" width="16"> button in the [tool bar](#user-interface).
+To visualise the deformed image in a 2D view click on the "Dual View" <img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/resources/icons/dualScreen.svg" width="16"> button in the [tool bar](#user-interface).
 Is it possible to visualise two objects on top of each other, which is very usefull for registration problems.
 The 2D view will be automatically updated each time the mouse is released during an image edition.
 
@@ -254,7 +254,7 @@ The 2D view will be automatically updated each time the mouse is released during
 
 Visualisation parameters can be customized using the pannel at the left of the [bottom section](#user-interface).
 Available options are from top to bottom:
-- Button <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/resources/icons/link.svg" width="16">: link the visible image in the 2D view with the cutting plane. This way the 2D and 3D views are synchronized.
+- Button <img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/resources/icons/link.svg" width="16">: link the visible image in the 2D view with the cutting plane. This way the 2D and 3D views are synchronized.
 - Slider: select which image slice to display.
 - Combobox `Back`: choose which image to display on back.
 - Combobox `Front`: choose which image to display on front.
@@ -275,13 +275,13 @@ These tools works __on *cages* only__, while they could be directly used on the 
 
 ### 3D manipulator
 
-<img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/3Dmanipulator.png " width="256">
+<img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/3Dmanipulator.png " width="256">
 
 Tools often use a 3D manipulator to apply deformation.
 Available shortcuts are from top to bottom:
-- <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/left-click.png" width="16"> or <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/right-click.png" width="16"> + move on axis: translate
-- <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/left-click.png" width="16"> or <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/right-click.png" width="16"> + move on circles: rotate
-- <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/left-click.png" width="16"> or <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/right-click.png" width="16"> + move on small spheres: scale
+- <img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/left-click.png" width="16"> or <img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/right-click.png" width="16"> + move on axis: translate
+- <img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/left-click.png" width="16"> or <img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/right-click.png" width="16"> + move on circles: rotate
+- <img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/left-click.png" width="16"> or <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/right-click.png" width="16"> + move on small spheres: scale
 - Wheel: changes the manipulator to a 3D sphere that moves along the plane of the current view.
 
 ### Tools
@@ -307,9 +307,9 @@ Use this tool for visualisation only, when no edition is needed.
 To translate, rotate or scale an image use the `move tool`.
 Once activated, this tool shows a standard 3D manipulator to deform the image.
 Available options are:
-- Even <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/resources/icons/even.svg" width="16">: to apply an even scale on both X, Y and Z axis. If this option is toggled and a scaled is applied on one axis, the same scale will be applied on the 2 other axis.
-- Link <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/resources/icons/link.svg" width="16">: allow to link or unlink the *cage* to its *TM*. If this option is toggled the *cage* will deform the *TM* which is the default behavior. However if the user untoggle this option he is able to move the *cage* without moving the *TM*. This is usefull to adjust the placement of the *cage* according to the *TM*.
-- Reset <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/resources/icons/reset.svg" width="16">: reset the view and the size of the 3D manipulator, this is usefull when applying large scaling operation and the 3D manipulator get off the screen.
+- Even <img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/resources/icons/even.svg" width="16">: to apply an even scale on both X, Y and Z axis. If this option is toggled and a scaled is applied on one axis, the same scale will be applied on the 2 other axis.
+- Link <img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/resources/icons/link.svg" width="16">: allow to link or unlink the *cage* to its *TM*. If this option is toggled the *cage* will deform the *TM* which is the default behavior. However if the user untoggle this option he is able to move the *cage* without moving the *TM*. This is usefull to adjust the placement of the *cage* according to the *TM*.
+- Reset <img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/resources/icons/reset.svg" width="16">: reset the view and the size of the 3D manipulator, this is usefull when applying large scaling operation and the 3D manipulator get off the screen.
 
 __IMPROVEMENT__: This tool cannot be used directly on the *TM*, therefore it is impossible de translate, rotate or scale an image if no *cage* is loaded.
 __BUG__: The even, link or reset button are desynchronized sometime.
@@ -332,10 +332,10 @@ Once activated, vertices can be marked as fixed, and any vertices subset can be 
 All vertices that are not marked move automatically to achieve a very smooth and intuitive deformation.
 This tool is extensively used in a registration context when some parts of the images are already correctly aligned, but some other parts need adjustements for a better alignement.
 Available shortcuts are:
-- Maj+alt + <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/left-click.png" width="16"> + move: mark vertices as fixed.
-- Maj + <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/left-click.png" width="16"> + move: mark vertices as moving.
-- Maj+ctrl + <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/left-click.png" width="16"> + move: unmark vertices.
-- Maj + <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/doc/images/right-click.png" width="16">: show 3D manipulator to move the vertices marked as moving.
+- Maj+alt + <img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/left-click.png" width="16"> + move: mark vertices as fixed.
+- Maj + <img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/left-click.png" width="16"> + move: mark vertices as moving.
+- Maj+ctrl + <img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/left-click.png" width="16"> + move: unmark vertices.
+- Maj + <img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/right-click.png" width="16">: show 3D manipulator to move the vertices marked as moving.
 
 #### Slice tool
 
@@ -364,8 +364,8 @@ The point will be placed at the surface of the pointed grid.
 
 ### History
 
-The software include an history to undo <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/resources/icons/undo.svg" width="16">/redo<img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/resources/icons/redo.svg" width="16"> editions, these options are available on [tool bar](#user-interface).
-To go back to the initial state of the mesh use the `reset`<img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/resources/icons/reset.svg" width="16"> button.
+The software include an history to undo <img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/resources/icons/undo.svg" width="16">/redo<img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/resources/icons/redo.svg" width="16"> editions, these options are available on [tool bar](#user-interface).
+To go back to the initial state of the mesh use the `reset`<img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/resources/icons/reset.svg" width="16"> button.
 
 ## Save
 
@@ -377,7 +377,7 @@ To save the selected cage, go to the [Menu](#user-interface) and `File>Save...`,
 
 Once a *cage* has been edited and saved, it can be reopened again.
 __First the original *cage* should be opened__, because the edited *cage* do not contain its resting position which is required to compute defomations. 
-So open the original *cage* using the <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/resources/icons/open.svg" width="16"> button in the [tool bar](#user-interface) or the open mesh function on the [Menu](#user-interface) and `File>Open Mesh`.
+So open the original *cage* using the <img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/resources/icons/open.svg" width="16"> button in the [tool bar](#user-interface) or the open mesh function on the [Menu](#user-interface) and `File>Open Mesh`.
 Then go to the [Menu](#user-interface) `Edit>Apply cage`.
 Click on the `Choose` button and select the edited *cage* file.
 Use the combobox to select the original *cage*.
@@ -388,7 +388,7 @@ __IMPROVEMENT__: the cage saving process could includes the resting cage positio
 
 ![alt text][fig_export_image]
 
-To export the resulting image use the `Export` <img src="https://gitlab.com/thibaulltt/visualisation/raw/develop/resources/icons/save.svg" width="16"> button in the [tool bar](#user-interface).
+To export the resulting image use the `Export` <img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/resources/icons/save.svg" width="16"> button in the [tool bar](#user-interface).
 Available options from top to bottom are:
 - Combobox: choose whith image to export.
 - `Reset` button: reset all paramameters of this window.
