@@ -15,11 +15,11 @@ This is a C++ project using modern OpenGL and Qt.
 
 |      3D rendering         |    Cutting planes                   |    Alpha blending                 |
 |:-------------------------:|:-----------------------------------:|:---------------------------------:|
-| <img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/rendering.gif" width="270"> |<img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/cutting_planes.gif" width="230"> |<img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/alpha_blending.gif" width="270"> |
+| <img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/rendering.gif" width="260"> |<img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/cutting_planes.gif" width="230"> |<img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/alpha_blending.gif" width="260"> |
 
 |      ARAP deformation     |    Global deformation               |    2D view                        |
 |:-------------------------:|:-----------------------------------:|:---------------------------------:|
-| <img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/arap_deformation.gif" width="270"> |<img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/global.gif" width="230"> |<img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/2Dview.gif" width="270"> |
+| <img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/arap_deformation.gif" width="260"> |<img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/global.gif" width="230"> |<img src="https://github.com/RThomas96/Medical-Image-3D-Visualisation-Software/raw/master/doc/images/2Dview.gif" width="260"> |
 
 ----
 
