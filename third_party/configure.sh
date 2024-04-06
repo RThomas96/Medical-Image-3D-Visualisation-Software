@@ -164,8 +164,8 @@ if [ $# -gt 0 ]; then
 	do
 		lowercasearg=$(echo $arg | awk '{print tolower($0)}')
 		case $lowercasearg in
-			("qglviewer") configure_qglviewer;;
-			("qglviewer/") configure_qglviewer;;
+			#("qglviewer") configure_qglviewer;;
+			#("qglviewer/") configure_qglviewer;;
 			("libtiff") configure_libtiff;;
 			("libtiff/") configure_libtiff;;
 			("tinytiff") configure_tinytiff;;
@@ -184,7 +184,7 @@ check_compiled_directory
 
 # Configure all libs :
 configure_libtiff
-configure_qglviewer
+#configure_qglviewer
 configure_tinytiff
 configure_nifti
 configure_nanoflann
