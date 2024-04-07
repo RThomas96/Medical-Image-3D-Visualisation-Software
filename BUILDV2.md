@@ -72,23 +72,21 @@ $ cd libQGLViewer
 $ qmake
 $ make -j
 ```
-Then copy includes in third\_party/compiled\_libraries/include/QGLViewer
-And copy .so in compiled\_libraries/lib.
-
-Change findLibQGLViewer to simply search in compiledLib.
+Then copy all .h to third\_party/compiled\_libraries/include/QGLViewer
+And copy .so in compiled\_libraries/lib and rename it .so.2.
 
 ---
 
 ### Suitsparse
 
 ```sh
-$ sudo apt-get install libopenblas-dev liblapack-dev libgmp3-dev libgsl-dev
+$ sudo apt-get install libopenblas-dev liblapack-dev libgmp3-dev libgsl-dev libmpfr-dev pkg-config
 $ git clone suitsparse dans thirdparty
-$ cd build
-$ cmake ..
+$ cmake
 $ make local -j 4
+$ make install
 ```
-Change findSuiteSPARE paths to simply search directly in the suitsparse/lib.
+Copy choldmod.h and Suitsparseconfig.h to compiled_libraries/include/suitesparse
 
 ---
 
