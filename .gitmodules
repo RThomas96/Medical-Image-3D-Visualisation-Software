@@ -12,7 +12,7 @@
 	ignore = dirty
 [submodule "libtiff"]
 	path = third_party/libtiff
-	url = https://github.com/libtiff/libtiff.git
+	url = https://gitlab.com/libtiff/libtiff.git
 	ignore = dirty
 [submodule "third_party/nifticlib"]
 	path = third_party/nifticlib
