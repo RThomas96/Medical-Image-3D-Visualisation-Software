@@ -4,25 +4,25 @@
 	ignore = dirty
 [submodule "glm"]
 	path = third_party/glm
-	url = git@github.com:g-truc/glm.git
+	url = https://github.com/g-truc/glm.git
 	ignore = dirty
 [submodule "QGLViewer"]
 	path = third_party/libQGLViewer
-	url = git@github.com:GillesDebunne/libQGLViewer.git
+	url = https://github.com/GillesDebunne/libQGLViewer.git
 	ignore = dirty
 [submodule "libtiff"]
 	path = third_party/libtiff
-	url = git@gitlab.com:libtiff/libtiff.git
+	url = https://github.com/libtiff/libtiff.git
 	ignore = dirty
 [submodule "third_party/nifticlib"]
 	path = third_party/nifticlib
-	url = git@github.com:NIFTI-Imaging/nifti_clib.git
+	url = https://github.com/NIFTI-Imaging/nifti_clib.git
 	ignore = dirty
 [submodule "third_party/zlib"]
 	path = third_party/zlib
-	url = git@github.com:madler/zlib.git
+	url = https://github.com/madler/zlib.git
 	ignore = dirty
 [submodule "third_party/nanoflann"]
 	path = third_party/nanoflann
-	url = git@github.com:jlblancoc/nanoflann.git
+	url = https://github.com/jlblancoc/nanoflann.git
 	ignore = dirty
