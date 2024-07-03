@@ -7,6 +7,7 @@ This project is a Qt-based OpenGL viewer written in C++17. As such, here's what 
 - A C++17-compliant compiler (`gcc` and `minGW` have been tested on Linux and Windows respectively)
 - The Qt toolkit version 5.12 or higher
 - `git` installed
+- An implementation of OpenGL v3.2 or higher (usually bundled with your graphic card's video driver, or with the mesa library for the integrated Intel GPUs for example). If you have troubles installing OpenGL see the `Troubleshooting` section.
 
 This guide has been tested on Ubuntu 22.04.4 LTS. Some modifications can be needed on other versions.
 
@@ -105,4 +106,18 @@ Then, you can launch the program with :
 ```sh
 $ ./<your build path>/neighbor_visu.exe # For Windows
 $ ./<your build path>/neighbor_visu     # For Linux
+```
+
+---
+
+## Troubleshooting
+
+### OpenGL installation
+Depending of your Ubuntu version, when installing opengl by `apt-get install libgl1-mesa-dev` the default version of OpenGL could be different than v3.2, but the project **needs OpenGL-v3.2**. 
+This article could help you updating the right version of OpenGL [[Updating OpenGL from version 3.0 to latest 4.5](https://askubuntu.com/questions/928538/updating-opengl-from-version-3-0-to-latest-4-5)](https://askubuntu.com/questions/928538/updating-opengl-from-version-3-0-to-latest-4-5), as
+```
+glxinfo|grep OpenGL
+export MESA_GL_VERSION_OVERRIDE=3.2
+glxinfo | grep "OpenGL version"
+echo 'export MESA_GL_VERSION_OVERRIDE=3.2' >> ~/.bashrc
 ```
