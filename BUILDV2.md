@@ -87,7 +87,7 @@ $ cmake
 $ make local -j 4
 $ make install
 ```
-Copy choldmod.h and Suitsparseconfig.h to compiled_libraries/include/suitesparse
+Copy choldmod.h and Suitsparseconfig.h to compiled\_libraries/include/suitesparse
 
 ---
 
@@ -120,4 +120,45 @@ glxinfo|grep OpenGL
 export MESA_GL_VERSION_OVERRIDE=3.2
 glxinfo | grep "OpenGL version"
 echo 'export MESA_GL_VERSION_OVERRIDE=3.2' >> ~/.bashrc
+```
+
+---
+
+## Using vcpkg
+
+Vcpkg is a free and open-source C++ package manager that allows you to install all dependencies automatically.
+
+### Install vcpkg
+
+```
+$ sudo apt-get install ninja-build
+$ git clone https://github.com/microsoft/vcpkg.git
+$ cd vcpkg; ./bootstrap-vcpkg.bat
+$ export VCPKG_ROOT=/path/to/vcpkg
+$ export PATH=$PATH:$VCPKG_ROOT
+$ cmake --preset=default
+```
+
+You need to export the variable everytime you restart your shell.
+Or add it to your `~/.profile` file.
+
+You need some mistery dependencies too:
+
+```
+# For another vcpkg
+# Maybe not usefull
+sudo apt-get install bison pkg-config autoconf automake libtool libsystemd-dev
+
+# For qt5 package, missing jinja2
+sudo apt-get install python3-pip
+pip install jinja2
+sudo apt-get install libx11-*
+sudo apt-get install libx11*
+
+sudo apt-get install libxcb-*
+sudo apt-get install libxcb*
+
+sudo apt-get install libxkbcommon-devsudo
+sudo apt-get install libxkbcommon-x11-dev
+sudo apt-get install libgles2-mesa-dev
 ```
