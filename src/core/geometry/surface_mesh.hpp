@@ -4,6 +4,7 @@
 #include "../utils/Triangle.h"
 #include "base_mesh.hpp"
 #include <iostream>
+#define GLM_ENABLE_EXPERIMENTAL
 #include "glm/gtx/string_cast.hpp"
 #include "../deformation/AsRigidAsPossible.h"
 #include "../drawable/drawable_surface_mesh.hpp"

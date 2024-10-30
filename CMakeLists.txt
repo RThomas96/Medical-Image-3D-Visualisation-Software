@@ -95,12 +95,15 @@ ADD_LIBRARY(VisualisationWidgets STATIC
 TARGET_INCLUDE_DIRECTORIES(VisualisationWidgets
     PRIVATE ${CMAKE_CURRENT_LIST_DIR}/third_party/glm/
     PRIVATE ${CMAKE_CURRENT_LIST_DIR}/third_party
-    #PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include
+    PRIVATE ${CMAKE_SOURCE_DIR}
 	# Nifti uses brace-include without the 'nifti/' prefix, leading
 	# to manually have to include the lib's include dir in targets:
     #PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include/nifti
     #PRIVATE ${QGLViewer_HEADER_DIR}
 )
+target_link_libraries(VisualisationWidgets PRIVATE ${CMAKE_SOURCE_DIR}/build/vcpkg_installed/x64-linux/lib/libQGLViewer.a)
+#target_compile_options(VisualisationWidgets PRIVATE ${libQGLViewer_CFLAGS_OTHER})
+target_include_directories(VisualisationWidgets PRIVATE ${libQGLViewer_INCLUDE_DIRS})
 
 TARGET_LINK_LIBRARIES(VisualisationWidgets
 	PUBLIC Qt5::Core

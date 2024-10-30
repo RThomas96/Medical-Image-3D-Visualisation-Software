@@ -2,6 +2,7 @@
 #define GL_SELECTION_HPP_
 
 #include <glm/glm.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
 #include "glm/gtx/string_cast.hpp"
 #include "../../legacy/meshes/drawable/shaders.hpp"
 
