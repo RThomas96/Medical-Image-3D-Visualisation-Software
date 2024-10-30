@@ -158,7 +158,11 @@ sudo apt-get install libx11*
 sudo apt-get install libxcb-*
 sudo apt-get install libxcb*
 
-sudo apt-get install libxkbcommon-devsudo
+sudo apt-get install libxkbcommon-dev
 sudo apt-get install libxkbcommon-x11-dev
 sudo apt-get install libgles2-mesa-dev
+
+sudo apt-get install libxi-dev libxtst-dev gfortran flex
+sudo apt-get install autoconf automake autoconf-archive
+sudo apt-get install libx11-xcb-dev libglu1-mesa-dev libxrender-dev libxi-dev libxkbcommon-dev libxkbcommon-x11-dev libegl1-mesa-dev libxcb.*-dev
 ```
