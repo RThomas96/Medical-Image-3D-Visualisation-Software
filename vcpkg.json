@@ -1,5 +1,6 @@
 {
   "dependencies": [
+    "gsl",
     "glm",
     "libqglviewer",
     "libsystemd",
