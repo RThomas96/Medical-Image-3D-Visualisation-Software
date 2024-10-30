@@ -6,34 +6,30 @@ ADD_COMPILE_DEFINITIONS(NEED_ARAP)
 # Append current cmake/ directory to CMake file paths :
 LIST(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 # CMake Setup :
-INCLUDE(CMakeSetup)
+# INCLUDE(CMakeSetup)
 # Find libQGLViewer :
-INCLUDE(FindQGLViewer)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(libQGLViewer REQUIRED libQGLViewer)
 # Find the local libTIFF version :
-INCLUDE(FindLocalTIFF)
+find_package(TIFF REQUIRED)
 # Add the GLSL and icons dependencies :
 #INCLUDE(ShaderDependency)
 INCLUDE(ResourceDependency)
 # Find the local SuiteSparse and GSL libraries : (windows-only for now)
-IF (WIN32 OR MINGW OR MSVC)
-	INCLUDE(FindSuiteSparse_Windows)
-ELSE()
-	INCLUDE(FindSuiteSparse_Linux)
-ENDIF()
+find_package(suitesparse CONFIG REQUIRED)
 
-FIND_PACKAGE(Qt5 REQUIRED COMPONENTS Core Gui Widgets Xml OpenGL)
+find_package(Qt5 REQUIRED COMPONENTS Core Gui Widgets Xml OpenGL)
 FIND_PACKAGE(OpenGL REQUIRED)
 FIND_PACKAGE(Threads REQUIRED)
 FIND_PACKAGE(OpenMP REQUIRED)
 
 # Find locally-compiled libraries :
 # If any of them aren't found, it stops CMake's generation process with an error message.
-FIND_PACKAGE(TinyTIFF REQUIRED PATHS ${CMAKE_CURRENT_LIST_DIR}/third_party/compiled_libraries/lib/cmake PATH_SUFFIXES TinyTIFF)
-FIND_PACKAGE(nanoflann REQUIRED PATHS ${CMAKE_CURRENT_LIST_DIR}/third_party/compiled_libraries/lib/cmake PATH_SUFFIXES nanoflann)
+find_package(TinyTIFF CONFIG REQUIRED)
+find_package(TinyTIFFXX CONFIG REQUIRED)
+FIND_PACKAGE(nanoflann CONFIG REQUIRED)
 
-ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/third_party/glm)
-SET(LOCAL_GLM_HEADER_DIR "${CMAKE_CURRENT_LIST_DIR}/third_party/glm/")
-SET(LIBS_COMPILED_HEADERS "${CMAKE_CURRENT_LIST_DIR}/third_party/compiled_libraries/include")
+find_package(glm CONFIG REQUIRED)
 
 # To remove
 ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/src/legacy/image)
@@ -97,13 +93,15 @@ ADD_LIBRARY(VisualisationWidgets STATIC
 )
 
 TARGET_INCLUDE_DIRECTORIES(VisualisationWidgets
-	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/third_party/glm/
-	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include
+    PRIVATE ${CMAKE_CURRENT_LIST_DIR}/third_party/glm/
+    PRIVATE ${CMAKE_CURRENT_LIST_DIR}/third_party
+    #PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include
 	# Nifti uses brace-include without the 'nifti/' prefix, leading
 	# to manually have to include the lib's include dir in targets:
-	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include/nifti
-	PRIVATE ${QGLViewer_HEADER_DIR}
+    #PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include/nifti
+    #PRIVATE ${QGLViewer_HEADER_DIR}
 )
+
 TARGET_LINK_LIBRARIES(VisualisationWidgets
 	PUBLIC Qt5::Core
 	PUBLIC Qt5::Gui
@@ -111,6 +109,7 @@ TARGET_LINK_LIBRARIES(VisualisationWidgets
 	PUBLIC Qt5::Widgets
 	PUBLIC Qt5::OpenGL
 	PUBLIC Threads::Threads
+    PUBLIC glm::glm
 )
 
 ADD_EXECUTABLE(neighbor_visu
@@ -204,17 +203,17 @@ TARGET_PRECOMPILE_HEADERS(neighbor_visu
 	PRIVATE ${QGLViewer_HEADER_DIR}/QGLViewer/qglviewer.h
 	# Also, dramatically reduces compilation time.
 )
-TARGET_INCLUDE_DIRECTORIES(neighbor_visu
-	PRIVATE ${OPENGL_INCLUDE_DIRS}
-	PRIVATE ${QGLViewer_HEADER_DIR}
-	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/third_party/glm/
-	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include
-	# Nifti uses brace-include without the 'nifti/' prefix, leading
-	# to manually have to include the lib's include dir in targets:
-	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include/nifti
-    PRIVATE ${GSL_INCLUDE_DIRS}
-    PRIVATE ${LOCAL_GLM_HEADER_DIR}
-)
+#TARGET_INCLUDE_DIRECTORIES(neighbor_visu
+#	PRIVATE ${OPENGL_INCLUDE_DIRS}
+#	PRIVATE ${QGLViewer_HEADER_DIR}
+#	PRIVATE ${CMAKE_CURRENT_LIST_DIR}/third_party/glm/
+#	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include
+#	# Nifti uses brace-include without the 'nifti/' prefix, leading
+#	# to manually have to include the lib's include dir in targets:
+#	PRIVATE ${LOCAL_COMPILED_LIBS_PATH}/include/nifti
+#    PRIVATE ${GSL_INCLUDE_DIRS}
+#    PRIVATE ${LOCAL_GLM_HEADER_DIR}
+#)
 
 if (UNIX)
 TARGET_LINK_LIBRARIES(neighbor_visu

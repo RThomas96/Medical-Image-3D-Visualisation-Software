@@ -1,0 +1,19 @@
+{
+  "dependencies": [
+    "glm",
+    "libqglviewer",
+    "libsystemd",
+    "qt5-base",
+    "suitesparse",
+    "tiff",
+    "tinytiff",
+    "vcpkg-tool-meson",
+    "nanoflann"
+  ],
+  "overrides": [
+    {
+      "name": "qt5",
+      "version": "5.15.1"
+    }
+  ]
+}

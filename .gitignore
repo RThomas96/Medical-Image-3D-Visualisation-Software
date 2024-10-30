@@ -28,3 +28,6 @@ tags
 
 # Ignore vim files
 *.swp
+
+# Ignore vcpkg dirs
+vcpkg_installed/
