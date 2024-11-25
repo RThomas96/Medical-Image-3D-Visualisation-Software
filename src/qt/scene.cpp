@@ -26,11 +26,11 @@
 
 #include "../core/utils/apss.hpp"
 #include "glm/fwd.hpp"
-#include "src/core/drawable/drawable.hpp"
-#include "src/core/drawable/drawable_grid.hpp"
-#include "src/core/geometry/base_mesh.hpp"
-#include "src/core/geometry/surface_mesh.hpp"
-#include "src/core/interaction/mesh_manipulator.hpp"
+#include "../core/drawable/drawable.hpp"
+#include "../core/drawable/drawable_grid.hpp"
+#include "../core/geometry/base_mesh.hpp"
+#include "../core/geometry/surface_mesh.hpp"
+#include "../core/interaction/mesh_manipulator.hpp"
 
 #include "qobjectdefs.h"
 

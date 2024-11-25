@@ -1,5 +1,6 @@
 #include "apss.hpp"
 #include<algorithm>
+#define GLM_ENABLE_EXPERIMENTAL
 #include<glm/gtx/norm.hpp>
 
 ProjectedPoint apss(const glm::vec3& inputPoint, 

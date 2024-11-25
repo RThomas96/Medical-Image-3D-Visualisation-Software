@@ -206,6 +206,9 @@ TARGET_PRECOMPILE_HEADERS(neighbor_visu
 	PRIVATE ${QGLViewer_HEADER_DIR}/QGLViewer/qglviewer.h
 	# Also, dramatically reduces compilation time.
 )
+TARGET_INCLUDE_DIRECTORIES(neighbor_visu
+    PRIVATE ${CMAKE_SOURCE_DIR}/third_party
+    )
 #TARGET_INCLUDE_DIRECTORIES(neighbor_visu
 #	PRIVATE ${OPENGL_INCLUDE_DIRS}
 #	PRIVATE ${QGLViewer_HEADER_DIR}
@@ -228,12 +231,12 @@ TARGET_LINK_LIBRARIES(neighbor_visu
 	PUBLIC ${OPENGL_LIBRARIES}
     PUBLIC ${QGLViewer}
 	PUBLIC VisualisationWidgets
-	PUBLIC TinyTIFF
+    PUBLIC TinyTIFF::TinyTIFF
 	PUBLIC ${libTIFF}
     PUBLIC glm::glm
     PUBLIC ${GSL_LIBRARIES}
     #PUBLIC ${SUITESPARSE_LIBRARIES}
-    PUBLIC SuiteSparse
+    #PUBLIC SuiteSparse
     PUBLIC OpenMP::OpenMP_CXX
 )
 endif (UNIX)
